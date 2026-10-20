@@ -48,12 +48,14 @@ type Props = {
   autofill: ReactNode;
   notationControls: ReactNode;
   algHelp: ReactNode;
+  moveEditing?: boolean;
+  moveEditorRef?: (element: HTMLDivElement | null) => void;
 };
 
 /** Input presentation only: the playback controller owns drafts, validation and
  * notation conversions. Keep its DOM refs attached for caret sync and keyboards. */
 export default function SimAlgEditor({
-  setup, alg, is3x3, algStm, scramble, setupExtras, autofill, notationControls, algHelp,
+  setup, alg, is3x3, algStm, scramble, setupExtras, autofill, notationControls, algHelp, moveEditing, moveEditorRef,
 }: Props) {
   const t = useT();
   return (
@@ -138,8 +140,9 @@ export default function SimAlgEditor({
       {setup.error && <p id="sim-setup-error" className="sim-input-error" role="status">{setup.error}</p>}
       <label className="sim-field-label" htmlFor="sim-alg">{t('公式', 'Algorithm')}</label>
       <div className="sim-player-row">
-        <div className="sim-player-hlwrap">
-          {alg.showOverlay && (
+        <div className={'sim-player-hlwrap' + (moveEditing ? ' sim-player-hlwrap--editing' : '')}>
+          <div ref={moveEditorRef} hidden={!moveEditing} className="sim-move-editor-slot" />
+          {alg.showOverlay && !moveEditing && (
             <div className="sim-player-hl" aria-hidden="true">
               {alg.spans.map((s, i) => (
                 <span
@@ -170,7 +173,7 @@ export default function SimAlgEditor({
             onChange={alg.onChange}
             onCaretChange={alg.onCaretChange}
           />
-          {autofill}
+          {!moveEditing && autofill}
         </div>
         {is3x3 && algStm > 0 && (
           <output

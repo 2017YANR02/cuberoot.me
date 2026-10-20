@@ -170,15 +170,36 @@ describe('sim playback across active cube changes', () => {
       [...host.querySelectorAll<HTMLButtonElement>('.sim-player-tools button')]
         .find(element => element.textContent === 'Edit move')!.click();
     });
-    expect([...host.querySelectorAll('.sim-move-tokens button')].map(element => element.textContent)).toEqual(['U', 'F']);
-    await act(async () => host.querySelector<HTMLButtonElement>('.sim-move-tokens button')!.click());
+    expect(host.querySelector('.sim-move-editor')).toBeNull();
+    expect([...host.querySelectorAll('.sim-move-token')].map(element => element.textContent)).toEqual(['U', 'F']);
+    expect(host.querySelector('.sim-player-hlwrap--editing .sim-inline-moves')).not.toBeNull();
+    await act(async () => host.querySelector<HTMLButtonElement>('.sim-move-token')!.click());
+    expect(document.querySelectorAll('.sim-move-rotations button')).toHaveLength(9);
+    await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+    expect(document.querySelector('.sim-move-menu')).toBeNull();
+    await act(async () => host.querySelector<HTMLButtonElement>('.sim-move-token')!.click());
+    await act(async () => document.body.dispatchEvent(new Event('pointerdown', { bubbles: true })));
+    expect(document.querySelector('.sim-move-menu')).toBeNull();
+    await act(async () => host.querySelector<HTMLButtonElement>('.sim-move-token')!.click());
     await act(async () => {
-      const select = host.querySelector<HTMLSelectElement>('select[aria-label="Insert rotation after selected move"]')!;
-      select.value = 'y';
-      select.dispatchEvent(new Event('change', { bubbles: true }));
+      document.querySelector<HTMLButtonElement>('button[aria-label="Insert y"]')!.click();
     });
     expect(host.querySelector<HTMLTextAreaElement>('#sim-setup')?.value).toBe('R');
     expect(host.querySelector<HTMLTextAreaElement>('#sim-alg')?.value).toBe('U y L');
+    expect(host.querySelector<HTMLButtonElement>('.sim-move-token[aria-pressed="true"]')?.textContent).toBe('y');
+    expectState('R U y');
+    await act(async () => host.querySelector<HTMLButtonElement>('.sim-move-token[aria-pressed="true"]')!.click());
+    await act(async () => {
+      [...document.querySelectorAll<HTMLButtonElement>('.sim-move-menu button')]
+        .find(element => element.textContent === 'Remove rotation and rewrite following moves')!.click();
+    });
+    expect(host.querySelector<HTMLTextAreaElement>('#sim-alg')?.value).toBe('U  F');
+    await act(async () => {
+      [...host.querySelectorAll<HTMLButtonElement>('.sim-player-tools button')]
+        .find(element => element.textContent === 'Done editing')!.click();
+    });
+    expect(host.querySelector('.sim-inline-moves')).toBeNull();
+    expect(host.querySelector('.sim-player-hlwrap--editing')).toBeNull();
   });
 
   it('clears only the algorithm and can undo both clear and solved reset', async () => {

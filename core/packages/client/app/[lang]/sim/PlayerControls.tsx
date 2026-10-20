@@ -1051,6 +1051,9 @@ export default function PlayerControls({
   // a non-caret action (play / step / reset) moves the timeline.
   const [caretChar, setCaretChar] = useState<number | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [moveEditing, setMoveEditing] = useState(false);
+  const [moveEditorSlot, setMoveEditorSlot] = useState<HTMLDivElement | null>(null);
+  useEffect(() => { setMoveEditing(false); }, [puzzleKind, active]);
   const [lastEdit, setLastEdit] = useState<{ setup: string; alg: string; nextSetup: string; nextAlg: string; puzzle: SimPuzzle; step: number } | null>(null);
   const [optimalScrambleBusy, setOptimalScrambleBusy] = useState(false);
   const [optimalScrambleStatus, setOptimalScrambleStatus] = useState<string | null>(null);
@@ -2496,6 +2499,8 @@ export default function PlayerControls({
       )}
       <div className="sim-animation-controls" hidden={!active}>
       <SimAlgEditor
+        moveEditing={moveEditing}
+        moveEditorRef={setMoveEditorSlot}
         setup={{
           text: setupDraft, elementRef: setupElRef, spans: setupValidationSpans, error: setupError,
           invalid: !nativeSetupValid || (squareFamilySpec ? !squareFamilySetupValid : corner ? !cornerSetupValid : undefined),
@@ -2798,12 +2803,21 @@ export default function PlayerControls({
         {!(typeof puzzleKind === 'number' || puzzleKind === 'mirror' || puzzleKind === 'mirror2' || puzzleKind === 'sphere') && !isSquarePuzzle && !isTwistyMode && corner?.cubeMirrors !== false && <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('Mirror S (F↔B)', 'Mirror S (F↔B)')} aria-label="Mirror S"><FlipVertical2 size={13} /></button>}
         {(typeof puzzleKind === 'number' || puzzleKind === 'mirror' || puzzleKind === 'mirror2' || puzzleKind === 'sphere') && (
           <AlgTransformPanel
+            key={String(puzzleKind)}
             text={algDraft}
             setup={setupDraft}
             order={order}
-            onApply={(nextSetup, next) => {
+            editing={moveEditing}
+            editorSlot={moveEditorSlot}
+            onEditingChange={editing => {
+              setPlaying(false);
+              void restoreScramblePreview();
+              setMoveEditing(editing);
+            }}
+            onSelect={caret => handleCaretSync(algDraft, caret)}
+            onApply={(nextSetup, next, caret) => {
               const previousSetup = setupDraft, previousAlg = algDraft, previousStep = stepRef.current;
-              void replaceDrafts(nextSetup, next, parseNxnItems(next).length);
+              void replaceDrafts(nextSetup, next, caret === undefined ? parseNxnItems(next).length : caretStepOf(next, caret) ?? 0);
               return () => { void replaceDrafts(previousSetup, previousAlg, previousStep); };
             }}
           />
