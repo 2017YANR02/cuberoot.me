@@ -1,5 +1,21 @@
 /* /alg/progress — 学习进度总览。配色全走 globals token,派生色用 color-mix。 */
 
+.alg-progress-page {
+  font-family: var(--font-sans);
+  color: var(--foreground);
+  line-height: 1.5;
+  padding-bottom: 24px;
+}
+.alg-progress-page .alg-cat-header {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 24px 0;
+}
+.alg-progress-page .alg-cat-title { font-family: inherit; font-size: 1.5rem; font-weight: 600; }
+.alg-progress-page :is(button, a):focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
+.alg-progress-page button:active,
+.alg-prog-cta:active { transform: translateY(1px); }
+
 /* 与 .alg-cat-header 同宽同边距,内容不贴左边 */
 .alg-prog-body {
   max-width: 1200px;
@@ -10,108 +26,80 @@
 /* ── 顶部大数字 ─────────────────────────────────────────────── */
 
 .alg-prog-tiles {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px 30px;
-  margin: 16px 0 6px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px 20px;
+  padding: 24px 0;
+  margin: 0 0 12px;
+  border-bottom: 1px solid var(--border-default);
 }
 .alg-prog-tile {
   display: flex;
   flex-direction: column;
-  line-height: 1.15;
+  gap: 6px;
+  line-height: 1.3;
 }
 .alg-prog-tile b {
-  font-size: 1.55rem;
-  font-weight: 650;
+  font-size: 1.75rem;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--foreground);
 }
-.alg-prog-tile span { font-size: 0.76rem; color: var(--muted-foreground); }
+.alg-prog-tile > span { font-size: 0.875rem; color: var(--muted-foreground); }
+.alg-prog-tile .alg-prog-streak { font: inherit; color: inherit; }
 .alg-prog-tile i {
   font-style: normal;
-  font-size: 0.7rem;
-  color: var(--faint-foreground);
+  font-size: 0.8125rem;
+  color: var(--muted-foreground);
   font-variant-numeric: tabular-nums;
 }
-.alg-prog-tile.is-ok b { color: var(--signal-success); }
-.alg-prog-tile.is-warn b { color: var(--signal-warning); }
 .alg-prog-tile.is-due b { color: var(--accent); }
 .alg-prog-streak { display: inline-flex; align-items: center; gap: 3px; }
 
 /* 可点的统计块(点进公式清单)。下划线只在标签上,别把大号数字画花 */
 a.alg-prog-tile { text-decoration: none; }
-a.alg-prog-tile span { text-decoration: underline dotted; text-underline-offset: 3px; }
+a.alg-prog-tile > span { text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 4px; }
 @media (hover: hover) {
   a.alg-prog-tile:hover span { color: var(--accent); text-decoration-style: solid; }
 }
 
-/* ── 间隔阶梯(排期怎么算的)──────────────────────────────── */
-
-.alg-prog-ladder {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.alg-prog-ladder-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 10px;
-}
-.alg-prog-ladder-label {
-  font-size: 0.76rem;
-  color: var(--muted-foreground);
-  white-space: nowrap;
-}
-.alg-prog-ladder-steps {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
-}
-.alg-prog-ladder-steps b {
-  font-size: 0.72rem;
-  font-weight: 500;
-  padding: 2px 7px;
-  border-radius: 4px;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-  color: var(--muted-foreground);
-  background: color-mix(in srgb, var(--foreground) 7%, transparent);
-}
-.alg-prog-ladder-steps b.is-mature {
-  color: var(--signal-success);
-  background: color-mix(in srgb, var(--signal-success) 13%, transparent);
-}
-
 .alg-prog-note {
   margin: 4px 0 8px;
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   color: var(--muted-foreground);
 }
 
 /* ── 区块 ───────────────────────────────────────────────────── */
 
-.alg-prog-section { margin-top: 30px; }
+.alg-prog-section { margin-top: 32px; }
 .alg-prog-h2 {
-  margin: 0 0 12px;
-  font-size: 0.86rem;
+  margin: 0 0 16px;
+  font-size: 1rem;
   font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--muted-foreground);
+  color: var(--foreground);
 }
 .alg-prog-sub {
   margin: 10px 0 0;
-  font-size: 0.78rem;
-  color: var(--faint-foreground);
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: var(--muted-foreground);
+  max-width: 72ch;
 }
-.alg-prog-foot {
-  margin: 34px 0 0;
-  font-size: 0.76rem;
-  line-height: 1.6;
-  color: var(--faint-foreground);
-  max-width: 62ch;
+.alg-prog-heading { display: flex; align-items: center; gap: 6px; }
+.alg-prog-help {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+  color: var(--muted-foreground);
 }
+.alg-prog-help:hover { color: var(--foreground); }
 
 /* ── 记忆强度分布条 ─────────────────────────────────────────── */
 
@@ -150,25 +138,25 @@ a.alg-prog-tile span { text-decoration: underline dotted; text-underline-offset:
 
 /* ── 复习热力图 ─────────────────────────────────────────────── */
 
-.alg-prog-heat-wrap { max-width: 100%; }
+.alg-prog-heat-wrap { max-width: 100%; min-width: 0; }
 /* 窄屏一年放不下:整块横向滚动,页面 body 不横滚 */
 .alg-prog-heat {
   display: grid;
   grid-auto-flow: column;
-  grid-template-rows: 13px repeat(7, 11px);
-  gap: 2px;
+  grid-template-rows: 18px repeat(7, 13px);
+  gap: 3px;
   overflow-x: auto;
   padding-bottom: 4px;
 }
 .alg-prog-heat-month {
-  font-size: 0.6rem;
-  color: var(--faint-foreground);
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
   white-space: nowrap;
   line-height: 1;
 }
 .alg-prog-heat-cell {
-  width: 11px;
-  height: 11px;
+  width: 100%;
+  height: 13px;
   border-radius: 2px;
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
@@ -184,9 +172,10 @@ a.alg-prog-tile span { text-decoration: underline dotted; text-underline-offset:
   align-items: center;
   gap: 3px;
   margin-top: 8px;
-  font-size: 0.7rem;
-  color: var(--faint-foreground);
+  font-size: 0.8125rem;
+  color: var(--muted-foreground);
 }
+.alg-prog-heat-legend .alg-prog-heat-cell { width: 13px; }
 .alg-prog-heat-legend span:first-child { margin-right: 3px; }
 .alg-prog-heat-legend span:last-child { margin-left: 3px; }
 
@@ -302,16 +291,17 @@ a.alg-prog-tile span { text-decoration: underline dotted; text-underline-offset:
 }
 .alg-prog-group-icon { width: 20px; height: 20px; flex: none; }
 
-.alg-prog-sets { display: flex; flex-direction: column; }
+.alg-prog-sets { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 32px; }
 
 .alg-prog-row {
-  padding: 11px 0 12px;
-  border-top: 1px solid color-mix(in srgb, var(--foreground) 9%, transparent);
+  min-width: 0;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border-default);
 }
-.alg-prog-row:first-child { border-top: none; }
 
 .alg-prog-row-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: 10px;
 }
@@ -327,10 +317,10 @@ a.alg-prog-tile span { text-decoration: underline dotted; text-underline-offset:
 }
 .alg-prog-due-btn {
   flex: none;
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
   line-height: 1;
   padding: 4px 9px;
-  border-radius: 999px;
+  border-radius: 6px;
   text-decoration: none;
   color: var(--accent);
   background: var(--accent-soft);
@@ -343,7 +333,7 @@ a.alg-prog-tile span { text-decoration: underline dotted; text-underline-offset:
 .alg-prog-frac {
   margin-left: auto;   /* 分数贴右缘:行内只有它一个「右侧信息」,不是硬撑的 spacer */
   flex: none;
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   color: var(--muted-foreground);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
@@ -368,9 +358,9 @@ a.alg-prog-tile span { text-decoration: underline dotted; text-underline-offset:
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.78rem;
-  line-height: 1;
-  padding: 4px 0;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  padding: 6px 0;
   text-decoration: none;
   color: var(--muted-foreground);
   font-variant-numeric: tabular-nums;
@@ -404,7 +394,7 @@ button.alg-prog-stat:disabled { cursor: default; opacity: 0.6; }
   background: transparent;
   color: var(--muted-foreground);
   font-family: inherit;
-  font-size: 0.82rem;
+  font-size: 0.875rem;
   cursor: pointer;
 }
 .alg-prog-reset-all:disabled { cursor: default; opacity: 0.6; }
@@ -431,8 +421,15 @@ button.alg-prog-stat:disabled { cursor: default; opacity: 0.6; }
   background: var(--primary);
 }
 
+@media (max-width: 760px) {
+  .alg-prog-sets { grid-template-columns: minmax(0, 1fr); gap: 0; }
+}
 @media (max-width: 560px) {
+  .alg-progress-page .alg-cat-header { padding: 20px 16px 0; }
   .alg-prog-body { padding-left: 16px; padding-right: 16px; }
-  .alg-prog-tiles { gap: 12px 22px; }
-  .alg-prog-tile b { font-size: 1.3rem; }
+  .alg-prog-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+  .alg-prog-tile b { font-size: 1.5rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .alg-prog-spin { animation: none; }
 }

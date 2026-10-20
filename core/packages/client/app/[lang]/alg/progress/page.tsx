@@ -13,7 +13,8 @@ import { sessionFetch } from '@/lib/session-fetch';
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from '@/components/AppLink';
-import { ArrowLeft, Flame, Loader2 } from 'lucide-react';
+import { ArrowLeft, CircleHelp, Flame, Loader2 } from 'lucide-react';
+import { Tooltip } from '@/components/Tooltip';
 import { ALG_CATALOG, ALG_PUZZLES, type AlgPuzzle, type AlgCase } from '@cuberoot/shared/alg';
 import { virtualAlgSet, VIRTUAL_ALG_SET_PARAMS } from '@/lib/alg-virtual-sets';
 import { flushSweep, readSweep } from '@/lib/alg-sweep-store';
@@ -28,9 +29,9 @@ import { API_ORIGIN } from '@/lib/api-base';
 import { loadMarkOverview, resetSetMarks, MARK_STATUS_LABEL, type MarkOverview, type SetMarkSummary } from '@/lib/trainer-marks';
 import { loadSrsDashboard, resetSetSrs, resetSrsDaily, type SrsOverview } from '@/lib/alg-srs-store';
 import {
-  dueForecast, heatmapGrid, streakDays, dayKey, retention, weakness, scheduleNext,
+  dueForecast, heatmapGrid, streakDays, dayKey, retention, weakness,
   emptySrsStat, MASTER_DAYS,
-  type SrsDaily, type SrsRecs, type SrsSetStat, type SrsRec, type SrsGrade,
+  type SrsDaily, type SrsRecs, type SrsSetStat,
 } from '@/lib/alg-srs';
 import { primaryCaseName } from '@/lib/alg_case_display';
 import { caseKey } from '@/lib/trainer-case-key';
@@ -164,7 +165,7 @@ function Heatmap({ daily }: { daily: SrsDaily }) {
 
   return (
     <div className="alg-prog-heat-wrap">
-      <div className="alg-prog-heat" ref={scrollRef} style={{ gridTemplateColumns: `repeat(${weeks}, 11px)` }}>
+      <div className="alg-prog-heat" ref={scrollRef} style={{ gridTemplateColumns: `repeat(${weeks}, minmax(13px, 1fr))` }}>
         {monthLabels.map(m => (
           <span key={m.i} className="alg-prog-heat-month" style={{ gridColumn: m.i + 1, gridRow: 1 }}>
             {m.label}
@@ -250,49 +251,6 @@ function MaturityBar({ neverStudied, relearn, young, mature }: {
           </span>
         ))}
       </div>
-    </div>
-  );
-}
-
-/**
- * 间隔阶梯:一张新卡连续答对时,下次复习分别在几天后。
- *
- * 数字是**跑真引擎**算出来的(`scheduleNext` 逐步推),不是手写的示意 ——
- * 调了 SM-2 的参数,这张图跟着变;写死的话它迟早变成谎话。
- */
-function IntervalLadder() {
-  const rows = useMemo(() => {
-    const climb = (g: SrsGrade) => {
-      let rec: SrsRec | undefined;
-      const out: number[] = [];
-      for (let i = 0; i < 7; i++) {
-        rec = scheduleNext(rec, g, 0);   // fuzz 默认 0 ⟹ 确定性,这里要的是规律不是抖动
-        // 撞到间隔上限就收 —— 「365 天」连报三格只是噪声,不是阶梯
-        if (out.length > 0 && rec.iv === out[out.length - 1]) break;
-        out.push(rec.iv);
-      }
-      return out;
-    };
-    return [
-      { key: 'ok', label: tr({ zh: '每次「记得」', en: 'Recalled each time' }), ivs: climb(2) },
-      { key: 'easy', label: tr({ zh: '每次「秒答」', en: 'Instant each time' }), ivs: climb(3) },
-    ];
-  }, []);
-
-  return (
-    <div className="alg-prog-ladder">
-      {rows.map(r => (
-        <div key={r.key} className="alg-prog-ladder-row">
-          <span className="alg-prog-ladder-label">{r.label}</span>
-          <span className="alg-prog-ladder-steps">
-            {r.ivs.map((iv, i) => (
-              <b key={i} className={iv >= MASTER_DAYS ? 'is-mature' : undefined}>
-                {tr({ zh: `${iv} 天`, en: `${iv}d` })}
-              </b>
-            ))}
-          </span>
-        </div>
-      ))}
     </div>
   );
 }
@@ -641,7 +599,7 @@ export default function AlgProgressPage() {
   };
 
   return (
-    <div className="alg-root">
+    <div className="alg-progress-page">
       <div className="alg-cat-header">
         <Link href="/alg" className="alg-back">
           <ArrowLeft size={14} /> {tr({ zh: '公式库', en: 'Algorithms' })}
@@ -659,8 +617,8 @@ export default function AlgProgressPage() {
             <p>{tr({ zh: '还没有任何学习记录。', en: 'Nothing tracked yet.' })}</p>
             <p className="alg-prog-empty-hint">
               {tr({
-                zh: '进任意公式集,用「记忆」模式看图回忆公式并自评,或手动标上「不熟 / 已掌握」—— 进度、复习排期和记忆曲线都会汇总到这里。',
-                en: 'Open any set and use Memory mode — recall each alg from its picture and grade yourself — or mark cases as Shaky or Mastered. Progress, review scheduling and your memory curve all land here.',
+                zh: '选择一套公式开始练习，或标记「不熟」「已掌握」。这里会汇总学习进度和复习记录。',
+                en: 'Practice a set or mark cases as shaky or mastered. Your progress and review history will appear here.',
               })}
             </p>
             <Link href="/alg" className="alg-prog-cta" prefetch={false}>
@@ -691,7 +649,7 @@ export default function AlgProgressPage() {
                 <StatTile n={`${Math.round(ret.rate * 100)}%`} label={tr({ zh: '记忆保持率', en: 'Retention' })}
                   sub={tr({ zh: `${ret.samples} 次复习`, en: `${ret.samples} reviews` })} />
               )}
-              <StatTile n={totals.sets} label={tr({ zh: '套', en: 'Sets' })} />
+              <StatTile n={totals.sets} label={tr({ zh: '学习中的公式集', en: 'Active sets' })} />
             </div>
 
             {!loggedIn && (
@@ -703,52 +661,8 @@ export default function AlgProgressPage() {
               </p>
             )}
 
-            {totals.tracked > 0 && (
-              <section className="alg-prog-section">
-                <h2 className="alg-prog-h2">{tr({ zh: '记忆强度', en: 'Memory strength' })}</h2>
-                <MaturityBar
-                  neverStudied={Math.max(0, totals.known - totals.tracked)}
-                  relearn={totals.relearn}
-                  young={totals.young}
-                  mature={totals.mature}
-                />
-                <p className="alg-prog-sub">
-                  {tr({
-                    zh: `累计复习 ${totals.reviews} 次,其中忘掉 ${totals.lapses} 次。间隔涨过 ${MASTER_DAYS} 天就算长期记住了。`,
-                    en: `${totals.reviews} reviews so far, ${totals.lapses} of them lapses. Past a ${MASTER_DAYS}-day interval a card counts as long-term.`,
-                  })}
-                </p>
-              </section>
-            )}
-
             <section className="alg-prog-section">
-              <h2 className="alg-prog-h2">{tr({ zh: '复习日历', en: 'Review calendar' })}</h2>
-              <Heatmap daily={daily} />
-            </section>
-
-            {/* 遗忘曲线怎么被抵消的 —— 这套排期一直在跑,但除非说出来,没人会知道它存在 */}
-            <section className="alg-prog-section">
-              <h2 className="alg-prog-h2">{tr({ zh: '排期怎么算的', en: 'How scheduling works' })}</h2>
-              <IntervalLadder />
-              <p className="alg-prog-sub">
-                {tr({
-                  zh: `每次自评「忘了 / 犹豫 / 记得 / 秒答」决定下次隔多久:记得越牢,间隔涨得越快,复习频率随之贴着你的遗忘曲线往下掉。忘了就把间隔清零、当场重来。间隔涨过 ${MASTER_DAYS} 天算长期记住。`,
-                  en: `Each self-grade — forgot / hesitated / recalled / instant — sets the next gap. The stronger the recall, the faster the interval grows, so reviews thin out along your own forgetting curve. A lapse zeroes the interval and repeats the card on the spot. Past ${MASTER_DAYS} days it counts as long-term.`,
-                })}
-              </p>
-            </section>
-
-            {totals.tracked > 0 && (
-              <section className="alg-prog-section">
-                <h2 className="alg-prog-h2">{tr({ zh: '接下来两周的复习量', en: 'Next two weeks' })}</h2>
-                <DueForecast recs={recs} />
-              </section>
-            )}
-
-            <WeakCards recs={recs} />
-
-            <section className="alg-prog-section">
-              <h2 className="alg-prog-h2">{tr({ zh: '各公式集', en: 'By set' })}</h2>
+              <h2 className="alg-prog-h2">{tr({ zh: '公式集进度', en: 'Progress by set' })}</h2>
               {ALG_PUZZLES.filter(p => byPuzzle.has(p)).map(p => (
                 <div key={p} className="alg-prog-group">
                   <h3 className="alg-prog-group-title">
@@ -768,6 +682,51 @@ export default function AlgProgressPage() {
                 </div>
               ))}
             </section>
+
+            {totals.tracked > 0 && (
+              <section className="alg-prog-section">
+                <h2 className="alg-prog-h2">{tr({ zh: '记忆强度', en: 'Memory strength' })}</h2>
+                <MaturityBar
+                  neverStudied={Math.max(0, totals.known - totals.tracked)}
+                  relearn={totals.relearn}
+                  young={totals.young}
+                  mature={totals.mature}
+                />
+                <p className="alg-prog-sub">
+                  {tr({
+                    zh: `累计复习 ${totals.reviews} 次，遗忘 ${totals.lapses} 次。复习间隔超过 ${MASTER_DAYS} 天的情况计为长期记忆。`,
+                    en: `${totals.reviews} reviews and ${totals.lapses} lapses. Cases with a review interval over ${MASTER_DAYS} days count as long-term memory.`,
+                  })}
+                </p>
+              </section>
+            )}
+
+            <section className="alg-prog-section">
+              <h2 className="alg-prog-h2 alg-prog-heading">
+                {tr({ zh: '复习日历', en: 'Review calendar' })}
+                <Tooltip openOnClick content={tr({
+                  zh: '复习间隔根据自评调整：回忆越熟练，间隔越长；选择「忘了」后会重新安排练习。',
+                  en: 'Review intervals follow your grade: stronger recall means longer gaps; forgotten cases return for practice.',
+                })}>
+                  {tip => (
+                    <button {...tip} type="button" className="alg-prog-help"
+                      aria-label={tr({ zh: '复习间隔说明', en: 'About review intervals' })}>
+                      <CircleHelp size={16} aria-hidden />
+                    </button>
+                  )}
+                </Tooltip>
+              </h2>
+              <Heatmap daily={daily} />
+            </section>
+
+            {totals.tracked > 0 && (
+              <section className="alg-prog-section">
+                <h2 className="alg-prog-h2">{tr({ zh: '未来两周', en: 'Next two weeks' })}</h2>
+                <DueForecast recs={recs} />
+              </section>
+            )}
+
+            <WeakCards recs={recs} />
 
             {/* 重置全部:放在最底下,离日常操作最远的地方 */}
             <section className="alg-prog-section">
@@ -793,12 +752,6 @@ export default function AlgProgressPage() {
               </p>
             </section>
 
-            <p className="alg-prog-foot">
-              {tr({
-                zh: '排期用 SM-2 间隔重复:记得越牢,下次见面隔得越久;一旦忘了,当场重来并把间隔清零。',
-                en: 'Scheduling is SM-2 spaced repetition — the stronger the recall, the longer until you see it again; a lapse resets the interval and repeats the card immediately.',
-              })}
-            </p>
           </>
         )}
       </div>
