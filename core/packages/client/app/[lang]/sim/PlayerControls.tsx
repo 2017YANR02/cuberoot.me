@@ -1912,11 +1912,8 @@ export default function PlayerControls({
   };
   const canUndoEdit = lastEdit && lastEdit.puzzle === puzzleKind && setupDraft === lastEdit.nextSetup && algDraft === lastEdit.nextAlg;
   const tool = (transform: (s: string) => string) => () => {
-    // A transformation applies to the complete sequence; preserve its two-field
-    // source for undo, including comments and grip notation.
-    const separator = /\/\/[^\n\r]*$/.test(setupDraft) ? '\n' : ' ';
-    const combined = stripHandMarks(setupDraft + separator + algDraft).trim();
-    editDrafts('', transform(combined));
+    // Algorithm tools edit the solution; setup remains a separate playback anchor.
+    editDrafts(setupDraft, transform(stripHandMarks(algDraft).trim()));
   };
 
   // Per-puzzle "消步" (cancel redundant moves) + invert. SQ1 has its own token
@@ -2799,24 +2796,12 @@ export default function PlayerControls({
         {!(typeof puzzleKind === 'number' || puzzleKind === 'mirror' || puzzleKind === 'mirror2' || puzzleKind === 'sphere') && !isSquarePuzzle && !isTwistyMode && corner?.cubeMirrors !== false && <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('Mirror S (F↔B)', 'Mirror S (F↔B)')} aria-label="Mirror S"><FlipVertical2 size={13} /></button>}
         {(typeof puzzleKind === 'number' || puzzleKind === 'mirror' || puzzleKind === 'mirror2' || puzzleKind === 'sphere') && (
           <AlgTransformPanel
-            text={stripHandMarks(setupDraft + '\n' + algDraft).trim()}
+            text={stripHandMarks(algDraft).trim()}
             order={order}
             onApply={(next) => {
               const previousSetup = setupDraft, previousAlg = algDraft, previousStep = stepRef.current;
-              const update = (newSetup: string, newAlg: string, targetStep: number) => {
-                setPlaying(false);
-                setCaretChar(null);
-                skipAutoResetRef.current = false;
-                stepRef.current = targetStep;
-                setSetupDraft(newSetup);
-                onSetupChange(newSetup);
-                setAlgDraft(newAlg);
-                onAlgChange(newAlg);
-                if (setupElRef.current) setupElRef.current.value = newSetup;
-                if (algElRef.current) algElRef.current.value = newAlg;
-              };
-              update('', next, parseNxnItems(next).length);
-              return () => update(previousSetup, previousAlg, previousStep);
+              void replaceDrafts(previousSetup, next, parseNxnItems(next).length);
+              return () => { void replaceDrafts(previousSetup, previousAlg, previousStep); };
             }}
           />
         )}

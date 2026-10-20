@@ -110,6 +110,55 @@ describe('sim playback across active cube changes', () => {
     expect(host.querySelector<HTMLTextAreaElement>('textarea[placeholder="Solution"]')?.value).toBe('U F');
   }
 
+  it.each([
+    ['Orientation', 'y', 'U L'],
+    ['Mirror', 'M', "U' F'"],
+    ['Invert', '', "F' U'"],
+  ])('keeps the scramble separate when applying %s and undoing', async (label, value, expected) => {
+    await mount();
+    await act(async () => button('Step forward').click());
+    expectState('R U');
+    await act(async () => {
+      if (value) {
+        const select = host.querySelector<HTMLSelectElement>(`select[aria-label="${label}"]`)!;
+        select.value = value;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+      } else {
+        button(label).click();
+      }
+    });
+    expect(host.querySelector<HTMLTextAreaElement>('#sim-setup')?.value).toBe('R');
+    expect(host.querySelector<HTMLTextAreaElement>('#sim-alg')?.value).toBe(expected);
+    await act(async () => {
+      if (value) {
+        const undo = [...host.querySelectorAll<HTMLButtonElement>('.sim-player-tools button')]
+          .find(element => element.textContent === 'Undo')!;
+        undo.click();
+      } else {
+        button('Undo algorithm edit').click();
+      }
+    });
+    expectTextPreserved();
+    expectState('R U');
+  });
+
+  it('offers only solution moves for rotation insertion and preserves the scramble', async () => {
+    await mount();
+    await act(async () => {
+      [...host.querySelectorAll<HTMLButtonElement>('.sim-player-tools button')]
+        .find(element => element.textContent === 'Edit move')!.click();
+    });
+    expect([...host.querySelectorAll('.sim-move-tokens button')].map(element => element.textContent)).toEqual(['U', 'F']);
+    await act(async () => host.querySelector<HTMLButtonElement>('.sim-move-tokens button')!.click());
+    await act(async () => {
+      const select = host.querySelector<HTMLSelectElement>('select[aria-label="Insert rotation after selected move"]')!;
+      select.value = 'y';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    expect(host.querySelector<HTMLTextAreaElement>('#sim-setup')?.value).toBe('R');
+    expect(host.querySelector<HTMLTextAreaElement>('#sim-alg')?.value).toBe('U y L');
+  });
+
   it('clears only the algorithm and can undo both clear and solved reset', async () => {
     await mount();
     await act(async () => button('Step forward').click());
