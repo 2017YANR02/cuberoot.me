@@ -557,7 +557,7 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
       ? options.wcaLink : '';
     const wcaUrl = typeof options.wcaUrl === 'string' && isExternalHttpsUrl(options.wcaUrl)
       ? options.wcaUrl : '';
-    if (wcaLink && wcaUrl) {
+    if (!isDouyinMiniProgram() && wcaLink && wcaUrl) {
       const snapshot = getStoredSessionSnapshot();
       this.wcaLinkTicket = wcaLink;
       this.wcaLinkBaseline = snapshot.status === 'available' ? snapshot.session?.user.wcaId ?? '' : '';

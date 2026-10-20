@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { dirname, isAbsolute, relative, resolve } from 'node:path';
 
 /** Check transitive templates too: a native entry must not include a web shell. */
@@ -17,4 +17,14 @@ export async function validateNativePages(root, pages) {
     }
   }
   for (const page of pages) await inspect(resolve(root, `${page}.ttml`));
+  // Include custom components and orphaned templates in the shipped package.
+  // They need not be referenced by an include/import from a registered page.
+  async function inspectDirectory(directory) {
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+      const path = resolve(directory, entry.name);
+      if (entry.isDirectory()) await inspectDirectory(path);
+      else if (entry.isFile() && entry.name.endsWith('.ttml')) await inspect(path);
+    }
+  }
+  await inspectDirectory(root);
 }

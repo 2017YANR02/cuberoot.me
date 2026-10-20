@@ -121,6 +121,19 @@ function normalLaunchOptions() {
 }
 
 describe('mini program account page', () => {
+  it('does not open or copy a legacy WCA browser authorization in Douyin', async () => {
+    const openUrl = vi.fn(), setClipboardData = vi.fn(), request = vi.fn();
+    const page = await loadPage({
+      getStorageInfoSync: () => ({ keys: [] }), getStorageSync: () => null,
+      getLaunchOptionsSync: normalLaunchOptions, setNavigationBarTitle: vi.fn(),
+      showShareMenu: vi.fn(), openUrl, setClipboardData, request,
+    }, 'douyin');
+    page.onLoad({ wcaLink: 'a'.repeat(43), wcaUrl: 'https://www.worldcubeassociation.org/oauth/authorize' });
+    expect(openUrl).not.toHaveBeenCalled();
+    expect(setClipboardData).not.toHaveBeenCalled();
+    expect(request).not.toHaveBeenCalled();
+    expect(page.data.loginRequired).toBe(true);
+  });
   it.each(['confirm', 'cancel', 'switch', 'hide', 'storage-failure'] as const)('signs out only the confirmed current native session: %s', async scenario => {
     let session: unknown = { token: 't'.repeat(20), user: { uid: 12, name: 'Member', wcaId: null } };
     let confirm!: (result: { confirm: boolean; cancel: boolean }) => void;

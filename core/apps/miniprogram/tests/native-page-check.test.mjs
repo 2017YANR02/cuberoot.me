@@ -11,6 +11,9 @@ it('rejects a web container hidden behind a native page include', async () => {
     await writeFile(join(root, 'index.ttml'), '<include src="templates/body.ttml" />');
     await writeFile(join(root, 'templates/body.ttml'), '<view>Native</view>');
     await expect(validateNativePages(root, ['index'])).resolves.toBeUndefined();
+    await writeFile(join(root, 'templates/component.ttml'), '<web-view src="{{url}}" />');
+    await expect(validateNativePages(root, ['index'])).rejects.toThrow('contains web-view');
+    await writeFile(join(root, 'templates/component.ttml'), '<view>Native component</view>');
     await writeFile(join(root, 'templates/body.ttml'), '<web-view src="{{url}}" />');
     await expect(validateNativePages(root, ['index'])).rejects.toThrow('contains web-view');
     await writeFile(join(root, 'templates/body.ttml'), '<include src="../../outside.ttml" />');
