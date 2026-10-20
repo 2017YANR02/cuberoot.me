@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import { useTimerSearchParams as useSearchParams } from '@/lib/timer-practice-url-adapter';
 import { useQueryState } from 'nuqs';
 import { tr } from '@/i18n/tr';
 import { TIMER_TRAINING_HELP } from '@/lib/timer-training-help';

@@ -355,23 +355,23 @@ describe('trainer URL isolation', () => {
     const url = new URL(mapHref('/zh/alg/3x3/pll/run?room=new-room&share=training-share&case=A&case=B#answer'), 'https://example.test');
     expect(url.pathname).toBe('/zh/timer');
     expect(url.hash).toBe('#answer');
-    expect(url.searchParams.get('training')).toBe('/alg/3x3/pll/run');
-    expect(url.searchParams.get('event')).toBe('333');
+    expect(url.searchParams.get('content')).toBe('pll');
+    expect(url.searchParams.has('event')).toBe(false);
     expect(url.searchParams.get('players')).toBe('2');
     expect(url.searchParams.get('room')).toBe('timer-room');
     expect(url.searchParams.get('share')).toBe('timer-share');
-    expect(url.searchParams.get('train.room')).toBe('new-room');
-    expect(url.searchParams.get('train.share')).toBe('training-share');
-    expect(url.searchParams.getAll('train.case')).toEqual(['A', 'B']);
+    expect(url.searchParams.get('trainingRoom')).toBe('new-room');
+    expect(url.searchParams.get('trainingShare')).toBe('training-share');
+    expect(url.searchParams.getAll('case')).toEqual(['A', 'B']);
     expect(url.searchParams.get('trainingOrg')).toBe('school');
     expect(url.searchParams.get('trainingAssignment')).toBe('homework');
   });
 
   it('preserves attribution, accepts incoming attribution and resolves local query links', () => {
     const url = new URL(mapHref('?case=new&trainingOrg=other&trainingAssignment=next'), 'https://example.test');
-    expect(url.searchParams.get('training')).toBe('/alg/3x3/oll/run');
-    expect(url.searchParams.get('train.case')).toBe('new');
-    expect(url.searchParams.has('train.room')).toBe(false);
+    expect(url.searchParams.get('content')).toBe('oll');
+    expect(url.searchParams.get('case')).toBe('new');
+    expect(url.searchParams.has('trainingRoom')).toBe(false);
     expect(url.searchParams.get('trainingOrg')).toBe('other');
     expect(url.searchParams.get('trainingAssignment')).toBe('next');
     expect(url.searchParams.has('train.trainingOrg')).toBe(false);
@@ -389,7 +389,8 @@ describe('trainer URL isolation', () => {
       timerPathname: '/timer', currentSearch: '', acceptsPath,
     }), 'https://example.test');
     expect(url.pathname).toBe('/timer');
-    expect(url.searchParams.get('training')).toBe('/alg/3x3/oll/select');
+    expect(url.searchParams.get('content')).toBe('oll');
+    expect(url.searchParams.get('view')).toBe('select');
   });
 
   it('exposes only trainer parameters and assignment attribution without mutating the URL', () => {
@@ -404,7 +405,7 @@ describe('trainer URL isolation', () => {
   });
 
   it('restores timer state on exit and namespaces the keys used by share links', () => {
-    expect(timerTrainingExitHref('/zh/timer', timerSearch)).toBe('/zh/timer?event=333&players=2&room=timer-room&share=timer-share&trainingOrg=school&trainingAssignment=homework');
+    expect(timerTrainingExitHref('/zh/timer', timerSearch)).toBe('/zh/timer?players=2&room=timer-room&share=timer-share&trainingOrg=school&trainingAssignment=homework');
     expect(timerTrainingExitHref('/timer', 'training=%2Falg&train.case=A')).toBe('/timer');
     expect(trainingQueryKey('room')).toBe('train.room');
     expect(trainingQueryKey('room', false)).toBe('room');
@@ -433,9 +434,10 @@ describe('training host hooks and links', () => {
     const href = container.querySelector('a')!.getAttribute('href')!;
     const url = new URL(href, 'https://example.test');
     expect(url.pathname).toBe('/zh/timer');
-    expect(url.searchParams.get('training')).toBe('/alg/3x3/pll/select');
-    expect(url.searchParams.get('train.scope')).toBe('g');
-    expect(url.searchParams.getAll('train.case')).toEqual(['A', 'B']);
+    expect(url.searchParams.get('content')).toBe('pll');
+    expect(url.searchParams.get('view')).toBe('select');
+    expect(url.searchParams.get('group')).toBe('g');
+    expect(url.searchParams.getAll('case')).toEqual(['A', 'B']);
     expect(url.hash).toBe('#cases');
   });
 
@@ -495,7 +497,7 @@ describe('training host hooks and links', () => {
     expect(navigation.router.back).toHaveBeenCalledOnce();
 
     await act(async () => root.render(createElement(Probe)));
-    expect(container.querySelector('a')!.getAttribute('href')).toBe('/zh/timer?training=%2Falg%2F3x3%2Fpll%2Frun&train.case=A');
+    expect(container.querySelector('a')!.getAttribute('href')).toBe('/zh/timer?content=pll&source=cases&case=A');
     expect(route).toBe(navigation.router);
     expect(pathname).toBe('/zh/timer');
     expect(params).toEqual({ lang: 'zh' });

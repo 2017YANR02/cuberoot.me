@@ -6,7 +6,7 @@ import { useMemo, type ReactNode } from 'react';
 import { Settings } from 'lucide-react';
 import { TimerPuzzlePicker } from '@cuberoot/timer-ui';
 import { TIMER_EVENT_PICKER_GROUPS, timerEventIdFromSelector, type EventId } from '@cuberoot/shared/timer';
-import { useSearchParams } from 'next/navigation';
+import { useTimerSearchParams as useSearchParams } from '@/lib/timer-practice-url-adapter';
 import { parseAsString, useQueryState, useQueryStates } from 'nuqs';
 import { CompactSelect } from '@/components/CompactSelect';
 import { useTrainerSplitScreen } from '@/hooks/useTrainerSplitScreen';
@@ -42,7 +42,8 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
   const event = trainingEvent && trainingEvent !== trainingPuzzleForEvent(selectedEvent)
     ? timerEventIdFromSelector(trainingEvent) ?? selectedEvent : selectedEvent;
   const contents = useMemo(() => timerPracticeContents(event), [event]);
-  const [type222, setType222] = use222Type();
+  const [savedType222, setType222] = use222Type();
+  const type222 = params.get('scramble222') ?? savedType222;
   const content = training === 'home' ? undefined : selectedTimerPracticeContent(contents, event, type222, target);
   const settings = useSettings();
   const storePuzzle = useTrainerStore(s => s.puzzle);
@@ -77,7 +78,7 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
     : training && actualMode === 'memo' ? 'memo' : 'train';
 
   const queryParsers = useMemo(() => {
-    const keys = new Set(['training', 'event', 'train.mode', 'train.draw', 'train.timing', 'train.split', 'train.room', 'train.multi']);
+    const keys = new Set(['training', 'event', 'source', 'scramble222', 'train.mode', 'train.draw', 'train.split', 'train.room', 'train.multi']);
     for (const key of new URLSearchParams(search).keys()) if (key.startsWith('train.')) keys.add(key);
     for (const group of TRAINING_DIRECTORY) for (const item of group.items) {
       for (const key of new URLSearchParams(item.path.split('?')[1]).keys()) keys.add(`train.${key}`);
@@ -92,6 +93,8 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
     );
     next.event = nextEvent;
     next.training = href?.split('?')[0] ?? null;
+    next.source = null;
+    next.scramble222 = null;
     if (href) for (const [key, value] of new URLSearchParams(href.split('?')[1])) next[`train.${key}`] = value;
     Object.assign(next, options);
     if (!href) {
@@ -120,7 +123,10 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
     if (!entry.timer) return;
     if (entry.timer.type222) setType222(entry.timer.type222);
     updateSettings({ ...(source ? { scrambleSource: source } : entry.id !== 'solve' ? { scrambleSource: 'random' as const } : {}) });
-    navigate(null, entry.timer.event, sameContent);
+    navigate(null, entry.timer.event, sameContent, {
+      source: source === 'manual' ? 'manual' : null,
+      scramble222: entry.timer.type222 ?? null,
+    });
   };
 
   const startTraining = (entry: TimerPracticeContent, nextMethod: PracticeMethod, sameContent: boolean, select = false) => {
@@ -130,10 +136,11 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
     // Coverage and random draws are trainer preferences, separate from timing.
     const drawMode = sameContent && (actualMode === 'train' || (actualMode === 'memo' && params.get('train.draw') === 'train')) ? 'train' : 'recap';
     const nextMode = nextMethod === 'memo' ? 'memo' : drawMode;
-    navigate(href, entry.timer?.event ?? event, sameContent, {
+    // The selected project (for example OH) belongs to the URL. The formula
+    // set already identifies its engine; a scramble subtype is not a project.
+    navigate(href, event, sameContent, {
       // These belong to the run surface, not its selector, guide or recognition task.
       'train.split': null, 'train.room': null, 'train.multi': null,
-      'train.timing': sameContent && nextMethod !== 'recognize' ? params.get('train.timing') : null,
       ...(nextMethod === 'recognize' ? {} : {
         'train.mode': nextMode,
         // Recall has its own queue; remember the action drill's draw preference.

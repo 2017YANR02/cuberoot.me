@@ -1,6 +1,7 @@
 import { ALG_CATALOG } from '@cuberoot/shared/alg';
-import { TIMER_333_SCRAMBLE_TYPES, timerEventIdFromSelector } from '@cuberoot/shared/timer';
+import { TIMER_333_SCRAMBLE_TYPES, isScramble222Type, timerEventIdFromSelector } from '@cuberoot/shared/timer';
 import { PUZZLE_EVENT, resolveAlgPuzzle } from '@/app/[lang]/alg/_trainer/events';
+import { canonicalZbllSubgroupSlug } from './alg_zbll_subgroups';
 
 type Search = string | { toString(): string };
 
@@ -81,15 +82,23 @@ export function decodeTimerPracticeSearch(search: Search): URLSearchParams {
     for (const [engine, publicKey] of Object.entries(ALIASES)) copyKey(params, publicKey, engine);
     if (params.get('train.drill') === 'stored') params.set('train.drill', '1');
   } else if (content && !hosted) {
+    const type222 = content === 'tcll-plus' ? 'tcllp' : content === 'tcll-minus' ? 'tclln' : content;
     const subtype = event === '333' ? randomContents.get(content)
       : event === '222' && (content === 'eg1' || content === 'eg2') ? content : null;
     if (subtype) params.set('event', subtype);
+    else if (event === '222' && isScramble222Type(type222)) params.set('scramble222', type222);
+    else if (content !== 'full') {
+      // Unsupported contents must not silently become ordinary 3x3 timing.
+      params.set('training', '/unsupported-practice');
+      return params;
+    }
   }
   for (const key of PUBLIC_KEYS) {
     // Manual/random source is also read by the Solo view, independently of its generator.
     if (key !== 'source' || hosted) params.delete(key);
   }
   if (!params.has('event')) params.set('event', '333');
+  if (!hosted && event === '222' && !content) params.set('scramble222', 'full');
   return params;
 }
 
@@ -119,7 +128,7 @@ export function encodeTimerPracticeSearch(search: Search): URLSearchParams {
     if (recognition) params.set('method', 'recognition');
     else if (mode === 'memo') params.set('method', 'recall');
     if (mode === 'train' || (mode === 'memo' && params.get('train.draw') === 'train')) params.set('draw', 'random');
-    const scope = params.get('train.scope');
+    const scope = params.get('train.scope')?.trim().toLowerCase();
     if (content === 'lsll') {
       const covered = scope && /^zbls(?:-r(\d+))?$/.exec(scope);
       const category = scope && /^([a-z]+)(?:-eo(\d+))?$/.exec(scope);
@@ -134,7 +143,7 @@ export function encodeTimerPracticeSearch(search: Search): URLSearchParams {
         params.set('group', category[1]);
         if (category[2]) params.set('flippedEdges', category[2]);
       }
-    } else if (scope) params.set('group', scope.toLowerCase());
+    } else if (scope) params.set('group', canonicalZbllSubgroupSlug(content, scope.trim().toLowerCase())!);
     for (const key of ['train.mode', 'train.draw', 'train.timing', 'train.scope']) params.delete(key);
     for (const [engine, publicKey] of Object.entries(ALIASES)) copyKey(params, engine, publicKey);
     if (params.get('selection') === '1') params.set('selection', 'stored');
@@ -147,8 +156,14 @@ export function encodeTimerPracticeSearch(search: Search): URLSearchParams {
     } else if (event === 'eg1' || event === 'eg2') {
       params.set('event', '222');
       params.set('content', event);
+    } else if (event === '222') {
+      const subtype = params.get('scramble222');
+      if (subtype && subtype !== 'full' && isScramble222Type(subtype)) {
+        params.set('content', subtype === 'tcllp' ? 'tcll-plus' : subtype === 'tclln' ? 'tcll-minus' : subtype);
+      }
     }
   }
+  params.delete('scramble222');
   if (params.get('event') === '333') params.delete('event');
   if (params.get('players') === '1') params.delete('players');
   if (params.get('source') === 'random') params.delete('source');

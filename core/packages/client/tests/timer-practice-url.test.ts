@@ -45,6 +45,10 @@ describe('public practice URL contract', () => {
     expect(decode('event=222&content=eg1').get('event')).toBe('eg1');
     expect(canonical('event=ll').toString()).toBe('content=1lll');
     expect(decode('content=1lll').get('event')).toBe('ll');
+    expect(decode('event=222&content=tcll-plus').get('scramble222')).toBe('tcllp');
+    expect(encode('event=222&scramble222=tcllp').toString()).toBe('event=222&content=tcll-plus');
+    expect(decode('event=222').get('scramble222')).toBe('full');
+    expect(canonical('training=/alg/3x3/zbll/run&train.scope=U1').get('group')).toBe('ur');
   });
 
   it('keeps room/share namespaces, assignment attribution and repeated case keys separate', () => {
@@ -67,6 +71,8 @@ describe('public practice URL contract', () => {
     'content=mix&source=cases&sets=pll,zbll',
     'content=zbll&source=cases&method=recall&draw=random',
     'event=222&content=eg1',
+    'event=222&content=tcll-plus',
+    'event=222&content=ls',
     'event=333oh',
     'players=2&event=333,222',
     'training=/alg/roux&train.mode=fb',
@@ -74,5 +80,9 @@ describe('public practice URL contract', () => {
     const first = canonical(search);
     expect(canonical(first).toString()).toBe(first.toString());
     expect(encode(decode(first)).toString()).toBe(first.toString());
+  });
+
+  it('keeps invalid random content out of the ordinary timer', () => {
+    expect(decode('content=does-not-exist').get('training')).toBe('/unsupported-practice');
   });
 });

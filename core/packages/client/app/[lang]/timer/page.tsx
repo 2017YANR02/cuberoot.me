@@ -9,7 +9,8 @@
  */
 
 import TimerBootstrap from './_components/TimerBootstrap';
+import { TimerPracticeUrlProvider } from '@/lib/timer-practice-url-adapter';
 
 export default function Page() {
-  return <TimerBootstrap />;
+  return <TimerPracticeUrlProvider><TimerBootstrap /></TimerPracticeUrlProvider>;
 }

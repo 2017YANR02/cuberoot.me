@@ -46,6 +46,7 @@ import {
 import { MIX_SLUG, MIX_MIN_SETS, parseMixSets, mixTitle, mixHref, loadMixCases, setLabel } from '@/lib/alg-mix';
 import { virtualAlgSet } from '@/lib/alg-virtual-sets';
 import { virtualTrainingSessionId } from '@/lib/training-set-metadata';
+import { decodeTimerPracticeSearch, encodeTimerPracticeSearch } from '@/lib/timer-practice-url';
 import { useTrainerMarks, markStatus, type CaseMarkStatus } from '@/lib/trainer-marks';
 import { ALG_SET_UNIVERSE } from '@/lib/alg_probability';
 import {
@@ -856,9 +857,11 @@ export default function TrainerRunClient() {
   const roomInviteUrl = useCallback((): string | null => {
     if (typeof window === 'undefined' || !room) return null;
     const u = new URL(window.location.href);
+    if (trainingHost) u.search = decodeTimerPracticeSearch(u.searchParams).toString();
     u.searchParams.set(trainingQueryKey('room', !!trainingHost), room.code);
     if (multiScramble && !timing) u.searchParams.set(trainingQueryKey('multi', !!trainingHost), '1');
     else u.searchParams.delete(trainingQueryKey('multi', !!trainingHost));
+    if (trainingHost) u.search = encodeTimerPracticeSearch(u.searchParams).toString();
     return u.toString();
   }, [room, multiScramble, timing, trainingHost]);
   const copyRoomLink = useCallback(() => {
@@ -1185,7 +1188,6 @@ export default function TrainerRunClient() {
   const selectUrl = new URL(originalSelectHref, 'https://training.invalid');
   if (trainingHost) {
     selectUrl.searchParams.set('mode', mode);
-    selectUrl.searchParams.set('timing', timing ? '1' : '0');
     if (mode === 'memo' && drawParam) selectUrl.searchParams.set('draw', drawParam);
   }
   const selectHref = `${selectUrl.pathname}${selectUrl.search}`;

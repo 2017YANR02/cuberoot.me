@@ -1,3 +1,5 @@
+import { canonicalTimerPracticeSearch, decodeTimerPracticeSearch, encodeTimerPracticeSearch } from './timer-practice-url';
+
 const TRAINING_PREFIX = 'train.';
 const ASSIGNMENT_KEYS = new Set(['trainingOrg', 'trainingAssignment']);
 
@@ -10,7 +12,7 @@ export function trainingQueryKey(key: string, hosted = true): string {
 
 /** Present the trainer with its own query string, never the timer's room or solve share. */
 export function trainingSearchParams(search: SearchInput, hosted = true): URLSearchParams {
-  const original = new URLSearchParams(search.toString());
+  const original = hosted ? decodeTimerPracticeSearch(search) : new URLSearchParams(search.toString());
   if (!hosted) return original;
   const scoped = new URLSearchParams();
   for (const [key, value] of original) {
@@ -26,7 +28,7 @@ export function trainingSearchParams(search: SearchInput, hosted = true): URLSea
 }
 
 function clearTrainingQuery(search: SearchInput): URLSearchParams {
-  const params = new URLSearchParams(search.toString());
+  const params = decodeTimerPracticeSearch(search);
   for (const key of [...params.keys()]) {
     if (key === 'training' || key.startsWith(TRAINING_PREFIX)) params.delete(key);
   }
@@ -34,7 +36,7 @@ function clearTrainingQuery(search: SearchInput): URLSearchParams {
 }
 
 function joinLocation(pathname: string, params: URLSearchParams, hash = ''): string {
-  const query = params.toString();
+  const query = encodeTimerPracticeSearch(params).toString();
   return `${pathname}${query ? `?${query}` : ''}${hash}`;
 }
 
@@ -62,6 +64,14 @@ export function timerTrainingHref(href: string, options: TimerTrainingHrefOption
   }
   for (const [key, value] of url.searchParams) params.append(trainingQueryKey(key), value);
   return joinLocation(options.timerPathname, params, url.hash);
+}
+
+/** Normalize direct timer links as well as converted legacy trainer links. */
+export function canonicalTimerHref(href: string): string {
+  if (!/^\/(?:(?:zh|en)\/)?timer(?:[?#]|$)/.test(href)) return href;
+  const url = new URL(href, 'https://training.invalid');
+  const query = canonicalTimerPracticeSearch(url.searchParams).toString();
+  return `${url.pathname}${query ? `?${query}` : ''}${url.hash}`;
 }
 
 /** Return to the timer with its pre-existing event, room, share and player settings intact. */
