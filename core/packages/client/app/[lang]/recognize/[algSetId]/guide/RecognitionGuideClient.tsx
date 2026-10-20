@@ -22,6 +22,7 @@ import {
   type GuideSetId,
 } from './guide-content';
 import '@/components/recognition-guide.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface CaseGroup {
   name: string;
@@ -188,7 +189,7 @@ export default function RecognitionGuideClient() {
         <p className="recognition-guide-simplified-note">{tr(spec.simplifiedNote)}</p>
 
         {!data && !error && (
-          <p className="recognition-guide-status">{tr({ zh: '正在加载情况…', en: 'Loading cases…' })}</p>
+          <p className="recognition-guide-status"><LoadingIndicator>{tr({ zh: '正在加载情况…', en: 'Loading cases…' })}</LoadingIndicator></p>
         )}
         {error && (
           <div className="recognition-guide-status">

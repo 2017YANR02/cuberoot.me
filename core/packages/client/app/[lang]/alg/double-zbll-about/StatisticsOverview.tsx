@@ -6,6 +6,7 @@ import { SCRAMBLE_KINDS } from '@/lib/trainer-scramble';
 import { useT } from '@/hooks/useT';
 import { histogramFor, singleModes, summarizeHistogram, type Mode, type StatisticsData } from './useStatisticsData';
 import statistics from './statistics.json';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 export default function StatisticsOverview({ pll, data, selected, onSelect }: {
   pll: boolean; data: StatisticsData; selected: Mode; onSelect: (mode: Mode) => void;
@@ -39,7 +40,7 @@ export default function StatisticsOverview({ pll, data, selected, onSelect }: {
     <p className="dz-about-muted">{t('下面八张图分别对应训练菜单的八种打乱方式。统一横轴为步数、纵轴为占比，方便比较形状；点击卡片查看该模式的明细与极端实例。', 'Each chart corresponds to one of the eight training modes. Shared axes show move count and percentage, making distribution shapes comparable. Select a card for details and extreme examples.')}</p>
     <p className="dz-about-muted">{t('双底每条打乱包含两个 case，按有序配对等权；其余每条一个 case，按单层 case 等权。这里比较打乱长度，不表示训练效率或还原难度。', 'Double ZBLL trains two cases per scramble and weights ordered pairs equally; other modes weight individual cases equally. These charts compare scramble lengths, not training efficiency or solving difficulty.')}</p>
     {data.error && <p role="alert">{t('单层题库加载失败，双底统计仍可查看。', 'Single-layer data failed to load; double ZBLL statistics remain available.')} <button onClick={data.retry}>{t('重试', 'Retry')}</button></p>}
-    {data.running && <p role="status">{data.cases.length ? `${t('csTimer 样本生成中', 'Generating csTimer samples')}: ${data.progress} / ${data.cases.length}` : t('正在加载单层题库…', 'Loading the single-layer corpus…')}</p>}
+    {data.running && <p role="status">{data.cases.length ? `${t('csTimer 样本生成中', 'Generating csTimer samples')}: ${data.progress} / ${data.cases.length}` : <LoadingIndicator>{t('正在加载单层题库…', 'Loading the single-layer corpus…')}</LoadingIndicator>}</p>}
     <div className="dz-chart-grid">
       {groups.map(group => <button type="button" className="dz-mode-chart" data-site-surface="panel" key={group.mode} aria-pressed={selected === group.mode} onClick={() => onSelect(group.mode)}>
         <span className="dz-mode-heading"><strong>{label(group.mode)}</strong><span>{group.mode === 'double-zbll' ? t('双层 · 完整题库', 'Two layers · full corpus') : group.mode === 'cstimer' ? t('单层 · 样本', 'Single layer · sample') : t('单层 · 题库', 'Single layer · corpus')}</span></span>

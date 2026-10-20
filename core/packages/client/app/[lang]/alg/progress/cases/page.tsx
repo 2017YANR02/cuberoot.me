@@ -41,6 +41,7 @@ import { tr } from '@/i18n/tr';
 import '../../alg.css';
 import '../progress.css';
 import './cases.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const FILTER_LABEL: Record<CaseFilter, () => string> = {
   learning: () => MARK_STATUS_LABEL.learning(),
@@ -257,7 +258,7 @@ export default function AlgProgressCasesPage() {
         </div>
 
         {loading ? (
-          <div className="alg-empty">{tr({ zh: '加载中…', en: 'Loading…' })}</div>
+          <div className="alg-empty"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator></div>
         ) : (
           <>
             {loadingAlgs && (

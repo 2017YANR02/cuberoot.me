@@ -23,6 +23,7 @@ import { resolveCaseSlug } from '@/lib/alg_case_link';
 import { tr } from '@/i18n/tr';
 import { useIsAdmin } from '@/lib/auth-store';
 import '../../../alg.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 function firstParam(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
@@ -67,7 +68,7 @@ export default function AlgSubOrCaseClient() {
     return <div className="alg-root"><div className="alg-empty">{tr({ zh: '加载失败', en: 'Failed to load.' })}</div></div>;
   }
   if (!route || !data) {
-    return <div className="alg-root"><div className="alg-empty">{tr({ zh: '加载中…', en: 'Loading…' })}</div></div>;
+    return <div className="alg-root"><div className="alg-empty"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator></div></div>;
   }
 
   // 子组优先(含迁移前数字制别名 canonical 化)。命中 → 列表视图。

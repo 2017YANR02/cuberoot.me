@@ -13,6 +13,7 @@ import { fetchRecentSubmissions, markSubmissionsSeen } from '@/lib/alg_api';
 import { setAlgSubmissionUnread } from '@/lib/alg-submission-unread';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
 import { UserIdLabel } from '@/components/UserIdLabel';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const CSS = `
 .alg-subnotify-backdrop{position:fixed;inset:0;z-index:2147483600;background:transparent;}
@@ -81,7 +82,7 @@ export default function AdminSubmissionsPanel({ lang, onClose }: Props) {
         </div>
         <div className="alg-subnotify-list">
           {items === null && (
-            <div className="alg-subnotify-empty">{t('加载中…', 'Loading…')}</div>
+            <div className="alg-subnotify-empty"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></div>
           )}
           {items !== null && items.length === 0 && (
             <div className="alg-subnotify-empty">

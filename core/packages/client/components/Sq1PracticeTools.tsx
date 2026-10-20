@@ -29,6 +29,7 @@ import {
   type Sq1TrainingParity,
 } from '@/lib/sq1-tools';
 import styles from './Sq1Tools.module.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 export function Sq1CountPositions() {
   const [shapeId, setShapeId] = useQueryState('shape', parseAsString.withDefault('square'));
@@ -434,7 +435,7 @@ export function Sq1ShapeTrainer() {
     });
   };
 
-  if (loading) return <p className={styles.hint}>{tr({ zh: '正在加载 CS/CSP 题库…', en: 'Loading the CS/CSP case library…' })}</p>;
+  if (loading) return <p className={styles.hint}><LoadingIndicator>{tr({ zh: '正在加载 CS/CSP 题库…', en: 'Loading the CS/CSP case library…' })}</LoadingIndicator></p>;
   if (error) return <div className={styles.error} role="alert">
     <p>{tr({ zh: 'CS/CSP 题库加载失败。', en: 'Could not load the CS/CSP case library.' })}</p>
     <button type="button" className={styles.button} onClick={() => setReloadKey((key) => key + 1)}>{tr({ zh: '重新加载', en: 'Reload' })}</button>

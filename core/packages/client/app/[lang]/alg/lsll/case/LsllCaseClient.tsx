@@ -28,6 +28,7 @@ import { algSpeed, getSTM } from '@/lib/mcc';
 import { apiUrl } from '@/lib/api-base';
 import '../../alg.css';
 import '../lsll.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 /**
  * `exhaustive=false` = 只拿到一条最优解(cubeopt/h48 的 wasm 吐不出全部最优解),
@@ -208,7 +209,7 @@ export default function LsllCaseClient() {
 
       <section className="lsll-section">
         <h2>{tr({ zh: 'HTM 最优解', en: 'Optimal (HTM)' })}</h2>
-        {opt.kind === 'loading' && <div className="lsll-note">{tr({ zh: '读取中…', en: 'Loading…' })}</div>}
+        {opt.kind === 'loading' && <div className="lsll-note"><LoadingIndicator>{tr({ zh: '读取中…', en: 'Loading…' })}</LoadingIndicator></div>}
         {opt.kind === 'error' && <div className="lsll-note">{tr({ zh: '读取失败,刷新重试', en: 'Failed — refresh to retry' })}</div>}
         {opt.kind === 'pending' && (
           <div className="lsll-note">

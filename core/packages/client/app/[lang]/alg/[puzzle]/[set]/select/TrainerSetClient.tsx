@@ -29,6 +29,7 @@ import { useAlgSrs } from '@/lib/alg-srs-store';
 import '@/app/[lang]/alg/_trainer/trainer.css';
 import '@/app/[lang]/alg/_trainer/memory.css';
 import { tr } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 /** 显示过滤:按标记只看一类(大 set 里找 case 用)。 */
 const MARK_FILTERS = ['all', 'none', 'learning', 'mastered'] as const;
@@ -177,7 +178,7 @@ export default function TrainerSetClient() {
         <div className="trainer-root">
           {mounted
             ? <MixSetPicker puzzle={puzzle} puzzleParam={puzzleParam} leaf="select" initial={mixSets} />
-            : <div className="trainer-landing-empty">{tr({ zh: '加载中…', en: 'Loading…' })}</div>}
+            : <div className="trainer-landing-empty"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator></div>}
         </div>
       );
     }
@@ -191,7 +192,7 @@ export default function TrainerSetClient() {
   }
 
   if (sessionLoadError) return <div className="trainer-root"><p role="alert">{tr({ zh: '训练加载失败，请重试。', en: 'Training could not load. Please retry.' })}</p><button type="button" onClick={() => setLoadRetry(value => value + 1)}>{tr({ zh: '重试', en: 'Retry' })}</button></div>;
-  if (storePuzzle !== puzzle || storeSet !== sessionId) return <div className="trainer-root" role="status">{tr({ zh: '加载中…', en: 'Loading…' })}</div>;
+  if (storePuzzle !== puzzle || storeSet !== sessionId) return <div className="trainer-root" role="status"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator></div>;
 
   const selectedSet = new Set(selected);
   const scopedSelectedCount = scopedCases.filter(c => selectedSet.has(caseKey(c))).length;
@@ -299,8 +300,8 @@ export default function TrainerSetClient() {
       </div>
 
       {cases.length === 0 ? (
-        <div className="trainer-landing-empty">{tr({ zh: '加载中…', en: 'Loading…'
-        })}</div>
+        <div className="trainer-landing-empty"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…'
+        })}</LoadingIndicator></div>
       ) : (
         <>
           {/* 本 set 学习进度 + 待复习 / 连续天数。与 run 页共用同一条(components 单一源) */}

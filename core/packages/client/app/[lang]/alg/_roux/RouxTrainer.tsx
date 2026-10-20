@@ -31,6 +31,7 @@ import { rt } from './i18n';
 
 import './roux.css';
 import { useT } from "@/hooks/useT";
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 // [mode key, long label, short label] — ported from AppView.tab_modes.
 // (OLLCP / tracking were commented out upstream; we keep them wired so the
@@ -203,7 +204,7 @@ function RouxTrainer() {
 
   if (!mounted) {
     // Lightweight skeleton (no localStorage / no reducer state reads).
-    return <div className="roux-root roux-skeleton" />;
+    return <div className="roux-root roux-skeleton"><LoadingIndicator /></div>;
   }
 
   return (
