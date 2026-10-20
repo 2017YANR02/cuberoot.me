@@ -23,7 +23,7 @@ export { QIYI_MAC_ADV, QIYI_CIC_LIST } from '@cuberoot/shared/timer/external/mac
  * `moyu32cube.js`, `qiyicube.js` / `qiyitimer.js` and `bluetooth.js`.
  */
 
-import { persistItem } from '@/lib/safe-storage';
+import { readAccountMac, writeAccountMac } from './mac-account';
 import { GAN_V4_MANUFACTURER_DATA_CICS } from '@cuberoot/shared/smart-cube/gan-v4';
 
 /**
@@ -253,37 +253,17 @@ export function parseMacFromName(name: string | null | undefined): string | null
 /*  Persisted manual MACs (keyed by device name)                       */
 /* ------------------------------------------------------------------ */
 
-const STORE_KEY = 'cuberoot.timer.ganMacMap';
-
-function readMap(): Record<string, string> {
-  if (typeof localStorage === 'undefined') return {};
-  try {
-    return JSON.parse(localStorage.getItem(STORE_KEY) || '{}') as Record<string, string>;
-  } catch {
-    return {};
-  }
-}
-
 export function savedMac(deviceName: string | null | undefined): string | null {
-  if (!deviceName) return null;
-  return normalizeMac(readMap()[deviceName]);
+  return deviceName ? normalizeMac(readAccountMac(deviceName)) : null;
 }
 
 export function saveMac(deviceName: string | null | undefined, mac: string): void {
   if (typeof localStorage === 'undefined' || !deviceName) return;
   const norm = normalizeMac(mac);
-  if (!norm) return;
-  const map = readMap();
-  if (map[deviceName] === norm) return;
-  map[deviceName] = norm;
-  persistItem(STORE_KEY, JSON.stringify(map));
+  if (norm) writeAccountMac(deviceName, norm);
 }
 
-/** Forget a stored MAC (used after a wrong-MAC re-prompt). */
+/** Forget an invalid address locally and on the signed-in account. */
 export function clearMac(deviceName: string | null | undefined): void {
-  if (typeof localStorage === 'undefined' || !deviceName) return;
-  const map = readMap();
-  if (!(deviceName in map)) return;
-  delete map[deviceName];
-  persistItem(STORE_KEY, JSON.stringify(map));
+  if (typeof localStorage !== 'undefined' && deviceName) writeAccountMac(deviceName, null);
 }

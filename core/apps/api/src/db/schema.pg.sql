@@ -9457,3 +9457,8 @@ CREATE TRIGGER workspace_prepare_account_delete BEFORE DELETE ON app_users
 
 -- Automatic administrator employee access, independent of explicit employee grants.
 ALTER TABLE workspace_members ADD COLUMN admin_access BOOLEAN NOT NULL DEFAULT FALSE;
+
+CREATE TABLE IF NOT EXISTS smart_cube_macs (
+  user_id BIGINT PRIMARY KEY REFERENCES app_users(id) ON DELETE CASCADE,
+  items JSONB NOT NULL DEFAULT '{}'::jsonb
+);

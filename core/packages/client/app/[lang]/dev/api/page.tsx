@@ -69,13 +69,15 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   account_auth account_face admin_assistant admin_dashboard admin_disk alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps app_boot_diagnostics article auth battle_rooms calendar cn_comp_names colpi
 //   chat comp_follows creator_gallery cube cubeopt_solve cubing_live documents downloads drive feedback forum friends geo health historical_ranks pb private_vault
 //   membership membership_benefits membership_apple membership_google membership_subscriptions music nav_sites pets nemesizer notifications ops remote_access dev_preview page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
-//   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
+//   smart_cube_macs scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wca_teams wca_training_institutions wechat_jssdk wechat_pc_opensdk wiki
 //   platform_competitions platform_competition_attempts platform_competition_evidence platform_competition_settlements platform_competition_device_reports platform_organizer_applications platform_refunds
 //   enterprise_verification contests workspace
 //   mcp mcp_oauth onboarding timer_replay_shares site_assistant cube_agents
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
+  { d: 'account', m: 'GET', p: '/v1/smart-cube/macs', g: 'login', c: 'no-store', zh: '读取我的智能魔方地址', en: 'Read my smart cube addresses' },
+  { d: 'account', m: 'PATCH', p: '/v1/smart-cube/macs', g: 'login', c: 'no-store', zh: '按设备保存或删除智能魔方地址', en: 'Save or remove smart cube addresses per device' },
   { d: 'account', m: 'GET', p: '/v1/workspace/:action', g: 'login', c: 'no-store', zh: 'CubeRoot 员工身份、项目、工作记录与讨论；按员工及项目权限过滤', en: 'CubeRoot employee session, projects, reports and discussion, filtered by grants' },
   { d: 'account', m: 'POST', p: '/v1/workspace/:action', g: 'login', c: 'no-store', zh: '员工记录与评论；member/project 仅管理员，服务端逐次检查权限', en: 'Employee reports and comments; member/project require administrator access on every write' },
   { d: 'comp', m: 'GET', p: '/v1/contests', g: 'public', c: 'short', zh: 'Contests 公开项目、比赛、纪录、排名及选手；view 选择资源，支持 event/region/group/category/type/history/id/q/offset，成绩格式由 RecordRanks 提供', en: 'Public Contests catalog, competitions, records, rankings and persons; select view, filter by event/region/group/category/type/history/id/q/offset; RecordRanks formats results' },
