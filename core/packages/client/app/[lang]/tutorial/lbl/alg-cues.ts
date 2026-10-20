@@ -59,7 +59,8 @@ export function getLblAlgGroups(step: string, alg: string): LblAlgMove[][] {
   const groups: LblAlgMove[][] = [];
   for (let start = 0; start < moves.length;) {
     const sequence = sequences.find(item => item.moves.every((move, offset) => moves[start + offset] === move));
-    const length = sequence?.moves.length ?? 1;
+    const length = step === 'cross' && start >= 3
+      ? Math.min(3, moves.length - start) : sequence?.moves.length ?? 1;
     const preparation = /^U(?:2|')?$/.test(moves[start])
       && ((['corners', 'yellow-face'].includes(step) && start === 0) || step === 'yellow-cross'
         || (step === 'middle' && start === 0 && /^d(?:2|')?$/.test(moves[1])));

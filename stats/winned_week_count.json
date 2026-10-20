@@ -65,7 +65,7 @@
         ],
         [
           "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
-          16
+          17
         ],
         [
           "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
@@ -205,7 +205,7 @@
         ],
         [
           "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
-          67
+          68
         ],
         [
           "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
@@ -612,11 +612,11 @@
           12
         ],
         [
-          "[Marcell Endrey](https://www.worldcubeassociation.org/persons/2007ENDR01)",
-          11
+          "[Charles Daloz-Baltenberger](https://www.worldcubeassociation.org/persons/2018DALO01)",
+          12
         ],
         [
-          "[Sreeram Venkatarao](https://www.worldcubeassociation.org/persons/2008VENK01)",
+          "[Marcell Endrey](https://www.worldcubeassociation.org/persons/2007ENDR01)",
           11
         ]
       ]
@@ -753,7 +753,7 @@
         ],
         [
           "[Zhen Chen (陈震)](https://www.worldcubeassociation.org/persons/2023CHEN30)",
-          14
+          15
         ],
         [
           "[Arifumi Fushimi (伏見有史)](https://www.worldcubeassociation.org/persons/2009FUSH01)",
@@ -1072,15 +1072,15 @@
           20
         ],
         [
+          "[Urho Kinnunen](https://www.worldcubeassociation.org/persons/2018KINN05)",
+          13
+        ],
+        [
           "[Michał Krasowski](https://www.worldcubeassociation.org/persons/2013KRAS02)",
           12
         ],
         [
           "[Simon Kellum](https://www.worldcubeassociation.org/persons/2016KELL12)",
-          12
-        ],
-        [
-          "[Urho Kinnunen](https://www.worldcubeassociation.org/persons/2018KINN05)",
           12
         ],
         [
@@ -1233,7 +1233,7 @@
         ],
         [
           "[Daniel Wallin](https://www.worldcubeassociation.org/persons/2013WALL03)",
-          39
+          40
         ],
         [
           "[Kaijun Lin (林恺俊)](https://www.worldcubeassociation.org/persons/2013LINK01)",
@@ -2955,7 +2955,7 @@
     [
       "2013WALL03",
       "444bf",
-      39
+      40
     ],
     [
       "2013WALL03",
@@ -3170,7 +3170,7 @@
     [
       "2016KOLA02",
       "444",
-      67
+      68
     ],
     [
       "2016KOLA02",
@@ -3395,7 +3395,7 @@
     [
       "2018KINN05",
       "skewb",
-      12
+      13
     ],
     [
       "2018KHAN26",
@@ -3415,7 +3415,7 @@
     [
       "2018DALO01",
       "333bf",
-      11
+      12
     ],
     [
       "2018MURR03",
@@ -3570,12 +3570,12 @@
     [
       "2023CHEN30",
       "333oh",
-      14
+      15
     ],
     [
       "2023GENG02",
       "333",
-      16
+      17
     ],
     [
       "2023GUOK01",

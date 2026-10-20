@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { Alg } from 'cubing/alg';
 import { Axis } from '@cuberoot/visualcube';
 import { ArrowRight } from 'lucide-react';
@@ -42,6 +42,8 @@ const thumbCueColors = [18, 38].map((side, index) => {
 const FOUR_GRAY_HIDDEN_STICKERS = ['U8'] as const;
 const ANGLED_LAST_LAYER_VIEW = { x: 25 * Math.PI / 180, y: -25 * Math.PI / 180, z: 0 };
 const FOUR_GRAY_VIEW = { x: 25 * Math.PI / 180, y: 30 * Math.PI / 180, z: 0 };
+const CROSS_INITIAL_VIEW = { x: Math.PI / 18, y: -Math.PI / 8, z: 0 };
+const CROSS_FINISH_VIEW = { x: -Math.PI / 4, y: -Math.PI / 6, z: 0 };
 
 // A cropped face row illustrates the definitions using the shared cube renderer.
 const definitionRows = [false, true].map(wall => {
@@ -121,7 +123,7 @@ export default function LblTutorial() {
       onChange={value => { void setStepId(value); }} />
   </div>;
 
-  return <main className={`lbl-page${step.id === 'structure' ? ' lbl-basics-page' : ' lbl-lesson-page'}`}>
+  return <main className={`lbl-page lbl-tutorial-page${step.id === 'structure' ? ' lbl-basics-page' : ' lbl-lesson-page'}`}>
     <header className="lbl-header">
       <BackHome />
       <Link href="/tutorial?puzzle=3x3" prefetch={false}><T zh="教程" en="Tutorials" /></Link>
@@ -173,7 +175,7 @@ export default function LblTutorial() {
         </div>
         {showComparison && <div className="lbl-comparison">
           <figure><VisualCube local {...diagramMask} stickerColors={comparisonBefore} view="plan" scheme="yogwrb" size={96} setup={setup}
-            outlineMaskedTop={step.id === 'yellow-face'}
+            outlineMaskedTop={step.id === 'yellow-face' && exampleIndex >= 2}
             alt={tr({ zh: '转动前', en: 'Before' })} /><figcaption><T zh="转动前" en="Before" /></figcaption></figure>
           <ArrowRight size={20} aria-hidden="true" />
           <figure><VisualCube local {...diagramMask} stickerColors={comparisonAfter} view="plan" scheme="yogwrb" size={96} setup={new Alg(`${setup} ${demo.alg}`).expand().toString()} alt={tr({ zh: '转动后', en: 'After' })} /><figcaption>{step.id === 'yellow-face' && exampleIndex >= 2 ? <T zh="转动后：3灰，再判断" en="After: 3 gray; reassess" /> : step.id === 'edge-position' && exampleIndex === 2 ? <T zh="转动后：有墙，再判断" en="After: a wall; reassess" /> : <T zh="转动后" en="After" />}</figcaption></figure>
@@ -201,7 +203,7 @@ export default function LblTutorial() {
 const DAISY_TARGET_STICKERS = [['D5'], ['D5'], ['D3'], ['D5'], ['D5'], ['D5']] as const;
 // These cases end with choosing the next case, rather than another cube move.
 const NEXT_CASE_STEPS: Record<string, readonly number[]> = {
-  corners: [1], middle: [1], 'yellow-cross': [2], 'yellow-face': [2, 3],
+  corners: [1], middle: [2], 'yellow-cross': [2], 'yellow-face': [2, 3],
   'corner-position': [1], 'edge-position': [2],
 };
 
@@ -209,6 +211,42 @@ function LessonDemo({ step, demo, fourGray, instruction }: { step: string; demo:
   const [playbackStep, setPlaybackStep] = useState(0);
   const demoPlayer = useRef<AlgPlayerHandle>(null);
   const groups = getLblAlgGroups(step, demo.alg);
+  const moveCount = groups.reduce((count, group) => count + group.length, 0);
+  const showingWhiteFace = useRef(false);
+  const viewInterrupted = useRef(false);
+  useEffect(() => {
+    if (step !== 'cross') return;
+    if (playbackStep !== moveCount) {
+      if (showingWhiteFace.current) demoPlayer.current?.resetView?.();
+      showingWhiteFace.current = false;
+      return;
+    }
+    viewInterrupted.current = false;
+    let frame = 0;
+    let started: number | undefined;
+    let previous = 0;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reveal = (now: number) => {
+      if (viewInterrupted.current) return;
+      if (demoPlayer.current?.isUserMovePending?.()) {
+        frame = requestAnimationFrame(reveal);
+        return;
+      }
+      if (started === undefined) {
+        started = now;
+        demoPlayer.current?.resetView?.();
+        showingWhiteFace.current = true;
+      }
+      const progress = reducedMotion ? 1 : Math.min((now - started) / 800, 1);
+      const eased = progress * progress * (3 - 2 * progress);
+      const delta = eased - previous;
+      demoPlayer.current?.orbitView?.((CROSS_FINISH_VIEW.y - CROSS_INITIAL_VIEW.y) * delta, (CROSS_FINISH_VIEW.x - CROSS_INITIAL_VIEW.x) * delta);
+      previous = eased;
+      if (progress < 1) frame = requestAnimationFrame(reveal);
+    };
+    frame = requestAnimationFrame(reveal);
+    return () => cancelAnimationFrame(frame);
+  }, [step, playbackStep, moveCount]);
   const phrases = instruction.split(' → ');
   const groupedInstruction = step === 'middle' && phrases.length === groups.length && phrases.length > 1;
   const activeMove = Math.max(0, playbackStep - 1);
@@ -247,12 +285,12 @@ function LessonDemo({ step, demo, fourGray, instruction }: { step: string; demo:
   }
   return <>
     <div className="lbl-demo lbl-demo-split" data-step={step}>
-    <div className="lbl-cube">
+    <div className="lbl-cube" onPointerDownCapture={() => { viewInterrupted.current = true; }}>
       <AlgPlayer ref={demoPlayer} puzzle="3x3" set={LESSON_STICKERING[step] ?? ''} engine="sim" orientation="z2"
         additionalStickering={['yellow-cross', 'yellow-face', 'corner-position', 'edge-position'].includes(step) ? 'F2L' : undefined}
         hiddenStickers={fourGray ? FOUR_GRAY_HIDDEN_STICKERS : undefined}
         outlinedStickers={step === 'daisy' ? DAISY_TARGET_STICKERS[exampleIndex] : undefined}
-        sceneRot={fourGray ? FOUR_GRAY_VIEW : demo.sceneRot ?? (['yellow-cross', 'yellow-face', 'corner-position', 'edge-position'].includes(step) ? ANGLED_LAST_LAYER_VIEW : LBL_INITIAL_VIEW)} onStepChange={setPlaybackStep}
+        sceneRot={step === 'cross' ? CROSS_INITIAL_VIEW : fourGray ? FOUR_GRAY_VIEW : demo.sceneRot ?? (['yellow-cross', 'yellow-face', 'corner-position', 'edge-position'].includes(step) ? ANGLED_LAST_LAYER_VIEW : LBL_INITIAL_VIEW)} onStepChange={setPlaybackStep}
         highlightDaisyAlignment={step === 'cross'}
         stepMarkers={stepMarkers}
         autoPlay
@@ -260,7 +298,7 @@ function LessonDemo({ step, demo, fourGray, instruction }: { step: string; demo:
     </div>
     <ol className="lbl-demo-stages" aria-label={tr({ zh: '操作步骤', en: 'Teaching steps' })}>
       {rows.map((row, i) => <li className="lbl-demo-stage" key={i}>
-        <span className="lbl-demo-stage-number" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+        <span className="lbl-demo-stage-number" aria-hidden="true">{i + 1}</span>
         <div className="lbl-demo-stage-body">
           <p className="lbl-instruction-phase" aria-current={row.moves.includes(activeMove + 1) ? 'step' : undefined}>{row.text}</p>
           {row.moves.length > 0 && <AlgSteps step={step} alg={demo.alg} activeMove={activeMove} moveIndices={row.moves.map(move => move - 1)} onMoveClick={index => demoPlayer.current?.playMove?.(index)} />}

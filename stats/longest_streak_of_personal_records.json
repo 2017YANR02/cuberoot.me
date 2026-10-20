@@ -60,16 +60,16 @@
       "[Swallow Spring 2023](https://www.worldcubeassociation.org/competitions/SwallowSpring2023)"
     ],
     [
+      75,
+      "[Leo Alanen](https://www.worldcubeassociation.org/persons/2022ALAN02)",
+      "[Pulmapelipäivät 2022](https://www.worldcubeassociation.org/competitions/Pulmapelipaivat2022)",
+      "[Finnish Championship 2026](https://www.worldcubeassociation.org/competitions/FinnishChampionship2026)"
+    ],
+    [
       74,
       "[Will Callan](https://www.worldcubeassociation.org/persons/2012CALL01)",
       "[River Hill Summer 2012](https://www.worldcubeassociation.org/competitions/RiverHillSummer2012)",
       "[No Place for DNF Spring 2019](https://www.worldcubeassociation.org/competitions/NoPlaceForDNFSpring2019)"
-    ],
-    [
-      74,
-      "[Leo Alanen](https://www.worldcubeassociation.org/persons/2022ALAN02)",
-      "[Pulmapelipäivät 2022](https://www.worldcubeassociation.org/competitions/Pulmapelipaivat2022)",
-      "[KirkkoNxNummi 2026](https://www.worldcubeassociation.org/competitions/KirkkoNxNummi2026)"
     ],
     [
       73,
@@ -120,6 +120,12 @@
       "[VIC State Championship 2025](https://www.worldcubeassociation.org/competitions/VICStateChampionship2025)"
     ],
     [
+      67,
+      "[Annye Bennett](https://www.worldcubeassociation.org/persons/2022BENN11)",
+      "[Southeast Championship 2022](https://www.worldcubeassociation.org/competitions/SoutheastChampionship2022)",
+      "[Middle Georgia Fall Frenzy 2026](https://www.worldcubeassociation.org/competitions/MiddleGeorgiaFallFrenzy2026)"
+    ],
+    [
       66,
       "[Wilhelm Kilders](https://www.worldcubeassociation.org/persons/2010KILD02)",
       "[German Nationals 2010](https://www.worldcubeassociation.org/competitions/Germany2010)",
@@ -130,12 +136,6 @@
       "[Kyle Meade](https://www.worldcubeassociation.org/persons/2019MEAD03)",
       "[Bala Big and Blind 2019](https://www.worldcubeassociation.org/competitions/BalaBigandBlind2019)",
       "[Mid-Atlantic Championship 2026](https://www.worldcubeassociation.org/competitions/MidAtlanticChampionship2026)"
-    ],
-    [
-      66,
-      "[Annye Bennett](https://www.worldcubeassociation.org/persons/2022BENN11)",
-      "[Southeast Championship 2022](https://www.worldcubeassociation.org/competitions/SoutheastChampionship2022)",
-      "[GA Cuber Jackets Fall 2026](https://www.worldcubeassociation.org/competitions/GACuberJacketsFall2026)"
     ],
     [
       65,
@@ -313,7 +313,7 @@
     ],
     [
       56,
-      "[Maciej Spirydowicz](https://www.worldcubeassociation.org/persons/2020SPIR01)",
+      "[Moli Spirydowicz](https://www.worldcubeassociation.org/persons/2020SPIR01)",
       "[GLS Gdynia 2020](https://www.worldcubeassociation.org/competitions/GLSGdynia2020)",
       "[Toruń Cubing Summer 2024](https://www.worldcubeassociation.org/competitions/TorunCubingSummer2024)"
     ],
@@ -463,6 +463,12 @@
     ],
     [
       52,
+      "[Jules Créteur](https://www.worldcubeassociation.org/persons/2017CRET01)",
+      "[France 2017](https://www.worldcubeassociation.org/competitions/France2017)",
+      "[RC Nogent-sur-Seine Open 2026](https://www.worldcubeassociation.org/competitions/RCNogentsurSeineOpen2026)"
+    ],
+    [
+      52,
       "[Pep Edén](https://www.worldcubeassociation.org/persons/2021EDEN01)",
       "[Swedish Championship 2021](https://www.worldcubeassociation.org/competitions/SwedishChampionship2021)",
       "[Götalandsmästerskapet 2024](https://www.worldcubeassociation.org/competitions/Gotalandsmasterskapet2024)"
@@ -499,12 +505,6 @@
     ],
     [
       51,
-      "[Jules Créteur](https://www.worldcubeassociation.org/persons/2017CRET01)",
-      "[France 2017](https://www.worldcubeassociation.org/competitions/France2017)",
-      "[Zottegem Open 2026](https://www.worldcubeassociation.org/competitions/ZottegemOpen2026)"
-    ],
-    [
-      51,
       "[Mengfei Shen (沈梦非)](https://www.worldcubeassociation.org/persons/2018SHEN07)",
       "[Manchester Open 2018](https://www.worldcubeassociation.org/competitions/ManchesterOpen2018)",
       "[Stevenage February 2024](https://www.worldcubeassociation.org/competitions/StevenageFebruary2024)"
@@ -532,6 +532,12 @@
       "[Ian Yazid Zavala](https://www.worldcubeassociation.org/persons/2023LOPE06)",
       "[Agoura Cubing Again 2023](https://www.worldcubeassociation.org/competitions/AgouraCubingAgain2023)",
       "[FMC Tijuas I 2026](https://www.worldcubeassociation.org/competitions/FMCTijuasI2026)"
+    ],
+    [
+      51,
+      "[Ville Vasilis](https://www.worldcubeassociation.org/persons/2024VASI03)",
+      "[West Coast 2: Mölnlycke 2024](https://www.worldcubeassociation.org/competitions/WestCoast2Molnlycke2024)",
+      "[Nuntorp Open 2026](https://www.worldcubeassociation.org/competitions/NuntorpOpen2026)"
     ],
     [
       50,
@@ -601,9 +607,9 @@
     ],
     [
       50,
-      "[Ville Vasilis](https://www.worldcubeassociation.org/persons/2024VASI03)",
-      "[West Coast 2: Mölnlycke 2024](https://www.worldcubeassociation.org/competitions/WestCoast2Molnlycke2024)",
-      "[Kärnan Open 2026](https://www.worldcubeassociation.org/competitions/KarnanOpen2026)"
+      "[Christian Crea](https://www.worldcubeassociation.org/persons/2023CREA02)",
+      "[Cubing Italy for Charity 2023](https://www.worldcubeassociation.org/competitions/CubingItalyforCharity2023)",
+      "[Swiss Nationals 2026](https://www.worldcubeassociation.org/competitions/SwissNationals2026)"
     ],
     [
       49,
@@ -622,12 +628,6 @@
       "[Tommy Kiprillis](https://www.worldcubeassociation.org/persons/2014KIPR01)",
       "[Shepparton Autumn 2014](https://www.worldcubeassociation.org/competitions/SheppartonAutumn2014)",
       "[Melbourne Summer 2022](https://www.worldcubeassociation.org/competitions/MelbourneSummer2022)"
-    ],
-    [
-      49,
-      "[Lucas Déglise](https://www.worldcubeassociation.org/persons/2015DEGL01)",
-      "[Chambéry Cube Open 2015](https://www.worldcubeassociation.org/competitions/ChamberyCube2015)",
-      "[Sorgues 2022](https://www.worldcubeassociation.org/competitions/SorguesOpen2022)"
     ]
   ]
 }

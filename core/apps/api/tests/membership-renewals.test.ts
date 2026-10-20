@@ -49,7 +49,7 @@ describe.skipIf(!databaseUrl)('renewal lifecycle in isolated PostgreSQL, synthet
     await db.unsafe(`CREATE FUNCTION trg_set_updated_at() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at=NOW(); RETURN NEW; END $$;
       CREATE TABLE app_users(id int PRIMARY KEY, wca_id text, display_name text, merged_into_user_id int);
       INSERT INTO app_users VALUES (1, '2017TEST01', 'Fixture', NULL);`);
-    for (const file of ['0046_membership.sql', '0181_enterprise_membership_plans.sql', '0222_membership_contracts.sql', '0276_membership_renewal_pipeline.sql', '0280_enterprise_membership_renewal.sql']) {
+    for (const file of ['0046_membership.sql', '0181_enterprise_membership_plans.sql', '0222_membership_contracts.sql', '0276_membership_renewal_pipeline.sql', '0283_enterprise_membership_renewal.sql']) {
       await db.unsafe(readFileSync(new URL(`../migrations/${file}`, import.meta.url), 'utf8'));
     }
     await db.unsafe(`INSERT INTO membership_plans(slug,name_zh,name_en,period,price_cents,active) VALUES

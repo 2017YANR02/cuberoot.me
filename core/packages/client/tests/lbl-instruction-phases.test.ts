@@ -10,7 +10,7 @@ for (const step of LBL_STEPS.filter(step => step.id !== 'structure')) {
       it(`${step.id}/${index}/${lang}: covers every move once and preserves the complete instruction`, () => {
         const instruction = (step.id === 'cross' ? step.paragraphs[0] : example.hint)[lang];
         const count = new Alg(example.alg).expand().toString().split(/\s+/).length;
-        if (step.id === 'middle' && index !== 1) {
+        if (step.id === 'middle' && index !== 2) {
           expect(instruction.split(' → ').length).toBe(getLblAlgGroups(step.id, example.alg).length);
           return;
         }
