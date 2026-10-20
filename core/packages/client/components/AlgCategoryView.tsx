@@ -19,7 +19,7 @@ import { parseAsBoolean, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import { useTrainingQueryState as useQueryState, useTrainingQueryStates as useQueryStates } from '@/lib/training-host';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Copy, Check, Shuffle, Plus, ShieldCheck, AlertTriangle, HelpCircle, Pin } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Shuffle, Plus, ShieldCheck, AlertTriangle, HelpCircle } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, rectSortingStrategy, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import {
@@ -65,6 +65,7 @@ import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { buildOllNameByGroup, displayAlgCaseName, primaryCaseName, displayZbllToken } from '@/lib/alg_case_display';
 import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { sortByCp } from '@/lib/alg_cp_order';
+import { groupAlgCases } from '@/lib/alg-case-groups';
 import { compareAlgGroupLabel, sortAlgItemsBySignedLabel } from '@/lib/alg_group_order';
 import { CUBE_ORIENTATIONS, visualCubeSchemeForOrientation } from '@/lib/cube-orientation';
 import { algTagLabel, ALG_TAGS, OH_TAG_LABEL } from '@/lib/alg_tags';
@@ -204,28 +205,23 @@ function SetupLine({ puzzle, setup, notationStyle, sq1NotationMode = 'compact' }
   notationStyle: AlgNotationStyle;
   sq1NotationMode?: Sq1NotationMode;
 }) {
-  const { copied, copy } = useCopy();
+  const { copy } = useCopy();
   const sq1Text = puzzle === 'sq1' ? sq1NotationText(setup, sq1NotationMode) : null;
   const text = sq1Text
     ? tr(sq1Text)
     : formatAlgNotation(formatScrambleForEvent(puzzle, setup), notationStyle);
   return (
-    <div className="alg-case-standard">
+    <button type="button" className="alg-case-standard alg-formula-copy"
+      onClick={event => { event.stopPropagation(); copy(text); }}
+      title={tr({ zh: '点击复制打乱', en: 'Click to copy setup' })}
+    >
       <Shuffle size={13} className="alg-case-icon" aria-label={tr({ zh: '打乱', en: 'Setup' })} />
       <code>{text}</code>
-      <button
-        type="button"
-        className="alg-alg-copy-btn alg-case-setup-copy"
-        onClick={() => copy(text)}
-        title={tr({ zh: '复制打乱', en: 'Copy setup' })}
-      >
-        {copied ? <Check size={12} /> : <Copy size={12} />}
-      </button>
-    </div>
+    </button>
   );
 }
 
-function AlgRow({ entry, puzzle, set, invalid, notationStyle, viewAngle, ohHand, sq1NotationMode = 'compact', sourceKarnaukh, preferred = false, onPreferredToggle }: {
+function AlgRow({ entry, puzzle, set, invalid, notationStyle, viewAngle, ohHand, sq1NotationMode = 'compact', sourceKarnaukh }: {
   entry: AlgEntry;
   puzzle: AlgPuzzle; invalid?: string;
   set: string;
@@ -235,13 +231,11 @@ function AlgRow({ entry, puzzle, set, invalid, notationStyle, viewAngle, ohHand,
   sq1NotationMode?: Sq1NotationMode;
   /** PBL 的 note 是原表卡脑壳记号；其他套系的 note 仍是普通说明。 */
   sourceKarnaukh?: boolean;
-  preferred?: boolean;
-  onPreferredToggle?: () => void;
 }) {
   const { alg, algHtml } = entry;
   const issue = caseAlgIssue(entry);
   invalid ||= issue;
-  const { copied, copy } = useCopy();
+  const { copy } = useCopy();
   // 列表只负责显示 / 复制,剥掉收尾 AUF；完整公式的动画统一放到 case 详情页。
   const angledAlg = displayCaseAlg(puzzle, set, caseViewAlg(alg, viewAngle));
   const standardAlgShown = formatScrambleForEvent(puzzle, angledAlg);
@@ -258,7 +252,9 @@ function AlgRow({ entry, puzzle, set, invalid, notationStyle, viewAngle, ohHand,
     >
         {/* 就是这条过不了校验 —— 卡片红框只说「这张有问题」,不说是哪条 */}
         {invalid && <AlertTriangle size={13} className="alg-alg-invalid-icon" aria-label={invalid} />}
-        <span className={`alg-alg-text${isKarnaukh ? ' is-karnaukh' : ''}`}>
+        <button type="button" onClick={event => { event.stopPropagation(); copy(shownText); }}
+          disabled={!!issue} title={tr({ zh: '点击复制公式', en: 'Click to copy algorithm' })}
+          className={`alg-formula-copy alg-alg-text${isKarnaukh ? ' is-karnaukh' : ''}`}>
           {sq1Notation
             ? shownText
             : algHtml && viewAngle === 'default' && puzzle !== 'sq1' && notationStyle === 'standard'
@@ -266,33 +262,13 @@ function AlgRow({ entry, puzzle, set, invalid, notationStyle, viewAngle, ohHand,
             : algShown}
           {!sourceKarnaukh && entry.note && <span className="alg-alg-note">({tr(entry.note)})</span>}
           {issue && <span className="alg-alg-note">{tr({ zh: '（原公式与本图不匹配）', en: '(Source algorithm does not match this case)' })}</span>}
-        </span>
+        </button>
         {entry.tags?.map(t => {
           const label = t === 'oh' && ohHand === 'right' ? OH_TAG_LABEL.right() : algTagLabel(t);
           return <span key={t} className={`alg-tag alg-tag-${t}`}><AlgTagLabel tag={t} label={label} hand={ohHand} /></span>;
         })}
-        {onPreferredToggle && (
-          <button
-            type="button"
-            className="alg-alg-copy-btn"
-            onClick={(e) => { e.stopPropagation(); onPreferredToggle(); }}
-            title={preferred
-              ? tr({ zh: '取消置顶', en: 'Unpin algorithm' })
-              : tr({ zh: '置顶公式', en: 'Pin algorithm' })}
-            aria-pressed={preferred}
-          >
-            <Pin size={14} fill={preferred ? 'currentColor' : 'none'} className="alg-alg-copy-icon" aria-hidden="true" />
-          </button>
-        )}
-        <button
-          type="button"
-          className="alg-alg-copy-btn"
-          onClick={(e) => { e.stopPropagation(); copy(shownText); }}
-          disabled={!!issue}
-          title="copy"
-        >
-          {copied ? <Check size={14} /> : <Copy size={14} className="alg-alg-copy-icon" />}
-        </button>
+
+
     </div>
   );
 }
@@ -302,7 +278,7 @@ function AlgRow({ entry, puzzle, set, invalid, notationStyle, viewAngle, ohHand,
  *
  * 两级 umbrella 且顶层组不多(ZBLL 7 组 / OLLCP…:子组形如 `U/UR`)——**就地展开**:每组一行,
  * 首格是「组封面卡」(点它展开 / 收起该组),其后是二级子组卡(`UR`/`UL`…,直接链到 case 列表)。
- * 封面卡与子组卡**同一个网格、等宽等高、魔方图一样大**,省掉「先进 /zbll/u 再挑」那一跳,默认全展开。
+ * 封面卡与子组卡**同一个网格、等宽等高、魔方图一样大**；小公式集默认展开，大公式集按需展开。
  *
  * 顶层组很多(1LLL 40+)——就地展开会太长,退回顶层卡片网格(点进 `/set/<组>` 的二级选择页)。
  * 单级 umbrella(ZBLS / VLS:顶层组直接装 case)——没有二级可展,同样是卡片网格(直接链到 case)。
@@ -323,35 +299,28 @@ function SubgroupIndex({
   const inlineCases = puzzle === '2x2' || (puzzle === '3x3' && set === 'coll');
   const caseSlugs = useMemo(() => buildCaseSlugMap(cases, set), [set, cases]);
   const tops = useMemo(() => {
-    const map = new Map<string, { sample: AlgCase; total: number; cases: AlgCase[]; subs: Map<string, { sample: AlgCase; count: number }> }>();
-    for (const c of cases) {
-      const parts = (c.subgroup || '').split('/');
-      const top = parts[0] || '';
-      let e = map.get(top);
-      if (!e) { e = { sample: c, total: 0, cases: [], subs: new Map() }; map.set(top, e); }
-      e.total++;
-      e.cases.push(c);
-      if (parts.length >= 2 && parts[1]) {
-        const se = e.subs.get(parts[1]);
-        if (se) se.count++;
-        else e.subs.set(parts[1], { sample: c, count: 1 });
-      }
-    }
-    // 二阶 / COLL 情况卡按显示编号排列，不沿用角块换位优先级。
-    if (inlineCases) {
-      for (const e of map.values()) {
-        e.cases.sort((a, b) => compareAlgGroupLabel(primaryCaseName(puzzle, set, a), primaryCaseName(puzzle, set, b)));
-      }
-    }
-    return Array.from(map.entries());
+    return groupAlgCases(cases).tops.map(group => [group.label, {
+      sample: group.sample,
+      cases: inlineCases
+        ? [...group.allCases].sort((a, b) => compareAlgGroupLabel(primaryCaseName(puzzle, set, a), primaryCaseName(puzzle, set, b)))
+        : group.allCases,
+      subs: new Map(Array.from(group.subs.entries())
+        .filter(([label]) => label !== '')
+        .map(([label, members]) => [label, { sample: members[0], count: members.length }])),
+    }] as const);
   }, [cases, inlineCases, puzzle, set]);
 
   // 就地展开只在「两级 + 顶层组不多」时用;组太多(1LLL)就地展开会太长,退回卡片网格。
   const inlineExpand = (inlineCases || tops.some(([, e]) => e.subs.size > 0)) && tops.length <= 10;
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set()); // 默认全展开(一眼看全所有二级子组)
-  const toggle = (t: string) => setCollapsed(prev => {
-    const next = new Set(prev);
-    if (next.has(t)) next.delete(t); else next.add(t);
+  // 同时限制数据规模和实际子卡片数：ZBLL 等大公式集默认收起，
+  // CLL / COLL 等小集合保留一眼看全；收起的子卡片不挂载。
+  const childCardCount = tops.reduce((total, [, group]) => total + (inlineCases ? group.cases.length : group.subs.size), 0);
+  const defaultCollapsed = cases.length > 100 || childCardCount > 48;
+  // 仅记录手动选择，让异步数据刷新后未操作的分组仍遵循规模规则。
+  const [collapsedOverrides, setCollapsedOverrides] = useState<Map<string, boolean>>(() => new Map());
+  const toggle = (t: string) => setCollapsedOverrides(prev => {
+    const next = new Map(prev);
+    next.set(t, !(prev.get(t) ?? defaultCollapsed));
     return next;
   });
 
@@ -413,7 +382,7 @@ function SubgroupIndex({
     <div className="alg-l2-index">
       {tops.map(([topLabel, e]) => {
         const showCover = !(puzzle === '2x2' && (set === 'ortega-oll' || set === 'ortega-pbl'));
-        const isCollapsed = showCover && collapsed.has(topLabel);
+        const isCollapsed = showCover && (collapsedOverrides.get(topLabel) ?? defaultCollapsed);
         const firstAlg = e.sample.algs.flat()[0]?.alg ?? e.sample.standard ?? '';
         const dispTop = set === 'zbll' ? displayZbllToken(topLabel) : displayAlgCaseName(puzzle, set, topLabel);
         // 封面卡标题不必再带 set 名(页首 H1 已写 ZBLL)。1lll 组号是纯数字 → 换字母制 OLL 名。
@@ -614,6 +583,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     'sq1-notation',
     parseAsStringEnum<Sq1NotationMode>([...SQ1_NOTATION_MODES]).withDefault('compact'),
   );
+  const [showOtherAlgs, setShowOtherAlgs] = useQueryState(
+    'other-algs', parseAsBoolean.withDefault(false),
+  );
   const [showAllCasesParam, setShowAllCasesParam] = useQueryState(
     'all',
     parseAsBoolean.withDefault(false),
@@ -654,7 +626,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   // AlgViewModeToggle 里,`/alg` 下所有 case 列表页共用同一个偏好。
   const [view, changeView] = useAlgViewMode();
   const [showCaseNumbers, setShowCaseNumbers] = useAlgCaseNumberVisibility();
-  // 分组页也共用图 / 公式偏好；公式模式直接列出当前范围的情况。
+  // 图 / 公式偏好仅决定情况列表的呈现，不绕过分类导航。
 
   /** 这个 set 里实际出现过的标签 —— 没有就不渲染筛选器 */
   const availableTags = useMemo(() => {
@@ -1012,7 +984,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   }
 
   const showSubgroupPicker = !collection && !!meta.umbrella && !subgroupParam
-    && !showAllCases && !optimalFilterActive && effectiveView === 'cards';
+    && !showAllCases && !optimalFilterActive;
   const headerCaseCount = categoryHeaderCaseCount(
     scopedCases.length,
     visibleCases.length,
@@ -1032,7 +1004,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     }
     return Array.from(map.entries());
   }, [visibleCases, slugLevel, meta.umbrella]);
-  const showSubSubgroupPicker = subSubgroups.length > 1 && !optimalFilterActive && effectiveView === 'cards';
+  const showSubSubgroupPicker = subSubgroups.length > 1 && !showAllCases && !optimalFilterActive;
 
   const rawBackTo = collection?.backHref ?? (slugLevel === 'sub' && subParentSlug
     ? `/alg/${puzzleParam}/${set}/${subParentSlug}`
@@ -1134,136 +1106,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             </span>
           </div>
         )}
-        {data && canShowAllCases && (
-          <BoolToggle
-            value={showAllCases}
-            onChange={(value) => {
-              void setShowAllCasesParam(value);
-              if (!value) {
-                void setOptimalMoves(null);
-                void setDiagramParams({ simplified: null, diagram: null });
-              }
-            }}
-            label={tr({ zh: '显示全部情况', en: 'Show all cases' })}
-            className="alg-show-all-toggle"
-          />
-        )}
-        {data && canShowAllCases && (
-          <select
-            className="alg-header-select"
-            value={zbllDiagramMode}
-            onChange={(event) => {
-              const diagram = event.target.value as ZbllDiagramMode;
-              void setDiagramParams({
-                simplified: null,
-                diagram: diagram === 'full' ? null : diagram,
-              });
-            }}
-            aria-label={tr({ zh: '图片显示', en: 'Diagram display' })}
-          >
-            <option value="full">{tr({ zh: '完整', en: 'Full' })}</option>
-            <option value="simplified">{tr({ zh: '简化', en: 'Simplified' })}</option>
-            <option value="dual">{tr({ zh: '双图', en: 'Dual' })}</option>
-          </select>
-        )}
-        {data && !canShowAllCases && canSimplifyRecognition && !showSubgroupPicker && (
-          <BoolToggle
-            value={simplified}
-            onChange={value => setDiagramParams({ simplified: value })}
-            label={tr({ zh: '简化图', en: 'Simplified diagrams' })}
-            className="alg-show-all-toggle"
-          />
-        )}
-        {data && canChooseViewAngleHere && !showSubgroupPicker && !showSubSubgroupPicker && (
-          <label className="alg-view-angle">
-            <span>{tr({ zh: '角度', en: 'Angle' })}</span>
-            <select
-              className="alg-header-select"
-              value={effectiveViewAngle}
-              onChange={event => setViewAngle(event.target.value as CaseViewAngle)}
-              aria-label={tr({ zh: '角度', en: 'Angle' })}
-            >
-              <option value="default">{tr({ zh: '默认', en: 'Default' })}</option>
-              <option value="u">U</option>
-              <option value="u2">U2</option>
-              <option value="up">U&apos;</option>
-            </select>
-          </label>
-        )}
-        {data && canChooseOrientation && (
-          <label className="alg-view-angle">
-            <span>{tr({ zh: '朝向', en: 'Holding' })}</span>
-            <CubeOrientationSelect
-              className="alg-header-select"
-              value={effectiveOrientation}
-              onChange={value => void setOrientation(value)}
-              ariaLabel={tr({ zh: '魔方朝向', en: 'Cube holding orientation' })}
-            />
-          </label>
-        )}
-        {data && !collection && (
-          <div className="alg-optimal-filter" role="group" aria-label={tr({ zh: '按最优步数筛选', en: 'Filter by optimal move count' })}
-            title={computeOptimal ? tr({ zh: '标准状态的整解最优 HTM，转体不计步', en: 'Optimal full-solve HTM from the standard setup; rotations are free' }) : undefined}>
-            <span className="alg-optimal-filter-label">{tr({ zh: '最优', en: 'Optimal' })}</span>
-            <select
-              className="alg-header-select"
-              value={resolvedOptimalMetric}
-              disabled={!selectedOptimalRange}
-              onChange={e => setOptimalMetric(e.target.value as OptimalMetric)}
-              aria-label={tr({ zh: '步数指标', en: 'Move metric' })}
-            >
-              {availableMetrics.map(metric => <option key={metric} value={metric}>{metric.toUpperCase()}</option>)}
-              {availableMetrics.length === 0 && <option value={resolvedOptimalMetric}>—</option>}
-            </select>
-            <select
-              className="alg-header-select alg-optimal-comparison"
-              value={optimalComparison}
-              disabled={!selectedOptimalRange}
-              onChange={e => setOptimalComparison(e.target.value as OptimalComparison)}
-              aria-label={tr({ zh: '比较方式', en: 'Comparison' })}
-            >
-              <option value="lte">≤</option>
-              <option value="eq">=</option>
-              <option value="gte">≥</option>
-            </select>
-            <select
-              className="alg-header-select"
-              value={optimalMoves ?? ''}
-              disabled={!selectedOptimalRange}
-              onChange={e => setOptimalMoves(e.target.value ? Number(e.target.value) : null)}
-              aria-label={tr({ zh: '最优步数', en: 'Optimal move count' })}
-            >
-              <option value="">{selectedOptimalRange
-                ? tr({ zh: '步数', en: 'Moves' })
-                : optimalPending ? tr({ zh: '计算中…', en: 'Computing…' })
-                  : optimalFailed ? tr({ zh: '最优计算未完成', en: 'Optimal calculation incomplete' })
-                    : tr({ zh: '暂无最优数据', en: 'No optimal data' })}</option>
-              {selectedOptimalRange && Array.from(
-                { length: selectedOptimalRange.max - selectedOptimalRange.min + 1 },
-                (_, i) => selectedOptimalRange.min + i,
-              ).map(moves => <option key={moves} value={moves}>{moves}</option>)}
-            </select>
-            {optimalFilterActive && (
-              <button type="button" className="alg-filter-clear" onClick={() => setOptimalMoves(null)}>
-                {tr({ zh: '清除', en: 'Clear' })}
-              </button>
-            )}
-          </div>
-        )}
-        {puzzleParam === 'sq1' && !isSq1Ep && (
-          <BoolToggle
-            value={sq1BlackTop}
-            onChange={setSq1BlackTop}
-            label={tr({ zh: '黑顶', en: 'Black top' })}
-            className="alg-sq1-black-top-toggle"
-          />
-        )}
-        {data && puzzleParam === 'sq1' && (
-          <Sq1NotationSelect
-            value={sq1NotationMode}
-            onChange={value => void setSq1NotationMode(value)}
-          />
-        )}
         {/* 所有公式集共用列表设置，偏好跨 `/alg` 页面生效。 */}
         {data && (
           <AlgListSettings
@@ -1278,7 +1120,177 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                   onNotationStyleChange: (value: AlgNotationStyle) => void setNotationStyle(value),
                 }
               : {})}
-          />
+          >
+            {!collection?.cardsOnly && <BoolToggle
+              value={showOtherAlgs}
+              onChange={value => void setShowOtherAlgs(value)}
+              label={tr({ zh: '显示其他公式', en: 'Show other algorithms' })}
+            />}
+            {data && canShowAllCases && (
+              <BoolToggle
+                value={showAllCases}
+                onChange={(value) => {
+                  void setShowAllCasesParam(value);
+                  if (!value) {
+                    void setOptimalMoves(null);
+                    void setDiagramParams({ simplified: null, diagram: null });
+                  }
+                }}
+                label={tr({ zh: '显示全部情况', en: 'Show all cases' })}
+                className="alg-show-all-toggle"
+              />
+            )}
+            {data && canShowAllCases && (
+              <select
+                className="alg-header-select"
+                value={zbllDiagramMode}
+                onChange={(event) => {
+                  const diagram = event.target.value as ZbllDiagramMode;
+                  void setDiagramParams({
+                    simplified: null,
+                    diagram: diagram === 'full' ? null : diagram,
+                  });
+                }}
+                aria-label={tr({ zh: '图片显示', en: 'Diagram display' })}
+              >
+                <option value="full">{tr({ zh: '完整', en: 'Full' })}</option>
+                <option value="simplified">{tr({ zh: '简化', en: 'Simplified' })}</option>
+                <option value="dual">{tr({ zh: '双图', en: 'Dual' })}</option>
+              </select>
+            )}
+            {data && !canShowAllCases && canSimplifyRecognition && !showSubgroupPicker && (
+              <BoolToggle
+                value={simplified}
+                onChange={value => setDiagramParams({ simplified: value })}
+                label={tr({ zh: '简化图', en: 'Simplified diagrams' })}
+                className="alg-show-all-toggle"
+              />
+            )}
+            {data && canChooseViewAngleHere && !showSubgroupPicker && !showSubSubgroupPicker && (
+              <label className="alg-view-angle">
+                <span>{tr({ zh: '角度', en: 'Angle' })}</span>
+                <select
+                  className="alg-header-select"
+                  value={effectiveViewAngle}
+                  onChange={event => setViewAngle(event.target.value as CaseViewAngle)}
+                  aria-label={tr({ zh: '角度', en: 'Angle' })}
+                >
+                  <option value="default">{tr({ zh: '默认', en: 'Default' })}</option>
+                  <option value="u">U</option>
+                  <option value="u2">U2</option>
+                  <option value="up">U&apos;</option>
+                </select>
+              </label>
+            )}
+            {data && canChooseOrientation && (
+              <label className="alg-view-angle">
+                <span>{tr({ zh: '朝向', en: 'Holding' })}</span>
+                <CubeOrientationSelect
+                  className="alg-header-select"
+                  value={effectiveOrientation}
+                  onChange={value => void setOrientation(value)}
+                  ariaLabel={tr({ zh: '魔方朝向', en: 'Cube holding orientation' })}
+                />
+              </label>
+            )}
+            {data && !collection && (
+              <div className="alg-optimal-filter" role="group" aria-label={tr({ zh: '按最优步数筛选', en: 'Filter by optimal move count' })}
+                title={computeOptimal ? tr({ zh: '标准状态的整解最优 HTM，转体不计步', en: 'Optimal full-solve HTM from the standard setup; rotations are free' }) : undefined}>
+                <span className="alg-optimal-filter-label">{tr({ zh: '最优', en: 'Optimal' })}</span>
+                <select
+                  className="alg-header-select"
+                  value={resolvedOptimalMetric}
+                  disabled={!selectedOptimalRange}
+                  onChange={e => setOptimalMetric(e.target.value as OptimalMetric)}
+                  aria-label={tr({ zh: '步数指标', en: 'Move metric' })}
+                >
+                  {availableMetrics.map(metric => <option key={metric} value={metric}>{metric.toUpperCase()}</option>)}
+                  {availableMetrics.length === 0 && <option value={resolvedOptimalMetric}>—</option>}
+                </select>
+                <select
+                  className="alg-header-select alg-optimal-comparison"
+                  value={optimalComparison}
+                  disabled={!selectedOptimalRange}
+                  onChange={e => setOptimalComparison(e.target.value as OptimalComparison)}
+                  aria-label={tr({ zh: '比较方式', en: 'Comparison' })}
+                >
+                  <option value="lte">≤</option>
+                  <option value="eq">=</option>
+                  <option value="gte">≥</option>
+                </select>
+                <select
+                  className="alg-header-select"
+                  value={optimalMoves ?? ''}
+                  disabled={!selectedOptimalRange}
+                  onChange={e => setOptimalMoves(e.target.value ? Number(e.target.value) : null)}
+                  aria-label={tr({ zh: '最优步数', en: 'Optimal move count' })}
+                >
+                  <option value="">{selectedOptimalRange
+                    ? tr({ zh: '步数', en: 'Moves' })
+                    : optimalPending ? tr({ zh: '计算中…', en: 'Computing…' })
+                      : optimalFailed ? tr({ zh: '最优计算未完成', en: 'Optimal calculation incomplete' })
+                        : tr({ zh: '暂无最优数据', en: 'No optimal data' })}</option>
+                  {selectedOptimalRange && Array.from(
+                    { length: selectedOptimalRange.max - selectedOptimalRange.min + 1 },
+                    (_, i) => selectedOptimalRange.min + i,
+                  ).map(moves => <option key={moves} value={moves}>{moves}</option>)}
+                </select>
+                {optimalFilterActive && (
+                  <button type="button" className="alg-filter-clear" onClick={() => setOptimalMoves(null)}>
+                    {tr({ zh: '清除', en: 'Clear' })}
+                  </button>
+                )}
+              </div>
+            )}
+            {puzzleParam === 'sq1' && !isSq1Ep && (
+              <BoolToggle
+                value={sq1BlackTop}
+                onChange={setSq1BlackTop}
+                label={tr({ zh: '黑顶', en: 'Black top' })}
+                className="alg-sq1-black-top-toggle"
+              />
+            )}
+            {data && puzzleParam === 'sq1' && (
+              <Sq1NotationSelect
+                value={sq1NotationMode}
+                onChange={value => void setSq1NotationMode(value)}
+              />
+            )}
+            {/* 标签筛选只在公式内联时有意义(只看图时没公式可筛) */}
+            {data && !showSubgroupPicker && !showSubSubgroupPicker && effectiveView === 'full' && availableTags.length > 0 && (
+              <label className="alg-list-settings-row"><span>{tr({ zh: '公式筛选', en: 'Algorithm filter' })}</span>
+                <select
+                  className="alg-header-select"
+                  value={tagFilter === 'oh' && ohHand === 'right' ? RIGHT_OH_MENU_VALUE : tagFilter}
+                  onChange={e => {
+                    const value = e.target.value as AlgTagMenuValue;
+                    if (value === RIGHT_OH_MENU_VALUE) {
+                      void setTagParams({ tag: 'oh', hand: 'right' });
+                      return;
+                    }
+                    void setTagParams({ tag: value, hand: 'left' });
+                  }}
+                  aria-label={tr({ zh: '按标签筛选公式', en: 'Filter algs by tag' })}
+                >
+                  <option value="all">{tr({ zh: '全部', en: 'All' })}</option>
+                  {availableTags.map(t => t === 'oh' && canChooseOhHand ? (
+                    <Fragment key={t}>
+                      <option value="oh">{algTagLabel('oh')}</option>
+                      <option value={RIGHT_OH_MENU_VALUE}>{OH_TAG_LABEL.right()}</option>
+                    </Fragment>
+                  ) : (
+                    <option key={t} value={t}>{algTagLabel(t)}</option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {data.cases.length > 0 && (
+              <div className="alg-list-settings-row">
+                <AlgPdfButton build={buildPdfSheet} />
+                <AlgImageDownloadButton batch build={() => caseImageBatch(buildExportOptions())} />
+              </div>
+            )}
+          </AlgListSettings>
         )}
         {puzzleParam === 'fto' && (
           <Link href="/alg/fto/notation" className="alg-recog-cta" prefetch={false}>
@@ -1308,42 +1320,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
               {tr({ zh: '记号说明', en: 'Notation guide' })}
             </Link>
           )
-        )}
-        {/* 标签筛选只在公式内联时有意义(只看图时没公式可筛) */}
-        {data && !showSubgroupPicker && !showSubSubgroupPicker && effectiveView === 'full' && availableTags.length > 0 && (
-          <>
-            <select
-              className="alg-header-select"
-              value={tagFilter === 'oh' && ohHand === 'right' ? RIGHT_OH_MENU_VALUE : tagFilter}
-              onChange={e => {
-                const value = e.target.value as AlgTagMenuValue;
-                if (value === RIGHT_OH_MENU_VALUE) {
-                  void setTagParams({ tag: 'oh', hand: 'right' });
-                  return;
-                }
-                void setTagParams({ tag: value, hand: 'left' });
-              }}
-              aria-label={tr({ zh: '按标签筛选公式', en: 'Filter algs by tag' })}
-            >
-              <option value="all">{tr({ zh: '全部', en: 'All' })}</option>
-              {availableTags.map(t => t === 'oh' && canChooseOhHand ? (
-                <Fragment key={t}>
-                  <option value="oh">{algTagLabel('oh')}</option>
-                  <option value={RIGHT_OH_MENU_VALUE}>{OH_TAG_LABEL.right()}</option>
-                </Fragment>
-              ) : (
-                <option key={t} value={t}>{algTagLabel(t)}</option>
-              ))}
-            </select>
-          </>
-        )}
-        {/* 打印表:子组选择页(没列 case)也给 —— 那一层下载的是**整套**,
-            正是「把这套公式印出来」最自然的落点 */}
-        {data && data.cases.length > 0 && (
-          <>
-            <AlgPdfButton build={buildPdfSheet} />
-            <AlgImageDownloadButton batch build={() => caseImageBatch(buildExportOptions())} />
-          </>
         )}
         {/* set 级(含 umbrella 落地页)从全集选;subgroup 页带 ?scope= 只从该组选 */}
         {data && !collection && (
@@ -1430,7 +1406,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     })}</div>}
 
       {data && showSubgroupPicker && (
-        <SubgroupIndex puzzle={puzzleParam as AlgPuzzle} set={set} cases={orderedCases} ollByGroup={ollByGroup} isZh={isZh} querySuffix={sq1QuerySuffix} orientation={effectiveOrientation} />
+        <SubgroupIndex key={`${puzzleParam}/${set}`} puzzle={puzzleParam as AlgPuzzle} set={set} cases={orderedCases} ollByGroup={ollByGroup} isZh={isZh} querySuffix={sq1QuerySuffix} orientation={effectiveOrientation} />
       )}
 
       {data && showSubSubgroupPicker && (() => {
@@ -1558,6 +1534,37 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                   const cardName = isSq1Ep && sq1EpNumericNames
                     ? (sq1EpNumericCaseName(c.name) ?? defaultCardName)
                     : defaultCardName;
+                  // 筛了标签就别拖:看到的是子集,拖出来的顺序对不上真实数组
+                  const dragAlgs = isAdmin && c.id != null && !filtering && showOtherAlgs;
+                  const rows = effectiveView === 'full' ? (showOtherAlgs ? algsForOri : algsForOri.slice(0, 1)).map((entry, displayIdx) => {
+                    // 校验结果 / 拖动 id 都按**未筛选**的下标走(标签筛选只是个视图)——
+                    // 拿对象身份换回真下标
+                    const trueIdx = allAlgsForOri.indexOf(entry);
+                    const row = (
+                      <AlgRow
+                        entry={entry}
+                        puzzle={puzzleParam as AlgPuzzle}
+                        set={set}
+                        invalid={isAdmin && c.id != null && trueIdx >= 0 ? invalidAlgs.get(`${c.id}:${oriIdx}:${trueIdx}`) : undefined}
+                        notationStyle={displayedNotationStyle}
+                        viewAngle={effectiveViewAngle}
+                        ohHand={rightHandOh ? 'right' : undefined}
+                        sq1NotationMode={sq1NotationMode}
+                        sourceKarnaukh={isSq1Pbl}
+
+                      />
+                    );
+                    const key = `${entry.altId ?? entry.alg}::${trueIdx >= 0 ? trueIdx : displayIdx}`;
+                    // 不拖的时候不加额外外壳，保持列表 DOM 和间距一致。
+                    return dragAlgs
+                      ? (
+                        <SortableAlgRow key={key} id={algDragId(c.id!, oriIdx, trueIdx)} draggable>
+                          {row}
+                        </SortableAlgRow>
+                      )
+                      : <Fragment key={key}>{row}</Fragment>;
+                  }) : [];
+
                   return (
                     <SortableCard key={c.id ?? c.name} id={c.id ?? 0} draggable={isAdmin && c.id != null}>
                     <AlgImageDownloadButton build={() => caseImageBatch({
@@ -1578,7 +1585,13 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                         prefetch={false}
                         aria-label={cardName}
                       />
+                      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleAlgDragEnd(c, oriIdx)}>
+                        <SortableContext
+                          items={dragAlgs ? algsForOri.map(e => algDragId(c.id!, oriIdx, allAlgsForOri.indexOf(e))) : []}
+                          strategy={verticalListSortingStrategy}
+                        >
                       <div className="alg-case-head">
+                        <div className="alg-case-figure">
                         <div className={`alg-case-cube${useSvDualThumb || useZbllDualThumb ? ' is-dual' : ''}`}>
                           {useSvDualThumb ? (
                             <>
@@ -1645,13 +1658,21 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                             />
                           )}
                         </div>
-                        <div className="alg-case-info">
                           <div className="alg-case-name">
-                            <span className="alg-case-letter">{cardName}</span>
+                            <Link href={caseDetailHref(c)} prefetch={false} className="alg-case-detail-link"
+                              aria-label={tr({ zh: `查看 ${cardName} 详情`, en: `View ${cardName} details` })}>
+                            <span className={`alg-case-letter${set === 'zbll' ? ' alg-case-letter--zbll' : ''}`}>
+                              {cardName}
+                              {set === 'zbll' && c.meta?.ollcp && (
+                                <span className="alg-case-index"> ({displayAlgCaseName(puzzleParam, set, c.name).replace(/^ZBLL\s+/i, '').replace(/\s+/g, '')})</span>
+                              )}
+                            </span>
+                            <ChevronRight size={14} aria-hidden="true" />
+                            </Link>
                             {/* 字母制主名接管之后,站上原来那个名字(`1LLL 6 7` / `ZBLL L 34`)降为副名 —— 不丢。
                                 但 PLL 的 OLLCP 名剥掉 `PLL-` 前缀后就等于站上的名字,再挂一个副名纯属重复。 */}
                             {(() => {
-                              if (!c.meta?.ollcp) return null;
+                              if (!c.meta?.ollcp || set === 'zbll') return null;
                               const disp = displayAlgCaseName(puzzleParam, set, c.name);
                               const primary = primaryCaseName(puzzleParam, set, c);
                               return disp.startsWith(primary) ? null : <span className="alg-case-index">{disp}</span>;
@@ -1669,6 +1690,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                               </button>
                             )}
                           </div>
+                        </div>
+                        <div className="alg-case-info">
                           {effectiveView === 'full' && c.setup && (
                             <SetupLine
                               puzzle={puzzleParam}
@@ -1678,60 +1701,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                               sq1NotationMode={sq1NotationMode}
                             />
                           )}
+                          {rows.length > 0 && <div className="alg-case-algs">{rows[0]}</div>}
                         </div>
                       </div>
-                      {effectiveView === 'full' && (<>
-                      <div className="alg-case-algs">
-                        {(() => {
-                          // 筛了标签就别拖:看到的是子集,拖出来的顺序对不上真实数组
-                          const dragAlgs = isAdmin && c.id != null && !filtering;
-                          const rows = algsForOri.map((entry, displayIdx) => {
-                            // 校验结果 / 拖动 id 都按**未筛选**的下标走(标签筛选只是个视图)——
-                            // 拿对象身份换回真下标
-                            const trueIdx = allAlgsForOri.indexOf(entry);
-                            const row = (
-                              <AlgRow
-                                entry={entry}
-                                puzzle={puzzleParam as AlgPuzzle}
-                                set={set}
-                                invalid={isAdmin && c.id != null && trueIdx >= 0 ? invalidAlgs.get(`${c.id}:${oriIdx}:${trueIdx}`) : undefined}
-                                notationStyle={displayedNotationStyle}
-                                viewAngle={effectiveViewAngle}
-                                ohHand={rightHandOh ? 'right' : undefined}
-                                sq1NotationMode={sq1NotationMode}
-                                sourceKarnaukh={isSq1Pbl}
-                                preferred={!rightHandOh && preferredAlgRef(entry) === preferredRef}
-                                onPreferredToggle={rightHandOh ? undefined : () => setPreferred(
-                                  puzzleParam as AlgPuzzle,
-                                  preferenceSet,
-                                  preferenceSlot,
-                                  preferredAlgRef(entry) === preferredRef ? null : preferredAlgRef(entry),
-                                )}
-                              />
-                            );
-                            const key = `${entry.altId ?? entry.alg}::${trueIdx >= 0 ? trueIdx : displayIdx}`;
-                            // 不拖的时候不加额外外壳，保持列表 DOM 和间距一致。
-                            return dragAlgs
-                              ? (
-                                <SortableAlgRow key={key} id={algDragId(c.id!, oriIdx, trueIdx)} draggable>
-                                  {row}
-                                </SortableAlgRow>
-                              )
-                              : <Fragment key={key}>{row}</Fragment>;
-                          });
-                          if (!dragAlgs) return rows;
-                          return (
-                            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleAlgDragEnd(c, oriIdx)}>
-                              <SortableContext
-                                items={algsForOri.map(e => algDragId(c.id!, oriIdx, allAlgsForOri.indexOf(e)))}
-                                strategy={verticalListSortingStrategy}
-                              >
-                                {rows}
-                              </SortableContext>
-                            </DndContext>
-                          );
-                        })()}
-                      </div>
+                      {effectiveView === 'full' && showOtherAlgs && (<>
+                      {rows.length > 1 && <div className="alg-case-algs">{rows.slice(1)}</div>}
                       <CommunityAlgs
                         puzzle={puzzleParam}
                         setSlug={set}
@@ -1761,6 +1735,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                         }}
                       />
                       </>)}
+                        </SortableContext>
+                      </DndContext>
                     </article>
                     </AlgImageDownloadButton>
                     </SortableCard>

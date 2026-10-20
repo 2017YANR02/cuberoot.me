@@ -40,7 +40,7 @@
     "@cuberoot/shared": "workspace:*",
     "@cuberoot/timer-ui": "workspace:*",
     "@emoji-mart/data": "1.2.1",
-    "@2017yanr02/continuous-corners": "file:../../vendor/continuous-corners-0.3.0.tgz"
+    "@2017yanr02/continuous-corners": "file:../../vendor/continuous-corners-0.3.1.tgz"
   },
   "peerDependencies": {
     "lucide-react": "1.8.0",
