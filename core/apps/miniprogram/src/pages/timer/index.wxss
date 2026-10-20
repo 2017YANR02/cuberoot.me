@@ -44,3 +44,6 @@
 .nt-histogram-bar { width: 100%; min-height: 2rpx; background: var(--cr-accent); position: relative; }
 .nt-histogram-bar text { position: absolute; bottom: 100%; width: 100%; text-align: center; font-size: 20rpx; color: var(--cr-muted); font-variant-numeric: tabular-nums; }
 .nt-chart-axis { display: flex; justify-content: space-between; }
+.nt-detail-time { display: block; font-size: 64rpx; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.nt-comment { display: block; white-space: pre-wrap; overflow-wrap: anywhere; padding: 16rpx 0; }
+.nt-manual-entry { font-size: 40rpx; color: var(--cr-accent); }

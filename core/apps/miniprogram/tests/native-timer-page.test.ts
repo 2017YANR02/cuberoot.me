@@ -31,6 +31,11 @@ function fixture() {
     selectSettingsCategory(event: WechatMiniprogram.PickerChange): void;
     toggleSetting(event: WechatMiniprogram.SwitchChange): void;
     timerUp(): void;
+    editResult(event: WechatMiniprogram.TouchEvent): void;
+    changeDetailPenalty(event: WechatMiniprogram.PickerChange): void;
+    resultAction(event: WechatMiniprogram.TouchEvent): void;
+    draftInput(event: WechatMiniprogram.Input): void;
+    saveDraft(): void;
   };
   const page = {
     ...options, data: { ...options.data }, active: true, nativeTimer: timer,
@@ -72,6 +77,62 @@ describe('native timer source sheet lifecycle', () => {
     timer.down(); page.timerUp();
     expect(page.data.phase).toBe('stopped');
     expect(page.data.hideChrome).toBe(false);
+  });
+
+  it('updates penalties in place while preserving the raw result and source', () => {
+    const { page, timer } = fixture();
+    timer.setManualScrambles('R U');
+    timer.updateSettings({ precision: 2 });
+    timer.manualEntry('12.34');
+    const original = structuredClone(timer.records[0]);
+    page.editResult(event({ id: original.id }));
+    page.changeDetailPenalty({ detail: { value: '1' } } as WechatMiniprogram.PickerChange);
+    expect(page.data.sheet).toBe('detail');
+    expect(page.data.detail).toMatchObject({ result: '14.34', rawTime: '12.34', scramble: 'R U' });
+    expect(timer.records[0]).toEqual({ ...original, penalty: '+2' });
+    page.changeDetailPenalty({ detail: { value: '3' } } as WechatMiniprogram.PickerChange);
+    expect(page.data.detail).toMatchObject({ result: 'DNS', rawTime: '12.34' });
+    page.closeSheet();
+    expect(page.data.sheet).toBe('history');
+  });
+
+  it('returns to the same detail after saving or cancelling a comment', () => {
+    const { page, timer } = fixture();
+    timer.setManualScrambles('R U'); timer.manualEntry('12');
+    const id = timer.records[0].id;
+    page.editResult(event({ id }));
+    page.resultAction(event({ action: 'history.quick.comment' }));
+    page.draftInput({ detail: { value: 'Saved note' } } as WechatMiniprogram.Input);
+    page.saveDraft();
+    expect(page.data.sheet).toBe('detail');
+    expect(page.data.detail).toMatchObject({ id, comment: 'Saved note' });
+    page.resultAction(event({ action: 'history.quick.comment' }));
+    page.draftInput({ detail: { value: 'Discarded note' } } as WechatMiniprogram.Input);
+    page.closeSheet();
+    expect(page.data.sheet).toBe('detail');
+    expect(timer.records[0].comment).toBe('Saved note');
+  });
+
+  it('projects recorded split and device metadata without mutating the solve', () => {
+    const { page, timer } = fixture();
+    timer.setManualScrambles('R U'); timer.manualEntry('12');
+    timer.updateSettings({ precision: 2 });
+    const solve = timer.records[0];
+    solve.inspectionMs = 9000;
+    solve.device = { model: 'gan-v4', name: 'GAN16' };
+    solve.stages = { cross: 2000, f2l: 7000, oll: 9000, pll: 12000 };
+    const original = structuredClone(solve);
+    page.editResult(event({ id: solve.id }));
+    expect(page.data.detail).toMatchObject({
+      rawTime: '12.00', inspection: '9.00', deviceName: 'GAN16',
+      stages: [
+        { id: 'cross', duration: '2.00', cumulative: '2.00' },
+        { id: 'f2l', duration: '5.00', cumulative: '7.00' },
+        { id: 'oll', duration: '2.00', cumulative: '9.00' },
+        { id: 'pll', duration: '3.00', cumulative: '12.00' },
+      ],
+    });
+    expect(timer.records[0]).toEqual(original);
   });
 
   it('shows the current competition rounds and groups', async () => {

@@ -4,7 +4,7 @@ import { exportSpeedstacks } from '@cuberoot/shared/timer/export-speedstacks';
 import { TIMER_SESSION_UI_COPY, timerSessionDeleteConfirmation, timerSessionClearConfirmation } from '@cuberoot/shared/timer/session';
 import { timerManualEntryCopy } from '@cuberoot/shared/timer/manual-entry';
 import { TIMER_MANUAL_SCRAMBLE_EMPTY_COPY } from '@cuberoot/shared/timer/manual-scramble-queue';
-import { TIMER_HISTORY_QUICK_ACTION_IDS, TIMER_HISTORY_QUICK_ACTION_COPY, timerHistoryQuickActionPenalty, timerHistoryMoveTargets } from '@cuberoot/shared/timer/history';
+import { TIMER_HISTORY_QUICK_ACTION_IDS, TIMER_HISTORY_QUICK_ACTION_COPY, TIMER_HISTORY_PENALTIES, timerHistoryQuickActionPenalty, timerHistoryMoveTargets, timerSolveDetailStageRows, timerSolveDetailBldTimes } from '@cuberoot/shared/timer/history';
 import type { EventId, Solve } from '@cuberoot/shared/timer/types';
 import { effectiveMs } from '@cuberoot/shared/timer/types';
 import { TIMER_SCRAMBLE_CLICK_ACTIONS, TIMER_SCRAMBLE_CLICK_TITLE_COPY, timerScrambleClickEffect, TIMER_SETTING_FIELD_CONTRACTS, TIMER_SETTING_CATEGORY_CONTRACTS } from '@cuberoot/shared/timer/settings-contract';
@@ -23,7 +23,7 @@ import { nativeTimerPreview } from './native-timer-preview';
 import { createTimerBackupClient } from '@cuberoot/shared/timer/backup-client';
 import { getStoredSessionSnapshot, requestJson } from './auth';
 import { nativeTimerFetch } from './native-timer-network';
-import { formatSolveResult } from '@cuberoot/shared/timer/stats';
+import { formatSolveResult, formatEventMs, formatMs } from '@cuberoot/shared/timer/stats';
 import { createTimerRankClient, toWcaEventForRank } from '@cuberoot/shared/timer/rank-client';
 import { timerRankPills, timerPersonalOfficialRank, type TimerRankOfficialRow } from '@cuberoot/shared/timer/rank-presentation';
 import { WCA_ID_REGEX } from '@cuberoot/shared/wca-person';
@@ -102,6 +102,12 @@ function copy() { return {
   count: tr({ en: 'Solved / total', zh: '成功 / 总次数' }), deviation: tr({ en: 'Standard deviation', zh: '标准差' }),
   distribution: tr({ en: 'Time distribution', zh: '成绩分布' }),
   distributionEmpty: tr({ en: 'Need 5+ solves to chart distribution', zh: '至少 5 次成绩才显示分布' }),
+  noMatches: tr({ en: 'No matching results', zh: '没有匹配的成绩' }),
+  detail: tr({ en: 'Result details', zh: '成绩详情' }), event: tr({ en: 'Event', zh: '项目' }),
+  rawTime: tr({ en: 'Raw time', zh: '原始时间' }), penalty: tr({ en: 'Penalty', zh: '罚时' }),
+  inspectionTime: tr({ en: 'Inspection', zh: '观察用时' }), device: tr({ en: 'Device', zh: '设备' }),
+  stageSplits: tr({ en: 'Stage splits', zh: '分阶段成绩' }), memo: tr({ en: 'Memo', zh: '记忆' }), execution: tr({ en: 'Execution', zh: '执行' }),
+  duration: tr({ en: 'Duration', zh: '耗时' }), cumulative: tr({ en: 'Cumulative', zh: '累计' }),
   statsRanges: [tr({ en: 'All', zh: '全部' }), tr({ en: '7d', zh: '近7天' }), tr({ en: '30d', zh: '近30天' }), tr({ en: '90d', zh: '近90天' }), tr({ en: '365d', zh: '近一年' })],
   rankHint: tr({ en: 'Compared with historical WCA results; not a live official rank', zh: '对比 WCA 历史成绩，非实时官方排名' }),
   rankScopes: tr(TIMER_SETTING_FIELD_CONTRACTS.find(f => f.storagePath === 'rankScopes')!.copy),
@@ -219,6 +225,32 @@ function refresh(page: NativePage, history = false) {
   if (history) refreshRank(page);
 }
 function cancelHold(page: NativePage) { if (page.holdTimer !== undefined) clearTimeout(page.holdTimer); page.holdTimer = undefined; }
+function showDetail(p: NativePage): boolean {
+  const t = p.nativeTimer, solve = t?.records.find(s => s.id === p.resultId);
+  if (!t || !solve) return false;
+  let preview = '', previewError = '';
+  try { preview = nativeTimerPreview(solve.event, solve.scramble); }
+  catch { previewError = tr({ en: 'Unable to draw this state', zh: '无法绘制当前状态' }); }
+  const labels = copy(), bld = timerSolveDetailBldTimes(solve);
+  p.sheet = 'detail';
+  p.setData({ sheet: 'detail', formError: '', detailPreview: preview, detailPreviewError: previewError,
+    detail: { id: solve.id, scramble: solve.scramble, comment: solve.comment ?? '', penalty: solve.penalty, result: formatSolveResult(solve, t.settings.precision),
+      rawTime: formatEventMs(solve.event, solve.timeMs, t.settings.precision),
+      date: new Date(solve.ts).toLocaleString(getMiniProgramLocale() === 'zh' ? 'zh-CN' : 'en-US'),
+      eventName: nativeTimerEvents().find(e => e.id === solve.event)?.name ?? solve.event,
+      inspection: solve.inspectionMs === undefined ? '' : formatMs(solve.inspectionMs, t.settings.precision),
+      source: solve.scrambleSource ? ({ random: labels.random, manual: labels.manualScrambles, wca: labels.wca })[solve.scrambleSource.kind] : '',
+      deviceName: solve.device?.name || solve.device?.model || '',
+      stages: timerSolveDetailStageRows(solve).map(row => ({ id: row.id, label: row.id === 'cross' ? tr({ en: 'Cross', zh: '十字' }) : row.id.toUpperCase(), duration: formatMs(row.durationMs, t.settings.precision), cumulative: formatMs(row.cumulativeMs, t.settings.precision) })),
+      memo: bld ? formatMs(bld.memoMs, t.settings.precision) : '', execution: bld ? formatMs(bld.executionMs, t.settings.precision) : '',
+    },
+    penaltyIndex: TIMER_HISTORY_PENALTIES.indexOf(solve.penalty),
+    penaltyLabels: [tr(TIMER_HISTORY_QUICK_ACTION_COPY['history.quick.penalty-ok']), '+2', 'DNF', 'DNS'],
+    moveTargets: timerHistoryMoveTargets(t.sessions.sessions, t.sessions.activeSessionId),
+    resultActions: TIMER_HISTORY_QUICK_ACTION_IDS.filter(action => !timerHistoryQuickActionPenalty(action)).map(action => ({ id: action, title: tr(TIMER_HISTORY_QUICK_ACTION_COPY[action]) })),
+  });
+  return true;
+}
 function generate(page: NativePage, event?: string) {
   const timer = page.nativeTimer;
   if (!timer || timer.busy) return;
@@ -326,6 +358,8 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
       // Dismiss only taps originating on the backdrop; inner controls retain their defaults.
       if (e?.currentTarget.id === 'nt-backdrop' && e.target.id !== 'nt-backdrop') return;
       const p = this as unknown as NativePage;
+      if (p.sheet === 'comment' && showDetail(p)) return;
+      if (p.sheet === 'detail') { this.openSheet({ currentTarget: { dataset: { sheet: 'history' } } }); return; }
       p.sheet = ''; p.sheetGeneration = (p.sheetGeneration ?? 0) + 1;
       p.competitionRequest = (p.competitionRequest ?? 0) + 1;
       this.setData({ sheet: '' });
@@ -416,7 +450,7 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
       if (p.sheet === 'scrambles') t.setManualScrambles(value);
       if (p.sheet === 'create') t.createSession(value);
       if (p.sheet === 'rename' && !t.renameSession(value)) return;
-      if (p.sheet === 'comment' && p.resultId) t.updateComment(p.resultId, value);
+      if (p.sheet === 'comment' && p.resultId) { t.updateComment(p.resultId, value); showDetail(p); refresh(p, true); return; }
       if (p.sheet === 'import' && !t.importCstimer(value)) {
         this.setData({ formError: tr({ en: 'Invalid file or unresolved event. No data was imported.', zh: '格式无效或项目未识别，没有导入任何数据。' }) }); return;
       }
@@ -500,6 +534,7 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
       refreshCompetitionOptions(p); refresh(p, true);
     },
     imageError() { this.setData({ previewError: tr({ en: 'Image could not be displayed', zh: '图示加载失败' }) }); },
+    detailImageError() { this.setData({ detailPreviewError: tr({ en: 'Image could not be displayed', zh: '图示加载失败' }) }); },
     cancelAttempt() { const p = this as unknown as NativePage; p.nativeTimer?.dispatch({ type: 'cancel-arm' }); refresh(p); },
     async connectCube() {
       const p = this as unknown as NativePage, t = p.nativeTimer;
@@ -536,11 +571,13 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
       if (!t || t.busy) return;
       const solve = t.records.find(s => s.id === id);
       if (!solve) return;
-      p.resultId = id; p.sheet = 'detail';
-      this.setData({ sheet: p.sheet, detail: { ...solve, result: formatSolveResult(solve, t.settings.precision), date: new Date(solve.ts).toLocaleString() },
-        detailPreview: nativeTimerPreview(solve.event, solve.scramble),
-        moveTargets: timerHistoryMoveTargets(t.sessions.sessions, t.sessions.activeSessionId),
-        resultActions: TIMER_HISTORY_QUICK_ACTION_IDS.map(action => ({ id: action, title: tr(TIMER_HISTORY_QUICK_ACTION_COPY[action]) })) });
+      p.resultId = id; showDetail(p);
+    },
+    changeDetailPenalty(e: WechatMiniprogram.PickerChange) {
+      const p = this as unknown as NativePage, t = p.nativeTimer;
+      const penalty = TIMER_HISTORY_PENALTIES[Number(e.detail.value)];
+      if (!t || t.busy || !p.resultId || !penalty) return;
+      t.updatePenalty(p.resultId, penalty); showDetail(p); refresh(p, true);
     },
     resultAction(e: WechatMiniprogram.TouchEvent) {
       const p = this as unknown as NativePage, t = p.nativeTimer, id = p.resultId;
@@ -548,12 +585,12 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
       const action = TIMER_HISTORY_QUICK_ACTION_IDS.find(a => a === e.currentTarget.dataset.action);
       if (!action) return;
       const penalty = timerHistoryQuickActionPenalty(action);
-      if (penalty) { t.updatePenalty(id, penalty); this.closeSheet(); }
+      if (penalty) { t.updatePenalty(id, penalty); showDetail(p); }
       else if (action === 'history.quick.comment') {
           p.resultId = id; p.sheet = 'comment'; p.draft = t.records.find(s => s.id === id)?.comment ?? '';
           this.setData({ sheet: p.sheet, draft: p.draft, formError: '' });
       } else if (action === 'history.quick.copy-scramble') miniProgramApi().setClipboardData({ data: t.records.find(s => s.id === id)?.scramble ?? '' });
-      else miniProgramApi().showModal({ title: tr({ en: 'Delete this result?', zh: '删除这条成绩？' }), content: tr({ en: 'This cannot be undone.', zh: '删除后无法恢复。' }), success: r => { if (r.confirm) { t.remove(id); this.closeSheet(); refresh(p, true); } } });
+      else miniProgramApi().showModal({ title: tr({ en: 'Delete this result?', zh: '删除这条成绩？' }), content: tr({ en: 'This cannot be undone.', zh: '删除后无法恢复。' }), success: r => { if (r.confirm && p.active && !t.busy && p.resultId === id && p.sheet === 'detail') { t.remove(id); this.closeSheet(); refresh(p, true); } } });
       refresh(p, true);
     },
     moveResult(e: WechatMiniprogram.PickerChange) {
