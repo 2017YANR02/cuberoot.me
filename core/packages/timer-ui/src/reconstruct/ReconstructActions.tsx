@@ -29,5 +29,5 @@ export default function ReconstructActions({
         setTimeout(()=>setUI(state=>reduceReportUI(state,{type:'copied'})),1500);
       }catch(err){console.warn('[reconstruct] copy share link failed:',err);}
     })();
-  }}/>{placement !== 'recap' && host.renderIntakeAction?.(solve, snapshot)}</>;
+  }}/>{host.renderIntakeAction?.(solve, snapshot)}</>;
 }

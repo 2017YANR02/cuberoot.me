@@ -20,6 +20,7 @@ vi.mock('@cuberoot/timer-ui/reconstruct-report', () => ({
   },
 }));
 import ReconIntakeAction from '@/components/recon/ReconIntakeAction';
+import SolveRecap from '@cuberoot/timer-ui/solve-recap';
 const solve = { id: 'sample', event: '333' as const, ts: 0, penalty: 'ok' as const,
   scramble: 'R', moves: [{ m: "R'", ts: 0 }], timeMs: 1000 };
 const host: ReconstructHost = { localize: value => value.en, writeClipboardText: async () => {}, replayUrl: () => '', recordGyro: false };
@@ -42,6 +43,21 @@ it('collects the confirmed snapshot without overwriting the original recording',
   expect(mocks.submit).toHaveBeenCalledTimes(1);
   expect(mocks.submit.mock.calls[0][1]).toMatchObject({ verdict: 'correct', observed: snapshot,
     recording: { scramble: 'R', moves: solve.moves }, annotations: [] });
+});
+it('collects from the post-solve recap toolbar using that report’s snapshot', async () => {
+  const recapHost: ReconstructHost = { ...host, renderIntakeAction: (current, observed) =>
+    createElement(ReconIntakeAction, { solve: current, snapshot: observed, host: recapHost }) };
+  await act(async () => root.render(createElement(SolveRecap, {
+    host: recapHost, solve, isZh: false, history: [], onFull: vi.fn(), onDismiss: vi.fn(),
+  })));
+  await vi.waitFor(() => expect(container.querySelector('.shell-recap-head .ri-action')).not.toBeNull());
+  await click('Collect sample');
+  await vi.waitFor(() => expect(button('Confirm correct · Queue tests').disabled).toBe(false));
+  await click('Confirm correct · Queue tests');
+  expect(mocks.submit).toHaveBeenCalledExactlyOnceWith(expect.any(String), expect.objectContaining({
+    recording: expect.objectContaining({ scramble: solve.scramble, moves: solve.moves }),
+    observed: snapshot, verdict: 'correct',
+  }));
 });
 it('opens the shared replay, binds a step annotation to encoder indices and submits it', async () => {
   await render(); await click('Collect sample'); await click('Annotate and collect'); await click('Annotate');
