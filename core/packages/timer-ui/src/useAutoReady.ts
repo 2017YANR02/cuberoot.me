@@ -9,19 +9,18 @@
  *                   directly after a previous solve).  In practice "no moves
  *                   for 2s" after the user finished resetting works well.
  *
- *   'double-flick'  The last 4 moves (in order) match `U U' U U'`.  Any
- *                   quarter-turn / inverse pair pattern is accepted only on
- *                   U / U'; other faces don't count.  We require the moves to
- *                   be exact face notation (U, U', U2 doesn't qualify).
+ *   'double-flick'  Legacy stored name for one turn followed by its inverse,
+ *                   on any layer (e.g. U U' or R' R). Half turns and rotations
+ *                   cannot express the direction of this back-and-forth gesture.
  *
  * onReady is called at most once per hook lifetime (re-arm by toggling
  * `enabled` off→on).  enabled=false unsubscribes immediately.
  */
 
 import { useEffect, useRef } from 'react';
+import { parseScrambleStrict, type ParsedMove } from '@cuberoot/puzzle-solvers/cube-moves';
 
 const STILL_THRESHOLD_MS = 2000;
-const DOUBLE_FLICK_PATTERN = ["U", "U'", "U", "U'"] as const;
 
 export interface AutoReadyOpts {
   enabled: boolean;
@@ -84,19 +83,22 @@ export function useAutoReady(opts: AutoReadyOpts): void {
       };
     }
 
-    // double-flick mode: keep a rolling buffer of the last 4 moves.
-    const buf: string[] = [];
+    // Keep the persisted enum compatible; only the previous layer turn is needed.
+    let previous: ParsedMove[] | null = null;
     const cb = (move: string, _ts: number) => {
       if (firedOnce) return;
-      buf.push(move);
-      if (buf.length > DOUBLE_FLICK_PATTERN.length) buf.shift();
-      if (buf.length === DOUBLE_FLICK_PATTERN.length) {
-        let match = true;
-        for (let i = 0; i < DOUBLE_FLICK_PATTERN.length; i++) {
-          if (buf[i] !== DOUBLE_FLICK_PATTERN[i]) { match = false; break; }
-        }
-        if (match) fire();
+      const { moves, bad } = parseScrambleStrict(move);
+      // One stream event is one turn; slices expand into two commuting blocks.
+      if (/\s|,/.test(move.trim()) || bad.length || !moves.length
+        || moves.some(turn => turn.isRotation || Math.abs(turn.amount) !== 1)) {
+        previous = null;
+        return;
       }
+      if (previous?.length === moves.length && moves.every((turn, index) => {
+        const last = previous![index];
+        return turn.face === last.face && turn.layers === last.layers && turn.amount === -last.amount;
+      })) fire();
+      previous = moves;
     };
     const unsub = onMoveSubRef.current(cb);
     return () => { unsub(); };

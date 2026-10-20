@@ -992,7 +992,7 @@ export function KeymapModal({ open, onClose, keymap, onKeymapChange, onResetKeym
           </div>
 
           <button type="button" className="sim-keymap-reset" onClick={onResetKeymap}>
-            {t('恢复默认快捷键', 'Reset shortcuts to defaults')}
+            {t('恢复默认', 'Reset defaults')}
           </button>
         </div>
       </div>

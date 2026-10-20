@@ -10,6 +10,31 @@ function integer(value, name, min, max) {
   if (!Number.isSafeInteger(value) || value < min || value > max) throw new Error(`${name} must be ${min}..${max}`);
   return value;
 }
+// This is a claim from the checked WASM constructor, not a replacement for a
+// pruning-table checksum or independent solution verification. The coordinator
+// requires every worker to attest the same immutable root and inverse bounds.
+export function validateRootBoundProof(proof, threads, { allowFixture = false } = {}) {
+  integer(threads, 'proof threads', 1, MAX_THREADS);
+  if (!proof || proof.schema !== 'cuberoot.root-bound-proof.v1') throw new Error('Missing root-bound proof');
+  if (proof.source !== 'pdb-forward-inverse' && !(allowFixture && proof.source === 'fixture-orientation-bound'))
+    throw new Error('Unsupported root-bound proof source');
+  integer(proof.maximum, 'oracle maximum', 10, 13);
+  integer(proof.lowerBound, 'root lower bound', 0, proof.maximum);
+  if (proof.oracleLookups !== 4 * threads) throw new Error('Root proof must include the independently repeated reads');
+  if (!Array.isArray(proof.workers) || proof.workers.length !== threads) throw new Error('Incomplete root-bound worker proofs');
+  const seen = new Set();
+  const expected = proof.workers[0];
+  for (const row of proof.workers) {
+    integer(row.worker, 'proof worker', 0, threads - 1);
+    integer(row.normal, 'normal root bound', 0, proof.maximum);
+    integer(row.inverse, 'inverse root bound', 0, proof.maximum);
+    if (seen.has(row.worker)) throw new Error('Duplicate root-bound worker proof');
+    seen.add(row.worker);
+    if (row.normal !== expected.normal || row.inverse !== expected.inverse) throw new Error('Workers disagree on root bounds');
+    if (Math.max(row.normal, row.inverse) !== proof.lowerBound) throw new Error('Initial depth lacks a matching root bound');
+  }
+  return proof.lowerBound;
+}
 export function errorFromWorker(message) {
   const context = `worker=${message.worker ?? '?'} operation=${message.operation ?? '?'} depth=${message.depth ?? '-'}`;
   const error = new Error(`Rust WASM ${context}: ${message.error}`);
@@ -48,6 +73,8 @@ export default async function createModule(options = {}) {
     ?? options.wasmURL ?? new URL('./cube48opt-rust8.wasm', import.meta.url)));
   const memory = new WebAssembly.Memory({ initial: BigInt(INITIAL_BYTES / PAGE), maximum: BigInt(MAX_PAGES), shared: true, address: 'i64' });
   const { instance, api } = await instantiate(compiled, memory);
+  const rootBoundEnabled = api.cubeopt_root_bound_enabled?.() === 1;
+  if (options.fixtureRootBound && (!options.fixture || !rootBoundEnabled)) throw new Error('Root-bound fixture requires an enabled small-check module');
   const maxThreads = api.cubeopt_max_threads();
   if (threads > maxThreads) throw new Error(`This WASM supports at most ${maxThreads} workers`);
   if (api.cubeopt_supports_variant(variant) !== 1) throw new Error('WASM does not support this variant');
@@ -56,7 +83,7 @@ export default async function createModule(options = {}) {
   const tablePointer = Number(api.cubeopt_pdb_ptr());
   const layout = sharedMemoryLayout(tablePointer, options.fixture ? 0 : tableBytes, threads);
   const metadata = Object.freeze({ implementation: 'cuberoot-rust-opt-shared-wasm', abiVersion: 2,
-    variant, threads, maxThreads, memory64: true, sharedTable: true, tableBytes, snapshotBytes,
+    variant, threads, maxThreads, memory64: true, sharedTable: true, tableBytes, snapshotBytes, rootBoundEnabled,
     workerRegionBytes: layout.workerRegionBytes, reservedMemoryBytes: layout.requiredBytes });
   const workers = [];
   let nextId = 0, ready = false, busy = false, broken = false, initializing, closing;
@@ -97,7 +124,8 @@ export default async function createModule(options = {}) {
         const workerURL = options.workerURL ?? new URL('./cube48opt-rust8-worker.mjs', import.meta.url);
         await Promise.all(Array.from({ length: threads }, (_, index) => new Promise((resolve, reject) => {
           const worker = new Worker(workerURL, { workerData: { compiled, memory, variant, threads, index,
-            fixture: !!options.fixture, region: layout.regionBase + index * WORKER_REGION_BYTES } });
+            fixture: !!options.fixture, fixtureRootBound: !!options.fixtureRootBound,
+            region: layout.regionBase + index * WORKER_REGION_BYTES } });
           const w = { worker, pending: new Map(), rejectStartup: reject }; workers.push(w);
           const fail = error => { broken = true; reject(error); for (const p of w.pending.values()) p.reject(error); w.pending.clear(); };
           worker.on('error', fail);
@@ -128,8 +156,22 @@ export default async function createModule(options = {}) {
       const stats = { nodes: 0, probes: 0, jobs: 0, workers: Array(threads).fill(0), depthResults: [] };
       try {
         Atomics.store(control, 0, 0);
-        await Promise.all(workers.map(w => call(w, 'begin', { scramble })));
-        for (let depth = 0; depth <= maxDepth; depth++) {
+        const roots = await Promise.all(workers.map(w => call(w, 'begin', { scramble })));
+        let initialDepth = 0;
+        if (rootBoundEnabled) {
+          const first = roots[0];
+          const rootBoundProof = { schema: 'cuberoot.root-bound-proof.v1', source: first.rootBounds?.source,
+            lowerBound: first.initialDepth, maximum: first.rootBounds?.maximum, oracleLookups: 4 * threads,
+            workers: roots.map(r => ({ worker: r.worker, normal: r.rootBounds?.normal, inverse: r.rootBounds?.inverse })) };
+          initialDepth = validateRootBoundProof(rootBoundProof, threads, { allowFixture: !!options.fixtureRootBound });
+          if (roots.some(r => r.initialDepth !== initialDepth || r.rootBounds?.source !== rootBoundProof.source
+            || r.rootBounds?.maximum !== rootBoundProof.maximum)) throw new Error('Workers disagree on the initial depth proof');
+          Object.assign(stats, { initialDepth, skippedDepths: initialDepth, rootBoundProof });
+          // These four reads per worker occur during begin, inside the timed
+          // solve call; do not hide them from the aggregate lookup count.
+          stats.probes += rootBoundProof.oracleLookups;
+        }
+        for (let depth = initialDepth; depth <= maxDepth; depth++) {
           Atomics.store(control, 0, 0);
           const results = await Promise.all(workers.map(w => call(w, 'depth', { depth })));
           for (const r of results) { stats.nodes += r.nodes; stats.probes += r.probes; stats.jobs += r.jobs; stats.workers[r.worker] += r.nodes; }
@@ -158,6 +200,7 @@ export default async function createModule(options = {}) {
     },
     async fixtureDeepPrefixes(scramble) {
       if (!options.fixture || !ready || busy) throw new Error('Fixture mode only');
+      Atomics.store(control, 0, 0);
       await Promise.all(workers.map(w => call(w, 'begin', { scramble })));
       const depths = [];
       for (let depth = 0; depth <= 20; depth++) {
@@ -170,6 +213,7 @@ export default async function createModule(options = {}) {
   };
   if (options.instantiateOnly) return module;
   if (options.fixture && typeof api.cubeopt_fixture_create !== 'function') throw new Error('Production module cannot use the fixture oracle');
+  if (options.fixtureRootBound && typeof api.cubeopt_fixture_root_bound_create !== 'function') throw new Error('Production module cannot use the root-bound fixture oracle');
   memory.grow(BigInt(layout.requiredBytes / PAGE - INITIAL_BYTES / PAGE));
   const snapshot = await bytes(options.smallTableBytes ?? options.snapshotURL ?? options.smallTableURL
     ?? new URL(`./cube48opt${variant}.small.bin`, import.meta.url));

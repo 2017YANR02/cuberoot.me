@@ -2,6 +2,9 @@
 import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
+import { invertAlg } from '@cuberoot/shared/alg-transform';
+import { TRAINER_CUBE_ORIENTATION, trainerPhysicalScramble, trainerStepComplete } from '@/app/[lang]/alg/_trainer/smartcube';
 import { applyScramble, fromFaceletString, toFaceletString } from '@cuberoot/shared/timer/reconstruct/state';
 import { SmartCubeSessionController } from '@cuberoot/shared/smart-cube/session';
 import { useTrainerCube, type TrainerCubeState, type UseTrainerCubeOpts } from '@/app/[lang]/alg/_trainer/useTrainerCube';
@@ -15,13 +18,14 @@ vi.mock('@/lib/trainer-store', () => ({
   useTrainerStore: Object.assign((selector: any) => selector(rig.store), { getState: () => rig.store }),
 }));
 
-const facelets = (alg = '') => toFaceletString(applyScramble(3, alg));
+const facelets = (alg = '') => toFaceletString(applyScramble(3, trainerPhysicalScramble(alg) ?? ''));
+const deviceMove = (token: string) => normalizeWcaScramble(`${TRAINER_CUBE_ORIENTATION} ${token}`)!;
 let root: Root, host: HTMLDivElement, state: TrainerCubeState, options: UseTrainerCubeOpts;
 function Harness() { state = useTrainerCube(options); return null; }
 const draw = () => act(async () => { root.render(createElement(Harness)); });
 const move = (token: string, alg: string, timestamp = 1000) => {
   rig.cube.facelets = facelets(alg);
-  rig.opts.onMove(token, timestamp, rig.cube.facelets);
+  rig.opts.onMove(deviceMove(token), timestamp, rig.cube.facelets);
 };
 
 beforeEach(() => {
@@ -40,9 +44,47 @@ beforeEach(() => {
     currentKey: 'test', currentScramble: 'R U', currentAttempt: {} };
   host = document.createElement('div'); document.body.append(host); root = createRoot(host);
 });
-afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.unstubAllGlobals(); });
+afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 
 describe('manual smart-cube training', () => {
+  it.each(['manual', 'virtual'] as const)('uses the diagram grip for the physical target, raw moves and partial OLL finish (%s)', async practice => {
+    const algorithm = "R U R' U R U2 R'";
+    const pll = "R U R' U' R' F R2 U' R' U' R U R' F'";
+    options.sessionSet = 'oll';
+    options.currentScramble = `${pll} ${invertAlg(algorithm)}`;
+    localStorage.setItem('trainer:smart-cube-practice', practice);
+    if (practice === 'virtual') vi.useFakeTimers();
+    const session = new SmartCubeSessionController({
+      onChange: snapshot => { rig.cube.facelets = snapshot.facelets; },
+      onMove: event => rig.opts.onMove(event.move, event.timestamp, event.facelets),
+    }).open();
+    await draw();
+    expect(TRAINER_CUBE_ORIENTATION).toBe("z2 y'");
+    expect(trainerPhysicalScramble('R U F')).toBe('F D R');
+    expect(state.physicalScramble).toBe(trainerPhysicalScramble(options.currentScramble));
+    expect(trainerStepComplete('oll', facelets(options.currentScramble))).toBe(false);
+    if (practice === 'virtual') {
+      expect(rig.cube.hijackTo).toHaveBeenCalledWith(facelets(options.currentScramble), 'oll');
+      session.adoptFacelets(facelets(options.currentScramble));
+      await act(async () => vi.advanceTimersByTime(500));
+    } else {
+      for (const token of options.currentScramble.split(' ')) {
+        await act(async () => { session.move(deviceMove(token)); });
+      }
+      expect(state.reason).toBe('ready');
+      expect(rig.store.startTimer).not.toHaveBeenCalled();
+    }
+    const solution = algorithm.split(' ').map(deviceMove);
+    for (const [index, token] of solution.entries()) {
+      await act(async () => { session.move(token, 2000 + index * 100); });
+    }
+    expect(rig.store.startTimer).toHaveBeenCalledTimes(1);
+    expect(rig.store.stopTimer).toHaveBeenCalledTimes(1);
+    expect(rig.cube.facelets).toBe(facelets(pll));
+    expect(rig.cube.facelets).not.toBe(facelets());
+    expect(state.moves).toEqual(solution);
+  });
+
   it('uses timer guidance for half turns, undo, mismatch and completion, then hides it while solving', async () => {
     options.timing = false;
     options.currentScramble = 'R2 U';
@@ -70,17 +112,17 @@ describe('manual smart-cube training', () => {
     const session = new SmartCubeSessionController({
       onChange: snapshot => { rig.cube.facelets = snapshot.facelets; },
       onMove: event => rig.opts.onMove(event.move, event.timestamp, event.facelets),
-      onSolved: timestamp => rig.opts.onSolved(timestamp),
+      onSolved: timestamp => rig.opts.onSolved?.(timestamp),
     }).open();
     await draw();
     const tokens = options.currentScramble.split(' ');
     for (const token of tokens) {
-      await act(async () => { session.move(token); });
+      await act(async () => { session.move(deviceMove(token)); });
       await draw();
     }
     expect(state.reason).toBe('ready');
     for (const token of tokens.reverse()) {
-      await act(async () => { session.move(token.endsWith('2') ? token : token.endsWith("'") ? token[0] : `${token}'`); });
+      await act(async () => { session.move(deviceMove(token.endsWith('2') ? token : token.endsWith("'") ? token[0] : `${token}'`)); });
       await draw();
     }
     expect(rig.store.nextScramble).toHaveBeenCalledTimes(1);
@@ -98,11 +140,11 @@ describe('manual smart-cube training', () => {
     expect(state.armed).toBe(true);
     expect(state.reason).toBe('ready');
     expect(rig.store.startTimer).not.toHaveBeenCalled();
-    expect(state.physicalMoves).toEqual(['R', 'U']);
+    expect(state.physicalMoves).toEqual(['F', 'D']);
     await act(async () => { move("U'", 'R', 1300); });
     expect(rig.store.startTimer).toHaveBeenCalledTimes(1);
     expect(rig.store.startTimer).toHaveBeenCalledWith(performance.timeOrigin + 1300);
-    await act(async () => { move("R'", '', 1700); rig.opts.onSolved(1700); rig.opts.onSolved(1700); });
+    await act(async () => { move("R'", '', 1700); rig.opts.onSolved?.(1700); rig.opts.onSolved?.(1700); });
     expect(rig.store.stopTimer).toHaveBeenCalledTimes(1);
     expect(rig.store.stopTimer).toHaveBeenCalledWith(performance.timeOrigin + 1700);
     expect(state.armed).toBe(false);
@@ -115,13 +157,13 @@ describe('manual smart-cube training', () => {
 
   it('does not advance on a wrong scramble or a solved state-only resync', async () => {
     options.timing = false; await draw();
-    await act(async () => { move('F', 'F'); rig.opts.onSolved(1000); });
+    await act(async () => { move('F', 'F'); rig.opts.onSolved?.(1000); });
     expect(state.armed).toBe(false);
     expect(rig.store.nextScramble).not.toHaveBeenCalled();
     await act(async () => { move('U', 'R U'); });
-    await act(async () => { move("U'", 'R'); rig.opts.onSolved(); });
+    await act(async () => { move("U'", 'R'); rig.opts.onSolved?.(); });
     expect(rig.store.nextScramble).not.toHaveBeenCalled();
-    await act(async () => { move("R'", ''); rig.opts.onSolved(1500); });
+    await act(async () => { move("R'", ''); rig.opts.onSolved?.(1500); });
     expect(rig.store.nextScramble).toHaveBeenCalledTimes(1);
     expect(rig.store.startTimer).not.toHaveBeenCalled();
     expect(rig.store.stopTimer).not.toHaveBeenCalled();

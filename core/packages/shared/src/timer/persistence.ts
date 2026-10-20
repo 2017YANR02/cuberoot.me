@@ -1,13 +1,13 @@
 import { normalizeTimerSyncSeed, type TimerSyncSeedSettings } from './sync-seed';
 import { normalizeTimerRankScopes, type TimerRankScope } from './settings-contract';
-import { normalizeTimerAutoBackupEvery, DEFAULT_TIMER_AUTO_BACKUP_EVERY } from './backup-client';
+import { normalizeTimerAutoBackupEvery, DEFAULT_TIMER_AUTO_BACKUP_EVERY } from './backup-settings';
 import { normalizeTimerPreScrambleSettings, type TimerPreScrambleSettings } from './pre-scramble';
 import { normalizeTimerSoundSettings, type TimerSoundSettings } from './sound-settings';
 import { normalizeTimerMetronomeSettings, type TimerMetronomeSettings } from './metronome-settings';
 import { normalizeTimerColorNeutralMode, type CnMode } from './color-neutral';
 import { normalizeTimerDisplaySettings, type TimerDisplaySettings } from './display-settings';
 import { normalizeTimerKeymap, type TimerKeymapOverrides } from './input-contract';
-import { normalizeTimerTrainingSettings, type TimerTrainingSettings } from './training-settings';
+import { normalizeTimerTrainingSettings, TRAINING_START_MODES, type TrainingStartMode, type TimerTrainingSettings } from './training-settings';
 import { DEFAULT_TIMER_TYPOGRAPHY, normalizeTimerTypography, type TimerTypographySettings } from './typography';
 import { EVENTS, type EventId, type Penalty, type Solve } from './types';
 import {
@@ -115,6 +115,8 @@ export interface TimerStoreSettings extends TimerSyncSeedSettings,
   /** Auto-upsert a public mark after a successful real-WCA solve. */
   autoMarkWcaScramble: boolean;
   scrambleClickAction: TimerScrambleClickAction;
+  /** Old hidden click preferences were ignored; adopt timing once, then preserve choices. */
+  scrambleClickStartMigrated?: boolean;
   language: 'en' | 'zh';
   theme: 'system' | 'light' | 'dark';
 }
@@ -281,6 +283,10 @@ export function decodeTimerSolve(value: unknown, event: EventId): Solve | null {
     if (typeof value.caseId !== 'string') return null;
     decoded.caseId = value.caseId;
   }
+  if (value.trainingStartMode !== undefined) {
+    if (!TRAINING_START_MODES.includes(value.trainingStartMode as TrainingStartMode)) return null;
+    decoded.trainingStartMode = value.trainingStartMode as TrainingStartMode;
+  }
   if (value.scrambleSource !== undefined) {
     if (!isRecord(value.scrambleSource)
       || (value.scrambleSource.kind !== 'wca'
@@ -323,6 +329,10 @@ export function decodeTimerSolve(value: unknown, event: EventId): Solve | null {
   if (value.reconstruction !== undefined) {
     if (!Array.isArray(value.reconstruction) || !value.reconstruction.every((line) => typeof line === 'string')) return null;
     decoded.reconstruction = [...value.reconstruction];
+  }
+  if (value.watchReconRevision !== undefined) {
+    if (typeof value.watchReconRevision !== 'number' || !Number.isSafeInteger(value.watchReconRevision) || value.watchReconRevision < 0) return null;
+    decoded.watchReconRevision = value.watchReconRevision;
   }
   if (value.reconOk !== undefined) {
     if (typeof value.reconOk !== 'boolean') return null;
@@ -450,7 +460,8 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
       )))) return null;
   if (value.language !== 'en' && value.language !== 'zh') return null;
   if (value.theme !== 'system' && value.theme !== 'light' && value.theme !== 'dark') return null;
-  if (value.bluetoothAutoReady !== undefined
+  // Accept the retired mode in historical backups; normalization migrates it.
+  if (value.bluetoothAutoReady !== undefined && value.bluetoothAutoReady !== 'off'
     && !TIMER_SMART_CUBE_AUTO_READY_MODES.includes(value.bluetoothAutoReady as TimerSmartCubeSettings['bluetoothAutoReady'])) return null;
   if (value.liveCubeView !== undefined
     && !TIMER_SMART_CUBE_LIVE_VIEWS.includes(value.liveCubeView as TimerSmartCubeSettings['liveCubeView'])) return null;
@@ -527,7 +538,10 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
     bldMemo: typeof value.bldMemo === 'boolean'
       ? value.bldMemo
       : DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS.bldMemo,
-    scrambleClickAction: normalizeTimerScrambleClickAction(value.scrambleClickAction),
+    scrambleClickAction: value.scrambleClickStartMigrated === true
+      ? normalizeTimerScrambleClickAction(value.scrambleClickAction)
+      : DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION,
+    scrambleClickStartMigrated: true,
     ...scramblePreview,
     ...normalizeTimerTypography(value),
     ...normalizeTimerDisplaySettings(value),
@@ -712,6 +726,7 @@ export function createTimerStoreSettings(language: 'en' | 'zh' = 'en'): TimerSto
     autoBackupEvery: DEFAULT_TIMER_AUTO_BACKUP_EVERY,
     autoMarkWcaScramble: DEFAULT_TIMER_AUTO_MARK_WCA_SCRAMBLE,
     scrambleClickAction: DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION,
+    scrambleClickStartMigrated: true,
     ...DEFAULT_TIMER_SCRAMBLE_PREVIEW_SETTINGS,
     ...DEFAULT_TIMER_WCA_SOURCE_SETTINGS,
     language,

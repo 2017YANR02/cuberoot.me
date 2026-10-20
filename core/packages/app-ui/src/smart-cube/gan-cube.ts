@@ -1,9 +1,10 @@
+import { GanV4CubeConnection } from './gan-v4-cube';
+import { createGanV1Session, GAN_V1_SERVICE_UUID, GAN_V1_META_SERVICE_UUID } from '@cuberoot/shared/smart-cube/gan-v1';
 import { GIIKER_DATA_SERVICE_UUID } from '@cuberoot/shared/smart-cube/giiker';
 import { createLegacyCubeSession } from '@cuberoot/shared/smart-cube/legacy-session';
 import { createDeviceStateReset } from '@cuberoot/shared/smart-cube/device-reset';
 import { createGanV2ResetCommand } from '@cuberoot/shared/smart-cube/gan-v2';
 import { createGanV3ResetCommand } from '@cuberoot/shared/smart-cube/gan-v3';
-import { createGanV4ResetCommand } from '@cuberoot/shared/smart-cube/gan-v4';
 import {
   GAN_V2_NOTIFY_CHARACTERISTIC_UUID,
   GAN_V2_SERVICE_UUID,
@@ -29,27 +30,14 @@ import {
   decodeGanV3Frame,
   matchesGanV3Name,
 } from '@cuberoot/shared/smart-cube/gan-v3';
-import {
-  GAN_V4_NOTIFY_CHARACTERISTIC_UUID,
-  GAN_V4_SERVICE_UUID,
-  GAN_V4_WRITE_CHARACTERISTIC_UUID,
-  createGanV4BatteryCommand,
-  createGanV4Cipher,
-  createGanV4DecodeState,
-  createGanV4FaceletsCommand,
-  createGanV4HardwareInfoCommand,
-  createGanV4HistoryCommand,
-  createGanV4IdleStateChecks,
-  decodeGanV4Frame,
-  matchesGanV4Name,
-} from '@cuberoot/shared/smart-cube/gan-v4';
+import { GAN_V4_SERVICE_UUID, createGanV4IdleStateChecks, matchesGanV4Name } from '@cuberoot/shared/smart-cube/gan-v4';
 import type { GyroSink } from '@cuberoot/shared/smart-cube/gan-crypto';
 
 import { resolveCubeMac } from './mac';
 
 import type { BleDeviceRef, BleServiceRef, BleTransport } from './transport';
 
-export type GanCubeProtocol = 'gan-v2' | 'gan-v3' | 'gan-v4';
+export type GanCubeProtocol = 'gan-v1' | 'gan-v2' | 'gan-v3' | 'gan-v4';
 
 export interface GanCubeStatus {
   protocol: GanCubeProtocol | 'giiker';
@@ -63,7 +51,7 @@ export interface GanCubeStatus {
 export interface GanCubeCallbacks {
   onDisconnect(): void;
   onNeedMac?(deviceName: string): Promise<string | null>;
-  onMove(move: string, deviceTimestamp?: number): void;
+  onMove(move: string, deviceTimestamp?: number, metadata?: { delayed?: boolean }): void;
   onProtocolError(): void;
   onState?(facelets: string): void;
   onGyro?: GyroSink;
@@ -85,10 +73,13 @@ function protocolForService(services: ReadonlyArray<BleServiceRef>): GanCubeProt
   if (hasService(services, GAN_V4_SERVICE_UUID)) return 'gan-v4';
   if (hasService(services, GAN_V3_SERVICE_UUID)) return 'gan-v3';
   if (hasService(services, GAN_V2_SERVICE_UUID)) return 'gan-v2';
+  if (hasService(services, GAN_V1_SERVICE_UUID) && hasService(services, GAN_V1_META_SERVICE_UUID)) return 'gan-v1';
   return null;
 }
 
 export class GanCubeConnection {
+  private v4: GanV4CubeConnection | null = null;
+  private v1: ReturnType<typeof createGanV1Session> | null = null;
   private legacy: ReturnType<typeof createLegacyCubeSession> | null = null;
   private calibration: ReturnType<typeof createDeviceStateReset> | null = null;
   private deviceId: string | null = null;
@@ -122,7 +113,7 @@ export class GanCubeConnection {
     if (!this.forcedProtocol && !namedProtocol) throw new Error('unsupported GAN protocol');
 
     const generation = ++this.generation;
-    const knownMac = /^Gi/i.test(device.name) ? null : await resolveCubeMac(device, 'gan', this.callbacks.onNeedMac);
+
     if (generation !== this.generation) throw new Error('smart cube connection closed');
 
 
@@ -130,6 +121,8 @@ export class GanCubeConnection {
     const current = () => this.generation === generation && this.deviceId === device.id;
     const onDisconnect = () => {
       if (!current()) return;
+      void this.v4?.disconnect(); this.v4 = null;
+      this.v1?.dispose(); this.v1 = null;
       this.calibration?.dispose();
       this.calibration = null;
       this.generation++;
@@ -171,10 +164,25 @@ export class GanCubeConnection {
         return;
       }
     }
-    const mac = knownMac ?? await resolveCubeMac(device, 'gan', this.callbacks.onNeedMac);
-    if (!current()) throw new Error('smart cube connection closed');
     const protocol = this.forcedProtocol ?? await this.detectProtocol(device, namedProtocol);
+    if (!current()) throw new Error('smart cube connection closed');
     this.protocol = protocol;
+    this.emitStatus(protocol, null, 0, 0, 0, false);
+    if (protocol === 'gan-v1') {
+      let stateReady = false, moveCounter = 0;
+      const status = (battery: number | null) => this.callbacks.onStatus?.({ protocol, battery, moveCounter, pendingMoves: 0, badFrames: 0, stateReady });
+      status(null);
+      this.v1 = createGanV1Session((service, characteristic) => this.transport.read(device.id, service, characteristic), {
+        onState: facelets => { if (current()) { stateReady = true; this.callbacks.onState?.(facelets); } },
+        onMove: (move, time, metadata) => { if (current()) { moveCounter++; this.callbacks.onMove(move, time, metadata); } },
+        onBattery: battery => { if (current()) status(battery); },
+        onError: () => { if (current()) this.callbacks.onProtocolError(); },
+      });
+      await this.v1.start();
+      return;
+    }
+    const mac = await resolveCubeMac(device, 'gan', this.callbacks.onNeedMac);
+    if (!current()) throw new Error('smart cube connection closed');
     if (protocol === 'gan-v2') {
       await this.startV2(device, mac, current);
     } else if (protocol === 'gan-v3') {
@@ -282,7 +290,9 @@ export class GanCubeConnection {
       } catch {
         return;
       }
-      for (const move of decodeGanV2Frame(plain, decodeState, this.callbacks.onGyro)) {
+      const moves = decodeGanV2Frame(plain, decodeState, this.callbacks.onGyro);
+      if (decodeState.historyLost) { this.reportProtocolError(current, protocolError); return; }
+      for (const move of moves) {
         this.callbacks.onMove(move);
       }
       this.emitStatus(
@@ -321,10 +331,7 @@ export class GanCubeConnection {
       requestHistory: (startMoveCounter, numberOfMoves) => {
         void send(createGanV3HistoryCommand(startMoveCounter, numberOfMoves), false);
       },
-      onWedged: () => {
-        decodeState.sync.reset();
-        void send(createGanV3FaceletsCommand(), false);
-      },
+      onWedged: () => this.reportProtocolError(current, protocolError),
       onState: (facelets) => {
         stateReady = true;
         this.calibration?.observe(facelets); this.callbacks.onState?.(facelets);
@@ -344,8 +351,13 @@ export class GanCubeConnection {
       } catch {
         return;
       }
+      const recovering = decodeState.sync.pending > 0 || plain[1] === 6;
       const moves = decodeGanV3Frame(plain, decodeState);
-      for (const move of moves) this.callbacks.onMove(move.mv, move.ts);
+      if (protocolError.value || !current()) return;
+      for (const move of moves) {
+        if (recovering) this.callbacks.onMove(move.mv, move.ts, { delayed: true });
+        else this.callbacks.onMove(move.mv, move.ts);
+      }
       if (moves.length > 0) idleChecks.afterMoves();
       this.emitStatus(
         'gan-v3', decodeState.battery, decodeState.sync.counter, decodeState.sync.pending,
@@ -367,67 +379,23 @@ export class GanCubeConnection {
     await send(createGanV3BatteryCommand());
   }
 
-  private async startV4(
-    device: BleDeviceRef,
-    mac: Uint8Array,
-    current: () => boolean,
-  ): Promise<void> {
-    const cipher = createGanV4Cipher(mac);
-    const send = this.createSender(
-      device, current, GAN_V4_SERVICE_UUID, GAN_V4_WRITE_CHARACTERISTIC_UUID, cipher,
-    );
-    this.sendCommand = (command) => send(command);
-    let stateReady = false;
-    const protocolError = { value: false };
-    const decodeState = createGanV4DecodeState({
-      requestHistory: (startMoveCounter, numberOfMoves) => {
-        void send(createGanV4HistoryCommand(startMoveCounter, numberOfMoves), false);
-      },
-      onWedged: () => {
-        decodeState.sync.reset();
-        stateReady = false;
-        void send(createGanV4FaceletsCommand(), false);
-      },
-      onState: (facelets) => {
-        stateReady = true;
-        this.calibration?.observe(facelets); this.callbacks.onState?.(facelets);
-      },
-    });
-    const idleChecks = createGanV4IdleStateChecks({
-      schedule: (callback, delay) => setTimeout(callback, delay),
-      cancel: (handle) => clearTimeout(handle),
-      requestState: () => { void send(createGanV4FaceletsCommand(), false); },
-    });
-    this.disposeTimers = () => idleChecks.dispose();
-    await this.subscribe(device, current, GAN_V4_SERVICE_UUID, GAN_V4_NOTIFY_CHARACTERISTIC_UUID, (value) => {
-      if (!current() || protocolError.value) return;
-      let plain: Uint8Array;
-      try {
-        plain = cipher.decrypt(bytesFromView(value));
-      } catch {
-        return;
-      }
-      const moves = decodeGanV4Frame(plain, decodeState, this.callbacks.onGyro);
-      for (const move of moves) this.callbacks.onMove(move.mv, move.ts);
-      if (moves.length > 0) idleChecks.afterMoves();
-      this.emitStatus(
-        'gan-v4', decodeState.battery, decodeState.sync.counter, decodeState.sync.pending,
-        decodeState.badFrames, stateReady,
-      );
-      if (decodeState.badFrames >= 6) this.reportProtocolError(current, protocolError);
-    });
-    this.calibration = createDeviceStateReset({
-      sendReset: begin => send(createGanV4ResetCommand(), true, begin),
-      prepareSnapshot: () => { decodeState.sync.reset(); },
-      requestSnapshot: () => send(createGanV4FaceletsCommand()),
-    });
-    this.requestStateCommand = async () => {
-      await send(createGanV4FaceletsCommand());
-      await send(createGanV4BatteryCommand());
+  private async startV4(device: BleDeviceRef, mac: Uint8Array, current: () => boolean): Promise<void> {
+    // Discovery/physical connection belongs to this owner; keep the proven v4
+    // recovery driver as the single implementation for Watch and native hosts.
+    const transport: BleTransport = {
+      connect: async () => {}, disconnect: async () => {},
+      initialize: () => this.transport.initialize(),
+      getMtu: device => this.transport.getMtu(device),
+      requestDevice: options => this.transport.requestDevice(options),
+      read: (...args) => this.transport.read(...args),
+      write: (...args) => this.transport.write(...args),
+      subscribe: (...args) => this.transport.subscribe(...args),
     };
-    await send(createGanV4HardwareInfoCommand());
-    await send(createGanV4FaceletsCommand());
-    await send(createGanV4BatteryCommand());
+    const driver = new GanV4CubeConnection(transport, this.callbacks, true);
+    this.v4 = driver;
+    await driver.connect({ ...device, macAddress: Array.from(mac, byte => byte.toString(16).padStart(2, '0')).join(':') });
+    if (!current()) { await driver.disconnect(); throw new Error('smart cube connection closed'); }
+    this.requestStateCommand = () => driver.requestState();
   }
 
   getProtocol(): GanCubeProtocol | 'giiker' | null {
@@ -440,11 +408,14 @@ export class GanCubeConnection {
   }
 
   async resetDeviceState(): Promise<void> {
+    if (this.v4) { await this.v4.resetDeviceState(); return; }
     if (!this.calibration) throw new Error('smart cube is not connected');
     await this.calibration.run();
   }
 
   async disconnect(): Promise<void> {
+    const v4 = this.v4; this.v4 = null;
+    this.v1?.dispose(); this.v1 = null;
     this.calibration?.dispose();
     this.calibration = null;
     const deviceId = this.deviceId;
@@ -455,6 +426,7 @@ export class GanCubeConnection {
     this.requestStateCommand = null;
     this.disposeTimers?.();
     this.disposeTimers = null;
+    await v4?.disconnect();
     await this.legacy?.dispose();
     this.legacy = null;
     const stop = this.stopNotifications;

@@ -30,7 +30,7 @@ import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags
 import { compSourceLine } from '@/lib/comp-schedule';
 import { statsUrl } from '@/lib/stats-base';
 import { VARIANT_ORDER, stageLabel, variantLabel, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT, EO_DATA_VARIANTS, EO_STAGE_VARIANT, LBL_STAGE_VARIANT, VARIANT_STAGES, LENGTH_VARIANT, RECENT_METRIC_ORDER, uiVariantOf, uiVariantOptions, dataVariantOfStage, uiStagesOf, variantDataRef } from '@/lib/scramble-variants';
-import { VariantSelect } from '@/components/VariantSelect';
+import { MethodStagePicker } from '@cuberoot/timer-ui/puzzle-picker';
 import { fetchRecentScramblesEvents, type RecentScramblesEventsJson, type RecentScrMeta } from '@/lib/recent-scrambles-events';
 import { formatDateRangeIso } from '@/lib/wca-date';
 import { eventDisplayName, wcaToReconEvent } from '@/lib/wca-events';
@@ -514,7 +514,7 @@ export default function RecentScrambles({ lang }: Props) {
         <span className="rs-title">{tr({ zh: '近期打乱', en: 'Recent Scrambles' })}</span>
         {dateRange && <span className="rs-date-range">{dateRange}</span>}
       </div>
-      <PuzzlePicker isZh={isZh} selectedEvent={curEvent} groups={pickerGroups} onSelect={setEvent} />
+      <PuzzlePicker showArrow={false} isZh={isZh} selectedEvent={curEvent} groups={pickerGroups} onSelect={setEvent} />
       {curEvent === '333'
         ? <Recent333Body data={data} dist={dist} eventsJson={eventsJson} isZh={isZh} lp={lp} />
         : <RecentEventBody event={curEvent} json={eventsJson} isZh={isZh} lp={lp} />}
@@ -594,23 +594,24 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
   const curVariant = variantOptions.includes(variant) ? variant : (variants[0] ?? 'std');
   const isLength = curVariant === LENGTH_VARIANT;
   // 聚合方法(lbl / block / eo)的指标散在多个数据变体里 -> 按映射逐个指标回查。
-  const stageVariantMap = curVariant === 'block' ? BLOCK_STAGE_VARIANT : curVariant === 'eo' ? EO_STAGE_VARIANT : null;
-  const metrics = useMemo(() => {
-    if (curVariant === 'lbl') {
-      return uiStagesOf(curVariant).filter((m) => {
-        const ref = variantDataRef(curVariant, m);
+  const metricsForVariant = useCallback((selectedVariant: string) => {
+    if (selectedVariant === 'lbl') {
+      return uiStagesOf(selectedVariant).filter((m) => {
+        const ref = variantDataRef(selectedVariant, m);
         return ref.recentMetric in (data?.rank?.[ref.variant] ?? {});
       });
     }
+    const stageVariantMap = selectedVariant === 'block' ? BLOCK_STAGE_VARIANT : selectedVariant === 'eo' ? EO_STAGE_VARIANT : null;
     if (stageVariantMap) {
       return RECENT_METRIC_ORDER.filter((m) => {
         const dv = stageVariantMap[m];
         return dv !== undefined && m in (data?.rank?.[dv] ?? {});
       });
     }
-    const r = data?.rank?.[curVariant];
-    return r ? RECENT_METRIC_ORDER.filter((m) => m in r) : [];
-  }, [data, curVariant, stageVariantMap]);
+    const rank = data?.rank?.[selectedVariant];
+    return rank ? RECENT_METRIC_ORDER.filter((m) => m in rank) : [];
+  }, [data]);
+  const metrics = useMemo(() => metricsForVariant(curVariant), [curVariant, metricsForVariant]);
   const curMetric = metrics.includes(metric) ? metric : (metrics[0] ?? 'cross');
   const aliasRef = variantDataRef(curVariant, curMetric);
   const dataVariant = aliasRef.variant;
@@ -668,21 +669,17 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
       value={String(mode === 'rare')}
       onChange={event => { const v = event.currentTarget.value === 'true'; setMode(v ? 'rare' : 'type'); }}
       aria-label={tr({ zh: '视图', en: 'View' })}
-      className="native-select"
+      className="rs-select"
     >
       <option value="true">{tr({ zh: '概率', en: 'Rare' })}</option>
       <option value="false">{tr({ zh: '类型', en: 'By type' })}</option>
     </select>
   );
   const variantSelect = (
-    <VariantSelect
-      className="rs-select"
-      value={curVariant}
-      options={variantOptions}
-      onChange={(v) => { markTouched(); setVariant(v); }}
-      isZh={isZh}
-      label={variantLabel}
-      ariaLabel={tr({ zh: '变体', en: 'Variant' })}
+    <MethodStagePicker
+      isZh={isZh} method={curVariant} stage={curMetric} methods={variantOptions}
+      stagesOf={v => v === LENGTH_VARIANT ? [] : metricsForVariant(v)}
+      onSelect={(v, m) => { markTouched(); setVariant(v); if (m) setMetric(m); }}
     />
   );
 
@@ -719,9 +716,6 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
         </>) : (<>
         {!isWhole && <SubsetColorPicker sel={pickerSel} isZh={isZh} />}
         {variantSelect}
-        {metrics.length > 1 && (
-          <VariantSelect className="rs-select" value={curMetric} options={metrics} onChange={(v) => { markTouched(); setMetric(v); }} isZh={isZh} label={stageLabel} ariaLabel={tr({ zh: '类型', en: 'Type' })} />
-        )}
         {steps.length > 0 && (
           <select className="rs-select" value={curStep ?? ''} onChange={(e) => { markTouched(); setStep(Number(e.target.value)); }} aria-label={tr({ zh: '步数', en: 'Moves' })}>
             {steps.map((s) => (<option key={s} value={s}>{stepOptionLabel(s)}</option>))}

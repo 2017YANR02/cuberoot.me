@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "version": "2cf62aac9b538a9d",
-  "caseCount": 472,
-  "pairCount": 222784,
+  "version": "dbb361143e883990",
+  "caseCount": 493,
+  "pairCount": 243049,
   "recordBytes": 21,
   "moves": [
     "U",
@@ -25,30 +25,58 @@
     "B'"
   ],
   "metric": "HTM",
-  "solver": "nissy-core H48 h10",
-  "phases": "Shortest verified pre/post AUF representative for processed pairs; original representative for remaining pairs",
-  "dataFile": "pairs-2cf62aac9b538a9d.bin",
-  "dataBytes": 4678464,
-  "dataSha256": "2cf62aac9b538a9de0a23811dc38f5a4bcd108b395e72f00f782e65edea7b3f0",
-  "casesFile": "cases-c4cd4db9e9354146.json",
-  "casesSha256": "c4cd4db9e935414623af0a4477de438fd4efcaa5ec84edce7b0e549c455df801",
-  "generatedAt": "2026-10-12T01:58:07.720Z",
-  "histogram": {
-    "10": 3,
-    "11": 18,
-    "12": 144,
-    "13": 792,
-    "14": 4251,
-    "15": 20978,
-    "16": 79344,
-    "17": 107634,
-    "18": 9619,
-    "19": 1
-  },
-  "optimization": {
-    "pairs": 2208,
-    "totalPairs": 222784,
-    "improvedPairs": 2068,
-    "totalMovesSaved": 3082
-  }
+  "solver": "Rust Opt10 coset",
+  "selection": [
+    "htm",
+    "qtm",
+    "generators"
+  ],
+  "selectionScope": "Best among all saved optimal-HTM state solutions; not exhaustive QTM optimization within one state",
+  "phases": "All AUF states, reduced by eight axis-preserving rotations; independently verified ordered pairs",
+  "dataFile": "pairs-1fbae05e0b92ca8d.bin",
+  "dataBytes": 5104029,
+  "dataSha256": "1fbae05e0b92ca8dd88e2f4bf5a4afc182db86cc8a35dc6456662b10c4f0f254",
+  "casesFile": "cases-0c10155f0baa71f8.json",
+  "casesSha256": "0c10155f0baa71f89e9f92b101e121a4d2e0f1a8aa30b51dae399985b08bd319",
+  "generatedAt": "2026-10-16T04:42:01.059Z",
+  "histogram": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    5,
+    10,
+    108,
+    469,
+    2318,
+    10716,
+    42511,
+    111264,
+    73398,
+    2244,
+    4,
+    0,
+    0
+  ],
+  "sourceStates": 7555446,
+  "sources": [
+    {
+      "file": "representatives.csv",
+      "bytes": 19627201,
+      "rows": 355891,
+      "sha256": "fdeaa5804b7018f9379edf89a9034426bcae18f5f3b0bc363895fdd2cea14b36"
+    },
+    {
+      "file": "solutions.csv",
+      "bytes": 404135191,
+      "rows": 7199555,
+      "sha256": "3599892c31152ebc679ecad814c168b9f48f30f0221787977f6892604f24a681"
+    }
+  ],
+  "zbllCaseCount": 472,
+  "pllCaseCount": 21
 }

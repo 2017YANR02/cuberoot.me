@@ -1,4 +1,6 @@
 'use client';
+import { useDouyinToolSurface } from '@/lib/douyin-content';
+import { douyinContentAvailable } from '@cuberoot/shared/douyin-content';
 
 import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 
@@ -111,6 +113,7 @@ function LandingCardContent({ label, Icon, iconImg }: LandingCardContentProps) {
 type ReconSolve = Awaited<ReturnType<typeof getPinnedRecons>>[number];
 
 export default function LandingPage() {
+  const douyin = useDouyinToolSurface();
   const contentRefreshKey = useContentRefreshKey();
   // Title is owned by page.tsx's generateMetadata (lib/page-meta.ts, key '').
   // The useDocumentTitle('', '') call that used to live here forced the tab back
@@ -362,7 +365,7 @@ export default function LandingPage() {
   const renderCardGrid = (groupId: string, cards: CardConfig[], className: string, adminArea = false) => {
     const orderedCards = applyLandingCardOrder(cards, cardOrders[groupId] ?? []);
     // Split the same full group by access; keep all IDs when saving its order.
-    const visibleCards = orderedCards.filter((card) => (isAdmin || locksLoaded)
+    const visibleCards = orderedCards.filter((card) => (!douyin || douyinContentAvailable(card.href)) && (isAdmin || locksLoaded)
       && (adminArea ? isAdmin && isCardLocked(card) : !isCardLocked(card)));
     if (visibleCards.length === 0) return null;
     const handleDragEnd = (event: DragEndEvent) => {
@@ -433,6 +436,17 @@ export default function LandingPage() {
       </section>
     );
   });
+
+  if (douyin) return <div className="landing-page">
+    <div className="landing-auth"><Link href="/account" prefetch={false}>{tr({ zh: '我的', en: 'Account' })}</Link><HeaderToggles /></div>
+    <div className="brand-line"><span className="brand-name">CubeRoot</span></div>
+    <p>{tr({ zh: '计时、成绩记录与比赛信息查询', en: 'Timing, solve records and competition information' })}</p>
+    <div className="hero-grids">
+      {renderCardGrid('main', PRIMARY_CARDS, 'primary-hero-grid')}
+      {renderCardGrid('wca', WCA_CARDS, 'wca-hero-grid')}
+    </div>
+    {renderCardGrid('tools', SECTIONS.flatMap(section => section.cards), 'cards-container')}
+  </div>;
 
   return (
     <div className="landing-page">

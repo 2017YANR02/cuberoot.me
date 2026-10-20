@@ -1,0 +1,15 @@
+.alg-image-download-icon { display: inline-flex; align-items: center; justify-content: center; padding: 8px; border: 0; background: transparent; color: var(--muted-foreground); cursor: pointer; }
+.alg-image-download-icon:hover { color: var(--foreground); }
+.timer-room-dialog.alg-image-download-dialog { width: min(100%, 440px); }
+.alg-image-download-options { display: flex; flex-direction: column; gap: 12px; padding: 0; margin: 0; border: 0; }
+.alg-image-download-options > label { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.alg-image-download-select { max-width: 70%; padding: 6px; border: 1px solid var(--input); border-radius: 6px; background: var(--background); color: var(--foreground); }
+.alg-image-download-actions { display: flex; gap: 12px; margin-bottom: 12px; }
+.alg-image-download-action { padding: 6px 12px; border: 1px solid var(--border-default); border-radius: 6px; background: transparent; color: var(--foreground); cursor: pointer; }
+.alg-image-download-action:disabled { opacity: .5; cursor: default; }
+.alg-image-download-cases { display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow: auto; }
+.alg-image-download-cases > .bool-toggle { width: 100%; justify-content: space-between; }
+.alg-related-download-card { display: flex; flex-direction: column; align-items: center; }
+
+.alg-image-download-target { min-width: 0; -webkit-touch-callout: none; }
+.alg-image-download-target:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }

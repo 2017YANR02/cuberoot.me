@@ -156,16 +156,26 @@ function writeStoredSessionValue(session: SessionData): boolean {
   }
 }
 
-export function requestJson<T>(
-  path: string,
-  options: {
-    method?: 'GET' | 'POST';
+interface JsonRequestOptions {
+    method?: 'GET' | 'POST' | 'DELETE';
     body?: WechatMiniprogram.IAnyObject;
     timeoutMs?: number;
     token?: string;
     idempotencyKey?: string;
-  } = {},
-): Promise<T> {
+    signal?: AbortSignal;
+}
+
+export function requestJson<T>(path: string, options: JsonRequestOptions = {}): Promise<T> {
+  return requestNativeJson(`${API_ORIGIN}${path}`, options);
+}
+
+/** Public assets only: this entry cannot forward credentials or write methods. */
+export function requestStaticJson<T>(path: string): Promise<T> {
+  if (!path.startsWith('/stats/')) return Promise.reject(new Error('Invalid static asset path'));
+  return requestNativeJson(`https://static.cuberoot.me${path}`, {});
+}
+
+function requestNativeJson<T>(url: string, options: JsonRequestOptions): Promise<T> {
   return new Promise((resolve, reject) => {
     let requestTask: WechatMiniprogram.RequestTask | undefined;
     let settled = false;
@@ -178,8 +188,15 @@ export function requestJson<T>(
       if (settled) return;
       settled = true;
       clearRuntimeTimeout(hardTimeout);
+      options.signal?.removeEventListener('abort', abort);
       action();
     };
+    const abort = () => settle(() => {
+      try { requestTask?.abort(); } catch { /* Cancellation must still settle. */ }
+      reject(new ApiError(0, 'request cancelled'));
+    });
+    if (options.signal?.aborted) { abort(); return; }
+    options.signal?.addEventListener('abort', abort, { once: true });
     hardTimeout = scheduleRuntimeTimeout(() => {
       settle(() => {
         try {
@@ -198,7 +215,7 @@ export function requestJson<T>(
 
     try {
       requestTask = miniProgramApi().request({
-        url: `${API_ORIGIN}${path}`,
+        url,
         method: options.method ?? 'GET',
         data: options.body,
         header,

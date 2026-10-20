@@ -23,6 +23,34 @@ import {
   GAN_V4_WRITE_CHARACTERISTIC_UUID,
 } from '@cuberoot/shared/smart-cube/gan-v4';
 
+import { createMoyu32Cipher, MOYU32_SERVICE_UUID, MOYU32_NOTIFY_CHARACTERISTIC_UUID, MOYU32_WRITE_CHARACTERISTIC_UUID } from '@cuberoot/shared/smart-cube/moyu32';
+
+// Exercise the real encrypted address probe before the mocked timer driver starts.
+function attachMoyuProbe(rig: FakeGattRig, suppliedMac?: Uint8Array) {
+  const gatt = makeFakeGatt(rig.device.name!, {
+    [MOYU32_SERVICE_UUID]: [MOYU32_NOTIFY_CHARACTERISTIC_UUID, MOYU32_WRITE_CHARACTERISTIC_UUID],
+  });
+  vi.mocked(rig.server.getPrimaryService).mockImplementation(uuid => gatt.asServer.getPrimaryService(uuid));
+  if (suppliedMac) {
+    const cipher = createMoyu32Cipher(suppliedMac);
+    const state = new Uint8Array(20);
+    state[0] = 0xa3;
+    for (let face = 0; face < 6; face++) for (let sticker = 0; sticker < 8; sticker++) {
+      for (let bit = 0; bit < 3; bit++) {
+        const offset = 8 + face * 24 + sticker * 3 + bit;
+        state[offset >> 3] |= ((face >> (2 - bit)) & 1) << (7 - (offset & 7));
+      }
+    }
+    vi.spyOn(gatt.char(MOYU32_SERVICE_UUID, MOYU32_WRITE_CHARACTERISTIC_UUID), 'writeValue')
+      .mockImplementation(async value => {
+        const bytes = value instanceof ArrayBuffer ? new Uint8Array(value) : new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
+        if (cipher.decrypt(bytes)[0] === 0xa3) {
+          gatt.char(MOYU32_SERVICE_UUID, MOYU32_NOTIFY_CHARACTERISTIC_UUID).emit(cipher.encrypt(state));
+        }
+      });
+  }
+}
+
 const SCRAMBLED = toFaceletString(applyMoves(solved(3), 3, parseScramble('R U')));
 
 describe('GAN v4 battery notifications', () => {
@@ -275,9 +303,10 @@ describe('smart-cube reconnect ownership', () => {
   });
 
   it.each(['WCU_MY32_A1B2', 'WCU_MY32_AABBCCDDEEFF'])('asks for MY32 MAC once and reuses the validated address: %s', async (name) => {
-    const rig = fakeGattRig('my32');
+    const rig = fakeGattRig(name);
     Object.defineProperty(rig.device, 'name', { value: name });
-    clearMac(name);
+    clearMac(rig.device.id);
+    attachMoyuProbe(rig, Uint8Array.of(0x11, 0x22, 0x33, 0x44, 0x55, 0x66));
     vi.mocked(rig.server.getPrimaryServices).mockResolvedValue([{ uuid: moyu32Driver.service } as BluetoothRemoteGATTService]);
     const input = deferred<string | null>();
     onNeedMac = vi.fn(() => input.promise);
@@ -289,11 +318,13 @@ describe('smart-cube reconnect ownership', () => {
     let connection!: Promise<void>;
     await act(async () => {
       connection = cube.connectDevice(rig.device);
-      await vi.waitFor(() => expect(onNeedMac).toHaveBeenCalledWith(name));
+      // 10s advertisement fallback plus three 2s encrypted candidate probes.
+      await vi.advanceTimersByTimeAsync(17000);
+      expect(onNeedMac).toHaveBeenCalledWith(name);
     });
-    expect(rig.device.watchAdvertisements).not.toHaveBeenCalled();
+    expect(rig.device.watchAdvertisements).toHaveBeenCalledTimes(name.endsWith('A1B2') ? 1 : 0);
     expect(start).not.toHaveBeenCalled();
-    expect(savedMac(name)).toBeNull();
+    expect(savedMac(rig.device.id)).toBeNull();
     await act(async () => { input.resolve('11:22:33:44:55:66'); await connection; });
     expect(start.mock.calls[0][2]?.mac).toBe('11:22:33:44:55:66');
     expect(savedMac(name)).toBe('11:22:33:44:55:66');
@@ -301,24 +332,31 @@ describe('smart-cube reconnect ownership', () => {
     await act(async () => { await cube.connectDevice(rig.device); });
     expect(onNeedMac).toHaveBeenCalledOnce();
     expect(start.mock.calls[1][2]?.mac).toBe('11:22:33:44:55:66');
-    expect(rig.device.watchAdvertisements).not.toHaveBeenCalled();
-    clearMac(name);
+    expect(rig.device.watchAdvertisements).toHaveBeenCalledTimes(name.endsWith('A1B2') ? 1 : 0);
+    clearMac(rig.device.id);
   });
 
   it('cancels MY32 connection without saving a MAC or starting its driver', async () => {
     const rig = fakeGattRig('my32-cancel');
     Object.defineProperty(rig.device, 'name', { value: 'WCU_MY32_1234' });
-    clearMac(rig.device.name);
+    clearMac(rig.device.id);
+    attachMoyuProbe(rig);
     vi.mocked(rig.server.getPrimaryServices).mockResolvedValue([{ uuid: moyu32Driver.service } as BluetoothRemoteGATTService]);
     onNeedMac = vi.fn(async () => null);
     await act(async () => root.render(createElement(Harness)));
     const start = vi.spyOn(moyu32Driver, 'start');
-    await act(async () => { await cube.connectDevice(rig.device); });
+    let failure: unknown;
+    await act(async () => {
+      const connection = cube.connectDevice(rig.device).catch(error => { failure = error; });
+      await vi.advanceTimersByTimeAsync(17000);
+      await connection;
+    });
+    expect(failure).toBeInstanceOf(Error);
     expect(onNeedMac).toHaveBeenCalledOnce();
     expect(start).not.toHaveBeenCalled();
-    expect(rig.device.watchAdvertisements).not.toHaveBeenCalled();
+    expect(rig.device.watchAdvertisements).toHaveBeenCalledOnce();
     expect(cube.status.connected).toBe(false);
-    expect(savedMac(rig.device.name)).toBeNull();
+    expect(savedMac(rig.device.id)).toBeNull();
     expect(rig.disconnect).toHaveBeenCalled();
   });
 

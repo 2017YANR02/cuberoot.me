@@ -85,7 +85,7 @@ export const TIMER_MORE_ACTION_COPY: Readonly<Record<TimerMoreActionId, TimerMor
   'more.solver': { en: 'Solver', zh: '通用求解器' },
   'more.bulk': { en: 'Bulk scrambles', zh: '批量打乱' },
   'more.print': { en: 'Print', zh: '打印' },
-  'more.clear-event': { en: 'Clear current event', zh: '清空当前项目' },
+  'more.clear-event': { en: 'Clear current data', zh: '清空当前数据' },
 };
 
 export function timerClearCurrentEventConfirmation(

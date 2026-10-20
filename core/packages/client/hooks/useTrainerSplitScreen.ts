@@ -22,6 +22,6 @@ export function useTrainerSplitScreen({ requested, sessionReady, doubleZbll, roo
   const available = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
   return {
     available,
-    eligible: requested && sessionReady && available && !doubleZbll && !room && caseCount >= 2,
+    eligible: requested && sessionReady && available && !room && caseCount >= (doubleZbll ? 4 : 2),
   };
 }

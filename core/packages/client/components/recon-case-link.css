@@ -1,0 +1,3 @@
+.alg-admin-modal-backdrop.recon-case-backdrop { z-index: 1100; }
+.alg-admin-modal.recon-case-dialog { width: min(1000px, 95vw); }
+.recon-case-dialog .alg-case-detail-back { display: none; }

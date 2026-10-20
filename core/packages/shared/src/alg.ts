@@ -536,7 +536,12 @@ function nodeProcessEnv(): string | undefined {
   return process.env.NODE_ENV;
 }
 
-export async function loadAlg(puzzle: AlgPuzzle, set: string, opts?: { fresh?: boolean }): Promise<AlgFile> {
+/** Hosts without HTTP (watchOS) supply the same versioned AlgFile data offline. */
+export type AlgFileLoader = (puzzle: AlgPuzzle, set: string, opts?: { fresh?: boolean }) => Promise<AlgFile>;
+let algFileLoader: AlgFileLoader | null = null;
+export function configureAlgFileLoader(loader: AlgFileLoader | null): void { algFileLoader = loader; }
+
+async function fetchAlgFile(puzzle: AlgPuzzle, set: string, opts?: { fresh?: boolean }): Promise<AlgFile> {
   // NOTE: 用 build-time NODE_ENV 而不是 hostname 检查 — 走 LAN IP / 隧道域名(dev.cuberoot.me)
   // 等其它 dev host 时,hostname 检查会错判成 prod 直接打 api.cuberoot.me 跨域,
   // 而 api 的 CORS allowlist 没那些 host → 浏览器拦截。server 端 loadAlg 不被调,
@@ -567,14 +572,16 @@ export async function loadAlg(puzzle: AlgPuzzle, set: string, opts?: { fresh?: b
   const queryString = query.toString();
   const url = `${base}/${encodeURIComponent(puzzle)}/${encodeURIComponent(set)}`
     + (queryString ? `?${queryString}` : '');
+  const res = await fetch(url, { cache: 'no-cache' });
+  if (!res.ok) throw new Error(`Failed to load alg ${puzzle}/${set}: HTTP ${res.status}`);
+  return await res.json() as AlgFile;
+}
+
+export async function loadAlg(puzzle: AlgPuzzle, set: string, opts?: { fresh?: boolean }): Promise<AlgFile> {
   const oneHandedCmll = puzzle === '3x3' && set === 'cmll'
     ? loadAlg('3x3', 'oh-cmll', opts).catch(() => null)
     : null;
-  const res = await fetch(url, { cache: 'no-cache' });
-  if (!res.ok) {
-    throw new Error(`Failed to load alg ${puzzle}/${set}: HTTP ${res.status}`);
-  }
-  let file = canonicalize3x3AlgFile((await res.json()) as AlgFile);
+  let file = canonicalize3x3AlgFile(await (algFileLoader ?? fetchAlgFile)(puzzle, set, opts));
   if (oneHandedCmll) {
     const source = await oneHandedCmll;
     if (source) file = mergeOhCmll(file, source);

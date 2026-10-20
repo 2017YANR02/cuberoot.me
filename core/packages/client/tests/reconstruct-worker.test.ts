@@ -9,7 +9,11 @@ class FakeWorker {
   onmessageerror: ((event: MessageEvent) => void) | null = null;
   requests: AnalysisRequest[] = [];
   terminate = vi.fn();
-  postMessage(request: AnalysisRequest) { this.requests.push(request); }
+  warmups = 0;
+  postMessage(request: AnalysisRequest | { type: 'warmup' }) {
+    if ('type' in request) this.warmups++;
+    else this.requests.push(request);
+  }
   reply(response: Omit<AnalysisResponse, 'id'>, id = this.requests.at(-1)!.id) {
     this.onmessage?.({ data: { id, ...response } } as MessageEvent<AnalysisResponse>);
   }
@@ -203,4 +207,20 @@ describe('reconstruction worker lifecycle', () => {
     vi.advanceTimersByTime(1);
     expect(workers).toHaveLength(2);
   });
+});
+
+
+it('reuses a prewarmed worker for the next report and recovers a failed preload worker', async () => {
+  const { analyzer, workers } = setup();
+  analyzer.warmup();
+  expect(workers[0].warmups).toBe(1);
+  expect(workers[0].requests).toHaveLength(0);
+  workers[0].onerror?.({} as ErrorEvent);
+  expect(workers[0].terminate).toHaveBeenCalledTimes(1);
+  analyzer.warmup();
+  const unsubscribe = analyzer.subscribe(input(), () => {});
+  await vi.advanceTimersByTimeAsync(0);
+  expect(workers).toHaveLength(2);
+  expect(workers[1].requests).toHaveLength(1);
+  unsubscribe();
 });

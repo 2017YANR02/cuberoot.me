@@ -116,6 +116,9 @@ const CSTIMER_EVENT_MAP: Record<string, EventId> = {
   '三阶＋直升机': 'cube3heli', '三阶+直升机': 'cube3heli',
   'radiojewel': 'radiojewel', 'jewel': 'radiojewel',
   'radioweb': 'radioweb', 'radiolarian6': 'radioweb',
+  'catscradle': 'catscradle', 'cat’scradle': 'catscradle', "cat'scradle": 'catscradle',
+  'radiolarian5': 'catscradle',
+  'radiocanon': 'radiocanon', 'radiocannon': 'radiocanon', 'radiolarian1.5': 'radiocanon',
 };
 
 /* ------------------------------------------------------------------ */
@@ -134,7 +137,7 @@ const CSTIMER_EVENT_MAP: Record<string, EventId> = {
 /** Matches "DNS", "DNS " and "DNS <rest>" — the shapes `encodeDnsComment` emits. */
 export const CSTIMER_DNS_RE = /^DNS(?:\s+|$)/;
 
-export { encodeDnsComment } from '@cuberoot/shared/timer';
+export { encodeDnsComment } from './export-cstimer';
 
 /** Strip the DNS marker. Returns null when the comment isn't DNS-marked. */
 export function decodeDnsComment(comment: string): string | null {
@@ -164,7 +167,8 @@ function normalizeEventKey(raw: unknown): { event: EventId; matched: boolean } {
   if (typeof raw !== 'string') return { event: '333', matched: false };
   const k = raw.toLowerCase().trim().replace(/[\s_-]/g, '');
   if (k in CSTIMER_EVENT_MAP) return { event: CSTIMER_EVENT_MAP[k], matched: true };
-  const noX = k.replace(/x/g, '');
+  // Treat x as a dimension separator only between numbers, not inside names.
+  const noX = k.replace(/(\d)x(?=\d)/g, '$1');
   if (noX in CSTIMER_EVENT_MAP) return { event: CSTIMER_EVENT_MAP[noX], matched: true };
   return { event: '333', matched: false };
 }
@@ -198,10 +202,20 @@ function nameToEvent(name: unknown): { event: EventId; matched: boolean } {
   if (tokens.some((token, index) => token === 'radio' && tokens[index + 1] === 'jewel')) {
     return normalizeEventKey('radiojewel');
   }
+  // Preserve the decimal in Radiolarian 1.5 before the generic token fallback.
+  if (/(?:^|[^a-z0-9])(?:radio[\s_-]*cann?on(?![a-z0-9])|radiolarian[\s_-]*1\.5(?![a-z0-9]|\.\d))/i.test(name)) {
+    return normalizeEventKey('radiocanon');
+  }
   if (tokens.some((token, index) =>
     (token === 'radio' && tokens[index + 1] === 'web')
     || (token === 'radiolarian' && tokens[index + 1] === '6'))) {
     return normalizeEventKey('radioweb');
+  }
+  if (tokens.some((token, index) =>
+    (token === 'cat' && tokens[index + 1] === 's' && tokens[index + 2] === 'cradle')
+    || (token === 'cats' && tokens[index + 1] === 'cradle')
+    || (token === 'radiolarian' && tokens[index + 1] === '5'))) {
+    return normalizeEventKey('catscradle');
   }
   // Hybrid names must be recognized before the standalone Skewb/3x3 tokens.
   if (tokens.some((token, index) => token === 'helicopter' && tokens[index + 1] === 'skewb') || name.includes('直升机斜转')) {
@@ -260,7 +274,7 @@ export type CstimerSessionParsed = TimerImportSession;
  * Parse a cstimer "Local backup → Export" JSON string into per-session entries.
  * Returns [] if the input does not look like cstimer JSON.
  */
-export function parseCstimerExport(jsonText: string): CstimerSessionParsed[] {
+export function parseCstimerExport(jsonText: string, createId: () => string = newId): CstimerSessionParsed[] {
   let outer: Record<string, unknown>;
   try {
     outer = JSON.parse(jsonText) as Record<string, unknown>;
@@ -364,7 +378,7 @@ export function parseCstimerExport(jsonText: string): CstimerSessionParsed[] {
 
       const ts = Number(dateSec);
       solves.push({
-        id: newId(),
+        id: createId(),
         timeMs,
         penalty,
         scramble: typeof scramble === 'string' ? scramble : '',

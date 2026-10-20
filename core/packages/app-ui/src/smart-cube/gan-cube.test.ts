@@ -21,11 +21,44 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { BleDeviceRef, BleServiceRef, BleTransport } from './transport';
 import { GanCubeConnection } from './gan-cube';
+import { GAN_V4_SERVICE_UUID } from '@cuberoot/shared/smart-cube/gan-v4';
 
 const MAC = Uint8Array.of(0xab, 0xcd, 0xef, 0x01, 0x23, 0x45);
 const SOLVED_CORNERS = [0, 1, 2, 3, 4, 5, 6];
 const SOLVED_EDGES = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20];
 const GAN_AXIS_MASKS = [2, 32, 8, 1, 16, 4];
+
+it('delegates discovered GAN v4 through inherited transport methods with their original receiver', async () => {
+  const fake = fakeBle('v3');
+  let receiver: object | undefined;
+  class Transport {
+    initialize = fake.transport.initialize;
+    requestDevice = fake.transport.requestDevice;
+    getMtu = fake.transport.getMtu;
+    connect = fake.transport.connect;
+    disconnect = fake.transport.disconnect;
+    getServices = async () => [{ uuid: GAN_V4_SERVICE_UUID, characteristics: [] }];
+    async read() { return new DataView(new ArrayBuffer(0)); }
+    async write() { receiver = this; }
+    async subscribe() { receiver = this; return async () => {}; }
+  }
+  const transport = new Transport();
+  const cube = new GanCubeConnection(transport, { onMove() {}, onProtocolError() {}, onDisconnect() {} });
+  await cube.connect({ id: 'AB:CD:EF:01:23:45', name: 'GAN356i' });
+  expect(cube.getProtocol()).toBe('gan-v4');
+  expect(receiver).toBe(transport);
+  await cube.disconnect();
+});
+
+it('rejects a GAN v2 gap larger than the seven-turn history before publishing moves', async () => {
+  const fake = fakeBle('v2'), onMove = vi.fn(), onProtocolError = vi.fn();
+  const cube = new GanCubeConnection(fake.transport, { onMove, onProtocolError, onDisconnect() {} });
+  await cube.connect(protocolDetails('v2').device);
+  fake.emit(v2Facelets(10)); fake.emit(v2Move(18, 0));
+  expect(onProtocolError).toHaveBeenCalledTimes(1);
+  expect(onMove).not.toHaveBeenCalled();
+  await cube.disconnect();
+});
 
 type Protocol = 'v2' | 'v3';
 

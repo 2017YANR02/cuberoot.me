@@ -2,7 +2,7 @@ import {
   SOLVED_SMART_CUBE_FACELETS,
   SmartCubeStateTracker,
 } from './cubie';
-import { MoveClock } from './move_clock';
+import { MoveClock, type MoveClockStampOptions } from './move_clock';
 
 export interface SmartCubeSessionSnapshot<Metadata = unknown> {
   active: boolean;
@@ -26,7 +26,7 @@ export interface SmartCubeSessionLease<Metadata = unknown> {
   readonly generation: number;
   adoptFacelets(facelets: string, solvedTimestamp?: number): boolean;
   isCurrent(): boolean;
-  move(move: string, deviceTimestamp?: number, metadata?: Metadata): SmartCubeSessionMove<Metadata> | null;
+  move(move: string, deviceTimestamp?: number, metadata?: Metadata, clock?: MoveClockStampOptions): SmartCubeSessionMove<Metadata> | null;
 }
 
 export interface SmartCubeSessionControllerOptions<Metadata = unknown> {
@@ -107,8 +107,8 @@ export class SmartCubeSessionController<Metadata = unknown> {
         this.adoptFacelets(generation, nextFacelets, solvedTimestamp)
       ),
       isCurrent: () => this.isCurrent(generation),
-      move: (move, deviceTimestamp, metadata) => (
-        this.applyMove(generation, move, deviceTimestamp, metadata)
+      move: (move, deviceTimestamp, metadata, clock) => (
+        this.applyMove(generation, move, deviceTimestamp, metadata, clock)
       ),
     };
   }
@@ -179,11 +179,13 @@ export class SmartCubeSessionController<Metadata = unknown> {
     move: string,
     deviceTimestamp?: number,
     metadata?: Metadata,
+    clock?: MoveClockStampOptions,
   ): SmartCubeSessionMove<Metadata> | null {
     if (!this.isCurrent(generation)) return null;
     const timestamp = this.moveClock.stamp(
       deviceTimestamp,
       this.options.now?.() ?? Date.now(),
+      clock,
     );
     this.tracker.applyMove(move);
     const rawFacelets = this.tracker.getFacelets();

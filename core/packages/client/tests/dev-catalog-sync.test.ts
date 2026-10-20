@@ -43,6 +43,21 @@ describe('hooks/ are all registered in /dev/utils', () => {
     // Web hook paths and must stay registered without copying a wrapper body.
     for (const m of src.matchAll(/export\s*\{\s*(use[A-Z]\w*)\s*\}\s*from/g)) exported.add(m[1]);
   }
+  // Domain modules can export a hook alongside their pure helpers. Verify the
+  // catalog's actual source declaration rather than treating hooks/ as their
+  // only valid location (for example lib/douyin-content).
+  for (const entry of UTILS.filter((e) => e.category === 'hook')) {
+    for (const spec of specifiersOf(entry.imp)) {
+      const base = join(ROOT, spec.replace(/^@\//, ''));
+      const file = ['.ts', '.tsx', '/index.ts', '/index.tsx']
+        .map((suffix) => base + suffix).find(existsSync);
+      if (!file) continue;
+      const source = readFileSync(file, 'utf8');
+      for (const match of source.matchAll(/export\s+(?:function|const)\s+(use[A-Z]\w*)/g)) {
+        if (match[1] === entry.name) exported.add(match[1]);
+      }
+    }
+  }
   // External timer hooks have real Web and installed consumers through this
   // public barrel. Inspect its exports, not private implementation helpers.
   const externalDir = join(ROOT, '..', 'timer-ui', 'src', 'external');

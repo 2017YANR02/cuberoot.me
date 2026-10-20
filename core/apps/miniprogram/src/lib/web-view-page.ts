@@ -306,6 +306,13 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
   if (disposedPages.has(context)) return false;
 
   const route = resolveWebRoute(key, sharedDestinations.get(context));
+  // Legacy shared links must also land on native primary pages in the Douyin build.
+  if (route && isDouyinMiniProgram() && !['account', 'account-link', 'privacy', 'logout'].includes(String(key))) {
+    beginRouteAttempt(context);
+    context.setData({ src: '' });
+    miniProgramApi().switchTab({ url: key === 'timer' ? '/pages/timer/index' : '/pages/tools/index' });
+    return false;
+  }
   updateShareMenu(key);
   if (!route) {
     const attempt = beginRouteAttempt(context);

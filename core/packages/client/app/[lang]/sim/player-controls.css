@@ -1,6 +1,6 @@
 .sim-player {
-  padding: 14px 18px;
-  background: var(--card);
+  padding: 12px;
+  background: transparent;
   border-top: 1px solid var(--border-default);
   display: flex;
   flex-direction: column;
@@ -228,6 +228,7 @@
   align-items: center;
   gap: 8px;
 }
+
 /* 消步开关在工具行里:无外框,标签 + PillToggle 滑钮直接排在按钮间(开 / 关状态由滑钮表达) */
 .sim-player-tools .sim-toggle {
   height: 34px;
@@ -260,6 +261,48 @@
   color: var(--signal-success);
   background: color-mix(in srgb, var(--signal-success) 12%, transparent);
 }
+
+.sim-transform-select {
+  width: fit-content;
+  max-width: 100%;
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.sim-transform-select option { background: var(--background); color: var(--foreground); }
+.sim-player-tools > button.sim-transform-active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.sim-transform-select:disabled,
+.sim-player-tools > button:disabled { opacity: 0.45; cursor: default; }
+.sim-move-editor {
+  flex-basis: 100%;
+  min-width: 0;
+  order: 1;
+  padding: 10px 0 2px;
+  border-top: 1px solid var(--border-default);
+}
+.sim-move-editor-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--muted-foreground); font-size: 12px; }
+.sim-move-editor button { appearance: none; font: inherit; color: var(--foreground); background: transparent; border: 0; cursor: pointer; }
+.sim-move-editor-heading button { display: inline-flex; padding: 6px; border-radius: 6px; }
+.sim-move-tokens { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 8px; max-height: 180px; overflow-y: auto; }
+.sim-move-tokens button { min-width: 34px; min-height: 36px; padding: 6px 8px; border-radius: 6px; font-family: var(--font-geist-mono), monospace; font-size: 16px; }
+.sim-move-editor button:hover { background: var(--muted); }
+.sim-move-tokens button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+.sim-move-editor button:focus-visible,
+.sim-transform-select:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.sim-move-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+.sim-move-actions button { display: inline-flex; align-items: center; gap: 10px; border: 1px solid var(--border-default); border-radius: 6px; padding: 7px 10px; }
+.sim-move-actions small { color: var(--muted-foreground); }
+.sim-move-note { flex-basis: 100%; color: var(--muted-foreground); font-size: 12px; }
 
 .sim-puzzle {
   /* No card frame (house style, matches .gt-panel): stacked panels are separated
@@ -337,6 +380,28 @@
   border-color: var(--ring);
 }
 
+.sim-appearance-presets { margin: 0; }
+.sim-appearance-presets > :not(summary) { margin-top: 8px; }
+.sim-appearance-presets p { color: var(--muted-foreground); font-size: 12px; line-height: 1.5; margin-bottom: 6px; }
+.sim-appearance-presets p:empty { display: none; }
+.sim-puzzle-select.sim-preset-select { min-width: 0; max-width: 100%; align-self: flex-start; }
+.sim-preset-name { position: relative; max-width: 100%; }
+.sim-preset-name input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px 36px 8px 10px;
+  border: 1px solid var(--input);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 16px;
+}
+.sim-preset-name input:focus-visible { outline: 2px solid var(--ring); }
+@media (max-width: 767px) {
+  .sim-appearance-presets .sim-player-tools > button,
+  .sim-appearance-presets .sim-preset-select { min-height: 44px; height: auto; }
+}
+
 .sim-player-scramble {
   display: inline-flex;
   align-items: center;
@@ -380,7 +445,7 @@
 
 .sim-puzzle-sliders {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 8px 12px;
 }
 @media (max-width: 640px) {
@@ -394,7 +459,7 @@
 
 .sim-puzzle-toggles {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 6px 12px;
 }
 @media (max-width: 640px) {
@@ -406,10 +471,7 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  /* 标签紧贴自己的控件成一组(flex-start),不再 space-between 把控件甩到格右沿 ——
-     多列网格里右沿控件会紧挨「下一格」的标签,造成「这个开关属于哪个标签」歧义
-     (灰掉的「挖块」旁边正好是隔壁「结构着色」可点的开关;空尾格旁边是孤零零没标签的开关)。 */
-  justify-content: flex-start;
+  justify-content: space-between;
   gap: 8px;
 }
 .sim-puzzle-toggles .sim-toggle > span {
@@ -475,7 +537,7 @@
 }
 .sim-puzzle-debug-toggles {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 6px 12px;
 }
 @media (max-width: 640px) {
@@ -1319,3 +1381,198 @@
 .sim-person-avatar > button:disabled { opacity: 0.5; cursor: wait; }
 .sim-person-avatar-adjust { display: flex; flex-wrap: wrap; gap: 12px; flex-basis: 100%; }
 .sim-person-avatar-adjust > .sim-slider { flex: 1 1 120px; min-width: 0; }
+
+.sim-animation-controls { display: flex; flex-direction: column; gap: 10px; }
+.sim-animation-controls[hidden] { display: none; }
+.sim-field-label { color: var(--muted-foreground); font-size: 13px; }
+.sim-puzzle-debug > summary {
+  padding: 10px 0;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.sim-settings-section > .sim-puzzle { border: 0; }
+.sim-settings-section .sim-puzzle-body { padding: 8px 0; }
+
+.sim-stage-controls { width: 100%; min-width: 0; }
+.sim-view-tools,
+.sim-playback-options,
+.sim-preview-notice {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sim-view-tools { margin-bottom: 8px; }
+.sim-view-tools > select {
+  font: inherit;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  padding: 4px;
+}
+.sim-view-tools .playback-bar-btn[aria-pressed="true"] {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.sim-playback-options { margin-top: 6px; justify-content: space-between; }
+.sim-playback-options > .sim-slider { width: 180px; min-width: 0; }
+.sim-playback-options > details { max-width: 100%; font-size: 13px; }
+.sim-playback-options summary { cursor: pointer; padding: 4px 0; }
+.sim-preview-notice { color: var(--muted-foreground); font-size: 13px; }
+.sim-preview-notice button,
+.sim-research-enable button {
+  font: inherit;
+  color: var(--foreground);
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.sim-research-enable { padding: 0 12px 12px; font-size: 13px; }
+.sim-input-error { margin: 0; font-size: 13px; color: var(--destructive); overflow-wrap: anywhere; }
+
+@media (max-width: 767px) {
+  .sim-view-tools { flex-wrap: nowrap; overflow-x: auto; }
+  .sim-view-tools > * { flex-shrink: 0; }
+  .sim-stage-controls .playback-bar-btn,
+  .sim-player button:not(.pill-toggle):not(.bool-toggle-label),
+  .sim-float-close,
+  .sim-backview-swap,
+  .sim-image-swap { min-width: 44px; min-height: 44px; }
+  .sim-player input:not([type="range"]),
+  .sim-player select { min-height: 44px; font-size: 16px; }
+  .sim-side { overscroll-behavior: contain; scroll-padding-block: 12px; }
+}
+
+/* Fixed editing tools precede optional panels. One chevron style for every
+   disclosure; native summary markers must not create a second visual hierarchy. */
+.sim-appearance-presets > summary,
+.sim-puzzle-debug > summary,
+.sim-playback-options summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  list-style: none;
+}
+.sim-appearance-presets > summary::-webkit-details-marker,
+.sim-puzzle-debug > summary::-webkit-details-marker,
+.sim-playback-options summary::-webkit-details-marker { display: none; }
+.sim-appearance-presets > summary::before,
+.sim-puzzle-debug > summary::before,
+.sim-playback-options summary::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  margin: 0 4px;
+}
+.sim-appearance-presets[open] > summary::before,
+.sim-puzzle-debug[open] > summary::before,
+.sim-playback-options details[open] > summary::before { transform: rotate(45deg); }
+
+.sim-alg-tools { padding-block: 4px; }
+.sim-puzzle-section-title,
+.sim-appearance-presets > summary,
+.sim-puzzle-debug > summary { font-size: 13px; font-weight: 500; }
+.sim-puzzle-toggles > .sim-toggle { min-height: 36px; }
+@media (max-width: 480px) {
+  .sim-puzzle-toggles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.sim-puzzle-toggles .sim-toggle > .bool-toggle { width: 100%; justify-content: space-between; }
+
+/* Outer sections share a full-width heading; inner disclosures are inset and
+   quieter, so the hierarchy remains legible without a second heavy title. */
+.sim-puzzle-head,
+.sim-settings-section > summary,
+.vc-api-doc.sim-api-section > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  color: var(--foreground);
+  cursor: pointer;
+  list-style: none;
+  box-sizing: border-box;
+}
+.sim-settings-section > summary::-webkit-details-marker,
+.vc-api-doc.sim-api-section > summary::-webkit-details-marker { display: none; }
+.sim-settings-section > summary:hover,
+.vc-api-doc.sim-api-section > summary:hover { background: color-mix(in srgb, var(--foreground) 5%, transparent); }
+.sim-settings-section[open] > summary > .sim-puzzle-caret { transform: rotate(90deg); }
+.sim-settings-section { margin: 0 -12px -12px; border-top: 1px solid var(--border-default); }
+.sim-settings-section .sim-puzzle-body { padding: 8px 12px 12px; }
+.sim-settings-section .sim-section-content > .sim-appearance-presets { margin: 0 12px 12px; }
+.sim-appearance-presets > summary,
+.sim-puzzle-debug > summary { padding: 8px 0; font-size: 13px; font-weight: 500; color: var(--muted-foreground); }
+.sim-renderer-row { display: flex; align-items: center; gap: 12px; }
+.sim-renderer-row .sim-puzzle-section-title { font-size: 13px; }
+.sim-view-settings { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); align-items: center; gap: 16px; }
+.sim-view-settings > .sim-puzzle-sliders { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.sim-view-settings > .sim-orbit { align-items: center; justify-content: center; }
+.sim-view-settings .sim-orbit-pad { width: clamp(112px, 12vw, 160px); height: clamp(112px, 12vw, 160px); }
+.sim-preset-row.sim-player-tools { gap: 6px; }
+.sim-preset-row > .sim-preset-name { flex: 1 1 140px; }
+.sim-preset-row .sim-preset-select { align-self: center; }
+.sim-preset-row input { min-height: 34px; padding-block: 6px; font-size: 13px; }
+.sim-puzzle-toggles .sim-logo-setting > .sim-toggle { width: 100%; min-height: 36px; }
+.sim-puzzle-toggles .sim-toggle select {
+  font: inherit;
+  max-width: min(65%, 10rem);
+  min-width: 0;
+  min-height: 30px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  padding: 3px 6px;
+  color: var(--foreground);
+  background: var(--background);
+}
+@media (max-width: 480px) {
+  .sim-view-settings { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+  .sim-view-settings > .sim-orbit { flex-direction: column; gap: 6px; }
+  .sim-view-settings .sim-orbit-pad { width: 112px; height: 112px; }
+  .sim-view-settings .sim-orbit-fields { width: 100%; gap: 4px; }
+  .sim-preset-row input { min-height: 44px; font-size: 16px; }
+}
+
+.sim-material-sliders { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px; }
+.sim-material-sliders > .sim-percent-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; margin: 0; }
+.sim-material-sliders .sim-color-row-label { grid-column: 1 / -1; }
+.sim-material-sliders input[type="range"] { width: 100%; min-width: 0; }
+.sim-material-sliders .sim-slider-valwrap { font-size: 13px; }
+.sim-color-settings { --sim-color-control-height: 30px; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 24px; }
+.sim-color-settings > .sim-color-row,
+.sim-color-settings > .sim-picture-setting { margin: 0; }
+.sim-color-settings > .sim-toggle { min-height: 30px; }
+
+/* Align the control row, not the combined height of face letters + controls.
+   Letters may extend above it; every actual control has the same centre line. */
+.sim-color-settings .sim-color-row-label { line-height: var(--sim-color-control-height); }
+.sim-color-settings .sim-color-select-trigger,
+.sim-color-settings .sim-face-color-reset,
+.sim-color-settings > .sim-toggle,
+.sim-color-settings select { min-height: var(--sim-color-control-height); }
+.sim-color-settings .sim-color-select-trigger,
+.sim-color-settings .sim-face-color-reset { height: var(--sim-color-control-height); }
+.sim-color-settings .sim-color-select-trigger { vertical-align: bottom; }
+.sim-color-settings .sim-swatch-list { align-items: flex-end; }
+@media (max-width: 767px) {
+  .sim-color-settings { --sim-color-control-height: 44px; }
+}
+
+.sim-view-tools .playback-bar-btn,
+.sim-view-tools .compact-select-trigger.sim-player-mode { font-size: 14px; }
+.sim-puzzle-toggles > * { border-inline-end: 1px solid color-mix(in srgb, var(--border-default) 65%, transparent); padding-inline-end: 12px; }
+@media (max-width: 480px) {
+  .sim-puzzle-toggles > * { border-inline-end: 0; padding-inline-end: 0; }
+}

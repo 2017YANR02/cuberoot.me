@@ -1,0 +1,31 @@
+{
+  "schema": "cuberoot.opt9-native-release.v1",
+  "id": "opt9-fixed-20261014",
+  "candidate": "fixed",
+  "status": "official",
+  "platform": "darwin",
+  "arch": "arm64",
+  "executable": {
+    "path": "target/opt9-official/release/cube48opt-research",
+    "sha256": "3314f88daaf8be5423ae862e359c98fc741a0f9ea8bbd9695f45fd474eb857a9"
+  },
+  "snapshot": {
+    "path": ".tmp/cubeopt-reverse/opt9-native-fixed-preserved-20261014",
+    "manifestSha256": "f2f633ebc79f5948b86991f259c85e53cedc6b2776167573d574bafc8eda1244"
+  },
+  "benchmark": {
+    "report": "wca1000-mt16-rust-native-opt9-exp-fixed-report.json",
+    "sha256": "b1b3e79da609c23a317946bd1c8fb5dca83a92033af3ca114178bd6281c8f262",
+    "cases": 1000,
+    "threads": 16,
+    "passes": 1,
+    "warmup": 0,
+    "seconds": 43.23124978399998,
+    "peakRssBytes": 15638528000,
+    "corpusSha256": "5b42a18086b27e974115a73696702017b5dde0a19c9819a77c88c8014d67c8ea"
+  },
+  "threads": 16,
+  "contexts": 8,
+  "command": "solve",
+  "archives": "opt9-archives.json"
+}

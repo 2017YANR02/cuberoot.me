@@ -1,3 +1,4 @@
+import { SmartCubeStateTracker } from '@cuberoot/shared/smart-cube/cubie';
 import { createDeviceStateReset } from '@cuberoot/shared/smart-cube/device-reset';
 import { createQiyiResetCommand, QIYI_SOLVED_STATE, QIYI_OP_SYNC } from '@cuberoot/shared/smart-cube/qiyi';
 import {
@@ -167,6 +168,7 @@ export class QiyiCubeConnection {
     let protocolReady = false;
     let protocolError = false;
     let stateReady = false;
+    const verifiedState = new SmartCubeStateTracker();
     let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
     let retryTimer: ReturnType<typeof setTimeout> | undefined;
     const clearHelloTimers = () => {
@@ -213,7 +215,19 @@ export class QiyiCubeConnection {
     let confirmed: { facelets: string; counter: number } | null = null;
     let pending: Uint8Array[] = [];
     const apply = (plain: Uint8Array) => {
+        if (protocolError || !current()) return;
         const notification = decodeQiyiNotification(plain, lastTimestamp);
+        // Validate the entire batch before publishing a turn/solved edge. A
+        // snapshot may reveal history loss but must never repair a recording.
+        if (stateReady && notification.opcode === QIYI_OP_STATE && notification.moves.length + notification.futureMoves.length >= 12) {
+          reportProtocolError(); return;
+        }
+        if (stateReady && notification.state) {
+          for (const move of notification.moves) verifiedState.applyMove(move.mv);
+          if (verifiedState.getFacelets() !== notification.state) { reportProtocolError(); return; }
+        }
+        if (notification.state && !verifiedState.adoptFacelets(notification.state)) { reportProtocolError(); return; }
+        for (const move of notification.futureMoves) verifiedState.applyMove(move.mv);
         if (!notification.gyro && notification.opcode === null) {
           recordBadFrame();
           return;
@@ -258,6 +272,7 @@ export class QiyiCubeConnection {
         const snapshot = confirmed as { facelets: string; counter: number } | null;
         if (!snapshot) throw new Error('Missing confirmed cube state');
         lastTimestamp = snapshot.counter;
+        verifiedState.adoptFacelets(snapshot.facelets);
         this.callbacks.onState?.(snapshot.facelets);
       } finally {
         resetting = false;

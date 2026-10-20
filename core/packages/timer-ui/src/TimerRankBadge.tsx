@@ -8,14 +8,14 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { TIMER_RANK_SCOPES, type TimerRankScope } from '@cuberoot/shared/timer';
 import { EVENT_DISPLAY_EN, EVENT_DISPLAY_ZH } from '@cuberoot/shared/wca-events';
-import { toWcaEventForRank, type RankResult, type RegionRank } from '@cuberoot/shared/timer/rank-client';
+import { toWcaEventForRank, type RankResult } from '@cuberoot/shared/timer/rank-client';
 
 import type { EventId } from '@cuberoot/shared/timer';
-import { ISO2_TO_CONTINENT, CONTINENT_RECORD_ABBR } from '@cuberoot/shared/continent';
+import { timerPersonalOfficialRank, timerRankPills, type TimerRankOfficialRow } from '@cuberoot/shared/timer/rank-presentation';
+export type { TimerRankOfficialRow } from '@cuberoot/shared/timer/rank-presentation';
 import { RecordBadge } from './RecordBadge';
 import { WCA_ID_REGEX } from '@cuberoot/shared/wca-person';
 import './timer-rank.css';
-export interface TimerRankOfficialRow { event_id: string; attempts: number[]; average: number; live?: boolean; }
 export interface TimerRankHost { fetchRankFor(event: string, centis: number, type: 'single' | 'average', country?: string): Promise<RankResult | null>; fetchOfficial(wcaId: string): Promise<TimerRankOfficialRow[]>; }
 
 export interface RankBadgeProps {
@@ -93,10 +93,7 @@ export function TimerRankBadge({
 
   const personal = useMemo(() => {
     if (!queryPersonal || official?.personId !== personId) return null;
-    const times = official.rows.filter((row) => row.event_id === wcaEvent && !row.live)
-      .flatMap((row) => type === 'single' ? row.attempts : [row.average])
-      .filter((value) => Number.isFinite(value) && value > 0);
-    return times.length ? { rank: 1 + times.filter((value) => value < centis!).length, total: times.length } : null;
+    return timerPersonalOfficialRank(official.rows, wcaEvent!, centis!, type);
   }, [queryPersonal, official, personId, wcaEvent, type, centis]);
 
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'none'>('idle');
@@ -143,25 +140,8 @@ export function TimerRankBadge({
     WR: tr({ zh: '世界', en: 'World' }),
   };
 
-  // CR 按登录用户的国家映射到大洲记录缩写(AsR / ER / NAR / OcR / SAR / AfR);
-  // 无国家或映射缺失时退回通用 'CR'.
-  const crLabel = (() => {
-    const cc = country ? ISO2_TO_CONTINENT[country.toUpperCase()] : undefined;
-    return (cc && CONTINENT_RECORD_ABBR[cc]) || 'CR';
-  })();
-
-  // label 同时作为「名次前缀」和「纪录代码」:WR / AsR / NR(RecordBadge 认这些).
-  const pills: { scope: TimerRankScope; label: string; data: RegionRank }[] = [];
-  if (personal) pills.push({ scope: 'PR', label: 'PR', data: personal });
-  if (queryWca && state === 'done' && result?.key === queryKey) {
-    if (scopes.includes('NR') && result.value.national) pills.push({ scope: 'NR', label: 'NR', data: result.value.national });
-    if (scopes.includes('CR') && result.value.continental) pills.push({ scope: 'CR', label: crLabel, data: result.value.continental });
-    if (scopes.includes('WR') && result.value.world) pills.push({ scope: 'WR', label: 'WR', data: result.value.world });
-  }
+  const pills = timerRankPills(scopes, personal, queryWca && state === 'done' && result?.key === queryKey ? result.value : null, country);
   if (pills.length === 0) return null;
-  // PR → NR → CR → WR 已按范围排序；最高纪录覆盖所有更小范围。
-  const highestRecordIndex = pills.map(({ data }) => data.rank === 1).lastIndexOf(true);
-  if (highestRecordIndex > 0) pills.splice(0, highestRecordIndex);
 
   // 悬停说明：对比历史比赛成绩，非实时官方排名。
   const parts = pills.map(({ scope, data }) => {

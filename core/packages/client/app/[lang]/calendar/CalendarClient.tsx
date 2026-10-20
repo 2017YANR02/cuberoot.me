@@ -18,7 +18,6 @@ import {
   CalendarDays, ChevronLeft, ChevronRight, Download, Globe, Menu, Plus, Search, Settings,
   Share2, Undo2, Upload, X,
 } from 'lucide-react';
-import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
 import AppLink from '@/components/AppLink';
 import { ListSelect } from '@/components/ListSelect';
@@ -537,7 +536,6 @@ export default function CalendarClient() {
     return (
       <div className="cal-page">
         <div className="cal-topbar">
-          <BackHome />
           <h1 className="cal-brand"><CalendarDays size={20} aria-hidden />{tr({ zh: '日历', en: 'Calendar' })}</h1>
           <span className="cal-foot-gap" />
           <HeaderToggles />
@@ -564,7 +562,6 @@ export default function CalendarClient() {
         >
           <Menu size={18} aria-hidden />
         </button>
-        <BackHome />
         <h1 className="cal-brand">
           <CalendarDays size={20} aria-hidden />
           {tr({ zh: '日历', en: 'Calendar' })}

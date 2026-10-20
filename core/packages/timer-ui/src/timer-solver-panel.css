@@ -32,8 +32,7 @@
    桌面收起态的 pill 形态里当它不存在,原有布局一字不改;只有右栏展开态(见 ≥1024 段)
    才把它变成真的 flex 行,好把按钮摆到标题那条分隔线上。 */
 .solver-panel-headrow { display: contents; }
-/* 手机形态:顶栏那排控件里的一员,但不画框 —— 纯文字入口,高度对齐旁边的下拉。
-   (桌面那颗仍是 pill:它在右栏里是唯一的可点物,没有边框就读不出可点。) */
+/* 手机形态:顶栏那排控件里的一员,但不画框 —— 纯文字入口,高度对齐旁边的下拉。 */
 .shell-topbar-left .solver-panel-head {
   height: 32px;
   padding: 0 4px;
@@ -186,7 +185,7 @@
   /* :not(.fullscreen) so fullscreen (rail hidden via display:none) doesn't keep a
      phantom left pad — :has() still matches display:none panels otherwise. */
   .timer-solver-stage:not([data-stage-fullscreen='true']):has(.timer-solver-rail .solver-panel[data-open='true']) {
-    --shell-left-inset: var(--solver-rail-w);
+    --shell-left-inset: var(--timer-left-dock-width, var(--solver-rail-w));
   }
   .timer-workspace:has(.timer-solver-rail .solver-panel[data-open='true']) .timer-solver-rail {
     top: 0;
@@ -194,7 +193,7 @@
     bottom: 0;
     align-items: stretch;
     gap: 0;
-    width: var(--solver-rail-w);
+    width: var(--timer-left-dock-width, var(--solver-rail-w));
     border-right: 1px solid var(--shell-divider, var(--border-default));
     background: var(--background);
     overflow-y: auto;
@@ -232,14 +231,12 @@
   .timer-workspace:has(.timer-solver-rail .solver-panel[data-open='true']) .timer-solver-rail .solver-panel-headrow:has(.solver-settings-slot) .solver-panel-head {
     flex: 0 0 auto;
   }
-  /* Header, rail collapsed (all closed): free-floating pill under the topbar
-     icons (not flush to the viewport edge, so it's rounded all the way round). */
+  /* Collapsed desktop entry: text and chevron, matching the toolbar controls. */
   .timer-solver-rail .solver-panel[data-open='false'] .solver-panel-head {
-    border: 1px solid var(--shell-divider, var(--border-default));
-    border-radius: 999px;
+    border: 0;
+    border-radius: 6px;
     padding: 9px 13px;
-    background: var(--shell-chip, var(--card));
-    box-shadow: 0 2px 12px color-mix(in srgb, var(--foreground) 10%, transparent);
+    background: transparent;
   }
   .timer-solver-rail .solver-panel[data-open='false'] .solver-panel-head:hover { background: var(--shell-hover, var(--muted)); }
 
@@ -270,4 +267,25 @@
 .timer-solver-stage[data-stage-fullscreen='true'] .timer-solver-rail { display: none; }
 @media (max-width: 560px) {
   .shell-topbar-left .solver-panel-head { height: 30px; padding: 0 3px; font-size: 12px; gap: 4px; }
+}
+
+/* Reserve a second column only while step-by-step content is expanded.
+   Its existing disclosure state also controls layout; no extra UI state is needed. */
+@media (min-width: 900px) {
+  .solver-sheet .solver-sheet-body { padding: 20px 28px; }
+  .solver-sheet-body > [data-no-timer] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 16px 32px;
+    max-width: 640px;
+    margin-inline: auto;
+  }
+  .solver-sheet-body > [data-no-timer]:has(.stepsolve-head[aria-expanded='true']) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    max-width: 1040px;
+  }
+  .solver-sheet .solver-panel-scramble { grid-column: 1 / -1; margin: 0; }
+  .solver-sheet .stepsolve { margin-top: 0; }
+  .solver-sheet .stsv-player { width: min(100%, 340px); }
 }

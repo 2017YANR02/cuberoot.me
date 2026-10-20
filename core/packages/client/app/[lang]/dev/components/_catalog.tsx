@@ -31,6 +31,7 @@ import { ClearButton } from '@/components/ClearButton';
 import { SearchInput } from '@/components/SearchInput';
 import { ListSelect } from '@/components/ListSelect';
 import { CompactSelect } from '@/components/CompactSelect';
+import { MethodStagePicker } from '@cuberoot/timer-ui/puzzle-picker';
 import { VariantSelect } from '@/components/VariantSelect';
 import { RangeSlider } from '@/components/RangeSlider/RangeSlider';
 import { ParamSliders, type ParamSliderSpec } from '@/components/ParamSliders';
@@ -867,6 +868,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared friend chat panel and useChat lifecycle hook: conversations, text and native emoji, uploaded sticker favorites, retry and visible-message read receipts. Hosts inject transport, language, identity rendering and built-in expression catalogs (WeChat and unlocked pets); Compact composer, recent expressions, search and host action slots support Web meeting invites, music sharing and dictation; import @cuberoot/app-ui/chat.css for styles.',
   },
   {
+    name: 'UURemotePanel',
+    import: "import { UURemotePanel, UURemoteClient } from '@cuberoot/app-ui';",
+    category: 'more',
+    zh: '安装端 UU 远程入口：绑定电脑、全屏远控与画中画；宿主注入安全存储与 URL 唤起，共享请求校验和回调状态。',
+    en: 'Installed-app UU Remote panel: computer binding, full-screen control and PiP; host-injected secure storage and URL launching with shared request validation and callback state.',
+  },
+  {
     name: 'RecordSectionsView',
     import: "import { RecordSectionsView } from '@/components/wca-stats/WcaStatView.views';",
     category: 'more',
@@ -886,6 +894,14 @@ export const CATALOG: ComponentEntry[] = [
     category: 'more',
     zh: '外观菜单按需加载的滚动诊断工具，限时采集手势和性能线索，支持临时毛玻璃对照与本地报告导出。',
     en: 'On-demand scroll diagnostics from the appearance menu, with bounded gesture/timing capture, temporary glass comparisons and local report export.',
+  },
+  {
+    name: 'ContinuousCorners',
+    import: "import { Surface, SiteCorners } from '@2017yanr02/continuous-corners/react';",
+    category: 'more',
+    zh: '版本化苹果 SwiftUI 连续圆角：Web 与共享 app-ui 共用同一个 TypeScript 包；像素四角与声明的卡片容器支持同心规则，新组件可显式使用 Surface。',
+    en: 'Versioned SwiftUI continuous corners shared by Web and app-ui. Independent corners and declared card containers support concentric rules; new components can use Surface explicitly.',
+    note: { zh: '圆形、复杂背景和原生阴影等限制见 docs/continuous-corners.md。', en: 'See docs/continuous-corners.md for circles, complex backgrounds and native-shadow limitations.' },
   },
   {
     name: 'SiteGlass',
@@ -1057,7 +1073,7 @@ export const CATALOG: ComponentEntry[] = [
     category: 'more',
     zh: '视口懒挂载容器：内容接近可见区域后才挂载并保持，用于避免折叠线下的重组件和数据请求争抢首屏资源。',
     en: 'Viewport-deferred mount container that stays mounted once nearby, keeping below-the-fold components and data requests out of the initial render.',
-    note: { zh: '用 minHeight 或固定宽高比防止滚动跳动；依赖原顶层布局时传 unwrapWhenVisible；动画可传 unmountWhenHidden 离屏卸载，此时保留容器。', en: 'Use minHeight or a fixed aspect ratio to avoid scroll jumps; unwrapWhenVisible preserves the original top-level layout; unmountWhenHidden releases offscreen animations and keeps the wrapper.' },
+    note: { zh: '用 minHeight 或固定宽高比防止滚动跳动；行内小图用 inline + style 预留准确宽高；依赖原顶层布局时传 unwrapWhenVisible；动画可传 unmountWhenHidden 离屏卸载，此时保留容器。', en: 'Use minHeight or a fixed aspect ratio to avoid scroll jumps; inline plus style reserves exact diagram dimensions; unwrapWhenVisible preserves the original top-level layout; unmountWhenHidden releases offscreen animations and keeps the wrapper.' },
   },
   {
     name: 'WcaTeacherCell',
@@ -1219,14 +1235,22 @@ export const CATALOG: ComponentEntry[] = [
     Demo: CompactSelectDemo,
   },
   {
+    name: 'MethodStagePicker',
+    import: "import { MethodStagePicker } from '@cuberoot/timer-ui/puzzle-picker';",
+    category: 'input',
+    zh: '魔方方法与阶段共用级联菜单。无框、无下拉箭头，标准方法省略前缀；调用方提供支持的阶段和选择回调。',
+    en: 'Shared method/stage cascade with a plain trigger, no arrow, and no Standard prefix. Callers supply supported stages and selection callbacks.',
+    usage: '<MethodStagePicker method={method} stage={stage} methods={methods} stagesOf={stagesOf} isZh={isZh} onSelect={onSelect} />',
+    Demo: () => { const [value, setValue] = useState(['std', 'cross']); return <MethodStagePicker method={value[0]} stage={value[1]} methods={['std', 'pseudo']} stagesOf={() => ['cross', 'xcross']} isZh={useIsZh()} onSelect={(m, s) => setValue([m, s])} />; },
+  },
+  {
     name: 'VariantSelect',
     import: "import { VariantSelect } from '@/components/VariantSelect';",
     category: 'input',
-    zh: '打乱方法 / 阶段下拉:首页近期打乱与 /scramble/stats 共用。默认 label=variantLabel(方法),传 label={stageLabel} 即阶段下拉。纯展示,onChange 各页自理。',
-    en: 'Scramble method / stage dropdown shared by the landing Recent Scrambles and /scramble/stats. Default label=variantLabel (method); pass label={stageLabel} for the stage dropdown. Presentational; each page owns onChange.',
+    zh: '通用原生单选控件，保留给统计维度与数据集等平铺选项。魔方方法与阶段使用 MethodStagePicker。',
+    en: 'Native select for flat choices such as statistical dimensions and datasets. Use MethodStagePicker for cube methods and stages.',
     usage: '<VariantSelect value={v} options={opts} onChange={setV} isZh={isZh} label={stageLabel} />',
     Demo: VariantSelectDemo,
-    note: { zh: '两页的方法 / 阶段下拉都走它,别再各写一份 <select>。', en: 'Both pages’ method / stage dropdowns route through it — don’t hand-roll another <select>.' },
   },
   {
     name: 'CubeOrientationSelect',
@@ -1494,6 +1518,13 @@ export const CATALOG: ComponentEntry[] = [
     Demo: BackHomeDemo,
   },
   {
+    name: 'AlgImageDownloadButton',
+    import: "import AlgImageDownloadButton from '@/components/AlgImageDownloadButton';",
+    category: 'more',
+    zh: '公式库单张图片与批量 ZIP 下载。传入 children 时通过右键、触摸长按或菜单键打开单张下载；批量保留按钮。打开时快照当前筛选与显示设置，支持 PNG/SVG、背景、朝向、自选 case 和取消；共享现有 case 绘图与栅格化工具。',
+    en: 'Single case images via right-click, touch hold or the context-menu key on children; batch ZIP downloads retain a button. Supports PNG/SVG, backgrounds, orientations, case selection and cancellation. Snapshots display settings on click and reuses the canonical case renderer.',
+  },
+  {
     name: 'AlgPdfButton',
     import: "import AlgPdfButton from '@/components/AlgPdfButton';\nimport { algSheetFromCases } from '@/lib/alg_pdf/from_cases';",
     category: 'more',
@@ -1546,6 +1577,14 @@ export const CATALOG: ComponentEntry[] = [
     category: 'more',
     zh: '网站通用魔方项目下拉：首页近期打乱、预判、模拟器、求解与打乱统计共用同一套图标 + 名称菜单。传 wcaEvents 使用数据驱动的 WCA + csTimer 家族目录;页面有自己的可用集时传 groups。单选回调的项目可传 children，复用 TimerPuzzlePicker 的系列 → 项目两级菜单；WCA 仍可置顶直达。linkFor 保留中键新开,onSelect 用于页内状态。计时器必须改用跨端 TimerPuzzlePicker，禁止页面内自写项目菜单。',
     en: 'General website puzzle dropdown shared by Recent Scrambles, Predict, Sim, Solver, and Scramble Stats. Pass wcaEvents for the data-driven WCA + csTimer family catalog, or groups for a page-specific available set. Single-select callback items may supply children to reuse TimerPuzzlePicker for family → puzzle submenus while keeping WCA entries directly accessible. linkFor preserves middle-click navigation; onSelect updates in-page state. Timer surfaces must use the cross-platform TimerPuzzlePicker. Do not hand-roll page-local puzzle menus.',
+  },
+  {
+    name: 'PuzzleTypeSelect',
+    import: "import { PuzzleTypeSelect } from '@/app/[lang]/sim/PuzzleTypeSelect';",
+    category: 'input',
+    zh: '动画与作图共用的项目选择器，复用 PuzzlePicker 与模拟器项目目录，保留 WCA 顺序和系列子菜单。',
+    en: 'Puzzle selector shared by animation and drawing, using PuzzlePicker and the simulator catalog with stable WCA ordering and family submenus.',
+    usage: '<PuzzleTypeSelect value="nxn" onChange={setPuzzle} isZh={false} />',
   },
   {
     name: 'AlgPuzzlePicker',
@@ -1755,8 +1794,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'TimerWorkspace / useTimerWideLayout',
     import: "import { TimerWorkspace, useTimerWideLayout } from '@cuberoot/timer-ui';",
     category: 'more',
-    zh: 'Web 与安装端共享 1024px 宽屏断点、全宽计时区、360px 成绩侧栏及独立滚动；宿主只提供导航高度。',
-    en: 'Shared 1024px breakpoint, full-width timer workspace, 360px results dock and independent scrolling. Hosts provide navigation offsets.',
+    zh: 'Web 与安装端共享 1024px 宽屏断点、全宽计时区、可拖动调宽的左右侧栏及独立滚动；宿主只提供导航高度。',
+    en: 'Shared 1024px breakpoint, full-width timer workspace, resizable side docks and independent scrolling. Hosts provide navigation offsets.',
   },
   {
     name: 'TimerStageLayout',
@@ -1780,11 +1819,11 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Basic reconstruction metric cards shared by Web and all five installed clients. QTM/QTPS, first-move delay, longest pause, and pause count are computed only by @cuberoot/shared/timer/reconstruct/solve-metrics; the component receives the computed result so the full Web report does not traverse moves twice. The full move stream, timeline, replay, and feedback remain separate surfaces.',
   },
   {
-    name: 'ReconstructModal / ReconstructReport / SolveRecap / PlaybackPanel / SolveTimeline / StepAnalysis / StepMoveList',
+    name: 'ReconstructModal / ReconstructReport / SolveRecap / PlaybackPanel / SolveTimeline / StepAnalysis / StepMoveList / ReportContent',
     import: "import ReconstructReport from '@cuberoot/timer-ui/reconstruct-report'; import ReconstructModal from '@cuberoot/timer-ui/reconstruct-modal';",
     category: 'display',
-    zh: 'Web 与安装端共用的完整智能魔方复盘：分步动作谱、可定位时间线、三维/陀螺仪回放、方法切换、参考解法、质量和反馈只维护一份。live 模式以同一阶段识别、记号和 StepMoveList 展示进行中的 Cross、F2L 分组、OLL、PLL，Worker 合并连续更新且不做参考解搜索。纯分析来自 shared/recon 与 shared/timer/reconstruct；宿主只注入双语解析、剪贴板、分享 URL 和录姿态设置。按需加载，不能以基础指标卡或网站外跳代替。',
-    en: 'The full smart-cube reconstruction shared by Web and installed clients: per-step move score, seekable timeline, 3D/gyro replay, method selection, reference lines, quality and feedback have one implementation. Live mode uses the same recognition, notation and StepMoveList for Cross, F2L pairs, OLL and PLL; the worker coalesces updates without reference searches. Analysis comes from shared/recon and shared/timer/reconstruct; hosts inject localization, clipboard, public share URLs and gyro settings. Load on demand; metric cards and external website links are not substitutes.',
+    zh: 'Web 与安装端共用的完整智能魔方复盘：还原步骤、可定位时间线、三维/陀螺仪回放、方法自动识别、参考解法和反馈只维护一份。report-content、report-notation 和 report-player 定义公共内容、显示条件及交互；React ReportContent 与 Watch 原生绘制消费同一份定义，重构后共享修改自动进入手表。live 模式以同一阶段识别、记号和 StepMoveList 展示进行中的 Cross、F2L 分组、OLL、PLL，Worker 合并连续更新且不做参考解搜索。纯分析来自 shared/recon 与 shared/timer/reconstruct；宿主只注入双语解析、剪贴板、分享 URL 和录姿态设置。按需加载，不能以基础指标卡或网站外跳代替。',
+    en: 'The full smart-cube reconstruction shared by Web and installed clients: solution steps, seekable timeline, 3D/gyro replay, automatic method detection, reference lines and feedback have one implementation. report-content, report-notation and report-player own the content, visibility and transitions consumed by React ReportContent and the native Watch renderer. Live mode uses the same recognition, notation and StepMoveList for Cross, F2L pairs, OLL and PLL; the worker coalesces updates without reference searches. Analysis comes from shared/recon and shared/timer/reconstruct; hosts inject localization, clipboard, public share URLs and gyro settings. Load on demand; metric cards and external website links are not substitutes.',
   },
   {
     name: 'TimerPrintController / TimerPrintDocument',
@@ -1881,9 +1920,9 @@ export const CATALOG: ComponentEntry[] = [
     name: 'VisualCube',
     import: "import { VisualCube } from '@/components/VisualCube';",
     category: 'display',
-    zh: 'NxN 魔方状态图(facelets → SVG,服务端渲染),唯一入口。手写 <rect> 拼魔方 = bug。view=iso/pll/oll/f2l…,setup= 正向打乱,或 algorithm= 当解法(渲染其逆)。',
-    en: 'NxN cube state image (facelets → SVG, server-rendered), single entry point. Hand-rolling a cube out of <rect> is a bug. view=iso/pll/oll/f2l…, setup= a forward scramble, or algorithm= treated as a solution (renders its inverse).',
-    usage: '<VisualCube view="pll" algorithm="R U R\' U\' …" size={88} />',
+    zh: 'NxN 魔方状态图(facelets → SVG),唯一入口。应用内少量图用 local，长列表用 local + loading="lazy"，接近视口才绘制。setup= 正向打乱，algorithm= 解法(渲染其逆)。',
+    en: 'Single NxN state-image renderer. Use local for a few diagrams and local + loading="lazy" for viewport-deferred lists. setup is a forward scramble; algorithm is a solution (renders its inverse).',
+    usage: '<VisualCube local view="pll" algorithm="R U R\' U\' …" size={88} />',
     Demo: VisualCubeDemo,
     note: { zh: '默认从后端获取；local 或 interactive 使用同一引擎本地渲染。interactive 支持拖动和方向键旋转，移开复位，保留实际配色和遮罩；enlargeable 支持单击放大，复用共享弹窗。', en: 'Fetched from the backend by default; local or interactive uses the same renderer locally. Interactive supports drag and arrow-key orbit, resets on leave, and preserves colors and masks; enlargeable adds a click-to-enlarge shared dialog.' },
   },
@@ -2129,6 +2168,13 @@ export const CATALOG: ComponentEntry[] = [
     en: `High-order NxN (8-300) number input that fires onAdd(n) once a valid order is entered; shared by the scramble generator's two modes.`,
   },
   {
+    name: 'F2lSolutionGroups',
+    import: "import F2lSolutionGroups from '@/components/F2lSolutionGroups';",
+    category: 'more',
+    zh: '按实际 F2L 状态把完整解法收纳为前段与标态入槽引用；选择后播放、复制完整公式，保留原始编辑行。',
+    en: 'Groups full F2L solutions into state-verified prefixes and live insertion-library references; plays/copies the full composition and preserves original editor rows.',
+  },
+  {
     name: 'AlgEditor',
     import: "import AlgEditor from '@/components/AlgEditor';",
     category: 'input',
@@ -2283,12 +2329,33 @@ export const CATALOG: ComponentEntry[] = [
     en: `Brand logo wrapped in a home link that swaps light/dark variants with the theme; use in top bars like /timer.`,
   },
   {
+    name: 'NotationLine',
+    import: "import NotationLine, { useNotationCases } from '@cuberoot/timer-ui/recon/NotationLine';",
+    category: 'display',
+    zh: '计时器与复盘共用的整行展示：状态图、缩进、色块、公式链接、观察朝向和无损光标偏移。调用方仅提供动作交互和数据。',
+    en: 'Shared notation row for timer and recon: diagrams, indentation, color chips, case links, inspection orientation and lossless cursor offsets. Hosts supply data and move interactions.',
+  },
+  {
     name: 'SolutionView',
     import: "import SolutionView from '@/components/SolutionView';",
     category: 'display',
     zh: `只读展示复盘解法文本,高亮阶段注释,点击或方向键移动虚拟光标并同步外部播放器进度,用在复盘详情 / 编辑页。`,
     en: `Read-only solution text view with highlighted step comments and a virtual caret that scrubs a linked player on click/arrow keys; use on recon detail/edit pages.`,
     note: { zh: `需调用方通过 playerRef 传入一个播放器实例。`, en: `Caller must pass a player instance via playerRef.` },
+  },
+  {
+    name: 'ReconLineDiagrams',
+    import: "import { useReconLineDiagrams, ReconLineDiagramProvider } from '@/components/ReconLineDiagrams';",
+    category: 'display',
+    zh: '复盘详情和计时器共用的行首状态图：累计执行前状态、F2L 遮罩、顶层平面图及公式链接。',
+    en: 'Shared pre-line cube diagrams for recon and timer: accumulated setup, F2L masks, last-layer plans and case links.',
+  },
+  {
+    name: 'ReconCaseLink',
+    import: "import ReconCaseLink from '@/components/ReconCaseLink';",
+    category: 'display',
+    zh: '复盘和计时器共用的公式链接，点击原地打开 AlgCaseView 详情弹窗，保留完整页面入口。',
+    en: 'Shared recon and timer case link opening AlgCaseView in a dialog with a full-page link.',
   },
   {
     name: 'TwistySection',
@@ -2406,6 +2473,13 @@ export const CATALOG: ComponentEntry[] = [
   },
 
   // ── 导航与链接 ──────────────────────────────────────────────────────────
+  {
+    name: 'WorkspaceProvider',
+    import: "import { WorkspaceProvider, WorkspaceShell, Reports, Projects } from '@app-foundation/workspace-ui';",
+    category: 'nav',
+    zh: '工作台共享布局、项目与工作记录；宿主注入自己的 API、路由、品牌和控件，账号与数据保持独立。',
+    en: 'Shared workspace shell, projects and reports; hosts inject their own API, routing, brand and controls, with independent identities and data.',
+  },
   {
     name: 'WcaAuth',
     import: "import WcaAuth from '@/components/WcaAuth';",

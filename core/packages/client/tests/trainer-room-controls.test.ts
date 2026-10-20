@@ -5,9 +5,9 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { parseAsString, useQueryState, useQueryStates } from 'nuqs';
 
-const { navigation, copied, memoryRendered } = vi.hoisted(() => ({
+const { navigation, copied, memoryRendered, cubeConnection } = vi.hoisted(() => ({
   navigation: { search: '', pathname: '/zh/alg/3x3/pll/run' }, copied: vi.fn(),
-  memoryRendered: vi.fn(),
+  memoryRendered: vi.fn(), cubeConnection: { connected: false },
 }));
 vi.mock('next/navigation', async original => ({
   ...await original<typeof import('next/navigation')>(),
@@ -36,7 +36,7 @@ vi.mock('@/components/TrainingSettings', () => ({
     }), children),
 }));
 vi.mock('@/app/[lang]/alg/_trainer/useTrainerCube', () => ({
-  useTrainerCube: () => ({ armed: false, cube: { status: { connected: false } } }),
+  useTrainerCube: () => ({ armed: false, cube: { status: cubeConnection }, practiceMode: 'manual', setPracticeMode: vi.fn() }),
 }));
 vi.mock('@/app/[lang]/alg/_trainer/trainer-components', () => ({
   TimerDisplay: () => null, ScrambleHeader: () => null, SolveCard: () => null,
@@ -77,6 +77,7 @@ let changeSplit: (value: string | null) => Promise<URLSearchParams>;
 beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.clearAllMocks();
+  cubeConnection.connected = false;
   const state = useTrainerStore.getState();
   originalKeyboardActions = { getTimerReady: state.getTimerReady, nextScramble: state.nextScramble };
   localStorage.clear();
@@ -86,6 +87,8 @@ beforeEach(() => {
   useTrainerStore.getState().loadSession('3x3', 'pll', cases);
   useTrainerStore.getState().setSelected(cases.map(caseKey));
   useTrainerStore.getState().setMode('recap');
+  useTrainerStore.getState().setTiming(true);
+  useTrainerStore.getState().setMultiScramble(false);
   useTrainerStore.getState().setScrambleKind('inv');
   container = document.createElement('div');
   document.body.append(container);
@@ -138,43 +141,49 @@ it('changes hosted practice method in place without replacing the session or its
   const solves = before.solves;
   await act(async () => { await changePractice('memo', '0'); });
   expect(useTrainerStore.getState().mode).toBe('memo');
-  expect(useTrainerStore.getState().timing).toBe(true);
+  expect(useTrainerStore.getState().timing).toBe(false);
   await act(async () => { await changePractice('recap', '1'); });
   expect(useTrainerStore.getState().mode).toBe('recap');
-  expect(useTrainerStore.getState().timing).toBe(true);
+  expect(useTrainerStore.getState().timing).toBe(false);
   expect(useTrainerStore.getState().set).toBe('pll');
   expect(useTrainerStore.getState().selected).toEqual(selected);
   expect(useTrainerStore.getState().solves).toBe(solves);
 });
 
-it('normalizes restored untimed formula training and ignores legacy timing links', async () => {
-  useTrainerStore.getState().setTiming(false);
+it('uses only a smart-cube connection for timing and keeps three-at-once available while disconnected', async () => {
   useTrainerStore.getState().setMultiScramble(true);
   await renderTrainer(true);
-  expect(useTrainerStore.getState().timing).toBe(true);
+  expect(useTrainerStore.getState().timing).toBe(false);
+  await act(async () => { await changePractice('train', '1'); });
+  expect(useTrainerStore.getState().timing).toBe(false);
+  expect(container.querySelector('[role="switch"][aria-label="Timing"], [role="switch"][aria-label="计时"]')).toBeNull();
+  const three = container.querySelector<HTMLButtonElement>('[role="switch"][aria-label="Three at once"], [role="switch"][aria-label="三条"]')!;
+  await act(async () => three.click());
   expect(useTrainerStore.getState().multiScramble).toBe(false);
-  await act(async () => { await changePractice('train', '0'); });
-  await vi.waitFor(() => expect(onUrlUpdate.mock.lastCall![0].searchParams.has('train.timing')).toBe(false));
-  expect(useTrainerStore.getState().mode).toBe('train');
+  cubeConnection.connected = true;
+  await act(async () => { await changePractice('recap', '0'); });
   expect(useTrainerStore.getState().timing).toBe(true);
-  expect(container.querySelector('button[aria-label="Timing"]')).toBeNull();
-  expect(container.querySelector('button[aria-label="计时"]')).toBeNull();
+  cubeConnection.connected = false;
+  await act(async () => { await changePractice('train', '1'); });
+  expect(useTrainerStore.getState().timing).toBe(false);
+  expect(useTrainerStore.getState().timerState).toBe(TimerState.NOT_RUNNING);
 });
 
-it('leaves completion to split view and restores timed training when leaving it', async () => {
+it('leaves completion to split view without forcing timing on when leaving it', async () => {
   vi.stubGlobal('matchMedia', () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));
   const splitCases = [...cases, { ...cases[0], name: 'B' }];
   useTrainerStore.getState().loadSession('3x3', 'pll', splitCases);
   useTrainerStore.getState().setSelected(splitCases.map(caseKey));
   await renderTrainer(true);
-  expect(useTrainerStore.getState().timing).toBe(true);
+  expect(useTrainerStore.getState().timing).toBe(false);
   await act(async () => { await changeSplit('1'); });
   expect(useTrainerStore.getState().timing).toBe(false);
   await act(async () => { await changeSplit(null); });
-  expect(useTrainerStore.getState().timing).toBe(true);
+  expect(useTrainerStore.getState().timing).toBe(false);
 });
 
-it('pauses keyboard timing, next-case shortcuts and formula recall while settings are open', async () => {
+it('keeps keyboard timing disabled and pauses next-case shortcuts and recall while settings are open', async () => {
+  cubeConnection.connected = true;
   useTrainerStore.getState().setMode('train');
   useTrainerStore.getState().setTiming(true);
   useTrainerStore.getState().setTimerState(TimerState.NOT_RUNNING);
@@ -204,7 +213,7 @@ it('pauses keyboard timing, next-case shortcuts and formula recall while setting
 
   await act(async () => gear.click());
   await act(async () => { press('Space'); press('ArrowRight'); });
-  expect(ready).toHaveBeenCalledOnce();
+  expect(ready).not.toHaveBeenCalled();
   expect(next).toHaveBeenCalledOnce();
 
   await act(async () => { await changePractice('memo', '1'); });
@@ -215,11 +224,35 @@ it('pauses keyboard timing, next-case shortcuts and formula recall while setting
   expect(memoryRendered.mock.lastCall?.[0].paused).toBe(false);
 });
 
-it('keeps hosted rooms timed without allowing a memory request to replace the room mode', async () => {
+it('ignores keyboard and pointer timer input during connected-cube practice', async () => {
+  cubeConnection.connected = true;
+  await renderTrainer(true);
+  const ready = vi.spyOn(useTrainerStore.getState(), 'getTimerReady');
+  const start = vi.spyOn(useTrainerStore.getState(), 'startTimer');
+  const stop = vi.spyOn(useTrainerStore.getState(), 'stopTimer');
+  const press = () => {
+    window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', key: ' ', bubbles: true }));
+    window.dispatchEvent(new KeyboardEvent('keyup', { code: 'Space', key: ' ', bubbles: true }));
+    for (const target of [document.body, container.querySelector('.trainer-stage')!]) {
+      target.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0 }));
+      target.dispatchEvent(new MouseEvent('pointerup', { bubbles: true, button: 0 }));
+    }
+  };
+  await act(async () => press());
+  expect(useTrainerStore.getState().timerState).toBe(TimerState.NOT_RUNNING);
+  await act(async () => useTrainerStore.getState().setTimerState(TimerState.RUNNING));
+  await act(async () => press());
+  expect(useTrainerStore.getState().timerState).toBe(TimerState.RUNNING);
+  expect(ready).not.toHaveBeenCalled();
+  expect(start).not.toHaveBeenCalled();
+  expect(stop).not.toHaveBeenCalled();
+});
+
+it('keeps a three-at-once room untimed without allowing a memory request to replace the room mode', async () => {
   await renderTrainer(true, '0123', true);
   await act(async () => { await changePractice('memo', '1'); });
   expect(useTrainerStore.getState().mode).toBe('recap');
-  expect(useTrainerStore.getState().timing).toBe(true);
+  expect(useTrainerStore.getState().timing).toBe(false);
   expect(useTrainerStore.getState().room?.code).toBe('0123');
 });
 
@@ -262,19 +295,19 @@ it.each([false, true])('joins a four-digit code from the actual input, copies an
 it.each([false, true])('automatically joins each invite when the room changes on the same training page (hosted=%s)', async hosted => {
   await renderTrainer(hosted, '0123', true);
   expect(useTrainerStore.getState().room?.code).toBe('0123');
-  expect(useTrainerStore.getState().timing).toBe(hosted);
-  expect(useTrainerStore.getState().multiScramble).toBe(!hosted);
+  expect(useTrainerStore.getState().timing).toBe(false);
+  expect(useTrainerStore.getState().multiScramble).toBe(true);
   await act(async () => {
     useTrainerStore.getState().setTiming(true);
     useTrainerStore.getState().setMultiScramble(false);
   });
-  expect(useTrainerStore.getState().timing).toBe(true);
+  expect(useTrainerStore.getState().timing).toBe(false);
   expect(useTrainerStore.getState().multiScramble).toBe(false);
   await act(async () => { await replaceInvite('4567'); });
   expect(roomApi.getRoom).toHaveBeenLastCalledWith('4567');
   expect(useTrainerStore.getState().room?.code).toBe('4567');
-  expect(useTrainerStore.getState().timing).toBe(hosted);
-  expect(useTrainerStore.getState().multiScramble).toBe(!hosted);
+  expect(useTrainerStore.getState().timing).toBe(false);
+  expect(useTrainerStore.getState().multiScramble).toBe(true);
   expect(roomApi.getRoom).toHaveBeenCalledTimes(2);
 });
 
@@ -293,7 +326,17 @@ it.each([false, true])('retries a warm-session invitation after the StrictMode e
   expect(roomApi.getRoom).toHaveBeenCalledTimes(2);
   expect(roomApi.claimRoomBatch).toHaveBeenCalledOnce();
   expect(useTrainerStore.getState().room?.code).toBe('0123');
-  expect(useTrainerStore.getState().timing).toBe(hosted);
-  expect(useTrainerStore.getState().multiScramble).toBe(!hosted);
+  expect(useTrainerStore.getState().timing).toBe(false);
+  expect(useTrainerStore.getState().multiScramble).toBe(true);
   expect(container.textContent).not.toMatch(/Joining room|正在加入房间/);
+});
+
+it('keeps the shared room and split settings visible in double practice', async () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));
+  await renderTrainer(true);
+  await act(async () => { useTrainerStore.setState({ doubleZbll: true }); });
+  expect(container.querySelector('.trainer-room-row')).not.toBeNull();
+  expect(container.querySelector('input.trainer-coop-code')).not.toBeNull();
+  expect(container.querySelector('.trainer-split-setting')).not.toBeNull();
+  await act(async () => { useTrainerStore.setState({ doubleZbll: false }); });
 });

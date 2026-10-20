@@ -20,8 +20,10 @@ import OneLookPanel from './_components/OneLookPanel';
 import '@/app/[lang]/alg/_trainer/trainer.css';
 import './skewb.css';
 import { tr } from '@/i18n/tr';
+import { useTrainingHost } from '@/lib/training-host';
 
 export default function SkewbTrainerPage() {
+  const host = useTrainingHost();
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
@@ -60,13 +62,13 @@ export default function SkewbTrainerPage() {
 
   return (
     <div className="trainer-root">
-      <div className="trainer-topbar">
+      {!host && <div className="trainer-topbar">
         <AlgPuzzlePicker
           current="skewb"
           linkFor={(id) => ({ href: `/alg/${id}` })}
           isZh={isZh}
         />
-      </div>
+      </div>}
       <div className="sk-root">
         <h1 className="sk-title">{tr({ zh: 'Skewb 技巧训练', en: 'Skewb Skills'
         })}</h1>
@@ -76,7 +78,7 @@ export default function SkewbTrainerPage() {
         </p>
 
         <Link href={`/${lang}/alg/skewb/sarahs-advanced/select`} className="sk-altlink">
-          {tr({ zh: '经典公式集训练器:Sarah’s Advanced', en: "Classic alg-set trainer: Sarah’s Advanced"
+          {tr({ zh: '练习 Sarah’s Advanced 公式集', en: "Practise Sarah’s Advanced algorithms"
         })}
           <ArrowRight size={14} />
         </Link>

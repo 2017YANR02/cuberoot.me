@@ -10,7 +10,7 @@ import { ensureWorkerInit, workerApply } from "./setup_worker_client";
 // Stack kernel (WASM):内层 rotate apply loop。模块初始化时 fire-and-forget,
 // init 完前 setup() 退回纯 JS 路径。N=200 用户场景 ~6s,kernel 目标降到 1s 量级。
 let STACK_KERNEL_READY = false;
-initStackKernel().then(() => { STACK_KERNEL_READY = true; }).catch((e) => {
+if (typeof WebAssembly !== 'undefined' && typeof fetch !== 'undefined') initStackKernel().then(() => { STACK_KERNEL_READY = true; }).catch((e) => {
   console.warn('[stack-kernel] init failed, falling back to JS path:', e);
 });
 

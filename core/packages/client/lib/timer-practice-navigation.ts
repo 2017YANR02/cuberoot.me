@@ -119,12 +119,16 @@ export function timerPracticeContents(event: string): readonly TimerPracticeCont
     }
   }
 
+  // Keep the canonical method groups ahead of the catch-all formula group.
+  const groupOrder: readonly string[] = [...TIMER_333_TRAINING_GROUPS.map(group => group.id), 'other-formulas'];
+  formulas.sort((a, b) => groupOrder.indexOf(a.group?.id ?? '') - groupOrder.indexOf(b.group?.id ?? ''));
+
   // Only scramble subtypes return to their full-solve event. OH/FMC/BLD and
   // other real event identities must survive choosing their ordinary solve.
   const solveEvent = timerEvent === 'eg1' || timerEvent === 'eg2' ? '222'
     : TIMER_333_SCRAMBLE_TYPES.some(type => type.event === timerEvent) ? '333' : timerEvent;
   return [{
-    id: 'solve', title: { zh: '完整', en: 'Full solve' },
+    id: 'solve', title: { zh: '完整', en: 'Full' },
     timer: { event: solveEvent, ...(solveEvent === '222' ? { type222: 'full' as const } : {}) },
   }, ...formulas, ...randomOnly, ...tools];
 }

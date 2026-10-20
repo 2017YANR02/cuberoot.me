@@ -1,3 +1,4 @@
+import { douyinContentAvailable } from '@cuberoot/shared/douyin-content';
 import {
   SITE_DIRECTORY_GROUPS,
   SITE_DIRECTORY_TEXTS,
@@ -12,7 +13,7 @@ import { MINI_PROGRAM_WEB_MARKER, isDouyinMiniProgram } from './platform';
 import { publicPageSharePath, type PageShareMessage } from '@cuberoot/shared/page-share';
 
 type DiscoveryRouteKey = Exclude<SiteDirectoryEntryId, 'algdb' | 'alg' | 'github'> | 'alg';
-export type WebRouteKey = DiscoveryRouteKey | 'home' | 'training' | 'account' | 'account-link' | 'privacy' | 'logout';
+export type WebRouteKey = DiscoveryRouteKey | 'home' | 'training' | 'account' | 'account-link' | 'privacy' | 'renewal-terms' | 'logout';
 
 interface WebRouteDefinition {
   title: string;
@@ -76,7 +77,7 @@ const DIRECTORY_TOOL_GROUPS: WebToolGroup[] = SITE_DIRECTORY_GROUPS.map((group) 
   eyebrow: tr(group.eyebrow),
   title: tr(group.title),
   description: tr(group.sub),
-  tools: group.entries.map((entry) => {
+  tools: group.entries.filter(entry => !isDouyinMiniProgram() || douyinContentAvailable(entry.href)).map((entry) => {
     const action = toolAction(entry);
     return {
       action,
@@ -140,6 +141,13 @@ function createWebRoutes(): Record<WebRouteKey, WebRouteDefinition> {
         zh: '先登录已有账号，再在登录方式中绑定微信',
       }),
       path: `${localizedWebsitePath('/account')}${isDouyinMiniProgram() ? '?view=signin&mini_program=login' : ''}`,
+      publicEntry: false,
+      sessionHandoff: false,
+    },
+    'renewal-terms': {
+      title: tr({ en: 'Auto-renewal Agreement', zh: '自动续费服务协议' }),
+      description: tr({ en: 'Review renewal prices and cancellation rules', zh: '查看续费价格与取消规则' }),
+      path: localizedWebsitePath('/membership/renewal-terms'),
       publicEntry: false,
       sessionHandoff: false,
     },
@@ -214,9 +222,10 @@ export function resolveWebRouteShare(key: unknown, currentUrl?: string, metadata
 
   const routeKey = key as WebRouteKey;
   const route = createWebRoutes()[routeKey];
+  if (isDouyinMiniProgram() && !douyinContentAvailable(route.path)) return null;
   if (currentUrl !== undefined || !route.publicEntry) {
     const path = publicPageSharePath(currentUrl ?? route.path);
-    if (!path) return null;
+    if (!path || (isDouyinMiniProgram() && !douyinContentAvailable(path))) return null;
     return {
       imageUrl: WEB_ROUTE_SHARE_IMAGE,
       title: metadata?.path === path ? metadata.title : tr({ en: 'CubeRoot', zh: '魔方根CubeRoot' }),
@@ -248,7 +257,8 @@ export function resolveWebRoute(key: unknown, sharedPath?: unknown): {
   }
   const route = createWebRoutes()[key as WebRouteKey];
   const path = sharedPath === undefined ? route.path : publicPageSharePath(sharedPath);
-  if (!path || (sharedPath !== undefined && !route.publicEntry)) return null;
+  if (!path || (sharedPath !== undefined && !route.publicEntry)
+    || (isDouyinMiniProgram() && !douyinContentAvailable(path))) return null;
   const resolved = {
     title: route.title,
     path,

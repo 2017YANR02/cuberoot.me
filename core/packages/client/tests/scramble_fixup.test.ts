@@ -251,11 +251,11 @@ describe('复制反馈不能骑在修正路径上(2026-08-04)', () => {
     expect(hostSrc).toMatch(/copiedCorrection: tr\(\{ zh: '已复制原打乱', en: 'Copied the scramble' \}\)/);
   });
 
-  it('Web 打乱条用于计时,纠错引导不再挂复制操作', () => {
-    const strip = hostSrc.match(/<TimerScrambleStrip\b[\s\S]*?\/>/)?.[0];
+  it('Web 打乱条遵循点击设置，纠错引导不再挂复制操作', () => {
+    const strip = hostSrc.match(/<TimerScrambleStrip\b[\s\S]*?<\/TimerScrambleStrip>/)?.[0];
     expect(strip).toBeTruthy();
-    expect(strip).not.toContain('onActivate=');
-    expect(hostSrc).toMatch(/timerScrambleClickEffect\(\s*'none'/);
+    expect(strip).toContain("timingEnabled={!layoutEditing && settings.scrambleSource !== 'manual' && scrambleClickEffect === 'start'}");
+    expect(hostSrc).toMatch(/timerScrambleClickEffect\(\s*settings.scrambleClickAction/);
     expect(hostSrc).not.toContain("'copy-scramble':");
   });
 });

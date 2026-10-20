@@ -14,9 +14,10 @@ const videoRegion = form.slice(videoStart, videoEnd);
 describe('recon submit video upload', () => {
   it('shows the upload picker only to active members while keeping external URLs for everyone', () => {
     expect(form).toContain('const { isMember } = useMembership()');
-    expect(videoRegion).toMatch(/\{isMember && \([\s\S]*?type="file"[\s\S]*?\)\}\s*<textarea/);
+    expect(videoRegion).toMatch(/\{isMember && \([\s\S]*?type="file"[\s\S]*?\)\}/);
+    expect(videoRegion.indexOf('<textarea')).toBeGreaterThan(videoRegion.indexOf('splitReconVideoGroups'));
     expect(videoRegion).toContain('accept="video/mp4,video/webm,video/quicktime,.mov"');
-    expect(videoRegion).toContain('id="recon-video-urls"');
+    expect(videoRegion).toContain("'recon-video-urls'");
   });
 
   it('treats administrators as members before the membership request resolves', () => {
@@ -26,8 +27,7 @@ describe('recon submit video upload', () => {
 
   it('uploads through the authenticated API then appends the public URL to the existing field', () => {
     expect(form).toContain('await uploadReconVideo(file)');
-    expect(form).toContain("urls.push(uploaded.url)");
-    expect(form).toContain("urls.join('\\n')");
+    expect(form).toContain("appendReconVideo(prev.videoUrl || '', uploaded.url)");
     expect(api).toContain("new Headers(authHeaders(false))");
     expect(api).toContain("sessionFetch(`${API_BASE}/video`");
     expect(api).toContain("publicApiUrl(`/v1/recon/video/${result.id}`)");

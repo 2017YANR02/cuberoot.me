@@ -8,7 +8,7 @@ export interface DashboardProgress {
   total: number; verified: number; activeCompleted: number; activeTotal: number; activeBatch: number;
   stage: string; status: string; updatedAt: string; computeSeconds: number;
   currentRssGiB: number; peakRssGiB: number; availableGiB: number;
-  currentSwapouts: number; baselineSwapouts: number; histogram: number[]; meanHtm: number | null;
+  currentSwapouts: number; baselineSwapouts: number; reviewedSwapouts?: number; histogram: number[]; meanHtm: number | null;
   ratePerSecond?: number; reason?: string;
   activeVerified?: number; memoryPressure?: number; diskGiB?: number;
   solverThreads?: number;
@@ -22,6 +22,19 @@ export interface DashboardProgress {
 export const REFRESH_MS = 5000;
 const number = (n: number) => n.toLocaleString('en-US');
 const gib = (n: number) => Number.isFinite(n) ? n.toFixed(1) : '—';
+export function renderCompletion(p: DashboardProgress, work: string): string {
+  if (p.status !== 'complete' || p.verified !== p.total) throw Error('任务尚未完整完成');
+  const w = p.website;
+  return [
+    '双底 ZBLL · 全部完成并验证',
+    `已验证 ${number(p.verified)} / ${number(p.total)}（100%）`,
+    ...(w ? ['', '网站候选打乱 · 不含 PLL',
+      `平均 ${w.baselineMean.toFixed(3)} → ${w.bestMean.toFixed(3)} 步 · 减少 ${w.meanSaved.toFixed(3)} 步`,
+      `${number(w.improvedPairs)} 对变短 · 最多减少 ${w.maxSaved} 步`,
+      `含 PLL 配对：${number(w.pllKnownPairs)} / ${number(w.pllTotalPairs)} 对完成`] : []),
+    '', `结果与断点：${work}`, '计算已结束，无需再次启动。',
+  ].join('\n');
+}
 export function humanTime(seconds: number | null): string {
   if (seconds === null || !Number.isFinite(seconds)) return '采集速度中（约 10 秒）';
   const minutes = Math.ceil(Math.max(0, seconds) / 60);
@@ -59,7 +72,7 @@ export function renderDashboard(p: DashboardProgress, options: { now?: number; r
   const accent = (s: string) => paint(s, '1;36');
   const muted = (s: string) => paint(s, '2');
   const headroom = p.availableGiB - (p.reservedRssGiB ?? p.currentRssGiB);
-  const swap = p.currentSwapouts - p.baselineSwapouts;
+  const swap = p.currentSwapouts - (p.reviewedSwapouts ?? p.baselineSwapouts);
   const good = !stale && p.status === 'running' && swap === 0 && headroom >= 2 && p.memoryPressure === 1;
   const barWidth = Math.max(16, width - 12), filled = Math.floor(barWidth * count / p.total);
   const website = p.website;
@@ -171,7 +184,11 @@ export async function watchDashboard(work: string) {
   try {
     while (!closing) {
       try {
-        const p = JSON.parse(readFileSync(resolve(work, 'progress.json'), 'utf8')) as DashboardProgress;
+        let p = JSON.parse(readFileSync(resolve(work, 'progress.json'), 'utf8')) as DashboardProgress;
+        try {
+          const live = JSON.parse(readFileSync(resolve(work, 'live-progress.json'), 'utf8'));
+          if (live.ownerPid === Number(readFileSync(resolve(work, 'owner.pid'), 'utf8')) && activeOwner(work)) p = live;
+        } catch { /* Older coordinators only write the durable snapshot. */ }
         const output = renderDashboard(p, { rate: speed.update(p), viewer: true, columns: process.stdout.columns, rows: process.stdout.rows, color: process.stdout.isTTY && !process.env.NO_COLOR });
         screen.render(output);
         if (!activeOwner(work)) { screen.close(); console.log('计算进程已结束。此面板不会自动重启计算。'); return; }

@@ -15,7 +15,7 @@ vi.mock('@/lib/auth-store', () => ({
 }));
 vi.mock('@/lib/apple-membership-bridge', () => ({ isIosMembershipSurface: () => false, useAppleMembershipAvailable: () => false }));
 vi.mock('@/lib/membership-api', async (original) => ({
-  ...await original<typeof import('@/lib/membership-api')>(), listPlans: mocks.listPlans,
+  ...await original<typeof import('@/lib/membership-api')>(), listPlans: mocks.listPlans, renewalAvailability: async () => ({ available: false, termsVersion: '2026-10-14' }),
 }));
 vi.mock('@/components/AppLink', () => ({ default: ({ prefetch: _prefetch, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { prefetch?: boolean }) => createElement('a', props) }));
 vi.mock('@/components/CubeRootLogo', () => ({ default: () => null }));
@@ -37,7 +37,8 @@ describe('membership in the WeChat browser', () => {
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone) MicroMessenger/8.0');
     mocks.getEnv.mockReset().mockImplementation((callback) => { reply = callback; });
     mocks.listPlans.mockReset().mockResolvedValue({
-      plans: [{ slug: 'monthly', nameZh: '月度会员', nameEn: 'Monthly', period: 'month', periodCount: 1, priceCents: 100, currency: 'CNY', perks: [] }],
+      plans: [{ slug: 'monthly', nameZh: '月度会员', nameEn: 'Monthly', period: 'month', periodCount: 1, priceCents: 3999, currency: 'CNY', perks: [] }],
+      renewalPlans: [{ slug: 'monthly_auto_renew', nameZh: '连续包月', nameEn: 'Monthly auto-renewal', period: 'month', periodCount: 1, priceCents: 2999, currency: 'CNY', perks: [], active: false }],
       payEnabled: true, channels: { wechat: true, wechatNative: true, wechatH5: true },
     });
     host = document.createElement('div');
@@ -66,7 +67,14 @@ describe('membership in the WeChat browser', () => {
     } else {
       expect(mocks.listPlans).toHaveBeenCalledTimes(1);
       expect(host.textContent).not.toContain('小程序内暂不提供');
-      expect(host.querySelector('.mem-plan-cta')?.textContent).toBe('登录后开通');
+      expect(host.querySelector('.mem-plan-cta')?.textContent).toBe('自动续费暂未开放');
+      expect((host.querySelector('.mem-plan-cta') as HTMLButtonElement).disabled).toBe(true);
+      expect(host.querySelectorAll('.mem-plan-cta')).toHaveLength(1);
+      expect(host.textContent).toContain('微信签约后按所选周期自动续费');
+      const select = host.querySelector('#membership-payment-mode') as HTMLSelectElement;
+      await act(async () => { select.value = 'manual'; select.dispatchEvent(new Event('change', { bubbles: true })); });
+      expect(host.textContent).toContain('仅支付本期费用，不会自动扣款');
+      expect(host.querySelector('.mem-plan-cta')?.textContent).toBe('登录后继续');
     }
   });
 });

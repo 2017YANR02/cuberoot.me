@@ -13,7 +13,7 @@
  *
  * Two independent settings, mirroring csTimer: `preScr` for normal scrambles,
  * `preScrT` for training scrambles (CFOP-step / LL-subset events). csTimer
- * defaults the latter to z2 because last-layer cases are read yellow-up.
+ * uses z2; CubeRoot defaults both to UF (white up, green front).
  *
  * Cube-shaped events only (rotations are NxN notation) — see nxnSizeForEvent.
  */
@@ -29,7 +29,7 @@ export interface TimerPreScrambleSettings {
 export function normalizeTimerPreScrambleSettings(value: Partial<Record<keyof TimerPreScrambleSettings, unknown>> = {}): TimerPreScrambleSettings {
   const rotation = (input: unknown, fallback: string) => typeof input === 'string'
     && input.length <= 128 && /^(?:[xyz](?:2|')?(?:\s+[xyz](?:2|')?)*)?$/.test(input.trim()) ? input.trim() : fallback;
-  return { preScr: rotation(value.preScr, ''), preScrT: rotation(value.preScrT, 'z2') };
+  return { preScr: rotation(value.preScr, ''), preScrT: rotation(value.preScrT, '') };
 }
 
 /** CFOP-step + LL-subset trainers — these use `preScrT`, not `preScr`. */
@@ -44,14 +44,14 @@ export function isTrainingEvent(event: EventId): boolean {
 }
 
 /** Smart 3x3 drills share the preview's training grip; WCA keeps its device frame. */
-export function timerSmartCubeTrainingOrientation(event: EventId, preScrT = 'z2'): string {
+export function timerSmartCubeTrainingOrientation(event: EventId, preScrT = ''): string {
   const selection = timerPuzzleSelection(event);
   return selection.puzzle === '333' && selection.scrambleType !== 'wca'
     ? normalizeTimerPreScrambleSettings({ preScrT }).preScrT : '';
 }
 
 /** Snapshot the performed scramble in the same physical frame as recorded BLE moves. */
-export function timerSmartCubeAttemptScramble(event: EventId, scramble: string, preScrT = 'z2'): string {
+export function timerSmartCubeAttemptScramble(event: EventId, scramble: string, preScrT = ''): string {
   const orientation = timerSmartCubeTrainingOrientation(event, preScrT);
   const selection = timerPuzzleSelection(event);
   return selection.puzzle === '333' && selection.scrambleType !== 'wca'

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { primaryCaseName } from '@cuberoot/shared/recon/alg-case-display';
 import type { AlgCase } from '@cuberoot/shared/alg';
 import { reconCommentCaseIndex, reconCommentLinks } from '@/lib/recon-comment-links';
 
@@ -13,6 +14,21 @@ const cases = new Map([
 ]);
 
 describe('recon comment learning links', () => {
+  it('uses the shared recognized case for a bare family without rewriting source text', () => {
+    const source = "R U R' // OLL(CP)";
+    const [link] = reconCommentLinks(source, new Map(), set => set === 'ollcp' ? '/alg/3x3/ollcp/ollcp56-1' : undefined);
+    expect(source.slice(link.start, link.end)).toBe('OLL(CP)');
+    expect(link.href).toBe('/alg/3x3/ollcp/ollcp56-1');
+  });
+  it('removes the repeated OLLCP family while retaining the exact case link', () => {
+    const item = makeCase(412, 'OLLCP41 2');
+    expect(primaryCaseName('3x3', 'ollcp', item)).toBe('412');
+    const index = new Map([['ollcp', reconCommentCaseIndex('ollcp', [item])]]);
+    const [link] = reconCommentLinks("R U // OLL(CP)-412", index);
+    expect(link.href).toBe('/alg/3x3/ollcp/ollcp41-2');
+    expect("R U // OLL(CP)-412".slice(link.start, link.end)).toBe('OLL(CP)-412');
+  });
+
   it.each([
     ['ZBLL-S+67', '/alg/3x3/zbll/s+u3'],
     ['ZBLL-S+U3', '/alg/3x3/zbll/s+u3'],
@@ -36,7 +52,8 @@ describe('recon comment learning links', () => {
     expect(reconCommentLinks(line, cases).map(link => line.slice(link.start, link.end)))
       .toEqual(['OLL', 'PLL', 'F2L', 'ZBLL', 'ZBLS']);
     expect(reconCommentLinks('R U // ZBLL-unknown', cases)[0].href).toBe('/alg/3x3/zbll');
-    expect(reconCommentLinks('R U // inspection / OLLCP / notF2L', cases)).toEqual([]);
+    expect(reconCommentLinks('R U // inspection / notF2L', cases)).toEqual([]);
+    expect(reconCommentLinks('R U // OLLCP', cases)[0].href).toBe('/alg/3x3/ollcp');
   });
 
   it('does not guess a case when names collide across subgroups', () => {

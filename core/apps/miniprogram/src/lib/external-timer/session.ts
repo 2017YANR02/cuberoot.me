@@ -12,18 +12,18 @@ let current: { disconnect(): Promise<void> } | null = null;
 export async function disconnectExternalTimer(): Promise<void> { generation++; await current?.disconnect(); }
 
 /** Owns native resources after the setup page returns to the WebView. */
-export async function startExternalTimer(token: string, kind: NativeTimerKind): Promise<void> {
-  if (!SMART_CUBE_RELAY_TOKEN_PATTERN.test(token)) throw new Error('INVALID_TIMER_BRIDGE_TOKEN');
+export async function startExternalTimer(token: string, kind: NativeTimerKind, localReceiver?: (event: SmartCubeRelayEvent) => void): Promise<void> {
+  if (!localReceiver && !SMART_CUBE_RELAY_TOKEN_PATTERN.test(token)) throw new Error('INVALID_TIMER_BRIDGE_TOKEN');
   const attempt = ++generation;
   await current?.disconnect();
   if (attempt !== generation) throw new Error('TIMER_CONNECTION_CANCELLED');
   const api = miniProgramApi();
   let closed = false;
-  let ready = false;
+  let ready = !!localReceiver;
   let connection: { disconnect(): Promise<void>; deviceName?: string } | undefined;
   const abortListeners = new Set<() => void>();
   const pending: SmartCubeRelayEvent[] = [];
-  const socket = api.connectSocket({ url: API_ORIGIN.replace(/^https:/, 'wss:').replace(/^http:/, 'ws:').replace(/\/v1\/?$/, '') + SMART_CUBE_RELAY_PATH });
+  const socket = localReceiver ? null : api.connectSocket({ url: API_ORIGIN.replace(/^https:/, 'wss:').replace(/^http:/, 'ws:').replace(/\/v1\/?$/, '') + SMART_CUBE_RELAY_PATH });
   let rejectReady: (error: Error) => void = () => {};
   let lastEvent: ExternalTimerEvent | undefined;
   const owner = {
@@ -34,15 +34,17 @@ export async function startExternalTimer(token: string, kind: NativeTimerKind): 
       for (const abort of abortListeners) abort();
       abortListeners.clear();
       await connection?.disconnect();
-      socket.close({ code: 1000, reason: 'timer disconnected' });
+      socket?.close({ code: 1000, reason: 'timer disconnected' });
+      localReceiver?.({ type: 'status', phase: 'disconnected' });
       if (current === owner) current = null;
     },
   };
   current = owner;
   const send = (event: SmartCubeRelayEvent): void => {
     if (closed) return;
+    if (localReceiver) { localReceiver(event); return; }
     if (!ready) { pending.push(event); return; }
-    socket.send({ data: JSON.stringify(event), fail: () => { void owner.disconnect(); } });
+    socket?.send({ data: JSON.stringify(event), fail: () => { void owner.disconnect(); } });
   };
   const emit = (event: ExternalTimerEvent): void => {
     // QiYi retransmits results until ACK; Stackmat repeats unchanged readings.
@@ -53,7 +55,7 @@ export async function startExternalTimer(token: string, kind: NativeTimerKind): 
   };
   const timeout = setTimeout(() => { rejectReady(new Error('TIMER_BRIDGE_TIMEOUT')); void owner.disconnect(); }, 10000);
   try {
-    await new Promise<void>((resolve, reject) => {
+    if (socket) await new Promise<void>((resolve, reject) => {
       rejectReady = reject;
       socket.onOpen(() => socket.send({ data: JSON.stringify({ type: 'hello', role: 'source', token }), fail: () => reject(new Error('TIMER_BRIDGE_SEND_FAILED')) }));
       socket.onMessage(({ data }) => {

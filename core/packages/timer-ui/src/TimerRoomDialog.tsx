@@ -36,7 +36,7 @@ export function TimerRoomDialog({ title, className, headerControls, language, on
   }, []);
   if (typeof document === 'undefined') return null;
   const close = { en: 'Close', zh: '关闭' }[language];
-  return createPortal(<div className="timer-room-overlay" data-no-timer {...backdrop}>
+  return createPortal(<div className="timer-room-overlay timer-no-selection" data-no-timer {...backdrop}>
     <div className={`timer-room-dialog${className ? ` ${className}` : ''}`} data-site-surface="panel" role="dialog" aria-modal="true" aria-labelledby={titleId}
       ref={ref} tabIndex={-1} onKeyUp={(event) => event.stopPropagation()} onKeyDown={(event) => {
         event.stopPropagation();

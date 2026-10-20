@@ -27,10 +27,10 @@ if (!inRepo) process.exit(0);
 
 const gate = resolve(repoRoot, 'core/packages/client/scripts/recon-ground-truth-gate.mjs');
 if (!existsSync(gate)) process.exit(0);
-const result = spawnSync(process.execPath, [gate, 'check-staged'], { cwd: repoRoot, encoding: 'utf8' });
+const result = spawnSync(process.execPath, [gate, 'check-staged', '--preflight'], { cwd: repoRoot, encoding: 'utf8' });
 if (result.status === 0) process.exit(0);
 const detail = `${result.stdout ?? ''}${result.stderr ?? ''}`.trim();
-let reason = '提交已拦截：复盘算法或 ground-truth 集合有改动，但当前内容尚无有效的全集测试凭证。先运行 pnpm --filter @cuberoot/client test:recon-ground-truth；新增多少条 fixture 都会由同一入口全部测试。';
+let reason = '提交已拦截：自动复盘检查的准备条件不满足。请按下面的原因修正；准备好后 Git 会自动检查全部样本，无需另行手动启动测试。';
 if (detail) reason += ` 检查结果：${detail}`;
 process.stdout.write(JSON.stringify({ hookSpecificOutput: {
   hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: reason,

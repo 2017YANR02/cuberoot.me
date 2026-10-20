@@ -1,3 +1,4 @@
+import { isDouyinToolSurface } from './douyin-content';
 /**
  * 2x2 打乱设置:
  * - 完整状态口径:`wca`(WCA 官方:恰好 11 步、握位代价最小,= TNoodle generateExactly)或
@@ -45,6 +46,7 @@ export function set222Mode(mode: Scramble222Mode): void {
 }
 
 export function get222Type(): Scramble222Type {
+  if (isDouyinToolSurface()) return 'full';
   if (typeof localStorage === 'undefined') return DEFAULT_SCRAMBLE_222_TYPE;
   const stored = localStorage.getItem(TYPE_KEY);
   return isScramble222Type(stored) ? stored : DEFAULT_SCRAMBLE_222_TYPE;

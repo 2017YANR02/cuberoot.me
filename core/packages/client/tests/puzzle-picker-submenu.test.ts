@@ -79,3 +79,34 @@ it('preserves a text-only trigger when the caller disables item icons', () => {
   expect(trigger.querySelector('.pp-trigger-label')?.textContent).toBe('Kilominx');
   expect(trigger.querySelector('.pp-trigger-icon')).toBeNull();
 });
+
+it('searches bilingual leaves without changing IDs and keeps shortcuts after WCA', () => {
+  const onSelect = vi.fn();
+  const discovery = {
+    storageKey: 'test.picker-discovery', searchLabel: 'Search puzzles', clearLabel: 'Clear search',
+    emptyLabel: 'No results', resultsLabel: 'Results', recentLabel: 'Recent', favoritesLabel: 'Favorites',
+    favoriteLabel: 'Favorite current puzzle', unfavoriteLabel: 'Unfavorite current puzzle',
+  };
+  localStorage.removeItem(discovery.storageKey);
+  const bilingual = groups.map(group => ({ ...group, items: group.items.map(item => ({ ...item,
+    children: item.children?.map(child => ({ ...child, searchText: child.id === 'gigaminx' ? '五阶五魔 Gigaminx' : '二阶五魔 Kilominx' })),
+  })) }));
+  act(() => root.render(createElement(PuzzlePicker, { groups: bilingual, selectedEvent: 'gigaminx', onSelect, discovery })));
+  act(() => host.querySelector<HTMLButtonElement>('.pp-trigger')!.click());
+  act(() => host.querySelector<HTMLButtonElement>('.pp-favorite')!.click());
+  expect([...host.querySelectorAll('.pp-group-title')].map(el => el.textContent)).toEqual(['WCA events', 'Favorites', 'Series']);
+  expect(JSON.parse(localStorage.getItem(discovery.storageKey)!).favorites).toEqual(['gigaminx']);
+  const input = host.querySelector<HTMLInputElement>('input')!;
+  act(() => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, '五阶');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  expect([...host.querySelectorAll('.pp-item-label')].map(el => el.textContent)).toEqual(['GigaminxSeries / Minx family']);
+  act(() => input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true })));
+  expect(document.activeElement).toBe(host.querySelector('.pp-item'));
+  act(() => host.querySelector<HTMLButtonElement>('.pp-item')!.click());
+  expect(onSelect).toHaveBeenCalledExactlyOnceWith('gigaminx');
+  expect(JSON.parse(localStorage.getItem(discovery.storageKey)!).recent).toEqual(['gigaminx']);
+  expect(document.activeElement).toBe(host.querySelector('.pp-trigger'));
+  localStorage.removeItem(discovery.storageKey);
+});

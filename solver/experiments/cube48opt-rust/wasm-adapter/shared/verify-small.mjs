@@ -9,7 +9,7 @@ import createModule, { sharedMemoryLayout } from './cube48opt-rust8.mjs';
 import { INITIAL_BYTES, WORKER_REGION_BYTES, MAX_THREADS, instantiate } from './cube48opt-rust8-worker.mjs';
 import { shallowCorpus, replay } from '../../validate.mjs';
 
-export async function verifySmall(wasmPath, root) {
+export async function verifySmall(wasmPath, root, { additionalThreadCounts = [] } = {}) {
   const { cube3x3x3 } = await import(pathToFileURL(resolve(root,
     'core/jobs/alg-build/node_modules/cubing/dist/lib/cubing/puzzles/index.js')));
   const puzzle = await cube3x3x3.kpuzzle();
@@ -18,10 +18,15 @@ export async function verifySmall(wasmPath, root) {
   const corpus = JSON.parse(readFileSync(resolve(root, 'solver/testdata/benchmarks/wca-first100.json'), 'utf8'));
   const compiled = await WebAssembly.compile(readFileSync(wasmPath));
   const probe = await createModule({ wasmModule: compiled, variant: 8, instantiateOnly: true });
+  const MAX_THREADS = probe.wasmInstance.exports.cubeopt_max_threads();
+  assert([4,18].includes(MAX_THREADS));
+  const threadCounts = [...new Set([1,2,4,...additionalThreadCounts,MAX_THREADS])];
+  assert(threadCounts.every(n => Number.isInteger(n) && n > 0 && n <= MAX_THREADS));
   assert.equal(probe.metadata.threads, 4, 'Default thread count remains four');
   assert.equal(probe.wasmInstance.exports.cubeopt_max_threads(), MAX_THREADS);
   for (const threads of [0, MAX_THREADS + 1, 1.5]) {
-    await assert.rejects(createModule({ wasmModule: compiled, threads, instantiateOnly: true }), /threads must/);
+    await assert.rejects(createModule({ wasmModule: compiled, threads, instantiateOnly: true }),
+      MAX_THREADS === 4 && threads === 5 ? /This WASM supports at most 4 workers/ : /threads must/);
   }
   assert.equal(probe.wasmInstance.exports.cubeopt_fixture_create(0, MAX_THREADS + 1, 8), 0n);
   assert.equal(probe.wasmInstance.exports.cubeopt_fixture_create(MAX_THREADS, MAX_THREADS, 8), 0n);
@@ -32,13 +37,23 @@ export async function verifySmall(wasmPath, root) {
   assert(layouts.every(l => l.requiredBytes <= 16 * 1024 ** 3));
   const batchProbeChecks = probe.wasmInstance.exports.cubeopt_fixture_verify_batch_probes();
   assert.equal(batchProbeChecks, 3072, 'Synthetic batch loads/decode must match scalar for all codes, slots and None masks');
+  const cosetBatchEnabled = probe.wasmInstance.exports.cubeopt_fixture_coset_batch_enabled() === 1;
+  const rootBoundEnabled = probe.wasmInstance.exports.cubeopt_root_bound_enabled?.() === 1;
+  const lazyNormalEnabled = probe.wasmInstance.exports.cubeopt_lazy_normal_enabled?.() === 1;
+  const opt9BatchEnabled = probe.wasmInstance.exports.cubeopt_fixture_opt9_batch_enabled?.() === 1;
+  const opt9SelectEnabled = probe.wasmInstance.exports.cubeopt_fixture_opt9_select_enabled?.() === 1;
+  const opt9SelectProbeChecks = opt9SelectEnabled
+    ? probe.wasmInstance.exports.cubeopt_fixture_verify_opt9_select_probes() : 0;
+  if (opt9SelectEnabled) assert.equal(opt9SelectProbeChecks,3072,'Select decoder must preserve all codes, slots and sparse masks');
+  const paddedStateLayout = probe.wasmInstance.exports.cubeopt_fixture_padded_layout?.() ?? 0;
+  assert([0,0x401814].includes(paddedStateLayout), 'Padded state must retain Cube20 / storage24 / Frame64');
   const genericProbeChecks = probe.wasmInstance.exports.cubeopt_fixture_verify_generic_probes();
   assert.equal(genericProbeChecks, 18432, 'Production generic decoder across all variants and codes');
   let deepPrefixes;
   const variants = [];
   for (let variant = 1; variant <= 9; variant++) {
     const snapshot = readFileSync(resolve(root, `.tmp/cubeopt-reverse/opt${variant}-generated/small-memory.bin`));
-    for (const threads of [1,2,4,MAX_THREADS]) {
+    for (const threads of threadCounts) {
     const m = await createModule({ wasmModule: compiled, variant, threads, fixture: true, smallTableBytes: snapshot });
     try {
       assert.equal(m.HEAPU8.length, INITIAL_BYTES + threads * WORKER_REGION_BYTES);
@@ -55,6 +70,11 @@ export async function verifySmall(wasmPath, root) {
         for (const depth of result.depthResults) {
           assert.deepEqual(depth.map(r => r.worker), Array.from({ length: threads }, (_, i) => i),
             'Every depth must settle exactly once for every shard');
+          for (const row of depth) {
+            if (cosetBatchEnabled) assert.equal(row.cosetRemoved, 0,
+              'A zero-bound fixture cannot supply any backward coset proof');
+            else assert.equal(row.cosetRemoved, undefined, 'Existing artifacts retain their output fields');
+          }
         }
         for (let d = 0; d < result.length; d++) {
           assert(result.depthResults[d].every(r => r.completed && !r.cancelled && r.solution === null));
@@ -109,8 +129,8 @@ export async function verifySmall(wasmPath, root) {
   await requestRejected;
   await assert.rejects(closedRequest.solve('R'), /healthy pool/);
   return { schema: 'cuberoot.rust-opt-shared-small.v1', node: process.versions.node,
-    pdbAllocatedBytes: 0, maxThreads: MAX_THREADS, threadCounts: [1,2,4,MAX_THREADS],
-    maxThreadLayouts: layouts, batchProbeChecks, genericProbeChecks, deepPrefixes, variants, independentlyVerifiedSolutions: variants.length * shallow.length,
+    pdbAllocatedBytes: 0, maxThreads: MAX_THREADS, threadCounts,
+    maxThreadLayouts: layouts, batchProbeChecks, batchProbeVariants: [8,9], cosetBatchEnabled, rootBoundEnabled, lazyNormalEnabled, opt9BatchEnabled, opt9SelectEnabled, opt9SelectProbeChecks, paddedStateLayout, genericProbeChecks, deepPrefixes, variants, independentlyVerifiedSolutions: variants.length * shallow.length,
     scalarCoordinateChecks: variants.reduce((n,v)=>n+v.coordinateCases*v.workers,0),
     failedWorkerStartupRejected:true,failedWorkerRequestRejected:true,failedPoolCannotBeReused:true,
     activeStartupCloseSettled:true,activeRequestCloseSettled:true,repeatedCloseSettled:true,

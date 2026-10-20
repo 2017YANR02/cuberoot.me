@@ -5,6 +5,7 @@ import ollMap from '@cuberoot/shared/data/oll.json';
 import pllMap from '@cuberoot/shared/data/pll.json';
 import zbllMap from '@cuberoot/shared/data/zbll.json';
 import { invertAlg } from '@cuberoot/shared/alg-transform';
+import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
 import {
   CMLL_ALGS,
   CMLL_CASES,
@@ -83,7 +84,8 @@ describe('shared Timer trainer providers', () => {
       expect(direct.event).toBe(event);
       expect(direct.caseId).not.toBe('');
       expect(direct.solutionAlg).not.toBe('');
-      expect(direct.scramble).toBe(invertAlg(direct.solutionAlg));
+      expect(direct.scramble).toBe(invertAlg(event === 'eg1' || event === 'eg2'
+        ? direct.solutionAlg : normalizeWcaScramble(direct.solutionAlg)!));
 
       const runtime = await generateTimerScramble(
         { event },
@@ -114,7 +116,8 @@ describe('shared Timer trainer providers', () => {
       });
       expect(direct.caseId).toBe(target.id);
       expect(direct.solutionAlg).toBe(target.solutionAlg);
-      expect(direct.scramble).toBe(invertAlg(target.solutionAlg));
+      expect(direct.scramble).toBe(invertAlg(event === 'eg1' || event === 'eg2'
+        ? target.solutionAlg : normalizeWcaScramble(target.solutionAlg)!));
 
       const runtime = await generateTimerScramble(
         { event, trainerCaseIds: [target.id] },
@@ -129,7 +132,7 @@ describe('shared Timer trainer providers', () => {
     },
   );
 
-  it('validates every shared case, not a sample, against the canonical inverter', () => {
+  it('validates every shared case, not a sample, in the original solution frame', () => {
     for (const event of TRAINER_WITH_CASE_LIST) {
       for (const item of timerTrainerCases(event)) {
         const generated = generateTimerTrainerScramble(event, {
@@ -140,7 +143,8 @@ describe('shared Timer trainer providers', () => {
         expect(generated.caseId).toBe(item.id);
         expect(generated.solutionAlg).toBe(item.solutionAlg);
         expect(generated.scramble).not.toBe('');
-        expect(generated.scramble).toBe(invertAlg(item.solutionAlg));
+        expect(generated.scramble).toBe(invertAlg(event === 'eg1' || event === 'eg2'
+          ? item.solutionAlg : normalizeWcaScramble(item.solutionAlg)!));
       }
     }
   });
@@ -154,7 +158,7 @@ describe('shared Timer trainer providers', () => {
     });
     expect(result.event).toBe('ll');
     expect(result.caseId).toBe(`${oll.id} + ${pll.id}`);
-    expect(result.solutionAlg).toBe(`${oll.solutionAlg} ${pll.solutionAlg}`);
+    expect(result.solutionAlg).toBe(`${normalizeWcaScramble(oll.solutionAlg)} ${normalizeWcaScramble(pll.solutionAlg)}`);
     expect(result.scramble).toBe(invertAlg(result.solutionAlg));
   });
 
@@ -162,11 +166,11 @@ describe('shared Timer trainer providers', () => {
     resetSettings();
     const oll = OLL_CASES[OLL_CASES.length - 1];
     updateSettings({ ollSubset: [oll.id] });
-    expect(scrambleOll(() => 0.5)).toBe(invertAlg(oll.solutionAlg));
+    expect(scrambleOll(() => 0.5)).toBe(invertAlg(normalizeWcaScramble(oll.solutionAlg)!));
     expect(getLastPickedCase('oll')).toBe(oll.id);
 
     const coll = COLL_CASES[0];
-    expect(scrambleColl(() => 0)).toBe(invertAlg(coll.solutionAlg));
+    expect(scrambleColl(() => 0)).toBe(invertAlg(normalizeWcaScramble(coll.solutionAlg)!));
     expect(getLastPickedCase('coll')).toBe(coll.id);
 
     const ll = generateTimerTrainerScramble('ll', { random: () => 0 });

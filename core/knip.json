@@ -7,7 +7,7 @@
     "{packages/miniprogram,apps/miniprogram}/scripts/release-check-lib.d.mts",
     "packages/client/app/[lang]/timer/_lib/scramble/invert.ts"
   ],
-  "ignoreBinaries": ["open", "rundll32.exe", "netstat", "wasm-pack", "pwsh", "xcrun", "ssh-keygen", "plutil", "launchctl", "whoami.exe", "icacls.exe", "taskkill.exe", "schtasks.exe"],
+  "ignoreBinaries": ["open", "rundll32.exe", "netstat", "wasm-pack", "pwsh", "xcrun", "ssh-keygen", "ssh-keyscan", "plutil", "launchctl", "whoami.exe", "icacls.exe", "taskkill.exe", "schtasks.exe"],
   "ignoreDependencies": ["tsx"],
   "workspaces": {
     ".": {
@@ -35,6 +35,8 @@
       "ignoreDependencies": ["@ohos/hvigor-ohos-plugin"]
     },
     "apps/mobile": {
+      "entry": ["scripts/build-watch-runtime.ts", "scripts/watch-lookup-build.ts", "src/watch-cube-runtime.ts", "src/watch-scene-runtime.ts", "src/watch-replay-runtime.ts", "src/watch-scramble-runtime.ts"],
+      "ignoreDependencies": ["watch-cubing-333"],
       "ignore": [
         "android/app/build/**",
         "android/app/src/main/assets/public/**",

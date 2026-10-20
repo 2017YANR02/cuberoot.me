@@ -1,6 +1,8 @@
 // Lightweight catalog shared by the simulator menu and icon gallery.
 import { eventDisplayName } from '@/lib/wca-events';
-import { PG_PUZZLES } from './pgCatalog';
+import { PG_PUZZLES, type PgPuzzleId } from './pgCatalog';
+
+export type SimPuzzle = number | 'sq1' | 'sq2' | 'sq4' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'ghost' | 'pyraminx' | 'pyraminx_duo' | 'skewb' | 'megaminx' | 'kilominx' | 'fto' | 'mirror' | 'mirror2' | 'sphere' | 'clock' | 'magic' | 'mmagic' | 'custom' | PgPuzzleId;
 
 // WCA-standard event names reuse the site-wide single source (lib/wca-events
 // eventDisplayName — same labels the /wca/records page renders: 三阶/3×3, SQ1,
@@ -88,7 +90,7 @@ const SIM_PUZZLE_FAMILIES: readonly SimPuzzleFamily[] = [
   },
   {
     id: 'icosahedron', labelZh: '二十面体', labelEn: 'Icosahedra',
-    values: ['radiochop', 'radiocrystal', 'radiojewel', 'radioweb', 'circoradiolarian', 'eitansstar', 'icosamate', 'astrominx', 'astrominxbigchop',
+    values: ['radiochop', 'radiocrystal', 'radiojewel', 'radioweb', 'catscradle', 'radiocanon', 'circoradiolarian', 'eitansstar', 'icosamate', 'astrominx', 'astrominxbigchop',
       'icosaminx', 'redicosahedron', 'redicosahedroncenters', 'dogic', 'icosababyface'],
   },
   {
@@ -133,3 +135,15 @@ export function groupSimPuzzleOptions(allowedValues?: readonly string[]): SimPuz
   return groups.filter(group => group.options.length > 0);
 }
 
+
+/** Free drawing supports templates independently of the animation puzzle. */
+export const DRAW_PUZZLES = ['nxn', 'sq1', 'megaminx', 'skewb', 'pyraminx', 'fto'] as const;
+export type DrawPuzzleSelection = number | Exclude<(typeof DRAW_PUZZLES)[number], 'nxn'>;
+
+export function normalizeDrawPuzzle(value: string | number): DrawPuzzleSelection {
+  if (typeof value === 'string' && DRAW_PUZZLES.some(id => id !== 'nxn' && id === value)) {
+    return value as Exclude<DrawPuzzleSelection, number>;
+  }
+  const order = Number(value);
+  return Number.isInteger(order) && order >= 2 && order <= 20 ? order : 3;
+}

@@ -72,10 +72,13 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wca_teams wca_training_institutions wechat_jssdk wechat_pc_opensdk wiki
 //   platform_competitions platform_competition_attempts platform_competition_evidence platform_competition_settlements platform_competition_device_reports platform_organizer_applications platform_refunds
-//   enterprise_verification
+//   enterprise_verification contests workspace
 //   mcp mcp_oauth onboarding timer_replay_shares site_assistant cube_agents
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
+  { d: 'account', m: 'GET', p: '/v1/workspace/:action', g: 'login', c: 'no-store', zh: 'CubeRoot 员工身份、项目、工作记录与讨论；按员工及项目权限过滤', en: 'CubeRoot employee session, projects, reports and discussion, filtered by grants' },
+  { d: 'account', m: 'POST', p: '/v1/workspace/:action', g: 'login', c: 'no-store', zh: '员工记录与评论；member/project 仅管理员，服务端逐次检查权限', en: 'Employee reports and comments; member/project require administrator access on every write' },
+  { d: 'comp', m: 'GET', p: '/v1/contests', g: 'public', c: 'short', zh: 'Contests 公开项目、比赛、纪录、排名及选手；view 选择资源，支持 event/region/group/category/type/history/id/q/offset，成绩格式由 RecordRanks 提供', en: 'Public Contests catalog, competitions, records, rankings and persons; select view, filter by event/region/group/category/type/history/id/q/offset; RecordRanks formats results' },
   { d: 'content', m: 'POST', p: '/v1/downloads/events', g: 'public', c: 'no-store', zh: '匿名记录 Android 下载入口点击；仅接受 play/apk 渠道与 en/zh 语言，正文最多 256 字节，按 IP 限流', en: 'Record anonymous Android download-entry clicks; accepts only play/apk channels and en/zh languages, with a 256-byte body limit and per-IP rate limiting' },
   { d: 'enterprise-verification', m: 'POST', p: '/v1/enterprise-verification/admin/applications/:id/receipt', g: 'admin', c: 'no-store', zh: '登记实际银行到账，包含异常或过期来款，不授予认证', en: 'Record actual bank receipts, including mismatches and late transfers, without granting certification' },
   { d: 'enterprise-verification', m: 'GET', p: '/v1/enterprise-verification/organizations/:slug', g: 'login', c: 'no-store', zh: '读取企业认证状态', en: 'Read enterprise verification' },
@@ -314,6 +317,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'recon', m: 'GET', p: '/v1/recon-ground-truth/export', g: 'public', zh: '已确认复盘测试样本的确定性导出', en: 'Deterministic export of confirmed recon test cases' },
   { d: 'recon', m: 'GET', p: '/v1/recon-ground-truth/candidates', g: 'admin', zh: '管理员复盘测试候选池', en: 'Admin recon-test candidate pool' },
   { d: 'recon', m: 'GET', p: '/v1/recon-ground-truth/:reconId', g: 'admin', zh: '候选完整性检查与规范化预览', en: 'Candidate completeness check and normalized preview' },
+  { d: 'recon', m: 'GET', p: '/v1/recon-ground-truth/runs', g: 'admin', zh: '分页读取自动复盘测试历史', en: 'Read paginated reconstruction test history' },
+  { d: 'recon', m: 'POST', p: '/v1/recon-ground-truth/runs', g: 'admin', zh: '保存自动复盘测试报告', en: 'Save automated reconstruction test report' },
   { d: 'recon', m: 'PUT', p: '/v1/recon-ground-truth/:reconId', g: 'admin', zh: '保存采用、讨论或不采用决定', en: 'Save include, discuss or reject decision' },
 
   // ---- comp ----
@@ -717,6 +722,9 @@ const ENDPOINTS: Ep[] = [
   { d: 'membership', m: 'PUT', p: '/v1/membership/admin/benefits', g: 'admin', c: 'no-store', zh: '管理员或 API key 更新权益；revision 防覆盖，中文改变后旧英文失效', en: 'Admin or API key updates with revision conflict protection and translation invalidation' },
   { d: 'membership', m: 'GET', p: '/v1/membership/subscriptions', g: 'login', c: 'no-store', zh: '查询本人自动续费合约并向微信核验状态', en: 'List owned renewal contracts and verify their state with WeChat' },
   { d: 'membership', m: 'GET', p: '/v1/membership/subscriptions/availability', g: 'public', c: 'no-store', zh: '自动续费开放状态及协议版本；审核中保持关闭', en: 'Renewal availability and consent version; closed during review' },
+  { d: 'membership', m: 'POST', p: '/v1/membership/subscriptions/mini-link', g: 'login', c: 'no-store', zh: '创建绑定当前账号的短时微信签约链接与二维码', en: 'Create an account-bound, expiring WeChat authorization link and QR code' },
+  { d: 'membership', m: 'POST', p: '/v1/membership/subscriptions/mini-context', g: 'login', c: 'no-store', zh: '校验签约链接归属并返回账号、价格和协议版本', en: 'Validate handoff ownership and return account, price and terms' },
+  { d: 'membership', m: 'POST', p: '/v1/membership/subscriptions/mini-enroll', g: 'login', c: 'no-store', zh: '校验微信身份与明确同意后返回小程序签约参数', en: 'Verify WeChat identity and explicit consent before signing Mini Program authorization parameters' },
   { d: 'membership', m: 'POST', p: '/v1/membership/subscriptions/enroll', g: 'login', c: 'no-store', zh: '验证同意与固定价格，保存账号绑定后发起微信 H5 签约', en: 'Verify consent and price, reserve account binding and request WeChat H5 authorization' },
   { d: 'membership', m: 'POST', p: '/v1/membership/subscriptions/wechat/payment-notify', g: 'public', c: 'no-store', zh: '扣款通知验签并主动查单，到账后幂等延长会员', en: 'Authenticate debit notification, query payment and extend membership once' },
   { d: 'membership', m: 'POST', p: '/v1/membership/subscriptions/:id/cancel', g: 'login', c: 'no-store', zh: '本人确认退订；微信确认后返回成功，待确认返回 202', en: 'Cancel an owned contract after confirmation; return 202 until verified' },

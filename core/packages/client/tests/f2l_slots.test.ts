@@ -57,6 +57,15 @@ describe('computeF2lSlots', () => {
     expect(new Set(res.slots.map(s => s.slot)).size).toBe(4);
   });
 
+  it.each([true, false])('only revises an unsettled insertion boundary (already paused: %s)', alreadyPaused => {
+    const tokens = [...SOLUTION.slice(0, 16), "R'", 'R', ...SOLUTION.slice(16)];
+    const moves = timed(tokens).map((move, index) => ({ ...move,
+      ts: move.ts + (alreadyPaused && index >= 16 ? 1800 : 0) + (index >= 18 ? 1800 : 0),
+    }));
+    const res = computeF2lSlots(SCRAMBLE, moves, moves.at(-1)!.ts + 300)!;
+    expect(res.slots.map(s => s.endIdx)).toEqual([alreadyPaused ? 15 : 17, 22, 30, 39]);
+  });
+
   it('每对的识别 + 执行正好等于这对的用时,累计时间单调', () => {
     const res = computeF2lSlots(SCRAMBLE, moves, totalMs)!;
     let prevCum = 0;

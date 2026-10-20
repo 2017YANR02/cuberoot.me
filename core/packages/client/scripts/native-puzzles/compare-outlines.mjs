@@ -6,12 +6,32 @@
 // --set=cube2heli: review the central face cuts added to a planar Helicopter.
 // --set=cube3heli: review the uniform 3x3 / Helicopter combination.
 // --set=radiojewel: review Radio Jewel's exact face-cut depth.
+// --set=catscradle: review Cat's Cradle's critical face-cut depth.
+// --set=radiocanon: review Radio Canon's fixed-center face cuts.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { getPuzzleGeometryByDesc } from 'cubing/puzzle-geometry';
 import { NATIVE_PUZZLES } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { Vector3 } from 'three';
 
 const reviewSets = {
+  radiocanon: {
+    basename: 'radiocanon-outlines',
+    rows: [{
+      id: 'radiocanon', en: 'Radio Canon (Radiolarian 1.5)',
+      description: 'i f 0.77', visibleFacelets: 320,
+      prior: 'i f 0.7453559924999299', priorLabel: 'Circo-Radiolarian (comparison; cuts are replaced)',
+      notes: ['Face-normal depth h = 0.77; seven triangles and nine quadrilaterals per face.', 'Twenty fixed centers; shape-preserving 120-degree turns, without jumbling.'],
+    }],
+  },
+  catscradle: {
+    basename: 'catscradle-outlines',
+    rows: [{
+      id: 'catscradle', en: "Cat's Cradle (Radiolarian 5)",
+      description: 'i f 0.566915270681799', visibleFacelets: 380,
+      prior: 'i f 0.5478640450004204', priorLabel: 'Radio Web (comparison; cuts are replaced)',
+      notes: ['Face-normal depth h = phi^2 / (2 + phi^2); 19 regions per face.', 'Fifteen triangles, three quadrilaterals and one hexagon; shape-preserving 120-degree turns.'],
+    }],
+  },
   radiojewel: {
     basename: 'radiojewel-outlines',
     rows: [
@@ -128,7 +148,7 @@ const reviewSets = {
 };
 const args = process.argv.slice(2);
 if (args.length > 1 || (args[0] && !args[0].startsWith('--set='))) {
-  throw new Error('Usage: node compare-outlines.mjs [--set=original|2026-10|2026-10-12|cube3heli|radiojewel]');
+  throw new Error(`Usage: node compare-outlines.mjs [--set=${Object.keys(reviewSets).join('|')}]`);
 }
 const setName = args[0]?.slice('--set='.length) ?? 'original';
 if (!Object.hasOwn(reviewSets, setName)) throw new Error(`Unknown review set: ${setName}`);

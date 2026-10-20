@@ -11,12 +11,14 @@ const icons = { timer: Timer, 'smart-cube': Bluetooth, scramble: Dices, training
   appearance: Palette, sound: Volume2, data: Database, advanced: Keyboard };
 
 /** One responsive settings dialog. Hosts supply supported categories and their fields. */
-export function TimerSettingsPanel({ language, activeCategory, onCategoryChange, onClose, categories, children }: {
+export function TimerSettingsPanel({ language, activeCategory, onCategoryChange, onClose, categories, playersControl, resetControl, children }: {
   language: 'en' | 'zh';
   activeCategory: TimerSettingCategoryId;
   onCategoryChange(category: TimerSettingCategoryId): void;
   onClose(): void;
   categories?: readonly TimerSettingCategoryId[];
+  playersControl?: ReactNode;
+  resetControl?: ReactNode;
   children: ReactNode;
 }) {
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -39,11 +41,11 @@ export function TimerSettingsPanel({ language, activeCategory, onCategoryChange,
   if (typeof document === 'undefined') return null;
   return createPortal(
     <div className="timer-settings-overlay" data-no-timer {...backdrop}>
-      <div ref={dialogRef} className="timer-modal settings-modal" role="dialog" aria-modal="true"
+      <div ref={dialogRef} className="timer-modal settings-modal" data-site-surface="panel" role="dialog" aria-modal="true"
         aria-labelledby={titleId} tabIndex={-1} onKeyDown={event => {
           if (event.key !== 'Tab' || !dialogRef.current) return;
           const focusable = [...dialogRef.current.querySelectorAll<HTMLElement>(
-            'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
+            'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), summary, [tabindex]:not([tabindex="-1"])',
           )].filter(element => !element.closest('[hidden]') && element.getClientRects().length > 0);
           const first = focusable[0]; const last = focusable[focusable.length - 1];
           if (!first) { event.preventDefault(); dialogRef.current.focus(); }
@@ -53,6 +55,13 @@ export function TimerSettingsPanel({ language, activeCategory, onCategoryChange,
         }}>
         <header className="settings-modal-head">
           <h2 id={titleId}>{label('Settings', '设置')}</h2>
+            <label className="settings-category-picker">
+              <select className="settings-category-select" aria-label={label('Settings categories', '设置分类')} value={activeCategory}
+                onChange={event => onCategoryChange(event.target.value as TimerSettingCategoryId)}>
+                {items.map(category => <option key={category.id} value={category.id}>{category.label[language]}</option>)}
+              </select>
+            </label>
+          {resetControl && <div className="settings-global-reset">{resetControl}</div>}
           <button type="button" className="settings-modal-close" onClick={close} aria-label={label('Close settings', '关闭设置')}><X size={18} /></button>
         </header>
         <div className="settings-layout">
@@ -66,16 +75,16 @@ export function TimerSettingsPanel({ language, activeCategory, onCategoryChange,
                   onClick={() => onCategoryChange(category.id)}><Icon size={16} aria-hidden /><span>{category.label[language]}</span></button>;
               })}
             </nav>
-            <label className="settings-category-picker">
-              <span>{label('Category', '分类')}</span>
-              <select className="settings-category-select" value={activeCategory}
-                onChange={event => onCategoryChange(event.target.value as TimerSettingCategoryId)}>
-                {items.map(category => <option key={category.id} value={category.id}>{category.label[language]}</option>)}
-              </select>
-            </label>
+
           </aside>
           <div ref={mainRef} className="settings-main">
-            <div className="settings-category-intro"><h3>{items.find(category => category.id === activeCategory)?.label[language]}</h3></div>
+
+            {activeCategory === 'timer' && playersControl && (
+              <div className="settings-row">
+                <span className="settings-row-label">{label('Players', '人数')}</span>
+                <span className="settings-row-control">{playersControl}</span>
+              </div>
+            )}
             {children}
           </div>
         </div>

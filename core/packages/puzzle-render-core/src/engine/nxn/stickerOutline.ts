@@ -16,10 +16,10 @@
  * 描边色,厚贴片从侧面看仍是一圈框。
  */
 import * as THREE from 'three';
-import { COLORS, STICKER_INNER, STICKER_CORNER_RADIUS } from '@cuberoot/puzzle-render-core/engine/define';
+import { COLORS, STICKER_INNER, STICKER_CORNER_RADIUS, STICKER_OUTLINE_WIDTH } from '@cuberoot/puzzle-render-core/engine/define';
 
 /** 描边宽度(世界单位;贴纸半宽 = STICKER_INNER/2 = 28)。 */
-export const OUTLINE_WIDTH = 4.5;
+export const OUTLINE_WIDTH = STICKER_OUTLINE_WIDTH;
 
 /** 默认描边色 = 引擎自带的高亮品红(define.COLORS.High)。六面色里没有这个色相,
  *  压在白/黄/红/橙/绿/蓝哪一枚上都跳得出来。 */

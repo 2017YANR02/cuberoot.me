@@ -495,7 +495,7 @@ function GeoExtremesSection({ comps, isZh }: { comps: Comp[]; isZh: boolean }) {
               </Link>
             </span>
             <span className="cs-geo-meta">
-              {[localizeCity(r.comp.city ?? '', isZh, r.comp.country), countryName(r.comp.country, isZh)].filter(Boolean).join(', ')} · {formatDateRangeIso(r.comp.start_date, r.comp.end_date)}
+              {[localizeCity(r.comp.city ?? '', isZh, r.comp.country), countryName(r.comp.country, isZh)].filter(Boolean).join(tr({ zh: '，', en: ', ' }))} · {formatDateRangeIso(r.comp.start_date, r.comp.end_date)}
             </span>
             <span className="cs-geo-value">{r.value}</span>
           </div>

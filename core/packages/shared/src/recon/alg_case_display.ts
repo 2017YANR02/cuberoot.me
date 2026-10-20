@@ -25,9 +25,9 @@ export const OLL_NAME_BY_NUMBER: Record<number, string> = {
   57: 'B',
 };
 
-/** PLL 改名:仅这 4 个,其余原样。 */
+/** PLL 旧识别名到公式库主名的兼容映射。 */
 export const PLL_RENAME: Record<string, string> = {
-  Aa: 'A+', Ab: 'A-', Ua: 'U-', Ub: 'U+',
+  Aa: 'A+', Ab: 'A-', Ua: 'U-', Ub: 'U+', Ja: 'L', Jb: 'J',
 };
 
 /** "OLL 27" → 27;非该格式或越界返 null。 */
@@ -212,5 +212,10 @@ export function primaryCaseName(puzzle: string, set: string, c: AlgCase): string
       if (shortName) { name = shortName; break; }
     }
   }
-  return name.replace(/^([A-Za-z][A-Za-z0-9+-]*)\s+(\d+)$/, '$1$2');
+  const compact = name.replace(/^([A-Za-z][A-Za-z0-9+-]*)\s+(\d+)$/, '$1$2');
+  // Numeric library names can carry an attached family prefix (OLLCP41 2).
+  // The caller supplies that family separately, just as for spaced prefixes.
+  return /^[a-z]+$/i.test(set) && compact.toLowerCase().startsWith(set.toLowerCase())
+    && /^\d+$/.test(compact.slice(set.length))
+    ? compact.slice(set.length) : compact;
 }

@@ -12,3 +12,8 @@
 .training-iframe-stats { flex-shrink: 0; max-height: 45dvh; overflow: auto; padding: 8px 16px; }
 .training-iframe-stats > summary { cursor: pointer; }
 .training-manual-practice { padding-bottom: 8px; }
+
+.training-stats details > summary { display: flex; align-items: center; gap: 8px; list-style: none; }
+.training-stats details > summary::-webkit-details-marker { display: none; }
+.training-stats-caret { flex: 0 0 auto; }
+.training-stats details[open] > summary > .training-stats-caret { transform: rotate(90deg); }

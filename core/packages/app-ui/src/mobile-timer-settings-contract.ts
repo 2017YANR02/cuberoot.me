@@ -1,5 +1,6 @@
 import type { TimerSettingFieldId } from '@cuberoot/shared/timer';
 import {
+  TIMER_TIMING_SETTING_FIELD_IDS,
   TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS,
   TIMER_SMART_CUBE_SETTING_FIELD_IDS,
   TIMER_TYPOGRAPHY_SETTING_FIELD_IDS,
@@ -25,14 +26,7 @@ import {
  * through the same shared components as Web.
  */
 export const MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS = [
-  'settings.timer.enabled',
-  'settings.timer.inspection',
-  'settings.timer.hold-threshold',
-  'settings.timer.auto-session-for-event',
-  'settings.timer.auto-event-for-session',
-  'settings.timer.hide-running-time',
-  'settings.timer.running-precision',
-  'settings.timer.result-precision',
+  ...TIMER_TIMING_SETTING_FIELD_IDS,
   ...TIMER_SMART_CUBE_SETTING_FIELD_IDS,
   'settings.training.stage-splits',
   'settings.training.bld-memo-split',
@@ -40,7 +34,8 @@ export const MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS = [
   'settings.scramble.auto-mark-wca',
   ...TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS,
   ...TIMER_TYPOGRAPHY_SETTING_FIELD_IDS,
-  ...TIMER_TRAINING_SETTING_FIELD_IDS,
+  // Installed App has not wired the specialized training-start controller yet.
+  ...TIMER_TRAINING_SETTING_FIELD_IDS.filter(id => id !== 'settings.training.start-mode'),
   ...TIMER_KEYMAP_SETTING_FIELD_IDS,
   ...TIMER_DISPLAY_SETTING_FIELD_IDS,
   ...TIMER_PRE_SCRAMBLE_SETTING_FIELD_IDS,

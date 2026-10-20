@@ -1,0 +1,46 @@
+.recon-case-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+.recon-case-line-text {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.recon-case-diagram {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 4px;
+  line-height: 0;
+}
+
+.recon-inspection-chip {
+  display: inline-block;
+  margin-inline-start: 6px;
+}
+
+
+.recon-notation-list:has(.recon-case-diagram) .recon-plain-line {
+  display: inline-block;
+  box-sizing: border-box;
+  max-width: 100%;
+  padding-inline-start: var(--recon-diagram-indent, 32px);
+}
+
+/* Semantic chip size belongs to the row, never to the host page. */
+.ccc-chip.recon-label-chip { width: 17px; height: 11px; }
+.recon-notation-list :is(.recon-comment-link, .sml-case-link) {
+  color: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.recon-notation-list :is(.recon-comment-link, .sml-case-link):hover,
+.recon-notation-list :is(.recon-comment-link, .sml-case-link):focus-visible {
+  color: var(--accent);
+  text-decoration-style: solid;
+}

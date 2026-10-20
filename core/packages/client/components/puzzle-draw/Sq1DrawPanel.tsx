@@ -502,6 +502,7 @@ export function Sq1DrawPanel({ onDocumentChange }: Sq1DrawPanelProps) {
 
       <div role="tabpanel" hidden={view !== 'single'}>
         <DrawCanvas
+          previewActive={view === 'single'}
           elements={singleElements}
           viewBox="0 0 75 75"
           width={400}
@@ -517,6 +518,7 @@ export function Sq1DrawPanel({ onDocumentChange }: Sq1DrawPanelProps) {
 
       <div role="tabpanel" hidden={view !== 'double'}>
         <DrawCanvas
+          previewActive={view === 'double'}
           elements={doubleElements}
           viewBox="0 0 75 150"
           width={300}

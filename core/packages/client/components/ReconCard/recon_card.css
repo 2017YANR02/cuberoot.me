@@ -218,8 +218,11 @@
   padding: 0;
   border: 0;
   border-radius: 6px;
-  background: var(--card);
-  color: var(--muted-foreground);
+  /* Media overlays need glass even when the page has no scenery. */
+  background: var(--glass-popover-bg);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+  color: var(--foreground);
   cursor: pointer;
 }
 .recon-curation-button:hover, .recon-curation-button[aria-pressed="true"] { color: var(--accent); }

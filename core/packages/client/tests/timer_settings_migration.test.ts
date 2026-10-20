@@ -13,6 +13,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { timerSeedTicket } from '@cuberoot/shared/timer/sync-seed';
 
+// These storage migrations run in the ordinary Web surface. Keep the native
+// bridge (and its browser session listeners) outside this Node-only harness.
+vi.mock('@/lib/douyin-content', () => ({ isDouyinToolSurface: () => false }));
+
 const KEY = 'cuberoot-timer.settings.v1';
 
 /** node 环境没有 localStorage / window,给一个够用的内存版。 */
@@ -35,6 +39,17 @@ async function freshSettings() {
   vi.resetModules();
   return import('@/app/[lang]/timer/_lib/settings');
 }
+
+it.each(['none', 'copy', 'next'])('migrates hidden %s to timing once and preserves subsequent choices', async (legacy) => {
+  installStorage({ [KEY]: JSON.stringify({ scrambleClickAction: legacy, scrambleClickMigrated: true }) });
+  try {
+    const settings = await freshSettings();
+    expect(settings.getSettings().scrambleClickAction).toBe('start');
+    expect(settings.getSettings().scrambleClickStartMigrated).toBe(true);
+    settings.updateSettings({ scrambleClickAction: 'copy' });
+    expect((await freshSettings()).getSettings().scrambleClickAction).toBe('copy');
+  } finally { vi.unstubAllGlobals(); }
+});
 
 it('keeps Web training timed after loading or updating an old untimed preference', async () => {
   const mem = installStorage({ [KEY]: JSON.stringify({ timingEnabled: false }) });
@@ -100,10 +115,13 @@ describe('录姿态:老存档里的 false 要翻过来', () => {
     expect(saved.recordGyroMigrated).toBe(true);
   });
 
-  it('翻过之后用户再关掉,不会被翻回来 —— 那时的 false 才是他的意思', async () => {
-    installStorage({ [KEY]: JSON.stringify({ recordGyro: false, recordGyroMigrated: true }) });
-    const { getSettings } = await freshSettings();
-    expect(getSettings().recordGyro).toBe(false);
+  it('旧版关闭姿态记录的偏好迁移为始终记录', async () => {
+    const mem = installStorage({ [KEY]: JSON.stringify({ recordGyro: false, recordGyroMigrated: true }) });
+    const { getSettings, updateSettings } = await freshSettings();
+    expect(getSettings().recordGyro).toBe(true);
+    expect(JSON.parse(mem.get(KEY) as string).recordGyro).toBe(true);
+    updateSettings({ recordGyro: false });
+    expect(getSettings().recordGyro).toBe(true);
   });
 
   it('从没存过设置的浏览器:走默认值,不写盘', async () => {
@@ -121,7 +139,7 @@ describe('录姿态:老存档里的 false 要翻过来', () => {
     const { getSettings } = await freshSettings();
     // 两条迁移(scrambleClick + recordGyro)同时命中,但只落一次盘。
     expect(writes.filter(k => k === KEY)).toHaveLength(1);
-    expect(getSettings().scrambleClickAction).toBe('copy');
+    expect(getSettings().scrambleClickAction).toBe('start');
     expect(getSettings().recordGyro).toBe(true);
   });
 
@@ -141,8 +159,8 @@ describe('录姿态:老存档里的 false 要翻过来', () => {
       }),
     });
     const { getSettings } = await freshSettings();
-    expect(getSettings().scrambleClickAction).toBe('copy');
-    expect(JSON.parse(mem.get(KEY) as string).scrambleClickAction).toBe('copy');
+    expect(getSettings().scrambleClickAction).toBe('start');
+    expect(JSON.parse(mem.get(KEY) as string).scrambleClickAction).toBe('start');
   });
 
   it('分段开关复用共享默认值并修复显式坏值', async () => {
@@ -180,13 +198,10 @@ describe('智能魔方自动预备:老存档里的 off 要翻过来', () => {
     expect(saved.bluetoothAutoReadyMigrated).toBe(true);
   });
 
-  it('迁移后用户手动关闭,刷新后仍然保持关闭', async () => {
-    installStorage();
-    let settings = await freshSettings();
-    settings.updateSettings({ bluetoothAutoReady: 'off' });
-
-    settings = await freshSettings();
-    expect(settings.getSettings().bluetoothAutoReady).toBe('off');
+  it('已迁移存档中的关闭模式也升级为打乱正确', async () => {
+    installStorage({ [KEY]: JSON.stringify({ bluetoothAutoReady: 'off', bluetoothAutoReadyMigrated: true }) });
+    const settings = await freshSettings();
+    expect(settings.getSettings().bluetoothAutoReady).toBe('scrambled');
   });
 
   it('保留老用户选过的其他预备方式', async () => {

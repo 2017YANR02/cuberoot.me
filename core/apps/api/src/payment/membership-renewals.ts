@@ -3,7 +3,7 @@ import { query, withTransaction } from '../db/connection.js';
 import { applyPapayDebit, papayConfig, papayConfigured, queryPapayDebit } from './wechat-papay.js';
 import { synchronizeMembershipContract, type MembershipContractRow } from './membership-contracts.js';
 import { grantMembershipInTransaction } from './membership-settlement.js';
-import { renewalReleased } from './membership-renewal-policy.js';
+import { renewalReleased, renewalPilotAllowed, renewalDebitAllowed, renewalPlanConfigured, RENEWAL_TEMPLATES, type RenewalSlug } from './membership-renewal-policy.js';
 
 type Contract = MembershipContractRow & { consented_at: Date | null; debit_cycle: number; next_debit_at: Date | null };
 type Debit = { out_trade_no: string; contract_id: string; cycle: number; status: string };
@@ -61,7 +61,7 @@ export async function reconcileRenewalDebit(orderNo: string): Promise<boolean> {
 }
 
 async function prepareDebit(id: string, owner: string): Promise<string | null> {
-  if (!renewalReleased() || process.env.WECHAT_PAPAY_DEBIT_ENABLED !== 'true') return null;
+  if (!renewalDebitAllowed(owner, 0)) return null;
   const verified = await synchronizeMembershipContract(id, owner, false);
   if (verified?.state !== 'active' || verified.syncStatus !== 'verified') return null;
   return withTransaction(async tx => {
@@ -72,7 +72,9 @@ async function prepareDebit(id: string, owner: string): Promise<string | null> {
     const [contract] = await tx<Contract>(`SELECT * FROM membership_contracts WHERE id = ? AND wca_id = ?
       AND state = 'active' AND cancellation_requested_at IS NULL AND consented_at IS NOT NULL
       AND (debit_cycle = 0 OR next_debit_at <= now()) FOR UPDATE`, [id, owner]);
-    if (!contract) return null;
+    if (!contract || !renewalPlanConfigured(contract.plan_slug)
+      || RENEWAL_TEMPLATES[contract.plan_slug as RenewalSlug]?.id !== contract.plan_id
+      || !renewalDebitAllowed(owner, contract.debit_cycle)) return null;
     const [existing] = await tx<Debit>('SELECT * FROM membership_renewal_debits WHERE contract_id = ? AND cycle = ?', [id, contract.debit_cycle]);
     if (existing) return existing.status === 'prepared' ? existing.out_trade_no : null;
     const [membership] = await tx<{ expires_at: Date | null }>('SELECT expires_at FROM memberships WHERE wca_id = ?', [owner]);
@@ -99,8 +101,10 @@ async function submitDebit(no: string): Promise<void> {
     if (!binding) return;
     await tx("SELECT id FROM app_users WHERE wca_id = ? OR 'u' || id::text = ? FOR UPDATE", [binding.wca_id, binding.wca_id]);
     const [contract] = await tx<Contract>('SELECT * FROM membership_contracts WHERE id = ? FOR UPDATE', [attempt.contract_id]);
-    if (!contract || contract.state !== 'active' || contract.cancellation_requested_at
-      || !renewalReleased() || process.env.WECHAT_PAPAY_DEBIT_ENABLED !== 'true') {
+    if (!contract || !renewalPlanConfigured(contract.plan_slug)
+      || RENEWAL_TEMPLATES[contract.plan_slug as RenewalSlug]?.id !== contract.plan_id
+      || contract.state !== 'active' || contract.cancellation_requested_at
+      || !renewalDebitAllowed(contract.wca_id, attempt.cycle)) {
       await tx("UPDATE membership_renewal_debits SET status = 'cancelled' WHERE out_trade_no = ?", [no]);
       return;
     }
@@ -122,12 +126,14 @@ export async function runMembershipRenewalsOnce(): Promise<void> {
     for (const row of pending) {
       try { await reconcileRenewalDebit(row.out_trade_no); } catch { /* retain uncertain attempt for reconciliation */ }
     }
-    if (!renewalReleased() || process.env.WECHAT_PAPAY_DEBIT_ENABLED !== 'true') return;
+    if (!(renewalReleased() && process.env.WECHAT_PAPAY_DEBIT_ENABLED === 'true')
+      && !(renewalPilotAllowed(process.env.WECHAT_PAPAY_PILOT_OWNER) && process.env.WECHAT_PAPAY_PILOT_DEBIT_ENABLED === 'true')) return;
     const due = await query<Contract>(`SELECT * FROM membership_contracts c WHERE state = 'active'
+      AND (?::boolean OR (wca_id = ? AND debit_cycle = 0))
       AND cancellation_requested_at IS NULL AND consented_at IS NOT NULL
       AND (debit_cycle = 0 OR next_debit_at <= now())
       AND NOT EXISTS (SELECT 1 FROM membership_renewal_debits d WHERE d.contract_id = c.id AND d.cycle = c.debit_cycle AND d.status <> 'prepared')
-      ORDER BY next_debit_at NULLS FIRST, created_at LIMIT 10`);
+      ORDER BY next_debit_at NULLS FIRST, created_at LIMIT 10`, [renewalReleased(), process.env.WECHAT_PAPAY_PILOT_OWNER ?? '']);
     for (const contract of due) {
       try {
         const no = await prepareDebit(contract.id, contract.wca_id);

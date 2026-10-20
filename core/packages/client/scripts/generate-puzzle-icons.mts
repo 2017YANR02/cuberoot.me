@@ -21,21 +21,42 @@ const vertices = (coords: number[]): V[] => Array.from({length: coords.length / 
 const center = (vs: V[]) => mul(vs.reduce(add, [0, 0, 0]), 1 / vs.length);
 const fmt = (n: number) => Number(n.toFixed(2));
 
-// Offset convex sticker edges by a fixed optical gap. Unlike centroid scaling,
-// this keeps thin high-order pieces and broad centers separated by equal gaps.
+// Offset convex sticker edges by an optical gap, capped for narrow pieces.
 function inset(poly: P[], gap: number): P[] {
   const area = poly.reduce((s, p, i) => { const q=poly[(i+1)%poly.length]; return s+p[0]*q[1]-q[0]*p[1]; },0);
+  const mid: P = [
+    poly.reduce((sum,p) => sum+p[0],0)/poly.length,
+    poly.reduce((sum,p) => sum+p[1],0)/poly.length,
+  ];
+  const maxGap = Math.min(...poly.map((p,i) => {
+    const q=poly[(i+1)%poly.length], dx=q[0]-p[0], dy=q[1]-p[1];
+    return Math.sign(area)*(dx*(mid[1]-p[1])-dy*(mid[0]-p[0]))/Math.hypot(dx,dy);
+  }));
+  // Keep this interior point strictly inside every offset half-plane.
+  gap = Math.min(gap,0.95*maxGap);
   const edges = poly.map((p,i) => {
     const q=poly[(i+1)%poly.length], dx=q[0]-p[0], dy=q[1]-p[1], len=Math.hypot(dx,dy);
     const k=Math.sign(area)*gap/len;
     return {p:[p[0]-dy*k,p[1]+dx*k] as P, d:[dx,dy] as P};
   });
-  return edges.map((b,i) => {
+  const shifted: P[] = edges.map((b,i) => {
     const a=edges[(i+edges.length-1)%edges.length], det=a.d[0]*b.d[1]-a.d[1]*b.d[0];
     if(Math.abs(det)<1e-8) return b.p;
     const t=((b.p[0]-a.p[0])*b.d[1]-(b.p[1]-a.p[1])*b.d[0])/det;
     return [a.p[0]+t*a.d[0],a.p[1]+t*a.d[1]];
   });
+  // Each offset edge length is affine in gap. Stop before any edge collapses.
+  const scale = Math.min(1,...poly.map((p,i) => {
+    const j=(i+1)%poly.length, q=poly[j], dx=q[0]-p[0], dy=q[1]-p[1];
+    const lengthSq=dx*dx+dy*dy;
+    const remaining=(shifted[j][0]-shifted[i][0])*dx+(shifted[j][1]-shifted[i][1])*dy;
+    const shrink=lengthSq-remaining;
+    return shrink>0 ? 0.95*lengthSq/shrink : 1;
+  }));
+  return scale===1 ? shifted : shifted.map(([x,y],i) => [
+    poly[i][0]+scale*(x-poly[i][0]),
+    poly[i][1]+scale*(y-poly[i][1]),
+  ]);
 }
 
 function glyph(def: string): string {

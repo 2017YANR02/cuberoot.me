@@ -10,8 +10,10 @@
  * 关联缩略图点了是**切弹窗**(`onJump`):跳过去的那个 case 多半在别的组,身后的列表根本
  * 没渲染它,只给元数据等于跳进一片空白;弹窗自带缩略图 + 公式,原地看得到。
  */
-import { useEffect, useMemo } from 'react';
-import { X, ExternalLink } from 'lucide-react';
+import { useMemo } from 'react';
+import { ExternalLink } from 'lucide-react';
+import { ClearButton } from '@/components/ClearButton';
+import { useModalDismiss } from '@/hooks/useModalDismiss';
 import Link from '@/components/AppLink';
 import type { AlgCase, AlgCaseMeta, AlgPuzzle } from '@cuberoot/shared';
 import AlgCaseMetaContent from '@/components/AlgCaseMetaContent';
@@ -37,18 +39,14 @@ export default function AlgCaseMetaModal({ caseObj, puzzle, set, byNo, onClose, 
   // meta 可能整个没有(虚拟集 / 库里还没补元数据的集):标题退回 case 名,正文各段自行消失
   const m = (caseObj.meta ?? {}) as AlgCaseMeta;
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  const backdropProps = useModalDismiss(onClose);
 
   /** 「在列表中打开」—— 真 <a>,中键能新开(AGENTS.md「链接支持中键新开」) */
   const listHref = useMemo(() => href ?? algCaseHref(puzzle, set, caseObj), [href, caseObj, puzzle, set]);
 
   return (
-    <div className="alg-admin-modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="alg-admin-modal alg-meta-modal" onClick={e => e.stopPropagation()}>
+    <div className="alg-admin-modal-backdrop" {...backdropProps} role="dialog" aria-modal="true">
+      <div className="alg-admin-modal alg-meta-modal">
         <div className="alg-admin-modal-head">
           <h2>
             {m.ollcp ?? caseObj.name}
@@ -58,9 +56,7 @@ export default function AlgCaseMetaModal({ caseObj, puzzle, set, byNo, onClose, 
               <ExternalLink size={14} />
             </Link>
           </h2>
-          <button type="button" className="alg-admin-modal-head-btn" onClick={onClose} title={tr({ zh: '关闭', en: 'Close' })}>
-            <X size={16} />
-          </button>
+          <ClearButton variant="standalone" onClick={onClose} ariaLabel={tr({ zh: '关闭', en: 'Close' })} />
         </div>
 
         <div className="alg-admin-modal-body alg-meta-body">

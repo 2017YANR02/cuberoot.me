@@ -1,4 +1,4 @@
-import { Download, FileSpreadsheet, FileText } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { useId } from 'react';
 import { timerSettingFieldContract, type TimerSettingCopy } from '@cuberoot/shared/timer';
 
@@ -18,14 +18,13 @@ export function TimerExportSettings({ onExport, disabled, localize: tr }: {
     { zh: '导出当前分组的全部项目，每条成绩一行', en: 'Export all events in the current session, one row per solve' },
     { zh: '导出当前项目为 Speedstacks 文本', en: 'Export the current event as Speedstacks text' },
   ];
-  return <div className="settings-row">
+  return <div className="settings-row settings-export-row">
     <span id={labelId} className="settings-row-label">{tr({ zh: '导出', en: 'Export' })}</span>
-    <span className="settings-row-control" role="group" aria-labelledby={labelId}>
+    <span className="settings-row-control settings-export-buttons" role="group" aria-labelledby={labelId}>
       {FORMATS.map((format, index) => {
-        const Icon = format === 'csv' ? FileSpreadsheet : format === 'speedstacks' ? FileText : Download;
         return <button key={format} type="button" className="hint-btn" style={{ minHeight: 44 }} disabled={disabled}
           data-setting-id={TIMER_EXPORT_SETTING_FIELD_IDS[index]} title={tr(titles[index])} onClick={() => onExport(format)}>
-          <Icon size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
+          {index < 2 && <Download size={14} aria-hidden />}
           {tr(timerSettingFieldContract(TIMER_EXPORT_SETTING_FIELD_IDS[index]).copy)}
         </button>;
       })}

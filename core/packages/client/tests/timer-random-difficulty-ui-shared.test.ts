@@ -49,6 +49,15 @@ describe('shared random-difficulty timer UI', () => {
   const open = async () => {
     await act(async () => host.querySelector<HTMLButtonElement>('.timer-difficulty-trigger')!.click());
   };
+  const choose = async (method: string, stage?: string) => {
+    await act(async () => document.querySelector<HTMLButtonElement>('.pp-trigger')!.click());
+    const parent = [...document.querySelectorAll<HTMLButtonElement>('.pp-group-items > button')].find(item => item.textContent === method)!;
+    await act(async () => parent.click());
+    if (stage) {
+      const child = [...document.querySelectorAll<HTMLButtonElement>('.pp-cascade-options > button')].find(item => item.textContent === stage)!;
+      await act(async () => child.click());
+    }
+  };
   const apply = async () => {
     await act(async () => document.querySelector<HTMLButtonElement>('.timer-difficulty-actions [data-primary]')!.click());
   };
@@ -58,17 +67,13 @@ describe('shared random-difficulty timer UI', () => {
     expect(host.querySelector('select')).toBeNull();
     await open();
     expect(document.querySelector('select[aria-label="Generate by difficulty"]')).toBeNull();
-    expect(document.querySelector('select[aria-label="Method"]')).not.toBeNull();
+    expect(document.querySelector('.pp-trigger')).not.toBeNull();
     expect(document.querySelectorAll('input[type="range"]')).toHaveLength(2);
     await act(async () => document.querySelector<HTMLButtonElement>('.subset-picker-mode')!.click());
     const white = [...document.querySelectorAll<HTMLButtonElement>('.subset-swatch')]
       .find(button => button.getAttribute('aria-label') === 'White')!;
     await act(async () => white.click());
-    const stage = document.querySelector<HTMLSelectElement>('select[aria-label="Stage"]')!;
-    await act(async () => {
-      stage.value = 'xcross';
-      stage.dispatchEvent(new Event('change', { bubbles: true }));
-    });
+    await choose('Standard', 'XCross');
     expect(document.querySelector('select[aria-label="F2L slot"]')).not.toBeNull();
     expect(JSON.parse(host.querySelector('output')!.textContent!).genDiffColors).toBe('BGORWY');
     await apply();
@@ -91,15 +96,11 @@ describe('shared random-difficulty timer UI', () => {
     await act(async () => root.render(createElement(ConfigHarness)));
     const before = host.querySelector('output')!.textContent;
     await open();
-    const stage = document.querySelector<HTMLSelectElement>('select[aria-label="Stage"]')!;
-    await act(async () => {
-      stage.value = 'xcross';
-      stage.dispatchEvent(new Event('change', { bubbles: true }));
-    });
+    await choose('Standard', 'XCross');
     await act(async () => document.querySelector('[role="dialog"]')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
     expect(host.querySelector('output')!.textContent).toBe(before);
     await open();
-    expect(document.querySelector<HTMLSelectElement>('select[aria-label="Stage"]')!.value).toBe('cross');
+    expect(document.querySelector('.pp-trigger')?.textContent).toBe('Cross');
     await act(async () => document.querySelector<HTMLButtonElement>('.timer-difficulty-actions button')!.click());
     expect(JSON.parse(host.querySelector('output')!.textContent!).genDiffOn).toBe(false);
   });

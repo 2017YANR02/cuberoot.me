@@ -2,7 +2,7 @@ import { apiUrl, directApiUrl } from './api-base';
 import { getWebAccessToken } from './web-session';
 
 const WEB_SESSION_PREFIX = 'web-session:';
-const PRIVATE_PAGE_ENDPOINTS = new Set(['/api/admin/interview', '/api/identity-choice']);
+const PRIVATE_PAGE_ENDPOINTS = new Set(['/api/admin/interview', '/api/admin/recon-tests', '/api/identity-choice']);
 
 function trustedSessionTarget(input: RequestInfo | URL): { url: URL; authSuffix?: string } | null {
   const base = typeof window === 'undefined' ? directApiUrl('/') : window.location.href;

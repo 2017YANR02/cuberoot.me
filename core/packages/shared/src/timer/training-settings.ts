@@ -1,8 +1,22 @@
 import { EVENTS, type EventId } from './types';
 import { DEFAULT_ROUND_CONFIG, type RoundConfig } from './round';
+import { TIMER_333_SCRAMBLE_TYPES } from './event-catalog';
+
+export const TRAINING_START_MODES = ['first-turn', 'scrambled', 'manual'] as const;
+export type TrainingStartMode = (typeof TRAINING_START_MODES)[number];
+export const TRAINING_START_MODE_COPY = {
+  'first-turn': { zh: '首转开始', en: 'First turn' },
+  scrambled: { zh: '打乱完成后自动开始', en: 'When scramble is complete' },
+  manual: { zh: '手动开始', en: 'Manual start' },
+} as const;
+
+export function timerSupportsTrainingTiming(event: EventId): boolean {
+  return event !== '333' && TIMER_333_SCRAMBLE_TYPES.some(item => item.event === event);
+}
 
 /** Shared training preferences; hosts own persistence and the current event. */
 export interface TimerTrainingSettings {
+  trainingStartMode: TrainingStartMode;
   targetMsByEvent: Partial<Record<EventId, number>>;
   dailySolveGoal: number | null;
   round: RoundConfig;
@@ -21,6 +35,8 @@ export function normalizeTimerTrainingSettings(value: Record<string, unknown> = 
     ? value.round as Record<string, unknown> : {};
   const positiveTime = (value: unknown) => typeof value === 'number' && Number.isSafeInteger(value) && value > 0 ? value : null;
   return {
+    trainingStartMode: TRAINING_START_MODES.includes(value.trainingStartMode as TrainingStartMode)
+      ? value.trainingStartMode as TrainingStartMode : 'first-turn',
     targetMsByEvent,
     dailySolveGoal: typeof value.dailySolveGoal === 'number' && Number.isFinite(value.dailySolveGoal) && value.dailySolveGoal >= 1
       ? Math.floor(value.dailySolveGoal) : null,

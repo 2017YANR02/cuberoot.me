@@ -6,7 +6,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { timerScrambleClickEffect } from '@cuberoot/shared/timer';
-import { TimerScrambleClickActionSetting, TimerScrambleStrip } from '@cuberoot/timer-ui';
+import { TimerScrambleClickActionSetting, TimerScrambleStrip, shouldIgnoreTimerTarget } from '@cuberoot/timer-ui';
 
 describe('shared scramble click action setting', () => {
   let host: HTMLDivElement;
@@ -39,6 +39,7 @@ describe('shared scramble click action setting', () => {
       row?.querySelector('.settings-row-label')?.id,
     );
     expect([...select!.options].map((option) => [option.value, option.textContent])).toEqual([
+      ['start', 'Start timing'],
       ['none', 'Nothing'],
       ['next', 'Next scramble'],
       ['copy', 'Copy to clipboard'],
@@ -58,7 +59,7 @@ describe('shared scramble click action setting', () => {
     })));
     expect(row?.textContent).toContain('点击打乱条');
     expect([...select!.options].map((option) => option.textContent)).toEqual([
-      '无操作', '换下一个', '复制到剪贴板',
+      '开始计时', '无操作', '换下一个', '复制到剪贴板',
     ]);
   });
 
@@ -71,18 +72,14 @@ describe('shared scramble click action setting', () => {
     expect(solo).not.toContain('className="scramble-empty-retry"');
   });
 
-  it('removes current-scramble copying from every Web timer mode and legacy copy preferences', () => {
+  it('uses the selected action in Web and exposes it through shared display settings', () => {
     const solo = readFileSync('app/[lang]/timer/_shell/SoloView.tsx', 'utf8');
-    const settings = readFileSync('app/[lang]/timer/_components/SettingsPanel.tsx', 'utf8');
-    expect(solo).toMatch(/timerScrambleClickEffect\(\s*'none'/);
-    expect(solo).not.toContain("onActivate={scrambleClickEffect");
-    expect(solo).toContain("action.enabled && action.id !== 'copy-scramble'");
-    expect(solo).not.toContain("'copy-scramble':");
-    expect(settings).not.toContain('<TimerScrambleClickActionSetting');
-    for (const mode of ['SoloView', 'BattleView', 'NetBattleView']) {
-      const source = readFileSync(`app/[lang]/timer/_shell/${mode}.tsx`, 'utf8');
-      expect(source).not.toMatch(/copyScramble|scrambleCopied|点击复制打乱/);
-    }
+    const display = readFileSync('../timer-ui/src/TimerDisplaySettings.tsx', 'utf8');
+    expect(solo).toContain('settings.scrambleClickAction,');
+    // Editing the layout must suppress both starting the timer and other strip actions.
+    expect(solo).toContain("timingEnabled={!layoutEditing && settings.scrambleSource !== 'manual' && scrambleClickEffect === 'start'}");
+    expect(solo).toContain("onActivate={layoutEditing ? undefined : settings.scrambleSource === 'manual' ? () => { if (canSwitchScramble()) setManualEditing(true); } : scrambleClickEffect === 'next'");
+    expect(display).toContain('<TimerScrambleClickActionSetting');
   });
 
   it('omits clipboard copying for installed clients while retaining explicit next-scramble selection', () => {
@@ -91,7 +88,7 @@ describe('shared scramble click action setting', () => {
       allowCopy: false, localize: (copy) => copy.en, onChange, value: 'none',
     })));
     const select = host.querySelector('select')!;
-    expect([...select.options].map((option) => option.value)).toEqual(['none', 'next']);
+    expect([...select.options].map((option) => option.value)).toEqual(['start', 'none', 'next']);
     expect(select.value).toBe('none');
     act(() => {
       select.value = 'next';
@@ -123,5 +120,36 @@ describe('shared scramble click action setting', () => {
     expect(strip?.hasAttribute('tabindex')).toBe(false);
     act(() => strip?.click());
     expect(activate).not.toHaveBeenCalled();
+  });
+
+  it.each(['start', 'none', 'copy', 'next'] as const)('isolates %s actions from pointer timing and global keyboard controls', (action) => {
+    const activate = vi.fn();
+    const globalKey = vi.fn();
+    const interactive = action === 'copy' || action === 'next';
+    act(() => root.render(createElement(TimerScrambleStrip, {
+      scramble: 'R U', copiedLabel: 'Copied', timingEnabled: action === 'start',
+      onActivate: interactive ? activate : undefined,
+      verificationLabels: { copiedCorrection: 'Copied' },
+      children: createElement('a', { href: '#competition' }, 'Competition'),
+    })));
+    const moves = host.querySelector('.scramble-moves')!;
+    const text = host.querySelector('.scramble-text')!;
+    expect(shouldIgnoreTimerTarget(moves)).toBe(action !== 'start');
+    expect(shouldIgnoreTimerTarget(host.querySelector('a'))).toBe(true);
+    if (interactive) {
+      window.addEventListener('keydown', globalKey);
+      window.addEventListener('keyup', globalKey);
+      try {
+        act(() => {
+          text.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true }));
+          text.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        });
+        expect(activate).toHaveBeenCalledOnce();
+        expect(globalKey).not.toHaveBeenCalled();
+      } finally {
+        window.removeEventListener('keydown', globalKey);
+        window.removeEventListener('keyup', globalKey);
+      }
+    }
   });
 });

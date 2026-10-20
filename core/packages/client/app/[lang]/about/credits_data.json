@@ -794,10 +794,16 @@
     "long_en": "professional speedcubing timer & WCA random-state scramble engine; also vendored at tools/cstimer-scramble/ to power non-WCA puzzle generation (gear/ivy/dino/sq2/giga/pyracrystal/heli/curvycopter/cuboids/15-puzzle/bicube/siamese cubes/...) via classic Web Worker bridge; for a few puzzles whose state space is too large for a full BFS/table, cstimer's own solver is wrapped directly as the SOLVING engine in /scramble/solver (Dino = redi IDA*, Master Pyraminx = two-phase, Square-1 = sq12phase two-phase); cstimer's megascramble model + poly3dlib geometry (makePuzzle) are also used as the bit-exact piece-model oracle when building from-scratch reductions (e.g. the Helicopter Cube and the Siamese 2×2×2 solvers)"
   },
   {
+    "name": "poliva/smartcube-web-bluetooth",
+    "url": "https://github.com/poliva/smartcube-web-bluetooth",
+    "zh": "全端共享的 MoYu32 地址发现参考其 MY32/MY33 有限候选探测设计；候选经加密状态校验后使用",
+    "en": "Reference for shared MoYu32 MY32/MY33 finite MAC candidate probing across clients; candidates are verified with encrypted state replies"
+  },
+  {
     "name": "mintydev789/RecordRanks",
     "url": "https://github.com/mintydev789/RecordRanks",
-    "zh": "比赛管理、现场成绩、排名与纪录系统;独立实例嵌入 /contests",
-    "en": "Competition management, live results, rankings and records; self-hosted instance embedded at /contests"
+    "zh": "比赛管理、排名与纪录数据服务；/contests 以本站双语界面展示 Cubing Contests 公开数据，成绩格式与排名计算复用 RecordRanks",
+    "en": "Competition, ranking and record data service; /contests presents Cubing Contests public data in CubeRoot's bilingual UI, reusing RecordRanks result formatting and rankings"
   },
   {
     "name": "afedotov/gan-web-bluetooth",
@@ -1082,5 +1088,17 @@
     "url": "https://github.com/dataxiv/data-district",
     "zh": "账号中国地区选项以民政部2025年末公开行政区划存档为基础，结合地方政府后续公告及港澳台官方资料校核；保留来源、存档版本和核对日期。",
     "en": "Chinese account location options use an archived year-end 2025 MCA administrative dataset, checked against later local-government announcements and official Hong Kong, Macao and Taiwan sources, with provenance and review dates recorded."
+  },
+  {
+    "name": "QuickJS / Fabrice Bellard & Charlie Gordon",
+    "url": "https://bellard.org/quickjs/",
+    "zh": "Apple Watch 通过 MIT 许可的 QuickJS 核心直接运行既有智能魔方共享代码，避免另写协议和计时规则。",
+    "en": "Apple Watch uses the MIT-licensed QuickJS core to run existing shared smart-cube code without duplicating protocols or timing rules."
+  },
+  {
+    "name": "Algorithm Translator / Conrad Rider",
+    "url": "https://cube.rider.biz/algtrans.html",
+    "zh": "模拟器公式变换与逐步改写的功能参考；实现复用本站公式解析和变换逻辑。",
+    "en": "Feature reference for simulator algorithm transformations and step editing, implemented with our existing algorithm parser and transformation utilities."
   }
 ]

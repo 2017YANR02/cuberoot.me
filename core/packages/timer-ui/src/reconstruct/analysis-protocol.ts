@@ -16,6 +16,8 @@ export interface AnalysisSnapshot {
 }
 
 export interface AnalysisRequest { id: number; input: AnalysisInput; skipText?: boolean }
+export interface AnalysisWarmup { type: 'warmup' }
+export type AnalysisWorkerRequest = AnalysisRequest | AnalysisWarmup;
 export interface AnalysisResponse {
   id: number;
   patch?: Partial<Omit<AnalysisSnapshot, 'status'>>;

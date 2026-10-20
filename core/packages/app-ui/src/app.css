@@ -253,6 +253,10 @@ button {
 .android-update-notice { flex: 0 1 auto; max-height: 45%; overflow: auto; padding: 8px 12px; border-bottom: 1px solid var(--shell-divider); }
 .android-update-notice .action-row { flex-wrap: wrap; }
 .android-update-notice p { margin: 6px 0; font-size: 0.85rem; }
+.uu-remote-panel { flex: 0 1 auto; max-height: 45%; overflow: auto; padding: 8px 12px; border-bottom: 1px solid var(--shell-divider); }
+.uu-remote-panel summary { cursor: pointer; }
+.uu-remote-panel .action-row { flex-wrap: wrap; }
+.uu-remote-panel p { margin: 6px 0; font-size: 0.85rem; }
 
 .timer-toolbar-control {
   display: inline-flex;

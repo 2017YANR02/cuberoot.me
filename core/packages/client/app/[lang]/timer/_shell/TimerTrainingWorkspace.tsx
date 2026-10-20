@@ -12,7 +12,7 @@ import TimerTrainingContent from './TimerTrainingContent';
 import TimerTrainingMenu from './TimerTrainingMenu';
 // Own the common trainer styles at the workspace boundary so switching lazy
 // select/run surfaces cannot render the trainer before its layout is available.
-// Standalone trainers continue importing these same styles themselves.
+// Legacy /alg URLs redirect here before their standalone surfaces can render.
 import '@/app/[lang]/alg/_trainer/trainer.css';
 import '@/app/[lang]/alg/_trainer/memory.css';
 import '@/app/[lang]/alg/alg.css';
@@ -25,7 +25,7 @@ export default function TimerTrainingWorkspace() {
   const search = searchParams.toString();
   const target = useMemo(() => training && training !== 'home' ? resolveTrainingTarget(training) : null, [training]);
   const [settingsPortal, setSettingsPortal] = useState<HTMLDivElement | null>(null);
-  const practiceSettings = useMemo(() => <TimerTrainingMenu settingsOnly />, []);
+  const [devicePortal, setDevicePortal] = useState<HTMLDivElement | null>(null);
   const mapHref = useCallback((href: string) => timerTrainingHref(href, {
     timerPathname: pathname,
     currentSearch: search,
@@ -38,14 +38,15 @@ export default function TimerTrainingWorkspace() {
     params: target.params,
     mapHref,
     settingsPortal,
-    practiceSettings,
-  } : null, [target, mapHref, settingsPortal, practiceSettings]);
+    devicePortal,
+  } : null, [target, mapHref, settingsPortal, devicePortal]);
 
   return (
     <main className="timer-training-workspace" data-timer-training>
       {/* This non-sticky toolbar must not create a backdrop root: its menu needs
           to blur and cover the training cards outside the toolbar. */}
       <div className="timer-training-workspace__toolbar" data-no-timer>
+        {target?.kind === 'alg-run' && <div className="timer-training-workspace__settings" ref={setDevicePortal} />}
         <TimerTrainingMenu />
         {target?.kind === 'alg-run' && <div className="timer-training-workspace__settings" ref={setSettingsPortal} />}
       </div>

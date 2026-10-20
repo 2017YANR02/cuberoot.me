@@ -1,12 +1,13 @@
 /** Existing timer backup protocol; only the database (never App settings) crosses it. */
+import type { TimerHttpFetch, TimerHttpRequest } from './http';
 export interface TimerCloudBackupMeta { exists: boolean; byteSize?: number; solveCount?: number; updatedAt?: number; }
-export interface TimerBackupTransport { apiUrl(path: string): string; fetcher: typeof fetch; headers(): HeadersInit; }
+export interface TimerBackupTransport { apiUrl(path: string): string; fetcher: TimerHttpFetch; headers(): Record<string, string>; }
 export function countTimerBackupSolves(blob: string): number {
   try { const db = JSON.parse(blob); return Object.values(db.dataBySession ?? {}).reduce<number>((total, value) => total + Object.values(value as Record<string, unknown>).reduce<number>((sum, list) => sum + (Array.isArray(list) ? list.length : 0), 0), 0); }
   catch { return 0; }
 }
 export function createTimerBackupClient(transport: TimerBackupTransport) {
-  async function request<T>(suffix = '', init?: RequestInit): Promise<T> {
+  async function request<T>(suffix = '', init?: TimerHttpRequest): Promise<T> {
     const response = await transport.fetcher(transport.apiUrl('/v1/timer/backup' + suffix), { ...init, headers: transport.headers() });
     if (!response.ok) throw new Error(`Backup failed: HTTP ${response.status}`);
     return response.json() as Promise<T>;
@@ -28,7 +29,4 @@ export function createTimerBackupClient(transport: TimerBackupTransport) {
 }
 export interface TimerLocalBackupEntry { key: string; ts: number; size: number; }
 export const TIMER_BACKUP_KEEP = 10;
-export const DEFAULT_TIMER_AUTO_BACKUP_EVERY = 10;
-export function normalizeTimerAutoBackupEvery(value: unknown): number {
-  return typeof value === 'number' && Number.isFinite(value) ? Math.max(0, Math.min(30, Math.trunc(value))) : DEFAULT_TIMER_AUTO_BACKUP_EVERY;
-}
+export { DEFAULT_TIMER_AUTO_BACKUP_EVERY, normalizeTimerAutoBackupEvery } from './backup-settings';

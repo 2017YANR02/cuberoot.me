@@ -104,9 +104,6 @@ export default function AlgsPanel({ onSelect, activePuzzle }: Props) {
             </option>
           ))}
         </select>
-        <span className="sim-algs-hint">
-          {t('点公式 = 摆出此情形;下方回放区按播放看动画', 'Click case = set up the position; hit play below to watch the alg')}
-        </span>
       </div>
       <div className="sim-algs-list">
         {loading ? <div className="sim-algs-msg">{t('加载中…', 'Loading…')}</div> : null}

@@ -29,7 +29,7 @@
 import { Hono } from 'hono';
 import type { Context } from 'hono';
 import { getIp } from '../utils/analytics_helpers.js';
-import { renewalReleased } from '../payment/membership-renewal-policy.js';
+import { renewalReleased, renewalPlanConfigured } from '../payment/membership-renewal-policy.js';
 import { papayConfigured } from '../payment/wechat-papay.js';
 import { createHash, randomUUID } from 'node:crypto';
 import QRCode from 'qrcode';
@@ -70,7 +70,7 @@ const xunhupayConfigured = () => Boolean(XHP_PRIMARY.appid && XHP_PRIMARY.secret
 // 否则虎皮椒兜底,都没配则 null。
 type PayChannel = 'alipay' | 'wechat' | 'card_cn' | 'card_global';
 type Provider = 'alipay' | 'wechat' | 'xunhupay' | 'airwallex';
-const AUTO_RENEW_PLAN_SLUGS = new Set(['monthly_auto_renew', 'yearly_auto_renew']);
+const AUTO_RENEW_PLAN_SLUGS = new Set(['monthly_auto_renew', 'yearly_auto_renew', 'enterprise_monthly_auto_renew']);
 const PAY_CHANNELS = new Set<PayChannel>(['alipay', 'wechat', 'card_cn', 'card_global']);
 function providerForChannel(channel: PayChannel, clientType: 'pc' | 'wap'): Provider | null {
   if ((channel === 'card_cn' || channel === 'card_global') && airwallex.airwallexChannelEnabled(channel)) {
@@ -242,11 +242,11 @@ membershipRoutes.get('/membership/plans', async (c) => {
   // Display the two renewal prices without activating either plan for checkout.
   const renewalRows = await query<PlanRow>(
     `SELECT slug, name_zh, name_en, period, period_count, price_cents, currency, perks, active, sort
-       FROM membership_plans WHERE slug IN ('monthly_auto_renew', 'yearly_auto_renew') ORDER BY sort, price_cents`,
+       FROM membership_plans WHERE slug IN ('monthly_auto_renew', 'yearly_auto_renew', 'enterprise_monthly_auto_renew') ORDER BY sort, price_cents`,
   );
   const renewalAvailable = renewalReleased() && papayConfigured()
     && process.env.WECHAT_PAPAY_DEBIT_ENABLED === 'true' && process.env.WECHAT_PAPAY_SYNC_ENABLED === 'true';
-  return c.json({ plans: rows.filter(row => !AUTO_RENEW_PLAN_SLUGS.has(row.slug) || renewalAvailable).map(planToJson), renewalPlans: renewalRows.map(planToJson),
+  return c.json({ plans: rows.filter(row => !['enterprise_yearly', 'enterprise_yearly_auto_renew'].includes(row.slug) && (!AUTO_RENEW_PLAN_SLUGS.has(row.slug) || (renewalAvailable && renewalPlanConfigured(row.slug)))).map(planToJson), renewalPlans: renewalRows.map(planToJson),
     payEnabled: paymentConfigured(), channels: channelAvailability() });
 });
 
@@ -439,6 +439,7 @@ membershipRoutes.post('/membership/orders', async (c) => {
   const b = await c.req.json<{ plan?: string; channel?: string; clientType?: string; language?: string; checkoutContext?: string }>();
 
   const planSlug = String(b.plan || '');
+  if (['enterprise_yearly', 'enterprise_yearly_auto_renew'].includes(planSlug)) return c.json({ error: 'plan no longer available' }, 400);
   if (!PLAN_SLUG_RE.test(planSlug)) return c.json({ error: 'invalid plan' }, 400);
   if (AUTO_RENEW_PLAN_SLUGS.has(planSlug)) {
     return c.json({ error: 'automatic renewal is not available' }, 503);
@@ -788,6 +789,7 @@ membershipRoutes.post('/membership/admin/grant', async (c) => {
   const wcaId = String(b.wcaId || '').trim().toUpperCase();
   if (!/^\d{4}[A-Z]{4}\d{2}$/.test(wcaId)) return c.json({ error: 'invalid WCA ID' }, 400);
   const planSlug = String(b.plan || '');
+  if (['enterprise_yearly', 'enterprise_yearly_auto_renew'].includes(planSlug)) return c.json({ error: 'plan no longer available' }, 400);
   if (!PLAN_SLUG_RE.test(planSlug)) return c.json({ error: 'invalid plan' }, 400);
   if (AUTO_RENEW_PLAN_SLUGS.has(planSlug)) return c.json({ error: 'automatic renewal is not available' }, 400);
   const plans = await query<PlanRow>('SELECT * FROM membership_plans WHERE slug = ?', [planSlug]);
@@ -872,9 +874,10 @@ membershipRoutes.put('/membership/admin/plans/:slug', async (c) => {
     add('price_cents', n);
   }
   if (b.active != null) {
+    if (b.active && ['enterprise_yearly', 'enterprise_yearly_auto_renew'].includes(slug)) return c.json({ error: 'plan no longer available' }, 400);
     if (typeof b.active !== 'boolean') return c.json({ error: 'invalid active' }, 400);
     // Merchant approval and the explicit release switch are independent from plan visibility.
-    if (b.active && AUTO_RENEW_PLAN_SLUGS.has(slug) && (!renewalReleased() || !papayConfigured()
+    if (b.active && AUTO_RENEW_PLAN_SLUGS.has(slug) && (!renewalPlanConfigured(slug) || !renewalReleased() || !papayConfigured()
       || process.env.WECHAT_PAPAY_DEBIT_ENABLED !== 'true' || process.env.WECHAT_PAPAY_SYNC_ENABLED !== 'true')) {
       return c.json({ error: 'automatic renewal is not available' }, 503);
     }

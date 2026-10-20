@@ -1,7 +1,7 @@
 'use client';
 
 import { useLayoutEffect, useRef } from 'react';
-import { useTrainingPathname as usePathname } from '@/lib/training-host';
+import { useTrainingPathname as usePathname, useTrainingHost } from '@/lib/training-host';
 import Link from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 import styles from './Sq1ToolNav.module.css';
@@ -24,6 +24,7 @@ const TOOLS = [
 ] as const;
 
 export default function Sq1ToolNav({ contained = false }: { contained?: boolean }) {
+  const host = useTrainingHost();
   const pathname = usePathname();
   const plainPath = pathname.replace(/^\/zh(?=\/|$)/, '');
   const navRef = useRef<HTMLElement>(null);
@@ -56,6 +57,7 @@ export default function Sq1ToolNav({ contained = false }: { contained?: boolean 
     };
   }, [plainPath]);
 
+  if (host) return null;
   return (
     <nav
       ref={navRef}

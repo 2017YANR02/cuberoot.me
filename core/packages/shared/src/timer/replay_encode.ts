@@ -7,7 +7,8 @@
  *
  * `moves[i].ts` in the source Solve are absolute performance.now() rebased to
  * solve start. We re-rebase to the FIRST move so the URL is shorter (skips
- * the leading idle gap, which can be hundreds of ms). Decode keeps them as
+ * the leading idle gap, which can be hundreds of ms). Training links retain
+ * the original timestamps and carry their start mode in `a`. Decode keeps legacy moves as
  * deltas from move 0 — sliceReconstruction in ReconstructModal handles that.
  */
 
@@ -25,6 +26,9 @@ export interface ReplayPayload {
   d?: [string, string];
   /** Optional user-verified notation, one display line per step. */
   r?: string[];
+  /** Training links retain the clock origin instead of discarding observation. */
+  a?: Solve['trainingStartMode'];
+  c?: string;
 }
 
 function base64UrlEncode(input: string): string {
@@ -37,7 +41,7 @@ function base64UrlEncode(input: string): string {
 
 export function encodeReplayPayload(solve: Solve): string {
   const moves = solve.moves ?? [];
-  const base = moves.length > 0 ? moves[0].ts : 0;
+  const base = !solve.trainingStartMode && moves.length > 0 ? moves[0].ts : 0;
   const compactMoves: Array<[string, number]> = moves.map(({ m, ts }) => [m, Math.round(ts - base)]);
   const payload: ReplayPayload = {
     e: solve.event,
@@ -48,6 +52,8 @@ export function encodeReplayPayload(solve: Solve): string {
   if (solve.gyro) payload.g = solve.gyro;
   if (solve.device) payload.d = [solve.device.model, solve.device.name];
   if (solve.reconstruction?.length) payload.r = solve.reconstruction;
+  if (solve.trainingStartMode) payload.a = solve.trainingStartMode;
+  if (solve.caseId) payload.c = solve.caseId;
   return base64UrlEncode(JSON.stringify(payload));
 }
 

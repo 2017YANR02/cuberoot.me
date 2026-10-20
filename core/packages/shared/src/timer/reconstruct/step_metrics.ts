@@ -108,7 +108,7 @@ export function stmWeight(raw: string): number {
 }
 
 /** A turn that ends recognition: not an AUF, not a rotation. */
-function endsRecognition(raw: string): boolean {
+export function endsRecognition(raw: string): boolean {
   return stmWeight(raw) > 0 && !isAufToken(raw);
 }
 

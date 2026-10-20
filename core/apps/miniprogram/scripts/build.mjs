@@ -7,6 +7,7 @@ import process from 'node:process';
 import { build } from 'esbuild';
 
 import { BUILD_ASSETS } from './build-assets.mjs';
+import { buildWechatBundle } from './build-wechat-bundle.mjs';
 import { buildDouyinTabIcons } from './build-tab-icons.mjs';
 import { resolveProjectConfig } from './build-config.mjs';
 import {
@@ -45,6 +46,7 @@ const douyinUnsupportedAppConfigKeys = [
   'sitemapLocation',
   'style',
   'themeLocation',
+  'navigateToMiniProgramAppIdList',
 ];
 const watch = process.argv.includes('--watch');
 
@@ -72,6 +74,11 @@ async function prepareOutput(sourceFiles) {
     .map(async (file) => {
       const output = join(compileRoot, relative(sourceRoot, file));
       await mkdir(dirname(output), { recursive: true });
+      const page = relative(sourceRoot, file).replaceAll('\\', '/').match(/^pages\/(timer|tools)\/index\.wxml$/)?.[1];
+      if (douyin && page) {
+        await writeFile(output, `<include src="../../templates/native-${page}.wxml" />\n`);
+        return;
+      }
       await copyFile(file, output);
     }));
   await Promise.all(BUILD_ASSETS.map(async (asset) => {
@@ -104,7 +111,7 @@ async function buildProject() {
       templateLabel: 'project.douyin.config.template.json',
     } : {}),
   });
-  const sourceFiles = await walkFiles(sourceRoot);
+  const sourceFiles = (await walkFiles(sourceRoot)).filter(file => !douyin || !normalizedRelativePath(sourceRoot, file).startsWith('pages/membership/'));
   const appConfigPath = join(sourceRoot, 'app.json');
   const sourceJsonFiles = [
     appConfigPath,
@@ -120,9 +127,10 @@ async function buildProject() {
     { labelForPath: (file) => normalizedRelativePath(packageRoot, file) },
   );
   await prepareOutput(sourceFiles);
-  const buildResult = await build({
+  const buildResult = await (douyin ? build : buildWechatBundle)({
     absWorkingDir: packageRoot,
     bundle: true,
+    inject: [join(sourceRoot, 'lib/native-timer-runtime.ts')],
     entryPoints: entryPoints(sourceFiles),
     format: 'iife',
     logLevel: 'info',
@@ -158,6 +166,10 @@ async function buildProject() {
   });
   if (!douyin) {
     await writeBuildState(packageRoot, {
+      bundleInputs: Object.fromEntries(Object.entries(buildResult.metafile.outputs).map(([path, output]) => [
+        normalizedRelativePath(compileRoot, resolve(packageRoot, path)),
+        Object.keys(output.inputs).map(input => normalizedRelativePath(packageRoot, resolve(packageRoot, input))),
+      ])),
       buildGraphInputs: serializeBuildGraphInputs(packageRoot, graphInputFiles),
       sourceFingerprint: await buildInputFingerprint(packageRoot, graphInputFiles),
       outputFingerprint: await outputFingerprint(packageRoot, outputRoot),
@@ -196,6 +208,9 @@ async function normalizeDouyinAppConfig() {
   // Douyin privacy-related capabilities (including Bluetooth) must enter the
   // platform privacy authorization flow before the native API is invoked.
   normalized.usePrivacyCheck = true;
+  normalized.pages = normalized.pages.filter(page => page !== 'pages/training/index' && page !== 'pages/membership/index');
+  normalized.tabBar.list = normalized.tabBar.list.filter(tab => tab.pagePath !== 'pages/training/index');
+  await rm(join(stagingRoot, 'pages/training'), { recursive: true, force: true });
   normalized.tabBar.list = await buildDouyinTabIcons(stagingRoot, normalized.tabBar);
   await writeFile(appConfigPath, `${JSON.stringify(normalized, null, 2)}\n`, 'utf8');
   await Promise.all([

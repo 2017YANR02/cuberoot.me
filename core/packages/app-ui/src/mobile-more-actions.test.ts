@@ -89,7 +89,7 @@ describe('Mobile timer More effect adapter', () => {
       'Solver',
       'Bulk scrambles',
       'Print',
-      'Clear current event',
+      'Clear current data',
     ]);
     expect(chinese.map((item) => item.label)).toEqual([
       '打乱足迹',
@@ -102,7 +102,7 @@ describe('Mobile timer More effect adapter', () => {
       '通用求解器',
       '批量打乱',
       '打印',
-      '清空当前项目',
+      '清空当前数据',
     ]);
     for (const item of english) item.onSelect?.();
     for (const id of MOBILE_TIMER_MORE_IMPLEMENTED_ACTION_IDS.filter(

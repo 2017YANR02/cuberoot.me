@@ -26,7 +26,7 @@ export default function TimerSolverBody({ scramble, language, compact, settingsS
     if (event.key === 'Escape' && stageDismiss.current?.()) { event.preventDefault(); event.stopPropagation(); }
   }}>
     {scramble.trim() && <p className="solver-panel-scramble">{scramble}</p>}
-    <StageSolver scramble={scramble} lang={language} compact={compact} settingsSlot={settingsSlot}
+    <StageSolver scramble={scramble} lang={language} compact={compact} expandedSolutions={!compact} settingsSlot={settingsSlot}
       onPrevScramble={onPrevScramble} onNextScramble={onNextScramble} onDismissChange={registerStage} onBlockingChange={setStageBlocking} />
     <TimerStepSolve scramble={scramble} isZh={language === 'zh'} onDismissChange={registerCompare} onBlockingChange={setCompareBlocking} />
   </div>;

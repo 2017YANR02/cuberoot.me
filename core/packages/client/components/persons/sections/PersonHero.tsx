@@ -5,6 +5,7 @@ import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Mars, Venus } from 'lucide-react';
 import AppLink from '@/components/AppLink';
+import { contestsHref } from '@/lib/contests-api';
 import BoolToggle from '@/components/BoolToggle';
 import { CompactSelect } from '@/components/CompactSelect';
 import { Flag } from '@/components/Flag';
@@ -212,6 +213,10 @@ export default function PersonHero({
           </span>
           <div className="wp-hero-id">
             <a href={wcaUrl} target="_blank" rel="noopener noreferrer" className="wp-hero-id-link" title="WCA">{p.wca_id}</a>
+            <span aria-hidden="true">|</span>
+            <AppLink href={contestsHref({ view: 'person', id: p.wca_id })} prefetch={false} className="wp-hero-id-link">
+              {t('Contests 成绩', 'Contests results')}
+            </AppLink>
             {(creatorProfileHref || memberProfile) && (
               <>
                 <span aria-hidden="true">|</span>

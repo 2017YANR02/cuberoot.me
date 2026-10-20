@@ -42,7 +42,7 @@ export default function TimerPresencePanel({ snapshot }: { snapshot: TimerPresen
     };
   }, [open]);
 
-  const title = tr({ zh: '当前计时会话', en: 'Live timer sessions' });
+  const title = tr({ zh: '当前在线', en: 'Currently online' });
   const value = (n: number | undefined) => n === undefined ? '—' : String(n);
   const hasLocation = snapshot?.sessions.some(session => session.location) ?? false;
   const modeLabel = (mode: 'solo' | 'local' | 'net') => ({

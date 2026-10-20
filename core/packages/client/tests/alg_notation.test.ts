@@ -57,13 +57,23 @@ describe('tokenizeMoves', () => {
 });
 
 describe('glued cube move spacing', () => {
-  it('allows only turns on opposite parallel faces', () => {
-    expect(findIllegalGluedCubeMoves("RL L2R' U'D dU F2B bF")).toBeNull();
+  it('allows distinct parallel face and slice turns', () => {
+    expect(findIllegalGluedCubeMoves("RL L2R' U'D dU F2B bF FS SF MR ML RM LM UE ED BS")).toBeNull();
   });
 
-  it.each(['rU', 'Dr', 'RR', 'MR', 'yR'])(
+  it.each(['rU', 'Dr', 'RR', 'MF', 'SU', 'yR'])(
     'rejects %s because the two moves are not opposite parallel faces',
     (alg) => expect(findIllegalGluedCubeMoves(alg)?.joined).toBe(alg),
+  );
+
+  it.each(['FS', 'UD', 'MR', 'ML', "F'S2", "M2R'", "M'L", 'UE', 'BS'])(
+    'preserves %s while playback keeps the exact state and move count', (alg) => {
+      const spaced = tokenizeMoves(alg).moves.map(move => move.raw).join(' ');
+      expect(findIllegalGluedCubeMoves(alg)).toBeNull();
+      expect(spaceIllegalGluedCubeMoves(alg)).toBe(alg);
+      expect(sameState(cleanForPlayer(alg), spaced)).toBe(true);
+      expect(countMovesExpanded(alg)).toBe(2);
+    },
   );
 
   it('adds only required spaces and leaves permitted pairs and comments intact', () => {

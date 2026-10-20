@@ -515,9 +515,9 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
   gap: 8px;
-  margin-bottom: 24px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--border-default);
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-default);
 }
 .settings-modal .timer-settings-action {
   display: flex;

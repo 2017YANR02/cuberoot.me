@@ -873,6 +873,8 @@ export default function AccountPage() {
         desc: tr({ zh: '把比赛成绩、个人纪录和复盘接进来', en: 'Bring your results, records and reconstructions here' }),
       },
     ]),
+    { key: 'workspace', href: '/workspace', icon: <Building2 size={22} className="account-card-icon" />, title: tr({ zh: '工作台', en: 'Workspace' }) },
+    { key: 'team', href: '/dev/team', icon: <Users size={22} className="account-card-icon" />, title: tr({ zh: '团队手册', en: 'Team handbook' }) },
     {
       key: 'progress',
       href: '/alg/progress',

@@ -11,7 +11,6 @@ import { decodeReplayParam } from '@/app/[lang]/timer/_lib/share/decode';
 import ReconstructReport, { type ReconstructHost } from '@cuberoot/timer-ui/reconstruct-report';
 import SolveRecap from '@cuberoot/timer-ui/solve-recap';
 import { reconstructionAnalyzer } from '@cuberoot/timer-ui/reconstruct-analysis';
-import { METHODS } from '@cuberoot/shared/timer/reconstruct/methods';
 
 vi.mock('@cuberoot/timer-ui/SimCubeView', () => ({
   default: ({ moves }: { moves: string[] }) => createElement('div', { 'data-replay-moves': moves.join(' ') }),
@@ -72,66 +71,20 @@ function button(label: string): HTMLButtonElement {
 }
 
 describe('the complete shared reconstruction report', () => {
-  it('backfills Roux history and shows a stage comparison after five recordings', async () => {
-    localStorage.setItem('cuberoot.reconstruction.method', 'roux');
-    const history = Array.from({ length: 5 }, (_, i) => ({ ...solve, id: `previous-${i}`, ts: solve.ts - i - 1 }));
-    await act(async () => root.render(createElement(ReconstructReport, { solve, history, isZh: false, host })));
+  it('automatically recognizes the method and ignores the old manual preference', async () => {
+    localStorage.setItem('cuberoot.reconstruction.method', 'zz');
+    const tokens = "L U L' R U R' R U R' U R U2 R' M' U2 M U2".split(' ');
+    const value = {...solve, scramble:tokens.slice().reverse().map(m=>m.endsWith('2')?m:m.endsWith("'")?m.slice(0,-1):m+"'").join(' '),
+      timeMs:tokens.length*200, moves:tokens.map((m,i)=>({m,ts:(i+1)*200}))};
+    const history = Array.from({length:5},(_,i)=>({...value,id:'previous-'+i,ts:value.ts-i-1}));
+    await act(async () => root.render(createElement(ReconstructReport, { solve:value, history, isZh:false, host })));
     await vi.waitFor(async () => {
       await act(async () => undefined);
       expect(container.querySelector('.sa-row-avg')?.textContent).toContain('vs recent stage mean');
     });
+    expect(container.querySelector('.sa-method-select')).toBeNull();
+    expect([...container.querySelectorAll('.stl-names .stl-cap')].map(el=>el.textContent)).toEqual(['FB','SB','CMLL','LSE']);
     expect(localStorage.getItem('cuberoot.reconstruction.stage-cache.v1')).toContain('previous-4');
-  });
-
-  it.each(['roux', 'zz'] as const)('remembers %s for live stages and the next report', async method => {
-    const stageTarget = document.createElement('div');
-    await act(async () => root.render(createElement(ReconstructReport, { solve, isZh: false, host, live: true, liveStageTarget: stageTarget })));
-    const select = container.querySelector<HTMLSelectElement>('.sa-method-select')!;
-    await act(async () => {
-      select.value = method;
-      select.dispatchEvent(new Event('change', { bubbles: true }));
-    });
-    await vi.waitFor(async () => {
-      await act(async () => undefined);
-      expect(stageTarget.textContent).toContain(method === 'roux' ? 'LSE' : 'Last layer');
-    });
-    await act(async () => root.render(null));
-    await act(async () => root.render(createElement(ReconstructReport, { solve, isZh: false, host })));
-    expect(container.querySelector<HTMLSelectElement>('.sa-method-select')?.value).toBe(method);
-    expect(localStorage.getItem('cuberoot.reconstruction.method')).toBe(method);
-  });
-
-  it.each(['roux', 'zz'] as const)('adapts playback stages and seeking when switching to %s', async method => {
-    const value = { ...solve, timeMs: 500, moves: ['R', 'U', "U'", "R'"].map((m, i) => ({ m, ts: (i + 1) * 100 })) };
-    vi.mocked(reconstructionAnalyzer.subscribe).mockImplementation((input, notify) => {
-      const stages = METHODS[input.text.method ?? 'cfop'].stages;
-      notify({ status: 'complete', reference: null, slotReference: null, text: {
-        scramble: value.scramble, inspection: '', text: '', stm: 4, turns: 4, seconds: 0.5, tps: 8, blindPairs: 0, rotations: [],
-        lines: stages.map((stage, i) => ({
-          key: stage.key, kind: (['cross', 'f2l', 'oll', 'pll'] as const)[i], label: stage.en,
-          fromIdx: i, toIdx: i, moves: [value.moves[i].m], recognitionMs: 20, executionMs: 80, stepMs: 100,
-        })),
-      } });
-      return () => {};
-    });
-    await act(async () => root.render(createElement(ReconstructReport, { solve: value, isZh: false, host })));
-    const select = container.querySelector<HTMLSelectElement>('.sa-method-select')!;
-    const switchMethod = async (id: string) => act(async () => {
-      select.value = id;
-      select.dispatchEvent(new Event('change', { bubbles: true }));
-    });
-    await switchMethod(method);
-    const stages = METHODS[method].stages;
-    expect([...container.querySelectorAll('.stl-names .stl-cap')].map(el => el.textContent)).toEqual(stages.map(s => s.en));
-    expect([...container.querySelectorAll('.sml-group[data-stage]')].map(el => el.getAttribute('data-stage'))).toEqual(stages.map(s => s.key));
-    expect([...container.querySelectorAll('.stl-seg:not([data-pause])')].map(el => el.getAttribute('data-stage'))).toEqual(stages.map(s => s.key));
-    const row = container.querySelector<HTMLButtonElement>(`.sml-group[data-stage="${stages[2].key}"] .is-seek`)!;
-    await act(async () => row.click());
-    expect(container.querySelector('.reconstruct-playback-counter')?.textContent).toBe('0.20 / 0.50');
-    await act(async () => button('Step forward').click());
-    expect(row.closest('.sml-line')?.getAttribute('data-state')).toBe('now');
-    await switchMethod('cfop');
-    expect([...container.querySelectorAll('.stl-names .stl-cap')].map(el => el.textContent)).toEqual(['CROSS', 'F2L', 'OLL', 'PLL']);
   });
 
   it('keeps live steps visible across final remount while collapsed references load separately', async () => {

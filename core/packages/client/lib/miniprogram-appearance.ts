@@ -94,17 +94,28 @@ export async function syncMiniProgramAppearance(): Promise<void> {
       const preferences: MiniProgramPreferences = { locale,
         theme: savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : 'system',
         palette, contrast: readContrast(), lightBackground, darkBackground };
-      const payload = JSON.stringify({ preferences, appearance: message });
-      if (payload === lastPreferences) return;
-      const previous = lastPreferences;
-      lastPreferences = payload;
-      api.navigateTo({ url: `/pages/preferences/index?value=${encodeURIComponent(payload)}`,
-        fail: () => { lastPreferences = previous; } });
-    } else {
-      if (serialized === lastPublished) return;
-      api.postMessage({ data: message });
-      lastPublished = serialized;
+      const settings = JSON.stringify(preferences);
+      // Opening a WebView establishes its baseline; it is not a settings edit.
+      // Navigating on mount pushes the native "Return" page and immediately
+      // pops it, visibly bouncing the timer. Resolved colors can also change
+      // during loading or with the OS theme without any preference edit.
+      if (lastPreferences && settings !== lastPreferences) {
+        const previous = lastPreferences;
+        lastPreferences = settings;
+        const payload = JSON.stringify({ preferences, appearance: message });
+        api.navigateTo({ url: `/pages/preferences/index?value=${encodeURIComponent(payload)}`,
+          fail: () => { lastPreferences = previous; } });
+        return;
+      }
+      lastPreferences = settings;
+      if (locale !== lastLocale) {
+        api.postMessage({ data: { type: 'cuberoot:locale', locale } });
+        lastLocale = locale;
+      }
     }
+    if (serialized === lastPublished) return;
+    api.postMessage({ data: message });
+    lastPublished = serialized;
   } catch { /* Appearance sync must not interrupt the page. */ }
   finally { publishing = false; }
 }

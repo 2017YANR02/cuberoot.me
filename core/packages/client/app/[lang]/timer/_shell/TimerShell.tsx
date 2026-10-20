@@ -1,4 +1,8 @@
 'use client';
+import { useSearchParams } from 'next/navigation';
+import { useDouyinToolSurface } from '@/lib/douyin-content';
+import { douyinContentAvailable } from '@cuberoot/shared/douyin-content';
+import AppLink from '@/components/AppLink';
 
 /**
  * TimerShell — the mode host for /timer.
@@ -58,6 +62,8 @@ const parseAsPlayers = createParser<PlayersMode>({
 });
 
 export default function TimerShell() {
+  const douyin = useDouyinToolSurface();
+  const search = useSearchParams();
   const [training] = useQueryState('training', parseAsString.withOptions({ history: 'push' }));
   const notice = <TimerNetOutboxNotice outbox={netRecordingOutbox} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} />;
   const [mounted, setMounted] = useState(false);
@@ -121,6 +127,10 @@ export default function TimerShell() {
   // A training deep link must never briefly mount Solo/Battle: those views own
   // keyboard and device listeners. Training has its own sole input owner.
   if (!mounted) return <ClientLoadStatus />;
+  if (douyin && !douyinContentAvailable('/timer?' + search.toString())) return <main role="status">
+    <p>{tr({ zh: '抖音小程序提供基础计时，此训练模式暂不提供。', en: 'Douyin offers basic timing; this training mode is unavailable.' })}</p>
+    <AppLink href="/timer">{tr({ zh: '基础计时', en: 'Basic timer' })}</AppLink>
+  </main>;
   if (training) {
     return <TimerTrainingWorkspace />;
   }
@@ -152,7 +162,7 @@ export default function TimerShell() {
 
   return (
     <>{notice}<SoloView
-      playersControl={playersControl}
+      playersControl={douyin ? null : playersControl}
       presenceControl={presenceControl}
       onPresenceChange={setPresenceReport}
     /></>

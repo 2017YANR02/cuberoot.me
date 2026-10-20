@@ -1,5 +1,8 @@
 ## 原生智能魔方
 
+- 维护者默认测试魔方为 **GAN 16 UI**（2026-10-15 明确要求记入项目约定）；维护者有多款设备，但没有指定其他型号时不要重复询问品牌型号。该默认覆盖 iOS、Android、Apple Watch；各端验收独立记账。
+- Series 8 / watchOS 26.6 已实测直接连接 GAN 16 UI 并收到有效状态与转动（2026-10-15，详见路线图）。Watch 使用 CoreBluetooth transport + 原 app-ui GAN driver/shared controller。Apple 的 manufacturer map 分离了厂商头；`app-ui/smart-cube/mac.ts` 恢复完整段后调用微信/抖音同一个共享解析器，不能把 20 字节扩展 payload 当作旧的短 payload，也不能取尾部六字节猜地址。完整离线自动计时、恢复同步和后台验收仍以路线图最新证据为准。
+
 - 当前首个真机矩阵是 OPPO Reno7 Pro 5G `PFDM00`（Android 13 / ColorOS 13.1）+ GAN 16 UI；不要再次询问是否有 Android 手机或首测魔方型号，先用 `adb devices -l` 核对它是否在线。
 - GAN 16 UI 按现有网站 registry 归入 GAN v4；服务、特征、加解密、历史补帧和转动解析复用 `@cuberoot/shared/smart-cube/gan-v4`，禁止在 Mobile 复制协议常量或算法。
 - 设备时间映射统一使用 `@cuberoot/shared/smart-cube/move-clock` 的 `MoveClock`；状态帧采纳、转动推进和复原判断统一使用 `@cuberoot/shared/smart-cube/cubie` 的 `SmartCubeStateTracker`。网站旧 `move_clock.ts` / `state_track.ts` 只是兼容 adapter，Mobile 不得复制它们或另建第二套状态模型。

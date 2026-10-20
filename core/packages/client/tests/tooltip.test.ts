@@ -4,6 +4,42 @@ import { createRoot } from 'react-dom/client';
 import { expect, it, vi } from 'vitest';
 import { Tooltip } from '@/components/Tooltip';
 
+it('opens help on hover or touch click, toggles closed and dismisses outside', async () => {
+  const host = document.createElement('div');
+  document.body.append(host);
+  const root = createRoot(host);
+  try {
+    await act(async () => root.render(createElement(Tooltip, {
+      content: 'Coverage explanation', openOnClick: true,
+      children: props => createElement('button', { ...props, type: 'button' }, '?'),
+    })));
+    const button = host.querySelector('button')!;
+    expect(document.querySelector('[role="tooltip"]')).toBeNull();
+    const pointer = (type: string, pointerType: string) => {
+      const event = new Event(type, { bubbles: true });
+      Object.defineProperty(event, 'pointerType', { value: pointerType });
+      return event;
+    };
+    await act(async () => button.dispatchEvent(pointer('pointerover', 'mouse')));
+    expect(document.querySelector('[role="tooltip"]')?.textContent).toBe('Coverage explanation');
+    await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })));
+    await act(async () => button.dispatchEvent(pointer('pointerover', 'touch')));
+    expect(document.querySelector('[role="tooltip"]')).toBeNull();
+    // Mobile browsers may focus before click; the first tap must stay open.
+    await act(async () => { button.focus(); button.click(); });
+    expect(document.querySelector('[role="tooltip"]')).not.toBeNull();
+    await act(async () => button.click());
+    expect(document.querySelector('[role="tooltip"]')).toBeNull();
+    await act(async () => button.click());
+    expect(document.querySelector('[role="tooltip"]')).not.toBeNull();
+    await act(async () => document.body.dispatchEvent(pointer('pointerdown', 'touch')));
+    expect(document.querySelector('[role="tooltip"]')).toBeNull();
+  } finally {
+    await act(async () => root.unmount());
+    host.remove();
+  }
+});
+
 it('portals outside a clipped glass parent, describes the focused trigger, clamps and dismisses with Escape', async () => {
   const host = document.createElement('div');
   host.style.overflow = 'hidden';

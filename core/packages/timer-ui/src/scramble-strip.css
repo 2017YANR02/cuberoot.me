@@ -392,3 +392,30 @@ html[data-theme=dark] { --scramble-fg: #fff; }
     justify-self: end;
   }
 }
+
+/* Manual entry occupies the same typographic surface as the displayed scramble. */
+.scramble-strip .scramble-text:has(.scramble-manual-inline),
+.scramble-strip .scramble-manual-inline { width: 100%; }
+.scramble-strip .scramble-manual-inline {
+  box-sizing: border-box;
+  padding: 6px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+}
+.scramble-strip .scramble-manual-inline .scramble-src-manual-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  text-align: center;
+  word-spacing: 0.25em;
+  resize: none;
+  field-sizing: content;
+}

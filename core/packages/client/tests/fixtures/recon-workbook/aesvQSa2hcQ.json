@@ -1,0 +1,408 @@
+{
+  "source": "https://cuberoot.me/zh/timer?share=aesvQSa2hcQ",
+  "recording": {
+    "scramble": "F' R2 D R U' B2 R2 D' B2 R B2 D R2 F L' U R' U",
+    "moves": [
+      {
+        "m": "R'",
+        "ts": 52.59999996423721
+      },
+      {
+        "m": "U'",
+        "ts": 150.5999999642372
+      },
+      {
+        "m": "B",
+        "ts": 413.5999999642372
+      },
+      {
+        "m": "B",
+        "ts": 473.5999999642372
+      },
+      {
+        "m": "R'",
+        "ts": 815.5999999642372
+      },
+      {
+        "m": "U",
+        "ts": 1328.5999999642372
+      },
+      {
+        "m": "U",
+        "ts": 1475.5999999642372
+      },
+      {
+        "m": "U",
+        "ts": 2014.5999999642372
+      },
+      {
+        "m": "R'",
+        "ts": 2282.599999964237
+      },
+      {
+        "m": "L",
+        "ts": 3608.599999964237
+      },
+      {
+        "m": "D",
+        "ts": 3703.599999964237
+      },
+      {
+        "m": "L'",
+        "ts": 3849.599999964237
+      },
+      {
+        "m": "R",
+        "ts": 4048.599999964237
+      },
+      {
+        "m": "D'",
+        "ts": 4173.599999964237
+      },
+      {
+        "m": "R'",
+        "ts": 4350.599999964237
+      },
+      {
+        "m": "B",
+        "ts": 6553.599999964237
+      },
+      {
+        "m": "D",
+        "ts": 6627.599999964237
+      },
+      {
+        "m": "B'",
+        "ts": 6696.599999964237
+      },
+      {
+        "m": "L",
+        "ts": 6886.599999964237
+      },
+      {
+        "m": "L",
+        "ts": 6971.599999964237
+      },
+      {
+        "m": "D'",
+        "ts": 7588.599999964237
+      },
+      {
+        "m": "B",
+        "ts": 7732.599999964237
+      },
+      {
+        "m": "D'",
+        "ts": 7791.599999964237
+      },
+      {
+        "m": "B'",
+        "ts": 7887.599999964237
+      },
+      {
+        "m": "D",
+        "ts": 7963.599999964237
+      },
+      {
+        "m": "B",
+        "ts": 8023.599999964237
+      },
+      {
+        "m": "D'",
+        "ts": 8402.599999964237
+      },
+      {
+        "m": "B'",
+        "ts": 8632.599999964237
+      },
+      {
+        "m": "D",
+        "ts": 8682.599999964237
+      },
+      {
+        "m": "B",
+        "ts": 8748.599999964237
+      },
+      {
+        "m": "D'",
+        "ts": 8787.599999964237
+      },
+      {
+        "m": "B'",
+        "ts": 8904.599999964237
+      },
+      {
+        "m": "D",
+        "ts": 9338.599999964237
+      },
+      {
+        "m": "D",
+        "ts": 9403.599999964237
+      },
+      {
+        "m": "R'",
+        "ts": 9630.599999964237
+      },
+      {
+        "m": "D'",
+        "ts": 9752.599999964237
+      },
+      {
+        "m": "R",
+        "ts": 9816.599999964237
+      },
+      {
+        "m": "D'",
+        "ts": 9920.599999964237
+      },
+      {
+        "m": "F",
+        "ts": 10170.599999964237
+      },
+      {
+        "m": "D",
+        "ts": 10356.599999964237
+      },
+      {
+        "m": "F'",
+        "ts": 10661.599999964237
+      },
+      {
+        "m": "D'",
+        "ts": 11422.599999964237
+      },
+      {
+        "m": "L",
+        "ts": 11609.599999964237
+      },
+      {
+        "m": "D",
+        "ts": 11744.599999964237
+      },
+      {
+        "m": "L'",
+        "ts": 11917.599999964237
+      },
+      {
+        "m": "F",
+        "ts": 12014.599999964237
+      },
+      {
+        "m": "L'",
+        "ts": 12079.599999964237
+      },
+      {
+        "m": "F'",
+        "ts": 12200.599999964237
+      },
+      {
+        "m": "L",
+        "ts": 12276.599999964237
+      },
+      {
+        "m": "D'",
+        "ts": 13177.599999964237
+      },
+      {
+        "m": "R'",
+        "ts": 13451.599999964237
+      },
+      {
+        "m": "D",
+        "ts": 13505.599999964237
+      },
+      {
+        "m": "L",
+        "ts": 13639.599999964237
+      },
+      {
+        "m": "D'",
+        "ts": 13762.599999964237
+      },
+      {
+        "m": "R",
+        "ts": 13931.599999964237
+      },
+      {
+        "m": "D'",
+        "ts": 14045.599999964237
+      },
+      {
+        "m": "L'",
+        "ts": 14190.599999964237
+      },
+      {
+        "m": "D'",
+        "ts": 14242.599999964237
+      },
+      {
+        "m": "L",
+        "ts": 14340.599999964237
+      },
+      {
+        "m": "D'",
+        "ts": 14414.599999964237
+      },
+      {
+        "m": "L'",
+        "ts": 14502.599999964237
+      },
+      {
+        "m": "D",
+        "ts": 15065.599999964237
+      },
+      {
+        "m": "L",
+        "ts": 15269.599999964237
+      },
+      {
+        "m": "L",
+        "ts": 15335.599999964237
+      },
+      {
+        "m": "D'",
+        "ts": 15435.599999964237
+      },
+      {
+        "m": "F",
+        "ts": 15539.599999964237
+      },
+      {
+        "m": "B'",
+        "ts": 15539.599999964237
+      },
+      {
+        "m": "L'",
+        "ts": 15687.599999964237
+      },
+      {
+        "m": "L'",
+        "ts": 15755.599999964237
+      },
+      {
+        "m": "F'",
+        "ts": 15810.599999964237
+      },
+      {
+        "m": "B",
+        "ts": 15824.599999964237
+      },
+      {
+        "m": "D'",
+        "ts": 15869.599999964237
+      },
+      {
+        "m": "L",
+        "ts": 15990.599999964237
+      },
+      {
+        "m": "L",
+        "ts": 16091.599999964237
+      },
+      {
+        "m": "D'",
+        "ts": 16162.599999964237
+      },
+      {
+        "m": "D'",
+        "ts": 16227.599999964237
+      }
+    ],
+    "timeMs": 16227.599999964237,
+    "model": "gan-v4",
+    "gyro": "RwIAkAAAIYYH9QAlHIUG8QB0FIQJ7AA4CoUJ5AB4AIYI3QB5+ooE0wBZ940EywA8/IgA1gB4/YX/3wBe44kB3gBW0Y8E3gA82YsB4QCW44j94QA85Ij45AB56ofw5AA794Xx5wDS+YTy6gB454fx6AA81Yzy5gB54on04wDR5Yfy5gA8+IP36wB4BoL98ABa+4IB8gC0AoIC9AB4B4IC9gA8DIID8wC0EoMD8gGkFoQE8wEPD4IG+AB3A4EJ/gA8C4IJ/AB4EoMF9gA8B4IG8wBaEYMJ9QB4J4gK8gDwHIUI8gAeGoUF7gB4K4oF8QBbRpcF9wB3Q5UG+gBbP5IF+QEOOY8I/AAAKogDCABZI5n8QQB7H58BTAA5G6QBVABaFqT8VABaEbT9ZADSC7IAYwAfDaT9VwA7Bp8GUgB48pYcPgA86pcoNgC06JUpMgDw6JchOgBj8pkPRwAzA574UAB76ZcXPwB28pMUPABa8pETOACV9pINPQB4+ZUFRADS/5v+TQA9Bpv5TQCBDZ33TwAyEaH3UgCXKqziUAA7IafrUgDWGqXpUgAaKa7dUAC0MrLZTgA8O7jWTABjOLTbTQCrLavoTwDxLKvfTQAeN7XZTQAdKKnnUAB4EdDhcABbFfPoegA7FPjsfAB5EPvnewBiCP7qfQBRBvfqfQB5Ce3megBa8ePOcAA7AOXScwB5EvLmegBZEf3lewBa/PrpfQB4AvPxfQBAAfHmewB+9vDmewCM+vDpfAAeC/LrfAB4DvPnewBaBPLlewBaBe7rfAB4BunvfAFpBOzpewBkBPPjewB0A/fgewBUAvrTdwBBCgHDbwBVBQa+bACWAADQdQA8+/XaeQB3AOUEfAA9CeYNewCWC/TsfAAlBfnceQElCvjfegAACfbaeQErBvPZeADxAvnQdQAdCv7FcABgB/7JcgDNBPfHcQBa8u+1ZAAA/O21ZAB3AvSkVwA8Bu+iUwBcCfepXAB2EwXLcgBcEgvEbgCVEQLTdgAdEwHeeQB4EgLQdADVDvneeQCTDPPfeQA8CfHjegC5B/TnfAEKCfjkewBaCvzbeQAyCxuhTwApKDWnPQCBDhigTwBx7PClVQAa6vTTdAC1LOsMdQBdQL4kUAADErYiYAB589oAeQCPDObseg=="
+  },
+  "issue": "Remove solved trailing x z y x-prime.",
+  "displayRows": [
+    {
+      "moves": "F' R2 D R U' B2 R2 D' B2 R B2 D R2 F L' U R' U",
+      "label": "",
+      "colors": [],
+      "hrefs": [],
+      "diagrams": []
+    },
+    {
+      "moves": "x2 y'",
+      "label": "// inspection ",
+      "colors": [
+        "Yellow Orange"
+      ],
+      "hrefs": [],
+      "diagrams": []
+    },
+    {
+      "moves": "B' D' R2 B' (D D D) B' F U F' B U' B' R U R' F2",
+      "label": "// xcross ",
+      "colors": [
+        "White",
+        "Blue Red"
+      ],
+      "hrefs": [],
+      "diagrams": []
+    },
+    {
+      "moves": "U' R U' R' U R U' R' U R U' R'",
+      "label": "// ",
+      "colors": [
+        "Orange Blue"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/s"
+      ],
+      "diagrams": [
+        "iso"
+      ]
+    },
+    {
+      "moves": "y' U2 L' U' L U' F U F'",
+      "label": "// ",
+      "colors": [
+        "Green Red"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/v-"
+      ],
+      "diagrams": [
+        "iso"
+      ]
+    },
+    {
+      "moves": "U' R U R' F R' F' R",
+      "label": "// ZBLS-V Tc",
+      "colors": [
+        "Green Orange"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/v+",
+        "/alg/3x3/zbls/v"
+      ],
+      "diagrams": [
+        "iso"
+      ]
+    },
+    {
+      "moves": "U' L' U R U' L U' R' U' R U' R'",
+      "label": "// COLL-Pi5",
+      "colors": [],
+      "hrefs": [
+        "/alg/3x3/coll/pi-5"
+      ],
+      "diagrams": [
+        "plan"
+      ]
+    },
+    {
+      "moves": "U R2 U' S' U2' S U' R2 U2",
+      "label": "// PLL-U-",
+      "colors": [],
+      "hrefs": [
+        "/alg/3x3/pll/u-"
+      ],
+      "diagrams": [
+        "plan"
+      ]
+    }
+  ]
+,
+  "approval": { "status": "pending" }
+}

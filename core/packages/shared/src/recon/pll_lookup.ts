@@ -121,3 +121,9 @@ export function warmupPllTable(): Promise<void> {
 }
 
 export { pllFingerprint };
+
+/** Same table builder, moved out of device cold-start; lookup stays unchanged. */
+export async function exportPllLookup() { return [...await buildTable()]; }
+export function installPllLookup(data: Array<[string, PllAlgEntry[]]>) {
+  _tablePromise = Promise.resolve(new Map(data));
+}

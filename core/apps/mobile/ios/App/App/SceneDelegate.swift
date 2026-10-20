@@ -93,6 +93,7 @@ final class CubeRootBridgeViewController: CAPBridgeViewController {
         bridge?.registerPluginInstance(ScreenAwakePlugin())
         bridge?.registerPluginInstance(AppleMembershipPlugin())
         bridge?.registerPluginInstance(RecordPushPlugin())
+        bridge?.registerPluginInstance(WatchTimerPlugin())
     }
 }
 

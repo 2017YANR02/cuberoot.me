@@ -18,7 +18,7 @@ async function fixture() {
 }
 
 describe('Douyin native tab assets', () => {
-  it('generates all eight local PNGs using the source tabs and existing theme', async () => {
+  it('generates all six local PNGs using the source tabs and existing theme', async () => {
     const directory = await fixture();
     const config = JSON.parse(await readFile(new URL('../src/app.json', import.meta.url), 'utf8'));
     const theme = JSON.parse(await readFile(new URL('../src/theme.json', import.meta.url), 'utf8'));
@@ -27,11 +27,7 @@ describe('Douyin native tab assets', () => {
       ...config.tabBar, color: theme.light.tabBarColor, selectedColor: theme.light.tabBarSelectedColor,
     });
     expect(config.tabBar).toEqual(original);
-    expect(tabs).toHaveLength(4);
-    expect(tabs.find((tab) => tab.pagePath === 'pages/training/index')).toMatchObject({
-      iconPath: 'assets/tabbar/graduation-cap.png',
-      selectedIconPath: 'assets/tabbar/graduation-cap-selected.png',
-    });
+    expect(tabs).toHaveLength(3);
     const paths = new Set();
     for (const [index, tab] of tabs.entries()) {
       expect(tab).toMatchObject(original.list[index]);
@@ -49,7 +45,7 @@ describe('Douyin native tab assets', () => {
       }
       expect(buffers[0].equals(buffers[1])).toBe(false);
     }
-    expect(paths.size).toBe(8);
+    expect(paths.size).toBe(6);
     expect(await readFile(join(directory, 'assets/tabbar/LICENSE.txt'), 'utf8')).toContain('ISC');
   });
 

@@ -1,0 +1,402 @@
+{
+  "source": "https://cuberoot.me/zh/timer?share=jg9cInfxw4w",
+  "recording": {
+    "scramble": "B' L U2 L F' L' D2 F L2 D F L' F' U2 B' R B2",
+    "moves": [
+      {
+        "m": "D",
+        "ts": 89.40000000037253
+      },
+      {
+        "m": "R",
+        "ts": 389.40000000037253
+      },
+      {
+        "m": "R",
+        "ts": 436.40000000037253
+      },
+      {
+        "m": "D",
+        "ts": 527.4000000003725
+      },
+      {
+        "m": "L",
+        "ts": 677.4000000003725
+      },
+      {
+        "m": "L",
+        "ts": 726.4000000003725
+      },
+      {
+        "m": "R'",
+        "ts": 1008.4000000003725
+      },
+      {
+        "m": "D",
+        "ts": 1060.4000000003725
+      },
+      {
+        "m": "R",
+        "ts": 1136.4000000003725
+      },
+      {
+        "m": "D'",
+        "ts": 1211.4000000003725
+      },
+      {
+        "m": "R",
+        "ts": 1260.4000000003725
+      },
+      {
+        "m": "D",
+        "ts": 1332.4000000003725
+      },
+      {
+        "m": "R'",
+        "ts": 1482.4000000003725
+      },
+      {
+        "m": "D",
+        "ts": 1839.4000000003725
+      },
+      {
+        "m": "D",
+        "ts": 2106.4000000003725
+      },
+      {
+        "m": "D",
+        "ts": 2333.4000000003725
+      },
+      {
+        "m": "L'",
+        "ts": 2481.4000000003725
+      },
+      {
+        "m": "F",
+        "ts": 2537.4000000003725
+      },
+      {
+        "m": "L",
+        "ts": 2593.4000000003725
+      },
+      {
+        "m": "F'",
+        "ts": 2709.4000000003725
+      },
+      {
+        "m": "L'",
+        "ts": 2861.4000000003725
+      },
+      {
+        "m": "D'",
+        "ts": 2922.4000000003725
+      },
+      {
+        "m": "L",
+        "ts": 2996.4000000003725
+      },
+      {
+        "m": "D'",
+        "ts": 3193.4000000003725
+      },
+      {
+        "m": "D",
+        "ts": 3451.4000000003725
+      },
+      {
+        "m": "L",
+        "ts": 3554.4000000003725
+      },
+      {
+        "m": "D'",
+        "ts": 3607.4000000003725
+      },
+      {
+        "m": "D'",
+        "ts": 3648.4000000003725
+      },
+      {
+        "m": "L'",
+        "ts": 3711.4000000003725
+      },
+      {
+        "m": "D'",
+        "ts": 3809.4000000003725
+      },
+      {
+        "m": "L",
+        "ts": 3862.4000000003725
+      },
+      {
+        "m": "D",
+        "ts": 3913.4000000003725
+      },
+      {
+        "m": "L'",
+        "ts": 3980.4000000003725
+      },
+      {
+        "m": "D",
+        "ts": 4402.4000000003725
+      },
+      {
+        "m": "R'",
+        "ts": 4486.4000000003725
+      },
+      {
+        "m": "D'",
+        "ts": 4580.4000000003725
+      },
+      {
+        "m": "R",
+        "ts": 4639.4000000003725
+      },
+      {
+        "m": "D",
+        "ts": 4712.4000000003725
+      },
+      {
+        "m": "R'",
+        "ts": 4762.4000000003725
+      },
+      {
+        "m": "D'",
+        "ts": 4836.4000000003725
+      },
+      {
+        "m": "R",
+        "ts": 4893.4000000003725
+      },
+      {
+        "m": "D'",
+        "ts": 5376.4000000003725
+      },
+      {
+        "m": "R",
+        "ts": 5521.4000000003725
+      },
+      {
+        "m": "L'",
+        "ts": 5749.4000000003725
+      },
+      {
+        "m": "L",
+        "ts": 6675.4000000003725
+      },
+      {
+        "m": "F",
+        "ts": 6796.4000000003725
+      },
+      {
+        "m": "L'",
+        "ts": 6901.4000000003725
+      },
+      {
+        "m": "F'",
+        "ts": 7010.4000000003725
+      },
+      {
+        "m": "R'",
+        "ts": 7180.4000000003725
+      },
+      {
+        "m": "L",
+        "ts": 7294.4000000003725
+      },
+      {
+        "m": "D",
+        "ts": 7343.4000000003725
+      },
+      {
+        "m": "L",
+        "ts": 7427.4000000003725
+      },
+      {
+        "m": "D'",
+        "ts": 7471.4000000003725
+      },
+      {
+        "m": "L'",
+        "ts": 7537.4000000003725
+      },
+      {
+        "m": "D'",
+        "ts": 8033.4000000003725
+      },
+      {
+        "m": "R",
+        "ts": 8194.400000000373
+      },
+      {
+        "m": "L'",
+        "ts": 8194.400000000373
+      },
+      {
+        "m": "R",
+        "ts": 8261.400000000373
+      },
+      {
+        "m": "L'",
+        "ts": 8271.400000000373
+      },
+      {
+        "m": "U",
+        "ts": 8318.400000000373
+      },
+      {
+        "m": "L",
+        "ts": 8424.400000000373
+      },
+      {
+        "m": "R'",
+        "ts": 8519.400000000373
+      },
+      {
+        "m": "F",
+        "ts": 8577.400000000373
+      },
+      {
+        "m": "F",
+        "ts": 8634.400000000373
+      },
+      {
+        "m": "R",
+        "ts": 8724.400000000373
+      },
+      {
+        "m": "L'",
+        "ts": 8724.400000000373
+      },
+      {
+        "m": "U",
+        "ts": 8811.400000000373
+      },
+      {
+        "m": "R",
+        "ts": 8866.400000000373
+      },
+      {
+        "m": "L'",
+        "ts": 8874.400000000373
+      },
+      {
+        "m": "R",
+        "ts": 8913.400000000373
+      },
+      {
+        "m": "L'",
+        "ts": 8913.400000000373
+      },
+      {
+        "m": "D",
+        "ts": 9014.400000000373
+      }
+    ],
+    "timeMs": 8999.900000000373,
+    "model": "gan-v4",
+    "gyro": "RwIAUwAA/fQJggB3DvYJggBbB/YMggCWEfgRhAAdB/IHggB+BOwKgwA2/+4HgwB4AegShQB4AusMgwBa/vEKggA9Af0ghQBbB/gUgwB8/vMJggCvAuX0hAAGBegDgwCPBe0NgwCW/vEPgwC0AfYRgwDT/fsTgwBZAvoQggC0BvkSgwB5AQQEgQDwAhH5ggAG/v4GgQAdAvcRgwBzCfgGggBBDAX4ggCQ//QVgwAe/vATgwDS8/MQgwB58fcShAA79vEOgwB/5PQPhgBT4vQIhQDx3uwMiAAF4O4JhwBH6vMEhAAr9fgFggBa7/MJgwB48/EFgwC1+/oRggCWEgEhhwAd//cDgQB4B/wPggBjDgcoiABR+PMQgwBa+u0QhABa/u8VhAGk++rjhgA88+W7mQB5+OvDkwBf9Oi9mABy+OqtowA89e+hrgBa8umppwDT++C0nwAA++ehrwBZ9eCrqAC19NuvpgAA9t+pqgB39OGmrQB59t6pqwBZ+uWspQBb/eanqQA7/OWspAB4+e+sogBb+Q/PjABZ9Oz4gwBa7uMRhwB/8fP8gwBT9vT7ggA87/QGgwCW9PUIggDw7fgJgwCX9+7PjQA7CPSG4QCWC+SL2QArC9qUygBN+OTAlgBa9eu6mACXB+yG5ABCD/WDCgBTEwDSdQ=="
+  },
+  "issue": "待确认：显示 cross cancel into，十字行末未完成十字；第一组 F2L 后十字完成，整把可完整还原。现有阶段边界检查未通过。",
+  "displayRows": [
+    {
+      "colors": [],
+      "diagrams": [],
+      "hrefs": [],
+      "label": "",
+      "moves": "B' L U2 L F' L' D2 F L2 D F L' F' U2 B' R B2"
+    },
+    {
+      "colors": [
+        "Yellow Green"
+      ],
+      "diagrams": [],
+      "hrefs": [],
+      "label": "// inspection",
+      "moves": "z2"
+    },
+    {
+      "colors": [
+        "White"
+      ],
+      "diagrams": [],
+      "hrefs": [],
+      "label": "//  cross cancel into",
+      "moves": "U L2 U R2 L'"
+    },
+    {
+      "colors": [
+        "Blue Red"
+      ],
+      "diagrams": [
+        "iso"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/u-"
+      ],
+      "label": "// ",
+      "moves": "U L U' L U L'"
+    },
+    {
+      "colors": [
+        "Orange Blue"
+      ],
+      "diagrams": [
+        "iso"
+      ],
+      "hrefs": [],
+      "label": "// ",
+      "moves": "(U U U) R' F R F' R' U' R"
+    },
+    {
+      "colors": [
+        "Green Orange"
+      ],
+      "diagrams": [
+        "iso"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/h+"
+      ],
+      "label": "// ",
+      "moves": "(U' U) R U2' R' U' R U R'"
+    },
+    {
+      "colors": [
+        "Green Red"
+      ],
+      "diagrams": [
+        "iso"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/l-"
+      ],
+      "label": "// ",
+      "moves": "U L' U' L U L' U' L"
+    },
+    {
+      "colors": [],
+      "diagrams": [
+        "plan"
+      ],
+      "hrefs": [
+        "/alg/3x3/ollcp/ollcp28-5"
+      ],
+      "label": "// OLL(CP)-285",
+      "moves": "U' r (R' R) U R' U' M U R U' R'"
+    },
+    {
+      "colors": [],
+      "diagrams": [
+        "plan"
+      ],
+      "hrefs": [
+        "/alg/3x3/pll/u-"
+      ],
+      "label": "// PLL-U-",
+      "moves": "U' M2 U M U2 M' U M2 U"
+    }
+  ],
+  "approval": {
+    "status": "pending"
+  }
+}

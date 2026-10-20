@@ -100,7 +100,7 @@ function ganV2GyroFrame(
 }
 
 function freshV2State(): GanV2State {
-  return { prevMoveCnt: -1, prevMoves: [], battery: null, badFrames: 0 };
+  return { historyLost: false, prevMoveCnt: -1, prevMoves: [], battery: null, badFrames: 0 };
 }
 
 describe('GAN gen2 gyro (mode 1)', () => {

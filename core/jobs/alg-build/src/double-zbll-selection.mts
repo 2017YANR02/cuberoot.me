@@ -24,7 +24,9 @@ export class PairSelection {
     const top=Math.min(a,b), bottom=Math.max(a,b), pair=top*this.model.cases.length+bottom;
     const old=this.selected.get(pair);
     // Equal face counts are equal: there is no RU/RF/RUF spelling preference.
-    if (!old || compareSolutions(rank,old)<0) this.selected.set(pair,{pair,top,bottom,stateId,solution,...rank});
+    // Regex captures may retain the entire streamed CSV chunk. Own only the
+    // winning short formula; keep all original candidates in the disk journal.
+    if (!old || compareSolutions(rank,old)<0) this.selected.set(pair,{pair,top,bottom,stateId,solution:Buffer.from(solution).toString(),...rank});
   }
   get(pair: number) { return this.selected.get(pair); }
   snapshot() {

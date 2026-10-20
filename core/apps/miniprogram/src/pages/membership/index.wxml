@@ -1,0 +1,20 @@
+<page-meta page-style="{{appearanceStyle}}" />
+<import src="../../templates/native-appearance.wxml" />
+<template is="native-scenery" />
+<view class="page">
+  <text class="page-title">{{labels.title}}</text>
+  <text class="page-intro">{{account}}</text>
+  <text class="page-title">{{amount}}</text>
+  <text class="page-intro">{{message}}</text>
+  <text wx:if="{{error}}" class="status-text status-text--error">{{error}}</text>
+  <button hover-class="press-feedback" wx:if="{{needsLogin}}" class="primary-button" bindtap="login">{{labels.login}}</button>
+  <block wx:if="{{context}}">
+    <text wx:if="{{!context.pilot}}" class="page-intro">{{labels.rules}}</text>
+    <button hover-class="press-feedback" class="text-button" bindtap="terms">{{labels.terms}}</button>
+    <!-- allow-checkbox: explicit renewal consent must be actively selected -->
+    <checkbox-group wx:if="{{canSign}}" bindchange="consent"><label><checkbox value="agree" checked="{{agreed}}" />{{labels.agree}}</label></checkbox-group>
+    <button hover-class="press-feedback" wx:if="{{canSign}}" class="primary-button" disabled="{{!agreed || busy}}" loading="{{busy}}" bindtap="sign">{{labels.sign}}</button>
+    <button hover-class="press-feedback" class="text-button" disabled="{{busy}}" bindtap="refresh">{{labels.refresh}}</button>
+    <button hover-class="press-feedback" wx:if="{{canCancel}}" class="text-button" disabled="{{busy}}" bindtap="cancel">{{labels.cancel}}</button>
+  </block>
+</view>

@@ -4,6 +4,8 @@
 
 ## 本机配置
 
+2026-10-17 路径修复：仓库在 `~/Developer/cuberoot.me`，历史统计数据仍在 `~/Documents/scramble`。本机 `.command` 明确导出 `CUBEROOT_DATA_ROOT` 指向后者；尊重显式环境覆盖，并在历史 `wca_scramble/stats/std.csv` 缺失时退出，避免把仓库移动误判为首次全量计算。不要移动、清空旧数据或把 `~/Developer/scramble` 中误启动生成的输入当作历史结果。重新启动前可用 `incremental.ts --dry-run --tsv-dir <现有导出目录> --data-dir <历史 WCA 目录>` 只读核对新增量。
+
 - Apple「快捷指令」中有「跑打乱统计」，已添加到 Dock。
 - 该快捷指令只有一个「运行Shell脚本」操作，内容为 `open -a Terminal "$HOME/.local/bin/跑打乱统计.command"`，Shell 选 `zsh`，不以管理员身份运行。
 - 在「快捷指令 → 设置 → 高级」中，用户已开启「允许运行脚本」。

@@ -48,6 +48,9 @@ export const PLACE_CITY_ZH: Record<string, string> = {
   "CZ:ricany": "日恰尼",
   "CZ:nupaky": "努帕基",
   "CZ:hradeknadnisou": "尼萨河畔赫拉德克",
+  // Domažlice: 捷克旅游局简中名称;源同步于 scripts/place-tail-zh.json。
+  // https://www.visitczechia.com/zh-cn/news/2025/05/n-gastronomic-food-festivals
+  "CZ:domazlice": "多马日利采",
   "PL:knurow": "克努鲁夫",
   "HR:bibinje": "比比涅",
   "PH:cityofgapan": "加潘",

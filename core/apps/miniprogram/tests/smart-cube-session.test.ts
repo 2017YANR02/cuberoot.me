@@ -148,6 +148,26 @@ describe('SmartCubeSession', () => {
     await startPromise;
   }
 
+  it('delivers native connection and moves without opening a WebSocket', async () => {
+    const session = new SmartCubeSession();
+    const receive = vi.fn();
+    await session.startLocal(receive);
+    await session.connect('simulator');
+    session.simulateMove('R');
+    expect(wx.connectSocket).not.toHaveBeenCalled();
+    expect(receive).toHaveBeenCalledWith(expect.objectContaining({ type: 'status', phase: 'connected' }));
+    expect(receive).toHaveBeenCalledWith(expect.objectContaining({ type: 'move', move: 'R' }));
+    await session.stopLocal();
+    expect(session.relayOpen).toBe(false);
+  });
+
+  it('does not revive a local receiver after unload cancels startup', async () => {
+    const session = new SmartCubeSession();
+    const start = session.startLocal(vi.fn());
+    await session.stopLocal(); await start;
+    expect(session.relayOpen).toBe(false);
+  });
+
   it('waits for the server acknowledgement before accepting BLE work', async () => {
     const session = new SmartCubeSession();
     let started = false;
@@ -464,16 +484,20 @@ describe('SmartCubeSession', () => {
     expect(driverMocks.connectGanV4).not.toHaveBeenCalled();
   });
 
-  it('waits for incremental scan cleanup before connecting the selected device', async () => {
+  it.each(['gocube', 'gan-v4'] as const)('waits for incremental scan cleanup before connecting %s', async (driver) => {
     const session = new SmartCubeSession();
     await startSession(session, 'v'.repeat(32));
     const found = {
       device: { deviceId: 'cube-1', name: 'GoCube Edge', RSSI: -48 },
-      driver: 'gocube' as const,
+      driver,
     };
+    const closeAdapter = vi.fn(async () => {});
+    const adapter = { api: {}, lease: {}, close: closeAdapter };
+    const connectDriver = driver === 'gan-v4' ? driverMocks.connectGanV4 : driverMocks.connectGoCube;
     let finishScanCleanup!: () => void;
     driverMocks.discoverSmartCubeDriver.mockImplementation((options: {
       onUpdate?(devices: typeof found[]): void;
+      onAdapterRetained?(value: typeof adapter): void;
       signal: { onAbort(listener: () => void): () => void };
     }) => {
       options.onUpdate?.([found]);
@@ -481,11 +505,14 @@ describe('SmartCubeSession', () => {
         options.signal.onAbort(() => {
           void new Promise<void>((resolve) => {
             finishScanCleanup = resolve;
-          }).then(() => reject(new Error('cancelled')));
+          }).then(() => {
+            options.onAdapterRetained?.(adapter);
+            reject(new Error('cancelled'));
+          });
         });
       });
     });
-    driverMocks.connectGoCube.mockResolvedValue({
+    connectDriver.mockResolvedValue({
       deviceName: 'GoCube Edge',
       disconnect: async () => {},
       requestBattery: async () => 65,
@@ -504,13 +531,43 @@ describe('SmartCubeSession', () => {
     const connection = session.connectDevice('cube-1');
     await vi.waitFor(() => expect(finishScanCleanup).toBeTypeOf('function'));
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
-    expect(driverMocks.connectGoCube).not.toHaveBeenCalled();
+    expect(connectDriver).not.toHaveBeenCalled();
 
     finishScanCleanup();
     await Promise.all([scan, connection]);
-    expect(driverMocks.connectGoCube).toHaveBeenCalledWith(expect.objectContaining({
+    expect(connectDriver).toHaveBeenCalledWith(expect.objectContaining({
       device: found.device,
     }));
+    if (driver === 'gan-v4') {
+      expect(connectDriver).toHaveBeenCalledWith(expect.objectContaining({ adapter }));
+      expect(closeAdapter).not.toHaveBeenCalled();
+    } else {
+      expect(closeAdapter).toHaveBeenCalledOnce();
+    }
+  });
+
+  it.each(['relay', 'local'])('hands a retained scan adapter to GAN and releases it if selection is cancelled (%s)', async (transport) => {
+    const session = new SmartCubeSession();
+    if (transport === 'local') await session.startLocal(vi.fn());
+    else await startSession(session);
+    const close = vi.fn(async () => {});
+    const adapter = { api: {}, lease: {}, close };
+    const device = { deviceId: 'gan-1', name: 'GAN16ui' };
+    driverMocks.discoverSmartCubeDriver.mockImplementation(async (options) => {
+      options.onAdapterRetained(adapter);
+      return [{ device, driver: 'gan-v4' }];
+    });
+    const disconnect = vi.fn(async () => {});
+    driverMocks.connectGanV4.mockResolvedValue({ deviceName: device.name, disconnect,
+      requestBattery: async () => 80 });
+    await session.scan();
+    await session.connectDevice(device.deviceId);
+    expect(driverMocks.connectGanV4).toHaveBeenCalledWith(expect.objectContaining({ adapter, device }));
+    expect(close).not.toHaveBeenCalled();
+    await session.scan();
+    await session.disconnect();
+    expect(close).toHaveBeenCalledOnce();
+    expect(disconnect).toHaveBeenCalledOnce();
   });
 
   it('connects only the device selected from the scan result', async () => {
@@ -614,6 +671,20 @@ describe('SmartCubeSession', () => {
     });
     expect(driverMocks.connectGanV4).not.toHaveBeenCalled();
     expect(driverMocks.connectGoCube).not.toHaveBeenCalled();
+  });
+
+  it('preserves the BLE failure when the timer subsequently closes its relay', async () => {
+    const session = new SmartCubeSession();
+    const snapshots: Array<{ error: string; phase: string }> = [];
+    session.subscribe(({ error, phase }) => snapshots.push({ error, phase }));
+    await startSession(session);
+    driverMocks.discoverSmartCubeDriver.mockRejectedValue(new Error('蓝牙用途未声明'));
+    await expect(session.scan()).rejects.toThrow('蓝牙用途未声明');
+    socket.error();
+    socket.remoteClose();
+    expect(session.relayOpen).toBe(false);
+    expect(snapshots.at(-1)).toEqual({ phase: 'error', error: '蓝牙用途未声明' });
+    await expect(session.scan()).rejects.toThrow('请先从计时器打开连接页');
   });
 
   it('does not start a new BLE scan after disconnecting during prior hardware cleanup', async () => {

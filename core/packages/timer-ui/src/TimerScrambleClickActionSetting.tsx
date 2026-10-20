@@ -17,6 +17,7 @@ export interface TimerScrambleClickActionSettingProps {
 const FIELD = timerSettingFieldContract('settings.appearance.scramble-click-action');
 
 const ACTION_COPY: Record<TimerScrambleClickAction, TimerSettingCopy> = {
+  start: { en: 'Start timing', zh: '开始计时' },
   none: { en: 'Nothing', zh: '无操作' },
   next: { en: 'Next scramble', zh: '换下一个' },
   copy: { en: 'Copy to clipboard', zh: '复制到剪贴板' },

@@ -34,13 +34,13 @@
  */
 
 
+import { reportSeconds } from './report-presentation';
+import ReportContent from './ReportContent';
+import { reportPlayback, reportPlayerAction, playbackMoveDurationTicks, type ReportPlayerState } from './report-player';
+import type { ReportAction } from './report-content';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import {
-  ChevronLeft, ChevronRight, Play, Pause, SkipBack, SkipForward,
-} from 'lucide-react';
 
-import DefaultBoolToggle from '../BoolToggle';
 import { useReconstructHost } from './ReconstructHost';
 
 import type { EventId } from '@cuberoot/shared/timer';
@@ -53,17 +53,17 @@ import { notationQuaternion } from '@cuberoot/shared/timer/reconstruct/gyro-orie
 import type { HumanRotation } from '@cuberoot/shared/timer/reconstruct/humanize';
 import type { ReconTextLine } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import type { SolveMove } from '@cuberoot/shared/timer/reconstruct/stage-segments';
-import type { MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
+import type { ReconstructionType } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import SolveTimeline from './SolveTimeline';
 import type { SolveTimelineHandle } from './SolveTimeline';
-import { reconstructedTrack, playbackIndexAt, playbackIndexForRaw, type PlaybackMove } from './playback-track';
+import { reconstructedTrack, playbackIndexAt, playbackEndMs, rawPlaybackTarget, playbackFrame, type PlaybackMove } from './playback-track';
 
 // WebGL + the /sim engine. The panel stays visible; the cube itself mounts only
 // when it nears the viewport (see cubeNear below).
 const SimCubeView = lazy(() => import('../SimCubeView'));
 
 interface Props {
-  method?: MethodId;
+  method?: ReconstructionType;
   event: EventId;
   scramble: string;
   moves: SolveMove[];
@@ -84,22 +84,17 @@ interface Props {
    * 只影响看到的朝向,不影响状态。开陀螺仪时忽略。
    */
   viewRotation?: string;
+  /** Initial frame of the simplified steps; raw gyro playback keeps its own frame. */
+  inspection?: string;
 }
 
-const SPEEDS: Array<{ key: string; label: string; mult: number }> = [
-  { key: '0.5x', label: '0.5x', mult: 0.5 },
-  { key: '1x',   label: '1x',   mult: 1 },
-  { key: '2x',   label: '2x',   mult: 2 },
-];
 
-function formatSec(ms: number, digits = 2): string {
-  return (ms / 1000).toFixed(digits);
-}
+const formatSec = reportSeconds;
 
 export default function PlaybackPanel({
-  method, event, scramble, moves: rawMoves, totalMs, lines, rotations, side, gyro, deviceModel, viewRotation,
+  method, event, scramble, moves: rawMoves, totalMs, lines, rotations, side, gyro, deviceModel, viewRotation, inspection,
 }: Props) {
-  const { localize: tr, BoolToggle = DefaultBoolToggle } = useReconstructHost();
+  const { localize: tr } = useReconstructHost();
   // /sim 只画 NxN;这里只有 3x3 会有动作流(智能魔方就这一种),别的项目退回预览图。
   const isNxn3 = nxnSizeForEvent(event) === 3;
   const [playing, setPlaying] = useState(false);
@@ -134,6 +129,8 @@ export default function PlaybackPanel({
     return previous.track === moves && previous.index === index ? previous : { track: moves, index };
   });
   const rawIdx = idx > 0 ? moves[idx - 1].rawAfter : 0;
+  const playerRef=useRef<ReportPlayerState>({index:0,timeMs:0,playing:false,speed:1,posed:false,run:0});
+  playerRef.current={index:idx,timeMs:playFromRef.current,playing,speed:speedMult,posed,run:playbackRun};
   const poseAt = useMemo(() => (
     posed
       ? (tMs: number) => sampleGyroAt(gyroTrack, tMs)
@@ -183,20 +180,13 @@ export default function PlaybackPanel({
     ? `${scramble} ${moves.slice(0, idx).map(m => m.m).join(' ')}`
     : scramble;
 
-  const tsOf = (i: number) => (i <= 0 ? 0 : (moves[Math.min(i, total) - 1]?.ts ?? 0));
   const elapsedMs = playFromRef.current;
-  const lastTs = total > 0 ? Math.max(moves[total - 1].endTs, rawMoves.at(-1)?.ts ?? 0) : 0;
+  const lastTs = Math.max(playbackEndMs(moves, rawMoves), method === 'training' ? totalMs : 0);
 
   // Keep the engine's normal 500 ms duration across observation/put-down pauses.
   // Shorter gaps still shorten the animation to prevent a backlog; the clock
   // retains the full recorded gap and leaves the finished cube still.
-  const moveDurationTicks = idx > 0
-    ? Math.max(
-      1,
-      (Math.min(500, (idx < total ? moves[idx].ts : totalMs) - moves[idx - 1].ts) * 60) /
-        (1000 * speedMult),
-    )
-    : undefined;
+  const moveDurationTicks = playbackMoveDurationTicks(moves,idx,totalMs,speedMult);
 
   /**
    * 播放时钟。**按墙钟走,不是一手一个定时器**。
@@ -216,123 +206,53 @@ export default function PlaybackPanel({
     const solve0 = playFromRef.current;
     const tick = () => {
       const t = solve0 + (performance.now() - wall0) * speedMult;
-      const at = Math.min(t, lastTs);
+      const frame = playbackFrame(moves, lastTs, t);
+      const at = frame.timeMs;
       playFromRef.current = at;
       playbackQuatRef.current = poseAt(at);
       timelineRef.current?.setPlayhead(at);
       if (counterRef.current) counterRef.current.textContent = formatSec(at);
-      let i = 0;
-      while (i < total && moves[i].ts <= at) i++;
-      setIdx(i);
-      if (t >= lastTs) { setPlaying(false); return; }
+      setIdx(frame.index);
+      if (!frame.playing) { setPlaying(false); return; }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [playing, playbackRun, speedMult, total, moves, lastTs, poseAt]);
 
-  // 暂停时**不**把游标交还给 idx:两手之间按下暂停,时间确实走到了那儿,而下一下
-  // 播放也正是从那儿接着走(playFromRef 就停在那)。倒回「最后落下那一手」看着像
-  // 卡了一下,而且和继续播的位置对不上。交还只发生在拖动 / 单步(见 seek / step)。
-  const seek = (i: number, atMs?: number) => {
-    setPlaying(false);
-    const j = Math.max(0, Math.min(total, i));
-    playFromRef.current = atMs === undefined ? tsOf(j) : Math.max(0, Math.min(lastTs, atMs));
-    playbackQuatRef.current = poseAt(playFromRef.current);
-    setIdx(j);
-    setSeekIdx(j);
-    timelineRef.current?.setPlayhead(playFromRef.current);
-    if (counterRef.current) counterRef.current.textContent = formatSec(playFromRef.current);
+  const dispatchPlayer=(action:ReportAction)=>{
+    if (method === 'training' && action.type === 'end') action = { type: 'time', value: lastTs };
+    const result=reportPlayerAction({...playerRef.current,timeMs:playFromRef.current},action,moves,rawMoves,lastTs,hasGyro);
+    const next=result.state;playerRef.current=next;
+    playFromRef.current=next.timeMs;playbackQuatRef.current=poseAt(next.timeMs);
+    setIdx(next.index);setPlaying(next.playing);setSpeedMult(next.speed);setGyroOn(next.posed);setPlaybackRun(next.run);
+    if(result.jump)setSeekIdx(next.index);
+    timelineRef.current?.setPlayhead(next.timeMs);
+    if(counterRef.current)counterRef.current.textContent=formatSec(next.timeMs);
   };
-  // A notation row starts playback, unlike scrubbing/stepping. Restart the
-  // wall clock even when already playing or clicking the same row again.
-  const playFrom = (i: number, atMs?: number) => {
-    const at = atMs ?? (i > 0 ? rawMoves[i - 1]?.ts ?? 0 : 0);
-    const target = playbackIndexForRaw(moves, i, at);
-    seek(target, at);
-    setPlaybackRun(run => run + 1);
-    setPlaying(total > 0 && target < total);
+  const seekRaw=(i:number,atMs?:number)=>{
+    if (method === 'training' && atMs !== undefined) { dispatchPlayer({ type: 'time', value: atMs }); return; }
+    const target=rawPlaybackTarget(moves,rawMoves,i,atMs);
+    dispatchPlayer({type:'time',value:target.timeMs});
   };
-  const seekRaw = (i: number, atMs?: number) => {
-    const at = atMs ?? (i > 0 ? rawMoves[i - 1]?.ts ?? 0 : 0);
-    const target = atMs === undefined ? playbackIndexForRaw(moves, i, at) : playbackIndexAt(moves, at);
-    seek(target, atMs);
-  };
-  // 上一步 / 下一步走**函数式**更新,不能写成 `seek(idx + 1)`:idx 是这一帧闭包里的
-  // 值,连点五下会算出同一个目标,只前进一步。绝对跳转(时间轴、点某一步)没有这
-  // 个问题,因为目标本来就与当前位置无关。
-  const step = (delta: number) => {
-    setPlaying(false);
-    setIdx(i => {
-      const j = Math.max(0, Math.min(total, i + delta));
-      playFromRef.current = tsOf(j);
-      playbackQuatRef.current = poseAt(playFromRef.current);
-      return j;
-    });
-    timelineRef.current?.setPlayhead(null);
-  };
-  const handleTogglePlay = () => {
-    // 播完了再按 = 重播:从头起,播放头也得跟着回零,否则时钟以为还剩 0ms。
-    if (idx >= total) {
-      setIdx(0);
-      playFromRef.current = 0;
-      playbackQuatRef.current = poseAt(0);
-      setPlaying(true);
-      return;
-    }
-    setPlaying(p => !p);
-  };
+  const playFrom=(i:number,atMs?:number)=>dispatchPlayer({type:'play-from',value:i,timeMs:atMs});
 
   // The inspection rotation is a fixed prefix before reconstructed notation.
   // New gestures append after it; recorded playback instead gets external pose.
+  const rebuiltInspection = inspection ?? viewRotation ?? '';
   const simMoves = useMemo(
     () => [
       ...scramble.trim().split(/\s+/).filter(Boolean),
-      ...(useRebuilt ? (viewRotation ?? '').trim().split(/\s+/).filter(Boolean) : []),
+      ...(useRebuilt ? rebuiltInspection.trim().split(/\s+/).filter(Boolean) : []),
       ...moves.slice(0, idx).map(m => m.m),
     ],
-    [scramble, moves, idx, useRebuilt, viewRotation],
+    [scramble, moves, idx, useRebuilt, rebuiltInspection],
   );
   const simPose = !useRebuilt && !posed && viewRotation ? viewRotation : '';
 
-  const playLabel = playing
-    ? tr({ zh: '暂停', en: 'Pause' })
-    : (idx >= total ? tr({ zh: '重播', en: 'Replay' }) : tr({ zh: '播放', en: 'Play' }));
 
-  return (
-    <div className={`reconstruct-playback${side ? ' has-side' : ''}`}>
-      <div className="reconstruct-playback-main">
-        <div className="reconstruct-playback-top">
-          <span className="reconstruct-playback-cap">{tr({ zh: '回放', en: 'replay' })}</span>
-          <div className="reconstruct-playback-controls">
-          {hasGyro && (
-            <div className="reconstruct-playback-gyro">
-              <BoolToggle value={gyroOn} onChange={setGyroOn}
-                label={tr({ zh: '陀螺仪', en: 'Gyro' })} />
-            </div>
-          )}
-          <span className="reconstruct-playback-speed">
-            <span className="reconstruct-playback-speed-cap">{tr({ zh: '速度', en: 'Speed' })}</span>
-            {SPEEDS.map(s => (
-              <button
-                key={s.key}
-                type="button"
-                className={`reconstruct-playback-speed-btn ${speedMult === s.mult ? 'active' : ''}`}
-                onClick={() => setSpeedMult(s.mult)}
-                aria-pressed={speedMult === s.mult}
-              >
-                {s.label}
-              </button>
-            ))}
-          </span>
-          </div>
-        </div>
-
-        {/* 3D 而不是展开图:回放是「看别人拧」,展开图看不出这是一次转动还是
-            三次。展开图留给打乱预览那种「一眼扫全六面」的场合。
-
-            开启陀螺仪跟原始动作和姿态流，关闭时直接执行重建谱子。 */}
-        <div ref={cubeBoxRef} className={`reconstruct-playback-cube${gyroOn ? ' is-gyro' : ''}`}>
+  return <ReportContent node={reportPlayback(playerRef.current,total,totalMs,hasGyro,Boolean(side),tr)} dispatch={dispatchPlayer} slots={{
+    cube:<div ref={cubeBoxRef} className={`reconstruct-playback-cube${gyroOn ? ' is-gyro' : ''}`}>
           {isNxn3 ? (cubeNear ? (
             <Suspense fallback={<div className="timer-live-cube-3d" aria-hidden />}><SimCubeView
               language={tr({ en: 'en' as const, zh: 'zh' as const })}
@@ -340,7 +260,7 @@ export default function PlaybackPanel({
               resetViewOnRelease
               moves={simMoves}
               pose={simPose}
-              key={useRebuilt ? `rebuilt:${viewRotation ?? ''}` : 'recorded'}
+              key={useRebuilt ? `rebuilt:${rebuiltInspection}` : 'recorded'}
               quatRef={useRebuilt ? undefined : playbackQuatRef}
               sensorBasis={posed && !calibrated ? sensorBasisForBrand(deviceModel) : 'identity'}
               mirror={posed && !calibrated ? mirrorForBrand(deviceModel) : false}
@@ -359,15 +279,9 @@ export default function PlaybackPanel({
           )) : (
             <CubePreview event={event} scramble={composed} size={20} visualization="3D" />
           )}
-        </div>
-
-        <div className="reconstruct-playback-counter">
-          <span ref={counterRef}>{formatSec(elapsedMs)}</span> / {formatSec(totalMs)}
-        </div>
-
-        {/* showLabels:这是这一页上唯一一根轴了(报告顶部那根删了),所以阶段名和
-            阶段用时归它 —— 一根没有标注的彩条只能看出「有几段」。 */}
-        <SolveTimeline
+        </div>,
+    elapsed:<span ref={counterRef}>{formatSec(elapsedMs)}</span>,
+    timeline:<SolveTimeline
           method={method}
           ref={timelineRef}
           moves={rawMoves}
@@ -376,52 +290,7 @@ export default function PlaybackPanel({
           showLabels
           currentIdx={rawIdx}
           onSeek={seekRaw}
-        />
-
-        <div className="reconstruct-playback-buttons">
-          <button
-            type="button" className="reconstruct-pb-btn"
-            onClick={() => seek(0)} disabled={idx === 0}
-            title={tr({ zh: '回到开头', en: 'To start' })}
-            aria-label={tr({ zh: '回到开头', en: 'To start' })}
-          >
-            <SkipBack size={15} />
-          </button>
-          <button
-            type="button" className="reconstruct-pb-btn"
-            onClick={() => step(-1)} disabled={idx === 0}
-            title={tr({ zh: '上一步', en: 'Step back' })}
-            aria-label={tr({ zh: '上一步', en: 'Step back' })}
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <button
-            type="button" className="reconstruct-pb-btn is-play"
-            onClick={handleTogglePlay} disabled={total === 0}
-            title={playLabel} aria-label={playLabel}
-          >
-            {playing ? <Pause size={17} /> : <Play size={17} />}
-          </button>
-          <button
-            type="button" className="reconstruct-pb-btn"
-            onClick={() => step(1)} disabled={idx >= total}
-            title={tr({ zh: '下一步', en: 'Step forward' })}
-            aria-label={tr({ zh: '下一步', en: 'Step forward' })}
-          >
-            <ChevronRight size={16} />
-          </button>
-          <button
-            type="button" className="reconstruct-pb-btn"
-            onClick={() => seek(total)} disabled={idx >= total}
-            title={tr({ zh: '到结尾', en: 'To end' })}
-            aria-label={tr({ zh: '到结尾', en: 'To end' })}
-          >
-            <SkipForward size={15} />
-          </button>
-        </div>
-      </div>
-
-      {side && <div className="reconstruct-playback-side">{side({ idx: rawIdx, seek: seekRaw, playFrom })}</div>}
-    </div>
-  );
+        />,
+    notation:side?.({idx:rawIdx,seek:seekRaw,playFrom}),
+  }}/>;
 }

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A77C00000000000000000091 = {isa = PBXBuildFile; fileRef = A77C00000000000000000092; };
 		A24900000000000000000001 /* RecordPushPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A24900000000000000000002 /* RecordPushPlugin.swift */; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
 		4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 4D22ABE82AF431CB00220026 /* CapApp-SPM */; };
@@ -18,9 +19,35 @@
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9582B6822FE993A50072D4E8 /* SceneDelegate.swift */; };
 		A99100000000000000000001 /* AppleMembershipPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A99100000000000000000002 /* AppleMembershipPlugin.swift */; };
+		A77C0000000000000000000B /* WatchTimerWire.swift */ = {isa = PBXBuildFile; fileRef = A77C00000000000000000001; };
+		A77C0000000000000000000C /* WatchTimerPlugin.swift */ = {isa = PBXBuildFile; fileRef = A77C00000000000000000002; };
+		A77C0000000000000000000D /* CubeRootWatchApp.swift */ = {isa = PBXBuildFile; fileRef = A77C00000000000000000003; };
+		A77C0000000000000000000E /* WatchTimerModel.swift */ = {isa = PBXBuildFile; fileRef = A77C00000000000000000004; };
+		A77C0000000000000000000F /* WatchCopy.swift */ = {isa = PBXBuildFile; fileRef = A77C00000000000000000005; };
+		A77C00000000000000000015 = {isa = PBXBuildFile; fileRef = A77C00000000000000000001; };
+		A77C00000000000000000016 = {isa = PBXBuildFile; fileRef = A77C00000000000000000032; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A77C00000000000000000017 = {isa = PBXBuildFile; fileRef = A77C00000000000000000033; };
+		A77C00000000000000000061 = {isa = PBXBuildFile; productRef = A77C00000000000000000062; };
+		A77C00000000000000000064 = {isa = PBXBuildFile; fileRef = A77C00000000000000000065; };
+		A77C00000000000000000066 = {isa = PBXBuildFile; fileRef = A77C00000000000000000067; };
+		A77C00000000000000000071 = {isa = PBXBuildFile; fileRef = A77C00000000000000000072; };
+		A77C00000000000000000073 = {isa = PBXBuildFile; fileRef = A77C00000000000000000074; };
+		A77C00000000000000000076 = {isa = PBXBuildFile; fileRef = A77C00000000000000000077; };
+		A77C00000000000000000078 = {isa = PBXBuildFile; fileRef = A77C00000000000000000079; };
+A77C00000000000000000080 = {isa = PBXBuildFile; fileRef = A77C00000000000000000081; };
 /* End PBXBuildFile section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		A77C00000000000000000049 = {isa = PBXCopyFilesBuildPhase; buildActionMask = 2147483647; dstPath = "$(CONTENTS_FOLDER_PATH)/Watch"; dstSubfolderSpec = 16; files = (A77C00000000000000000016, ); name = "Embed Watch Content"; runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXCopyFilesBuildPhase section */
+/* Begin PBXContainerItemProxy section */
+		A77C0000000000000000004A = {isa = PBXContainerItemProxy; containerPortal = 504EC2FC1FED79650016851F; proxyType = 1; remoteGlobalIDString = A77C00000000000000000050; remoteInfo = CubeRootWatch; };
+/* End PBXContainerItemProxy section */
+/* Begin PBXTargetDependency section */
+		A77C0000000000000000004B = {isa = PBXTargetDependency; target = A77C00000000000000000050; targetProxy = A77C0000000000000000004A; };
+/* End PBXTargetDependency section */
 /* Begin PBXFileReference section */
+		A77C00000000000000000092 = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = WatchScramble.js; sourceTree = DERIVED_FILE_DIR; };
 		A24900000000000000000002 /* RecordPushPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordPushPlugin.swift; sourceTree = "<group>"; };
 		A24900000000000000000003 /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
@@ -35,6 +62,20 @@
 		9582B6822FE993A50072D4E8 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
 		A99100000000000000000002 /* AppleMembershipPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleMembershipPlugin.swift; sourceTree = "<group>"; };
+		A77C00000000000000000001 /* WatchTimerWire.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WatchTimerWire.swift; path = WatchShared/WatchTimerWire.swift; sourceTree = SOURCE_ROOT; };
+		A77C00000000000000000002 /* WatchTimerPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WatchTimerPlugin.swift; path = App/WatchTimerPlugin.swift; sourceTree = SOURCE_ROOT; };
+		A77C00000000000000000003 /* CubeRootWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CubeRootWatchApp.swift; path = CubeRootWatch/CubeRootWatchApp.swift; sourceTree = SOURCE_ROOT; };
+		A77C00000000000000000004 /* WatchTimerModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WatchTimerModel.swift; path = CubeRootWatch/WatchTimerModel.swift; sourceTree = SOURCE_ROOT; };
+		A77C00000000000000000005 /* WatchCopy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WatchCopy.swift; path = CubeRootWatch/WatchCopy.swift; sourceTree = SOURCE_ROOT; };
+		A77C00000000000000000032 = {isa = PBXFileReference; explicitFileType = wrapper.application; path = CubeRootWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A77C00000000000000000033 = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = CubeRootWatch/Assets.xcassets; sourceTree = SOURCE_ROOT; };
+		A77C00000000000000000065 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CubeRootWatch/WatchCubeConnection.swift; sourceTree = SOURCE_ROOT; };
+		A77C00000000000000000067 = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = WatchCube.js; sourceTree = DERIVED_FILE_DIR; };
+		A77C00000000000000000072 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CubeRootWatch/WatchCubeScene.swift; sourceTree = SOURCE_ROOT; };
+		A77C00000000000000000074 = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = WatchScene.js; sourceTree = DERIVED_FILE_DIR; };
+		A77C00000000000000000077 = {isa = PBXFileReference; lastKnownFileType = text.json; path = WatchAlgData.json; sourceTree = DERIVED_FILE_DIR; };
+		A77C00000000000000000079 = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = WatchReplay.js; sourceTree = DERIVED_FILE_DIR; };
+A77C00000000000000000081 = {isa = PBXFileReference; lastKnownFileType = folder; path = WatchAlgorithms; sourceTree = DERIVED_FILE_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -46,12 +87,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A77C00000000000000000047 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (A77C00000000000000000061, ); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		504EC2FB1FED79650016851F = {
 			isa = PBXGroup;
 			children = (
+				A77C0000000000000000003C,
 				958DCC722DB07C7200EA8C5F /* debug.xcconfig */,
 				504EC3061FED79650016851F /* App */,
 				504EC3051FED79650016851F /* Products */,
@@ -62,6 +105,7 @@
 			isa = PBXGroup;
 			children = (
 				504EC3041FED79650016851F /* App.app */,
+				A77C00000000000000000032,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -85,6 +129,7 @@
 			path = App;
 			sourceTree = "<group>";
 		};
+		A77C0000000000000000003C = {isa = PBXGroup; name = "Apple Watch"; sourceTree = "<group>"; children = (A77C00000000000000000001, A77C00000000000000000002, A77C00000000000000000003, A77C00000000000000000004, A77C00000000000000000005, A77C00000000000000000033, ); };
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -95,11 +140,11 @@
 				504EC3001FED79650016851F /* Sources */,
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
+                A77C00000000000000000049,
 			);
 			buildRules = (
 			);
-			dependencies = (
-			);
+			dependencies = (A77C0000000000000000004B, );
 			name = App;
 			packageProductDependencies = (
 				4D22ABE82AF431CB00220026 /* CapApp-SPM */,
@@ -108,6 +153,7 @@
 			productReference = 504EC3041FED79650016851F /* App.app */;
 			productType = "com.apple.product-type.application";
 		};
+		A77C00000000000000000050 /* CubeRootWatch */ = {isa = PBXNativeTarget; buildConfigurationList = A77C0000000000000000005A; buildPhases = (A77C00000000000000000068, A77C00000000000000000046, A77C00000000000000000047, A77C00000000000000000048, ); buildRules = (); dependencies = (); name = CubeRootWatch; packageProductDependencies = (A77C00000000000000000062, ); productName = CubeRootWatch; productReference = A77C00000000000000000032; productType = "com.apple.product-type.application"; };
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -135,6 +181,7 @@
 			);
 			mainGroup = 504EC2FB1FED79650016851F;
 			packageReferences = (
+                A77C00000000000000000063,
 				D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */,
 			);
 			productRefGroup = 504EC3051FED79650016851F /* Products */;
@@ -142,6 +189,7 @@
 			projectRoot = "";
 			targets = (
 				504EC3031FED79650016851F /* App */,
+                A77C00000000000000000050,
 			);
 		};
 /* End PBXProject section */
@@ -160,20 +208,26 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A77C00000000000000000048 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (A77C00000000000000000091, A77C00000000000000000078, A77C00000000000000000080, A77C00000000000000000076, A77C00000000000000000073, A77C00000000000000000066, A77C00000000000000000017, ); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+        A77C00000000000000000068 = {isa = PBXShellScriptBuildPhase; alwaysOutOfDate = 1; buildActionMask = 2147483647; files = (); inputPaths = (); outputPaths = ("$(DERIVED_FILE_DIR)/WatchScramble.js", "$(DERIVED_FILE_DIR)/WatchCube.js", "$(DERIVED_FILE_DIR)/WatchScene.js", "$(DERIVED_FILE_DIR)/WatchAlgData.json", "$(DERIVED_FILE_DIR)/WatchReplay.js", "$(DERIVED_FILE_DIR)/WatchAlgorithms", ); name = "Bundle shared smart cube runtime"; runOnlyForDeploymentPostprocessing = 0; shellPath = /bin/sh; shellScript = "export PATH=/opt/homebrew/bin:/usr/local/bin:$PATH\nnode \"$SRCROOT/../../scripts/build-watch-runtime.ts\" \"$DERIVED_FILE_DIR/WatchCube.js\"\n"; };
+/* End PBXShellScriptBuildPhase section */
 /* Begin PBXSourcesBuildPhase section */
 		504EC3001FED79650016851F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
+				A77C0000000000000000000B, A77C0000000000000000000C,
 				A99100000000000000000001 /* AppleMembershipPlugin.swift in Sources */,
 				9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */,
                 A24900000000000000000001 /* RecordPushPlugin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A77C00000000000000000046 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A77C00000000000000000071, A77C00000000000000000064, A77C00000000000000000015, A77C0000000000000000000D, A77C0000000000000000000E, A77C0000000000000000000F, ); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
@@ -313,7 +367,7 @@
 				CODE_SIGN_STYLE = Automatic;
                 CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
                 APNS_ENVIRONMENT = development;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = R25HL7AXXK;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
@@ -321,7 +375,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
 				PRODUCT_BUNDLE_IDENTIFIER = me.cuberoot.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -338,7 +392,7 @@
 				CODE_SIGN_STYLE = Automatic;
                 CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
                 APNS_ENVIRONMENT = production;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = R25HL7AXXK;
 				INFOPLIST_FILE = App/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
@@ -346,7 +400,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = me.cuberoot.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
@@ -355,6 +409,52 @@
 			};
 			name = Release;
 		};
+		A77C0000000000000000005B = {isa = XCBuildConfiguration; buildSettings = {
+ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+CODE_SIGN_STYLE = Automatic;
+DEVELOPMENT_TEAM = R25HL7AXXK;
+CURRENT_PROJECT_VERSION = 3;
+GENERATE_INFOPLIST_FILE = YES;
+INFOPLIST_KEY_CFBundleDisplayName = CubeRoot;
+INFOPLIST_KEY_WKApplication = YES;
+INFOPLIST_FILE = CubeRootWatch/Info.plist;
+INFOPLIST_KEY_WKCompanionAppBundleIdentifier = me.cuberoot.app;
+INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
+INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Connect your smart cube for automatic timing.";
+MARKETING_VERSION = 1.0.0;
+PRODUCT_BUNDLE_IDENTIFIER = me.cuberoot.app.watchkitapp;
+PRODUCT_NAME = "$(TARGET_NAME)";
+SDKROOT = watchos;
+SKIP_INSTALL = YES;
+SUPPORTED_PLATFORMS = "watchos watchsimulator";
+SWIFT_VERSION = 5.0;
+SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+TARGETED_DEVICE_FAMILY = 4;
+WATCHOS_DEPLOYMENT_TARGET = 10.0;
+}; name = Debug; };
+		A77C0000000000000000005C = {isa = XCBuildConfiguration; buildSettings = {
+ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+CODE_SIGN_STYLE = Automatic;
+DEVELOPMENT_TEAM = R25HL7AXXK;
+CURRENT_PROJECT_VERSION = 3;
+GENERATE_INFOPLIST_FILE = YES;
+INFOPLIST_KEY_CFBundleDisplayName = CubeRoot;
+INFOPLIST_KEY_WKApplication = YES;
+INFOPLIST_FILE = CubeRootWatch/Info.plist;
+INFOPLIST_KEY_WKCompanionAppBundleIdentifier = me.cuberoot.app;
+INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
+INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Connect your smart cube for automatic timing.";
+MARKETING_VERSION = 1.0.0;
+PRODUCT_BUNDLE_IDENTIFIER = me.cuberoot.app.watchkitapp;
+PRODUCT_NAME = "$(TARGET_NAME)";
+SDKROOT = watchos;
+SKIP_INSTALL = YES;
+SUPPORTED_PLATFORMS = "watchos watchsimulator";
+SWIFT_VERSION = 5.0;
+SWIFT_OPTIMIZATION_LEVEL = "-O";
+TARGETED_DEVICE_FAMILY = 4;
+WATCHOS_DEPLOYMENT_TARGET = 10.0;
+}; name = Release; };
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -376,6 +476,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		A77C0000000000000000005A = {isa = XCConfigurationList; buildConfigurations = (A77C0000000000000000005B, A77C0000000000000000005C, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
@@ -385,7 +486,11 @@
 		};
 /* End XCLocalSwiftPackageReference section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+        A77C00000000000000000063 = {isa = XCLocalSwiftPackageReference; relativePath = WatchJS; };
+/* End XCRemoteSwiftPackageReference section */
 /* Begin XCSwiftPackageProductDependency section */
+        A77C00000000000000000062 = {isa = XCSwiftPackageProductDependency; package = A77C00000000000000000063; productName = WatchJS; };
 		4D22ABE82AF431CB00220026 /* CapApp-SPM */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = D4C12C0A2AAA248700AAC8A2 /* XCLocalSwiftPackageReference "CapApp-SPM" */;

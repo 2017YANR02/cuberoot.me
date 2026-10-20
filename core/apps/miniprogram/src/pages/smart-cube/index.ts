@@ -1,9 +1,9 @@
 import { applyNativeAppearance } from '../../lib/appearance';
 import {
-  smartCubeSession,
+  getSmartCubeSession,
   type SmartCubeSessionSnapshot,
 } from '../../lib/smart-cube/session';
-import { miniProgramApi } from '../../lib/platform';
+import { miniProgramApi, isDouyinMiniProgram } from '../../lib/platform';
 import { tr } from '../../lib/i18n';
 import { getStoredSessionSnapshot } from '../../lib/auth';
 import { openRequiredSessionLogin } from '../../lib/required-session';
@@ -47,6 +47,7 @@ interface SmartCubePageInstance {
   returningToTimer?: boolean;
   simulator?: boolean;
   token?: string;
+  nativeTimer?: boolean;
   unsubscribe?: () => void;
   setData(data: Partial<SmartCubePageData>): void;
 }
@@ -80,13 +81,13 @@ async function startConnection(page: SmartCubePageInstance): Promise<void> {
   const attempt = (page.connectionAttempt ?? 0) + 1;
   page.connectionAttempt = attempt;
   try {
-    await smartCubeSession.start(page.token ?? '');
-    if (page.simulator) await smartCubeSession.connect('simulator');
-    else await smartCubeSession.scan();
+    if (!page.nativeTimer) await getSmartCubeSession().start(page.token ?? '');
+    if (page.simulator) await getSmartCubeSession().connect('simulator');
+    else await getSmartCubeSession().scan(page.nativeTimer ? { scanTimeoutMs: 30_000 } : undefined);
     if (
       page.active
       && page.connectionAttempt === attempt
-      && page.token
+      && (page.token || page.nativeTimer)
       && page.latestPhase === 'connected'
       && !page.autoReturnAttempted
     ) {
@@ -108,11 +109,11 @@ async function connectSelectedDevice(page: SmartCubePageInstance, deviceId: stri
   page.connectionAttempt = attempt;
   page.autoReturnAttempted = false;
   try {
-    await smartCubeSession.connectDevice(deviceId);
+    await getSmartCubeSession().connectDevice(deviceId);
     if (
       page.active
       && page.connectionAttempt === attempt
-      && page.token
+      && (page.token || page.nativeTimer)
       && page.latestPhase === 'connected'
       && !page.autoReturnAttempted
     ) {
@@ -147,8 +148,9 @@ Page<SmartCubePageData, WechatMiniprogram.Page.CustomOption>({
 
   onLoad(options) {
     const page = this as unknown as SmartCubePageInstance;
+    page.nativeTimer = isDouyinMiniProgram() && options.native === '1' && getSmartCubeSession().relayOpen;
     const stored = getStoredSessionSnapshot();
-    if (!stored.session) {
+    if (!stored.session && !page.nativeTimer) {
       const token = typeof options.token === 'string' ? options.token : '';
       openRequiredSessionLogin({
         tab: false,
@@ -169,7 +171,7 @@ Page<SmartCubePageData, WechatMiniprogram.Page.CustomOption>({
     } catch {
       // The platform title is cosmetic and may be unavailable in test runtimes.
     }
-    page.unsubscribe = smartCubeSession.subscribe((snapshot) => {
+    page.unsubscribe = getSmartCubeSession().subscribe((snapshot) => {
       page.latestPhase = snapshot.phase;
       page.setData({
         ...snapshot,
@@ -206,6 +208,12 @@ Page<SmartCubePageData, WechatMiniprogram.Page.CustomOption>({
 
   retryConnection() {
     const page = this as unknown as SmartCubePageInstance;
+    // The local receiver survives a failed scan; only the WebView relay needs
+    // to return to its timer to establish a new transport after an error.
+    if (!getSmartCubeSession().relayOpen || (!page.nativeTimer && page.latestPhase === 'error')) {
+      navigateBackToTimer(page, true);
+      return;
+    }
     page.autoReturnAttempted = false;
     void startConnection(page);
   },
@@ -218,11 +226,11 @@ Page<SmartCubePageData, WechatMiniprogram.Page.CustomOption>({
 
   simulateMove(event: WechatMiniprogram.TouchEvent) {
     const move = event.currentTarget.dataset.move;
-    if (typeof move === 'string') smartCubeSession.simulateMove(move);
+    if (typeof move === 'string') getSmartCubeSession().simulateMove(move);
   },
 
   disconnectCube() {
-    void smartCubeSession.disconnect();
+    void getSmartCubeSession().disconnect();
   },
 
   returnToTimer() {

@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { runInNewContext } from 'node:vm';
+import ts from 'typescript';
 import * as shared from '@cuberoot/shared/timer';
 import * as webKeymap from '@/app/[lang]/timer/_lib/keymap';
 import type {
@@ -478,6 +480,47 @@ describe('Web migration consumes the shared contract', () => {
     expect(wheelWrapper).not.toContain('forwardRef');
   });
 
+  it('keeps practice and manual training presses behind their actual start gates', () => {
+    const source = ts.createSourceFile('SoloView.tsx', readFileSync(new URL(
+      '../app/[lang]/timer/_shell/SoloView.tsx', import.meta.url,
+    ), 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+    let handler: ts.Node | undefined;
+    const visit = (node: ts.Node) => {
+      if (ts.isVariableDeclaration(node) && node.name.getText(source) === 'onPressDown'
+        && node.initializer && ts.isCallExpression(node.initializer)) handler = node.initializer.arguments[0];
+      if (!handler) ts.forEachChild(node, visit);
+    };
+    visit(source);
+    if (!handler) throw new Error('onPressDown not found');
+    const code = ts.transpileModule('(' + handler.getText(source) + ')', {
+      compilerOptions: { target: ts.ScriptTarget.ES2022 },
+    }).outputText;
+    for (const mode of [undefined, 'manual']) {
+      for (const blocked of ['none', 'competition', 'layout', 'unready', 'mismatch', 'timing-disabled']) {
+        const timer = { armFromCube: vi.fn(() => true), onPressDown: vi.fn() };
+        const context = {
+          competitionRef: { current: { enabled: blocked === 'competition' } },
+          layoutEditingRef: { current: blocked === 'layout' },
+          trainingTimingModeRef: { current: () => mode },
+          getSettings: () => ({ timingEnabled: blocked !== 'timing-disabled' }),
+          attemptCanStartRef: { current: blocked !== 'unready' },
+          smartCubeSoloController: { getGuidanceSnapshot: () => ({ match: blocked !== 'mismatch' }) },
+          phaseSnapshotRef: { current: 'idle' },
+          smartCubeInputBlocked: () => mode === 'manual',
+          timerCanHandleAttemptPress: shared.timerCanHandleAttemptPress,
+          warmupSound: vi.fn(), timer,
+        };
+        const press = runInNewContext(code, context) as () => boolean;
+        const allowed = mode === 'manual' ? blocked === 'none'
+          : !['competition', 'layout', 'unready'].includes(blocked);
+        expect(press(), String(mode) + ':' + blocked).toBe(allowed);
+        expect(timer.armFromCube).toHaveBeenCalledTimes(allowed && mode === 'manual' ? 1 : 0);
+        expect(timer.onPressDown).toHaveBeenCalledTimes(allowed && !mode ? 1 : 0);
+        expect(context.phaseSnapshotRef.current).toBe(allowed && mode === 'manual' ? 'inspecting' : 'idle');
+      }
+    }
+  });
+
   it('routes starts through the practice gate or authorized competition preparation', () => {
     const soloSource = readFileSync(new URL(
       '../app/[lang]/timer/_shell/SoloView.tsx', import.meta.url,
@@ -493,14 +536,12 @@ describe('Web migration consumes the shared contract', () => {
     );
     expect(soloSource).toContain('timerCanHandleAttemptPress(');
     expect(soloSource.match(/timer\.onPressDown\(\)/g)).toHaveLength(2);
-    expect(soloSource).toMatch(
-      /if \(competitionRef\.current\.enabled\) return false;\s*if \(!timerCanHandleAttemptPress\([\s\S]*?timer\.onPressDown\(\)/,
-    );
+
     expect(soloSource).toMatch(
       /if \(!await competition\.begin\(scrambleTarget, bluetoothCube\.status\)\) return;[\s\S]*?if \(!latest\?\.status\.connected \|\| latest\.hijacked \|\| !latestFaces \|\| toFaceletString\(latestFaces\) !== scrambleTarget\) \{[\s\S]*?return;\s*\}\s*timer\.onPressDown\(\)/,
     );
     expect(soloSource).toMatch(
-      /new SmartCubeSoloTimerController[\s\S]*?canStartAttempt: \(\) => attemptCanStartRef\.current[\s\S]*?competitionRef\.current\.canStart\(\)[\s\S]*?startFromCube: \(timestamp\) => \{[\s\S]*?timerHandleRef\.current\.startFromCube\(timestamp\)/,
+      /new SmartCubeSoloTimerController[\s\S]*?canStartAttempt: \(\) => !layoutEditingRef\.current && attemptCanStartRef\.current[\s\S]*?competitionRef\.current\.canStart\(\)[\s\S]*?startFromCube: \(timestamp\) => \{[\s\S]*?timerHandleRef\.current\.startFromCube\(timestamp\)/,
     );
     expect(soloSource).toMatch(
       /if \(timerEvent\.state === 'RUNNING'\)[\s\S]*?if \(!attemptCanStartRef\.current\)[\s\S]*?timer\.startNow/,

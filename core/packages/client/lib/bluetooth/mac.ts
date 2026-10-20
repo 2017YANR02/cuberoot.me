@@ -1,3 +1,4 @@
+import { MOYU32_MANUFACTURER_IDS, moyu32AdvertisementMac } from '@cuberoot/shared/smart-cube/moyu32';
 import { macFromPayload, QIYI_MAC_ADV } from '@cuberoot/shared/timer/external/mac';
 export { QIYI_MAC_ADV, QIYI_CIC_LIST } from '@cuberoot/shared/timer/external/mac';
 /**
@@ -32,19 +33,9 @@ import { GAN_V4_MANUFACTURER_DATA_CICS } from '@cuberoot/shared/smart-cube/gan-v
  */
 export const GAN_CIC_LIST: number[] = [...GAN_V4_MANUFACTURER_DATA_CICS];
 
-/**
- * Company Identifier Codes MoYu32 (WCU_MY32_*) cubes advertise under:
- * 0x0100 .. 0xFF00, i.e. `(i + 1) << 8` for i in 0..254.
- *
- * cstimer's `moyu32cube.js` explains why the list looks like this: once the
- * cube is bound in the WCU app its CIC becomes the two high bytes of the
- * 32-bit account ID (little-endian), so it is effectively arbitrary. 0x0000
- * is deliberately EXCLUDED — Chromium's `WTF::HashMap` rejects 0 as a key and
- * asking for it breaks `device.gatt.connect()` outright. Consequence: unbound
- * cubes, and cubes bound to an account ID below 65536, have no auto-MAC and
- * fall through to the manual prompt.
- */
-export const MOYU32_CIC_LIST: number[] = Array.from({ length: 255 }, (_v, i) => (i + 1) << 8);
+// Chromium <130 cannot request CIC zero; current engines and Bluefy can.
+const chromeMajor = typeof navigator === 'undefined' ? null : /(?:Chrome|Chromium)\/(\d+)/.exec(navigator.userAgent)?.[1];
+export const MOYU32_CIC_LIST = MOYU32_MANUFACTURER_IDS.filter(id => id !== 0 || !chromeMajor || Number(chromeMajor) >= 130);
 
 /** The single CIC QiYi uses for both the smart cube and the smart timer. */
 
@@ -135,8 +126,18 @@ export function extractMacFromManufacturerData(
   if (mfData instanceof DataView) {
     // Bluefy: [companyId(2)] [payload…] — skip the 2-byte prefix.
     const payloadStart = 2;
+    if (specs[0].brand === 'moyu32') return moyu32AdvertisementMac(
+      new Uint8Array(mfData.buffer, mfData.byteOffset + Math.min(2, mfData.byteLength), Math.max(0, mfData.byteLength - 2)),
+    );
     const len = Math.max(0, mfData.byteLength - payloadStart);
     return macFromPayload((k) => mfData.getUint8(payloadStart + k), len, specs[0]);
+  }
+  if (specs[0]?.brand === 'moyu32' && mfData.values) {
+    for (const view of mfData.values()) {
+      const mac = moyu32AdvertisementMac(new Uint8Array(view.buffer, view.byteOffset, view.byteLength));
+      if (mac) return mac;
+    }
+    return null;
   }
   for (const spec of specs) {
     for (const id of spec.cics) {

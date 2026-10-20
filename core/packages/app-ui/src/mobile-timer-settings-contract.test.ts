@@ -45,7 +45,7 @@ describe('Mobile timer settings parity ledger', () => {
       'settings.scramble.auto-mark-wca',
       ...TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS,
       ...TIMER_TYPOGRAPHY_SETTING_FIELD_IDS,
-  ...TIMER_TRAINING_SETTING_FIELD_IDS,
+      ...TIMER_TRAINING_SETTING_FIELD_IDS.filter(id => id !== 'settings.training.start-mode'),
       ...TIMER_KEYMAP_SETTING_FIELD_IDS,
       ...TIMER_DISPLAY_SETTING_FIELD_IDS,
       ...TIMER_PRE_SCRAMBLE_SETTING_FIELD_IDS,
@@ -60,9 +60,12 @@ describe('Mobile timer settings parity ledger', () => {
   ...TIMER_RANK_SETTING_FIELD_IDS,
   ...TIMER_SYNC_SEED_SETTING_FIELD_IDS,
     ]);
-    expect(MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS).not.toContain(
+    expect(MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS).toContain(
       'settings.appearance.scramble-click-action',
     );
+    expect(TIMER_SETTING_FIELD_IDS.filter(id =>
+      !MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS.some(effect => effect === id),
+    )).toEqual(['settings.smart-cube.fake-cube', 'settings.training.start-mode']);
     expect(MOBILE_TIMER_SETTING_PARITY_FIELD_IDS).toEqual([]);
   });
 
@@ -70,7 +73,7 @@ describe('Mobile timer settings parity ledger', () => {
     expect(TIMER_SETTING_FIELD_IDS).toHaveLength(67);
     expect(TIMER_SETTING_CATEGORY_IDS.map((category) => (
       TIMER_SETTING_FIELD_CONTRACTS.filter((field) => field.category === category).length
-    ))).toEqual([8, 9, 4, 9, 11, 6, 15, 5]);
+    ))).toEqual([8, 8, 4, 10, 11, 6, 15, 5]);
 
     const parity = new Set<string>(MOBILE_TIMER_SETTING_PARITY_FIELD_IDS);
     expect(TIMER_SETTING_CATEGORY_IDS.map((category) => (
@@ -79,7 +82,7 @@ describe('Mobile timer settings parity ledger', () => {
         && field.visibility !== 'admin-only'
         && !parity.has(field.id)
       )).length
-    ))).toEqual([8, 8, 4, 9, 11, 6, 15, 5]);
+    ))).toEqual([8, 7, 4, 10, 11, 6, 15, 5]);
   });
 
   it('renders the shared settings UI and keeps its runtime effects wired', () => {

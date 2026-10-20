@@ -30,6 +30,7 @@ describe('sim playback across active cube changes', () => {
   let ordinaryCubes: Set<Cube>;
   let setPuzzle: (kind: SimPuzzle) => void;
   let publishWorld: () => void;
+  let setActive: (active: boolean) => void;
 
   beforeEach(() => {
     vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
@@ -62,6 +63,8 @@ describe('sim playback across active cube changes', () => {
 
   async function mount(initial: SimPuzzle = 3, cold = false) {
     function Harness() {
+      const [active, changeActive] = useState(true);
+      setActive = changeActive;
       const [kind, changeKind] = useState(initial);
       const [readyWorld, setReadyWorld] = useState<World | null>(cold ? null : world);
       const [activeCube, setActiveCube] = useState<World['cube'] | null>(null);
@@ -77,10 +80,10 @@ describe('sim playback across active cube changes', () => {
         setActiveCube(readyWorld.cube);
       }, [kind, readyWorld]);
       return createElement(PlayerControls, {
-        world: readyWorld, activeCube, clearFrozen: () => world.controller.clearFrozen(),
+        active, world: readyWorld, activeCube, clearFrozen: () => world.controller.clearFrozen(),
         setup: 'R', alg: 'U F', onSetupChange: () => {}, onAlgChange: () => {},
-        order: typeof kind === 'number' ? kind : 3, onOrderChange: changeKind,
-        puzzleKind: kind, onPuzzleChange: changeKind,
+        order: typeof kind === 'number' ? kind : 3,
+        puzzleKind: kind,
         settings, onSettingsChange: setSettings, canUseCustomLogo: false,
         keymap: {}, onKeymapChange: () => {}, onResetKeymap: () => {},
       });
@@ -106,6 +109,42 @@ describe('sim playback across active cube changes', () => {
     expect(host.querySelector<HTMLTextAreaElement>('textarea[placeholder="Scramble"]')?.value).toBe('R');
     expect(host.querySelector<HTMLTextAreaElement>('textarea[placeholder="Solution"]')?.value).toBe('U F');
   }
+
+  it('clears only the algorithm and can undo both clear and solved reset', async () => {
+    await mount();
+    await act(async () => button('Step forward').click());
+    expectState('R U');
+    await act(async () => button('Clear algorithm').click());
+    expect(host.querySelector<HTMLTextAreaElement>('#sim-setup')?.value).toBe('R');
+    expect(host.querySelector<HTMLTextAreaElement>('#sim-alg')?.value).toBe('');
+    expectState('R');
+    await act(async () => button('Undo algorithm edit').click());
+    expectTextPreserved();
+    expectState('R U');
+    await act(async () => button('Reset to solved').click());
+    expectState('');
+    await act(async () => button('Undo algorithm edit').click());
+    expectTextPreserved();
+    expectState('R U');
+  });
+
+  it('keeps the virtual keyboard open when it refocuses the editor, until a direct editor click', async () => {
+    await mount();
+    const toggle = button('Alg virtual keyboard');
+    await act(async () => { toggle.focus(); toggle.click(); });
+    expect(host.querySelector('.vkb')).not.toBeNull();
+    const editor = host.querySelector<HTMLTextAreaElement>('#sim-alg')!;
+    // CubeVirtualKeyboard restores focus before inserting at the saved caret.
+    await act(async () => editor.focus());
+    expect(document.activeElement).toBe(editor);
+    expect(host.querySelector('.vkb')).not.toBeNull();
+    expect(toggle.getAttribute('aria-pressed')).toBe('true');
+    expectTextPreserved();
+    // Directly choosing the editor still returns to ordinary text input.
+    await act(async () => editor.click());
+    expect(host.querySelector('.vkb')).toBeNull();
+    expect(toggle.getAttribute('aria-pressed')).toBe('false');
+  });
 
   it.each([3, 2])('replays setup from order %i to sphere and preserves the step when returning to a cached cube', async (order) => {
     await mount(order);
@@ -141,9 +180,35 @@ describe('sim playback across active cube changes', () => {
     expectState('R U F');
   });
 
+  it('pauses when leaving animation and preserves the cube, drafts and step on return', async () => {
+    await mount();
+    vi.useFakeTimers();
+    const tickMs = Math.max(80, Math.round(mapFrames(DEFAULT_SETTINGS.speed) / 60 * 1000));
+    await act(async () => button('Play').click());
+    await act(async () => { await vi.advanceTimersByTimeAsync(tickMs); });
+    expectState('R U');
+    const cube = world.cube;
+    await act(async () => setActive(false));
+    await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+    expectState('R U');
+    expect(host.querySelector('button[title="Play"]')).toBeNull();
+    expectTextPreserved();
+    await act(async () => setActive(true));
+    expect(world.cube).toBe(cube);
+    expectState('R U');
+    await act(async () => button('Step forward').click());
+    expectState('R U F');
+  });
+
   it('waits for a cold sphere URL to receive its World before applying setup', async () => {
     await mount('sphere', true);
+    expect(button('Play').disabled).toBe(true);
+    expect(button('Step forward').disabled).toBe(true);
+    expect(button('Skip to end').disabled).toBe(true);
+    expect(button('Random scramble').disabled).toBe(true);
     await act(async () => publishWorld());
+    expect(button('Step forward').disabled).toBe(false);
+    expect(button('Random scramble').disabled).toBe(false);
     expect(world.puzzleKind).toBe('sphere');
     expectState('R');
     await act(async () => button('Step forward').click());
@@ -162,6 +227,9 @@ describe('sim playback across active cube changes', () => {
     }));
     await act(async () => setPuzzle('sphere'));
     expect(sphere.complete).toBe(true);
+    expect(button('Play').disabled).toBe(true);
+    expect(button('Step forward').disabled).toBe(true);
+    expect(host.querySelector<HTMLInputElement>('.playback-scrubber')!.disabled).toBe(true);
     vi.useFakeTimers();
     await act(async () => button('Play').click());
     await act(async () => button('Step forward').click());
@@ -169,6 +237,7 @@ describe('sim playback across active cube changes', () => {
     expect(sphere.complete).toBe(true);
     expect(button('Play')).not.toBeNull();
     await act(async () => release());
+    expect(button('Step forward').disabled).toBe(false);
     expectState('R');
     await act(async () => button('Step forward').click());
     expectState('R U');

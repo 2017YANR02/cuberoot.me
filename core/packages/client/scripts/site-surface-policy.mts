@@ -3,6 +3,21 @@
 // Containers forbid decorative paint; headings only forbid separator borders.
 // Add entries only after confirming an actual defect, never from a heuristic hit.
 export const unframedSurfaces = [
+  // These sections keep their ordinary-theme fallback; only scenery adapters
+  // must remain unpainted. Controls and semantic child states are separate.
+  ...[
+    ['.alg-case-detail-ori-algs', '/zh/alg/3x3/oll/l-'],
+    ['.detail-stats-grid', '/zh/recon/2381-ruimin-yan-3-3'],
+    ['.detail-note', '/zh/recon/2381-ruimin-yan-3-3'],
+    ['.wca-stats-table-wrapper', '/zh/wca/most_competitions_abroad'],
+    ['.ns-stat-cell', '/zh/wca/results'],
+    ['.reconstruct-playback-main', '/zh/timer'],
+    ['.reconstruct-playback-side', '/zh/timer'],
+    ['.reconstruct-stage-cell', '/zh/timer'],
+    ['.reconstruct-move-list', '/zh/timer'],
+    ['.reconstruct-empty', '/zh/timer'],
+    ['.timer-reconstruct-metric', '/zh/timer'],
+  ].map(([selector, route]) => ({ selector, route, kind: 'scenery-content' })),
   { selector: '.calendar-page .toolbar', kind: 'container', route: '/zh/wca/comp?year=2026&month=10&country=cn' },
   { selector: '.wca-stats-index-toolbar', kind: 'container', route: '/zh/wca' },
   { selector: '.sor-race-bar', kind: 'container', route: '/zh/wca/results?events=333,222' },

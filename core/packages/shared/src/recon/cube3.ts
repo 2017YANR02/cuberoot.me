@@ -11,8 +11,9 @@ import {
   type AlgNode,
 } from 'cubing/alg';
 import type { KPattern, KPuzzle } from 'cubing/kpuzzle';
-import { mirrorFamily, mirrorKeepsAmount, type MirrorAxis } from '../alg_notation';
+import { mirrorFamily, mirrorKeepsAmount, ROTATE_Y, type MirrorAxis } from '../alg_notation';
 export { invertAlg } from '../alg_transform';
+import { parseCubeAlg } from '../alg_transform';
 
 let _kpuzzle: Promise<KPuzzle> | null = null;
 
@@ -45,19 +46,19 @@ function mirrorMove(move: Move, axis: MirrorAxis): Move {
   return move.modified({ family, amount });
 }
 
-function mirrorAlgTree(alg: Alg, axis: MirrorAxis): Alg {
+function mapAlgMoves(alg: Alg, transform: (move: Move) => Move): Alg {
   const nodes: AlgNode[] = [];
   for (const node of alg.childAlgNodes()) {
     if (node instanceof Move) {
       // Nothing legitimate produces amount 0, so omit it rather than stringifying
       // it as a quarter turn.
-      if (node.amount !== 0) nodes.push(mirrorMove(node, axis));
+      if (node.amount !== 0) nodes.push(transform(node));
     } else if (node instanceof Grouping) {
-      nodes.push(new Grouping(mirrorAlgTree(node.alg, axis), node.amount));
+      nodes.push(new Grouping(mapAlgMoves(node.alg, transform), node.amount));
     } else if (node instanceof Commutator) {
-      nodes.push(new Commutator(mirrorAlgTree(node.A, axis), mirrorAlgTree(node.B, axis)));
+      nodes.push(new Commutator(mapAlgMoves(node.A, transform), mapAlgMoves(node.B, transform)));
     } else if (node instanceof Conjugate) {
-      nodes.push(new Conjugate(mirrorAlgTree(node.A, axis), mirrorAlgTree(node.B, axis)));
+      nodes.push(new Conjugate(mapAlgMoves(node.A, transform), mapAlgMoves(node.B, transform)));
     } else {
       // Pauses, comments, and newlines carry no move direction.
       nodes.push(node);
@@ -104,7 +105,7 @@ export function mirrorAlg(alg: string, axis: MirrorAxis): string {
     // Transform the parsed tree instead of flattening its leaf moves. Flattening
     // preserves the cube state but silently deletes grouping parentheses, repeat
     // counts, commutators, comments, and pauses from the user's text.
-    return mirrorAlgTree(new Alg(alg), axis).toString();
+    return mapAlgMoves(new Alg(alg), move => mirrorMove(move, axis)).toString();
   } catch {
     return alg;
   }
@@ -142,4 +143,28 @@ export function simplifyAlg(alg: string): string {
   } catch {
     return alg;
   }
+}
+
+/** Relabel in a rotated frame (rotation^-1 · alg · rotation), preserving the syntax tree. */
+export function rotateAlg(alg: string, axis: 'x' | 'y' | 'z', turns = 1): string {
+  const maps: Record<'x' | 'z', Record<string, readonly [string, number]>> = {
+    x: { U: ['B', 1], B: ['D', 1], D: ['F', 1], F: ['U', 1], R: ['R', 1], L: ['L', 1],
+      M: ['M', 1], E: ['S', 1], S: ['E', -1], x: ['x', 1], y: ['z', -1], z: ['y', 1] },
+    z: { U: ['R', 1], R: ['D', 1], D: ['L', 1], L: ['U', 1], F: ['F', 1], B: ['B', 1],
+      M: ['E', -1], E: ['M', 1], S: ['S', 1], x: ['y', -1], y: ['x', 1], z: ['z', 1] },
+  };
+  const count = ((turns % 4) + 4) % 4;
+  return mapAlgMoves(parseCubeAlg(alg), move => {
+    let family = move.family, amount = move.amount;
+    for (let i = 0; i < count; i++) {
+      const lower = /^[rludfbmse]$/.test(family);
+      const wide = /^[RLUDFB]w$/.test(family);
+      const base = lower ? family.toUpperCase() : wide ? family[0] : family;
+      const hit = axis === 'y' ? ROTATE_Y[base] : maps[axis][base];
+      if (!hit) throw new Error('Unsupported cube move: ' + family);
+      family = lower ? hit[0].toLowerCase() : wide ? hit[0] + 'w' : hit[0];
+      amount *= hit[1];
+    }
+    return move.modified({ family, amount: amount === -2 ? 2 : amount });
+  }).toString();
 }

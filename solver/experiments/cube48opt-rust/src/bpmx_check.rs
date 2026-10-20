@@ -235,7 +235,7 @@ fn real_distances() -> Result<(usize,usize,usize),String> {
         for flips in [0, 0b010101, 0b101010] {
             let mut context = context(length + 1, flips);
             let before = context.stack.clone();
-            let h = exact_distance(before.last().unwrap().cube, &solved)?;
+            let h = exact_distance(before.last().unwrap().cube.into(), &solved)?;
             require(usize::from(h) == length, "short path fixture is not the asserted exact distance")?;
             let remaining = 1;
             let excess = h - remaining;
@@ -243,7 +243,7 @@ fn real_distances() -> Result<(usize,usize,usize),String> {
             let extra = usize::from((excess - 1) / 2);
             for up in 1..=extra {
                 let ancestor = &before[before.len() - 1 - up];
-                let exact = exact_distance(ancestor.cube, &solved)?;
+                let exact = exact_distance(ancestor.cube.into(), &solved)?;
                 require(exact > remaining + up as u8, "BPMX would discard a solvable ancestor")?;
                 require(ancestor.inverse == ancestor.cube.inverse(), "NISS fixture inverse mismatch")?;
                 ancestors += 1;
@@ -430,7 +430,7 @@ fn quarter_pruned_search_matches_every_radius_three_bfs_distance() {
 #[cfg(all(test, feature = "opt9-native-quarter-cache", not(target_family = "wasm")))]
 #[test]
 fn quarter_cache_zero_bounds_side_switch_and_split_ownership() {
-    assert_eq!(std::mem::size_of::<Frame>(), 56, "the byte must fit existing padding");
+    assert_eq!(std::mem::size_of::<Frame>(), if cfg!(all(feature = "wasm-padded-state", any(target_family = "wasm", test))) { 64 } else { 56 }, "the cache byte must fit existing frame storage");
     assert_eq!(std::mem::align_of::<Frame>(), 4);
     let cube = Cube::from_scramble("R U F L D B").unwrap();
     for face in 0..6_u8 {
@@ -1019,7 +1019,7 @@ fn dual_search_matches_every_radius_three_independent_distance() {
     println!("dual: bfsStates=3502 searches=28016 attempts={attempts} raised={raised} parentCuts={parent_cuts} pdbBytes=0");
 }
 
-#[cfg(all(test, feature = "opt10-native-coset", not(target_family = "wasm")))]
+#[cfg(all(test, any(feature = "opt10-native-coset", feature = "wasm-coset-prune"), not(target_family = "wasm")))]
 #[test]
 fn backward_coset_changes_only_owned_inverse_masks() {
     assert_eq!(std::mem::size_of::<Frame>(), 56);
@@ -1065,7 +1065,7 @@ fn backward_coset_changes_only_owned_inverse_masks() {
     assert_eq!(stats, SearchStats::default());
 }
 
-#[cfg(all(test, feature = "opt10-native-coset", not(target_family = "wasm")))]
+#[cfg(all(test, any(feature = "opt10-native-coset", feature = "wasm-coset-prune"), not(target_family = "wasm")))]
 #[test]
 fn backward_coset_matches_every_radius_three_distance() {
     fn orientation(cube: &Cube) -> usize {

@@ -145,6 +145,7 @@ export const PLATFORM_ACCOUNT_DELETE_TABLES = [
  * 新表要么进清单,要么进这里,不能两边都不在(那就是漏了)。
  */
 export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
+  workspace_members: '0282 数据库注销守卫清理私人草稿与修订、撤销项目资格、匿名化成员和评论；保留已提交团队记录，账号外键置空',
   remote_access_requests: '远程接入申请通过 user_id 外键随账号级联删除，申请事件随申请删除；已授权设备仍须由负责人独立撤销',
   dev_preview_requests: '开发网址申请通过 user_id 外键随账号级联删除，申请事件随申请删除；已开通隧道仍须由负责人独立撤销',
   wca_person_teams: '管理员维护的公开选手战队资料，按官方 WCA ID 关联，不属于站内账号私有数据；注销不删除',

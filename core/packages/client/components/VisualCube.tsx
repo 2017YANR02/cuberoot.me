@@ -1,12 +1,15 @@
 'use client';
 
 import { useMemo, useRef, useState } from 'react';
-import { renderFromSimpleQuery, buildSimpleOptions, renderCubeSVG, Axis, type PlanSimplifyOptions } from '@cuberoot/visualcube';
+import { renderFromSimpleQuery, buildSimpleOptions, renderCubeSVG, Axis, type ICubeOptions, type PlanSimplifyOptions } from '@cuberoot/visualcube';
 import { ORBIT_K } from '@cuberoot/puzzle-render-core/engine/viewControls';
 import { tr } from '@/i18n/tr';
 import { apiUrl } from '@/lib/api-base';
 import { TimerRoomDialog } from '@cuberoot/timer-ui';
+import LazyVisible from '@/components/LazyVisible';
 import './visual-cube.css';
+import { COLORS, STICKER_INNER, STICKER_OUTLINE_WIDTH } from '@cuberoot/puzzle-render-core/engine/define';
+const stickerOutlineStyle = { color: COLORS.High, widthFraction: STICKER_OUTLINE_WIDTH / STICKER_INNER };
 
 interface Props {
   /** WCA notation alg. Treated as a SOLUTION — cube renders the case state that `algorithm`
@@ -21,6 +24,16 @@ interface Props {
   mask?: string;
   /** Exact final-state 6N² compact colour codes in U R F D L B order. */
   faceletColors?: string;
+  /** Solved-piece colours in U R F D L B order; setup/algorithm moves carry these colours. */
+  stickerColors?: string[];
+  /** Colour treated as hidden on the plan view's side rim. */
+  stickerMaskColor?: string;
+  /** Semantic diagrams may show another camera angle; rendered locally. */
+  viewportRotations?: ICubeOptions['viewportRotations'];
+  /** Highlight masked top stickers with the prediction trainer's inset outline. */
+  outlineMaskedTop?: boolean;
+  /** Final-state sticker indices in U R F D L B order to highlight in any view. */
+  outlinedFacelets?: readonly number[];
   /** Forward whole-cube rotation applied only when `faceletColors` is present. */
   faceletAlg?: string;
   /** U R F D L B face colours, using the visualcube `sch=` format. Only for semantic diagrams. */
@@ -40,7 +53,7 @@ interface Props {
   size?: number;
   puzzleSize?: number;
   alt?: string;
-  /** Native <img> loading hint. Defaults to browser eager; pass 'lazy' for below-the-fold. */
+  /** With local rendering, 'lazy' defers SVG generation until near the viewport; otherwise the native image hint. */
   loading?: 'lazy' | 'eager';
   /**
    * Render the SVG in-process instead of fetching `/v1/visualcube.svg`.
@@ -50,8 +63,7 @@ interface Props {
    * *together and instantly* (the trainer's three-at-once screen: a network `<img>` per cube
    * lands one by one, so the images visibly lag the scrambles and each other).
    *
-   * Do NOT switch a grid of dozens of thumbnails to this — that's what `<img>` (parallel fetch +
-   * HTTP cache) is good at; rendering them all synchronously would block paint.
+   * Long lists must combine local with loading="lazy", so offscreen diagrams are not generated.
    */
   local?: boolean;
   /** Drag to orbit the existing state; leaving restores the original projection. */
@@ -60,10 +72,19 @@ interface Props {
   enlargeable?: boolean;
 }
 
-// Ported from packages/client-vite/src/components/VisualCube.tsx — minus the SW interception note
-// (Next.js bundles a fresh SW; for now this hits the api.cuberoot.me endpoint directly in prod).
 export function VisualCube(props: Props) {
-  const { algorithm = '', setup, view, mask, faceletColors, faceletAlg, scheme, showLastLayerColor, planSimplify, size = 88, puzzleSize = 3, alt = 'Cube state', loading, local, hideGreySides, interactive = false, enlargeable = false } = props;
+  if (props.loading === 'lazy' && (props.local || props.faceletColors || props.interactive || props.stickerColors || props.viewportRotations || props.outlineMaskedTop || props.outlinedFacelets?.length)) {
+    const size = props.size ?? 88;
+    return <LazyVisible inline minHeight={size} rootMargin="160px" unwrapWhenVisible
+      style={{ display: 'inline-flex', width: size, height: size, flexShrink: 0 }}>
+      <VisualCubeContent {...props} />
+    </LazyVisible>;
+  }
+  return <VisualCubeContent {...props} />;
+}
+
+function VisualCubeContent(props: Props) {
+  const { algorithm = '', setup, view, mask, faceletColors, stickerColors, stickerMaskColor, viewportRotations, outlineMaskedTop, outlinedFacelets, faceletAlg, scheme, showLastLayerColor, planSimplify, size = 88, puzzleSize = 3, alt = 'Cube state', loading, local, hideGreySides, interactive = false, enlargeable = false } = props;
   const [expanded, setExpanded] = useState(false);
   const dragged = useRef(false);
   const isPlan = view === 'plan' || view === 'oll' || view === 'pll';
@@ -77,7 +98,7 @@ export function VisualCube(props: Props) {
   // Exact facelet states are already available in the client bundle and may use
   // query features that an older deployed API does not know yet. Render them
   // locally so the page and its data stay atomic during rolling deployments.
-  const renderLocally = Boolean(local || faceletColors || interactive);
+  const renderLocally = Boolean(local || faceletColors || interactive || stickerColors || viewportRotations || outlineMaskedTop || outlinedFacelets?.length);
   // 同一组参数喂两条路:本地渲染直接调 server 端点用的那个函数,URL 版把它们拼成 query。
   const svg = useMemo(() => {
     if (!renderLocally) return null;
@@ -94,13 +115,11 @@ export function VisualCube(props: Props) {
       ...(planSimplify?.forceShow ? { pfs: planSimplify.forceShow } : {}),
       ...(planSimplify?.forceHide ? { pfh: planSimplify.forceHide } : {}),
     };
-    if (interactive && orbit && !isPlan) {
-      // Build from the original preset first, retaining its colors and masking.
-      const options = buildSimpleOptions(query);
-      return renderCubeSVG({ ...options, view: 'iso', viewportRotations: [[Axis.Y, orbit.y], [Axis.X, orbit.x]] });
+    if ((interactive && orbit && !isPlan) || (stickerColors && !faceletColors) || viewportRotations || outlineMaskedTop || outlinedFacelets?.length) {
+      return renderCubeSVG({ ...buildSimpleOptions(query), ...(stickerColors && !faceletColors ? { stickerColors } : {}), ...(viewportRotations ? { viewportRotations } : {}), ...(outlineMaskedTop ? { maskedTopOutline: stickerOutlineStyle } : {}), ...(outlinedFacelets?.length ? { stickerOutline: { ...stickerOutlineStyle, indices: outlinedFacelets } } : {}), ...(stickerMaskColor ? { maskColor: stickerMaskColor } : {}), ...(interactive && orbit && !isPlan ? { view: 'iso', viewportRotations: [[Axis.Y, orbit.y], [Axis.X, orbit.x]] } : {}) });
     }
     return renderFromSimpleQuery(query);
-  }, [interactive, orbit, isPlan, renderLocally, algorithm, setup, view, mask, faceletColors, faceletAlg, scheme, showLastLayerColor, planSimplify, size, puzzleSize, hideGreySides]);
+  }, [interactive, orbit, isPlan, renderLocally, algorithm, setup, view, mask, faceletColors, stickerColors, stickerMaskColor, viewportRotations, outlineMaskedTop, outlinedFacelets, faceletAlg, scheme, showLastLayerColor, planSimplify, size, puzzleSize, hideGreySides]);
 
   const src = useMemo(() => {
     if (renderLocally) return '';
@@ -188,3 +207,4 @@ export function VisualCube(props: Props) {
   }
   return <img className="puzzle-art" src={src} width={size} height={size} alt={alt} loading={loading} />;
 }
+

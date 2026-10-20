@@ -108,3 +108,11 @@
 - Tauri 可用同一 Web 前端构建主要桌面和移动平台，本项目只把它用于共享的 Windows/macOS 桌面宿主：[Tauri](https://v2.tauri.app/start/)
 - Windows PWA 仍是可安装网站和故障回退，不替代本文的桌面客户端验收：[Microsoft PWA](https://learn.microsoft.com/en-us/microsoft-edge/progressive-web-apps/ux)
 - macOS Safari Web App 同样保留为网站入口和回退，不替代共享桌面宿主：[Apple Safari Web App](https://support.apple.com/guide/safari/add-to-dock-ibrw9e991864/mac)
+
+## 7. Apple Watch 配套计时器（2026-10-14 首版授权）
+
+用户明确要求新增 Apple Watch 计时器，并尽量复用现有 iOS App。watchOS 作为现有 iOS 工程中的配套 target，按 [Apple Watch 首版范围](./apple-watch-timer.md) 实施；它不是五端完整 React 产品的第六份复制，也不改变本合同原有五端 parity 义务。
+
+手表原生层只承载腕上交互、本地连续时钟、震动、缓存、WatchConnectivity 与 BLE 传输。手机继续消费共享打乱生成器、成绩库和统计；同一 repository 队列处理手表导入，稳定 UUID 与事务 receipt 防止重投。两端 DTO 和必要的 Swift 原生数值展示由边界 fixture 核对，不移植重型生成器或另建账号/统计体系。当前实现与各层验收证据仍统一记入 `mobile-app-roadmap.md`。
+
+2026-10-15 用户追加授权手表直连智能魔方、离开手机使用，并要求默认以 GAN 16 UI 验收。手表 CoreBluetooth 仅实现 transport；用嵌入的官方 QuickJS 核心执行现有 app-ui GAN driver 与 shared 状态/自动计时模块，手动起停同样消费 shared timer machine，不另写协议或自动计时规则。首个连接范围为 GAN v4；缓存打乱耗尽仍需手机补充，走偏修正 Worker、逐手复盘、其他品牌与后台连接能力不得从前台接线推断已完成。
