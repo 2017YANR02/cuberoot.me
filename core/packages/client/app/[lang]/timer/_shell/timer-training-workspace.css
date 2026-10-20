@@ -210,9 +210,9 @@
 
 .timer-training-workspace__settings .settings-popover-panel.trainer-opts-panel {
   /* anchored-panel: clamped (SettingsPopover retains usePanelClamp in its portal) */
-  left: 0;
+  left: 50%;
   right: auto;
-  transform: none;
+  transform: translateX(-50%);
 }
 
 /* Context actions stay in flow inside their toolbar portal. */
