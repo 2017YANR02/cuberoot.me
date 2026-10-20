@@ -229,6 +229,8 @@
   gap: 8px;
 }
 
+.sim-player-tools > .sim-player-tools-row { flex-basis: 100%; }
+
 /* 消步开关在工具行里:无外框,标签 + PillToggle 滑钮直接排在按钮间(开 / 关状态由滑钮表达) */
 .sim-player-tools .sim-toggle {
   height: 34px;

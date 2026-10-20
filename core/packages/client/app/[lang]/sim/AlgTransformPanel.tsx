@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, type ReactNode, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
 import { Move } from 'cubing/alg';
@@ -9,8 +9,9 @@ import { useT } from '@/hooks/useT';
 import { mirrorAlg, rotateAlg } from '@/lib/cube3';
 import { editCubeText, cubeTextMoves, oppositeMove, transformCubeText, hasHandNotation, moveSourceGroup, moveAtFirstExecution } from './alg-manipulation';
 
-export default function AlgTransformPanel({ text, setup, order, onApply, editing, onEditingChange, editorSlot, onSelect }: {
+export default function AlgTransformPanel({ text, setup, order, onApply, editing, onEditingChange, editorSlot, onSelect, basicTools, undoTool, endTools }: {
   text: string; setup: string; order: number;
+  basicTools: ReactNode; undoTool: ReactNode; endTools: ReactNode;
   onApply: (setup: string, text: string, caret?: number) => () => void;
   editing: boolean; onEditingChange: (editing: boolean) => void; editorSlot: HTMLElement | null;
   onSelect: (caret: number) => void;
@@ -133,7 +134,6 @@ export default function AlgTransformPanel({ text, setup, order, onApply, editing
     {index !== null && index >= 0 && parsed && moveSourceGroup(text, parsed.tokens[index].start) && <span className="sim-move-note">
       {t('修改首次执行；仅展开所在分组。', 'Edit the first execution; expand only its enclosing group.')}
     </span>}
-    <span className="sim-move-note">{t('打乱不变，后续动作自动改写；末态朝向可能改变。', 'Scramble stays unchanged; following moves adapt. Final orientation may change.')}</span>
     {error && <span role="status" className="sim-move-note">{error}</span>}
   </div>, document.fullscreenElement ?? document.body);
   const inlineEditor = editing && editorSlot && createPortal(<div className="sim-inline-moves" aria-label={t('选择解法步骤', 'Select solution move')}>
@@ -154,42 +154,45 @@ export default function AlgTransformPanel({ text, setup, order, onApply, editing
   </div>, editorSlot);
   return <>
     {inlineEditor}
-    <select className="sim-transform-select" aria-label={t('转换范围', 'Transform scope')} value={scope}
-      aria-describedby="sim-transform-scope-note"
-      onChange={event => setScopeChoice(event.target.value as 'solution' | 'both')}>
-      <option value="solution">{t('仅解法', 'Solution only')}</option>
-      <option value="both">{t('打乱与解法', 'Scramble and solution')}</option>
-    </select>
-    <span id="sim-transform-scope-note" className="sim-move-note">{t('范围用于换朝向和镜像；取逆、消步、改单步仅作用于解法。', 'Scope applies to orientation and mirror; invert, reduce and move edits affect only the solution.')}</span>
-    <select className="sim-transform-select" aria-label={t('换朝向', 'Orientation')} value="" disabled={!transformEnabled}
-      onChange={event => {
-        const rotation = new Move(event.target.value);
-        transform(move => rotateAlg(move, rotation.family as 'x' | 'y' | 'z', rotation.amount));
-      }}>
-      <option value="" disabled>{t('换朝向', 'Orientation')}</option>
-      {rotations.map(value => <option key={value} value={value}>{value}</option>)}
-    </select>
-    <select className="sim-transform-select" aria-label={t('镜像', 'Mirror')} value="" disabled={!transformEnabled}
-      onChange={event => { const axis = event.target.value as 'M' | 'S' | 'E'; transform(move => mirrorAlg(move, axis)); }}>
-      <option value="" disabled>{t('镜像', 'Mirror')}</option>
-      <option value="M">{t('LR 镜像', 'LR mirror')}</option>
-      <option value="S">{t('FB 镜像', 'FB mirror')}</option>
-      <option value="E">{t('UD 镜像', 'UD mirror')}</option>
-    </select>
-    <button type="button" aria-expanded={editing} className={editing ? 'sim-transform-active' : undefined}
-      disabled={!enabled && !editing} onClick={() => { onEditingChange(!editing); setSelected(null); setMenuOpen(false); }}>
-      <PencilLine size={14} />{editing ? t('完成改写', 'Done editing') : t('改一步', 'Edit move')}
-    </button>
-    {canUndo && <button type="button" onClick={() => {
-      history[history.length - 1].undo();
-      setHistory(previous => previous.slice(0, -1));
-      setSelected(null);
-    }}><Undo2 size={14} />{t('撤销', 'Undo')}</button>}
+    <div className="sim-player-tools sim-player-tools-row">
+      {basicTools}
+      <button type="button" aria-expanded={editing} className={editing ? 'sim-transform-active' : undefined}
+        disabled={!enabled && !editing} onClick={() => { onEditingChange(!editing); setSelected(null); setMenuOpen(false); }}>
+        <PencilLine size={14} />{editing ? t('完成改写', 'Done editing') : t('改一步', 'Edit move')}
+      </button>
+    </div>
+    <div className="sim-player-tools sim-player-tools-row">
+      <select className="sim-transform-select" aria-label={t('换朝向', 'Orientation')} value="" disabled={!transformEnabled}
+        onChange={event => {
+          const rotation = new Move(event.target.value);
+          transform(move => rotateAlg(move, rotation.family as 'x' | 'y' | 'z', rotation.amount));
+        }}>
+        <option value="" disabled>{t('换朝向', 'Orientation')}</option>
+        {rotations.map(value => <option key={value} value={value}>{value}</option>)}
+      </select>
+      <select className="sim-transform-select" aria-label={t('镜像', 'Mirror')} value="" disabled={!transformEnabled}
+        onChange={event => { const axis = event.target.value as 'M' | 'S' | 'E'; transform(move => mirrorAlg(move, axis)); }}>
+        <option value="" disabled>{t('镜像', 'Mirror')}</option>
+        <option value="M">{t('LR 镜像', 'LR mirror')}</option>
+        <option value="S">{t('FB 镜像', 'FB mirror')}</option>
+        <option value="E">{t('UD 镜像', 'UD mirror')}</option>
+      </select>
+      <select className="sim-transform-select" aria-label={t('转换范围', 'Transform scope')} value={scope}
+        onChange={event => setScopeChoice(event.target.value as 'solution' | 'both')}>
+        <option value="solution">{t('仅解法', 'Solution only')}</option>
+        <option value="both">{t('打乱与解法', 'Scramble and solution')}</option>
+      </select>
+    </div>
+    <div className="sim-player-tools sim-player-tools-row">
+      {canUndo ? <button type="button" onClick={() => {
+        history[history.length - 1].undo();
+        setHistory(previous => previous.slice(0, -1));
+        setSelected(null);
+      }}><Undo2 size={14} />{t('撤销', 'Undo')}</button> : undoTool}
+      {endTools}
+    </div>
     {(hasHandNotation(text) || (scope === 'both' && hasHandNotation(setup))) && <span className="sim-move-note" role="status">
       {t('含指法记号，暂不支持无损转换；原文保留。', 'Finger notation cannot yet be transformed losslessly; the original is preserved.')}
-    </span>}
-    {scope === 'solution' && !!setup.trim() && <span className="sim-move-note">
-      {t('仅转换解法可能不再还原原打乱；保持同一打乱请用转体插入。', 'Transforming only the solution may no longer solve this scramble; use rotation insertion to keep it.')}
     </span>}
   </>;
 }

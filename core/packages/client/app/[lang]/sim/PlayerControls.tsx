@@ -2489,6 +2489,48 @@ export default function PlayerControls({
     )
     : null;
 
+  const hasTransformPanel = typeof puzzleKind === 'number' || puzzleKind === 'mirror' || puzzleKind === 'mirror2' || puzzleKind === 'sphere';
+  const basicTools = <>
+    <button disabled={corner?.endAnchor === false || hasHandNotation(algDraft)} onClick={tool(invertForPuzzle)} title={t('取逆', 'Invert')}>{t('取逆', 'Invert')}</button>
+    {/* 消步:实时消步开关(默认开)。开 = 手势 / 键盘转动追加时自动合并 / 抵消重复转动,
+        并对当前解法消一次步;关 = 原样保留。取代原一次性「消步」按钮。 */}
+    {!isIvy && (
+      <Toggle
+        label={t('消步', 'Reduce')}
+        value={settings.liveReduce !== false}
+        onChange={setLiveReduce}
+      />
+    )}
+    {!isSquarePuzzle && !isIvy && !corner && !isTwistyMode && (
+      <button
+        disabled={hasHandNotation(algDraft)}
+        onClick={tool(flattenAlg)}
+        title={t('展开所有括号并保留等价动作', 'Expand all groups into equivalent moves')}
+      >
+        {t('去括号', 'Expand')}
+      </button>
+    )}
+  </>;
+  const undoTool = (
+    <button disabled={!canUndoEdit} type="button" title={t('撤销公式操作', 'Undo algorithm edit')} onClick={() => {
+      if (!lastEdit) return;
+      void replaceDrafts(lastEdit.setup, lastEdit.alg, lastEdit.step);
+      setLastEdit(null);
+    }}>{t('撤销', 'Undo')}</button>
+  );
+  const endTools = <>
+    <button onClick={() => editDrafts(setupDraft, '')} title={t('清空公式', 'Clear algorithm')}><Eraser size={13} />{t('清空公式', 'Clear algorithm')}</button>
+    <button type="button" onClick={() => editDrafts('', '')} title={t('重置为还原态', 'Reset to solved')}>{t('重置', 'Reset')}</button>
+    <button
+      onClick={handleCopyLink}
+      className={linkCopied ? 'sim-link-copied' : undefined}
+      title={t('复制本页链接(含打乱 / 解法)', 'Copy this page link (with scramble / solution)')}
+    >
+      {linkCopied ? <Check size={13} /> : <Link2 size={13} />}
+      {linkCopied ? t('已复制', 'Copied') : t('复制链接', 'Copy link')}
+    </button>
+  </>;
+
   return (
     <div className="sim-player">
       {stickeringSelect && captureStickeringSlot && createPortal(
@@ -2789,21 +2831,12 @@ export default function PlayerControls({
 
       <section className="sim-alg-tools" aria-label={t('公式操作', 'Algorithm tools')}>
       <div className="sim-player-tools">
-        <button disabled={corner?.endAnchor === false || hasHandNotation(algDraft)} onClick={tool(invertForPuzzle)} title={t('取逆', 'Invert')}>{t('解法取逆', 'Invert solution')}</button>
-        {/* 消步:实时消步开关(默认开)。开 = 手势 / 键盘转动追加时自动合并 / 抵消重复转动,
-            并对当前解法消一次步;关 = 原样保留。取代原一次性「消步」按钮。 */}
-        {!isIvy && (
-          <Toggle
-            label={t('消步', 'Reduce')}
-            value={settings.liveReduce !== false}
-            onChange={setLiveReduce}
-          />
-        )}
-        {!(typeof puzzleKind === 'number' || puzzleKind === 'mirror' || puzzleKind === 'mirror2' || puzzleKind === 'sphere') && !isSquarePuzzle && !isTwistyMode && corner?.cubeMirrors !== false && <button onClick={tool((s) => mirrorAlg(s, 'M'))} title={t('Mirror M (L↔R)', 'Mirror M (L↔R)')} aria-label="Mirror M"><FlipHorizontal2 size={13} /></button>}
-        {!(typeof puzzleKind === 'number' || puzzleKind === 'mirror' || puzzleKind === 'mirror2' || puzzleKind === 'sphere') && !isSquarePuzzle && !isTwistyMode && corner?.cubeMirrors !== false && <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('Mirror S (F↔B)', 'Mirror S (F↔B)')} aria-label="Mirror S"><FlipVertical2 size={13} /></button>}
-        {(typeof puzzleKind === 'number' || puzzleKind === 'mirror' || puzzleKind === 'mirror2' || puzzleKind === 'sphere') && (
+        {hasTransformPanel ? (
           <AlgTransformPanel
             key={String(puzzleKind)}
+            basicTools={basicTools}
+            undoTool={undoTool}
+            endTools={endTools}
             text={algDraft}
             setup={setupDraft}
             order={order}
@@ -2821,30 +2854,13 @@ export default function PlayerControls({
               return () => { void replaceDrafts(previousSetup, previousAlg, previousStep); };
             }}
           />
-        )}
-        {!isSquarePuzzle && !isIvy && !corner && !isTwistyMode && (
-          <button
-            disabled={hasHandNotation(algDraft)}
-            onClick={tool(flattenAlg)}
-            title={t('展开所有括号并保留等价动作', 'Expand all groups into equivalent moves')}
-          >
-            {t('去括号', 'Expand')}
-          </button>
-        )}
-        <button onClick={() => editDrafts(setupDraft, '')} title={t('清空公式', 'Clear algorithm')}><Eraser size={13} />{t('清空公式', 'Clear algorithm')}</button>
-        <button type="button" onClick={() => editDrafts('', '')} title={t('重置为还原态', 'Reset to solved')}>{t('重置', 'Reset')}</button>
-        {canUndoEdit && <button type="button" title={t('撤销公式操作', 'Undo algorithm edit')} onClick={() => {
-          void replaceDrafts(lastEdit.setup, lastEdit.alg, lastEdit.step);
-          setLastEdit(null);
-        }}>{t('撤销公式操作', 'Undo algorithm edit')}</button>}
-        <button
-          onClick={handleCopyLink}
-          className={linkCopied ? 'sim-link-copied' : undefined}
-          title={t('复制本页链接(含打乱 / 解法)', 'Copy this page link (with scramble / solution)')}
-        >
-          {linkCopied ? <Check size={13} /> : <Link2 size={13} />}
-          {linkCopied ? t('已复制', 'Copied') : t('复制链接', 'Copy link')}
-        </button>
+        ) : <>
+          {basicTools}
+          {!isSquarePuzzle && !isTwistyMode && corner?.cubeMirrors !== false && <button onClick={tool((s) => mirrorAlg(s, 'M'))} title={t('Mirror M (L↔R)', 'Mirror M (L↔R)')} aria-label="Mirror M"><FlipHorizontal2 size={13} /></button>}
+          {!isSquarePuzzle && !isTwistyMode && corner?.cubeMirrors !== false && <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('Mirror S (F↔B)', 'Mirror S (F↔B)')} aria-label="Mirror S"><FlipVertical2 size={13} /></button>}
+          {undoTool}
+          {endTools}
+        </>}
       </div>
       </section>
       </div>
