@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { spawn, execFileSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { once } from 'node:events';
 import { parseProcesses } from '../../core/scripts/mac-system-recorder.mts';
-import { GiB, analyzerTableNames, isTsxService, parseIdentities, resourceLimits, resourceValues, runWhileMonitored, sameIdentity, tableBudget, trackedTree, validateResumeReview, type Identity, type ProcessRow, type TableBudget } from './resource-monitor.js';
+import { GiB, analyzerTableNames, archiveReviewedStatsStop, isTsxService, parseIdentities, resourceLimits, resourceValues, resolveStatsAnalyzerEnv, runWhileMonitored, sameIdentity, selectStatsEoProfile, tableBudget, trackedTree, validateResumeReview, type Identity, type ProcessRow, type TableBudget } from './resource-monitor.js';
 
 const identity = (pid: number, command = `process-${pid}`, start = 'Wed Oct 21 12:00:00 2026'): Identity => ({ pid, start, command });
 const row = (pid: number, ppid: number, rssBytes = 0): ProcessRow => ({ pid, ppid, rssBytes, cpuPercent: 0, state: 'S', name: `process-${pid}` });
@@ -42,6 +43,49 @@ test('table plan follows EO profile and optional table flags; unknown binaries f
   assert.throws(() => tableBudget('sq1_analyzer', { SQ1_TT_BUDGET: '-1' }, 64 * GiB, inspect));
   assert.throws(() => tableBudget('sq1_analyzer', { SQ1_TT_BUDGET: '' }, 64 * GiB, inspect));
   assert.equal(tableBudget('sq1_slash_mitm', {}, 64 * GiB, inspect).workingBytes, 20_736_638_976);
+});
+
+test('EO auto freezes a profile at the unchanged startup boundary and preserves native eligibility', () => {
+  const highRssLimit = 47_452_533_712, required = 50_136_888_272;
+  const original = { CUBE_TABLE_PROFILE: 'auto', CUBE_EO_NO_DIAG: '0' };
+  assert.equal(selectStatsEoProfile(original, 49_692_983_296, () => highRssLimit, 64 * GiB).CUBE_TABLE_PROFILE, 'default');
+  assert.equal(selectStatsEoProfile(original, required - 1, () => highRssLimit, 64 * GiB).CUBE_TABLE_PROFILE, 'default');
+  const high = selectStatsEoProfile(original, required, () => highRssLimit, 64 * GiB);
+  assert.equal(high.CUBE_TABLE_PROFILE, 'high-memory');
+  assert.equal(original.CUBE_TABLE_PROFILE, 'auto');
+  const unavailable = () => { throw Error('Optional high-memory table is absent'); };
+  assert.equal(selectStatsEoProfile({}, 100 * GiB, unavailable, 32 * GiB).CUBE_TABLE_PROFILE, 'default');
+  assert.equal(selectStatsEoProfile({ CUBE_TABLE_PROFILE: '' }, required, () => highRssLimit, 64 * GiB).CUBE_TABLE_PROFILE, 'high-memory');
+  assert.equal(selectStatsEoProfile(high, 0, unavailable, 64 * GiB), high);
+  const explicitDefault = { CUBE_TABLE_PROFILE: 'default' };
+  assert.equal(selectStatsEoProfile(explicitDefault, 100 * GiB, unavailable, 64 * GiB), explicitDefault);
+  assert.equal(resolveStatsAnalyzerEnv('eo_cross_analyzer', explicitDefault), explicitDefault);
+  assert.equal(resolveStatsAnalyzerEnv('std_analyzer', original), original);
+  assert.equal(selectStatsEoProfile(original, 0, () => highRssLimit, 64 * GiB).CUBE_TABLE_PROFILE, 'default');
+});
+
+test('completed reviewed stop archives original bytes before clearing only the matching active latch', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'stats-stop-archive-'));
+  const run = join(dir, 'run'); mkdirSync(run);
+  const path = join(dir, 'protected-stop.json'), reviewPath = join(dir, 'resume-review.json');
+  const bytes = Buffer.from('{"baseline":{"boot":"123","swapouts":0}, "reason":"earlier stop"}\n');
+  const sha256 = createHash('sha256').update(bytes).digest('hex'), reviewed = { path, sha256 };
+  const review = JSON.stringify({ stopPath: path, stopSha256: sha256, reason: 'Reviewed resources' });
+  try {
+    writeFileSync(path, bytes); writeFileSync(reviewPath, review);
+    assert.throws(() => archiveReviewedStatsStop(dir, join(dir, 'missing-directory'), reviewed));
+    assert.deepEqual(readFileSync(path), bytes);
+    assert.equal(archiveReviewedStatsStop(dir, run, reviewed), true);
+    assert.deepEqual(readFileSync(join(run, 'reviewed-protected-stop.json')), bytes);
+    assert.equal(readFileSync(join(run, 'completed-resume-review.json'), 'utf8'), review);
+    assert.equal(existsSync(path), false); assert.equal(existsSync(reviewPath), false);
+    assert.equal(archiveReviewedStatsStop(dir, run, reviewed), false);
+    writeFileSync(path, '{"reason":"new stop"}'); writeFileSync(reviewPath, review);
+    assert.equal(archiveReviewedStatsStop(dir, run, reviewed), false);
+    assert.equal(readFileSync(path, 'utf8'), '{"reason":"new stop"}');
+    assert.equal(readFileSync(reviewPath, 'utf8'), review);
+    assert.deepEqual(readFileSync(join(run, 'reviewed-protected-stop.json')), bytes);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
 test('unexpected monitor exit, including code zero, interrupts a pending action', async () => {
@@ -117,11 +161,28 @@ test('isolated real watcher completes normally and fails closed before child-clo
   `;
   writeFileSync(fixture, `
     import { spawn } from 'node:child_process';
-    import { writeFileSync } from 'node:fs';
+    import { mkdirSync, writeFileSync } from 'node:fs';
+    import { createHash } from 'node:crypto';
     import { once } from 'node:events';
     import { registerStatsSummary, withStatsResourceMonitor } from ${JSON.stringify(resolve('scripts/stats/resource-monitor.ts'))};
+    import { observeStatsResources } from ${JSON.stringify(resolve('solver/experiments/cube48opt-rust/stats-resume-review.mts'))};
+    if (process.argv[3].startsWith('reviewed-')) {
+      const state = process.argv[2]; mkdirSync(state, { recursive: true });
+      const baseline = observeStatsResources(); baseline.boot = baseline.boot.match(/sec\\s*=\\s*(\\d+)/)[1];
+      const bytes = Buffer.from(JSON.stringify({ baseline, reason: 'Fixture retained stop' }) + '\\n');
+      const stopPath = state + '/protected-stop.json';
+      writeFileSync(stopPath, bytes); writeFileSync(state + '/initial-stop.json', bytes);
+      writeFileSync(state + '/resume-review.json', JSON.stringify({ schema: 'cuberoot.stats-resource-review/v1', stopPath,
+        stopSha256: createHash('sha256').update(bytes).digest('hex'), boot: baseline.boot, swapouts: baseline.swapouts,
+        reason: 'Fixture resource review', reviewedAt: new Date().toISOString() }));
+    }
     await withStatsResourceMonitor(async () => {
       if (process.argv[3] === 'normal') return;
+      if (process.argv[3].startsWith('reviewed-')) {
+        if (process.argv[3] === 'reviewed-failed') throw Error('Fixture action failure');
+        if (process.argv[3] === 'reviewed-partial') process.exitCode = 2;
+        return;
+      }
       writeFileSync(process.argv[2] + '/summary.json', JSON.stringify({ status: 'running' }));
       registerStatsSummary(process.argv[2] + '/summary.json');
       const child = spawn(process.execPath, ['-e', ${JSON.stringify(scheduler)}, process.argv[2]]);
@@ -139,7 +200,7 @@ test('isolated real watcher completes normally and fails closed before child-clo
     }
   };
   try {
-    for (const mode of ['normal', 'crash', 'protected-stop']) {
+    for (const mode of ['normal', 'crash', 'protected-stop', 'reviewed-complete', 'reviewed-partial', 'reviewed-failed']) {
       const state = join(temporary, mode);
       const child = spawn(process.execPath, [...process.execArgv, fixture, state, mode], { stdio: ['ignore', 'pipe', 'pipe'] });
       let output = '';
@@ -147,7 +208,7 @@ test('isolated real watcher completes normally and fails closed before child-clo
       const closed = once(child, 'close');
       let watcher: number | undefined, work: number | undefined, schedulerPid: number | undefined;
       try {
-        if (mode !== 'normal') {
+        if (mode === 'crash' || mode === 'protected-stop') {
           await waitFor(() => existsSync(join(state, 'work.pid')) || child.exitCode !== null);
           assert.equal(child.exitCode, null, output);
           work = Number(readFileSync(join(state, 'work.pid'), 'utf8'));
@@ -158,12 +219,21 @@ test('isolated real watcher completes normally and fails closed before child-clo
           else writeFileSync(join(run, 'request-stop.json'), JSON.stringify({ reason: 'Fixture resource protection' }));
         }
         const [code, signal] = await closed;
-        assert.equal(code, mode === 'normal' ? 0 : mode === 'crash' ? 1 : null, output);
+        assert.equal(code, mode === 'protected-stop' ? null : mode === 'crash' || mode === 'reviewed-failed' ? 1 : mode === 'reviewed-partial' ? 2 : 0, output);
         if (mode === 'protected-stop') assert.equal(signal, 'SIGKILL', output);
-        assert.equal(existsSync(join(state, 'protected-stop.json')), mode !== 'normal');
+        assert.equal(existsSync(join(state, 'protected-stop.json')), ['crash', 'protected-stop', 'reviewed-failed'].includes(mode));
         assert.equal(existsSync(join(state, 'unexpected-continuation')), false);
         assert.equal(existsSync(join(state, 'unexpected-child-continuation')), false);
-        if (mode === 'normal') assert.equal(existsSync(join(state, 'active.lock')), false);
+        if (mode.startsWith('reviewed-')) {
+          const run = join(state, 'runs', readdirSync(join(state, 'runs'))[0]);
+          const initial = readFileSync(join(state, 'initial-stop.json'));
+          assert.equal(existsSync(join(state, 'resume-review.json')), mode === 'reviewed-failed');
+          if (mode === 'reviewed-failed') {
+            assert.deepEqual(readFileSync(join(state, 'protected-stop.json')), initial);
+            assert.equal(existsSync(join(run, 'reviewed-protected-stop.json')), false);
+          } else assert.deepEqual(readFileSync(join(run, 'reviewed-protected-stop.json')), initial);
+        }
+        else if (mode === 'normal') assert.equal(existsSync(join(state, 'active.lock')), false);
         else {
           const stop = JSON.parse(readFileSync(join(state, 'protected-stop.json'), 'utf8'));
           assert.equal(stop.reason, mode === 'crash' ? 'Statistics resource monitor failed' : 'Fixture resource protection');

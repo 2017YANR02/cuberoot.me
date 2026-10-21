@@ -30,9 +30,12 @@ const command = (bin: string, args: string[]) => execFileSync(bin, args, { encod
 const digest = (data: Buffer) => createHash('sha256').update(data).digest('hex');
 const read = <T>(path: string): T => JSON.parse(readFileSync(path, 'utf8'));
 function atomic(path: string, value: unknown) {
+  atomicBytes(path, Buffer.from(JSON.stringify(value, null, 2) + '\n'));
+}
+function atomicBytes(path: string, bytes: Buffer) {
   const temp = `${path}.new-${process.pid}`;
   const fd = openSync(temp, 'w', 0o600);
-  try { writeFileSync(fd, JSON.stringify(value, null, 2) + '\n'); fsyncSync(fd); } finally { closeSync(fd); }
+  try { writeFileSync(fd, bytes); fsyncSync(fd); } finally { closeSync(fd); }
   renameSync(temp, path);
 }
 export function parseIdentities(text: string): Identity[] {
@@ -169,6 +172,35 @@ function inheritedRun(): string | undefined {
   if (existsSync(join(dir, 'protected-stop.json'))) throw Error('Statistics resource protection has stopped this run');
   return dir;
 }
+const startupRequiredBytes = (rssLimit: number) => rssLimit + 2 * GiB + reserve;
+/** Explicit choices stay fixed, including when this is called again at spawn. */
+export function selectStatsEoProfile(env: NodeJS.ProcessEnv, available: number, highRssLimit: () => number, physicalBytes = totalmem()): NodeJS.ProcessEnv {
+  const requested = env.CUBE_TABLE_PROFILE?.trim() || 'auto';
+  if (requested !== 'auto') return env;
+  // Preserve native auto eligibility. Smaller machines need not even have the
+  // optional high-memory tables, so inspect their metadata only if eligible.
+  if (physicalBytes < 56 * GiB) return { ...env, CUBE_TABLE_PROFILE: 'default' };
+  return { ...env, CUBE_TABLE_PROFILE: available >= startupRequiredBytes(highRssLimit()) ? 'high-memory' : 'default' };
+}
+/** Resolve before the checkpoint hash and keep the selected profile explicit.
+ * A later startup check still rejects either profile if resources have changed.
+ */
+export function resolveStatsAnalyzerEnv(binary: string, env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  if (process.platform !== 'darwin' || basename(binary) !== 'eo_cross_analyzer' || !['', 'auto'].includes(env.CUBE_TABLE_PROFILE?.trim() ?? '')) return env;
+  const dir = inheritedRun();
+  if (!dir) return env;
+  const now = observe(), physicalBytes = totalmem();
+  let highRequiredBytes: number | null = null;
+  const resolved = selectStatsEoProfile(env, now.available, () => {
+    const high = tableBudget(binary, { ...env, CUBE_TABLE_PROFILE: 'high-memory' });
+    highRequiredBytes = startupRequiredBytes(high.rssLimit);
+    return high.rssLimit;
+  }, physicalBytes);
+  atomic(join(dir, `profile-selection-${process.pid}.json`), { binary, requested: env.CUBE_TABLE_PROFILE ?? 'auto', selected: resolved.CUBE_TABLE_PROFILE,
+    available: now.available, physicalBytes, highRequiredBytes, sampledAt: now.sampledAt, boot: now.boot, swapouts: now.swapouts });
+  console.log(`[统计档位] ${basename(binary)} auto → ${resolved.CUBE_TABLE_PROFILE} (available=${now.available}, high-required=${highRequiredBytes ?? 'not-applicable'})`);
+  return resolved;
+}
 export function prepareStatsAnalyzer(binary: string, env: NodeJS.ProcessEnv): (pid: number) => () => void {
   const dir = inheritedRun();
   if (!dir) return () => () => {};
@@ -176,7 +208,7 @@ export function prepareStatsAnalyzer(binary: string, env: NodeJS.ProcessEnv): (p
   const now = observe();
   try {
     validateStatsRun(owner.baseline, now);
-    if (now.available < budget.rssLimit + 2 * GiB + reserve) throw Error(`Insufficient startup memory for ${basename(binary)}: requires ${budget.rssLimit + 2 * GiB + reserve} bytes`);
+    if (now.available < startupRequiredBytes(budget.rssLimit)) throw Error(`Insufficient startup memory for ${basename(binary)}: requires ${startupRequiredBytes(budget.rssLimit)} bytes`);
   } catch (error) {
     atomic(join(dir, 'request-stop.json'), { reason: String(error) });
     throw error;
@@ -218,6 +250,32 @@ export function validateResumeReview(review: unknown, stop: { path: string; sha2
     || value.boot !== stop.baseline.boot || value.swapouts !== stop.baseline.swapouts || !value.reason?.trim() || !Number.isFinite(Date.parse(value.reviewedAt ?? '')))
     throw Error('Explicit resource review must match the retained stop and original baseline');
   validateStatsRun(stop.baseline, now);
+}
+/** Release only the reviewed latch after the whole run has completed. Archive
+ * original bytes first; a newer stop must remain active for its own review.
+ */
+export function archiveReviewedStatsStop(stateDir: string, runDir: string, reviewed: { path: string; sha256: string }): boolean {
+  const path = join(stateDir, 'protected-stop.json');
+  if (reviewed.path !== path || !existsSync(path)) return false;
+  const bytes = readFileSync(path);
+  if (digest(bytes) !== reviewed.sha256) return false;
+  const archived = join(runDir, 'reviewed-protected-stop.json');
+  if (existsSync(archived) && digest(readFileSync(archived)) !== reviewed.sha256) throw Error('Archived statistics stop differs from reviewed proof');
+  atomicBytes(archived, bytes);
+  const reviewPath = join(stateDir, 'resume-review.json');
+  let matchingReview = false;
+  if (existsSync(reviewPath)) {
+    const reviewBytes = readFileSync(reviewPath), review = JSON.parse(reviewBytes.toString('utf8'));
+    matchingReview = review.stopPath === reviewed.path && review.stopSha256 === reviewed.sha256;
+    if (matchingReview) atomicBytes(join(runDir, 'completed-resume-review.json'), reviewBytes);
+  }
+  if (!existsSync(path) || digest(readFileSync(path)) !== reviewed.sha256) return false;
+  unlinkSync(path);
+  if (matchingReview && existsSync(reviewPath)) {
+    const review = read<{ stopPath?: string; stopSha256?: string }>(reviewPath);
+    if (review.stopPath === reviewed.path && review.stopSha256 === reviewed.sha256) unlinkSync(reviewPath);
+  }
+  return true;
 }
 function signalVerified(value: Identity, signal: NodeJS.Signals): boolean {
   if (!sameIdentity(value, identity(value.pid))) return false;
@@ -415,7 +473,7 @@ export async function withStatsResourceMonitor(action: () => Promise<void>, stat
     process.on('SIGINT', onInt); process.on('SIGTERM', onTerm);
     console.log(`[资源监控] ${dir}`);
     await runWhileMonitored(action, exited, () => { unexpectedExit = true; });
-    status = process.exitCode === 2 ? 'partial' : 'complete';
+    status = process.exitCode === 2 ? 'partial' : process.exitCode === undefined || process.exitCode === 0 ? 'complete' : 'failed';
   } finally {
     if (timer) clearTimeout(timer);
     try { atomic(join(dir, 'finish.json'), { status }); }
@@ -439,7 +497,10 @@ export async function withStatsResourceMonitor(action: () => Promise<void>, stat
     })]);
     if (completionTimeout) clearTimeout(completionTimeout);
     process.off('SIGINT', onInt); process.off('SIGTERM', onTerm);
-    if (code === 0 && !unexpectedExit) unlinkSync(lock);
+    if (code === 0 && !unexpectedExit) {
+      if ((status === 'complete' || status === 'partial') && owner.priorStop) archiveReviewedStatsStop(stateDir, dir, owner.priorStop);
+      unlinkSync(lock);
+    }
     if (code !== 0 || unexpectedExit) {
       // If the observer itself crashed, fail closed rather than leaving work
       // running without protection. Never signal the monitor or a reused PID.

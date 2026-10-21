@@ -5,7 +5,7 @@ import { access, appendFile, mkdir, open, readFile, stat, unlink, writeFile } fr
 import { dirname, join, resolve } from 'node:path';
 import { createInterface } from 'node:readline';
 import { dataRoot, puzzleDir, repoRoot, tableDir, wcaDir } from '../../core/jobs/scramble-stats-build/pipeline_paths.mjs';
-import { prepareStatsAnalyzer } from './resource-monitor.js';
+import { prepareStatsAnalyzer, resolveStatsAnalyzerEnv } from './resource-monitor.js';
 
 export { dataRoot, puzzleDir, repoRoot, tableDir, wcaDir };
 export const coreDir = join(repoRoot, 'core');
@@ -141,6 +141,7 @@ export async function reapUnregisteredAnalyzer(child: ChildProcess): Promise<voi
   try { await closed; } finally { clearTimeout(force); }
 }
 async function launchAnalyzer(binary: string, logFile: string, env: NodeJS.ProcessEnv, label: string, args: string[], cwd: string, onLine?: (line: string) => void) {
+  env = resolveStatsAnalyzerEnv(binary, env);
   await mkdir(dirname(logFile), { recursive: true });
   const attachResource = prepareStatsAnalyzer(binary, env);
   const child = spawn(binary, args, { cwd, env, stdio: ['pipe', 'pipe', 'pipe'], shell: process.platform === 'win32' && /\.cmd$/i.test(binary) });
@@ -211,6 +212,9 @@ export async function analyzer(binary: string, inputFiles: string[], logFile: st
 }
 
 export async function openAnalyzerSession(binary: string, logFile: string, env: NodeJS.ProcessEnv, label: string, args: string[] = [], cwd = dirname(logFile)) {
+  // Resolve auto once, before hashing, so checkpoint identity and the spawned
+  // analyzer use the same explicit table profile across every resident batch.
+  env = resolveStatsAnalyzerEnv(binary, env);
   // Bind checkpoints to the real executable and all solver configuration, but
   // exclude monitoring/progress and thread count, which do not change results.
   const hash = createHash('sha256');

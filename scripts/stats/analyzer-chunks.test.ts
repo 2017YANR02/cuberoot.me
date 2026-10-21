@@ -15,7 +15,7 @@ for await (const input of readline.createInterface({input:process.stdin})) {
   if(input==='exit') break;
   const source=fs.readFileSync(input,'utf8');
   const output=input.replace(/\\.txt$/, '_fixture.csv');
-  fs.appendFileSync(process.env.FIXTURE_CALLS,JSON.stringify({pid:process.pid,source,checkpoint:fs.existsSync(output+'.checkpoint')})+'\\n');
+  fs.appendFileSync(process.env.FIXTURE_CALLS,JSON.stringify({pid:process.pid,source,checkpoint:fs.existsSync(output+'.checkpoint'),profile:process.env.CUBE_TABLE_PROFILE,identity:process.env.ANALYZER_CHECKPOINT_ID})+'\\n');
   const ids=source.trim().split('\\n').map(row=>row.split(',')[0]);
   fs.writeFileSync(output,'id,depth\\n'+ids.map(id=>id+',4').join('\\n')+'\\n');
   console.error('[DONE] '+ids.length+' tasks, output='+output);
@@ -56,6 +56,27 @@ test('pending input is recovered before overwrite; an interrupted merge remains 
     assert.deepEqual(observed.map(row => [row.source, row.checkpoint]), [['1,U\n2,R\n', true], ['3,F\n', false]]);
     assert.equal(new Set(observed.map(row => row.pid)).size, 1);
     assert.equal(await readFile(options.target, 'utf8'), 'id,depth\n1,4\n2,4\n3,4\n');
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
+test('checkpoint identity binds the explicit table profile passed to the resident child', { timeout: 10_000 }, async () => {
+  const { dir, calls, options } = await fixture();
+  try {
+    await writeFile(options.input, '1,U\n');
+    const identities: string[] = [];
+    for (const profile of ['default', 'high-memory']) {
+      const session = await openAnalyzerSession(options.binary, options.log,
+        { ...options.env, CUBE_TABLE_PROFILE: profile }, 'profile-fixture', options.args);
+      try {
+        identities.push(session.checkpointId);
+        await session.run(options.input, options.output);
+        await session.close();
+      } finally { await session.abort(); }
+    }
+    assert.notEqual(identities[0], identities[1]);
+    const observed = (await readFile(calls, 'utf8')).trim().split('\n').map(row => JSON.parse(row));
+    assert.deepEqual(observed.map(row => row.profile), ['default', 'high-memory']);
+    assert.deepEqual(observed.map(row => row.identity), identities);
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
 
