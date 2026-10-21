@@ -5,10 +5,16 @@ First deploy the API version that supports `engine: rust-native`. Then run
 does not replace the selected production engine before its full-solve benchmark.
 
 The workflow builds a static Linux x86-64 binary using Rust 1.98.1 and
-`opt8-native-search,opt8-native-quarter,opt9-native-fixed-contexts`. The CPU
+`opt8-native-search,opt8-native-quarter,opt9-native-fixed-contexts,opt8-native-prefetch`. The CPU
 baseline is explicitly `x86-64`; runtime SIMD detection selects the supported
 backend. Its `build.json` records the source commit, flags and binary SHA-256.
 Builds never load or generate tables.
+
+When publishing a measured optimization, supply the accepted executable's
+SHA-256 as the workflow's `expected_binary_sha256` input. A different build
+fails before upload or any server operation; inspect that difference before
+changing the pin. The same check is available to the local builder through
+`CUBEOPT_EXPECTED_BINARY_SHA256`.
 
 The daemon keeps one table resident across requests. `CUBEOPT_THREADS` controls
 single-cube search threads; the native batch worker count is fixed to one.

@@ -47,7 +47,7 @@ const meta = JSON.parse(readFileSync(`${dir}/build.json`, 'utf8'));
 const binary = readFileSync(`${dir}/cube48opt-native`);
 if (meta.schema !== 'cuberoot.cubeopt-native-build/v1' || meta.revision !== revision
   || meta.target !== 'x86_64-unknown-linux-musl' || meta.rustflags !== '-C target-cpu=x86-64'
-  || meta.features !== 'opt8-native-search,opt8-native-quarter,opt9-native-fixed-contexts'
+  || meta.features !== 'opt8-native-search,opt8-native-quarter,opt9-native-fixed-contexts,opt8-native-prefetch'
   || meta.binary.bytes !== binary.length
   || meta.binary.sha256 !== createHash('sha256').update(binary).digest('hex')) {
   throw new Error('uploaded native build does not match release metadata');

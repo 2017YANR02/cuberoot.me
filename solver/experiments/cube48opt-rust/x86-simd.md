@@ -121,8 +121,7 @@ of resident PID `1595936` found RSS **7,601,880 kB**, anonymous memory
 policy was `enabled=always`, `defrag=madvise`. This is a deployed baseline
 snapshot, not evidence that most of the table already uses huge pages.
 
-Two separate non-default candidates are staged; neither has an accepted
-full-table performance result:
+Two separate candidates were measured after the initial native release:
 
 | Feature | Hypothesis | Acceptance measurements |
 | --- | --- | --- |
@@ -157,6 +156,58 @@ feature; prefetch is disabled in that candidate. Compare sequential resident
 processes with alternating baseline/candidate order, the same corpus and CPU
 mode, independent solution/optimal-length checks, and comparable validation
 receipt state. Retain only repeatable net improvements.
+
+### Repeated Linux Opt8 results (2026-10-21)
+
+Three interleaved rounds per candidate used the formal deployed binary as
+baseline, AVX2, four search threads and the same WCA100 corpus. Each pass kept
+one process resident for all 100 requests. Both six-pass groups passed 600/600
+independent cubing.js replays and pinned historical H10 optimal-length checks;
+the wrapper restored the original service and verified readiness after each
+group. All timings below exclude startup.
+
+| Candidate | Baseline rounds (s) | Candidate rounds (s) | Paired time reductions | Decision |
+| --- | --- | --- | --- | --- |
+| Hugepages | 109.839 / 92.081 / 87.075 | 95.869 / 86.323 / 88.891 | 12.718% / 6.253% / −2.086% | Keep off: not consistently faster. |
+| Prefetch | 103.013 / 101.240 / 94.450 | 93.414 / 81.172 / 80.559 | 9.318% / 19.822% / 14.707% | Accepted as a measured release candidate; deployment is recorded separately. |
+
+The review threshold was at least 5% improvement in every paired round and
+in the ratio of median totals, followed by tail/resource review. This is a
+conservative selection rule, not a statistical confidence interval. A fixed
+100-case workload repeated three times does not establish performance for
+every cube state or machine.
+
+Hugepages added 8.5–10.3 seconds to startup. The baseline's actual process-wide
+`AnonHugePages` changed from 16 MiB in round one to about 2,896 MiB in subsequent
+rounds; the host's existing automatic THP policy also backed the baseline.
+The candidate had more huge pages in round three yet was slower. These records
+do not identify the cause of the timing drift or justify a global THP change.
+
+Prefetch's median **paired** reduction was 14.707%. The separate ratio of median
+totals was 19.822% (101.240 → 81.172 seconds); these are different statistics.
+Every round improved P95, P99 and maximum request latency. Using each query's
+three-run median, P95 was 3.655 → 3.421 seconds and P99 5.194 → 4.203 seconds.
+The baseline's hardest ten queries improved by 13.24% in their sum of medians.
+No query regressed in all three paired rounds, although individual regressions
+remain: query 27001, for example, was slower in two rounds and its independent
+median increased from 2.322 to 2.467 seconds. This is a workload improvement,
+not a guarantee that every request is faster.
+
+Prefetch and baseline both started in about 49–52 seconds, peaked near 7,428 MiB
+RSS and had closely matched 3,002–3,010 MiB process-wide `AnonHugePages`. Search
+CPU ticks decreased in all three pairs by 11.48% / 14.68% / 15.63%. These process
+figures neither prove table-wide THP backing nor provide hardware cache/TLB
+miss counters. Remote host swap is permitted; it must not be confused with the
+separately monitored Mac's no-new-swapout evidence.
+
+Accepted prefetch executable SHA-256:
+`0f6f481c5f98130d5295aaf2b073f2b642a5b8c4e271dfb60c19f42c6c9a50c0`.
+It was built by workflow `39657276722` from `8719737536`, adding only
+`opt8-native-prefetch` to the production search flags. Full local records:
+`.tmp/cubeopt-reverse/native-feature-ab-20261021/accepted-v4/{hugepages,prefetch}/`;
+independent tail review: `.tmp/cubeopt-prefetch-review-20261021/review.md`.
+Combining other features requires a new measured executable; standalone gains
+must not be added together.
 
 ## Why 96 symmetries do not directly halve the current Opt8 table
 

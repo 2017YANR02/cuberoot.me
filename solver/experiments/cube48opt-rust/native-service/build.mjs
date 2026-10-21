@@ -9,7 +9,11 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const output = resolve(process.argv[2] || resolve(root, 'target/native-service-release'));
 const target = 'x86_64-unknown-linux-musl';
 const toolchain = '1.98.1';
-const features = 'opt8-native-search,opt8-native-quarter,opt9-native-fixed-contexts';
+const expectedSha256 = process.env.CUBEOPT_EXPECTED_BINARY_SHA256 || '';
+if (expectedSha256 && !/^[a-f0-9]{64}$/.test(expectedSha256)) {
+  throw new Error('CUBEOPT_EXPECTED_BINARY_SHA256 must be a lowercase SHA-256 digest');
+}
+const features = 'opt8-native-search,opt8-native-quarter,opt9-native-fixed-contexts,opt8-native-prefetch';
 const args = [`+${toolchain}`, 'build', '--locked', '--release', '--target', target,
   '--target-dir', resolve(root, 'target/native-service'), '--features', features,
   '--bin', 'cube48opt-research'];
@@ -30,6 +34,10 @@ const binaryPath = resolve(output, 'cube48opt-native');
 copyFileSync(resolve(root, `target/native-service/${target}/release/cube48opt-research`), binaryPath);
 chmodSync(binaryPath, 0o755);
 const binary = readFileSync(binaryPath);
+const binarySha256 = createHash('sha256').update(binary).digest('hex');
+if (expectedSha256 && binarySha256 !== expectedSha256) {
+  throw new Error(`native build differs from the performance-accepted binary: expected ${expectedSha256}, got ${binarySha256}`);
+}
 if (binary.subarray(0, 4).toString('hex') !== '7f454c46'
   || binary[4] !== 2 || binary[5] !== 1 || binary.readUInt16LE(18) !== 62) {
   throw new Error('native service binary must be an x86-64 little-endian ELF64 executable');
@@ -44,7 +52,7 @@ const metadata = {
   schema: 'cuberoot.cubeopt-native-build/v1', revision, target, toolchain, features,
   rustflags: env.RUSTFLAGS,
   buildCommand: 'node solver/experiments/cube48opt-rust/native-service/build.mjs',
-  binary: { path: 'cube48opt-native', bytes: binary.length, sha256: createHash('sha256').update(binary).digest('hex') },
+  binary: { path: 'cube48opt-native', bytes: binary.length, sha256: binarySha256 },
 };
 writeFileSync(resolve(output, 'build.json'), `${JSON.stringify(metadata, null, 2)}\n`);
 console.log(JSON.stringify(metadata, null, 2));

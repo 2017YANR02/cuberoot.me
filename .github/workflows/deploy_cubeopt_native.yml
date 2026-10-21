@@ -2,6 +2,11 @@ name: Deploy CubeOpt Native
 
 on:
   workflow_dispatch:
+    inputs:
+      expected_binary_sha256:
+        description: 'SHA-256 of the performance-accepted binary; reject a different build before upload'
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -38,6 +43,7 @@ jobs:
       - name: Build native Opt8 service
         env:
           CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER: musl-gcc
+          CUBEOPT_EXPECTED_BINARY_SHA256: ${{ inputs.expected_binary_sha256 }}
         run: node solver/experiments/cube48opt-rust/native-service/build.mjs "$RUNNER_TEMP/cubeopt-native"
 
       - uses: actions/upload-artifact@v4
