@@ -61,6 +61,9 @@ node --env-file=.env dist/cubeopt/prepare.mjs \
   --source-url https://github.com/2017YANR02/cuberoot.me \
   --source-revision "$revision" \
   --source-build-command 'node solver/experiments/cube48opt-rust/native-service/build.mjs'
+# Fail before changing admission if an entry-point/build regression returned
+# success without publishing the immutable candidate.
+test -f "$store/bundles/$bundle/manifest.json"
 
 admission_changed=0
 pointer_changed=0

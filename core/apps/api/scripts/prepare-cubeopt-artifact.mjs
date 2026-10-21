@@ -1,5 +1,3 @@
-import { resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { prepareCubeoptArtifact } from './lib/prepare-cubeopt-artifact.mjs';
 
@@ -39,9 +37,9 @@ function parseCliOptions() {
   };
 }
 
-const isMain = typeof process.argv[1] === 'string'
-  && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url));
-if (isMain) {
+// Node resolves import.meta.url through the production dist symlink, while
+// argv keeps the symlink path. Let Node identify the entry module itself.
+if (import.meta.main) {
   const result = await prepareCubeoptArtifact(parseCliOptions());
   console.log(`published immutable ${result.artifact.manifest.bundle} at ${result.finalDir}`);
 }

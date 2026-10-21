@@ -1,8 +1,9 @@
 import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 import { lstat, mkdir, mkdtemp, readFile, readdir, rename, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { prepareCubeoptArtifact } from '../scripts/lib/prepare-cubeopt-artifact.mjs';
@@ -757,11 +758,14 @@ describe('CubeOpt artifact bundle', () => {
     expect(await readFile(envFile, 'utf8')).toBe(original);
   });
 
-  it('executes the bundled provision CLI without invoking another bundled CLI', async () => {
+  it('executes the bundled provision CLI through the production dist symlink', async () => {
     const deployment = await mkdtemp(join(tmpdir(), 'cuberoot-cubeopt-bundled-cli-'));
     scratchDirs.push(deployment);
     const envFile = join(deployment, '.env');
-    const output = join(deployment, 'provision.mjs');
+    const release = join(deployment, 'releases', 'fixture', 'dist');
+    await mkdir(release, { recursive: true });
+    await symlink(release, join(deployment, 'dist'), process.platform === 'win32' ? 'junction' : 'dir');
+    const output = join(release, 'provision.mjs');
     await writeFile(envFile, 'CUBEOPT_SOLVE_ENABLED=1\n');
     await build({
       entryPoints: [resolve(__dirname, '../scripts/provision-cubeopt-artifact.mjs')],
@@ -773,35 +777,78 @@ describe('CubeOpt artifact bundle', () => {
       logLevel: 'silent',
     });
 
-    const originalArgv = process.argv;
-    const originalLegacy = {
-      CUBEOPT_ARTIFACT_DIR: process.env.CUBEOPT_ARTIFACT_DIR,
-      CUBEOPT_MODULE: process.env.CUBEOPT_MODULE,
-      CUBEOPT_TABLE: process.env.CUBEOPT_TABLE,
-    };
-    process.argv = [
-      process.execPath,
-      output,
+    const env = { ...process.env };
+    delete env.CUBEOPT_ARTIFACT_DIR;
+    delete env.CUBEOPT_MODULE;
+    delete env.CUBEOPT_TABLE;
+    const result = spawnSync(process.execPath, [
+      join(deployment, 'dist', 'provision.mjs'),
       '--env-file', envFile,
       '--default-store', join(deployment, 'artifacts', 'cubeopt'),
       '--bundle-suffix', 'legacy-runtime-v1',
       '--source-url', 'fixture://legacy-runtime',
       '--source-revision', 'test-only',
       '--source-build-command', 'copy fixture bytes',
-    ];
-    delete process.env.CUBEOPT_ARTIFACT_DIR;
-    delete process.env.CUBEOPT_MODULE;
-    delete process.env.CUBEOPT_TABLE;
-    try {
-      await expect(import(`${pathToFileURL(output).href}?run=${Date.now()}`))
-        .rejects.toThrow(/missing required legacy CUBEOPT_MODULE/);
-    } finally {
-      process.argv = originalArgv;
-      for (const [name, value] of Object.entries(originalLegacy)) {
-        if (value === undefined) delete process.env[name];
-        else process.env[name] = value;
-      }
-    }
+    ], { encoding: 'utf8', env, timeout: 10_000 });
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(1);
+    expect(result.stderr).toMatch(/missing required legacy CUBEOPT_MODULE/);
+  });
+
+  it('publishes a small fixture with the bundled prepare CLI through a dist symlink', async () => {
+    const fixture = await makeFixture({ bundle: 'cubeopt-opt5-cli-source' });
+    const deployment = await mkdtemp(join(tmpdir(), 'cuberoot-cubeopt-prepare-cli-'));
+    scratchDirs.push(deployment);
+    const release = join(deployment, 'releases', 'fixture', 'dist');
+    await mkdir(release, { recursive: true });
+    await symlink(release, join(deployment, 'dist'), process.platform === 'win32' ? 'junction' : 'dir');
+    const output = join(release, 'prepare.mjs');
+    const options = {
+      entryPoints: [resolve(__dirname, '../scripts/prepare-cubeopt-artifact.mjs')],
+      bundle: true, platform: 'node', target: 'node22', format: 'esm', outfile: output,
+      logLevel: 'silent',
+    };
+    // First exercise the unmodified production bundle: missing CLI inputs must
+    // fail, rather than silently return success because dist is a symlink.
+    await build(options);
+    const executable = join(deployment, 'dist', 'prepare.mjs');
+    const missing = spawnSync(process.execPath, [executable], { encoding: 'utf8', timeout: 10_000 });
+    expect(missing.error).toBeUndefined();
+    expect(missing.status).toBe(1);
+    expect(missing.stderr).toMatch(/missing required --bundle/);
+
+    // The existing library test seam permits tiny tables. Inject only that
+    // option at build time; the CLI entry guard, argument parsing, hashing and
+    // atomic publication remain the real code. No production flag is added.
+    await build({ ...options, plugins: [{
+      name: 'bounded-cubeopt-fixture',
+      setup(builder) {
+        builder.onLoad({ filter: /[/\\]scripts[/\\]prepare-cubeopt-artifact\.mjs$/ }, async ({ path }) => ({
+          contents: (await readFile(path, 'utf8')).replace(
+            'prepareCubeoptArtifact(parseCliOptions())',
+            'prepareCubeoptArtifact({ ...parseCliOptions(), allowFixtureSizes: true })',
+          ),
+          loader: 'js', resolveDir: dirname(path),
+        }));
+      },
+    }] });
+    const store = join(deployment, 'artifacts', 'cubeopt');
+    const bundle = 'cubeopt-opt5-cli-published';
+    const result = spawnSync(process.execPath, [executable,
+      '--store', store, '--bundle', bundle,
+      '--module', join(fixture.root, 'cube48opt5.mjs'),
+      '--wasm', join(fixture.root, 'cube48opt5.wasm'),
+      '--table', join(fixture.root, 'h48prun31h5.dat'),
+      '--source-url', 'fixture://bundled-cli', '--source-revision', 'test-only',
+      '--source-build-command', 'copy fixture bytes',
+    ], { encoding: 'utf8', timeout: 10_000 });
+    expect(result.error).toBeUndefined();
+    expect(result.stderr).toBe('');
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain(`published immutable ${bundle}`);
+    const artifact = await verifyCubeoptBundle(join(store, 'bundles', bundle), { allowFixtureSizes: true });
+    expect(artifact.manifest.bundle).toBe(bundle);
+    expect(artifact.manifest.files.table.sha256).toBe(fixture.manifest.files.table.sha256);
   });
 
   it('keeps server runtime sources free of Web and solver-table path fallbacks', async () => {

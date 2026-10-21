@@ -384,6 +384,21 @@
       "evidence": [{"file":"core/apps/api/src/cubeopt/diagnostics.ts","contains":"timeout: 1500, maxBuffer: 65536"}]
     },
     {
+      "id": "server-cubeopt-cli-symlink-regression",
+      "from": "apps/api CubeOpt artifact CLI regression tests",
+      "to": "temporary esbuild prepare/provision CLI bundles through a dist directory symlink",
+      "phase": "subprocess-native",
+      "mechanism": "Three shell-free process.execPath spawnSync calls with temporary fixture CLI paths and a 10 second timeout; no solver process or production data",
+      "owner": "server",
+      "rationale": "Reviewed by the parent task agent: reproduce the production argv/import.meta symlink mismatch and verify actual CLI publication, which an imported-function test cannot cover.",
+      "replacement": "Keep test-only, fixed Node executable, temporary bundles and small synthetic tables; do not accept user-provided executables or production artifact stores.",
+      "subprocessCalls": [{"file":"apps/api/tests/cubeopt_artifact.test.mjs","mechanism":"spawnSync","target":"<dynamic>","count":3}],
+      "evidence": [
+        {"file":"core/apps/api/tests/cubeopt_artifact.test.mjs","contains":"publishes a small fixture with the bundled prepare CLI through a dist symlink"},
+        {"file":"core/apps/api/tests/cubeopt_artifact.test.mjs","contains":"timeout: 10_000"}
+      ]
+    },
+    {
       "id": "server-backup-shell-regression",
       "from": "apps/api backup regression tests",
       "to": "repository backup shell script with disposable fixture binaries and archive",

@@ -10,7 +10,6 @@ import {
   stat,
 } from 'node:fs/promises';
 import { basename, dirname, isAbsolute, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import {
   assertCubeoptArtifactSources,
@@ -176,9 +175,8 @@ function parseCliOptions() {
   };
 }
 
-const isMain = typeof process.argv[1] === 'string'
-  && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url));
-if (isMain) {
+// The production dist path is a symlink to an immutable release directory.
+if (import.meta.main) {
   const result = await provisionCubeoptArtifact(parseCliOptions());
   console.log(JSON.stringify(result, null, 2));
 }
