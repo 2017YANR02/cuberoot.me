@@ -104,10 +104,16 @@ export async function appendUniqueById(target: string, source: string, sourceHea
   }
   return added;
 }
+export class CommandExitError extends Error {
+  constructor(public readonly command: string, public readonly args: string[], public readonly code: number) {
+    super(`${command} ${args.join(' ')} exited with ${code}`);
+    this.name = 'CommandExitError';
+  }
+}
 export async function run(command: string, args: string[], cwd: string, env: NodeJS.ProcessEnv = process.env): Promise<void> {
   const child = spawn(command, args, { cwd, env, stdio: 'inherit', shell: process.platform === 'win32' && /\.cmd$/i.test(command) });
   const code = await new Promise<number>((done, fail) => { child.on('error', fail); child.on('close', value => done(value ?? 1)); });
-  if (code !== 0) throw new Error(`${command} exited with ${code}`);
+  if (code !== 0) throw new CommandExitError(command, args, code);
 }
 export async function runPnpm(args: string[], cwd = coreDir, env: NodeJS.ProcessEnv = process.env): Promise<void> {
   await run(process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm', args, cwd, env);

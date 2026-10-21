@@ -4,6 +4,8 @@
 
 ## 本机配置
 
+2026-10-21 退出码修复：本地统计的退出码 `2` 表示全部产物已生成，但 SQ1 等仍有待解/待定状态；原因同时写入终端末尾和 `solver/tables/stats-local-*.json` 的 `partial`。日常发布入口将此状态作为警告继续发布，未解 `M` 不计入精确分布，原始记录保留供续算；真正的子任务失败仍阻止发布。2026-10-20 这一轮为 SQ1 ID `5886113` 在三轮有时限求解后仍未解出，其余结果已保存。若只恢复该轮发布，在确认本地产物仍是该轮结果后，从 `core/` 使用 `CUBEROOT_DATA_ROOT="$HOME/Documents/scramble" pnpm stats:scramble --publish-only`，不重跑计算；该命令会灌 PG、上传 static 并提交推送统计文件。
+
 2026-10-17 路径修复：仓库在 `~/Developer/cuberoot.me`，历史统计数据仍在 `~/Documents/scramble`。本机 `.command` 明确导出 `CUBEROOT_DATA_ROOT` 指向后者；尊重显式环境覆盖，并在历史 `wca_scramble/stats/std.csv` 缺失时退出，避免把仓库移动误判为首次全量计算。不要移动、清空旧数据或把 `~/Developer/scramble` 中误启动生成的输入当作历史结果。重新启动前可用 `incremental.ts --dry-run --tsv-dir <现有导出目录> --data-dir <历史 WCA 目录>` 只读核对新增量。
 
 - Apple「快捷指令」中有「跑打乱统计」，已添加到 Dock。

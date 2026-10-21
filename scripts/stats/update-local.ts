@@ -319,8 +319,13 @@ async function main(): Promise<void> {
       await step('scramble-steps', () => runPnpm(['--filter', '@cuberoot/scramble-stats-build', 'build:scramble-steps'], coreDir, buildEnv));
     }
     summary.status = partial.length ? 'partial' : 'complete';
-    if (partial.length) { summary.partial = partial; process.exitCode = 2; }
-    console.log(`\n统计完成：${((Date.now() - runStart) / 60_000).toFixed(1)} 分钟；只写本地文件。`);
+    if (partial.length) {
+      summary.partial = partial;
+      process.exitCode = 2;
+      for (const reason of partial) console.warn(`[统计待完成] ${reason}`);
+      console.warn('已保存本轮结果；退出码 2 表示仍有待解/待定状态，下次从保存结果继续。');
+    }
+    console.log(`\n统计${partial.length ? '产物已生成（仍有待完成项）' : '完成'}：${((Date.now() - runStart) / 60_000).toFixed(1)} 分钟；只写本地文件。`);
   } catch (error) {
     summary.status = `failed: ${String(error)}`;
     throw error;
