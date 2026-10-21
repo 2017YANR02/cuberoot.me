@@ -2,7 +2,8 @@ import { spawn } from 'node:child_process';
 import { availableParallelism } from 'node:os';
 import { mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { analyzer, exe, exists, lines, puzzleDir } from './common.js';
+import { analyzer, exe, exists, lines, puzzleDir, reapUnregisteredAnalyzer } from './common.js';
+import { prepareStatsAnalyzer } from './resource-monitor.js';
 
 type Wca = { moves: number; slashes: number; optimal: string };
 type Resolved = { value: string; optimal: string };
@@ -59,12 +60,19 @@ async function saveFinal(wca: Map<string, Wca>, ambiguous: Set<string>, resolved
   return fallback;
 }
 async function decideOne(binary: string, input: string): Promise<string> {
+  const attachResource = prepareStatsAnalyzer(binary, process.env);
   const child = spawn(binary, [], { cwd: dir, stdio: ['pipe', 'pipe', 'ignore'] });
+  let releaseResource: () => void;
+  try { releaseResource = child.pid ? attachResource(child.pid) : () => {}; }
+  catch (error) { await reapUnregisteredAnalyzer(child); throw error; }
   let output = '';
   child.stdout.setEncoding('utf8');
   child.stdout.on('data', chunk => { output += chunk; });
+  child.stdin.on('error', () => {});
   child.stdin.end(`${input}\n`);
-  const code = await new Promise<number>((done, fail) => { child.on('error', fail); child.on('close', value => done(value ?? 1)); });
+  let code: number;
+  try { code = await new Promise<number>((done, fail) => { child.on('error', fail); child.on('close', value => done(value ?? 1)); }); }
+  finally { releaseResource(); }
   if (code !== 0) return '';
   let result = '';
   for (const line of output.split(/\r?\n/)) if (/^\d+,\d+$/.test(line.trim())) result = line.trim();

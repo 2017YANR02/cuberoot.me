@@ -1,9 +1,11 @@
-import { spawn } from 'node:child_process';
+import { spawn, type ChildProcess } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { createReadStream, createWriteStream } from 'node:fs';
 import { access, appendFile, mkdir, open, readFile, stat, unlink, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { createInterface } from 'node:readline';
 import { dataRoot, puzzleDir, repoRoot, tableDir, wcaDir } from '../../core/jobs/scramble-stats-build/pipeline_paths.mjs';
+import { prepareStatsAnalyzer } from './resource-monitor.js';
 
 export { dataRoot, puzzleDir, repoRoot, tableDir, wcaDir };
 export const coreDir = join(repoRoot, 'core');
@@ -124,10 +126,31 @@ export async function runNode(script: string, args: string[] = [], cwd = jobDir,
 export async function runTs(script: string, args: string[] = [], cwd = jobDir, env: NodeJS.ProcessEnv = process.env): Promise<void> {
   await run(tsx, [script, ...args], cwd, env);
 }
-export async function analyzer(binary: string, inputFiles: string[], logFile: string, env: NodeJS.ProcessEnv, label: string, args: string[] = [], cwd = dirname(inputFiles[0]), terminator = 'exit'): Promise<void> {
+/** Reap only the child we just spawned if resource registration fails. */
+export async function reapUnregisteredAnalyzer(child: ChildProcess): Promise<void> {
+  if (child.exitCode !== null || child.signalCode !== null) return;
+  const closed = new Promise<void>(done => { child.once('close', () => done()); });
+  child.on('error', () => {});
+  child.stdin?.on('error', () => {});
+  child.stdout?.resume();
+  child.stderr?.resume();
+  child.kill('SIGTERM');
+  const force = setTimeout(() => {
+    if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
+  }, 1500);
+  try { await closed; } finally { clearTimeout(force); }
+}
+async function launchAnalyzer(binary: string, logFile: string, env: NodeJS.ProcessEnv, label: string, args: string[], cwd: string, onLine?: (line: string) => void) {
   await mkdir(dirname(logFile), { recursive: true });
+  const attachResource = prepareStatsAnalyzer(binary, env);
   const child = spawn(binary, args, { cwd, env, stdio: ['pipe', 'pipe', 'pipe'], shell: process.platform === 'win32' && /\.cmd$/i.test(binary) });
+  let releaseResource: () => void;
+  try { releaseResource = child.pid ? attachResource(child.pid) : () => {}; }
+  catch (error) { await reapUnregisteredAnalyzer(child); throw error; }
+  child.stdin.on('error', () => {}); // run/write callbacks and child exit report failures
   const log = createWriteStream(logFile, { flags: 'w', encoding: 'utf8' });
+  let logFailure: Error | undefined;
+  log.on('error', error => { logFailure = error; child.kill('SIGTERM'); });
   let lastStatus = 0;
   let lastPercent = -1;
   const show = (done: number, total: number) => {
@@ -143,6 +166,7 @@ export async function analyzer(binary: string, inputFiles: string[], logFile: st
     const reader = createInterface({ input: stream, crlfDelay: Infinity });
     for await (const line of reader) {
       log.write(`${line}\n`);
+      onLine?.(line);
       const match = line.match(/\[PROG\]\s+(\d+)\s*\/\s*(\d+)/);
       if (match) show(Number(match[1]), Number(match[2]));
     }
@@ -165,14 +189,75 @@ export async function analyzer(binary: string, inputFiles: string[], logFile: st
     } catch { /* progress file may be between writes */ }
   }, 10_000) : undefined;
   const output = Promise.all([capture(child.stdout), capture(child.stderr)]);
+  const finished = (async () => {
+    let code: number;
+    try { code = await new Promise<number>((done, fail) => { child.on('error', fail); child.on('close', value => done(value ?? 1)); }); }
+    finally { if (heartbeat) clearInterval(heartbeat); releaseResource(); }
+    await output;
+    if (logFailure) throw logFailure;
+    await new Promise<void>((done, fail) => { log.end(done); log.once('error', fail); });
+    if (code !== 0) throw new Error(`${label} exited with ${code}; see ${logFile}`);
+    if (lastPercent < 100) console.log(`[进度] ${label} 100%`);
+  })();
+  // Callers can be preparing the next input while a child exits.
+  void finished.catch(() => {});
+  return { child, finished };
+}
+
+export async function analyzer(binary: string, inputFiles: string[], logFile: string, env: NodeJS.ProcessEnv, label: string, args: string[] = [], cwd = dirname(inputFiles[0]), terminator = 'exit'): Promise<void> {
+  const { child, finished } = await launchAnalyzer(binary, logFile, env, label, args, cwd);
   child.stdin.end(`${inputFiles.join('\n')}\n${terminator ? `${terminator}\n` : ''}`);
-  let code: number;
-  try { code = await new Promise<number>((done, fail) => { child.on('error', fail); child.on('close', value => done(value ?? 1)); }); }
-  finally { if (heartbeat) clearInterval(heartbeat); }
-  await output;
-  await new Promise<void>((done, fail) => { log.end(done); log.once('error', fail); });
-  if (code !== 0) throw new Error(`${label} exited with ${code}; see ${logFile}`);
-  if (lastPercent < 100) console.log(`[进度] ${label} 100%`);
+  await finished;
+}
+
+export async function openAnalyzerSession(binary: string, logFile: string, env: NodeJS.ProcessEnv, label: string, args: string[] = [], cwd = dirname(logFile)) {
+  // Bind checkpoints to the real executable and all solver configuration, but
+  // exclude monitoring/progress and thread count, which do not change results.
+  const hash = createHash('sha256');
+  for await (const bytes of createReadStream(binary)) hash.update(bytes);
+  hash.update(JSON.stringify(args));
+  hash.update(JSON.stringify(Object.entries(env).filter(([key]) => key.startsWith('CUBE_')).sort(([a], [b]) => a.localeCompare(b))));
+  const checkpointId = hash.digest('hex');
+  let pending: { output: string; resolve: () => void; reject: (error: Error) => void } | undefined;
+  let ended = false;
+  const { child, finished } = await launchAnalyzer(binary, logFile,
+    { ...env, ANALYZER_CHECKPOINT_ID: checkpointId, ANALYZER_PROGRESS_FILE: undefined }, label, args, cwd, line => {
+      const done = line.match(/\[DONE\].*output=(.+)$/);
+      if (!done || !pending) return;
+      const current = pending;
+      pending = undefined;
+      if (resolve(cwd, done[1]) !== current.output) current.reject(new Error('Analyzer completed an unexpected output file'));
+      else current.resolve();
+    });
+  void finished.then(() => {
+    ended = true;
+    pending?.reject(new Error('Analyzer exited before completing its input'));
+    pending = undefined;
+  }, error => { ended = true; pending?.reject(error); pending = undefined; });
+  return {
+    pid: child.pid,
+    checkpointId,
+    async run(input: string, output: string) {
+      if (ended || pending) throw new Error('Analyzer session is closed or already processing a file');
+      if (/[\r\n]/.test(input)) throw new Error('Analyzer input path contains a line break');
+      await new Promise<void>((done, fail) => {
+        pending = { output: resolve(output), resolve: done, reject: fail };
+        child.stdin.write(`${input}\n`, error => { if (error) { pending = undefined; fail(error); } });
+      });
+    },
+    async close() {
+      if (pending) throw new Error('Cannot close an analyzer with unfinished work');
+      if (!ended) child.stdin.end('exit\n');
+      await finished;
+    },
+    async abort() {
+      if (child.exitCode === null && child.signalCode === null) child.kill('SIGTERM');
+      const force = setTimeout(() => {
+        if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
+      }, 1500);
+      try { await finished.catch(() => {}); } finally { clearTimeout(force); }
+    },
+  };
 }
 export async function stamp(): Promise<string> {
   const file = join(wcaDir, 'incremental', 'export_date.txt');

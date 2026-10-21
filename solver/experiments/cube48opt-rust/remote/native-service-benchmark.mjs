@@ -19,7 +19,7 @@ const READY_URL = 'http://127.0.0.1:3001/v1/scramble/optimal-solve/ready';
 const MOVES = /^(?:[URFDLB](?:2|')?)(?: [URFDLB](?:2|')?)*$/;
 export const LIMITS = Object.freeze({ reserveBytes: 2 * GiB, startupAvailableBytes: TABLE_BYTES + 3 * GiB,
   treeRssBytes: TABLE_BYTES + GiB, sampleMs: 1000, bootMs: 300_000, requestMs: 180_000,
-  taskMs: 30 * 60_000, fullPressureAvg10: 5, logBytes: 64 * 1024 ** 2 });
+  admissionMs: 10_000, taskMs: 30 * 60_000, fullPressureAvg10: 5, logBytes: 64 * 1024 ** 2 });
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const save = (file, value) => writeFileSync(file, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
 const append = (file, value) => appendFileSync(file, JSON.stringify(value) + '\n');
@@ -219,11 +219,54 @@ function saveProcessMemory(directory, pid, phase) {
   save(resolve(directory, `memory-${phase}.json`), sample);
 }
 
-async function admissionDisabled() {
-  const response = await fetch(READY_URL, { signal: AbortSignal.timeout(2000), redirect: 'error', cache: 'no-store' });
+export async function admissionDisabled({ signal, timeoutMs = LIMITS.admissionMs, url = READY_URL } = {}) {
+  const deadline = AbortSignal.timeout(timeoutMs);
+  const response = await fetch(url, { signal: signal ? AbortSignal.any([signal, deadline]) : deadline,
+    redirect: 'error', cache: 'no-store' });
   assert.equal(response.status, 200, 'Cannot verify API admission');
   const body = await response.json(); assert.equal(body.enabled, false, 'API CubeOpt admission must remain disabled');
   return body;
+}
+
+async function recordAdmission(probe, signal, onSample, phase) {
+  const started = performance.now(), startedAt = new Date().toISOString();
+  let evidence;
+  try {
+    const body = await probe(signal);
+    evidence = { outcome: 'disabled', body };
+    return body;
+  } catch (error) {
+    evidence = { outcome: signal?.aborted ? 'cancelled' : 'error', error: error.name, message: error.message };
+    throw error;
+  } finally {
+    onSample({ startedAt, at: new Date().toISOString(), phase, durationMs: performance.now() - started, ...evidence });
+  }
+}
+
+/** HTTP may be pending; resource sampling must still run on every timer tick. */
+export function startSafetyMonitor({ sampleResources, probeAdmission = signal => admissionDisabled({ signal }),
+  onAdmission, onFailure, intervalMs = LIMITS.sampleMs }) {
+  let active = true, pending = null, controller = null, timer;
+  const fail = error => {
+    if (!active) return;
+    active = false; clearInterval(timer); controller?.abort(); onFailure(error);
+  };
+  const tick = () => {
+    if (!active) return;
+    try { sampleResources(); } catch (error) { fail(error); }
+    if (!active || pending) return;
+    controller = new AbortController();
+    // Defer invocation so a synchronous probe failure cannot race assignment
+    // of pending. Never overlap admission requests or retry a failed probe.
+    pending = Promise.resolve().then(() => recordAdmission(probeAdmission, controller.signal, onAdmission, 'runtime'))
+      .catch(error => { if (active) fail(error); })
+      .finally(() => { pending = null; controller = null; });
+  };
+  timer = setInterval(tick, intervalMs); tick();
+  return { async stop() {
+    active = false; clearInterval(timer); controller?.abort();
+    await pending;
+  } };
 }
 
 function assertResources(sample, rssBytes, startup = false) {
@@ -245,9 +288,14 @@ async function runEngine(config, assets, cases, pass, taskStarted) {
   const engine = pass.label;
   const isWasm = pass.kind === 'wasm';
   assertAssetsUnchanged(config, assets);
-  const initial = systemSample(); assertResources(initial, 0, true); await admissionDisabled();
-  assertNoConflict(processRows(), Object.keys(assets.binaries));
   const directory = resolve(config.out, engine); mkdirSync(directory);
+  const admissionEvidence = row => append(resolve(directory, 'admission.jsonl'), row);
+  const initial = systemSample(); assertResources(initial, 0, true);
+  await recordAdmission(() => admissionDisabled(), undefined, admissionEvidence, 'preflight');
+  // HTTP verification may take up to ten seconds. Recheck memory/conflicts
+  // immediately before allocation, rather than trusting an older snapshot.
+  assertResources(systemSample(), 0, true);
+  assertNoConflict(processRows(), Object.keys(assets.binaries));
   const resultsFd = openSync(resolve(directory, 'results.jsonl'), 'wx');
   const env = { ...process.env, CUBEOPT_ARTIFACT_DIR: config.store, CUBEOPT_THREADS: '4',
     CUBEOPT_PROTOCOL: 'tsv-v1', CUBEOPT_VARIANT: '8', CUBEOPT_SOLVE_THREADS: '1', CUBEOPT_SEARCH_THREADS: '4' };
@@ -258,7 +306,7 @@ async function runEngine(config, assets, cases, pass, taskStarted) {
   const args = isWasm ? [config.daemon] : ['solve', assets.snapshot, assets.table, '8', '20', '0'];
   const started = performance.now();
   const child = spawn(executable, args, { env, detached: true, stdio: ['pipe', 'pipe', 'pipe'] });
-  let failure = null, waiter = null, killTimer, pendingSample = Promise.resolve(), sampling = false;
+  let failure = null, waiter = null, killTimer;
   let peakTreeRssBytes = 0, logBytes = 0, closed = false, exitResult;
   const lines = [];
   const signal = kind => { try { process.kill(-child.pid, kind); } catch (error) { if (error.code !== 'ESRCH') throw error; } };
@@ -297,27 +345,21 @@ async function runEngine(config, assets, cases, pass, taskStarted) {
       waiter = { resolve: line => { clearTimeout(timer); resolveLine(line); }, reject: error => { clearTimeout(timer); rejectLine(error); } };
     });
   };
-  const sample = async () => {
-    if (sampling) return; sampling = true;
-    try {
-      const rows = processRows(), tree = treeRows(rows, child.pid), current = systemSample();
-      const rssBytes = tree.reduce((sum, row) => sum + row.rssBytes, 0); peakTreeRssBytes = Math.max(peakTreeRssBytes, rssBytes);
-      append(resolve(directory, 'resources.jsonl'), { ...current, pid: child.pid, processIds: tree.map(row => row.pid),
-        treeRssBytes: rssBytes, treeSwapBytes: tree.reduce((sum, row) => sum + row.swapBytes, 0),
-        swapInDeltaPages: current.swapInPages - initial.swapInPages, swapOutDeltaPages: current.swapOutPages - initial.swapOutPages });
-      assert.equal(current.bootId, initial.bootId, 'System boot changed'); assertResources(current, rssBytes);
-      assertNoConflict(rows, Object.keys(assets.binaries), tree.map(row => row.pid));
-      assert(performance.now() - taskStarted < LIMITS.taskMs, 'Task time limit exceeded');
-      await admissionDisabled();
-    } catch (error) { stop(error); }
-    finally { sampling = false; }
+  const sample = () => {
+    const rows = processRows(), tree = treeRows(rows, child.pid), current = systemSample();
+    const rssBytes = tree.reduce((sum, row) => sum + row.rssBytes, 0); peakTreeRssBytes = Math.max(peakTreeRssBytes, rssBytes);
+    append(resolve(directory, 'resources.jsonl'), { ...current, pid: child.pid, processIds: tree.map(row => row.pid),
+      treeRssBytes: rssBytes, treeSwapBytes: tree.reduce((sum, row) => sum + row.swapBytes, 0),
+      swapInDeltaPages: current.swapInPages - initial.swapInPages, swapOutDeltaPages: current.swapOutPages - initial.swapOutPages });
+    assert.equal(current.bootId, initial.bootId, 'System boot changed'); assertResources(current, rssBytes);
+    assertNoConflict(rows, Object.keys(assets.binaries), tree.map(row => row.pid));
+    assert(performance.now() - taskStarted < LIMITS.taskMs, 'Task time limit exceeded');
   };
-  const poll = () => { if (!sampling) pendingSample = sample(); };
-  const timer = setInterval(poll, LIMITS.sampleMs);
+  const monitor = startSafetyMonitor({ sampleResources: sample, onAdmission: admissionEvidence, onFailure: stop });
   const interrupt = () => stop(Error('Benchmark interrupted'));
   process.once('SIGTERM', interrupt); process.once('SIGINT', interrupt);
   try {
-    poll(); const readyLine = await nextLine(LIMITS.bootMs);
+    const readyLine = await nextLine(LIMITS.bootMs);
     assert.equal(readyLine, 'READY\t4'); if (failure) throw failure;
     const startupSeconds = (performance.now() - started) / 1000;
     save(resolve(directory, 'startup.json'), { pid: child.pid, engine, readyLine, startupSeconds, threads: 4 });
@@ -337,7 +379,7 @@ async function runEngine(config, assets, cases, pass, taskStarted) {
     child.stdin.end();
     const eofTimer = setTimeout(() => stop(Error('Solver did not exit after EOF')), 15_000);
     try { await exit; } finally { clearTimeout(eofTimer); }
-    clearInterval(timer); await pendingSample;
+    await monitor.stop();
     if (failure) throw failure;
     assert.equal(exitResult.code, 0); assert.equal(exitResult.signal, null);
     assert.equal(treeRows(processRows(), child.pid).length, 0, 'Solver left descendants alive');
@@ -351,7 +393,7 @@ async function runEngine(config, assets, cases, pass, taskStarted) {
     stop(error); save(resolve(directory, 'failure.json'), { at: new Date().toISOString(), error: String(error.stack ?? error), partialResultsPreserved: true });
     throw error;
   } finally {
-    clearInterval(timer); await pendingSample;
+    await monitor.stop();
     if (!closed) { signal('SIGTERM'); const force = setTimeout(() => signal('SIGKILL'), 1500); await exit; clearTimeout(force); }
     // Also terminate any reparented child in the detached process group.
     if (child.pid && treeRows(processRows(), child.pid).length) signal('SIGKILL');

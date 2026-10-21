@@ -18,6 +18,10 @@ use rayon::prelude::*;
 
 use crate::cube_common::{string_to_alg, Move};
 
+#[cfg(not(target_arch = "wasm32"))]
+#[path = "executor_checkpoint.rs"]
+mod checkpoint;
+
 /// 全局节点计数器(线程安全)。`COUNT_NODE` 宏的 Rust 版本:调用方在搜索热路径
 /// 自行 `bump_node_count(1)` 即可;executor 只读取最终值。
 pub static GLOBAL_NODES: AtomicU64 = AtomicU64::new(0);
@@ -285,7 +289,36 @@ fn run_batch_core<T: Send + Sync>(
     let t0 = Instant::now();
 
     let total = tasks.len();
-    let completed = AtomicU64::new(0);
+    let (journal, mut results) = if let Ok(identity) = std::env::var("ANALYZER_CHECKPOINT_ID") {
+        if identity.is_empty() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "empty analyzer checkpoint identity",
+            ));
+        }
+        let input = std::fs::read(input_file)?;
+        let (journal, rows) = checkpoint::Checkpoint::open(
+            &out_path,
+            &input,
+            &header,
+            suffix,
+            &identity,
+            tasks.iter().map(|(id, _)| id.clone()).collect(),
+        )?;
+        (Some(std::sync::Mutex::new(journal)), rows)
+    } else {
+        (None, vec![String::new(); total])
+    };
+    let reused = results.iter().filter(|row| !row.is_empty()).count();
+    let completed = AtomicU64::new(reused as u64);
+    if reused > 0 {
+        prog_emit(&format!(
+            "[RESUME] {reused}/{total} completed rows from checkpoint"
+        ));
+        if progress_cfg().is_some() {
+            GLOBAL_COMPLETED.fetch_add(reused as u64, Ordering::Relaxed);
+        }
+    }
     let progress_step = (total / 100).max(1);
 
     // 看门狗(opt-in):某条解算超阈值 ⇒ 立即报 `[STUCK] id=.. scramble=..` 暴露卡死的具体打乱。
@@ -314,11 +347,14 @@ fn run_batch_core<T: Send + Sync>(
         })
     });
 
-    let mut results: Vec<String> = vec![String::new(); total];
-    results
+    let solved: std::io::Result<()> = results
         .par_iter_mut()
         .zip(tasks.par_iter())
-        .for_each(|(slot, (id, alg))| {
+        .enumerate()
+        .try_for_each(|(index, (slot, (id, alg)))| {
+            if !slot.is_empty() {
+                return Ok(());
+            }
             if wd_on.is_some() {
                 if let Ok(mut m) = in_flight().lock() {
                     m.insert(id.clone(), (descr(alg), Instant::now()));
@@ -326,7 +362,14 @@ fn run_batch_core<T: Send + Sync>(
             }
             {
                 let _nodes = BatchNodeCount::begin();
-                *slot = solve(alg, id);
+                let row = solve(alg, id);
+                if let Some(journal) = &journal {
+                    journal
+                        .lock()
+                        .map_err(|_| std::io::Error::other("checkpoint writer poisoned"))?
+                        .append(index, &row)?;
+                }
+                *slot = row;
             }
             if wd_on.is_some() {
                 if let Ok(mut m) = in_flight().lock() {
@@ -343,6 +386,7 @@ fn run_batch_core<T: Send + Sync>(
             } else if c as usize % progress_step == 0 {
                 prog_emit(&format!("[PROG] {}/{}", c, total)); // 原行为:每块 1%
             }
+            Ok(())
         });
 
     wd_stop.store(true, Ordering::Relaxed);
@@ -350,13 +394,14 @@ fn run_batch_core<T: Send + Sync>(
         let _ = h.join();
     }
 
-    let f = std::fs::File::create(&out_path)?;
-    let mut w = std::io::BufWriter::new(f);
-    writeln!(w, "{}", header)?;
-    for line in &results {
-        writeln!(w, "{}", line)?;
+    solved?;
+    if let Some(journal) = &journal {
+        journal
+            .lock()
+            .map_err(|_| std::io::Error::other("checkpoint writer poisoned"))?
+            .sync()?;
     }
-    w.flush()?;
+    checkpoint::write_completed(&out_path, &header, &results)?;
 
     let elapsed = t0.elapsed();
     let nodes = GLOBAL_NODES.load(Ordering::Relaxed);
@@ -404,6 +449,8 @@ fn analyzer_stdin_loop(run: impl Fn(&str) -> std::io::Result<PathBuf>) {
         }
         if let Err(e) = run(name) {
             eprintln!("[ERROR] {}: {}", name, e);
+            // A caller must never merge output or publish after a failed batch.
+            std::process::exit(1);
         }
     }
 }
@@ -476,6 +523,108 @@ mod tests {
         assert!(content.contains("b,1,2"));
         let _ = std::fs::remove_file(&tmp);
         let _ = std::fs::remove_file(&out);
+    }
+
+    // Bounded subprocess fixture: no solver or table loading occurs here.
+    #[test]
+    #[ignore = "spawned only by checkpoint_survives_process_kill"]
+    fn checkpoint_process_fixture() {
+        let input = std::env::var("CUBE_EXECUTOR_FIXTURE_INPUT").unwrap();
+        let resumed = std::env::var_os("CUBE_EXECUTOR_FIXTURE_RESUME").is_some();
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(2)
+            .build()
+            .unwrap();
+        pool.install(|| {
+            run_batch_core(
+                vec![("slow".into(), 1), ("fast".into(), 2)],
+                &input,
+                "_fixture",
+                "id,value".into(),
+                |value, id| {
+                    if id == "slow" && !resumed {
+                        std::thread::sleep(std::time::Duration::from_secs(30));
+                    }
+                    assert!(
+                        !resumed || id != "fast",
+                        "completed fast row must not be recomputed"
+                    );
+                    format!("{id},{value}")
+                },
+                |_| String::new(),
+            )
+        })
+        .unwrap();
+    }
+
+    #[test]
+    fn checkpoint_survives_process_kill() {
+        use std::process::{Command, Stdio};
+        use std::time::Duration;
+        let dir = std::env::temp_dir().join(format!("cube-executor-kill-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let input = dir.join("input.txt");
+        std::fs::write(&input, "slow,U\nfast,R\n").unwrap();
+        let output = output_filename(input.to_str().unwrap(), "_fixture");
+        let journal = PathBuf::from(format!("{}.checkpoint", output.display()));
+        let spawn = |resume: bool| {
+            let mut command = Command::new(std::env::current_exe().unwrap());
+            command
+                .args([
+                    "--exact",
+                    "executor::tests::checkpoint_process_fixture",
+                    "--ignored",
+                    "--nocapture",
+                ])
+                .env("CUBE_EXECUTOR_FIXTURE_INPUT", &input)
+                .env("ANALYZER_CHECKPOINT_ID", "bounded-test-binary-v1")
+                .stdout(Stdio::null())
+                .stderr(Stdio::null());
+            if resume {
+                command.env("CUBE_EXECUTOR_FIXTURE_RESUME", "1");
+            }
+            command.spawn().unwrap()
+        };
+        let mut child = spawn(false);
+        let deadline = Instant::now() + Duration::from_secs(5);
+        let persisted = loop {
+            if std::fs::read_to_string(&journal).is_ok_and(|text| text.contains("\t1\tfast,2\n")) {
+                break true;
+            }
+            if Instant::now() >= deadline || child.try_wait().unwrap().is_some() {
+                break false;
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        };
+        let _ = child.kill();
+        child.wait().unwrap();
+        assert!(
+            persisted,
+            "out-of-order completed row must reach disk while first row is still running"
+        );
+        assert!(
+            !output.exists(),
+            "partial checkpoint must not masquerade as completed CSV"
+        );
+        let mut resumed = spawn(true);
+        let deadline = Instant::now() + Duration::from_secs(5);
+        let status = loop {
+            if let Some(status) = resumed.try_wait().unwrap() {
+                break status;
+            }
+            if Instant::now() >= deadline {
+                let _ = resumed.kill();
+                resumed.wait().unwrap();
+                panic!("resume exceeded fixture deadline");
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        };
+        assert!(status.success());
+        assert_eq!(
+            std::fs::read_to_string(output).unwrap(),
+            "id,value\nslow,1\nfast,2\n"
+        );
+        std::fs::remove_dir_all(dir).unwrap();
     }
 
     #[test]

@@ -5,6 +5,7 @@ import { CommandExitError, coreDir, jobDir, repoRoot, run, runTs, solverDir, sta
 import { publishScrambleIncremental } from './publish-static.js';
 import { loadMirrorToPg, loadOptimalToPg, loadStepsToPg } from './publish-pg.js';
 import { publishStatsCommit } from './publish-git.js';
+import { withStatsResourceMonitor } from './resource-monitor.js';
 
 type Options = { jobs: string[]; publishOnly: boolean; push: boolean; localArgs: string[] };
 export function parsePublishedArgs(args: string[]): Options {
@@ -88,4 +89,4 @@ export async function publishPipeline(options: Options): Promise<void> {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url))
-  void publishPipeline(parsePublishedArgs(process.argv.slice(2))).catch(error => { console.error(error); process.exitCode = 1; });
+  void withStatsResourceMonitor(() => publishPipeline(parsePublishedArgs(process.argv.slice(2)))).catch(error => { console.error(error); process.exitCode = 1; });

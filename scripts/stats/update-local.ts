@@ -1,14 +1,16 @@
 /** One local TypeScript entry for stages, 3x3 optimal, and puzzle statistics. */
 import { availableParallelism } from 'node:os';
-import { appendFile, mkdir, readFile, readdir, stat, unlink, writeFile } from 'node:fs/promises';
+import { appendFile, mkdir, open, readFile, readdir, rename, stat, unlink, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import {
-  analyzer, appendData, appendUniqueById, coreDir, exe, exists, fileSize, ids, jobDir, lineCount, lines,
+  appendUniqueById, coreDir, exe, exists, fileSize, ids, jobDir, lineCount, openAnalyzerSession,
   puzzleDir, recordSeconds, repoRoot, run, runNode, runPnpm, runTs, solverDir, stamp,
   tableDir, taskProgress, wcaDir,
 } from './common.js';
 import { runPuzzles } from './puzzles.js';
+import { syncAnalyzerChunks, validateAnalyzerOutput } from './analyzer-chunks.js';
 import { preflightStatsEngine, statsEngine } from '../../solver/333opt/stats-engine.mts';
+import { registerStatsSummary, statsProtectionReason, statsResourcePlan, withStatsResourceMonitor } from './resource-monitor.js';
 
 type Job = 'stages' | '333opt' | 'puzzles';
 type Options = {
@@ -78,6 +80,10 @@ async function syncStageTriplet(required: boolean): Promise<boolean> {
   const addedStd = await appendUniqueById(join(wcaDir, 'stats', 'std.csv'), pendingStd, true, true);
   const addedMaster = await appendUniqueById(master, pendingInput, false, false);
   const addedSplit = await appendUniqueById(join(wcaDir, 'input', 'wca_scrambles_split_mbf.csv'), pendingSplit, true, true);
+  for (const path of [join(wcaDir, 'stats', 'std.csv'), master, join(wcaDir, 'input', 'wca_scrambles_split_mbf.csv')]) {
+    const file = await open(path, 'r');
+    try { await file.sync(); } finally { await file.close(); }
+  }
   if (addedStd || addedMaster || addedSplit) console.log(`[stages] 恢复/保存增量：std ${addedStd}，master ${addedMaster}，元数据 ${addedSplit}`);
   return Boolean(addedStd || addedMaster || addedSplit);
 }
@@ -136,65 +142,79 @@ function stageEnv(): NodeJS.ProcessEnv {
   return env;
 }
 async function syncVariant(name: string, options: Options): Promise<boolean> {
-  const csvFile = join(wcaDir, 'stats', `${name}.csv`);
-  const have = await ids(csvFile, true);
-  const missing: string[] = [];
-  for await (const row of lines(master)) {
-    const comma = row.indexOf(',');
-    if (comma > 0 && !have.has(row.slice(0, comma))) missing.push(row);
-  }
-  if (!missing.length) { console.log(`[${name}] 已最新 (${have.size} 条)`); return false; }
-  const size = options.chunkSize ?? defaultChunks[name];
-  console.log(`[${name}] 待补 ${missing.length} 条，chunk=${size}`);
-  const input = join(incremental, `sync_${name}.txt`);
-  const output = join(incremental, `sync_${name}_${name}.csv`);
-  const log = join(incremental, `sync_${name}.analyzer.log`);
-  let chunks = 0;
-  for (let i = 0; i < missing.length; i += size) {
-    const expected = Math.min(size, missing.length - i);
-    await writeFile(input, `${missing.slice(i, i + size).join('\n')}\n`);
-    if (await exists(output)) await unlink(output);
-    await analyzer(exe(variantBins[name]), [input], log, stageEnv(), name);
-    const got = Math.max(0, (await lineCount(output)) - 1);
-    if (got !== expected) throw new Error(`[${name}] analyzer returned ${got}/${expected} rows`);
-    await appendData(csvFile, output, await fileSize(csvFile) > 0);
-    await unlink(output);
-    chunks++;
-    if (options.maxChunks && chunks >= options.maxChunks) break;
-  }
-  console.log(`[${name}] 已补 ${Math.min(chunks * size, missing.length)}/${missing.length} 条`);
-  return true;
+  return (await syncAnalyzerChunks({
+    binary: exe(variantBins[name]), input: join(incremental, `sync_${name}.txt`),
+    output: join(incremental, `sync_${name}_${name}.csv`), log: join(incremental, `sync_${name}.analyzer.log`),
+    env: stageEnv(), label: name, master, target: join(wcaDir, 'stats', `${name}.csv`),
+    chunkSize: options.chunkSize ?? defaultChunks[name], maxChunks: options.maxChunks,
+  })) > 0;
 }
 
 async function runStages(options: Options): Promise<{ nNew: number; stdChanged: boolean; variantChanged: boolean }> {
   const units = 2 + options.variants.length;
   let completedUnits = 0;
-  const recovered = options.dryRun ? false : await syncStageTriplet(false);
-  console.log('\n=== stages: 增量取数 ===');
-  const incrArgs = ['--data-dir', wcaDir];
-  if (options.sourceCsv) incrArgs.push('--source-csv', options.sourceCsv);
-  if (options.useCached) incrArgs.push('--use-cached');
-  if (options.dryRun) incrArgs.push('--dry-run');
-  await runTs(join(jobDir, 'src', 'incremental.ts'), incrArgs);
-  if (!options.dryRun) taskProgress('stages', ++completedUnits, units);
-  if (options.dryRun) {
-    console.log('[dry-run] 只读检查完成');
-    return { nNew: 0, stdChanged: false, variantChanged: false };
-  }
-  const input = pendingInput;
-  const nNew = await lineCount(input);
-  console.log(`新打乱 ${nNew} 条`);
-  let stdChanged = recovered;
+  let stdSession: Awaited<ReturnType<typeof openAnalyzerSession>> | undefined;
+  const solveStd = async () => {
+    stdSession ??= await openAnalyzerSession(exe('std_analyzer'), join(incremental, 'std_analyzer.log'),
+      { ...stageEnv(), CUBE_RUN_FULL_STD: '1' }, 'std');
+    await stdSession.run(pendingInput, pendingStd);
+    await validateAnalyzerOutput(pendingInput, pendingStd);
+  };
+  const clearStdCheckpoint = async () => {
+    for (const suffix of ['.checkpoint', '.checkpoint.meta']) {
+      if (await exists(pendingStd + suffix)) await unlink(pendingStd + suffix);
+    }
+  };
+  let nNew = 0;
+  let stdChanged = false;
   let variantChanged = false;
-  if (nNew > 0) {
-    console.log('\n=== stages: std_analyzer ===');
-    const output = pendingStd;
-    if (await exists(output)) await unlink(output);
-    await analyzer(exe('std_analyzer'), [input], join(incremental, 'std_analyzer.log'), { ...stageEnv(), CUBE_RUN_FULL_STD: '1' }, 'std');
-    const got = Math.max(0, (await lineCount(output)) - 1);
-    if (got !== nNew) throw new Error(`std returned ${got}/${nNew} rows`);
-    console.log('\n=== stages: 幂等同步 CSV ===');
-    stdChanged = await syncStageTriplet(true) || stdChanged;
+  try {
+    if (!options.dryRun) {
+      const pending = await exists(pendingStd + '.checkpoint') || await exists(pendingStd + '.checkpoint.meta');
+      if (pending) {
+        // Recover the old exact input before incremental.ts replaces any triplet member.
+        const expected = await ids(pendingInput);
+        const saved = await Promise.all([
+          ids(join(wcaDir, 'stats', 'std.csv'), true), ids(master),
+          ids(join(wcaDir, 'input', 'wca_scrambles_split_mbf.csv'), true),
+        ]);
+        const alreadyCommitted = expected.size > 0 && saved.every(set => [...expected].every(id => set.has(id)));
+        if (!alreadyCommitted) {
+          await solveStd();
+          stdChanged = await syncStageTriplet(true);
+        }
+        await clearStdCheckpoint();
+      } else stdChanged = await syncStageTriplet(false);
+    }
+    console.log('\n=== stages: 增量取数 ===');
+    const incrArgs = ['--data-dir', wcaDir];
+    if (options.sourceCsv) incrArgs.push('--source-csv', options.sourceCsv);
+    if (options.useCached) incrArgs.push('--use-cached');
+    if (options.dryRun) incrArgs.push('--dry-run');
+    await runTs(join(jobDir, 'src', 'incremental.ts'), incrArgs);
+    if (!options.dryRun) taskProgress('stages', ++completedUnits, units);
+    if (options.dryRun) {
+      console.log('[dry-run] 只读检查完成');
+      return { nNew: 0, stdChanged: false, variantChanged: false };
+    }
+    const input = pendingInput;
+    nNew = await lineCount(input);
+    console.log(`新打乱 ${nNew} 条`);
+    if (nNew > 0) {
+      console.log('\n=== stages: std_analyzer ===');
+      const output = pendingStd;
+      if (await exists(output)) await unlink(output);
+      await solveStd();
+      const got = Math.max(0, (await lineCount(output)) - 1);
+      if (got !== nNew) throw new Error(`std returned ${got}/${nNew} rows`);
+      console.log('\n=== stages: 幂等同步 CSV ===');
+      stdChanged = await syncStageTriplet(true) || stdChanged;
+      await clearStdCheckpoint();
+    }
+  } finally {
+    if (stdSession) {
+      try { await stdSession.close(); } catch (error) { await stdSession.abort(); throw error; }
+    }
   }
   taskProgress('stages', ++completedUnits, units);
   if (options.variants.length) {
@@ -228,11 +248,11 @@ async function run333(options: Options, inject: boolean): Promise<boolean> {
   return true;
 }
 
-type Summary = { startedAt: string; finishedAt?: string; status: string; active?: string; partial?: string[]; steps: Array<{ name: string; seconds: number }> };
+type Summary = { startedAt: string; finishedAt?: string; status: string; protectionReason?: string; active?: string; partial?: string[]; steps: Array<{ name: string; seconds: number }> };
 async function main(): Promise<void> {
   const options = parse(process.argv.slice(2));
   if (options.plan) {
-    console.log(JSON.stringify({ ...options, analyzers: requiredAnalyzers(options), repoRoot, coreDir, jobDir, wcaDir, puzzleDir, tableDir, optimalEngine: statsEngine(repoRoot), publish: false }, null, 2));
+    console.log(JSON.stringify({ ...options, analyzers: requiredAnalyzers(options), resourceBudgets: statsResourcePlan(requiredAnalyzers(options), stageEnv(), options.jobs.includes('333opt')), repoRoot, coreDir, jobDir, wcaDir, puzzleDir, tableDir, optimalEngine: statsEngine(repoRoot), publish: false }, null, 2));
     return;
   }
   if (options.dryRun) {
@@ -251,7 +271,14 @@ async function main(): Promise<void> {
   await mkdir(tableDir, { recursive: true });
   const summaryPath = join(tableDir, `stats-local-${new Date().toISOString().replaceAll(':', '-')}.json`);
   const summary: Summary = { startedAt: new Date().toISOString(), status: 'running', steps: [] };
-  const persist = () => writeFile(summaryPath, `${JSON.stringify(summary, null, 2)}\n`);
+  registerStatsSummary(summaryPath);
+  const persist = async () => {
+    const reason = statsProtectionReason();
+    if (reason) { summary.status = 'protected-stop'; summary.protectionReason = reason; }
+    const temporary = `${summaryPath}.${process.pid}.new`;
+    await writeFile(temporary, `${JSON.stringify(summary, null, 2)}\n`);
+    await rename(temporary, summaryPath);
+  };
   const step = async (name: string, action: () => Promise<void>) => {
     const started = Date.now();
     summary.active = name;
@@ -336,4 +363,5 @@ async function main(): Promise<void> {
     console.log(`Run summary: ${summaryPath}`);
   }
 }
-void main().catch(error => { console.error(error); process.exitCode = 1; });
+const readOnly = process.argv.includes('--plan') || process.argv.includes('--dry-run');
+void (readOnly ? main() : withStatsResourceMonitor(main)).catch(error => { console.error(error); process.exitCode = 1; });
