@@ -36,7 +36,7 @@ import {
   Trophy,
   X,
   type LucideIcon,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 
 
 

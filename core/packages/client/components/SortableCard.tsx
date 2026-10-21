@@ -1,6 +1,6 @@
 'use client';
 
-import { GripVertical } from 'lucide-react';
+import { GripVertical } from '@app-foundation/icons/lucide';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { UniqueIdentifier } from '@dnd-kit/core';

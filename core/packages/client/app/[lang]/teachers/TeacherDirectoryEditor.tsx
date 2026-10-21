@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
-import { ChevronDown, ChevronUp, ImagePlus, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, ImagePlus, Trash2 } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import { tr } from '@/i18n/tr';

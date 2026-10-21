@@ -34,7 +34,7 @@ import {
   Maximize2, Minimize2,
   ArrowLeftRight,
   X,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import World, { type PuzzleKind } from './engine/world';
 import { attachInteraction } from './worldInteraction';
 import HandsRig from './engine/hands/handsRig';
@@ -2269,7 +2269,6 @@ export default function SimPage() {
           <PuzzleTypeSelect
             value={typeof selectedPuzzle === 'number' ? 'nxn' : selectedPuzzle}
             isZh={i18n.language.startsWith('zh')}
-            showName
             allowedValues={drawMode ? DRAW_PUZZLES : imageMode ? ['fto'] : undefined}
             onChange={(value) => selectPuzzle(value === 'nxn' ? (drawMode ? drawOrder : order) : value as SimPuzzle)}
           />

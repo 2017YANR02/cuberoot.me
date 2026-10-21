@@ -10,7 +10,7 @@
  * 与 /math/probability(末层 62,208 态的 AUF 概率)同源,是它在"最后一槽"上的推广。
  */
 import Link from '@/components/AppLink';
-import { ArrowLeft, Boxes } from 'lucide-react';
+import { ArrowLeft, Boxes } from '@app-foundation/icons/lucide';
 import { TeX, TeXBlock } from '@/components/math/Tex';
 import { useT } from '@/hooks/useT';
 import { T } from '@/i18n/tr';
@@ -30,7 +30,7 @@ export default function LsllMathPage() {
       <header className="lmath-header">
         <Link href="/math" className="lmath-back">
           <ArrowLeft size={16} />
-          <span>{t('返回 数学', 'Back to Math')}</span>
+          <span className="sr-only">{t('返回 数学', 'Back to Math')}</span>
         </Link>
         <Link href="/alg/lsll" className="lmath-header-link">
           <Boxes size={15} />
@@ -40,7 +40,6 @@ export default function LsllMathPage() {
 
       <main className="lmath-main">
         <section className="lmath-hero">
-          <div className="lmath-eyebrow">{t('数学 群论 组合计数', 'Mathematics Group Theory Enumeration')}</div>
           <h1 className="lmath-title">
             {t('LSLL 到底有多少个 case', 'How many LSLL cases are there')}
             <span className="lmath-title-sub">

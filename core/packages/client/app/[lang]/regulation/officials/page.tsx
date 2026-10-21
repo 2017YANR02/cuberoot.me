@@ -11,8 +11,8 @@ import { useTranslation } from 'react-i18next';
 import {
   Gavel, Building2, ClipboardCheck, Shuffle,
   Calculator, Megaphone, Layers, Trophy,
-} from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+} from '@app-foundation/icons/lucide';
+import type { LucideIcon } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { useT } from '../../../../hooks/useT';
 import RegArticleLayout from '../_components/RegArticleLayout';

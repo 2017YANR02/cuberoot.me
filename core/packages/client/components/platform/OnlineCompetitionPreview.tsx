@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
-import { ArrowUpRight, CalendarDays, Check, Clock3, Headphones, ShieldCheck, Trophy, Video, Wallet } from 'lucide-react';
+import { ArrowUpRight, CalendarDays, Check, Clock3, Headphones, ShieldCheck, Trophy, Video, Wallet } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import { CompactSelect } from '@/components/CompactSelect';

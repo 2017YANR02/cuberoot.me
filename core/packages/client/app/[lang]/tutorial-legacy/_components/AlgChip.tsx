@@ -2,7 +2,7 @@
  * AlgChip — 可点击复制的公式 chip
  */
 import { useState, useCallback } from 'react';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 
 interface AlgChipProps {

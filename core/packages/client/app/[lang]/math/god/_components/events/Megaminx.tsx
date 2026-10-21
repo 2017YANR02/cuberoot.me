@@ -23,7 +23,7 @@
  */
 import { Suspense, lazy, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
-import { ArrowDownToLine, Ruler, Gauge } from 'lucide-react';
+import { ArrowDownToLine, Ruler, Gauge } from '@app-foundation/icons/lucide';
 import {
   EvHighlights, EvSection, EvCallout, EvRefs, EvStatStrip,
   TeX, TeXBlock, MathText,

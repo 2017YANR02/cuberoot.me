@@ -3,7 +3,7 @@
 import { getWebAccessToken } from '@/lib/web-session';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parseAsString, useQueryState } from 'nuqs';
-import { AlignCenter, AlignLeft, AlignRight, Bold, CheckSquare, ChevronLeft, ClipboardPaste, Copy, Download, FileDown, Grid2x2, Italic, Link2, Merge, PaintBucket, Palette, Plus, Printer, Redo2, Scissors, Search, Share2, Strikethrough, Trash2, Undo2, WrapText } from 'lucide-react';
+import { AlignCenter, AlignLeft, AlignRight, Bold, CheckSquare, ChevronLeft, ClipboardPaste, Copy, Download, FileDown, Grid2x2, Italic, Link2, Merge, PaintBucket, Palette, Plus, Printer, Redo2, Scissors, Search, Share2, Strikethrough, Trash2, Undo2, WrapText } from '@app-foundation/icons/lucide';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import * as Y from 'yjs';
 import AppLink from '@/components/AppLink';

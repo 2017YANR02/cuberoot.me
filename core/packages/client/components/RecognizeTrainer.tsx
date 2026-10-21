@@ -271,7 +271,7 @@ export default function RecognizeTrainer({
             {tr({ zh: '重新评估', en: 'Restart evaluation' })}
           </button>
           <Link className={`btn-secondary ${styles.textLinkButton}`} href="/">
-            {tr({ zh: '返回首页', en: 'Home' })}
+            <span aria-hidden="true">←</span> <span className="sr-only">{tr({ zh: '返回首页', en: 'Home' })}</span>
           </Link>
         </div>
       </div>

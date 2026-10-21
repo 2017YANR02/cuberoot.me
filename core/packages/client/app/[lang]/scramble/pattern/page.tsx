@@ -11,7 +11,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Sparkles, X, Copy, Check, Search } from 'lucide-react';
+import { Sparkles, X, Copy, Check, Search } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { Alg } from 'cubing/alg';
 import WcaEventSelector from '@/components/WcaEventSelector';

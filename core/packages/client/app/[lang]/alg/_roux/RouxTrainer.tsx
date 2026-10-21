@@ -11,7 +11,7 @@
 
 import TrainingStatsPanel, { TrainingSelfPractice } from '@/components/TrainingStatsPanel';
 import React, { useEffect, useReducer, useRef, useState } from 'react';
-import { Info, Star } from 'lucide-react';
+import { Info, Star } from '@app-foundation/icons/lucide';
 import { useTranslation } from 'react-i18next';
 import { parseAsStringEnum } from 'nuqs';
 import { useTrainingQueryState as useQueryState } from '@/lib/training-host';

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw } from '@app-foundation/icons/lucide';
 import type { EChartsCoreOption } from 'echarts/core';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';

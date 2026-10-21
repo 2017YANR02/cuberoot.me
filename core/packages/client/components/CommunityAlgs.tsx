@@ -9,7 +9,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAlgTextField } from '@/hooks/useAlgTextField';
-import { Plus, Trash2, Pencil, Check, X, Tags, Pin, Copy, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, Pencil, Check, X, Tags, Pin, Copy, AlertTriangle } from '@app-foundation/icons/lucide';
 import { is3x3TopLayerSet, type AlgEntry, type AlgPuzzle, type AlgSticker, type AlgTag } from '@cuberoot/shared/alg';
 import { alignCaseEntry, caseAlgIssue, sourceCaseEntry } from '@/lib/alg_case_alignment';
 import { duplicateAlgKey, startsWithYRotation } from '@cuberoot/shared/alg-notation';

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Lock } from 'lucide-react';
+import { Lock } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 import { useIsAdmin } from '@/lib/auth-store';
 

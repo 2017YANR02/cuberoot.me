@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useEffect, useId, useRef, useState } from 'react';
-import { Bluetooth, Globe2, Timer, UserRound, Users } from 'lucide-react';
+import { Bluetooth, Globe2, Timer, UserRound, Users } from '@app-foundation/icons/lucide';
 import { useTranslation } from 'react-i18next';
 import { EventIcon } from '@/components/EventIcon';
 import { tr } from '@/i18n/tr';

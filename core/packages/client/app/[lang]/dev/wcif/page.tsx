@@ -43,8 +43,8 @@ export default function WcifPage() {
   return (
     <div className="wcif-page">
       <div className="wcif-topbar">
-        <HomeLink className="wcif-back">← {tr({ zh: '回首页', en: 'Home'
-        })}</HomeLink>
+        <HomeLink className="wcif-back">← <span className="sr-only">{tr({ zh: '回首页', en: 'Home'
+        })}</span></HomeLink>
         <AppLink href="/dev" className="wcif-back">/dev</AppLink>
       </div>
 

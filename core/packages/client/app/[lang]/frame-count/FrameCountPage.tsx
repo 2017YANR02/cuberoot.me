@@ -8,7 +8,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
-import { HelpCircle, MonitorDown } from 'lucide-react';
+import { HelpCircle, MonitorDown } from '@app-foundation/icons/lucide';
 import { useTranslation } from 'react-i18next';
 import type mediaInfoFactoryT from 'mediainfo.js';
 

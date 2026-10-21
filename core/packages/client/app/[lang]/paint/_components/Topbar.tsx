@@ -16,7 +16,7 @@ import {
   Check,
   CloudOff,
   Keyboard,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { tr } from '@/i18n/tr';
 import { useT } from '@/hooks/useT';

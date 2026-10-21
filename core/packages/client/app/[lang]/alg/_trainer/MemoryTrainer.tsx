@@ -17,7 +17,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from '@/components/AppLink';
 import {
   Eye, Undo2, RotateCcw,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import { CaseThumb } from '@/components/CaseThumb';
 import { CaseMarkBar, CaseThumbAction } from '@/app/[lang]/alg/_trainer/trainer-components';

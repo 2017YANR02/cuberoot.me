@@ -6,7 +6,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw } from '@app-foundation/icons/lucide';
 import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';
 import { useT } from '../../../hooks/useT';
 import { HERO_SCRAMBLE, HERO_SOLUTION } from './_cube-util';

@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import Link from '@/components/AppLink';
 import { persistItem } from '@/lib/safe-storage';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ArrowRight as ArrowRightIcon, Menu, X as XIcon } from 'lucide-react';
+import { ArrowLeft, ArrowRight as ArrowRightIcon, Menu, X as XIcon } from '@app-foundation/icons/lucide';
 
 const ActiveSectionContext = createContext<string>('tldr');
 import { LineChart, type Series, type Band, type RefLine } from './charts';
@@ -184,7 +184,7 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
       <header className="pred-header">
         <Link href="/wca/prediction" className="pred-back" aria-label="back">
           <ArrowLeft size={16} />
-          <span>{tr({ zh: '返回全项目', en: 'Back to All Events'
+          <span className="sr-only">{tr({ zh: '返回全项目', en: 'Back to All Events'
         })}</span>
         </Link>
         <button className="pred-toc-btn" onClick={() => setTocOpen(!tocOpen)}>

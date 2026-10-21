@@ -8,7 +8,7 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, Trash2, Lightbulb, Bug, MessageSquare, ExternalLink, ChevronDown } from 'lucide-react';
+import { ChevronLeft, Trash2, Lightbulb, Bug, MessageSquare, ExternalLink, ChevronDown } from '@app-foundation/icons/lucide';
 import HomeLink from '@/components/HomeLink';
 import FeedbackConversation from '@/components/FeedbackConversation';
 import { UserIdLabel } from '@/components/UserIdLabel';
@@ -107,7 +107,7 @@ export default function FeedbackAdminPage() {
     return (
       <div className="fba-page fba-denied">
         <p>{t('需要管理员权限', 'Admin access required')}</p>
-        <HomeLink className="fba-back"><ChevronLeft size={16} /><span>{t('首页', 'Home')}</span></HomeLink>
+        <HomeLink className="fba-back"><ChevronLeft size={16} /><span className="sr-only">{t('首页', 'Home')}</span></HomeLink>
       </div>
     );
   }
@@ -115,7 +115,7 @@ export default function FeedbackAdminPage() {
   return (
     <div className="fba-page">
       <header className="fba-header">
-        <HomeLink className="fba-back"><ChevronLeft size={16} /><span>{t('首页', 'Home')}</span></HomeLink>
+        <HomeLink className="fba-back"><ChevronLeft size={16} /><span className="sr-only">{t('首页', 'Home')}</span></HomeLink>
       </header>
       <h1 className="fba-title">{t('反馈', 'Feedback')}</h1>
 

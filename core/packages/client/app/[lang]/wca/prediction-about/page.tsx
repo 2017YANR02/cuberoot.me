@@ -4,7 +4,7 @@
  * /wca/prediction-about — 速拧极限预测说明页
  */
 import Link from '@/components/AppLink';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from '@app-foundation/icons/lucide';
 import './prediction_about.css';
 import { useT } from "@/hooks/useT";
 
@@ -30,7 +30,7 @@ export default function PredictionAboutPage() {
       <div className="pa-header">
         <Link href="/wca/prediction" className="pa-back">
           <ArrowLeft size={16} />
-          <span>{t('返回极限预测', 'Back to Prediction')}</span>
+          <span className="sr-only">{t('返回极限预测', 'Back to Prediction')}</span>
         </Link>
       </div>
 

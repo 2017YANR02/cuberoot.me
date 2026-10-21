@@ -2,7 +2,7 @@
 
 import { sessionFetch } from '@/lib/session-fetch';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Check, Copy, Download, KeyRound, Loader2, Lock, Plus, Save, Trash2, UserPlus, X } from 'lucide-react';
+import { Check, Copy, Download, KeyRound, Loader2, Lock, Plus, Save, Trash2, UserPlus, X } from '@app-foundation/icons/lucide';
 import BackHome from '@/components/BackHome';
 import BoolToggle from '@/components/BoolToggle';
 import { PasswordInput } from '@/components/PasswordInput';

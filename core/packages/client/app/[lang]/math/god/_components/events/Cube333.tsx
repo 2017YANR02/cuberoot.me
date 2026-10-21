@@ -16,7 +16,7 @@
  */
 import { Suspense, lazy, useState } from 'react';
 import Link from '@/components/AppLink';
-import { Cog, Layers, Sparkles, CheckCircle2, CircleDashed } from 'lucide-react';
+import { Cog, Layers, Sparkles, CheckCircle2, CircleDashed } from '@app-foundation/icons/lucide';
 import {
   EvHighlights, EvSection, EvCallout, EvRefs, EvStatStrip,
   TeX, TeXBlock, MathText, tr,

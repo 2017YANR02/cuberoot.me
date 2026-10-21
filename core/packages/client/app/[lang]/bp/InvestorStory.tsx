@@ -1,4 +1,4 @@
-import { ArrowUpRight, Bluetooth, BookOpen, ChartNoAxesColumnIncreasing, ChevronDown, Code2, Users } from 'lucide-react';
+import { ArrowUpRight, Bluetooth, BookOpen, ChartNoAxesColumnIncreasing, ChevronDown, Code2, Users } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 

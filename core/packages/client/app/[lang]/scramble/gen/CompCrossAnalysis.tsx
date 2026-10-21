@@ -11,7 +11,7 @@
  * the offline analyzer pipeline.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { LayoutGrid, BarChart3 } from 'lucide-react';
+import { LayoutGrid, BarChart3 } from '@app-foundation/icons/lucide';
 import { histogram, type Histogram } from '@/lib/comp-cross';
 import { reduceDigits, type ColorLetter } from '@/lib/cross-color-subset';
 import type { StepMapState, StepMetric } from './useStepMap';

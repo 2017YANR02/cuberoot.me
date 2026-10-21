@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, Search, ShieldCheck } from 'lucide-react';
+import { Plus, Search, ShieldCheck } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import WcaAuth from '@/components/WcaAuth';

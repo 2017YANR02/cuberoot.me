@@ -14,7 +14,7 @@
  * 本组件自己不算任何东西,只负责摆:`target` 是主角(直接被删的),`cascade` 是连带。
  */
 import { useEffect, useRef } from 'react';
-import { AlertTriangle, Trash2 } from 'lucide-react';
+import { AlertTriangle, Trash2 } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 
 /** 一组公式 —— `where` 是它们在哪(case 名 + 视角),单条不需要就留空。 */

@@ -8,7 +8,7 @@
 
 import { useEffect, useMemo, useState, type JSX } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Play, X } from 'lucide-react';
+import { Plus, Play, X } from '@app-foundation/icons/lucide';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import BoolToggle from '@/components/BoolToggle';
 import { BldConfigBar } from './BldConfigBar';

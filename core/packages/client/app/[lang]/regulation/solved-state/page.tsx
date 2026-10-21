@@ -10,7 +10,7 @@
 
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Ban } from 'lucide-react';
+import { Ban } from '@app-foundation/icons/lucide';
 import { EventIcon } from '@/components/EventIcon';
 import Link from '@/components/AppLink';
 import { useT } from '../../../../hooks/useT';

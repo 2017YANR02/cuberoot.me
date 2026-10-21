@@ -21,7 +21,7 @@ import {
   useLocalParticipantPermissions,
   usePersistentUserChoices,
 } from '@livekit/components-react';
-import { MessageSquare, PhoneOff, ScreenShare, Users, Volume2, VolumeX } from 'lucide-react';
+import { MessageSquare, PhoneOff, ScreenShare, Users, Volume2, VolumeX } from '@app-foundation/icons/lucide';
 
 import { tr } from '@/i18n/tr';
 import { useIsMobile } from '@/hooks/useIsMobile';

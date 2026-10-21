@@ -5,7 +5,7 @@
 // (react / quote / edit / delete).
 
 import { useState } from 'react';
-import { Link2, Quote, Pencil, Trash2, Check, Flag, ShieldCheck, Hourglass, CircleX } from 'lucide-react';
+import { Link2, Quote, Pencil, Trash2, Check, Flag, ShieldCheck, Hourglass, CircleX } from '@app-foundation/icons/lucide';
 import PersonLink from '@/components/PersonLink';
 import { tr, useLang } from '@/i18n/tr';
 import { ownerDisplayName } from '@/lib/cuber-name-display';

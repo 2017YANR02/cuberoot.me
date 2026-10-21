@@ -1,4 +1,4 @@
-import { BookOpen, Keyboard } from 'lucide-react';
+import { BookOpen, Keyboard } from '@app-foundation/icons/lucide';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import type { OhHand } from '@/lib/alg_oh_hand';
 import './alg-tag-label.css';

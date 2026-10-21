@@ -6,7 +6,7 @@
 // MUI <Dialog> → ../ui Modal. Styles in ../roux.css (.roux-sel-*).
 
 import React from 'react';
-import { Settings } from 'lucide-react';
+import { Settings } from '@app-foundation/icons/lucide';
 
 import { AppState, Action, SliderOpt } from '@/lib/roux/Types';
 import Selector from '@/lib/roux/Selector';

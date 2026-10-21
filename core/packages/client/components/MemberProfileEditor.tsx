@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, type ChangeEvent } from 'react';
-import { Check, ImagePlus, Trash2 } from 'lucide-react';
+import { Check, ImagePlus, Trash2 } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 import BoolToggle from '@/components/BoolToggle';
 import { prepareImageUpload, uploadedImageUrl, uploadImageBlob } from '@/lib/image-upload';

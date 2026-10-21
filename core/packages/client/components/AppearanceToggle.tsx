@@ -11,7 +11,7 @@
 // 通过太阳 / 月亮图标选择,选中态跟随当前实际明暗。
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Sun, Moon, Check, Settings } from 'lucide-react';
+import { Sun, Moon, Settings } from '@app-foundation/icons/lucide';
 import { persistItem } from '@/lib/safe-storage';
 import {
   THEME_KEY,
@@ -275,7 +275,6 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
                       onBlur={(event) => { tip.onBlur?.(event); endPreview(); }}
                       onClick={() => pickPalette(p.id)}
                     >
-                      <span className="lang-menu-check">{on && <Check size={13} />}</span>
                       <Swatch color={p.swatch[1]} />
                     </button>
                   )}

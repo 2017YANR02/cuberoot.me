@@ -6,7 +6,7 @@
  * with Select All / Select None convenience buttons.
  */
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, Languages } from 'lucide-react';
+import { ChevronDown, ChevronUp, Languages } from '@app-foundation/icons/lucide';
 import {
   TNOODLE_LOCALES,
   LOCALE_DISPLAY_NAME,

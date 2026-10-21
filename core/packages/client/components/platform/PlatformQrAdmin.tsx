@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from 'react';
 import { parseAsInteger, parseAsString, useQueryState } from 'nuqs';
-import { ArrowDown, ArrowUp, Copy, Download, Pencil } from 'lucide-react';
+import { ArrowDown, ArrowUp, Copy, Download, Pencil } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import SearchInput from '@/components/SearchInput';
 import { useT } from '@/hooks/useT';

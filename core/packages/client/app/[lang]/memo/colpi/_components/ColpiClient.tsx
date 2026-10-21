@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Search, Eye, EyeOff, ThumbsUp, ThumbsDown, Flag as FlagIcon, X,
   Pencil, Trash2,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import WcaAuth from '@/components/WcaAuth';
 import { SearchInput } from '@/components/SearchInput';
 import { Flag } from '@/components/Flag';

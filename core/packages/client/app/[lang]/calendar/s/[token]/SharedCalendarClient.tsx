@@ -8,7 +8,7 @@
 // token 从 window.location 读(哨兵壳,服务端拿不到路由参数)。
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarDays, ChevronLeft, ChevronRight, Link2, Check, Copy } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Link2, Check, Copy } from '@app-foundation/icons/lucide';
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
 import { ListSelect } from '@/components/ListSelect';

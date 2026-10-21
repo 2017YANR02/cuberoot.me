@@ -4,7 +4,7 @@ import { parseAsStringEnum, useQueryStates } from 'nuqs';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { Axis, type ICubeOptions } from '@cuberoot/visualcube';
 import { COLORS } from '@cuberoot/puzzle-render-core/engine/define';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from '@app-foundation/icons/lucide';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import { VisualCube } from '@/components/VisualCube';
 import { stickeringMaskFn, FM_FIXED_COLOR, FM_IGNORED } from '@cuberoot/puzzle-render-core/engine/nxn/stickering';

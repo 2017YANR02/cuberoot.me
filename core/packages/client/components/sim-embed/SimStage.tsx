@@ -19,7 +19,7 @@
  */
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw } from '@app-foundation/icons/lucide';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { useT } from '@/hooks/useT';
 

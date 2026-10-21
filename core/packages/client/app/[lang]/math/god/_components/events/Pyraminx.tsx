@@ -18,7 +18,7 @@
  *   references
  */
 import { useState, useMemo, Suspense, lazy } from 'react';
-import { Layers, Triangle } from 'lucide-react';
+import { Layers, Triangle } from '@app-foundation/icons/lucide';
 import {
   EvHighlights, EvSection, EvCallout, EvRefs, EvStatStrip,
   TeX, TeXBlock, MathText, type HighlightCard, type RefItem, type StatItem,

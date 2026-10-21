@@ -4,7 +4,7 @@
 // 迷你月历直接用站内的 MonthGrid(/wca/comp 与首页日历同一个),不另造一个月网格。
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Trash2, Pencil, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Trash2, Pencil, Check } from '@app-foundation/icons/lucide';
 import MonthGrid from '@/components/MonthGrid';
 import { tr } from '@/i18n/tr';
 import { colorHex } from '@/lib/calendar-colors';

@@ -8,7 +8,7 @@ import '@cuberoot/timer-ui/compact-select.css';
 // 两者共用同一套表单原语(CodeFlow / 密码表单 / 错误文案),故同处一文件。
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Check, Copy, Loader2, Mail, Smartphone, KeyRound, Merge } from 'lucide-react';
+import { Check, Copy, Loader2, Mail, Smartphone, KeyRound, Merge } from '@app-foundation/icons/lucide';
 import { SiApple, SiWechat, SiQq, SiAlipay, SiTiktok } from 'react-icons/si';
 import { primaryHandle, visibleAccountIdentities, ACCOUNT_PROVIDER_LABELS as PROVIDER_LABEL } from '@cuberoot/shared/account';
 import type { MobileAuthProvider } from '@cuberoot/shared/auth/web-session';
@@ -942,7 +942,7 @@ function LoginFormFields({
         <div className="auth-flow">
           <p className="auth-hint">{t(`已打开${name},请完成授权后返回本页面。`, `Opened ${name} — finish authorizing there, then return to this page.`)}</p>
           <button className="auth-primary" onClick={() => window.location.reload()}>{t('我已完成授权', 'I have authorized')}</button>
-          <button className="auth-textbtn" onClick={() => setSocialLaunched(null)}>{t('返回', 'Back')}</button>
+          <button className="auth-textbtn" onClick={() => setSocialLaunched(null)}><span aria-hidden="true">←</span> <span className="sr-only">{t('返回', 'Back')}</span></button>
         </div>
       </>
     );
@@ -1603,7 +1603,7 @@ export function DeleteAccountPanel({ backHref }: { backHref: string }) {
             {t('你的账号和私有数据已经删除,登录方式即刻失效。感谢一路同行。',
               'Your account and private data are gone, and your sign-in methods no longer work. Thanks for having been here.')}
           </p>
-          <AppLink href="/" className="auth-textbtn">{t('返回首页', 'Back to home')}</AppLink>
+          <AppLink href="/" className="auth-textbtn"><span aria-hidden="true">←</span> <span className="sr-only">{t('返回首页', 'Back to home')}</span></AppLink>
         </div>
       </>
     );

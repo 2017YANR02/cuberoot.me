@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type PointerEvent, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, GripHorizontal, MoveVertical, RotateCcw } from 'lucide-react';
+import { Check, GripHorizontal, MoveVertical, RotateCcw } from '@app-foundation/icons/lucide';
 import { Tooltip } from '@/components/Tooltip';
 import { DEFAULT_SOLO_LAYOUT } from '../_lib/settings/layout';
 import { tr } from '@/i18n/tr';

@@ -1,4 +1,4 @@
-import { ArrowUpRight, BookOpen, Building2, CalendarDays, Check, Trophy, Users } from 'lucide-react';
+import { ArrowUpRight, BookOpen, Building2, CalendarDays, Check, Trophy, Users } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 import { EVENT_GROSS_PER_EVENT, EVENT_GROSS_PER_MONTH, ONLINE_EVENT_PLAN } from './bp-data';

@@ -5,6 +5,7 @@ import { useDouyinToolSurface } from '@/lib/douyin-content';
 import { TimerSoloPage, timerSoloModalState, useTimerSoloCompactLayout } from '@cuberoot/timer-ui/TimerSoloPage';
 import SoloLayoutEditor from '../_components/SoloLayoutEditor';
 import { Tooltip } from '@/components/Tooltip';
+import { useIvyMode, ivyScrambleForMode } from '@/lib/scramble-ivy-mode';
 import { get222Mode } from '@/lib/scramble-222-mode';
 import { browserTimerToolTransport, type TimerTool } from '@cuberoot/timer-ui/TimerTools';
 import { timerSeedTicket } from '@cuberoot/shared/timer/sync-seed';
@@ -48,7 +49,7 @@ import {
   ArrowLeft,
   Box,
   X,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import HomeLink from '@/components/HomeLink';
 import { petReact } from '@/lib/deskpet';
 import {
@@ -579,6 +580,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // 2x2 口径(WCA 11 步 ↔ 最优/Q|H):与 /scramble/gen 同一个全站设置(Scramble222ModePicker)。
   // 真题:optimal → 服务端 God's-number 最优等态(复用 optimal_scramble);随机状态 → 见 scramble222。
   const [mode222] = use222Mode();
+  const [ivyMode] = useIvyMode();
   const [savedType222, setType222] = use222Type();
   const [type222Param] = useQueryState('scramble222');
   const type222 = isScramble222Type(type222Param) ? type222Param : savedType222;
@@ -733,7 +735,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
   const phaseRef = useRef<TimerPhase>('idle');
 
-  const seedOptionsSignature = JSON.stringify([settings.syncSeed, settings.syncSeedRevision, settings.cnMode, mode222, type222, settings.ollSubset, settings.pllSubset]);
+  const seedOptionsSignature = JSON.stringify([settings.syncSeed, settings.syncSeedRevision, settings.cnMode, mode222, type222, ivyMode, settings.ollSubset, settings.pllSubset]);
   const genScramble = useCallback((): TimerScrambleHistoryEntry => {
     // Manual queue: walk the user-typed lines in order, wrapping at the end.
     // Empty queue → '' placeholder (the strip shows a "paste scrambles" hint).
@@ -806,7 +808,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     // 按所选度量最优步数生成(非案例库)。必须先于 non-WCA worker 分支,否则后两项会绕过难度。
     // 度量+区间进 pool key,改设置即换 buffer;拒绝采样 + IDA* 在 Worker 生成,不阻塞计时。
     if (non222ByStepsEvent) {
-      return timerScrambleHistoryEntry(takeWebNon222ByStepsScramble(non222ByStepsEvent, s));
+      const next = takeWebNon222ByStepsScramble(non222ByStepsEvent, s);
+      return timerScrambleHistoryEntry(event === 'ivy' ? ivyScrambleForMode(next, ivyMode) : next);
     }
     if (event === '222' && genStepsSig) return timerScrambleHistoryEntry('');
     // Only the async shared client generates ordinary random slots. Never run
@@ -859,10 +862,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     const entry = current.list[current.idx];
     if (entry?.id !== expectedId || entry.scramble !== '') return false;
     const list = [...current.list];
-    list[current.idx] = { ...entry, scramble: value, trainerMeta, wca, caseId };
+    list[current.idx] = { ...entry, scramble: event === 'ivy' ? ivyScrambleForMode(value, ivyMode) : value, trainerMeta, wca, caseId };
     applyScrambleHist({ list, idx: current.idx });
     return true;
-  }, [applyScrambleHist]);
+  }, [applyScrambleHist, event, ivyMode]);
   const randomRequest = currentScrambleEntry.randomRequest;
   const [ordinaryFailedId, setOrdinaryFailedId] = useState<number | null>(null);
   const [ordinaryRetry, setOrdinaryRetry] = useState(0);

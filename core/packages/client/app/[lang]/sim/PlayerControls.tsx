@@ -25,7 +25,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useT } from '@/hooks/useT';
 import { SettingsPopover } from '@/components/TrainingSettings';
-import { FlipHorizontal2, FlipVertical2, Eraser, Link2, Check, Keyboard, Grid3x3 } from 'lucide-react';
+import { FlipHorizontal2, FlipVertical2, Eraser, Link2, Check, Keyboard, Grid3x3 } from '@app-foundation/icons/lucide';
 import { Alg, Move } from 'cubing/alg';
 import type { TwistyPlayer } from 'cubing/twisty';
 import World from './engine/world';
@@ -40,6 +40,7 @@ import { parseSq1Scramble, type Sq1Move } from './engine/sq1/sq1State';
 import { SQUARE_FAMILY_SPECS, formatSquareFamilyAlg, invertSquareFamilyMoves, randomSquareFamilyScramble, simplifySquareFamilyAlg, squareFamilyMovesToString, tryParseSquareFamilyMoves, type SquareFamilyKind, type SquareFamilyMove, type SquareFamilyNotationFormat } from './engine/squareFamily/squareFamilyState';
 import { parseIvyMoves } from './engine/ivy/IvyTwister';
 import type { IvyMove } from './engine/ivy/IvyCube';
+import { getIvyMode, ivyScrambleForMode } from '@/lib/scramble-ivy-mode';
 import { classifyIvyTokens } from '@/lib/ivy-solver';
 import { parseDinoMoves, dinoMovesToString, randomDinoScramble, type DinoMove } from './engine/dino/dinoState';
 import { parseRediMoves, rediMovesToString, randomRediScramble, type RediMove } from './engine/redi/rediState';
@@ -68,7 +69,7 @@ function randomIvyScramble(): string {
     last = a;
     out.push(L[a] + (Math.random() < 0.5 ? "'" : ''));
   }
-  return out.join(' ');
+  return ivyScrambleForMode(out.join(' '), getIvyMode());
 }
 import { invertAlg, simplifyAlg, simplifyTwistyAlg, mirrorAlg } from '@/lib/cube3';
 import { convertKilominxAlg, fromCubingKilominx, type KilominxNotation } from '@/lib/kilominx-notation';

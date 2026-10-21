@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { Settings } from 'lucide-react';
+import { Settings } from '@app-foundation/icons/lucide';
 import BoolToggle from '@/components/BoolToggle';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';

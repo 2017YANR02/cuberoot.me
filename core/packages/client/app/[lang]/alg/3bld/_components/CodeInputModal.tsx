@@ -4,7 +4,7 @@
 // Used by edge/corner/ltct/parity trainers. Esc closes; backdrop click closes.
 
 import { useEffect, useRef, type JSX } from 'react';
-import { X } from 'lucide-react';
+import { X } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 
 interface SampleButton {

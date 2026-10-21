@@ -7,7 +7,7 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import HomeLink from '@/components/HomeLink';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, Mars, Venus } from 'lucide-react';
+import { ChevronLeft, Mars, Venus } from '@app-foundation/icons/lucide';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { EventIcon } from '@/components/EventIcon';
 import { loadFlagData } from '@/lib/country-flags';
@@ -180,7 +180,7 @@ function RecordsPageInner() {
       <header className="wse-header">
         <div className="wse-header-row">
           <HomeLink className="wse-back">
-            <ChevronLeft size={16} /> {tr({ zh: '首页', en: 'Home' })}
+            <ChevronLeft size={16} /> <span className="sr-only">{tr({ zh: '首页', en: 'Home' })}</span>
           </HomeLink>
         </div>
         <h1>{tr({ zh: '纪录', en: 'Records'

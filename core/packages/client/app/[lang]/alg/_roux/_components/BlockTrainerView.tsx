@@ -7,7 +7,7 @@
 // useTheme/useMediaQuery) is replaced by plain HTML + site-token CSS.
 
 import React, { Fragment } from 'react';
-import { AlertCircle, Heart } from 'lucide-react';
+import { AlertCircle, Heart } from '@app-foundation/icons/lucide';
 
 import CubeSim from './CubeSim';
 import { FaceletCube, Mask, MoveSeq } from '@/lib/roux/CubeLib';

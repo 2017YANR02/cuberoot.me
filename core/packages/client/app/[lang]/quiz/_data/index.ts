@@ -1,4 +1,4 @@
-import { BookOpen, Scale, Boxes, Trophy, Type, Route, Sigma, Wrench, type LucideIcon } from 'lucide-react';
+import { BookOpen, Scale, Boxes, Trophy, Type, Route, Sigma, Wrench, type LucideIcon } from '@app-foundation/icons/lucide';
 import type { Level, Msg, Question, QuizCat } from './types';
 import { HISTORY } from './history';
 import { RULES } from './rules';

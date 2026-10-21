@@ -7,7 +7,7 @@
  */
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
-import { Brain, type LucideIcon } from 'lucide-react';
+import { Brain, type LucideIcon } from '@app-foundation/icons/lucide';
 import '../../landing.css';
 import { tr } from '@/i18n/tr';
 

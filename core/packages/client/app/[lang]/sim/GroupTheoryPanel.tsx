@@ -16,7 +16,7 @@
  */
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useT } from '@/hooks/useT';
-import { Sigma, Shuffle, Wand2 } from 'lucide-react';
+import { Sigma, Shuffle, Wand2 } from '@app-foundation/icons/lucide';
 import type { PgGroupFacts } from './engine/pgBackbone';
 import type { GroupKernel } from './engine/pgBinding';
 import { nxnHasPgKernel } from './engine/nxn/nxnPgBridge';
@@ -38,6 +38,9 @@ function historyString(c: SimEngineCube): string {
   const init = c.history.init ?? '';
   const body = Array.isArray(c.history.moves) ? c.history.moves.join(' ') : (c.history.exp ?? '');
   return `${init} ${body}`.trim();
+}
+function hasUnsupportedIvyTurn(puzzle: string, text: string): boolean {
+  return puzzle === 'ivy' && /(?:^|\s)U'?(?:\s|$)/i.test(text);
 }
 /** Minimal view of the sim World the panel reads (to confirm the active cube is the
  *  expected engine puzzle before driving it). */
@@ -70,6 +73,7 @@ export default function GroupTheoryPanel({
   const bindingRef = useRef<GroupKernel | null>(null);
   const [facts, setFacts] = useState<PgGroupFacts | null>(null);
   const [live, setLive] = useState<LiveState | null>(null);
+  const [unsupportedIvyU, setUnsupportedIvyU] = useState(false);
   // Facts-only puzzles (cubing.js "explore": rendered by TwistyPlayer, no engine cube) show
   // |G| + structure but no live state / solve / scramble.
   const [factsOnly, setFactsOnly] = useState(false);
@@ -98,6 +102,7 @@ export default function GroupTheoryPanel({
     setFacts(null);
     setLive(null);
     setFactsOnly(false);
+    setUnsupportedIvyU(false);
 
     void import('./engine/pgBindings').then(({ createBinding }) => {
       if (!alive) return;
@@ -118,7 +123,14 @@ export default function GroupTheoryPanel({
 
       const refresh = () => {
         if (!cube) return;
-        binding.rebuildFromString(historyString(cube));
+        const history = historyString(cube);
+        const unsupported = hasUnsupportedIvyTurn(puzzle, history);
+        setUnsupportedIvyU(unsupported);
+        if (unsupported) {
+          setLive(null);
+          return;
+        }
+        binding.rebuildFromString(history);
         // The badge follows the engine's own geometry (faithful to what's on screen);
         // PG's fixed-in-space group can be a multiple of the engine's, so state==id is
         // stricter than visually-solved — use cube.complete instead.
@@ -167,11 +179,11 @@ export default function GroupTheoryPanel({
   const onSolve = useCallback(() => {
     const c = activeCube();
     const b = bindingRef.current;
-    if (!c || !b) return;
+    if (!c || !b || hasUnsupportedIvyTurn(puzzle, historyString(c))) return;
     b.rebuildFromString(historyString(c));
     const s = b.solveString();
     if (s) c.twister.push(s); // animate the BSGS solution
-  }, [activeCube]);
+  }, [activeCube, puzzle]);
 
   if (!bound) return null;
 
@@ -201,7 +213,12 @@ export default function GroupTheoryPanel({
             )}
           </div>
 
-          {!factsOnly && (
+          {unsupportedIvyU && <div className="gt-actions-note">
+            {t('以下为 R L D B 群结构；含 U 的实时群分析与群论还原尚未支持。',
+              'The structure below is for R L D B. Live group analysis and BSGS solving with U are not supported yet.')}
+          </div>}
+
+          {!factsOnly && !unsupportedIvyU && (
           <div className="gt-live">
             <div className={`gt-live-state ${live?.solved ? 'is-solved' : 'is-scrambled'}`}>
               {live?.solved ? t('已还原', 'Solved') : t('打乱中', 'Scrambled')}
@@ -227,7 +244,7 @@ export default function GroupTheoryPanel({
             </div>
           )}
 
-          {!factsOnly && (solvable ? (
+          {!factsOnly && !unsupportedIvyU && (solvable ? (
             <>
               <div className="gt-actions">
                 <button type="button" className="gt-btn" onClick={onScramble}>

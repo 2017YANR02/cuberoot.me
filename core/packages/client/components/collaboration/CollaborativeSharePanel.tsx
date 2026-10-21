@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Trash2, UserPlus } from 'lucide-react';
+import { Trash2, UserPlus } from '@app-foundation/icons/lucide';
 import { ClearButton } from '@/components/ClearButton';
 import { T, tr } from '@/i18n/tr';
 import {

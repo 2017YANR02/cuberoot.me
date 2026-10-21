@@ -1,6 +1,6 @@
 'use client';
 
-import { Brush, LogIn } from 'lucide-react';
+import { Brush, LogIn } from '@app-foundation/icons/lucide';
 import { useT } from '@/hooks/useT';
 import { useAuthStore } from '@/lib/auth-store';
 

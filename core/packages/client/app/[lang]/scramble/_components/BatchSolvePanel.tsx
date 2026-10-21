@@ -16,7 +16,7 @@
  * 同步引擎(concurrency=1,solveOne 内 setTimeout 让出主线程)。两者同一套 UI。
  */
 import { useMemo, useRef, useState, type ReactNode } from 'react';
-import { Trash2, Copy, Download, Check } from 'lucide-react';
+import { Trash2, Copy, Download, Check } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 import './batch_solve.css';
 

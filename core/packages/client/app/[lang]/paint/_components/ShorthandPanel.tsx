@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Boxes, AlertTriangle } from 'lucide-react';
+import { X, Boxes, AlertTriangle } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 import { useT } from '@/hooks/useT';
 import BoolToggle from '@/components/BoolToggle';

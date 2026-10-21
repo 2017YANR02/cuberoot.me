@@ -4,7 +4,7 @@
  * FAQ + Glossary — 折叠面板。
  */
 import { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown } from '@app-foundation/icons/lucide';
 import { MathText } from './Tex';
 import { tr } from '@/i18n/tr';
 

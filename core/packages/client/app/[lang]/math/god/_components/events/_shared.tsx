@@ -19,7 +19,7 @@
  * util-function parameter is exempt). Never write a bare literal-text ternary in JSX.
  */
 import type { ReactNode } from 'react';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink } from '@app-foundation/icons/lucide';
 
 export { TeX, TeXBlock, MathText } from '../Tex';
 export { tr, T } from '@/i18n/tr';

@@ -22,7 +22,7 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryState, parseAsString, parseAsInteger } from 'nuqs';
-import { Check, Copy, Plus, RotateCcw, X } from 'lucide-react';
+import { Check, Copy, Plus, RotateCcw, X } from '@app-foundation/icons/lucide';
 import BackHome from '@/components/BackHome';
 import { DateInput } from '@/components/DateInput';
 import HeaderToggles from '@/components/HeaderToggles';

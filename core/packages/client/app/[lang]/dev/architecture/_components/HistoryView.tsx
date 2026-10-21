@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight } from '@app-foundation/icons/lucide';
 import MonthGrid from '@/components/MonthGrid';
 import { useLang } from '../../_lib/Lang';
 import type { Lang } from '../../_lib/Lang';

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
-import { Check, ChevronRight, Plus, RefreshCw } from 'lucide-react';
+import { Check, ChevronRight, Plus, RefreshCw } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import { CompactSelect } from '@/components/CompactSelect';

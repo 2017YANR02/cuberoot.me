@@ -27,7 +27,7 @@ import {
   type JSX,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Copy, Check, Shuffle, GripVertical, Wand2 } from 'lucide-react';
+import { Copy, Check, Shuffle, GripVertical, Wand2 } from '@app-foundation/icons/lucide';
 import AlgPlayer from '@/components/AlgPlayer';
 import { ClearButton } from '@/components/ClearButton';
 import { Spinner } from '@/components/Spinner/Spinner';

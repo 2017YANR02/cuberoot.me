@@ -17,7 +17,7 @@ import {
   type JSX,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Play, FileText } from 'lucide-react';
+import { Play, FileText } from '@app-foundation/icons/lucide';
 import BoolToggle from '@/components/BoolToggle';
 import { BldConfigBar } from './BldConfigBar';
 import { ScrambleOutput } from './ScrambleOutput';

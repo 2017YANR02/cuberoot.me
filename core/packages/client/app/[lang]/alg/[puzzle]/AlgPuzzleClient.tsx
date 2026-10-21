@@ -14,7 +14,7 @@ import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from '
 import Link from '@/components/AppLink';
 import { useTrainingParams as useParams, useTrainingRouter as useRouter, useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import { useTranslation } from 'react-i18next';
-import { X } from 'lucide-react';
+import { X } from '@app-foundation/icons/lucide';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 import { ALG_CATALOG, ALG_CATALOG_SECTIONS, ALG_PUZZLES, CFOP_SET_SLUGS, type AlgCase, type AlgPuzzle } from '@cuberoot/shared/alg';
@@ -31,7 +31,9 @@ import BoolToggle from '@/components/BoolToggle';
 import { ClearButton } from '@/components/ClearButton';
 import { MIX_MIN_SETS, mixHref, mixTitle } from '@/lib/alg-mix';
 import { useSavedMixes } from '@/lib/alg-mix-saved';
-import AlgAdminValidate from '@/components/AlgAdminValidate';
+import dynamic from 'next/dynamic';
+const AlgAdminValidate = dynamic(() => import('@/components/AlgAdminValidate'));
+import { readAlgLibrary, subscribeAlgLibrary } from '@/lib/alg-library-cache';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { FaceletsCube } from '@/components/FaceletsCube';
 import { categoryCardFacelets } from '@/lib/lsll/model';
@@ -184,20 +186,12 @@ function isPuzzle(s: string): s is AlgPuzzle {
   return (ALG_PUZZLES as readonly string[]).includes(s);
 }
 
-// Share only concurrent reads, so dev Strict Mode cannot duplicate the request.
-// Every later visit still validates the server revision.
-const catalogRequests = new Map<string, Promise<PreparedAlgCatalog>>();
 function loadCatalog(puzzle: string) {
-  const existing = catalogRequests.get(puzzle);
-  if (existing) return existing;
-  const pending = fetch(apiUrl(`/v1/alg/sets/${puzzle}/catalog?v=1`), { cache: 'no-cache' })
-    .then(async response => {
-      if (!response.ok) throw new Error(`Catalog HTTP ${response.status}`);
-      return prepareAlgCatalog(await response.json() as AlgCatalogSnapshot);
-    })
-    .finally(() => { catalogRequests.delete(puzzle); });
-  catalogRequests.set(puzzle, pending);
-  return pending;
+  return readAlgLibrary(`catalog:${puzzle}`, async () => {
+    const response = await fetch(apiUrl(`/v1/alg/sets/${puzzle}/catalog?v=1`), { cache: 'no-cache' });
+    if (!response.ok) throw new Error(`Catalog HTTP ${response.status}`);
+    return prepareAlgCatalog(await response.json() as AlgCatalogSnapshot);
+  });
 }
 
 export default function AlgPuzzleClient({ initialCatalog = null }: { initialCatalog?: PreparedAlgCatalog | null }) {
@@ -287,10 +281,13 @@ export default function AlgPuzzleClient({ initialCatalog = null }: { initialCata
     if (!valid) return;
     let cancelled = false;
     setSetOrder([]);
-    loadCatalog(puzzle).then(next => {
-      if (!cancelled) setCatalog(next);
-    }).catch(error => console.error('alg catalog refresh failed', error));
-    return () => { cancelled = true; };
+    let revision = 0;
+    const refresh = () => { const request = ++revision; void loadCatalog(puzzle).then(next => {
+      if (!cancelled && request === revision) setCatalog(next);
+    }).catch(error => console.error('alg catalog refresh failed', error)); };
+    const unsubscribe = subscribeAlgLibrary(`catalog:${puzzle}`, refresh);
+    refresh();
+    return () => { cancelled = true; unsubscribe(); };
   }, [puzzle, valid, refreshKey]);
 
   if (legacyRedirect) {
@@ -408,16 +405,12 @@ export default function AlgPuzzleClient({ initialCatalog = null }: { initialCata
         <Link href="/alg/progress" className="alg-index-progress-link" prefetch={false}>
           {tr({ zh: '进度', en: 'Progress' })}
         </Link>
-        {/* 这一层就是「这个魔方的所有公式集」,校验粒度跟着它 —— 一次扫完本页列出的每套 */}
         <AlgAdminValidate
           scope={{ kind: 'puzzle', puzzle }}
-          label={tr({ zh: '校验本页公式集', en: 'Validate these sets' })}
-        />
-        {/* 全站唯一一处「一次扫完所有 (puzzle, set)」的入口 —— 原在 /alg 落地页,
-            落地页取消后跟着搬到这里(admin 才看得见) */}
-        <AlgAdminValidate
-          scope={{ kind: 'all' }}
-          label={tr({ zh: '校验全库', en: 'Validate all' })}
+          options={[
+            { label: tr({ zh: '本页公式集', en: 'Sets on this page' }), scope: { kind: 'puzzle', puzzle } },
+            { label: tr({ zh: '全库', en: 'Entire library' }), scope: { kind: 'all' } },
+          ]}
         />
       </div>
 

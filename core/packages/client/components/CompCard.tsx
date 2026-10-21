@@ -4,7 +4,7 @@
 // 首页「报名」tab(RegistrationComps)与 /wca/comp 卡片视图复用同一份视觉(registration_comps.css 的 .rc-* 类)。
 // 纯展示组件:报名状态 pill 由调用方算好(各页里程碑口径不同)传进来,卡片本身不碰时间逻辑。
 import { useMemo, type ReactNode } from 'react';
-import { Users } from 'lucide-react';
+import { Users } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import PersonLink from '@/components/PersonLink';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import AppLink from '@/components/AppLink';
-import { ArrowUpRight, Users, GraduationCap, Timer, Eye, BookOpen, Box } from 'lucide-react';
+import { ArrowUpRight, Users, GraduationCap, Timer, Eye, BookOpen, Box } from '@app-foundation/icons/lucide';
 import { useT } from '@/hooks/useT';
 import { getTeachingOrganizationSummary, type TeachingOrganizationSummary, type TeachingOrganizationAccess } from '@/lib/teaching-saas-api';
 import { hasTeachingPermission } from '@cuberoot/shared/teaching';

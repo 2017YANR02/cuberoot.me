@@ -636,7 +636,7 @@
 }
 .gen-tn-event-card.is-on .gen-tn-event-header { color: var(--gen-accent); font-weight: 600; }
 .gen-tn-event-header--static { cursor: default; }
-.gen-tn-event-name { flex: 1; }
+.gen-tn-event-header--static .gen-tn-mini-num { margin-left: auto; }
 .gen-tn-event-remove {
     border: none;
     background: transparent;

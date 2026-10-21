@@ -18,7 +18,7 @@ import dynamic from 'next/dynamic';
 import { WcaPersonRelationCells, useWcaTeams } from './_components/WcaTeamCell';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, HelpCircle, ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronLeft, HelpCircle, ChevronDown, ChevronRight } from '@app-foundation/icons/lucide';
 import Paginator from '@/components/wca-stats/Paginator';
 import NameStatsView, { type NameStatsData } from '@/components/wca-stats/NameStatsView';
 import { type NameMode, NAME_MODES, nameByMode, FormerNames } from '@/components/wca-stats/nameMode';
@@ -565,7 +565,7 @@ function AllResultsPageInner() {
     <div className="wse-page">
       <header className="wse-header">
         <div className="wse-header-row">
-          <HomeLink className="wse-back"><ChevronLeft size={16} /> {tr({ zh: '首页', en: 'Home' })}</HomeLink>
+          <HomeLink className="wse-back"><ChevronLeft size={16} /> <span className="sr-only">{tr({ zh: '首页', en: 'Home' })}</span></HomeLink>
         </div>
         <h1 className="wse-title-row">
           {tr({ zh: '排名', en: 'Rankings' })}

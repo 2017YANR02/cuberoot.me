@@ -1,5 +1,9 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { NavigationShell } from '@app-foundation/navigation-ui';
+import { Contact, UserPlus, Users } from '@app-foundation/icons/lucide';
+import '@app-foundation/navigation-ui/navigation.css';
 import {
   CONTACT_GROUP_SECTIONS,
   CONTACT_JOIN_INSTRUCTION,
@@ -10,7 +14,7 @@ import BackHome from '@/components/BackHome';
 import AppLink from '@/components/AppLink';
 import { T, tr } from '@/i18n/tr';
 import { useIsAdmin } from '@/lib/auth-store';
-import ContactDetails from './ContactDetails';
+import ContactDetails from '@/components/ContactDetails';
 import './contact.css';
 
 function GroupName({ name }: { name: ContactText }) {
@@ -32,16 +36,27 @@ function JoinInstruction() {
 
 export default function ContactPage() {
   const admin = useIsAdmin();
+  const [activeId, setActiveId] = useState('contact-details');
+  useEffect(() => {
+    const sync = () => setActiveId(window.location.hash.slice(1) || 'contact-details');
+    sync();
+    window.addEventListener('hashchange', sync);
+    return () => window.removeEventListener('hashchange', sync);
+  }, []);
+  const sections = [
+    { id: 'contact-details', label: tr({ zh: '联系方式', en: 'Contact details' }), icon: <Contact size={18} /> },
+    { id: 'contact-join-title', label: tr({ zh: '进群方法', en: 'How to join' }), icon: <UserPlus size={18} /> },
+    ...CONTACT_GROUP_SECTIONS.map(section => ({ id: section.id, label: tr(section.title), icon: <Users size={18} /> })),
+  ];
 
   return (
-    <main className="contact-page">
-      <header className="contact-header">
-        <BackHome />
-        <p className="contact-eyebrow">{tr({ zh: '联系与社群', en: 'CONTACT & COMMUNITY' })}</p>
-        <h1>{tr({ zh: '联系方式', en: 'Contact' })}</h1>
-      </header>
-
-      <section className="contact-profile">
+    <NavigationShell className="contact-navigation" mainClassName="contact-page"
+      items={sections.map(section => ({ ...section, href: `#${section.id}`, active: activeId === section.id }))}
+      labels={{ navigation: tr({ zh: '联系目录', en: 'Contact navigation' }), show: tr({ zh: '显示侧边栏', en: 'Show sidebar' }), hide: tr({ zh: '隐藏侧边栏', en: 'Hide sidebar' }), openMobile: tr({ zh: '打开导航', en: 'Open navigation' }), closeMobile: tr({ zh: '关闭导航', en: 'Close navigation' }) }}
+      renderLink={props => <a {...props} onClick={() => { props.onClick?.(); setActiveId(props.href.slice(1)); }} />}
+      header={toggle => <header className="contact-navigation-header">{toggle}<BackHome /><h1>{tr({ zh: '联系方式', en: 'Contact' })}</h1></header>}
+    >
+      <section id="contact-details" className="contact-profile">
         <div className="contact-profile-copy">
           {admin && (
             <div className="contact-membership-link">
@@ -60,10 +75,9 @@ export default function ContactPage() {
       </section>
 
       <div className="contact-directory">
-        {CONTACT_GROUP_SECTIONS.map((section, sectionIndex) => (
+        {CONTACT_GROUP_SECTIONS.map((section) => (
           <section className="contact-section" aria-labelledby={section.id} key={section.id}>
             <div className="contact-section-heading">
-              <span aria-hidden>{String(sectionIndex + 1).padStart(2, '0')}</span>
               <div>
                 <h2 id={section.id}>{tr(section.title)}</h2>
                 <p>{tr(section.description)}</p>
@@ -83,6 +97,6 @@ export default function ContactPage() {
           </section>
         ))}
       </div>
-    </main>
+    </NavigationShell>
   );
 }

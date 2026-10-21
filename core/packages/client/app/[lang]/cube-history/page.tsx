@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQueryState, useQueryStates, parseAsString, parseAsStringEnum, parseAsArrayOf, parseAsBoolean } from 'nuqs';
-import { ArrowUpRight, BookOpen, Check, ChevronDown, Columns3, Crown, Download, History, ImageOff, Link2, Plus, Search, SlidersHorizontal, X } from 'lucide-react';
+import { ArrowUpRight, BookOpen, Check, ChevronDown, Columns3, Crown, Download, History, ImageOff, Link2, Plus, Search, SlidersHorizontal, X } from '@app-foundation/icons/lucide';
 import HomeLink from '@/components/HomeLink';
 import AppLink from '@/components/AppLink';
 import HeaderToggles from '@/components/HeaderToggles';

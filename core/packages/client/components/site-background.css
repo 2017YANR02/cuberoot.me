@@ -80,9 +80,8 @@ html[data-contrast='soft'] .site-scenery img {
   padding: 0;
 }
 
-.appearance-color-options .lang-menu-check {
-  position: absolute;
-  left: 0;
+.appearance-color-options .lang-menu-item.is-active {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
 .appearance-background-row {

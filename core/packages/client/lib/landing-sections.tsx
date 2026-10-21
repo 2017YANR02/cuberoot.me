@@ -9,7 +9,7 @@ import {
   FileText, Table2, Award, Radio, PanelsTopLeft, UserRound, UsersRound, HardDrive, ListOrdered,
   Images, Music2, Gamepad2, History,
   type LucideIcon,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import {
   SITE_DIRECTORY_GROUPS,
   SITE_DIRECTORY_TEXTS,

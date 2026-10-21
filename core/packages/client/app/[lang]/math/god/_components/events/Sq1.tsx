@@ -17,7 +17,7 @@
  */
 import { Suspense, lazy } from 'react';
 import Link from '@/components/AppLink';
-import { ExternalLink, Wrench } from 'lucide-react';
+import { ExternalLink, Wrench } from '@app-foundation/icons/lucide';
 import { TeXBlock } from '../sq1/Tex';
 import { METRICS, STATE_SPACE } from '../sq1/sq1_data';
 import '../sq1/sq1.css';

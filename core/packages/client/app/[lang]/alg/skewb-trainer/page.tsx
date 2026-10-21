@@ -11,7 +11,7 @@ import TrainingStatsPanel from '@/components/TrainingStatsPanel';
 import { useEffect } from 'react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { Layers, RotateCcw, Eye, TimerReset, ArrowRight } from 'lucide-react';
+import { Layers, RotateCcw, Eye, TimerReset, ArrowRight } from '@app-foundation/icons/lucide';
 import AlgPuzzlePicker from '@/components/AlgPuzzlePicker';
 import { useSkewbTrainer, type SkewbMode } from './_lib/useSkewbTrainer';
 import FirstLayerPanel from './_components/FirstLayerPanel';

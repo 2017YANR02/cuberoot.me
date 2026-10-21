@@ -244,7 +244,7 @@
   border: none;
   border-radius: 50%;
   cursor: pointer;
-  color: light-dark(var(--foreground), var(--destructive-foreground));
+  color: var(--foreground);
   transition: color 0.12s, background 0.12s, transform 0.12s;
 }
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useRef, useState } from 'react';
-import { BookOpen, ChevronRight, RotateCcw } from 'lucide-react';
+import { BookOpen, ChevronRight, RotateCcw } from '@app-foundation/icons/lucide';
 import { HexColorPicker } from 'react-colorful';
 import { ImageExportMenu } from '@/components/puzzle-image/PuzzleImageStudio';
 import '@/components/puzzle-image/puzzle-image.css';

@@ -14,7 +14,7 @@ import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseAsStringEnum } from 'nuqs';
 import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
-import { X, Save, ChevronRight, ChevronDown, Shuffle } from 'lucide-react';
+import { X, Save, ChevronRight, ChevronDown, Shuffle } from '@app-foundation/icons/lucide';
 import { loadAlg, MIRROR_ALG_SYNC_SETS, requires3x3AlgCaseSetup, type AlgCase, type AlgEntry, type AlgPuzzle, type AlgSticker } from '@cuberoot/shared';
 import { mirrorCascadeOnDelete, VIEWS } from '@cuberoot/shared/alg-mirror';
 import { canonicalSq1Alg, formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';

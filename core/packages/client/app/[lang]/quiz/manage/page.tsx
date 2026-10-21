@@ -9,7 +9,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { Check, Languages, Trash2 } from 'lucide-react';
+import { Check, Languages, Trash2 } from '@app-foundation/icons/lucide';
 import type { QuizDraft } from '@cuberoot/shared/quiz';
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';

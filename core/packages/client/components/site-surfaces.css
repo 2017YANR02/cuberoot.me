@@ -24,7 +24,7 @@ body[data-site-scenery] .wp-page {
 /* Cards and panels that already have a material, never unframed prose or cells. */
 body[data-site-scenery] :is(
   [data-site-surface='panel'],
-  .alg-card,
+  .alg-card:not(:where(.alg-bento .alg-card, .alg-card--subgroup-plain)),
   .chx-panel,
   .chx-chain,
   .chx-tabs,

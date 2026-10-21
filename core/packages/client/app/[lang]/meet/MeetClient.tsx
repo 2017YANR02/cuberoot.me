@@ -32,7 +32,7 @@ import { usePathname } from 'next/navigation';
 import { useQueryState } from 'nuqs';
 import { LiveKitRoom, PreJoin, type LocalUserChoices } from '@livekit/components-react';
 import type { DisconnectReason } from 'livekit-client';
-import { Check, Copy, QrCode } from 'lucide-react';
+import { Check, Copy, QrCode } from '@app-foundation/icons/lucide';
 
 import BoolToggle from '@/components/BoolToggle';
 import { RoomQrModal } from '@/components/RoomQrModal';

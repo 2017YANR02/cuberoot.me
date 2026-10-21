@@ -4,7 +4,7 @@
  * 会员联系方式:用于到期续费提醒 / 万一 WCA 登录失效时人工找回会员资格。可留空。
  */
 import { useState } from 'react';
-import { Check } from 'lucide-react';
+import { Check } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 import { setMyContact, type Membership } from '@/lib/membership-api';
 

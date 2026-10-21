@@ -23,7 +23,7 @@ import {
   ImagePlus, Plus, Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin,
   CalendarDays, LayoutGrid, Wrench, ArrowRight, ArrowUp, X, Square, Search, Clipboard,
   ScanSearch, BookA, BookOpen, Library, Code as CodeIcon, Mic, Sparkles, type LucideIcon,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import { Flag } from '@/components/Flag';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import { displayCuberName } from '@/lib/cuber-name-display';

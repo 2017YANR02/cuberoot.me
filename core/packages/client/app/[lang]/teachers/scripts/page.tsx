@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
-import { ArrowRight, Clock3, Mic2, Plus } from 'lucide-react';
+import { ArrowRight, Clock3, Mic2, Plus } from '@app-foundation/icons/lucide';
 import { parseAsString, useQueryState } from 'nuqs';
 import AppLink from '@/components/AppLink';
 import BackHome from '@/components/BackHome';

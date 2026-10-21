@@ -5,7 +5,7 @@
 import {
   Type, Crown, Smartphone, Mic, Radio, Timer, Disc, Languages, Shuffle, Flag, MapPin, User,
   ListChecks, CalendarDays, Trophy, Palette, Box, Link2, Webhook, Wrench, type LucideIcon,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 
 export type UtilCat = 'hook' | 'i18n' | 'api' | 'format' | 'wca' | 'cube' | 'util';
 
@@ -72,6 +72,14 @@ export const UCATS: { id: UtilCat; zh: string; en: string }[] = [
 ];
 
 export const CATALOG: UtilEntry[] = [
+  {
+    name: 'useIvyMode',
+    sig: 'useIvyMode(): [IvyScrambleMode, typeof setIvyMode]',
+    imp: "import { useIvyMode, ivyScrambleForMode } from '@/lib/scramble-ivy-mode';",
+    category: 'hook',
+    zh: '同步枫叶 R L D B / R L U B 打乱类型；转换在生成结果入库前完成，图示和播放读取原文。',
+    en: 'Synchronize Ivy RLDB/RLUB scramble types; convert before saving generated results so previews and playback consume the saved notation.',
+  },
   {
     name: 'useDouyinToolSurface', sig: 'useDouyinToolSurface(): boolean',
     imp: "import { useDouyinToolSurface } from '@/lib/douyin-content';",

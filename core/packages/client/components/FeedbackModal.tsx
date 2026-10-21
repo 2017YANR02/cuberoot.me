@@ -6,7 +6,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
-import { ImagePlus, Film, X, Check, LogIn, Inbox, MessagesSquare } from 'lucide-react';
+import { ImagePlus, Film, X, Check, LogIn, Inbox, MessagesSquare } from '@app-foundation/icons/lucide';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { useAuthStore, isAdmin } from '@/lib/auth-store';
 import AppLink from '@/components/AppLink';

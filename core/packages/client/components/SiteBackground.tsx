@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, type CSSProperties } from 'react';
-import { Check } from 'lucide-react';
+import { Check } from '@app-foundation/icons/lucide';
 import { usePathname } from 'next/navigation';
 import { useHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';
 import { HOME_BACKGROUND_ASSETS as ASSET_ROOT, HOME_BACKGROUNDS as SCENES, resolveHomeBackground, type HomeBackgroundChoice } from '@/lib/home-backgrounds';

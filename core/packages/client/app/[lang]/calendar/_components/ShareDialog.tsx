@@ -10,7 +10,7 @@ import '@cuberoot/timer-ui/compact-select.css';
 // 同一个 token 还提供 .ics 订阅源,Google / Apple 日历能直接订上。
 
 import { useState } from 'react';
-import { Check, Copy, Link2, RefreshCw, X, ExternalLink } from 'lucide-react';
+import { Check, Copy, Link2, RefreshCw, X, ExternalLink } from '@app-foundation/icons/lucide';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
 import BoolToggle from '@/components/BoolToggle';
 import { useCopy } from '@/hooks/useCopy';

@@ -6,7 +6,7 @@ import Link from '@/components/AppLink';
 import { parseAsStringEnum } from 'nuqs';
 import { useTrainingRouter as useRouter, useTrainingParams as useParams, useTrainingQueryState as useQueryState, useTrainingHost } from '@/lib/training-host';
 import { useTranslation } from 'react-i18next';
-import { Eraser, MousePointer2 } from 'lucide-react';
+import { Eraser, MousePointer2 } from '@app-foundation/icons/lucide';
 import { getAlgSetMeta, type AlgCase } from '@cuberoot/shared/alg';
 import { loadTrainingAlg as loadAlg } from '@/lib/alg_case_alignment';
 import { MIX_SLUG, MIX_MIN_SETS, parseMixSets, mixTitle, mixHref, loadMixCases, setLabel } from '@/lib/alg-mix';

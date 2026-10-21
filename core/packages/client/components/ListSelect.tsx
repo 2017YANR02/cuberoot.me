@@ -6,7 +6,7 @@
  * caller 预格式化 label / hint / country / searchTerms,组件不做本地化。
  */
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { ChevronDown, X } from 'lucide-react';
+import { ChevronDown, X } from '@app-foundation/icons/lucide';
 import { Flag } from '@/components/Flag';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { tr } from '@/i18n/tr';

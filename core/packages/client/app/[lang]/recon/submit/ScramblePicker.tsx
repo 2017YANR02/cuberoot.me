@@ -8,7 +8,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { X, Search } from 'lucide-react';
+import { X, Search } from '@app-foundation/icons/lucide';
 import { Spinner } from '@/components/Spinner/Spinner';
 import type { ReconSolve } from '@cuberoot/shared';
 import { getReconScramble } from '@cuberoot/shared/recon-completion';

@@ -6,7 +6,7 @@
 // Reimplemented from scratch in TypeScript for this project's data shape.
 
 import { useMemo, useState } from 'react';
-import { ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowUp, ArrowDown } from '@app-foundation/icons/lucide';
 import { buildMilestones, type MilestoneType } from '../logic/milestones';
 import { localizeCompName } from '@/lib/comp-localize';
 import { EVENT_ZH, EVENT_EN } from '@/lib/event-constants';

@@ -7,7 +7,7 @@
  */
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, ChevronDown, ChevronRight, ExternalLink, Trophy, Play } from 'lucide-react';
+import { Search, ChevronDown, ChevronRight, ExternalLink, Trophy, Play } from '@app-foundation/icons/lucide';
 import { useWbData } from './use_wb_data';
 import type { WbCategory, WbEvent, WbRecord, WbTab } from './types';
 import { displayCuberName } from '@/lib/cuber-name-display';

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { CalendarDays, Table as TableIcon, ImageDown, CalendarPlus } from 'lucide-react';
+import { CalendarDays, Table as TableIcon, ImageDown, CalendarPlus } from '@app-foundation/icons/lucide';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { EventIcon } from '@/components/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';

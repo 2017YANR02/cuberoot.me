@@ -39,7 +39,7 @@ import {
   RotateCcw,
   ArrowRight,
   Clock,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import CubingPreview from '@/components/CubingPreview';
 import BoolToggle from '@/components/BoolToggle';
 import { Spinner } from '@/components/Spinner/Spinner';

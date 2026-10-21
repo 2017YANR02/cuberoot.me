@@ -1,4 +1,4 @@
-import { Check, X } from 'lucide-react';
+import { Check, X } from '@app-foundation/icons/lucide';
 import styles from './TrainingFeedbackOverlay.module.css';
 
 export type TrainingFeedbackKind = 'correct' | 'wrong';

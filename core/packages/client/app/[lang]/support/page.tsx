@@ -10,7 +10,7 @@ import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
  * 数据走 /v1/sponsors + /v1/contributors。
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Heart, Plus, Pencil, Trash2, Crown, List, X } from 'lucide-react';
+import { Heart, Plus, Pencil, Trash2, Crown, List, X } from '@app-foundation/icons/lucide';
 import { tr, useLang } from '@/i18n/tr';
 import AppLink from '@/components/AppLink';
 import DonateModal from '@/components/DonateModal';

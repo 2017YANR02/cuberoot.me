@@ -11,7 +11,7 @@
 import { useEffect, useMemo, useState, type JSX } from 'react';
 import { parseAsStringEnum } from 'nuqs';
 import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { SearchInput } from '@/components/SearchInput';
 import { Spinner } from '@/components/Spinner/Spinner';

@@ -7,7 +7,7 @@
 // attempted to count. Shared shell + primitives do the chrome.
 
 import { useTranslation } from 'react-i18next';
-import { Layers, Clock, Hash, Ban } from 'lucide-react';
+import { Layers, Clock, Hash, Ban } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { useT } from '../../../../hooks/useT';
 import { EventIcon } from '@/components/EventIcon';

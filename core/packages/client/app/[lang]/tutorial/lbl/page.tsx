@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { Alg } from 'cubing/alg';
 import { Axis } from '@cuberoot/visualcube';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight } from '@app-foundation/icons/lucide';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
 import BackHome from '@/components/BackHome';
 import Link from '@/components/AppLink';

@@ -10,7 +10,7 @@
  * 保存走 sponsors-api,成功后 onSaved(saved) 由父组件刷新本地列表。
  */
 import { useEffect, useState } from 'react';
-import { X, Plus, Trash2 } from 'lucide-react';
+import { X, Plus, Trash2 } from '@app-foundation/icons/lucide';
 import { tr, useLang } from '@/i18n/tr';
 import { DateInput } from '@/components/DateInput';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';

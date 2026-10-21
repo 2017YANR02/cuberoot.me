@@ -8,7 +8,7 @@
  * 五个图文选项。None 没有实时投影,所以只用图片图标占位。
  */
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, Image as ImageIcon } from 'lucide-react';
+import { ChevronDown, Image as ImageIcon } from '@app-foundation/icons/lucide';
 
 import { FaceletsCube } from '@/components/FaceletsCube';
 import { usePanelClamp } from '@/hooks/usePanelClamp';

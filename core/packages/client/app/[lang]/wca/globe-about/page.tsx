@@ -4,7 +4,7 @@
  * /wca/globe-about — WCA 地球视图说明页
  */
 import Link from '@/components/AppLink';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from '@app-foundation/icons/lucide';
 import './globe_about.css';
 import { useT } from "@/hooks/useT";
 
@@ -30,7 +30,7 @@ export default function GlobeAboutPage() {
       <div className="gla-header">
         <Link href="/wca/comp?view=globe" className="gla-back">
           <ArrowLeft size={16} />
-          <span>{t('返回地球视图', 'Back to Globe')}</span>
+          <span className="sr-only">{t('返回地球视图', 'Back to Globe')}</span>
         </Link>
       </div>
 

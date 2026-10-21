@@ -7,7 +7,7 @@ import {
   Coffee, Hand, LifeBuoy, Users, Globe, Wrench, GraduationCap, Puzzle, Timer,
   MessageCircleWarning,
   type LucideIcon,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 
 const ICONS: Record<string, LucideIcon> = {
   Megaphone, HelpCircle, BookOpen, MessageSquare, MessagesSquare, Box, Cpu,

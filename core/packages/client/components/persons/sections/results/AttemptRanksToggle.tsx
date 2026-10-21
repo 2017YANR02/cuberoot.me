@@ -3,7 +3,7 @@
 // 开(默认):每把单次后显示时间序 PR 名次;关:只显示成绩,隐藏全部角标。
 
 import BoolToggle from '@/components/BoolToggle';
-import { Hash } from 'lucide-react';
+import { Hash } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 
 export function AttemptRanksToggle({ active, onToggle }: { active: boolean; onToggle: () => void }) {

@@ -16,7 +16,7 @@ import { useQueryState } from 'nuqs';
 import {
   Search, Square as StopIcon, Eraser, Copy, Check,
   Plus, Pencil, Trash2, ChevronLeft, ChevronRight,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import { renderCubeSVG } from '@cuberoot/visualcube';
 import BoolToggle from '@/components/BoolToggle';
 import { useT } from '@/hooks/useT';

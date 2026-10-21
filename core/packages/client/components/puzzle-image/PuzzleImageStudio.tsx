@@ -16,7 +16,7 @@ import '@cuberoot/timer-ui/compact-select.css';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Code2, Copy, Check, Download, ChevronDown, ChevronRight, MousePointerClick, RotateCcw, Plus, Trash2 } from 'lucide-react';
+import { Code2, Copy, Check, Download, ChevronDown, ChevronRight, MousePointerClick, RotateCcw, Plus, Trash2 } from '@app-foundation/icons/lucide';
 import SimCaptureGroup, { type SimBridge } from '@/components/puzzle-image/SimCaptureGroup';
 import BoolToggle from '@/components/BoolToggle';
 import PuzzleImage from '@/components/puzzle-image/PuzzleImage';

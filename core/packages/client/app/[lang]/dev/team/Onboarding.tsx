@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Check, ChevronDown, Sparkles, UserRound } from 'lucide-react';
+import { Check, ChevronDown, Sparkles, UserRound } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { UserIdLabel } from '@/components/UserIdLabel';
 import { useCopy } from '@/hooks/useCopy';

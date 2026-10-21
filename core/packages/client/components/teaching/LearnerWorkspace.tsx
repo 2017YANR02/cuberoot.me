@@ -50,7 +50,7 @@ export default function LearnerWorkspace({ orgSlug, studentId, children }: Props
     );
   }
   if (error) {
-    return <main className="teaching-page teaching-centered"><p role="alert">{error}</p><AppLink href="/learn" prefetch={false}>{t('返回学习中心', 'Back to learning center')}</AppLink></main>;
+    return <main className="teaching-page teaching-centered"><p role="alert">{error}</p><AppLink href="/learn" prefetch={false}><span aria-hidden="true">←</span> <span className="sr-only">{t('返回学习中心', 'Back to learning center')}</span></AppLink></main>;
   }
   if (!context) return <main className="teaching-page" aria-busy="true"><p><LoadingIndicator>{t('正在加载学习档案…', 'Loading learning profile…')}</LoadingIndicator></p></main>;
 

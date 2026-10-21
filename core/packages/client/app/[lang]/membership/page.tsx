@@ -7,7 +7,7 @@
  * admin 登录后见管理面板。
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Check, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Check, RefreshCw, AlertTriangle } from '@app-foundation/icons/lucide';
 import { useQueryState } from 'nuqs';
 import { tr, useLang } from '@/i18n/tr';
 import { useAuthStore, isAdmin, getSessionToken, getWcaToken } from '@/lib/auth-store';

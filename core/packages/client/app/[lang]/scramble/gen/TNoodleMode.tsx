@@ -13,12 +13,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useQueryStates, parseAsString } from 'nuqs';
 import Link from '@/components/AppLink';
-import { RefreshCw, Download, X, Edit3, Image as ImageIcon, ImageOff, Dices } from 'lucide-react';
+import { RefreshCw, Download, X, Edit3, Image as ImageIcon, ImageOff, Dices } from '@app-foundation/icons/lucide';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { EventIcon } from '@/components/EventIcon';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import EventScrambleOptions from './EventScrambleOptions';
 import NumberCommitInput from '@/components/NumberCommitInput';
+import { onIvyModeChange } from '@/lib/scramble-ivy-mode';
 import { onRediModeChange } from '@/lib/scramble-redi-mode';
 import { on222ModeChange } from '@/lib/scramble-222-mode';
 import { on333ModeChange } from '@/lib/scramble-333-mode';
@@ -371,7 +372,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
       cacheTargetRef.current = {};
       setScrambleModeVer((v) => v + 1);
     };
-    const uns = [on222ModeChange(invalidate), on333ModeChange(invalidate), on555ModeChange(invalidate), onRediModeChange(invalidate)];
+    const uns = [on222ModeChange(invalidate), on333ModeChange(invalidate), on555ModeChange(invalidate), onRediModeChange(invalidate), onIvyModeChange(invalidate)];
     return () => uns.forEach((un) => un());
   }, []);
 
@@ -1412,7 +1413,6 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
               selectedEvents={new Set(Object.keys(events))}
               onToggle={toggleEvent}
               isZh={isZh}
-              showTriggerIcon={false}
             />
             <div className="gen-config-toolbar-scroll">
               <div className="gen-tn-controls">{actionsNode}</div>
@@ -1440,8 +1440,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
             return (
               <div key={ev} className="gen-tn-event-card is-on">
                 <div className="gen-tn-event-header gen-tn-event-header--static">
-                  <EventIcon event={ev} />
-                  <span className="gen-tn-event-name">{eventDisplayName(ev, isZh)}</span>
+                  <EventIcon event={ev} title={eventDisplayName(ev, isZh)} />
                   <label className="gen-tn-mini-num">
                     <span>{t('轮数', 'Rounds')}</span>
                     <NumberCommitInput

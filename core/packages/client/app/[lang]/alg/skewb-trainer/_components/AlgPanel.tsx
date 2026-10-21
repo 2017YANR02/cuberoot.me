@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { HelpCircle, RefreshCw } from 'lucide-react';
+import { HelpCircle, RefreshCw } from '@app-foundation/icons/lucide';
 import BoolToggle from '@/components/BoolToggle';
 import SkewbImage from './SkewbImage';
 import HintModal from './HintModal';

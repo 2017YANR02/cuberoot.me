@@ -2,7 +2,7 @@
 
 import { memo, useRef, useState, useEffect, useCallback, type RefObject } from 'react';
 import { parseAsStringLiteral, useQueryState } from 'nuqs';
-import { ArrowLeft, ArrowRight, ArrowUp, ArrowUpRight, MoveHorizontal, BookOpen, Pause, Play, Sun, Moon, Sparkles, Download, RotateCcw, Gamepad2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUp, ArrowUpRight, MoveHorizontal, BookOpen, Pause, Play, Sun, Moon, Sparkles, Download, RotateCcw, Gamepad2 } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { ClearButton } from '@/components/ClearButton';
 import { CompactSelect } from '@/components/CompactSelect';

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Apple, Hand, Heart, Moon, Sparkles, Star, Check, Zap, Loader2 } from 'lucide-react';
+import { Apple, Hand, Heart, Moon, Sparkles, Star, Check, Zap, Loader2 } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import PetLevelBadge from '@/components/PetLevelBadge';
 import { tr, useLang } from '@/i18n/tr';

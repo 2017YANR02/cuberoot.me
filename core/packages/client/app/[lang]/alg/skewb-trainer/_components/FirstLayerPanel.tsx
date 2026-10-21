@@ -1,6 +1,6 @@
 'use client';
 
-import { Minus, Plus, RefreshCw } from 'lucide-react';
+import { Minus, Plus, RefreshCw } from '@app-foundation/icons/lucide';
 import BoolToggle from '@/components/BoolToggle';
 import SkewbImage from './SkewbImage';
 import type { FltSettings } from '../_lib/useSkewbTrainer';

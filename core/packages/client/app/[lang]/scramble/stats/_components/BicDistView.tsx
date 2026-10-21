@@ -8,7 +8,7 @@
 // 语料,但全状态空间可枚举)。God 数 28、均值 ≈ 18.80,出处 jaapsch.net。无浏览器现场 BFS。
 // 态数 ~1.1M(<2M),「下载全部」CSV 先 confirm + 流式生成(分块 Blob,峰值内存有界)。
 import { useEffect, useMemo, useState } from 'react';
-import { Download } from 'lucide-react';
+import { Download } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';

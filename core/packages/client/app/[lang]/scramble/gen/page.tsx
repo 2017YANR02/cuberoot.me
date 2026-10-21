@@ -14,11 +14,9 @@ import { Suspense, useEffect, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsString } from 'nuqs';
 import Link from '@/components/AppLink';
-import { Shuffle, HelpCircle } from 'lucide-react';
+import { Shuffle, HelpCircle } from '@app-foundation/icons/lucide';
 import LiquidGlassChips from '@/components/LiquidGlassChips';
-import { prewarmScramble } from '@/lib/cubing-scramble';
 import { persistItem } from '@/lib/safe-storage';
-import { get333Mode } from '@/lib/scramble-333-mode';
 import { useT } from '@/hooks/useT';
 import QuickMode from './QuickMode';
 import { CUBE_FILL } from '@/lib/cube-colors';
@@ -83,19 +81,6 @@ function GenPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = useT();
-
-  // Prewarm the heaviest random-state scramblers while the user is reading the
-  // event selector. 444/555 each pay a ~3s pruning-table build on first call;
-  // running that during page idle (rather than after the user clicks Generate)
-  // is the single biggest win for perceived latency.
-  useEffect(() => {
-    prewarmScramble('333', '444', '555', '333fm');
-    // If the user has opted into the m2p engine, also fetch + init it during
-    // page idle so their first 3x3 Generate doesn't pay the 120KB + 100ms tax.
-    if (get333Mode() === 'm2p') {
-      void import('@/lib/m2p-scramble').then((m) => m.prewarmM2p());
-    }
-  }, []);
 
   // Shared 打乱图 visibility. Persisted to localStorage so the choice survives
   // page reloads and mode switches. Off ⇒ neither web sheet nor PDF includes

@@ -15,7 +15,7 @@ import Link from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import { statsUrl } from '@/lib/stats-base';
 import { persistItem } from '@/lib/safe-storage';
-import { ArrowLeft, Menu, X as XIcon, HelpCircle } from 'lucide-react';
+import { ArrowLeft, Menu, X as XIcon, HelpCircle } from '@app-foundation/icons/lucide';
 import { LineChart, type Series } from './_components/charts';
 import { fitExpFloor, type DataPoint } from './_components/models';
 import { EVENTS, formatVal, toDisplay, toDisplayAvg } from './_components/events';
@@ -192,7 +192,7 @@ export default function PredictionPage() {
       <header className="pred-header">
         <HomeLink className="pred-back" aria-label="back">
           <ArrowLeft size={16} />
-          <span>{tr({ zh: '返回', en: 'Back' })}</span>
+          <span className="sr-only">{tr({ zh: '返回', en: 'Back' })}</span>
         </HomeLink>
         <button
           className="pred-toc-btn"

@@ -10,7 +10,7 @@ import { ColorScheme } from '@/lib/roux/CubeLib';
 
 import { MultiSelectContent } from './SelectorViews';
 import { Modal, FieldLabel } from './ui';
-import { Settings } from 'lucide-react';
+import { Settings } from '@app-foundation/icons/lucide';
 import { useRT } from '../i18n';
 import './Input.css';
 

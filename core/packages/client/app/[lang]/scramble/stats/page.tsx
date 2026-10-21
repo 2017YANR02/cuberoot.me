@@ -47,7 +47,7 @@ import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import { CSTIMER_SOLVABLE_IDS } from '@/lib/cstimer-scramble';
 import BoolToggle from '@/components/BoolToggle';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle } from '@app-foundation/icons/lucide';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { Flag } from '@/components/Flag';

@@ -35,7 +35,7 @@ import { useBattleHistoryProps } from '@/app/[lang]/timer/_battle/VsHistoryPanel
 import { updateSettings, useSettings } from '@/app/[lang]/timer/_lib/settings';
 import { eventInfo } from '@/app/[lang]/timer/_lib/types';
 import HomeLink from '@/components/HomeLink';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from '@app-foundation/icons/lucide';
 import WcaSourceConfig from '@/components/WcaSourceConfig';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { localizeCompName } from '@/lib/comp-localize';

@@ -11,7 +11,7 @@
  * 没渲染它,只给元数据等于跳进一片空白;弹窗自带缩略图 + 公式,原地看得到。
  */
 import { useMemo } from 'react';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink } from '@app-foundation/icons/lucide';
 import { ClearButton } from '@/components/ClearButton';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
 import Link from '@/components/AppLink';

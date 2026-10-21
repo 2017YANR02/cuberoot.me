@@ -8,7 +8,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { X, Search, Film } from 'lucide-react';
+import { X, Search, Film } from '@app-foundation/icons/lucide';
 import { Spinner } from '@/components/Spinner/Spinner';
 import type { ReconSolve } from '@cuberoot/shared';
 import { listPersonRecons, getRecon } from '@/lib/recon-api';

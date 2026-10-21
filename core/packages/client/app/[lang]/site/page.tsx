@@ -14,7 +14,7 @@ import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 import { Suspense, useMemo, useCallback, useState, useEffect } from 'react';
 import { useQueryState, useQueryStates, parseAsArrayOf, parseAsString, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { Search, AlertTriangle, Pencil, Trash2, ArrowUp, ArrowDown, Plus, LayoutGrid, List } from 'lucide-react';
+import { Search, AlertTriangle, Pencil, Trash2, ArrowUp, ArrowDown, Plus, LayoutGrid, List } from '@app-foundation/icons/lucide';
 import Fuse from 'fuse.js';
 import { ALG_CATALOG } from '@cuberoot/shared/alg';
 import { WCA_AUTHOR_BY_CREDIT } from './data/wca-authors';
@@ -1059,7 +1059,6 @@ function SitesPageInner() {
               <PuzzlePicker
                 isZh={lang === 'zh'}
                 groups={eventPickerGroups}
-                showTriggerIcon={false}
                 selectedEvents={selectedEvents}
                 onToggle={toggleEvent}
               />

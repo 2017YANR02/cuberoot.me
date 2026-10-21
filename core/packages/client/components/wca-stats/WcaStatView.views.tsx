@@ -7,7 +7,7 @@
 // Guard-forced adaptation vs the original inline code: the four
 // `isZh ? '<literal>' : '<literal>'` text ternaries use tr({zh,en}).
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { BarChart3, Play, Pause, ChevronRight } from 'lucide-react';
+import { BarChart3, Play, Pause, ChevronRight } from '@app-foundation/icons/lucide';
 import BoolToggle from '@/components/BoolToggle';
 import { ListSelect } from '@/components/ListSelect';
 import WcaEventSelector from '@/components/WcaEventSelector';

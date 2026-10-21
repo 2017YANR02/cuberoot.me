@@ -26,6 +26,7 @@ export async function POST(request: Request): Promise<Response> {
     // Public covers stay visible while refreshing; the browser separately
     // checks the current revision. A brief API outage must not blank the page.
     revalidateTag('alg-catalog', 'max');
+    revalidateTag('alg-library', 'max');
   } else if (kind === 'forum') {
     // Moderation/privacy changes must also refresh the first visitor.
     revalidateTag(id ? forumThreadCacheTag(id) : FORUM_CACHE_TAG, { expire: 0 });

@@ -21,7 +21,7 @@ import { Suspense } from 'react';
 import Link from '@/components/AppLink';
 import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ExternalLink, FileText, Sparkles } from 'lucide-react';
+import { ArrowLeft, ExternalLink, FileText, Sparkles } from '@app-foundation/icons/lucide';
 import { TeX, TeXBlock } from '@/components/math/Tex';
 import './unit_distance.css';
 import { useT } from "@/hooks/useT";
@@ -66,7 +66,7 @@ export default function UnitDistancePage() {
       <header className="ud-header">
         <Link href="/math" className="ud-back">
           <ArrowLeft size={16} />
-          <span>{t('返回 数学', 'Back to Math')}</span>
+          <span className="sr-only">{t('返回 数学', 'Back to Math')}</span>
         </Link>
       </header>
 

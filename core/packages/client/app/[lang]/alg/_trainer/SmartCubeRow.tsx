@@ -16,7 +16,7 @@
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, X } from 'lucide-react';
+import { Check, X } from '@app-foundation/icons/lucide';
 
 import { tr } from '@/i18n/tr';
 import { TimerDeviceCenter } from '@cuberoot/timer-ui';

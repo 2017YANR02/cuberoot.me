@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import Link from '@/components/AppLink';
-import { Check, Copy, FileX2, PackageX, FunctionSquare, Terminal, ShieldCheck, Layers } from 'lucide-react';
+import { Check, Copy, FileX2, PackageX, FunctionSquare, Terminal, ShieldCheck, Layers } from '@app-foundation/icons/lucide';
 import './dead-code.css';
 import { tr, useLang } from '@/i18n/tr';
 

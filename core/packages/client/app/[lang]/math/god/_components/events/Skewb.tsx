@@ -21,7 +21,7 @@
  */
 import { useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
-import { Layers, GitCompareArrows } from 'lucide-react';
+import { Layers, GitCompareArrows } from '@app-foundation/icons/lucide';
 import {
   EvHighlights, EvSection, EvCallout, EvRefs, EvStatStrip,
   TeX, TeXBlock, type HighlightCard, type RefItem, type StatItem,

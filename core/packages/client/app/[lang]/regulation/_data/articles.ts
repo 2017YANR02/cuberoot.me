@@ -12,12 +12,12 @@
 // i18n: title/tagline are { zh, en } and render via tr().
 // Render through useRegText() in _components/reg-text.
 
-import type { LucideIcon } from 'lucide-react';
+import type { LucideIcon } from '@app-foundation/icons/lucide';
 import {
   Gavel, Users, Box, Shuffle, Wrench, Building2, ListChecks,
   CircleCheckBig, TriangleAlert, RotateCw,
   Timer, EyeOff, Hand, PencilRuler, Layers, Swords,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 
 export type RegGroup = 'core' | 'event';
 

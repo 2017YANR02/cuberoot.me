@@ -5,7 +5,7 @@ import '@cuberoot/timer-ui/compact-select.css';
 // 折叠形态与同目录 BldConfigBar 一致(同一套 .bld-config-* 样式),别再造第二种。
 
 import { useState, type JSX } from 'react';
-import { SlidersHorizontal, ChevronDown, ChevronUp } from 'lucide-react';
+import { SlidersHorizontal, ChevronDown, ChevronUp } from '@app-foundation/icons/lucide';
 import BoolToggle from '@/components/BoolToggle';
 import { tr } from '@/i18n/tr';
 import { useBlddbPrefsStore, type BlddbPrefs } from '../_store/blddb-prefs-store';

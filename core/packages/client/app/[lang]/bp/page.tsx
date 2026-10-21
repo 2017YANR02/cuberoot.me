@@ -2,7 +2,7 @@
 
 import { useRef } from 'react';
 import { useBpMotion } from './useBpMotion';
-import { ArrowRight, ArrowUpRight, BookOpen, Building2, ChartNoAxesColumnIncreasing, Check, ChevronDown, Clock3, Code2, Globe2, Layers3, Printer, Radio, RotateCcw, ScanSearch, School, ShieldCheck, Sparkles, Timer, Users } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, BookOpen, Building2, ChartNoAxesColumnIncreasing, Check, ChevronDown, Clock3, Code2, Globe2, Layers3, Printer, Radio, RotateCcw, ScanSearch, School, ShieldCheck, Sparkles, Timer, Users } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import PersonLink from '@/components/PersonLink';
 import HeaderToggles from '@/components/HeaderToggles';

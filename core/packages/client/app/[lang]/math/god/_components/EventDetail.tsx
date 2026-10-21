@@ -12,7 +12,7 @@
  */
 import { Suspense, lazy, useMemo, type ComponentType } from 'react';
 import Link from '@/components/AppLink';
-import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight } from '@app-foundation/icons/lucide';
 import { VisualCube } from '@/components/VisualCube';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';

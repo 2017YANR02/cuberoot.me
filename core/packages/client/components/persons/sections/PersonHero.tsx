@@ -3,7 +3,7 @@
 
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Mars, Venus } from 'lucide-react';
+import { Mars, Venus } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { contestsHref } from '@/lib/contests-api';
 import BoolToggle from '@/components/BoolToggle';

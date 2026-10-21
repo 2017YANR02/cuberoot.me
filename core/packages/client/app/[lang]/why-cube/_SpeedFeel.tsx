@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Timer, RotateCcw } from 'lucide-react';
+import { Timer, RotateCcw } from '@app-foundation/icons/lucide';
 import { useT } from '../../../hooks/useT';
 import './_SpeedFeel.css';
 

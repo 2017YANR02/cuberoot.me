@@ -22,6 +22,10 @@ Current incident controls and recovery: [Traffic defense and cost protection](tr
 
 ## Maintenance-aware notifications (2026-09-25)
 
+### Exception-only Bark policy (2026-10-20, local change pending publication)
+
+Bark now requires `server_errors_high` or `unclassified_503_high` and includes only the affected observed sources. The existing thresholds remain: at least 100 non-maintenance requests with at least 5% unexpected 5xx, or at least 100 requests with at least 5% unclassified legacy 503s. Page/API volume growth, rate-limit counts, and expected maintenance blocks remain machine-readable report signals but do not independently send Bark. Low error counts no longer imply an instruction to investigate. This supersedes the informational notification behavior described below; the independent emergency guard is unchanged.
+
 The three nginx access logs retain their combined-log fields and append a server-owned `maintenance=0|1` marker. Only a 503 with `maintenance=1` counts as a confirmed maintenance block. A 503 with `maintenance=0`, or another 5xx, remains an unexpected service error. Historical 503s without the marker are reported separately as unclassified; the current maintenance switch never retroactively labels past requests.
 
 Each report keeps total requests, confirmed blocks (maintenance 503 + rate-limit 429 + denied 403), successful 2xx/3xx responses, unexpected 5xx, unclassified old 503s and other responses distinct. Requests are not people; successful responses include redirects and cache hits. Only maintenance blocks are described as not entering the application. Minute guard reports keep maintenance, 429 and 403 counts separate; none of those blocked requests independently trips the volume guard. Previous maintenance responses cannot retrip the guard immediately after reopening. Shutdown notifications also use Chinese reasons, the last two complete minutes, and received/blocked counts.

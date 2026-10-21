@@ -14,7 +14,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Camera, Images, RefreshCw } from 'lucide-react';
+import { Camera, Images, RefreshCw } from '@app-foundation/icons/lucide';
 import { useTranslation } from 'react-i18next';
 import { useT } from '@/hooks/useT';
 import { SCAN_STEPS, classifyScan, sampleGridColors, type RGB, type ScanResult, type PhotoFace } from '@/lib/cube-photo';

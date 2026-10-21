@@ -8,7 +8,7 @@
 // on every chapter page).
 
 import type { ReactNode } from 'react';
-import { Info, TriangleAlert, Ban, CircleCheckBig } from 'lucide-react';
+import { Info, TriangleAlert, Ban, CircleCheckBig } from '@app-foundation/icons/lucide';
 
 /* ── Section wrapper ──────────────────────────────────────────────
  * Standard chapter section: small eyebrow, big title, optional lede,

@@ -4,7 +4,7 @@
  * /wca/comp-about — WCA 比赛直播说明页
  */
 import Link from '@/components/AppLink';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from '@app-foundation/icons/lucide';
 import './comp_about.css';
 import { useT } from "@/hooks/useT";
 
@@ -30,7 +30,7 @@ export default function CompAboutPage() {
       <div className="ca-header">
         <Link href="/wca/comp" className="ca-back">
           <ArrowLeft size={16} />
-          <span>{t('返回 WCA 比赛', 'Back to Competitions')}</span>
+          <span className="sr-only">{t('返回 WCA 比赛', 'Back to Competitions')}</span>
         </Link>
       </div>
 

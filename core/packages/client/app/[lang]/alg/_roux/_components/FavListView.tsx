@@ -9,7 +9,7 @@
 // Icons: PlaylistPlay→ListVideo, DeleteOutline→Trash2, Add→Plus (lucide).
 
 import React from 'react';
-import { ListVideo, Trash2, Plus } from 'lucide-react';
+import { ListVideo, Trash2, Plus } from '@app-foundation/icons/lucide';
 
 import { AppState, Action, FavCase } from '@/lib/roux/Types';
 import { all_solvers } from '@/lib/roux/CachedSolver';

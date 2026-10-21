@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type InputHTMLAttributes } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 import './password-input.css';
 

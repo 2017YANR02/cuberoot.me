@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft, ArrowUpRight, Code2, Terminal, Globe, Bot, ShieldCheck, Lock,
   Check, Minus, Scale, Sparkles, Rocket, Briefcase, Gauge,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 import './sonnet-5.css';

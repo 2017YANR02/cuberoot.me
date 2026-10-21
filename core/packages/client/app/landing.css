@@ -307,6 +307,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     max-width: 1100px;
     box-sizing: border-box;
     margin: 0 auto 2.5rem;
+    padding-inline: 0;
 }
 .landing-page .landing-featured-news {
     --home-news-color: var(--accent);
@@ -825,6 +826,14 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     max-width: 100%;
 }
 
+.landing-page .beian.company-contact {
+    flex-direction: column;
+    gap: 0.25rem;
+    white-space: normal;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
 .landing-page .beian a {
     color: var(--text-sub);
     text-decoration: none;
@@ -846,6 +855,11 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 }
 
 /* ── 页脚 ── */
+.landing-page .landing-contact-details {
+    width: min(100%, 920px);
+    margin: 3rem auto 2rem;
+}
+
 .landing-page .footer {
     margin-top: 0.5rem;
     font-size: 0.75rem;

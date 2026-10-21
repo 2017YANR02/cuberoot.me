@@ -27,7 +27,7 @@ import {
   mayUseMiniProgramBridge,
 } from '../_lib/bluetooth';
 import type { BluetoothCubeHandle, ConnectStage, ConnectPickOptions } from '../_lib/bluetooth';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 
 interface Props {

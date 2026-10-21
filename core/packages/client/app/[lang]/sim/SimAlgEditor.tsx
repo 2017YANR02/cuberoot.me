@@ -2,7 +2,7 @@
 
 import type { ReactNode, RefObject } from 'react';
 import AlgInput, { type AlgInputProps } from '@/components/AlgInput';
-import { Play, Shuffle, Search, Loader2 } from 'lucide-react';
+import { Play, Shuffle, Search, Loader2 } from '@app-foundation/icons/lucide';
 import { ClearButton } from '@/components/ClearButton';
 import { useT } from '@/hooks/useT';
 

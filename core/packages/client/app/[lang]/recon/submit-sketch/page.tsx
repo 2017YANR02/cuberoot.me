@@ -5,7 +5,7 @@
  * 灵感:Twizzle 左输入右预览 + GitHub 设置式 collapsible sections
  */
 import { useState } from 'react';
-import { ChevronDown, ChevronRight, Keyboard, Eye } from 'lucide-react';
+import { ChevronDown, ChevronRight, Keyboard, Eye } from '@app-foundation/icons/lucide';
 
 // ── tiny presentational primitives,inline styled,自洽 ──
 

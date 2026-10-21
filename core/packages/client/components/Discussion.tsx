@@ -7,7 +7,7 @@
  */
 import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Key, MoreVertical } from 'lucide-react';
+import { Key, MoreVertical } from '@app-foundation/icons/lucide';
 import { useAuthStore, useAuthUser } from '@/lib/auth-store';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
 import { UserContactLink, UserIdLabel } from '@/components/UserIdLabel';

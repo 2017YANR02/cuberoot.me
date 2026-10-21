@@ -332,7 +332,7 @@ export default function GroupTheoryPage() {
     <div className="gt-page">
       <div className="gt-topbar">
         {isIndex
-          ? <HomeLink className="gt-back">← {tr({ zh: '返回', en: 'home' })}</HomeLink>
+          ? <HomeLink className="gt-back">← <span className="sr-only">{tr({ zh: '返回', en: 'home' })}</span></HomeLink>
           : <Link href="/math/group" className="gt-back">← {tr({ zh: '目录', en: 'contents'
         })}</Link>}
       </div>

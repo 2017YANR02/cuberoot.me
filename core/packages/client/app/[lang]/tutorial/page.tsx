@@ -9,7 +9,7 @@ import AlgPuzzlePicker, {
 import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';
 import Link from '@/components/AppLink';
 import { T, tr } from '@/i18n/tr';
-import { ArrowRight, Check, Play } from 'lucide-react';
+import { ArrowRight, Check, Play } from '@app-foundation/icons/lucide';
 import { useParams } from 'next/navigation';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
 import { useState } from 'react';

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { parseAsString, useQueryState } from 'nuqs';
-import { ChevronRight, Folder, RefreshCw } from 'lucide-react';
+import { ChevronRight, Folder, RefreshCw } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import StackedBar from '@/components/StackedBar/StackedBar';
 import { useT } from '@/hooks/useT';

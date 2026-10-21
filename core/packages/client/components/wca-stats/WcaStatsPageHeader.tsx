@@ -6,7 +6,7 @@
 // 返回链接、说明图标(HelpCircle)、class 名与原实现保持一致。
 
 import Link from '@/components/AppLink';
-import { ChevronLeft, HelpCircle } from 'lucide-react';
+import { ChevronLeft, HelpCircle } from '@app-foundation/icons/lucide';
 import { useTranslation } from 'react-i18next';
 import { tr } from '@/i18n/tr';
 
@@ -22,7 +22,7 @@ export function WcaStatsPageHeader({ slug, title, subtitle }: Props) {
   return (
     <header className="wse-header">
       <div className="wse-header-row">
-        <Link href={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {tr({ zh: '返回', en: 'Back' })}</Link>
+        <Link href={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> <span className="sr-only">{tr({ zh: '返回', en: 'Back' })}</span></Link>
       </div>
       <h1 className="wse-title-row">
         {tr(title)}

@@ -9,7 +9,7 @@ import { TimerSyncSeedSettings, TimerRankSettings, TimerBackupSettings, TimerImp
 
 import { useEffect, useId, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import type { MoreMenuItem } from './MoreMenu';
 import { getSettings, resetSettings, updateSettings, useSettings } from '../_lib/settings';

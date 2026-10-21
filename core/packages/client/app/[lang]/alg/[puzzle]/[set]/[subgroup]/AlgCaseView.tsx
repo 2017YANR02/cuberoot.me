@@ -17,7 +17,7 @@ import { alignAlgFile, caseAlgIssue, loadAlg } from '@/lib/alg_case_alignment';
  */
 import { Fragment, useEffect, useMemo, useState, useRef } from 'react';
 import Link from '@/components/AppLink';
-import { ArrowLeft, ExternalLink, Copy, Check, Shuffle, FlipHorizontal2, HelpCircle, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Copy, Check, Shuffle, FlipHorizontal2, HelpCircle, AlertTriangle } from '@app-foundation/icons/lucide';
 import type { AlgCase, AlgEntry, AlgFile, AlgPuzzle, AlgSubmission } from '@cuberoot/shared';
 import { displayedAlgorithmStm } from '@/lib/alg-metrics';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
@@ -31,6 +31,7 @@ import CommunityAlgs from '@/components/CommunityAlgs';
 import AdminCaseEditor, { type InlineCaseEditorParts } from '@/components/AdminCaseEditor';
 import type { AlgInvalidMark } from '@/components/AlgEditor';
 import AlgAdminValidate from '@/components/AlgAdminValidate';
+import { SettingsPopover } from '@/components/TrainingSettings';
 import AlgImageDownloadButton from '@/components/AlgImageDownloadButton';
 import { CaseThumb } from '@/components/CaseThumb';
 import { caseImageBatch } from '@/lib/alg-case-images';
@@ -218,6 +219,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
   [puzzle, set, insertionCases, caseObj]);
   const [composedByOri, setComposedByOri] = useState<Record<number, AlgEntry>>({});
   const [validationInvalid, setValidationInvalid] = useState<AlgInvalidMark[]>([]);
+  const [validationTriggerContainer, setValidationTriggerContainer] = useState<HTMLDivElement | null>(null);
   const [selectedAlgByOri, setSelectedAlgByOri] = useState<Record<number, number>>({});
   const [playRequestByOri, setPlayRequestByOri] = useState<Record<number, number>>({});
   useEffect(() => {
@@ -449,7 +451,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
       <div className="alg-case-detail-head">
         <Link href={backHref} className="alg-case-detail-back" prefetch={false}>
           <ArrowLeft size={16} />
-          <span>{tr({ zh: '返回', en: 'Back' })}</span>
+          <span className="sr-only">{tr({ zh: '返回', en: 'Back' })}</span>
         </Link>
         <h1 className="alg-case-detail-title">
           {editor ? editor.name : primary}
@@ -458,74 +460,78 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
             <ExternalLink size={14} />
           </Link>
         </h1>
-        {puzzle === 'sq1' && (
-          <BoolToggle
-            value={sq1BlackTop}
-            onChange={setSq1BlackTop}
-            label={tr({ zh: '黑顶', en: 'Black top' })}
-          />
-        )}
-        {puzzle === 'sq1' && (
-          <Sq1NotationSelect
-            value={sq1NotationMode}
-            onChange={value => void setSq1NotationMode(value)}
-          />
-        )}
-        {puzzle === 'sq1' && set === 'pbl' && (
-          <Link href="/alg/sq1/karnaukh-notation" className="alg-recog-cta" prefetch={false}>
-            {tr({ zh: '卡脑壳记号', en: 'Karnaukh notation' })}
-          </Link>
-        )}
-        {puzzle === 'fto' && (
-          <Link href="/alg/fto/notation" className="alg-recog-cta" prefetch={false}>
-            <HelpCircle size={15} aria-hidden="true" />
-            {tr({ zh: '转动记号', en: 'Move notation' })}
-          </Link>
-        )}
-        {canChooseViewAngle && (
-          <label className="alg-view-angle">
-            <span>{tr({ zh: '角度', en: 'Angle' })}</span>
-            <select
-              className="alg-header-select"
-              value={effectiveViewAngle}
-              onChange={event => setViewAngle(event.target.value as CaseViewAngle)}
-            >
-              <option value="default">{tr({ zh: '默认', en: 'Default' })}</option>
-              <option value="u">U</option>
-              <option value="u2">U2</option>
-              <option value="up">U&apos;</option>
-            </select>
-          </label>
-        )}
-        {canChooseOrientation && (
-          <label className="alg-view-angle">
-            <span>{tr({ zh: '朝向', en: 'Holding' })}</span>
-            <CubeOrientationSelect
-              className="alg-header-select"
-              value={effectiveOrientation}
-              onChange={value => void setOrientation(value)}
-              ariaLabel={tr({ zh: '魔方朝向', en: 'Cube holding orientation' })}
+        <SettingsPopover label={tr({ zh: '公式设置', en: 'Algorithm settings' })}>
+          {puzzle === 'sq1' && (
+            <BoolToggle
+              value={sq1BlackTop}
+              onChange={setSq1BlackTop}
+              label={tr({ zh: '黑顶', en: 'Black top' })}
             />
-          </label>
-        )}
-        {/* 单张也能印:每个视角各一份(这页本来就把视角都列出来了) */}
-        <AlgPdfButton
-          build={() => algSheetFromCases({
-            puzzle,
-            set,
-            cases: [caseObj],
-            title: `${puzzle} ${set.toUpperCase()} ${primary}`,
-            sourcePath: `/alg/${puzzle}/${set}`,
-            filename: `${puzzle}-${set}-${primary.replace(/\s+/g, '-').toLowerCase()}`,
-            allOris: true,
-            maxAlgs: Infinity,  // 单张 case 的表,备选公式正是它的价值
-            sq1BlackTop,
-            viewAngle: effectiveViewAngle,
-            orientation: effectiveOrientation,
-          })}
-        />
+          )}
+          {puzzle === 'sq1' && (
+            <Sq1NotationSelect
+              value={sq1NotationMode}
+              onChange={value => void setSq1NotationMode(value)}
+            />
+          )}
+          {puzzle === 'sq1' && set === 'pbl' && (
+            <Link href="/alg/sq1/karnaukh-notation" className="alg-recog-cta" prefetch={false}>
+              {tr({ zh: '卡脑壳记号', en: 'Karnaukh notation' })}
+            </Link>
+          )}
+          {puzzle === 'fto' && (
+            <Link href="/alg/fto/notation" className="alg-recog-cta" prefetch={false}>
+              <HelpCircle size={15} aria-hidden="true" />
+              {tr({ zh: '转动记号', en: 'Move notation' })}
+            </Link>
+          )}
+          {canChooseViewAngle && (
+            <label className="alg-view-angle">
+              <span>{tr({ zh: '角度', en: 'Angle' })}</span>
+              <select
+                className="alg-header-select"
+                value={effectiveViewAngle}
+                onChange={event => setViewAngle(event.target.value as CaseViewAngle)}
+              >
+                <option value="default">{tr({ zh: '默认', en: 'Default' })}</option>
+                <option value="u">U</option>
+                <option value="u2">U2</option>
+                <option value="up">U&apos;</option>
+              </select>
+            </label>
+          )}
+          {canChooseOrientation && (
+            <label className="alg-view-angle">
+              <span>{tr({ zh: '朝向', en: 'Holding' })}</span>
+              <CubeOrientationSelect
+                className="alg-header-select"
+                value={effectiveOrientation}
+                onChange={value => void setOrientation(value)}
+                ariaLabel={tr({ zh: '魔方朝向', en: 'Cube holding orientation' })}
+              />
+            </label>
+          )}
+          {/* 单张也能印:每个视角各一份(这页本来就把视角都列出来了) */}
+          <AlgPdfButton
+            build={() => algSheetFromCases({
+              puzzle,
+              set,
+              cases: [caseObj],
+              title: `${puzzle} ${set.toUpperCase()} ${primary}`,
+              sourcePath: `/alg/${puzzle}/${set}`,
+              filename: `${puzzle}-${set}-${primary.replace(/\s+/g, '-').toLowerCase()}`,
+              allOris: true,
+              maxAlgs: Infinity,  // 单张 case 的表,备选公式正是它的价值
+              sq1BlackTop,
+              viewAngle: effectiveViewAngle,
+              orientation: effectiveOrientation,
+            })}
+          />
+          {isAdmin && <div ref={setValidationTriggerContainer} />}
+        </SettingsPopover>
         {/* 校验只扫这一张 —— 报告里点失败项就开上面同一个编辑器,不再叠第二个 */}
         <AlgAdminValidate
+          triggerContainer={validationTriggerContainer}
           scope={{ kind: 'case', puzzle, set, caseObj }}
           onPickCase={() => editorArea.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
           onResults={failures => setValidationInvalid(failures.map(({ oriIdx, algIdx, reason }) => ({

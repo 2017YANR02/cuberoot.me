@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
-import { Check, Copy } from 'lucide-react';
+import { Check, Copy } from '@app-foundation/icons/lucide';
 import { useCopy } from '@/hooks/useCopy';
 import { useHashHighlight } from '@/hooks/useHashHighlight';
 import { salesScript as script } from './sales-script-data';

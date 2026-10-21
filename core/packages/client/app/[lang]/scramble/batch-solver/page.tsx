@@ -7,10 +7,11 @@
  * CSV 导出取代 ExcelJS、图像走站内 VisualCube / sr-puzzlegen。
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowDown, ArrowUp, ChevronDown, Minus, Plus } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, Minus, Plus } from '@app-foundation/icons/lucide';
 import BoolToggle from '@/components/BoolToggle';
 import { ListSelect } from '@/components/ListSelect';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
+import { eventIconClass } from '@/components/EventIcon/EventIcon';
 import NumberCommitInput from '@/components/NumberCommitInput';
 import { MCC_SLIDERS, ParamSliders } from '@/components/ParamSliders';
 import { useT } from '@/hooks/useT';
@@ -427,9 +428,12 @@ export default function BatchSolverPage() {
       <div className="bsv-form">
         <div className="bsv-field-row">
           <label className="bsv-label">{t('谜题', 'Puzzle')}</label>
-          <PuzzlePicker selectedEvent={puzzle} onSelect={selectPuzzle} showItemIcons={false} groups={[{
+          <PuzzlePicker selectedEvent={puzzle} onSelect={selectPuzzle} groups={[{
             id: 'puzzles', label: tr({ zh: '项目', en: 'Puzzles' }),
-            items: puzzleItems.map(item => ({ id: item.value, label: item.label })),
+            items: puzzleItems.map(item => ({
+              id: item.value, label: item.label,
+              iconClass: item.value === 'Custom' ? 'puzzle-custom' : eventIconClass(item.value.replaceAll('x', '')),
+            })),
           }]} />
           <button
             type="button"

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useId, useRef } from 'react';
-import { X } from 'lucide-react';
+import { X } from '@app-foundation/icons/lucide';
 import SkewbImage from './SkewbImage';
 import { transftoWCA } from '../_lib/scramble';
 import { tr } from '@/i18n/tr';

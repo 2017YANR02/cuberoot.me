@@ -5,7 +5,7 @@ import '@cuberoot/timer-ui/compact-select.css';
 // 待审队列先来先审;每项就地 通过/驳回(驳回可附原因,随站内通知+邮件发给作者)。
 
 import { useCallback, useEffect, useState } from 'react';
-import { Hourglass, Check, CircleX, ExternalLink } from 'lucide-react';
+import { Hourglass, Check, CircleX, ExternalLink } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import { UserIdLabel } from '@/components/UserIdLabel';

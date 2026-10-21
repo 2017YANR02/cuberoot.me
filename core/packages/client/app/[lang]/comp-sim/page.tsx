@@ -10,7 +10,7 @@ import {
   History,
   Play,
   Target,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import {
   fromWcaSpelling,
   parseTimerEntry,

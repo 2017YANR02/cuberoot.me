@@ -39,7 +39,7 @@ import {
   UserMinus,
   UserPlus,
   Users,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import {
   DRIVE_CHUNK_BYTES,

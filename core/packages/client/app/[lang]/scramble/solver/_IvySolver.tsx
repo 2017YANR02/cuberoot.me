@@ -4,11 +4,10 @@
  * /scramble/solver?event=ivy — Ivy Cube (枫叶魔方) 在线求解器。
  *
  * 纯 TS,无 worker、无下载表:Ivy 状态空间只有 29,160 个,整张图在浏览器里 BFS 一次(memoized),
- * 每次求解都是 O(深度) 的最优最短路(上帝之数 8)。打乱来源复用 /scramble/gen 的 cstimer 桥
- * (cstimerScramble('ivy')),记号与 cstimer 完全一致(R L D B,带 '),保证它生成的打乱被正确求解。
+ * 每次求解都是 O(深度) 的最优最短路(上帝之数 8)。随机输入复用共享 RLDB 生成器，
+ * 不受计时器 RLUB 偏好影响；记号与 cstimer 一致，保证生成的输入能被该坐标系求解。
  */
-import { cstimerScramble } from '@/lib/cstimer-scramble';
-import { solveIvy, IVY_GODS_NUMBER } from '@/lib/ivy-solver';
+import { generateIvyTimerScramble, solveIvy, IVY_GODS_NUMBER } from '@/lib/ivy-solver';
 import PuzzleSolverPage, {
   type SolverSpec, METRIC_FIXED_OPTIMAL, badgeGodsNumber, CAVEAT_TITLE_OPTIMAL,
 } from './_components/PuzzleSolverPage';
@@ -45,7 +44,8 @@ const SPEC: SolverSpec<ReturnType<typeof solveIvy>> = {
     }
     return null;
   },
-  randomOne: () => cstimerScramble('ivy'),
+  // This exact solver retains its RLDB coordinate system, regardless of the timer's mode.
+  randomOne: async () => generateIvyTimerScramble(),
 };
 
 export default function IvySolverPage() {

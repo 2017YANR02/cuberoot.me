@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 import { CUBE_COLOR_NAMES } from '@/lib/cube-colors';

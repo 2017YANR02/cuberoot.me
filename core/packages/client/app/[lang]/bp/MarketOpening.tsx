@@ -1,4 +1,4 @@
-import { ArrowUpRight, Building2, ChartNoAxesColumnIncreasing, Users } from 'lucide-react';
+import { ArrowUpRight, Building2, ChartNoAxesColumnIncreasing, Users } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 import { MARKET_SOURCE } from './bp-data';
 

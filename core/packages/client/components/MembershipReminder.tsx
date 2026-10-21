@@ -8,7 +8,7 @@
  */
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Crown, X } from 'lucide-react';
+import { Crown, X } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 import { useMembership } from '@/hooks/useMembership';

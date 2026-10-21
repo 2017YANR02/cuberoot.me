@@ -34,7 +34,7 @@ import {
   useTracks,
   type TrackReferenceOrPlaceholder,
 } from '@livekit/components-react';
-import { LoaderCircle } from 'lucide-react';
+import { LoaderCircle } from '@app-foundation/icons/lucide';
 
 import { tr } from '@/i18n/tr';
 import MeetChat from './MeetChat';

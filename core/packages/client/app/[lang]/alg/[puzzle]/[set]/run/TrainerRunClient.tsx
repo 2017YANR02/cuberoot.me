@@ -14,7 +14,7 @@ import {
   useTrainingSearchParams, trainingQueryKey,
 } from '@/lib/training-host';
 import { useTranslation } from 'react-i18next';
-import { Copy, Check, HelpCircle, QrCode, RotateCcw, X } from 'lucide-react';
+import { Copy, Check, HelpCircle, QrCode, RotateCcw, X } from '@app-foundation/icons/lucide';
 import { Tooltip } from '@/components/Tooltip';
 import { ALG_CATALOG, getAlgSetMeta, type AlgCase } from '@cuberoot/shared/alg';
 import { loadTrainingAlg as loadAlg } from '@/lib/alg_case_alignment';

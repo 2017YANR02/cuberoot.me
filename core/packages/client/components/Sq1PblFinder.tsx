@@ -9,7 +9,7 @@ import {
   type ChangeEvent,
 } from 'react';
 import type { AlgSticker } from '@cuberoot/shared';
-import { Check, Copy } from 'lucide-react';
+import { Check, Copy } from '@app-foundation/icons/lucide';
 import { parseAsString } from 'nuqs';
 import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import AlgPlayer from '@/components/AlgPlayer';

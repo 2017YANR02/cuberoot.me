@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Check, Copy, Play } from 'lucide-react';
+import { Check, Copy, Play } from '@app-foundation/icons/lucide';
 import type { AlgCase, AlgEntry } from '@cuberoot/shared/alg';
 import Link from '@/components/AppLink';
 import { Tooltip } from '@/components/Tooltip';

@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, Copy } from 'lucide-react';
+import { Check, Copy } from '@app-foundation/icons/lucide';
 import { useCopy } from '@/hooks/useCopy';
 
 interface Props {

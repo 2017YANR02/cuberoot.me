@@ -8,7 +8,7 @@
  * 不额外发一条自己的心跳。
  */
 
-import { Mic, MicOff, Video, VideoOff } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff } from '@app-foundation/icons/lucide';
 import { ConnectionQualityIndicator, useParticipants } from '@livekit/components-react';
 
 import { tr } from '@/i18n/tr';

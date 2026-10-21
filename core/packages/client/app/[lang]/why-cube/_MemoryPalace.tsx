@@ -6,7 +6,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, Eye, EyeOff, Pause, Play } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, EyeOff, Pause, Play } from '@app-foundation/icons/lucide';
 import { useT } from '../../../hooks/useT';
 import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
 import { useInView, useReducedMotion } from './_hooks';

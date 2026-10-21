@@ -2,7 +2,7 @@
 
 // Ported from packages/client-vite/src/pages/trainer/components.tsx
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Trash2, ChevronDown, ChevronRight, Check, Star } from 'lucide-react';
+import { Trash2, ChevronDown, ChevronRight, Check, Star } from '@app-foundation/icons/lucide';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import Link from '@/components/AppLink';
 import { CaseThumb } from '@/components/CaseThumb';

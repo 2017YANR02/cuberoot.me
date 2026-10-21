@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
-import { CalendarClock, CalendarDays, CalendarX, Copy, Pencil, Plus, RefreshCw, Video } from 'lucide-react';
+import { CalendarClock, CalendarDays, CalendarX, Copy, Pencil, Plus, RefreshCw, Video } from '@app-foundation/icons/lucide';
 import { meetingOccurrences, type MeetingPlan } from '@cuberoot/shared/meeting';
 import { toLocalIsoDate } from '@cuberoot/shared/iso-date';
 import { ClearButton } from '@/components/ClearButton';

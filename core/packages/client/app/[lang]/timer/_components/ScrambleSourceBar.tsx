@@ -19,6 +19,7 @@ import GenStepsConfig from './GenStepsConfig';
 import GenDiffConfig from './GenDiffConfig';
 import { stepPuzzleOf } from '../_lib/scramble/step-metrics';
 import { canTrainerDifficulty } from '../_lib/scramble/trainer-source';
+import ScrambleIvyModePicker from '@/components/ScrambleIvyModePicker';
 import Scramble222ModePicker from '@/components/Scramble222ModePicker';
 import { use222Type } from '@/lib/scramble-222-mode';
 import { SCRAMBLE_222_TYPES, WCA_SCRAMBLE_222_TYPES, timerSupportsRealWcaScrambles, type Scramble222Type } from '@cuberoot/shared/timer';
@@ -52,6 +53,7 @@ export default function ScrambleSourceBar({ disabled = false, event, isZh, diffS
 
   return (
     <fieldset className="scramble-src-bar surface-chrome" data-no-timer disabled={disabled}>
+      {src === 'random' && event === 'ivy' && <ScrambleIvyModePicker />}
       {src === 'wca' && timerSupportsRealWcaScrambles(event) && (
         <WcaSourceConfig disabled={disabled} isZh={isZh} event={event} settings={s} updateSettings={updateSettings} toggleSlot={diffSlot} mergeSlot={mergeSlot} sourceSlot={wcaSourceSlot} />
       )}

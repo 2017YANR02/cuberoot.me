@@ -6,7 +6,7 @@
 // <slug>/page.tsx; shared scaffolding is in _components/ and _data/.
 
 import { useTranslation } from 'react-i18next';
-import { Newspaper, ArrowRight, ScrollText } from 'lucide-react';
+import { Newspaper, ArrowRight, ScrollText } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import { useT } from '../../../hooks/useT';

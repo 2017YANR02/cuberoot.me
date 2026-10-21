@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { LiveKitRoom, useLocalParticipant } from '@livekit/components-react';
 import { Track } from 'livekit-client';
-import { Video } from 'lucide-react';
+import { Video } from '@app-foundation/icons/lucide';
 import VideoTiles from '@/components/video/VideoTiles';
 import { LIVEKIT_ROOM_OPTIONS, denyMessage, disconnectMessage } from '@/components/video/video-call';
 import { getCompetitionVideoToken, VideoDeniedError, type VideoToken } from '@/lib/video-room-api';

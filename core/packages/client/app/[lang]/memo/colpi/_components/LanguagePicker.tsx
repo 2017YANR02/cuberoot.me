@@ -11,7 +11,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Flag } from '@/components/Flag';
 import { LANGS, LANG_MAP, langDisplay } from '../_lib/langs';
-import { ChevronDown, X, Globe } from 'lucide-react';
+import { ChevronDown, X, Globe } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 
 interface PopupProps {

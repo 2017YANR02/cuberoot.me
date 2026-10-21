@@ -6,7 +6,7 @@ import {
   Highlighter, Image as ImageIcon, Italic, Link2, List, ListOrdered, MessageSquare,
   MessageSquarePlus, PanelRight, Pilcrow, Printer, Quote, Redo2, Search,
   Strikethrough, Table2, Underline as UnderlineIcon, Undo2,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import { EditorContent, useEditor, type Editor } from '@tiptap/react';
 import { SearchInput } from '@/components/SearchInput';
 import StarterKit from '@tiptap/starter-kit';

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Pause, Play, Shuffle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Pause, Play, Shuffle } from '@app-foundation/icons/lucide';
 import NxNOrderInput from '@/components/NxNOrderInput';
 import { randomMoveScrambleNxN } from '@/lib/cubing-scramble';
 import StickerGraph from './StickerGraph';

@@ -7,7 +7,7 @@
 // neutrality. Shared shell + primitives provide the chrome.
 
 import { useTranslation } from 'react-i18next';
-import { Palette, BadgeCheck, Wrench, EyeOff, Tag } from 'lucide-react';
+import { Palette, BadgeCheck, Wrench, EyeOff, Tag } from '@app-foundation/icons/lucide';
 import { useT } from '../../../../hooks/useT';
 import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
 import RegArticleLayout from '../_components/RegArticleLayout';

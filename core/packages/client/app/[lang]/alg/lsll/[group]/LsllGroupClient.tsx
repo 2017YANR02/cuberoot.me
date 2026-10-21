@@ -16,7 +16,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTrainingParams as useParams, useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import { parseAsInteger, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from '@app-foundation/icons/lucide';
 import { tr, T } from '@/i18n/tr';
 import { FaceletsCube } from '@/components/FaceletsCube';
 import { useAlgViewMode } from '@/components/AlgViewModeToggle';

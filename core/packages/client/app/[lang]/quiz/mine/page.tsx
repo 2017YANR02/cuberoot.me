@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { Key, Pencil, Trash2 } from 'lucide-react';
+import { Key, Pencil, Trash2 } from '@app-foundation/icons/lucide';
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
 import Link from '@/components/AppLink';

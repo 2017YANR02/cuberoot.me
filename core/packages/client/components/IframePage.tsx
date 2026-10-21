@@ -7,7 +7,7 @@
  *
  * Ported 1:1 from packages/client-vite/src/pages/IframePage.tsx
  */
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink } from '@app-foundation/icons/lucide';
 import { useEffect, useRef } from 'react';
 import { useTrainingHref, useTrainingRouter } from '@/lib/training-host';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';

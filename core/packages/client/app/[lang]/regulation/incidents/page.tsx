@@ -12,7 +12,7 @@
 import {
   Power, Wrench, Users, AlertTriangle, Hand, ShieldQuestion,
   CircleCheckBig, RotateCcw, Video, Repeat, Swords,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { useT } from '../../../../hooks/useT';
 import RegArticleLayout from '../_components/RegArticleLayout';

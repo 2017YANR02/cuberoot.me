@@ -12,7 +12,7 @@
  */
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical } from 'lucide-react';
+import { GripVertical } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 
 export default function SortableAlgRow({ id, draggable, children }: { id: string; draggable: boolean; children: React.ReactNode }) {

@@ -19,7 +19,7 @@
 import BoolToggle from '@/components/BoolToggle';
 import '@cuberoot/timer-ui/compact-select.css';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Ban, X, Play, ChevronDown, Plus } from 'lucide-react';
+import { Ban, X, Play, ChevronDown, Plus } from '@app-foundation/icons/lucide';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { RangeSlider } from '@/components/RangeSlider/RangeSlider';
 import TwistySection from '@/components/TwistySection';

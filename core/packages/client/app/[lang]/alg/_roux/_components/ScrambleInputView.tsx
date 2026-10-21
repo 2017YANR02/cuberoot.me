@@ -9,7 +9,7 @@
 // react-ga removed (was not present here). props: { display, scrambles, dispatch }.
 
 import React from 'react';
-import { Pencil } from 'lucide-react';
+import { Pencil } from '@app-foundation/icons/lucide';
 
 import { Action } from '@/lib/roux/Types';
 import { MoveSeq } from '@/lib/roux/CubeLib';

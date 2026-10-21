@@ -11,7 +11,7 @@ import { useMemo } from 'react';
 import { parseAsString } from 'nuqs';
 import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import Link from '@/components/AppLink';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from '@app-foundation/icons/lucide';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr, T } from '@/i18n/tr';
 import { FaceletsCube } from '@/components/FaceletsCube';

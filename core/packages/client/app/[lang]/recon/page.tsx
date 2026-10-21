@@ -13,7 +13,7 @@ import Link from '@/components/AppLink';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsBoolean, parseAsStringEnum } from 'nuqs';
-import { CirclePlus, HelpCircle, TriangleAlert, LayoutGrid, List, TestTube2, Check, Bookmark } from 'lucide-react';
+import { CirclePlus, HelpCircle, TriangleAlert, LayoutGrid, List, TestTube2, Check, Bookmark } from '@app-foundation/icons/lucide';
 import type { ReconSolve } from '@cuberoot/shared';
 import { useReconStore, type SortKey, type SortDir } from '@/lib/recon-store';
 import {

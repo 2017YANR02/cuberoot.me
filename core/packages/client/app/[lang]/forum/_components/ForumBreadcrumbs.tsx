@@ -2,7 +2,7 @@
 
 // Breadcrumb trail: 论坛 › category › forum. Items with href render as links.
 
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 

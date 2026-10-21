@@ -12,7 +12,7 @@
  */
 import { useEffect, useMemo, useState } from 'react';
 import { VisualCube } from '@/components/VisualCube';
-import { Play, Pause, RotateCcw, SkipBack, SkipForward, ChevronsRight } from 'lucide-react';
+import { Play, Pause, RotateCcw, SkipBack, SkipForward, ChevronsRight } from '@app-foundation/icons/lucide';
 
 interface Props {
   /** state to render at step 0, applied forward from solved */

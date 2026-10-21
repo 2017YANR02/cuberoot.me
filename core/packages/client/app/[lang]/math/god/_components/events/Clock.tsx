@@ -19,7 +19,7 @@
  */
 import { useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
-import { Wrench, RotateCw, MousePointerClick } from 'lucide-react';
+import { Wrench, RotateCw, MousePointerClick } from '@app-foundation/icons/lucide';
 import {
   EvHighlights, EvSection, EvCallout, EvRefs, EvStatStrip,
   TeX, TeXBlock, MathText, type HighlightCard, type RefItem,

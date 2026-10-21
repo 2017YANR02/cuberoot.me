@@ -6,7 +6,7 @@
 
 import { useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import AppLink from '@/components/AppLink';
-import { Key } from 'lucide-react';
+import { Key } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 import { useAuthStore, useAuthUser } from '@/lib/auth-store';
 import { ForumMarkdownEditor, type ForumEditorHandle } from './ForumMarkdownEditor';

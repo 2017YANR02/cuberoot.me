@@ -3,7 +3,7 @@ import { useDouyinToolSurface } from '@/lib/douyin-content';
 import { DOUYIN_BASIC_TIMER_EVENTS } from '@cuberoot/shared/douyin-content';
 
 import { useMemo, type ReactNode } from 'react';
-import { Settings } from 'lucide-react';
+import { Settings } from '@app-foundation/icons/lucide';
 import { TimerPuzzlePicker } from '@cuberoot/timer-ui';
 import { TIMER_EVENT_PICKER_GROUPS, timerEventIdFromSelector, type EventId } from '@cuberoot/shared/timer';
 import { useTimerSearchParams as useSearchParams } from '@/lib/timer-practice-url-adapter';

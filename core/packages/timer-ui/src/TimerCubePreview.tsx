@@ -109,7 +109,7 @@ function previewEvent(event: EventId): EventId | null {
   if (nxn !== null) return nxn;
   switch (event) {
     case 'pyra': case 'skewb': case 'sq1': case 'mega': case 'clock':
-    case 'pyraminx_duo': case 'magic': case 'mmagic': case 'fto': case 'redi': case 'kilominx':
+    case 'ivy': case 'pyraminx_duo': case 'magic': case 'mmagic': case 'fto': case 'redi': case 'kilominx':
       return event;
     case 'r3': case 'r4': case 'r5': case 'custom':
       return '333';

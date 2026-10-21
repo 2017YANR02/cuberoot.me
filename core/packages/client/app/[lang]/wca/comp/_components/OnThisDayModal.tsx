@@ -6,7 +6,7 @@
  */
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
-import { ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin } from '@app-foundation/icons/lucide';
 import { Flag } from '@/components/Flag';
 import { loadFlagData, flagDataVersion } from '@/lib/country-flags';
 import { localizeCompName } from '@/lib/comp-localize';

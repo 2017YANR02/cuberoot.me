@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useQueryState, parseAsInteger } from 'nuqs';
-import { Pin, PinOff, Lock, LockOpen, Trash2, Pencil, Hourglass, CircleX, Check } from 'lucide-react';
+import { Pin, PinOff, Lock, LockOpen, Trash2, Pencil, Hourglass, CircleX, Check } from '@app-foundation/icons/lucide';
 import Paginator from '@/components/wca-stats/Paginator';
 import { tr, T, useLang } from '@/i18n/tr';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';

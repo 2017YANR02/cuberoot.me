@@ -5,7 +5,7 @@
 // 1080×1920。作为赛程 tab 的 layout=poster 直接渲染在页面上(原弹窗形态已移除),
 // 窄屏按容器宽等比缩放预览,导出节点本身不带 transform;右上角悬浮下载按钮。
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Download } from 'lucide-react';
+import { Download } from '@app-foundation/icons/lucide';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { toBlob } from 'html-to-image';
 import { EventIcon } from '@/components/EventIcon';

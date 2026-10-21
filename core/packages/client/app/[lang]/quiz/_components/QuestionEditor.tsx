@@ -11,7 +11,7 @@ import '@cuberoot/timer-ui/compact-select.css';
  * 只是为了把错误提前说清楚,真正的把关在服务端。
  */
 
-import { Check, Plus, Trash2 } from 'lucide-react';
+import { Check, Plus, Trash2 } from '@app-foundation/icons/lucide';
 import {
   QUIZ_LIMITS, filledLangs, validateQuizDraft,
   type QuizDraft, type QuizDraftError,

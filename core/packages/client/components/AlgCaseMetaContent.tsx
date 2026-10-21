@@ -12,7 +12,7 @@ import { caseAlgIssue, caseCoepEntry } from '@/lib/alg_case_alignment';
  * 所以 `byNo` 一定查得到(查不到只显示编号,不猜)。背景见 AlgCaseMetaModal 顶部注释。
  */
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Copy, Check, HelpCircle, Pin, Shuffle } from 'lucide-react';
+import { Copy, Check, HelpCircle, Pin, Shuffle } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import type { AlgCase, AlgCaseMeta, AlgPuzzle } from '@cuberoot/shared';

@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, type JSX } from 'react';
 import { useTrainingPathname as usePathname } from '@/lib/training-host';
 import TrainingStatsPanel, { TrainingSelfCheck } from '@/components/TrainingStatsPanel';
 import { useTrainingStats } from '@/hooks/useTrainingStats';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check } from '@app-foundation/icons/lucide';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { tr } from '@/i18n/tr';
 

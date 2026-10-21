@@ -10,7 +10,7 @@
 import { useTranslation } from 'react-i18next';
 import {
   Hand, PlayCircle, StopCircle, Layers, Clock, MoveUpRight,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { useT } from '../../../../hooks/useT';
 import RegArticleLayout from '../_components/RegArticleLayout';

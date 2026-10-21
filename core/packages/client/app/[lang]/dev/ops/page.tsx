@@ -7,7 +7,7 @@ import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { Check, Copy, Database, Hammer, UploadCloud, Archive, ChevronDown, Terminal, Sparkles, Plus, Pencil, Trash2, X } from 'lucide-react';
+import { Check, Copy, Database, Hammer, UploadCloud, Archive, ChevronDown, Terminal, Sparkles, Plus, Pencil, Trash2, X } from '@app-foundation/icons/lucide';
 import { useIsAdmin } from '@/lib/auth-store';
 import { createCommand, updateCommand, deleteCommand, listCommands, type OpsCommandInput } from '@/lib/ops-api';
 import './ops.css';

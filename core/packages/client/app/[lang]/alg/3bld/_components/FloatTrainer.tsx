@@ -29,7 +29,7 @@ import {
 import Link from '@/components/AppLink';
 import { persistItem } from '@/lib/safe-storage';
 import { useTranslation } from 'react-i18next';
-import { Play, Timer, X } from 'lucide-react';
+import { Play, Timer, X } from '@app-foundation/icons/lucide';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ClearButton } from '@/components/ClearButton';
 import BoolToggle from '@/components/BoolToggle';

@@ -10,7 +10,7 @@ import {
   Globe2, MapPin, Type, Grid2x2, LayoutGrid, Boxes, Map as MapIcon, Globe,
   Percent, Award, Gavel, Zap, Eye, UserRound,
   type LucideIcon,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 
 export const STAT_ICONS: Record<string, LucideIcon> = {
   annual_participation: Users,

@@ -3,7 +3,7 @@
 //   - 仅在「当前排序列」显示(inactive 列不出箭头,可排序感由列头 hover / 文字色提示);
 //   - 方向由 dir 决定(asc=↑ / desc=↓),放在表头文字「右侧」;
 //   - 与 cuberoot.me/zh/wca/persons 的成绩表(ByEventView)同款观感。
-import { ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowUp, ArrowDown } from '@app-foundation/icons/lucide';
 
 export function SortArrow({
   active,

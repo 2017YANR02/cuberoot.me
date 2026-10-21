@@ -22,7 +22,7 @@ import {
   ChevronDown, ChevronUp,
   ArrowLeft, Copy, Check, Maximize2, Minimize2,
   Lock, Link2, LogIn, ExternalLink, Share2, Download,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/shared';
 import { cleanFtoReconAlgForPlayer, getReconScramble } from '@cuberoot/shared/recon-completion';
 import { ReconCompletionBadge } from '@/components/recon/ReconCompletionBadge';
@@ -187,7 +187,7 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
           <div className="detail-header-block">
             <div className="detail-header-nav">
               <Link href="/recon" className="recon-back-link">
-                <ArrowLeft size={14} /> {tr({ zh: '返回列表', en: 'Back to list' })}
+                <ArrowLeft size={14} /> <span className="sr-only">{tr({ zh: '返回列表', en: 'Back to list' })}</span>
               </Link>
             </div>
           </div>
@@ -222,7 +222,7 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
       <div className="detail-header-block">
         <div className="detail-header-nav">
           <Link href="/recon" className="recon-back-link">
-            <ArrowLeft size={14} /> {tr({ zh: '返回列表', en: 'Back to list' })}
+            <ArrowLeft size={14} /> <span className="sr-only">{tr({ zh: '返回列表', en: 'Back to list' })}</span>
           </Link>
         </div>
         <div className="detail-header">

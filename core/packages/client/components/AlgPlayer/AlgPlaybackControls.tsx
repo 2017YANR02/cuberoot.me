@@ -1,6 +1,6 @@
 'use client';
 
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw } from '@app-foundation/icons/lucide';
 import PlaybackBar from '@/components/PlaybackBar';
 import { useT } from '@/hooks/useT';
 

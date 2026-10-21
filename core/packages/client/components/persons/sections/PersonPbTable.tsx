@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2 } from '@app-foundation/icons/lucide';
 import {
   PB_EVENT_IDS,
   PB_RECORD_OPTIONS,

@@ -7,7 +7,7 @@
  *  - 套餐:改价格(元)/ 启用,免动 migration。
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Check } from 'lucide-react';
+import { Plus, Check } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';
 import BoolToggle from '@/components/BoolToggle';

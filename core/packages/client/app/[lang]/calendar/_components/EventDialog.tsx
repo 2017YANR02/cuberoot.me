@@ -8,7 +8,7 @@
 // 所以「北京时间 21:00 的会」在洛杉矶的人改起来也不会漂。
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Bell, Clock, MapPin, Palette, Repeat, Text, Trash2, Users, X, Globe } from 'lucide-react';
+import { Bell, Clock, MapPin, Palette, Repeat, Text, Trash2, Users, X, Globe } from '@app-foundation/icons/lucide';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { DateInput } from '@/components/DateInput';
 import { ListSelect } from '@/components/ListSelect';

@@ -25,12 +25,12 @@ import {
   Link2Off,
   Minus,
   Plus,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import {
   AlignLeft,
   AlignCenter,
   AlignRight,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 import { useT } from '@/hooks/useT';
 import { CUBE_FILL } from '@/lib/cube-colors';

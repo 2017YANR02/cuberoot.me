@@ -80,7 +80,7 @@ import {
 } from '@cuberoot/shared/recon-completion';
 import { loadComps, type Comp } from '@/lib/comp-search';
 import type { WcaPersonLite } from '@/lib/wca-api';
-import { ArrowLeft, ArrowRightLeft, History, Home, LogIn, UserPlus, ListPlus, AlertTriangle, Rows3, Upload } from 'lucide-react';
+import { ArrowLeft, ArrowRightLeft, History, Home, LogIn, UserPlus, ListPlus, AlertTriangle, Rows3, Upload } from '@app-foundation/icons/lucide';
 import { Spinner } from '@/components/Spinner/Spinner';
 import '../recon.css';
 import './recon_submit.css';
@@ -1658,7 +1658,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         <div className="recon-page-header">
           <div>
             <Link href={`${langPrefix}/recon`} className="recon-back-link">
-              <ArrowLeft size={14} /> {tr({ zh: '返回列表', en: 'Back to list' })}
+              <ArrowLeft size={14} /> <span className="sr-only">{tr({ zh: '返回列表', en: 'Back to list' })}</span>
             </Link>
             <h1>{tr({ zh: '提交复盘', en: 'Submit Reconstruction'
             })}</h1>

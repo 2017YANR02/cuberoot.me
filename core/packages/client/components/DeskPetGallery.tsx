@@ -3,7 +3,7 @@
 // Gallery and story player, opened from the existing search toolbar.
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { ArrowLeft, ArrowRight, Play, Pause, RotateCcw } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Play, Pause, RotateCcw } from '@app-foundation/icons/lucide';
 import { PET_GALLERY } from '@/lib/deskpet-gallery';
 import { getDeskPetScene, PLAYTIME_SCENES } from '@/lib/deskpet-playtime';
 import { ROOTBEAST_COLLECTIONS, ROOTBEAST_SCENES } from '@/lib/deskpet-rootbeast';

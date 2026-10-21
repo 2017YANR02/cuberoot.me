@@ -2,7 +2,7 @@
 
 // 共享「更多 / 收起」展开开关:文字 + 旋转 chevron。落地页「近期打乱」「今日复盘」
 // 等需要折叠次要内容的卡片统一用它,避免每处各写一份 *-more 按钮。
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 import './more_toggle.css';
 

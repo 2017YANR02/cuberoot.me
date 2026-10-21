@@ -19,7 +19,7 @@
  */
 import { Suspense, lazy, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
-import { Trophy, Hand, Clock, Target } from 'lucide-react';
+import { Trophy, Hand, Clock, Target } from '@app-foundation/icons/lucide';
 import {
   CUBE3_STATES, GOD_DIST_333_NORMALIZED, GOD_MEAN_HTM,
   GOD_SHARE_16_19_PCT as SHARE_16_19, GOD_SHARE_17_19_PCT as SHARE_17_19,

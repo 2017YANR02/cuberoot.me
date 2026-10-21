@@ -6,7 +6,7 @@
 // has W after L, edge order is alphabetical A..T then W..Z).
 
 import { useEffect, useMemo, type JSX } from 'react';
-import { CheckCheck, Eraser } from 'lucide-react';
+import { CheckCheck, Eraser } from '@app-foundation/icons/lucide';
 import { globalState } from '../_lib/lettering';
 import { tr } from '@/i18n/tr';
 

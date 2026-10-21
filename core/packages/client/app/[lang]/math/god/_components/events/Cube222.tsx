@@ -16,7 +16,7 @@
  * as the puzzle's God's number.
  */
 import { Suspense, lazy, useMemo, useState } from 'react';
-import { Boxes, Calculator } from 'lucide-react';
+import { Boxes, Calculator } from '@app-foundation/icons/lucide';
 import {
   EvHighlights, EvSection, EvCallout, EvRefs, EvStatStrip,
   TeX, TeXBlock, MathText, tr,

@@ -6,7 +6,7 @@ import '@cuberoot/timer-ui/compact-select.css';
 // 用 cubing.js 原生 experimentalStickering,清单与 cubing.js puzzle-stickerings.ts 对齐。
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Settings, Undo2, Redo2 } from 'lucide-react';
+import { Settings, Undo2, Redo2 } from '@app-foundation/icons/lucide';
 import { useT } from '@/hooks/useT';
 import { useIsAdmin } from '@/lib/auth-store';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';

@@ -11,7 +11,7 @@ import Link from '@/components/AppLink';
 import PersonLink from '@/components/PersonLink';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { Bookmark, LogOut, TriangleAlert } from 'lucide-react';
+import { Bookmark, LogOut, TriangleAlert } from '@app-foundation/icons/lucide';
 import type { ReconSolve } from '@cuberoot/shared';
 import { listPersonRecons } from '@/lib/recon-api';
 import {

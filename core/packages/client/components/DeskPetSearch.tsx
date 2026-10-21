@@ -6,7 +6,7 @@
 // the site-search data layer only loads when the user actually opens search.
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Check, Lock, LockOpen, ArrowLeft, ArrowRight, Pencil, Trash2, RotateCcw, Maximize2, Coffee, Sun, Heart, Home, Sparkles, Shuffle, MessageSquarePlus, Music } from 'lucide-react';
+import { Check, Lock, LockOpen, ArrowLeft, ArrowRight, Pencil, Trash2, RotateCcw, Maximize2, Coffee, Sun, Heart, Home, Sparkles, Shuffle, MessageSquarePlus, Music } from '@app-foundation/icons/lucide';
 import type { DeskPetEntry } from '@cuberoot/shared/deskpet';
 import { CompactSelect } from '@/components/CompactSelect';
 import BoolToggle from '@/components/BoolToggle';

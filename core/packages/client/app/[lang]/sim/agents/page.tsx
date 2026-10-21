@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { ArrowUpRight, Check, Pause, Play, RotateCcw } from 'lucide-react';
+import { ArrowUpRight, Check, Pause, Play, RotateCcw } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import HeaderToggles from '@/components/HeaderToggles';
 import BackHome from '@/components/BackHome';
@@ -79,7 +79,6 @@ export default function AgentReplayPage() {
     <main className="agents-page">
       <header className="agents-topbar"><BackHome prefetch={false} /><HeaderToggles /></header>
       <div className="agents-heading">
-        <span className="agents-eyebrow">CUBEROOT · {t('AI 实验室', 'AI LAB')}</span>
         <h1>{t('一起，解开魔方。', 'A puzzle. A team. A solution.')}</h1>
         <p>{t('千问与 DeepSeek，同一个二阶魔方。各派四个代理，看看谁先找到答案。', 'Qwen and DeepSeek. The same 2×2 cube. Four agents on each team, searching for a solution.')}</p>
       </div>

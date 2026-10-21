@@ -195,9 +195,12 @@
 
 .alg-time-attack-handle:hover,
 .alg-time-attack-handle:focus-visible {
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
   color: var(--accent);
-  outline: none;
+}
+
+.alg-time-attack-handle:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 
 .alg-time-attack-handle:active {

@@ -2,7 +2,10 @@
 import { Suspense, useMemo, type AnchorHTMLAttributes, type ButtonHTMLAttributes } from 'react';
 import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import { useRouter } from 'next/navigation';
-import { WorkspaceProvider, WorkspaceShell, WorkspaceLoginFrame, ReportEditor, Reports, ReportDetailPanel, Projects, ErrorNotice, Form, Field, useResource, value, RequestError, workspaceText, type StaffActor, type MemberDirectory } from '@app-foundation/workspace-ui';
+import { WorkspaceProvider, WorkspaceLoginFrame, ReportEditor, Reports, ReportDetailPanel, Projects, ErrorNotice, Form, Field, useResource, value, RequestError, workspaceText, type StaffActor, type MemberDirectory } from '@app-foundation/workspace-ui';
+import { NavigationShell } from '@app-foundation/navigation-ui';
+import { ClipboardList, Users, FolderKanban, ShieldCheck, BookOpen } from '@app-foundation/icons/lucide';
+import '@app-foundation/navigation-ui/navigation.css';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
@@ -44,7 +47,15 @@ function SignedInWorkspace() {
   const [id]=useQueryState('id',parseAsString.withDefault(''));
   const session=useResource<{actor:StaffActor;employee:StaffActor;directory:MemberDirectory}>('session');const actor=session.data?.actor;const employee=session.data?.employee;
   const items=[{key:'mine',label:t('我的工作','My work')},{key:'updates',label:t('团队动态','Team updates')},{key:'projects',label:t('项目','Projects')},...(actor?.kind==='admin'?[{key:'members',label:t('成员与权限','Members and access')}]:[])];
-  return <WorkspaceShell brand="CubeRoot" title={items.find(i=>i.key===section)?.label??t('工作记录','Work report')} actions={<AppLink href="/account" prefetch={false}>{actor?.name??t('我的账号','My account')}</AppLink>} navigation={<>{items.map(item=><AppLink key={item.key} href={`/workspace?section=${item.key}`} aria-current={section===item.key?'page':undefined} prefetch={false}>{item.label}</AppLink>)}<AppLink href="/dev/team" prefetch={false}>{t('团队手册','Team handbook')}</AppLink></>}>
+  const icons = { mine: ClipboardList, updates: Users, projects: FolderKanban, members: ShieldCheck };
+  const navigation = items.map(item => { const Icon = icons[item.key as keyof typeof icons]; return { id: item.key, href: `/workspace?section=${item.key}`, label: item.label, icon: <Icon size={18} />, active: section === item.key }; });
+  navigation.push({ id: 'handbook', href: '/dev/team', label: t('团队手册','Team handbook'), icon: <BookOpen size={18} />, active: false });
+  return <NavigationShell className="staff-workspace cuberoot-workspace-navigation" mainClassName="staff-main"
+    items={navigation} labels={{ navigation: t('工作台导航','Workspace navigation'), show: t('显示侧边栏','Show sidebar'), hide: t('隐藏侧边栏','Hide sidebar'), openMobile: t('打开导航','Open navigation'), closeMobile: t('关闭导航','Close navigation') }}
+    renderLink={props => <AppLink {...props} prefetch={false} />}
+    header={toggle => <header className="staff-header">{toggle}<AppLink href="/" className="staff-brand">CubeRoot</AppLink><div className="staff-header-actions"><AppLink href="/account" prefetch={false}>{actor?.name??t('我的账号','My account')}</AppLink></div></header>}
+  >
+    <div className="staff-page-heading"><h1>{items.find(i=>i.key===section)?.label??t('工作记录','Work report')}</h1></div>
     <ErrorNotice error={session.error} retry={session.reload} />
     {session.error?.status===401&&<Button onClick={()=>useAuthStore.getState().login()}>{t('重新登录','Sign in again')}</Button>}
     {session.loading&&<p role="status"><LoadingIndicator>{t('正在加载…','Loading…')}</LoadingIndicator></p>}
@@ -55,7 +66,7 @@ function SignedInWorkspace() {
       {section==='detail'&&id&&employee&&<ReportDetailPanel actor={employee} id={id} />}
       {section==='members'&&actor.kind==='admin'&&<Members onSaved={session.reload} />}
     </>}
-  </WorkspaceShell>;
+  </NavigationShell>;
 }
 type Member={id:number;userId:number;name:string;role:'member'|'manager';active:boolean;adminAccess:boolean};
 function Members({onSaved}:{onSaved:()=>void}) {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Image as ImageIcon, Key, PenLine, Video } from 'lucide-react';
+import { Image as ImageIcon, Key, PenLine, Video } from '@app-foundation/icons/lucide';
 import { T, tr, useLang } from '@/i18n/tr';
 import { useAuthStore, useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import {

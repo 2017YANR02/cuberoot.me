@@ -1,6 +1,6 @@
 'use client';
 
-import { Video } from 'lucide-react';
+import { Video } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 import { forumVideoUrl, type ForumVideo } from '@/lib/forum-api';
 import './forum-video.css';

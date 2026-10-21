@@ -7,7 +7,7 @@
  */
 import { useEffect, useState } from 'react';
 import NextLink from 'next/link';
-import { X, Inbox } from 'lucide-react';
+import { X, Inbox } from '@app-foundation/icons/lucide';
 import type { AlgSubmission } from '@cuberoot/shared';
 import { fetchRecentSubmissions, markSubmissionsSeen } from '@/lib/alg_api';
 import { setAlgSubmissionUnread } from '@/lib/alg-submission-unread';

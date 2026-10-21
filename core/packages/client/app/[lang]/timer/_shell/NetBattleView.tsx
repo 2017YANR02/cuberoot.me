@@ -45,7 +45,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 
 
 import HomeLink from '@/components/HomeLink';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from '@app-foundation/icons/lucide';
 import { EventIcon } from '@/components/EventIcon';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';

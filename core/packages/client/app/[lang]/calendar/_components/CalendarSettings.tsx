@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { Settings } from 'lucide-react';
+import { Settings } from '@app-foundation/icons/lucide';
 import BoolToggle from '@/components/BoolToggle';
 import { ClearButton } from '@/components/ClearButton';
 import { ListSelect, type ListSelectItem } from '@/components/ListSelect';

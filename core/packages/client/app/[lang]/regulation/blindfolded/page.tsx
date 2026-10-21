@@ -7,7 +7,7 @@
 // 3BLD, 4BLD and 5BLD. Shared shell + primitives do the chrome.
 
 import { useTranslation } from 'react-i18next';
-import { Eye, EyeOff, Clock, Ban, ShieldCheck, Hand } from 'lucide-react';
+import { Eye, EyeOff, Clock, Ban, ShieldCheck, Hand } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { useT } from '../../../../hooks/useT';
 import { EventIcon } from '@/components/EventIcon';

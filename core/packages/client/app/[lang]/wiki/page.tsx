@@ -14,7 +14,7 @@
  */
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, Search, Pencil, MessageSquarePlus, Plus, Trash2, Link2 } from 'lucide-react';
+import { ChevronLeft, Search, Pencil, MessageSquarePlus, Plus, Trash2, Link2 } from '@app-foundation/icons/lucide';
 import HomeLink from '@/components/HomeLink';
 import { ClearButton } from '@/components/ClearButton';
 import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
@@ -262,7 +262,7 @@ export default function WikiPage() {
       <header className="wiki-header">
         <HomeLink className="wiki-back">
           <ChevronLeft size={16} />
-          <span>{tr({ zh: '首页', en: 'Home'
+          <span className="sr-only">{tr({ zh: '首页', en: 'Home'
         })}</span>
         </HomeLink>
         <BoolToggle

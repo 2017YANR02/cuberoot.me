@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { MapPin, Plane, TrainFront, Copy, ExternalLink } from 'lucide-react';
+import { MapPin, Plane, TrainFront, Copy, ExternalLink } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { ClearButton } from '@/components/ClearButton';
 import { DateRangeInput } from '@/components/DateRangeInput';

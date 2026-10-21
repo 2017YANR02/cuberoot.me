@@ -7,7 +7,7 @@
 // re-scrambling on error). Shared shell + primitives do the chrome.
 
 import { useTranslation } from 'react-i18next';
-import { Dices, Eye, ShieldCheck, Timer, PenLine, ScanLine } from 'lucide-react';
+import { Dices, Eye, ShieldCheck, Timer, PenLine, ScanLine } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { useT } from '../../../../hooks/useT';
 import { EventIcon } from '@/components/EventIcon';

@@ -10,7 +10,7 @@
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import { useTranslation } from 'react-i18next';
-import { Infinity as InfinityIcon, Sigma, Dices, Ruler, Boxes, Percent } from 'lucide-react';
+import { Infinity as InfinityIcon, Sigma, Dices, Ruler, Boxes, Percent } from '@app-foundation/icons/lucide';
 import { useT } from "@/hooks/useT";
 import { tr } from '@/i18n/tr';
 

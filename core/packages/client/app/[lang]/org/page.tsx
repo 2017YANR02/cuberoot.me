@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Building2, ArrowRight, Plus } from 'lucide-react';
+import { Building2, ArrowRight, Plus } from '@app-foundation/icons/lucide';
 import EnterpriseVerificationAdmin from './_components/EnterpriseVerificationAdmin';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';

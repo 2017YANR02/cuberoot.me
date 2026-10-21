@@ -9,7 +9,7 @@
  * 流程图用 CSS box + Unicode 箭头。
  */
 import Link from '@/components/AppLink';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from '@app-foundation/icons/lucide';
 import './scramble_555_about.css';
 import { useT } from "@/hooks/useT";
 
@@ -81,7 +81,7 @@ export default function Scramble555AboutPage() {
       <div className="s555-header">
         <Link href="/scramble/gen" className="s555-back">
           <ArrowLeft size={16} />
-          <span>{t('返回打乱生成器', 'Back to scramble generator')}</span>
+          <span className="sr-only">{t('返回打乱生成器', 'Back to scramble generator')}</span>
         </Link>
       </div>
 

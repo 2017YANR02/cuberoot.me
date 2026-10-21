@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { Star } from 'lucide-react';
+import { Star } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import { DateInput } from '@/components/DateInput';

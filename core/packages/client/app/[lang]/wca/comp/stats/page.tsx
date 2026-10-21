@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import Link from '@/components/AppLink';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ArrowUp, ArrowDown, ArrowRight, Mountain, Waves, Ghost } from 'lucide-react';
+import { ArrowLeft, ArrowUp, ArrowDown, ArrowRight, Mountain, Waves, Ghost } from '@app-foundation/icons/lucide';
 import { CountryInput } from '@/components/CountryInput';
 import { EventSelect } from '@/components/EventSelect';
 import { Flag } from '@/components/Flag';

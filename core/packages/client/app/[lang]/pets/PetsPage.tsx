@@ -3,7 +3,7 @@ import { installedPetAvailable } from '@/lib/installed-content';
 
 import { useEffect, useState } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
-import { Heart, Sparkles, Share2, Check, Lock, ArrowUpRight, ChevronLeft } from 'lucide-react';
+import { Heart, Sparkles, Share2, Check, Lock, ArrowUpRight, ChevronLeft } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import DeskPetHome from '@/components/DeskPetHome';
@@ -58,7 +58,7 @@ export default function PetsPage({ gallery = false }: { gallery?: boolean }) {
   useEffect(()=>{setShareState('idle');},[petId,scene,collection]);
   return <main className="pets-page">
     <header className="pets-header">
-      <HomeLink className="back-home" prefetch={false}><ChevronLeft size={16} aria-hidden="true" />{tr({ zh: '返回', en: 'Back' })}</HomeLink>
+      <HomeLink className="back-home" prefetch={false}><ChevronLeft size={16} aria-hidden="true" /><span className="sr-only">{tr({ zh: '返回', en: 'Back' })}</span></HomeLink>
       <nav aria-label={tr({zh:'宠物导航',en:'Pet navigation'})}>
         <AppLink className="pets-nav-action" href={`/pets?pet=${pet?.id ?? 'rootbeast'}`} prefetch={false} aria-current={!gallery?'page':undefined}><Heart size={15}/>{tr({zh:'领养与陪伴',en:'Adopt & care'})}</AppLink>
         <AppLink className="pets-nav-action" href={`/pets/gallery?pet=${pet?.id ?? 'rootbeast'}`} prefetch={false} aria-current={gallery?'page':undefined}><Sparkles size={15}/>{tr({zh:'宠物图鉴',en:'Gallery'})}</AppLink>

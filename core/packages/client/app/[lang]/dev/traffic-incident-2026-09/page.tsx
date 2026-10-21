@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { ArrowDown, ArrowUpRight, Check, CircleHelp, FileText, ShieldCheck, Activity, Server, Globe2, ScanLine } from 'lucide-react';
+import { ArrowDown, ArrowUpRight, Check, CircleHelp, FileText, ShieldCheck, Activity, Server, Globe2, ScanLine } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import HeaderToggles from '@/components/HeaderToggles';
 import JsonLd from '@/components/JsonLd';

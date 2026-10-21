@@ -20,7 +20,7 @@
  */
 import { useEffect, useMemo, useState } from 'react';
 import { VisualCube } from '@/components/VisualCube';
-import { Play, Pause, RotateCcw, SkipBack, SkipForward, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { Play, Pause, RotateCcw, SkipBack, SkipForward, ChevronsLeft, ChevronsRight } from '@app-foundation/icons/lucide';
 import { MathText } from './Tex';
 import { tr } from '@/i18n/tr';
 

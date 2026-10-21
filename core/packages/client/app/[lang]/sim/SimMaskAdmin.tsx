@@ -3,7 +3,7 @@
 //
 // 标签与显隐用条目覆盖层；分组顺序、组内顺序与跨组归属一次保存完整布局。
 import { useMemo, useState, type ReactNode } from 'react';
-import { Eye, EyeOff, Menu, Trash2, X } from 'lucide-react';
+import { Eye, EyeOff, Menu, Trash2, X } from '@app-foundation/icons/lucide';
 import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import SortableCard from '@/components/SortableCard';

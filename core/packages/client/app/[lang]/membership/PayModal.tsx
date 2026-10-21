@@ -7,7 +7,7 @@
  * 返回二维码(微信 Native / 虎皮椒 PC)→ 弹窗内扫码 + 轮询查单,成功 onPaid()。
  */
 import { useEffect, useRef, useState } from 'react';
-import { X, Smartphone, Check, CreditCard } from 'lucide-react';
+import { X, Smartphone, Check, CreditCard } from '@app-foundation/icons/lucide';
 import { SiAlipay, SiWechat } from 'react-icons/si';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { tr } from '@/i18n/tr';

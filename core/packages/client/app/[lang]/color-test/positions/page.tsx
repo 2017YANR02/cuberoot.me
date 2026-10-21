@@ -4,7 +4,7 @@ import TrainingStatsPanel from '@/components/TrainingStatsPanel';
 import { useTrainingStats } from '@/hooks/useTrainingStats';
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw } from '@app-foundation/icons/lucide';
 import BackHome from '@/components/BackHome';
 import BoolToggle from '@/components/BoolToggle';
 import HeaderToggles from '@/components/HeaderToggles';
@@ -162,7 +162,6 @@ export default function ColorPositionsPage() {
       </div>
 
       <header className="color-quiz-header">
-        <p className="color-quiz-eyebrow">{tr({ zh: '颜色测试 02', en: 'COLOUR TEST 02' })}</p>
         <h1>{tr({ zh: '颜色位置关系', en: 'Colour positions' })}</h1>
         <div className="position-top-control">
           <span>{tr({ zh: '顶面', en: 'Top face' })}</span>

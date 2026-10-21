@@ -16,7 +16,7 @@ import '@cuberoot/timer-ui/compact-select.css';
 
 import { useCallback, useEffect, useMemo, useRef, useState, memo } from 'react';
 import { useQueryState, parseAsStringEnum, parseAsInteger } from 'nuqs';
-import { Search, Square as StopIcon, Copy, Check, Eraser, ArrowRight } from 'lucide-react';
+import { Search, Square as StopIcon, Copy, Check, Eraser, ArrowRight } from '@app-foundation/icons/lucide';
 import { renderCubeSVG } from '@cuberoot/visualcube';
 import Link from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';

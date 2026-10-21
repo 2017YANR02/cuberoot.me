@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Eye, Heart, MessageCircle } from 'lucide-react';
+import { Eye, Heart, MessageCircle } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import PersonLink from '@/components/PersonLink';
 import { tr, useLang } from '@/i18n/tr';

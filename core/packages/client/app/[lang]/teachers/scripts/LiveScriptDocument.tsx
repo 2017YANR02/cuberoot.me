@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
-import { CheckCircle2, ChevronDown, Clock3, List, MessageCircleQuestion, Mic2, MoveRight, Radio } from 'lucide-react';
+import { CheckCircle2, ChevronDown, Clock3, List, MessageCircleQuestion, Mic2, MoveRight, Radio } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 import type { LiveScriptCueKind, TeacherLiveScript } from '@/lib/teacher-live-scripts-api';

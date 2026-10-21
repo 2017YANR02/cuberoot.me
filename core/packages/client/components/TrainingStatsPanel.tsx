@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 import { useTrainingStats } from '@/hooks/useTrainingStats';
 import './training-stats.css';

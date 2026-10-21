@@ -24,7 +24,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { ListSelect } from '@/components/ListSelect';
 import { Spinner } from '@/components/Spinner/Spinner';

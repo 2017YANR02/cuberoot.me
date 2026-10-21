@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Pencil, Plus, Save } from 'lucide-react';
+import { Pencil, Plus, Save } from '@app-foundation/icons/lucide';
 import { Tooltip } from '@/components/Tooltip';
 import { ClearButton } from '@/components/ClearButton';
 import { validateMembershipBenefits, type MembershipBenefit, type MembershipBenefitGroup, type MembershipBenefits } from '@cuberoot/shared/membership-benefits';

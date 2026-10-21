@@ -10,7 +10,7 @@
 // in ../roux.css (.roux-modal-*).
 
 import React, { useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X } from '@app-foundation/icons/lucide';
 import { useRT } from '../i18n';
 
 export function Modal(props: {

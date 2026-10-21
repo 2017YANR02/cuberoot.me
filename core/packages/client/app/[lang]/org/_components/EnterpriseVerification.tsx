@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import type { EnterpriseVerificationState, EnterpriseVerificationStatus } from '@cuberoot/shared/teaching';
-import { ShieldCheck, ArrowRight, Check } from 'lucide-react';
+import { ShieldCheck, ArrowRight, Check } from '@app-foundation/icons/lucide';
 import BoolToggle from '@/components/BoolToggle';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';

@@ -4,7 +4,7 @@
 
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { Brain, Library, FileText, Compass, Search, TableProperties, NotebookPen, Timer as TimerIcon } from 'lucide-react';
+import { Brain, Library, FileText, Compass, Search, TableProperties, NotebookPen, Timer as TimerIcon } from '@app-foundation/icons/lucide';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 
 import helperIcon from '../_icons/helper.svg';

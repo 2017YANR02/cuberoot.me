@@ -4,7 +4,7 @@
  * /frame-count-about — 数帧工具说明页
  */
 import Link from '@/components/AppLink';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from '@app-foundation/icons/lucide';
 import './frame_count_about.css';
 import { useT } from "@/hooks/useT";
 
@@ -30,7 +30,7 @@ export default function FrameCountAboutPage() {
       <div className="fca-header">
         <Link href="/frame-count" className="fca-back">
           <ArrowLeft size={16} />
-          <span>{t('返回数帧', 'Back to Frame Count')}</span>
+          <span className="sr-only">{t('返回数帧', 'Back to Frame Count')}</span>
         </Link>
       </div>
 

@@ -4,7 +4,7 @@
  * native title= 只在 hover 出, 这个是 click-toggle 兼桌面 + 移动.
  */
 import { useState, useEffect, useRef } from 'react';
-import { Info, X, type LucideIcon } from 'lucide-react';
+import { Info, X, type LucideIcon } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
 import './info_tooltip.css';

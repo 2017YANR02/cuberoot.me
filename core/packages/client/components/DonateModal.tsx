@@ -1,7 +1,7 @@
 'use client';
 
 import { useModalDismiss } from '@/hooks/useModalDismiss';
-import { Info } from 'lucide-react';
+import { Info } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { installedMembershipStore } from '@/lib/store-membership-bridge';
 import './donate-modal.css';

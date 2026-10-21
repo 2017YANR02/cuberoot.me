@@ -10,7 +10,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronRight, ChevronDown } from 'lucide-react';
+import { ChevronRight, ChevronDown } from '@app-foundation/icons/lucide';
 import { TeX, TeXBlock } from '@/components/math/Tex';
 import { tr } from '@/i18n/tr';
 

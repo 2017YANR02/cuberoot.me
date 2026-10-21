@@ -12,7 +12,7 @@
 // classes live in ./head-to-head.css.
 import {
   Swords, Trophy, Layers, Clock, Megaphone, Scale, ListOrdered, Medal,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { useT } from '../../../../hooks/useT';
 import RegArticleLayout from '../_components/RegArticleLayout';

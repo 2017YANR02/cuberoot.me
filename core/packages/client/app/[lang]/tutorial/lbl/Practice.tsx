@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { parseAsInteger, useQueryState } from 'nuqs';
 import { Alg } from 'cubing/alg';
-import { ArrowRight, Trophy, X } from 'lucide-react';
+import { ArrowRight, Trophy, X } from '@app-foundation/icons/lucide';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
 import BackHome from '@/components/BackHome';
 import Link from '@/components/AppLink';

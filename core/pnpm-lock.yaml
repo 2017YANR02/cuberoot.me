@@ -575,6 +575,15 @@ importers:
       '@airwallex/components-sdk':
         specifier: ^1.35.1
         version: 1.35.1
+      '@app-foundation/icons':
+        specifier: file:../../vendor/app-foundation/app-foundation-icons-0.1.0.tgz
+        version: file:vendor/app-foundation/app-foundation-icons-0.1.0.tgz(lucide-react@1.8.0(react@19.2.4))(react@19.2.4)
+      '@app-foundation/navigation-ui':
+        specifier: file:../../vendor/app-foundation/app-foundation-navigation-ui-0.1.2.tgz
+        version: file:vendor/app-foundation/app-foundation-navigation-ui-0.1.2.tgz(@2017yanr02/continuous-corners@file:vendor/continuous-corners-0.3.1.tgz(react@19.2.4))(react@19.2.4)
+      '@app-foundation/registration-ui':
+        specifier: file:../../vendor/app-foundation/app-foundation-registration-ui-0.1.0.tgz
+        version: file:vendor/app-foundation/app-foundation-registration-ui-0.1.0.tgz(react@19.2.4)
       '@app-foundation/workspace-policy':
         specifier: https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz
         version: https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz
@@ -1198,15 +1207,38 @@ packages:
     version: 0.1.0
     engines: {node: '>=22'}
 
+  '@app-foundation/icons@file:vendor/app-foundation/app-foundation-icons-0.1.0.tgz':
+    resolution: {integrity: sha512-jsHAjL5XdWpURgFZqiaDjs1JJTnF9dwJUhT2SUKrHc2qHD/RbpRbLBDeqFGeIjnvoxK8rw9DCtrfsnpbsZNZ0Q==, tarball: file:vendor/app-foundation/app-foundation-icons-0.1.0.tgz}
+    version: 0.1.0
+    engines: {node: '>=22'}
+    peerDependencies:
+      lucide-react: '>=1 <2'
+      react: '>=19'
+
   '@app-foundation/messaging@https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-messaging-0.1.0.tgz':
     resolution: {integrity: sha512-O0v0KUH5Ha7RCF3ZFdLTLMVh9VE6GIM1EBaBWBnvFMPZE+5VSRHgXd/605l1ZVTodhzcf608iuIkd2TIeKSjXg==, tarball: https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-messaging-0.1.0.tgz}
     version: 0.1.0
     engines: {node: '>=22'}
 
+  '@app-foundation/navigation-ui@file:vendor/app-foundation/app-foundation-navigation-ui-0.1.2.tgz':
+    resolution: {integrity: sha512-RtIuq6+XXcdd9gGm9kZvdFRXNEM9a3sdAY4p9Y4hwDtkU5Bj6ioeT3P37pfyzCb2Pp1licfXgpaFbvkTyO7I/Q==, tarball: file:vendor/app-foundation/app-foundation-navigation-ui-0.1.2.tgz}
+    version: 0.1.2
+    engines: {node: '>=22'}
+    peerDependencies:
+      '@2017yanr02/continuous-corners': 0.3.1
+      react: '>=19'
+
   '@app-foundation/payments@https://github.com/2017YANR02/app-foundation/releases/download/v0.1.0/app-foundation-payments-0.1.0.tgz':
     resolution: {integrity: sha512-zLVBAkpOSzXdtlYduCHTgcNRiQZjqrx0kGKGawLnm7iGzXsJMN+6OOIIePy5MLpXq15AWxFgXI6NgCLjqCRwXw==, tarball: https://github.com/2017YANR02/app-foundation/releases/download/v0.1.0/app-foundation-payments-0.1.0.tgz}
     version: 0.1.0
     engines: {node: '>=22'}
+
+  '@app-foundation/registration-ui@file:vendor/app-foundation/app-foundation-registration-ui-0.1.0.tgz':
+    resolution: {integrity: sha512-QcmZ/fO0CcVfTCemg80vF0TcXtXG227D7kCgUJURkQeL4KT/L57SdNHc7OF6xwTTUHN4yZK0ImgYdk4Z2QzQcA==, tarball: file:vendor/app-foundation/app-foundation-registration-ui-0.1.0.tgz}
+    version: 0.1.0
+    engines: {node: '>=22'}
+    peerDependencies:
+      react: '>=19'
 
   '@app-foundation/sms@https://github.com/2017YANR02/app-foundation/releases/download/v0.3.1/app-foundation-sms-0.1.1.tgz':
     resolution: {integrity: sha512-WSasNetrvPDkwxlhJKELS3veXktnU5sibgWFactbN1SBVCEr68pDPQgX99F6o0l9SyInc08Sm1ZwazDd8aTBHA==, tarball: https://github.com/2017YANR02/app-foundation/releases/download/v0.3.1/app-foundation-sms-0.1.1.tgz}
@@ -6600,9 +6632,24 @@ snapshots:
 
   '@app-foundation/face-verification@https://github.com/2017YANR02/app-foundation/releases/download/v0.5.0/app-foundation-face-verification-0.1.0.tgz': {}
 
+  '@app-foundation/icons@file:vendor/app-foundation/app-foundation-icons-0.1.0.tgz(lucide-react@1.8.0(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      lucide-react: 1.8.0(react@19.2.4)
+      react: 19.2.4
+      react-icons: 5.7.0(react@19.2.4)
+
   '@app-foundation/messaging@https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-messaging-0.1.0.tgz': {}
 
+  '@app-foundation/navigation-ui@file:vendor/app-foundation/app-foundation-navigation-ui-0.1.2.tgz(@2017yanr02/continuous-corners@file:vendor/continuous-corners-0.3.1.tgz(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      '@2017yanr02/continuous-corners': file:vendor/continuous-corners-0.3.1.tgz(react@19.2.4)
+      react: 19.2.4
+
   '@app-foundation/payments@https://github.com/2017YANR02/app-foundation/releases/download/v0.1.0/app-foundation-payments-0.1.0.tgz': {}
+
+  '@app-foundation/registration-ui@file:vendor/app-foundation/app-foundation-registration-ui-0.1.0.tgz(react@19.2.4)':
+    dependencies:
+      react: 19.2.4
 
   '@app-foundation/sms@https://github.com/2017YANR02/app-foundation/releases/download/v0.3.1/app-foundation-sms-0.1.1.tgz': {}
 

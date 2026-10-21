@@ -6,7 +6,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { List, X } from 'lucide-react';
+import { List, X } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import type { ArticlePostContent } from '../_lib/useTutorialCatalog';
 import { tutorialMediaUrl } from '../_lib/useTutorialCatalog';

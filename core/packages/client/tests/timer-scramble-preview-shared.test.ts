@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import { renderIvyScrambleSvg } from '@cuberoot/puzzle-render-core/ivy-svg';
 import { renderMegaScrambleSvg as webMega } from '@/app/[lang]/scramble/gen/_svg/mega_svg';
 import { renderSq1ScrambleSvg as webSq1 } from '@/lib/sq1-svg';
 import { renderMegaScrambleSvg as sharedMega } from '@cuberoot/puzzle-render-core/mega-svg';
@@ -45,6 +46,20 @@ describe('shared timer scramble preview', () => {
   afterEach(async () => {
     await act(async () => root.unmount());
     host.remove();
+  });
+
+  it('renders Ivy with the sheet renderer and updates its state', async () => {
+    for (const scramble of ['', "R' D' R' L' R L'"]) {
+      await act(async () => root.render(createElement(TimerCubePreview, {
+        event: 'ivy', scramble, fill: true,
+      })));
+      const expected = document.createElement('div');
+      expected.innerHTML = renderIvyScrambleSvg(scramble);
+      expect(host.querySelector('svg')?.innerHTML).toBe(expected.querySelector('svg')?.innerHTML);
+      expect(host.querySelectorAll('path')).toHaveLength(18);
+      expect(host.textContent).not.toContain('no preview');
+      expect(timerCubePreviewAspect('ivy', scramble)).toBe(4 / 3);
+    }
   });
 
   it('keeps Web renderer imports as identity re-exports', () => {
@@ -355,7 +370,7 @@ describe('shared timer scramble preview', () => {
       expect(timerCubePreviewAspect(event)).toBe(nativePuzzleSvgAspect(event));
     }
     expect(timerCubePreviewAspect('mmagic', null)).toBe(magicSvgAspect('mmagic'));
-    expect(timerCubePreviewAspect('ivy')).toBe(8 / 5);
+    expect(timerCubePreviewAspect('ivy')).toBe(4 / 3);
     expect(timerCubePreviewAspect('magic', 'M Forward')).toBe(8 / 5);
     expect(timerCubePreviewAspect('mmagic', 'R U')).toBe(8 / 5);
   });

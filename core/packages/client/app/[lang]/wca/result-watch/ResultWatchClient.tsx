@@ -24,7 +24,7 @@ import {
 } from '@/lib/result-watch-api';
 import {
   BellRing, RefreshCw, MinusCircle, PencilLine, Clock, ChevronDown, ShieldAlert, Hourglass, Check, X,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import './result-watch.css';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 

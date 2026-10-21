@@ -1,4 +1,4 @@
-import { Star, Moon, Sun } from 'lucide-react';
+import { Star, Moon, Sun } from '@app-foundation/icons/lucide';
 import { petLevel } from '@/lib/deskpet-care';
 import { tr } from '@/i18n/tr';
 export default function PetLevelBadge({ bond }: { bond: number }) {

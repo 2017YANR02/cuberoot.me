@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import {
   ChevronDown, Disc3, Download, ImagePlus, ListMusic, MoreHorizontal, Music2, Pause, Pencil, Play, Repeat, Repeat1,
   Shuffle, SkipBack, SkipForward, TextQuote, Trash2, Upload, Volume2,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import HeaderToggles from '@/components/HeaderToggles';
 import AppLink from '@/components/AppLink';

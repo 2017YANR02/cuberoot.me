@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, type FormEvent } from 'react';
-import { Clock3, Mic2, Target, Video } from 'lucide-react';
+import { Clock3, Mic2, Target, Video } from '@app-foundation/icons/lucide';
 import { usePathname } from 'next/navigation';
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';

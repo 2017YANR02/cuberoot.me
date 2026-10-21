@@ -12,7 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
-import { ExternalLink, HelpCircle, Copy, Check } from 'lucide-react';
+import { ExternalLink, HelpCircle, Copy, Check } from '@app-foundation/icons/lucide';
 import * as XLSX from 'xlsx';
 import { search as cmtSearch, expand as cmtExpand } from './engine';
 import { persistItem } from '@/lib/safe-storage';

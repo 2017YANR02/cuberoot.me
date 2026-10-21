@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryState, parseAsString } from 'nuqs';
-import { Key } from 'lucide-react';
+import { Key } from '@app-foundation/icons/lucide';
 import { tr, T, useLang } from '@/i18n/tr';
 import { useAuthStore, useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import {

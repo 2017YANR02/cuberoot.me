@@ -7,7 +7,7 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CornerDownRight, LogIn, Trash2 } from 'lucide-react';
+import { CornerDownRight, LogIn, Trash2 } from '@app-foundation/icons/lucide';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { UserContactLink } from '@/components/UserIdLabel';
 import { useT } from '@/hooks/useT';

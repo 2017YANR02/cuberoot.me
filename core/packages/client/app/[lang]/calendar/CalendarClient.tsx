@@ -17,7 +17,7 @@ import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import {
   CalendarDays, ChevronLeft, ChevronRight, Download, Globe, Menu, Plus, Search, Settings,
   Share2, Undo2, Upload, X,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import HeaderToggles from '@/components/HeaderToggles';
 import AppLink from '@/components/AppLink';
 import { ListSelect } from '@/components/ListSelect';

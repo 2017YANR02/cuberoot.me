@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { BookOpen, Building2, Compass, GraduationCap, UsersRound } from 'lucide-react';
+import { BookOpen, Building2, Compass, GraduationCap, UsersRound } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import { useAuthUser, useIsAdmin } from '@/lib/auth-store';

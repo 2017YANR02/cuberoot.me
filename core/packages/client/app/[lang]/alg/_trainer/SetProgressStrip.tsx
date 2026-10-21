@@ -10,7 +10,7 @@
  */
 import { useMemo } from 'react';
 import Link from '@/components/AppLink';
-import { Flame, ChevronRight } from 'lucide-react';
+import { Flame, ChevronRight } from '@app-foundation/icons/lucide';
 import { useTrainerMarks, markStatus } from '@/lib/trainer-marks';
 import { useAlgSrs } from '@/lib/alg-srs-store';
 import { streakDays, dayKey } from '@/lib/alg-srs';

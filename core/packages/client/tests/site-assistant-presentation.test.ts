@@ -88,6 +88,22 @@ describe('assistant image interactions',()=>{
 });
 
 describe('assistant linked table presentation',()=>{
+  it.each([false,true])('omits actions already shown as citations (explicit: %s)',async(explicit)=>{
+    const person={id:'person:2017YANR02',title:'颜瑞民',href:'/wca/persons/2017YANR02',read:true};
+    await render({
+      answer:`颜瑞民参加过 26 场比赛。${explicit ? ` [[${person.id}]]` : ''}`,
+      sources:[person],
+      actions:[person,{id:'timer',title:'计时器',href:'/timer'}],
+    });
+    expect(document.querySelectorAll('a[href="/zh/wca/persons/2017YANR02"]')).toHaveLength(1);
+    expect(document.querySelector('.site-assistant-citation')?.textContent).toBe('颜瑞民');
+    expect(document.querySelector('.site-assistant-navigation')?.textContent).toBe('打开 计时器');
+  });
+  it('keeps actions for sources that are not cited',async()=>{
+    await render({answer:`比赛见来源。 [[${sources[0].id}]]`,sources,actions:sources});
+    expect(document.querySelectorAll('.site-assistant-navigation a')).toHaveLength(1);
+    expect(document.querySelector('.site-assistant-navigation a')?.getAttribute('href')).toBe('/zh/wca/comp/Taipei2026');
+  });
   it('puts the host flag before competition names outside the first column',async()=>{
     await render({answer:'排名见下表。',sources:[],actions:[sources[0]],artifacts:[{
       kind:'table',title:'排名',columns:['名次','选手','WCA ID','成绩','地区','比赛','日期'],

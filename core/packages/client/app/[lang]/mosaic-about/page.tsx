@@ -4,7 +4,7 @@
  * /mosaic-about — 魔方马赛克说明页
  */
 import Link from '@/components/AppLink';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from '@app-foundation/icons/lucide';
 import './mosaic_about.css';
 import { useT } from "@/hooks/useT";
 
@@ -30,7 +30,7 @@ export default function MosaicAboutPage() {
       <div className="moa-header">
         <Link href="/mosaic" className="moa-back">
           <ArrowLeft size={16} />
-          <span>{t('返回马赛克', 'Back to Mosaic')}</span>
+          <span className="sr-only">{t('返回马赛克', 'Back to Mosaic')}</span>
         </Link>
       </div>
 

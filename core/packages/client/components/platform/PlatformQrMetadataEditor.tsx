@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type MutableRefObject, type FormEvent } from 'react';
-import { ArrowDown, ArrowUp, GripVertical, ExternalLink, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, GripVertical, ExternalLink, Plus, Trash2 } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import { useT } from '@/hooks/useT';

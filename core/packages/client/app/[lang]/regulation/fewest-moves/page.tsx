@@ -11,7 +11,7 @@
 // rotations (E2d1).
 
 import type { ReactNode } from 'react';
-import { Clock, Cuboid, Ban, ListChecks } from 'lucide-react';
+import { Clock, Cuboid, Ban, ListChecks } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { useT } from '../../../../hooks/useT';
 import RegArticleLayout from '../_components/RegArticleLayout';

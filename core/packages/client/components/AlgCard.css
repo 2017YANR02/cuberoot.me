@@ -22,6 +22,13 @@
   border-color: var(--accent);
   transform: translateY(-1px);
 }
+.alg-card.alg-card--subgroup-plain {
+  background: transparent;
+  border-color: transparent;
+}
+.alg-card.alg-card--subgroup-plain:hover {
+  color: var(--accent);
+}
 .alg-card-thumb {
   display: flex;
   align-items: center;

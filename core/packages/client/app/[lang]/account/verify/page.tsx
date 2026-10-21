@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { CircleCheck } from 'lucide-react';
+import { CircleCheck } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import { ClearButton } from '@/components/ClearButton';

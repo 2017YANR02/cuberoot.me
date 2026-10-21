@@ -12,7 +12,7 @@
 
 import { useMemo } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
-import { Search, ExternalLink } from 'lucide-react';
+import { Search, ExternalLink } from '@app-foundation/icons/lucide';
 import BackHome from '@/components/BackHome';
 import { SearchInput } from '@/components/SearchInput';
 import { useLang, tr } from '@/i18n/tr';

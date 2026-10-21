@@ -9,7 +9,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Check, X, RotateCcw, ArrowRight, Flag } from 'lucide-react';
+import { Check, X, RotateCcw, ArrowRight, Flag } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { UserContactLink } from '@/components/UserIdLabel';
 import { tr } from '@/i18n/tr';

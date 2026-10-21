@@ -14,8 +14,41 @@
   border-bottom: 0;
 }
 
+/* Group content with spacing rather than nested decorative cards. */
+.staff-workspace .staff-panel,
+.staff-workspace .staff-empty {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.staff-workspace .staff-main .staff-panel {
+  padding: 0;
+}
+
+.staff-workspace .staff-empty {
+  padding: 16px 0;
+  text-align: start;
+}
+
+.staff-workspace .staff-feed {
+  gap: 24px;
+}
+
+.staff-workspace .staff-comment,
+.staff-workspace .staff-revision {
+  border-top: 0;
+}
+
+.staff-workspace .staff-badge {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+}
+
 /* The selected navigation item already names the page; retain its h1 for readers. */
-.staff-workspace .staff-layout:has(.staff-nav [aria-current="page"]) > .staff-main > .staff-page-heading {
+.staff-workspace .staff-layout:has(.staff-nav [aria-current="page"]) > .staff-main > .staff-page-heading,
+.cuberoot-workspace-navigation .af-nav-body:has(.af-nav-link[aria-current="page"]) > .staff-main > .staff-page-heading {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -26,3 +59,8 @@
   white-space: nowrap;
   border: 0;
 }
+
+.cuberoot-workspace-navigation.af-navigation { --af-nav-expanded: 208px; --af-nav-sidebar-bg: var(--muted); --af-nav-content-bg: var(--background); --af-nav-text: var(--muted-foreground); --af-nav-active: var(--foreground); --af-nav-hover: var(--card); --af-nav-selected: var(--card); }
+.cuberoot-workspace-navigation .staff-header { position: sticky; top: 0; z-index: 45; box-sizing: border-box; height: var(--af-nav-header-height); background: var(--af-nav-sidebar-bg); padding: 0 20px; justify-content: flex-start; }
+.cuberoot-workspace-navigation .staff-header-actions { margin-left: auto; }
+.cuberoot-workspace-navigation .staff-main { margin: 0 auto; }

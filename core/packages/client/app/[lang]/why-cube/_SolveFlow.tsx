@@ -5,7 +5,7 @@
 // move-count stat that ticks up. Illustrates "mental rotation" literally.
 
 import { useTranslation } from 'react-i18next';
-import { Rotate3d } from 'lucide-react';
+import { Rotate3d } from '@app-foundation/icons/lucide';
 import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';
 import { useInView, useCountUp } from './_hooks';
 import { useT } from '../../../hooks/useT';

@@ -1010,16 +1010,17 @@ input[type='range'].reconstruct-playback-slider::-moz-range-track {
   top: 4px;
   left: 4px;
   z-index: 5;
-  background: color-mix(in srgb, var(--background) 60%, transparent);
-  border: 1px solid var(--border-default);
+  background: transparent;
+  border: 0;
   color: var(--muted-foreground);
-  border-radius: 4px;
-  padding: 3px;
+  border-radius: 0;
+  padding: 4px;
   cursor: grab;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   touch-action: none;
 }
-.sortable-card-drag-handle:hover { color: var(--accent); border-color: var(--accent); }
+.sortable-card-drag-handle:hover { color: var(--accent); }
+.sortable-card-drag-handle:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .sortable-card-drag-handle:active { cursor: grabbing; }

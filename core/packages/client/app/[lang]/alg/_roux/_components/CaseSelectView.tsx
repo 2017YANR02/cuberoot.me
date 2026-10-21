@@ -13,7 +13,7 @@
 // with a filter().join().
 
 import React from 'react';
-import { CheckCircle2, XCircle, Settings } from 'lucide-react';
+import { CheckCircle2, XCircle, Settings } from '@app-foundation/icons/lucide';
 
 import { AppState, Action } from '@/lib/roux/Types';
 import Selector from '@/lib/roux/Selector';

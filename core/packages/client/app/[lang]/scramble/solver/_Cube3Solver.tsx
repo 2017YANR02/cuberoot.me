@@ -22,7 +22,7 @@ import { sessionFetch } from '@/lib/session-fetch';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
-import { Download, X, HelpCircle } from 'lucide-react';
+import { Download, X, HelpCircle } from '@app-foundation/icons/lucide';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { streamApiUrl } from '@/lib/api-base';

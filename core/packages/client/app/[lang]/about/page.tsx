@@ -2,7 +2,7 @@
 
 // /about — port of packages/client-vite/src/pages/AboutPage.tsx.
 
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft } from '@app-foundation/icons/lucide';
 import HomeLink from '@/components/HomeLink';
 import CREDITS from './credits_data.json';
 import './about.css';
@@ -15,7 +15,7 @@ export default function AboutPage() {
       <header className="about-header">
         <HomeLink className="about-back">
           <ChevronLeft size={16} />
-          <span>{tr({ zh: '首页', en: 'Home'
+          <span className="sr-only">{tr({ zh: '首页', en: 'Home'
         })}</span>
         </HomeLink>
       </header>

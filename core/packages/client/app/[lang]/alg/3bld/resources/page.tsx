@@ -24,7 +24,7 @@ import {
   Users,
   Library,
   ExternalLink,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import '../3bld.css';
 import { tr } from '@/i18n/tr';

@@ -9,7 +9,7 @@
 // (regulations C1, C1b, C1b+, C1b++, C1b2, C1b3, C1b4, C1c).
 
 import type { ReactNode } from 'react';
-import { Hand, Eye, Wrench, Timer } from 'lucide-react';
+import { Hand, Eye, Wrench, Timer } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { useT } from '../../../../hooks/useT';
 import RegArticleLayout from '../_components/RegArticleLayout';

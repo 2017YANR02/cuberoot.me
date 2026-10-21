@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
-import { BookOpen, Check, ChevronDown, Copy, Mic2 } from 'lucide-react';
+import { BookOpen, Check, ChevronDown, Copy, Mic2 } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import HeaderToggles from '@/components/HeaderToggles';
 import { useCopy } from '@/hooks/useCopy';

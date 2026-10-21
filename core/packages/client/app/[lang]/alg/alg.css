@@ -32,16 +32,14 @@ html[data-theme=dark] .alg-root {
   gap: 6px;
   font-size: 0.85rem;
   padding: 6px 12px;
-  border-radius: 8px;
   text-decoration: none;
   color: var(--foreground);
-  background: color-mix(in srgb, var(--foreground) 5%, transparent);
-  border: 1px solid color-mix(in srgb, var(--foreground) 13%, transparent);
+  background: transparent;
+  border: 0;
   white-space: nowrap;
 }
 .alg-index-progress-link:hover {
   color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
 }
 /* 页尾的出处行 —— 不再嵌在 header 里,自己撑住左右内边距 */
 .alg-index-credit {
@@ -70,7 +68,7 @@ html[data-theme=dark] .alg-root {
   border: 0;
 }
 .alg-bento .alg-card:hover {
-  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  background: transparent;
 }
 /* SQ1 双层横排封面放大；窄屏由卡片宽度约束，外框随 SVG 等比缩小。 */
 .alg-bento .alg-card--sq1-set .puzzle-art {
@@ -316,8 +314,8 @@ html[data-theme=dark] .alg-root {
 /* 公式集页头靠右那一簇的推力挂在 PDF 按钮上(它排在训练 CTA 前面);空集那种没有
    PDF 按钮的页面,推力落回训练 CTA —— 两个都写 auto 会把空白分到两者中间。
    别把 auto 写进 .alg-pdf-btn 本身:换位子字典那条工具栏里它是普通一项,不推。 */
-.alg-cat-header .alg-pdf { margin-left: auto; }
-.alg-cat-header:not(:has(.alg-pdf)) .alg-train-cta { margin-left: auto; }
+.alg-cat-header:not(.alg-cat-header--list) .alg-pdf { margin-left: auto; }
+.alg-cat-header:not(.alg-cat-header--list):not(:has(.alg-pdf)) .alg-train-cta { margin-left: auto; }
 
 /* 「开始训练」CTA —— 跳到 /alg/<puzzle>/<set>/select 的计时训练流 */
 .alg-train-cta {
@@ -684,21 +682,6 @@ html[data-theme=dark] .alg-root {
 }
 .alg-case-cube {
   flex: 0 0 auto;
-}
-.alg-case-figure {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 0 0 auto;
-  width: min-content;
-  gap: 6px;
-}
-.alg-case-figure .alg-case-name {
-  flex-direction: column;
-  gap: 3px;
-  width: 100%;
-  text-align: center;
-  overflow-wrap: anywhere;
 }
 .alg-case-letter.alg-case-letter--zbll {
   white-space: nowrap;

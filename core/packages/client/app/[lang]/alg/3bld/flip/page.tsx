@@ -6,7 +6,7 @@
 
 import { useCallback, useEffect, useState, type JSX } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Play } from 'lucide-react';
+import { Play } from '@app-foundation/icons/lucide';
 import BoolToggle from '@/components/BoolToggle';
 import { BldConfigBar } from '../_components/BldConfigBar';
 import { ScrambleOutput } from '../_components/ScrambleOutput';

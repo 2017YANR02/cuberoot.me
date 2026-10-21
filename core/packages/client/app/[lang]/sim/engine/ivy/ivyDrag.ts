@@ -46,7 +46,7 @@ export function ivyPickHit(
   let cur: THREE.Object3D | null = hits[0].object;
   while (cur && cur !== cube) {
     const ud = cur.userData as { ivyCornerAxis?: number; ivyCenterPiece?: number };
-    if (typeof ud.ivyCornerAxis === 'number') { candidates = [ud.ivyCornerAxis]; break; }
+    if (typeof ud.ivyCornerAxis === 'number') { candidates = [cube.cornerSlotForPiece(ud.ivyCornerAxis)]; break; }
     if (typeof ud.ivyCenterPiece === 'number') { candidates = cube.cornersForCenterPiece(ud.ivyCenterPiece); break; }
     cur = cur.parent;
   }

@@ -1,6 +1,6 @@
 'use client';
 
-import { TriangleAlert } from 'lucide-react';
+import { TriangleAlert } from '@app-foundation/icons/lucide';
 import type { ReconSolve } from '@cuberoot/shared';
 import { tr } from '@/i18n/tr';
 import './recon-completion-badge.css';

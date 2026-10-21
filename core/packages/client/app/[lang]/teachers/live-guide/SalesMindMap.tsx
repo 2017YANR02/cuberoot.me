@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from 'react';
-import { Maximize, Minimize, Minus, Plus, Scan } from 'lucide-react';
+import { Maximize, Minimize, Minus, Plus, Scan } from '@app-foundation/icons/lucide';
 import SiteBackground from '@/components/SiteBackground';
 import { salesScript as script } from './sales-script-data';
 

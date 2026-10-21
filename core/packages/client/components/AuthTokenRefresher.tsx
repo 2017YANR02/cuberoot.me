@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Megaphone, Sparkles, UserCog, Laptop, Globe, Drama, X } from 'lucide-react';
+import { Megaphone, Sparkles, UserCog, Laptop, Globe, Drama, X } from '@app-foundation/icons/lucide';
 import { ensureFreshToken, refreshSessionUser, canTestRoles, getRolePreview, startRolePreview, endRolePreview, useAuthUser, isAdmin, type TestRole } from '@/lib/auth-store';
 import AppLink from './AppLink';
 import { openPageNoticeEditor, pageKeyFromPathname } from '@/lib/page-notices-api';

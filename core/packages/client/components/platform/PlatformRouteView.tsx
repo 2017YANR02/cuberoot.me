@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { ArrowRight, ExternalLink, Play, Search } from 'lucide-react';
+import { ArrowRight, ExternalLink, Play, Search } from '@app-foundation/icons/lucide';
 import { parseAsFloat, parseAsInteger, parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import AppLink from '@/components/AppLink';
 import { AccountPanel, LoginForm } from '@/components/AuthPanel';
@@ -767,7 +767,7 @@ function PlatformResourceRouteView({
         <div className="platform-route-heading">
           {courseSection && params.id ? <div>
             <AppLink className="platform-home-secondary" href={`/platform/courses/${encodeURIComponent(params.id)}`} prefetch={false}>
-              {t('返回课程', 'Back to course')}
+              <span aria-hidden="true">←</span> <span className="sr-only">{t('返回课程', 'Back to course')}</span>
             </AppLink>
           </div> : null}
           {!inviteManager && !orderPage ? <div className="platform-route-labels">

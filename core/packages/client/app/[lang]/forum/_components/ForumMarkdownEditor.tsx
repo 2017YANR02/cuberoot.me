@@ -21,7 +21,7 @@ import dynamic from 'next/dynamic';
 import {
   Bold, Heading, Highlighter, Info, Image as ImageIcon, Rows3, Play, Box,
   Video as VideoIcon, X,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import type { EditorView } from '@codemirror/view';
 import { FORUM_VIDEO_MAX_DURATION_SECONDS } from '@cuberoot/shared/forum';
 import { ForumVideoPlayer } from '@/components/forum/ForumVideoPlayer';

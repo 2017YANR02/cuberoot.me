@@ -13,8 +13,8 @@ import {
   Type,
   Pipette,
   Hand,
-} from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+} from '@app-foundation/icons/lucide';
+import type { LucideIcon } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 import type { ToolId } from '../_lib/types';
 import { usePaint } from '../_lib/store';

@@ -26,7 +26,7 @@ describe('Web timer session switcher adapter', () => {
     expect(wrapper).toContain('clearSession(sessionId)');
     expect(wrapper).toContain('deleteSession(sessionId)');
     expect(wrapper).not.toContain('window.confirm');
-    expect(wrapper).not.toContain('lucide-react');
+    expect(wrapper).not.toContain('@app-foundation/icons/lucide');
     expect(wrapper).not.toContain('className="session-menu"');
   });
 

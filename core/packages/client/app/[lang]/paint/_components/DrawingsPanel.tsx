@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Plus, Trash2, Pencil, Check, Images } from 'lucide-react';
+import { X, Plus, Trash2, Pencil, Check, Images } from '@app-foundation/icons/lucide';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { tr } from '@/i18n/tr';
 import { useT } from '@/hooks/useT';

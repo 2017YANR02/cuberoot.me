@@ -9,7 +9,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Camera, Film } from 'lucide-react';
+import { Camera, Film } from '@app-foundation/icons/lucide';
 import { useTranslation } from 'react-i18next';
 // Type-only imports (fully erased at build) — the concrete sim engine + export
 // modules are dynamically imported inside the handlers so pages without a live

@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseAsInteger, parseAsStringEnum, useQueryState } from 'nuqs';
-import { ChevronDown, ChevronLeft, Lightbulb, Bug, Link2, MessageSquare, Plus } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Lightbulb, Bug, Link2, MessageSquare, Plus } from '@app-foundation/icons/lucide';
 import { CompactSelect } from '@/components/CompactSelect';
 import HomeLink from '@/components/HomeLink';
 import AppLink from '@/components/AppLink';
@@ -131,7 +131,7 @@ export default function FeedbackPage() {
   return (
     <div className="fbm-page">
       <header className="fbm-header">
-        <HomeLink className="fbm-back"><ChevronLeft size={16} /><span>{t('首页', 'Home')}</span></HomeLink>
+        <HomeLink className="fbm-back"><ChevronLeft size={16} /><span className="sr-only">{t('首页', 'Home')}</span></HomeLink>
       </header>
       <div className="fbm-titlerow">
         <div>

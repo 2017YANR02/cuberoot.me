@@ -22,7 +22,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, RotateCcw, Shuffle } from 'lucide-react';
+import { GripVertical, RotateCcw, Shuffle } from '@app-foundation/icons/lucide';
 import {
   ALG_CATALOG,
   ALG_PUZZLES,

@@ -7,7 +7,7 @@
 // 单条深态求解可能要一两秒(个别更久),所以采样异步分批跑、显示进度、可取消;下载提供「下载样本」CSV
 //(optimal_length,scramble),不提供「下载全部状态」(10¹³ 态不可枚举)。
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Download, Loader2, RotateCw } from 'lucide-react';
+import { Download, Loader2, RotateCw } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';

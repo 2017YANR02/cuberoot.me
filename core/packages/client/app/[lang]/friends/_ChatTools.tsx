@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowLeft, Music, Video, Mic, Square, Play, Pause, Search } from 'lucide-react';
+import { ArrowLeft, Music, Video, Mic, Square, Play, Pause, Search } from '@app-foundation/icons/lucide';
 import { useT } from '@/hooks/useT';
 import { useSpeechToText } from '@/hooks/useSpeechToText';
 import AppLink from '@/components/AppLink';

@@ -16,7 +16,7 @@ import { Suspense, lazy, useMemo, type ReactNode } from 'react';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from '@app-foundation/icons/lucide';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { VisualCube } from '@/components/VisualCube';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
@@ -196,7 +196,7 @@ export default function GodNumberPage() {
       <header className="god-header">
         <Link href="/math" className="god-back">
           <ArrowLeft size={16} />
-          <span>{t('返回数学', 'Back to math hub')}</span>
+          <span className="sr-only">{t('返回数学', 'Back to math hub')}</span>
         </Link>
       </header>
 
@@ -207,7 +207,6 @@ export default function GodNumberPage() {
         <>
         {/* ────────────── HERO ────────────── */}
         <section className="god-hero">
-          <div className="god-hero-eyebrow">{t('数学:扭计群论', 'Mathematics: combinatorial group theory')}</div>
           <h1 className="god-title">
             {t('上帝之数 ', "God's Number ")}
             <span className="god-title-zh">{t('— 全 WCA 项目', '— across every WCA puzzle')}</span>

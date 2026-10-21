@@ -244,7 +244,7 @@ describe('site assistant grounding', () => {
       return Response.json({profile:{person:{name:'Ruimin Yan (颜瑞民)'},competition_count:42}});
     });
     const result=await answerSiteQuestion(question,'zh',config,AbortSignal.timeout(5000),fetcher,[{role:'user',content:'Max Park 的全部 PB'}],'2017YANR02');
-    expect(result.answer).toBe('按已导入的 WCA 官方成绩，颜瑞民共参加过 42 场比赛。 [[person:2017YANR02]]');
+    expect(result.answer).toBe('颜瑞民共参加过 42 场比赛。 [[person:2017YANR02]]');
     expect(result.artifacts).toEqual([]);
     expect(fetcher).toHaveBeenCalledTimes(2);
   });

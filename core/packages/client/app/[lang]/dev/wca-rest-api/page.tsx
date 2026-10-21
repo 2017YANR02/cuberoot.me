@@ -67,7 +67,7 @@ export default function WcaRestApiPage() {
   return (
     <div className="wcif-page wcif-page-wide api-accent">
       <div className="wcif-topbar">
-        <HomeLink className="wcif-back">← {tr({ zh: '回首页', en: 'Home' })}</HomeLink>
+        <HomeLink className="wcif-back">← <span className="sr-only">{tr({ zh: '回首页', en: 'Home' })}</span></HomeLink>
         <AppLink href="/dev" className="wcif-back">/dev</AppLink>
         <AppLink href="/dev/wca-export" className="wcif-back">WST Export</AppLink>
         <AppLink href="/dev/wcif" className="wcif-back">WCIF</AppLink>

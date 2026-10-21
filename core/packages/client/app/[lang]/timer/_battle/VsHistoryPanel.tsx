@@ -7,7 +7,7 @@
 
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Waypoints } from 'lucide-react';
+import { Waypoints } from '@app-foundation/icons/lucide';
 import { TimerBattleHistory } from '@cuberoot/timer-ui';
 import {
   useBattleStore,

@@ -10,7 +10,7 @@
 
 import { useEffect, useState, useCallback, type JSX } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Play, FileText } from 'lucide-react';
+import { Play, FileText } from '@app-foundation/icons/lucide';
 import BoolToggle from '@/components/BoolToggle';
 import { BldConfigBar } from '../_components/BldConfigBar';
 import { ScrambleOutput } from '../_components/ScrambleOutput';

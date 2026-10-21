@@ -22,7 +22,7 @@ import {
   type JSX,
 } from 'react';
 import Link from '@/components/AppLink';
-import { RotateCcw, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { RotateCcw, Trash2, ChevronLeft, ChevronRight } from '@app-foundation/icons/lucide';
 import { useSpaceHoldTimer } from '@/hooks/useSpaceHoldTimer';
 import { formatMs } from '@/app/[lang]/alg/_trainer/trainer-components';
 import { BLD_TIMER_SCRAMBLES_KEY } from '../_components/FloatTrainer';
@@ -183,8 +183,8 @@ export default function BldTimerPage(): JSX.Element {
         })}</h1>
         <span className="bld-spacer" />
         <Link href="/alg/3bld/edge-float" className="bld-btn">
-          {tr({ zh: '返回浮动训练', en: 'Back to float trainer'
-        })}
+          <span aria-hidden="true">←</span> <span className="sr-only">{tr({ zh: '返回浮动训练', en: 'Back to float trainer'
+        })}</span>
         </Link>
       </div>
 

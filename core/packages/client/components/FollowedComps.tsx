@@ -6,7 +6,7 @@
 // join 出来。不在该集合里的(更久远的已结束比赛)降级成纯链接行。SSG 页用 mounted 门控避免 hydration 错配。
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
-import { Star } from 'lucide-react';
+import { Star } from '@app-foundation/icons/lucide';
 import { loadComps, type Comp } from '@/lib/comp-search';
 import { compLinkProps } from '@/lib/comp-link';
 import { localizeCompName } from '@/lib/comp-localize';

@@ -4,7 +4,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
-import { Globe2 } from 'lucide-react';
+import { Globe2 } from '@app-foundation/icons/lucide';
 import { Flag } from '@/components/Flag';
 import { countryName } from '@/lib/country-name';
 import { localizeCityName } from '@/lib/cn-city-name';

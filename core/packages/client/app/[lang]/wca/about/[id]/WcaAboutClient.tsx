@@ -13,7 +13,7 @@ import { useMemo } from 'react';
 import Link from '@/components/AppLink';
 import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ExternalLink } from '@app-foundation/icons/lucide';
 import { ABOUT_REGISTRY } from './_lib/registry';
 import type { AboutEntry, AboutStep, AboutStat, AboutFormula, AboutCode, AboutRelated, AboutSection } from './_lib/types';
 import './wca_about.css';
@@ -157,7 +157,7 @@ export default function WcaAboutClient() {
         <div className="wcaa-header">
           <Link href="/wca" className="wcaa-back">
             <ArrowLeft size={16} />
-            <span>{tr({ zh: '返回 WCA 统计', en: 'Back to WCA Statistics'
+            <span className="sr-only">{tr({ zh: '返回 WCA 统计', en: 'Back to WCA Statistics'
             })}</span>
           </Link>
         </div>
@@ -177,7 +177,7 @@ export default function WcaAboutClient() {
       <div className="wcaa-header">
         <Link href="/wca" className="wcaa-back">
           <ArrowLeft size={16} />
-          <span>{tr({ zh: '返回 WCA 统计', en: 'Back to WCA Statistics'
+          <span className="sr-only">{tr({ zh: '返回 WCA 统计', en: 'Back to WCA Statistics'
         })}</span>
         </Link>
       </div>

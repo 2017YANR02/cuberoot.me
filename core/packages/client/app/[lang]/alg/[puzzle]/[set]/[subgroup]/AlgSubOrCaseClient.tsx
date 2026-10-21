@@ -14,14 +14,16 @@ import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
  */
 import { useEffect, useState } from 'react';
 import { useTrainingPathname as usePathname, useTrainingHost } from '@/lib/training-host';
-import type { AlgFile, AlgPuzzle } from '@cuberoot/shared/alg';
-import { loadAlg } from '@/lib/alg_case_alignment';
+import { type AlgFile, type AlgPuzzle } from '@cuberoot/shared/alg';
+import { algLibraryKey, loadLibrarySource, subscribeAlgLibrary } from '@/lib/alg-library-cache';
+import { warmAlgValidation } from '@/lib/alg_validation';
+import { alignAlgSelection } from '@/lib/alg_case_alignment';
 import AlgCategoryView from '@/components/AlgCategoryView';
-import AlgCaseView from './AlgCaseView';
+import dynamic from 'next/dynamic';
+const AlgCaseView = dynamic(() => import('./AlgCaseView'));
 import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { resolveCaseSlug } from '@/lib/alg_case_link';
 import { tr } from '@/i18n/tr';
-import { useIsAdmin } from '@/lib/auth-store';
 import '../../../alg.css';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
@@ -35,7 +37,6 @@ export default function AlgSubOrCaseClient() {
   const hostPuzzle = firstParam(trainingHost?.params.puzzle);
   const hostSet = firstParam(trainingHost?.params.set);
   const hostSubgroup = firstParam(trainingHost?.params.subgroup);
-  const isAdmin = useIsAdmin();
   const [route, setRoute] = useState<{ puzzle: string; set: string; slug: string; edit: boolean } | null>(null);
   useEffect(() => {
     const m = (trainingHost?.path ?? window.location.pathname).match(/\/alg\/([^/]+)\/([^/]+)\/([^/?#]+)(?:\/(edit))?\/?$/);
@@ -53,16 +54,30 @@ export default function AlgSubOrCaseClient() {
 
   const [data, setData] = useState<AlgFile | null>(null);
   const [error, setError] = useState(false);
-  useEffect(() => { setData(null); }, [puzzle, set, isAdmin]);
+  useEffect(() => { setData(null); }, [puzzle, set, slug]);
   useEffect(() => {
     setError(false);
-    if (!puzzle || !set) return;
+    if (!puzzle || !set || !slug) return;
     let live = true;
-    loadAlg(puzzle as AlgPuzzle, set, { fresh: isAdmin })
-      .then(d => { if (live) setData(d); })
-      .catch(() => { if (live) setError(true); });
-    return () => { live = false; };
-  }, [puzzle, set, isAdmin, refreshKey]);
+    let revision = 0;
+    const refresh = () => {
+      const request = ++revision;
+      void warmAlgValidation(puzzle).catch(() => {});
+      loadLibrarySource(puzzle as AlgPuzzle, set).then(file => {
+        const subSlug = canonicalZbllSubgroupSlug(set, slug.toLowerCase());
+        const selected = file.cases.filter(c => {
+          const parts = (c.subgroup || '').toLowerCase().split('/');
+          return parts[0] === subSlug || parts[1] === subSlug;
+        });
+        const caseObj = selected.length ? null : resolveCaseSlug(file.cases, slug, puzzle, set);
+        return alignAlgSelection(file, selected.length ? selected : caseObj ? [caseObj] : []);
+      }).then(d => { if (live && request === revision) { setData(d); setError(false); } })
+        .catch(() => { if (live && request === revision) setError(true); });
+    };
+    const unsubscribe = subscribeAlgLibrary(algLibraryKey(puzzle, set), refresh);
+    refresh();
+    return () => { live = false; unsubscribe(); };
+  }, [puzzle, set, slug, refreshKey]);
 
   if (error) {
     return <div className="alg-root"><div className="alg-empty">{tr({ zh: '加载失败', en: 'Failed to load.' })}</div></div>;

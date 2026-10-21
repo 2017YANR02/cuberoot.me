@@ -10,7 +10,7 @@
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryStates, parseAsString } from 'nuqs';
-import { CheckCircle2, Search, Trash2 } from 'lucide-react';
+import { CheckCircle2, Search, Trash2 } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { ClearButton } from '@/components/ClearButton';
 import { EventIcon } from '@/components/EventIcon/EventIcon';

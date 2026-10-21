@@ -7,7 +7,7 @@
 // 按界面语言把源排个序(中文优先抖音),三个源都留着让人自己翻,打不开就下一个。
 
 import { useEffect, useState, type JSX } from 'react';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X } from '@app-foundation/icons/lucide';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { tr } from '@/i18n/tr';
 import type { AlgToUrl } from '../_lib/blddb';

@@ -6,7 +6,8 @@
  * 可选副名、可选展开箭头(组封面)。有 href → 真 `<a>`(中键新开);只有 onClick → `<button>`(如展开切换)。
  */
 import Link from '@/components/AppLink';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { prefetchAlgLibrary } from '@/lib/alg-library-cache';
+import { ChevronDown, ChevronRight } from '@app-foundation/icons/lucide';
 import './AlgCard.css';
 
 interface AlgCardProps {
@@ -44,7 +45,8 @@ export default function AlgCard({
   );
   if (href) {
     return (
-      <Link href={href} className={cls} prefetch={prefetch} aria-label={ariaLabel} title={tooltip}>
+      <Link href={href} className={cls} prefetch={prefetch} aria-label={ariaLabel} title={tooltip}
+        onPointerEnter={() => prefetchAlgLibrary(href)} onFocus={() => prefetchAlgLibrary(href)}>
         {body}
       </Link>
     );

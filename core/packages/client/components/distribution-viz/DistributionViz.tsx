@@ -9,7 +9,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { WcaPersonPicker } from '@cuberoot/shared';
-import { Download } from 'lucide-react';
+import { Download } from '@app-foundation/icons/lucide';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { useVizStore } from './_stores/viz_store';
 import { download as downloadCsv } from './_engine/csv_export';

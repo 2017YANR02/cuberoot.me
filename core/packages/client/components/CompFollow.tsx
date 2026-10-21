@@ -5,7 +5,7 @@
 // 关注状态:在 OngoingComps 顶层调用一次 useCompFollows(),把 { loggedIn, follows, toggle }
 // 下发给各 tab 的卡片 / chip,避免每个组件各自 fetch、各自乐观态打架。
 import { useCallback, useEffect, useState } from 'react';
-import { Star } from 'lucide-react';
+import { Star } from '@app-foundation/icons/lucide';
 import { useAuthStore } from '@/lib/auth-store';
 import { fetchFollows, addFollow, removeFollow } from '@/lib/comp-follows';
 import { tr } from '@/i18n/tr';

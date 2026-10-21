@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { parseAsInteger, parseAsString, parseAsStringEnum, useQueryState, useQueryStates } from 'nuqs';
-import { ChevronLeft, ChevronRight, Loader2, Monitor, Search, Smartphone, Tablet } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, Monitor, Search, Smartphone, Tablet } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { CompactSelect } from '@/components/CompactSelect';
 import { DailyActivityChart, type DailyActivityPoint } from '@/components/DailyActivityChart';

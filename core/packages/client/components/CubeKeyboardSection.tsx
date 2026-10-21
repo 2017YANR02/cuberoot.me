@@ -5,7 +5,7 @@
  */
 import { useState, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
-import { Keyboard } from 'lucide-react';
+import { Keyboard } from '@app-foundation/icons/lucide';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import CubeVirtualKeyboard from './CubeVirtualKeyboard';
 import { tr } from '@/i18n/tr';

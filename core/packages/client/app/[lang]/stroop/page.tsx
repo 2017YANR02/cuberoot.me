@@ -16,7 +16,7 @@
 
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryState, parseAsStringEnum, parseAsInteger } from 'nuqs';
-import { RefreshCw, Trash2 } from 'lucide-react';
+import { RefreshCw, Trash2 } from '@app-foundation/icons/lucide';
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
 import LiquidGlassChips from '@/components/LiquidGlassChips';

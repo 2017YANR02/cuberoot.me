@@ -12,7 +12,7 @@ import {
   Sparkles,
   Timer,
   type LucideIcon,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import { tr } from '@/i18n/tr';
@@ -405,7 +405,7 @@ export default function AchievementsPage() {
       <header className="achievements-topbar">
         <HomeLink className="achievements-home" prefetch={false}>
           <ChevronLeft size={17} aria-hidden />
-          {tr({ zh: '首页', en: 'Home' })}
+          <span className="sr-only">{tr({ zh: '首页', en: 'Home' })}</span>
         </HomeLink>
         <span>{tr({ zh: '独立开发与原创研究', en: 'Independent development and original research' })}</span>
       </header>

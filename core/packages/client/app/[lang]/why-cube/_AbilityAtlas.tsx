@@ -36,7 +36,7 @@ import {
   Trophy,
   UsersRound,
   type LucideIcon,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';
 import { ClearButton } from '@/components/ClearButton';
 import { useModalDismiss } from '@/hooks/useModalDismiss';

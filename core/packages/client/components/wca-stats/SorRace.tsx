@@ -8,7 +8,7 @@ import '@cuberoot/timer-ui/compact-select.css';
 //   + stats/sor_over_time/{scope}.json(per-scope lazy)。
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Play, Pause } from 'lucide-react';
+import { Play, Pause } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { Flag } from '@/components/Flag';
 import { displayCuberName } from '@/lib/cuber-name-display';

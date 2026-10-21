@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { EyeOff, Plus } from 'lucide-react';
+import { EyeOff, Plus } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import { nextQuery, useAuthUser } from '@/lib/auth-store';

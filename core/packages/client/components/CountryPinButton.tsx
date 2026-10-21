@@ -1,6 +1,6 @@
 'use client';
 
-import { Pin, PinOff } from 'lucide-react';
+import { Pin, PinOff } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 import AppLink from '@/components/AppLink';
 import { nextQuery, useAuthUser } from '@/lib/auth-store';

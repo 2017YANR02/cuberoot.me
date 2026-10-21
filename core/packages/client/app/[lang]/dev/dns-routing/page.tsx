@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { ArrowDown, ArrowRight, ArrowUpRight, Globe2, MapPin, Server } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUpRight, Globe2, MapPin, Server } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import HeaderToggles from '@/components/HeaderToggles';
 import JsonLd, { articleJsonLd } from '@/components/JsonLd';
@@ -155,7 +155,7 @@ export default function DnsRoutingPage() {
             <SectionTitle number="07" label={t('延伸阅读', 'REFERENCES')} title={t('官方说明与记录日期', 'Official sources and observation date')} />
             <p>{t('CF 套餐、文件限制和本站的 DNS 设置都可能改变。下列链接是对应的官方说明。文中服务器地址记录于 2026 年 9 月 25 日；真正切换前，需要重新查询一次。', 'CF plans, file limits and this site’s DNS settings can change. The links below are the official references. Server addresses were recorded on 25 September 2026 and should be checked again before a switch.')}</p>
             <div className="dns-source-list">{SOURCES.map((source, index) => <a key={source.href} href={source.href} target="_blank" rel="noreferrer"><span>{String(index + 1).padStart(2, '0')}</span>{t(source.zh, source.en)}<ArrowUpRight size={15} /></a>)}</div>
-            <div className="dns-footer-nav"><AppLink href="/dev/architecture/flow" prefetch={false}>{t('查看网站请求经过哪些服务', 'See which services handle site requests')} <ArrowRight size={16} /></AppLink><AppLink href="/dev" prefetch={false}>{t('返回开发目录', 'Dev index')} <ArrowRight size={16} /></AppLink></div>
+            <div className="dns-footer-nav"><AppLink href="/dev/architecture/flow" prefetch={false}>{t('查看网站请求经过哪些服务', 'See which services handle site requests')} <ArrowRight size={16} /></AppLink><AppLink href="/dev" prefetch={false}><span className="sr-only">{t('返回开发目录', 'Dev index')}</span> <span aria-hidden="true">←</span></AppLink></div>
           </footer>
         </article>
       </div>

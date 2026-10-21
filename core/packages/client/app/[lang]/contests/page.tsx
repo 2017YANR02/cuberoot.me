@@ -7,7 +7,8 @@ import Markdown from 'react-markdown';
 import AppLink from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
-import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
+import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
+import { eventIconClass } from '@/components/EventIcon/EventIcon';
 import { RegionPicker } from '@/components/RegionPicker';
 import { Flag } from '@/components/Flag';
 import { SearchInput } from '@/components/SearchInput';
@@ -169,8 +170,11 @@ export default function ContestsPage() {
   const update = (next: Partial<typeof params>) => void setParams({ offset: 0, ...next });
   const groups = Array.from(new Set(events.map(e => e.category.categoryId)));
   const pickerEvents = detail?.events ?? (view === 'records' ? events.filter(e => e.category.categoryId === params.group) : events);
-  const pickerGroups = groups.map(group => ({ id: group, label: CONTEST_GROUPS[group] ? tr(CONTEST_GROUPS[group]) : group,
-    items: pickerEvents.filter(e => e.category.categoryId === group).map(e => ({ id: e.eventId, label: contestEventName(e, isZh), searchText: `${e.name} ${e.eventId}` })),
+  const pickerGroups: PuzzlePickerGroup[] = groups.map(group => ({ id: group, label: CONTEST_GROUPS[group] ? tr(CONTEST_GROUPS[group]) : group,
+    items: pickerEvents.filter(e => e.category.categoryId === group).map(e => ({
+      id: e.eventId, label: contestEventName(e, isZh), searchText: `${e.name} ${e.eventId}`,
+      iconClass: eventIconClass(e.eventId), textLabel: contestEventName(e, isZh),
+    })),
   }));
   if (view !== 'rankings' && view !== 'contest') pickerGroups.unshift({ id: 'all', label: '', items: [{ id: '', label: t('全部项目', 'All events'), searchText: '' }] });
   const regionValue = Object.entries(REGION_CODES).find(([, value]) => value === params.region)?.[0] ?? (params.region.toLowerCase() || 'world');
@@ -202,7 +206,7 @@ export default function ContestsPage() {
       {view === 'records' && <label>{t('项目分类', 'Event category')}<select className="contests-filter-select" value={params.group} onChange={e => update({ group: e.target.value, event: '' })}>
         {groups.map(group => <option key={group} value={group}>{CONTEST_GROUPS[group] ? tr(CONTEST_GROUPS[group]) : group}</option>)}</select></label>}
       {view !== 'persons' && <div><span className="contests-label">{t('项目', 'Event')}</span><PuzzlePicker groups={pickerGroups} selectedEvent={eventId || detail?.events[0]?.eventId}
-        onSelect={event => update({ event })} isZh={isZh} showTriggerIcon={false} showItemIcons={false} /></div>}
+        onSelect={event => update({ event })} isZh={isZh} /></div>}
       {!['contest', 'person'].includes(view) && <div><span className="contests-label">{view === 'competitions' ? t('举办地区', 'Contest region') : t('选手地区', 'Competitor region')}</span>
         <RegionPicker isZh={isZh} value={regionValue} onChange={region => update({ region: REGION_CODES[region] ?? (region === 'world' ? '' : region.toUpperCase()) })}
           restrictTo={catalog.data?.regions.filter(r => r.type !== 'super-region').map(r => r.code)} allLabel={t('全球', 'Worldwide')} />

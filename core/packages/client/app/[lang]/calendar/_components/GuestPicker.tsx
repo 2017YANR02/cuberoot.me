@@ -4,7 +4,7 @@
 // 被邀请的人会在自己的 /calendar 里看到这条日程,并能接受 / 拒绝(状态回显在 chip 上)。
 
 import { useEffect, useRef, useState } from 'react';
-import { UserPlus, X, Check, Ban } from 'lucide-react';
+import { UserPlus, X, Check, Ban } from '@app-foundation/icons/lucide';
 import { ClearButton } from '@/components/ClearButton';
 import { searchPeople, type PersonHit } from '@/lib/calendar-api';
 import { tr } from '@/i18n/tr';

@@ -11,7 +11,7 @@ import {
   Workflow, BarChart3, FileText, MoreHorizontal, Play, Wrench, Cpu, Clock,
   Palette, BookOpen,
   type LucideIcon,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import Fuse from 'fuse.js';
 import { useTutorialCatalog, type CatalogEntry, type Lang } from './_lib/useTutorialCatalog';
 import { CATEGORY_CARDS, type Tier } from './_data/categories';

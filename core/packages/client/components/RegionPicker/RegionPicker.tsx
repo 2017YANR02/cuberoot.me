@@ -2,7 +2,7 @@
 
 // Ported from packages/client-vite/src/components/RegionPicker/RegionPicker.tsx.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Search, X } from 'lucide-react';
+import { Search, X } from '@app-foundation/icons/lucide';
 import { Flag } from '@/components/Flag';
 import { ContinentIcon, type ContinentSlug } from '@/components/ContinentIcon';
 import { countryName } from '@/lib/country-name';

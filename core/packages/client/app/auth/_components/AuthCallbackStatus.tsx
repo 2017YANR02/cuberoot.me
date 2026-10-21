@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, type ReactNode } from 'react';
-import { CircleAlert } from 'lucide-react';
+import { CircleAlert } from '@app-foundation/icons/lucide';
 import './auth-callback-status.css';
 
 interface AuthCallbackStatusProps {

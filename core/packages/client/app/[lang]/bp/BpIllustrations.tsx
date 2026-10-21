@@ -1,4 +1,4 @@
-import { ArrowRight, ArrowUpRight, BookOpen, Code2, GraduationCap, ScanSearch, UserRound } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, BookOpen, Code2, GraduationCap, ScanSearch, UserRound } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { VisualCube } from '@/components/VisualCube';
 import { tr } from '@/i18n/tr';

@@ -13,7 +13,7 @@
  * 分组判据见 `lib/alg_ll_orientation`。
  */
 import { useMemo, useState } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight } from '@app-foundation/icons/lucide';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import { VisualCube } from '@/components/VisualCube';
 import { caseBaseAlg } from '@/lib/trainer-scramble';

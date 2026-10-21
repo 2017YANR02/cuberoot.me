@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 import Link from '@/components/AppLink';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle } from '@app-foundation/icons/lucide';
 import NemesizerBrand from './_components/NemesizerBrand';
 import StandardMode from './_modes/StandardMode';
 import H2HMode from './_modes/H2HMode';

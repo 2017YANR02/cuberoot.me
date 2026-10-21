@@ -18,7 +18,7 @@
  */
 import { Suspense, lazy, useState } from 'react';
 import Link from '@/components/AppLink';
-import { Layers, AlertTriangle } from 'lucide-react';
+import { Layers, AlertTriangle } from '@app-foundation/icons/lucide';
 import {
   EvHighlights, EvSection, EvCallout, EvRefs, EvStatStrip,
   TeX, TeXBlock, MathText, type HighlightCard, type RefItem, type StatItem,

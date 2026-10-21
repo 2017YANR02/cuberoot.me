@@ -7,7 +7,7 @@ import { useEffect, useState, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { TriangleAlert, ArrowLeft, LogIn } from 'lucide-react';
+import { TriangleAlert, ArrowLeft, LogIn } from '@app-foundation/icons/lucide';
 import type { ReconSolve } from '@cuberoot/shared';
 import { getReconScramble, normalizeReconSolution } from '@cuberoot/shared/recon-completion';
 import { getRecon, addAlternative, updateAlternative } from '@/lib/recon-api';
@@ -109,8 +109,8 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
         <div className="recon-page-header">
           <div>
             <Link href={`/recon/${parentId}`} className="recon-back-link">
-              <ArrowLeft size={14} /> {tr({ zh: '返回详情', en: 'Back'
-            })}
+              <ArrowLeft size={14} /> <span className="sr-only">{tr({ zh: '返回详情', en: 'Back'
+            })}</span>
             </Link>
           </div>
         </div>
@@ -132,7 +132,7 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
         <div className="detail-header">
           <div className="detail-header-nav">
             <Link href={`/recon/${parentId}`} className="recon-back-link">
-              <ArrowLeft size={14} /> {tr({ zh: '返回', en: 'Back' })}
+              <ArrowLeft size={14} /> <span className="sr-only">{tr({ zh: '返回', en: 'Back' })}</span>
             </Link>
           </div>
           <h1>{isEditing ? t('recon.editAlternative') : t('recon.addAlternative')}</h1>

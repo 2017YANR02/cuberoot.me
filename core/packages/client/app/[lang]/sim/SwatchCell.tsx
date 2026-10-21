@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Pipette } from 'lucide-react';
+import { Pipette } from '@app-foundation/icons/lucide';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
 
 /** 模拟器共用色块下拉:trigger 显当前色,面板列出色块选项。 */

@@ -174,8 +174,28 @@ export function alignAlgFile(file: AlgFile): Promise<AlgFile> {
   const pending = prepareFile(file).then(result => {
     fileCache.set(result, Promise.resolve(result));
     return result;
-  });
+  }).catch(error => { fileCache.delete(file); throw error; });
   fileCache.set(file, pending);
+  return pending;
+}
+
+/** Align only displayed cases; keep the full source order for links and admin writes. */
+const selectionCache = new WeakMap<AlgFile, Map<string, Promise<AlgFile>>>();
+export function alignAlgSelection(file: AlgFile, selected: readonly AlgCase[]): Promise<AlgFile> {
+  if (selected.length === file.cases.length || supportsOhHands(file.puzzle as AlgPuzzle, file.set)) return alignAlgFile(file);
+  if (!selected.length) return Promise.resolve(file);
+  let cache = selectionCache.get(file);
+  if (!cache) { cache = new Map(); selectionCache.set(file, cache); }
+  const indices = new Map(file.cases.map((c, i) => [c, i]));
+  const key = selected.map(c => indices.get(c)).join(',');
+  const existing = cache.get(key);
+  if (existing) return existing;
+  const pending = alignAlgFile({ ...file, cases: [...selected] }).then(aligned => {
+    const replacements = new Map(selected.map((c, i) => [c, aligned.cases[i]]));
+    return { ...file, cases: file.cases.map(c => replacements.get(c) ?? c) };
+  }).catch(error => { cache!.delete(key); throw error; });
+  cache.set(key, pending);
+  while (cache.size > 32) cache.delete(cache.keys().next().value!);
   return pending;
 }
 

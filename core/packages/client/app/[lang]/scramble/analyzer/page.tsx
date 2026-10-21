@@ -17,7 +17,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from 'rea
 import { useQueryState, useQueryStates, parseAsString, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, ChevronRight, Copy, Check, Clapperboard } from 'lucide-react';
+import { ChevronDown, ChevronRight, Copy, Check, Clapperboard } from '@app-foundation/icons/lucide';
 import { buildReconSubmitQuery, type ReconScrambleSource } from '@/lib/sim-recon-link';
 import { wcaToReconEvent } from '@/lib/wca-events';
 import { Spinner } from '@/components/Spinner/Spinner';

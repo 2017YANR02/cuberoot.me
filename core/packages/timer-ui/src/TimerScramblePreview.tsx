@@ -12,6 +12,7 @@
  */
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { renderIvyScrambleSvg } from '@cuberoot/puzzle-render-core/ivy-svg';
 import { renderMegaScrambleSvg, DEFAULT_MEGA_COLORS } from '@cuberoot/puzzle-render-core/mega-svg';
 import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from '@cuberoot/puzzle-render-core/sq1-svg';
 import { renderPyraminxDuoSvg, DUO_SVG_ASPECT } from '@cuberoot/puzzle-render-core/pyraminx-duo-svg';
@@ -70,7 +71,7 @@ interface PuzzleSpec {
   /** cubing.js puzzle id (only used when we go through TwistyPlayer). */
   cubingPuzzle: string | null;
   /** Inline SVG renderer; overrides TwistyPlayer when present. */
-  inlineSvg?: 'sq1' | 'mega' | 'pyraminx_duo' | 'magic' | 'mmagic' | 'sphere' | NativePuzzleId;
+  inlineSvg?: 'ivy' | 'sq1' | 'mega' | 'pyraminx_duo' | 'magic' | 'mmagic' | 'sphere' | NativePuzzleId;
   /** Unit multipliers for width/height (units of `size`). */
   w: number;
   h: number;
@@ -100,6 +101,7 @@ function planFor(event: string): PuzzleSpec | null {
     case 'fto':                                  return { cubingPuzzle: 'fto',       w: 16, h: 12 };
     case 'redi': case 'redi_cube':               return { cubingPuzzle: 'redi_cube', w: 16, h: 12 };
     case 'kilominx':                             return { cubingPuzzle: 'kilominx',  w: 18, h: 14 };
+    case 'ivy': return { cubingPuzzle: null, inlineSvg: 'ivy', w: 12, h: 9 };
     case 'sphere':                               return { cubingPuzzle: null, inlineSvg: 'sphere', w: 12, h: 9 };
     // sq1 / mega — use our inline renderers (cubing.js 2D for sq1 is broken;
     // mega unfolded view differs from tnoodle).
@@ -130,6 +132,7 @@ export function timerScramblePreviewAspect(event: string, scramble = ''): number
 function inlinePreviewSvg(plan: PuzzleSpec | null, scramble: string): string | null {
     if (!plan?.inlineSvg) return null;
     try {
+      if (plan.inlineSvg === 'ivy') return renderIvyScrambleSvg(scramble ?? '');
       if (plan.inlineSvg === 'sq1')  return renderSq1ScrambleSvg(scramble ?? '', DEFAULT_SQ1_COLORS);
       if (plan.inlineSvg === 'mega') return renderMegaScrambleSvg(scramble ?? '', DEFAULT_MEGA_COLORS);
       if (plan.inlineSvg === 'pyraminx_duo') return renderPyraminxDuoSvg(scramble ?? '');

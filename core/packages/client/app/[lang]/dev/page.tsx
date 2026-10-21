@@ -16,6 +16,13 @@ interface Card {
 
 const CARDS: Card[] = [
   {
+    href: '/dev/continuous-corners',
+    glyph: '◜',
+    accent: 'var(--signal-info)',
+    zh: { title: '连续圆角', sub: 'Continuous Corners', tagline: 'SwiftUI 路径重建、贝塞尔数学、同心圆角与误差测量', meta: '交互实验 / 数学推导 / TypeScript' },
+    en: { title: 'Continuous Corners', sub: 'Design & Geometry', tagline: 'SwiftUI path reconstruction, Bézier mathematics, concentric corners and error measurements', meta: 'Interactive labs / Mathematics / TypeScript' },
+  },
+  {
     href: '/workspace',
     glyph: '↗',
     accent: 'var(--accent)',
@@ -437,8 +444,8 @@ export default function DevIndexPage() {
       <header className="code-index-head">
         <div className="code-index-topbar">
           <HomeLink className="code-index-back">
-            ← {tr({ zh: '回首页', en: 'Home'
-            })}
+            ← <span className="sr-only">{tr({ zh: '回首页', en: 'Home'
+            })}</span>
           </HomeLink>
         </div>
         <h1 className="code-index-title">

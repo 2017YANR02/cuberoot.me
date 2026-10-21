@@ -7,7 +7,7 @@
 // pages don't each hand-roll their own back-link CSS. Place it inside the same-width
 // header/topbar/wrap as the body, never directly under a full-bleed page root.
 
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft } from '@app-foundation/icons/lucide';
 import HomeLink from './HomeLink';
 import { tr } from '@/i18n/tr';
 
@@ -15,7 +15,7 @@ export default function BackHome({ className, prefetch }: { className?: string; 
   const cls = ['back-home', className].filter(Boolean).join(' ');
   return (
     <HomeLink className={cls} prefetch={prefetch} aria-label={tr({ zh: '返回首页', en: 'Back to home' })}>
-      <ChevronLeft size={16} aria-hidden="true" /> {tr({ zh: '首页', en: 'Home' })}
+      <ChevronLeft size={16} aria-hidden="true" /> <span className="sr-only">{tr({ zh: '首页', en: 'Home' })}</span>
     </HomeLink>
   );
 }

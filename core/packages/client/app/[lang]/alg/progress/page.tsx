@@ -13,7 +13,7 @@ import { sessionFetch } from '@/lib/session-fetch';
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from '@/components/AppLink';
-import { ArrowLeft, CircleHelp, Flame, Loader2 } from 'lucide-react';
+import { ArrowLeft, CircleHelp, Flame, Loader2 } from '@app-foundation/icons/lucide';
 import { Tooltip } from '@/components/Tooltip';
 import { ALG_CATALOG, ALG_PUZZLES, type AlgPuzzle, type AlgCase } from '@cuberoot/shared/alg';
 import { virtualAlgSet, VIRTUAL_ALG_SET_PARAMS } from '@/lib/alg-virtual-sets';

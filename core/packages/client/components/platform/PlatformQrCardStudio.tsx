@@ -11,7 +11,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { Check, Copy, Download, ExternalLink, FileImage, ImageDown, Magnet, Move, Pencil, Plus, Printer, RotateCcw, Save, Trash2 } from 'lucide-react';
+import { Check, Copy, Download, ExternalLink, FileImage, ImageDown, Magnet, Move, Pencil, Plus, Printer, RotateCcw, Save, Trash2 } from '@app-foundation/icons/lucide';
 import { parseAsString, useQueryState } from 'nuqs';
 import { prepareImageUpload } from '@/lib/image-upload';
 import { qrAdminRequest, qrAdminEntity, type QrAdminPage, type QrAdminRow } from '@/lib/platform-qr-admin';

@@ -11,7 +11,7 @@
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
-import { Check, ExternalLink } from 'lucide-react';
+import { Check, ExternalLink } from '@app-foundation/icons/lucide';
 import { useParams, useRouter } from 'next/navigation';
 import { EventIcon } from '@/components/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';

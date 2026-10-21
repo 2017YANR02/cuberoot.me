@@ -1,6 +1,6 @@
 'use client';
 
-import { SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal } from '@app-foundation/icons/lucide';
 import CollapsibleSection from './CollapsibleSection';
 import SimAppearancePresets from './SimAppearancePresets';
 import PictureCubeEditor, { PictureFaceMiniNet } from './PictureCubeEditor';

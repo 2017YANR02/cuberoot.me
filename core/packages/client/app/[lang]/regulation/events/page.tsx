@@ -9,7 +9,7 @@
 // how a field is reduced round to round. Shared shell + primitives do the chrome.
 
 import { useTranslation } from 'react-i18next';
-import { Trophy, ListChecks, Scissors, Timer, Hourglass, Users, Sigma, Crown, History } from 'lucide-react';
+import { Trophy, ListChecks, Scissors, Timer, Hourglass, Users, Sigma, Crown, History } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { useT } from '../../../../hooks/useT';
 import { EventIcon } from '@/components/EventIcon';

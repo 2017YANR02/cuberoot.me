@@ -1,3 +1,4 @@
+import { invalidateAlgLibrary } from './alg-library-cache';
 import { sessionFetch } from '@/lib/session-fetch';
 import { duplicateAware } from './alg_duplicates';
 /**
@@ -45,7 +46,9 @@ export async function createCase(puzzle: string, set: string, body: AlgCaseInput
     `${API_BASE}/${encodeURIComponent(puzzle)}/${encodeURIComponent(set)}/cases`,
     { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) },
   );
-  return duplicateAware(handle<AlgCase>(r));
+  const result = await duplicateAware(handle<AlgCase>(r));
+  invalidateAlgLibrary(puzzle, set);
+  return result;
 }
 
 export async function updateCase(puzzle: string, set: string, id: number, body: AlgCaseInput): Promise<AlgCase> {
@@ -53,7 +56,9 @@ export async function updateCase(puzzle: string, set: string, id: number, body: 
     `${API_BASE}/${encodeURIComponent(puzzle)}/${encodeURIComponent(set)}/cases/${id}`,
     { method: 'PUT', headers: authHeaders(), body: JSON.stringify(body) },
   );
-  return duplicateAware(handle<AlgCase>(r));
+  const result = await duplicateAware(handle<AlgCase>(r));
+  invalidateAlgLibrary(puzzle, set);
+  return result;
 }
 
 /** Store a new public U-layer phase; source algorithms and their notation stay intact. */
@@ -131,7 +136,9 @@ export async function reorderCases(puzzle: string, set: string, ids: number[]): 
     `${API_BASE}/${encodeURIComponent(puzzle)}/${encodeURIComponent(set)}/reorder`,
     { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ ids }) },
   );
-  return handle<{ ok: boolean }>(r);
+  const result = await handle<{ ok: boolean }>(r);
+  invalidateAlgLibrary(puzzle, set);
+  return result;
 }
 
 export async function getAlgCatalogOrder(puzzle: string, _fresh = false): Promise<string[]> {
@@ -147,7 +154,9 @@ export async function reorderAlgCatalog(puzzle: string, slugs: string[]): Promis
     `${API_BASE}/${encodeURIComponent(puzzle)}/order`,
     { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ slugs }) },
   );
-  return handle<{ ok: boolean }>(r);
+  const result = await handle<{ ok: boolean }>(r);
+  invalidateAlgLibrary(puzzle);
+  return result;
 }
 
 export async function deleteCase(puzzle: string, set: string, id: number): Promise<{ ok: boolean }> {
@@ -155,5 +164,7 @@ export async function deleteCase(puzzle: string, set: string, id: number): Promi
     `${API_BASE}/${encodeURIComponent(puzzle)}/${encodeURIComponent(set)}/cases/${id}`,
     { method: 'DELETE', headers: authHeaders() },
   );
-  return handle<{ ok: boolean }>(r);
+  const result = await handle<{ ok: boolean }>(r);
+  invalidateAlgLibrary(puzzle, set);
+  return result;
 }

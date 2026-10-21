@@ -20,7 +20,7 @@ import {
   Users, Percent, LayoutGrid, Crown, Sparkles, BellRing,
   Radio, ListOrdered, Gauge,
   type LucideIcon,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import { useIsAdmin } from '@/lib/auth-store';
 import { statsUrl } from '@/lib/stats-base';
 import { STAT_ICONS } from './wca-stat-icons';

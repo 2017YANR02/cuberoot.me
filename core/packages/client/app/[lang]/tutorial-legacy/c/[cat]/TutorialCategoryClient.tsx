@@ -4,7 +4,7 @@ import { Suspense, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'next/navigation';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
-import { Search as SearchIcon } from 'lucide-react';
+import { Search as SearchIcon } from '@app-foundation/icons/lucide';
 import Fuse from 'fuse.js';
 import { useTutorialCatalog, type CatalogEntry, type Lang } from '../../_lib/useTutorialCatalog';
 import { TutorialCard } from '../../_components/TutorialCard';

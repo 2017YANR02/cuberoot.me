@@ -5,7 +5,7 @@
  * 后台预生成 pool 的工作方式。从 GenPage 标题的 HelpCircle 入口进入。
  */
 import Link from '@/components/AppLink';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from '@app-foundation/icons/lucide';
 import './gen_about.css';
 import { useT } from "@/hooks/useT";
 
@@ -38,7 +38,7 @@ export default function GenAboutPage() {
       <div className="ga-header">
         <Link href="/scramble/gen" className="ga-back">
           <ArrowLeft size={16} />
-          <span>{t('返回打乱生成器', 'Back to scramble generator')}</span>
+          <span className="sr-only">{t('返回打乱生成器', 'Back to scramble generator')}</span>
         </Link>
       </div>
 

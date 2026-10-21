@@ -13,7 +13,7 @@
 // Per-puzzle differences live in EnumSpec (see enumerated-specs.ts).
 
 import { useEffect, useMemo, useState } from 'react';
-import { Download } from 'lucide-react';
+import { Download } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';

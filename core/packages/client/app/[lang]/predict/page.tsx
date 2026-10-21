@@ -29,7 +29,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import dynamic from 'next/dynamic';
 import { parseAsStringEnum, parseAsInteger, parseAsString, parseAsBoolean } from 'nuqs';
 import { useTrainingQueryState as useQueryState, useTrainingSearchParams } from '@/lib/training-host';
-import { Check, ExternalLink } from 'lucide-react';
+import { Check, ExternalLink } from '@app-foundation/icons/lucide';
 import AlgInput from '@/components/AlgInput';
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';

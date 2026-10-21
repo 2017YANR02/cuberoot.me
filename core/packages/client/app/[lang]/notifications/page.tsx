@@ -10,7 +10,7 @@ import {
   ChevronLeft, MessageSquare, Reply, GitBranch, LogIn, Check, MessagesSquare, Flag,
   Hourglass, CircleCheck, CircleX, Plane, BellRing, CalendarPlus, CalendarCheck,
   FilePenLine, UserPlus, UserCheck,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import HomeLink from '@/components/HomeLink';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
@@ -130,7 +130,7 @@ export default function NotificationsPage() {
   return (
     <div className="ntf-page">
       <header className="ntf-header">
-        <HomeLink className="ntf-back"><ChevronLeft size={16} /><span>{t('首页', 'Home')}</span></HomeLink>
+        <HomeLink className="ntf-back"><ChevronLeft size={16} /><span className="sr-only">{t('首页', 'Home')}</span></HomeLink>
       </header>
       <h1 className="ntf-title">{t('消息', 'Notifications')}</h1>
 

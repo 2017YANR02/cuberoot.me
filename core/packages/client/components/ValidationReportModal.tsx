@@ -17,7 +17,7 @@
  */
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Play, ExternalLink } from 'lucide-react';
+import { X, Play, ExternalLink } from '@app-foundation/icons/lucide';
 import { ALG_CATALOG, type AlgCase, type AlgPuzzle } from '@cuberoot/shared';
 import { scanCases, scanTargets, allTargets, type AlgFailure } from '@/lib/alg_validation_scan';
 import { tr } from '@/i18n/tr';

@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { UserRound } from 'lucide-react';
+import { UserRound } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import { useLang } from '@/i18n/tr';
@@ -52,7 +52,6 @@ export default function ExpensesPage() {
       <div className="infra-shell">
         <HomeLink />
         <header className="infra-hero">
-          <p className="infra-kicker">CubeRoot / Expenses & Equipment</p>
           <h1>{localize(lang, { zh: '支出与设备', en: 'Expenses & Equipment' })}</h1>
           <p className="infra-lead">{localize(lang, {
             zh: 'CubeRoot 的投入概览：设备、工位、人员及服务订阅。金额包含实际订单、设备发售价与可退押金，并非全部都是已消耗的费用；持续支出按当前计划估算。',

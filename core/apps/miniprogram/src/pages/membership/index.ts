@@ -57,13 +57,16 @@ Page({
       if (!state.visible || state.revision !== revision || states.get(this) !== state || getStoredSession()?.token !== session.token) return;
       if (context.pilot && context.ticket) state.ticket = context.ticket;
       const contract = result.subscriptions.find(row => row.state !== 'terminated');
+      const cancelled = result.subscriptions.some(row => row.state === 'terminated' && row.planSlug === context.planSlug);
       const message = contract?.syncStatus === 'unavailable'
         ? tr({ zh: '暂时无法向微信确认签约状态，请稍后刷新。', en: 'Unable to verify authorization with WeChat. Refresh later.' })
         : contract?.billingStatus === 'paid'
           ? tr({ zh: '付款已确认，会员权益已发放。', en: 'Payment confirmed. Membership benefits have been granted.' })
           : contract?.state === 'active'
             ? tr({ zh: '微信签约已确认，扣款结果尚未确认。会员权益以实际到账为准。', en: 'Authorization confirmed. Payment is still pending; benefits depend on confirmed payment.' })
-            : tr({ zh: '请核对开通账号、价格及续费规则。', en: 'Check the membership account, price and renewal terms.' });
+            : !contract && cancelled
+              ? tr({ zh: '已取消自动续费，不会再发起续费扣款。已付会员权益保留至到期。', en: 'Auto-renewal cancelled. No further renewal charges will be requested. Paid benefits remain until expiry.' })
+              : tr({ zh: '请核对开通账号、价格及续费规则。', en: 'Check the membership account, price and renewal terms.' });
       this.setData({ context, account: `${context.name} (${context.account})`,
         amount: `¥${(context.priceCents / 100).toFixed(2)} / ${context.period === 'year' ? tr({ zh: '年', en: 'year' }) : tr({ zh: '月', en: 'month' })}`,
         message: context.pilot ? (context.pilotPayment

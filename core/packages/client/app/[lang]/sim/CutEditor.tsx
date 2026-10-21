@@ -11,7 +11,7 @@
 // planes are collected then applied), so we group them by type for the UI.
 
 import { useMemo, useCallback } from 'react';
-import { X, Plus, Copy } from 'lucide-react';
+import { X, Plus, Copy } from '@app-foundation/icons/lucide';
 import { useT } from '@/hooks/useT';
 import './CutEditor.css';
 

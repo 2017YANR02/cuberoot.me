@@ -20,7 +20,7 @@
 
 import { lazy, Suspense, useState, useRef, useEffect, useCallback, useLayoutEffect, type CSSProperties, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronRight, X } from 'lucide-react';
+import { ChevronRight, X } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 import { parseHumanResult } from '@/lib/result-watch-api';

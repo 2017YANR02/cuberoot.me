@@ -4,7 +4,7 @@
  * MembershipBadge — CubeRoot 会员标记(小药丸)。
  * 用在选手名旁 / 个人页 / 致谢墙等处标识会员;lifetime 显示「永久会员」。
  */
-import { Crown } from 'lucide-react';
+import { Crown } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 import './membership-badge.css';
 

@@ -12,7 +12,7 @@
  */
 import { useState, useRef, useImperativeHandle, useMemo, forwardRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Trash2, Plus, AlertTriangle, Copy, Check, Pin, FlipHorizontal2, Tags } from 'lucide-react';
+import { Trash2, Plus, AlertTriangle, Copy, Check, Pin, FlipHorizontal2, Tags } from '@app-foundation/icons/lucide';
 import type { AlgCase, AlgEntry, AlgPuzzle } from '@cuberoot/shared/alg';
 import { gen as algorithmGenerators } from '@cuberoot/shared/alg-notation';
 import { resolveSimPreviewMoves } from '@/components/AlgPlayer/player-setup';

@@ -6,7 +6,7 @@
 
 import { useMemo, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Trash2, ClipboardCheck } from 'lucide-react';
+import { Trash2, ClipboardCheck } from '@app-foundation/icons/lucide';
 import { parseTimeList } from './parse_time';
 import { summarize, rollingStats, DNF } from './stats';
 import { formatWcaResult } from '@/lib/wca-format-result';

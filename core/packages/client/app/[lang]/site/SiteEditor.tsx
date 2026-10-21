@@ -7,7 +7,7 @@
  * 1:1 port from packages/client-vite/src/pages/sites/SiteEditor.tsx.
  */
 import { useEffect, useState } from 'react';
-import { X } from 'lucide-react';
+import { X } from '@app-foundation/icons/lucide';
 import BoolToggle from '@/components/BoolToggle';
 import { GROUPS } from './data/categories';
 import type { GroupId, Site } from './data/types';

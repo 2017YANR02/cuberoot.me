@@ -22,7 +22,7 @@
 
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useParams } from 'next/navigation';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown } from '@app-foundation/icons/lucide';
 import { TimerPuzzlePicker, type TimerPuzzlePickerProps } from '@cuberoot/timer-ui/puzzle-picker';
 import AppLink from '../AppLink';
 import { CubingIcon } from '../EventIcon/EventIcon';

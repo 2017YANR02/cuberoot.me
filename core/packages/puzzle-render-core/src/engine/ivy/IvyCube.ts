@@ -38,7 +38,7 @@ import { SIZE } from '@cuberoot/puzzle-render-core/engine/define';
 import { COLORS } from '@cuberoot/puzzle-render-core/engine/define';
 import { alignedSphereGeo, cutCell } from '../csgCut';
 import { extrudeOntoFace, makeSticker } from '@cuberoot/puzzle-render-core/engine/stickerGeom';
-import { MOVE_CENTERS } from '@cuberoot/puzzle-solvers/ivy';
+import { MOVE_CENTERS, ivySolvedDisplayState, applyIvyDisplayMove, IVY_U_CENTERS } from '@cuberoot/puzzle-solvers/ivy';
 import { facePathsGrooved, type Corner } from './ivyFacePaths';
 import IvyTwister from './IvyTwister';
 import MoveHistory from '@cuberoot/puzzle-render-core/engine/MoveHistory';
@@ -142,7 +142,7 @@ export default class IvyCube extends THREE.Group implements TweenCube<IvyMove> {
   private cornerPivot: THREE.Object3D[] = [];
   /** pivotAtFace[face] = which center piece currently sits at `face`. */
   private pivotAtFace: number[] = [0, 1, 2, 3, 4, 5];
-  private cornerTwist: number[] = [0, 0, 0, 0];
+  private displayState = ivySolvedDisplayState();
   private axisVec: THREE.Vector3[] = [];
   private baseSign: number[] = [];
   /** Shared black material for the core sphere + every piece body shell. */
@@ -281,6 +281,11 @@ export default class IvyCube extends THREE.Group implements TweenCube<IvyMove> {
     return face < 0 ? [] : FACE_CORNERS[face];
   }
 
+  /** Resolve a petal's home piece id after U has moved it to another slot. */
+  cornerSlotForPiece(piece: number): number {
+    return this.displayState.cornerAtAxis.indexOf(piece);
+  }
+
   /** Pick the IvyMove for a drag on corner `axis` with geometric rotation sign
    *  `geomSign` (sign of the angle about cornerAxisVec, right-hand rule). The
    *  power (times 1 vs 2) is folded in here via baseSign so beginMove's signed
@@ -298,12 +303,13 @@ export default class IvyCube extends THREE.Group implements TweenCube<IvyMove> {
 
   /** Build the per-piece animation plan for a move (no state change yet). */
   beginMove(move: IvyMove): IvyAnim[] {
-    const [fa, fb, fd] = MOVE_CENTERS[move.axis];
-    const angle = (move.times === 2 ? -1 : 1) * this.baseSign[move.axis] * TWO_PI_3;
-    const axisV = this.axisVec[move.axis];
+    const [fa, fb, fd] = move.axis === 4 ? IVY_U_CENTERS : MOVE_CENTERS[move.axis];
+    const baseAxis = move.axis === 4 ? 2 : move.axis;
+    const angle = (move.times === 2 ? -1 : 1) * this.baseSign[baseAxis] * (move.axis === 4 ? -1 : 1) * TWO_PI_3;
+    const axisV = this.axisVec[baseAxis];
     const delta = new THREE.Quaternion().setFromAxisAngle(axisV, angle);
     const pivots = [
-      this.cornerPivot[move.axis],
+      ...(move.axis === 4 ? [0, 1, 3] : [move.axis]).map(axis => this.cornerPivot[this.displayState.cornerAtAxis[axis]]),
       this.centerPivot[this.pivotAtFace[fa]],
       this.centerPivot[this.pivotAtFace[fb]],
       this.centerPivot[this.pivotAtFace[fd]],
@@ -311,14 +317,10 @@ export default class IvyCube extends THREE.Group implements TweenCube<IvyMove> {
     return pivots.map((pivot) => makeAnim(pivot, delta, axisV, angle));
   }
 
-  /** Advance the discrete state (face permutation + corner twist) for a move. */
+  /** Advance the shared center, petal and live corner-slot state. */
   private _commit(move: IvyMove): void {
-    const [fa, fb, fd] = MOVE_CENTERS[move.axis];
-    for (let t = 0; t < move.times; t++) {
-      const oa = this.pivotAtFace[fa], ob = this.pivotAtFace[fb], od = this.pivotAtFace[fd];
-      this.pivotAtFace[fb] = oa; this.pivotAtFace[fd] = ob; this.pivotAtFace[fa] = od;
-    }
-    this.cornerTwist[move.axis] = (this.cornerTwist[move.axis] + move.times) % 3;
+    applyIvyDisplayMove(this.displayState, move);
+    this.pivotAtFace = this.displayState.centers;
   }
 
   /** Snap pivots to end pose, advance the discrete state, record history. */
@@ -351,7 +353,7 @@ export default class IvyCube extends THREE.Group implements TweenCube<IvyMove> {
     for (const p of this.cornerPivot) p.quaternion.identity();
     for (const p of this.centerPivot) p.quaternion.identity();
     this.pivotAtFace = [0, 1, 2, 3, 4, 5];
-    this.cornerTwist = [0, 0, 0, 0];
+    this.displayState = ivySolvedDisplayState();
     this.dirty = true;
     // Notify listeners (UI sync + lets SimPage drop a frozen debug-hold turn,
     // since reset re-poses all pivots). setup()/_replay() already fire these.
@@ -377,9 +379,10 @@ export default class IvyCube extends THREE.Group implements TweenCube<IvyMove> {
   }
 
   get complete(): boolean {
-    for (let f = 0; f < 6; f++) if (this.pivotAtFace[f] !== f) return false;
-    for (let m = 0; m < 4; m++) if (this.cornerTwist[m] !== 0) return false;
-    return true;
+    // A common rigid orientation is solved too (U can move the reference frame).
+    const petals = this.displayState.petals;
+    return this.pivotAtFace.every((color, face) =>
+      FACE_CORNERS[face].every(axis => petals[axis][face] === color));
   }
 
   dispose(): void {

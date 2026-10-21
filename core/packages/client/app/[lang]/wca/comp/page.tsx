@@ -20,7 +20,7 @@ import { loadCalendarManifest, loadCalendarMonth } from '@/lib/competition-calen
 import type { CalendarManifest } from '@cuberoot/shared/competition-calendar';
 import HomeLink from '@/components/HomeLink';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, Star, Earth as GlobeIcon, List, LayoutGrid, BarChart3, CalendarDays, CalendarRange, HelpCircle, Users, Gauge, Percent, CaseSensitive, MapPin, Mountain, MoveVertical, MoveHorizontal, ArrowDownAZ, ArrowDownZA, X as XIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, Earth as GlobeIcon, List, LayoutGrid, BarChart3, CalendarDays, CalendarRange, HelpCircle, Users, Gauge, Percent, CaseSensitive, MapPin, Mountain, MoveVertical, MoveHorizontal, ArrowDownAZ, ArrowDownZA, X as XIcon } from '@app-foundation/icons/lucide';
 import { SortArrow } from '@/components/SortArrow';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import {
@@ -2062,8 +2062,8 @@ function CalendarPageInner() {
         </h1>
         <div className="upcoming-meta">
           <HomeLink className="globe-link">
-            <ChevronLeft size={12} strokeWidth={1.75} /> {tr({ zh: '首页', en: 'Home'
-            })}
+            <ChevronLeft size={12} strokeWidth={1.75} /> <span className="sr-only">{tr({ zh: '首页', en: 'Home'
+            })}</span>
           </HomeLink>
           <Link href="/wca/comp/stats" className="globe-link">
             <BarChart3 size={12} strokeWidth={1.75} /> {tr({ zh: '统计', en: 'Stats'

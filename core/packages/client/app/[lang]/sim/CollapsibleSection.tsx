@@ -1,5 +1,5 @@
 import { useId, useState, type ReactNode } from 'react';
-import { ChevronRight, type LucideIcon } from 'lucide-react';
+import { ChevronRight, type LucideIcon } from '@app-foundation/icons/lucide';
 
 /** Keep visited panels mounted so both sides of the accordion can animate. */
 export default function CollapsibleSection({ open, onToggle, icon: Icon, label, children, className = '', keepMounted = false }: {

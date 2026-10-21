@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { ChevronDown, Sparkles, UserRound } from 'lucide-react';
+import { ChevronDown, Sparkles, UserRound } from '@app-foundation/icons/lucide';
 import { useCopy } from '@/hooks/useCopy';
 import { useT } from '@/hooks/useT';
 import { useAuthUser, useAuthStore } from '@/lib/auth-store';

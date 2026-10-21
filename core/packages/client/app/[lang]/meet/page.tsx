@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { useQueryState } from 'nuqs';
-import { LogIn } from 'lucide-react';
+import { LogIn } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { ClientLoadStatus } from '@/components/StartupStatus';
 import { nextQuery, useAuthUser } from '@/lib/auth-store';

@@ -31,7 +31,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { X } from 'lucide-react';
+import { X } from '@app-foundation/icons/lucide';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { getCaretRect } from '@/lib/textarea_caret';
 import { isAlgPrefix } from '@/lib/cube3';

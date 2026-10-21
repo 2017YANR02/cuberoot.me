@@ -10,7 +10,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { Cpu, Database, Gauge, HardDrive, Globe, Layers, Boxes, CircleCheck, CircleDashed, CircleDot, X } from 'lucide-react';
+import { Cpu, Database, Gauge, HardDrive, Globe, Layers, Boxes, CircleCheck, CircleDashed, CircleDot, X } from '@app-foundation/icons/lucide';
 import { statsUrl } from '@/lib/stats-base';
 import { fetchPuzzleDistribution } from '@/lib/puzzle-distribution';
 import { tr } from '@/i18n/tr';

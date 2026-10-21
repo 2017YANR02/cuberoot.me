@@ -125,6 +125,7 @@
       "./engine/coreOpacity": "mixed",
       "./engine/backView": "react-dom",
       "./support/three": "runtime-neutral",
+      "./ivy-svg": "runtime-neutral",
       "./magic-svg": "runtime-neutral",
       "./engine/magic/MagicCube": "mixed",
       "./engine/magic/magicDrag": "mixed",
@@ -153,6 +154,7 @@
       "node": "./dist/sphere-svg.js",
       "default": "./src/sphere-svg.ts"
     },
+    "./ivy-svg": "./src/ivy-svg.ts",
     "./mega-svg": "./src/mega-svg.ts",
     "./sq1-svg": "./src/sq1-svg.ts",
     "./bsp": "./src/bsp.ts",

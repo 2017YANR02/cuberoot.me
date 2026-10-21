@@ -10,7 +10,7 @@
 // this site can deep-link the rules without leaving for worldcubeassociation.org.
 
 import type { ReactNode } from 'react';
-import { ChevronLeft, ArrowUp } from 'lucide-react';
+import { ChevronLeft, ArrowUp } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 import { useT } from '../../../../hooks/useT';

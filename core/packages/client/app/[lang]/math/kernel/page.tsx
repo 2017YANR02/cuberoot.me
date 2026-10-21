@@ -14,7 +14,7 @@
 
 import { Fragment, useState } from 'react';
 import Link from '@/components/AppLink';
-import { ArrowLeft, Boxes, Cpu, Eye, ShieldCheck, Sparkles, Wand2, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Boxes, Cpu, Eye, ShieldCheck, Sparkles, Wand2, ChevronRight } from '@app-foundation/icons/lucide';
 import { useTranslation } from 'react-i18next';
 import { TeX } from '@/components/math/Tex';
 import { useT } from '@/hooks/useT';
@@ -108,13 +108,12 @@ export default function KernelPage() {
   return (
     <div className="kernel-page">
       <header className="kn-header">
-        <Link href="/math" className="kn-back" prefetch={false}><ArrowLeft size={16} /><span>{t('返回 数学', 'Back to Math')}</span></Link>
+        <Link href="/math" className="kn-back" prefetch={false}><ArrowLeft size={16} /><span className="sr-only">{t('返回 数学', 'Back to Math')}</span></Link>
       </header>
 
       <main className="kn-main">
         {/* ── HERO ── */}
         <section className="kn-hero">
-          <div className="kn-eyebrow">{t('魔方模拟器 · 群论 · 计算代数', 'Cube simulator · Group theory · Computational algebra')}</div>
           <h1 className="kn-title">
             {t('群论内核', 'The group-theory kernel')}
             <span className="kn-title-sub">

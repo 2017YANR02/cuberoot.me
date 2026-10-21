@@ -4,7 +4,7 @@ import TrainingStatsPanel from '@/components/TrainingStatsPanel';
 import { useTrainingStats } from '@/hooks/useTrainingStats';
 
 import { useEffect, useRef, useState } from 'react';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw } from '@app-foundation/icons/lucide';
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
 import TrainingNavButton from '@/components/TrainingNavButton';
@@ -114,7 +114,6 @@ export default function ColorRelationsPage() {
       </div>
 
       <header className="color-quiz-header">
-        <p className="color-quiz-eyebrow">{tr({ zh: '颜色测试 01', en: 'COLOUR TEST 01' })}</p>
         <h1>{tr({ zh: '对色还是邻色?', en: 'Opposite or adjacent?' })}</h1>
         <p>{tr({
           zh: '每题有两种颜色。判断它们在标准三阶魔方上是面对面,还是相邻。一轮会遍历全部 15 种组合。',

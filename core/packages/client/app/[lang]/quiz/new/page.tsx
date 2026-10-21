@@ -10,7 +10,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryState, parseAsInteger } from 'nuqs';
-import { Key } from 'lucide-react';
+import { Key } from '@app-foundation/icons/lucide';
 import type { QuizDraft } from '@cuberoot/shared/quiz';
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';

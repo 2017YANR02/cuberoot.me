@@ -1,7 +1,7 @@
 'use client';
 
 import type { ComponentProps } from 'react';
-import { Pin, PinOff, Star, Bookmark } from 'lucide-react';
+import { Pin, PinOff, Star, Bookmark } from '@app-foundation/icons/lucide';
 import { ReconCard } from './ReconCard';
 import { tr } from '@/i18n/tr';
 

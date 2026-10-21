@@ -6,7 +6,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RotateCcw, Search, UserRound } from 'lucide-react';
+import { RotateCcw, Search, UserRound } from '@app-foundation/icons/lucide';
 import { useCalcStore, isMbfForEvent } from '../stores/calc_store';
 import {
   DNF_VALUE,

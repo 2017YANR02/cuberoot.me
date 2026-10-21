@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, Copy } from 'lucide-react';
+import { Check, Copy } from '@app-foundation/icons/lucide';
 import { useState, type ReactNode } from 'react';
 import AppLink from '@/components/AppLink';
 import { useAuthUser } from '@/lib/auth-store';

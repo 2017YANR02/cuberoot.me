@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, type FormEvent } from 'react';
-import { ImagePlus, RotateCcw, Trash2 } from 'lucide-react';
+import { ImagePlus, RotateCcw, Trash2 } from '@app-foundation/icons/lucide';
 import { parseAsString, useQueryState } from 'nuqs';
 import AppLink from '@/components/AppLink';
 import HeaderToggles from '@/components/HeaderToggles';
@@ -177,7 +177,6 @@ export default function MusicManagePage() {
   return <main className="music-page music-manage-page">
     <header className="music-header">
       <div>
-        <span className="music-kicker">{tr({ zh: 'CUBEROOT 音频', en: 'CUBEROOT AUDIO' })}</span>
         <h1>{isAdmin ? tr({ zh: '审核与管理', en: 'Review & manage' }) : tr({ zh: '我的上传', en: 'My uploads' })}</h1>
         <p>{isAdmin ? tr({ zh: '管理静态曲库与会员上传内容。', en: 'Manage the library and member uploads.' }) : tr({ zh: '查看审核状态、修改待审核内容，或删除自己上传的音乐（包括已发布曲目）。', en: 'Check review status, edit pending uploads, or delete your own music, including published tracks.' })}</p>
         <AppLink href="/music" className="music-credits-link">{tr({ zh: '打开音乐播放器', en: 'Open music player' })}<span aria-hidden="true">→</span></AppLink>

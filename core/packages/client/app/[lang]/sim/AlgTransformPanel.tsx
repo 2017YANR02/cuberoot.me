@@ -4,7 +4,7 @@ import { Fragment, type ReactNode, useLayoutEffect, useMemo, useRef, useState } 
 import { createPortal } from 'react-dom';
 import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
 import { Move } from 'cubing/alg';
-import { Undo2, PencilLine, X } from 'lucide-react';
+import { Undo2, PencilLine, X } from '@app-foundation/icons/lucide';
 import { useT } from '@/hooks/useT';
 import { mirrorAlg, rotateAlg } from '@/lib/cube3';
 import { editCubeText, cubeTextMoves, oppositeMove, transformCubeText, hasHandNotation, moveSourceGroup, moveAtFirstExecution } from './alg-manipulation';

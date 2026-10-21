@@ -12,7 +12,7 @@
  * 不给链接。
  */
 import { useCallback, useEffect, useState } from 'react';
-import { ChevronRight, Megaphone } from 'lucide-react';
+import { ChevronRight, Megaphone } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { useIsAdmin } from '@/lib/auth-store';
 import { fetchAllPageNotices, type PageNotice } from '@/lib/page-notices-api';

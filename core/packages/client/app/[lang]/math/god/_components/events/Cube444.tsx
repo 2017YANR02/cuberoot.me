@@ -17,7 +17,7 @@
  *   references
  */
 import { Suspense, lazy, useMemo, useState } from 'react';
-import { ArrowRight, Boxes, Ruler } from 'lucide-react';
+import { ArrowRight, Boxes, Ruler } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import {
   EvHighlights, EvSection, EvCallout, EvRefs, EvStatStrip,

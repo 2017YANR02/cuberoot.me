@@ -38,9 +38,8 @@
   width: 32px;
   height: 18px;
   margin-top: -9px;
-  border: 1px solid var(--border-default);
-  border-radius: 999px;
-  background: var(--background);
+  border: 0;
+  background: transparent;
 }
 .solo-layout-handle--size { right: -13px; bottom: -13px; width: 44px; height: 44px; }
 .solo-layout-size-knob {

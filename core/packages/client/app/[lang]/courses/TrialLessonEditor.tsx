@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { Pencil } from 'lucide-react';
+import { Pencil } from '@app-foundation/icons/lucide';
 import { T } from '@/i18n/tr';
 import {
   updateTrialLessonOverride,

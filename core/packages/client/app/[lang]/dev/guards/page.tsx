@@ -5,7 +5,7 @@
 // 数据在 ./_guards.ts(与 tests/dev-guards-drift.test.ts 共享,改这页先改那份数据)。
 
 import Link from '@/components/AppLink';
-import { ShieldAlert, Hand, FlaskConical, Terminal, GitCompare } from 'lucide-react';
+import { ShieldAlert, Hand, FlaskConical, Terminal, GitCompare } from '@app-foundation/icons/lucide';
 import './guards.css';
 import { tr, useLang } from '@/i18n/tr';
 import { PAIRED_GUARDS, CI_GUARDS_UI, CI_GUARDS_DRIFT, CI_GUARDS_API, PROCESS_GUARDS } from './_guards';

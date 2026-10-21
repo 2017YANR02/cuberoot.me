@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ThumbsDown, ThumbsUp } from 'lucide-react';
+import { ThumbsDown, ThumbsUp } from '@app-foundation/icons/lucide';
 import { useAuthStore, useAuthUser } from '@/lib/auth-store';
 import { setCommentVote, type listComments } from '@/lib/recon-api';
 import { useT } from '@/hooks/useT';

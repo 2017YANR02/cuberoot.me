@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Download } from 'lucide-react';
+import { Download } from '@app-foundation/icons/lucide';
 import { TimerRoomDialog } from '@cuberoot/timer-ui';
 import BoolToggle from '@/components/BoolToggle';
 import { Tooltip } from '@/components/Tooltip';

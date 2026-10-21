@@ -91,6 +91,11 @@ function loadKpuzzle(puzzle: string): Promise<KPuzzle> | null {
   return _kpuzzleCache[puzzle];
 }
 
+/** Start the puzzle module alongside data loading, rather than after the HTTP round trip. */
+export async function warmAlgValidation(puzzle: string): Promise<void> {
+  await loadKpuzzle(puzzle);
+}
+
 /** Preserve the case geometry while putting its completed bottom colour on D. */
 export async function orientCaseSetup(puzzle: AlgPuzzle, set: string, setup: string): Promise<string> {
   // LS/TCLL deliberately have an unfinished bottom face; do not reinterpret them.

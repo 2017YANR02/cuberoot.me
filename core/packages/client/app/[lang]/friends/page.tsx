@@ -12,7 +12,7 @@ import type { ChatClient } from '@cuberoot/shared/chat';
 import '@cuberoot/app-ui/chat.css';
 import {
   Ban, Check, Loader2, LogIn, MessageSquare, Search, UserMinus, UserPlus, Users, X,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { Flag } from '@/components/Flag';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';

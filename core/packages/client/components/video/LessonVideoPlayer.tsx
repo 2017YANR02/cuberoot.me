@@ -2,7 +2,7 @@
 
 import { Tooltip } from '@/components/Tooltip';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type SyntheticEvent } from 'react';
-import { AudioLines, Bug, Check, ChevronLeft, ChevronRight, CircleHelp, Code, Gauge, Info, Keyboard, Link, Maximize, Minimize, Moon, Pause, PictureInPicture2, Play, RectangleHorizontal, Repeat2, Settings, SlidersHorizontal, Subtitles, Volume1, Volume2, VolumeX } from 'lucide-react';
+import { AudioLines, Bug, Check, ChevronLeft, ChevronRight, CircleHelp, Code, Gauge, Info, Keyboard, Link, Maximize, Minimize, Moon, Pause, PictureInPicture2, Play, RectangleHorizontal, Repeat2, Settings, SlidersHorizontal, Subtitles, Volume1, Volume2, VolumeX } from '@app-foundation/icons/lucide';
 import { browserClipboardTransport } from '@cuberoot/timer-ui';
 import { ClearButton } from '@/components/ClearButton';
 import BoolToggle from '@/components/BoolToggle';

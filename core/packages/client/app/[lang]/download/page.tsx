@@ -1,7 +1,7 @@
 'use client';
 
 /** @module Official app downloads and platform availability. */
-import { ArrowLeft, Download } from 'lucide-react';
+import { ArrowLeft, Download } from '@app-foundation/icons/lucide';
 import { useEffect, useState } from 'react';
 import { fetchAndroidRelease, type AndroidRelease } from '@cuberoot/shared/android-release';
 import HomeLink from '@/components/HomeLink';

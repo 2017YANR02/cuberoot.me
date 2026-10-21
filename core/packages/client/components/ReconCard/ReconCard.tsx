@@ -6,7 +6,7 @@
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
-import { Video, Link2, Lock } from 'lucide-react';
+import { Video, Link2, Lock } from '@app-foundation/icons/lucide';
 import type { ReconSolve } from '@cuberoot/shared';
 import { getReconScramble } from '@cuberoot/shared/recon-completion';
 import { pickReconCover, coverSyncSrc, coverPreviewSrc, loadBiliCover, loadDouyinCover } from '@/lib/recon-video-cover';

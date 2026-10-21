@@ -6,7 +6,7 @@
 
 import BoolToggle from '@/components/BoolToggle';
 import '@cuberoot/timer-ui/compact-select.css';
-import { X } from 'lucide-react';
+import { X } from '@app-foundation/icons/lucide';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CUBE_FILL } from '@/lib/cube-colors';
 import GhostCube from '@cuberoot/puzzle-render-core/engine/ghost/GhostCube';

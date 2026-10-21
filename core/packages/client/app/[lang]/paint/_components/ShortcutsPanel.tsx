@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 import { useT } from '@/hooks/useT';
 import { COMMAND_KEYS, type CommandId, type KeyBinding } from '../_lib/shortcuts';

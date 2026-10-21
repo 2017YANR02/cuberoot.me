@@ -16,7 +16,7 @@
 import Link from '@/components/AppLink';
 import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from '@app-foundation/icons/lucide';
 import { TeX, TeXBlock } from '@/components/math/Tex';
 import './probability.css';
 import { useT } from '@/hooks/useT';
@@ -42,13 +42,12 @@ export default function ProbabilityPage() {
       <header className="prob-header">
         <Link href="/math" className="prob-back">
           <ArrowLeft size={16} />
-          <span>{t('返回 数学', 'Back to Math')}</span>
+          <span className="sr-only">{t('返回 数学', 'Back to Math')}</span>
         </Link>
       </header>
 
       <main className="prob-main">
         <section className="prob-hero">
-          <div className="prob-eyebrow">{t('数学 群论 组合计数', 'Mathematics Group Theory Enumeration')}</div>
           <h1 className="prob-title">
             {t('情况概率与旋转对称', 'Case Probability & Rotational Symmetry')}
             <span className="prob-title-sub">

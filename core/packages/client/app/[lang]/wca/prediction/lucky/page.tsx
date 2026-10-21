@@ -29,7 +29,7 @@ import { Suspense, useState, useMemo, useCallback, useEffect } from 'react';
 import { useQueryState, parseAsInteger } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import Link from '@/components/AppLink';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from '@app-foundation/icons/lucide';
 import { persistItem } from '@/lib/safe-storage';
 import { EVENTS, formatVal } from '../_components/events';
 import {

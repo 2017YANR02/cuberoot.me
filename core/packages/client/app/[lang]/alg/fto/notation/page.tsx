@@ -35,7 +35,7 @@ export default function FtoNotationPage() {
         <header className="alg-notation-hero">
           <h1>{t('FTO 转动记号', 'FTO move notation')}</h1>
           <Link href="/alg/fto" className="alg-notation-reference" prefetch={false}>
-            {t('返回 FTO 公式库', 'Back to FTO algorithms')}
+            <span aria-hidden="true">←</span> <span className="sr-only">{t('返回 FTO 公式库', 'Back to FTO algorithms')}</span>
           </Link>
         </header>
 

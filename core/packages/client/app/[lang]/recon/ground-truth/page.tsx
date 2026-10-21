@@ -5,7 +5,7 @@ import { parseAsInteger, parseAsString, parseAsStringEnum, useQueryState } from 
 import {
   AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, ExternalLink,
   RefreshCw, Save, ShieldCheck,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import { SearchInput } from '@/components/SearchInput';

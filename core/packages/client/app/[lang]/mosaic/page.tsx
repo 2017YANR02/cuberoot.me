@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle } from '@app-foundation/icons/lucide';
 import { useTranslation } from 'react-i18next';
 import { useMosaicStore } from './_components/state/store';
 import type { Stage } from './_components/state/types';

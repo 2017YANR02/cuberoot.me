@@ -21,7 +21,7 @@ import {
   GitCompareArrows,
   SplitSquareVertical,
   Gauge,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import '../3bld.css';
 import { tr, T } from '@/i18n/tr';
 

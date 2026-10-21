@@ -21,7 +21,7 @@
  * docs/issue-40-alg-mirror-plan.md §5.7。
  */
 import { useMemo } from 'react';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check } from '@app-foundation/icons/lucide';
 import { MIRROR_SETS, type AlgPuzzle } from '@cuberoot/shared';
 import { applyMirrorGen, MIRROR_TARGET, MIRROR_VIEW, VIEWS, type MirrorGen } from '@cuberoot/shared/alg-mirror';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';

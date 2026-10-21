@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
@@ -82,7 +82,6 @@ export default function ColorTestPage() {
             <i key={face} style={{ background: CUBE_FILL[face] }} />
           ))}
         </div>
-        <p className="color-test-eyebrow">COLOR LAB</p>
         <h1>{tr({ zh: '颜色测试', en: 'Colour Tests' })}</h1>
       </header>
 

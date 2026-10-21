@@ -1,6 +1,6 @@
 'use client';
 import { useState, useCallback } from 'react';
-import { BookOpen, RotateCcw } from 'lucide-react';
+import { BookOpen, RotateCcw } from '@app-foundation/icons/lucide';
 import { useT } from '@/hooks/useT';
 import type { SkewbNotation } from '@cuberoot/shared/skewb-notation';
 

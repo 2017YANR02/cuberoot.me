@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowUpRight, Download } from 'lucide-react';
+import { ArrowUpRight, Download } from '@app-foundation/icons/lucide';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';

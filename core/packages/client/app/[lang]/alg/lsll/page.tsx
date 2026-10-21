@@ -14,7 +14,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { parseAsStringEnum } from 'nuqs';
 import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import Link from '@/components/AppLink';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from '@app-foundation/icons/lucide';
 import { tr, T } from '@/i18n/tr';
 import { SearchInput } from '@/components/SearchInput';
 import { FaceletsCube } from '@/components/FaceletsCube';
@@ -91,7 +91,7 @@ export default function LsllHubPage() {
     <div className="alg-root">
       <div className="alg-cat-header">
         <Link href="/alg/3x3" className="alg-back">
-          <ArrowLeft size={14} /> {tr({ zh: '返回', en: 'Back' })}
+          <ArrowLeft size={14} /> <span className="sr-only">{tr({ zh: '返回', en: 'Back' })}</span>
         </Link>
         <h1 className="alg-cat-title">
           <span>LSLL <span className="alg-cat-count">

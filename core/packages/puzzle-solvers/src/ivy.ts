@@ -206,7 +206,7 @@ export function classifyIvyTokens(text: string): IvyTokenSpan[] {
   const out: IvyTokenSpan[] = [];
   for (const part of text.split(/(\s+)/)) {
     if (part === '') continue;
-    out.push({ text: part, bad: !/^\s+$/.test(part) && !TOKEN_RE.test(part) });
+    out.push({ text: part, bad: !/^\s+$/.test(part) && !/^([RLDBU])('?)$/i.test(part) });
   }
   return out;
 }
@@ -268,6 +268,87 @@ export function ivyApply(scramble: string): IvyState {
 /** Apply standard /sim and scramble-sheet notation instead of cstimer's inverted powers. */
 export function ivyApplyStandard(scramble: string): IvyState {
   return ivyApply(ivyStandardToCstimer(scramble));
+}
+
+export interface IvyStandardMove { axis: number; times: number; name: string; }
+
+/** Fixed-world axes: R=UBR, L=UFL, D=DFR, B=DBL, U=UBL. */
+export function parseIvyStandardMoves(scramble: string): IvyStandardMove[] {
+  return scramble.trim().split(/\s+/).filter(Boolean).map(token => {
+    const match = /^([RLDBU])('?)$/i.exec(token);
+    if (!match) throw new Error(`bad: ${token}`);
+    const letter = match[1].toUpperCase();
+    return { axis: 'RLDBU'.indexOf(letter), times: match[2] ? 2 : 1, name: letter + match[2] };
+  });
+}
+
+/** U turns the complementary side of D: U → L → B, viewed clockwise from UBL. */
+export const IVY_U_CENTERS = [0, 4, 3] as const;
+/** Whole-cube UBL rotation, old face → new face (U R F B L D). */
+export const IVY_U_FACE_MAP = [4, 2, 5, 0, 3, 1] as const;
+/** The three mobile turning corners move R → L → B → R; DFR stays fixed. */
+export const IVY_U_CORNER_MAP = [1, 3, 2, 0] as const;
+
+export interface IvyDisplayState {
+  centers: number[];
+  /** Face colors at each turning-corner slot, indexed by global face id. */
+  petals: number[][];
+  cornerAtAxis: number[];
+}
+
+export function ivySolvedDisplayState(): IvyDisplayState {
+  return {
+    centers: [0, 1, 2, 3, 4, 5],
+    petals: MOVE_CENTERS.map(faces => Array.from({ length: 6 }, (_, face) => faces.includes(face) ? face : -1)),
+    cornerAtAxis: [0, 1, 2, 3],
+  };
+}
+
+/** Shared physical state for SVG and animation; legacy solver coordinates stay unchanged. */
+export function applyIvyDisplayMove(state: IvyDisplayState, move: IvyStandardMove): void {
+  const faces = move.axis === 4 ? IVY_U_CENTERS : MOVE_CENTERS[move.axis];
+  for (let turn = 0; turn < move.times; turn++) {
+    const before = [...state.centers];
+    faces.forEach((face, i) => { state.centers[faces[(i + 1) % 3]] = before[face]; });
+    if (move.axis === 4) {
+      const petals = state.petals.map(row => [...row]);
+      const pieces = [...state.cornerAtAxis];
+      for (const axis of [0, 1, 3]) {
+        const dest = IVY_U_CORNER_MAP[axis];
+        state.cornerAtAxis[dest] = pieces[axis];
+        for (const face of MOVE_CENTERS[axis]) {
+          state.petals[dest][IVY_U_FACE_MAP[face]] = petals[axis][face];
+        }
+      }
+    } else {
+      const petals = [...state.petals[move.axis]];
+      faces.forEach((face, i) => { state.petals[move.axis][faces[(i + 1) % 3]] = petals[face]; });
+    }
+  }
+}
+
+export function ivyDisplayState(scramble: string): IvyDisplayState {
+  const state = ivySolvedDisplayState();
+  for (const move of parseIvyStandardMoves(scramble)) applyIvyDisplayMove(state, move);
+  return state;
+}
+
+/**
+ * Change the generating set without changing the sampled state up to orientation.
+ * U = whole-UBL-rotation · D. Each substituted D also rotates the frame for
+ * subsequent R/L/B moves; a plain letter replacement would produce a different state.
+ */
+export function ivyScrambleToRlub(scramble: string): string {
+  let frame = [0, 1, 2, 3];
+  return parseIvyStandardMoves(scramble).map(move => {
+    if (move.axis === 4) throw new Error('Expected an RLDB Ivy scramble');
+    const axis = frame[move.axis];
+    const name = (axis === 2 ? 'U' : 'RLDB'[axis]) + (move.times === 2 ? "'" : '');
+    if (axis === 2) {
+      for (let turn = 0; turn < move.times; turn++) frame = frame.map(a => IVY_U_CORNER_MAP[a]);
+    }
+    return name;
+  }).join(' ');
 }
 
 /** Shortest scramble producing state `idx` = inverse of its optimal solution (reverse + invert). */

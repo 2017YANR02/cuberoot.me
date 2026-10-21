@@ -7,10 +7,11 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RefreshCw, Download, Image as ImageIcon, ImageOff, ChevronDown, Check } from 'lucide-react';
+import { RefreshCw, Download, Image as ImageIcon, ImageOff, ChevronDown, Check } from '@app-foundation/icons/lucide';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import EventScrambleOptions from './EventScrambleOptions';
 import NumberCommitInput from '@/components/NumberCommitInput';
+import { useIvyMode } from '@/lib/scramble-ivy-mode';
 import { useRediMode } from '@/lib/scramble-redi-mode';
 import { EventIcon } from '@/components/EventIcon';
 import { ScramblePreview2D, eventHasScramblePreview } from '@/components/ScramblePreview2D';
@@ -160,11 +161,15 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
   // lastCount/lastTick 用 ref 跨 effect 持久,跟 state 一同变更时不冲突。
   const lastCountRef = useRef(count);
   const lastTickRef = useRef(tick);
+  const [ivyMode] = useIvyMode();
+  const lastIvyModeRef = useRef(ivyMode);
   const [rediMode] = useRediMode();
   const lastRediModeRef = useRef(rediMode);
   useEffect(() => {
     if (subMode !== 'batch') return;
     const fullRegen = count !== lastCountRef.current || tick !== lastTickRef.current;
+    const ivyChanged = ivyMode !== lastIvyModeRef.current;
+    lastIvyModeRef.current = ivyMode;
     const rediChanged = rediMode !== lastRediModeRef.current;
     lastRediModeRef.current = rediMode;
     lastCountRef.current = count;
@@ -173,7 +178,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
     const existing = generated;
     const toGenerate = fullRegen
       ? eventsOrdered
-      : eventsOrdered.filter((ev) => !(ev in existing) || (ev === 'redi_cube' && rediChanged));
+      : eventsOrdered.filter((ev) => !(ev in existing) || (ev === 'redi_cube' && rediChanged) || (ev === 'ivy' && ivyChanged));
     const toKeep = fullRegen
       ? new Set<string>()
       : new Set(eventsOrdered.filter((ev) => ev in existing && !toGenerate.includes(ev)));
@@ -280,7 +285,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
       setLoading(false);
       setGenProgress(null);
     });
-  }, [subMode, eventsKey, count, tick, rediMode]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [subMode, eventsKey, count, tick, rediMode, ivyMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const regenerate = () => setTick((n) => n + 1);
 
@@ -513,8 +518,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
           {eventsOrdered.filter((ev) => ev === activeView).map((ev) => (
             <div key={ev} className="gen-tn-paste-block">
               <div className="gen-tn-paste-block-header">
-                <EventIcon event={ev} />
-                <span>{eventDisplayName(ev, isZh)}</span>
+                <EventIcon event={ev} title={eventDisplayName(ev, isZh)} />
               </div>
               <textarea
                 className="gen-tn-paste-area"
@@ -548,8 +552,8 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
             return (
               <div key={ev} className="gen-tn-sheet">
                 <div className="gen-tn-sheet-header">
-                  <EventIcon event={ev} />
-                  <span>{eventDisplayName(ev, isZh)} {arr.length} {t('个打乱', 'scrambles')}</span>
+                  <EventIcon event={ev} title={eventDisplayName(ev, isZh)} />
+                  <span>{arr.length} {t('个打乱', 'scrambles')}</span>
                   {ti && ti.count > 0 && (
                     <span className="gen-tn-bench">
                       {formatMs(ti.wallMs)}    {t('平均', 'avg')} {formatMs(ti.avgMs)}    {t('首条', 'first')} {formatMs(ti.firstMs)}

@@ -12,7 +12,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import {
   ChevronDown, Disc3, ExternalLink, Minus, Pause, Play, Plus,
   SkipBack, SkipForward, Volume2, X,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import {
   useMetronome, setMetronome, subscribeBeat, tapTempo, resetTapTempo,

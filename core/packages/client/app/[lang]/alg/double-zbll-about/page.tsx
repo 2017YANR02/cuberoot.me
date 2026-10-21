@@ -4,7 +4,7 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import BoolToggle from '@/components/BoolToggle';
 import { SCRAMBLE_KINDS } from '@/lib/trainer-scramble';
-import { ArrowDown, Layers, RotateCw } from 'lucide-react';
+import { ArrowDown, Layers, RotateCw } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import CorpusStatistics from './CorpusStatistics';
 import StatisticsOverview from './StatisticsOverview';

@@ -25,7 +25,7 @@ import {
   Brain, FlaskConical, MonitorOff, HelpCircle,
   Layers, Search, ListChecks, TriangleAlert,
   Sparkles, Boxes, GraduationCap, MapPin,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { EventIcon } from '@/components/EventIcon';
 import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';

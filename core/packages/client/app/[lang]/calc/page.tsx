@@ -10,7 +10,7 @@ import { useQueryState, useQueryStates, parseAsString, parseAsStringEnum } from 
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import { useTranslation } from 'react-i18next';
-import { Sigma, HelpCircle, Share2, Radio, LogOut } from 'lucide-react';
+import { Sigma, HelpCircle, Share2, Radio, LogOut } from '@app-foundation/icons/lucide';
 import { DNF_VALUE, useCalcStore, isMbfForEvent, solveCountForEvent } from './_components/stores/calc_store';
 import { setCurrentEvent, setMoveCntMode, setMbfMode } from './_components/engine/calc_engine';
 import { load as loadWrIds, loadDefaults, setPlayerOverride, clearPlayerOverride, getPlayerOverride, getAvgWR12 } from './_components/engine/wr_data';

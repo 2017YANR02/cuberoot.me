@@ -12,7 +12,7 @@ import DOMPurify from 'dompurify';
 import {
   RotateCw, Hand, Shuffle, BookOpen, Globe, Zap, Layers,
   Plus, Compass, Box, Boxes, Crown, Brain,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { AlgChip } from './AlgChip';
 import { tutorialMediaUrl } from '../_lib/useTutorialCatalog';

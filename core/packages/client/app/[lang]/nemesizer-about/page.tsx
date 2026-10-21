@@ -4,7 +4,7 @@
  * /nemesizer-about — Nemesizer 宿敌说明页
  */
 import Link from '@/components/AppLink';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from '@app-foundation/icons/lucide';
 import './nemesizer_about.css';
 import { useT } from "@/hooks/useT";
 
@@ -30,7 +30,7 @@ export default function NemesizerAboutPage() {
       <div className="nema-header">
         <Link href="/nemesizer" className="nema-back">
           <ArrowLeft size={16} />
-          <span>{t('返回 Nemesizer', 'Back to Nemesizer')}</span>
+          <span className="sr-only">{t('返回 Nemesizer', 'Back to Nemesizer')}</span>
         </Link>
       </div>
 

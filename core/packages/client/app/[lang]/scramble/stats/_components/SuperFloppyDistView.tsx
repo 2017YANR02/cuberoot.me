@@ -6,7 +6,7 @@
 // 项目,没有比赛语料,但全状态空间可枚举)。态数 ~3M(>2M),故「下载全部」CSV 先 confirm + 流式生成
 // (逐状态枚举 → 分块 Blob,峰值内存有界,不一次性拼 80MB 字符串);单步数 txt 也走流式(§0.5 下载策略)。
 import { useMemo, useState } from 'react';
-import { Download } from 'lucide-react';
+import { Download } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';

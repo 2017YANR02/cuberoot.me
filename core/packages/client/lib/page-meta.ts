@@ -41,6 +41,13 @@ const SEP = ' — ';
 const SHARE_IMAGE = '/icons/CubeRoot.png';
 
 export const PAGE_META: Record<string, PageMetaEntry> = {
+  'dev/continuous-corners': {
+    title: { zh: '连续圆角：几何与实现', en: 'Continuous Corners: Geometry and Implementation' },
+    description: {
+      zh: 'continuous-corners 实现记录：SwiftUI 路径重建、贝塞尔曲线、曲率、同心圆角、误差测量与 TypeScript 接入。',
+      en: 'Implementation notes for continuous-corners: SwiftUI path reconstruction, Bézier curves, curvature, concentric corners, error measurements and TypeScript integration.',
+    },
+  },
   'download': {
     title: { zh: '下载', en: 'Download' },
     description: {

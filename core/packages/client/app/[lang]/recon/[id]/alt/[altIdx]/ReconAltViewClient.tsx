@@ -9,7 +9,7 @@ import { useEffect, useState, useRef, useMemo } from 'react';
 import Link from '@/components/AppLink';
 import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { TriangleAlert } from 'lucide-react';
+import { TriangleAlert } from '@app-foundation/icons/lucide';
 import type { ReconSolve } from '@cuberoot/shared';
 import { getReconScramble } from '@cuberoot/shared/recon-completion';
 import { getRecon } from '@/lib/recon-api';

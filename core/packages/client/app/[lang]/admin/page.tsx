@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ComponentType } from 'react';
 import { useRouter } from 'next/navigation';
-import { Gift, HardDrive, HeartHandshake, Inbox, MessageSquare, ShieldCheck, Users, Wrench } from 'lucide-react';
+import { Gift, HardDrive, HeartHandshake, Inbox, MessageSquare, ShieldCheck, Users, Wrench } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import { loginHref, useAuthStore, useIsAdmin } from '@/lib/auth-store';

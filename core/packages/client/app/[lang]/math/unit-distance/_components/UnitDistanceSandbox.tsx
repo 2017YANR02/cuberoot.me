@@ -10,7 +10,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Shuffle, Grid3x3, Hexagon, Triangle } from 'lucide-react';
+import { Shuffle, Grid3x3, Hexagon, Triangle } from '@app-foundation/icons/lucide';
 import { useT } from "@/hooks/useT";
 import BoolToggle from '@/components/BoolToggle';
 import { T } from '@/i18n/tr';

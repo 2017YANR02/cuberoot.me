@@ -1,5 +1,5 @@
 'use client';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import HeaderToggles from '@/components/HeaderToggles';
 import { tr } from '@/i18n/tr';

@@ -4,7 +4,7 @@
  * Ported from packages/client-vite/src/pages/comp/CompSourcesPage.tsx.
  */
 import Link from '@/components/AppLink';
-import { ArrowLeft, Database, Globe, Radio, FileText } from 'lucide-react';
+import { ArrowLeft, Database, Globe, Radio, FileText } from '@app-foundation/icons/lucide';
 import '../comp.css';
 import { tr } from '@/i18n/tr';
 
@@ -13,7 +13,7 @@ export default function CompSourcesPage() {
   return (
     <div className="comp-sources-page">
       <div className="comp-sources-wrap">
-        <Link href="/wca/comp" className="comp-back-link"><ArrowLeft size={14} /> {tr({ zh: '返回', en: 'Back' })}</Link>
+        <Link href="/wca/comp" className="comp-back-link"><ArrowLeft size={14} /> <span className="sr-only">{tr({ zh: '返回', en: 'Back' })}</span></Link>
         <h1 className="comp-page-title">{tr({ zh: '数据流', en: 'Data Flow'
         })}</h1>
         <p className="comp-page-subtitle">

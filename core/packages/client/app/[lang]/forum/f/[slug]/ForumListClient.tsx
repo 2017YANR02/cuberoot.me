@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useQueryState, parseAsInteger, parseAsStringEnum } from 'nuqs';
-import { Plus, Lock } from 'lucide-react';
+import { Plus, Lock } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import Paginator from '@/components/wca-stats/Paginator';
 import { tr, T, useLang } from '@/i18n/tr';

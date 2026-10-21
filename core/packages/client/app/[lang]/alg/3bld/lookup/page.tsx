@@ -22,7 +22,7 @@ import { useCallback, useEffect, useMemo, useState, type JSX } from 'react';
 import { parseAsStringEnum } from 'nuqs';
 import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import { useTranslation } from 'react-i18next';
-import { Check, Copy, ExternalLink, Users, Video } from 'lucide-react';
+import { Check, Copy, ExternalLink, Users, Video } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { SearchInput } from '@/components/SearchInput';
 import { Spinner } from '@/components/Spinner/Spinner';

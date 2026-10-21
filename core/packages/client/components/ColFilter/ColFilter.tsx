@@ -4,7 +4,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, useCallback, createContext, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { Filter, X, ArrowUp, ArrowDown, RotateCcw } from 'lucide-react';
+import { Filter, X, ArrowUp, ArrowDown, RotateCcw } from '@app-foundation/icons/lucide';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import './ColFilter.css';
 

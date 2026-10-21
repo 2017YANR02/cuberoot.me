@@ -3,7 +3,7 @@
 // Backgrounds affect the whole site; palette previews keep their local token scope.
 
 import { useEffect, useRef, useState } from 'react';
-import { Check, Play, RotateCcw } from 'lucide-react';
+import { Check, Play, RotateCcw } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import HeaderToggles from '@/components/HeaderToggles';
 import { previewBackground, endBackgroundPreview } from '@/components/SiteBackground';

@@ -5,7 +5,7 @@
  * Ported from packages/client-vite/src/components/RecordSelect/RecordSelect.tsx.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, X } from 'lucide-react';
+import { ChevronDown, X } from '@app-foundation/icons/lucide';
 import type { ReconOfficial } from '@cuberoot/shared';
 import { RECORD_OPTIONS, isRecordCodeAllowedFor } from '@/lib/recon-utils';
 import { tr } from '@/i18n/tr';

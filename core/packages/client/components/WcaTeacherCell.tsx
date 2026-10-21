@@ -3,7 +3,7 @@ import '@cuberoot/timer-ui/compact-select.css';
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { Pencil } from 'lucide-react';
+import { Pencil } from '@app-foundation/icons/lucide';
 import { useModalBackdrop } from '@/hooks/useModalDismiss';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { loadPersonsIndex } from '@cuberoot/shared/persons-index';

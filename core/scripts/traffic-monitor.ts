@@ -304,8 +304,10 @@ export class TrafficAccumulator {
 
 /** Operator notification, deliberately separate from the machine-readable report. */
 export function formatTrafficNotification(report: ReturnType<TrafficAccumulator["report"]>) {
-  if (!report.sources.some(source => source.alerts.length)) return null;
-  const sources = report.sources.filter(source => source.coverage === "observed");
+  // Volume and expected blocking remain report signals, not operator pages.
+  const sources = report.sources.filter(source => source.coverage === "observed"
+    && source.alerts.some(alert => alert === "server_errors_high" || alert === "unclassified_503_high"));
+  if (!sources.length) return null;
   const formatTime = (iso: string) => new Date(Date.parse(iso) + 8 * HOUR).toISOString().slice(5, 16).replace("T", " ");
   const names: Record<Source, string> = { nginx: "阿里云主站", next: "预览入口", api: "数据接口", vercel: "Vercel" };
   const hasErrors = sources.some(source => source.alerts.includes("server_errors_high"));
@@ -320,12 +322,10 @@ export function formatTrafficNotification(report: ReturnType<TrafficAccumulator[
     lines.push(`${names[source.source]}：收到 ${n(source.requests)} 次请求，确认拦截 ${n(source.blockedRequests)} 次，成功响应 ${n(source.successfulResponses)} 次。`);
     lines.push(`拦截明细：维护 ${n(source.maintenanceBlocked503)} 次，限流 ${n(source.rateLimited429)} 次，拒绝访问 ${n(source.denied403)} 次。`);
     if (source.maintenanceBlocked503) lines.push("维护拦截的请求未进入应用。");
-    if (source.unexpected5xx) lines.push(`${source.unexpected5xx.toLocaleString("en-US")} 次非维护的服务错误，需要排查。`);
+    if (source.unexpected5xx) lines.push(`${source.unexpected5xx.toLocaleString("en-US")} 次非维护的服务错误${source.alerts.includes("server_errors_high") ? "，已达到异常阈值，需要排查" : "，未达到异常阈值"}。`);
     if (source.unclassified503) lines.push(`${source.unclassified503.toLocaleString("en-US")} 次旧日志 503 缺少维护标记，原因待核对，不能直接算作应用故障。`);
     const other = source.requests - source.blockedRequests - source.successfulResponses - source.unclassified503 - source.unexpected5xx;
     if (other) lines.push(`其他响应 ${n(other)} 次（含 404、连接中断等，未计入确认拦截）。`);
-    if (source.alerts.includes("api_requests_spike")) lines.push("请求量超过过去同一时段基线的 4 倍；这不代表都已放行或都是攻击。");
-    if (source.alerts.includes("page_candidates_spike")) lines.push("成功页面请求明显增加，需核对来源。");
     const route = source.topRoutes[0]?.name;
     if (route) lines.push(`主要路径：${route}。`);
   }

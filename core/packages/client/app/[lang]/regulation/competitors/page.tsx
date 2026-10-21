@@ -10,8 +10,8 @@ import { useTranslation } from 'react-i18next';
 import {
   ClipboardList, BadgeCheck, Timer,
   Handshake, Gavel, Volume2, Shirt, CalendarCheck, ShieldCheck,
-} from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+} from '@app-foundation/icons/lucide';
+import type { LucideIcon } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { useT } from '../../../../hooks/useT';
 import RegArticleLayout from '../_components/RegArticleLayout';

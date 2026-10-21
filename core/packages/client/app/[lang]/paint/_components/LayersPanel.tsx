@@ -17,7 +17,7 @@ import {
   Unlock,
   Layers as LayersIcon,
   type LucideIcon,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import { useT } from '@/hooks/useT';
 import type { Shape, ShapeType } from '../_lib/types';
 import { usePaint } from '../_lib/store';

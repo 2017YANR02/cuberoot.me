@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertTriangle, Inbox, LockKeyhole } from 'lucide-react';
+import { AlertTriangle, Inbox, LockKeyhole } from '@app-foundation/icons/lucide';
 import { Spinner } from '@/components/Spinner/Spinner';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';

@@ -1,4 +1,4 @@
-import { ArrowUpRight, ChartNoAxesColumnIncreasing, ChevronDown, Handshake, Megaphone } from 'lucide-react';
+import { ArrowUpRight, ChartNoAxesColumnIncreasing, ChevronDown, Handshake, Megaphone } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 

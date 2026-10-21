@@ -7,7 +7,7 @@
 
 import { useEffect, useState, useCallback, type JSX } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Wand2 } from 'lucide-react';
+import { Wand2 } from '@app-foundation/icons/lucide';
 import BoolToggle from '@/components/BoolToggle';
 import { BldConfigBar } from '../_components/BldConfigBar';
 import { ScrambleOutput } from '../_components/ScrambleOutput';

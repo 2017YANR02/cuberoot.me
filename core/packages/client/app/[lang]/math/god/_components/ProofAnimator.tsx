@@ -14,7 +14,7 @@
  */
 import { useState, type ReactElement } from 'react';
 import { TeX, MathText } from './Tex';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 
 type ProofId = 'reid' | 'rokicki';

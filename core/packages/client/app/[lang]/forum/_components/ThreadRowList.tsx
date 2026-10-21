@@ -4,7 +4,7 @@
 // latest-activity block all render the same row anatomy.
 // title (+pin/lock) / starter + created / replies / views / last post.
 
-import { Pin, Lock, MessageSquare, Eye } from 'lucide-react';
+import { Pin, Lock, MessageSquare, Eye } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { tr, useLang } from '@/i18n/tr';
 import { ownerDisplayName } from '@/lib/cuber-name-display';

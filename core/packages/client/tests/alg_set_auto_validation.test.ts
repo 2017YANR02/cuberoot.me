@@ -10,8 +10,8 @@ describe('alg set automatic validation markers', () => {
       source.indexOf('/**\n   * `#<case 名>`'),
     );
 
-    expect(effect).toContain('if (!isAdmin || !data || !validPuzzle)');
-    expect(effect).toContain('scanCases(puzzleParam, set, data.cases');
+    expect(effect).toContain('if (!isAdmin || !data || !validPuzzle ||');
+    expect(effect).toContain('scanCases(puzzleParam, set, subgroupParam');
     expect(effect).toContain('setInvalidAlgs(m)');
     expect(effect).toContain('validationRefreshKey, isAdmin');
   });
@@ -22,9 +22,10 @@ describe('alg set automatic validation markers', () => {
     expect(source).toContain('invalid={isAdmin && c.id != null && trueIdx >= 0');
   });
 
-  it('reloads administrator case details without the public one-hour cache', () => {
+  it('uses the same refreshed public snapshot for every role without a second admin request', () => {
     const detail = readFileSync(new URL('../app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgSubOrCaseClient.tsx', import.meta.url), 'utf8');
-    expect(detail).toContain('loadAlg(puzzle as AlgPuzzle, set, { fresh: isAdmin })');
-    expect(detail).toContain('[puzzle, set, isAdmin]');
+    expect(detail).toContain('loadLibrarySource(puzzle as AlgPuzzle, set)');
+    expect(detail).toContain('subscribeAlgLibrary(algLibraryKey(puzzle, set), refresh)');
+    expect(detail).not.toContain('fresh: isAdmin');
   });
 });

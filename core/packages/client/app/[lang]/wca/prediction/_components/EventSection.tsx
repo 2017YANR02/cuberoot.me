@@ -5,7 +5,7 @@ import { fitExpFloor, fitExp, fitPower, type DataPoint } from './models';
 import { THEORETICAL_LIMITS } from './theoretical_limits';
 import TheoreticalLimitView from './TheoreticalLimitView';
 import Link from '@/components/AppLink';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 
 interface EventData {

@@ -29,7 +29,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw } from '@app-foundation/icons/lucide';
 import type * as THREE from 'three';
 import type World from '@/app/[lang]/sim/engine/world';
 import type Cube from '@/app/[lang]/sim/engine/nxn/cube';

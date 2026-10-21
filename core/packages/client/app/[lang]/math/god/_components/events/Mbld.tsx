@@ -18,7 +18,7 @@
  */
 import { Suspense, lazy, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
-import { Brain, Layers, Timer } from 'lucide-react';
+import { Brain, Layers, Timer } from '@app-foundation/icons/lucide';
 import {
   EvHighlights, EvSection, EvCallout, EvRefs, EvStatStrip,
   TeX, TeXBlock, type HighlightCard, type RefItem,

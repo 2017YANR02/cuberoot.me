@@ -10,7 +10,7 @@
  * 滚过去、闪一下。真 `<a>`(AppLink),中键能新开。
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ShieldCheck, ShieldAlert, RefreshCw, ChevronRight } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, RefreshCw, ChevronRight } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { useIsAdmin } from '@/lib/auth-store';
 import { scanAll, type AlgFailure } from '@/lib/alg_validation_scan';

@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, X, RotateCcw } from 'lucide-react';
+import { Check, X, RotateCcw } from '@app-foundation/icons/lucide';
 import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';
 import { useT } from '../../../hooks/useT';
 import { invertAlg } from './_cube-util';

@@ -1,3 +1,4 @@
+import { getIvyMode, ivyScrambleForMode } from './scramble-ivy-mode';
 /*
  * Bridge to vendored cs0x7f/cstimer scramble core.
  *
@@ -222,6 +223,13 @@ export function cstimerEventTextLabel(id: string): string | null {
 export async function cstimerScramble(id: string): Promise<string> {
   const e = BY_ID.get(id);
   if (!e) throw new Error('unknown cstimer event: ' + id);
+  // Reuse the timer's small random-state solver; avoid loading the entire
+  // classic csTimer engine and its unrelated puzzle modules for Ivy.
+  if (id === 'ivy') {
+    const mode = getIvyMode();
+    const { generateIvyTimerScramble } = await import('@cuberoot/puzzle-solvers/ivy');
+    return ivyScrambleForMode(generateIvyTimerScramble(), mode);
+  }
   const w = getWorker();
   const reqId = nextId++;
   return new Promise<string>((resolve, reject) => {

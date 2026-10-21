@@ -11,7 +11,7 @@ import '@cuberoot/timer-ui/compact-select.css';
 import { useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useQueryState, parseAsBoolean, parseAsStringEnum } from 'nuqs';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown } from '@app-foundation/icons/lucide';
 import BoolToggle from '@/components/BoolToggle';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import SortArrow from '@/components/SortArrow';

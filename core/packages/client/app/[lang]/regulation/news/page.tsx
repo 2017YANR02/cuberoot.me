@@ -6,7 +6,7 @@
 // 故不走 RegArticleLayout —— 自带面包屑 + 来源页脚,复用 .reg-page 外壳。
 
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Newspaper, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Newspaper, ExternalLink } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { CubingIcon } from '@/components/EventIcon';
 import { useT } from '../../../../hooks/useT';
@@ -500,7 +500,7 @@ export default function RegulationNews() {
             )}
           </p>
           <p style={{ marginTop: 12 }}>
-            <Link href="/regulation">{t('← 返回规则总览', '← Back to overview')}</Link>
+            <Link href="/regulation"><span aria-hidden="true">←</span><span className="sr-only">{t('← 返回规则总览', '← Back to overview')}</span></Link>
             {' · '}
             <a href={POST_4_PAD} target="_blank" rel="noopener noreferrer">{t('4-pad 计时公告', '4-pad timing post')}</a>
             {' · '}

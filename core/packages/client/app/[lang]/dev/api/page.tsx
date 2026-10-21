@@ -1186,7 +1186,6 @@ export default function ApiCatalogPage() {
         </div>
 
         <header className="api-hero">
-          <div className="api-eyebrow">{tr({ zh: 'REST 端点参考', en: 'REST endpoint reference' })}</div>
           <h1 className="api-title"><span className="api-title-slash">/</span>dev/api</h1>
           <p className="api-lede">
             {tr({

@@ -6,7 +6,8 @@ import { use333Mode } from '@/lib/scramble-333-mode';
 import { use555Mode } from '@/lib/scramble-555-mode';
 import { SCRAMBLE_222_UI_LABELS } from '@cuberoot/shared/timer';
 import AppLink from '@/components/AppLink';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle } from '@app-foundation/icons/lucide';
+import ScrambleIvyModePicker from '@/components/ScrambleIvyModePicker';
 import ScrambleRediModePicker from '@/components/ScrambleRediModePicker';
 import { tr } from '@/i18n/tr';
 import { nativeScramblePracticeHint } from '@/lib/native-scramble';
@@ -74,6 +75,9 @@ export default function EventScrambleOptions({ event, isZh, onAddOrder, sq1Compa
     case '555':
       if (!onAddOrder) return null;
       options = <CubeModeSelect event="555" />;
+      break;
+    case 'ivy':
+      options = <ScrambleIvyModePicker />;
       break;
     case 'redi_cube':
       options = <ScrambleRediModePicker active />;

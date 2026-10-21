@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
-import { RotateCcw, X } from 'lucide-react';
+import { RotateCcw, X } from '@app-foundation/icons/lucide';
 import { CaseThumb } from '@/components/CaseThumb';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { caseKey, findCaseByKey } from '@/lib/trainer-case-key';

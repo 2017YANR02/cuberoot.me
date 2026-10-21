@@ -8,7 +8,7 @@
 // chrome.
 
 import { useTranslation } from 'react-i18next';
-import { Timer, Sun, Ruler, EyeOff, Armchair, Wrench } from 'lucide-react';
+import { Timer, Sun, Ruler, EyeOff, Armchair, Wrench } from '@app-foundation/icons/lucide';
 import { useT } from '../../../../hooks/useT';
 import RegArticleLayout from '../_components/RegArticleLayout';
 import { RegSection, Callout, RegQuote, RegList } from '../_components/primitives';

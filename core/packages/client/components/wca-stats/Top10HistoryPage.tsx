@@ -6,7 +6,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { Play, Pause, Download } from 'lucide-react';
+import { Play, Pause, Download } from '@app-foundation/icons/lucide';
 import { Flag } from '@/components/Flag';
 import { CompactSelect } from '@/components/CompactSelect';
 import { displayCuberName } from '@/lib/cuber-name-display';

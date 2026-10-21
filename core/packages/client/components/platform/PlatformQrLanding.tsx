@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { ArrowRight, ExternalLink, QrCode } from 'lucide-react';
+import { ArrowRight, ExternalLink, QrCode } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import { resolvePlatformQrLanding, type PlatformQrLink } from '@/lib/platform-qr-landing';
@@ -55,7 +55,7 @@ export function PlatformQrLanding({ entity, previewRedirect = false }: {
         <p className={styles.eyebrow}>{t('二维码已停用', 'QR code disabled')}</p>
         <h2 id="platform-qr-disabled-title">{t('这个入口暂时不可用', 'This destination is temporarily unavailable')}</h2>
         <p>{t('二维码本身有效，但管理员已经暂停了它。你仍可返回 CubeRoot 继续浏览。', 'The code is valid, but its owner has paused it. You can still return to CubeRoot.')}</p>
-        <AppLink className={styles.homeLink} href="/" prefetch={false}>{t('返回首页', 'Go to the homepage')}<ArrowRight aria-hidden /></AppLink>
+        <AppLink className={styles.homeLink} href="/" prefetch={false}><span className="sr-only">{t('返回首页', 'Go to the homepage')}</span><span aria-hidden="true">←</span></AppLink>
       </section>
     );
   }

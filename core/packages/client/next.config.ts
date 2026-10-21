@@ -127,10 +127,6 @@ const nextConfig: NextConfig = {
         headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
       },
       {
-        source: "/beian-badge.png",
-        headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
-      },
-      {
         source: "/cstimer_logo.png",
         headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
       },

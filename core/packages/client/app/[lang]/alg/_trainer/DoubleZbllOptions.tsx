@@ -1,5 +1,5 @@
 'use client';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import { Tooltip } from '@/components/Tooltip';

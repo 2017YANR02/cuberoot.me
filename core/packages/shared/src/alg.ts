@@ -577,11 +577,11 @@ async function fetchAlgFile(puzzle: AlgPuzzle, set: string, opts?: { fresh?: boo
   return await res.json() as AlgFile;
 }
 
-export async function loadAlg(puzzle: AlgPuzzle, set: string, opts?: { fresh?: boolean }): Promise<AlgFile> {
+export async function loadAlg(puzzle: AlgPuzzle, set: string, opts?: { fresh?: boolean; loader?: AlgFileLoader }): Promise<AlgFile> {
   const oneHandedCmll = puzzle === '3x3' && set === 'cmll'
     ? loadAlg('3x3', 'oh-cmll', opts).catch(() => null)
     : null;
-  let file = canonicalize3x3AlgFile(await (algFileLoader ?? fetchAlgFile)(puzzle, set, opts));
+  let file = canonicalize3x3AlgFile(await (opts?.loader ?? algFileLoader ?? fetchAlgFile)(puzzle, set, opts));
   if (oneHandedCmll) {
     const source = await oneHandedCmll;
     if (source) file = mergeOhCmll(file, source);

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Loader2, ImagePlus, Upload, Trash2, Crop } from 'lucide-react';
+import { Loader2, ImagePlus, Upload, Trash2, Crop } from '@app-foundation/icons/lucide';
 import { ValueField } from './SettingDrawer';
 import { PICTURE_FACE_ORDER, DEFAULT_PICTURE_CROP, countPictureFaces, drawPictureCrop, emptyPictureFaces, fileToPictureEditSourceDataUrl, normalizePictureCrop, panPictureCropBy, pictureCropGeometry, pictureEditSourceToFaceDataUrl, rotatePictureCropTo, zoomPictureCropAt, type PictureCrop, type PictureFace, type PictureFaces } from './engine/nxn/pictureCube';
 import { ClearButton } from '@/components/ClearButton';

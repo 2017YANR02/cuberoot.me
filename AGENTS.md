@@ -193,6 +193,7 @@ H11 在本机仅允许源码实现、静态检查和不接触 H11 表文件的�
 - 新增或修改 MutationObserver/ResizeObserver/effect 同步时，核对回调写入是否会再次触发自身或其他监听器；相同值不重复写，共享 DOM 状态只保留一个写入入口，卸载时清理订阅。涉及页面嵌套/弹窗时用有硬性次数上限的隔离回归验证挂载、关闭与重新挂载，不能只验证单组件或用延时掩盖循环。
 - 浏览器端源码禁用正则后行断言,改用捕获边界或显式前字符判断;Hook + CI 守卫。
 - UI 可用 lucide-react;不放页面级"返回"按钮(wizard 步骤间不算)。
+- **返回导航（维护者要求，2026-10-20）**：全站已有或确需保留的返回导航只显示箭头，不显示“返回”“首页”“Back”等文字；通过 `aria-label` 或 `sr-only` 保留明确的无障碍名称。返回首页复用 `BackHome`，其他返回导航优先复用已有组件，不另造带可见文字的版本。本规则不要求新增返回入口，也不适用于“返回公式”等恢复内容的功能操作。暂不增加 hook。
 - `BackHome` 必须放进与正文同宽的 header/topbar/wrap，禁直接挂在 full-bleed page root 下。
 - 按钮式交互必须真 `<button>`(剥 UA 样式)或 `AppLink`,禁 `<div/span onClick>`(iOS Safari tap 不可靠);例外 div 加 `role="button"`+`tabIndex`+`onKeyDown`;豁免注释 `allow-static-onclick`。守卫:hook + CI ratchet。
 - 选择/搜索输入框非空时显示清除按钮,统一 `components/ClearButton`。
@@ -323,3 +324,13 @@ H48 **建表**不得把正在写的表文件映射为计算缓冲区（禁止 fi
 ### 2026-10-17 日常 Opt10 统计启动规则更新（维护者明确授权）
 
 维护者同意取消历史换出计数锁定、保留运行保护，并要求开始续跑。仅 `scramble-stats-opt10-session`：每次用户主动启动时核验正式制品、当前压力、可用内存和独占锁，以当前 boot/Swapouts 建立本轮固定基线；历史非零计数或旧停止记录不再永久阻止新任务。运行中不得更新基线，新增换出、异常压力、RSS 超限或余量不足仍立即停止，不自动重启。每轮基线、资源采样及停止证据单独保存在 `.tmp/scramble-stats-opt10/runs/<timestamp>-<pid>/`，保留全部旧记录及求解结果。此条取代此前日常统计对48/80的逐次批准要求，不扩大到其他研究或建表任务。
+
+## 圆角
+
+统一复用 `@2017yanr02/continuous-corners`：全站入口 `core/packages/client/app/layout.tsx` 的 `SiteCorners`；自定义／反向圆角用包内 `continuousCornerRadii` 生成。禁止用渐变、手绘曲线或 CSS squircle 替代；真圆保持圆形。
+
+## 导航
+
+新增或修改导航相关 UI 前，先查 `@app-foundation/navigation-ui` 的 README 与导出，优先复用；通用能力补进共享包，避免本站重复实现。
+
+内部工作台与联系页侧栏复用 `@app-foundation/navigation-ui`，接入见 `core/packages/client/app/[lang]/{workspace,contact}/page.tsx`；布局、动画和圆角在共享包修改，业务菜单与权限留在本站。

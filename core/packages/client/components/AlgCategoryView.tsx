@@ -19,14 +19,17 @@ import { parseAsBoolean, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import { useTrainingQueryState as useQueryState, useTrainingQueryStates as useQueryStates } from '@/lib/training-host';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ChevronRight, Shuffle, Plus, ShieldCheck, AlertTriangle, HelpCircle } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Shuffle, Plus, ShieldCheck, AlertTriangle, HelpCircle } from '@app-foundation/icons/lucide';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, rectSortingStrategy, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import {
   getAlgSetMeta, ALG_PUZZLES,
   type AlgCase, type AlgEntry, type AlgFile, type AlgPuzzle, type AlgSubmission, type AlgTag,
 } from '@cuberoot/shared';
-import { loadAlg, alignAlgFile, caseAlgIssue, commonCaseSetup } from '@/lib/alg_case_alignment';
+import { alignAlgSelection, alignAlgFile, caseAlgIssue, commonCaseSetup } from '@/lib/alg_case_alignment';
+import { warmAlgValidation } from '@/lib/alg_validation';
+import { algLibraryKey, loadLibrarySource, subscribeAlgLibrary } from '@/lib/alg-library-cache';
+import dynamic from 'next/dynamic';
 import { SET_GOAL } from '@/lib/alg_goals';
 import { VisualCube } from '@/components/VisualCube';
 import { CaseThumb } from '@/components/CaseThumb';
@@ -43,9 +46,10 @@ import {
 } from '@/lib/alg_thumb_plan';
 import AlgCard from '@/components/AlgCard';
 import CommunityAlgs from '@/components/CommunityAlgs';
-import AdminCaseEditor, { type AdminEditorState } from '@/components/AdminCaseEditor';
+import type { AdminEditorState } from '@/components/AdminCaseEditor';
+const AdminCaseEditor = dynamic(() => import('@/components/AdminCaseEditor'));
 import type { AlgInvalidMark } from '@/components/AlgEditor';
-import ValidationReportModal from '@/components/ValidationReportModal';
+const ValidationReportModal = dynamic(() => import('@/components/ValidationReportModal'));
 import SortableAlgRow from '@/components/SortableAlgRow';
 import SortableCard from '@/components/SortableCard';
 import { useAlgViewMode } from '@/components/AlgViewModeToggle';
@@ -313,10 +317,11 @@ function SubgroupIndex({
 
   // 就地展开只在「两级 + 顶层组不多」时用;组太多(1LLL)就地展开会太长,退回卡片网格。
   const inlineExpand = (inlineCases || tops.some(([, e]) => e.subs.size > 0)) && tops.length <= 10;
-  // 同时限制数据规模和实际子卡片数：ZBLL 等大公式集默认收起，
-  // CLL / COLL 等小集合保留一眼看全；收起的子卡片不挂载。
+  // ZBLL 首页默认展开 COLL 分类卡片，具体情况仍进入子组后才展示。
+  // 其他公式集按数据规模和实际子卡片数决定；收起的子卡片不挂载。
   const childCardCount = tops.reduce((total, [, group]) => total + (inlineCases ? group.cases.length : group.subs.size), 0);
-  const defaultCollapsed = cases.length > 100 || childCardCount > 48;
+  const defaultCollapsed = !(puzzle === '3x3' && set === 'zbll')
+    && (cases.length > 100 || childCardCount > 48);
   // 仅记录手动选择，让异步数据刷新后未操作的分组仍遵循规模规则。
   const [collapsedOverrides, setCollapsedOverrides] = useState<Map<string, boolean>>(() => new Map());
   const toggle = (t: string) => setCollapsedOverrides(prev => {
@@ -347,6 +352,7 @@ function SubgroupIndex({
           return (
             <AlgCard
               key={topLabel || '_root_'}
+              className="alg-card--subgroup-plain"
               href={`/alg/${puzzle}/${set}/${slug}${querySuffix ?? ''}`}
               // zbls 的顶层组分的是 F2L 对(A+ / A− …),顶层朝向留给组内的 case 分 ——
               // 组封面画上黄色只会让 A+ 那 8 张看着都一样,所以这里就画 F2L(顶层灰)。
@@ -408,6 +414,7 @@ function SubgroupIndex({
               return (
                 <AlgCard
                   key={subLabel}
+                  className="alg-card--subgroup-plain"
                   href={inlineCases
                     ? `${algCaseDetailHref(puzzle, set, (sample.id != null && caseSlugs.byId.get(sample.id)) || caseSlugBase(set, sample))}${querySuffix ?? ''}`
                     : `/alg/${puzzle}/${set}/${subSlug}${querySuffix ?? ''}`}
@@ -427,7 +434,7 @@ export interface AlgCategoryViewProps {
   puzzleParam: string;
   set: string;
   subgroupParam?: string;
-  /** 上层(哨兵壳分流)已经加载好的整份 set,直接复用免二次拉。admin 仍会 fresh 重拉。 */
+  /** 上层(哨兵壳分流)已经加载好的整份 set,当前子组已对齐，直接复用；父层负责管理员刷新。 */
   initialData?: AlgFile;
   /** A curated view over one DB-backed set, used by learning paths such as Simple ZBLL. */
   collection?: {
@@ -623,6 +630,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     ? 'simplified'
     : zbllDiagramParam;
   const recognitionSimplified = canShowAllCases ? zbllDiagramMode === 'simplified' : simplified;
+  const needsCaseList = optimalMoves !== null || (canShowAllCases && (showAllCasesParam || simplified || zbllDiagramMode !== 'full'));
   // 列表视图(`cards` 只看图 / `full` 公式内联)。语义 + localStorage key 都在
   // AlgViewModeToggle 里,`/alg` 下所有 case 列表页共用同一个偏好。
   const [view, changeView] = useAlgViewMode();
@@ -734,21 +742,26 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     return map;
   }, [submissions]);
 
-  useEffect(() => { setData(null); }, [puzzleParam, set, isAdmin]);
+  useEffect(() => { setData(initialData ?? null); }, [puzzleParam, set, initialData]);
   useEffect(() => {
     if (!validPuzzle || !meta) { setError('unknown set'); setData(null); return; }
+    if (initialData) { setData(initialData); setError(null); return; }
     let live = true;
-    setError(null);
-    // 哨兵壳分流已经把整份 set 拉好传下来(initialData):非 admin 直接复用,免二次 fetch。
-    // 普通读取会核对版本；管理员保留显式 fresh 入口。
-    const pending = initialData && !isAdmin ? alignAlgFile(initialData)
-      : loadAlg(puzzleParam, set, { fresh: isAdmin });
-    pending.then(d => {
-      if (!live) return;
-      setData(d);
-    }).catch(e => { if (live) setError(String(e)); });
-    return () => { live = false; };
-  }, [puzzleParam, set, validPuzzle, meta, isAdmin, initialData, refreshKey]);
+    let revision = 0;
+    const refresh = () => {
+      const request = ++revision;
+      if (!meta.umbrella || needsCaseList || collection) void warmAlgValidation(puzzleParam).catch(() => {});
+      loadLibrarySource(puzzleParam, set).then(file => {
+        const indexOnly = puzzleParam === '3x3' && meta.umbrella && !subgroupParam && !needsCaseList && !collection;
+        return alignAlgSelection(file, indexOnly ? [] : collection ? file.cases.filter(collection.include) : file.cases);
+      }).then(d => {
+        if (live && request === revision) { setData(d); setError(null); }
+      }).catch(e => { if (live && request === revision) setError(String(e)); });
+    };
+    const unsubscribe = subscribeAlgLibrary(algLibraryKey(puzzleParam, set), refresh);
+    refresh();
+    return () => { live = false; unsubscribe(); };
+  }, [puzzleParam, set, validPuzzle, meta, initialData, refreshKey, subgroupParam, needsCaseList, collection]);
 
   useEffect(() => {
     if (!data || !validPuzzle) return;
@@ -760,9 +773,15 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
 
   /** 管理员进入 set 时自动扫。case 改完(data 变 / validationRefreshKey)重扫,红标跟着消。 */
   useEffect(() => {
-    if (!isAdmin || !data || !validPuzzle) { setInvalidAlgs(new Map()); return; }
+    if (!isAdmin || !data || !validPuzzle || (meta?.umbrella && !needsCaseList && !collection && (!subgroupParam || data.cases.some(c => {
+      const parts = (c.subgroup || '').toLowerCase().split('/');
+      return parts.length > 1 && parts[0] === canonicalZbllSubgroupSlug(set, subgroupParam.toLowerCase());
+    })))) { setInvalidAlgs(new Map()); return; }
     let cancelled = false;
-    scanCases(puzzleParam, set, data.cases, { shouldCancel: () => cancelled })
+    scanCases(puzzleParam, set, subgroupParam
+      ? data.cases.filter(c => (c.subgroup || '').toLowerCase().split('/').includes(
+        canonicalZbllSubgroupSlug(set, decodeURIComponent(subgroupParam).toLowerCase()) ?? ''))
+      : data.cases, { shouldCancel: () => cancelled })
       .then(fails => {
         if (cancelled) return;
         const m = new Map<string, string>();
@@ -774,7 +793,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       })
       .catch(e => console.warn('[alg] validation scan failed', e));
     return () => { cancelled = true; };
-  }, [data, puzzleParam, set, validPuzzle, validationRefreshKey, isAdmin]);
+  }, [data, puzzleParam, set, subgroupParam, validPuzzle, validationRefreshKey, isAdmin, meta, needsCaseList, collection]);
 
   // `#<case 名>` 锚点来自分享链接、元数据弹窗和个人页校验汇总。选中目标后滚动并闪一下；
   // 闪烁用 flashId 保持在 React 状态中，避免卡片重渲染覆盖命令式 class。
@@ -1088,9 +1107,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
 
   return (
     <div className="alg-root">
-      <div className="alg-cat-header">
+      <div className="alg-cat-header alg-cat-header--list">
         <Link href={backTo} className="alg-back">
-          <ArrowLeft size={14} /> {tr({ zh: '返回', en: 'Back' })}
+          <ArrowLeft size={14} /> <span className="sr-only">{tr({ zh: '返回', en: 'Back' })}</span>
         </Link>
         <h1 className="alg-cat-title">
           <EventIcon event={puzzleParam} className="alg-cat-title-icon" title={puzzleParam} />
@@ -1099,13 +1118,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
         </h1>
         {(collection || meta.short) && (
           <p className="alg-cat-intro">{collection ? tr(collection.intro) : tr(meta.intro ?? meta)}</p>
-        )}
-        {data && (
-          <div className="alg-cat-metrics">
-            <span className="alg-cat-metric">
-              {headerCaseCount}{tr({ zh: '个', en: ' cases' })}
-            </span>
-          </div>
         )}
         {/* 所有公式集共用列表设置，偏好跨 `/alg` 页面生效。 */}
         {data && (
@@ -1291,6 +1303,10 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                 <AlgImageDownloadButton batch build={() => caseImageBatch(buildExportOptions())} />
               </div>
             )}
+            <div className="alg-list-settings-row">
+              <span>{tr({ zh: '情况数量', en: 'Case count' })}</span>
+              <span>{headerCaseCount}</span>
+            </div>
           </AlgListSettings>
         )}
         {puzzleParam === 'fto' && (
@@ -1421,6 +1437,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
               return (
                 <AlgCard
                   key={subLabel}
+                  className="alg-card--subgroup-plain"
                   href={`/alg/${puzzleParam}/${set}/${sub2Slug}${sq1QuerySuffix}`}
                   /* 子组卡片接近视口后才在本地生成 SVG，避免首屏绘制整份列表。 */
                   thumb={<CaseThumb local puzzle={puzzleParam as AlgPuzzle} set={set} sticker={sample.sticker} alg={firstAlg} setup={sample.setup} size={thumbSize} mask={pickerMask} loading="lazy" orientation={effectiveOrientation} />}
@@ -1592,7 +1609,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                           strategy={verticalListSortingStrategy}
                         >
                       <div className="alg-case-head">
-                        <div className="alg-case-figure">
                         <div className={`alg-case-cube${useSvDualThumb || useZbllDualThumb ? ' is-dual' : ''}`}>
                           {useSvDualThumb ? (
                             <>
@@ -1659,6 +1675,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                             />
                           )}
                         </div>
+                        <div className="alg-case-info">
                           <div className="alg-case-name">
                             <Link href={caseDetailHref(c)} prefetch={false} className="alg-case-detail-link"
                               aria-label={tr({ zh: `查看 ${cardName} 详情`, en: `View ${cardName} details` })}>
@@ -1691,8 +1708,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                               </button>
                             )}
                           </div>
-                        </div>
-                        <div className="alg-case-info">
                           {effectiveView === 'full' && c.setup && (
                             <SetupLine
                               puzzle={puzzleParam}

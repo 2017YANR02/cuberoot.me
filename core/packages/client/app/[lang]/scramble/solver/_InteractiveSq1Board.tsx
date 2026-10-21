@@ -26,7 +26,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { RotateCcw, Undo2 } from 'lucide-react';
+import { RotateCcw, Undo2 } from '@app-foundation/icons/lucide';
 import SimStage from '@/components/sim-embed/SimStage';
 import { useT } from '@/hooks/useT';
 import { parseSq1Tokens, simplifySq1Alg, type Sq1Token } from '@cuberoot/shared/sq1-notation';

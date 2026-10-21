@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowDown, ArrowDownToLine, ArrowLeft, ArrowRight, ArrowUp, ArrowUpFromLine, CloudSun, Copy, Crosshair, Drone, Footprints, Maximize, Move, Plus, Redo2, RotateCcw, RotateCw, Trash2, Undo2 } from 'lucide-react';
+import { ArrowDown, ArrowDownToLine, ArrowLeft, ArrowRight, ArrowUp, ArrowUpFromLine, CloudSun, Copy, Crosshair, Drone, Footprints, Maximize, Move, Plus, Redo2, RotateCcw, RotateCw, Trash2, Undo2 } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import HeaderToggles from '@/components/HeaderToggles';
 import BoolToggle from '@/components/BoolToggle';

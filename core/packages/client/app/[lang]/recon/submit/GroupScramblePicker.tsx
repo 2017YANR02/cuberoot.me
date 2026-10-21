@@ -11,7 +11,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { X } from 'lucide-react';
+import { X } from '@app-foundation/icons/lucide';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { useTranslation } from 'react-i18next';
 import { fetchGroupScrambles, type GroupScrambles } from '@/lib/wca-results-api';

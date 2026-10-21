@@ -1,7 +1,7 @@
 'use client';
 
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
-import { FilePlus2, Sheet, Upload } from 'lucide-react';
+import { FilePlus2, Sheet, Upload } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import WcaAuth from '@/components/WcaAuth';

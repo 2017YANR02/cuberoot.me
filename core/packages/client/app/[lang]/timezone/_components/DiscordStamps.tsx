@@ -18,7 +18,7 @@
  */
 
 import { useMemo } from 'react';
-import { Check, Copy } from 'lucide-react';
+import { Check, Copy } from '@app-foundation/icons/lucide';
 import { useCopy } from '@/hooks/useCopy';
 import { tr, useLang } from '@/i18n/tr';
 import { localZone, zoneOffsetMinutes } from '@cuberoot/shared/tz';

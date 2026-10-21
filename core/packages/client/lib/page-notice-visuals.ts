@@ -4,7 +4,7 @@
 import {
   Info, AlertTriangle, Wrench, Hammer, Bug, RefreshCw, FlaskConical, Eye,
   Sparkles, Rocket, Megaphone, Gift, Bell, Zap, Archive,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import type { NoticeLevel } from './page-notices-api';
 
 export const LEVEL_ICON: Record<NoticeLevel, typeof Info> = {

@@ -4,7 +4,7 @@
 // One reaction per user per post (clicking your current kind removes it).
 
 import { useEffect, useState } from 'react';
-import { SmilePlus } from 'lucide-react';
+import { SmilePlus } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 import { useAuthStore, useAuthUser } from '@/lib/auth-store';
 import {

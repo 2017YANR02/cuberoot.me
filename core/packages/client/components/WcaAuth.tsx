@@ -7,7 +7,7 @@
  */
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Key } from 'lucide-react';
+import { Key } from '@app-foundation/icons/lucide';
 import { useTranslation } from 'react-i18next';
 import AppLink from '@/components/AppLink';
 import { useAuthStore, nextQuery } from '@/lib/auth-store';

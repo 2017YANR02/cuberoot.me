@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
-import { BadgeCheck, ExternalLink, EyeOff, GraduationCap, MapPin, Mic2, Pencil, Plus, UserRound } from 'lucide-react';
+import { BadgeCheck, ExternalLink, EyeOff, GraduationCap, MapPin, Mic2, Pencil, Plus, UserRound } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { PlatformTeacherCourses } from '@/components/platform/PlatformTeacherCourses';
 import BackHome from '@/components/BackHome';

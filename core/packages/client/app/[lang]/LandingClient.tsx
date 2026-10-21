@@ -1,4 +1,6 @@
 'use client';
+import { IcpRegistration, PublicSecurityRegistration } from '@app-foundation/registration-ui';
+import beianBadge from '@app-foundation/registration-ui/beian-badge.png';
 import { useDouyinToolSurface } from '@/lib/douyin-content';
 import { douyinContentAvailable } from '@cuberoot/shared/douyin-content';
 
@@ -10,7 +12,7 @@ import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'r
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { parseAsBoolean, useQueryState } from 'nuqs';
-import { ArrowRight, Blocks, Crown, Download, Heart, Layers3, Lock, LockOpen, LogIn, User, type LucideIcon } from 'lucide-react';
+import { ArrowRight, Blocks, Crown, Download, Heart, Layers3, Lock, LockOpen, LogIn, User, type LucideIcon } from '@app-foundation/icons/lucide';
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortable';
 import Link from '@/components/AppLink';
@@ -24,6 +26,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthUser, nextQuery } from '@/lib/auth-store';
 import { fmtVipId } from '@/lib/membership-format';
 import LandingSearch from '@/components/LandingSearch';
+import ContactDetails from '@/components/ContactDetails';
 import PersonUpcomingComps from '@/components/persons/sections/PersonUpcomingComps';
 import SearchInput from '@/components/SearchInput';
 import LazyVisible from '@/components/LazyVisible';
@@ -408,7 +411,6 @@ export default function LandingPage() {
     return (
       <section key={section.id} className="cards-section" aria-labelledby={`${section.id}-members-title`}>
         <div className="section-header">
-          <div className="section-eyebrow">{section.eyebrow}</div>
           <div className="landing-member-heading">
             <h2 id={`${section.id}-members-title`} className="section-title-serif">{section.title}</h2>
             {renderLock(lockId, locked, false, section.title)}
@@ -589,7 +591,6 @@ export default function LandingPage() {
           return grid && (
             <section key={sec.id} id={`section-${sec.id}`} className="cards-section">
               <div className="section-header">
-                <div className="section-eyebrow">{tr(sec.eyebrow)}</div>
                 <h2 className="section-title-serif">{tr(sec.title)}</h2>
               </div>
               {grid}
@@ -612,6 +613,10 @@ export default function LandingPage() {
           {renderMemberSections(true)}
         </section>
       )}
+
+      <div className="landing-contact-details">
+        <ContactDetails />
+      </div>
 
       <div className="footer">
         {/* allow-nested-link: footer entries are sibling links with text-only contents. */}
@@ -639,21 +644,24 @@ export default function LandingPage() {
         </a>
       </div>
 
+      <div className="beian company-contact">
+        <span>{tr({ zh: '上海魔方根科技有限公司', en: 'Shanghai CubeRoot Technology Co., Ltd.' })}</span>
+        <span>{tr({
+          zh: '联系地址：上海市徐汇区龙耀路8号阿里巴巴徐汇滨江园区X区X5-406',
+          en: 'Contact address: X5-406, Zone X, Alibaba Xuhui Riverside Campus, 8 Longyao Road, Xuhui District, Shanghai',
+        })}</span>
+      </div>
+
       {showBeian && (
         <div className="beian">
-          <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">
-            沪ICP备2025130431号
-          </a>
+          <IcpRegistration number="沪ICP备2025130431号" />
           <span className="beian-sep">|</span>
-          <a
-            href="https://beian.mps.gov.cn/#/query/webSearch?code=31010902100930"
-            target="_blank"
-            rel="noopener noreferrer"
+          <PublicSecurityRegistration
+            number="沪公网安备31010902100930号"
+            code="31010902100930"
+            badgeSrc={typeof beianBadge === "string" ? beianBadge : beianBadge.src}
             className="beian-mps"
-          >
-            <img src="/beian-badge.png" alt="" width="14" height="14" />
-            沪公网安备31010902100930号
-          </a>
+          />
         </div>
       )}
       <OnboardingGuideModal open={guideOpen} onClose={closeGuide} />

@@ -14,7 +14,7 @@
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
-import { ArrowLeft, Loader2, Dumbbell } from 'lucide-react';
+import { ArrowLeft, Loader2, Dumbbell } from '@app-foundation/icons/lucide';
 import { parseAsStringEnum } from 'nuqs';
 import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import { useTranslation } from 'react-i18next';

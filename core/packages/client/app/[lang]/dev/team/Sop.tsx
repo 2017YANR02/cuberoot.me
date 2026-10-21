@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { ChevronDown, ListChecks, Users } from 'lucide-react';
+import { ChevronDown, ListChecks, Users } from '@app-foundation/icons/lucide';
 import { useT } from '@/hooks/useT';
 import { useCopy } from '@/hooks/useCopy';
 import { useAuthStore, useAuthUser } from '@/lib/auth-store';

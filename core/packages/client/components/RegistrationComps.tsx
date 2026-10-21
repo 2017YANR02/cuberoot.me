@@ -5,7 +5,7 @@
 // 比赛,置顶为「已关注」组,跨设备同步(server PG comp_follows)。
 // 取数 + 分组纯逻辑在 lib/comp-registration.ts;关注 API 在 lib/comp-follows.ts。
 import { useMemo, useState } from 'react';
-import { Star, LogIn } from 'lucide-react';
+import { Star, LogIn } from '@app-foundation/icons/lucide';
 import type { Comp } from '@/lib/comp-search';
 import {
   buildRegView,

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Copy, ExternalLink, Search, Settings2 } from 'lucide-react';
+import { Copy, ExternalLink, Search, Settings2 } from '@app-foundation/icons/lucide';
 import { parseAsString, useQueryState } from 'nuqs';
 import { loadAlg, type AlgFile } from '@cuberoot/shared';
 import AlgSimPlayer from '@/components/AlgPlayer/AlgSimPlayer';

@@ -5,7 +5,7 @@
 import { Tooltip } from '@/components/Tooltip';
 import { useMemo, useState, type ReactNode } from 'react';
 import { useParams } from 'next/navigation';
-import { X, Search } from 'lucide-react';
+import { X, Search } from '@app-foundation/icons/lucide';
 import { ALL_EVENT_IDS, CANCELLED_EVENT_IDS, EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
 import { eventDisplayName } from '@/lib/wca-events';
 import { CubingIcon } from './EventIcon/EventIcon';

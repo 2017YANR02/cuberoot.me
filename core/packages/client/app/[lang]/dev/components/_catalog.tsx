@@ -20,7 +20,7 @@ import {
   FileText, FilePen, BookMarked, KeyRound, Link2, ListOrdered, LayoutGrid, ToggleLeft,
   ChevronsUpDown, Type, Tag, Component as ComponentIcon, PanelTop, Info, Sigma, Box, ListChecks,
   Palette, Disc, MousePointerClick, Image as ImageIcon, type LucideIcon,
-} from 'lucide-react';
+} from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 import BoolToggle from '@/components/BoolToggle';
 import TrainingNavButton from '@/components/TrainingNavButton';
@@ -1532,6 +1532,14 @@ export const CATALOG: ComponentEntry[] = [
     usage: '<HomeLink>← Home</HomeLink>',
   },
   {
+    name: 'ContactDetails',
+    import: "import ContactDetails from '@/components/ContactDetails';",
+    category: 'more',
+    zh: '首页与联系页共用的应用平台、社交平台及联系方式三列，包含二维码弹层、链接及复制交互。',
+    en: 'Shared app platforms, social platforms and contact details for the homepage and contact page, including QR popovers, links and copy actions.',
+    usage: '<ContactDetails />',
+  },
+  {
     name: 'BackHome',
     import: "import BackHome from '@/components/BackHome';",
     category: 'nav',
@@ -2109,6 +2117,13 @@ export const CATALOG: ComponentEntry[] = [
     category: 'toggle',
     zh: `网站端二阶持久化薄适配:localStorage 与跨标签同步留在 client，可视 UI 统一委托 TimerScramble222Config，类型/口径契约来自 @cuberoot/shared/timer。`,
     en: `Thin Web persistence adapter for 2x2: localStorage and cross-tab synchronization stay in the client, while all visible UI delegates to TimerScramble222Config and the type/style contract comes from @cuberoot/shared/timer.`,
+  },
+  {
+    name: 'ScrambleIvyModePicker',
+    import: "import ScrambleIvyModePicker from '@/components/ScrambleIvyModePicker';",
+    category: 'toggle',
+    zh: '枫叶 R L D B / R L U B 打乱类型，U 绕 UBL 角转动。',
+    en: 'Ivy R L D B / R L U B scramble type; U turns about UBL.',
   },
   {
     name: 'ScrambleRediModePicker',

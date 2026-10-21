@@ -32,6 +32,7 @@ test("deduplicates Vercel request records and detects a same-hour spike", () => 
   assert.equal(vercel.requests, 120);
   assert.equal(vercel.baselinePageCandidates, 20);
   assert.deepEqual(vercel.alerts, ["page_candidates_spike"]);
+  assert.equal(formatTrafficNotification(accumulator.report()), null);
   assert.deepEqual(vercel.topRoutes, [{ name: "/zh/calc", count: 120 }]);
   assert.deepEqual(vercel.agentClasses, [{ name: "declared automation", count: 120 }]);
 });
@@ -88,6 +89,7 @@ test("keeps independent API coverage and alerts separate from page traffic", () 
   assert.equal(api.rateLimited429, 10);
   assert.equal(api.baselineRequests, 100);
   assert.deepEqual(api.alerts, ["api_requests_spike", "rate_limited_high"]);
+  assert.equal(formatTrafficNotification(accumulator.report()), null);
   assert.deepEqual(api.topRoutes, [{ name: "/v1/cubing-live/:id", count: 600 }]);
   assert.doesNotMatch(JSON.stringify(api), /PrivateComp|PrivateAgent|1\.2\.3\.4/);
 });
@@ -127,13 +129,7 @@ test("confirmed maintenance is blocked traffic, not a service failure, even afte
   assert.equal(api.successfulResponses, 0);
   assert.equal(api.unexpected5xx, 0);
   assert.deepEqual(api.alerts, ["maintenance_traffic"]);
-  const notification = formatTrafficNotification(report);
-  assert.equal(notification.title, "CubeRoot 访问量提醒");
-  assert.match(notification.body, /09-26 05:00 至 09-26 06:00（北京时间，整小时，非实时）/);
-  assert.match(notification.body, /收到 41,384 次请求，确认拦截 41,384 次，成功响应 0 次/);
-  assert.match(notification.body, /当前维护开关已关闭/);
-  assert.match(notification.body, /不包含 Vercel/);
-  assert.doesNotMatch(notification.body, /server_errors_high|PrivateComp|1\.2\.3\.4/);
+  assert.equal(formatTrafficNotification(report), null);
 });
 
 test("legacy 503s stay unclassified, never silently assigned to current maintenance", () => {
@@ -165,9 +161,30 @@ test("mixed outcomes reconcile and real errors remain visible during maintenance
   assert.equal(api.unclassified503, 0);
   assert.equal(formatTrafficNotification(report).title, "CubeRoot 服务异常");
   assert.match(formatTrafficNotification(report).body, /其他响应 100 次/);
+  assert.match(formatTrafficNotification(report).body, /09-26 05:00 至 09-26 06:00（北京时间，整小时，非实时）/);
+  assert.match(formatTrafficNotification(report).body, /已达到异常阈值，需要排查/);
   assert.deepEqual(api.alerts, ["rate_limited_high", "server_errors_high", "maintenance_traffic"]);
 });
 
 test("quiet reports do not send notifications", () => {
   assert.equal(formatTrafficNotification(new TrafficAccumulator().report()), null);
+});
+
+test("page growth with sparse errors stays quiet; a service failure reports only its source", () => {
+  const accumulator = new TrafficAccumulator(Date.parse("2026-10-20T05:58:00Z"), false);
+  const timestamp = Date.parse("2026-10-20T04:15:00Z");
+  const sample = { source: "nginx", timestamp, method: "GET", path: "/zh/timer", status: 200, referrer: "", userAgent: "test" };
+  accumulator.addInput("nginx");
+  accumulator.addInput("api");
+  for (let i = 0; i < 100; i++) accumulator.add({ ...sample, timestamp: timestamp - 86_400_000 });
+  for (let i = 0; i < 40526; i++) accumulator.add({ ...sample, status: i < 2 ? 502 : 200 });
+  for (let i = 0; i < 52904; i++) accumulator.add({ ...sample, source: "api", path: "/v1/timer", status: i < 21 ? 502 : 200 });
+  assert.deepEqual(accumulator.report().sources[0].alerts, ["page_candidates_spike"]);
+  assert.equal(formatTrafficNotification(accumulator.report()), null);
+  accumulator.addInput("next");
+  for (let i = 0; i < 100; i++) accumulator.add({ ...sample, source: "next", status: i < 5 ? 502 : 200 });
+  const notification = formatTrafficNotification(accumulator.report());
+  assert.equal(notification.title, "CubeRoot 服务异常");
+  assert.match(notification.body, /预览入口：/);
+  assert.doesNotMatch(notification.body, /阿里云主站：|数据接口：/);
 });

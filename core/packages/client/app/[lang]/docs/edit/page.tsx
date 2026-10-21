@@ -3,7 +3,7 @@
 import { getWebAccessToken } from '@/lib/web-session';
 import { useCallback, useEffect, useState } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
-import { ChevronLeft, Share2 } from 'lucide-react';
+import { ChevronLeft, Share2 } from '@app-foundation/icons/lucide';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import * as Y from 'yjs';
 import AppLink from '@/components/AppLink';

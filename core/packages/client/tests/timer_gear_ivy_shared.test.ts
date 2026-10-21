@@ -1,5 +1,6 @@
+import { cstimerScramble } from '@/lib/cstimer-scramble';
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { generateGearTimerScramble, solveGear } from '@cuberoot/puzzle-solvers/gear';
 import { generateIvyTimerScramble, solveIvy } from '@cuberoot/puzzle-solvers/ivy';
@@ -18,6 +19,16 @@ const webDispatcher = readFileSync(
 );
 
 describe('Web/Mobile shared Gear and Ivy Timer providers', () => {
+  it('generates sheet Ivy scrambles with the shared solver without a classic Worker', async () => {
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    try {
+      const expected = generateIvyTimerScramble(() => 0.5);
+      for (let i = 0; i < 7; i++) await expect(cstimerScramble('ivy')).resolves.toBe(expected);
+    } finally {
+      random.mockRestore();
+    }
+  });
+
   it('keeps the former Web solver entries as thin public-package adapters', () => {
     expect(gearAdapter).toContain("export * from '@cuberoot/puzzle-solvers/gear'");
     expect(ivyAdapter).toContain("export * from '@cuberoot/puzzle-solvers/ivy'");

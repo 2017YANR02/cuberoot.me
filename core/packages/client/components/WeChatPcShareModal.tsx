@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, Copy, Images, LoaderCircle, MessageCircle, Share2 } from 'lucide-react';
+import { Check, Copy, Images, LoaderCircle, MessageCircle, Share2 } from '@app-foundation/icons/lucide';
 import { ClearButton } from '@/components/ClearButton';
 import { tr } from '@/i18n/tr';
 import { useModalDismiss } from '@/hooks/useModalDismiss';

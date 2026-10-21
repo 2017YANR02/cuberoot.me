@@ -4,7 +4,7 @@
 // Text rendering reuses the API's Bark formatter (id-cached).
 import { useEffect, useState, useMemo } from 'react';
 import Link from '@/components/AppLink';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check } from '@app-foundation/icons/lucide';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { apiUrl } from '@/lib/api-base';
 import { compLinkProps, compRecordHref } from '@/lib/comp-link';

@@ -10,7 +10,7 @@
 
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ArrowRight, LibraryBig, ScrollText } from 'lucide-react';
+import { ArrowLeft, ArrowRight, LibraryBig, ScrollText } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { useT } from '../../../../hooks/useT';
 import { useLang, tr } from '@/i18n/tr';
@@ -112,7 +112,7 @@ export default function RegArticleLayout({ slug, children }: { slug: string; chi
             )}
           </p>
           <p style={{ marginTop: 12 }}>
-            <Link href="/regulation">{t('← 返回规则总览', '← Back to overview')}</Link>
+            <Link href="/regulation"><span aria-hidden="true">←</span><span className="sr-only">{t('← 返回规则总览', '← Back to overview')}</span></Link>
             {' · '}
             <a href={WCA_REG_FULL} target="_blank" rel="noopener noreferrer">{t('官方规则全文', 'Official Regulations (full)')}</a>
             {' · '}

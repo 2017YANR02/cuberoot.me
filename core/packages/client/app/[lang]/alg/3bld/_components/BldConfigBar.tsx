@@ -5,7 +5,7 @@
 
 import { useState, type JSX } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Settings2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Settings2, ChevronDown, ChevronUp } from '@app-foundation/icons/lucide';
 import { ClearButton } from '@/components/ClearButton';
 import BoolToggle from '@/components/BoolToggle';
 import { useBldConfigStore } from '../_store/bld-config-store';

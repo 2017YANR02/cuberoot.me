@@ -1,5 +1,5 @@
 import Link from '@/components/AppLink';
-import { FileText } from 'lucide-react';
+import { FileText } from '@app-foundation/icons/lucide';
 import { tutorialMediaUrl, type CatalogEntry, type Lang } from '../_lib/useTutorialCatalog';
 import { tr } from '@/i18n/tr';
 
