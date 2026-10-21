@@ -2,12 +2,14 @@
 import { availableParallelism } from 'node:os';
 import { appendFile, mkdir, open, readFile, readdir, rename, stat, unlink, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   appendUniqueById, coreDir, exe, exists, fileSize, ids, jobDir, lineCount, openAnalyzerSession,
   puzzleDir, recordSeconds, repoRoot, run, runNode, runPnpm, runTs, solverDir, stamp,
   tableDir, taskProgress, wcaDir,
 } from './common.js';
 import { runPuzzles } from './puzzles.js';
+import { sq1GrindResourcePlan } from './sq1-grind.js';
 import { syncAnalyzerChunks, validateAnalyzerOutput } from './analyzer-chunks.js';
 import { preflightStatsEngine, statsEngine } from '../../solver/333opt/stats-engine.mts';
 import { registerStatsSummary, statsProtectionReason, statsResourcePlan, withStatsResourceMonitor } from './resource-monitor.js';
@@ -16,7 +18,7 @@ type Job = 'stages' | '333opt' | 'puzzles';
 type Options = {
   jobs: Job[]; puzzles: string[]; variants: string[]; maxChunks: number;
   chunkSize?: number; dryRun: boolean; useCached: boolean; sourceCsv?: string;
-  skipSolve333: boolean; plan: boolean; noPublish: true;
+  skipSolve333: boolean; skipSq1Grind: boolean; plan: boolean; noPublish: true;
 };
 const variantBins: Record<string, string> = {
   daisy: 'daisy_analyzer', first_layer: 'first_layer_analyzer', eo: 'eo_cross_analyzer',
@@ -89,11 +91,11 @@ async function syncStageTriplet(required: boolean): Promise<boolean> {
 }
 
 function csv(value: string): string[] { return value === 'none' ? [] : value.split(',').map(item => item.trim()).filter(Boolean); }
-function parse(argv: string[]): Options {
+export function parseLocalArgs(argv: string[]): Options {
   const options: Options = {
     jobs: ['stages', '333opt', 'puzzles'], puzzles: ['222', 'pyraminx', 'skewb', 'clock', 'sq1'],
     variants: Object.keys(variantBins), maxChunks: 0, dryRun: false, useCached: false,
-    skipSolve333: false, plan: false, noPublish: true,
+    skipSolve333: false, skipSq1Grind: false, plan: false, noPublish: true,
   };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
@@ -102,6 +104,7 @@ function parse(argv: string[]): Options {
     else if (arg === '--dry-run') options.dryRun = true;
     else if (arg === '--use-cached') options.useCached = true;
     else if (arg === '--skip-solve-333') options.skipSolve333 = true;
+    else if (arg === '--skip-sq1-grind') options.skipSq1Grind = true;
     else if (arg === '--jobs') {
       const items = csv(argv[++i] ?? '');
       options.jobs = items.includes('all') ? ['stages', '333opt', 'puzzles'] : items as Job[];
@@ -250,9 +253,13 @@ async function run333(options: Options, inject: boolean): Promise<boolean> {
 
 type Summary = { startedAt: string; finishedAt?: string; status: string; protectionReason?: string; active?: string; partial?: string[]; steps: Array<{ name: string; seconds: number }> };
 async function main(): Promise<void> {
-  const options = parse(process.argv.slice(2));
+  const options = parseLocalArgs(process.argv.slice(2));
   if (options.plan) {
-    console.log(JSON.stringify({ ...options, analyzers: requiredAnalyzers(options), resourceBudgets: statsResourcePlan(requiredAnalyzers(options), stageEnv(), options.jobs.includes('333opt')), repoRoot, coreDir, jobDir, wcaDir, puzzleDir, tableDir, optimalEngine: statsEngine(repoRoot), publish: false }, null, 2));
+    const resourceBudgets = [
+      ...statsResourcePlan(requiredAnalyzers(options), stageEnv(), options.jobs.includes('333opt')),
+      ...(options.jobs.includes('puzzles') && options.puzzles.includes('sq1') && !options.skipSq1Grind ? sq1GrindResourcePlan(stageEnv()) : []),
+    ];
+    console.log(JSON.stringify({ ...options, analyzers: requiredAnalyzers(options), resourceBudgets, repoRoot, coreDir, jobDir, wcaDir, puzzleDir, tableDir, optimalEngine: statsEngine(repoRoot), publish: false }, null, 2));
     return;
   }
   if (options.dryRun) {
@@ -300,7 +307,7 @@ async function main(): Promise<void> {
       ({ nNew, stdChanged, variantChanged } = await runStages(options));
     });
     if (options.jobs.includes('puzzles')) await step('puzzles', async () => {
-      partial.push(...await runPuzzles(options.puzzles));
+      partial.push(...await runPuzzles(options.puzzles, 0, { skipSq1Grind: options.skipSq1Grind }));
       taskProgress('puzzles', 1, 4);
       await runPnpm(['--filter', '@cuberoot/scramble-stats-build', 'build:puzzle-examples']);
       taskProgress('puzzles', 2, 4);
@@ -363,5 +370,7 @@ async function main(): Promise<void> {
     console.log(`Run summary: ${summaryPath}`);
   }
 }
-const readOnly = process.argv.includes('--plan') || process.argv.includes('--dry-run');
-void (readOnly ? main() : withStatsResourceMonitor(main)).catch(error => { console.error(error); process.exitCode = 1; });
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const readOnly = process.argv.includes('--plan') || process.argv.includes('--dry-run');
+  void (readOnly ? main() : withStatsResourceMonitor(main)).catch(error => { console.error(error); process.exitCode = 1; });
+}

@@ -6,6 +6,7 @@ import { mkdir, readdir, rename, unlink, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { analyzer, exe, exists, lines, puzzleDir, tableDir } from './common.js';
+import { skipOptionalStatsAnalyzer, startupRequiredBytes, tableBudget } from './resource-monitor.js';
 
 const dir = join(puzzleDir, 'sq1');
 const output = join(dir, 'sq1_wca_exact.csv');
@@ -68,6 +69,20 @@ async function todo(): Promise<string[]> {
 }
 
 export type GrindOptions = { threads?: number; ttBudget?: number; timeoutSecs?: number; chunkSize?: number; split?: number; ladder?: boolean };
+export const sq1GrindLadder = [
+  { label: '常规', split: 0, budget: 240_000_000, chunkSize: 12 },
+  { label: '并行', split: 2, budget: 240_000_000, chunkSize: 1 },
+  { label: '高 TT', split: 2, budget: 300_000_000, chunkSize: 1 },
+] as const;
+export function sq1GrindResourcePlan(env: NodeJS.ProcessEnv) {
+  return sq1GrindLadder.map(rung => {
+    const stage = { label: `SQ1 ${rung.label}`, optional: true, ttEntries: rung.budget, split: rung.split };
+    try {
+      const budget = tableBudget('sq1_analyzer', { ...env, SQ1_TT_BUDGET: String(rung.budget) });
+      return { ...stage, ...budget, startupRequiredBytes: startupRequiredBytes(budget.rssLimit) };
+    } catch (error) { return { ...stage, error: String(error) }; }
+  });
+}
 async function ensureNoAnalyzer(): Promise<void> {
   const command = process.platform === 'win32' ? 'tasklist' : 'ps';
   const args = process.platform === 'win32' ? ['/FO', 'CSV', '/NH'] : ['-axo', 'comm='];
@@ -86,24 +101,11 @@ export async function grindSq1Monsters(options: GrindOptions = {}): Promise<numb
   const ladder = options.ladder === false ? [{
     label: '手动', split: options.split ?? 0, budget: options.ttBudget ?? 240_000_000,
     chunkSize: options.chunkSize ?? (options.split ? 1 : 12),
-  }] : [
-    { label: '常规', split: 0, budget: 240_000_000, chunkSize: 12 },
-    { label: '并行', split: 2, budget: 240_000_000, chunkSize: 1 },
-    { label: '高 TT', split: 2, budget: 300_000_000, chunkSize: 1 },
-  ];
+  }] : sq1GrindLadder;
   for (const rung of ladder) {
     const rows = await todo();
     if (!rows.length) break;
-    console.log(`[SQ1 ${rung.label}] 难题剩余 ${rows.length} 条`);
-    for (const name of await readdir(work)) if (/^mchunk_\d+\.txt$/.test(name)) await unlink(join(work, name));
-    const files: string[] = [];
-    for (let i = 0; i < rows.length; i += rung.chunkSize) {
-      const file = join(work, `mchunk_${String(i / rung.chunkSize).padStart(5, '0')}.txt`);
-      await writeFile(file, `${rows.slice(i, i + rung.chunkSize).join('\n')}\n`);
-      files.push(file);
-    }
     const progress = join(dir, '_monster_progress.log');
-    await writeFile(progress, '');
     const env: NodeJS.ProcessEnv = {
       ...process.env, CUBE_TABLE_DIR: tableDir, SQ1_WCA_EXACT: '1', SQ1_WCA_SOLN: '1',
       RAYON_NUM_THREADS: String(options.threads ?? availableParallelism()), SQ1_TT_BUDGET: String(rung.budget),
@@ -115,6 +117,16 @@ export async function grindSq1Monsters(options: GrindOptions = {}): Promise<numb
     else delete env.SQ1_SOLVE_TIMEOUT_SECS;
     if (rung.split) env.SQ1_SOLVE_PARALLEL = String(rung.split);
     else delete env.SQ1_SOLVE_PARALLEL;
+    if (options.ladder !== false && skipOptionalStatsAnalyzer(exe('sq1_analyzer'), env, `SQ1 ${rung.label}`)) continue;
+    console.log(`[SQ1 ${rung.label}] 难题剩余 ${rows.length} 条`);
+    for (const name of await readdir(work)) if (/^mchunk_\d+\.txt$/.test(name)) await unlink(join(work, name));
+    const files: string[] = [];
+    for (let i = 0; i < rows.length; i += rung.chunkSize) {
+      const file = join(work, `mchunk_${String(i / rung.chunkSize).padStart(5, '0')}.txt`);
+      await writeFile(file, `${rows.slice(i, i + rung.chunkSize).join('\n')}\n`);
+      files.push(file);
+    }
+    await writeFile(progress, '');
     let failure: unknown;
     try { await analyzer(exe('sq1_analyzer'), files, join(dir, '_monster_run.err'), env, `SQ1 ${rung.label}`); }
     catch (error) { failure = error; }

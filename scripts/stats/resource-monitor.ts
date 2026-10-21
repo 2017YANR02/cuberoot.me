@@ -172,7 +172,10 @@ function inheritedRun(): string | undefined {
   if (existsSync(join(dir, 'protected-stop.json'))) throw Error('Statistics resource protection has stopped this run');
   return dir;
 }
-const startupRequiredBytes = (rssLimit: number) => rssLimit + 2 * GiB + reserve;
+export const startupRequiredBytes = (rssLimit: number) => rssLimit + 2 * GiB + reserve;
+export function statsAnalyzerStartupDecision(available: number, rssLimit: number, optional: boolean): 'start' | 'skip' | 'reject' {
+  return available >= startupRequiredBytes(rssLimit) ? 'start' : optional ? 'skip' : 'reject';
+}
 /** Explicit choices stay fixed, including when this is called again at spawn. */
 export function selectStatsEoProfile(env: NodeJS.ProcessEnv, available: number, highRssLimit: () => number, physicalBytes = totalmem()): NodeJS.ProcessEnv {
   const requested = env.CUBE_TABLE_PROFILE?.trim() || 'auto';
@@ -201,6 +204,23 @@ export function resolveStatsAnalyzerEnv(binary: string, env: NodeJS.ProcessEnv):
   console.log(`[统计档位] ${basename(binary)} auto → ${resolved.CUBE_TABLE_PROFILE} (available=${now.available}, high-required=${highRequiredBytes ?? 'not-applicable'})`);
   return resolved;
 }
+/** Optional retry admission is not a protection failure: nothing has started.
+ * Boot, swap and pressure failures still stop the run; only an insufficient
+ * startup budget may skip the optional attempt without changing the baseline.
+ */
+export function skipOptionalStatsAnalyzer(binary: string, env: NodeJS.ProcessEnv, label: string): boolean {
+  const dir = inheritedRun();
+  if (!dir) return false;
+  const owner = read<Owner>(join(dir, 'owner.json')), budget = tableBudget(binary, env), now = observe();
+  try { validateStatsRun(owner.baseline, now); }
+  catch (error) { atomic(join(dir, 'request-stop.json'), { reason: String(error) }); throw error; }
+  if (statsAnalyzerStartupDecision(now.available, budget.rssLimit, true) !== 'skip') return false;
+  const record = { label, binary, available: now.available, required: startupRequiredBytes(budget.rssLimit),
+    budget, sampledAt: now.sampledAt, boot: now.boot, swapouts: now.swapouts };
+  appendFileSync(join(dir, 'optional-skips.jsonl'), JSON.stringify(record) + '\n');
+  console.warn(`[${label}] 跳过可选重试：启动需要 ${record.required} bytes，当前可用 ${record.available} bytes；保留待解状态。`);
+  return true;
+}
 export function prepareStatsAnalyzer(binary: string, env: NodeJS.ProcessEnv): (pid: number) => () => void {
   const dir = inheritedRun();
   if (!dir) return () => () => {};
@@ -208,7 +228,7 @@ export function prepareStatsAnalyzer(binary: string, env: NodeJS.ProcessEnv): (p
   const now = observe();
   try {
     validateStatsRun(owner.baseline, now);
-    if (now.available < startupRequiredBytes(budget.rssLimit)) throw Error(`Insufficient startup memory for ${basename(binary)}: requires ${startupRequiredBytes(budget.rssLimit)} bytes`);
+    if (statsAnalyzerStartupDecision(now.available, budget.rssLimit, false) === 'reject') throw Error(`Insufficient startup memory for ${basename(binary)}: requires ${startupRequiredBytes(budget.rssLimit)} bytes`);
   } catch (error) {
     atomic(join(dir, 'request-stop.json'), { reason: String(error) });
     throw error;

@@ -13,7 +13,7 @@ export function parsePublishedArgs(args: string[]): Options {
   const jobs = args.includes('--jobs') ? (args[args.indexOf('--jobs') + 1] ?? '').split(',') : ['stages', '333opt', 'puzzles'];
   if (!jobs.length || jobs.some(job => !['all', 'stages', '333opt', 'puzzles'].includes(job))) throw new Error('Invalid --jobs');
   const forwarded = new Set(['--jobs', '--puzzles', '--variants', '--source-csv', '--max-chunks', '--chunk-size']);
-  const switches = new Set(['--use-cached', '--skip-solve-333']);
+  const switches = new Set(['--use-cached', '--skip-solve-333', '--skip-sq1-grind']);
   const localArgs: string[] = [];
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];

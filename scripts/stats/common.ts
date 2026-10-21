@@ -202,7 +202,7 @@ async function launchAnalyzer(binary: string, logFile: string, env: NodeJS.Proce
   })();
   // Callers can be preparing the next input while a child exits.
   void finished.catch(() => {});
-  return { child, finished };
+  return { child, finished, resetProgress: () => { lastStatus = 0; lastPercent = -1; } };
 }
 
 export async function analyzer(binary: string, inputFiles: string[], logFile: string, env: NodeJS.ProcessEnv, label: string, args: string[] = [], cwd = dirname(inputFiles[0]), terminator = 'exit'): Promise<void> {
@@ -224,7 +224,7 @@ export async function openAnalyzerSession(binary: string, logFile: string, env: 
   const checkpointId = hash.digest('hex');
   let pending: { output: string; resolve: () => void; reject: (error: Error) => void } | undefined;
   let ended = false;
-  const { child, finished } = await launchAnalyzer(binary, logFile,
+  const { child, finished, resetProgress } = await launchAnalyzer(binary, logFile,
     { ...env, ANALYZER_CHECKPOINT_ID: checkpointId, ANALYZER_PROGRESS_FILE: undefined }, label, args, cwd, line => {
       const done = line.match(/\[DONE\].*output=(.+)$/);
       if (!done || !pending) return;
@@ -244,6 +244,7 @@ export async function openAnalyzerSession(binary: string, logFile: string, env: 
     async run(input: string, output: string) {
       if (ended || pending) throw new Error('Analyzer session is closed or already processing a file');
       if (/[\r\n]/.test(input)) throw new Error('Analyzer input path contains a line break');
+      resetProgress();
       await new Promise<void>((done, fail) => {
         pending = { output: resolve(output), resolve: done, reject: fail };
         child.stdin.write(`${input}\n`, error => { if (error) { pending = undefined; fail(error); } });

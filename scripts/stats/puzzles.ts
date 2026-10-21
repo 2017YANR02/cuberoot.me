@@ -122,7 +122,14 @@ async function monsterCount(): Promise<number> {
   return count;
 }
 
-export type PuzzleOptions = { buildOnly?: boolean; chunkSize?: number; sampled?: boolean; sampledN?: number; sampledEvents?: string[]; rebuildTierB?: boolean };
+export async function sq1WcaPartial(remaining: number, skipGrind: boolean, grind = grindSq1Monsters): Promise<string | undefined> {
+  if (!remaining) return;
+  if (skipGrind) console.log(`[SQ1] 本轮跳过 ${remaining} 条未解状态的重试，保留待解记录`);
+  const unresolved = skipGrind ? remaining : await grind();
+  if (unresolved) return `SQ1 WCA still has ${unresolved} unresolved states`;
+}
+
+export type PuzzleOptions = { buildOnly?: boolean; chunkSize?: number; skipSq1Grind?: boolean; sampled?: boolean; sampledN?: number; sampledEvents?: string[]; rebuildTierB?: boolean };
 export async function runPuzzles(selected: string[], maxNew = 0, options: PuzzleOptions = {}): Promise<string[]> {
   const keys = selected.length ? selected as Puzzle[] : defaultPuzzles;
   const partial: string[] = [];
@@ -150,10 +157,8 @@ export async function runPuzzles(selected: string[], maxNew = 0, options: Puzzle
       await runSq1Wca();
     }
     const remaining = await monsterCount();
-    if (remaining) {
-      const afterGrind = await grindSq1Monsters();
-      if (afterGrind) partial.push(`SQ1 WCA still has ${afterGrind} unresolved states`);
-    }
+    const wcaPartial = await sq1WcaPartial(remaining, options.skipSq1Grind ?? false);
+    if (wcaPartial) partial.push(wcaPartial);
     if (hasNewWca || remaining || !await exists(join(puzzleDir, 'sq1', 'sq1_slash_exact.csv'))) {
       const fallback = await runSq1Slash();
       if (fallback) partial.push(`SQ1 slash still has ${fallback} provisional states`);

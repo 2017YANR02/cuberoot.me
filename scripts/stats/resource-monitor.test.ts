@@ -7,7 +7,8 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { once } from 'node:events';
 import { parseProcesses } from '../../core/scripts/mac-system-recorder.mts';
-import { GiB, analyzerTableNames, archiveReviewedStatsStop, isTsxService, parseIdentities, resourceLimits, resourceValues, resolveStatsAnalyzerEnv, runWhileMonitored, sameIdentity, selectStatsEoProfile, tableBudget, trackedTree, validateResumeReview, type Identity, type ProcessRow, type TableBudget } from './resource-monitor.js';
+import { GiB, analyzerTableNames, archiveReviewedStatsStop, isTsxService, parseIdentities, resourceLimits, resourceValues, resolveStatsAnalyzerEnv, runWhileMonitored, sameIdentity, selectStatsEoProfile, startupRequiredBytes, statsAnalyzerStartupDecision, tableBudget, trackedTree, validateResumeReview, type Identity, type ProcessRow, type TableBudget } from './resource-monitor.js';
+import { sq1GrindLadder, sq1GrindResourcePlan } from './sq1-grind.js';
 
 const identity = (pid: number, command = `process-${pid}`, start = 'Wed Oct 21 12:00:00 2026'): Identity => ({ pid, start, command });
 const row = (pid: number, ppid: number, rssBytes = 0): ProcessRow => ({ pid, ppid, rssBytes, cpuPercent: 0, state: 'S', name: `process-${pid}` });
@@ -62,6 +63,30 @@ test('EO auto freezes a profile at the unchanged startup boundary and preserves 
   assert.equal(resolveStatsAnalyzerEnv('eo_cross_analyzer', explicitDefault), explicitDefault);
   assert.equal(resolveStatsAnalyzerEnv('std_analyzer', original), original);
   assert.equal(selectStatsEoProfile(original, 0, () => highRssLimit, 64 * GiB).CUBE_TABLE_PROFILE, 'default');
+});
+
+test('daily SQ1 ladder budgets every rung and skips only optional attempts below the unchanged threshold', () => {
+  assert.deepEqual(sq1GrindLadder.map(rung => [rung.budget, rung.split]), [[240_000_000, 0], [240_000_000, 2], [300_000_000, 2]]);
+  const fixture = mkdtempSync(join(tmpdir(), 'stats-sq1-plan-'));
+  try {
+    // Metadata-only fixture: budget arithmetic never allocates or reads a table.
+    writeFileSync(join(fixture, 'sq1_wca_jsqfull.bin'), 'fixture');
+    const plan = sq1GrindResourcePlan({ CUBE_TABLE_DIR: fixture });
+    assert.equal(plan.length, 3);
+    for (const [index, item] of plan.entries()) {
+      assert(!('error' in item));
+      const entries = sq1GrindLadder[index].budget;
+      assert.equal(item.rssLimit, 7 + entries * 114 + 4 * GiB);
+      assert.equal(item.startupRequiredBytes, item.rssLimit + 2.5 * GiB);
+      assert.equal(statsAnalyzerStartupDecision(item.startupRequiredBytes, item.rssLimit, true), 'start');
+      assert.equal(statsAnalyzerStartupDecision(item.startupRequiredBytes - 1, item.rssLimit, true), 'skip');
+      assert.equal(statsAnalyzerStartupDecision(item.startupRequiredBytes - 1, item.rssLimit, false), 'reject');
+    }
+    const actualHighCap = 13_005_619_200 + 300_000_000 * 114 + 4 * GiB;
+    assert.equal(startupRequiredBytes(actualHighCap), 54_184_941_056);
+    assert.equal(statsAnalyzerStartupDecision(47 * GiB, actualHighCap, true), 'skip');
+    assert.equal(statsAnalyzerStartupDecision(47 * GiB, actualHighCap, false), 'reject');
+  } finally { rmSync(fixture, { recursive: true, force: true }); }
 });
 
 test('completed reviewed stop archives original bytes before clearing only the matching active latch', () => {
