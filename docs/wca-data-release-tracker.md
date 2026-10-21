@@ -1,6 +1,6 @@
 # WCA latest-data Release migration
 
-Status: IN PROGRESS (2026-10-21).
+Status: FIRST MIGRATION UNIT DEPLOYED (2026-10-21). Scoped release checks passed; repository-wide CI has failures outside this change (see below).
 
 ## Authorized outcome
 
@@ -27,11 +27,11 @@ Potential shared integration files: `.github/workflows/stats.yml`, `.github/work
 - [x] Publish to the single Release without exposing an incomplete dataset.
 - [x] Deploy the complete dataset and verify API/static consumers; retain the previous live data until success.
 - [x] Remove obsolete Release attachments only after success; prevent stale concurrent publishers.
-- [ ] Update WCA generation and generic static sync so old checkout files cannot overwrite released data.
-- [ ] Remove only the migrated generated files from Git tracking and register their new owner.
-- [ ] Run focused failure-path checks and applicable builds/CI.
-- [ ] Synchronize main, commit only this task's changes, push, and verify applicable CI/deployment (CodeQL excluded).
-- [ ] Record actual release, commit, deployment, rollback and final file inventory evidence.
+- [x] Update WCA generation and generic static sync so old checkout files cannot overwrite released data.
+- [x] Remove only the migrated generated files from Git tracking and register their new owner.
+- [x] Run focused failure-path checks and inspect applicable CI; record unrelated failures separately.
+- [x] Synchronize main, commit only this task's changes, push, and verify scoped deployment (CodeQL excluded).
+- [x] Record actual release, commit, deployment, rollback and final file inventory evidence.
 
 ## Acceptance and failure behavior
 
@@ -50,9 +50,30 @@ Potential shared integration files: `.github/workflows/stats.yml`, `.github/work
 - Latest manifest is the single Release's JSON body. Upload the content-addressed archive first, activate/verify production, then update the body as the commit point. A candidate JSON attachment exists only while queued/in progress. Completed candidates and previous archives are deleted after commit.
 - WCA publication runs in `deploy-core-production`, shared with the existing API deployment. Generation retains its own existing concurrency group and submits a candidate; it does not reload the API itself.
 - Production `.wca-data/current` switches a complete dataset. Only this owner's files are linked; the rest of `stats/`, including `comp/`, is untouched. The last data remains until API and public static validation succeed. A journal recovers interrupted activation or finalization.
-- Six focused fixture checks pass locally: byte integrity, invalid gzip/counts, scoped cleanup, activation rollback, interrupted commit recovery, stale/same-generation rejection. Fixtures use the canonical shared binary encoders; no real WCA computation or solver was started.
+- Nine focused checks pass locally and in GitHub Actions: Git tracking/ignore ownership, draft lookup and permissions, queued-asset cleanup, byte integrity, invalid gzip/counts, scoped activation, activation rollback, interrupted commit recovery, and stale/same-generation rejection. Fixtures use the canonical shared binary encoders; no real WCA computation or solver was started.
 - Phase 1 adds the publisher and prevents generic static sync from overwriting its files. Bootstrap adopts the existing live dataset. Phase 2 stops Git tracking and connects the scheduled WCA producer after bootstrap succeeds.
-- Published commits: `514b8deb5e` (publisher), `56ffa98d7b` (draft lookup fix). First bootstrap correctly stopped before activation because GitHub's tag endpoint omits drafts; the authenticated listing fallback and regression check fix this.
+- Published commits: `514b8deb5e` (publisher), `56ffa98d7b` (draft lookup fix), `7f651e248a` (stop Git tracking and connect producer). First bootstrap correctly stopped before activation because GitHub's tag endpoint omits drafts; the authenticated listing fallback and regression check fix this.
 - Successful bootstrap: [run 39647075445](https://github.com/2017YANR02/cuberoot.me/actions/runs/39647075445). The release is mutable and public, API/static validation passed, and only one current archive remains.
 - The primary checkout contained another task's unpushed `f879fb7b0f`. To avoid including it, this task's edits were transferred once to `/Users/eula/Developer/cuberoot-wca-data-release`, based on remote main; no other task files or commits were published. Continue editing only that checkout.
 - Existing generated-artifact ledger validation has four baseline errors in the isolated checkout (assistant generated output, two local miniprogram project configs, avatar-gallery license). Comparing old and new ledger reports no additional errors; these unrelated files are not modified here.
+
+## Final production evidence
+
+- [Final publication run 39647834392](https://github.com/2017YANR02/cuberoot.me/actions/runs/39647834392) passed both nine checks and actual publication at `7f651e248a`. [Static sync 39647753067](https://github.com/2017YANR02/cuberoot.me/actions/runs/39647753067) and [39647752958](https://github.com/2017YANR02/cuberoot.me/actions/runs/39647752958) passed with the migrated paths excluded.
+- [Release `wca-data-latest`](https://github.com/2017YANR02/cuberoot.me/releases/tag/wca-data-latest), ID `419868944`, is public and mutable. It contains exactly one attachment: `wca-data-31d132fb2515070cc40cd938aeb5ce094974e646baa284ae3dc0817b0ab76bb0.tar`, 18,073,600 bytes. The Release body points at this archive.
+- Production has exactly one owned dataset directory, with `.wca-data/current` pointing at the archive hash above. All five live file hashes match the manifest. No transaction journal or legacy adoption backup remains. Server-owned `stats/comp/` still exists.
+- Origin API reports ready with export `2026-10-21`, generation `2026-10-21T00:08:44.216Z`, 300,617 persons and 1,945,619 ranks; public static index verification passed. Existing browser cache policies remain unchanged.
+- Hydration into an empty local directory passed; all five restored hashes match the published dataset. The files are ignored and absent from the current Git index. Workflow actionlint and `git diff --check` passed.
+- The scheduled WCA producer now submits these files through the serialized publisher before its Git commit. Initial adoption and repeat publication used existing server data; a fresh full statistics generation was deliberately not started alongside the other AI's work. The next scheduled generation remains the first end-to-end run with a newly generated dataset.
+- Existing Git history was not rewritten. Other WCA JSON, scramble statistics, media and solver assets remain outside this first migration unit.
+
+## CI handoff for concurrent work
+
+The original general Test run on `7f651e248a` was cancelled by newer pushes. Successor `3caad42697` contains all three migration commits. Its [Test run 39647952130](https://github.com/2017YANR02/cuberoot.me/actions/runs/39647952130) reports failures in files not modified by this migration:
+
+- Architecture boundary guard: six unregistered edges in `packages/client/tests/auth-doc-sync.test.ts` and `packages/client/tests/timer-heatmap-colors.test.ts`.
+- Mobile: `packages/app-ui/src/mobile-scramble-history.test.ts:331` expects `data-tag-id="pb-single"` in rendered history.
+- Client shard 2: failures include hash navigation ownership, magic controls, raw localStorage writes in `alg-library-cache.ts`, simulator companion lifecycle, timer settings/training and WCA calculator/auth contracts. See the run for complete logs.
+- At handoff, client shard 1 is still running; Desktop UI passed. The overall run therefore cannot be described as green regardless of the remaining shard.
+
+These are not claimed as passing and were not changed to avoid conflicting with the other task. The other maintainer/AI should inspect that run for their client/mobile work. Data-publication CI and its production checks passed independently. Preserve the new `stats.yml` submit step and the two `sync_toolkit.yml` rsync exclusions when modifying pipeline infrastructure; do not re-add the five generated files to Git.
