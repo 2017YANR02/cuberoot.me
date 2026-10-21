@@ -43,7 +43,14 @@ const { solveOptimal } = await import('../cubeopt/daemon.js');
 const wallTimeoutMs = bootTimeoutMs + solveTimeoutMs + 5_000;
 let wallTimer: NodeJS.Timeout | undefined;
 const result = await Promise.race([
-  solveOptimal('R'),
+  (async () => {
+    const first = await solveOptimal('R');
+    assertCubeoptSmokeResult(first);
+    // Reuse the resident worker and exercise a valid zero-move response.
+    const solved = await solveOptimal("R R'");
+    if (solved.htm !== 0 || solved.solution !== '') throw new Error('solved-state smoke returned a non-empty solution');
+    return first;
+  })(),
   new Promise<never>((_resolve, reject) => {
     wallTimer = setTimeout(
       () => reject(new Error(`CubeOpt manager smoke exceeded ${wallTimeoutMs}ms`)),
@@ -57,5 +64,5 @@ const result = await Promise.race([
 
 assertCubeoptSmokeResult(result);
 
-console.log(JSON.stringify({ ok: true, threads, scramble: 'R', ...result }, null, 2));
+console.log(JSON.stringify({ ok: true, threads, requests: 2, scramble: 'R', ...result }, null, 2));
 process.exit(0);

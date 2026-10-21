@@ -10,6 +10,8 @@ pub mod h48_table;
 pub mod h48_variant;
 pub mod search;
 pub mod table;
+#[cfg(target_arch = "x86_64")]
+pub mod x86_simd;
 pub mod opt10;
 pub mod opt10_table;
 pub mod opt10_generate;

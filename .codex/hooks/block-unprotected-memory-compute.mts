@@ -86,12 +86,12 @@ function blockedCubeopt(words: string[], cwd: string): boolean {
       || words.some(word => word === 'cube48opt-research' || word === '--bin=cube48opt-research');
     if (researchPackage && !words.some(word => word === '--example' || word.startsWith('--example='))) {
       const delimiter = words.indexOf('--');
-      return delimiter < 0 || !['inspect', '--help', '-h'].includes(words[delimiter + 1]);
+      return delimiter < 0 || !['inspect', '--help', '-h', '--server-info'].includes(words[delimiter + 1]);
     }
     return false;
   }
-  const executable = words.findIndex(word => /^cube48opt-research(?:[-_.][\w.-]+)?$/.test(base(word)));
-  return executable >= 0 && !['inspect', '--help', '-h'].includes(words[executable + 1]);
+  const executable = words.findIndex(word => /^(?:cube48opt-research(?:[-_.][\w.-]+)?|cube48opt-native)$/.test(base(word)));
+  return executable >= 0 && !['inspect', '--help', '-h', '--server-info'].includes(words[executable + 1]);
 }
 
 // Preserve quoted arguments so `rg 'table_generator' ...` is inspection, while
@@ -140,6 +140,10 @@ export function blockedCompute(command: string, depth = 0, cwd = repoRoot): stri
     // executable. This exemption is segment-local, and substitutions are still
     // checked below. Do not extend it to Node or arbitrary file-operation code.
     if (first === 'cp') continue;
+    // Plain scp transfers operands; it does not execute the solver filename.
+    // No option exemptions (e.g. -S / ProxyCommand); substitutions are still
+    // inspected below and subsequent command segments retain their checks.
+    if (first === 'scp' && words.length >= 3 && words.slice(1).every(word => !word.startsWith('-'))) continue;
     if (first === 'cargo' && !words.includes('run')) continue;
     // Static TypeScript checking reads the entry file; it never executes it.
     // Keep this segment-local so a following compute command is still checked.

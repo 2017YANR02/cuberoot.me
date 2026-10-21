@@ -7,15 +7,28 @@ use cube48opt_research::{
     H48Solver, H48Table, H48Variant, OptSolver,
 };
 mod native_parallel;
+mod table_init;
 use std::{
     env, fs,
-    io::{self, BufRead},
+    io::{self, BufRead, Write},
     path::Path,
     time::Instant,
 };
 
 fn run() -> Result<(), String> {
     let args: Vec<String> = env::args().collect();
+    if args.get(1).is_some_and(|arg| arg == "--server-info") {
+        println!("{{\"engine\":\"rust-native\",\"variant\":\"opt8\",\"protocol\":1,\"maxThreads\":4,\"optimized\":{}}}",
+            cfg!(all(feature = "opt8-native-search", feature = "opt8-native-quarter", feature = "opt9-native-fixed-contexts")));
+        return Ok(());
+    }
+    if args.get(1).is_some_and(|arg| arg == "init") {
+        return table_init::run(&args[2..]);
+    }
+    if args.len() == 1 || args.get(1).is_some_and(|arg| arg == "--help" || arg == "-h") {
+        println!("{}\n\nSolve: CUBEOPT_VARIANT=6 cube48opt-research solve SMALL_TABLES PDB [CONTEXTS MAX_DEPTH MAX_NODES]\nInput: id<TAB>scramble, one per line.\nOpt1–9 solve caches successful table validation on Unix. Set CUBEOPT_VERIFY_TABLE=1 to force a full recheck.\nNative x86 SIMD: CUBEOPT_SIMD=auto|scalar|avx2|avx512 (default auto prefers AVX2; unsupported explicit modes fail).", table_init::HELP);
+        return Ok(());
+    }
     if matches!(args.get(1).map(String::as_str), Some("generate-opt10" | "solve-opt10")) {
         // Default builds reject before reading a table or allocating a PDB.
         // The dedicated Opt10 build is launched through its budgeted guard.
@@ -72,6 +85,15 @@ fn run() -> Result<(), String> {
         let options = options(&args[4..])?;
         Some((options, Parallelism::from_env(options)?))
     } else { None };
+    if server_protocol()? && (args[1] != "solve" || variant.number() != 8
+        || search.is_none_or(|(opts, parallel)| parallel.batch_threads != 1
+            || parallel.search_threads > 4 || opts.max_nodes != 0 || opts.max_depth != 20 || opts.contexts != 8)) {
+        return Err("tsv-v1 requires Opt8 solve, 8 contexts, depth 20, unlimited nodes, one batch worker and at most four search threads".into());
+    }
+    #[cfg(target_arch = "x86_64")]
+    if search.is_some() {
+        eprintln!("Native SIMD: {}", cube48opt_research::x86_simd::initialize()?.name());
+    }
     let coordinates = CoordTables::from_variant_bytes(
         &fs::read(&args[2]).map_err(|e| e.to_string())?,
         variant.number(),
@@ -90,9 +112,15 @@ fn run() -> Result<(), String> {
         return Ok(());
     }
     let pdb_path = args.get(3).ok_or("missing variant table path")?;
+    let force_validation = match env::var("CUBEOPT_VERIFY_TABLE") {
+        Err(env::VarError::NotPresent) => false,
+        Ok(value) if value == "0" => false,
+        Ok(value) if value == "1" => true,
+        _ => return Err("CUBEOPT_VERIFY_TABLE must be 0 or 1".into()),
+    };
     let oracle = OptSolver::new(
         coordinates,
-        PruningTable::load_variant(Path::new(pdb_path), variant)?,
+        PruningTable::load_variant_cached(Path::new(pdb_path), variant, force_validation)?,
     )?;
     let (options, parallelism) = search.unwrap();
     #[cfg(all(feature = "opt8-native-specialized", not(target_family = "wasm")))]
@@ -265,8 +293,19 @@ impl Parallelism {
 fn run_solver<O: PruningOracle + Sync>(oracle: &O, options: SearchOptions, parallelism: Parallelism) -> Result<(), String> {
     let contexts = options.contexts;
     let Parallelism { batch_threads, search_threads } = parallelism;
+    let server = server_protocol()?;
+    if server {
+        println!("READY\t{search_threads}");
+        io::stdout().flush().map_err(|e| e.to_string())?;
+    }
     cube48opt_research::batch::run(io::BufReader::new(io::stdin()), io::stdout(), batch_threads, |line| {
         let (id, scramble) = input(&line)?;
+        if server && (scramble.split_whitespace().count() > 50 || scramble.trim().is_empty()) {
+            return Ok(format!("{id}\tERROR\tinvalid scramble"));
+        }
+        if server && scramble.split_whitespace().any(|token| !MOVE_NAMES.contains(&token)) {
+            return Ok(format!("{id}\tERROR\tinvalid scramble"));
+        }
         let cube = Cube::from_scramble(scramble)?;
         let started = Instant::now();
         let result = native_parallel::solve(cube, oracle, options, search_threads)?;
@@ -282,6 +321,10 @@ fn run_solver<O: PruningOracle + Sync>(oracle: &O, options: SearchOptions, paral
             if !moves.iter().fold(cube, |c, &m| c.moved(m)).is_solved() {
                 return Err("internal solution replay failed".into());
             }
+        }
+        if server {
+            let moves = result.solution.as_ref().ok_or("optimal search returned no solution")?;
+            return Ok(format!("{id}\t{}\t{}", moves.len(), solution.as_deref().unwrap_or("")));
         }
         let solution_json = solution
             .as_ref()
@@ -353,6 +396,15 @@ fn run_solver<O: PruningOracle + Sync>(oracle: &O, options: SearchOptions, paral
         Ok(format!("{{\"id\":\"{id}\",\"solution\":{solution_json},\"length\":{length},\"seconds\":{seconds:.9},\"completed_depth\":{completed},\"cancelled\":{},\"contexts\":{contexts},\"threads\":{search_threads},\"batch_threads\":{batch_threads},\"nodes\":{},\"probes\":{},\"inverse_probes\":{},\"cache_reuses\":{},\"splits\":{},\"face_prunes\":{},\"face_siblings_removed\":{}{quarter_stats}{quarter_cache_stats}{axis_stats}{ranked_stats}{dual_stats}{coset_stats}{coset_chain_stats}{profile_stats}{lookahead_stats}{projection_stats}}}",
             result.cancelled, s.nodes, s.probes, s.inverse_probes, s.cache_reuses, s.splits, s.face_prunes, s.face_siblings_removed))
     })
+}
+
+fn server_protocol() -> Result<bool, String> {
+    match env::var("CUBEOPT_PROTOCOL") {
+        Err(env::VarError::NotPresent) => Ok(false),
+        Ok(value) if value == "json" => Ok(false),
+        Ok(value) if value == "tsv-v1" => Ok(true),
+        _ => Err("CUBEOPT_PROTOCOL must be json or tsv-v1".into()),
+    }
 }
 
 fn input(line: &str) -> Result<(&str, &str), String> {

@@ -49,9 +49,9 @@ export function cubeoptArtifactContractFromModulePath(modulePath, engine = 'emsc
   return cubeoptVariantContractFromModuleName(moduleName);
 }
 
-export function detectCubeoptArtifactSources({ modulePath, wasmPath, workerPath, snapshotPath, tablePath, engine = 'emscripten' }) {
-  const contract = cubeoptArtifactContractFromModulePath(modulePath, engine);
-  const inputs = { module: modulePath, wasm: wasmPath, worker: workerPath, snapshot: snapshotPath, table: tablePath };
+export function detectCubeoptArtifactSources({ binaryPath, modulePath, wasmPath, workerPath, snapshotPath, tablePath, engine = 'emscripten' }) {
+  const contract = engine === 'rust-native' ? cubeoptEngineContract('opt8', engine) : cubeoptArtifactContractFromModulePath(modulePath, engine);
+  const inputs = { binary: binaryPath, module: modulePath, wasm: wasmPath, worker: workerPath, snapshot: snapshotPath, table: tablePath };
   for (const [role, expectedName] of Object.entries(contract.files)) {
     if (typeof inputs[role] !== 'string' || basename(inputs[role]) !== expectedName) {
       throw new Error(`${inputs[role]} must be named ${expectedName} for ${contract.variant}`);
@@ -101,6 +101,7 @@ export async function prepareCubeoptArtifact({
   storeDir: rawStoreDir,
   bundle: rawBundle,
   modulePath: rawModulePath,
+  binaryPath: rawBinaryPath,
   wasmPath: rawWasmPath,
   workerPath: rawWorkerPath,
   snapshotPath: rawSnapshotPath,
@@ -120,18 +121,24 @@ export async function prepareCubeoptArtifact({
   };
   const storeDir = resolve(required(rawStoreDir, 'store'));
   const inputs = {
-    module: resolve(required(rawModulePath, 'module')),
-    wasm: resolve(required(rawWasmPath, 'wasm')),
     table: resolve(required(rawTablePath, 'table')),
   };
+  if (engine === 'rust-native') {
+    inputs.binary = resolve(required(rawBinaryPath, 'binary'));
+    inputs.snapshot = resolve(required(rawSnapshotPath, 'snapshot'));
+  } else {
+    inputs.module = resolve(required(rawModulePath, 'module'));
+    inputs.wasm = resolve(required(rawWasmPath, 'wasm'));
+  }
   if (engine === 'rust-wasm') {
     inputs.worker = resolve(required(rawWorkerPath, 'worker'));
     inputs.snapshot = resolve(required(rawSnapshotPath, 'snapshot'));
-  } else if (rawWorkerPath || rawSnapshotPath) {
-    throw new Error('--worker and --snapshot require --engine rust-wasm');
+  } else if (rawWorkerPath || (rawSnapshotPath && engine !== 'rust-native')) {
+    throw new Error('--worker requires rust-wasm; --snapshot requires a Rust engine');
   }
   if (typeof linkTable !== 'boolean') throw new Error('--link-table must be a boolean');
   const contract = detectCubeoptArtifactSources({
+    binaryPath: inputs.binary,
     modulePath: inputs.module,
     wasmPath: inputs.wasm,
     tablePath: inputs.table,
@@ -181,6 +188,7 @@ export async function prepareCubeoptArtifact({
     protocol: CUBEOPT_PROTOCOL,
     ...(engine === 'rust-wasm' ? { engine, abiVersion: CUBEOPT_RUST_OPT8.abiVersion,
       memory64: true, sharedTable: true, maxThreads: CUBEOPT_RUST_OPT8.maxThreads } : {}),
+    ...(engine === 'rust-native' ? { engine, maxThreads: contract.maxThreads } : {}),
     source,
     files,
   };

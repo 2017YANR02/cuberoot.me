@@ -2,7 +2,7 @@
 // Read-only upstream WASM oracle. Generation/solving are explicit, externally monitored modes.
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { closeSync, existsSync, fsyncSync, linkSync, mkdirSync, openSync, readSync, readFileSync, statSync, unlinkSync, writeFileSync, writeSync } from 'node:fs';
+import { closeSync, createReadStream, existsSync, fsyncSync, linkSync, mkdirSync, openSync, readSync, readFileSync, statSync, unlinkSync, writeFileSync, writeSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { availableParallelism } from 'node:os';
@@ -117,6 +117,36 @@ function freshDirectory(directory) {
 }
 
 function saveJson(file, value) { writeFileSync(file, json(value), { flag: 'wx' }); }
+
+// Reuse the same bundle on another machine without trusting recorded absolute
+// paths. Stream hashes with bounded memory; never instantiate WASM for reuse.
+export async function verifyTableBundle(directory, variant = VARIANT) {
+  const tablePath = path.join(directory, variant.tableName);
+  const smallPath = path.join(directory, 'small-memory.bin');
+  const table = JSON.parse(readFileSync(path.join(directory, 'table.json'), 'utf8'));
+  const small = JSON.parse(readFileSync(path.join(directory, 'small-tables.json'), 'utf8'));
+  assert.equal(table.schema, `cuberoot.cube48opt${variant.id}.table.v1`, 'wrong table variant');
+  assert.equal(small.schema, `cuberoot.cube48opt${variant.id}.small-tables.v1`, 'wrong small-table variant');
+  assert.equal(table.wasmSha256, variant.wasmSha256, 'table generator version differs');
+  assert.equal(table.wrapperSha256, variant.wrapperSha256, 'table wrapper version differs');
+  assert.equal(table.tableBytes, variant.tableBytes, 'wrong table size');
+  assert.equal(small.bytes, variant.smallMemoryBytes, 'wrong small-table size');
+  for (const [file, bytes, expectedHash] of [
+    [tablePath, variant.tableBytes, table.tableSha256],
+    [smallPath, variant.smallMemoryBytes, small.sha256],
+  ]) {
+    assert.match(expectedHash ?? '', /^[a-f0-9]{64}$/, 'missing file checksum');
+    const before = statSync(file);
+    assert(before.isFile() && before.size === bytes, `incorrect file size: ${file}`);
+    const hash = createHash('sha256');
+    for await (const chunk of createReadStream(file, { highWaterMark: WINDOW_BYTES })) hash.update(chunk);
+    const after = statSync(file);
+    assert.equal(after.size, before.size, 'table changed during validation');
+    assert.equal(after.mtimeMs, before.mtimeMs, 'table changed during validation');
+    assert.equal(hash.digest('hex'), expectedHash, `checksum mismatch: ${file}`);
+  }
+  return { mode: 'generate', reused: true, out: directory, tablePath, tableBytes: variant.tableBytes, tableSha256: table.tableSha256 };
+}
 
 function writeRawExclusive(file, length, chunkAt) {
   assert(!existsSync(file), `refusing to overwrite: ${file}`);
@@ -391,6 +421,24 @@ export async function solveCases(oracle, tablePath, casesPath, outputPath, lines
 
 async function main() {
   const [mode = 'inspect', ...args] = process.argv.slice(2);
+  // The public native `init` command uses the existing guarded generation
+  // entry. Historical research commands retain their fresh-directory contract.
+  const reuse = mode === 'generate' && args.length === 2 && args[1] === '--reuse';
+  if (reuse) {
+    args.pop();
+    const directory = path.resolve(args[0]);
+    if (existsSync(directory)) {
+      process.stderr.write(`Checking existing Opt${VARIANT.id} tables: ${directory}\n`);
+      try { return await verifyTableBundle(directory); }
+      catch (error) {
+        throw new Error(`Existing table directory is incomplete or invalid: ${directory}. Files were preserved; select a new --out directory to generate again. ${error.message}`);
+      }
+    }
+    // Fail before creating an output directory if checkout assets are missing
+    // or changed. createOracle repeats this check before instantiation.
+    auditBinary(readFileSync(SOURCE), VARIANT);
+    assert.equal(sha256(readFileSync(WRAPPER)), EXPECTED_WRAPPER, 'upstream wrapper changed: re-audit');
+  }
   if (mode === 'inspect') {
     assert.equal(args.length, 0);
     const original = readFileSync(SOURCE);
@@ -438,7 +486,10 @@ async function main() {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   main().then((result) => {
-    process.stdout.write(JSON.stringify(result) + '\n', () => process.exit(0));
+    const summary = process.argv.at(-1) === '--reuse'
+      ? `${result.reused ? 'Verified existing tables' : 'Tables generated'}: Opt${VARIANT.id}\n${result.tablePath}\n${path.join(result.out, 'small-memory.bin')}\n`
+      : JSON.stringify(result) + '\n';
+    process.stdout.write(summary, () => process.exit(0));
   }, (error) => {
     process.stderr.write(`${error.stack ?? error}\n`, () => process.exit(1));
   });

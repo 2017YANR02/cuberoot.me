@@ -2,6 +2,7 @@
 .compare-topbar, .compare-heading, .compare-section-head, .compare-controls, .compare-chart-caption, .compare-footer { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 .compare-topbar { margin-bottom: 68px; }
 .compare-hero { padding-bottom: 36px; }
+.compare-help-link { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin-top: 8px; font-size: 14px; color: var(--accent); }
 .compare-eyebrow { color: var(--muted-foreground); font: 11px/1.5 var(--font-mono, monospace); letter-spacing: .13em; }
 .compare-eyebrow > span { margin-left: 16px; color: var(--accent); }
 .compare-heading { align-items: flex-end; margin-top: 20px; }

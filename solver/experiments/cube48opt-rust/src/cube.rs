@@ -4,6 +4,10 @@
 //! fastcube. The six generators below are the original .rodata bytes at
 //! linear-memory addresses 4028, 4048, 4068, 4088, 4108, 4128.
 
+#[cfg(target_arch = "x86_64")]
+#[path = "cube_x86.rs"]
+mod x86;
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 #[repr(C)]
 pub struct Cube {
@@ -149,10 +153,17 @@ pub const fn inverse_move(m: u8) -> u8 {
 
 /// Advance a legal cube and its inverse together: (g*m, m^-1*g^-1).
 /// The default neon-moves feature enables NEON on AArch64; builds without
-/// that feature, and other architectures, retain the scalar operations.
+/// that feature retain scalar moves on AArch64. Native x86 selects AVX2 or
+/// AVX-512 when supported, with a scalar fallback; WASM keeps its SIMD path.
 /// Both implementations preserve move order and the remaining search state.
 #[inline]
 pub fn moved_pair(cube: &Cube, inverse: &Cube, movement: u8) -> (Cube, Cube) {
+    #[cfg(target_arch = "x86_64")]
+    match crate::x86_simd::selected() {
+        crate::x86_simd::Backend::Avx2 => return unsafe { x86::moved_pair_avx2(cube, inverse, movement) },
+        crate::x86_simd::Backend::Avx512 => return unsafe { x86::moved_pair_avx512(cube, inverse, movement) },
+        crate::x86_simd::Backend::Scalar => {},
+    }
     #[cfg(all(feature = "neon-moves", target_arch = "aarch64"))]
     // AArch64 always provides NEON. All loads/stores stay within their objects;
     // the byte-table indices do not become memory addresses.
@@ -229,7 +240,7 @@ unsafe fn moved_single_wasm<const LEFT: bool>(cube: &Cube, movement: u8) -> Cube
 // Same three 16-byte blocks as original fast-move table at address 30016:
 // normal/inverse corners, normal edges, inverse edges. Four padding bytes per
 // edge block are zero. The six physical generators remain the single source.
-#[cfg(any(all(feature = "neon-moves", target_arch = "aarch64"), all(target_family = "wasm", target_feature = "simd128")))]
+#[cfg(any(target_arch = "x86_64", all(feature = "neon-moves", target_arch = "aarch64"), all(target_family = "wasm", target_feature = "simd128")))]
 const PAIRED_MOVES: [[u8; 48]; 18] = {
     let mut result = [[0; 48]; 18];
     let mut m = 0;

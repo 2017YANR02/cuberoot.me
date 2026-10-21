@@ -226,7 +226,7 @@ function spawnDaemon(): Promise<void> {
     spawned.stderr?.on('data', (chunk: Buffer) => {
       for (const line of chunk.toString().split('\n')) {
         const t = line.trim();
-        if (t) console.error(`[cubeopt-wasm] ${t}`);
+        if (t) console.error(`[cubeopt] ${t}`);
       }
     });
 

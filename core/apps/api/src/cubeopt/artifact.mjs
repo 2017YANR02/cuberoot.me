@@ -3,10 +3,18 @@ import { createReadStream } from 'node:fs';
 import { lstat, open, readFile, realpath, rename, unlink } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { verifyTableDigest } from './table-digest.mjs';
 
 export const CUBEOPT_ARTIFACT_SCHEMA = 'cuberoot.cubeopt-artifact/v1';
 export const CUBEOPT_POINTER_SCHEMA = 'cuberoot.cubeopt-current/v1';
 export const CUBEOPT_PROTOCOL = 1;
+export const CUBEOPT_NATIVE_OPT8 = Object.freeze({
+  engine: 'rust-native', variant: 'opt8', maxThreads: 4,
+  tableBytes: 7_782_727_680, snapshotBytes: 818_008,
+  files: Object.freeze({ binary: 'cube48opt-native', snapshot: 'cube48opt8.small.bin', table: 'h48prun31h8.dat' }),
+});
 export const CUBEOPT_RUST_OPT8 = Object.freeze({
   engine: 'rust-wasm', variant: 'opt8', abiVersion: 2,
   memory64: true, sharedTable: true, maxThreads: 4,
@@ -72,6 +80,7 @@ export function cubeoptEngineContract(variant, engine = 'emscripten') {
   const contract = cubeoptVariantContract(variant);
   if (engine === 'emscripten') return Object.freeze({ ...contract, engine });
   if (engine === 'rust-wasm' && variant === 'opt8') return CUBEOPT_RUST_OPT8;
+  if (engine === 'rust-native' && variant === 'opt8') return CUBEOPT_NATIVE_OPT8;
   throw artifactError(`unsupported engine/variant ${JSON.stringify(engine)}/${JSON.stringify(variant)}`);
 }
 
@@ -116,6 +125,9 @@ function validateManifest(manifest, { allowFixtureSizes }) {
       if (manifest[field] !== contract[field]) throw artifactError(`${field} must be ${contract[field]} for Rust Opt8`);
     }
   }
+  if (contract.engine === 'rust-native' && manifest.maxThreads !== contract.maxThreads) {
+    throw artifactError('native Opt8 maxThreads must be 4');
+  }
 
   const source = manifest.source;
   if (!source || typeof source !== 'object' || Array.isArray(source)) {
@@ -150,7 +162,7 @@ function validateManifest(manifest, { allowFixtureSizes }) {
   if (!allowFixtureSizes && files.table.bytes !== contract.tableBytes) {
     throw artifactError(`${variant} table must be ${contract.tableBytes} bytes, got ${files.table.bytes}`);
   }
-  if (contract.engine === 'rust-wasm' && !allowFixtureSizes && files.snapshot.bytes !== contract.snapshotBytes) {
+  if (contract.snapshotBytes && !allowFixtureSizes && files.snapshot.bytes !== contract.snapshotBytes) {
     throw artifactError(`opt8 snapshot must be ${contract.snapshotBytes} bytes, got ${files.snapshot.bytes}`);
   }
 
@@ -240,7 +252,7 @@ export async function syncDirectoryDurably(
  * and manifest checks without checking a large prune table into the repository. The
  * daemon never enables it.
  */
-export async function loadCubeoptArtifact(storeDir, { allowFixtureSizes = false } = {}) {
+export async function loadCubeoptArtifact(storeDir, { allowFixtureSizes = false, cachedTable = false } = {}) {
   const store = resolve(requireNonEmptyString(storeDir, 'CUBEOPT_ARTIFACT_DIR'));
   const currentPath = resolve(store, 'current.json');
   const currentSource = await readRegularUtf8(currentPath, 'current.json');
@@ -260,7 +272,7 @@ export async function loadCubeoptArtifact(storeDir, { allowFixtureSizes = false 
   const bundle = requireNonEmptyString(current.bundle, 'current.bundle');
   cubeoptBundleVariant(bundle, 'current.bundle');
 
-  const artifact = await verifyCubeoptBundle(resolve(store, 'bundles', bundle), { allowFixtureSizes });
+  const artifact = await verifyCubeoptBundle(resolve(store, 'bundles', bundle), { allowFixtureSizes, cachedTable });
   if (artifact.manifest.bundle !== bundle) {
     throw artifactError(`current bundle ${bundle} does not match manifest bundle ${artifact.manifest.bundle}`);
   }
@@ -268,7 +280,7 @@ export async function loadCubeoptArtifact(storeDir, { allowFixtureSizes = false 
 }
 
 /** Verify one immutable bundle directory without consulting the current pointer. */
-export async function verifyCubeoptBundle(bundleDir, { allowFixtureSizes = false } = {}) {
+export async function verifyCubeoptBundle(bundleDir, { allowFixtureSizes = false, cachedTable = false } = {}) {
   const root = resolve(requireNonEmptyString(bundleDir, 'bundle directory'));
   let rootInfo;
   try {
@@ -302,11 +314,22 @@ export async function verifyCubeoptBundle(bundleDir, { allowFixtureSizes = false
     if (info.size !== manifest.files[role].bytes) {
       throw artifactError(`${role} size mismatch: manifest=${manifest.files[role].bytes}, actual=${info.size}`);
     }
-    const actualHash = await sha256File(path);
+    const actualHash = role === 'table'
+      ? (await verifyTableDigest(path, manifest.files[role].sha256, { cached: cachedTable }), manifest.files[role].sha256)
+      : await sha256File(path);
     if (actualHash !== manifest.files[role].sha256) {
       throw artifactError(`${role} sha256 mismatch: manifest=${manifest.files[role].sha256}, actual=${actualHash}`);
     }
     paths[`${role}Path`] = path;
+  }
+
+  if (contract.engine === 'rust-native') {
+    if (process.platform !== 'linux' || process.arch !== 'x64') throw artifactError('native Opt8 requires Linux x86_64');
+    const { stdout } = await promisify(execFile)(paths.binaryPath, ['--server-info'], { timeout: 5000, maxBuffer: 4096 });
+    const info = JSON.parse(stdout);
+    if (info.engine !== contract.engine || info.variant !== contract.variant || info.protocol !== CUBEOPT_PROTOCOL
+      || info.maxThreads !== contract.maxThreads || info.optimized !== true) throw artifactError('native Opt8 binary contract mismatch');
+    return Object.freeze({ root: canonicalRoot, manifestPath, manifest: Object.freeze(manifest), ...paths });
   }
 
   if (contract.engine === 'rust-wasm') {

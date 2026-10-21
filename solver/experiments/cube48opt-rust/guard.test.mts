@@ -14,6 +14,16 @@ import { parsePrintedSolution, parseWasmBenchmarkArguments, readWca100 } from '.
 
 const here = dirname(fileURLToPath(import.meta.url));
 const native = resolve(here, 'target/release/cube48opt-research');
+test('plain artifact upload and metadata probes do not authorize computation', () => {
+  assert.equal(blockedCompute(`scp ${native} cuberoot:/tmp/cube48opt-native`), undefined);
+  assert.equal(blockedCompute(`${native} --server-info`), undefined);
+  assert.equal(blockedCompute('/tmp/cube48opt-native --server-info'), undefined);
+  assert.ok(blockedCompute('/tmp/cube48opt-native solve small table'));
+  assert.ok(blockedCompute(`${native} solve small table`));
+  assert.ok(blockedCompute(`scp ${native} cuberoot:/tmp/native; ${native} solve small table`));
+  assert.ok(blockedCompute(`scp $(${native} solve small table) cuberoot:/tmp/native`));
+  assert.ok(blockedCompute(`scp -S ${native} local cuberoot:/tmp/native`));
+});
 test('dedicated 18-thread reviews route only existing-table commands with one shared native table', () => {
   const root=resolve(here,'../../..'), executable=resolve(here,'target/multithread/release/cube48opt-research');
   const env={CUBEOPT_MULTITHREAD_REVIEW:resolve(root,'.tmp/cubeopt-reverse/mt18-review/launch.json'),

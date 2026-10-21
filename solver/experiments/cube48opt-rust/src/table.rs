@@ -1,6 +1,9 @@
 //! cube48opt's padded, two-bit pruning tables (not nissy-core H48 files).
 use std::{fs, io::Read, path::Path};
 
+#[path = "table_validation_cache.rs"]
+mod validation_cache;
+
 pub const OPT1_BYTES: usize = 30_401_280;
 
 // Preserve the existing WASM load/decode boundary even under LTO. None lanes
@@ -65,7 +68,19 @@ impl PruningTable {
     }
 
     pub fn load_variant(path: &Path, variant: Variant) -> Result<Self, String> {
-        let size = fs::metadata(path).map_err(|e| e.to_string())?.len();
+        Self::load_file(path, variant, false, false)
+    }
+
+    /// Native CLI fast path: reuse validation only for an unchanged local file.
+    /// The ordinary load_variant/from_words APIs still always validate fully.
+    pub fn load_variant_cached(path: &Path, variant: Variant, force: bool) -> Result<Self, String> {
+        Self::load_file(path, variant, true, force)
+    }
+
+    fn load_file(path: &Path, variant: Variant, cache_validation: bool, force: bool) -> Result<Self, String> {
+        let mut file = fs::File::open(path).map_err(|e| e.to_string())?;
+        let before = file.metadata().map_err(|e| e.to_string())?;
+        let size = before.len();
         if size != variant.bytes() {
             return Err(format!("opt{} requires exactly {} bytes; got {size}. Other variants and nissy tables are not interchangeable.", variant.number(), variant.bytes()));
         }
@@ -73,7 +88,13 @@ impl PruningTable {
         let mut words = Vec::<u32>::new();
         words.try_reserve_exact(len).map_err(|e| e.to_string())?;
         words.resize(len, 0);
-        let mut file = fs::File::open(path).map_err(|e| e.to_string())?;
+        let cache = cache_validation.then(|| validation_cache::Cache::new(path, &before, variant)).flatten();
+        if force {
+            if let Some(cache) = &cache {
+                // A failed forced recheck must never leave an old success receipt.
+                cache.invalidate().map_err(|e| format!("cannot invalidate table validation cache: {e}"))?;
+            }
+        }
         for chunk in words.chunks_mut(1024 * 1024) {
             // u32 accepts every bit pattern; this exclusive byte view is
             // bounded to its initialized allocation. No second whole table.
@@ -89,7 +110,26 @@ impl PruningTable {
         if file.read(&mut [0_u8; 1]).map_err(|e| e.to_string())? != 0 {
             return Err("table changed during read".into());
         }
-        Self::from_words(words, variant)
+        if validation_cache::identity(&before) != validation_cache::identity(&file.metadata().map_err(|e| e.to_string())?) {
+            return Err("table changed during read".into());
+        }
+        if let Some(counts) = cache.as_ref().filter(|_| !force).and_then(|cache| cache.read()) {
+            eprintln!("Opt{}: table validation reused (unchanged file)", variant.number());
+            return Ok(Self { words, variant, distribution: counts });
+        }
+        if cache_validation {
+            eprintln!("Opt{}: validating complete table", variant.number());
+        }
+        let table = Self::from_words(words, variant)?;
+        if validation_cache::identity(&before) != validation_cache::identity(&file.metadata().map_err(|e| e.to_string())?) {
+            return Err("table changed during validation".into());
+        }
+        if let Some(cache) = cache {
+            if let Err(error) = cache.write(&table.distribution) {
+                eprintln!("Table verified, but validation cache could not be saved: {error}");
+            }
+        }
+        Ok(table)
     }
 
     /// Validate an owned table loaded by a host such as a WASM wrapper.
@@ -124,18 +164,7 @@ impl PruningTable {
             counts[fallback] += (valid & !word & !high).count_ones() as u64;
             checksum ^= word;
         }
-        if checksum != variant.checksum()
-            || counts.iter().sum::<u64>() != 117_567_450_u64 << variant.eo_bits()
-            || counts[usize::from(variant.max_bound()) + 1..]
-                .iter()
-                .any(|&n| n != 0)
-            || variant.number() == 1
-                && counts
-                    != [
-                        36, 27, 77, 547, 3218, 20172, 102167, 393472, 4953846, 34776317, 77317571,
-                        0, 0, 0, 0, 0,
-                    ]
-        {
+        if checksum != variant.checksum() || !valid_distribution(&counts, variant) {
             return Err(
                 "table checksum or pruning distribution differs from the verified variant".into(),
             );
@@ -243,6 +272,16 @@ impl PruningTable {
     pub fn distribution(&self) -> &[u64; 16] {
         &self.distribution
     }
+}
+
+fn valid_distribution(counts: &[u64; 16], variant: Variant) -> bool {
+    counts.iter().try_fold(0_u64, |total, count| total.checked_add(*count))
+        == Some(117_567_450_u64 << variant.eo_bits())
+        && counts[usize::from(variant.max_bound()) + 1..].iter().all(|&n| n == 0)
+        && (variant.number() != 1 || *counts == [
+            36, 27, 77, 547, 3218, 20172, 102167, 393472, 4953846, 34776317, 77317571,
+            0, 0, 0, 0, 0,
+        ])
 }
 
 #[cfg(test)]

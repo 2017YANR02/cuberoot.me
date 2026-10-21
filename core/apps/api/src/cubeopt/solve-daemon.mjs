@@ -33,12 +33,26 @@ import { checkCubeoptLoadMemory, requiredCubeoptLoadBytes, CUBEOPT_LOAD_FLOOR_BY
 import { resolveCubeoptThreads } from './config.ts';
 import { captureCubeoptOutput, initializeCubeoptSolver, serveCubeoptLines } from './solve-protocol.mjs';
 
-const artifact = await loadCubeoptArtifact(process.env.CUBEOPT_ARTIFACT_DIR);
+const artifact = await loadCubeoptArtifact(process.env.CUBEOPT_ARTIFACT_DIR, {
+  cachedTable: process.env.CUBEOPT_VERIFY_TABLE !== '1',
+});
 const MJS = artifact.modulePath;
 const DAT = artifact.tablePath;
 const THREADS = resolveCubeoptThreads(process.env.CUBEOPT_THREADS);
-if (artifact.manifest.engine === 'rust-wasm' && THREADS > artifact.manifest.maxThreads) {
+if (artifact.manifest.maxThreads && THREADS > artifact.manifest.maxThreads) {
   throw new Error(`Rust CubeOpt supports at most ${artifact.manifest.maxThreads} threads`);
+}
+
+if (artifact.manifest.engine === 'rust-native') {
+  checkCubeoptLoadMemory(requiredCubeoptLoadBytes(statSync(DAT).size));
+  if (typeof process.execve !== 'function') throw new Error('native CubeOpt requires Node with process.execve');
+  // Replace the loader, preserving PID and stdio. The existing API watchdog,
+  // timeout, OOM priority and shutdown then own the actual native process.
+  process.execve(artifact.binaryPath, [artifact.binaryPath, 'solve', artifact.snapshotPath, DAT, '8', '20', '0'], {
+    ...process.env, CUBEOPT_VARIANT: '8', CUBEOPT_PROTOCOL: 'tsv-v1',
+    CUBEOPT_SOLVE_THREADS: '1', CUBEOPT_SEARCH_THREADS: String(THREADS),
+  });
+  throw new Error('native CubeOpt execve unexpectedly returned');
 }
 
 async function makeSolver() {

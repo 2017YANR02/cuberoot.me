@@ -1,5 +1,31 @@
 # Rust Opt9 / Opt10：Mac 原生最优求解器
 
+## Opt1–9 一键建表（原生 CLI）
+
+准备 Rust 和 Node.js 24+，保留完整仓库中的 `core/packages/client/public/cubeopt/` 资源即可；建表无需安装网站的 pnpm 依赖。在本目录构建独立程序，不覆盖已验收的研究制品：
+
+```sh
+cd solver/experiments/cube48opt-rust
+cargo build --release --target-dir target/init-cli
+./target/init-cli/release/cube48opt-research init --memory 2G
+```
+
+`2G` 对应 Opt6，剪枝表为 1,945,681,920 字节，并非进程内存上限。省略 `--memory` 可在终端选择档位；支持 `32M / 128M / 256M / 512M / 1G / 2G / 4G / 8G / 16G`，依次对应 Opt1–9。也可用 `--variant 6`，不能与 `--memory` 同时指定。`--threads 4` 设置建表线程数，默认使用当前可用线程数。
+
+命令复用固定版本的原版 WASM 生成器，显示已有生成进度和日志，自动保存到仓库的 `solver/tables/cubeopt/opt6/`。可以用 `--out /path/to/opt6` 指定位置。输出包含剪枝表、`small-memory.bin` 及两份 JSON 元数据；再次运行会流式校验文件大小和 SHA-256 后复用，不重新建表、不把整张表加载进 WASM。复制整个目录到其他机器后同样可以复用，元数据中的旧绝对路径不会阻止迁移。
+
+目录不完整、档位不符或校验失败时明确报错，保留原文件，不自动覆盖或重建。当前上游建表算法不提供计算中途的续建断点；中断后的不完整目录不能当作已完成表。可保留现场并通过新的 `--out` 目录重新建表。
+
+Linux 上建表完成后，从同一目录求解（从标准输入读取 `id<TAB>scramble`，可连续多行）：
+
+```sh
+CUBEOPT_VARIANT=6 ./target/init-cli/release/cube48opt-research solve \
+  ../../tables/cubeopt/opt6/small-memory.bin \
+  ../../tables/cubeopt/opt6/h48prun31h6.dat 8 20 0
+```
+
+Linux 使用原生成入口；macOS 的 `init` 会自动转入现有 `guard.mts`，沿用资源预检、独占锁、历史停止记录与运行监控，不提供绕过参数。维护者 Mac 上的求解仍走现有受保护研究入口，不直接执行上述 Linux 求解命令。自动化工具的启动 hook 继续拦截直接 native `init`；内部受保护生成调用及其预算由 `table-init.test.mts` 覆盖。此入口不改变表格式、搜索算法、正式 Opt9/10 制品或历史性能记录。
+
 ## 当前正式 Opt10
 
 维护者于2026-10-14指定 **coset 24.6秒版**为正式原生Opt10，登记在 [opt10-release.json](opt10-release.json)。正式程序是已完成WCA1000独立验解的原始构件，未从后续实验源码重新编译；基准为同一Mac、16搜索线程、单轮、不预热，峰值RSS约31.2GB。此晋升仅本地，未发布到服务器或替换WASM。
@@ -26,7 +52,11 @@ node --experimental-strip-types solver/experiments/cube48opt-rust/run-opt10.mts
 
 当前源码已把原固定 H10 后端泛化为 Nissy **H0–H11 共用后端**。本阶段通过编译检查及 **19 项不同的小数据测试**，尚未对通用版运行任何真实 H48 表回归或性能对照，包括 H10。**H11 仅保留代码支持，CLI 在任何表文件访问前拒绝；本机未生成、打开、映射或求解 H11。** 下文的 1.566× H10 和 1.165× Opt9 均归属于各自已保存的历史程序，不能作为本次通用版的验收结果。
 
-默认启用 `neon-moves`，在 AArch64 同时向量化正逆状态转动；其它架构自动使用标量。`--no-default-features` 关闭默认的移动 SIMD、H48 快坐标及 H48 预取；各开关保留兼容名称 `neon-moves`、`h10-fast-coord`、`h10-prefetch`，后两个现在作用于 Nissy H0–H11 共用实现。Opt 的现有 AArch64 坐标路径不随这些开关改变。历史 Opt9 的同表、单线程完整 60 例对照中，正式三轮总时间中位数为 Rust **52.117762 秒**、原 WASM **60.718842 秒**，速度比 **1.165 倍**；全部 960 次求解独立验过。它是这组样本的实测，不能外推为所有随机状态或相对原 C++ 的提升。旧 Opt1 1.108 倍结果仍在跟踪 MD 中作为历史单独保留。
+默认启用 `neon-moves`，在 AArch64 同时向量化正逆状态转动。新编译的 x86_64 原生版为 Opt1–9 转动和坐标计算提供 AVX2 / AVX-512BW+VL 路径，运行时检测 CPU 与 OS 支持；自动模式优先 AVX2，不支持时回退标量。`CUBEOPT_SIMD=scalar|avx2|avx512` 可固定路径，明确指定不支持的指令集会报错；未指定等同 `auto`。`--no-default-features` 关闭默认的 ARM 移动 SIMD、H48 快坐标及 H48 预取，不关闭独立的 x86 路径；各开关保留兼容名称 `neon-moves`、`h10-fast-coord`、`h10-prefetch`，后两个现在作用于 Nissy H0–H11 共用实现。Opt 的现有 AArch64 坐标路径不随这些开关改变。历史 Opt9 的同表、单线程完整 60 例对照中，正式三轮总时间中位数为 Rust **52.117762 秒**、原 WASM **60.718842 秒**，速度比 **1.165 倍**；全部 960 次求解独立验过。它是这组样本的实测，不能外推为所有随机状态或相对原 C++ 的提升。旧 Opt1 1.108 倍结果仍在跟踪 MD 中作为历史单独保留。
+
+x86 构建需要 Rust 1.89+。在目标 Linux 机器上执行前面的 `cargo build --release` 即可使用 SIMD，不需要改表或加实验 feature。本仓库 `solver/.cargo/config.toml` 使用 `target-cpu=native`；需要跨 CPU 分发时，用 `RUSTFLAGS='-C target-cpu=x86-64' cargo build --release` 保留基线兼容性，AVX2 / AVX-512 热点仍由运行时检测选择。交叉编译不能沿用 Mac 的 `target-cpu=native`。
+
+2026-10-21 的真实 Linux Xeon 小数据验证已覆盖九档、三条路径共 1,472,526 次坐标差分；Opt8/9 的转动、坐标热点对照中 AVX2 比 AVX-512 更快，因此没有按指令集宽度强制选择 AVX-512。此结果不代表完整求解提速；没有加载大表或替换线上 WASM。构建方法、具体数据与证据见 [x86 SIMD 验证记录](x86-simd.md)。
 
 这是独立实验，尚未接入统计管道或替换线上引擎。Opt1 剪枝表 30,401,280 字节，小表快照 816,856 字节。二者文件合计 31,218,136 字节不等于整个进程峰值内存。Opt9 表为 15,565,455,360 字节；历史固定 H10 约 30 GB 后端的标量版与优化版均已通过坐标差分和完整固定语料验解。纯 Rust 建表尚未实现；本轮新增的是上述状态级批处理线程调度，单个状态内的搜索仍是单线程。本次没有新增生成器。
 
@@ -135,7 +165,11 @@ REA 6.4.0 的本地 CLI 已实际尝试，但该文件触发 `Unsupported WABT s
 
 小表快照 SHA-256：`072d6d57388fa8e2fe0174e861270ba093f5374633e15df0d82baf47a8f3350f`。
 
-Opt 的 Rust 表加载器检查精确大小、原版 XOR 校验和和完整剪枝分布；Opt 验证/基准脚本另核对完整 SHA-256。通用 H48 加载器核对精确大小、三段表头、辅助数据和完整主表分布；历史 H10 验证没有重新计算整张 30 GB 表的 SHA-256，不能把分布校验写成文件摘要校验。小表快照不是长期 ABI。opt1 的填充坐标、16 字节 fallback 编码与 nissy-core H48 不同，不能互换表文件。
+Opt 的 Rust 表加载器检查精确大小、原版 XOR 校验和和完整剪枝分布；Opt 验证/基准脚本另核对完整 SHA-256。原生 CLI 的 Opt1–9 `solve` 在 Linux/macOS 首次成功校验后写入同目录的 `<表名>.verified`；后续文件设备/身份、大小、mtime、ctime、档位和校验版本均未变化时，复用校验结果，不再扫描全表统计分布。表仍需完整读入内存；此优化只减少启动耗时，不改变逐条 JSON `seconds` 的计时范围。记录丢失、损坏或文件变化会重新校验，目录不可写则本次求解照常继续、下次再次完整校验。其他平台暂保留完整校验。
+
+需要强制重验时，在原求解命令前加 `CUBEOPT_VERIFY_TABLE=1`；旧记录先失效，成功后重新保存。缓存基于文件元数据，不能检测不改变元数据的底层静默损坏，也不是文件内容摘要。库的 `load_variant` / `from_words`、WASM、`init --reuse` 的 SHA-256 检查、H48 和 Opt10 流程保持完整校验；冻结的正式程序需另行更新后才具有此功能。
+
+通用 H48 加载器核对精确大小、三段表头、辅助数据和完整主表分布；历史 H10 验证没有重新计算整张 30 GB 表的 SHA-256，不能把分布校验写成文件摘要校验。小表快照不是长期 ABI。opt1 的填充坐标、16 字节 fallback 编码与 nissy-core H48 不同，不能互换表文件。
 
 ## 验证与研究边界
 

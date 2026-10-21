@@ -199,15 +199,21 @@ fn main() {
     } else {
         assert_eq!(wide_indices, 0);
     }
+    #[cfg(not(target_arch = "x86_64"))]
     let coordinate_backend = if cfg!(target_arch = "aarch64") {
         "neon"
     } else {
         "scalar"
     };
+    #[cfg(target_arch = "x86_64")]
+    let coordinate_backend = cube48opt_research::x86_simd::initialize().unwrap().name();
+    #[cfg(not(target_arch = "x86_64"))]
     let paired_backend = if cfg!(all(feature = "neon-moves", target_arch = "aarch64")) {
         "neon"
     } else {
         "scalar"
     };
+    #[cfg(target_arch = "x86_64")]
+    let paired_backend = cube48opt_research::x86_simd::initialize().unwrap().name();
     println!("{{\"variant\":{variant},\"states\":{states},\"conjugates\":{},\"inverseMoveIdentities\":{},\"coordinateReference\":{states},\"fastScalarCoordinates\":{fast_slow},\"originalHotQueryIndices\":{},\"pairedMoveStates\":{},\"pairedMoveBackend\":\"{paired_backend}\",\"coordinateBackend\":\"{coordinate_backend}\",\"maxObservedIndex\":{max_index},\"indicesAboveU32\":{wide_indices},\"solvedIndex\":2,\"allEqual\":true}}", states * 48, states * 18, states * 2, states * 18);
 }

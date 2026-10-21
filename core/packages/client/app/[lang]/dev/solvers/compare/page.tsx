@@ -3,6 +3,7 @@
 import { ArrowUpRight, Download } from '@app-foundation/icons/lucide';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
 import BackHome from '@/components/BackHome';
+import AppLink from '@/components/AppLink';
 import HeaderToggles from '@/components/HeaderToggles';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { useT } from '@/hooks/useT';
@@ -49,6 +50,7 @@ export default function SolverComparisonPage() {
       <div className="compare-heading"><h1>{t('三阶最优求解器', 'Optimal 3×3 solvers')}<span>Benchmark<span className="compare-period">.</span></span></h1>
       </div>
       <div className="compare-protocol-strip"><span>Apple M5 Pro</span><span>{t('单轮 · 不预热', 'One pass · no warmup')}</span></div>
+      <AppLink className="compare-help-link" href="/dev/solvers#native-init" prefetch={false}>{t('原生版使用说明', 'Native solver quick start')} <ArrowUpRight size={14} aria-hidden="true" /></AppLink>
     </header>
 
     <section className="compare-results" aria-label={t('性能对比', 'Performance comparison')}>

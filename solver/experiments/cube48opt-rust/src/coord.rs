@@ -4,6 +4,10 @@
 
 pub use crate::cube::Cube;
 
+#[cfg(target_arch = "x86_64")]
+#[path = "coord_x86.rs"]
+mod x86;
+
 pub const SNAPSHOT_BYTES: usize = 816_856;
 pub const CORNER_RAW_COUNT: usize = 70 * 2187;
 pub const CORNER_CLASSES: u32 = 3393;
@@ -356,7 +360,9 @@ impl CoordTables {
         let (orbit, eo) = unsafe { self.coordinate_parts_neon::<true>(cube) };
         #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
         let (orbit, eo) = unsafe { self.coordinate_parts_wasm::<true>(cube) };
-        #[cfg(not(any(target_arch = "aarch64", all(target_family = "wasm", target_feature = "simd128"))))]
+        #[cfg(target_arch = "x86_64")]
+        let (orbit, eo) = self.coordinate_parts_x86::<true>(cube);
+        #[cfg(not(any(target_arch = "aarch64", target_arch = "x86_64", all(target_family = "wasm", target_feature = "simd128"))))]
         let (orbit, eo) = self.coordinate_parts_slow::<true>(cube);
         self.pack_index(orbit, eo)
     }
@@ -385,7 +391,9 @@ impl CoordTables {
         let (orbit, eo) = unsafe { self.coordinate_parts_neon::<true>(cube) };
         #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
         let (orbit, eo) = unsafe { self.coordinate_parts_wasm::<true>(cube) };
-        #[cfg(not(any(target_arch = "aarch64", all(target_family = "wasm", target_feature = "simd128"))))]
+        #[cfg(target_arch = "x86_64")]
+        let (orbit, eo) = self.coordinate_parts_x86::<true>(cube);
+        #[cfg(not(any(target_arch = "aarch64", target_arch = "x86_64", all(target_family = "wasm", target_feature = "simd128"))))]
         let (orbit, eo) = self.coordinate_parts_slow::<true>(cube);
         ((u64::from(orbit) & !511) << 8)
             | (u64::from(eo >> 3) << 9)
@@ -402,7 +410,9 @@ impl CoordTables {
         let (orbit, eo) = unsafe { self.coordinate_parts_neon::<true>(cube) };
         #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
         let (orbit, eo) = unsafe { self.coordinate_parts_wasm::<true>(cube) };
-        #[cfg(not(any(target_arch = "aarch64", all(target_family = "wasm", target_feature = "simd128"))))]
+        #[cfg(target_arch = "x86_64")]
+        let (orbit, eo) = self.coordinate_parts_x86::<true>(cube);
+        #[cfg(not(any(target_arch = "aarch64", target_arch = "x86_64", all(target_family = "wasm", target_feature = "simd128"))))]
         let (orbit, eo) = self.coordinate_parts_slow::<true>(cube);
         ((u64::from(orbit) & !511) << 9)
             | (u64::from(eo >> 2) << 9)
@@ -513,7 +523,9 @@ impl CoordTables {
         unsafe {
             self.coordinate_parts_wasm::<false>(cube).0
         }
-        #[cfg(not(any(target_arch = "aarch64", all(target_family = "wasm", target_feature = "simd128"))))]
+        #[cfg(target_arch = "x86_64")]
+        { self.coordinate_parts_x86::<false>(cube).0 }
+        #[cfg(not(any(target_arch = "aarch64", target_arch = "x86_64", all(target_family = "wasm", target_feature = "simd128"))))]
         self.index_slow(cube)
     }
 
