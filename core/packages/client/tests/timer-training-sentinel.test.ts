@@ -3,8 +3,14 @@ import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
-const { loadAlg } = vi.hoisted(() => ({ loadAlg: vi.fn() }));
-vi.mock('@/lib/alg_case_alignment', () => ({ loadAlg }));
+const { loadLibrarySource, alignAlgSelection } = vi.hoisted(() => ({ loadLibrarySource: vi.fn(), alignAlgSelection: vi.fn() }));
+vi.mock('@/lib/alg-library-cache', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/lib/alg-library-cache')>(),
+  loadLibrarySource,
+  subscribeAlgLibrary: () => () => {},
+}));
+vi.mock('@/lib/alg_case_alignment', () => ({ alignAlgSelection }));
+vi.mock('@/lib/alg_validation', () => ({ warmAlgValidation: async () => {} }));
 vi.mock('@/lib/auth-store', () => ({ useIsAdmin: () => false }));
 vi.mock('@/hooks/useContentRefreshKey', () => ({ useContentRefreshKey: () => 0 }));
 vi.mock('@/i18n/tr', () => ({ tr: ({ en }: { en: string }) => en }));
@@ -28,7 +34,8 @@ let root: Root;
 beforeEach(() => {
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.clearAllMocks();
-  loadAlg.mockResolvedValue({ cases: [{ name: 'CaseA', subgroup: 'u', algs: [[{ alg: 'R' }]] }] });
+  loadLibrarySource.mockResolvedValue({ cases: [{ name: 'CaseA', subgroup: 'u', algs: [[{ alg: 'R' }]] }] });
+  alignAlgSelection.mockImplementation(async file => file);
   container = document.createElement('div');
   document.body.append(container);
   root = createRoot(container);
@@ -48,13 +55,17 @@ it.each([
     value: { path: target.path, params: target.params, mapHref: href => href },
     children: createElement(AlgSubOrCaseClient),
   })));
-  expect(loadAlg).toHaveBeenCalledWith('3x3', 'coll', { fresh: false });
+  expect(loadLibrarySource).toHaveBeenCalledWith('3x3', 'coll');
+  expect(alignAlgSelection).toHaveBeenCalledWith(
+    { cases: [{ name: 'CaseA', subgroup: 'u', algs: [[{ alg: 'R' }]] }] },
+    [{ name: 'CaseA', subgroup: 'u', algs: [[{ alg: 'R' }]] }],
+  );
   expect(container.textContent).toBe(expected);
 });
 
 it('keeps resolving the actual standalone URL when Next supplies sentinel params', async () => {
   window.history.replaceState({}, '', '/zh/alg/3x3/coll/casea');
   await act(async () => root.render(createElement(AlgSubOrCaseClient)));
-  expect(loadAlg).toHaveBeenCalledWith('3x3', 'coll', { fresh: false });
+  expect(loadLibrarySource).toHaveBeenCalledWith('3x3', 'coll');
   expect(container.textContent).toBe('3x3/coll/case:CaseA');
 });

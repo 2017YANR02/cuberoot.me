@@ -60,7 +60,8 @@ const TIMING_FIELDS = {
 /** Exact contract-derived set rendered by this shared UI. */
 export const TIMER_TIMING_SETTING_FIELD_IDS: readonly TimerSettingFieldId[] =
   TIMER_SETTING_FIELD_CONTRACTS
-    .filter((field) => field.category === 'timer')
+    .filter((field) => field.category === 'timer' && field.storagePath !== null
+      && Object.hasOwn(TIMING_FIELDS, field.storagePath))
     .map((field) => field.id as TimerSettingFieldId);
 
 function numberEnumValues(field: TimerSettingFieldContract): readonly number[] {

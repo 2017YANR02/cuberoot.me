@@ -54,6 +54,24 @@ describe('algorithm library snapshots', () => {
     expect(await readAlgLibrary('file:3x3/zbll', async () => ({ revision: 3 }))).toEqual({ revision: 2 });
   });
 
+  it('evicts only library snapshots when quota prevents persisting an invalidation', async () => {
+    const { invalidateAlgLibrary } = await import('@/lib/alg-library-cache');
+    localStorage.setItem('alg-library:v1:file:3x3/pll', JSON.stringify({ value: { cases: [] }, saved: 1 }));
+    localStorage.setItem('timer-session', 'keep');
+    const setItem = Storage.prototype.setItem;
+    const write = vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => {
+      throw new DOMException('Full', 'QuotaExceededError');
+    }).mockImplementation(setItem);
+    try {
+      invalidateAlgLibrary('3x3', 'zbll');
+      expect(write).toHaveBeenCalledTimes(3);
+      expect(localStorage.getItem('alg-library:v1:file:3x3/pll')).toBeNull();
+      expect(localStorage.getItem('timer-session')).toBe('keep');
+      expect(JSON.parse(localStorage.getItem('alg-library:v1:catalog:3x3')!)).toEqual({ invalidated: true, saved: Date.now() });
+      expect(JSON.parse(localStorage.getItem('alg-library:v1:file:3x3/zbll')!)).toEqual({ invalidated: true, saved: Date.now() });
+    } finally { write.mockRestore(); }
+  });
+
   it('keeps identity and does not notify when the server data is unchanged', async () => {
     const { readAlgLibrary, subscribeAlgLibrary } = await import('@/lib/alg-library-cache');
     const first = await readAlgLibrary('file:3x3/pll', async () => ({ cases: [1] }));

@@ -10,7 +10,7 @@
 }
 .cc-page *, .cc-page *::before, .cc-page *::after { box-sizing: border-box; }
 .cc-page a { color: inherit; text-decoration: none; }
-.cc-page button, .cc-page input, .cc-page select { font: inherit; }
+.cc-page :is(.cc-button, .cc-range-input, .cc-view-select) { font: inherit; }
 .cc-page :is(a, button, input, select, summary, [tabindex]):focus-visible { outline: 3px solid var(--ring); outline-offset: 5px; }
 .cc-page :is(a, button, summary) { -webkit-tap-highlight-color: transparent; }
 .cc-page p { margin: 0 0 1em; }
@@ -97,9 +97,9 @@
 .cc-slider { margin-top: 22px; }
 .cc-slider label { display: flex; justify-content: space-between; gap: 16px; font-size: 14px; }
 .cc-slider output { font-variant-numeric: tabular-nums; font-family: ui-monospace, monospace; color: var(--cc-blue); }
-.cc-slider input { display: block; width: 100%; height: 32px; accent-color: var(--cc-blue); cursor: pointer; margin: 4px 0 0; }
+.cc-slider .cc-range-input { display: block; width: 100%; height: 32px; accent-color: var(--cc-blue); cursor: pointer; margin: 4px 0 0; }
 .cc-select { display: flex; align-items: center; justify-content: space-between; gap: 18px; font-size: 14px; margin: 12px 0 20px; }
-.cc-select select { width: auto; max-width: 70%; min-height: 44px; background: var(--background); border: 1px solid var(--border-default); color: var(--foreground); padding: 8px 10px; border-radius: 10px; }
+.cc-select .cc-view-select { width: auto; max-width: 70%; min-height: 44px; background: var(--background); border: 1px solid var(--border-default); color: var(--foreground); padding: 8px 10px; border-radius: 10px; }
 .cc-inline-code { display: block; font-family: ui-monospace, monospace; font-size: 12px; overflow-wrap: anywhere; margin: 20px 0; color: var(--muted-foreground); }
 .cc-feedback { display: block; font-size: 12px; color: var(--muted-foreground); margin-top: 8px; }
 .cc-code-details { grid-column: 1 / -1; border-top: 1px solid var(--border-default); padding: 16px 28px; min-width: 0; }
@@ -244,7 +244,7 @@
   .cc-page *, .cc-page *::before, .cc-page *::after { transition: none !important; scroll-behavior: auto !important; }
 }
 @media print {
-  .cc-topbar, .cc-nav, .cc-hero-actions, .cc-controls button, .cc-feedback { display: none; }
+  .cc-topbar, .cc-nav, .cc-hero-actions, .cc-controls .cc-button, .cc-feedback { display: none; }
   .cc-main { max-width: none; padding: 0; }
   .cc-chapter { padding-top: 30px; }
   .cc-chapter-head, .cc-code, .cc-lab { break-inside: avoid; }

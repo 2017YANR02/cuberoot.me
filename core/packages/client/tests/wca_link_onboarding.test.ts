@@ -9,6 +9,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import ts from 'typescript';
 import { workspaceFixturePath } from './workspace-fixture-path';
 
 const CLIENT = join(__dirname, '..');
@@ -108,11 +109,12 @@ describe('client:只问新人,只问一次', () => {
 });
 
 describe('引导只给 OAuth 一条路', () => {
-  const from = panel.indexOf('export function WcaLinkPrompt');
-  const body = panel.slice(from, panel.indexOf('\nconst PROVIDER_LABEL', from));
+  const source = ts.createSourceFile('AuthPanel.tsx', panel, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const prompt = source.statements.find(statement => ts.isFunctionDeclaration(statement) && statement.name?.text === 'WcaLinkPrompt');
+  const body = prompt?.getText(source) ?? '';
 
   it('WcaLinkPrompt 存在且走 WCA 授权', () => {
-    expect(from).toBeGreaterThan(-1);
+    expect(prompt).toBeDefined();
     expect(body).toContain('startWcaLink');
   });
 

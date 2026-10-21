@@ -121,7 +121,8 @@ describe('wca_kinch stats deploy contract', () => {
 
   it('can bootstrap stats-extra without duplicating or waiting for the full daily pipeline', () => {
     expect(workflow).toMatch(/pipeline:\s+[\s\S]*?- wca_stats_extra/);
-    expect(workflow.match(/inputs\.pipeline != 'wca_stats_extra'/g)).toHaveLength(22);
+    expect(workflow.match(/inputs\.pipeline != 'wca_stats_extra'/g)).toHaveLength(23);
+    expect(workflow).toMatch(/name: Publish latest WCA binary data\s+if: github\.event_name == 'schedule' \|\| inputs\.pipeline != 'wca_stats_extra'/);
     // Cleanup follows the upload outcome, so skipped bootstrap uploads never open SSH cleanup.
     expect(workflow).toMatch(/name: Cleanup historical ranks upload\s+if: always\(\) && steps\.stats_ssh\.outcome == 'success' && contains\(fromJSON\('\["success", "failure", "cancelled"\]'\), steps\.historical_ranks_upload\.outcome\)/);
     expect(workflow).toMatch(/name: Build WCA stats extra\s+working-directory:/);

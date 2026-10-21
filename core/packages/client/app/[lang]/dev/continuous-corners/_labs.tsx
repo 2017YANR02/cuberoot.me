@@ -13,7 +13,7 @@ function Slider({ label, value, min, max, step = 1, onChange }: {
   const id = useId();
   return <div className="cc-slider">
     <label htmlFor={id}>{label}<output htmlFor={id}>{value}</output></label>
-    <input id={id} type="range" min={min} max={max} step={step} value={value}
+    <input className="cc-range-input" id={id} type="range" min={min} max={max} step={step} value={value}
       onChange={event => onChange(Number(event.target.value))} />
   </div>;
 }
@@ -57,7 +57,7 @@ export function CornerLab() {
       <Slider label={t('宽度', 'Width')} value={width} min={100} max={360} onChange={setWidth} />
       <Slider label={t('高度', 'Height')} value={height} min={60} max={250} onChange={setHeight} />
       <Slider label={t('名义半径', 'Nominal radius')} value={radius} min={0} max={125} onChange={setRadius} />
-      <label className="cc-select">{t('显示', 'Display')}<select value={view} onChange={e => setView(e.target.value)}>
+      <label className="cc-select">{t('显示', 'Display')}<select className="cc-view-select" value={view} onChange={e => setView(e.target.value)}>
         <option value="overlay">{t('叠加对比', 'Overlay')}</option>
         <option value="path">{t('仅路径重建', 'Reconstructed path')}</option>
         <option value="circle">{t('仅圆弧', 'Circular only')}</option>

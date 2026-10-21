@@ -38,11 +38,11 @@ ${executable} init --memory ${tiers[variant - 1]}`;
         <h3>{t('选择档位，执行命令', 'Choose a size and run the commands')}</h3>
         <div className="solv-start-controls">
           <label>{t('表档位', 'Table size')}{' '}
-            <select value={variant} onChange={event => setVariant(Number(event.target.value))}>
+            <select className="solv-start-tier" value={variant} onChange={event => setVariant(Number(event.target.value))}>
               {tiers.map((tier, index) => <option key={tier} value={index + 1}>Opt{index + 1} · {tier}</option>)}
             </select>
           </label>
-          <button type="button" onClick={() => copy(commands)}>
+          <button type="button" className="solv-start-copy" onClick={() => copy(commands)}>
             {copied ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
             {copied ? t('已复制', 'Copied') : t('复制命令', 'Copy commands')}
           </button>

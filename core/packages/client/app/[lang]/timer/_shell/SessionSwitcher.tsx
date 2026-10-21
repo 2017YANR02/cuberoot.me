@@ -90,6 +90,7 @@ export default function SessionSwitcher({
           placeholder={isZh ? '时间、打乱、注释' : 'Time, scramble, comment'}
           aria-label={isZh ? '搜索成绩' : 'Search solves'} />
         </div>
+        {/* allow-manual-search: Only opens or closes the input; onChange updates results while typing. */}
         <button type="button" className="tsession-icon-btn" aria-expanded={searchOpen}
           aria-label={isZh ? '搜索成绩' : 'Search solves'}
           onClick={() => { setSearchOpen(!searchOpen); if (searchOpen) onQueryChange(''); }}>

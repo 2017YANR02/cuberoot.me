@@ -13,7 +13,7 @@
 }
 .alg-progress-page .alg-cat-title { font-family: inherit; font-size: 1.5rem; font-weight: 600; }
 .alg-progress-page :is(button, a):focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
-.alg-progress-page button:active,
+.alg-progress-page :is(.alg-prog-stat.is-reset, .alg-prog-reveal, .alg-prog-help, .alg-prog-reset-all):active,
 .alg-prog-cta:active { transform: translateY(1px); }
 
 /* 与 .alg-cat-header 同宽同边距,内容不贴左边 */

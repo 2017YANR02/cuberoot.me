@@ -81,8 +81,8 @@
 .solv-start p code { overflow-wrap: anywhere; }
 .solv-start pre { margin: 12px 0; padding: 16px; overflow-x: auto; max-width: 100%; background: var(--muted); border-radius: 8px; font: 13px/1.7 var(--font-mono); }
 .solv-start-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-.solv-start-controls select, .solv-start-controls button { min-height: 44px; font: inherit; color: var(--foreground); background: var(--background); border: 1px solid var(--border-default); border-radius: 6px; padding: 8px 12px; }
-.solv-start-controls button { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.solv-start-controls .solv-start-tier, .solv-start-controls .solv-start-copy { min-height: 44px; font: inherit; color: var(--foreground); background: var(--background); border: 1px solid var(--border-default); border-radius: 6px; padding: 8px 12px; }
+.solv-start-controls .solv-start-copy { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
 .solv-start summary { cursor: pointer; min-height: 44px; padding-block: 10px; }
 .solv-start :is(a, button, select, summary, pre):focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
 .solv-sec-head {

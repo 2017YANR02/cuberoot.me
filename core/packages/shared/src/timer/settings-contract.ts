@@ -276,6 +276,7 @@ export const TIMER_SETTING_FIELD_CONTRACTS = [
   { id: 'settings.timer.result-precision', category: 'timer', copy: { en: 'Result precision', zh: '成绩精度' }, storagePath: 'precision', value: { kind: 'enum', values: [2, 3] }, visibility: 'always', disabledWhen: 'never', effect: 'persist-result-precision' },
   { id: 'settings.timer.auto-session-for-event', category: 'timer', copy: { en: 'Match session when changing event', zh: '切换项目时匹配分组' }, storagePath: 'autoSessionForEvent', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-session-for-event' },
   { id: 'settings.timer.auto-event-for-session', category: 'timer', copy: { en: 'Match event when changing session', zh: '切换分组时匹配项目' }, storagePath: 'autoEventForSession', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-event-for-session' },
+  { id: 'settings.timer.rolling-statistics', category: 'timer', copy: { en: 'Statistics', zh: '统计指标' }, storagePath: 'statsRollingColumns', value: { kind: 'string-list' }, visibility: 'always', disabledWhen: 'never', effect: 'persist-rolling-stat-columns' },
 
   // Smart cube
   { id: 'settings.smart-cube.fake-cube', category: 'smart-cube', copy: { en: 'Virtual cube', zh: '虚拟魔方' }, storagePath: 'showAdminFakeCube', value: bool, visibility: 'admin-only', disabledWhen: 'never', effect: 'persist-admin-fake-cube-controls' },

@@ -75,52 +75,58 @@ describe('homepage development cards', () => {
     changeAppLanguage('zh');
     const host = document.createElement('div');
     const root = createRoot(host);
-    await act(async () => root.render(renderLanding()));
-    const admin = user?.wcaId === ADMIN_WCA_IDS[0];
-    for (const [id, href] of [['platform', '/zh/platform'], ['teaching-management', '/zh/org'], ['learning-center', '/zh/learn']]) {
-      const card = host.querySelector(`#card-${id}`)!;
-      if (!admin) { expect(card).toBeNull(); continue; }
-      expect(card.tagName).toBe('A');
-      expect(card.getAttribute('href')).toBe(href);
-      expect(card.getAttribute('aria-disabled')).toBeNull();
-      expect(card.classList.contains('is-disabled')).toBe(true);
-      expect(card.querySelector('.coming-soon-badge')).toBeNull();
-      expect(card.querySelector('.lucide-lock')).toBeNull();
-    }
-    expect(host.querySelector('#card-teaching')?.getAttribute('href')).toBe('/zh/courses');
-    const partnership = host.querySelector('#card-partnership');
-    if (admin) {
-      expect(partnership?.getAttribute('href')).toBe('/zh/bp');
-      expect(partnership?.classList.contains('is-disabled')).toBe(true);
-      const lock = partnership?.parentElement?.querySelector<HTMLButtonElement>('.landing-card-lock');
-      expect(lock?.disabled).toBe(false);
-      expect(lock?.getAttribute('aria-pressed')).toBe('true');
-      expect(lock?.getAttribute('aria-label')).toBe('解锁卡片');
-    } else {
-      expect(partnership).toBeNull();
-    }
-    const interview = host.querySelector('#card-interview');
-    if (admin) {
-      expect(interview?.getAttribute('href')).toBe('/zh/docs/edit?id=b769490d-292b-4423-8e83-3ada43c1d96b');
-      expect(interview?.textContent).toContain('面试');
-    } else {
-      expect(interview).toBeNull();
-    }
-    expect(host.querySelectorAll('.landing-card-lock').length > 0).toBe(admin);
-    const adminArea = host.querySelector('#landing-admin-content');
-    if (admin) {
-      expect(adminArea?.nextElementSibling).toBe(host.querySelector('.footer'));
-      for (const config of [...PRIMARY_CARDS, ...WCA_CARDS, ...SECTIONS.flatMap((section) => section.cards)]) {
-        const cards = host.querySelectorAll(`#card-${config.id}`);
-        expect(cards).toHaveLength(1);
-        expect(adminArea?.contains(cards[0])).toBe(Boolean(config.adminOnly || config.lockedForNonAdmin || config.comingSoon));
+    try {
+      await act(async () => root.render(renderLanding()));
+      const admin = user?.wcaId === ADMIN_WCA_IDS[0];
+      for (const [id, href] of [['platform', '/zh/platform'], ['teaching-management', '/zh/org'], ['learning-center', '/zh/learn']]) {
+        const card = host.querySelector(`#card-${id}`)!;
+        if (!admin) { expect(card).toBeNull(); continue; }
+        expect(card.tagName).toBe('A');
+        expect(card.getAttribute('href')).toBe(href);
+        expect(card.getAttribute('aria-disabled')).toBeNull();
+        expect(card.classList.contains('is-disabled')).toBe(true);
+        expect(card.querySelector('.coming-soon-badge')).toBeNull();
+        expect(card.querySelector('.lucide-lock')).toBeNull();
       }
-      expect(adminArea?.querySelector('#enterprise-members-title')).not.toBeNull();
-      expect(adminArea?.querySelector('#individual-members-title')).not.toBeNull();
-    } else {
-      expect(adminArea).toBeNull();
+      expect(host.querySelector('#card-teaching')?.getAttribute('href')).toBe('/zh/courses');
+      const partnership = host.querySelector('#card-partnership');
+      if (admin) {
+        expect(partnership?.getAttribute('href')).toBe('/zh/bp');
+        expect(partnership?.classList.contains('is-disabled')).toBe(true);
+        const lock = partnership?.parentElement?.querySelector<HTMLButtonElement>('.landing-card-lock');
+        expect(lock?.disabled).toBe(false);
+        expect(lock?.getAttribute('aria-pressed')).toBe('true');
+        expect(lock?.getAttribute('aria-label')).toBe('解锁卡片');
+      } else {
+        expect(partnership).toBeNull();
+      }
+      const interview = host.querySelector('#card-interview');
+      if (admin) {
+        expect(interview?.getAttribute('href')).toBe('/zh/docs/edit?id=b769490d-292b-4423-8e83-3ada43c1d96b');
+        expect(interview?.textContent).toContain('面试');
+      } else {
+        expect(interview).toBeNull();
+      }
+      expect(host.querySelectorAll('.landing-card-lock').length > 0).toBe(admin);
+      const adminArea = host.querySelector('#landing-admin-content');
+      if (admin) {
+        const contactDetails = host.querySelector('.landing-contact-details');
+        expect(contactDetails).not.toBeNull();
+        expect(adminArea?.nextElementSibling).toBe(contactDetails);
+        expect(contactDetails?.nextElementSibling).toBe(host.querySelector('.footer'));
+        for (const config of [...PRIMARY_CARDS, ...WCA_CARDS, ...SECTIONS.flatMap((section) => section.cards)]) {
+          const cards = host.querySelectorAll(`#card-${config.id}`);
+          expect(cards).toHaveLength(1);
+          expect(adminArea?.contains(cards[0])).toBe(Boolean(config.adminOnly || config.lockedForNonAdmin || config.comingSoon));
+        }
+        expect(adminArea?.querySelector('#enterprise-members-title')).not.toBeNull();
+        expect(adminArea?.querySelector('#individual-members-title')).not.toBeNull();
+      } else {
+        expect(adminArea).toBeNull();
+      }
+    } finally {
+      await act(async () => root.unmount());
     }
-    await act(async () => root.unmount());
   });
   it.each(['partnership', 'interview'])('treats %s as a default-locked card that can be unlocked for visitors', async (id) => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });

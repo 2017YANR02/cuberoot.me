@@ -281,7 +281,7 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
           value={s}
         />
         <SettingsSection category="timer" activeCategory={activeCategory} title={tr({ zh: '成绩', en: 'Results' })}>
-          {s.statsRollingColumns.map((column, index) => <Row key={index}
+          {s.statsRollingColumns.map((column, index) => <Row key={index} settingId="settings.timer.rolling-statistics"
             label={tr({ zh: `统计指标${index === 0 ? '一' : '二'}`, en: `Statistic ${index + 1}` })}>
           <TimerRollingStatsPicker variant="settings" columns={s.statsRollingColumns}
             triggerColumns={[column]} onColumnsChange={statsRollingColumns => updateSettings({ statsRollingColumns })}

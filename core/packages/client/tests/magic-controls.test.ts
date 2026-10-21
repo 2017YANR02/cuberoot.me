@@ -87,7 +87,7 @@ describe.each<MagicPuzzle>(['magic', 'mmagic'])('%s player controls', (puzzle) =
 
   function button(label: string) {
     const element = [...host.querySelectorAll<HTMLButtonElement>('button')]
-      .find(candidate => candidate.title === label || candidate.textContent === label);
+      .find(candidate => candidate.getAttribute('aria-label') === label || candidate.title === label || candidate.textContent === label);
     expect(element, label).toBeDefined();
     return element!;
   }
@@ -127,9 +127,13 @@ describe.each<MagicPuzzle>(['magic', 'mmagic'])('%s player controls', (puzzle) =
   it('loads the whole route, waits for real folds to finish, and gives each practice direction its own start', async () => {
     const count = magicStepCount(puzzle);
     await mount(setupFor('Forward'), 'F F', { animatePlayback: true, playbackMode: 'algorithm' });
-    const anchor = host.querySelector<HTMLSelectElement>('select[aria-label="Anchor: keep the scramble start or the solve end fixed"]')!;
+    await click('Playback settings');
+    const anchor = button('Anchor: keep the scramble start or the solve end fixed');
     expect(anchor.disabled).toBe(true);
-    expect(anchor.value).toBe('moves');
+    expect(anchor.textContent).toBe('Start');
+    await act(async () => anchor.click());
+    expect(host.querySelector('.sim-anchor-menu')).toBeNull();
+    await click('Playback settings');
     expect(cube.state).toEqual({ direction: 'Forward', step: 0 });
     expect(cube.positionOnRoute).toBe(0);
 

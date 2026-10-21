@@ -100,11 +100,16 @@ describe('shared Timer Timing settings UI', () => {
   it('renders the exact eight contract fields, Web DOM classes, labels, and value policies', async () => {
     await render();
 
-    expect(TIMER_TIMING_SETTING_FIELD_IDS).toEqual(
-      TIMER_SETTING_FIELD_CONTRACTS
-        .filter((field) => field.category === 'timer')
-        .map((field) => field.id),
-    );
+    expect(TIMER_TIMING_SETTING_FIELD_IDS).toEqual([
+      'settings.timer.enabled',
+      'settings.timer.inspection',
+      'settings.timer.hold-threshold',
+      'settings.timer.hide-running-time',
+      'settings.timer.running-precision',
+      'settings.timer.result-precision',
+      'settings.timer.auto-session-for-event',
+      'settings.timer.auto-event-for-session',
+    ]);
     expect([...host.querySelectorAll<HTMLElement>('[data-setting-id]')]
       .map((element) => element.dataset.settingId)).toEqual(TIMER_TIMING_SETTING_FIELD_IDS);
     expect(host.querySelectorAll('.settings-section')).toHaveLength(3);
@@ -131,7 +136,7 @@ describe('shared Timer Timing settings UI', () => {
     expect([...host.querySelectorAll<HTMLElement>('.settings-row-boolean')]
       .map((row) => row.dataset.settingId)).toEqual(expectedBooleanRows);
 
-    for (const field of TIMER_SETTING_FIELD_CONTRACTS.filter((entry) => entry.category === 'timer')) {
+    for (const field of TIMER_SETTING_FIELD_CONTRACTS.filter((entry) => TIMER_TIMING_SETTING_FIELD_IDS.includes(entry.id))) {
       const setting = host.querySelector<HTMLElement>(`[data-setting-id="${field.id}"]`)!;
       expect(setting.textContent).toContain(field.copy.en);
       expect(setting.querySelector<HTMLElement>('[role="switch"]')?.getAttribute('aria-label')
@@ -167,7 +172,7 @@ describe('shared Timer Timing settings UI', () => {
     await render({ localize: localizeZh });
     expect([...host.querySelectorAll<HTMLElement>('.settings-section-head h4')]
       .map((heading) => heading.textContent)).toEqual(['计时显示', '项目与分组']);
-    for (const field of TIMER_SETTING_FIELD_CONTRACTS.filter((entry) => entry.category === 'timer')) {
+    for (const field of TIMER_SETTING_FIELD_CONTRACTS.filter((entry) => TIMER_TIMING_SETTING_FIELD_IDS.includes(entry.id))) {
       expect(host.querySelector(`[data-setting-id="${field.id}"]`)?.textContent)
         .toContain(field.copy.zh);
     }

@@ -59,6 +59,7 @@ function saveSnapshot(key: string, value: object) {
     while (keys.length >= MAX_ENTRIES) localStorage.removeItem(keys.shift()!);
     const json = JSON.stringify(value);
     for (;;) {
+      // allow-raw-localstorage: retry with eviction limited to this library's snapshots, preserving other features' data.
       try { localStorage.setItem(PREFIX + key, json); break; }
       catch { if (!keys.length) break; localStorage.removeItem(keys.shift()!); }
     }
@@ -165,7 +166,7 @@ export function invalidateAlgLibrary(puzzle: string, set?: string): void {
     entries.delete(key);
     requests.delete(key);
     initialReads.delete(key);
-    try { localStorage.setItem(PREFIX + key, JSON.stringify({ invalidated: true, saved: Date.now() })); } catch { /* no storage */ }
+    saveSnapshot(key, { invalidated: true, saved: Date.now() });
     notify(key);
   }
 }

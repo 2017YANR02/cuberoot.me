@@ -102,7 +102,7 @@
 .trainer-select .trainer-checkbox::after { border-color: var(--accent-foreground); }
 .trainer-select .trainer-checkbox.is-indeterminate::after { background: var(--accent-foreground); }
 .trainer-selection-empty { padding: 24px 0; color: var(--muted-foreground); font-size: 0.875rem; }
-.trainer-select button:active { transform: translateY(1px); }
+.trainer-select :is(.trainer-start-btn, .trainer-memo-btn, .trainer-set-header, .trainer-bulk-toggle, .trainer-group-expand, .trainer-case-cell, .trainer-strip-more):active { transform: translateY(1px); }
 @media (max-width: 560px) {
   .trainer-root.trainer-select { padding: 16px; column-gap: 8px; }
   .trainer-select > .trainer-topbar { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; margin-bottom: 16px; }
@@ -231,7 +231,7 @@
 }
 .trainer-picker-panel.is-open { grid-template-rows: 1fr; opacity: 1; }
 .trainer-picker-panel-inner { min-height: 0; overflow: hidden; }
-.trainer-top-groups button:focus-visible,
+.trainer-top-groups :is(.trainer-bulk-toggle, .trainer-group-expand, .trainer-case-cell):focus-visible,
 .trainer-set-header:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;

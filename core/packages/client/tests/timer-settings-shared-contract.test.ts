@@ -51,6 +51,7 @@ const EXPECTED_FIELDS_BY_CATEGORY = {
     'settings.timer.result-precision',
     'settings.timer.auto-session-for-event',
     'settings.timer.auto-event-for-session',
+    'settings.timer.rolling-statistics',
   ],
   'smart-cube': [
     'settings.smart-cube.fake-cube',
@@ -150,13 +151,13 @@ const BASE_CONTEXT: TimerSettingFieldContext = {
 };
 
 describe('canonical timer settings surface manifest', () => {
-  it('locks all eight categories, all 67 reachable fields/commands, and their order', () => {
+  it('locks all eight categories, all 68 reachable fields/commands, and their order', () => {
     expect(TIMER_SETTING_CATEGORY_IDS).toEqual([
       'timer', 'smart-cube', 'scramble', 'training', 'appearance', 'sound', 'data', 'advanced',
     ]);
     expect(TIMER_SETTING_CATEGORY_CONTRACTS.map((category) => category.id))
       .toEqual(TIMER_SETTING_CATEGORY_IDS);
-    expect(new Set(TIMER_SETTING_FIELD_IDS).size).toBe(67);
+    expect(new Set(TIMER_SETTING_FIELD_IDS).size).toBe(68);
     expect(TIMER_SETTING_FIELD_IDS).toEqual(Object.values(EXPECTED_FIELDS_BY_CATEGORY).flat());
     for (const category of TIMER_SETTING_CATEGORY_IDS) {
       expect(TIMER_SETTING_FIELD_CONTRACTS
@@ -386,14 +387,21 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
   });
 
   it('maps every direct preference mutation to a registered storage path', () => {
+    expect(TIMER_SETTING_FIELD_CONTRACTS.find((field) => field.id === 'settings.timer.rolling-statistics'))
+      .toEqual({
+        id: 'settings.timer.rolling-statistics', category: 'timer',
+        copy: { en: 'Statistics', zh: '统计指标' }, storagePath: 'statsRollingColumns',
+        value: { kind: 'string-list' }, visibility: 'always', disabledWhen: 'never',
+        effect: 'persist-rolling-stat-columns',
+      });
     const registeredRoots = new Set(
       TIMER_SETTING_FIELD_CONTRACTS
         .flatMap((field) => field.storagePath === null ? [] : [field.storagePath.split('.')[0]!]),
     );
     const directMutationRoots = [...panel.matchAll(/updateSettings\(\{\s*([A-Za-z][A-Za-z0-9]*)/g)]
       .map((match) => match[1]!);
-    // Typography and training mutations now live in the checked shared field group.
-    expect(directMutationRoots.length).toBe(10);
+    // Typography and training mutations live in the shared group; rolling statistics are selected here.
+    expect(directMutationRoots.length).toBe(11);
     expect(directMutationRoots.filter((key) => !registeredRoots.has(key))).toEqual([]);
   });
 });

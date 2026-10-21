@@ -164,7 +164,7 @@ describe('algorithm player placement', () => {
   it('routes every canonical case detail through the shared AlgCaseView', () => {
     const route = read('app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgSubOrCaseClient.tsx');
 
-    expect(route).toContain("import AlgCaseView from './AlgCaseView'");
+    expect(route).toContain("const AlgCaseView = dynamic(() => import('./AlgCaseView'));");
     expect(route).toContain('return <AlgCaseView puzzle={puzzle as AlgPuzzle} set={set} caseObj={caseObj} data={data} />;');
   });
 

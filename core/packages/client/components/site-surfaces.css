@@ -425,8 +425,8 @@ body[data-site-scenery] .solver-view-select {
   background-color: transparent !important;
 }
 /* Statistics controls share the scenic panel instead of an opaque input fill. */
-body[data-site-scenery] .timer-statistics-workspace > select,
-body[data-site-scenery] .timer-statistics-actions > button:not(.timer-statistics-report) {
+body[data-site-scenery] .timer-statistics-workspace > .timer-statistics-chart-select,
+body[data-site-scenery] .timer-statistics-actions > .timer-statistics-action {
   background-color: transparent !important;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
