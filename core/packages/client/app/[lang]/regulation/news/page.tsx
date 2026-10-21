@@ -58,6 +58,62 @@ export default function RegulationNews() {
 
         <div className="news-list">
 
+          {/* ───────────── WIC 近期调查声明（2026-10）───────────── */}
+          <article className="news-item" id="wic-investigation-2026">
+            <div className="news-meta">
+              <span className="news-date">2026-10</span>
+              <SourceLink
+                href="https://forum.worldcubeassociation.org/t/statement-from-the-wca-integrity-committee-regarding-a-recent-investigation/68143"
+                label={t('WCA 论坛官方声明', 'Official WCA Forum statement')}
+              />
+            </div>
+            <h2 className="news-title">
+              {t('WCA 诚信委员会关于近期调查的声明', 'Statement from the WCA Integrity Committee Regarding a Recent Investigation')}
+            </h2>
+            <p className="news-lede">
+              {t(
+                '亲爱的 WCA 社区成员：',
+                'Dear WCA Community,',
+              )}
+            </p>
+            <p className="news-lede">
+              {t(
+                'WCA 诚信委员会（WIC）已完成一项调查，涉及一名选手在 2025 年末至 2026 年初多场比赛中的若干次还原。该选手尚未成年。依照我们此前处理涉及未成年选手案件的惯例，以及青少年体育领域的普遍做法，我们不会公开其姓名，并请社区成员不要猜测其身份，尊重其隐私。我们发布本声明的唯一目的，是防止有关此案的不实说法和猜测在社区内传播。WCA 论坛将删除此类消息。',
+                'The WCA Integrity Committee (WIC) has concluded an investigation into a competitor’s attempts at several competitions between late 2025 and early 2026. The competitor is a minor. In line with our previous practice in cases involving minor competitors and with common practice in youth sport, we are not naming them, and we ask the Community not to speculate about their identity, and to respect their privacy. We are solely releasing this statement to prevent false narratives and speculation regarding this case from spreading across the community. Any such messages will be removed from the WCA Forum.',
+              )}
+            </p>
+            <p className="news-lede">
+              {t(
+                '调查始于 WIC 收到有关该选手还原过程的视频资料，此后又有社区成员提交了更多录像。应 WIC 要求，WCA 规则委员会（WRC）依据规则 11f1+，采用既定的计时器启动分析方法，对视频进行了逐帧审查。原公告附有该逐帧分析方法的链接。WRC 确认，该选手在多场比赛的数次还原中存在违反规则的情况。其中大部分涉及未按规定启动计时器（规则 A4b 和 A4b1）；少数还原中，选手在计时器启动前便开始转动魔方（A3c1），或在停止计时器前没有完全松开魔方（A6c）。',
+                'The investigation began after video footage of the competitor’s attempts were shared with the WIC, and more footage was later submitted by Community Members. At the WIC’s request, the WCA Regulations Committee (WRC) reviewed the footage frame by frame using its established method for analyzing timer starts, under regulation 11f1+. A link to the Frame by Frame analysis methodology can be found here. The WRC confirmed violations in several solves across multiple competitions. Most involved starting the timer improperly (Regulations A4b and A4b1). In a few attempts, moves were applied before the timer started (A3c1), and the competitor did not fully release the puzzle before stopping the timer (A6c).',
+              )}
+            </p>
+            <p className="news-lede">
+              {t(
+                '依据 WCA 规则，这些还原已分别受到加罚 2 秒、加罚 4 秒或判定为 DNF（还原无效）的处理。由于相关成绩受到影响，纪录历史也已相应更新。未被确认存在违规的还原不受影响。',
+                'These attempts have been penalized under the Regulations with +2 or +4 second penalties or disqualification (DNF). The record history is impacted due to the affected results, and it has been updated accordingly. Attempts without a confirmed violation are unaffected.',
+              )}
+            </p>
+            <p className="news-lede">
+              {t(
+                '在大多数情况下，对于已经确认的违规行为，通常只需对相应还原作出判罚。但在本案中，WIC 综合考虑了违规次数、违规持续的时间跨度，以及这类违规可能使记录成绩短于实际还原用时这一事实。基于这些因素，WIC 认为仅作出警告和成绩判罚并不足够。因此，依据《停赛及其他处罚》议案第 2.2 节，该选手被处以短期禁止参加 WCA 比赛的处分。',
+                'In most cases, a confirmed violation is addressed by penalizing the affected attempt. Here, the WIC considered the number of violations, the length of time over which they continued, and the fact that violations of this kind can make a recorded time lower than the time the solve actually took. Given this, the WIC did not believe a warning and penalties alone were sufficient. The competitor was therefore issued a short suspension from WCA competitions under section 2.2 of the Suspensions and Other Sanctions motion.',
+              )}
+            </p>
+            <p className="news-lede">
+              {t(
+                '该选手及其家人在调查中给予了充分配合，并有权就调查结论及处分决定提出申诉。最后，我们希望澄清：WIC 并未对该选手行为是否出于故意作出认定，在作出本次决定时仅考虑了违反规则的次数。本公告是 WIC 就此案作出的唯一公开回应。',
+                'The competitor and their family cooperated fully with the investigation, and have the right to appeal our findings and decision. We would like to finally clarify that the WIC did not make a determination on the intentionality of the competitor’s actions, and only considered the amount of regulation infractions when making this decision. This notice will be the only comment the WIC will provide about this case.',
+              )}
+            </p>
+            <Callout tone="info" label={t('本站说明', 'About this translation')}>
+              {t(
+                '以上为 WCA 诚信委员会官方声明的中文翻译。本文不涉及任何选手身份推测；处罚、纪录修订及申诉事项均以 WCA 官方信息为准。',
+                'The Chinese text above translates the official WCA Integrity Committee statement. No competitor identity is inferred; the official WCA statement governs sanctions, record updates and appeals.',
+              )}
+            </Callout>
+          </article>
+
           {/* ───────────── 4-pad 计时(2026-08)───────────── */}
           <article className="news-item" id="4-pad-2027">
             <div className="news-meta">
