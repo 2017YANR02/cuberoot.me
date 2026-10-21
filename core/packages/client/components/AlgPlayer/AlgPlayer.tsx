@@ -40,7 +40,7 @@ export interface AlgPlayerHandle {
 }
 
 export type AlgPlayerControlMode = 'full' | 'replay' | 'none';
-export type AlgPlayerInteractionMode = 'view' | 'turn';
+export type AlgPlayerInteractionMode = 'view' | 'turn' | 'none';
 
 /** Map our AlgPuzzle slug to cubing.js's TwistyPlayer puzzle id. */
 export const TWISTY_PUZZLE: Partial<Record<AlgPlayerPuzzle, string>> = {
@@ -94,6 +94,8 @@ interface Props {
   hideResetView?: boolean;
   /** 拖拽只调整视角，或直接使用 `/sim` 的手拧交互。 */
   interactionMode?: AlgPlayerInteractionMode;
+  /** Sim engine: keep the initial camera orientation while allowing layer turns. */
+  lockView?: boolean;
   /** `interactionMode='turn'` 时返回 `/sim` 产生的标准转动记号。 */
   onUserMove?: (move: string) => void;
   /** Sim engine: current target step (0 at the start), for accompanying move cues. */
@@ -157,6 +159,7 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
       props.size ?? 260,
       props.fillPane ?? false,
       props.interactionMode ?? 'view',
+      props.lockView ?? false,
       props.sceneRot?.x, props.sceneRot?.y, props.sceneRot?.z,
     ]);
     return (
@@ -177,6 +180,7 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
         playRequest={props.playRequest}
         controlMode={props.controlMode}
         interactionMode={props.interactionMode}
+        lockView={props.lockView}
         onUserMove={props.onUserMove}
         moveDurationMs={moveDurationMs} size={props.size ?? 260} fillPane={props.fillPane}
         stepMarkers={props.stepMarkers}

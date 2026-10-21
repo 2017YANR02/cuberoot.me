@@ -7,6 +7,7 @@ import { THEME_BOOTSTRAP, LANG_BOOTSTRAP } from "@/lib/theme-bootstrap";
 import DeskPet from "@/components/DeskPet";
 import AuthRouteBridge from "@/components/AuthRouteBridge";
 import SiteBackground from '@/components/SiteBackground';
+import SiteChrome from '@/components/SiteChrome';
 import SiteGlass from '@/components/SiteGlass';
 import '@/components/glass-material.css';
 import '@/components/site-surfaces.css';
@@ -114,12 +115,14 @@ export default function RootLayout({
       </head>
       <body suppressHydrationWarning>
         <AppNuqsAdapter>
-          <SiteBackground />
+          <SiteChrome><SiteBackground /></SiteChrome>
           <SiteGlass />
           <SiteCorners exclude=".site-glass-engine, .maplibregl-map" containers=".cg-card, .rc-card, .recon-card, .sortable-card, .timer-workspace-panel" />
           <InstalledContentBoundary>{children}</InstalledContentBoundary>
-          <MembershipReminder />
-          <DeskPet />
+          <SiteChrome>
+            <MembershipReminder />
+            <DeskPet />
+          </SiteChrome>
           <AuthRouteBridge />
           <ThemeColorSync />
           <AuthTokenRefresher />

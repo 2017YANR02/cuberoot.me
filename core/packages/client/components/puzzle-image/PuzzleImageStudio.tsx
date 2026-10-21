@@ -502,8 +502,8 @@ export default function PuzzleImageStudio({
         </div>
         <p>
           {t(
-            '直接通过 GET /v1/visualcube.svg 拿到 SVG 字节流，可放进 <img>、curl、博客 Markdown 等。这是简化端点（7 个参数），端点覆盖不到的设置请在这里调好后复制地址栏。',
-            'GET /v1/visualcube.svg returns image/svg+xml directly. Use it in an <img>, curl, blog Markdown, etc. This is a simplified endpoint (7 params); for anything it does not cover, set it up here and copy the address bar.',
+            'GET /v1/visualcube.svg 返回静态 SVG，可用于 <img>、curl 和 Markdown。图片不支持拖拽，也没有交互开关。需要调整视角或手拧时，使用下方 iframe。',
+            'GET /v1/visualcube.svg returns a static SVG for <img>, curl and Markdown. Images cannot be dragged and have no interaction switches. Use the iframe below for view rotation or manual turns.',
           )}
         </p>
         <pre className="vc-api-example">{`https://api.cuberoot.me/v1/visualcube.svg?alg=R+U+R'+U'+R+U2+R'&view=oll&size=128`}</pre>
@@ -531,10 +531,27 @@ export default function PuzzleImageStudio({
         </table>
         <p className="vc-api-note">
           {t(
-            '该端点不支持完整 PHP query API（无 arw / ac / sch / fc / fd 等）。需要这些参数就在这里调好，然后下载 SVG / PNG 或复制图片。',
-            'Endpoint does not accept the full PHP query API (no arw / ac / sch / fc / fd). For those, set it up here and download the SVG / PNG or copy the image.',
+            '该端点支持 sch（六面配色）和 fc（贴纸状态），但不支持完整 PHP query API，例如 arw / ac / fd。完整外观请使用 SVG / PNG 导出。',
+            'The endpoint supports sch (face colors) and fc (facelet state), but not the full PHP query API, such as arw / ac / fd. Use SVG / PNG export for the full appearance.',
           )}
         </p>
+        <h3>{t('交互嵌入', 'Interactive embed')}</h3>
+        <p>{t(
+          '支持二至五阶，复用模拟器播放器。iframe 的尺寸由 width / height 设置；参数仅控制下表所列内容，不包含图片面板的配色、箭头等外观设置。修改 src 可更新参数。',
+          'Supports 2×2 through 5×5 using the simulator player. Set the iframe size with width / height. Only the parameters below apply; image-panel colors, arrows and other appearance settings are not included. Update src to change parameters.',
+        )}</p>
+        <pre className="vc-api-example">{'<iframe src="https://cuberoot.me/sim/embed?puzzle=3&alg=R+U+R%27&yaw=30&pitch=30&drag=view&lockView=0" title="Cube simulator" width="320" height="320" style="border:0" loading="lazy"></iframe>'}</pre>
+        <table className="vc-api-table">
+          <thead><tr><th>{t('参数', 'Param')}</th><th>{t('取值', 'Values')}</th><th>{t('默认', 'Default')}</th></tr></thead>
+          <tbody>
+            <tr><td><code>puzzle</code></td><td>2 / 3 / 4 / 5</td><td>3</td></tr>
+            <tr><td><code>alg / setup / case</code></td><td>{t('alg、setup 正向打乱；case 取逆，优先于前两者', 'alg and setup apply forward; case applies the inverse and takes precedence')}</td><td>{t('还原态', 'Solved')}</td></tr>
+            <tr><td><code>yaw / pitch</code></td><td>{t('角度：yaw −180…180，pitch −90…90；0 为正前方，正值分别露出右面、顶面', 'Degrees: yaw −180…180, pitch −90…90; 0 faces front, positive values reveal the right and top faces respectively')}</td><td>33.75 / 30</td></tr>
+            <tr><td><code>drag</code></td><td>{t('view：拖拽视角；turn：拖贴纸转层、拖空白转视角；0 或 none：禁用拖拽', 'view: orbit; turn: turn stickers and orbit on empty space; 0 or none: disable dragging')}</td><td>view</td></tr>
+            <tr><td><code>lockView</code></td><td>{t('1：固定 yaw/pitch，drag=turn 时仍可转层；0：允许调整视角', '1: fix yaw/pitch while keeping layer turns with drag=turn; 0: allow view rotation')}</td><td>0</td></tr>
+            <tr><td><code>stickering</code></td><td>full / F2L / OLL / PLL / Cross</td><td>full</td></tr>
+          </tbody>
+        </table>
       </details>
   ) : null;
 

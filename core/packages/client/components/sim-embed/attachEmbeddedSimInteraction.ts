@@ -14,12 +14,13 @@ import { moveToString as sq1MoveToString } from '@/app/[lang]/sim/engine/sq1/sq1
 import tweener from '@/app/[lang]/sim/engine/tweener';
 import { ORBIT_K, orbitSceneFree } from '@/app/[lang]/sim/engine/viewControls';
 
-export type EmbeddedSimInteractionMode = 'view' | 'turn';
+export type EmbeddedSimInteractionMode = 'view' | 'turn' | 'none';
 
 interface EmbeddedSimInteractionOptions {
   world: World;
   dom: HTMLElement;
   mode: EmbeddedSimInteractionMode;
+  lockView?: boolean;
   onUserMove?: (move: string) => void;
 }
 
@@ -34,9 +35,13 @@ export function attachEmbeddedSimInteraction({
   world,
   dom,
   mode,
+  lockView = false,
   onUserMove,
 }: EmbeddedSimInteractionOptions): () => void {
-  const orbit = (dx: number, dy: number) => orbitSceneFree(world, dx, dy, ORBIT_K);
+  if (mode === 'none') return () => undefined;
+  const orbit = (dx: number, dy: number) => {
+    if (!lockView) orbitSceneFree(world, dx, dy, ORBIT_K);
+  };
 
   if (typeof world.puzzleKind === 'number') {
     const toucher = new Toucher();

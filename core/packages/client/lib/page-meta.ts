@@ -770,6 +770,9 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     title: { zh: '魔方空间', en: 'Cube Space' },
     description: { zh: '在开放的三维空间中摆放、移动和旋转魔方，自由切换视角并保存布局。', en: 'Arrange, move and rotate puzzles in an open 3D space. Explore every angle and save your layout.' },
   },
+  'sim/embed': {
+    title: { zh: '魔方嵌入', en: 'Cube Embed' },
+  },
   'sim': {
     title: { zh: '魔方模拟器', en: 'Puzzle Simulator' },
     description: {

@@ -109,6 +109,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   stepMarkers?: readonly number[];
   hideResetView?: boolean;
   interactionMode?: AlgPlayerInteractionMode;
+  lockView?: boolean;
   onUserMove?: (move: string) => void;
   onStepChange?: (step: number) => void;
   highlightDaisyAlignment?: boolean;
@@ -117,7 +118,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   /** 撑满父容器。给编辑器那种「右半屏放预览」的布局用。 */
   fillPane?: boolean;
 }>(function AlgSimPlayer({
-  alg, puzzle, puzzleOrder, set, additionalStickering, hiddenStickers, outlinedStickers, setup, orientation = '', sceneRot, startSolved = false, autoPlay = false, playRequest = 0, loop = false, controlMode = 'full', stepMarkers, hideResetView = false, interactionMode = 'view', onUserMove, onStepChange, highlightDaisyAlignment = false, moveDurationMs, size = 260, fillPane = false,
+  alg, puzzle, puzzleOrder, set, additionalStickering, hiddenStickers, outlinedStickers, setup, orientation = '', sceneRot, startSolved = false, autoPlay = false, playRequest = 0, loop = false, controlMode = 'full', stepMarkers, hideResetView = false, interactionMode = 'view', lockView = false, onUserMove, onStepChange, highlightDaisyAlignment = false, moveDurationMs, size = 260, fillPane = false,
 }, ref) {
   const t = useT();
   const canonicalPuzzleKind = SIM_PUZZLE[puzzle] ?? NXN_ORDER_DEFAULT;
@@ -282,6 +283,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       world,
       dom: m.renderer.domElement,
       mode: interactionMode,
+      lockView,
       onUserMove: move => onUserMoveRef.current?.(move),
     });
 
@@ -322,7 +324,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       lastRef.current = null;
       instantStepRef.current = null;
     };
-  }, [puzzleKind, puzzle, set, additionalStickering, hiddenStickers, outlinedStickers, previewTiming.frames, interactionMode, sceneRot, highlightDaisyAlignment]);
+  }, [puzzleKind, puzzle, set, additionalStickering, hiddenStickers, outlinedStickers, previewTiming.frames, interactionMode, lockView, sceneRot, highlightDaisyAlignment]);
 
   const resetView = useCallback(() => resetViewRef.current?.(), []);
 

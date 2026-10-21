@@ -1,0 +1,9 @@
+.sim-external-embed {
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+}
+.sim-external-embed .alg-sim-player {
+  padding: 0;
+  gap: 0;
+}
