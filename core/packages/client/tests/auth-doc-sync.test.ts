@@ -30,11 +30,14 @@ describe('/dev/auth source-review drift', () => {
   it('requires the real page to acknowledge the current authentication sources', () => {
     const sources = collectAuthDocSources();
     expect(sources.length).toBeGreaterThan(20);
-    expect(sources.map(([path]) => path)).toContain('apps/miniprogram/src/pages/account-link/index.wxml');
-    expect(sources.map(([path]) => path)).toContain('apps/miniprogram/src/pages/account-delete/index.wxml');
-    expect(sources.map(([path]) => path)).toContain('apps/miniprogram/src/pages/account-settings/index.wxml');
-    expect(sources.map(([path]) => path)).toContain('apps/miniprogram/src/lib/native-account-link.ts');
-    expect(sources.map(([path]) => path)).toContain('apps/miniprogram/src/lib/native-route-page.ts');
+    for (const file of [
+      'src/pages/account-link/index.wxml', 'src/pages/account-delete/index.wxml',
+      'src/pages/account-settings/index.wxml', 'src/lib/native-account-link.ts',
+      'src/lib/native-route-page.ts',
+    ]) {
+      expect(sources.map(([path]) => path))
+        .toContain(relative(CORE_ROOT, workspaceFixturePath('@cuberoot/miniprogram', file)));
+    }
     expect(sources.some(([path]) => path.endsWith('/external-timer/index.ts'))).toBe(true);
     expect(sources.map(([path]) => path)).toContain('packages/client/app/[lang]/calendar/_components/GoogleBackupPanel.tsx');
     expect(checkAuthDocReview(readFileSync(resolve(CORE_ROOT, DOC_PATH), 'utf8'), sources)).toEqual([]);

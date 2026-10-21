@@ -328,7 +328,12 @@ describe('mobile displayed-scramble history', () => {
     expect(historyHtml).toContain('timer-history-day-divider');
     expect(historyHtml.match(/data-stat="mo3"/g)).toHaveLength(3);
     expect(historyHtml).toContain('aria-label="; mo3: 2.00, PB"');
-    expect(historyHtml).toContain('data-tag-id="pb-single"');
+    // Shared history accents the PB result row instead of repeating a badge.
+    const pbRows = [...historyHtml.matchAll(/<button class="([^"]*timer-history-row[^"]*)"[^>]*>([\s\S]*?)<\/button>/g)]
+      .filter(([, classes]) => classes.split(' ').includes('is-pb'));
+    expect(pbRows).toHaveLength(1);
+    expect(pbRows[0][2]).toContain('<span class="time">1.00');
+    expect(historyHtml).not.toContain('data-tag-id="pb-single"');
     expect(historyHtml).toContain('aria-label="Search comment or scramble"');
     // The shared workspace shows a match count only while filters are active.
     expect(historyHtml).not.toContain('class="history-search-count"');

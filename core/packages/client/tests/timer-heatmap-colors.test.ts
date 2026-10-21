@@ -3,7 +3,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { expect, it } from 'vitest';
 import type { Solve } from '@cuberoot/shared/timer';
-import PracticeHeatmap from '../../timer-ui/src/workspace/charts/PracticeHeatmap';
+import { TimerPracticeHeatmap } from '@cuberoot/timer-ui';
 
 it('keeps inactive dates transparent and maps activity to four contribution levels', () => {
   const solves: Solve[] = [1, 6, 16, 51].flatMap((count, day) =>
@@ -12,7 +12,7 @@ it('keeps inactive dates transparent and maps activity to four contribution leve
       timeMs: 10000, scramble: 'R U', ts: new Date(2026, 0, day + 1, 12).getTime(),
     })));
   const host = document.createElement('div');
-  host.innerHTML = renderToStaticMarkup(createElement(PracticeHeatmap, { solves, year: 2026, isZh: false }));
+  host.innerHTML = renderToStaticMarkup(createElement(TimerPracticeHeatmap, { solves, year: 2026, isZh: false }));
   const cells = [...host.querySelectorAll('.tc-heatmap-cell:not(.tc-heatmap-cell-out)')];
   expect(cells).toHaveLength(365);
   expect(cells.filter(cell => cell.getAttribute('fill') === 'transparent')).toHaveLength(361);
