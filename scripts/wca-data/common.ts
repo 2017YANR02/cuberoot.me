@@ -104,3 +104,12 @@ export function resolveRelease(result: { status: number | null; stdout: string; 
   check(!r.immutable, 'Latest WCA data Release must be mutable');
   return r;
 }
+
+export function obsoleteAssets(assets: any[], activeName: string, completedCandidate: string, now = Date.now()) {
+  const liveCandidates = new Set(assets.filter(a => /^candidate-[a-f0-9]{64}\.json$/.test(a.name) && a.name !== completedCandidate && now - Date.parse(a.created_at) < 86_400_000).map(a => a.name));
+  return assets.filter(a => {
+    if (/^candidate-[a-f0-9]{64}\.json$/.test(a.name)) return !liveCandidates.has(a.name);
+    if (/^wca-data-[a-f0-9]{64}\.tar$/.test(a.name)) return a.name !== activeName && !liveCandidates.has(`candidate-${a.name.slice(9, -4)}.json`);
+    return false;
+  });
+}

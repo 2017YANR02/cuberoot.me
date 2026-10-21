@@ -4,8 +4,10 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, readdirSyn
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { encodePersons, encodeRanks, encodeCounts } from '../../core/packages/shared/src/nemesizer_format.ts';
-import { FILES, TAG, pack, unpack, parseManifest, assertFresh, sha, resolveRelease } from './common.ts';
+import { FILES, TAG, pack, unpack, parseManifest, assertFresh, sha, resolveRelease, obsoleteAssets } from './common.ts';
 import { activate, finalize, recover } from './deploy.ts';
 
 const commit = '1'.repeat(40);
@@ -20,6 +22,14 @@ function fixture(root: string, day = '2026-10-20', name = 'Test Person') {
 function workspace(t: any) { const dir = mkdtempSync(join(tmpdir(), 'wca-data-test-')); t.after(() => rmSync(dir, { recursive: true, force: true })); return dir; }
 const noop = async () => {};
 
+test('migrated runtime datasets cannot re-enter the Git index', () => {
+  const root = fileURLToPath(new URL('../../', import.meta.url));
+  const paths = FILES.map(f => `stats/${f}`);
+  assert.equal(execFileSync('git', ['ls-files', '--', ...paths], { cwd: root, encoding: 'utf8' }).trim(), '');
+  const ignored = execFileSync('git', ['check-ignore', '--no-index', '--', ...paths], { cwd: root, encoding: 'utf8' }).trim().split('\n');
+  assert.deepEqual(ignored.sort(), paths.sort());
+});
+
 test('draft Release lookup falls back to authenticated listing without creating duplicates', () => {
   const missing = { status: 1, stdout: '', stderr: 'gh: Not Found (HTTP 404)' };
   const draft = { id: 42, tag_name: TAG, draft: true, immutable: false };
@@ -27,6 +37,14 @@ test('draft Release lookup falls back to authenticated listing without creating 
   assert.equal(resolveRelease(missing, () => [], () => draft), draft);
   assert.throws(() => resolveRelease({ ...missing, stderr: 'HTTP 403' }, () => { throw new Error('unexpected listing'); }), /403/);
   assert.throws(() => resolveRelease(missing, () => [{ ...draft, immutable: true }]), /mutable/);
+});
+
+test('cleanup removes superseded and expired files but preserves current and queued data', () => {
+  const now = Date.parse('2026-10-21T00:00:00Z');
+  const assets = ['a', 'b', 'c', 'd'].flatMap(letter => ['wca-data-', 'candidate-'].map(prefix => ({ name: `${prefix}${letter.repeat(64)}${prefix === 'candidate-' ? '.json' : '.tar'}`, created_at: letter === 'd' ? '2026-10-19T00:00:00Z' : '2026-10-21T00:00:00Z' })));
+  assets.splice(3, 1); // b is the previous published archive, with no pending candidate.
+  const remove = obsoleteAssets(assets, `wca-data-${'a'.repeat(64)}.tar`, `candidate-${'a'.repeat(64)}.json`, now).map(a => a.name);
+  assert.deepEqual(remove, [`candidate-${'a'.repeat(64)}.json`, `wca-data-${'b'.repeat(64)}.tar`, `wca-data-${'d'.repeat(64)}.tar`, `candidate-${'d'.repeat(64)}.json`]);
 });
 
 test('archive preserves all bytes and rejects corruption, missing members and path substitution', t => {

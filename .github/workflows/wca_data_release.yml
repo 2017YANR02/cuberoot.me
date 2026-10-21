@@ -7,10 +7,20 @@ on:
     paths:
       - 'scripts/wca-data/**'
       - '.github/workflows/wca_data_release.yml'
+      - '.github/workflows/stats.yml'
+      - '.github/workflows/sync_toolkit.yml'
+      - '.gitignore'
+      - 'stats/nemesizer/**'
+      - 'stats/persons_search.json.gz'
   pull_request:
     paths:
       - 'scripts/wca-data/**'
       - '.github/workflows/wca_data_release.yml'
+      - '.github/workflows/stats.yml'
+      - '.github/workflows/sync_toolkit.yml'
+      - '.gitignore'
+      - 'stats/nemesizer/**'
+      - 'stats/persons_search.json.gz'
   workflow_dispatch:
     inputs:
       candidate:

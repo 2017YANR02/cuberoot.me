@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as sleep } from 'node:timers/promises';
-import { REPO, TAG, FILES, check, run, pack, unpack, parseManifest, assertFresh, resolveRelease, type Manifest } from './common.ts';
+import { REPO, TAG, FILES, check, run, pack, unpack, parseManifest, assertFresh, resolveRelease, obsoleteAssets } from './common.ts';
 
 const scripts = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scripts, '../..');
@@ -95,11 +95,7 @@ async function publish(candidate: string, out: string) {
     console.log(deploy('finalize'));
     // Delete only the previous current archive and this completed candidate. Concurrent
     // staged candidates belong to queued runs and must not be removed underneath them.
-    for (const asset of r.assets) {
-      if (asset.name === candidate || (asset.name.startsWith('wca-data-') && asset.name.endsWith('.tar') && asset.name !== m.archive.name && !r.assets.some((a: any) => a.name === `candidate-${asset.name.slice(9, -4)}.json`))) {
-        gh(['api', `${endpoint}/assets/${asset.id}`, '--method', 'DELETE']);
-      }
-    }
+    for (const asset of obsoleteAssets(r.assets, m.archive.name, candidate)) gh(['api', `${endpoint}/assets/${asset.id}`, '--method', 'DELETE']);
     console.log(JSON.stringify({ release: r.html_url, archive: m.archive.name, exportDate: m.exportDate, generatedAt: m.generatedAt, files: m.files.length }));
   } catch (error) {
     if (activated && !committed && !commitUncertain) remoteRun(`node ${remote}/deploy.ts rollback /www/wwwroot/toolkit/stats`);

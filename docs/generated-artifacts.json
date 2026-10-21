@@ -185,6 +185,25 @@
       "driftPolicy": "Regenerate this local Three.js font subset after changing signage text; do not edit glyph outlines by hand. Reference photos are not runtime textures."
     },
     {
+      "id": "stats.wca-release",
+      "kind": "runtime-generated",
+      "source": {
+        "locator": "WCA developer export; same snapshot used for Nemesizer and the person search index",
+        "paths": ["core/jobs/stats-build/src/bin/nemesizer.ts", "core/jobs/stats-build/src/bin/gen_persons_search.ts"]
+      },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "LICENSE and the upstream terms of the WCA developer export"
+      },
+      "owner": ["scripts/wca-data", ".github/workflows/wca_data_release.yml", ".github/workflows/stats.yml"],
+      "workingDirectory": ".",
+      "command": "WCA generation submits through node scripts/wca-data/cli.ts submit stats; local restore uses node scripts/wca-data/cli.ts hydrate",
+      "transientOutputs": ["stats/nemesizer/**", "stats/persons_search.json.gz"],
+      "runtimeOutputs": ["github:2017YANR02/cuberoot.me/releases/tag/wca-data-latest", "<toolkit>/stats/.wca-data/current"],
+      "verification": ["node --test scripts/wca-data/*.test.ts", "Publish WCA data verifies archive and file checksums, API dataset identity, and the public person-search bytes"],
+      "driftPolicy": "Exactly one mutable Release. Its JSON body identifies the complete current archive. Stage attachments, activate and verify, then update the body and remove superseded attachments. Failed/unknown commits retain a recovery journal. Never commit these exports or rewrite Git history. Generic static sync excludes this owner's paths."
+    },
+    {
       "id": "stats.wca",
       "kind": "checked-in-generated",
       "source": {

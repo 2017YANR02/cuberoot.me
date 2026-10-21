@@ -146,3 +146,9 @@ core/packages/client/public/maplibre/
 # Local optimal-solver run evidence; preserve on disk, never ship with source.
 /solver/333opt/out.*.csv.rust-run-*.json
 /solver/333opt/out.*.csv.rust.jsonl
+
+# Latest WCA binary exports live in the wca-data-latest Release, not Git history.
+# Restore locally: node scripts/wca-data/cli.ts hydrate
+/stats/nemesizer/
+/stats/persons_search.json.gz
+/stats/persons_search.json.gz.next

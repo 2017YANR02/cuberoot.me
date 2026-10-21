@@ -381,6 +381,14 @@ jobs:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" 'rm -rf /var/cache/nginx/api/* && nginx -s reload'
 
+      # Large gzip exports use the single mutable Release; do not put their daily
+      # versions in Git. The separate publish job serializes activation with API deploys.
+      - name: Publish latest WCA binary data
+        if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/wca-data/cli.ts submit stats
+
       - name: Commit and push
         if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         env:
@@ -407,7 +415,7 @@ jobs:
             # GIT_EDITOR=true 让 rebase --continue 不弹编辑器，否则 CI 上会失败导致整个 commit 被 --skip 丢弃
             if ! git pull --rebase origin main; then
               echo "Rebase conflict detected, resolving with ours..."
-              git diff --name-only --diff-filter=U | while read f; do
+              git diff --name-only --diff-filter=U | while IFS= read -r f; do
                 git checkout --theirs "$f"
                 git add "$f"
               done

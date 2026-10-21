@@ -22,11 +22,11 @@ Potential shared integration files: `.github/workflows/stats.yml`, `.github/work
 
 ## Delivery checklist
 
-- [ ] Record existing runtime, workflows, data versions and concurrent changes.
-- [ ] Implement manifest, checksums, bounded validation, and local hydration.
-- [ ] Publish to the single Release without exposing an incomplete dataset.
-- [ ] Deploy the complete dataset and verify API/static consumers; retain the previous live data until success.
-- [ ] Remove obsolete Release attachments only after success; prevent stale concurrent publishers.
+- [x] Record existing runtime, workflows, data versions and concurrent changes.
+- [x] Implement manifest, checksums, bounded validation, and local hydration.
+- [x] Publish to the single Release without exposing an incomplete dataset.
+- [x] Deploy the complete dataset and verify API/static consumers; retain the previous live data until success.
+- [x] Remove obsolete Release attachments only after success; prevent stale concurrent publishers.
 - [ ] Update WCA generation and generic static sync so old checkout files cannot overwrite released data.
 - [ ] Remove only the migrated generated files from Git tracking and register their new owner.
 - [ ] Run focused failure-path checks and applicable builds/CI.
@@ -52,3 +52,7 @@ Potential shared integration files: `.github/workflows/stats.yml`, `.github/work
 - Production `.wca-data/current` switches a complete dataset. Only this owner's files are linked; the rest of `stats/`, including `comp/`, is untouched. The last data remains until API and public static validation succeed. A journal recovers interrupted activation or finalization.
 - Six focused fixture checks pass locally: byte integrity, invalid gzip/counts, scoped cleanup, activation rollback, interrupted commit recovery, stale/same-generation rejection. Fixtures use the canonical shared binary encoders; no real WCA computation or solver was started.
 - Phase 1 adds the publisher and prevents generic static sync from overwriting its files. Bootstrap adopts the existing live dataset. Phase 2 stops Git tracking and connects the scheduled WCA producer after bootstrap succeeds.
+- Published commits: `514b8deb5e` (publisher), `56ffa98d7b` (draft lookup fix). First bootstrap correctly stopped before activation because GitHub's tag endpoint omits drafts; the authenticated listing fallback and regression check fix this.
+- Successful bootstrap: [run 39647075445](https://github.com/2017YANR02/cuberoot.me/actions/runs/39647075445). The release is mutable and public, API/static validation passed, and only one current archive remains.
+- The primary checkout contained another task's unpushed `f879fb7b0f`. To avoid including it, this task's edits were transferred once to `/Users/eula/Developer/cuberoot-wca-data-release`, based on remote main; no other task files or commits were published. Continue editing only that checkout.
+- Existing generated-artifact ledger validation has four baseline errors in the isolated checkout (assistant generated output, two local miniprogram project configs, avatar-gallery license). Comparing old and new ledger reports no additional errors; these unrelated files are not modified here.
