@@ -105,15 +105,27 @@ test('actual idle tsx fixture only exempts its esbuild service from completion',
 test('isolated real watcher completes normally and fails closed before child-close continuation', { skip: process.platform !== 'darwin', timeout: 25000 }, async () => {
   const temporary = mkdtempSync(join(tmpdir(), 'stats-monitor-lifecycle-'));
   const fixture = join(temporary, 'entry.mts');
+  const scheduler = `
+    const { spawn } = require('node:child_process');
+    const { writeFileSync } = require('node:fs');
+    const state = process.argv[1];
+    process.on('SIGTERM', () => {});
+    const work = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)']);
+    writeFileSync(state + '/work.pid', String(work.pid));
+    work.on('close', () => writeFileSync(state + '/unexpected-child-continuation', 'BUG'));
+    setInterval(() => {}, 1000);
+  `;
   writeFileSync(fixture, `
     import { spawn } from 'node:child_process';
     import { writeFileSync } from 'node:fs';
     import { once } from 'node:events';
-    import { withStatsResourceMonitor } from ${JSON.stringify(resolve('scripts/stats/resource-monitor.ts'))};
+    import { registerStatsSummary, withStatsResourceMonitor } from ${JSON.stringify(resolve('scripts/stats/resource-monitor.ts'))};
     await withStatsResourceMonitor(async () => {
       if (process.argv[3] === 'normal') return;
-      const child = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)']);
-      writeFileSync(process.argv[2] + '/work.pid', String(child.pid));
+      writeFileSync(process.argv[2] + '/summary.json', JSON.stringify({ status: 'running' }));
+      registerStatsSummary(process.argv[2] + '/summary.json');
+      const child = spawn(process.execPath, ['-e', ${JSON.stringify(scheduler)}, process.argv[2]]);
+      writeFileSync(process.argv[2] + '/scheduler.pid', String(child.pid));
       await once(child, 'close');
       writeFileSync(process.argv[2] + '/unexpected-continuation', 'BUG');
       await new Promise(() => {});
@@ -127,35 +139,40 @@ test('isolated real watcher completes normally and fails closed before child-clo
     }
   };
   try {
-    for (const mode of ['normal', 'crash']) {
+    for (const mode of ['normal', 'crash', 'protected-stop']) {
       const state = join(temporary, mode);
       const child = spawn(process.execPath, [...process.execArgv, fixture, state, mode], { stdio: ['ignore', 'pipe', 'pipe'] });
       let output = '';
       child.stdout.on('data', data => { output += data; }); child.stderr.on('data', data => { output += data; });
       const closed = once(child, 'close');
-      let watcher: number | undefined, work: number | undefined;
+      let watcher: number | undefined, work: number | undefined, schedulerPid: number | undefined;
       try {
-        if (mode === 'crash') {
+        if (mode !== 'normal') {
           await waitFor(() => existsSync(join(state, 'work.pid')) || child.exitCode !== null);
           assert.equal(child.exitCode, null, output);
           work = Number(readFileSync(join(state, 'work.pid'), 'utf8'));
+          schedulerPid = Number(readFileSync(join(state, 'scheduler.pid'), 'utf8'));
           const run = join(state, 'runs', readdirSync(join(state, 'runs'))[0]);
           watcher = JSON.parse(readFileSync(join(run, 'owner.json'), 'utf8')).monitor.pid;
-          process.kill(watcher!, 'SIGKILL');
+          if (mode === 'crash') process.kill(watcher!, 'SIGKILL');
+          else writeFileSync(join(run, 'request-stop.json'), JSON.stringify({ reason: 'Fixture resource protection' }));
         }
-        const [code] = await closed;
-        assert.equal(code, mode === 'normal' ? 0 : 1, output);
-        assert.equal(existsSync(join(state, 'protected-stop.json')), mode === 'crash');
+        const [code, signal] = await closed;
+        assert.equal(code, mode === 'normal' ? 0 : mode === 'crash' ? 1 : null, output);
+        if (mode === 'protected-stop') assert.equal(signal, 'SIGKILL', output);
+        assert.equal(existsSync(join(state, 'protected-stop.json')), mode !== 'normal');
         assert.equal(existsSync(join(state, 'unexpected-continuation')), false);
+        assert.equal(existsSync(join(state, 'unexpected-child-continuation')), false);
         if (mode === 'normal') assert.equal(existsSync(join(state, 'active.lock')), false);
         else {
           const stop = JSON.parse(readFileSync(join(state, 'protected-stop.json'), 'utf8'));
-          assert.equal(stop.reason, 'Statistics resource monitor failed');
-          await waitFor(() => { try { process.kill(work!, 0); return false; } catch { return true; } });
+          assert.equal(stop.reason, mode === 'crash' ? 'Statistics resource monitor failed' : 'Fixture resource protection');
+          assert.equal(JSON.parse(readFileSync(join(state, 'summary.json'), 'utf8')).status, 'protected-stop');
+          for (const pid of [schedulerPid, work]) await waitFor(() => { try { process.kill(pid!, 0); return false; } catch { return true; } });
         }
       } finally {
         if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
-        for (const pid of [watcher, work]) if (pid) { try { process.kill(pid, 'SIGKILL'); } catch { /* fixture exited */ } }
+        for (const pid of [watcher, schedulerPid, work]) if (pid) { try { process.kill(pid, 'SIGKILL'); } catch { /* fixture exited */ } }
         await closed;
       }
     }

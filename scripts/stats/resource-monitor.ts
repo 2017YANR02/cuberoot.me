@@ -223,6 +223,31 @@ function signalVerified(value: Identity, signal: NodeJS.Signals): boolean {
   if (!sameIdentity(value, identity(value.pid))) return false;
   try { process.kill(value.pid, signal); return true; } catch { return false; }
 }
+/** Freeze schedulers before killing workers: a close callback must not start a
+ * successor. Repeat the snapshot to include children born during the freeze.
+ * This is deliberately synchronous so the caller's action cannot continue.
+ */
+function terminateOwnedChildren(root: Identity, known: Map<number, Identity>, excludedPid: number): void {
+  const frozen = new Set<string>();
+  try {
+    for (;;) {
+      const snap = snapshot();
+      const children = trackedTree(root, known, snap.rows, snap.identities, excludedPid).filter(row => row.pid !== root.pid);
+      let discovered = false;
+      for (const row of children) {
+        const value = known.get(row.pid)!, key = JSON.stringify(value);
+        if (frozen.has(key)) continue;
+        signalVerified(value, 'SIGSTOP');
+        frozen.add(key); discovered = true;
+      }
+      if (!discovered) break;
+    }
+  } catch (error) {
+    console.error('Could not rescan statistics children during stop:', error);
+  } finally {
+    for (const child of known.values()) if (child.pid !== root.pid && child.pid !== excludedPid) signalVerified(child, 'SIGKILL');
+  }
+}
 /** tsx keeps this non-compute service alive until its owning Node exits. */
 export function isTsxService(row: ProcessRow, current: Identity | undefined): boolean {
   return row.name === 'esbuild' && Boolean(current && /[/\\]node_modules[/\\](?:[^\n]*[/\\])?@esbuild[/\\][^/\\\s]+[/\\]bin[/\\]esbuild --service=[\d.]+ --ping$/.test(current.command));
@@ -271,19 +296,13 @@ async function watch(dir: string): Promise<void> {
     // Freeze the scheduler first, then identify new descendants. The monitor and
     // its own observation subprocesses are deliberately excluded from this tree.
     signalVerified(owner.root, 'SIGSTOP');
-    try { const snap = snapshot(); trackedTree(owner.root, known, snap.rows, snap.identities, process.pid); } catch { /* already have verified identities */ }
-    const children = [...known.values()].filter(p => p.pid !== owner.root.pid && p.pid !== process.pid);
-    for (const child of children) { signalVerified(child, 'SIGTERM'); signalVerified(child, 'SIGCONT'); }
-    await delay(1500);
-    for (const child of children) signalVerified(child, 'SIGKILL');
+    terminateOwnedChildren(owner.root, known, process.pid);
     updateSummaries(dir, reason);
     try { atomic(join(dir, 'exit.json'), { ...record, status: 'protected-stop', finishedAt: new Date().toISOString() }); }
     catch (error) { console.error('Could not persist statistics monitor exit:', error); }
-    signalVerified(owner.root, 'SIGTERM'); signalVerified(owner.root, 'SIGCONT');
-    await delay(500);
+    // Never continue the frozen scheduler: its pending Promise could publish or
+    // launch another task. The stop record and row checkpoints are already saved.
     signalVerified(owner.root, 'SIGKILL');
-    // A scheduler frozen during its own atomic rename could otherwise restore
-    // an older "running" summary when briefly continued for termination.
     updateSummaries(dir, reason);
     console.error(`[统计保护停止] ${reason}`);
     process.exitCode = 1;
@@ -432,17 +451,11 @@ export async function withStatsResourceMonitor(action: () => Promise<void>, stat
         updateSummaries(dir, reason);
       } catch (error) { console.error('Could not persist statistics monitor failure:', error); }
       try {
-        const snap = snapshot(), known = new Map<number, Identity>();
+        const known = new Map<number, Identity>();
         try {
           for (const previous of read<{ known: Identity[] }>(join(dir, 'current.json')).known) known.set(previous.pid, previous);
         } catch { /* startup may precede the first observation */ }
-        const children = trackedTree(root, known, snap.rows, snap.identities, monitor.pid ?? -1).filter(row => row.pid !== root.pid);
-        for (const row of children) signalVerified(known.get(row.pid)!, 'SIGSTOP');
-        const finalSnapshot = snapshot();
-        const finalChildren = trackedTree(root, known, finalSnapshot.rows, finalSnapshot.identities, monitor.pid ?? -1).filter(row => row.pid !== root.pid);
-        // No await here: a closed child's Promise continuation must not launch
-        // another stage while the observer is gone. Checkpoints survive SIGKILL.
-        for (const row of finalChildren) signalVerified(known.get(row.pid)!, 'SIGKILL');
+        terminateOwnedChildren(root, known, monitor.pid ?? -1);
       } catch (error) {
         console.error('Could not inspect statistics children during emergency stop:', error);
       }
