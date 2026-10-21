@@ -34,6 +34,7 @@ import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
 import { dateDisplay } from './comp_date';
+import { loadOptimal333 } from './optimal333.mjs';
 
 const PER_BUCKET = 12;        // examples kept per (event, mode, value) — hero + up to 11 rows
 const RECENT_WINDOW_DAYS = 30; // bootstrap window when no watermark exists yet
@@ -145,22 +146,6 @@ async function loadPuzzleSteps(csvPath: string, valueCol: string, wanted: Set<st
   return out;
 }
 
-// stream solver/333opt/out.0.csv (id,htm,solution) → id -> { step:htm, opt:invert(solution) } for wanted ids.
-// htm = 整解最优 HTM(难度值);opt = 纯面转最优打乱(无宽块后缀)。缺文件/缺 id -> 该条无难度 + 回退长度视图。
-async function loadOptimal333(outCsv: string, wanted: Set<string>): Promise<Map<string, { step: number; opt: string }>> {
-  const out = new Map<string, { step: number; opt: string }>();
-  if (wanted.size === 0 || !fs.existsSync(outCsv)) return out;
-  const rl = readline.createInterface({ input: fs.createReadStream(outCsv, 'utf-8'), crlfDelay: Infinity });
-  for await (const line of rl) {
-    if (!line) continue;
-    const c = line.split(',');
-    if (c.length < 3 || !c[2] || !wanted.has(c[0])) continue;
-    const step = Number(c[1]);
-    if (!Number.isFinite(step)) continue;
-    out.set(c[0], { step, opt: invertAlg(c[2]) });
-  }
-  return out;
-}
 
 async function main() {
   const here = path.dirname(fileURLToPath(import.meta.url));
@@ -310,7 +295,7 @@ async function main() {
       if (solved.size === 0) console.warn(`  [difficulty] 3x3-family: no rows joined from ${outCsv}`);
       const byStepOf: Record<string, Record<string, string[]>> = {};
       let nOpt = 0;
-      for (const [corpusId, { step, opt }] of solved) {
+      for (const [corpusId, { htm: step, scr: opt }] of solved) {
         const id = corpusToRaw.get(corpusId)!;
         const ev = newRows.get(id)!.event;
         (byStepOf[ev] ??= {});

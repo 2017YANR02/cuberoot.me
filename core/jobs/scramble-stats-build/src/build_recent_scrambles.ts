@@ -26,6 +26,7 @@ import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
 import { dateDisplay } from './comp_date';
+import { loadOptimal333 } from './optimal333.mjs';
 
 const PER_STEP = 12; // examples kept per (variant, metric, color, step) — hero + up to 11 rows
 
@@ -83,26 +84,6 @@ type StepBuckets = Record<string, [string, string][]>;
 //    invert 到达的态与原打乱相差一个整体旋转(中心朝向不同,拧解难度 / 各阶段步数完全相同);首页按核心态
 //    展示即可(点进 analyzer 的分析也据核心态,与卡片标注的阶段步数一致),故一并纳入、直接用纯面转最优。
 const OPTIMAL_EVENTS = new Set(['333', '333oh', '333ft', '333fm', '333bf', '333mbf']);
-const invertAlg = (alg: string) => alg.trim().split(/\s+/).filter(Boolean).reverse()
-  .map((m) => (m.endsWith("'") ? m.slice(0, -1) : m.endsWith('2') ? m : `${m}'`)).join(' ');
-
-// 流式 solver/333opt/out.0.csv (id,htm,solution),只取 wanted 里的 id。缺文件/缺 id -> 该条回退原打乱。
-// htm = 整解最优步数(= '333' 变体的难度值),scr = invert(最优解) = 最优等态打乱。一趟扫出两者。
-interface Opt333 { htm: number; scr: string }
-async function loadOptimal333(outCsv: string, wanted: Set<string>): Promise<Map<string, Opt333>> {
-  const out = new Map<string, Opt333>();
-  if (wanted.size === 0 || !fs.existsSync(outCsv)) return out;
-  const rl = readline.createInterface({ input: fs.createReadStream(outCsv, 'utf-8'), crlfDelay: Infinity });
-  for await (const line of rl) {
-    if (!line) continue;
-    const c = line.split(',');
-    if (c.length < 3 || !c[2] || !wanted.has(c[0])) continue;
-    const htm = Number(c[1]);
-    if (!Number.isFinite(htm)) continue;
-    out.set(c[0], { htm, scr: invertAlg(c[2]) });
-  }
-  return out;
-}
 
 async function loadCompMeta(tsvPath: string): Promise<Map<string, { name: string; date: string }>> {
   const map = new Map<string, { name: string; date: string }>();

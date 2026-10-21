@@ -11,12 +11,19 @@
 // 同一文本(面转字母表互不冲突)→ 同一最优,故全局 byText 足够;前端按样例文本查表。
 //
 // 用法: node build_length_opt.mjs   (从 core/jobs/scramble-stats-build/ 或任意 CWD,路径自解析)
-import { readFileSync, writeFileSync, existsSync, statSync, mkdtempSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, statSync, mkdtempSync, rmSync, renameSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
-import { executableSuffix } from './pipeline_paths.mjs';
+import { executableSuffix, wcaDir } from './pipeline_paths.mjs';
+import { tsImport } from 'tsx/esm/api';
+
+// The shared package uses bundler-style internal imports. Keep the existing
+// plain-Node CLI working through this job's existing, scoped TS loader.
+const { invertAlg } = await tsImport('@cuberoot/shared/alg-transform', import.meta.url);
+const { normalizeWcaScramble } = await tsImport('@cuberoot/shared/normalize-wca-scramble', import.meta.url);
+const { loadOptimal333ByText } = await tsImport('./src/optimal333.mts', import.meta.url);
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '../../..');
@@ -29,12 +36,37 @@ const ANALYZER_DIR = resolve(repoRoot, 'solver/target/release');
 const FACE_ONLY = /^[UDLRFB][2']? ?(?:[UDLRFB][2']? ?)*$/;
 const FACE_EVENTS = new Set(['333', '333oh', '333fm', '333ft']);
 const PUZZLE_BY_EVENT = { '222': '222', pyram: 'pyraminx', skewb: 'skewb' };
+export const PUZZLE_BINARIES = { '222': 'cube222_analyzer', pyraminx: 'pyraminx_analyzer', skewb: 'skewb_analyzer' };
 
-// 逆一条解 → 最优等价打乱:X2 自逆;X' ↔ X;pyraminx 小写 tip 同理。
-function invertAlg(s) {
-  return s.trim().split(/\s+/).filter(Boolean).reverse()
-    .map((m) => (m.endsWith('2') ? m : m.endsWith("'") ? m.slice(0, -1) : `${m}'`))
-    .join(' ');
+// Both native contracts return id,length,solution; never publish a partial batch.
+export function parseSolvedSamples(csv, texts, puzzleKey = '333') {
+  if (!csv.endsWith('\n')) throw new Error(`[${puzzleKey}] incomplete output CSV`);
+  const rows = csv.split(/\r?\n/);
+  rows.pop();
+  if (puzzleKey !== '333' && rows.shift() !== `id,${puzzleKey},soln`) {
+    throw new Error(`[${puzzleKey}] missing id/${puzzleKey}/soln header`);
+  }
+  const out = new Map();
+  const seen = new Set();
+  const movePattern = puzzleKey === 'pyraminx' ? /^[ULRBulrb]'?$/
+    : puzzleKey === 'skewb' ? /^[ULRB]'?$/ : /^[UDLRFB][2']?$/;
+  for (const row of rows) {
+    const c = row.split(',');
+    const index = Number(c[0]);
+    const length = Number(c[1]);
+    const solution = c[2]?.trim();
+    const moves = solution ? solution.split(/\s+/) : [];
+    if (c.length !== 3 || !/^\d+$/.test(c[0]) || !Number.isSafeInteger(index)
+      || index >= texts.length || seen.has(index) || !/^\d+$/.test(c[1])
+      || !Number.isSafeInteger(length) || moves.length !== length || moves.some((m) => !movePattern.test(m))) {
+      throw new Error(`[${puzzleKey}] invalid or duplicate sample row: ${row}`);
+    }
+    seen.add(index);
+    const inverse = invertAlg(solution);
+    out.set(texts[index], puzzleKey === '333' || puzzleKey === '222' ? normalizeWcaScramble(inverse) : inverse);
+  }
+  if (seen.size !== texts.length) throw new Error(`[${puzzleKey}] incomplete solutions: ${seen.size}/${texts.length}`);
+  return out;
 }
 
 // 复用 333opt 的同一个 H10 worker；临时语料和结果不改全量 out.0.csv/counts.json。
@@ -55,15 +87,7 @@ function solveFaceTexts(texts) {
     if (result.error || result.status !== 0) {
       throw new Error(`H48 h10 length sample solve failed: ${String(result.error || result.status)}\n${result.stderr}`);
     }
-    for (const row of readFileSync(output, 'utf8').trim().split('\n')) {
-      const first = row.indexOf(',');
-      const second = row.indexOf(',', first + 1);
-      const index = Number(row.slice(0, first));
-      if (first < 1 || second < 0 || !Number.isInteger(index) || index < 0 || index >= texts.length) {
-        throw new Error(`Invalid H48 h10 length sample row: ${row}`);
-      }
-      out.set(texts[index], invertAlg(row.slice(second + 1)));
-    }
+    return parseSolvedSamples(readFileSync(output, 'utf8'), texts);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -72,9 +96,12 @@ function solveFaceTexts(texts) {
 
 // 批量跑 puzzle analyzer(PUZZLE_EMIT_SOLN)→ Map<text, optScramble>。
 function solvePuzzleTexts(puzzleKey, texts) {
-  const exe = join(ANALYZER_DIR, `${puzzleKey}_analyzer${executableSuffix}`);
+  const binary = PUZZLE_BINARIES[puzzleKey];
+  if (!binary) throw new Error(`Unknown puzzle analyzer: ${puzzleKey}`);
+  const exe = join(ANALYZER_DIR, `${binary}${executableSuffix}`);
   const out = new Map();
-  if (!existsSync(exe) || texts.length === 0) return out;
+  if (texts.length === 0) return out;
+  if (!existsSync(exe)) throw new Error(`Missing puzzle analyzer: ${exe}`);
   const dir = mkdtempSync(join(tmpdir(), 'lenopt-'));
   try {
     const inFile = join(dir, 'in.txt');
@@ -85,19 +112,10 @@ function solvePuzzleTexts(puzzleKey, texts) {
       encoding: 'utf8',
       maxBuffer: 256 * 1024 * 1024,
     });
-    if (r.status !== 0 && r.error) { console.warn(`  [${puzzleKey}] analyzer 失败: ${r.error.message}`); return out; }
+    if (r.error || r.status !== 0) throw new Error(`[${puzzleKey}] analyzer failed: ${String(r.error || r.status)}\n${r.stderr}`);
     // executor 输出 = <输入名去扩展>_<suffix>.csv = in_<key>.csv
     const csv = join(dir, `in_${puzzleKey}.csv`);
-    if (!existsSync(csv)) { console.warn(`  [${puzzleKey}] 无输出 csv`); return out; }
-    let header = true;
-    for (const line of readFileSync(csv, 'utf8').split('\n')) {
-      if (!line) continue;
-      if (header) { header = false; continue; }
-      const c = line.split(','); // id,len,soln
-      const idx = Number(c[0]);
-      const soln = c[2];
-      if (Number.isInteger(idx) && soln && soln !== '-') out.set(texts[idx], invertAlg(soln));
-    }
+    return parseSolvedSamples(readFileSync(csv, 'utf8'), texts, puzzleKey);
   } finally {
     try { rmSync(dir, { recursive: true, force: true }); } catch { /* ignore */ }
   }
@@ -134,16 +152,22 @@ async function main() {
   // 增量:复用已解 overlay,只解新出现的文本(CI 蓄水池缓慢漂移,再跑很便宜)。
   const byText = {};
   if (existsSync(OUT)) {
-    try { Object.assign(byText, JSON.parse(readFileSync(OUT, 'utf8')).byText ?? {}); } catch { /* 重建 */ }
+    Object.assign(byText, JSON.parse(readFileSync(OUT, 'utf8')).byText ?? {});
   }
   const before = Object.keys(byText).length;
 
   // 3x3 面转族(跳过已解)。
   const faceArr = [...faceTexts].filter((t) => !(t in byText));
   if (faceArr.length) {
-    const solved = solveFaceTexts(faceArr);
+    const solved = await loadOptimal333ByText(
+      join(wcaDir, 'wca_scrambles_no_wide_move.txt'),
+      join(repoRoot, 'solver/333opt/out.0.csv'), faceArr,
+    );
+    const reused = solved.size;
+    const missing = faceArr.filter((text) => !solved.has(text));
+    for (const [text, optimal] of solveFaceTexts(missing)) solved.set(text, optimal);
     for (const [text, optimal] of solved) byText[text] = optimal;
-    console.log(`  [3x3] H48 h10 ${solved.size}/${faceArr.length} 条 → 最优`);
+    console.log(`  [3x3] ${solved.size}/${faceArr.length} 条 → 最优（复用 ${reused}，新增求解 ${missing.length}）`);
   }
 
   // 222 / pyram / skewb(跳过已解)。
@@ -156,9 +180,15 @@ async function main() {
   }
 
   const generated_at = process.env.SCRAMBLE_STATS_STAMP || new Date().toISOString();
-  writeFileSync(OUT, JSON.stringify({ meta: { generated_at }, byText }));
+  const temporary = `${OUT}.${process.pid}.tmp`;
+  try {
+    writeFileSync(temporary, JSON.stringify({ meta: { generated_at }, byText }), { flag: 'wx', flush: true });
+    renameSync(temporary, OUT);
+  } finally { rmSync(temporary, { force: true }); }
   const total = Object.keys(byText).length;
   console.log(`Wrote ${OUT}  (${total} texts, +${total - before} new, ${(statSync(OUT).size / 1024).toFixed(1)} KB)`);
 }
 
-main().catch((err) => { console.error(err); process.exit(1); });
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((err) => { console.error(err); process.exit(1); });
+}
