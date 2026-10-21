@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as sleep } from 'node:timers/promises';
-import { REPO, TAG, FILES, check, run, pack, unpack, parseManifest, assertFresh, type Manifest } from './common.ts';
+import { REPO, TAG, FILES, check, run, pack, unpack, parseManifest, assertFresh, resolveRelease, type Manifest } from './common.ts';
 
 const scripts = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scripts, '../..');
@@ -17,15 +17,9 @@ function api(path: string, input?: unknown) {
 }
 function release(create = false): any {
   const result = spawnSync('gh', ['api', `${endpoint}/tags/${TAG}`], { encoding: 'utf8', maxBuffer: 2 * 1024 * 1024 });
-  if (result.status === 0) {
-    const r = JSON.parse(result.stdout);
-    check(!r.immutable, 'Latest WCA data Release must be mutable');
-    return r;
-  }
-  check(create && result.stderr.includes('404'), `Cannot read data Release: ${result.stderr}`);
-  return JSON.parse(gh(['api', endpoint, '--method', 'POST', '--input', '-'], {
+  return resolveRelease(result, () => JSON.parse(gh(['api', `${endpoint}?per_page=100`, '--paginate', '--slurp'])).flat(), create ? () => JSON.parse(gh(['api', endpoint, '--method', 'POST', '--input', '-'], {
     tag_name: TAG, target_commitish: run('git', ['rev-parse', 'HEAD']), name: 'Latest WCA data', draft: true, make_latest: 'false', body: '',
-  }));
+  })) : undefined);
 }
 function currentManifest(r: any): Manifest | undefined { return r.body ? parseManifest(JSON.parse(r.body)) : undefined; }
 function upload(r: any, path: string, name: string) {

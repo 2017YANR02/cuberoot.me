@@ -91,3 +91,16 @@ export function assertFresh(next: Manifest, previous?: Manifest) {
   check(next.exportDate >= previous.exportDate && Date.parse(next.generatedAt) >= Date.parse(previous.generatedAt), 'Refusing stale candidate');
   if (next.generatedAt === previous.generatedAt) check(JSON.stringify(next.files) === JSON.stringify(previous.files), 'Same generation has different content');
 }
+
+// The tags endpoint does not return draft releases. Authenticated listing does.
+export function resolveRelease(result: { status: number | null; stdout: string; stderr: string }, list: () => any[], create?: () => any) {
+  let r: any;
+  if (result.status === 0) r = JSON.parse(result.stdout);
+  else {
+    check(result.stderr.includes('404'), `Cannot read data Release: ${result.stderr}`);
+    r = list().find(item => item.tag_name === TAG);
+    if (!r) { check(create, 'Latest data Release does not exist'); r = create(); }
+  }
+  check(!r.immutable, 'Latest WCA data Release must be mutable');
+  return r;
+}

@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { encodePersons, encodeRanks, encodeCounts } from '../../core/packages/shared/src/nemesizer_format.ts';
-import { FILES, pack, unpack, parseManifest, assertFresh, sha } from './common.ts';
+import { FILES, TAG, pack, unpack, parseManifest, assertFresh, sha, resolveRelease } from './common.ts';
 import { activate, finalize, recover } from './deploy.ts';
 
 const commit = '1'.repeat(40);
@@ -19,6 +19,15 @@ function fixture(root: string, day = '2026-10-20', name = 'Test Person') {
 }
 function workspace(t: any) { const dir = mkdtempSync(join(tmpdir(), 'wca-data-test-')); t.after(() => rmSync(dir, { recursive: true, force: true })); return dir; }
 const noop = async () => {};
+
+test('draft Release lookup falls back to authenticated listing without creating duplicates', () => {
+  const missing = { status: 1, stdout: '', stderr: 'gh: Not Found (HTTP 404)' };
+  const draft = { id: 42, tag_name: TAG, draft: true, immutable: false };
+  assert.equal(resolveRelease(missing, () => [draft], () => { throw new Error('duplicate'); }), draft);
+  assert.equal(resolveRelease(missing, () => [], () => draft), draft);
+  assert.throws(() => resolveRelease({ ...missing, stderr: 'HTTP 403' }, () => { throw new Error('unexpected listing'); }), /403/);
+  assert.throws(() => resolveRelease(missing, () => [{ ...draft, immutable: true }]), /mutable/);
+});
 
 test('archive preserves all bytes and rejects corruption, missing members and path substitution', t => {
   const d = workspace(t), source = join(d, 'source'), out = join(d, 'out'); fixture(source);
