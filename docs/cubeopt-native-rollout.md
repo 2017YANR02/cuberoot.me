@@ -12,7 +12,7 @@
 - [x] 完整求解与现网 Rust WASM 对照，记录正确性、启动时间和耗时。
 - [x] 计时器、求解器及共享 App 的统一云端接口核对。
 - [x] 必要验证、同步远端、提交并推送。
-- [ ] CI、服务发布、正式接口验收。
+- [x] CI、服务发布、正式接口验收。
 - [ ] 最后运行 Mac「跑打乱统计」，监控结果、断点、内存与换出，确认发布结果。
 - [ ] 完成上述工作后，逐项审查 prefetch、huge page、profile 和 mod M + inv 的 96 对称性表；仅采用完整对照有明显收益的改动。
 
@@ -37,3 +37,11 @@ Opt8 继续使用 `h48prun31h8.dat`（7,782,727,680 字节）及对应 818,008 �
 
 - 首轮发布：`3caad42697` 的 Deploy Core / Deploy Next 通过；原生制品发布 `39649234948` 在准备脚本未实际建立 bundle 时由 promote 拒绝，自动恢复旧指针与服务，健康及 ready 已确认。正在修复打包后的 CLI 入口，未将失败发布记为上线。
 - CI 修复：`00f22e96a1` 修复共享组件测试入口、旧 PB 展示断言及经源码复核后的认证文档漂移；定向 Client 91 项 / Mobile 11 项和架构检查通过，等待本提交完整 CI。
+- 原生正式发布成功：workflow `39651706031`，bundle `cubeopt-opt8-native-39651706031-1-ed3ae9830dc0481d4f250b69f6eadf51dbd9b6d6`；2026-10-21 18:26 UTC 完成双请求 smoke，线上 enabled/configured/ready 均为 true，常驻 native PID 1595936。
+- 网页链路验收：`/zh/scramble/solver` 云端模式随机合法状态返回 19h* 最优解；`/zh/dev/solvers#native-init` 默认 2G，切换 8G 后命令同步为 `init --memory 8G`。
+- 完整前端 CI 暴露既有 UI/路由测试漂移及样式、缓存、设置契约遗漏；`8e2493e588` 已统一修复并推送。定向检查、shared build、client typecheck 和 auth-doc-sync 通过；等待本提交完整 CI 与部署后才运行统计。
+- 后续优化准备：冻结 baseline/dynamic/root-bound/prefetch 四份 Linux ELF 和交错对照计划，尚未运行候选大表。服务器硬件 PMU counters 未开放；cpu-clock 软件采样可用。正式 native 的 RSS 7,601,880 kB、AnonHugePages 65,536 kB、Swap 0，说明全局 THP 开启不等于整张表已用大页。
+- `8e2493e588` 的两组 Client、Mobile、Desktop UI 与 Core/Next 部署全部通过；主检查另外暴露小程序既有页面清单、联系网址归属和按钮反馈遗漏，`7eaecf89c1` 修复并推送。小程序 1022 项与认证文档 90 项通过，微信/抖音 dist 已重建。微信开发者工具关闭重开后加载计时器页面；登录令牌过期的 SDK 报错单独保留，不将游客模拟器当作认证验收或小程序发布。
+- `7eaecf89c1`：Test `39654159186`、Deploy Next `39654159074`、Vercel 全部成功；线上求解 ready 为 true。2026-10-21 11:44 PDT 从 Apple 快捷指令菜单实际运行「跑打乱统计」，日志 `~/.local/state/cuberoot/scramble-stats/20261021-114437.log`，历史数据根仍为 `~/Documents/scramble`，启动 Swapouts=0。统计正在运行，尚未记录为计算或发布成功。
+- 统计于 18:48 UTC 保护停止：临时全管道监控误用按 Opt10 估算的 36 GiB RSS 上限，EO high-memory 的 23 张只读映射表本身合计 40.194 GiB。停止时树 RSS 36.055 GiB、保守余量 46.126 GiB、压力正常、Swapouts 仍为 0；没有实际内存压力异常的证据。`std/222/223/daisy/first_layer` 各完成 479 条并保留，EO 已计算的 68 条因旧 executor 只在整批结束写 CSV 而未保存。未发布、不自动续跑、不重设旧保护记录。停止证据 `.tmp/stats-monitor-20261021-114437/`；正在修复准确预算、全管道监控及完成行断点保存，修复后需明确恢复授权。
+- 服务器候选首个预检在改变接单前拒绝：正式 CI 二进制 SHA `0bb0cc10…` 与本机构建的冻结基线 `601db1a9…` 不同，正在核对构建来源并以实际部署程序作为新对照；未把不同二进制视为同一基线，旧失败目录保留。

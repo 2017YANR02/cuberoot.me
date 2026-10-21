@@ -111,7 +111,10 @@ impl search::PruningOracle for Opt8Oracle<'_> {
     type Query = u64;
     #[inline(always)]
     fn prepare(&self, cube: &cube::Cube, _: u8) -> Result<u64, u8> {
-        Ok(self.0.coordinates.index8(cube))
+        let index = self.0.coordinates.index8(cube);
+        #[cfg(feature = "opt8-native-prefetch")]
+        self.0.pruning.prefetch_opt8(index);
+        Ok(index)
     }
     #[inline(always)]
     fn lookup(&self, index: u64) -> u8 { self.0.pruning.get_opt8(index) }

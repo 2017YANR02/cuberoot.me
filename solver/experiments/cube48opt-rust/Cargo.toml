@@ -63,6 +63,10 @@ opt8-native-search = ["opt8-native-specialized"]
 # Isolated grouped Opt8 reads; the shared pipeline feature applies to the
 # candidate binary, while default builds keep the original lookup ordering.
 opt8-native-batch = ["opt8-native-search", "wasm-batch-probes"]
+# Isolated x86 read-ahead hint; keep the existing Opt8 search policy explicit.
+opt8-native-prefetch = ["opt8-native-specialized"]
+# Linux-only allocation advice candidate; no global THP policy or table changes.
+opt8-native-hugepages = []
 opt9-native-quarter-cache = ["opt9-native-quarter"]
 # Prove the starting depth before dispatching workers; preserve IDA optimality.
 opt9-native-root-bound = []

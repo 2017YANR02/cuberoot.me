@@ -7,12 +7,14 @@ import { createHash } from 'node:crypto';
 import { existsSync, lstatSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { LIMITS, parseResult, readCorpus } from './native-service-benchmark.mjs';
+import { LIMITS, parseResult, readCorpus, summarizeCandidates, validateCandidatePlan } from './native-service-benchmark.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
 const ENGINES = ['wasm', 'avx2', 'avx512'];
 const TABLE_SHA = '0c742e0ad31d2c6bb428ae8658fa0fe88ffe2f7ac09072dbc3eaab8fcad850f1';
 const SMALL_SHA = '90c95b69404f00858e32529f83daa985d0c377a745b288a5d0fd4261cf3e6dbd';
+// Preserved first Linux WASM/AVX2/AVX-512 acceptance harness, before candidate plans.
+const ORIGINAL_HARNESS_SHA = '03e6991419ae4f73124e37b2f9b90b62a8927aa4ace9952435f2687cc791bdeb';
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 
 export function parseArguments(argv) {
@@ -57,23 +59,49 @@ export async function verifyNativeServiceBenchmark({ directory, reference, refer
   const input = JSON.parse(read('input.json')), report = JSON.parse(read('report.json'));
   assert.equal(input.schema, 'cuberoot.opt8.native-service-benchmark-input.v1');
   assert.equal(report.schema, 'cuberoot.opt8.native-service-benchmark-report.v1');
-  assert.equal(report.complete, true); assert.equal(report.independentReplay, false); assert.equal(report.lengthMatches, 300);
-  assert.deepEqual(input.engineOrder, ENGINES); assert.deepEqual(Object.keys(report.engines), ENGINES);
+  const candidateMode = input.mode === 'native-candidates';
+  assert(candidateMode || input.mode === undefined, 'Unknown benchmark mode');
+  let engineOrder = ENGINES;
+  if (candidateMode) {
+    assert.equal(report.mode, input.mode);
+    validateCandidatePlan(input.candidatePlan);
+    const planBytes = read('candidates.json');
+    assert.equal(hash(planBytes), input.candidatePlanSha256); assert.deepEqual(JSON.parse(planBytes), input.candidatePlan);
+    engineOrder = input.candidatePlan.passes.map(pass => pass.label);
+    for (const pass of input.candidatePlan.passes) {
+      assert.equal(input.assets.binaries?.[pass.binary]?.sha256, pass.sha256, 'Candidate does not match recorded executable');
+      assert(input.assets.binaries[pass.binary].identity);
+    }
+  } else assert.equal(report.mode, undefined);
+  assert.equal(report.complete, true); assert.equal(report.independentReplay, false); assert.equal(report.lengthMatches, engineOrder.length * 100);
+  assert.deepEqual(input.engineOrder, engineOrder); assert.deepEqual(Object.keys(report.engines), engineOrder);
   assert.equal(input.measuredPasses, 1); assert.equal(input.warmupCases, 0);
   assert.deepEqual(input.limits, LIMITS);
-  assert.equal(input.sourceSha256, hash(readSmall(resolve(dirname(fileURLToPath(import.meta.url)), 'native-service-benchmark.mjs'))),
-    'Harness source differs from the version understood by this verifier');
+  const currentHarnessSha = hash(readSmall(resolve(dirname(fileURLToPath(import.meta.url)), 'native-service-benchmark.mjs')));
+  assert(input.sourceSha256 === currentHarnessSha || (!candidateMode && input.sourceSha256 === ORIGINAL_HARNESS_SHA),
+    'Harness source differs from the versions understood by this verifier');
+  if (input.sourceSha256 === currentHarnessSha) assert.equal(input.memoryEvidence, 'ready-and-complete-v1');
+  if (input.memoryEvidence) {
+    assert.equal(input.memoryEvidence, 'ready-and-complete-v1');
+    const settings = JSON.parse(read('system-memory-settings.json'));
+    for (const key of ['enabled', 'defrag', 'hpage_pmd_size']) {
+      assert(settings.transparentHugepage[key] === null || typeof settings.transparentHugepage[key] === 'string');
+    }
+  }
   assert.deepEqual(report.machine, input.machine); assert.equal(input.machine.platform, 'linux'); assert.equal(input.machine.arch, 'x64');
   const { corpus, fileSha256 } = readCorpus(resolve(ROOT, 'solver/testdata/benchmarks/wca-first100.json'));
   assert.deepEqual(input.cases, corpus.cases, 'Cases differ from committed WCA first100');
   assert.equal(input.corpusSha256, corpus.corpusSha256); assert.equal(report.corpusSha256, corpus.corpusSha256);
   assert.equal(input.corpusFileSha256, fileSha256, 'Corpus file bytes differ from committed corpus');
   const manifest = input.assets.manifest;
-  assert.equal(manifest.engine, 'rust-wasm'); assert.equal(manifest.variant, 'opt8'); assert.equal(manifest.maxThreads, 4);
+  assert(candidateMode ? ['rust-wasm', 'rust-native'].includes(manifest.engine) : manifest.engine === 'rust-wasm');
+  assert.equal(manifest.variant, 'opt8'); assert.equal(manifest.maxThreads, 4);
   assert.equal(manifest.files.table.sha256, TABLE_SHA); assert.equal(manifest.files.table.bytes, 7_782_727_680);
   assert.equal(manifest.files.snapshot.sha256, SMALL_SHA); assert.equal(manifest.files.snapshot.bytes, 818_008);
   assert.equal(input.assets.tableIdentity.size, '7782727680');
-  for (const key of ['binarySha256', 'daemonSha256', 'manifestSha256', 'pointerSha256']) assert(/^[a-f0-9]{64}$/.test(input.assets[key]));
+  for (const key of candidateMode ? ['manifestSha256', 'pointerSha256'] : ['binarySha256', 'daemonSha256', 'manifestSha256', 'pointerSha256']) {
+    assert(/^[a-f0-9]{64}$/.test(input.assets[key]));
+  }
 
   const referenceBytes = readSmall(reference);
   assert.equal(hash(referenceBytes), referenceSha256, 'Pinned historical H10 reference changed');
@@ -90,7 +118,7 @@ export async function verifyNativeServiceBenchmark({ directory, reference, refer
   }
 
   const evidence = {}, pids = new Set(); let bootId;
-  for (const engine of ENGINES) {
+  for (const engine of engineOrder) {
     assert(!existsSync(resolve(directory, engine, 'failure.json')), `${engine} failed`);
     const results = rows(read(`${engine}/results.jsonl`));
     const summary = JSON.parse(read(`${engine}/report.json`));
@@ -130,19 +158,48 @@ export async function verifyNativeServiceBenchmark({ directory, reference, refer
       bootId ??= sample.bootId; assert.equal(sample.bootId, bootId, 'Measurements crossed system boots');
     }
     assert.equal(summary.peakTreeRssBytes, Math.max(...resources.map(row => row.treeRssBytes)));
+    let memory;
+    if (input.memoryEvidence) {
+      memory = {};
+      for (const phase of ['ready', 'complete']) {
+        const snapshot = JSON.parse(read(`${engine}/memory-${phase}.json`));
+        const rollup = read(`${engine}/memory-${phase}.smaps_rollup`).toString('utf8');
+        const rawStat = read(`${engine}/memory-${phase}.stat`).toString('utf8');
+        const fields = rawStat.slice(rawStat.lastIndexOf(') ') + 2).trim().split(/\s+/);
+        assert.equal(snapshot.pid, summary.pid); assert.equal(snapshot.phase, phase);
+        assert.equal(Number(rawStat.slice(0, rawStat.indexOf(' ('))), summary.pid);
+        for (const [key, procName] of [['anonHugePagesBytes', 'AnonHugePages'], ['rssBytes', 'Rss'], ['anonymousBytes', 'Anonymous'], ['swapBytes', 'Swap']]) {
+          const match = rollup.match(new RegExp(`^${procName}:\\s+(\\d+) kB$`, 'm'));
+          assert(match, `Missing ${procName} from memory evidence`); assert.equal(snapshot[key], Number(match[1]) * 1024);
+        }
+        for (const [key, index] of [['minorFaults', 7], ['majorFaults', 9], ['childMinorFaults', 8], ['childMajorFaults', 10]]) {
+          assert(Number.isSafeInteger(snapshot[key]) && snapshot[key] >= 0); assert.equal(snapshot[key], Number(fields[index]));
+        }
+        memory[phase] = snapshot;
+      }
+      assert(memory.complete.minorFaults >= memory.ready.minorFaults);
+      assert(memory.complete.majorFaults >= memory.ready.majorFaults);
+      memory.solveMinorFaults = memory.complete.minorFaults - memory.ready.minorFaults;
+      memory.solveMajorFaults = memory.complete.majorFaults - memory.ready.majorFaults;
+    }
     evidence[engine] = { pid: summary.pid, verifiedSolutions: 100, historicalOptimalLengthsMatched: 100,
       startupSeconds: summary.startupSeconds, totalWallSeconds: summary.totalWallSeconds,
-      peakTreeRssBytes: summary.peakTreeRssBytes, processExited: true, remainingPids: [] };
+      peakTreeRssBytes: summary.peakTreeRssBytes, processExited: true, remainingPids: [], ...(memory ? { memory } : {}) };
   }
-  assert.equal(report.wasmOverAvx2, evidence.wasm.totalWallSeconds / evidence.avx2.totalWallSeconds);
-  assert.equal(report.wasmOverAvx512, evidence.wasm.totalWallSeconds / evidence.avx512.totalWallSeconds);
+  if (candidateMode) assert.deepEqual(report.candidates, summarizeCandidates(input.candidatePlan.passes, report.engines));
+  else {
+    assert.equal(report.wasmOverAvx2, evidence.wasm.totalWallSeconds / evidence.avx2.totalWallSeconds);
+    assert.equal(report.wasmOverAvx512, evidence.wasm.totalWallSeconds / evidence.avx512.totalWallSeconds);
+  }
+  const verifiedSolutions = engineOrder.length * 100;
   const verification = { schema: 'cuberoot.opt8.native-service-benchmark-verification.v1', createdAt: new Date().toISOString(),
-    allSolutionsVerified: true, verifiedSolutions: 300, historicalOptimalLengthsMatched: 300, verifiedReferenceSolutions: 100,
+    allSolutionsVerified: true, verifiedSolutions, historicalOptimalLengthsMatched: verifiedSolutions, verifiedReferenceSolutions: 100,
     reference: { path: reference, sha256: referenceSha256, selectedPass: 0 }, corpusSha256: corpus.corpusSha256,
     committedCorpusFileSha256: fileSha256, inputSha256: digests['input.json'], reportSha256: digests['report.json'],
     files: digests, bootId, engines: evidence, artifacts: input.assets,
-    wasmOverAvx2: report.wasmOverAvx2, wasmOverAvx512: report.wasmOverAvx512,
-    note: 'All 300 returned solutions and 100 pinned H10 references independently replayed using cubing.js. Every benchmark length matches the historical H10 optimum. No additional solve or table load was performed.',
+    ...(candidateMode ? { mode: input.mode, candidates: report.candidates, candidatePlan: input.candidatePlan }
+      : { wasmOverAvx2: report.wasmOverAvx2, wasmOverAvx512: report.wasmOverAvx512 }),
+    note: `All ${verifiedSolutions} returned solutions and 100 pinned H10 references independently replayed using cubing.js. Every benchmark length matches the historical H10 optimum. No additional solve or table load was performed.`,
     limitations: input.limitations };
   writeFileSync(resolve(directory, 'independent-verification.json'), JSON.stringify(verification, null, 2) + '\n', { flag: 'wx' });
   return verification;

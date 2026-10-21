@@ -6,6 +6,71 @@ mod validation_cache;
 
 pub const OPT1_BYTES: usize = 30_401_280;
 
+/// Byte offset and length of complete pages strictly contained in an allocation.
+/// Pure arithmetic: no pointer is constructed or memory accessed here.
+#[cfg(all(feature = "opt8-native-hugepages", any(test, all(target_os = "linux", target_arch = "x86_64"))))]
+fn full_pages_inside(address: usize, bytes: usize, page: usize) -> Result<Option<(usize, usize)>, &'static str> {
+    if address == 0 || !page.is_power_of_two() || page > isize::MAX as usize {
+        return Err("invalid allocation address or base page size");
+    }
+    if bytes > isize::MAX as usize {
+        return Err("allocation exceeds pointer offset limit");
+    }
+    let end = address.checked_add(bytes).ok_or("allocation end overflow")?;
+    let offset = (page - address % page) % page;
+    if offset >= bytes {
+        return Ok(None);
+    }
+    let start = address.checked_add(offset).ok_or("aligned start overflow")?;
+    let aligned_end = end - end % page;
+    if aligned_end <= start {
+        return Ok(None);
+    }
+    Ok(Some((offset, aligned_end - start)))
+}
+
+#[cfg(all(feature = "opt8-native-hugepages", target_os = "linux", target_arch = "x86_64"))]
+fn advise_opt8_hugepages(words: &mut Vec<u32>, requested_len: usize) {
+    use std::ffi::{c_int, c_void};
+    // Linux libc ABI: man7.org/linux/man-pages/man2/{getpagesize,madvise}.2.html.
+    unsafe extern "C" {
+        fn getpagesize() -> c_int;
+        fn madvise(address: *mut c_void, length: usize, advice: c_int) -> c_int;
+    }
+    // Linux x86 UAPI includes asm-generic/mman-common.h, which defines this value.
+    const MADV_HUGEPAGE: c_int = 14;
+    let mut advise = || -> Result<Option<(usize, usize)>, String> {
+        if requested_len > words.capacity() {
+            return Err("requested table exceeds reserved capacity".into());
+        }
+        let bytes = requested_len.checked_mul(std::mem::size_of::<u32>())
+            .ok_or("table byte length overflow")?;
+        // SAFETY: getpagesize takes no pointers and has no memory preconditions.
+        let page = usize::try_from(unsafe { getpagesize() }).map_err(|_| "invalid base page size")?;
+        let pointer = words.as_mut_ptr().cast::<u8>();
+        let Some((offset, length)) = full_pages_inside(pointer as usize, bytes, page)? else {
+            return Ok(None);
+        };
+        // SAFETY: reserve has allocated at least requested_len u32s. The checked
+        // range is entirely inside that allocation, excludes partial edge pages,
+        // and is a whole number of base pages (madvise cannot round it outward).
+        // add preserves the allocation's provenance; no reference to uninitialized
+        // words is created. MADV_HUGEPAGE advises mapping policy without reading,
+        // writing, discarding, or changing access permissions of these bytes.
+        // The Vec stays alive and cannot reallocate during this synchronous call.
+        let result = unsafe { madvise(pointer.add(offset).cast::<c_void>(), length, MADV_HUGEPAGE) };
+        if result != 0 {
+            return Err(std::io::Error::last_os_error().to_string());
+        }
+        Ok(Some((length, page)))
+    };
+    match advise() {
+        Ok(Some((bytes, page))) => eprintln!("Opt8: MADV_HUGEPAGE accepted for {bytes} bytes (base page {page}); actual THP backing is kernel-dependent"),
+        Ok(None) => eprintln!("Opt8: MADV_HUGEPAGE skipped (no complete allocated pages); continuing without advice"),
+        Err(error) => eprintln!("Opt8: MADV_HUGEPAGE unavailable: {error}; continuing without advice"),
+    }
+}
+
 // Preserve the existing WASM load/decode boundary even under LTO. None lanes
 // never read the table; every Some retains the ordinary slice bounds check.
 #[cfg(all(feature = "opt8-native-batch", not(target_family = "wasm")))]
@@ -87,6 +152,10 @@ impl PruningTable {
         let len = usize::try_from(size / 4).map_err(|_| "table needs a 64-bit host")?;
         let mut words = Vec::<u32>::new();
         words.try_reserve_exact(len).map_err(|e| e.to_string())?;
+        #[cfg(all(feature = "opt8-native-hugepages", target_os = "linux", target_arch = "x86_64"))]
+        if variant.number() == 8 {
+            advise_opt8_hugepages(&mut words, len);
+        }
         words.resize(len, 0);
         let cache = cache_validation.then(|| validation_cache::Cache::new(path, &before, variant)).flatten();
         if force {
@@ -256,7 +325,30 @@ impl PruningTable {
         let _ = index;
     }
 
-    #[cfg(all(feature = "opt9-native-prefetch", not(target_family = "wasm"), any(target_arch = "aarch64", test)))]
+    /// Opt8 x86 candidate: hint the primary word only, while preserving the
+    /// exact decoder and the order in which search contexts are processed.
+    /// SSE prefetch is available on every x86_64 host; no AVX capability is
+    /// required. Other architectures retain their ordinary lookup behavior.
+    #[cfg(all(feature = "opt8-native-prefetch", not(target_family = "wasm")))]
+    #[inline(always)]
+    pub(crate) fn prefetch_opt8(&self, index: u64) {
+        #[cfg(target_arch = "x86_64")]
+        if let Some(address) = self.prefetch_word_address(index) {
+            // An in-bounds reference to this immutable Vec supplies the
+            // pointer. The instruction is only a read hint, never a load
+            // used as a bound or a substitute for the checked decoder.
+            unsafe {
+                std::arch::x86_64::_mm_prefetch(address.cast::<i8>(), std::arch::x86_64::_MM_HINT_T0);
+            }
+        }
+        #[cfg(not(target_arch = "x86_64"))]
+        let _ = index;
+    }
+
+    #[cfg(all(not(target_family = "wasm"), any(
+        all(feature = "opt9-native-prefetch", any(target_arch = "aarch64", test)),
+        all(feature = "opt8-native-prefetch", any(target_arch = "x86_64", test)),
+    )))]
     #[inline(always)]
     fn prefetch_word_address(&self, index: u64) -> Option<*const u32> {
         let word = usize::try_from(index >> 4).ok()?;
@@ -287,6 +379,43 @@ fn valid_distribution(counts: &[u64; 16], variant: Variant) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(feature = "opt8-native-hugepages")]
+    #[test]
+    fn hugepage_advice_range_contains_only_complete_allocated_pages() {
+        assert_eq!(full_pages_inside(0x1000, 0x3000, 0x1000), Ok(Some((0, 0x3000))));
+        assert_eq!(full_pages_inside(0x1004, 0x3000, 0x1000), Ok(Some((0xffc, 0x2000))));
+        assert_eq!(full_pages_inside(0x1004, 0x1ffc, 0x1000), Ok(Some((0xffc, 0x1000))));
+        assert_eq!(full_pages_inside(0x1004, 0x1ffb, 0x1000), Ok(None));
+        assert_eq!(full_pages_inside(0x1000, 0, 0x1000), Ok(None));
+        assert_eq!(full_pages_inside(0x1000, 0xfff, 0x1000), Ok(None));
+        for (address, bytes, page) in [
+            (0, 4096, 4096), (4096, 4096, 0), (4096, 4096, 3),
+            (4096, 4096, usize::MAX), (4096, isize::MAX as usize + 1, 4096),
+            (usize::MAX - 8, 16, 4096), (1, 1, isize::MAX as usize + 1),
+        ] {
+            assert!(full_pages_inside(address, bytes, page).is_err());
+        }
+        // Every possible base-page offset, plus alternate runtime page sizes.
+        // No allocation, FFI, or table loading is involved in these checks.
+        for page in [4096, 16384, 65536] {
+            for displacement in 0..page {
+                let address = page * 4 + displacement;
+                for bytes in [0, 1, page - 1, page, page + 1, page * 2 - 1, page * 2, page * 3 + 7] {
+                    if let Some((offset, length)) = full_pages_inside(address, bytes, page).unwrap() {
+                        assert!(offset < page && length > 0);
+                        assert_eq!((address + offset) % page, 0);
+                        assert_eq!(length % page, 0);
+                        assert!(offset + length <= bytes);
+                        assert!(bytes - offset - length < page);
+                    } else {
+                        let first_page = address / page + usize::from(address % page != 0);
+                        assert!(first_page * page + page > address + bytes);
+                    }
+                }
+            }
+        }
+    }
     #[cfg(all(feature = "opt8-native-batch", not(target_family = "wasm")))]
     #[test]
     fn opt8_batch_decoder_matches_scalar_sparse_lanes_and_block_headers() {
@@ -438,5 +567,35 @@ mod tests {
         table.words.clear();
         assert!(table.prefetch_word_address(0).is_none());
         table.prefetch_opt9(0);
+    }
+
+    #[cfg(all(feature = "opt8-native-prefetch", not(target_family = "wasm")))]
+    #[test]
+    fn opt8_prefetch_has_bounded_addresses_and_preserves_all_decoded_cells() {
+        let mut table = PruningTable {
+            words: vec![0; 8], variant: Variant(8), distribution: [0; 16],
+        };
+        table.words[0] = 5;
+        table.words[1] = 1 | (2 << 2) | (3 << 30);
+        table.words[4] = 7;
+        table.words[7] = 0x0123_4567;
+        let before = table.words.clone();
+        assert_eq!(table.prefetch_word_address(0), Some(&table.words[0] as *const u32));
+        assert_eq!(table.prefetch_word_address(15), Some(&table.words[0] as *const u32));
+        assert_eq!(table.prefetch_word_address(16), Some(&table.words[1] as *const u32));
+        assert_eq!(table.prefetch_word_address(127), Some(&table.words[7] as *const u32));
+        for index in [128, 129, u64::MAX] {
+            assert!(table.prefetch_word_address(index).is_none());
+            table.prefetch_opt8(index);
+        }
+        for index in 0..128 {
+            let expected = table.get(index);
+            table.prefetch_opt8(index);
+            assert_eq!(table.get_opt8(index), expected);
+        }
+        assert_eq!(table.words, before);
+        table.words.clear();
+        assert!(table.prefetch_word_address(0).is_none());
+        table.prefetch_opt8(0);
     }
 }

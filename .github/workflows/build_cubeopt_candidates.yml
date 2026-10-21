@@ -1,0 +1,106 @@
+name: Build CubeOpt Candidates
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Build artifacts only. This workflow has no SSH, service or deployment step.
+concurrency:
+  group: cubeopt-candidate-build-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        candidate: [baseline, dynamic, root-bound, prefetch, hugepages]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .node-version
+            solver/experiments/cube48opt-rust
+            solver/.cargo
+          filter: blob:none
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.node-version'
+
+      - name: Install the production static Rust toolchain
+        run: |
+          rustup toolchain install 1.98.1 --profile minimal --target x86_64-unknown-linux-musl
+          sudo apt-get update -qq
+          sudo apt-get install -y musl-tools
+
+      - name: Build the fixed candidate
+        env:
+          CANDIDATE: ${{ matrix.candidate }}
+          SOURCE_REVISION: ${{ github.sha }}
+          CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER: musl-gcc
+          RUSTFLAGS: -C target-cpu=x86-64
+        working-directory: solver/experiments/cube48opt-rust
+        run: |
+          set -euo pipefail
+          unset CARGO_ENCODED_RUSTFLAGS
+          base=opt8-native-search,opt8-native-quarter,opt9-native-fixed-contexts
+          case "$CANDIDATE" in
+            baseline) features="$base" ;;
+            dynamic) features="$base,opt9-native-dynamic" ;;
+            root-bound) features="$base,opt9-native-root-bound" ;;
+            prefetch) features="$base,opt8-native-prefetch" ;;
+            hugepages) features="$base,opt8-native-hugepages" ;;
+            *) echo 'Unsupported candidate' >&2; exit 1 ;;
+          esac
+          export CANDIDATE_FEATURES="$features"
+          export CANDIDATE_OUTPUT="$RUNNER_TEMP/cubeopt-candidate-$CANDIDATE"
+          cargo +1.98.1 build --locked --release --target x86_64-unknown-linux-musl \
+            --target-dir "target/native-ci-candidates/$CANDIDATE" \
+            --features "$features" --bin cube48opt-research
+          mkdir "$CANDIDATE_OUTPUT"
+          cp "target/native-ci-candidates/$CANDIDATE/x86_64-unknown-linux-musl/release/cube48opt-research" \
+            "$CANDIDATE_OUTPUT/cube48opt-$CANDIDATE"
+          chmod 755 "$CANDIDATE_OUTPUT/cube48opt-$CANDIDATE"
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { createHash } from 'node:crypto';
+          import { execFileSync } from 'node:child_process';
+          import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
+          import { resolve } from 'node:path';
+          const output = process.env.CANDIDATE_OUTPUT, candidate = process.env.CANDIDATE;
+          const binaryName = `cube48opt-${candidate}`, binaryPath = resolve(output, binaryName);
+          const binary = readFileSync(binaryPath);
+          const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
+          const run = (command, args) => execFileSync(command, args, { encoding: 'utf8' }).trim();
+          assert.equal(binary.subarray(0, 4).toString('hex'), '7f454c46');
+          assert.equal(binary[4], 2); assert.equal(binary[5], 1); assert.equal(binary.readUInt16LE(18), 62);
+          assert(!/\bINTERP\b/.test(run('readelf', ['-l', binaryPath])), 'Must be statically linked');
+          const protocol = JSON.parse(run(binaryPath, ['--server-info']));
+          assert.deepEqual(protocol, { engine: 'rust-native', variant: 'opt8', protocol: 1, maxThreads: 4, optimized: true });
+          const sources = ['Cargo.toml', 'Cargo.lock', ...readdirSync('src').filter(name => name.endsWith('.rs')).sort().map(name => `src/${name}`)];
+          const metadata = {
+            schema: 'cuberoot.opt8.native-ci-candidate/v1', candidate,
+            revision: process.env.SOURCE_REVISION, target: 'x86_64-unknown-linux-musl',
+            toolchain: '1.98.1', defaultFeatures: true, features: process.env.CANDIDATE_FEATURES,
+            rustflags: process.env.RUSTFLAGS, linker: 'musl-gcc',
+            rustc: run('rustup', ['run', '1.98.1', 'rustc', '-vV']),
+            linkerVersion: run('musl-gcc', ['--version']), systemLinkerVersion: run('ld', ['--version']),
+            runnerImage: process.env.ImageOS ?? null, runnerImageVersion: process.env.ImageVersion ?? null,
+            sourceSha256: Object.fromEntries(sources.map(name => [name, sha256(readFileSync(name))])),
+            binary: { path: binaryName, bytes: binary.length, sha256: sha256(binary) },
+            protocol, pruningTableLoaded: false, deployed: false,
+          };
+          writeFileSync(resolve(output, 'build.json'), JSON.stringify(metadata, null, 2) + '\n');
+          console.log(JSON.stringify(metadata, null, 2));
+          NODE
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cubeopt-native-candidate-${{ matrix.candidate }}-${{ github.sha }}
+          path: ${{ runner.temp }}/cubeopt-candidate-${{ matrix.candidate }}/
+          retention-days: 30
