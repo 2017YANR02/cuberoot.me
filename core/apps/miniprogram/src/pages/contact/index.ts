@@ -21,7 +21,7 @@ export function createContactPageOptions() {
     onShareTimeline() { return { title: this.data.contact.title }; },
     openContactWebsite() {
       if (this.data.contact.platformFeedback) return;
-      this.copyContactValue({ currentTarget: { dataset: { value: `https://${this.data.contact.website}` } } });
+      this.copyContactValue({ currentTarget: { dataset: { value: this.data.contact.websiteHref } } });
     },
     previewWechatQr() {
       if (this.data.contact.platformFeedback) return;
@@ -34,7 +34,7 @@ export function createContactPageOptions() {
       const value = event.currentTarget.dataset.value;
       const contact = this.data.contact;
       const allowed = new Set([
-        `https://${contact.website}`,
+        contact.websiteHref,
         ...contact.platforms.map(platform => platform.href),
         ...contact.details.map(detail => detail.actionValue),
       ]);

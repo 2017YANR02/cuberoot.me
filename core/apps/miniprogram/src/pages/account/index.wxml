@@ -113,26 +113,26 @@
   <view wx:if="{{editingName}}" class="account-name-editor">
     <view class="account-link-code-row">
       <input class="account-link-code-input" value="{{nameDraft}}" maxlength="100" aria-label="{{copy.editName}}" disabled="{{nameBusy}}" bindinput="inputDisplayName" />
-      <button wx:if="{{nameDraft}}" class="text-button" aria-label="{{copy.clearName}}" disabled="{{nameBusy}}" bindtap="clearDisplayName">×</button>
+      <button hover-class="press-feedback" wx:if="{{nameDraft}}" class="text-button" aria-label="{{copy.clearName}}" disabled="{{nameBusy}}" bindtap="clearDisplayName">×</button>
     </view>
     <view class="account-name-actions">
-      <button class="text-button" disabled="{{nameBusy}}" bindtap="cancelDisplayName">{{copy.cancelLabel}}</button>
-      <button class="primary-button" disabled="{{nameBusy || !nameDraft}}" loading="{{nameBusy}}" bindtap="saveDisplayName">{{copy.saveName}}</button>
+      <button hover-class="press-feedback" class="text-button" disabled="{{nameBusy}}" bindtap="cancelDisplayName">{{copy.cancelLabel}}</button>
+      <button hover-class="press-feedback" class="primary-button" disabled="{{nameBusy || !nameDraft}}" loading="{{nameBusy}}" bindtap="saveDisplayName">{{copy.saveName}}</button>
     </view>
   </view>
-  <button wx:elif="{{!wcaId}}" class="text-button account-name-edit" bindtap="editDisplayName">{{copy.editName}}</button>
-  <button class="text-button account-name-edit" loading="{{identitiesBusy}}" aria-expanded="{{identitiesOpen}}" bindtap="toggleIdentities">{{copy.identities}}</button>
+  <button hover-class="press-feedback" wx:elif="{{!wcaId}}" class="text-button account-name-edit" bindtap="editDisplayName">{{copy.editName}}</button>
+  <button hover-class="press-feedback" class="text-button account-name-edit" loading="{{identitiesBusy}}" aria-expanded="{{identitiesOpen}}" bindtap="toggleIdentities">{{copy.identities}}</button>
   <view wx:if="{{identitiesOpen}}" class="account-identities">
     <view wx:for="{{identityRows}}" wx:key="key" class="account-identity">
       <text>{{item.label}}</text>
       <text wx:if="{{item.handle}}" class="account-user-meta" selectable="{{true}}">{{item.handle}}</text>
-      <button class="text-button" data-index="{{index}}" disabled="{{identityMutationBusy || nameBusy}}" bindtap="unlinkIdentity">{{copy.unlink}}</button>
+      <button hover-class="press-feedback" class="text-button" data-index="{{index}}" disabled="{{identityMutationBusy || nameBusy}}" bindtap="unlinkIdentity">{{copy.unlink}}</button>
     </view>
     <text wx:if="{{hasPassword}}" class="account-user-meta">{{copy.password}}</text>
     <text wx:if="{{!identitiesBusy && !identitiesError && !identityRows.length && !hasPassword}}" class="account-user-meta">{{copy.identitiesEmpty}}</text>
     <view wx:if="{{identitiesError}}">
       <text class="status-text status-text--error" aria-role="status">{{identitiesError}}</text>
-      <button class="text-button" bindtap="loadIdentities">{{copy.identitiesRetry}}</button>
+      <button hover-class="press-feedback" class="text-button" bindtap="loadIdentities">{{copy.identitiesRetry}}</button>
     </view>
   </view>
   <text wx:if="{{wcaLinkPending}}" class="status-text" aria-role="status" aria-live="polite">{{copy.wcaLinkHint}}</text>
@@ -144,9 +144,9 @@
   >
     {{copy.accountButtonLabel}}
   </button>
-  <button class="text-button account-name-edit" disabled="{{identityMutationBusy || nameBusy}}" bindtap="signOut">{{copy.signOut}}</button>
-  <button wx:if="{{!requiresAgreement}}" class="text-button account-name-edit" disabled="{{identityMutationBusy || nameBusy}}" bindtap="openSecuritySettings">{{copy.securitySettings}}</button>
-  <button class="text-button account-name-edit" disabled="{{identityMutationBusy || nameBusy}}" bindtap="openDeleteAccount">{{copy.deleteAccount}}</button>
+  <button hover-class="press-feedback" class="text-button account-name-edit" disabled="{{identityMutationBusy || nameBusy}}" bindtap="signOut">{{copy.signOut}}</button>
+  <button hover-class="press-feedback" wx:if="{{!requiresAgreement}}" class="text-button account-name-edit" disabled="{{identityMutationBusy || nameBusy}}" bindtap="openSecuritySettings">{{copy.securitySettings}}</button>
+  <button hover-class="press-feedback" class="text-button account-name-edit" disabled="{{identityMutationBusy || nameBusy}}" bindtap="openDeleteAccount">{{copy.deleteAccount}}</button>
   <text
     wx:if="{{accountError}}"
     class="status-text status-text--error"

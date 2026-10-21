@@ -5,24 +5,24 @@
     <text class="link-note">{{account}}</text>
     <text class="link-code">{{linkCode}}</text>
     <text class="link-note">{{expiresLabel}}</text>
-    <button class="primary-button" bindtap="copyCode">{{copy.copy}}</button>
-    <button class="text-button link-action" bindtap="returnToAccount">{{copy.back}}</button>
+    <button hover-class="press-feedback" class="primary-button" bindtap="copyCode">{{copy.copy}}</button>
+    <button hover-class="press-feedback" class="text-button link-action" bindtap="returnToAccount">{{copy.back}}</button>
   </block>
   <block wx:else>
     <picker range="{{copy.methods}}" value="{{method}}" disabled="{{busy}}" bindchange="selectMethod"><view class="link-action">{{copy.methods[method]}} ▾</view></picker>
     <view class="link-input-row">
       <input class="link-input" value="{{email}}" placeholder="{{method === 2 ? copy.phone : copy.email}}" aria-label="{{method === 2 ? copy.phone : copy.email}}" maxlength="320" disabled="{{busy}}" bindinput="inputEmail" />
-      <button wx:if="{{email}}" class="text-button" disabled="{{busy}}" aria-label="{{copy.clear}}" bindtap="clearAccount">×</button>
+      <button hover-class="press-feedback" wx:if="{{email}}" class="text-button" disabled="{{busy}}" aria-label="{{copy.clear}}" bindtap="clearAccount">×</button>
     </view>
     <view wx:if="{{method === 1}}" class="link-input-row">
       <input class="link-input" value="{{password}}" password="{{!showPassword}}" placeholder="{{copy.password}}" aria-label="{{copy.password}}" maxlength="128" disabled="{{busy}}" bindinput="inputPassword" />
-      <button class="text-button" bindtap="togglePassword">{{showPassword ? copy.hidePassword : copy.showPassword}}</button>
+      <button hover-class="press-feedback" class="text-button" bindtap="togglePassword">{{showPassword ? copy.hidePassword : copy.showPassword}}</button>
     </view>
     <input wx:else class="link-input" value="{{code}}" type="number" placeholder="{{copy.verification}}" aria-label="{{copy.verification}}" maxlength="6" disabled="{{busy}}" bindinput="inputCode" />
-    <button class="text-button link-action" bindtap="openPolicy">{{copy.policy}}</button>
-    <button class="text-button link-action" aria-pressed="{{agreement}}" disabled="{{busy}}" bindtap="toggleAgreement">{{agreement ? '✓' : '○'}} {{copy.agreement}}</button>
-    <button wx:if="{{method !== 1}}" class="text-button link-action" disabled="{{busy || !agreement}}" bindtap="sendCode">{{copy.send}}</button>
-    <button class="primary-button" disabled="{{busy || !agreement}}" loading="{{busy}}" bindtap="generateCode">{{copy.generate}}</button>
+    <button hover-class="press-feedback" class="text-button link-action" bindtap="openPolicy">{{copy.policy}}</button>
+    <button hover-class="press-feedback" class="text-button link-action" aria-pressed="{{agreement}}" disabled="{{busy}}" bindtap="toggleAgreement">{{agreement ? '✓' : '○'}} {{copy.agreement}}</button>
+    <button hover-class="press-feedback" wx:if="{{method !== 1}}" class="text-button link-action" disabled="{{busy || !agreement}}" bindtap="sendCode">{{copy.send}}</button>
+    <button hover-class="press-feedback" class="primary-button" disabled="{{busy || !agreement}}" loading="{{busy}}" bindtap="generateCode">{{copy.generate}}</button>
   </block>
   <text wx:if="{{message}}" class="link-note" aria-role="status">{{message}}</text>
   <text wx:if="{{error}}" class="link-error" aria-role="alert">{{error}}</text>

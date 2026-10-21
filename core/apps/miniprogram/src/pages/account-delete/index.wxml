@@ -11,15 +11,15 @@
       <text selectable="{{true}}" class="delete-handle">{{handle}}</text>
       <view class="delete-input-row">
         <input value="{{confirm}}" disabled="{{busy}}" maxlength="320" aria-label="{{copy.confirm}}" bindinput="inputConfirm" />
-        <button wx:if="{{confirm}}" class="text-button" disabled="{{busy}}" aria-label="{{copy.clear}}" bindtap="clearConfirm">×</button>
+        <button hover-class="press-feedback" wx:if="{{confirm}}" class="text-button" disabled="{{busy}}" aria-label="{{copy.clear}}" bindtap="clearConfirm">×</button>
       </view>
       <view wx:if="{{hasPassword}}" class="delete-input-row">
         <input value="{{password}}" password="{{!showPassword}}" disabled="{{busy}}" maxlength="256" placeholder="{{copy.password}}" aria-label="{{copy.password}}" bindinput="inputPassword" />
-        <button class="text-button" bindtap="togglePassword">{{showPassword ? copy.hidePassword : copy.showPassword}}</button>
+        <button hover-class="press-feedback" class="text-button" bindtap="togglePassword">{{showPassword ? copy.hidePassword : copy.showPassword}}</button>
       </view>
-      <button class="primary-button delete-submit" disabled="{{busy || !confirm || (hasPassword && !password)}}" loading="{{busy}}" bindtap="deleteAccount">{{copy.submit}}</button>
+      <button hover-class="press-feedback" class="primary-button delete-submit" disabled="{{busy || !confirm || (hasPassword && !password)}}" loading="{{busy}}" bindtap="deleteAccount">{{copy.submit}}</button>
     </block>
-    <button wx:else class="text-button" disabled="{{busy}}" loading="{{busy}}" bindtap="loadAccount">{{copy.retry}}</button>
+    <button hover-class="press-feedback" wx:else class="text-button" disabled="{{busy}}" loading="{{busy}}" bindtap="loadAccount">{{copy.retry}}</button>
   </block>
   <text wx:if="{{error}}" class="delete-error" aria-role="status">{{error}}</text>
 </view>

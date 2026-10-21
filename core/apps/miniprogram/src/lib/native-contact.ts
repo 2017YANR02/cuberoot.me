@@ -37,7 +37,7 @@ export function createContactView() {
     eyebrow: tr({ zh: '支持', en: 'SUPPORT' }, contactLocale),
     title: tr({ zh: '问题反馈', en: 'Feedback' }, contactLocale),
     joinInstructionAfter: '', joinInstructionBefore: '', joinInstructionValue: '', joinTitle: '',
-    qrAria: '', qrPath: '', websiteLabel: '', website: '',
+    qrAria: '', qrPath: '', websiteLabel: '', website: '', websiteHref: '',
     platforms: [], details: [], sections: [],
   };
   const joinInstruction = tr(CONTACT_JOIN_INSTRUCTION, contactLocale);
@@ -54,6 +54,7 @@ export function createContactView() {
     title: tr({ en: 'Contact', zh: '联系方式' }, contactLocale),
     websiteLabel: tr({ en: 'Website', zh: '网站' }, contactLocale),
     website: CONTACT_WEBSITE,
+    websiteHref: `https://${CONTACT_WEBSITE}`,
     platforms: [...CONTACT_SOCIAL_PLATFORMS]
       .sort((a, b) => Number(b.language === contactLocale) - Number(a.language === contactLocale))
       .map((platform) => ({
