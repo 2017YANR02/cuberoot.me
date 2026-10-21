@@ -26,7 +26,7 @@ import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
 import { dateDisplay } from './comp_date';
-import { loadOptimal333 } from './optimal333.mjs';
+import { loadOptimalFaceResults } from './optimal-face-results.mjs';
 
 const PER_STEP = 12; // examples kept per (variant, metric, color, step) — hero + up to 11 rows
 
@@ -277,7 +277,7 @@ async function main() {
   //     (客户端对该变体固定用 'ALL',不走底色选择)。桶里的颜色字母留空 = 无底色语义。
   const same333 = new Set<string>();
   for (const [id, nm] of newMeta) if (OPTIMAL_EVENTS.has(nm.event)) same333.add(id);
-  const optMap = await loadOptimal333(path.join(repoRoot, 'solver', '333opt', 'out.0.csv'), same333);
+  const optMap = await loadOptimalFaceResults(path.join(repoRoot, 'solver', '333opt', 'out.0.csv'), same333);
   if (optMap.size > 0) {
     const buckets: StepBuckets = {};
     for (const id of [...optMap.keys()].sort()) {

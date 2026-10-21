@@ -10,20 +10,21 @@
 // 产出 stats/scramble/event_length_examples_opt.json = { meta, byText: { "<打乱文本>": "<最优打乱>" } }。
 // 同一文本(面转字母表互不冲突)→ 同一最优,故全局 byText 足够;前端按样例文本查表。
 //
-// 用法: node build_length_opt.mjs   (从 core/jobs/scramble-stats-build/ 或任意 CWD,路径自解析)
+// 用法: node build_length_opt.mjs [--cached-only]
+// --cached-only 仅复用 overlay/已完成 CSV；缺项即失败，绝不启动求解器。
 import { readFileSync, writeFileSync, existsSync, statSync, mkdtempSync, rmSync, renameSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
-import { executableSuffix, wcaDir } from './pipeline_paths.mjs';
+import { executableSuffix, wcaDir, puzzleDir } from './pipeline_paths.mjs';
 import { tsImport } from 'tsx/esm/api';
 
 // The shared package uses bundler-style internal imports. Keep the existing
 // plain-Node CLI working through this job's existing, scoped TS loader.
 const { invertAlg } = await tsImport('@cuberoot/shared/alg-transform', import.meta.url);
 const { normalizeWcaScramble } = await tsImport('@cuberoot/shared/normalize-wca-scramble', import.meta.url);
-const { loadOptimal333ByText } = await tsImport('./src/optimal333.mts', import.meta.url);
+const { loadOptimalFaceResultsByText } = await tsImport('./src/optimal-face-results.mts', import.meta.url);
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '../../..');
@@ -122,9 +123,12 @@ function solvePuzzleTexts(puzzleKey, texts) {
   return out;
 }
 
-async function main() {
-  if (!existsSync(EX)) { console.error(`缺 ${EX}(先跑 build_scramble_lengths 或拉线上数据)`); process.exit(1); }
-  const ex = JSON.parse(readFileSync(EX, 'utf8'));
+export async function buildLengthOpt({
+  cachedOnly = false, examplesFile = EX, outputFile = OUT,
+  faceCorpus = join(wcaDir, 'wca_scrambles_no_wide_move.txt'),
+  faceResults = join(repoRoot, 'solver/333opt/out.0.csv'), puzzleRoot = puzzleDir,
+} = {}) {
+  const ex = JSON.parse(readFileSync(examplesFile, 'utf8'));
   const events = ex.events ?? {};
   const eventsQtm = ex.events_qtm ?? {};
 
@@ -151,21 +155,19 @@ async function main() {
 
   // 增量:复用已解 overlay,只解新出现的文本(CI 蓄水池缓慢漂移,再跑很便宜)。
   const byText = {};
-  if (existsSync(OUT)) {
-    Object.assign(byText, JSON.parse(readFileSync(OUT, 'utf8')).byText ?? {});
+  if (existsSync(outputFile)) {
+    Object.assign(byText, JSON.parse(readFileSync(outputFile, 'utf8')).byText ?? {});
   }
   const before = Object.keys(byText).length;
 
   // 3x3 面转族(跳过已解)。
   const faceArr = [...faceTexts].filter((t) => !(t in byText));
   if (faceArr.length) {
-    const solved = await loadOptimal333ByText(
-      join(wcaDir, 'wca_scrambles_no_wide_move.txt'),
-      join(repoRoot, 'solver/333opt/out.0.csv'), faceArr,
-    );
+    const solved = await loadOptimalFaceResultsByText(faceCorpus, faceResults, faceArr);
     const reused = solved.size;
     const missing = faceArr.filter((text) => !solved.has(text));
-    for (const [text, optimal] of solveFaceTexts(missing)) solved.set(text, optimal);
+    if (cachedOnly && missing.length) throw new Error(`[333] cached-only: ${missing.length} missing solutions; overlay unchanged`);
+    if (!cachedOnly) for (const [text, optimal] of solveFaceTexts(missing)) solved.set(text, optimal);
     for (const [text, optimal] of solved) byText[text] = optimal;
     console.log(`  [3x3] ${solved.size}/${faceArr.length} 条 → 最优（复用 ${reused}，新增求解 ${missing.length}）`);
   }
@@ -174,21 +176,29 @@ async function main() {
   for (const [pk, set] of Object.entries(puzzleTexts)) {
     const arr = [...set].filter((t) => !(t in byText));
     if (!arr.length) continue;
-    const m = solvePuzzleTexts(pk, arr);
+    const m = pk === '222' ? await loadOptimalFaceResultsByText(
+      join(puzzleRoot, '222/scrambles.txt'), join(puzzleRoot, '222/222.csv'), arr, '222',
+    ) : new Map();
+    const reused = m.size;
+    const missing = arr.filter((text) => !m.has(text));
+    if (cachedOnly && missing.length) throw new Error(`[${pk}] cached-only: ${missing.length} missing solutions; overlay unchanged`);
+    if (!cachedOnly) for (const [text, optimal] of solvePuzzleTexts(pk, missing)) m.set(text, optimal);
     for (const [t, opt] of m) byText[t] = opt;
-    console.log(`  [${pk}] ${m.size}/${arr.length} 条 → 最优`);
+    console.log(`  [${pk}] ${m.size}/${arr.length} 条 → 最优（复用 ${reused}，新增求解 ${missing.length}）`);
   }
 
   const generated_at = process.env.SCRAMBLE_STATS_STAMP || new Date().toISOString();
-  const temporary = `${OUT}.${process.pid}.tmp`;
+  const temporary = `${outputFile}.${process.pid}.tmp`;
   try {
     writeFileSync(temporary, JSON.stringify({ meta: { generated_at }, byText }), { flag: 'wx', flush: true });
-    renameSync(temporary, OUT);
+    renameSync(temporary, outputFile);
   } finally { rmSync(temporary, { force: true }); }
   const total = Object.keys(byText).length;
-  console.log(`Wrote ${OUT}  (${total} texts, +${total - before} new, ${(statSync(OUT).size / 1024).toFixed(1)} KB)`);
+  console.log(`Wrote ${outputFile}  (${total} texts, +${total - before} new, ${(statSync(outputFile).size / 1024).toFixed(1)} KB)`);
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main().catch((err) => { console.error(err); process.exit(1); });
+  const args = process.argv.slice(2);
+  if (args.some(arg => arg !== '--cached-only')) throw new Error(`Unknown arguments: ${args.join(' ')}`);
+  buildLengthOpt({ cachedOnly: args.includes('--cached-only') }).catch((err) => { console.error(err); process.exit(1); });
 }

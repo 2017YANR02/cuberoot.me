@@ -34,7 +34,7 @@ import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
 import { dateDisplay } from './comp_date';
-import { loadOptimal333 } from './optimal333.mjs';
+import { loadOptimalFaceResults } from './optimal-face-results.mjs';
 
 const PER_BUCKET = 12;        // examples kept per (event, mode, value) — hero + up to 11 rows
 const RECENT_WINDOW_DAYS = 30; // bootstrap window when no watermark exists yet
@@ -291,7 +291,7 @@ async function main() {
     for (const [id, b] of newRows) if (DIFFICULTY_333_EVENTS.has(b.event)) corpusToRaw.set(`${id}001`, id);
     if (corpusToRaw.size > 0) {
       const outCsv = path.join(repoRoot, 'solver', '333opt', 'out.0.csv');
-      const solved = await loadOptimal333(outCsv, new Set(corpusToRaw.keys()));
+      const solved = await loadOptimalFaceResults(outCsv, new Set(corpusToRaw.keys()));
       if (solved.size === 0) console.warn(`  [difficulty] 3x3-family: no rows joined from ${outCsv}`);
       const byStepOf: Record<string, Record<string, string[]>> = {};
       let nOpt = 0;
