@@ -55,7 +55,10 @@ jobs:
           # --exclude='/comp/' 锚定到传输根:stats/comp/ 是服务器端独有,排除掉
           for dir in tools stats; do
             [ -d "$dir" ] || continue
-            rsync -rltz --exclude='.*' --exclude='/comp/' --chmod=D755,F644 \
+            # WCA Release publisher exclusively owns these paths. Never replace its
+            # complete dataset with an old Git checkout (or overwrite its symlinks).
+            rsync -rltz --exclude='.*' --exclude='/comp/' \
+              --exclude='/nemesizer/' --exclude='/persons_search.json.gz' --chmod=D755,F644 \
               -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
               "$dir/" "${USER}@${HOST}:${REMOTE}/${dir}/"
           done

@@ -1,0 +1,80 @@
+name: Publish WCA data
+run-name: WCA data ${{ inputs.request || github.run_id }}
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/wca-data/**'
+      - '.github/workflows/wca_data_release.yml'
+  pull_request:
+    paths:
+      - 'scripts/wca-data/**'
+      - '.github/workflows/wca_data_release.yml'
+  workflow_dispatch:
+    inputs:
+      candidate:
+        description: 'Candidate manifest asset, or server to adopt the existing live dataset'
+        required: true
+        default: server
+        type: string
+      request:
+        description: 'Calling workflow run/attempt (optional for manual operation)'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .node-version
+            scripts/wca-data
+            core/packages/shared/src
+          filter: blob:none
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - run: node --test scripts/wca-data/*.test.ts
+
+  publish:
+    if: github.event_name == 'workflow_dispatch'
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Serialize API reloading with the existing code-deployment job, including other AIs.
+    concurrency:
+      group: deploy-core-production
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .node-version
+            scripts/wca-data
+          filter: blob:none
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/wca_data_key
+          chmod 600 ~/.ssh/wca_data_key
+          ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts
+          echo "WCA_SSH_KEY_FILE=$HOME/.ssh/wca_data_key" >> "$GITHUB_ENV"
+      - name: Publish and activate the latest dataset
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WCA_SSH_HOST: root@${{ secrets.DEPLOY_HOST }}
+          CANDIDATE: ${{ inputs.candidate }}
+        run: node scripts/wca-data/cli.ts publish "$CANDIDATE"
