@@ -209,6 +209,73 @@ independent tail review: `.tmp/cubeopt-prefetch-review-20261021/review.md`.
 Combining other features requires a new measured executable; standalone gains
 must not be added together.
 
+Production release `39681945513` completed at 2026-10-21 21:56 UTC. The formal
+build and deployed ELF both match the accepted SHA above exactly; the workflow
+rejects a mismatch before upload or server operations. The existing table and
+small snapshot hashes are unchanged. Smoke, ready/health and a live Web cloud
+solve passed. Release source is `9890b860f7`.
+
+The additional nine-pass dynamic/root-bound group used the same frozen setup
+and passed another 900 independent replays and historical-length checks:
+
+| Candidate | Baseline rounds (s) | Candidate rounds (s) | Paired time reductions | Decision |
+| --- | --- | --- | --- | --- |
+| Dynamic prefixes | 93.430 / 83.370 / 87.232 | 82.598 / 79.572 / 81.839 | 11.594% / 4.556% / 6.183% | Keep off: below the all-round threshold; P95 regressed. |
+| Root lower bound | 93.430 / 83.370 / 87.232 | 83.327 / 98.804 / 84.981 | 10.814% / −18.513% / 2.581% | Keep off: round-two and P99 regression. |
+
+With each query's three-run median, dynamic prefixes increased P95 from 2.979
+to 3.301 seconds; the root-bound candidate increased P99 from 4.734 to 5.275
+seconds. All 21 passes across the three groups exited normally with no remaining
+descendants; each kept the same solver PID for its 100 requests. The final
+wrapper restored production health/readiness at 21:31 UTC. See
+`.tmp/cubeopt-reverse/native-feature-ab-20261021/accepted-v4/dynamic-root/`.
+Only prefetch proceeds to release; no unmeasured combination is enabled.
+
+## Production-machine profile of the selected prefetch binary
+
+The separate diagnostic pass attached only after READY, acknowledged sampling
+before request 1, and covered all 100 requests. It recorded `cpu-clock` at 49 Hz
+with 4096-byte DWARF stacks, using the exact accepted ELF above. Both its baseline
+and sampled pass passed independent replay and historical-length checks (200
+solutions). Profiling overhead is excluded from the acceptance timings above.
+Production health/readiness was restored at 21:39 UTC.
+
+The corrected offline export has 13,628 samples, zero lost samples, no empty
+stacks and no unresolved symbols. Median stack depth is 4, P90 is 5. All 13,596
+records containing the search worker reach its named thread `start`; the other
+32 records are not assumed to have complete roots. The 386 sampled TIDs are
+accumulated across requests, whose worker threads are recreated per request,
+not 386 concurrent workers. Two earlier malformed text exports were rejected
+and retained; only the export was corrected, with no repeated solve/recording.
+
+| Self share | Location |
+| --- | --- |
+| 73.75% | Worker containing the inlined search loop |
+| 14.39% | AVX2 coordinate calculation |
+| 2.14% | Coordinate dispatch/entry |
+| 4.81% | `Frame::child` |
+| 4.16% | AVX2 paired move |
+
+The worker's Rust short-backtrace wrapper name does not indicate thread-creation
+cost. Exact-ELF instruction annotation places 40.29% of the global sampled period
+at two PCs immediately following prefetch instructions, and 6.11% around PDB
+load/decode. These are sampled neighborhoods, not measured instruction latency:
+software sampling skid/dependencies do not prove that prefetch stalls for 40%,
+or that removing it would help. Coordinate hotspots are near corner-class
+lookup and outer-complement load-to-shuffle dependencies.
+
+This supports a future small, separately measured prefetch-policy experiment
+(for example T1 versus the accepted T0 hint), followed by coordinate dependency
+scheduling if generated assembly actually changes. It does not justify a table
+replacement or another scheduler rewrite. No PMU cycles, cache/TLB misses, IPC
+or off-CPU waiting were available, and no new speedup is claimed from the profile.
+
+Raw `perf.data` SHA-256:
+`916ebef8ff3f31ab8eee58829fb7c33abd5721efe2baa2d8a55dc9f104566608`.
+Local evidence: `.tmp/cubeopt-reverse/native-feature-ab-20261021/profile-results-v4/profile-QjFH26/`
+(`analysis-v3`, exact-ELF `annotations`, original results and rejected exports).
+Independent interpretation: `.tmp/cubeopt-profile-review-20261021/review.md`.
+
 ## Why 96 symmetries do not directly halve the current Opt8 table
 
 For full cube states, the 48 spatial symmetries and group inversion form an
