@@ -77,9 +77,36 @@ normal workloads; these are kernel measurements, not isolated end-to-end results
 AVX2 speeds up these kernels by about 4.7–4.8× and 5.8× versus scalar.
 Do not apply these factors to whole solves: random PDB reads, search scheduling,
 memory bandwidth and the chosen search features are outside this measurement.
-Full same-table solver performance and production replacement remain unverified.
+Full same-table solver measurements are recorded below; production rollout is
+tracked separately in `docs/cubeopt-native-rollout.md`.
 
 Local raw evidence: `.tmp/cubeopt-reverse/x86-simd-20261021-c53Ib1/` at repository
 root, containing `fixtures-manifest.json`, `correctness.json`, `kernels.json`,
 the initial Opt8 probe and `instruction-evidence.json`. Small fixtures are retained
 there for reproduction; historic programs and benchmark reports were not replaced.
+
+## Linux full solves, 2026-10-21
+
+The production Xeon host ran the fixed WCA100 corpus with four search threads,
+one resident process per engine, in WASM / AVX2 / AVX-512 order. External
+request-to-response wall times exclude startup, with one pass and no warmup.
+
+| Backend | 100 solves (seconds) | Startup (seconds) | Peak RSS (bytes) |
+| --- | ---: | ---: | ---: |
+| Current Rust WASM Opt8 | 120.262 | 72.874 | 8,026,701,824 |
+| Native Opt8 AVX2 | 109.989 | 69.221 | 7,788,609,536 |
+| Native Opt8 AVX-512 | 121.867 | 52.258 | 7,788,605,440 |
+
+Native features: `opt8-native-search,opt8-native-quarter,opt9-native-fixed-contexts`,
+baseline target `x86-64`, static musl. AVX2 reduced total solve time by 8.5%
+(1.093× throughput) in this run. AVX-512 was slower and remains opt-in.
+The AVX-512 startup reused the native validation receipt; the AVX2 startup
+performed the first full native checksum/distribution check. Startup differences
+therefore do not measure SIMD performance. This fixed-order single pass does
+not quantify scheduling, cache or thermal variance on the shared server.
+
+Raw results and resource/PID/exit evidence are retained locally under
+`.tmp/cubeopt-reverse/native-service-linux-20261021/results-ready-wait/`.
+Its `independent-verification.json` confirms all 300 solutions replay to solved,
+all 300 lengths match the pinned historical H10 optimum, and each engine
+handled all requests in one PID before exiting normally without descendants.

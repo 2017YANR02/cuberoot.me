@@ -1,18 +1,6 @@
-// Long-lived cube48opt optimal-solve daemon (Node child process).
-//
-// Loads ONE manifest-verified cubeopt prune table into the wasm heap once
-// (the manifest selects a strictly matched opt5/h5, opt6/h6, or opt8/h8 bundle),
-// then serves solve requests over line-based stdio — exactly the cube555 daemon
-// shape (see ../cube555/daemon.ts), but for 3x3 god's-number optimal solving.
-//
-// Why a child process (not in-proc in the Hono server):
-//   • isolates variant-dependent table RAM (opt8 is ~7.25 GiB) from the API,
-//   • the emscripten build leaks pthread/proxying resources and throws "unwind"
-//     after a few thousand solves — the parent just respawns this child.
-//
-// Solve math is identical to solver/333opt/solve.mjs makeSolver(): stream the
-// table into HEAPU8 in 64M chunks, init(0,K), solve_scramble(scr,K,1,true) with
-// debug=true so the wasm prints "Solution found!: <moves>" + "finished in N".
+// Long-lived manifest-selected CubeOpt worker. Rust native replaces this
+// loader with execve; WASM loads one table into its shared heap. Both retain
+// the API manager's PID/stdio contract and isolate table memory from the API.
 //
 // Wire protocol (one record per line, fields tab-separated):
 //   in : "<id>\t<scramble>"
