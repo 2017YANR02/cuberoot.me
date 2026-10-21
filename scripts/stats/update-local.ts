@@ -327,7 +327,7 @@ async function main(): Promise<void> {
     const refreshRecentEvents = async () => {
       if (options.jobs.includes('stages') || options.jobs.includes('puzzles')) await step('recent-events', () => runPnpm(['--filter', '@cuberoot/scramble-stats-build', 'build:recent-scrambles-events'], coreDir, buildEnv));
     };
-    const willInject = options.jobs.includes('333opt') || (options.jobs.includes('stages') && (stdChanged || variantChanged));
+    const willInject = options.jobs.includes('333opt') || stageBuildPending;
     if (!stageBuildPending && !willInject && !puzzleChanged) {
       await refreshRecentEvents();
       console.log('没有数据变化，结束。');
