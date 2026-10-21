@@ -75,7 +75,7 @@ export const CATALOG: UtilEntry[] = [
   {
     name: 'useIvyMode',
     sig: 'useIvyMode(): [IvyScrambleMode, typeof setIvyMode]',
-    imp: "import { useIvyMode, ivyScrambleForMode } from '@/lib/scramble-ivy-mode';",
+    imp: "import { useIvyMode } from '@/hooks/useIvyMode';\nimport { ivyScrambleForMode } from '@/lib/scramble-ivy-mode';",
     category: 'hook',
     zh: '同步枫叶 R L D B / R L U B 打乱类型；转换在生成结果入库前完成，图示和播放读取原文。',
     en: 'Synchronize Ivy RLDB/RLUB scramble types; convert before saving generated results so previews and playback consume the saved notation.',

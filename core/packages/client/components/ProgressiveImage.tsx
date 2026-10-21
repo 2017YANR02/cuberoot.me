@@ -11,6 +11,7 @@ interface ProgressiveImageProps {
   loading?: 'lazy' | 'eager';
   referrerPolicy?: React.HTMLAttributeReferrerPolicy;
   fallback?: ReactNode;
+  onError?: () => void;
 }
 
 /** The caller reserves dimensions; a small preview and the decoded image share that box. */
@@ -19,7 +20,7 @@ export function ProgressiveImage(props: ProgressiveImageProps) {
 }
 
 function ProgressiveImageSource({
-  src, previewSrc, alt, className, loading = 'lazy', referrerPolicy, fallback,
+  src, previewSrc, alt, className, loading = 'lazy', referrerPolicy, fallback, onError,
 }: ProgressiveImageProps) {
   const fullRef = useRef<HTMLImageElement>(null);
   const previewRef = useRef<HTMLImageElement>(null);
@@ -55,7 +56,7 @@ function ProgressiveImageSource({
         <img ref={fullRef} className="progressive-image-full" src={src} alt={alt}
           loading={loading} decoding="async" referrerPolicy={referrerPolicy}
           onLoad={event => { void reveal(event.currentTarget, false); }}
-          onError={() => setFailed(true)} />
+          onError={() => { setFailed(true); onError?.(); }} />
       </span>
     </span>
   );

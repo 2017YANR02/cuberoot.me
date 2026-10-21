@@ -50,7 +50,7 @@ function Swatch({ color }: { color: string }) {
   );
 }
 
-export default function AppearanceToggle({ className, showLabel = false, menuContent }: { className?: string; showLabel?: boolean; menuContent?: ReactNode }) {
+export default function AppearanceToggle({ className, triggerClassName, labelClassName = 'toolbar-label', showLabel = false, menuContent }: { className?: string; triggerClassName?: string; labelClassName?: string; showLabel?: boolean; menuContent?: ReactNode }) {
   const t = useT();
   const L = {
     title: t('设置', 'Settings'),
@@ -174,7 +174,7 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
     applyContrast(level);
   };
 
-  const cls = ['theme-toggle-inline', className].filter(Boolean).join(' ');
+  const cls = triggerClassName ?? ['theme-toggle-inline', className].filter(Boolean).join(' ');
 
   if (!mounted) {
     return (
@@ -214,7 +214,7 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
         aria-expanded={open}
       >
         <Settings size={14} />
-        {showLabel && <span className="toolbar-label">{L.title}</span>}
+        {showLabel && <span className={labelClassName}>{L.title}</span>}
       </button>
       {open && (
         <div

@@ -1,6 +1,6 @@
 'use client';
 
-import { useIvyMode } from '@/lib/scramble-ivy-mode';
+import { useIvyMode } from '@/hooks/useIvyMode';
 import { tr } from '@/i18n/tr';
 
 export default function ScrambleIvyModePicker() {

@@ -34,10 +34,14 @@ export interface CompactSelectProps<T extends string | number> {
   title?: string;
   className?: string;
   triggerClassName?: string;
+  /** Keep menu behavior while the host supplies the trigger's complete appearance. */
+  unstyledTrigger?: boolean;
   popupClassName?: string;
   /** Align option content with an external row containing the trigger. */
   contentAnchorRef?: RefObject<HTMLElement | null>;
   align?: 'start' | 'center';
+  /** Sidebars can reserve the trigger column by opening to its right. */
+  side?: 'vertical' | 'right';
   variant?: 'pill' | 'plain';
   /** Some icon-only triggers are self-explanatory and do not need a caret. */
   showArrow?: boolean;
@@ -84,9 +88,11 @@ export function CompactSelect<T extends string | number>({
   title,
   className,
   triggerClassName,
+  unstyledTrigger = false,
   popupClassName,
   contentAnchorRef,
   align = 'start',
+  side = 'vertical',
   variant = 'pill',
   showArrow = false,
   footer,
@@ -142,6 +148,9 @@ export function CompactSelect<T extends string | number>({
           && event.clientX <= Math.min(a.right, b.right)
           && event.clientY >= top && event.clientY <= bottom
           && bottom - top <= PANEL_GAP + 1) return;
+        if (side === 'right' && event.clientX >= a.right && event.clientX <= b.left
+          && event.clientY >= Math.max(a.top, b.top) && event.clientY <= Math.min(a.bottom, b.bottom)
+          && b.left - a.right <= PANEL_GAP + 1) return;
       }
       setOpen(false);
     };
@@ -157,7 +166,7 @@ export function CompactSelect<T extends string | number>({
       document.removeEventListener('pointerout', onWindowLeave);
       window.removeEventListener('blur', onBlur);
     };
-  }, [open, dismissOnMouseLeave]);
+  }, [open, dismissOnMouseLeave, side]);
 
   useLayoutEffect(() => {
     if (!open) {
@@ -193,10 +202,11 @@ export function CompactSelect<T extends string | number>({
       const contentInset = contentAnchorRef?.current && optionContent
         ? optionContent.getBoundingClientRect().left - panelRect.left
         : 0;
-      const safeWidth = Math.max(0, safeRight - safeLeft);
+      const rightLeft = Math.max(safeLeft, Math.min(anchor.right + PANEL_GAP, safeRight));
+      const safeWidth = Math.max(0, safeRight - (side === 'right' ? rightLeft : safeLeft));
       const naturalWidth = panel.scrollWidth || panelRect.width || anchor.width;
       const desiredWidth = Math.min(naturalWidth, safeWidth);
-      const left = Math.min(
+      const left = side === 'right' ? rightLeft : Math.min(
         Math.max(align === 'center' ? anchor.left + (anchor.width - desiredWidth) / 2 : anchor.left - contentInset, safeLeft),
         Math.max(safeLeft, safeRight - desiredWidth),
       );
@@ -208,12 +218,16 @@ export function CompactSelect<T extends string | number>({
       // scrollHeight includes padding, but the border-box height also needs both borders.
       const desiredHeight = panel.scrollHeight ? panel.scrollHeight + borderHeight : panelRect.height;
       const placeBelow = belowSpace >= Math.min(desiredHeight, aboveSpace);
-      const availableHeight = placeBelow ? belowSpace : aboveSpace;
+      const availableHeight = side === 'right' ? safeBottom - safeTop : placeBelow ? belowSpace : aboveSpace;
       const maxHeight = Math.min(Math.max(0, desiredHeight), availableHeight);
-      const top = placeBelow
+      const top = side === 'right'
+        ? Math.max(safeTop, Math.min(anchor.top, safeBottom - maxHeight))
+        : placeBelow
         ? Math.max(safeTop, belowTop)
         : Math.max(safeTop, anchor.top - PANEL_GAP - maxHeight);
-      setGeometry({ left, maxHeight, maxWidth: safeWidth, top });
+      setGeometry(previous => previous?.left === left && previous.top === top
+        && previous.maxHeight === maxHeight && previous.maxWidth === safeWidth
+        ? previous : { left, maxHeight, maxWidth: safeWidth, top });
     };
 
     positionPanel();
@@ -229,7 +243,7 @@ export function CompactSelect<T extends string | number>({
       window.visualViewport?.removeEventListener('resize', positionPanel);
       window.visualViewport?.removeEventListener('scroll', positionPanel);
     };
-  }, [align, contentAnchorRef, items.length, open, viewportBottomInset, hasPanelContent]);
+  }, [align, side, contentAnchorRef, items.length, open, viewportBottomInset, hasPanelContent]);
 
   const panelStyle = geometry ? {
     left: geometry.left,
@@ -260,7 +274,7 @@ export function CompactSelect<T extends string | number>({
         id={id}
         disabled={disabled}
         type="button"
-        className={['compact-select-trigger', triggerClassName].filter(Boolean).join(' ')}
+        className={['compact-select-trigger', unstyledTrigger && 'compact-select-trigger--unstyled', triggerClassName].filter(Boolean).join(' ')}
         onClick={() => { if (!disabled) setOpen(current => !current); }}
         onPointerEnter={event => {
           if (!disabled && openOnHover && event.pointerType === 'mouse') setOpen(true);

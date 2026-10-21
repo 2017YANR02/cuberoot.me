@@ -21,27 +21,24 @@ export function videoCoverInfo(url: string): CoverRef | null {
   return null;
 }
 
-// videoUrl 多行。按语言挑能出封面的视频:中文优先 B 站、英文优先 YouTube;
-// 首选平台没有就退而用另一平台;两者皆无 → null(由调用方渲染回退内容)。
-export function pickReconCover(videoUrl: string | undefined, isZh: boolean): CoverRef | null {
-  if (!videoUrl) return null;
-  let yt: CoverRef | null = null;
-  let bili: CoverRef | null = null;
-  let douyin: CoverRef | null = null;
-  for (const line of videoUrl.split('\n')) {
+// 保留全部候选，首选接口或图片失败时可继续尝试同条复盘的其他视频。
+export function reconCoverCandidates(videoUrl: string | undefined, isZh: boolean): CoverRef[] {
+  const covers: CoverRef[] = [];
+  const seen = new Set<string>();
+  for (const line of videoUrl?.split('\n') ?? []) {
     const info = videoCoverInfo(line);
     if (!info) continue;
-    if (info.kind === 'yt' && !yt) yt = info;
-    else if (info.kind === 'bili' && !bili) bili = info;
-    else if (info.kind === 'douyin' && !douyin) douyin = info;
+    const key = `${info.kind}:${info.id}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    covers.push(info);
   }
   const order: CoverKind[] = isZh ? ['bili', 'douyin', 'yt'] : ['yt', 'bili', 'douyin'];
-  for (const k of order) {
-    if (k === 'yt' && yt) return yt;
-    if (k === 'bili' && bili) return bili;
-    if (k === 'douyin' && douyin) return douyin;
-  }
-  return null;
+  return covers.sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind));
+}
+
+export function pickReconCover(videoUrl: string | undefined, isZh: boolean): CoverRef | null {
+  return reconCoverCandidates(videoUrl, isZh)[0] ?? null;
 }
 
 /** YouTube 封面有直链规律;B 站/抖音需走后端代理(模块级缓存按 key 去重,避免重复拉取)。 */
@@ -63,21 +60,57 @@ export function coverPreviewSrc(cover: CoverRef | null, src: string): string | n
   }
 }
 
-const biliCoverCache = new Map<string, Promise<string | null>>();
-export function loadBiliCover(bvid: string): Promise<string | null> {
+const biliCoverCache = new Map<string, Promise<Awaited<ReturnType<typeof getBiliCover>> | null>>();
+export function loadBiliVideo(bvid: string) {
   let p = biliCoverCache.get(bvid);
   if (!p) {
-    p = getBiliCover(bvid).then((r) => r.pic || null).catch(() => null);
+    p = getBiliCover(bvid).catch(() => null).then(video => {
+      if (!video?.pic && !video?.title) biliCoverCache.delete(bvid);
+      return video;
+    });
     biliCoverCache.set(bvid, p);
   }
   return p;
+}
+
+export function loadBiliCover(bvid: string): Promise<string | null> {
+  return loadBiliVideo(bvid).then(video => video?.pic || null);
+}
+
+const videoTitleCache = new Map<string, Promise<string | null>>();
+/** Titles are source metadata, not translated labels or titles inferred from a solve. */
+export function loadVideoTitle(url: string): Promise<string | null> {
+  const cover = videoCoverInfo(url);
+  if (!cover || cover.kind === 'douyin') return Promise.resolve(null);
+  const key = `${cover.kind}:${cover.id}`;
+  let pending = videoTitleCache.get(key);
+  if (!pending) {
+    pending = (cover.kind === 'bili'
+      ? loadBiliVideo(cover.id).then(video => video?.title || null)
+      : fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(`https://www.youtube.com/watch?v=${cover.id}`)}&format=json`, {
+        signal: AbortSignal.timeout(8000), credentials: 'omit',
+      }).then(async response => {
+        if (!response.ok) return null;
+        const data = await response.json() as { title?: unknown };
+        return typeof data.title === 'string' ? data.title : null;
+      }))
+      .catch(() => null).then(title => {
+        if (!title) videoTitleCache.delete(key);
+        return title;
+      });
+    videoTitleCache.set(key, pending);
+  }
+  return pending;
 }
 
 const douyinCoverCache = new Map<string, Promise<string | null>>();
 export function loadDouyinCover(url: string): Promise<string | null> {
   let p = douyinCoverCache.get(url);
   if (!p) {
-    p = getDouyinCover(url).then((r) => r.pic || null).catch(() => null);
+    p = getDouyinCover(url).then((r) => r.pic || null).catch(() => null).then(pic => {
+      if (!pic) douyinCoverCache.delete(url);
+      return pic;
+    });
     douyinCoverCache.set(url, p);
   }
   return p;

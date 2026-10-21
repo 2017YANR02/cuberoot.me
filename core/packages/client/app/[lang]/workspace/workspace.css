@@ -64,3 +64,9 @@
 .cuberoot-workspace-navigation .staff-header { position: sticky; top: 0; z-index: 45; box-sizing: border-box; height: var(--af-nav-header-height); background: var(--af-nav-sidebar-bg); padding: 0 20px; justify-content: flex-start; }
 .cuberoot-workspace-navigation .staff-header-actions { margin-left: auto; }
 .cuberoot-workspace-navigation .staff-main { margin: 0 auto; }
+
+.staff-workspace .staff-workspace-handbook {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}

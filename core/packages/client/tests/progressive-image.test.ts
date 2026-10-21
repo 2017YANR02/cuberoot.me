@@ -52,6 +52,17 @@ describe('progressive image decoding', () => {
     expect(host.contains(preview)).toBe(true);
   });
 
+  it('reports full-image failure so the caller can switch to another video cover', async () => {
+    const onError = vi.fn();
+    await act(async () => root.render(createElement(ProgressiveImage, {
+      src: '/failed.jpg', previewSrc: '/tiny.jpg', alt: '', onError,
+    })));
+    await act(async () => host.querySelector('.progressive-image-preview')!.dispatchEvent(new Event('error')));
+    expect(onError).not.toHaveBeenCalled();
+    await act(async () => host.querySelector('.progressive-image-full')!.dispatchEvent(new Event('error')));
+    expect(onError).toHaveBeenCalledTimes(1);
+  });
+
   it('does not reveal a replacement image when the previous decode finishes late', async () => {
     await act(async () => root.render(render()));
     let finishOld!: () => void;

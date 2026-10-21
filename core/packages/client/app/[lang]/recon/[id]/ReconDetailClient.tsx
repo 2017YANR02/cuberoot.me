@@ -1,6 +1,7 @@
 'use client';
 
 import { reconVideoGroups } from '@/lib/recon-video-url';
+import { loadBiliVideo, loadVideoTitle } from '@/lib/recon-video-cover';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 
@@ -27,7 +28,7 @@ import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/share
 import { cleanFtoReconAlgForPlayer, getReconScramble } from '@cuberoot/shared/recon-completion';
 import { ReconCompletionBadge } from '@/components/recon/ReconCompletionBadge';
 import {
-  listComments, addComment, updateComment, deleteComment, pinComment, getBiliCover, getDouyinCover,
+  listComments, addComment, updateComment, deleteComment, pinComment, getDouyinCover,
   listRecons, deleteAlternative, getSameScramble,
 } from '@/lib/recon-api';
 import { revalidateRecon } from '../revalidate-action';
@@ -726,6 +727,19 @@ function VideoSourceGroup({ urls }: { urls: string[] }) {
 
   const [country, setCountry] = useState<string | null>(null);
   const [selectedUrl, setSelectedUrl] = useState<string | null>(null);
+  const [titles, setTitles] = useState<Record<string, string>>({});
+  const sourceKey = urls.join('\n');
+  useEffect(() => {
+    const links = sourceKey.split('\n');
+    if (links.length < 2) return;
+    let alive = true;
+    for (const url of links) {
+      void loadVideoTitle(url).then(title => {
+        if (alive && title) setTitles(previous => ({ ...previous, [url]: title }));
+      });
+    }
+    return () => { alive = false; };
+  }, [sourceKey]);
   const sources = [
     ...ytUrls.map(url => ({ url, platform: 'youtube', label: 'YouTube', logo: YOUTUBE_LOGO })),
     ...biliUrls.map(url => ({ url, platform: 'bilibili', label: tr({ zh: 'B 站', en: 'Bilibili' }), logo: BILIBILI_LOGO })),
@@ -753,8 +767,9 @@ function VideoSourceGroup({ urls }: { urls: string[] }) {
       {active ? <VideoEmbed key={active.url} url={active.url} /> : <div className="detail-video-wrap" aria-busy="true" />}
       {hasChoice && <div className="detail-video-switches">
         {sources.filter(source => source !== active).map(source => {
-          const label = tr({ zh: `切换到 ${source.label}`, en: `Switch to ${source.label}` });
-          return <Tooltip key={source.url} content={label}>{tip => (
+          const title = titles[source.url] || source.url;
+          const label = tr({ zh: `切换到 ${source.label}：${title}`, en: `Switch to ${source.label}: ${title}` });
+          return <Tooltip key={source.url} content={title}>{tip => (
             <button {...tip} type="button" className="detail-video-switch"
               aria-label={label} onClick={() => setSelectedUrl(source.url)}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1671,9 +1686,11 @@ function BilibiliFacade({ bvId, href }: { bvId: string | null; href: string }) {
 
   useEffect(() => {
     if (!bvId) return;
-    getBiliCover(bvId).then(res => {
-      if (res.pic) setCover(res.pic);
+    let alive = true;
+    loadBiliVideo(bvId).then(res => {
+      if (alive && res?.pic) setCover(res.pic);
     }).catch(() => { /* ignore */ });
+    return () => { alive = false; };
   }, [bvId]);
 
   return (

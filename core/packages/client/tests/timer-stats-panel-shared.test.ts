@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import type { RollingStatKey, Solve } from '@cuberoot/shared/timer';
+import { CompactSelect } from '@cuberoot/timer-ui/compact-select';
 import {
   TimerRollingStatsPicker,
   TimerStatsPanel,
@@ -243,6 +244,34 @@ describe('shared TimerRollingStatsPicker interaction and viewport contract', () 
       const { panel } = await openFirst();
       expect(panel.style.maxHeight).toBe('166px');
     } finally { css.remove(); }
+  });
+
+  it('keeps a sidebar menu to the right on a narrow viewport across reopen and remount', async () => {
+    const measure = vi.mocked(HTMLElement.prototype.getBoundingClientRect);
+    measure.mockImplementation(function (this: HTMLElement) {
+      const trigger = this.classList.contains('compact-select-trigger');
+      return { x: trigger ? 12 : 62, y: 8, left: trigger ? 12 : 62, top: 8,
+        right: trigger ? 56 : 312, bottom: trigger ? 62 : 492,
+        width: trigger ? 44 : 250, height: trigger ? 54 : 484, toJSON: () => ({}) } as DOMRect;
+    });
+    const mount = () => act(async () => root.render(createElement(CompactSelect<string>, {
+      side: 'right', label: 'Pet', ariaLabel: 'Pet', items: [{ value: 'pet', label: 'Pet' }], onChange: vi.fn(),
+    })));
+    for (let cycle = 0; cycle < 2; cycle++) {
+      await mount();
+      for (let reopen = 0; reopen < 2; reopen++) {
+        const { panel, trigger } = await openFirst();
+        expect(panel.style.left).toBe('62px');
+        expect(panel.style.maxWidth).toBe('250px');
+        expect(panel.style.top).toBe('8px');
+        expect(panel.style.maxHeight).toBe('484px');
+        await act(async () => window.dispatchEvent(new Event('resize')));
+        await act(async () => trigger.click());
+        expect(document.querySelector('.compact-select-popup')).toBeNull();
+      }
+      await act(async () => root.render(null));
+    }
+    expect(measure.mock.calls.length).toBeLessThan(40);
   });
 
   it('validates custom aoN, supports Enter, and restores Escape focus', async () => {

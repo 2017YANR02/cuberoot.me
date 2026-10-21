@@ -303,8 +303,8 @@ export async function getWcaAttempts(
   return apiGet('/wca-attempts', { compId, personId });
 }
 
-export async function getBiliCover(bvid: string): Promise<{ pic: string }> {
-  return apiGet('/bili-cover', { bvid });
+export async function getBiliCover(bvid: string): Promise<{ pic: string; title?: string }> {
+  return apiGet('/bili-cover', { bvid, v: '3' });
 }
 
 // 抖音封面:传完整 douyin url(短链或长链),服务端解析 aweme_id 后取首帧封面。

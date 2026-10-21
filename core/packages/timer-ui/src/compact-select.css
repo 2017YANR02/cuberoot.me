@@ -9,7 +9,7 @@
   align-self: center;
 }
 
-.compact-select-trigger,
+.compact-select-trigger:where(:not(.compact-select-trigger--unstyled)),
 .native-select {
   display: inline-flex;
   align-items: center;
@@ -29,18 +29,18 @@
   transition: background 0.2s;
 }
 
-.compact-select-trigger:hover:not(:disabled),
+.compact-select-trigger:where(:not(.compact-select-trigger--unstyled)):hover:not(:disabled),
 .native-select:hover:not(:disabled) {
   background: color-mix(in srgb, var(--foreground) 8%, var(--popover));
 }
 
-.compact-select-trigger:disabled,
+.compact-select-trigger:where(:not(.compact-select-trigger--unstyled)):disabled,
 .native-select:disabled {
   color: var(--faint-foreground);
   cursor: not-allowed;
 }
 
-.compact-select-trigger:focus-visible,
+.compact-select-trigger:where(:not(.compact-select-trigger--unstyled)):focus-visible,
 .native-select:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
@@ -78,11 +78,11 @@ select {
 .compact-select-arrow.open { transform: rotate(180deg); }
 
 .compact-select--plain,
-.compact-select--plain .compact-select-trigger {
+.compact-select--plain .compact-select-trigger:where(:not(.compact-select-trigger--unstyled)) {
   width: 100%;
 }
 
-.compact-select--plain .compact-select-trigger {
+.compact-select--plain .compact-select-trigger:where(:not(.compact-select-trigger--unstyled)) {
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -90,7 +90,7 @@ select {
   font-weight: inherit;
 }
 
-.compact-select--plain .compact-select-trigger:hover:not(:disabled) {
+.compact-select--plain .compact-select-trigger:where(:not(.compact-select-trigger--unstyled)):hover:not(:disabled) {
   background: transparent;
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -102,7 +102,7 @@ select {
   width: fit-content;
 }
 
-.compact-select.timer-scramble-type-select .compact-select-trigger {
+.compact-select.timer-scramble-type-select .compact-select-trigger:where(:not(.compact-select-trigger--unstyled)) {
   width: auto;
   height: 32px;
   padding-inline: 4px;
@@ -110,7 +110,7 @@ select {
   font-weight: 400;
 }
 
-.compact-select.timer-scramble-type-select .compact-select-trigger:hover:not(:disabled) {
+.compact-select.timer-scramble-type-select .compact-select-trigger:where(:not(.compact-select-trigger--unstyled)):hover:not(:disabled) {
   text-decoration: none;
 }
 

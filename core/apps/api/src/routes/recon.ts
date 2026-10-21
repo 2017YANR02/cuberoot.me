@@ -982,6 +982,7 @@ reconRoutes.get('/recon/wca-results', async (c) => {
 
 // GET /v1/recon/bili-cover?bvid=xxx
 reconRoutes.get('/recon/bili-cover', async (c) => {
+  c.header('Cache-Control', 'no-store');
   const bvid = c.req.query('bvid') ?? '';
   if (!bvid || !/^BV[A-Za-z0-9]+$/.test(bvid)) {
     return c.json({ error: 'Invalid bvid' }, 400);
@@ -990,22 +991,22 @@ reconRoutes.get('/recon/bili-cover', async (c) => {
   try {
     const biliUrl = `https://api.bilibili.com/x/web-interface/view?bvid=${encodeURIComponent(bvid)}`;
     const res = await fetch(biliUrl, {
-      headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://www.bilibili.com/' },
+      // The old generic browser UA + Referer combination triggers upstream 412s.
       signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) {
       return c.json({ error: 'Bilibili API unavailable' }, 502);
     }
 
-    const data = await res.json() as { data: { pic: string } };
+    const data = await res.json() as { data?: { pic?: string; title?: string } };
     const pic = data?.data?.pic;
     if (!pic) {
       return c.json({ error: 'Cover not found' }, 404);
     }
 
     // NOTE: 升级 http → https
-    c.header('Cache-Control', 'public, max-age=86400');
-    return c.json({ pic: pic.replace('http://', 'https://') });
+    c.header('Cache-Control', 'public, max-age=3600, s-maxage=86400');
+    return c.json({ pic: pic.replace('http://', 'https://'), title: data.data?.title ?? '' });
   } catch {
     return c.json({ error: 'Bilibili API unavailable' }, 502);
   }

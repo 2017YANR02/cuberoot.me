@@ -1,4 +1,3 @@
-import { useSyncExternalStore } from 'react';
 import { ivyScrambleToRlub } from '@cuberoot/puzzle-solvers/ivy';
 import { persistItem } from './safe-storage';
 
@@ -24,10 +23,6 @@ export function onIvyModeChange(handler: () => void): () => void {
     window.removeEventListener(EVENT, handler);
     window.removeEventListener('storage', handler);
   };
-}
-
-export function useIvyMode(): [IvyScrambleMode, typeof setIvyMode] {
-  return [useSyncExternalStore(onIvyModeChange, getIvyMode, () => 'rldb' as const), setIvyMode];
 }
 
 /** Convert before storing a generated scramble; rendering and playback consume the saved text. */

@@ -14,7 +14,7 @@ import { useAuthStore, nextQuery } from '@/lib/auth-store';
 import './wca_auth.css';
 import { tr } from '@/i18n/tr';
 
-export default function WcaAuth({ onNavigate, showLabel = false, href = '/account' }: { onNavigate?: () => void; showLabel?: boolean; href?: string }) {
+export default function WcaAuth({ onNavigate, showLabel = false, href = '/account', linkClassName, labelClassName = 'toolbar-label' }: { onNavigate?: () => void; showLabel?: boolean; href?: string; linkClassName?: string; labelClassName?: string }) {
   const { t } = useTranslation();
   const pathname = usePathname();
   const user = useAuthStore(s => s.user);
@@ -29,14 +29,14 @@ export default function WcaAuth({ onNavigate, showLabel = false, href = '/accoun
     return (
       <AppLink
         href={`/account${nextQuery(pathname)}`}
-        className="wca-auth-btn"
+        className={linkClassName ?? 'wca-auth-btn'}
         title={label}
         aria-label={label}
         prefetch={false}
         onClick={onNavigate}
       >
         <Key size={18} />
-        {showLabel && <span className="toolbar-label">{tr({ zh: '登录', en: 'Login' })}</span>}
+        {showLabel && <span className={labelClassName}>{tr({ zh: '登录', en: 'Login' })}</span>}
       </AppLink>
     );
   }
@@ -53,14 +53,14 @@ export default function WcaAuth({ onNavigate, showLabel = false, href = '/accoun
   return (
     <AppLink
       href={href}
-      className="wca-auth-trigger"
+      className={linkClassName ?? 'wca-auth-trigger'}
       title={label}
       aria-label={label}
       prefetch={false}
       onClick={onNavigate}
     >
       {face}
-      {showLabel && <span className="toolbar-label">{tr({ zh: '我的', en: 'Account' })}</span>}
+      {showLabel && <span className={labelClassName}>{tr({ zh: '我的', en: 'Account' })}</span>}
     </AppLink>
   );
 }

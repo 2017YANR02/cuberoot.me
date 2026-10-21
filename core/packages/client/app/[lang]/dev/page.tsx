@@ -26,15 +26,8 @@ const CARDS: Card[] = [
     href: '/workspace',
     glyph: '↗',
     accent: 'var(--accent)',
-    zh: { title: '工作台', sub: 'Workspace', tagline: '项目、工作记录与团队协作', meta: 'CubeRoot / Mira' },
-    en: { title: 'Workspace', sub: 'Team workspace', tagline: 'Projects, work updates and team collaboration', meta: 'CubeRoot / Mira' },
-  },
-  {
-    href: '/dev/team',
-    glyph: '→',
-    accent: 'var(--accent)',
-    zh: { title: '团队手册', sub: '交给 AI · 由自己完成', tagline: '软件安装、环境配置与接入申请', meta: 'AI 带练 / 协作基础' },
-    en: { title: 'Team handbook', sub: 'Delegate to AI · Do yourself', tagline: 'Install apps, set up your environment and request access', meta: 'AI coaching / collaboration basics' },
+    zh: { title: 'Workspace', sub: '', tagline: '项目、工作记录与团队协作', meta: '入职 / 离职 / SOP' },
+    en: { title: 'Workspace', sub: '', tagline: 'Projects, work updates and team collaboration', meta: 'Onboarding / Offboarding / SOP' },
   },
   {
     href: '/dev/dns-routing',
@@ -474,7 +467,7 @@ export default function DevIndexPage() {
                 <div className="code-index-card-route">{c.href}</div>
               </div>
               <div className="code-index-card-title">{t.title}</div>
-              <div className="code-index-card-sub">{t.sub}</div>
+              {t.sub && <div className="code-index-card-sub">{t.sub}</div>}
               <p className="code-index-card-tagline">{t.tagline}</p>
               <div className="code-index-card-foot">
                 <span className="code-index-card-meta">{t.meta}</span>

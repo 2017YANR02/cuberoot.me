@@ -9,7 +9,7 @@ import Link from '@/components/AppLink';
 import { Video, Link2, Lock } from '@app-foundation/icons/lucide';
 import type { ReconSolve } from '@cuberoot/shared';
 import { getReconScramble } from '@cuberoot/shared/recon-completion';
-import { pickReconCover, coverSyncSrc, coverPreviewSrc, loadBiliCover, loadDouyinCover } from '@/lib/recon-video-cover';
+import { reconCoverCandidates, coverSyncSrc, coverPreviewSrc, loadBiliCover, loadDouyinCover, type CoverRef } from '@/lib/recon-video-cover';
 import { ProgressiveImage } from '@/components/ProgressiveImage';
 import { formatAvg, formatReconSingle } from '@/lib/recon-utils';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -24,27 +24,31 @@ import { ReconCompletionBadge } from '@/components/recon/ReconCompletionBadge';
 import './recon_card.css';
 
 // 卡片媒体区：有视频→封面图（YouTube 直链 / B 站 / 抖音异步取），否则打乱公式，再否则项目图标。
-// showScrambleFallback=false（首页「今日复盘」）时只留视频封面，没封面就整块不渲染（返回 null）。
-function ReconCardMedia({ solve, isZh, showScrambleFallback }: { solve: ReconSolve; isZh: boolean; showScrambleFallback: boolean }) {
-  const cover = useMemo(() => pickReconCover(solve.videoUrl, isZh), [solve.videoUrl, isZh]);
+// 首页保留已知视频的媒体区，即使所有封面都失败也不改变卡片高度。
+type ReconCardMediaProps = { solve: ReconSolve; isZh: boolean; showScrambleFallback: boolean };
+function ReconCardMedia(props: ReconCardMediaProps) {
+  return <ReconCardMediaSource key={`${props.isZh}\n${props.solve.videoUrl ?? ''}`} {...props} />;
+}
+
+function ReconCardMediaSource({ solve, isZh, showScrambleFallback }: ReconCardMediaProps) {
+  const covers = useMemo(() => reconCoverCandidates(solve.videoUrl, isZh), [solve.videoUrl, isZh]);
+  const [coverIndex, setCoverIndex] = useState(0);
+  const cover = covers[coverIndex] ?? null;
   const ytSrc = cover ? coverSyncSrc(cover) : null;
-  const [asyncSrc, setAsyncSrc] = useState<string | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState<{ cover: CoverRef; src: string } | null>(null);
 
   useEffect(() => {
-    setFailed(false);
-    setAsyncSrc(null);
     if (cover?.kind !== 'bili' && cover?.kind !== 'douyin') return;
     let alive = true;
     const loader = cover.kind === 'bili' ? loadBiliCover(cover.id) : loadDouyinCover(cover.id);
     void loader.then(pic => {
       if (!alive) return;
-      if (pic) setAsyncSrc(pic); else setFailed(true);
+      if (pic) setLoaded({ cover, src: pic }); else setCoverIndex(index => index + 1);
     });
     return () => { alive = false; };
   }, [cover]);
 
-  const imgSrc = failed ? null : (ytSrc ?? asyncSrc);
+  const imgSrc = ytSrc ?? (loaded?.cover === cover ? loaded.src : null);
 
   if (imgSrc) {
     return (
@@ -57,6 +61,7 @@ function ReconCardMedia({ solve, isZh, showScrambleFallback }: { solve: ReconSol
           referrerPolicy="no-referrer"
           loading="lazy"
           fallback={<Video size={24} />}
+          onError={() => setCoverIndex(coverIndex + 1)}
         />
       </div>
     );
@@ -64,7 +69,7 @@ function ReconCardMedia({ solve, isZh, showScrambleFallback }: { solve: ReconSol
 
   // A known video owns its media slot before the cover request completes.
   // Keep it on failure too, so sibling cards and everything below never move.
-  if (!showScrambleFallback) return cover ? (
+  if (!showScrambleFallback) return covers.length ? (
     <div className="recon-card-media" aria-hidden="true">
       <Video size={24} className="recon-card-media-empty" />
     </div>

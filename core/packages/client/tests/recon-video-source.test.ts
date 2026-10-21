@@ -4,8 +4,13 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { VideoSection } from '@/app/[lang]/recon/[id]/ReconDetailClient';
 import { loadIpCountry } from '@/lib/ip-country';
+import { loadVideoTitle } from '@/lib/recon-video-cover';
 
 vi.mock('@/lib/ip-country', () => ({ loadIpCountry: vi.fn() }));
+vi.mock('@/lib/recon-video-cover', async original => ({
+  ...await original<typeof import('@/lib/recon-video-cover')>(),
+  loadVideoTitle: vi.fn(async () => null),
+}));
 vi.mock('@/lib/recon-api', async original => ({
   ...await original<typeof import('@/lib/recon-api')>(),
   getBiliCover: vi.fn(async () => ({ pic: '' })),
@@ -17,6 +22,7 @@ let root: Root;
 beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.mocked(loadIpCountry).mockReset();
+  vi.mocked(loadVideoTitle).mockReset().mockResolvedValue(null);
   host = document.createElement('div'); document.body.append(host); root = createRoot(host);
 });
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); });
@@ -76,4 +82,19 @@ it('shows uploaded files and unknown providers as separate video entries', async
   expect(host.querySelectorAll('.detail-video-player')).toHaveLength(2);
   expect(host.querySelector('video')?.getAttribute('src')).toBe('https://api.cuberoot.me/v1/recon/video/42');
   expect(host.querySelector('.detail-video-facade')?.getAttribute('href')).toBe('https://example.com/watch');
+});
+
+it('shows each video title in its tooltip even when two alternatives are both Bilibili', async () => {
+  const otherBili = 'https://www.bilibili.com/video/BV1qppd65EY1';
+  vi.mocked(loadIpCountry).mockResolvedValue('us');
+  vi.mocked(loadVideoTitle).mockImplementation(async url => url === bilibili ? '比赛现场完整视频' : '[100FPS] 2.51三阶单次世界纪录WR');
+  await act(async () => root.render(createElement(VideoSection, { videoUrl: [youtube, bilibili, otherBili].join('\n') })));
+  const buttons = host.querySelectorAll<HTMLButtonElement>('.detail-video-switch');
+  expect(buttons).toHaveLength(2);
+  await act(async () => buttons[0].focus());
+  expect(document.querySelector('[role="tooltip"]')?.textContent).toBe('比赛现场完整视频');
+  await act(async () => buttons[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+  await act(async () => buttons[1].focus());
+  expect(document.querySelector('[role="tooltip"]')?.textContent).toBe('[100FPS] 2.51三阶单次世界纪录WR');
+  expect(buttons[1].getAttribute('aria-label')).toContain('[100FPS] 2.51三阶单次世界纪录WR');
 });

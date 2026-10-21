@@ -14,7 +14,11 @@ import { apiUrl } from '@/lib/api-base';
 import { authHeaders } from '@/lib/admin-api';
 import { sessionFetch } from '@/lib/session-fetch';
 import '@app-foundation/workspace-ui/workspace.css';
+import '../dev/team/get-started.css';
 import './workspace.css';
+import Onboarding from '../dev/team/Onboarding';
+import Offboarding from '../dev/team/Offboarding';
+import Sop from '../dev/team/Sop';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 // Product adapter: only CubeRoot auth headers and CubeRoot API are used here.
@@ -32,7 +36,7 @@ function workspaceHref(href: string) {
 }
 function Link({href,...props}:AnchorHTMLAttributes<HTMLAnchorElement>&{href:string}) { return <AppLink {...props} href={workspaceHref(href)} prefetch={false} />; }
 function Button({variant,size,...props}:ButtonHTMLAttributes<HTMLButtonElement>&{variant?:'secondary';size?:'sm'}) { return <button type="button" {...props} className={`btn ${variant==='secondary'?'btn-secondary':'btn-primary'} ${props.className??''}`} data-size={size} />; }
-const sections=['mine','updates','projects','members','detail'] as const;
+const sections=['mine','updates','projects','members','detail','onboarding','offboarding','sop'] as const;
 function Workspace() {
   const lang=useLang();const router=useRouter();
   const host=useMemo(()=>({api,Link,Button,t:(text:string)=>workspaceText(lang,text),navigate:(href:string)=>router.push(`${lang==='zh'?'/zh':''}${workspaceHref(href)}`)}),[lang,router]);
@@ -40,7 +44,7 @@ function Workspace() {
 }
 function WorkspaceContent() {
   const t=useT();const user=useAuthUser();
-  return user ? <SignedInWorkspace key={user.uid} /> : <WorkspaceLoginFrame brand="CubeRoot"><h1>{t('工作台','Workspace')}</h1><Button onClick={()=>useAuthStore.getState().login()}>{t('登录 CubeRoot','Sign in to CubeRoot')}</Button></WorkspaceLoginFrame>;
+  return user ? <SignedInWorkspace key={user.uid} /> : <WorkspaceLoginFrame brand="CubeRoot"><h1>{t('Workspace','Workspace')}</h1><Button onClick={()=>useAuthStore.getState().login()}>{t('登录 CubeRoot','Sign in to CubeRoot')}</Button></WorkspaceLoginFrame>;
 }
 function SignedInWorkspace() {
   const t=useT();const [section]=useQueryState('section',parseAsStringEnum([...sections]).withDefault('mine'));
@@ -49,16 +53,19 @@ function SignedInWorkspace() {
   const items=[{key:'mine',label:t('我的工作','My work')},{key:'updates',label:t('团队动态','Team updates')},{key:'projects',label:t('项目','Projects')},...(actor?.kind==='admin'?[{key:'members',label:t('成员与权限','Members and access')}]:[])];
   const icons = { mine: ClipboardList, updates: Users, projects: FolderKanban, members: ShieldCheck };
   const navigation = items.map(item => { const Icon = icons[item.key as keyof typeof icons]; return { id: item.key, href: `/workspace?section=${item.key}`, label: item.label, icon: <Icon size={18} />, active: section === item.key }; });
-  navigation.push({ id: 'handbook', href: '/dev/team', label: t('团队手册','Team handbook'), icon: <BookOpen size={18} />, active: false });
+  const handbookItems = [{ key: 'onboarding', label: t('入职','Onboarding') }, { key: 'offboarding', label: t('离职','Offboarding') }, { key: 'sop', label: 'SOP' }];
+  const handbook = handbookItems.some(item => item.key === section);
+  navigation.push(...handbookItems.map(item => ({ id: item.key, href: `/workspace?section=${item.key}`, label: item.label, icon: <BookOpen size={18} />, active: section === item.key })));
   return <NavigationShell className="staff-workspace cuberoot-workspace-navigation" mainClassName="staff-main"
     items={navigation} labels={{ navigation: t('工作台导航','Workspace navigation'), show: t('显示侧边栏','Show sidebar'), hide: t('隐藏侧边栏','Hide sidebar'), openMobile: t('打开导航','Open navigation'), closeMobile: t('关闭导航','Close navigation') }}
     renderLink={props => <AppLink {...props} prefetch={false} />}
     header={toggle => <header className="staff-header">{toggle}<AppLink href="/" className="staff-brand">CubeRoot</AppLink><div className="staff-header-actions"><AppLink href="/account" prefetch={false}>{actor?.name??t('我的账号','My account')}</AppLink></div></header>}
   >
-    <div className="staff-page-heading"><h1>{items.find(i=>i.key===section)?.label??t('工作记录','Work report')}</h1></div>
-    <ErrorNotice error={session.error} retry={session.reload} />
+    <div className="staff-page-heading"><h1>{[...items,...handbookItems].find(i=>i.key===section)?.label??t('工作记录','Work report')}</h1></div>
+    {!handbook&&<ErrorNotice error={session.error} retry={session.reload} />}
     {session.error?.status===401&&<Button onClick={()=>useAuthStore.getState().login()}>{t('重新登录','Sign in again')}</Button>}
-    {session.loading&&<p role="status"><LoadingIndicator>{t('正在加载…','Loading…')}</LoadingIndicator></p>}
+    {!handbook&&session.loading&&<p role="status"><LoadingIndicator>{t('正在加载…','Loading…')}</LoadingIndicator></p>}
+    {handbook&&<div className="staff-start staff-workspace-handbook">{section==='offboarding'?<Offboarding />:section==='sop'?<Sop />:<Onboarding />}</div>}
     {actor&&<>
       {section==='mine'&&employee&&<><ReportEditor /><Reports actor={employee} directory={session.data!.directory} mine /></>}
       {section==='updates'&&<Reports actor={actor} directory={session.data!.directory} />}

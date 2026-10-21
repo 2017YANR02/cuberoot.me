@@ -6,11 +6,11 @@
 import AppearanceToggle from './AppearanceToggle';
 import type { ReactNode } from 'react';
 
-export default function HeaderToggles({ className, showLabels = false, appearanceContent }: { className?: string; showLabels?: boolean; appearanceContent?: ReactNode }) {
+export default function HeaderToggles({ className, triggerClassName, labelClassName, showLabels = false, appearanceContent }: { className?: string; triggerClassName?: string; labelClassName?: string; showLabels?: boolean; appearanceContent?: ReactNode }) {
   const cls = ['header-toggles', className].filter(Boolean).join(' ');
   return (
     <div className={cls}>
-      <AppearanceToggle showLabel={showLabels} menuContent={appearanceContent} />
+      <AppearanceToggle triggerClassName={triggerClassName} labelClassName={labelClassName} showLabel={showLabels} menuContent={appearanceContent} />
     </div>
   );
 }

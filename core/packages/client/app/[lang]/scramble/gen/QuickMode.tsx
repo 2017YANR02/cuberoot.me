@@ -11,7 +11,7 @@ import { RefreshCw, Download, Image as ImageIcon, ImageOff, ChevronDown, Check }
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import EventScrambleOptions from './EventScrambleOptions';
 import NumberCommitInput from '@/components/NumberCommitInput';
-import { useIvyMode } from '@/lib/scramble-ivy-mode';
+import { useIvyMode } from '@/hooks/useIvyMode';
 import { useRediMode } from '@/lib/scramble-redi-mode';
 import { EventIcon } from '@/components/EventIcon';
 import { ScramblePreview2D, eventHasScramblePreview } from '@/components/ScramblePreview2D';
