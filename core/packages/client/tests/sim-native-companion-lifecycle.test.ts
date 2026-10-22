@@ -31,10 +31,7 @@ vi.mock('@/hooks/useT', () => ({ useT: () => (_zh: string, en: string) => en }))
 vi.mock('@/i18n/tr', () => ({ useLang: () => 'en', tr: ({ en }: { en: string }) => en }));
 vi.mock('@/app/[lang]/sim/GroupTheoryPanel', () => ({ default: () => null }));
 vi.mock('@/app/[lang]/sim/PuzzleDrawWorkspace', () => ({
-  default: ({ puzzle }: { puzzle: string | number }) => createElement('div', { 'data-drawing-puzzle': puzzle }),
-}));
-vi.mock('@/app/[lang]/sim/FtoImageGenerator', () => ({
-  default: ({ algorithm }: { algorithm: string }) => createElement('div', { 'data-image-alg': algorithm }),
+  default: ({ puzzle, fto }: ComponentProps<typeof import('@/app/[lang]/sim/PuzzleDrawWorkspace').default>) => createElement('div', { 'data-drawing-puzzle': puzzle, 'data-image-alg': puzzle === 'fto' ? fto?.algorithm : undefined }),
 }));
 vi.mock('@/components/HomeLink', () => ({ default: () => null }));
 vi.mock('@/components/AppLink', () => ({ default: () => null }));

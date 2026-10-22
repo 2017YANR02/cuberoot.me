@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { parseAsString, parseAsStringEnum, useQueryStates } from 'nuqs';
 import { ArrowLeft, ExternalLink, ScrollText } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
+import BoolToggle from '@/components/BoolToggle';
 import JsonLd, { articleJsonLd, SITE_URL } from '@/components/JsonLd';
 import { useT } from '@/hooks/useT';
 import { tr } from '@/i18n/tr';
@@ -45,14 +46,14 @@ export default function RegulationLogs() {
     </header>
     <div className="reg-logs-controls">
       <div className="reg-logs-kinds" role="group" aria-label={t('日志分类', 'Log category')}>
-        {KINDS.map((k) => <button key={k.id} type="button" aria-pressed={state.kind === k.id} onClick={() => void setState({ kind: k.id, entry: null }, { history: 'push' })}>{tr(k.title)}</button>)}
+        {KINDS.map((k) => <button className="reg-logs-kind" key={k.id} type="button" aria-pressed={state.kind === k.id} onClick={() => void setState({ kind: k.id, entry: null }, { history: 'push' })}>{tr(k.title)}</button>)}
       </div>
-      <input type="search" value={state.q} aria-label={t('搜索日志', 'Search logs')} placeholder={t('搜索日志', 'Search logs')} onChange={(event) => void setState({ q: event.target.value, entry: null })} />
-      <label className="reg-logs-compare"><input type="checkbox" checked={compare} onChange={(event) => void setState({ view: event.target.checked ? 'compare' : 'text' })} />{t('中英对照', 'Chinese / English')}</label>
+      <input className="reg-logs-search" type="search" value={state.q} aria-label={t('搜索日志', 'Search logs')} placeholder={t('搜索日志', 'Search logs')} onChange={(event) => void setState({ q: event.target.value, entry: null })} />
+      <BoolToggle className="reg-logs-compare" value={compare} onChange={(value) => void setState({ view: value ? 'compare' : 'text' })} label={t('中英对照', 'Chinese / English')} />
     </div>
     <div className="reg-logs-reader">
       <aside className="reg-logs-list" aria-label={t('日志列表', 'Log entries')}>
-        {entries.map((e) => <button type="button" key={e.id} aria-current={selected?.id === e.id ? 'true' : undefined} onClick={() => void setState({ entry: e.id }, { history: 'push' })}>
+        {entries.map((e) => <button className="reg-logs-entry" type="button" key={e.id} aria-current={selected?.id === e.id ? 'true' : undefined} onClick={() => void setState({ entry: e.id }, { history: 'push' })}>
           <time dateTime={e.date}>{e.date}</time><span>{tr(e.title)}</span>
         </button>)}
         {!entries.length && <p>{t('没有匹配的日志。', 'No matching entries.')}</p>}

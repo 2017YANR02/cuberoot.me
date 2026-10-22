@@ -24,13 +24,13 @@ export default function RegulationNews(){
  const visible=filtered.slice((page-1)*pageSize,page*pageSize);
  useEffect(()=>{
   const openLegacyArticle=()=>{const id=window.location.hash.slice(1);if(!ALL_NEWS.some(e=>e.id===id))return;router.replace((pathname.startsWith('/zh/')?'/zh':'')+'/regulation/post/'+id);};
-  openLegacyArticle();window.addEventListener('hashchange',openLegacyArticle);return()=>window.removeEventListener('hashchange',openLegacyArticle);
+  openLegacyArticle();
  },[pathname,router]);
  return <div className="reg-page"><div className="reg-wrap">
   <PostHeading href="/regulation" backLabel={t('全部规则','All regulations')} large>{t('公告','Posts')}</PostHeading>
-  <div className="news-filters"><div className="news-search"><input type="search" aria-label={t('搜索标题','Search titles')} placeholder={t('搜索标题','Search titles')} value={state.q} onChange={e=>void setState({q:e.target.value,page:null})}/>{state.q&&<ClearButton onClick={()=>void setState({q:null,page:null})}/>}</div><select aria-label={t('年份','Year')} value={state.year} onChange={e=>void setState({year:e.target.value,page:null})}><option value="">{t('全部年份','All years')}</option>{years.map(year=><option value={year} key={year}>{year}</option>)}</select></div>
+  <div className="news-filters"><div className="news-search"><input className="news-search-input" type="search" aria-label={t('搜索标题','Search titles')} placeholder={t('搜索标题','Search titles')} value={state.q} onChange={e=>void setState({q:e.target.value,page:null})}/>{state.q&&<ClearButton onClick={()=>void setState({q:null,page:null})}/>}</div><select className="news-year-select" aria-label={t('年份','Year')} value={state.year} onChange={e=>void setState({year:e.target.value,page:null})}><option value="">{t('全部年份','All years')}</option>{years.map(year=><option value={year} key={year}>{year}</option>)}</select></div>
   <ul className="news-index">{visible.map(item=><li key={item.id}><Link href={'/regulation/post/'+item.id} prefetch={false} className="news-index-link"><time dateTime={item.date}>{item.date}</time><span>{tr(item.title)}</span><ArrowRight size={18} aria-hidden="true"/></Link></li>)}</ul>
   {!visible.length&&<p>{t('没有匹配的公告。','No matching announcements.')}</p>}
-  {totalPages>1&&<nav className="news-pagination" aria-label={t('公告分页','Announcement pages')}><button disabled={page===1} onClick={()=>void setState({page:page-1},{history:'push'})}>{t('上一页','Previous')}</button><span>{page} / {totalPages}</span><button disabled={page===totalPages} onClick={()=>void setState({page:page+1},{history:'push'})}>{t('下一页','Next')}</button></nav>}
+  {totalPages>1&&<nav className="news-pagination" aria-label={t('公告分页','Announcement pages')}><button className="news-page-button" disabled={page===1} onClick={()=>void setState({page:page-1},{history:'push'})}>{t('上一页','Previous')}</button><span>{page} / {totalPages}</span><button className="news-page-button" disabled={page===totalPages} onClick={()=>void setState({page:page+1},{history:'push'})}>{t('下一页','Next')}</button></nav>}
  </div></div>;
 }

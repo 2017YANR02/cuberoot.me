@@ -81,7 +81,13 @@ it('defers every gallery group and scene until its media enters the viewport', a
     })));
     expect(host.querySelectorAll('.deskpet-gallery-media img, .deskpet-gallery-media object').length, group.id).toBe(0);
     await act(async () => observers.forEach(observer => observer.notify(true)));
-    const media = host.querySelectorAll(`section[data-pet="${group.id}"] .deskpet-gallery-media img, section[data-pet="${group.id}"] .deskpet-gallery-media object`);
+    const media = host.querySelectorAll(`section[data-pet="${group.id}"] .deskpet-gallery-media img:not(.deskpet-save-image), section[data-pet="${group.id}"] .deskpet-gallery-media object`);
+    const saveImages = host.querySelectorAll(`section[data-pet="${group.id}"] .deskpet-save-image`);
+    expect(saveImages.length, group.id).toBe(group.anims.filter(anim => anim.state || group.scripted).length);
+    saveImages.forEach((image) => {
+      expect(image.getAttribute('src')).toBe(image.parentElement?.querySelector('object')?.getAttribute('data'));
+      expect(image.getAttribute('aria-hidden')).toBe('true');
+    });
     expect(media.length, group.id).toBe(group.anims.length);
     for (const [index, anim] of group.anims.entries()) {
       expect(media[index].getAttribute(anim.state || group.scripted ? 'data' : 'src'), `${group.id}/${anim.file}`)

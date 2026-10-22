@@ -152,12 +152,12 @@
 
 .news-filters { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; }
 .news-search { position: relative; flex: 1; min-width: 180px; }
-.news-search input { width: 100%; padding-right: 40px; }
-.news-filters input,.news-filters select { min-height: 44px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); padding: 10px 14px; font: inherit; }
-.news-search input { padding-right: 44px; }
+.news-search-input { width: 100%; padding-right: 40px; }
+.news-search-input,.news-year-select { min-height: 44px; border: 1px solid var(--input); background: var(--background); color: var(--foreground); padding: 10px 14px; font: inherit; }
+.news-search-input { padding-right: 44px; }
 .news-pagination { display: flex; justify-content: center; align-items: center; gap: 24px; margin-top: 28px; }
-.news-pagination button { min-height: 44px; padding: 8px 16px; font: inherit; color: var(--foreground); background: transparent; border: 1px solid var(--border-default); cursor: pointer; }
-.news-pagination button:disabled { color: var(--faint-foreground); cursor: default; }
+.news-page-button { min-height: 44px; padding: 8px 16px; font: inherit; color: var(--foreground); background: transparent; border: 1px solid var(--border-default); cursor: pointer; }
+.news-page-button:disabled { color: var(--faint-foreground); cursor: default; }
 .news-post-body { font-size: 17px; line-height: 1.8; overflow-wrap: anywhere; }
 .news-post-body p,.news-post-body ul,.news-post-body ol { margin: 0 0 22px; }
 .news-post-body a { color: var(--blue); text-underline-offset: 3px; }

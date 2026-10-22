@@ -1,18 +1,18 @@
 .reg-logs-wrap { max-width: 1280px; }
 .reg-logs-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; margin: 30px 0; }
 .reg-logs-kinds { display: flex; gap: 6px; }
-.reg-logs-controls button, .reg-logs-controls input[type=search] { color: var(--foreground); font: inherit; border: 1px solid var(--border-default); padding: 9px 14px; background: var(--background); }
-.reg-logs-controls button { cursor: pointer; }
-.reg-logs-controls button[aria-pressed=true] { color: var(--blue); border-color: var(--blue); background: color-mix(in srgb, var(--blue) 8%, transparent); }
-.reg-logs-controls input[type=search] { min-width: 180px; flex: 1; }
+.reg-logs-kind, .reg-logs-search { color: var(--foreground); font: inherit; border: 1px solid var(--border-default); padding: 9px 14px; background: var(--background); }
+.reg-logs-kind { cursor: pointer; }
+.reg-logs-kind[aria-pressed=true] { color: var(--blue); border-color: var(--blue); background: color-mix(in srgb, var(--blue) 8%, transparent); }
+.reg-logs-search { min-width: 180px; flex: 1; }
 .reg-logs-compare { display: flex; align-items: center; gap: 7px; font-size: 14px; white-space: nowrap; }
-.reg-logs-compare input { accent-color: var(--blue); }
+
 .reg-logs-reader { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 40px; align-items: start; }
 .reg-logs-list { max-height: 75vh; overflow: auto; position: sticky; top: 28px; border-right: 1px solid var(--border-default); padding-right: 12px; }
-.reg-logs-list button { width: 100%; text-align: left; padding: 13px 14px; margin-bottom: 4px; display: flex; flex-direction: column; gap: 3px; border: 0; border-left: 2px solid transparent; background: transparent; color: var(--foreground); font: inherit; font-size: 14px; cursor: pointer; }
+.reg-logs-entry { width: 100%; text-align: left; padding: 13px 14px; margin-bottom: 4px; display: flex; flex-direction: column; gap: 3px; border: 0; border-left: 2px solid transparent; background: transparent; color: var(--foreground); font: inherit; font-size: 14px; cursor: pointer; }
 .reg-logs-list time { font-size: 12px; color: var(--muted-foreground); }
-.reg-logs-list button:hover { background: color-mix(in srgb, var(--foreground) 4%, transparent); }
-.reg-logs-list button[aria-current=true] { border-left-color: var(--blue); background: color-mix(in srgb, var(--blue) 8%, transparent); }
+.reg-logs-entry:hover { background: color-mix(in srgb, var(--foreground) 4%, transparent); }
+.reg-logs-entry[aria-current=true] { border-left-color: var(--blue); background: color-mix(in srgb, var(--blue) 8%, transparent); }
 .reg-logs-list p { color: var(--muted-foreground); font-size: 14px; }
 .reg-logs-article { min-width: 0; }
 .reg-logs-article > h2 { font-size: clamp(23px, 3vw, 31px); line-height: 1.45; margin: 12px 0 28px; }
@@ -32,6 +32,6 @@
 .reg-logs-body pre { overflow: auto; }
 .reg-logs-supplement { border-top: 1px solid var(--border-default); margin-top: 38px; padding-top: 30px; }
 .reg-logs-supplement > h3 { font-size: 23px; margin: 12px 0 24px; }
-.reg-logs-page button:focus-visible, .reg-logs-page input:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+.reg-logs-kind:focus-visible, .reg-logs-entry:focus-visible, .reg-logs-search:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
 @media(max-width: 900px) { .reg-logs-reader { grid-template-columns: 230px minmax(0, 1fr); gap: 24px; } .reg-logs-columns-compare { grid-template-columns: minmax(0, 1fr); } }
-@media(max-width: 640px) { .reg-logs-reader { grid-template-columns: minmax(0, 1fr); } .reg-logs-list { position: static; max-height: 240px; border-right: 0; border-bottom: 1px solid var(--border-default); padding: 0 0 12px; } .reg-logs-kinds { width: 100%; } .reg-logs-kinds button { flex: 1; } .reg-logs-controls { gap: 12px; } }
+@media(max-width: 640px) { .reg-logs-reader { grid-template-columns: minmax(0, 1fr); } .reg-logs-list { position: static; max-height: 240px; border-right: 0; border-bottom: 1px solid var(--border-default); padding: 0 0 12px; } .reg-logs-kinds { width: 100%; } .reg-logs-kind { flex: 1; } .reg-logs-controls { gap: 12px; } }
