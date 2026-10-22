@@ -292,8 +292,8 @@ describe('shared timer puzzle picker', () => {
 
     act(() => host.querySelector<HTMLButtonElement>('.pp-trigger')?.click());
     const items = [...host.querySelectorAll<HTMLElement>('.pp-item')];
-    expect(items).toHaveLength(81);
-    expect(items.filter((item) => item.querySelector('.cubing-icon'))).toHaveLength(60);
+    expect(items).toHaveLength(82);
+    expect(items.filter((item) => item.querySelector('.cubing-icon'))).toHaveLength(61);
     expect(items.filter((item) => item.querySelector('.pp-item-tag'))).toHaveLength(21);
     for (const item of items) {
       const icon = item.querySelector<HTMLElement>('.cubing-icon');
