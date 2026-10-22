@@ -22,6 +22,22 @@ The maintainer authorized publishing all pending project changes, merging PR #14
 - The primary `/Users/eula/Developer/cuberoot.me` checkout is aligned with the rewritten main, with working files and `.local/` unchanged. The full offline original-history backup is `/Users/eula/Developer/cuberoot-history-backup-20261021.git`; exact ref proofs, commit mapping, cancellation, CI and restoration records are in `/Users/eula/Developer/cuberoot-history-maintenance-20261022/`.
 - Other old worktrees, local-only branches/stashes and other computers are deliberately preserved. Before using them again, save unpublished work and move it onto the rewritten history. Do not merge or push the old main history back into the repository. This maintenance uses the primary checkout; the isolated checkout mentioned in the original migration notes below is now historical.
 
+### Follow-up: retired frontend bundles (2026-10-22)
+
+- The remaining-size audit identified root `_assets/` as obsolete hashed frontend bundles. It was absent from all 85 branch tips and the tag, but its historical versions still occupied about 338 MiB. Root `/_assets/` is now ignored, and the existing data-ownership CI rejects tracked files there. All nine checks passed locally and in [run 39710328778](https://github.com/2017YANR02/cuberoot.me/actions/runs/39710328778).
+- Removed `_assets/` from all 86 writable remote refs using an atomic push with exact old-ref leases. Every branch/tag tip retains an identical tree, and all 8,819 commits retain their metadata and mapped parents. All 18,743 blobs used exclusively by `_assets/` are unreachable; shared blobs still required by other paths are preserved. Full object integrity validation passed.
+- Main changed from `14b59e24570a7aaab04258a934707eed8abe541d` to `1912907d31a95e548678c0e4c91f92d6ad512cf2`, retaining tree `991b59bddc4346ade0031e920e22551a44372f1c`. The primary checkout was aligned without changing working files or `.local/`.
+- Reachable compressed object bytes fell from 1,432,798,281 to 1,078,244,084, a further 354,554,197 bytes removed. Including pack indexes, the independently packed repositories measure approximately **1.34 GiB → 1.01 GiB**. These are local verified Git-object measurements, not GitHub's retained-object storage counter.
+- The original full-history backup remains intact. The backup immediately before this second rewrite is `/Users/eula/Developer/cuberoot-history-assets-backup-20261022.git`; verification, exact ref mapping and restoration records are in `/Users/eula/Developer/cuberoot-history-assets-20261022/`.
+- Release identity, manifest and asset hashes remain unchanged. The API reports ready with export date `2026-10-21`; the public person-index hash matches the Release and the F2L page returns HTTP 200. The cancelled statistics computation was not restarted.
+- This cutover disabled Actions at repository level and temporarily disconnected Vercel's Git link, then restored Actions permissions, branch protections, repository identity, credentials, production branch and saved build settings. Vercel's reconnect API no longer returns the previous `sourceless` metadata field, even when explicitly supplied; that discrepancy and the verified functional settings are recorded in `restoration-verification.json`. No application code was changed by the rewrite.
+
+### Remaining data boundary
+
+Other generated statistics still account for about 376 MiB of compressed historical blobs, including top-10 history and scramble statistics. They remain tracked and can accumulate new versions; this follow-up does **not** claim their migration is complete. Active tutorial media, public assets and upstream tools also remain in Git and must not be deleted merely because they are large.
+
+A broader statistics migration must change producers and consumers together: `stats.yml`, `update_upcoming.yml`, the disabled elevation backfill, local scramble publication, toolkit synchronization, and CI's sparse-checkout fixtures. Calendar shards must be rebuilt from the latest combined past/upcoming inputs under the publication lock. Keep the same latest-only Release, preserve server-only `stats/comp`, authored tutorial assets and local computation checkpoints, and verify publication/hydration before removing these families from Git history. Do not simply add `stats/**` to `.gitignore` or delete historical data while the existing producers still commit it.
+
 ## Authorized outcome
 
 - Use this repository and one mutable `wca-data-latest` GitHub Release.
