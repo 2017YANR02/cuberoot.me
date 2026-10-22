@@ -22,12 +22,12 @@ export default function Walkthrough() {
     </header>
     <div className="lbl-walkthrough-options">
       <label><T zh="示例" en="Example" />
-        <select value={runIndex} onChange={event => setRunIndex(Number(event.target.value))}>
+        <select className="lbl-walkthrough-select" value={runIndex} onChange={event => setRunIndex(Number(event.target.value))}>
           {LBL_LESSON_RUNS.map((_, index) => <option key={index} value={index}>{index + 1}</option>)}
         </select>
       </label>
       <label><T zh="播放范围" en="Playback range" />
-        <select value={stage} onChange={event => setStage(event.target.value as typeof stage)}>
+        <select className="lbl-walkthrough-select" value={stage} onChange={event => setStage(event.target.value as typeof stage)}>
           <option value="all">{tr({ zh: '完整还原', en: 'Full solve' })}</option>
           {LBL_LESSON_STAGE_IDS.map(id => <option key={id} value={id}>{tr(LBL_STEPS.find(item => item.id === id)!.title)}</option>)}
         </select>
