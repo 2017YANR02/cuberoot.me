@@ -368,6 +368,32 @@ function sourceKind(owner, file) {
   return 'runtime';
 }
 
+const buildToolCache = new WeakMap();
+
+// package.json is the build entrypoint contract. Do not exempt arbitrary scripts,
+// jobs or files named build.ts: only directly declared, package-local CLI tools.
+export function declaredBuildTools(owner) {
+  if (buildToolCache.has(owner)) return buildToolCache.get(owner);
+  const files = new Set();
+  for (const [name, script] of Object.entries(owner.json.scripts ?? {})) {
+    if (!/^build(?::|$)/.test(name) || typeof script !== 'string') continue;
+    for (const command of script.split('&&')) {
+      const match = command.trim().match(/^(?:node(?: --import tsx)?|tsx) (?:\.\/)?(scripts\/[\w./-]+\.[cm]?[jt]s)(?:\s+[^;&|<>`$]*)?$/);
+      if (!match || match[1].split('/').some((part) => part === '.' || part === '..')) continue;
+      const file = resolve(owner.root, match[1]);
+      if (sourceKind(owner, file) !== 'test') files.add(file);
+    }
+  }
+  buildToolCache.set(owner, files);
+  return files;
+}
+
+function isBuildToolPath(owner, file) {
+  const candidate = resolve(file);
+  return [...declaredBuildTools(owner)].some((entry) => entry === candidate
+    || entry.replace(/\.[cm]?[jt]s$/, '') === candidate.replace(/\.[cm]?[jt]s$/, ''));
+}
+
 function packageForPath(packages, absolute) {
   const normalized = `${resolve(absolute)}${sep}`.toLowerCase();
   return packages
@@ -567,6 +593,14 @@ function moduleFinding(packages, owner, file, specifier, kind, mechanism) {
     sourceKind: sourceKind(owner, file),
     specifier,
   };
+
+  // A build entry is not a production library. This also covers the client's
+  // existing @/ alias, whose root is the package directory.
+  const localTarget = specifier.startsWith('.') ? resolve(dirname(file), specifier)
+    : owner.dir === 'client' && specifier.startsWith('@/') ? resolve(owner.root, specifier.slice(2)) : null;
+  if (kind !== 'type-only' && common.sourceKind === 'runtime' && localTarget && isBuildToolPath(owner, localTarget)) {
+    return { ...common, rule: 'runtime-build-tool-import', target: owner.dir };
+  }
 
   if (specifier === '@cuberoot/shared') {
     return { ...common, rule: 'shared-root-import', target: 'shared' };
@@ -1008,7 +1042,8 @@ export function validateRuntimeNeutralExports(packages = activePackages()) {
 }
 
 function scanSourceText(packages, owner, file, source) {
-  const ast = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, (
+  const testProgram = sourceKind(owner, file) === 'test' ? sourceProgram(file, source) : null;
+  const ast = testProgram?.ast ?? ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, (
     file.endsWith('.tsx') || file.endsWith('.jsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS
   ));
   const findings = [];
@@ -1016,6 +1051,20 @@ function scanSourceText(packages, owner, file, source) {
   const childProcessNamespaces = new Set();
   const moduleNodes = new Set();
   const joinedPathNodes = new Set();
+  const pathConsumers = new Set();
+  const valueDependencies = new Map();
+  const bindingOf = (node) => testProgram?.checker.getSymbolAtLocation(node) ?? node.text;
+  const identifiersIn = (node) => {
+    const names = new Set();
+    const visit = (child) => {
+      if (ts.isIdentifier(child)) names.add(bindingOf(child));
+      ts.forEachChild(child, visit);
+    };
+    visit(node);
+    return names;
+  };
+  const consumesPath = (name) => /^(?:read|write|copy|rename|open|access|stat|lstat|exists|realpath|readdir|mkdir|rm|unlink)/.test(name)
+    || ['join', 'resolve', 'pathToFileURL', ...SUBPROCESS_APIS].includes(name);
 
   const recordModule = (node, specifier, kind, mechanism) => {
     moduleNodes.add(node);
@@ -1024,6 +1073,12 @@ function scanSourceText(packages, owner, file, source) {
   };
 
   const firstPass = (node) => {
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer) {
+      valueDependencies.set(bindingOf(node.name), identifiersIn(node.initializer));
+    }
+    if (ts.isCallExpression(node) && consumesPath(calleeName(node.expression))) {
+      for (const argument of node.arguments) for (const name of identifiersIn(argument)) pathConsumers.add(name);
+    }
     if (ts.isImportDeclaration(node) && literalText(node.moduleSpecifier) !== null) {
       const specifier = literalText(node.moduleSpecifier);
       recordModule(node.moduleSpecifier, specifier, importKind(node), 'static-import');
@@ -1098,6 +1153,15 @@ function scanSourceText(packages, owner, file, source) {
     ts.forEachChild(node, firstPass);
   };
   firstPass(ast);
+  // Follow ordinary constant aliases so a test's real readFile(path) remains an
+  // edge, while a path used only as simulated scanner input is just fixture data.
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const name of [...pathConsumers]) for (const dependency of valueDependencies.get(name) ?? []) {
+      if (!pathConsumers.has(dependency)) { pathConsumers.add(dependency); changed = true; }
+    }
+  }
 
   const secondPass = (node) => {
     if (ts.isCallExpression(node)) {
@@ -1106,7 +1170,7 @@ function scanSourceText(packages, owner, file, source) {
         && ts.isIdentifier(node.expression.expression)
         && childProcessNamespaces.has(node.expression.expression.text)
         && SUBPROCESS_APIS.has(node.expression.name.text);
-      if (childProcessNames.has(name) || namespaceCall) {
+      if ((childProcessNames.has(name) || namespaceCall) && !declaredBuildTools(owner).has(resolve(file))) {
         findings.push({
           file: repoRelative(file),
           mechanism: namespaceCall ? node.expression.name.text : name,
@@ -1142,13 +1206,25 @@ function scanSourceText(packages, owner, file, source) {
         const kind = sourceKind(owner, file);
         let parent = node.parent;
         let mechanism = 'path-literal';
+        let directPathConsumer = false;
         for (let depth = 0; parent && depth < 5; depth += 1, parent = parent.parent) {
           if (!ts.isCallExpression(parent)) continue;
           const name = calleeName(parent.expression);
+          if (consumesPath(name)) directPathConsumer = true;
           if (/^(?:read|write|copy|rename|open|access|stat|readdir|mkdir|rm|unlink)/.test(name)) mechanism = name;
           else if (parent.expression.kind === ts.SyntaxKind.ImportKeyword) mechanism = 'dynamic-import-path';
           else if (name === 'pathToFileURL') mechanism = 'dynamic-import-path';
           break;
+        }
+        if (kind === 'test' && mechanism === 'path-literal' && !directPathConsumer) {
+          let declaration = node.parent;
+          while (declaration && !ts.isVariableDeclaration(declaration) && !ts.isForOfStatement(declaration)) declaration = declaration.parent;
+          const binding = declaration && ts.isForOfStatement(declaration) ? declaration.initializer : declaration?.name;
+          const consumed = binding && [...identifiersIn(binding)].some((name) => pathConsumers.has(name));
+          if (!consumed) {
+            ts.forEachChild(node, secondPass);
+            return;
+          }
         }
         // Runtime UI files often show repository paths as documentation. They are not
         // dependency edges. Runtime server paths remain relevant because they can pull
@@ -1342,7 +1418,17 @@ async function runHook() {
   const violations = violationsFromHookPayload(payload);
   if (!violations.length) return;
   const rules = [...new Set(violations.map((item) => item.rule))].join(', ');
-  deny(`检测到新的架构边界违规: ${rules}。源码依赖必须改用公开 package subpath；只有无法由语法表达的例外契约才可经 reviewer 登记。`);
+  const advice = [];
+  if (violations.some((item) => item.rule === 'subprocess-call')) {
+    advice.push('未登记的子进程调用：包顶层 scripts/ 的构建入口须由 package.json 的 build 或 build:* 直接声明；运行时、测试及其他工具调用仍须登记准确的子进程契约。');
+  }
+  if (violations.some((item) => item.rule === 'runtime-build-tool-import')) {
+    advice.push('生产代码不能导入构建 CLI；把需复用的逻辑提取为不启动构建进程的公共模块。');
+  }
+  if (violations.some((item) => !['subprocess-call', 'runtime-build-tool-import'].includes(item.rule))) {
+    advice.push('源码依赖必须改用公开 package subpath；无法由语法表达的例外关系须登记契约。');
+  }
+  deny(`检测到新的架构边界违规: ${rules}。${advice.join('')}`);
 }
 
 function run() {

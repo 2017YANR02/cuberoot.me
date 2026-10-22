@@ -94,6 +94,7 @@
               "workspace-undeclared-import",
               "cross-package-path",
               "subprocess-call",
+              "runtime-build-tool-import",
               "cross-package-alias-definition"
             ]
           },

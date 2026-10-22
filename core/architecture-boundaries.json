@@ -14,7 +14,9 @@
       "Existing findings are exact legacy debt: deletion is allowed, substitution or addition fails.",
       "New @cuberoot/shared root imports are forbidden; use an explicit exported subpath.",
       "Apps and jobs may not import another app's private source or public directory.",
-      "Build, test, artifact, subprocess and deploy edges require an explicit contract."
+      "Build, test, artifact, subprocess and deploy edges require an explicit contract.",
+      "Package-local scripts/ CLIs directly declared by build or build:* use package.json as their build subprocess contract; production imports of those CLIs remain forbidden.",
+      "Inert path strings in test fixtures are data; module imports, path construction and actual file/process consumers remain dependency edges."
     ]
   },
   "manualContracts": [
@@ -674,31 +676,6 @@
   ],
   "legacyFindings": [
     {
-      "file": "packages/client/tests/recon-ground-truth-gate.test.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "core/packages/shared/node_modules/typescript/bin/tsc",
-      "target": "shared"
-    },
-    {
-      "file": "packages/client/tests/recon-ground-truth-gate.test.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "core/packages/timer-ui/src/reconstruct/reconstruct.css",
-      "target": "timer-ui"
-    },
-    {
-      "file": "packages/client/tests/recon-ground-truth-gate.test.ts",
-      "mechanism": "path-literal",
-      "occurrences": 2,
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "core/packages/timer-ui/src/reconstruct/StepMoveList.tsx",
-      "target": "timer-ui"
-    },
-    {
       "file": "packages/client/tests/timer-scramble-click-action-shared.test.ts",
       "mechanism": "readFileSync",
       "rule": "cross-package-path",
@@ -767,22 +744,6 @@
       "sourceKind": "test",
       "specifier": "../../app-ui/src/data/timer-repository",
       "target": "app-ui"
-    },
-    {
-      "file": "packages/client/tests/auth-doc-sync.test.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "apps/api/migrations/0265_home_onboarding.sql",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/auth-doc-sync.test.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "apps/api/src/routes/onboarding.ts",
-      "target": "server"
     },
     {
       "file": "apps/api/src/calc/live_relay.ts",
@@ -873,22 +834,6 @@
       "sourceKind": "test",
       "specifier": "@cuberoot/shared",
       "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "apps/miniprogram/tests/release-check.test.mjs",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "/packages/shared/package.json",
-      "target": "shared"
-    },
-    {
-      "file": "apps/miniprogram/tests/release-check.test.mjs",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "/packages/shared/src/smart_cube/relay.ts",
       "target": "shared"
     },
     {
@@ -2304,30 +2249,6 @@
       "rule": "subprocess-call",
       "sourceKind": "subprocess",
       "target": "<dynamic>"
-    },
-    {
-      "file": "packages/client/tests/recon-ground-truth-gate.test.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "core/apps/api/migrations/0106_recon_ground_truth_candidates.sql",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/recon-ground-truth-gate.test.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "core/apps/api/src/routes/recon_ground_truth.ts",
-      "target": "server"
-    },
-    {
-      "file": "packages/client/tests/recon-ground-truth-gate.test.ts",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "test",
-      "specifier": "core/packages/shared/src/recon_ground_truth.ts",
-      "target": "shared"
     },
     {
       "file": "packages/client/tests/sq1_pbl_alg_library.test.ts",

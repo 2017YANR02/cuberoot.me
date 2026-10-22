@@ -93,7 +93,7 @@ jobs:
         env:
           NODE_ENV: production
           NODE_OPTIONS: --max-old-space-size=8192
-        run: pnpm --filter @cuberoot/client build
+        run: pnpm --filter @cuberoot/client build:profile
 
       # standalone output layout follows the current workspace root under core/.
       #   .next/standalone/node_modules/... (hoisted shared deps)
@@ -132,6 +132,13 @@ jobs:
           chmod +x .next/standalone/start.sh
           printf '%s\n' "$GITHUB_SHA" > .next/standalone/.deploy-sha
           du -sh .next/standalone
+          {
+            echo '### Deploy bundle'
+            echo
+            echo "- Size on disk: $(du -sh .next/standalone | cut -f1)"
+            echo "- Regular files: $(find .next/standalone -type f | wc -l)"
+            echo "- Symlinks: $(find .next/standalone -type l | wc -l)"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Setup SSH
         env:
@@ -156,16 +163,45 @@ jobs:
           SOURCE="core/${{ steps.workspace.outputs.web }}/.next/standalone/"
           DEST="$DEPLOY_USER@$DEPLOY_HOST:/www/wwwroot/toolkit-next.new/"
           LISTS=$(mktemp -d)
+          START_SECONDS=$SECONDS
+          report_upload() {
+            {
+              echo '### Upload timings'
+              echo
+              echo "- Total wall time: $((SECONDS - START_SECONDS))s (exit $1)"
+              echo "- Parallel transfer: ${PARALLEL_SECONDS:-incomplete} seconds"
+              echo "- Final reconciliation: ${RECONCILE_SECONDS:-incomplete} seconds"
+              echo
+              echo '<details><summary>Per-attempt rsync statistics</summary>'
+              echo
+              echo '```text'
+              for log in "$LISTS"/*.log; do
+                [ -f "$log" ] || continue
+                basename "$log"
+                cat "$log"
+              done
+              echo '```'
+              echo '</details>'
+            } >> "$GITHUB_STEP_SUMMARY"
+          }
+          trap 'report_upload "$?"' EXIT
           # Disjoint file lists bound concurrency without concurrent deletion.
           # NUL records preserve spaces; empty directories and symlinks are included.
           (cd "$SOURCE" && find . \( -type f -o -type l -o -type d -empty \) -print0 \
             | sort -z | split -t '\0' -n r/8 - "$LISTS/part-")
           upload_part() {
+            set -o pipefail
             for i in 1 2; do
-              timeout --kill-after=15s 300s rsync -az --checksum \
+              local started=$SECONDS
+              if timeout --kill-after=15s 300s rsync -az --checksum \
                 --from0 --files-from="$1" --partial --timeout=60 --stats \
-                --copy-dest=/www/wwwroot/toolkit-next -e "$RSH" "$SOURCE" "$DEST" \
-                && return 0
+                --copy-dest=/www/wwwroot/toolkit-next -e "$RSH" "$SOURCE" "$DEST" 2>&1 | tee "$1-attempt-$i.log"; then
+                echo "Wall time: $((SECONDS - started))s; exit 0" >> "$1-attempt-$i.log"
+                return 0
+              else
+                local status=$?
+                echo "Wall time: $((SECONDS - started))s; exit $status" >> "$1-attempt-$i.log"
+              fi
               echo "$(basename "$1") attempt $i failed; resuming in 5s"
               sleep 5
             done
@@ -173,13 +209,19 @@ jobs:
           }
           export RSH SOURCE DEST
           export -f upload_part
+          PARALLEL_START=$SECONDS
+          # $1 belongs to the child bash, not this shell.
+          # shellcheck disable=SC2016
           printf '%s\0' "$LISTS"/part-* | xargs -0 -n 1 -P 8 bash -c 'upload_part "$1"' _
+          PARALLEL_SECONDS=$((SECONDS - PARALLEL_START))
           # Only after every part succeeds, reconcile the complete tree once.
           # This restores directory metadata and removes stale staged files safely.
           # Budget for the full 29k-file checksum list over the slow SSH link too.
+          RECONCILE_START=$SECONDS
           timeout --kill-after=15s 360s rsync -az --checksum --delete-delay \
             --partial --timeout=60 --stats --copy-dest=/www/wwwroot/toolkit-next \
-            -e "$RSH" "$SOURCE" "$DEST"
+            -e "$RSH" "$SOURCE" "$DEST" 2>&1 | tee "$LISTS/reconcile.log"
+          RECONCILE_SECONDS=$((SECONDS - RECONCILE_START))
           # unit file is tiny — plain scp is fine
           timeout --kill-after=5s 30s scp -i ~/.ssh/id -o BatchMode=yes -o ConnectTimeout=15 ops/systemd/cuberoot-next.service \
             "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cuberoot-next.service"

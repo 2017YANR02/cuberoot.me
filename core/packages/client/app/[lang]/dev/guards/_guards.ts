@@ -76,9 +76,9 @@ export const PAIRED_GUARDS: PairedGuard[] = [
     scope: 'project',
     hook: 'check-architecture-boundaries.mjs',
     test: 'architecture-boundary-guard.test.ts + codex_hook_adapters.test.ts',
-    baseline: '223 个旧债指纹（238 次出现）+ 13 条人工契约',
-    zh: { title: '架构边界与公开入口', desc: '活跃 workspace 的运行时、构建、测试、产物、子进程和部署关系由 manifest 统一登记。223 个旧债指纹共出现 238 次,允许删除或减少,禁止新增、替换或复制同类违规。项目 Hook 在新会话中对新增片段里可见的 shared 根入口、跨 app 私有源码、未公开 subpath 和完整子进程调用提供即时反馈;CI 用同一 AST 扫描器做权威全文件复核。' },
-    en: { title: 'Architecture boundaries and public entry points', desc: 'One manifest records runtime, build, test, artifact, subprocess, and deployment relationships across active workspaces. The 223 legacy identities occur 238 times: removal and reduction are allowed, while additions, substitutions, and duplicate violations fail. In a new session, the project hook gives immediate feedback for visible shared root imports, private cross-app source imports, unexported subpaths, and complete subprocess calls in the added fragment; CI is the authoritative full-file check using the same AST scanner.' },
+    baseline: '192 个旧债指纹（206 次出现）+ 34 条人工契约',
+    zh: { title: '架构边界与公开入口', desc: 'Hook 与 CI 共用 AST 扫描器,检查跨包私有依赖、公开入口及子进程契约。package.json 的 build / build:* 直接声明的包顶层 scripts/ 入口按构建工具处理,生产代码不得导入这些 CLI。测试中的纯路径样本不算依赖;真实 import、路径构造、文件读写及进程调用仍受检查。其他子进程继续使用准确的人工契约,旧债只允许减少。' },
+    en: { title: 'Architecture boundaries and public entry points', desc: 'The hook and CI share an AST scanner for private cross-package dependencies, public entry points and subprocess contracts. Package-local scripts/ CLIs directly declared by build or build:* use package.json as their build contract; production code cannot import them. Inert test path fixtures are data, while imports, path construction, file access and process calls remain checked. Other subprocesses still require exact manual contracts; legacy debt may only decrease.' },
   },
   {
     id: 'browser-regexp-lookbehind',

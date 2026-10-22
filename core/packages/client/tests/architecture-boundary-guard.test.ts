@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import {
   activePackages,
   collectFindings,
+  declaredBuildTools,
   compareFindings,
   parseWorkspacePackagePatterns,
   resolvePackageExport,
@@ -44,7 +45,7 @@ function rules(file: string, content: string): string[] {
 
 describe('architecture boundary guard', () => {
   it('pins the complete current dependency baseline by exact finding identity', () => {
-    expect(MANIFEST.legacyFindings).toHaveLength(202);
+    expect(MANIFEST.legacyFindings).toHaveLength(192);
     expect(compareFindings(uncontractedFindings(CURRENT, MANIFEST.manualContracts), MANIFEST.legacyFindings)).toEqual({ additions: [], stale: [] });
     // Reviewed native adapters, the Android release build, isolated fixtures, diagnostics, geometry/solver proofs,
     // deployment-only pgvector provisioning and remote-access host commands, plus
@@ -97,6 +98,83 @@ describe('architecture boundary guard', () => {
     const absoluteServerPath = ['D:', 'cube', 'cuberoot.me', 'core', 'apps', 'api', 'src', 'index.ts'].join('/');
     expect(rules(CLIENT_PROBE, `readFileSync('${absoluteServerPath}');`))
       .toContain('cross-package-path');
+  });
+
+  it('allows declared build CLIs while retaining runtime, test and private-source checks', () => {
+    const packages = activePackages().map((pkg: any) => pkg.dir === 'client' ? {
+      ...pkg,
+      json: { ...pkg.json, scripts: { ...pkg.json.scripts,
+        'build:profile': 'node scripts/profile-build.mts',
+        'build:nested': 'node src/scripts/probe.ts',
+        'build:escape': 'node scripts/../lib/probe.ts',
+        'build:test': 'node scripts/probe.test.ts',
+        diagnose: 'node scripts/diagnose.mts',
+      } },
+    } : pkg);
+    const call = "import { spawnSync } from 'node:child_process'; spawnSync(command, args);";
+    const check = (file: string, source = call) => violationsFromHookPayload(payload(file, source), packages)
+      .map((finding: { rule: string }) => finding.rule);
+    const build = 'core/packages/client/scripts/profile-build.mts';
+    expect(check(build)).toEqual([]);
+    for (const file of [CLIENT_PROBE, CLIENT_TEST_PROBE, SERVER_PROBE,
+      'core/packages/client/src/scripts/probe.ts',
+      'core/packages/client/scripts/probe.test.ts',
+      'core/packages/client/scripts/diagnose.mts',
+      'core/packages/client/scripts/undeclared.mts',
+      'core/jobs/stats-build/src/probe.ts']) {
+      expect(check(file), file).toContain('subprocess-call');
+    }
+    expect(check(build, call + " import '@cuberoot/shared';")).toContain('shared-root-import');
+    expect(check(build, call + " import '../../../apps/api/src/index';")).toContain('cross-package-relative-module');
+    for (const source of [
+      "import '../scripts/profile-build.mts';",
+      "export * from '../scripts/profile-build.mjs';",
+      "import('@/scripts/profile-build');",
+      "require('../scripts/profile-build');",
+    ]) expect(check(CLIENT_PROBE, source)).toContain('runtime-build-tool-import');
+    expect(check(CLIENT_TEST_PROBE, "import '../scripts/profile-build.mts';")).toEqual([]);
+  });
+
+  it('uses the same build declarations for full-file CI and write-hook scans', () => {
+    const root = mkdtempSync(join(CORE_ROOT, '.tmp-build-contract-'));
+    try {
+      mkdirSync(join(root, 'scripts'));
+      const file = join(root, 'scripts/profile.mts');
+      const source = "import { spawnSync } from 'node:child_process'; spawnSync(command, args);";
+      writeFileSync(file, source);
+      const owner = { root, dir: 'probe', name: '@cuberoot/probe', cuberoot: { kind: 'app' },
+        json: { scripts: { 'build:profile': 'node --import tsx scripts/profile.mts' } } };
+      expect([...declaredBuildTools(owner)]).toEqual([file]);
+      expect(collectFindings([owner])).toEqual([]);
+      expect(violationsFromHookPayload({ tool_input: { file_path: file, content: source } }, [owner])).toEqual([]);
+      const undeclared = { ...owner, json: { scripts: {} } };
+      expect(collectFindings([undeclared])).toContainEqual(expect.objectContaining({ rule: 'subprocess-call' }));
+      expect(violationsFromHookPayload({ tool_input: { file_path: file, content: source } }, [undeclared]))
+        .toContainEqual(expect.objectContaining({ rule: 'subprocess-call' }));
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('distinguishes inert test path fixtures from real file and process dependencies', () => {
+    const path = '../../../apps/api/src/index.ts';
+    expect(rules(CLIENT_TEST_PROBE, `const fixture = '${path}'; expect(scan(fixture)).toEqual([]);`)).toEqual([]);
+    expect(rules(CLIENT_TEST_PROBE, `for (const fixture of ['${path}']) check(fixture);`)).toEqual([]);
+    expect(rules(CLIENT_TEST_PROBE, `
+      function realRead() { const file = './local.txt'; readFileSync(file); }
+      for (const file of ['${path}']) check(file);
+    `)).toEqual([]);
+    for (const source of [
+      `readFileSync('${path}');`,
+      `const file = '${path}'; readFileSync(file);`,
+      `const file = '${path}'; const alias = file; readFileSync(alias);`,
+      `for (const file of ['${path}']) readFileSync(file);`,
+      `copyFileSync('${path}', 'fixture.ts');`,
+      `existsSync('${path}');`,
+      `spawnSync('node', ['${path}']);`,
+      `const file = join('${path}');`,
+      `import '${path}';`,
+    ]) expect(rules(CLIENT_TEST_PROBE, source), source).not.toEqual([]);
   });
 
   it('limits solver diagnostics and backup fixtures to their exact commands, files and counts', () => {
