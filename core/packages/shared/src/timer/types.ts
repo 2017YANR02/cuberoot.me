@@ -32,7 +32,7 @@ export type EventId =
   | 'lattice' | 'hyperx' | 'latticex' | 'masterbrilic' | 'masterftov2'
   | 'quadx' | 'dinoocta' | 'fto5' | 'fto6' | 'eto' | 'radiocrystal'
   | 'cube3skewb' | 'heliskewb' | 'comboctahedron' | 'circoradiolarian' | 'icosababyface'
-  | 'cube2heli' | 'cube3heli' | 'radiojewel' | 'radioweb' | 'catscradle' | 'radiocanon'
+  | 'cube2heli' | 'cube3heli' | 'radiojewel' | 'radioweb' | 'radiojam' | 'catscradle' | 'radiocanon'
   // Relays
   | 'r3' | 'r4' | 'r5'
   // CFOP step training
@@ -265,6 +265,7 @@ export const EVENTS: EventInfo[] = [
   { id: 'cube3heli', nameEn: '3×3 + Helicopter', nameZh: '三阶＋直升机', group: 'nonwca', icon: 'puzzle-cube3heli' },
   { id: 'radiojewel', nameEn: 'Radio Jewel', nameZh: 'Radio Jewel', group: 'nonwca', icon: 'puzzle-radiojewel' },
   { id: 'radioweb', nameEn: 'Radio Web', nameZh: 'Radio Web', group: 'nonwca', icon: 'puzzle-radioweb' },
+  { id: 'radiojam', nameEn: 'Radio Jam', nameZh: 'Radio Jam', group: 'nonwca', icon: 'puzzle-radiojam' },
   { id: 'catscradle', nameEn: 'Cat’s Cradle', nameZh: 'Cat’s Cradle', group: 'nonwca', icon: 'puzzle-catscradle' },
   { id: 'radiocanon', nameEn: 'Radio Canon', nameZh: 'Radio Canon', group: 'nonwca', icon: 'puzzle-radiocanon' },
 

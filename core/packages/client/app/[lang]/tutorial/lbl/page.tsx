@@ -21,6 +21,7 @@ import { tr, T } from '@/i18n/tr';
 import { LBL_STEPS, LESSON_STICKERING, LBL_STAGE_GOALS, LBL_INITIAL_VIEW } from './content';
 import BasicsCards from './BasicsCards';
 import Practice from './Practice';
+import Walkthrough from './Walkthrough';
 import AlgSteps from './AlgSteps';
 import { getLblAlgGroups } from './alg-cues';
 import { INSTRUCTION_PHASES, splitInstruction } from './instruction-phases';
@@ -77,7 +78,7 @@ const documentStageImages: Record<string, [string, string]> = {
 
 export default function LblTutorial() {
   const [stepId, setStepId] = useQueryState('step', parseAsStringEnum(LBL_STEPS.map(s => s.id)).withDefault('structure').withOptions({ history: 'push' }));
-  const [view] = useQueryState('view', parseAsStringEnum(['lesson', 'practice']).withDefault('lesson').withOptions({ history: 'push' }));
+  const [view] = useQueryState('view', parseAsStringEnum(['lesson', 'practice', 'walkthrough']).withDefault('lesson').withOptions({ history: 'push' }));
   const stepIndex = Math.max(0, LBL_STEPS.findIndex(s => s.id === stepId));
   const step = LBL_STEPS[stepIndex];
   const nextStep = LBL_STEPS[stepIndex + 1];
@@ -117,6 +118,7 @@ export default function LblTutorial() {
     <figure><img className="puzzle-art" src={`/tutorial/lbl/document-${stageImages[1]}.svg`} width={64} height={64} alt={tr(stageGoal.after)} /><figcaption>{tr(stageGoal.summary ?? stageGoal.after)}</figcaption></figure>
   </div>;
   if (view === 'practice') return <Practice key={step.id} step={step.id === 'structure' ? LBL_STEPS[1] : step} />;
+  if (view === 'walkthrough') return <Walkthrough />;
   const stepHeading = <div className="lbl-step-heading" role="heading" aria-level={2}>
     <CompactSelect className="lbl-step-select" variant="plain" label={`${stepIndex + 1}. ${tr(step.title)}`} value={step.id} ariaLabel={tr({ zh: '选择步骤', en: 'Choose a step' })}
       items={LBL_STEPS.map((s, i) => ({ value: s.id, label: `${i + 1}. ${tr(s.title)}` }))}
@@ -128,6 +130,7 @@ export default function LblTutorial() {
       <BackHome />
       <Link href="/tutorial?puzzle=3x3" prefetch={false}><T zh="教程" en="Tutorials" /></Link>
       <h1><T zh="层先法" en="LBL" /></h1>
+      <Link href="/tutorial/lbl?view=walkthrough" prefetch={false}><T zh="完整还原" en="Full solve" /></Link>
     </header>
     <JsonLd data={{ '@context': 'https://schema.org', '@type': 'Article', headline: tr({ zh: '三阶魔方层先法', en: '3×3 LBL tutorial' }), description: tr({ zh: '配有交互演示的层先法入门教程。', en: 'A beginner layer-by-layer guide with interactive demonstrations.' }) }} />
     {step.id === 'structure' ?

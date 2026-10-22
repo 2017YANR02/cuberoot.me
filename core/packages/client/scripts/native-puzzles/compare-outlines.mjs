@@ -14,6 +14,15 @@ import { NATIVE_PUZZLES } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { Vector3 } from 'three';
 
 const reviewSets = {
+  radiojam: {
+    basename: 'radiojam-outlines',
+    rows: [{
+      id: 'radiojam', en: 'Radio Jam (Radiolarian 8)',
+      description: 'i f 0.4678640450004204', visibleFacelets: 440,
+      prior: 'i f 0.5278640450004204', priorLabel: 'Radio Jewel (comparison, not retained cuts)',
+      notes: ['Actual radio08 depth: 5 - 2 sqrt(5) - 0.06; not the unused radio8 constant.', '15 triangles + 6 pentagons + 1 hexagon per face; shape-preserving turns, no jumbling.'],
+    }],
+  },
   radiocanon: {
     basename: 'radiocanon-outlines',
     rows: [{

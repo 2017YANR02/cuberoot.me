@@ -164,6 +164,7 @@ const TIMER_EVENT_PICKER_LAYOUT = [
   { id: 'cube3heli', group: 'other' },
   { id: 'radiojewel', group: 'other' },
   { id: 'radioweb', group: 'other' },
+  { id: 'radiojam', group: 'other' },
   { id: 'catscradle', group: 'other' },
   { id: 'radiocanon', group: 'other' },
 ] as const satisfies readonly TimerEventPickerLayoutItem[];

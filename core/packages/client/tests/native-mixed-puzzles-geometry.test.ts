@@ -203,6 +203,14 @@ const CASES: readonly Spec[] = [
     shapes: { 3: 7, 4: 9 }, unmarkedOrbit: 'CENTERS2',
     orbits: [['C5RNER', 12, 5], ['EDGES', 60, 2], ['CENTERS', 60, 1], ['EDGES2', 30, 2], ['CENTERS2', 20, 3]],
   },
+  {
+    // Read radio08's axes:add expression, not the unused radio8 constant.
+    id: 'radiojam', faceNormals: icoNormals,
+    axes: [{ pairs: icoFacePairs, normals: icoNormals, cuts: [5 - 2 * Math.sqrt(5) - 0.06], order: 3 }],
+    faces: 20, perFace: 22, raw: 480, visible: 440, pieces: 302,
+    shapes: { 3: 15, 5: 6, 6: 1 }, unmarkedOrbit: 'CENTERS4',
+    orbits: [['EDGES', 60, 2], ['C5RNER', 12, 5], ['CENTERS', 60, 1], ['CENTERS2', 60, 1], ['EDGES2', 30, 2], ['CENTERS3', 60, 1], ['CENTERS4', 20, 3]],
+  },
 ];
 
 const center = (points: Vector3[]) => points.reduce((sum, point) => sum.add(point), new Vector3()).divideScalar(points.length);
@@ -702,7 +710,7 @@ afterEach(async () => {
   }
 });
 
-it.each(['heliskewb', 'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'catscradle', 'radiocanon'] as const)('animates %s moves in both directions with the real PG3D matrices and selected pieces', async (id) => {
+it.each(['heliskewb', 'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'radiojam', 'catscradle', 'radiocanon'] as const)('animates %s moves in both directions with the real PG3D matrices and selected pieces', async (id) => {
   // This is a local renderer fixture, not browser interaction evidence. The
   // real TwistyPlayer creates its real PG3D; only DOM camera attachment and
   // scheduling are suppressed because jsdom has no display or GPU.
@@ -741,7 +749,7 @@ it.each(['heliskewb', 'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'catsc
   // Fixed samples of the renderer's quintic easing, independently applied to
   // physical vertices. Keep existing cases at their established middle frame;
   // the new fixed-center model checks start, end and three intermediate frames.
-  const samples = id === 'radiocanon'
+  const samples = id === 'radiocanon' || id === 'radiojam'
     ? [[0, 0], [0.2, 0.05792], [0.5, 0.5], [0.8, 0.94208], [1, 1]]
     : [[0.5, 0.5]];
   for (const choice of manualChoices(spec)) {
@@ -772,3 +780,31 @@ it.each(['heliskewb', 'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'catsc
   }
 });
 
+
+it('distinguishes Radio Jam from same-count Radio Web and preserves all of its small triangles', () => {
+  const jam = CASES.find(({ id }) => id === 'radiojam')!;
+  const web = CASES.find(({ id }) => id === 'radioweb')!;
+  // Hyperspeedcube declares radio8 = 1/phi^2 but does NOT use it for radio08.
+  // That alternative has the same number of pieces and a different silhouette.
+  const unusedConstant = { ...jam, axes: [{ ...jam.axes[0], cuts: [1 / PHI ** 2] }] };
+  const area = (polygon: Vector3[]) => polygon.reduce((sum, point, i) =>
+    sum.add(point.clone().cross(polygon[(i + 1) % polygon.length])), new Vector3()).length() / 2;
+  expect(Number(NATIVE_PUZZLES.radiojam.description.split(' ')[2])).toBeCloseTo(5 - 2 * Math.sqrt(5) - 0.06, 14);
+  for (const normal of Object.values(icoNormals)) {
+    const regions = expectedFace(jam, normal);
+    expect(shapeCounts(regions)).toEqual({ 3: 15, 5: 6, 6: 1 });
+    expect(shapeCounts(expectedFace(web, normal))).toEqual({ 3: 12, 4: 6, 5: 3, 6: 1 });
+    expect(shapeCounts(expectedFace(unusedConstant, normal))).toEqual({ 3: 15, 4: 3, 5: 3, 6: 1 });
+    expect(regions.map(area).reduce((sum, a) => sum + a, 0))
+      .toBeCloseTo(area(uncutFace(normal, Object.values(icoNormals))), 10);
+  }
+  const { stickers } = fixture(jam);
+  const counts = new Map<string, number>();
+  for (const sticker of stickers) {
+    const key = sticker.orbit + ':' + sticker.ord;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  expect([...counts.values()].filter((n) => n === 1)).toHaveLength(200);
+  expect([...counts.values()].filter((n) => n === 2)).toHaveLength(90);
+  expect([...counts.values()].filter((n) => n === 5)).toHaveLength(12);
+});

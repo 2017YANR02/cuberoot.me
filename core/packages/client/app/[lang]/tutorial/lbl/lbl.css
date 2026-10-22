@@ -427,3 +427,9 @@ button.lbl-case:active, .lbl-practice:active { transform: scale(.96); }
   .lbl-lesson-page .lbl-visuals[data-step='yellow-face'] .lbl-case { min-height: 58px; padding-block: 3px; }
   .lbl-lesson-page .lbl-comparison .puzzle-art { width: 60px; height: 60px; }
 }
+.lbl-page.lbl-walkthrough { max-width: 760px; }
+.lbl-walkthrough-options { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+.lbl-walkthrough-options label { display: flex; align-items: center; gap: 8px; }
+.lbl-walkthrough-options select { color: var(--foreground); background: var(--background); border: 1px solid var(--border-default); border-radius: 6px; padding: 6px; }
+.lbl-walkthrough-scramble { overflow-wrap: anywhere; color: var(--text-secondary); font-family: var(--font-mono); line-height: 1.7; }
+.lbl-walkthrough-player { height: min(65vh, 520px); min-height: 320px; }

@@ -116,6 +116,7 @@ const CSTIMER_EVENT_MAP: Record<string, EventId> = {
   '三阶＋直升机': 'cube3heli', '三阶+直升机': 'cube3heli',
   'radiojewel': 'radiojewel', 'jewel': 'radiojewel',
   'radioweb': 'radioweb', 'radiolarian6': 'radioweb',
+  'radiojam': 'radiojam', 'radiolarian8': 'radiojam',
   'catscradle': 'catscradle', 'cat’scradle': 'catscradle', "cat'scradle": 'catscradle',
   'radiolarian5': 'catscradle',
   'radiocanon': 'radiocanon', 'radiocannon': 'radiocanon', 'radiolarian1.5': 'radiocanon',
@@ -210,6 +211,11 @@ function nameToEvent(name: unknown): { event: EventId; matched: boolean } {
     (token === 'radio' && tokens[index + 1] === 'web')
     || (token === 'radiolarian' && tokens[index + 1] === '6'))) {
     return normalizeEventKey('radioweb');
+  }
+  if (tokens.some((token, index) =>
+    (token === 'radio' && tokens[index + 1] === 'jam')
+    || (token === 'radiolarian' && tokens[index + 1] === '8'))) {
+    return normalizeEventKey('radiojam');
   }
   if (tokens.some((token, index) =>
     (token === 'cat' && tokens[index + 1] === 's' && tokens[index + 2] === 'cradle')

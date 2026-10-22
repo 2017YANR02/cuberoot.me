@@ -242,6 +242,7 @@ describe.each([
   { event: 'cube3heli', nameEn: '3×3 + Helicopter', nameZh: '三阶＋直升机' },
   { event: 'radiojewel', nameEn: 'Radio Jewel', nameZh: 'Radio Jewel' },
   { event: 'radioweb', nameEn: 'Radio Web', nameZh: 'Radio Web' },
+  { event: 'radiojam', nameEn: 'Radio Jam', nameZh: 'Radio Jam' },
   { event: 'catscradle', nameEn: 'Cat’s Cradle', nameZh: 'Cat’s Cradle' },
   { event: 'radiocanon', nameEn: 'Radio Canon', nameZh: 'Radio Canon' },
 ] as const)('$event csTimer compatibility', ({ event, nameEn, nameZh }) => {
