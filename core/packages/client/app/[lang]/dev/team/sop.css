@@ -191,6 +191,6 @@
 .staff-sop .sop-loading-status { min-height: 1.5em; margin: 14px 0 0; font-size: .8rem; color: var(--muted-foreground); }
 
 .quality-tabs { display: flex; gap: 20px; overflow-x: auto; margin-bottom: 24px; }
-.quality-tabs > button { flex: 1 0 auto; appearance: none; border: 0; border-bottom: 2px solid var(--border-default); padding: 10px 8px 12px; background: transparent; color: var(--muted-foreground); font: inherit; font-size: .9rem; cursor: pointer; white-space: nowrap; }
-.quality-tabs > button[aria-selected="true"] { border-bottom-color: var(--foreground); color: var(--foreground); font-weight: 600; }
-.quality-tabs > button:focus-visible { outline-offset: -3px; }
+.quality-tab { flex: 1 0 auto; appearance: none; border: 0; border-bottom: 2px solid var(--border-default); padding: 10px 8px 12px; background: transparent; color: var(--muted-foreground); font: inherit; font-size: .9rem; cursor: pointer; white-space: nowrap; }
+.quality-tab[aria-selected="true"] { border-bottom-color: var(--foreground); color: var(--foreground); font-weight: 600; }
+.quality-tab:focus-visible { outline-offset: -3px; }

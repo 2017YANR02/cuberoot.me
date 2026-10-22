@@ -45,7 +45,7 @@ export default function QualityStandards() {
           <h2 id="sop-standards" className="staff-start-module-title">{t('质量标准', 'Quality standards')}</h2>
         </div>
         <div className="quality-tabs" role="tablist" aria-label={t('标准分类', 'Standards categories')}>
-          {keys.map((key, index) => <button key={key} type="button" role="tab" id={`quality-tab-${key}`} aria-controls="quality-panel" aria-selected={category === key} tabIndex={category === key ? 0 : -1} onClick={() => setCategory(key)} onKeyDown={event => {
+          {keys.map((key, index) => <button key={key} className="quality-tab" type="button" role="tab" id={`quality-tab-${key}`} aria-controls="quality-panel" aria-selected={category === key} tabIndex={category === key ? 0 : -1} onClick={() => setCategory(key)} onKeyDown={event => {
             let next = index;
             if (event.key === 'ArrowRight') next = (index + 1) % keys.length;
             else if (event.key === 'ArrowLeft') next = (index + keys.length - 1) % keys.length;
