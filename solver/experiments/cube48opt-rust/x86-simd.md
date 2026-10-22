@@ -364,3 +364,31 @@ while applying `U2` changes that distance to one. It must initially be a
 separate prune-only check, **not** a `max` merged into the `PruningOracle`
 values that authorize move removal and cached-bound reuse. No such auxiliary
 table or integration has been built or accepted in this work.
+
+### Follow-up mathematical prototype
+
+The external handoff described below originally contained unexecuted code.
+Subsequent guarded Mac builds, mathematical certificates and paired solve
+measurements are recorded in [the local validation report](corner96-validation.md).
+That report is the current evidence; the unmeasured statements below describe
+the original handoff, not the later local validation.
+
+[The mod-M plus inversion research note](corner96-research.md) separates this
+current-coordinate obstruction from the feasibility of other 96-symmetry
+coordinates. It supplies proofs, an opt-in `corner-research` feature, a
+half-turn-coset lower bound, a two-sided full-corner quotient BFS, and explicit
+certificate types for search integration. The source has been statically
+reviewed; it has not been compiled, tested, used to generate tables, or
+benchmarked in that investigation. No performance improvement is claimed.
+
+[The second research note](corner96-optimization.md) adds a 654-permutation-fiber
+dense corner index, an 18-right-edge certificate for an existing full-corner
+distance payload, a feature-gated distance-only NISS rejection channel, and
+independent complete-EO and EO-weight bounds. Its stronger analytic floor is
+proved in [the bounds appendix](corner96-bounds.md). The
+[global coarsening appendix](corner96-coarsening.md) reduces the smallest
+96-stable coarsening of the actual Opt8 projection to at most 318,480 symbolic
+vertices, with all residual EO confined to a count or its complement pairing.
+The final snapshot-dependent class counts remain unevaluated. These source
+changes and proofs were statically reviewed only; there has been no build,
+algorithm execution, test run, table generation, or performance measurement.

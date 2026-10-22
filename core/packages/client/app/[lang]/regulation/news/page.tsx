@@ -13,6 +13,8 @@ import { useT } from '../../../../hooks/useT';
 import { Callout, RegList } from '../_components/primitives';
 import '../regulation.css';
 import './news.css';
+import { REG_NEWS } from '../_data/news';
+import { tr } from '@/i18n/tr';
 
 const POST_4_PAD = 'https://www.worldcubeassociation.org/posts/adoption-of-4-pad-timing-august-2026';
 const FOUR_PAD_EXPLAINER = 'https://drive.google.com/file/d/13fQghYapzMIPQnGeo53r80_cmKcp0NrW/view';
@@ -59,17 +61,15 @@ export default function RegulationNews() {
         <div className="news-list">
 
           {/* ───────────── WIC 近期调查声明（2026-10）───────────── */}
-          <article className="news-item" id="wic-investigation-2026">
+          <article className="news-item" id={REG_NEWS['wic-investigation-2026'].id}>
             <div className="news-meta">
-              <span className="news-date">2026-10</span>
+              <span className="news-date">{REG_NEWS['wic-investigation-2026'].date}</span>
               <SourceLink
                 href="https://forum.worldcubeassociation.org/t/statement-from-the-wca-integrity-committee-regarding-a-recent-investigation/68143"
                 label={t('WCA 论坛官方声明', 'Official WCA Forum statement')}
               />
             </div>
-            <h2 className="news-title">
-              {t('WCA 诚信委员会关于近期调查的声明', 'Statement from the WCA Integrity Committee Regarding a Recent Investigation')}
-            </h2>
+            <h2 className="news-title">{tr(REG_NEWS['wic-investigation-2026'].title)}</h2>
             <p className="news-lede">
               {t(
                 '亲爱的 WCA 社区成员：',
@@ -115,17 +115,15 @@ export default function RegulationNews() {
           </article>
 
           {/* ───────────── 4-pad 计时(2026-08)───────────── */}
-          <article className="news-item" id="4-pad-2027">
+          <article className="news-item" id={REG_NEWS['4-pad-2027'].id}>
             <div className="news-meta">
-              <span className="news-date">2026-08-23</span>
+              <span className="news-date">{REG_NEWS['4-pad-2027'].date}</span>
               <SourceLink href={POST_4_PAD} label={t('官方原文', 'Official post')} />
               <SourceLink href={FOUR_PAD_EXPLAINER} label={t('决策说明', 'Decision explainer')} />
               <SourceLink href={SPEED_STACKS_G5} label={t('G5 工作原理', 'How the G5 works')} />
               <SourceLink href={REG_A7G} label={t('现行 A7g 条款', 'Current Regulation A7g')} />
             </div>
-            <h2 className="news-title">
-              {t('WCA 将要求使用 4-pad 计时', 'WCA to require 4-pad timing')}
-            </h2>
+            <h2 className="news-title">{tr(REG_NEWS['4-pad-2027'].title)}</h2>
             <p className="news-lede">
               {t(
                 '从 2027 年 1 月 2 日起,所有采用速拧计时器记录的 WCA 官方尝试,都必须使用 Speed Stacks G5 StackMat™ Pro Timer 的 4-pad 模式。WCA 表示,这一改变能更可靠地确认成绩符合规则,进一步保障官方成绩的公正性与可信度。',
@@ -348,14 +346,12 @@ export default function RegulationNews() {
           </article>
 
           {/* ───────────── 项目列表变更(2026-06)───────────── */}
-          <article className="news-item">
+          <article className="news-item" id={REG_NEWS['official-events-2026'].id}>
             <div className="news-meta">
-              <span className="news-date">2026-06</span>
+              <span className="news-date">{REG_NEWS['official-events-2026'].date}</span>
               <SourceLink href={POST_EVENTS} label={t('官方原文', 'Official post')} />
             </div>
-            <h2 className="news-title">
-              {t('WCA 官方项目列表变更', "Changes to the WCA’s list of official events")}
-            </h2>
+            <h2 className="news-title">{tr(REG_NEWS['official-events-2026'].title)}</h2>
             <p className="news-lede">
               {t(
                 '这是自 2014 年增加斜转(Skewb)以来,WCA 首次调整官方项目列表:新增一个项目,并退役一个项目。',
@@ -438,14 +434,12 @@ export default function RegulationNews() {
           </article>
 
           {/* ───────────── 竞赛要求政策 5.5(2026-05)───────────── */}
-          <article className="news-item">
+          <article className="news-item" id={REG_NEWS['requirements-policy-5-5'].id}>
             <div className="news-meta">
-              <span className="news-date">2026-05</span>
+              <span className="news-date">{REG_NEWS['requirements-policy-5-5'].date}</span>
               <SourceLink href={POST_POLICY} label={t('官方原文', 'Official post')} />
             </div>
-            <h2 className="news-title">
-              {t('竞赛要求政策更新 5.5', 'WCA Competition Requirements Policy update 5.5')}
-            </h2>
+            <h2 className="news-title">{tr(REG_NEWS['requirements-policy-5-5'].title)}</h2>
             <p className="news-lede">
               {t(
                 '《竞赛要求政策》更新至 5.5 版(公告人 Lars Johan Folde),带来两项主要变化。',

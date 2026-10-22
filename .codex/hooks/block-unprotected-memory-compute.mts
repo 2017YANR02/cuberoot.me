@@ -83,14 +83,14 @@ function blockedCubeopt(words: string[], cwd: string): boolean {
     const manifest = manifestFlag < 0 ? '' : words[manifestFlag].includes('=')
       ? words[manifestFlag].slice('--manifest-path='.length) : words[manifestFlag + 1] ?? '';
     const researchPackage = cwd === cubeoptRoot || manifest && resolve(cwd, manifest) === resolve(cubeoptRoot, 'Cargo.toml')
-      || words.some(word => word === 'cube48opt-research' || word === '--bin=cube48opt-research');
+      || words.some(word => ['cube48opt-research', '--bin=cube48opt-research', 'corner-research', '--bin=corner-research'].includes(word));
     if (researchPackage && !words.some(word => word === '--example' || word.startsWith('--example='))) {
       const delimiter = words.indexOf('--');
       return delimiter < 0 || !['inspect', '--help', '-h', '--server-info'].includes(words[delimiter + 1]);
     }
     return false;
   }
-  const executable = words.findIndex(word => /^(?:cube48opt-research(?:[-_.][\w.-]+)?|cube48opt-native)$/.test(base(word)));
+  const executable = words.findIndex(word => /^(?:cube48opt-research(?:[-_.][\w.-]+)?|cube48opt-native|corner-research)$/.test(base(word)));
   return executable >= 0 && !['inspect', '--help', '-h', '--server-info'].includes(words[executable + 1]);
 }
 
@@ -182,7 +182,7 @@ export function blockedCompute(command: string, depth = 0, cwd = repoRoot): stri
         if (/spawn|exec|subprocess|Start-Process/.test(nested)
           && /table_generator|double-zbll|stats:scramble|scripts[\\/]stats[\\/]update-/.test(nested)) return '内联脚本中的大内存计算';
         if (/spawn|exec|subprocess|Start-Process/.test(nested)
-          && /cube48opt-research|cube48opt-rust[\\/](?:oracle|validate|benchmark|wasm-benchmark|wasm-browser-benchmark|verify-h10|validate-h10|h10-benchmark)\.mjs/.test(nested)) return cubeoptLabel;
+          && /cube48opt-research|corner-research|cube48opt-rust[\\/](?:oracle|validate|benchmark|wasm-benchmark|wasm-browser-benchmark|verify-h10|validate-h10|h10-benchmark)\.mjs/.test(nested)) return cubeoptLabel;
       }
     }
   }

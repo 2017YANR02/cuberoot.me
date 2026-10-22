@@ -1,4 +1,6 @@
 import {beginStatsRun, validateStatsRun} from './stats-resume-review.mts';
+import {cornerExecutable, cornerResearchPolicy} from './corner-policy.mts';
+import {readCornerSession} from './corner-session.mts';
 import { currentPolicy, validateCurrentReview } from './opt10-current-benchmark-policy.mts';
 import { nxPolicy as opt8NativePolicy, validateNxReview as validateOpt8NativeReview } from './opt8-native-policy.mts';
 /** Backend-budgeted research. Shares the previous experiment's swap stop record. */
@@ -282,6 +284,8 @@ export function resourceProtectionReasons(before: MemoryObservation, now: Memory
 
 /** Pure protocol validation. Tests never need to observe memory or open a PDB. */
 export function researchPolicy(label: string, executable: string, args: string[], env: NodeJS.ProcessEnv = process.env) {
+if (env.CUBEOPT_BACKEND === 'corner' || executable === cornerExecutable)
+  return cornerResearchPolicy(label, executable, args, env);
 if (env.CUBEOPT_OPT10_CURRENT_REVIEW !== undefined)
   return currentPolicy({label,executable,args,env});
 if (env.CUBEOPT_OPT8_NATIVE_REVIEW !== undefined)
@@ -611,6 +615,8 @@ if (process.platform !== 'darwin') throw Error('This resource guard requires mac
 const observationReserve = 256 * MiB;
 const output = resolve(root, '.tmp/cubeopt-reverse');
 mkdirSync(output, { recursive: true });
+if (backend === 'corner' && ['-resources.json', '-started.json'].some(suffix => existsSync(resolve(output, label + suffix))))
+  throw Error('This corner-research label already has resource evidence; use a new label to resume the same checkpoint');
 const record = resolve(root, '.tmp/h48-corners-research/resource-baseline.json');
 const ownRecord = resolve(output, 'resource-baseline.json');
 const lockPath = resolve(output, 'compute.lock');
@@ -636,6 +642,7 @@ function memory() {
     pressure: Number(command('/usr/sbin/sysctl', ['-n', 'kern.memorystatus_vm_pressure_level']).trim()), available: summary.reclaimableEstimateBytes };
 }
 let before = memory();
+const cornerSession = backend === 'corner' ? readCornerSession(before) : undefined;
 const statsResume = label === 'scramble-stats-opt10-session' ? beginStatsRun(before) : undefined;
 const zbllResume = zbllOfficial && label === 'double-zbll-opt10-session' ? readResumeReview(before) : undefined;
 if (generationProof) {
@@ -645,9 +652,9 @@ if (generationProof) {
 if (process.env.AUF_EXPECTED_BOOT !== undefined && (process.env.AUF_EXPECTED_BOOT !== before.boot || Number(process.env.AUF_EXPECTED_SWAPOUTS) !== before.swapouts))
   throw Error('Long-job boot/swap baseline changed; cannot reset');
 const otherComputations = command('/bin/ps', ['-axo', 'pid,comm']).split('\n')
-  .filter(line => /solve_h48_h10|cube48opt-research|table_generator|nxopt\d+/.test(line));
+  .filter(line => /solve_h48_h10|cube48opt-research|corner-research|table_generator|nxopt\d+/.test(line));
 if (otherComputations.length) throw Error('Another native computation is running: ' + otherComputations.join('; '));
-if (!openBenchmark && !zbllResume && !statsResume && (existsSync(reviewedStopPath) || existsSync(opt10ReviewedStopPath) || existsSync(officialPaths.stop)
+if (!openBenchmark && !zbllResume && !statsResume && !cornerSession && (existsSync(reviewedStopPath) || existsSync(opt10ReviewedStopPath) || existsSync(officialPaths.stop)
     || (existsSync(multithreadPaths.stop) && !multithreadReviewPath && !official && !zbllOfficial && !localOpt8))) throw Error('A newer reviewed computation stopped; further execution requires review');
 let reviewReceipt: any;
 let opt10ReviewReceipt: any;
@@ -696,6 +703,7 @@ function checkZbllReview(current: MemoryObservation) {
   }, current);
 }
 function checkBaselines(current: MemoryObservation) {
+  if (cornerSession) { readCornerSession(current); return; }
   if (statsResume) { validateStatsRun(statsResume,current); return; }
   if (zbllResume) { readResumeReview(current); return; }
   if (openBenchmark) {
@@ -812,13 +820,22 @@ checkOpt10Review(before);
 checkMultithreadReview(before);
 checkOfficialReview(before);
 if (before.pressure !== 1 || before.available < rssLimit + startupReserveBytes)
-  throw Error(`Insufficient memory headroom: ${backend === 'h48' ? `h${h}` : backend === 'h10' ? 'h10' : `opt${variant}`} ${entry}/${mode} requires ${rssLimit + startupReserveBytes} bytes; observed ${before.available}`);
+  throw Error(`Insufficient memory headroom: ${backend === 'corner' ? 'corner96' : backend === 'h48' ? `h${h}` : backend === 'h10' ? 'h10' : `opt${variant}`} ${entry}/${mode} requires ${rssLimit + startupReserveBytes} bytes; observed ${before.available}`);
 // An abandoned lock requires explicit inspection; never erase it to auto-restart.
 const lock = openSync(lockPath, 'wx');
 writeFileSync(lock, JSON.stringify({ pid: process.pid, backend, variant, h, entry, mode, boot: before.boot,
   ...('wasmThreads' in policy ? {wasmThreads:policy.wasmThreads} : {}) }));
 closeSync(lock);
 try {
+  if (cornerSession) {
+    before = memory();
+    checkBaselines(before);
+    consumeResourceReview(resolve(output, `${label}-started.json`), {
+      schema: 'cuberoot.corner96-run.v1', label, executable, args, before,
+      sessionSha256: cornerSession.sha256, executableSha256: digest(readSmallRecord(executable, 64 * MiB)),
+      startedAt: new Date().toISOString(), guardPid: process.pid,
+    });
+  }
   if (openBenchmark) {
     before=memory();
     const checked=validateBenchmarkReview({label,executable,args,env:process.env},before);
@@ -874,7 +891,8 @@ let forceKill: ReturnType<typeof setTimeout> | undefined;
 // rusage to inherited stderr; it and the native remain in the guarded group.
 const child = spawn(measureNativeRss ? '/usr/bin/time' : executable,
   measureNativeRss ? ['-l', executable, ...args] : args,
-  { cwd: root, detached: true, stdio: opt10SolveInput ? ['pipe','inherit','inherit'] : 'inherit' });
+  { cwd: root, detached: true, stdio: opt10SolveInput ? ['pipe','inherit','inherit'] : 'inherit',
+    ...(backend === 'corner' ? {env: {...process.env, CUBEOPT_CORNER_GUARDED: '1'}} : {}) });
 // The reviewed solve receives only the already checked bytes, never extra
 // caller-provided cases or a second pass on inherited standard input.
 if (opt10SolveInput) deliverOpt10Input(child.stdin!, opt10SolveInput, stop);
@@ -883,7 +901,7 @@ function stop(reason: string, protection = false, details?: unknown) {
   if (stopped) return;
   stopped = reason;
   try {
-    if (protection || openBenchmark || opt10ReviewReceipt || multithreadReviewReceipt || officialReviewReceipt || localOpt8) {
+    if (protection || openBenchmark || opt10ReviewReceipt || multithreadReviewReceipt || officialReviewReceipt || localOpt8 || cornerSession) {
       trigger = { reason, sampledAt:new Date().toISOString(), details };
       // A reviewed run must never mutate the original stopped history.
       if ((multithreadReviewReceipt?.repair || multithreadReviewReceipt?.continuation) && existsSync(multithreadPaths.stop)) {
@@ -891,7 +909,7 @@ function stop(reason: string, protection = false, details?: unknown) {
         const archive = resolve(output, `multithread-stop-${digest(previous)}.json`);
         if (!existsSync(archive)) writeFileSync(archive, previous, {flag:'wx'});
       }
-      atomic(statsResume ? statsResume.stopPath : zbllResume ? zbllResumeStopPath : dualWasmCandidate || browserBenchmark || nxoptBenchmark || opt8NativeBenchmark || opt10CurrentBenchmark ? dualScopeStopPath as string : wasmCandidate ? candidateStopPath : originalResume ? resumeStopPath : openBenchmark ? openStopPath : officialReviewReceipt ? officialPaths.stop : multithreadReviewReceipt ? multithreadPaths.stop : opt10ReviewReceipt || zbll ? opt10ReviewedStopPath : reviewReceipt ? reviewedStopPath : ownRecord,
+      atomic(cornerSession ? cornerSession.stopPath : statsResume ? statsResume.stopPath : zbllResume ? zbllResumeStopPath : dualWasmCandidate || browserBenchmark || nxoptBenchmark || opt8NativeBenchmark || opt10CurrentBenchmark ? dualScopeStopPath as string : wasmCandidate ? candidateStopPath : originalResume ? resumeStopPath : openBenchmark ? openStopPath : officialReviewReceipt ? officialPaths.stop : multithreadReviewReceipt ? multithreadPaths.stop : opt10ReviewReceipt || zbll ? opt10ReviewedStopPath : reviewReceipt ? reviewedStopPath : ownRecord,
         { ...before, stopped: reason, trigger,
           ...(reviewReceipt ? { label, reviewReceipt } : {}), ...(opt10ReviewReceipt ? {label,opt10ReviewReceipt} : {}),
           ...(multithreadReviewReceipt ? {label,multithreadReviewReceipt} : {}),...(officialReviewReceipt ? {label,officialReviewReceipt} : {}) });
@@ -940,7 +958,7 @@ function sample() {
     minimumHeadroom = Math.min(minimumHeadroom, headroom);
     const reasons = resourceProtectionReasons(before, now, rss, rssLimit, headroom);
     if (reasons.length) stop(`Resource protection: ${reasons.join('; ')}`, true, { ...now, rss, rssLimit, headroom, reasons });
-    atomic(statsResume ? resolve(statsResume.directory, "resources.json") : resolve(output, `${label}-resources.json`), { ...now, backend, variant, h, entry, mode, measureNativeRss, tableBytes, rssLimit, deadlineMs, peakRss, minimumHeadroom, stopped, trigger, reviewReceipt, opt10ReviewReceipt, zbllReviewReceipt, multithreadReviewReceipt, officialReviewReceipt, openBenchmarkReceipt, sampledAt: new Date().toISOString() });
+    atomic(statsResume ? resolve(statsResume.directory, "resources.json") : resolve(output, `${label}-resources.json`), { ...now, backend, variant, h, entry, mode, measureNativeRss, tableBytes, rssLimit, deadlineMs, peakRss, minimumHeadroom, stopped, trigger, reviewReceipt, opt10ReviewReceipt, zbllReviewReceipt, multithreadReviewReceipt, officialReviewReceipt, openBenchmarkReceipt, ...(cornerSession ? {guardPid:process.pid, childPid:child.pid, sessionSha256:cornerSession.sha256} : {}), sampledAt: new Date().toISOString() });
   } catch (e) { stop(String(e), true, { observationError:String(e) }); }
 }
 const interval = setInterval(sample, 500);

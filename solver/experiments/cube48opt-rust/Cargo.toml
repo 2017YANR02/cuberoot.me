@@ -14,6 +14,8 @@ default = ["neon-moves", "h10-fast-coord", "h10-prefetch"]
 neon-moves = []
 h10-fast-coord = []
 h10-prefetch = []
+# Standalone mathematical research; no production search or table is replaced.
+corner-research = []
 # Only the dedicated target/opt10 build opts in; local execution requires the
 # Opt10 guard budget and a matching complete small-table generator proof.
 opt10-runtime = []
@@ -101,6 +103,11 @@ wasm-padded-state = []
 name = "bpmx-check"
 path = "examples/bpmx-check.rs"
 required-features = ["bpmx-check"]
+
+[[bin]]
+name = "corner-research"
+path = "src/bin/corner-research.rs"
+required-features = ["corner-research"]
 
 [profile.release]
 opt-level = 3

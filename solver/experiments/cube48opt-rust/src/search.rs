@@ -39,6 +39,18 @@ pub trait PruningOracle {
     fn prepare(&self, cube: &Cube, remaining: u8) -> Result<Self::Query, u8>;
     fn lookup(&self, query: Self::Query) -> u8;
 
+    /// Optional, separate certificate L <= D(cube). No half-turn invariance,
+    /// consistency, or relationship to max_bound is required. The caller may
+    /// supply the actual inverse state to avoid materializing a deferred normal
+    /// state; inversion preserves D. None means no additional certificate.
+    ///
+    /// Only L > remaining is consumed, through generic distance rejection.
+    /// This value is never stored in either subgroup bound/cache and never
+    /// enters the H-specific quarter, axis, backward-coset or coset-chain cuts.
+    #[cfg(feature = "corner-research")]
+    #[inline(always)]
+    fn distance_only_bound(&self, _cube: &Cube, _remaining: u8) -> Option<u8> { None }
+
     /// Optional batched reads of the same immutable oracle. None slots must
     /// not issue a lookup; their result is unused. Returned bounds must equal
     /// lookup(query), independent of lookup/prepare call interleaving.
@@ -1329,6 +1341,17 @@ fn search_depth_contexts<O: PruningOracle, const N: usize>(
                 context.reject(1, stats);
                 continue;
             }
+            #[cfg(feature = "corner-research")]
+            if let Some(bound) = oracle.distance_only_bound(&frame.inverse, remaining) {
+                if bound > remaining {
+                    // A pure distance certificate can use triangle-inequality
+                    // parent/same-face cuts, but none of stage 2's H-specific
+                    // consequences. Reject before setting live or pending so
+                    // this context cannot enter that pipeline or its caches.
+                    context.reject_bound(bound - remaining, parent_propagation, stats);
+                    continue;
+                }
+            }
             #[cfg(all(feature = "opt10-native-profile", not(target_family = "wasm")))]
             if profiling { stats.profile.pending[usize::from(remaining)] += 1; }
             live[i] = true;
@@ -2321,6 +2344,75 @@ mod tests {
         }
         fn lookup(&self, _: u64) -> u8 {
             0
+        }
+    }
+
+    #[cfg(feature = "corner-research")]
+    mod distance_only_tests {
+        use super::*;
+
+        // This is exactly min(D, 2): distance zero is identity, and distance
+        // one is one of the repository's 18 generators. It needs no PDB and
+        // is not H-invariant, since it assigns one to every face half turn.
+        fn clipped_distance(cube: &Cube) -> u8 {
+            if cube.is_solved() { 0 }
+            else if MOVES.iter().any(|movement| movement == cube) { 1 }
+            else { 2 }
+        }
+
+        struct SeparateBounds;
+        impl PruningOracle for SeparateBounds {
+            type Query = u8;
+            fn prepare(&self, _: &Cube, _: u8) -> Result<u8, u8> { Ok(0) }
+            fn lookup(&self, _: u8) -> u8 { 0 }
+            fn distance_only_bound(&self, cube: &Cube, _: u8) -> Option<u8> {
+                Some(clipped_distance(cube))
+            }
+            fn allow_parent_propagation(&self) -> bool { true }
+        }
+
+        #[test]
+        fn non_h_invariant_distance_bound_keeps_one_move_half_turn_solutions() {
+            for contexts in [1, 8] {
+                for movement in [1_u8, 4, 7, 10, 13, 16] {
+                    let start = MOVES[usize::from(movement)];
+                    let result = solve(start, &SeparateBounds, SearchOptions {
+                        max_depth: 1, max_nodes: 1000, contexts,
+                    }).unwrap();
+                    assert!(!result.cancelled);
+                    let solution = result.solution.expect("distance-only bounds must retain half turns");
+                    assert_eq!(solution.len(), 1);
+                    assert!(replay(start, &solution).is_solved());
+                }
+            }
+        }
+
+        struct RejectBeforeSubgroupQuery;
+        impl PruningOracle for RejectBeforeSubgroupQuery {
+            type Query = u8;
+            fn prepare(&self, _: &Cube, _: u8) -> Result<u8, u8> {
+                panic!("a distance-rejected state must not enter subgroup preparation")
+            }
+            fn lookup(&self, _: u8) -> u8 { unreachable!("no subgroup query was prepared") }
+            fn distance_only_bound(&self, cube: &Cube, remaining: u8) -> Option<u8> {
+                assert!(remaining > 0, "zero-budget leaves must precede this hook");
+                Some(clipped_distance(cube))
+            }
+        }
+
+        #[test]
+        fn distance_rejection_and_zero_budget_leaves_bypass_subgroup_queries() {
+            let options = SearchOptions { max_depth: 1, max_nodes: 1000, contexts: 1 };
+            let solved = solve(Cube::SOLVED, &RejectBeforeSubgroupQuery, options).unwrap();
+            assert_eq!(solved.solution, Some(Vec::new()));
+            let start = MOVES[0].multiplied(&MOVES[3]);
+            assert_eq!(clipped_distance(&start), 2);
+            let result = solve(start, &RejectBeforeSubgroupQuery, options).unwrap();
+            assert!(!result.cancelled);
+            assert!(result.solution.is_none());
+            assert_eq!(result.completed_depth, Some(1));
+            assert_eq!(result.stats.nodes, 2);
+            assert_eq!(result.stats.probes, 0);
         }
     }
 

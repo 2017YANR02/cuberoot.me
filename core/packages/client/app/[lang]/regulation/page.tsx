@@ -13,6 +13,8 @@ import { useT } from '../../../hooks/useT';
 import { CORE_ARTICLES, EVENT_ARTICLES, regArticleHref, type RegArticle } from './_data/articles';
 import { useRegText } from './_components/reg-text';
 import './regulation.css';
+import { LATEST_REG_NEWS } from './_data/news';
+import { tr } from '@/i18n/tr';
 
 function ChapterCard({ a }: { a: RegArticle }) {
   const { badge, title, tagline } = useRegText();
@@ -58,7 +60,7 @@ export default function RegulationHub() {
           </p>
         </header>
 
-        <Link href="/regulation/news" className="reg-hub-news">
+        <Link href={`/regulation/news#${LATEST_REG_NEWS.id}`} prefetch={false} className="reg-hub-news">
           <span className="reg-hub-news-icon"><Newspaper size={22} /></span>
           <span className="reg-hub-news-body">
             <span className="reg-hub-news-eyebrow">
@@ -66,16 +68,10 @@ export default function RegulationHub() {
               {t('最新动态', "What’s New")}
             </span>
             <span className="reg-hub-news-title">
-              {t(
-                '2027 年起,WCA 官方尝试强制采用 G5 计时器 4-pad 模式',
-                'G5 timer 4-pad mode required for official WCA attempts from 2027',
-              )}
+              {tr(LATEST_REG_NEWS.title)}
             </span>
             <span className="reg-hub-news-sub">
-              {t(
-                '2027-01-02 生效;现有纪录保留,2-pad 与 4-pad 成绩共同排名',
-                'Effective 2027-01-02; existing records stand and 2-pad and 4-pad results rank together',
-              )}
+              {LATEST_REG_NEWS.date} · {t('中文译文与英文原文', 'Chinese translation and English original')}
             </span>
           </span>
           <ArrowRight size={20} className="reg-hub-news-arrow" />

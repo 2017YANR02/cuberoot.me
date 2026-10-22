@@ -1,0 +1,42 @@
+name: WCA News Drift
+
+on:
+  schedule:
+    - cron: '23 8 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: wca-news-drift
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            core/scripts/wca-news
+            .node-version
+          filter: blob:none
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.node-version'
+      - name: Detect changes and open or update issues
+        working-directory: core
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/wca-news/check.mts --publish --output "$RUNNER_TEMP/wca-news-drift"
+      - name: Save public source snapshots and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wca-news-drift-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/wca-news-drift
+          if-no-files-found: warn
+          retention-days: 30

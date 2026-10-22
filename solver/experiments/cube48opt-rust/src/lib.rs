@@ -3,6 +3,14 @@
 pub mod batch;
 pub mod coord;
 pub mod cube;
+#[cfg(feature = "corner-research")]
+pub mod corner_coset;
+#[cfg(feature = "corner-research")]
+pub mod corner_symmetry;
+#[cfg(feature = "corner-research")]
+pub mod corner_oracle;
+#[cfg(feature = "corner-research")]
+pub mod corner_distance_search;
 pub mod h10_coord;
 pub mod h10_table;
 pub mod h48_coord;
