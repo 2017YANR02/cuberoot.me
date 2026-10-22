@@ -909,7 +909,8 @@ describe('deployment workflow path contracts', () => {
     expect(sq2Run).toMatch(
       /dist_sq2\.json[\s\S]*event:\s*'sq2'[\s\S]*sampleCount:\s*1[\s\S]*generated_at:\s*process\.env\.SCRAMBLE_STATS_STAMP/,
     );
-    expect(sq2Run).toContain('git diff --exit-code -- ../stats/scramble/dist_sq2.json');
+    expect(sq2Run).toContain('before=$(sha256sum ../stats/scramble/dist_sq2.json)');
+    expect(sq2Run).toContain('test "$before" = "$(sha256sum ../stats/scramble/dist_sq2.json)"');
   });
 
   it('atomically deploys CubeOpt with the same dotenv gate and rollback contract', () => {

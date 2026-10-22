@@ -27,9 +27,6 @@ jobs:
       actions: write
     steps:
       - uses: actions/checkout@v4
-        with:
-          # Repository deploy key preserves automated data pushes through PR rules.
-          ssh-key: ${{ secrets.AUTOMATION_PUSH_SSH_KEY }}
 
       - uses: actions/setup-node@v4
         with:
@@ -62,6 +59,11 @@ jobs:
           key: upcoming-http-v1-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: upcoming-http-v1-
 
+      - name: Hydrate latest published statistics
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/wca-data/snapshot-cli.ts hydrate-ci stats
+
       # WCA 对 GH runner IP 段返 403;经自有服务器代理出网(IP 未被封)。
       # 见 @cuberoot/server 的 src/routes/wca_proxy.ts;secret 存 repo secret WCA_PROXY_SECRET。
       - name: Fetch upcoming comps (WCA + CN)
@@ -85,31 +87,7 @@ jobs:
           path: .upcoming_cache
           key: upcoming-http-v1-${{ github.run_id }}-${{ github.run_attempt }}
 
-      - name: Commit and push
+      - name: Publish latest statistics snapshot
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git add stats/upcoming_comps.json stats/all_upcoming_comps.json stats/cn_upcoming_registrations.json stats/comp_names_zh.json stats/comp_elevations.json
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-          else
-            # commit 带 [skip ci] 避免触发 deploy_next/test 等重 workflow;
-            # 但这样也掐死了 sync_toolkit(靠 push+stats/** 触发),upcoming 数据永远上不了 static。
-            # 故 push 后显式触发 sync_toolkit 把新 stats/*.json rsync 到静态服务器。
-            git commit -m "chore: update upcoming comps + comp names zh [skip ci]"
-            git pull --rebase origin main
-            # Merge source changes from both writers before deriving the shared month index.
-            (cd core && node --import tsx "${{ steps.workspace.outputs.stats }}/src/bin/build_calendar_comps.ts")
-            git add stats/comp_calendar/
-            if ! git diff --cached --quiet; then
-              if [ "$(git rev-list --count origin/main..HEAD)" -gt 0 ]; then
-                git commit --amend --no-edit
-              else
-                git commit -m "chore: refresh competition calendar [skip ci]"
-              fi
-            fi
-            git push
-            gh workflow run sync_toolkit.yml
-          fi
+        run: node scripts/wca-data/snapshot-cli.ts submit upcoming stats

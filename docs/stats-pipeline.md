@@ -21,7 +21,13 @@ pnpm --filter @cuberoot/stats-build compute:all
 
 ## 线上更新
 
-获得发布授权后在仓库根目录手动触发 `gh workflow run stats.yml -f pipeline=full`，并在 Actions 中确认 `Update Stats` 及其触发的 `Sync static toolkit` 成功。不要在统计 job 子目录执行旧的 `git add ../../stats/` 或对带未提交修改的工作区直接 `git pull --rebase`。
+获得发布授权后在仓库根目录手动触发 `gh workflow run stats.yml -f pipeline=full`，并在 Actions 中确认 `Update Stats` 及其触发的 `Publish WCA data` 成功。统计文件不再提交 Git。
+
+新 checkout 在 `core/` 运行 `pnpm stats:hydrate`，从唯一的 `wca-data-latest` Release 下载并校验统计快照；不同内容的本地文件会阻止覆盖，先保存未发布结果。Nemesizer 二进制仍通过仓库根 `node scripts/wca-data/cli.ts hydrate` 单独恢复。
+
+本地计算后获得发布授权时，在 `core/` 运行 `pnpm stats:publish wca`；非官方世界最好成绩使用 `pnpm stats:publish world-bests`。日常 `pnpm stats:scramble` 自动发布 `scramble` owner。每日 upcoming、WCA 和 elevation backfill 各自恢复基线并提交所属数据补丁；发布工作流串行校验、合并、重建日历、切换服务器指针并更新 Release。同文件并发冲突会停止，不能用旧结果覆盖新数据。
+
+服务器独有 `stats/comp/`、打乱 `comp_steps*`、`steps` 和本地求解断点保持原有归属；独立在线分片继续由增量发布维护。`sync_toolkit.yml` 只同步 tools 和教学资源。成功事务只保留一份当前统计快照；候选和回滚记录仅在事务期间保留。详见 `docs/wca-data-release-tracker.md`。
 
 ## 计算架构
 

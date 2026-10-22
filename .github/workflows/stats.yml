@@ -87,9 +87,6 @@ jobs:
           df -h /
 
       - uses: actions/checkout@v4
-        with:
-          # Repository deploy key preserves automated data pushes through PR rules.
-          ssh-key: ${{ secrets.AUTOMATION_PUSH_SSH_KEY }}
 
       - name: Activate MySQL
         run: sudo systemctl start mysql.service
@@ -119,6 +116,11 @@ jobs:
       - name: Build stats runtime dependencies
         working-directory: core
         run: pnpm --filter @cuberoot/stats-build build:deps
+
+      - name: Hydrate latest published statistics
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/wca-data/snapshot-cli.ts hydrate-ci stats
 
       - name: Create stats output directory
         run: mkdir -p stats
@@ -215,7 +217,7 @@ jobs:
         run: npx tsx src/bin/records_build.ts
 
       # 非官方多盲平均(333mbf/333mbo Mo3)的区域纪录标签 → stats/records/mbld_avg_records.json
-      # (WCA 不追踪多盲平均;选手页平均列用它上 WR/大洲/NR 角标)。随下面 git add -A stats/ 一起提交+同步。
+      # (WCA 不追踪多盲平均;选手页平均列用它上 WR/大洲/NR 角标)。随统计 owner 补丁一起发布到最新 Release。
       - name: Build unofficial MBLD-average records JSON
         if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         working-directory: core/${{ steps.workspace.outputs.stats }}
@@ -231,7 +233,7 @@ jobs:
 
       # upcoming comps 抓取已交给独立的 update_upcoming.yml(每天 20:00 同跑,专属 owner):
       # 它产 upcoming_comps.json / all_upcoming_comps.json / cn_upcoming_registrations.json + comp_names_zh.json
-      # 并触发 sync_toolkit。曾经这里也跑一遍 fetch_upcoming_comps,与之撞车(同分钟提交同一批文件 →
+      # 并独立发布 upcoming owner。曾经这里也跑一遍 fetch_upcoming_comps,与之撞车(同分钟更新同一批文件 →
       # rebase 冲突),且依赖 WCA 代理:WCA 封 runner IP 时脚本 process.exit(1) 会在下面 historical_ranks /
       # sor / wca_stats_extra 之前就 abort 掉整个 2h 关键管道。故从 stats.yml 移除,只留 update_upcoming.yml。
 
@@ -389,51 +391,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: node scripts/wca-data/cli.ts submit stats
 
-      - name: Commit and push
+      - name: Publish latest statistics snapshot
         if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email 'github-actions[bot]@users.noreply.github.com'
-          # NOTE: 清理已被合并到聚合页面的旧 .md 文件
-          for f in wr_single_history wr_average_history \
-                   wr_bao5 wr_wao5 wr_mo5 wr_bpa wr_wpa \
-                   wr_median wr_best_counting wr_worst_counting wr_worst \
-                   wr_variance wr_best_average_ratio \
-                   wr_ao1r wr_ao2r wr_ao3r wr_ao4r \
-                   best_first_average best_first_single; do
-              rm -f "stats/${f}.md"
-          done
-          git add -A stats/
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "chore: update WCA statistics [skip ci]"
-            # NOTE: 本 workflow 不再产 upcoming_comps.json(已归 update_upcoming.yml),但 rebase 仍可能
-            # 撞到别的并发自动 commit 而冲突;CI 刚生成的数据是最新的，冲突时直接用我们的版本（rebase 中 --theirs 指被 rebase 的 commit）
-            # GIT_EDITOR=true 让 rebase --continue 不弹编辑器，否则 CI 上会失败导致整个 commit 被 --skip 丢弃
-            if ! git pull --rebase origin main; then
-              echo "Rebase conflict detected, resolving with ours..."
-              git diff --name-only --diff-filter=U | while IFS= read -r f; do
-                git checkout --theirs "$f"
-                git add "$f"
-              done
-              GIT_EDITOR=true git rebase --continue
-            fi
-            # Merge source changes from both writers before deriving the shared month index.
-            (cd core && node --import tsx "${{ steps.workspace.outputs.stats }}/src/bin/build_calendar_comps.ts")
-            git add stats/comp_calendar/
-            if ! git diff --cached --quiet; then
-              if [ "$(git rev-list --count origin/main..HEAD)" -gt 0 ]; then
-                git commit --amend --no-edit
-              else
-                git commit -m "chore: refresh competition calendar [skip ci]"
-              fi
-            fi
-            git push
-            # commit 带 [skip ci](避开 deploy_next/test 等重 workflow),但这样也掐死了靠 push+stats/**
-            # 触发的 sync_toolkit → 日更 stats 永远上不了 static(过去比赛双轮等数据隔天才同步)。
-            # 故 push 后显式触发一次 sync_toolkit,把新 stats/*.json rsync 到静态服务器(同 update_upcoming.yml)。
-            gh workflow run sync_toolkit.yml
-          fi
+        run: node scripts/wca-data/snapshot-cli.ts submit wca stats

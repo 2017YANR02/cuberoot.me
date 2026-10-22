@@ -22,7 +22,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 | `core/packages/platform` | workspace 外的退役历史归档，不测试、不构建、不部署、不引入新功能 |
 | `solver/` | workspace 外 Rust 求解引擎，产 native 分析器和 WASM；`target/`、`tables/`、`pkg-*` 仅本机有 |
 | `research/reconer/` | workspace 外速拧视频自动复盘研发；进入前读 `research/reconer/AGENTS.md`、`roadmap.md`、`plan.md` 和 `human.md` |
-| `tools/` / `stats/` | `static.cuberoot.me` 服务的混合 upstream/static 树与已提交数据生成物，本轮不迁仓 |
+| `tools/` / `stats/` | `static.cuberoot.me` 的 upstream/教学资源与本地生成数据；统计快照由 `wca-data-latest` Release 管理，不再提交 Git |
 | `ops/` / `docs/` / `.github/workflows` | 运维、状态/设计记录和 CI/部署契约 |
 
 事实源按优先级核对：`core/pnpm-workspace.yaml` 与各 `package.json` 定义 pnpm workspace/命令，Cargo app 由自身 `Cargo.toml` 定义；源码路由、shared schema 和 migration 定义运行契约；`.github/workflows` 与 `ops/` 定义发布边界；`docs/generated-artifacts.json` 定义生成物，`docs/generated-artifacts.md` 解释维护方式；`docs/architecture-modernization-tracker.md` 是架构执行入口。
@@ -33,7 +33,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 仓库自有 PowerShell 脚本已迁为 TypeScript 或退役，清单和验证边界见 `docs/powershell-to-typescript-tracker.md`。新增自动化入口使用 TypeScript；调用方、CI、hook 配置和文档不得重新引入 `.ps1` 或把 `pwsh` 当作 TS 入口的依赖。
 
-打乱统计的日常一键入口在 `core/` 运行 `pnpm stats:scramble`：默认增量运行全部作业，成功后自动灌线上 PG、上传 static，并提交推送统计文件，与旧 `update_cross_stats.ps1` 的默认发布语义一致。明确只想本地计算时用 `pnpm stats:scramble:local`；仅跑指定作业用 `--jobs stages|333opt|puzzles`，只读查看路径与计划用 `pnpm stats:scramble:local --plan`。运行日常一键命令即明确授权本轮统计发布；其他代码 push 仍遵守部署章节。
+打乱统计的日常一键入口在 `core/` 运行 `pnpm stats:scramble`：默认增量运行全部作业，成功后自动灌线上 PG、通过同一个 `wca-data-latest` Release 发布最新统计，并增量上传独立在线分片；统计产物不再提交 Git。明确只想本地计算时用 `pnpm stats:scramble:local`；仅跑指定作业用 `--jobs stages|333opt|puzzles`，只读查看路径与计划用 `pnpm stats:scramble:local --plan`。新 checkout 先运行 `pnpm stats:hydrate` 恢复校验后的数据及发布基线。运行日常一键命令即明确授权本轮统计发布；其他代码 push 仍遵守部署章节。
 
 创建或修改 Mac 快捷指令用 [mac-shortcuts skill](.agents/skills/mac-shortcuts/SKILL.md)；本机「跑打乱统计」实例见 [docs/mac-stats-shortcut.md](docs/mac-stats-shortcut.md)。
 

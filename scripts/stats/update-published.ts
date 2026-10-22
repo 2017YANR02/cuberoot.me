@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { CommandExitError, coreDir, jobDir, repoRoot, run, runTs, solverDir, stamp, taskProgress, tsx } from './common.js';
 import { publishScrambleIncremental } from './publish-static.js';
 import { loadMirrorToPg, loadOptimalToPg, loadStepsToPg } from './publish-pg.js';
-import { publishStatsCommit } from './publish-git.js';
+import { existsSync } from 'node:fs';
 import { withStatsResourceMonitor } from './resource-monitor.js';
 
 type Options = { jobs: string[]; publishOnly: boolean; push: boolean; localArgs: string[] };
@@ -24,29 +24,6 @@ export function parsePublishedArgs(args: string[]): Options {
   return { jobs: jobs.includes('all') ? ['stages', '333opt', 'puzzles'] : jobs, publishOnly: args.includes('--publish-only'),
     push: args.includes('--push'), localArgs };
 }
-async function requireMainForPush(): Promise<void> {
-  const { execFile } = await import('node:child_process');
-  const { promisify } = await import('node:util');
-  const { stdout: branch } = await promisify(execFile)('git', ['branch', '--show-current'], { cwd: repoRoot, encoding: 'utf8' });
-  if (branch.trim() !== 'main') throw new Error(`--push requires local main, current branch is ${branch.trim() || '(detached)'}`);
-}
-async function pushStats(stampValue: string): Promise<void> {
-  // Save locally, then publish only this statistics delta on remote main.
-  await requireMainForPush();
-  await run('git', ['add', '--', 'stats/scramble'], repoRoot);
-  const { spawn } = await import('node:child_process');
-  const child = spawn('git', ['diff', '--cached', '--quiet', '--', 'stats/scramble'], { cwd: repoRoot, stdio: 'ignore' });
-  const code = await new Promise<number>((done, fail) => { child.on('error', fail); child.on('close', value => done(value ?? 2)); });
-  if (code !== 0 && code !== 1) throw new Error(`git diff exited ${code}`);
-  if (code === 1) await run('git', ['commit', '-m', `chore(scramble-stats): incremental refresh (${stampValue})`, '--', 'stats/scramble'], repoRoot);
-  const { execFile } = await import('node:child_process');
-  const { promisify } = await import('node:util');
-  const { stdout } = await promisify(execFile)('git', ['log', '-1', '--format=%H', '--fixed-strings',
-    '--grep=chore(scramble-stats): incremental refresh (', '--', 'stats/scramble'], { cwd: repoRoot });
-  if (!stdout.trim()) { console.log('[git] stats/scramble unchanged'); return; }
-  await publishStatsCommit(repoRoot, stdout.trim());
-}
-
 // Exit 2 is emitted only after local artifacts have all been built, with unresolved
 // puzzle states recorded in the summary. Failed steps still exit 1 and block publishing.
 export async function runLocalForPublish(args: string[], execute = runTs): Promise<void> {
@@ -59,15 +36,14 @@ export async function runLocalForPublish(args: string[], execute = runTs): Promi
 }
 
 export async function publishPipeline(options: Options): Promise<void> {
-  if (options.push) await requireMainForPush();
+  if (!existsSync(join(repoRoot, 'stats/.stats-release-base.json'))) throw new Error('Statistics publication baseline missing; hydrate the latest Release before computing (pnpm stats:hydrate). Existing local files are preserved.');
   if (!options.publishOnly) await runLocalForPublish(options.localArgs);
   const stampValue = await stamp();
   const operations = [
     ...(options.jobs.includes('stages') ? ['mirror', 'steps'] : []),
     ...(options.jobs.includes('333opt') ? ['optimal-333'] : []),
     ...(options.jobs.includes('puzzles') ? ['optimal-puzzle'] : []),
-    'static',
-    ...(options.push ? ['git'] : []),
+    'release', 'static',
   ];
   let completed = 0;
   const publishStep = async (name: string, action: () => Promise<unknown>): Promise<void> => {
@@ -84,8 +60,8 @@ export async function publishPipeline(options: Options): Promise<void> {
   }
   if (options.jobs.includes('333opt')) await publishStep('optimal-333', () => loadOptimalToPg(join(solverDir, '333opt', 'wca_optimal.csv'), '333'));
   if (options.jobs.includes('puzzles')) await publishStep('optimal-puzzle', () => loadOptimalToPg(join(jobDir, 'wca_optimal_puzzle.csv'), 'puzzle'));
+  await publishStep('release', () => run(process.execPath, [join(repoRoot, 'scripts/wca-data/snapshot-cli.ts'), 'submit', 'scramble', join(repoRoot, 'stats')], repoRoot));
   await publishStep('static', publishScrambleIncremental);
-  if (options.push) await publishStep('git', () => pushStats(stampValue));
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url))

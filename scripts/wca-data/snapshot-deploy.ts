@@ -59,6 +59,7 @@ export async function activateSnapshot(root: string, archive: string, descriptor
     check(current(root) === expected || (current(root) === 'bootstrap' && expected === 'none'), 'Server/Release snapshot mismatch');
     previous = validate(JSON.parse(readFileSync(join(base(root), 'current/_inventory.json'), 'utf8')));
   }
+  for (const f of previous.files) check(await hashFile(join(root, f.path)) === f.sha256, `Live data changed outside the publisher: ${f.path}`);
   const previousUnits = units(previous), nextUnits = units(next);
   function checkUnit(path: string, prefix: string) {
     for (const entry of readdirSync(path, { withFileTypes: true })) {

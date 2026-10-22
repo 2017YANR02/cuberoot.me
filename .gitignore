@@ -150,6 +150,27 @@ core/packages/client/public/maplibre/
 # Retired front-end bundles; current applications build their own assets in CI.
 /_assets/
 
+# Generated statistics live in the single mutable wca-data-latest Release.
+/stats/*.json
+/stats/*.json.next
+/stats/.stats-release-base.json*
+/stats/data/
+/stats/top10_history/
+/stats/records/
+/stats/historical/
+/stats/sor_over_time/
+/stats/record_place_details_v1/
+/stats/record_place_details_v2/
+/stats/prediction/
+/stats/comp_city/
+/stats/comp_calendar/
+/stats/scramble/*.json
+/stats/scramble/*.json.gz
+/stats/scramble/downloads/
+/stats/scramble/examples_avg/
+/stats/scramble/examples_stage/
+/stats/scramble/wca_cross/
+
 # Latest WCA binary exports live in the wca-data-latest Release, not Git history.
 # Restore locally: node scripts/wca-data/cli.ts hydrate
 /stats/nemesizer/

@@ -19,7 +19,7 @@
     "music:prepare": "tsx ../scripts/music/prepare-music.ts",
     "music:publish": "tsx ../scripts/music/publish-music.ts",
     "stats:progress:sq1": "tsx ../scripts/progress/sq1-exact.ts",
-    "stats:scramble": "tsx ../scripts/stats/update-published.ts --publish --push",
+    "stats:scramble": "tsx ../scripts/stats/update-published.ts --publish",
     "stats:scramble:local": "tsx ../scripts/stats/update-local.ts",
     "stats:scramble:publish": "tsx ../scripts/stats/update-published.ts",
     "build:cubing-worker": "node scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks",
@@ -29,7 +29,9 @@
     "typecheck": "turbo typecheck",
     "lint": "turbo lint",
     "android:release": "node scripts/android-release/release.ts",
-    "android:release:test": "node --test scripts/android-release/*.test.ts"
+    "android:release:test": "node --test scripts/android-release/*.test.ts",
+    "stats:hydrate": "node ../scripts/wca-data/snapshot-cli.ts hydrate ../stats",
+    "stats:publish": "node ../scripts/wca-data/snapshot-cli.ts submit"
   },
   "devDependencies": {
     "ajv": "^8.20.0",

@@ -15,7 +15,7 @@ import { enrichCompElevations } from '../elevation.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUTPUT_PATH = resolve(__dirname, '../../../../../stats/all_past_comps.json');
-// 场馆坐标 → 海拔(米)缓存,enrichCompElevations 读写;stats.yml 的 git add -A stats/ 顺带提交
+// 场馆坐标 → 海拔(米)缓存；两个生成任务通过 Release 发布器合并新增坐标，不再提交 Git。
 const ELEVATION_CACHE_PATH = resolve(__dirname, '../../../../../stats/comp_elevations.json');
 // round-1 WCIF 配置（限时/及格/晋级/资格）大文件，列表视图按需懒加载（不内联进 all_past_comps，避免它再涨 ~5MB）
 const META_OUTPUT_PATH = resolve(__dirname, '../../../../../stats/comp_round_meta.json');

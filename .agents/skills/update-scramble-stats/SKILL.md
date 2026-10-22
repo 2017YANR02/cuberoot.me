@@ -17,9 +17,9 @@ pnpm stats:scramble:local
 pnpm stats:scramble:local --plan
 ```
 
-用户运行日常一键命令或明确要求跑完自动发布时，按该次授权执行发布。已有本地产物只需发布时运行 `pnpm stats:scramble --publish-only`，不重复计算。底层 `stats:scramble:publish --publish` 仍可只灌 PG、传 static；它不推送 Git，需加 `--push` 才完整发布。发布失败时保持原 SHA1/PG manifest，供下次重试。只读静态差异预览在仓库根运行 `./core/node_modules/.bin/tsx scripts/stats/publish-static.ts --dry-run`，`--verify-all` 忽略哈希缓存重算。
+用户运行日常一键命令或明确要求跑完自动发布时，按该次授权执行发布。已有本地产物只需发布时运行 `pnpm stats:scramble --publish-only`，不重复计算。底层 `stats:scramble:publish --publish` 同样灌 PG、更新最新 Release 并上传独立在线分片；兼容旧 `--push` 参数，但不再提交或推送统计文件。发布失败时保持对应 SHA1/PG manifest，供下次重试。只读独立分片差异预览在仓库根运行 `./core/node_modules/.bin/tsx scripts/stats/publish-static.ts --dry-run`，`--verify-all` 忽略哈希缓存重算。
 
-Git 发布先保存本轮统计提交，再用临时 Git index 把该提交的统计差异三方应用到远端最新 `main`；只推统计，不推本地代码提交，不改本地分支或工作区。统计内容冲突或推送期间远端再次前进时停止，禁止强推。没有新统计改动时仍重试最近一次统计提交，已发布则不重复提交。
+统计发布通过同一个 `wca-data-latest` Release，基于本地 `stats/.stats-release-base.json` 生成 owner 补丁，并在全局发布锁内合并。并发修改同一文件时停止，保留结果和基线；不覆盖其他任务的新结果。新 checkout 先在 `core/` 运行 `pnpm stats:hydrate`，再开始计算；hydrate 不覆盖不同的本地文件。成功发布后只推进该 owner 的基线，失败可重试，不需要提交 Git。
 
 | job | 内容 | 主要产物 |
 | --- | --- | --- |

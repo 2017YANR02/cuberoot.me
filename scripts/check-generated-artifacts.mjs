@@ -344,7 +344,7 @@ export function validateLedger(ledger, { root = repoRoot } = {}) {
     for (const output of outputs) {
       const pendingVersionRecord = artifact.versionRecord?.state === 'pending-next-successful-sync'
         && normalizePattern(artifact.versionRecord.path ?? '') === normalizePattern(output);
-      if (assertLocalPath(output, `${artifact.id}.outputs`, root, fail, { mayBeAbsent: pendingVersionRecord })) {
+      if (assertLocalPath(output, `${artifact.id}.outputs`, root, fail, { mayBeAbsent: pendingVersionRecord || artifact.kind === 'runtime-generated' })) {
         claims.push({ artifact, category: 'outputs', pattern: normalizePattern(output) });
       }
     }
@@ -358,7 +358,7 @@ export function validateLedger(ledger, { root = repoRoot } = {}) {
     }
 
     for (const excluded of asArray(artifact.outputExclusions)) {
-      if (!assertLocalPath(excluded, `${artifact.id}.outputExclusions`, root, fail)) continue;
+      if (!assertLocalPath(excluded, `${artifact.id}.outputExclusions`, root, fail, { mayBeAbsent: artifact.kind === 'runtime-generated' })) continue;
       if (hasWildcard(excluded)) {
         fail(`${artifact.id}.outputExclusions: exclusions must be exact paths (${excluded})`);
         continue;

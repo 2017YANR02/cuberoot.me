@@ -24,6 +24,8 @@ export function managed(path: string): boolean {
 }
 export function owns(owner: Owner, path: string): boolean {
   if (!managed(path) || path.startsWith('comp_calendar/')) return false;
+  // Both calendar producers enrich the same append-only coordinate cache.
+  if (path === 'comp_elevations.json') return ['wca', 'upcoming', 'elevations'].includes(owner);
   if (owner === 'scramble') return path.startsWith('scramble/');
   if (owner === 'world-bests') return path === 'world_bests.json';
   if (owner === 'upcoming') return UPCOMING.includes(path);
@@ -77,10 +79,24 @@ export function patch(base: Inventory, next: Inventory, owner: Owner): Inventory
 export function applyPatch(root: string, latest: Inventory, change: Inventory, source: string) {
   validate(change); check(change.kind === 'patch', 'Expected patch');
   const previous = new Map(latest.files.map(f => [f.path, f.sha256]));
+  let elevations: string | undefined;
   // Check every precondition before modifying even one file. Identical replay is safe.
-  for (const c of change.changes!) check((previous.get(c.path) ?? null) === c.before || (previous.get(c.path) ?? null) === c.after, `Concurrent update to ${c.path}; hydrate the latest data and regenerate this owner before retrying`);
   for (const c of change.changes!) {
-    if (c.after === null) rmSync(join(root, c.path), { force: true });
+    if (c.path === 'comp_elevations.json') {
+      check(c.after !== null, 'The shared elevation cache is append-only');
+      const current = existsSync(join(root, c.path)) ? JSON.parse(readFileSync(join(root, c.path), 'utf8')) : {};
+      const proposed = JSON.parse(readFileSync(join(source, 'data', c.path), 'utf8'));
+      for (const cache of [current, proposed]) {
+        check(cache && typeof cache === 'object' && !Array.isArray(cache), 'Invalid elevation cache');
+        for (const [key, value] of Object.entries(cache)) check(/^-?\d+\.\d{4},-?\d+\.\d{4}$/.test(key) && Number.isSafeInteger(value), 'Invalid elevation entry');
+      }
+      for (const [key, value] of Object.entries(proposed)) check(!(key in current) || current[key] === value, `Concurrent elevation correction: ${key}`);
+      elevations = JSON.stringify(Object.fromEntries(Object.entries({ ...current, ...proposed }).sort(([a], [b]) => a.localeCompare(b))));
+    } else check((previous.get(c.path) ?? null) === c.before || (previous.get(c.path) ?? null) === c.after, `Concurrent update to ${c.path}; hydrate the latest data and regenerate this owner before retrying`);
+  }
+  for (const c of change.changes!) {
+    if (c.path === 'comp_elevations.json') writeFileSync(join(root, c.path), elevations!);
+    else if (c.after === null) rmSync(join(root, c.path), { force: true });
     else { mkdirSync(dirname(join(root, c.path)), { recursive: true }); cpSync(join(source, 'data', c.path), join(root, c.path)); }
   }
 }

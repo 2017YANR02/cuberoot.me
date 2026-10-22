@@ -74,3 +74,21 @@ test('publisher preserves baseline on remote failure and sends exact UTF-8 LF de
     await publishScrambleIncremental({ root, manifest, dryRun: true, command: async () => { throw new Error('dry run executed remote command'); } });
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
+
+test('direct static publication never uploads or deletes Release-owned files, even on first publish', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'scramble-release-owner-'));
+  try {
+    const root = join(dir, 'scramble'), manifest = join(dir, 'baseline.sha1');
+    await mkdir(root); await mkdir(join(root, 'comp_steps'));
+    await writeFile(join(root, 'distribution.json'), '{}');
+    await writeFile(join(root, 'comp_steps/example.json'), '{}');
+    const calls: { program: string; args: string[]; input?: string }[] = [];
+    const command = async (program: string, args: string[], input?: string) => { calls.push({ program, args, input }); };
+    const first = await publishScrambleIncremental({ root, manifest, command });
+    assert.deepEqual(first.changed, ['./comp_steps/example.json']);
+    assert(!calls.some(c => c.args.some(a => /scramble\.new|scramble\.prev|mv scramble/.test(a))));
+    await writeFile(manifest, `${'a'.repeat(40)}  ./distribution.json\n${'b'.repeat(40)}  ./no_bar.json\n`);
+    const next = await publishScrambleIncremental({ root, manifest, command });
+    assert.deepEqual(next.deleted, []); assert.deepEqual(next.changed, ['./comp_steps/example.json']);
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});

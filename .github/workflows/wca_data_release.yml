@@ -15,6 +15,10 @@ on:
       - 'stats/data/nemesizer/**'
       - 'stats/data/persons_search.json.gz'
       - '_assets/**'
+      - 'stats/**'
+      - 'scripts/stats/**'
+      - '.github/workflows/update_upcoming.yml'
+      - '.github/workflows/elev_backfill.yml'
   pull_request:
     paths:
       - 'scripts/wca-data/**'
@@ -27,6 +31,10 @@ on:
       - 'stats/data/nemesizer/**'
       - 'stats/data/persons_search.json.gz'
       - '_assets/**'
+      - 'stats/**'
+      - 'scripts/stats/**'
+      - '.github/workflows/update_upcoming.yml'
+      - '.github/workflows/elev_backfill.yml'
   workflow_dispatch:
     inputs:
       candidate:

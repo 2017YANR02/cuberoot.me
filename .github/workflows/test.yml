@@ -371,6 +371,7 @@ jobs:
             /.sync/
             /scripts/upstream/
             /scripts/stats/
+            /scripts/wca-data/
             /ops/contests/recordranks-ref.txt
             /ops/nginx/platform.cuberoot.me.conf
             /ops/nginx/www.cuberoot.me.conf
@@ -428,9 +429,10 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: core/pnpm-lock.yaml
 
-      - name: Check out record-statistics fixtures discovered from generators
-        shell: bash
-        run: node core/scripts/list-record-stat-fixtures.mjs | git sparse-checkout add --stdin
+      - name: Hydrate verified published statistics fixtures
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/wca-data/snapshot-cli.ts hydrate-ci stats
 
       - name: Install dependencies
         working-directory: core
@@ -560,6 +562,7 @@ jobs:
           SCRAMBLE_STATS_OUT_DIR: ${{ runner.temp }}/cuberoot-sq2-sampled
           SCRAMBLE_STATS_STAMP: 2000-01-01T00:00:00.000Z
         run: |
+          before=$(sha256sum ../stats/scramble/dist_sq2.json)
           pnpm --filter @cuberoot/scramble-stats-build exec tsx src/build_puzzle_sampled_dist.ts sq2 1
           node --input-type=module <<'NODE'
           import { readFileSync } from 'node:fs';
@@ -577,7 +580,7 @@ jobs:
             }
           }
           NODE
-          git diff --exit-code -- ../stats/scramble/dist_sq2.json
+          test "$before" = "$(sha256sum ../stats/scramble/dist_sq2.json)"
 
       - name: Typecheck client
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.client == 'true' }}
@@ -647,6 +650,7 @@ jobs:
             /.sync/
             /scripts/upstream/
             /scripts/stats/
+            /scripts/wca-data/
             /ops/contests/recordranks-ref.txt
             /ops/nginx/platform.cuberoot.me.conf
             /ops/nginx/www.cuberoot.me.conf
@@ -696,9 +700,10 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: core/pnpm-lock.yaml
 
-      - name: Check out record-statistics fixtures discovered from generators
-        shell: bash
-        run: node core/scripts/list-record-stat-fixtures.mjs | git sparse-checkout add --stdin
+      - name: Hydrate verified published statistics fixtures
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/wca-data/snapshot-cli.ts hydrate-ci stats
 
       - name: Install dependencies
         working-directory: core

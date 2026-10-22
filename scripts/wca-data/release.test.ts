@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { encodePersons, encodeRanks, encodeCounts } from '../../core/packages/shared/src/nemesizer_format.ts';
 import { FILES, TAG, pack, unpack, parseManifest, assertFresh, sha, resolveRelease, obsoleteAssets } from './common.ts';
 import { activate, finalize, recover } from './deploy.ts';
+import { managed } from './snapshot.ts';
 
 const commit = '1'.repeat(40);
 function fixture(root: string, day = '2026-10-20', name = 'Test Person') {
@@ -26,7 +27,9 @@ test('released datasets and retired build bundles cannot re-enter the Git index'
   const root = fileURLToPath(new URL('../../', import.meta.url));
   const paths = FILES.flatMap(f => [`stats/${f}`, `stats/data/${f}`]);
   assert.equal(execFileSync('git', ['ls-files', '--', '_assets/', ...paths], { cwd: root, encoding: 'utf8' }).trim(), '');
-  const candidates = [...paths, '_assets/retired-build.js'];
+  const tracked = execFileSync('git', ['ls-files', '--', 'stats', ':(exclude)stats/tutorial/**'], { cwd: root, encoding: 'utf8' }).trim().split('\n').filter(Boolean);
+  assert.deepEqual(tracked.filter(path => managed(path.slice(6)) || path.startsWith('stats/data/')), []);
+  const candidates = [...paths, '_assets/retired-build.js', 'stats/all_past_comps.json', 'stats/all_past_comps.json.next', 'stats/scramble/distribution.json', 'stats/scramble/downloads/a.txt', 'stats/records/history/a.json', 'stats/data/old.json'];
   const ignored = execFileSync('git', ['check-ignore', '--no-index', '--', ...candidates], { cwd: root, encoding: 'utf8' }).trim().split('\n');
   assert.deepEqual(ignored.sort(), candidates.sort());
 });

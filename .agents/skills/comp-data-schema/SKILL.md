@@ -5,7 +5,7 @@ description: "Use when touching WCA competition JSON (upcoming_comps/all_past_co
 
 # Competition 数据源（预生成 JSON）
 
-所有比赛相关静态 JSON 都在 `/stats/` 下，前端通过 `serveRepoRoot` Vite 插件在本地 serve。生产由 GH Actions 自动 commit，**不要手改**。
+所有比赛相关静态 JSON 都在 `/stats/` 下。生产由 GH Actions 发布到 `wca-data-latest` Release，并原子切换 static 数据指针；新 checkout 在 `core/` 运行 `pnpm stats:hydrate`。**不要手改生成数据**。
 
 | JSON | 生成器 | 触发 | 用途 |
 |---|---|---|---|

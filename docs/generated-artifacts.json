@@ -42,12 +42,11 @@
     },
     {
       "id": "stats.competition-calendar",
-      "kind": "build-generated",
+      "kind": "runtime-generated",
       "source": {
-        "locator": "Complete published past and upcoming competition directories",
+        "locator": "Complete published past and upcoming competition directories from the latest statistics Release",
         "paths": [
-          "stats/all_past_comps.json",
-          "stats/all_upcoming_comps.json"
+          "core/jobs/stats-build/src/bin/build_calendar_comps.ts"
         ]
       },
       "license": {
@@ -57,14 +56,18 @@
       "owner": "core/jobs/stats-build/src/bin/build_calendar_comps.ts",
       "workingDirectory": "core",
       "command": "node --import tsx jobs/stats-build/src/bin/build_calendar_comps.ts",
-      "outputs": [
-        "stats/comp_calendar/*.json"
-      ],
       "verification": [
         "tests/competition-calendar.test.ts checks all month windows and global summary",
         "tests/competition-calendar-loader.test.ts verifies stale/missing-file fallback signals"
       ],
-      "driftPolicy": "Regenerate after each daily upcoming or weekly historical update. Preserve full source files. Publish index last; hash mismatches fall back to full catalogs."
+      "driftPolicy": "Regenerate after each daily upcoming or weekly historical update. Preserve full source files. Publish index last; hash mismatches fall back to full catalogs. Generated statistics stay out of Git. Hydrate the latest verified Release before generation; publish through scripts/wca-data/snapshot-cli.ts using the family owner. Only the current successful snapshot remains after finalization. Calendar is derived from the latest merged sources under the publication lock.",
+      "runtimeOutputs": [
+        "github:2017YANR02/cuberoot.me/releases/tag/wca-data-latest",
+        "<toolkit>/stats/.stats-data/current"
+      ],
+      "outputs": [
+        "stats/comp_calendar/*.json"
+      ]
     },
     {
       "id": "trainer.double-zbll",
@@ -189,37 +192,55 @@
       "kind": "runtime-generated",
       "source": {
         "locator": "WCA developer export; same snapshot used for Nemesizer and the person search index",
-        "paths": ["core/jobs/stats-build/src/bin/nemesizer.ts", "core/jobs/stats-build/src/bin/gen_persons_search.ts"]
+        "paths": [
+          "core/jobs/stats-build/src/bin/nemesizer.ts",
+          "core/jobs/stats-build/src/bin/gen_persons_search.ts"
+        ]
       },
       "license": {
         "spdx": "LicenseRef-CubeRoot",
         "evidence": "LICENSE and the upstream terms of the WCA developer export"
       },
-      "owner": ["scripts/wca-data", ".github/workflows/wca_data_release.yml", ".github/workflows/stats.yml"],
+      "owner": [
+        "scripts/wca-data",
+        ".github/workflows/wca_data_release.yml",
+        ".github/workflows/stats.yml"
+      ],
       "workingDirectory": ".",
       "command": "WCA generation submits through node scripts/wca-data/cli.ts submit stats; local restore uses node scripts/wca-data/cli.ts hydrate",
-      "transientOutputs": ["stats/nemesizer/**", "stats/persons_search.json.gz"],
-      "runtimeOutputs": ["github:2017YANR02/cuberoot.me/releases/tag/wca-data-latest", "<toolkit>/stats/.wca-data/current"],
-      "verification": ["node --test scripts/wca-data/*.test.ts", "Publish WCA data verifies archive and file checksums, API dataset identity, and the public person-search bytes"],
-      "driftPolicy": "Exactly one mutable Release. Its JSON body identifies the complete current archive. Stage attachments, activate and verify, then update the body and remove superseded attachments. Failed/unknown commits retain a recovery journal. Never commit these exports or rewrite Git history. Generic static sync excludes this owner's paths."
+      "transientOutputs": [
+        "stats/nemesizer/**",
+        "stats/persons_search.json.gz"
+      ],
+      "runtimeOutputs": [
+        "github:2017YANR02/cuberoot.me/releases/tag/wca-data-latest",
+        "<toolkit>/stats/.wca-data/current"
+      ],
+      "verification": [
+        "node --test scripts/wca-data/*.test.ts",
+        "Publish WCA data verifies archive and file checksums, API dataset identity, and the public person-search bytes"
+      ],
+      "driftPolicy": "Exactly one mutable Release. Its JSON body identifies the current binary archive and statistics snapshot. Stage attachments, activate and verify, then update the body and remove superseded attachments. Failed/unknown commits retain a recovery journal. Never commit these exports; historical cleanup requires separate maintainer authorization. Generic static sync excludes this owner's paths."
     },
     {
       "id": "stats.wca",
-      "kind": "checked-in-generated",
+      "kind": "runtime-generated",
       "source": {
         "locator": "WCA developer export plus the stats-build source tree",
-        "paths": ["core/jobs/stats-build/src/**"]
+        "paths": [
+          "core/jobs/stats-build/src/**"
+        ]
       },
-      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and the upstream terms of the WCA developer export" },
-      "owner": ["core/jobs/stats-build", ".github/workflows/stats.yml"],
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "LICENSE and the upstream terms of the WCA developer export"
+      },
+      "owner": [
+        "core/jobs/stats-build",
+        ".github/workflows/stats.yml"
+      ],
       "workingDirectory": "core",
       "command": "pnpm --filter @cuberoot/stats-build compute <stat-id>; run the complete compute_all.ts, transfer, and load sequence only through .github/workflows/stats.yml",
-      "outputs": [
-        "stats/*.json",
-        "stats/records/**",
-        "stats/historical/**",
-        "stats/sor_over_time/**"
-      ],
       "outputExclusions": [
         "stats/upcoming_comps.json",
         "stats/all_upcoming_comps.json",
@@ -236,58 +257,114 @@
         ".github/workflows/stats.yml generation and validation steps",
         "keep builder output, workflow transfer inventory, and load SQL synchronized"
       ],
-      "driftPolicy": "The workflow generates, validates, commits, transfers, and loads this family. It excludes stats/scramble, stats/tutorial, and the separately owned upcoming files; generated values are never edited by hand."
+      "driftPolicy": "The workflow hydrates, generates, validates, publishes owner patches, transfers, and loads this family. It excludes stats/scramble, stats/tutorial, and the separately owned upcoming files; generated values are never edited by hand. Generated statistics stay out of Git. Hydrate the latest verified Release before generation; publish through scripts/wca-data/snapshot-cli.ts using the family owner. Only the current successful snapshot remains after finalization. Calendar is derived from the latest merged sources under the publication lock.",
+      "runtimeOutputs": [
+        "github:2017YANR02/cuberoot.me/releases/tag/wca-data-latest",
+        "<toolkit>/stats/.stats-data/current"
+      ],
+      "outputs": [
+        "stats/*.json",
+        "stats/records/**",
+        "stats/historical/**",
+        "stats/sor_over_time/**",
+        "stats/top10_history/**",
+        "stats/comp_city/**",
+        "stats/record_place_details_v1/**",
+        "stats/record_place_details_v2/**",
+        "stats/prediction/**"
+      ]
     },
     {
       "id": "stats.upcoming",
-      "kind": "checked-in-generated",
+      "kind": "runtime-generated",
       "source": {
         "locator": "WCA and WCIF feeds plus competition-name localization data",
-        "paths": [".github/workflows/update_upcoming.yml"]
+        "paths": [
+          ".github/workflows/update_upcoming.yml"
+        ]
       },
-      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and the upstream terms of the WCA data feeds" },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "LICENSE and the upstream terms of the WCA data feeds"
+      },
       "owner": ".github/workflows/update_upcoming.yml",
       "workingDirectory": ".",
       "command": "run .github/workflows/update_upcoming.yml",
+      "verification": [
+        "daily lightweight index plus conditional detail snapshots; changed artifacts only; catalog_only updates the persisted catalog after complete pagination"
+      ],
+      "driftPolicy": "Published snapshots remain available independently of daily refresh success. Incomplete pagination fails without replacing the catalog. Merge by id, preserve missing records unless explicitly cancelled or handed to history. Persist validators with bodies in Actions cache; bound cold recovery and periodic reconciliation. See docs/upcoming-sync.md. This daily pipeline is intentionally separate from stats.wca; do not move these outputs into the main statistics owner. Generated statistics stay out of Git. Hydrate the latest verified Release before generation; publish through scripts/wca-data/snapshot-cli.ts using the family owner. Only the current successful snapshot remains after finalization. Calendar is derived from the latest merged sources under the publication lock.",
+      "runtimeOutputs": [
+        "github:2017YANR02/cuberoot.me/releases/tag/wca-data-latest",
+        "<toolkit>/stats/.stats-data/current"
+      ],
       "outputs": [
         "stats/upcoming_comps.json",
         "stats/all_upcoming_comps.json",
         "stats/cn_upcoming_registrations.json",
         "stats/comp_names_zh.json",
         "stats/comp_elevations.json"
-      ],
-      "verification": ["daily lightweight index plus conditional detail snapshots; changed artifacts only; catalog_only updates the persisted catalog after complete pagination"],
-      "driftPolicy": "Published snapshots remain available independently of daily refresh success. Incomplete pagination fails without replacing the catalog. Merge by id, preserve missing records unless explicitly cancelled or handed to history. Persist validators with bodies in Actions cache; bound cold recovery and periodic reconciliation. See docs/upcoming-sync.md. This daily pipeline is intentionally separate from stats.wca; do not move these outputs into the main statistics owner."
+      ]
     },
     {
       "id": "stats.world-bests",
-      "kind": "checked-in-generated",
+      "kind": "runtime-generated",
       "source": {
         "url": "https://www.speedsolving.com/wiki/index.php?title=List_of_Unofficial_World_Records",
-        "paths": ["core/jobs/wb-build/src/**"]
+        "paths": [
+          "core/jobs/wb-build/src/**"
+        ]
       },
-      "license": { "spdx": "NOASSERTION", "evidence": "the external wiki retains its own terms; repository code is covered by LICENSE" },
+      "license": {
+        "spdx": "NOASSERTION",
+        "evidence": "the external wiki retains its own terms; repository code is covered by LICENSE"
+      },
       "owner": "core/jobs/wb-build",
       "workingDirectory": "core",
       "command": "pnpm --filter @cuberoot/wb-build scrape",
-      "outputs": ["stats/world_bests.json"],
-      "verification": ["resolve @cuberoot/wb-build uniquely, run the generated-artifact ownership check, and review any generated JSON diff only when the network-backed scraper is explicitly run"],
-      "driftPolicy": "This network-backed dataset is regenerated only through its owner. Ordinary CI checks ownership and paths without fetching or overwriting the checked-in output."
+      "verification": [
+        "resolve @cuberoot/wb-build uniquely, run the generated-artifact ownership check, and review any generated JSON diff only when the network-backed scraper is explicitly run"
+      ],
+      "driftPolicy": "This network-backed dataset is regenerated only through its owner. Ordinary CI checks ownership and paths without fetching or overwriting the published output. Generated statistics stay out of Git. Hydrate the latest verified Release before generation; publish through scripts/wca-data/snapshot-cli.ts using the family owner. Only the current successful snapshot remains after finalization. Calendar is derived from the latest merged sources under the publication lock.",
+      "runtimeOutputs": [
+        "github:2017YANR02/cuberoot.me/releases/tag/wca-data-latest",
+        "<toolkit>/stats/.stats-data/current"
+      ],
+      "outputs": [
+        "stats/world_bests.json"
+      ]
     },
     {
       "id": "stats.scramble",
-      "kind": "local-heavy-artifact",
+      "kind": "runtime-generated",
       "source": {
         "locator": "scramble-stats-build source plus local solver tables and samples",
-        "paths": ["core/jobs/scramble-stats-build/src/**", "solver/**"]
+        "paths": [
+          "core/jobs/scramble-stats-build/src/**",
+          "solver/**"
+        ]
       },
-      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE" },
-      "owner": ["core/jobs/scramble-stats-build", "solver"],
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "LICENSE"
+      },
+      "owner": [
+        "core/jobs/scramble-stats-build",
+        "solver"
+      ],
       "workingDirectory": "core",
       "command": "pnpm --filter @cuberoot/scramble-stats-build build:<target>; build:example-shards only splits existing JSON without solvers; use the matching runbook or skill for the complete heavy pipeline",
-      "outputs": ["stats/scramble/**"],
-      "verification": ["fixture, schema, numeric-baseline, and committed-result tests for the selected target"],
-      "driftPolicy": "Ordinary CI does not recompute local heavy tables. Verify schema and exact numeric baselines, and never hand-edit generated numbers."
+      "verification": [
+        "fixture, schema, numeric-baseline, and committed-result tests for the selected target"
+      ],
+      "driftPolicy": "Ordinary CI does not recompute local heavy tables. Verify schema and exact numeric baselines, and never hand-edit generated numbers. Generated statistics stay out of Git. Hydrate the latest verified Release before generation; publish through scripts/wca-data/snapshot-cli.ts using the family owner. Only the current successful snapshot remains after finalization. Calendar is derived from the latest merged sources under the publication lock.",
+      "runtimeOutputs": [
+        "github:2017YANR02/cuberoot.me/releases/tag/wca-data-latest",
+        "<toolkit>/stats/.stats-data/current"
+      ],
+      "outputs": [
+        "stats/scramble/**"
+      ]
     },
     {
       "id": "music.library",

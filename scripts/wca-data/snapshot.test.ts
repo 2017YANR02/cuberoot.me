@@ -55,3 +55,16 @@ test('atomic adoption, interrupted rollback and finalization retain only latest 
   assert.equal(readFileSync(join(live, 'all_past_comps.json'), 'utf8'), '[3]'); assert.equal(readFileSync(join(live, 'comp/keep.json'), 'utf8'), 'keep'); assert.equal(readFileSync(join(live, 'scramble/steps/checkpoint.json'), 'utf8'), 'checkpoint');
   assert.deepEqual(readdirSync(join(live, '.stats-data/datasets')), [b.sha256]);
 });
+
+test('daily producers union the shared elevation cache without losing concurrent coordinates', async t => {
+  const root = workspace(t), source = join(root, 'source'), live = join(root, 'live');
+  put(source, 'comp_elevations.json', '{"1.0000,2.0000":3}'); const base = await inventory(source, commit);
+  put(source, 'comp_elevations.json', '{"1.0000,2.0000":3,"4.0000,5.0000":6}');
+  const change = patch(base, await inventory(source, commit), 'wca');
+  const a = await packSnapshot(source, change, join(root, 'pack')); const extracted = join(root, 'patch'); await unpackSnapshot(join(root, 'pack', a.name), extracted);
+  put(live, 'comp_elevations.json', '{"1.0000,2.0000":3,"7.0000,8.0000":9}');
+  applyPatch(live, await inventory(live, commit), change, extracted);
+  assert.deepEqual(JSON.parse(readFileSync(join(live, 'comp_elevations.json'), 'utf8')), { '1.0000,2.0000': 3, '4.0000,5.0000': 6, '7.0000,8.0000': 9 });
+  put(live, 'comp_elevations.json', '{"1.0000,2.0000":99}');
+  assert.throws(() => applyPatch(live, { ...base, files: [] }, change, extracted), /Concurrent elevation/);
+});

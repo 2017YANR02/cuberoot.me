@@ -5,9 +5,9 @@ import { fileURLToPath } from 'node:url';
 import { parsePublishedArgs, runLocalForPublish } from './update-published.js';
 import { CommandExitError, coreDir, run, tsx } from './common.js';
 
-test('daily command publishes and pushes; local command remains explicit', () => {
+test('daily command publishes through Release; local command remains explicit', () => {
   const packageJson = JSON.parse(readFileSync(fileURLToPath(new URL('../../core/package.json', import.meta.url)), 'utf8'));
-  assert.equal(packageJson.scripts['stats:scramble'], 'tsx ../scripts/stats/update-published.ts --publish --push');
+  assert.equal(packageJson.scripts['stats:scramble'], 'tsx ../scripts/stats/update-published.ts --publish');
   assert.equal(packageJson.scripts['stats:scramble:local'], 'tsx ../scripts/stats/update-local.ts');
 });
 

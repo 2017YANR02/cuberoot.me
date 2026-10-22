@@ -23,9 +23,6 @@ jobs:
       actions: write
     steps:
       - uses: actions/checkout@v4
-        with:
-          # Repository deploy key preserves automated data pushes through PR rules.
-          ssh-key: ${{ secrets.AUTOMATION_PUSH_SSH_KEY }}
 
       - uses: actions/setup-node@v4
         with:
@@ -51,6 +48,11 @@ jobs:
           stats="$(node scripts/resolve-workspace-path.mjs @cuberoot/stats-build)"
           echo "stats=$stats" >> "$GITHUB_OUTPUT"
 
+      - name: Hydrate latest published statistics
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/wca-data/snapshot-cli.ts hydrate-ci stats
+
       - name: Backfill elevations
         id: backfill
         working-directory: core/${{ steps.workspace.outputs.stats }}
@@ -60,22 +62,10 @@ jobs:
           REMAINING=$(grep -oP 'ELEV_REMAINING=\K\d+' /tmp/elev.log | tail -1)
           echo "remaining=$REMAINING" >> "$GITHUB_OUTPUT"
 
-      - name: Commit and push
+      - name: Publish latest statistics snapshot
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git add stats/all_past_comps.json stats/all_upcoming_comps.json stats/comp_elevations.json
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-          else
-            # [skip ci] 同 update_upcoming.yml:不触发重 workflow,但要显式触发 sync_toolkit 上 static
-            git commit -m "chore: backfill comp elevations [skip ci]"
-            git pull --rebase origin main
-            git push
-            gh workflow run sync_toolkit.yml
-          fi
+        run: node scripts/wca-data/snapshot-cli.ts submit elevations stats
 
       - name: Disable self when complete
         if: steps.backfill.outputs.remaining == '0'

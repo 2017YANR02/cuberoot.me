@@ -53,12 +53,12 @@ jobs:
           REMOTE=/www/wwwroot/toolkit
           # --exclude='.*'   git checkout 的 atomic-write 临时文件 (.<name>.<rand>)
           # --exclude='/comp/' 锚定到传输根:stats/comp/ 是服务器端独有,排除掉
-          for dir in tools stats; do
-            [ -d "$dir" ] || continue
-            # WCA Release publisher exclusively owns these paths. Never replace its
-            # complete dataset with an old Git checkout (or overwrite its symlinks).
-            rsync -rltz --exclude='.*' --exclude='/comp/' \
-              --exclude='/nemesizer/' --exclude='/persons_search.json.gz' --chmod=D755,F644 \
-              -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
-              "$dir/" "${USER}@${HOST}:${REMOTE}/${dir}/"
-          done
+          rsync -rltz --exclude='.*' --chmod=D755,F644 \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            tools/ "${USER}@${HOST}:${REMOTE}/tools/"
+          # All generated statistics are owned by the latest Release publisher.
+          # Only authored tutorial assets remain Git-owned. Never traverse the
+          # server's dataset symlinks or touch comp/ and independent scramble shards.
+          rsync -rltz --exclude='.*' --chmod=D755,F644 \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            stats/tutorial/ "${USER}@${HOST}:${REMOTE}/stats/tutorial/"
