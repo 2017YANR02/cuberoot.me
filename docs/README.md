@@ -1,6 +1,6 @@
 # CubeRoot 文档索引
 
-状态：`ACTIVE`。最后更新：2026-10-13。
+状态：`ACTIVE`。最后更新：2026-10-22。
 
 本页是文档状态和权威入口的索引，不替代代码、schema、workflow 或各专题跟踪表。
 
@@ -20,14 +20,18 @@
 
 | 领域 | 权威入口 | 状态 | 用途 |
 | --- | --- | --- | --- |
-| 架构现代化 | [architecture-modernization-tracker.md](./architecture-modernization-tracker.md) | `ACTIVE` | 决策、批次、验收和审核记录 |
+| 架构现代化 | [architecture-modernization-tracker.md](./architecture-modernization-tracker.md) | `ACTIVE` | 当前边界、未完成事项与证据入口 |
+| 架构历史验收 | [architecture-modernization-history.md](./architecture-modernization-history.md) | `HISTORICAL` | 原批次、提交、审核与验收；不作为当前待办 |
+| Core 目录迁移 | [core-workspace-layout-migration-plan.md](./core-workspace-layout-migration-plan.md) | `ACTIVE` | 当前路径、未完成迁移与历史映射分开维护 |
+| package 候选快照 | [architecture-package-candidates.md](./architecture-package-candidates.md) | `HISTORICAL` | 候选证据与重开门槛；消费者和路径需重新核对 |
+| Platform 完整移植 | [platform-completion-tracker.md](./platform-completion-tracker.md) | `ACTIVE` | 后续产品缺口与人工业务验收的当前入口 |
 | 新人入门与提交 | [CONTRIBUTING.md](../CONTRIBUTING.md) | `REFERENCE` | 权限开通、直接推送 main、自查验证及可选 PR 流程 |
 | 下载页与安装包分发 | [app-downloads.md](./app-downloads.md) | `REFERENCE` | 官网下载入口、APK 启用条件与匿名点击日志汇总 |
 | 好友轻量聊天 | [friend-chat-design.md](./friend-chat-design.md) | `ACTIVE` | 设计提案：跨端共享、一对一文字、权限与持久化；尚未实现或部署 |
 | 音乐播放器 | [music-player-tracker.md](./music-player-tracker.md) | `ACTIVE` | `/music`、DeskPet 悬浮音频中心、曲库转码与静态媒体发布 |
 | 后台与增长监控 | [admin-observability-tracker.md](./admin-observability-tracker.md) | `ACTIVE` | `/admin` 首页、用户注册与会员增长的口径、实施和验收 |
 | 架构现状锐评 | [architecture-audit-2026-08.md](./architecture-audit-2026-08.md) | `HISTORICAL` | 2026-08 审计快照；当前状态以 tracker 为准 |
-| Platform 产品迁移 | [platform-product-migration-tracker.md](./platform-product-migration-tracker.md) | `ACTIVE` | 发布、角色态复验和旧资产观察 |
+| Platform 产品迁移 | [platform-product-migration-tracker.md](./platform-product-migration-tracker.md) | `ACTIVE` | 技术接入历史与旧站对照说明；后续产品验收转完整移植跟踪 |
 | Platform 数据处置 | [platform-data-disposition-ledger.md](./platform-data-disposition-ledger.md) | `ACTIVE` | 旧数据逐项保管、迁移和处置 |
 | Platform surface | [platform-product-surface-ledger.md](./platform-product-surface-ledger.md) | `COMPLETED` | 已验收的页面/Handler/Action 守恒证据 |
 | Platform 源码迁入 | [platform-migration.md](./platform-migration.md) | `HISTORICAL` | 独立前端迁入与退役记录，不是当前开发手册 |

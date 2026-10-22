@@ -315,6 +315,60 @@ Local evidence: `.tmp/cubeopt-reverse/native-feature-ab-20261021/profile-results
 (`analysis-v3`, exact-ELF `annotations`, original results and rejected exports).
 Independent interpretation: `.tmp/cubeopt-profile-review-20261021/review.md`.
 
+## Opt8 memory-policy experiment (2026-10-22)
+
+Following the profile above, tested two isolated changes: T1 instead of T0 for
+Opt8's existing prefetch, and AVX2/BMI2 PEXT instead of the dependent
+outer-complement lookup/shuffle. PEXT preserves all twelve selection bits before
+the unchanged padded rank omits bit 11. The candidate's CPU detection retained
+the existing AVX2, AVX-512 and scalar fallbacks. Both opt-in feature definitions
+and implementations were removed after the measurements below.
+
+The fixed plan is one WCA100 pass per executable, four search threads, eight
+contexts, no warmup: deployed production, current-source T0 control, T1 only,
+BMI2 only, then their combination. The extra current-source control separates
+these changes from intervening source/compiler-layout differences. Each pass
+keeps one solver PID and one existing main table for all 100 requests. Startup
+is recorded separately; no table format, size or pruning rule changes.
+
+Linux small-coordinate checks passed for Opt1–9 against the preserved upstream
+fixtures and scalar reference, and Opt10 against its scalar/orbit checks. The
+exact candidate ELFs contain the intended PEXT and T1 instructions. The Mac
+build check passed without adding x86 instructions to its ARM execution path.
+
+| Executable | WCA100 solve seconds | Startup seconds, separate | Time change vs current-source T0 |
+| --- | ---: | ---: | ---: |
+| Deployed production binary | 101.238240388 | 55.372633276 | +26.20% |
+| Current-source T0 control | 80.217319290 | 51.715792888 | — |
+| T1 only | 103.359192308 | 53.818393283 | +28.85% |
+| BMI2 only | 86.899885995 | 52.186939700 | +8.33% |
+| T1 + BMI2 | 82.214954180 | 51.239685700 | +2.49% |
+
+**Decision: adopt none. Keep the existing main tables, AVX2 and T0 prefetch.**
+All 500 solutions independently replayed with cubing.js and matched the pinned
+historical H10 optimal lengths. All five processes exited normally, with one
+PID throughout each pass and no remaining descendants. Peak solver-tree RSS
+was 7,788,814,336 bytes; minimum system available memory was 4,892,966,912 bytes.
+Recorded solver swap was zero, while system swap-out counters did increase on
+this remote server, where swap is permitted. This is not a no-swap result.
+
+These are single ordered passes on a shared Linux server; API/database work
+continued, and CPU/load evidence is retained. The production/current-source
+control difference is not attributable to these two experiments, and none of
+the differences establishes repeatability or the cost of one instruction.
+Even under this limited protocol, no candidate beat its matched control, so
+there is no measured benefit that justifies adopting it.
+
+Frozen source, executable hashes, single-use launch wrapper, original fixtures,
+results and `decision.json`: `.tmp/cubeopt-reverse/opt8-memory-20261022-v1/`.
+The rejected implementation is retained as `candidates.patch` (SHA-256
+`a523261e03e8334028e5264315dc78ee21840431f774c507e6d0618ab100913d`).
+This scope is consumed: do not repeat its passes or overwrite its evidence.
+The wrapper restored the original service configuration, health and readiness
+at **2026-10-22 08:26:06 UTC**. Production's binary and artifact pointer were
+unchanged. Candidate source changes were removed, with no commit, push or
+deployment. Earlier corner-research work remains separate and intact.
+
 ## Why 96 symmetries do not directly halve the current Opt8 table
 
 For full cube states, the 48 spatial symmetries and group inversion form an

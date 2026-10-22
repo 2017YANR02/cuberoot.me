@@ -33,7 +33,7 @@
   font-size: clamp(23px, 3.4vw, 31px); font-weight: 700;
   letter-spacing: -.018em; line-height: 1.18; margin: 0 0 14px;
 }
-.news-lede { font-size: 17px; color: var(--ink-dim); margin: 0 0 26px; max-width: 64ch; }
+.news-lede { font-size: 17px; color: var(--ink-dim); margin: 0 0 26px; }
 
 .news-sub-title {
   font-size: clamp(18px, 2.4vw, 21px); font-weight: 700;

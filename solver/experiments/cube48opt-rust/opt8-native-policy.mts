@@ -15,7 +15,7 @@ export const nxBinary = resolve(nxRoot,'.tmp/cubeopt-reverse/opt8-native-quarter
 export const nxTableBytes = 7782727680;
 export const nxBoot = '{ sec = 1791771877, usec = 170806 } Sun Oct 11 19:24:37 2026';
 export const nxHash = (p: string) => {assert(statSync(p).size < 64*2**20); return createHash('sha256').update(readFileSync(p)).digest('hex');};
-const table='/Users/eula/.Trash/retired-opt-tables-20261013/.tmp/cubeopt-reverse/opt8-generated/h48prun31h8.dat';
+const table=resolve(nxRoot,'.tmp/cubeopt-reverse/opt8-generated/h48prun31h8.dat');
 const small=resolve(nxRoot,'.tmp/cubeopt-reverse/opt9-generated/small-memory.bin');
 export function nxRequest() {return {label:nxLabel, executable:nxBinary,
   args:['solve',small,table,'8','20','0'], env:{CUBEOPT_OPT8_NATIVE_REVIEW:nxReview,CUBEOPT_VARIANT:'8',CUBEOPT_BACKEND:'opt',CUBEOPT_SEARCH_THREADS:'4',CUBEOPT_SOLVE_THREADS:'1',CUBEOPT_MEASURE_RSS:'1'}};}

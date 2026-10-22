@@ -51,6 +51,12 @@ pub trait PruningOracle {
     #[inline(always)]
     fn distance_only_bound(&self, _cube: &Cube, _remaining: u8) -> Option<u8> { None }
 
+    /// Evaluate an independent distance certificate only after the ordinary
+    /// subgroup queries survive, retaining their stronger rejection margins.
+    #[cfg(feature = "corner-research")]
+    #[inline(always)]
+    fn distance_only_after_primary(&self) -> bool { false }
+
     /// Optional batched reads of the same immutable oracle. None slots must
     /// not issue a lookup; their result is unused. Returned bounds must equal
     /// lookup(query), independent of lookup/prepare call interleaving.
@@ -279,6 +285,14 @@ pub struct SearchProfile {
     pub cached_inverse: [u64; 21],
     pub inverse_rejected: [u64; 21],
     pub normal_rejected: [u64; 21],
+    /// Independent full-state certificate, separate from subgroup rejection.
+    pub distance_attempts: [u64; 21],
+    pub distance_queries: [u64; 21],
+    pub distance_rejected: [u64; 21],
+    /// Sample one hook call in 256 per remaining depth; Some results only.
+    /// Includes timing overhead. Diagnostic estimates, not benchmark timings.
+    pub distance_samples: [u64; 21],
+    pub distance_sample_ns: [u64; 21],
     /// Both bounds passed, before NISS/move-mask planning.
     pub survived: [u64; 21],
     /// Actual stage-4 children generated, indexed by their parent's budget.
@@ -301,7 +315,7 @@ impl SearchProfile {
                 + self.root_inverse_probes + self.root_normal_probes == stats.probes
             && self.cached_inverse.iter().sum::<u64>() == stats.cache_reuses
             && (0..=20).all(|r| self.visited[r] == self.inverse_rejected[r] + self.normal_rejected[r]
-                + self.survived[r] + self.pending[r] + self.leaf_solved[r] + self.leaf_rejected[r]
+                + self.distance_rejected[r] + self.survived[r] + self.pending[r] + self.leaf_solved[r] + self.leaf_rejected[r]
                 && self.inverse_fallback[r] <= self.inverse_probes[r]
                 && self.normal_fallback[r] <= self.normal_probes[r])
     }
@@ -316,6 +330,11 @@ impl SearchProfile {
             self.cached_inverse[r] += part.cached_inverse[r];
             self.inverse_rejected[r] += part.inverse_rejected[r];
             self.normal_rejected[r] += part.normal_rejected[r];
+            self.distance_attempts[r] += part.distance_attempts[r];
+            self.distance_queries[r] += part.distance_queries[r];
+            self.distance_rejected[r] += part.distance_rejected[r];
+            self.distance_samples[r] += part.distance_samples[r];
+            self.distance_sample_ns[r] += part.distance_sample_ns[r];
             self.survived[r] += part.survived[r];
             self.child_expansions[r] += part.child_expansions[r];
             self.pending[r] += part.pending[r];
@@ -328,11 +347,37 @@ impl SearchProfile {
     }
 
     pub fn json(&self) -> String {
-        format!("{{\"visited\":{:?},\"inverse_probes\":{:?},\"normal_probes\":{:?},\"inverse_fallback\":{:?},\"normal_fallback\":{:?},\"cached_inverse\":{:?},\"inverse_rejected\":{:?},\"normal_rejected\":{:?},\"survived\":{:?},\"child_expansions\":{:?},\"pending\":{:?},\"leaf_solved\":{:?},\"leaf_rejected\":{:?},\"root_nodes\":{},\"root_inverse_probes\":{},\"root_normal_probes\":{}}}",
+        format!("{{\"visited\":{:?},\"inverse_probes\":{:?},\"normal_probes\":{:?},\"inverse_fallback\":{:?},\"normal_fallback\":{:?},\"cached_inverse\":{:?},\"inverse_rejected\":{:?},\"normal_rejected\":{:?},\"distance_attempts\":{:?},\"distance_queries\":{:?},\"distance_rejected\":{:?},\"distance_samples\":{:?},\"distance_sample_ns\":{:?},\"survived\":{:?},\"child_expansions\":{:?},\"pending\":{:?},\"leaf_solved\":{:?},\"leaf_rejected\":{:?},\"root_nodes\":{},\"root_inverse_probes\":{},\"root_normal_probes\":{}}}",
             self.visited, self.inverse_probes, self.normal_probes, self.inverse_fallback, self.normal_fallback,
-            self.cached_inverse, self.inverse_rejected, self.normal_rejected, self.survived, self.child_expansions, self.pending,
+            self.cached_inverse, self.inverse_rejected, self.normal_rejected,
+            self.distance_attempts, self.distance_queries, self.distance_rejected, self.distance_samples, self.distance_sample_ns,
+            self.survived, self.child_expansions, self.pending,
             self.leaf_solved, self.leaf_rejected, self.root_nodes, self.root_inverse_probes, self.root_normal_probes)
     }
+}
+
+#[cfg(feature = "corner-research")]
+#[inline(always)]
+fn independent_distance<O: PruningOracle>(oracle: &O, cube: &Cube, remaining: u8,
+    _stats: &mut SearchStats) -> Option<u8> {
+    #[cfg(all(feature = "opt10-native-profile", not(target_family = "wasm")))]
+    if oracle.profile_search() {
+        let r = usize::from(remaining);
+        let profile = &mut _stats.profile;
+        profile.distance_attempts[r] += 1;
+        let started = (profile.distance_attempts[r] & 255 == 1).then(std::time::Instant::now);
+        let bound = oracle.distance_only_bound(cube, remaining);
+        if let Some(bound) = bound {
+            profile.distance_queries[r] += 1;
+            profile.distance_rejected[r] += u64::from(bound > remaining);
+            if let Some(started) = started {
+                profile.distance_samples[r] += 1;
+                profile.distance_sample_ns[r] += started.elapsed().as_nanos() as u64;
+            }
+        }
+        return bound;
+    }
+    oracle.distance_only_bound(cube, remaining)
 }
 
 #[derive(Debug)]
@@ -1342,7 +1387,8 @@ fn search_depth_contexts<O: PruningOracle, const N: usize>(
                 continue;
             }
             #[cfg(feature = "corner-research")]
-            if let Some(bound) = oracle.distance_only_bound(&frame.inverse, remaining) {
+            if let Some(bound) = (!oracle.distance_only_after_primary())
+                .then(|| independent_distance(oracle, &frame.inverse, remaining, stats)).flatten() {
                 if bound > remaining {
                     // A pure distance certificate can use triangle-inequality
                     // parent/same-face cuts, but none of stage 2's H-specific
@@ -1611,6 +1657,20 @@ fn search_depth_contexts<O: PruningOracle, const N: usize>(
                 if let Some(proof) = chain_proof { context.apply_coset_chain(proof, stats); }
             } else {
                 let remaining = context.remaining(depth);
+                // Preserve primary failures and their full rejection margin.
+                // Distance-only rejection never enters the H-specific cuts;
+                // use this existing survivor pass instead of another scan.
+                #[cfg(feature = "corner-research")]
+                if oracle.distance_only_after_primary() {
+                    if let Some(bound) = independent_distance(oracle, &context.stack.last().unwrap().inverse, remaining, stats) {
+                        if bound > remaining {
+                            #[cfg(all(feature = "opt10-native-profile", not(target_family = "wasm")))]
+                            if profiling { stats.profile.survived[usize::from(remaining)] -= 1; }
+                            context.reject_bound(bound - remaining, parent_propagation, stats);
+                            continue;
+                        }
+                    }
+                }
                 let frame = context.stack.last_mut().unwrap();
                 #[cfg(all(feature = "opt10-native-lookahead", not(target_family = "wasm")))]
                 if lookahead_tightened[i] {
@@ -2360,7 +2420,7 @@ mod tests {
             else { 2 }
         }
 
-        struct SeparateBounds;
+        struct SeparateBounds { late: bool }
         impl PruningOracle for SeparateBounds {
             type Query = u8;
             fn prepare(&self, _: &Cube, _: u8) -> Result<u8, u8> { Ok(0) }
@@ -2368,21 +2428,58 @@ mod tests {
             fn distance_only_bound(&self, cube: &Cube, _: u8) -> Option<u8> {
                 Some(clipped_distance(cube))
             }
+            fn distance_only_after_primary(&self) -> bool { self.late }
             fn allow_parent_propagation(&self) -> bool { true }
+            fn profile_search(&self) -> bool { true }
         }
 
         #[test]
         fn non_h_invariant_distance_bound_keeps_one_move_half_turn_solutions() {
             for contexts in [1, 8] {
+              for late in [false, true] {
                 for movement in [1_u8, 4, 7, 10, 13, 16] {
                     let start = MOVES[usize::from(movement)];
-                    let result = solve(start, &SeparateBounds, SearchOptions {
+                    let result = solve(start, &SeparateBounds { late }, SearchOptions {
                         max_depth: 1, max_nodes: 1000, contexts,
                     }).unwrap();
                     assert!(!result.cancelled);
                     let solution = result.solution.expect("distance-only bounds must retain half turns");
                     assert_eq!(solution.len(), 1);
                     assert!(replay(start, &solution).is_solved());
+                }
+              }
+            }
+        }
+
+        struct PrimaryReject;
+        impl PruningOracle for PrimaryReject {
+            type Query = u8;
+            fn prepare(&self, _: &Cube, _: u8) -> Result<u8, u8> { Err(2) }
+            fn lookup(&self, _: u8) -> u8 { unreachable!() }
+            fn distance_only_after_primary(&self) -> bool { true }
+            fn distance_only_bound(&self, _: &Cube, _: u8) -> Option<u8> {
+                panic!("an existing primary rejection must retain its margin without an auxiliary query")
+            }
+        }
+
+        #[test]
+        fn late_distance_checks_only_primary_survivors() {
+            let options = SearchOptions { max_depth: 1, max_nodes: 1000, contexts: 1 };
+            let start = MOVES[0].multiplied(&MOVES[3]);
+            let rejected = solve(start, &PrimaryReject, options).unwrap();
+            assert_eq!(rejected.solution, None);
+            assert_eq!(rejected.stats.nodes, 2);
+            assert_eq!(rejected.stats.probes, 0);
+            for late in [false, true] {
+                let survived = solve(start, &SeparateBounds { late }, options).unwrap();
+                assert_eq!(survived.solution, None);
+                assert_eq!(survived.stats.nodes, 2);
+                assert_eq!(survived.stats.probes, if late { 2 } else { 0 });
+                #[cfg(all(feature = "opt10-native-profile", not(target_family = "wasm")))]
+                {
+                    assert!(survived.stats.profile.matches_totals(&survived.stats));
+                    assert_eq!(survived.stats.profile.distance_queries[1], 1);
+                    assert_eq!(survived.stats.profile.distance_rejected[1], 1);
                 }
             }
         }

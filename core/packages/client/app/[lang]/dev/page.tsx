@@ -445,10 +445,6 @@ export default function DevIndexPage() {
           <span className="code-index-prefix">/</span>dev
           <span className="code-index-cursor">_</span>
         </h1>
-        <p className="code-index-sub">
-          {tr({ zh: '开发相关的两条线:CubeRoot 这个站点本身是怎么搭的,以及一些写给爱好者看的编程语言长篇导览。', en: 'Two development threads: how this site itself is built, and long-form guides to programming languages.'
-        })}
-        </p>
       </header>
 
       <main className="code-index-grid">
@@ -464,9 +460,8 @@ export default function DevIndexPage() {
             >
               <div className="code-index-card-top">
                 <div className="code-index-card-glyph">{c.glyph}</div>
-                <div className="code-index-card-route">{c.href}</div>
+                <div className="code-index-card-title">{t.title}</div>
               </div>
-              <div className="code-index-card-title">{t.title}</div>
               {t.sub && <div className="code-index-card-sub">{t.sub}</div>}
               <p className="code-index-card-tagline">{t.tagline}</p>
               <div className="code-index-card-foot">

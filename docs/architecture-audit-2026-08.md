@@ -2,6 +2,8 @@
 
 审计日期：2026-08-21
 
+状态：`HISTORICAL`。本文的问题清单不代表当前待办。API→Web 源码依赖、Web public 运行时读取及宽泛部署触发已在 `6756c599a1` 对应批次关闭；后续目录与共享层也已演进。引用任何结论前先按[当前跟踪](./architecture-modernization-tracker.md)核对实现和提交，以下原始审计与当时状态说明保持不改。
+
 状态说明（2026-08-25）：本文是 2026-08-21 起形成的审计快照，架构证据仍可用于后续现代化调查。Platform P0-P8 技术迁移与发布验收现已完成；P9 主站产品体验改版的代码与发布已验收，Test、Deploy Next、Deploy Core 全绿，线上真实角色态仍待复验。仓库所有者已明确豁免 RET-04 原定观察等待；非仓库资产处置完成，仓库删除由所有者自行执行。Platform 当前边界以[架构现代化跟踪](./architecture-modernization-tracker.md)和[主站完整迁移跟踪](./platform-product-migration-tracker.md)为准；迁移后的源码实施仍须刷新依赖基线、重新复审并取得用户授权。
 
 审计范围：仓库顶层、`core/` workspace、Web、API、Platform、Mobile、小程序、共享包、构建任务、上游同步脚本和已跟踪静态数据。本次只做静态审计，不修改实现，不以单个文件长度代替架构判断。

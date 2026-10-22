@@ -129,6 +129,15 @@ impl Opt9CoordTables {
 }
 
 impl CoordTables {
+    /// Research geometry only. These are spatial rotations, not legal fixed-
+    /// centre cube states; their cubie permutations can have opposite parity.
+    #[cfg(feature = "corner-research")]
+    pub(crate) fn proper_rotations(&self) -> Vec<Cube> {
+        self.symmetries.iter().filter(|s| s[..8].iter().all(|&c| c < 24))
+            .map(|s| Cube { corners: s[..8].try_into().unwrap(), edges: s[8..].try_into().unwrap() })
+            .collect()
+    }
+
     pub(crate) fn corner_entry(&self, cube: &Cube) -> u32 {
         self.corner_class[self.raw_corner(cube)]
     }

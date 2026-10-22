@@ -147,11 +147,11 @@
 .code-index-card-top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 28px;
+  margin-bottom: 12px;
   gap: 16px;
 }
 .code-index-card-glyph {
+  flex-shrink: 0;
   font-family: var(--mono);
   font-size: 56px;
   font-weight: 700;
@@ -171,12 +171,12 @@
 }
 
 .code-index-card-title {
+  min-width: 0;
   font-family: var(--mono);
   font-size: clamp(28px, 3.2vw, 42px);
   font-weight: 700;
   letter-spacing: -.025em;
   color: var(--text);
-  margin-bottom: 6px;
   line-height: 1.05;
   overflow-wrap: anywhere;
   hyphens: auto;

@@ -5,6 +5,7 @@ use cube48opt_research::{
     coord::CoordTables,
     corner_coset::{self, BuildMode, CornerBfs, CornerPdb, CornerTransitions},
     corner_distance_search,
+    corner_joint::{JointPdb, JointTransitions, PairPdb, PairTransitions, PAIR_COUNT, PAIR_EDGES},
     corner_oracle::{self, CornerOracle, DistanceGatedOracle, DoubleCornerOracle, FullCornerDistanceOracle, StrengthenedOracle},
     corner_oracle::eo::EoPdb,
     corner_symmetry::{self, CornerSymmetries, DoubleClasses, FullCornerBfs, FullCornerPdb},
@@ -22,6 +23,12 @@ use std::{
     time::Instant,
 };
 
+#[path = "corner-research/layouts.rs"]
+mod layouts;
+#[cfg(all(feature = "opt8-native-specialized", not(target_family = "wasm")))]
+#[path = "corner-research/joint.rs"]
+mod joint;
+
 const HELP: &str = "corner-research (opt-in, unmeasured reference implementation)
 
   inspect [SCRAMBLE]
@@ -29,6 +36,13 @@ const HELP: &str = "corner-research (opt-in, unmeasured reference implementation
   verify-eo
   verify-coordinate
   verify-opt8-projection SMALL_TABLE
+  joint-check SMALL_TABLE
+  joint-build SMALL_TABLE OUTPUT CHECKPOINT
+  joint-probe SMALL_TABLE OPT8_TABLE JOINT_TABLE MAX_NODES
+  joint-pair-check SMALL_TABLE
+  joint-pair-build SMALL_TABLE OUTPUT CHECKPOINT
+  joint-pair-probe SMALL_TABLE OPT8_TABLE JOINT_PAIR_TABLE MAX_NODES
+  joint-pair-solve SMALL_TABLE OPT8_TABLE JOINT_PAIR_TABLE MAX_NODES
   build-u OUTPUT CHECKPOINT exact|CAP [CHUNK=16384]
   verify-u TABLE
   build-double OUTPUT
@@ -56,6 +70,9 @@ const HELP: &str = "corner-research (opt-in, unmeasured reference implementation
   solve-opt-distance-eo U_TABLE FULL96_TABLE 8|9 SMALL_TABLE OPT_TABLE MAX_DEPTH MAX_NODES [CONTEXTS=1]
   verify-search U_TABLE DEPTH_0_TO_3 [FULL96_TABLE]
   compare-opt8 U_TABLE FULL96_TABLE SMALL_TABLE OPT_TABLE MAX_NODES
+  compare-opt8-scheduled U_TABLE FULL96_TABLE SMALL_TABLE OPT_TABLE MAX_NODES
+  profile-opt8 U_TABLE FULL96_TABLE SMALL_TABLE OPT_TABLE MAX_NODES
+  compare-layouts FULL96_TABLE
 
 Query/solve input: id<TAB>scramble, one per line. Empty scramble means solved.
 All commands except inspect/help require the repository guard.mts. See
@@ -168,7 +185,8 @@ fn load_opt(variant: &str, small: &Path, main: &Path) -> Result<OptSolver, Strin
 #[cfg(all(feature = "opt8-native-specialized", not(target_family = "wasm")))]
 fn compare_opt8(original: &OptSolver, corners: &CornerPdb,
     full: &DenseCornerPdb, symmetries: &CornerSymmetries, max_nodes: u64,
-    load_seconds: f64) -> Result<(), String> {
+    load_seconds: f64, scheduled: bool, diagnostic: bool) -> Result<(), String> {
+    let setup = Instant::now();
     let base = original.experimental_native_opt8_oracle().ok_or("expected Opt8")?;
     let eo = EoPdb::new()?;
     let u = StrengthenedOracle::new(&base, corners)?;
@@ -176,17 +194,37 @@ fn compare_opt8(original: &OptSolver, corners: &CornerPdb,
     let distance = FullCornerDistanceOracle::from_dense(full, symmetries);
     let distance_only = DistanceGatedOracle::new(&base, &distance);
     let combined = DistanceGatedOracle::new(&u_eo, &distance);
+    let prepared = full.prepare_lookup(symmetries)?;
+    let fast_distance = FullCornerDistanceOracle::from_prepared(&prepared, symmetries);
+    let u_deferred = StrengthenedOracle::deferred(&base, corners, None)?;
+    let u_eo_deferred = StrengthenedOracle::deferred(&base, corners, Some(&eo))?;
+    let distance_late = DistanceGatedOracle::after_primary(&base, &fast_distance);
+    #[cfg(all(feature = "opt10-native-profile", not(target_family = "wasm")))]
+    let distance_profiled = DistanceGatedOracle::profiled_after_primary(&base, &fast_distance);
+    let combined_late = DistanceGatedOracle::after_primary(&u_eo_deferred, &fast_distance);
     let options = SearchOptions { max_depth: 20, max_nodes, contexts: 8 };
-    let modes = ["baseline", "u", "distance", "combined"];
+    let modes: &[&str] = if diagnostic { &["distance-late"] }
+        else if scheduled { &["u-deferred", "distance-late", "combined-late"] }
+        else { &["baseline", "u", "distance", "combined"] };
     let mut counts = [0usize; 4];
     let mut seen = std::collections::HashSet::new();
-    println!("{{\"kind\":\"comparison-ready\",\"pid\":{},\"threads\":1,\"contexts\":8,\"load_seconds\":{load_seconds:.9}}}", std::process::id());
+    let load_seconds = load_seconds + setup.elapsed().as_secs_f64();
+    let corner_bytes = corners.values().len();
+    let distance_bytes = if scheduled { prepared.memory_bytes() } else { full.memory_bytes() };
+    let combined_bytes = corner_bytes + distance_bytes + 2048;
+    let auxiliary = if scheduled {
+        format!("{{\"u-deferred\":{corner_bytes},\"distance-late\":{distance_bytes},\"combined-late\":{combined_bytes}}}")
+    } else {
+        format!("{{\"baseline\":0,\"u\":{corner_bytes},\"distance\":{distance_bytes},\"combined\":{combined_bytes}}}")
+    };
+    println!("{{\"kind\":\"comparison-ready\",\"pid\":{},\"threads\":1,\"contexts\":8,\"load_seconds\":{load_seconds:.9},\"main_table_bytes\":{},\"auxiliary_bytes\":{auxiliary}}}",
+        std::process::id(), Variant::new(8)?.bytes());
     io::stdout().flush().map_err(|error| error.to_string())?;
     input(|id, cube| {
         let (mode, case) = id.split_once(':').ok_or("comparison ID requires mode:case")?;
         let index = modes.iter().position(|&name| name == mode).ok_or("unknown comparison mode")?;
-        if counts[index] >= 100 || !seen.insert(id.to_string()) {
-            return Err("at most one pass of 100 distinct cases per mode".into());
+        if counts[index] >= (if diagnostic { 20 } else { 100 }) || !seen.insert(id.to_string()) {
+            return Err("comparison case limit or distinct single-pass IDs violated".into());
         }
         counts[index] += 1;
         let started = Instant::now();
@@ -195,13 +233,31 @@ fn compare_opt8(original: &OptSolver, corners: &CornerPdb,
             "u" => search::solve(cube, &u, options),
             "distance" => search::solve(cube, &distance_only, options),
             "combined" => search::solve(cube, &combined, options),
+            "u-deferred" => search::solve(cube, &u_deferred, options),
+            "distance-late" => {
+                #[cfg(all(feature = "opt10-native-profile", not(target_family = "wasm")))]
+                if diagnostic { search::solve(cube, &distance_profiled, options) }
+                else { search::solve(cube, &distance_late, options) }
+                #[cfg(not(all(feature = "opt10-native-profile", not(target_family = "wasm"))))]
+                search::solve(cube, &distance_late, options)
+            }
+            "combined-late" => search::solve(cube, &combined_late, options),
             _ => unreachable!(),
         }?;
         let seconds = started.elapsed().as_secs_f64();
         let solution = result.solution.as_ref().ok_or("comparison node budget exhausted without a solution")?;
         if result.cancelled { return Err("comparison cancelled".into()); }
         replay(cube, solution, false)?;
-        println!("{{\"id\":{},\"case\":{},\"mode\":{},\"pid\":{},\"seconds\":{seconds:.9},\"length\":{},\"solution\":{},\"nodes\":{},\"probes\":{}}}",
+        #[cfg(all(feature = "opt10-native-profile", not(target_family = "wasm")))]
+        let diagnostic_json = if diagnostic {
+            if !result.stats.profile.matches_totals(&result.stats) {
+                return Err("corner profile does not conserve search totals".into());
+            }
+            format!(",\"profile\":{}", result.stats.profile.json())
+        } else { String::new() };
+        #[cfg(not(all(feature = "opt10-native-profile", not(target_family = "wasm"))))]
+        let diagnostic_json = String::new();
+        println!("{{\"id\":{},\"case\":{},\"mode\":{},\"pid\":{},\"seconds\":{seconds:.9},\"length\":{},\"solution\":{},\"nodes\":{},\"probes\":{}{diagnostic_json}}}",
             json(id), json(case), json(mode), std::process::id(), solution.len(), json(&word(solution)),
             result.stats.nodes, result.stats.probes);
         Ok(())
@@ -399,11 +455,20 @@ fn verify_search(table: &CornerPdb, depth: u8, full: Option<(&FullCornerPdb, &Co
     let edge_orientation = EoPdb::new()?;
     let with_eo = CornerOracle::new_with_eo(table, &edge_orientation);
     let dense = full.map(|(pdb, symmetries)| DenseCornerPdb::from_sparse(pdb, symmetries)).transpose()?;
+    let prepared = full.zip(dense.as_ref()).map(|((_, symmetries), table)| table.prepare_lookup(symmetries)).transpose()?;
     let sparse_oracle = full.map(|(pdb, symmetries)| FullCornerDistanceOracle::new(pdb, symmetries));
     let dense_oracle = full.zip(dense.as_ref()).map(|((_, symmetries), table)|
         FullCornerDistanceOracle::from_dense(table, symmetries));
+    let prepared_oracle = full.zip(prepared.as_ref()).map(|((_, symmetries), table)|
+        FullCornerDistanceOracle::from_prepared(table, symmetries));
+    let deferred = StrengthenedOracle::deferred(&oracle, table, Some(&edge_orientation))?;
     for (index, &cube) in queue.iter().enumerate() {
         let expected = known[&cube] as usize;
+        for state in [cube, cube.inverse()] {
+            let expected_bound = with_eo.prepare(&state, 13).map(|q| with_eo.lookup(q)).unwrap();
+            let deferred_bound = deferred.prepare(&state, 13).map(|q| deferred.lookup(q)).unwrap();
+            if expected_bound != deferred_bound { return Err(format!("deferred bound differs at {index}")); }
+        }
         for side_oracle in [&oracle, &with_eo] {
             for contexts in [1, 8] {
                 let result = search::solve(cube, side_oracle, SearchOptions {
@@ -416,9 +481,18 @@ fn verify_search(table: &CornerPdb, depth: u8, full: Option<(&FullCornerPdb, &Co
                 replay(cube, &moves, false)?;
             }
         }
-        if let (Some(sparse), Some(dense)) = (&sparse_oracle, &dense_oracle) {
+        if let (Some(sparse), Some(dense), Some(prepared)) = (&sparse_oracle, &dense_oracle, &prepared_oracle) {
             if sparse.lower_bound(&cube)? != dense.lower_bound(&cube)? {
                 return Err(format!("sparse/dense distance differs at shallow case {index}"));
+            }
+            let late = DistanceGatedOracle::after_primary(&deferred, prepared);
+            for contexts in [1, 8] {
+                let result = search::solve(cube, &late, SearchOptions {
+                    max_depth: depth, max_nodes: 1_000_000, contexts,
+                })?;
+                let moves = result.solution.ok_or_else(|| format!("late distance NISS did not solve {index}"))?;
+                if result.cancelled || moves.len() != expected { return Err(format!("late distance length differs at {index}")); }
+                replay(cube, &moves, false)?;
             }
             for distance_oracle in [sparse, dense] {
                 let gated = DistanceGatedOracle::new(&oracle, distance_oracle);
@@ -447,8 +521,8 @@ fn verify_search(table: &CornerPdb, depth: u8, full: Option<(&FullCornerPdb, &Co
         }
         if index % 256 == 0 { eprintln!("search certificate: {index}/{}", queue.len()); }
     }
-    println!("{{\"kind\":\"bounded-search-check\",\"passed\":true,\"reference_depth\":{},\"full_cube_states\":{},\"contexts\":[1,8],\"distance_only_checked\":{},\"dense_and_gated_niss_checked\":{}}}",
-        depth, queue.len(), full.is_some(), full.is_some());
+    println!("{{\"kind\":\"bounded-search-check\",\"passed\":true,\"reference_depth\":{},\"full_cube_states\":{},\"contexts\":[1,8],\"distance_only_checked\":{},\"dense_and_gated_niss_checked\":{},\"prepared_late_niss_checked\":{}}}",
+        depth, queue.len(), full.is_some(), full.is_some(), full.is_some());
     Ok(())
 }
 
@@ -474,8 +548,61 @@ fn run() -> Result<(), String> {
         return Err("use the repository guard.mts with CUBEOPT_BACKEND=corner; see corner96-research.md".into());
     }
     match args[0].as_str() {
-        "compare-opt8" => {
+        "joint-pair-solve" => {
+            arity(&args, 5, 5)?;
+            #[cfg(all(feature = "opt8-native-specialized", not(target_family = "wasm")))]
+            { joint::solve(&args) }
+            #[cfg(not(all(feature = "opt8-native-specialized", not(target_family = "wasm"))))]
+            Err("joint-pair-solve requires opt8-native-specialized".into())
+        }
+        "joint-probe" | "joint-pair-probe" => {
+            arity(&args, 5, 5)?;
+            #[cfg(all(feature = "opt8-native-specialized", not(target_family = "wasm")))]
+            { if args[0] == "joint-probe" { joint::probe::<24>(&args) } else { joint::probe::<PAIR_EDGES>(&args) } }
+            #[cfg(not(all(feature = "opt8-native-specialized", not(target_family = "wasm"))))]
+            Err("joint-probe requires opt8-native-specialized".into())
+        }
+        "joint-pair-check" | "joint-pair-build" => {
+            let check = args[0] == "joint-pair-check";
+            arity(&args, if check { 2 } else { 4 }, if check { 2 } else { 4 })?;
+            let started = Instant::now();
+            if fs::metadata(&args[1]).map_err(|e| e.to_string())?.len() != 818_008 {
+                return Err("joint geometry requires the 818008-byte Opt8 small snapshot".into());
+            }
+            let small = CoordTables::from_variant_bytes(&fs::read(&args[1]).map_err(|e| e.to_string())?, 8)?;
+            let transitions = PairTransitions::new(&small)?;
+            if check {
+                println!("{{\"kind\":\"corner-edge-pair-check\",\"verified\":true,\"refines_single_edge\":true,\"states\":{PAIR_COUNT},\"seconds\":{}}}", started.elapsed().as_secs_f64());
+            } else {
+                let pdb = PairPdb::build_pair(&transitions, Path::new(&args[2]), Path::new(&args[3]))?;
+                println!("{{\"kind\":\"corner-edge-pair-build\",\"certified\":true,\"states\":{PAIR_COUNT},\"bytes\":{},\"maximum\":{},\"distribution\":{:?},\"seconds\":{}}}",
+                    PAIR_COUNT + 24, pdb.maximum, pdb.distribution(), started.elapsed().as_secs_f64());
+            }
+            Ok(())
+        }
+        "joint-check" | "joint-build" => {
+            arity(&args, if args[0] == "joint-check" { 2 } else { 4 }, if args[0] == "joint-check" { 2 } else { 4 })?;
+            let started = Instant::now();
+            if fs::metadata(&args[1]).map_err(|e| e.to_string())?.len() != 818_008 {
+                return Err("joint geometry requires the existing 818008-byte Opt8 small snapshot".into());
+            }
+            let small = CoordTables::from_variant_bytes(&fs::read(&args[1]).map_err(|e| e.to_string())?, 8)?;
+            let transitions = JointTransitions::new(&small)?;
+            if args[0] == "joint-check" {
+                println!("{{\"kind\":\"corner-edge-joint-check\",\"verified\":true,\"states\":88179840,\"seconds\":{}}}", started.elapsed().as_secs_f64());
+            } else {
+                let pdb = JointPdb::build(&transitions, Path::new(&args[2]), Path::new(&args[3]))?;
+                println!("{{\"kind\":\"corner-edge-joint-build\",\"certified\":true,\"states\":88179840,\"bytes\":88179864,\"maximum\":{},\"distribution\":{:?},\"seconds\":{}}}",
+                    pdb.maximum, pdb.distribution(), started.elapsed().as_secs_f64());
+            }
+            Ok(())
+        }
+        "compare-layouts" => { arity(&args, 2, 2)?; layouts::compare(Path::new(&args[1])) }
+        "compare-opt8" | "compare-opt8-scheduled" | "profile-opt8" => {
             arity(&args, 6, 6)?;
+            if args[0] == "profile-opt8" && !cfg!(feature = "opt10-native-profile") {
+                return Err("profile-opt8 requires the existing opt10-native-profile diagnostics feature".into());
+            }
             #[cfg(all(feature = "opt8-native-specialized", not(target_family = "wasm")))]
             {
                 let started = Instant::now();
@@ -485,7 +612,8 @@ fn run() -> Result<(), String> {
                 let full = load_dense(Path::new(&args[2]), &symmetries)?;
                 let original = load_opt("8", Path::new(&args[3]), Path::new(&args[4]))?;
                 compare_opt8(&original, &corners, &full, &symmetries,
-                    number(&args[5], 1, 1_000_000_000, "node budget")?, started.elapsed().as_secs_f64())
+                    number(&args[5], 1, 1_000_000_000, "node budget")?, started.elapsed().as_secs_f64(),
+                    args[0] != "compare-opt8", args[0] == "profile-opt8")
             }
             #[cfg(not(all(feature = "opt8-native-specialized", not(target_family = "wasm"))))]
             Err("compare-opt8 requires the opt8-native-specialized feature".into())

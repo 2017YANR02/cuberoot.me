@@ -101,7 +101,7 @@ const previousReview = resolve(openDir, 'session-opt9-quarter-fixed.json');
 const previousReviewSha256 = 'b9cdb33500407bd5e8203da9d69a38e385d3156e9edff6f1f08188a3d5ed43e0';
 const opt8Prior = 'wca100-local4-opt8-release4-turbofan-20261014';
 const tablePaths = {
-  8: '/Users/eula/.Trash/retired-opt-tables-20261013/.tmp/cubeopt-reverse/opt8-generated/h48prun31h8.dat',
+  8: resolve(openBase, 'opt8-generated/h48prun31h8.dat'),
   9: resolve(openBase, 'opt9-generated/h48prun31h9.dat'),
 };
 const expectedCorpus = {

@@ -31,7 +31,7 @@ export function localOpt8Request(stage:string) {
   const [build]=builds[stage];
   const label=`wca100-local4-opt8-${stage}-turbofan-20261014`;
   const args=[resolve(HERE,'wasm-benchmark.mjs'),'--variant','8','--threads','4','--engine','rust','--compiler','turbofan',
-    '--table','/Users/eula/.Trash/retired-opt-tables-20261013/.tmp/cubeopt-reverse/opt8-generated/h48prun31h8.dat',
+    '--table',resolve(BASE,'opt8-generated/h48prun31h8.dat'),
     '--small',resolve(BASE,'opt8-generated/small-memory.bin'),
     '--wasm',resolve(BASE,'rust-wasm-shared-builds',build,'cube48opt-rust8.wasm'),
     '--out',resolve(BASE,label)];

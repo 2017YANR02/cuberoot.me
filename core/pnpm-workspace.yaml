@@ -12,6 +12,7 @@ allowBuilds:
   esbuild: true
   sharp: false # next/image native build,POC 不用图片优化跳过
 patchedDependencies:
+  '@app-foundation/workspace-ui@0.1.0': patches/@app-foundation__workspace-ui@0.1.0.patch
   cubing@0.63.3: patches/cubing@0.63.3.patch
 # These packages publish Three.js declarations without a types dependency.
 # Pin their matching types so installs cannot resolve cubing's older hoisted types.

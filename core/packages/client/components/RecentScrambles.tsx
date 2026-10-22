@@ -166,13 +166,6 @@ function findRarestSelection(
   return best ? { variant: best.variant, metric: best.metric, subsetKey: best.subsetKey, step: best.step } : null;
 }
 
-// 稀有汇总:概率阈值下拉的候选(p < 选中值)。默认 1/10k。
-const RARE_THRESHOLDS = [
-  { v: 1e-3, label: '1/1k' },
-  { v: 1e-4, label: '1/10k' },
-  { v: 1e-5, label: '1/100k' },
-];
-const RARE_DEFAULT = 1e-4;
 const RARE_CAP = 60; // 渲染上限(每张卡含 SVG 预览 + ObjectURL,过多伤性能);超出给提示
 
 interface RareEntry { id: string; uiVariant: string; metric: string; step: number; color: ColorLetter | ''; subsetKey: string; p: number }
@@ -384,7 +377,7 @@ function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, dotColors
         {rarity && (
           <div className="rs-scard-rarity">
             <span className="rs-scard-rtag">{rarity.tag}</span>
-            <span className="rs-scard-rprob">≈ {rarity.prob}</span>
+            <span className="rs-scard-rprob">{rarity.prob}</span>
           </div>
         )}
         <Link
@@ -512,8 +505,7 @@ export default function RecentScrambles({ lang }: Props) {
       onTouchStart={loadExtras}
     >
       <div className="rs-topbar">
-        <span className="rs-title">{tr({ zh: '近期打乱', en: 'Recent Scrambles' })}</span>
-        {dateRange && <span className="rs-date-range">{dateRange}</span>}
+        <span className="rs-title" title={dateRange || undefined}>{tr({ zh: '近期打乱', en: 'Recent Scrambles' })}</span>
         <PuzzlePicker showArrow={false} isZh={isZh} selectedEvent={curEvent} groups={pickerGroups} onSelect={setEvent} />
       </div>
       {curEvent === '333'
@@ -535,15 +527,8 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
   const [metric, setMetric] = useState('cross');
   const [step, setStep] = useState<number | null>(null);
   const sel = useSubsetSelection('dual');
-  // 概率视图专用的底色档:默认双色白黄(WY)。独立于类型视图的 sel —— 类型视图会被 findRarestSelection
-  // 自动定位到最稀有(单色)那格,概率视图不该被它带走,故各持一份。
-  const rareSel = useSubsetSelection('dual');
-  // 视图:'type' 按 变体/类型/底色/步数 下钻单桶(变体可选 LENGTH_VARIANT = 按原打乱长度分桶);
-  // 'rare' 在选定底色档内横扫全部 变体×类型,列出概率 < threshold 的稀有打乱。
-  const [mode, setMode] = useState<'type' | 'rare'>('type');
-  const [threshold, setThreshold] = useState(RARE_DEFAULT);
-  // 概率视图的「综合」档:合并全部底色档取跨档最稀有(picker 里的第 5 个选项)。与 rareSel 互斥。
-  const [rareAgg, setRareAgg] = useState(false);
+  // 最稀有固定展示全批最低概率结果；自选保留独立的筛选条件。
+  const [mode, setMode] = useState<'type' | 'rare'>('rare');
 
   // 首屏一次性把默认选择定位到本批全局概率最低(最稀有)的那一格;用户手动改过任一选择器即不再覆盖。
   const pickedRef = useRef(false);
@@ -567,15 +552,6 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
     selectOption: (id: string) => { markTouched(); sel.selectOption(id); },
     // 菜单里点色块走这条(一次定模式 + 子集);auto-pick 用的是未包装的 sel,不会误标 touched。
     selectByKey: (key: string) => { markTouched(); sel.selectByKey(key); },
-  };
-
-  // 概率视图的底色选择器:点任一色块即退出「综合」;综合选中时 subsetKey 置空 = 不高亮任何色块。
-  const rarePickerSel: SubsetSelection = {
-    ...rareSel,
-    subsetKey: rareAgg ? '' : rareSel.subsetKey,
-    setColorMode: (m: ColorMode) => { setRareAgg(false); rareSel.setColorMode(m); },
-    selectOption: (id: string) => { setRareAgg(false); rareSel.selectOption(id); },
-    selectByKey: (key: string) => { setRareAgg(false); rareSel.selectByKey(key); },
   };
 
   const hasData = (v: string) => {
@@ -656,14 +632,12 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
     return `${lp}/scramble/stats${qs ? `?${qs}` : ''}`;
   }, [prob, curVariant, curMetric, isWhole, subsetKey, lp]);
 
-  // 稀有汇总:在选定底色档(rareSel)内、或「综合」(rareAgg=合并全档),概率 < threshold 的去重打乱
-  // (最稀有在前)。仅 rare 模式计算。
-  const rare = useMemo(
-    () => (mode === 'rare' && data && dist
-      ? collectRareScrambles(data, dist, threshold, rareAgg ? null : rareSel.subsetKey)
-      : []),
-    [mode, data, dist, threshold, rareAgg, rareSel.subsetKey],
-  );
+  // 跨所有底色和类型比较，保留最低概率的结果（含并列），不受自选条件影响。
+  const rare = useMemo(() => {
+    if (mode !== 'rare' || !data || !dist) return [];
+    const candidates = collectRareScrambles(data, dist, Infinity, null);
+    return candidates.filter(r => r.p === candidates[0]?.p);
+  }, [mode, data, dist]);
 
   const modePill = (
     <select
@@ -672,8 +646,8 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
       aria-label={tr({ zh: '视图', en: 'View' })}
       className="rs-select"
     >
-      <option value="true">{tr({ zh: '概率', en: 'Rare' })}</option>
-      <option value="false">{tr({ zh: '类型', en: 'By type' })}</option>
+      <option value="true">{tr({ zh: '最稀有', en: 'Rarest' })}</option>
+      <option value="false">{tr({ zh: '自选', en: 'Custom' })}</option>
     </select>
   );
   const variantSelect = (
@@ -701,20 +675,7 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
     <div className="rs-body">
       <div className="rs-head">
         {modePill}
-        {mode === 'rare' ? (<>
-          <SubsetColorPicker sel={rarePickerSel} isZh={isZh} allOption={{ active: rareAgg, onSelect: () => setRareAgg(true) }} />
-          <select
-            className="rs-select"
-            value={threshold}
-            onChange={(e) => setThreshold(Number(e.target.value))}
-            aria-label={tr({ zh: '概率阈值', en: 'Probability threshold' })}
-            title={tr({ zh: '列出概率低于此值的近期打乱', en: 'List recent scrambles rarer than this' })}
-          >
-            {RARE_THRESHOLDS.map((t) => (
-              <option key={t.label} value={t.v}>{`< ${t.label}`}</option>
-            ))}
-          </select>
-        </>) : (<>
+        {mode === 'type' && (<>
         {!isWhole && <SubsetColorPicker sel={pickerSel} isZh={isZh} />}
         {variantSelect}
         {steps.length > 0 && (
@@ -735,9 +696,8 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
           <>
             <div className="rs-cards scroll-panel scroll-panel--hover-lift">
               {rare.slice(0, RARE_CAP).map((r) => {
-                // 综合视图:点显示整个胜出档的色集(多色档 = 扇形拼色),消除「多色档被当单色底」歧义。
-                // 具体档视图:档已由 picker 明示,点仍显示单个胜出色。
-                const aggColors = rareAgg ? subsetColorsOf(r.subsetKey) : [];
+                // 标明最低概率对应的底色档。
+                const aggColors = subsetColorsOf(r.subsetKey);
                 return (
                   <ScrambleCard
                     key={r.id}
@@ -761,9 +721,7 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
               <div className="rs-rare-more">{tr({ zh: `仅显示最稀有的 ${RARE_CAP} 条(共 ${rare.length} 条)`, en: `Showing the ${RARE_CAP} rarest of ${rare.length}` })}</div>
             )}
           </>
-        ) : (
-          <div className="rs-empty">{tr({ zh: '本批暂无低于该概率的打乱', en: 'No scrambles below this probability in this batch' })}</div>
-        )
+        ) : null
       ) : entries.length > 0 ? (
         <div className="rs-cards scroll-panel scroll-panel--hover-lift">
           {entries.slice(0, 12).map(([id, color]) => (

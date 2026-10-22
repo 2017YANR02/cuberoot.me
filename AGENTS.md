@@ -9,7 +9,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 | 路径 | 责任与边界 |
 | --- | --- |
 | `core/packages/client` | 唯一 Web 前端，包含 `/platform/*` 产品入口及其复用的 `/org/*`、`/learn/*` 深链 |
-| `core/apps/api` | Hono API + PostgreSQL，独立运行和部署；对 Web 源码与 `client/public` 的旧耦合是待治理债务，不得扩大 |
+| `core/apps/api` | Hono API + PostgreSQL，独立运行和部署；源码与运行时资产不依赖 Web 私有目录；既有解耦验收见架构跟踪表，禁止重新引入 |
 | `core/packages/app-ui` | Android、iOS、HarmonyOS NEXT、Windows 和 macOS 唯一共享的 React 产品层；不调用原生 API，只通过宿主 capability adapter 使用系统能力 |
 | `core/apps/mobile` | Android/iOS 共用的 Capacitor 薄宿主；业务 UI 从 `@cuberoot/app-ui` 消费 |
 | `core/apps/desktop` | Windows/macOS 共用的单一 Tauri 薄宿主；构建、安装、BLE、签名与公证证据分平台记账 |
@@ -25,7 +25,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 | `tools/` / `stats/` | `static.cuberoot.me` 的 upstream/教学资源与本地生成数据；统计快照由 `wca-data-latest` Release 管理，不再提交 Git |
 | `ops/` / `docs/` / `.github/workflows` | 运维、状态/设计记录和 CI/部署契约 |
 
-事实源按优先级核对：`core/pnpm-workspace.yaml` 与各 `package.json` 定义 pnpm workspace/命令，Cargo app 由自身 `Cargo.toml` 定义；源码路由、shared schema 和 migration 定义运行契约；`.github/workflows` 与 `ops/` 定义发布边界；`docs/generated-artifacts.json` 定义生成物，`docs/generated-artifacts.md` 解释维护方式；`docs/architecture-modernization-tracker.md` 是架构执行入口。
+事实源按优先级核对：`core/pnpm-workspace.yaml` 与各 `package.json` 定义 pnpm workspace/命令，Cargo app 由自身 `Cargo.toml` 定义；源码路由、shared schema 和 migration 定义运行契约；`.github/workflows` 与 `ops/` 定义发布边界；`docs/generated-artifacts.json` 定义生成物，`docs/generated-artifacts.md` 解释维护方式；`docs/architecture-modernization-tracker.md` 是当前架构执行入口，历史验收单独保存在 `docs/architecture-modernization-history.md`。架构建议须注明检查提交与具体源码/配置证据；路径和 package 身份复用现有 workspace resolver，部署路径合同从 manifest 依赖推导，文档不重复维护完整清单。
 
 新代码归属：页面和平台适配留在所属 app；稳定、运行时中性且有真实多端消费者的契约/纯逻辑才进共享 package；只因两份文件相似不拆 package。
 
@@ -42,7 +42,7 @@ WXML 表达式直接写 `&&` / `||`，禁 HTML 实体；改 WXML 后必须通过
 
 新增生产依赖禁止 `package -> app`、`app A -> app B 源码`、`server -> client/client public`、`miniprogram -> React DOM/Next`、跨包 deep import 和任何现役包对 `packages/platform` 的引用；已有违规在架构跟踪表里递减，不得扩大。
 
-所有 core pnpm 命令先进入 `core/`；Cargo app 进入自身目录运行 `cargo`；验证使用目标单元的 `typecheck`/`test`/`build`；当前 API 部署仍对广泛 `core/**` 变更敏感，push 前必须按 workflow path filter 核对实际触发和运行产物。
+所有 core pnpm 命令先进入 `core/`；Cargo app 进入自身目录运行 `cargo`；验证使用目标单元的 `typecheck`/`test`/`build`；API 部署按真实输入路径触发；push 前以当前 workflow path filter 与产物步骤核对范围，不从历史文档推断。
 
 ## 模块归属(fork 不能改)
 
@@ -105,6 +105,8 @@ WXML 表达式直接写 `&&` / `||`，禁 HTML 实体；改 WXML 后必须通过
 用户说“帮我配置 dev，名字是…电脑是…”、新增同事开发域名或撤销某台电脑时，读取 `.agents/skills/dev-preview/SKILL.md` 和 `docs/dev-preview-onboarding.md`。以 `ops/dev-preview/machines.json` 为唯一设备清单，使用 `core/scripts/dev-preview/cli.ts` 和 `client.ts` 完成登记、授权、DNS、证书、部署、电脑自启和验收；不能只改 DNS 就报完成。新增同事使用每设备独立 SSH 密钥，不分发现有 FRP 共用令牌。
 
 ## 开发命令
+
+- **代码量统计（维护者要求，2026-10-22）**：用户说“统计代码量”“看看代码统计”等时，AI 直接运行 `cloc` 并汇总结果，不只提供命令让用户自行执行。默认在仓库根目录用 `cloc --vcs=git` 统计 Git 跟踪文件的当前本地内容，按需补充语言和主要模块统计；明确区分代码、注释、空行，以及数据、资源、第三方和生成内容，不把总行数称为自研代码量。维护者 Mac 已通过 Homebrew 安装 cloc；换环境先检查可用性。
 
 流量异常排查先读 [`docs/traffic-monitor.md`](docs/traffic-monitor.md) 与 [`docs/traffic-defense.md`](docs/traffic-defense.md)（当前防护、费用保护、暂停及恢复步骤），2026-09-22 `/zh/calc` 峰值的证据见 [`docs/traffic-incident-2026-09-22.md`](docs/traffic-incident-2026-09-22.md)。先核对报表的 `coverage`：自动来源分析目前只覆盖自有服务器 nginx；Vercel 请求在现有 Firewall 和 Logs 中按时间与路径核查。Analytics 是浏览器事件，自有线路也可能上报，不能等同于 Vercel 页面线路；停用时不得为了监控自行重新开启。User-Agent 和浏览器名称不能证明是真人；不要把 nginx 请求数当作全站访客数，也不要为监控启用额外收费项。
 

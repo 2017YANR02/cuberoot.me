@@ -64,7 +64,7 @@
 }
 .rs-prob:hover { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
 
-/* 卡片网格:一行两卡;单卡时撑满整行(避免半宽留白)。固定高度 + 右侧滚动条走
+/* 卡片网格:桌面一行两卡,单卡也保持半宽。固定高度 + 右侧滚动条走
    .scroll-panel(scroll_panel.css)。minmax(0,…) 让列缩到容器、不被卡内容顶宽。 */
 .rs-cards {
   flex: 1 1 100%;
@@ -72,7 +72,6 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem;
 }
-.rs-cards > .rs-scard:only-child { grid-column: 1 / -1; }
 
 .rs-scard {
   display: flex;

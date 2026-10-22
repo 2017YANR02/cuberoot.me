@@ -51,6 +51,41 @@ test('corner research cannot borrow another backend review or a parent guard tok
   assert.throws(() => cornerResearchPolicy('corner96-test', '/tmp/other', ['verify-small'], env));
 });
 
+test('joint projection uses a small snapshot and bounded distinct research outputs', () => {
+  assert.equal(policy(['joint-check', '/tmp/small.bin']).rssLimit, 512 * 2 ** 20);
+  const args = ['joint-build', '/tmp/small.bin', artifact('joint.dat'), artifact('joint.chk')];
+  assert.equal(policy(args).rssLimit, 2 ** 30);
+  assert.equal(policy(args).tableBytes, 88_179_864);
+  assert.throws(() => policy([...args.slice(0, 3), args[2]]));
+  assert.throws(() => policy([args[0], args[2], args[2], args[3]]));
+  assert.throws(() => policy([args[0], args[1], '/tmp/joint.dat', args[3]]));
+  assert.throws(() => policy([...args, 'unbounded']));
+  const probe = ['joint-probe', '/tmp/small.bin', '/tmp/main.dat', artifact('joint.dat'), '1000000000'];
+  assert.equal(policy(probe).rssLimit, 30_401_280 * 2 ** 8 + 88_179_864 + 2 ** 30);
+  assert.throws(() => policy([...probe.slice(0, 4), '0']));
+  assert.throws(() => policy([...probe.slice(0, 3), '/tmp/joint.dat', probe[4]]));
+});
+
+test('research cannot depend on tables in macOS Trash', () => {
+  const args = ['joint-pair-solve', '/tmp/small.bin', '/tmp/main.dat', artifact('pair.dat'), '1000'];
+  for (const retired of ['/Users/owner/.Trash/main.dat', '/Volumes/Data/.Trashes/501/main.dat'])
+    assert.throws(() => policy([args[0], args[1], retired, ...args.slice(3)]), /Trash is not a working directory/);
+});
+
+test('two distinct edges budget byte distances plus a bounded u32 frontier', () => {
+  const build = ['joint-pair-build', '/tmp/small.bin', artifact('pair.dat'), artifact('pair.chk')];
+  assert.equal(policy(['joint-pair-check', '/tmp/small.bin']).rssLimit, 512 * 2 ** 20);
+  assert.equal(policy(build).tableBytes, 1_939_956_504);
+  assert.equal(policy(build).rssLimit, 5 * 1_939_956_480 + 2 ** 30);
+  assert.throws(() => policy([...build.slice(0, 3), build[2]]));
+  assert.throws(() => policy([build[0], build[1], '/tmp/pair.dat', build[3]]));
+  const probe = ['joint-pair-probe', '/tmp/small.bin', '/tmp/main.dat', artifact('pair.dat'), '1000000000'];
+  assert.equal(policy(probe).rssLimit, 30_401_280 * 2 ** 8 + 1_939_956_504 + 2 ** 30);
+  assert.equal(policy(['joint-pair-solve', ...probe.slice(1)]).rssLimit, policy(probe).rssLimit);
+  assert.throws(() => policy([...probe.slice(0, 4), '0']));
+  assert.throws(() => policy([...probe, 'unbounded']));
+});
+
 test('full-cube research searches always have a finite node budget and bounded cache', () => {
   const args = ['solve-distance', artifact('c.dat'), '10', '1000000', '100000'];
   assert.equal(policy(args).backend, 'corner');
@@ -70,10 +105,16 @@ test('Opt strengthening budgets the existing main table and does not expose gene
   assert.equal(policy(comparison).rssLimit, 30_401_280 * 2 ** 8 + 918_604 + 4_673_930 + 2 ** 30);
   assert.throws(() => policy([...comparison.slice(0, 5), '0']));
   assert.throws(() => policy([...comparison.slice(0, 5), '1000000001']));
+  assert.equal(policy(['compare-opt8-scheduled', ...comparison.slice(1)]).rssLimit,
+    policy(comparison).rssLimit);
+  assert.equal(policy(['profile-opt8', ...comparison.slice(1)]).rssLimit,
+    policy(comparison).rssLimit);
 });
 
 test('dense and distance-gated routes retain path, context and finite-budget restrictions', () => {
   assert.equal(policy(['verify-dense', artifact('c.dat')]).rssLimit, 2 ** 30);
+  assert.equal(policy(['compare-layouts', artifact('c.dat')]).rssLimit, 512 * 2 ** 20);
+  assert.throws(() => policy(['compare-layouts', '/tmp/unscoped.dat']));
   assert.equal(policy(['query96-dense', artifact('c.dat')]).tableBytes, 4_673_930);
   for (const command of ['solve-u-distance', 'solve-u-distance-sparse']) {
     const args = [command, artifact('u.dat'), artifact('c.dat'), '10', '1000', '8'];

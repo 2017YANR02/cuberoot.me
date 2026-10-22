@@ -1,4 +1,4 @@
-//! Factorized dense indexing of the same complete-corner 96 orbits.
+//! Factorized dense indexing of complete-corner 48 or 96 orbits.
 //!
 //! First quotient the 40320 corner permutations: their spatial/inverse action
 //! has 654 orbits. Transport a permutation to its minimum representative, then
@@ -6,12 +6,13 @@
 //! Thus only 654 * 2187 orientation slots need a local-class decoder. The sum
 //! of their orientation-orbit counts is 934778, exactly the sparse table's set.
 //!
-//! Queries apply ONE transported affine orientation map and a u16 lookup;
-//! they do not enumerate 96 complete corner states. This is an operation-count
-//! improvement, not a measured performance result. Index construction and
-//! verification are deliberately explicit. No dense BFS or new file format is
-//! introduced. DenseCornerPdb either converts an already certified sparse PDB
-//! or directly certifies that same persistent format on the dense orbit graph.
+//! Spatial-only indexing uses 984 permutation orbits and 1841970 full orbits.
+//! Queries apply one transported affine orientation map; PreparedCornerPdb
+//! precompiles it and folds the local-class decoder into direct distance bytes.
+//! Exhaustive equivalence and lookup/search measurements are recorded in
+//! corner96-validation.md. No dense BFS or new file format is introduced.
+//! DenseCornerPdb either converts an already certified sparse PDB or directly
+//! certifies that same persistent format on the dense orbit graph.
 
 use super::{
     allocated, checked_usize, corner_cube, full_corner_unrank, inverse, multiply,
@@ -25,6 +26,8 @@ use std::path::Path;
 
 pub const PERMUTATION_COUNT: usize = 40_320;
 pub const PERMUTATION_ORBIT_COUNT: usize = 654;
+pub const SPATIAL_PERMUTATION_ORBIT_COUNT: usize = 984;
+pub const SPATIAL_CORNER_ORBIT_COUNT: usize = 1_841_970;
 pub const ORIENTATION_SLOT_COUNT: usize = PERMUTATION_ORBIT_COUNT * ORIENTATION_COUNT;
 /// Edges checked by a direct dense load. The construction BFS still uses the
 /// complete 36-edge left/right adjacency; this constant concerns certification.
@@ -166,29 +169,41 @@ pub struct DenseCornerIndex {
 
 impl DenseCornerIndex {
     pub fn new(symmetries: &CornerSymmetries) -> Result<Self, String> {
+        Self::with_inversion(symmetries, true)
+    }
+
+    pub fn spatial(symmetries: &CornerSymmetries) -> Result<Self, String> {
+        Self::with_inversion(symmetries, false)
+    }
+
+    fn with_inversion(symmetries: &CornerSymmetries, inversion: bool) -> Result<Self, String> {
+        let permutation_orbits = if inversion { PERMUTATION_ORBIT_COUNT } else { SPATIAL_PERMUTATION_ORBIT_COUNT };
+        let corner_orbits = if inversion { FULL_CORNER_ORBIT_COUNT } else { SPATIAL_CORNER_ORBIT_COUNT };
+        let orientation_slots = permutation_orbits * ORIENTATION_COUNT;
+        let token_count = if inversion { 96 } else { 48 };
         let inverse_token = inverse_tokens(symmetries)?;
         let mut permutation_class = allocated(PERMUTATION_COUNT, NO_CLASS, "dense permutation classes")?;
         let mut transport = allocated(PERMUTATION_COUNT, NO_TOKEN, "dense permutation transporters")?;
         let mut permutation_representatives = Vec::new();
-        permutation_representatives.try_reserve_exact(PERMUTATION_ORBIT_COUNT)
+        permutation_representatives.try_reserve_exact(permutation_orbits)
             .map_err(|e| format!("cannot allocate dense permutation representatives: {e}"))?;
         let mut stabilizers: Vec<Vec<u8>> = Vec::new();
-        stabilizers.try_reserve_exact(PERMUTATION_ORBIT_COUNT)
+        stabilizers.try_reserve_exact(permutation_orbits)
             .map_err(|e| format!("cannot allocate dense permutation stabilizers: {e}"))?;
 
         // The first unseen permutation is its orbit minimum, because every
         // earlier discovered orbit was marked in its entirety. This performs
-        // only 654*96 permutation images, rather than 40320*96 minima scans.
+        // one token scan per orbit (654*96 or 984*48), not per permutation.
         for rank in 0..PERMUTATION_COUNT {
             if permutation_class[rank] != NO_CLASS { continue; }
             let class = permutation_representatives.len();
-            if class >= PERMUTATION_ORBIT_COUNT {
+            if class >= permutation_orbits {
                 return Err("permutation orbit count exceeded the analytic prediction".into());
             }
             let permutation = permutation_unrank(rank);
             permutation_representatives.push(rank as u16);
             let mut stabilizer = Vec::new();
-            for token in 0..96u8 {
+            for token in 0..token_count {
                 let image = apply_token(&permutation, token, symmetries);
                 let other = permutation_rank(&image);
                 if other < rank {
@@ -207,13 +222,13 @@ impl DenseCornerIndex {
             }
             stabilizers.push(stabilizer);
         }
-        if permutation_representatives.len() != PERMUTATION_ORBIT_COUNT
+        if permutation_representatives.len() != permutation_orbits
             || permutation_class.contains(&NO_CLASS) || transport.contains(&NO_TOKEN) {
-            return Err("permutation factor did not yield 654 complete orbits".into());
+            return Err("permutation factor did not yield the expected complete orbits".into());
         }
 
         // Check every stored transport, including its orientation effect. A
-        // mere permutation witness would not certify the actual 96 action.
+        // mere permutation witness would not certify the full corner action.
         for rank in 0..PERMUTATION_COUNT {
             let permutation = permutation_unrank(rank);
             let class = permutation_class[rank] as usize;
@@ -223,14 +238,14 @@ impl DenseCornerIndex {
             verify_affine_action(&permutation, target, token, &action, symmetries)?;
         }
 
-        let mut local_class = allocated(ORIENTATION_SLOT_COUNT, NO_CLASS, "dense orientation classes")?;
-        let mut representative_bits = allocated((ORIENTATION_SLOT_COUNT + 63) / 64, 0u64, "dense representative bits")?;
+        let mut local_class = allocated(orientation_slots, NO_CLASS, "dense orientation classes")?;
+        let mut representative_bits = allocated((orientation_slots + 63) / 64, 0u64, "dense representative bits")?;
         let mut offsets = Vec::new();
-        offsets.try_reserve_exact(PERMUTATION_ORBIT_COUNT + 1)
+        offsets.try_reserve_exact(permutation_orbits + 1)
             .map_err(|e| format!("cannot allocate dense class offsets: {e}"))?;
         offsets.push(0u32);
 
-        for class in 0..PERMUTATION_ORBIT_COUNT {
+        for class in 0..permutation_orbits {
             let permutation_rank = permutation_representatives[class] as usize;
             let permutation = permutation_unrank(permutation_rank);
             let mut actions = Vec::new();
@@ -270,8 +285,8 @@ impl DenseCornerIndex {
             }
             offsets.push(offsets[class] + u32::from(classes_in_fiber));
         }
-        if offsets.last().copied() != Some(FULL_CORNER_ORBIT_COUNT as u32) {
-            return Err(format!("dense factor has {:?} orbits, expected {FULL_CORNER_ORBIT_COUNT}", offsets.last()));
+        if offsets.last().copied() != Some(corner_orbits as u32) {
+            return Err(format!("dense factor has {:?} orbits, expected {corner_orbits}", offsets.last()));
         }
 
         let mut representative_prefix = Vec::new();
@@ -290,7 +305,7 @@ impl DenseCornerIndex {
             offsets, representative_bits, representative_prefix,
         };
         // Verify the select representation also at every fiber boundary.
-        for class in 0..=PERMUTATION_ORBIT_COUNT {
+        for class in 0..=permutation_orbits {
             if result.rank_before(class * ORIENTATION_COUNT) != result.offsets[class] {
                 return Err("dense representative select directory crosses a wrong fiber boundary".into());
             }
@@ -318,7 +333,7 @@ impl DenseCornerIndex {
             + self.representative_prefix.capacity() * size_of::<u32>()
     }
 
-    /// Exact dense ID of the corner 96 orbit. Edges are intentionally ignored.
+    /// Exact dense ID of the selected corner orbit. Edges are ignored.
     /// After ranking the permutation this performs one affine orientation
     /// transport, one local-class lookup and an offset addition.
     pub fn index(&self, cube: &Cube, symmetries: &CornerSymmetries) -> Result<usize, String> {
@@ -333,7 +348,7 @@ impl DenseCornerIndex {
         Ok(self.offsets[class] as usize + local as usize)
     }
 
-    /// Same minimum full-corner rank as CornerSymmetries::canonicalize.
+    /// For the default 96 index, matches CornerSymmetries::canonicalize.
     /// This method returns a rank, not a word-restoration frame witness.
     pub fn canonical_rank(&self, cube: &Cube, symmetries: &CornerSymmetries) -> Result<u32, String> {
         self.canonical_rank_by_index(self.index(cube, symmetries)?)
@@ -341,7 +356,7 @@ impl DenseCornerIndex {
 
     pub fn canonical_rank_by_index(&self, index: usize) -> Result<u32, String> {
         let flat = select_position(&self.representative_bits, &self.representative_prefix, index)?;
-        if flat >= ORIENTATION_SLOT_COUNT {
+        if flat >= self.local_class.len() {
             return Err("dense representative select exceeds its orientation universe".into());
         }
         let class = flat / ORIENTATION_COUNT;
@@ -391,6 +406,19 @@ pub struct DenseCornerPdb {
 }
 
 impl DenseCornerPdb {
+    /// Lift the already certified exact distance to the finer spatial-only
+    /// quotient. The value at every representative is inherited, not weakened.
+    pub fn spatial_from_certified(source: &Self, symmetries: &CornerSymmetries) -> Result<Self, String> {
+        let index = DenseCornerIndex::spatial(symmetries)?;
+        let mut values = allocated(index.len(), UNKNOWN, "spatial corner distances")?;
+        for (id, value) in values.iter_mut().enumerate() {
+            *value = source.distance(&index.representative(id)?, symmetries)?;
+        }
+        let result = Self { index, values, maximum: source.maximum };
+        result.certify_graph(symmetries)?;
+        Ok(result)
+    }
+
     pub fn from_sparse(sparse: &FullCornerPdb, symmetries: &CornerSymmetries) -> Result<Self, String> {
         let index = DenseCornerIndex::new(symmetries)?;
         if sparse.len() != index.len() {
@@ -471,7 +499,7 @@ impl DenseCornerPdb {
         Ok(Self { index, values, maximum })
     }
 
-    /// Let Q_R have one vertex per 96 orbit and the 18 right successors of its
+    /// Let Q_R have one vertex per selected orbit and the 18 right successors of its
     /// chosen representative. True distance D is constant on every orbit; each
     /// edge changes D by at most one, and each non-root representative has a
     /// right move on a geodesic that decreases D. Therefore the directed
@@ -515,6 +543,57 @@ impl DenseCornerPdb {
 
     pub fn distance(&self, cube: &Cube, symmetries: &CornerSymmetries) -> Result<u8, String> {
         Ok(self.values[self.index.index(cube, symmetries)?])
+    }
+
+    /// Compile one transport per permutation and fold the local-class decoder
+    /// into distance bytes. Build-only representative/select arrays are absent
+    /// from this owned runtime layout, so the original DenseCornerPdb may drop.
+    pub fn prepare_lookup(&self, symmetries: &CornerSymmetries) -> Result<PreparedCornerPdb, String> {
+        let mut permutations = Vec::new();
+        permutations.try_reserve_exact(PERMUTATION_COUNT).map_err(|e| e.to_string())?;
+        for rank in 0..PERMUTATION_COUNT {
+            let permutation = permutation_unrank(rank);
+            let class = self.index.permutation_class[rank] as usize;
+            let action = OrientationAction::compile(&permutation, self.index.transport[rank], symmetries);
+            permutations.push(PreparedPermutation { action, base: (class * ORIENTATION_COUNT) as u32 });
+        }
+        let mut values = allocated(self.index.orientation_slots(), UNKNOWN, "prepared corner fibers")?;
+        for (flat, value) in values.iter_mut().enumerate() {
+            let class = flat / ORIENTATION_COUNT;
+            let id = self.index.offsets[class] as usize + self.index.local_class[flat] as usize;
+            *value = self.values[id];
+        }
+        Ok(PreparedCornerPdb { permutations, values, maximum: self.maximum, orbits: self.len() })
+    }
+}
+
+#[derive(Clone, Copy)]
+struct PreparedPermutation {
+    action: OrientationAction,
+    base: u32,
+}
+
+/// Same exact distances, with one permutation lookup and one distance lookup.
+/// Some values repeat within a fiber, avoiding the larger u16 class decoder.
+pub struct PreparedCornerPdb {
+    permutations: Vec<PreparedPermutation>,
+    values: Vec<u8>,
+    maximum: u8,
+    orbits: usize,
+}
+
+impl PreparedCornerPdb {
+    pub fn max_distance(&self) -> u8 { self.maximum }
+    pub fn orbits(&self) -> usize { self.orbits }
+    pub fn memory_bytes(&self) -> usize {
+        self.permutations.capacity() * size_of::<PreparedPermutation>() + self.values.capacity()
+    }
+    /// Input has valid corners, as required by the existing search contract.
+    #[inline]
+    pub fn distance(&self, cube: &Cube) -> u8 {
+        let query = &self.permutations[permutation_rank(&cube.corners)];
+        let twists = cube.corners.map(|corner| corner >> 3);
+        self.values[query.base as usize + query.action.apply(&twists)]
     }
 }
 

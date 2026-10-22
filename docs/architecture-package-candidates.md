@@ -1,6 +1,10 @@
 # CubeRoot package 候选清单
 
-状态：`COMPLETE / Batch 8 snapshot`。本清单冻结已验证的代表性提取、条件候选和重开门槛；它不是“把所有相似文件搬进 package”的永久 backlog。当前事实基线见 [`core/architecture-boundaries.json`](../core/architecture-boundaries.json)，机器扫描器见 [`core/scripts/check-architecture-boundaries.mjs`](../core/scripts/check-architecture-boundaries.mjs)。
+状态：`HISTORICAL / Batch 8 snapshot`。
+
+2026-10-22 校准：下文“当前消费者”、候选和路径是批次快照，不是今日清单。品牌资产已在 `cbaf427dbb` 收口至 `core/assets/brand` 和共享生成入口；已安装客户端现复用 `@cuberoot/app-ui`，不能再据此文认定没有跨端 React 消费者。现行边界及重新立项入口见[当前架构跟踪](./architecture-modernization-tracker.md)。原始候选证据保留如下。
+
+本清单冻结已验证的代表性提取、条件候选和重开门槛；它不是“把所有相似文件搬进 package”的永久 backlog。当前事实基线见 [`core/architecture-boundaries.json`](../core/architecture-boundaries.json)，机器扫描器见 [`core/scripts/check-architecture-boundaries.mjs`](../core/scripts/check-architecture-boundaries.mjs)。
 
 ## 结论
 

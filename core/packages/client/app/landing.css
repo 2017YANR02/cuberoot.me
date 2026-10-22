@@ -946,6 +946,21 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     overflow-y: auto;
 }
 .landing-page .landing-personal-comps:empty { min-height: 12rem; }
+.landing-page .landing-personal-comps .wp-upcoming-card { padding-inline: 0; }
+.landing-page .landing-personal-comps .reg-cards {
+    display: grid;
+    /* Match the first two columns of the four-column training grid. */
+    width: calc((100% - 1rem) / 2);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+}
+.landing-page .landing-personal-comps .rc-card { min-width: 0; }
+@media (max-width: 900px) {
+    .landing-page .landing-personal-comps .reg-cards { width: 100%; }
+}
+@media (max-width: 560px) {
+    .landing-page .landing-personal-comps .reg-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 .landing-widget:empty,
 .landing-personal-comps:empty,
 .landing-widget :is(.recent-scrambles--loading, .today-recon--loading, .ongoing-comps--loading),

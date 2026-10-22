@@ -11,6 +11,8 @@ pub mod corner_symmetry;
 pub mod corner_oracle;
 #[cfg(feature = "corner-research")]
 pub mod corner_distance_search;
+#[cfg(feature = "corner-research")]
+pub mod corner_joint;
 pub mod h10_coord;
 pub mod h10_table;
 pub mod h48_coord;

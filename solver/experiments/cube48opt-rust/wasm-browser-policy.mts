@@ -49,7 +49,7 @@ export function browserSlotConfig(slot: BrowserSlot) {
   return {slot, variant, engine, threads: variant === 8 ? 4 : 16, cases: variant === 8 ? 100 : 1000,
     passes: 1, warmupCases: 0, wasm, wasmSha256: engine === 'rust' ? rustBuilds[variant].sha256 : getVariant(variant).wasmSha256,
     wrapper: engine === 'rust' ? resolve(dirname(wasm), 'cube48opt-rust8.mjs') : resolve(publicDir, `cube48opt${variant}.mjs`),
-    table: variant === 8 ? '/Users/eula/.Trash/retired-opt-tables-20261013/.tmp/cubeopt-reverse/opt8-generated/h48prun31h8.dat'
+    table: variant === 8 ? resolve(openBase, 'opt8-generated/h48prun31h8.dat')
       : resolve(openBase, 'opt9-generated/h48prun31h9.dat'),
     tableBytes: getVariant(variant).tableBytes, small: resolve(openBase, `opt${variant}-generated/small-memory.bin`),
     corpus: resolve(openRoot, `solver/testdata/benchmarks/wca-first${variant === 8 ? 100 : 1000}.json`), corpusSha256: corpusHashes[variant],

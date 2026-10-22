@@ -142,7 +142,7 @@ describe('architecture boundary guard', () => {
       const file = join(root, 'scripts/profile.mts');
       const source = "import { spawnSync } from 'node:child_process'; spawnSync(command, args);";
       writeFileSync(file, source);
-      const owner = { root, dir: 'probe', name: '@cuberoot/probe', cuberoot: { kind: 'app' },
+      const owner = { root, dir: 'probe', workspacePath: 'probe', exports: {}, name: '@cuberoot/probe', cuberoot: { kind: 'app' },
         json: { scripts: { 'build:profile': 'node --import tsx scripts/profile.mts' } } };
       expect([...declaredBuildTools(owner)]).toEqual([file]);
       expect(collectFindings([owner])).toEqual([]);

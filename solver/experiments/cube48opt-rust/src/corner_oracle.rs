@@ -5,7 +5,7 @@ pub mod eo;
 
 use crate::corner_coset::{self, CornerPdb};
 use crate::corner_symmetry::{CornerSymmetries, DoubleClasses, FullCornerPdb};
-use crate::corner_symmetry::dense::DenseCornerPdb;
+use crate::corner_symmetry::dense::{DenseCornerPdb, PreparedCornerPdb};
 use crate::cube::{Cube, MOVES};
 use crate::search::PruningOracle;
 
@@ -109,7 +109,7 @@ impl PruningOracle for CornerOracle<'_> {
 
 /// Strengthens the SAME side only. In particular, neither u(g^-1), w, nor
 /// d_C(g) is merged into this oracle's left-H-invariant result.
-pub struct StrengthenedOracle<'a, O> {
+pub struct StrengthenedOracle<'a, O, const DEFER: bool = false> {
     inner: &'a O,
     corner: &'a CornerPdb,
     edge_orientation: Option<&'a eo::EoPdb>,
@@ -118,8 +118,11 @@ pub struct StrengthenedOracle<'a, O> {
 #[derive(Clone, Copy)]
 pub struct StrengthenedQuery<Q: Copy> {
     inner: Q,
-    corner: u8,
+    corner: CornerQuery,
 }
+
+#[derive(Clone, Copy)]
+enum CornerQuery { Value(u8), State(Cube) }
 
 impl<'a, O: PruningOracle> StrengthenedOracle<'a, O> {
     pub fn new(inner: &'a O, corner: &'a CornerPdb) -> Result<Self, String> {
@@ -135,35 +138,64 @@ impl<'a, O: PruningOracle> StrengthenedOracle<'a, O> {
         oracle.edge_orientation = Some(edge_orientation);
         Ok(oracle)
     }
+
+    /// Preserve the pure max bound, but compute the small coordinate only if
+    /// the primary table value is below the auxiliary table's certified cap.
+    pub fn deferred(inner: &'a O, corner: &'a CornerPdb,
+        edge_orientation: Option<&'a eo::EoPdb>) -> Result<StrengthenedOracle<'a, O, true>, String> {
+        Self::new(inner, corner)?;
+        Ok(StrengthenedOracle { inner, corner, edge_orientation })
+    }
 }
 
-impl<O: PruningOracle> PruningOracle for StrengthenedOracle<'_, O> {
+impl<O: PruningOracle, const DEFER: bool> StrengthenedOracle<'_, O, DEFER> {
+    fn finish(&self, primary: u8, query: CornerQuery) -> u8 {
+        let corner = match query {
+            CornerQuery::Value(value) => value,
+            CornerQuery::State(cube) => {
+                let maximum = self.corner.certificate().maximum.max(5)
+                    .max(self.edge_orientation.map_or(0, |eo| eo.maximum())).min(self.inner.max_bound());
+                if primary >= maximum { return primary; }
+                same_side(self.corner, &cube, self.inner.max_bound())
+                    .max(self.edge_orientation.map_or(0, |eo| eo.lower_bound(&cube)).min(self.inner.max_bound()))
+            }
+        };
+        primary.max(corner)
+    }
+}
+
+impl<O: PruningOracle, const DEFER: bool> PruningOracle for StrengthenedOracle<'_, O, DEFER> {
     type Query = StrengthenedQuery<O::Query>;
 
     fn prepare(&self, cube: &Cube, remaining: u8) -> Result<Self::Query, u8> {
+        if DEFER {
+            return self.inner.prepare(cube, remaining)
+                .map(|inner| StrengthenedQuery { inner, corner: CornerQuery::State(*cube) });
+        }
         let corner = same_side(self.corner, cube, self.max_bound())
             .max(self.edge_orientation.map_or(0, |pdb| pdb.lower_bound(cube)).min(self.max_bound()));
         if corner > remaining { return Err(corner); }
         self.inner.prepare(cube, remaining)
-            .map(|inner| StrengthenedQuery { inner, corner })
+            .map(|inner| StrengthenedQuery { inner, corner: CornerQuery::Value(corner) })
             .map_err(|inner| inner.max(corner))
     }
 
     fn lookup(&self, query: Self::Query) -> u8 {
-        self.inner.lookup(query.inner).max(query.corner)
+        self.finish(self.inner.lookup(query.inner), query.corner)
     }
 
     #[cfg(any(feature = "wasm-batch-probes", all(feature = "opt10-native-batch", not(target_family = "wasm"))))]
     fn lookup_batch(&self, queries: &[Option<Self::Query>; 8]) -> [u8; 8] {
         let inner = std::array::from_fn(|i| queries[i].map(|q| q.inner));
         let result = self.inner.lookup_batch(&inner);
-        std::array::from_fn(|i| queries[i].map_or(0, |q| result[i].max(q.corner)))
+        std::array::from_fn(|i| queries[i].map_or(0, |q| self.finish(result[i], q.corner)))
     }
 
     fn cancelled(&self) -> bool { self.inner.cancelled() }
     fn distance_only_bound(&self, cube: &Cube, remaining: u8) -> Option<u8> {
         self.inner.distance_only_bound(cube, remaining)
     }
+    fn distance_only_after_primary(&self) -> bool { self.inner.distance_only_after_primary() }
     fn max_bound(&self) -> u8 { self.inner.max_bound() }
     fn allow_parent_propagation(&self) -> bool { self.inner.allow_parent_propagation() }
     fn allow_dynamic_prefixes(&self) -> bool { self.inner.allow_dynamic_prefixes() }
@@ -256,6 +288,7 @@ pub struct FullCornerDistanceOracle<'a> {
 enum CornerDistanceStorage<'a> {
     Sparse(&'a FullCornerPdb),
     Dense(&'a DenseCornerPdb),
+    Prepared(&'a PreparedCornerPdb),
 }
 
 impl<'a> FullCornerDistanceOracle<'a> {
@@ -271,12 +304,17 @@ impl<'a> FullCornerDistanceOracle<'a> {
             maximum: table.max_distance() }
     }
 
+    pub fn from_prepared(table: &'a PreparedCornerPdb, symmetries: &'a CornerSymmetries) -> Self {
+        Self { table: CornerDistanceStorage::Prepared(table), symmetries, maximum: table.max_distance() }
+    }
+
     pub fn max_distance(&self) -> u8 { self.maximum }
 
     pub fn lower_bound(&self, cube: &Cube) -> Result<DistanceBound, String> {
         match self.table {
             CornerDistanceStorage::Sparse(table) => table.distance(cube, self.symmetries),
             CornerDistanceStorage::Dense(table) => table.distance(cube, self.symmetries),
+            CornerDistanceStorage::Prepared(table) => Ok(table.distance(cube)),
         }.map(DistanceBound)
     }
 }
@@ -287,18 +325,45 @@ impl<'a> FullCornerDistanceOracle<'a> {
 /// Every corner is reachable as the projection of a legal full cube, so d_C
 /// is admissible for the residual state on either side of a NISS switch.
 /// Neither d_C nor max(inner_bound, d_C) is an H-invariant oracle value.
-pub struct DistanceGatedOracle<'a, O> {
+pub trait IndependentDistance {
+    /// A full-state certificate only. None can also be used by a diagnostic
+    /// observer that must leave the original search decisions unchanged.
+    fn bound(&self, cube: &Cube, remaining: u8) -> Option<u8>;
+}
+
+impl IndependentDistance for FullCornerDistanceOracle<'_> {
+    fn bound(&self, cube: &Cube, remaining: u8) -> Option<u8> {
+        (remaining < self.max_distance()).then(|| self.lower_bound(cube)
+            .expect("certified corner table and a legal search state").get())
+    }
+}
+
+pub struct DistanceGatedOracle<'a, O, const LATE: bool = false, const PROFILE: bool = false,
+    D: IndependentDistance = FullCornerDistanceOracle<'a>> {
     inner: &'a O,
-    distance: &'a FullCornerDistanceOracle<'a>,
+    distance: &'a D,
 }
 
 impl<'a, O: PruningOracle> DistanceGatedOracle<'a, O> {
     pub fn new(inner: &'a O, distance: &'a FullCornerDistanceOracle<'a>) -> Self {
         Self { inner, distance }
     }
+
+    pub fn after_primary(inner: &'a O, distance: &'a FullCornerDistanceOracle<'a>) -> DistanceGatedOracle<'a, O, true> {
+        DistanceGatedOracle { inner, distance }
+    }
+
+    #[cfg(all(feature = "opt10-native-profile", not(target_family = "wasm")))]
+    pub fn profiled_after_primary(inner: &'a O, distance: &'a FullCornerDistanceOracle<'a>) -> DistanceGatedOracle<'a, O, true, true> {
+        DistanceGatedOracle { inner, distance }
+    }
 }
 
-impl<O: PruningOracle> PruningOracle for DistanceGatedOracle<'_, O> {
+impl<'a, O: PruningOracle, D: IndependentDistance> DistanceGatedOracle<'a, O, true, false, D> {
+    pub fn with_independent(inner: &'a O, distance: &'a D) -> Self { Self { inner, distance } }
+}
+
+impl<O: PruningOracle, const LATE: bool, const PROFILE: bool, D: IndependentDistance> PruningOracle for DistanceGatedOracle<'_, O, LATE, PROFILE, D> {
     type Query = O::Query;
 
     fn prepare(&self, cube: &Cube, remaining: u8) -> Result<Self::Query, u8> {
@@ -306,17 +371,17 @@ impl<O: PruningOracle> PruningOracle for DistanceGatedOracle<'_, O> {
     }
     fn lookup(&self, query: Self::Query) -> u8 { self.inner.lookup(query) }
 
+    fn distance_only_after_primary(&self) -> bool { LATE }
+
     fn distance_only_bound(&self, cube: &Cube, remaining: u8) -> Option<u8> {
         let previous = self.inner.distance_only_bound(cube, remaining);
-        // Either condition proves this additional lookup cannot change the
-        // accept/reject decision. No consistency assumption is needed.
-        if previous.is_some_and(|bound| bound > remaining)
-            || remaining >= self.distance.max_distance() {
+        if previous.is_some_and(|bound| bound > remaining) {
             return previous;
         }
-        let corner = self.distance.lower_bound(cube)
-            .expect("certified corner table and a legal search state").get();
-        Some(previous.map_or(corner, |bound| bound.max(corner)))
+        match self.distance.bound(cube, remaining) {
+            Some(value) => Some(previous.map_or(value, |bound| bound.max(value))),
+            None => previous,
+        }
     }
 
     #[cfg(any(feature = "wasm-batch-probes", all(feature = "opt10-native-batch", not(target_family = "wasm"))))]
@@ -334,7 +399,7 @@ impl<O: PruningOracle> PruningOracle for DistanceGatedOracle<'_, O> {
     fn allow_dual_rejection(&self) -> bool { self.inner.allow_dual_rejection() }
     fn allow_backward_coset(&self) -> bool { self.inner.allow_backward_coset() }
     fn allow_coset_chain(&self) -> bool { self.inner.allow_coset_chain() }
-    fn profile_search(&self) -> bool { self.inner.profile_search() }
+    fn profile_search(&self) -> bool { PROFILE || self.inner.profile_search() }
     fn allow_niss_inverse_tie(&self) -> bool { self.inner.allow_niss_inverse_tie() }
     fn allow_axis_pruning(&self) -> bool { self.inner.allow_axis_pruning() }
     fn allow_global_prefix_ranking(&self) -> bool { self.inner.allow_global_prefix_ranking() }
