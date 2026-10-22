@@ -557,7 +557,7 @@
     {
       "id": "nemesizer-generated-runtime-artifacts",
       "from": "jobs/stats-build nemesizer job",
-      "to": "repo stats/nemesizer and apps/api runtime loader",
+      "to": "latest-data Release and apps/api runtime loader",
       "phase": "generated-artifact",
       "mechanism": "workflow-generated binary files consumed through NEMESIZER_DATA_DIR",
       "owner": "stats-build and server",
@@ -566,11 +566,11 @@
       "evidence": [
         {"file":"core/jobs/stats-build/src/bin/nemesizer.ts","contains":"const OUTPUT_DIR = resolve(__dirname, '../../../../../stats/nemesizer')"},
         {"file":".github/workflows/stats.yml","contains":"Generate nemesizer dataset"},
-        {"file":".github/workflows/stats.yml","contains":"git add -A stats/"},
-        {"file":".github/workflows/stats.yml","contains":"gh workflow run sync_toolkit.yml"},
-        {"file":".github/workflows/sync_toolkit.yml","contains":"REMOTE=/www/wwwroot/toolkit"},
-        {"file":".github/workflows/sync_toolkit.yml","contains":"for dir in tools stats; do"},
-        {"file":".github/workflows/sync_toolkit.yml","contains":"\"$dir/\" \"${USER}@${HOST}:${REMOTE}/${dir}/\""},
+        {"file":".github/workflows/stats.yml","contains":"node scripts/wca-data/cli.ts submit stats"},
+        {"file":".github/workflows/stats.yml","contains":"node scripts/wca-data/snapshot-cli.ts submit wca stats"},
+        {"file":".github/workflows/wca_data_release.yml","contains":"group: deploy-core-production"},
+        {"file":"scripts/wca-data/deploy.ts","contains":"/www/wwwroot/toolkit/stats"},
+        {"file":".github/workflows/sync_toolkit.yml","contains":"stats/tutorial/ \"${USER}@${HOST}:${REMOTE}/stats/tutorial/\""},
         {"file":"core/apps/api/src/nemesizer/loader.ts","contains":"process.env.NEMESIZER_DATA_DIR"},
         {"file":"core/apps/api/src/nemesizer/loader.ts","contains":"'/www/wwwroot/toolkit/stats/nemesizer'"},
         {"file":"core/apps/api/src/nemesizer/loader.ts","contains":"readFile(path.join(DATA_DIR, 'persons.bin.gz'))"}
