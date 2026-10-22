@@ -22,12 +22,13 @@ function fixture(root: string, day = '2026-10-20', name = 'Test Person') {
 function workspace(t: any) { const dir = mkdtempSync(join(tmpdir(), 'wca-data-test-')); t.after(() => rmSync(dir, { recursive: true, force: true })); return dir; }
 const noop = async () => {};
 
-test('migrated runtime datasets cannot re-enter the Git index', () => {
+test('released datasets and retired build bundles cannot re-enter the Git index', () => {
   const root = fileURLToPath(new URL('../../', import.meta.url));
   const paths = FILES.flatMap(f => [`stats/${f}`, `stats/data/${f}`]);
-  assert.equal(execFileSync('git', ['ls-files', '--', ...paths], { cwd: root, encoding: 'utf8' }).trim(), '');
-  const ignored = execFileSync('git', ['check-ignore', '--no-index', '--', ...paths], { cwd: root, encoding: 'utf8' }).trim().split('\n');
-  assert.deepEqual(ignored.sort(), paths.sort());
+  assert.equal(execFileSync('git', ['ls-files', '--', '_assets/', ...paths], { cwd: root, encoding: 'utf8' }).trim(), '');
+  const candidates = [...paths, '_assets/retired-build.js'];
+  const ignored = execFileSync('git', ['check-ignore', '--no-index', '--', ...candidates], { cwd: root, encoding: 'utf8' }).trim().split('\n');
+  assert.deepEqual(ignored.sort(), candidates.sort());
 });
 
 test('draft Release lookup falls back to authenticated listing without creating duplicates', () => {

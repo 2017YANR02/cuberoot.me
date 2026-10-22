@@ -147,6 +147,9 @@ core/packages/client/public/maplibre/
 /solver/333opt/out.*.csv.rust-run-*.json
 /solver/333opt/out.*.csv.rust.jsonl
 
+# Retired front-end bundles; current applications build their own assets in CI.
+/_assets/
+
 # Latest WCA binary exports live in the wca-data-latest Release, not Git history.
 # Restore locally: node scripts/wca-data/cli.ts hydrate
 /stats/nemesizer/

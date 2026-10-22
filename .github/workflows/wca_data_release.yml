@@ -14,6 +14,7 @@ on:
       - 'stats/persons_search.json.gz'
       - 'stats/data/nemesizer/**'
       - 'stats/data/persons_search.json.gz'
+      - '_assets/**'
   pull_request:
     paths:
       - 'scripts/wca-data/**'
@@ -25,6 +26,7 @@ on:
       - 'stats/persons_search.json.gz'
       - 'stats/data/nemesizer/**'
       - 'stats/data/persons_search.json.gz'
+      - '_assets/**'
   workflow_dispatch:
     inputs:
       candidate:
