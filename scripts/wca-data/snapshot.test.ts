@@ -41,9 +41,12 @@ test('owner patches merge independent writers, reject conflicting updates before
 test('atomic adoption, interrupted rollback and finalization retain only latest snapshot without touching siblings', async t => {
   const root = workspace(t), live = join(root, 'live'), source = join(root, 'source');
   put(live, 'all_past_comps.json', '[1]'); put(live, 'scramble/distribution.json', '[2]'); put(live, 'comp/keep.json', 'keep'); put(live, 'scramble/steps/checkpoint.json', 'checkpoint');
+  put(live, 'scramble/downloads/a.txt', 'R U');
+  writeFileSync(join(live, 'scramble/downloads/._a.txt'), Buffer.from([0, 5, 22, 7, 0, 2, 0, 0]));
   cpSync(live, source, { recursive: true });
   const m = await inventory(source, commit), a = await packSnapshot(source, m, join(root, 'pack1'));
   await activateSnapshot(live, join(root, 'pack1', a.name), a, 'none', noop); finalizeSnapshot(live, a.sha256);
+  assert(!existsSync(join(live, 'scramble/downloads/._a.txt')));
   put(source, 'all_past_comps.json', '[3]'); put(source, 'new_stat.json', '[4]');
   const b = await packSnapshot(source, await inventory(source, commit), join(root, 'pack2'));
   await assert.rejects(activateSnapshot(live, join(root, 'pack2', b.name), b, a.sha256, async () => { throw Error('public verification failed'); }), /verification/);

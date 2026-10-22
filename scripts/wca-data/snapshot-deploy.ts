@@ -63,6 +63,12 @@ export async function activateSnapshot(root: string, archive: string, descriptor
   function checkUnit(path: string, prefix: string) {
     for (const entry of readdirSync(path, { withFileTypes: true })) {
       const rel = `${prefix}/${entry.name}`;
+      // Older Mac tar uploads carried AppleDouble sidecars. They are not data;
+      // recognize the binary signature rather than ignoring arbitrary hidden files.
+      if (entry.isFile() && entry.name.startsWith('._') && lstatSync(join(path, entry.name)).size <= 1048576) {
+        const bytes = readFileSync(join(path, entry.name));
+        if (bytes.length >= 4 && bytes.readUInt32BE(0) === 0x00051607) continue;
+      }
       if (entry.isDirectory()) checkUnit(join(path, entry.name), rel);
       else check(previous.files.some(f => f.path === rel), `Unmanaged file inside statistics unit: ${rel}`);
     }
