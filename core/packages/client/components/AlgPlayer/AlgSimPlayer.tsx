@@ -67,6 +67,8 @@ const SIM_PUZZLE: Partial<Record<AlgPlayerPuzzle, PuzzleKind>> = {
 type PreviewTwister = {
   setup(scramble: string): void;
   push(scramble: string): void;
+  /** NxN counts queued and active moves; optional for other engines. */
+  readonly backlog?: number;
 };
 
 async function preloadEngine() {
@@ -111,16 +113,20 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   interactionMode?: AlgPlayerInteractionMode;
   lockView?: boolean;
   onUserMove?: (move: string) => void;
+  pauseAfterSteps?: readonly number[];
+  sectionPauseMs?: number;
   onStepChange?: (step: number) => void;
+  stickeringAtStep?: (step: number) => import('@cuberoot/puzzle-render-core/engine/nxn/stickering').StickeringMaskFn;
   highlightDaisyAlignment?: boolean;
   moveDurationMs?: number;
   size?: number;
   /** 撑满父容器。给编辑器那种「右半屏放预览」的布局用。 */
   fillPane?: boolean;
 }>(function AlgSimPlayer({
-  alg, puzzle, puzzleOrder, set, additionalStickering, hiddenStickers, outlinedStickers, setup, orientation = '', sceneRot, startSolved = false, autoPlay = false, playRequest = 0, loop = false, controlMode = 'full', stepMarkers, hideResetView = false, interactionMode = 'view', lockView = false, onUserMove, onStepChange, highlightDaisyAlignment = false, moveDurationMs, size = 260, fillPane = false,
+  alg, puzzle, puzzleOrder, set, additionalStickering, hiddenStickers, outlinedStickers, setup, orientation = '', sceneRot, startSolved = false, autoPlay = false, playRequest = 0, loop = false, controlMode = 'full', stepMarkers, hideResetView = false, interactionMode = 'view', lockView = false, onUserMove, pauseAfterSteps, sectionPauseMs, onStepChange, stickeringAtStep, highlightDaisyAlignment = false, moveDurationMs, size = 260, fillPane = false,
 }, ref) {
   const t = useT();
+  const timedSectionPauses = typeof sectionPauseMs === 'number' && Number.isFinite(sectionPauseMs) && sectionPauseMs > 0;
   const canonicalPuzzleKind = SIM_PUZZLE[puzzle] ?? NXN_ORDER_DEFAULT;
   const puzzleKind = NXN_ORDER[puzzle] !== undefined && puzzleOrder !== undefined
     ? clampNxNOrder(puzzleOrder)
@@ -155,10 +161,13 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   );
 
   const [step, setStep] = useState(0);
-  useEffect(() => { onStepChange?.(step); }, [step, onStepChange]);
   const [playing, setPlaying] = useState(false);
   const [replayRequest, setReplayRequest] = useState(0);
   const [ready, setReady] = useState(false);
+  const playbackStartStep = useRef(0);
+  const onStepChangeRef = useRef(onStepChange);
+  onStepChangeRef.current = onStepChange;
+  useEffect(() => { onStepChangeRef.current?.(step); }, [step]);
   const stepRef = useRef(step);
   stepRef.current = step;
   /** 进度条、首尾跳转和外部光标同步都必须瞬时落到完整状态。 */
@@ -189,7 +198,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     });
   }, [moves.length]);
   const seekPlayer = useMemo(
-    () => createStepSeekPlayer(moves.length, jumpToStep),
+    () => createStepSeekPlayer(moves.length, next => { setPlaying(false); jumpToStep(next); }),
     [moves.length, jumpToStep],
   );
   useImperativeHandle(ref, () => ({
@@ -250,6 +259,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     // Reduced motion suppresses automatic playback, not a deliberate replay click.
     if (!requested && (!autoPlay || window.matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
     jumpToStep(0);
+    playbackStartStep.current = 0;
     setPlaying(true);
     setReplayRequest(request => request + 1);
   }, [ready, autoPlay, alg, playRequest, setupAlg, moves.length, jumpToStep]);
@@ -349,6 +359,9 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     if (requestedMove !== null) {
       requestedMoveRef.current = null;
       twister.setup([setupAlg, ...moves.slice(0, requestedMove)].join(' '));
+      if (typeof puzzleKind === 'number' && stickeringAtStep) {
+        (m.world.cube as Cube).instancedRenderer.setStickering(stickeringAtStep(requestedMove + 1));
+      }
       twister.push(moves[requestedMove]);
       lastRef.current = { sequenceKey, setupAlg, step: requestedMove + 1 };
       m.invalidate();
@@ -359,6 +372,9 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     const syncStep = resolvePreviewSyncStep(last?.sequenceKey ?? null, sequenceKey, step);
     const sequenceChanged = syncStep !== step;
     const instantSeek = sequenceChanged || instantStepRef.current === syncStep;
+    if (typeof puzzleKind === 'number' && stickeringAtStep) {
+      (m.world.cube as Cube).instancedRenderer.setStickering(stickeringAtStep(syncStep));
+    }
     instantStepRef.current = null;
     lastRef.current = { sequenceKey, setupAlg, step: syncStep };
 
@@ -378,19 +394,21 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
       twister.setup([setupAlg, ...moves.slice(0, syncStep)].join(' '));
     }
     m.invalidate();
-  }, [sequenceKey, setupAlg, moves, puzzle, puzzleKind, step, ready, moveRequest]);
+  }, [sequenceKey, setupAlg, moves, puzzle, puzzleKind, step, ready, moveRequest, stickeringAtStep]);
 
   const togglePlayback = useCallback(() => {
     if (playing) {
       setPlaying(false);
       return;
     }
+    playbackStartStep.current = stepRef.current >= moves.length ? 0 : stepRef.current;
     if (stepRef.current >= moves.length) jumpToStep(0);
     setPlaying(true);
   }, [jumpToStep, moves.length, playing]);
 
   const replay = useCallback(() => {
     jumpToStep(0);
+    playbackStartStep.current = 0;
     setPlaying(true);
     setReplayRequest(request => request + 1);
   }, [jumpToStep]);
@@ -400,18 +418,29 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     if (!playing) return;
     const atLastFrame = step >= moves.length;
     if (atLastFrame && !loop) { setPlaying(false); return; }
+    const atSectionBoundary = !atLastFrame && step !== playbackStartStep.current && pauseAfterSteps?.includes(step);
     const delay = atLastFrame
       ? LOOP_PAUSE_MS + (hasCustomTiming ? previewTiming.stepMs : 0)
       : step === 0
         ? Math.min(previewTiming.stepMs, 260)
         : previewTiming.stepMs;
     const advance = () => {
-      if (atLastFrame) jumpToStep(0);
+      if (atLastFrame) { playbackStartStep.current = 0; jumpToStep(0); }
       else stepForward();
     };
     // Start the observation pause only after the turn has actually settled.
     // Clearing this same timer also makes pause, seek and sequence changes immediate.
     const afterTurn = () => {
+      if (atSectionBoundary) {
+        const twister = mountRef.current?.world.cube.twister as PreviewTwister | undefined;
+        if ((twister?.backlog ?? 0) > 0) {
+          id = setTimeout(afterTurn, 16);
+          return;
+        }
+        if (timedSectionPauses) id = setTimeout(advance, sectionPauseMs);
+        else setPlaying(false);
+        return;
+      }
       const cube = mountRef.current?.world.cube as Cube | undefined;
       if (highlightDaisyAlignment && step > 0 && !atLastFrame && cube?.order === 3) {
         if (cube.twister.backlog > 0 || [...cube.locks.values()].some(lock => lock.size > 0)) {
@@ -430,7 +459,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
     };
     let id = setTimeout(afterTurn, delay);
     return () => clearTimeout(id);
-  }, [playing, loop, step, moves.length, hasCustomTiming, previewTiming.stepMs, replayRequest, jumpToStep, stepForward, highlightDaisyAlignment]);
+  }, [playing, loop, step, moves.length, hasCustomTiming, previewTiming.stepMs, replayRequest, jumpToStep, stepForward, highlightDaisyAlignment, pauseAfterSteps, sectionPauseMs, timedSectionPauses]);
 
   return (
     <div className={`alg-sim-player${fillPane ? ' is-fill' : ''}`}>
@@ -464,10 +493,10 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
           count={moves.length}
           playing={playing}
           stepMarkers={stepMarkers}
-          onScrub={jumpToStep}
-          onStepBack={stepBack}
+          onScrub={next => { if (timedSectionPauses) setPlaying(false); jumpToStep(next); }}
+          onStepBack={() => { if (timedSectionPauses) setPlaying(false); stepBack(); }}
           onTogglePlay={togglePlayback}
-          onStepForward={stepForward}
+          onStepForward={() => { if (timedSectionPauses) setPlaying(false); stepForward(); }}
           onResetView={resetView}
         />
       ) : null}

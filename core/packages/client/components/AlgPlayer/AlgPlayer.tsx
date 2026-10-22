@@ -98,8 +98,15 @@ interface Props {
   lockView?: boolean;
   /** `interactionMode='turn'` 时返回 `/sim` 产生的标准转动记号。 */
   onUserMove?: (move: string) => void;
-  /** Sim engine: current target step (0 at the start), for accompanying move cues. */
+  /** Sim 教学预览：在这些完整步数之后暂停；继续播放会越过当前边界。 */
+  pauseAfterSteps?: readonly number[];
+  /** Sim only: automatically continue after this many ms at section boundaries.
+   * Omitted or non-positive keeps the existing manual-resume behavior. */
+  sectionPauseMs?: number;
+  /** Sim 教学预览的动作位置，用于同步逐步说明。 */
   onStepChange?: (step: number) => void;
+  /** Sim renderer only: update piece visibility without resetting playback. */
+  stickeringAtStep?: (step: number) => import('@cuberoot/puzzle-render-core/engine/nxn/stickering').StickeringMaskFn;
   /** Sim 3x3: frame each daisy petal whose side matches the center below it. */
   highlightDaisyAlignment?: boolean;
   /** 每个 STM 的动画时长(ms)，默认 1000。 */
@@ -183,6 +190,9 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
         lockView={props.lockView}
         onUserMove={props.onUserMove}
         moveDurationMs={moveDurationMs} size={props.size ?? 260} fillPane={props.fillPane}
+        pauseAfterSteps={props.pauseAfterSteps}
+        sectionPauseMs={props.sectionPauseMs}
+        stickeringAtStep={props.stickeringAtStep}
         stepMarkers={props.stepMarkers}
       />
     );
@@ -299,4 +309,3 @@ const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPla
 });
 
 export default AlgPlayer;
-

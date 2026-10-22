@@ -15,6 +15,8 @@ export function pickStickering(
 ): string | undefined {
   if (puzzle !== '3x3') return undefined;
   switch (set) {
+    case 'f2l-tutorial':                          return engine === 'sim' ? 'F2LPair' : 'F2L';
+    case 'f2l-overview':                          return engine === 'sim' ? 'F2LOverview' : 'F2L';
     // Explicit /sim sticker masks keep the whole yellow top visible in LBL lessons.
     case 'sim:oll': case 'sim:coll':
       return engine === 'sim' ? set.slice(4) : set.slice(4).toUpperCase();
