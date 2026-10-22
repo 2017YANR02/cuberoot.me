@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:60",
+  "source": {
+    "key": "incidents:60",
+    "kind": "incidents",
+    "title": "A runner picked up a popped piece during a competitor's attempt",
+    "url": "https://www.worldcubeassociation.org/incidents/60",
+    "date": "2021-05-05T21:12:57.000Z",
+    "content": "During a 3x3 round, a piece popped out of a competitor's cube and a first-time runner picked it up and handed it to the competitor, which is not what [Guideline A5b++](https://www.worldcubeassociation.org/regulations/guidelines.html#A5b++) calls for. An extra attempt was provided by the WCA Delegates because this was the runner's fault and not the competitor's since the competitor did not ask the runner to pick it up and the runner did this by themselves.\n\nThe WRC found a DNF to be too harsh for this particular case. As a result, the extra attempt should be used for the following reasons:\n\n1. The extra follows the correct procedure.\n2. It was not competitor's fault.\n3. The competitor did not attempt to gain an unfair advantage.\n\nIn case the original time was available, that original result should have been used. The reasoning for using the original time is to find a compromise between a DNF (which too harsh for something the competitor did not ask for) and an extra (which too kind because the solve with a pop was presumably bad).",
+    "hash": "c0c63185b8e5200799531c66230d625c89e5bff1c1569f1171db492c930f1549",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "选手还原时，传递员拾起掉出的部件",
+    "content": "三阶某轮中，选手的魔方掉出一个部件。一名首次担任传递员的工作人员将其捡起并递给选手，不符合[指导 A5b++](https://www.worldcubeassociation.org/regulations/guidelines.html#A5b++)。代表给予额外尝试，因为选手未请求帮助，传递员是自行这样做的，错误应由传递员而非选手承担。\n\nWRC 认为本案判 DNF 过于严厉，因此应采用额外尝试，理由是：\n1. 额外尝试遵循了正确流程；\n2. 并非选手的错；\n3. 选手没有试图取得不公平优势。\n\n若原时间仍可获得，则应采用原成绩。这样是在 DNF 与额外尝试之间折中：对选手未请求的帮助判 DNF 过重，而给予额外尝试又过于宽厚，因为发生掉块的那次还原推测并不理想。",
+    "translatedAt": "2026-10-22T05:52:51.924Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "c0c63185b8e5200799531c66230d625c89e5bff1c1569f1171db492c930f1549"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_5",
+      "reviewedAt": "2026-10-22T06:22:53.079981Z",
+      "report": "reviews/round-1/report-5.json",
+      "sourceHash": "c0c63185b8e5200799531c66230d625c89e5bff1c1569f1171db492c930f1549",
+      "reviewedTranslationHash": "c420c2e54e3d845b8e5a387e393683082482a938b0bb05fe2449be93466ee6a6",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

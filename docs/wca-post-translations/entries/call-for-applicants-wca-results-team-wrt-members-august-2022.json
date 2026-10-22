@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/call-for-applicants-wca-results-team-wrt-members-august-2022",
+  "source": {
+    "key": "posts:/posts/call-for-applicants-wca-results-team-wrt-members-august-2022",
+    "kind": "posts",
+    "title": "Call for Applicants - WCA Results Team (WRT) Members (August 2022)",
+    "date": "2022-08-13T14:07:34.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/call-for-applicants-wca-results-team-wrt-members-august-2022",
+    "content": "The WCA Results Team (WRT) is looking for devoted and trustworthy team members!\n\nDo you like numbers? Are you the type of person quickly spotting typos or inconsistencies in restaurant menus that others miss? Does it drive you crazy when data lacks precision? If yes, then you might be a very good fit for the WRT!\n\n<!-- break -->\n\nThe qualities that you should bring to become a WRT member include:\n\n* You are very responsive and willing to work on WRT tasks regularly.\n* You have a good sense of detail and you are able to handle data precisely and consciously.\n* You are a highly trusted and reliable member of the WCA community and can responsibly handle access to the WCA database. Ideally, you are already a WCA employee or have a recommendation from one.\n* You have at least a basic understanding of what a (relational / SQL) database is. \n* Existing experience with SQL (MySQL) is beneficial, but not strictly mandatory.\n\nAs a WRT member you will work on the following regular tasks:\n\n* Verifying, uploading and publishing competition results.\n* Handling change requests to results or personal data.\n* Supporting WCA Delegates and WCA committees with data-related problems and requests.\n* Investigating inconsistencies in the WCA database.\n* Analyzing the WCA’s data to provide insights for other WCA staff members.\n* Managing and enforcing WCA’s Data Protection policies.\n* Handling requests from Registered Speedcubers and WCA Staff on Data Protection matters.\n\nOn average, the membership in the WRT requires approximately 5-6 hours per week. In particular, you should be ready to spend 30-60 minutes at least every second/third day on handling time-critical regular WRT work (e.g. result submissions). \n\nIn return, you gain a deeper insight into the structure of the WCA and the WCA database, and you will actively contribute to ensuring the integrity of the WCA's competition results. The official rights and duties of the WRT as described in the Motions of the WCA can be found [here](https://www.worldcubeassociation.org/documents/motions/10.2022.10%20-%20Results%20Team.pdf).\n\nIf you are interested in joining the WCA Results Team, please send an application to WRT leader Sébastien Auroux (sauroux@worldcubeassociation.org). The application should at least include a comprehensive description of yourself, showing why you would be a good addition to the WRT, and your motivation and goals for becoming a WRT member.\n\nThe application deadline is **August 31st 2022 23:59 UTC**. Following that date, the applications will be reviewed and discussed among the current WRT members and a decision will be made about 3-5 weeks after.\n\nWe are looking forward to your application!",
+    "hash": "2ee92eae8fffd8de03f6ad60b0fef01bf12713c1bf4d7ae888f9b3105621bdfb",
+    "format": "markdown",
+    "sourceId": 14068
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "2ee92eae8fffd8de03f6ad60b0fef01bf12713c1bf4d7ae888f9b3105621bdfb",
+    "language": "zh-Hans",
+    "title": "WCA 成绩团队成员招募（2022 年 8 月）",
+    "content": "WCA 成绩团队（WRT）正在招募认真投入、值得信赖的新成员！\n\n你喜欢数字吗？你是否总能很快发现餐厅菜单上别人没注意到的错字或前后不一致之处？数据不准确会不会让你难以忍受？如果是，你可能很适合 WRT！\n\nWRT 成员应具备以下条件：\n\n* 回应及时，愿意经常处理 WRT 工作。\n* 注重细节，能够准确、审慎地处理数据。\n* 是 WCA 社区中值得信赖、做事可靠的成员，能够负责任地使用 WCA 数据库访问权限。已在 WCA 任职或有 WCA 工作人员推荐者更佳。\n* 至少基本了解什么是关系型数据库或 SQL 数据库。\n* 有 SQL（MySQL）经验更佳，但并非硬性要求。\n\nWRT 成员的日常工作包括：\n\n* 核验、上传和公布比赛成绩。\n* 处理成绩或个人资料的修改请求。\n* 协助 WCA 代表及委员会处理数据相关问题和需求。\n* 调查 WCA 数据库中不一致的数据。\n* 分析 WCA 数据，为其他 WCA 工作人员提供参考。\n* 管理并落实 WCA 的数据保护政策。\n* 处理注册速拧选手和 WCA 工作人员提出的数据保护相关请求。\n\nWRT 成员平均每周需投入约 5–6 小时。尤其需要准备好至少每隔两三天拿出 30–60 分钟，处理有时效要求的日常工作，例如提交比赛成绩。\n\n在此过程中，你可以更深入地了解 WCA 的组织结构和数据库，并直接参与维护 WCA 比赛成绩的准确可信。WCA 动议中规定的 WRT 正式权利与职责见[此处](https://www.worldcubeassociation.org/documents/motions/10.2022.10%20-%20Results%20Team.pdf)。\n\n有意加入 WCA 成绩团队者，请将申请发送给 WRT 负责人 Sébastien Auroux（sauroux@worldcubeassociation.org）。申请至少应包括详细的个人介绍，说明自己为什么适合 WRT，以及加入团队的动机和目标。\n\n申请截止时间为 **2022 年 8 月 31 日 23:59 UTC**。此后，现任 WRT 成员会审阅和讨论申请，并在约 3–5 周后作出决定。\n\n期待收到你的申请！",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:45:43.554Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "5fa351e402f3cac057c4e198f6cfc269b861a3c7f1d42ad3d5eed014f49e407b"
+}

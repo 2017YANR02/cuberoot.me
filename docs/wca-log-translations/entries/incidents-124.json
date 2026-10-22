@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:124",
+  "source": {
+    "key": "incidents:124",
+    "kind": "incidents",
+    "title": "Pyraminx round affected by a great amount of misscrambles",
+    "url": "https://www.worldcubeassociation.org/incidents/124",
+    "date": "2024-10-13T05:20:39.000Z",
+    "content": "After a competition had ended, a delegate received messages from two of the pyraminx solvers indicating that their scrambles for the first round of pyraminx were almost entirely wrong. Between the two competitors, only 3 out of 10 scrambles they received were correct, with the remaining being off by a tip (both direction and quantity) or scrambled in the wrong orientation.\n\nThe WRC made the tough decision to remove the affected Pyraminx round. Given the high misscramble rate and the very limited videographic evidence available to check, ensuring that scrambles were equal in difficulty for all competitors would be nearly impossible. As a result, the decision was to remove the affected round, which would ultimately mean removing all rounds of Pyraminx.",
+    "hash": "fa8d4eaebd53ee1e9b606c64471ed08a14d4267fcd9c06db2300e5565f5c6db9",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "金字塔轮次出现大量错误打乱",
+    "content": "赛后，两名金字塔选手告知代表，第一轮打乱几乎全部错误。两人合计 10 次中仅 3 次正确，其余存在小角方向或数量错误，或以错误朝向打乱。\n\nWRC 作出了删除受影响金字塔轮次的艰难决定。错误率高，可供核查的视频又很有限，几乎不可能确保所有选手打乱难度相当。因此决定删除该轮，最终意味着删除金字塔全部轮次。",
+    "translatedAt": "2026-10-22T05:57:56.837Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "fa8d4eaebd53ee1e9b606c64471ed08a14d4267fcd9c06db2300e5565f5c6db9"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_3",
+      "reviewedAt": "2026-10-22T06:22:42.955322Z",
+      "report": "reviews/round-1/report-3.json",
+      "sourceHash": "fa8d4eaebd53ee1e9b606c64471ed08a14d4267fcd9c06db2300e5565f5c6db9",
+      "reviewedTranslationHash": "8e4754931fa556858a81f5a2fb5b0e80915e4fca53096fdae604d83a8bb7495f",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

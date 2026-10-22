@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/scrambling-program-update-tnoodle-0-8-0",
+  "source": {
+    "key": "posts:/posts/scrambling-program-update-tnoodle-0-8-0",
+    "kind": "posts",
+    "title": "Scrambling Program Update: TNoodle 0.8.0",
+    "date": "2014-01-14T01:50:22.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/scrambling-program-update-tnoodle-0-8-0",
+    "content": "The final release of TNoodle 0.8.0 is now available from https://www.worldcubeassociation.org/regulations/scrambles\n\nThis addresses the following:\n\n- Support for Skewb.\n- Random orientation for blindfolded events, as specified in [Regulation 4b3a](https://www.worldcubeassociation.org/regulations/#4b3a).\n- If TNoodle is connected to the web and detects that a newer version is available, it will display a download link for the new version.\n- The .zip file now includes an HTML file with a link to re-generate a new set of scrambles for the same round formats.\n<!--break-->\n\nPlease remember that official competitions must always use the current version of the official scramble program. This is always available from: https://www.worldcubeassociation.org/regulations/scrambles/",
+    "hash": "c17e881c5b9a987cb23afccba4c87b57ddb1388524a615fb54fd52140de9cbe7",
+    "format": "markdown",
+    "sourceId": 3095
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "c17e881c5b9a987cb23afccba4c87b57ddb1388524a615fb54fd52140de9cbe7",
+    "language": "zh-Hans",
+    "title": "打乱程序更新：TNoodle 0.8.0",
+    "content": "TNoodle 0.8.0 正式版现已发布，可在 https://www.worldcubeassociation.org/regulations/scrambles 获取。\n\n本次更新包括：\n\n- 支持斜转。\n- 按照[规则 4b3a](https://www.worldcubeassociation.org/regulations/#4b3a)，为盲拧项目随机设置魔方朝向。\n- TNoodle 联网后如检测到新版本，会显示新版下载链接。\n- .zip 压缩包现包含一个 HTML 文件，其中的链接可按相同轮次赛制重新生成一套打乱。\n\n请注意，正式比赛必须始终使用当前版本的官方打乱程序。最新版始终可在 https://www.worldcubeassociation.org/regulations/scrambles/ 获取。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.157Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "ada3790df77e0db653b0fad5422b63903c3f8253261f8ce48ad2cc3836c55a83"
+}

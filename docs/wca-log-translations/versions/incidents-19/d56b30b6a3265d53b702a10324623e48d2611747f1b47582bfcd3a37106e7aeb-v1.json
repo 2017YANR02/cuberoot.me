@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:19",
+  "source": {
+    "key": "incidents:19",
+    "kind": "incidents",
+    "title": "Missing signatures found after the competition",
+    "url": "https://www.worldcubeassociation.org/incidents/19",
+    "date": "2018-04-16T11:53:44.000Z",
+    "content": "Both the competitor's and the judge's signatures were found missing for one attempt in Skewb after the competition. The WRC decided to change the result to DNF.\n\nThis incident is violating and ignoring [A7b](https://www.worldcubeassociation.org/regulations/#A7b) and [A7c](https://www.worldcubeassociation.org/regulations/#A7c). More concrete, the judge did not acknowledge that the result is correct, complete, properly formatted, and clearly readable and the competitor did not check and sign the result. These are the steps to finish an attempt.\n\nAlthough this can be seen as a harsh decision, we believe that these are important regulations to assure the correctness and validness result. For that reason, accepting results which were done without following [A7b](https://www.worldcubeassociation.org/regulations/#A7b) and [A7c](https://www.worldcubeassociation.org/regulations/#A7c), should not be accepted as valid results.",
+    "hash": "32a038966a6a6b8683e403aa29de3c1928f21d367c5afd5424f72b20dbfbd181",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "赛后发现成绩单缺少签名",
+    "content": "赛后发现，Skewb 某次尝试缺少选手和裁判双方的签名。WRC 决定将该成绩改为 DNF。\n\n此事件违反并忽略了 [A7b](https://www.worldcubeassociation.org/regulations/#A7b) 和 [A7c](https://www.worldcubeassociation.org/regulations/#A7c)。具体而言，裁判没有确认成绩正确、完整、格式规范且清晰可读，选手也没有核对并签署成绩；这些都是结束一次尝试的必要步骤。\n\n尽管这一决定可能显得严厉，我们认为这些规则对确保成绩正确、有效十分重要。因此，未按 [A7b](https://www.worldcubeassociation.org/regulations/#A7b) 和 [A7c](https://www.worldcubeassociation.org/regulations/#A7c) 完成的成绩，不应被接受为有效成绩。",
+    "translatedAt": "2026-10-22T05:48:51.542Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "32a038966a6a6b8683e403aa29de3c1928f21d367c5afd5424f72b20dbfbd181"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "checkedAt": "2026-10-22T06:53:07.936Z",
+  "ok": true,
+  "checkpoints": [
+    {
+      "path": "checkpoints/020.json",
+      "recoverableTranslatedEntries": 20
+    },
+    {
+      "path": "checkpoints/040.json",
+      "recoverableTranslatedEntries": 40
+    },
+    {
+      "path": "checkpoints/060.json",
+      "recoverableTranslatedEntries": 60
+    },
+    {
+      "path": "checkpoints/080.json",
+      "recoverableTranslatedEntries": 80
+    },
+    {
+      "path": "checkpoints/100.json",
+      "recoverableTranslatedEntries": 100
+    },
+    {
+      "path": "checkpoints/122.json",
+      "recoverableTranslatedEntries": 122
+    },
+    {
+      "path": "checkpoints/144.json",
+      "recoverableTranslatedEntries": 144
+    },
+    {
+      "path": "checkpoints/155.json",
+      "recoverableTranslatedEntries": 155
+    },
+    {
+      "path": "checkpoints/166.json",
+      "recoverableTranslatedEntries": 166
+    },
+    {
+      "path": "checkpoints/177.json",
+      "recoverableTranslatedEntries": 177
+    },
+    {
+      "path": "checkpoints/188-review-round-1-applied.json",
+      "recoverableTranslatedEntries": 188
+    },
+    {
+      "path": "checkpoints/188-review-round-1-final.json",
+      "recoverableTranslatedEntries": 188
+    },
+    {
+      "path": "checkpoints/188-validated.json",
+      "recoverableTranslatedEntries": 188
+    },
+    {
+      "path": "checkpoints/188.json",
+      "recoverableTranslatedEntries": 188
+    }
+  ],
+  "checkpointEntryBindingsVerified": 1816
+}

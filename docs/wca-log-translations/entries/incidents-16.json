@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:16",
+  "source": {
+    "key": "incidents:16",
+    "kind": "incidents",
+    "title": "Competitor mistakenly reported duplicate scramble in Square-1",
+    "url": "https://www.worldcubeassociation.org/incidents/16",
+    "date": "2018-04-08T18:14:41.000Z",
+    "content": "A competitor reported that he had received the same scrambles for the first and second attempt in Square-1. It turned out that both attempts were scrambled correctly so the result of the second attempt was initially recorded as DNF but an extra attempt was granted.\n\nAs both cube shapes were indeed similar, the WRC has decided to accept the result of the extra attempt to acknowledge the honesty of the competitor and to avoid discouraging competitors from reporting repeated scrambles.",
+    "hash": "ca526e3619d1516409271d0bf5d8f891a8b76954d7b20264e5a12b3214a2ee58",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "选手误报 Square-1 重复打乱",
+    "content": "一名选手报告，他在 Square-1 第一次和第二次尝试中收到了相同打乱。后来查明两次打乱均正确，因此第二次成绩最初记为 DNF，但现场仍给予了额外尝试。\n\n由于两个形状确实相似，WRC 决定接受额外尝试成绩，以认可选手的诚实，避免使选手不愿报告重复打乱。",
+    "translatedAt": "2026-10-22T05:48:51.542Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "ca526e3619d1516409271d0bf5d8f891a8b76954d7b20264e5a12b3214a2ee58"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_4",
+      "reviewedAt": "2026-10-22T06:22:38.727845Z",
+      "report": "reviews/round-1/report-4.json",
+      "sourceHash": "ca526e3619d1516409271d0bf5d8f891a8b76954d7b20264e5a12b3214a2ee58",
+      "reviewedTranslationHash": "e61c818a9ad18cad9687979b33d827d073679628961a41c780512223b831f0bd",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

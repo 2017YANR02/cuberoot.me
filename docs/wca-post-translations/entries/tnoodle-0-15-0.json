@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/tnoodle-0-15-0",
+  "source": {
+    "key": "posts:/posts/tnoodle-0-15-0",
+    "kind": "posts",
+    "title": "TNoodle 0.15.0",
+    "date": "2019-07-17T23:26:56.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/tnoodle-0-15-0",
+    "content": "TNoodle-WCA-0.15.0 is now available on the [Scrambles page](https://www.worldcubeassociation.org/regulations/scrambles)\nThe following changes have been made, since the previous version:\n\n**Changes visible to the regular competitor:**\n\n- Better spacing on FMC cutout sheets.\n- Competitor can fill competition's name on FMC filling sheet.\n\n**Changes visible to staff members:**\n\n- Since competitors can fill competition's name on the FMC filling sheet, you can reuse sheets across competitions (in case you got some left).\n- Prevent Multi-Blind from being set to 1 cube (prevent input mistakes).\n- Show a table with rounds and groups for each event when generating scrambles for a competition.\n- Option to print ordered scrambles matching the schedule.\n\nUpcoming competitions should use TNoodle-WCA-0.15.0 to generate new scrambles, when possible. However, since we have just a few changes that directly affect competitors, TNoodle-WCA-0.14.0 will briefly remain an officially permitted version (competition scrambles for the coming week that have already been generated using TNoodle-WCA-0.14.0 can still be used).\n\nPlease remember that official competitions must use a current version of the official scramble program. This is always available from:\nhttps://www.worldcubeassociation.org/regulations/scrambles/",
+    "hash": "2276d46776fc36639845b8851979f7834acea667f6278f39a5e65afe56123359",
+    "format": "markdown",
+    "sourceId": 12453
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "2276d46776fc36639845b8851979f7834acea667f6278f39a5e65afe56123359",
+    "language": "zh-Hans",
+    "title": "TNoodle 0.15.0",
+    "content": "TNoodle-WCA-0.15.0 现已在[打乱页面](https://www.worldcubeassociation.org/regulations/scrambles)提供下载。\n与上一版本相比，作出了以下调整：\n\n**与普通选手有关的调整：**\n\n- 改善最少步打乱裁切页的排版间距。\n- 选手可在最少步答题纸上填写比赛名称。\n\n**与工作人员有关的调整：**\n\n- 由于比赛名称可由选手填写，剩余的最少步答题纸可以留到其他比赛使用。\n- 禁止将多盲数量设为 1 个，以防输入错误。\n- 为比赛生成打乱时，显示各项目的轮次和分组表。\n- 可选择按赛程顺序打印打乱。\n\n即将举行的比赛应尽可能使用 TNoodle-WCA-0.15.0 生成新的打乱。不过，由于本次直接影响选手的改动很少，TNoodle-WCA-0.14.0 将暂时继续作为官方允许的版本；未来一周比赛中已经使用 TNoodle-WCA-0.14.0 生成的打乱仍可使用。\n\n请记住，正式比赛必须使用官方打乱程序当前获准使用的版本，可随时从以下页面下载：\nhttps://www.worldcubeassociation.org/regulations/scrambles/",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:49:54.119Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "0d681bf7a2a81038538acfa223c1d63c68a508c957200cdc6656067e67c132f9"
+}

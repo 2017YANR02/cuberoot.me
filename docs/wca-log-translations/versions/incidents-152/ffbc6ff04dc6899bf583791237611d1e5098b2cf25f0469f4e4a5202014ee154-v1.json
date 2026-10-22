@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:152",
+  "source": {
+    "key": "incidents:152",
+    "kind": "incidents",
+    "title": "Judge did not reset timer and recorded the previous competitor's time",
+    "url": "https://www.worldcubeassociation.org/incidents/152",
+    "date": "2025-04-04T02:28:53.000Z",
+    "content": "A competitor unknowingly performed their first solve without resetting the timer, which displayed a time from a previous attempt. The incorrect time was recorded on the scorecard. Upon review, it was noticed that the result seemed unusual. After consulting with the competitor and their parent, a video confirmed the actual time was significantly different. Since the exact time couldn't be verified, the result was changed to a DNF, which was accepted by the competitor and their parent.\n\nThe WRC concluded that the delegate could have decided to give the competitor an extra instead of a DNF. Since the main problem in this incident was the judge not resetting the timer ([A3b](https://www.worldcubeassociation.org/regulations/full/#A3b)), the delegate could have decided to give the competitor an extra attempt instead of a DNF if the incident was found out about on time ([A3c3+](https://www.worldcubeassociation.org/regulations/full/#A3c3+)). Though the competitor is allowed to reset the timer themselves, this is ultimately the judge's responsibility. The WRC would like to remind judges to be mindful of the state of their timer when judging and to ensure their station is ready for the next attempt.",
+    "hash": "31299f0cad82c48827a4d7536f55621a8ec6fb72791f9d75b89258049921793e",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "裁判未复位计时器，记录了前一选手时间",
+    "content": "选手不知情地在未复位、仍显示前一次时间的计时器上完成第一次还原，错误时间被记入成绩单。复核发现异常，联系选手及家长后，视频证实实际时间差异很大。因无法核实准确时间，成绩改为 DNF，选手和家长接受了处理。\n\nWRC 认为，代表原可给予额外尝试而非 DNF。主要问题是裁判未复位（[A3b](https://www.worldcubeassociation.org/regulations/full/#A3b)）；若及时发现，代表可按 [A3c3+](https://www.worldcubeassociation.org/regulations/full/#A3c3+)给予额外尝试。虽然选手可自行复位，最终责任仍在裁判。WRC 提醒裁判留意计时器状态，确保比赛台已为下一次尝试准备好。",
+    "translatedAt": "2026-10-22T06:00:02.853Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "31299f0cad82c48827a4d7536f55621a8ec6fb72791f9d75b89258049921793e"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

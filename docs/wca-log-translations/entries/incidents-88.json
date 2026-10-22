@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:88",
+  "source": {
+    "key": "incidents:88",
+    "kind": "incidents",
+    "title": "Several rounds were found to have several misscrambles",
+    "url": "https://www.worldcubeassociation.org/incidents/88",
+    "date": "2023-06-09T00:16:18.000Z",
+    "content": "After a competition, a large number of misscrambles was found to be sent out during certain rounds of several events. In particular, a lot of misscrambles happened during 3x3x3 Cube Final, Pyraminx Final, and 3x3x3 One-Handed Final.\n\nAltghough many attempts during the mentioned rounds were done using correct scrambles, and therefore were valid, the outcome of the internal WRC voting was to **remove all affected rounds** as the number of misscrambles was large. The decision resulted in the removal of 3x3x3 One-Handed event, change in Pyraminx event format from two rounds to one round, and in the change in 3x3x3 Cube event format from three rounds to two rounds. See similar Incident Log entry [here](https://www.worldcubeassociation.org/incidents/53).",
+    "hash": "79fa75849c9ebf96099e4045ae85d770b7a3df1b5ecf77d88a69e1fdde87f6ce",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "多个轮次发现大量错误打乱",
+    "content": "赛后发现，多个项目的部分轮次发出了大量错误打乱，尤其是三阶决赛、金字塔决赛和三阶单手决赛。\n\n虽然这些轮次中许多尝试使用了正确打乱，本身有效，但由于错误数量很大，WRC 内部投票决定**删除所有受影响轮次**。因此删除了三阶单手项目，金字塔从两轮改为一轮，三阶从三轮改为两轮。类似事件见[此处](https://www.worldcubeassociation.org/incidents/53)。",
+    "translatedAt": "2026-10-22T05:56:15.197Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "79fa75849c9ebf96099e4045ae85d770b7a3df1b5ecf77d88a69e1fdde87f6ce"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_6",
+      "reviewedAt": "2026-10-22T06:24:59.959967Z",
+      "report": "reviews/round-1/report-6.json",
+      "sourceHash": "79fa75849c9ebf96099e4045ae85d770b7a3df1b5ecf77d88a69e1fdde87f6ce",
+      "reviewedTranslationHash": "f98e5b9ec2e57c5e4b98f3702f1db1a3e1985f02fcc8dd3e09cc577a04cbaa61",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

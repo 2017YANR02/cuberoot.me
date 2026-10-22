@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/new-wfc-leader",
+  "source": {
+    "key": "posts:/posts/new-wfc-leader",
+    "kind": "posts",
+    "title": "New WFC Leader",
+    "date": "2018-05-22T00:31:45.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/new-wfc-leader",
+    "content": "We are happy to announce that we have a new Committee Leader. Chris Wright will replace Chris Hardwick as the Leader of the WCA Financial Committee (WFC), and thus as the WCA Treasurer. Chris Wright was already working as a member of the WFC, and will step down as a member of the WCA Ethics Committee.\n\nChris Wright was selected by the WCA Board and approved in a voting among the current Committee/Team Leaders and Senior Delegates, following Section 4 of our [Motion 10.2017.0 ](https://drive.google.com/file/d/1NDLzup8rbfw8En0S6vtChNti9IKopDBq/edit)about WCA Committees and Teams.\n\nWe thank Chris Hardwick for the great work he has done for the WCA, and wish Chris Wright the best of luck in fulfilling his new duties.\n\nThe new Leader will be promoted immediately. Chris Wright was the only applicant, and his candidacy document can be found [here](https://drive.google.com/drive/folders/13LrXkIzm0IWT-3lfW3twNj_VUT4dIQHr?usp=sharing) if you are interested in viewing it.",
+    "hash": "bb478b517877a92fe92ff89e400cdf9ef894d3e00f1085cf527c63a9e2765938",
+    "format": "markdown",
+    "sourceId": 9531
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "bb478b517877a92fe92ff89e400cdf9ef894d3e00f1085cf527c63a9e2765938",
+    "language": "zh-Hans",
+    "title": "WCA 财务委员会新负责人",
+    "content": "我们很高兴地宣布，Chris Wright 将接替 Chris Hardwick，出任 WCA 财务委员会（WFC）负责人，并因此担任 WCA 财务主管。Chris Wright 此前已是 WFC 成员，同时将卸任 WCA 道德委员会成员。\n\nWCA 董事会依照[《议案 10.2017.0：委员会与团队》](https://drive.google.com/file/d/1NDLzup8rbfw8En0S6vtChNti9IKopDBq/edit)第 4 节选出 Chris Wright，并经现任委员会、团队负责人及高级代表投票确认。\n\n感谢 Chris Hardwick 为 WCA 所做的出色工作，祝 Chris Wright 在新的岗位上一切顺利。\n\n新负责人将立即就任。Chris Wright 是唯一申请人，如有兴趣，其申请材料可在[这里](https://drive.google.com/drive/folders/13LrXkIzm0IWT-3lfW3twNj_VUT4dIQHr?usp=sharing)查看。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.128Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "b45046c09f0c47f3fbed6a622aae5aa3a0751368900ba8f62cf6a671f094b751"
+}

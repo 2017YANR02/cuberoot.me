@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "checkedOn": "2026-10-22",
+  "status": "not_confirmed",
+  "scope": "188条既有日志正文译文及2008论坛归档首帖的公开译载许可边界",
+  "findings": [
+    {
+      "url": "https://github.com/thewca/worldcubeassociation.org",
+      "observation": "仓库自述为网站代码，标示GPL-3.0；未找到将该代码许可明确延伸到日志数据库内容或历史论坛文章的声明。",
+      "conclusion": "不以网站代码GPL推定日志或论坛译载许可。"
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/export/results",
+      "observation": "结果数据库导出说明允许在署名及日期条件下转载该导出中的信息；其描述和表格覆盖比赛、成员、成绩等。",
+      "conclusion": "没有据此确认Incidents正文、Disciplinary公告或论坛文章也包含在该许可范围。"
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/disclaimer",
+      "observation": "网页读取工具仅返回页脚，未取得可判定相关许可的正文。",
+      "conclusion": "读取不完整不能视作许可或拒绝许可。"
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/archive/forum_topics/388",
+      "observation": "官方归档可读，首帖Ron，2008-02-26 22:11:59 UTC；未取得明确再利用许可。",
+      "conclusion": "本轮只保存出处和简短中文摘要，不补全文翻译。"
+    }
+  ],
+  "handling": {
+    "existingTranslations": "保留本地已有188条稿件并记录独立语言审校；其存在和通过审校不代表已获公开译载许可。",
+    "forumAnnouncement": "full_first_post_translated_user_permission_confirmed",
+    "publication": "not_authorized",
+    "nextStep": "388首帖本地全文翻译许可已由用户确认；其余内容的公开译载许可仍未确认，全部内容公开发布仍需具体授权。"
+  },
+  "limitation": "这是本次读取所得许可证据清单，不是确定侵权或确定合法的法律结论；未向权利人发信。",
+  "updatedAt": "2026-10-22T06:53:07.762Z",
+  "forumTranslation": {
+    "status": "user_confirmed_for_translation",
+    "confirmedOn": "2026-10-22",
+    "scope": "官方归档388首帖全文翻译及本地保存",
+    "evidence": "父任务转交用户对该首帖翻译许可的明确确认；不是公开发布授权。",
+    "source": "supplements/forum-388-full.json"
+  }
+}

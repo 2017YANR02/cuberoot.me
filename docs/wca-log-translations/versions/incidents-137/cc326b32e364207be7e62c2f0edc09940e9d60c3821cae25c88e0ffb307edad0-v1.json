@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:137",
+  "source": {
+    "key": "incidents:137",
+    "kind": "incidents",
+    "title": "Competitor's scorecard went missing",
+    "url": "https://www.worldcubeassociation.org/incidents/137",
+    "date": "2024-11-18T22:02:00.000Z",
+    "content": "A competitor competed in the 3x3 OH event, but later recognized that their results had not been entered. After searching the venue, the scorecard remained missing. The competitor was not suspected of deliberately misplacing their scorecard, so after discussion amongst delegates, it was agreed to grant the competitor provisional extra attempts. The competitor initially preferred to have their results marked as a DNS, but later agreed to complete the extra attempts.\n\nThe WRC ruled that since the provisional extras were completed *at the competition*, the extras must be used. If there were no results available, then a DNS would have been appropriate.\n\nAs an important note: if a competitor's scorecard goes missing at no fault of their own, then they are entitled to an extra, and one should be provided. Competitors then have the option of choosing to complete these extras or to DNS them.",
+    "hash": "9eb1202c1644edb76feaddf644de58d567b8df80c0acbbd6802a449f6d1bf389",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "选手成绩单遗失",
+    "content": "一名选手参加三阶单手后发现成绩未录入，搜索场地仍未找到成绩单。没有怀疑选手故意弄丢，代表讨论后给予暂定的额外尝试。选手最初倾向记录为 DNS，后来同意完成额外尝试。\n\nWRC 认定，既然额外尝试已在**比赛现场**完成，就必须使用；若没有可用成绩，才适合记为 DNS。\n\n需注意：成绩单遗失且非选手过错时，选手有权获得额外尝试，工作人员应予提供。选手可选择完成这些尝试或记为 DNS。",
+    "translatedAt": "2026-10-22T06:00:02.853Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "9eb1202c1644edb76feaddf644de58d567b8df80c0acbbd6802a449f6d1bf389"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:117",
+  "source": {
+    "key": "incidents:117",
+    "kind": "incidents",
+    "title": "Puzzle landed in competitor's lap and then on floor in solved state",
+    "url": "https://www.worldcubeassociation.org/incidents/117",
+    "date": "2024-06-19T19:13:16.000Z",
+    "content": "At the end of a competitor's solve, the puzzle landed on the competitor's lap briefly, and then fell onto the floor in a solved state.\n\nUpon discussion with the delegate, the WRC deemed that it was likely that the cube bounced off the competitor right away. Thus, by regulation [A6e2](https://www.worldcubeassociation.org/regulations/#A6e2)'s exception, it was concluded to not apply a penalty to this solve.",
+    "hash": "4f31e6c5bc5872257d58fa22e00e62c224b0603614cd01e0949e3682de59c39b",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 2,
+    "title": "魔方短暂落到腿上，随后以已还原状态掉到地上",
+    "content": "选手还原结束时，魔方短暂落在腿上，随后以已还原状态掉到地上。\n\n与代表讨论后，WRC 认为魔方很可能立即从选手身上弹开，因此依据 [A6e2](https://www.worldcubeassociation.org/regulations/#A6e2) 的例外，不予处罚。",
+    "translatedAt": "2026-10-22T05:57:56.837Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "4f31e6c5bc5872257d58fa22e00e62c224b0603614cd01e0949e3682de59c39b",
+    "revisedAt": "2026-10-22T06:25:36.680Z",
+    "revisionReason": "独立审校 round-1 的精确修正建议"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_2",
+      "reviewedAt": "2026-10-22T06:22:43.237972Z",
+      "report": "reviews/round-1/report-2.json",
+      "sourceHash": "4f31e6c5bc5872257d58fa22e00e62c224b0603614cd01e0949e3682de59c39b",
+      "reviewedTranslationHash": "28b079142fbf14e7e70d930462c194ff34d0d1f70eecfd687ea3b74a27d945f1",
+      "verdict": "correction_required",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": [],
+    "recheck": {
+      "reviewer": "review_2",
+      "reviewedAt": "2026-10-22T06:26:26.122806Z",
+      "report": "reviews/round-1/recheck-2.json",
+      "sourceHash": "4f31e6c5bc5872257d58fa22e00e62c224b0603614cd01e0949e3682de59c39b",
+      "reviewedTranslationHash": "7ddb80faf3cbdf36836e9d7235a693cf435fdcbaf8c8b6ac4d29b5c06ac365d2",
+      "verdict": "pass"
+    }
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

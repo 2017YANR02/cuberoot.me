@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/sei-sugama-wins-asian-championship-2014",
+  "source": {
+    "key": "posts:/posts/sei-sugama-wins-asian-championship-2014",
+    "kind": "posts",
+    "title": "Sei Sugama (洲鎌星) wins Asian Championship 2014",
+    "date": "2014-11-05T16:52:37.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/sei-sugama-wins-asian-championship-2014",
+    "content": "[Sei Sugama (洲鎌星)](https://www.worldcubeassociation.org/results/p.php?i=2010SUGA01) won the [Asian Championship 2014](https://www.worldcubeassociation.org/results/c.php?i=AsianChampionship2014) with an average of 9.47 seconds. [Seung Hyuk Nahm (남승혁)](https://www.worldcubeassociation.org/results/p.php?i=2013NAHM01) finished second (9.57) and [Mitsuki Gunji (郡司光貴)](https://www.worldcubeassociation.org/results/p.php?i=2006GUNJ01) finished third (9.64).  \n\r World records: Kabyanil Talukdar 3x3 blindfolded 27.63 (average), Yu Da-Hyun Megaminx 37.83 (single), Megaminx 44.63 (average), Megaminx 42.89 (average), Yunho Nam (남윤호) Rubik's Clock 6.00 (average), Rubik's Clock 6.25 (average).  \n\r Asian records: Seung Hyuk Nahm (남승혁) 4x4 Cube 26.80 (single), 4x4 Cube 31.57 (average), Yohei Oka (岡要平) Pyraminx 3.00 (average).",
+    "hash": "fc5d6a53df03b0487ddf62e7e08b04266c4ab9657ad2e8ae125a74a28e0b274d",
+    "format": "markdown",
+    "sourceId": 3871
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "fc5d6a53df03b0487ddf62e7e08b04266c4ab9657ad2e8ae125a74a28e0b274d",
+    "language": "zh-Hans",
+    "title": "Sei Sugama（洲镰星）夺得 2014 年亚洲锦标赛冠军",
+    "content": "[Sei Sugama（洲镰星）](https://www.worldcubeassociation.org/results/p.php?i=2010SUGA01) 以 9.47 秒的平均成绩夺得 [2014 年亚洲锦标赛](https://www.worldcubeassociation.org/results/c.php?i=AsianChampionship2014)冠军。[Seung Hyuk Nahm（남승혁）](https://www.worldcubeassociation.org/results/p.php?i=2013NAHM01) 以 9.57 秒获得亚军，[Mitsuki Gunji（郡司光贵）](https://www.worldcubeassociation.org/results/p.php?i=2006GUNJ01) 以 9.64 秒获得季军。\n\n世界纪录：Kabyanil Talukdar，三阶盲拧平均 27.63 秒；Yu Da-Hyun，五魔方单次 37.83 秒、平均 44.63 秒、平均 42.89 秒；Yunho Nam（남윤호），魔表平均 6.00 秒、平均 6.25 秒。\n\n亚洲纪录：Seung Hyuk Nahm（남승혁），四阶单次 26.80 秒、平均 31.57 秒；Yohei Oka（冈要平），金字塔平均 3.00 秒。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:55:00.990Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "44e78467784e29b67bf34be865cbf5d0fca48320b92a337c8e2bd0bb58447dd5"
+}

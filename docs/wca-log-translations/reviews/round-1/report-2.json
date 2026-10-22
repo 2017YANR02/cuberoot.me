@@ -1,0 +1,366 @@
+{
+  "reviewer": "review_2",
+  "reviewedAt": "2026-10-22T06:22:43.237972Z",
+  "entries": [
+    {
+      "key": "disciplinary:/posts/wdc-monthly-digest-december-2019",
+      "path": "entries/disciplinary-wdc-monthly-digest-december-2019.json",
+      "verdict": "pass",
+      "sourceHash": "893d648851b41c26c3d3ce980e25dfd002cb8c7df348ccfb1382697c5ad903cf",
+      "reviewedTranslationHash": "ca02625cbc6632a2bef9af89ac0d58d23af691104e37c1d94a3539029425541c",
+      "evidence": "逐项核对标题及全文；55 件立案、53 件结案、19 件正式警告、14 件禁赛、2 项在办调查，卸任与新增成员及任期至 2020 年 12 月均对应。报告异常及询问代表的提醒保留。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/wdc-monthly-digest-february-2019",
+      "path": "entries/disciplinary-wdc-monthly-digest-february-2019.json",
+      "verdict": "pass",
+      "sourceHash": "e2dfc8363e1d6acc54dbe3444d85f30db04bfc527610af1e8a5e4290bd693230",
+      "reviewedTranslationHash": "2f2454f3c8747ff22c536925036a4df4133b16eb59dbfec40025e4540c64baa8",
+      "evidence": "逐项核对标题及全文；8 项调查的 4/2/2 开案月份、7 件结案及 2018 年案件全部结案均对应。三宗盲拧案分别为正式警告、6 个月及 9 个月禁赛；眼罩、口琴架、遮挡纸及自认不会盲拧等证据未倒置。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/wdc-monthly-digest-january-2019",
+      "path": "entries/disciplinary-wdc-monthly-digest-january-2019.json",
+      "verdict": "correction_required",
+      "sourceHash": "041f3b95c8afa44d3fdf1d277bc5154d0714c6b8766ea0e1510066e747ab43d7",
+      "reviewedTranslationHash": "b03818408a6ff9383abee8367e34987f19fcff16da205fc6deb5c3b113827677",
+      "evidence": "逐项核对标题及全文；11 项调查、3 件新案、8 件延续、5 件结案及各项处分数字对应。首案保留未提供盲拧能力证明及六个月禁赛、受影响成绩 DNF；第二案的目的性应明确保留 attempt；第三案第二次认定作弊及总禁赛两年对应，匿名及原有链接保留。",
+      "unresolvedNotes": [],
+      "corrections": [
+        {
+          "field": "content",
+          "old": "两名未成年选手因互相帮助取得更好成绩，各被禁赛六个月。",
+          "new": "两名未成年选手因采取行动试图互相帮助取得更好成绩，各被禁赛六个月。",
+          "reason": "保留处分原因中的尝试及目的性，不把 attempt 直接改成已实现的行为结果。",
+          "sourceEvidence": "because of their actions taken in an attempt to help each other get better results"
+        }
+      ]
+    },
+    {
+      "key": "disciplinary:/posts/wdc-monthly-digest-july-2019",
+      "path": "entries/disciplinary-wdc-monthly-digest-july-2019.json",
+      "verdict": "pending_source_verification",
+      "sourceHash": "8904de8d783cf098f53c1e672db3bb338562969759a7f9148490a7d719314b25",
+      "reviewedTranslationHash": "bf76e9d09b9c032ce9eef7f85cbac22bafa6db4ff7f4ab5af7ff5f55d26cd066",
+      "evidence": "逐项核对标题及全文；9 件在办案件、全部正式成绩取消、附条件禁赛及两个月未答复对应。前臂提前停表的证据归属于委员会认定；公开信、取消多盲成绩、重复金字塔打乱及不进一步处分均对应，未补身份。原文近十年前的年代矛盾原样保留。",
+      "unresolvedNotes": [
+        "源文公开信称 2007 年的作弊发生于 almost a decade ago，与 2019 年简报时间相差约十二年不一致；译文忠实保留为近十年，年代问题 unresolved。本轮仅对照所给正文，未作事实核验。"
+      ],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/wdc-monthly-digest-march-april-2019",
+      "path": "entries/disciplinary-wdc-monthly-digest-march-april-2019.json",
+      "verdict": "pass",
+      "sourceHash": "9a25c9a310caf9b2f09b16fda73275fbb2d3bdc2180d679f905102a130c9f287",
+      "reviewedTranslationHash": "27b96d4867d96b487580ac045d1881d8cd2aa05c9b153689b66adbc7e9d9349e",
+      "evidence": "逐项核对标题及全文；3 月 4 件（2 件新案）、4 月 8 件（2 件延续、6 件新案）和两件暂停对应。潜在案件直接报告、网络推测可能导致欺凌及对线上与比赛环境的共同要求保留。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/wdc-monthly-digest-may-june-2019",
+      "path": "entries/disciplinary-wdc-monthly-digest-may-june-2019.json",
+      "verdict": "pass",
+      "sourceHash": "f9085d1bba1662d4acf9184acf90ef0ecea05fbb0fc2869afc2e8cae8c4cdd0c",
+      "reviewedTranslationHash": "ae630fcfd1534295ecad27c62d7d7e97d2a78c31a4d318a71109768d5d33e2c4",
+      "evidence": "逐项核对标题及全文；半年立案超过 2018 全年、在办 11 件、多数复杂及乌克兰案件仍需时间对应。非工作人员涉嫌违反伦理准则时的 WDC 职责、精准报告加快调查及代表报告流程保留。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/wdc-monthly-digest-november-2019",
+      "path": "entries/disciplinary-wdc-monthly-digest-november-2019.json",
+      "verdict": "pass",
+      "sourceHash": "823e8fee84f6325e65f5da8d600445fe77a481f4131ab4c6addfc9689e3ead87",
+      "reviewedTranslationHash": "8ceb8b02aa888e1b02a305a23ebaa3564d8474106141418fee9cea8660e39412",
+      "evidence": "逐项核对标题及全文；11 月新开与结束各三项调查对应，因无重大更新而公开内部工作流程文件的目的及链接均保留，未把外链内容算作已审校。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/wdc-monthly-digest-october-2019",
+      "path": "entries/disciplinary-wdc-monthly-digest-october-2019.json",
+      "verdict": "pass",
+      "sourceHash": "d7e2780c47fc8473b4ca8eeaac050c3582b77c127e06de73a52d88c9e771b6a0",
+      "reviewedTranslationHash": "bae97cc71c079622aee2898122f386cc392acc1e72d42f078d5a2961b1477058",
+      "evidence": "逐项核对标题及全文；四项新案、一件数日结案、另三件中两件月底或次月初结案对应。16/16、9/16、6/9 三阶段人数、30 分钟面试、六名成员及 ID、Anuj 两年贡献和卸任原因均对应。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/wdc-report-on-a-case-of-cheating",
+      "path": "entries/disciplinary-wdc-report-on-a-case-of-cheating.json",
+      "verdict": "correction_required",
+      "sourceHash": "bc3837e954ce65dba9788e6706d51f9322fb7da3091d9a687acdb086fc2427be",
+      "reviewedTranslationHash": "44727bf0b1b294e950f0aa146232583fabd0bea93115ea5c95063b09610930f5",
+      "evidence": "逐项核对标题及全文；2022/2023、多场多项目、2 年 6 个月及 2026-06-24 截止日期对应。无法确定有效的成绩取消和 9t 后续轮次删除范围对应；匿名化理由保留，但强烈劝阻公开姓名的原因修饰语错接，需修正。",
+      "unresolvedNotes": [],
+      "corrections": [
+        {
+          "field": "content",
+          "old": "WDC 强烈劝阻社群因此公开其姓名。",
+          "new": "出于这一原因，WDC 强烈劝阻社群公开其姓名。",
+          "reason": "for this reason 修饰 WDC 劝阻行为；现译将原因错接为社群公开姓名的原因。",
+          "sourceEvidence": "The WDC strongly discourages the community from publicizing the name of the accused competitor for this reason."
+        }
+      ]
+    },
+    {
+      "key": "disciplinary:/posts/wdc-report-on-a-case-of-cheating-in-3x3x3-multi-blind",
+      "path": "entries/disciplinary-wdc-report-on-a-case-of-cheating-in-3x3x3-multi-blind.json",
+      "verdict": "pass",
+      "sourceHash": "786f4bb4a4d949db046c2307e43aabb351655d865c7e62e1c159b1e0ee974bb7",
+      "reviewedTranslationHash": "52cf4feb1129524932846dbfd298675df8edb2126449d0db96d976f512c06020",
+      "evidence": "逐项核对标题及全文；已认定本案作弊与确信此前比赛也存在该行为的强度对应，2 年禁赛、仅部分成绩改为 DNF、仍保持未受调查影响的多项国家纪录均准确。未解析外链或补身份。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/wdc-report-on-a-case-of-harassment",
+      "path": "entries/disciplinary-wdc-report-on-a-case-of-harassment.json",
+      "verdict": "pass",
+      "sourceHash": "d9e014f6eea2bac1924f614c35aa6ddae0941c51ad4f618fd5a29515e4d28271",
+      "reviewedTranslationHash": "bdaeee268f12da8beb2a8fdd67031a28c6a4f50f3bc9b17f406de1106f9f8a20",
+      "evidence": "逐项核对标题及全文；伦理委员会先处理正式职位、纪律委员会后调查的顺序保留。性骚扰阅读提示、坚决回应和支持受害者的内容齐全；未添加公告没有给出的禁赛处分。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/wic-digest-2024-q3",
+      "path": "entries/disciplinary-wic-digest-2024-q3.json",
+      "verdict": "pending_source_verification",
+      "sourceHash": "f00fb0252ed1e826ae1444d8c136845f0b4a4d3bd32e4c900228eb6f19308b39",
+      "reviewedTranslationHash": "f0469b5117427c85a5238766b95c0ac39e313ecb18e6529a89c8222b60915591",
+      "evidence": "逐项核对标题及全文；2024-08-01 成立、两委员会合并、23 件立案、17 件结案及 4/3/13 数字全部照录。六组个案的否认故意后承认、手机作弊起始时间争议、证据不足证明或排除作弊及无进一步处分均对应；统计口径问题未自行改数。",
+      "unresolvedNotes": [
+        "源文称结案 17 件，但随后列 4 项禁赛、3 项警告及 13 件其他结局；若按互斥案件数理解则合计 20。是否处分数量与案件数口径不同或存在交叉，正文未说明。译文忠实照录；统计口径 unresolved，未作外部事实核验。"
+      ],
+      "corrections": []
+    },
+    {
+      "key": "incidents:1",
+      "path": "entries/incidents-1.json",
+      "verdict": "pass",
+      "sourceHash": "1c164b33ce9619c321eae03ca175ca447ccd0b5f3457cda00a3c7634e1035ba7",
+      "reviewedTranslationHash": "c41465582602bcd348cefc8a35e7acb91070e9e4ca3314377e9711380ddb9705",
+      "evidence": "逐项核对标题及全文；使用胸部辅助及承认既往行为、缺乏视频无法追溯、决定不取消既往成绩均对应。“我们认为”未获显著优势保留为委员会判断，未提升为确定事实。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:10",
+      "path": "entries/incidents-10.json",
+      "verdict": "pass",
+      "sourceHash": "de5bed737a00ac8faa4a1997c91fd434f00cf90119ababbbab3d476b5fa009f6",
+      "reviewedTranslationHash": "2f219c8852ed6ae781c9a8897e2e48010fa761510fe1fa8a5ba0b5e3aab65222",
+      "evidence": "逐项核对标题及全文；标题保留当时非当前官方版本，正文说明旧 TNoodle；接受成绩为正式成绩的裁定准确，未增添处分或当前版本信息。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:100",
+      "path": "entries/incidents-100.json",
+      "verdict": "pass",
+      "sourceHash": "fcf08ef68f45bb861158bcfb06ffcf8779cd4a47c953ddb7225d521ede2137ae",
+      "reviewedTranslationHash": "54ca74648ea825b7b8e31ab60ea9bed9bc3dd651f2eed141b30aa8719a074d46",
+      "evidence": "逐项核对标题及全文；十秒位 1 变 0、少计 10 秒、没有额外尝试、逐帧及咨询 WRT 的过程对应。最终加回 10 秒而非 DNF 的处理准确。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:102",
+      "path": "entries/incidents-102.json",
+      "verdict": "pass",
+      "sourceHash": "c16736e4b31bb34f40c4151689949ba046c7bc4a6c6a7d07e368600facec36b1",
+      "reviewedTranslationHash": "29a35060bac502f452b8d514fa35dab7ecc27ece9f6bc1c402b0ebbccf990f93",
+      "evidence": "逐项核对标题及全文；3k2 更新说明、第四场比赛、暂定重赛整轮、第一轮 DNF 保持以及不得再发额外尝试的两层理由均保留。9l 无效尝试概念未定义及将来考虑澄清、经验足够不能适用 A7g 的意见对应，未把历史裁定写成已核实的现行规则。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:103",
+      "path": "entries/incidents-103.json",
+      "verdict": "pass",
+      "sourceHash": "a33970278eb2082d5eaade27f7e3d9978830b2d9a5f5afefa384646205491394",
+      "reviewedTranslationHash": "4ae8993c57d88ac9807d65e89f8374749de1e0489df4c7095013e7d66945f192",
+      "evidence": "逐项核对标题及全文；误听准备好后的额外尝试、前四次未报 8/12 秒、第五次换裁判对应。第二三四次观察超过 15 秒且不足 17 秒，各加 2 秒及经验理由均准确。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:104",
+      "path": "entries/incidents-104.json",
+      "verdict": "pass",
+      "sourceHash": "27da706081de015c3ff23993617bde6263ea33ef5e82b8cf341f2e7348cbda48",
+      "reviewedTranslationHash": "e3b2bb3bb15b25058ed21b67996ae828b27dc4ff8a4ed7b5086cc49e29356694",
+      "evidence": "逐项核对标题及全文；第一次误用第二条打乱、第二次重复、碰倒罩后才知重复的顺序保留。主要错误认定为碰倒罩、最终 DNF 而非 DNS，以及自愿放弃与其他错误的历史区分对应。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:105",
+      "path": "entries/incidents-105.json",
+      "verdict": "pass",
+      "sourceHash": "b0869e2134866ffc594434dbf0b0a951c94ffc51ee85449d72344d3ab39d38c7",
+      "reviewedTranslationHash": "cafc362e5a2ece19acf0e29fe86aa4aab0d5243a86e58fda7ac9deedb70a5b4f",
+      "evidence": "逐项核对标题及全文；11i 后续更新声明、两人第二次均 DNF、视频质量差而结论不明、暂定额外尝试获接受均对应。较难打乱仍表述为当事人声称，代表酌情判断及事件 35 链接保留。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:106",
+      "path": "entries/incidents-106.json",
+      "verdict": "pass",
+      "sourceHash": "bcbe75245f40ec9b90600e36731e44ef4225336873ebbe1b8a57e554640a6686",
+      "reviewedTranslationHash": "9529a7a7b130de56e394e7a12abf93f2fe858b6953672c8d79279ea725d57f0a",
+      "evidence": "逐项核对标题及全文；比赛后发现一块中心可触摸区分、两次多盲成功数各减 1、无法确认实际还原状态及已还原较可能的判断均对应；选手提交合规魔方的责任和 3k2b 依据保留。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:107",
+      "path": "entries/incidents-107.json",
+      "verdict": "pass",
+      "sourceHash": "984af9cb7b6727384d121a0149ea1a8170b24e75785fdd4ee7530b7b4e93f1e9",
+      "reviewedTranslationHash": "590a4c40a4c9a5e846bb56a2f3a00e0528c7fe9e5d9bbe6e3840cf617cefef45",
+      "evidence": "逐项核对标题及全文；停表前用魔方撞落计时器到腿上、暂定额外尝试且保留原成绩对应。最终因选手过错而仅采用原成绩，否定采用额外尝试的结论准确。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:108",
+      "path": "entries/incidents-108.json",
+      "verdict": "pass",
+      "sourceHash": "1a161b8ef733568257c696638190666593fa1f3df0c21acbe5a79e768a62d19e",
+      "reviewedTranslationHash": "2e2843f0631eaa2b3d98e4f60c8250c1763f6f341d2f04959a50f63733b73a57",
+      "evidence": "逐项核对标题及全文；秒表 0:00.00、很可能意外复位、双方似乎记得相同时间均保留不确定性。非选手造成及一致记忆支持采纳时间；记录签名前不复位、选手提前复位应 DNF 的提醒对应。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:109",
+      "path": "entries/incidents-109.json",
+      "verdict": "pass",
+      "sourceHash": "2ee899fc1918de0aa2d650e2bd398eb8a18069236ccdba41a7276e476d61ded6",
+      "reviewedTranslationHash": "6400f2f52b6ebbbf85a5ff0b833b8efcc78e2df430cec097cf7694c4ce72a899",
+      "evidence": "逐项核对标题及全文；FMC 开始前翻开打乱纸、代表已明确告知、选手自身过错及 DNF 裁定对应。未扩展规则或动机。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:11",
+      "path": "entries/incidents-11.json",
+      "verdict": "pending_source_verification",
+      "sourceHash": "0f38fe9423de7d19c800589e931609e343573da19b112d8bab61a808039bdd2c",
+      "reviewedTranslationHash": "c0d18abf02701f09f86ec829a2a45f6c2938d7d285697312dceb44ffa46bed4f",
+      "evidence": "逐项核对标题及全文；4b1 后续禁止筛选的声明、二阶决赛幸运打乱、NR、众人祝贺、代表换组及全部成绩保留均对应。“filtration of the solve” 含混，译文取泄露义但无法仅凭正文排除其他意思。",
+      "unresolvedNotes": [
+        "原文 suspecting filtration of the solve 措辞含混；现译为怀疑还原情况泄露，是一种语境解释，需源文作者或来源确认。此处 unresolved；未读取外链或推断身份。"
+      ],
+      "corrections": []
+    },
+    {
+      "key": "incidents:110",
+      "path": "entries/incidents-110.json",
+      "verdict": "correction_required",
+      "sourceHash": "729133657cec1e00ee3432cbd1a187ad32e245729a9235c7248ddf8ca55df72e",
+      "reviewedTranslationHash": "0f0fec8991976b8bacd176180ea4f9135d0e82225c9bd27b3935fefbd0c41364",
+      "evidence": "逐项核对标题及全文；赛后数天、创纪录魔方、声音随角块位置变化、中心盖触感差异、最终保留成绩及三项依据均对应。potentially invalid 是合规资格而非一般适合度，需要准确译为可能不合规。",
+      "unresolvedNotes": [],
+      "corrections": [
+        {
+          "field": "content",
+          "old": "可能不适合盲拧，而该纪录正是在盲拧中取得。",
+          "new": "因此该魔方可能不符合盲拧项目的规则要求，而该纪录正是在盲拧中取得。",
+          "reason": "invalid 指器材规则资格，不是一般用途上的不适合；同时保留 potentially 的不确定性。",
+          "sourceEvidence": "thus making it potentially invalid for blind solving, which is where the record was set"
+        }
+      ]
+    },
+    {
+      "key": "incidents:111",
+      "path": "entries/incidents-111.json",
+      "verdict": "pass",
+      "sourceHash": "083a3c0a310e84d78ab20435840ecd6bdeeb289a1916ddda3f0164700d746f6d",
+      "reviewedTranslationHash": "765fff855df7348a291df61db69e755c0ae653473d7c2d286b163292cbb6b4dd",
+      "evidence": "逐项核对标题及全文；2025 年 A2e2 更新声明、选手示意准备好后裁判先启动秒表而未揭罩、选手自行揭罩均对应。历史无明确处罚、赛后不能补赛、未获优势而保留成绩及立即找代表的建议完整。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:112",
+      "path": "entries/incidents-112.json",
+      "verdict": "pass",
+      "sourceHash": "412b42eb0a15cff8a2b86f9f16b17a7d936104be05099843471d889b4bd8607b",
+      "reviewedTranslationHash": "25a9ea59f5f3c7bbdea5ef98bdec824220bb588f1ebb6401f555e6a17a95bf0f",
+      "evidence": "逐项核对标题及全文；A2e2 后续更新提示、设置摄像头时意外碰倒罩、提前看到魔方归责于选手及 DNF 而非 DNS 均对应。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:113",
+      "path": "entries/incidents-113.json",
+      "verdict": "pass",
+      "sourceHash": "cff7a03439267474d9b39736cb4eb28a080976a5982304bf4aaee112a033b715",
+      "reviewedTranslationHash": "03fae9b24954ae6d29974543fe33d5cd6c70040b97b48b55eef8a7d1f9b01205",
+      "evidence": "逐项核对标题及全文；10h1a 后续新增说明、一个钟面偏移、全部指针为 12 点但一齿轮不齐平、当时不处罚均对应。正文保留事件先于 5b5f 及按最接近完整状态处理的历史说明。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:114",
+      "path": "entries/incidents-114.json",
+      "verdict": "pass",
+      "sourceHash": "681b635b44548e2c4bce2d8013969b0ca7242104ecffbbc6bb7aac658ebaf56f",
+      "reviewedTranslationHash": "1b2d551936ae67a932a1a24663d6448472e87fd9444668dd68f0e31ba86fe32d",
+      "evidence": "逐项核对标题及全文；揭罩时魔表倒下、似乎不知 F3 变更、暂定额外尝试及本次前和规则修改前不足 10 次正式还原对应。基于经验不足酌情接受额外尝试的裁定准确。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:115",
+      "path": "entries/incidents-115.json",
+      "verdict": "pending_source_verification",
+      "sourceHash": "7fb23ca92061d3efe05ca1bbeae6f7dc8db9a01c39dda7b7e1bb902f38a95392",
+      "reviewedTranslationHash": "8d79b8acf061a71f49380174482cfc919c76030ba23e97b325248aaf7d116ba7",
+      "evidence": "逐项核对标题及全文；代表赛前误报 12 分钟而网站 10 分钟、轮次开始后发现、前两次 DNF 第三次成功及最终采纳 12 分钟均对应。引述 A1a3 的赛前公布、赛后不应改及公平性要求保留；原文将选手累计时间称为 cumulative time limit 的用词问题尚待源文确认。",
+      "unresolvedNotes": [
+        "原文写 their cumulative time limit was greater than 10 minutes but less than 12 minutes，而上下文讨论的似乎是选手累计用时。译文采用累计时间属语境解释，尚不能声称已确认源文措辞；需来源澄清，unresolved。"
+      ],
+      "corrections": []
+    },
+    {
+      "key": "incidents:116",
+      "path": "entries/incidents-116.json",
+      "verdict": "pass",
+      "sourceHash": "7ca047e6ec9103e710724cfa62480a9ea1978aa6505cc697b9f69df3f2229590",
+      "reviewedTranslationHash": "eaf1f4533f2e79ed32961f7ae7a284790c1a244427b5368a0f34227ceb6b75fa",
+      "evidence": "逐项核对标题及全文；B4c3 后续更新提示、四阶盲拧最后一次、已戴眼罩、约执行 30 秒后加遮挡均对应。代表认为未获益而暂给补赛、WRC 采用原尝试并按当时 B4c 归责裁判，历史与后续责任区别明确。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:117",
+      "path": "entries/incidents-117.json",
+      "verdict": "correction_required",
+      "sourceHash": "4f31e6c5bc5872257d58fa22e00e62c224b0603614cd01e0949e3682de59c39b",
+      "reviewedTranslationHash": "28b079142fbf14e7e70d930462c194ff34d0d1f70eecfd687ea3b74a27d945f1",
+      "evidence": "逐项核对标题及全文；正文保持先短暂落腿上、后以还原状态落地及委员会认为很可能立即弹开，A6e2 例外不罚对应。标题把已还原状态前置到落腿阶段，需消除原文没有明确给出的时序推断。",
+      "unresolvedNotes": [],
+      "corrections": [
+        {
+          "field": "title",
+          "old": "已还原魔方短暂落到腿上后掉到地上",
+          "new": "魔方短暂落到腿上，随后以已还原状态掉到地上",
+          "reason": "原文仅明确落地时的已还原状态，标题不应额外断言落腿之前就已还原。",
+          "sourceEvidence": "Puzzle landed in competitor's lap and then on floor in solved state"
+        }
+      ]
+    }
+  ]
+}

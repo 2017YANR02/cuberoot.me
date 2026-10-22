@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:27",
+  "source": {
+    "key": "incidents:27",
+    "kind": "incidents",
+    "title": "Scramblers made a consistent mistake in clock scrambling",
+    "url": "https://www.worldcubeassociation.org/incidents/27",
+    "date": "2018-10-03T10:40:48.000Z",
+    "content": "In Clock finals, a competitor noticed while reconstructing their solves that every single pin was the opposite of what it should have been.\n\nAfter investigation, it appeared that all scramblers had a misconception about pin scrambling, and made that mistake through the whole round. \n\nThe WRC decided to keep the results of the round, since:\n1. it was not the competitors' fault, and\n2. in this specific case, the random distribution of scrambles states was consistently preserved by the mistake.\nThe scrambles in the database were updated to reflect the actual scrambles received by the competitors.",
+    "hash": "23a7ed8612253f86d9abb90d5701efd8fe8ac1b2d6e729a9becc817176556e80",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 2,
+    "title": "打乱员在魔表打乱中犯了相同错误",
+    "content": "在魔表决赛中，一名选手复盘时发现，每个拨针的状态都与应有状态相反。\n\n调查发现，所有打乱员都误解了拨针打乱方式，整轮持续犯了同样的错误。\n\nWRC 决定保留该轮成绩，理由是：\n1. 错误并非由选手造成；\n2. 在这一特定情况下，该错误始终保留了打乱状态的随机分布。\n\n数据库中的打乱已更新，以反映选手实际收到的打乱。",
+    "translatedAt": "2026-10-22T05:50:48.611Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "23a7ed8612253f86d9abb90d5701efd8fe8ac1b2d6e729a9becc817176556e80",
+    "revisedAt": "2026-10-22T06:25:36.680Z",
+    "revisionReason": "独立审校 round-1 的精确修正建议"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_4",
+      "reviewedAt": "2026-10-22T06:22:38.727845Z",
+      "report": "reviews/round-1/report-4.json",
+      "sourceHash": "23a7ed8612253f86d9abb90d5701efd8fe8ac1b2d6e729a9becc817176556e80",
+      "reviewedTranslationHash": "15325e546a165d43097c68aa131f7029cdfefcdb4e72a15be615305630a407bf",
+      "verdict": "correction_required",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": [],
+    "recheck": {
+      "reviewer": "review_4",
+      "reviewedAt": "2026-10-22T06:26:29.980Z",
+      "report": "reviews/round-1/recheck-4.json",
+      "sourceHash": "23a7ed8612253f86d9abb90d5701efd8fe8ac1b2d6e729a9becc817176556e80",
+      "reviewedTranslationHash": "bfd7b03adadecef260b2aff7a982164c33b205db05448874d617451063ff3720",
+      "verdict": "pass"
+    }
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

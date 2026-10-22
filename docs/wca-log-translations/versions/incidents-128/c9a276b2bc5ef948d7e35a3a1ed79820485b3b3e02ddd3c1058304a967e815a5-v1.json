@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:128",
+  "source": {
+    "key": "incidents:128",
+    "kind": "incidents",
+    "title": "Delegate awarded themselves an extra attempt after attempt had concluded",
+    "url": "https://www.worldcubeassociation.org/incidents/128",
+    "date": "2024-10-13T05:25:42.000Z",
+    "content": "A delegate at this competition was competing and received another competitor’s cube on a 4x4 solve. While the delegate wasn’t distracted by this, he realized and decided to grant himself an extra after the solve, resetting the timer immediately before it was recorded by the judge. There was a split opinion amongst the other delegates at this competition as to whether this warranted the extra, since another competitor also had a similar issue but didn’t receive an extra on account of not being distracted. While the WRC decided to leave this up to delegate discretion, we strongly advised that the original attempt (in this case, DNF) be kept, as the competitor did not request an extra until the solve was complete (see 11e+++)",
+    "hash": "4ccc6d1086972c66291d3f1c5328be25374631d5dc616a8b803821a3a68dc1ce",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "代表在还原结束后给予自己额外尝试",
+    "content": "一名参赛的代表在四阶还原中拿到了他人的魔方。虽然未因此分心，他在还原后意识到问题并决定给予自己额外尝试，且在裁判记录前立即复位了计时器。现场其他代表意见不一，因为另一名选手遇到类似问题，却因未受干扰而没有获得额外尝试。\n\nWRC 决定交由代表酌情判断，但强烈建议保留原尝试结果，即本案中的 DNF，因为选手直到完成还原才请求额外尝试（见 11e+++）。",
+    "translatedAt": "2026-10-22T05:57:56.837Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "4ccc6d1086972c66291d3f1c5328be25374631d5dc616a8b803821a3a68dc1ce"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

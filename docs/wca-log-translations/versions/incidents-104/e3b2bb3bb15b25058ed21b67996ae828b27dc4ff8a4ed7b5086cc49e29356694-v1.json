@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:104",
+  "source": {
+    "key": "incidents:104",
+    "kind": "incidents",
+    "title": "Competitor accidentally knocked over cube cover and realized they got a duplicate scramble",
+    "url": "https://www.worldcubeassociation.org/incidents/104",
+    "date": "2024-05-31T10:50:29.000Z",
+    "content": "A competitor was mistakenly given the second scramble for their first attempt. The second attempt was scrambled according to the second scramble (as the mistake was not yet known). Upon sitting down for the second attempt, the competitor accidentally knocked over the cover. The competitor then recognized and confirmed that they had received a duplicate scramble as it had matched the first attempt. \n\nThe finalized ruling was for the attempt to be DNFed. In this case, there were two mistakes that occurred simultaneously:\n1. the competitor obtained a repeat scramble\n2. the competitor accidentally knocked over the cube cover.\n\nHere, the predominant mistake was deemed to be 2. as the competitor did not know it was a repeated scramble when knocking it, even if accidentally.\n\nThe decision also aligns with the historical and commonplace interpretations of the differences between a DNS and a DNF, where a DNS is given when a competitor voluntarily removes themselves from an attempt, and a DNF is given for other mistakes.",
+    "hash": "27da706081de015c3ff23993617bde6263ea33ef5e82b8cf341f2e7348cbda48",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "选手意外碰倒魔方罩后发现重复打乱",
+    "content": "选手第一次尝试误收了第二条打乱。因错误尚未发现，第二次仍使用第二条打乱。选手坐下准备第二次尝试时，意外碰倒魔方罩，随后认出并确认与第一次打乱相同。\n\n最终裁定为 DNF。本案同时存在两项错误：\n1. 收到重复打乱；\n2. 意外碰倒魔方罩。\n\n第二项被认定为主要错误，因为选手碰倒罩时并不知道是重复打乱，即使碰倒是意外。\n\n此决定也与历来常见的 DNS 和 DNF 区分一致：选手自愿放弃尝试时为 DNS，其他错误则为 DNF。",
+    "translatedAt": "2026-10-22T05:56:15.197Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "27da706081de015c3ff23993617bde6263ea33ef5e82b8cf341f2e7348cbda48"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

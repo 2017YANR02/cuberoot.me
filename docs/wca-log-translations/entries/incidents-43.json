@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:43",
+  "source": {
+    "key": "incidents:43",
+    "kind": "incidents",
+    "title": "A competitor submitted a wrong number of puzzles for Multi-Blind",
+    "url": "https://www.worldcubeassociation.org/incidents/43",
+    "date": "2019-11-06T21:11:43.000Z",
+    "content": "During Multi-BLD, a competitor submitted his puzzles to be scrambled, without writing down a declared number of cubes. The scramblers scrambled all the puzzles and wrote down it on the scorecard. When the competitor came to solve, he told the judge that he wanted to attempt a number of cubes lower than the amount submitted. The judge intended to give the competitor the amount that he said he wanted to attempt, but miscounted and gave the competitor the full amount of cubes that were sumbitted.\n\nThe WCA Delegate allowed the competitor to attempt the amount that he had claimed, rather than the amount that he had submitted. Due to the staff's mistake in counting the attempt, the delegate gave a provisional extra.\n\nAlthough the competitor said a different number later, he initially submitted all the puzzles and did not mark anything on the scoresheet. This violates Regulation H1a):\n> [H1a](https://www.worldcubeassociation.org/regulations/#H1a)) Before an attempt, the competitor must submit to the organization team the number of puzzles (at least 2) they wish to attempt.\n\nIn addition, Regulation H1a1) explicitly clarifies that changing the number of puzzles is not allowed:\n> [H1a1](https://www.worldcubeassociation.org/regulations/#H1a1)) A competitor is not permitted to change the number of puzzles after submitting their number to the organization team.\n\nTherefore, the WRC decision was to consider the total amount of cubes attempted as the original amount the competitor had submitted.",
+    "hash": "1cc71cfb6e3402b4ff892c87a9af90e9294cdb91e4cc0e0f0e428444f19c617f",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "选手在多盲中提交了错误数量的魔方",
+    "content": "多盲中，一名选手提交魔方供打乱，却没有写明申报数量。打乱员将全部魔方打乱，并把数量写在成绩单上。选手来到比赛台后告诉裁判，希望尝试的数量少于提交数量。裁判本想按选手所述数量提供魔方，但数错了，给了提交的全部魔方。\n\n代表允许选手尝试其口头声称的数量，而非原提交数量。由于工作人员计数失误，代表给予了一次暂定的额外尝试。\n\n虽然选手后来报出了不同数量，但最初提交了全部魔方，且未在成绩单上作任何标记。这违反了 H1a：\n> [H1a](https://www.worldcubeassociation.org/regulations/#H1a) 尝试前，选手须向组织团队提交希望尝试的魔方数量，至少为 2 个。\n\nH1a1 还明确规定不得更改数量：\n> [H1a1](https://www.worldcubeassociation.org/regulations/#H1a1) 向组织团队提交数量后，选手不得更改魔方数量。\n\n因此，WRC 决定以选手最初提交的数量作为该次尝试的魔方总数。",
+    "translatedAt": "2026-10-22T05:50:48.611Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "1cc71cfb6e3402b4ff892c87a9af90e9294cdb91e4cc0e0f0e428444f19c617f"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_5",
+      "reviewedAt": "2026-10-22T06:22:53.079981Z",
+      "report": "reviews/round-1/report-5.json",
+      "sourceHash": "1cc71cfb6e3402b4ff892c87a9af90e9294cdb91e4cc0e0f0e428444f19c617f",
+      "reviewedTranslationHash": "dab571ba91bb7332cf3a35b9e4f379525c6ba9773197a054a5146e9d55030a5a",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

@@ -309,8 +309,12 @@
 
 .landing-search-mic.landing-search-send {
   margin: -4px -8px -4px 0;
-  background: color-mix(in srgb, var(--signal-info) 78%, black);
+  background: color-mix(in srgb, var(--signal-info) 55%, black);
   color: var(--destructive-foreground);
+}
+
+.landing-search-input:focus-within .landing-search-mic.landing-search-send {
+  background: color-mix(in srgb, var(--signal-info) 78%, black);
 }
 
 .landing-search-input .landing-search-voice-button,
@@ -336,7 +340,7 @@
   background: var(--muted);
 }
 
-.landing-search-mic.landing-search-send:hover:not(:disabled) {
+.landing-search-input:focus-within .landing-search-mic.landing-search-send:hover:not(:disabled) {
   background: color-mix(in srgb, var(--signal-info) 88%, black);
 }
 

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:155",
+  "source": {
+    "key": "incidents:155",
+    "kind": "incidents",
+    "title": "Competitor thought timer malfunctioned after getting second DNF for timer start",
+    "url": "https://www.worldcubeassociation.org/incidents/155",
+    "date": "2025-04-04T02:30:15.000Z",
+    "content": "A competitor called a delegate over after getting a second DNF because the timer did not start. This was a very experienced competitor, and had no explanation as to why this happened. The competitor believed they held their hands on the timer long enough, but the judge was unsure if the green starting light was visible or not. \n\nThe delegates tested the timers that were used on the two DNF attempts and had no issues with them, and nobody else complained about the timers for the rest of the competition. Videos of the solves were provided for analysis. \n\nThe WRC reviewed the information and videos and concluded that the DNFs should be kept. The competitor had a tendency of starting the timer quite fast (even on successful starts), and on the DNF attempts, their hands were held on the timer for a bit less time, justifying why the timer did not start. Additionally, since there were no other complaints about the timer during the competition, it is very likely that the competitor simply did not start the timer correctly. As a result, both attempts remained as DNFs.",
+    "hash": "f7bcc967f3028dbd295a8900509aa89664e05edade8a69f19c6ff91f30e77ea2",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "第二次启动失败后，选手认为计时器故障",
+    "content": "一名经验丰富的选手因计时器未启动第二次得到 DNF，叫来代表，无法解释原因。他认为手放得够久，但裁判不确定绿灯是否亮起。\n\n代表测试了两次 DNF 所用计时器，均无异常；此后比赛中也无人投诉。选手提供了录像。\n\nWRC 审查后决定保留两个 DNF。选手即使在成功启动时，也倾向很快抬手；两次 DNF 时放手时间更短，足以解释未启动。加上没有其他投诉，很可能只是选手未正确启动。因此两次均保持 DNF。",
+    "translatedAt": "2026-10-22T06:00:02.853Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "f7bcc967f3028dbd295a8900509aa89664e05edade8a69f19c6ff91f30e77ea2"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

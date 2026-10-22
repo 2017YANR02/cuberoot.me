@@ -1,0 +1,30 @@
+{
+  "reviewer": "review_4",
+  "reviewedAt": "2026-10-22T06:26:29.980Z",
+  "entries": [
+    {
+      "key": "incidents:155",
+      "sourceHash": "f7bcc967f3028dbd295a8900509aa89664e05edade8a69f19c6ff91f30e77ea2",
+      "reviewedTranslationHash": "75e988a4f0a5a9f13041f5792b14c9158403748d84e07782049b2da36316c874",
+      "verdict": "pass",
+      "evidence": "已重新完整核对标题及正文。原建议正确应用为“双手按在计时器上的时间更短”，准确对应 hands were held on the timer for a bit less time；前文裁判不确定绿灯、设备测试正常与后文很可能未正确启动及两个 DNF 均保留，语义连贯。",
+      "unresolvedNotes": []
+    },
+    {
+      "key": "incidents:27",
+      "sourceHash": "23a7ed8612253f86d9abb90d5701efd8fe8ac1b2d6e729a9becc817176556e80",
+      "reviewedTranslationHash": "bfd7b03adadecef260b2aff7a982164c33b205db05448874d617451063ff3720",
+      "verdict": "pass",
+      "evidence": "已重新完整核对标题及正文。原建议正确应用为“在魔表决赛中”，对应 In Clock finals，未再额外断言决赛后。所有拨针相反、整轮共同错误、非选手过失与随机分布保留的理由、保留成绩及更新打乱数据库均保持完整。",
+      "unresolvedNotes": []
+    },
+    {
+      "key": "incidents:28",
+      "sourceHash": "8b6b2f8d36c3a2b0e497f1f0f81e3b4fec329da411026647f4567e1ecd1a0ebf",
+      "reviewedTranslationHash": "15c3c7314c25376e899566d9259ff7c2a48f634dc6ce6d8349f1d5780cdcf6cc",
+      "verdict": "pass",
+      "evidence": "已重新完整核对标题、全文引文、表格及结论。原建议正确应用为“分析提示……可能未受影响”，保留 suggests 的证据强度；随后至少一场比赛确有偏差及其他项目已核实未受影响的区别清楚。86/73、版本 0.13.4/0.13.5、7/11 步、五行表格和四项保留理由均一致。",
+      "unresolvedNotes": []
+    }
+  ]
+}

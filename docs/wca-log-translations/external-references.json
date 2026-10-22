@@ -1,0 +1,2256 @@
+{
+  "updatedAt": "2026-10-22T06:15:27.876Z",
+  "scope": "正文中引用，不自动扩大翻译范围。not_fetched表示未读取，不表示已经确认受限。",
+  "entries": [
+    {
+      "url": "https://www.worldcubeassociation.org/documents/motions/10.2022.3%20-%20Disciplinary%20Committee.pdf",
+      "kind": "document",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/call-for-applicants-wca-disciplinary-committee-wdc-members-september-2022",
+        "disciplinary:/posts/call-for-applicants-wdc-leader-december-2023",
+        "disciplinary:/posts/call-for-applicants-wdc-members-august-2023"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/documents/motions/15.2022.1%20-%20Suspensions%20and%20other%20Sanctions.pdf",
+      "kind": "document",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/call-for-applicants-wca-disciplinary-committee-wdc-members-september-2022",
+        "disciplinary:/posts/call-for-applicants-wdc-members-august-2023"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/documents/Code%20of%20Conduct.pdf",
+      "kind": "document",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/call-for-applicants-wca-disciplinary-committee-wdc-members-september-2022",
+        "disciplinary:/posts/call-for-applicants-wdc-members-august-2023"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/disciplinary",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/call-for-applicants-wca-disciplinary-committee-wdc-members-september-2022",
+        "disciplinary:/posts/call-for-applicants-wca-integrity-committee-members-august-2025",
+        "disciplinary:/posts/call-for-applicants-wdc-members-august-2023",
+        "disciplinary:/posts/call-for-applicants-wdc-members-september-2019",
+        "disciplinary:/posts/wdc-digest-2023-q2"
+      ]
+    },
+    {
+      "url": "https://forum.worldcubeassociation.org/c/wca-disciplinary/26",
+      "kind": "forum",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/call-for-applicants-wca-disciplinary-committee-wdc-members-september-2022",
+        "disciplinary:/posts/call-for-applicants-wdc-members-august-2023",
+        "disciplinary:/posts/wdc-digest-2023-q2",
+        "disciplinary:/posts/wdc-digest-2023-q3",
+        "disciplinary:/posts/wdc-digest-december-2022",
+        "disciplinary:/posts/wdc-digest-march-2023",
+        "disciplinary:/posts/wdc-digest-september-2022",
+        "disciplinary:/posts/wic-digest-2024-q3"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/teams-committees#WDC",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/call-for-applicants-wca-disciplinary-committee-wdc-members-september-2022",
+        "disciplinary:/posts/call-for-applicants-wdc-members-august-2023",
+        "disciplinary:/posts/wdc-digest-december-2022"
+      ]
+    },
+    {
+      "url": "mailto:stronto@worldcubeassociation.org",
+      "kind": "contact",
+      "retrievalStatus": "contact_only",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/call-for-applicants-wca-disciplinary-committee-wdc-members-september-2022",
+        "disciplinary:/posts/call-for-applicants-wdc-members-august-2023"
+      ]
+    },
+    {
+      "url": "mailto:assistants@worldcubeassociation.org",
+      "kind": "contact",
+      "retrievalStatus": "contact_only",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/call-for-applicants-wca-integrity-committee-leader-december-2025",
+        "disciplinary:/posts/call-for-applicants-wdc-leader-december-2023"
+      ]
+    },
+    {
+      "url": "mailto:board@worldcubeassociation.org",
+      "kind": "contact",
+      "retrievalStatus": "contact_only",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/call-for-applicants-wca-integrity-committee-leader-december-2025",
+        "disciplinary:/posts/call-for-applicants-wdc-leader-december-2023",
+        "disciplinary:/posts/call-for-applicants-wdc-leader-january-2021",
+        "disciplinary:/posts/call-for-applicants-wdc-leader-october-2020"
+      ]
+    },
+    {
+      "url": "https://documents.worldcubeassociation.org/documents/motions/10.2025.3%20-%20Integrity%20Committee.pdf",
+      "kind": "document",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/call-for-applicants-wca-integrity-committee-leader-december-2025",
+        "disciplinary:/posts/call-for-applicants-wca-integrity-committee-members-august-2025"
+      ]
+    },
+    {
+      "url": "https://documents.worldcubeassociation.org/documents/motions/10.2025.0%20-%20Committees%20and%20Teams.pdf",
+      "kind": "document",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/call-for-applicants-wca-integrity-committee-leader-december-2025",
+        "disciplinary:/posts/wca-integrity-committee-team-leader-announcement-january-2026"
+      ]
+    },
+    {
+      "url": "https://documents.worldcubeassociation.org/documents/motions/15.2025.1%20-%20Suspensions%20and%20other%20Sanctions.pdf",
+      "kind": "document",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/call-for-applicants-wca-integrity-committee-members-august-2025"
+      ]
+    },
+    {
+      "url": "https://documents.worldcubeassociation.org/documents/Code%20of%20Conduct.pdf",
+      "kind": "document",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/call-for-applicants-wca-integrity-committee-members-august-2025"
+      ]
+    },
+    {
+      "url": "https://documents.worldcubeassociation.org/documents/Code%20of%20Ethics.pdf",
+      "kind": "document",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/call-for-applicants-wca-integrity-committee-members-august-2025"
+      ]
+    },
+    {
+      "url": "mailto:slongbehn@worldcubeassociation.org",
+      "kind": "contact",
+      "retrievalStatus": "contact_only",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/call-for-applicants-wca-integrity-committee-members-august-2025"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/documents/motions/10.2022.0%20-%20Committees%20and%20Teams.pdf",
+      "kind": "document",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/call-for-applicants-wdc-leader-december-2023"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/documents/motions/10.2019.2%20-%20Disciplinary%20Committee.pdf",
+      "kind": "document",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/call-for-applicants-wdc-leader-january-2021",
+        "disciplinary:/posts/call-for-applicants-wdc-leader-october-2020",
+        "disciplinary:/posts/call-for-applicants-wdc-members-september-2019"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/documents/motions/10.2020.0%20-%20Committees%20and%20Teams.pdf",
+      "kind": "document",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/call-for-applicants-wdc-leader-january-2021",
+        "disciplinary:/posts/call-for-applicants-wdc-leader-october-2020",
+        "disciplinary:/posts/wdc-leader-announcement-february-2021"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/documents/motions/15.2019.1%20-%20Suspensions%20and%20other%20Sanctions.pdf",
+      "kind": "document",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/call-for-applicants-wdc-members-september-2019"
+      ]
+    },
+    {
+      "url": "mailto:lpoli@worldcubeassociation.org",
+      "kind": "contact",
+      "retrievalStatus": "contact_only",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/call-for-applicants-wdc-members-september-2019"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/forum/viewtopic.php?f=9&t=388",
+      "kind": "forum",
+      "retrievalStatus": "legacy_404_archive_read",
+      "translationStatus": "full_first_post_translated",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/important-announcement-about-blindfolded-solving"
+      ],
+      "archiveUrl": "https://www.worldcubeassociation.org/archive/forum_topics/388#p1640",
+      "summaryPath": "supplements/forum-388-summary.json",
+      "fullTranslationPath": "supplements/forum-388-full.json",
+      "accessEvidence": "旧URL404由父任务报告；官方归档首帖p1640已读取、全文翻译并独立对照，未含回帖。"
+    },
+    {
+      "url": "mailto:integrity@worldcubeassociation.org",
+      "kind": "contact",
+      "retrievalStatus": "contact_only",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/integrity-committee-digest-2024-q4",
+        "disciplinary:/posts/integrity-committee-digest-2025-q1",
+        "disciplinary:/posts/integrity-committee-digest-2025-q2",
+        "disciplinary:/posts/integrity-committee-digest-2025-q3",
+        "disciplinary:/posts/integrity-committee-digest-2026-q1",
+        "disciplinary:/posts/integrity-committee-digest-2026-q3",
+        "disciplinary:/posts/wic-digest-2024-q3"
+      ]
+    },
+    {
+      "url": "https://forum.worldcubeassociation.org/c/wca-integrity/26",
+      "kind": "forum",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/integrity-committee-digest-2024-q4",
+        "disciplinary:/posts/integrity-committee-digest-2025-q1"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/posts/integrity-committee-digest-2024-q4",
+      "kind": "reference",
+      "retrievalStatus": "included_log_body",
+      "translationStatus": "translated_log_body",
+      "includedSourceKey": "disciplinary:/posts/integrity-committee-digest-2024-q4",
+      "sourceKeys": [
+        "disciplinary:/posts/integrity-committee-digest-2025-q1"
+      ]
+    },
+    {
+      "url": "https://documents.worldcubeassociation.org/documents/motions/16.2025.1%20-%20Disputes.pdf",
+      "kind": "document",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/integrity-committee-digest-2025-q2"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/posts/integrity-committee-report-on-a-case-of-cheating-sep-2025",
+      "kind": "reference",
+      "retrievalStatus": "included_log_body",
+      "translationStatus": "translated_log_body",
+      "includedSourceKey": "disciplinary:/posts/integrity-committee-report-on-a-case-of-cheating-sep-2025",
+      "sourceKeys": [
+        "disciplinary:/posts/integrity-committee-digest-2025-q3"
+      ]
+    },
+    {
+      "url": "https://forum.worldcubeassociation.org/t/statement-from-the-wca-integrity-committee-regarding-investigation-in-turkiye/67571",
+      "kind": "forum",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/integrity-committee-digest-2026-q3"
+      ]
+    },
+    {
+      "url": "https://drive.google.com/file/d/1C-D8XBzppSybpxVd_Z_ikaph6h9eiLPq/view?usp=drive_link",
+      "kind": "google_drive",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/integrity-committee-digest-2026-q3"
+      ]
+    },
+    {
+      "url": "https://drive.google.com/file/d/12yeSGOosgr07ZFi3EUdTg4r4jQdrK3qH/view?usp=sharing",
+      "kind": "google_drive",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/integrity-committee-digest-2026-q3"
+      ]
+    },
+    {
+      "url": "mailto:safeguarding@worldcubeassociation.org",
+      "kind": "contact",
+      "retrievalStatus": "contact_only",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/integrity-committee-digest-2026-q3"
+      ]
+    },
+    {
+      "url": "https://drive.google.com/drive/folders/1xm2tnGC2XWBEeQp76BX-C_WdgZbbh6Zt?usp=drive_link",
+      "kind": "google_drive",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/integrity-committee-report-on-a-case-of-cheating-sep-2025"
+      ]
+    },
+    {
+      "url": "https://drive.google.com/file/d/1LW6YcbRNm30U6h-JlUi7es2KHkWal5eN/view?usp=drive_link",
+      "kind": "google_drive",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/integrity-committee-report-on-a-case-of-cheating-sep-2025"
+      ]
+    },
+    {
+      "url": "https://drive.google.com/drive/folders/1lmZaa6cUdQW-RAVnkVg4-Bq7YjKhqp2u",
+      "kind": "google_drive",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/wca-integrity-committee-team-leader-announcement-january-2026"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#4g1",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/wdc-action-on-a-misscrambling-incident"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/wdc-digest-2023-q3"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/posts/call-for-applicants-wdc-members-august-2023",
+      "kind": "reference",
+      "retrievalStatus": "included_log_body",
+      "translationStatus": "translated_log_body",
+      "includedSourceKey": "disciplinary:/posts/call-for-applicants-wdc-members-august-2023",
+      "sourceKeys": [
+        "disciplinary:/posts/wdc-digest-2023-q3"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/panel",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/wdc-digest-2023-q3"
+      ]
+    },
+    {
+      "url": "https://www.speedstacks.com/store/retail/speed-stacks-g5-timer/",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/wdc-digest-2023-q3"
+      ]
+    },
+    {
+      "url": "https://drive.google.com/a/worldcubeassociation.org/file/d/1SDBOUXH5Pb9tPxa2MYzE20CVzEgsVRGr/view?usp=sharing",
+      "kind": "google_drive",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/wdc-digest-beginning-of-2020"
+      ]
+    },
+    {
+      "url": "https://drive.google.com/file/d/11NvHg-kAcVu3YB4chtv51f-OCLpe5ZbB/view",
+      "kind": "google_drive",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/wdc-digest-march-2023"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/documents/Code%2520of%2520Conduct.pdf",
+      "kind": "document",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/wdc-digest-march-2023"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/archive/forum_topics/1209",
+      "kind": "forum",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/wdc-digest-september-2022"
+      ]
+    },
+    {
+      "url": "https://drive.google.com/drive/folders/1s0YwsXQRSTQZnU5peAsgMMx5DdWfJ4mn?usp=sharing",
+      "kind": "google_drive",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/wdc-leader-announcement-february-2021"
+      ]
+    },
+    {
+      "url": "https://documents.worldcubeassociation.org/documents/motions/10.2022.0%20-%20Committees%20and%20Teams.pdf",
+      "kind": "document",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/wdc-leader-announcement-february-2024"
+      ]
+    },
+    {
+      "url": "https://drive.google.com/file/d/1s3bSstwi-INW4-DU_glqtxNc-d2ITuc7/view",
+      "kind": "google_drive",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/wdc-leader-announcement-february-2024"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/persons/2016DERO04",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/wdc-monthly-digest-january-2019"
+      ]
+    },
+    {
+      "url": "https://drive.google.com/a/worldcubeassociation.org/file/d/1gAizTI8yOR6YwC2n8V5wBAGtLOPBNcff/view?usp=sharing",
+      "kind": "google_drive",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/wdc-monthly-digest-january-2019"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/posts/wdc-announcement-blindsolving-incidents",
+      "kind": "reference",
+      "retrievalStatus": "included_log_body",
+      "translationStatus": "translated_log_body",
+      "includedSourceKey": "disciplinary:/posts/wdc-announcement-blindsolving-incidents",
+      "sourceKeys": [
+        "disciplinary:/posts/wdc-monthly-digest-january-2019"
+      ]
+    },
+    {
+      "url": "https://drive.google.com/a/worldcubeassociation.org/file/d/1g5PhbrbW2OtLgQSFdpkyqjVR4QSZlc0P/view?usp=sharing",
+      "kind": "google_drive",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/wdc-monthly-digest-november-2019"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/persons/2014GARC27",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/wdc-monthly-digest-october-2019"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/persons/2013MORR03",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/wdc-monthly-digest-october-2019"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/persons/2017TABA02",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/wdc-monthly-digest-october-2019"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/persons/2010DESJ01",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/wdc-monthly-digest-october-2019"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/persons/2013EGDA02",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/wdc-monthly-digest-october-2019"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/persons/2011TRON02",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/wdc-monthly-digest-october-2019"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#9t",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/wdc-report-on-a-case-of-cheating",
+        "incidents:141"
+      ]
+    },
+    {
+      "url": "https://drive.google.com/file/d/18z231aVdCDVma90EJ6XQNNp63gp0xtkU/view?usp=drive_link",
+      "kind": "google_drive",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/wdc-report-on-a-case-of-cheating"
+      ]
+    },
+    {
+      "url": "https://drive.google.com/file/d/11NvHg-kAcVu3YB4chtv51f-OCLpe5ZbB/view?usp=sharing",
+      "kind": "google_drive",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/wdc-report-on-a-case-of-cheating-in-3x3x3-multi-blind"
+      ]
+    },
+    {
+      "url": "https://drive.google.com/file/d/1iUSG1NpuLakjNcb_Iaq5JGfJ2yMDhF_-/view?usp=sharing",
+      "kind": "google_drive",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/wdc-report-on-a-case-of-harassment"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/posts/amendments-to-the-motions-approved-september-2024",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/wic-digest-2024-q3"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/teams-committees-councils#wic",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "disciplinary:/posts/wic-digest-2024-q3"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#3k2",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:102",
+        "incidents:2"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#A7g",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:102",
+        "incidents:55"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#3k2a",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:102",
+        "incidents:41"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#9l",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:102"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/guidelines.html#A7g++++",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:102"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#2t",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:102",
+        "incidents:34",
+        "incidents:81"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#11i",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:105",
+        "incidents:119",
+        "incidents:22",
+        "incidents:25",
+        "incidents:33",
+        "incidents:35",
+        "incidents:67",
+        "incidents:86"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/incidents/35",
+      "kind": "reference",
+      "retrievalStatus": "included_log_body",
+      "translationStatus": "translated_log_body",
+      "includedSourceKey": "incidents:35",
+      "sourceKeys": [
+        "incidents:105"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#3k2b",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:106",
+        "incidents:2"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#A6f1",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:108"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#4b1",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:11",
+        "incidents:28"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#3j1",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:110",
+        "incidents:74"
+      ]
+    },
+    {
+      "url": "https://drive.google.com/file/d/1m6THsA8fXRN7QFM4ApJbm6eVODKGbMLx/view",
+      "kind": "google_drive",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:110"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/guidelines.html#3j++",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:110"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#A2e2",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:111",
+        "incidents:84"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/full/#A2e2",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:112"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/full/#10h1a",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:113",
+        "incidents:120"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#5b5f",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:113"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#F3",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:114"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#A1a3",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:115"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#B4c3",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:116"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#B4c",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:116"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/guidelines.html#B4c++",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:116"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#A6e2",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:117",
+        "incidents:73"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#11i2b",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:118"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/incidents/79",
+      "kind": "reference",
+      "retrievalStatus": "included_log_body",
+      "translationStatus": "translated_log_body",
+      "includedSourceKey": "incidents:79",
+      "sourceKeys": [
+        "incidents:121"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#11d",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:127"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#2i",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:129",
+        "incidents:34",
+        "incidents:36",
+        "incidents:77",
+        "incidents:83"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/competitions/ERAUSpeedcubingSpring2018",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:13"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/competitions/STEMEduc82018",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:13"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#11e",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:131",
+        "incidents:69",
+        "incidents:98"
+      ]
+    },
+    {
+      "url": "https://documents.worldcubeassociation.org/documents/policies/external/Scramble%20Accountability.pdf",
+      "kind": "document",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:133"
+      ]
+    },
+    {
+      "url": "https://wcaregs.netlify.app/#1h1",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:133"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/rails/active_storage/blobs/redirect/eyJfcmFpbHMiOnsiZGF0YSI6NDcwNTksInB1ciI6ImJsb2JfaWQifX0=--b9956b3a663b0bf0a0d839d39b5352e91feba702/Screenshot%202024-11-18%20at%203.08.47%E2%80%AFPM.png",
+      "kind": "image",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:134"
+      ]
+    },
+    {
+      "url": "https://wcaregs.netlify.app/#5b5c",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:134"
+      ]
+    },
+    {
+      "url": "https://wcaregs.netlify.app/#5b5f",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:134"
+      ]
+    },
+    {
+      "url": "https://wcaregs.netlify.app/#2s",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:136"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/incidents/50",
+      "kind": "reference",
+      "retrievalStatus": "included_log_body",
+      "translationStatus": "translated_log_body",
+      "includedSourceKey": "incidents:50",
+      "sourceKeys": [
+        "incidents:143"
+      ]
+    },
+    {
+      "url": "https://forum.worldcubeassociation.org/t/wrc-statement-on-frame-by-frame-analysis/55294",
+      "kind": "forum",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:143"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/posts/wrc-decisions-with-frame-by-frame-analysis",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:143",
+        "incidents:50"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/full/#A6e1",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:145"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/full/#A6e",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:145"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#4b3b",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:147"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#11i1",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:147"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/full/#2i",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:149"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/full/#11f",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:150"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/full/#11f1d",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:150"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/full/#11f1",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:150"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/full/#A3b",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:152"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/full/#A3c3+",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:152"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/full/#11i1",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:153"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/full/#11i1+",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:153"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/full/#11e+++++",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:153"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/full/#11d",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:154"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/full/#B2a",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:156"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/full/#A1b",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:156"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/full/#A7c8",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:157"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/full/#A2a1",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:158"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/full/#A2a3",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:158"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/full/#2k5",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:158"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/full/#2j1a",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:158"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/full/#A6b1",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:169"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#4b4",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:17",
+        "incidents:75"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#2i2a",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:18"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#A7b",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:19",
+        "incidents:20"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#A7c",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:19"
+      ]
+    },
+    {
+      "url": "https://github.com/thewca/wca-regulations/issues/545",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:2"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/full/#B4c",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:21"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#4f",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:24"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#4b",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:25"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#4g",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:25",
+        "incidents:33"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#4b3",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:28"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/competitions/CubingUSANationals2018/",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:28"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/posts/tnoodle-0-13-5",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:28"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#4b3c",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:28"
+      ]
+    },
+    {
+      "url": "https://github.com/thewca/tnoodle/pull/368",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:28"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/competitions/CubingUSANationals2018",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:28"
+      ]
+    },
+    {
+      "url": "https://github.com/SAuroux/wca-analysis/blob/master/results-scripts/scramble_validity_analysis/skewb_outliers_20181005.txt",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:28"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/incidents/24",
+      "kind": "reference",
+      "retrievalStatus": "included_log_body",
+      "translationStatus": "translated_log_body",
+      "includedSourceKey": "incidents:24",
+      "sourceKeys": [
+        "incidents:28"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#A4d",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:29"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#A2c1",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:31",
+        "incidents:57",
+        "incidents:70"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/guidelines.html#A2c1+",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:31",
+        "incidents:57",
+        "incidents:70"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/documents/motions/04.2019.1%20-%20Board%20of%20Directors.pdf",
+      "kind": "document",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:31"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#8f",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:31"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/incidents/81",
+      "kind": "reference",
+      "retrievalStatus": "included_log_body",
+      "translationStatus": "translated_log_body",
+      "includedSourceKey": "incidents:81",
+      "sourceKeys": [
+        "incidents:34"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/guidelines.html#2i1b+",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:34"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/guidelines.html#1h++",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:40"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/scrambles/",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:40"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#3d2",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:41"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#11e2",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:41"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#3d",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:42"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#3h",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:42"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#H1a",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:43"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#H1a1",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:43"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/full/#2k6",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:44"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#A1c",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:44"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#2i1",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:44"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#A6e",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:45"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/guidelines.html#A6e+",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:45"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/incidents/23",
+      "kind": "reference",
+      "retrievalStatus": "included_log_body",
+      "translationStatus": "translated_log_body",
+      "includedSourceKey": "incidents:23",
+      "sourceKeys": [
+        "incidents:45"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#A7c4",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:48"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#A7f",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:48"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/guidelines.html#A7c4+",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:48"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/incidents/19",
+      "kind": "reference",
+      "retrievalStatus": "included_log_body",
+      "translationStatus": "translated_log_body",
+      "includedSourceKey": "incidents:19",
+      "sourceKeys": [
+        "incidents:48"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#B4a",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:49",
+        "incidents:65"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#B4b",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:49",
+        "incidents:65",
+        "incidents:97"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/incidents/21",
+      "kind": "reference",
+      "retrievalStatus": "included_log_body",
+      "translationStatus": "translated_log_body",
+      "includedSourceKey": "incidents:21",
+      "sourceKeys": [
+        "incidents:5"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#A6d",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:50"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#A7b1",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:51",
+        "incidents:72"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#9f2",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:54"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/incidents/6",
+      "kind": "reference",
+      "retrievalStatus": "included_log_body",
+      "translationStatus": "translated_log_body",
+      "includedSourceKey": "incidents:6",
+      "sourceKeys": [
+        "incidents:54"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#A7c2",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:55"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#article-A-speedsolving",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:55"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#2j1a",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:56",
+        "incidents:58"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#9p2",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:56"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/incidents/48",
+      "kind": "reference",
+      "retrievalStatus": "included_log_body",
+      "translationStatus": "translated_log_body",
+      "includedSourceKey": "incidents:48",
+      "sourceKeys": [
+        "incidents:56"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#9p1",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:56",
+        "incidents:71"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/incidents/31",
+      "kind": "reference",
+      "retrievalStatus": "included_log_body",
+      "translationStatus": "translated_log_body",
+      "includedSourceKey": "incidents:31",
+      "sourceKeys": [
+        "incidents:57",
+        "incidents:70"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#2j1",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:58"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#9f5",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:58"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/guidelines.html#9f5+",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:58"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/incidents/56",
+      "kind": "reference",
+      "retrievalStatus": "included_log_body",
+      "translationStatus": "translated_log_body",
+      "includedSourceKey": "incidents:56",
+      "sourceKeys": [
+        "incidents:58"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#E3",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:59"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#E3c",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:59"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#E3e",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:59"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/guidelines.html#A5b++",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:60"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#A3c1",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:63"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#11f",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:63"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#10f2",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:63"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/full/#3h4d",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:66"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/guidelines.html#11e+",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:69"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#3l",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:7"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#9p2a",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:71"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/incidents/51",
+      "kind": "reference",
+      "retrievalStatus": "included_log_body",
+      "translationStatus": "translated_log_body",
+      "includedSourceKey": "incidents:51",
+      "sourceKeys": [
+        "incidents:72"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/full/#A6e++",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:73"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#A6c",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:73"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#2i4",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:77"
+      ]
+    },
+    {
+      "url": "https://drive.google.com/file/d/1E-J8WRfld6mpbHslM3rW10fNSsXgkl2y/view?usp=share_link",
+      "kind": "google_drive",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:79"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/posts/wrc-investigation-vietnamese-competitions-results-removal",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:79"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/incidents/70",
+      "kind": "reference",
+      "retrievalStatus": "included_log_body",
+      "translationStatus": "translated_log_body",
+      "includedSourceKey": "incidents:70",
+      "sourceKeys": [
+        "incidents:79"
+      ]
+    },
+    {
+      "url": "http://enchroma.com/",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:8"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/history/official/2018-01-01/",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:80"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#7f1a",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:80"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#1c",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:81"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#E5",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:81"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#A5a",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:85"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/incidents/86",
+      "kind": "reference",
+      "retrievalStatus": "included_log_body",
+      "translationStatus": "translated_log_body",
+      "includedSourceKey": "incidents:86",
+      "sourceKeys": [
+        "incidents:87"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/incidents/53",
+      "kind": "reference",
+      "retrievalStatus": "included_log_body",
+      "translationStatus": "translated_log_body",
+      "includedSourceKey": "incidents:53",
+      "sourceKeys": [
+        "incidents:88",
+        "incidents:93"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#2i2b",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:91"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#A6a1",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:92"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/guidelines.html#2i+",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:92"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/#B5b",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:92"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/incidents/88",
+      "kind": "reference",
+      "retrievalStatus": "included_log_body",
+      "translationStatus": "translated_log_body",
+      "includedSourceKey": "incidents:88",
+      "sourceKeys": [
+        "incidents:93"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/regulations/guidelines.html#11e+++",
+      "kind": "reference",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:98"
+      ]
+    },
+    {
+      "url": "https://www.worldcubeassociation.org/incidents/69",
+      "kind": "reference",
+      "retrievalStatus": "included_log_body",
+      "translationStatus": "translated_log_body",
+      "includedSourceKey": "incidents:69",
+      "sourceKeys": [
+        "incidents:98"
+      ]
+    },
+    {
+      "url": "https://forum.worldcubeassociation.org/t/wca-statement-regarding-yiheng-wangs-0-93-2x2-average/49637",
+      "kind": "forum",
+      "retrievalStatus": "not_fetched",
+      "translationStatus": "reference_only",
+      "includedSourceKey": null,
+      "sourceKeys": [
+        "incidents:98"
+      ]
+    }
+  ]
+}

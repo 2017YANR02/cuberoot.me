@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:102",
+  "source": {
+    "key": "incidents:102",
+    "kind": "incidents",
+    "title": "An illegal cube was discovered after a subsequent round had started",
+    "url": "https://www.worldcubeassociation.org/incidents/102",
+    "date": "2024-05-31T10:15:45.000Z",
+    "content": "DISCLAIMER: Since the resolution of this incident, regulation [3k2](https://www.worldcubeassociation.org/regulations/#3k2) has been updated to better define how an incident like this should be handled.\n\nAt the start of round 2 it was noticed that a competitor had submitted an illegal puzzle that had also been used in the previous round. Their previous results were therefore changed to DNF, following [3k2](https://www.worldcubeassociation.org/regulations/#3k2). As this was the competitor's fourth competition they were granted a provisional extra round under [A7g](https://www.worldcubeassociation.org/regulations/#A7g).\n\nThe WRC decided that the round 1 results should remain DNF. Extra attempts can not be issued for round 1 using [3k2a](https://www.worldcubeassociation.org/regulations/#3k2a) as the round had finished. As the second round had started and the original attempts were valid, [9l](https://www.worldcubeassociation.org/regulations/#9l) also prevented extras being awarded for another reason, such as [A7g](https://www.worldcubeassociation.org/regulations/#A7g). The WRC acknowledges that the concept of an invalid attempt in [9l](https://www.worldcubeassociation.org/regulations/#9l) is not defined and will consider clarifying this in the next regulations cycle.\n\nAdditionally, had [A7g](https://www.worldcubeassociation.org/regulations/#A7g) been available, the WRC's view is that it should not be applied to issue extra attempts in this situation as the competitor had enough competiton experience ([A7g++++](https://www.worldcubeassociation.org/regulations/guidelines.html#A7g++++)). While they may not have encountered this aspect of the WCA Regulations before, the same could be said in many situations, and competitors are expected to be familiar with the regulations ([2t](https://www.worldcubeassociation.org/regulations/#2t)).",
+    "hash": "c16736e4b31bb34f40c4151689949ba046c7bc4a6c6a7d07e368600facec36b1",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "下一轮开始后才发现不合规魔方",
+    "content": "说明：此事件处理后，[3k2](https://www.worldcubeassociation.org/regulations/#3k2) 已更新，更明确地规定此类事件处理方式。\n\n第二轮开始时发现，一名选手提交了不合规魔方，前一轮也用过。因此按 [3k2](https://www.worldcubeassociation.org/regulations/#3k2)，此前成绩改为 DNF。由于这是其第四场比赛，现场依据 [A7g](https://www.worldcubeassociation.org/regulations/#A7g) 暂时给予重新进行整轮的机会。\n\nWRC 决定第一轮成绩仍为 DNF。第一轮已结束，不能依据 [3k2a](https://www.worldcubeassociation.org/regulations/#3k2a) 发放第一轮额外尝试。第二轮已经开始，且原尝试有效，[9l](https://www.worldcubeassociation.org/regulations/#9l) 也阻止以其他理由，例如 [A7g](https://www.worldcubeassociation.org/regulations/#A7g)，给予额外尝试。WRC 承认 [9l](https://www.worldcubeassociation.org/regulations/#9l) 未定义“无效尝试”，会考虑在下一轮规则修订中澄清。\n\n此外，即使能适用 [A7g](https://www.worldcubeassociation.org/regulations/#A7g)，WRC 也认为本案不应据此给予额外尝试，因为选手已有足够比赛经验（[A7g++++](https://www.worldcubeassociation.org/regulations/guidelines.html#A7g++++)）。虽然可能此前未遇到这部分规则，但许多情形都如此，选手应熟悉规则（[2t](https://www.worldcubeassociation.org/regulations/#2t)）。",
+    "translatedAt": "2026-10-22T05:56:15.197Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "c16736e4b31bb34f40c4151689949ba046c7bc4a6c6a7d07e368600facec36b1"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_2",
+      "reviewedAt": "2026-10-22T06:22:43.237972Z",
+      "report": "reviews/round-1/report-2.json",
+      "sourceHash": "c16736e4b31bb34f40c4151689949ba046c7bc4a6c6a7d07e368600facec36b1",
+      "reviewedTranslationHash": "29a35060bac502f452b8d514fa35dab7ecc27ece9f6bc1c402b0ebbccf990f93",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

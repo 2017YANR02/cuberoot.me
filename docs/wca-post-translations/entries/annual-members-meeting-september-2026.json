@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/annual-members-meeting-september-2026",
+  "source": {
+    "key": "posts:/posts/annual-members-meeting-september-2026",
+    "kind": "posts",
+    "title": "Annual Members Meeting (September 2026)",
+    "date": "2026-09-13T04:53:33.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/annual-members-meeting-september-2026",
+    "content": "Dear WCA Community,\n\nThe Board is providing notice, as required by Bylaw 2.12, of the 2026 annual meeting of the members which will be held on September 27 at 17:00 UTC. Members will be able to tune into this meeting via a livestream hosted on the [WCA’s Twitch](https://www.twitch.tv/worldcubeassociation). In this [folder](https://drive.google.com/drive/folders/1MEVM0MChBjC5-gCXvQyJ5s2CqgB41RpX), you will find the information packet related to the annual meeting which contains all relevant documentation which will be discussed at the meeting.\n\n<!-- break -->\n\nWe look forward to your participation in the upcoming annual meeting.\n\nKind Regards,\nOliver Hexter, on behalf of the Board of Directors",
+    "hash": "6093fecedd182442405ffc78924eb568209a0217081bcee35dfda5d0065347d0",
+    "format": "markdown",
+    "sourceId": 14256
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "6093fecedd182442405ffc78924eb568209a0217081bcee35dfda5d0065347d0",
+    "language": "zh-Hans",
+    "title": "年度会员大会（2026 年 9 月）",
+    "content": "亲爱的 WCA 社区成员：\n\n董事会依照章程第 2.12 条发出通知：2026 年年度会员大会将于 9 月 27 日 17:00 UTC 举行。会员可通过 [WCA Twitch 频道](https://www.twitch.tv/worldcubeassociation)的直播观看会议。在这个[文件夹](https://drive.google.com/drive/folders/1MEVM0MChBjC5-gCXvQyJ5s2CqgB41RpX)中，您可以找到本次年度大会的资料包，其中包括所有将在会上讨论的相关文件。\n\n我们期待您参与即将举行的年度大会。\n\n此致，\nOliver Hexter，代表董事会",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:26:07.750Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "8c106dc793a797724d98084a82e49a2b2a5a77243c16e8b2dee9b8604b14babb"
+}

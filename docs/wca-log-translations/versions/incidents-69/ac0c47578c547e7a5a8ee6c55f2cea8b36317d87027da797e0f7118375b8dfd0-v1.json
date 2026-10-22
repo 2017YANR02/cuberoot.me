@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:69",
+  "source": {
+    "key": "incidents:69",
+    "kind": "incidents",
+    "title": "A competitor asked for an extra after stopping the timer",
+    "url": "https://www.worldcubeassociation.org/incidents/69",
+    "date": "2022-12-07T14:45:33.000Z",
+    "content": "A competitor claimed to be distracted in a 4x4x4 Blindfolded attempt with a DNF result, after finishing the solve, but before finishing the attempt (before signing the score sheet). Delegates granted the competitor an extra attempt as per [Regulation 11e](https://www.worldcubeassociation.org/regulations/#11e).\n\nWRC further discussed this incident and agreed that the **original attempt should stay**. \n\nWhen an incident occurs during the attempt, a competitor has three options, each with their own benefits and risks:\n1. Immediately stop the attempt and request the extra.\n2. Keep the attempt running and appeal for an extra, as per [Guideline 11e+](https://www.worldcubeassociation.org/regulations/guidelines.html#11e+).\n3. Finish the attempt and then try to request the extra.\n\nWRC highly recommends the competitors to choose the first or the second option as the WCA Delegate will be able to better determine the fairness of the appeal and exclude the possibility that the competitor based their request on the result of their solve.",
+    "hash": "d715041f7053c0a1d09a9d5e5b5ec58671ff8725c44f72cfa103e1cb91ae1acc",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "选手停表后请求额外尝试",
+    "content": "一名选手在四阶盲拧还原结束、结果为 DNF 后，但在签署成绩单、结束该次尝试之前，声称受到干扰。代表依据 [11e](https://www.worldcubeassociation.org/regulations/#11e) 给予了额外尝试。\n\nWRC 进一步讨论后，同意**保留原尝试成绩**。\n\n尝试中发生事件时，选手有三种选择，各有收益与风险：\n1. 立即停止尝试并申请额外尝试；\n2. 按[指导 11e+](https://www.worldcubeassociation.org/regulations/guidelines.html#11e+)，保持尝试进行，同时申诉请求额外尝试；\n3. 完成尝试后再提出请求。\n\nWRC 强烈建议选择前两种方式，因为这样代表更容易判断申诉是否公平，也能排除选手根据还原结果决定是否提出请求的可能。",
+    "translatedAt": "2026-10-22T05:54:37.260Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "d715041f7053c0a1d09a9d5e5b5ec58671ff8725c44f72cfa103e1cb91ae1acc"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "batch": 1,
+  "total": 75,
+  "newTranslations": 73,
+  "reusedRoot": 2,
+  "sourceHashValidation": "passed",
+  "uniqueLinks": 181,
+  "linkOccurrences": 198,
+  "errors": [],
+  "reviewStatus": "self_checked_not_independent_review",
+  "notes": [
+    "原文正文全部翻译；外链附件未擅自扩展。",
+    "TNoodle 三篇使用产品版本名作标题。",
+    "2018 WRC 负责人原文裸邮箱链接待渲染层规范，源串保留。",
+    "2009 规则原文 history URL 含 Markdown 转义，保留。"
+  ],
+  "changedInFinalPass": [
+    "application-period-closed-for-continental-championships-2020.json",
+    "candidates-for-wca-world-championship-2019.json",
+    "regulations-and-guidelines-april-3-2014.json",
+    "regulations-committee-digest-q3-q4-2024.json",
+    "wac-leader-application-october-2020.json",
+    "wrc-digest-a-summary-of-2022.json",
+    "wrc-digest-october-2023.json"
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "disciplinary:/posts/wdc-monthly-digest-august-september-2019",
+  "source": {
+    "key": "disciplinary:/posts/wdc-monthly-digest-august-september-2019",
+    "kind": "disciplinary",
+    "title": "WDC Monthly Digest - August &amp; September 2019",
+    "date": "2019-10-19T22:23:00Z",
+    "url": "https://www.worldcubeassociation.org/posts/wdc-monthly-digest-august-september-2019",
+    "content": "<p>Dear WCA Community,</p><p>Here you can find some noteworthy updates about the activity of the Disciplinary Committee over the months of August and September 2019.  </p><p>The Committee is actively working on 5 cases. The WDC was also able to close 4 cases over the second half of August and 5 during September. The total number of investigations/cases in 2019 is now 45.  </p><p>The main case the WDC was called to investigate during this time is the one concerning the official results in 3x3 One-Handed of 2017SHIR03 at Udmurtia Open 2019. The competitor has been found guilty of cheating in the event by prematurely stopping the timer with his solving arm during various attempts, both in the First and Final rounds. Video evidence was available and it confirmed what witnesses denounced. The competitor is banned from WCA Competitions for 2 years and all of the results achieved in 3x3 One-Handed at Udmurtia Open 2019 have been disqualified. </p><p>As anticipated in the last Monthly Digest, the WDC decided to publish the report for the case that affected the Ukrainian Community at the beginning of the summer. Over the last couple of months, though, the WDC has conducted more investigations than usual where we saw competitors exploiting the lack of experience of judges to gain a personal advantage: for example, a competitor was caught applying moves during inspection, while another one was caught not resetting the timer intentionally, which resulted in a faster result getting registered on the scorecards. These cases were resolved using video evidence, when nobody noticed anything during the competition. As a consequence of their actions, these competitors were banned from WCA Competitions and the affected results were disqualified. Because of this worrisome trend, the aforementioned report is currently under revision and it will be reshaped to show which WCA processes were not properly followed and how it’s possible to prevent easily exploitable situations during competitions.   </p><p>Now, on a more pleasant note, I would like to use this space to publicly thank JP Bulman for his outstanding work for the WDC over the last (almost) 2 years. JP will shortly leave the Committee and we are currently working on finding new members. The selection process is going pretty well and I’m very pleased to see such a high level of candidates; the plan is to have the “new” WDC defined by the end of the month.   </p><p>To conclude, we would like to remind everyone to make sure they fully understand the WCA Regulations and competition procedures. If you have any questions or are unsure about how to do something, please do not hesitate to ask the Delegate(s) of the competition. In addition, if you think the competition results are being compromised in any way or see suspicious behavior, find the nearest delegate immediately and report the incident.</p><p>Thank you all for your help in supporting the WCA Spirit and Mission.</p><p>Thank you, JP, for your very valuable contribution and best of luck for your future!</p><p>Lorenzo Vigani Poli<br><em>WDC Leader<br>\nOn behalf of the Disciplinary Committee</em></p>",
+    "hash": "72f8cb9768799d25e08407abe1cb3c93229262ea66ba56629b1e9e4a27f3774b",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "WDC 月度简报：2019 年 8 月和 9 月",
+    "content": "亲爱的 WCA 社群：\n\n以下为纪律委员会 2019 年 8、9 月的重要动态。\n\n目前积极处理 5 件案件；8 月下半月结案 4 件，9 月结案 5 件。2019 年调查及案件总数现为 45。\n\n主要调查涉及 2017SHIR03 在 Udmurtia Open 2019 的三阶单手正式成绩。调查认定其在第一轮和决赛多次用还原手臂提前停表作弊，视频证实了证人举报。其被禁赛 2 年，该比赛全部三阶单手成绩被取消。\n\n如上期预告，WDC 原定公布初夏影响乌克兰社群案件的报告。但近几个月，我们调查了比平常更多的利用裁判缺乏经验谋利案件：例如观察期间转动，以及故意不复位计时器，使成绩单记录更快时间。现场无人察觉，后来依视频解决；选手被禁赛，相关成绩取消。鉴于这一令人担忧的趋势，上述报告正在修订，改为说明哪些流程未正确执行，以及如何预防容易被利用的情况。\n\n另一方面，我想公开感谢 JP Bulman 近两年来为 WDC 作出的出色贡献。JP 即将离任，我们正在寻找新成员。遴选进展良好，候选人水平很高，计划月底前确定“新”WDC。\n\n最后提醒充分理解规则及流程，不清楚时询问代表。若认为成绩受到损害或发现可疑行为，请立即找最近的代表报告。\n\n感谢大家支持 WCA 精神与使命。感谢 JP 的宝贵贡献，祝未来顺利！\n\nLorenzo Vigani Poli\nWDC 负责人，代表纪律委员会",
+    "translatedAt": "2026-10-22T06:07:32.458Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "72f8cb9768799d25e08407abe1cb3c93229262ea66ba56629b1e9e4a27f3774b"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_1",
+      "reviewedAt": "2026-10-22T06:23:54.689Z",
+      "report": "reviews/round-1/report-1.json",
+      "sourceHash": "72f8cb9768799d25e08407abe1cb3c93229262ea66ba56629b1e9e4a27f3774b",
+      "reviewedTranslationHash": "e32476a8aafb0c19ac506714d07d4907dd9fffef72e4c1e8a0b12e41c5d12bcb",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

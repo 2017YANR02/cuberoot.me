@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "disciplinary:/posts/wdc-digest-march-2023",
+  "source": {
+    "key": "disciplinary:/posts/wdc-digest-march-2023",
+    "kind": "disciplinary",
+    "title": "WDC Digest (March 2023)",
+    "date": "2023-04-02T20:22:22Z",
+    "url": "https://www.worldcubeassociation.org/posts/wdc-digest-march-2023",
+    "content": "<p>Dear WCA Community,</p><p>We hope that the beginning of 2023 is going well for you. Below you can find a summary of some notable WDC cases from the past three months. </p><ol><li>Earlier in the year, the WDC investigated a case of a high profile competitor cheating in 3x3x3 Multi-Blind by peeking under the blindfold. The WDC concluded that the competitor had cheated, and that this cheating extends to several prior competitions as well. A full public report on this case has been made available, which can be found <a href=\"https://drive.google.com/file/d/11NvHg-kAcVu3YB4chtv51f-OCLpe5ZbB/view\">here</a>.</li><li>A similar case of blind cheating was caught where a competitor took advantage of their judge’s poorly placed sight blocker, in order to peek at their cube and fix several mistakes. This cheating extended to several attempts at the competition in question, including two national record averages. After several exchanges with the WDC, the competitor admitted to cheating, and apologized for their behavior. The competitor was issued a 9 month ban, and the affected solves have been changed to DNF.</li><li>A competitor was caught with the 4x4 OLL parity algorithm written down on their leg. After being confronted, the competitor quickly admitted they had not memorized the algorithm, and that they didn’t know doing so was against regulations. The affected results were changed to DNF and a formal warning was given to the competitor, along with a reminder to be familiar with the WCA regulations.</li><li>A young competitor who achieved several unusually fast times was suspected to be making turns to their cube underneath the table cube during inspection. The guardian of the competitor initially admitted that they had done this, however the WDC doubted that claim, instead believing that the competitor had switched the cube they were using under the table for one with a predetermined scramble. After reaching out to the competitor, they were quick to confirm the WDC’s theory and apologized for their mistakes. The competitor was issued a formal warning and the results in question were DNFed.</li><li>Recently, the WDC has received a number of harassment cases from several different countries, some of which involving WCA staff. We would like to remind everyone to be respectful of others, and ensure that you are upholding the <a href=\"https://www.worldcubeassociation.org/documents/Code%2520of%2520Conduct.pdf\">WCA Code of Conduct</a>.</li></ol><p>The WDC would also like to remind all judges to give their full attention to performing their duties as a judge, particularly holding the blindfolded sight blocker correctly, and not distracting themselves or the competitor. We would also like to remind all judges to not hesitate in speaking to their competition’s delegate if they have questions or notice any suspicious behavior.</p><p>Do you have questions for the WDC? Feel free to send us an email, or ask your question in the <a href=\"https://forum.worldcubeassociation.org/c/wca-disciplinary/26\">Disciplinary section</a> of the WCA forum.</p>",
+    "hash": "3ad58e0e594048b03162b7e4e6fe1abc8b19d3429e3452e3f73b0da24616ee56",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "WDC 简报：2023 年 3 月",
+    "content": "亲爱的 WCA 社群：\n\n希望大家 2023 年开局顺利。以下是过去三个月的部分重要案件。\n1. 年初调查一名知名选手在三阶多盲中从眼罩下偷看作弊。WDC 认定其作弊，并延伸到此前数场比赛。[完整公开报告](https://drive.google.com/file/d/11NvHg-kAcVu3YB4chtv51f-OCLpe5ZbB/view)已发布。\n2. 类似盲拧作弊中，选手利用裁判遮挡板位置不当偷看魔方、修正多处错误，涉及该比赛多次尝试，包括两个国家纪录平均。多次沟通后，选手承认并道歉，被禁赛 9 个月，相关还原改为 DNF。\n3. 发现选手腿上写有四阶 OLL 特殊情况公式。其很快承认没有记住公式，且不知道这样违反规则。相关成绩改为 DNF，给予正式警告，并提醒熟悉规则。\n4. 一名年轻选手取得数次异常快成绩，被怀疑观察时在桌下转动。监护人最初承认存在这一行为，但 WDC 怀疑实际是在桌下换成预先设定打乱的另一个魔方。联系选手后，其很快确认这一推断并道歉，获正式警告，相关成绩判 DNF。\n5. 近期收到多个国家的骚扰案件，部分涉及 WCA 工作人员。请尊重他人，遵守 [WCA 行为准则](https://www.worldcubeassociation.org/documents/Code%2520of%2520Conduct.pdf)。\n\n也提醒裁判全神贯注履职，尤其正确举盲拧遮挡板，不要让自己或选手分心。有疑问或发现可疑行为时，应及时询问代表。\n\n如有问题，可发邮件，或在论坛[纪律板块](https://forum.worldcubeassociation.org/c/wca-disciplinary/26)提问。",
+    "translatedAt": "2026-10-22T06:07:32.458Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "3ad58e0e594048b03162b7e4e6fe1abc8b19d3429e3452e3f73b0da24616ee56"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

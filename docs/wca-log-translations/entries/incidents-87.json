@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:87",
+  "source": {
+    "key": "incidents:87",
+    "kind": "incidents",
+    "title": "Attempt was found to be misscrambled after a competition (extra not available)",
+    "url": "https://www.worldcubeassociation.org/incidents/87",
+    "date": "2023-06-09T00:13:14.000Z",
+    "content": "*DISCLAIMER: The WCA Regulations and Guidelines relating to misscrambles have been updated since this incident was originally published. The approach described below should no longer be followed from January 1st, 2025.*\n\nAfter a competition, attempts from several competitors were found to be misscrambled. The WRC investigated each of those attempts to determine if they should stay based on the following criteria:\n\n* If the misscramble gives the competitor a significant advantage, the attempt should be changed to DNF.\n* If the misscramble is similar in difficulty to the original scramble, the attempt should be left as is.\n* If the misscramble cannot be analyzed (e.g. the video of the attempt is not available), the attempt should be left as is.\n\nPlease note that in case the misscramble is found during a competition, it must always be replaced with an extra attempt (see the Incident Log entry [here](https://www.worldcubeassociation.org/incidents/86)).",
+    "hash": "f2c7e5b831386a4e5acdb12abaa0a54037fc571cbe4e5af542df6087d5f2d7d7",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "赛后发现错误打乱（无额外尝试）",
+    "content": "说明：本事件最初公布后，WCA 关于错误打乱的规则和指导已更新。自 2025 年 1 月 1 日起，不应再采用下述方式。\n\n赛后发现，多名选手的部分尝试使用了错误打乱。WRC 按以下标准逐次调查是否保留：\n- 错误打乱带来显著优势：改为 DNF；\n- 与原打乱难度相近：保留原成绩；\n- 无法分析错误打乱，例如无视频：保留原成绩。\n\n请注意，若在比赛期间发现错误打乱，必须以额外尝试替代（见[日志](https://www.worldcubeassociation.org/incidents/86)）。",
+    "translatedAt": "2026-10-22T05:56:15.197Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "f2c7e5b831386a4e5acdb12abaa0a54037fc571cbe4e5af542df6087d5f2d7d7"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_6",
+      "reviewedAt": "2026-10-22T06:24:59.959967Z",
+      "report": "reviews/round-1/report-6.json",
+      "sourceHash": "f2c7e5b831386a4e5acdb12abaa0a54037fc571cbe4e5af542df6087d5f2d7d7",
+      "reviewedTranslationHash": "154fda3ab66c48150c62ce4fe9facbdf5cc55b01404cd5ef8a002ad160363145",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

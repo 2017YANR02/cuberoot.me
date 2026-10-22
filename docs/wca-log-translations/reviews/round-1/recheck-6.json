@@ -1,0 +1,30 @@
+{
+  "reviewer": "review_6",
+  "reviewedAt": "2026-10-22T06:26:41.975Z",
+  "entries": [
+    {
+      "key": "incidents:78",
+      "sourceHash": "ba4da0924970b90a24d36f9c0a4b2900ba916ced9f8fc46c550770d78f3d73c7",
+      "reviewedTranslationHash": "f3c3ffcf650dfde3f0716ff68ad9b78ad0fee6654850b79b902536ca0c0aa992",
+      "verdict": "pass",
+      "evidence": "已对照当前 source 与 translation 全文及标题，建议替换已精确应用，旧句已移除。第 3 项现在将作弊与试图获益均置于“没有任何行为令人认为”的证据范围内，符合原文 lead to the impression；两场比赛日期、WRC 原决定、理事会仅推翻后一案以及其他两项理由均保持准确。当前源哈希与复核请求一致。",
+      "unresolvedNotes": []
+    },
+    {
+      "key": "incidents:81",
+      "sourceHash": "54ad50ad9392d9278d284c81b3de00954ebf9a13ea3dcbb929b8041ee1a1fdd4",
+      "reviewedTranslationHash": "261c687ad0651202f0bbabe175f1c56894754490edd70e9bf5085db882376335",
+      "verdict": "pass",
+      "evidence": "已对照当前 source 与 translation 全文及标题，标题已精确改为“代表无法提供协助”，不再擅自断言代表不在场，与 unavailable 及正文授权裁判的上下文一致。两名选手的 DNF 区别、z/z' 处理、2t 的个案理由和 E5 的可以解释/必须正确均保持完整。当前源哈希与复核请求一致。",
+      "unresolvedNotes": []
+    },
+    {
+      "key": "incidents:97",
+      "sourceHash": "89292099f152558dfc5c0ded3bab60241a74613b51ee99dc7f0d6072eccd62a5",
+      "reviewedTranslationHash": "3b1d6cedf60289350d0b6bea68eaf1dfd93b0a2f4d3399501f4595693858a824",
+      "verdict": "pass",
+      "evidence": "已对照当前 source 与 translation 全文及标题，建议替换已精确应用，“选手看着裁判”明确对应 looked at them，消除了“自己”的指代歧义。看得到裁判但看不到魔方、裁判报告、B4b 引文、未完全戴好眼罩及最终 DNF 的上下文均准确。当前源哈希与复核请求一致。",
+      "unresolvedNotes": []
+    }
+  ]
+}

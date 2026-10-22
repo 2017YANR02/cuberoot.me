@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/retiring-tnoodle-0-13-5",
+  "source": {
+    "key": "posts:/posts/retiring-tnoodle-0-13-5",
+    "kind": "posts",
+    "title": "Retiring TNoodle 0.13.5",
+    "date": "2018-12-12T06:17:44.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/retiring-tnoodle-0-13-5",
+    "content": "When `TNoodle-WCA-0.14.0` was released last week, we announced that `TNoodle-WCA-0.13.5` would briefly remain an officially permitted version. Since a week has passed, `TNoodle-WCA-0.13.5` is now officially retired, leaving `TNoodle-WCA-0.14.0` as the only official scramble program.\n\nPlease see [last week's `TNoodle-WCA-0.14.0`  announcement](https://www.worldcubeassociation.org/posts/tnoodle-0-14-0) for details.\n\nPlease remember that official competitions must use a current version of the official scramble program. This is always available from:\nhttps://www.worldcubeassociation.org/regulations/scrambles/",
+    "hash": "b6ad50c18887778622f1b5b983b1f3535701a174f2f6910ea5c4b14779a15b14",
+    "format": "markdown",
+    "sourceId": 10869
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "b6ad50c18887778622f1b5b983b1f3535701a174f2f6910ea5c4b14779a15b14",
+    "language": "zh-Hans",
+    "title": "TNoodle 0.13.5 停止使用",
+    "content": "上周发布 `TNoodle-WCA-0.14.0` 时，我们曾说明，`TNoodle-WCA-0.13.5` 会暂时继续列为官方允许使用的版本。一周已过，`TNoodle-WCA-0.13.5` 现正式停止使用，`TNoodle-WCA-0.14.0` 成为唯一的官方打乱程序。\n\n详情请参阅[上周的 `TNoodle-WCA-0.14.0` 发布公告](https://www.worldcubeassociation.org/posts/tnoodle-0-14-0)。\n\n请记住，官方比赛必须使用当前有效版本的官方打乱程序。最新版始终可以从以下页面获取：\nhttps://www.worldcubeassociation.org/regulations/scrambles/",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:49:54.069Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "eb301e350ec729f30521b38710c36747de3567de45d8fbe802c9993478344c15"
+}

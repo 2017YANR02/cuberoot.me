@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:41",
+  "source": {
+    "key": "incidents:41",
+    "kind": "incidents",
+    "title": "A competitor did several attempts with an illegal puzzle without accepting the extra attempts",
+    "url": "https://www.worldcubeassociation.org/incidents/41",
+    "date": "2019-10-19T19:14:10.000Z",
+    "content": "A competitor competed with a cube where one of the stickers on the red face was a distinguishable shade from the others. This violates Regulation 3d2):\n\n> [3d2](https://www.worldcubeassociation.org/regulations/#3d2)) The colors of the colored parts must be solid, with one uniform color per face. Each color must be clearly distinct from the other colors.\n\nThe competitor did 4 attempts with this cube, and then did the last attempt with a legal cube. When the WCA Delegate asked if the competitor wanted to replace the 4 solves with extras (using Regulation [3k2a](https://www.worldcubeassociation.org/regulations/#3k2a)), the competitor declined.\n\nAs the round had a cutoff, the competitor did not make the cutoff after his first two solves (as stated by [11e2](https://www.worldcubeassociation.org/regulations/#11e2)), so the WRC has decided to record the results as DNS, DNS. Because all competitor's attempts are considered DNS, the competitor has not started any attempt. Therefore, the competitor's result should be removed.",
+    "hash": "635d89d1b558b822a20115f6cae2613be4897854035784cb201387693a8fcf1a",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "选手使用不合规魔方完成多次尝试并拒绝额外尝试",
+    "content": "一名选手使用的魔方红面有一张贴纸，色调与其他贴纸明显不同，违反了 3d2：\n\n> [3d2](https://www.worldcubeassociation.org/regulations/#3d2) 有色部件必须为纯色，每个面的颜色须统一，各种颜色之间须清楚可辨。\n\n选手使用该魔方完成了 4 次尝试，最后一次改用合规魔方。代表依据 [3k2a](https://www.worldcubeassociation.org/regulations/#3k2a) 询问是否愿意用额外尝试替代前 4 次，选手拒绝。\n\n该轮设有及格线，依据 [11e2](https://www.worldcubeassociation.org/regulations/#11e2)，选手在前两次后未达到及格线，因此 WRC 决定将成绩记为 DNS、DNS。由于其所有尝试均视为 DNS，选手被视为没有开始任何一次尝试，因此应删除其成绩。",
+    "translatedAt": "2026-10-22T05:50:48.611Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "635d89d1b558b822a20115f6cae2613be4897854035784cb201387693a8fcf1a"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:149",
+  "source": {
+    "key": "incidents:149",
+    "kind": "incidents",
+    "title": "Competitor checked if camera was on during inspection",
+    "url": "https://www.worldcubeassociation.org/incidents/149",
+    "date": "2025-04-04T02:27:27.000Z",
+    "content": "During inspection, the competitor looked to see if his camera was recording. To do this, he stood up and looked at the screen of his phone, before sitting back down and starting the solve. This behavior could be considered a violation of regulation [2i](https://www.worldcubeassociation.org/regulations/full/#2i), but it was unclear if the competitor's behavior qualified as \"using\" an electronic device. \n\nThe WRC concluded that the result should stand without penalty, citing the following reasons:\n1. Regulation 2i2 allows for restricted use of cameras by the competitor, as clarified in 2i2a and 2i2c.\n2. 2i2a clarifies that delegate discretion can be used to determine whether or not a competitor gained an advantage from electronic usage.\n3. 2i2c prohibits the competitor from pressing any buttons on electronics, which did not occur in this incident.\n\nIt was determined that since the competitor was just checking to see if their camera was on and recording, they did not gain an advantage or receive assistance by looking at the camera.",
+    "hash": "228e5d7a85d3ebe61b9b0fcc2d88626ba001b1a99d5f7d2893114505021d146f",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "选手观察时查看摄像头是否在录制",
+    "content": "观察时，选手站起查看手机屏幕，确认摄像头是否录制，随后坐下开始还原。此行为可能违反 [2i](https://www.worldcubeassociation.org/regulations/full/#2i)，但是否构成“使用”电子设备并不明确。\n\nWRC 决定不处罚、保留成绩，理由是：\n1. 2i2 允许受限制的摄像头使用，具体见 2i2a、2i2c；\n2. 2i2a 允许代表酌情判断电子设备是否带来优势；\n3. 2i2c 禁止按电子设备按钮，本案没有此行为。\n\n选手只是确认摄像头已开启并录制，查看摄像头未使其取得优势或获得帮助。",
+    "translatedAt": "2026-10-22T06:00:02.853Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "228e5d7a85d3ebe61b9b0fcc2d88626ba001b1a99d5f7d2893114505021d146f"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_3",
+      "reviewedAt": "2026-10-22T06:22:42.955322Z",
+      "report": "reviews/round-1/report-3.json",
+      "sourceHash": "228e5d7a85d3ebe61b9b0fcc2d88626ba001b1a99d5f7d2893114505021d146f",
+      "reviewedTranslationHash": "058b15caeb1272fc7c27c65fe89db4cb3644f74c3c6dd3ccfcffd502d7da9b29",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

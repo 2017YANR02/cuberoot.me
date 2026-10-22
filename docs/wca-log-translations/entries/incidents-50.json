@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:50",
+  "source": {
+    "key": "incidents:50",
+    "kind": "incidents",
+    "title": "A competitor stopped the timer with a \"karate chop\", only visible with video analysis",
+    "url": "https://www.worldcubeassociation.org/incidents/50",
+    "date": "2019-12-22T19:54:27.000Z",
+    "content": "A competitor stopped the timer in a way that looked like it potentially violated the regulations (ie, with a \"karate chop\"). This violates Regulation A6d):\n\n> [A6d](https://www.worldcubeassociation.org/regulations/#A6d)) The competitor must stop the timer using both hands, placed flat on the sensors with palms down. Penalty: time penalty (+2 seconds).\n\nHowever, after analyzing the video evidence, the WRC has concluded that the bad timer stop is only visible if the video was analyzed frame-by-frame. Therefore, the WRC agrees that the original time **should not be penalized**. The WRC is also proposed a new policy for delegates using video evidence to apply potential penalites to solves. \n\n**The WRC updated their approach on frame-by-frame analysis on September 27th, 2024, clarifying other use cases. Whilst this does not affect this previous decision, more information can be found [here](https://www.worldcubeassociation.org/posts/wrc-decisions-with-frame-by-frame-analysis).**",
+    "hash": "55cbb798755d4ba8136c3ff65d88cd71c80940bc4b4e7e4853d771aa7f8a0747",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "仅逐帧分析才能看出的手刀停表",
+    "content": "一名选手的停表方式看起来可能违反规则，即以“手刀”方式停表。这违反了 A6d：\n> [A6d](https://www.worldcubeassociation.org/regulations/#A6d) 选手须双手掌心朝下，平放于感应区停表。处罚为加 2 秒。\n\n分析视频后，WRC 认定只有逐帧查看才能看出停表不当。因此，WRC 同意原成绩**不应受罚**。WRC 还提出了关于代表使用视频证据判断潜在处罚的新政策。\n\n**2024 年 9 月 27 日，WRC 更新了逐帧分析的处理方式，明确了其他使用情形。这不影响此前决定，更多信息见[此处](https://www.worldcubeassociation.org/posts/wrc-decisions-with-frame-by-frame-analysis)。**",
+    "translatedAt": "2026-10-22T05:52:51.924Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "55cbb798755d4ba8136c3ff65d88cd71c80940bc4b4e7e4853d771aa7f8a0747"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_5",
+      "reviewedAt": "2026-10-22T06:22:53.079981Z",
+      "report": "reviews/round-1/report-5.json",
+      "sourceHash": "55cbb798755d4ba8136c3ff65d88cd71c80940bc4b4e7e4853d771aa7f8a0747",
+      "reviewedTranslationHash": "1af8b0add65e2c74ba2afed99e30a1d17ca99a9fd3e69522400d5f8d052ce723",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

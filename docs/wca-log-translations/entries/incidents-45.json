@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:45",
+  "source": {
+    "key": "incidents:45",
+    "kind": "incidents",
+    "title": "A competitor noticeably touched the puzzle immediately after stopping the timer",
+    "url": "https://www.worldcubeassociation.org/incidents/45",
+    "date": "2019-11-15T08:09:26.000Z",
+    "content": "In Skewb, a competitor touched the puzzle immediately after stopping the timer. When releasing the puzzle, it fell into the lap of the competitor and then it jumped back to the mat.\n\nThis violates Regulation A6e):\n> [A6e](https://www.worldcubeassociation.org/regulations/#A6e)) After releasing the puzzle, the competitor must not touch or move the puzzle until the judge has inspected the puzzle. Penalty: disqualification of the attempt (DNF). Exception: If no moves have been applied, a time penalty (+2 seconds) may be assigned instead, at the discretion of the judge.\n\nIn addition, Guideline A6e+) explicitly clarifies that this case is considered touching the puzzle:\n> [A6e+](https://www.worldcubeassociation.org/regulations/guidelines.html#A6e+)) CLARIFICATION If the puzzle falls into the lap of the competitor after stopping the timer, this is considered touching the puzzle.\n\nBy reviewing video evidences, the WRC determined that this case is not comparable with [this other](https://www.worldcubeassociation.org/incidents/23) as the competitor in this incident noticeably touched the puzzle. The WRC concluded that it is appropriate to apply a **+2 penalty** to the affected attempt.",
+    "hash": "8fad922ffd4454e051177c633256b40246e5a7c175c8fcd4e42913de79ba8c40",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "选手停表后立即明显触碰魔方",
+    "content": "Skewb 项目中，一名选手在停表后立即触碰了魔方。松手后，魔方落到选手腿上，又弹回垫子。\n\n这违反了 A6e：\n> [A6e](https://www.worldcubeassociation.org/regulations/#A6e) 松开魔方后，在裁判检查之前，选手不得触碰或移动魔方。处罚为该次尝试 DNF。例外：若未发生转动，裁判可酌情改判加 2 秒。\n\n指导 A6e+ 明确指出，这种情况属于触碰：\n> [A6e+](https://www.worldcubeassociation.org/regulations/guidelines.html#A6e+) 澄清：停表后魔方掉到选手腿上，视为触碰魔方。\n\n复核视频后，WRC 认为本案不能与[另一事件](https://www.worldcubeassociation.org/incidents/23)相比，因为本案选手明显触碰了魔方。WRC 认定应对该次尝试给予 **+2 秒处罚**。",
+    "translatedAt": "2026-10-22T05:52:51.924Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "8fad922ffd4454e051177c633256b40246e5a7c175c8fcd4e42913de79ba8c40"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_5",
+      "reviewedAt": "2026-10-22T06:22:53.079981Z",
+      "report": "reviews/round-1/report-5.json",
+      "sourceHash": "8fad922ffd4454e051177c633256b40246e5a7c175c8fcd4e42913de79ba8c40",
+      "reviewedTranslationHash": "945ed9828b7c03c2b8988bfca7ca12c86016e2b45ac7006470bf0b5ed2768fdc",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

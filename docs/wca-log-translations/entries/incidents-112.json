@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:112",
+  "source": {
+    "key": "incidents:112",
+    "kind": "incidents",
+    "title": "Competitor knocked over cover while setting up camera",
+    "url": "https://www.worldcubeassociation.org/incidents/112",
+    "date": "2024-06-19T18:57:25.000Z",
+    "content": "DISCLAIMER: This has seen been updated with regulation [A2e2](https://www.worldcubeassociation.org/regulations/full/#A2e2), to more clearly define how this kind of incident should be handled\n\nA competitor accidentally knocked over the cube cover while setting up their camera. Incidents like this are ruled as DNFs (not DNS's). The ruling is determined as such because it is the fault of the competitor that they are seeing their cube early.",
+    "hash": "412b42eb0a15cff8a2b86f9f16b17a7d936104be05099843471d889b4bd8607b",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "选手设置摄像头时碰倒魔方罩",
+    "content": "说明：此后规则 [A2e2](https://www.worldcubeassociation.org/regulations/full/#A2e2) 已更新，更明确地规定此类事件的处理方式。\n\n一名选手设置摄像头时意外碰倒魔方罩。此类情况判为 DNF，而非 DNS，因为选手提前看见自己的魔方是由其自身过错造成。",
+    "translatedAt": "2026-10-22T05:57:56.837Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "412b42eb0a15cff8a2b86f9f16b17a7d936104be05099843471d889b4bd8607b"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_2",
+      "reviewedAt": "2026-10-22T06:22:43.237972Z",
+      "report": "reviews/round-1/report-2.json",
+      "sourceHash": "412b42eb0a15cff8a2b86f9f16b17a7d936104be05099843471d889b4bd8607b",
+      "reviewedTranslationHash": "25a9ea59f5f3c7bbdea5ef98bdec824220bb588f1ebb6401f555e6a17a95bf0f",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

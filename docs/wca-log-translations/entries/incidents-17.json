@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:17",
+  "source": {
+    "key": "incidents:17",
+    "kind": "incidents",
+    "title": "Staff member competes in missed rounds without knowledge of Delegate and organizer",
+    "url": "https://www.worldcubeassociation.org/incidents/17",
+    "date": "2018-04-16T11:30:58.000Z",
+    "content": "A competitor was late for the first round of 4x4x4 and 5x5x5. He asked the organizer if it would still be possible to compete, which  was denied. As the competitor was also a staff member, he decided to ask a fellow staff member to scramble and judge his attempts.\n\nThe WRC has decided that the results of both rounds must be removed. The competitor abused his position as a staff member and got a preferential treatment through this. This was also a violation of [4b4](https://www.worldcubeassociation.org/regulations/#4b4) as the scrambles had already been used earlier.",
+    "hash": "59aff677abd4240967dbc881a5ab96f67ffb6ca12d61b53b3d82eb03d92df063",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "工作人员在代表和主办方不知情的情况下补赛错过的轮次",
+    "content": "一名选手错过了四阶和五阶第一轮。他询问主办方是否还能参赛，遭到拒绝。由于自己也是工作人员，他转而请另一名工作人员为自己的尝试打乱并担任裁判。\n\nWRC 决定删除这两轮的成绩。该选手滥用了工作人员身份，从而获得优待。这也违反了 [4b4](https://www.worldcubeassociation.org/regulations/#4b4)，因为这些打乱此前已使用过。",
+    "translatedAt": "2026-10-22T05:48:51.542Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "59aff677abd4240967dbc881a5ab96f67ffb6ca12d61b53b3d82eb03d92df063"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_4",
+      "reviewedAt": "2026-10-22T06:22:38.727845Z",
+      "report": "reviews/round-1/report-4.json",
+      "sourceHash": "59aff677abd4240967dbc881a5ab96f67ffb6ca12d61b53b3d82eb03d92df063",
+      "reviewedTranslationHash": "78de41990522136c705945ed6f186eb660943a50344ee3d034fa37c13ce86550",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

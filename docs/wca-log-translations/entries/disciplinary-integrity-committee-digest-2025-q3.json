@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "disciplinary:/posts/integrity-committee-digest-2025-q3",
+  "source": {
+    "key": "disciplinary:/posts/integrity-committee-digest-2025-q3",
+    "kind": "disciplinary",
+    "title": "Integrity Committee Digest 2025-Q3",
+    "date": "2025-11-14T20:31:44Z",
+    "url": "https://www.worldcubeassociation.org/posts/integrity-committee-digest-2025-q3",
+    "content": "<p>Dear WCA Community,</p><p>In the last quarter, the WIC opened 19 cases and closed 18, both a record number for the Committee. This resulted in 7 bans and 5 warnings, while 6 cases ended with no action. Below, you can find summaries of some notable cases:</p><ul><li>The WCA Integrity Committee recently posted a public report about a former National-Record holding competitor intentionally stopping the timer inappropriately. The competitor was issued a two-and-a-half-year ban from competing and their results in multiple competitions were disqualified. For further information, please click <a href=\"https://www.worldcubeassociation.org/posts/integrity-committee-report-on-a-case-of-cheating-sep-2025\">here</a>.</li><li>The WCA Integrity Committee was informed that a competitor touched a spectator inappropriately during a competition. The spectator also explained that that was not the first time the competitor did so without consent. The WIC contacted a witness, who corroborated the competitor’s behavior. The WIC determined the incident credible and substantiated based on the credibility of the testimonies, the immediate emotional impact observed by multiple parties, and the existence of witnesses who confirmed the victim’s reaction. The competitor was issued a multi-year ban from competing, attending WCA competitions and participating in WCA forums.</li><li>The WCA Integrity Committee was provided conclusive footage of a competitor performing moves in inspection. When presented with the evidence, the WIC felt that the competitor’s remorse and cooperation during the investigation was not entirely genuine, and that the competitor only regretted their actions when caught. They were issued a multi-year ban from competing and their results in multiple competitions were disqualified.</li><li>The WCA Integrity Committee was informed that a competitor had made several inappropriate comments that violated 2.2.1 of the Code of conduct. The competitor denied having engaged in any offence. However, multiple witnesses corroborated the competitor&#39;s behavior. The competitor was issued a ban from competing and attending WCA competitions.</li><li>The WCA Integrity Committee was informed by multiple Delegates across several competitions about a competitor manipulating multiple scorecards. As the competitor confessed to having manipulated some results, a short-term ban from competing was issued. We remind all Delegates and Volunteers involved in data entry of the importance of carefully checking the results for suspicious changes.</li><li>The WCA Integrity Committee received an email reporting inappropriate behavior by a competitor who had made inappropriate and unwanted jokes that were violent in nature and violated 2.2.1 of the Code of Conduct. When confronted, the competitor denied having made such jokes and stopped replying to our subsequent emails. The competitor was issued a ban from competing and attending WCA competitions.</li></ul><p>Do you have questions for the WIC? Feel free to send us an <a href=\"mailto:integrity@worldcubeassociation.org\">email</a>.</p>",
+    "hash": "d66f044685ba3d5846fc62a934eb0793bc59c120cbff16b30f96613530ec909f",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "诚信委员会简报：2025 年第三季度",
+    "content": "亲爱的 WCA 社群：\n\n上季度 WIC 立案 19 件、结案 18 件，均为委员会纪录。作出 7 项禁赛、5 项警告，6 件未采取措施。部分重要案件如下：\n- WIC 近期公布了一名曾持国家纪录的选手故意不当停表的报告。其被禁止参赛两年半，多场比赛成绩被取消，详情见[报告](https://www.worldcubeassociation.org/posts/integrity-committee-report-on-a-case-of-cheating-sep-2025)。\n- 接报一名选手比赛中不当触碰观众。观众称此前也有未经同意的类似行为。WIC 联系证人，获得佐证。依据证词可信度、多方观察到的即时情绪影响，以及证人对受害者反应的确认，WIC 认定事件可信且有依据。该选手被多年禁止参赛、到场及参与 WCA 论坛。\n- 收到确凿视频，显示选手在观察时转动魔方。向其出示证据后，WIC 认为其调查中的悔意与合作并非完全真诚，只在被发现后才后悔。其被多年禁止参赛，多场比赛成绩被取消。\n- 接报选手多次发表违反行为准则 2.2.1 的不当言论。选手否认违规，但多名证人证实其行为。其被禁止参赛及到场。\n- 多场比赛的多名代表报告一名选手篡改多张成绩单。选手承认修改部分成绩，因此被短期禁止参赛。提醒参与录入的代表和志愿者仔细检查可疑修改。\n- 收到邮件，报告选手讲带暴力性质、不恰当且不受欢迎的笑话，违反行为准则 2.2.1。询问时，选手否认并不再回复后续邮件。其被禁止参赛及到场。\n\n如有问题，欢迎[发邮件](mailto:integrity@worldcubeassociation.org)。",
+    "translatedAt": "2026-10-22T06:05:15.716Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "d66f044685ba3d5846fc62a934eb0793bc59c120cbff16b30f96613530ec909f"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_1",
+      "reviewedAt": "2026-10-22T06:23:54.689Z",
+      "report": "reviews/round-1/report-1.json",
+      "sourceHash": "d66f044685ba3d5846fc62a934eb0793bc59c120cbff16b30f96613530ec909f",
+      "reviewedTranslationHash": "fece5dad6b94ec5fb42fa9b1a49d509ee0439afb8d6681c3d24bf4cda7428bd3",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

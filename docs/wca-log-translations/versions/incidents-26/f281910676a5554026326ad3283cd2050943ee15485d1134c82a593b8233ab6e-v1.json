@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:26",
+  "source": {
+    "key": "incidents:26",
+    "kind": "incidents",
+    "title": "Competitor made a move in the memorization phase of Multi Blind",
+    "url": "https://www.worldcubeassociation.org/incidents/26",
+    "date": "2018-10-03T10:19:52.000Z",
+    "content": "During their Multi Blind attempt, a competitor accidentaly made a move on one of their cubes during the memorization phase.\n\nRule B3c) forbids to apply moves during the memorization (penalty : disqualification of the attempt), and is not superseded by other rules in the F article, so the whole attempt should be disqualified.\n\nHowever, the WRC found more fair to consider only that cube as unsolved, and let the competitor continue the rest of the attempt.",
+    "hash": "c40c27fae99ac11f0024f27d8704879a14189ba3d3efc7ac8ad7ccd864cbac90",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "选手在多盲记忆阶段转动了魔方",
+    "content": "多盲尝试中，一名选手在记忆阶段意外转动了其中一个魔方。\n\nB3c 禁止在记忆阶段转动魔方，处罚为取消该次尝试资格；第 F 章的其他规则并未取代此规定，因此整次尝试本应被取消资格。\n\n不过，WRC 认为只将该魔方计为未还原、允许选手继续完成其余部分更为公平。",
+    "translatedAt": "2026-10-22T05:50:48.611Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "c40c27fae99ac11f0024f27d8704879a14189ba3d3efc7ac8ad7ccd864cbac90"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [
+      "原文写 ‘F article’，按原文保留第 F 章，不擅自改为其他章节。"
+    ],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

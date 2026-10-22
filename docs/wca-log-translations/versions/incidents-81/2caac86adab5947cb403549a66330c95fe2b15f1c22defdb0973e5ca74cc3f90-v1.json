@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:81",
+  "source": {
+    "key": "incidents:81",
+    "kind": "incidents",
+    "title": "Fewest Moves judge provided wrong information about the WCA Regulations (Delegate unavailable)",
+    "url": "https://www.worldcubeassociation.org/incidents/81",
+    "date": "2023-09-21T02:51:05.000Z",
+    "content": "During a FMC attempt, the only listed WCA Delegate assigned some of his responsibilities to the judge (the Delegate asked competitors to make questions to the judge), as per [Regulation 1c](https://www.worldcubeassociation.org/regulations/#1c). For this reason, two competitors asked the judge about rotations during the attempt, and both received wrong information. One of the competitors initially got a DNF because of the wrong rotation, and the other one got a DNF regardless of the rotation.\n\n**The final decision was to consider the rotations wrote by the competitors as if they were correct**. Therefore, if the involved competitors wrote z, then the rotation was considered as z', because that is what the competitors would have written if they had received the correct information. The decision from the WCA Regulations Committee had the following reasons (among others explained privately):\n\n1. Although competitors must be familiar with the WCA Regulations as per Regulation [2t](https://www.worldcubeassociation.org/regulations/#2t), the WRC considers that a WCA Delegate (in this case the judge representing the authority of the Delegate) telling wrong information overrides this regulation, in this particular situation.\n2. In FMC attempts, delegates and judges **may** give clarifications about the Regulations (see Regulation [E5](https://www.worldcubeassociation.org/regulations/#E5)). If they decide to give clarifications (because they consider that the question is reasonable and they know the answer to the question), the clarification **must** be correct.",
+    "hash": "54ad50ad9392d9278d284c81b3de00954ebf9a13ea3dcbb929b8041ee1a1fdd4",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "最少步裁判提供错误规则信息（代表不在场）",
+    "content": "一次最少步尝试中，唯一列名的代表依据 [1c](https://www.worldcubeassociation.org/regulations/#1c)，将部分职责交给裁判，并让选手向裁判提问。因此，两名选手询问整体转动记号，均得到了错误信息。其中一人最初因错误整体转动被判 DNF，另一人无论如何解释整体转动都是 DNF。\n\n**最终决定将选手所写的整体转动按其原意视为正确。**例如，若他们写了 z，则按 z' 处理，因为若得到正确信息，他们本来就会这样写。WRC 公开给出的理由如下，另有部分理由私下说明：\n1. 虽然 [2t](https://www.worldcubeassociation.org/regulations/#2t) 要求选手熟悉规则，但在这一特殊情况下，代表（本案为代表授权的裁判）提供了错误信息，WRC 认为这一因素优先于该要求。\n2. 最少步中，代表和裁判**可以**解释规则（见 [E5](https://www.worldcubeassociation.org/regulations/#E5)）。如果认为问题合理且自己知道答案，从而决定作出解释，解释就**必须**正确。",
+    "translatedAt": "2026-10-22T05:54:37.260Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "54ad50ad9392d9278d284c81b3de00954ebf9a13ea3dcbb929b8041ee1a1fdd4"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

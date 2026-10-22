@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:6",
+  "source": {
+    "key": "incidents:6",
+    "kind": "incidents",
+    "title": "5x5x5 Blindfolded result missing on the score sheet",
+    "url": "https://www.worldcubeassociation.org/incidents/6",
+    "date": "2018-03-31T13:55:11.000Z",
+    "content": "A competitor got a succesful 5x5x5 Blindfolded solve. The result wasn't written on the score sheet, but the competitor had recorded the solve, so the time was retrieved from the video and the result accepted as official.",
+    "hash": "f8eaec0db956c10941aef32d4ac737e09b5003aadd7189818c14a43eec3c91cc",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "五阶盲拧成绩未写入成绩单",
+    "content": "一名选手成功完成五阶盲拧，但成绩未写入成绩单。选手录下了该次还原，因此从视频中恢复了用时，并将成绩接受为正式成绩。",
+    "translatedAt": "2026-10-22T05:48:51.542Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "f8eaec0db956c10941aef32d4ac737e09b5003aadd7189818c14a43eec3c91cc"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_5",
+      "reviewedAt": "2026-10-22T06:22:53.079981Z",
+      "report": "reviews/round-1/report-5.json",
+      "sourceHash": "f8eaec0db956c10941aef32d4ac737e09b5003aadd7189818c14a43eec3c91cc",
+      "reviewedTranslationHash": "91016636c94bca5a8491cbcf01e30487961b837a6344da64306ffb9bcd4602d7",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

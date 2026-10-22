@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "disciplinary:/posts/integrity-committee-digest-2025-q1",
+  "source": {
+    "key": "disciplinary:/posts/integrity-committee-digest-2025-q1",
+    "kind": "disciplinary",
+    "title": "Integrity Committee Digest 2025-Q1",
+    "date": "2025-04-08T23:26:58Z",
+    "url": "https://www.worldcubeassociation.org/posts/integrity-committee-digest-2025-q1",
+    "content": "<p>Dear WCA Community,</p><p>In the last quarter, the WIC opened 7 cases and closed 10. This resulted in 3 bans and 6 warnings. Also, 1 case ended with no action. Below, you can find summaries of some notable cases:</p><ul><li>The WCA Integrity Committee was informed of financial misconduct by a competition organizer. After reviewing details from multiple community members, the committee determined the competitor misused competition finances for personal gain. As a result, the WIC issued an indefinite ban to the competitor until the misused funds are repaid, along with an additional multi-year ban in accordance with the severity of the offense.</li><li>The WCA Integrity Committee received reports of misconduct by a competitor’s guest. After consulting multiple witnesses, the committee confirmed that the guest engaged in inappropriate behavior, including disrespect towards delegates, hate speech, intimidation, and advocacy of such conduct. The WIC decided to issue a short-term ban on the guest from competing and attending competitions.</li><li>The WCA Integrity Committee was provided conclusive footage of a competitor starting the timer inappropriately by sliding the hands on the timer during one of their official attempts and wearing in-ear headphones during the same official attempt. Due to the lack of cooperation from the competitor, the WIC decided to issue a short-term ban from competing and disqualify all the attempts from the round in which the video evidence was recorded.</li><li>The WCA Integrity Committee has also prioritized improving existing workflow with <a href=\"https://www.worldcubeassociation.org/posts/integrity-committee-digest-2024-q4\">new members</a> and project collaboration with other WCA teams.</li></ul><p>Do you have questions for the WIC? Feel free to send us an <a href=\"mailto:integrity@worldcubeassociation.org\">email</a>, or ask your question in the Integrity section of the <a href=\"https://forum.worldcubeassociation.org/c/wca-integrity/26\">WCA forum</a>. </p>",
+    "hash": "6a13109d7dda9cb45ec024aee1f6f1566a6a515637e9e985ac8d4da991a12dd8",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "诚信委员会简报：2025 年第一季度",
+    "content": "亲爱的 WCA 社群：\n\n上季度 WIC 立案 7 件、结案 10 件，作出 3 项禁赛、6 项警告，1 件未采取措施。部分重要案件如下：\n\n- 接报一名比赛组织者存在财务不当行为。审查多名社群成员提供的细节后，委员会认定该选手为个人利益挪用了比赛资金。因此，对其实施无固定期限禁赛，直至归还被挪用资金，并根据严重程度另加多年禁赛。\n- 接到一名选手来宾行为不当的报告。询问多名证人后，确认来宾存在不尊重代表、仇恨言论、恐吓及宣扬此类行为。WIC 决定短期禁止其参赛及到场。\n- 获得确凿视频，显示一名选手在一次正式尝试中滑动双手、不当启动计时器，并同时佩戴入耳式耳机。由于选手不配合，WIC 决定短期禁止其参赛，并取消视频所涉轮次的全部尝试成绩。\n- WIC 也优先推进与[新成员](https://www.worldcubeassociation.org/posts/integrity-committee-digest-2024-q4)共同改进现有工作流程，以及与其他 WCA 团队协作的项目。\n\n如有问题，可[发邮件](mailto:integrity@worldcubeassociation.org)，或在 [WCA 论坛诚信板块](https://forum.worldcubeassociation.org/c/wca-integrity/26)提问。",
+    "translatedAt": "2026-10-22T06:02:27.941Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "6a13109d7dda9cb45ec024aee1f6f1566a6a515637e9e985ac8d4da991a12dd8"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

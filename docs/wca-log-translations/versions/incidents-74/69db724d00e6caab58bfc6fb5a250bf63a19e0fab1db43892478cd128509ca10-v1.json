@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:74",
+  "source": {
+    "key": "incidents:74",
+    "kind": "incidents",
+    "title": "One piece of the puzzle was found slightly distinguishable after the competition",
+    "url": "https://www.worldcubeassociation.org/incidents/74",
+    "date": "2022-12-07T19:17:51.000Z",
+    "content": "A competitor contacted the WCA Delegate several days after the competition reporting that one piece of their puzzle had a sound slightly distinguishable from other pieces and that another piece coating  was different from other pieces. Both things were found after the competition. The competitor provided video evidence to show the difference. They used this puzzle during their 3x3x3 Blindfolded attempts. \n\nThe WRC agreed that **the results should be kept as is** for the following reasons:\n\n1. The sound is very lightly distinguishable even in silence, which is not the case in a competitive environment, even during Blindfolded Solving events. \n2. The competitor analyzed the sound difference only after the competition, so there was no defined advantage during the competition. The video of the attempts also showed that the competitor's solving speed could not allow to apply the moves based on the sound and/or texture.\n3. The texture was considered reasonable by the WCA Delegate at the competition. Regulation 3j1 allows it:\n\n> [3j2](https://www.worldcubeassociation.org/regulations/#3j1)) Puzzles are permitted to have reasonable wear, at the discretion of the WCA Delegate.",
+    "hash": "0cfed4e9b0fe16e472891069c49916dc2d3df0810c52413993052f4650c45697",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "赛后发现魔方部件略可辨别",
+    "content": "赛后数天，一名选手联系代表，报告其魔方的一个部件声音与其他部件略有差别，另一个部件涂层也不同。两点均在赛后发现，选手提供视频展示差异。该魔方曾用于三阶盲拧。\n\nWRC 同意**保留原成绩**，理由是：\n1. 即使安静环境下，声音差异也很轻微；比赛环境，包括盲拧项目，并非完全安静；\n2. 选手只在赛后分析声音差异，比赛中不存在明确优势。还原视频也显示，其速度不允许根据声音或触感实施转动；\n3. 现场代表认为该触感差异合理。3j1 允许合理磨损：\n> [3j2](https://www.worldcubeassociation.org/regulations/#3j1) 魔方可有合理磨损，由 WCA 代表判断。",
+    "translatedAt": "2026-10-22T05:54:37.260Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "0cfed4e9b0fe16e472891069c49916dc2d3df0810c52413993052f4650c45697"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [
+      "原文正文写 3j1，但引用标签为 3j2，链接仍指向 3j1；照录并待核验。"
+    ],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

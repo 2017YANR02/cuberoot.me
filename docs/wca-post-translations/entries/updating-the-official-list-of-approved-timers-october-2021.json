@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/updating-the-official-list-of-approved-timers-october-2021",
+  "source": {
+    "key": "posts:/posts/updating-the-official-list-of-approved-timers-october-2021",
+    "kind": "posts",
+    "title": "Updating the Official List of Approved Timers (October 2021)",
+    "date": "2021-10-11T02:26:21.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/updating-the-official-list-of-approved-timers-october-2021",
+    "content": "After a few months of feedback and review, the WCA Regulations Committee (WRC) and the WCA Board have decided to update the official list of approved timer versions (see [Regulation 7f1a](https://www.worldcubeassociation.org/regulations/#7f1a)). The following changes will take effect:\n\n* Speed Stacks Stackmat timer Generation 5 will be approved alongside 2022 Regulations.\n* Speed Stacks Stackmat timer Generation 2 will no longer be an approved timer alongside 2023 Regulations.\n\nThe Generation 2 Timers have to be removed to address some concerns about Stackmat timer malfunctions. A grace period of over one year will be granted to allow the communities that still use these timers to make the arrangements to replace them.\n\nAt the same time, this update on the list of approved timers will bring more opportunities to organizers and WCA Delegates.",
+    "hash": "6d95f098372ea769c47e0c815d5643a867dafc32f1c1da3d2e471333faef3388",
+    "format": "markdown",
+    "sourceId": 14037
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "6d95f098372ea769c47e0c815d5643a867dafc32f1c1da3d2e471333faef3388",
+    "language": "zh-Hans",
+    "title": "官方认可计时器名单更新（2021 年 10 月）",
+    "content": "经过数月征求意见和评估，WCA 规则委员会（WRC）与 WCA 董事会决定更新官方认可的计时器型号名单，参见[规则 7f1a](https://www.worldcubeassociation.org/regulations/#7f1a)。具体调整如下：\n\n* Speed Stacks 第五代 Stackmat 计时器将随 2022 年规则生效而获准使用。\n* Speed Stacks 第二代 Stackmat 计时器将随 2023 年规则生效而不再获准使用。\n\n取消对第二代计时器的认可，是为了解决部分 Stackmat 计时器故障方面的顾虑。仍在使用这些计时器的社区将有一年以上的过渡期，以安排更换。\n\n同时，认可名单的更新也将为组织者和 WCA 代表提供更多选择。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:49:00.929Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "fe4d9ddf9ea59f7c5038ebf6e9c45a66a4113a494f521164450c9a6b6ee43cb2"
+}

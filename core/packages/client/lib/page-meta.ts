@@ -679,6 +679,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'The WCA Regulations, illustrated — every official article rewritten with diagrams and 3D examples, one page per article, plus the full official text for citation.',
     },
   },
+  'regulation/rules': {
+    title: { zh: 'WCA 规则', en: 'WCA Regulations' },
+    description: {
+      zh: '按核心条款与项目附则分类浏览 WCA 规则图解，并查阅官方条文。',
+      en: 'Browse illustrated WCA regulations by core articles and event-specific articles, with access to the official text.',
+    },
+  },
   'regulation/full': {
     title: { zh: 'WCA 竞赛规则:完整原文', en: 'WCA Regulations: Full Official Text' },
     description: {
@@ -686,7 +693,11 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'The complete official WCA Regulations, verbatim, for citation.',
     },
   },
-  'regulation/news': { title: { zh: 'WCA 规则:最新动态', en: 'WCA Regulations: Updates' } },
+  'regulation/post': { title: { zh: '公告', en: 'Posts' } },
+  'regulation/logs': {
+    title: { zh: 'WCA 意外事件与纪律处分日志', en: 'WCA Incidents and Disciplinary Logs' },
+    description: { zh: 'WCA 意外事件及纪律处分历史日志，提供中文译文与英文原文。', en: 'Historical WCA incidents and disciplinary announcements, in Chinese and English.' },
+  },
   'scramble': {
     title: { zh: '打乱分析', en: 'Scramble Analysis' },
     description: {

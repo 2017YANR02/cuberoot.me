@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:54",
+  "source": {
+    "key": "incidents:54",
+    "kind": "incidents",
+    "title": "5x5x5 Blindfolded result without a backup stopwatch timing",
+    "url": "https://www.worldcubeassociation.org/incidents/54",
+    "date": "2020-04-02T03:56:12.000Z",
+    "content": "A competitor solved over 10 minutes in the 5x5x5 Blindfolded event. Due to a miscommunication, the judge did not use a stopwatch assuming that the competitor did not need it.\n\nAfter analyzing the video evidence, the WRC agreed to **use the original time** because:\n\n1. The time was near to 10 minutes so it was possible to estimate the time from the video.\n2. According to [Regulation 9f2](https://www.worldcubeassociation.org/regulations/#9f2), the result should be rounded to the nearest second.\n\nIn addition, a similar result was accepted at Nacional Perubik 2016 (see [Incident Log](https://www.worldcubeassociation.org/incidents/6)):\n\n> A competitor got a succesful 5x5x5 Blindfolded solve. The result wasn't written on the score sheet, but the competitor had recorded the solve, so the time was retrieved from the video and the result accepted as official.",
+    "hash": "9c8228a88ae8a484742bafa17e6aff8c8bc74cd404fc77991fc01bad6ca94209",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "五阶盲拧成绩缺少秒表备用计时",
+    "content": "一名选手在五阶盲拧中用时超过 10 分钟。由于沟通失误，裁判以为无需秒表，没有使用秒表计时。\n\n分析视频后，WRC 同意**使用原时间**，理由是：\n1. 用时接近 10 分钟，可从视频中估算；\n2. 根据[规则 9f2](https://www.worldcubeassociation.org/regulations/#9f2)，成绩应四舍五入到整秒。\n\nNacional Perubik 2016 也接受过类似成绩（见[事件日志](https://www.worldcubeassociation.org/incidents/6)）：\n> 一名选手成功完成五阶盲拧，成绩未写入成绩单，但选手录下了还原，因此从视频中恢复用时，并接受为正式成绩。",
+    "translatedAt": "2026-10-22T05:52:51.924Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "9c8228a88ae8a484742bafa17e6aff8c8bc74cd404fc77991fc01bad6ca94209"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_5",
+      "reviewedAt": "2026-10-22T06:22:53.079981Z",
+      "report": "reviews/round-1/report-5.json",
+      "sourceHash": "9c8228a88ae8a484742bafa17e6aff8c8bc74cd404fc77991fc01bad6ca94209",
+      "reviewedTranslationHash": "331fcf3e27bff959494c24087e706d2ea2bcb17b4463cc341ed62a2b6e48c309",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

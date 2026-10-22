@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "disciplinary:/posts/call-for-applicants-wdc-members-september-2019",
+  "source": {
+    "key": "disciplinary:/posts/call-for-applicants-wdc-members-september-2019",
+    "kind": "disciplinary",
+    "title": "Call for Applicants - WDC Members (September 2019)",
+    "date": "2019-09-09T01:22:52Z",
+    "url": "https://www.worldcubeassociation.org/posts/call-for-applicants-wdc-members-september-2019",
+    "content": "<p>The <strong>WCA Disciplinary Committee (WDC)</strong> is seeking new members to help them with their mission! Applications are open to everyone and community members not currently holding a WCA position are encouraged to apply.</p><p><strong>What does the WDC do?</strong><br>\n- Advises the WCA Board in special cases, like alleged violations of WCA Regulations<br>\n- May be contacted by WCA members in case of important personal matters regarding WCA competitions. </p><p>If you want to get more insight about the work of the Committee, you can check the <a href=\"https://www.worldcubeassociation.org/disciplinary\">Disciplinary Log</a> on the WCA website. Suspensions and other Sanctions are defined in <a href=\"https://www.worldcubeassociation.org/documents/motions/15.2019.1%20-%20Suspensions%20and%20other%20Sanctions.pdf\">Motion 15.2019.1</a>. The official rights and duties of the WDC are documented in <a href=\"https://www.worldcubeassociation.org/documents/motions/10.2019.2%20-%20Disciplinary%20Committee.pdf\">WCA Motion 10.2019.2</a>.</p><p><strong>The qualities and requirements expected of candidates are:</strong><br>\n- Clear background<br>\n- Personal time management skills<br>\n- Ability to discuss reasoning and ideas<br>\n- Familiarity with WCA activities</p><p>The application period is open for applicants to submit their application documents from now until <strong>September 23rd, 2019, 23:59 UTC</strong> to Lorenzo Vigani Poli (<a href=\"mailto:lpoli@worldcubeassociation.org\">lpoli@worldcubeassociation.org</a>).</p><p><strong>The application document must be in PDF format, and should include the following:</strong><br>\n- A brief personal introduction<br>\n- Summary of activities done within the cubing community<br>\n- Motivation for applying to join the WDC</p><p>Application documents not in PDF format will be automatically discarded. </p><p>Applicants can expect a reply to confirm the receipt of the application, and may later receive a request to be interviewed. Anyone with questions about applying can contact Lorenzo Vigani Poli (<a href=\"mailto:lpoli@worldcubeassociation.org\">lpoli@worldcubeassociation.org</a>).</p><p>After the application period, the WDC Leader will make a selection and the new members will be announced once applicants have accepted the positions.</p><p>Thank you for your interest in assisting the WDC, and the WCA!</p>",
+    "hash": "adc31e9908de74dc3246318856f9bebfd4c5b304b122dde5cc0032744db273de",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "招募 WDC 成员（2019 年 9 月）",
+    "content": "**WCA 纪律委员会（WDC）**正在招募新成员协助履行使命！人人可申请，鼓励目前未在 WCA 任职的社群成员申请。\n\n**WDC 做什么？**\n- 就特殊个案向理事会提供意见，例如涉嫌违反 WCA 规则；\n- WCA 成员遇到有关比赛的重要个人事务时可联系 WDC。\n\n更多工作信息见[纪律日志](https://www.worldcubeassociation.org/disciplinary)。暂停资格及其他处分见[动议 15.2019.1](https://www.worldcubeassociation.org/documents/motions/15.2019.1%20-%20Suspensions%20and%20other%20Sanctions.pdf)，正式权利和职责见[动议 10.2019.2](https://www.worldcubeassociation.org/documents/motions/10.2019.2%20-%20Disciplinary%20Committee.pdf)。\n\n**期望素质与要求：**清白的背景、个人时间管理能力、讨论推理和想法的能力、熟悉 WCA 活动。\n\n申请期为即日起至 **2019 年 9 月 23 日 23:59 UTC**，请发送至 Lorenzo Vigani Poli（[lpoli@worldcubeassociation.org](mailto:lpoli@worldcubeassociation.org)）。\n\n申请文件必须为 PDF，应包含简短自我介绍、在魔方社群中所做活动、加入 WDC 的动机。非 PDF 文件将自动弃置。\n\n申请人会收到收件确认，之后可能获邀面试。有疑问可联系 [Lorenzo Vigani Poli](mailto:lpoli@worldcubeassociation.org)。申请期后由 WDC 负责人遴选，在申请人接受职位后公布新成员。\n\n感谢愿意协助 WDC 和 WCA！",
+    "translatedAt": "2026-10-22T06:02:27.941Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "adc31e9908de74dc3246318856f9bebfd4c5b304b122dde5cc0032744db273de"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

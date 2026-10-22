@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:42",
+  "source": {
+    "key": "incidents:42",
+    "kind": "incidents",
+    "title": "PVC coating on a stickerless cube",
+    "url": "https://www.worldcubeassociation.org/incidents/42",
+    "date": "2019-10-22T10:40:43.000Z",
+    "content": "A competitor used a stickerless cube with a \"PVC coating\" on each colored part. The puzzle was accepted at the competition.\n\nSimilar cubes with non-transparent (black) stickers have previously been allowed, and the WRC has concluded that the PVC coatings do not give the competitor an advantage that [Regulation 3d](https://www.worldcubeassociation.org/regulations/#3d)) and [Regulation 3h](https://www.worldcubeassociation.org/regulations/#3h)) are meant to prevent.\n\nTherefore, the WRC has decided that it is reasonable for these puzzles to be permitted.\n\nThe WCA Regulations will be updated to clarify this.",
+    "hash": "0a03822289e885b1b3a0321f61ee3d8bbc9c2011c96939c5c22dd1f887e7f8e1",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "无贴纸魔方上的 PVC 涂层",
+    "content": "一名选手使用了每个有色部件上都有“PVC 涂层”的无贴纸魔方，比赛现场允许使用。\n\n此前曾允许贴有不透明黑色贴纸的类似魔方。WRC 认定，这些 PVC 涂层不会带来[规则 3d](https://www.worldcubeassociation.org/regulations/#3d)和[规则 3h](https://www.worldcubeassociation.org/regulations/#3h)意在防止的优势。\n\n因此，WRC 决定允许此类魔方是合理的。WCA 规则将更新以明确这一点。",
+    "translatedAt": "2026-10-22T05:50:48.611Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "0a03822289e885b1b3a0321f61ee3d8bbc9c2011c96939c5c22dd1f887e7f8e1"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

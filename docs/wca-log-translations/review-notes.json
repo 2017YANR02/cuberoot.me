@@ -1,0 +1,243 @@
+{
+  "updatedAt": "2026-10-22T06:53:07.762Z",
+  "count": 21,
+  "entries": [
+    {
+      "key": "disciplinary:/posts/call-for-applicants-wdc-leader-october-2020",
+      "path": "entries/disciplinary-call-for-applicants-wdc-leader-october-2020.json",
+      "status": "independently_verified",
+      "notes": [
+        "原文“at least 4-6 hours per week on average”自身将最低值与范围并列，译文忠实保留；未核验招聘方实际工时解释。"
+      ],
+      "unresolvedNotes": [
+        "原文“at least 4-6 hours per week on average”自身将最低值与范围并列，译文忠实保留；未核验招聘方实际工时解释。"
+      ]
+    },
+    {
+      "key": "disciplinary:/posts/important-announcement-about-blindfolded-solving",
+      "path": "entries/disciplinary-important-announcement-about-blindfolded-solving.json",
+      "status": "independently_verified",
+      "notes": [
+        "官网引导句及关联官方归档388首帖全文均已翻译并独立对照。旧phpBB链接404；未纳入社区回帖；用户已确认首帖翻译许可，仍无公开发布授权。"
+      ],
+      "unresolvedNotes": []
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2024-q4",
+      "path": "entries/disciplinary-integrity-committee-digest-2024-q4.json",
+      "status": "pending_source_verification",
+      "notes": [
+        "原文结案14件，但8项禁赛+3项警告+2件无措施合计13；按原文保留，未补造第14件。",
+        "‘permanent until’ 的有条件永久禁令措辞按原文保留，待核验具体政策含义。",
+        "原文称结案14件，但列举8项禁赛、3项警告、2件无措施合计13；译文忠实保留，未补造案件，统计待来源核验。",
+        "原文“permanent until”及连续不出席达到原禁令时长的条件已照译；具体政策性质未核验，不能称已解决该原文措辞疑义。"
+      ],
+      "unresolvedNotes": [
+        "原文称结案14件，但列举8项禁赛、3项警告、2件无措施合计13；译文忠实保留，未补造案件，统计待来源核验。",
+        "原文“permanent until”及连续不出席达到原禁令时长的条件已照译；具体政策性质未核验，不能称已解决该原文措辞疑义。"
+      ]
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2025-q2",
+      "path": "entries/disciplinary-integrity-committee-digest-2025-q2.json",
+      "status": "pending_source_verification",
+      "notes": [
+        "原文结案9件，但4项禁赛与6件无措施合计10；按原文保留，未调整统计。",
+        "原文称结案9件，但4项禁赛加6件无措施为10；译文忠实保留，未调整统计，待来源核验。"
+      ],
+      "unresolvedNotes": [
+        "原文称结案9件，但4项禁赛加6件无措施为10；译文忠实保留，未调整统计，待来源核验。"
+      ]
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2025-q4",
+      "path": "entries/disciplinary-integrity-committee-digest-2025-q4.json",
+      "status": "independently_verified",
+      "notes": [
+        "原文末尾邮箱链接缺少 mailto:，译文保留原链接目标；实际联系地址为文中 integrity@worldcubeassociation.org。",
+        "原文末尾邮箱href缺少mailto:；译文原样保留，未验证该链接能否正常发邮件。此为来源链接问题，未改译文目标。"
+      ],
+      "unresolvedNotes": [
+        "原文末尾邮箱href缺少mailto:；译文原样保留，未验证该链接能否正常发邮件。此为来源链接问题，未改译文目标。"
+      ]
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-report-on-a-case-of-cheating-sep-2025",
+      "path": "entries/disciplinary-integrity-committee-report-on-a-case-of-cheating-sep-2025.json",
+      "status": "independently_verified",
+      "notes": [
+        "此条为官网公告全文；所链接的完整调查报告未包含在快照中，未读取、未翻译。保持匿名，不根据链接或纪录推断身份。",
+        "仅审校所提供官网公告全文；所链完整调查报告不在快照中，未读取或翻译。未根据纪录、年龄或链接推断身份。"
+      ],
+      "unresolvedNotes": []
+    },
+    {
+      "key": "disciplinary:/posts/wdc-digest-september-2022",
+      "path": "entries/disciplinary-wdc-digest-september-2022.json",
+      "status": "independently_verified",
+      "notes": [
+        "原文姓名后仅写 ‘(2014)’，照录，不推测或补全 WCA ID。",
+        "原文Carlos Miguel Pérez后仅标(2014)，译文照录。此项未补全也未事实核验，不应误标为已核实的完整WCA ID。"
+      ],
+      "unresolvedNotes": [
+        "原文Carlos Miguel Pérez后仅标(2014)，译文照录。此项未补全也未事实核验，不应误标为已核实的完整WCA ID。"
+      ]
+    },
+    {
+      "key": "disciplinary:/posts/wdc-monthly-digest-july-2019",
+      "path": "entries/disciplinary-wdc-monthly-digest-july-2019.json",
+      "status": "pending_source_verification",
+      "notes": [
+        "公开信原文写 ‘almost a decade ago’，与2007及2019时间差不一致；按原文译为近十年，不擅自改为十二年。",
+        "源文公开信称 2007 年的作弊发生于 almost a decade ago，与 2019 年简报时间相差约十二年不一致；译文忠实保留为近十年，年代问题 unresolved。本轮仅对照所给正文，未作事实核验。"
+      ],
+      "unresolvedNotes": [
+        "源文公开信称 2007 年的作弊发生于 almost a decade ago，与 2019 年简报时间相差约十二年不一致；译文忠实保留为近十年，年代问题 unresolved。本轮仅对照所给正文，未作事实核验。"
+      ]
+    },
+    {
+      "key": "disciplinary:/posts/wdc-report-on-a-case-of-cheating",
+      "path": "entries/disciplinary-wdc-report-on-a-case-of-cheating.json",
+      "status": "independently_verified",
+      "notes": [
+        "官网公告正文已译；所链接调查报告与视频未读取、未翻译。匿名保持不变，不以纪录或日期推断身份。"
+      ],
+      "unresolvedNotes": []
+    },
+    {
+      "key": "disciplinary:/posts/wdc-report-on-a-case-of-cheating-in-3x3x3-multi-blind",
+      "path": "entries/disciplinary-wdc-report-on-a-case-of-cheating-in-3x3x3-multi-blind.json",
+      "status": "independently_verified",
+      "notes": [
+        "官网公告正文已译，外链完整报告未读取、未翻译。"
+      ],
+      "unresolvedNotes": []
+    },
+    {
+      "key": "disciplinary:/posts/wdc-report-on-a-case-of-harassment",
+      "path": "entries/disciplinary-wdc-report-on-a-case-of-harassment.json",
+      "status": "independently_verified",
+      "notes": [
+        "官网公告正文已译，外链完整调查报告未读取、未翻译；不补充公告未说明的身份或处分。"
+      ],
+      "unresolvedNotes": []
+    },
+    {
+      "key": "disciplinary:/posts/wic-digest-2024-q3",
+      "path": "entries/disciplinary-wic-digest-2024-q3.json",
+      "status": "pending_source_verification",
+      "notes": [
+        "原文结案17件，但4项禁赛、3项警告、13件其他结局合计20；照录，未自行纠正统计。",
+        "源文称结案 17 件，但随后列 4 项禁赛、3 项警告及 13 件其他结局；若按互斥案件数理解则合计 20。是否处分数量与案件数口径不同或存在交叉，正文未说明。译文忠实照录；统计口径 unresolved，未作外部事实核验。"
+      ],
+      "unresolvedNotes": [
+        "源文称结案 17 件，但随后列 4 项禁赛、3 项警告及 13 件其他结局；若按互斥案件数理解则合计 20。是否处分数量与案件数口径不同或存在交叉，正文未说明。译文忠实照录；统计口径 unresolved，未作外部事实核验。"
+      ]
+    },
+    {
+      "key": "incidents:11",
+      "path": "entries/incidents-11.json",
+      "status": "pending_source_verification",
+      "notes": [
+        "原文使用 ‘suspecting filtration of the solve’，措辞含混；译为怀疑还原情况泄露，待独立复核。",
+        "原文 suspecting filtration of the solve 措辞含混；现译为怀疑还原情况泄露，是一种语境解释，需源文作者或来源确认。此处 unresolved；未读取外链或推断身份。"
+      ],
+      "unresolvedNotes": [
+        "原文 suspecting filtration of the solve 措辞含混；现译为怀疑还原情况泄露，是一种语境解释，需源文作者或来源确认。此处 unresolved；未读取外链或推断身份。"
+      ]
+    },
+    {
+      "key": "incidents:115",
+      "path": "entries/incidents-115.json",
+      "status": "pending_source_verification",
+      "notes": [
+        "原文写 their cumulative time limit was greater than 10 minutes but less than 12 minutes，而上下文讨论的似乎是选手累计用时。译文采用累计时间属语境解释，尚不能声称已确认源文措辞；需来源澄清，unresolved。"
+      ],
+      "unresolvedNotes": [
+        "原文写 their cumulative time limit was greater than 10 minutes but less than 12 minutes，而上下文讨论的似乎是选手累计用时。译文采用累计时间属语境解释，尚不能声称已确认源文措辞；需来源澄清，unresolved。"
+      ]
+    },
+    {
+      "key": "incidents:169",
+      "path": "entries/incidents-169.json",
+      "status": "pending_source_verification",
+      "notes": [
+        "原文写 ‘WRC Board’，与常见机构名称 WCA Board 不一致；保留原称并待核验。",
+        "现有 review.notes 所列 “WRC Board” 机构名称疑点未解决。源文申诉机构与常见称谓的关系无法仅据本条确认；译文忠实标为原文所称 WRC Board，未擅改 WCA Board。本审校没有联网或事实核验。"
+      ],
+      "unresolvedNotes": [
+        "现有 review.notes 所列 “WRC Board” 机构名称疑点未解决。源文申诉机构与常见称谓的关系无法仅据本条确认；译文忠实标为原文所称 WRC Board，未擅改 WCA Board。本审校没有联网或事实核验。"
+      ]
+    },
+    {
+      "key": "incidents:26",
+      "path": "entries/incidents-26.json",
+      "status": "pending_source_verification",
+      "notes": [
+        "原文写 ‘F article’，按原文保留第 F 章，不擅自改为其他章节。",
+        "现有 review.notes 所列 “F article” 章节指代疑点未解决。源文在多盲事件中援引该章，译文忠实保留第 F 章；未据推测改章，也未核验历史规则或外链。"
+      ],
+      "unresolvedNotes": [
+        "现有 review.notes 所列 “F article” 章节指代疑点未解决。源文在多盲事件中援引该章，译文忠实保留第 F 章；未据推测改章，也未核验历史规则或外链。"
+      ]
+    },
+    {
+      "key": "incidents:4",
+      "path": "entries/incidents-4.json",
+      "status": "pending_source_verification",
+      "notes": [
+        "原文记载成绩 7.51 秒，又仅以视频用时超过 7 秒解释慢计时；该比较不足以单独说明偏慢。译文忠实保留数字，需源方澄清，不能自行改为超过 7.51 秒或其他值。"
+      ],
+      "unresolvedNotes": [
+        "原文记载成绩 7.51 秒，又仅以视频用时超过 7 秒解释慢计时；该比较不足以单独说明偏慢。译文忠实保留数字，需源方澄清，不能自行改为超过 7.51 秒或其他值。"
+      ]
+    },
+    {
+      "key": "incidents:48",
+      "path": "entries/incidents-48.json",
+      "status": "pending_source_verification",
+      "notes": [
+        "原文标题/开头称未晋级，后文却要求删除决赛成绩；v2已恢复“未晋级”且删除推断性因果，没有自行消解源文冲突。",
+        "原文标题及开头称 did not qualify，后文却要求删除决赛成绩；修正后的译文忠实保留冲突，仍待源方澄清。"
+      ],
+      "unresolvedNotes": [
+        "原文标题及开头称 did not qualify，后文却要求删除决赛成绩；修正后的译文忠实保留冲突，仍待源方澄清。"
+      ]
+    },
+    {
+      "key": "incidents:53",
+      "path": "entries/incidents-53.json",
+      "status": "pending_source_verification",
+      "notes": [
+        "原文结尾写 ‘removing all second attempts’，与前文取消第三轮/决赛不一致；明确保留并标注，不擅自纠正。",
+        "现有 review.notes 所指冲突成立：原文由三轮改为两轮、以前轮定排名，却写 removing all second attempts。译文以“原文接着称”忠实标注保留；到底应删除何轮或哪些尝试仍待源方确认。"
+      ],
+      "unresolvedNotes": [
+        "现有 review.notes 所指冲突成立：原文由三轮改为两轮、以前轮定排名，却写 removing all second attempts。译文以“原文接着称”忠实标注保留；到底应删除何轮或哪些尝试仍待源方确认。"
+      ]
+    },
+    {
+      "key": "incidents:62",
+      "path": "entries/incidents-62.json",
+      "status": "pending_source_verification",
+      "notes": [
+        "原文标题说选手询问，正文明确说裁判询问代表；可能有转述关系，但所给正文未说明。译文忠实保留，不推断谁直接提出询问，待源方澄清。"
+      ],
+      "unresolvedNotes": [
+        "原文标题说选手询问，正文明确说裁判询问代表；可能有转述关系，但所给正文未说明。译文忠实保留，不推断谁直接提出询问，待源方澄清。"
+      ]
+    },
+    {
+      "key": "incidents:74",
+      "path": "entries/incidents-74.json",
+      "status": "pending_source_verification",
+      "notes": [
+        "原文正文写 3j1，但引用标签为 3j2，链接仍指向 3j1；照录并待核验。",
+        "源正文的 Regulation 3j1、引文标签 [3j2] 和目标链接 #3j1 不一致。原文未澄清正确编号，需后续核验官方源；本轮按要求未读取外链，不建议擅自改成任一编号。"
+      ],
+      "unresolvedNotes": [
+        "源正文的 Regulation 3j1、引文标签 [3j2] 和目标链接 #3j1 不一致。原文未澄清正确编号，需后续核验官方源；本轮按要求未读取外链，不建议擅自改成任一编号。"
+      ]
+    }
+  ]
+}

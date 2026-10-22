@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:25",
+  "source": {
+    "key": "incidents:25",
+    "kind": "incidents",
+    "title": "3x3x3 One-Handed Attempt was identified as misscramble",
+    "url": "https://www.worldcubeassociation.org/incidents/25",
+    "date": "2018-07-29T12:07:06.000Z",
+    "content": "*DISCLAIMER*: Since the resolution of this incident, the regulation [11i](https://www.worldcubeassociation.org/regulations/#11i) has been updated. The outcome of this incident wouldn't change, but how it should be handled is now explicitely stated in the regulations. \n\n\nA competitor broke the single World Record the first round of 3x3x3 One-Handed. It was later found that the cube was not scrambled correctly.\n\nOriginal scramble: L2 D F2 D2 F2 L2 R2 D F U2 F' R' B2 F D' B2 L2 R'\nGiven scramble: L2 D F2 D2 F2 L2 R2 D F U2 F' R' B2 F D' B2 **L** R'\n\nA provisional extra attempt was granted to the competitor. The WRC has decided to accept the result of the extra attempt as the official result because the given scramble was not an officially generated scramble.\n\nRelevant Regulations:\n[4b)](https://www.worldcubeassociation.org/regulations/#4b) Puzzles must be scrambled using computer-generated random scramble sequences.\n[4g)](https://www.worldcubeassociation.org/regulations/#4g) After scrambling a puzzle, the scrambler must verify that the puzzle is scrambled correctly. If the puzzle state is wrong, the scrambler must correct it (e.g. by solving the puzzle and applying the scramble sequence again).\n\nThis decision is in line with several precedents.",
+    "hash": "808383bc7155590b52c9daa3208f28f06433ff3925c3401330e753172bcaffad",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "三阶单手还原被认定使用了错误打乱",
+    "content": "说明：此事件处理后，规则 [11i](https://www.worldcubeassociation.org/regulations/#11i) 已更新。事件结果不会改变，但现在规则已明确规定处理方式。\n\n一名选手在三阶单手第一轮打破单次世界纪录，后来发现魔方打乱错误。\n\n原定打乱：L2 D F2 D2 F2 L2 R2 D F U2 F' R' B2 F D' B2 L2 R'\n实际打乱：L2 D F2 D2 F2 L2 R2 D F U2 F' R' B2 F D' B2 **L** R'\n\n现场给予选手一次暂定的额外尝试。由于实际打乱并非官方生成的打乱，WRC 决定将额外尝试的成绩接受为正式成绩。\n\n相关规则：\n[4b)](https://www.worldcubeassociation.org/regulations/#4b) 魔方必须使用计算机生成的随机打乱序列打乱。\n[4g)](https://www.worldcubeassociation.org/regulations/#4g) 打乱后，打乱员必须核对魔方是否打乱正确。如果状态错误，必须纠正，例如还原魔方后重新执行打乱序列。\n\n本决定与多个先例一致。",
+    "translatedAt": "2026-10-22T05:50:48.611Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "808383bc7155590b52c9daa3208f28f06433ff3925c3401330e753172bcaffad"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_4",
+      "reviewedAt": "2026-10-22T06:22:38.727845Z",
+      "report": "reviews/round-1/report-4.json",
+      "sourceHash": "808383bc7155590b52c9daa3208f28f06433ff3925c3401330e753172bcaffad",
+      "reviewedTranslationHash": "91ffbfd48787199dc3a633c40a9f16e47ebcd87d15a617240a1149bac0f82ee4",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

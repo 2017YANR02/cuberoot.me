@@ -49,8 +49,7 @@ body[data-site-scenery] :is(
   .comp-gate-input,
   .comp-gate-rules
 ),
-body[data-site-scenery] .calendar-page :is(.calendar, .view-toggle, .mode-toggle),
-body[data-site-scenery] .deskpet-story .deskpet-story-art {
+body[data-site-scenery] .calendar-page :is(.calendar, .view-toggle, .mode-toggle) {
   background: var(--glass-surface-bg);
   -webkit-backdrop-filter: var(--glass-filter);
   backdrop-filter: var(--glass-filter);

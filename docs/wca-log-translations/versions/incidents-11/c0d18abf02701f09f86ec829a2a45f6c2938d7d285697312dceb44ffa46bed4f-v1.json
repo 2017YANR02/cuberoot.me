@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:11",
+  "source": {
+    "key": "incidents:11",
+    "kind": "incidents",
+    "title": "Scramble filtering",
+    "url": "https://www.worldcubeassociation.org/incidents/11",
+    "date": "2018-03-31T14:55:10.000Z",
+    "content": "*DISCLAIMER:*  After the resolution of this incident, regulation [4b1](https://www.worldcubeassociation.org/regulations/#4b1) has been changed to explicitely disallow scramble filtering by delegates.\n\nThere was a very lucky scramble during the 2x2x2 Cube final. A competitor got NR on that scramble, and everyone went to congratulate him. The Delegate changed the scramble group suspecting filtration of the solve. All the solves were kept.",
+    "hash": "0f38fe9423de7d19c800589e931609e343573da19b112d8bab61a808039bdd2c",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "筛选打乱",
+    "content": "说明：此事件处理完毕后，规则 [4b1](https://www.worldcubeassociation.org/regulations/#4b1) 已修改，明确禁止代表筛选打乱。\n\n二阶决赛中出现了一个非常幸运的打乱。一名选手以此取得国家纪录（NR），大家都前去祝贺。代表怀疑还原情况已经泄露，因此更换了打乱组。所有还原成绩均予保留。",
+    "translatedAt": "2026-10-22T05:48:51.542Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "0f38fe9423de7d19c800589e931609e343573da19b112d8bab61a808039bdd2c"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [
+      "原文使用 ‘suspecting filtration of the solve’，措辞含混；译为怀疑还原情况泄露，待独立复核。"
+    ],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

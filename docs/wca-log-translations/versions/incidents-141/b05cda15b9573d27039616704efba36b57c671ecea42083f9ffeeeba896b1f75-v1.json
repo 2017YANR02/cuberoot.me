@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:141",
+  "source": {
+    "key": "incidents:141",
+    "kind": "incidents",
+    "title": "Scorecards misplaced and later found, removing competitor from round",
+    "url": "https://www.worldcubeassociation.org/incidents/141",
+    "date": "2024-11-18T22:41:10.000Z",
+    "content": "Two competitors, competitor X and competitor Y, were both vying for a spot in the final round. Their round 1 results were very close, with competitor X beating out competitor Y, and the competitors took their scorecards aside to do their own calculations before the scores were properly entered. Somewhere along this process, the scorecards were misplaced and could not be found.\n\nThe delegates lines up a clear set of circumstances for a procedure: The competitors would redo the first round on a new set of scrambles to determine who would go to the final. The new results would not stand if the original scorecards turned up, and if the \"wrong\" person competed in the final, then neither of them would advance. These circumstances are in line with [Regulation 9t](https://www.worldcubeassociation.org/regulations/#9t). The competitors agreed to this, and in these new attempts, competitor Y was faster and was placed in the final.\n\nMuch later, after the rounds, the original scorecards were found. Since the delegates and competitors had agreed on a procedure, competitor Y's results were removed from the final. Note that competitor X did not have any results for the final at all.\n\nThe competitors were at fault for misplacing their scoresheets, and since the delegates had laid out a complete plan of actions, the WRC agreed that it was best to stick to the delegate decision. The WRC recommends in similar situations that both competitors compete in the final provisionally if at all possible.",
+    "hash": "f0bc42f9a39a9cbaf575368639b60ec0d29d029fc60524232b295332706f5102",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "成绩单遗失后找回，选手决赛成绩被删除",
+    "content": "选手 X、Y 争夺决赛名额，第一轮成绩接近，X 略胜 Y。正式录入前，两人将成绩单拿到一旁自行计算，过程中成绩单遗失。\n\n代表预先明确处理方案：两人用新打乱重赛第一轮以确定晋级者；若找回原成绩单，新成绩不采用；若“错误”的人参加了决赛，则两人都不晋级。这符合 [9t](https://www.worldcubeassociation.org/regulations/#9t)。选手同意，重赛中 Y 更快，进入决赛。\n\n轮次结束很久后，原成绩单被找到。依事先约定，删除 Y 的决赛成绩；X 本来就没有任何决赛成绩。\n\n成绩单遗失是选手过错，代表又已给出完整方案，因此 WRC 同意遵循代表决定。WRC 建议类似情况下，若可能，应让两人均暂时参加决赛。",
+    "translatedAt": "2026-10-22T06:00:02.853Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "f0bc42f9a39a9cbaf575368639b60ec0d29d029fc60524232b295332706f5102"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

@@ -368,7 +368,7 @@
 | [core/packages/client/app/[lang]/regulation/head-to-head/page.tsx](<../core/packages/client/app/[lang]/regulation/head-to-head/page.tsx>) | `/regulation/head-to-head` | 文档/内容/演示（候选） | 待浏览 |
 | [core/packages/client/app/[lang]/regulation/incidents/page.tsx](<../core/packages/client/app/[lang]/regulation/incidents/page.tsx>) | `/regulation/incidents` | 文档/内容/演示（候选） | 待浏览 |
 | [core/packages/client/app/[lang]/regulation/multi-blind/page.tsx](<../core/packages/client/app/[lang]/regulation/multi-blind/page.tsx>) | `/regulation/multi-blind` | 文档/内容/演示（候选） | 待浏览 |
-| [core/packages/client/app/[lang]/regulation/news/page.tsx](<../core/packages/client/app/[lang]/regulation/news/page.tsx>) | `/regulation/news` | 文档/内容/演示（候选） | 待浏览 |
+| [core/packages/client/app/[lang]/regulation/post/page.tsx](<../core/packages/client/app/[lang]/regulation/post/page.tsx>) | `/regulation/post` | 文档/内容/演示（候选） | 待浏览 |
 | [core/packages/client/app/[lang]/regulation/officials/page.tsx](<../core/packages/client/app/[lang]/regulation/officials/page.tsx>) | `/regulation/officials` | 文档/内容/演示（候选） | 待浏览 |
 | [core/packages/client/app/[lang]/regulation/one-handed/page.tsx](<../core/packages/client/app/[lang]/regulation/one-handed/page.tsx>) | `/regulation/one-handed` | 文档/内容/演示（候选） | 待浏览 |
 | [core/packages/client/app/[lang]/regulation/page.tsx](<../core/packages/client/app/[lang]/regulation/page.tsx>) | `/regulation` | 文档/内容/演示（候选） | 待浏览 |

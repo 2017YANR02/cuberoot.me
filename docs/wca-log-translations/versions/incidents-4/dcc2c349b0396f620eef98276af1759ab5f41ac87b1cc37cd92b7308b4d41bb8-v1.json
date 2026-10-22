@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:4",
+  "source": {
+    "key": "incidents:4",
+    "kind": "incidents",
+    "title": "Timer ran in slow mode",
+    "url": "https://www.worldcubeassociation.org/incidents/4",
+    "date": "2018-03-31T13:15:11.000Z",
+    "content": "A competitor set a time of 7.51 seconds. When checking the video of the solve, it was clear that the solve took more than 7 seconds. The timer was checked and it was found that the timer would stop for a while after lifting both hands. The timer was removed and an extra attempt was granted by the Delegate.",
+    "hash": "e67f78eb5b4d983d627eded9b262191058c68b3a90b4cce6457e8da30ee184f2",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "计时器运行偏慢",
+    "content": "一名选手取得了 7.51 秒的成绩。查看还原视频时，明显看出实际还原用时超过 7 秒。检查发现，双手抬起后计时器会停顿一段时间。该计时器被撤下，代表给予了额外尝试。",
+    "translatedAt": "2026-10-22T05:48:51.542Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "e67f78eb5b4d983d627eded9b262191058c68b3a90b4cce6457e8da30ee184f2"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

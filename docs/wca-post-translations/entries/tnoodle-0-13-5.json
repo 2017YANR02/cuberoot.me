@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/tnoodle-0-13-5",
+  "source": {
+    "key": "posts:/posts/tnoodle-0-13-5",
+    "kind": "posts",
+    "title": "TNoodle 0.13.5",
+    "date": "2018-10-09T10:37:27.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/tnoodle-0-13-5",
+    "content": "`TNoodle-WCA-0.13.5` is now available from https://www.worldcubeassociation.org/regulations/scrambles/\nThe following change has been made since `TNoodle-WCA-0.13.4`:\n\n- Fix a bug where Skewb scrambles could be shorter than the 11 moves they should be.\n<!-- break -->\n\nPer the WCA Regulations, an official scramble sequence for Skewb must produce a random state ([4b3](https://www.worldcubeassociation.org/regulations/#4b3)) from those that require at least 7 moves ([4b3c](https://www.worldcubeassociation.org/regulations/#4b3c)) to solve.\n\nIn order to make it hard to distinguish scrambles with short solutions on a scramble sheet, TNoodle was designed to ensure that all generated Skewb scramble sequences are at least 11 moves (even if there is an optional solution with fewer moves). However, a thread safety bug in TNoodle before version `0.13.5` made it possible for scramble sequences to be truncated, such that:\n\n* a truncated scramble sequence would be used if it required at least 7 moves to solve (still satisfying Regulation 4b3c), but\n* the truncation did not preserve the random scramble distribution (violating Regulation 4b3).\n\nMore details are available [at the TNoodle project on GitHub](https://github.com/thewca/tnoodle/pull/368).\n\nAn analysis of solution lengths for historical scrambles suggests that this did not affect the distribution of states for the vast majority of past competitions. However, it did result in a significant bias of states towards shorter optimal solutions for at least one major competition ([CubingUSA Nationals 2018](https://www.worldcubeassociation.org/competitions/CubingUSANationals2018)), which led to the discovery of this bug. We would like to thank Sébastien Auroux for bringing it to our attention, and Tim Reynolds for working with Jeremy Fleischman to identify and prepare a fix for TNoodle over the past weekend.\n\nWe do not believe that this bug was purposely used by anyone to gain an advantage. However, we are still working to complete the analysis before posting an entry to the WRC [incidents log](https://www.worldcubeassociation.org/incidents).\n\nPlease remember that official competitions must use a current version of the official scramble program. This is always available from:\nhttps://www.worldcubeassociation.org/regulations/scrambles/",
+    "hash": "f1e71e3c3b0118b7c5ce2e7aab244ecd4b5ce91859d03c173c574c40a3355fd5",
+    "format": "markdown",
+    "sourceId": 10425
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "f1e71e3c3b0118b7c5ce2e7aab244ecd4b5ce91859d03c173c574c40a3355fd5",
+    "language": "zh-Hans",
+    "title": "TNoodle 0.13.5 发布",
+    "content": "TNoodle-WCA-0.13.5 现已可从 https://www.worldcubeassociation.org/regulations/scrambles/ 下载。\n\n与 TNoodle-WCA-0.13.4 相比，本次作出了以下修改：\n\n* 修复了 Skewb 打乱可能短于预期 11 步的问题。\n\n根据 WCA 规则，官方 Skewb 打乱必须从至少需要 7 步才能还原的状态中（[4b3c](https://www.worldcubeassociation.org/regulations/#4b3c)），生成随机状态（[4b3](https://www.worldcubeassociation.org/regulations/#4b3)）。\n\n为避免从打乱纸上轻易辨认出解法较短的打乱，TNoodle 的设计确保生成的所有 Skewb 打乱序列至少有 11 步，即使该状态存在更短的解法。然而，0.13.5 之前版本的 TNoodle 存在线程安全问题，可能导致打乱序列被截断，具体表现为：\n\n* 如果截断后的打乱仍需要至少 7 步才能还原，该序列就会被采用，仍满足规则 4b3c；但\n* 截断操作破坏了打乱的随机分布，违反规则 4b3。\n\n更多细节可在 [GitHub 上的 TNoodle 项目](https://github.com/thewca/tnoodle/pull/368)中查看。\n\n对历史打乱解法长度的分析表明，过去绝大多数比赛的状态分布并未受影响。然而，至少有一场大型比赛（[CubingUSA Nationals 2018](https://www.worldcubeassociation.org/competitions/CubingUSANationals2018)）的状态明显偏向最优解较短的情况，这也促成了问题的发现。感谢 Sébastien Auroux 向我们反映此事，也感谢 Tim Reynolds 在刚过去的周末与 Jeremy Fleischman 一起定位问题，并为 TNoodle 准备了修复。\n\n我们不认为有人故意利用这一问题获取优势。不过，分析工作仍未完成；完成后，我们会在 WRC [意外事件日志](https://www.worldcubeassociation.org/incidents)中记录此事。\n\n请记住，官方比赛必须使用当前有效版本的官方打乱程序。最新版本始终可从以下页面获取：\nhttps://www.worldcubeassociation.org/regulations/scrambles/",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.170Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "13ee74cb80a8d735c667bacdc5308ff4ae0ed9739fe9d066c52100f2579577e9"
+}

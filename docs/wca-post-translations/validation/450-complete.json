@@ -1,0 +1,17 @@
+{
+  "checkedAt": "2026-10-22T08:59:28.054Z",
+  "ok": true,
+  "counts": {
+    "total": 494,
+    "linkedDisciplinary": 44,
+    "translated": 450,
+    "pending": 0,
+    "entryFiles": 450,
+    "sourceLinks": 1495,
+    "checkpoints": 13
+  },
+  "checkpointBindingsVerified": 2470,
+  "snapshotSha256": "2dfb084c79bc833cb0ddc2d00c471fe93c305141bde13e8f616ff5889ca61933",
+  "errors": [],
+  "scope": "覆盖、来源版本、链接、译文哈希及检查点可恢复性校验；不代替逐条独立语义审校。"
+}

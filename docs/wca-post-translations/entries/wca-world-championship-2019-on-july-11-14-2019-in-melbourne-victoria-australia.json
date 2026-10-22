@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/wca-world-championship-2019-on-july-11-14-2019-in-melbourne-victoria-australia",
+  "source": {
+    "key": "posts:/posts/wca-world-championship-2019-on-july-11-14-2019-in-melbourne-victoria-australia",
+    "kind": "posts",
+    "title": "WCA World Championship 2019 on July 11 - 14, 2019 in Melbourne, Victoria, Australia",
+    "date": "2019-01-15T08:59:58.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/wca-world-championship-2019-on-july-11-14-2019-in-melbourne-victoria-australia",
+    "content": "The [WCA World Championship 2019](https://www.worldcubeassociation.org/competitions/WC2019) will take place on July 11 - 14, 2019 in Melbourne, Victoria, Australia. Check out the [WCA World Championship 2019 website](https://wc2019.speedcubing.org.au) for more information and registration.",
+    "hash": "079db7c7f3a15f803e116fba75f0d47ea427b9e21ff64548b4d324450b31790c",
+    "format": "markdown",
+    "sourceId": 11091
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "079db7c7f3a15f803e116fba75f0d47ea427b9e21ff64548b4d324450b31790c",
+    "language": "zh-Hans",
+    "title": "2019 年 WCA 世锦赛将于 7 月 11–14 日在澳大利亚墨尔本举行",
+    "content": "[2019 年 WCA 世锦赛](https://www.worldcubeassociation.org/competitions/WC2019)将于 2019 年 7 月 11–14 日在澳大利亚维多利亚州墨尔本举行。更多信息及报名方式请见 [2019 年 WCA 世锦赛官网](https://wc2019.speedcubing.org.au)。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.159Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "e50a4854890fe091bb222f29fba98dea9abfc3a1fb26141e7182d9baa415d5b6"
+}

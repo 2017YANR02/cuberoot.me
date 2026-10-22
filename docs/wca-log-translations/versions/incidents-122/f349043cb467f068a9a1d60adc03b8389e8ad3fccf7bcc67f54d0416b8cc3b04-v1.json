@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:122",
+  "source": {
+    "key": "incidents:122",
+    "kind": "incidents",
+    "title": "Judge briefly touched puzzle before conclusion of attempt",
+    "url": "https://www.worldcubeassociation.org/incidents/122",
+    "date": "2024-10-13T05:16:35.000Z",
+    "content": "A competitor had dropped their clock before stopping the timer and the judge interfered and touched the clock before the competitor picked it up and completed the attempt.\n\nWhile the judge's reasonable attempt to verify if the puzzle was indeed solved may have briefly prevented the competitor from picking up the clock again, the negative impact of the competitor not stopping the timer correctly outweighs any disadvantage caused by the judge's interference. As a result, the original attempt is kept.",
+    "hash": "0ce92b637757c7dd49aa3aa5a9185b5599421e3901db3a4154cf899f510bf707",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "尝试结束前裁判短暂触碰魔表",
+    "content": "选手停表前掉落魔表，裁判介入并触碰魔表，之后选手才将其拾起、完成尝试。\n\n裁判为确认是否还原而作出的合理检查，可能短暂阻止选手重新拿起魔表，但选手未正确停表造成的不利影响，大于裁判介入带来的不利。因此保留原尝试成绩。",
+    "translatedAt": "2026-10-22T05:57:56.837Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "0ce92b637757c7dd49aa3aa5a9185b5599421e3901db3a4154cf899f510bf707"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

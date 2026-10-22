@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:72",
+  "source": {
+    "key": "incidents:72",
+    "kind": "incidents",
+    "title": "Timer was reset before the result was recorded (only video evidence showing the display was available)",
+    "url": "https://www.worldcubeassociation.org/incidents/72",
+    "date": "2022-12-07T15:09:49.000Z",
+    "content": "After a competitor finished their solve, the timer was reset by either the judge (Montpellier Open 2022) or by the timer itself (Bay Area Speedcubin' 29 PM 2022 and Rose City 2022) before the result was fully recorded on the score sheet. The video evidence showed the display but not the timer.\n\nSince the display was clearly shown in the evidence and it was working fine through the solve, WRC agreed that **the original result shown on the display may stand**.\n\nPlease note that as per Regulation A7b1 the result must always be recorded from the timer, but not from the display:\n\n> [A7b1](https://www.worldcubeassociation.org/regulations/#A7b1)) If penalties are assigned, the judge records the original recorded **time displayed on the timer**, along with any penalties...\n\nThe time from the display may be accepted when the one from the timer is unavailable **only** under certain circumstances (see the following [incident log](https://www.worldcubeassociation.org/incidents/51)).",
+    "hash": "423e533975f59f47bf07923067e5692ef8147f80e48b735d2ce64d1fe122f59b",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "记录成绩前计时器复位，仅有显示屏视频证据",
+    "content": "选手还原结束后，在成绩完整写入成绩单前，计时器被裁判复位（Montpellier Open 2022），或自行复位（Bay Area Speedcubin' 29 PM 2022、Rose City 2022）。视频只拍到显示屏，没有拍到计时器。\n\n由于视频中显示屏清晰可见，且整个还原过程工作正常，WRC 同意**保留显示屏上的原成绩**。\n\n请注意，A7b1 要求始终从计时器而非显示屏记录成绩：\n> [A7b1](https://www.worldcubeassociation.org/regulations/#A7b1) 若有处罚，裁判记录**计时器显示的原始时间**及所有处罚……\n\n无法取得计时器时间时，**仅在特定情况下**可接受显示屏时间（见[事件日志](https://www.worldcubeassociation.org/incidents/51)）。",
+    "translatedAt": "2026-10-22T05:54:37.260Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "423e533975f59f47bf07923067e5692ef8147f80e48b735d2ce64d1fe122f59b"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_6",
+      "reviewedAt": "2026-10-22T06:24:59.959967Z",
+      "report": "reviews/round-1/report-6.json",
+      "sourceHash": "423e533975f59f47bf07923067e5692ef8147f80e48b735d2ce64d1fe122f59b",
+      "reviewedTranslationHash": "ec48683f936bde01c25ef7ead9baa8a004e6c221c56940bd70f33c198278240f",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

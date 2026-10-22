@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:143",
+  "source": {
+    "key": "incidents:143",
+    "kind": "incidents",
+    "title": "Competitor started the timer improperly, only visible with frame-by-frame video analysis",
+    "url": "https://www.worldcubeassociation.org/incidents/143",
+    "date": "2024-10-25T20:10:52.000Z",
+    "content": "Many instances of results where timers were started in ways that violated Regulation A4b and/or Regulation A4b1 were discovered, but were not visible when viewing footage at full speed.\n\nA4b) The competitor uses their fingers to touch the elevated sensor surfaces of the Stackmat timer. The competitor's palms must be facing down, and located on the side of the timer that is closer to the competitor. Penalty: time penalty (+2 seconds).\nA4b1) The competitor must have no physical contact with the puzzle while starting the solve. Penalty: time penalty (+2 seconds).\n\nPreviously, the WRC only viewed footage at full speed to determine penalties, based on [this incident](https://www.worldcubeassociation.org/incidents/50). After further discussion, the WRC decided to change its approach to use frame-by-frame analysis to determine penalties on certain results as described [here](https://forum.worldcubeassociation.org/t/wrc-statement-on-frame-by-frame-analysis/55294), and with the permission of the WCA Board of Directors, to do so retroactively on past results. As a result, the WRC analyzed various results and applied the corresponding penalties to applicable cases.\n\nThe approach used by WRC to analyze timer starts in this case can be seen as follows:\n1. The video’s frame rate is determined, and the time of the attempt in frames is calculated and rounded up (Example: 0.74 Seconds = 44.4 frames, rounded up to 45 frames @ 60 FPS).\n2. The first frame in which the timer could have been stopped is determined. If there are two frames where the timer could have been stopped (i.e. the stop likely happened in between two frames), the earlier frame is selected. At least two members must confirm the timer stop frame.\n3.  The video is rewound by the number of frames calculated in step 1. The frame that the video ends up on after the rewind is considered the timer start and used as a basis to analyze for penalties. At least two members must confirm the timer start frame.\n4.  A penalty is only applied if the WRC strongly believes that a violation of the Regulation(s) occurred. This is determined through a vote.\n\nFor more details regarding the affected attempts, please see [this announcement](https://www.worldcubeassociation.org/posts/wrc-decisions-with-frame-by-frame-analysis) on the final WRC decision.\n \nThe WCA Regulations will be updated to reflect this change in the WRC’s approach.",
+    "hash": "284c565d9a179290f281a93c9cb0dccc7e79863f21fcb80fed4bff1df9508159",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "只有逐帧视频分析才能看出的不合规启动计时器",
+    "content": "发现许多成绩的计时器启动方式违反 A4b 或 A4b1，但正常速度观看视频看不出来。\n\nA4b：选手须用手指触碰 Stackmat 计时器凸起的感应面，掌心朝下，手掌位于计时器靠近自己的一侧；处罚为加 2 秒。\nA4b1：开始还原时不得与魔方有身体接触；处罚为加 2 秒。\n\n此前，WRC 根据[这起事件](https://www.worldcubeassociation.org/incidents/50)，仅以正常速度视频判断处罚。进一步讨论后，WRC 改变处理方式，对[此处声明](https://forum.worldcubeassociation.org/t/wrc-statement-on-frame-by-frame-analysis/55294)所述特定成绩使用逐帧分析，并经 WCA 理事会许可追溯检查历史成绩。因此，WRC 分析了多项成绩，并对符合条件的情况施加相应处罚。\n\n本案分析计时器启动的方法为：\n1. 确定视频帧率，将尝试时间换算为帧数并向上取整。例如 60 FPS 下，0.74 秒为 44.4 帧，取 45 帧。\n2. 确定计时器最早可能停止的帧。若两帧皆可能，例如停表发生在两帧之间，选较早一帧。至少两名成员须确认停表帧。\n3. 回退第 1 步计算的帧数，将落到的帧视为启动帧，作为处罚分析依据。至少两名成员须确认启动帧。\n4. 只有 WRC 强烈确信存在违规时才施加处罚，并通过投票确定。\n\n受影响尝试详情及最终决定见[公告](https://www.worldcubeassociation.org/posts/wrc-decisions-with-frame-by-frame-analysis)。WCA 规则将更新，以体现 WRC 处理方式的变化。",
+    "translatedAt": "2026-10-22T06:00:02.853Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "284c565d9a179290f281a93c9cb0dccc7e79863f21fcb80fed4bff1df9508159"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:98",
+  "source": {
+    "key": "incidents:98",
+    "kind": "incidents",
+    "title": "The judge lifted the cover early and the competitor requested an extra attempt",
+    "url": "https://www.worldcubeassociation.org/incidents/98",
+    "date": "2024-04-27T00:22:23.000Z",
+    "content": "A competitor called the WCA Delegate asking for an extra attempt, claiming that the judge lifted the cover without him indicating that he was ready. The WCA Delegate granted an extra attempt with the reasoning that no delegates were available at the moment the incident happened (one was competing, one was supervising the scrambling table, and one was outside the room). It was initially thought that the competitor only asked for an extra attempt after the solve was completed. \n\nThe WCA Delegates described their reasoning to the WRC. Initially, the WRC decided to revert the decision of the WCA Delegates and use the original attempt. The WRC based their decision on the following:\n\n* [Regulation 11e](https://www.worldcubeassociation.org/regulations/#11e): \"... The competitor should appeal verbally or in writing to the judge and WCA Delegate *at the time of the incident*...\".\n* [Guideline 11e+++](https://www.worldcubeassociation.org/regulations/guidelines.html#11e+++): The WRC did not deem the circumstances exceptional enough based on the description of the WCA Delegates.\n* [Similar incident](https://www.worldcubeassociation.org/incidents/69).\n\nThe WRC does not consider the Delegates being temporarily unavailable as an extreme circumstance that would result in an extra attempt. It would be near impossible for a Delegate to reach a competitor within their inspection period. As the incident happened at the very beginning of the inspection, the competitor should have stopped their inspection right away and waited for one of the Delegates to be available to request an extra attempt. \n\nBy following through with the solve, the competitor had the opportunity to decide whether or not they wanted an extra attempt based on their result on the original scramble. This is an unfair advantage that providing an extra attempt in this scenario provides, and this is exactly the reason for 11e+++.\n\nThis decision was appealed to the WCA Board. While processing the appeal, new evidence became available - it was found that the competitor did appeal to the judge when the cover was lifted early. The WCA Board decided to overturn the WRC decision, reinstating the extra attempt. The statement from the WCA Board can be found [here](https://forum.worldcubeassociation.org/t/wca-statement-regarding-yiheng-wangs-0-93-2x2-average/49637).",
+    "hash": "367b7cc232f1eec0ae6ab9a8ddce6615caf7f1bdf40eb18b3cee2952a5eb3e13",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "裁判提前揭罩，选手申请额外尝试",
+    "content": "一名选手叫来代表申请额外尝试，称自己尚未表示准备好，裁判就揭开了罩。代表给予额外尝试，理由是事件发生时没有代表可立即处理：一位正在比赛，一位监督打乱台，一位在房间外。最初以为选手直到还原结束才提出请求。\n\n代表向 WRC 说明后，WRC 起初决定推翻代表决定，采用原尝试，依据是：\n- [11e](https://www.worldcubeassociation.org/regulations/#11e)：选手应在事件发生时向裁判和代表口头或书面申诉；\n- [11e+++](https://www.worldcubeassociation.org/regulations/guidelines.html#11e+++)：按代表描述，WRC 认为情况不够特殊；\n- [类似事件](https://www.worldcubeassociation.org/incidents/69)。\n\nWRC 不认为代表暂时无法到场构成应获额外尝试的极端情况。代表几乎不可能在观察期间赶到选手面前。事件发生在观察刚开始时，选手应立即停止观察，等代表有空再提出申请。\n\n继续完成还原，会让选手有机会根据原打乱上的结果决定是否要求额外尝试。这正是此情况下给予额外尝试带来的不公平优势，也是 11e+++ 的理由。\n\n该决定被申诉至 WCA 理事会。处理申诉期间出现新证据，证明裁判提前揭罩时，选手确实已向裁判申诉。理事会决定推翻 WRC 决定，恢复额外尝试。理事会声明见[此处](https://forum.worldcubeassociation.org/t/wca-statement-regarding-yiheng-wangs-0-93-2x2-average/49637)。",
+    "translatedAt": "2026-10-22T05:56:15.197Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "367b7cc232f1eec0ae6ab9a8ddce6615caf7f1bdf40eb18b3cee2952a5eb3e13"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_6",
+      "reviewedAt": "2026-10-22T06:24:59.959967Z",
+      "report": "reviews/round-1/report-6.json",
+      "sourceHash": "367b7cc232f1eec0ae6ab9a8ddce6615caf7f1bdf40eb18b3cee2952a5eb3e13",
+      "reviewedTranslationHash": "908f5ba11b87fa03314bee5f3a43f4d93487865d4738f80aa981ac3aa300442d",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

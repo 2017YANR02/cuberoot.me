@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:15",
+  "source": {
+    "key": "incidents:15",
+    "kind": "incidents",
+    "title": "Several issues with the venue setup",
+    "url": "https://www.worldcubeassociation.org/incidents/15",
+    "date": "2018-04-08T18:05:56.000Z",
+    "content": "There were several issues and concerns regarding the venue setup at this competition. The main point was that waiting competitors were able to watch competing competitors. Additionally, it was obviously possible to choose scramble groups by cutting the waiting line.\n\nThe questionable setup was reported by a competitor who intentionally tried to abuse it by pre-inspecting scrambles in one round. The WRC agreed with him to change all his results from this particular round to DNF.",
+    "hash": "3945099285f22ef7cf957c73dded2e7df41d66feff565ee6af53d1c58e9da6fa",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "场地布置存在多项问题",
+    "content": "该比赛的场地布置存在多项问题和疑虑。主要问题是候场选手能够观看正在比赛的选手；此外，显然还可以通过插队选择打乱组。\n\n一名选手报告了这一有问题的布置；他曾故意试图利用这一情况，在某一轮提前观察打乱。WRC 与其达成一致，将他该轮的所有成绩改为 DNF。",
+    "translatedAt": "2026-10-22T05:48:51.542Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "3945099285f22ef7cf957c73dded2e7df41d66feff565ee6af53d1c58e9da6fa"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_4",
+      "reviewedAt": "2026-10-22T06:22:38.727845Z",
+      "report": "reviews/round-1/report-4.json",
+      "sourceHash": "3945099285f22ef7cf957c73dded2e7df41d66feff565ee6af53d1c58e9da6fa",
+      "reviewedTranslationHash": "b2f177f44c8026b1a46a2b1eecc04c8e2163dc9f71cfbffe5a1e49346c17775e",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

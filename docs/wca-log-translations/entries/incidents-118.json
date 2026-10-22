@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:118",
+  "source": {
+    "key": "incidents:118",
+    "kind": "incidents",
+    "title": "Competitor received partially solved cube",
+    "url": "https://www.worldcubeassociation.org/incidents/118",
+    "date": "2024-06-19T19:13:05.000Z",
+    "content": "DISCLAIMER: As of 2025, regulation [11i2b](https://www.worldcubeassociation.org/regulations/#11i2b) indicates that such an incident would be a DNS, since no replacement attempt was provided.\n\nDuring the megaminx event, a competitor recorded times of 4 DNFs, and one completed solve. The delegate examined video evidence and verified that it aligned with the time written on the scorecard. Of note, the video was partially obstructed by a cube cover. \n\nLater, the competitor contacted the delegate to inform them that the megaminx was not fully scrambled during the attempt. The delegates suspect that the competitor's prior attempt (DNF) was a result of the competitor going over the time limit, and the unsolved cube was sent back to the scramble table, where it was mistakenly perceived as scrambled by a runner. \n\nThe WRC agreed that the attempt should be ruled as a DNF.",
+    "hash": "335000fba0201b0b244009311269ef21dd28953b3961de1a72768a299f6f72ff",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "选手收到部分还原的魔方",
+    "content": "说明：截至 2025 年，[11i2b](https://www.worldcubeassociation.org/regulations/#11i2b) 规定，未给予替代尝试的此类事件应为 DNS。\n\n五魔方项目中，一名选手取得 4 次 DNF 和一次成功成绩。代表查看视频，确认与成绩单时间一致，但视频部分画面被魔方罩遮挡。\n\n后来选手联系代表，说明该次尝试的五魔方未完全打乱。代表怀疑，选手前一次 DNF 是因超过时限，未还原的魔方被送回打乱台，传递员误以为已打乱。\n\nWRC 同意将该次尝试判为 DNF。",
+    "translatedAt": "2026-10-22T05:57:56.837Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "335000fba0201b0b244009311269ef21dd28953b3961de1a72768a299f6f72ff"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_3",
+      "reviewedAt": "2026-10-22T06:22:42.955322Z",
+      "report": "reviews/round-1/report-3.json",
+      "sourceHash": "335000fba0201b0b244009311269ef21dd28953b3961de1a72768a299f6f72ff",
+      "reviewedTranslationHash": "237f94574aa2c8c4e48da4f5af95fcd3a82a8b4ada331fb00105a4c314a40d46",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

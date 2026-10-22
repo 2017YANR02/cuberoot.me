@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:47",
+  "source": {
+    "key": "incidents:47",
+    "kind": "incidents",
+    "title": "An inproper room was used for Fewest Moves Solving",
+    "url": "https://www.worldcubeassociation.org/incidents/47",
+    "date": "2019-12-22T19:48:55.000Z",
+    "content": "The Organization Team used a small room for Fewest Moves Solving for a large number of competitors. This caused competitors to be very close to each other. This could have been used by competitors to cheat and look off another competitor's paper. \n\nHowever, the WRC has decided to **accept** the results because:\n1.  The WCA Delegates checked the solution sheets and saw that no competitors had the same solution.\n2.  The WCA Delegates carefully oversaw the competitors during the round.\n3.  There is no evidence that any competitors abused the situation to gain an unfair advantage.",
+    "hash": "9bee597fd3f209a8c81d0b6212be070f346b72592fccd46e1a61a5d74014a888",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "最少步使用了不合适的房间",
+    "content": "组织团队用一间小房间容纳大量选手进行最少步，选手彼此距离很近。这可能使人通过看他人的答题纸作弊。\n\n不过，WRC 决定**接受**成绩，理由是：\n1. 代表检查了解答纸，没有选手的解法相同；\n2. 代表在该轮仔细监督了选手；\n3. 没有证据表明任何选手利用此情况取得不公平优势。",
+    "translatedAt": "2026-10-22T05:52:51.924Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "9bee597fd3f209a8c81d0b6212be070f346b72592fccd46e1a61a5d74014a888"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_5",
+      "reviewedAt": "2026-10-22T06:22:53.079981Z",
+      "report": "reviews/round-1/report-5.json",
+      "sourceHash": "9bee597fd3f209a8c81d0b6212be070f346b72592fccd46e1a61a5d74014a888",
+      "reviewedTranslationHash": "06b933951b0b224338ff1732fbb656c8c9d27040538d2b3f9fbc708a663dd3df",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

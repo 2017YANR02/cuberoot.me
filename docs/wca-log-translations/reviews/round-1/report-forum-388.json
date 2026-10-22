@@ -1,0 +1,56 @@
+{
+  "reviewer": "review_3",
+  "reviewedAt": "2026-10-22T06:23:59.034901Z",
+  "summaryPath": "/Users/eula/Documents/Codex/2026-10-21/task/review-round-1/forum-388-summary.json",
+  "reviewedFileSha256": "702abbcf7527f9d7dfaa1706da7ad096ba5c70ad60a0d84f9e3d1546fac2f0a8",
+  "reviewedSummarySha256": "55c2ccadac013e42a2d823894314c94b15727078eb9d187919b77349e4624038",
+  "source": {
+    "url": "https://www.worldcubeassociation.org/archive/forum_topics/388",
+    "authorDisplayName": "Ron",
+    "publishedAt": "2008-02-26T22:11:59Z",
+    "scope": "仅首帖；在 jazzthief81 的下一帖之前结束。后续回复未纳入审校依据。",
+    "accessStatus": "readable_official_archive"
+  },
+  "verdict": "pass",
+  "reviewMode": "summary_only",
+  "fullTextTranslated": false,
+  "evidence": [
+    {
+      "check": "处分范围及期限",
+      "result": "pass",
+      "note": "首帖裁决为自公告日起禁参加所有WCA比赛三年；摘要未缩为仅盲拧禁赛。"
+    },
+    {
+      "check": "两年后的条件性申请",
+      "result": "pass",
+      "note": "须配合WCA，满两年后可申请恢复资格；摘要未写成两年后自动恢复。"
+    },
+    {
+      "check": "DNF与奖金",
+      "result": "pass",
+      "note": "全部盲拧成绩改为DNF；要求退还盲拧项目奖金。摘要范围吻合，未声称已经退款。"
+    },
+    {
+      "check": "临时措施及隐私",
+      "result": "pass",
+      "note": "首帖记载临时遮挡要求，并因未满18岁而不公开姓名、请求保护隐私；摘要保留这些要点且未推断身份。"
+    },
+    {
+      "check": "事实判断边界",
+      "result": "pass",
+      "note": "摘要将结论归于历史公告；本次仅核对表述忠实性，不独立核实当时调查结论。"
+    }
+  ],
+  "corrections": [],
+  "unresolvedNotes": [
+    "内容再利用许可尚未确认；本次不作许可结论。旧网址404状态沿用父任务记录，本次未重复核验。"
+  ],
+  "rights": {
+    "status": "not_confirmed",
+    "fullTranslationAuthorized": false
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "changesMade": "仅保存本审校报告；未修改摘要，未另存首帖全文。"
+}

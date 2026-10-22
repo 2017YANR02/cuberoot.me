@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:92",
+  "source": {
+    "key": "incidents:92",
+    "kind": "incidents",
+    "title": "A competitor stopped the official stopwatch in a BLD attempt (judge unavailable to stop it)",
+    "url": "https://www.worldcubeassociation.org/incidents/92",
+    "date": "2023-09-21T03:03:46.000Z",
+    "content": "DISCLAIMER: As of 2025, regulation [A6a1](https://www.worldcubeassociation.org/regulations/#A6a1) has been updated, to allow competitors to stop the stopwatch themselves if their judge does not do so.\n\nA competitor finished their attempt and made the signal for the judge to stop the official stopwatch. However, as the judge was unavailable (i.e. too far from the station), the competitor decided to stop the stopwatch themselves (in violation of [Guideline 2i+](https://www.worldcubeassociation.org/regulations/guidelines.html#2i+)).\n\nDespite the fact that Guideline 2i+ would make this a DNF, **the WCA Regulations Committee agreed to keep the result**, based on the following points:\n\n* **Either the Delegate or the judge saw this situation (key point of consideration for the final decision).**\n* [Regulation B5b](https://www.worldcubeassociation.org/regulations/#B5b) was not followed by the judge.\n* The competitor had no intention to cheat nor gain an unfair advantage.\n* An extra is unnecessarily harsh and mentally draining for Big BLD and MBLD attempts.",
+    "hash": "c65d1fc4b15045bda62549a666704650eb0a9246f85a18440848bb67b258ba7a",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "盲拧中裁判未能停表，选手自行停止官方秒表",
+    "content": "说明：截至 2025 年，[A6a1](https://www.worldcubeassociation.org/regulations/#A6a1) 已更新，允许裁判未停表时由选手自行停止秒表。\n\n选手完成尝试后示意裁判停止官方秒表，但裁判离比赛台太远，无法操作，选手便自行停表，违反了[指导 2i+](https://www.worldcubeassociation.org/regulations/guidelines.html#2i+)。\n\n尽管按 2i+ 应判 DNF，**WRC 同意保留成绩**，依据如下：\n- **代表或裁判亲眼见到此情况，这是最终决定的关键因素。**\n- 裁判没有遵守 [B5b](https://www.worldcubeassociation.org/regulations/#B5b)；\n- 选手无意作弊，也无意取得不公平优势；\n- 对高阶盲拧和多盲，额外尝试过于严苛，且会造成不必要的精神消耗。",
+    "translatedAt": "2026-10-22T05:56:15.197Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "c65d1fc4b15045bda62549a666704650eb0a9246f85a18440848bb67b258ba7a"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

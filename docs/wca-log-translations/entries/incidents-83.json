@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:83",
+  "source": {
+    "key": "incidents:83",
+    "kind": "incidents",
+    "title": "A competitor grabbed a microphone during an attempt, to prevent it from falling",
+    "url": "https://www.worldcubeassociation.org/incidents/83",
+    "date": "2023-05-03T02:56:19.000Z",
+    "content": "DISCLAIMER: Since the resolution of this incident, the [regulation 2i](https://www.worldcubeassociation.org/regulations/#2i) has been updated to provide more insight on what is permitted and not permitted regarding electronic usage.\n\n\nA competitor was carrying a handheld microphone which was used for announcements during the competition. During a solve he had it lying on the table where it started to roll. He grabbed the microphone to make sure it did not fall off the table. Regulation 2i states:\n\n> 2i) While inspecting or solving, competitors must not use electronics or audio equipment (e.g. cell phones, MP3 players, dictaphones, additional lighting) apart from the Stackmat timer or stopwatch. Penalty: disqualification of the attempt (DNF).\n\nGiven that the competitor was not **using** the microphone, he did not break this regulation. The solve was therefore ruled as OK.",
+    "hash": "7474ef97a32e51058aa88fa22767f7e479b6b31eb94663c5fa5890bd1ae94958",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "选手在还原中抓住话筒以防掉落",
+    "content": "说明：此事件处理后，[2i](https://www.worldcubeassociation.org/regulations/#2i) 已更新，更清楚地说明电子设备使用的允许与禁止范围。\n\n一名选手携带了比赛播报用的手持话筒。还原时话筒放在桌上并开始滚动，他抓住话筒以免掉下桌。2i 规定：\n> 观察或还原时，不得使用 Stackmat 计时器或秒表以外的电子或音频设备，例如手机、MP3 播放器、录音机、额外照明；处罚为 DNF。\n\n由于选手没有在**使用**话筒，因此未违反该规则，成绩被判定有效。",
+    "translatedAt": "2026-10-22T05:54:37.260Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "7474ef97a32e51058aa88fa22767f7e479b6b31eb94663c5fa5890bd1ae94958"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_6",
+      "reviewedAt": "2026-10-22T06:24:59.959967Z",
+      "report": "reviews/round-1/report-6.json",
+      "sourceHash": "7474ef97a32e51058aa88fa22767f7e479b6b31eb94663c5fa5890bd1ae94958",
+      "reviewedTranslationHash": "d7a7067545dbcaa9ef4510cdfea054cc7fa48e46cc308015dbb8897948c4df77",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

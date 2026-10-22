@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "disciplinary:/posts/wca-integrity-committee-team-leader-announcement-january-2026",
+  "source": {
+    "key": "disciplinary:/posts/wca-integrity-committee-team-leader-announcement-january-2026",
+    "kind": "disciplinary",
+    "title": "WCA Integrity Committee Team Leader Announcement (January 2026)",
+    "date": "2026-01-26T03:10:32Z",
+    "url": "https://www.worldcubeassociation.org/posts/wca-integrity-committee-team-leader-announcement-january-2026",
+    "content": "<p>Dear WCA Community,</p><p>We are happy to announce that Zachary Miller has become the new Leader of the WCA Integrity Committee (WIC). Zachary was already working as a Senior Member of the WIC.</p><p>Zachary was selected by the WCA Board and approved in a vote, as described in Section 5 of our <a href=\"https://documents.worldcubeassociation.org/documents/motions/10.2025.0%20-%20Committees%20and%20Teams.pdf\">Motion</a> about WCA Committees and Teams. This appointment is effective as of January 13, 2026.</p><p>We thank Shain Longbehn, who will remain as a Senior Member of the WIC, for the work he has done as the Leader, and wish Zachary the best of luck in fulfilling his new duties.</p><p>Zachary was the only applicant for the role, and his successful candidacy document can be found <a href=\"https://drive.google.com/drive/folders/1lmZaa6cUdQW-RAVnkVg4-Bq7YjKhqp2u\">here.</a></p>",
+    "hash": "c8963510efd2d9425ded79e4e4ab4d12480a21ef31ab7d20751f78b76709a359",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "WCA 诚信委员会负责人任命公告（2026 年 1 月）",
+    "content": "亲爱的 WCA 社群：\n\n很高兴宣布，Zachary Miller 成为 WCA 诚信委员会（WIC）新任负责人。他此前已担任 WIC 高级成员。\n\n按[委员会与团队动议](https://documents.worldcubeassociation.org/documents/motions/10.2025.0%20-%20Committees%20and%20Teams.pdf)第 5 节，Zachary 由理事会选出并经投票批准，任命自 2026 年 1 月 13 日生效。\n\n感谢 Shain Longbehn 担任负责人期间的工作，他将留任高级成员。祝 Zachary 顺利履行新职责。\n\nZachary 是唯一申请人，其获选申请文件见[此处](https://drive.google.com/drive/folders/1lmZaa6cUdQW-RAVnkVg4-Bq7YjKhqp2u)。",
+    "translatedAt": "2026-10-22T06:05:15.716Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "c8963510efd2d9425ded79e4e4ab4d12480a21ef31ab7d20751f78b76709a359"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_1",
+      "reviewedAt": "2026-10-22T06:23:54.689Z",
+      "report": "reviews/round-1/report-1.json",
+      "sourceHash": "c8963510efd2d9425ded79e4e4ab4d12480a21ef31ab7d20751f78b76709a359",
+      "reviewedTranslationHash": "409b87ca331919b35d389769aee61d176ddef8e123f08d5f0f52c4a82a60b3de",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

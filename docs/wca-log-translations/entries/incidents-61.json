@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:61",
+  "source": {
+    "key": "incidents:61",
+    "kind": "incidents",
+    "title": "A competitor's video showed an over-inspected solve without any time callouts by the judge",
+    "url": "https://www.worldcubeassociation.org/incidents/61",
+    "date": "2021-05-05T21:12:43.000Z",
+    "content": "In a competitor's video for a 3x3x3 Cube attempt, the competitor over-inspected (around 17.1s), but no call outs of 8 or 12 seconds at the correct timestamp were heard in the video.\n\nThe initial decision was to DNF this solve, but the decision was overturned by the WCA Board after an appeal. The WCA Board decided that it was more fair to let the result stand.\n\nThis was done because of the following:\n\n1. The error was made by the judge and the competitor is not at fault for overinspecting.\n2. The competitor may have gained an advantage, but potentially may not have. This is because it is not uncommon for competitors to begin solving when they hear the \"8 second\" warning, as this competitor did.\n3. Because the mistake was made by the judge, an extra should have been provided. However, since an extra was not available, the original time shall stand.\n4. A DNF is overly harsh for this situation and accepting the time achieved is more fair.",
+    "hash": "90a9c20d23332cb61d25baf0a3a13d4b67b7fdbf4ce73b60f03725e61f6b23da",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "视频显示观察超时，且裁判没有按时提示",
+    "content": "一名选手的三阶还原视频显示，观察约 17.1 秒，但视频中没有在正确时点听到“8 秒”或“12 秒”提示。\n\n最初决定判 DNF，申诉后由 WCA 理事会推翻。理事会认为保留原成绩更公平，理由是：\n1. 错误由裁判造成，观察超时并非选手过错；\n2. 选手可能获得了优势，也可能没有。选手听到“8 秒”提示就开始还原并不少见，本案选手也是如此；\n3. 既然是裁判出错，本应给予额外尝试，但已无法提供，因此保留原时间；\n4. 本案判 DNF 过于严厉，接受实际取得的时间更公平。",
+    "translatedAt": "2026-10-22T05:52:51.924Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "90a9c20d23332cb61d25baf0a3a13d4b67b7fdbf4ce73b60f03725e61f6b23da"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_5",
+      "reviewedAt": "2026-10-22T06:22:53.079981Z",
+      "report": "reviews/round-1/report-5.json",
+      "sourceHash": "90a9c20d23332cb61d25baf0a3a13d4b67b7fdbf4ce73b60f03725e61f6b23da",
+      "reviewedTranslationHash": "4d338f2e8a4bf1ce77db83912e633737590a0b13d64f98b2ede5ec375cb872da",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

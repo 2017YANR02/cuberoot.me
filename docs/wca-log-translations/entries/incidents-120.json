@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:120",
+  "source": {
+    "key": "incidents:120",
+    "kind": "incidents",
+    "title": "Clock not fully intact at end of attempt",
+    "url": "https://www.worldcubeassociation.org/incidents/120",
+    "date": "2024-10-13T05:13:44.000Z",
+    "content": "DISCLAIMER: Since the resolution of this incident, regulation [10h1a](https://www.worldcubeassociation.org/regulations/full/#10h1a) has been introduced to clearly define how these incidents should be handled.\n\nUpon ending an attempt, a competitor's clock \"exploded\" in place. Some of the screws holding the puzzle together had come undone, and the plastic framing was noticeably out of its home position. The puzzle was clearly solved (supported by the intact, complete backside), but the pieces were not assembled correctly.\n\nAfter reviewing picture evidence, the WRC ruled the puzzle to be in a solved state, citing Regulation 5b5f to make the decision. If one were to put the plastic casing of the puzzle back together in the closest position to where it was, all of the dials of the clock would be pointing to the noon position.",
+    "hash": "6a8f50e9b994935925cde865f269a61dab3c6789d41648f8c5f8a3bc6865b51a",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "尝试结束时魔表未完全保持组装状态",
+    "content": "说明：此事件处理后，新增了 [10h1a](https://www.worldcubeassociation.org/regulations/full/#10h1a)，明确此类事件处理方式。\n\n结束尝试时，选手的魔表原地“散开”。部分固定螺丝松脱，塑料框明显偏离正常位置。完整的背面支持魔表已还原的判断，但部件未正确组装。\n\n查看照片后，WRC 依据 5b5f 判为已还原：若将外壳组回与当时位置最接近的状态，所有指针都会指向 12 点。",
+    "translatedAt": "2026-10-22T05:57:56.837Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "6a8f50e9b994935925cde865f269a61dab3c6789d41648f8c5f8a3bc6865b51a"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_3",
+      "reviewedAt": "2026-10-22T06:22:42.955322Z",
+      "report": "reviews/round-1/report-3.json",
+      "sourceHash": "6a8f50e9b994935925cde865f269a61dab3c6789d41648f8c5f8a3bc6865b51a",
+      "reviewedTranslationHash": "ab869a51a3e2569434e9d80cc0e41a9374bbfed66ad94b76131e184929c18585",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

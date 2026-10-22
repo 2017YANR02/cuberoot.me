@@ -1,0 +1,238 @@
+{
+  "updatedAt": "2026-10-22T08:59:27.829Z",
+  "count": 23,
+  "scope": "原文矛盾、缺失链接、历史语境与译者备注；不显示到网站，不猜补来源。",
+  "entries": [
+    {
+      "key": "posts:/posts/amendments-to-the-motions-approved-september-2020",
+      "url": "https://www.worldcubeassociation.org/posts/amendments-to-the-motions-approved-september-2020",
+      "sourceHash": "58dc0e86f1deceb766512237641acd8cbc2db91eed8b10f351d33c168d8df0ce",
+      "translationHash": "89d7bb8365de232b5d53fa4d8e86b52ebaf37f35761364bfcbe127e08f8895e6",
+      "path": "entries/amendments-to-the-motions-approved-september-2020.json",
+      "notes": [
+        "原文首段对 13.2020.1 的名称仍含 Bylaws，后文明确删去；按原文各处分别保留，未擅自统一。"
+      ]
+    },
+    {
+      "key": "posts:/posts/applications-for-continental-championships-2020",
+      "url": "https://www.worldcubeassociation.org/posts/applications-for-continental-championships-2020",
+      "sourceHash": "db11dc0a6ee8aea29697ff1cccf9d4de35ae8691136811e940add3e712b92464",
+      "translationHash": "eae131cf6e5e4f1955d866fb36f987d5a9eecd0ee112f0a31fdf6510108171d0",
+      "path": "entries/applications-for-continental-championships-2020.json",
+      "notes": [
+        "原文嵌套列表编号紊乱，译文改为小标题和项目符号，保留全部问题与要求。"
+      ]
+    },
+    {
+      "key": "posts:/posts/applications-for-wca-continental-championships-2026-july-2025",
+      "url": "https://www.worldcubeassociation.org/posts/applications-for-wca-continental-championships-2026-july-2025",
+      "sourceHash": "4201b01a8bfbf3ba8ab71c3294becc7b99e1becaee07d6cf745b8eff8be58cdc",
+      "translationHash": "204244f0ed4f339458efeef7c1ec22daf90a5a3eddf1b9dbbd71f168a182e088",
+      "path": "entries/applications-for-wca-continental-championships-2026-july-2025.json",
+      "notes": [
+        "原文 championships 邮件链接的协议拼为 maito，按来源保留；显示邮箱地址正确。"
+      ]
+    },
+    {
+      "key": "posts:/posts/appointment-of-a-new-wca-ethics-committee-leader-july-2019",
+      "url": "https://www.worldcubeassociation.org/posts/appointment-of-a-new-wca-ethics-committee-leader-july-2019",
+      "sourceHash": "c677dab0c832bf38851c83fe0d8e7bb68d04ff8b0501c103e5f14917c5e14b84",
+      "translationHash": "c7f8acedfb56a713431301d4e64820b037e90b067ebf9c94ccc2fc67d47547bb",
+      "path": "entries/appointment-of-a-new-wca-ethics-committee-leader-july-2019.json",
+      "notes": [
+        "原文提到“下方附录”，但本篇正文未附相关内容；仅保留原句与议案链接。"
+      ]
+    },
+    {
+      "key": "posts:/posts/appointment-of-a-new-wrc-leader-october-2018",
+      "url": "https://www.worldcubeassociation.org/posts/appointment-of-a-new-wrc-leader-october-2018",
+      "sourceHash": "f5a7d7f0468b9d9950dadacf9d4245025a84fa1b55d257aff4a992ea8e44146b",
+      "translationHash": "4e9476938ddb77eb822384052316d997b864f7d6463551cd86560d060d4f1060",
+      "path": "entries/appointment-of-a-new-wrc-leader-october-2018.json",
+      "notes": [
+        "原文邮件链接目标缺少 mailto:，原样保留，供主任务链接渲染层核验。"
+      ]
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wca-communication-team-members-july-2025",
+      "url": "https://www.worldcubeassociation.org/posts/call-for-applicants-wca-communication-team-members-july-2025",
+      "sourceHash": "97948e39909bd4426a1dc392f9406a226d4fc5bcab81d8318208722b9ef8bf60",
+      "translationHash": "a5880581db700fbd3c2dcd7fe55c4442647f8f9a69ed2c08a335116fd3564710",
+      "path": "entries/call-for-applicants-wca-communication-team-members-july-2025.json",
+      "notes": [
+        "原文动议链接文字为 10.2024.1，实际链接指向 10.2025.1，均按原文保留。"
+      ]
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wmt-leader-february-2019",
+      "url": "https://www.worldcubeassociation.org/posts/call-for-applicants-wmt-leader-february-2019",
+      "sourceHash": "dcfd6f594792a4d86b736f7614f65992b5826d2f6f16afb40bfe5f49a9ac495e",
+      "translationHash": "ac1d18c702f20eb1dd35461caff15b6af0a158c9cf71efd8442c444ff16d998f",
+      "path": "entries/call-for-applicants-wmt-leader-february-2019.json",
+      "notes": [
+        "原文将 WMT 称为 Advisory Committee，按原文保留咨询委员会表述。"
+      ]
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wmt-members-may-2021",
+      "url": "https://www.worldcubeassociation.org/posts/call-for-applicants-wmt-members-may-2021",
+      "sourceHash": "42f6ce07261c9407cf6f380c341237cc47f3489845e9f13f8f0ffcee77270113",
+      "translationHash": "28e07e8a7f65291c7cbc5741eed388df1f19684d3954c807e28f9ae0b4c32062",
+      "path": "entries/call-for-applicants-wmt-members-may-2021.json",
+      "notes": [
+        "原文标题为 2021 年 5 月，但申请截止日期写为 June 26th, 2020；译文忠实保留原日期，未自行更正。"
+      ]
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wrc-leader-october-2022",
+      "url": "https://www.worldcubeassociation.org/posts/call-for-applicants-wrc-leader-october-2022",
+      "sourceHash": "c7a64776656a96cebec876ad23331688ce481fbc1c791f60c5ebc633022e442c",
+      "translationHash": "7f9650a062cfa5ed91375f5cd5517a123fb5aa57e060997918a17f1500b2734f",
+      "path": "entries/call-for-applicants-wrc-leader-october-2022.json",
+      "notes": [
+        "原文两条 PDF 链接含未编码空格；译文以 Markdown 尖括号包围完整目标，未改变 URL。"
+      ]
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wrt-leader-august-2021",
+      "url": "https://www.worldcubeassociation.org/posts/call-for-applicants-wrt-leader-august-2021",
+      "sourceHash": "7f82035d910668dc7d058ffbb37e18121d7a428b3c0fa91475807b41ca77cce9",
+      "translationHash": "520c6386085e78a1d635c97be1e756502a44c4c41c28e7d39da83a48c9f4369f",
+      "path": "entries/call-for-applicants-wrt-leader-august-2021.json",
+      "notes": [
+        "原文显示议案号 01.2021.10，链接文件号为 10.2021.10；照录原文显示，不自行修正。"
+      ]
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wrt-members-june-2024",
+      "url": "https://www.worldcubeassociation.org/posts/call-for-applicants-wrt-members-june-2024",
+      "sourceHash": "1bb760a6f0d72499122372709a3b9e4e954c65f10318668a77eebd2a49b7ee97",
+      "translationHash": "b3722b364f2b940fda4072df32e3bb922ecb2e8905e3967bd1ab6302a5fc8bb9",
+      "path": "entries/call-for-applicants-wrt-members-june-2024.json",
+      "notes": [
+        "原文称权利与职责可在“here”查看，但没有提供对应链接；译文不补造链接。"
+      ]
+    },
+    {
+      "key": "posts:/posts/call-for-feedback-wca-regulations-2019-draft",
+      "url": "https://www.worldcubeassociation.org/posts/call-for-feedback-wca-regulations-2019-draft",
+      "sourceHash": "c056028c81d8a6c9c11b977710f65b3da521a8a39b5bf022f653c559ce2d9756",
+      "translationHash": "b6e579ed2cdd92e35955ca5d179c501bedcd800d3e78dc83327290452da20e89",
+      "path": "entries/call-for-feedback-wca-regulations-2019-draft.json",
+      "notes": [
+        "原文有一条 commit 链接仅为 dfaecca2213de51e7d638b623d3976f95c671fbd 相对地址，已原样保留。"
+      ]
+    },
+    {
+      "key": "posts:/posts/forum-digest-december-2021",
+      "url": "https://www.worldcubeassociation.org/posts/forum-digest-december-2021",
+      "sourceHash": "2cd3cf7aebd66c8c2856beaf47e4bcebd001e5c44c4922d4e5bf0da49f1cbd05",
+      "translationHash": "253415cadd929f19fbc5580a31133170bb99aa29cc5c68f9c6be0a7447917420",
+      "path": "entries/forum-digest-december-2021.json",
+      "notes": [
+        "Zayn 段原文标题及成绩列出三次纪录，正文却写 twice；译文保留该矛盾，不擅自修正。"
+      ]
+    },
+    {
+      "key": "posts:/posts/forum-digest-july-2021",
+      "url": "https://www.worldcubeassociation.org/posts/forum-digest-july-2021",
+      "sourceHash": "c31b83a7b2c9a6e4e932c7900ff4e1db820b663c600cd23161b96040d697886c",
+      "translationHash": "4a016f4be288e1f6bd0744507855f521d280c72b98d82a4c810da096eb5a204e",
+      "path": "entries/forum-digest-july-2021.json",
+      "notes": [
+        "原文“WCA Github here”未附超链接，译文不猜补。世锦赛报名与举办地信息按本公告发布时内容保留。"
+      ]
+    },
+    {
+      "key": "posts:/posts/important-changes-to-the-recognition-of-regions",
+      "url": "https://www.worldcubeassociation.org/posts/important-changes-to-the-recognition-of-regions",
+      "sourceHash": "ee4e8894b63ef58a127904ad5fd2eb8af70fbf541df536b1a0be3e42b39e9a09",
+      "translationHash": "38a5d9807eaccb1bbd05cce9c1c098a0256b48ce200c0019bdb967a765129729",
+      "path": "entries/important-changes-to-the-recognition-of-regions.json",
+      "notes": [
+        "原文邮件链接显示文字 worldcubeassocation.org 少一个 i，但 mailto 目标正确；保留原文显示文字及链接目标。"
+      ]
+    },
+    {
+      "key": "posts:/posts/quality-assurance-committee-digest-2025-q1",
+      "url": "https://www.worldcubeassociation.org/posts/quality-assurance-committee-digest-2025-q1",
+      "sourceHash": "1d96a9ca517794d3232afa59089e78907424898fe1820c3b6138734c8ffc47c0",
+      "translationHash": "df409e684c02bcc7dccb30c4e546d34a1e41bb93f2e0c6cf70918b88f26c34b4",
+      "path": "entries/quality-assurance-committee-digest-2025-q1.json",
+      "notes": [
+        "原文称新增十名成员，但名单仅列九人；人数和名单按原文保留。"
+      ]
+    },
+    {
+      "key": "posts:/posts/regulations-committee-digest-q3-q4-2024",
+      "url": "https://www.worldcubeassociation.org/posts/regulations-committee-digest-q3-q4-2024",
+      "sourceHash": "3dafa8ee09d466708a98d9ee1031c648bba0012d9546e893c277b5b3f0dfa2e8",
+      "translationHash": "b2013ba6f4642546f72e06320958ffd949ec3caca83e4b9081a26e65e48077fd",
+      "path": "entries/regulations-committee-digest-q3-q4-2024.json",
+      "notes": [
+        "原文将 Megaminx 的块组称为 1x1x3，按原文保留；未据此推定具体故障。",
+        "所有事件责任、推测、可能性与历史规则适用范围依原文保留。"
+      ]
+    },
+    {
+      "key": "posts:/posts/removing-official-status-for-3x3x3-with-feet",
+      "url": "https://www.worldcubeassociation.org/posts/removing-official-status-for-3x3x3-with-feet",
+      "sourceHash": "2c60d12659a697e6d4ae9135885fd5ed5953e71718e092f782fa1f7ebdf77a39",
+      "translationHash": "9795208e8a9cf5bad37b71fbe0937003ca203a98e8718dfecdd05f83fcab9625",
+      "path": "entries/removing-official-status-for-3x3x3-with-feet.json",
+      "notes": [
+        "原文链接文字为 Guideline 5b+，目标为 #A5b+；按原文分别保留，未擅自修正。"
+      ]
+    },
+    {
+      "key": "posts:/posts/rubik-s-returns-for-year-two-of-sponsorship-with-the-world-cube-association",
+      "url": "https://www.worldcubeassociation.org/posts/rubik-s-returns-for-year-two-of-sponsorship-with-the-world-cube-association",
+      "sourceHash": "2d868659065f4412f4bdda7965d509a88c7847e4320f0e857a60ddff73b37201",
+      "translationHash": "5e662e9f33f591b3b9b2c2f55f55054a6d67837c70fbe41b23c084390c85cbaf",
+      "path": "entries/rubik-s-returns-for-year-two-of-sponsorship-with-the-world-cube-association.json",
+      "notes": [
+        "统计数字及“目前”纪录均为原公告发布时信息，按历史原文保留。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wca-regulations-2009-are-final",
+      "url": "https://www.worldcubeassociation.org/posts/wca-regulations-2009-are-final",
+      "sourceHash": "59be0f918711d751a5110e73f1ffe5dc1dc4a7675d9feb77a6dad1a9d7c4760a",
+      "translationHash": "48ab721815c5fcea58e16377b426fa0991fc0ac8d8a87fd90d8aa7d85759f04a",
+      "path": "entries/wca-regulations-2009-are-final.json",
+      "notes": [
+        "原文 regulations\\_history2009.html 含 Markdown 转义，保留源串供渲染器正确处理。原文 closed competitions 译为“封闭比赛”，未扩写其政策含义。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wqac-digest-2026-q1-q2",
+      "url": "https://www.worldcubeassociation.org/posts/wqac-digest-2026-q1-q2",
+      "sourceHash": "c622775ec92f003de441aa4759bc023bd4132f19cff6cce7d9d25f9fceefd1b9",
+      "translationHash": "1d2885a143f48c50855fe5e6aac80adcfede70ccc857313a503984df1d01956a",
+      "path": "entries/wqac-digest-2026-q1-q2.json",
+      "notes": [
+        "原文摘要称新增 13.5 名成员，后文列出 13 名新成员并说明 Dan Smith 离开后重新加入。保留原文 13.5，不自行更正。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wrc-digest-2024-q1",
+      "url": "https://www.worldcubeassociation.org/posts/wrc-digest-2024-q1",
+      "sourceHash": "f572d0afdfa061dc2f0415d123e74891affdcef4d3e2e6e4b3ee0d998f32ee7c",
+      "translationHash": "e9e01c86b5b1866ad60eaebb4255601edba228b5b1afff95803fbaf8d22c759e",
+      "path": "entries/wrc-digest-2024-q1.json",
+      "notes": [
+        "原文列表从 6 跳至 8，保留原编号。原文第 2 项关于停表引用 A4b，按原文保留，未擅改规则编号。原文第 11 项对双底选手比例的判断按历史公告译出。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wrc-digest-2024-q2",
+      "url": "https://www.worldcubeassociation.org/posts/wrc-digest-2024-q2",
+      "sourceHash": "e914dea36ecd9c53e64f4ad5986f0153df56ff2df09f38699088873742b9cb88",
+      "translationHash": "ff0caf56e100b9b585226a73f4aa282d47e70057b42ff841e2fb2c1ff7c891ee",
+      "path": "entries/wrc-digest-2024-q2.json",
+      "notes": [
+        "第3项原文开头称已纠正疑似转角，后文又概括为 twist-twist-fix-fix，叙述存在歧义；译文保留两处表述，不自行重构过程。"
+      ]
+    }
+  ]
+}

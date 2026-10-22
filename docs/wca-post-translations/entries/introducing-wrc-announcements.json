@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/introducing-wrc-announcements",
+  "source": {
+    "key": "posts:/posts/introducing-wrc-announcements",
+    "kind": "posts",
+    "title": "Introducing WRC Announcements",
+    "date": "2013-05-21T20:18:27.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/introducing-wrc-announcements",
+    "content": "Starting with the May 21 update, all significant updates to the WCA Regulations and/or Guidelines will be announced by the WRC in a post at [www.worldcubeassociation.org/regulations/announcements](/regulations/announcements)\n Such posts will also be made “sticky” on the main [WCA homepage](https://www.worldcubeassociation.org/) for a while, so that they are always at the top of the page.\n\nThe WRC will try to make sure such changes are only announced and put into effect at the beginning of the week (Monday-Wednesday), so that Delegates and competitors have time to learn of the changes (and respond with any urgent feedback).\n\nNevertheless, delegates and competitors are always encouraged to check the date listed on the [current English Regulations](https://www.worldcubeassociation.org/regulations/) before using a saved/printed version as reference for a competition.\n\n<!--break-->\n\nIt is possible to view a feed of WRC announcements at [https://www.worldcubeassociation.org/regulations/announcements/](/regulations/announcements/)  \n\n A RSS feed of WRC announcements is also available at [https://www.worldcubeassociation.org/regulations/announcements/rss.xml](/regulations/announcements/rss.xml)",
+    "hash": "f08b5a7f4cd097eb19bed860df3510b3d850c4d449677936a56e11a123dd699d",
+    "format": "markdown",
+    "sourceId": 2616
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "f08b5a7f4cd097eb19bed860df3510b3d850c4d449677936a56e11a123dd699d",
+    "language": "zh-Hans",
+    "title": "WRC 规则公告栏目上线",
+    "content": "从 5 月 21 日的更新开始，WCA 规则与指南的所有重要更新，都将由 WCA 规则委员会（WRC）在 [www.worldcubeassociation.org/regulations/announcements](/regulations/announcements) 发布公告。\n\n这些公告也会在 [WCA 首页](https://www.worldcubeassociation.org/)置顶一段时间，方便大家看到。\n\nWRC 会尽量只在一周的前半段（星期一至星期三）公布并实施这些改动，让代表和选手有时间了解变化，也能及时反馈紧急问题。\n\n不过，我们仍建议代表和选手在比赛中使用保存或打印的规则前，先核对[现行英文规则](https://www.worldcubeassociation.org/regulations/)所标注的日期。\n\nWRC 公告列表可在 [https://www.worldcubeassociation.org/regulations/announcements/](/regulations/announcements/) 查看。\n\n也可通过 RSS 订阅 WRC 公告：[https://www.worldcubeassociation.org/regulations/announcements/rss.xml](/regulations/announcements/rss.xml)",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:55:00.978Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "f9bc3b7ce507a307a6b53a1d0ecca31200b59811eef3a0587acbc491c3fe749b"
+}

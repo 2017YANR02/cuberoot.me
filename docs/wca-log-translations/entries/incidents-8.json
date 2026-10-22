@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:8",
+  "source": {
+    "key": "incidents:8",
+    "kind": "incidents",
+    "title": "EnChroma glasses",
+    "url": "https://www.worldcubeassociation.org/incidents/8",
+    "date": "2018-03-31T14:11:55.000Z",
+    "content": "A mildly colorblind US competitor is trying out special glasses for the colorblind called [EnChroma](http://enchroma.com/) that block out some parts of the color spectrum. It has been decided that these glasses are not likely to offer an unfair advantage, and should be allowed under the current Regulations.",
+    "hash": "8b332fdb3c853c836fbf7345f353686b8805e9cdcdde014bc137be75c2c1ba05",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "EnChroma 眼镜",
+    "content": "一名轻度色盲的美国选手正在试用名为 [EnChroma](http://enchroma.com/) 的特殊色盲眼镜，其作用是滤除部分光谱。经决定，此类眼镜不太可能带来不公平优势，应根据现行规则允许使用。",
+    "translatedAt": "2026-10-22T05:48:51.542Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "8b332fdb3c853c836fbf7345f353686b8805e9cdcdde014bc137be75c2c1ba05"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_6",
+      "reviewedAt": "2026-10-22T06:24:59.959967Z",
+      "report": "reviews/round-1/report-6.json",
+      "sourceHash": "8b332fdb3c853c836fbf7345f353686b8805e9cdcdde014bc137be75c2c1ba05",
+      "reviewedTranslationHash": "7ea83ed16cbaf39ca72ffc6a3bcf344f9448ea3e2335e4c676fad0d4db0d5e75",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

@@ -1,0 +1,678 @@
+{
+  "batch": 4,
+  "expected": 75,
+  "translated": 71,
+  "reusedRoot": 4,
+  "verifiedAt": "2026-10-22T08:52:50.434Z",
+  "checks": [
+    "JSON parse",
+    "source hash exact match",
+    "all URL and mailto occurrence counts preserved",
+    "self-check complete source coverage; not independent review"
+  ],
+  "entries": [
+    {
+      "key": "posts:/posts/senior-delegate-announcement-africa-october-2026",
+      "status": "reused_root_translation"
+    },
+    {
+      "key": "posts:/posts/announcing-the-moyu-wca-world-championship-2027",
+      "status": "reused_root_translation"
+    },
+    {
+      "key": "posts:/posts/wca-quality-assurance-committee-call-for-applicants-september-2026",
+      "status": "reused_root_translation"
+    },
+    {
+      "key": "posts:/posts/wca-regulations-committee-leader-announcement-april-2026",
+      "status": "reused_root_translation"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wca-financial-committee-members-march-2026",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 3310,
+      "translationLength": 1276,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/wca-regulations-january-2026",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 5549,
+      "translationLength": 4216,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/senior-delegate-announcement-usa-and-canada-november-2025",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 651,
+      "translationLength": 306,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/call-for-applications-wca-quality-assurance-committee-leader-october-2025",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 2004,
+      "translationLength": 909,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wca-communication-team-members-july-2025",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 2976,
+      "translationLength": 984,
+      "notes": [
+        "原文动议链接文字为 10.2024.1，实际链接指向 10.2025.1，均按原文保留。"
+      ],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/call-for-applications-wca-executive-assistants-team-april-2025",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 1137,
+      "translationLength": 500,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/quality-assurance-committee-digest-2025-q1",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 2504,
+      "translationLength": 967,
+      "notes": [
+        "原文称新增十名成员，但名单仅列九人；人数和名单按原文保留。"
+      ],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/expression-of-interest-for-2026-wca-continental-championships-march-2025",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 2075,
+      "translationLength": 889,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/wca-regulations-january-2025",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 3672,
+      "translationLength": 2318,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/call-for-applications-wmct-leader-october-2024",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 1800,
+      "translationLength": 746,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/wdc-digest-2024-q2",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 3531,
+      "translationLength": 1296,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/changes-to-the-wca-board-of-directors-january-2024",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 510,
+      "translationLength": 161,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/world-cube-association-hosts-newcomer-month-inviting-everyone-to-join-the-thrilling-world-of-competitive-speedcubing",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 2743,
+      "translationLength": 883,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/wqac-leader-announcement-december-2023",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 912,
+      "translationLength": 448,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wrt-leader-november-2023",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 1811,
+      "translationLength": 729,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/wfc-leader-announcement-november-2023",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 844,
+      "translationLength": 410,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wqac-leader-october-2023",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 1902,
+      "translationLength": 772,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wec-leader-august-2023",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 1480,
+      "translationLength": 631,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/wca-regulations-august-2023",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 1291,
+      "translationLength": 864,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wqac-members-july-2023",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 1896,
+      "translationLength": 806,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/planned-wca-website-outage-june-2023",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 406,
+      "translationLength": 153,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/wrc-investigation-vietnamese-competitions-results-removal",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 3054,
+      "translationLength": 1410,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/wca-regulations-february-2023",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 1570,
+      "translationLength": 1029,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/year-end-message-2022",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 4495,
+      "translationLength": 1289,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/wrc-leader-announcement-december-2022",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 871,
+      "translationLength": 454,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/wca-community-survey-2022",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 990,
+      "translationLength": 383,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/forum-digest-november-2022",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 2269,
+      "translationLength": 1065,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/applications-for-wca-continental-championships-2024-october-2022",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 3394,
+      "translationLength": 1170,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wca-results-team-wrt-members-august-2022",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 2687,
+      "translationLength": 933,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/wat-leader-announcement-july-2022",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 711,
+      "translationLength": 374,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/wct-leader-announcement-january-2022",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 788,
+      "translationLength": 410,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/wca-regulations-january-2022",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 2403,
+      "translationLength": 1740,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/forum-digest-december-2021",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 2855,
+      "translationLength": 1268,
+      "notes": [
+        "Zayn 段原文标题及成绩列出三次纪录，正文却写 twice；译文保留该矛盾，不擅自修正。"
+      ],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/senior-delegate-announcement-asia-west-and-south-october-2021",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 663,
+      "translationLength": 348,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/updates-on-wca-competition-requirements-policy-wca-dues-policy-september-2021",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 753,
+      "translationLength": 483,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/tnoodle-bugfix-release-for-macos",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 1171,
+      "translationLength": 510,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/wca-regulations-may-2021-now-in-effect",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 309,
+      "translationLength": 234,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/tnoodle-1-1-0-release",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 1451,
+      "translationLength": 678,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/year-end-message-2020",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 3999,
+      "translationLength": 1435,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/senior-delegate-announcement-africa-europe-north-and-baltic-states",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 340,
+      "translationLength": 90,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wec-leader-september-2020",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 1588,
+      "translationLength": 709,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/clarification-regarding-venue-contracts",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 958,
+      "translationLength": 339,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wac-leader-august-2020",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 1599,
+      "translationLength": 694,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/cancellation-of-wca-european-championship-2020",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 596,
+      "translationLength": 240,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/wca-forum-launch",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 761,
+      "translationLength": 222,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/covid-19-situation-update-2020-03-30",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 1026,
+      "translationLength": 268,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/cancellation-of-wca-north-american-championship-2020",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 645,
+      "translationLength": 228,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wrt-members-january-2020",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 2588,
+      "translationLength": 911,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/applications-for-the-wca-world-championship-2021",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 3179,
+      "translationLength": 1160,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/new-wqac-leader-december-2019",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 695,
+      "translationLength": 363,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/philipp-weyer-wins-wca-world-championship-2019-in-melbourne-victoria-australia",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 1661,
+      "translationLength": 941,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-gear-team-members-for-wmt-2019",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 1750,
+      "translationLength": 604,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/announcement-of-the-wdpc-leader",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 734,
+      "translationLength": 373,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wmt-leader-february-2019",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 1753,
+      "translationLength": 737,
+      "notes": [
+        "原文将 WMT 称为 Advisory Committee，按原文保留咨询委员会表述。"
+      ],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/wca-world-championship-2019-on-july-11-14-2019-in-melbourne-victoria-australia",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 290,
+      "translationLength": 177,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/new-wrc-leader",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 804,
+      "translationLength": 402,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/new-hope-open-winter-2019-on-january-20-2019-in-new-hope-pennsylvania-united-states",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 341,
+      "translationLength": 252,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/new-wcat-leader",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 926,
+      "translationLength": 490,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/appointment-of-new-wec-leader-july-2018",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 1644,
+      "translationLength": 666,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/tnoodle-0-13-1",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 617,
+      "translationLength": 346,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/committee-team-membership-application-deadlines-extended",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 2187,
+      "translationLength": 1286,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/application-documents-election-of-board-of-directors-2017",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 566,
+      "translationLength": 192,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/applications-for-asian-championship-2018-european-championship-2018",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 2909,
+      "translationLength": 1167,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/world-rubik-s-cube-championship-2017-on-july-13-16-2017-in-paris-france",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 293,
+      "translationLength": 165,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/tnoodle-0-11-1",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 892,
+      "translationLength": 450,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/scrambling-program-update-tnoodle-0-8-0",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 779,
+      "translationLength": 368,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/wca-regulations-and-guidelines-2014",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 7825,
+      "translationLength": 5111,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/skewb-new-event-in-2014",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 257,
+      "translationLength": 139,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/ernesto-gutierrez-cuba-wins-campeonato-sudamericano-2013",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 467,
+      "translationLength": 405,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/michal-pleskowicz-wins-world-rubik-s-cube-championship-2011",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 1390,
+      "translationLength": 916,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/masayuki-akimoto-new-wca-board-member",
+      "status": "translated",
+      "sourceHashMatches": true,
+      "sourceLength": 850,
+      "translationLength": 341,
+      "notes": [],
+      "reviewStatus": "pending_independent_review"
+    }
+  ]
+}

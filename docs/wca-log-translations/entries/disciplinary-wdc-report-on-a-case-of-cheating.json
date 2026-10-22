@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "key": "disciplinary:/posts/wdc-report-on-a-case-of-cheating",
+  "source": {
+    "key": "disciplinary:/posts/wdc-report-on-a-case-of-cheating",
+    "kind": "disciplinary",
+    "title": "WDC Report on a Case of Cheating",
+    "date": "2024-03-20T13:00:21Z",
+    "url": "https://www.worldcubeassociation.org/posts/wdc-report-on-a-case-of-cheating",
+    "content": "<p>Dear WCA Community,</p><p>The Disciplinary Committee has concluded an investigation on a case of cheating by a well-known competitor in multiple events spanning several competitions in 2022 and 2023. As a result, they have been banned for 2-years and 6-months from competing, ending on June 24th, 2026.</p><p>The WDC allowed the competitor to submit footage for review. Any result that the WDC could not determine as valid has been disqualified. As specified in <a href=\"https://www.worldcubeassociation.org/regulations/#9t\">Regulation 9t</a>, if there was any change where the competitor would not have advanced to the next round, all results of the competitor for those subsequent rounds were removed.</p><p>Since this competitor is well-known in the community and is still a record holder, the WDC decided to make the report for this investigation public. The intention is to explain the reasons behind our decision and provide insight on how the Committee works.</p><p>The WDC has elected to fully anonymize this report and the video evidence due to the age of the accused competitor. The WDC strongly discourages the community from publicizing the name of the accused competitor for this reason. The full report can be found <a href=\"https://drive.google.com/file/d/18z231aVdCDVma90EJ6XQNNp63gp0xtkU/view?usp=drive_link\">here</a>.</p><p>Best regards,<br><strong>Shain Longbehn (WDC Leader)</strong><br>\nOn behalf of the WCA Disciplinary Committee</p>",
+    "hash": "bc3837e954ce65dba9788e6706d51f9322fb7da3091d9a687acdb086fc2427be",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 2,
+    "title": "WDC 关于一宗作弊案件的报告",
+    "content": "亲爱的 WCA 社群：\n\n纪律委员会已完成一宗知名选手在 2022、2023 年多场比赛、多个项目中作弊的调查。其被禁止参赛 2 年 6 个月，至 2026 年 6 月 24 日结束。\n\nWDC 允许选手提交录像供审核，凡无法确定有效的成绩均被取消。按[规则 9t](https://www.worldcubeassociation.org/regulations/#9t)，若变更导致选手本不应晋级，则删除其相应后续轮次全部成绩。\n\n因该选手在社群知名、仍为纪录保持者，WDC 决定公开报告，以解释决定理由并介绍委员会工作。\n\n鉴于被指控者年龄，报告和视频证据完全匿名化。出于这一原因，WDC 强烈劝阻社群公开其姓名。完整报告见[此处](https://drive.google.com/file/d/18z231aVdCDVma90EJ6XQNNp63gp0xtkU/view?usp=drive_link)。\n\n谨致问候，\nShain Longbehn，WDC 负责人\n代表 WCA 纪律委员会",
+    "translatedAt": "2026-10-22T06:10:02.357Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "bc3837e954ce65dba9788e6706d51f9322fb7da3091d9a687acdb086fc2427be",
+    "revisedAt": "2026-10-22T06:25:36.680Z",
+    "revisionReason": "独立审校 round-1 的精确修正建议"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [
+      "官网公告正文已译；所链接调查报告与视频未读取、未翻译。匿名保持不变，不以纪录或日期推断身份。"
+    ],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_2",
+      "reviewedAt": "2026-10-22T06:22:43.237972Z",
+      "report": "reviews/round-1/report-2.json",
+      "sourceHash": "bc3837e954ce65dba9788e6706d51f9322fb7da3091d9a687acdb086fc2427be",
+      "reviewedTranslationHash": "44727bf0b1b294e950f0aa146232583fabd0bea93115ea5c95063b09610930f5",
+      "verdict": "correction_required",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": [],
+    "recheck": {
+      "reviewer": "review_2",
+      "reviewedAt": "2026-10-22T06:26:26.122806Z",
+      "report": "reviews/round-1/recheck-2.json",
+      "sourceHash": "bc3837e954ce65dba9788e6706d51f9322fb7da3091d9a687acdb086fc2427be",
+      "reviewedTranslationHash": "eda82b7dfb3f1b185e86f33067aaff1ac96329c2d82468fb916c1f649b0d0703",
+      "verdict": "pass"
+    }
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

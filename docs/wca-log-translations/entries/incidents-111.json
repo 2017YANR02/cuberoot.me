@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:111",
+  "source": {
+    "key": "incidents:111",
+    "kind": "incidents",
+    "title": "Competitor uncovered puzzle after judge had started the timer",
+    "url": "https://www.worldcubeassociation.org/incidents/111",
+    "date": "2024-05-31T11:06:11.000Z",
+    "content": "DISCLAIMER: Please note that as of 2025, [A2e2](https://www.worldcubeassociation.org/regulations/#A2e2) explicitly prohibits the competitor from lifting the cover with associated DNF penalty.\n\nA competitor posted one of their solves from a competition online, and it was seen that the competitor had lifted their own cube cover (as opposed to the judge doing so). The video indicated the competitor signaling they were \"ready\" to the judge and the judge starting the stopwatch without lifting the cube cover. The competitor then proceeded to lift the cover for themselves.\n\nThough the actions seem in violation with regulation A3b2, this regulation does not have an associated penalty. Additionally, the incident was only discovered after the competition, making the opportunity for an extra attempt unavailable. \n\nThe WRC decided to keep the attempt as is with no penalty, because it was deemed that it was the judge's mistake that caused the incident, the competitor gained no advantage, and that the stopwatch was started before the cover was lifted.\n\nAll competitors should take note that if a similar incident were to occur to them, they should immediately call a Delegate to rectify the incident on the spot.",
+    "hash": "083a3c0a310e84d78ab20435840ecd6bdeeb289a1916ddda3f0164700d746f6d",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "裁判开始计时后，选手自行揭罩",
+    "content": "说明：截至 2025 年，[A2e2](https://www.worldcubeassociation.org/regulations/#A2e2) 已明确禁止选手自行揭罩，并规定 DNF 处罚。\n\n选手将一次比赛还原视频发布到网上，视频显示由选手而非裁判揭罩。选手向裁判示意“准备好了”，裁判启动秒表却未揭罩，于是选手自行揭开。\n\n此行为看似违反 A3b2，但该条没有相应处罚。事件赛后才发现，已无法给予额外尝试。\n\nWRC 决定不处罚，保留原成绩，因为事件由裁判错误造成，选手未获优势，且秒表在揭罩前已经启动。\n\n所有选手应注意，遇到类似情况时应立即叫来代表，在现场纠正。",
+    "translatedAt": "2026-10-22T05:56:15.197Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "083a3c0a310e84d78ab20435840ecd6bdeeb289a1916ddda3f0164700d746f6d"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_2",
+      "reviewedAt": "2026-10-22T06:22:43.237972Z",
+      "report": "reviews/round-1/report-2.json",
+      "sourceHash": "083a3c0a310e84d78ab20435840ecd6bdeeb289a1916ddda3f0164700d746f6d",
+      "reviewedTranslationHash": "765fff855df7348a291df61db69e755c0ae653473d7c2d286b163292cbb6b4dd",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

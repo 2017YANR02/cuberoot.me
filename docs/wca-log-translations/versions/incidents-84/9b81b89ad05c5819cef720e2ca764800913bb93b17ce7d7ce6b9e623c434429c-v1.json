@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:84",
+  "source": {
+    "key": "incidents:84",
+    "kind": "incidents",
+    "title": "A competitor uncovered their own puzzle, as the judge failed to do so",
+    "url": "https://www.worldcubeassociation.org/incidents/84",
+    "date": "2023-05-03T03:24:14.000Z",
+    "content": "DISCLAIMER: Please note that as of 2025, [A2e2](https://www.worldcubeassociation.org/regulations/#A2e2) explicitly prohibits the competitor from lifting the cover with associated DNF penalty.\n\n> A3b2) The competitor starts the attempt by confirming that they are ready, and the judge uncovers the puzzle and starts timing the inspection.\n\nThe competitor said \"ready\" to the judge before inspection, but the judge did not uncover the puzzle. From a video of the incident, it can be seen that the competitor looks visibly confused and stressed after the judge did not uncover the cube. The competitor then lifted the cover themselves and began the solve shortly after. This was only discovered after the competition, meaning no extras were available. The WRC agreed to keep the original result without penalties, for the following reasons: The procedural error was the judge's fault, the video of the competitor showing he was thrown off by the situation, and no advantage gained (as the inspection time was within 15 seconds).",
+    "hash": "066d9ed3606650828fae82debd3053546d925bdd6655ca6d21452670edabae9b",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "裁判未揭罩，选手自行揭开魔方罩",
+    "content": "说明：截至 2025 年，[A2e2](https://www.worldcubeassociation.org/regulations/#A2e2) 已明确禁止选手自行揭罩，并规定 DNF 处罚。\n\n> A3b2：选手确认准备好后开始尝试，由裁判揭开魔方罩并开始计量观察时间。\n\n选手在观察前对裁判说“准备好了”，但裁判未揭罩。视频显示，选手明显困惑、紧张，随后自行揭罩，不久后开始还原。赛后才发现此事，无法提供额外尝试。WRC 同意不处罚并保留原成绩，理由是：流程错误在裁判，视频显示选手被情况打乱了节奏，且观察在 15 秒内，没有取得优势。",
+    "translatedAt": "2026-10-22T05:54:37.260Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "066d9ed3606650828fae82debd3053546d925bdd6655ca6d21452670edabae9b"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

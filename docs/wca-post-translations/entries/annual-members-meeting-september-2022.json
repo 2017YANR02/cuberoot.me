@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/annual-members-meeting-september-2022",
+  "source": {
+    "key": "posts:/posts/annual-members-meeting-september-2022",
+    "kind": "posts",
+    "title": "Annual Members Meeting (September 2022)",
+    "date": "2022-09-21T13:51:53.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/annual-members-meeting-september-2022",
+    "content": "The Board is providing notice as required by [Bylaw 2.12](https://www.worldcubeassociation.org/documents/WCA%20Bylaws.pdf) of the Annual Meeting of WCA members which will be held on **October 8 at 18:00 UTC**. Members will be able to tune into this meeting via a livestream hosted on the [WCA Twitch](https://www.twitch.tv/worldcubeassociation). In [this folder](https://drive.google.com/drive/folders/1j2i2AKJEVLA0NSC6Tyw8ITKDItwpbuP3?usp=sharing) you will find the information packet related to the annual meeting which contains all relevant documentation which will be discussed at the meeting.\n\nWe look forward to your participation in the upcoming annual meeting.",
+    "hash": "f0ce3f870ee7e8c801f7be25bb39ce76d2b0cdf03656eb342e329befabfdb6e7",
+    "format": "markdown",
+    "sourceId": 14071
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "f0ce3f870ee7e8c801f7be25bb39ce76d2b0cdf03656eb342e329befabfdb6e7",
+    "language": "zh-Hans",
+    "title": "年度会员大会通知（2022 年 9 月）",
+    "content": "董事会根据[章程第 2.12 条](https://www.worldcubeassociation.org/documents/WCA%20Bylaws.pdf)发出通知：WCA 年度会员大会将于 **10 月 8 日 18:00 UTC** 举行。会员可通过 [WCA Twitch 频道](https://www.twitch.tv/worldcubeassociation)观看直播。[此文件夹](https://drive.google.com/drive/folders/1j2i2AKJEVLA0NSC6Tyw8ITKDItwpbuP3?usp=sharing)内提供了年度大会资料包，包含会上将讨论的全部相关文件。\n\n期待大家参加即将举行的年度大会。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:45:43.531Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "bd196bf690b4ad74320866c6bef49d0f68eaf1aa4d8f5fbe811a17aa31113902"
+}

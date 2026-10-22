@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "key": "disciplinary:/posts/important-announcement-about-blindfolded-solving",
+  "source": {
+    "key": "disciplinary:/posts/important-announcement-about-blindfolded-solving",
+    "kind": "disciplinary",
+    "title": "Important announcement about blindfolded solving",
+    "date": "2008-02-26T22:19:50Z",
+    "url": "https://www.worldcubeassociation.org/posts/important-announcement-about-blindfolded-solving",
+    "content": "<p>WCA made an important announcement about blindfolded solving on the <a href=\"https://www.worldcubeassociation.org/forum/viewtopic.php?f=9&t=388\">WCA forum</a>.</p>",
+    "hash": "ec28925700d25462e3b3394780445a4cca1c28a73140fd82d179b24cc3f6a8d5",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "关于盲拧的重要公告",
+    "content": "WCA 已在 [WCA 论坛](https://www.worldcubeassociation.org/forum/viewtopic.php?f=9&t=388)发布一项关于盲拧的重要公告。",
+    "translatedAt": "2026-10-22T06:02:27.941Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "ec28925700d25462e3b3394780445a4cca1c28a73140fd82d179b24cc3f6a8d5"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [
+      "官方日志正文仅这一句和论坛链接；链接指向的公告全文未包含在日志快照中，未读取、未翻译，不能声称已覆盖该公告全文。需父任务登录浏览器另行取得原文。"
+    ],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

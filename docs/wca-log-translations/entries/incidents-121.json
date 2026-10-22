@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:121",
+  "source": {
+    "key": "incidents:121",
+    "kind": "incidents",
+    "title": "Qiyi timer used for official attempts",
+    "url": "https://www.worldcubeassociation.org/incidents/121",
+    "date": "2024-10-13T05:14:48.000Z",
+    "content": "A competition was found to have used a Qiyi timer for official attempts. The delegate supplied a list of competitors' attempts that were done on the Qiyi timer, however, it was unclear if this list was complete and had correctly enumerated all of the affected attempts.\n\nConsidering that there was likely a large amount of official solves done on the timer, it would be quite difficult to discern exactly which solvers were done using it. Consequently, due to the lack of confidence in the exact solves that were affected, it would not be fair to DNF/remove some results and not others.\n\nIn a decision that was not taken lightly, the WRC decided to remove all results from the competition. Please note that this decision falls in line with precedent such as [this incident.](https://www.worldcubeassociation.org/incidents/79)",
+    "hash": "11e96a0979d74afec07233ceb63d1c10db8e8cb2a500c020a3d2c3ae4466fcd9",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "正式尝试使用奇艺计时器",
+    "content": "发现一场比赛在正式尝试中使用奇艺计时器。代表提供了使用该计时器的选手尝试清单，但无法确定清单完整、准确地列出了全部受影响尝试。\n\n由于很可能已有大量正式还原使用该计时器，难以确定具体是哪些。无法准确确定受影响范围时，只将部分成绩判 DNF 或删除、却保留其他成绩，并不公平。\n\n经过慎重考虑，WRC 决定删除该比赛全部成绩。此决定符合[这类先例](https://www.worldcubeassociation.org/incidents/79)。",
+    "translatedAt": "2026-10-22T05:57:56.837Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "11e96a0979d74afec07233ceb63d1c10db8e8cb2a500c020a3d2c3ae4466fcd9"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_3",
+      "reviewedAt": "2026-10-22T06:22:42.955322Z",
+      "report": "reviews/round-1/report-3.json",
+      "sourceHash": "11e96a0979d74afec07233ceb63d1c10db8e8cb2a500c020a3d2c3ae4466fcd9",
+      "reviewedTranslationHash": "242f01179253411e8f370fdedb7de684e51b94246967a7d02774afc1824dc383",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

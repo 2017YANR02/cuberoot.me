@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:93",
+  "source": {
+    "key": "incidents:93",
+    "kind": "incidents",
+    "title": "A 3x3x3 Blindfolded round was found to have several misscrambles",
+    "url": "https://www.worldcubeassociation.org/incidents/93",
+    "date": "2023-09-21T03:05:08.000Z",
+    "content": "It was reported that several misscrambles were issued during the first round of the 3x3x3 Blindfolded event.\nGiven the substantial amount of affected attempts, the WRC deemed that the most consistent and fair decision was to remove all the results from the round. As the results were invalidated, it was no longer possible to determine the advancement conditions for the final round. Therefore, the results for any subsequent round were also invalid (and removed).\n\nFor more precedents, see the following incident logs: [#53](https://www.worldcubeassociation.org/incidents/53) and [#88](https://www.worldcubeassociation.org/incidents/88).",
+    "hash": "8bf1eb7d9ec4b2b25ef194eb18a9bf31dec132cd8a7181b2b08ee11cc28e5ec4",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "三阶盲拧轮次发现多个错误打乱",
+    "content": "有人报告，三阶盲拧第一轮发出了多个错误打乱。鉴于受影响次数很多，WRC 认为最一致、公平的处理是删除该轮全部成绩。该轮成绩失效后，无法再确定决赛晋级条件，因此后续轮次成绩也无效并被删除。\n\n更多先例见 [#53](https://www.worldcubeassociation.org/incidents/53) 和 [#88](https://www.worldcubeassociation.org/incidents/88)。",
+    "translatedAt": "2026-10-22T05:56:15.197Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "8bf1eb7d9ec4b2b25ef194eb18a9bf31dec132cd8a7181b2b08ee11cc28e5ec4"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

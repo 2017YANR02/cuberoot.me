@@ -1,0 +1,477 @@
+{
+  "reviewer": "review_1",
+  "reviewedAt": "2026-10-22T06:23:54.689Z",
+  "entries": [
+    {
+      "key": "disciplinary:/posts/call-for-applicants-wca-disciplinary-committee-wdc-members-september-2022",
+      "path": "entries/disciplinary-call-for-applicants-wca-disciplinary-committee-wdc-members-september-2022.json",
+      "verdict": "pass",
+      "sourceHash": "303f2191db7581682adb1e99e7804d32c85b606f9e833ec4c0aab0fce1d2a0b0",
+      "reviewedTranslationHash": "8bb3c4d70633c86abd71bc4c0ed135f328abca8c9f9a34d7325c9208f758c47a",
+      "evidence": [
+        "完整对照标题与正文：仅两项硬性要求、其余可取素质与非必需条件均保留；2022-10-14星期五23:59 UTC、单一PDF、24小时收件确认及可能面试准确。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/call-for-applicants-wca-integrity-committee-leader-december-2025",
+      "path": "entries/disciplinary-call-for-applicants-wca-integrity-committee-leader-december-2025.json",
+      "verdict": "pass",
+      "sourceHash": "d4c8df09a9e2f619590864bfc49e41c7a96e2cf5550b284a1197a4de9623aded",
+      "reviewedTranslationHash": "50852bccf6c0a108ff27923488d2879206db78813ac99f5a73faafccc45f0453",
+      "evidence": [
+        "完整对照标题与正文：24个月任期、每周至少8小时、2025-12-31 23:59 UTC、执行助理收件及抄送理事会、公开副本、面试和投票流程均保留。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/call-for-applicants-wca-integrity-committee-members-august-2025",
+      "path": "entries/disciplinary-call-for-applicants-wca-integrity-committee-members-august-2025.json",
+      "verdict": "correction_required",
+      "sourceHash": "04318d274d1ccd29a7b5be57b0f22899df1ae9661848cca8ae3056769c25fb0f",
+      "reviewedTranslationHash": "4e35601437c2fdd23d726df547136846650211271f73c2d3bd0b0b1b8a8a55cb",
+      "evidence": [
+        "完整对照标题与正文：四个小组中三个招聘、3/1/1个名额、每周3–6小时、2025-09-11 23:59 UTC和48小时确认均准确；年龄截止日期的包含边界须修正。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": [
+        {
+          "field": "content",
+          "old": "在 2025 年 9 月 1 日前满 18 岁",
+          "new": "截至 2025 年 9 月 1 日已满 18 岁",
+          "reason": "by包含所列日期；“日前”会排除9月1日当天满18岁的申请者。",
+          "sourceEvidence": "Be 18 years or older by September 1, 2025"
+        }
+      ]
+    },
+    {
+      "key": "disciplinary:/posts/call-for-applicants-wdc-leader-december-2023",
+      "path": "entries/disciplinary-call-for-applicants-wdc-leader-december-2023.json",
+      "verdict": "pass",
+      "sourceHash": "e300fb324204fb513e6b0bd0e87c7753d172fdf11b06fbb5b43674ee93cd6b5e",
+      "reviewedTranslationHash": "8dbb4825fe71ba53d73e88d608be2d9d0cf9696f1639dabb7c65ecd96e6c59ed",
+      "evidence": [
+        "完整对照标题与正文：感谢过去3年、24个月任期、每周至少7小时、2024-01-07截止、PDF与公开副本、理事会遴选及高级代表等投票确认均保留。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/call-for-applicants-wdc-leader-january-2021",
+      "path": "entries/disciplinary-call-for-applicants-wdc-leader-january-2021.json",
+      "verdict": "pass",
+      "sourceHash": "8653313ebeb1e46f0708505bd502f1fa8ccbd8b77252b29cbf12c28a4ac7ff12",
+      "reviewedTranslationHash": "a46df975b7891d9a7b9486499e1bc813ffc50171b69236bc208de42786194065",
+      "evidence": [
+        "完整对照标题与正文：申请人无须现任职、24个月任期、每周至少5小时、2021-01-18截止、两阶段投票和动议版本均准确。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/call-for-applicants-wdc-leader-october-2020",
+      "path": "entries/disciplinary-call-for-applicants-wdc-leader-october-2020.json",
+      "verdict": "pass",
+      "sourceHash": "51d31cf375745670de6a329276337a34d32d7b2fc46e8c1eca7bb0a951fd75b6",
+      "reviewedTranslationHash": "c19b675d54bcd3ad40772664455fddaa867a79480b5cebb81f3a1f151b0cca1c",
+      "evidence": [
+        "完整对照标题与正文：卸任者姓名、24个月任期、原文at least 4–6 hours、2020-11-23截止、保密/客观/公平/周全四项素质及选任程序均保留。"
+      ],
+      "unresolvedNotes": [
+        "原文“at least 4-6 hours per week on average”自身将最低值与范围并列，译文忠实保留；未核验招聘方实际工时解释。"
+      ],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/call-for-applicants-wdc-members-august-2023",
+      "path": "entries/disciplinary-call-for-applicants-wdc-members-august-2023.json",
+      "verdict": "pass",
+      "sourceHash": "c83b689f5a21da222f77eb8cd95c2be27d90d898e1046bda91e2a7b79f95249b",
+      "reviewedTranslationHash": "018c6eb471f9bb30ce577699e6ff96212a11d434eba86909274506acad42e053",
+      "evidence": [
+        "完整对照标题与正文：调查、现场建议及政策改进三类工作；硬性/非必需要求；2023-09-10星期日23:59 UTC、24小时确认和遴选可能评估均准确。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/call-for-applicants-wdc-members-september-2019",
+      "path": "entries/disciplinary-call-for-applicants-wdc-members-september-2019.json",
+      "verdict": "pass",
+      "sourceHash": "adc31e9908de74dc3246318856f9bebfd4c5b304b122dde5cc0032744db273de",
+      "reviewedTranslationHash": "58655f17936989aa5d5ef6dfad4d89a794f9ff5f66a4394c8c92a9befd8f369a",
+      "evidence": [
+        "完整对照标题与正文：涉嫌违规而非既定违规、重要个人事务、PDF不合格自动弃置、2019-09-23截止、接受职位后公布均保留。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/important-announcement-about-blindfolded-solving",
+      "path": "entries/disciplinary-important-announcement-about-blindfolded-solving.json",
+      "verdict": "pending_source_verification",
+      "sourceHash": "ec28925700d25462e3b3394780445a4cca1c28a73140fd82d179b24cc3f6a8d5",
+      "reviewedTranslationHash": "3bbacac3075561c71f72c7ec5d6cff887dbbe82b96990193d38483c225d85096",
+      "evidence": [
+        "完整对照日志快照标题与唯一正文句：关于盲拧的重要公告及原始t=388论坛链接准确；快照没有论坛公告正文，不能据此判定完整公告翻译已完成。"
+      ],
+      "unresolvedNotes": [
+        "所提供日志快照仍只有引导句，未包含t=388公告全文；本轮未读取或审校外链全文。",
+        "父任务补充：官方归档已定位为 https://www.worldcubeassociation.org/archive/forum_topics/388 ，首帖Ron，2008-02-26 22:11:59 UTC。再利用许可尚未确认，父任务要求只保留链接、时间及简短中文摘要，不补全文；本条保持未完整/待许可状态。",
+        "本轮审校判断不构成公开译载授权；其余条目亦同。"
+      ],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2024-q4",
+      "path": "entries/disciplinary-integrity-committee-digest-2024-q4.json",
+      "verdict": "pending_source_verification",
+      "sourceHash": "206965c3e76461eca9177b30197f35fec6e1a9f709161086d5be57fd807f6c83",
+      "reviewedTranslationHash": "be586009fa2055a5a54cc9f0c1abd64a95825b15895ef19481fb338d33c91390",
+      "evidence": [
+        "完整对照标题与正文：16立案/14结案、8禁赛/3警告/2无措施忠实照录；区分参赛禁令与参赛及到场禁令，保留有条件永久禁令及盲拧选手否认此前作弊；11名新成员及ID逐项一致。"
+      ],
+      "unresolvedNotes": [
+        "原文称结案14件，但列举8项禁赛、3项警告、2件无措施合计13；译文忠实保留，未补造案件，统计待来源核验。",
+        "原文“permanent until”及连续不出席达到原禁令时长的条件已照译；具体政策性质未核验，不能称已解决该原文措辞疑义。"
+      ],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2025-q1",
+      "path": "entries/disciplinary-integrity-committee-digest-2025-q1.json",
+      "verdict": "pass",
+      "sourceHash": "6a13109d7dda9cb45ec024aee1f6f1566a6a515637e9e985ac8d4da991a12dd8",
+      "reviewedTranslationHash": "1edd0182a0c143d058d0de6a637fd8161eef9ca0105e330ed2d554a12a13b5a0",
+      "evidence": [
+        "完整对照标题与正文：7/10、3禁赛/6警告/1无措施；财务案直至还款的无固定期限禁赛再加多年禁赛、来宾参赛及到场禁令、视频所涉整轮成绩取消均准确。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2025-q2",
+      "path": "entries/disciplinary-integrity-committee-digest-2025-q2.json",
+      "verdict": "pending_source_verification",
+      "sourceHash": "543edad848e97c3441c90a991a700e5cc5c3b3b4d9b11a95601b334047b48dfc",
+      "reviewedTranslationHash": "9c95e3634e0ed7e18e83395947592919ba27293818582585cf0b4b6cf171c73d",
+      "evidence": [
+        "完整对照标题与正文：12立案/9结案、4禁赛/6无措施照录；代表权限判断、先遵从再争议、裁判试图包庇及短期禁赛、网络威胁和联系主管机关保留。"
+      ],
+      "unresolvedNotes": [
+        "原文称结案9件，但4项禁赛加6件无措施为10；译文忠实保留，未调整统计，待来源核验。"
+      ],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2025-q3",
+      "path": "entries/disciplinary-integrity-committee-digest-2025-q3.json",
+      "verdict": "pass",
+      "sourceHash": "d66f044685ba3d5846fc62a934eb0793bc59c120cbff16b30f96613530ec909f",
+      "reviewedTranslationHash": "fece5dad6b94ec5fb42fa9b1a49d509ee0439afb8d6681c3d24bf4cda7428bd3",
+      "evidence": [
+        "完整对照标题与六案：19/18、7禁赛/5警告/6无措施；两年半、未经同意触碰及多方证词、参赛/到场/论坛三项禁令、WIC对悔意的判断和受询者否认均保留。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2025-q4",
+      "path": "entries/disciplinary-integrity-committee-digest-2025-q4.json",
+      "verdict": "pass",
+      "sourceHash": "580e10ce2c1f29ab8fcdb139882d79518364b86a8c3ce275c25d4b06735df4f1",
+      "reviewedTranslationHash": "81ba030894da29f4f4bebdbc50490bd2d6bd95510d22e6b6207a22bd8fa2a0f8",
+      "evidence": [
+        "完整对照标题与五案及人事更新：24/19、5/8/6准确；涉嫌选择无显示屏比赛台而非已证事实、录像不足后发现证据、加重情节、两名篡改者正式警告及全部盲拧成绩取消均保留；8名新成员姓名及ID一致。"
+      ],
+      "unresolvedNotes": [
+        "原文末尾邮箱href缺少mailto:；译文原样保留，未验证该链接能否正常发邮件。此为来源链接问题，未改译文目标。"
+      ],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2026-q1",
+      "path": "entries/disciplinary-integrity-committee-digest-2026-q1.json",
+      "verdict": "pass",
+      "sourceHash": "67795c0bee5d1b515002e49f9f8b3a1477d248ee22f241c9a9c6b2cd690539b9",
+      "reviewedTranslationHash": "3d518237642c66c9c88da01d7cc1b95f4b3223ed34cdf2799b6ccbd507b60f56",
+      "evidence": [
+        "完整对照标题与正文：12/16、5/4/7；WCA范围外法律程序仍在进行、事先批准的预防性暂停资格及其三项范围，未译成已定罪；作弊仅部分选手禁赛及人事任命均保留。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2026-q2",
+      "path": "entries/disciplinary-integrity-committee-digest-2026-q2.json",
+      "verdict": "correction_required",
+      "sourceHash": "742850af272350dfed2faf596d75b4cfa120fc735107adaf78c25c95a2433660",
+      "reviewedTranslationHash": "265237661a1bda3a5cfce43ffc4dc18ded0c92f79469482049f90b4d9f58840a",
+      "evidence": [
+        "完整对照标题与三案及人事：10/12、2/4/6；盲拧由怀疑到视频与证词支持的认定、说明并非完全真实、正式警告而非禁赛均保留；8名加入/4名卸任及两项任命准确。第一案志愿者感受被译为意愿，须修正。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": [
+        {
+          "field": "content",
+          "old": "志愿者表示这使他们不愿承办其擅长项目",
+          "new": "志愿者表示，这使他们对承办该选手擅长的项目感到不安",
+          "reason": "uncomfortable表示感受，原文未断言志愿者不愿承办，需保留报告中的心理状态而不扩展为行动意愿。",
+          "sourceEvidence": "Volunteers shared with the WIC made them uncomfortable with hosting events the competitor specialized in"
+        }
+      ]
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2026-q3",
+      "path": "entries/disciplinary-integrity-committee-digest-2026-q3.json",
+      "verdict": "correction_required",
+      "sourceHash": "0f0378d09864f1d9cc898a125f6d825ee8ecdc38d371430fbff091e4b1406031",
+      "reviewedTranslationHash": "b2bbdd2dd1ab84c4325e4a5d397858dffba15356a975bf177bb31190102ea84c",
+      "evidence": [
+        "完整对照标题与全部案件及动态：17/10、6/3/1；代表降职、FMC自认、Skewb意外或故意未定、两案因年龄而不同处分、串通和保护小组的必要知情原则均保留。continental record须按术语表译为洲纪录。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": [
+        {
+          "field": "content",
+          "old": "单次洲际纪录",
+          "new": "单次洲纪录",
+          "reason": "continental是单一洲范围的纪录；“洲际”会被理解为跨洲，且仓库术语表CR对应“洲纪录”。",
+          "sourceEvidence": "a continental record single"
+        },
+        {
+          "field": "content",
+          "old": "一项 Skewb 洲际纪录",
+          "new": "一项 Skewb 洲纪录",
+          "reason": "同一案件的撤销对象亦应准确标明洲纪录级别。",
+          "sourceEvidence": "retroactively reverting a continental record in Skewb"
+        }
+      ]
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-report-on-a-case-of-cheating-sep-2025",
+      "path": "entries/disciplinary-integrity-committee-report-on-a-case-of-cheating-sep-2025.json",
+      "verdict": "correction_required",
+      "sourceHash": "4b2e09eadf615c68880831b7bbd61de22d9164ed8698e7358f36469060fb1de6",
+      "reviewedTranslationHash": "7c83e7b9c7c29b8dce6084d7eed5df1a5bc9e62125a2568456698a5fef223be7",
+      "evidence": [
+        "完整对照标题与公告全文（含西班牙语提示）：2年6个月仅禁止参赛、三阶最少步例外、多年成绩、先否认后呈证、因年龄匿名及不公开姓名均保留。计时成绩取消范围中的“相关”有缩窄风险。"
+      ],
+      "unresolvedNotes": [
+        "仅审校所提供官网公告全文；所链完整调查报告不在快照中，未读取或翻译。未根据纪录、年龄或链接推断身份。"
+      ],
+      "corrections": [
+        {
+          "field": "content",
+          "old": "WIC 取消了所有被怀疑成绩不合法的比赛中的相关计时成绩。",
+          "new": "WIC 取消了所有存在成绩合法性疑虑的比赛中该选手的计时成绩。",
+          "reason": "原文以比赛为范围取消该选手的计时成绩；“相关”可能被理解为仅取消其中具体可疑尝试，缩窄处分。前句三阶最少步例外继续保留。",
+          "sourceEvidence": "the WIC disqualified their times from all competitions where the results were suspected to be illegitimate"
+        }
+      ]
+    },
+    {
+      "key": "disciplinary:/posts/wca-integrity-committee-team-leader-announcement-january-2026",
+      "path": "entries/disciplinary-wca-integrity-committee-team-leader-announcement-january-2026.json",
+      "verdict": "pass",
+      "sourceHash": "c8963510efd2d9425ded79e4e4ab4d12480a21ef31ab7d20751f78b76709a359",
+      "reviewedTranslationHash": "409b87ca331919b35d389769aee61d176ddef8e123f08d5f0f52c4a82a60b3de",
+      "evidence": [
+        "完整对照标题与正文：新负责人此前为高级成员，2026-01-13生效、动议第5节、Shain留任高级成员、唯一申请人及文件链接准确。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/wdc-action-on-a-misscrambling-incident",
+      "path": "entries/disciplinary-wdc-action-on-a-misscrambling-incident.json",
+      "verdict": "pass",
+      "sourceHash": "08ed8985609dba2149bc753251144fa6961609cf5ef73ba5159e8f5d00596eb5",
+      "reviewedTranslationHash": "00dba0c74c0c7a52911c1631c001c6164eefedc629fa8af45178c1fb1c9a0df7",
+      "evidence": [
+        "完整对照标题与正文：比赛名称、同一打乱者、无视代表指示、极度疏忽与未能发现恶意的区别、6个月仅禁止参赛、4g1例外均保留。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/wdc-announcement-blindsolving-incidents",
+      "path": "entries/disciplinary-wdc-announcement-blindsolving-incidents.json",
+      "verdict": "pass",
+      "sourceHash": "451141f1a137cce6353e162f98aaa11afa5493b35420af7fe46abed1c2976e24",
+      "reviewedTranslationHash": "6b1a01a121de6621be2a236164f7fdee8fa83f8fafce1c8fbe26992494d98ced",
+      "evidence": [
+        "完整对照标题与正文：第一案匿名、故意盲拧偷看及6个月禁赛；第二案仅特定成绩追溯DNF、证据/配合不足、一年禁赛及愿在提供证据后重启调查的条件准确。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/wdc-digest-2023-q2",
+      "path": "entries/disciplinary-wdc-digest-2023-q2.json",
+      "verdict": "correction_required",
+      "sourceHash": "f5de06930e7115fd437c0beeabe97a13180c23561b6466a59a70ecec199b3a40",
+      "reviewedTranslationHash": "79cf2532418ac2b0b3d06a41ff0186a2e137db1340a4f80e6b0636f13403332d",
+      "evidence": [
+        "完整对照标题、六案与问卷：20新调查/17结案、5个月、两场至少8次、各3个月、9个月；道歉后重新考虑而非擅加已减刑、代表独立撤职、五分之一/近二分之一均准确。性骚扰施事表达及未保存页面编辑的发布意图须澄清。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": [
+        {
+          "field": "content",
+          "old": "涉及选手在线行为、反复错误打乱、代表性骚扰",
+          "new": "涉及选手在线行为、反复错误打乱，以及一名代表实施性骚扰的调查",
+          "reason": "“代表性骚扰”存在错误分词，未清楚表达性骚扰来自一名代表。",
+          "sourceEvidence": "an investigation regarding sexual harassment from a delegate"
+        },
+        {
+          "field": "content",
+          "old": "一名组织者修改尚未公布的比赛页面，发布针对另一选手的冒犯性言论。",
+          "new": "一名组织者修改尚未公布的比赛页面，试图发布针对另一选手的冒犯性言论。",
+          "reason": "原文描述编辑目的且明确未正式保存；不能把试图发布写成已经发布。",
+          "sourceEvidence": "making edits to an unannounced competition page in order to post offensive remarks ... the changes were never officially saved"
+        }
+      ]
+    },
+    {
+      "key": "disciplinary:/posts/wdc-digest-2023-q3",
+      "path": "entries/disciplinary-wdc-digest-2023-q3.json",
+      "verdict": "pass",
+      "sourceHash": "5bd8b8100506b33b1b2e7d09cc0134b73ff6b8c84182945a2c97f4631b6f13b9",
+      "reviewedTranslationHash": "f2171c89ba6d8c680172ef30fb66185a309417825691387f4536059975fe6390",
+      "evidence": [
+        "完整对照标题与正文：27结案、6禁赛、9正式警告；受限工作人员面板、提前停表可能意外或故意、第五代计时器两次闪灯及结束不闪灯的否定条件均保留。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/wdc-digest-2023-q4",
+      "path": "entries/disciplinary-wdc-digest-2023-q4.json",
+      "verdict": "pass",
+      "sourceHash": "ad2431530b09573a650379b20e1ef9a57a7c79df54ff21398ff8f12deeab9da0",
+      "reviewedTranslationHash": "0ec9e00d6666c17c1b563c9fa9fc75361bf290bc366ba25edfd470e699f319f4",
+      "evidence": [
+        "完整对照标题与正文：2023年77调查；2020盗窃后有条件无固定结束日禁赛、2022规避、2023秋联系后6个月结束；另案至少一年、取消全部但可凭充分视频恢复部分成绩及二月卸任历史语境均保留。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/wdc-digest-beginning-of-2020",
+      "path": "entries/disciplinary-wdc-digest-beginning-of-2020.json",
+      "verdict": "correction_required",
+      "sourceHash": "09a45901257ea9ed07705971c5faf642a38aa339ed99ba73e8c8b56e681ff176",
+      "reviewedTranslationHash": "eeb08e82f0f4523c90df241c175aa72e83f4f884db23633e3ce6f7da23c84cfd",
+      "evidence": [
+        "完整对照标题与正文：İzmir Open 2020、İskender的WEC降职/WDC五年禁赛及2月6日生效、申诉结果；Ahmet三个月和2月9日通知准确。公布报告的主体被增译为WEC与WDC双方，须恢复原文第一人称。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": [
+        {
+          "field": "content",
+          "old": "鉴于决定重要，WEC 和 WDC 决定公布",
+          "new": "鉴于 WEC 和 WDC 所作决定的重要性，我们决定公布",
+          "reason": "原文只说明两个委员会所作决定重要，并以发布者“we”说明公布报告；译文擅自把两个委员会均指定为公布报告的决策主体。",
+          "sourceEvidence": "Given the importance of the decisions taken by the WEC and WDC, we have decided to publish the report of the investigation."
+        }
+      ]
+    },
+    {
+      "key": "disciplinary:/posts/wdc-digest-december-2022",
+      "path": "entries/disciplinary-wdc-digest-december-2022.json",
+      "verdict": "pass",
+      "sourceHash": "183fdd0f6529328a6137dfef6ed4e009d12001b503e7878faa41698acbab2511",
+      "reviewedTranslationHash": "81196e36c7d4d99586cc138bbfd985ecefe8b25fd7921d372cab9239627006ca",
+      "evidence": [
+        "完整对照标题与正文：规避禁赛计入最终期限、同周末两国盲拧案因年轻且立即承认仅警告、两宗盗窃调查尚未结束、29申请/16面试/8录用均准确。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/wdc-digest-march-2023",
+      "path": "entries/disciplinary-wdc-digest-march-2023.json",
+      "verdict": "correction_required",
+      "sourceHash": "3ad58e0e594048b03162b7e4e6fe1abc8b19d3429e3452e3f73b0da24616ee56",
+      "reviewedTranslationHash": "7dd60d2d39c3ac26ff2d2c1de598232f721ae8c75c29192b9774567c2a71f1e9",
+      "evidence": [
+        "完整对照标题与五案：多盲既往比赛范围；两项国家纪录平均、9个月及DNF；四阶公式、桌下预设打乱换方、正式警告而非禁赛；裁判职责与链接保留。OLL parity译名须按术语表明确为O特。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": [
+        {
+          "field": "content",
+          "old": "四阶 OLL 特殊情况公式",
+          "new": "四阶 O 特（OLL 奇偶）公式",
+          "reason": "明确原文parity这一特定情况，遵循仓库术语表Oparity (OLL Parity)=O特，避免仅称泛指的OLL特殊情况。",
+          "sourceEvidence": "the 4x4 OLL parity algorithm"
+        }
+      ]
+    },
+    {
+      "key": "disciplinary:/posts/wdc-digest-september-2022",
+      "path": "entries/disciplinary-wdc-digest-september-2022.json",
+      "verdict": "pass",
+      "sourceHash": "e247c3d40e5748a0a67ec53e028529f85498dc507a21f5504f48c9019d8444ed",
+      "reviewedTranslationHash": "c84888b221a40b6e69364ddfe5ede276f96f85a7751d75efa64c8ee16cabc479",
+      "evidence": [
+        "完整对照标题与五案：三人擅入、两人水灾加长禁赛；假报名正式警告；1误作7及国家纪录意图；延迟回复的目的；近8年后归还财物解除永久禁令均保留。Carlos姓名后仅(2014)照录，未推测完整ID。"
+      ],
+      "unresolvedNotes": [
+        "原文Carlos Miguel Pérez后仅标(2014)，译文照录。此项未补全也未事实核验，不应误标为已核实的完整WCA ID。"
+      ],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/wdc-leader-announcement-february-2021",
+      "path": "entries/disciplinary-wdc-leader-announcement-february-2021.json",
+      "verdict": "pass",
+      "sourceHash": "8c636510d099a1c5019169830e8b238b35019a158503a183383bf70c21fb99ca",
+      "reviewedTranslationHash": "b2bd01b43b7f68a9841de98439681c41d62f458ba67abe33780694652e543bc0",
+      "evidence": [
+        "完整对照标题与正文：Sebastiano原为成员、理事会选出并经在任委员会负责人及高级代表投票批准、另一申请人Alaqmaar及两份申请链接均保留。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/wdc-leader-announcement-february-2024",
+      "path": "entries/disciplinary-wdc-leader-announcement-february-2024.json",
+      "verdict": "pass",
+      "sourceHash": "2c5a9ee778ca43f2f01b0892f8faa6bac7fda28ce3d5b9216d3f8a69806046c2",
+      "reviewedTranslationHash": "421b4ac95687f6a40d9149370f02e056c0ad75176eea7e3b0d820a958da3a531",
+      "evidence": [
+        "完整对照标题与正文：Shain原为成员、动议第4节选任程序、感谢Sebastiano过去3年、唯一申请人及文件链接均准确。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/wdc-leader-application-december-2020",
+      "path": "entries/disciplinary-wdc-leader-application-december-2020.json",
+      "verdict": "pass",
+      "sourceHash": "41c71ffaab9290422ee3140ec9da60e9a2f5824b1883880fd2ee49cd496fd3d8",
+      "reviewedTranslationHash": "7e8235f9b1cf0696a5ebf7476b6e5454c21ec2e42401a2d3f17904575048f466",
+      "evidence": [
+        "完整对照标题与唯一正文段：未收到任何申请、理事会立即代任、直到找到新负责人的持续条件均准确，无擅加固定任期。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "disciplinary:/posts/wdc-monthly-digest-august-september-2019",
+      "path": "entries/disciplinary-wdc-monthly-digest-august-september-2019.json",
+      "verdict": "pass",
+      "sourceHash": "72f8cb9768799d25e08407abe1cb3c93229262ea66ba56629b1e9e4a27f3774b",
+      "reviewedTranslationHash": "e32476a8aafb0c19ac506714d07d4907dd9fffef72e4c1e8a0b12e41c5d12bcb",
+      "evidence": [
+        "完整对照标题与正文：5在办、8月下半月4结案/9月5结案/全年45；2017SHIR03、单手第一轮与决赛、2年禁赛和该比赛单手成绩取消；乌克兰报告修订尚未完成、JP近两年贡献及月底计划均保留。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    }
+  ]
+}

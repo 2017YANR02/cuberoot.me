@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/world-rubik-s-cube-championship-2009-on-october-9-11-2009-in-dusseldorf-germany",
+  "source": {
+    "key": "posts:/posts/world-rubik-s-cube-championship-2009-on-october-9-11-2009-in-dusseldorf-germany",
+    "kind": "posts",
+    "title": "World Rubik's Cube Championship 2009 on October 9-11, 2009 in Düsseldorf, Germany",
+    "date": "2009-06-10T15:21:36.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/world-rubik-s-cube-championship-2009-on-october-9-11-2009-in-dusseldorf-germany",
+    "content": "The [World Rubik's Cube Championship 2009](https://www.worldcubeassociation.org/results/c.php?i=WC2009) will take place on October 9-11, 2009 in Düsseldorf, Germany. Check out the [World Rubik's Cube Championship 2009 website](http://www.speedcubing.com/events/wc2009) for more information and registration.",
+    "hash": "3648cc08178be7c9a764f7773c2a20774bfb6720ac8cc3bdcbc9ff23898f7bfb",
+    "format": "markdown",
+    "sourceId": 479
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "3648cc08178be7c9a764f7773c2a20774bfb6720ac8cc3bdcbc9ff23898f7bfb",
+    "language": "zh-Hans",
+    "title": "2009 年世界魔方锦标赛将于 10 月 9–11 日在德国杜塞尔多夫举行",
+    "content": "[2009 年世界魔方锦标赛](https://www.worldcubeassociation.org/results/c.php?i=WC2009)将于 2009 年 10 月 9–11 日在德国杜塞尔多夫举行。更多信息及报名请见[赛事网站](http://www.speedcubing.com/events/wc2009)。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:55:00.935Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "9e1b033343a9fe852c44676530c643b93eef5c5eb616b9bf30715a189acded8a"
+}

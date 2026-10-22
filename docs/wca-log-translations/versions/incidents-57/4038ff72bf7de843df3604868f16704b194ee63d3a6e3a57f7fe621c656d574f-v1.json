@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:57",
+  "source": {
+    "key": "incidents:57",
+    "kind": "incidents",
+    "title": "Proper puzzle covers were not used for a Clock round",
+    "url": "https://www.worldcubeassociation.org/incidents/57",
+    "date": "2020-09-30T21:02:23.000Z",
+    "content": "Due to a miscommunication, Kharkiv Open 2019 did not have puzzle covers for Clocks on hand. Because of the lack of covers, some judges used a score sheet for the Clock round.\n\nVideo evidence confirms that different judges used score sheets during the Clock round. This violates Regulation A2c1:\n\n> [A2c1](https://www.worldcubeassociation.org/regulations/#A2c1)) The scrambler places a cover over the scrambled puzzle that makes it impossible for any competitors or spectators to see any part of the puzzle. The cover remains over the puzzle until the start of the attempt.\n\nIn addition, Guideline A2c1+ explicitly clarifies that paper or score sheets are not an acceptable substitute:\n\n> [A2c1+](https://www.worldcubeassociation.org/regulations/guidelines.html#A2c1+)) REMINDER In the past, score sheets have been used to cover puzzles while leaving some sides exposed. This is no longer permitted.\n\nAlthough there is no evidence anyone specifically intended to cheat, this is a serious violation of scramble secrecy. Following the Cavite Open 2 2018 precedent (see [Incident Log](https://www.worldcubeassociation.org/incidents/31)), the WRC agreed that the **Clock round should be removed**.",
+    "hash": "e4449413db73b1230e54582e6cc7f8bbda67202ddeba46060caa883a75167c55",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "魔表轮次未使用合适的遮盖物",
+    "content": "由于沟通失误，Kharkiv Open 2019 未备有魔表罩，部分裁判在魔表轮次改用成绩单遮盖。\n\n视频证实，多名裁判使用了成绩单，违反 A2c1：\n> [A2c1](https://www.worldcubeassociation.org/regulations/#A2c1) 打乱员须遮盖打乱后的魔方，使任何选手或观众都看不到任何部分，并保持遮盖至尝试开始。\n\nA2c1+ 明确说明纸张或成绩单不能替代：\n> [A2c1+](https://www.worldcubeassociation.org/regulations/guidelines.html#A2c1+) 提醒：过去曾用成绩单遮盖魔方，却仍暴露部分侧面。这种做法现已禁止。\n\n虽然没有证据表明任何人明确意图作弊，但此事严重破坏了打乱保密性。依据 Cavite Open 2 2018 的先例（[事件日志](https://www.worldcubeassociation.org/incidents/31)），WRC 同意**删除该魔表轮次**。",
+    "translatedAt": "2026-10-22T05:52:51.924Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "e4449413db73b1230e54582e6cc7f8bbda67202ddeba46060caa883a75167c55"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:131",
+  "source": {
+    "key": "incidents:131",
+    "kind": "incidents",
+    "title": "Timer flipped over during an attempt",
+    "url": "https://www.worldcubeassociation.org/incidents/131",
+    "date": "2024-10-13T05:31:13.000Z",
+    "content": "A competitor started their solve as per usual, but the timer came loose, flipped over and landed upside-down on the mat. The competitor proceeded to finish their solve before placing the timer back in position and stopping it. The competitor seemed to have been disadvantaged by an equipment malfunction through no fault of their own. A provisional extra was given.\n\nAs a reminder, from regulation 11e:\n> [11e](https://www.worldcubeassociation.org/regulations/#11e)) ...The competitor should appeal verbally or in writing to the judge and WCA Delegate at the time of the incident, before finishing the original attempt, to be eligible for an extra attempt...\n\nAlthough competitors should appeal when an incident occurs, the incident happened during Skewb, a quick event, and the impact of the timer movement may not have been apparent until the competitor tried to stop the timer. Competition Delegates are best placed to assess the overall evidence available in this case. Thus, situations like this are left to Delegate discretion, with an extra attempt being the recommendation.",
+    "hash": "328f4df097491ca7e370a45b60f643a4a2c823d98565a9aca16385e5506885cb",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "还原中计时器翻转",
+    "content": "选手正常开始还原，但计时器松脱，翻转后倒扣在垫子上。选手继续完成还原，再将计时器摆正并停表。选手似乎因器材故障、而非自身过错受损，现场给予了暂定的额外尝试。\n\n提醒，规则 [11e](https://www.worldcubeassociation.org/regulations/#11e) 规定：\n> ……为取得额外尝试资格，选手应在事件发生时、原尝试结束前，向裁判和代表口头或书面申诉……\n\n虽然应在事件发生时申诉，但本案发生在速度很快的 Skewb 项目，计时器位移的影响可能直到准备停表时才明显。现场代表最有条件综合判断证据，因此此类情况交由代表酌情处理，并建议给予额外尝试。",
+    "translatedAt": "2026-10-22T05:57:56.837Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "328f4df097491ca7e370a45b60f643a4a2c823d98565a9aca16385e5506885cb"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

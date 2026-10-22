@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:125",
+  "source": {
+    "key": "incidents:125",
+    "kind": "incidents",
+    "title": "Round re-run after scrambles were found to be \"incorrectly\" generated",
+    "url": "https://www.worldcubeassociation.org/incidents/125",
+    "date": "2024-10-13T05:21:23.000Z",
+    "content": "After a round of 6x6 and 7x7 had concluded, the staff found that the scrambles were generated under \"manual mode\" with TNoodle. They thought that this made the round invalid and decided to re-run the rounds. \n\nWhile it is typically simpler to generate scramble sets for a selected competition in TNoodle, there is no prohibition against using manual mode. As a result, it was encouraged to use the original results. However, these scorecards were discarded during the competition, as the organizers and delegates believed that they would be invalid. Therefore, the results of the \"re-run\" rounds of 6x6 and 7x7 were used.",
+    "hash": "31f9c38dadbb9df4a132ca9adf580ff62b4d871c3b58a11ffe29011a4dd19bfd",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "误以为打乱生成不正确而重赛",
+    "content": "六阶和七阶各一轮结束后，工作人员发现打乱由 TNoodle“手动模式”生成，认为轮次无效，决定重赛。\n\n通常在 TNoodle 中选择具体比赛生成打乱更简单，但并无规定禁止手动模式。因此建议采用原成绩。不过，主办方和代表认为原成绩无效，已在比赛期间丢弃成绩单，所以最终使用了六阶、七阶重赛轮次成绩。",
+    "translatedAt": "2026-10-22T05:57:56.837Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "31f9c38dadbb9df4a132ca9adf580ff62b4d871c3b58a11ffe29011a4dd19bfd"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_3",
+      "reviewedAt": "2026-10-22T06:22:42.955322Z",
+      "report": "reviews/round-1/report-3.json",
+      "sourceHash": "31f9c38dadbb9df4a132ca9adf580ff62b4d871c3b58a11ffe29011a4dd19bfd",
+      "reviewedTranslationHash": "2a0caa79eb71b7eda423217e853f3fda92d1fa20c2b2502fe23b93efc603bcd0",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

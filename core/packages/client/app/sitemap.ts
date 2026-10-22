@@ -1,3 +1,4 @@
+import { ALL_NEWS } from './[lang]/regulation/_data/news-catalog';
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { MetadataRoute } from 'next';
@@ -67,6 +68,7 @@ export const PLATFORM_SITEMAP_PATHS = PLATFORM_ROUTES
   .map((route) => `platform/${route.pattern}`);
 
 const EXTRA = [
+  ...ALL_NEWS.map(({id}) => `regulation/post/${id}`),
   ...(ALG_PUZZLES as readonly string[]).map((puzzle) => `alg/${puzzle}`),
   ...Object.entries(ALG_CATALOG).flatMap(([puzzle, sets]) =>
     sets.map((s) => `alg/${puzzle}/${s.slug}`),

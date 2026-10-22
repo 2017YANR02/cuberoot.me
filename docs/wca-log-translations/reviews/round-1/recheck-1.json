@@ -1,0 +1,76 @@
+{
+  "reviewer": "review_1",
+  "reviewedAt": "2026-10-22T06:26:33.824Z",
+  "entries": [
+    {
+      "key": "disciplinary:/posts/call-for-applicants-wca-integrity-committee-members-august-2025",
+      "sourceHash": "04318d274d1ccd29a7b5be57b0f22899df1ae9661848cca8ae3056769c25fb0f",
+      "reviewedTranslationHash": "2e49420878d8982bc6c11ae55d2b07aa1b41905c08e9b8a794a7f7c03be963c6",
+      "verdict": "pass",
+      "evidence": [
+        "重新完整对照当前标题和正文。年龄条件已改为“截至2025年9月1日已满18岁”，准确包含当日，且与其他必备条件衔接正常；招聘名额3/1/1、每周3–6小时、9月11日23:59 UTC截止及48小时确认均保留。原建议已正确应用。"
+      ],
+      "unresolvedNotes": []
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2026-q2",
+      "sourceHash": "742850af272350dfed2faf596d75b4cfa120fc735107adaf78c25c95a2433660",
+      "reviewedTranslationHash": "ef51ee4a7fd96bf7335c31a0b80341642c46751c36d971d7e165c9ff42db25af",
+      "verdict": "pass",
+      "evidence": [
+        "重新完整对照当前标题和正文。首案已写为对承办该选手擅长项目“感到不安”，准确保留uncomfortable的感受而未扩展为拒绝承办；后续回应不满意、短期禁赛及另两案正式警告的关系未变。10立案/12结案、2/4/6统计及人事名单一致。原建议已正确应用。"
+      ],
+      "unresolvedNotes": []
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2026-q3",
+      "sourceHash": "0f0378d09864f1d9cc898a125f6d825ee8ecdc38d371430fbff091e4b1406031",
+      "reviewedTranslationHash": "dbd8ee497df2a3f0d8860db96c6a574e70716b6512b2271842068bb38b113d9f",
+      "verdict": "pass",
+      "evidence": [
+        "重新完整对照当前标题和正文。Skewb段两处均改为“洲纪录”，单次纪录和追溯撤销的对象对应一致；仍保留取消两项成绩、可能意外或故意的未定性质，未扩大为确认故意作弊；17/10与6/3/1及其他案件、保护小组上下文保持准确。两项建议均正确应用。"
+      ],
+      "unresolvedNotes": []
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-report-on-a-case-of-cheating-sep-2025",
+      "sourceHash": "4b2e09eadf615c68880831b7bbd61de22d9164ed8698e7358f36469060fb1de6",
+      "reviewedTranslationHash": "f3c4dc0cdade9b859b11ce87469b11065bd4cba35f279d99ca976301d6f5bdc7",
+      "verdict": "pass",
+      "evidence": [
+        "重新完整对照当前标题和官网公告正文。已删除缩窄范围的“相关”，现在明确取消所有存在成绩合法性疑虑的比赛中该选手的计时成绩；前句三阶最少步例外、跨越数年及两年六个月仅禁止参赛均保留。因年龄完全匿名和劝阻公开姓名仍在。原建议已正确应用；通过仅指本公告正文。"
+      ],
+      "unresolvedNotes": []
+    },
+    {
+      "key": "disciplinary:/posts/wdc-digest-2023-q2",
+      "sourceHash": "f5de06930e7115fd437c0beeabe97a13180c23561b6466a59a70ecec199b3a40",
+      "reviewedTranslationHash": "cd68a0311d39c099f812b79c19b615d586e4a18470119be2f85683cfaf9b641f",
+      "verdict": "pass",
+      "evidence": [
+        "重新完整对照当前标题与六案、问卷正文。第一案明确“一名代表实施性骚扰的调查”，已消除“代表性骚扰”的分词歧义；第六案改为“试图发布”，与未正式保存而截图传播的下文一致。警告与代表独立撤职、各案禁赛期限及问卷比例均保持准确。两项建议均正确应用。"
+      ],
+      "unresolvedNotes": []
+    },
+    {
+      "key": "disciplinary:/posts/wdc-digest-beginning-of-2020",
+      "sourceHash": "09a45901257ea9ed07705971c5faf642a38aa339ed99ba73e8c8b56e681ff176",
+      "reviewedTranslationHash": "56e8e247101dc51bff6820509bf257d2b9fa2fb72a5000b924556b051d99cbcd",
+      "verdict": "pass",
+      "evidence": [
+        "重新完整对照当前标题与正文。报告公布句已恢复“鉴于WEC和WDC所作决定的重要性，我们决定公布”，不再擅定两个委员会共同作出公布决定；上下文WEC降职、WDC五年禁赛、另一选手三个月禁赛和2月6日/9日信息仍准确。原建议已正确应用。"
+      ],
+      "unresolvedNotes": []
+    },
+    {
+      "key": "disciplinary:/posts/wdc-digest-march-2023",
+      "sourceHash": "3ad58e0e594048b03162b7e4e6fe1abc8b19d3429e3452e3f73b0da24616ee56",
+      "reviewedTranslationHash": "3fa61fad73aa02452747a50f9c35df60a2d43dabecbbf136bffd22d6a3c7f8ed",
+      "verdict": "pass",
+      "evidence": [
+        "重新完整对照当前标题与五案正文。第三案已明确为“四阶O特（OLL奇偶）公式”，准确对应4x4 OLL parity；腿上记录、未记住公式、不了解违规、相关成绩DNF及正式警告的上下文完整。另案九个月禁赛、两个国家纪录平均、换用预设打乱魔方的证据过程保留。原建议已正确应用。"
+      ],
+      "unresolvedNotes": []
+    }
+  ]
+}

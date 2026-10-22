@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/regulations-and-guidelines-april-3-2014",
+  "source": {
+    "key": "posts:/posts/regulations-and-guidelines-april-3-2014",
+    "kind": "posts",
+    "title": "Regulations and Guidelines: April 3, 2014",
+    "date": "2014-04-04T04:23:33.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/regulations-and-guidelines-april-3-2014",
+    "content": "New versions of the WCA [Regulations](https://www.worldcubeassociation.org/regulations/) and [Guidelines](https://www.worldcubeassociation.org/regulations/guidelines.html) are going into effect April 3, 2014. This includes the following changes:\n\n- Painted/printed colours are [permitted again](https://www.worldcubeassociation.org/regulations/#3d). ( [#166](https://github.com/cubing/wca-documents/issues/166) / [5035dec](https://github.com/cubing/wca-documents/commit/5035dec765237e08fbd07e5a9f0edddd1fec30de))\n- Tiles for any puzzle may be [up to 1.5mm](https://www.worldcubeassociation.org/regulations/#3d3). In order to allow certain popular brands, Megaminx tiles may be slightly thicker than 1.5mm (at the discretion of the Delegate). ( [#166](https://github.com/cubing/wca-documents/issues/166) / [5035dec](https://github.com/cubing/wca-documents/commit/5035dec765237e08fbd07e5a9f0edddd1fec30de))\n- Various small simplifications and corrections. ( [official-2014-01-01... official-2014-04-03^](https://github.com/cubing/wca-documents/compare/official-2014-01-01...official-2014-04-03%5E#files_bucket))\n\nFor the exact changes regarding painted/printed colours and tiles, please [view the differences on GitHub](https://github.com/cubing/wca-documents/commit/official-2014-04-03).\n\n<!--break-->\n\nThe current Regulations are always available from [https://www.worldcubeassociation.org/regulations/](https://www.worldcubeassociation.org/regulations/)   \n\n For an exact list of all changes compared to January 1, [view differences on GitHub](https://github.com/cubing/wca-documents/compare/official-2014-01-01...official-2014-04-03#files_bucket).",
+    "hash": "532e127b3a40ba17173afc2d342a0239e6fa0c7d725f46cce22f872120eca363",
+    "format": "markdown",
+    "sourceId": 3319
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "532e127b3a40ba17173afc2d342a0239e6fa0c7d725f46cce22f872120eca363",
+    "language": "zh-Hans",
+    "title": "规则与指南更新：2014 年 4 月 3 日",
+    "content": "新版 WCA [规则](https://www.worldcubeassociation.org/regulations/)和[指南](https://www.worldcubeassociation.org/regulations/guidelines.html)将于 2014 年 4 月 3 日生效，包含以下修改：\n\n- [重新允许](https://www.worldcubeassociation.org/regulations/#3d)使用涂绘或印刷的颜色。（[#166](https://github.com/cubing/wca-documents/issues/166) / [5035dec](https://github.com/cubing/wca-documents/commit/5035dec765237e08fbd07e5a9f0edddd1fec30de)）\n- 任何魔方的贴片厚度均可[不超过 1.5 毫米](https://www.worldcubeassociation.org/regulations/#3d3)。为允许某些常见品牌参赛，五魔贴片可以略厚于 1.5 毫米，由代表酌情判断。（[#166](https://github.com/cubing/wca-documents/issues/166) / [5035dec](https://github.com/cubing/wca-documents/commit/5035dec765237e08fbd07e5a9f0edddd1fec30de)）\n- 其他小幅简化和修正。（[official-2014-01-01... official-2014-04-03^](https://github.com/cubing/wca-documents/compare/official-2014-01-01...official-2014-04-03%5E#files_bucket)）\n\n有关涂绘、印刷颜色及贴片的具体修改，请[在 GitHub 查看差异](https://github.com/cubing/wca-documents/commit/official-2014-04-03)。\n\n现行规则始终可在 [https://www.worldcubeassociation.org/regulations/](https://www.worldcubeassociation.org/regulations/) 查看。\n\n与 1 月 1 日版本相比的全部具体修改，请[在 GitHub 查看差异](https://github.com/cubing/wca-documents/compare/official-2014-01-01...official-2014-04-03#files_bucket)。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:55:00.916Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "ed1196f149db613f1edc46a30efb28482b2d7f05d2828b761d246f446a3b02be"
+}

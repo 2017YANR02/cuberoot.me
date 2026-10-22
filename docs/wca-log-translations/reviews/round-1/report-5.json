@@ -1,0 +1,453 @@
+{
+  "reviewer": "review_5",
+  "reviewedAt": "2026-10-22T06:22:53.079981Z",
+  "entries": [
+    {
+      "key": "incidents:39",
+      "path": "entries/incidents-39.json",
+      "verdict": "pass",
+      "sourceHash": "65a476aaae4a44481cda8bb34cd2616909eceae33b3acf75e8c8b886094a24d6",
+      "reviewedTranslationHash": "d023a6eb2f394b29fe2c1ff9fa99b4eba5a4f9ac8e4f69673ae30b198ec25e33",
+      "evidence": [
+        "标题的协助调查、四阶盲拧重复打乱、两人尚未收到该打乱、出于帮忙而非作弊的意图，以及维持代表决定另生成打乱，均对应原文。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:4",
+      "path": "entries/incidents-4.json",
+      "verdict": "pending_source_verification",
+      "sourceHash": "e67f78eb5b4d983d627eded9b262191058c68b3a90b4cce6457e8da30ee184f2",
+      "reviewedTranslationHash": "dcc2c349b0396f620eef98276af1759ab5f41ac87b1cc37cd92b7308b4d41bb8",
+      "evidence": [
+        "标题慢计时、7.51 秒、视频超过 7 秒、抬手后停顿、撤下计时器及给予额外尝试均按原文保留；没有擅改数字。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [
+        "原文记载成绩 7.51 秒，又仅以视频用时超过 7 秒解释慢计时；该比较不足以单独说明偏慢。译文忠实保留数字，需源方澄清，不能自行改为超过 7.51 秒或其他值。"
+      ],
+      "corrections": []
+    },
+    {
+      "key": "incidents:40",
+      "path": "entries/incidents-40.json",
+      "verdict": "pass",
+      "sourceHash": "3b09903e5c7495bd9a6942ea51d1033c16cf1be9bfbe96ed1fd41074b25890c6",
+      "reviewedTranslationHash": "eacb855e38cabcf06a069b3ab1756c6429b11bfa700a8b9051ed918f035198ec",
+      "evidence": [
+        "提前参加三阶决赛、赶飞机和赛程延误、未使用的单手备用打乱、在场前 20 名、1h++ 的建议强度及全部尝试获准均保留。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:41",
+      "path": "entries/incidents-41.json",
+      "verdict": "pass",
+      "sourceHash": "635d89d1b558b822a20115f6cae2613be4897854035784cb201387693a8fcf1a",
+      "reviewedTranslationHash": "fc23ee747f2ddf4fc8cd0fab0ece60db99424aad8b01e5a4788c4cf5fc1dc1ad",
+      "evidence": [
+        "红面贴纸色差、前 4 次不合规而最后一次合规、拒绝额外尝试、及格线前两次 DNS、最终删除成绩的链条完整，未混成 DNF。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:42",
+      "path": "entries/incidents-42.json",
+      "verdict": "pass",
+      "sourceHash": "0a03822289e885b1b3a0321f61ee3d8bbc9c2011c96939c5c22dd1f887e7f8e1",
+      "reviewedTranslationHash": "c5df82e48719a90c64e8ea17034569fb85d0480ab3a653cc9f856b23f2e8b27a",
+      "evidence": [
+        "PVC 涂层与不透明黑色贴纸的先例、3d/3h 所防范的优势、允许使用及将更新规则的历史表述均对应；未扩大为任意改装均合法。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:43",
+      "path": "entries/incidents-43.json",
+      "verdict": "pass",
+      "sourceHash": "1cc71cfb6e3402b4ff892c87a9af90e9294cdb91e4cc0e0f0e428444f19c617f",
+      "reviewedTranslationHash": "dab571ba91bb7332cf3a35b9e4f379525c6ba9773197a054a5146e9d55030a5a",
+      "evidence": [
+        "未写申报数量、裁判数错并给出全部魔方、暂定额外尝试、H1a 至少 2 个及 H1a1 不得变更、最终按原提交数量计算均完整。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:44",
+      "path": "entries/incidents-44.json",
+      "verdict": "pass",
+      "sourceHash": "2b61733c7259454f531eb10b9174f780424811bab43825f635b6d45bae799d1e",
+      "reviewedTranslationHash": "1d514758da8e0c9f5af78199474f874b401d9ebd72e1fe67c132fe062b3906b3",
+      "evidence": [
+        "开头新增 2k6 的后补说明，与正文当时结构下 A1c 或许不适用、原始立法意图、2i1 辅助用品允许使用均保留。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:45",
+      "path": "entries/incidents-45.json",
+      "verdict": "pass",
+      "sourceHash": "8fad922ffd4454e051177c633256b40246e5a7c175c8fcd4e42913de79ba8c40",
+      "reviewedTranslationHash": "945ed9828b7c03c2b8988bfca7ca12c86016e2b45ac7006470bf0b5ed2768fdc",
+      "evidence": [
+        "落腿再弹回垫子、A6e 的 DNF 原则及未转动时可酌情 +2、A6e+ 触碰认定、视频区别于日志 23 与本案 +2 结论对应。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:46",
+      "path": "entries/incidents-46.json",
+      "verdict": "pass",
+      "sourceHash": "0326828b6f6bd73688fcec2d4d8a207eddf6a5a6f71b4b17128455ca3022e1d5",
+      "reviewedTranslationHash": "20538e59a99454c5f69b376b0d5b35928230c303a59c9740e4f1ba119bb75b92",
+      "evidence": [
+        "仅有直播视频且无法读清计时器或显示屏、双方签名及缺乏可靠视频证据，所以维持原记录；未把声称记错写成已证实。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:47",
+      "path": "entries/incidents-47.json",
+      "verdict": "pass",
+      "sourceHash": "9bee597fd3f209a8c81d0b6212be070f346b72592fccd46e1a61a5d74014a888",
+      "reviewedTranslationHash": "06b933951b0b224338ff1732fbb656c8c9d27040538d2b3f9fbc708a663dd3df",
+      "evidence": [
+        "狭小房间存在作弊可能，与无相同解法、代表监督、无利用情况作弊的证据三项理由均保留；未把可能作弊写成实际作弊。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:48",
+      "path": "entries/incidents-48.json",
+      "verdict": "correction_required",
+      "sourceHash": "981d56eda1c65f818adafc21319f85602bb5581c33927a8ce54a9cdcdeab5b7a",
+      "reviewedTranslationHash": "1eb75e980ac17052f659d73d5c023e4110f0123dd7d1da84f0382581bafa90e2",
+      "evidence": [
+        "第二轮漏签、赛后才发现、A7c4 的 DNF 和 A7c4+ 不适用、删除决赛成绩及他人/自身错误两种原则均在译文；标题和开头却将 did not qualify 推断为不具备资格。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [
+        "现有 review.notes 已指出原文开头及标题称未晋级，但后文要求删除决赛成绩。不得靠译者推断将其消解为不具备资格；建议恢复未晋级，保留冲突供源方核实。修正后仍不能作为源事实已核实。"
+      ],
+      "corrections": [
+        {
+          "field": "title",
+          "old": "选手某次尝试未签名，因而不具备决赛资格",
+          "new": "选手某次尝试未签名，且未晋级决赛",
+          "reason": "原题陈述 did not qualify；当前译文新增因果并以资格解释消解源文前后冲突，应恢复原题表述。",
+          "sourceEvidence": "A competitor did not sign for an attempt and did not qualify for the finals"
+        },
+        {
+          "field": "content",
+          "old": "一名选手在第二轮某次尝试中未签名，因而不具备决赛资格；赛后才发现此事。",
+          "new": "一名选手在第二轮某次尝试中未签名，且未晋级决赛；赛后才发现此事。",
+          "reason": "原文说未晋级而非仅不具备资格；不得为与后文删除决赛成绩相容而推断改写，原文冲突另记 unresolved。",
+          "sourceEvidence": "A competitor did not sign for an attempt in R2 and did not qualify for the final round. This was discovered after the competition."
+        }
+      ]
+    },
+    {
+      "key": "incidents:49",
+      "path": "entries/incidents-49.json",
+      "verdict": "pass",
+      "sourceHash": "98c8552d6c5017423d180d4a5a9f6a786524660d353d7c530889b585fea9a864",
+      "reviewedTranslationHash": "431c86c4cedc4a2ba9abfaea0a96595d2abd00af0673bc907e32260a036c0757",
+      "evidence": [
+        "第二轮三阶盲拧、选手主动报告可能在眼罩完全戴好前转动、暂定额外尝试、B4a/B4b 与视频不足判断合规、接受额外成绩均保留。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:5",
+      "path": "entries/incidents-5.json",
+      "verdict": "pass",
+      "sourceHash": "617ebe15fc7cef6607dfe907b0c127961c6c09f11f8b5af32e0b170394029c67",
+      "reviewedTranslationHash": "a933eadaf814c474e807b6a0d1b75d465ca26298109925cab83addaa6001a6dd",
+      "evidence": [
+        "裁判未使用遮挡板、预备额外尝试、理事会仍保留原成绩及指向更新裁定的日志 21 链接完整，未声称已核读外链。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:50",
+      "path": "entries/incidents-50.json",
+      "verdict": "pass",
+      "sourceHash": "55cbb798755d4ba8136c3ff65d88cd71c80940bc4b4e7e4853d771aa7f8a0747",
+      "reviewedTranslationHash": "1af8b0add65e2c74ba2afed99e30a1d17ca99a9fd3e69522400d5f8d052ce723",
+      "evidence": [
+        "可能手刀停表、A6d 双手掌心向下及 +2 原则、仅逐帧可辨而不处罚、本案不受 2024 年 9 月 27 日新处理方式影响均保留。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:51",
+      "path": "entries/incidents-51.json",
+      "verdict": "pass",
+      "sourceHash": "687cb2f9a8b901630aaac5f0a48bcddb2a2523fdda6ae65c98d99fee24587edd",
+      "reviewedTranslationHash": "799be30244dbcce64b1e35839fd98b51e8b889a6d90308e3e7433627af300507",
+      "evidence": [
+        "双方已签名、代表认为很可能记错、仅小数差异、XX.X6/XX.X7 与 10.507/10.57/10.53 三组数值、三项判断条件及非普遍裁定限制完整。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:52",
+      "path": "entries/incidents-52.json",
+      "verdict": "pass",
+      "sourceHash": "6239f839e05e015ff600e248a69be5d8ecd97ca9a41937e5d3bfbac97e3c6edc",
+      "reviewedTranslationHash": "6a35cba04e86f514be35b673ddb6a3631cae167e3cf076353e9351e0bbfda0d6",
+      "evidence": [
+        "组织失误造成重复打乱、暂改部分为 DNF、全部第二次均重复、两次取最佳改一次取最佳及追溯删除全部第二次范围均准确。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:53",
+      "path": "entries/incidents-53.json",
+      "verdict": "pending_source_verification",
+      "sourceHash": "cc1f586a301614c5dfa289fa3484e073487634b2a600941ce4c587259d5cd257",
+      "reviewedTranslationHash": "1ab9b35f27e38dfcfe27de55481a12cc20169de430489f96740a5993cb841afd",
+      "evidence": [
+        "不熟悉 Skewb 记号、超过半数错误且明显不同、三轮改两轮、以前轮定排名均保留；按现有备注，second attempts 与取消第三轮的冲突也明确保留。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [
+        "现有 review.notes 所指冲突成立：原文由三轮改为两轮、以前轮定排名，却写 removing all second attempts。译文以“原文接着称”忠实标注保留；到底应删除何轮或哪些尝试仍待源方确认。"
+      ],
+      "corrections": []
+    },
+    {
+      "key": "incidents:54",
+      "path": "entries/incidents-54.json",
+      "verdict": "pass",
+      "sourceHash": "9c8228a88ae8a484742bafa17e6aff8c8bc74cd404fc77991fc01bad6ca94209",
+      "reviewedTranslationHash": "331fcf3e27bff959494c24087e706d2ea2bcb17b4463cc341ed62a2b6e48c309",
+      "evidence": [
+        "五阶盲拧超过且接近 10 分钟、沟通失误无秒表、视频估算、整秒四舍五入、使用原时间及 Nacional Perubik 2016 引述均对应。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:55",
+      "path": "entries/incidents-55.json",
+      "verdict": "pass",
+      "sourceHash": "799869920d673a4f3450049d37e89d6148f49db541d8c5eabb06108cbd148589",
+      "reviewedTranslationHash": "272481ec4155d60365bb55cf9c6355eb343cd84170a76fe712d009af1a2bf528",
+      "evidence": [
+        "签错栏的 DNS、经验足够而 A7g 不适用，和 Altona Algorithms Attempt 2 2021 非故意且立即报告的保留成绩例外分开；三项理由与签名用途完整。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:56",
+      "path": "entries/incidents-56.json",
+      "verdict": "pass",
+      "sourceHash": "cde8cd8c5f44fd98526319fd5725c0b1c725692f04acbaee8b3176cd989072fb",
+      "reviewedTranslationHash": "2b28b2b8195ed40da2109efdc2b0ce769f7216d83da54c4a42f3c38a3ad15051",
+      "evidence": [
+        "WDC 多轮作弊结论、首轮 DNF 与后续轮删除区别、自始无效解释、至少淘汰 25%、无辜选手保留成绩及仅向后适用均完整，未添加禁赛时长。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:57",
+      "path": "entries/incidents-57.json",
+      "verdict": "pass",
+      "sourceHash": "e4449413db73b1230e54582e6cc7f8bbda67202ddeba46060caa883a75167c55",
+      "reviewedTranslationHash": "4038ff72bf7de843df3604868f16704b194ee63d3a6e3a57f7fe621c656d574f",
+      "evidence": [
+        "Kharkiv Open 2019 缺魔表罩、视频证实用成绩单、A2c1/A2c1+、无意图作弊证据但严重破坏保密、依据 Cavite Open 2 2018 删除整个魔表轮次均对应。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:58",
+      "path": "entries/incidents-58.json",
+      "verdict": "pass",
+      "sourceHash": "ca03a59741787e1e8ae4b2a152815bffd32bede3a0ce06ca004764f33dae6bf8",
+      "reviewedTranslationHash": "f3a3de4597cead4613567a0050c47096800fc13068f3c5c70346f1fbab5ab4a6",
+      "evidence": [
+        "后补说明 2j1a 现可 DNS 与历史原案删除成绩区分清楚；未履行裁判任务、尝试前取消资格、旧 DNF 条文及 9f5/9f5+ 推理均保留。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:59",
+      "path": "entries/incidents-59.json",
+      "verdict": "correction_required",
+      "sourceHash": "d442e1da399cae9a9b800f9794dd799303ca2e03951c00033bf62947cc7df335",
+      "reviewedTranslationHash": "74e2e68ed6b26e94874a47393c92f076cc8cd926197c81b5a6234b4571fc7e6f",
+      "evidence": [
+        "正文的三阶魔方、积木标记而非粘贴、不得违反其他规则、需代表预先批准及电子辅助/不公平优势限制完整；标题遗漏原题明确的三阶魔方对象。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": [
+        {
+          "field": "title",
+          "old": "最少步中使用乐高积木替代贴纸作为标记",
+          "new": "最少步中使用乐高积木替代贴纸作为三阶魔方上的标记",
+          "reason": "补回原题明确限定的三阶魔方对象，避免标题遗漏适用对象。",
+          "sourceEvidence": "Use of a 3x3x3 Cube with LEGO Pieces instead of stickers in Fewest Moves Solving"
+        }
+      ]
+    },
+    {
+      "key": "incidents:6",
+      "path": "entries/incidents-6.json",
+      "verdict": "pass",
+      "sourceHash": "f8eaec0db956c10941aef32d4ac737e09b5003aadd7189818c14a43eec3c91cc",
+      "reviewedTranslationHash": "91016636c94bca5a8491cbcf01e30487961b837a6344da64306ffb9bcd4602d7",
+      "evidence": [
+        "五阶盲拧成功、成绩单漏记、由选手视频恢复时间并作为正式成绩，标题和全部正文均对应。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:60",
+      "path": "entries/incidents-60.json",
+      "verdict": "pass",
+      "sourceHash": "c0c63185b8e5200799531c66230d625c89e5bff1c1569f1171db492c930f1549",
+      "reviewedTranslationHash": "c420c2e54e3d845b8e5a387e393683082482a938b0bb05fe2449be93466ee6a6",
+      "evidence": [
+        "首次传递员自行捡块、选手未求助且未谋不公平优势、额外尝试三理由、若有原时间优先采用及掉块成绩推测不佳的折中解释完整。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:61",
+      "path": "entries/incidents-61.json",
+      "verdict": "pass",
+      "sourceHash": "90a9c20d23332cb61d25baf0a3a13d4b67b7fdbf4ce73b60f03725e61f6b23da",
+      "reviewedTranslationHash": "4d338f2e8a4bf1ce77db83912e633737590a0b13d64f98b2ede5ec375cb872da",
+      "evidence": [
+        "约 17.1 秒、正确时点未听见 8/12 秒提示、原 DNF 经申诉被理事会推翻、可能有优势也可能没有、无额外尝试而保留原时间四理由均完整。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:62",
+      "path": "entries/incidents-62.json",
+      "verdict": "pending_source_verification",
+      "sourceHash": "62d4219783f6c42486e9c392b5afb6d03cea19c8680cf20902dc59ffd44d4709",
+      "reviewedTranslationHash": "39bc3955df8e872da4a16558083496e0a1e08caf8bcba23aaa812478fd5250c3",
+      "evidence": [
+        "七阶两个中心盖、代表尚待查规则、停表时未装回、暂定额外后仍判 DNF均对应；标题选手询问而正文裁判询问的主体差别忠实保留。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [
+        "原文标题说选手询问，正文明确说裁判询问代表；可能有转述关系，但所给正文未说明。译文忠实保留，不推断谁直接提出询问，待源方澄清。"
+      ],
+      "corrections": []
+    },
+    {
+      "key": "incidents:63",
+      "path": "entries/incidents-63.json",
+      "verdict": "pass",
+      "sourceHash": "15081ab9bf105745a037487f810fafebf7041b34bee806a1ddcb4006ebe9894c",
+      "reviewedTranslationHash": "9c0be2aed2b8ed6da3bc7ee5bce88997c859aa504ad7f5592acea16d9b2978ee",
+      "evidence": [
+        "五魔观察中非故意错位与可能违规、11f 视频复核、无一帧显示超过允许 36º、最终不判 DNF 的证据强度均对应。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:65",
+      "path": "entries/incidents-65.json",
+      "verdict": "pass",
+      "sourceHash": "2682cc8bd669484fae8b80c17307c03e15d462735b6f110feef4fd4caa1ba9bf",
+      "reviewedTranslationHash": "dfe51696288a8e7dadcdbb9af0c302d181a32df529701d3da8fba3653499b933",
+      "evidence": [
+        "赛后主动联系、可能眼罩未完全戴好即转动、B4a/B4b 及 DNF 原则、正常速度审视频、不太可能获益而成绩有效均保留。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:66",
+      "path": "entries/incidents-66.json",
+      "verdict": "pass",
+      "sourceHash": "ab6ce632f8f7b38a1660fea135357fbf82b64955d80d4ade82cdc480e2e23ce0",
+      "reviewedTranslationHash": "e0868b01f7f25bc12f8ef4a5169613655c07af84511bb82b18c4edfe03586859",
+      "evidence": [
+        "2025 年 3h4d 的后补说明、不遮挡内部钟面、侧边而非平面位置、代表判断无优势和 WRC 不太可能获益的限定完整。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:67",
+      "path": "entries/incidents-67.json",
+      "verdict": "pass",
+      "sourceHash": "ca4b8fc1ec04246727bc9fe8e3fc2cfac08b8c5d426faad737b7521ee44bdba0",
+      "reviewedTranslationHash": "1f73ba9718057357590774c4aca0ffe899303222c082ae2c1a8274b42be90923",
+      "evidence": [
+        "赛后发现 Square-1 错乱、无法额外且比正式打乱简单故 DNF，以及 11i 后来更严格的附注均保留。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:69",
+      "path": "entries/incidents-69.json",
+      "verdict": "pass",
+      "sourceHash": "d715041f7053c0a1d09a9d5e5b5ec58671ff8725c44f72cfa103e1cb91ae1acc",
+      "reviewedTranslationHash": "ac0c47578c547e7a5a8ee6c55f2cea8b36317d87027da797e0f7118375b8dfd0",
+      "evidence": [
+        "四阶盲拧 DNF 后、签名前声称受干扰、代表额外但 WRC 保留原成绩、三种申请时点及强烈推荐前两种的公平性理由完整。",
+        "已完整对照所给 source.title/content 与 translation.title/content，并读取 review.notes；仅审校所给文本，未联网、未核验外链或匿名者身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/start-up-of-the-wca-financial-committee",
+  "source": {
+    "key": "posts:/posts/start-up-of-the-wca-financial-committee",
+    "kind": "posts",
+    "title": "Start up of the WCA Financial Committee",
+    "date": "2017-06-27T05:25:59.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/start-up-of-the-wca-financial-committee",
+    "content": "Dear WCA Community,\n\nThe World Cube Association made the next step towards becoming a non-profit organization and formed a new committee: the **WCA Financial Committee** (WFC).\nThe WFC consist of the following members:\nTreasurer: Chris Hardwick (US)\nCommittee members: Chris Wright (United Kingdom) and James Molloy (United Kingdom).\n\nThe team is currently building up and doing the necessary research to handle their designated tasks. Some software adjustments were made by the WCA Software Team to accommodate the needs of the new committee. The new email address is <finance@worldcubeassociation.org>, which is the default, public and official email address of the WCA Financial Committee.\n\nThe WFC is responsible for everything regarding finances within the WCA. This includes an annual budget proposal, managing finances and much more. To read about the WFC’s full description of responsibilities, please take a look at our By-Laws:\n\n*1. The WCA Financial Committee is an Advisory Committee of the WCA with the following rights and duties:\n1.1. Creating an annual budget proposal for the WCA.\n1.2 Managing the finances and accounts of the WCA in accordance with the approved annual budget proposal.\n1.3 Paying invoices and taxes that are directed to the WCA, after procuration by the WCA Board of Directors.\n1.4 Reporting and advising on a quarterly basis to the WCA Board of Directors on the finances of the WCA.\n1.5 Reporting on a periodic basis to external organizations on the finances of the WCA, based on all applicable legal requirements.\n1.6 Appointing and supporting financial auditors based on all applicable legal requirements.\n2. The Leader of the WCA Financial Committee is the Treasurer of the WCA.*\n\nBest regards,\nLinus Fresz, on behalf of the World Cube Association",
+    "hash": "85e950a4b8844ec2bf015e815b9c17d17c3944e09026f41630b535abae1c909f",
+    "format": "markdown",
+    "sourceId": 7528
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "85e950a4b8844ec2bf015e815b9c17d17c3944e09026f41630b535abae1c909f",
+    "language": "zh-Hans",
+    "title": "WCA 财务委员会成立",
+    "content": "各位 WCA 社区成员：\n\n世界魔方协会向成为非营利组织又迈出了一步，成立了新的委员会——**WCA 财务委员会**（WFC）。\nWFC 由以下成员组成：\n\n- 财务主管：Chris Hardwick（美国）。\n- 委员会成员：Chris Wright（英国）及 James Molloy（英国）。\n\n团队目前正在组建，并开展履行职责所需的调研。WCA 软件团队已作出一些软件调整，以满足新委员会的需要。新邮箱为 <finance@worldcubeassociation.org>，这是 WCA 财务委员会默认使用、面向公众的官方邮箱。\n\nWFC 负责 WCA 内部的一切财务事务，包括提出年度预算、管理财务等。完整职责载于章程：\n\n*1. WCA 财务委员会是 WCA 的咨询委员会，拥有以下权利与职责：*\n\n*1.1. 为 WCA 制定年度预算提案。*\n\n*1.2. 按照获批准的年度预算提案，管理 WCA 的财务与账目。*\n\n*1.3. 经 WCA 董事会授权后，支付 WCA 应付的账单及税款。*\n\n*1.4. 每季度向 WCA 董事会汇报财务情况，并提供建议。*\n\n*1.5. 按照所有适用的法律要求，定期向外部机构报告 WCA 的财务情况。*\n\n*1.6. 按照所有适用的法律要求，任命并协助财务审计人员。*\n\n*2. WCA 财务委员会负责人兼任 WCA 财务主管。*\n\n此致\nLinus Fresz，代表世界魔方协会",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:55:00.990Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "2131a9e6dcb5ecaaca49cc1c1fa1f2ae4e11d47fb158e5722493d826dfc0d423"
+}

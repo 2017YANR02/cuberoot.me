@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:2",
+  "source": {
+    "key": "incidents:2",
+    "kind": "incidents",
+    "title": "A competitor used one cube with a logo in a Multi-Blind attempt ",
+    "url": "https://www.worldcubeassociation.org/incidents/2",
+    "date": "2018-03-09T11:00:40.000Z",
+    "content": "DISCLAIMER: As of 2025, there is now a clear regulation, regulation [3k2b](https://www.worldcubeassociation.org/regulations/#3k2b), that states that cubes with a logo during multiblind should count as unsolved. \n\nA competitor used a cube with a logo in his Multi-Blind attempt. This was only found after the attempt.\nCurrently, according to [3k2](https://www.worldcubeassociation.org/regulations/#3k2), using a non-permitted puzzle results in DNF of the attempt. As this would be a very harsh consequence in Multi-Blind, the WRC has decided count the non-permitted puzzle as unsolved, without affecting other puzzles\nThe WRC is discussing how to revise the Regulations to reflect this policy (see [GitHub issue](https://github.com/thewca/wca-regulations/issues/545)).",
+    "hash": "c42942132e22a9959fccafa1b2eaa9caa2278045015fb0924f4f56d1796105d1",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "选手在多盲中使用了一个带标志的魔方",
+    "content": "说明：截至 2025 年，规则 [3k2b](https://www.worldcubeassociation.org/regulations/#3k2b) 已明确规定，多盲中带标志的魔方应计为未还原。\n\n一名选手在多盲中使用了一个带标志的魔方，直到该次尝试结束后才被发现。按当时规则 [3k2](https://www.worldcubeassociation.org/regulations/#3k2)，使用不允许的魔方会导致整次尝试 DNF。由于这对多盲而言后果过于严厉，WRC 决定仅将不符合规定的那个魔方计为未还原，不影响其他魔方。WRC 正在讨论如何修改规则以体现这一处理原则（见 [GitHub issue](https://github.com/thewca/wca-regulations/issues/545)）。",
+    "translatedAt": "2026-10-22T05:48:51.542Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "c42942132e22a9959fccafa1b2eaa9caa2278045015fb0924f4f56d1796105d1"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_4",
+      "reviewedAt": "2026-10-22T06:22:38.727845Z",
+      "report": "reviews/round-1/report-4.json",
+      "sourceHash": "c42942132e22a9959fccafa1b2eaa9caa2278045015fb0924f4f56d1796105d1",
+      "reviewedTranslationHash": "6c5cf61c9b7cd8ca5c6e65a8ecde62162f24248872e8d1a48c7621314c40b09f",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

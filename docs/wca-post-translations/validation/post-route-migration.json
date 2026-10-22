@@ -1,0 +1,43 @@
+{
+  "checkedAt": "2026-10-22T09:09:35.274Z",
+  "route": "/zh/regulation/post",
+  "statement": "/zh/regulation/post/wic-investigation-2026",
+  "hubEntry": "全部公告",
+  "httpChecks": [
+    {
+      "path": "/zh/regulation/post",
+      "status": 200
+    },
+    {
+      "path": "/zh/regulation/post/wic-investigation-2026",
+      "status": 200
+    },
+    {
+      "path": "/zh/regulation/news",
+      "status": 404
+    },
+    {
+      "path": "/zh/regulation/news/wic-investigation-2026",
+      "status": 404
+    },
+    {
+      "path": "/regulation/post",
+      "status": 200
+    },
+    {
+      "path": "/regulation/news",
+      "status": 404
+    }
+  ],
+  "redirects": false,
+  "tests": {
+    "passed": 15,
+    "failed": 0,
+    "files": [
+      "page-metadata-coverage.test.ts",
+      "page_notices.test.ts"
+    ]
+  },
+  "browserVerification": "Computer-use transport closed; HTTP response and rendered HTML confirmed. No new screenshot captured.",
+  "publication": "local_uncommitted"
+}

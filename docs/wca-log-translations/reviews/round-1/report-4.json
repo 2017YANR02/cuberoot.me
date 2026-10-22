@@ -1,0 +1,418 @@
+{
+  "reviewer": "review_4",
+  "reviewedAt": "2026-10-22T06:22:38.727845Z",
+  "entries": [
+    {
+      "key": "incidents:15",
+      "path": "entries/incidents-15.json",
+      "sourceHash": "3945099285f22ef7cf957c73dded2e7df41d66feff565ee6af53d1c58e9da6fa",
+      "reviewedTranslationHash": "b2f177f44c8026b1a46a2b1eecc04c8e2163dc9f71cfbffe5a1e49346c17775e",
+      "verdict": "pass",
+      "evidence": [
+        "标题及全文一致；保留候场观看、插队选择打乱组、故意提前观察及经本人同意将该特定轮全部成绩改为 DNF，未扩大范围。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:150",
+      "path": "entries/incidents-150.json",
+      "sourceHash": "9eb091ea140a64bd44183dee59b3d0960070285e2d55e82b33de6e0ef9e7db1e",
+      "reviewedTranslationHash": "92a154b59546945f83e9ea24b2c293598a392a52d0e12e6e0c8888533d4c3e37",
+      "verdict": "pass",
+      "evidence": [
+        "保留决赛、疑似手刀、加 2 秒及慢放仅略有争议；11f/11f1d 可撤罚与只有正常速度证据可施罚（11f1 例外）的方向一致。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:152",
+      "path": "entries/incidents-152.json",
+      "sourceHash": "31299f0cad82c48827a4d7536f55621a8ec6fb72791f9d75b89258049921793e",
+      "reviewedTranslationHash": "ffbc6ff04dc6899bf583791237611d1e5098b2cf25f0469f4e4a5202014ee154",
+      "verdict": "pass",
+      "evidence": [
+        "保留首次还原、前次时间误记、视频显示显著差异但准确时间无法核实、选手与家长接受 DNF；及时发现才可能给予额外尝试及裁判最终责任均一致。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:153",
+      "path": "entries/incidents-153.json",
+      "sourceHash": "f687d431d8f4fd747df070d1a5f59803d26e7f5bf355aff8083af7df750f02c9",
+      "reviewedTranslationHash": "12cb841d48d252f1af7fa0e80964d01820cb3efa922159f8bd6b3e067152a18c",
+      "verdict": "pass",
+      "evidence": [
+        "保留 Skewb 单次国家纪录、平均水平差异、打乱记号求助和打乱员漏签等怀疑依据；“likely”仍为“很可能”，最终 DNS 与现场未给额外尝试的条件一致，三项建议完整。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:154",
+      "path": "entries/incidents-154.json",
+      "sourceHash": "6455b16f37035f79c18619119056adbc2863cce11946868b83529fb3255105cc",
+      "reviewedTranslationHash": "66f741ff8441dcd5d8fa71943bb17bf7c3ba3a037727ec655f3a981df04dc168",
+      "verdict": "pass",
+      "evidence": [
+        "保留 Square-1 决赛、朋友交换顶底颜色、选手提交但不知情、未签名以及 DNF 直接因果；11d 额外尝试及事先知情时较不合理的限定一致。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:155",
+      "path": "entries/incidents-155.json",
+      "sourceHash": "f7bcc967f3028dbd295a8900509aa89664e05edade8a69f19c6ff91f30e77ea2",
+      "reviewedTranslationHash": "fce30158a807b4e43af8e216e981c0c5e8da9bf09e3826562f540a30fd5d8ada",
+      "verdict": "correction_required",
+      "evidence": [
+        "标题及两次启动失败、裁判不确定绿灯、设备测试正常、保留两个 DNF 均一致；“hands were held on the timer”却译为“放手时间”，需要明确按手持续时间。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": [
+        {
+          "field": "content",
+          "old": "两次 DNF 时放手时间更短",
+          "new": "两次 DNF 时双手按在计时器上的时间更短",
+          "reason": "原文指双手保持接触计时器的时长；“放手时间”可能被理解为松手或离开计时器的时间，混淆启动失败的原因。",
+          "sourceEvidence": "on the DNF attempts, their hands were held on the timer for a bit less time"
+        }
+      ]
+    },
+    {
+      "key": "incidents:156",
+      "path": "entries/incidents-156.json",
+      "sourceHash": "1ca03a6a6b35edee193959f8428c46f6ceed42ba755e6bc27643d42622035609",
+      "reviewedTranslationHash": "b8a85dec0c72b111c66885a29fbd4b3f735e0489b48cc6bbdaa9c73c7e23962e",
+      "verdict": "pass",
+      "evidence": [
+        "保留流动裁判误解、主动询问后停止、暂定额外尝试；B2a 开始时须有裁判、时限超过 10 分钟须用秒表及原尝试 DNF 均一致。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:157",
+      "path": "entries/incidents-157.json",
+      "sourceHash": "cefe321dcf54e91e14328278655bf97bf11906f1a2c5df6e59d1ff0bce20adf4",
+      "reviewedTranslationHash": "4e73a274b9c67889d1d118a771a6efa5d3faa134a0b7d82719f3c4d7112f6e67",
+      "verdict": "pass",
+      "evidence": [
+        "保留双方漏签、录像及本人认可但找不到裁判、误认新人及后续纠正；仅能由仍可联系的原裁判补签、不可代签和改为 DNF 均一致。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:158",
+      "path": "entries/incidents-158.json",
+      "sourceHash": "761a73ceeb0a6d0b52010fde562da2e0f7d1bc113429bf1c3dce89a3271e0d8e",
+      "reviewedTranslationHash": "ccb3dc36844377f91740a1193f7c2b77f8b250f74008be9d678c32b5b5133c21",
+      "verdict": "pass",
+      "evidence": [
+        "保留提交后误认魔方被换、进入打乱区、首尝试初判 DNF；剩余尝试由代表酌情取消与整轮取消的依据区分清楚，尚无还原时不记录成绩而非多个 DNF 的结论一致。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:16",
+      "path": "entries/incidents-16.json",
+      "sourceHash": "ca526e3619d1516409271d0bf5d8f891a8b76954d7b20264e5a12b3214a2ee58",
+      "reviewedTranslationHash": "e61c818a9ad18cad9687979b33d827d073679628961a41c780512223b831f0bd",
+      "verdict": "pass",
+      "evidence": [
+        "保留 Square-1 前两次误认为重复、核实均正确、第二次初记 DNF 但给额外尝试；形状相似、认可诚实及鼓励报告重复打乱的理由完整。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:169",
+      "path": "entries/incidents-169.json",
+      "sourceHash": "412e2cab624cfda7dd182532d04eb4ae13df320c6b153e2f0578e0281a1b72df",
+      "reviewedTranslationHash": "0fcbd160746ec02ac6d194d699564f1fa8ee77541e047b7e3655e57397826ea4",
+      "verdict": "pending_source_verification",
+      "evidence": [
+        "完整保留低于（严格小于）0.06 秒、A6b1 后来修改说明、WRC 初判 DNF、引述故意停表才失去额外尝试权利以及申诉后改用额外成绩；译文明确保留原称 WRC Board。"
+      ],
+      "unresolvedNotes": [
+        "现有 review.notes 所列 “WRC Board” 机构名称疑点未解决。源文申诉机构与常见称谓的关系无法仅据本条确认；译文忠实标为原文所称 WRC Board，未擅改 WCA Board。本审校没有联网或事实核验。"
+      ],
+      "corrections": []
+    },
+    {
+      "key": "incidents:17",
+      "path": "entries/incidents-17.json",
+      "sourceHash": "59aff677abd4240967dbc881a5ab96f67ffb6ca12d61b53b3d82eb03d92df063",
+      "reviewedTranslationHash": "78de41990522136c705945ed6f186eb660943a50344ee3d034fa37c13ce86550",
+      "verdict": "pass",
+      "evidence": [
+        "保留四阶/五阶第一轮迟到、请求被拒后利用工作人员身份补赛、两轮成绩删除；4b4 与打乱此前已使用的理由一致。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:18",
+      "path": "entries/incidents-18.json",
+      "sourceHash": "e890c598b99de28966bc0a9c344393ba67770107a359acac05bed39b5eef6ecb",
+      "reviewedTranslationHash": "45f92f989645b52474e31103be92cd946391f1c9cac44c4495d07e9cbfb485bc",
+      "verdict": "pass",
+      "evidence": [
+        "保留规则 2i2a 后来更新允许代表酌情处理的历史说明、二阶第一轮第三次前发现前置相机、承认此前轮次同样设置及此前成绩 DNF。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:19",
+      "path": "entries/incidents-19.json",
+      "sourceHash": "32a038966a6a6b8683e403aa29de3c1928f21d367c5afd5424f72b20dbfbd181",
+      "reviewedTranslationHash": "d56b30b6a3265d53b702a10324623e48d2611747f1b47582bfcd3a37106e7aeb",
+      "verdict": "pass",
+      "evidence": [
+        "保留赛后 Skewb 双方漏签、改 DNF；A7b/A7c 中正确、完整、格式、可读性及选手核对签名均完整，严厉但必要的论证一致。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:2",
+      "path": "entries/incidents-2.json",
+      "sourceHash": "c42942132e22a9959fccafa1b2eaa9caa2278045015fb0924f4f56d1796105d1",
+      "reviewedTranslationHash": "6c5cf61c9b7cd8ca5c6e65a8ecde62162f24248872e8d1a48c7621314c40b09f",
+      "verdict": "pass",
+      "evidence": [
+        "保留 2025 年 3k2b 已明确的更新说明、赛后发现带标志魔方、当时规则原会整次 DNF 与仅该魔方计未还原的区别，其他魔方不受影响及讨论修规链接均保留。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:20",
+      "path": "entries/incidents-20.json",
+      "sourceHash": "7dd6bcc5b26f3d5acc739575bc3b4b83b0ea6d2c421a144de290f67064a5a3bc",
+      "reviewedTranslationHash": "5b1cd86a5c4833af4f4da1c80ad7addab88eeae6a746a46a49ee8ffc1887aa58",
+      "verdict": "pass",
+      "evidence": [
+        "保留 Skewb 决赛、选手短暂分神、裁判未记录即送回、未签名才发现及暂定额外尝试；最终保留原成绩，录像和目击证据及裁判过失理由完整。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:21",
+      "path": "entries/incidents-21.json",
+      "sourceHash": "84fbe76d16c9833a11417583d909f48af7e0d1f0fdc74558519aa32621d9e087",
+      "reviewedTranslationHash": "44cb982cfaed6f4d865150092618a1fd455f46e5039770adfc78a09436aefda6",
+      "verdict": "pass",
+      "evidence": [
+        "保留 B4c 后续修改、无不良意图可保留原成绩；最初个案和 PBQ Berkeley 2018 保留原成绩、PBQ Oshawa 2019 改用额外尝试的差异忠实呈现。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:22",
+      "path": "entries/incidents-22.json",
+      "sourceHash": "3839a0319e7001a6ba9dcc06cb8b9db45bfab972dfc0161a2c0a1946178bccd4",
+      "reviewedTranslationHash": "89b830b084a7644cc1ce2a874510f5e9e911b8a93e91aca2997362772948df0b",
+      "verdict": "pass",
+      "evidence": [
+        "保留 11i 更新不改变结果说明、三阶单手第二轮第四次欧洲纪录、打乱中间漏一步、暂定额外尝试及最终替代原成绩。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:23",
+      "path": "entries/incidents-23.json",
+      "sourceHash": "a6b78bbc7c1955bec4f62ed50cbce9981fe9ed545af151601e1584cc540d4de3",
+      "reviewedTranslationHash": "c10866555d983e9658afda941d830b2c419b0f7415aba0405a6b877200d76992",
+      "verdict": "pass",
+      "evidence": [
+        "保留四阶第一轮、停表后立即短暂触碰、无意因而不罚；A6e 将更新的历史将来时未改成已更新。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:24",
+      "path": "entries/incidents-24.json",
+      "sourceHash": "8dc3eb13abb80677124548d9544b4f17ed2d79d67aa149568934b0fb292bc72c",
+      "reviewedTranslationHash": "97947571b5fc254282da26f607ab3af1edb009df1c3c9466de7682ef0e70e0e7",
+      "verdict": "pass",
+      "evidence": [
+        "保留三年前 0.9.0 与当时 0.13.3、金字塔第一轮重生成、影响不明及无法通用判断优势；4f 无例外使受影响者成绩无效，离线无法检测更新及公平理由完整。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:25",
+      "path": "entries/incidents-25.json",
+      "sourceHash": "808383bc7155590b52c9daa3208f28f06433ff3925c3401330e753172bcaffad",
+      "reviewedTranslationHash": "91ffbfd48787199dc3a633c40a9f16e47ebcd87d15a617240a1149bac0f82ee4",
+      "verdict": "pass",
+      "evidence": [
+        "保留三阶单手第一轮单次世界纪录、11i 历史说明、两个完整打乱序列及 L2→L 的加粗差别；额外成绩转正式、4b/4g 引文与多个先例一致。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:26",
+      "path": "entries/incidents-26.json",
+      "sourceHash": "c40c27fae99ac11f0024f27d8704879a14189ba3d3efc7ac8ad7ccd864cbac90",
+      "reviewedTranslationHash": "f281910676a5554026326ad3283cd2050943ee15485d1134c82a593b8233ab6e",
+      "verdict": "pending_source_verification",
+      "evidence": [
+        "保留多盲记忆阶段意外转动一方、B3c 原本整次取消与 WRC 仅该方未还原继续其余部分的区别；原文 F article 已忠实保留为第 F 章，但章节指代仍待核验。"
+      ],
+      "unresolvedNotes": [
+        "现有 review.notes 所列 “F article” 章节指代疑点未解决。源文在多盲事件中援引该章，译文忠实保留第 F 章；未据推测改章，也未核验历史规则或外链。"
+      ],
+      "corrections": []
+    },
+    {
+      "key": "incidents:27",
+      "path": "entries/incidents-27.json",
+      "sourceHash": "23a7ed8612253f86d9abb90d5701efd8fe8ac1b2d6e729a9becc817176556e80",
+      "reviewedTranslationHash": "15325e546a165d43097c68aa131f7029cdfefcdb4e72a15be615305630a407bf",
+      "verdict": "correction_required",
+      "evidence": [
+        "保留所有拨针状态相反、所有打乱员整轮误解、非选手过失与随机分布保留、保留成绩及数据库更新；首句把 In Clock finals 改成“决赛后”，增加原文未给的时间断言。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": [
+        {
+          "field": "content",
+          "old": "魔表决赛后，一名选手复盘时发现",
+          "new": "在魔表决赛中，一名选手复盘时发现",
+          "reason": "原文写 In Clock finals，未说明发生在决赛之后；删除译文新增的事后时间断言。",
+          "sourceEvidence": "In Clock finals, a competitor noticed while reconstructing their solves"
+        }
+      ]
+    },
+    {
+      "key": "incidents:28",
+      "path": "entries/incidents-28.json",
+      "sourceHash": "8b6b2f8d36c3a2b0e497f1f0f81e3b4fec329da411026647f4567e1ecd1a0ebf",
+      "reviewedTranslationHash": "bf2c62242da2850507e9b991d414ec34a5f530683d314ee7c467e8d4492a257f",
+      "verdict": "correction_required",
+      "evidence": [
+        "完整核对长文、引文、表格及四项理由：0.13.4/0.13.5、86/73、至少 7 步与生成至少 11 步、五行预期/实际数值全部一致；历史分析的 suggests 被强化为“表明”，应保留推测性。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": [
+        {
+          "field": "content",
+          "old": "对历史打乱解长的分析表明，过去绝大多数比赛的状态分布未受影响。",
+          "new": "对历史打乱解长的分析提示，过去绝大多数比赛的状态分布可能未受影响。",
+          "reason": "保留 suggests 的证据强度，不把分析所提示的结论写成已明确证实。",
+          "sourceEvidence": "An analysis of solution lengths for historical scrambles suggests that this did not affect the distribution of states for the vast majority of past competitions."
+        }
+      ]
+    },
+    {
+      "key": "incidents:29",
+      "path": "entries/incidents-29.json",
+      "sourceHash": "28ac7a06febd96a8657f65b9c406f122a7e6973870280e3aa3e4926554cbe8bc",
+      "reviewedTranslationHash": "ee2a3f24692dc2bb40c0f55f0e7c44dbb7ac89db4112c0de0d4959fd77cece55",
+      "verdict": "pass",
+      "evidence": [
+        "保留观察后启动—复位—再启动且尚未转动、A4d 首次启动即算开始、未还原前复位应 DNF；China Championship 2017 胶带遮灯与同一计时器第五次还原的权衡完整。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:30",
+      "path": "entries/incidents-30.json",
+      "sourceHash": "c5e87ca68d3dcdcf4200d7f61fb5b827db7cffb0cd9d0c8649c11afbc5b92229",
+      "reviewedTranslationHash": "6ef65550538f4027c7925a7de6a56a603b384f84049411f0643c5875db96d711",
+      "verdict": "pass",
+      "evidence": [
+        "保留裁判漏放脸与魔方之间遮挡板、赛后才发现且无额外尝试；视频没有利用情况的迹象而非证明未作弊、过失非选手及接受成绩均一致。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:31",
+      "path": "entries/incidents-31.json",
+      "sourceHash": "06a8fc9793e9a2da61acd7ceabbf344d33cc4b9cb36ae566f1541b528fe11aa0",
+      "reviewedTranslationHash": "f03892749840f396840021b1386e9c104a6074918dbeab15661233d97b05409c",
+      "verdict": "pass",
+      "evidence": [
+        "保留 Cavite Open 2 2018 沟通失误、纸张/成绩单替代、视频确证暴露、A2c1 与指导引文；没有证据显示作弊意图与严重破坏保密区分清楚，全部成绩删除及 04.2019.1 第 2.8 节均一致。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:33",
+      "path": "entries/incidents-33.json",
+      "sourceHash": "b658678b32b6433ce457d763f7b2db4572be40df48e4e5ff838ccd5590801e9b",
+      "reviewedTranslationHash": "27516035c741066f99c0f3631cd736658ef3d4b5865c3fcfee539664b6256dca",
+      "verdict": "pass",
+      "evidence": [
+        "保留至少一名选手、Square-1 正方体形状、明显优势及 virtually all（几乎所有）；11i 后续说明、取消尝试和打乱核验责任两项理由完整，无新增身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:34",
+      "path": "entries/incidents-34.json",
+      "sourceHash": "daa3023459f0ad67376c6e176b016d94cd35837a54042ad3b667b2ec2d76bad3",
+      "reviewedTranslationHash": "27e72a45987a5c0b7db886901c0975ff170b7adbe7690e640479f52d40f23635",
+      "verdict": "pass",
+      "evidence": [
+        "保留后来宽缓立场说明、沟通失误及代表允许未连接耳机、前两次多盲、2i/2i1b+ 包括关闭或断开的设备、2t 熟悉规则与当时 DNF 的历史结论。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:35",
+      "path": "entries/incidents-35.json",
+      "sourceHash": "6bb57ccbc6adf4070aa264eb54676fec8ed46af2e5c606a68656f238edd3b8ef",
+      "reviewedTranslationHash": "b4fae566e9b117c6a1a2c42b86e8a9ddf9e7b5401b7b6c7609604d6a4c2284ba",
+      "verdict": "pass",
+      "evidence": [
+        "保留 11i 后续说明、金字塔决赛阿尔及利亚国家纪录、WDC 发现错误且明显更简单、暂定额外尝试及 WRC 以额外替代原成绩。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:36",
+      "path": "entries/incidents-36.json",
+      "sourceHash": "9f4ef2c5ae25ba685bb153cf4cb76d0343685af4f33d10ca92e168609d613dae",
+      "reviewedTranslationHash": "3e61a4aab09671426704221fb2531982ae4cd3fe810def36e689663893f9cf8c",
+      "verdict": "pass",
+      "evidence": [
+        "保留提交前短暂用手机拍最少步解答纸、没有试图作弊但明确违反 2i、器材例外引文与只将受影响该次判 DNF。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:38",
+      "path": "entries/incidents-38.json",
+      "sourceHash": "debd94ad00949514b7e27379c73318bc92d4a55b9bb6c25fac8a6dfa7ba7b5d5",
+      "reviewedTranslationHash": "39984543ae8864306a94a3e058cd0640bf11a94bc5aeb3b21ff84f822bfbb081",
+      "verdict": "pass",
+      "evidence": [
+        "保留姓名相似导致错发成绩单及 Skewb、还原后因姓名不符才察觉、现场额外尝试及 WRC 最终替代原成绩；未推测匿名选手身份。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    }
+  ]
+}

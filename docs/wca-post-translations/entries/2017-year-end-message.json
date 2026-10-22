@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/2017-year-end-message",
+  "source": {
+    "key": "posts:/posts/2017-year-end-message",
+    "kind": "posts",
+    "title": "2017 Year End Message",
+    "date": "2018-01-02T02:36:38.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/2017-year-end-message",
+    "content": "Dear WCA Community,\n\nWith 2017 coming to a close, we wanted to use this opportunity to say thank you and wish you the very best for the New Year! We have experienced great developments in 2017 that we would like to share with you.\n<!-- break -->\nWCA competitions took place in 13 new countries and over 23,000 new competitors competed officially. At these competitions, 76 world records and 301 continental records were broken!\n\nSome major structural changes within the World Cube Association took place, most importantly the establishment of four new committees: in April the WCA Communication Team started their work which then was joined by the WCA Financial Committee in June. Just recently the WCA Ethics Committee and the WCA Quality Assurance Committee were formed and will begin their work in the new year.\n\nInternally, there have been 920 competition results posted by the WCA Results Team, the WCA Regulation Committee worked through 129 single commits and  about 50 pull requests on GitHub to give us the most recent regulation changes, the WCA Disciplinary Committee investigated around 30 cases, the WCA Communication Team posted 82 times on Facebook, and the WCA Software Team deleted nearly a million lines of code while only adding 85 thousand to our codebase. It’s been a busy year!\n\nWe are looking forward to an even more successful year 2018 and are completing the final steps to become a registered non-profit organization. The World Cube Association wants to thank everyone involved with its development and those who work to make it a great experience for the whole community!\n\n(Posted by Lauren Clement on behalf of the WCA Communication Team)",
+    "hash": "98f3ef492990c92a096f5fcb60fee3186a5335035ad595547aec2c67b831a911",
+    "format": "markdown",
+    "sourceId": 8586
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "98f3ef492990c92a096f5fcb60fee3186a5335035ad595547aec2c67b831a911",
+    "language": "zh-Hans",
+    "title": "2017 年年末寄语",
+    "content": "亲爱的 WCA 社区成员：\n\n2017 年即将结束，我们想借此机会向大家道谢，并送上新年的祝福！这一年有许多值得分享的进展。\n\n<!-- break -->\n\n13 个国家首次举办了 WCA 比赛，超过 23,000 名新选手参加了官方比赛。在这些比赛中，共有 76 项世界纪录和 301 项洲纪录被打破！\n\n世界魔方协会的组织架构也有重要调整，最主要的是成立了四个新委员会/团队：4 月，WCA 沟通团队开始工作；6 月，WCA 财务委员会成立。最近，WCA 道德委员会和 WCA 质量保证委员会也已成立，将在新的一年开始工作。\n\n内部工作方面，WCA 成绩团队公布了 920 场比赛的成绩；WCA 规则委员会在 GitHub 上处理了 129 次提交和约 50 个拉取请求，完成了最新一轮规则更新；WCA 纪律委员会调查了约 30 起案件；WCA 沟通团队在 Facebook 上发了 82 条帖子；WCA 软件团队从代码库中删除了近 100 万行代码，只新增了 85,000 行。这确实是忙碌的一年！\n\n我们期待 2018 年取得更多成果，也正在完成注册为非营利组织的最后几项手续。世界魔方协会感谢所有参与组织发展，以及努力为整个社区创造良好体验的人！\n\n（Lauren Clement 代表 WCA 沟通团队发布）",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.145Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "1c018c14a74e058441169e0a4db73429b7ad580b69ccfb3e74fc419326a6bc3d"
+}

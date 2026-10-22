@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:139",
+  "source": {
+    "key": "incidents:139",
+    "kind": "incidents",
+    "title": "Competitor reset timer after signing a different scorecard",
+    "url": "https://www.worldcubeassociation.org/incidents/139",
+    "date": "2024-11-18T22:30:27.000Z",
+    "content": "The delegates of a competition discovered a missing signature for a competitor's scorecard for another event while they were competing in 3x3 One-Handed. After the competitor finished their solve, the delegate approached them, prompting them to add the missing signature. The competitor then reset their timer before the judge was able to write down the time for the current attempt. A provisional extra was given for this attempt.\n\nThe WRC voted to have the result for this attempt be a DNF, as having signed the other scorecard is unrelated to their actual solve. The competitor is responsible for resetting the timer in this incident, and A6f1 is clear about the penalty.",
+    "hash": "640d4d9777f7c1c2f05ad388b49af09d5c0fc5995d704ec9eab322106923600b",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "选手补签另一张成绩单后复位计时器",
+    "content": "选手参加三阶单手时，代表发现其另一项目成绩单漏签。还原结束后，代表前来请其补签。随后选手在裁判尚未记录当前时间前复位计时器，现场给予暂定的额外尝试。\n\nWRC 投票决定该次为 DNF，因为签署另一张成绩单与当前还原无关。选手须对复位负责，A6f1 的处罚也很明确。",
+    "translatedAt": "2026-10-22T06:00:02.853Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "640d4d9777f7c1c2f05ad388b49af09d5c0fc5995d704ec9eab322106923600b"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

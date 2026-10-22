@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:135",
+  "source": {
+    "key": "incidents:135",
+    "kind": "incidents",
+    "title": "Competitor received two identical scrambles on a 2-cube MBLD attempt",
+    "url": "https://www.worldcubeassociation.org/incidents/135",
+    "date": "2024-11-18T21:56:30.000Z",
+    "content": "A competitor attempted 2 puzzles in an attempt of multi-blind. A scrambling mistake was made such that both cubes got the same scramble. The competitor continued with their attempt and only reported the mistake after the attempt. However, the delegates of the competition were doing MBLD attempts themselves at this time. Because of this, an extra attempt was granted to the competitor by the judge. \n\nCiting 1c, it was ruled that using the extra attempt granted by the judge (in lieu of the delegates) was fine to use, as this regulation allows for delegates to appoint responsibilities to other people. \n\nAs a general reminder to delegates and organizers, if all delegates are competing at the same time, a specific individual should be prior appointed to have oversight and be in charge of giving out extras if necessary. \n\nAs a reminder for competitors: if facing a similar situation of encountering duplicate scrambles in a multiblind attempt, bring this up to the delegates/organizers/judges immediately instead of proceeding with the attempt.",
+    "hash": "cbe7840f7d1a4845b621ff3a99c8f987e78b28abc9eacea49eafcc1e9898e430",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "两只魔方的多盲尝试收到两个相同打乱",
+    "content": "一名选手进行 2 个魔方的多盲，打乱失误导致两者打乱相同。选手继续尝试，结束后才报告。此时比赛代表自己也在进行多盲，因此由裁判给予额外尝试。\n\n依据 1c，裁判代代表给予的额外尝试可采用，因为该条允许代表将职责交给他人。\n\n提醒代表和主办方：若所有代表同时参赛，应提前指定专人监督，并在必要时负责给予额外尝试。\n\n提醒选手：多盲中遇到重复打乱，应立即向代表、主办方或裁判提出，而非继续完成尝试。",
+    "translatedAt": "2026-10-22T06:00:02.853Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "cbe7840f7d1a4845b621ff3a99c8f987e78b28abc9eacea49eafcc1e9898e430"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_3",
+      "reviewedAt": "2026-10-22T06:22:42.955322Z",
+      "report": "reviews/round-1/report-3.json",
+      "sourceHash": "cbe7840f7d1a4845b621ff3a99c8f987e78b28abc9eacea49eafcc1e9898e430",
+      "reviewedTranslationHash": "3ef2fd63f85eba457d87c1c607a964c8a992cd3af44f6584b72827b97cf7dc99",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

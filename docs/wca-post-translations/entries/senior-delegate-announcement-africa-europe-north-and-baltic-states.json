@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/senior-delegate-announcement-africa-europe-north-and-baltic-states",
+  "source": {
+    "key": "posts:/posts/senior-delegate-announcement-africa-europe-north-and-baltic-states",
+    "kind": "posts",
+    "title": "Senior Delegate Announcement - Africa & Europe North and Baltic States",
+    "date": "2020-10-28T04:38:14.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/senior-delegate-announcement-africa-europe-north-and-baltic-states",
+    "content": "Following the Senior Delegate application period, there were no applications for Africa and as such the Board will lead this region until further notice.\n\nAdditionally, there was one applicant for Europe North and Baltic States. However, this region has been merged with the Europe region and therefore no Senior Delegate will be appointed.",
+    "hash": "b0f350eae70ddaa1abaebb4c7370b235294108642c7fa1716f6a477bedf4b6e8",
+    "format": "markdown",
+    "sourceId": 13996
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "b0f350eae70ddaa1abaebb4c7370b235294108642c7fa1716f6a477bedf4b6e8",
+    "language": "zh-Hans",
+    "title": "高级代表任命公告：非洲、北欧及波罗的海地区",
+    "content": "高级代表申请期结束后，非洲地区未收到任何申请，因此在另行通知前，该地区将由董事会负责。\n\n此外，北欧及波罗的海地区收到了一份申请。不过，该地区已并入欧洲地区，因此不再任命高级代表。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:49:00.952Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "ca22f385e227bc5a4cccc743737a6b2bf9852966eb60296ff6501c5341cca046"
+}

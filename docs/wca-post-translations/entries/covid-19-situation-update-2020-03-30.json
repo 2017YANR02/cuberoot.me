@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/covid-19-situation-update-2020-03-30",
+  "source": {
+    "key": "posts:/posts/covid-19-situation-update-2020-03-30",
+    "kind": "posts",
+    "title": "COVID-19 Situation Update (2020-03-30)",
+    "date": "2020-03-31T03:27:40.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/covid-19-situation-update-2020-03-30",
+    "content": "Given recent escalations of the COVID-19 situation over the past couple weeks and to support the global effort to slow the spread of the virus, the Board has unanimously agreed to extend competition restrictions.\n\n**All competitions already announced where the first day of the competition is May 31, 2020 or earlier will be cancelled with immediate effect.** In addition, new competitions will only be approved if the first date of the competition is June 1, 2020 or later.\n\nWe are encouraged by the initiatives being seen within the community such as online competitions, virtual meets and live streams. We wholeheartedly support and encourage these and are urging more WCA Staff to get involved with these events to support the community. Please keep checking our website for more announcements about these events. \n\nWe hope everyone in the community is staying safe by following the directives of their local governments and the World Health Organization. Thank you for your understanding during these unprecedented times.",
+    "hash": "1eaac9a46fa1081d1a309dc82b5364114d5668b4e0c236f7a58e9df1a82bd7f2",
+    "format": "markdown",
+    "sourceId": 13969
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "1eaac9a46fa1081d1a309dc82b5364114d5668b4e0c236f7a58e9df1a82bd7f2",
+    "language": "zh-Hans",
+    "title": "新冠疫情情况更新（2020 年 3 月 30 日）",
+    "content": "鉴于过去几周新冠疫情进一步加剧，为支持全球减缓病毒传播的努力，董事会一致同意延长比赛限制。\n\n**所有已公布且首个比赛日在 2020 年 5 月 31 日或之前的比赛，即刻取消。**此外，新比赛只有在首个比赛日为 2020 年 6 月 1 日或之后时，才会获批。\n\n社区开展的线上比赛、远程聚会和直播等活动让我们备受鼓舞。我们全力支持这些尝试，也呼吁更多 WCA 工作人员参与，支持社区。请继续关注官网，了解这些活动的后续公告。\n\n希望所有社区成员都遵循当地政府和世界卫生组织的指引，保护自身安全。感谢大家在这段前所未有的时期给予理解。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:49:00.950Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "d914f91b1774660f85d22401e53c5e70b786406e7da96e7dd3c36fe980b6e452"
+}

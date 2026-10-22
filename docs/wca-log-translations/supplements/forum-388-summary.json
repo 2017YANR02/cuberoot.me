@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "parentKey": "disciplinary:/posts/important-announcement-about-blindfolded-solving",
+  "source": {
+    "id": "wca-archive-forum-topic-388:first-post",
+    "url": "https://www.worldcubeassociation.org/archive/forum_topics/388",
+    "legacyUrl": "https://www.worldcubeassociation.org/forum/viewtopic.php?f=9&t=388",
+    "title": "Important announcement about blindfolded solving",
+    "authorDisplayName": "Ron",
+    "publishedAt": "2008-02-26T22:11:59Z",
+    "accessedOn": "2026-10-22",
+    "accessStatus": "readable_official_archive",
+    "scope": "首帖，截止下一位回复者 jazzthief81；不包括任何后续回复",
+    "legacyAccess": {
+      "status": "404",
+      "evidence": "父任务核查报告；本次未重复请求旧URL"
+    }
+  },
+  "summaryZh": "这份历史公告记载了 WCA 董事会对一名未成年选手盲拧作弊的调查结论及处分：自公告当日起禁止参加所有 WCA 比赛三年；若充分配合，可在两年后申请恢复资格；全部盲拧成绩改为 DNF，并要求退还相应奖金。公告另说明临时遮挡措施，并要求保护当事人隐私。这里只概述当时公告，不作新的事实判断或身份推断。",
+  "status": "superseded_by_full_translation",
+  "fullTextTranslated": false,
+  "rights": {
+    "status": "user_confirmed_for_translation",
+    "confirmedOn": "2026-10-22",
+    "scope": "官方归档388首帖全文翻译及本地保存",
+    "evidence": "父任务转交用户对该首帖翻译许可的明确确认；不是公开发布授权。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "supersededBy": "supplements/forum-388-full.json"
+}

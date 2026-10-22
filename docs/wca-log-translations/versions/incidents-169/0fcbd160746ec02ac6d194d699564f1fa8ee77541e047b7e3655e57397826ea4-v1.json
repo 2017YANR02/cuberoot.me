@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:169",
+  "source": {
+    "key": "incidents:169",
+    "kind": "incidents",
+    "title": "Competitor got a time below 0.06 because of shaky hands",
+    "url": "https://www.worldcubeassociation.org/incidents/169",
+    "date": "2025-06-18T18:36:58.000Z",
+    "content": "DISCLAIMER: Since the resolution of this incident, [A6b1](https://www.worldcubeassociation.org/regulations/full/#A6b1) has been changed, to better state how incidents with a timer stop under 0.06s should be handled.\n\nA competitor got a timer stop with a time less than 0.06s. An extra was given for malfunctioning equipment, but the judge said it could have been the competitors fault because of shaking hands.\n\nThe WRC determined that the most likely reason were the shaky hands of the competitor and that the result should therefore be DNF'ed, in accordance with A6b1, because the cause was not a timer malfunction:\n\n> A6b1) If the timer stops before the competitor has solved the puzzle and the timer shows a time strictly below 0.06 seconds, then the attempt is replaced by an extra attempt. A competitor forfeits the right to the additional attempt if the WCA Delegate determines that the timer was stopped deliberately.\n\nAfter an appeal to the WRC Board, the Board decided to overturn the decision by the WRC, citing that shaking hands do not count as stopping the timer **deliberately**. The DNF was therefore changed to the time of the extra solve.",
+    "hash": "412e2cab624cfda7dd182532d04eb4ae13df320c6b153e2f0578e0281a1b72df",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "选手因手抖得到低于 0.06 秒的时间",
+    "content": "说明：此事件处理后，[A6b1](https://www.worldcubeassociation.org/regulations/full/#A6b1) 已修改，更清楚地说明低于 0.06 秒停表的处理方式。\n\n选手停表时间低于 0.06 秒，现场按器材故障给予额外尝试，但裁判称可能是选手手抖造成。\n\nWRC 认为最可能原因是手抖而非计时器故障，依据 A6b1 决定判 DNF：\n> A6b1：若魔方还原前计时器停止，且显示时间严格小于 0.06 秒，则以额外尝试替代。若代表认定选手故意停表，则取消获得额外尝试的权利。\n\n申诉至原文所称“WRC Board”后，理事会推翻 WRC 决定，指出手抖不属于**故意**停表。因此，将 DNF 改为额外尝试的时间。",
+    "translatedAt": "2026-10-22T06:00:02.853Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "412e2cab624cfda7dd182532d04eb4ae13df320c6b153e2f0578e0281a1b72df"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [
+      "原文写 ‘WRC Board’，与常见机构名称 WCA Board 不一致；保留原称并待核验。"
+    ],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

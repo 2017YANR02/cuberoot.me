@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/tnoodle-0-15-1",
+  "source": {
+    "key": "posts:/posts/tnoodle-0-15-1",
+    "kind": "posts",
+    "title": "TNoodle 0.15.1",
+    "date": "2019-12-31T10:51:43.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/tnoodle-0-15-1",
+    "content": "TNoodle-WCA-0.15.1 is now available on the Scrambles page.\n\n**Changes since the previous version:**\n\n* Update rotations in the Fewest Moves sheet to match 2020 regulations.\n* Removing 3x3x3 With Feet from events.\n\nPlease remember that official competitions must use a current version of the official scramble program. This is always available from:\nhttps://www.worldcubeassociation.org/regulations/scrambles/",
+    "hash": "e2f9d813cb1cf33ba69188f87f33536bfd45723c68243bea93635adf0608bb92",
+    "format": "markdown",
+    "sourceId": 13718
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "e2f9d813cb1cf33ba69188f87f33536bfd45723c68243bea93635adf0608bb92",
+    "language": "zh-Hans",
+    "title": "TNoodle 0.15.1",
+    "content": "TNoodle-WCA-0.15.1 现已可在打乱页面下载。\n\n**相比上一版本的修改：**\n\n* 更新最少步成绩单中的整体转动记号，与 2020 年规则保持一致。\n* 从项目列表中移除三阶脚拧。\n\n请记住，正式比赛必须使用现行版本的官方打乱程序。下载地址始终为：\nhttps://www.worldcubeassociation.org/regulations/scrambles/",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:49:54.036Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "623e1b5ad78f13dc5a33444760072afc3040ab3a4fe7d5e210b7c8de05c56e28"
+}

@@ -1,6 +1,6 @@
 /**
  * 一张图从 SVG 字符串到「用户手里」的那几步:栅格化、下载、复制到剪贴板。
- * 唯一宿主是 /sim 的图像面板。
+ * 供模拟器图像面板和宠物图鉴共用。
  *
  * 浏览器相关,勿在 node/测试里直接调。
  */
@@ -10,19 +10,36 @@ export function svgBlob(svg: string): Blob {
 }
 
 /** Capture a live SVG, including CSS-painted pins/stickers, without its controls. */
-export function snapshotSvgElement(source: SVGSVGElement) {
+export function snapshotSvgElement(source: SVGSVGElement, options: { freezeAnimations?: boolean } = {}) {
   const clone = source.cloneNode(true) as SVGSVGElement;
   const originals = [source, ...source.querySelectorAll<SVGElement>('*')];
   const copies = [clone, ...clone.querySelectorAll<SVGElement>('*')];
   const paint = ['fill', 'fill-opacity', 'stroke', 'stroke-width', 'stroke-opacity',
     'stroke-linecap', 'stroke-linejoin', 'opacity', 'color', 'font-family', 'font-size'];
+  if (options.freezeAnimations) paint.push('transform', 'transform-origin', 'transform-box',
+    'translate', 'rotate', 'scale', 'display', 'visibility', 'filter', 'clip-path',
+    'stroke-dasharray', 'stroke-dashoffset');
+  const view = source.ownerDocument.defaultView ?? window;
   originals.forEach((element, index) => {
-    const style = getComputedStyle(element);
+    // Symbols inherit currentColor/strokes from each <use>, not their hidden definitions.
+    if (options.freezeAnimations && element.closest('defs, symbol')) return;
+    const style = view.getComputedStyle(element);
     for (const property of paint) {
-      const value = style.getPropertyValue(property);
+      let value = style.getPropertyValue(property);
+      if (options.freezeAnimations) {
+        // Computed clip/filter URLs may be absolute; the snapshot owns these IDs.
+        value = value.replaceAll(`${source.ownerDocument.URL.split('#')[0]}#`, '#');
+      }
       if (value) copies[index].style.setProperty(property, value);
     }
+    if (options.freezeAnimations) {
+      copies[index].style.setProperty('animation', 'none', 'important');
+      copies[index].style.setProperty('transition', 'none', 'important');
+    }
   });
+  if (options.freezeAnimations) {
+    clone.querySelectorAll('script, animate, animateTransform, animateMotion, set').forEach(element => element.remove());
+  }
   const rect = source.getBoundingClientRect();
   const width = Math.max(1, Math.round(rect.width || source.viewBox.baseVal.width));
   const height = Math.max(1, Math.round(rect.height || source.viewBox.baseVal.height));

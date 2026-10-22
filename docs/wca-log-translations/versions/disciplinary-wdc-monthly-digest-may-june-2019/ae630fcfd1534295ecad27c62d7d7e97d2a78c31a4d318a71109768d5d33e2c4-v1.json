@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "disciplinary:/posts/wdc-monthly-digest-may-june-2019",
+  "source": {
+    "key": "disciplinary:/posts/wdc-monthly-digest-may-june-2019",
+    "kind": "disciplinary",
+    "title": "WDC Monthly Digest - May &amp; June 2019",
+    "date": "2019-07-21T16:08:39Z",
+    "url": "https://www.worldcubeassociation.org/posts/wdc-monthly-digest-may-june-2019",
+    "content": "<p>Dear WCA Community,</p><p>Here you can find some noteworthy updates about the activity of the Disciplinary Committee over the months of May and June 2019.  </p><p>In the first six months of 2019, the WDC has opened more investigations than in 2018 as a whole. </p><p>The Committee is currently actively working on 11 cases. Some of these cases are straightforward but the majority are more complex and require more time and effort to reach a proper conclusion. For example, the WDC is currently investigating a case that greatly affects the Ukrainian community and some more time is needed to properly cover all of the different aspects of this particular case.  </p><p>The aforementioned increment in the number of investigations is partially due to the fact that the WDC has to investigate violations of the Code of Ethics if the accused individual is not WCA Staff. Another reason is surely represented by a more careful eye from WCA Staff and Registered Speedcubers who promptly contact the WDC if they witness something odd. We would like to thank everyone who contacts us providing precise information and context. The more accurate a reporting is, the quicker the investigation will be.  </p><p>To conclude, we would like to remind everyone to make sure they fully understand the WCA Regulations and competition procedures. If you have any questions or are unsure about how to do something, please do not hesitate to ask the Delegate(s) of the competition. In addition, if you think the competition results are being compromised in any way or see suspicious behavior, find the nearest delegate immediately and report the incident.</p><p>Thank you all for your help in supporting the WCA Spirit and Mission.</p><p>Lorenzo Vigani Poli<br><em>WDC Team Leader<br>\nOn behalf of the Disciplinary Committee</em></p>",
+    "hash": "f9085d1bba1662d4acf9184acf90ef0ecea05fbb0fc2869afc2e8cae8c4cdd0c",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "WDC 月度简报：2019 年 5 月和 6 月",
+    "content": "亲爱的 WCA 社群：\n\n以下为纪律委员会 2019 年 5、6 月的重要动态。\n\n2019 年前六个月立案数量已超过 2018 年全年。目前积极处理 11 件，其中少数简单，多数复杂，需更多时间精力才能妥善结案。例如，正在调查一宗对乌克兰社群影响重大的案件，需要更多时间覆盖各方面。\n\n数量增长部分因为，当被指控者不是 WCA 工作人员时，WDC 也须调查违反伦理准则的行为。另一个原因显然是工作人员和注册选手观察更仔细，发现异常及时联系。感谢所有提供准确资料与背景的人；报告越准确，调查越快。\n\n最后提醒充分理解规则及流程，有疑问时询问代表。若认为成绩受到损害或看到可疑行为，请立即找最近的代表报告。\n\n感谢支持 WCA 精神与使命。\n\nLorenzo Vigani Poli\nWDC 团队负责人，代表纪律委员会",
+    "translatedAt": "2026-10-22T06:10:02.357Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "f9085d1bba1662d4acf9184acf90ef0ecea05fbb0fc2869afc2e8cae8c4cdd0c"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

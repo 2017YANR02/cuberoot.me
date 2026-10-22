@@ -1,0 +1,32 @@
+{
+  "reviewer": "review_5",
+  "reviewedAt": "2026-10-22T06:46:40.870Z",
+  "entries": [
+    {
+      "key": "incidents:48",
+      "sourceHash": "981d56eda1c65f818adafc21319f85602bb5581c33927a8ce54a9cdcdeab5b7a",
+      "reviewedTranslationHash": "475d96f5a36f9561bca478423bfeb1b8428944ab56f263bc7b21f0b7eb0414d3",
+      "verdict": "pending_source_verification",
+      "evidence": [
+        "已重新完整对照 source.title/content 与当前 translation.title/content；精确替换均已应用，旧句已移除，语言修正通过。",
+        "标题和正文开头均恢复“且未晋级决赛”，不再新增因果或以资格解释替代原文；A7c4 的 DNF、赛后不能补签、删除决赛成绩以及他人/自身错误的两种原则均完整保留。",
+        "已对当前整个 translation 对象执行 sha256(JSON.stringify(entry.translation))，结果匹配复核请求；仅核对所给文本，未进行外部事实核验。"
+      ],
+      "unresolvedNotes": [
+        "原文标题及开头称 did not qualify，后文却要求删除决赛成绩；修正后的译文忠实保留冲突，仍待源方澄清。"
+      ]
+    },
+    {
+      "key": "incidents:59",
+      "sourceHash": "d442e1da399cae9a9b800f9794dd799303ca2e03951c00033bf62947cc7df335",
+      "reviewedTranslationHash": "39e727101727568313cabaa1fd32671caba7e571d5d01b5b3e7ed11fbe096b01",
+      "verdict": "pass",
+      "evidence": [
+        "已重新完整对照 source.title/content 与当前 translation.title/content；精确替换均已应用，旧句已移除，语言修正通过。",
+        "标题已补回“三阶魔方上的标记”，对应原题的 3x3x3 Cube；正文积木标记、不得违反其他规则、代表预先批准及电子辅助/不公平优势限制均保持准确。",
+        "已对当前整个 translation 对象执行 sha256(JSON.stringify(entry.translation))，结果匹配复核请求；仅核对所给文本，未进行外部事实核验。"
+      ],
+      "unresolvedNotes": []
+    }
+  ]
+}

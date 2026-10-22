@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "disciplinary:/posts/wdc-monthly-digest-december-2019",
+  "source": {
+    "key": "disciplinary:/posts/wdc-monthly-digest-december-2019",
+    "kind": "disciplinary",
+    "title": "WDC Monthly Digest - December 2019",
+    "date": "2020-01-29T14:14:23Z",
+    "url": "https://www.worldcubeassociation.org/posts/wdc-monthly-digest-december-2019",
+    "content": "<p>Dear WCA Community,</p><p>For this last Digest of 2019, we want to summarize everything achieved by the WCA Disciplinary Committee over the year that ended a month ago.   </p><p>First, some numbers about the activity of the WDC.</p><ul><li> 55 cases were opened;</li><li> 53 cases were closed;</li><li> 19 of the resolved cases ended with an official warning to one or more people; </li><li> 14 of the resolved cases ended with a ban;</li><li> 2 investigations are still ongoing.</li></ul><p>Then a few numbers and facts about the WDC.</p><ul><li> 2 members stepped down: Anuj Menta and JP Bulman;</li><li> 6 new members were added: Arthur Garcin, Chris Tabar, Christopher Morris, Jules Desjardin, Martin Vædele Egdal, Sebastiano Tronto;</li><li> My term as WDC Leader was renewed by the Board for one year and is now scheduled to end in December 2020.</li></ul><p>To conclude this short Digest, we would like to remind everyone to make sure they fully understand the WCA Regulations and competition procedures. If you have any questions or are unsure about how to do something, please do not hesitate to ask the Delegate(s) of the competition. In addition, if you think the competition results are being compromised in any way or if you see suspicious behavior, find the nearest delegate immediately and report the incident.</p><p>Thank you all for your help in supporting the WCA Spirit and Mission.</p><p>Lorenzo Vigani Poli<br><em>WDC Leader<br>\nOn behalf of the Disciplinary Committee</em></p>",
+    "hash": "893d648851b41c26c3d3ce980e25dfd002cb8c7df348ccfb1382697c5ad903cf",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "WDC 月度简报：2019 年 12 月",
+    "content": "亲爱的 WCA 社群：\n\n2019 年最后一期简报，回顾一个月前结束的这一年 WDC 的工作。\n\n工作数据：\n- 立案 55 件；\n- 结案 53 件；\n- 19 件已结案件对一人或多人发出正式警告；\n- 14 件已结案件导致禁赛；\n- 2 项调查仍在进行。\n\n委员会动态：\n- Anuj Menta、JP Bulman 两名成员卸任；\n- 新增 6 名成员：Arthur Garcin、Chris Tabar、Christopher Morris、Jules Desjardin、Martin Vædele Egdal、Sebastiano Tronto；\n- 理事会将我的负责人任期续延一年，现定于 2020 年 12 月结束。\n\n最后提醒大家充分理解规则和流程，有疑问时询问代表。若认为成绩受到损害或看到可疑行为，请立即找最近的代表报告。\n\n感谢支持 WCA 精神与使命。\n\nLorenzo Vigani Poli\nWDC 负责人，代表纪律委员会",
+    "translatedAt": "2026-10-22T06:07:32.458Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "893d648851b41c26c3d3ce980e25dfd002cb8c7df348ccfb1382697c5ad903cf"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_2",
+      "reviewedAt": "2026-10-22T06:22:43.237972Z",
+      "report": "reviews/round-1/report-2.json",
+      "sourceHash": "893d648851b41c26c3d3ce980e25dfd002cb8c7df348ccfb1382697c5ad903cf",
+      "reviewedTranslationHash": "ca02625cbc6632a2bef9af89ac0d58d23af691104e37c1d94a3539029425541c",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

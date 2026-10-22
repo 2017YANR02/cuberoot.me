@@ -1,0 +1,317 @@
+{
+  "reviewedAt": "2026-10-22T06:53:07.762Z",
+  "initialPriorityCount": 17,
+  "entries": [
+    {
+      "key": "disciplinary:/posts/important-announcement-about-blindfolded-solving",
+      "initialNotes": [
+        "官方日志正文仅这一句和论坛链接；链接指向的公告全文未包含在日志快照中，未读取、未翻译，不能声称已覆盖该公告全文。需父任务登录浏览器另行取得原文。"
+      ],
+      "status": "independently_verified",
+      "remainingNotes": [],
+      "review": {
+        "reviewer": "review_3",
+        "reviewedAt": "2026-10-22T06:52:49.420Z",
+        "report": "reviews/round-1/recheck-forum-full.json",
+        "sourceHash": "ec28925700d25462e3b3394780445a4cca1c28a73140fd82d179b24cc3f6a8d5",
+        "reviewedTranslationHash": "3bbacac3075561c71f72c7ec5d6cff887dbbe82b96990193d38483c225d85096",
+        "verdict": "pass"
+      }
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2024-q4",
+      "initialNotes": [
+        "原文结案14件，但8项禁赛+3项警告+2件无措施合计13；按原文保留，未补造第14件。",
+        "‘permanent until’ 的有条件永久禁令措辞按原文保留，待核验具体政策含义。"
+      ],
+      "status": "pending_source_verification",
+      "remainingNotes": [
+        "原文称结案14件，但列举8项禁赛、3项警告、2件无措施合计13；译文忠实保留，未补造案件，统计待来源核验。",
+        "原文“permanent until”及连续不出席达到原禁令时长的条件已照译；具体政策性质未核验，不能称已解决该原文措辞疑义。"
+      ],
+      "review": {
+        "reviewer": "review_1",
+        "reviewedAt": "2026-10-22T06:23:54.689Z",
+        "report": "reviews/round-1/report-1.json",
+        "sourceHash": "206965c3e76461eca9177b30197f35fec6e1a9f709161086d5be57fd807f6c83",
+        "reviewedTranslationHash": "be586009fa2055a5a54cc9f0c1abd64a95825b15895ef19481fb338d33c91390",
+        "verdict": "pending_source_verification",
+        "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+      }
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2025-q2",
+      "initialNotes": [
+        "原文结案9件，但4项禁赛与6件无措施合计10；按原文保留，未调整统计。"
+      ],
+      "status": "pending_source_verification",
+      "remainingNotes": [
+        "原文称结案9件，但4项禁赛加6件无措施为10；译文忠实保留，未调整统计，待来源核验。"
+      ],
+      "review": {
+        "reviewer": "review_1",
+        "reviewedAt": "2026-10-22T06:23:54.689Z",
+        "report": "reviews/round-1/report-1.json",
+        "sourceHash": "543edad848e97c3441c90a991a700e5cc5c3b3b4d9b11a95601b334047b48dfc",
+        "reviewedTranslationHash": "9c95e3634e0ed7e18e83395947592919ba27293818582585cf0b4b6cf171c73d",
+        "verdict": "pending_source_verification",
+        "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+      }
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2025-q4",
+      "initialNotes": [
+        "原文末尾邮箱链接缺少 mailto:，译文保留原链接目标；实际联系地址为文中 integrity@worldcubeassociation.org。"
+      ],
+      "status": "independently_verified",
+      "remainingNotes": [
+        "原文末尾邮箱href缺少mailto:；译文原样保留，未验证该链接能否正常发邮件。此为来源链接问题，未改译文目标。"
+      ],
+      "review": {
+        "reviewer": "review_1",
+        "reviewedAt": "2026-10-22T06:23:54.689Z",
+        "report": "reviews/round-1/report-1.json",
+        "sourceHash": "580e10ce2c1f29ab8fcdb139882d79518364b86a8c3ce275c25d4b06735df4f1",
+        "reviewedTranslationHash": "81ba030894da29f4f4bebdbc50490bd2d6bd95510d22e6b6207a22bd8fa2a0f8",
+        "verdict": "pass",
+        "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+      }
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-report-on-a-case-of-cheating-sep-2025",
+      "initialNotes": [
+        "此条为官网公告全文；所链接的完整调查报告未包含在快照中，未读取、未翻译。保持匿名，不根据链接或纪录推断身份。"
+      ],
+      "status": "independently_verified",
+      "remainingNotes": [],
+      "review": {
+        "reviewer": "review_1",
+        "reviewedAt": "2026-10-22T06:26:33.824Z",
+        "report": "reviews/round-1/recheck-1.json",
+        "sourceHash": "4b2e09eadf615c68880831b7bbd61de22d9164ed8698e7358f36469060fb1de6",
+        "reviewedTranslationHash": "f3c4dc0cdade9b859b11ce87469b11065bd4cba35f279d99ca976301d6f5bdc7",
+        "verdict": "pass"
+      }
+    },
+    {
+      "key": "disciplinary:/posts/wdc-digest-september-2022",
+      "initialNotes": [
+        "原文姓名后仅写 ‘(2014)’，照录，不推测或补全 WCA ID。"
+      ],
+      "status": "independently_verified",
+      "remainingNotes": [
+        "原文Carlos Miguel Pérez后仅标(2014)，译文照录。此项未补全也未事实核验，不应误标为已核实的完整WCA ID。"
+      ],
+      "review": {
+        "reviewer": "review_1",
+        "reviewedAt": "2026-10-22T06:23:54.689Z",
+        "report": "reviews/round-1/report-1.json",
+        "sourceHash": "e247c3d40e5748a0a67ec53e028529f85498dc507a21f5504f48c9019d8444ed",
+        "reviewedTranslationHash": "c84888b221a40b6e69364ddfe5ede276f96f85a7751d75efa64c8ee16cabc479",
+        "verdict": "pass",
+        "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+      }
+    },
+    {
+      "key": "disciplinary:/posts/wdc-monthly-digest-july-2019",
+      "initialNotes": [
+        "公开信原文写 ‘almost a decade ago’，与2007及2019时间差不一致；按原文译为近十年，不擅自改为十二年。"
+      ],
+      "status": "pending_source_verification",
+      "remainingNotes": [
+        "源文公开信称 2007 年的作弊发生于 almost a decade ago，与 2019 年简报时间相差约十二年不一致；译文忠实保留为近十年，年代问题 unresolved。本轮仅对照所给正文，未作事实核验。"
+      ],
+      "review": {
+        "reviewer": "review_2",
+        "reviewedAt": "2026-10-22T06:22:43.237972Z",
+        "report": "reviews/round-1/report-2.json",
+        "sourceHash": "8904de8d783cf098f53c1e672db3bb338562969759a7f9148490a7d719314b25",
+        "reviewedTranslationHash": "bf76e9d09b9c032ce9eef7f85cbac22bafa6db4ff7f4ab5af7ff5f55d26cd066",
+        "verdict": "pending_source_verification",
+        "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+      }
+    },
+    {
+      "key": "disciplinary:/posts/wdc-report-on-a-case-of-cheating",
+      "initialNotes": [
+        "官网公告正文已译；所链接调查报告与视频未读取、未翻译。匿名保持不变，不以纪录或日期推断身份。"
+      ],
+      "status": "independently_verified",
+      "remainingNotes": [],
+      "review": {
+        "reviewer": "review_2",
+        "reviewedAt": "2026-10-22T06:26:26.122806Z",
+        "report": "reviews/round-1/recheck-2.json",
+        "sourceHash": "bc3837e954ce65dba9788e6706d51f9322fb7da3091d9a687acdb086fc2427be",
+        "reviewedTranslationHash": "eda82b7dfb3f1b185e86f33067aaff1ac96329c2d82468fb916c1f649b0d0703",
+        "verdict": "pass"
+      }
+    },
+    {
+      "key": "disciplinary:/posts/wdc-report-on-a-case-of-cheating-in-3x3x3-multi-blind",
+      "initialNotes": [
+        "官网公告正文已译，外链完整报告未读取、未翻译。"
+      ],
+      "status": "independently_verified",
+      "remainingNotes": [],
+      "review": {
+        "reviewer": "review_2",
+        "reviewedAt": "2026-10-22T06:22:43.237972Z",
+        "report": "reviews/round-1/report-2.json",
+        "sourceHash": "786f4bb4a4d949db046c2307e43aabb351655d865c7e62e1c159b1e0ee974bb7",
+        "reviewedTranslationHash": "52cf4feb1129524932846dbfd298675df8edb2126449d0db96d976f512c06020",
+        "verdict": "pass",
+        "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+      }
+    },
+    {
+      "key": "disciplinary:/posts/wdc-report-on-a-case-of-harassment",
+      "initialNotes": [
+        "官网公告正文已译，外链完整调查报告未读取、未翻译；不补充公告未说明的身份或处分。"
+      ],
+      "status": "independently_verified",
+      "remainingNotes": [],
+      "review": {
+        "reviewer": "review_2",
+        "reviewedAt": "2026-10-22T06:22:43.237972Z",
+        "report": "reviews/round-1/report-2.json",
+        "sourceHash": "d9e014f6eea2bac1924f614c35aa6ddae0941c51ad4f618fd5a29515e4d28271",
+        "reviewedTranslationHash": "bdaeee268f12da8beb2a8fdd67031a28c6a4f50f3bc9b17f406de1106f9f8a20",
+        "verdict": "pass",
+        "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+      }
+    },
+    {
+      "key": "disciplinary:/posts/wic-digest-2024-q3",
+      "initialNotes": [
+        "原文结案17件，但4项禁赛、3项警告、13件其他结局合计20；照录，未自行纠正统计。"
+      ],
+      "status": "pending_source_verification",
+      "remainingNotes": [
+        "源文称结案 17 件，但随后列 4 项禁赛、3 项警告及 13 件其他结局；若按互斥案件数理解则合计 20。是否处分数量与案件数口径不同或存在交叉，正文未说明。译文忠实照录；统计口径 unresolved，未作外部事实核验。"
+      ],
+      "review": {
+        "reviewer": "review_2",
+        "reviewedAt": "2026-10-22T06:22:43.237972Z",
+        "report": "reviews/round-1/report-2.json",
+        "sourceHash": "f00fb0252ed1e826ae1444d8c136845f0b4a4d3bd32e4c900228eb6f19308b39",
+        "reviewedTranslationHash": "f0469b5117427c85a5238766b95c0ac39e313ecb18e6529a89c8222b60915591",
+        "verdict": "pending_source_verification",
+        "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+      }
+    },
+    {
+      "key": "incidents:11",
+      "initialNotes": [
+        "原文使用 ‘suspecting filtration of the solve’，措辞含混；译为怀疑还原情况泄露，待独立复核。"
+      ],
+      "status": "pending_source_verification",
+      "remainingNotes": [
+        "原文 suspecting filtration of the solve 措辞含混；现译为怀疑还原情况泄露，是一种语境解释，需源文作者或来源确认。此处 unresolved；未读取外链或推断身份。"
+      ],
+      "review": {
+        "reviewer": "review_2",
+        "reviewedAt": "2026-10-22T06:22:43.237972Z",
+        "report": "reviews/round-1/report-2.json",
+        "sourceHash": "0f38fe9423de7d19c800589e931609e343573da19b112d8bab61a808039bdd2c",
+        "reviewedTranslationHash": "c0d18abf02701f09f86ec829a2a45f6c2938d7d285697312dceb44ffa46bed4f",
+        "verdict": "pending_source_verification",
+        "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+      }
+    },
+    {
+      "key": "incidents:169",
+      "initialNotes": [
+        "原文写 ‘WRC Board’，与常见机构名称 WCA Board 不一致；保留原称并待核验。"
+      ],
+      "status": "pending_source_verification",
+      "remainingNotes": [
+        "现有 review.notes 所列 “WRC Board” 机构名称疑点未解决。源文申诉机构与常见称谓的关系无法仅据本条确认；译文忠实标为原文所称 WRC Board，未擅改 WCA Board。本审校没有联网或事实核验。"
+      ],
+      "review": {
+        "reviewer": "review_4",
+        "reviewedAt": "2026-10-22T06:22:38.727845Z",
+        "report": "reviews/round-1/report-4.json",
+        "sourceHash": "412e2cab624cfda7dd182532d04eb4ae13df320c6b153e2f0578e0281a1b72df",
+        "reviewedTranslationHash": "0fcbd160746ec02ac6d194d699564f1fa8ee77541e047b7e3655e57397826ea4",
+        "verdict": "pending_source_verification",
+        "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+      }
+    },
+    {
+      "key": "incidents:26",
+      "initialNotes": [
+        "原文写 ‘F article’，按原文保留第 F 章，不擅自改为其他章节。"
+      ],
+      "status": "pending_source_verification",
+      "remainingNotes": [
+        "现有 review.notes 所列 “F article” 章节指代疑点未解决。源文在多盲事件中援引该章，译文忠实保留第 F 章；未据推测改章，也未核验历史规则或外链。"
+      ],
+      "review": {
+        "reviewer": "review_4",
+        "reviewedAt": "2026-10-22T06:22:38.727845Z",
+        "report": "reviews/round-1/report-4.json",
+        "sourceHash": "c40c27fae99ac11f0024f27d8704879a14189ba3d3efc7ac8ad7ccd864cbac90",
+        "reviewedTranslationHash": "f281910676a5554026326ad3283cd2050943ee15485d1134c82a593b8233ab6e",
+        "verdict": "pending_source_verification",
+        "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+      }
+    },
+    {
+      "key": "incidents:48",
+      "initialNotes": [
+        "原文开头称未晋级，后文要求删除决赛成绩；译文按其裁定语境表述为不具备决赛资格，保留此原文矛盾供复核。"
+      ],
+      "status": "pending_source_verification",
+      "remainingNotes": [
+        "原文标题及开头称 did not qualify，后文却要求删除决赛成绩；修正后的译文忠实保留冲突，仍待源方澄清。"
+      ],
+      "review": {
+        "reviewer": "review_5",
+        "reviewedAt": "2026-10-22T06:46:40.870Z",
+        "report": "reviews/round-1/recheck-5.json",
+        "sourceHash": "981d56eda1c65f818adafc21319f85602bb5581c33927a8ce54a9cdcdeab5b7a",
+        "reviewedTranslationHash": "475d96f5a36f9561bca478423bfeb1b8428944ab56f263bc7b21f0b7eb0414d3",
+        "verdict": "pending_source_verification"
+      }
+    },
+    {
+      "key": "incidents:53",
+      "initialNotes": [
+        "原文结尾写 ‘removing all second attempts’，与前文取消第三轮/决赛不一致；明确保留并标注，不擅自纠正。"
+      ],
+      "status": "pending_source_verification",
+      "remainingNotes": [
+        "现有 review.notes 所指冲突成立：原文由三轮改为两轮、以前轮定排名，却写 removing all second attempts。译文以“原文接着称”忠实标注保留；到底应删除何轮或哪些尝试仍待源方确认。"
+      ],
+      "review": {
+        "reviewer": "review_5",
+        "reviewedAt": "2026-10-22T06:22:53.079981Z",
+        "report": "reviews/round-1/report-5.json",
+        "sourceHash": "cc1f586a301614c5dfa289fa3484e073487634b2a600941ce4c587259d5cd257",
+        "reviewedTranslationHash": "1ab9b35f27e38dfcfe27de55481a12cc20169de430489f96740a5993cb841afd",
+        "verdict": "pending_source_verification",
+        "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+      }
+    },
+    {
+      "key": "incidents:74",
+      "initialNotes": [
+        "原文正文写 3j1，但引用标签为 3j2，链接仍指向 3j1；照录并待核验。"
+      ],
+      "status": "pending_source_verification",
+      "remainingNotes": [
+        "源正文的 Regulation 3j1、引文标签 [3j2] 和目标链接 #3j1 不一致。原文未澄清正确编号，需后续核验官方源；本轮按要求未读取外链，不建议擅自改成任一编号。"
+      ],
+      "review": {
+        "reviewer": "review_6",
+        "reviewedAt": "2026-10-22T06:24:59.959967Z",
+        "report": "reviews/round-1/report-6.json",
+        "sourceHash": "0cfed4e9b0fe16e472891069c49916dc2d3df0810c52413993052f4650c45697",
+        "reviewedTranslationHash": "69db724d00e6caab58bfc6fb5a250bf63a19e0fab1db43892478cd128509ca10",
+        "verdict": "pending_source_verification",
+        "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+      }
+    }
+  ]
+}

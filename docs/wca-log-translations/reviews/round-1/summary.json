@@ -1,0 +1,123 @@
+{
+  "completedAt": "2026-10-22T06:53:07.762Z",
+  "process": "六个与初稿编写过程分离的审校代理，逐条对照提供的完整官方日志正文；统一应用21条修正后，由原审校代理逐条复核当前版本。非人工审校，不代表外部事实核验或内容许可。",
+  "coverage": 188,
+  "correctedEntries": 21,
+  "correctionOperations": 24,
+  "counts": {
+    "independently_verified": 175,
+    "pending_source_verification": 13
+  },
+  "unresolved": [
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2024-q4",
+      "path": "entries/disciplinary-integrity-committee-digest-2024-q4.json",
+      "status": "pending_source_verification",
+      "notes": [
+        "原文称结案14件，但列举8项禁赛、3项警告、2件无措施合计13；译文忠实保留，未补造案件，统计待来源核验。",
+        "原文“permanent until”及连续不出席达到原禁令时长的条件已照译；具体政策性质未核验，不能称已解决该原文措辞疑义。"
+      ]
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2025-q2",
+      "path": "entries/disciplinary-integrity-committee-digest-2025-q2.json",
+      "status": "pending_source_verification",
+      "notes": [
+        "原文称结案9件，但4项禁赛加6件无措施为10；译文忠实保留，未调整统计，待来源核验。"
+      ]
+    },
+    {
+      "key": "disciplinary:/posts/wdc-monthly-digest-july-2019",
+      "path": "entries/disciplinary-wdc-monthly-digest-july-2019.json",
+      "status": "pending_source_verification",
+      "notes": [
+        "源文公开信称 2007 年的作弊发生于 almost a decade ago，与 2019 年简报时间相差约十二年不一致；译文忠实保留为近十年，年代问题 unresolved。本轮仅对照所给正文，未作事实核验。"
+      ]
+    },
+    {
+      "key": "disciplinary:/posts/wic-digest-2024-q3",
+      "path": "entries/disciplinary-wic-digest-2024-q3.json",
+      "status": "pending_source_verification",
+      "notes": [
+        "源文称结案 17 件，但随后列 4 项禁赛、3 项警告及 13 件其他结局；若按互斥案件数理解则合计 20。是否处分数量与案件数口径不同或存在交叉，正文未说明。译文忠实照录；统计口径 unresolved，未作外部事实核验。"
+      ]
+    },
+    {
+      "key": "incidents:11",
+      "path": "entries/incidents-11.json",
+      "status": "pending_source_verification",
+      "notes": [
+        "原文 suspecting filtration of the solve 措辞含混；现译为怀疑还原情况泄露，是一种语境解释，需源文作者或来源确认。此处 unresolved；未读取外链或推断身份。"
+      ]
+    },
+    {
+      "key": "incidents:115",
+      "path": "entries/incidents-115.json",
+      "status": "pending_source_verification",
+      "notes": [
+        "原文写 their cumulative time limit was greater than 10 minutes but less than 12 minutes，而上下文讨论的似乎是选手累计用时。译文采用累计时间属语境解释，尚不能声称已确认源文措辞；需来源澄清，unresolved。"
+      ]
+    },
+    {
+      "key": "incidents:169",
+      "path": "entries/incidents-169.json",
+      "status": "pending_source_verification",
+      "notes": [
+        "现有 review.notes 所列 “WRC Board” 机构名称疑点未解决。源文申诉机构与常见称谓的关系无法仅据本条确认；译文忠实标为原文所称 WRC Board，未擅改 WCA Board。本审校没有联网或事实核验。"
+      ]
+    },
+    {
+      "key": "incidents:26",
+      "path": "entries/incidents-26.json",
+      "status": "pending_source_verification",
+      "notes": [
+        "现有 review.notes 所列 “F article” 章节指代疑点未解决。源文在多盲事件中援引该章，译文忠实保留第 F 章；未据推测改章，也未核验历史规则或外链。"
+      ]
+    },
+    {
+      "key": "incidents:4",
+      "path": "entries/incidents-4.json",
+      "status": "pending_source_verification",
+      "notes": [
+        "原文记载成绩 7.51 秒，又仅以视频用时超过 7 秒解释慢计时；该比较不足以单独说明偏慢。译文忠实保留数字，需源方澄清，不能自行改为超过 7.51 秒或其他值。"
+      ]
+    },
+    {
+      "key": "incidents:48",
+      "path": "entries/incidents-48.json",
+      "status": "pending_source_verification",
+      "notes": [
+        "原文标题及开头称 did not qualify，后文却要求删除决赛成绩；修正后的译文忠实保留冲突，仍待源方澄清。"
+      ]
+    },
+    {
+      "key": "incidents:53",
+      "path": "entries/incidents-53.json",
+      "status": "pending_source_verification",
+      "notes": [
+        "现有 review.notes 所指冲突成立：原文由三轮改为两轮、以前轮定排名，却写 removing all second attempts。译文以“原文接着称”忠实标注保留；到底应删除何轮或哪些尝试仍待源方确认。"
+      ]
+    },
+    {
+      "key": "incidents:62",
+      "path": "entries/incidents-62.json",
+      "status": "pending_source_verification",
+      "notes": [
+        "原文标题说选手询问，正文明确说裁判询问代表；可能有转述关系，但所给正文未说明。译文忠实保留，不推断谁直接提出询问，待源方澄清。"
+      ]
+    },
+    {
+      "key": "incidents:74",
+      "path": "entries/incidents-74.json",
+      "status": "pending_source_verification",
+      "notes": [
+        "源正文的 Regulation 3j1、引文标签 [3j2] 和目标链接 #3j1 不一致。原文未澄清正确编号，需后续核验官方源；本轮按要求未读取外链，不建议擅自改成任一编号。"
+      ]
+    }
+  ],
+  "forumSupplement": {
+    "path": "supplements/forum-388-full.json",
+    "status": "independently_verified",
+    "review": "reviews/round-1/recheck-forum-full.json"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:55",
+  "source": {
+    "key": "incidents:55",
+    "kind": "incidents",
+    "title": "A competitor signed for the wrong attempt",
+    "url": "https://www.worldcubeassociation.org/incidents/55",
+    "date": "2020-04-16T19:58:29.000Z",
+    "content": "A competitor signed for the wrong solve attempt. This is considered a DNS according to [Regulation A7c2](https://www.worldcubeassociation.org/regulations/#A7c2)):\n\n> [A7c2](https://www.worldcubeassociation.org/regulations/#A7c2)) If the competitor signs (or otherwise marks) an attempt before they have begun it, they forfeit the attempt and the result will be considered DNS.\n\nAs the competitor was experienced enough, the [Regulation A7g](https://www.worldcubeassociation.org/regulations/#A7g) is not applicable. Therefore the WRC agreed to changed the original attempt to **DNS**.\n\nFor the Altona Algorithms Attempt 2 2021 incident, the WRC agreed that this case is substantially different because:\n\n1. The competitor did not do it on purpose.\n2. The competitor notified the mistake to the WCA Delegate right after realizing it.\n3. It is clear that the competitor knows Article A's procedure and the importance of the signature. The competitor did not attempt to intentionally break the standard procedure not gain an unfair advantage.\n\nBecause of this, the WRC agreed to accept the original result for this incident.\n\nThe WRC would like encourage competitors to be familiar with the procedure of speedsolving ([Article A](https://www.worldcubeassociation.org/regulations/#article-A-speedsolving)). It is important to understand that the use of the signatures is not arbitrary but rather serves to identify the scramblers and judges and if the competitor agrees with the result.",
+    "hash": "799869920d673a4f3450049d37e89d6148f49db541d8c5eabb06108cbd148589",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "选手签错尝试栏",
+    "content": "一名选手在错误的尝试栏签名。根据 [A7c2](https://www.worldcubeassociation.org/regulations/#A7c2)，这视为 DNS：\n> [A7c2](https://www.worldcubeassociation.org/regulations/#A7c2) 如果选手在开始一次尝试前签名或作其他标记，视为放弃该次尝试，成绩记为 DNS。\n\n该选手已有足够经验，[A7g](https://www.worldcubeassociation.org/regulations/#A7g) 不适用，因此 WRC 同意将原尝试改为 **DNS**。\n\n对于 Altona Algorithms Attempt 2 2021 的事件，WRC 认为存在实质差别：\n1. 选手并非故意；\n2. 一发现错误便立即通知代表；\n3. 显然理解第 A 章流程和签名的重要性，没有试图故意违反标准流程或获取不公平优势。\n\n因此，WRC 同意保留该事件的原成绩。\n\nWRC 鼓励选手熟悉速拧流程（[第 A 章](https://www.worldcubeassociation.org/regulations/#article-A-speedsolving)）。签名并非随意设置，而是用于识别打乱员和裁判，并确认选手是否认可成绩。",
+    "translatedAt": "2026-10-22T05:52:51.924Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "799869920d673a4f3450049d37e89d6148f49db541d8c5eabb06108cbd148589"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

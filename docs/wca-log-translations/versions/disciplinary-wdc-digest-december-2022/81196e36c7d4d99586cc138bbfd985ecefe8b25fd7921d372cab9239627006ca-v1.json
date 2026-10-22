@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "disciplinary:/posts/wdc-digest-december-2022",
+  "source": {
+    "key": "disciplinary:/posts/wdc-digest-december-2022",
+    "kind": "disciplinary",
+    "title": "WDC Digest - December 2022",
+    "date": "2022-12-29T11:10:25Z",
+    "url": "https://www.worldcubeassociation.org/posts/wdc-digest-december-2022",
+    "content": "<p>Dear WCA Community,</p><p>The end of 2022 is approaching. We hope that this was a successful year for you, and hope that the upcoming year will be full of even more cubing, records, and fun!</p><p>The WDC would like to share with you some insight on the work we have done in the last three months. Firstly, we have concluded a few investigations that could be of interest for you:</p><ol><li>A competitor signed up with a new account and registered for a competition despite being banned. This was caught by the Delegates when submitting the results of the competition, and the results of the competitor were removed. This attempt to circumvent a WDC decision has been taken into account to determine the final duration of the ban.</li><li>As an unusual coincidence, we had two nearly identical cases of cheating in a blindfolded event on the same weekend, but in two different countries. When confronted with the evidence, the competitors immediately owned up to their mistakes and apologized. The affected results have been disqualified. Given the relatively young age of these competitors, and the fact that they immediately confessed, we concluded both cases with a warning. We believe that they understood their mistake and that bans were not necessary in these cases.</li><li>In the past few months there has also been an increase in cases of cube stealing, and we are about to close two investigations related to this. We take this chance to remind all competitors to keep an eye on their belongings at all times and not to leave their puzzles unattended at competitions.</li></ol><p>On a different note, you may have noticed that some new members have joined <a href=\"https://www.worldcubeassociation.org/teams-committees#WDC\">our committee</a>. Indeed, during the past three months the senior members have gone through the applications of 29 candidates, most of whom were potentially excellent WDC members. Of these, 16 candidates were selected for an interview, and finally 8 of the interviewed candidates have been selected to join the Disciplinary Committee.</p><p>The new members have taken up their role with great enthusiasm and energy, and have already carried out a few investigations. With their help, the WDC will be better equipped to make sure that the WCA Regulations are followed, and that competitions remain a safe environment for everyone.</p><p>To conclude this Digest, we would like to remind everyone to make sure they fully understand the WCA Regulations and competition procedures. If you have any questions, or are unsure about how to do something, please do not hesitate to ask the Delegate(s) of the competition. In addition, if you ever think the competition results are being compromised in any way, or if you see suspicious behavior, please find the nearest Delegate immediately and report the incident. </p><p>Do you have questions for the WDC? Feel free to send us an email, or ask your question in the <a href=\"https://forum.worldcubeassociation.org/c/wca-disciplinary/26\">Disciplinary section</a> of the WCA forum.</p><p>Sebastiano Tronto<br>\nWDC Leader<br>\nOn behalf of the Disciplinary Committee</p>",
+    "hash": "183fdd0f6529328a6137dfef6ed4e009d12001b503e7878faa41698acbab2511",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "WDC 简报：2022 年 12 月",
+    "content": "亲爱的 WCA 社群：\n\n2022 年即将结束，希望大家这一年顺利，来年有更多魔方活动、纪录与乐趣！\n\nWDC 分享过去三个月的工作。首先，完成了以下可能令人关注的调查：\n1. 一名被禁赛选手新建账号报名。代表提交成绩时发现，其成绩已删除。试图规避 WDC 决定这一行为，已计入最终禁赛期限的考量。\n2. 巧合的是，同一周末不同国家发生两起几乎相同的盲拧作弊案。看到证据后，两名选手立即承认并道歉，相关成绩被取消。鉴于年龄较小、立即承认，两案均以警告结案。我们相信其已理解错误，无需禁赛。\n3. 近月魔方偷窃案件增加，即将结束两项相关调查。提醒选手看管随身物品，不要在比赛中让魔方无人照看。\n\n你可能已注意到[委员会](https://www.worldcubeassociation.org/teams-committees#WDC)新成员。过去三个月，高级成员审阅 29 人申请，多数都有潜力成为优秀成员；16 人获选面试，最终 8 人加入。\n\n新成员充满热情和活力，已开展一些调查。他们将帮助 WDC 更好地确保规则被遵守、比赛对所有人安全。\n\n最后提醒充分理解规则和流程，有问题时询问代表；若认为成绩受到损害或看到可疑行为，请立即联系最近的代表报告。\n\n如有问题，可发邮件或在论坛[纪律板块](https://forum.worldcubeassociation.org/c/wca-disciplinary/26)提问。\n\nSebastiano Tronto\nWDC 负责人，代表纪律委员会",
+    "translatedAt": "2026-10-22T06:07:32.458Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "183fdd0f6529328a6137dfef6ed4e009d12001b503e7878faa41698acbab2511"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

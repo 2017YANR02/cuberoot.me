@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:158",
+  "source": {
+    "key": "incidents:158",
+    "kind": "incidents",
+    "title": "Competitor entered the scramble area after scrambling started, but before his first solve",
+    "url": "https://www.worldcubeassociation.org/incidents/158",
+    "date": "2025-04-04T02:31:46.000Z",
+    "content": "A competitor submitted their puzzle and went to the waiting area but then entered the scrambling area, mistakenly believing their puzzle had been swapped. They saw their puzzle with the first scramble, leading to a DNF for that attempt. Uncertain about the correct penalty, the delegates asked if only the first attempt should be disqualified or if the entire average should be affected.\n\nThe WRC clarified that violating [A2a1](https://www.worldcubeassociation.org/regulations/full/#A2a1) allows for the disqualification of all remaining attempts at the delegate's discretion. Additionally, entering the scrambling area early violated [A2a3](https://www.worldcubeassociation.org/regulations/full/#A2a3), which, while not listing a specific penalty, could justify round disqualification under [2k5](https://www.worldcubeassociation.org/regulations/full/#2k5). Since this occurred before any solves were completed, the competitor should receive no results rather than DNFs ([2j1a](https://www.worldcubeassociation.org/regulations/full/#2j1a)).\n\nThe WRC would like to give a reminder that competitors must never enter the scrambling area while scrambling is in progress, as scramble secrecy must be maintained throughout the group.",
+    "hash": "761a73ceeb0a6d0b52010fde562da2e0f7d1bc113429bf1c3dce89a3271e0d8e",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "打乱开始后、第一次还原前，选手进入打乱区",
+    "content": "选手提交魔方并前往候场区，随后误以为魔方被换而进入打乱区，看到了自己魔方的第一条打乱，该次被判 DNF。代表不确定应只取消第一次，还是影响整个平均，向 WRC 询问。\n\nWRC 澄清，违反 [A2a1](https://www.worldcubeassociation.org/regulations/full/#A2a1) 时，代表可酌情取消全部剩余尝试资格。提前进入打乱区还违反 [A2a3](https://www.worldcubeassociation.org/regulations/full/#A2a3)；该条虽无特定处罚，但可按 [2k5](https://www.worldcubeassociation.org/regulations/full/#2k5) 取消该轮资格。由于发生时尚未完成任何还原，应不记录成绩，而非记为多个 DNF（[2j1a](https://www.worldcubeassociation.org/regulations/full/#2j1a)）。\n\nWRC 提醒：打乱进行中，选手绝不能进入打乱区，整组期间都必须维持打乱保密。",
+    "translatedAt": "2026-10-22T06:00:02.853Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "761a73ceeb0a6d0b52010fde562da2e0f7d1bc113429bf1c3dce89a3271e0d8e"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

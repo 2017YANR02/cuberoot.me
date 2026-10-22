@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "key": "disciplinary:/posts/important-announcement-about-blindfolded-solving",
+  "source": {
+    "key": "disciplinary:/posts/important-announcement-about-blindfolded-solving",
+    "kind": "disciplinary",
+    "title": "Important announcement about blindfolded solving",
+    "date": "2008-02-26T22:19:50Z",
+    "url": "https://www.worldcubeassociation.org/posts/important-announcement-about-blindfolded-solving",
+    "content": "<p>WCA made an important announcement about blindfolded solving on the <a href=\"https://www.worldcubeassociation.org/forum/viewtopic.php?f=9&t=388\">WCA forum</a>.</p>",
+    "hash": "ec28925700d25462e3b3394780445a4cca1c28a73140fd82d179b24cc3f6a8d5",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "关于盲拧的重要公告",
+    "content": "WCA 已在 [WCA 论坛](https://www.worldcubeassociation.org/forum/viewtopic.php?f=9&t=388)发布一项关于盲拧的重要公告。",
+    "translatedAt": "2026-10-22T06:02:27.941Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "ec28925700d25462e3b3394780445a4cca1c28a73140fd82d179b24cc3f6a8d5"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [
+      "官网引导句及关联官方归档388首帖全文均已翻译并独立对照。旧phpBB链接404；未纳入社区回帖；用户已确认首帖翻译许可，仍无公开发布授权。"
+    ],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_1",
+      "reviewedAt": "2026-10-22T06:23:54.689Z",
+      "report": "reviews/round-1/report-1.json",
+      "sourceHash": "ec28925700d25462e3b3394780445a4cca1c28a73140fd82d179b24cc3f6a8d5",
+      "reviewedTranslationHash": "3bbacac3075561c71f72c7ec5d6cff887dbbe82b96990193d38483c225d85096",
+      "verdict": "pending_source_verification",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": [],
+    "recheck": {
+      "reviewer": "review_3",
+      "reviewedAt": "2026-10-22T06:52:49.420Z",
+      "report": "reviews/round-1/recheck-forum-full.json",
+      "sourceHash": "ec28925700d25462e3b3394780445a4cca1c28a73140fd82d179b24cc3f6a8d5",
+      "reviewedTranslationHash": "3bbacac3075561c71f72c7ec5d6cff887dbbe82b96990193d38483c225d85096",
+      "verdict": "pass"
+    }
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "supplements": [
+    {
+      "path": "supplements/forum-388-full.json",
+      "status": "independently_verified"
+    },
+    {
+      "path": "supplements/forum-388-summary.json",
+      "status": "superseded_by_full_translation"
+    }
+  ],
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

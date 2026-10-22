@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:29",
+  "source": {
+    "key": "incidents:29",
+    "kind": "incidents",
+    "title": "A competitor started his timer twice",
+    "url": "https://www.worldcubeassociation.org/incidents/29",
+    "date": "2019-01-02T09:38:53.000Z",
+    "content": "After their inspection, a competitor started their timer, then reset it, then started it again before making any move.\nRegulation [A4d](https://www.worldcubeassociation.org/regulations/#A4d) states that the competitor starts the solve by removing their hands from the timer (thus starting the timer), which happened during the first time they started the timer.\nTherefore the competitor reset the timer before the puzzle was solved and the result should be DNF.\n\nFor the case which occurred during China Championship 2017, the WRC also considered that the timer lights were covered by tape. However since it was the competitor's fifth solve on the exact same timer, the WRC decided to change the result to DNF.",
+    "hash": "28ac7a06febd96a8657f65b9c406f122a7e6973870280e3aa3e4926554cbe8bc",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "选手两次启动计时器",
+    "content": "观察结束后，一名选手启动计时器，随后复位，又再次启动；此时尚未转动魔方。规则 [A4d](https://www.worldcubeassociation.org/regulations/#A4d) 规定，双手离开计时器并启动计时即开始还原；第一次启动时这一步已经发生。因此，选手在魔方尚未还原时复位计时器，成绩应为 DNF。\n\n对于 China Championship 2017 的这起事件，WRC 也考虑了计时器指示灯被胶带遮住的情况。不过，由于这是选手在同一计时器上的第五次还原，WRC 决定将成绩改为 DNF。",
+    "translatedAt": "2026-10-22T05:50:48.611Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "28ac7a06febd96a8657f65b9c406f122a7e6973870280e3aa3e4926554cbe8bc"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

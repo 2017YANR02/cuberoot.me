@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/covid-19-situation-update-2020-03-19",
+  "source": {
+    "key": "posts:/posts/covid-19-situation-update-2020-03-19",
+    "kind": "posts",
+    "title": "COVID-19 Situation Update (2020-03-19)",
+    "date": "2020-03-19T09:15:47.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/covid-19-situation-update-2020-03-19",
+    "content": "Dear WCA Community,\n\nThe Board of Directors would like to make a few announcements regarding the ever changing situation which is unfolding around the world with COVID-19.\n\nGiven the rapid pace of change and action from local governments being taken to combat COVID-19 the Board has decided to **cancel all competitions between now and April 19th**. Additionally we have decided to **not allow any submissions of competitions with a starting date between now and May 15th** given the high likelihood that these competitions would be faced with cancellation.\n\nIt is worth noting that the Board sees a very high likelihood that these deadlines will be extended and further cancellations will be required.\n\nWe encourage you to practice social distancing and stay as safe as you can within your communities.\n\nThank you for your understanding,\nThe Board of Directors",
+    "hash": "46698a2bb3379c3c4fb14a13b7688914077c7eb66202e3a7e6ebc259129221af",
+    "format": "markdown",
+    "sourceId": 13966
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "46698a2bb3379c3c4fb14a13b7688914077c7eb66202e3a7e6ebc259129221af",
+    "language": "zh-Hans",
+    "title": "新冠疫情情况更新（2020 年 3 月 19 日）",
+    "content": "亲爱的 WCA 社区成员：\n\n针对全球不断变化的新冠疫情，董事会现作出以下通知。\n\n鉴于疫情变化迅速，各地政府也正采取防控措施，董事会决定**取消即日起至 4 月 19 日之间的所有比赛**。此外，考虑到后续比赛极有可能面临取消，我们决定**不接受开始日期在即日起至 5 月 15 日之间的比赛申请**。\n\n董事会认为，上述截止日期很可能还会延长，并需要取消更多比赛。\n\n我们鼓励大家保持社交距离，尽力保护自己和所在社区的安全。\n\n感谢理解。\n\nWCA 董事会",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:49:54.099Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "48f03194dd5711ce578b05c0dafb935e921e31104fa5e34af21cc8b801aad2be"
+}

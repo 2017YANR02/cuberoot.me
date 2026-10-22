@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:123",
+  "source": {
+    "key": "incidents:123",
+    "kind": "incidents",
+    "title": "Competitor was distracted by another competitor and simultaneously faced a timer issue",
+    "url": "https://www.worldcubeassociation.org/incidents/123",
+    "date": "2024-10-13T05:19:35.000Z",
+    "content": "During a competitor's pyraminx attempt, a different competitor began talking to them. The affected competitor, upon completing their attempt, called for a delegate to request an extra. However, the timer display showed 0.000. The affected competitor claimed that due to habit, they had immediately reset the timer after their solve. However, a judge mentioned that they heard the competitor mention that they had not started the timer upon completion of the solve. \n\nThis is a particularly complex situations because of two incidents occurring in tandem: the distraction from the other competitor, and the timer situation. It was unclear the extent of the distraction by the other competitor as well as when the distraction occurred (i.e. during inspection, in the midst of the very short solve, etc). \n\nIn general, if two incidents occur during the same attempt, the incident that occurred first takes precedence. In this situation, it was not possible to determine for certain which incident occurred first. If the distraction occurred during inspection, then the ordering of incidents would be known.  Due to the lack of information the WRC had regarding the magnitude and duration of the distraction, the decision was left to delegate discretion, suggesting that if the distraction started during inspection and was significant, then an extra could be used. Otherwise, the penalty should be a DNF. In the end, the result was marked as a DNF.",
+    "hash": "822be9a5f54da35a7e3460d85267d722382bf75ee9faac2cce495d10c9e28d07",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "选手同时受到他人干扰并遇到计时问题",
+    "content": "一名选手进行金字塔尝试时，另一名选手开始与其讲话。受影响选手完成尝试后叫来代表申请额外尝试，但计时器显示 0.000。选手称自己出于习惯在还原后立即复位；一名裁判却说，自己听见选手完成时说没有启动计时器。\n\n两起事件同时出现，使情况复杂：他人干扰与计时问题。干扰程度及发生时间均不清楚，例如是在观察中，还是极短的还原过程中。\n\n一般而言，同一次尝试出现两起事件，先发生者优先。本案无法确定顺序；若干扰始于观察，则顺序便可确定。由于 WRC 不掌握干扰强度和持续时间，决定留给代表酌情判断，并建议：若干扰始于观察且程度显著，可以采用额外尝试；否则应判 DNF。最终记录为 DNF。",
+    "translatedAt": "2026-10-22T05:57:56.837Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "822be9a5f54da35a7e3460d85267d722382bf75ee9faac2cce495d10c9e28d07"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_3",
+      "reviewedAt": "2026-10-22T06:22:42.955322Z",
+      "report": "reviews/round-1/report-3.json",
+      "sourceHash": "822be9a5f54da35a7e3460d85267d722382bf75ee9faac2cce495d10c9e28d07",
+      "reviewedTranslationHash": "90fa55f9bf4ba00f9f29a8c7b0c9ea387ed83fe6499820f611f2fc336c22c648",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

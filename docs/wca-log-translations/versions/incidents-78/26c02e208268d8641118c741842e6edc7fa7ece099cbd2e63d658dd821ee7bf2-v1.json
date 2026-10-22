@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:78",
+  "source": {
+    "key": "incidents:78",
+    "kind": "incidents",
+    "title": "A judge forgot to hold a sight blocker for a significant amount of time in a 3x3x3 Blindfolded attempt",
+    "url": "https://www.worldcubeassociation.org/incidents/78",
+    "date": "2023-01-09T20:02:29.000Z",
+    "content": "During Please Be Solved Vancouver 2022 (Jul 24, 2022) and Silver Spring Summer 2022 (Aug 13, 2022), a judge forgot to hold a sight blocker for a significant amount of time in a 3BLD attempt.\n\nIn both cases, the decision from the WCA Regulations Committee was to keep the extra attempt. However, in the latter, the decision was overturned by the WCA Board of Directors, thus keeping the original attempt.\n\nThe WCA Board of Directors provided the following reasons:\n>  1.  No change in the execution speed or positioning of the competitor's head to indicate that they were looking at the cube initially.\n>  2.  The speed is in line with the competitor's abilities per previous competitions which were without incidents.\n>  3.  It is not the fault of the competitor, but the judge. No actions from the competitor lead to the impression of cheating or even trying to gain an advantage from the situation.",
+    "hash": "ba4da0924970b90a24d36f9c0a4b2900ba916ced9f8fc46c550770d78f3d73c7",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "三阶盲拧中裁判长时间忘记举遮挡板",
+    "content": "Please Be Solved Vancouver 2022（2022 年 7 月 24 日）和 Silver Spring Summer 2022（2022 年 8 月 13 日）均发生了裁判在三阶盲拧中长时间忘记举遮挡板的情况。\n\n两案中，WCA 规则委员会均决定采用额外尝试。但后一案被 WCA 理事会推翻，改为保留原尝试。\n\n理事会给出的理由是：\n> 1. 执行速度和头部位置没有变化，未显示选手起初在看魔方；\n> 2. 速度与选手此前没有发生事件的比赛能力一致；\n> 3. 这是裁判而非选手的过错。选手没有任何行为令人认为其作弊，甚至没有试图利用情况取得优势。",
+    "translatedAt": "2026-10-22T05:54:37.260Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "ba4da0924970b90a24d36f9c0a4b2900ba916ced9f8fc46c550770d78f3d73c7"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

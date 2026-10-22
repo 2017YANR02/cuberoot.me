@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/tnoodle-0-10-0",
+  "source": {
+    "key": "posts:/posts/tnoodle-0-10-0",
+    "kind": "posts",
+    "title": "TNoodle 0.10.0",
+    "date": "2015-06-30T08:09:42.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/tnoodle-0-10-0",
+    "content": "TNoodle-WCA-0.10.0 is now available from [https://www.worldcubeassociation.org/regulations/scrambles](https://www.worldcubeassociation.org/regulations/scrambles), in anticipation of tomorrow's update to the WCA Regulations.\n\nThe following change has been made since TNoodle 0.9.0:\n\n- The Pyraminx scrambling limit has been lowered from 7 moves to 6 moves.\n<!--break-->\n\nPlease remember that official competitions must always use the current version of the official scramble program. This is always available from: [https://www.worldcubeassociation.org/regulations/scrambles/](https://www.worldcubeassociation.org/regulations/scrambles/)",
+    "hash": "21bfa8f7c853ced4a596227ba4e10dc485016aba7135b4c5b2e001f05449d76b",
+    "format": "markdown",
+    "sourceId": 4601
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "21bfa8f7c853ced4a596227ba4e10dc485016aba7135b4c5b2e001f05449d76b",
+    "language": "zh-Hans",
+    "title": "TNoodle 0.10.0 发布",
+    "content": "为配合明天生效的 WCA 规则更新，TNoodle-WCA-0.10.0 现已可从 [https://www.worldcubeassociation.org/regulations/scrambles](https://www.worldcubeassociation.org/regulations/scrambles) 下载。\n\n与 TNoodle 0.9.0 相比，本次作出了以下修改：\n\n* 金字塔打乱所要求的最短还原步数由 7 步降为 6 步。\n\n请记住，官方比赛必须始终使用当前版本的官方打乱程序。最新版本可从以下页面获取：[https://www.worldcubeassociation.org/regulations/scrambles/](https://www.worldcubeassociation.org/regulations/scrambles/)",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.169Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "b5176567af0d074b5b5062d2f7f702131654d9b4b24f69de6bc3253dfe744fba"
+}

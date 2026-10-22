@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:147",
+  "source": {
+    "key": "incidents:147",
+    "kind": "incidents",
+    "title": "2x2 misscramble took only 3 moves to solve",
+    "url": "https://www.worldcubeassociation.org/incidents/147",
+    "date": "2025-02-17T15:18:33.000Z",
+    "content": "A video was found where a competitor could be seen performing a 0.54 2x2 Solve, this being the North American Record at that time. After some analysis, it was determined that the cube was in fact misscrambled, with a 3 move optimal solution (R U R’), rather than the intended 4 move optimal solution (U’ R U R’).\n\nThe optimal solution for any official 2x2 scrambles has a minimum of 4 moves ([Regulation 4b3b](https://www.worldcubeassociation.org/regulations/#4b3b)). The WRC held a vote to confirm our decision to DNF the attempt, in line with our approach for handling misscrambles at the time.\n\nIf this were to happen under the current Regulations, the solve would be marked as DNS as per [Regulation 11i1](https://www.worldcubeassociation.org/regulations/#11i1).",
+    "hash": "5e0887a388daaf150be8322c6774d3c2607bdc5c240949d64d309213eae84b73",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "二阶错误打乱仅需 3 步还原",
+    "content": "发现一段视频，选手二阶还原 0.54 秒，当时为北美纪录。分析后确定打乱错误，最优解为 3 步（R U R’），而非原定 4 步（U’ R U R’）。\n\n正式二阶打乱的最优解至少为 4 步（[4b3b](https://www.worldcubeassociation.org/regulations/#4b3b)）。WRC 投票确认判 DNF，符合当时对错误打乱的处理方式。\n\n若按现行规则处理，应依据 [11i1](https://www.worldcubeassociation.org/regulations/#11i1) 记为 DNS。",
+    "translatedAt": "2026-10-22T06:00:02.853Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "5e0887a388daaf150be8322c6774d3c2607bdc5c240949d64d309213eae84b73"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:65",
+  "source": {
+    "key": "incidents:65",
+    "kind": "incidents",
+    "title": "The \"Nod-don\" technique was used for Blindfolded Solving (extra not available)",
+    "url": "https://www.worldcubeassociation.org/incidents/65",
+    "date": "2022-08-10T22:14:02.000Z",
+    "content": "A competitor who used the nod-don technique contacted the delegate after the competition because he thought he may have been close to starting the first turn before the blindfold was fully donned (possibly against regulations [B4a](https://www.worldcubeassociation.org/regulations/#B4a) and [B4b](https://www.worldcubeassociation.org/regulations/#B4b)).\n\n> B4a) The competitor dons the blindfold to start the blindfolded phase.\n\n> B4b) The competitor must not apply moves to the puzzle before they have fully donned the blindfold. Penalty: disqualification of the attempt (DNF).\n\n\nAfter analyzing video evidence at full speed, the WRC came to the conclusion that the competitor is not likely to have gained an advantage, thus allowing the solve to remain valid.",
+    "hash": "2682cc8bd669484fae8b80c17307c03e15d462735b6f110feef4fd4caa1ba9bf",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "盲拧中使用低头戴眼罩技巧（无额外尝试）",
+    "content": "一名使用低头戴眼罩技巧的选手在赛后联系代表，认为自己第一步转动可能接近眼罩尚未完全戴好的时刻，可能违反 [B4a](https://www.worldcubeassociation.org/regulations/#B4a) 和 [B4b](https://www.worldcubeassociation.org/regulations/#B4b)。\n\n> B4a：选手戴上眼罩，开始盲拧阶段。\n> B4b：眼罩完全戴好前不得转动魔方，否则该次尝试 DNF。\n\n以正常速度分析视频后，WRC 认为选手不太可能取得优势，因此允许该成绩保持有效。",
+    "translatedAt": "2026-10-22T05:54:37.260Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "2682cc8bd669484fae8b80c17307c03e15d462735b6f110feef4fd4caa1ba9bf"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_5",
+      "reviewedAt": "2026-10-22T06:22:53.079981Z",
+      "report": "reviews/round-1/report-5.json",
+      "sourceHash": "2682cc8bd669484fae8b80c17307c03e15d462735b6f110feef4fd4caa1ba9bf",
+      "reviewedTranslationHash": "dfe51696288a8e7dadcdbb9af0c302d181a32df529701d3da8fba3653499b933",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

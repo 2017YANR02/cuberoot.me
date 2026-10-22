@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:58",
+  "source": {
+    "key": "incidents:58",
+    "kind": "incidents",
+    "title": "A competitor was disqualified before their attempts",
+    "url": "https://www.worldcubeassociation.org/incidents/58",
+    "date": "2020-10-05T20:43:00.000Z",
+    "content": "DISCLAIMER: Since the resolution of this incident, regulation 2j1a has been changed and now allows for results to be entered as DNS rather than DNF, if the competitor has not yet succesfully completed a solve in the round he is disqualified for.\n\nA competitor was disqualified from a round by the WCA Delegate for not doing their judging tasks. Following Regulation 2j1a, the results should be recorded as a DNF:\n\n> [2j1](https://www.worldcubeassociation.org/regulations/#2j1)) If a competitor is disqualified from an event for any reason, they are not eligible for any more attempts in the event.\n> [2j1a](https://www.worldcubeassociation.org/regulations/#2j1a)) The results of all remaining attempts in the event are recorded as DNF.\n\nHowever, the WRC found that because the competitor was disqualified before any of their attempts, this fits the definitions of Regulation 9f5 and Guideline 9f5+:\n\n> [9f5](https://www.worldcubeassociation.org/regulations/#9f5)) The result of an attempt is recorded as DNS (Did Not Start) if the competitor is eligible for an attempt but declines it.\n> [9f5+](https://www.worldcubeassociation.org/regulations/guidelines.html#9f5+)) (...). If the competitor did not qualify for an attempt (e.g. in a cutoff round), they have no result for the attempt.\n\nFollowing the reasoning of BCM Arya Cubing Challenge 2019 incident (see [Incident Log](https://www.worldcubeassociation.org/incidents/56)) and according to [Guideline 9f5+](https://www.worldcubeassociation.org/regulations/guidelines.html#9f5+), the WRC agreed that the **competitor's result should be removed**. The Regulations will be updated to clarify this.",
+    "hash": "ca03a59741787e1e8ae4b2a152815bffd32bede3a0ce06ca004764f33dae6bf8",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "选手在开始尝试前被取消资格",
+    "content": "说明：此事件处理后，2j1a 已修改。如果选手在被取消资格的轮次中尚未成功完成一次还原，现允许记录为 DNS，而非 DNF。\n\n一名选手因未履行裁判任务，被代表取消某轮资格。按 2j1a，本应记录为 DNF：\n> [2j1](https://www.worldcubeassociation.org/regulations/#2j1) 因任何原因被取消某项目资格后，选手不得再进行该项目的任何尝试。\n> [2j1a](https://www.worldcubeassociation.org/regulations/#2j1a) 该项目所有剩余尝试均记录为 DNF。\n\n但 WRC 认为，选手在任何尝试开始前已被取消资格，符合 9f5 和 9f5+ 的定义：\n> [9f5](https://www.worldcubeassociation.org/regulations/#9f5) 选手有资格进行一次尝试但选择放弃时，记为 DNS（未开始）。\n> [9f5+](https://www.worldcubeassociation.org/regulations/guidelines.html#9f5+)（……）若选手不具备某次尝试资格，例如未通过及格线，则该次尝试没有成绩。\n\n依据 BCM Arya Cubing Challenge 2019 事件的理由（[日志](https://www.worldcubeassociation.org/incidents/56)）及 [9f5+](https://www.worldcubeassociation.org/regulations/guidelines.html#9f5+)，WRC 同意**删除选手成绩**。规则将更新以明确此点。",
+    "translatedAt": "2026-10-22T05:52:51.924Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "ca03a59741787e1e8ae4b2a152815bffd32bede3a0ce06ca004764f33dae6bf8"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

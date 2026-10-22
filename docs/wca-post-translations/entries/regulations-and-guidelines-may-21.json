@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/regulations-and-guidelines-may-21",
+  "source": {
+    "key": "posts:/posts/regulations-and-guidelines-may-21",
+    "kind": "posts",
+    "title": "Regulations and Guidelines: May 21",
+    "date": "2013-05-21T20:28:43.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/regulations-and-guidelines-may-21",
+    "content": "In response to feedback after the May 11 update to the Regulations, the WRC is updating the Regulations and Guidelines with the following changes. These changes are about puzzle defects at the end of an attempt:\n\n- Phrasing corrections for [5b5d](https://www.worldcubeassociation.org/regulations/#5b5d) and [5b5++](https://www.worldcubeassociation.org/regulations/guidelines.html#5b5++).\n- Simplifications of the examples in [5b5+](https://www.worldcubeassociation.org/regulations/guidelines.html#5b5+) and [5b5++](https://www.worldcubeassociation.org/regulations/guidelines.html#5b5++).\n\nThis change is effective for all official competitions starting May 21, 2013.\n\n<!--break-->\n\nThese changes should not affect the meaning of the Regulations, but will hopefully help delegates and competitors interpret them better.\n\nThe new Regulations are available at [https://www.worldcubeassociation.org/regulations/](https://www.worldcubeassociation.org/regulations/)  \n\n A history of exact changes is available [on GitHub](https://github.com/cubing/wca-documents/compare/official-2013-05-10...official-2013-05-21).",
+    "hash": "fa61427016cc39a56c7e7f2f6e3a23207426e2229788d5ab07d2cb9b7c917af7",
+    "format": "markdown",
+    "sourceId": 2615
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "fa61427016cc39a56c7e7f2f6e3a23207426e2229788d5ab07d2cb9b7c917af7",
+    "language": "zh-Hans",
+    "title": "规则与指南更新：5 月 21 日",
+    "content": "根据 5 月 11 日规则更新后收到的反馈，WRC 对规则和指南作出以下修改。这些修改涉及一次尝试结束时的魔方故障：\n\n- 修正 [5b5d](https://www.worldcubeassociation.org/regulations/#5b5d) 和 [5b5++](https://www.worldcubeassociation.org/regulations/guidelines.html#5b5++) 的措辞。\n- 简化 [5b5+](https://www.worldcubeassociation.org/regulations/guidelines.html#5b5+) 和 [5b5++](https://www.worldcubeassociation.org/regulations/guidelines.html#5b5++) 中的示例。\n\n这些修改适用于从 2013 年 5 月 21 日起举行的所有正式比赛。\n\n这些修改不应改变规则的原意，而是希望帮助代表和选手更准确地理解规则。\n\n新版规则见 [https://www.worldcubeassociation.org/regulations/](https://www.worldcubeassociation.org/regulations/)。\n\n具体修改记录可[在 GitHub 查看](https://github.com/cubing/wca-documents/compare/official-2013-05-10...official-2013-05-21)。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:55:00.917Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "311bf1608ccb1caf628ebf3fe08245036396933b81642b2a73ff6a87b8ab041d"
+}

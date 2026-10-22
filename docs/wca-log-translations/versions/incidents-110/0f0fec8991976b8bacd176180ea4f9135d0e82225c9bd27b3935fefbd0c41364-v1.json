@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:110",
+  "source": {
+    "key": "incidents:110",
+    "kind": "incidents",
+    "title": "Competitor asked about potentially illegal cube days after competition",
+    "url": "https://www.worldcubeassociation.org/incidents/110",
+    "date": "2024-05-31T11:04:17.000Z",
+    "content": "A few days after a competiton, a competitor contacted a delegate asking if one of the cubes they used at the competition (which was also a cube they used to set a record) was a legal puzzle. \n\nThe competitor claimed that the puzzle made different sounds depending on the location of a certain corner piece. They also mentioned that one center cap had a slighly different texture than the others (thus making it potentially invalid for blind solving, which is where the record was set).\n\nThe decision was made to keep the result. The following criteria were used in making the decision:\n1. The sound difference was negligible and would require an entirely silent environment for it to be potentially noticeable (which is unlikely the case in 3x3 blindfolded).\n2. The sound difference was only noticed after the competition, and video evidence showed that no advantage was gained.\n3. The delegates had ruled during the competition that the texture difference was reasonable. \n\nAs per [Regulation 3j1](https://www.worldcubeassociation.org/regulations/#3j1), puzzles are allowed to have reasonable wear. Competitors are encouraged to bring any concerns to their local delegates regarding the legality of their puzzles. The [visual guide](https://drive.google.com/file/d/1m6THsA8fXRN7QFM4ApJbm6eVODKGbMLx/view) in [Guideline 3j++](https://www.worldcubeassociation.org/regulations/guidelines.html#3j++) is also a good reference for competitors.",
+    "hash": "729133657cec1e00ee3432cbd1a187ad32e245729a9235c7248ddf8ca55df72e",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "赛后数天选手询问魔方是否不合规",
+    "content": "赛后数天，一名选手联系代表，询问比赛中使用、并用于创造纪录的一个魔方是否合规。\n\n选手称某个角块所处位置不同时，魔方声音不同；还提到一个中心盖的触感略有差别，可能不适合盲拧，而该纪录正是在盲拧中取得。\n\n最终决定保留成绩，依据是：\n1. 声音差异微乎其微，需要完全安静的环境才可能察觉，三阶盲拧比赛不太可能如此；\n2. 赛后才注意到声音差异，视频也显示没有获得优势；\n3. 代表在现场已认定触感差异合理。\n\n[3j1](https://www.worldcubeassociation.org/regulations/#3j1) 允许魔方有合理磨损。鼓励选手向当地代表提出合规疑虑。[指导 3j++](https://www.worldcubeassociation.org/regulations/guidelines.html#3j++) 中的[图示指南](https://drive.google.com/file/d/1m6THsA8fXRN7QFM4ApJbm6eVODKGbMLx/view)也是良好参考。",
+    "translatedAt": "2026-10-22T05:56:15.197Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "729133657cec1e00ee3432cbd1a187ad32e245729a9235c7248ddf8ca55df72e"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

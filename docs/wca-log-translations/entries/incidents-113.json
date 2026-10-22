@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:113",
+  "source": {
+    "key": "incidents:113",
+    "kind": "incidents",
+    "title": "A clock was displaced from usual position",
+    "url": "https://www.worldcubeassociation.org/incidents/113",
+    "date": "2024-06-19T18:59:01.000Z",
+    "content": "DISCLAIMER: Since the resolution of this incident, regulation [10h1a](https://www.worldcubeassociation.org/regulations/full/#10h1a) has been introduced to clearly define how these incidents should be handled.\n\nOne clock on a competitor's puzzle was displaced from its usual position. \n\nThe ending state of the puzzle had all dials pointing to the 12 position, but one of the gears itself was not entirely flush with the puzzle's front. Given the fact that the dials were all pointed correctly, it was decided to not award any penalty to this attempt.\n\nThis incident occurred prior to the introduction of [5b5f](https://www.worldcubeassociation.org/regulations/#5b5f). Incidents similar to this should now be ruled according to 5b5f, where each dial should be considered to be at its closest intact state.",
+    "hash": "cff7a03439267474d9b39736cb4eb28a080976a5982304bf4aaee112a033b715",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "魔表某个钟面偏离正常位置",
+    "content": "说明：此事件处理后，新增了 [10h1a](https://www.worldcubeassociation.org/regulations/full/#10h1a)，明确此类事件的处理方式。\n\n选手魔表的一个钟面偏离正常位置。结束状态中所有指针均指向 12 点，但一个齿轮未与魔表正面完全齐平。由于所有指针方向正确，决定不予处罚。\n\n此事件发生在 [5b5f](https://www.worldcubeassociation.org/regulations/#5b5f) 引入之前。类似事件现在应按 5b5f 处理，将每个钟面视为其最接近的完整状态。",
+    "translatedAt": "2026-10-22T05:57:56.837Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "cff7a03439267474d9b39736cb4eb28a080976a5982304bf4aaee112a033b715"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_2",
+      "reviewedAt": "2026-10-22T06:22:43.237972Z",
+      "report": "reviews/round-1/report-2.json",
+      "sourceHash": "cff7a03439267474d9b39736cb4eb28a080976a5982304bf4aaee112a033b715",
+      "reviewedTranslationHash": "03fae9b24954ae6d29974543fe33d5cd6c70040b97b48b55eef8a7d1f9b01205",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

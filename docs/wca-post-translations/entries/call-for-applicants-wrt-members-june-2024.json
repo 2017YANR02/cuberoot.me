@@ -1,0 +1,27 @@
+{
+  "key": "posts:/posts/call-for-applicants-wrt-members-june-2024",
+  "source": {
+    "key": "posts:/posts/call-for-applicants-wrt-members-june-2024",
+    "kind": "posts",
+    "title": "Call for Applicants - WRT Members (June 2024)",
+    "date": "2024-06-09T19:15:13.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/call-for-applicants-wrt-members-june-2024",
+    "content": "Do you like numbers? Are you the type of person quickly spotting typos or inconsistencies in restaurant menus that others miss? Does it drive you crazy when data lacks precision? If yes, then you might be a very good fit for the WRT!\n\n\n**The qualities that you should bring to become a WRT member include:**\n\n* You are very responsive and willing to learn and understand internal processes.\n* You are able to work on WRT tasks regularly.\n* You have a good sense of detail and you are able to handle data precisely and consciously.\n* You are a trusted and reliable member of the WCA community and can responsibly handle access to the WCA database. Ideally, you can provide a recommendation from a WCA Staff member.\n* Existing experience with SQL (MySQL) is beneficial, but not mandatory.\n\n\n**As a WRT member you will work on the following regular tasks:**\n\n* Verifying, uploading and publishing competition results.\n* Handling change requests to results or personal data.\n* Supporting WCA Delegates and other WCA Staff with data-related problems and requests.\n* Investigating inconsistencies in the WCA database.\n* Analyzing the WCA’s data to provide insights for other WCA Staff members.\n* Managing and enforcing the WCA’s Data Protection policies.\n* Handling requests from Registered Speedcubers and WCA Staff on Data Protection matters.\n\n\n\nOn average, membership of WRT requires approximately 5-6 hours per week. In particular, you should be ready to spend 30-60 minutes at least two times per week for time-critical regular WRT work (e.g. result submissions). There are also internal discussions which need a faster response time.\n\n\nIn return, you will gain a deeper insight into the structure of the WCA and the WCA database, and you will actively contribute to ensuring the integrity of the WCA's competition results. The official rights and duties of the WRT as described in the Motions of the WCA can be found here.\n\n\nIf you are interested in joining the WCA Results Team, please send an application to WRT Leader Callum James Goodyear (cgoodyear@worldcubeassociation.org). The application should at least include a comprehensive description of yourself, showing why you would be a good addition to the WRT, and your motivation / goals for becoming a WRT member.\n\n\nThe application deadline is **June 30th 2024 23:59 UTC**. Following that date, the applications will be reviewed and discussed among the current WRT members, with possible interviews happening, and final decisions being made shortly thereafter.\n\n\nWe look forward to your application!",
+    "hash": "1bb760a6f0d72499122372709a3b9e4e954c65f10318668a77eebd2a49b7ee97",
+    "format": "markdown",
+    "sourceId": 14156
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "1bb760a6f0d72499122372709a3b9e4e954c65f10318668a77eebd2a49b7ee97",
+    "language": "zh-Hans",
+    "title": "WCA 成绩团队招募成员（2024 年 6 月）",
+    "content": "你喜欢数字吗？你会很快发现餐厅菜单上别人没注意到的错字或前后矛盾吗？数据不准确会让你难以忍受吗？如果是，你可能很适合加入 WRT！\n\n**成为 WRT 成员，我们希望你具备：**\n\n* 回复及时，愿意学习和理解内部流程。\n* 能够定期处理 WRT 事务。\n* 细心，能够准确、认真地处理数据。\n* 是 WCA 社区中可靠、值得信任的一员，能够负责任地使用 WCA 数据库访问权限。最好能提供一位 WCA 工作人员的推荐。\n* 有 SQL（MySQL）经验会有帮助，但并非必需。\n\n**WRT 成员的日常工作包括：**\n\n* 核验、上传并公布比赛成绩。\n* 处理成绩或个人信息的修改申请。\n* 协助 WCA 代表及其他工作人员处理数据相关问题和请求。\n* 调查 WCA 数据库中的不一致之处。\n* 分析 WCA 数据，为其他工作人员提供参考。\n* 管理并执行 WCA 数据保护政策。\n* 处理注册速拧选手及 WCA 工作人员提出的数据保护相关请求。\n\nWRT 成员平均每周约需投入 5–6 小时。其中，每周至少两次、每次 30–60 分钟，需要用于处理有时效要求的日常工作，例如提交成绩。此外，一些内部讨论也需要较快回复。\n\n你将有机会深入了解 WCA 的组织结构和数据库，并直接参与保障比赛成绩的可靠性。WCA 议案中规定的 WRT 正式权利与职责可在此处查看。\n\n如果你有意加入 WCA 成绩团队，请将申请发送至 WRT 负责人 Callum James Goodyear（cgoodyear@worldcubeassociation.org）。申请至少应全面介绍自己，说明你为何适合加入 WRT，以及加入团队的动机和目标。\n\n申请截止时间为 **2024 年 6 月 30 日 23:59 UTC**。随后，现任 WRT 成员将审阅并讨论申请，必要时安排面试，并在不久后作出最终决定。\n\n期待收到你的申请！",
+    "notes": [
+      "原文称权利与职责可在“here”查看，但没有提供对应链接；译文不补造链接。"
+    ],
+    "translatedAt": "2026-10-22T08:45:43.543Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "b3722b364f2b940fda4072df32e3bb922ecb2e8905e3967bd1ab6302a5fc8bb9"
+}

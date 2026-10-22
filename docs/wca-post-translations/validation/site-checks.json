@@ -1,0 +1,40 @@
+{
+  "checkedAt": "2026-10-22T09:00:54.156Z",
+  "metadataAndTerminology": {
+    "passed": 8,
+    "failed": 0
+  },
+  "safeRendering": {
+    "passed": 6,
+    "failed": 0
+  },
+  "browser": {
+    "index": true,
+    "titleOnly": true,
+    "oldestYearFilter": "2006",
+    "oldestArticle": true,
+    "screenshot": "/Users/eula/Documents/Codex/2026-10-21/task/regulation-integration/posts-final-preview.png"
+  },
+  "typecheck": {
+    "earlierPass": "2026-10-22T08:53:49Z",
+    "finalStatus": "blocked_by_unrelated_concurrent_changes",
+    "files": [
+      "core/packages/client/app/[lang]/sim/PuzzleDrawWorkspace.tsx",
+      "core/packages/client/app/[lang]/sim/SimPage.tsx",
+      "core/packages/client/app/[lang]/sim/FtoImageGenerator.tsx"
+    ],
+    "errors": [
+      "TS2322: DrawExport callback does not accept null",
+      "TS2307: FtoImageGenerator module missing (file deleted in current dirty tree)",
+      "TS2769/TS7006: related component props/implicit any"
+    ],
+    "action": "No unrelated simulator files changed by this task."
+  },
+  "publication": {
+    "monitorWorkflow": "published_and_verified",
+    "commit": "5573dfbc3aa3f43a8e89f930fb4deca57b1e1da0",
+    "run": "https://github.com/2017YANR02/cuberoot.me/actions/runs/39746617954",
+    "website": "local_uncommitted",
+    "translations": "local_uncommitted"
+  }
+}

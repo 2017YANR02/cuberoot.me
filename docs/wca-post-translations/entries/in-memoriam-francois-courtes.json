@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/in-memoriam-francois-courtes",
+  "source": {
+    "key": "posts:/posts/in-memoriam-francois-courtes",
+    "kind": "posts",
+    "title": "In Memoriam: François Courtès",
+    "date": "2016-09-11T19:34:02.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/in-memoriam-francois-courtes",
+    "content": "Our friend and fellow cuber François Courtès died in the evening of September 7, 2016, from a cerebrovascular accident. He was 45 years old. It is very sad news.\n\nIn our [In Memoriam: François Courtès](https://www.worldcubeassociation.org/forum/viewtopic.php?f=9&t=2028) fellow cubers express their feelings and bring back memories about François. He will be missed by many of us.",
+    "hash": "9f52f6827fb4a9581e90941886e43a92cb74a436a5a57fc046f516bfd3d51536",
+    "format": "markdown",
+    "sourceId": 6205
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "9f52f6827fb4a9581e90941886e43a92cb74a436a5a57fc046f516bfd3d51536",
+    "language": "zh-Hans",
+    "title": "悼念 François Courtès",
+    "content": "我们的朋友、魔友 François Courtès 于 2016 年 9 月 7 日晚因脑血管意外去世，年仅 45 岁。这是一个令人悲痛的消息。\n\n在[《悼念 François Courtès》](https://www.worldcubeassociation.org/forum/viewtopic.php?f=9&t=2028)主题中，魔友们表达哀思，回忆与 François 相处的往事。我们中的许多人都会怀念他。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.168Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "b690b13bb0232555306dc1922fe35f2d8d2067be1084f8606c7361ed9bcf30a2"
+}

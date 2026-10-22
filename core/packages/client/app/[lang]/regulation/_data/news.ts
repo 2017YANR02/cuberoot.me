@@ -1,5 +1,5 @@
-// Add each announcement here when adding its body to news/page.tsx.
-// Both pages share titles, dates and anchors; the hub selects the newest date.
+// Add each announcement here when adding its body to post/_components/NewsArticle.tsx.
+// Both pages share titles, dates and article IDs; the hub selects the newest date.
 export const REG_NEWS = {
   "wic-investigation-2026": {
     "id": "wic-investigation-2026",

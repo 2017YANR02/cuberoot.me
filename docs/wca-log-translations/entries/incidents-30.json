@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:30",
+  "source": {
+    "key": "incidents:30",
+    "kind": "incidents",
+    "title": "A judge forgot to hold a sheet between the competitor's face and the puzzle (extra not available)",
+    "url": "https://www.worldcubeassociation.org/incidents/30",
+    "date": "2019-02-28T18:44:26.000Z",
+    "content": "A judge forgot to hold a sheet between the competitor's face and the puzzle. This was found after the end of the competition and no extra was granted.\n\nThe WRC decided to accept the result as the video showed no sign of the competitor abusing the situation and it was not his fault.",
+    "hash": "c5e87ca68d3dcdcf4200d7f61fb5b827db7cffb0cd9d0c8649c11afbc5b92229",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "裁判忘记放置遮挡板（无额外尝试）",
+    "content": "裁判忘记在选手脸部与魔方之间放置遮挡板。比赛结束后才发现问题，没有给予额外尝试。\n\nWRC 决定接受该成绩，因为视频没有显示选手利用这一情况的迹象，且错误并非由选手造成。",
+    "translatedAt": "2026-10-22T05:50:48.611Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "c5e87ca68d3dcdcf4200d7f61fb5b827db7cffb0cd9d0c8649c11afbc5b92229"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_4",
+      "reviewedAt": "2026-10-22T06:22:38.727845Z",
+      "report": "reviews/round-1/report-4.json",
+      "sourceHash": "c5e87ca68d3dcdcf4200d7f61fb5b827db7cffb0cd9d0c8649c11afbc5b92229",
+      "reviewedTranslationHash": "6ef65550538f4027c7925a7de6a56a603b384f84049411f0643c5875db96d711",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

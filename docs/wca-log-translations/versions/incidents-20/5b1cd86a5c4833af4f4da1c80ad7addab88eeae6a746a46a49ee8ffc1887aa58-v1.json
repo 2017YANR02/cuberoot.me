@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:20",
+  "source": {
+    "key": "incidents:20",
+    "kind": "incidents",
+    "title": "A judge sent the cube back to the scrambling table before the competitor could sign",
+    "url": "https://www.worldcubeassociation.org/incidents/20",
+    "date": "2018-04-17T11:27:40.000Z",
+    "content": "In the final round of Skewb, a competitor received a good result and reacted excitedly. While he was inattentive for a short moment, his judge did not write the result down but sent the puzzle back to the scrambling table. This was discovered when the competitor realized he didn't sign for the attempt. A provisional extra attempt was granted at the competition.\n\nThe WRC has decided that the original result should be kept. The judge did not follow the approach described in the Regulations. More specifically, he ignored [A7b](https://www.worldcubeassociation.org/regulations/#A7b) by not recording the result. We believe that this should not result in a disadvantage for the competitor. Furthermore, there was enough proof that the original result was legit (recordings as well as eyewitnesses).",
+    "hash": "7dd6bcc5b26f3d5acc739575bc3b4b83b0ea6d2c421a144de290f67064a5a3bc",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "选手签名前，裁判已将魔方送回打乱台",
+    "content": "Skewb 决赛中，一名选手取得好成绩，表现兴奋。就在他短暂分神时，裁判没有记录成绩，而是将魔方送回打乱台。直到选手意识到自己尚未签名，才发现此事。比赛现场给予了暂定的额外尝试。\n\nWRC 决定保留原成绩。裁判没有遵循规则规定的流程，具体而言，未记录成绩，忽略了 [A7b](https://www.worldcubeassociation.org/regulations/#A7b)。我们认为不应因此让选手承受不利后果。此外，还有充分证据证明原成绩有效，包括录像和目击证人。",
+    "translatedAt": "2026-10-22T05:48:51.542Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "7dd6bcc5b26f3d5acc739575bc3b4b83b0ea6d2c421a144de290f67064a5a3bc"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

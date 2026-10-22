@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:63",
+  "source": {
+    "key": "incidents:63",
+    "kind": "incidents",
+    "title": "A competitor unintentionally caused a misalignment during Megaminx inspection",
+    "url": "https://www.worldcubeassociation.org/incidents/63",
+    "date": "2022-07-12T18:55:49.000Z",
+    "content": "During the inspection of a Megaminx attempt, the competitor caused an unintentional misalignment to the puzzle, possibly against regulation [A3c1](https://www.worldcubeassociation.org/regulations/#A3c1).\n\nAfter careful review of the video footage ([11f](https://www.worldcubeassociation.org/regulations/#11f)), the WRC has decided not to DNF the attempt. None of the frames analyzed point to the face having moved beyond the allowed 36º ([10f2](https://www.worldcubeassociation.org/regulations/#10f2)).",
+    "hash": "15081ab9bf105745a037487f810fafebf7041b34bee806a1ddcb4006ebe9894c",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "选手在五魔方观察时意外造成错位",
+    "content": "一名选手在五魔方观察时意外使魔方错位，可能违反 [A3c1](https://www.worldcubeassociation.org/regulations/#A3c1)。\n\n依据 [11f](https://www.worldcubeassociation.org/regulations/#11f)仔细审查视频后，WRC 决定不判 DNF。分析的各帧均未显示该面转动超过允许的 36º（[10f2](https://www.worldcubeassociation.org/regulations/#10f2)）。",
+    "translatedAt": "2026-10-22T05:52:51.924Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "15081ab9bf105745a037487f810fafebf7041b34bee806a1ddcb4006ebe9894c"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

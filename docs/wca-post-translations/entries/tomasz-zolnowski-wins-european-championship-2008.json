@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/tomasz-zolnowski-wins-european-championship-2008",
+  "source": {
+    "key": "posts:/posts/tomasz-zolnowski-wins-european-championship-2008",
+    "kind": "posts",
+    "title": "Tomasz Zolnowski wins European Championship 2008",
+    "date": "2008-09-22T19:42:24.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/tomasz-zolnowski-wins-european-championship-2008",
+    "content": "[Tomasz Zolnowski](https://www.worldcubeassociation.org/results/p.php?i=2005ZOLN01) won the [European Championship 2008](https://www.worldcubeassociation.org/results/c.php?i=Euro2008) with an average of 11.71 seconds. [Erik Akkersdijk](https://www.worldcubeassociation.org/results/p.php?i=2005AKKE01) finished second (12.15) and [Edouard Chambon](https://www.worldcubeassociation.org/results/p.php?i=2004CHAM01) finished third (12.47).\n World records: Erik Akkersdijk 5x5x5 1:18.59 (single), Edouard Chambon 2x2x2 3.43 (average), Maté Horvath Master Magic 1.95 (average).\n European records: Rafal Guzewicz 4x4x4 blindfolded 7:54.35, 5x5x5 blindfolded 16:15.",
+    "hash": "731b02f7df192c96398e4d2cce20e5176f7bd26b9313255f211b6be02c2df950",
+    "format": "markdown",
+    "sourceId": 257
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "731b02f7df192c96398e4d2cce20e5176f7bd26b9313255f211b6be02c2df950",
+    "language": "zh-Hans",
+    "title": "Tomasz Zolnowski 夺得 2008 年欧洲锦标赛冠军",
+    "content": "[Tomasz Zolnowski](https://www.worldcubeassociation.org/results/p.php?i=2005ZOLN01) 以 11.71 秒的平均成绩赢得[2008 年欧洲锦标赛](https://www.worldcubeassociation.org/results/c.php?i=Euro2008)冠军。[Erik Akkersdijk](https://www.worldcubeassociation.org/results/p.php?i=2005AKKE01) 以 12.15 秒获得亚军，[Edouard Chambon](https://www.worldcubeassociation.org/results/p.php?i=2004CHAM01) 以 12.47 秒获得季军。\n\n世界纪录：Erik Akkersdijk，五阶单次 1:18.59；Edouard Chambon，二阶平均 3.43 秒；Maté Horvath，十二板平均 1.95 秒。\n\n欧洲纪录：Rafal Guzewicz，四盲 7:54.35、五盲 16:15。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:55:00.931Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "f84cff507afa13ca63bb12ea2b323a437281cc25e316c98f89d28dde6be80d4c"
+}

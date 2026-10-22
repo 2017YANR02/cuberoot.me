@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "disciplinary:/posts/wdc-announcement-blindsolving-incidents",
+  "source": {
+    "key": "disciplinary:/posts/wdc-announcement-blindsolving-incidents",
+    "kind": "disciplinary",
+    "title": "WDC Announcement: Blindsolving Incidents",
+    "date": "2018-11-20T20:25:13Z",
+    "url": "https://www.worldcubeassociation.org/posts/wdc-announcement-blindsolving-incidents",
+    "content": "<p>Dear WCA Community,</p><p>The WCA Disciplinary Committee (WDC) has been facing a rise in the number of investigations concerning competitors trying to achieve a personal advantage by cheating (or attempting to cheat) during blindfolded events. </p><p>We are concerned about this phenomenon, especially because competitors often have been able to get away with it during competitions. The WDC had to step in and conduct difficult investigations after illegal results had been accepted by the WCA. </p><p>The WDC has decided to administer a six month ban to a competitor, who shall remain anonymous, because of their actions taken in an attempt to gain a personal advantage. The competitor was found to be intentionally cheating while competing in 3x3x3 Blindfolded by looking under their blindfold and using a sight-solving method to finish the cube. We would like to remind everyone that this kind of behavior is not allowed at WCA Competitions because it is in direct violation of the Regulations and contravenes both the Mission and Spirit of the WCA. If you or anyone else sees this kind of activity happening, please report it to the WCA Delegate of the competition immediately.</p><p>The WDC has also decided to retroactively DNF specific results of another competitor, who obtained exceptionally good results under unclear circumstances. Since the competitor in question failed to cooperate with the WCA Disciplinary Committee during the investigation, acted in an extremely defensive and suspicious way, and failed to present any sort of evidence or acceptable explanation, the WDC deemed impossible for these results to have been achieved in compliance with the WCA Regulations. The competitor has consequently been banned from any WCA Competition for one year. The WDC conducted a thorough investigation in this case, considering the opinion of top level speedcubers and cooperating with multiple witnesses. The ban is conditional, though, since we are willing to reopen the investigation if the competitor decides to cooperate and provides the evidence that we requested. </p><p>Thank you,<br><em>WCA Disciplinary Committee</em></p>",
+    "hash": "451141f1a137cce6353e162f98aaa11afa5493b35420af7fe46abed1c2976e24",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "WDC 公告：盲拧事件",
+    "content": "亲爱的 WCA 社群：\n\nWCA 纪律委员会面对越来越多调查，涉及选手在盲拧中通过作弊或试图作弊谋取个人优势。\n\n我们对此担忧，尤其是选手常在比赛现场未被发现，不合规成绩被 WCA 接受后，WDC 才不得不开展困难的调查。\n\nWDC 决定对一名保持匿名的选手禁赛六个月，因为其试图取得个人优势。调查发现，其在三阶盲拧中故意从眼罩下偷看，用明拧方法完成还原。这直接违反规则，也违背 WCA 使命和精神，比赛中不允许这种行为。若看到此类行为，请立即报告比赛代表。\n\nWDC 还决定追溯将另一名选手的特定成绩改为 DNF，该人在不明情况下取得异常优异成绩。由于其不配合调查，表现极度防御且可疑，未提供任何证据或可接受解释，WDC 认为这些成绩不可能在遵守规则的情况下取得。因此禁止其参加任何 WCA 比赛一年。WDC 进行了全面调查，参考顶尖选手意见，并与多名证人合作。不过，该禁赛附有条件：如果选手愿意配合并提供所请求证据，我们愿意重启调查。\n\n谢谢，\nWCA 纪律委员会",
+    "translatedAt": "2026-10-22T06:05:15.716Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "451141f1a137cce6353e162f98aaa11afa5493b35420af7fe46abed1c2976e24"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

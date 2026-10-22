@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:142",
+  "source": {
+    "key": "incidents:142",
+    "kind": "incidents",
+    "title": "Question mark written on scorecard",
+    "url": "https://www.worldcubeassociation.org/incidents/142",
+    "date": "2024-11-18T22:46:04.000Z",
+    "content": "The time written on a scorecard appeared as \"57.?\". The delegates tried locating the judge and competitor for the attempt, but were unable to get a response. The competitor was emailed after the competition asking what happened, but no response was given. \n\nThe delegates made the assumption that the question mark on the scorecard meant that the timer was reset by either the competitor or judge before the time was written down. \n\nThe WRC agrees with the decision to record this result as a DNF. One possible explanation of what occurred during this attempt is indeed that the competitor reset the timer prematurely, and this situation is not unlikely, thus, under A7c+, the result should be a DNF.",
+    "hash": "32d66d625bbb738564adf9659984bc205c5e32bf8407abe1c87b291c46333577",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "成绩单时间写有问号",
+    "content": "成绩单时间写成“57.?”。代表试图联系裁判和选手，未获回应；赛后邮件询问选手，也未收到回复。\n\n代表推测，问号可能表示裁判或选手在时间写下前复位了计时器。\n\nWRC 同意记为 DNF。选手提前复位确实是一种可能解释，且并非不太可能，因此依据 A7c+ 应为 DNF。",
+    "translatedAt": "2026-10-22T06:00:02.853Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "32d66d625bbb738564adf9659984bc205c5e32bf8407abe1c87b291c46333577"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_3",
+      "reviewedAt": "2026-10-22T06:22:42.955322Z",
+      "report": "reviews/round-1/report-3.json",
+      "sourceHash": "32d66d625bbb738564adf9659984bc205c5e32bf8407abe1c87b291c46333577",
+      "reviewedTranslationHash": "48383f97eee7d283c3da1df63729431847a09e16deb7d554f430cee519404b55",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

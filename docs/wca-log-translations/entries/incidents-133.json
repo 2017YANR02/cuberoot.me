@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:133",
+  "source": {
+    "key": "incidents:133",
+    "kind": "incidents",
+    "title": "Delegate started scrambling for a group they were to compete in",
+    "url": "https://www.worldcubeassociation.org/incidents/133",
+    "date": "2024-11-18T20:57:41.000Z",
+    "content": "A delegate was doing table management at the start of a group when they decided to help out scrambling the first couple of cubes because many judges were already waiting at the scrambling table. After scrambling a few cubes, the delegate realized that they themselves were supposed to compete in the current group. After consulting with another delegate, they decided to not generate a new set of scrambles, but instead give the delegate that was to compete E1, as they had only seen the first scramble.\n\nScrambles must not be visible to competitors ([WSAP](https://documents.worldcubeassociation.org/documents/policies/external/Scramble%20Accountability.pdf) 5.1.1), and if competitors are required to act as scrambles for their own group, they must be prevented from seeing any scrambles they have not yet attempted ([1h1](https://wcaregs.netlify.app/#1h1)). By scrambling some cubes and having access to the scrambling document, the delegate did have the opportunity to see all scrambles of the group. In accordance with maintaining scramble secrecy requirements, the WRC concluded that all results from the average must be removed. Delegates are considered highly trustworthy and have specific responsibilities for handling scrambles. However, when they act in a competitor role, scramble secrecy requirements applying to competitors must still apply to them.",
+    "hash": "9bb74b9c091119c262502ab7111f522d150ba7f8a3519edcf59c01a9672144d7",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "代表为自己即将参赛的组开始打乱",
+    "content": "某组开始时，一名负责台面管理的代表见许多裁判已在打乱台等候，便帮忙打乱最初几个魔方。随后他意识到自己也应参加本组。与另一名代表商量后，他们决定不生成新打乱组，而是因该代表只看过第一条，给他使用 E1。\n\n打乱不得让选手看到（[WSAP](https://documents.worldcubeassociation.org/documents/policies/external/Scramble%20Accountability.pdf) 5.1.1）。选手必须为自己的组打乱时，应防止其看到尚未尝试的打乱（[1h1](https://wcaregs.netlify.app/#1h1)）。该代表打乱了几个魔方并能接触打乱文件，因此有机会看到本组全部打乱。为维护保密要求，WRC 决定删除该平均的全部成绩。\n\n代表被视为高度可信，并负有特定的打乱管理责任；但以选手身份参赛时，仍须遵守适用于选手的打乱保密要求。",
+    "translatedAt": "2026-10-22T05:57:56.837Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "9bb74b9c091119c262502ab7111f522d150ba7f8a3519edcf59c01a9672144d7"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_3",
+      "reviewedAt": "2026-10-22T06:22:42.955322Z",
+      "report": "reviews/round-1/report-3.json",
+      "sourceHash": "9bb74b9c091119c262502ab7111f522d150ba7f8a3519edcf59c01a9672144d7",
+      "reviewedTranslationHash": "017eb6b2c07ad595784146519af2f676e9564574d680250696de57be6b082a97",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:119",
+  "source": {
+    "key": "incidents:119",
+    "kind": "incidents",
+    "title": "Competitor claimed misscramble after round but video footage was unclear",
+    "url": "https://www.worldcubeassociation.org/incidents/119",
+    "date": "2024-10-13T05:12:25.000Z",
+    "content": "DISCLAIMER: Since the resolution of this incident, the regulation [11i](https://www.worldcubeassociation.org/regulations/#11i) has been updated to provide stricter criteria for when a misscramble should receive an extra.\n\nAfter the conclusion of a round, a competitor looked at the scrambles they were supposed to receive and reported to have gotten a misscramble. There was a video recording of the solve, but it was very poor footage, and it was unclear whether or not the scramble was correct based solely on the footage. The delegates decided to provide a provisional extra.\n\nThe WRC reviewed the footage and were also unable to determine whether or not the scramble was correct. As a result, the ruling was to rely on delegate discretion - delegates should make the decision based on their interactions with a competitor, and give an extra if they believe it is more likely that the competitor received a misscramble.",
+    "hash": "39d544e666c6722f664cd2c7eaa470ce86b27540adfc0ae84fbac270bfde3f72",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "选手轮次结束后报告错误打乱，但视频不清楚",
+    "content": "说明：此事件处理后，[11i](https://www.worldcubeassociation.org/regulations/#11i) 已更新，对错误打乱何时应获额外尝试设定更严格标准。\n\n轮次结束后，选手查看应收到的打乱并报告自己收到错误打乱。虽然有录像，但质量很差，仅凭视频无法判断打乱是否正确。代表决定给予暂定的额外尝试。\n\nWRC 复核后同样无法确定，因此决定依代表酌情判断：代表应根据与选手的沟通判断，若认为收到错误打乱更有可能，则给予额外尝试。",
+    "translatedAt": "2026-10-22T05:57:56.837Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "39d544e666c6722f664cd2c7eaa470ce86b27540adfc0ae84fbac270bfde3f72"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_3",
+      "reviewedAt": "2026-10-22T06:22:42.955322Z",
+      "report": "reviews/round-1/report-3.json",
+      "sourceHash": "39d544e666c6722f664cd2c7eaa470ce86b27540adfc0ae84fbac270bfde3f72",
+      "reviewedTranslationHash": "cfe32b69ddebac65eca4fac138840d773b03fc783e24571d27d2d576d6b14cfd",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

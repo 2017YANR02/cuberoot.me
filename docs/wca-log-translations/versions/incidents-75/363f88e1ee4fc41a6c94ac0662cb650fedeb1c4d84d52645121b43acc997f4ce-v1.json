@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:75",
+  "source": {
+    "key": "incidents:75",
+    "kind": "incidents",
+    "title": "Scrambles were accidentally reused",
+    "url": "https://www.worldcubeassociation.org/incidents/75",
+    "date": "2022-12-07T19:10:37.000Z",
+    "content": "A competition staff member competed in 5x5x5 Blindfolded one day prior to the event. Mistakenly, the scrambles that were used for their attempts were reused for one of the next groups. The scrambles were seen by two competition staff members and one competitor who was not competing in that group.\n\nAs per Regulation 4b4, the scrambles **should** be applied during a maximum time frame of 2 hours:\n\n> [4b4](https://www.worldcubeassociation.org/regulations/#4b4)) Each scramble sequence should be applied during a maximum time frame of 2 hours. This time frame starts when the scramble sequence is applied for the first time.\n\nThe WCA Delegates granted the competitors provisional extra attempts. \n\nSince scramble secrecy is not guaranteed here and even though Regulation 4b4 wording is \"should'', scramble secrecy must be treated seriously. Due to the reasons above, WRC agreed that **the extra attempts should be kept**.",
+    "hash": "f61fc885c8f64113170a4f09f8391dd0371134d088d7aacef029334a7906995a",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "意外重复使用打乱",
+    "content": "一名比赛工作人员在项目举行前一天参加了五阶盲拧。他使用的打乱被误用于后续某组。这些打乱此前已被两名工作人员及一名不参加该组的选手看过。\n\n按 4b4，打乱**应**在最长 2 小时内使用：\n> [4b4](https://www.worldcubeassociation.org/regulations/#4b4) 每条打乱序列应在最长 2 小时内使用，时间从首次应用该打乱开始计算。\n\n代表给予选手暂定的额外尝试。\n\n此处无法保证打乱保密性；即使 4b4 的用词为“应”，也必须严肃对待打乱保密。基于以上理由，WRC 同意**保留额外尝试成绩**。",
+    "translatedAt": "2026-10-22T05:54:37.260Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "f61fc885c8f64113170a4f09f8391dd0371134d088d7aacef029334a7906995a"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

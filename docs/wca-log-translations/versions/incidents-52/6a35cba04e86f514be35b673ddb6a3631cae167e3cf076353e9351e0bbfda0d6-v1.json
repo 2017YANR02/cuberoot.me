@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:52",
+  "source": {
+    "key": "incidents:52",
+    "kind": "incidents",
+    "title": "A Multi-Blind attempt was found to have several misscrambles",
+    "url": "https://www.worldcubeassociation.org/incidents/52",
+    "date": "2020-02-26T21:28:15.000Z",
+    "content": "A Multi-Blind scheduled second attempt was found to have several duplicate scrambles because of an organizational mistake. The WCA Delegate provisionally changed some certain results to DNF that were surely duplicate scrambles.\n\nThe WRC agreed to **change the round format** from \"Best of 2\" to \"Best of 1\", because:\n\n1. All second attempts were found to be duplicate scrambles.\n2. It is not consistent to disqualify some competitors and not others arbitrarily for an organizational mistake.\n\nThis decision involves retroactively removing all second attempts.",
+    "hash": "6239f839e05e015ff600e248a69be5d8ecd97ca9a41937e5d3bfbac97e3c6edc",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "多盲某次尝试出现多个错误打乱",
+    "content": "因组织失误，安排的多盲第二次尝试中发现多个重复打乱。代表暂将一些确定收到重复打乱的成绩改为 DNF。\n\nWRC 同意将赛制从“两次取最佳”**改为“一次取最佳”**，理由是：\n1. 所有第二次尝试均被发现使用了重复打乱；\n2. 因组织错误而任意取消部分选手成绩、保留其他人成绩，处理不一致。\n\n此决定意味着追溯删除全部第二次尝试成绩。",
+    "translatedAt": "2026-10-22T05:52:51.924Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "6239f839e05e015ff600e248a69be5d8ecd97ca9a41937e5d3bfbac97e3c6edc"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

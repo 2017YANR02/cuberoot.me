@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/changes-in-the-wca-board",
+  "source": {
+    "key": "posts:/posts/changes-in-the-wca-board",
+    "kind": "posts",
+    "title": "Changes in the WCA Board",
+    "date": "2018-07-01T18:53:18.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/changes-in-the-wca-board",
+    "content": "We hereby announce that as of June 30, 2018, the WCA Board of Directors is reduced to three members. Luis J. Iáñez’s term has officially ended, and Pedro Santos Guimarães and Ron van Bruchem stepped down from their positions as Board members.\n<!-- break -->\nWe deeply thank Luis, Pedro, and Ron for their efforts and for the great work they have done for the WCA to convert it to what it is now. A special mention goes to Ron, who co-founded the World Cube Association, and has dedicated almost 15 years of his life to spread the WCA Mission and Spirit around the world. We wish the three of them the best of luck on all of their future projects!",
+    "hash": "123d38e61879e47f2d0c644b2bc5555d600a116c940320c731947166591ec870",
+    "format": "markdown",
+    "sourceId": 9793
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "123d38e61879e47f2d0c644b2bc5555d600a116c940320c731947166591ec870",
+    "language": "zh-Hans",
+    "title": "WCA 董事会成员变动",
+    "content": "现宣布，自 2018 年 6 月 30 日起，WCA 董事会减至三名成员。Luis J. Iáñez 的任期已正式结束，Pedro Santos Guimarães 和 Ron van Bruchem 也已辞去董事职务。\n\n<!-- break -->\n\n衷心感谢 Luis、Pedro 和 Ron 的付出，以及他们为 WCA 发展至今所做的出色工作。尤其要感谢 Ron：他参与创立了世界魔方协会，并用近 15 年时间向世界各地传播 WCA 的使命与精神。祝三位今后的各项工作一切顺利！",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.148Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "e82c75050ab0bd1a5d22be34af8bb48915b1131dcc549eb0c82f336f39c3d5ea"
+}

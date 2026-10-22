@@ -3,14 +3,16 @@
 // Gallery and story player, opened from the existing search toolbar.
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { ArrowLeft, ArrowRight, Play, Pause, RotateCcw } from '@app-foundation/icons/lucide';
+import { ArrowLeft, ArrowRight, Download, Play, Pause, RotateCcw } from '@app-foundation/icons/lucide';
 import { PET_GALLERY } from '@/lib/deskpet-gallery';
 import { getDeskPetScene, PLAYTIME_SCENES } from '@/lib/deskpet-playtime';
 import { ROOTBEAST_COLLECTIONS, ROOTBEAST_SCENES } from '@/lib/deskpet-rootbeast';
 import { ORIGINAL_CHARACTERS, ORIGINAL_COLLECTIONS, ORIGINAL_SCENES } from '@/lib/deskpet-originals';
+import { saveBlob, snapshotSvgElement, svgToRasterBlob } from '@/lib/puzzle-image/image-export';
 import AppLink from '@/components/AppLink';
 import { CompactSelect } from '@/components/CompactSelect';
 import LazyVisible from '@/components/LazyVisible';
+import { Tooltip } from '@/components/Tooltip';
 import { tr } from '@/i18n/tr';
 
 const CSS = `
@@ -33,15 +35,13 @@ const CSS = `
 .deskpet-gallery figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:0;padding:0 0 16px;}
 /* square media cell; clips per-group scale (sprites are authored small with motion
    headroom) so a zoomed figure can't bleed onto its caption or neighbours. */
-.deskpet-gallery-media{width:100%;aspect-ratio:1/1;overflow:hidden;display:flex;}
+.deskpet-gallery-media{position:relative;width:100%;aspect-ratio:1/1;overflow:hidden;display:flex;}
 .deskpet-gallery-media img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated;}
 .deskpet-gallery section[data-pet=rootbeast] img{image-rendering:auto;}
 .deskpet-gallery section[data-pixel=false] img{image-rendering:auto;}
-/* Keep dark paws and the radical tail readable in every site theme. */
+/* Keep dark paws and the radical tail readable in gallery thumbnails. */
 .deskpet-gallery section[data-pet=rootbeast] .deskpet-gallery-media,
-.deskpet-gallery section[data-light=true] .deskpet-gallery-media,
-.deskpet-story[data-light=true] .deskpet-story-art,
-.deskpet-story[data-pet=rootbeast] .deskpet-story-art{
+.deskpet-gallery section[data-light=true] .deskpet-gallery-media{
   background:color-mix(in srgb, var(--popover) 18%, white);border-radius:12px;}
 /* color-scheme:normal stops the object inheriting the page color-scheme (light dark);
    otherwise Chrome paints the embedded SVG doc an opaque white canvas on OS-light
@@ -57,16 +57,22 @@ const CSS = `
 .deskpet-gallery-tile:hover figcaption{color:var(--accent);}
 .deskpet-gallery button:focus-visible{outline:2px solid var(--ring);outline-offset:3px;}
 .deskpet-story{max-width:600px;margin:0 auto;}
-.deskpet-story-art{display:block;width:100%;height:min(42svh,350px);color-scheme:normal;pointer-events:none;}
+.deskpet-story-art{position:relative;display:block;width:100%;height:min(42svh,350px);color-scheme:normal;}
+.deskpet-story-art object{width:100%;height:100%;pointer-events:none;}
+/* Keep the controllable SVG visible while a real image supplies the native save menu. */
+.deskpet-gallery .deskpet-save-image{position:absolute;inset:0;width:100%;height:100%;opacity:0;object-fit:contain;}
 .deskpet-gallery .deskpet-story h3{font-size:1.2rem;color:var(--foreground);margin:12px 0 8px;}
 .deskpet-story p{font-size:.88rem;line-height:1.6;color:var(--muted-foreground);margin:0 0 12px;}
 .deskpet-story input{width:100%;accent-color:var(--accent);cursor:pointer;}
-.deskpet-story output{display:block;font-size:.75rem;color:var(--muted-foreground);font-variant-numeric:tabular-nums;}
 .deskpet-story-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin:14px 0;}
 .deskpet-story-controls button,.deskpet-story-controls a{display:inline-flex;align-items:center;gap:6px;padding:8px 0;border:0;background:transparent;
   color:var(--foreground);font:inherit;font-size:.84rem;cursor:pointer;white-space:nowrap;text-decoration:none;}
 .deskpet-story-controls button:hover{color:var(--accent);}
 .deskpet-story-controls button:disabled{opacity:.4;cursor:default;}
+.deskpet-story-controls.deskpet-story-playback{gap:8px;}
+.deskpet-story-playback button{justify-content:center;min-width:44px;min-height:44px;}
+.deskpet-story-controls .deskpet-download{align-self:center;}
+.deskpet-download .compact-select-current{display:inline-flex;align-items:center;gap:6px;}
 .deskpet-story-controls .deskpet-story-perform{color:var(--accent);font-weight:600;}
 @media (max-width:480px){
   .deskpet-gallery-grid{grid-template-columns:repeat(auto-fill,minmax(125px,1fr));}
@@ -99,6 +105,7 @@ function SceneTile({ src, label, posterMs, zoom, onSelect }: {
             }
             playback();
           }} />
+        <img className="deskpet-save-image" src={src} alt="" aria-hidden="true" draggable={false} style={zoom} />
       </LazyVisible>
       <figcaption>{label}</figcaption>
     </figure>
@@ -108,11 +115,37 @@ function SceneTile({ src, label, posterMs, zoom, onSelect }: {
 function PlaytimePreview({ scene, onStep }: {
   scene: NonNullable<ReturnType<typeof getDeskPetScene>>; onStep: (delta: number) => void;
 }) {
+  const art = useRef<HTMLObjectElement>(null);
   const animations = useRef<Animation[]>([]);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadFailed, setDownloadFailed] = useState(false);
   const [paused, setPaused] = useState(false);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const [time, setTime] = useState(0);
+  const download = async (format: 'png' | 'svg') => {
+    if (downloading) return;
+    setDownloading(true);
+    setDownloadFailed(false);
+    try {
+      let blob: Blob;
+      if (format === 'svg') {
+        const response = await fetch(scene.src);
+        if (!response.ok) throw new Error('SVG download failed');
+        blob = await response.blob();
+      } else {
+        const source = art.current?.contentDocument?.querySelector('svg');
+        if (!source) throw new Error('SVG not ready');
+        const frame = snapshotSvgElement(source, { freezeAnimations: true });
+        blob = await svgToRasterBlob(frame.svg, { width: frame.width * 2, height: frame.height * 2 });
+      }
+      saveBlob(blob, `${scene.state.replace(':', '-')}.${format}`);
+    } catch {
+      setDownloadFailed(true);
+    } finally {
+      setDownloading(false);
+    }
+  };
   const control = (pause: boolean, at?: number) => {
     for (const animation of animations.current) {
       if (at !== undefined) animation.currentTime = at;
@@ -131,40 +164,60 @@ function PlaytimePreview({ scene, onStep }: {
   }, [ready, paused, scene.durationMs]);
   return (
     <div className="deskpet-story" data-pet={scene.character} data-light={ORIGINAL_CHARACTERS.some(pet => pet.id === scene.character)}>
-      <object
-        className="deskpet-story-art" type="image/svg+xml" data={scene.src} aria-label={tr(scene)} tabIndex={-1}
+      <div className="deskpet-story-art"
         style={{ imageRendering: ORIGINAL_CHARACTERS.find(pet => pet.id === scene.character)?.pixel ? 'pixelated' : 'auto' }}
-        onLoad={(event) => {
-          animations.current = event.currentTarget.contentDocument?.getAnimations() ?? [];
-          if (!animations.current.length) { setFailed(true); return; }
-          for (const animation of animations.current) animation.effect?.updateTiming({ delay: 0 });
-          const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-          control(reduced, reduced ? scene.poster * scene.durationMs : 0);
-          setReady(true);
-        }}
-        onError={() => setFailed(true)}
-      />
+      >
+        <object
+          ref={art}
+          type="image/svg+xml" data={scene.src} aria-label={tr(scene)} tabIndex={-1}
+          onLoad={(event) => {
+            animations.current = event.currentTarget.contentDocument?.getAnimations() ?? [];
+            if (!animations.current.length) { setFailed(true); return; }
+            for (const animation of animations.current) animation.effect?.updateTiming({ delay: 0 });
+            const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            control(reduced, reduced ? scene.poster * scene.durationMs : 0);
+            setReady(true);
+          }}
+          onError={() => setFailed(true)}
+        />
+        <img className="deskpet-save-image" src={scene.src} alt="" aria-hidden="true" draggable={false} />
+      </div>
       <h3>{tr(scene)}</h3>
       <p>{tr({ zh: scene.description, en: scene.descriptionEn })}</p>
       {failed && <p role="status">{tr({ zh: '动画加载失败，请重新打开。', en: 'The animation could not load. Please reopen it.' })}</p>}
       <input type="range" min={0} max={scene.durationMs} step={10} value={time} disabled={!ready}
         aria-label={tr({ zh: '动画进度', en: 'Animation progress' })}
         onChange={(event) => control(true, Number(event.target.value))} />
-      <output>{(time / 1000).toFixed(1)} / {scene.duration.toFixed(1)} s</output>
-      <div className="deskpet-story-controls">
-        <button type="button" onClick={() => onStep(-1)}><ArrowLeft size={15} />{tr({ zh: '上一个', en: 'Previous' })}</button>
-        <button type="button" disabled={!ready} onClick={() => control(!paused)}>
-          {paused ? <Play size={15} /> : <Pause size={15} />}
-          {paused ? tr({ zh: '播放', en: 'Play' }) : tr({ zh: '暂停', en: 'Pause' })}
-        </button>
-        <button type="button" disabled={!ready} onClick={() => control(false, 0)}><RotateCcw size={15} />{tr({ zh: '重播', en: 'Replay' })}</button>
-        <button type="button" onClick={() => onStep(1)}>{tr({ zh: '下一个', en: 'Next' })}<ArrowRight size={15} /></button>
+      <div className="deskpet-story-controls deskpet-story-playback">
+        <Tooltip content={tr({ zh: '上一个', en: 'Previous' })}>{tip =>
+          <button {...tip} type="button" aria-label={tr({ zh: '上一个', en: 'Previous' })} onClick={() => onStep(-1)}><ArrowLeft size={15} aria-hidden="true" /></button>
+        }</Tooltip>
+        <Tooltip content={paused ? tr({ zh: '播放', en: 'Play' }) : tr({ zh: '暂停', en: 'Pause' })}>{tip =>
+          <button {...tip} type="button" disabled={!ready} aria-label={paused ? tr({ zh: '播放', en: 'Play' }) : tr({ zh: '暂停', en: 'Pause' })} onClick={() => control(!paused)}>
+            {paused ? <Play size={15} aria-hidden="true" /> : <Pause size={15} aria-hidden="true" />}
+          </button>
+        }</Tooltip>
+        <Tooltip content={tr({ zh: '重播', en: 'Replay' })}>{tip =>
+          <button {...tip} type="button" disabled={!ready} aria-label={tr({ zh: '重播', en: 'Replay' })} onClick={() => control(false, 0)}><RotateCcw size={15} aria-hidden="true" /></button>
+        }</Tooltip>
+        <Tooltip content={tr({ zh: '下一个', en: 'Next' })}>{tip =>
+          <button {...tip} type="button" aria-label={tr({ zh: '下一个', en: 'Next' })} onClick={() => onStep(1)}><ArrowRight size={15} aria-hidden="true" /></button>
+        }</Tooltip>
       </div>
       <div className="deskpet-story-controls">
+        <CompactSelect<'png' | 'svg'>
+          className="deskpet-download" popupClassName="deskpet-gallery-collection-menu"
+          unstyledTrigger disabled={downloading}
+          ariaLabel={downloading ? tr({ zh: '正在下载…', en: 'Downloading…' }) : tr({ zh: '下载', en: 'Download' })}
+          label={<Download size={16} aria-hidden="true" />}
+          items={[{ value: 'png', label: 'PNG', disabled: !ready }, { value: 'svg', label: 'SVG' }]}
+          onChange={format => void download(format)}
+        />
         <AppLink className="deskpet-story-perform" href={`/pets?pet=${scene.character}`} prefetch={false}>
           <Play size={16} />{tr({ zh: '和它一起玩', en: 'Spend time together' })}
         </AppLink>
       </div>
+      {downloadFailed && <p role="status">{tr({ zh: '下载失败，请重试。', en: 'Download failed. Please try again.' })}</p>}
     </div>
   );
 }
@@ -235,7 +288,10 @@ export default function DeskPetGallery({ character, characters, selected, setSel
                     <LazyVisible className="deskpet-gallery-media" minHeight={0} rootMargin="0px" unmountWhenHidden>
                       {g.scripted ? (
                         // script-driven SVG: <object> runs its animation; <img> would stay blank
-                        <object type="image/svg+xml" data={src} aria-label={tr(a)} style={zoom} />
+                        <>
+                          <object type="image/svg+xml" data={src} aria-label={tr(a)} style={zoom} />
+                          <img className="deskpet-save-image" src={src} alt="" aria-hidden="true" draggable={false} style={zoom} />
+                        </>
                       ) : (
                         <img src={src} alt={tr(a)} loading="lazy" style={zoom} />
                       )}

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "disciplinary:/posts/wdc-leader-announcement-february-2021",
+  "source": {
+    "key": "disciplinary:/posts/wdc-leader-announcement-february-2021",
+    "kind": "disciplinary",
+    "title": "WDC Leader Announcement (February 2021)",
+    "date": "2021-02-24T04:41:41Z",
+    "url": "https://www.worldcubeassociation.org/posts/wdc-leader-announcement-february-2021",
+    "content": "<p>We are happy to announce that we have a new Committee Leader, Sebastiano Tronto. He will become the new Leader of the WCA Disciplinary Committee (WDC) and was already working as a Member of the Committee.</p><p>Sebastiano was selected by the WCA Board and approved in a vote among the current Committee Leaders and Senior Delegates, following Section 4 of our <a href=\"https://www.worldcubeassociation.org/documents/motions/10.2020.0%20-%20Committees%20and%20Teams.pdf\">Motion</a> about WCA Committees and Teams.</p><p>We wish Sebastiano best of luck in fulfilling his new duties.</p><p>The Board also received an application from the following applicant:</p><ul><li>Alaqmaar Gandhi</li></ul><p>We thank Alaqmaar for applying and both applications can be found <a href=\"https://drive.google.com/drive/folders/1s0YwsXQRSTQZnU5peAsgMMx5DdWfJ4mn?usp=sharing\">here</a>.</p>",
+    "hash": "8c636510d099a1c5019169830e8b238b35019a158503a183383bf70c21fb99ca",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "WDC 负责人任命公告（2021 年 2 月）",
+    "content": "很高兴宣布新的委员会负责人 Sebastiano Tronto。他将担任 WCA 纪律委员会（WDC）负责人，此前已是委员会成员。\n\n根据[委员会与团队动议](https://www.worldcubeassociation.org/documents/motions/10.2020.0%20-%20Committees%20and%20Teams.pdf)第 4 节，由理事会选出，并经现任委员会负责人及高级代表投票批准。\n\n祝 Sebastiano 顺利履行新职责。理事会还收到 Alaqmaar Gandhi 的申请。感谢 Alaqmaar 申请，两份申请均可在[此处](https://drive.google.com/drive/folders/1s0YwsXQRSTQZnU5peAsgMMx5DdWfJ4mn?usp=sharing)查看。",
+    "translatedAt": "2026-10-22T06:07:32.458Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "8c636510d099a1c5019169830e8b238b35019a158503a183383bf70c21fb99ca"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

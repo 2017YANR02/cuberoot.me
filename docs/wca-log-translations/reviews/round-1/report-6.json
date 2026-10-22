@@ -1,0 +1,284 @@
+{
+  "reviewer": "review_6",
+  "reviewedAt": "2026-10-22T06:24:59.959967Z",
+  "entries": [
+    {
+      "key": "incidents:7",
+      "sourceHash": "b3b1089cb0567c2ae768f4297f56ceb5fca78a020ccaca256d88f08d9a5daa65",
+      "reviewedTranslationHash": "29fd5c7ae520545a1f681bc494fbadf621c2e367066c0a611b588baf796735bd",
+      "verdict": "pass",
+      "evidence": "全文及标题已对照：保留 2025 年三阶盲拧允许标志、其他盲拧不允许的更新说明；perceptible logos 和要求移除均已传达。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:70",
+      "sourceHash": "3c72549fa51c17087209bb317b06a35d79d767719691b35d5484b7198164fca0",
+      "reviewedTranslationHash": "4f36580a93e51b5f8aa8580ae16b9adb654cd567c6cb4990ac9c81d4a46ef8a7",
+      "verdict": "pass",
+      "evidence": "全文及标题已对照：三个项目、A2c1/A2c1+ 引文、没有主动作弊证据、严重保密违规、删除三个项目全部成绩及先例均保留，没有将无证据译为证实无人作弊。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:71",
+      "sourceHash": "894614c9dadab7c3641b166f157fd038011bf53630127f9304a6eeb0952f5d0b",
+      "reviewedTranslationHash": "5199a12b36de1daa15693f7c5e4c0ca8a13eeff893023cdf2d2ca081cebf3a27",
+      "verdict": "pass",
+      "evidence": "全文及标题已对照：发现错误发生在决赛后但比赛结束前、低于原晋级线两位、暂定增加晋级人数及 9p2a/9p1 的理由均准确。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:72",
+      "sourceHash": "423e533975f59f47bf07923067e5692ef8147f80e48b735d2ce64d1fe122f59b",
+      "reviewedTranslationHash": "ec48683f936bde01c25ef7ead9baa8a004e6c221c56940bd70f33c198278240f",
+      "verdict": "pass",
+      "evidence": "全文及标题已对照：三个比赛中的复位原因、仅显示屏有视频证据、正常工作的条件、原成绩保留、应从计时器读数及特定情况下的例外均完整。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:73",
+      "sourceHash": "ce41d71d2714a5653395669513e84f3b4fd4aad08f12f8b629a8c884eed274ff",
+      "reviewedTranslationHash": "efc729ea649a179f7bde2bedd05200ee3290fcfad3ae7ff79594734533122b99",
+      "verdict": "pass",
+      "evidence": "全文及标题已对照：后续 A6e++ 澄清、60 分钟、多盲、A6c 与 A6e2 各加 2 秒的本来适用关系，以及最终只适用 A6c 均保留。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:74",
+      "sourceHash": "0cfed4e9b0fe16e472891069c49916dc2d3df0810c52413993052f4650c45697",
+      "reviewedTranslationHash": "69db724d00e6caab58bfc6fb5a250bf63a19e0fab1db43892478cd128509ca10",
+      "verdict": "pending_source_verification",
+      "evidence": "全文及标题已对照：赛后才发现声音与涂层差异、无明确优势、视频速度证据、代表认可合理磨损及保留成绩均忠实。但原文正文写 Regulation 3j1，引文标签写 3j2，而链接仍指向 #3j1；译文原样保留了这一矛盾，不能在本轮径自选定正确编号。",
+      "unresolvedNotes": [
+        "源正文的 Regulation 3j1、引文标签 [3j2] 和目标链接 #3j1 不一致。原文未澄清正确编号，需后续核验官方源；本轮按要求未读取外链，不建议擅自改成任一编号。"
+      ],
+      "corrections": []
+    },
+    {
+      "key": "incidents:75",
+      "sourceHash": "f61fc885c8f64113170a4f09f8391dd0371134d088d7aacef029334a7906995a",
+      "reviewedTranslationHash": "363f88e1ee4fc41a6c94ac0662cb650fedeb1c4d84d52645121b43acc997f4ce",
+      "verdict": "pass",
+      "evidence": "全文及标题已对照：提前一天参赛、后续组误复用打乱、看过打乱的人数及范围、4b4 的 should/应而非 must/必须、暂定额外尝试及最终保留均准确。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:77",
+      "sourceHash": "75510619b1bdf97bdc6f59b3c7b4dd8b04ed3a7ce795589d237fa859f8c595dc",
+      "reviewedTranslationHash": "a6ac69304938dde2c7eaf1fb0f6501bececc1714bbb41a7724d222243eda1acb",
+      "verdict": "pass",
+      "evidence": "全文及标题已对照：仅关闭闹钟、严格规则本应 DNF、未获优势、避免干扰他人和最终保留的例外理由均保留；没有把例外推广为一般许可。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:78",
+      "sourceHash": "ba4da0924970b90a24d36f9c0a4b2900ba916ced9f8fc46c550770d78f3d73c7",
+      "reviewedTranslationHash": "26c02e208268d8641118c741842e6edc7fa7ece099cbd2e63d658dd821ee7bf2",
+      "verdict": "correction_required",
+      "evidence": "全文及标题已对照：两场比赛日期、WRC 两案采用额外尝试以及理事会只推翻后一案均准确。第 3 项末尾把“没有行为给人试图获益的印象”加强成“没有试图取得优势”，须恢复证据层级。",
+      "unresolvedNotes": [],
+      "corrections": [
+        {
+          "field": "content",
+          "old": "选手没有任何行为令人认为其作弊，甚至没有试图利用情况取得优势。",
+          "new": "选手没有任何行为令人认为其作弊，或甚至试图利用这种情况取得优势。",
+          "reason": "原文只描述行为未造成作弊或试图获益的印象，并未直接断言不存在获益意图。",
+          "sourceEvidence": "No actions from the competitor lead to the impression of cheating or even trying to gain an advantage from the situation."
+        }
+      ]
+    },
+    {
+      "key": "incidents:79",
+      "sourceHash": "1453a0067b55952ece2bce0827d741c03f1fa7c4d97c188f17df9b2222f0ac7e",
+      "reviewedTranslationHash": "072d48d14384ccb2fcd39e2459243e0ad35d1e835d7d6b50da98ce04c6bf59ca",
+      "verdict": "pass",
+      "evidence": "全文及标题已对照：2013—2022 年违规清单完整，删除优先于保留、计时器导致整场删除、成绩单遮盖按 2013 年分界及受影响轮次删除、理事会批准和三个外链均保留。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:8",
+      "sourceHash": "8b332fdb3c853c836fbf7345f353686b8805e9cdcdde014bc137be75c2c1ba05",
+      "reviewedTranslationHash": "7ea83ed16cbaf39ca72ffc6a3bcf344f9448ea3e2335e4c676fad0d4db0d5e75",
+      "verdict": "pass",
+      "evidence": "全文及标题已对照：美国、轻度色盲、EnChroma 滤除部分光谱、unlikely 的“不太可能”及原日志当时规则允许的判断均准确，未增添身份。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:80",
+      "sourceHash": "c6ddfe8b52c046b44b126334b7becf1803a87d3e5d8ef0c5e7e47f1b8144c84c",
+      "reviewedTranslationHash": "1ad83fc4d37c5df61b084438b517d859902d235074d730ea6abfddf3f2003f5a",
+      "verdict": "pass",
+      "evidence": "全文及标题已对照：Vancouver Island 2019、裕鑫、五个受影响项目、轮次处分、2018-01-01 历史版本与现编号区分、获准计时器代际以及可能计时不准且不易发现的理由均完整。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:81",
+      "sourceHash": "54ad50ad9392d9278d284c81b3de00954ebf9a13ea3dcbb929b8041ee1a1fdd4",
+      "reviewedTranslationHash": "2caac86adab5947cb403549a66330c95fe2b15f1c22defdb0973e5ca74cc3f90",
+      "verdict": "correction_required",
+      "evidence": "全文及标题已对照：两名选手不同的 DNF 原因、z 按 z' 解释、2t 的个案处理、E5 的可以解释与必须正确、私下另有理由均保留。标题把 unavailable 具体化为“不在场”，原文不能支持这一位置判断。",
+      "unresolvedNotes": [],
+      "corrections": [
+        {
+          "field": "title",
+          "old": "最少步裁判提供错误规则信息（代表不在场）",
+          "new": "最少步裁判提供错误规则信息（代表无法提供协助）",
+          "reason": "unavailable 表示无法提供协助，并不必然表示不在场；正文只说明代表把部分职责交给裁判。",
+          "sourceEvidence": "Fewest Moves judge provided wrong information about the WCA Regulations (Delegate unavailable)"
+        }
+      ]
+    },
+    {
+      "key": "incidents:82",
+      "sourceHash": "aeda5b3fff423bf1d1ddd06a34180435dd5181adefc2855d0aca5c576ac183dd",
+      "reviewedTranslationHash": "e1596ede5b97c56bb3ce01cad617cb1fd0aa49c0e9b19cca565a54c655ee34f8",
+      "verdict": "pass",
+      "evidence": "全文及标题已对照：中途离场数分钟、无论如何均 DNF，以及仅在代表能确保不会试图作弊时允许去洗手间的条件均准确。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:83",
+      "sourceHash": "7474ef97a32e51058aa88fa22767f7e479b6b31eb94663c5fa5890bd1ae94958",
+      "reviewedTranslationHash": "d7a7067545dbcaa9ef4510cdfea054cc7fa48e46cc308015dbb8897948c4df77",
+      "verdict": "pass",
+      "evidence": "全文及标题已对照：后续 2i 更新说明、手持话筒滚动、为防掉落抓住、历史规则 DNF 和没有在使用话筒故保留成绩的关键区分完整。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:84",
+      "sourceHash": "066d9ed3606650828fae82debd3053546d925bdd6655ca6d21452670edabae9b",
+      "reviewedTranslationHash": "9b81b89ad05c5819cef720e2ca764800913bb93b17ce7d7ce6b9e623c434429c",
+      "verdict": "pass",
+      "evidence": "全文及标题已对照：2025 年 A2e2 已明确禁止并罚 DNF 的说明、历史 A3b2、裁判未揭罩、选手困惑紧张、赛后不能补尝试、15 秒内未获优势和不处罚保留均准确。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:85",
+      "sourceHash": "786a533bb29b8e2a5aee328d20dcb05bc0fb07c55dd7c8c258ca10925b5885f3",
+      "reviewedTranslationHash": "adda458a5e5b5b925ef040fadda1a9b4503ff771c231167a4d51e5edafdde6a0",
+      "verdict": "pass",
+      "evidence": "全文及标题已对照：2025 年例外说明、2023-02-15 历史条文、观众请求及选手回答、未申请额外尝试、严格规则违反与善意交流未获优势的例外裁定均保留。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:86",
+      "sourceHash": "3a4f2e940de969d4201b34926d9046e9f192d516c1ff5a2574438a31c7288d53",
+      "reviewedTranslationHash": "59a1b57e0414c15413d478c947aba99bac7db3872305bab28f9d1ed0c4d90f1a",
+      "verdict": "pass",
+      "evidence": "全文及标题已对照：11i 后续更新不改变结果、两场比赛及各自错误步骤影响、破纪录后的核查、难度影响轻微但仍按标准程序采用额外尝试均准确。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:87",
+      "sourceHash": "f2c7e5b831386a4e5acdb12abaa0a54037fc571cbe4e5af542df6087d5f2d7d7",
+      "reviewedTranslationHash": "154fda3ab66c48150c62ce4fe9facbdf5cc55b01404cd5ef8a002ad160363145",
+      "verdict": "pass",
+      "evidence": "全文及标题已对照：2025-01-01 起不得再采用旧处理方式的声明明确，三种赛后处理条件完整，并保留比赛期间发现错误打乱必须用额外尝试替代的区别。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:88",
+      "sourceHash": "79fa75849c9ebf96099e4045ae85d770b7a3df1b5ecf77d88a69e1fdde87f6ce",
+      "reviewedTranslationHash": "f98e5b9ec2e57c5e4b98f3702f1db1a3e1985f02fcc8dd3e09cc577a04cbaa61",
+      "verdict": "pass",
+      "evidence": "全文及标题已对照：三个受影响决赛、许多正确打乱尝试原本有效但整轮删除、单手项目删除、金字塔两轮变一轮、三阶三轮变两轮及先例链接均准确。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:89",
+      "sourceHash": "249e951b8a7a6f119b3f47f04005ef530086939649f79a11c0db4f98df771e34",
+      "reviewedTranslationHash": "c1945903c840811b7d764c0da0a842e4b623bb7c70eea0dbf5bbde035fb4fae4",
+      "verdict": "pass",
+      "evidence": "全文及标题已对照：选手平均混入前组与本组打乱、兼任前组打乱员、代表只是确认可能同时打开两组的证据强度、删除受影响轮次及决赛均保留。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:9",
+      "sourceHash": "be7cf836ae026b82681df5da1024ccca3473b0fb8b1ea14f7a0ae3fc1fb553ca",
+      "reviewedTranslationHash": "36fac3fa4a23ade86eb56cd6e1fe8003085720811e29bd605a9c15098b0c2e7d",
+      "verdict": "pass",
+      "evidence": "全文及标题已对照：三阶脚拧未用垫子、组织团队未提供、原先取消项目资格、器材责任在组织团队及本应给予额外尝试的纠正结论完整，未把历史项目当作新规则。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:90",
+      "sourceHash": "7c5663a92e2b41efd585a5f6f01e9348867178bf0b3c072d1dac227040694fe5",
+      "reviewedTranslationHash": "dfcd103791dcada44bd1141e7563f17821202d6538ea13280fc6a3b3d5563712",
+      "verdict": "pass",
+      "evidence": "全文及标题已对照：照片仅表明某角度可能透出打乱信息、双层罩与部分足够不透明的单层罩、公开视频核查后保留，以及向代表反映和可能删除成绩的建议均完整。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:91",
+      "sourceHash": "4b150d3c45aba60ad0ecb7e52e0455a7fec24f89198d3495db81d733b4d1575c",
+      "reviewedTranslationHash": "6dc52357de59a58c18cc81a16bd24a25c610ebaa488d449087fa024842f6f7b3",
+      "verdict": "pass",
+      "evidence": "全文及标题已对照：四触点模式、先触碰工作中的摄像头再报告计时器问题、头戴摄像头例外、暂定额外尝试最终不采用而保留 DNF，以及相反顺序会采用额外尝试的说明均准确。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:92",
+      "sourceHash": "c65d1fc4b15045bda62549a666704650eb0a9246f85a18440848bb67b258ba7a",
+      "reviewedTranslationHash": "90d78ba9b51fca5328f95f42e04b83269c9987b3b02eba46cac7d72b38c09223",
+      "verdict": "pass",
+      "evidence": "全文及标题已对照：2025 年 A6a1 更新、先示意裁判、裁判离台过远、历史 2i+ 本应 DNF、代表或裁判目击这一关键条件、无作弊或不公平获益意图、高阶盲拧及多盲精神负担均保留。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:93",
+      "sourceHash": "8bf1eb7d9ec4b2b25ef194eb18a9bf31dec132cd8a7181b2b08ee11cc28e5ec4",
+      "reviewedTranslationHash": "191a2ecaec8436dc88fa4c7ffa932231e7cc4affa9edf79b1cbc8072deea5f73",
+      "verdict": "pass",
+      "evidence": "全文及标题已对照：第一轮多个错误打乱、受影响数量较多、删除整轮后无法确定决赛晋级条件及后续各轮一并删除的因果关系完整。",
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:97",
+      "sourceHash": "89292099f152558dfc5c0ded3bab60241a74613b51ee99dc7f0d6072eccd62a5",
+      "reviewedTranslationHash": "983d649d35d55a36959f1a63643dfbfef5fa6a0e84dedfb1d58c8a887eb8b401",
+      "verdict": "correction_required",
+      "evidence": "全文及标题已对照：可见裁判而不可见魔方、B4b 的完全戴好眼罩条件及最终 DNF 均准确。裁判报告中的 looked at them 指向裁判，译文“选手看着自己”存在回指为选手本人的歧义，应明确对象。",
+      "unresolvedNotes": [],
+      "corrections": [
+        {
+          "field": "content",
+          "old": "裁判表示，盲拧阶段某时刻，选手看着自己数秒后继续还原。",
+          "new": "裁判表示，盲拧阶段某时刻，选手看着裁判数秒后继续还原。",
+          "reason": "明确 them 指向裁判，避免“自己”被理解为选手本人而改变目视对象。",
+          "sourceEvidence": "The judge said that at some point of the blindfolded phase the competitor looked at them for a few seconds and then continued the execution."
+        }
+      ]
+    },
+    {
+      "key": "incidents:98",
+      "sourceHash": "367b7cc232f1eec0ae6ab9a8ddce6615caf7f1bdf40eb18b3cee2952a5eb3e13",
+      "reviewedTranslationHash": "908f5ba11b87fa03314bee5f3a43f4d93487865d4738f80aa981ac3aa300442d",
+      "verdict": "pass",
+      "evidence": "全文及标题已对照：初始指称尚未准备好、三名代表的状态、最初误以为结束后才申诉、WRC 最初撤回额外尝试的三项理由与公平性逻辑、新证据显示及时向裁判申诉、理事会最终恢复额外尝试均完整；没有根据外链推测匿名选手身份。",
+      "unresolvedNotes": [],
+      "corrections": []
+    }
+  ]
+}

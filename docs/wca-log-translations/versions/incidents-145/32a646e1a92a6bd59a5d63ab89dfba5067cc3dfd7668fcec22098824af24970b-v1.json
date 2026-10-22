@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:145",
+  "source": {
+    "key": "incidents:145",
+    "kind": "incidents",
+    "title": "Competitor turned the puzzle before the judge had clearly inspected it",
+    "url": "https://www.worldcubeassociation.org/incidents/145",
+    "date": "2024-11-19T16:35:22.000Z",
+    "content": "After a solve, a competitor picked up their puzzle and began to turn it again while the judge was recording the result. No penalty was issued by the judge. Competition Delegates subsequently reviewed video footage of the attempt and chose to disqualify (DNF) the result based on Regulation [A6e1](https://www.worldcubeassociation.org/regulations/full/#A6e1), as the judge had not clearly inspected the puzzle before the competitor began to turn it in again. When Delegates later spoke to the judge, he confirmed the puzzle was solved before recording the result.\n\nThe WRC chose to remove the DNF penalty. While the judge had not clearly inspected the puzzle, the attempt had moved past the point at which the puzzle would be subject to inspection and it was reasonable for the competitor to pick up and turn their puzzle at the time they did.\n\nWhile video evidence demonstrated that the puzzle was solved, the WRC did not consider this relevant to this decision. Regulation [A6e](https://www.worldcubeassociation.org/regulations/full/#A6e) requires the judge to inspect the puzzle, rather than being based on the puzzle's state. In this case the video evidence for the judge inspecting the puzzle was inconclusive, but the other factors described above drove the WRC's overall decision. If video demonstrating a solved state could be used to override [A6e](https://www.worldcubeassociation.org/regulations/full/#A6e) then this could lead to an undesirable increase in workload for Delegates and the WRC from assessing such videos.",
+    "hash": "3fbdb6add92837776cde5b5cf00f3ba88ccafa9b8a0f859ee05ebbe2b2786683",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "裁判尚未明确检查魔方，选手便开始转动",
+    "content": "还原后，裁判记录成绩时，选手拿起魔方并开始转动，裁判没有处罚。代表随后审查视频，认为选手再次转动前裁判并未明确检查魔方，依据 [A6e1](https://www.worldcubeassociation.org/regulations/full/#A6e1) 判为 DNF。之后与裁判交谈时，裁判确认自己记录前已确认魔方还原。\n\nWRC 撤销 DNF。虽然裁判没有明显检查动作，但流程已超过本应检查魔方的阶段，选手在当时拿起并转动魔方是合理的。\n\n视频证明魔方已还原，但 WRC 不认为这一点与本决定相关。[A6e](https://www.worldcubeassociation.org/regulations/full/#A6e) 要求裁判检查，而非仅基于魔方状态判断。本案视频无法确定裁判是否检查，最终由上述其他因素决定。若允许用显示已还原状态的视频推翻 [A6e](https://www.worldcubeassociation.org/regulations/full/#A6e)，会使代表和 WRC 因审核此类视频而承担不必要增加的工作量。",
+    "translatedAt": "2026-10-22T06:00:02.853Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "3fbdb6add92837776cde5b5cf00f3ba88ccafa9b8a0f859ee05ebbe2b2786683"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

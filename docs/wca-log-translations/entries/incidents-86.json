@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:86",
+  "source": {
+    "key": "incidents:86",
+    "kind": "incidents",
+    "title": "An attempt was found to be misscrambled by one move",
+    "url": "https://www.worldcubeassociation.org/incidents/86",
+    "date": "2023-06-09T00:53:16.000Z",
+    "content": "*DISCLAIMER*: Since the resolution of this incident, the regulation [11i](https://www.worldcubeassociation.org/regulations/#11i) has been updated. The outcome of this incident wouldn't change, but how it should be handled is now explicitely stated in the regulations. \n\nDuring the competition, after the round was completed, scrambles were verified as a competitor broke a record.\n\n* At Hanoi Super Brain Zyo 2023, one of the attempts in 3x3x3 Cube was found to be misscrambled by the first move of the scramble, affecting only the last move of the solution.\n* At Michigan Speedcubing Spring 2023, one of the attempts in Pyraminx was found to be misscrambled by a tip affecting only one move of the solution.\n\nAlthough the solution was barely affected, and it was similar in difficulty in both cases, the voting among WRC members resulted in a decision to **keep the extra solve** following the standard misscrambles procedure.",
+    "hash": "3a4f2e940de969d4201b34926d9046e9f192d516c1ff5a2574438a31c7288d53",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "某次尝试被发现打乱错了一步",
+    "content": "说明：此事件处理后，[11i](https://www.worldcubeassociation.org/regulations/#11i) 已更新。事件结果不会改变，但规则现已明确处理方式。\n\n比赛期间，某轮结束后因选手打破纪录而核查打乱：\n- Hanoi Super Brain Zyo 2023 的一次三阶尝试，打乱第一步错误，仅影响解法最后一步；\n- Michigan Speedcubing Spring 2023 的一次金字塔尝试，一个小角打乱错误，仅影响解法一步。\n\n虽然两案的解法几乎未受影响，难度相近，但 WRC 成员投票决定遵循错误打乱的标准流程，**保留额外尝试成绩**。",
+    "translatedAt": "2026-10-22T05:54:37.260Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "3a4f2e940de969d4201b34926d9046e9f192d516c1ff5a2574438a31c7288d53"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_6",
+      "reviewedAt": "2026-10-22T06:24:59.959967Z",
+      "report": "reviews/round-1/report-6.json",
+      "sourceHash": "3a4f2e940de969d4201b34926d9046e9f192d516c1ff5a2574438a31c7288d53",
+      "reviewedTranslationHash": "59a1b57e0414c15413d478c947aba99bac7db3872305bab28f9d1ed0c4d90f1a",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/wca-regulations-april-2026-misscramble-changes",
+  "source": {
+    "key": "posts:/posts/wca-regulations-april-2026-misscramble-changes",
+    "kind": "posts",
+    "title": "WCA Regulations - April 2026 (Misscramble Changes)",
+    "date": "2026-03-09T07:00:09.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/wca-regulations-april-2026-misscramble-changes",
+    "content": "Dear WCA Community,\n\nThe WCA Regulations Committee would like to inform you about a new version of the WCA Regulations. This version will be in effect for competitions beginning on, or after, April 1st, 2026. The changes to the Regulations in this version are limited in scope and only affect the handling of incidents in which puzzles were not correctly scrambled (misscrambles). <!-- break -->\n\nIn summary, these changes:\n\n* Remove championship finals from the scope of the firmer Extra/DNS misscramble approach in Regulation 11i1. While scramble integrity remains important, this prioritizes the competitive integrity and spectacle of these rounds.\n* Also remove record/top 50 results in championship finals from this scope, as long as scramble double checking takes place. This avoids potentially unfair scenarios in which championship finals could still be affected, while encouraging measures to support correct scrambles in these contexts.\n* Provide support to ensure results still subject to stricter misscramble requirements (top results not in championship finals) can be checked once they take place, to minimise the chance of later DNS changes, and allowing subsequent round results not to be removed even if a misscramble is found after the competition.\n\nYou can review the wording changes in this [comparison on GitHub](https://github.com/thewca/wca-regulations/compare/official-2026-01-01-deployed...official-2026-04-01), where changes and additions are marked green and removals are marked red.\n\nYou can read a detailed description of changes in this [explainer document](https://drive.google.com/file/d/1ZjWbycRYNXugro6DbMbqY777llcBDIGE/view). The final changes made remain consistent with the draft changes circulated in February 2026, with no further amendments made.",
+    "hash": "235bf8005affaf2853673ed0e2b62c459369b985d2fd4f4c9e89a4526e5dc1f3",
+    "format": "markdown",
+    "sourceId": 14240
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "235bf8005affaf2853673ed0e2b62c459369b985d2fd4f4c9e89a4526e5dc1f3",
+    "language": "zh-Hans",
+    "title": "WCA 竞赛规则：2026 年 4 月更新（错误打乱处理调整）",
+    "content": "各位 WCA 社区成员：\n\nWCA 规则委员会现公布新版 WCA 竞赛规则，适用于 2026 年 4 月 1 日及以后开始的比赛。本次修改范围有限，只涉及魔方未被正确打乱（错误打乱）时的处理方式。<!-- break -->\n\n主要调整如下：\n\n* 锦标赛决赛不再适用规则 11i1 中较严格的错误打乱处理方式，即补赛或 DNS。正确打乱仍然重要，但这一调整优先保障这些轮次的竞技公平性和观赏性。\n* 在进行打乱复核的前提下，锦标赛决赛中的纪录成绩及世界前 50 成绩也不再适用上述处理方式。这既避免了决赛仍可能受到影响的不公平情况，也鼓励赛事采取措施，确保打乱正确。\n* 对仍须按较严格标准处理错误打乱的成绩（非锦标赛决赛中的顶尖成绩），提供支持，使其能在成绩产生后及时核查，尽量避免事后改判 DNS；即使比赛结束后才发现错误打乱，也允许保留后续轮次的成绩。\n\n具体条文可查看 [GitHub 版本对比](https://github.com/thewca/wca-regulations/compare/official-2026-01-01-deployed...official-2026-04-01)：绿色为修改或新增内容，红色为删除内容。\n\n详细说明见[这份解释文档](https://drive.google.com/file/d/1ZjWbycRYNXugro6DbMbqY777llcBDIGE/view)。最终修改与 2026 年 2 月公布的草案一致，未作进一步调整。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:40:49.156Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "efd58d878fdb4d60ff3a7a5738386953af8ca4136eb94bdabcb39938373a3d68"
+}

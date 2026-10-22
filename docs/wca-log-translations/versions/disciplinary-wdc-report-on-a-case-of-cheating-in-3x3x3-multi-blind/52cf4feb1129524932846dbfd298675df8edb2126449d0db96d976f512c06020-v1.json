@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "key": "disciplinary:/posts/wdc-report-on-a-case-of-cheating-in-3x3x3-multi-blind",
+  "source": {
+    "key": "disciplinary:/posts/wdc-report-on-a-case-of-cheating-in-3x3x3-multi-blind",
+    "kind": "disciplinary",
+    "title": "WDC report on a case of cheating in 3x3x3 Multi-Blind",
+    "date": "2023-01-27T07:37:11Z",
+    "url": "https://www.worldcubeassociation.org/posts/wdc-report-on-a-case-of-cheating-in-3x3x3-multi-blind",
+    "content": "<p>Dear WCA community,</p><p>The Disciplinary Committee has just concluded an investigation on a case of cheating in 3x3x3 Multi-Blind. The competitor was found guilty and we are convinced that this behavior extends to prior competitions as well. As a result, they have been banned for 2 years and some of their results have been changed to DNF.</p><p>Since this competitor is relatively well-known in the community, still holding multiple national records (unaffected by our investigation), the WDC decided to make the report for this investigation public. The intention is to explain the reasons behind our decision and give you some insight on how the Committee works.</p><p>The report can be found <a href=\"https://drive.google.com/file/d/11NvHg-kAcVu3YB4chtv51f-OCLpe5ZbB/view?usp=sharing\">here</a>.</p><p>Best regards,<br>\nSebastiano Tronto,<br>\nOn behalf of the WCA Disciplinary Committee</p>",
+    "hash": "786f4bb4a4d949db046c2307e43aabb351655d865c7e62e1c159b1e0ee974bb7",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "WDC 关于一宗三阶多盲作弊案件的报告",
+    "content": "亲爱的 WCA 社群：\n\n纪律委员会刚结束一宗三阶多盲作弊调查。认定选手作弊，并确信行为也延伸至此前比赛。因此禁赛 2 年，部分成绩改为 DNF。\n\n该选手在社群较知名，仍保持多项未受本调查影响的国家纪录。因此 WDC 决定公开报告，以解释决定理由并介绍委员会工作。\n\n报告见[此处](https://drive.google.com/file/d/11NvHg-kAcVu3YB4chtv51f-OCLpe5ZbB/view?usp=sharing)。\n\n谨致问候，\nSebastiano Tronto\n代表 WCA 纪律委员会",
+    "translatedAt": "2026-10-22T06:10:02.357Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "786f4bb4a4d949db046c2307e43aabb351655d865c7e62e1c159b1e0ee974bb7"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [
+      "官网公告正文已译，外链完整报告未读取、未翻译。"
+    ],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

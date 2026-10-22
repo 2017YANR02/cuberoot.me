@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:116",
+  "source": {
+    "key": "incidents:116",
+    "kind": "incidents",
+    "title": "Competitor forgot to lift harmonica holder",
+    "url": "https://www.worldcubeassociation.org/incidents/116",
+    "date": "2024-06-19T19:13:27.000Z",
+    "content": "DISCLAIMER: Since the resolution of this incident, the relevant Regulations have been updated. [B4c3](https://www.worldcubeassociation.org/regulations/#B4c3) indicates that competitors are responsible for placing the harmonica holder.\n\nDuring the final solve of a competitor's 4x4 Blindfolded round, they forgot to life their harmonica holder to block sight from the cube. The competitor had already donned the blindfold and started to solve the puzzle. A delegate noticed this and was able to get a card in front of the competitor roughly 30 seconds into their solving stage. \n\nThe delegate deemed that the competitor was not using their error to their advantage and gave the competitor a provisional extra.\n\nThe WRC agreed to accept the original attempt and not the extra, basing the decision on how it is ultimately the judge's responsibility to ensure that the sight blocker is placed appropriately, as per [B4c](https://www.worldcubeassociation.org/regulations/#B4c). Additionally, see [B4c++](https://www.worldcubeassociation.org/regulations/guidelines.html#B4c++).",
+    "hash": "7ca047e6ec9103e710724cfa62480a9ea1978aa6505cc697b9f69df3f2229590",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "选手忘记抬起口琴架遮挡装置",
+    "content": "说明：此事件处理后，相关规则已更新。[B4c3](https://www.worldcubeassociation.org/regulations/#B4c3) 明确选手有责任放置口琴架。\n\n选手四阶盲拧该轮最后一次还原时，忘记抬起口琴架遮挡魔方视线，已经戴好眼罩并开始还原。代表注意到后，约在盲拧执行阶段开始 30 秒时，将遮挡板放到选手面前。\n\n代表认为选手没有利用这一错误获益，给予了暂定的额外尝试。\n\nWRC 同意接受原尝试而非额外尝试，理由是按当时 [B4c](https://www.worldcubeassociation.org/regulations/#B4c)，最终确保遮挡板正确放置是裁判责任；另见 [B4c++](https://www.worldcubeassociation.org/regulations/guidelines.html#B4c++)。",
+    "translatedAt": "2026-10-22T05:57:56.837Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "7ca047e6ec9103e710724cfa62480a9ea1978aa6505cc697b9f69df3f2229590"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_2",
+      "reviewedAt": "2026-10-22T06:22:43.237972Z",
+      "report": "reviews/round-1/report-2.json",
+      "sourceHash": "7ca047e6ec9103e710724cfa62480a9ea1978aa6505cc697b9f69df3f2229590",
+      "reviewedTranslationHash": "eaf1f4533f2e79ed32961f7ae7a284790c1a244427b5368a0f34227ceb6b75fa",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

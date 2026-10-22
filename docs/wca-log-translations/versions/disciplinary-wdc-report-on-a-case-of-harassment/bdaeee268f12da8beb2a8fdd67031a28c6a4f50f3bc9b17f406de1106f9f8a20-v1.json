@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "key": "disciplinary:/posts/wdc-report-on-a-case-of-harassment",
+  "source": {
+    "key": "disciplinary:/posts/wdc-report-on-a-case-of-harassment",
+    "kind": "disciplinary",
+    "title": "WDC report on a case of harassment",
+    "date": "2023-05-18T21:06:41Z",
+    "url": "https://www.worldcubeassociation.org/posts/wdc-report-on-a-case-of-harassment",
+    "content": "<p>Dear WCA community,</p><p>The Disciplinary Committee has recently concluded an incident involving the misconduct of a competitor. Since this person used to be a WCA delegate, our investigation has been preceded by the decision of the Ethics Committee to demote them from their official position. We have prepared a public report of our investigation and we would like to share it with you.</p><p>The report discusses the topic of sexual harassment, therefore it may not be suitable for all readers. Although it is unpleasant to bring up such a topic, we think it is important for the community to know that the WCA reacts firmly to these kind of actions.</p><p>We support everyone who has been the victim of harassment or other improper behavior. If you have ever been in an uncomfortable position during a WCA event, we encourage you to talk about it with your local community representatives or with the WDC.</p><p>You can find the report of the aforementioned investigation <a href=\"https://drive.google.com/file/d/1iUSG1NpuLakjNcb_Iaq5JGfJ2yMDhF_-/view?usp=sharing\">here</a>.</p><p>Best,<br>\nOn behalf of the disciplinary committee,<br>\nSebastiano Tronto</p>",
+    "hash": "d9e014f6eea2bac1924f614c35aa6ddae0941c51ad4f618fd5a29515e4d28271",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "WDC 关于一宗骚扰案件的报告",
+    "content": "亲爱的 WCA 社群：\n\n纪律委员会近期处理完一宗选手行为不当事件。该人曾为 WCA 代表，因此我们的调查之前，伦理委员会已决定将其从正式职务降职。我们已准备公开调查报告，希望与大家分享。\n\n报告讨论性骚扰，可能不适合所有读者。虽然话题令人不快，但社群应知道 WCA 会坚决回应此类行为。\n\n我们支持所有遭受骚扰或其他不当行为的人。若曾在 WCA 活动中处于不舒服的境地，鼓励向当地社群代表或 WDC 讲述。\n\n上述调查报告见[此处](https://drive.google.com/file/d/1iUSG1NpuLakjNcb_Iaq5JGfJ2yMDhF_-/view?usp=sharing)。\n\n谨致问候，\nSebastiano Tronto\n代表纪律委员会",
+    "translatedAt": "2026-10-22T06:10:02.357Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "d9e014f6eea2bac1924f614c35aa6ddae0941c51ad4f618fd5a29515e4d28271"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [
+      "官网公告正文已译，外链完整调查报告未读取、未翻译；不补充公告未说明的身份或处分。"
+    ],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

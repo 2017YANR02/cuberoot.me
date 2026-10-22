@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/wac-leader-application-october-2020",
+  "source": {
+    "key": "posts:/posts/wac-leader-application-october-2020",
+    "kind": "posts",
+    "title": "WAC Leader Application (October 2020)",
+    "date": "2020-10-01T11:32:08.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/wac-leader-application-october-2020",
+    "content": "Dear WCA Community,\n\nSince we didn’t receive any applications for the position of WAC Leader, the WCA Board has stepped in as the WAC Leader from September 29, 2020. The Board will continue in this position until a new leader is found.",
+    "hash": "5599cc895d72b6839d2271accf571bb0a9dcfc99c252ddf23ba9751c15898a80",
+    "format": "markdown",
+    "sourceId": 13990
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "5599cc895d72b6839d2271accf571bb0a9dcfc99c252ddf23ba9751c15898a80",
+    "language": "zh-Hans",
+    "title": "WCA 顾问委员会负责人申请情况（2020 年 10 月）",
+    "content": "各位 WCA 社区成员：\n\n由于没有收到 WAC 负责人职位的申请，WCA 董事会自 2020 年 9 月 29 日起代行 WAC 负责人的职责，并将继续承担这一职责，直至找到新负责人。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:49:54.037Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "961215a75321a0f4cd77fc8e91fd433db511a88f6efb2eba77fd828b765b66dc"
+}

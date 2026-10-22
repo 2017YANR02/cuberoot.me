@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:24",
+  "source": {
+    "key": "incidents:24",
+    "kind": "incidents",
+    "title": "Old version of TNoodle used for Pyraminx scrambles",
+    "url": "https://www.worldcubeassociation.org/incidents/24",
+    "date": "2018-10-03T10:11:23.000Z",
+    "content": "While re-generating scrambles for the 1st round of Pyraminx to accommodate a larger number of competitor groups, the Delegate accidentally used a version of TNoodle from 3 years ago (0.9.0). This version of TNoodle generates a different distribution of Pyraminx scrambles from the current version (0.13.3). Although it is unclear if this could have had a significant impact on competitors in this particular case, there is no general way to decide whether competitors may have received an advantage in an incident like this. As a result, the WRC has decided that [Regulation 4f](https://www.worldcubeassociation.org/regulations/#4f) applies to this incident without exception, invalidating results from affected people in the first round of Pyraminx from YJ Fest 2018.\n\nNote: TNoodle contains a mechanism to contact the WCA website and detect if it is out of date, but this mechanism cannot detect if it is out of date when the computer is not connected to the internet (which is common at competitions). Individuals generating scrambles are reminded to take care and make sure they have the latest version of TNoodle on hand.\n\nWe know that this is a harsh decision that affects a significant number of competitors. However, the integrity of scrambles in WCA competitions is essential and the mission of the WCA states that we must strive for fair and equal conditions.",
+    "hash": "8dc3eb13abb80677124548d9544b4f17ed2d79d67aa149568934b0fb292bc72c",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "使用旧版 TNoodle 生成金字塔打乱",
+    "content": "为容纳更多选手组，代表重新生成金字塔第一轮打乱时，意外使用了三年前的 TNoodle 0.9.0。该版本生成的金字塔打乱分布与当时现行版本 0.13.3 不同。虽无法确定本案中是否对选手产生了显著影响，但对于此类事件，没有通用方法判断选手是否获得了优势。因此，WRC 决定不作例外地适用[规则 4f](https://www.worldcubeassociation.org/regulations/#4f)，使 YJ Fest 2018 金字塔第一轮受影响选手的成绩无效。\n\n注：TNoodle 可联系 WCA 网站检测自身是否过时，但电脑未联网时无法检测，而比赛中这种情况很常见。提醒负责生成打乱的人员务必确认手头使用的是最新版 TNoodle。\n\n我们知道这一决定严厉，影响了许多选手。然而，WCA 比赛打乱的完整性至关重要，WCA 的使命也要求我们努力提供公平、平等的条件。",
+    "translatedAt": "2026-10-22T05:50:48.611Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "8dc3eb13abb80677124548d9544b4f17ed2d79d67aa149568934b0fb292bc72c"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_4",
+      "reviewedAt": "2026-10-22T06:22:38.727845Z",
+      "report": "reviews/round-1/report-4.json",
+      "sourceHash": "8dc3eb13abb80677124548d9544b4f17ed2d79d67aa149568934b0fb292bc72c",
+      "reviewedTranslationHash": "97947571b5fc254282da26f607ab3af1edb009df1c3c9466de7682ef0e70e0e7",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

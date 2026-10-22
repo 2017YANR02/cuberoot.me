@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "disciplinary:/posts/wdc-digest-2023-q3",
+  "source": {
+    "key": "disciplinary:/posts/wdc-digest-2023-q3",
+    "kind": "disciplinary",
+    "title": "WDC Digest 2023-Q3",
+    "date": "2023-10-02T07:01:55Z",
+    "url": "https://www.worldcubeassociation.org/posts/wdc-digest-2023-q3",
+    "content": "<p>Dear WCA Community,</p><p>In the last three months the Disciplinary Committee has worked hard to make sure that every competitor complies with the <a href=\"https://www.worldcubeassociation.org/regulations\">WCA regulations</a> and that competitions remain a safe and pleasant environment for everyone. We have also <a href=\"https://www.worldcubeassociation.org/posts/call-for-applicants-wdc-members-august-2023\">opened a new round of applications</a> to select a few new members, and we are currently in the selection process.</p><p>The WDC has also worked on writing some guidelines to help WCA Delegates handle common disciplinary issues that arise during competitions. These <em>Guidelines for Disciplinary Incidents</em> are now an official WCA document, available to all delegates via the <a href=\"https://www.worldcubeassociation.org/panel\">panel</a> on the WCA website (link accessible to WCA Staff members only). We plan to keep this document updated and add some examples in the future, so if you have any advice for us related to this do let us know.</p><p>In the last 3 months the WDC has closed 27 investigations, including 6 that resulted in a ban and 9 that resulted in an official warning. These cases included:</p><ul><li>Multiple attempted cube thefts.</li><li>Various interpersonal issues, e.g. bullying.</li><li>Multiple attempts of cheating, for example by peeking in blindfolded events, stopping the timer early or manipulating the results on the scorecard.</li></ul><p>To expand on this last point, we have noticed more cases of competitors stopping the timer early, sometimes by accident and sometimes in an attempt to get better results. We would like to remind everyone that, when acting as a judge, you should always pay attention to the competitor and call a delegate if you notice anything suspicious. Moreover, keep in mind that <a href=\"https://www.speedstacks.com/store/retail/speed-stacks-g5-timer/\">gen5 timers</a> flash twice when the competitor stops: if you notice this happening early during the solve, or if you <em>do not</em> notice this at the end of the attempt, this likely means that the timer was stopped early.</p><p>To conclude this Digest, we would like to remind everyone to make sure they fully understand the WCA Regulations and competition procedures. If you have any questions, or are unsure about how to do something, please do not hesitate to ask the Delegate(s) of the competition. In addition, if you ever think the competition results are being compromised in any way, or if you see suspicious behavior or feel uncomfortable at a competition, please find the nearest Delegate immediately and/or contact the WDC to report the incident.</p><p>Do you have questions for the WDC? Feel free to send us an email, or ask on the <a href=\"https://forum.worldcubeassociation.org/c/wca-disciplinary/26\">Disciplinary section</a> of the WCA forum.</p><p>Best Regards,<br>\nSebastiano Tronto<br>\nOn behalf of the WCA Disciplinary Committee.</p>",
+    "hash": "5bd8b8100506b33b1b2e7d09cc0134b73ff6b8c84182945a2c97f4631b6f13b9",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "WDC 简报：2023 年第三季度",
+    "content": "亲爱的 WCA 社群：\n\n过去三个月，纪律委员会努力确保选手遵守 [WCA 规则](https://www.worldcubeassociation.org/regulations)，使比赛对所有人都安全、愉快。我们也[启动新一轮招募](https://www.worldcubeassociation.org/posts/call-for-applicants-wdc-members-august-2023)，目前正在遴选。\n\nWDC 编写了帮助代表处理常见比赛纪律问题的指导。《纪律事件指导》现为正式 WCA 文件，代表可通过官网[面板](https://www.worldcubeassociation.org/panel)查看，仅工作人员可访问。我们计划持续更新并补充案例，欢迎建议。\n\n过去 3 个月结案 27 件，其中 6 件导致禁赛，9 件导致正式警告，包括多起试图偷窃魔方、欺凌等人际问题，以及盲拧偷看、提前停表、篡改成绩单等作弊尝试。\n\n我们注意到提前停表案件增加，有时是意外，有时意在取得更好成绩。担任裁判时须始终关注选手，发现可疑情况就叫代表。[第五代计时器](https://www.speedstacks.com/store/retail/speed-stacks-g5-timer/)停表时会闪两次；若还原尚未结束就闪灯，或结束时没有闪灯，很可能已提前停表。\n\n最后提醒大家充分理解规则及流程，不清楚时询问代表。若认为成绩受到损害，发现可疑行为或感到不适，请立即联系最近的代表，或向 WDC 报告。\n\n如有问题，可发邮件，或在论坛[纪律板块](https://forum.worldcubeassociation.org/c/wca-disciplinary/26)提问。\n\n谨致问候，\nSebastiano Tronto\n代表 WCA 纪律委员会",
+    "translatedAt": "2026-10-22T06:07:32.458Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "5bd8b8100506b33b1b2e7d09cc0134b73ff6b8c84182945a2c97f4631b6f13b9"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_1",
+      "reviewedAt": "2026-10-22T06:23:54.689Z",
+      "report": "reviews/round-1/report-1.json",
+      "sourceHash": "5bd8b8100506b33b1b2e7d09cc0134b73ff6b8c84182945a2c97f4631b6f13b9",
+      "reviewedTranslationHash": "f2171c89ba6d8c680172ef30fb66185a309417825691387f4536059975fe6390",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

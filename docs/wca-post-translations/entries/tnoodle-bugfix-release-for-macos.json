@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/tnoodle-bugfix-release-for-macos",
+  "source": {
+    "key": "posts:/posts/tnoodle-bugfix-release-for-macos",
+    "kind": "posts",
+    "title": "TNoodle Bugfix Release for macOS",
+    "date": "2021-07-07T05:47:48.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/tnoodle-bugfix-release-for-macos",
+    "content": "There has just been a new bugfix release for TNoodle. With competitions slowly returning, several Delegates reported issues with TNoodle 1.1.0 crashing directly after launch on macOS versions \"Big Sur\" and later.\nWe fixed this bug in TNoodle 1.1.1, along with a minor inconsistency in FMC cutout sheets. There is also a brand new Esperanto translation; please [refer to GitHub](https://github.com/thewca/tnoodle/releases/tag/v1.1.1) for the full release notes.\n\nIn order to enable the affected Delegates to generate scrambles for their competitions, **TNoodle 1.1.1 has been promoted immediately**. However, please note that the scrambling routines have not changed, which means that **scrambles which have already been generated with TNoodle 1.1.0 remain valid**.\n\nThere will be a phase-out of roughly two weeks. You may continue to use TNoodle 1.1.0 **up to and including Sunday, July 25**. All scrambles for competitions ending after that date must be generated with TNoodle 1.1.1.\n\nPlease remember that the latest version of the scramble program is always available at https://worldcubeassociation.org/regulations/scrambles/.\n\nStay safe,\n- Gregor on behalf of the WST",
+    "hash": "5cfa70b10b61cdaac99503069be6a3be586ed5bdf15de9673a6fab88d2212624",
+    "format": "markdown",
+    "sourceId": 14026
+  },
+  "translation": {
+    "version": 3,
+    "sourceHash": "5cfa70b10b61cdaac99503069be6a3be586ed5bdf15de9673a6fab88d2212624",
+    "language": "zh-Hans",
+    "title": "TNoodle 发布 macOS 问题修复版本",
+    "content": "TNoodle 刚刚发布了一个问题修复版本。随着比赛逐步恢复，多位代表反馈：TNoodle 1.1.0 在 macOS Big Sur 及更高版本中会在启动后立即崩溃。\n\n我们在 TNoodle 1.1.1 中修复了这一问题，同时修正了最少步裁切纸张的一处细小不一致。新版本还加入了世界语翻译。完整更新说明请见 [GitHub](https://github.com/thewca/tnoodle/releases/tag/v1.1.1)。\n\n为了让受影响的代表能够为比赛生成打乱，**TNoodle 1.1.1 已立即获准使用**。不过，打乱算法并未改变，因此**已用 TNoodle 1.1.0 生成的打乱仍然有效**。\n\n旧版将有约两周的过渡期。**截至 7 月 25 日星期日（含当日）**，仍可使用 TNoodle 1.1.0。所有在此日期之后结束的比赛，均须使用 TNoodle 1.1.1 生成打乱。\n\n请记得，最新版打乱程序的下载地址始终为 https://worldcubeassociation.org/regulations/scrambles/.\n\n请大家注意安全。\n\nGregor，代表 WST",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:55:00.964Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "a005c9319a91970b84b15f3d0edbe30b2bfd6098b1e27d67078361aef78477b8"
+}

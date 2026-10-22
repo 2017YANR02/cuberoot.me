@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:53",
+  "source": {
+    "key": "incidents:53",
+    "kind": "incidents",
+    "title": "A Skewb round was found to have several misscrambles",
+    "url": "https://www.worldcubeassociation.org/incidents/53",
+    "date": "2020-03-14T09:43:42.000Z",
+    "content": "A skewb final was found to have several misscrambles because of an organizational mistake. One scrambler was not familiar with skewb notation and accidentally scrambled wrongly some puzzles.\n\nAfter analyzing the video evidence, the WRC has concluded the amount of misscrambles significantly affected the final. The WRC agreed to change the round format **from three rounds to two rounds**, because:\n\n1. More than half of the attempts were found to be misscrambled.\n2. It is not consistent to disqualify some competitors and not others arbitrarily for an organizational mistake.\n3. The misscrambles were found to be noticeably different from the original scrambles.\n\nThis decision involves retroactively removing all second attempts. Therefore, the classification was decided with the results from the previous round.",
+    "hash": "cc1f586a301614c5dfa289fa3484e073487634b2a600941ce4c587259d5cd257",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "Skewb 一轮中出现多个错误打乱",
+    "content": "因组织失误，Skewb 决赛中发现多个错误打乱。一名打乱员不熟悉 Skewb 记号，意外将部分魔方打乱错误。\n\n分析视频后，WRC 认定错误打乱的数量对决赛产生了显著影响，同意将该项目**由三轮改为两轮**，理由是：\n1. 超过一半的尝试使用了错误打乱；\n2. 因组织错误而任意取消部分选手成绩、保留其他人成绩，处理不一致；\n3. 错误打乱与原定打乱明显不同。\n\n原文接着称，此决定意味着追溯删除所有“第二次尝试”。因此，最终排名以前一轮成绩确定。",
+    "translatedAt": "2026-10-22T05:52:51.924Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "cc1f586a301614c5dfa289fa3484e073487634b2a600941ce4c587259d5cd257"
+  },
+  "review": {
+    "status": "pending_source_verification",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [
+      "原文结尾写 ‘removing all second attempts’，与前文取消第三轮/决赛不一致；明确保留并标注，不擅自纠正。",
+      "现有 review.notes 所指冲突成立：原文由三轮改为两轮、以前轮定排名，却写 removing all second attempts。译文以“原文接着称”忠实标注保留；到底应删除何轮或哪些尝试仍待源方确认。"
+    ],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_5",
+      "reviewedAt": "2026-10-22T06:22:53.079981Z",
+      "report": "reviews/round-1/report-5.json",
+      "sourceHash": "cc1f586a301614c5dfa289fa3484e073487634b2a600941ce4c587259d5cd257",
+      "reviewedTranslationHash": "1ab9b35f27e38dfcfe27de55481a12cc20169de430489f96740a5993cb841afd",
+      "verdict": "pending_source_verification",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": [
+      "现有 review.notes 所指冲突成立：原文由三轮改为两轮、以前轮定排名，却写 removing all second attempts。译文以“原文接着称”忠实标注保留；到底应删除何轮或哪些尝试仍待源方确认。"
+    ]
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

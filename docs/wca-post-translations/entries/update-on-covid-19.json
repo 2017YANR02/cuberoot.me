@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/update-on-covid-19",
+  "source": {
+    "key": "posts:/posts/update-on-covid-19",
+    "kind": "posts",
+    "title": "Update on COVID-19",
+    "date": "2020-03-13T05:19:20.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/update-on-covid-19",
+    "content": "Dear WCA Community,\n\nFollowing the classification of the Coronavirus (COVID-19) as a pandemic by the World Health Organization (WHO), the WCA Board of Directors wants to communicate that we are in the process of drafting a policy and recommendations for the holding of WCA Competitions.\n\nIn the meantime we urge all community members to read and follow the advice of the WHO, especially in relation to attendance at Competitions.\n\n[WHO COVID-19 Site](https://www.who.int/emergencies/diseases/novel-coronavirus-2019)\n[Protecting yourself](https://www.who.int/emergencies/diseases/novel-coronavirus-2019/advice-for-public)\n[Travel advice](https://www.who.int/emergencies/diseases/novel-coronavirus-2019/travel-advice)\n\nBe mindful of the amount of misinformation on social media and please refer to the guidance by WHO and information recommended by your local governments or health organisations.\n\nPlease also be aware that different countries and governments have different and ever changing restrictions in place. Keep yourself up to date and abide by any restrictions and recommendations for your country and any country you are travelling to.\n\nWe are committed to the health and safety of our Staff, Community, and the general public. We all have a responsibility to minimize, where possible, the spread of the virus.",
+    "hash": "a93ec614001586405918faced122c4319a50771219aeadb6fb08eaeafde713fd",
+    "format": "markdown",
+    "sourceId": 13964
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "a93ec614001586405918faced122c4319a50771219aeadb6fb08eaeafde713fd",
+    "language": "zh-Hans",
+    "title": "新冠疫情相关通知",
+    "content": "亲爱的 WCA 社区成员：\n\n世界卫生组织（WHO）已将新冠肺炎（COVID-19）认定为全球大流行。WCA 董事会现告知大家，我们正在制定有关举办 WCA 比赛的政策和建议。\n\n在此期间，我们敦促所有社区成员阅读并遵循世卫组织的建议，尤其是在决定是否参加比赛时。\n\n* [世卫组织新冠疫情专题页面](https://www.who.int/emergencies/diseases/novel-coronavirus-2019)\n* [如何保护自己](https://www.who.int/emergencies/diseases/novel-coronavirus-2019/advice-for-public)\n* [旅行建议](https://www.who.int/emergencies/diseases/novel-coronavirus-2019/travel-advice)\n\n请留意社交媒体上的大量不实信息，以世卫组织的指引，以及当地政府或卫生机构推荐的信息为准。\n\n也请注意，各国及政府采取的限制措施各不相同，并会不断调整。请及时了解并遵守你所在国家及旅行目的地的限制和建议。\n\n我们重视工作人员、社区成员和公众的健康与安全。每个人都有责任尽可能减少病毒传播。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:49:54.102Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "9a8ba77b178b8cc7899802e12059eef369d838865e2767f8e93d2d1d49bef841"
+}

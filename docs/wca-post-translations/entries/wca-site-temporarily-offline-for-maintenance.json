@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/wca-site-temporarily-offline-for-maintenance",
+  "source": {
+    "key": "posts:/posts/wca-site-temporarily-offline-for-maintenance",
+    "kind": "posts",
+    "title": "WCA site temporarily offline for maintenance",
+    "date": "2008-03-03T22:18:19.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/wca-site-temporarily-offline-for-maintenance",
+    "content": "Sorry for the inconvenience.\n \n The WCA forum is still working at https://www.worldcubeassociation.org/forum\n The WCA results are still working at https://www.worldcubeassociation.org/results\n \n Ron",
+    "hash": "801c5aaf86b0f9efc94b291fd2f2bcdcf937ca51219a91a63810f50a596639b3",
+    "format": "markdown",
+    "sourceId": 139
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "801c5aaf86b0f9efc94b291fd2f2bcdcf937ca51219a91a63810f50a596639b3",
+    "language": "zh-Hans",
+    "title": "WCA 网站暂时下线维护",
+    "content": "给大家带来不便，敬请谅解。\n\nWCA 论坛仍可正常访问：https://www.worldcubeassociation.org/forum\n\nWCA 成绩页面仍可正常访问：https://www.worldcubeassociation.org/results\n\nRon",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.152Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "75e3fc628dd08b993e3e4bc43a1fc7a2ada36bd697875d2dfd869270ce9ed247"
+}

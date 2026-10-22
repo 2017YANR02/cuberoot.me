@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:156",
+  "source": {
+    "key": "incidents:156",
+    "kind": "incidents",
+    "title": "Competitor started a Multiblind attempt without a judge present",
+    "url": "https://www.worldcubeassociation.org/incidents/156",
+    "date": "2025-04-04T02:30:30.000Z",
+    "content": "A competitor began their 3x3x3 Multi-blind attempt without a judge present, assuming they could start with a stackmat timer due to the use of floating judges. Realizing their mistake, the competitor asked if their attempt should be a DNF. When the delegate told them that this was the case they stopped their attempt. After reconsideration however, the delegates provided a provisional extra attempt.\n\nThe WRC clarified that starting a blindfolded attempt without a judge violates regulation [B2a](https://www.worldcubeassociation.org/regulations/full/#B2a), which states that a judge must be present at the start of each attempt. Furthermore, a stopwatch should have been started as required by Regulation [A1b](https://www.worldcubeassociation.org/regulations/full/#A1b) since the time limit was over 10 minutes. Since the competitor's actions prevented proper judging, the WRC ruled that the original attempt should be disqualified (DNF).",
+    "hash": "1ca03a6a6b35edee193959f8428c46f6ceed42ba755e6bc27643d42622035609",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "无裁判在场时开始多盲",
+    "content": "一名选手认为采用流动裁判时可以用 Stackmat 自行开始，于是在没有裁判在场的情况下开始三阶多盲。意识到错误后，他询问是否应判 DNF。代表说是，他便停止。代表重新考虑后又给予暂定的额外尝试。\n\nWRC 澄清，无裁判在场便开始盲拧违反 [B2a](https://www.worldcubeassociation.org/regulations/full/#B2a)，该条要求每次尝试开始时必须有裁判。此外，时限超过 10 分钟，按 [A1b](https://www.worldcubeassociation.org/regulations/full/#A1b) 也应启动秒表。选手行为使正常执裁无法进行，因此 WRC 判原尝试 DNF。",
+    "translatedAt": "2026-10-22T06:00:02.853Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "1ca03a6a6b35edee193959f8428c46f6ceed42ba755e6bc27643d42622035609"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_4",
+      "reviewedAt": "2026-10-22T06:22:38.727845Z",
+      "report": "reviews/round-1/report-4.json",
+      "sourceHash": "1ca03a6a6b35edee193959f8428c46f6ceed42ba755e6bc27643d42622035609",
+      "reviewedTranslationHash": "b8a85dec0c72b111c66885a29fbd4b3f735e0489b48cc6bbdaa9c73c7e23962e",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

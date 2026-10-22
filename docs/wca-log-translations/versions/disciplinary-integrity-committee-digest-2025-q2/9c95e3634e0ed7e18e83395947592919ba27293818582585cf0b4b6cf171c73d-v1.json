@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "key": "disciplinary:/posts/integrity-committee-digest-2025-q2",
+  "source": {
+    "key": "disciplinary:/posts/integrity-committee-digest-2025-q2",
+    "kind": "disciplinary",
+    "title": "Integrity Committee Digest 2025-Q2",
+    "date": "2025-08-11T15:25:31Z",
+    "url": "https://www.worldcubeassociation.org/posts/integrity-committee-digest-2025-q2",
+    "content": "<p>Dear WCA Community,</p><p>In the last quarter, the WIC opened 12 cases and closed 9. This resulted in 4 bans, while 6 cases ended with no action. Below, you can find summaries of some notable cases:</p><ul><li>The WCA Integrity Committee received a complaint from a competitor regarding perceived unfair treatment from Delegates. This competitor felt that the Delegates had overstepped their role and made unreasonable requests towards the competitor. The WIC found that the Delegates acted within the scope of their role and asked a reasonable request of the competitor. The WIC would like to advise competitors that should they disagree with a Delegate’s decision, they should comply with the request and later file a dispute as defined in <a href=\"https://documents.worldcubeassociation.org/documents/motions/16.2025.1%20-%20Disputes.pdf\">16.2025.1 - Disputes</a> if necessary.</li><li>The WCA Integrity Committee was informed of cheating through manipulation of scorecards by a competitor. The WIC contacted the involved delegates and judges to investigate the possibility of scorecard manipulation in each round this competitor competed in and found evidence of scorecard manipulation in multiple rounds across several competitions. The WIC also concluded one of the judges who had been contacted attempted to cover up for the competitor. The competitor was issued a ban from competing, while the judge was also issued with a short ban for assisting the competitor.</li><li>The WCA Integrity Committee was informed of an incident where a competitor sent threats to individuals online, specifically targeting WCA competitors and competitions. The WIC found that these actions posed a significant threat to the maintenance of a safe WCA competition environment and were major violations of the Code of Conduct. As a result, the perpetrator was given a multi-year ban and appropriate authorities were involved. The WIC strongly recommends that the local authorities are involved first where safety is concerned.</li></ul><p>Do you have questions for the WIC? Feel free to send us an <a href=\"mailto:integrity@worldcubeassociation.org\">email</a>.</p>",
+    "hash": "543edad848e97c3441c90a991a700e5cc5c3b3b4d9b11a95601b334047b48dfc",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "诚信委员会简报：2025 年第二季度",
+    "content": "亲爱的 WCA 社群：\n\n上季度 WIC 立案 12 件、结案 9 件，作出 4 项禁赛，6 件未采取措施。部分重要案件如下：\n- 一名选手投诉代表对待不公平，认为代表越权并提出不合理要求。WIC 认定代表在职责范围内行事，要求合理。WIC 建议：若不同意代表决定，应先遵从要求，之后必要时按[16.2025.1—争议](https://documents.worldcubeassociation.org/documents/motions/16.2025.1%20-%20Disputes.pdf)提出争议。\n- 接报一名选手通过篡改成绩单作弊。WIC 联系相关代表、裁判，调查该选手各轮情况，发现其在多场比赛多个轮次中篡改成绩单；还认定一名受询问裁判试图包庇。该选手被禁止参赛，裁判也因协助而被短期禁赛。\n- 接报一名选手在网上向他人发送威胁，特别针对 WCA 选手和比赛。WIC 认定行为严重威胁安全的比赛环境，且严重违反行为准则，因此给予多年禁赛，并联系相关主管机关。涉及安全时，WIC 强烈建议先联系当地主管机关。\n\n如有问题，欢迎[发邮件](mailto:integrity@worldcubeassociation.org)。",
+    "translatedAt": "2026-10-22T06:05:15.716Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "543edad848e97c3441c90a991a700e5cc5c3b3b4d9b11a95601b334047b48dfc"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [
+      "原文结案9件，但4项禁赛与6件无措施合计10；按原文保留，未调整统计。"
+    ],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

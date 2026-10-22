@@ -1,0 +1,27 @@
+{
+  "key": "posts:/posts/removing-official-status-for-3x3x3-with-feet",
+  "source": {
+    "key": "posts:/posts/removing-official-status-for-3x3x3-with-feet",
+    "kind": "posts",
+    "title": "Removing official status for 3x3x3 With Feet",
+    "date": "2019-12-04T00:11:41.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/removing-official-status-for-3x3x3-with-feet",
+    "content": "Dear WCA Community,\n\nAfter a full year of feedback and review, the WRC and the WCA Board have come to the conclusion that 3x3x3 with Feet should be removed from the list of official WCA events as [previously planned](https://github.com/thewca/wca-regulations/issues/652), on January 1, 2020. Although it is clear that some people will be significantly impacted, there has not been a significant change in participation in the event throughout 2019. 3x3x3 with Feet remains the least popular speedsolving event by a significant margin, and concerns from organizers about hygiene and logistics remain. \n\nWe know that this outcome is disappointing for many community members, and understand the frustration that removing an event from the official list will have a significant impact on its popularity. However, any competition is still welcome to hold it as an unofficial event, and organizers may allow competitors with medical considerations to compete using feet during 3x3x3 Speed Solving. (See [Guideline 5b+](https://www.worldcubeassociation.org/regulations/guidelines.html#A5b+) and [Regulation 2s](https://www.worldcubeassociation.org/regulations/#2s).)\n\nWe also welcome suggestions to bridge the gap between unofficial and official events. For example:\n\n- Making it easy to sign up for unofficial events during official registration.\n- Having a standard place for unofficial results from WCA competitions.\n\nWe would also like to take this time to apologize for the flaws in the process used for this decision. We have learned greatly from the community's feedback, and will prioritize a clear and transparent process for event changes in the future.\n\nLucas Garron\nWRC leader\nOn behalf of the Regulations Committee",
+    "hash": "2c60d12659a697e6d4ae9135885fd5ed5953e71718e092f782fa1f7ebdf77a39",
+    "format": "markdown",
+    "sourceId": 13505
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "2c60d12659a697e6d4ae9135885fd5ed5953e71718e092f782fa1f7ebdf77a39",
+    "language": "zh-Hans",
+    "title": "取消三阶脚拧的正式项目资格",
+    "content": "各位 WCA 社区成员：\n\n经过一整年的意见收集和评估，WRC 与 WCA 董事会决定，按照[此前的计划](https://github.com/thewca/wca-regulations/issues/652)，于 2020 年 1 月 1 日将三阶脚拧从 WCA 正式项目列表中移除。我们清楚这一决定会给部分人带来很大影响，但在整个 2019 年，该项目的参与情况并未明显改变。三阶脚拧仍是参与人数最少的速拧项目，且与其他项目相差很大；主办方对卫生和现场组织安排的担忧也依然存在。\n\n我们知道，这一结果会让许多社区成员失望，也理解大家的挫败感：取消正式资格，会明显影响一个项目的普及程度。不过，各场比赛仍可将脚拧设为非正式项目；对于有医疗方面特殊情况的选手，主办方也可以允许其在三阶速拧项目中用脚还原。（参见[指南 5b+](https://www.worldcubeassociation.org/regulations/guidelines.html#A5b+) 和[规则 2s](https://www.worldcubeassociation.org/regulations/#2s)。）\n\n我们也欢迎大家提出缩小非正式项目与正式项目之间差距的建议，例如：\n\n- 在正式报名时，也能方便地报名非正式项目。\n- 为 WCA 比赛中的非正式成绩设立统一的发布位置。\n\n同时，我们为此次决策流程中的不足表示歉意。社区的反馈让我们学到了很多；今后涉及项目变更时，我们会优先确保流程清晰、透明。\n\nLucas Garron\nWRC 负责人\n代表规则委员会",
+    "notes": [
+      "原文链接文字为 Guideline 5b+，目标为 #A5b+；按原文分别保留，未擅自修正。"
+    ],
+    "translatedAt": "2026-10-22T08:49:54.035Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "9795208e8a9cf5bad37b71fbe0937003ca203a98e8718dfecdd05f83fcab9625"
+}

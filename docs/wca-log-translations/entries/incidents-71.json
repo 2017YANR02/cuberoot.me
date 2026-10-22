@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:71",
+  "source": {
+    "key": "incidents:71",
+    "kind": "incidents",
+    "title": "A competitor should not have advanced to the next round upon the data entry error was found",
+    "url": "https://www.worldcubeassociation.org/incidents/71",
+    "date": "2022-12-07T14:36:29.000Z",
+    "content": "A competitor qualified for the final round of an event. Upon checking data entry after the final round, but before the competition was over, an error was found which placed this competitor two positions beyond the original advancement conditions. \n\nThe Delegates provisionally decided to change the advancement conditions, increasing the number of competitors qualifying for the final round. Therefore, the competitors affected by this mistake could still compete. The WRC agreed with delegates' decision as per [Regulation 9p2a](https://www.worldcubeassociation.org/regulations/#9p2a) because the decision was in compliance with [Regulation 9p1](https://www.worldcubeassociation.org/regulations/#9p1).",
+    "hash": "894614c9dadab7c3641b166f157fd038011bf53630127f9304a6eeb0952f5d0b",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "发现录入错误后，选手原本不应晋级",
+    "content": "一名选手晋级某项目决赛。决赛后、比赛结束前核对录入时发现错误，纠正后该选手名次比原晋级范围低两位。\n\n代表暂定修改晋级条件，增加决赛晋级人数，使受影响选手仍能参赛。由于此决定符合 [9p1](https://www.worldcubeassociation.org/regulations/#9p1)，WRC 依据 [9p2a](https://www.worldcubeassociation.org/regulations/#9p2a) 同意代表的决定。",
+    "translatedAt": "2026-10-22T05:54:37.260Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "894614c9dadab7c3641b166f157fd038011bf53630127f9304a6eeb0952f5d0b"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_6",
+      "reviewedAt": "2026-10-22T06:24:59.959967Z",
+      "report": "reviews/round-1/report-6.json",
+      "sourceHash": "894614c9dadab7c3641b166f157fd038011bf53630127f9304a6eeb0952f5d0b",
+      "reviewedTranslationHash": "5199a12b36de1daa15693f7c5e4c0ca8a13eeff893023cdf2d2ca081cebf3a27",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

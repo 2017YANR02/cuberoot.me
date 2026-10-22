@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:127",
+  "source": {
+    "key": "incidents:127",
+    "kind": "incidents",
+    "title": "Competitor faced a sequence of misscrambles",
+    "url": "https://www.worldcubeassociation.org/incidents/127",
+    "date": "2024-10-13T05:24:36.000Z",
+    "content": "A competitor was caught in a frenzy of misplaced scrambles and cubes, receiving a different cube on one occasion and a particular scramble more than once. The competitor DNFed two attempts, which gave them the impression that they would DNF the average. However, it was noticed after the round that one of these was actually a duplicate scramble, which meant that it wasn’t fair to retain the DNF on it. Since they could still get an average on the remaining solves that were originally DNSed by them, the WRC decided under [11d ](https://www.worldcubeassociation.org/regulations/#11d)that it was best to leave this to delegate discretion in the pretext of fair sportsmanship. The solves were re-ordered appropriately and the remaining attempts were granted back to the competitor under such unique circumstances.",
+    "hash": "f3a7ed532d5c6d3f0243b1ca68e04e987e621d3ab673d4a8e6f72fca031be1d7",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "选手连续遭遇打乱和魔方错配",
+    "content": "一名选手遭遇一连串打乱及魔方错配，某次拿到不同魔方，还不止一次收到同一打乱。选手两次 DNF，以为平均注定 DNF。轮次结束后才发现其中一次实际上是重复打乱，因此保留那次 DNF 并不公平。\n\n选手原本放弃并记为 DNS 的剩余尝试，仍可能组成有效平均。WRC 依据 [11d](https://www.worldcubeassociation.org/regulations/#11d)，从公平竞赛角度认为应交由代表酌情判断。在这一特殊情况下，将尝试顺序正确重排，并恢复了选手剩余尝试机会。",
+    "translatedAt": "2026-10-22T05:57:56.837Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "f3a7ed532d5c6d3f0243b1ca68e04e987e621d3ab673d4a8e6f72fca031be1d7"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_3",
+      "reviewedAt": "2026-10-22T06:22:42.955322Z",
+      "report": "reviews/round-1/report-3.json",
+      "sourceHash": "f3a7ed532d5c6d3f0243b1ca68e04e987e621d3ab673d4a8e6f72fca031be1d7",
+      "reviewedTranslationHash": "67f010db41d14414eee5d9d11e775b0c9b9358bfe7e6761431c357d4e2387824",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

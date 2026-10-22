@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/campeonato-sudamericano-2013-on-january-5-6-2013-in-arequipa-peru",
+  "source": {
+    "key": "posts:/posts/campeonato-sudamericano-2013-on-january-5-6-2013-in-arequipa-peru",
+    "kind": "posts",
+    "title": "Campeonato Sudamericano 2013 on January 5-6, 2013 in Arequipa, Peru",
+    "date": "2012-09-13T08:48:50.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/campeonato-sudamericano-2013-on-january-5-6-2013-in-arequipa-peru",
+    "content": "The [Campeonato Sudamericano 2013](https://www.worldcubeassociation.org/results/c.php?i=CampeonatoSudamericano2013) will take place on January 5-6, 2013 in Arequipa, Peru. Check out the [Campeonato Sudamericano 2013 website](http://www.cubingsouthamerica.com/Sudamericano/index.php) for more information and registration.",
+    "hash": "99b7a5000605cff25ede2b413db2435ca50799b971bf5969ffa9e31d404bcd52",
+    "format": "markdown",
+    "sourceId": 2158
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "99b7a5000605cff25ede2b413db2435ca50799b971bf5969ffa9e31d404bcd52",
+    "language": "zh-Hans",
+    "title": "2013 年南美洲锦标赛将于 1 月 5–6 日在秘鲁阿雷基帕举行",
+    "content": "[2013 年南美洲锦标赛（Campeonato Sudamericano 2013）](https://www.worldcubeassociation.org/results/c.php?i=CampeonatoSudamericano2013)将于 2013 年 1 月 5–6 日在秘鲁阿雷基帕举行。更多信息及报名请见[赛事网站](http://www.cubingsouthamerica.com/Sudamericano/index.php)。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:55:00.929Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "14864035be77ff4bea082ccef7b06e93f73b54197359fb8d49a4c2f1d03a5802"
+}

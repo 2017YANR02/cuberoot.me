@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:105",
+  "source": {
+    "key": "incidents:105",
+    "kind": "incidents",
+    "title": "Competitors claimed they got misscrambles after round",
+    "url": "https://www.worldcubeassociation.org/incidents/105",
+    "date": "2024-05-31T10:53:42.000Z",
+    "content": "DISCLAIMER: Since the resolution of this incident, the regulation [11i](https://www.worldcubeassociation.org/regulations/#11i) has been updated to provide stricter criteria for when a misscramble should receive an extra.\n\nAfter the final round of 3x3 Blindfolded, a delegate was approached by two competitors who informed the delegate that they had received misscrambled on their second solves. Both competitors had DNFed their second solves, and the scramble they received was said to be less straightforward than the true scramble. Video evidence of the misscramble was inconclusive due to poor quality. The delegate decided to give the competitors provisional extra attempts. \n\nThe decision was to use the delegate discretion and accept the extra attempts that the delegates provided. This situation is best understood by the delegates handling the incident as they are the best equipped to determine if the competitor truly received a misscamble.\n\nThis decision is similar to the one outlined in [incident 35.](https://www.worldcubeassociation.org/incidents/35)",
+    "hash": "b0869e2134866ffc594434dbf0b0a951c94ffc51ee85449d72344d3ab39d38c7",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "选手在轮次结束后声称收到错误打乱",
+    "content": "说明：此事件处理后，[11i](https://www.worldcubeassociation.org/regulations/#11i) 已更新，对错误打乱何时应获额外尝试设定更严格标准。\n\n三阶盲拧决赛后，两名选手告诉代表，第二次还原收到了错误打乱。两人该次均为 DNF，并称实际打乱比原定打乱更不容易处理。视频质量较差，无法明确证实错误打乱。代表决定给予暂定的额外尝试。\n\n最终决定尊重代表的酌情判断，接受其给予的额外尝试。处理此事的代表最了解现场，也最有条件判断选手是否确实收到错误打乱。\n\n此决定与[事件 35](https://www.worldcubeassociation.org/incidents/35)类似。",
+    "translatedAt": "2026-10-22T05:56:15.197Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "b0869e2134866ffc594434dbf0b0a951c94ffc51ee85449d72344d3ab39d38c7"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

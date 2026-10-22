@@ -1,0 +1,374 @@
+{
+  "reviewer": "review_3",
+  "reviewedAt": "2026-10-22T06:22:42.955322Z",
+  "entries": [
+    {
+      "key": "incidents:118",
+      "sourceHash": "335000fba0201b0b244009311269ef21dd28953b3961de1a72768a299f6f72ff",
+      "reviewedTranslationHash": "237f94574aa2c8c4e48da4f5af95fcd3a82a8b4ada331fb00105a4c314a40d46",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题及4段：保留2025年规则说明中的DNS与当时裁决DNF的历史区分；4次DNF、1次完成、视频遮挡及代表仅“怀疑”的原因均对应。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:119",
+      "sourceHash": "39d544e666c6722f664cd2c7eaa470ce86b27540adfc0ae84fbac270bfde3f72",
+      "reviewedTranslationHash": "cfe32b69ddebac65eca4fac138840d773b03fc783e24571d27d2d576d6b14cfd",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题及3段：规则后来收紧、轮次结束后报告、视频无法判断、暂定额外尝试和基于更可能发生错误打乱的代表酌情裁量均保留。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:12",
+      "sourceHash": "172c6bb0760a1f2bf50c3f135753d20037305aaff9fb7bdca2b199f1d2eac0a5",
+      "reviewedTranslationHash": "0744738df8bce7a8213733dc063c0db4d1b97ae4f8752a2d526894ba38f7d40a",
+      "verdict": "pass",
+      "evidence": [
+        "标题与正文完整对应：非组织方提供的非官方Stackmat用于三阶脚拧，给予额外尝试，器材责任归组织团队，额外成绩获接受。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:120",
+      "sourceHash": "6a8f50e9b994935925cde865f269a61dab3c6789d41648f8c5f8a3bc6865b51a",
+      "reviewedTranslationHash": "ab869a51a3e2569434e9d80cc0e41a9374bbfed66ad94b76131e184929c18585",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题及3段：新10h1a的历史说明、螺丝松脱与背面完整、援引5b5f及按最接近位置重组后全部指针指向12点均对应。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:121",
+      "sourceHash": "11e96a0979d74afec07233ceb63d1c10db8e8cb2a500c020a3d2c3ae4466fcd9",
+      "reviewedTranslationHash": "242f01179253411e8f370fdedb7de684e51b94246967a7d02774afc1824dc383",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题及3段：奇艺计时器清单完整性和准确性不确定；部分删除不公平的理由，以及删除该比赛全部成绩的范围均保留。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:122",
+      "sourceHash": "0ce92b637757c7dd49aa3aa5a9185b5599421e3901db3a4154cf899f510bf707",
+      "reviewedTranslationHash": "f349043cb467f068a9a1d60adc03b8389e8ad3fccf7bcc67f54d0416b8cc3b04",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题及2段：停表前掉落、裁判先触碰后选手拾起、合理检查仅可能造成短暂阻碍及保留原尝试的权衡均对应。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:123",
+      "sourceHash": "822be9a5f54da35a7e3460d85267d722382bf75ee9faac2cce495d10c9e28d07",
+      "reviewedTranslationHash": "90fa55f9bf4ba00f9f29a8c7b0c9ea387ed83fe6499820f611f2fc336c22c648",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题及3段：0.000、选手称已复位与裁判所述未启动的不同说法均保留；干扰时间/程度不明、先发生事件优先、条件性额外尝试及最终DNF对应。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:124",
+      "sourceHash": "fa8d4eaebd53ee1e9b606c64471ed08a14d4267fcd9c06db2300e5565f5c6db9",
+      "reviewedTranslationHash": "8e4754931fa556858a81f5a2fb5b0e80915e4fca53096fdae604d83a8bb7495f",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题及2段：两名选手合计10次仅3次正确、小角方向/数量及朝向错误、视频有限和最终删除金字塔全部轮次范围均对应。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:125",
+      "sourceHash": "31f9c38dadbb9df4a132ca9adf580ff62b4d871c3b58a11ffe29011a4dd19bfd",
+      "reviewedTranslationHash": "2a0caa79eb71b7eda423217e853f3fda92d1fa20c2b2502fe23b93efc603bcd0",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题及2段：六阶/七阶误认为TNoodle手动模式不合法、其实无禁令、原成绩单已丢弃以及采用重赛结果的因果链完整。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:127",
+      "sourceHash": "f3a7ed532d5c6d3f0243b1ca68e04e987e621d3ab673d4a8e6f72fca031be1d7",
+      "reviewedTranslationHash": "67f010db41d14414eee5d9d11e775b0c9b9358bfe7e6761431c357d4e2387824",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题及正文：魔方错配与重复打乱、两次DNF其中一次重复、剩余DNS、11d代表裁量、重排顺序并恢复剩余尝试均对应。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:128",
+      "sourceHash": "4ccc6d1086972c66291d3f1c5328be25374631d5dc616a8b803821a3a68dc1ce",
+      "reviewedTranslationHash": "c9a276b2bc5ef948d7e35a3a1ed79820485b3b3e02ddd3c1058304a967e815a5",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题及正文：四阶收到他人魔方但未分心、代表自行给额外且提前复位、另一选手未获额外、WRC仅强烈建议保留DNF而非断言最终执行均对应。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:129",
+      "sourceHash": "0632b5f6ff0e4712e28fa05095b751bf3e7f77bb114fed125074663688512d7d",
+      "reviewedTranslationHash": "2af33d685a02b158267575b09e2cbe43649f6e18e5a4d3d485c75863b0db498b",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题及正文：剪断耳机线与明显损坏、2i语境视为非电子设备及保留成绩均对应；“仍有电子部件的断开连接耳机不允许使用”的否定明确保留。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:13",
+      "sourceHash": "75183a465c49426475e902e232688aa167d10ee21c03ab64076bbd7c67fd0503",
+      "reviewedTranslationHash": "ec358ba2613795639f9559aab1e632009ec69e7432b7b384bb5ca48c04134008",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题及3段：两个比赛名和链接、重复使用已公开打乱、六个受影响项目与仅五魔方/七阶认可的范围完整，年轻选手及严厉决定的原意保留。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:130",
+      "sourceHash": "80e20aaf1f601e3dd98e3cddd639455262cee9dce366667fa8f43bd4e997871b",
+      "reviewedTranslationHash": "6b3f639f7b8d8ff8d7274e3215e6eb1aa5d31967b2249404661b7398f5461757",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题及2段：补转一步、两次停表动作的不确定性、暂定额外尝试、代表裁量以及裁判和代表均不确定时的建议对应。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:131",
+      "sourceHash": "328f4df097491ca7e370a45b60f643a4a2c823d98565a9aca16385e5506885cb",
+      "reviewedTranslationHash": "f3688d984357ad727fbb4f40e2eef1dc1504fe3bde9818b3a1516a6ac29c1586",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题、规则引文及3段：计时器翻转倒扣、选手似乎无过错、11e原尝试结束前申诉、Skewb很快及影响可能稍后显现，建议额外而交代表裁量均对应。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:132",
+      "sourceHash": "77804fc9c275d78ac33ba144e0aaa526c8f6652d413d573c759477fc5ac5a2cb",
+      "reviewedTranslationHash": "2941edccf517c6982d9c47826a2f865f3045939a12a7be60a389265954398dcb",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题及2段：Skewb第二次6.52与7.52、双方签名、无视频及记忆越来越不确定均对应；WRC不要采用额外尝试的否定和弱记忆证据判断完整。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:133",
+      "sourceHash": "9bb74b9c091119c262502ab7111f522d150ba7f8a3519edcf59c01a9672144d7",
+      "reviewedTranslationHash": "017eb6b2c07ad595784146519af2f676e9564574d680250696de57be6b082a97",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题及3段：代表起初仅看第一条而获E1、但实际有机会接触整组打乱的区别保留；WSAP/1h1、删除该平均全部成绩及代表参赛仍受保密约束均对应。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:134",
+      "sourceHash": "3ad0c3082d42598f46b3419fc636418afec641ac3cb33a0a24172410f98930a8",
+      "reviewedTranslationHash": "49d8759a2648d329a6f15664ee28db6c40359389d07176785c3bb30fe26429cb",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题及全部正文：两个盖片部分分离、第三片完整、不足60度、应按完整部件判断，以及5b5c可能适用但本案按5b5f视完整均对应；图片链接原样保留，仅核对正文而未打开图片。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:135",
+      "sourceHash": "cbe7840f7d1a4845b621ff3a99c8f987e78b28abc9eacea49eafcc1e9898e430",
+      "reviewedTranslationHash": "3ef2fd63f85eba457d87c1c607a964c8a992cd3af44f6584b72827b97cf7dc99",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题及4段：2个多盲魔方打乱相同、结束才报告、代表正在多盲所以裁判给额外、1c授权职责及事先指定监督者和立即报告要求均对应。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:136",
+      "sourceHash": "44092d106c1f716283552536829a8e52dbf16649b0f481ee7aeda5659637ca14",
+      "reviewedTranslationHash": "0ee1bba4d551947cba34c120f39f7a9f330b05a2c2da1ea3f00ce45b61473c16",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题及3段：手汗状况、感应区湿导致无法停表、代表熟知状况和额外尝试完全合理对应；赛前依据2s申请、手背停表必须预先批准的限制完整。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:137",
+      "sourceHash": "9eb1202c1644edb76feaddf644de58d567b8df80c0acbbd6802a449f6d1bf389",
+      "reviewedTranslationHash": "cc326b32e364207be7e62c2f0edc09940e9d60c3821cae25c88e0ffb307edad0",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题及3段：三阶单手成绩单遗失、无故意嫌疑、先偏好DNS后完成额外、比赛中已完成的额外必须使用，以及非自身过错时有权获额外且可选择DNS均对应。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:138",
+      "sourceHash": "89326209118bc33e579e461481f97a0b42a7523c5ee20867cf4d2238774ef0b3",
+      "reviewedTranslationHash": "2236217bdcdcd5e194a02d7094d63f2e9217a73a5385485a1adf045028586273",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题及2段：七阶先误用第2条后暂用第1条，两次均未过及格线；按打乱顺序重排且仅保留第1条的成绩，范围准确。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:139",
+      "sourceHash": "640d4d9777f7c1c2f05ad388b49af09d5c0fc5995d704ec9eab322106923600b",
+      "reviewedTranslationHash": "5e674e0a8a9bb9e1a336f202d00a414ecdc49e2817bfc82b9af6681bdee4eb1f",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题及2段：三阶单手期间补签其他项目成绩单、裁判记录前复位、暂定额外，以及WRC投票DNF和选手承担复位责任均对应。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:14",
+      "sourceHash": "d0e990ce1bff3f153bff88bd022ba40b6b95a505b2c2424b13d8f341a3301e6d",
+      "reviewedTranslationHash": "434ccb26ddb3e1b3d8256acbebb7cda7921cabd690ae0669e5f3bcd04d3f2a71",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题及2段：Kansai Open 2018、两次取最佳、累计时限不允许、删除第二次全部成绩且只影响1人（其余DNS）均对应。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:140",
+      "sourceHash": "7234a93b6e3f5cb32e929c4b6d7e7dfb3be5e1b737c2ad8502df35f4c22b1f26",
+      "reviewedTranslationHash": "1e2c6a4c8c5730658d3283e8101c5781791756d55bfb97ddfcde5315ec44ef5d",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题及2段：观察时本人三脚架倒下、按旧规则误判触碰手机、较新规则允许复位三脚架、暂定额外及2t责任下最终DNF均对应。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:141",
+      "sourceHash": "f0bc42f9a39a9cbaf575368639b60ec0d29d029fc60524232b295332706f5102",
+      "reviewedTranslationHash": "b05cda15b9573d27039616704efba36b57c671ecea42083f9ffeeeba896b1f75",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题及4段：匿名X/Y保留；原成绩X快、重赛Y快、原单找回后删除Y决赛成绩、X无决赛成绩及预先约定的9t程序均对应；建议两人暂定参赛也保留。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:142",
+      "sourceHash": "32d66d625bbb738564adf9659984bc205c5e32bf8407abe1c87b291c46333577",
+      "reviewedTranslationHash": "48383f97eee7d283c3da1df63729431847a09e16deb7d554f430cee519404b55",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题及3段：“57.?”、联系裁判/选手及赛后邮件均无回应、复位仅为推测/可能解释，以及A7c+下DNF的证据强度和结论均保留。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:143",
+      "sourceHash": "284c565d9a179290f281a93c9cb0dccc7e79863f21fcb80fed4bff1df9508159",
+      "reviewedTranslationHash": "92d029f3c14d9910f9a2143cfad0b9a0d815e537d9ef1c373760d5e28a90aa82",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题、两条规则、4步分析及全部段落：A4b/A4b1各+2秒、正常速度到逐帧的历史变更和理事会追溯许可；60FPS/0.74秒/44.4取45帧、选较早停表帧、两人确认及强烈确信后投票均对应。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:145",
+      "sourceHash": "3fbdb6add92837776cde5b5cf00f3ba88ccafa9b8a0f859ee05ebbe2b2786683",
+      "reviewedTranslationHash": "32a646e1a92a6bd59a5d63ab89dfba5067cc3dfd7668fcec22098824af24970b",
+      "verdict": "correction_required",
+      "evidence": [
+        "完整核对标题及3段：记录时转动、代表判DNF后WRC撤销、裁判检查的视频证据不确定但魔方已还原不构成决定依据均对应；末句将“could lead”译为“会使”，把潜在后果强化为确定后果，需恢复可能性。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": [
+        {
+          "field": "content",
+          "old": "会使代表和 WRC 因审核此类视频而承担不必要增加的工作量。",
+          "new": "可能使代表和 WRC 因审核此类视频而承担不必要增加的工作量。",
+          "reason": "原文仅描述可能后果；现译将could强化为确定的“会”，应保留不确定性。",
+          "sourceEvidence": "then this could lead to an undesirable increase in workload for Delegates and the WRC from assessing such videos."
+        }
+      ]
+    },
+    {
+      "key": "incidents:147",
+      "sourceHash": "5e0887a388daaf150be8322c6774d3c2607bdc5c240949d64d309213eae84b73",
+      "reviewedTranslationHash": "196d6af25b32b01ba97d787119e0249a0d2f45293dcf2d97cdc5e1011d24b8ae",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题及3段：0.54秒和当时北美纪录、3步R U R’与原定4步U’ R U R’、4b3b最低4步、当时判DNF与正文所称现行11i1判DNS的历史区分均对应。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    },
+    {
+      "key": "incidents:148",
+      "sourceHash": "4fa58c57324c265349f4f5affe46ed79358d5bc3b27710f627834ddc38e2d292",
+      "reviewedTranslationHash": "817bcd0369b983fd2bf0a7249e6de2b0b991b5318b7318b0ec0ce187b8c49afc",
+      "verdict": "correction_required",
+      "evidence": [
+        "完整核对标题及3段：三阶盲拧未还原、未复位/未运行的计时器、B2a较早违规优先、给予额外及否则须连续成功两次的逻辑均对应；“attempted to stop”被写成“停表”，需保留只是尝试停表。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": [
+        {
+          "field": "content",
+          "old": "发生在选手以未还原状态停表之前",
+          "new": "发生在选手以未还原状态尝试停表之前",
+          "reason": "原文只说选手尝试停止计时器；本案计时器本就未运行，不应译成已实际停表。",
+          "sourceEvidence": "before the competitor attempted to stop the timer with an unsolved puzzle"
+        }
+      ]
+    },
+    {
+      "key": "incidents:149",
+      "sourceHash": "228e5d7a85d3ebe61b9b0fcc2d88626ba001b1a99d5f7d2893114505021d146f",
+      "reviewedTranslationHash": "058b15caeb1272fc7c27c65fe89db4cb3644f74c3c6dd3ccfcffd502d7da9b29",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对标题、3条理由及全部正文：观察时站起看手机后坐下还原、是否构成使用并不明确、2i2a裁量/2i2c未按按钮、不获优势或帮助及无罚保留均对应。"
+      ],
+      "unresolvedNotes": [],
+      "corrections": []
+    }
+  ]
+}

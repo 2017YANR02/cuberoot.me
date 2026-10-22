@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/new-wca-board-members",
+  "source": {
+    "key": "posts:/posts/new-wca-board-members",
+    "kind": "posts",
+    "title": "New WCA Board Members",
+    "date": "2016-07-04T11:27:23.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/new-wca-board-members",
+    "content": "We are happy to announce that the WCA Board has two new members: [Chris Hardwick](https://www.worldcubeassociation.org/results/p.php?i=2003HARD01) and [Luis J. Iáñez](https://www.worldcubeassociation.org/results/p.php?i=2009PARE02).\nThey were chosen in an election among the delegates.\n\nTheir membership is valid from July 1st, 2016, and we are sure they will make a great contribution to the WCA!",
+    "hash": "b5e863f0c9787744ae1ed5defd47828f4faf477c6f28ddd6ce2dbac9d7b1d18a",
+    "format": "markdown",
+    "sourceId": 5945
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "b5e863f0c9787744ae1ed5defd47828f4faf477c6f28ddd6ce2dbac9d7b1d18a",
+    "language": "zh-Hans",
+    "title": "WCA 董事会新增两位成员",
+    "content": "我们很高兴宣布，WCA 董事会新增两位成员：[Chris Hardwick](https://www.worldcubeassociation.org/results/p.php?i=2003HARD01) 和 [Luis J. Iáñez](https://www.worldcubeassociation.org/results/p.php?i=2009PARE02)。他们由代表投票选出。\n\n两人的董事任期自 2016 年 7 月 1 日起生效。相信他们将为 WCA 作出重要贡献！",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.150Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "4f68d0c9b9048eaccf6fc4be11c0bf82d718c035e4c56aac19a8b922a63cb140"
+}

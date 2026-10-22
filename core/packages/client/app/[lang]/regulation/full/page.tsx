@@ -106,8 +106,8 @@ export default function RegulationFull() {
   return (
     <div className="reg-page" id="top">
       <div className="reg-wrap reg-doc">
-        <Link href="/regulation" className="reg-crumb">
-          <ChevronLeft size={16} /> {t('WCA 竞赛规则', 'WCA Regulations')}
+        <Link href="/regulation/rules" className="back-home" aria-label={t('返回规则', 'Back to regulations')}>
+          <ChevronLeft size={16} aria-hidden="true" />
         </Link>
 
         <header className="reg-hero">

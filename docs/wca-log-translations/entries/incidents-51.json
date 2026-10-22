@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:51",
+  "source": {
+    "key": "incidents:51",
+    "kind": "incidents",
+    "title": "A tournament display showed a different result from the one recorded on the scorecard",
+    "url": "https://www.worldcubeassociation.org/incidents/51",
+    "date": "2020-01-30T20:24:45.000Z",
+    "content": "During the competitions, results on the scorecards were found to not match the results on the tournament displays. This was found after both the competitor and the judge signed the attempt. The WCA Delegate contacted with the competitor and the judge and concluded that the time was likely recorded incorrectly.\n\nThe Regulations A7b1) states that:\n> [A7b1](https://www.worldcubeassociation.org/regulations/#A7b1)) If penalties are assigned, the judge records the original recorded time displayed on the timer, along with any penalties. (...)\n\nHowever, the WRC agreed to change the affected attempt to the one that was shown in the tournament display and that only varies in decimal (e.g. XX.X6 to XX.X7).\n\nGenerally, incidents regarding recording results from the tournament display follow this policy:\n\n1. The display is visible during a good part of the solve and seems to be working fine.\n2. It stops at a believable time (when the competitor stops the timer, + a little delay).\n3. The scoretaking mistake is understandable (e.g. The exact time is 10.507 and the judge wrote 10.57. If the display stops at 10.507 and the judge writes 10.53, there is most likely a display error and the recorded time on the scorecard is used).\n\nPlease notice that this is not a general ruling and the WRC strongly recommends to write the result directly from the Speed Stacks Stackmat timer. Tournament Displays are not recognized in the WCA Regulations and sometimes, do not match the time of the Speed Stacks Stackmat timer.",
+    "hash": "687cb2f9a8b901630aaac5f0a48bcddb2a2523fdda6ae65c98d99fee24587edd",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "大屏显示成绩与成绩单记录不同",
+    "content": "比赛中发现，成绩单与比赛显示屏的成绩不同；此时选手和裁判均已签名。代表联系双方后判断，时间很可能记录错误。\n\nA7b1 规定：\n> [A7b1](https://www.worldcubeassociation.org/regulations/#A7b1) 若有处罚，裁判须记录计时器显示的原始时间及所有处罚。（……）\n\n不过，WRC 同意将受影响成绩改为显示屏上的时间，两者仅小数部分不同，例如 XX.X6 改为 XX.X7。\n\n一般而言，关于从比赛显示屏恢复成绩的事件按以下条件处理：\n1. 还原过程中相当一段时间能看见显示屏，且其似乎正常工作；\n2. 显示屏在可信的时间停止，即选手停表后略有延迟；\n3. 记录错误可以合理解释。例如准确时间为 10.507，裁判写成 10.57；但若显示屏停在 10.507，裁判写成 10.53，则更可能是显示屏出错，应采用成绩单记录。\n\n请注意，这不是普遍适用的裁定。WRC 强烈建议直接从 Speed Stacks Stackmat 计时器记录成绩。比赛显示屏未获 WCA 规则认可，有时与计时器时间不一致。",
+    "translatedAt": "2026-10-22T05:52:51.924Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "687cb2f9a8b901630aaac5f0a48bcddb2a2523fdda6ae65c98d99fee24587edd"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_5",
+      "reviewedAt": "2026-10-22T06:22:53.079981Z",
+      "report": "reviews/round-1/report-5.json",
+      "sourceHash": "687cb2f9a8b901630aaac5f0a48bcddb2a2523fdda6ae65c98d99fee24587edd",
+      "reviewedTranslationHash": "799be30244dbcce64b1e35839fd98b51e8b889a6d90308e3e7433627af300507",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

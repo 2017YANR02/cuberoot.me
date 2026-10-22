@@ -1,0 +1,49 @@
+{
+  "reviewer": "review_3",
+  "reviewedAt": "2026-10-22T06:51:17.047Z",
+  "entries": [
+    {
+      "key": "archive:forum_topics/388#p1640",
+      "sourceHash": "55e46a7fade54683f615f9350c57d7b5befa61ff6bc4abc6aacd801027a9a6e2",
+      "reviewedTranslationHash": "85f9f78178135414b2cfe017d3829ba2baadcd0e9f40a3f8ab9247be5fca60dc",
+      "verdict": "correction_required",
+      "evidence": [
+        "已完整对照首帖标题及所有正文段落，包括证据、裁定、临时措施、获奖名单、沟通、使命和四人署名；仅核对所提供的Ron首帖，不读取网络、不纳入回帖。",
+        "结论在开头归属于WCA董事会，并保留“并未承认作弊”；视频分析、77/77、复杂方法造成块位置/朝向变化及多盲视频中的操作错误均有译出。需将结果正确率与执行过程有无错误区分，并校正setup术语。",
+        "处分为自历史公告当日起禁止所有WCA比赛三年；充分配合才可在两年后申请恢复，未写为自动恢复。全部盲拧成绩改DNF、请求退还盲拧奖金给组织者及后续重新分配均对应，未声称已退款。",
+        "保留2007规则临时遮挡、预计2008年3月新规则、坐姿/站姿两用装置及无需裁判持续手持纸张的要求；“今日”和“正在寻找”均处于署有2008年日期的历史公告语境，未改为当前事实。",
+        "世界纪录、冠军、银牌、铜牌全部姓名按原文完整保留，Chris Hardwick和Rafal Guzewicz的twice均译为两次；四名董事及法国、日本、荷兰、美国对应无遗漏。",
+        "未满18岁、不公开姓名、少数相关方报告、保护隐私、私下向董事会举报及论坛管理均保留；未添加被处分者姓名或推断身份。",
+        "父任务已确认本地全文翻译许可；本报告不以旧的许可未确认记录阻断审校，也不将该确认视为公开发布授权。"
+      ],
+      "corrections": [
+        {
+          "field": "content",
+          "old": "却始终毫无失误（77 次还原全部正确）",
+          "new": "且还原成功率达到 100%（77 次还原全部正确）",
+          "reason": "flawless accuracy及括号仅说明77次还原结果全部正确；“始终毫无失误”扩展为全过程没有操作错误，与后段所述执行错误也会产生表面矛盾。",
+          "sourceEvidence": "because of the applied complex method combined with a flawless accuracy (77 correct solves out of 77 solves)"
+        },
+        {
+          "field": "content",
+          "old": "错误地撤销设置步骤",
+          "new": "错误地撤销预设步骤",
+          "reason": "此处为盲拧方法中的set-up moves；仓库术语表Setup的headZh为“预设”，共轭子条目bodyZh将undoes the setup译为“撤销预设步骤”。“设置步骤”会被误解为一般配置操作。",
+          "sourceEvidence": "incorrect undo of set-up moves"
+        }
+      ]
+    },
+    {
+      "key": "disciplinary:/posts/important-announcement-about-blindfolded-solving",
+      "sourceHash": "ec28925700d25462e3b3394780445a4cca1c28a73140fd82d179b24cc3f6a8d5",
+      "reviewedTranslationHash": "3bbacac3075561c71f72c7ec5d6cff887dbbe82b96990193d38483c225d85096",
+      "verdict": "pass",
+      "evidence": [
+        "完整核对主条目的标题与唯一引导段落：WCA在WCA论坛发布关于盲拧的重要公告，中文表述准确，原链接完整保留。",
+        "引导段落没有把论坛全文、回帖或译者判断混入原文，也没有增加被处分者身份。",
+        "本地全文翻译许可已由父任务确认。主条目review.status、notes、unresolvedNotes和supplements仍残留“许可尚未确认／全文未译／仅摘要”的旧状态，父任务合并本报告时需更新这些元数据；它们不影响当前引导正文语言通过。公开发布仍未授权。"
+      ],
+      "corrections": []
+    }
+  ]
+}

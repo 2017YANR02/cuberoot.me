@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:21",
+  "source": {
+    "key": "incidents:21",
+    "kind": "incidents",
+    "title": "A judge forgot to hold a sheet between the competitor's face and the puzzle (extra available)",
+    "url": "https://www.worldcubeassociation.org/incidents/21",
+    "date": "2018-04-18T16:45:59.000Z",
+    "content": "*DISCLAIMER*: After these incidents took place, [B4c](https://www.worldcubeassociation.org/regulations/full/#B4c) has been changed to explicitly state that in similar incidents the original solve can stand, if the delegate believes the competitor didn't have any bad intentions\n\nA judge forgot to hold a sheet between the competitor's face and the puzzle. This was found after the end of the attempt and a provisional extra was granted.\nThe WRC decided to accept the result as there was no sign of the competitor abusing the situation and it was not his fault.\n\n\nThe same situation occurred during PBQ Berkeley 2018 where the original attempt was kept.\n\nFor a lot of incidents, the WRC used the reasoning that it's better to use an extra attempt where the procedure was correctly followed over an existing attempt where there was a problem with the procedure.\nThe WRC used this reasoning for PBQ Oshawa 2019, where an extra was available and used over the existing attempt.",
+    "hash": "84fbe76d16c9833a11417583d909f48af7e0d1f0fdc74558519aa32621d9e087",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "裁判忘记在选手脸部与魔方之间放置遮挡板（有额外尝试）",
+    "content": "说明：这些事件发生后，[B4c](https://www.worldcubeassociation.org/regulations/full/#B4c) 已修改，明确规定：类似情况下，若代表认为选手没有不良意图，可以保留原成绩。\n\n裁判忘记在选手脸部与魔方之间放置遮挡板。该次尝试结束后发现问题，并给予了暂定的额外尝试。WRC 决定接受原成绩，因为没有迹象表明选手利用了这一情况，且错误并非由选手造成。\n\nPBQ Berkeley 2018 也发生了相同情况，当时保留了原尝试成绩。\n\n在许多事件中，WRC 采用的理由是：与其使用流程存在问题的原尝试，不如使用流程正确的额外尝试。WRC 在 PBQ Oshawa 2019 采用了这一理由，以可用的额外尝试替代原尝试。",
+    "translatedAt": "2026-10-22T05:48:51.542Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "84fbe76d16c9833a11417583d909f48af7e0d1f0fdc74558519aa32621d9e087"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_4",
+      "reviewedAt": "2026-10-22T06:22:38.727845Z",
+      "report": "reviews/round-1/report-4.json",
+      "sourceHash": "84fbe76d16c9833a11417583d909f48af7e0d1f0fdc74558519aa32621d9e087",
+      "reviewedTranslationHash": "44cb982cfaed6f4d865150092618a1fd455f46e5039770adfc78a09436aefda6",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

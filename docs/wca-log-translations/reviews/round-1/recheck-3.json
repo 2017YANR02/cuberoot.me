@@ -1,0 +1,22 @@
+{
+  "reviewer": "review_3",
+  "reviewedAt": "2026-10-22T06:26:21.801Z",
+  "entries": [
+    {
+      "key": "incidents:145",
+      "sourceHash": "3fbdb6add92837776cde5b5cf00f3ba88ccafa9b8a0f859ee05ebbe2b2786683",
+      "reviewedTranslationHash": "0994515d43f2c0d78408e969002561284db23645efa0b58d412d84a868bfa2e4",
+      "verdict": "pass",
+      "evidence": "已完整重读当前标题及三段原译文；末句已将“会使”修正为“可能使”，对应 could lead，保留条件假设和潜在工作量后果。撤销DNF、裁判检查证据不明确及已还原视频不作为决定依据的上下文完整。",
+      "unresolvedNotes": []
+    },
+    {
+      "key": "incidents:148",
+      "sourceHash": "4fa58c57324c265349f4f5affe46ed79358d5bc3b27710f627834ddc38e2d292",
+      "reviewedTranslationHash": "1e74ce4204d6d38b795207e4bda573f260e1cdee18520423ed23979bcc55ef36",
+      "verdict": "pass",
+      "evidence": "已完整重读当前标题及三段原译文；已改为“以未还原状态尝试停表”，对应 attempted to stop，未断言计时器实际停止。未复位且未运行、B2a较早违规优先、额外尝试及连续两次成功的上下文完整。",
+      "unresolvedNotes": []
+    }
+  ]
+}

@@ -66,12 +66,12 @@ export default function RegArticleLayout({ slug, children }: { slug: string; chi
           url: `${SITE_URL}${tr({ zh: '/zh', en: '' })}${regArticleHref(a)}`,
           lang,
           partOfName: tr({ zh: 'WCA 规则图解', en: 'The WCA Regulations, illustrated' }),
-          partOfUrl: `${SITE_URL}${tr({ zh: '/zh', en: '' })}/regulation`,
+          partOfUrl: `${SITE_URL}${tr({ zh: '/zh', en: '' })}/regulation/rules`,
         })}
       />
       <div className="reg-wrap">
         <div className="reg-crumb">
-          <Link href="/regulation" className="reg-crumb-link">
+          <Link href="/regulation/rules" className="reg-crumb-link">
             <ArrowLeft size={15} />
             {t('全部规则', 'All regulations')}
           </Link>
@@ -112,7 +112,7 @@ export default function RegArticleLayout({ slug, children }: { slug: string; chi
             )}
           </p>
           <p style={{ marginTop: 12 }}>
-            <Link href="/regulation"><span aria-hidden="true">←</span><span className="sr-only">{t('← 返回规则总览', '← Back to overview')}</span></Link>
+            <Link href="/regulation/rules"><span aria-hidden="true">←</span><span className="sr-only">{t('← 返回规则总览', '← Back to overview')}</span></Link>
             {' · '}
             <a href={WCA_REG_FULL} target="_blank" rel="noopener noreferrer">{t('官方规则全文', 'Official Regulations (full)')}</a>
             {' · '}
@@ -121,7 +121,7 @@ export default function RegArticleLayout({ slug, children }: { slug: string; chi
         </footer>
 
         {/* Floating jump-to-overview on long chapters */}
-        <Link href="/regulation" className="reg-fab" aria-label={t('返回规则总览', 'Back to overview')}>
+        <Link href="/regulation/rules" className="reg-fab" aria-label={t('返回规则总览', 'Back to overview')}>
           <LibraryBig size={20} />
         </Link>
       </div>

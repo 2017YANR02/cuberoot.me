@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:138",
+  "source": {
+    "key": "incidents:138",
+    "kind": "incidents",
+    "title": "Competitor received incorrect order of scrambles",
+    "url": "https://www.worldcubeassociation.org/incidents/138",
+    "date": "2024-11-18T22:08:55.000Z",
+    "content": "During a round of 7x7, a competitor was mistakenly given scramble 2 for their first attempt. The competitor did not make cutoff. Realizing the mistake, the competitor was given scramble 1 provisionally, and also did not make cutoff. \n\nAs would be done with swapped scrambles in a non-cutoff round, the results have to be rearranged, so the result of the attempt with scramble 1 was kept as the only recorded result.",
+    "hash": "89326209118bc33e579e461481f97a0b42a7523c5ee20867cf4d2238774ef0b3",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "选手收到错误顺序的打乱",
+    "content": "七阶某轮中，选手第一次误收第二条打乱，未通过及格线。发现错误后，暂让选手进行第一条打乱，仍未通过。\n\n与无及格线轮次中打乱交换的情况一样，成绩应重新排序，因此仅保留使用第一条打乱的成绩。",
+    "translatedAt": "2026-10-22T06:00:02.853Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "89326209118bc33e579e461481f97a0b42a7523c5ee20867cf4d2238774ef0b3"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_3",
+      "reviewedAt": "2026-10-22T06:22:42.955322Z",
+      "report": "reviews/round-1/report-3.json",
+      "sourceHash": "89326209118bc33e579e461481f97a0b42a7523c5ee20867cf4d2238774ef0b3",
+      "reviewedTranslationHash": "2236217bdcdcd5e194a02d7094d63f2e9217a73a5385485a1adf045028586273",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

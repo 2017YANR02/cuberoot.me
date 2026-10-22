@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "key": "disciplinary:/posts/wdc-monthly-digest-march-april-2019",
+  "source": {
+    "key": "disciplinary:/posts/wdc-monthly-digest-march-april-2019",
+    "kind": "disciplinary",
+    "title": "WDC Monthly Digest - March &amp; April 2019",
+    "date": "2019-05-16T15:45:41Z",
+    "url": "https://www.worldcubeassociation.org/posts/wdc-monthly-digest-march-april-2019",
+    "content": "<p>Dear WCA Community,</p><p>Here you can find some noteworthy updates about the activity of the Disciplinary Committee over the months of March and April 2019.  </p><p>In March, the WDC actively worked on 4 investigations: 2 were opened in March and 2 were already ongoing.<br>\nIn April, the WDC has actively worked on 8 investigations: 2 were the ones that began in March and 6 were opened in April.<br>\nTwo of these cases are currently on hold, because the Committee has to wait for future developments in order to proceed with its work. The other ongoing investigations are quite complex and are expected to require the attention of the Committee for some time, since the matters under investigation don’t involve simple violations of WCA Regulations.</p><p>Even though there are no public announcements in this digest, the WDC would like to stress out that potential cases should be communicated directly to the Disciplinary Committee, without indulging in misinformed speculation online. This attitude only leads to the spreading of false information and, potentially, to cases of online bullying, especially when very young competitors are involved in allegations of intentionally breaking the WCA Regulations.  </p><p><strong>The WCA strongly condemn every form of bullying and promotes an environment of respect and cooperation. This applies both to officially sanctioned WCA Competitions and to the community online.</strong></p><p>To conclude, we would like to remind everyone to make sure they fully understand the WCA Regulations and competition procedures. If you have any questions or are unsure about how to do something, please do not hesitate to ask the Delegate(s) of the competition. In addition, if you think the competition results are being compromised in any way or see suspicious behavior, find the nearest delegate immediately and report the incident.</p><p>Thank you all for your help in supporting the WCA Spirit and Mission.</p><p>Lorenzo Vigani Poli<br><em>WDC Team Leader<br>\nOn behalf of the Disciplinary Committee</em></p>",
+    "hash": "9a25c9a310caf9b2f09b16fda73275fbb2d3bdc2180d679f905102a130c9f287",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "WDC 月度简报：2019 年 3 月和 4 月",
+    "content": "亲爱的 WCA 社群：\n\n以下为纪律委员会 2019 年 3、4 月的重要动态。\n\n3 月处理 4 项调查，其中 2 件新立案、2 件延续。4 月处理 8 项，其中 2 件始于 3 月、6 件于 4 月立案。两件目前暂停，需等待后续发展。其他在办案件较复杂，并非简单违反比赛规则，预计仍需投入一段时间。\n\n本期虽无公开个案通报，但 WDC 强调：潜在案件应直接报告委员会，不应在网上基于不充分信息推测。这只会传播错误信息，甚至引发网络欺凌，尤其当非常年轻的选手被指故意违规时。\n\n**WCA 强烈谴责任何形式的欺凌，倡导尊重与合作。这既适用于正式 WCA 比赛，也适用于线上社群。**\n\n最后提醒充分理解规则及流程，有疑问时询问代表。若认为成绩受到损害或看到可疑行为，请立即找最近的代表报告。\n\n感谢支持 WCA 精神与使命。\n\nLorenzo Vigani Poli\nWDC 团队负责人，代表纪律委员会",
+    "translatedAt": "2026-10-22T06:10:02.357Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "9a25c9a310caf9b2f09b16fda73275fbb2d3bdc2180d679f905102a130c9f287"
+  },
+  "review": {
+    "status": "pending_independent_review",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+  },
+  "publication": {
+    "status": "not_authorized"
+  }
+}

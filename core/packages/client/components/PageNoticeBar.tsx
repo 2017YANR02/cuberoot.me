@@ -357,7 +357,7 @@ export default function PageNoticeBar() {
             <span><T en="Target link (required for homepage feature)" zh="目标链接(首页焦点必填)" /></span>
             <input className="page-notice-input" value={form.href}
               onChange={(e) => setForm({ ...form, href: e.target.value })}
-              placeholder="/regulation/news#4-pad-2027" />
+              placeholder="/regulation/post#4-pad-2027" />
           </label>
 
           <div className="page-notice-editor-row">

@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:97",
+  "source": {
+    "key": "incidents:97",
+    "kind": "incidents",
+    "title": "A competitor did not fully don the blindfond but was not able to see the puzzle",
+    "url": "https://www.worldcubeassociation.org/incidents/97",
+    "date": "2024-02-28T12:15:20.000Z",
+    "content": "During 3x3x3 blindfolded attempt, a competitor donned the blindfold in such a way that they were able to see the judge but not the puzzle. The judge said that at some point of the blindfolded phase the competitor looked at them for a few seconds and then continued the execution.\n\n[Regulation B4b](https://www.worldcubeassociation.org/regulations/#B4b) says:\n\n> B4b) The competitor must not apply moves or intentional changes in alignment to the puzzle before they have fully donned the blindfold. Penalty: disqualification of the attempt (DNF).\n\nSince the competitor was able to see the judge and other surrounding, the WRC decided that the blindfold was **not** fully donned, and therefore **the attempt should be changed to DNF**.",
+    "hash": "89292099f152558dfc5c0ded3bab60241a74613b51ee99dc7f0d6072eccd62a5",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 2,
+    "title": "眼罩未完全戴好，虽看不到魔方但能看到裁判",
+    "content": "一次三阶盲拧中，选手的眼罩戴法使其能看到裁判，但看不到魔方。裁判表示，盲拧阶段某时刻，选手看着裁判数秒后继续还原。\n\n[B4b](https://www.worldcubeassociation.org/regulations/#B4b) 规定：\n> 眼罩完全戴好前，不得转动魔方或故意改变其对齐状态，否则该次尝试 DNF。\n\n由于选手能看见裁判和周围环境，WRC 认定眼罩**未完全戴好**，因此**该次尝试应改为 DNF**。",
+    "translatedAt": "2026-10-22T05:56:15.197Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "89292099f152558dfc5c0ded3bab60241a74613b51ee99dc7f0d6072eccd62a5",
+    "revisedAt": "2026-10-22T06:25:36.680Z",
+    "revisionReason": "独立审校 round-1 的精确修正建议"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_6",
+      "reviewedAt": "2026-10-22T06:24:59.959967Z",
+      "report": "reviews/round-1/report-6.json",
+      "sourceHash": "89292099f152558dfc5c0ded3bab60241a74613b51ee99dc7f0d6072eccd62a5",
+      "reviewedTranslationHash": "983d649d35d55a36959f1a63643dfbfef5fa6a0e84dedfb1d58c8a887eb8b401",
+      "verdict": "correction_required",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": [],
+    "recheck": {
+      "reviewer": "review_6",
+      "reviewedAt": "2026-10-22T06:26:41.975Z",
+      "report": "reviews/round-1/recheck-6.json",
+      "sourceHash": "89292099f152558dfc5c0ded3bab60241a74613b51ee99dc7f0d6072eccd62a5",
+      "reviewedTranslationHash": "3b1d6cedf60289350d0b6bea68eaf1dfd93b0a2f4d3399501f4595693858a824",
+      "verdict": "pass"
+    }
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "checkedAt": "2026-10-22T08:48:21.854Z",
+  "ok": true,
+  "fixture": "/var/folders/bf/b3hpgshn2tv7mqj61d1hbfc40000gn/T/wca-post-recovery-EkthfQ",
+  "resumed": {
+    "saved": 0,
+    "recovered": 1,
+    "total": 1,
+    "linkedDisciplinary": 0,
+    "translated": 1,
+    "pending": 0
+  },
+  "unchanged": {
+    "saved": 0,
+    "recovered": 0,
+    "total": 1,
+    "linkedDisciplinary": 0,
+    "translated": 1,
+    "pending": 0
+  },
+  "changed": {
+    "saved": 1,
+    "recovered": 0,
+    "total": 1,
+    "linkedDisciplinary": 0,
+    "translated": 1,
+    "pending": 0
+  },
+  "checks": [
+    "entry saved before ledger interruption recovery",
+    "idempotent repeated import",
+    "changed translation archives exact prior version"
+  ]
+}

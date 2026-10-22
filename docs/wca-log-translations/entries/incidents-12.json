@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:12",
+  "source": {
+    "key": "incidents:12",
+    "kind": "incidents",
+    "title": "3x3x3 With Feet solving with a non-official Stackmat",
+    "url": "https://www.worldcubeassociation.org/incidents/12",
+    "date": "2018-03-31T15:04:01.000Z",
+    "content": "One competitor was found to be using a non-official Stackmat timer, which wasn't provided by the organization team for the 3x3x3 With Feet event, and it was granted an extra attempt. It was decided that the organization team is responsible to provide the competition equipment, and the result of the extra attempt was accepted.",
+    "hash": "172c6bb0760a1f2bf50c3f135753d20037305aaff9fb7bdca2b199f1d2eac0a5",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "三阶脚拧使用非官方 Stackmat 计时器",
+    "content": "发现一名选手使用非官方 Stackmat 计时器进行三阶脚拧；该计时器并非组织团队提供。现场给予了额外尝试。裁定认为，提供比赛器材是组织团队的责任，并接受了额外尝试的成绩。",
+    "translatedAt": "2026-10-22T05:48:51.542Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "172c6bb0760a1f2bf50c3f135753d20037305aaff9fb7bdca2b199f1d2eac0a5"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_3",
+      "reviewedAt": "2026-10-22T06:22:42.955322Z",
+      "report": "reviews/round-1/report-3.json",
+      "sourceHash": "172c6bb0760a1f2bf50c3f135753d20037305aaff9fb7bdca2b199f1d2eac0a5",
+      "reviewedTranslationHash": "0744738df8bce7a8213733dc063c0db4d1b97ae4f8752a2d526894ba38f7d40a",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

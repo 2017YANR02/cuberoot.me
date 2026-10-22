@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { deletePageNotice, fetchPageNotices, matchNotices, type PageNotice } from '@/lib/page-notices-api';
+import { deletePageNotice, featureHomepagePost, fetchPageNotices, matchNotices, type PageNotice } from '@/lib/page-notices-api';
 
 function notice(overrides: Partial<PageNotice>): PageNotice {
   return {
@@ -17,6 +17,19 @@ function notice(overrides: Partial<PageNotice>): PageNotice {
 
 describe('public notice request sharing', () => {
   afterEach(() => vi.unstubAllGlobals());
+
+  it('updates stored announcement destinations without changing unrelated links', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json([
+      notice({ id: 1, href: '/regulation/news#4-pad-2027' }),
+      notice({ id: 2, href: '/zh/regulation/news/wic-investigation-2026' }),
+      notice({ id: 3, href: '/regulation/newsroom' }),
+      notice({ id: 4, href: 'https://example.org/regulation/news' }),
+    ])));
+    expect((await fetchPageNotices()).map(row => row.href)).toEqual([
+      '/regulation/post#4-pad-2027', '/zh/regulation/post/wic-investigation-2026',
+      '/regulation/newsroom', 'https://example.org/regulation/news',
+    ]);
+  });
 
   it('shares concurrent reads but fetches again after an empty response', async () => {
     let respond!: (response: Response) => void;
@@ -69,7 +82,7 @@ describe('public notice request sharing', () => {
 describe('page notice placement matching', () => {
   it('does not render homepage featured news in the global page-top bar', () => {
     const rows = [
-      notice({ id: 1, placement: 'home_featured', href: '/regulation/news#4-pad-2027' }),
+      notice({ id: 1, placement: 'home_featured', href: '/regulation/post#4-pad-2027' }),
       notice({ id: 2, placement: 'page_top', path: '/*' }),
     ];
 
@@ -78,5 +91,32 @@ describe('page notice placement matching', () => {
 
   it('treats responses from the pre-placement API as page-top notices', () => {
     expect(matchNotices([notice({ placement: undefined })], '/').map((row) => row.id)).toEqual([1]);
+  });
+});
+
+
+describe('homepage article feature', () => {
+  afterEach(() => vi.unstubAllGlobals());
+  it('upserts the homepage slot with bilingual titles and no expired schedule', async () => {
+    const fetch = vi.fn().mockResolvedValueOnce(Response.json([
+      notice({ id: 7, placement: 'home_featured', icon: 'megaphone', color: 'blue', endsAt: '2020-01-01T00:00:00Z' }),
+      notice({ id: 8, placement: 'page_top', path: '/' }),
+    ])).mockResolvedValueOnce(Response.json(notice({ placement: 'home_featured' })));
+    vi.stubGlobal('fetch', fetch);
+    await featureHomepagePost({ id: 'wic-investigation-2026', title: {zh: '声明', en: 'Statement'} });
+    expect(fetch).toHaveBeenCalledTimes(2);
+    const request = fetch.mock.calls[1][1];
+    expect(request.method).toBe('PUT');
+    expect(JSON.parse(request.body)).toEqual({
+      path: '/', placement: 'home_featured', level: 'info', icon: 'megaphone', color: 'blue',
+      bodyZh: '声明', bodyEn: 'Statement', href: '/regulation/post/wic-investigation-2026',
+      enabled: true, dismissible: false, startsAt: null, endsAt: null,
+    });
+  });
+  it('does not attempt a write when the administrator read is denied', async () => {
+    const fetch = vi.fn().mockResolvedValue(Response.json({error: 'Forbidden'}, {status: 403}));
+    vi.stubGlobal('fetch', fetch);
+    await expect(featureHomepagePost({id:'example',title:{zh:'公告',en:'Post'}})).rejects.toThrow();
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 });

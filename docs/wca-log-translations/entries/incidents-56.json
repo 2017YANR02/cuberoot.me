@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:56",
+  "source": {
+    "key": "incidents:56",
+    "kind": "incidents",
+    "title": "A WDC decision affected a competitor's results on multiple rounds",
+    "url": "https://www.worldcubeassociation.org/incidents/56",
+    "date": "2020-05-06T23:05:01.000Z",
+    "content": "A competitor had been disqualified after an investigation by the WCA Disciplinary Committee found they were guilty of cheating in a WCA Competition over multiple rounds. Applying [Regulation 2j1a](https://www.worldcubeassociation.org/regulations/#2j1a)), the results of the first round of the competitor should be changed to DNF.\n\nThe WRC has decided that the results of the following rounds the competitor participated in should be removed, and not disqualified. [Regulation 9p2](https://www.worldcubeassociation.org/regulations/#9p2) states that the competitors who advance to the next round must be determined by ranking or by result in the preceding round. \n\nTherefore, as the competitor does not have a valid result in the first round, he doesn't meet the requirements for advancing to the next round and should not have competed in it.\n\nThe WRC understands that this decision is the best for maintaining consistency of the Regulations. The results should be removed because they were null and void, and not voidable, as they didn't meet the requirements to have happened in the first place.\n\nThis is also consistent with the decision taken on [this Incident Log](https://www.worldcubeassociation.org/incidents/48), in which the WRC decided to remove, and not disqualify, the results of a competitor in a round of an event they shouldn't have competed in due to a mistake they made in a previous round.\n\nAs a side effect, this stance could reduce the number of possible competitors that are able to advance to the subsequent rounds due to the [Regulation 9p1](https://www.worldcubeassociation.org/regulations/#9p1):\n\n> [9p1](https://www.worldcubeassociation.org/regulations/#9p1)) At least 25% of competitors must be eliminated between consecutive rounds of the same event.\n\nAs a consequence, some competitors, as has happened in the past, could hypothetically not have advanced to the following round and their results should have been removed.\n\nTo prevent those innocent competitors from being harmed by the disqualification of the results of a competitor in an incident they were not involved in, the WRC has agreed to preserve their results, regardless of the number of competitors being able to advance in a previous round.\n\nThis is also consistent with the precedent set on [this Incident Log](https://www.worldcubeassociation.org/incidents/48), as follows:\n\n> More generally, this is what WRC decided to apply when results were wrongly entered, and someone mistakenly proceeded to the next round:\n> - Keep the results if the competitor proceeded thanks to an error in someone else's results\n> - Remove the results if the competitor proceeded thanks to an error in their own result\n\nAs this has become a reoccurring incident, the Regulations will be updated to reflect this understanding of a flexible interpretation of Regulation 9p1 in the special circumstances here described.\n\nAdditionally, as this is the first time the WRC has adopted this stance, this understanding should not be applied retroactively, but only on incidents that happen from now on.",
+    "hash": "cde8cd8c5f44fd98526319fd5725c0b1c725692f04acbaee8b3176cd989072fb",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 1,
+    "title": "WDC 决定影响选手多个轮次的成绩",
+    "content": "WCA 纪律委员会调查认定，一名选手在某场 WCA 比赛多个轮次中作弊，该选手被取消资格。按 [2j1a](https://www.worldcubeassociation.org/regulations/#2j1a)，其第一轮成绩应改为 DNF。\n\nWRC 决定，选手参加的后续轮次成绩应删除，而非判为取消资格。[9p2](https://www.worldcubeassociation.org/regulations/#9p2) 规定，晋级下一轮的选手必须根据前一轮排名或成绩确定。\n\n由于该选手在第一轮没有有效成绩，不符合晋级要求，本不应参加后续轮次。\n\nWRC 认为，这最能保持规则一致性。这些成绩应删除，因为它们从一开始就不满足产生条件，属于自始无效，而非事后可撤销。\n\n这也符合[这条事件日志](https://www.worldcubeassociation.org/incidents/48)：选手因自己前一轮的错误而参加了本不应参加的轮次，WRC 决定删除其该轮成绩，而非判为取消资格。\n\n这一立场可能产生附带影响：依据 [9p1](https://www.worldcubeassociation.org/regulations/#9p1)，后续轮次可晋级人数可能减少：\n> [9p1](https://www.worldcubeassociation.org/regulations/#9p1) 同一项目相邻轮次之间，至少须淘汰 25% 的选手。\n\n因此，某些选手在理论上可能不应晋级，成绩本应被删除；过去曾发生过这种情况。\n\n为避免无辜选手因与自己无关的另一选手成绩被取消而受损，WRC 同意保留他们的成绩，不论前一轮实际可晋级人数是多少。\n\n这也符合[已有先例](https://www.worldcubeassociation.org/incidents/48)：\n> 对错误录入导致误晋级：\n> - 因他人成绩错误而晋级，保留成绩；\n> - 因自己成绩错误而晋级，删除成绩。\n\n此类事件已反复发生，规则将更新，体现上述特殊情形下对 9p1 的灵活解释。\n\n此外，这是 WRC 首次采用此立场，因此不追溯适用，只用于此后发生的事件。",
+    "translatedAt": "2026-10-22T05:52:51.924Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "cde8cd8c5f44fd98526319fd5725c0b1c725692f04acbaee8b3176cd989072fb"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_5",
+      "reviewedAt": "2026-10-22T06:22:53.079981Z",
+      "report": "reviews/round-1/report-5.json",
+      "sourceHash": "cde8cd8c5f44fd98526319fd5725c0b1c725692f04acbaee8b3176cd989072fb",
+      "reviewedTranslationHash": "2b28b2b8195ed40da2109efdc2b0ce769f7216d83da54c4a42f3c38a3ad15051",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}
