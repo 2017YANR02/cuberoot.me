@@ -63,7 +63,6 @@ export default function NativePuzzleControls({ id, disabled, showDragDepth, dept
   const token = new Move(current.move).modified({ amount: turnAmount }).toString();
   return (
     <div className="twisty-native-controls">
-      <p className="twisty-fallback-notice">{t(...NOTES[id])}</p>
       {/* Keep these native form controls on their shared CSS radii. The global
           corner surface decorator must not repaint the measured control strip. */}
       <div className="twisty-fallback-controls" data-corner-shape="native" role="group" aria-label={t('手动转动', 'Manual turns')}>
@@ -98,6 +97,7 @@ export default function NativePuzzleControls({ id, disabled, showDragDepth, dept
       </div>
       <details className="twisty-native-notation">
         <summary>{t('记号说明', 'Notation guide')}</summary>
+        <p className="twisty-fallback-notice">{t(...NOTES[id])}</p>
         {mixedOrders && <p>{t('不同转轴使用不同的基本转角，以“角度”选项为准。转轴名称与手动转动列表一致，后缀 v 表示绕该轴整体转体。', 'Different axes use different base angles, as shown in the Angle options. Axis names match the manual-turn list; the v suffix rotates the whole puzzle around that axis.')}</p>}
         {rangeWide && <p>{t('对列表中使用层号范围的转轴 A：A 转外层，2A 只转第二层，1-2A 同时转最外两层，Av 转动整体。', 'For an axis A that uses layer ranges in the move list: A turns the outer layer, 2A turns only the second layer, 1-2A turns both outer layers, and Av rotates the whole puzzle.')}</p>}
         {suffixWide && <p>{t('对列表中使用 w 的转轴 A：A 转外层，2A 只转第二层，Aw 同时转最外两层，Av 转动整体。', 'For an axis A that uses w in the move list: A turns the outer layer, 2A turns only the second layer, Aw turns both outer layers, and Av rotates the whole puzzle.')}</p>}
