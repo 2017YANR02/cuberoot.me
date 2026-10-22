@@ -1,25 +1,36 @@
 # WCA latest-data Release migration
 
-Status: FIRST MIGRATION UNIT DEPLOYED (2026-10-21). Scoped release checks passed; repository-wide CI has failures outside this change (see below).
+Status: FIRST MIGRATION UNIT DEPLOYED; REMOTE HISTORY CLEANED (2026-10-22). Current integration checks and application deployments passed. Earlier CI failures below are retained as historical evidence, not current failures.
 
 ## History maintenance (2026-10-22)
 
 The maintainer authorized publishing all pending project changes, merging PR #142, then cleaning obsolete data history after other AI tasks finished. Preserve `.local/`, computation checkpoints, current code and live Release assets. The earlier decision not to rewrite history is superseded for this maintenance window.
 
-- PR #142 is merged locally with both the current `lockView` and the tutorial's section-pause/dynamic-stickering options preserved. Client typecheck and 89 related checks passed, including an independent replay of all 150 tutorial practice placements. Three Opt10 guard-policy checks and a small Rust library feature compilation passed; no solver benchmark or table generation was repeated.
+- [PR #142](https://github.com/2017YANR02/cuberoot.me/pull/142) is merged and published, with both the current `lockView` and the tutorial's section-pause/dynamic-stickering options preserved. All pending project work was published, excluding `.local/`. Client typecheck and 89 related checks passed, including an independent replay of all 150 tutorial practice placements. Three Opt10 guard-policy checks and a small Rust library feature compilation passed; no solver benchmark or table generation was repeated.
 - Historical data also used `stats/data/nemesizer/` and `stats/data/persons_search.json.gz`. Include those predecessor paths in the same removal, retaining all source code, other data families and commit topology.
 - Before remote rewriting: finish active automatic data publication, back up exact remote refs and protection/workflow state, validate rewritten branch/tag tips and unchanged main tree, then use explicit expected-old ref leases. Restore branch protection and temporarily paused writers after the cutover. Keep the offline backup and commit map for existing-checkout recovery.
 - GitHub PR/fork references are outside normal writable branch/tag refs. Do not claim their retained storage has been purged or that GitHub's displayed repository size updates immediately.
+
+### Completed maintenance evidence
+
+- [General Test](https://github.com/2017YANR02/cuberoot.me/actions/runs/39703772705), [Deploy Next](https://github.com/2017YANR02/cuberoot.me/actions/runs/39703772794), [Deploy Core](https://github.com/2017YANR02/cuberoot.me/actions/runs/39702881860), Vercel production and the [WCA ownership checks](https://github.com/2017YANR02/cuberoot.me/actions/runs/39703071218) passed before rewriting. The F2L production page was checked through chapter selection, practice placement and restoration playback. A bare-button CSS guard failure discovered during integration was fixed before the successful Test run.
+- The maintainer explicitly cancelled [today's statistics run](https://github.com/2017YANR02/cuberoot.me/actions/runs/39690156751). GitHub reports `cancelled`; its remote import process exited and its temporary import directory was cleaned. Database transactions committed before cancellation remain committed. The run did not reach Release publication or the statistics Git commit. The first fresh-data end-to-end producer acceptance therefore remains pending a future scheduled run; it is not claimed as passed.
+- All 85 remote branches and the `wca-data-latest` tag were atomically rewritten with explicit expected-old leases. Main changed from `ab94ce76dee2e658e3c6a368f72fa240750f4d16` to `3554f987b0ca22044edd77ac4f0e52af66e2193c`; its tree stayed exactly `d515cb1ed39df8433780e0b8d3fe4e868daeeed9`.
+- All 8,817 commits retain their authors, committers, timestamps, messages and mapped parent relationships, including empty commits and merges. Commit IDs change and old cryptographic signatures cannot carry over. All ten specified paths are absent from reachable history, and all 441 inventoried data blobs are unreachable even under other filenames. Every branch/tag tip differs only by the allowed data deletions; main has no file changes. Full object integrity validation passed.
+- Comparable reachable packed-object size fell from 2,619,775,430 to 1,432,776,024 bytes: approximately 2.44 GiB to 1.34 GiB, a 45.3% reduction. This measures the cleaned Git history, not GitHub's server-side storage counter or the combined disk usage of retained local backups.
+- Release ID, manifest body, asset IDs, hashes and sizes were unchanged by the rewrite. Main's deletion and non-fast-forward protections were restored, as were temporarily paused workflows and the Vercel preview setting. Previously disabled workflows remain disabled; daily scheduling resumes without rerunning the cancelled statistics job.
+- The primary `/Users/eula/Developer/cuberoot.me` checkout is aligned with the rewritten main, with working files and `.local/` unchanged. The full offline original-history backup is `/Users/eula/Developer/cuberoot-history-backup-20261021.git`; exact ref proofs, commit mapping, cancellation, CI and restoration records are in `/Users/eula/Developer/cuberoot-history-maintenance-20261022/`.
+- Other old worktrees, local-only branches/stashes and other computers are deliberately preserved. Before using them again, save unpublished work and move it onto the rewritten history. Do not merge or push the old main history back into the repository. This maintenance uses the primary checkout; the isolated checkout mentioned in the original migration notes below is now historical.
 
 ## Authorized outcome
 
 - Use this repository and one mutable `wca-data-latest` GitHub Release.
 - Keep only the latest successfully deployed WCA dataset; old files may exist temporarily during a transaction, then are removed.
 - Stop committing large generated WCA files. Preserve latest datasets' historical results; do not confuse historical results with obsolete export snapshots.
-- No new repository, OSS subscription, Git LFS, or Git history rewriting.
+- No new repository, OSS subscription or Git LFS. The initial migration excluded history rewriting; the later explicit maintenance authorization above supersedes that restriction.
 - User authorized scoped commits, push, deployment, and necessary verification.
 
-## Concurrent work boundary
+## Original migration concurrency boundary
 
 Another AI owns solver/scramble pipeline optimization and publication. This task does not edit `solver/**`, `stats/scramble/**`, or `core/jobs/scramble-stats-build/**`, and does not start computation or stop another task's processes. Existing unrelated working changes must remain intact and must not enter this task's commits.
 
@@ -51,7 +62,7 @@ Potential shared integration files: `.github/workflows/stats.yml`, `.github/work
 - Publish/deploy failures preserve the last complete live dataset and are reported distinctly.
 - A clean checkout can hydrate the migrated files explicitly; ordinary tests use fixtures.
 - Successful publication leaves one Release and one current dataset, without daily releases.
-- Existing Git history remains unchanged; this migration stops new blob accumulation rather than immediately shrinking old clones.
+- The migration stops new blob accumulation. The separately authorized maintenance above removes the old migrated-data history from writable remote refs; existing clones and GitHub's retained PR/fork objects are a separate boundary.
 
 ## Implementation and evidence
 
@@ -66,7 +77,7 @@ Potential shared integration files: `.github/workflows/stats.yml`, `.github/work
 - The primary checkout contained another task's unpushed `f879fb7b0f`. To avoid including it, this task's edits were transferred once to `/Users/eula/Developer/cuberoot-wca-data-release`, based on remote main; no other task files or commits were published. Continue editing only that checkout.
 - Existing generated-artifact ledger validation has four baseline errors in the isolated checkout (assistant generated output, two local miniprogram project configs, avatar-gallery license). Comparing old and new ledger reports no additional errors; these unrelated files are not modified here.
 
-## Final production evidence
+## Initial production evidence (2026-10-21)
 
 - [Final publication run 39647834392](https://github.com/2017YANR02/cuberoot.me/actions/runs/39647834392) passed both nine checks and actual publication at `7f651e248a`. [Static sync 39647753067](https://github.com/2017YANR02/cuberoot.me/actions/runs/39647753067) and [39647752958](https://github.com/2017YANR02/cuberoot.me/actions/runs/39647752958) passed with the migrated paths excluded.
 - [Release `wca-data-latest`](https://github.com/2017YANR02/cuberoot.me/releases/tag/wca-data-latest), ID `419868944`, is public and mutable. It contains exactly one attachment: `wca-data-31d132fb2515070cc40cd938aeb5ce094974e646baa284ae3dc0817b0ab76bb0.tar`, 18,073,600 bytes. The Release body points at this archive.
@@ -74,9 +85,9 @@ Potential shared integration files: `.github/workflows/stats.yml`, `.github/work
 - Origin API reports ready with export `2026-10-21`, generation `2026-10-21T00:08:44.216Z`, 300,617 persons and 1,945,619 ranks; public static index verification passed. Existing browser cache policies remain unchanged.
 - Hydration into an empty local directory passed; all five restored hashes match the published dataset. The files are ignored and absent from the current Git index. Workflow actionlint and `git diff --check` passed.
 - The scheduled WCA producer now submits these files through the serialized publisher before its Git commit. Initial adoption and repeat publication used existing server data; a fresh full statistics generation was deliberately not started alongside the other AI's work. The next scheduled generation remains the first end-to-end run with a newly generated dataset.
-- Existing Git history was not rewritten. Other WCA JSON, scramble statistics, media and solver assets remain outside this first migration unit.
+- Git history was not rewritten during the initial migration; the later cleanup is recorded above. Other WCA JSON, scramble statistics, media and solver assets remain outside this first migration unit.
 
-## CI handoff for concurrent work
+## Original CI handoff (superseded by maintenance checks above)
 
 The original general Test run on `7f651e248a` was cancelled by newer pushes. Successor `3caad42697` contains all three migration commits. Its [Test run 39647952130](https://github.com/2017YANR02/cuberoot.me/actions/runs/39647952130) reports failures in files not modified by this migration:
 
