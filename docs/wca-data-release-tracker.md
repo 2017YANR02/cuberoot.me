@@ -34,6 +34,8 @@ The maintainer authorized publishing all pending project changes, merging PR #14
 
 ### Remaining data boundary
 
+The maintainer subsequently authorized completing this remaining migration. Execution is in progress: the generic statistics publisher uses checksum-verified tar.gz snapshots in the same Release, owner-scoped optimistic patches, serialized calendar regeneration, and recoverable server activation. Existing writers are temporarily paused during adoption; the cancelled statistics computation will not be restarted. Remove Git tracking/history only after live adoption and consumer hydration are verified.
+
 Other generated statistics still account for about 376 MiB of compressed historical blobs, including top-10 history and scramble statistics. They remain tracked and can accumulate new versions; this follow-up does **not** claim their migration is complete. Active tutorial media, public assets and upstream tools also remain in Git and must not be deleted merely because they are large.
 
 A broader statistics migration must change producers and consumers together: `stats.yml`, `update_upcoming.yml`, the disabled elevation backfill, local scramble publication, toolkit synchronization, and CI's sparse-checkout fixtures. Calendar shards must be rebuilt from the latest combined past/upcoming inputs under the publication lock. Keep the same latest-only Release, preserve server-only `stats/comp`, authored tutorial assets and local computation checkpoints, and verify publication/hydration before removing these families from Git history. Do not simply add `stats/**` to `.gitignore` or delete historical data while the existing producers still commit it.

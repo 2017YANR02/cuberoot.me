@@ -30,7 +30,7 @@ on:
   workflow_dispatch:
     inputs:
       candidate:
-        description: 'Candidate manifest asset, or server to adopt the existing live dataset'
+        description: 'Binary candidate/server, statistics patch, or statistics-server for first adoption'
         required: true
         default: server
         type: string
@@ -74,10 +74,21 @@ jobs:
           sparse-checkout: |
             .node-version
             scripts/wca-data
+            core
           filter: blob:none
       - uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
+      - uses: pnpm/action-setup@v4
+        if: startsWith(inputs.candidate, 'stats-patch-')
+        with:
+          package_json_file: core/package.json
+      - name: Install calendar generation dependencies
+        if: startsWith(inputs.candidate, 'stats-patch-')
+        working-directory: core
+        run: |
+          pnpm install --frozen-lockfile --filter @cuberoot/stats-build...
+          pnpm --filter @cuberoot/stats-build build:deps
       - name: Configure SSH
         env:
           SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
@@ -93,4 +104,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           WCA_SSH_HOST: root@${{ secrets.DEPLOY_HOST }}
           CANDIDATE: ${{ inputs.candidate }}
-        run: node scripts/wca-data/cli.ts publish "$CANDIDATE"
+        run: |
+          case "$CANDIDATE" in
+            statistics-server|stats-patch-*) node scripts/wca-data/snapshot-cli.ts publish "$CANDIDATE" ;;
+            *) node scripts/wca-data/cli.ts publish "$CANDIDATE" ;;
+          esac

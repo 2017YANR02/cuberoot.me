@@ -1,11 +1,13 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
+import { resolve } from 'node:path';
 import { buildCalendarData, type CalendarManifest } from '@cuberoot/shared/competition-calendar';
 const root = fileURLToPath(new URL('../../../../../', import.meta.url));
-const read = (name: string) => JSON.parse(readFileSync(`${root}stats/${name}.json`, 'utf8'));
+const output = process.env.STATS_OUTPUT_DIR ? resolve(process.env.STATS_OUTPUT_DIR) : `${root}stats`;
+const read = (name: string) => JSON.parse(readFileSync(`${output}/${name}.json`, 'utf8'));
 const { summary, months } = buildCalendarData(read('all_past_comps'), read('all_upcoming_comps'));
-const directory = `${root}stats/comp_calendar`;
+const directory = `${output}/comp_calendar`;
 mkdirSync(directory, { recursive: true });
 const manifest: CalendarManifest = { version: 1, ...summary, months: {} };
 for (const [month, rows] of Object.entries(months)) {

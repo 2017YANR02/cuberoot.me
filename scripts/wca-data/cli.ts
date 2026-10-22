@@ -1,36 +1,15 @@
-import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync, existsSync, rmSync, renameSync, cpSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as sleep } from 'node:timers/promises';
-import { REPO, TAG, FILES, check, run, pack, unpack, parseManifest, assertFresh, resolveRelease, obsoleteAssets } from './common.ts';
+import { REPO, FILES, check, run, pack, unpack, parseManifest, assertFresh, obsoleteAssets, type Manifest } from './common.ts';
+
+import { endpoint, gh, api, release, upload, download } from './github.ts';
 
 const scripts = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scripts, '../..');
-const endpoint = `repos/${REPO}/releases`;
-function gh(args: string[], input?: unknown) {
-  return run('gh', args, input === undefined ? {} : { input: JSON.stringify(input) });
-}
-function api(path: string, input?: unknown) {
-  return JSON.parse(gh(['api', path, ...(input === undefined ? [] : ['--method', 'PATCH', '--input', '-'])], input));
-}
-function release(create = false): any {
-  const result = spawnSync('gh', ['api', `${endpoint}/tags/${TAG}`], { encoding: 'utf8', maxBuffer: 2 * 1024 * 1024 });
-  return resolveRelease(result, () => JSON.parse(gh(['api', `${endpoint}?per_page=100`, '--paginate', '--slurp'])).flat(), create ? () => JSON.parse(gh(['api', endpoint, '--method', 'POST', '--input', '-'], {
-    tag_name: TAG, target_commitish: run('git', ['rev-parse', 'HEAD']), name: 'Latest WCA data', draft: true, make_latest: 'false', body: '',
-  })) : undefined);
-}
 function currentManifest(r: any): Manifest | undefined { return r.body ? parseManifest(JSON.parse(r.body)) : undefined; }
-function upload(r: any, path: string, name: string) {
-  if (!r.assets.some((a: any) => a.name === name)) gh(['release', 'upload', TAG, path, '--repo', REPO]);
-}
-function download(r: any, name: string, destination: string) {
-  const asset = r.assets.find((a: any) => a.name === name);
-  check(asset, `Missing release asset: ${name}`);
-  // gh streams binary response to disk; do not print binary data or tokens.
-  execFileSync('gh', ['release', 'download', TAG, '--repo', REPO, '--pattern', name, '--output', destination], { stdio: ['ignore', 'inherit', 'inherit'], timeout: 180_000 });
-}
 function stage(root: string, out: string) {
   const m = pack(root, out, run('git', ['rev-parse', 'HEAD']));
   const r = release(true);
@@ -80,7 +59,7 @@ async function publish(candidate: string, out: string) {
     console.log(deploy('activate'));
     activated = true;
     try {
-      api(`${endpoint}/${r.id}`, { body: JSON.stringify(m, null, 2), draft: false, make_latest: 'false', name: 'Latest WCA data' });
+      api(`${endpoint}/${r.id}`, { body: JSON.stringify({ ...m, ...(JSON.parse(r.body || '{}').statistics ? { statistics: JSON.parse(r.body).statistics } : {}) }, null, 2), draft: false, make_latest: 'false', name: 'Latest WCA data' });
     } catch (error) {
       // Network timeout can happen after GitHub committed the PATCH. Resolve before rollback.
       try { r = release(); } catch {
