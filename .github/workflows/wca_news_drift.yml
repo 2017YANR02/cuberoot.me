@@ -16,7 +16,7 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
         with:
@@ -27,11 +27,14 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version-file: '.node-version'
+      - name: Verify source parsers and drift logic
+        working-directory: core
+        run: node --test scripts/wca-news/check.test.mts scripts/wca-news/posts.test.mts
       - name: Detect changes and open or update issues
         working-directory: core
         env:
           GH_TOKEN: ${{ github.token }}
-        run: node scripts/wca-news/check.mts --publish --output "$RUNNER_TEMP/wca-news-drift"
+        run: node scripts/wca-news/check.mts --posts --publish --output "$RUNNER_TEMP/wca-news-drift"
       - name: Save public source snapshots and report
         if: always()
         uses: actions/upload-artifact@v4
