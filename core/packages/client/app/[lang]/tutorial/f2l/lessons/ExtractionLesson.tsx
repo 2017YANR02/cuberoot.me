@@ -31,7 +31,7 @@ export default function ExtractionLesson({ orientation, pauseBetween, onNextChap
 
       <div className="f2l-section-nav">
         <div className="f2l-section-list" role="group" aria-label={tr({ zh: '选择非标类型', en: 'Choose a non-standard case type' })}>
-          {(Object.keys(EXTRACTION_TITLES) as (keyof typeof EXTRACTION_TITLES)[]).map(kind => <button key={kind} type="button"
+          {(Object.keys(EXTRACTION_TITLES) as (keyof typeof EXTRACTION_TITLES)[]).map(kind => <button className="f2l-section-button" key={kind} type="button"
             aria-pressed={extractionKind === kind} onClick={() => setExtractionKind(kind)}>
             <span className="f2l-section-label">
               <VisualCube view="iso" size={36} faceletColors={f2lDiagramFacelets(examples.find(item => item.kind === kind)!.setup, orientation)} alt="" />

@@ -16,7 +16,7 @@ export default function CaseCatalogLesson({ orientation, onNextChapter }: { orie
     <div className="f2l-study-layout">
 
       <div className="f2l-section-nav"><div className="f2l-section-list" role="group" aria-label={tr({ zh: '选择情况分组', en: 'Choose a case group' })}>
-        {groups.map(group => <button key={group} type="button" aria-pressed={activeGroup === group} onClick={() => setSelectedGroup(group)}>
+        {groups.map(group => <button className="f2l-section-button" key={group} type="button" aria-pressed={activeGroup === group} onClick={() => setSelectedGroup(group)}>
           <span className="f2l-section-label"><VisualCube view="iso" size={36} faceletColors={diagrams.find(c => c.group === group)!.facelets} alt="" />
             <span>{tr(f2lGroupName(group))}</span></span>
         </button>)}

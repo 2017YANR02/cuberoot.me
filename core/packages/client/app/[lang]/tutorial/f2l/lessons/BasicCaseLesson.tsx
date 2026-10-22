@@ -48,7 +48,7 @@ export default function BasicCaseLesson({ stepId, orientation, pauseBetween, cas
             <div className="f2l-section-group">
             {stepId === 'lesson-3' && <span><T zh="三步标态" en="Three-move case" /></span>}
             <div className="f2l-section-list" role="group" aria-label={tr({ zh: '选择三步标态', en: 'Choose a three-move case' })}>
-              {chapterCases.map((item, index) => <button key={item.id} type="button" aria-pressed={lesson.id === item.id} onClick={() => selectCase(item.id)}>
+              {chapterCases.map((item, index) => <button className="f2l-section-button" key={item.id} type="button" aria-pressed={lesson.id === item.id} onClick={() => selectCase(item.id)}>
                 <span className="f2l-section-label"><VisualCube view="iso" size={36} faceletColors={diagrams[index]} alt="" />
                   <span>{item.name}</span>
                   {stepId === 'lesson-4' && <code>{item.alg.replace(/[()]/g, '')}</code>}</span>
@@ -58,7 +58,7 @@ export default function BasicCaseLesson({ stepId, orientation, pauseBetween, cas
 
             {stepId === 'lesson-3' && <>          <div className="f2l-section-list" role="group" aria-label={tr({ zh: '选择顶层对位动作', en: 'Choose a top-layer alignment' })}>
               <span><T zh="尝试不同的对位方向" en="Try different alignment directions" /></span>
-              {F2L_TOP_ADJUSTMENTS.map(move => <button key={move} type="button" aria-pressed={alignment === move} onClick={() => setAlignment(move)}><code>{move}</code></button>)}
+              {F2L_TOP_ADJUSTMENTS.map(move => <button className="f2l-section-button" key={move} type="button" aria-pressed={alignment === move} onClick={() => setAlignment(move)}><code>{move}</code></button>)}
             </div></>}
           </aside>
           <div className="f2l-study-main">

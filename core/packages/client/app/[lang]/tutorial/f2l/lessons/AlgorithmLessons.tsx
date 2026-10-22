@@ -39,7 +39,7 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, on
           <div className="f2l-section-group">
             <span><T zh="类型" en="Type" /></span>
             <div className="f2l-section-list" role="group" aria-label={tr({ zh: '选择情况分组', en: 'Choose a case group' })}>
-              {lessonGroups.map(group => <button key={group} type="button" aria-pressed={lesson.group === group}
+              {lessonGroups.map(group => <button className="f2l-section-button" key={group} type="button" aria-pressed={lesson.group === group}
                 onClick={() => setCaseName(lessons.find(c => c.group === group)!.name)}>
                 {pickerLabel(lessons.find(c => c.group === group)!.name, tr(f2lGroupName(group)))}
               </button>)}
@@ -53,7 +53,7 @@ export default function AlgorithmLessons({ stepId, orientation, pauseBetween, on
               onChange={setCaseName} />
           </div>
         </div> : <div className="f2l-section-nav"><div className="f2l-section-list" role="group" aria-label={tr({ zh: '选择教学情况', en: 'Choose a teaching case' })}>
-          {visibleLessons.map(c => <button key={c.name} type="button" aria-pressed={lesson.name === c.name} onClick={() => setCaseName(c.name)}>
+          {visibleLessons.map(c => <button className="f2l-section-button" key={c.name} type="button" aria-pressed={lesson.name === c.name} onClick={() => setCaseName(c.name)}>
             {pickerLabel(c.name, c.name)}
           </button>)}
         </div></div>}
