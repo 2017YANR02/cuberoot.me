@@ -9,6 +9,7 @@ import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { useT } from '@/hooks/useT';
 import { tr } from '@/i18n/tr';
 import { BENCHMARK_MANIFEST, CANDIDATES, COHORTS, CURRENT_RESULTS, NODE_COUNTER_DEFINITIONS } from './benchmark-data';
+import { SERVER_RESULTS, summarizeServerResults, type ServerComparison } from './server-results';
 import './compare.css';
 
 const memoryTiers = ['8', '16', '32'] as const;
@@ -19,6 +20,29 @@ const statisticFormat = new Intl.NumberFormat('en-US', {
   maximumSignificantDigits: 2,
   useGrouping: false,
 });
+
+function ServerComparisonSection({ result }: { result: ServerComparison }) {
+  const t = useT();
+  const summary = summarizeServerResults(result);
+  const maximum = Math.max(...summary.rows.map(row => row.solvesPerSecond));
+  return <section className="compare-server" aria-labelledby="compare-server-title">
+    <div className="compare-section-head"><h2 id="compare-server-title">{t('线上版本', 'Production versions')}</h2><time className="compare-date" dateTime={result.measuredAt}>{result.measuredAt.slice(0, 10)}</time></div>
+    <p className="compare-server-summary"><strong>{Math.abs(summary.timeReductionPercent).toFixed(1)}%</strong> {summary.timeReductionPercent >= 0 ? t('云端求解耗时减少', 'less server solve time') : t('云端求解耗时增加', 'more server solve time')}</p>
+    <figure className="compare-chart">
+      <figcaption>{result.environment.os} · {result.environment.vcpus} vCPU · Opt8 · WCA {result.cases} · {result.threads} {t('线程', 'threads')} <InfoTooltip content={result.environment.cpu} iconSize={14} ariaLabel={t('服务器 CPU', 'Server CPU')} /></figcaption>
+      <div className="compare-column-head"><span /><span>{t('每秒求解数', 'Solves per second')}</span><span>{t('100 条耗时', 'Time for 100 solves')}</span></div>
+      {summary.rows.map(row => <div className="compare-chart-row" key={row.id}>
+        <div className="compare-row-name"><strong>{row.id === 'wasm' ? t('旧线上 WASM', 'Previous production WASM') : t('当前线上原生', 'Current production native')}</strong><span>{row.id === 'wasm' ? t('原生迁移前 · 2026-10-14 发布', 'Before native migration · released 2026-10-14') : t('AVX2 + 预取', 'AVX2 + prefetch')}</span></div>
+        <div className="compare-metric-cell" aria-label={t('每秒求解数', 'Solves per second')}>
+          <div className="compare-bar-area"><div className="compare-bar" style={{ width: `${row.solvesPerSecond / maximum * 100}%` }} /></div>
+          <div className="compare-row-value"><strong>{row.solvesPerSecond.toFixed(2)} <small>{t('条/秒', 'solves/s')}</small></strong></div>
+        </div>
+        <div className="compare-row-value" aria-label={t('100 条耗时', 'Time for 100 solves')}><strong>{row.seconds.toFixed(2)} <small>s</small></strong></div>
+      </div>)}
+    </figure>
+    <p className="compare-muted">{t('同机同表，单轮、不预热。启动另计，不含网络和排队。', 'Same server and table; one pass, no warmup. Startup is separate; network and queue time excluded.')}</p>
+  </section>;
+}
 
 export default function SolverComparisonPage() {
   const t = useT();
@@ -36,7 +60,8 @@ export default function SolverComparisonPage() {
   const unavailableInfo = unavailable.map(row => `${row.name} ${row.runtime === 'wasm' ? 'WASM' : t('原生', 'Native')} ${tableTier(row.tableGB)}G：${results.some(result => result.id === row.id) ? t('未记录此指标', 'Metric unavailable') : tr(row.status ?? row.note)}`).join('\n\n');
 
   function downloadProtocol() {
-    const url = URL.createObjectURL(new Blob([JSON.stringify(BENCHMARK_MANIFEST, null, 2)], { type: 'application/json' }));
+    const report = SERVER_RESULTS ? { ...BENCHMARK_MANIFEST, serverComparison: SERVER_RESULTS } : BENCHMARK_MANIFEST;
+    const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' }));
     const anchor = document.createElement('a');
     anchor.href = url;
     anchor.download = 'cuberoot-optimal-benchmark.json';
@@ -49,11 +74,13 @@ export default function SolverComparisonPage() {
     <header className="compare-hero">
       <div className="compare-heading"><h1>{t('三阶最优求解器', 'Optimal 3×3 solvers')}<span>Benchmark<span className="compare-period">.</span></span></h1>
       </div>
-      <div className="compare-protocol-strip"><span>Apple M5 Pro</span><span>{t('单轮 · 不预热', 'One pass · no warmup')}</span></div>
       <AppLink className="compare-help-link" href="/dev/solvers#native-init" prefetch={false}>{t('原生版使用说明', 'Native solver quick start')} <ArrowUpRight size={14} aria-hidden="true" /></AppLink>
     </header>
 
+    {SERVER_RESULTS && <ServerComparisonSection result={SERVER_RESULTS} />}
+
     <section className="compare-results" aria-label={t('性能对比', 'Performance comparison')}>
+      <div className="compare-protocol-strip"><span>Apple M5 Pro</span><span>{t('单轮 · 不预热', 'One pass · no warmup')}</span></div>
       <div className="compare-section-head">
         <div className="compare-controls">
           <label><span>{t('内存', 'Memory')}</span><select className="compare-filter-select" value={memory} onChange={e => { void setMemory(e.target.value as typeof memory); }}>{memoryTiers.map(value => <option value={value} key={value}>{value}G</option>)}</select></label>

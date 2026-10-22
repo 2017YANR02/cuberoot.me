@@ -228,7 +228,7 @@ describe('practice menu availability and transitions', () => {
     expect(returned.get('training')).toBe('/alg/3x3/oll/run');
     expect(returned.get('train.mode')).toBe('recap');
     expect(returned.get('train.timing')).toBe(timing ? '1' : '0');
-    expect(getSettings().timingEnabled).toBe(true);
+    expect(getSettings().timingEnabled).toBe(timing);
   });
 
   it.each(['train', 'recap'] as const)('restores the original draw mode after recall (%s)', async mode => {

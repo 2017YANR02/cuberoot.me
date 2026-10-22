@@ -851,5 +851,39 @@
     "artifactSha256": "30474885846bd7e0abf797f7180ecbdcc257cc61a5d68d3684777f81f1bda94b",
     "rawSha256": "5a18076499a7477ede002f8a6c970dedad78e6a97e33a9322c5775e5bd136caf",
     "quarterSiblingsRemoved": 596514029
+  },
+  {
+    "id": "rust-opt10-native",
+    "engine": "rust-native",
+    "date": "2026-10-22T00:43:56.058Z",
+    "cases": 1000,
+    "threads": 16,
+    "passes": 1,
+    "warmupCases": 0,
+    "verifiedSolutions": 1000,
+    "optimalLengthsMatched": 1000,
+    "seconds": 26.134212438000034,
+    "peakRssBytes": 31209684992,
+    "processTreePeakRssBytes": 31282020352,
+    "nodes": 5040774271,
+    "corpusSha256": "5b42a18086b27e974115a73696702017b5dde0a19c9819a77c88c8014d67c8ea",
+    "tableBytes": 31130911744,
+    "tableHeaderSha256": "50b4313ff43d281736a193441b653629a8e21e1d4d56f5e91d7ed71abfe805ea",
+    "tablePayloadSha256": "2ce3d57dbefc8d4fb557568398c280ebbd827f5e19125c1cdcc9d5f79032c3e8",
+    "rawSha256": "b20746857521714df97e5b0eb14a9036cfcc5f9391300228029bc7b2c9b1e43f",
+    "swapoutsDelta": 0,
+    "artifactSha256": "bd311e05cfd541b43aafb32e67025130bacc130592033b28439a9277cee3c58c",
+    "resourceSha256": "a17b733b37398b04aeb15f20e4e508e5114e3542d10ce816e770d0f163785797",
+    "receiptSha256": "150ed05766ef321873017596809266980d5025b28c37a49f62b118b14dcac240",
+    "timing": "Sum of serial per-state native solve seconds; table loading, validation and replay excluded",
+    "compiler": "native official fixed · ARM64",
+    "reportSha256": "186cb3988eb1eff5b33af809367565d5c4355cc35138f836de291ae0cd6fdc22",
+    "nodeCounter": {
+      "value": 5040774271,
+      "definition": "rust-context-visits-v1",
+      "cases": 1000,
+      "sourceField": "nodes",
+      "rawSha256": "b20746857521714df97e5b0eb14a9036cfcc5f9391300228029bc7b2c9b1e43f"
+    }
   }
 ]

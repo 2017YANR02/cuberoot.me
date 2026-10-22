@@ -2,8 +2,30 @@ import { describe, expect, it } from 'vitest';
 import { COMPARISON_ROWS } from '@/app/[lang]/dev/solvers/compare/comparison-data';
 import { BENCHMARK_MACHINES, WCA_BENCHMARK } from '@/app/[lang]/dev/solvers/compare/unified-benchmark';
 import { BENCHMARK_MANIFEST, CANDIDATES, COHORTS, CURRENT_RESULTS } from '@/app/[lang]/dev/solvers/compare/benchmark-data';
+import { SERVER_RESULTS, summarizeServerResults } from '@/app/[lang]/dev/solvers/compare/server-results';
 
 describe('multithread solver comparison evidence', () => {
+  it('keeps the independently verified single-pass server comparison separate from Mac results', () => {
+    expect(SERVER_RESULTS).not.toBeNull();
+    const result = SERVER_RESULTS!;
+    expect([result.cases, result.threads, result.passes, result.warmupCases]).toEqual([100, 4, 1, 0]);
+    expect(result.order).toEqual(['wasm', 'native']);
+    expect(result.environment).toEqual({ os: 'Linux', vcpus: 4, cpu: 'Intel(R) Xeon(R) Platinum' });
+    expect(result.corpusSha256).toBe(COHORTS.opt8.corpusSha256);
+    expect(result.table.sha256).toBe('0c742e0ad31d2c6bb428ae8658fa0fe88ffe2f7ac09072dbc3eaab8fcad850f1');
+    expect(result.versions.wasm.artifactSha256).toBe('b600c699ab91c29f0bef5a14b7c2871bf1fb03d840b8813d5656266132433bb6');
+    expect(result.versions.native.artifactSha256).toBe('0f6f481c5f98130d5295aaf2b073f2b642a5b8c4e271dfb60c19f42c6c9a50c0');
+    expect([result.wasm.solveSeconds, result.native.solveSeconds]).toEqual([128.27944568900006, 87.9764358779999]);
+    expect([result.wasm.startupSeconds, result.native.startupSeconds]).toEqual([106.013499621, 48.36550826599999]);
+    for (const pass of [result.wasm, result.native]) {
+      expect([pass.verifiedSolutions, pass.optimalLengthsMatched]).toEqual([100, 100]);
+      expect(pass.rawSha256).toMatch(/^[a-f0-9]{64}$/);
+    }
+    const summary = summarizeServerResults(result);
+    expect(summary.timeReductionPercent).toBeCloseTo(31.41813530182421, 10);
+    expect(summary.rows.map(row => row.solvesPerSecond)).toEqual([0.7795481143755439, 1.1366680066316122]);
+    expect(CURRENT_RESULTS.find(row => row.id === 'rust-opt8-native')?.seconds).toBe(26.402382370999998);
+  });
   it('publishes complete verified runs and discloses the retained original prefix', () => {
     expect(Object.fromEntries(CURRENT_RESULTS.map(row => [row.id, row.seconds]))).toEqual({
       'rust-opt8-wasm': 33.36867566599999,
@@ -19,6 +41,7 @@ describe('multithread solver comparison evidence', () => {
       'rust-opt9-wasm-select': 83.68332329199988,
       'nxopt-22': 296.600813958,
       'rust-opt8-native': 26.402382370999998,
+      'rust-opt10-native': 26.134212438000034,
     });
     for (const row of BENCHMARK_MANIFEST.currentRunResults) {
       const candidate = CANDIDATES.find(candidate => candidate.id === row.id)!;
@@ -26,7 +49,8 @@ describe('multithread solver comparison evidence', () => {
       expect([row.cases, row.threads, row.passes, row.warmupCases, row.verifiedSolutions, row.optimalLengthsMatched])
         .toEqual([cohort.cases, cohort.threads, 1, 0, cohort.cases, cohort.cases]);
       expect(row.corpusSha256).toBe(cohort.corpusSha256);
-      expect(row.tableBytes).toBe(row.id === 'nxopt-22' ? 7809269764 : candidate.cohort === 'opt8' ? 7782727680 : 15565455360);
+      expect(row.tableBytes).toBe(row.id === 'nxopt-22' ? 7809269764
+        : candidate.cohort === 'opt10' ? 31130911744 : candidate.cohort === 'opt8' ? 7782727680 : 15565455360);
       expect(row.swapoutsDelta).toBe(0);
     }
     expect(BENCHMARK_MANIFEST.incompleteRuns).toEqual([{
@@ -108,6 +132,7 @@ describe('multithread solver comparison evidence', () => {
       'rust-opt9-wasm-select': 9994096263,
       'nxopt-22': 2673464088,
       'rust-opt8-native': 1837689891,
+      'rust-opt10-native': 5040774271,
     });
     for (const row of BENCHMARK_MANIFEST.currentRunResults) {
       expect(row.nodeCounter.cases).toBe(row.cases);

@@ -52,11 +52,13 @@ node --experimental-strip-types solver/experiments/cube48opt-rust/run-opt10.mts
 
 当前源码已把原固定 H10 后端泛化为 Nissy **H0–H11 共用后端**。本阶段通过编译检查及 **19 项不同的小数据测试**，尚未对通用版运行任何真实 H48 表回归或性能对照，包括 H10。**H11 仅保留代码支持，CLI 在任何表文件访问前拒绝；本机未生成、打开、映射或求解 H11。** 下文的 1.566× H10 和 1.165× Opt9 均归属于各自已保存的历史程序，不能作为本次通用版的验收结果。
 
-默认启用 `neon-moves`，在 AArch64 同时向量化正逆状态转动。新编译的 x86_64 原生版为 Opt1–9 转动和坐标计算提供 AVX2 / AVX-512BW+VL 路径，运行时检测 CPU 与 OS 支持；自动模式优先 AVX2，不支持时回退标量。`CUBEOPT_SIMD=scalar|avx2|avx512` 可固定路径，明确指定不支持的指令集会报错；未指定等同 `auto`。`--no-default-features` 关闭默认的 ARM 移动 SIMD、H48 快坐标及 H48 预取，不关闭独立的 x86 路径；各开关保留兼容名称 `neon-moves`、`h10-fast-coord`、`h10-prefetch`，后两个现在作用于 Nissy H0–H11 共用实现。Opt 的现有 AArch64 坐标路径不随这些开关改变。历史 Opt9 的同表、单线程完整 60 例对照中，正式三轮总时间中位数为 Rust **52.117762 秒**、原 WASM **60.718842 秒**，速度比 **1.165 倍**；全部 960 次求解独立验过。它是这组样本的实测，不能外推为所有随机状态或相对原 C++ 的提升。旧 Opt1 1.108 倍结果仍在跟踪 MD 中作为历史单独保留。
+默认启用 `neon-moves`，在 AArch64 同时向量化正逆状态转动。新编译的 x86_64 原生版为 Opt1–9 及独立 Opt10 后端的转动和坐标计算提供 AVX2 / AVX-512BW+VL 路径，运行时检测 CPU 与 OS 支持；自动模式优先 AVX2，不支持时回退标量。`CUBEOPT_SIMD=scalar|avx2|avx512` 可固定路径，明确指定不支持的指令集会报错；未指定等同 `auto`。Opt10 仍使用 `solve-opt10`，不是 `CUBEOPT_VARIANT=10`。`--no-default-features` 关闭默认的 ARM 移动 SIMD、H48 快坐标及 H48 预取，不关闭独立的 x86 路径；各开关保留兼容名称 `neon-moves`、`h10-fast-coord`、`h10-prefetch`，后两个现在作用于 Nissy H0–H11 共用实现。Opt 的现有 AArch64 坐标路径不随这些开关改变。历史 Opt9 的同表、单线程完整 60 例对照中，正式三轮总时间中位数为 Rust **52.117762 秒**、原 WASM **60.718842 秒**，速度比 **1.165 倍**；全部 960 次求解独立验过。它是这组样本的实测，不能外推为所有随机状态或相对原 C++ 的提升。旧 Opt1 1.108 倍结果仍在跟踪 MD 中作为历史单独保留。
 
 x86 构建需要 Rust 1.89+。在目标 Linux 机器上执行前面的 `cargo build --release` 即可使用 SIMD，不需要改表或加实验 feature。本仓库 `solver/.cargo/config.toml` 使用 `target-cpu=native`；需要跨 CPU 分发时，用 `RUSTFLAGS='-C target-cpu=x86-64' cargo build --release` 保留基线兼容性，AVX2 / AVX-512 热点仍由运行时检测选择。交叉编译不能沿用 Mac 的 `target-cpu=native`。
 
 2026-10-21 的真实 Linux Xeon 小数据验证已覆盖九档、三条路径共 1,472,526 次坐标差分；Opt8/9 的转动、坐标热点对照中 AVX2 比 AVX-512 更快，因此没有按指令集宽度强制选择 AVX-512。此结果不代表完整求解提速；没有加载大表或替换线上 WASM。构建方法、具体数据与证据见 [x86 SIMD 验证记录](x86-simd.md)。
+
+2026-10-22 补齐 Opt10 EO10 的 x86 SIMD，三条路径的坐标、对称性与后继集合检查通过。Opt1–7 的 `opt1-7-native-prefetch`、Opt9 的 `opt9-native-prefetch` 和 Opt10 的 `opt10-native-prefetch-x86` 可显式选择 x86 预取；这些档位尚未完成整批预取性能对照，不纳入默认 features。Opt8 继续使用已经上线验证的预取实现。冻结的 Mac Opt10 正式程序不受这些源码改动影响；本台 M5 Pro 的新单轮 WCA1000 / 16 线程为 **26.134 秒、38.264 条/秒**，全部独立验解通过，启动不计入求解时间。
 
 这是独立实验，尚未接入统计管道或替换线上引擎。Opt1 剪枝表 30,401,280 字节，小表快照 816,856 字节。二者文件合计 31,218,136 字节不等于整个进程峰值内存。Opt9 表为 15,565,455,360 字节；历史固定 H10 约 30 GB 后端的标量版与优化版均已通过坐标差分和完整固定语料验解。纯 Rust 建表尚未实现；本轮新增的是上述状态级批处理线程调度，单个状态内的搜索仍是单线程。本次没有新增生成器。
 

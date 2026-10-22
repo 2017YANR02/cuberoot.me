@@ -339,8 +339,6 @@ function load(): TimerSettings {
     };
     const normalizedTiming = normalizeTimerTimingSettings({
       ...parsed,
-      // Web training always records time; old untimed preferences cannot disable it.
-      timingEnabled: true,
       inspectionSec: parsed.inspectionSec ?? parsed.inspection,
     });
     const normalizedSplits = normalizeTimerAttemptSplitSettings(parsed);
@@ -480,7 +478,7 @@ export function updateSettings(patch: Partial<TimerSettings>): void {
   const candidate = { ...(_cache), ...normalizedPatch };
   _cache = {
     ...candidate,
-    ...normalizeTimerTimingSettings({ ...candidate, timingEnabled: true }),
+    ...normalizeTimerTimingSettings(candidate),
     ...normalizeTimerSyncSeed(candidate),
     ...normalizeTimerTypography(candidate),
     soloLayout: normalizeSoloLayout(candidate.soloLayout),

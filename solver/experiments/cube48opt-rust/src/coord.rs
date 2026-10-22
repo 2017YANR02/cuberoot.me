@@ -176,7 +176,9 @@ impl CoordTables {
         } else {
             #[cfg(target_arch = "aarch64")]
             { unsafe { self.coordinate_parts_neon::<true>(cube) } }
-            #[cfg(not(target_arch = "aarch64"))]
+            #[cfg(target_arch = "x86_64")]
+            { self.coordinate_parts_x86::<true>(cube) }
+            #[cfg(not(any(target_arch = "aarch64", target_arch = "x86_64")))]
             { self.coordinate_parts_slow::<true>(cube) }
         };
         ((u64::from(orbit) & !511) << 10)

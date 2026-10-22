@@ -29,6 +29,8 @@ opt10-native-search = [
 ]
 # Isolated immutable-table read hint and decoder inlining; no coordinate changes.
 opt10-native-hotpath = ["opt10-native-search"]
+# Unmeasured x86 read hint; existing hotpath/ARM builds retain their behavior.
+opt10-native-prefetch-x86 = ["opt10-native-hotpath"]
 # Issue immutable probe loads as a group before decoding their bounds.
 opt10-native-batch = ["opt10-native-hotpath"]
 # Probe the other side only when a weak rejection can still save owned siblings.
@@ -53,6 +55,8 @@ opt9-native-dynamic = []
 opt9-native-ranked = ["opt9-native-dynamic"]
 # Native-only read-ahead hint; does not alter coordinates, bounds or scheduling.
 opt9-native-prefetch = []
+# Unmeasured x86 read hint for the generic Opt1–7 oracle only.
+opt1-7-native-prefetch = []
 # Opposite quarter-turn children share the inverse subgroup lower bound.
 opt9-native-quarter = []
 opt8-native-quarter = ["opt9-native-quarter"]

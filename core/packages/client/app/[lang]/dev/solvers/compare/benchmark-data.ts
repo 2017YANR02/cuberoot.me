@@ -47,7 +47,7 @@ export const CANDIDATES: readonly Candidate[] = [
   { id: 'rust-opt8-native', name: 'CubeRoot Opt8', implementation: 'Rust', runtime: 'native', cohort: 'opt8', tableGB: 7.8,
     source: 'https://github.com/2017YANR02/cuberoot.me', note: {zh: '待测试', en: 'Pending benchmark'} },
   { id: 'rust-opt10-native', name: 'CubeRoot Opt10', implementation: 'Rust', runtime: 'native', cohort: 'opt10', tableGB: 31.1,
-    source: 'https://github.com/2017YANR02/cuberoot.me', note: {zh: '待测试 · 复用现有实现', en: 'Pending benchmark · existing implementation'} },
+    source: 'https://github.com/2017YANR02/cuberoot.me', note: {zh: '正式版 · 本机 1000 条已验证', en: 'Official release · 1000 verified locally'} },
   { id: 'nissy-h10-native', name: 'Nissy H48 h10', implementation: 'C', runtime: 'native', cohort: 'opt10', tableGB: 30.3,
     source: 'https://github.com/sebastianotronto/nissy-core', note: {zh: '待测试 · 启动前核对专用表', en: 'Pending benchmark · table availability must be checked'} },
   { id: 'nxopt-23', name: 'nxopt 23', implementation: 'C++', runtime: 'native', cohort: 'opt10', tableGB: 22.7,

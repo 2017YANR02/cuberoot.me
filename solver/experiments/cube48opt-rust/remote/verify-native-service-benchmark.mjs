@@ -15,6 +15,7 @@ const TABLE_SHA = '0c742e0ad31d2c6bb428ae8658fa0fe88ffe2f7ac09072dbc3eaab8fcad85
 const SMALL_SHA = '90c95b69404f00858e32529f83daa985d0c377a745b288a5d0fd4261cf3e6dbd';
 // Preserved first Linux WASM/AVX2/AVX-512 acceptance harness, before candidate plans.
 const ORIGINAL_HARNESS_SHA = '03e6991419ae4f73124e37b2f9b90b62a8927aa4ace9952435f2687cc791bdeb';
+const NATIVE_V4_HARNESS_SHA = 'bad53190e2555b562834fe58e8a88bbe3c58235b8865b09faf46d1b8ebff68b2';
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 
 export function parseArguments(argv) {
@@ -59,16 +60,21 @@ export async function verifyNativeServiceBenchmark({ directory, reference, refer
   const input = JSON.parse(read('input.json')), report = JSON.parse(read('report.json'));
   assert.equal(input.schema, 'cuberoot.opt8.native-service-benchmark-input.v1');
   assert.equal(report.schema, 'cuberoot.opt8.native-service-benchmark-report.v1');
-  const candidateMode = input.mode === 'native-candidates';
+  const comparisonMode = input.mode === 'service-comparison';
+  const candidateMode = input.mode === 'native-candidates' || comparisonMode;
   assert(candidateMode || input.mode === undefined, 'Unknown benchmark mode');
   let engineOrder = ENGINES;
   if (candidateMode) {
     assert.equal(report.mode, input.mode);
     validateCandidatePlan(input.candidatePlan);
+    assert.equal(input.candidatePlan.schema, comparisonMode ? 'cuberoot.opt8.service-comparison/v1' : 'cuberoot.opt8.native-candidates/v1');
     const planBytes = read('candidates.json');
     assert.equal(hash(planBytes), input.candidatePlanSha256); assert.deepEqual(JSON.parse(planBytes), input.candidatePlan);
     engineOrder = input.candidatePlan.passes.map(pass => pass.label);
     for (const pass of input.candidatePlan.passes) {
+      if (comparisonMode && pass.kind === 'wasm') {
+        assert.equal(input.assets.wasm.manifest.files.wasm.sha256, pass.sha256); continue;
+      }
       assert.equal(input.assets.binaries?.[pass.binary]?.sha256, pass.sha256, 'Candidate does not match recorded executable');
       assert(input.assets.binaries[pass.binary].identity);
     }
@@ -78,7 +84,8 @@ export async function verifyNativeServiceBenchmark({ directory, reference, refer
   assert.equal(input.measuredPasses, 1); assert.equal(input.warmupCases, 0);
   assert.deepEqual(input.limits, LIMITS);
   const currentHarnessSha = hash(readSmall(resolve(dirname(fileURLToPath(import.meta.url)), 'native-service-benchmark.mjs')));
-  assert(input.sourceSha256 === currentHarnessSha || (!candidateMode && input.sourceSha256 === ORIGINAL_HARNESS_SHA),
+  assert(input.sourceSha256 === currentHarnessSha || (!comparisonMode && input.sourceSha256 === NATIVE_V4_HARNESS_SHA)
+    || (!candidateMode && input.sourceSha256 === ORIGINAL_HARNESS_SHA),
     'Harness source differs from the versions understood by this verifier');
   if (input.sourceSha256 === currentHarnessSha) assert.equal(input.memoryEvidence, 'ready-and-complete-v1');
   if (input.memoryEvidence) {
@@ -101,6 +108,21 @@ export async function verifyNativeServiceBenchmark({ directory, reference, refer
   assert.equal(input.assets.tableIdentity.size, '7782727680');
   for (const key of candidateMode ? ['manifestSha256', 'pointerSha256'] : ['binarySha256', 'daemonSha256', 'manifestSha256', 'pointerSha256']) {
     assert(/^[a-f0-9]{64}$/.test(input.assets[key]));
+  }
+  if (comparisonMode) {
+    const plan = input.candidatePlan, wasm = input.assets.wasm;
+    assert.equal(manifest.engine, 'rust-native'); assert.equal(manifest.bundle, plan.production.bundle);
+    assert.equal(input.assets.manifestSha256, plan.production.manifestSha256);
+    assert.equal(manifest.files.binary.sha256, plan.passes[1].sha256);
+    assert.equal(input.machine.node, plan.node.version);
+    assert.equal(wasm.bundle, plan.wasm.bundle); assert.equal(wasm.store, plan.wasm.store);
+    assert.equal(wasm.daemon, plan.wasm.daemon); assert.equal(wasm.daemonSha256, plan.wasm.daemonSha256);
+    assert.equal(wasm.manifestSha256, plan.wasm.manifestSha256);
+    assert.equal(wasm.manifest.engine, 'rust-wasm'); assert.equal(wasm.manifest.bundle, plan.wasm.bundle);
+    assert.equal(wasm.manifest.maxThreads, 4); assert.equal(wasm.manifest.variant, 'opt8');
+    assert.equal(wasm.files.table.sha256, TABLE_SHA); assert.equal(wasm.files.snapshot.sha256, SMALL_SHA);
+    assert.deepEqual(wasm.files.table.identity, input.assets.tableIdentity);
+    for (const [role, file] of Object.entries(wasm.files)) assert.equal(file.sha256, wasm.manifest.files[role].sha256);
   }
 
   const referenceBytes = readSmall(reference);
@@ -125,6 +147,15 @@ export async function verifyNativeServiceBenchmark({ directory, reference, refer
     const startup = JSON.parse(read(`${engine}/startup.json`));
     const exit = JSON.parse(read(`${engine}/exit.json`));
     const resources = rows(read(`${engine}/resources.jsonl`));
+    if (comparisonMode) {
+      const probes = rows(read(`${engine}/admission.jsonl`));
+      assert(probes.some(row => row.phase === 'preflight' && row.outcome === 'disabled'));
+      for (const probe of probes) {
+        assert(['disabled', 'cancelled'].includes(probe.outcome));
+        assert(Number.isFinite(probe.durationMs) && probe.durationMs >= 0);
+        if (probe.outcome === 'disabled') assert.equal(probe.body.enabled, false);
+      }
+    }
     const stdout = read(`${engine}/stdout.log`, LIMITS.logBytes).toString('utf8');
     if (existsSync(resolve(directory, engine, 'stderr.log'))) read(`${engine}/stderr.log`, LIMITS.logBytes);
     assert(stdout.endsWith('\n')); const lines = stdout.trimEnd().split('\n');
@@ -149,6 +180,10 @@ export async function verifyNativeServiceBenchmark({ directory, reference, refer
     assert.equal(summary.totalWallSeconds, results.reduce((sum, row) => sum + row.wallSeconds, 0));
     assert(resources.length > 0);
     for (const sample of resources) {
+      if (comparisonMode) {
+        for (const key of ['user', 'nice', 'system', 'idle', 'iowait', 'irq', 'softirq', 'steal']) assert(/^\d+$/.test(sample.cpuTicks[key]));
+        assert(typeof sample.loadavg === 'string' && /^\d+(?:\.\d+)? \d+(?:\.\d+)? \d+(?:\.\d+)? /.test(sample.loadavg));
+      }
       assert.equal(sample.pid, summary.pid); assert(Array.isArray(sample.processIds));
       assert(sample.processIds.every(pid => Number.isSafeInteger(pid) && pid > 0));
       assert(Number.isFinite(sample.treeRssBytes) && sample.treeRssBytes >= 0 && sample.treeRssBytes <= LIMITS.treeRssBytes);
@@ -186,7 +221,9 @@ export async function verifyNativeServiceBenchmark({ directory, reference, refer
       startupSeconds: summary.startupSeconds, totalWallSeconds: summary.totalWallSeconds,
       peakTreeRssBytes: summary.peakTreeRssBytes, processExited: true, remainingPids: [], ...(memory ? { memory } : {}) };
   }
-  if (candidateMode) assert.deepEqual(report.candidates, summarizeCandidates(input.candidatePlan.passes, report.engines));
+  // Compare the persisted representation: WASM has no binary/SIMD keys, and
+  // JSON serialization omits those undefined fields in the shared summary.
+  if (candidateMode) assert.deepEqual(report.candidates, JSON.parse(JSON.stringify(summarizeCandidates(input.candidatePlan.passes, report.engines))));
   else {
     assert.equal(report.wasmOverAvx2, evidence.wasm.totalWallSeconds / evidence.avx2.totalWallSeconds);
     assert.equal(report.wasmOverAvx512, evidence.wasm.totalWallSeconds / evidence.avx512.totalWallSeconds);

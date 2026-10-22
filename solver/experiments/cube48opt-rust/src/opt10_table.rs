@@ -386,6 +386,8 @@ impl Opt10Table {
     #[cfg(all(feature = "opt10-native-hotpath", not(target_family = "wasm")))]
     #[inline(always)]
     pub(crate) fn prefetch(&self, index: u64) {
+        #[cfg(all(feature = "opt10-native-prefetch-x86", target_arch = "x86_64"))]
+        crate::prefetch::read_word(&self.words, index);
         #[cfg(target_arch = "aarch64")]
         if let Some(address) = self.prefetch_word_address(index) {
             // SAFETY: the pointer comes from an in-bounds reference into the

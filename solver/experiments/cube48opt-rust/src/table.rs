@@ -303,12 +303,26 @@ impl PruningTable {
         }
     }
 
+    /// Opt1–7 generic-oracle candidate; Opt8/9 keep their separate policies.
+    #[cfg(all(feature = "opt1-7-native-prefetch", not(target_family = "wasm")))]
+    #[inline(always)]
+    pub(crate) fn prefetch_opt1_to_7(&self, index: u64) {
+        #[cfg(target_arch = "x86_64")]
+        if self.variant.number() <= 7 {
+            crate::prefetch::read_word(&self.words, index);
+        }
+        #[cfg(not(target_arch = "x86_64"))]
+        let _ = index;
+    }
+
     /// Start the immutable PDB read while the other search contexts still
     /// compute their coordinates. Invalid indices issue no hint and never
     /// form an out-of-allocation pointer; checked lookup remains authoritative.
     #[cfg(all(feature = "opt9-native-prefetch", not(target_family = "wasm")))]
     #[inline(always)]
     pub(crate) fn prefetch_opt9(&self, index: u64) {
+        #[cfg(target_arch = "x86_64")]
+        crate::prefetch::read_word(&self.words, index);
         #[cfg(target_arch = "aarch64")]
         if let Some(address) = self.prefetch_word_address(index) {
             // address comes from an in-bounds reference to the live immutable
@@ -321,7 +335,7 @@ impl PruningTable {
                 );
             }
         }
-        #[cfg(not(target_arch = "aarch64"))]
+        #[cfg(not(any(target_arch = "aarch64", target_arch = "x86_64")))]
         let _ = index;
     }
 
@@ -536,6 +550,37 @@ mod tests {
                     assert_eq!(table.get_opt9(index), table.get(index));
                 }
             }
+        }
+    }
+
+    #[cfg(all(feature = "opt1-7-native-prefetch", not(target_family = "wasm")))]
+    #[test]
+    fn opt1_to_7_prefetch_preserves_variant_bases_and_block_fallbacks() {
+        // Two small blocks exercise all codes, distinct fallback minima, the
+        // last allocated word, empty storage and overflowing public indices.
+        for number in 1..=7 {
+            let mut table = PruningTable {
+                words: vec![5, 1 | (2 << 2) | (3 << 30), 0, 0, 7, 0, 0, 0x0123_4567],
+                variant: Variant::new(number).unwrap(), distribution: [0; 16],
+            };
+            let before = table.words.clone();
+            let decoded: Vec<_> = (0..128).map(|index| table.get(index)).collect();
+            assert_eq!(decoded[16], table.variant.max_bound() - 2);
+            assert_eq!(decoded[17], table.variant.max_bound() - 1);
+            assert_eq!(decoded[31], table.variant.max_bound());
+            assert_eq!(decoded[32], 5);
+            assert_eq!(decoded[80], 7);
+            for index in 0..128 {
+                table.prefetch_opt1_to_7(index);
+                assert_eq!(table.get(index), decoded[index as usize]);
+            }
+            for index in [128, 129, u64::MAX] {
+                table.prefetch_opt1_to_7(index);
+                assert!(std::panic::catch_unwind(|| table.get(index)).is_err());
+            }
+            assert_eq!(table.words, before);
+            table.words.clear();
+            table.prefetch_opt1_to_7(0);
         }
     }
 

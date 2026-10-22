@@ -1,7 +1,7 @@
 # Native x86 SIMD — 2026-10-21
 
-Opt1–9 now have native AVX2 and AVX-512 implementations for paired cubie moves
-and padded coordinates. PDB bytes, coordinate values, search policy and WASM
+Opt1–9 and the separate Opt10 backend have native AVX2 and AVX-512 implementations
+for paired cubie moves and coordinates. PDB bytes, coordinate values, search policy and WASM
 artifacts are unchanged. Initial kernel validation did not deploy a binary;
 the subsequent native release and its measurements are recorded below.
 
@@ -14,8 +14,8 @@ modes fail; automatic mode falls back to scalar when AVX2 is unavailable.
 AVX-512 requires AVX2 plus AVX512F/BW/VL, including OS register-state support.
 It does not require VBMI or other extensions absent from the tested Xeon.
 
-`auto` prefers AVX2: on the measured host its paired moves and coordinates both
-beat the AVX-512 candidate. Instruction width alone is not a performance policy.
+`auto` prefers AVX2: the initial Opt8/9 kernel runs and the full Opt8 solve run
+favored it. Instruction width alone is not a performance policy.
 An explicit override permits comparisons on another CPU without recompilation.
 
 For a binary transferable between x86_64 machines, override the repository's
@@ -85,6 +85,45 @@ Local raw evidence: `.tmp/cubeopt-reverse/x86-simd-20261021-c53Ib1/` at reposito
 root, containing `fixtures-manifest.json`, `correctness.json`, `kernels.json`,
 the initial Opt8 probe and `instruction-evidence.json`. Small fixtures are retained
 there for reproduction; historic programs and benchmark reports were not replaced.
+
+## Opt10 coordinates and optional prefetch coverage, 2026-10-22
+
+`eo10_index` now uses the existing x86 coordinate parts when scalar mode is not
+requested. The EO10 projection, table layout and AArch64 path are unchanged.
+Opt10 is still a separate backend; `CUBEOPT_VARIANT` remains limited to 1–9.
+
+Optional x86 prefetch coverage is now available through
+`opt1-7-native-prefetch`, `opt9-native-prefetch` and
+`opt10-native-prefetch-x86`. The new common helper forms a pointer only after
+an in-bounds slice lookup. These flags are not default features; full-solve
+benefit has not been measured for these tiers. Opt8's deployed prefetch code and
+the existing ARM hints remain unchanged.
+
+The portable Linux release build used Rust 1.98.1, `target-cpu=x86-64` and all
+four Opt prefetch flags. On the actual Xeon host, six prefetch boundary tests
+passed. Each of scalar, AVX2 and AVX-512 passed Opt10's 3,502 shallow states,
+407 deep states, 46,076 coordinate queries, 276,456 left-half-turn checks,
+207,168 conjugate-orbit checks and 25,896 successor-set checks. No PDB was
+loaded and no live service configuration was changed.
+
+One pass per backend, no extra warmup, 524,288 operations per kernel, fixed
+CPU affinity and reduced scheduling priority:
+
+| Backend | Paired moves (ms) | Opt10 coordinate (ms) |
+| --- | ---: | ---: |
+| scalar | 20.750572 | 50.871955 |
+| AVX2 | 6.792937 | 12.048770 |
+| AVX-512 | 5.553106 | 9.406412 |
+
+All three output digests match. AVX2 coordinate throughput was about 4.22 times
+the scalar throughput in this bounded run; AVX-512 was faster in this particular
+Opt10 kernel run. This is not a full Opt10 solve comparison and does not change
+the automatic selection policy. The Mac 32G benchmark uses its frozen ARM
+release, not this x86 build.
+
+Build hashes, raw checks and kernel results are retained in
+`.tmp/cubeopt-reverse/opt-x86-coverage-20261022/`. ARM library compilation and
+the x86 release build passed. These additions remain local pending publication.
 
 ## Linux full solves, 2026-10-21
 

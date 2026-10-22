@@ -273,7 +273,6 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
             )}
 
         <TimerTimingSettingsSections
-          timingRequired
           active={activeCategory === 'timer'}
           localize={tr}
           onChange={updateSettings}

@@ -15,6 +15,12 @@ pub mod x86_simd;
 pub mod opt10;
 pub mod opt10_table;
 pub mod opt10_generate;
+#[cfg(all(target_arch = "x86_64", any(
+    feature = "opt1-7-native-prefetch",
+    feature = "opt9-native-prefetch",
+    feature = "opt10-native-prefetch-x86",
+)))]
+mod prefetch;
 
 pub use h48_coord::H48State;
 pub use h48_table::H48Table;
@@ -234,7 +240,10 @@ impl search::PruningOracle for OptSolver {
     type Query = u64;
     #[inline(always)]
     fn prepare(&self, cube: &cube::Cube, _: u8) -> Result<u64, u8> {
-        Ok(self.coordinates.index64(cube))
+        let index = self.coordinates.index64(cube);
+        #[cfg(all(feature = "opt1-7-native-prefetch", not(target_family = "wasm")))]
+        self.pruning.prefetch_opt1_to_7(index);
+        Ok(index)
     }
     #[inline(always)]
     fn lookup(&self, index: u64) -> u8 {

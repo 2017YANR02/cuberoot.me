@@ -1,4 +1,6 @@
 //! Bounded EO10 arithmetic check. Reads only the 818,008-byte Opt9 snapshot.
+//! On x86, run separate processes with CUBEOPT_SIMD=scalar|avx2|avx512 to
+//! compare each supported dispatch path against the explicit scalar reference.
 use cube48opt_research::{coord::CoordTables, cube::Cube,
     opt10::{Opt10Coordinates, COORDINATES, TABLE_BYTES, project_to_opt9}};
 use std::{collections::{HashMap, HashSet}, env, fs};
@@ -137,6 +139,13 @@ fn check(cube: Cube, opt9: &CoordTables, opt10: &Opt10Coordinates, data: &[u8]) 
 fn main() {
     let args: Vec<_> = env::args().collect();
     assert_eq!(args.len(), 2, "verify_opt10_coordinates OPT9_SMALL_SNAPSHOT");
+    #[cfg(target_arch = "x86_64")]
+    let backend = cube48opt_research::x86_simd::initialize()
+        .expect("requested SIMD backend must be supported").name();
+    #[cfg(target_arch = "aarch64")]
+    let backend = "neon";
+    #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
+    let backend = "scalar";
     assert_eq!(fs::metadata(&args[1]).unwrap().len(), 818_008);
     let data = fs::read(&args[1]).unwrap();
     let opt9 = CoordTables::from_variant_bytes(&data, 9).unwrap();
@@ -188,5 +197,5 @@ fn main() {
         }
     }
     assert!(max_index > u64::from(u32::MAX));
-    println!("{{\"schema\":\"cuberoot.opt10.coordinates.v2\",\"shallowStates\":3502,\"shallowExactOrbits\":{shallow_orbits},\"deepStates\":407,\"queries\":{queries},\"leftHalfTurnChecks\":{},\"orbitStates\":{},\"conjugateOrbitChecks\":{},\"withinGroupPermutationChecks\":{},\"successorSetChecks\":{},\"maxIndex\":{max_index},\"plannedTableBytes\":{TABLE_BYTES},\"pdbLoaded\":false,\"allEqual\":true}}", queries*6, orbit_checks.states, orbit_checks.conjugates, orbit_checks.identity_permutations, orbit_checks.successor_sets);
+    println!("{{\"schema\":\"cuberoot.opt10.coordinates.v2\",\"coordinateBackend\":\"{backend}\",\"shallowStates\":3502,\"shallowExactOrbits\":{shallow_orbits},\"deepStates\":407,\"queries\":{queries},\"leftHalfTurnChecks\":{},\"orbitStates\":{},\"conjugateOrbitChecks\":{},\"withinGroupPermutationChecks\":{},\"successorSetChecks\":{},\"maxIndex\":{max_index},\"plannedTableBytes\":{TABLE_BYTES},\"pdbLoaded\":false,\"allEqual\":true}}", queries*6, orbit_checks.states, orbit_checks.conjugates, orbit_checks.identity_permutations, orbit_checks.successor_sets);
 }

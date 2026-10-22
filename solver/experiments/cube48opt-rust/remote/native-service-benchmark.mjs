@@ -44,6 +44,7 @@ export function parseArguments(argv) {
 
 /** Validate metadata only; safe for local plan/verifier checks without loading binaries. */
 export function validateCandidatePlan(plan) {
+  if (plan?.schema === 'cuberoot.opt8.service-comparison/v1') return validateServiceComparisonPlan(plan);
   assert.equal(plan?.schema, 'cuberoot.opt8.native-candidates/v1');
   assert(Array.isArray(plan.passes) && plan.passes.length >= 2 && plan.passes.length <= 12);
   const labels = new Set(), candidates = new Map();
@@ -65,10 +66,31 @@ export function validateCandidatePlan(plan) {
   return plan;
 }
 
+/** One pass per endpoint, historical WASM followed by deployed native. */
+export function validateServiceComparisonPlan(plan) {
+  assert.equal(plan?.schema, 'cuberoot.opt8.service-comparison/v1');
+  const sha = value => assert(typeof value === 'string' && /^[a-f0-9]{64}$/.test(value));
+  const path = value => assert(typeof value === 'string' && isAbsolute(value) && resolve(value) === value);
+  path(plan.wasm.store); path(plan.wasm.daemon); sha(plan.wasm.daemonSha256); sha(plan.wasm.manifestSha256);
+  assert(/^cubeopt-opt8-[A-Za-z0-9._-]+$/.test(plan.wasm.bundle));
+  assert(/^cubeopt-opt8-native-[A-Za-z0-9._-]+$/.test(plan.production.bundle)); sha(plan.production.manifestSha256);
+  assert(/^v24\.\d+\.\d+$/.test(plan.node.version)); path(plan.node.path); sha(plan.node.sha256);
+  const order = ['baseline', 'native'];
+  assert.equal(plan.passes?.length, 2, 'Run each endpoint once; repeated passes are not authorized');
+  for (const [i, pass] of plan.passes.entries()) {
+    const candidate = order[i]; assert.equal(pass.candidate, candidate);
+    assert.equal(pass.label, `r1-${candidate}`);
+    assert.equal(pass.kind, candidate === 'baseline' ? 'wasm' : 'native'); sha(pass.sha256);
+    if (pass.kind === 'native') { path(pass.binary); assert.equal(pass.simd, 'avx2'); }
+    else { assert.equal(pass.binary, undefined); assert.equal(pass.simd, undefined); }
+  }
+  return plan;
+}
+
 export function summarizeCandidates(passes, engines) {
   const summaries = {};
   for (const pass of passes) {
-    if (!Object.hasOwn(summaries, pass.candidate)) summaries[pass.candidate] = { binary: pass.binary, sha256: pass.sha256, simd: pass.simd, passes: [] };
+    if (!Object.hasOwn(summaries, pass.candidate)) summaries[pass.candidate] = { binary: pass.binary, sha256: pass.sha256, simd: pass.simd, ...(pass.kind === 'wasm' ? { kind: 'wasm' } : {}), passes: [] };
     const summary = summaries[pass.candidate];
     summary.passes.push({ label: pass.label, totalWallSeconds: engines[pass.label].totalWallSeconds });
   }
@@ -97,7 +119,7 @@ function fileIdentity(file) {
   return Object.fromEntries(['dev', 'ino', 'size', 'mtimeNs', 'ctimeNs'].map(key => [key, String(stat[key])]));
 }
 
-function resolveAssets(config, passes) {
+export function resolveAssets(config, passes, plan) {
   const pointerBytes = boundedRead(resolve(config.store, 'current.json'));
   const pointer = JSON.parse(pointerBytes);
   assert.equal(pointer.schema, 'cuberoot.cubeopt-current/v1');
@@ -125,8 +147,41 @@ function resolveAssets(config, passes) {
     }
     if (pass.sha256) assert.equal(binaries[pass.binary].sha256, pass.sha256, 'Pinned candidate changed');
   }
+  let wasm;
+  if (plan?.schema === 'cuberoot.opt8.service-comparison/v1') {
+    assert.equal(manifest.engine, 'rust-native'); assert.equal(pointer.bundle, plan.production.bundle);
+    assert.equal(digest(manifestBytes), plan.production.manifestSha256);
+    const native = passes.find(pass => pass.kind === 'native');
+    assert.equal(native.binary, resolve(root, manifest.files.binary.path));
+    assert.equal(native.sha256, manifest.files.binary.sha256);
+    assert.equal(process.version, plan.node.version); assert.equal(process.execPath, plan.node.path);
+    assert.equal(digest(boundedRead(process.execPath, 256 * 1024 ** 2)), plan.node.sha256);
+    const wasmPointer = boundedRead(resolve(plan.wasm.store, 'current.json'));
+    assert.deepEqual(JSON.parse(wasmPointer), { schema: 'cuberoot.cubeopt-current/v1', bundle: plan.wasm.bundle });
+    const wasmRoot = resolve(plan.wasm.store, 'bundles', plan.wasm.bundle);
+    const wasmManifestBytes = boundedRead(resolve(wasmRoot, 'manifest.json')), wasmManifest = JSON.parse(wasmManifestBytes);
+    assert.equal(digest(wasmManifestBytes), plan.wasm.manifestSha256);
+    assert.equal(wasmManifest.engine, 'rust-wasm'); assert.equal(wasmManifest.bundle, plan.wasm.bundle);
+    assert.equal(wasmManifest.maxThreads, 4); assert.equal(wasmManifest.variant, 'opt8');
+    assert.equal(wasmManifest.files.wasm.sha256, passes[0].sha256);
+    const files = {};
+    for (const [role, declared] of Object.entries(wasmManifest.files)) {
+      assert(/^[A-Za-z0-9._-]+$/.test(declared.path));
+      const file = resolve(wasmRoot, declared.path); assert(lstatSync(file).isFile());
+      assert.equal(statSync(file).size, declared.bytes);
+      if (role !== 'table') assert.equal(digest(boundedRead(file)), declared.sha256);
+      files[role] = { path: file, identity: fileIdentity(file), sha256: declared.sha256 };
+    }
+    // The production bundles hard-link the same table; no second copy or new table.
+    assert.deepEqual(files.table.identity, fileIdentity(table));
+    assert.equal(files.table.sha256, manifest.files.table.sha256);
+    assert.equal(files.snapshot.sha256, manifest.files.snapshot.sha256);
+    assert.equal(digest(boundedRead(plan.wasm.daemon, 32 * 1024 ** 2)), plan.wasm.daemonSha256);
+    wasm = { ...plan.wasm, root: wasmRoot, pointerSha256: digest(wasmPointer), manifest: wasmManifest, files,
+      daemonIdentity: fileIdentity(plan.wasm.daemon), nodeIdentity: fileIdentity(process.execPath) };
+  }
   return { table, snapshot, tableIdentity: fileIdentity(table), snapshotIdentity: fileIdentity(snapshot),
-    binaries,
+    binaries, ...(wasm ? { wasm } : {}),
     ...(config.binary ? { binaryIdentity: binaries[config.binary].identity, binarySha256: binaries[config.binary].sha256,
       daemonSha256: digest(boundedRead(config.daemon, 32 * 1024 ** 2)) } : {}),
     pointerSha256: digest(pointerBytes), manifestSha256: digest(manifestBytes), manifest, root };
@@ -142,6 +197,18 @@ function assertAssetsUnchanged(config, assets) {
     assert.equal(digest(boundedRead(binary, 64 * 1024 ** 2)), expected.sha256, 'Native candidate bytes changed');
   }
   if (config.daemon) assert.equal(digest(boundedRead(config.daemon, 32 * 1024 ** 2)), assets.daemonSha256, 'Daemon changed');
+  if (assets.wasm) {
+    const wasm = assets.wasm;
+    assert.equal(digest(boundedRead(resolve(wasm.store, 'current.json'))), wasm.pointerSha256);
+    assert.equal(digest(boundedRead(resolve(wasm.root, 'manifest.json'))), wasm.manifestSha256);
+    assert.deepEqual(fileIdentity(wasm.daemon), wasm.daemonIdentity);
+    assert.equal(digest(boundedRead(wasm.daemon, 32 * 1024 ** 2)), wasm.daemonSha256);
+    assert.deepEqual(fileIdentity(process.execPath), wasm.nodeIdentity);
+    for (const [role, file] of Object.entries(wasm.files)) {
+      assert.deepEqual(fileIdentity(file.path), file.identity);
+      if (role !== 'table') assert.equal(digest(boundedRead(file.path)), file.sha256);
+    }
+  }
 }
 
 function processRows() {
@@ -186,7 +253,9 @@ function systemSample() {
     const pressure = readFileSync('/proc/pressure/memory', 'utf8').match(/^full avg10=([\d.]+)/m);
     assert(pressure, 'Malformed memory pressure data'); fullPressureAvg10 = Number(pressure[1]);
   } catch (error) { if (error.code !== 'ENOENT') throw error; }
-  return { at: new Date().toISOString(), bootId: readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim(),
+  const cpu = readFileSync('/proc/stat', 'utf8').match(/^cpu\s+(.+)$/m)[1].trim().split(/\s+/);
+  return { at: new Date().toISOString(), cpuTicks: Object.fromEntries(['user', 'nice', 'system', 'idle', 'iowait', 'irq', 'softirq', 'steal', 'guest', 'guestNice'].map((key, i) => [key, cpu[i] ?? null])),
+    loadavg: readFileSync('/proc/loadavg', 'utf8').trim(), bootId: readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim(),
     availableBytes: fields.MemAvailable, totalBytes: fields.MemTotal, swapFreeBytes: fields.SwapFree,
     swapTotalBytes: fields.SwapTotal, fullPressureAvg10,
     swapInPages: Number(vm.match(/^pswpin (\d+)$/m)?.[1]), swapOutPages: Number(vm.match(/^pswpout (\d+)$/m)?.[1]) };
@@ -297,13 +366,14 @@ async function runEngine(config, assets, cases, pass, taskStarted) {
   assertResources(systemSample(), 0, true);
   assertNoConflict(processRows(), Object.keys(assets.binaries));
   const resultsFd = openSync(resolve(directory, 'results.jsonl'), 'wx');
-  const env = { ...process.env, CUBEOPT_ARTIFACT_DIR: config.store, CUBEOPT_THREADS: '4',
+  const env = { ...process.env, CUBEOPT_ARTIFACT_DIR: isWasm && assets.wasm ? assets.wasm.store : config.store, CUBEOPT_THREADS: '4',
     CUBEOPT_PROTOCOL: 'tsv-v1', CUBEOPT_VARIANT: '8', CUBEOPT_SOLVE_THREADS: '1', CUBEOPT_SEARCH_THREADS: '4' };
   delete env.NODE_OPTIONS;
   delete env.CUBEOPT_VERIFY_TABLE;
+  delete env.CUBEOPT_SIMD;
   if (!isWasm) env.CUBEOPT_SIMD = pass.simd;
   const executable = isWasm ? process.execPath : pass.binary;
-  const args = isWasm ? [config.daemon] : ['solve', assets.snapshot, assets.table, '8', '20', '0'];
+  const args = isWasm ? [assets.wasm?.daemon ?? config.daemon] : ['solve', assets.snapshot, assets.table, '8', '20', '0'];
   const started = performance.now();
   const child = spawn(executable, args, { env, detached: true, stdio: ['pipe', 'pipe', 'pipe'] });
   let failure = null, waiter = null, killTimer;
@@ -415,23 +485,26 @@ export async function main(argv = process.argv.slice(2)) {
     mkdirSync(config.out);
     const candidateBytes = config.candidates ? boundedRead(config.candidates) : null;
     const candidatePlan = candidateBytes ? validateCandidatePlan(JSON.parse(candidateBytes)) : null;
-    const passes = candidatePlan ? candidatePlan.passes.map(pass => ({ ...pass, kind: 'native' })) : [
+    const comparison = candidatePlan?.schema === 'cuberoot.opt8.service-comparison/v1';
+    const passes = candidatePlan ? candidatePlan.passes.map(pass => ({ ...pass, kind: pass.kind ?? 'native' })) : [
       { label: 'wasm', kind: 'wasm' },
       { label: 'avx2', kind: 'native', binary: config.binary, simd: 'avx2' },
       { label: 'avx512', kind: 'native', binary: config.binary, simd: 'avx512' },
     ];
-    const assets = resolveAssets(config, passes), { corpus, fileSha256 } = readCorpus(config.corpus);
+    const assets = resolveAssets(config, passes, candidatePlan), { corpus, fileSha256 } = readCorpus(config.corpus);
     const input = { schema: 'cuberoot.opt8.native-service-benchmark-input.v1', config, assets,
       corpusSha256: CORPUS_SHA, corpusFileSha256: fileSha256, cases: corpus.cases, limits: LIMITS,
       memoryEvidence: 'ready-and-complete-v1',
       engineOrder: passes.map(pass => pass.label), warmupCases: 0, measuredPasses: 1,
-      ...(candidatePlan ? { mode: 'native-candidates', candidatePlan, candidatePlanSha256: digest(candidateBytes) } : {}),
+      ...(candidatePlan ? { mode: comparison ? 'service-comparison' : 'native-candidates', candidatePlan, candidatePlanSha256: digest(candidateBytes) } : {}),
       sourceSha256: digest(readFileSync(fileURLToPath(import.meta.url))),
       machine: { hostname: hostname(), platform: process.platform, arch: process.arch, osRelease: release(),
         cpuModel: cpus()[0]?.model ?? null, logicalCpus: cpus().length, node: process.version },
-      measurement: 'Monotonic external request-to-response wall time; startup separately measured; each engine remains resident for all 100 requests.',
+      measurement: 'Monotonic external stdin-write to complete stdout-response wall time, including IPC/scheduling but excluding HTTP/network/API queue; startup separately measured; each engine remains resident for all 100 requests.',
       limitations: [candidatePlan ? 'Explicit ordered candidate passes; use recorded repetitions to assess drift and variability.'
-        : 'One fixed-order pass; cache and thermal drift are not estimated.', 'Independent solution replay must be completed before deployment acceptance.'] };
+        : 'One fixed-order pass; cache and thermal drift are not estimated.', 'Independent solution replay must be completed before deployment acceptance.',
+        ...(comparison ? ['Startup is test-entry spawn-to-READY: historical WASM Node daemon versus direct native ELF, not complete API cold startup.',
+          'Each endpoint runs exactly once. Shared-server CPU/load counters diagnose drift; this single comparison does not measure repeatability.'] : [])] };
     if (candidateBytes) writeFileSync(resolve(config.out, 'candidates.json'), candidateBytes, { flag: 'wx' });
     save(resolve(config.out, 'system-memory-settings.json'), memorySettings());
     save(resolve(config.out, 'input.json'), input);
@@ -441,7 +514,7 @@ export async function main(argv = process.argv.slice(2)) {
     for (const pass of passes.slice(1)) engines[pass.label] = (await runEngine(config, assets, cases, pass, started)).report;
     const report = { schema: 'cuberoot.opt8.native-service-benchmark-report.v1', complete: true,
       engines, lengthMatches: passes.length * 100, independentReplay: false, corpusSha256: CORPUS_SHA,
-      ...(candidatePlan ? { mode: 'native-candidates', candidates: summarizeCandidates(candidatePlan.passes, engines) } : {
+      ...(candidatePlan ? { mode: comparison ? 'service-comparison' : 'native-candidates', candidates: summarizeCandidates(candidatePlan.passes, engines) } : {
         wasmOverAvx2: engines.wasm.totalWallSeconds / engines.avx2.totalWallSeconds,
         wasmOverAvx512: engines.wasm.totalWallSeconds / engines.avx512.totalWallSeconds }),
       machine: input.machine, limitations: input.limitations };

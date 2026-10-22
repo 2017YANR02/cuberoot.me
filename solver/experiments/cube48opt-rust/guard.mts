@@ -1,4 +1,5 @@
 import {beginStatsRun, validateStatsRun} from './stats-resume-review.mts';
+import { currentPolicy, validateCurrentReview } from './opt10-current-benchmark-policy.mts';
 import { nxPolicy as opt8NativePolicy, validateNxReview as validateOpt8NativeReview } from './opt8-native-policy.mts';
 /** Backend-budgeted research. Shares the previous experiment's swap stop record. */
 import { localOpt8Scope, validateLocalOpt8Review } from './opt8-local-policy.mts';
@@ -281,6 +282,8 @@ export function resourceProtectionReasons(before: MemoryObservation, now: Memory
 
 /** Pure protocol validation. Tests never need to observe memory or open a PDB. */
 export function researchPolicy(label: string, executable: string, args: string[], env: NodeJS.ProcessEnv = process.env) {
+if (env.CUBEOPT_OPT10_CURRENT_REVIEW !== undefined)
+  return currentPolicy({label,executable,args,env});
 if (env.CUBEOPT_OPT8_NATIVE_REVIEW !== undefined)
   return opt8NativePolicy({label,executable,args,env});
 if (env.CUBEOPT_NXOPT_REVIEW !== undefined)
@@ -536,10 +539,11 @@ const wasmCandidate = 'wasmCandidate' in policy && policy.wasmCandidate === true
 const dualWasmCandidate = 'dualWasmCandidate' in policy && policy.dualWasmCandidate === true;
 const browserBenchmark = 'browserBenchmark' in policy && policy.browserBenchmark === true;
 const opt8NativeBenchmark = 'opt8NativeBenchmark' in policy && policy.opt8NativeBenchmark === true;
+const opt10CurrentBenchmark = 'opt10CurrentBenchmark' in policy && policy.opt10CurrentBenchmark === true;
 const nxoptBenchmark = 'nxoptBenchmark' in policy && policy.nxoptBenchmark === true;
 const dualScopeStopPath = 'scopeStopPath' in policy ? policy.scopeStopPath : undefined;
-if ((dualWasmCandidate || browserBenchmark) && typeof dualScopeStopPath !== 'string') throw Error('Missing fixed candidate scope stop path');
-const validateBenchmarkReview = opt8NativeBenchmark ? validateOpt8NativeReview : nxoptBenchmark ? validateNxReview : browserBenchmark ? validateBrowserReview : dualWasmCandidate ? validateDualCandidateReview : wasmCandidate ? validateCandidateReview : originalResume ? validateResumeReview : validateOpenReview;
+if ((dualWasmCandidate || browserBenchmark || opt10CurrentBenchmark) && typeof dualScopeStopPath !== 'string') throw Error('Missing fixed candidate scope stop path');
+const validateBenchmarkReview = opt10CurrentBenchmark ? validateCurrentReview : opt8NativeBenchmark ? validateOpt8NativeReview : nxoptBenchmark ? validateNxReview : browserBenchmark ? validateBrowserReview : dualWasmCandidate ? validateDualCandidateReview : wasmCandidate ? validateCandidateReview : originalResume ? validateResumeReview : validateOpenReview;
 let openBenchmarkReceipt: any;
 const { entry, mode, backend, variant, h, tablePath, measureNativeRss, rssLimit, deadlineMs } = policy;
 // Only the fixed, reviewed candidate policy may select a different startup reserve.
@@ -887,7 +891,7 @@ function stop(reason: string, protection = false, details?: unknown) {
         const archive = resolve(output, `multithread-stop-${digest(previous)}.json`);
         if (!existsSync(archive)) writeFileSync(archive, previous, {flag:'wx'});
       }
-      atomic(statsResume ? statsResume.stopPath : zbllResume ? zbllResumeStopPath : dualWasmCandidate || browserBenchmark || nxoptBenchmark || opt8NativeBenchmark ? dualScopeStopPath as string : wasmCandidate ? candidateStopPath : originalResume ? resumeStopPath : openBenchmark ? openStopPath : officialReviewReceipt ? officialPaths.stop : multithreadReviewReceipt ? multithreadPaths.stop : opt10ReviewReceipt || zbll ? opt10ReviewedStopPath : reviewReceipt ? reviewedStopPath : ownRecord,
+      atomic(statsResume ? statsResume.stopPath : zbllResume ? zbllResumeStopPath : dualWasmCandidate || browserBenchmark || nxoptBenchmark || opt8NativeBenchmark || opt10CurrentBenchmark ? dualScopeStopPath as string : wasmCandidate ? candidateStopPath : originalResume ? resumeStopPath : openBenchmark ? openStopPath : officialReviewReceipt ? officialPaths.stop : multithreadReviewReceipt ? multithreadPaths.stop : opt10ReviewReceipt || zbll ? opt10ReviewedStopPath : reviewReceipt ? reviewedStopPath : ownRecord,
         { ...before, stopped: reason, trigger,
           ...(reviewReceipt ? { label, reviewReceipt } : {}), ...(opt10ReviewReceipt ? {label,opt10ReviewReceipt} : {}),
           ...(multithreadReviewReceipt ? {label,multithreadReviewReceipt} : {}),...(officialReviewReceipt ? {label,officialReviewReceipt} : {}) });

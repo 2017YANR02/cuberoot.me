@@ -51,15 +51,18 @@ it.each(['none', 'copy', 'next'])('migrates hidden %s to timing once and preserv
   } finally { vi.unstubAllGlobals(); }
 });
 
-it('keeps Web training timed after loading or updating an old untimed preference', async () => {
+it('preserves untimed mode across loading, unrelated updates and reloading', async () => {
   const mem = installStorage({ [KEY]: JSON.stringify({ timingEnabled: false }) });
   try {
     const settings = await freshSettings();
-    expect(settings.getSettings().timingEnabled).toBe(true);
-    expect(JSON.parse(mem.get(KEY)!).timingEnabled).toBe(true);
-    settings.updateSettings({ timingEnabled: false, holdMs: 600 });
-    expect(settings.getSettings().timingEnabled).toBe(true);
+    expect(settings.getSettings().timingEnabled).toBe(false);
+    expect(JSON.parse(mem.get(KEY)!).timingEnabled).toBe(false);
+    settings.updateSettings({ holdMs: 600 });
+    expect(settings.getSettings().timingEnabled).toBe(false);
     expect(settings.getSettings().holdMs).toBe(600);
+    const reloaded = await freshSettings();
+    expect(reloaded.getSettings().timingEnabled).toBe(false);
+    reloaded.updateSettings({ timingEnabled: true });
     expect((await freshSettings()).getSettings().timingEnabled).toBe(true);
   } finally {
     vi.unstubAllGlobals();
