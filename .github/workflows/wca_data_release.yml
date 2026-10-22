@@ -12,6 +12,8 @@ on:
       - '.gitignore'
       - 'stats/nemesizer/**'
       - 'stats/persons_search.json.gz'
+      - 'stats/data/nemesizer/**'
+      - 'stats/data/persons_search.json.gz'
   pull_request:
     paths:
       - 'scripts/wca-data/**'
@@ -21,6 +23,8 @@ on:
       - '.gitignore'
       - 'stats/nemesizer/**'
       - 'stats/persons_search.json.gz'
+      - 'stats/data/nemesizer/**'
+      - 'stats/data/persons_search.json.gz'
   workflow_dispatch:
     inputs:
       candidate:

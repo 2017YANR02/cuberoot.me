@@ -24,7 +24,7 @@ const noop = async () => {};
 
 test('migrated runtime datasets cannot re-enter the Git index', () => {
   const root = fileURLToPath(new URL('../../', import.meta.url));
-  const paths = FILES.map(f => `stats/${f}`);
+  const paths = FILES.flatMap(f => [`stats/${f}`, `stats/data/${f}`]);
   assert.equal(execFileSync('git', ['ls-files', '--', ...paths], { cwd: root, encoding: 'utf8' }).trim(), '');
   const ignored = execFileSync('git', ['check-ignore', '--no-index', '--', ...paths], { cwd: root, encoding: 'utf8' }).trim().split('\n');
   assert.deepEqual(ignored.sort(), paths.sort());
