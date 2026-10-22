@@ -40,6 +40,7 @@ export interface DrawElement {
   unColorBindKey?: string;
   disShow?: boolean;
   defaultFill?: string;
+  strokeWidthScale?: number;
   /** Optional shape selected directly in the preview; omitted from exports when off. */
   toggle?: { selected: boolean; label: string };
 }
@@ -62,6 +63,7 @@ export interface RenderDrawSvgOptions {
   height: number;
   strokeWidth?: number;
   strokeWidthScale?: number;
+  strokeColor?: string;
   interactive?: boolean;
 }
 
@@ -82,6 +84,7 @@ export interface DrawCanvasProps {
   onElementToggle?: (key: string) => void;
   controls?: ReactNode;
   strokeWidthScale?: number;
+  strokeColor?: string;
   className?: string;
   /** Only the selected view may render into the shared simulator stage. */
   previewActive?: boolean;

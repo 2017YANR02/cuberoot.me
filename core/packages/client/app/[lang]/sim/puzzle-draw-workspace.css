@@ -69,6 +69,10 @@
   padding: 10px 0;
 }
 
+.fto-draw-controls { width: 100%; min-width: 0; }
+.fto-draw-controls .fto-image-settings,
+.fto-draw-controls .fto-image-colors { padding: 0 0 12px; }
+
 @media (max-width: 767px) {
   .sim-draw-stage { padding: 12px; }
 }

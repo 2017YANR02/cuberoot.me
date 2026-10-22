@@ -132,7 +132,6 @@ import {
 import { DRAW_PUZZLES, normalizeDrawPuzzle } from './puzzleOptions';
 import './sim.css';
 
-const FtoImageGenerator = dynamic(() => import('./FtoImageGenerator'), { ssr: false });
 import { useT } from "@/hooks/useT";
 
 /** Gap (px) between the back-view window and the canvas top-right corner.
@@ -321,8 +320,9 @@ export default function SimPage() {
 
   const algParam = query.alg || '';
   const setupParam = query.setup || '';
-  const drawMode = query.tool === 'draw';
   const imageMode = query.tool === 'image';
+  // Legacy formula-image URLs open the same editable drawing workspace.
+  const drawMode = query.tool === 'draw' || imageMode;
   const animationMode = query.tool === 'sim';
   const captureMode = query.tool === 'capture';
   const [panelExpanded, setPanelExpanded] = useState(false);
@@ -350,20 +350,12 @@ export default function SimPage() {
     };
   }, []);
   const [openPanel, setOpenPanel] = useState<'appearance' | 'algs' | null>('appearance');
-  const [lastCreationTool, setLastCreationTool] = useState<'capture' | 'draw' | 'image'>(
-    query.tool === 'sim' ? 'capture' : query.tool,
-  );
-  useEffect(() => {
-    if (query.tool !== 'sim') setLastCreationTool(query.tool);
-  }, [query.tool]);
   // Drawing owns its puzzle; entering a template must never replace the animation.
   const [initialDrawPuzzle] = useState(() => normalizeDrawPuzzle(query.puzzle));
-  const drawPuzzle = normalizeDrawPuzzle(query.drawPuzzle ?? initialDrawPuzzle);
+  const drawPuzzle = imageMode ? 'fto' : normalizeDrawPuzzle(query.drawPuzzle ?? initialDrawPuzzle);
   const [drawOrder, setDrawOrder] = useState(typeof drawPuzzle === 'number' ? drawPuzzle : 3);
   useEffect(() => { if (typeof drawPuzzle === 'number') setDrawOrder(drawPuzzle); }, [drawPuzzle]);
   const [initialImageAlg] = useState(() => imageMode || query.puzzle === 'fto' ? query.alg ?? '' : '');
-  const [imageVisited, setImageVisited] = useState(imageMode);
-  useEffect(() => { if (imageMode) setImageVisited(true); }, [imageMode]);
 
   const puzzleParam: SimPuzzle = useMemo(() => {
     const raw = query.puzzle;
@@ -2239,20 +2231,18 @@ export default function SimPage() {
     resizeMainViewRef.current?.();
   }, [imgSwapActive]);
 
-  const selectedPuzzle = drawMode ? drawPuzzle : imageMode ? 'fto' : puzzleParam;
+  const selectedPuzzle = drawMode ? drawPuzzle : puzzleParam;
   const selectPuzzle = (puzzle: SimPuzzle) => {
-    if (drawMode) void setQuery({ drawPuzzle: String(puzzle) });
-    else if (!imageMode) handlePuzzle(puzzle);
+    if (drawMode) void setQuery({ tool: 'draw', drawPuzzle: String(puzzle) });
+    else handlePuzzle(puzzle);
   };
-  const changeTool = (tool: 'sim' | 'capture' | 'draw' | 'image') => {
+  const changeTool = (tool: 'sim' | 'capture' | 'draw') => {
     void setQuery({
       tool: tool === 'sim' ? null : tool,
       // Legacy creation links share puzzle/alg with animation until the first mode
       // change. Snapshot the departing document before animation can edit those keys.
       ...(drawMode || tool === 'draw' ? {
         drawPuzzle: query.drawPuzzle ?? String(drawMode ? drawPuzzle : normalizeDrawPuzzle(query.puzzle)),
-      } : {}),
-      ...(imageMode || tool === 'image' ? {
         imageAlg: query.imageAlg ?? (imageMode ? initialImageAlg : puzzleParam === 'fto' ? algParam : initialImageAlg),
       } : {}),
     });
@@ -2269,7 +2259,7 @@ export default function SimPage() {
           <PuzzleTypeSelect
             value={typeof selectedPuzzle === 'number' ? 'nxn' : selectedPuzzle}
             isZh={i18n.language.startsWith('zh')}
-            allowedValues={drawMode ? DRAW_PUZZLES : imageMode ? ['fto'] : undefined}
+            allowedValues={drawMode ? DRAW_PUZZLES : undefined}
             onChange={(value) => selectPuzzle(value === 'nxn' ? (drawMode ? drawOrder : order) : value as SimPuzzle)}
           />
           {typeof selectedPuzzle === 'number' && (
@@ -2288,25 +2278,14 @@ export default function SimPage() {
         </div>
         <select
           className="sim-tool-select"
-          value={animationMode ? 'animation' : 'creation'}
-          onChange={(event) => changeTool(event.target.value === 'animation' ? 'sim' : lastCreationTool)}
+          value={drawMode ? 'draw' : query.tool}
+          onChange={(event) => changeTool(event.target.value as 'sim' | 'capture' | 'draw')}
           aria-label={t('工作模式', 'Workspace mode')}
         >
-          <option value="animation">{t('动画', 'Animation')}</option>
-          <option value="creation">{t('作图', 'Create images')}</option>
+          <option value="sim">{t('动画', 'Animation')}</option>
+          <option value="capture">{t('当前状态', 'Current state')}</option>
+          <option value="draw">{t('自由绘图', 'Free drawing')}</option>
         </select>
-        {!animationMode && (
-          <select
-            className="sim-tool-select"
-            value={query.tool}
-            onChange={(event) => changeTool(event.target.value as 'capture' | 'draw' | 'image')}
-            aria-label={t('作图方式', 'Image source')}
-          >
-            <option value="capture">{t('当前状态', 'Current state')}</option>
-            <option value="draw">{t('自由绘图', 'Free drawing')}</option>
-            <option value="image">{t('FTO 公式出图', 'FTO algorithm')}</option>
-          </select>
-        )}
         {!drawMode && !imageMode && (
           <button type="button" className="sim-panel-toggle" aria-expanded={panelExpanded} aria-controls="sim-task-panel"
             onClick={() => {
@@ -2591,17 +2570,6 @@ export default function SimPage() {
         </aside>
       </div>
 
-      {imageVisited && (
-        <div className="sim-image-workspace" hidden={!imageMode}>
-        <FtoImageGenerator
-          algorithm={query.imageAlg ?? initialImageAlg}
-          onAlgorithmChange={(algorithm) => setQuery({ imageAlg: algorithm })}
-          inverse={query.imageInverse === '1'}
-          onInverseChange={(inverse) => setQuery({ imageInverse: inverse ? '1' : null })}
-        />
-        </div>
-      )}
-
       {drawVisited && (
         <div style={{ display: drawMode ? 'contents' : 'none' }}>
           <PuzzleDrawWorkspace
@@ -2609,6 +2577,12 @@ export default function SimPage() {
             puzzle={drawPuzzle}
             order={typeof drawPuzzle === 'number' ? drawPuzzle : drawOrder}
             onDocumentChange={setDrawDocument}
+            fto={{
+              algorithm: query.imageAlg ?? initialImageAlg,
+              onAlgorithmChange: (algorithm) => setQuery({ imageAlg: algorithm }),
+              inverse: query.imageInverse === '1',
+              onInverseChange: (inverse) => setQuery({ imageInverse: inverse ? '1' : null }),
+            }}
             exportPanel={drawDocument ? (
               <PuzzleImageStudio
                 spec={imgSpec}

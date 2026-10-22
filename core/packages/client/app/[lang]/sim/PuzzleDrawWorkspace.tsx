@@ -9,7 +9,7 @@ import {
 } from 'react';
 import { DrawPreviewHostContext } from '@/components/puzzle-draw/DrawCanvas';
 import CubeDrawPanel from '@/components/puzzle-draw/CubeDrawPanel';
-import FtoDrawPanel from '@/components/puzzle-draw/FtoDrawPanel';
+import FtoDrawPanel, { type FtoDrawPanelProps } from '@/components/puzzle-draw/FtoDrawPanel';
 import MegaminxDrawPanel from '@/components/puzzle-draw/MegaminxDrawPanel';
 import PyraminxDrawPanel from '@/components/puzzle-draw/PyraminxDrawPanel';
 import SkewbDrawPanel from '@/components/puzzle-draw/SkewbDrawPanel';
@@ -26,6 +26,7 @@ export interface PuzzleDrawWorkspaceProps {
   order: number;
   onDocumentChange: (document: DrawExport | null) => void;
   exportPanel?: ReactNode;
+  fto?: Omit<FtoDrawPanelProps, 'onDocumentChange'>;
 }
 
 /** `/sim` free-drawing surface. All puzzle panels stay mounted after first load. */
@@ -35,19 +36,20 @@ export default function PuzzleDrawWorkspace({
   order,
   onDocumentChange,
   exportPanel,
+  fto,
 }: PuzzleDrawWorkspaceProps) {
   const [previewHost, setPreviewHost] = useState<HTMLDivElement | null>(null);
   const current: DrawPuzzle = typeof puzzle === 'number' ? 'cube' : puzzle;
   const currentRef = useRef<DrawPuzzle>(current);
   currentRef.current = current;
-  const documentsRef = useRef<Partial<Record<DrawPuzzle, DrawExport>>>({});
+  const documentsRef = useRef<Partial<Record<DrawPuzzle, DrawExport | null>>>({});
 
   useEffect(() => {
     if (!active) return;
     onDocumentChange(documentsRef.current[current] ?? null);
   }, [active, current, onDocumentChange]);
 
-  const receiveDocument = useCallback((source: DrawPuzzle, document: DrawExport) => {
+  const receiveDocument = useCallback((source: DrawPuzzle, document: DrawExport | null) => {
     documentsRef.current[source] = document;
     if (active && currentRef.current === source) onDocumentChange(document);
   }, [active, onDocumentChange]);
@@ -56,7 +58,7 @@ export default function PuzzleDrawWorkspace({
   const receiveMegaminx = useCallback((doc: DrawExport) => receiveDocument('megaminx', doc), [receiveDocument]);
   const receiveSkewb = useCallback((doc: DrawExport) => receiveDocument('skewb', doc), [receiveDocument]);
   const receivePyraminx = useCallback((doc: DrawExport) => receiveDocument('pyraminx', doc), [receiveDocument]);
-  const receiveFto = useCallback((doc: DrawExport) => receiveDocument('fto', doc), [receiveDocument]);
+  const receiveFto = useCallback((doc: DrawExport | null) => receiveDocument('fto', doc), [receiveDocument]);
 
   const panels: { key: DrawPuzzle; content: ReactNode }[] = [
     { key: 'cube', content: <CubeDrawPanel order={Math.max(2, Math.min(20, order))} onDocumentChange={receiveCube} /> },
@@ -64,7 +66,7 @@ export default function PuzzleDrawWorkspace({
     { key: 'megaminx', content: <MegaminxDrawPanel onDocumentChange={receiveMegaminx} /> },
     { key: 'skewb', content: <SkewbDrawPanel onDocumentChange={receiveSkewb} /> },
     { key: 'pyraminx', content: <PyraminxDrawPanel onDocumentChange={receivePyraminx} /> },
-    { key: 'fto', content: <FtoDrawPanel onDocumentChange={receiveFto} /> },
+    { key: 'fto', content: <FtoDrawPanel {...fto} onDocumentChange={receiveFto} /> },
   ];
 
   return (

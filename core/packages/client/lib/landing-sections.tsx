@@ -22,6 +22,7 @@ import { PLATFORM_ROUTES } from '@/lib/platform-routes';
 import { TOC } from '@/app/[lang]/math/group/_data/toc';
 import { REG_ARTICLES, regArticleHref } from '@/app/[lang]/regulation/_data/articles';
 import { LLM_TOOLS_META } from '@/app/[lang]/dev/llm/_lib/llm_meta';
+import { ALL_PUZZLE_TYPE_OPTIONS } from '@/app/[lang]/sim/puzzleOptions';
 
 export const TEXTS = SITE_DIRECTORY_TEXTS;
 
@@ -225,6 +226,16 @@ const PAGE_SEARCH_CARDS: LandingSearchCard[] = Object.entries(PAGE_META)
   });
 
 const CATALOG_SEARCH_CARDS: LandingSearchCard[] = [
+  ...ALL_PUZZLE_TYPE_OPTIONS.map(puzzle => ({
+    id: `sim:${puzzle.value}`,
+    href: `/sim?puzzle=${encodeURIComponent(puzzle.value === 'nxn' ? '3' : puzzle.value)}`,
+    internal: true,
+    nameEn: puzzle.labelEn,
+    nameZh: puzzle.labelZh,
+    sectionTitleEn: PAGE_META.sim.title.en,
+    sectionTitleZh: PAGE_META.sim.title.zh,
+    keywords: puzzle.value,
+  })),
   // WCA and footer entries also belong in search, even without a grid card.
   ...SITE_DIRECTORY_GROUPS.flatMap(group => group.entries.map(entry => ({
     id: entry.id,

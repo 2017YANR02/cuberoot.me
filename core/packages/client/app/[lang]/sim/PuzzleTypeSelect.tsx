@@ -46,7 +46,7 @@ export function PuzzleTypeSelect({ value, onChange, isZh, allowedValues, showNam
         searchLabel: tr({ zh: '搜索项目名称 / 阶数', en: 'Search name / order' }),
         clearLabel: tr({ zh: '清除搜索', en: 'Clear search' }),
         emptyLabel: tr({ zh: '没有匹配项目', en: 'No matching puzzles' }),
-        resultsLabel: tr({ zh: '搜索结果', en: 'Results' }),
+        resultsLabel: '',
         recentLabel: tr({ zh: '最近使用', en: 'Recent' }),
         favoritesLabel: tr({ zh: '收藏', en: 'Favorites' }),
         favoriteLabel: tr({ zh: '收藏当前项目', en: 'Favorite current puzzle' }),

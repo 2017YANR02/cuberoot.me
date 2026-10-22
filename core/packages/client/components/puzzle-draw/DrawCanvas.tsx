@@ -121,6 +121,7 @@ export function renderDrawSvg(options: RenderDrawSvgOptions): string {
     ? options.strokeWidthScale!
     : 1;
   const colors = options.colors ?? {};
+  const strokeColor = escapeAttr(options.strokeColor ?? DRAW_STROKE_COLOR);
   const cellIdByKey = new Map(options.elements.map((element) => [element.key, element.cellId ?? element.key]));
 
   const body = options.elements.map((element) => {
@@ -146,7 +147,7 @@ export function renderDrawSvg(options: RenderDrawSvgOptions): string {
     if (transform) attrs.push(`transform="${escapeAttr(transform)}"`);
     if (element.disShow) attrs.push('opacity="0"');
     const common = attrs.join(' ');
-    const lineWidth = element.disableStrokeWidth ? 0 : strokeWidth * strokeScale;
+    const lineWidth = element.disableStrokeWidth ? 0 : strokeWidth * strokeScale * (element.strokeWidthScale ?? 1);
 
     if (kind === 'text') {
       const textX = element.textPoint?.[0] ?? 0;
@@ -167,13 +168,13 @@ export function renderDrawSvg(options: RenderDrawSvgOptions): string {
     }
 
     if (kind === 'path') {
-      return `<path ${common} d="${escapeAttr(element.d!)}" fill="${escapeAttr(fill)}" stroke="${DRAW_STROKE_COLOR}" stroke-width="${lineWidth}" stroke-linejoin="round"/>`;
+      return `<path ${common} d="${escapeAttr(element.d!)}" fill="${escapeAttr(fill)}" stroke="${strokeColor}" stroke-width="${lineWidth}" stroke-linejoin="round"/>`;
     }
     if (kind === 'polygon') {
-      return `<polygon ${common} points="${escapeAttr(element.points!)}" fill="${escapeAttr(fill)}" stroke="${DRAW_STROKE_COLOR}" stroke-width="${lineWidth}" stroke-linejoin="round"/>`;
+      return `<polygon ${common} points="${escapeAttr(element.points!)}" fill="${escapeAttr(fill)}" stroke="${strokeColor}" stroke-width="${lineWidth}" stroke-linejoin="round"/>`;
     }
     const line = element.line!;
-    return `<line ${common} x1="${line.x1 ?? 0}" y1="${line.y1 ?? 0}" x2="${line.x2 ?? 0}" y2="${line.y2 ?? 0}" fill="none" stroke="${DRAW_STROKE_COLOR}" stroke-width="${lineWidth}" stroke-linejoin="round"/>`;
+    return `<line ${common} x1="${line.x1 ?? 0}" y1="${line.y1 ?? 0}" x2="${line.x2 ?? 0}" y2="${line.y2 ?? 0}" fill="none" stroke="${strokeColor}" stroke-width="${lineWidth}" stroke-linejoin="round"/>`;
   }).filter(Boolean).join('\n  ');
 
   return `<svg xmlns="http://www.w3.org/2000/svg" class="puzzle-draw-svg" width="${width}" height="${height}" viewBox="${escapeAttr(viewBox)}" preserveAspectRatio="xMidYMid meet">\n  ${body}\n</svg>`;
@@ -251,6 +252,7 @@ export function DrawCanvas({
   onElementToggle,
   controls,
   strokeWidthScale = 1,
+  strokeColor,
   className,
   previewActive = true,
 }: DrawCanvasProps) {
@@ -295,11 +297,12 @@ export function DrawCanvas({
     height,
     strokeWidth,
     strokeWidthScale,
-  }), [elements, colors, viewBox, width, height, strokeWidth, strokeWidthScale]);
+    strokeColor,
+  }), [elements, colors, viewBox, width, height, strokeWidth, strokeWidthScale, strokeColor]);
 
   const previewSvg = useMemo(() => onElementToggle ? renderDrawSvg({
-    elements, colors, viewBox, width, height, strokeWidth, strokeWidthScale, interactive: true,
-  }) : svg, [onElementToggle, elements, colors, viewBox, width, height, strokeWidth, strokeWidthScale, svg]);
+    elements, colors, viewBox, width, height, strokeWidth, strokeWidthScale, strokeColor, interactive: true,
+  }) : svg, [onElementToggle, elements, colors, viewBox, width, height, strokeWidth, strokeWidthScale, strokeColor, svg]);
 
   useEffect(() => {
     onDocumentChange?.({ svg, width, height, filenameBase: resolvedFilenameBase });

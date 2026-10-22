@@ -48,6 +48,16 @@ export function ftoEifState(
   return ftoEifStickerState(algorithm, palette);
 }
 
+/** The formula image and the painter use identical sticker IDs and geometry. */
+export function ftoEifDrawElements(algorithm: string, palette: FtoEifPalette = DEFAULT_FTO_EIF_PALETTE) {
+  const state = ftoEifState(algorithm, palette);
+  return FTO_DRAW_ELEMENTS.map(element => ({
+    ...element,
+    defaultFill: element.key === 'body' ? palette.stroke : state[element.key.toLowerCase() as keyof FtoEifStickerState],
+    strokeWidthScale: element.key.startsWith('B') || element.key.startsWith('F') ? 2 : 1,
+  }));
+}
+
 function escapeXml(value: string): string {
   return value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 }

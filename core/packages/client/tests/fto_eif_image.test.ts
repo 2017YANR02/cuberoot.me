@@ -3,6 +3,7 @@ import type { AlgSticker } from '@cuberoot/shared';
 import {
   DEFAULT_FTO_EIF_PALETTE,
   ftoEifState,
+  ftoEifDrawElements,
   invertFtoEifAlgorithm,
   isFtoEifSolved,
   parseFtoEifAlgorithm,
@@ -10,6 +11,7 @@ import {
   renderFtoEifSvg,
 } from '@/lib/fto-eif-image';
 import { FTO_DRAW_ELEMENTS } from '@/lib/fto-draw-elements';
+import { renderDrawSvg } from '@/components/puzzle-draw/DrawCanvas';
 import { FTO_PF_TARGET_SETUP, FTO_TL_TARGET_SETUP, validateAlgCase } from '@/lib/alg_validation';
 import { createFtoSeekPlayer } from '@/components/AlgPlayer/FtoEifAlgPlayer';
 import { syncPlayerToMoveCount } from '@/lib/recon-alg-utils';
@@ -17,6 +19,23 @@ import { syncPlayerToMoveCount } from '@/lib/recon-alg-utils';
 const RAW_STICKER: AlgSticker = { kind: 'raw', tag: 'lowcubes-fto', attrs: {} };
 
 describe('FTO EIF image engine', () => {
+  it('keeps formula colors and outlines when the image becomes a paintable document', () => {
+    const palette = { ...DEFAULT_FTO_EIF_PALETTE, stroke: '#654321' };
+    const alg = "Uo' U Rw2 R' S H' Ft2 Blw Fs'";
+    const elements = ftoEifDrawElements(alg, palette);
+    const svg = renderDrawSvg({ elements, viewBox: '0 0 279.92 301.94', width: 400, height: 432,
+      strokeWidthScale: 2, strokeColor: palette.stroke });
+    const original = renderFtoEifSvg(alg, palette);
+    const fills = (value: string) => [...value.matchAll(/<path\b[^>]*?fill="([^"]*)"/g)].map(match => match[1]);
+    expect(fills(svg)).toEqual(fills(original));
+    expect(svg.match(/data-draw-cell=/g)).toHaveLength(72);
+    expect(svg).toContain('stroke="#654321" stroke-width="4"');
+    expect(svg).toContain('stroke="#654321" stroke-width="2"');
+    const painted = renderDrawSvg({ elements, colors: { F1: 'transparent' }, viewBox: '0 0 279.92 301.94', width: 400, height: 432 });
+    expect(painted).toMatch(/data-draw-cell="F1"[^>]*fill="transparent"/);
+    expect(elements.find(element => element.key === 'body')?.disableDrawing).toBe(true);
+  });
+
   it('accepts every documented move family plus common casing and prime aliases', () => {
     const documented = "F R L U D Bl Br B Fw Rw Lw Uw Dw Blw Brw Bw Fs Rs Ls Us Fo Ro Lo Uo Rt Lt Ft S H F' R2 Rt2'";
     expect(parseFtoEifAlgorithm(documented).invalid).toEqual([]);
