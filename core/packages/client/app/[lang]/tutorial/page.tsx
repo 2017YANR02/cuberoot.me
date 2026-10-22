@@ -7,6 +7,7 @@ import AlgPuzzlePicker, {
   TUTORIAL_PUZZLE_PICKER_IDS,
 } from '@/components/AlgPuzzlePicker';
 import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';
+import Ivy3YGuide from './_Ivy3YGuide';
 import Link from '@/components/AppLink';
 import { T, tr } from '@/i18n/tr';
 import { ArrowRight, Check, Play } from '@app-foundation/icons/lucide';
@@ -96,8 +97,13 @@ function FourCenterGuide() {
 }
 
 function IvyTutorial() {
+  const [showBasics, setShowBasics] = useState(false);
   return (
-    <article className="tutorial-article">
+    <>
+      <Ivy3YGuide />
+      <details className="tutorial-article tutorial-basics" onToggle={event => setShowBasics(event.currentTarget.open)}>
+        <summary><T zh="入门复原与其他方法" en="Beginner solving and other methods" /></summary>
+        {showBasics && <div className="tutorial-basics-content">
       <p className="tutorial-lead">
         <T
           zh="枫叶魔方只有四个可转角和六个中心。每次转角都会改变一个外角，并循环它周围的三个中心；入门解法就是先复原四个外角，再处理六个中心。"
@@ -130,7 +136,7 @@ function IvyTutorial() {
         <ol>
           <li><T zh="找两个带有同一种颜色的外角，把这个共同色转到同一面。" en="Find two outer corners that share a color and twist them so that color faces the same side." /></li>
           <li><T zh="把这一面转到底面，再转动另外两个外角，让它们的共同色朝上。" en="Put that face on the bottom, then twist the other two outer corners so their shared color faces up." /></li>
-          <li><T zh="四个外角的位置是固定的，只需调整方向；完成后先不要再单独转角，后面的四步公式会自动保护角块。" en="The four outer corners have fixed positions, so only their orientation matters. Once solved, avoid isolated corner turns; the four-move sequences below preserve them." /></li>
+          <li><T zh="在这套 R / L / D / B 记号中，四个外角的位置固定，只需调整方向；完成后先不要再单独转角，后面的四步公式会自动保护角块。" en="With this R / L / D / B move set, the four outer corners have fixed positions, so only their orientation matters. Once solved, avoid isolated corner turns; the four-move sequences below preserve them." /></li>
         </ol>
       </section>
 
@@ -172,8 +178,8 @@ function IvyTutorial() {
         </div>
         <p className="tutorial-note">
           <T
-            zh="若三个待换中心排成另一种直线结构，可用 R L′ R′ L。它同样只循环三个中心，不会破坏已经复原的外角。"
-            en="If the three centers form the other straight-line pattern, use R L′ R′ L. It also cycles only three centers without disturbing the solved outer corners."
+            zh="若三个待换中心位于彼此相邻的三个面，可用 R L′ R′ L。它同样只循环三个中心，不会破坏已经复原的外角；仍需对齐持握并确认循环方向。"
+            en="If the three displaced centers lie on three mutually adjacent faces, use R L′ R′ L. It cycles only those centers without disturbing the solved corners; match the holding orientation and cycle direction."
           />
         </p>
         <div className="tutorial-demo">
@@ -187,8 +193,8 @@ function IvyTutorial() {
         <h2><T zh="进阶：邻心法" en="Advanced: neighboring-center method" /></h2>
         <p>
           <T
-            zh="你朋友说的“六三法”也可能是“邻心法”。这是另一套公开的提速思路：检查时先规划约四步的第一阶段，再按中心是否已经连色、能否直接插入来判断后半程，而不是每做一步就停下来重新找块。"
-            en="What sounded like “six-three” may have been the neighboring-center method. This is a separate public speedsolving approach: plan an approximately four-move first phase during inspection, then classify the remainder by whether matching centers are connected and whether they can be inserted directly, instead of stopping to search after every move."
+            zh="邻心法是另一套公开的提速思路：观察时先规划约四步的第一阶段，再按中心是否已经连色、能否直接插入来判断后半程。它与本页介绍的 3Y 系列、63 法分别有自己的来源。"
+            en="The neighboring-center method is a separate public speedsolving approach: plan an approximately four-move first phase during inspection, then classify the remainder by connected colors and direct insertions. It has its own source, distinct from the 3Y series and the 63 method."
           />
         </p>
         <p className="tutorial-note">
@@ -229,7 +235,9 @@ function IvyTutorial() {
         <a href="https://www.bilibili.com/video/BV1oFy7BHEtR/" target="_blank" rel="noreferrer"><T zh="邻心法公开视频" en="Neighboring-center video" /></a>
         <a href="https://www.bilibili.com/video/BV13bAFz5E3s/" target="_blank" rel="noreferrer"><T zh="63 法公开介绍" en="Public 63 overview" /></a>
       </footer>
-    </article>
+        </div>}
+      </details>
+    </>
   );
 }
 
