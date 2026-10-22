@@ -2,6 +2,15 @@
 
 Status: FIRST MIGRATION UNIT DEPLOYED (2026-10-21). Scoped release checks passed; repository-wide CI has failures outside this change (see below).
 
+## History maintenance (2026-10-22)
+
+The maintainer authorized publishing all pending project changes, merging PR #142, then cleaning obsolete data history after other AI tasks finished. Preserve `.local/`, computation checkpoints, current code and live Release assets. The earlier decision not to rewrite history is superseded for this maintenance window.
+
+- PR #142 is merged locally with both the current `lockView` and the tutorial's section-pause/dynamic-stickering options preserved. Client typecheck and 89 related checks passed, including an independent replay of all 150 tutorial practice placements. Three Opt10 guard-policy checks and a small Rust library feature compilation passed; no solver benchmark or table generation was repeated.
+- Historical data also used `stats/data/nemesizer/` and `stats/data/persons_search.json.gz`. Include those predecessor paths in the same removal, retaining all source code, other data families and commit topology.
+- Before remote rewriting: finish active automatic data publication, back up exact remote refs and protection/workflow state, validate rewritten branch/tag tips and unchanged main tree, then use explicit expected-old ref leases. Restore branch protection and temporarily paused writers after the cutover. Keep the offline backup and commit map for existing-checkout recovery.
+- GitHub PR/fork references are outside normal writable branch/tag refs. Do not claim their retained storage has been purged or that GitHub's displayed repository size updates immediately.
+
 ## Authorized outcome
 
 - Use this repository and one mutable `wca-data-latest` GitHub Release.
