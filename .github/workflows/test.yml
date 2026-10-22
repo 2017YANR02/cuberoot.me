@@ -331,7 +331,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      # 只需 core/(根有 stats/ 709MB + tools/ 等 ~1GB 静态残留);blob:none partial clone 跳过下载.
+      # 只检出代码和必需的工具样本；生成统计随后从最新 Release 校验恢复。
       # 例外:tools/cstimer-scramble(519K)是非 WCA 求解器测试的打乱 oracle,必须拉进来,
       # 否则 bic/cm3/heli/helicv/ctico/sia222 的 "≥200 real cstimer scrambles" 全 0 条变红.
       # 例外:仓库级守卫入口 —— code-guards-drift / recon-ground-truth-gate 会同时断言
@@ -343,10 +343,7 @@ jobs:
       # CI 上不值这个下载量。高阶只点翼棱(等价类只有循环移位这条新路径 + 镜像要翻手性)
       # 和中棱(高阶命名 + 换贴纸那条路径),角心 / 边心与翼棱同规则,再拉 1.1MB 是重复。
       # 缺文件的类型测试会自动 skip,不会红。
-      # 例外:stats/scramble 下那两个小 JSON —— skip_probability / skewb_odds 拿它们跟站上
-      # 已发布的数据对表;整个 stats/scramble 是 235MB(downloads/ 占大头),所以只点名到文件.
-      # 例外:all_past_comps.json + all_upcoming_comps.json —— H2H 与比赛搜索回归会核对
-      # 已提交比赛快照中的真实赛制和省份搜索结果。
+      # WCA/打乱统计回归共享最新 Release 快照，不再从 Git 检出生成物。
       # 例外:Platform 退役 vhost —— 教学架构守卫会确认旧域名只返回 410、不再反代旧应用。
       # 点名到文件就必须关 cone 模式(cone 只认目录),模式改成 gitignore 风格、前导 / 锚定仓库根.
       - uses: actions/checkout@v6
@@ -395,25 +392,6 @@ jobs:
             # 必须检出整个 workflow 目录，否则 sparse CI 会把“未检出”误报为“文件缺失”。
             /.github/workflows/
             /.githooks/pre-commit
-            /stats/all_past_comps.json
-            /stats/comp_calendar/
-            /stats/all_upcoming_comps.json
-            /stats/comp_names_zh.json
-            # Validate every gendered country record against its generated manifest and world/continent feeds.
-            /stats/records/history/gender/
-            # Achievement tests validate every row in these three complete snapshots.
-            /stats/date_match_pr.json
-            /stats/tied_podium_results.json
-            /stats/complete_competition_winners.json
-            /stats/scramble/2x2_essential.json
-            /stats/scramble/puzzle_distribution.json
-            /stats/scramble/recent_scrambles.json
-            /stats/scramble/no_bar.json
-            # scramble_exact_dist.test.ts 拿它当「WCA 那套菜单」的真源逐项比对(420KB)。
-            /stats/scramble/distribution.json
-            /stats/scramble/examples.json
-            /stats/scramble/examples_wca_*.json
-            /stats/scramble/examples_stage/
             /solver/333opt/inject.mjs
             /solver/333opt/data_paths.mjs
           filter: blob:none
@@ -671,21 +649,6 @@ jobs:
             /.codex/banned-words.json
             /.github/workflows/
             /.githooks/pre-commit
-            /stats/all_past_comps.json
-            /stats/comp_calendar/
-            /stats/all_upcoming_comps.json
-            /stats/comp_names_zh.json
-            /stats/records/history/gender/
-            /stats/date_match_pr.json
-            /stats/tied_podium_results.json
-            /stats/complete_competition_winners.json
-            /stats/scramble/2x2_essential.json
-            /stats/scramble/puzzle_distribution.json
-            /stats/scramble/recent_scrambles.json
-            /stats/scramble/distribution.json
-            /stats/scramble/examples.json
-            /stats/scramble/examples_wca_*.json
-            /stats/scramble/examples_stage/
             /solver/333opt/inject.mjs
             /solver/333opt/data_paths.mjs
           filter: blob:none
