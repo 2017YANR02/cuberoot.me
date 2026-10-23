@@ -1,0 +1,267 @@
+[
+  {
+    "path": "app/[lang]/account/page.tsx",
+    "call": "useQueryState('view') history='push'",
+    "reason": "账户主页、登录和管理子页面导航"
+  },
+  {
+    "path": "app/[lang]/alg/[puzzle]/[set]/run/TrainerRunClient.tsx",
+    "call": "useQueryState('split') history='push'",
+    "reason": "进入或退出分屏训练界面"
+  },
+  {
+    "path": "app/[lang]/alg/_roux/RouxTrainer.tsx",
+    "call": "useQueryState('m') history='push'",
+    "reason": "训练主要模式导航"
+  },
+  {
+    "path": "app/[lang]/alg/commutator/page.tsx",
+    "call": "useQueryState('tab') history='push'",
+    "reason": "交换子工具、说明和导入功能导航"
+  },
+  {
+    "path": "app/[lang]/calc/page.tsx",
+    "call": "useQueryState('live') history='push'",
+    "reason": "打开比赛实时计算会话"
+  },
+  {
+    "path": "app/[lang]/cube-history/page.tsx",
+    "call": "useQueryState('view') history='push'",
+    "reason": "魔方历史内容视图及具体型号详情"
+  },
+  {
+    "path": "app/[lang]/cube-history/page.tsx",
+    "call": "useQueryState('model') history='push'",
+    "reason": "魔方历史内容视图及具体型号详情"
+  },
+  {
+    "path": "app/[lang]/dev/architecture/_components/HistoryJourney.tsx",
+    "call": "useQueryState('mode') history='push'",
+    "reason": "进入历史游戏或打开指定日期的内容"
+  },
+  {
+    "path": "app/[lang]/dev/architecture/_components/HistoryJourney.tsx",
+    "call": "useQueryState('day') history='push'",
+    "reason": "进入历史游戏或打开指定日期的内容"
+  },
+  {
+    "path": "app/[lang]/drive/page.tsx",
+    "call": "useQueryState('view') history='push'",
+    "reason": "文件、共享与回收站导航及文件预览"
+  },
+  {
+    "path": "app/[lang]/drive/page.tsx",
+    "call": "useQueryState('preview') history='push'",
+    "reason": "文件、共享与回收站导航及文件预览"
+  },
+  {
+    "path": "app/[lang]/feedback/page.tsx",
+    "call": "useQueryState('id') history='push'",
+    "reason": "打开具体反馈详情"
+  },
+  {
+    "path": "app/[lang]/friends/page.tsx",
+    "call": "useQueryState('view') history='push'",
+    "reason": "好友管理功能与聊天会话导航"
+  },
+  {
+    "path": "app/[lang]/friends/page.tsx",
+    "call": "useQueryState('peer') history='push'",
+    "reason": "好友管理功能与聊天会话导航"
+  },
+  {
+    "path": "app/[lang]/math/god/page.tsx",
+    "call": "useQueryState('event') history='push'",
+    "reason": "进入具体项目的上帝之数详情"
+  },
+  {
+    "path": "app/[lang]/meet/MeetClient.tsx",
+    "call": "useQueryState('room') history='push'",
+    "reason": "会议大厅功能及进入会议房间"
+  },
+  {
+    "path": "app/[lang]/meet/MeetLobby.tsx",
+    "call": "useQueryState('view') history='push'",
+    "reason": "会议大厅功能及进入会议房间"
+  },
+  {
+    "path": "app/[lang]/meet/page.tsx",
+    "call": "useQueryState('room') history='push'",
+    "reason": "会议大厅功能及进入会议房间"
+  },
+  {
+    "path": "app/[lang]/music/page.tsx",
+    "call": "useQueryState('view') history='push'",
+    "reason": "曲库、播放器和歌词页面导航"
+  },
+  {
+    "path": "app/[lang]/nemesizer/page.tsx",
+    "call": "useQueryState('mode') history='push'",
+    "reason": "切换对手分析主要模式"
+  },
+  {
+    "path": "app/[lang]/notation/page.tsx",
+    "call": "useQueryState('puzzle') history='push'",
+    "reason": "进入不同魔方的记号内容或记号训练"
+  },
+  {
+    "path": "app/[lang]/notation/page.tsx",
+    "call": "useQueryState('train') history='push'",
+    "reason": "进入不同魔方的记号内容或记号训练"
+  },
+  {
+    "path": "app/[lang]/pets/PetsPage.tsx",
+    "call": "useQueryState('scene') history='push'",
+    "reason": "打开宠物场景"
+  },
+  {
+    "path": "app/[lang]/quiz/page.tsx",
+    "call": "useQueryState('cat') history='push'",
+    "reason": "进入题目分类练习"
+  },
+  {
+    "path": "app/[lang]/regulation/logs/page.tsx",
+    "call": "setState({entry}) history='push'",
+    "reason": "打开具体版本日志正文"
+  },
+  {
+    "path": "app/[lang]/scramble/analyzer/page.tsx",
+    "call": "useQueryState('tool') history='push'",
+    "reason": "切换分析工具"
+  },
+  {
+    "path": "app/[lang]/scramble/stats/page.tsx",
+    "call": "useQueryState(k('tab')) history='push'",
+    "reason": "进入难度、长度或首次出现时间线内容"
+  },
+  {
+    "path": "app/[lang]/scramble/stats/page.tsx",
+    "call": "useQueryState(k('view')) history='push'",
+    "reason": "进入难度、长度或首次出现时间线内容"
+  },
+  {
+    "path": "app/[lang]/scramble/symmetry/page.tsx",
+    "call": "useQueryState('view') history='push'",
+    "reason": "切换对称搜索主要功能"
+  },
+  {
+    "path": "app/[lang]/sim/SimPage.tsx",
+    "call": "useQueryStates({tool}) history='push'",
+    "reason": "切换模拟、拍摄、涂色或图像工具"
+  },
+  {
+    "path": "app/[lang]/timer/_components/SolverHintPanel.tsx",
+    "call": "useQueryState(HINTS_PARAM) history='push'",
+    "reason": "打开求解提示浮层，后退关闭浮层"
+  },
+  {
+    "path": "app/[lang]/timer/_components/SolverHintPanel.tsx",
+    "call": "setSheetOpen(true) history=replace ? 'replace' : 'push'",
+    "reason": "打开求解提示浮层，后退关闭浮层"
+  },
+  {
+    "path": "app/[lang]/timer/_shell/TimerShell.tsx",
+    "call": "useQueryState('training') history='push'",
+    "reason": "进入训练或多人计时界面"
+  },
+  {
+    "path": "app/[lang]/timer/_shell/TimerShell.tsx",
+    "call": "useQueryState('players') history='push'",
+    "reason": "进入训练或多人计时界面"
+  },
+  {
+    "path": "app/[lang]/timer/_shell/TimerTrainingMenu.tsx",
+    "call": "useQueryStates(queryParsers) history='push'",
+    "reason": "进入具体训练工具或计时项目"
+  },
+  {
+    "path": "app/[lang]/training/[orgSlug]/page.tsx",
+    "call": "useQueryState('assignment') history='push'",
+    "reason": "打开课程作业"
+  },
+  {
+    "path": "app/[lang]/tutorial/f2l/page.tsx",
+    "call": "useQueryState('step') history='push'",
+    "reason": "进入课程章节"
+  },
+  {
+    "path": "app/[lang]/tutorial/lbl/BasicsCards.tsx",
+    "call": "useQueryStates({topic,basics}) history='push'",
+    "reason": "进入课程章节、知识主题或练习界面"
+  },
+  {
+    "path": "app/[lang]/tutorial/lbl/page.tsx",
+    "call": "useQueryState('step') history='push'",
+    "reason": "进入课程章节、知识主题或练习界面"
+  },
+  {
+    "path": "app/[lang]/tutorial/lbl/page.tsx",
+    "call": "useQueryState('view') history='push'",
+    "reason": "进入课程章节、知识主题或练习界面"
+  },
+  {
+    "path": "app/[lang]/wca/comp/[slug]/CompDetailPage.tsx",
+    "call": "useQueryState('view') history='push'",
+    "reason": "比赛成绩、预排名、赛程等主要标签导航"
+  },
+  {
+    "path": "app/[lang]/wca/comp/page.tsx",
+    "call": "useQueryState('view') history='push'",
+    "reason": "进入或离开地球视图；列表布局切换另用 replace"
+  },
+  {
+    "path": "app/[lang]/wca/comp/page.tsx",
+    "call": "setViewMode('calendar') history=viewMode === 'globe' ? 'push' : 'replace'",
+    "reason": "进入或离开地球视图；列表布局切换另用 replace"
+  },
+  {
+    "path": "app/[lang]/wca/comp/page.tsx",
+    "call": "setViewMode('card') history=viewMode === 'globe' ? 'push' : 'replace'",
+    "reason": "进入或离开地球视图；列表布局切换另用 replace"
+  },
+  {
+    "path": "app/[lang]/wca/comp/page.tsx",
+    "call": "setViewMode('list') history=viewMode === 'globe' ? 'push' : 'replace'",
+    "reason": "进入或离开地球视图；列表布局切换另用 replace"
+  },
+  {
+    "path": "app/[lang]/wca/persons/[wcaId]/PersonDetailClient.tsx",
+    "call": "useQueryState('records') history='push'",
+    "reason": "选手 PR、PB 和历史排名内容导航"
+  },
+  {
+    "path": "components/persons/sections/PersonTabs.tsx",
+    "call": "useQueryState('tab') history='push'",
+    "reason": "选手详情主要标签导航"
+  },
+  {
+    "path": "components/platform/OnlineCompetitionPreview.tsx",
+    "call": "useQueryState('view') history='push'",
+    "reason": "线上比赛角色及主要内容标签导航"
+  },
+  {
+    "path": "components/platform/OnlineCompetitionPreview.tsx",
+    "call": "useQueryState('tab') history='push'",
+    "reason": "线上比赛角色及主要内容标签导航"
+  },
+  {
+    "path": "components/platform/OnlineCompetitions.tsx",
+    "call": "useQueryState('view') history='push'",
+    "reason": "线上比赛管理功能或具体报名详情"
+  },
+  {
+    "path": "components/platform/OnlineCompetitions.tsx",
+    "call": "useQueryState('view') history='push'",
+    "reason": "线上比赛管理功能或具体报名详情"
+  },
+  {
+    "path": "components/platform/OnlineCompetitions.tsx",
+    "call": "useQueryState('entry') history='push'",
+    "reason": "线上比赛管理功能或具体报名详情"
+  },
+  {
+    "path": "components/platform/PlatformRouteView.tsx",
+    "call": "useQueryState('lesson') history='push'",
+    "reason": "打开具体课程课时"
+  }
+]

@@ -246,6 +246,7 @@ H11 在本机仅允许源码实现、静态检查和不接触 H11 表文件的�
 
 - 页内状态进 URL 一律 `useQueryState`,禁裸 `history.pushState/replaceState` + 手写 `popstate`(maplibre/canvas/video 重组件例外加注释豁免)。CI `tests/url-state-no-raw-history.test.ts`(豁免加 ALLOWLIST + eslint-disable + 理由)。
 - 大视图/大 tab/全屏浮层 → `.withOptions({ history: 'push' })`;筛选/排序/搜索 → 默认 replace;默认值 `.withDefault(x)`;枚举 `parseAsStringEnum`。
+- 分页、列表/卡片布局、日历日周月显示、项目/轮次筛选、训练范围与练习内换题同样用 replace；URL 仍保留可分享状态，返回不应逐次撤销这些操作。真实内容导航（详情、课程章节、聊天会话、全屏浮层）才用 push。CI `tests/url-state-no-raw-history.test.ts` 用 AST 核对显式 `history: 'push'`（含条件分支及 setter 覆盖）；新增导航须在 `core/packages/client/scripts/navigation-history-allowlist.json` 按具体文件、调用和理由登记，禁止整页放行或为通过检查把筛选冒充导航。此守卫不替代对 router/AppLink 和间接动态配置的审阅。
 - 沉浸浮层返回用 `history.back()`,`history.length<=1` fallback 硬导航父路由。
 - `useQueryState` 只在页级 client 组件用,禁进全局 chrome;重排 query key 顺序走 `AppNuqsAdapter` 的 `processUrlSearchParams`。
 - 范本:`app/[lang]/wca/comp/page.tsx` 的 `viewMode`。
