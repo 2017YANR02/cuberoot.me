@@ -21,7 +21,7 @@ export default function ForumFeedPage() {
     'sort', parseAsStringEnum<ForumFeedSort>(SORTS).withDefault('active'),
   );
   const [page, setPage] = useQueryState(
-    'page', parseAsInteger.withDefault(1).withOptions({ history: 'push' }),
+    'page', parseAsInteger.withDefault(1).withOptions({ history: 'replace' }),
   );
   const [size, setSize] = useQueryState('size', parseAsInteger.withDefault(20));
   const safePage = Math.max(1, page);

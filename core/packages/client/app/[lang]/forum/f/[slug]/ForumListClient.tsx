@@ -39,7 +39,7 @@ export default function ForumListClient() {
   }, [pathname]);
 
   const [page, setPage] = useQueryState(
-    'page', parseAsInteger.withDefault(1).withOptions({ history: 'push' }));
+    'page', parseAsInteger.withDefault(1).withOptions({ history: 'replace' }));
   const [size, setSize] = useQueryState('size', parseAsInteger.withDefault(25));
   const [sort, setSort] = useQueryState(
     'sort', parseAsStringEnum<Sort>(SORTS).withDefault('activity'));

@@ -776,16 +776,16 @@ export default function CompDetailPage() {
   // 比赛关注「盯一下」— 与首页 / 比赛列表共用同一份 server 关注集合
   const { loggedIn: followLoggedIn, follows, toggle: toggleFollow } = useCompFollows();
 
-  // URL 状态走 nuqs。导航型(项目 / 轮次 / 视图)默认 push,后退可逐步返回;
-  // 项目多选 / 筛选 / 赛程布局 / 数据源覆盖走 replace 不堆历史。多键联动(项目+轮次)
+  // URL 状态走 nuqs。导航型(视图)默认 push,后退可逐步返回;
+  // 项目 / 轮次 / 多选 / 筛选 / 赛程布局 / 数据源覆盖走 replace 不堆历史。多键联动(项目+轮次)
   // 用各自 setter 同 tick 调用,nuqs 自动合并;需要 replace 写入时传 per-call { history: 'replace' }。
   const [eventQuery, setEventParam] = useQueryState(
     'event',
-    parseAsString.withDefault('').withOptions({ history: 'push', scroll: false }),
+    parseAsString.withDefault('').withOptions({ history: 'replace', scroll: false }),
   );
   const [roundQuery, setRoundUrlParam] = useQueryState(
     'round',
-    parseAsString.withDefault('').withOptions({ history: 'push', scroll: false }),
+    parseAsString.withDefault('').withOptions({ history: 'replace', scroll: false }),
   );
   const [viewQuery, setExplicitView] = useQueryState(
     'view',

@@ -215,7 +215,7 @@ export default function TrainerRunClient() {
   // 训练范围:subgroup 页的训练按钮带 ?scope=<组slug> 进来,只练该组(筛选/默认 replace)
   const [scopeParam, setScopeParam] = useQueryState(
     'scope',
-    parseAsString.withOptions({ history: 'push' }),
+    parseAsString.withOptions({ history: 'replace' }),
   );
   // 旧数字制子组 slug(u1 / pi 1 / as1 …)→ 新方向制(ur / pif / asf …),老 ?scope= 链接 / 书签不失效(migration 0081)
   // 合练没有子组范围可言(?scope= 是某一套内部的分组),一律忽略
@@ -813,7 +813,7 @@ export default function TrainerRunClient() {
         if (e.code === 'Enter' || e.code === 'Space' || e.code === 'ArrowRight') {
           e.preventDefault();
           // 分轮次的范围:「下一轮」是换一批 case(换 URL),不是重洗本轮
-          if (nextRoundHrefRef.current) router.push(nextRoundHrefRef.current);
+          if (nextRoundHrefRef.current) router.replace(nextRoundHrefRef.current);
           else st0.continueRecapRound();
         } else if (e.code === 'Escape') {
           // 关闭只收起本人的提示,不重置房间的共享队列。
@@ -1510,6 +1510,7 @@ export default function TrainerRunClient() {
                         {sessionSets.length > 1 && (
                           <Link
                             href={sessionHref(sessionSets.filter(s => s !== slug))}
+                            replace
                             className="trainer-mix-chip-x"
                             aria-label={tr({ zh: `不练 ${setLabel(puzzle, slug)}`, en: `Drop ${setLabel(puzzle, slug)}` })}
                             title={tr({ zh: '从本场移除', en: 'Remove from this drill' })}
@@ -1525,7 +1526,7 @@ export default function TrainerRunClient() {
                       value=""
                       onChange={e => {
                         const slug = e.target.value;
-                        if (slug) router.push(sessionHref([...sessionSets, slug]));
+                        if (slug) router.replace(sessionHref([...sessionSets, slug]));
                       }}
                       aria-label={tr({ zh: '加一套公式集', en: 'Add a set' })}
                     >
@@ -2349,7 +2350,7 @@ export default function TrainerRunClient() {
                 </button>
               )}
               {nextRoundHref ? (
-                <Link className="trainer-round-modal-btn" href={nextRoundHref} prefetch={false} autoFocus>
+                <Link className="trainer-round-modal-btn" href={nextRoundHref} replace prefetch={false} autoFocus>
                   {tr({ zh: '进入下一轮', en: 'Next round' })}
                 </Link>
               ) : (

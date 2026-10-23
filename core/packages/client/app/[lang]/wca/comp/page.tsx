@@ -2220,7 +2220,7 @@ function CalendarPageInner() {
             role="tab"
             aria-selected={viewMode === 'calendar'}
             className={`view-btn ${viewMode === 'calendar' ? 'is-active' : ''}`}
-            onClick={() => setViewMode('calendar')}
+            onClick={() => setViewMode('calendar', { history: viewMode === 'globe' ? 'push' : 'replace' })}
             aria-label={tr({ zh: '日历', en: 'Calendar'
             })}
             title={tr({ zh: '日历', en: 'Calendar'
@@ -2232,7 +2232,7 @@ function CalendarPageInner() {
             role="tab"
             aria-selected={viewMode === 'card'}
             className={`view-btn ${viewMode === 'card' ? 'is-active' : ''}`}
-            onClick={() => setViewMode('card')}
+            onClick={() => setViewMode('card', { history: viewMode === 'globe' ? 'push' : 'replace' })}
             aria-label={tr({ zh: '卡片', en: 'Cards' })}
             title={tr({ zh: '卡片', en: 'Cards' })}
           >
@@ -2242,7 +2242,7 @@ function CalendarPageInner() {
             role="tab"
             aria-selected={viewMode === 'list'}
             className={`view-btn ${viewMode === 'list' ? 'is-active' : ''}`}
-            onClick={() => { setViewMode('list'); setMode('all'); }}
+            onClick={() => { setViewMode('list', { history: viewMode === 'globe' ? 'push' : 'replace' }); setMode('all'); }}
             aria-label={tr({ zh: '列表', en: 'List' })}
             title={tr({ zh: '列表', en: 'List' })}
           >

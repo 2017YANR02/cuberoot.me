@@ -99,7 +99,7 @@ export default function CalendarClient() {
   // ── URL 状态 ────────────────────────────────────────────────────────────
   const [viewParam, setViewParam] = useQueryState(
     'view',
-    parseAsStringEnum([...VIEW_KEYS]).withDefault('timeGridWeek').withOptions({ history: 'push' }),
+    parseAsStringEnum([...VIEW_KEYS]).withDefault('timeGridWeek').withOptions({ history: 'replace' }),
   );
   const [dateParam, setDateParam] = useQueryState('d', parseAsString.withDefault(''));
   const view: ViewKey = isViewKey(viewParam) ? viewParam : 'timeGridWeek';

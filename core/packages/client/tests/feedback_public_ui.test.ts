@@ -16,7 +16,7 @@ describe('public feedback UI contract', () => {
   it('loads the public feed and keeps pagination in URL state', () => {
     const page = read('app/[lang]/feedback/page.tsx');
     expect(page).toContain("fetchPublicFeedback(safePage, safeSize, status === 'all' ? undefined : status)");
-    expect(page).toContain("parseAsInteger.withDefault(1).withOptions({ history: 'push' })");
+    expect(page).toContain("parseAsInteger.withDefault(1).withOptions({ history: 'replace' })");
     expect(page).toContain('<FeedbackConversation feedbackId={it.id}');
     expect(page).toContain('<UserContactLink userId={it.userId} className="fbm-author">{author}</UserContactLink>');
     expect(page).not.toContain('<UserIdLabel');

@@ -46,7 +46,7 @@ export default function RegulationLogs() {
     </header>
     <div className="reg-logs-controls">
       <div className="reg-logs-kinds" role="group" aria-label={t('日志分类', 'Log category')}>
-        {KINDS.map((k) => <button className="reg-logs-kind" key={k.id} type="button" aria-pressed={state.kind === k.id} onClick={() => void setState({ kind: k.id, entry: null }, { history: 'push' })}>{tr(k.title)}</button>)}
+        {KINDS.map((k) => <button className="reg-logs-kind" key={k.id} type="button" aria-pressed={state.kind === k.id} onClick={() => void setState({ kind: k.id, entry: null }, { history: 'replace' })}>{tr(k.title)}</button>)}
       </div>
       <input className="reg-logs-search" type="search" value={state.q} aria-label={t('搜索日志', 'Search logs')} placeholder={t('搜索日志', 'Search logs')} onChange={(event) => void setState({ q: event.target.value, entry: null })} />
       <BoolToggle className="reg-logs-compare" value={compare} onChange={(value) => void setState({ view: value ? 'compare' : 'text' })} label={t('中英对照', 'Chinese / English')} />

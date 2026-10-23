@@ -43,7 +43,7 @@ function moveLabel(move: string): string {
 
 export default function Practice({ step }: { step: typeof LBL_STEPS[number] }) {
   const [textMoves, setTextMoves] = useState(false);
-  const [question, setQuestion] = useQueryState('case', parseAsInteger.withDefault(1).withOptions({ history: 'push' }));
+  const [question, setQuestion] = useQueryState('case', parseAsInteger.withDefault(1).withOptions({ history: 'replace' }));
   const index = Math.max(0, Math.min(step.examples.length - 1, question - 1));
   return <main className="lbl-page lbl-practice-page">
     <header className="lbl-header"><BackHome /><Link href={`/tutorial/lbl?step=${step.id}`} prefetch={false}>{tr(step.title)}</Link><h1><T zh="分步练习" en="Guided practice" /></h1></header>

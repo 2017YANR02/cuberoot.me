@@ -43,7 +43,7 @@ export default function LsllGroupClient() {
 
   const [cls, setCls] = useQueryState(
     'cls',
-    parseAsStringEnum(['2', '3']).withDefault('2').withOptions({ history: 'push' }),
+    parseAsStringEnum(['2', '3']).withDefault('2').withOptions({ history: 'replace' }),
   );
   const twoLook = cls === '3';
   const [eoBad, setEoBad] = useQueryState('eo', parseAsInteger.withDefault(-1));

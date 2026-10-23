@@ -183,12 +183,12 @@ export default function NameStatsView({ data, isZh, queryKey = 'type', nameMode:
   // 指标 tab(词数 / 字符长度);名字口径四态(英文名 / 全名 / 本地名 / 含曾用名)
   const [tab, setTab] = useQueryState(
     queryKey,
-    parseAsStringEnum(['parts', 'length']).withDefault('parts').withOptions({ history: 'push' }),
+    parseAsStringEnum(['parts', 'length']).withDefault('parts').withOptions({ history: 'replace' }),
   );
   // 名字口径:外部受控(与名录共用同一 URL 状态)优先,否则内部 nuqs 自管
   const [internalNameMode, setInternalNameMode] = useQueryState(
     `${queryKey}_name`,
-    parseAsStringEnum<NameMode>([...NAME_MODES]).withDefault('latin').withOptions({ history: 'push' }),
+    parseAsStringEnum<NameMode>([...NAME_MODES]).withDefault('latin').withOptions({ history: 'replace' }),
   );
   const nameMode: NameMode = nameModeProp ?? internalNameMode;
   const setNameMode = (m: NameMode) => { if (onNameModeChange) onNameModeChange(m); else setInternalNameMode(m); };

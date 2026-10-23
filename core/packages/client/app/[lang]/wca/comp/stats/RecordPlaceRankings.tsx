@@ -326,7 +326,7 @@ export function RecordPlaceRankings() {
   );
   const [view, setView] = useQueryState(
     'recordPlace',
-    parseAsStringEnum<RecordPlaceView>([...RECORD_PLACE_VIEWS]).withDefault('country').withOptions({ history: 'push', scroll: false }),
+    parseAsStringEnum<RecordPlaceView>([...RECORD_PLACE_VIEWS]).withDefault('country').withOptions({ history: 'replace', scroll: false }),
   );
   const [countryQuery, setCountryQuery] = useQueryState(
     'recordCountry',

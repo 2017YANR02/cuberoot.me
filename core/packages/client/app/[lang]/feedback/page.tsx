@@ -43,7 +43,7 @@ export default function FeedbackPage() {
   const login = useAuthStore((s) => s.login);
   const [mounted, setMounted] = useState(false);
   const [page, setPage] = useQueryState(
-    'page', parseAsInteger.withDefault(1).withOptions({ history: 'push' }),
+    'page', parseAsInteger.withDefault(1).withOptions({ history: 'replace' }),
   );
   const [size, setSize] = useQueryState('size', parseAsInteger.withDefault(20));
   const [status, setStatus] = useQueryState('status', parseAsStringEnum(STATUS_FILTERS).withDefault('all'));

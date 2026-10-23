@@ -46,7 +46,7 @@ export default function LsllHubPage() {
   const result = useMemo<LocateResult | null>(() => query.trim() ? locateFromScramble(query) : null, [query]);
   const [cls, setCls] = useQueryState(
     'cls',
-    parseAsStringEnum(['2', '3']).withDefault('2').withOptions({ history: 'push' }),
+    parseAsStringEnum(['2', '3']).withDefault('2').withOptions({ history: 'replace' }),
   );
   const twoLook = cls === '3';
   const suffix = twoLook ? '?cls=3' : '';

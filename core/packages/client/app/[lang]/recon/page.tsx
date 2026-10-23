@@ -290,12 +290,12 @@ export default function ReconListPage() {
     };
   };
 
-  // ── 列表 / 卡片视图切换（进 URL，后退可返回）──
+  // ── 列表 / 卡片布局切换（替换 URL，不堆积返回记录）──
   // 显式写视图：grid / list 都挂 ?view=（clearOnDefault:false 关掉默认省略），
   // 这样卡片视图也显示 ?view=grid。
   const [viewMode, setViewMode] = useQueryState(
     'view',
-    parseAsStringEnum<ViewMode>(VIEW_MODES).withDefault('grid').withOptions({ history: 'push', clearOnDefault: false }),
+    parseAsStringEnum<ViewMode>(VIEW_MODES).withDefault('grid').withOptions({ history: 'replace', clearOnDefault: false }),
   );
   const [unsolvedOnly, setUnsolvedOnly] = useQueryState(
     'unsolved',

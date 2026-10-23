@@ -556,7 +556,7 @@ function SitesPageInner() {
   const admin = mounted && isAdmin();
   const [viewMode, setViewMode] = useQueryState(
     'view',
-    parseAsStringEnum<ViewMode>(VIEW_MODES).withDefault('list').withOptions({ history: 'push', clearOnDefault: false }),
+    parseAsStringEnum<ViewMode>(VIEW_MODES).withDefault('list').withOptions({ history: 'replace', clearOnDefault: false }),
   );
 
   const [params, setQuery] = useQueryStates(

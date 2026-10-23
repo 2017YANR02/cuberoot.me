@@ -44,7 +44,7 @@ export default function ThreadClient() {
   }, [pathname]);
 
   const [page, setPage] = useQueryState(
-    'page', parseAsInteger.withDefault(1).withOptions({ history: 'push' }));
+    'page', parseAsInteger.withDefault(1).withOptions({ history: 'replace' }));
   const [size, setSize] = useQueryState('size', parseAsInteger.withDefault(SIZE_DEFAULT));
 
   const [data, setData] = useState<ThreadPageData | null>(null);

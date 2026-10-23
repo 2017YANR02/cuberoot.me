@@ -23,7 +23,7 @@ import './f2l.css';
 
 export default function F2lTutorial() {
   const [stepId, setStepId] = useQueryState('step', parseAsStringEnum(F2L_CHAPTERS.map(chapter => chapter.id)).withDefault('lesson-1').withOptions({ history: 'push', clearOnDefault: false }));
-  const [caseId, setCaseId] = useQueryState('case', parseAsStringEnum(F2L_CASES.map(item => item.id)).withDefault(ORDERED_BASIC_CASES[0].id).withOptions({ history: 'push' }));
+  const [caseId, setCaseId] = useQueryState('case', parseAsStringEnum(F2L_CASES.map(item => item.id)).withDefault(ORDERED_BASIC_CASES[0].id).withOptions({ history: 'replace' }));
   const [orientation, setOrientation] = useState('');
   const [pauseBetween, setPauseBetween] = useState(true);
   useEffect(() => {
