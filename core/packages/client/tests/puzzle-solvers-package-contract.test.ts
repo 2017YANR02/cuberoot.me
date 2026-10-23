@@ -68,6 +68,7 @@ const PUBLIC_SUBPATHS = [
   'cross-trainer/xpair',
   'pyra',
   'pyraminx-duo',
+  'pyraminx-duo-geometry-reference',
   'magic',
   'native-puzzles',
   'native-puzzle-model',

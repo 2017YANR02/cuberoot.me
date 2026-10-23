@@ -29,7 +29,7 @@
   border-radius: 8px;
   padding: 0.25rem 0.45rem;
 }
-.exact-distribution-coverage-search input {
+.exact-distribution-coverage-query {
   width: min(15rem, 58vw);
   min-width: 0;
   border: 0;
@@ -41,7 +41,7 @@
 .exact-distribution-coverage-search:focus-within {
   outline: 1px solid var(--ring);
 }
-.exact-distribution-coverage-search input:focus {
+.exact-distribution-coverage-query:focus {
   outline: none;
 }
 .exact-distribution-coverage-list {

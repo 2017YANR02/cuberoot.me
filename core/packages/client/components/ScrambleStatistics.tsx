@@ -113,7 +113,7 @@ function StatisticsBody({ compId, scramble, optimalScramble, resolveOriginal = f
       {missing && !data?.failed && <p className="scramble-statistics-status">{tr({ zh: '— 尚未统计', en: '— Not yet computed' })}</p>}
       {data?.failed && <p className="scramble-statistics-status" role="status">
         {tr({ zh: '部分统计加载失败', en: 'Some statistics could not be loaded' })}
-        {' '}<button type="button" onClick={() => setAttempt(value => value + 1)}>{tr({ zh: '重试', en: 'Retry' })}</button>
+        {' '}<button type="button" className="scramble-statistics-retry" onClick={() => setAttempt(value => value + 1)}>{tr({ zh: '重试', en: 'Retry' })}</button>
       </p>}
     </section>
   );

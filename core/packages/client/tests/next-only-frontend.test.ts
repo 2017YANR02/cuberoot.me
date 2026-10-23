@@ -33,7 +33,8 @@ describe('website frontend is Next-only', () => {
   };
 
   it('uses Next for development, build, and production start', () => {
-    expect(pkg.scripts?.dev).toContain('next dev');
+    expect(pkg.scripts?.dev).toContain('turbo watch dev:serve');
+    expect(pkg.scripts?.['dev:serve']).toContain('next dev');
     expect(pkg.scripts?.build).toContain('next build');
     expect(pkg.scripts?.start).toContain('next start');
   });

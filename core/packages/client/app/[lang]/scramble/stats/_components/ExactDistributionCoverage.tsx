@@ -44,7 +44,7 @@ export default function ExactDistributionCoverage() {
           <p>{tr(PUZZLE_DISTRIBUTION_COVERAGE_SCOPE)}</p>
           <div className="exact-distribution-coverage-controls">
             <div className="exact-distribution-coverage-search">
-              <input value={query} onChange={event => setQuery(event.currentTarget.value)}
+              <input className="exact-distribution-coverage-query" value={query} onChange={event => setQuery(event.currentTarget.value)}
                 placeholder={tr({ zh: '搜索项目', en: 'Search puzzles' })}
                 aria-label={tr({ zh: '搜索覆盖项目', en: 'Search coverage entries' })} />
               {query && <ClearButton onClick={() => setQuery('')} />}

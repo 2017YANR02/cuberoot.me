@@ -65,7 +65,7 @@
 .scramble-statistics-metrics > div { display: flex; gap: 0.3rem; align-items: baseline; white-space: nowrap; }
 .scramble-statistics b { font-weight: 600; font-variant-numeric: tabular-nums; }
 .scramble-statistics-status { margin: 0.35rem 0 0; font-size: 0.75rem; }
-.scramble-statistics-status button {
+.scramble-statistics-retry {
     appearance: none;
     background: none;
     border: 0;
@@ -74,4 +74,4 @@
     font: inherit;
     cursor: pointer;
 }
-.scramble-statistics-status button:focus-visible { outline: 2px solid var(--ring); }
+.scramble-statistics-retry:focus-visible { outline: 2px solid var(--ring); }
