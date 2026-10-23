@@ -7,6 +7,8 @@ export { checkRateLimit } from './rate_limit.js';
 import type { Context } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import jwt from 'jsonwebtoken';
+import { query } from '../db/connection.js';
+import { countryToIso2 } from '@cuberoot/shared/country-flag';
 import { validateReconTiming } from '@cuberoot/shared/recon-completion';
 import { ADMIN_WCA_IDS, BANNED_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
 export { ADMIN_WCA_IDS } from '@cuberoot/shared/admin';
@@ -621,4 +623,22 @@ export function assertReconTextLengths(fields: Record<string, unknown>): void {
       });
     }
   }
+}
+
+/** Resolve a competition's host country at the write boundary, including partial edits. */
+export async function normalizeReconCompetitionCountry(
+  row: Record<string, unknown>,
+  existing: Record<string, unknown> = {},
+): Promise<void> {
+  const compId = String(('comp_wca_id' in row ? row.comp_wca_id : existing.comp_wca_id) ?? '').trim();
+  const changed = 'comp_wca_id' in row && compId !== String(existing.comp_wca_id ?? '').trim();
+  // A replacement/cleared competition must not inherit the previous host country.
+  if (changed && !('country' in row)) row.country = null;
+  if (!compId) return;
+  const comps = await query<{ country_id: string }>(
+    'SELECT country_id FROM wca_competitions WHERE id = ? LIMIT 1', [compId],
+  );
+  const country = countryToIso2(comps[0]?.country_id ?? '');
+  // Recent or non-WCA competitions may not be in the local WCA index yet.
+  if (country) row.country = country;
 }

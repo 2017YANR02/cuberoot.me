@@ -20,8 +20,8 @@ import {
 import { compLinkProps } from '@/lib/comp-link';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { loadFlagData, flagDataVersion, personFlagIso2 } from '@/lib/country-flags';
+import { CompCell } from '@/components/CompCell/CompCell';
 import { Flag } from '@/components/Flag';
-import { localizeCompName } from '@/lib/comp-localize';
 import { reconPathSeg } from '@/lib/recon-seo';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { RecordBadge } from '@/components/RecordBadge';
@@ -277,8 +277,7 @@ export default function ReconPersonClient() {
                       { name: s.person || '', id: s.personId, country: s.personCountry },
                       ...(s.coPersons ?? []),
                     ].filter(c => c.name);
-                    const compName = s.comp ? localizeCompName(s.compWcaId ?? '', s.comp, isZh, { date: s.date }) : '';
-                    const compFlag = s.country ? <Flag iso2={s.country} className="recon-inline-flag" /> : null;
+                    const compName = s.comp ? <CompCell compId={s.compWcaId ?? ''} compName={s.comp} country={s.country} isZh={isZh} date={s.date ?? null} /> : null;
                     return (
                       <tr
                         key={s.id}
@@ -321,7 +320,6 @@ export default function ReconPersonClient() {
                           </span>
                         </td>
                         <td className="col-comp">
-                          {compFlag}{' '}
                           {s.compWcaId
                             ? <Link {...compLinkProps(s.compWcaId)} onClick={(e) => e.stopPropagation()}>{compName}</Link>
                             : compName}

@@ -23,6 +23,7 @@ import {
 import { compLinkProps } from '@/lib/comp-link';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { loadFlagData, flagDataVersion, personFlagIso2 } from '@/lib/country-flags';
+import { CompCell } from '@/components/CompCell/CompCell';
 import { Flag } from '@/components/Flag';
 import { localizeCompName } from '@/lib/comp-localize';
 import { reconPathSeg } from '@/lib/recon-seo';
@@ -868,13 +869,10 @@ export default function ReconListPage() {
       case 'date':
         return solve.date ? solve.date.slice(0, 10) : '';
       case 'comp': {
-        const flag = solve.country ? <Flag iso2={solve.country} className="recon-inline-flag" /> : null;
-        const rawName = solve.comp || '';
-        const displayName = localizeCompName(solve.compWcaId ?? '', rawName, isZh, { date: solve.date });
+        const displayName = <CompCell compId={solve.compWcaId ?? ''} compName={solve.comp} country={solve.country} isZh={isZh} date={solve.date ?? null} />;
         if (solve.compWcaId) {
           return (
             <>
-              {flag}{' '}
               <Link
                 {...compLinkProps(solve.compWcaId)}
                 onClick={(e) => e.stopPropagation()}
@@ -884,7 +882,7 @@ export default function ReconListPage() {
             </>
           );
         }
-        return <>{flag} {displayName}</>;
+        return displayName;
       }
       case 'round':
         return formatRound(solve.round, solve.solveNum);

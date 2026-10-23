@@ -11,7 +11,7 @@ import path from 'node:path';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import {
-  rowToJson, jsonToRow, validateRow, assertReconTextLengths,
+  rowToJson, jsonToRow, validateRow, assertReconTextLengths, normalizeReconCompetitionCountry,
   requireAuth, requireAdmin, optionalAuth, checkRateLimit,
   visibilityDiscoverFilter, visibilityOwnerFilter,
   buildInsert, buildUpdate, buildDuplicateQuery, buildSameScrambleQuery, DUP_REASONS,
@@ -732,6 +732,9 @@ reconRoutes.post('/recon/save-edit', async (c) => {
   // 字段级合并:PG jsonb || 是浅合并,右覆盖左(等价 MariaDB JSON_MERGE_PATCH 的扁平场景)
   // postgres@3 自带 jsonb 序列化器,这里直接传对象,driver 单次 stringify 即可。
   // 之前手动 JSON.stringify 会被 driver 再编码一次,落地变 jsonb 字符串字面量。
+  const competitionRow = jsonToRow(normalizedFields);
+  await normalizeReconCompetitionCountry(competitionRow, current[0]);
+  if ('country' in competitionRow) normalizedFields.country = competitionRow.country;
   await query(
     `INSERT INTO edits (solve_id, fields, edited_at) VALUES (?, ?::jsonb, ?)
      ON CONFLICT (solve_id) DO UPDATE SET
@@ -1300,6 +1303,8 @@ reconRoutes.post('/recon', async (c) => {
   body.id = Number(inserted[0].id);
   await revalidateReconPages(body.id as number);
   return c.json(body);
+  await normalizeReconCompetitionCountry(row);
+  if ('country' in row) body.country = row.country;
 });
 
 // PUT /v1/recon/:id — 更新复盘
@@ -1374,6 +1379,7 @@ reconRoutes.put('/recon/:id', async (c) => {
 
 // DELETE /v1/recon/:id — 删除复盘
 reconRoutes.delete('/recon/:id', async (c) => {
+  await normalizeReconCompetitionCountry(row, existing[0]);
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));
   const authUser = await requireAuth(c);

@@ -13,8 +13,8 @@ import { reconCoverCandidates, coverSyncSrc, coverPreviewSrc, loadBiliCover, loa
 import { ProgressiveImage } from '@/components/ProgressiveImage';
 import { formatAvg, formatReconSingle } from '@/lib/recon-utils';
 import { displayCuberName } from '@/lib/cuber-name-display';
+import { CompCell } from '@/components/CompCell/CompCell';
 import { Flag } from '@/components/Flag';
-import { localizeCompName } from '@/lib/comp-localize';
 import { RecordBadge } from '@/components/RecordBadge';
 import { EventIcon } from '@/components/EventIcon';
 import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
@@ -109,7 +109,6 @@ export function ReconCard({ solve, isZh, href, horizontal = false, showScrambleF
     ...(solve.coPersons ?? []).map(c => ({ name: c.name, id: c.id, country: c.country })),
   ].filter(c => c.name);
   const single = formatReconSingle(solve.event, solve.value, solve.rawTime);
-  const compName = localizeCompName(solve.compWcaId ?? '', solve.comp || '', isZh);
 
   return (
     <Link href={href} prefetch={false} className={`recon-card${horizontal ? ' recon-card--row' : ''}`}>
@@ -154,8 +153,7 @@ export function ReconCard({ solve, isZh, href, horizontal = false, showScrambleF
             </span>
           )}
           <span className="recon-card-foot">
-            {solve.country ? <Flag iso2={solve.country} className="recon-inline-flag" /> : null}
-            <span className="recon-card-comp">{compName || tr({ zh: '非官方', en: 'Unofficial' })}</span>
+            <span className="recon-card-comp">{solve.comp ? <CompCell compId={solve.compWcaId ?? ''} compName={solve.comp} country={solve.country} isZh={isZh} date={null} /> : tr({ zh: '非官方', en: 'Unofficial' })}</span>
           </span>
         </div>
       </div>

@@ -45,6 +45,7 @@ import { eventDisplayName, toWcaEventId } from '@/lib/wca-events';
 import { EventIcon } from '@/components/EventIcon';
 import { loadFlagData, flagDataVersion, personFlagIso2 } from '@/lib/country-flags';
 import { Flag } from '@/components/Flag';
+import { CompCell } from '@/components/CompCell/CompCell';
 import { localizeCompName } from '@/lib/comp-localize';
 import { displayCity } from '@/lib/city-display';
 import { cleanForPlayer, countMovesExpanded } from '@/lib/recon-alg-utils';
@@ -268,14 +269,13 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
           {solve.date && <span className="detail-meta-item">{solve.date.slice(0, 10)}</span>}
           {solve.comp && (
             <span className="detail-meta-item">
-              {solve.country && <Flag iso2={solve.country} className="recon-inline-flag" />}
               <span>
                 {/* 同一条 meta bar 左边已经写着日期 —— 比赛名里的年号剥掉 */}
                 {solve.compWcaId ? (
                   <Link {...compLinkProps(solve.compWcaId)}>
-                    {localizeCompName(solve.compWcaId ?? '', solve.comp, isZh, { date: solve.date })}
+                    <CompCell compId={solve.compWcaId ?? ''} compName={solve.comp} country={solve.country} isZh={isZh} date={solve.date ?? null} />
                   </Link>
-                ) : localizeCompName(solve.compWcaId ?? '', solve.comp, isZh, { date: solve.date })}
+                ) : <CompCell compId={solve.compWcaId ?? ''} compName={solve.comp} country={solve.country} isZh={isZh} date={solve.date ?? null} />}
                 {solve.round && (isZh ? `，${localizeRound(solve.round, t)}` : `, ${localizeRound(solve.round, t)}`)}
               </span>
             </span>

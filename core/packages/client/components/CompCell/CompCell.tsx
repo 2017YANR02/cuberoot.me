@@ -1,8 +1,9 @@
 'use client';
 
 // Ported from packages/client-vite/src/components/CompCell/CompCell.tsx.
+import { useEffect, useState } from 'react';
 import { Flag } from '@/components/Flag';
-import { compFlagIso2 } from '@/lib/country-flags';
+import { compFlagIso2, loadFlagData } from '@/lib/country-flags';
 import { localizeCompName } from '@/lib/comp-localize';
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
   compName?: string | null;
   isZh: boolean;
   noFlag?: boolean;
+  country?: string | null;
   /**
    * 同一行 / 同一卡片上已经显示的比赛日期或年份('2026-07-25' / '2026'):传入即从比赛名里
    * 剥掉重复的年号(全站规则,见 lib/comp-localize.ts 的 stripCompYear)。
@@ -18,8 +20,15 @@ interface Props {
   date: string | null;
 }
 
-export function CompCell({ compId, compName, isZh, noFlag, date }: Props) {
-  const iso2 = compFlagIso2(compId);
+export function CompCell({ compId, compName, isZh, noFlag, date, country }: Props) {
+  const [, setLoaded] = useState(false);
+  useEffect(() => {
+    let active = true;
+    void loadFlagData({ persons: false }).then(() => { if (active) setLoaded(true); });
+    return () => { active = false; };
+  }, []);
+  // Imported recon rows may omit country even though their competition ID is valid.
+  const iso2 = country || compFlagIso2(compId);
   const display = localizeCompName(compId, compName ?? compId, isZh, { date });
   return (
     <span className="comp-cell">
