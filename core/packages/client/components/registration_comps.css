@@ -92,6 +92,25 @@
   white-space: nowrap;
 }
 
+.rc-details { display: contents; }
+.rc-details--compact {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35em;
+  min-width: 0;
+  white-space: nowrap;
+}
+.rc-details--compact :is(.rc-meta, .rc-place) {
+  flex-wrap: nowrap;
+  font-size: inherit;
+}
+.rc-details--compact .rc-meta { flex-shrink: 0; }
+.rc-details--compact .rc-place { min-width: 0; }
+.rc-details--compact .rc-place > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .rc-meta {
   display: flex;
   align-items: center;

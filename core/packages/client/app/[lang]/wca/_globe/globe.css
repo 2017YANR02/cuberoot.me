@@ -6,7 +6,7 @@
     --text: #171717;
     --text-sub: #737373;
     --border: #e5e5e5;
-    --accent: #C15F3C;
+    --accent: var(--user-accent, #C15F3C);
     --accent-soft: rgba(193, 95, 60, 0.12);
 
     position: relative;
@@ -25,7 +25,7 @@
     --text: #ECEAE3;
     --text-sub: #9CA0A8;
     --border: #2F3540;
-    --accent: #E07752;
+    --accent: var(--user-accent, #E07752);
     --accent-soft: rgba(224, 119, 82, 0.20);
 }
 
@@ -181,7 +181,7 @@
     --text: #ECEAE3;
     --text-sub: #9CA0A8;
     --border: #2F3540;
-    --accent: #E07752;
+    --accent: var(--user-accent, #E07752);
     --accent-soft: rgba(224, 119, 82, 0.20);
 
     flex-shrink: 0;
@@ -909,7 +909,7 @@
 .globe-page .density-btn:hover { color: var(--text); }
 .globe-page .density-btn.is-active {
     background: var(--accent);
-    color: #FFF;
+    color: var(--user-accent-foreground, #FFF);
 }
 .globe-page .density-btn:not(:last-child) { border-right: 1px solid var(--border); }
 .globe-page .density-btn-icon { flex-shrink: 0; }
@@ -1057,7 +1057,7 @@
     height: 30px;
     border-radius: 50%;
     background: var(--accent);
-    color: #FFF;
+    color: var(--user-accent-foreground, #FFF);
     border: none;
     cursor: pointer;
     flex-shrink: 0;

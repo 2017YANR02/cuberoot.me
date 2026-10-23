@@ -122,13 +122,13 @@
   padding: 10px 12px 12px;
   min-width: 0;
 }
-/* 表头风格:成绩 项目 选手名 同一行,名字溢出省略,不换行 */
+/* 成绩与项目优先同行；姓名放不下时换行，完整展示。 */
 .recon-card-head {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px 8px;
   min-width: 0;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 .recon-card-result {
   font-size: 1.15rem;
@@ -149,14 +149,13 @@
 .recon-card-evt .cubing-icon,
 .recon-card-evt svg { width: 1.05em; height: 1.05em; }
 .recon-card-solver {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--foreground);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 /* 均值 + 比赛同一行,放不下时比赛折行 */
 .recon-card-sub {

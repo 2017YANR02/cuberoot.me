@@ -17,13 +17,13 @@ import { countryName } from '@/lib/country-name';
 import { useRecentRecords, RecentRecordsList } from '@/components/RecentRecords';
 import { useAnnouncedComps, AnnouncedCard } from '@/components/AnnouncedComps';
 import { RegistrationView } from '@/components/RegistrationComps';
-import { useCompFollows } from '@/components/CompFollow';
+import type { CompFollowState } from '@/components/CompFollow';
 import { countActionableReg } from '@/lib/comp-registration';
 import './ongoing_comps.css';
 import './scroll_panel.css';
 import { tr } from '@/i18n/tr';
 
-interface Props { lang: 'zh' | 'en' }
+interface Props { lang: 'zh' | 'en'; compFollows: CompFollowState }
 
 type TabKey = 'announced' | 'registration' | 'upcoming' | 'inProgress' | 'past' | 'records';
 
@@ -142,15 +142,15 @@ function CompChip({ comp, lang, isZh, showFlag }: {
   );
 }
 
-export default function OngoingComps({ lang }: Props) {
+export default function OngoingComps({ lang, compFollows }: Props) {
   const isZh = lang === 'zh';
   const [comps, setComps] = useRetainedState<Comp[] | null>('home:comps', null);
   const [tab, setTab] = useState<TabKey | null>(null);
   const { filled: records } = useRecentRecords(isZh);
   const announced = useAnnouncedComps();
   const announcedList = announced ?? [];
-  // 全 5 个比赛标签共用一份关注状态(单次 fetch,统一乐观态),下发给卡片 / chip。
-  const { loggedIn, follows, toggle } = useCompFollows();
+  // 与首页个人比赛区域共用关注状态，星标操作立即同步。
+  const { loggedIn, follows, toggle } = compFollows;
 
   useEffect(() => {
     let mounted = true;

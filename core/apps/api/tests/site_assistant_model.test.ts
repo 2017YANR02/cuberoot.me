@@ -2,6 +2,24 @@ import {it,expect,vi} from 'vitest';
 import {createAssistantModel} from '../src/utils/site_assistant_model.js';
 const config={key:'fixture',baseUrl:'https://api.deepseek.com',model:'deepseek-flash'};
 const options={system:'Use JSON for the answer.',context:{question:'question'},finalOnly:false,thinking:true,effort:'low' as const,maxTokens:2048};
+it('retains ordinary conversation roles and bounds older context without duplicating it in the question',async()=>{
+  const fetcher=vi.fn<typeof fetch>().mockResolvedValue(response({content:JSON.stringify({answerKind:'general',answer:'A follow-up.',sourceIds:[]})}));
+  const history=[{role:'user' as const,content:'First request'},{role:'assistant' as const,content:'Earlier answer'}];
+  const result=await createAssistantModel(config,fetcher,AbortSignal.timeout(2000),'',history).complete({...options,thinking:false});
+  const request=JSON.parse(String(fetcher.mock.calls[0][1]?.body));
+  expect(request.messages.filter((message:{role:string})=>message.role!=='system').slice(0,2)).toMatchObject(history);
+  expect(JSON.parse(request.messages.at(-1).content)).toEqual({question:'question'});
+  expect(result.answerKind).toBe('general');
+});
+it('enables bounded reasoning for supported Qwen while unknown compatible providers stay fast',async()=>{
+  const fetcher=vi.fn<typeof fetch>().mockImplementation(async()=>response({content:JSON.stringify({answer:'Done',sourceIds:[]})}));
+  const qwen={...config,model:'qwen3.8-flash',baseUrl:'https://dashscope.aliyuncs.com/compatible-mode/v1'};
+  await createAssistantModel(qwen,fetcher,AbortSignal.timeout(2000),'').complete({...options,maxTokens:16384});
+  const request=JSON.parse(String(fetcher.mock.calls[0][1]?.body));
+  expect(request).toMatchObject({enable_thinking:true,preserve_thinking:false,thinking_budget:4096,max_completion_tokens:8192,response_format:{type:'json_object'}});
+  await createAssistantModel({...qwen,baseUrl:'https://other.invalid/v1'},fetcher,AbortSignal.timeout(2000),'').complete({...options,maxTokens:16384});
+  expect(JSON.parse(String(fetcher.mock.calls[1][1]?.body))).toMatchObject({enable_thinking:false,max_tokens:4096});
+});
 it('sends actual image parts in their original turns through the compatible provider',async()=>{
   const image={mediaType:'image/png' as const,data:'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a0u8AAAAASUVORK5CYII='};
   const fetcher=vi.fn<typeof fetch>().mockResolvedValue(response({content:JSON.stringify({answer:'A visible number.',sourceIds:[]})}));

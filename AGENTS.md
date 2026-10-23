@@ -74,6 +74,7 @@ WXML 表达式直接写 `&&` / `||`，禁 HTML 实体；改 WXML 后必须通过
 
 > **团队提交政策（2026-10-11）**：默认只改本地，不自动提交或推送。用户要求发布时，所有已有仓库写入权限的成员及使用其已授权账号的 AI 均可直接 commit → push main，无需 PR、他人审批或个人豁免。PR 可按需使用。推送前同步最新 main、解决冲突并完成必要验证，推送后确认适用的 CI 和部署结果；GitHub 不再以 PR 或检查通过作为普通推送的前置门槛。保留禁止强推、禁止删除主分支的保护，不夹带他人改动。当次指令优先。
 
+- 小改动不单独提交；同一功能积累较多代码改动后再集中提交，明确要求立即提交时除外。
 - 当次明确指令优先：用户说“仅本地/不 push”“只建 PR/先别合并”“不要部署”等时按当次范围执行；仅要求分析或评审的任务不自动变成修改与发布任务。
 - 发布授权以本节和当次任务为准；Skill 中的常规 push/上传/workflow 提示不另设重复确认关卡。沿用平台和工具实际提供的权限与交互要求；本授权不授予新账号访问权，也不替代必须由用户完成的安全交接。
 - 充分使用用户已经授予且实际可用的仓库写入权限，不擅自扩大账号权限。没有写入权限的贡献者仍通过 PR 交付。需要用户亲自操作或缺少必要信息时，说明具体原因和所需的一步。
@@ -269,6 +270,7 @@ H11 在本机仅允许源码实现、静态检查和不接触 H11 表文件的�
 - 文案走 `tr({en,zh})` / `<T en zh/>` / `useT()`;长文/复用走 `t()` + `en.json`/`zh.json`;HTML lang `en`/`zh-Hans`。
 - 禁内联 `isZh`/`i18n.language` 文案三元(`isZh ? '中' : 'EN'`);`isZh` 仅可作 util 参数。守卫:hook + CI ratchet。细则调 skill `i18n`。
 - 魔方术语 zh 以 `client/app/[lang]/wiki/glossary.json` 为准,禁直译;陷阱表+黑名单守卫见 skill `i18n`。
+- 翻译 WCA 规则、公告或意外事件记录前，先读 [WCA 英中翻译参考](core/packages/client/public/regulation/wca-translation-reference.md)，再按条款号查同目录 `wca-regulations-bilingual.md`；网页入口 `/regulation/translation`。保留版本、主体、义务强弱和处罚范围，原译疑点单列，不把对齐语料视为已逐句审核。一般社区术语仍查词典。
 - 教程项目选择器的 ivy 中文短名固定为「枫叶」,禁加通用品类后缀。
 - 站内违禁词表 `.codex/banned-words.json`(hook `block-banned-words` 写入即拦,`.codex/` 自身豁免);用户说「添加违禁词:x」= 往该表加 `{word,use,why}` 一条。行内豁免注释 `allow-banned-word`。
 

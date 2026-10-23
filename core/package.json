@@ -23,7 +23,7 @@
     "stats:scramble:local": "tsx ../scripts/stats/update-local.ts",
     "stats:scramble:publish": "tsx ../scripts/stats/update-published.ts",
     "build:cubing-worker": "node scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks",
-    "dev:next": "turbo dev --filter=@cuberoot/client",
+    "dev:next": "pnpm --filter @cuberoot/client dev",
     "dev:server": "turbo dev --filter=@cuberoot/server",
     "build": "turbo build",
     "typecheck": "turbo typecheck",

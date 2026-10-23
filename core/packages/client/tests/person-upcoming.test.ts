@@ -14,6 +14,21 @@ vi.mock('@/lib/wca-api', () => ({
 }));
 
 describe('person upcoming competitions', () => {
+  it('merges registrations and follows once, including follows without a WCA registration', async () => {
+    const { selectPersonUpcomingCompetitions } = await import('@/lib/person-upcoming');
+    const competitions = [
+      { id: 'Registered', start_date: '2026-10-25', end_date: '2026-10-25' },
+      { id: 'Followed', start_date: '2026-10-24', end_date: '2026-10-24' },
+      { id: 'Ended', start_date: '2026-10-20', end_date: '2026-10-20' },
+    ].map((comp) => ({ ...comp, name: comp.id, country: 'cn' }));
+    const followedIds = new Set(['Followed', 'Registered', 'Ended']);
+
+    expect(selectPersonUpcomingCompetitions(['Registered', ...followedIds], competitions, '2026-10-23')
+      .map((comp) => comp.id)).toEqual(['Followed', 'Registered']);
+    expect(selectPersonUpcomingCompetitions([...followedIds], competitions, '2026-10-23')
+      .map((comp) => comp.id)).toEqual(['Followed', 'Registered']);
+  });
+
   it('filters stale registrations by end date, retaining ongoing and future competitions', async () => {
     const { selectPersonUpcomingCompetitions } = await import('@/lib/person-upcoming');
     const dates = [

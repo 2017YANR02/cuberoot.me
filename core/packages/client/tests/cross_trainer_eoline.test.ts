@@ -15,7 +15,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { drawTrainerState, stageMetric, type TrainerSpec } from '@/lib/cross-trainer';
+import { applyMove, drawTrainerState, stageMetric, trainerSolution, type TrainerSpec } from '@/lib/cross-trainer';
 import { COLOR_FACE, type FaceIdx } from '@/lib/cross-trainer/model';
 import {
   EOLINE_MAX_DEPTH, EOLINE_STATES, EO_MAX_DEPTH, eoDistCapped, eoHistogram, eoLineDist,
@@ -84,6 +84,31 @@ describe('cross-trainer / pure EO + EOLine tables', () => {
 // ── the samplers ─────────────────────────────────────────────────────────────────────────────
 
 describe('cross-trainer / EO + EOLine draws', () => {
+  it('fixed EO axes generate every depth and answer on that exact axis', () => {
+    let easierOnAnotherAxis = false;
+    for (const axis of [0, 1, 2] as const) {
+      for (let depth = 0; depth <= EO_MAX_DEPTH; depth++) {
+        const spec: TrainerSpec = {
+          variant: 'eoline', stage: 'eo', colors: 'BGORWY', slot: 0,
+          eoAxis: axis, lo: depth, hi: depth,
+        };
+        const got = drawTrainerState(spec, lcg(100 + axis * 8 + depth));
+        expect(got.ok).toBe(true);
+        if (!got.ok) throw new Error('fixed EO draw failed');
+        expect(validateCubie(got.state)).toBe(null);
+        expect(got.depth).toBe(depth);
+        expect(eoDistCapped(got.state, axis, EO_MAX_DEPTH)).toBe(depth);
+        const solution = trainerSolution(spec, got.state)!;
+        expect(solution.frame.axis).toBe(axis);
+        expect(solution.moves).toHaveLength(depth);
+        expect(eoDistCapped(solution.moves.reduce(applyMove, got.state), axis, EO_MAX_DEPTH)).toBe(0);
+        if (stageMetric('eoline', 'eo', got.state, 'BGORWY') < depth) easierOnAnotherAxis = true;
+      }
+    }
+    // Fixing an axis must not silently reject states that are easier on another axis.
+    expect(easierOnAnotherAxis).toBe(true);
+  });
+
   for (const [stage, top] of [['eo', EO_MAX_DEPTH], ['eoline', EOLINE_MAX_DEPTH]] as const) {
     it(`${stage}: every depth draws at exactly that depth, on a legal cube`, () => {
       for (let d = 0; d <= top; d++) {

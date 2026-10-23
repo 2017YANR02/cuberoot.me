@@ -174,7 +174,8 @@
 
 .news-heading-admin { grid-template-columns: 44px minmax(0, 1fr) auto; }
 .news-feature-action { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; max-width: 180px; font-size: 13px; }
-.news-feature-button { min-height: 44px; padding: 8px 14px; border: 1px solid var(--border-default); border-radius: 10px; background: transparent; color: var(--foreground); cursor: pointer; white-space: nowrap; }
+.news-feature-button { display: inline-flex; align-items: center; justify-content: center; width: 44px; min-height: 44px; padding: 8px; border: none; border-radius: 10px; background: transparent; color: var(--muted-foreground); cursor: pointer; }
+.news-feature-button[aria-pressed="true"] { color: var(--accent); }
 .news-feature-button:hover { background: var(--muted); }
 .news-feature-button:disabled { opacity: .6; cursor: wait; }
 .news-feature-button:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }

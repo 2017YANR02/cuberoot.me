@@ -12,9 +12,15 @@ on:
       - 'ops/systemd/pg-dump-recon.service'
       - '.github/workflows/deploy_ops_bin.yml'
 
+concurrency:
+  group: deploy-ops-bin
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      DEPLOY_STAGE: /tmp/cuberoot-ops-bin-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v4
 
@@ -29,14 +35,25 @@ jobs:
           ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
       - name: scp scripts to staging
+        id: staging
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
+          [[ "$DEPLOY_STAGE" =~ ^/tmp/cuberoot-ops-bin-[0-9]+-[0-9]+$ ]] || exit 1
+          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s -- "$DEPLOY_STAGE" <<'REMOTE'
+          set -euo pipefail
+          DEPLOY_STAGE=$1
+          [[ "$DEPLOY_STAGE" =~ ^/tmp/cuberoot-ops-bin-[0-9]+-[0-9]+$ ]] || exit 1
+          [[ ! -L /tmp && "$(realpath -e -- /tmp)" = /tmp ]] || exit 1
+          umask 077
+          mkdir -- "$DEPLOY_STAGE"
+          REMOTE
+          echo 'created=true' >> "$GITHUB_OUTPUT"
           scp -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/id \
-            ops/bin/*.sh "$DEPLOY_USER@$DEPLOY_HOST:/tmp/"
+            ops/bin/*.sh "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_STAGE/"
           scp -i ~/.ssh/id ops/systemd/pg-dump-recon.service \
-            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cuberoot-pg-dump-recon.service"
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_STAGE/cuberoot-pg-dump-recon.service"
 
       - name: Apply + bash -n + rollback on failure
         env:
@@ -46,14 +63,26 @@ jobs:
           # 注意:此处 ssh 不能带 -n —— 远端脚本经 heredoc 走 stdin,-n 会把 stdin 重定向到
           # /dev/null 丢掉整个 heredoc,bash -s 收不到任何命令 → 静默空跑(报 success 却什么都没部署).
           ssh -T -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/id \
-            "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'REMOTE'
-          set -e
+            "$DEPLOY_USER@$DEPLOY_HOST" bash -s -- "$DEPLOY_STAGE" <<'REMOTE'
+          set -euo pipefail
+          DEPLOY_STAGE=$1
+          [[ "$DEPLOY_STAGE" =~ ^/tmp/cuberoot-ops-bin-[0-9]+-[0-9]+$ ]] || exit 1
+          [[ -d "$DEPLOY_STAGE" && ! -L "$DEPLOY_STAGE" && -O "$DEPLOY_STAGE" ]] || exit 1
+          [[ "$(realpath -e -- "$DEPLOY_STAGE")" = "$DEPLOY_STAGE" ]] || exit 1
           DEST=/usr/local/bin
-          TS=$(date +%s)
+          TS=${DEPLOY_STAGE##*/}
+          replace_file() {
+            local source=$1 target=$2 mode=$3 next
+            next=$(mktemp "$(dirname "$target")/.cuberoot-deploy.XXXXXXXX")
+            if ! install -m "$mode" -- "$source" "$next" || ! mv -f -- "$next" "$target"; then
+              rm -f -- "$next"
+              return 1
+            fi
+          }
 
           # bash -n 语法检查所有 staging 脚本(语法错就 abort,不动现网)
           UNKNOWN_FOUND=0
-          for f in /tmp/*.sh; do
+          for f in "$DEPLOY_STAGE"/*.sh; do
             [ -f "$f" ] || continue
             base=$(basename "$f")
             # 只接受我们认得的脚本名,防止误传别的 .sh
@@ -62,21 +91,19 @@ jobs:
               *)
                 # ⚠️ 警告但不 abort;若 ops/bin/ 加了新 .sh 但忘了改 case,日志能发现
                 echo "::warning::SKIP unknown $base — add to case list in deploy_ops_bin.yml"
-                rm -f "$f"
                 UNKNOWN_FOUND=1
                 continue
                 ;;
             esac
             if ! bash -n "$f"; then
               echo "ERROR: bash -n failed on $base, abort"
-              rm -f /tmp/*.sh
               exit 1
             fi
           done
           [ "$UNKNOWN_FOUND" = 1 ] && echo "(some unknown scripts skipped above; check warning lines)"
 
           # cmp 跳过无变化 + 备份现网 + 替换 + chmod
-          for f in /tmp/*.sh; do
+          for f in "$DEPLOY_STAGE"/*.sh; do
             [ -f "$f" ] || continue
             base=$(basename "$f")
             case "$base" in
@@ -93,18 +120,35 @@ jobs:
               cp "$target" "${target}.bak-${TS}"
               echo "backup: ${target}.bak-${TS}"
             fi
-            cp "$f" "$target"
-            chmod +x "$target"
+            replace_file "$f" "$target" 0755
             rm -f "$f"
             echo "deployed: $base"
           done
           # Native EnvironmentFile supplies DB_PASS even when systemd has no NVM PATH.
           unit=/etc/systemd/system/pg-dump-recon.service
-          if ! cmp -s "$unit" /tmp/cuberoot-pg-dump-recon.service; then
+          if ! cmp -s "$unit" "$DEPLOY_STAGE/cuberoot-pg-dump-recon.service"; then
             mkdir -p /var/backups/cuberoot-ops-units
             [ ! -f "$unit" ] || cp "$unit" "/var/backups/cuberoot-ops-units/pg-dump-recon.service.$TS"
-            install -m 644 /tmp/cuberoot-pg-dump-recon.service "$unit"
+            replace_file "$DEPLOY_STAGE/cuberoot-pg-dump-recon.service" "$unit" 0644
             systemctl daemon-reload
           fi
           echo "OK"
+          REMOTE
+
+      - name: Remove this run's staging files
+        if: ${{ always() && steps.staging.outputs.created == 'true' }}
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s -- "$DEPLOY_STAGE" <<'REMOTE'
+          set -euo pipefail
+          DEPLOY_STAGE=$1
+          [[ "$DEPLOY_STAGE" =~ ^/tmp/cuberoot-ops-bin-[0-9]+-[0-9]+$ ]] || exit 1
+          [[ ! -L "$DEPLOY_STAGE" ]] || exit 1
+          [ -e "$DEPLOY_STAGE" ] || exit 0
+          [[ -d "$DEPLOY_STAGE" && -O "$DEPLOY_STAGE" ]] || exit 1
+          [[ "$(realpath -e -- "$DEPLOY_STAGE")" = "$DEPLOY_STAGE" ]] || exit 1
+          find "$DEPLOY_STAGE" -xdev -mindepth 1 -maxdepth 1 -type f -delete
+          rmdir -- "$DEPLOY_STAGE"
           REMOTE

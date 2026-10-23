@@ -2898,6 +2898,11 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     ? (
         <SolverHintPanel
           scramble={scramble}
+          onScrambleChange={timerCanSwitchScramble(timer.phase) ? manualScrambles => {
+            if (!canSwitchScramble()) return;
+            updateSettings({ scrambleSource: 'manual', manualScrambles });
+            setManualEditing(false);
+          } : undefined}
           isZh={isZh}
           autoCollapseOnReady={timer.phase === 'ready' && bluetoothCube.status.connected}
           autoOpenOnSolve={solverOpenRequest}

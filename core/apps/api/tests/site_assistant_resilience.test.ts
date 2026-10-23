@@ -12,6 +12,39 @@ const createSiteAssistantRoutes = (deps: Omit<Parameters<typeof createRoutes>[0]
 const secret='test-only-service-signing-secret-32-chars';
 afterEach(()=>{vi.restoreAllMocks();vi.unstubAllEnvs();});
 describe('assistant resilience',()=>{
+  it('reads dated official news without loading competition indexes',async()=>{
+    vi.useFakeTimers();vi.setSystemTime(new Date('2026-10-23T12:00:00Z'));
+    try {
+      const fetcher=vi.fn<typeof fetch>()
+        .mockResolvedValueOnce(model([{tool:'news',limit:5}]))
+        .mockResolvedValueOnce(new Response('<rss><channel><item><title>Official update</title><link>https://www.worldcubeassociation.org/posts/update</link><pubDate>2026-10-20T12:00:00Z</pubDate><description>Published facts.</description></item></channel></rss>'))
+        .mockResolvedValueOnce(model({answer:'本周 WCA 官方消息：公告已更新。[[news:update]]',sourceIds:['news:update']}));
+      const result=await answerSiteQuestion('这周魔方圈有什么新闻？','zh',config,new AbortController().signal,withCatalog(fetcher),[],undefined,undefined,'Asia/Shanghai');
+      expect(fetcher.mock.calls[1][0]).toBe('https://www.worldcubeassociation.org/rss.xml');
+      expect(fetcher).toHaveBeenCalledTimes(3);
+      expect(result.sources[0].href).toBe('https://www.worldcubeassociation.org/posts/update');
+      const context=JSON.parse(JSON.parse(String(fetcher.mock.calls[2][1]?.body)).messages[1].content);
+      expect(context.evidence[0].data).toMatchObject({from:'2026-10-19',to:'2026-10-25',timeZone:'Asia/Shanghai'});
+    } finally { vi.useRealTimers(); }
+  });
+  it.each(['timeout','network','gateway'])('recovers one transient %s data read without repeating model planning',async failure=>{
+    const fetcher=vi.fn<typeof fetch>().mockResolvedValueOnce(model([{tool:'glossary',query:'CFOP'}]));
+    if(failure==='gateway') fetcher.mockResolvedValueOnce(new Response('',{status:503}));
+    else fetcher.mockRejectedValueOnce(failure==='timeout'?new DOMException('timeout','TimeoutError'):new TypeError('fetch failed'));
+    fetcher.mockResolvedValueOnce(Response.json({sections:[]})).mockResolvedValueOnce(model({answer:'No matching term found.'}));
+    await answerSiteQuestion('CFOP','en',config,AbortSignal.timeout(5000),withCatalog(fetcher));
+    expect(fetcher).toHaveBeenCalledTimes(4);
+    expect(fetcher.mock.calls[1][0]).toBe(fetcher.mock.calls[2][0]);
+  });
+  it('stops after a second source timeout and does not retry an aborted request',async()=>{
+    const fetcher=vi.fn<typeof fetch>().mockResolvedValueOnce(model([{tool:'glossary',query:'CFOP'}])).mockRejectedValue(new DOMException('timeout','TimeoutError'));
+    await expect(answerSiteQuestion('CFOP','en',config,AbortSignal.timeout(5000),withCatalog(fetcher))).rejects.toMatchObject({code:'timeout'});
+    expect(fetcher).toHaveBeenCalledTimes(3);
+    const controller=new AbortController();
+    const aborted=vi.fn<typeof fetch>().mockResolvedValueOnce(model([{tool:'glossary',query:'CFOP'}])).mockImplementationOnce(async()=>{controller.abort();throw new TypeError('fetch failed');});
+    await expect(answerSiteQuestion('CFOP','en',config,controller.signal,withCatalog(aborted))).rejects.toThrow();
+    expect(aborted).toHaveBeenCalledTimes(2);
+  });
   it('accepts native tool calls without retry, while still validating every tool',async()=>{
     const fetcher=vi.fn<typeof fetch>()
       .mockResolvedValueOnce(model([{tool:'statistics',id:'example',limit:5}]))

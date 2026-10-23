@@ -6,7 +6,7 @@
   --surface: var(--card);
   --surface-2: var(--secondary);
   --border: var(--border-default);
-  --accent: #2563eb;
+  --accent: var(--user-accent, #2563eb);
   --accent-hover: color-mix(in srgb, var(--accent) 85%, black);
   --success: var(--signal-success);
   --warning: var(--signal-warning);
@@ -139,7 +139,7 @@
 .mosaic-btn:hover { background: var(--surface-2); }
 .mosaic-btn-primary {
   background: var(--accent);
-  color: #fff;
+  color: var(--user-accent-foreground, #fff);
   border-color: var(--accent);
 }
 .mosaic-btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }

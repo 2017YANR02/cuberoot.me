@@ -1,6 +1,7 @@
 import { SITE_ASSISTANT_DAILY_LIMIT, type AssistantErrorCode } from '@cuberoot/shared/site-assistant';
 
 export const ASSISTANT_ERROR_TEXT: Record<AssistantErrorCode, { zh: string; en: string }> = {
+  request_too_large: { zh: '内容超过发送上限。请缩小图片或缩短本条消息后重试。', en: 'This message exceeds the sending limit. Reduce image sizes or shorten this message and retry.' },
   invalid_image: { zh: '图片无法发送。请使用 JPG、PNG 或 WebP，每次最多 3 张，并尝试缩小图片。', en: 'Images could not be sent. Use up to 3 JPG, PNG or WebP images and try reducing their size.' },
   vision_unavailable: { zh: '图片识别暂时不可用，请稍后重试。', en: 'Image understanding is temporarily unavailable. Please try again later.' },
   login_required: { zh: '请先登录并绑定 WCA 账号，再使用 AI 问答。普通搜索仍可使用。', en: 'Sign in and link your WCA account to use AI. Regular search is still available.' },
@@ -10,7 +11,7 @@ export const ASSISTANT_ERROR_TEXT: Record<AssistantErrorCode, { zh: string; en: 
   busy: { zh: '当前提问较多，请稍后重试。', en: 'Too many requests right now. Please try again shortly.' },
   verification_required: { zh: '访问验证已失效，请完成验证后重新提问。', en: 'Access verification is required. Complete verification, then ask again.' },
   source_verification_required: { zh: '资料来源要求验证或拒绝访问，暂时无法读取。请稍后重试。', en: 'A source requires verification or has denied access. Please try again later.' },
-  timeout: { zh: '这次查询超时了，请缩小问题范围后重试。', en: 'This query timed out. Try a more specific question.' },
+  timeout: { zh: '这次查询超时了，请稍后重试。', en: 'This query timed out. Please try again shortly.' },
   network: { zh: '连接中断，请检查网络后重试。', en: 'The connection was interrupted. Check your network and retry.' },
   model_unavailable: { zh: '模型服务暂时无法回答，请稍后重试。', en: 'The model service is temporarily unavailable. Please try again later.' },
   source_unavailable: { zh: '查询资料时发生错误，请稍后重试。', en: 'A data source could not be read. Please try again later.' },

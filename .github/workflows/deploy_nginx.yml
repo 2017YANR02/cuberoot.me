@@ -16,9 +16,16 @@ on:
       - 'ops/journald/**'
       - '.github/workflows/deploy_nginx.yml'
 
+# Keep activation and rollback ordered even though each run has its own staging directory.
+concurrency:
+  group: deploy-web-ops-config
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      DEPLOY_STAGE: /tmp/cuberoot-web-ops-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -41,57 +48,86 @@ jobs:
           ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
       - name: scp confs to staging
+        id: staging
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
+          [[ "$DEPLOY_STAGE" =~ ^/tmp/cuberoot-web-ops-[0-9]+-[0-9]+$ ]] || exit 1
+          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s -- "$DEPLOY_STAGE" <<'REMOTE'
+          set -euo pipefail
+          DEPLOY_STAGE=$1
+          [[ "$DEPLOY_STAGE" =~ ^/tmp/cuberoot-web-ops-[0-9]+-[0-9]+$ ]] || exit 1
+          [[ ! -L /tmp && "$(realpath -e -- /tmp)" = /tmp ]] || exit 1
+          umask 077
+          mkdir -- "$DEPLOY_STAGE"
+          REMOTE
+          echo 'created=true' >> "$GITHUB_OUTPUT"
           scp -i ~/.ssh/id /tmp/cuberoot-cn-ranges.generated \
-            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cuberoot-cn-ranges.conf.new"
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_STAGE/cuberoot-cn-ranges.conf.new"
           scp -i ~/.ssh/id ops/nginx/competition-access.inc \
-            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cuberoot-competition-access.inc.conf.new"
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_STAGE/cuberoot-competition-access.inc.conf.new"
           scp -i ~/.ssh/id ops/nginx/site-access.integration.ts \
-            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/site-access.integration.ts"
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_STAGE/site-access.integration.ts"
           scp -i ~/.ssh/id ops/nginx/scanner-ban.integration.ts \
-            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/scanner-ban.integration.ts"
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_STAGE/scanner-ban.integration.ts"
           scp -i ~/.ssh/id ops/nginx/traffic-defense.integration.ts \
-            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/traffic-defense.integration.ts"
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_STAGE/traffic-defense.integration.ts"
           scp -i ~/.ssh/id ops/vercel-ban-relay/relay.ts ops/vercel-ban-relay/traffic-defense.ts ops/vercel-ban-relay/cuberoot-vercel-bans.service ops/vercel-ban-relay/cuberoot-vercel-bans.timer \
-            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/"
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_STAGE/"
           scp -i ~/.ssh/id ops/geoip/update-cn-ranges.ts ops/systemd/cuberoot-cn-ranges.service ops/systemd/cuberoot-cn-ranges.timer \
-            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/"
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_STAGE/"
           for f in ops/nginx/*.conf; do
             name=$(basename "$f")
             scp -i ~/.ssh/id "$f" \
-              "$DEPLOY_USER@$DEPLOY_HOST:/tmp/${name}.new"
+              "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_STAGE/${name}.new"
           done
           scp -i ~/.ssh/id ops/logrotate/nginx \
-            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/nginx.logrotate.new"
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_STAGE/nginx.logrotate.new"
           scp -i ~/.ssh/id ops/journald/10-cuberoot-disk-cap.conf \
-            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cuberoot-journald.new"
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_STAGE/cuberoot-journald.new"
 
       - name: Verify scanner bans in isolated nginx
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
-          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" \
-            '/root/.nvm/versions/node/v24.14.0/bin/node --experimental-strip-types /tmp/scanner-ban.integration.ts /tmp/02-scanner-ban.conf.new'
-          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" \
-            '/root/.nvm/versions/node/v24.14.0/bin/node --experimental-strip-types /tmp/site-access.integration.ts /tmp/01-traffic-limits.conf.new /tmp/cuberoot-competition-access.inc.conf.new'
-          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" \
-            '/root/.nvm/versions/node/v24.14.0/bin/node --experimental-strip-types /tmp/traffic-defense.integration.ts /tmp/01-traffic-limits.conf.new /tmp/00-maintenance.conf.new'
+          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s -- "$DEPLOY_STAGE" <<'REMOTE'
+          set -euo pipefail
+          DEPLOY_STAGE=$1
+          [[ "$DEPLOY_STAGE" =~ ^/tmp/cuberoot-web-ops-[0-9]+-[0-9]+$ ]] || exit 1
+          [[ -d "$DEPLOY_STAGE" && ! -L "$DEPLOY_STAGE" && -O "$DEPLOY_STAGE" ]] || exit 1
+          [[ "$(realpath -e -- "$DEPLOY_STAGE")" = "$DEPLOY_STAGE" ]] || exit 1
+          NODE=/root/.nvm/versions/node/v24.14.0/bin/node
+          "$NODE" --experimental-strip-types "$DEPLOY_STAGE/scanner-ban.integration.ts" "$DEPLOY_STAGE/02-scanner-ban.conf.new"
+          "$NODE" --experimental-strip-types "$DEPLOY_STAGE/site-access.integration.ts" "$DEPLOY_STAGE/01-traffic-limits.conf.new" "$DEPLOY_STAGE/cuberoot-competition-access.inc.conf.new"
+          "$NODE" --experimental-strip-types "$DEPLOY_STAGE/traffic-defense.integration.ts" "$DEPLOY_STAGE/01-traffic-limits.conf.new" "$DEPLOY_STAGE/00-maintenance.conf.new"
+          REMOTE
 
       - name: Install Vercel ban relay (activate only when credentials are configured)
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
-          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'REMOTE'
-          set -e
+          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s -- "$DEPLOY_STAGE" <<'REMOTE'
+          set -euo pipefail
+          DEPLOY_STAGE=$1
+          [[ "$DEPLOY_STAGE" =~ ^/tmp/cuberoot-web-ops-[0-9]+-[0-9]+$ ]] || exit 1
+          [[ -d "$DEPLOY_STAGE" && ! -L "$DEPLOY_STAGE" && -O "$DEPLOY_STAGE" ]] || exit 1
+          [[ "$(realpath -e -- "$DEPLOY_STAGE")" = "$DEPLOY_STAGE" ]] || exit 1
           install -d -m 0700 /opt/cuberoot-vercel-bans /var/lib/cuberoot-vercel-bans
-          install -m 0600 /tmp/relay.ts /opt/cuberoot-vercel-bans/relay.ts
-          install -m 0600 /tmp/traffic-defense.ts /opt/cuberoot-vercel-bans/traffic-defense.ts
-          install -m 0644 /tmp/cuberoot-vercel-bans.service /tmp/cuberoot-vercel-bans.timer /etc/systemd/system/
+          replace_file() {
+            local source=$1 target=$2 mode=$3 next
+            next=$(mktemp "$(dirname "$target")/.cuberoot-deploy.XXXXXXXX")
+            if ! install -m "$mode" -- "$source" "$next" || ! mv -f -- "$next" "$target"; then
+              rm -f -- "$next"
+              return 1
+            fi
+          }
+          replace_file "$DEPLOY_STAGE/relay.ts" /opt/cuberoot-vercel-bans/relay.ts 0600
+          replace_file "$DEPLOY_STAGE/traffic-defense.ts" /opt/cuberoot-vercel-bans/traffic-defense.ts 0600
+          replace_file "$DEPLOY_STAGE/cuberoot-vercel-bans.service" /etc/systemd/system/cuberoot-vercel-bans.service 0644
+          replace_file "$DEPLOY_STAGE/cuberoot-vercel-bans.timer" /etc/systemd/system/cuberoot-vercel-bans.timer 0644
           systemctl daemon-reload
           if [ -s /etc/cuberoot-vercel-bans.json ]; then
             systemctl enable --now cuberoot-vercel-bans.timer
@@ -112,10 +148,22 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
-          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'REMOTE'
-          set -e
+          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s -- "$DEPLOY_STAGE" <<'REMOTE'
+          set -euo pipefail
+          DEPLOY_STAGE=$1
+          [[ "$DEPLOY_STAGE" =~ ^/tmp/cuberoot-web-ops-[0-9]+-[0-9]+$ ]] || exit 1
+          [[ -d "$DEPLOY_STAGE" && ! -L "$DEPLOY_STAGE" && -O "$DEPLOY_STAGE" ]] || exit 1
+          [[ "$(realpath -e -- "$DEPLOY_STAGE")" = "$DEPLOY_STAGE" ]] || exit 1
           VHOST_DIR=/etc/nginx/vhost.d
-          TS=$(date +%s)
+          TS=${DEPLOY_STAGE##*/}
+          replace_conf() {
+            local source=$1 target=$2 next
+            next=$(mktemp "$(dirname "$target")/.cuberoot-deploy.XXXXXXXX")
+            if ! install -m 0644 -- "$source" "$next" || ! mv -f -- "$next" "$target"; then
+              rm -f -- "$next"
+              return 1
+            fi
+          }
           # Preserve the 30-day journal across deploys and full nginx restarts.
           install -d -o www -g www -m 0700 /var/lib/cuberoot-scanner
           touch /var/lib/cuberoot-scanner/bans.tsv
@@ -137,7 +185,8 @@ jobs:
           declare -a CHANGED=()
           declare -a BACKUPS=()
 
-          for staging in /tmp/*.conf.new; do
+          for staging in "$DEPLOY_STAGE"/*.conf.new; do
+            [ -f "$staging" ] || continue
             name=$(basename "$staging" .new)
             live="${VHOST_DIR}/${name}"
             [ "$name" != cuberoot-cn-ranges.conf ] || live="/etc/nginx/$name"
@@ -153,7 +202,7 @@ jobs:
             else
               BACKUPS+=(":$live")   # new file — rollback = delete
             fi
-            cp "$staging" "$live"
+            replace_conf "$staging" "$live"
             CHANGED+=("$name")
             rm -f "$staging"
           done
@@ -173,7 +222,7 @@ jobs:
               if [ -z "$backup" ]; then
                 rm -f "$live"
               else
-                cp "$backup" "$live"
+                replace_conf "$backup" "$live"
               fi
             done
             nginx -t 2>&1 || echo "WARN: rollback validation also failed!"
@@ -205,7 +254,7 @@ jobs:
               if [ -z "$backup" ]; then
                 rm -f "$live"
               else
-                cp "$backup" "$live"
+                replace_conf "$backup" "$live"
               fi
             done
             nginx -t 2>&1 || echo "WARN: rollback validation also failed!"
@@ -220,10 +269,22 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
-          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'REMOTE'
+          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s -- "$DEPLOY_STAGE" <<'REMOTE'
           set -euo pipefail
-          STAGING=/tmp/nginx.logrotate.new
+          DEPLOY_STAGE=$1
+          [[ "$DEPLOY_STAGE" =~ ^/tmp/cuberoot-web-ops-[0-9]+-[0-9]+$ ]] || exit 1
+          [[ -d "$DEPLOY_STAGE" && ! -L "$DEPLOY_STAGE" && -O "$DEPLOY_STAGE" ]] || exit 1
+          [[ "$(realpath -e -- "$DEPLOY_STAGE")" = "$DEPLOY_STAGE" ]] || exit 1
+          STAGING="$DEPLOY_STAGE/nginx.logrotate.new"
           LIVE=/etc/logrotate.d/nginx
+          replace_policy() {
+            local source=$1 next
+            next=$(mktemp /etc/logrotate.d/.cuberoot-deploy.XXXXXXXX)
+            if ! install -m 0644 -- "$source" "$next" || ! mv -f -- "$next" "$LIVE"; then
+              rm -f -- "$next"
+              return 1
+            fi
+          }
           # /etc/logrotate.d includes arbitrary filenames, including .bak-*.
           BACKUP_DIR=/var/backups/cuberoot-logrotate
           install -d -m 0700 "$BACKUP_DIR"
@@ -250,9 +311,9 @@ jobs:
             cp "$LIVE" "$BACKUP"
             HAD_LIVE=1
           fi
-          install -m 0644 "$STAGING" "$LIVE"
+          replace_policy "$STAGING"
           if ! logrotate --debug /etc/logrotate.conf; then
-            if [ "$HAD_LIVE" -eq 1 ]; then cp "$BACKUP" "$LIVE"; else rm -f "$LIVE"; fi
+            if [ "$HAD_LIVE" -eq 1 ]; then replace_policy "$BACKUP"; else rm -f "$LIVE"; fi
             echo "ERROR: logrotate validation failed; restored $BACKUP" >&2
             exit 1
           fi
@@ -264,11 +325,23 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
-          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'REMOTE'
+          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s -- "$DEPLOY_STAGE" <<'REMOTE'
           set -euo pipefail
-          STAGING=/tmp/cuberoot-journald.new
+          DEPLOY_STAGE=$1
+          [[ "$DEPLOY_STAGE" =~ ^/tmp/cuberoot-web-ops-[0-9]+-[0-9]+$ ]] || exit 1
+          [[ -d "$DEPLOY_STAGE" && ! -L "$DEPLOY_STAGE" && -O "$DEPLOY_STAGE" ]] || exit 1
+          [[ "$(realpath -e -- "$DEPLOY_STAGE")" = "$DEPLOY_STAGE" ]] || exit 1
+          STAGING="$DEPLOY_STAGE/cuberoot-journald.new"
           LIVE=/etc/systemd/journald.conf.d/10-cuberoot-disk-cap.conf
-          BACKUP="${LIVE}.bak-$(date +%s)"
+          BACKUP="${LIVE}.bak-${DEPLOY_STAGE##*/}"
+          replace_policy() {
+            local source=$1 next
+            next=$(mktemp /etc/systemd/journald.conf.d/.cuberoot-deploy.XXXXXXXX)
+            if ! install -m 0644 -- "$source" "$next" || ! mv -f -- "$next" "$LIVE"; then
+              rm -f -- "$next"
+              return 1
+            fi
+          }
           trap 'rm -f -- "$STAGING"' EXIT
 
           test -s "$STAGING"
@@ -283,9 +356,9 @@ jobs:
             cp "$LIVE" "$BACKUP"
             HAD_LIVE=1
           fi
-          install -m 0644 "$STAGING" "$LIVE"
+          replace_policy "$STAGING"
           if ! systemd-analyze cat-config systemd/journald.conf >/dev/null; then
-            if [ "$HAD_LIVE" -eq 1 ]; then cp "$BACKUP" "$LIVE"; else rm -f "$LIVE"; fi
+            if [ "$HAD_LIVE" -eq 1 ]; then replace_policy "$BACKUP"; else rm -f "$LIVE"; fi
             echo "ERROR: journald config validation failed; rolled back" >&2
             exit 1
           fi
@@ -299,12 +372,43 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
-          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'REMOTE'
+          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s -- "$DEPLOY_STAGE" <<'REMOTE'
           set -euo pipefail
+          DEPLOY_STAGE=$1
+          [[ "$DEPLOY_STAGE" =~ ^/tmp/cuberoot-web-ops-[0-9]+-[0-9]+$ ]] || exit 1
+          [[ -d "$DEPLOY_STAGE" && ! -L "$DEPLOY_STAGE" && -O "$DEPLOY_STAGE" ]] || exit 1
+          [[ "$(realpath -e -- "$DEPLOY_STAGE")" = "$DEPLOY_STAGE" ]] || exit 1
           install -d -m 0755 /usr/local/lib/cuberoot
-          install -m 0644 /tmp/update-cn-ranges.ts /usr/local/lib/cuberoot/update-cn-ranges.ts
-          install -m 0644 /tmp/cuberoot-cn-ranges.service /tmp/cuberoot-cn-ranges.timer /etc/systemd/system/
+          replace_file() {
+            local source=$1 target=$2 next
+            next=$(mktemp "$(dirname "$target")/.cuberoot-deploy.XXXXXXXX")
+            if ! install -m 0644 -- "$source" "$next" || ! mv -f -- "$next" "$target"; then
+              rm -f -- "$next"
+              return 1
+            fi
+          }
+          replace_file "$DEPLOY_STAGE/update-cn-ranges.ts" /usr/local/lib/cuberoot/update-cn-ranges.ts
+          replace_file "$DEPLOY_STAGE/cuberoot-cn-ranges.service" /etc/systemd/system/cuberoot-cn-ranges.service
+          replace_file "$DEPLOY_STAGE/cuberoot-cn-ranges.timer" /etc/systemd/system/cuberoot-cn-ranges.timer
           systemd-analyze verify /etc/systemd/system/cuberoot-cn-ranges.service /etc/systemd/system/cuberoot-cn-ranges.timer
           systemctl daemon-reload
           systemctl enable --now cuberoot-cn-ranges.timer
+          REMOTE
+
+      - name: Remove this run's staging files
+        if: ${{ always() && steps.staging.outputs.created == 'true' }}
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s -- "$DEPLOY_STAGE" <<'REMOTE'
+          set -euo pipefail
+          DEPLOY_STAGE=$1
+          [[ "$DEPLOY_STAGE" =~ ^/tmp/cuberoot-web-ops-[0-9]+-[0-9]+$ ]] || exit 1
+          [[ ! -L "$DEPLOY_STAGE" ]] || exit 1
+          [ -e "$DEPLOY_STAGE" ] || exit 0
+          [[ -d "$DEPLOY_STAGE" && -O "$DEPLOY_STAGE" ]] || exit 1
+          [[ "$(realpath -e -- "$DEPLOY_STAGE")" = "$DEPLOY_STAGE" ]] || exit 1
+          find "$DEPLOY_STAGE" -xdev -mindepth 1 -maxdepth 1 -type f -delete
+          rmdir -- "$DEPLOY_STAGE"
           REMOTE

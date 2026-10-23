@@ -47,8 +47,15 @@ test('cleanup removes superseded and expired files but preserves current and que
   const now = Date.parse('2026-10-21T00:00:00Z');
   const assets = ['a', 'b', 'c', 'd'].flatMap(letter => ['wca-data-', 'candidate-'].map(prefix => ({ name: `${prefix}${letter.repeat(64)}${prefix === 'candidate-' ? '.json' : '.tar'}`, created_at: letter === 'd' ? '2026-10-19T00:00:00Z' : '2026-10-21T00:00:00Z' })));
   assets.splice(3, 1); // b is the previous published archive, with no pending candidate.
-  const remove = obsoleteAssets(assets, `wca-data-${'a'.repeat(64)}.tar`, `candidate-${'a'.repeat(64)}.json`, now).map(a => a.name);
+  const remove = obsoleteAssets(assets, `wca-data-${'a'.repeat(64)}.tar`, `candidate-${'a'.repeat(64)}.json`, now, `wca-data-${'b'.repeat(64)}.tar`).map(a => a.name);
   assert.deepEqual(remove, [`candidate-${'a'.repeat(64)}.json`, `wca-data-${'b'.repeat(64)}.tar`, `wca-data-${'d'.repeat(64)}.tar`, `candidate-${'d'.repeat(64)}.json`]);
+});
+
+test('cleanup preserves an archive while its candidate manifest is still uploading', () => {
+  const now = Date.parse('2026-10-21T00:00:00Z');
+  const fresh = { name: `wca-data-${'e'.repeat(64)}.tar`, created_at: new Date(now - 1000).toISOString() };
+  const old = { name: `wca-data-${'f'.repeat(64)}.tar`, created_at: new Date(now - 86_400_001).toISOString() };
+  assert.deepEqual(obsoleteAssets([fresh, old], `wca-data-${'a'.repeat(64)}.tar`, `candidate-${'a'.repeat(64)}.json`, now), [old]);
 });
 
 test('archive preserves all bytes and rejects corruption, missing members and path substitution', t => {

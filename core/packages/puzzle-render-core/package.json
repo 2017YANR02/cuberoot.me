@@ -279,6 +279,7 @@
     "./wca-preview-svg": "./src/wca-preview-svg.ts"
   },
   "scripts": {
+    "dev:build": "pnpm run build",
     "build": "tsc -b && esbuild src/iso-svg.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/iso-svg.js && esbuild src/magic-svg.ts --bundle --packages=external --platform=node --target=node20 --format=esm --outfile=dist/magic-svg.js && esbuild src/sphere-svg.ts --bundle --external:three --external:@cuberoot/stack-kernel --platform=node --target=node20 --format=esm --define:Worker=undefined --minify-syntax --outfile=dist/sphere-svg.js && esbuild src/native-puzzle-svg.ts --bundle --packages=external --platform=node --target=node20 --format=esm --outfile=dist/native-puzzle-svg.js",
     "typecheck": "tsc --noEmit"
   },

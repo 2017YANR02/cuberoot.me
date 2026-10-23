@@ -85,6 +85,8 @@ export interface TrainerSpec {
   colors: string;
   /** Index into slotNamesOf(face), or 'best' = the easiest of the four. */
   slot: number | 'best';
+  /** Pure EO only: fix one axis; omitted keeps the best axis admitted by `colors`. */
+  eoAxis?: EoAxis;
   /** Inclusive optimal-length window. */
   lo: number;
   hi: number;
@@ -145,6 +147,7 @@ export interface Sampled { state: CubieCube; depth: number }
 interface ResolvedSpec {
   faces: FaceIdx[];
   slot: number | 'best';
+  eoAxis?: EoAxis;
   lo: number;
   hi: number;
   /** Wall clock a multi-frame draw may spend before reporting "unreachable". */
@@ -607,7 +610,8 @@ const sampleXxcross: Sampler = oneFrame((fr, lo, hi, rng, tries) => {
 const perpAxes = (face: FaceIdx): EoAxis[] =>
   ([0, 1, 2] as EoAxis[]).filter((a) => a !== (face % 3));
 
-const axisFrames = ({ faces }: ResolvedSpec): TrainerFrame[] => {
+const axisFrames = ({ faces, eoAxis }: ResolvedSpec): TrainerFrame[] => {
+  if (eoAxis !== undefined) return [{ face: faces[0], slots: [], axis: eoAxis, axisOnly: true }];
   const seen = new Set<EoAxis>();
   const out: TrainerFrame[] = [];
   for (const face of faces) {
@@ -845,7 +849,7 @@ export function trainerSolution(spec: TrainerSpec, state: CubieCube): TrainerSol
  * answer depends on a face it does not depend on.
  */
 export function frameLabel(frame: TrainerFrame, isZh: boolean): string {
-  const axis = frame.axis === undefined ? '' : AXIS_LABEL[frame.axis];
+  const axis = frame.axis === undefined ? '' : EO_AXIS_LABELS[frame.axis];
   if (frame.axisOnly) return axis;
   const color = FACE_COLOR[frame.face];
   const name = isZh ? COLOR_ZH[color] : color;
@@ -856,7 +860,7 @@ export function frameLabel(frame: TrainerFrame, isZh: boolean): string {
 }
 
 /** EO axes, in ./eo's numbering. */
-const AXIS_LABEL = ['U/D', 'R/L', 'F/B'];
+export const EO_AXIS_LABELS = ['U/D', 'R/L', 'F/B'] as const;
 
 const COLOR_ZH: Record<string, string> = {
   White: '白', Yellow: '黄', Green: '绿', Blue: '蓝', Red: '红', Orange: '橙',
@@ -864,7 +868,8 @@ const COLOR_ZH: Record<string, string> = {
 
 /** Stable identity of a spec — the scramble pool's buffer key. */
 export const trainerSpecKey = (s: TrainerSpec): string =>
-  `${s.variant}/${s.stage}|${[...s.colors].sort().join('')}|${s.slot}|${s.lo}.${s.hi}`;
+  `${s.variant}/${s.stage}|${[...s.colors].sort().join('')}|${s.slot}|${s.lo}.${s.hi}`
+  + (s.variant === 'eoline' && s.stage === 'eo' && s.eoAxis !== undefined ? `|axis:${s.eoAxis}` : '');
 
 /**
  * A uniformly random cube state whose `stage` metric falls in [lo,hi], plus the metric value.
@@ -969,7 +974,9 @@ function resolve(spec: TrainerSpec, def: StageDef, budgetMs = REJECT_BUDGET_MS):
   const slot = def.slots
     ? (spec.slot === 'best' ? 'best' : Math.min(Math.max(spec.slot, 0), nSlots - 1))
     : 0;
-  return { faces, slot, lo, hi, budgetMs, fail: { reason: 'budget' } };
+  const eoAxis = def.variant === 'eoline' && def.stage === 'eo'
+    && (spec.eoAxis === 0 || spec.eoAxis === 1 || spec.eoAxis === 2) ? spec.eoAxis : undefined;
+  return { faces, slot, eoAxis, lo, hi, budgetMs, fail: { reason: 'budget' } };
 }
 
 const slotOptionCount = (def: StageDef): number => (

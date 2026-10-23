@@ -24,6 +24,7 @@ import { groupLetter, type WcaFormat } from './_wca-round';
 import type { Metric } from './CompCrossAnalysis';
 import ScrambleLines from './ScrambleLines';
 import { CUBE_FILL, BADGE_FACE_ORDER } from '@/lib/cube-colors';
+import ScrambleStatistics, { supportsScrambleStatistics } from '@/components/ScrambleStatistics';
 
 // StageSolver 拉 ~27MB WASM 表 + TwistyPlayer 3D,首屏没必要打进 gen 包;
 // 行内展开第一次点开时才按需加载(ssr:false,纯 client 组件)。
@@ -104,6 +105,7 @@ export interface RoundSheet {
 
 interface SheetViewProps {
   sheet: RoundSheet;
+  compId?: string | null;
   isZh: boolean;
   t: (zh: string, en: string) => string;
   clockColors?: Record<string, string>;
@@ -139,7 +141,7 @@ interface SheetViewProps {
   titleSuffix?: string;
 }
 
-export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, megaColors, showPreview = true, rowDigits, metric = 'cross', variant = 'std', selectedLabel = null, onSelectScramble, selectableLabels, analyzable = true, copyOnClick = false, headerExtra, titleSuffix = '' }: SheetViewProps) {
+export default function SheetView({ sheet, compId, isZh, t, clockColors, sq1Colors, megaColors, showPreview = true, rowDigits, metric = 'cross', variant = 'std', selectedLabel = null, onSelectScramble, selectableLabels, analyzable = true, copyOnClick = false, headerExtra, titleSuffix = '' }: SheetViewProps) {
   const { event, roundIdx, groupIdx, attemptNumber, attempts, totalGroups } = sheet;
   const router = useRouter();
   const params = useParams();
@@ -357,6 +359,15 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
                 compact
               />
             </div>
+          </td>
+        </tr>,
+      );
+    }
+    if (analyzable && compId && (isExpanded || isSelected) && supportsScrambleStatistics(event)) {
+      rows.push(
+        <tr key={`stats-${i}`} className="gen-tn-statistics-row">
+          <td colSpan={colSpan}>
+            <ScrambleStatistics compId={compId} event={event} scramble={a.scramble} optimalScramble={a.optimalScramble} />
           </td>
         </tr>,
       );

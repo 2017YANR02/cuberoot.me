@@ -44,3 +44,7 @@
   -webkit-user-select: text;
   user-select: text;
 }
+.solver-scramble-row, .solver-scramble-editor { display: flex; align-items: flex-start; gap: 8px; }
+.solver-scramble-row > span { min-width: 0; }
+.solver-scramble-row > button, .solver-scramble-editor > button { flex-shrink: 0; }
+.solver-scramble-editor > .scramble-src-manual { flex: 1; }

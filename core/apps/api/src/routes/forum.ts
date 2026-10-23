@@ -6,10 +6,11 @@
  * + forum_videos(0163)。
  */
 import { Hono, type Context } from 'hono';
+import { HTTPException } from 'hono/http-exception';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { getIp } from '../utils/analytics_helpers.js';
-import { query } from '../db/connection.js';
+import { query, withTransaction, type QueryRunner } from '../db/connection.js';
 import {
   requireAuth, requireAdminOrApiKey, authenticateUser, checkRateLimit, ADMIN_WCA_IDS,
 } from '../utils/recon_helpers.js';
@@ -31,6 +32,40 @@ import {
 } from '../utils/video_upload.js';
 
 export const forumRoutes = new Hono();
+
+/** All existing-thread writes share one lock before reading post/moderation state.
+ * A transaction alone does not protect a cached COUNT from another writer's snapshot. */
+async function withThreadWrite<T>(threadId: number, write: (run: QueryRunner) => Promise<T>): Promise<T> {
+  return withTransaction(async run => {
+    const rows = await run('SELECT id FROM forum_threads WHERE id = ? FOR UPDATE', [threadId]);
+    if (!rows.length) throw new HTTPException(404, { message: 'Thread not found' });
+    return write(run);
+  });
+}
+
+async function withPostWrite<T>(postId: number, write: (run: QueryRunner, threadId: number) => Promise<T>): Promise<T> {
+  // thread_id is immutable. Read mutable post state again only after the parent lock.
+  const rows = await query<{ thread_id: string }>('SELECT thread_id FROM forum_posts WHERE id = ?', [postId]);
+  if (!rows.length) throw new HTTPException(404, { message: 'Post not found' });
+  const threadId = Number(rows[0].thread_id);
+  return withThreadWrite(threadId, run => write(run, threadId));
+}
+
+async function refreshThreadPosts(run: QueryRunner, threadId: number): Promise<void> {
+  await run(
+    `UPDATE forum_threads t
+     SET reply_count = GREATEST(s.cnt - 1, 0),
+         last_post_at = COALESCE(lp.created_at, t.created_at),
+         last_post_author_id = COALESCE(lp.author_id, t.author_id),
+         last_post_author_name = COALESCE(lp.author_name, t.author_name)
+     FROM (SELECT COUNT(*)::int AS cnt FROM forum_posts
+           WHERE thread_id = ? AND NOT is_deleted AND status = 'approved') s
+     LEFT JOIN LATERAL (SELECT created_at, author_id, author_name FROM forum_posts
+           WHERE thread_id = ? AND NOT is_deleted AND status = 'approved' ORDER BY id DESC LIMIT 1) lp ON TRUE
+     WHERE t.id = ?`,
+    [threadId, threadId, threadId],
+  );
+}
 
 /**
  * 通知失败绝不能连累已经落库的帖子(用户看到 500 会重发,于是重复发帖)—— 故吞异常。
@@ -805,40 +840,43 @@ forumRoutes.post('/forum/posts', async (c) => {
   if (!content) return c.json({ error: 'content is required' }, 400);
   if (content.length > MAX_CONTENT_LEN) return c.json({ error: `content exceeds ${MAX_CONTENT_LEN} characters` }, 400);
 
-  const threads = await query<{ is_locked: boolean; is_deleted: boolean; title: string; author_id: string; status: ReviewStatus }>(
-    'SELECT is_locked, is_deleted, title, author_id, status FROM forum_threads WHERE id = ?', [threadId],
-  );
-  if (threads.length === 0 || threads[0].is_deleted) return c.json({ error: 'Thread not found' }, 404);
-  if (threads[0].is_locked && !isAdmin(authUser)) return c.json({ error: 'Thread is locked' }, 403);
-  // 待审/驳回的主题不开放回帖(作者也不行——先等审核结果;管理员例外)
-  if (threads[0].status !== 'approved' && !isAdmin(authUser)) {
-    return c.json({ error: 'Thread is awaiting review' }, 403);
-  }
-
   const status = await statusFor(authUser, content);
-  // 单条语句 CTE:插帖 + 主题计数/末帖缓存一起更新;postNo 按自身 id 数楼层,并发下不错位。
-  // 待审帖不动计数缓存(过审时再补),但仍占楼层号。
-  const inserted = status === 'approved'
-    ? await query<{ id: string }>(
-        `WITH np AS (
-           INSERT INTO forum_posts (thread_id, author_id, author_name, content)
-           VALUES (?, ?, ?, ?) RETURNING id
-         ), bump AS (
-           UPDATE forum_threads SET reply_count = reply_count + 1, last_post_at = NOW(),
-             last_post_author_id = ?, last_post_author_name = ? WHERE id = ?
-         )
-         SELECT id FROM np`,
-        [threadId, authUser.wcaId, authUser.name, content, authUser.wcaId, authUser.name, threadId],
-      )
-    : await query<{ id: string }>(
-        `INSERT INTO forum_posts (thread_id, author_id, author_name, content, status)
-         VALUES (?, ?, ?, ?, 'pending') RETURNING id`,
-        [threadId, authUser.wcaId, authUser.name, content],
-      );
-  const newId = Number(inserted[0].id);
-  const nos = await query<{ n: number }>(
-    'SELECT COUNT(*)::int AS n FROM forum_posts WHERE thread_id = ? AND id <= ?', [threadId, newId],
-  );
+  const { thread, newId, postNo } = await withThreadWrite(threadId, async query => {
+    const threads = await query<{ is_locked: boolean; is_deleted: boolean; title: string; author_id: string; status: ReviewStatus }>(
+      'SELECT is_locked, is_deleted, title, author_id, status FROM forum_threads WHERE id = ?', [threadId],
+    );
+    if (threads.length === 0 || threads[0].is_deleted) throw new HTTPException(404, { message: 'Thread not found' });
+    if (threads[0].is_locked && !isAdmin(authUser)) throw new HTTPException(403, { message: 'Thread is locked' });
+    // 待审/驳回的主题不开放回帖(作者也不行——先等审核结果;管理员例外)
+    if (threads[0].status !== 'approved' && !isAdmin(authUser)) {
+      throw new HTTPException(403, { message: 'Thread is awaiting review' });
+    }
+
+    // The thread lock serializes post numbers and cached summary changes.
+    // Timestamp the actual insert, after waiting for any earlier writer.
+    const inserted = status === 'approved'
+      ? await query<{ id: string }>(
+          `WITH np AS (
+             INSERT INTO forum_posts (thread_id, author_id, author_name, content, created_at)
+             VALUES (?, ?, ?, ?, clock_timestamp()) RETURNING id, created_at
+           ), bump AS (
+             UPDATE forum_threads SET reply_count = reply_count + 1, last_post_at = (SELECT created_at FROM np),
+               last_post_author_id = ?, last_post_author_name = ? WHERE id = ?
+           )
+           SELECT id FROM np`,
+          [threadId, authUser.wcaId, authUser.name, content, authUser.wcaId, authUser.name, threadId],
+        )
+      : await query<{ id: string }>(
+          `INSERT INTO forum_posts (thread_id, author_id, author_name, content, status, created_at)
+           VALUES (?, ?, ?, ?, 'pending', clock_timestamp()) RETURNING id`,
+          [threadId, authUser.wcaId, authUser.name, content],
+        );
+    const newId = Number(inserted[0].id);
+    const nos = await query<{ n: number }>(
+      'SELECT COUNT(*)::int AS n FROM forum_posts WHERE thread_id = ? AND id <= ?', [threadId, newId],
+    );
+    return { thread: threads[0], newId, postNo: nos[0].n };
+  });
 
   // 已发布回帖 → 主题作者 + 管理员(notify 内部去重 + 剔除 actor 自己:
   //   管理员正好是楼主只收一条,自己回自己的帖不通知)。
@@ -849,20 +887,20 @@ forumRoutes.post('/forum/posts', async (c) => {
         kind: 'forum_review',
         actorKey: authUser.wcaId,
         actorName: authUser.name,
-        title: threads[0].title,
+        title: thread.title,
         excerpt: content,
         link: '/forum/review',
       }
     : {
-        recipients: [threads[0].author_id, ...adminRecipients()],
+        recipients: [thread.author_id, ...adminRecipients()],
         kind: 'forum_reply',
         actorKey: authUser.wcaId,
         actorName: authUser.name,
-        title: threads[0].title,
+        title: thread.title,
         excerpt: content,
         link: `/forum/t/${threadId}`,
       });
-  return c.json({ ok: true, id: newId, postNo: nos[0].n, status });
+  return c.json({ ok: true, id: newId, postNo, status });
 });
 
 // ==================== PATCH /v1/forum/posts/:id ====================
@@ -879,20 +917,22 @@ forumRoutes.patch('/forum/posts/:id', async (c) => {
   if (!content) return c.json({ error: 'content is required' }, 400);
   if (content.length > MAX_CONTENT_LEN) return c.json({ error: `content exceeds ${MAX_CONTENT_LEN} characters` }, 400);
 
-  const posts = await query<{ author_id: string; is_deleted: boolean; is_locked: boolean; thread_deleted: boolean }>(
-    `SELECT p.author_id, p.is_deleted, t.is_locked, t.is_deleted AS thread_deleted
-     FROM forum_posts p JOIN forum_threads t ON t.id = p.thread_id WHERE p.id = ?`,
-    [id],
-  );
-  if (posts.length === 0 || posts[0].is_deleted || posts[0].thread_deleted) {
-    return c.json({ error: 'Post not found' }, 404);
-  }
-  if (!isAdmin(authUser)) {
-    if (posts[0].author_id !== authUser.wcaId) return c.json({ error: 'Cannot edit others post' }, 403);
-    if (posts[0].is_locked) return c.json({ error: 'Thread is locked' }, 403);
-  }
-  await query('UPDATE forum_posts SET content = ?, edited_at = NOW() WHERE id = ?', [content, id]);
-  return c.json({ ok: true });
+  return withPostWrite(id, async query => {
+    const posts = await query<{ author_id: string; is_deleted: boolean; is_locked: boolean; thread_deleted: boolean }>(
+      `SELECT p.author_id, p.is_deleted, t.is_locked, t.is_deleted AS thread_deleted
+       FROM forum_posts p JOIN forum_threads t ON t.id = p.thread_id WHERE p.id = ?`,
+      [id],
+    );
+    if (posts.length === 0 || posts[0].is_deleted || posts[0].thread_deleted) {
+      return c.json({ error: 'Post not found' }, 404);
+    }
+    if (!isAdmin(authUser)) {
+      if (posts[0].author_id !== authUser.wcaId) return c.json({ error: 'Cannot edit others post' }, 403);
+      if (posts[0].is_locked) return c.json({ error: 'Thread is locked' }, 403);
+    }
+    await query('UPDATE forum_posts SET content = ?, edited_at = NOW() WHERE id = ?', [content, id]);
+    return c.json({ ok: true });
+  });
 });
 
 // ==================== DELETE /v1/forum/posts/:id ====================
@@ -906,45 +946,35 @@ forumRoutes.delete('/forum/posts/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (!Number.isInteger(id) || id <= 0) return c.json({ error: 'Invalid post id' }, 400);
 
-  const posts = await query<{ author_id: string; is_deleted: boolean; thread_id: string; is_locked: boolean; thread_deleted: boolean }>(
-    `SELECT p.author_id, p.is_deleted, p.thread_id, t.is_locked, t.is_deleted AS thread_deleted
-     FROM forum_posts p JOIN forum_threads t ON t.id = p.thread_id WHERE p.id = ?`,
-    [id],
-  );
-  if (posts.length === 0 || posts[0].is_deleted || posts[0].thread_deleted) {
-    return c.json({ error: 'Post not found' }, 404);
-  }
-  if (!isAdmin(authUser)) {
-    if (posts[0].author_id !== authUser.wcaId) return c.json({ error: 'Cannot delete others post' }, 403);
-    if (posts[0].is_locked) return c.json({ error: 'Thread is locked' }, 403);
-  }
-  const threadId = Number(posts[0].thread_id);
-  const first = await query<{ min: string }>(
-    'SELECT MIN(id) AS min FROM forum_posts WHERE thread_id = ?', [threadId],
-  );
-  if (Number(first[0].min) === id) return c.json({ error: 'Delete the thread instead' }, 400);
+  return withPostWrite(id, async query => {
+    const posts = await query<{ author_id: string; is_deleted: boolean; thread_id: string; is_locked: boolean; thread_deleted: boolean }>(
+      `SELECT p.author_id, p.is_deleted, p.thread_id, t.is_locked, t.is_deleted AS thread_deleted
+       FROM forum_posts p JOIN forum_threads t ON t.id = p.thread_id WHERE p.id = ?`,
+      [id],
+    );
+    if (posts.length === 0 || posts[0].is_deleted || posts[0].thread_deleted) {
+      return c.json({ error: 'Post not found' }, 404);
+    }
+    if (!isAdmin(authUser)) {
+      if (posts[0].author_id !== authUser.wcaId) return c.json({ error: 'Cannot delete others post' }, 403);
+      if (posts[0].is_locked) return c.json({ error: 'Thread is locked' }, 403);
+    }
+    const threadId = Number(posts[0].thread_id);
+    const first = await query<{ min: string }>(
+      'SELECT MIN(id) AS min FROM forum_posts WHERE thread_id = ?', [threadId],
+    );
+    if (Number(first[0].min) === id) return c.json({ error: 'Delete the thread instead' }, 400);
 
-  // 条件删除防双删竞态:两个并发 DELETE 只有一个真正翻位,第二个 404
-  const flipped = await query<{ thread_id: string }>(
-    'UPDATE forum_posts SET is_deleted = TRUE WHERE id = ? AND NOT is_deleted RETURNING thread_id', [id],
-  );
-  if (flipped.length === 0) return c.json({ error: 'Post not found' }, 404);
-  // 单条语句重算 reply_count + 末帖缓存(被删的可能正是末帖;首帖不可删,可见帖 ≥1)。
-  // 计数/末帖只认已过审帖——待审帖从未进过缓存,删它不该动缓存。
-  await query(
-    `UPDATE forum_threads t
-     SET reply_count = GREATEST(s.cnt - 1, 0),
-         last_post_at = lp.created_at,
-         last_post_author_id = lp.author_id,
-         last_post_author_name = lp.author_name
-     FROM (SELECT COUNT(*)::int AS cnt FROM forum_posts
-           WHERE thread_id = ? AND NOT is_deleted AND status = 'approved') s,
-          (SELECT created_at, author_id, author_name FROM forum_posts
-           WHERE thread_id = ? AND NOT is_deleted AND status = 'approved' ORDER BY id DESC LIMIT 1) lp
-     WHERE t.id = ?`,
-    [threadId, threadId, threadId],
-  );
-  return c.json({ ok: true });
+    // 条件删除防双删竞态:两个并发 DELETE 只有一个真正翻位,第二个 404
+    const flipped = await query<{ thread_id: string }>(
+      'UPDATE forum_posts SET is_deleted = TRUE WHERE id = ? AND NOT is_deleted RETURNING thread_id', [id],
+    );
+    if (flipped.length === 0) return c.json({ error: 'Post not found' }, 404);
+    // 单条语句重算 reply_count + 末帖缓存(被删的可能正是末帖;首帖不可删,可见帖 ≥1)。
+    // 计数/末帖只认已过审帖——待审帖从未进过缓存,删它不该动缓存。
+    await refreshThreadPosts(query, threadId);
+    return c.json({ ok: true });
+  });
 });
 
 // ==================== DELETE /v1/forum/threads/:id ====================
@@ -957,16 +987,18 @@ forumRoutes.delete('/forum/threads/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (!Number.isInteger(id) || id <= 0) return c.json({ error: 'Invalid thread id' }, 400);
 
-  const threads = await query<{ author_id: string; is_deleted: boolean; is_locked: boolean }>(
-    'SELECT author_id, is_deleted, is_locked FROM forum_threads WHERE id = ?', [id],
-  );
-  if (threads.length === 0 || threads[0].is_deleted) return c.json({ error: 'Thread not found' }, 404);
-  if (!isAdmin(authUser)) {
-    if (threads[0].author_id !== authUser.wcaId) return c.json({ error: 'Cannot delete others thread' }, 403);
-    if (threads[0].is_locked) return c.json({ error: 'Thread is locked' }, 403);
-  }
-  await query('UPDATE forum_threads SET is_deleted = TRUE WHERE id = ? AND NOT is_deleted', [id]);
-  return c.json({ ok: true });
+  return withThreadWrite(id, async query => {
+    const threads = await query<{ author_id: string; is_deleted: boolean; is_locked: boolean }>(
+      'SELECT author_id, is_deleted, is_locked FROM forum_threads WHERE id = ?', [id],
+    );
+    if (threads.length === 0 || threads[0].is_deleted) return c.json({ error: 'Thread not found' }, 404);
+    if (!isAdmin(authUser)) {
+      if (threads[0].author_id !== authUser.wcaId) return c.json({ error: 'Cannot delete others thread' }, 403);
+      if (threads[0].is_locked) return c.json({ error: 'Thread is locked' }, 403);
+    }
+    await query('UPDATE forum_threads SET is_deleted = TRUE WHERE id = ? AND NOT is_deleted', [id]);
+    return c.json({ ok: true });
+  });
 });
 
 // ==================== PATCH /v1/forum/threads/:id ====================
@@ -981,33 +1013,35 @@ forumRoutes.patch('/forum/threads/:id', async (c) => {
   if (!Number.isInteger(id) || id <= 0) return c.json({ error: 'Invalid thread id' }, 400);
   const body = await c.req.json<{ title?: string; isPinned?: boolean; isLocked?: boolean }>();
 
-  const threads = await query<{ author_id: string; is_deleted: boolean; is_locked: boolean }>(
-    'SELECT author_id, is_deleted, is_locked FROM forum_threads WHERE id = ?', [id],
-  );
-  if (threads.length === 0 || threads[0].is_deleted) return c.json({ error: 'Thread not found' }, 404);
+  return withThreadWrite(id, async query => {
+    const threads = await query<{ author_id: string; is_deleted: boolean; is_locked: boolean }>(
+      'SELECT author_id, is_deleted, is_locked FROM forum_threads WHERE id = ?', [id],
+    );
+    if (threads.length === 0 || threads[0].is_deleted) return c.json({ error: 'Thread not found' }, 404);
 
-  const sets: string[] = [];
-  const params: unknown[] = [];
-  if (body.title !== undefined) {
-    const title = String(body.title).trim();
-    if (!title) return c.json({ error: 'title is required' }, 400);
-    if (title.length > 200) return c.json({ error: 'title exceeds 200 characters' }, 400);
-    if (!isAdmin(authUser)) {
-      if (threads[0].author_id !== authUser.wcaId) return c.json({ error: 'Cannot edit others thread' }, 403);
-      if (threads[0].is_locked) return c.json({ error: 'Thread is locked' }, 403);
+    const sets: string[] = [];
+    const params: unknown[] = [];
+    if (body.title !== undefined) {
+      const title = String(body.title).trim();
+      if (!title) return c.json({ error: 'title is required' }, 400);
+      if (title.length > 200) return c.json({ error: 'title exceeds 200 characters' }, 400);
+      if (!isAdmin(authUser)) {
+        if (threads[0].author_id !== authUser.wcaId) return c.json({ error: 'Cannot edit others thread' }, 403);
+        if (threads[0].is_locked) return c.json({ error: 'Thread is locked' }, 403);
+      }
+      sets.push('title = ?');
+      params.push(title);
     }
-    sets.push('title = ?');
-    params.push(title);
-  }
-  if (body.isPinned !== undefined || body.isLocked !== undefined) {
-    if (!isAdmin(authUser)) return c.json({ error: 'Admin access required for pin/lock' }, 403);
-    if (body.isPinned !== undefined) { sets.push('is_pinned = ?'); params.push(Boolean(body.isPinned)); }
-    if (body.isLocked !== undefined) { sets.push('is_locked = ?'); params.push(Boolean(body.isLocked)); }
-  }
-  if (sets.length === 0) return c.json({ error: 'No valid fields to update' }, 400);
-  params.push(id);
-  await query(`UPDATE forum_threads SET ${sets.join(', ')} WHERE id = ?`, params);
-  return c.json({ ok: true });
+    if (body.isPinned !== undefined || body.isLocked !== undefined) {
+      if (!isAdmin(authUser)) return c.json({ error: 'Admin access required for pin/lock' }, 403);
+      if (body.isPinned !== undefined) { sets.push('is_pinned = ?'); params.push(Boolean(body.isPinned)); }
+      if (body.isLocked !== undefined) { sets.push('is_locked = ?'); params.push(Boolean(body.isLocked)); }
+    }
+    if (sets.length === 0) return c.json({ error: 'No valid fields to update' }, 400);
+    params.push(id);
+    await query(`UPDATE forum_threads SET ${sets.join(', ')} WHERE id = ?`, params);
+    return c.json({ ok: true });
+  });
 });
 
 // ==================== POST /v1/forum/posts/:id/react ====================
@@ -1024,27 +1058,29 @@ forumRoutes.post('/forum/posts/:id/react', async (c) => {
   const kind = body.kind ?? null;
   if (kind !== null && !REACTION_KINDS.includes(kind)) return c.json({ error: 'Invalid reaction kind' }, 400);
 
-  const posts = await query<{ is_deleted: boolean; thread_deleted: boolean; status: ReviewStatus }>(
-    `SELECT p.is_deleted, t.is_deleted AS thread_deleted, p.status
-     FROM forum_posts p JOIN forum_threads t ON t.id = p.thread_id WHERE p.id = ?`,
-    [id],
-  );
-  if (posts.length === 0 || posts[0].is_deleted || posts[0].thread_deleted || posts[0].status !== 'approved') {
-    return c.json({ error: 'Post not found' }, 404);
-  }
-
-  const existing = await query<{ kind: string }>(
-    'SELECT kind FROM forum_reactions WHERE post_id = ? AND author_id = ?', [id, authUser.wcaId],
-  );
-  if (kind === null || (existing.length > 0 && existing[0].kind === kind)) {
-    await query('DELETE FROM forum_reactions WHERE post_id = ? AND author_id = ?', [id, authUser.wcaId]);
-  } else {
-    await query(
-      `INSERT INTO forum_reactions (post_id, author_id, author_name, kind) VALUES (?, ?, ?, ?)
-       ON CONFLICT (post_id, author_id) DO UPDATE SET kind = EXCLUDED.kind, author_name = EXCLUDED.author_name, created_at = NOW()`,
-      [id, authUser.wcaId, authUser.name, kind],
+  await withPostWrite(id, async query => {
+    const posts = await query<{ is_deleted: boolean; thread_deleted: boolean; status: ReviewStatus }>(
+      `SELECT p.is_deleted, t.is_deleted AS thread_deleted, p.status
+       FROM forum_posts p JOIN forum_threads t ON t.id = p.thread_id WHERE p.id = ?`,
+      [id],
     );
-  }
+    if (posts.length === 0 || posts[0].is_deleted || posts[0].thread_deleted || posts[0].status !== 'approved') {
+      throw new HTTPException(404, { message: 'Post not found' });
+    }
+
+    const existing = await query<{ kind: string }>(
+      'SELECT kind FROM forum_reactions WHERE post_id = ? AND author_id = ?', [id, authUser.wcaId],
+    );
+    if (kind === null || (existing.length > 0 && existing[0].kind === kind)) {
+      await query('DELETE FROM forum_reactions WHERE post_id = ? AND author_id = ?', [id, authUser.wcaId]);
+    } else {
+      await query(
+        `INSERT INTO forum_reactions (post_id, author_id, author_name, kind) VALUES (?, ?, ?, ?)
+         ON CONFLICT (post_id, author_id) DO UPDATE SET kind = EXCLUDED.kind, author_name = EXCLUDED.author_name, created_at = NOW()`,
+        [id, authUser.wcaId, authUser.name, kind],
+      );
+    }
+  });
   const reactions = await reactionsFor([id]);
   return c.json({ ok: true, reactions: reactions.get(id) ?? [] });
 });
@@ -1369,78 +1405,71 @@ forumRoutes.post('/forum/review/:type/:id/:action', async (c) => {
   const newStatus = action === 'approve' ? 'approved' : 'rejected';
 
   if (type === 'thread') {
-    const flipped = await query<{ author_id: string; title: string }>(
-      `UPDATE forum_threads SET status = ?, review_note = ?
-       WHERE id = ? AND status = 'pending' AND NOT is_deleted RETURNING author_id, title`,
-      [newStatus, action === 'reject' ? reason || null : null, id],
-    );
-    if (flipped.length === 0) return c.json({ error: 'Not pending' }, 404);
-    // 首帖随主题同批过审/驳回(待审主题不开放回帖,故 pending 帖只有首帖)
-    await query(
-      `UPDATE forum_posts SET status = ? WHERE thread_id = ? AND status = 'pending'`,
-      [newStatus, id],
-    );
+    const flipped = await withThreadWrite(id, async query => {
+      const changed = await query<{ author_id: string; title: string }>(
+        `UPDATE forum_threads SET status = ?, review_note = ?
+         WHERE id = ? AND status = 'pending' AND NOT is_deleted RETURNING author_id, title`,
+        [newStatus, action === 'reject' ? reason || null : null, id],
+      );
+      if (changed.length === 0) return null;
+      // Publish/reject the thread and its pending posts atomically.
+      await query(
+        `UPDATE forum_posts SET status = ? WHERE thread_id = ? AND status = 'pending'`,
+        [newStatus, id],
+      );
+      await refreshThreadPosts(query, id);
+      return changed[0];
+    });
+    if (!flipped) return c.json({ error: 'Not pending' }, 404);
     await notifyBestEffort({
-      recipients: [flipped[0].author_id],
+      recipients: [flipped.author_id],
       kind: action === 'approve' ? 'forum_approved' : 'forum_rejected',
       actorKey: authUser.wcaId,
       actorName: authUser.name,
-      title: flipped[0].title,
-      excerpt: action === 'reject' && reason ? reason : flipped[0].title,
+      title: flipped.title,
+      excerpt: action === 'reject' && reason ? reason : flipped.title,
       link: `/forum/t/${id}`,
     });
     return c.json({ ok: true });
   }
 
   // type === 'post'
-  const flipped = await query<{ thread_id: string; author_id: string; content: string }>(
-    `UPDATE forum_posts SET status = ?, review_note = ?
-     WHERE id = ? AND status = 'pending' AND NOT is_deleted RETURNING thread_id, author_id, content`,
-    [newStatus, action === 'reject' ? reason || null : null, id],
-  );
-  if (flipped.length === 0) return c.json({ error: 'Not pending' }, 404);
-  const threadId = Number(flipped[0].thread_id);
-  const threads = await query<{ title: string; author_id: string }>(
-    'SELECT title, author_id FROM forum_threads WHERE id = ?', [threadId],
-  );
+  const result = await withPostWrite(id, async (query, threadId) => {
+    const threads = await query<{ title: string; author_id: string; is_deleted: boolean }>(
+      'SELECT title, author_id, is_deleted FROM forum_threads WHERE id = ?', [threadId],
+    );
+    if (!threads.length || threads[0].is_deleted) throw new HTTPException(404, { message: 'Thread not found' });
+    const flipped = await query<{ thread_id: string; author_id: string; author_name: string; content: string }>(
+      `UPDATE forum_posts SET status = ?, review_note = ?
+       WHERE id = ? AND status = 'pending' AND NOT is_deleted RETURNING thread_id, author_id, author_name, content`,
+      [newStatus, action === 'reject' ? reason || null : null, id],
+    );
+    if (!flipped.length) return null;
+    if (action === 'approve') await refreshThreadPosts(query, threadId);
+    return { post: flipped[0], thread: threads[0], threadId };
+  });
+  if (!result) return c.json({ error: 'Not pending' }, 404);
+  const { post, thread, threadId } = result;
 
   if (action === 'approve') {
-    // 过审即「发布」:补记 reply_count / 末帖缓存(发帖时待审没记)。
-    // 末帖取最新已过审帖——积压队列乱序过审也不会把旧帖顶成末帖。
-    await query(
-      `UPDATE forum_threads t
-       SET reply_count = GREATEST(s.cnt - 1, 0),
-           last_post_at = lp.created_at,
-           last_post_author_id = lp.author_id,
-           last_post_author_name = lp.author_name
-       FROM (SELECT COUNT(*)::int AS cnt FROM forum_posts
-             WHERE thread_id = ? AND NOT is_deleted AND status = 'approved') s,
-            (SELECT created_at, author_id, author_name FROM forum_posts
-             WHERE thread_id = ? AND NOT is_deleted AND status = 'approved' ORDER BY id DESC LIMIT 1) lp
-       WHERE t.id = ?`,
-      [threadId, threadId, threadId],
-    );
     // 补发原本在发帖时压下的「回复了你的主题」(actor 是发帖人,不是管理员)
-    const posts2 = await query<{ author_name: string }>(
-      'SELECT author_name FROM forum_posts WHERE id = ?', [id],
-    );
     await notifyBestEffort({
-      recipients: [threads[0]?.author_id],
+      recipients: [thread.author_id],
       kind: 'forum_reply',
-      actorKey: flipped[0].author_id,
-      actorName: posts2[0]?.author_name ?? '',
-      title: threads[0]?.title ?? '',
-      excerpt: flipped[0].content,
+      actorKey: post.author_id,
+      actorName: post.author_name,
+      title: thread.title,
+      excerpt: post.content,
       link: `/forum/t/${threadId}`,
     });
   }
   await notifyBestEffort({
-    recipients: [flipped[0].author_id],
+    recipients: [post.author_id],
     kind: action === 'approve' ? 'forum_approved' : 'forum_rejected',
     actorKey: authUser.wcaId,
     actorName: authUser.name,
-    title: threads[0]?.title ?? '',
-    excerpt: action === 'reject' && reason ? reason : flipped[0].content,
+    title: thread.title,
+    excerpt: action === 'reject' && reason ? reason : post.content,
     link: `/forum/t/${threadId}`,
   });
   return c.json({ ok: true });

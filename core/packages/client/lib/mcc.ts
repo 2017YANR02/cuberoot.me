@@ -75,8 +75,31 @@ export const ESQ_DEFAULTS: EsqParams = {
 type Finger = [number, string];
 type TestResult = number[] | string;
 
+/** Diagnostic path selected by MCC, not a physical minimum-regrip proof.
+ * Indices are 1-based in the full, space-separated input (including AUF).
+ * MCC restarts its finger simulation after a blocked segment; this trace keeps
+ * that approximation, and does not silently change the public MCC score.
+ */
+export interface MccGripEvent {
+  kind: 'regrip' | 'rotation-reset' | 'support-switch' | 'ud-switch';
+  beforeMove: number;
+  hand?: 'left' | 'right' | 'both';
+  target?: { left: number; right: number };
+  cost: number;
+}
+export interface MccGripPath {
+  start: { left: number; right: number };
+  events: MccGripEvent[];
+}
+export interface MccGripAnalysis extends MccGripPath {
+  mcc: number;
+  /** Counts reset events, not hands. A simultaneous two-hand reset counts once. */
+  regrips: number;
+}
+
 function testRun(
   splitSeqIn: string[], lGrip: number, rGrip: number, speedIn: number, p: MccParams,
+  onSwitch?: (index: number, kind: 'support-switch' | 'ud-switch', cost: number) => void,
 ): TestResult {
   const { wristMult, pushMult, ringMult, destabilize, double: dbl, sesliceMult, overWorkMult, moveblock, rotation } = p;
   const splitSeq = splitSeqIn;
@@ -683,16 +706,20 @@ function testRun(
     if ((move[0] == 'R' || move[0] == 'l') && grip == -1) {
       grip = 1;
       speed += 0.65;
+      onSwitch?.(j, 'support-switch', 0.65);
     } else if ((move[0] == 'r' || move[0] == 'L') && grip == 1) {
       grip = -1;
       speed += 0.65;
+      onSwitch?.(j, 'support-switch', 0.65);
     }
     if ((move[0] == 'd') && udgrip == -1) {
       udgrip = 1;
       speed += 2.25;
+      onSwitch?.(j, 'ud-switch', 2.25);
     } else if ((move[0] == 'U' || move[0] == 'u') && udgrip == 1) {
       udgrip = -1;
       speed += 2.25;
+      onSwitch?.(j, 'ud-switch', 2.25);
     }
     if (j >= 2) {
       if ((normalMove == 'R' && move == splitSeq[j - 2] && splitSeq[j - 1].toUpperCase() == "U'") || (normalMove == "R'" && move == splitSeq[j - 2] && splitSeq[j - 1].toUpperCase() == 'U')) {
@@ -755,6 +782,22 @@ export function algSpeed(
   ignoreauf = false,
   p: MccParams = MCC_DEFAULTS,
 ): number | string {
+  return scoreMcc(sequence, ignoreErrors, ignoreauf, p);
+}
+
+/** Full-algorithm diagnostic: AUF is executed, so reported positions are usable
+ * when trying the printed formula. Its score can differ from AUF-free MCC. */
+export function analyzeMccGrip(sequence: string, p: MccParams = MCC_DEFAULTS): MccGripAnalysis {
+  let selected: MccGripPath | undefined;
+  const mcc = scoreMcc(sequence, false, false, p, path => { selected = path; });
+  if (typeof mcc !== 'number' || !selected) throw new Error(String(mcc));
+  return { ...selected, mcc, regrips: selected.events.filter(e => e.kind === 'regrip').length };
+}
+
+function scoreMcc(
+  sequence: string, ignoreErrors: boolean, ignoreauf: boolean, p: MccParams,
+  onPath?: (path: MccGripPath) => void,
+): number | string {
   const { addRegrip, double: dbl, rotation } = p;
   let splitSeq: string[] = [];
   for (const seg of sequence.split(' ')) {
@@ -766,12 +809,28 @@ export function algSpeed(
   }
   if (ignoreauf) stripAuf(splitSeq);
 
+  const paths = onPath ? new Map<TestResult, MccGripPath>() : undefined;
+  let offset = 0;
+  const run = (seq: string[], left: number, right: number, speed: number,
+    startIndex: number, parent?: MccGripPath, event?: MccGripEvent): TestResult => {
+    if (!paths) return testRun(seq, left, right, speed, p);
+    const path: MccGripPath = {
+      start: parent?.start ?? { left, right },
+      events: [...(parent?.events ?? []), ...(event ? [event] : [])],
+    };
+    const result = testRun(seq, left, right, speed, p, (index, kind, cost) => {
+      path.events.push({ kind, beforeMove: startIndex + index + 1, cost });
+    });
+    paths.set(result, path);
+    return result;
+  };
+
   let tests: TestResult[] = [
-    testRun(splitSeq, 0, 0, 0, p),
-    testRun(splitSeq, 0, -1, 1 + addRegrip, p),
-    testRun(splitSeq, 0, 1, 1 + addRegrip, p),
-    testRun(splitSeq, -1, 0, 1 + addRegrip, p),
-    testRun(splitSeq, 1, 0, 1 + addRegrip, p),
+    run(splitSeq, 0, 0, 0, 0),
+    run(splitSeq, 0, -1, 1 + addRegrip, 0),
+    run(splitSeq, 0, 1, 1 + addRegrip, 0),
+    run(splitSeq, -1, 0, 1 + addRegrip, 0),
+    run(splitSeq, 1, 0, 1 + addRegrip, 0),
   ];
   while (true) {
     for (const t of tests) {
@@ -786,7 +845,19 @@ export function algSpeed(
       else if (compTest[0] > bestTest[0] && bestTest[0] != -1) { bestTest = compTest; }
       else if (compTest[0] == bestTest[0] && compTest[1] < bestTest[1] && bestTest[0] != -1) { bestTest = compTest; }
     }
-    if (bestTest[0] == -1) { return Math.round(bestTest[1] * 10) / 10; }
+    if (bestTest[0] == -1) {
+      if (paths) onPath!(paths.get(bestTest)!);
+      return Math.round(bestTest[1] * 10) / 10;
+    }
+    const parent = paths?.get(bestTest);
+    paths?.clear();
+    const nextIndex = offset + bestTest[0];
+    const resume = (left: number, right: number, speed: number, kind: 'regrip' | 'rotation-reset') =>
+      run(splitSeq.slice(bestTest[0]), left, right, speed, nextIndex, parent, {
+        kind, beforeMove: nextIndex + 1,
+        hand: bestTest[2] === left ? 'right' : bestTest[3] === right ? 'left' : 'both',
+        target: { left, right }, cost: speed - bestTest[1],
+      });
     tests = [];
 
     const prevMoveType = bestTest[0] >= 1 ? splitSeq[bestTest[0] - 1][0] : ' ';
@@ -802,7 +873,7 @@ export function algSpeed(
         const leftMatch = (bestTest[2] == leftWrist);
         const rightMatch = (bestTest[3] == rightWrist);
         if (['X', 'x', 'Y', 'y', 'Z', 'z'].includes(prevMoveType)) { // 整体转后手位任意重摆
-          tests.push(testRun(splitSeq.slice(bestTest[0]), leftWrist, rightWrist, bestTest[1], p));
+          tests.push(resume(leftWrist, rightWrist, bestTest[1], 'rotation-reset'));
         } else {
           let penalty = doubleRegrip ? (rotation * dbl) : 2; // 双手同时 regrip 极罕见,penalty 几乎总是 2
           const rMoveLatency = (prevMoveType == 'R' || prev2Type == 'R' || prevMoveType == 'r' || prev2Type == 'r') ? 1 : 0;
@@ -810,16 +881,17 @@ export function algSpeed(
           if (leftMatch || doubleRegrip) {
             const rHandLatency = Math.max(0, 2 - (bestTest[1] - bestTest[5])); // 右手最后动作距今
             penalty = Math.max(rHandLatency, rMoveLatency, lMoveLatency * 2);
-            tests.push(testRun(splitSeq.slice(bestTest[0]), leftWrist, rightWrist, bestTest[1] + penalty + addRegrip, p));
+            tests.push(resume(leftWrist, rightWrist, bestTest[1] + penalty + addRegrip, 'regrip'));
           } else if (rightMatch || doubleRegrip) {
             const lHandLatency = Math.max(0, 2 - (bestTest[1] - bestTest[4])); // 左手最后动作距今
             penalty = Math.max(lHandLatency, lMoveLatency, rMoveLatency * 2);
-            tests.push(testRun(splitSeq.slice(bestTest[0]), leftWrist, rightWrist, bestTest[1] + penalty + addRegrip, p));
+            tests.push(resume(leftWrist, rightWrist, bestTest[1] + penalty + addRegrip, 'regrip'));
           }
         }
       }
     }
     splitSeq = splitSeq.slice(bestTest[0]);
+    offset = nextIndex;
   }
 }
 

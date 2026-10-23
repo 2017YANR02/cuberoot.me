@@ -1,6 +1,7 @@
 'use client';
 
 import { useT } from '@/hooks/useT';
+import { ArrowRight, Check, Search, X } from 'lucide-react';
 import SopLoadingDemo from './SopLoadingDemo';
 
 type Example = 'simple' | 'sequence' | 'focus' | 'action' | 'group' | 'secondary' | 'consistent';
@@ -36,16 +37,22 @@ export default function SopUiStandards() {
     { kind: 'consistent', title: t('同类元素一致', 'Keep similar elements consistent'), text: t('同类元素使用一致的字体、颜色、间距和样式，避免无意义的视觉差异。', 'Use consistent typography, colors, spacing and styling for similar elements; avoid arbitrary visual differences.'), bad: t('相同的查看操作使用三种样式。', 'The same view action uses three different styles.'), good: t('同类操作保持一致，便于识别。', 'Consistent actions are easier to recognize.') },
   ];
   return <section className="sop-ui-standards" aria-labelledby="sop-ui-title">
-    <h3 id="sop-ui-title">{t('界面设计（UI）', 'Visual design (UI)')}</h3>
+    <h3 id="sop-ui-title">{t('界面设计', 'Visual design')}</h3>
+    <p className="quality-ui-summary">{t('让用户第一眼看到重点，看完就知道下一步。', 'Make the main point visible at a glance and the next action easy to find.')}</p>
+    <div className="quality-reading-order" aria-label={t('阅读顺序', 'Reading order')}>
+      <span><b>1</b>{t('看到重点', 'Notice')}</span><ArrowRight size={14} aria-hidden="true" />
+      <span><b>2</b>{t('理解信息', 'Understand')}</span><ArrowRight size={14} aria-hidden="true" />
+      <span><b>3</b>{t('完成操作', 'Act')}</span>
+    </div>
     <SopLoadingDemo />
     <div className="sop-ui-rules">{rules.map(rule => <article key={rule.kind} className="staff-sop-card sop-ui-rule" data-site-surface="panel">
-      <h4>{rule.title}</h4><p className="sop-ui-description">{rule.text}</p>
+      <div className="quality-rule-heading"><h4>{rule.title}</h4></div><p className="sop-ui-description">{rule.text}</p>
       <div className="sop-ui-comparison">{[false, true].map(good => <figure key={String(good)}>
-        <div className="sop-ui-verdict">{good ? t('✓ 推荐', '✓ Recommended') : t('× 不推荐', '× Avoid')}</div>
+        <div className={`quality-verdict ${good ? 'is-good' : 'is-bad'}`}>{good ? <Check size={14} aria-hidden="true" /> : <X size={14} aria-hidden="true" />}{good ? t('推荐', 'Do') : t('避免', 'Avoid')}</div>
         <ExampleView kind={rule.kind} good={good} />
         <figcaption>{good ? rule.good : rule.bad}</figcaption>
       </figure>)}</div>
     </article>)}</div>
-    <p className="staff-start-note">{t('验收：请未参与设计的人看一下页面，问他先注意到什么、页面能做什么、下一步会点哪里，核对是否符合设计目标。', 'Review: ask someone uninvolved in the design what they noticed first, what the page does and where they would click next; compare their answers with the intended task.')}</p>
+    <aside className="quality-review"><Search size={18} aria-hidden="true" /><div><strong>{t('验收时看什么', 'What to check')}</strong><p>{t('请未参与设计的人看一眼：先注意到什么？页面能做什么？下一步点哪里？答案应与设计目标一致。', 'Ask someone uninvolved in the design what they noticed first, what the page does and where they would click next. Their answers should match the intended task.')}</p></div></aside>
   </section>;
 }

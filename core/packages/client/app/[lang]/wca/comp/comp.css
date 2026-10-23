@@ -320,6 +320,7 @@
   align-items: baseline;
   gap: 8px;
   min-width: 0;
+  max-width: 100%;
 }
 .comp-info-row .comp-info-label { white-space: nowrap; }
 .comp-info-label {
@@ -330,7 +331,9 @@
 .comp-info-value {
   color: var(--foreground);
   margin: 0;
-  word-break: break-word;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .comp-info-link {
   color: var(--accent);
@@ -401,12 +404,13 @@
   }
   .comp-info-row {
     display: grid;
-    grid-template-columns: 56px 1fr;
+    grid-template-columns: 56px minmax(0, 1fr);
     column-gap: 10px;
   }
   /* zh 标签最多 4 个汉字;微信内置浏览器字体比 Safari 偏宽,固定 56px 会在「报名时间/修改截止/候补截止」处折行。
      改自适应宽度 + 不折行,保证一行(英文标签长,仍走 56px 固定列以免挤掉值列) */
-  .comp-info-panel--zh .comp-info-row { grid-template-columns: max-content 1fr; }
+  .comp-info-panel--zh .comp-info-row { grid-template-columns: max-content minmax(0, 1fr); }
+  .comp-info-panel .comp-info-row--unlabelled { grid-template-columns: minmax(0, 1fr); }
   .comp-info-panel--zh .comp-info-label { white-space: nowrap; }
 }
 

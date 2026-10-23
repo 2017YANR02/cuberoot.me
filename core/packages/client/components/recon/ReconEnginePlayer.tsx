@@ -97,6 +97,7 @@ export default function ReconEnginePlayer({
   if (NXN_RE.test(puzzleId) || puzzleId === 'mirror' || puzzleId === 'mirror2') {
     return (
       <CuberReconPlayer showPlaybackOptions
+        reconText={solution}
         segmentEnds={reconPlaybackSegments(solution)}
         scramble={scramble}
         alg={cleanForPlayer(solution)}

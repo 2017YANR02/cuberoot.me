@@ -12,6 +12,7 @@ import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { CONTRAST_KEY, THEME_KEY, restorePersistedAppearance } from '@/lib/theme';
 import { PALETTE_KEY } from '@/lib/palettes';
+import { ACCENT_KEY } from '@/lib/accent-colors';
 import { HOME_BACKGROUND_CHANGE_EVENT } from '@/hooks/useHomeBackgroundChoice';
 import { HOME_BACKGROUND_KEY } from '@/lib/home-backgrounds';
 import i18n, { changeAppLanguage, normalizeAppLang, syncLangToUrl } from '@/i18n/i18n-client';
@@ -62,7 +63,8 @@ export default function ThemeColorSync() {
     };
     const onStorage = (event: StorageEvent) => {
       if (event.key === null || event.key === THEME_KEY
-        || event.key === PALETTE_KEY || event.key === CONTRAST_KEY || event.key === 'trainer-lang') restore();
+        || event.key === PALETTE_KEY || event.key === CONTRAST_KEY || event.key === ACCENT_KEY
+        || event.key === 'trainer-lang') restore();
     };
     const onVisible = () => {
       if (document.visibilityState === 'visible') restore();

@@ -84,6 +84,8 @@ export default function XPage() {
 
 ## 国际化
 
+翻译前先读 [`WCA 英中翻译参考`](../../../core/packages/client/public/regulation/wca-translation-reference.md)，再按条款号查同目录 `wca-regulations-bilingual.md`。后者随 `reg:clauses` 自动从 `_full.json` 生成；仅重导出现有数据用 `pnpm -F @cuberoot/client reg:clauses --from-json`。人工参考是网页 `/regulation/translation` 与下载共用的唯一正文；规则改版后需复核其中的术语、基线日期和已知原译疑点，不能自动覆盖成人工已审校。公共发现入口在 `/llms.txt`，仓库发现入口在根 `AGENTS.md` 和 `i18n` skill。
+
 遵循 `i18n` Skill,仅 en + zh-Hans;文案用 `tr`/`T`/`useT` 或 locale JSON,禁止内联语言三元;不恢复繁体字段、生成器或已删除的 `zh:*` 检查命令。
 
 ## 新增一个全新章节(注册表里还没有)

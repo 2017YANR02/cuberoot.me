@@ -137,45 +137,49 @@ html[data-theme=dark] .wp-page {
 /* ── 成绩变更面板(PersonResultChanges)── 仅在该选手有往期成绩变更时渲染 */
 .wp-rc-card {
     padding: 16px 20px;
-    display: flex; flex-direction: column; gap: 8px;
+    display: flex; flex-direction: column; gap: 20px;
 }
 .wp-rc-head { display: flex; align-items: center; gap: 10px; }
 .wp-rc-title { margin: 0; font-size: 1rem; font-weight: 600; color: var(--wp-text); }
-.wp-rc-sub { margin: 0; font-size: 0.8rem; color: var(--wp-text-sub); line-height: 1.5; max-width: 640px; }
-.wp-rc-list { list-style: none; margin: 4px 0 0; padding: 0; }
+.wp-rc-groups { display: grid; gap: 28px; }
+.wp-rc-group { min-width: 0; }
+.wp-rc-comp { margin: 0 0 14px; font-size: 0.9rem; font-weight: 600; color: var(--foreground); overflow-wrap: anywhere; }
+.wp-rc-comp a { color: inherit; text-decoration: none; text-underline-offset: 3px; }
+.wp-rc-comp a:hover { text-decoration: underline; }
+.wp-rc-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 28px; align-items: start; list-style: none; margin: 0; padding: 0; }
 .wp-rc-row {
-    display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
-    padding: 9px 0; font-size: 0.85rem; font-variant-numeric: tabular-nums;
+    display: grid; gap: 8px; min-width: 0;
+    font-size: 0.85rem; font-variant-numeric: tabular-nums;
 }
-.wp-rc-row + .wp-rc-row { border-top: 1px solid var(--wp-border); }
+.wp-rc-context { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
 .wp-rc-badge {
-    flex: none; font-size: 0.72rem; font-weight: 650; padding: 1px 7px; border-radius: 999px;
+    margin-left: auto; flex: none; font-size: 0.68rem; font-weight: 600; padding: 1px 6px; border-radius: 5px;
 }
-.wp-rc-badge-removed { color: var(--wp-pink); background: var(--wp-pink-soft); }
-.wp-rc-badge-modified { color: var(--wp-accent); background: var(--wp-accent-soft); }
-.wp-rc-evt { font-size: 1.05em; color: var(--wp-text-sub); flex: none; }
-.wp-rc-ctx { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 7px; min-width: 0; }
-.wp-rc-event { color: var(--wp-text); font-weight: 550; }
-.wp-rc-round { color: var(--wp-text-sub); }
-.wp-rc-comp { color: var(--wp-text-sub); }
-.wp-rc-vals { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; margin-left: auto; }
-.wp-rc-pair { display: inline-flex; align-items: center; gap: 6px; }
-.wp-rc-flabel { color: var(--wp-text-mute); font-size: 0.78rem; }
-.wp-rc-old { color: var(--wp-text-mute); text-decoration: line-through; }
-.wp-rc-arrow { color: var(--wp-text-mute); }
-.wp-rc-new { color: var(--wp-text); font-weight: 650; }
-.wp-rc-gone { color: var(--wp-pink); font-size: 0.76rem; }
-.wp-rc-meta { color: var(--wp-text-sub); }
+.wp-rc-badge-removed { color: var(--destructive); background: color-mix(in srgb, var(--destructive) 10%, transparent); }
+.wp-rc-badge-modified { color: var(--accent); background: var(--accent-soft); }
+.wp-rc-evt { font-size: 1.05em; color: var(--muted-foreground); flex: none; }
+.wp-rc-event { color: var(--foreground); font-weight: 550; }
+.wp-rc-round { color: var(--muted-foreground); }
+.wp-rc-vals { display: flex; flex-wrap: wrap; gap: 10px 20px; min-width: 0; }
+.wp-rc-pair { display: grid; align-content: start; gap: 3px; min-width: 0; }
+.wp-rc-comparison { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; }
+.wp-rc-flabel { color: var(--muted-foreground); font-size: 0.72rem; }
+.wp-rc-old { color: var(--muted-foreground); text-decoration: line-through; font-size: 0.8rem; overflow-wrap: anywhere; }
+.wp-rc-arrow { color: var(--muted-foreground); }
+.wp-rc-new { color: var(--foreground); font-weight: 650; overflow-wrap: anywhere; }
 .wp-rc-source {
     flex: none; font-size: 0.68rem; font-weight: 600; padding: 1px 6px; border-radius: 999px;
-    color: var(--wp-text-sub); background: var(--wp-border);
+    color: var(--muted-foreground); background: var(--muted);
 }
 .wp-rc-note {
-    flex-basis: 100%; width: 100%; margin: 2px 0 0;
-    color: var(--wp-text-mute); font-size: 0.78rem; line-height: 1.45;
+    margin: 0; overflow-wrap: anywhere;
+    color: var(--muted-foreground); font-size: 0.78rem; line-height: 1.45;
 }
-@media (max-width: 560px) {
-    .wp-rc-vals { margin-left: 0; width: 100%; }
+@media (max-width: 1000px) {
+    .wp-rc-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+    .wp-rc-list { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* ── Hero ──────────────────────────────────────────────────────────── */

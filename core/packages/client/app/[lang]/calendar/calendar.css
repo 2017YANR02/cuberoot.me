@@ -13,7 +13,7 @@
  *
  * 这一页不跟站内 6 套配色主题走。事件色本来就是 Google 的 11 色原始 hex
  * (lib/calendar-colors),chrome 再跟着暖色配色跑,整页就是暖底配冷块 —— 而且
- * 「和 Google 一样」是这页的产品目标,不是可配置项。
+ * 默认保持 Google 外观；用户单独选的强调色只覆盖按钮、选中态和焦点。
  *
  * `html:root:has(.cal-page)` = (0,2,1),压过配色块 `:root[data-palette]` = (0,2,0),
  * 所以任何配色都渗不进来;深浅仍跟用户的 ThemeToggle / 系统偏好,因为 Google 自己
@@ -38,12 +38,12 @@ html:root:has(.cal-page) {
   --border-default: #dadce0;
   --border-strong: #bdc1c6;
   --input: #dadce0;
-  --ring: #1a73e8;
-  --accent: #1a73e8;
-  --accent-foreground: #ffffff;
+  --ring: var(--user-accent, #1a73e8);
+  --accent: var(--user-accent, #1a73e8);
+  --accent-foreground: var(--user-accent-foreground, #ffffff);
   --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
-  --primary: #1a73e8;
-  --primary-foreground: #ffffff;
+  --primary: var(--user-accent, #1a73e8);
+  --primary-foreground: var(--user-accent-foreground, #ffffff);
   --destructive: #d93025;
   --destructive-foreground: #ffffff;
   --cal-today-wash: color-mix(in srgb, #1a73e8 4%, transparent);
@@ -66,12 +66,12 @@ html:root:has(.cal-page) {
     --border-default: #444746;
     --border-strong: #5f6368;
     --input: #444746;
-    --ring: #a8c7fa;
-    --accent: #a8c7fa;
-    --accent-foreground: #062e6f;
+    --ring: var(--user-accent, #a8c7fa);
+    --accent: var(--user-accent, #a8c7fa);
+    --accent-foreground: var(--user-accent-foreground, #062e6f);
     --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
-    --primary: #a8c7fa;
-    --primary-foreground: #062e6f;
+    --primary: var(--user-accent, #a8c7fa);
+    --primary-foreground: var(--user-accent-foreground, #062e6f);
     --destructive: #f28b82;
     --destructive-foreground: #131314;
     --cal-today-wash: transparent;
@@ -95,12 +95,12 @@ html:root[data-theme=dark]:has(.cal-page) {
   --border-default: #444746;
   --border-strong: #5f6368;
   --input: #444746;
-  --ring: #a8c7fa;
-  --accent: #a8c7fa;
-  --accent-foreground: #062e6f;
+  --ring: var(--user-accent, #a8c7fa);
+  --accent: var(--user-accent, #a8c7fa);
+  --accent-foreground: var(--user-accent-foreground, #062e6f);
   --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
-  --primary: #a8c7fa;
-  --primary-foreground: #062e6f;
+  --primary: var(--user-accent, #a8c7fa);
+  --primary-foreground: var(--user-accent-foreground, #062e6f);
   --destructive: #f28b82;
   --destructive-foreground: #131314;
   --cal-today-wash: transparent;

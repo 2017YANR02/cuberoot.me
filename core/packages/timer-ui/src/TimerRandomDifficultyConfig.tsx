@@ -25,6 +25,7 @@ import {
 } from '@cuberoot/shared/timer';
 import {
   canTrain,
+  EO_AXIS_LABELS,
   facesOfSubset,
   trainerCaps,
   trainerSlotOptions,
@@ -87,6 +88,9 @@ const COPY = {
   },
   bestBlock: { en: 'Best block', zh: '最优块' },
   bestSlot: { en: 'Best slot', zh: '最优槽' },
+  bestAxis: { en: 'Best axis for colours', zh: '按底色取最优轴' },
+  eoAxis: { en: 'EO axis', zh: 'EO 轴' },
+  fixedAxis: { en: 'Fixed {axis} axis', zh: '固定 {axis} 轴' },
   block: { en: 'Block', zh: '块' },
   difficulty: { en: 'Difficulty', zh: '难度' },
   difficultyAria: { en: 'Generate by difficulty', zh: '按难度生成' },
@@ -125,6 +129,8 @@ export function TimerRandomDifficultyConfig({
   const stage = stages.includes(settings.genDiffStage) ? settings.genDiffStage : stages[0];
   const variant = dataVariantOfStage(method, stage);
   const caps = trainerCaps(variant, stage);
+  const pureEo = variant === 'eoline' && stage === 'eo';
+  const eoAxis = settings.genDiffEoAxis ?? 'best';
 
   // 底色子集:与真题难度筛共用同一个选择器(sel.subsetKey 是过滤性质,变了就写回)。
   const sel = useSubsetSelection('cn', settings.genDiffColors);
@@ -221,12 +227,28 @@ export function TimerRandomDifficultyConfig({
             {body && (
               <div className="timer-random-difficulty-body">
                 <div className="timer-random-difficulty-options">
-                  <SubsetColorPicker disabled={disabled} sel={sel} language={language} />
+                  {(!pureEo || eoAxis === 'best') && (
+                    <SubsetColorPicker disabled={disabled} sel={sel} language={language} />
+                  )}
                   <MethodStagePicker
                     disabled={disabled} isZh={language === 'zh'} method={method} stage={stage}
                     methods={methods} stagesOf={stagesOfMethod}
                     onSelect={(m, s) => onChange({ genDiffVariant: dataVariantOfStage(m, s), genDiffStage: s, ...RESET })}
                   />
+                  {pureEo && (
+                    <select className="timer-random-difficulty-select" disabled={disabled}
+                      aria-label={text(COPY.eoAxis)} value={eoAxis}
+                      onChange={(event) => onChange({
+                        genDiffEoAxis: event.target.value === 'best' ? 'best' : Number(event.target.value) as 0 | 1 | 2,
+                      })}>
+                      <option value="best">{text(COPY.bestAxis)}</option>
+                      {([2, 1, 0] as const).map(axis => (
+                        <option key={axis} value={axis}>
+                          {text(COPY.fixedAxis).replace('{axis}', EO_AXIS_LABELS[axis])}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                   {showSlots && (
                     <select
                       className="timer-random-difficulty-select"

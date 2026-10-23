@@ -1113,5 +1113,130 @@
     "date": "2026-09-27",
     "zh": "账号合并后旧会话失效 + 手机验证凭证与账号操作原子提交 + 身份存储错误明确反馈 + 打乱统计快捷入口精简进度输出",
     "en": "Account merges invalidate retired sessions + phone proofs commit atomically with account actions + identity storage errors surface explicitly + scramble statistics shortcuts show concise progress"
+  },
+  {
+    "date": "2026-09-28",
+    "zh": "站内助手接入页面与 WCA 数据问答 + 聊天表情与已读回执 + 会议预约与比赛日历 + 多智能体魔方实验",
+    "en": "The site assistant answers from pages and WCA data + chat expressions and read receipts + meeting scheduling and competition calendars + multi-agent cube experiments"
+  },
+  {
+    "date": "2026-09-29",
+    "zh": "计时器跨端共享训练、声音与导出设置 + 复盘分析移入后台线程 + iOS 会员订阅与纪录推送接入 + 账号删除说明加入",
+    "en": "Timers share training, audio and export settings across clients + reconstruction moves to background workers + iOS subscriptions and record push integration + account deletion instructions"
+  },
+  {
+    "date": "2026-09-30",
+    "zh": "刷新近期比赛、中文赛名与 WCA 统计",
+    "en": "Refresh upcoming competitions, Chinese competition names and WCA statistics"
+  },
+  {
+    "date": "2026-10-01",
+    "zh": "WCA 平均成绩与最少步单位修正 + 助手完善个人成绩和参赛国家查询 + 纪录快讯复制格式统一 + 长打乱完整展示",
+    "en": "Correct WCA averages and Fewest Moves units + improve assistant queries for personal results and competition countries + align copied record news + display long scrambles in full"
+  },
+  {
+    "date": "2026-10-02",
+    "zh": "项目介绍与合作方案加入 + 2027 世锦赛信息页加入 + 个人比赛成绩弹窗 + 助手支持站内导航与相对日期查询",
+    "en": "Project overview and partnership proposal + a 2027 World Championship information page + personal competition result dialogs + assistant navigation and relative-date queries"
+  },
+  {
+    "date": "2026-10-03",
+    "zh": "智能魔方实时显示转动与阶段 + 年度参赛统计加入 + 手机日历与成绩详情优化 + 纪录快讯复用统一格式",
+    "en": "Smart cubes show live moves and stages + annual participation statistics + improved mobile calendars and result details + shared record news formatting"
+  },
+  {
+    "date": "2026-10-04",
+    "zh": "Google Play 会员支付接入 + 教学二维码与交易流程完善 + 拓展十字表生成加速 + 合作计划与演示提纲加入",
+    "en": "Google Play billing integration + teaching QR and commerce workflows + faster XCross table generation + a business plan and presentation notes"
+  },
+  {
+    "date": "2026-10-05",
+    "zh": "外接计时器与智能魔方校准跨端共享 + 在线成绩队列持久化 + 无杠打乱统计加入 + 复盘评论评价与支出明细加入",
+    "en": "Shared external timer controls and smart cube calibration + persistent online result delivery + no-bar scramble statistics + reconstruction comment reactions and expense details"
+  },
+  {
+    "date": "2026-10-06",
+    "zh": "计时器历史、统计与对战页面跨端共享 + 在线房间扩展平均成绩 + 随机打乱与同步种子统一 + 流量防护总开关加入",
+    "en": "Shared timer history, statistics and battle pages + more rolling averages in online rooms + unified random scrambles and synchronization seeds + a runtime traffic defense switch"
+  },
+  {
+    "date": "2026-10-07",
+    "zh": "智能魔方阶段训练扩展 + 安装端文件保存与屏幕常亮接入 + 大型比赛成绩表按可见区域加载 + 复盘支持多篇首页置顶",
+    "en": "Expanded smart cube stage training + native file saving and screen wake locks + viewport-based competition result rendering + multiple homepage reconstruction pins"
+  },
+  {
+    "date": "2026-10-08",
+    "zh": "三阶魔方发展史加入 + 实名人脸验证接入 + 新手引导按账号同步 + 复盘公式链接到学习页 + 二重奏模拟器加入",
+    "en": "A 3×3 cube history archive + real-name face verification + account-synced onboarding + reconstruction links to algorithm learning + Pyraminx Duo simulation"
+  },
+  {
+    "date": "2026-10-09",
+    "zh": "双底 ZBLL 最优公式与离线训练加入 + 魔板与异形模拟器扩展 + 魔方发展史区分代际和价格 + 启动诊断完善",
+    "en": "Optimal double ZBLL algorithms and offline training + Magic and other puzzle simulators + cube history separates generations and prices + improved startup diagnostics"
+  },
+  {
+    "date": "2026-10-10",
+    "zh": "助手按需计算公开数据 + 选手队伍信息可编辑 + 比赛目录增量同步 + 专项训练整合进计时器 + 混合转轴模拟器扩展",
+    "en": "Assistant calculations on public data + editable cuber team information + incremental competition catalog sync + specialist training in the timer + more mixed-axis simulators"
+  },
+  {
+    "date": "2026-10-11",
+    "zh": "开发环境自助接入与设备授权加入 + 智能魔方复盘标记多余转动 + 训练识别与回忆菜单统一 + 深切异形模拟器扩展",
+    "en": "Self-service development setup and device enrollment + waste-move labels in smart cube reconstruction + unified recognition and recall training + more deep-cut simulators"
+  },
+  {
+    "date": "2026-10-12",
+    "zh": "双底 ZBLL 资料说明与断点选谱加入 + Android 安装包按版本提供 + 三阶直升机混合魔方加入 + 开发预览域名接入完善",
+    "en": "Double ZBLL corpus documentation and resumable selection + versioned Android installers + a 3×3–Helicopter hybrid + improved development preview provisioning"
+  },
+  {
+    "date": "2026-10-13",
+    "zh": "应用下载与求解器对比页加入 + 复盘支持桥式与 ZZ 阶段和拖动回放 + 会员续费流程完善 + 六层八面体与混合魔方加入",
+    "en": "App downloads and solver comparisons + Roux and ZZ reconstruction stages with draggable playback + improved membership renewals + six-layer FTO and hybrid puzzles"
+  },
+  {
+    "date": "2026-10-14",
+    "zh": "Android 发布流程与分渠道更新检查加入 + 助手反馈、监控与告警完善 + 最优求解器按实测条件分组对比",
+    "en": "Android release workflows and channel-aware update checks + assistant feedback, monitoring and alerts + optimal solver comparisons grouped by measured conditions"
+  },
+  {
+    "date": "2026-10-15",
+    "zh": "Apple Watch 计时与共享复盘接入 + F2L 解法按标准插入分组 + 账号头像库扩展 + 求解器对比补充实验结果",
+    "en": "Apple Watch timing and shared reconstruction integration + F2L solutions grouped by standard insertions + expanded account avatars + solver comparison experiment results"
+  },
+  {
+    "date": "2026-10-16",
+    "zh": "公式图片支持单张与批量下载 + 智能魔方训练增加起步方式 + Apple Watch 离线打乱与多协议接入 + Cat’s Cradle模拟器加入",
+    "en": "Individual and batch algorithm image downloads + more smart cube training start modes + offline Watch scrambles and multi-protocol integration + Cat’s Cradle simulation"
+  },
+  {
+    "date": "2026-10-17",
+    "zh": "F2L 交互教程加入 + 模拟器分动画与绘图工作区 + 外观预设、收藏与最近项目 + 旧训练入口转入计时器",
+    "en": "An interactive F2L tutorial + separate animation and image workspaces + appearance presets, favorites and recent puzzles + legacy training routes move into the timer"
+  },
+  {
+    "date": "2026-10-18",
+    "zh": "层先法教程加入引导练习 + 训练分别统计观察与执行时间 + 智能魔方朝向与复盘缓存修正 + 公式图片快捷导出",
+    "en": "Guided practice in the layer-by-layer tutorial + separate observation and execution statistics + smart cube orientation and reconstruction cache fixes + quick algorithm image export"
+  },
+  {
+    "date": "2026-10-19",
+    "zh": "独立员工工作区与团队流程加入 + 非官方比赛与纪录接入完善 + 微信续费签约绑定账号 + 共享连续圆角与Radio Canon加入",
+    "en": "An independent employee workspace and team workflows + expanded unofficial contest integration + account-bound WeChat renewal signing + shared continuous corners and Radio Canon"
+  },
+  {
+    "date": "2026-10-20",
+    "zh": "智能魔方复盘收录与批注队列加入 + 小程序原生账号与隐私页面完善 + 练习链接统一 + 连续圆角说明页加入 + 枫叶教学扩展",
+    "en": "Annotated smart cube reconstruction intake + native mini program account and privacy pages + unified practice links + continuous-corner documentation + expanded Ivy lessons"
+  },
+  {
+    "date": "2026-10-21",
+    "zh": "统计快照迁至 Release 并支持恢复 + 原生最优求解服务与实测对比完善 + 模拟器支持网页嵌入 + WCA 日志变更监测加入",
+    "en": "Recoverable statistics snapshots move to Releases + native optimal solving and measured comparisons + embeddable puzzle simulators + WCA log change monitoring"
+  },
+  {
+    "date": "2026-10-22",
+    "zh": "WCA 规则、公告与事件档案扩展 + 团队质量标准独立展示 + 层先法连续演练与枫叶 3Y 教程完善 + 顶色训练统计与Radio Jam加入",
+    "en": "Expanded WCA rules, announcements and incident archives + dedicated team quality standards + continuous LBL walkthroughs and Ivy 3Y lessons + top-color training statistics and Radio Jam"
   }
 ]

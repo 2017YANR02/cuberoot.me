@@ -1,0 +1,77 @@
+.scramble-statistics {
+    min-width: 0;
+    margin-block: 0.6rem;
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+.scramble-statistics-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.8rem;
+    margin-bottom: 0.35rem;
+}
+.scramble-statistics-header small,
+.scramble-statistics-status,
+.scramble-statistics-missing {
+    color: var(--muted-foreground);
+}
+.scramble-statistics-whole { margin-left: auto; }
+.scramble-statistics .scramble-statistics-matrix {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: inherit;
+}
+.scramble-statistics .scramble-statistics-matrix th,
+.scramble-statistics .scramble-statistics-matrix td,
+.gen-tn-sheet-table .gen-tn-statistics-row .scramble-statistics .scramble-statistics-matrix td {
+    padding: 0.2rem 0.1rem;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    text-align: center;
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+}
+.scramble-statistics .scramble-statistics-matrix th:first-child {
+    width: 24%;
+    text-align: left;
+    overflow-wrap: anywhere;
+}
+.scramble-statistics .scramble-statistics-matrix thead th,
+.scramble-statistics-group > dt,
+.scramble-statistics-metrics dt {
+    color: var(--muted-foreground);
+}
+.scramble-statistics dl,
+.scramble-statistics dd { margin: 0; }
+.scramble-statistics .scramble-statistics-other { margin-top: 0.45rem; }
+.scramble-statistics-group {
+    display: grid;
+    grid-template-columns: 3em minmax(0, 1fr);
+    column-gap: 0.75rem;
+    align-items: baseline;
+    padding-block: 0.2rem;
+}
+.scramble-statistics-metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem 0.85rem;
+}
+.scramble-statistics-group.is-ungrouped { display: block; }
+.scramble-statistics-metrics > div { display: flex; gap: 0.3rem; align-items: baseline; white-space: nowrap; }
+.scramble-statistics b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.scramble-statistics-status { margin: 0.35rem 0 0; font-size: 0.75rem; }
+.scramble-statistics-status button {
+    appearance: none;
+    background: none;
+    border: 0;
+    padding: 0.1rem 0.2rem;
+    color: var(--accent);
+    font: inherit;
+    cursor: pointer;
+}
+.scramble-statistics-status button:focus-visible { outline: 2px solid var(--ring); }

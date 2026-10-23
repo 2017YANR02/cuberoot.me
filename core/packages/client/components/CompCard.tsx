@@ -64,10 +64,12 @@ export interface CompCardFollow {
   onRequireLogin?: () => void;
 }
 
-export function CompCard({ comp, isZh, lang, pill, dimmed, follow, competitorLimit, eventRounds, topCubers, children }: {
+export function CompCard({ comp, isZh, lang, pill, dimmed, follow, competitorLimit, eventRounds, topCubers, compactDetails = false, children }: {
   comp: CompCardComp;
   isZh: boolean;
   lang: 'zh' | 'en';
+  /** Homepage cards: shorten Chinese competition names and show only name/date. */
+  compactDetails?: boolean;
   /** 报名状态 pill(调用方按各自里程碑口径算好);null/缺省则不渲染 pill */
   pill?: CompCardPill | null;
   /** 已截止 / 已取消等淡化样式 */
@@ -84,7 +86,9 @@ export function CompCard({ comp, isZh, lang, pill, dimmed, follow, competitorLim
   children?: ReactNode;
 }) {
   const name = localizeCompName(comp.id, comp.name, isZh, { explicitNameZh: comp.name_zh ?? undefined, date: comp.start_date });
-  const city = comp.city ? (isZh ? localizeCity(comp.city, true, comp.country) : comp.city) : '';
+  const displayName = compactDetails && isZh && comp.country.toUpperCase() === 'CN'
+    ? name.replace(/(?:公开赛|赛)$/, '') : name;
+  const city = !compactDetails && comp.city ? (isZh ? localizeCity(comp.city, true, comp.country) : comp.city) : '';
   const dateStr = formatDateRangeIso(comp.start_date, comp.end_date || comp.start_date).replace(/20\d\d-/g, '');
   const events = useMemo(
     () => [...new Set((comp.events ?? []).map(toWcaEventId).filter(Boolean))]
@@ -107,22 +111,24 @@ export function CompCard({ comp, isZh, lang, pill, dimmed, follow, competitorLim
       <Link {...compLinkProps(comp.id, undefined, lang)} className="rc-main">
         <div className="rc-title">
           <Flag iso2={comp.country} spanClassName="rc-flag" imgClassName="rc-flag-img" />
-          <span className="rc-name">{name}</span>
+          <span className="rc-name">{displayName}</span>
         </div>
-        <div className="rc-meta">
-          {pill && <RegPill pill={pill} />}
-          <span className="rc-date">{dateStr}</span>
+        <div className={compactDetails ? 'rc-details rc-details--compact' : 'rc-details'}>
+          <div className="rc-meta">
+            {pill && <RegPill pill={pill} />}
+            <span className="rc-date">{dateStr}</span>
+          </div>
+          {(city || !!competitorLimit) && <div className="rc-place">
+            {city && <span>{city}</span>}
+            {competitorLimit ? (
+              <span className="rc-limit" title={tr({ zh: `报名上限 ${competitorLimit} 人`, en: `Competitor limit ${competitorLimit}` })}>
+                <Users size={13} aria-hidden="true" />
+                {competitorLimit}
+              </span>
+            ) : null}
+          </div>}
         </div>
-        <div className="rc-place">
-          {city && <span>{city}</span>}
-          {competitorLimit ? (
-            <span className="rc-limit" title={tr({ zh: `报名上限 ${competitorLimit} 人`, en: `Competitor limit ${competitorLimit}` })}>
-              <Users size={13} aria-hidden="true" />
-              {competitorLimit}
-            </span>
-          ) : null}
-        </div>
-        {events.length > 0 && (
+        {!compactDetails && events.length > 0 && (
           <div className="rc-events">
             {events.map((eid) => (
               eventRounds ? (

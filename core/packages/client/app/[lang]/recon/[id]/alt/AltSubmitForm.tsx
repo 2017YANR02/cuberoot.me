@@ -51,8 +51,10 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
 
   useEffect(() => {
     if (!parentId) return;
+    let cancelled = false;
     getRecon(Number(parentId))
       .then(p => {
+        if (cancelled) return;
         setParent(p);
         if (isEditing && editIdx != null) {
           const alt = p.alternatives?.[editIdx];
@@ -61,7 +63,8 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
         }
         setLoading(false);
       })
-      .catch((e: Error) => { setError(e.message); setLoading(false); });
+      .catch((e: Error) => { if (!cancelled) { setError(e.message); setLoading(false); } });
+    return () => { cancelled = true; };
   }, [parentId, isEditing, editIdx, t]);
 
   const scramble = parent ? getReconScramble(parent) : '';
@@ -79,7 +82,9 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
     setSubmitting(true);
     try {
       if (isEditing && editIdx != null) {
-        await updateAlternative(Number(parentId), editIdx, trimmed);
+        const expected = parent?.alternatives?.[editIdx];
+        if (!expected || parent?.id !== Number(parentId)) throw new Error(t('recon.notFound'));
+        await updateAlternative(Number(parentId), editIdx, trimmed, expected);
       } else {
         await addAlternative(Number(parentId), trimmed);
       }

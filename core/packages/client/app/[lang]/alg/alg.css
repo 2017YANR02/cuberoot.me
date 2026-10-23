@@ -1,9 +1,9 @@
 /* /alg — alg library styles. Standalone (does not extend /tutorial). */
 
-/* /alg page-scoped accent override — keep classic shadcn blue accent (light #0066cc / dark #4ea1ff)
-   instead of global terracotta. Everything else inherits :root tokens via theme-tokens. */
+/* Default to classic blue; an explicit user accent takes priority.
+   Everything else inherits :root tokens via theme-tokens. */
 .alg-root {
-  --accent: #0066cc;
+  --accent: var(--user-accent, #0066cc);
   --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
 
   font-family: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
@@ -14,12 +14,12 @@
 }
 
 html[data-theme=dark] .alg-root {
-  --accent: #4ea1ff;
+  --accent: var(--user-accent, #4ea1ff);
   --accent-soft: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 @media (prefers-color-scheme: dark) {
   html:not([data-theme=light]) .alg-root {
-    --accent: #4ea1ff;
+    --accent: var(--user-accent, #4ea1ff);
     --accent-soft: color-mix(in srgb, var(--accent) 18%, transparent);
   }
 }

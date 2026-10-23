@@ -131,7 +131,6 @@ export function compareMoves(predicted: string[], gtMoves: string[]): CompareRes
   const rows: CompareRow[] = [];
   let faceCorrect = 0;
   let fullCorrect = 0;
-  let total = 0;
 
   for (let i = 0; i < maxLen; i++) {
     const pred = i < predicted.length ? predicted[i] : "---";
@@ -139,12 +138,11 @@ export function compareMoves(predicted: string[], gtMoves: string[]): CompareRes
     const faceOk = getMoveFace(pred === "---" ? null : pred) === getMoveFace(gt === "---" ? null : gt);
     const fullOk = pred === gt;
     if (pred !== "---" && gt !== "---") {
-      total++;
       if (faceOk) faceCorrect++;
       if (fullOk) fullCorrect++;
     }
     rows.push({ seg: i + 1, predicted: pred, gt, faceOk, fullOk });
   }
 
-  return { rows, faceCorrect, fullCorrect, total };
+  return { rows, faceCorrect, fullCorrect, total: maxLen };
 }

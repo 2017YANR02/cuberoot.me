@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
 import type { LanguageModelUsage } from 'ai';
-import type { AssistantAnswer } from '@cuberoot/shared/site-assistant';
+import { SITE_ASSISTANT_ANSWER_MAX_LENGTH, SITE_ASSISTANT_QUESTION_MAX_LENGTH, type AssistantAnswer, type AssistantThinkingMode } from '@cuberoot/shared/site-assistant';
 import postgres from 'postgres';
 import { databaseSettings } from '../db/settings.js';
 import type { QueryRunner } from '../db/connection.js';
@@ -23,6 +23,8 @@ export interface AssistantMetrics {
   stages: Record<string, { calls: number; ms: number; errors: number }>;
   models: Array<{ model: string; thinking: boolean; input: number | null; output: number | null; cached: number | null; reasoning: number | null; grossCny?: number | null; tariff?: unknown }>;
   embeddings: Array<{ model: string; tokens: number | null; grossCny?: number | null; tariff?: unknown }>;
+  searches: Array<{ provider: string; requests: number | null; grossCny: number | null; tariff: unknown }>;
+  policy: { version: string; thinking: AssistantThinkingMode };
   tools: Record<string, number>;
   retrievals: Array<{ mode: string; reason?: string; generation?: string; hits: Array<{ id: string; href: string; score?: number }> }>;
   cost?: { grossCny: number; unpricedCalls: number };
@@ -51,6 +53,18 @@ export function recordAssistantEmbedding(model: string, origin = '') {
   return (tokens?: number) => { entry.tokens = token(tokens); Object.assign(entry, assistantPrice(model, origin, entry.tokens)); };
 }
 
+/** Provider search intent counts estimate cost; only the provider bill establishes charges. */
+export function recordAssistantSearch(origin: string) {
+  const beijing = origin === 'https://dashscope.aliyuncs.com' || /^https:\/\/ws-[a-z0-9]+\.cn-beijing\.maas\.aliyuncs\.com$/.test(origin);
+  const entry = { provider: 'bailian-search', requests: null as number | null, grossCny: null as number | null,
+    tariff: beijing ? { version: 'bailian-web-turbo-2026-10-23', perRequest: 0.003, basis: 'provider_search_intents_estimate', source: 'https://help.aliyun.com/zh/model-studio/web-search/' } : null };
+  scope.getStore()?.searches.push(entry);
+  return (count?: number) => {
+    entry.requests = token(count);
+    entry.grossCny = beijing && entry.requests != null ? entry.requests * 0.003 : null;
+  };
+}
+
 export function recordAssistantRetrieval(value: AssistantMetrics['retrievals'][number]) {
   const metrics = scope.getStore();
   if (metrics && metrics.retrievals.length < 30) metrics.retrievals.push({ ...value, hits: value.hits.slice(0, 6).map(hit => ({ id: hit.id, href: hit.href, ...(hit.score == null ? {} : { score: Number(hit.score) }) })) });
@@ -67,7 +81,9 @@ export function redactAssistantText(value: string): string {
 function safeResponse(result: AssistantAnswer) {
   // Explicit allowlist; never serialize a request, history, image or provider object.
   const value = JSON.stringify({ sources: result.sources, actions: result.actions, artifacts: result.artifacts }, (_key, item) => typeof item === 'string' ? redactAssistantText(item) : item);
-  return value.length <= 180_000 ? JSON.parse(value) : { sources: result.sources.slice(0, 20).map(s => ({ ...s, title: redactAssistantText(s.title), href: redactAssistantText(s.href) })), truncated: true };
+  // Completion journals cap UTF-8 bytes, not JS string length. Leave room for
+  // the full answer and telemetry, including Chinese text and emoji.
+  return Buffer.byteLength(value, 'utf8') <= 110_000 ? JSON.parse(value) : { sources: result.sources.slice(0, 12).map(s => ({ ...s, title: redactAssistantText(s.title).slice(0,120), href: redactAssistantText(s.href).slice(0,2000) })), truncated: true };
 }
 const faultId = randomUUID();
 const health = { pendingCompletions: 0, failedWrites: 0, lastFailureAt: null as string | null, lastWriteAt: null as string | null };
@@ -93,29 +109,33 @@ function failed() {
   }
   diagnosticLog('assistant_monitor_write_failed', { failedWrites: health.failedWrites }, true);
 }
-export interface AssistantMonitorInput { uid: number | null; question: string; lang: string; model: string; streaming: boolean; imageCount: number; historyCount: number; startedAt?: number; conversationId?: string; parentId?: string; retryOf?: string; scope?: 'chat' | 'index' }
+export interface AssistantMonitorInput { uid: number | null; question: string; lang: string; model: string; streaming: boolean; imageCount: number; historyCount: number; startedAt?: number; conversationId?: string; parentId?: string; retryOf?: string; scope?: 'chat' | 'index'; thinking?: AssistantThinkingMode }
 export async function startAssistantMonitor(input: AssistantMonitorInput, run: QueryRunner = write) {
   const id = randomUUID(), started = input.startedAt ?? performance.now();
   const startedAt = new Date(Date.now() - (performance.now() - started)).toISOString();
-  const metrics: AssistantMetrics = { stages: {}, models: [], embeddings: [], tools: {}, retrievals: [] };
+  const metrics: AssistantMetrics = { stages: {}, models: [], embeddings: [], searches: [], tools: {}, retrievals: [], policy: { version: '2026-10-23', thinking: input.thinking ?? 'auto' } };
   let firstAnswer: number | null = null, partial = '', finished = false;
   // Admission is durable before consuming quota or calling a paid model.
   try {
     await run(`INSERT INTO site_assistant_requests (id,user_id,status,lang,model,streaming,image_count,history_count,question,started_at,conversation_id,parent_id,retry_of,scope)
-      VALUES (?,?,'running',?,?,?,?,?,?,?,?,(SELECT id FROM site_assistant_requests WHERE id=?::uuid AND user_id=? AND conversation_id=?::uuid),(SELECT id FROM site_assistant_requests WHERE id=?::uuid AND user_id=? AND conversation_id=?::uuid),?)`, [id, input.uid, input.lang, input.model, input.streaming, input.imageCount, input.historyCount, redactAssistantText(input.question).slice(0, 500), startedAt, input.conversationId ?? id, input.parentId ?? null, input.uid, input.conversationId ?? id, input.retryOf ?? null, input.uid, input.conversationId ?? id, input.scope ?? 'chat']);
+      VALUES (?,?,'running',?,?,?,?,?,?,?,?,(SELECT id FROM site_assistant_requests WHERE id=?::uuid AND user_id=? AND conversation_id=?::uuid),(SELECT id FROM site_assistant_requests WHERE id=?::uuid AND user_id=? AND conversation_id=?::uuid),?)`, [id, input.uid, input.lang, input.model, input.streaming, input.imageCount, input.historyCount, redactAssistantText(input.question).slice(0, SITE_ASSISTANT_QUESTION_MAX_LENGTH), startedAt, input.conversationId ?? id, input.parentId ?? null, input.uid, input.conversationId ?? id, input.retryOf ?? null, input.uid, input.conversationId ?? id, input.scope ?? 'chat']);
   } catch { failed(); throw new Error('Assistant monitoring unavailable'); }
   return {
     id,
     run<T>(callback: () => Promise<T>) { return scope.run(metrics, callback); },
-    text(answer: string) { if (answer) { firstAnswer ??= Math.round(performance.now() - started); partial = answer.slice(0, 6000); } },
+    text(answer: string) { if (answer) { firstAnswer ??= Math.round(performance.now() - started); partial = answer.slice(0, SITE_ASSISTANT_ANSWER_MAX_LENGTH); } },
     async finish(status: 'success' | 'error' | 'cancelled' | 'rejected', error?: string, result?: AssistantAnswer) {
       if (finished) return;
       finished = true;
       const duration = Math.round(performance.now() - started);
-      const calls = [...metrics.models, ...metrics.embeddings];
+      const calls = [...metrics.models, ...metrics.embeddings, ...metrics.searches];
       metrics.cost = { grossCny: calls.reduce((n, call) => n + (call.grossCny ?? 0), 0), unpricedCalls: calls.filter(call => call.grossCny == null).length };
       const snapshot = JSON.parse(JSON.stringify(metrics));
-      const item = { id, createdAt: startedAt, params: [status, error ?? null, new Date().toISOString(), duration, firstAnswer, redactAssistantText(result?.answer ?? partial).slice(0, 6000), result ? safeResponse(result) : null, snapshot, id] };
+      if (Buffer.byteLength(JSON.stringify(snapshot), 'utf8') > 64_000) {
+        snapshot.retrievals = snapshot.retrievals.map((item: AssistantMetrics['retrievals'][number]) => ({ ...item, hits: [] }));
+        snapshot.retrievalDetailsTruncated = true;
+      }
+      const item = { id, createdAt: startedAt, params: [status, error ?? null, new Date().toISOString(), duration, firstAnswer, redactAssistantText(result?.answer ?? partial).slice(0, SITE_ASSISTANT_ANSWER_MAX_LENGTH), result ? safeResponse(result) : null, snapshot, id] };
       // Disk journal survives PM2 reloads and DB outages. Test runners supply their own DB.
       let path: string | undefined;
       if (run === write) { try { path = await saveAssistantCompletion(item); } catch { failed(); } }

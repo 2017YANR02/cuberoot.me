@@ -4,7 +4,7 @@ import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import { useRouter } from 'next/navigation';
 import { WorkspaceProvider, WorkspaceLoginFrame, ReportEditor, Reports, ReportDetailPanel, Projects, ErrorNotice, Form, Field, useResource, value, RequestError, workspaceText, type StaffActor, type MemberDirectory } from '@app-foundation/workspace-ui';
 import { NavigationShell } from '@app-foundation/navigation-ui';
-import { ClipboardList, Users, FolderKanban, ShieldCheck, BookOpen } from '@app-foundation/icons/lucide';
+import { ClipboardList, Users, FolderKanban, ShieldCheck, Workflow, ScanEye, UserRoundPlus, LogOut } from '@app-foundation/icons/lucide';
 import '@app-foundation/navigation-ui/navigation.css';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
@@ -54,10 +54,10 @@ function SignedInWorkspace() {
   const items=[{key:'mine',label:t('我的工作','My work')},{key:'updates',label:t('团队动态','Team updates')},{key:'projects',label:t('项目','Projects')},...(actor?.kind==='admin'?[{key:'members',label:t('成员与权限','Members and access')}]:[])];
   const icons = { mine: ClipboardList, updates: Users, projects: FolderKanban, members: ShieldCheck };
   const navigation = items.map(item => { const Icon = icons[item.key as keyof typeof icons]; return { id: item.key, href: `/workspace?section=${item.key}`, label: item.label, icon: <Icon size={18} />, active: section === item.key }; });
-  const handbookItems = [{ key: 'onboarding', label: t('入职','Onboarding') }, { key: 'offboarding', label: t('离职','Offboarding') }, { key: 'sop', label: 'SOP' }, { key: 'quality', label: t('质量标准','Quality standards') }];
+  const handbookItems = [{ key: 'onboarding', label: t('入职','Onboarding'), icon: UserRoundPlus }, { key: 'sop', label: 'SOP', icon: Workflow }, { key: 'quality', label: t('质量标准','Quality standards'), icon: ScanEye }, { key: 'offboarding', label: t('离职','Offboarding'), icon: LogOut }];
   const handbook = handbookItems.some(item => item.key === section);
-  navigation.push(...handbookItems.map(item => ({ id: item.key, href: `/workspace?section=${item.key}`, label: item.label, icon: <BookOpen size={18} />, active: section === item.key })));
-  return <NavigationShell className="staff-workspace cuberoot-workspace-navigation" mainClassName="staff-main"
+  navigation.push(...handbookItems.map(({ icon: Icon, ...item }) => ({ id: item.key, href: `/workspace?section=${item.key}`, label: item.label, icon: <Icon size={18} />, active: section === item.key })));
+  return <NavigationShell className="staff-workspace cuberoot-workspace-navigation" mainClassName={`staff-main${handbook ? ' staff-handbook-main' : ''}`}
     items={navigation} labels={{ navigation: t('工作台导航','Workspace navigation'), show: t('显示侧边栏','Show sidebar'), hide: t('隐藏侧边栏','Hide sidebar'), openMobile: t('打开导航','Open navigation'), closeMobile: t('关闭导航','Close navigation') }}
     renderLink={props => <AppLink {...props} prefetch={false} />}
     header={toggle => <header className="staff-header">{toggle}<AppLink href="/" className="staff-brand">CubeRoot</AppLink><div className="staff-header-actions"><AppLink href="/account" prefetch={false}>{actor?.name??t('我的账号','My account')}</AppLink></div></header>}
@@ -87,6 +87,6 @@ function Members({onSaved}:{onSaved:()=>void}) {
     <Field label={t('状态','Status')}><select name="active" defaultValue={String(member?.active??true)}><option value="true">{t('启用','Enabled')}</option><option value="false">{t('停用','Disabled')}</option></select></Field>
     <Button type="submit">{member?t('保存','Save'):t('开通','Enable')}</Button>
   </Form>;
-  return <><ErrorNotice error={resource.error} retry={resource.reload} /><section className="staff-panel"><h2>{t('开通员工权限','Enable employee access')}</h2>{form()}</section>{resource.data?.members.map(m=><section key={m.id} className="staff-panel"><h2>{m.name}</h2>{m.adminAccess?<p>{t('管理员 · 已自动开通','Administrator · Enabled automatically')}</p>:form(m)}</section>)}</>;
+  return <><ErrorNotice error={resource.error} retry={resource.reload} /><section className="staff-panel"><h2>{t('开通员工权限','Enable employee access')}</h2>{form()}</section>{resource.data?.members.map(m=><section key={m.id} className="staff-panel"><h2>{m.name}</h2>{m.adminAccess?<p>{t('管理员权限已自动开通','Administrator access enabled automatically')}</p>:form(m)}</section>)}</>;
 }
 export default function WorkspacePage(){return <Suspense><Workspace /></Suspense>;}

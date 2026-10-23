@@ -433,12 +433,6 @@
   transform: translateX(-50%);
 }
 
-.shell-topbar .pp-popup {
-  /* anchored-panel: clamped by TimerPuzzlePicker */
-  left: 50%;
-  transform: translateX(-50%);
-}
-
 .shell-topbar .shell-device-center .shell-device-center-menu {
   width: max-content;
   min-width: 0;

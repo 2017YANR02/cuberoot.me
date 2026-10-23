@@ -11,12 +11,13 @@
  * 作者键 = 全站归属键 ownerKey(真 wca_id 或 u<uid>),与 forum_posts.author_id 同语义。
  */
 import { Hono } from 'hono';
+import { HTTPException } from 'hono/http-exception';
 import {
   QUIZ_LEVELS, normalizeQuizDraft, validateQuizDraft,
   type QuizDraft,
 } from '@cuberoot/shared/quiz';
 import { getIp } from '../utils/analytics_helpers.js';
-import { query } from '../db/connection.js';
+import { query, withTransaction } from '../db/connection.js';
 import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
 import type { WcaUser } from '../utils/recon_helpers.js';
 import { notify, adminRecipients } from '../utils/notify.js';
@@ -161,28 +162,31 @@ quizRoutes.post('/quiz/questions', async (c) => {
   const bad = validateQuizDraft(draft);
   if (bad) return c.json({ error: `Invalid question: ${bad}`, code: bad }, 400);
 
-  const today = await query<{ n: number | string }>(
-    `SELECT COUNT(*)::int AS n FROM quiz_questions
-     WHERE author_key = ? AND created_at > NOW() - INTERVAL '24 hours'`,
-    [user.wcaId],
-  );
-  if (Number(today[0]?.n ?? 0) >= DAILY_CAP) {
+  const rows = await withTransaction(async run => {
+    await run("SELECT pg_advisory_xact_lock(hashtext('quiz_daily_cap'), hashtext(?))", [user.wcaId]);
+    const today = await run<{ n: number | string }>(
+      `SELECT COUNT(*)::int AS n FROM quiz_questions
+       WHERE author_key = ? AND created_at > NOW() - INTERVAL '24 hours'`,
+      [user.wcaId],
+    );
+    if (Number(today[0]?.n ?? 0) >= DAILY_CAP) return null;
+    return run<QuestionRow>(
+      `INSERT INTO quiz_questions
+         (cat, level, type, q_zh, q_en, why_zh, why_en, options, answer_idx,
+          answer_zh, answer_en, accept, author_key, author_name)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?::text[], ?, ?)
+       RETURNING ${COLUMNS}`,
+      [
+        draft.cat, draft.level, draft.type, draft.qZh, draft.qEn, draft.whyZh, draft.whyEn,
+        // ::jsonb 参数传裸对象 —— postgres.js 自己序列化,预先 JSON.stringify 会双重编码
+        draft.options, draft.answerIdx, draft.answerZh, draft.answerEn, draft.accept,
+        user.wcaId, user.name,
+      ],
+    );
+  });
+  if (rows === null) {
     return c.json({ error: `Daily limit reached (${DAILY_CAP} questions per day)`, code: 'daily_cap' }, 429);
   }
-
-  const rows = await query<QuestionRow>(
-    `INSERT INTO quiz_questions
-       (cat, level, type, q_zh, q_en, why_zh, why_en, options, answer_idx,
-        answer_zh, answer_en, accept, author_key, author_name)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?::text[], ?, ?)
-     RETURNING ${COLUMNS}`,
-    [
-      draft.cat, draft.level, draft.type, draft.qZh, draft.qEn, draft.whyZh, draft.whyEn,
-      // ::jsonb 参数传裸对象 —— postgres.js 自己序列化,预先 JSON.stringify 会双重编码
-      draft.options, draft.answerIdx, draft.answerZh, draft.answerEn, draft.accept,
-      user.wcaId, user.name,
-    ],
-  );
   return c.json({ question: (await rowsToJson(rows, { withKey: true }))[0] });
 });
 
@@ -217,12 +221,16 @@ quizRoutes.patch('/quiz/questions/:id', async (c) => {
     `UPDATE quiz_questions SET
        cat = ?, level = ?, type = ?, q_zh = ?, q_en = ?, why_zh = ?, why_en = ?,
        options = ?::jsonb, answer_idx = ?, answer_zh = ?, answer_en = ?, accept = ?::text[],
-       status = ?, hidden_note = ?, updated_at = NOW()
+       status = CASE WHEN ? THEN ? ELSE status END,
+       hidden_note = CASE WHEN ? THEN ? ELSE hidden_note END, updated_at = NOW()
      WHERE id = ? RETURNING ${COLUMNS}`,
     [
       draft.cat, draft.level, draft.type, draft.qZh, draft.qEn, draft.whyZh, draft.whyEn,
       draft.options, draft.answerIdx, draft.answerZh, draft.answerEn, draft.accept,
-      status, hiddenNote || null, id,
+      // Preserve moderation fields in the UPDATE itself: an author's request
+      // may have read the question just before an administrator hid it.
+      admin && (body.status === 'hidden' || body.status === 'published'), status,
+      admin && body.hiddenNote !== undefined, hiddenNote || null, id,
     ],
   );
 
@@ -275,37 +283,40 @@ quizRoutes.post('/quiz/questions/:id/report', async (c) => {
   if (!reason) return c.json({ error: 'reason is required' }, 400);
   if (reason.length > 500) return c.json({ error: 'reason exceeds 500 characters' }, 400);
 
-  const rows = await query<{ author_key: string; status: string; q_zh: string; q_en: string }>(
-    'SELECT author_key, status, q_zh, q_en FROM quiz_questions WHERE id = ?', [id],
-  );
-  if (rows.length === 0 || rows[0].status !== 'published') {
-    return c.json({ error: 'Question not found' }, 404);
-  }
-  if (rows[0].author_key === user.wcaId) {
-    return c.json({ error: 'Cannot report your own question' }, 400);
-  }
+  const question = await withTransaction(async run => {
+    const rows = await run<{ author_key: string; status: string; q_zh: string; q_en: string }>(
+      'SELECT author_key, status, q_zh, q_en FROM quiz_questions WHERE id = ? FOR UPDATE', [id],
+    );
+    if (!rows.length || rows[0].status !== 'published') {
+      throw new HTTPException(404, { message: 'Question not found' });
+    }
+    if (rows[0].author_key === user.wcaId) {
+      throw new HTTPException(400, { message: 'Cannot report your own question' });
+    }
 
-  await query(
-    `INSERT INTO quiz_question_reports (question_id, reporter_key, reporter_name, reason)
-     VALUES (?, ?, ?, ?)
-     ON CONFLICT (question_id, reporter_key)
-     DO UPDATE SET reason = EXCLUDED.reason, created_at = NOW(), resolved_at = NULL`,
-    [id, user.wcaId, user.name, reason],
-  );
-  // report_count 是给管理台排序用的计数,重新算而不是 +1 —— 重复举报不该翻倍。
-  await query(
-    `UPDATE quiz_questions SET report_count =
-       (SELECT COUNT(*) FROM quiz_question_reports WHERE question_id = ?)
-     WHERE id = ?`,
-    [id, id],
-  );
+    await run(
+      `INSERT INTO quiz_question_reports (question_id, reporter_key, reporter_name, reason)
+       VALUES (?, ?, ?, ?)
+       ON CONFLICT (question_id, reporter_key)
+       DO UPDATE SET reason = EXCLUDED.reason, created_at = NOW(), resolved_at = NULL`,
+      [id, user.wcaId, user.name, reason],
+    );
+    // report_count 是给管理台排序用的计数,重新算而不是 +1 —— 重复举报不该翻倍。
+    await run(
+      `UPDATE quiz_questions SET report_count =
+         (SELECT COUNT(*) FROM quiz_question_reports WHERE question_id = ?)
+       WHERE id = ?`,
+      [id, id],
+    );
+    return rows[0];
+  });
 
   await notifyBestEffort({
     recipients: adminRecipients(),
     kind: 'quiz_report',
     actorKey: user.wcaId,
     actorName: user.name,
-    title: rows[0].q_zh || rows[0].q_en,
+    title: question.q_zh || question.q_en,
     excerpt: reason,
     link: '/quiz/manage',
   });

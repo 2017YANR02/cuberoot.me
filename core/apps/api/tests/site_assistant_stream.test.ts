@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { readAssistantEvents, type AssistantStreamEvent } from '@cuberoot/shared/site-assistant';
-import { partialAssistantAnswer } from '../src/utils/site_assistant_stream.js';
+import { partialAssistantAnswer, partialAssistantAnswerKind } from '../src/utils/site_assistant_stream.js';
 import { answerSiteQuestion } from '../src/utils/site_assistant.js';
 import { createSiteAssistantRoutes } from '../src/routes/site_assistant.js';
 import { AssistantFailure } from '../src/utils/site_assistant_diagnostics.js';
@@ -29,6 +29,11 @@ describe('assistant streaming', () => {
     expect(partialAssistantAnswer('{"answer":"中文\\n\\"ok\\"\\u4e')).toBe('中文\n"ok"');
     expect(partialAssistantAnswer('{"answer":"\\uD83D')).toBe('');
     expect(partialAssistantAnswer('{"answer":"\\uD83D\\uDE00"')).toBe('😀');
+    expect(partialAssistantAnswer('{"answerKind":"general","answer":"hello')).toBe('hello');
+    expect(partialAssistantAnswer('{"answerKind":"general","answer":"\\uD83D\\uDE00')).toBe('😀');
+    expect(partialAssistantAnswerKind('{"answerKind":"site_content","answer":"draft')).toBe('site_content');
+    expect(partialAssistantAnswerKind('{"answerKind":"site_con')).toBeUndefined();
+    expect(partialAssistantAnswer('{"answerKind":"invalid","answer":"draft')).toBeUndefined();
   });
 
   it('delivers provider answer text before the provider finishes and cites only retrieved pages', async () => {
@@ -60,6 +65,44 @@ describe('assistant streaming', () => {
     provider.enqueue(frame('[DONE]')); provider.close();
     expect((await answer).answer).toBe(`打开数帧页面。 [[${passage.id}]] `);
     expect(events).toContainEqual({ type: 'status', status: { phase: 'querying', tool: 'pages' } });
+  });
+
+  it('streams a classified ordinary answer before completion without any data read',async()=>{
+    let provider!: ReadableStreamDefaultController<Uint8Array>;
+    const events:AssistantStreamEvent[]=[];
+    const fetcher=vi.fn<typeof fetch>(async url=>{
+      expect(String(url)).toBe(config.baseUrl+'/chat/completions');
+      return new Response(new ReadableStream({start(controller){provider=controller;}}),{headers:{'Content-Type':'text/event-stream'}});
+    });
+    let finished=false;
+    const pending=answerSiteQuestion('Explain photosynthesis.','en',config,AbortSignal.timeout(5000),fetcher,[],undefined,async event=>{events.push(event);}).then(answer=>{finished=true;return answer;});
+    await vi.waitFor(()=>expect(provider).toBeDefined());
+    provider.enqueue(frame({choices:[{index:0,delta:{role:'assistant',content:'{"answerKind":"general","answer":"Plants convert light energy into chemical energy.'},finish_reason:null}]}));
+    await vi.waitFor(()=>expect(events).toContainEqual({type:'answer',answer:'Plants convert light energy into chemical energy.',sources:[]}));
+    expect(finished).toBe(false);
+    provider.enqueue(frame({choices:[{index:0,delta:{content:'","sourceIds":[]}'},finish_reason:'stop'}]}));
+    provider.enqueue(frame('[DONE]'));provider.close();
+    expect((await pending).answer).toBe('Plants convert light energy into chemical energy.');
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it('holds a site-specific draft until the actual page content has been read',async()=>{
+    const corpus={version:2,updated:'2026-10-10T00:00:00.000Z',pages:[{lang:'zh' as const,href:'/timer',title:'计时器',text:'打开训练菜单，选择公式集。'}]};
+    const events:AssistantStreamEvent[]=[];
+    const fetcher=vi.fn<typeof fetch>(async(url,init)=>{
+      if(String(url).endsWith('/assistant/pages.json'))return Response.json(corpus);
+      const context=JSON.parse(JSON.parse(String(init?.body)).messages[1].content);
+      const value=context.round===0?{answerKind:'site_content',answer:'UNVERIFIED instructions',sourceIds:[]}:{answerKind:'site_content',answer:'打开训练菜单，选择公式集。',sourceIds:context.sources.map((source:{id:string})=>source.id)};
+      return new Response(new ReadableStream({start(controller){
+        controller.enqueue(frame({choices:[{index:0,delta:{role:'assistant',content:JSON.stringify(value)},finish_reason:'stop'}]}));
+        controller.enqueue(frame('[DONE]'));controller.close();
+      }}),{headers:{'Content-Type':'text/event-stream'}});
+    });
+    const answer=await answerSiteQuestion('计时器训练怎么用？','zh',config,AbortSignal.timeout(5000),fetcher,[],undefined,async event=>{events.push(event);});
+    expect(answer.answer).toContain('打开训练菜单');
+    expect(answer.sources.every(source=>source.read)).toBe(true);
+    expect(events.filter(event=>event.type==='answer').some(event=>event.answer.includes('UNVERIFIED'))).toBe(false);
+    expect(events).toContainEqual({type:'status',status:{phase:'querying',tool:'pages'}});
   });
 
   it('holds concurrency slots until streams finish and maps post-header failures', async () => {

@@ -372,6 +372,7 @@ jobs:
             /ops/contests/recordranks-ref.txt
             /ops/nginx/platform.cuberoot.me.conf
             /ops/nginx/www.cuberoot.me.conf
+            /ops/nginx/purge-api-cache.ts
             /ops/vercel-ban-relay/competition-rule.json
             /ops/systemd/cuberoot-drive-compression.service
             /ops/bin/pg-dump-recon.sh

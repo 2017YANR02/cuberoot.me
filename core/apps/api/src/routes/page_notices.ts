@@ -2,7 +2,8 @@
  * /v1/page-notices — 页面通知(顶部运维通知 + 首页焦点新闻)。
  *   - GET    /v1/page-notices          — enabled 行 (public, 60s cache),前端一次拉完按 path 匹配
  *   - GET    /v1/page-notices/manage   — 全部行含 disabled (admin),行内编辑器预填用
- *   - PUT    /v1/page-notices          — admin upsert by path + placement
+ *   - PUT    /v1/page-notices          — admin upsert by path + placement (+ href for homepage features)
+ *   - PUT    /v1/page-notices/home-feature — feature writes requiring multi-pin support
  *   - DELETE /v1/page-notices/:id      — admin 删
  *
  * path 为匹配模式:精确 `/scramble/stats`、前缀 `/recon/*`、全站 `/*`。前端已 strip lang 前缀。
@@ -179,8 +180,9 @@ pageNoticesRoutes.get('/page-notices/manage', async (c) => {
   return c.json(rows.map(rowToJson));
 });
 
-// PUT /v1/page-notices — upsert by path + placement (admin)
-pageNoticesRoutes.put('/page-notices', async (c) => {
+// PUT /v1/page-notices — homepage destinations have independent slots (admin)
+// A separate feature-write URL makes old deployments fail safely instead of replacing their single slot.
+pageNoticesRoutes.on('PUT', ['/page-notices', '/page-notices/home-feature'], async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
   await requireAdminOrApiKey(c);
@@ -207,13 +209,16 @@ pageNoticesRoutes.put('/page-notices', async (c) => {
     return c.json(rowToJson(updated[0]));
   }
 
+  const conflictTarget = v.placement === 'home_featured'
+    ? "(path, placement, href) WHERE placement = 'home_featured'"
+    : "(path, placement) WHERE placement = 'page_top'";
   const rows = await query<NoticeRow>(
     `INSERT INTO page_notices (
        path, placement, level, icon, color, body_en, body_zh, href,
        enabled, dismissible, starts_at, ends_at
      )
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-     ON CONFLICT (path, placement) DO UPDATE SET
+     ON CONFLICT ${conflictTarget} DO UPDATE SET
        level = EXCLUDED.level, icon = EXCLUDED.icon, color = EXCLUDED.color,
        body_en = EXCLUDED.body_en, body_zh = EXCLUDED.body_zh, href = EXCLUDED.href,
        enabled = EXCLUDED.enabled, dismissible = EXCLUDED.dismissible,

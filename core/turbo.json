@@ -12,6 +12,20 @@
     "typecheck": {
       "dependsOn": ["^build"]
     },
-    "lint": {}
+    "lint": {},
+    "dev:build": {
+      "dependsOn": ["^dev:build"],
+      "outputs": ["dist/**", "*.tsbuildinfo"]
+    },
+    "dev:serve": {
+      "dependsOn": ["^dev:build"],
+      "cache": false,
+      "persistent": true
+    },
+    "dev:serve:safe": {
+      "dependsOn": ["^dev:build"],
+      "cache": false,
+      "persistent": true
+    }
   }
 }

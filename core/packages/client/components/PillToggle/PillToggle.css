@@ -21,10 +21,10 @@
 }
 
 .pill-toggle.is-on {
-  /* 所有开启态共用浅绿轨道；文字用深色保证对比度。 */
+  /* Opening color follows the theme or the independently selected accent. */
   background: var(--toggle-on);
   border-color: var(--toggle-on);
-  color: color-mix(in srgb, var(--toggle-on) 20%, black);
+  color: var(--toggle-on-foreground, color-mix(in srgb, var(--toggle-on) 20%, black));
   padding: 0 32px 0 14px;
   justify-content: flex-start;
 }
@@ -53,11 +53,12 @@
 }
 
 .pill-toggle.is-on .pill-toggle-dot {
+  background: var(--toggle-thumb-on, #fff);
   left: calc(100% - 24px);
 }
 
 /* ── BoolToggle 使用的无文字 iOS 风开关──
-   固定尺寸滑轨 + 白色宽胶囊滑钮;off 深灰轨,on 绿轨(var(--toggle-on))。 */
+   固定尺寸滑轨；开启色走 var(--toggle-on)。 */
 .pill-toggle--switch {
   min-width: 0;
   width: 38px;
@@ -66,7 +67,7 @@
   justify-content: flex-start;
 }
 .pill-toggle--switch.is-on {
-  /* 无文字开关:无对比顾虑,用纯 iOS 亮绿轨道 */
+  /* Same selected color as the labeled toggle. */
   background: var(--toggle-on);
   border-color: var(--toggle-on);
   padding: 0;

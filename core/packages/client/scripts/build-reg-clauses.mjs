@@ -19,6 +19,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { writeBilingualMarkdown } from './reg-bilingual-markdown.mts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.resolve(__dirname, '../app/[lang]/regulation/_data');
@@ -113,6 +114,11 @@ function parseClauses(body) {
 }
 
 async function main() {
+  // Offline export of the existing aligned snapshot, without refreshing sources.
+  if (process.argv.includes('--from-json')) {
+    writeBilingualMarkdown();
+    return;
+  }
   if (!fs.existsSync(EN_SNAPSHOT)) {
     console.error('[reg:clauses] missing EN snapshot. Run reg:check --write first.');
     process.exit(1);
@@ -167,6 +173,7 @@ async function main() {
     path.join(OUT_DIR, '_full.json'),
     JSON.stringify({ version: { en: enVer, zh: zhVer }, notes, articles: articlesOut }, null, 2) + '\n',
   );
+  writeBilingualMarkdown();
 
   console.log(`[reg:clauses] EN ${enVer} / ZH ${zhVer}`);
   console.log(`[reg:clauses] _full.json: ${notes.length} notes, ${articlesOut.length} articles`);

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { deletePageNotice, featureHomepagePost, fetchPageNotices, matchNotices, type PageNotice } from '@/lib/page-notices-api';
+import { deletePageNotice, featureHomepagePost, fetchPageNotices, homepagePostNotice, matchNotices, type PageNotice } from '@/lib/page-notices-api';
 
 function notice(overrides: Partial<PageNotice>): PageNotice {
   return {
@@ -97,21 +97,42 @@ describe('page notice placement matching', () => {
 
 describe('homepage article feature', () => {
   afterEach(() => vi.unstubAllGlobals());
-  it('upserts the homepage slot with bilingual titles and no expired schedule', async () => {
+  it('creates an independent homepage feature without overwriting another article', async () => {
     const fetch = vi.fn().mockResolvedValueOnce(Response.json([
-      notice({ id: 7, placement: 'home_featured', icon: 'megaphone', color: 'blue', endsAt: '2020-01-01T00:00:00Z' }),
+      notice({ id: 7, placement: 'home_featured', href: '/regulation/post/other', icon: 'megaphone', color: 'blue', endsAt: '2020-01-01T00:00:00Z' }),
       notice({ id: 8, placement: 'page_top', path: '/' }),
     ])).mockResolvedValueOnce(Response.json(notice({ placement: 'home_featured' })));
     vi.stubGlobal('fetch', fetch);
     await featureHomepagePost({ id: 'wic-investigation-2026', title: {zh: '声明', en: 'Statement'} });
     expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch.mock.calls[1][0]).toContain('/v1/page-notices/home-feature');
     const request = fetch.mock.calls[1][1];
     expect(request.method).toBe('PUT');
     expect(JSON.parse(request.body)).toEqual({
-      path: '/', placement: 'home_featured', level: 'info', icon: 'megaphone', color: 'blue',
+      path: '/', placement: 'home_featured', level: 'info', icon: 'megaphone', color: 'terracotta',
       bodyZh: '声明', bodyEn: 'Statement', href: '/regulation/post/wic-investigation-2026',
       enabled: true, dismissible: false, startsAt: null, endsAt: null,
     });
+  });
+  it('reactivates only the matching article, keeping its ID and appearance', async () => {
+    const rows = [
+      notice({ id: 7, placement: 'home_featured', href: '/regulation/post/other' }),
+      notice({ id: 9, placement: 'home_featured', href: '/zh/regulation/post/example', enabled: false, color: 'blue' }),
+    ];
+    const fetch = vi.fn().mockResolvedValueOnce(Response.json(rows)).mockResolvedValueOnce(Response.json(rows[1]));
+    vi.stubGlobal('fetch', fetch);
+    await featureHomepagePost({ id: 'example', title: { zh: '公告', en: 'Post' } });
+    expect(JSON.parse(fetch.mock.calls[1][1].body)).toMatchObject({ id: 9, enabled: true, color: 'blue', href: '/regulation/post/example', startsAt: null, endsAt: null });
+    expect(homepagePostNotice(rows, 'other')?.id).toBe(7);
+    expect(homepagePostNotice(rows, 'missing')).toBeUndefined();
+  });
+  it('does not fall back to the old singleton write endpoint', async () => {
+    const fetch = vi.fn().mockResolvedValueOnce(Response.json([]))
+      .mockResolvedValueOnce(Response.json({ error: 'Not found' }, { status: 404 }));
+    vi.stubGlobal('fetch', fetch);
+    await expect(featureHomepagePost({ id: 'example', title: { zh: '公告', en: 'Post' } })).rejects.toThrow();
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch.mock.calls[1][0]).toContain('/v1/page-notices/home-feature');
   });
   it('does not attempt a write when the administrator read is denied', async () => {
     const fetch = vi.fn().mockResolvedValue(Response.json({error: 'Forbidden'}, {status: 403}));

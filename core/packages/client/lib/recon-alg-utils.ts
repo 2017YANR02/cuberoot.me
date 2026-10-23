@@ -5,8 +5,9 @@
 import { etm } from '@cuberoot/shared/alg-notation';
 import { wastedDisplaySpans } from '@cuberoot/shared/timer/reconstruct/error-detect';
 import { parseSq1Tokens } from '@cuberoot/shared/sq1-notation';
-import { orientedFaceColors } from '@/lib/cube-orientation';
-import { CUBE_COLOR_LETTER_FOR_FACE } from '@/lib/cube-colors';
+import { orientedFaceColors, orientationForBottomFace } from '@/lib/cube-orientation';
+import { CUBE_COLOR_LETTER_FOR_FACE, CUBE_FACE_FOR_COLOR_LETTER } from '@/lib/cube-colors';
+import { crossColorFromReconText } from '@cuberoot/timer-ui/CubeColorChip';
 import {
   cleanReconAlgForPlayer,
   expandReconGroupRepeats,
@@ -31,6 +32,18 @@ export function expandGroupRepeats(alg: string): string {
 
 export function cleanForPlayer(text: string): string {
   return cleanReconAlgForPlayer(text);
+}
+
+/** Stage masks follow the reconstruction's bottom, independently of playback position. */
+export function reconPlaybackOrientation(text: string): string {
+  const color = crossColorFromReconText(text);
+  if (color) return orientationForBottomFace(CUBE_FACE_FOR_COLOR_LETTER[color]);
+  const rotations: string[] = [];
+  for (const move of cleanForPlayer(text).split(/\s+/).filter(Boolean)) {
+    if (!/^[xyz](?:2'?|')?$/.test(move)) break;
+    rotations.push(move.replace(/2'/g, '2'));
+  }
+  return orientationForBottomFace(orientedFaceColors(rotations.join(' ')).D);
 }
 
 /** Row boundaries in the same expanded token coordinates as the NxN player.

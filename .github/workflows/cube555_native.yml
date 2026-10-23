@@ -18,8 +18,10 @@ on:
       - '.github/workflows/cube555_native.yml'
 
 concurrency:
-  group: cube555-native
-  cancel-in-progress: true
+  # This workflow stops/restarts core-api, just like API and dataset releases.
+  group: deploy-core-production
+  cancel-in-progress: false
+  queue: max
 
 jobs:
   build:
@@ -133,6 +135,7 @@ jobs:
             "root@${{ secrets.DEPLOY_HOST }}:/opt/cube555/cube555-daemon.new"
 
       - name: Stop core-api for smoke
+        id: stop_core_api
         # 服务器 1.8GB RAM, 已被 Hono+JVM daemon 占 ~1.2GB,smoke 跑 native binary
         # (加载 230MB 剪枝表)会跟 JVM daemon 撞内存触发 OOM killer。先 pm2 stop
         # 让 Hono 退场 (期间 /v1/* 短暂 503),smoke 完再启回来。
@@ -154,7 +157,7 @@ jobs:
             'mv /opt/cube555/cube555-daemon.new /opt/cube555/cube555-daemon && (pm2 restart core-api --update-env || pm2 start core-api)'
 
       - name: Always restore core-api on failure
-        if: failure()
+        if: (failure() || cancelled()) && steps.stop_core_api.outcome != '' && steps.stop_core_api.outcome != 'skipped'
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             "root@${{ secrets.DEPLOY_HOST }}" \

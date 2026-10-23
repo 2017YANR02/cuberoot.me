@@ -45,13 +45,11 @@ import { tr } from '@/i18n/tr';
 import { useIsAdmin, useAuthUser, useAuthStore } from '@/lib/auth-store';
 import { CompactSelect } from '@/components/CompactSelect';
 import { ReconCompletionBadge } from '@/components/recon/ReconCompletionBadge';
-import dynamic from 'next/dynamic';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
-const ReconRoundOverview = dynamic(() => import('./ReconRoundOverview'));
 
 // ── 视图模式 ──
-type ViewMode = 'list' | 'grid' | 'rounds';
-const VIEW_MODES: ViewMode[] = ['list', 'grid', 'rounds'];
+type ViewMode = 'list' | 'grid';
+const VIEW_MODES: ViewMode[] = ['list', 'grid'];
 
 // ── 卡片视图排序选项 (key:dir 编码) ──
 const GRID_SORTS: { key: SortKey; dir: SortDir; zh: string; en: string }[] = [
@@ -1002,7 +1000,6 @@ export default function ReconListPage() {
           </div>}
         />
         <div className="recon-view-toggle">
-          <button type="button" className={`toggle-btn${viewMode === 'rounds' ? ' active' : ''}`} onClick={() => setViewMode('rounds')} aria-pressed={viewMode === 'rounds'}>{tr({ zh: '整轮', en: 'Rounds' })}</button>
           <button
             className={`toggle-btn${viewMode === 'list' ? ' active' : ''}`}
             onClick={() => setViewMode('list')}
@@ -1093,7 +1090,6 @@ export default function ReconListPage() {
             </div>
           )}
 
-          {viewMode === 'rounds' && <ReconRoundOverview filtered={filtered} all={useReconStore.getState().allSolves} />}
           {viewMode === 'list' && (
           <div className="recon-table-wrap sticky-scroll-mobile">
             <table className="recon-table sticky-thead">
@@ -1194,7 +1190,7 @@ export default function ReconListPage() {
           )}
 
           {/* 无限滚动 sentinel + 分页信息 */}
-          {viewMode !== 'rounds' && <div className="recon-pagination">
+          <div className="recon-pagination">
             {hasMore ? (
               <span className="recon-showing">
                 {t('recon.showing', { shown: displayed.length, total: filtered.length })}
@@ -1204,8 +1200,8 @@ export default function ReconListPage() {
                 {t('recon.total', { count: filtered.length })}
               </span>
             )}
-          </div>}
-          {viewMode !== 'rounds' && hasMore && <div ref={sentinelRef} style={{ height: 1 }} />}
+          </div>
+          {hasMore && <div ref={sentinelRef} style={{ height: 1 }} />}
         </>
       )}
     </div>

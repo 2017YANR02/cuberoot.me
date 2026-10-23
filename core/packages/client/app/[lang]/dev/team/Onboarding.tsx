@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Check, ChevronDown, Sparkles, UserRound } from '@app-foundation/icons/lucide';
+import { ArrowRight, Check, ChevronDown, ClipboardCheck, FileText, KeyRound, Laptop, ShieldCheck, Sparkles, UserRound, X } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { UserIdLabel } from '@/components/UserIdLabel';
 import { useCopy } from '@/hooks/useCopy';
@@ -9,6 +9,7 @@ import { useT } from '@/hooks/useT';
 import { useAuthUser, useAuthStore } from '@/lib/auth-store';
 import RemoteAccess from './RemoteAccess';
 import DevPreview from './DevPreview';
+import './team-lifecycle.css';
 
 export default function GetStartedPage() {
   const t = useT();
@@ -31,12 +32,22 @@ export default function GetStartedPage() {
 
   if (!user) return null;
 
-  return <section>
+  return <section className="team-lifecycle">
+    <header className="team-lifecycle-intro">
+      <span className="team-lifecycle-kicker">{t('入职', 'Onboarding')}</span>
+      <h2>{t('先接入，再完成第一个任务', 'Get set up. Complete your first task.')}</h2>
+      <p>{t('AI 帮你准备工具，你负责理解任务、确认权限和验收结果。', 'Let AI prepare the tools. You own the brief, access decisions and acceptance.')}</p>
+    </header>
+    <ol className="team-lifecycle-path" aria-label={t('入职顺序', 'Onboarding sequence')}>
+      <li><span className="team-lifecycle-path-icon"><UserRound size={22} aria-hidden="true" /></span><div><span className="team-lifecycle-step">01</span><h3>{t('确认身份', 'Identify yourself')}</h3><p>{t('发送账号 ID，由负责人分配权限。', 'Share your account ID so your lead can assign access.')}</p></div><ArrowRight className="team-lifecycle-path-arrow" size={18} aria-hidden="true" /></li>
+      <li><span className="team-lifecycle-path-icon"><Laptop size={22} aria-hidden="true" /></span><div><span className="team-lifecycle-step">02</span><h3>{t('准备工具', 'Prepare your tools')}</h3><p>{t('补齐软件，实际打开本地网页。', 'Install what is missing and open the local site.')}</p></div><ArrowRight className="team-lifecycle-path-arrow" size={18} aria-hidden="true" /></li>
+      <li><span className="team-lifecycle-path-icon"><ClipboardCheck size={22} aria-hidden="true" /></span><div><span className="team-lifecycle-step">03</span><h3>{t('完成练习', 'Complete a small task')}</h3><p>{t('说明需求，核验结果，留下交接。', 'Write the brief, verify the result and leave a handoff.')}</p></div></li>
+    </ol>
     <div className="staff-start-modules">
       <article className="staff-start-module" data-site-surface="panel" aria-labelledby="staff-ai-title">
         <div className="staff-start-module-heading">
           <Sparkles className="staff-start-module-icon" size={28} strokeWidth={1.5} aria-hidden="true" />
-          <h2 id="staff-ai-title" className="staff-start-module-title">{t('交给 AI', 'Delegate to AI')}</h2>
+          <div><span className="team-lifecycle-role">{t('执行与整理', 'Execution and preparation')}</span><h2 id="staff-ai-title" className="staff-start-module-title">{t('交给 AI', 'Delegate to AI')}</h2></div>
         </div>
         <section className="staff-start-task">
           <div className="staff-start-row">
@@ -91,7 +102,7 @@ export default function GetStartedPage() {
       <article className="staff-start-module" data-site-surface="panel" aria-labelledby="staff-self-title">
         <div className="staff-start-module-heading">
           <UserRound className="staff-start-module-icon" size={28} strokeWidth={1.5} aria-hidden="true" />
-          <h2 id="staff-self-title" className="staff-start-module-title">{t('由自己完成', 'Do yourself')}</h2>
+          <div><span className="team-lifecycle-role">{t('判断与确认', 'Judgment and approval')}</span><h2 id="staff-self-title" className="staff-start-module-title">{t('由自己完成', 'Do yourself')}</h2></div>
         </div>
         <div className="staff-start-row staff-start-account">
           <h3>{t('登录账号', 'Sign in')}</h3>
@@ -124,5 +135,32 @@ export default function GetStartedPage() {
         <AppLink className="staff-start-account-link" href="/account" prefetch={false}>{t('我的账号', 'My account')}</AppLink>
       </article>
     </div>
+    <section className="team-lifecycle-boundaries" aria-labelledby="onboarding-boundaries">
+      <div className="team-lifecycle-section-heading"><ShieldCheck size={22} aria-hidden="true" /><h2 id="onboarding-boundaries">{t('把工作交给 AI，把授权留给自己', 'Delegate work. Keep control of access.')}</h2></div>
+      <div className="team-lifecycle-comparison">
+        <article className="team-lifecycle-example team-lifecycle-example--good" data-site-surface="panel">
+          <h3><Check size={18} aria-hidden="true" />{t('可以这样做', 'Do this')}</h3>
+          <div className="team-lifecycle-access-flow" aria-hidden="true"><FileText size={26} /><span>{t('任务与资料', 'Brief and files')}</span><ArrowRight size={16} /><Sparkles size={26} /><span>AI</span></div>
+          <p>{t('提供相关文件、截图和完整报错，让 AI 先检查再执行。', 'Share relevant files, screenshots and full errors. Have AI inspect before acting.')}</p>
+          <p>{t('登录和系统授权由本人完成；开发接入使用自己的设备与密钥。', 'Handle sign-in and system permissions yourself. Use your own device and keys.')}</p>
+        </article>
+        <article className="team-lifecycle-example team-lifecycle-example--bad" data-site-surface="panel">
+          <h3><X size={18} aria-hidden="true" />{t('不要这样做', 'Avoid this')}</h3>
+          <div className="team-lifecycle-access-flow" aria-hidden="true"><KeyRound size={26} /><span>{t('密码与私钥', 'Passwords and keys')}</span><X className="team-lifecycle-stop" size={18} /><Sparkles size={26} /><span>AI</span></div>
+          <p>{t('不把密码、令牌、私钥或无关客户资料粘进聊天。', 'Keep passwords, tokens, private keys and unrelated customer data out of chats.')}</p>
+          <p>{t('不复制同事的接入凭据，不把安装软件当成发布授权。', 'Do not reuse a colleague’s credentials or treat setup permission as release approval.')}</p>
+        </article>
+      </div>
+    </section>
+    <section className="team-lifecycle-first-task" data-site-surface="panel" aria-labelledby="onboarding-first-task">
+      <div className="team-lifecycle-section-heading"><ClipboardCheck size={22} aria-hidden="true" /><h2 id="onboarding-first-task">{t('第一项练习：改好一个页面', 'First exercise: improve one page')}</h2></div>
+      <p className="team-lifecycle-task-brief">{t('选一个不写入线上数据的小任务。把“做漂亮一点”改成明确的改动与验收条件。', 'Choose a small task with no production writes. Replace “make it nicer” with specific changes and acceptance criteria.')}</p>
+      <div className="team-lifecycle-delivery">
+        <div className="team-lifecycle-delivery-card"><span className="team-lifecycle-role">{t('给 AI 的任务', 'The brief')}</span><strong>{t('简化入职页面', 'Simplify onboarding')}</strong><span>{t('范围：标题与说明', 'Scope: headings and copy')}</span><span>{t('要求：去掉重复，保留操作', 'Criteria: remove repetition, keep actions')}</span></div>
+        <ArrowRight className="team-lifecycle-delivery-arrow" size={24} aria-hidden="true" />
+        <div className="team-lifecycle-delivery-card"><span className="team-lifecycle-role">{t('由你核验', 'Your acceptance')}</span><strong>{t('打开实际页面', 'Open the actual page')}</strong><span>{t('文字是否清楚，按钮是否可用', 'Check the copy and use the buttons')}</span><span>{t('交接：成果链接与未完成项', 'Handoff: result link and open items')}</span></div>
+      </div>
+      <div className="team-lifecycle-next"><AppLink className="team-lifecycle-link" href="/workspace?section=sop" prefetch={false}>{t('查看工作流程', 'Open the workflow')}<ArrowRight size={16} aria-hidden="true" /></AppLink><AppLink className="team-lifecycle-link" href="/workspace?section=quality" prefetch={false}>{t('对照质量标准', 'Check quality standards')}<ArrowRight size={16} aria-hidden="true" /></AppLink></div>
+    </section>
   </section>;
 }

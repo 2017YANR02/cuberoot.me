@@ -31,6 +31,7 @@ on:
       - 'core/scripts/resolve-workspace-path.mjs'
       - 'ops/systemd/cuberoot-drive-compression.service'
       - 'ops/bin/provision-assistant-reader.sql'
+      - 'ops/nginx/purge-api-cache.ts'
       - 'ops/systemd/cuberoot-assistant-knowledge.service'
       - 'ops/systemd/cuberoot-assistant-knowledge.timer'
       - '.github/workflows/deploy_core.yml'
@@ -41,6 +42,7 @@ permissions:
 concurrency:
   group: deploy-core-production
   cancel-in-progress: false
+  queue: max
 
 jobs:
   deploy:
@@ -473,8 +475,9 @@ jobs:
 
           # Ordinary deployments retain valid cache entries; shape changes use response versioning.
           if [ "${{ inputs.clear_api_cache }}" = true ]; then
-            ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no "root@${{ secrets.DEPLOY_HOST }}" \
-              'rm -rf /var/cache/nginx/api/* && nginx -s reload'
+            ssh -T -o ServerAliveInterval=30 -o ServerAliveCountMax=3 \
+              -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no "root@${{ secrets.DEPLOY_HOST }}" \
+              'node --input-type=module' < ops/nginx/purge-api-cache.ts
           fi
 
       - name: Install public knowledge refresh timer

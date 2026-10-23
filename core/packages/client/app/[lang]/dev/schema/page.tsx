@@ -579,6 +579,8 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 288, slug: 'multiple_home_features', desc: { zh: '首页支持多个独立置顶内容', en: 'Multiple independent homepage features' } },
+  { n: 287, slug: 'alg_mark_tombstones', desc: { zh: '保留学习标记清除时间，阻止旧设备迟到写入复活标记', en: 'Retain learning-mark deletion timestamps to reject stale device writes' } },
   { n: 282, slug: 'workspace_account_deletion', desc: { zh: '员工账号注销：清理私有数据、撤销权限并保留匿名团队记录', en: 'Employee account deletion: purge private data and retain anonymous team records' } },
   { n: 281, slug: 'workspace', desc: { zh: 'CubeRoot 独立员工权限、项目、工作记录、评论与审计', en: 'CubeRoot employee access, projects, reports, comments and audit' } },
   { n: 286, slug: 'recon_intake', desc: { zh: '智能魔方复盘收录与 AI 处理队列', en: 'Smart cube reconstruction intake and AI queue' } },

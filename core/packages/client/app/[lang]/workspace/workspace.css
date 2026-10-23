@@ -69,4 +69,32 @@
   max-width: none;
   margin: 0;
   padding: 0;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.cuberoot-workspace-navigation .staff-main.staff-handbook-main {
+  box-sizing: border-box;
+  max-width: 1232px;
+  padding: 40px clamp(24px, 3.3vw, 48px) 80px;
+}
+
+.cuberoot-workspace-navigation .af-nav-row:has(.af-nav-link[href*="section=onboarding"]) {
+  margin-top: 22px;
+}
+
+.cuberoot-workspace-navigation .staff-header {
+  flex-direction: row;
+  align-items: center;
+}
+
+@media (max-width: 767px) {
+  .cuberoot-workspace-navigation .staff-main.staff-handbook-main {
+    padding: 24px 18px 56px;
+  }
+
+  .cuberoot-workspace-navigation .staff-header {
+    gap: 12px;
+    padding-inline: 16px;
+  }
 }

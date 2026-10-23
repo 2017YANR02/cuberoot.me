@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect } from 'react';
-import { ChevronDown, Sparkles, UserRound } from '@app-foundation/icons/lucide';
+import { ArrowRight, Check, ChevronDown, ClipboardCheck, FileCheck2, FolderOpen, KeyRound, Laptop, ShieldCheck, Sparkles, Unplug, UserRound, X } from '@app-foundation/icons/lucide';
+import AppLink from '@/components/AppLink';
 import { useCopy } from '@/hooks/useCopy';
 import { useT } from '@/hooks/useT';
 import { useAuthUser, useAuthStore } from '@/lib/auth-store';
+import './team-lifecycle.css';
 
 export default function OffboardingPage() {
   const t = useT();
@@ -36,12 +38,31 @@ export default function OffboardingPage() {
   );
 
   if (!user) return null;
-  return <section>
+  return <section className="team-lifecycle">
+    <header className="team-lifecycle-intro">
+      <span className="team-lifecycle-kicker">{t('离职', 'Offboarding')}</span>
+      <h2>{t('工作有人接，权限有记录', 'Hand over the work. Account for every access grant.')}</h2>
+      <p>{t('先确认交接，再撤销权限，最后清理设备。每一步都留下可核查的结果。', 'Confirm the handoff, revoke access, then clean up the device. Keep evidence for each step.')}</p>
+    </header>
+    <ol className="team-lifecycle-path" aria-label={t('离职交接顺序', 'Offboarding sequence')}>
+      <li><span className="team-lifecycle-path-icon"><FileCheck2 size={22} aria-hidden="true" /></span><div><span className="team-lifecycle-step">01</span><h3>{t('接收人确认', 'Recipient accepts')}</h3><p>{t('工作、文件与组织资源已接收。', 'Work, files and organizational resources are received.')}</p></div><ArrowRight className="team-lifecycle-path-arrow" size={18} aria-hidden="true" /></li>
+      <li><span className="team-lifecycle-path-icon"><ShieldCheck size={22} aria-hidden="true" /></span><div><span className="team-lifecycle-step">02</span><h3>{t('负责人撤权', 'Lead revokes access')}</h3><p>{t('收回授权，确认旧连接已结束。', 'Remove grants and confirm existing sessions have ended.')}</p></div><ArrowRight className="team-lifecycle-path-arrow" size={18} aria-hidden="true" /></li>
+      <li><span className="team-lifecycle-path-icon"><Laptop size={22} aria-hidden="true" /></span><div><span className="team-lifecycle-step">03</span><h3>{t('本人清理', 'Employee cleans up')}</h3><p>{t('只清理已确认的组织配置与副本。', 'Remove only approved organizational configuration and copies.')}</p></div></li>
+    </ol>
+    <section className="team-lifecycle-handoff" data-site-surface="panel" aria-labelledby="offboarding-handoff">
+      <div className="team-lifecycle-section-heading"><FolderOpen size={22} aria-hidden="true" /><h2 id="offboarding-handoff">{t('一份能接着做的交接', 'A handoff someone can continue')}</h2></div>
+      <div className="team-lifecycle-handoff-grid">
+        <div><span className="team-lifecycle-step">01</span><h3>{t('找到成果', 'Find the work')}</h3><p>{t('项目、文件、分支和成果链接。', 'Projects, files, branches and result links.')}</p></div>
+        <div><span className="team-lifecycle-step">02</span><h3>{t('知道进度', 'Understand its status')}</h3><p>{t('已完成、未完成和已知问题。', 'Completed work, open tasks and known issues.')}</p></div>
+        <div><span className="team-lifecycle-step">03</span><h3>{t('能够继续', 'Continue the task')}</h3><p>{t('启动方式、验证结果和下一步。', 'Startup steps, verification evidence and the next action.')}</p></div>
+        <div><span className="team-lifecycle-step">04</span><h3>{t('确认接收', 'Confirm receipt')}</h3><p>{t('接收人核对内容与资源归属。', 'The recipient checks the work and resource ownership.')}</p></div>
+      </div>
+    </section>
     <div className="staff-start-modules">
       <article className="staff-start-module" data-site-surface="panel" aria-labelledby="offboarding-ai">
         <div className="staff-start-module-heading">
           <Sparkles className="staff-start-module-icon" size={28} strokeWidth={1.5} aria-hidden="true" />
-          <h2 id="offboarding-ai" className="staff-start-module-title">{t('交给 AI', 'Delegate to AI')}</h2>
+          <div><span className="team-lifecycle-role">{t('盘点与整理', 'Inventory and preparation')}</span><h2 id="offboarding-ai" className="staff-start-module-title">{t('交给 AI', 'Delegate to AI')}</h2></div>
         </div>
         {tasks.map(task => <section className="staff-start-task" key={task.id}>
           <div className="staff-start-row"><h3>{task.title}</h3>
@@ -53,7 +74,7 @@ export default function OffboardingPage() {
       <article className="staff-start-module" data-site-surface="panel" aria-labelledby="offboarding-self">
         <div className="staff-start-module-heading">
           <UserRound className="staff-start-module-icon" size={28} strokeWidth={1.5} aria-hidden="true" />
-          <h2 id="offboarding-self" className="staff-start-module-title">{t('由自己完成', 'Do yourself')}</h2>
+          <div><span className="team-lifecycle-role">{t('接收与确认', 'Receipt and confirmation')}</span><h2 id="offboarding-self" className="staff-start-module-title">{t('由自己完成', 'Do yourself')}</h2></div>
         </div>
         <ul className="staff-start-knowledge">
           <li><strong>{t('确认交接', 'Confirm the handoff')}</strong><p>{t('由接收人确认工作、文件和资源已接收。', 'Have the recipient confirm receipt of work, files and resources.')}</p></li>
@@ -68,5 +89,23 @@ export default function OffboardingPage() {
         </details>
       </article>
     </div>
+    <section className="team-lifecycle-boundaries" aria-labelledby="offboarding-evidence">
+      <div className="team-lifecycle-section-heading"><ClipboardCheck size={22} aria-hidden="true" /><h2 id="offboarding-evidence">{t('撤权看结果，不看按钮', 'Verify the outcome of revocation')}</h2></div>
+      <div className="team-lifecycle-comparison">
+        <article className="team-lifecycle-example team-lifecycle-example--good" data-site-surface="panel">
+          <h3><Check size={18} aria-hidden="true" />{t('已验证的撤权', 'Verified revocation')}</h3>
+          <div className="team-lifecycle-access-flow" aria-hidden="true"><KeyRound size={26} /><span>{t('旧密钥', 'Old key')}</span><Unplug className="team-lifecycle-stop" size={22} /><ShieldCheck size={26} /><span>{t('服务端', 'Server')}</span></div>
+          <p>{t('旧密钥无法新建连接，旧会话已结束，开发网址不再代理该设备。', 'Old keys cannot connect, existing sessions have ended and preview URLs no longer reach the device.')}</p>
+          <p>{t('分别记录已验证、等待同步和未完成项。', 'Record verified, pending synchronization and incomplete items separately.')}</p>
+        </article>
+        <article className="team-lifecycle-example team-lifecycle-example--bad" data-site-surface="panel">
+          <h3><X size={18} aria-hidden="true" />{t('这些还不算完成', 'These are not proof of completion')}</h3>
+          <div className="team-lifecycle-access-flow" aria-hidden="true"><Laptop size={26} /><span>{t('本机删文件', 'Delete local files')}</span><span className="team-lifecycle-unequal">≠</span><ShieldCheck size={26} /><span>{t('服务端撤权', 'Revoke access')}</span></div>
+          <p>{t('点击撤销、删除本机密钥或移除 DNS，都不能单独证明权限已收回。', 'A revoke click, deleted local key or removed DNS record alone does not prove access is gone.')}</p>
+          <p>{t('交接未确认时只盘点；不清空整份 .ssh、共享目录或个人资料。', 'Inventory only until the handoff is accepted. Never clear all of .ssh, shared folders or personal data.')}</p>
+        </article>
+      </div>
+      <div className="team-lifecycle-next"><AppLink className="team-lifecycle-link" href="/workspace?section=onboarding" prefetch={false}>{t('核对远程连接与开发网址', 'Review remote access and development URLs')}<ArrowRight size={16} aria-hidden="true" /></AppLink></div>
+    </section>
   </section>;
 }

@@ -8,6 +8,7 @@
 
 import { decodeMiniProgramPreferences, MINI_PROGRAM_PREFERENCES_QUERY } from '@cuberoot/shared/appearance';
 import { PALETTES } from './palettes';
+import { ACCENT_KEY, ACCENT_COLORS, setAccentRoot } from './accent-colors';
 
 const PALETTE_SCHEMES = JSON.stringify(
   Object.fromEntries(PALETTES.map((p) => [p.id, p.scheme])),
@@ -64,6 +65,9 @@ export const THEME_BOOTSTRAP = `(() => {
     }
     // 柔和度(降对比护眼)— 正交于明暗/配色,首屏即设,避免高对比闪一下。
     if (localStorage.getItem('contrast') === 'soft') de.setAttribute('data-contrast', 'soft');
+    var accentId = localStorage.getItem('${ACCENT_KEY}');
+    var accent = ${JSON.stringify(ACCENT_COLORS)}.find(function(color) { return color.id === accentId; }) || null;
+    (${setAccentRoot.toString()})(de, accent);
     // iOS Safari tints its top/bottom chrome from <meta name=theme-color>;
     // without it dark mode leaks white at the screen edges. Set a pre-paint
     // guess here (ThemeColorSync refines it to the exact page bg after render).

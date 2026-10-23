@@ -1,6 +1,6 @@
 // 训练器学习标记的本地/云端合并(单条 last-write-wins)。
 // mergeMarks 是纯函数:每个 key 取 t 大的一边;本地较新的差异回传;
-// 本地墓碑(s 为空)在云端无对应行时不回传。
+// 本地墓碑(s 为空)也需同步,阻止旧设备迟到写入。
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import {
   mergeMarks, summarizeMarks, scanLocalOverview, combineOverviews,
@@ -32,14 +32,26 @@ describe('mergeMarks (LWW)', () => {
     expect(toUpload).toEqual([]);
   });
 
-  it('local-only real mark is uploaded; local-only tombstone is not', () => {
+  it('uploads local-only marks and tombstones to protect against delayed devices', () => {
     const local: CaseMarks = {
       'T|T1': { s: 'learning', t: 100 },
-      'T|T2': { t: 100 }, // 墓碑:云端本来就没有,不用传
+      'T|T2': { t: 100 },
     };
     const { merged, toUpload } = mergeMarks(local, {});
     expect(Object.keys(merged).sort()).toEqual(['T|T1', 'T|T2']);
-    expect(toUpload.map(i => i.k)).toEqual(['T|T1']);
+    expect(toUpload).toEqual([
+      { k: 'T|T1', s: 'learning', t: 100 },
+      { k: 'T|T2', s: null, t: 100 },
+    ]);
+  });
+
+  it('a cloud tombstone defeats an older device and accepts a genuinely newer mark', () => {
+    const cloud: CaseMarks = { 'T|T1': { t: 300 } };
+    const stale = mergeMarks({ 'T|T1': { s: 'mastered', t: 100 } }, cloud);
+    expect(stale).toEqual({ merged: cloud, toUpload: [] });
+    const fresh = mergeMarks({ 'T|T1': { s: 'learning', t: 400 } }, cloud);
+    expect(fresh.merged['T|T1']).toEqual({ s: 'learning', t: 400 });
+    expect(fresh.toUpload).toEqual([{ k: 'T|T1', s: 'learning', t: 400 }]);
   });
 
   it('newer local tombstone clears an older cloud mark (upload the clear)', () => {

@@ -68,7 +68,7 @@ const F2L_SIDE_RING_BY_CROSS: Readonly<Record<ColorLetter, string>> = Object.fre
 /** 从一条复盘标签里读十字颜色；普通 F2L / OLL / PLL 标签返回 null。 */
 export function crossColorFromLabel(label: string | null | undefined): ColorLetter | null {
   if (!label) return null;
-  const match = /^([WYGBOR])\s+x*cross\b/i.exec(label.trim());
+  const match = /^([WYGBOR])\s+(?:ps|pseudo[_ -]?)?x*cross\b/i.exec(label.trim());
   return match ? match[1].toUpperCase() as ColorLetter : null;
 }
 

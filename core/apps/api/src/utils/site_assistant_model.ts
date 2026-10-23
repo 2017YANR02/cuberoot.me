@@ -2,17 +2,20 @@ import { generateText, streamText, Output, tool, type ModelMessage, type ToolSet
 import { createDeepSeek } from '@ai-sdk/deepseek';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { z } from 'zod';
-import type { AssistantImage, AssistantMessage } from '@cuberoot/shared/site-assistant';
+import { SITE_ASSISTANT_ANSWER_MAX_LENGTH, boundAssistantHistory, type AssistantImage, type AssistantMessage } from '@cuberoot/shared/site-assistant';
 import { toolCallSchema } from './site_assistant_tools.js';
 import { AssistantFailure, checkAssistantResponse } from './site_assistant_diagnostics.js';
 import type { AssistantConfig } from './site_assistant.js';
 import { recordAssistantModel } from './site_assistant_monitor.js';
 
-const answerSchema = z.object({ answer: z.string().max(6000), sourceIds: z.array(z.string()).max(100) });
+const answerSchema = z.object({ answerKind: z.enum(['general','site_content','grounded','image']).optional(), answer: z.string().max(SITE_ASSISTANT_ANSWER_MAX_LENGTH), sourceIds: z.array(z.string()).max(100) });
 
 /** One provider conversation per HTTP request. Reasoning stays here, never in UI/logs. */
 export function createAssistantModel(config: AssistantConfig, fetcher: typeof fetch, signal: AbortSignal, guide: string, history: AssistantMessage[] = [], images: AssistantImage[] = []) {
   const deepseek = new URL(config.baseUrl).origin === 'https://api.deepseek.com';
+  const origin = new URL(config.baseUrl).origin;
+  const qwenThinking = /^https:\/\/(?:dashscope\.aliyuncs\.com|ws-[a-z0-9]+\.cn-beijing\.maas\.aliyuncs\.com)$/.test(origin)
+    && /^qwen3\.8-(?:flash|plus|max)(?:-|$)/.test(config.model);
   const boundedFetch: typeof fetch = async (input, init) => {
     const response = await fetcher(input, { ...init, signal, redirect: 'error' });
     checkAssistantResponse(response, 'model');
@@ -44,10 +47,9 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
   const imageParts = (items: AssistantImage[]) => items.map(image => ({
     type: 'file' as const, data: image.data, mediaType: image.mediaType,
   }));
-  const visualHistory: ModelMessage[] = images.length || history.some(message => message.images?.length)
-    ? history.map(message => message.role === 'user'
-      ? { role: 'user', content: [{ type: 'text', text: message.content }, ...imageParts(message.images ?? [])] }
-      : { role: 'assistant', content: message.content }) : [];
+  const conversation: ModelMessage[] = boundAssistantHistory(history).map(message => message.role === 'user'
+    ? { role: 'user', content: message.images?.length ? [{ type: 'text', text: message.content }, ...imageParts(message.images)] : message.content }
+    : { role: 'assistant', content: message.content });
   const transcript: ModelMessage[] = [];
   let pending: Array<{ raw: object; id: string; name: string; result?: unknown }> = [];
   return {
@@ -60,6 +62,7 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       effort: 'low' | 'high'; maxTokens: number; onText?: (text: string) => Promise<void>;
       followUp?: string;
     }) {
+      const thinking = options.thinking && (deepseek || qwenThinking);
       if (pending.length) {
         transcript.push({ role: 'tool', content: pending.map(call => ({
           type: 'tool-result' as const, toolCallId: call.id, toolName: call.name,
@@ -71,17 +74,17 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       const request = {
         model, tools, toolChoice: options.finalOnly ? 'none' as const : 'auto' as const,
         system: options.system + '\nAll prose and presentation instructions apply inside the answer string. The final response must be one JSON object with answer and sourceIds, without Markdown fences or text outside that object.',
-        messages: [...visualHistory, { role: 'user' as const, content: images.length ? [{ type: 'text' as const, text: JSON.stringify(options.context) }, ...imageParts(images)] : JSON.stringify(options.context) }, ...transcript],
+        messages: [...conversation, { role: 'user' as const, content: images.length ? [{ type: 'text' as const, text: JSON.stringify(options.context) }, ...imageParts(images)] : JSON.stringify(options.context) }, ...transcript],
         ...(deepseek ? { output: Output.object({schema:answerSchema}) } : {}),
-        maxOutputTokens: options.maxTokens, maxRetries: 0, abortSignal: signal,
-        ...(options.thinking ? {} : { temperature: 0 }),
+        maxOutputTokens: thinking ? options.maxTokens : Math.min(options.maxTokens, 4096), maxRetries: 0, abortSignal: signal,
+        ...(thinking ? {} : { temperature: 0 }),
         providerOptions: { [deepseek ? 'deepseek' : 'bailian']: deepseek
-          ? { thinking: { type: options.thinking ? 'enabled' : 'disabled' }, ...(options.thinking ? { reasoningEffort: options.effort } : {}) }
+          ? { thinking: { type: thinking ? 'enabled' : 'disabled' }, ...(thinking ? { reasoningEffort: options.effort } : {}) }
           // Keep JSON mode on the wire, then validate the compatible response
           // below. SDK eager JSON parsing cannot handle the provider's fences.
-          : { enable_thinking: false, response_format: { type: 'json_object' } } },
+          : { enable_thinking: thinking, response_format: { type: 'json_object' }, ...(qwenThinking ? { preserve_thinking: false, ...(thinking ? { thinking_budget: 4096, max_completion_tokens: 8192 } : {}) } : {}) } },
       };
-      const recordUsage = recordAssistantModel(config.model, options.thinking, new URL(config.baseUrl).origin);
+      const recordUsage = recordAssistantModel(config.model, thinking, origin);
       const response = options.onText ? streamText(request) : generateText(request);
       let result;
       if ('fullStream' in response) {

@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Check, Play, RotateCcw } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import HeaderToggles from '@/components/HeaderToggles';
+import AccentColorSelect from '@/components/AccentColorSelect';
 import { previewBackground, endBackgroundPreview } from '@/components/SiteBackground';
 import { useHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
@@ -90,6 +91,8 @@ export default function AppearancePage() {
         <h1 className="ac-h1">{tr({ zh: '外观', en: 'Appearance' })}</h1>
         <HeaderToggles />
       </header>
+
+      <div className="ac-accent"><AccentColorSelect /></div>
 
       <section id="backgrounds" className="ac-section" aria-labelledby="ac-background-title">
         <h2 id="ac-background-title" className="ac-h2">{tr({ zh: '全站背景', en: 'Site backgrounds' })}</h2>

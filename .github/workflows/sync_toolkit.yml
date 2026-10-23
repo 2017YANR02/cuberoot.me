@@ -20,6 +20,10 @@ on:
       - 'stats/**'
   workflow_dispatch:
 
+concurrency:
+  group: sync-static-toolkit
+  cancel-in-progress: false
+
 jobs:
   sync:
     runs-on: ubuntu-latest

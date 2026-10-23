@@ -5,7 +5,7 @@
   --surface: var(--card);
   --surface-2: var(--secondary);
   --border: var(--border-default);
-  --accent: #2563eb;
+  --accent: var(--user-accent, #2563eb);
   --accent-hover: color-mix(in srgb, var(--accent) 85%, black);
   --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
   /* Artboard is "paper": stays light under the dark UI chrome (like Illustrator /
@@ -95,12 +95,12 @@
 .paint-btn.is-active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--user-accent-foreground, #fff);
 }
 .paint-btn--accent {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--user-accent-foreground, #fff);
 }
 .paint-btn--accent:hover:not(:disabled) {
   background: var(--accent-hover);
@@ -193,7 +193,7 @@
 }
 .paint-tool.is-active {
   background: var(--accent);
-  color: #fff;
+  color: var(--user-accent-foreground, #fff);
 }
 .paint-tool.is-stub {
   color: var(--muted);
@@ -637,7 +637,7 @@
 }
 .paint-seg .paint-seg-btn.is-on {
   background: var(--accent);
-  color: #fff;
+  color: var(--user-accent-foreground, #fff);
 }
 .paint-select {
   flex: 1;
@@ -1428,7 +1428,7 @@
   --muted: var(--muted-foreground);
   --surface-2: var(--secondary);
   --border: var(--border-default);
-  --accent: #2563eb;
+  --accent: var(--user-accent, #2563eb);
   --accent-hover: color-mix(in srgb, var(--accent) 85%, black);
   position: fixed;
   inset: 0;

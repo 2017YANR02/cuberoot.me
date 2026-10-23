@@ -114,7 +114,7 @@ export function ReconCard({ solve, isZh, href, horizontal = false, showScrambleF
     <Link href={href} prefetch={false} className={`recon-card${horizontal ? ' recon-card--row' : ''}`}>
       <ReconCardMedia solve={solve} isZh={isZh} showScrambleFallback={showScrambleFallback} />
       <div className="recon-card-body">
-        {/* 表头风格:成绩 + 项目图标 + 项目名 + 国旗 + 选手名,同一行(对齐 /recon 详情页标题) */}
+        {/* 成绩 + 项目图标 + 国旗 + 选手名；宽度不足时姓名换行完整显示。 */}
         <div className="recon-card-head">
           {/* 纪录标志(PB/WR…)作为成绩数字的右上角标,需与数字同处 inline 上下文才生效 vertical-align */}
           <span className="recon-card-result mono">

@@ -167,7 +167,11 @@
         "spdx": "LicenseRef-CubeRoot",
         "evidence": "Algorithm catalog attribution retained in cases JSON; native solver license remains in solver/vendor/nissy-core"
       },
-      "owner": ["core/jobs/alg-build/src/double-zbll-select.mts", "core/packages/client/scripts/install-double-zbll.mts", "core/packages/client/scripts/summarize-double-zbll.mts"],
+      "owner": [
+        "core/jobs/alg-build/src/double-zbll-select.mts",
+        "core/packages/client/scripts/install-double-zbll.mts",
+        "core/packages/client/scripts/summarize-double-zbll.mts"
+      ],
       "workingDirectory": "core",
       "command": "pnpm --filter @cuberoot/alg-build double-zbll:export, then pnpm --filter @cuberoot/client double-zbll:install ../.tmp/double-zbll-symmetry-v2/export, then pnpm --filter @cuberoot/client double-zbll:summary",
       "outputs": [
@@ -243,15 +247,31 @@
       "kind": "local-heavy-artifact",
       "source": {
         "locator": "Editable Blender scenes kept locally in the repository and backed up as a separate asset bundle",
-        "paths": ["design/space/scenes/*.blend", "design/space/scripts/**", "design/space/README.md"]
+        "paths": [
+          "design/space/scenes/*.blend",
+          "design/space/scripts/**",
+          "design/space/README.md"
+        ]
       },
-      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE; existing asset provenance is listed in docs/space-sources.md and the website credits" },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "LICENSE; existing asset provenance is listed in docs/space-sources.md and the website credits"
+      },
       "owner": "design/space/scripts/export_scene.py",
       "workingDirectory": ".",
       "command": "cd core && pnpm space:batch --mode all",
-      "outputs": ["core/packages/client/public/assets/space/blender-v1/*.json"],
-      "transientOutputs": ["core/packages/client/public/assets/space/blender-v1/*.glb", "core/packages/client/public/assets/space/blender-v1/textures/**"],
-      "verification": ["design/space/scripts/verify.ts loads all 25 exports and checks room and city runtime contracts", "design/space/scripts/test_pack_gltf.py checks mesh buffer preservation and shared image round trips", "Inspect the local /zh/space page in daylight and at night after authoring changes"],
+      "outputs": [
+        "core/packages/client/public/assets/space/blender-v1/*.json"
+      ],
+      "transientOutputs": [
+        "core/packages/client/public/assets/space/blender-v1/*.glb",
+        "core/packages/client/public/assets/space/blender-v1/textures/**"
+      ],
+      "verification": [
+        "design/space/scripts/verify.ts loads all 25 exports and checks room and city runtime contracts",
+        "design/space/scripts/test_pack_gltf.py checks mesh buffer preservation and shared image round trips",
+        "Inspect the local /zh/space page in daylight and at night after authoring changes"
+      ],
       "driftPolicy": "Edit the saved .blend sources and export; never regenerate authored models from bootstrap captures. Heavy binaries stay outside Git. Provision and verify the complete asset bundle before enabling NEXT_PUBLIC_SPACE_BLENDER=1 for a release. Ordinary CI uses the existing procedural scene source."
     },
     {
@@ -259,14 +279,24 @@
       "kind": "checked-in-generated",
       "source": {
         "url": "https://sourceforge.net/projects/wqy/files/wqy-microhei/",
-        "paths": ["core/packages/client/public/fonts/wqy-microhei.ttf", "core/packages/client/app/[lang]/space/space-shanghai-signs-data.json"]
+        "paths": [
+          "core/packages/client/public/fonts/wqy-microhei.ttf",
+          "core/packages/client/app/[lang]/space/space-shanghai-signs-data.json"
+        ]
       },
-      "license": { "spdx": "Apache-2.0", "evidence": "Original font copyright and license metadata retained in sign-font.json; full license in sign-font.LICENSE.txt alongside it" },
+      "license": {
+        "spdx": "Apache-2.0",
+        "evidence": "Original font copyright and license metadata retained in sign-font.json; full license in sign-font.LICENSE.txt alongside it"
+      },
       "owner": "core/packages/client/scripts/build-shanghai-sign-font.mjs",
       "workingDirectory": "core",
       "command": "pnpm --filter @cuberoot/client exec node scripts/build-shanghai-sign-font.mjs",
-      "outputs": ["core/packages/client/public/assets/space/shanghai-v1/sign-font.json"],
-      "verification": ["core/packages/client/tests/space_shanghai.test.ts checks all signage glyphs, finite geometry, dimensions and physical placement"],
+      "outputs": [
+        "core/packages/client/public/assets/space/shanghai-v1/sign-font.json"
+      ],
+      "verification": [
+        "core/packages/client/tests/space_shanghai.test.ts checks all signage glyphs, finite geometry, dimensions and physical placement"
+      ],
       "driftPolicy": "Regenerate this local Three.js font subset after changing signage text; do not edit glyph outlines by hand. Reference photos are not runtime textures."
     },
     {
@@ -453,14 +483,25 @@
       "kind": "local-heavy-artifact",
       "source": {
         "locator": "operator-provided read-only music source",
-        "paths": ["scripts/music/prepare-music.ts", "docs/music-player-tracker.md"]
+        "paths": [
+          "scripts/music/prepare-music.ts",
+          "docs/music-player-tracker.md"
+        ]
       },
-      "license": { "spdx": "NOASSERTION", "evidence": "source-media rights are managed outside Git; no media is checked into this repository" },
+      "license": {
+        "spdx": "NOASSERTION",
+        "evidence": "source-media rights are managed outside Git; no media is checked into this repository"
+      },
       "owner": "scripts/music/prepare-music.ts",
       "workingDirectory": ".",
       "command": "cd core && pnpm music:prepare --source-root <read-only-media-dir> --staging-root <staging-dir> --pilot; omit --pilot only for one reviewed batch",
-      "runtimeOutputs": ["music-staging/inventory/source-manifest.jsonl", "music-staging/library/**"],
-      "verification": ["ffprobe every output for one audio stream, zero video streams, duration tolerance, and no partial files; validate manifest version and asset references"],
+      "runtimeOutputs": [
+        "music-staging/inventory/source-manifest.jsonl",
+        "music-staging/library/**"
+      ],
+      "verification": [
+        "ffprobe every output for one audio stream, zero video streams, duration tolerance, and no partial files; validate manifest version and asset references"
+      ],
       "driftPolicy": "The source is read-only and the generated inventory and media stay outside Git. Run one bounded batch at a time, preserve the disk reserve, and publish only after content-hash deduplication and manual classification are complete."
     },
     {
@@ -468,11 +509,19 @@
       "kind": "vendored-sync",
       "source": {
         "url": "https://github.com/cs0x7f/cstimer",
-        "ref": { "type": "branch", "value": "master" }
+        "ref": {
+          "type": "branch",
+          "value": "master"
+        }
       },
-      "license": { "spdx": "GPL-3.0-only", "evidence": "https://github.com/cs0x7f/cstimer/blob/master/LICENSE" },
+      "license": {
+        "spdx": "GPL-3.0-only",
+        "evidence": "https://github.com/cs0x7f/cstimer/blob/master/LICENSE"
+      },
       "owner": "scripts/upstream/sync-cstimer.ts",
-      "patchOwner": ["scripts/upstream/sync-cstimer.ts"],
+      "patchOwner": [
+        "scripts/upstream/sync-cstimer.ts"
+      ],
       "workingDirectory": ".",
       "command": "cd core && pnpm upstream:sync --only cstimer",
       "outputs": [
@@ -497,14 +546,24 @@
       "kind": "vendored-sync",
       "source": {
         "url": "https://github.com/cs0x7f/cstimer",
-        "ref": { "type": "branch", "value": "master" }
+        "ref": {
+          "type": "branch",
+          "value": "master"
+        }
       },
-      "license": { "spdx": "GPL-3.0-only", "evidence": "tools/cstimer-scramble/LICENSE" },
+      "license": {
+        "spdx": "GPL-3.0-only",
+        "evidence": "tools/cstimer-scramble/LICENSE"
+      },
       "owner": "scripts/upstream/sync-cstimer-scramble.ts",
-      "patchOwner": ["scripts/upstream/sync-cstimer-scramble.ts"],
+      "patchOwner": [
+        "scripts/upstream/sync-cstimer-scramble.ts"
+      ],
       "workingDirectory": ".",
       "command": "cd core && pnpm upstream:sync --only cstimer",
-      "outputs": ["tools/cstimer-scramble/**"],
+      "outputs": [
+        "tools/cstimer-scramble/**"
+      ],
       "versionRecord": {
         "path": "tools/cstimer-scramble/UPSTREAM.txt",
         "writer": "scripts/upstream/sync-cstimer-scramble.ts",
@@ -523,9 +582,15 @@
       "kind": "vendored-sync",
       "source": {
         "url": "https://github.com/or18/RubiksSolverDemo",
-        "ref": { "type": "branch", "value": "main" }
+        "ref": {
+          "type": "branch",
+          "value": "main"
+        }
       },
-      "license": { "spdx": "GPL-3.0-only", "evidence": "https://github.com/or18/RubiksSolverDemo/blob/main/LICENSE" },
+      "license": {
+        "spdx": "GPL-3.0-only",
+        "evidence": "https://github.com/or18/RubiksSolverDemo/blob/main/LICENSE"
+      },
       "owner": "scripts/upstream/sync-rubiks-solver-demo.ts",
       "patchOwner": [
         "scripts/upstream/sync-rubiks-solver-demo.ts",
@@ -576,9 +641,15 @@
       "kind": "vendored-sync",
       "source": {
         "url": "https://github.com/mihlefeld/Alg-Trainers",
-        "ref": { "type": "branch", "value": "master" }
+        "ref": {
+          "type": "branch",
+          "value": "master"
+        }
       },
-      "license": { "spdx": "GPL-3.0-only", "evidence": "https://github.com/mihlefeld/Alg-Trainers/blob/master/LICENSE" },
+      "license": {
+        "spdx": "GPL-3.0-only",
+        "evidence": "https://github.com/mihlefeld/Alg-Trainers/blob/master/LICENSE"
+      },
       "owner": "scripts/upstream/sync-alg-trainers.ts",
       "patchOwner": [
         "scripts/upstream/sync-alg-trainers.ts",
@@ -586,7 +657,9 @@
       ],
       "workingDirectory": ".",
       "command": "cd core && pnpm upstream:sync --only algtrainers",
-      "outputs": ["tools/alg_trainers/**"],
+      "outputs": [
+        "tools/alg_trainers/**"
+      ],
       "versionRecord": {
         "path": "tools/alg_trainers/UPSTREAM.txt",
         "writer": "scripts/upstream/sync-alg-trainers.ts",
@@ -605,9 +678,15 @@
       "kind": "vendored-sync",
       "source": {
         "url": "https://github.com/nbwzx/blddb",
-        "ref": { "type": "branch", "value": "v2" }
+        "ref": {
+          "type": "branch",
+          "value": "v2"
+        }
       },
-      "license": { "spdx": "GPL-3.0-only", "evidence": "tools/blddb/LICENSE" },
+      "license": {
+        "spdx": "GPL-3.0-only",
+        "evidence": "tools/blddb/LICENSE"
+      },
       "owner": "scripts/upstream/sync-blddb.ts",
       "patchOwner": [
         "scripts/upstream/sync-blddb.ts",
@@ -615,7 +694,9 @@
       ],
       "workingDirectory": ".",
       "command": "cd core && pnpm upstream:sync --only blddb",
-      "outputs": ["tools/blddb/**"],
+      "outputs": [
+        "tools/blddb/**"
+      ],
       "versionRecord": {
         "path": "tools/blddb/UPSTREAM.txt",
         "writer": "scripts/upstream/sync-blddb.ts",
@@ -633,15 +714,26 @@
       "kind": "upstream-fork-deploy",
       "source": {
         "url": "https://github.com/mintydev789/RecordRanks",
-        "ref": { "type": "branch", "value": "main" },
+        "ref": {
+          "type": "branch",
+          "value": "main"
+        },
         "forkUrl": "https://github.com/2017YANR02/RecordRanks"
       },
-      "license": { "spdx": "AGPL-3.0-only", "evidence": "https://github.com/mintydev789/RecordRanks/blob/main/LICENSE" },
+      "license": {
+        "spdx": "AGPL-3.0-only",
+        "evidence": "https://github.com/mintydev789/RecordRanks/blob/main/LICENSE"
+      },
       "owner": "scripts/upstream/sync-recordranks.ts",
-      "patchOwner": ["the 2017YANR02/RecordRanks fork", "scripts/upstream/sync-recordranks.ts compatibility assertions"],
+      "patchOwner": [
+        "the 2017YANR02/RecordRanks fork",
+        "scripts/upstream/sync-recordranks.ts compatibility assertions"
+      ],
       "workingDirectory": ".",
       "command": "cd core && pnpm upstream:sync --only recordranks",
-      "outputs": ["ops/contests/recordranks-ref.txt"],
+      "outputs": [
+        "ops/contests/recordranks-ref.txt"
+      ],
       "versionRecord": {
         "path": "ops/contests/recordranks-ref.txt",
         "writer": "scripts/upstream/sync-recordranks.ts",
@@ -661,34 +753,55 @@
         "url": "https://www.worldcubeassociation.org/regulations/",
         "paths": [
           "core/packages/client/scripts/reg-check.mjs",
-          "core/packages/client/scripts/build-reg-clauses.mjs"
+          "core/packages/client/scripts/build-reg-clauses.mjs",
+          "core/packages/client/scripts/reg-bilingual-markdown.mts"
         ]
       },
-      "license": { "spdx": "NOASSERTION", "evidence": "the official WCA Regulations source governs the verbatim snapshot" },
-      "owner": ["core/packages/client/scripts/reg-check.mjs", "core/packages/client/scripts/build-reg-clauses.mjs", ".github/workflows/regulation_drift.yml"],
+      "license": {
+        "spdx": "NOASSERTION",
+        "evidence": "the official WCA Regulations source governs the verbatim snapshot"
+      },
+      "owner": [
+        "core/packages/client/scripts/reg-check.mjs",
+        "core/packages/client/scripts/build-reg-clauses.mjs",
+        "core/packages/client/scripts/reg-bilingual-markdown.mts",
+        ".github/workflows/regulation_drift.yml"
+      ],
       "workingDirectory": "core",
       "command": "node packages/client/scripts/reg-check.mjs --write; node packages/client/scripts/build-reg-clauses.mjs",
       "outputs": [
         "core/packages/client/app/[lang]/regulation/_data/reg-source.snapshot.md",
         "core/packages/client/app/[lang]/regulation/_data/reg-source.hashes.json",
-        "core/packages/client/app/[lang]/regulation/_data/reg-clauses/_full.json"
+        "core/packages/client/app/[lang]/regulation/_data/reg-clauses/_full.json",
+        "core/packages/client/public/regulation/wca-regulations-bilingual.md"
       ],
-      "verification": [".github/workflows/regulation_drift.yml detects source drift, rebuilds the verbatim mirror, and opens a review PR"],
-      "driftPolicy": "The workflow may rebuild only the verbatim snapshot family. Review upstream changes and generated diffs before merging."
+      "verification": [
+        ".github/workflows/regulation_drift.yml detects source drift, rebuilds the verbatim mirror, and opens a review PR"
+      ],
+      "driftPolicy": "The workflow may rebuild only the verbatim snapshot family, including the clause-aligned Markdown export. The authored public/regulation/wca-translation-reference.md requires editorial review and is never overwritten. Review upstream changes and generated diffs before merging."
     },
     {
       "id": "client.regulation-illustrated",
       "kind": "human-authored-derivative",
       "source": {
         "url": "https://www.worldcubeassociation.org/regulations/",
-        "paths": ["core/packages/client/app/[lang]/regulation/**"]
+        "paths": [
+          "core/packages/client/app/[lang]/regulation/**"
+        ]
       },
-      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE; the official regulations remain the cited reference" },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "LICENSE; the official regulations remain the cited reference"
+      },
       "owner": "core/packages/client/app/[lang]/regulation",
       "workingDirectory": "core",
       "command": "follow the update-regulation review process and edit the affected regulation chapter sources",
-      "outputs": ["core/packages/client/app/[lang]/regulation/*/page.tsx"],
-      "verification": ["manual bilingual, citation, route, and illustrated-content review for each affected chapter"],
+      "outputs": [
+        "core/packages/client/app/[lang]/regulation/*/page.tsx"
+      ],
+      "verification": [
+        "manual bilingual, citation, route, and illustrated-content review for each affected chapter"
+      ],
       "driftPolicy": "regulation_drift.yml may open or update an issue but never generates this authored explanation; do not describe it as automatic output."
     },
     {
@@ -696,14 +809,28 @@
       "kind": "checked-in-generated",
       "source": {
         "locator": "Exact puzzle cuts, shape-mod geometry, canonical bandage/overlap models and CubeRoot projection/gap design",
-        "paths": ["core/packages/client/app/[lang]/sim/pgCatalog.ts", "core/packages/client/scripts/generate-puzzle-icons.mts", "core/packages/client/scripts/generate-extra-puzzle-icons.mts", "core/packages/client/scripts/generate-shape-mod-icons.mts"]
+        "paths": [
+          "core/packages/client/app/[lang]/sim/pgCatalog.ts",
+          "core/packages/client/scripts/generate-puzzle-icons.mts",
+          "core/packages/client/scripts/generate-extra-puzzle-icons.mts",
+          "core/packages/client/scripts/generate-shape-mod-icons.mts"
+        ]
       },
-      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE; existing cubing.js PG definitions and original projection design" },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "LICENSE; existing cubing.js PG definitions and original projection design"
+      },
       "owner": "core/packages/event-icon",
       "workingDirectory": "core",
       "command": "pnpm --filter @cuberoot/client exec node scripts/generate-puzzle-icons.mts && pnpm --filter @cuberoot/client exec node scripts/generate-extra-puzzle-icons.mts && pnpm --filter @cuberoot/client exec node scripts/generate-shape-mod-icons.mts",
-      "outputs": ["core/packages/event-icon/svg/puzzle/*.svg"],
-      "verification": ["Run each generator with --check", "Run tests/puzzle-icon-catalog.test.ts", "Review glyphs in /zh/icon and at menu size in the simulator, timer and scramble generator"],
+      "outputs": [
+        "core/packages/event-icon/svg/puzzle/*.svg"
+      ],
+      "verification": [
+        "Run each generator with --check",
+        "Run tests/puzzle-icon-catalog.test.ts",
+        "Review glyphs in /zh/icon and at menu size in the simulator, timer and scramble generator"
+      ],
       "driftPolicy": "Regenerate the affected family from its exact model, then run event-icon generate. Keep every physical puzzle registered in /icon before connecting consumers; never substitute a generic family icon or text badge for different cuts. Curvy Copter retains curved upstream artwork; gear.svg is authored artwork."
     },
     {
@@ -711,9 +838,14 @@
       "kind": "checked-in-generated",
       "source": {
         "locator": "reviewed EventIcon SVG source set",
-        "paths": ["core/packages/event-icon/svg/**"]
+        "paths": [
+          "core/packages/event-icon/svg/**"
+        ]
       },
-      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and the source-specific public credit registry" },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "LICENSE and the source-specific public credit registry"
+      },
       "owner": "core/packages/event-icon",
       "workingDirectory": "core",
       "command": "pnpm --filter @cuberoot/event-icon generate",
@@ -723,7 +855,10 @@
         "core/packages/event-icon/src/svg-map-penalty.ts",
         "core/packages/event-icon/src/svg-map-puzzle.ts"
       ],
-      "verification": ["pnpm --filter @cuberoot/event-icon generate and review the generated map diff", ".github/workflows/icons_drift.yml compares upstream and local SVGs"],
+      "verification": [
+        "pnpm --filter @cuberoot/event-icon generate and review the generated map diff",
+        ".github/workflows/icons_drift.yml compares upstream and local SVGs"
+      ],
       "driftPolicy": "icons_drift.yml does not prove SVG-map freshness. Until a cheap generator-diff guard is added, explicitly regenerate and review all category maps after SVG changes."
     },
     {
@@ -737,12 +872,19 @@
           "core/packages/shared/scripts/place-tail-zh.json"
         ]
       },
-      "license": { "spdx": "NOASSERTION", "evidence": "each external input retains its own terms; repository code is covered by LICENSE" },
+      "license": {
+        "spdx": "NOASSERTION",
+        "evidence": "each external input retains its own terms; repository code is covered by LICENSE"
+      },
       "owner": "core/packages/shared",
       "workingDirectory": "core/packages/shared",
       "command": "node scripts/gen-place-zh.mjs; node scripts/merge-place-zh.mjs",
-      "outputs": ["core/packages/shared/src/data/place_zh.ts"],
-      "verification": ["the place localization coverage test checks newly observed cities"],
+      "outputs": [
+        "core/packages/shared/src/data/place_zh.ts"
+      ],
+      "verification": [
+        "the place localization coverage test checks newly observed cities"
+      ],
       "driftPolicy": "External inputs and the manually reviewed tail are sources. Update them and rerun both generators instead of editing the output directly."
     },
     {
@@ -750,14 +892,23 @@
       "kind": "checked-in-generated",
       "source": {
         "locator": "cubingchina data.sql supplied explicitly or by the documented local convenience path",
-        "paths": ["core/packages/shared/scripts/gen-cn-region.mjs"]
+        "paths": [
+          "core/packages/shared/scripts/gen-cn-region.mjs"
+        ]
       },
-      "license": { "spdx": "NOASSERTION", "evidence": "the external data source retains its own terms; repository code is covered by LICENSE" },
+      "license": {
+        "spdx": "NOASSERTION",
+        "evidence": "the external data source retains its own terms; repository code is covered by LICENSE"
+      },
       "owner": "core/packages/shared",
       "workingDirectory": "core",
       "command": "node packages/shared/scripts/gen-cn-region.mjs [data.sql]",
-      "outputs": ["core/packages/shared/src/data/cn_region.ts"],
-      "verification": ["review the deterministic generated diff from the explicitly selected data.sql input"],
+      "outputs": [
+        "core/packages/shared/src/data/cn_region.ts"
+      ],
+      "verification": [
+        "review the deterministic generated diff from the explicitly selected data.sql input"
+      ],
       "driftPolicy": "The generated header forbids hand edits. The default machine path is only a local convenience and CI must not claim to possess the external source."
     },
     {
@@ -802,11 +953,16 @@
           "core/packages/shared/data/zbll.json"
         ]
       },
-      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and the canonical case-map provenance" },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "LICENSE and the canonical case-map provenance"
+      },
       "owner": "core/packages/shared/scripts/build-timer-trainer-case-data.mjs",
       "workingDirectory": "core",
       "command": "pnpm --filter @cuberoot/shared generate:timer-trainer-cases --write",
-      "outputs": ["core/packages/shared/src/timer/trainer-case-data.generated.ts"],
+      "outputs": [
+        "core/packages/shared/src/timer/trainer-case-data.generated.ts"
+      ],
       "verification": [
         "pnpm --filter @cuberoot/shared generate:timer-trainer-cases --check",
         "pnpm --filter @cuberoot/client exec vitest run tests/timer_trainer_scramble_shared.test.ts"
@@ -823,12 +979,19 @@
           "core/packages/client/tests/gen_pg_facts.gen.test.ts"
         ]
       },
-      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE" },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "LICENSE"
+      },
       "owner": "core/packages/client/app/[lang]/sim/engine",
       "workingDirectory": "core",
       "command": "$env:GEN_PG_FACTS='1'; pnpm --filter @cuberoot/client exec vitest run tests/gen_pg_facts.gen.test.ts",
-      "outputs": ["core/packages/client/app/[lang]/sim/engine/pgFacts.generated.ts"],
-      "verification": ["explicitly run the generator test and review the exact diff after bridge or generator changes"],
+      "outputs": [
+        "core/packages/client/app/[lang]/sim/engine/pgFacts.generated.ts"
+      ],
+      "verification": [
+        "explicitly run the generator test and review the exact diff after bridge or generator changes"
+      ],
       "driftPolicy": "The output path is derived from the test location and is clone-independent. Generation is slow and skipped by ordinary tests, so relevant engine changes require explicit regeneration."
     },
     {
@@ -836,14 +999,27 @@
       "kind": "upstream-snapshot",
       "source": {
         "url": "https://docs.google.com/spreadsheets/d/1VQNYNwdOLqqBkacHcfYtEBst22FOVhH9EAhTOYOZTgo/edit",
-        "paths": ["core/packages/client/scripts/sq1-pbl/**"]
+        "paths": [
+          "core/packages/client/scripts/sq1-pbl/**"
+        ]
       },
-      "license": { "spdx": "NOASSERTION", "evidence": "public access does not establish a reuse license; public credit remains in credits_data.json" },
-      "owner": ["core/packages/client/scripts/sq1-pbl-check.mjs", ".github/workflows/sq1_pbl_drift.yml"],
+      "license": {
+        "spdx": "NOASSERTION",
+        "evidence": "public access does not establish a reuse license; public credit remains in credits_data.json"
+      },
+      "owner": [
+        "core/packages/client/scripts/sq1-pbl-check.mjs",
+        ".github/workflows/sq1_pbl_drift.yml"
+      ],
       "workingDirectory": "core",
       "command": "node packages/client/scripts/sq1-pbl-check.mjs [--write]",
-      "outputs": ["core/packages/client/data/sq1-pbl/**"],
-      "verification": ["node packages/client/scripts/sq1-pbl-check.mjs", ".github/workflows/sq1_pbl_drift.yml reports upstream drift"],
+      "outputs": [
+        "core/packages/client/data/sq1-pbl/**"
+      ],
+      "verification": [
+        "node packages/client/scripts/sq1-pbl-check.mjs",
+        ".github/workflows/sq1_pbl_drift.yml reports upstream drift"
+      ],
       "driftPolicy": "The scheduled workflow reports drift only. After human review, --write updates the checked-in snapshot; publication is separately owned by migration.sq1-pbl."
     },
     {
@@ -851,17 +1027,28 @@
       "kind": "upstream-snapshot",
       "source": {
         "url": "https://docs.google.com/spreadsheets/d/1OFXakCV85Mp2zsQBXMxiMX9a506JeAcLnUXZr8FgXAY/edit",
-        "paths": ["core/packages/client/scripts/best2x2/sheets.mjs"]
+        "paths": [
+          "core/packages/client/scripts/best2x2/sheets.mjs"
+        ]
       },
-      "license": { "spdx": "NOASSERTION", "evidence": "authorized data merge is publicly credited in credits_data.json; no public license is asserted" },
-      "owner": ["core/packages/client/scripts/best2x2-check.mjs", ".github/workflows/best2x2_drift.yml"],
+      "license": {
+        "spdx": "NOASSERTION",
+        "evidence": "authorized data merge is publicly credited in credits_data.json; no public license is asserted"
+      },
+      "owner": [
+        "core/packages/client/scripts/best2x2-check.mjs",
+        ".github/workflows/best2x2_drift.yml"
+      ],
       "workingDirectory": "core",
       "command": "node packages/client/scripts/best2x2-check.mjs [--write]",
       "outputs": [
         "core/packages/client/scripts/best2x2/source-snapshot/**",
         "core/packages/client/scripts/best2x2/source.hashes.json"
       ],
-      "verification": ["node packages/client/scripts/best2x2-check.mjs", ".github/workflows/best2x2_drift.yml checks all 21 sheet hashes"],
+      "verification": [
+        "node packages/client/scripts/best2x2-check.mjs",
+        ".github/workflows/best2x2_drift.yml checks all 21 sheet hashes"
+      ],
       "driftPolicy": "The scheduled check detects the 21-sheet source drift. Use --write only after review; this owner stops at the checked-in snapshot and never owns import or migration output."
     },
     {
@@ -875,11 +1062,19 @@
           "core/packages/client/scripts/best2x2/build-import.mts"
         ]
       },
-      "license": { "spdx": "NOASSERTION", "evidence": "inherits the reviewed input terms recorded by client.best2x2-source" },
-      "owner": ["core/packages/client/scripts/best2x2", "core/docs/best-2x2-algs-port.md"],
+      "license": {
+        "spdx": "NOASSERTION",
+        "evidence": "inherits the reviewed input terms recorded by client.best2x2-source"
+      },
+      "owner": [
+        "core/packages/client/scripts/best2x2",
+        "core/docs/best-2x2-algs-port.md"
+      ],
       "workingDirectory": "core",
       "command": "follow core/docs/best-2x2-algs-port.md through fetch, report, build-import, verify-import, and verify-finder",
-      "transientOutputs": [".tmp/best2x2/**"],
+      "transientOutputs": [
+        ".tmp/best2x2/**"
+      ],
       "verification": [
         "pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-import.mts .tmp/best2x2/import.json",
         "pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-finder.mts .tmp/best2x2/import.json"
@@ -891,15 +1086,23 @@
       "kind": "checked-in-generated",
       "source": {
         "url": "https://github.com/thewca/tnoodle",
-        "ref": { "type": "branch", "value": "master" },
+        "ref": {
+          "type": "branch",
+          "value": "master"
+        },
         "input": "explicit path to server/src/main/resources/i18n in a TNoodle clone"
       },
-      "license": { "spdx": "AGPL-3.0-only", "evidence": "https://github.com/thewca/tnoodle/blob/master/LICENSE" },
+      "license": {
+        "spdx": "AGPL-3.0-only",
+        "evidence": "https://github.com/thewca/tnoodle/blob/master/LICENSE"
+      },
       "owner": "core/packages/client/scripts/build-tnoodle-i18n.mjs",
       "patchOwner": [],
       "workingDirectory": "core",
       "command": "node packages/client/scripts/build-tnoodle-i18n.mjs --input <tnoodle-i18n-dir> --write",
-      "outputs": ["core/packages/client/app/[lang]/scramble/gen/_tnoodle-i18n.ts"],
+      "outputs": [
+        "core/packages/client/app/[lang]/scramble/gen/_tnoodle-i18n.ts"
+      ],
       "verification": [
         "node packages/client/scripts/build-tnoodle-i18n.mjs --input <tnoodle-i18n-dir> --check"
       ],
@@ -910,14 +1113,29 @@
       "kind": "build-output",
       "source": {
         "locator": "Canonical stage solver workers and WASM",
-        "paths": ["tools/solver/rust-cross/cross-solver-worker.js", "tools/solver/rust-cross/xcross-table-worker.js", "tools/solver/rust-cross/cross_solver.js", "tools/solver/rust-cross/cross_solver_bg.wasm", "core/scripts/copy-stage-solver-assets.mts"]
+        "paths": [
+          "tools/solver/rust-cross/cross-solver-worker.js",
+          "tools/solver/rust-cross/xcross-table-worker.js",
+          "tools/solver/rust-cross/cross_solver.js",
+          "tools/solver/rust-cross/cross_solver_bg.wasm",
+          "core/scripts/copy-stage-solver-assets.mts"
+        ]
       },
-      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE" },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "LICENSE"
+      },
       "owner": "core/scripts/copy-stage-solver-assets.mts",
       "workingDirectory": "core",
       "command": "node scripts/build-cubing-worker.mjs <host-public-dir>/cubing-chunks",
-      "transientOutputs": ["core/apps/mobile/public/tools/solver/rust-cross/**", "core/apps/desktop/public/tools/solver/rust-cross/**", "core/apps/harmony/public/tools/solver/rust-cross/**"],
-      "verification": ["host production build and stage solver runtime smoke check"],
+      "transientOutputs": [
+        "core/apps/mobile/public/tools/solver/rust-cross/**",
+        "core/apps/desktop/public/tools/solver/rust-cross/**",
+        "core/apps/harmony/public/tools/solver/rust-cross/**"
+      ],
+      "verification": [
+        "host production build and stage solver runtime smoke check"
+      ],
       "driftPolicy": "Host dev/build copies the four executable assets from the canonical static tree. Never hand-edit host copies; table data continues to use the configured static host."
     },
     {
@@ -925,9 +1143,14 @@
       "kind": "build-output",
       "source": {
         "locator": "the installed cubing dependency and the worker bundler",
-        "paths": ["core/scripts/build-cubing-worker.mjs"]
+        "paths": [
+          "core/scripts/build-cubing-worker.mjs"
+        ]
       },
-      "license": { "spdx": "(MPL-2.0 OR GPL-3.0-or-later) AND Unlicense AND Apache-2.0", "evidence": "cubing/package.json, random-uint-below/package.json, cubing's vendored Comlink source header, and the generated worker SPDX banner" },
+      "license": {
+        "spdx": "(MPL-2.0 OR GPL-3.0-or-later) AND Unlicense AND Apache-2.0",
+        "evidence": "cubing/package.json, random-uint-below/package.json, cubing's vendored Comlink source header, and the generated worker SPDX banner"
+      },
       "owner": "core/scripts/build-cubing-worker.mjs",
       "workingDirectory": "core",
       "command": "node scripts/build-cubing-worker.mjs <host-public-dir>/cubing-chunks",
@@ -937,7 +1160,9 @@
         "core/apps/desktop/public/cubing-chunks/**",
         "core/apps/harmony/public/cubing-chunks/**"
       ],
-      "verification": ["each host production build and a real 3x3 scramble smoke check"],
+      "verification": [
+        "each host production build and a real 3x3 scramble smoke check"
+      ],
       "driftPolicy": "The host bundle directories are gitignored build outputs. Regenerate them through each host build and never commit or edit them as source."
     },
     {
@@ -945,14 +1170,23 @@
       "kind": "checked-in-generated",
       "source": {
         "locator": "DeskPet cubing generator sources",
-        "paths": ["core/packages/client/scripts/deskpet-cube/**"]
+        "paths": [
+          "core/packages/client/scripts/deskpet-cube/**"
+        ]
       },
-      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE" },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "LICENSE"
+      },
       "owner": "core/packages/client/scripts/deskpet-cube",
       "workingDirectory": "core/packages/client",
       "command": "node scripts/deskpet-cube/build-cubing.mjs",
-      "outputs": ["core/packages/client/public/deskpet/cubing/**"],
-      "verification": ["rerun the builder and review the generated diff"],
+      "outputs": [
+        "core/packages/client/public/deskpet/cubing/**"
+      ],
+      "verification": [
+        "rerun the builder and review the generated diff"
+      ],
       "driftPolicy": "Generated headers forbid hand edits. There is currently no cheap stale-output CI guard, so relevant source changes require explicit regeneration and diff review."
     },
     {
@@ -960,14 +1194,25 @@
       "kind": "checked-in-generated",
       "source": {
         "locator": "Original Clawd playtime choreography and canonical character geometry",
-        "paths": ["core/packages/client/scripts/deskpet-playtime/**", "core/packages/client/public/deskpet/clawd-static-base.svg"]
+        "paths": [
+          "core/packages/client/scripts/deskpet-playtime/**",
+          "core/packages/client/public/deskpet/clawd-static-base.svg"
+        ]
       },
-      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE" },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "LICENSE"
+      },
       "owner": "core/packages/client/scripts/deskpet-playtime",
       "workingDirectory": "core/packages/client",
       "command": "node scripts/deskpet-playtime/build-playtime.mjs",
-      "outputs": ["core/packages/client/public/deskpet/playtime/**"],
-      "verification": ["node scripts/deskpet-playtime/build-playtime.mjs --check", "preview all 30 complete loops in a browser"],
+      "outputs": [
+        "core/packages/client/public/deskpet/playtime/**"
+      ],
+      "verification": [
+        "node scripts/deskpet-playtime/build-playtime.mjs --check",
+        "preview all 30 complete loops in a browser"
+      ],
       "driftPolicy": "Edit choreography sources and regenerate. The manifest drives the gallery and pet runtime. Bump PLAYTIME_VERSION in client/lib/deskpet-playtime.ts when regenerating published assets."
     },
     {
@@ -975,14 +1220,26 @@
       "kind": "checked-in-generated",
       "source": {
         "locator": "Approved CubeRoot B2 traced vector parts and original choreography",
-        "paths": ["core/packages/client/scripts/deskpet-rootbeast/**", "core/packages/client/scripts/deskpet-animation.mjs"]
+        "paths": [
+          "core/packages/client/scripts/deskpet-rootbeast/**",
+          "core/packages/client/scripts/deskpet-animation.mjs"
+        ]
       },
-      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE" },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "LICENSE"
+      },
       "owner": "core/packages/client/scripts/deskpet-rootbeast",
       "workingDirectory": "core/packages/client",
       "command": "node scripts/deskpet-rootbeast/build-rootbeast.mjs",
-      "outputs": ["core/packages/client/public/deskpet/rootbeast/**"],
-      "verification": ["node scripts/deskpet-rootbeast/build-rootbeast.mjs --check", "tests/deskpet-rootbeast.test.ts", "preview all 51 complete loops and the mobile gallery in a browser"],
+      "outputs": [
+        "core/packages/client/public/deskpet/rootbeast/**"
+      ],
+      "verification": [
+        "node scripts/deskpet-rootbeast/build-rootbeast.mjs --check",
+        "tests/deskpet-rootbeast.test.ts",
+        "preview all 51 complete loops and the mobile gallery in a browser"
+      ],
       "driftPolicy": "Edit traced rig or choreography sources and regenerate. The manifest drives the gallery and pet runtime. Bump ROOTBEAST_VERSION when regenerating published assets."
     },
     {
@@ -990,14 +1247,27 @@
       "kind": "checked-in-generated",
       "source": {
         "locator": "Twelve selected original pet designs with articulated SVG parts and 48 shared story intents",
-        "paths": ["core/packages/client/scripts/deskpet-originals/**", "core/packages/client/scripts/deskpet-animation.mjs", "core/packages/client/scripts/deskpet-rootbeast/rig.mjs"]
+        "paths": [
+          "core/packages/client/scripts/deskpet-originals/**",
+          "core/packages/client/scripts/deskpet-animation.mjs",
+          "core/packages/client/scripts/deskpet-rootbeast/rig.mjs"
+        ]
       },
-      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE" },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "LICENSE"
+      },
       "owner": "core/packages/client/scripts/deskpet-originals",
       "workingDirectory": "core/packages/client",
       "command": "node scripts/deskpet-originals/build-originals.mjs",
-      "outputs": ["core/packages/client/public/deskpet/originals/**"],
-      "verification": ["node scripts/deskpet-originals/build-originals.mjs --check", "tests/deskpet-originals.test.ts", "preview every character and scene, including mobile gallery and playback"],
+      "outputs": [
+        "core/packages/client/public/deskpet/originals/**"
+      ],
+      "verification": [
+        "node scripts/deskpet-originals/build-originals.mjs --check",
+        "tests/deskpet-originals.test.ts",
+        "preview every character and scene, including mobile gallery and playback"
+      ],
       "driftPolicy": "Edit the articulated character, motion, props or bilingual scene sources and regenerate all 576 SVGs. The manifest is the single source for the existing gallery and runtime. Bump the manifest version when regenerating published assets."
     },
     {
@@ -1011,8 +1281,14 @@
           "core/apps/mobile/scripts/gen-android-assets.mjs"
         ]
       },
-      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE" },
-      "owner": ["core/scripts/gen-brand-assets.mjs", "core/apps/mobile/scripts/gen-android-assets.mjs"],
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "LICENSE"
+      },
+      "owner": [
+        "core/scripts/gen-brand-assets.mjs",
+        "core/apps/mobile/scripts/gen-android-assets.mjs"
+      ],
       "workingDirectory": "core",
       "command": "pnpm --filter @cuberoot/mobile assets:android",
       "outputs": [
@@ -1026,7 +1302,9 @@
         "core/apps/mobile/android/app/src/main/res/drawable/splash_icon.png",
         "core/apps/mobile/android/app/src/main/res/drawable-night/splash_icon.png"
       ],
-      "verification": ["the Test workflow regenerates assets and fails on tracked or untracked diff"],
+      "verification": [
+        "the Test workflow regenerates assets and fails on tracked or untracked diff"
+      ],
       "driftPolicy": "Regeneration plus a clean diff is the authoritative guard for PWA icons, Android density assets, and splash assets."
     },
     {
@@ -1034,9 +1312,15 @@
       "kind": "tool-managed-source-tree",
       "source": {
         "locator": "Capacitor configuration, dependencies, and CLI",
-        "paths": ["core/apps/mobile/capacitor.config.ts", "core/apps/mobile/package.json"]
+        "paths": [
+          "core/apps/mobile/capacitor.config.ts",
+          "core/apps/mobile/package.json"
+        ]
       },
-      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and dependency licenses" },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "LICENSE and dependency licenses"
+      },
       "owner": "core/apps/mobile",
       "workingDirectory": "core",
       "command": "pnpm --filter @cuberoot/mobile cap:sync",
@@ -1044,7 +1328,9 @@
         "core/apps/mobile/android/capacitor.settings.gradle",
         "core/apps/mobile/android/app/capacitor.build.gradle"
       ],
-      "verification": ["review every tracked Android Gradle and configuration change emitted by cap:sync"],
+      "verification": [
+        "review every tracked Android Gradle and configuration change emitted by cap:sync"
+      ],
       "driftPolicy": "Files marked DO NOT EDIT are updated through Capacitor. Review and commit only necessary tracked changes; they are tool-managed source, not disposable build output."
     },
     {
@@ -1059,7 +1345,10 @@
           "core/apps/mobile/ios/**"
         ]
       },
-      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and dependency licenses" },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "LICENSE and dependency licenses"
+      },
       "owner": "core/apps/mobile",
       "workingDirectory": "core",
       "command": "pnpm --filter @cuberoot/mobile build; pnpm --filter @cuberoot/mobile cap:sync; run the selected Android Gradle or iOS Xcode task",
@@ -1072,7 +1361,9 @@
         "core/apps/mobile/android/local.properties",
         "core/apps/mobile/ios/**/DerivedData/**"
       ],
-      "verification": ["the shared Web build, Capacitor sync, and selected Android or iOS native build complete from tracked sources; record installation, device, signing, and store evidence separately"],
+      "verification": [
+        "the shared Web build, Capacitor sync, and selected Android or iOS native build complete from tracked sources; record installation, device, signing, and store evidence separately"
+      ],
       "driftPolicy": "These outputs and local configuration are gitignored and never become editable source or tracked generated artifacts. An Android build is not iOS evidence and neither platform's local build is signing or store evidence."
     },
     {
@@ -1095,7 +1386,10 @@
           "core/apps/desktop/src-tauri/src/**"
         ]
       },
-      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and dependency licenses" },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "LICENSE and dependency licenses"
+      },
       "owner": "core/apps/desktop",
       "workingDirectory": "core",
       "command": "pnpm --filter @cuberoot/desktop build; pnpm --filter @cuberoot/desktop tauri:build",
@@ -1135,7 +1429,10 @@
           "core/apps/harmony/entry/src/main/resources/dark/**"
         ]
       },
-      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and dependency licenses" },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "LICENSE and dependency licenses"
+      },
       "owner": "core/apps/harmony",
       "workingDirectory": "core",
       "command": "pnpm --filter @cuberoot/harmony build; then run the installed DevEco Studio Hvigor assembleHap task for core/apps/harmony",
@@ -1163,15 +1460,23 @@
           "core/packages/client/scripts/render-mobile-timer-pdfs.cjs"
         ]
       },
-      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and embedded font dependency licenses" },
-      "owner": ["core/packages/timer-ui", "core/packages/client/scripts/render-mobile-timer-pdfs.cjs"],
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "LICENSE and embedded font dependency licenses"
+      },
+      "owner": [
+        "core/packages/timer-ui",
+        "core/packages/client/scripts/render-mobile-timer-pdfs.cjs"
+      ],
       "workingDirectory": "core",
       "command": "serve the current installed-client preview, then run node packages/client/scripts/render-mobile-timer-pdfs.cjs <preview-url> ../output/pdf",
       "transientOutputs": [
         "output/pdf/cuberoot-timer-zh.pdf",
         "output/pdf/cuberoot-timer-en.pdf"
       ],
-      "verification": ["render both PDFs page by page and check fixture markers, embedded Unicode text, pagination, clipping, overlap, and horizontal overflow"],
+      "verification": [
+        "render both PDFs page by page and check fixture markers, embedded Unicode text, pagination, clipping, overlap, and horizontal overflow"
+      ],
       "driftPolicy": "Chinese and English PDFs are generated from the same shared React print document and fixture renderer. They are QA evidence, not separately maintained templates or store documents."
     },
     {
@@ -1186,12 +1491,19 @@
           "core/apps/miniprogram/scripts/release-check.mjs"
         ]
       },
-      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and dependency licenses" },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "LICENSE and dependency licenses"
+      },
       "owner": "core/apps/miniprogram",
       "workingDirectory": "core",
       "command": "pnpm --filter @cuberoot/miniprogram release:check",
-      "transientOutputs": ["core/apps/miniprogram/dist/**"],
-      "verification": ["release:check validates build state and source fingerprint consistency"],
+      "transientOutputs": [
+        "core/apps/miniprogram/dist/**"
+      ],
+      "verification": [
+        "release:check validates build state and source fingerprint consistency"
+      ],
       "driftPolicy": "dist is build output and not a hand-edited source. Release checks must prove that its fingerprint matches the current source."
     },
     {
@@ -1207,12 +1519,20 @@
           "core/apps/miniprogram/package.json"
         ]
       },
-      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and bundled lucide-static LICENSE.txt" },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "LICENSE and bundled lucide-static LICENSE.txt"
+      },
       "owner": "core/apps/miniprogram",
       "workingDirectory": "core",
       "command": "pnpm --filter @cuberoot/miniprogram build:douyin",
-      "transientOutputs": ["core/apps/miniprogram/dist-douyin/**", "core/apps/miniprogram/.tmp/douyin-build-state.json"],
-      "verification": ["miniprogram typecheck and tests; build:douyin; audit:douyin verifies local configuration and fingerprints; developer-tool and device acceptance tracked separately"],
+      "transientOutputs": [
+        "core/apps/miniprogram/dist-douyin/**",
+        "core/apps/miniprogram/.tmp/douyin-build-state.json"
+      ],
+      "verification": [
+        "miniprogram typecheck and tests; build:douyin; audit:douyin verifies local configuration and fingerprints; developer-tool and device acceptance tracked separately"
+      ],
       "driftPolicy": "TTML, TTSS, JavaScript and Lucide tab/toolbar PNGs are generated together. Never hand-edit dist-douyin; successful conversion does not imply device acceptance or publication."
     },
     {
@@ -1220,10 +1540,19 @@
       "kind": "local-heavy-artifact",
       "source": {
         "locator": "a reviewed variant-consistent CubeOpt opt5/h5 or opt6/h6 build",
-        "paths": ["core/apps/api/CUBEOPT_ARTIFACT.md", "core/apps/api/scripts/*cubeopt-artifact.mjs"]
+        "paths": [
+          "core/apps/api/CUBEOPT_ARTIFACT.md",
+          "core/apps/api/scripts/*cubeopt-artifact.mjs"
+        ]
       },
-      "license": { "spdx": "NOASSERTION", "evidence": "core/apps/api/CUBEOPT_ARTIFACT.md and the selected CubeOpt source license" },
-      "owner": ["core/apps/api", "core/apps/api/CUBEOPT_ARTIFACT.md"],
+      "license": {
+        "spdx": "NOASSERTION",
+        "evidence": "core/apps/api/CUBEOPT_ARTIFACT.md and the selected CubeOpt source license"
+      },
+      "owner": [
+        "core/apps/api",
+        "core/apps/api/CUBEOPT_ARTIFACT.md"
+      ],
       "workingDirectory": "core",
       "command": "pnpm --filter @cuberoot/server cubeopt:prepare -- --store <store> <args>; pnpm --filter @cuberoot/server cubeopt:promote -- --store <store> --bundle <id>; pnpm --filter @cuberoot/server cubeopt:verify -- <store>; pnpm --filter @cuberoot/server cubeopt:smoke -- --store <store>",
       "runtimeOutputs": [
@@ -1234,7 +1563,16 @@
         "CUBEOPT_ARTIFACT_DIR/bundles/<bundle>/table"
       ],
       "schema": {
-        "manifestLocks": ["schema", "bundle", "variant", "protocol", "fixed filenames", "source", "bytes", "SHA-256"]
+        "manifestLocks": [
+          "schema",
+          "bundle",
+          "variant",
+          "protocol",
+          "fixed filenames",
+          "source",
+          "bytes",
+          "SHA-256"
+        ]
       },
       "verification": [
         "prepare, promote, verify, and post-release daemon smoke commands",
@@ -1247,14 +1585,23 @@
       "kind": "runtime-generated",
       "source": {
         "locator": "the start.sh template step in the Next deployment workflow",
-        "paths": [".github/workflows/deploy_next.yml"]
+        "paths": [
+          ".github/workflows/deploy_next.yml"
+        ]
       },
-      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE" },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "LICENSE"
+      },
       "owner": ".github/workflows/deploy_next.yml",
       "workingDirectory": ".",
       "command": "run .github/workflows/deploy_next.yml",
-      "runtimeOutputs": ["<release>/start.sh"],
-      "verification": ["the workflow generates start.sh into the release package and verifies the assembled artifact"],
+      "runtimeOutputs": [
+        "<release>/start.sh"
+      ],
+      "verification": [
+        "the workflow generates start.sh into the release package and verifies the assembled artifact"
+      ],
       "driftPolicy": "The file is generated during packaging and is not duplicated or hand-maintained in the source tree."
     },
     {
@@ -1262,15 +1609,26 @@
       "kind": "local-heavy-artifact",
       "source": {
         "locator": "solver Rust sources, table generators, and local tables",
-        "paths": ["solver/**"]
+        "paths": [
+          "solver/**"
+        ]
       },
-      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and solver-specific upstream terms" },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "LICENSE and solver-specific upstream terms"
+      },
       "owner": "solver",
       "workingDirectory": "solver",
       "command": "follow the matching solver loop or runbook; use available CPU parallelism by default",
-      "transientOutputs": ["solver/target/**", "solver/tables/**", "solver/pkg-*/**"],
+      "transientOutputs": [
+        "solver/target/**",
+        "solver/tables/**",
+        "solver/pkg-*/**"
+      ],
       "versioning": "record the implementation version plus table size and hash for each generated family",
-      "verification": ["exact fixtures, recorded table size and hash, and smoke checks in each target native or WASM runtime"],
+      "verification": [
+        "exact fixtures, recorded table size and hash, and smoke checks in each target native or WASM runtime"
+      ],
       "driftPolicy": "Large tables and build output remain local and untracked. Ordinary CI checks small deterministic fixtures and contracts rather than recomputing the heavy artifacts."
     },
     {
@@ -1280,11 +1638,19 @@
         "locator": ".tmp/best2x2/import.json",
         "lineage": "client.best2x2-import produces the reviewed import JSON from client.best2x2-source"
       },
-      "license": { "spdx": "NOASSERTION", "evidence": "credits_data.json records the authorized data merge; no public license is asserted" },
-      "owner": ["core/jobs/alg-build/gen_best2x2_sql.mjs", "core/apps/api/migrations"],
+      "license": {
+        "spdx": "NOASSERTION",
+        "evidence": "credits_data.json records the authorized data merge; no public license is asserted"
+      },
+      "owner": [
+        "core/jobs/alg-build/gen_best2x2_sql.mjs",
+        "core/apps/api/migrations"
+      ],
       "workingDirectory": "core",
       "command": "node jobs/alg-build/gen_best2x2_sql.mjs .tmp/best2x2/import.json core/apps/api/migrations/<new-id>_best_2x2_algs.sql",
-      "outputs": ["core/apps/api/migrations/0104_best_2x2_algs.sql"],
+      "outputs": [
+        "core/apps/api/migrations/0104_best_2x2_algs.sql"
+      ],
       "verification": [
         "pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-import.mts .tmp/best2x2/import.json",
         "pnpm -F @cuberoot/client exec tsx scripts/best2x2/verify-finder.mts .tmp/best2x2/import.json",
@@ -1297,10 +1663,16 @@
       "kind": "immutable-migration-family",
       "source": {
         "url": "https://github.com/spencerchubb/cubingapp",
-        "ref": { "type": "commit", "value": "613a49885dc618023368e5f0c2a25024b8c7e9a5" },
+        "ref": {
+          "type": "commit",
+          "value": "613a49885dc618023368e5f0c2a25024b8c7e9a5"
+        },
         "input": "explicit CubingApp checkout path"
       },
-      "license": { "spdx": "MIT", "evidence": "CubingApp checkout LICENSE at the recorded commit" },
+      "license": {
+        "spdx": "MIT",
+        "evidence": "CubingApp checkout LICENSE at the recorded commit"
+      },
       "owner": [
         "core/jobs/alg-build/gen_cubingapp_sq1_sql.mts",
         "core/jobs/alg-build/gen_cubingapp_sq1_stages_sql.mts",
@@ -1335,7 +1707,10 @@
         "locator": "site-owner PSF2L.docx reference",
         "snapshot": "the reviewed 33-entry DOCX transcription in core/jobs/alg-build/gen_psf2l_sql.mts"
       },
-      "license": { "spdx": "NOASSERTION", "evidence": "site-owner supplied reference; no external license applies" },
+      "license": {
+        "spdx": "NOASSERTION",
+        "evidence": "site-owner supplied reference; no external license applies"
+      },
       "owner": "core/jobs/alg-build/gen_psf2l_sql.mts",
       "workingDirectory": "core",
       "command": "pnpm --filter @cuberoot/alg-build exec tsx gen_psf2l_sql.mts <new-id>_psf2l.sql",
@@ -1354,13 +1729,20 @@
       "kind": "immutable-migration-family",
       "source": {
         "locator": "client.sq1-pbl checked-in reviewed snapshot",
-        "paths": ["core/packages/client/data/sq1-pbl/**"]
+        "paths": [
+          "core/packages/client/data/sq1-pbl/**"
+        ]
       },
-      "license": { "spdx": "NOASSERTION", "evidence": "public access does not establish a reuse license; see credits_data.json" },
+      "license": {
+        "spdx": "NOASSERTION",
+        "evidence": "public access does not establish a reuse license; see credits_data.json"
+      },
       "owner": "core/packages/client/scripts/sq1-pbl/build-alg-migration.mjs",
       "workingDirectory": "core",
       "command": "node packages/client/scripts/sq1-pbl/build-alg-migration.mjs --write",
-      "outputs": ["core/apps/api/migrations/0140_sq1_pbl.sql"],
+      "outputs": [
+        "core/apps/api/migrations/0140_sq1_pbl.sql"
+      ],
       "verification": [
         "node packages/client/scripts/sq1-pbl/build-alg-migration.mjs --check",
         "node packages/client/scripts/sq1-pbl-check.mjs"
@@ -1375,7 +1757,10 @@
         "intermediate": ".tmp/phase0/sheet_1lll.json",
         "design": "docs/1lll-migration.md"
       },
-      "license": { "spdx": "NOASSERTION", "evidence": "site-owner maintained sheet; no external license is asserted" },
+      "license": {
+        "spdx": "NOASSERTION",
+        "evidence": "site-owner maintained sheet; no external license is asserted"
+      },
       "owner": "core/jobs/alg-build/import_1lll.mjs",
       "workingDirectory": "core",
       "command": "node jobs/alg-build/import_1lll.mjs",
@@ -1386,7 +1771,9 @@
       "outputs": [
         "core/apps/api/migrations/0102_fix_1lll_meta_assignment.sql"
       ],
-      "transientOutputs": [".tmp/phase4/import_1lll.sql"],
+      "transientOutputs": [
+        ".tmp/phase4/import_1lll.sql"
+      ],
       "verification": [
         "node jobs/alg-build/fix_1lll_meta_assignment.mjs --dry",
         "pnpm --filter @cuberoot/alg-build exec tsx verify_meta_pointers.mjs --with-sql <new-migration>",

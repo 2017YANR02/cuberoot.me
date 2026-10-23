@@ -36,7 +36,7 @@ function isTypingTarget(el: EventTarget | null): boolean {
 export default function PaintEditor() {
   const user = useAuthStore((s) => s.user);
   if (!user) return <PaintGate />;
-  return <PaintEditorInner />;
+  return <PaintEditorInner key={user.uid ?? user.wcaId} />;
 }
 
 function PaintEditorInner() {

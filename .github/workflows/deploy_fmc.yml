@@ -13,6 +13,10 @@ on:
       - 'ops/systemd/cubelib-fmc.service'
       - '.github/workflows/deploy_fmc.yml'
 
+concurrency:
+  group: deploy-fmc
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest

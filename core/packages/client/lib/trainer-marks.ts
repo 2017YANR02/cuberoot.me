@@ -89,7 +89,7 @@ const persistLocal = (p: string, s: string, marks: CaseMarks) => {
   persistItem(marksKey(p, s), JSON.stringify(marks));
 };
 
-/** 服务器批量 PUT 的一条(k=caseKey;s=null ⟹ 服务器删行)。 */
+/** 服务器批量 PUT 的一条(k=caseKey;s=null ⟹ 保存清除时间)。 */
 interface PutItem { k: string; s: CaseMarkStatus | null; t: number }
 
 const toPutItem = (k: string, m: CaseMark): PutItem => ({ k, s: m.s ?? null, t: m.t });
@@ -118,7 +118,7 @@ function dropRetiredMarkData(marks: CaseMarks, now: number): { marks: CaseMarks;
 /**
  * 本地 vs 云端单条 LWW 合并(纯函数,tests/trainer-marks.test.ts 直测):
  * 每个 key 取 t 大的一边;本地更新(含本地墓碑但云端有行)的差异集回传服务器。
- * 云端没有该 key 时,本地墓碑不用回传(服务器本来就没有这行)。
+ * 云端没有该 key 时,本地墓碑也回传,阻止旧设备迟到写入复活标记。
  */
 export function mergeMarks(local: CaseMarks, cloud: CaseMarks): { merged: CaseMarks; toUpload: PutItem[] } {
   const merged: CaseMarks = {};
@@ -136,8 +136,7 @@ export function mergeMarks(local: CaseMarks, cloud: CaseMarks): { merged: CaseMa
       }
     } else if (l) {
       merged[k] = l;
-      // 本地实标记 → 上云;本地墓碑而云端无行 → 不用传
-      if (l.s) toUpload.push(toPutItem(k, l));
+      toUpload.push(toPutItem(k, l));
     } else if (c) {
       merged[k] = c;
     }
@@ -146,46 +145,60 @@ export function mergeMarks(local: CaseMarks, cloud: CaseMarks): { merged: CaseMa
 }
 
 /** 防抖批量上云的待发队列。键带 set 前缀:防抖窗口内切 set,旧 set 的条目不能发错路径。 */
-let pending = new Map<string, { p: string; s: string; item: PutItem }>();
+let pending = new Map<string, { p: string; s: string; item: PutItem; session: string }>();
 let flushTimer: ReturnType<typeof setTimeout> | null = null;
+let flushing: Promise<void> | null = null;
+let lastMutationTime = 0;
+const mutationTime = () => (lastMutationTime = Math.max(Date.now(), lastMutationTime + 1));
+const pendingKey = (session: string, p: string, s: string, k: string) => JSON.stringify([session, p, s, k]);
 
-async function putItems(puzzle: string, set: string, items: PutItem[]): Promise<void> {
+async function putItems(puzzle: string, set: string, items: PutItem[], session: string): Promise<void> {
+  if (!session || getSessionToken() !== session) return;
   await handleApi(await sessionFetch(apiUrl(`/v1/alg/marks/${puzzle}/${set}`), {
     method: 'PUT',
-    headers: authHeaders(),
+    headers: { ...authHeaders(), Authorization: `Bearer ${session}` },
     body: JSON.stringify({ items }),
   }));
 }
 
 /** 把当前 pending 队列按 (puzzle,set) 分组发出;失败的塞回队列等下次连带重试。 */
 async function flushPending(): Promise<void> {
+  if (flushTimer) clearTimeout(flushTimer);
   flushTimer = null;
+  if (flushing) {
+    await flushing;
+    return flushPending();
+  }
   if (pending.size === 0) return;
   const batch = pending;
   pending = new Map();
   // 按 (puzzle, set) 分组发送(防抖窗口内切了 set 会出现多组)
-  const groups = new Map<string, { p: string; s: string; items: PutItem[] }>();
+  const groups = new Map<string, { p: string; s: string; items: PutItem[]; session: string }>();
   for (const [, v] of batch) {
-    const gk = `${v.p}/${v.s}`;
-    const g = groups.get(gk) ?? { p: v.p, s: v.s, items: [] };
+    if (v.session !== getSessionToken()) continue;
+    const gk = JSON.stringify([v.session, v.p, v.s]);
+    const g = groups.get(gk) ?? { p: v.p, s: v.s, items: [], session: v.session };
     g.items.push(v.item);
     groups.set(gk, g);
   }
-  await Promise.all([...groups.values()].map((g) =>
-    putItems(g.p, g.s, g.items).catch((e) => {
+  const work = Promise.all([...groups.values()].map((g) =>
+    putItems(g.p, g.s, g.items, g.session).catch((e) => {
+      if (getSessionToken() !== g.session) return;
       // 失败塞回队列,下一次写操作会连带重试;不覆盖期间产生的更新版本
       console.warn('[trainer-marks] sync failed, will retry on next change', e);
       for (const it of g.items) {
-        const key = `${g.p}/${g.s}|${it.k}`;
-        if (!pending.has(key)) pending.set(key, { p: g.p, s: g.s, item: it });
+        const key = pendingKey(g.session, g.p, g.s, it.k);
+        if (!pending.has(key)) pending.set(key, { p: g.p, s: g.s, item: it, session: g.session });
       }
     }),
-  ));
+  )).then(() => {}).finally(() => { if (flushing === work) flushing = null; });
+  flushing = work;
+  await work;
 }
 
-function queueUpload(puzzle: string, set: string, items: PutItem[]) {
-  if (!getSessionToken()) return; // 未登录:纯本地
-  for (const it of items) pending.set(`${puzzle}/${set}|${it.k}`, { p: puzzle, s: set, item: it });
+function queueUpload(puzzle: string, set: string, items: PutItem[], session = getSessionToken()) {
+  if (!session || getSessionToken() !== session) return; // 未登录/旧会话:不上传
+  for (const it of items) pending.set(pendingKey(session, puzzle, set, it.k), { p: puzzle, s: set, item: it, session });
   if (flushTimer) clearTimeout(flushTimer);
   flushTimer = setTimeout(() => { void flushPending(); }, 800);
 }
@@ -208,7 +221,7 @@ export async function flushMarks(): Promise<void> {
 
 /** 丢掉某一套还没发出的防抖条目(重置前调:否则队列里的旧标记会在删完之后又飞上去)。 */
 function dropPending(puzzle: string, setSlug: string): void {
-  for (const [key, v] of [...pending]) if (v.p === puzzle && v.s === setSlug) pending.delete(key);
+  for (const [key, v] of [...pending]) if (v.p === puzzle && v.s === setSlug && v.session === getSessionToken()) pending.delete(key);
 }
 
 /**
@@ -253,14 +266,16 @@ interface TrainerMarksState {
 let loadToken = 0;
 
 /** 拉一个 set 的云端标记(失败返回 null,调用方退化成纯本地)。 */
-async function fetchSetMarks(puzzle: string, setSlug: string): Promise<CaseMarks | null> {
+async function fetchSetMarks(puzzle: string, setSlug: string, session: string): Promise<CaseMarks | null> {
+  if (!session || getSessionToken() !== session) return null;
   try {
     const data = await handleApi<{ marks: CaseMarks }>(
-      await sessionFetch(apiUrl(`/v1/alg/marks/${puzzle}/${setSlug}?v=2`), { headers: authHeaders(false) }),
+      await sessionFetch(apiUrl(`/v1/alg/marks/${puzzle}/${setSlug}?v=3`), { headers: authHeaders(false) }),
     );
+    if (getSessionToken() !== session) return null;
     // 云端可能还留着老版本设备写上去的退役字段——同样洗掉,并把清除回传
     const { marks, cleaned } = dropRetiredMarkData(data.marks, Date.now());
-    if (cleaned.length > 0) queueUpload(puzzle, setSlug, cleaned);
+    if (cleaned.length > 0) queueUpload(puzzle, setSlug, cleaned, session);
     return marks;
   } catch (e) {
     console.warn('[trainer-marks] cloud load failed, local only', e);
@@ -276,11 +291,12 @@ export const useTrainerMarks = create<TrainerMarksState>((set, get) => ({
 
   loadMarks: (puzzle, setSlug) => {
     const token = ++loadToken;
+    const session = getSessionToken();
     set({ puzzle, set: setSlug, sets: null, marks: loadLocalClean(puzzle, setSlug) });
-    if (!getSessionToken()) return;
+    if (!session) return;
     void (async () => {
-      const cloud = await fetchSetMarks(puzzle, setSlug);
-      if (!cloud || token !== loadToken) return; // 已切到别的 set
+      const cloud = await fetchSetMarks(puzzle, setSlug, session);
+      if (!cloud || token !== loadToken || getSessionToken() !== session) return;
       // 合并基准用「此刻」的本地(拉取期间用户可能已经涂了几个)
       const st = get();
       if (st.puzzle !== puzzle || st.set !== setSlug) return;
@@ -293,6 +309,7 @@ export const useTrainerMarks = create<TrainerMarksState>((set, get) => ({
 
   loadMarksMulti: (puzzle, sets) => {
     const token = ++loadToken;
+    const session = getSessionToken();
     const prefixed = (slug: string, m: CaseMarks): CaseMarks => {
       const out: CaseMarks = {};
       for (const k in m) out[`${slug}:${k}`] = m[k];
@@ -301,11 +318,11 @@ export const useTrainerMarks = create<TrainerMarksState>((set, get) => ({
     const local: CaseMarks = {};
     for (const slug of sets) Object.assign(local, prefixed(slug, loadLocalClean(puzzle, slug)));
     set({ puzzle, set: sets.join('+'), sets: [...sets], marks: local });
-    if (!getSessionToken()) return;
+    if (!session) return;
     void (async () => {
       // 每个成员 set 各自合并、各自回传 —— 云端仍是「一套 set 一张表」,合练不引入新表
-      const results = await Promise.all(sets.map(async slug => ({ slug, cloud: await fetchSetMarks(puzzle, slug) })));
-      if (token !== loadToken) return;
+      const results = await Promise.all(sets.map(async slug => ({ slug, cloud: await fetchSetMarks(puzzle, slug, session) })));
+      if (token !== loadToken || getSessionToken() !== session) return;
       const merged: CaseMarks = { ...get().marks };
       for (const { slug, cloud } of results) {
         if (!cloud) continue;
@@ -322,7 +339,7 @@ export const useTrainerMarks = create<TrainerMarksState>((set, get) => ({
   applyMarks: (keys, patch) => {
     const { puzzle, set: setSlug, sets, marks } = get();
     if (!puzzle || !setSlug || keys.length === 0) return;
-    const t = Date.now();
+    const t = mutationTime();
 
     if (!sets) {
       const { next, items } = applyPatchTo(marks, keys, patch, t);
@@ -353,29 +370,34 @@ export const useTrainerMarks = create<TrainerMarksState>((set, get) => ({
 /**
  * 清空一套 set 的全部标记(/alg/progress 的「重置」)。
  *
- * 走的是已有的「清除」语义,不需要新端点:PUT 一条 `s=null` 服务端就删行(带 LWW)。
+ * 走的是已有的「清除」语义:PUT 一条 `s=null` 服务端保存清除时间(带 LWW)。
  * 顺序是**先云后本地** —— 云端没删掉就整个失败,免得本地清了、下次进页又被云端合并回来。
  * 本地留墓碑而不是整张扔掉,理由同 applyMarks:光删本地,合并时会从别处复活。
  */
 export async function resetSetMarks(puzzle: string, setSlug: string): Promise<void> {
+  const session = getSessionToken();
   dropPending(puzzle, setSlug);
   const local = loadLocal(puzzle, setSlug);
-  const t = Date.now();
+  const t = mutationTime();
 
-  if (!getSessionToken()) {
+  if (!session) {
     if (typeof window !== 'undefined') localStorage.removeItem(marksKey(puzzle, setSlug));
   } else {
-    const cloud = await fetchSetMarks(puzzle, setSlug);
+    const cloud = await fetchSetMarks(puzzle, setSlug, session);
+    if (getSessionToken() !== session) return;
     const keys = [...new Set([...Object.keys(local), ...Object.keys(cloud ?? {})])];
     // 已经是墓碑、云端也没有的键不用再发一次
     const live = keys.filter(k => local[k]?.s || cloud?.[k]);
     for (let i = 0; i < live.length; i += MAX_ITEMS_PER_PUT) {
       const items = live.slice(i, i + MAX_ITEMS_PER_PUT).map(k => ({ k, s: null, t }));
-      await putItems(puzzle, setSlug, items);
+      await putItems(puzzle, setSlug, items, session);
+      if (getSessionToken() !== session) return;
     }
     const tombs: CaseMarks = {};
     for (const k of keys) tombs[k] = { t };
-    persistLocal(puzzle, setSlug, tombs);
+    const { merged, toUpload } = mergeMarks(loadLocal(puzzle, setSlug), tombs);
+    persistLocal(puzzle, setSlug, merged);
+    if (toUpload.length) queueUpload(puzzle, setSlug, toUpload, session);
   }
 
   // store 里正好装着这一套(用户从训练页跳过来的)→ 同步内存态,免得返回时看到旧标记
@@ -446,7 +468,7 @@ export function scanLocalOverview(): MarkOverview {
 /** 拉云端跨 set 聚合(需登录)。 */
 async function fetchCloudOverview(): Promise<MarkOverview> {
   const data = await handleApi<{ sets: Array<{ puzzle: string; set: string } & SetMarkSummary> }>(
-    await sessionFetch(apiUrl('/v1/alg/marks?v=2'), { headers: authHeaders(false) }),
+    await sessionFetch(apiUrl('/v1/alg/marks?v=3'), { headers: authHeaders(false) }),
   );
   const out: MarkOverview = {};
   for (const s of data.sets) {
@@ -471,15 +493,18 @@ export function combineOverviews(cloud: MarkOverview, local: MarkOverview): Mark
  * 云端失败时兜底本地,永不抛。
  */
 export async function loadMarkOverview(): Promise<MarkOverview> {
+  const session = getSessionToken();
   const local = scanLocalOverview();
-  if (!getSessionToken()) return local;
+  if (!session) return local;
   try {
     await flushMarks();
+    if (getSessionToken() !== session) return {};
     const cloud = await fetchCloudOverview();
+    if (getSessionToken() !== session) return {};
     return combineOverviews(cloud, local);
   } catch (e) {
     console.warn('[trainer-marks] overview cloud load failed, local only', e);
-    return local;
+    return getSessionToken() === session ? local : {};
   }
 }
 
@@ -493,15 +518,17 @@ export async function loadMarkOverview(): Promise<MarkOverview> {
 export async function loadMarkDetails(
   sets: ReadonlyArray<{ puzzle: string; set: string }>,
 ): Promise<Record<string, CaseMarks>> {
-  const loggedIn = !!getSessionToken();
-  if (loggedIn) await flushMarks();
+  const session = getSessionToken();
+  if (session) await flushMarks();
+  if (getSessionToken() !== session) return {};
   const pairs = await Promise.all(sets.map(async ({ puzzle, set }) => {
     const local = loadLocalClean(puzzle, set);
     const ps = `${puzzle}/${set}`;
-    if (!loggedIn) return [ps, local] as const;
-    const cloud = await fetchSetMarks(puzzle, set);
+    if (!session) return [ps, local] as const;
+    const cloud = await fetchSetMarks(puzzle, set, session);
+    if (getSessionToken() !== session) return [ps, {}] as const;
     if (!cloud) return [ps, local] as const;   // 这一套云端挂了,退回本地那份,别让整张清单空着
-    const { merged, toUpload } = mergeMarks(local, cloud);
+    const { merged, toUpload } = mergeMarks(loadLocalClean(puzzle, set), cloud);
     // 本地比云端新的那几条顺手回传 —— 与进单套页时同一行为,不让清单页成为只读分叉
     if (toUpload.length > 0) queueUpload(puzzle, set, toUpload);
     persistLocal(puzzle, set, merged);

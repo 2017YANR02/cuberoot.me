@@ -2,6 +2,8 @@
 
 更新：2026-09-23。目标：新的一般业务代码、离线统计和自动化优先 TypeScript；求解器与高性能表生成优先 Rust。只有宿主 API 或成熟科研工具链确实要求 Python 时才保留，并在此写明原因。迁移必须以相同输入的输出核对后切换调用方，不能只改扩展名。仓库的旧文档、外部引文和历史实验不等于当前生产入口。
 
+2026-10-23 科研例外补充：新增 `research/reconer/vision/{baseline,dataset,metrics,test_contract}.py`，使用 PyTorch/TorchVision 的预训练 Mask R-CNN 与 Pillow 掩码栅格化；依赖锁定于该目录的 `pyproject.toml` / `uv.lock`。这些文件属于独立研究，不接生产运行时；素材清点、任务状态和动作评分继续使用 TypeScript。当前只有代码与轻量契约检查，未完成模型训练。下列数量是 2026-09-23 清点快照，不含本次新增的 4 个科研文件。
+
 ## 当前清点
 
 迁移前 `rg --files -g '*.py' -g '!solver/vendor/**' -g '!**/node_modules/**' -g '!**/.venv/**'`：自有脚本 **73** 个；本轮移除 3 个，现余 **70** 个。另有 `solver/vendor/nissy-core/` 上游 Python 脚本 6 个，随 GPL 上游源码保留，不在本仓库改写。脚本文件之外，工作流的内联 `python3` 和文档里的调用也列在下面。

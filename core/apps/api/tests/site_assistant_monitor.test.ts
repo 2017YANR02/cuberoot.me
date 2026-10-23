@@ -1,13 +1,42 @@
 import { assistantPrice } from '../src/utils/site_assistant_pricing.js';
 import { describe, expect, it, vi } from 'vitest';
 import { HTTPException } from 'hono/http-exception';
-import { startAssistantMonitor, recordAssistantStage, recordAssistantModel, recordAssistantEmbedding, redactAssistantText } from '../src/utils/site_assistant_monitor.js';
+import { startAssistantMonitor, recordAssistantStage, recordAssistantModel, recordAssistantEmbedding, recordAssistantSearch, recordAssistantRetrieval, redactAssistantText } from '../src/utils/site_assistant_monitor.js';
 import { createAdminAssistantRoutes } from '../src/routes/admin_assistant.js';
 import { createSiteAssistantRoutes } from '../src/routes/site_assistant.js';
 import { AssistantFailure } from '../src/utils/site_assistant_diagnostics.js';
 
 const input = { uid: 7, question: 'How do I practise PLL?', lang: 'en', model: 'test-model', streaming: true, imageCount: 1, historyCount: 2 };
 describe('private assistant monitoring', () => {
+  it('keeps a full Chinese answer durable when artifacts and retrieval metadata exceed the journal byte budget', async () => {
+    const run = vi.fn().mockResolvedValue([]);
+    const monitor = await startAssistantMonitor(input, run);
+    await monitor.run(async () => {
+      recordAssistantStage('tool', 12, false, 'web_search');
+      recordAssistantSearch('https://dashscope.aliyuncs.com')(1);
+      for (let i = 0; i < 30; i++) recordAssistantRetrieval({ mode: 'hybrid', hits: Array.from({ length: 6 }, (_, n) => ({ id: `${i}-${n}`, href: '/' + '路径'.repeat(900) })) });
+    });
+    await monitor.finish('success', undefined, {
+      answer: '完整回答'.repeat(3000), sources: [{ id: 'source', title: '资料', href: '/learn', read: true }],
+      artifacts: [{ kind: 'table', title: '结果', columns: ['内容'], rows: Array.from({ length: 100 }, () => ['中文内容'.repeat(200)]) }],
+    });
+    const params = run.mock.calls.find(([statement]) => statement.startsWith('UPDATE'))![1];
+    expect(params[5]).toBe('完整回答'.repeat(3000));
+    expect(params[6]).toMatchObject({ truncated: true, sources: [{ id: 'source' }] });
+    expect(params[7]).toMatchObject({ retrievalDetailsTruncated: true, tools: { web_search: 1 }, cost: { grossCny: 0.003, unpricedCalls: 0 } });
+    expect(params[7].retrievals.every((r: { hits: unknown[] }) => r.hits.length === 0)).toBe(true);
+    expect(Buffer.byteLength(JSON.stringify({ id: monitor.id, createdAt: new Date().toISOString(), params }), 'utf8')).toBeLessThan(256_000);
+  });
+  it('retains longer questions and answers while accounting for separate search charges and missing usage',async()=>{
+    const run=vi.fn().mockResolvedValue([]);
+    const monitor=await startAssistantMonitor({...input,question:'问'.repeat(8000),thinking:'deep'},run);
+    monitor.run(()=>{recordAssistantSearch('https://dashscope.aliyuncs.com')(2);recordAssistantSearch('https://dashscope.aliyuncs.com')();});
+    await monitor.finish('success',undefined,{answer:'答'.repeat(12000),sources:[]});
+    expect(run.mock.calls[0][1][7]).toHaveLength(8000);
+    const completed=run.mock.calls.find(([statement])=>statement.startsWith('UPDATE'))!;
+    expect(completed[1][5]).toHaveLength(12000);
+    expect(completed[1][7]).toMatchObject({policy:{thinking:'deep'},searches:[{requests:2,grossCny:0.006},{requests:null,grossCny:null}],cost:{grossCny:0.006,unpricedCalls:1}});
+  });
   it('estimates only verified provider/model tariffs and leaves unknown usage unpriced',()=>{
     expect(assistantPrice('qwen3.8-flash','https://dashscope.aliyuncs.com',1000000,1000000).grossCny).toBe(3.5);
     expect(assistantPrice('text-embedding-v4','https://dashscope.aliyuncs.com',1000000).grossCny).toBe(0.5);

@@ -44,6 +44,8 @@
 .site-assistant-draft:focus { outline:none; }
 .site-assistant-draft::placeholder { color:var(--muted-foreground); opacity:1; }
 .site-assistant-input-actions { display:flex; align-items:center; justify-content:flex-end; gap:8px; }
+.site-assistant-input-actions .site-assistant-thinking { margin-right:auto; width:auto; min-width:0; flex:1; align-self:center; }
+.site-assistant-input-count { display:block; text-align:right; font-size:11px; color:var(--muted-foreground); white-space:nowrap; }
 .site-assistant-input-actions .site-assistant-action { width:36px; height:36px; flex-shrink:0; padding:0; border:0; border-radius:50%; }
 .site-assistant-mic { background:transparent; }
 .site-assistant-mic:hover { background:var(--card); }

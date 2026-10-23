@@ -622,9 +622,10 @@ export function formatChangeFieldValue(field: string, value: unknown, eventId: s
     if (arr.length === 0) return '—';
     return arr.map((v) => formatWcaResult(Number(v), eventId, 'single')).join('  ');
   }
+  if (field === 'attempt_penalty') return Number(value) > 0 ? `+${Math.round(Number(value) / 100)}` : '—';
   if (field === 'attempt_penalties') {
     const arr = Array.isArray(value) ? (value as number[]) : [];
-    const parts = arr.map((p, i) => (Number(p) > 0 ? `#${i + 1} +${Math.round(Number(p) / 100)}` : null)).filter(Boolean);
+    const parts = arr.map((p, i) => (Number(p) > 0 ? `#${i + 1} ${formatChangeFieldValue('attempt_penalty', p, eventId)}` : null)).filter(Boolean);
     return parts.length ? parts.join('  ') : '—';
   }
   if (field === 'attempt_videos') {

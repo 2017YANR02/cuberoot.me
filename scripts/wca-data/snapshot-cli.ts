@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { REPO, check, run } from './common.ts';
 import { endpoint, gh, api, release, upload, download } from './github.ts';
+import { withLocalLock } from './local-lock.ts';
 import { BASELINE, inventory, patch, applyPatch, owns, archiveDescriptor, packSnapshot, unpackSnapshot, validate, hashFile, type Owner, type Inventory, type Archive } from './snapshot.ts';
 const scripts = dirname(fileURLToPath(import.meta.url)), repoRoot = resolve(scripts, '../..');
 function descriptor(r: any): Archive | undefined { const a = JSON.parse(r.body || '{}').statistics; return a ? archiveDescriptor(a) : undefined; }
@@ -53,7 +54,7 @@ async function publish(candidate: string, out: string) {
   const ssh = (command: string) => run('ssh', [...options, host, command], { timeout: 600000 });
   const scp = (args: string[]) => run('scp', [...options, ...args], { timeout: 600000 });
   ssh(`mkdir -m 700 -p ${remote}`);
-  scp(['common.ts', 'snapshot.ts', 'snapshot-deploy.ts', 'snapshot-cli.ts', 'github.ts'].map(n => join(scripts, n)).concat(`${host}:${remote}/`));
+  scp(['common.ts', 'snapshot.ts', 'snapshot-deploy.ts', 'snapshot-cli.ts', 'github.ts', 'local-lock.ts'].map(n => join(scripts, n)).concat(`${host}:${remote}/`));
   let r = release(), committed = false, activated = false, uncertain = false;
   const old = descriptor(r);
   const deploy = (action: string, args = '') => ssh(`flock -w 120 /tmp/cuberoot-wca-data.lock node ${remote}/snapshot-deploy.ts ${action} /www/wwwroot/toolkit/stats ${args}`);
@@ -105,8 +106,13 @@ async function publish(candidate: string, out: string) {
 const [command, arg, extra] = process.argv.slice(2);
 const out = mkdtempSync(join(tmpdir(), 'cuberoot-statistics-'));
 try {
-  if (command === 'hydrate' || command === 'hydrate-ci') await hydrate(resolve(arg ?? join(repoRoot, 'stats')), out, command === 'hydrate-ci');
-  else if (command === 'submit') await submit(arg as Owner, resolve(extra ?? join(repoRoot, 'stats')), out);
+  if (command === 'hydrate' || command === 'hydrate-ci') {
+    const target = resolve(arg ?? join(repoRoot, 'stats'));
+    await withLocalLock(join(target, BASELINE + '.lock'), () => hydrate(target, out, command === 'hydrate-ci'));
+  } else if (command === 'submit') {
+    const target = resolve(extra ?? join(repoRoot, 'stats'));
+    await withLocalLock(join(target, BASELINE + '.lock'), () => submit(arg as Owner, target, out));
+  }
   else if (command === 'publish') await publish(arg, out);
   else if (command === 'export-server') {
     check(/^\/tmp\/cuberoot-statistics-\d+-\d+$/.test(scripts) && arg === join(scripts, 'export'), 'Export is only for the server adoption workflow');

@@ -643,14 +643,3 @@ img.recon-inline-flag {
   align-items: center;
   gap: 8px;
 }
-.recon-round-overview { display: flex; flex-direction: column; gap: 16px; }
-.recon-round-rows { display: grid; gap: 12px; margin-top: 16px; }
-.recon-round-row { display: grid; grid-template-columns: 90px 200px minmax(0, 1fr); align-items: center; gap: 16px; padding: 16px; border: 1px solid var(--border-default); border-radius: 12px; }
-.recon-round-diagram { width: 200px; height: 140px; display: grid; place-items: center; }
-.recon-round-scramble { overflow-wrap: anywhere; font-family: monospace; }
-.recon-round-row > div:last-child { grid-column: 2 / -1; display: flex; gap: 12px; flex-wrap: wrap; }
-@media (max-width: 600px) {
-  .recon-round-row { grid-template-columns: 1fr; }
-  .recon-round-diagram { justify-self: center; }
-  .recon-round-row > div:last-child { grid-column: 1; }
-}

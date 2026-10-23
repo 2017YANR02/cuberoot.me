@@ -381,7 +381,10 @@ jobs:
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-        run: ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" 'rm -rf /var/cache/nginx/api/* && nginx -s reload'
+        # stdin carries the shared script; do not add ssh -n.
+        run: |
+          ssh -T -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id \
+            "$DEPLOY_USER@$DEPLOY_HOST" 'node --input-type=module' < ops/nginx/purge-api-cache.ts
 
       # Large gzip exports use the single mutable Release; do not put their daily
       # versions in Git. The separate publish job serializes activation with API deploys.

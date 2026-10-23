@@ -401,7 +401,7 @@ export default function RecentScrambles({ lang }: Props) {
   const isZh = lang === 'zh';
   const lp = langPrefix(lang);
   const [data, setData] = useRetainedState<RecentScramblesJson | null | undefined>('home:scrambles', undefined);
-  const [dist, setDist] = useRetainedState<DistributionJson | null>('home:scrambleDistribution', null);
+  const [dist, setDist] = useRetainedState<DistributionJson | null | undefined>('home:scrambleDistribution', undefined);
   const [eventsJson, setEventsJson] = useRetainedState<RecentScramblesEventsJson | null>('home:scrambleEvents', null);
   const [event, setEvent] = useState('333');
   const aliveRef = useRef(true);
@@ -425,7 +425,16 @@ export default function RecentScrambles({ lang }: Props) {
       .catch(() => { if (aliveRef.current) setData(previous => previous ?? null); });
   }, [setData]);
 
-  // 先拿默认 333 卡片；项目全集和完整概率分布等首批内容画完后再补。
+  // The default rarest view needs both the scrambles and their probabilities.
+  // Fetch them together and retain the skeleton until both have settled.
+  useEffect(() => {
+    void fetch(statsUrl('/stats/scramble/distribution.json') + '?v=20260614opt')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j: DistributionJson | null) => { if (aliveRef.current) setDist(j); })
+      .catch(() => { if (aliveRef.current) setDist(previous => previous ?? null); });
+  }, [setDist]);
+
+  // 项目全集等首批内容画完后再补。
   // 用户开始触碰控件时立即预热，保证功能完整，同时避免三个大 JSON 同时下载、解析。
   const loadExtras = useCallback(() => {
     if (extrasStartedRef.current) return;
@@ -433,11 +442,7 @@ export default function RecentScrambles({ lang }: Props) {
 
     void fetchRecentScramblesEvents()
       .then((j) => { if (aliveRef.current) setEventsJson(j); });
-    void fetch(statsUrl('/stats/scramble/distribution.json') + '?v=20260614opt')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((j: DistributionJson | null) => { if (aliveRef.current) setDist(j); })
-      .catch(() => { if (aliveRef.current) setDist(null); });
-  }, [setEventsJson, setDist]);
+  }, [setEventsJson]);
 
   useEffect(() => {
     if (!data) return;
@@ -482,7 +487,7 @@ export default function RecentScrambles({ lang }: Props) {
   const dateRange = batchDateRange(data ?? null, eventsJson);
 
   // 主数据到达前保留与成品区块一致的几何尺寸，避免动态 chunk 已到、JSON 未到时先塌陷。
-  if (data === undefined) return <div className="recent-scrambles recent-scrambles--loading" data-tour="recent-scrambles" aria-hidden="true" />;
+  if (data === undefined || dist === undefined) return <div className="recent-scrambles recent-scrambles--loading" data-tour="recent-scrambles" aria-hidden="true" />;
   if (availableEvents.size === 0) return <p className="landing-slot-message">{tr({ zh: '暂无近期打乱', en: 'No recent scrambles available' })}</p>;
 
   const curEvent = availableEvents.has(event) ? event : (availableEvents.has('333') ? '333' : [...availableEvents][0]);
@@ -528,7 +533,7 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
   const [step, setStep] = useState<number | null>(null);
   const sel = useSubsetSelection('dual');
   // 最稀有固定展示全批最低概率结果；自选保留独立的筛选条件。
-  const [mode, setMode] = useState<'type' | 'rare'>('rare');
+  const [mode, setMode] = useState<'type' | 'rare'>(dist ? 'rare' : 'type');
 
   // 首屏一次性把默认选择定位到本批全局概率最低(最稀有)的那一格;用户手动改过任一选择器即不再覆盖。
   const pickedRef = useRef(false);

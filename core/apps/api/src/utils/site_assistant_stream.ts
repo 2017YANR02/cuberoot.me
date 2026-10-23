@@ -1,7 +1,7 @@
 /** Native tools carry planning separately. Read only the final answer field.
  * Incomplete JSON escapes (including surrogate pairs) wait for the next chunk. */
 export function partialAssistantAnswer(json: string): string | undefined {
-  const prefix = /^\s*\{\s*"answer"\s*:\s*"/.exec(json);
+  const prefix = /^\s*\{\s*(?:"answerKind"\s*:\s*"(?:general|site_content|grounded|image)"\s*,\s*)?"answer"\s*:\s*"/.exec(json);
   if (!prefix) return;
   let value = '';
   for (let i = prefix[0].length; i < json.length; i++) {
@@ -21,4 +21,10 @@ export function partialAssistantAnswer(json: string): string | undefined {
     }
   }
   return value.replace(/[\uD800-\uDBFF]$/, '');
+}
+
+/** Metadata precedes prose so an ungrounded site draft is held before display. */
+export function partialAssistantAnswerKind(json: string): 'general'|'site_content'|'grounded'|'image'|undefined {
+  const match=/^\s*\{\s*"answerKind"\s*:\s*"(general|site_content|grounded|image)"\s*[,}]/.exec(json);
+  return match?.[1] as ReturnType<typeof partialAssistantAnswerKind>;
 }

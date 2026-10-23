@@ -488,8 +488,22 @@ body .timer-room-overlay:has(> .visualcube-preview) {
 }
 
 body[data-site-scenery] .timer-room-dialog.timer-difficulty-dialog {
-  background: var(--glass-popover-bg);
+  /* Nested method menus must sample the slider and text behind them. Keep the
+     dialog's glass on a sibling paint layer instead of making a backdrop root. */
+  background: transparent;
   border-color: var(--glass-border);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+body[data-site-scenery] .timer-room-dialog.timer-difficulty-dialog::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+  background: var(--glass-popover-bg);
   -webkit-backdrop-filter: var(--glass-filter);
   backdrop-filter: var(--glass-filter);
 }

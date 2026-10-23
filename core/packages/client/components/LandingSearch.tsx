@@ -48,8 +48,9 @@ import { useAuthUser, useAuthStore } from '@/lib/auth-store';
 import { authHeaders } from '@/lib/admin-api';
 import { apiUrl } from '@/lib/api-base';
 import SiteAssistantDialog, { SiteAssistantAnswerText, type AssistantTurn } from '@/components/SiteAssistantDialog';
-import { SITE_ASSISTANT_TIMEOUT_MS, readAssistantEvents, type AssistantStreamEvent, type AssistantStatus, type AssistantAnswer, type AssistantErrorCode, type AssistantImage } from '@cuberoot/shared/site-assistant';
+import { assistantTimeoutMs, SITE_ASSISTANT_QUESTION_MAX_LENGTH, isAssistantSourceHref, readAssistantEvents, type AssistantStreamEvent, type AssistantStatus, type AssistantAnswer, type AssistantErrorCode, type AssistantImage } from '@cuberoot/shared/site-assistant';
 import { ASSISTANT_ERROR_TEXT, assistantResponseError } from '@/lib/site-assistant-errors';
+import { useAssistantThinkingMode } from '@/hooks/useAssistantThinkingMode';
 import { requestSiteAssistant, assistantImageHistory } from '@/lib/site-assistant-request';
 import { ALG_PUZZLES, type AlgCase } from '@cuberoot/shared/alg';
 
@@ -241,6 +242,7 @@ export default function LandingSearch({
   const [assistantDialog, setAssistantDialog] = useState(false);
   const [assistantDraft, setAssistantDraft] = useState('');
   const [assistantImages, setAssistantImages] = useState<AssistantImage[]>([]);
+  const [assistantThinking, setAssistantThinking] = useAssistantThinkingMode();
   const [assistantTurns, setAssistantTurns] = useState<AssistantTurn[]>([]);
   const assistantConversation = useRef<string | null>(null);
   const assistantRequest = useRef<AbortController | null>(null);
@@ -274,7 +276,7 @@ export default function LandingSearch({
   const closeAssistant = useCallback(() => { assistantRequest.current?.abort(); assistantRequest.current = null; setAssistantBusy(false); setAssistantDialog(false); }, []);
   const askAssistant = async (question = query, replaceLast = false, images: AssistantImage[] = []) => {
     question = question.trim();
-    if ((!question && !images.length) || question.length > 500 || assistantRequest.current) return;
+    if ((!question && !images.length) || question.length > SITE_ASSISTANT_QUESTION_MAX_LENGTH || assistantRequest.current) return;
     const completed = (replaceLast ? assistantTurns.slice(0, -1) : assistantTurns).filter(turn => turn.result);
     // Release older attachment bytes without erasing the visible conversation.
     const previous = completed.map((turn, index) => index < completed.length - 9 && turn.images?.length ? { ...turn, images: undefined, imagesExpired: true } : turn);
@@ -294,12 +296,12 @@ export default function LandingSearch({
     setAssistantStatus({ phase: 'planning' });
     setAssistantError(null);
     setAssistantAnswer(null);
-    const timeout = setTimeout(() => controller.abort(), SITE_ASSISTANT_TIMEOUT_MS);
+    const timeout = setTimeout(() => controller.abort(), assistantTimeoutMs(assistantThinking));
     try {
       assistantConversation.current ??= crypto.randomUUID();
       const response = await requestSiteAssistant(apiUrl('/v1/site-assistant'), {
         conversationId: assistantConversation.current, parentId: previous.at(-1)?.requestId, retryOf: replaceLast ? assistantTurns.at(-1)?.requestId : undefined,
-        question, lang, ...(images.length ? {images} : {}), timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,
+        question, lang, thinking: assistantThinking, ...(images.length ? {images} : {}), timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,
         history: assistantImageHistory(previous.filter(turn => !turn.partial).slice(-5).flatMap(turn => [{ role: 'user', content: turn.question, ...(turn.images?.length ? {images:turn.images} : {}) }, { role: 'assistant', content: turn.result!.answer }]), images),
       }, {headers: { ...authHeaders(), Accept: 'text/event-stream' },signal: controller.signal});
       const requestId = response.headers.get('X-Assistant-Request-Id') ?? undefined;
@@ -312,7 +314,7 @@ export default function LandingSearch({
       const applyAnswer = (data: AssistantAnswer, partial = false) => {
         if (typeof data.answer !== 'string' || !Array.isArray(data.sources)) throw new Error('invalid response');
         if (assistantRequest.current !== controller) return;
-        const result: AssistantAnswer = { answer: data.answer, actions: data.actions?.filter(action => typeof action.href === 'string' && /^\/(?!\/)/.test(action.href)), artifacts: Array.isArray(data.artifacts) ? data.artifacts : [], sources: data.sources.filter(source => typeof source.href === 'string' && /^\/(?!\/)/.test(source.href)) };
+        const result: AssistantAnswer = { answer: data.answer, actions: data.actions?.filter(action => typeof action.href === 'string' && isAssistantSourceHref(action.href)), artifacts: Array.isArray(data.artifacts) ? data.artifacts : [], sources: data.sources.filter(source => typeof source.href === 'string' && isAssistantSourceHref(source.href)) };
         if (!partial) setAssistantAnswer(result);
         setAssistantTurns([...previous, { question, images, result, partial, requestId }]);
       };
@@ -533,7 +535,7 @@ export default function LandingSearch({
               <Square size={15} fill="currentColor" />
             </button>}</Tooltip>
             <button type="button" className="landing-search-voice-button landing-search-voice-send"
-              disabled={voiceAction !== null || !voiceText.trim() || voiceText.trim().length > 500 || assistantBusy}
+              disabled={voiceAction !== null || !voiceText.trim() || voiceText.trim().length > SITE_ASSISTANT_QUESTION_MAX_LENGTH || assistantBusy}
               aria-label={tr({ zh: '发送语音提问', en: 'Send voice question' })}
               onClick={() => { setVoiceAction('send'); micStop(); }}><ArrowUp size={24} /></button>
           </div>
@@ -613,7 +615,7 @@ export default function LandingSearch({
           >
             <Mic size={16} strokeWidth={1.75} />
           </button>}</Tooltip>
-            <button type="button" className="landing-search-mic landing-search-send" disabled={assistantBusy || !query.trim() || query.trim().length > 500}
+            <button type="button" className="landing-search-mic landing-search-send" disabled={assistantBusy || !query.trim() || query.trim().length > SITE_ASSISTANT_QUESTION_MAX_LENGTH}
               onClick={() => void askAssistant()}
               aria-label={tr({ zh: '提问', en: 'Ask' })} title={tr({ zh: '提问（回车）', en: 'Ask (Enter)' })}>
               <ArrowUp size={20} strokeWidth={1.75} />
@@ -641,13 +643,13 @@ export default function LandingSearch({
         </p>
       )}
 
-      {assistantDialog && <SiteAssistantDialog key={`${assistantUser?.uid ?? "guest"}:${assistantUser?.wcaId ?? ""}`} images={assistantImages} onImagesChange={setAssistantImages} lang={lang} draft={assistantDraft} onDraftChange={setAssistantDraft} turns={assistantTurns} onFeedback={(id,value)=>setAssistantTurns(turns=>turns.map(turn=>turn.requestId===id?{...turn,feedback:value}:turn))} status={assistantStatus} busy={assistantBusy} error={assistantError} onAsk={(question, replaceLast, images) => void askAssistant(question, replaceLast, images)} onStop={stopAssistant} onClose={closeAssistant} onNew={() => { assistantConversation.current = null; stopAssistant(); setAssistantDraft(''); setAssistantImages([]); setAssistantTurns([]); setAssistantAnswer(null); setAssistantError(null); }} />}
+      {assistantDialog && <SiteAssistantDialog key={`${assistantUser?.uid ?? "guest"}:${assistantUser?.wcaId ?? ""}`} images={assistantImages} onImagesChange={setAssistantImages} thinking={assistantThinking} onThinkingChange={setAssistantThinking} lang={lang} draft={assistantDraft} onDraftChange={setAssistantDraft} turns={assistantTurns} onFeedback={(id,value)=>setAssistantTurns(turns=>turns.map(turn=>turn.requestId===id?{...turn,feedback:value}:turn))} status={assistantStatus} busy={assistantBusy} error={assistantError} onAsk={(question, replaceLast, images) => void askAssistant(question, replaceLast, images)} onStop={stopAssistant} onClose={closeAssistant} onNew={() => { assistantConversation.current = null; stopAssistant(); setAssistantDraft(''); setAssistantImages([]); setAssistantTurns([]); setAssistantAnswer(null); setAssistantError(null); }} />}
 
       {showDropdown && !assistantDialog && (
         <div className="landing-search-panel">
-          {(assistantBusy || assistantError || assistantAnswer || query.trim().length > 500) && (
+          {(assistantBusy || assistantError || assistantAnswer || query.trim().length > SITE_ASSISTANT_QUESTION_MAX_LENGTH) && (
           <section className="landing-search-section landing-search-answer" aria-live="polite" aria-busy={assistantBusy}>
-            {assistantBusy ? <p>{tr({ zh: '正在查找相关页面…', en: 'Finding relevant pages…' })}</p>
+            {assistantBusy ? <p>{tr({ zh: '正在回答…', en: 'Preparing an answer…' })}</p>
               : assistantError ? <>
                 <p>{tr(ASSISTANT_ERROR_TEXT[assistantError])}</p>
                 {(assistantError === 'login_required' || assistantError === 'wca_link_required') && <button type="button" className="landing-search-item" onClick={() => useAuthStore.getState().login()}>{tr({ zh: '前往账号页', en: 'Go to account' })}</button>}
@@ -656,7 +658,7 @@ export default function LandingSearch({
                 <div className="landing-search-answer-text"><SiteAssistantAnswerText result={assistantAnswer}/></div>
                 <button type="button" className="landing-search-item" onClick={() => setAssistantDialog(true)}>{tr({zh:'继续对话',en:'Continue conversation'})}</button>
 
-              </> : <p>{tr({ zh: '请把问题缩短到 500 字以内。', en: 'Please keep your question within 500 characters.' })}</p>}
+              </> : <p>{tr({ zh: `请把问题缩短到 ${SITE_ASSISTANT_QUESTION_MAX_LENGTH} 字以内。`, en: `Please keep your question within ${SITE_ASSISTANT_QUESTION_MAX_LENGTH} characters.` })}</p>}
           </section>
           )}
           {yearMatch && (

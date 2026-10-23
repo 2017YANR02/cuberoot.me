@@ -4,6 +4,7 @@ import { requireAuth } from '../src/utils/recon_helpers.js';
 import { getUserById } from '../src/utils/account.js';
 import { JWT_SECRET, signSession } from '../src/utils/session.js';
 import jwt from 'jsonwebtoken';
+import { assistantTimeoutMs, boundAssistantHistory } from '@cuberoot/shared/site-assistant';
 
 vi.mock('../src/utils/recon_helpers.js', () => ({ requireAuth: vi.fn() }));
 vi.mock('../src/utils/account.js', () => ({ getUserById: vi.fn() }));
@@ -26,6 +27,41 @@ function setup() {
   return { answer, reserve, ask };
 }
 describe('assistant account access', () => {
+  it('keeps a silent deep response alive with SSE comments and clears the heartbeat on completion', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    try {
+      let finish!: (value: { answer: string; sources: [] }) => void;
+      const answer = vi.fn(() => new Promise<{ answer: string; sources: [] }>(resolve => { finish = resolve; }));
+      const route = createSiteAssistantRoutes({ answer, config: () => config, now: Date.now,
+        reserve: async () => ({ allowed: true, retryAfter: 60 }), authenticate: async () => ({ uid: 42, wcaId: '2017YANR02' }) });
+      const response = await route.request('/site-assistant', { method: 'POST', headers: { Accept: 'text/event-stream' }, body: JSON.stringify({ question: 'Consider this carefully', lang: 'en', thinking: 'deep' }) });
+      const reader = response.body!.getReader(), decoder = new TextDecoder();
+      expect(decoder.decode((await reader.read()).value)).toContain('"phase":"planning"');
+      await vi.advanceTimersByTimeAsync(15_000);
+      expect(decoder.decode((await reader.read()).value)).toBe(': keepalive\n\n');
+      finish({ answer: 'Complete', sources: [] });
+      let body = '';
+      for (;;) { const chunk = await reader.read(); if (chunk.done) break; body += decoder.decode(chunk.value); }
+      expect(body).toContain('"type":"done"');
+      expect(vi.getTimerCount()).toBe(0);
+    } finally { vi.useRealTimers(); }
+  });
+  it('validates long messages and thinking modes before charging and keeps server and client deadlines aligned',async()=>{
+    const answer=vi.fn().mockResolvedValue({answer:'ok',sources:[]}),reserve=vi.fn().mockResolvedValue({allowed:true,retryAfter:60});
+    const route=createSiteAssistantRoutes({answer,reserve,config:()=>config,now:Date.now,authenticate:async()=>({uid:42,wcaId:'2017YANR02'})});
+    const timeout=vi.spyOn(AbortSignal,'timeout');
+    const ask=(body:object)=>route.request('/site-assistant',{method:'POST',body:JSON.stringify({lang:'en',...body})});
+    const question='a'.repeat(8000);
+    expect((await ask({question,thinking:'deep'})).status).toBe(200);
+    expect(answer.mock.calls[0][0]).toBe(question);
+    expect(answer.mock.calls[0][10]).toBe('deep');
+    expect(timeout).toHaveBeenCalledWith(assistantTimeoutMs('deep')-2000);
+    expect((await ask({question:question+'a',thinking:'auto'})).status).toBe(400);
+    expect((await ask({question:'test',thinking:'invalid'})).status).toBe(400);
+    expect(reserve).toHaveBeenCalledTimes(1);
+    const history=Array.from({length:10},(_,i)=>({role:(i%2?'assistant':'user') as 'user'|'assistant',content:String(i).repeat(12000)}));
+    expect(boundAssistantHistory(history).map(m=>m.content[0])).toEqual(['8','9']);
+  });
   it('rejects missing, forged and expired sessions before legacy WCA lookup', async () => {
     const { ask, reserve, answer } = setup();
     const expired = jwt.sign({uid:42,wcaId:'2017YANR02'},JWT_SECRET,{expiresIn:-1});

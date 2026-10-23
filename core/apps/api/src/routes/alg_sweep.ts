@@ -191,6 +191,7 @@ algSweepRoutes.post('/alg/sweep/:puzzle/:set/fold', async (c) => {
           SELECT 1 FROM alg_case_marks m
            WHERE m.wca_id = s.wca_id AND m.puzzle = s.puzzle
              AND m.set_slug = s.set_slug AND m.case_key = s.case_key
+             AND m.status IS NOT NULL
         )
       RETURNING s.case_key`,
     [authUser.wcaId, puzzle, setSlug, ...keys],

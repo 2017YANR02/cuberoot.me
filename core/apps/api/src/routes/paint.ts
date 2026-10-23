@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { getIp } from '../utils/analytics_helpers.js';
 import { bodyLimit } from 'hono/body-limit';
-import { query } from '../db/connection.js';
+import { query, withTransaction } from '../db/connection.js';
 import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
 
 /**
@@ -126,22 +126,22 @@ paintRoutes.post('/paint/drawings', paintBodyLimit, async (c) => {
   const byteSize = Buffer.byteLength(body.doc, 'utf8');
   if (byteSize > MAX_DOC_BYTES) return c.json({ error: 'doc too large' }, 413);
 
-  const cnt = await query<{ n: number }>(
-    'SELECT COUNT(*)::int AS n FROM paint_drawings WHERE wca_id = ?',
-    [authUser.wcaId],
-  );
-  if ((cnt[0]?.n ?? 0) >= MAX_DRAWINGS_PER_USER) {
-    return c.json({ error: 'drawing limit reached' }, 409);
-  }
-
   const now = Date.now();
   const title = cleanTitle(body.title);
   const thumbnail = cleanThumbnail(body.thumbnail);
-  const rows = await query<{ id: number }>(
-    `INSERT INTO paint_drawings (wca_id, title, doc, thumbnail, byte_size, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id`,
-    [authUser.wcaId, title, body.doc, thumbnail, byteSize, now, now],
-  );
+  const rows = await withTransaction(async run => {
+    await run("SELECT pg_advisory_xact_lock(hashtext('paint_drawings'), hashtext(?))", [authUser.wcaId]);
+    const cnt = await run<{ n: number }>(
+      'SELECT COUNT(*)::int AS n FROM paint_drawings WHERE wca_id = ?', [authUser.wcaId],
+    );
+    if ((cnt[0]?.n ?? 0) >= MAX_DRAWINGS_PER_USER) return null;
+    return run<{ id: number }>(
+      `INSERT INTO paint_drawings (wca_id, title, doc, thumbnail, byte_size, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id`,
+      [authUser.wcaId, title, body.doc, thumbnail, byteSize, now, now],
+    );
+  });
+  if (rows === null) return c.json({ error: 'drawing limit reached' }, 409);
   return c.json({ id: Number(rows[0]?.id), title, createdAt: now, updatedAt: now });
 });
 

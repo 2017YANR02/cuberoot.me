@@ -2348,7 +2348,7 @@ function CompInfoRows({
   return (
     <dl className={`comp-info-panel${isZh ? ' comp-info-panel--zh' : ''}`}>
       {activeRows.map((r, i) => (
-        <div key={r.label} className="comp-info-row">
+        <div key={r.label} className={`comp-info-row${r.hideLabel ? ' comp-info-row--unlabelled' : ''}`}>
           {!r.hideLabel && <dt className="comp-info-label">{r.label}</dt>}
           <dd className="comp-info-value">
             {r.value}

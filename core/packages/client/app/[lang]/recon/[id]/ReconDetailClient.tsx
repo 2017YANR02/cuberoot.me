@@ -4,6 +4,7 @@ import { reconVideoGroups } from '@/lib/recon-video-url';
 import { loadBiliVideo, loadVideoTitle } from '@/lib/recon-video-cover';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
+import { useCopy } from '@/hooks/useCopy';
 
 /**
  * /recon/[id] — full detail page, ported from packages/client-vite/src/pages/recon/ReconDetailPage.tsx.
@@ -44,11 +45,12 @@ import { displayCuberName } from '@/lib/cuber-name-display';
 import { eventDisplayName, toWcaEventId } from '@/lib/wca-events';
 import { EventIcon } from '@/components/EventIcon';
 import { loadFlagData, flagDataVersion, personFlagIso2 } from '@/lib/country-flags';
-import { Flag } from '@/components/Flag';
 import { CompCell } from '@/components/CompCell/CompCell';
+import { Flag } from '@/components/Flag';
 import { localizeCompName } from '@/lib/comp-localize';
 import { displayCity } from '@/lib/city-display';
 import { cleanForPlayer, countMovesExpanded } from '@/lib/recon-alg-utils';
+import ScrambleStatistics from '@/components/ScrambleStatistics';
 import {
   extractPersonCompetitionResults, fetchAttempts, fetchCubingAttempts, fetchScrambles, fetchWcaResults, matchRoundType,
 } from '@/lib/wca-results-api';
@@ -260,7 +262,7 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
             {' '}
             {solutionText && <span className="detail-share-target" ref={setShareTarget} />}
             {' '}
-            <Link href={`/recon/submit/${solve.id}`} className="recon-btn recon-btn-edit detail-title-edit" title={t('recon.edit')} aria-label={t('recon.edit')}>
+            <Link href={`/recon/submit/${solve.id}`} className="detail-title-edit detail-title-edit--accent" title={t('recon.edit')} aria-label={t('recon.edit')}>
               <Pencil size={14} />
             </Link>
           </h1>
@@ -322,6 +324,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
 }) {
   const [sameCompHasRows, setSameCompHasRows] = useState(false);
   const [sameSessionHasRows, setSameSessionHasRows] = useState(false);
+  const { copied: scrambleCopied, copy: copyScramble } = useCopy();
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -420,6 +423,15 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
             )}
             <div className="detail-scramble-line">
               {scramble ? <>{displayScramble}{optimalScrambleTag}</> : tr({ zh: '暂无打乱', en: 'No scramble available' })}
+              {scramble && <> <button
+                type="button"
+                className="normalized-cross-copy"
+                aria-label={scrambleCopied ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: '复制打乱', en: 'Copy scramble' })}
+                title={scrambleCopied ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: '复制打乱', en: 'Copy scramble' })}
+                onClick={() => copyScramble(scramble)}
+              >
+                {scrambleCopied ? <Check size={14} /> : <Copy size={14} />}
+              </button></>}
             </div>
             {solutionText && (
               <SolutionView
@@ -444,8 +456,15 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
           </div>
         )}
 
+        <ScrambleStatistics
+          compId={solve.compWcaId}
+          event={solve.event}
+          scramble={solve.wcaScramble || solve.scramble || scramble}
+          optimalScramble={solve.optimalScramble}
+          resolveOriginal
+        />
+
         <SameScrambleNav key={`same-scramble-${solve.id}`} solve={solve} initial={initialSameScramble} />
-        {solve.comp && solve.round && solve.solveNum && <Link href={`/recon?view=rounds&roundId=${solve.id}`} prefetch={false}>{tr({ zh: '查看整轮打乱与复盘', en: 'View this round’s scrambles and reconstructions' })}</Link>}
 
         <StatsGrid solve={solve} />
 
@@ -574,8 +593,10 @@ function ExternalLinks({ event, scramble, alg, solveId, copyText, shareTarget, o
   return shareTarget ? createPortal(
     <CompactSelect
       ariaLabel={tr({ zh: '分享', en: 'Share' })}
-      label={<span className="recon-png-label"><Share2 size={15} aria-hidden="true" />{tr({ zh: '分享', en: 'Share' })}</span>}
-      triggerClassName="recon-btn detail-title-edit"
+      label={<Share2 size={15} aria-hidden="true" />}
+      triggerClassName="detail-title-edit"
+      variant="plain"
+      unstyledTrigger
       popupClassName="recon-share-menu"
       showArrow={false}
       items={[]}
@@ -1779,7 +1800,9 @@ function AlternativesSection({ reconId, alts, setAlts, solveTime, event }: {
   const handleDelete = async (idx: number) => {
     if (!confirm(t('recon.confirmDeleteAlternative'))) return;
     try {
-      const updated = await deleteAlternative(reconId, idx);
+      const expected = alts[idx];
+      if (!expected) return;
+      const updated = await deleteAlternative(reconId, idx, expected);
       setAlts(updated);
       // setAlts updates this view instantly; bust the ISR cache for the next visitor.
       await revalidateRecon(reconId);

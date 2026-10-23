@@ -693,6 +693,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'The complete official WCA Regulations, verbatim, for citation.',
     },
   },
+  'regulation/translation': {
+    title: { zh: 'WCA 英中翻译参考', en: 'WCA English–Chinese Translation Reference' },
+    description: {
+      zh: 'WCA 规则术语、规范句式、易混译法及条款双语对照，提供 Markdown 下载供翻译与学习使用。',
+      en: 'WCA terminology, regulatory phrasing, translation pitfalls and aligned English–Chinese clauses, with Markdown downloads.',
+    },
+  },
   'regulation/post': { title: { zh: '公告', en: 'Posts' } },
   'regulation/logs': {
     title: { zh: 'WCA 意外事件与纪律处分日志', en: 'WCA Incidents and Disciplinary Logs' },

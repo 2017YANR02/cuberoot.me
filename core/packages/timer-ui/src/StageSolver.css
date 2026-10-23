@@ -478,13 +478,6 @@ html[data-theme='dark'] .stsv {
 .stsv-empty { color: var(--sv-text-mute); font-size: 13px; padding: 6px 0; }
 .stsv-solution-controls { position: relative; display: flex; align-items: center; gap: 8px; }
 .stsv-sol-rotation, .stsv-sol-prefix { color: var(--accent); }
-.stsv-solution-controls > .stsv-sol-orientation {
-  position: absolute;
-  right: 22px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-.stsv-solution-select .compact-select-current { padding-right: 36px; }
 .stsv-sol-prefix,
 .stsv-solution-controls > .stsv-sol-yrot {
   flex-shrink: 0;

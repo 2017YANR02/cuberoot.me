@@ -14,9 +14,9 @@
   "scripts": {
     "double-zbll:install": "node --import tsx scripts/install-double-zbll.mts",
     "double-zbll:summary": "node --max-old-space-size=128 --import tsx scripts/summarize-double-zbll.mts",
-    "dev": "node --import tsx scripts/build-cube-history.ts && node ../../scripts/copy-maplibre-assets.mts && node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && node scripts/predev-clean.mjs && next dev -H 127.0.0.1 -p 3000",
-    "dev:clean": "node --import tsx scripts/build-cube-history.ts && node ../../scripts/copy-maplibre-assets.mts && node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && node scripts/predev-clean.mjs --wipe-next && next dev -H 127.0.0.1 -p 3000",
-    "dev:safe": "node --import tsx scripts/build-cube-history.ts && node ../../scripts/copy-maplibre-assets.mts && node scripts/dev-safe.mjs",
+    "dev": "node --import tsx scripts/build-cube-history.ts && node ../../scripts/copy-maplibre-assets.mts && node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && node scripts/predev-clean.mjs && turbo watch dev:serve --filter=@cuberoot/client --concurrency=2 --ui=stream --env-mode=loose",
+    "dev:clean": "node --import tsx scripts/build-cube-history.ts && node ../../scripts/copy-maplibre-assets.mts && node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && node scripts/predev-clean.mjs --wipe-next && turbo watch dev:serve --filter=@cuberoot/client --concurrency=2 --ui=stream --env-mode=loose",
+    "dev:safe": "node --import tsx scripts/build-cube-history.ts && node ../../scripts/copy-maplibre-assets.mts && turbo watch dev:serve:safe --filter=@cuberoot/client --concurrency=2 --ui=stream --env-mode=loose",
     "build:deps": "pnpm --filter @cuberoot/shared build && pnpm --filter @cuberoot/visualcube build && pnpm --filter @cuberoot/vendor-sr-puzzlegen build && pnpm --filter @cuberoot/puzzle-render-core build && pnpm --filter @cuberoot/puzzle-solvers build",
     "build": "pnpm run build:deps && node --import tsx scripts/build-cube-history.ts && node ../../scripts/copy-maplibre-assets.mts && node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && next build && pnpm run typecheck && tsx scripts/build-assistant-index.ts",
     "build:profile": "node scripts/profile-build.mts",
@@ -39,7 +39,9 @@
     "lint": "eslint .",
     "build:account-avatars": "node --import tsx scripts/build-account-avatars.ts",
     "build:cube-history": "node --import tsx scripts/build-cube-history.ts",
-    "check:cube-history": "node --import tsx scripts/build-cube-history.ts --check"
+    "check:cube-history": "node --import tsx scripts/build-cube-history.ts --check",
+    "dev:serve": "next dev -H 127.0.0.1 -p 3000",
+    "dev:serve:safe": "node scripts/dev-safe.mjs"
   },
   "dependencies": {
     "@2017yanr02/continuous-corners": "file:../../vendor/continuous-corners-0.3.1.tgz",

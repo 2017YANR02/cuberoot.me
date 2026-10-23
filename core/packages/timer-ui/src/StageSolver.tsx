@@ -1138,18 +1138,23 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     return {
       value: i,
       label: <span className="stsv-sol-option">
+        {!expandedSolutions && renderOrientation(alg)}
         {sol.c && slotCombos.length >= 2 && renderSolSlots(sol.c)}
         <code>
           {splitLeadRot(alg).lead && <span className="stsv-sol-rotation">{splitLeadRot(alg).lead} </span>}
           {splitLeadRot(alg).body}
         </code>
         <span className="stsv-sol-len">{moveLen(alg)}</span>
-        {!expandedSolutions && renderOrientation(alg)}
       </span>,
     };
   }) ?? [];
   // 动画:把前导整体转体(z2 y…)折进 setup(打乱之后),只播实际转动 → 开头转体不动画化。
   const selSolParts = selSolAlg != null ? splitLeadRot(selSolAlg) : null;
+  // Keep the displayed, merged y rotation clickable; other view rotations stay fixed.
+  const selectedLeadTokens = selSolParts?.lead.split(/\s+/).filter(Boolean) ?? [];
+  const selectedYRotation = /^y[2']?$/.test(selectedLeadTokens.at(-1) ?? '')
+    ? selectedLeadTokens.pop()! : '';
+  const selectedViewRotation = selectedLeadTokens.join(' ');
   const playerSetup = selSolParts && selSolParts.lead ? `${normScramble} ${selSolParts.lead}` : normScramble;
   const playerAlg = selSolParts ? (selSolParts.body || (selSolAlg ?? '')) : null;
 
@@ -1567,9 +1572,13 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                         ))}
                       </div>
                     ) : <div ref={solutionControlsRef} className="stsv-solution-controls">
-                      {selSolParts?.lead && (
-                        <code className="stsv-sol-prefix">{selSolParts.lead}</code>
+                      {orientationButton(selectedSolIndex, selSolAlg ?? '')}
+                      {selectedViewRotation && (
+                        <code className="stsv-sol-prefix">{selectedViewRotation}</code>
                       )}
+                      {selectedYRotation && <button type="button" className="stsv-sol-yrot" data-no-timer
+                        aria-label={t('切换 y 预转体', 'Toggle y pre-rotation')}
+                        onClick={() => cycleRot(selectedSolIndex)}>{selectedYRotation}</button>}
                       <CompactSelect
                         className="stsv-solution-select"
                         showArrow
@@ -1587,7 +1596,6 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                           copySol(rotateSolutionY(moves.sols[i].m, rowRot[i] ?? 0));
                         }}
                       />
-                      {orientationButton(selectedSolIndex, selSolAlg ?? '')}
                     </div>}
                   </>
                 )}

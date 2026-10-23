@@ -72,13 +72,35 @@ describe('rotateSolutionY', () => {
     }
   });
 
-  it('带前导转体:y 插在转体之后,前缀原样保留(z F\' … → z y …)', () => {
+  it('带前导转体:y 插在转体之后,同轴转体合并,不同轴顺序保留', () => {
     expect(rotateSolutionY("z F' U B' L' R' F L2 R2", 1).startsWith('z y ')).toBe(true);
     expect(rotateSolutionY("x' D' F2 L' R2 U L' B", 2).startsWith("x' y2 ")).toBe(true);
-    expect(rotateSolutionY("x' y R U R'", 3).startsWith("x' y y' ")).toBe(true);
+    expect(rotateSolutionY("x' y R U R'", 3)).toBe("x' B U B'");
   });
 
-  it('带前导转体:整体效果 == 前缀 + body + y^n,且前缀留在开头', () => {
+  it('合并已有和新增的 y 转体,保持完整魔方状态和面转动数', () => {
+    const suffix = "R' U L F U L' B' R' D F";
+    const count = (alg: string) => alg.split(/\s+/).filter(move => /^[URFDLB]/.test(move)).length;
+    for (let initial = 0; initial < 4; initial++) {
+      for (let added = 0; added < 4; added++) {
+        const original = [Y_PREFIX[initial], suffix].filter(Boolean).join(' ');
+        const result = rotateSolutionY(original, added);
+        const prefix = result.split(/\s+/).filter(move => /^[xyz]/.test(move)).join(' ');
+        expect(prefix).toBe(Y_PREFIX[(initial + added) % 4]);
+        expect(state(result)).toBe(state(`${original} ${Y_PREFIX[added]}`));
+        expect(count(result)).toBe(10);
+      }
+    }
+  });
+
+  it('未额外旋转时也合并已有重复转体,不改写面转动', () => {
+    expect(rotateSolutionY('y y R R', 0)).toBe('y2 R R');
+    expect(rotateSolutionY('y y2 R', 0)).toBe("y' R");
+    expect(rotateSolutionY("x x' y y' R", 0)).toBe('R');
+    expect(rotateSolutionY('y y', 1)).toBe('y2');
+  });
+
+  it('带前导转体:整体效果 == 前缀 + body + y^n', () => {
     const rng = lcg(54321);
     const prefixes = ['z', "x'", 'z2', "x' y"];
     for (const pre of prefixes) {
@@ -87,7 +109,6 @@ describe('rotateSolutionY', () => {
         for (let k = 1; k <= 3; k++) {
           const rot = rotateSolutionY(A, k);
           expect(state(rot)).toBe(state(`${A} ${Y_PREFIX[k]}`));
-          expect(rot.startsWith(`${pre} `)).toBe(true);
         }
       }
     }

@@ -27,6 +27,15 @@ describe('persisted appearance across WebView documents', () => {
     host.remove();
     vi.unstubAllGlobals();
   });
+  it('syncs the independent accent and its reset across documents', () => {
+    localStorage.setItem('accent-color', 'pink');
+    act(() => window.dispatchEvent(new StorageEvent('storage', { key: 'accent-color' })));
+    expect(document.documentElement.dataset.accent).toBe('pink');
+    localStorage.removeItem('accent-color');
+    act(() => window.dispatchEvent(new StorageEvent('storage', { key: 'accent-color' })));
+    expect(document.documentElement.dataset.accent).toBeUndefined();
+    expect(document.documentElement.style.getPropertyValue('--user-accent-light')).toBe('');
+  });
   it('applies another tab’s dark mode, palette, contrast and reset', () => {
     localStorage.setItem('theme', 'dark');
     window.dispatchEvent(new StorageEvent('storage', { key: 'theme' }));

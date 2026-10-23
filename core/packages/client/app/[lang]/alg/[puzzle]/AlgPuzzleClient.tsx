@@ -406,9 +406,8 @@ export default function AlgPuzzleClient({ initialCatalog = null }: { initialCata
           {tr({ zh: '进度', en: 'Progress' })}
         </Link>
         <AlgAdminValidate
-          scope={{ kind: 'puzzle', puzzle }}
+          scope={{ kind: 'all' }}
           options={[
-            { label: tr({ zh: '本页公式集', en: 'Sets on this page' }), scope: { kind: 'puzzle', puzzle } },
             { label: tr({ zh: '全库', en: 'Entire library' }), scope: { kind: 'all' } },
           ]}
         />

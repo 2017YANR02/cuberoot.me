@@ -8,6 +8,7 @@
 import { useEffect, useState } from 'react';
 import { PALETTE_KEY, isPaletteId, paletteScheme, type PaletteId } from './palettes';
 import { persistItem } from './safe-storage';
+import { ACCENT_KEY, findAccentColor, setAccentRoot, type AccentId } from './accent-colors';
 
 export type Theme = 'system' | 'light' | 'dark';
 export type EffectiveTheme = 'light' | 'dark';
@@ -242,6 +243,25 @@ export function restorePersistedAppearance() {
   if (palette) applyPaletteRoot(palette);
   else applyThemeRoot(readTheme(), true);
   applyContrastRoot(readContrast());
+  setAccentRoot(document.documentElement, findAccentColor(readAccent()));
+}
+
+export function readAccent(): AccentId | null {
+  try {
+    return findAccentColor(localStorage.getItem(ACCENT_KEY))?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function applyAccent(id: AccentId | null) {
+  const color = findAccentColor(id);
+  if (color) persistItem(ACCENT_KEY, color.id);
+  else {
+    try { localStorage.removeItem(ACCENT_KEY); } catch { /* Storage is optional. */ }
+  }
+  setAccentRoot(document.documentElement, color);
+  window.dispatchEvent(new Event('theme-change'));
 }
 
 export function readContrast(): ContrastLevel {

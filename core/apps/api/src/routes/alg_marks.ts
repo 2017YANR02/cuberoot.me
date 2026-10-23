@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
+import { HTTPException } from 'hono/http-exception';
 import { getIp } from '../utils/analytics_helpers.js';
-import { query } from '../db/connection.js';
+import { query, withTransaction } from '../db/connection.js';
 import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
 import { normalizeCaseKeyForSet } from '../utils/sq1_cs.js';
 
@@ -11,7 +12,7 @@ import { normalizeCaseKeyForSet } from '../utils/sq1_cs.js';
  *       { marks: { [caseKey]: { s: status, t: updatedAt } } }
  *   PUT /alg/marks/:puzzle/:set — 批量 upsert(客户端画笔拖涂防抖后一次提交)
  *       body { items: [{ k: caseKey, s: status|null, t: updatedAt }] }
- *       s=null = 清除标记 → 删行。t 用于多设备 last-write-wins:
+ *       s=null = 清除标记 → 保留时间戳墓碑。t 用于多设备 last-write-wins:
  *       服务器只接受 t 更新的写(旧设备迟到的防抖包不能覆盖新标记)。
  *
  * 身份始终取 requireAuth(c).wcaId(ownerKey);客户端不传 userId
@@ -38,7 +39,7 @@ function validCaseKey(k: unknown): k is string {
   return typeof k === 'string' && k.length >= 1 && k.length <= 128 && !/[\x00-\x1f]/.test(k);
 }
 
-interface MarkRow { case_key: string; status: string; updated_at: string }
+interface MarkRow { case_key: string; status: string | null; updated_at: string }
 
 /**
  * GET /alg/marks — 当前用户跨全部 set 的标记聚合(/alg/progress 学习进度页用)。
@@ -57,7 +58,7 @@ algMarksRoutes.get('/alg/marks', async (c) => {
     `SELECT puzzle, set_slug,
             COUNT(*) FILTER (WHERE status = 'learning')::int AS learning,
             COUNT(*) FILTER (WHERE status = 'mastered')::int AS mastered
-       FROM alg_case_marks WHERE wca_id = ?
+       FROM alg_case_marks WHERE wca_id = ? AND status IS NOT NULL
       GROUP BY puzzle, set_slug
       ORDER BY puzzle, set_slug`,
     [authUser.wcaId],
@@ -84,10 +85,10 @@ algMarksRoutes.get('/alg/marks/:puzzle/:set', async (c) => {
     'SELECT case_key, status, updated_at FROM alg_case_marks WHERE wca_id = ? AND puzzle = ? AND set_slug = ?',
     [authUser.wcaId, puzzle, setSlug],
   );
-  const marks: Record<string, { s: string; t: number }> = {};
+  const marks: Record<string, { s?: string; t: number }> = {};
   for (const r of rows) {
     const key = normalizeCaseKeyForSet(puzzle, setSlug, r.case_key);
-    const next = { s: r.status, t: Number(r.updated_at) };
+    const next = { ...(r.status === null ? {} : { s: r.status }), t: Number(r.updated_at) };
     if (!marks[key] || marks[key].t <= next.t) marks[key] = next;
   }
   return c.json({ marks });
@@ -115,54 +116,53 @@ algMarksRoutes.put('/alg/marks/:puzzle/:set', async (c) => {
 
   // 逐条校验,任何一条坏 shape 整包拒收(客户端是我们自己的,坏包只能是 bug/恶意)
   const now = Date.now();
-  const parsed: Array<{ k: string; s: string | null; t: number }> = [];
+  const byKey = new Map<string, { k: string; s: string | null; t: number }>();
   for (const it of items) {
+    if (!it || typeof it !== 'object') return c.json({ error: 'invalid item' }, 400);
     if (!validCaseKey(it.k)) return c.json({ error: 'invalid case key' }, 400);
     const s = it.s == null ? null : (typeof it.s === 'string' && STATUSES.has(it.s) ? it.s : undefined);
     if (s === undefined) return c.json({ error: 'invalid status' }, 400);
     // 时间戳只在 [0, now+5min] 内可信,其余按服务器时间(防客户端时钟漂移把 LWW 卡死)
     const tRaw = typeof it.t === 'number' ? it.t : now;
-    const t = tRaw > 0 && tRaw <= now + 300_000 ? tRaw : now;
-    parsed.push({ k: normalizeCaseKeyForSet(puzzle, setSlug, it.k), s, t });
+    const t = Number.isSafeInteger(tRaw) && tRaw > 0 && tRaw <= now + 300_000 ? tRaw : now;
+    const k = normalizeCaseKeyForSet(puzzle, setSlug, it.k);
+    const previous = byKey.get(k);
+    // Canonical aliases or repeated keys must not make one INSERT update a row twice.
+    // Clear wins equal timestamps, matching the database rule below.
+    if (!previous || t > previous.t || (t === previous.t && (s === null || previous.s !== null))) {
+      byKey.set(k, { k, s, t });
+    }
   }
-
+  const parsed = [...byKey.values()];
   const clears = parsed.filter((p) => p.s === null);
   const upserts = parsed.filter((p): p is typeof p & { s: string } => p.s !== null);
 
-  if (upserts.length > 0) {
-    const cnt = await query<{ n: number }>(
-      'SELECT COUNT(*)::int AS n FROM alg_case_marks WHERE wca_id = ?',
-      [authUser.wcaId],
-    );
-    if ((cnt[0]?.n ?? 0) + upserts.length > MAX_MARKS_PER_USER) {
-      return c.json({ error: 'marks limit reached' }, 409);
-    }
-    // 单语句批量 upsert;LWW:只有更新的 t 才覆盖已有行
+  await withTransaction(async run => {
+    // A user-wide lock also protects the quota across simultaneous writes to different sets.
+    await run("SELECT pg_advisory_xact_lock(hashtext('alg_case_marks'), hashtext(?))", [authUser.wcaId]);
     const values: unknown[] = [];
-    const placeholders = upserts.map((p) => {
+    const placeholders = parsed.map((p) => {
       values.push(authUser.wcaId, puzzle, setSlug, p.k, p.s, p.t);
       return '(?, ?, ?, ?, ?, ?)';
     });
-    await query(
+    await run(
       `INSERT INTO alg_case_marks (wca_id, puzzle, set_slug, case_key, status, updated_at)
        VALUES ${placeholders.join(', ')}
        ON CONFLICT (wca_id, puzzle, set_slug, case_key) DO UPDATE
        SET status = EXCLUDED.status, updated_at = EXCLUDED.updated_at
-       WHERE alg_case_marks.updated_at <= EXCLUDED.updated_at`,
+       WHERE alg_case_marks.updated_at < EXCLUDED.updated_at
+          OR (alg_case_marks.updated_at = EXCLUDED.updated_at
+              AND (EXCLUDED.status IS NULL OR alg_case_marks.status IS NOT NULL))`,
       values,
     );
-  }
-  if (clears.length > 0) {
-    // 清除同样受 LWW 保护:只删「不比这次清除更新」的行
-    const values: unknown[] = [authUser.wcaId, puzzle, setSlug];
-    const conds = clears.map((p) => {
-      values.push(p.k, p.t);
-      return '(case_key = ? AND updated_at <= ?)';
-    });
-    await query(
-      `DELETE FROM alg_case_marks WHERE wca_id = ? AND puzzle = ? AND set_slug = ? AND (${conds.join(' OR ')})`,
-      values,
+    // Count active marks after the UPSERT. Edits do not consume new capacity,
+    // clears release it, and overflow rolls back the entire batch.
+    const cnt = await run<{ n: number }>(
+      'SELECT COUNT(*)::int AS n FROM alg_case_marks WHERE wca_id = ? AND status IS NOT NULL', [authUser.wcaId],
     );
-  }
+    if ((cnt[0]?.n ?? 0) > MAX_MARKS_PER_USER) {
+      throw new HTTPException(409, { message: 'marks limit reached' });
+    }
+  });
   return c.json({ ok: true, upserted: upserts.length, cleared: clears.length });
 });

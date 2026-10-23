@@ -14,6 +14,26 @@ const base = (word: string) => word.replaceAll('\\', '/').split('/').pop() ?? ''
 const cubeoptRoot = resolve(repoRoot, 'solver/experiments/cube48opt-rust');
 const cubeoptLabel = 'cube48opt Opt1–9 / Rust Opt10 / Rust H0–H10 研究计算';
 const cubeoptComputations = ['validate.mjs', 'benchmark.mjs', 'wasm-benchmark.mjs', 'wasm-browser-benchmark.mjs', 'nxopt-benchmark.mjs', 'verify-h10.mjs', 'validate-h10.mjs', 'h10-benchmark.mjs', 'zbll-benchmark.mjs'];
+const reconVisionEntry = resolve(repoRoot, 'research/reconer/vision/baseline.py');
+
+function blockedReconVision(words: string[], cwd: string): boolean {
+  // These are local PyTorch workloads. An SSH command runs on the remote host,
+  // whose resource policy is separate from this Mac's no-swap policy.
+  const executable = words.find(word => !/^\w+=/.test(word) && base(word) !== 'env');
+  if (base(executable ?? '') === 'ssh') return false;
+  for (const [index, word] of words.entries()) {
+    const file = resolve(cwd, word.replaceAll('\\', '/'));
+    const module = words[index - 1] === '-m' && (
+      word === 'vision.baseline' && resolve(cwd, 'vision/baseline.py') === reconVisionEntry
+      || word === 'baseline' && resolve(cwd, 'baseline.py') === reconVisionEntry
+    );
+    if (file !== reconVisionEntry && !module) continue;
+    const args = words.slice(index + 1);
+    if (args.includes('--help') || args.includes('-h')) continue;
+    if (['train', 'evaluate', 'predict'].includes(args[0])) return true;
+  }
+  return false;
+}
 
 // Only the actual interpreter entrypoint can authorize its child arguments.
 // Merely mentioning guard.mts after oracle.mjs must not grant an exemption.
@@ -148,6 +168,7 @@ export function blockedCompute(command: string, depth = 0, cwd = repoRoot): stri
     // Static TypeScript checking reads the entry file; it never executes it.
     // Keep this segment-local so a following compute command is still checked.
     if (['tsgo', 'tsc'].includes(first) && words.includes('--noEmit')) continue;
+    if (blockedReconVision(words, cwd)) return 'Reconer 视觉模型训练/批量推理';
     if (blockedCubeopt(words, cwd)) return cubeoptLabel;
     // H9-only generation was explicitly authorized on 2026-10-13. The guard
     // validates the exact target, directory, threads and process-tree budget.

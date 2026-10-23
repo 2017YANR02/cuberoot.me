@@ -33,6 +33,7 @@ import { SiteBackgroundControl } from '@/components/SiteBackground';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import LangToggle from '@/components/LangToggle';
+import AccentColorSelect from '@/components/AccentColorSelect';
 import { Tooltip } from '@/components/Tooltip';
 import { useDeskPetVisible } from '@/hooks/useDeskPetVisible';
 import { useHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';
@@ -50,10 +51,10 @@ function Swatch({ color }: { color: string }) {
   );
 }
 
-export default function AppearanceToggle({ className, triggerClassName, labelClassName = 'toolbar-label', showLabel = false, menuContent }: { className?: string; triggerClassName?: string; labelClassName?: string; showLabel?: boolean; menuContent?: ReactNode }) {
+export default function AppearanceToggle({ className, triggerClassName, triggerLabel, labelClassName = 'toolbar-label', showLabel = false, menuContent }: { className?: string; triggerClassName?: string; triggerLabel?: string; labelClassName?: string; showLabel?: boolean; menuContent?: ReactNode }) {
   const t = useT();
   const L = {
-    title: t('设置', 'Settings'),
+    title: triggerLabel ?? t('设置', 'Settings'),
     light: t('浅色', 'Light'),
     dark: t('深色', 'Dark'),
     lowContrast: t('低对比度', 'Low contrast'),
@@ -98,6 +99,7 @@ export default function AppearanceToggle({ className, triggerClassName, labelCla
     cancelHoverClose();
     hoverCloseTimerRef.current = window.setTimeout(() => {
       hoverCloseTimerRef.current = null;
+      if (document.querySelector('.accent-color-menu')) return;
       closeMenu();
     }, HOVER_CLOSE_DELAY_MS);
   };
@@ -130,6 +132,8 @@ export default function AppearanceToggle({ className, triggerClassName, labelCla
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
+      // CompactSelect renders the nested color menu in a body portal.
+      if (e.target instanceof Element && e.target.closest('.accent-color-menu')) return;
       if (ref.current && !ref.current.contains(e.target as Node)) closeMenu();
     };
     const onKey = (e: KeyboardEvent) => {
@@ -286,6 +290,7 @@ export default function AppearanceToggle({ className, triggerClassName, labelCla
           <div className="appearance-settings">
             <div className="appearance-sec-label" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <LangToggle variant="menu" showLabel />
+              <AccentColorSelect />
               <BoolToggle
                 value={petVisible}
                 onChange={setPetVisible}

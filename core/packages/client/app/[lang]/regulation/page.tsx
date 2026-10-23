@@ -58,6 +58,14 @@ export default function RegulationHub() {
           <ArrowRight size={20} className="reg-hub-news-arrow" />
         </Link>
 
+        <Link href="/regulation/translation" prefetch={false} className="reg-hub-news">
+          <span className="reg-hub-news-icon"><ScrollText size={22} /></span>
+          <span className="reg-hub-news-body">
+            <span className="reg-hub-news-title">{t('英中翻译参考', 'English–Chinese translation reference')}</span>
+          </span>
+          <ArrowRight size={20} className="reg-hub-news-arrow" />
+        </Link>
+
         {[
           { kind: 'incidents', title: { zh: '意外事件', en: 'Incidents' } },
           { kind: 'disciplinary', title: { zh: '纪律处分', en: 'Disciplinary' } },

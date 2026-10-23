@@ -12,7 +12,7 @@ import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'r
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { parseAsBoolean, useQueryState } from 'nuqs';
-import { ArrowRight, Blocks, Crown, Download, Heart, Layers3, Lock, LockOpen, LogIn, User, type LucideIcon } from '@app-foundation/icons/lucide';
+import { ArrowRight, Crown, Download, Heart, Lock, LockOpen, LogIn, User, type LucideIcon } from '@app-foundation/icons/lucide';
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortable';
 import Link from '@/components/AppLink';
@@ -28,6 +28,7 @@ import { fmtVipId } from '@/lib/membership-format';
 import LandingSearch from '@/components/LandingSearch';
 import ContactDetails from '@/components/ContactDetails';
 import PersonUpcomingComps from '@/components/persons/sections/PersonUpcomingComps';
+import { useCompFollows } from '@/components/CompFollow';
 import SearchInput from '@/components/SearchInput';
 import LazyVisible from '@/components/LazyVisible';
 import { ClientLoadStatus } from '@/components/StartupStatus';
@@ -132,6 +133,11 @@ export default function LandingPage() {
 
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const user = useAuthUser();
+  const compFollows = useCompFollows();
+  const personalKey = user ? `${user.uid ?? ''}:${user.wcaId}` : null;
+  const [personalReadyKey, setPersonalReadyKey] = useState<string | null>(null);
+  const onPersonalReady = useCallback(() => setPersonalReadyKey(personalKey), [personalKey, setPersonalReadyKey]);
+  const personalLoading = Boolean(user && (!compFollows.loaded || personalReadyKey !== personalKey));
   const [guideOpen, setGuideOpen] = useState(false);
   const [replayGuide, setReplayGuide] = useQueryState('guide', parseAsBoolean.withDefault(false));
   useEffect(() => {
@@ -153,7 +159,7 @@ export default function LandingPage() {
     void markOnboardingGuided(user);
     if (replayGuide) void setReplayGuide(null);
   }, [user, replayGuide, setReplayGuide]);
-  const [featuredNotice, setFeaturedNotice] = useRetainedState<PageNotice | null>('home:featuredNotice', null);
+  const [featuredNotices, setFeaturedNotices] = useRetainedState<PageNotice[]>('home:featuredNotices', []);
   const [publicMembers, setPublicMembers] = useRetainedState<PublicMember[] | null>('home:publicMembers', null);
   const [layoutReady, setLayoutReady] = useRetainedState('home:layoutReady', { notice: false, members: false, order: false });
   const [visibleWidgets, setVisibleWidgets] = useRetainedState<Record<string, boolean>>('home:visibleWidgets', {});
@@ -171,22 +177,22 @@ export default function LandingPage() {
 
   useEffect(() => {
     let active = true;
-    let managedNotice: PageNotice | null = null;
+    let managedNotices: PageNotice[] = [];
     const endsAt = Date.parse(HISTORY_HOME_FEATURE.endsAt!);
     const refresh = () => {
-      if (active) setFeaturedNotice(Date.now() < endsAt ? HISTORY_HOME_FEATURE : managedNotice);
+      if (active) setFeaturedNotices(Date.now() < endsAt ? [HISTORY_HOME_FEATURE, ...managedNotices] : managedNotices);
     };
     if (Date.now() < endsAt) refresh();
     const expiryTimer = Date.now() < endsAt ? window.setTimeout(refresh, endsAt - Date.now()) : undefined;
     fetchPageNotices()
       .then((rows) => {
-        managedNotice = rows.find((row) => row.placement === 'home_featured' && row.path === '/') ?? null;
+        managedNotices = rows.filter((row) => row.placement === 'home_featured' && row.path === '/');
         refresh();
       })
       .catch(() => { /* 焦点新闻不可阻断首页 */ })
       .finally(() => { if (active) setLayoutReady(previous => ({ ...previous, notice: true })); });
     return () => { active = false; window.clearTimeout(expiryTimer); };
-  }, [contentRefreshKey, setFeaturedNotice, setLayoutReady]);
+  }, [contentRefreshKey, setFeaturedNotices, setLayoutReady]);
 
   useEffect(() => {
     let active = true;
@@ -457,7 +463,10 @@ export default function LandingPage() {
   </div>;
 
   return (
-    <div className="landing-page">
+    <>
+    {personalLoading && <ClientLoadStatus />}
+    {/* Keep the data loader mounted while the first personalized layout settles. */}
+    <div className="landing-page" style={personalLoading ? { display: 'none' } : undefined}>
       <div className="landing-auth">
         {isAdmin && <Tooltip content={tr({ zh: '下载', en: 'Download' })}>
           {(tip) => <Link {...tip} href="/download" className="landing-auth-icon"
@@ -502,12 +511,15 @@ export default function LandingPage() {
         <span className="brand-name">{t('brand')}</span>
       </div>
       <LandingSearch cards={searchCards} lang={lang} />
-      {user?.wcaId && <div className="landing-personal-comps">
-        <PersonUpcomingComps wcaId={user.wcaId} isZh={lang === 'zh'}
-          title={tr({ zh: '我的比赛', en: 'My competitions' })}
-          emptyMessage={tr({ zh: '暂无即将参加的比赛', en: 'No upcoming competitions' })} />
+      {user && compFollows.loaded && <div className="landing-personal-comps">
+        <PersonUpcomingComps key={personalKey} wcaId={user.wcaId || undefined} isZh={lang === 'zh'}
+          onReady={onPersonalReady}
+          compactDetails
+          title={null}
+          followedIds={compFollows.follows} />
       </div>}
-      {featuredNotice && featuredNotice.href && (() => {
+      {featuredNotices.map((featuredNotice) => {
+        if (!featuredNotice.href) return null;
         const FeaturedIcon = iconFor(featuredNotice);
         const isHistoryFeature = featuredNotice === HISTORY_HOME_FEATURE;
         const featureClass = `landing-featured-news${isHistoryFeature ? ' landing-history-feature' : ''}`;
@@ -532,25 +544,28 @@ export default function LandingPage() {
         // allow-nested-link: internal AppLink and external anchor are mutually exclusive branches, with no links inside inner.
         return featuredNotice.href.startsWith('/') && !featuredNotice.href.startsWith('//')
           ? (
-              <Link href={featuredNotice.href} className={featureClass} style={style} prefetch={false}>
+              <Link key={featuredNotice.id} href={featuredNotice.href} className={featureClass} style={style} prefetch={false}>
                 {inner}
               </Link>
             )
           : (
-              <a href={featuredNotice.href} className={featureClass} style={style}
+              // allow-nested-link: this anchor is the mutually exclusive external branch; the internal Link above is already closed.
+              <a key={featuredNotice.id} href={featuredNotice.href} className={featureClass} style={style}
                 target="_blank" rel="noopener noreferrer">
                 {inner}
               </a>
             );
-      })()}
+      })}
 
       <div className="landing-training-grid">
-        <Link href="/alg/3x3/zbll/run" className="landing-card" data-site-surface="panel" prefetch={false}>
-          <LandingCardContent label={tr({ zh: 'ZBLL 训练', en: 'ZBLL Training' })} Icon={Layers3} />
-        </Link>
-        <Link href="/alg/3x3/lsll/run" className="landing-card" data-site-surface="panel" prefetch={false}>
-          <LandingCardContent label={tr({ zh: 'LSLL 训练', en: 'LSLL Training' })} Icon={Blocks} />
-        </Link>
+        <div className="landing-training-links">
+          <Link href="/alg/3x3/zbll/run" className="landing-card" data-site-surface="panel" prefetch={false}>
+            <LandingCardContent label={tr({ zh: 'ZBLL 训练', en: 'ZBLL Training' })} />
+          </Link>
+          <Link href="/alg/3x3/lsll/run" className="landing-card" data-site-surface="panel" prefetch={false}>
+            <LandingCardContent label={tr({ zh: 'LSLL 训练', en: 'LSLL Training' })} />
+          </Link>
+        </div>
         <div className="landing-pinned-recons" aria-busy={pinnedRecons === null && !pinError}>
           {pinnedRecons === null && !pinError
             ? <><div className="landing-widget-skeleton" aria-hidden="true" /><div className="landing-widget-skeleton" aria-hidden="true" /></>
@@ -578,7 +593,7 @@ export default function LandingPage() {
       </LazyVisible>
 
       <LazyVisible className="landing-widget landing-widget--comps" minHeight={0} rootMargin="120px 0px" initiallyVisible={visibleWidgets.comps} onVisible={() => rememberWidget('comps')}>
-        <OngoingComps lang={lang} />
+        <OngoingComps lang={lang} compFollows={compFollows} />
       </LazyVisible>
 
       <LazyVisible className="landing-widget landing-widget--forum" minHeight={0} rootMargin="120px 0px" initiallyVisible={visibleWidgets.forum} onVisible={() => rememberWidget('forum')}>
@@ -664,7 +679,8 @@ export default function LandingPage() {
           />
         </div>
       )}
-      <OnboardingGuideModal open={guideOpen} onClose={closeGuide} />
+      <OnboardingGuideModal open={guideOpen && !personalLoading} onClose={closeGuide} />
     </div>
+    </>
   );
 }

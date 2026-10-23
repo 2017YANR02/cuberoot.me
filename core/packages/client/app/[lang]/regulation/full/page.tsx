@@ -133,6 +133,10 @@ export default function RegulationFull() {
           </p>
         </header>
 
+        <Link href="/regulation/translation" prefetch={false} className="reg-fulllink">
+          {t('英中翻译参考与 Markdown 对照表', 'Translation reference and parallel Markdown')}
+        </Link>
+
         <section className="reg-doc-notes">
           {doc.notes.map((n, i) => {
             const note = tr(n);

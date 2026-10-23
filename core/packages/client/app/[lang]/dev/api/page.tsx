@@ -1019,6 +1019,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'content', m: 'GET', p: '/v1/page-notices', g: 'public', zh: '每页顶部通知条(enabled)', en: 'Per-page notice bars (enabled)' },
   { d: 'content', m: 'GET', p: '/v1/page-notices/manage', g: 'admin', zh: '全部通知(含停用)', en: 'All notices incl. disabled' },
   { d: 'content', m: 'PUT', p: '/v1/page-notices', g: 'admin', zh: '按路径新增/编辑通知', en: 'Upsert notice by path' },
+  { d: 'content', m: 'PUT', p: '/v1/page-notices/home-feature', g: 'admin', zh: '独立新增/编辑首页置顶内容', en: 'Upsert an independent homepage feature' },
   { d: 'content', m: 'DELETE', p: '/v1/page-notices/:id', g: 'admin', zh: '删通知', en: 'Delete notice' },
   { d: 'content', m: 'GET', p: '/v1/pattern-examples', g: 'public', zh: '图案搜索示例预设', en: 'Pattern-search example presets' },
   { d: 'content', m: 'POST', p: '/v1/pattern-examples', g: 'admin', zh: '新增示例预设', en: 'Add example preset' },

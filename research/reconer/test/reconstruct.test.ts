@@ -101,9 +101,16 @@ describe("greedyReverse — probability-only (no grids)", () => {
 describe("compareMoves", () => {
   it("counts face-level and full-move accuracy, honoring length mismatch", () => {
     const r = compareMoves(["U", "R'", "F2"], ["U", "R", "F2", "D"]);
-    expect(r.total).toBe(3); // 第 4 段 pred 缺失, 不计
+    expect(r.total).toBe(4); // 漏步同样进入分母
     expect(r.fullCorrect).toBe(2); // U, F2
     expect(r.faceCorrect).toBe(3); // U, R'~R, F2 面全对
+  });
+
+  it("counts extra trailing predictions in the denominator", () => {
+    const r = compareMoves(["U", "R", "F"], ["U", "R"]);
+    expect(r.total).toBe(3);
+    expect(r.fullCorrect).toBe(2);
+    expect(r.faceCorrect).toBe(2);
   });
 });
 

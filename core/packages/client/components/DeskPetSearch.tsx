@@ -5,14 +5,15 @@
 // in a vertical toolbar on the left. Lazy-loaded by DeskPet so
 // the site-search data layer only loads when the user actually opens search.
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { cloneElement, isValidElement, useEffect, useLayoutEffect, useRef, useState, type ButtonHTMLAttributes } from 'react';
 import { NavigationShell, type NavigationItem, type NavigationLinkProps } from '@app-foundation/navigation-ui';
 import '@app-foundation/navigation-ui/navigation.css';
-import { Check, Lock, LockOpen, ArrowLeft, ArrowRight, Pencil, Trash2, RotateCcw, Maximize2, Coffee, Sun, Heart, Home, Sparkles, Shuffle, MessageSquarePlus, Music } from '@app-foundation/icons/lucide';
+import { Check, Lock, LockOpen, ArrowLeft, ArrowRight, Pencil, Trash2, RotateCcw, Maximize2, Coffee, Sun, Heart, Home, Sparkles, Shuffle, MessageSquarePlus, Music, Settings } from '@app-foundation/icons/lucide';
 import type { DeskPetEntry } from '@cuberoot/shared/deskpet';
 import { CompactSelect } from '@/components/CompactSelect';
 import BoolToggle from '@/components/BoolToggle';
 import { useDeskPetVisible } from '@/hooks/useDeskPetVisible';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import HomeLink from '@/components/HomeLink';
 import LandingSearch from '@/components/LandingSearch';
 import HeaderToggles from '@/components/HeaderToggles';
@@ -29,7 +30,7 @@ const CSS = `
 .deskpet-search-backdrop{position:fixed;left:0;right:0;top:0;height:100dvh;z-index:100010;
   background:color-mix(in srgb, var(--background) 88%, transparent);
   backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
-.deskpet-search-backdrop:has(.deskpet-navigation[data-mobile-open='true'],.landing-search-panel,.appearance-menu){z-index:100025;}
+.deskpet-search-backdrop:has(.landing-search-panel,.appearance-menu){z-index:100025;}
 .deskpet-navigation.af-navigation{--af-nav-expanded:144px;--af-nav-header-height:0px;
   --af-nav-sidebar-bg:transparent;--af-nav-content-bg:transparent;--af-nav-text:var(--foreground);
   --af-nav-active:var(--accent);--af-nav-hover:color-mix(in srgb,var(--foreground) 9%,transparent);
@@ -66,9 +67,21 @@ const CSS = `
 @media (max-width:767px){
   .deskpet-navigation.af-navigation{--af-nav-header-height:48px;}
   .deskpet-navigation-header{display:flex;align-items:center;height:48px;padding:0 8px;}
-  .deskpet-navigation .deskpet-search-main{height:100%;padding:12px 8px max(64px,var(--sab,0px));}
-  .deskpet-navigation .af-nav-sidebar{height:calc(100% - var(--af-nav-header-height));}
-  .deskpet-navigation .appearance-menu[data-backgrounds]{--af-nav-width:var(--af-nav-expanded);}
+  .deskpet-navigation .af-nav-mobile-toggle{width:44px;height:44px;}
+  .deskpet-navigation .af-nav-mobile-toggle[aria-expanded='true']{background:var(--af-nav-selected);color:var(--af-nav-active);}
+  .deskpet-navigation .deskpet-search-main{height:100%;box-sizing:border-box;padding:12px 8px max(12px,var(--sab,0px));}
+  .deskpet-navigation .af-nav-sidebar{position:absolute;top:4px;left:8px;bottom:auto;
+    width:min(360px,calc(100% - 16px));height:auto;max-height:calc(100% - 80px);padding:8px;
+    border:1px solid var(--border-default);border-radius:16px;background:var(--glass-popover-bg,var(--popover));
+    overscroll-behavior:contain;}
+  .deskpet-navigation .af-nav-menu{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;}
+  .deskpet-navigation .af-nav-row:last-child{grid-column:1 / -1;}
+  /* The search overlay already dims the page; do not dim the toolbar a second time. */
+  .deskpet-navigation .af-nav-backdrop{position:absolute;inset:0;background:transparent;}
+  .deskpet-navigation .af-nav-link{height:48px;margin:0;padding:0 12px;font-size:14px;gap:10px;}
+  .deskpet-navigation .af-nav-link[aria-expanded='true']{background:var(--af-nav-selected);}
+  .deskpet-navigation .appearance-menu[data-backgrounds]{top:56px;left:8px;right:8px;
+    width:auto;max-width:none;max-height:calc(100% - 64px);}
 }
 
 /* anchored-panel: clamped (CompactSelect body portal and visualViewport bounds) */
@@ -93,9 +106,8 @@ const CSS = `
 .deskpet-character-check{flex:none;margin-left:2px;}
 .deskpet-character-settings,.deskpet-character-gallery{margin-top:4px;padding-top:4px;border-top:1px solid var(--border-default);}
 .deskpet-character-settings{display:flex;flex-direction:column;gap:2px;}
-.deskpet-character-setting{display:flex;align-items:center;gap:12px;padding:6px 10px;font-size:13px;}
+.deskpet-character-setting{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:6px 10px;font-size:13px;}
 .deskpet-character-settings .bool-toggle{width:100%;justify-content:space-between;}
-.deskpet-character-hint{margin:0;padding:0 10px 6px;font-size:12px;line-height:1.5;color:var(--muted-foreground);}
 .deskpet-character-sizes{display:flex;gap:2px;}
 .deskpet-character-menu .deskpet-character-size{width:auto;padding:6px 10px;white-space:nowrap;}
 .deskpet-character-random .pill-toggle{flex:none;}
@@ -141,6 +153,7 @@ export default function DeskPetSearch({
   onOpenPetHome: () => void;
 }) {
   const [petVisible, setPetVisible] = useDeskPetVisible();
+  const mobile = useIsMobile(767);
   const searchCards = SEARCH_CARDS.filter((card) => isLandingSearchCardVisible(card, isAdmin()));
   const backdropRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -226,50 +239,42 @@ export default function DeskPetSearch({
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
-    // iOS's visualViewport bottom lands ABOVE the form accessory bar (the
-    // dev.cuberoot.me / arrows / Done strip), and iOS exposes no keyboard-inset
-    // to locate it. When the keyboard is up, push the backdrop bottom past
-    // vv-bottom by a fixed amount so the box hugs that strip — the band between
-    // vv-bottom and the strip is actually visible, so the box stays on-screen.
-    const IOS_ACCESSORY = 30; // measured: vv-bottom sits ~30px above the iOS form accessory bar
     const apply = () => {
       const b = backdropRef.current;
       if (!b) return;
-      const kbOpen = window.innerHeight - vv.height - vv.offsetTop > 100;
-      b.style.height = `${vv.height + (kbOpen ? IOS_ACCESSORY : 0)}px`;
-      b.style.top = `${vv.offsetTop}px`;
+      const height = `${vv.height}px`, top = `${vv.offsetTop}px`;
+      const width = `${vv.width}px`, left = `${vv.offsetLeft}px`;
+      if (b.style.height !== height) b.style.height = height;
+      if (b.style.top !== top) b.style.top = top;
+      if (b.style.width !== width) b.style.width = width;
+      if (b.style.left !== left) b.style.left = left;
     };
     apply();
-    // The keyboard animates in over a few hundred ms (and the URL bar may shift),
-    // so visualViewport settles late. Re-apply a few times so the box ends up
-    // flush against the keyboard instead of stranded mid-screen.
-    const retries = [60, 150, 300, 500].map(d => setTimeout(apply, d));
     vv.addEventListener('resize', apply);
     vv.addEventListener('scroll', apply);
     return () => {
-      retries.forEach(clearTimeout);
       vv.removeEventListener('resize', apply);
       vv.removeEventListener('scroll', apply);
     };
   }, []);
 
   const navigation: NavigationItem[] = [
-    { id: 'home', href: '/', label: t('主页', 'Home'), icon: <Home /> },
-    { id: 'settings', href: '#settings', label: t('设置', 'Settings'), icon: null },
-    { id: 'account', href: '/account', label: t('我的', 'Account'), icon: null },
-    { id: 'donate', href: '#donate', label: t('赞助', 'Donate'), icon: <Heart className="heart-icon" /> },
-    { id: 'feedback', href: '#feedback', label: t('反馈', 'Feedback'), icon: <MessageSquarePlus />, badge: fbUnread || undefined },
-    { id: 'music', href: '#music', label: t('音乐', 'Music'), icon: <Music /> },
+    { id: 'settings', href: '#settings', label: t('外观', 'Appearance'), icon: null },
     { id: 'pet', href: '#pet', label: t('桌宠', 'Pet'), icon: currentCharacter && <img src={currentCharacter.thumb} alt="" className="deskpet-toolbar-thumb" style={{ transform: `scale(${currentCharacter.thumbScale ?? 1})` }} /> },
+    { id: 'music', href: '#music', label: t('音乐', 'Music'), icon: <Music /> },
+    { id: 'home', href: '/', label: t('主页', 'Home'), icon: <Home /> },
+    { id: 'account', href: '/account', label: t('我的', 'Account'), icon: null },
+    { id: 'feedback', href: '#feedback', label: t('反馈', 'Feedback'), icon: <MessageSquarePlus />, badge: fbUnread || undefined },
+    { id: 'donate', href: '#donate', label: t('赞助', 'Donate'), icon: <Heart className="heart-icon" /> },
   ];
   const renderNavigationItem = ({ href, ...props }: NavigationLinkProps) => {
     if (href === '/') return <HomeLink {...props} prefetch={false} onClick={() => { props.onClick?.(); onClose(); }} />;
-    if (href === '#settings') return <HeaderToggles triggerClassName={props.className} labelClassName="af-nav-label" showLabels />;
+    if (href === '#settings') return <HeaderToggles triggerClassName={props.className} triggerLabel={t('外观', 'Appearance')} labelClassName="af-nav-label" showLabels />;
     if (href === '/account') return <WcaAuth linkClassName={props.className} labelClassName="af-nav-label" onNavigate={() => { props.onClick?.(); onClose(); }} showLabel />;
     if (href === '#pet') return <CompactSelect
           openOnHover
           unstyledTrigger
-          side="right"
+          side={mobile ? 'vertical' : 'right'}
           className="deskpet-character-select"
           triggerClassName={`${props.className} char-btn`}
           popupClassName="deskpet-character-menu"
@@ -325,10 +330,10 @@ export default function DeskPetSearch({
                 <BoolToggle className="deskpet-character-setting"
                   value={petVisible} onChange={setPetVisible}
                   label={tr({ zh: '桌宠', en: 'Desk pet' })} />
-                <p className="deskpet-character-hint">{tr({ zh: '关闭后可在顶部的外观-桌宠再次开启', en: 'After hiding your pet, turn it back on from Appearance → Desk pet at the top.' })}</p>
                 <div className="deskpet-character-setting">
                   <span className="deskpet-character-option">
                     <span className="deskpet-character-thumb" aria-hidden><Maximize2 size={18} /></span>
+                    <span>{tr({ zh: '大小', en: 'Size' })}</span>
                   </span>
                   <div className="deskpet-character-sizes" role="group" aria-label={tr({ zh: '桌宠大小', en: 'Pet size' })}>
                     {([
@@ -391,8 +396,16 @@ export default function DeskPetSearch({
       <style>{CSS}</style>
       <NavigationShell className="deskpet-navigation" mainClassName="deskpet-search-main" contentAs="div"
         items={navigation} renderLink={renderNavigationItem}
-        labels={{ navigation: t('桌宠工具栏', 'Pet toolbar'), show: t('展开侧栏', 'Expand sidebar'), hide: t('收起侧栏', 'Collapse sidebar'), openMobile: t('打开工具栏', 'Open toolbar'), closeMobile: t('关闭工具栏', 'Close toolbar') }}
-        header={toggle => <div className="deskpet-navigation-header">{toggle}</div>}>
+        labels={{ navigation: t('桌宠工具栏', 'Pet toolbar'), show: t('展开侧栏', 'Expand sidebar'), hide: t('收起侧栏', 'Collapse sidebar'), openMobile: t('设置', 'Settings'), closeMobile: t('关闭设置', 'Close settings') }}
+        header={toggle => <div className="deskpet-navigation-header">
+          {isValidElement<ButtonHTMLAttributes<HTMLButtonElement>>(toggle) ? cloneElement(toggle, {
+            children: <Settings size={22} aria-hidden="true" />,
+            onClick: event => {
+              if (!toggle.props['aria-expanded']) boxRef.current?.querySelector<HTMLInputElement>('input')?.blur();
+              toggle.props.onClick?.(event);
+            },
+          }) : toggle}
+        </div>}>
         <div className="deskpet-search-box" ref={boxRef}>
           <LandingSearch cards={searchCards} lang={lang} />
         </div>

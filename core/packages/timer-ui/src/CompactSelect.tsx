@@ -3,16 +3,15 @@
 import { ChevronDown } from 'lucide-react';
 import {
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
-  type CSSProperties,
   type ReactNode,
   type RefObject,
 } from 'react';
 import { createPortal } from 'react-dom';
 
 import { usePopoverDismiss } from './usePopoverDismiss';
+import { POPOVER_GAP as PANEL_GAP, usePopoverPosition } from './usePopoverPosition';
 
 export interface CompactSelectItem<T extends string | number> {
   value: T;
@@ -60,16 +59,6 @@ export interface CompactSelectProps<T extends string | number> {
   onOpenChange?: (open: boolean) => void;
 }
 
-interface PanelGeometry {
-  left: number;
-  maxHeight: number;
-  maxWidth: number;
-  top: number;
-}
-
-const VIEWPORT_MARGIN = 8;
-const PANEL_GAP = 6;
-
 /**
  * Runtime-agnostic compact single-choice menu. The Web compatibility export
  * and timer-ui consumers share this exact DOM, focus, dismiss, and visual
@@ -111,7 +100,6 @@ export function CompactSelect<T extends string | number>({
     if (controlledOpen === undefined) setInternalOpen(next);
     onOpenChange?.(value);
   };
-  const [geometry, setGeometry] = useState<PanelGeometry | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const previousOpenRef = useRef(open);
@@ -168,90 +156,10 @@ export function CompactSelect<T extends string | number>({
     };
   }, [open, dismissOnMouseLeave, side]);
 
-  useLayoutEffect(() => {
-    if (!open) {
-      setGeometry(null);
-      return;
-    }
-    // Dialog filters create a containing block and can clip fixed descendants.
-    // The top layer preserves viewport positioning while keeping modal focus.
-    const popup = panelRef.current;
-    if (popup?.hasAttribute('popover') && typeof popup.showPopover === 'function' && !popup.matches(':popover-open')) {
-      popup.showPopover();
-    }
-    const positionPanel = () => {
-      const trigger = triggerRef.current;
-      const panel = panelRef.current;
-      if (!trigger || !panel) return;
-
-      const viewport = window.visualViewport;
-      const viewportLeft = viewport?.offsetLeft ?? 0;
-      const viewportTop = viewport?.offsetTop ?? 0;
-      const viewportWidth = viewport?.width ?? document.documentElement.clientWidth;
-      const viewportHeight = viewport?.height ?? document.documentElement.clientHeight;
-      const safeLeft = viewportLeft + VIEWPORT_MARGIN;
-      const safeRight = viewportLeft + viewportWidth - VIEWPORT_MARGIN;
-      const safeTop = viewportTop + VIEWPORT_MARGIN;
-      const safeBottom = Math.max(
-        safeTop,
-        viewportTop + viewportHeight - VIEWPORT_MARGIN - Math.max(0, viewportBottomInset),
-      );
-      const anchor = (contentAnchorRef?.current ?? trigger).getBoundingClientRect();
-      const panelRect = panel.getBoundingClientRect();
-      const optionContent = panel.querySelector('.compact-select-option')?.firstElementChild;
-      const contentInset = contentAnchorRef?.current && optionContent
-        ? optionContent.getBoundingClientRect().left - panelRect.left
-        : 0;
-      const rightLeft = Math.max(safeLeft, Math.min(anchor.right + PANEL_GAP, safeRight));
-      const safeWidth = Math.max(0, safeRight - (side === 'right' ? rightLeft : safeLeft));
-      const naturalWidth = panel.scrollWidth || panelRect.width || anchor.width;
-      const desiredWidth = Math.min(naturalWidth, safeWidth);
-      const left = side === 'right' ? rightLeft : Math.min(
-        Math.max(align === 'center' ? anchor.left + (anchor.width - desiredWidth) / 2 : anchor.left - contentInset, safeLeft),
-        Math.max(safeLeft, safeRight - desiredWidth),
-      );
-      const belowTop = anchor.bottom + PANEL_GAP;
-      const belowSpace = Math.max(0, safeBottom - belowTop);
-      const aboveSpace = Math.max(0, anchor.top - PANEL_GAP - safeTop);
-      const panelCss = getComputedStyle(panel);
-      const borderHeight = (parseFloat(panelCss.borderTopWidth) || 0) + (parseFloat(panelCss.borderBottomWidth) || 0);
-      // scrollHeight includes padding, but the border-box height also needs both borders.
-      const desiredHeight = panel.scrollHeight ? panel.scrollHeight + borderHeight : panelRect.height;
-      const placeBelow = belowSpace >= Math.min(desiredHeight, aboveSpace);
-      const availableHeight = side === 'right' ? safeBottom - safeTop : placeBelow ? belowSpace : aboveSpace;
-      const maxHeight = Math.min(Math.max(0, desiredHeight), availableHeight);
-      const top = side === 'right'
-        ? Math.max(safeTop, Math.min(anchor.top, safeBottom - maxHeight))
-        : placeBelow
-        ? Math.max(safeTop, belowTop)
-        : Math.max(safeTop, anchor.top - PANEL_GAP - maxHeight);
-      setGeometry(previous => previous?.left === left && previous.top === top
-        && previous.maxHeight === maxHeight && previous.maxWidth === safeWidth
-        ? previous : { left, maxHeight, maxWidth: safeWidth, top });
-    };
-
-    positionPanel();
-    const frame = requestAnimationFrame(positionPanel);
-    window.addEventListener('resize', positionPanel);
-    window.addEventListener('scroll', positionPanel, true);
-    window.visualViewport?.addEventListener('resize', positionPanel);
-    window.visualViewport?.addEventListener('scroll', positionPanel);
-    return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener('resize', positionPanel);
-      window.removeEventListener('scroll', positionPanel, true);
-      window.visualViewport?.removeEventListener('resize', positionPanel);
-      window.visualViewport?.removeEventListener('scroll', positionPanel);
-    };
-  }, [align, side, contentAnchorRef, items.length, open, viewportBottomInset, hasPanelContent]);
-
-  const panelStyle = geometry ? {
-    left: geometry.left,
-    maxHeight: geometry.maxHeight,
-    maxWidth: geometry.maxWidth,
-    top: geometry.top,
-    visibility: 'visible',
-  } satisfies CSSProperties : undefined;
+  const panelStyle = usePopoverPosition({
+    open, triggerRef, panelRef, contentAnchorRef, align, side, viewportBottomInset,
+    contentKey: String(items.length) + ':' + hasPanelContent,
+  });
 
   return (
     <div

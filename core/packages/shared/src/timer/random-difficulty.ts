@@ -26,6 +26,8 @@ export interface TimerRandomDifficultySettings {
   genDiffColors: string;
   /** -1 means the best eligible slot. */
   genDiffSlot: number;
+  /** Pure EO: omitted / best preserves the existing colour-based axis selection. */
+  genDiffEoAxis?: 'best' | 0 | 1 | 2;
   genDiffSteps: number[];
 }
 
@@ -35,6 +37,7 @@ export const DEFAULT_TIMER_RANDOM_DIFFICULTY_SETTINGS: TimerRandomDifficultySett
   genDiffStage: 'cross',
   genDiffColors: 'BGORWY',
   genDiffSlot: TIMER_RANDOM_DIFFICULTY_BEST_SLOT,
+  genDiffEoAxis: 'best',
   genDiffSteps: [],
 };
 
@@ -68,6 +71,8 @@ export function normalizeTimerRandomDifficultySettings(
       ? value!.genDiffSlot!
       : TIMER_RANDOM_DIFFICULTY_BEST_SLOT,
     genDiffSteps: steps,
+    genDiffEoAxis: value?.genDiffEoAxis === 0 || value?.genDiffEoAxis === 1 || value?.genDiffEoAxis === 2
+      ? value.genDiffEoAxis : 'best',
   };
 }
 
@@ -111,6 +116,9 @@ export function trainerSpecOf(
     stage: settings.genDiffStage,
     colors: settings.genDiffColors,
     slot: caps.slots ? (fixedSlot ? settings.genDiffSlot : 'best') : 0,
+    ...(settings.genDiffVariant === 'eoline' && settings.genDiffStage === 'eo'
+      && settings.genDiffEoAxis !== 'best' && settings.genDiffEoAxis !== undefined
+      ? { eoAxis: settings.genDiffEoAxis } : {}),
     lo,
     hi,
   };

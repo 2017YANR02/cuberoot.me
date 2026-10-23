@@ -1,7 +1,10 @@
+import { lllFivePolicy, validateLllFiveReview } from './lll-five-policy.mts';
+import { pllPolicy, validatePllReview } from './pll-sample-policy.mts';
 import {beginStatsRun, validateStatsRun} from './stats-resume-review.mts';
 import {cornerExecutable, cornerResearchPolicy} from './corner-policy.mts';
 import {readCornerSession} from './corner-session.mts';
 import { currentPolicy, validateCurrentReview } from './opt10-current-benchmark-policy.mts';
+import { zbllMultisolutionPolicy, validateZbllMultisolutionReview } from './zbll-multisolution-policy.mts';
 import { nxPolicy as opt8NativePolicy, validateNxReview as validateOpt8NativeReview } from './opt8-native-policy.mts';
 /** Backend-budgeted research. Shares the previous experiment's swap stop record. */
 import { localOpt8Scope, validateLocalOpt8Review } from './opt8-local-policy.mts';
@@ -288,6 +291,12 @@ if (env.CUBEOPT_BACKEND === 'corner' || executable === cornerExecutable)
   return cornerResearchPolicy(label, executable, args, env);
 if (env.CUBEOPT_OPT10_CURRENT_REVIEW !== undefined)
   return currentPolicy({label,executable,args,env});
+if (env.CUBEOPT_PLL_REVIEW !== undefined)
+  return pllPolicy({label,executable,args,env});
+if (env.CUBEOPT_LLL_FIVE_REVIEW !== undefined)
+  return lllFivePolicy({label,executable,args,env});
+if (env.CUBEOPT_ZBLL_MULTISOLUTION_REVIEW !== undefined)
+  return zbllMultisolutionPolicy({label,executable,args,env});
 if (env.CUBEOPT_OPT8_NATIVE_REVIEW !== undefined)
   return opt8NativePolicy({label,executable,args,env});
 if (env.CUBEOPT_NXOPT_REVIEW !== undefined)
@@ -544,10 +553,13 @@ const dualWasmCandidate = 'dualWasmCandidate' in policy && policy.dualWasmCandid
 const browserBenchmark = 'browserBenchmark' in policy && policy.browserBenchmark === true;
 const opt8NativeBenchmark = 'opt8NativeBenchmark' in policy && policy.opt8NativeBenchmark === true;
 const opt10CurrentBenchmark = 'opt10CurrentBenchmark' in policy && policy.opt10CurrentBenchmark === true;
+const lllFive = 'lllFive' in policy && policy.lllFive === true;
+const pllSample = 'pllSample' in policy && policy.pllSample === true;
+const zbllMultisolution = pllSample || lllFive || 'zbllMultisolution' in policy && policy.zbllMultisolution === true;
 const nxoptBenchmark = 'nxoptBenchmark' in policy && policy.nxoptBenchmark === true;
 const dualScopeStopPath = 'scopeStopPath' in policy ? policy.scopeStopPath : undefined;
-if ((dualWasmCandidate || browserBenchmark || opt10CurrentBenchmark) && typeof dualScopeStopPath !== 'string') throw Error('Missing fixed candidate scope stop path');
-const validateBenchmarkReview = opt10CurrentBenchmark ? validateCurrentReview : opt8NativeBenchmark ? validateOpt8NativeReview : nxoptBenchmark ? validateNxReview : browserBenchmark ? validateBrowserReview : dualWasmCandidate ? validateDualCandidateReview : wasmCandidate ? validateCandidateReview : originalResume ? validateResumeReview : validateOpenReview;
+if ((dualWasmCandidate || browserBenchmark || opt10CurrentBenchmark || zbllMultisolution) && typeof dualScopeStopPath !== 'string') throw Error('Missing fixed candidate scope stop path');
+const validateBenchmarkReview = pllSample ? validatePllReview : lllFive ? validateLllFiveReview : zbllMultisolution ? validateZbllMultisolutionReview : opt10CurrentBenchmark ? validateCurrentReview : opt8NativeBenchmark ? validateOpt8NativeReview : nxoptBenchmark ? validateNxReview : browserBenchmark ? validateBrowserReview : dualWasmCandidate ? validateDualCandidateReview : wasmCandidate ? validateCandidateReview : originalResume ? validateResumeReview : validateOpenReview;
 let openBenchmarkReceipt: any;
 const { entry, mode, backend, variant, h, tablePath, measureNativeRss, rssLimit, deadlineMs } = policy;
 // Only the fixed, reviewed candidate policy may select a different startup reserve.
@@ -909,7 +921,7 @@ function stop(reason: string, protection = false, details?: unknown) {
         const archive = resolve(output, `multithread-stop-${digest(previous)}.json`);
         if (!existsSync(archive)) writeFileSync(archive, previous, {flag:'wx'});
       }
-      atomic(cornerSession ? cornerSession.stopPath : statsResume ? statsResume.stopPath : zbllResume ? zbllResumeStopPath : dualWasmCandidate || browserBenchmark || nxoptBenchmark || opt8NativeBenchmark || opt10CurrentBenchmark ? dualScopeStopPath as string : wasmCandidate ? candidateStopPath : originalResume ? resumeStopPath : openBenchmark ? openStopPath : officialReviewReceipt ? officialPaths.stop : multithreadReviewReceipt ? multithreadPaths.stop : opt10ReviewReceipt || zbll ? opt10ReviewedStopPath : reviewReceipt ? reviewedStopPath : ownRecord,
+      atomic(cornerSession ? cornerSession.stopPath : statsResume ? statsResume.stopPath : zbllResume ? zbllResumeStopPath : dualWasmCandidate || browserBenchmark || nxoptBenchmark || opt8NativeBenchmark || opt10CurrentBenchmark || zbllMultisolution ? dualScopeStopPath as string : wasmCandidate ? candidateStopPath : originalResume ? resumeStopPath : openBenchmark ? openStopPath : officialReviewReceipt ? officialPaths.stop : multithreadReviewReceipt ? multithreadPaths.stop : opt10ReviewReceipt || zbll ? opt10ReviewedStopPath : reviewReceipt ? reviewedStopPath : ownRecord,
         { ...before, stopped: reason, trigger,
           ...(reviewReceipt ? { label, reviewReceipt } : {}), ...(opt10ReviewReceipt ? {label,opt10ReviewReceipt} : {}),
           ...(multithreadReviewReceipt ? {label,multithreadReviewReceipt} : {}),...(officialReviewReceipt ? {label,officialReviewReceipt} : {}) });
@@ -958,7 +970,7 @@ function sample() {
     minimumHeadroom = Math.min(minimumHeadroom, headroom);
     const reasons = resourceProtectionReasons(before, now, rss, rssLimit, headroom);
     if (reasons.length) stop(`Resource protection: ${reasons.join('; ')}`, true, { ...now, rss, rssLimit, headroom, reasons });
-    atomic(statsResume ? resolve(statsResume.directory, "resources.json") : resolve(output, `${label}-resources.json`), { ...now, backend, variant, h, entry, mode, measureNativeRss, tableBytes, rssLimit, deadlineMs, peakRss, minimumHeadroom, stopped, trigger, reviewReceipt, opt10ReviewReceipt, zbllReviewReceipt, multithreadReviewReceipt, officialReviewReceipt, openBenchmarkReceipt, ...(cornerSession ? {guardPid:process.pid, childPid:child.pid, sessionSha256:cornerSession.sha256} : {}), sampledAt: new Date().toISOString() });
+    atomic(statsResume ? resolve(statsResume.directory, "resources.json") : resolve(output, `${label}-resources.json`), { ...now, backend, variant, h, entry, mode, measureNativeRss, tableBytes, rssLimit, deadlineMs, peakRss, minimumHeadroom, stopped, trigger, reviewReceipt, opt10ReviewReceipt, zbllReviewReceipt, multithreadReviewReceipt, officialReviewReceipt, openBenchmarkReceipt, ...(cornerSession ? {guardPid:process.pid, childPid:child.pid, sessionSha256:cornerSession.sha256} : zbllMultisolution ? {guardPid:process.pid, childPid:child.pid, sessionSha256:openBenchmarkReceipt.reviewSha256} : {}), sampledAt: new Date().toISOString() });
   } catch (e) { stop(String(e), true, { observationError:String(e) }); }
 }
 const interval = setInterval(sample, 500);

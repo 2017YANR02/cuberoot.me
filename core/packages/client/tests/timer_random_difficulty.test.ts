@@ -116,4 +116,25 @@ describe('shared timer random difficulty', () => {
     legacy.settings.genDiffSteps = [4, '5'];
     expect(decodeTimerStoreData(legacy)).toBeNull();
   });
+
+  it('keeps fixed EO axes in settings, backup and queue identity without affecting other stages', () => {
+    const settings = enabled({ genDiffVariant: 'eoline', genDiffStage: 'eo', genDiffSteps: [7] });
+    expect(trainerSpecOf('333', settings)?.eoAxis).toBeUndefined();
+    const signatures = new Set([trainerSig('333', settings)]);
+    for (const axis of [0, 1, 2] as const) {
+      const fixed = { ...settings, genDiffEoAxis: axis };
+      expect(trainerSpecOf('333', fixed)).toMatchObject({ eoAxis: axis, lo: 7, hi: 7 });
+      signatures.add(trainerSig('333', fixed));
+      const store = createTimerStoreData(0, 'fixed-eo');
+      Object.assign(store.settings, fixed);
+      expect(decodeTimerStoreData(store)?.settings.genDiffEoAxis).toBe(axis);
+      expect(trainerSpecOf('333', { ...fixed, genDiffStage: 'eoline' })?.eoAxis).toBeUndefined();
+    }
+    expect(signatures.size).toBe(4);
+    const legacy = createTimerStoreData(0, 'legacy-eo');
+    delete legacy.settings.genDiffEoAxis;
+    expect(decodeTimerStoreData(legacy)?.settings.genDiffEoAxis).toBe('best');
+    Object.assign(legacy.settings, { genDiffEoAxis: 3 });
+    expect(decodeTimerStoreData(legacy)).toBeNull();
+  });
 });

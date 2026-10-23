@@ -368,7 +368,7 @@
   --ink-dim: var(--muted-foreground);
   --ink-mute: var(--faint-foreground);
   --rule: var(--border-default);
-  --accent: #1F3A6E;
+  --accent: var(--user-accent, #1F3A6E);
   --hot: #D97757;
   --green: #4A7A4A;
   --warn: #C2410C;
@@ -388,9 +388,9 @@
 
 /* dark 模式提亮品牌深蓝 — #1F3A6E 在 #171717 底上对比度太低 */
 @media (prefers-color-scheme: dark) {
-  html:not([data-theme=light]) .arch-page { --accent: #6B8FCE; }
+  html:not([data-theme=light]) .arch-page { --accent: var(--user-accent, #6B8FCE); }
 }
-html[data-theme=dark] .arch-page { --accent: #6B8FCE; }
+html[data-theme=dark] .arch-page { --accent: var(--user-accent, #6B8FCE); }
 
 .arch-page code {
   font-family: var(--mono);
@@ -1084,7 +1084,7 @@ html[data-theme=dark] .arch-page { --accent: #6B8FCE; }
 .tracer-tab.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #FFF;
+  color: var(--user-accent-foreground, #FFF);
   box-shadow: 0 2px 8px rgba(31, 58, 110, 0.16);
 }
 .tracer-tab-label {

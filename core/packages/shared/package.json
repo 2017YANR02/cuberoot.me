@@ -892,6 +892,7 @@
     "./timer/wca-competition-catalog": "./src/timer/wca-competition-catalog.ts"
   },
   "scripts": {
+    "dev:build": "pnpm run build",
     "build": "tsc -b",
     "generate:timer-trainer-cases": "node scripts/build-timer-trainer-case-data.mjs",
     "typecheck": "tsc --noEmit"

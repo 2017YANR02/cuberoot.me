@@ -1,5 +1,6 @@
 /** Incremental static publisher. A successful remote update is the only point that advances the baseline. */
 import { spawn } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import { copyFile, mkdtemp, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, posix, resolve } from 'node:path';
@@ -7,6 +8,8 @@ import { fileURLToPath } from 'node:url';
 import { buildManifest } from '../../core/jobs/scramble-stats-build/scramble_manifest.mjs';
 import { exists, repoRoot, taskProgress, wcaDir } from './common.js';
 import { managed } from '../wca-data/snapshot.ts';
+import { withLocalLock } from '../wca-data/local-lock.ts';
+import type { StaticChange } from './apply-static.ts';
 const unmanaged = (name: string) => !managed(`scramble/${name.slice(2)}`);
 
 export type PublishOptions = {
@@ -40,6 +43,12 @@ export function parseManifest(text: string): Map<string, string> {
 }
 
 export async function publishScrambleIncremental(options: PublishOptions = {}): Promise<{ changed: string[]; deleted: string[] }> {
+  if (options.dryRun) return publishUnlocked(options);
+  const manifest = resolve(options.manifest ?? join(wcaDir, 'incremental', 'publish_manifest.sha1'));
+  return withLocalLock(`${manifest}.lock`, () => publishUnlocked(options));
+}
+
+async function publishUnlocked(options: PublishOptions): Promise<{ changed: string[]; deleted: string[] }> {
   const root = resolve(options.root ?? join(repoRoot, 'stats', 'scramble'));
   const manifest = resolve(options.manifest ?? join(wcaDir, 'incremental', 'publish_manifest.sha1'));
   const host = options.host ?? process.env.CUBEROOT_STATIC_HOST ?? 'root@cuberoot';
@@ -76,25 +85,30 @@ export async function publishScrambleIncremental(options: PublishOptions = {}): 
     const deleted = previous ? [...previous.keys()].filter(name => !now.has(name)) : [];
     console.log(`[publish] changed ${changed.length}, deleted ${deleted.length}, baseline ${previous ? 'present' : 'missing'}`);
     if (options.dryRun) return { changed, deleted };
-    const transferTotal = 1 + (changed.length ? 3 : 0) + (deleted.length ? 1 : 0);
+    const transferTotal = 1 + (changed.length ? 2 : 0) + (changed.length || deleted.length ? 2 : 0);
     let transferred = 0;
     const advance = () => taskProgress('static:transfer', ++transferred, transferTotal);
     taskProgress('static:transfer', 0, transferTotal);
 
+    const remote = `/tmp/cuberoot-scramble-${randomUUID()}.tgz`;
+    const remoteScript = `${remote}.ts`;
     if (changed.length) {
       const list = join(scratch, 'changed.txt');
       const archive = join(scratch, 'delta.tgz');
-      const remote = '/tmp/_scramble_delta.tgz';
       await writeFile(list, `${changed.join('\n')}\n`);
       await exec('tar', ['--no-xattrs', '-czf', archive, '-C', root, '-T', list]);
       advance();
       await exec('scp', [archive, `${host}:${remote}`]);
       advance();
-      await exec('ssh', [host, `set -e; cd ${shellQuote(destination)}; tar -xzf ${shellQuote(remote)}; rm -f ${shellQuote(remote)}`]);
-      advance();
     }
-    if (deleted.length) {
-      await exec('ssh', [host, `cd ${shellQuote(destination)} && xargs -d '\\n' -r rm -f --`], `${deleted.join('\n')}\n`);
+    if (changed.length || deleted.length) {
+      const changes: StaticChange[] = [...changed, ...deleted].map(path => ({ path, before: previous?.get(path) ?? null, after: now.get(path) ?? null }));
+      await exec('scp', [fileURLToPath(new URL('./apply-static.ts', import.meta.url)), `${host}:${remoteScript}`]);
+      advance();
+      const cleanup = `rm -f -- ${shellQuote(remote)} ${shellQuote(remoteScript)}`;
+      // Check expected hashes and apply the entire delta under one server lock.
+      const apply = `node ${shellQuote(remoteScript)} ${shellQuote(destination)} ${shellQuote(changed.length ? remote : '-')}`;
+      await exec('ssh', [host, `trap ${shellQuote(cleanup)} EXIT; flock -w 120 /tmp/cuberoot-scramble-static.lock ${apply}`], JSON.stringify(changes));
       advance();
     }
     await save();

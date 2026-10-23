@@ -9,7 +9,10 @@ const { queryMock, requireAdminOrApiKeyMock, notifyMock, requireAuthMock, profil
   notifyMock: vi.fn(),
 }));
 
-vi.mock('../src/db/connection.js', () => ({ query: queryMock }));
+vi.mock('../src/db/connection.js', () => ({
+  query: queryMock,
+  withTransaction: async (run: (query: typeof queryMock) => Promise<unknown>) => run(queryMock),
+}));
 vi.mock('../src/utils/analytics_helpers.js', () => ({ getIp: vi.fn(() => '127.0.0.1') }));
 vi.mock('../src/utils/recon_helpers.js', () => ({
   requireAuth: requireAuthMock,
@@ -118,7 +121,8 @@ describe('forum API reply', () => {
 
   it('allows an earlier contributor with an incomplete profile', async () => {
     profileMock.mockResolvedValue({ ...completeProfile, fullName: null, birthDate: null, forumProfileExempt: true });
-    queryMock.mockResolvedValueOnce([{ is_locked: false, is_deleted: false, title: 'Thread', author_id: 'u8', status: 'approved' }])
+    queryMock.mockResolvedValueOnce([{ id: '43' }])
+      .mockResolvedValueOnce([{ is_locked: false, is_deleted: false, title: 'Thread', author_id: 'u8', status: 'approved' }])
       .mockResolvedValueOnce([{ id: '44' }]).mockResolvedValueOnce([{ n: 2 }]);
     const response = await forumRoutes.request('/forum/posts', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -128,7 +132,8 @@ describe('forum API reply', () => {
   });
 
   it('allows a complete ordinary account and rechecks the next request', async () => {
-    queryMock.mockResolvedValueOnce([{ is_locked: false, is_deleted: false, title: 'Thread', author_id: 'u8', status: 'approved' }])
+    queryMock.mockResolvedValueOnce([{ id: '43' }])
+      .mockResolvedValueOnce([{ is_locked: false, is_deleted: false, title: 'Thread', author_id: 'u8', status: 'approved' }])
       .mockResolvedValueOnce([{ id: '44' }]).mockResolvedValueOnce([{ n: 2 }]);
     const request = () => forumRoutes.request('/forum/posts', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -144,6 +149,7 @@ describe('forum API reply', () => {
     requireAdminOrApiKeyMock.mockResolvedValue({ wcaId: '__api_key__', name: 'API Key' });
     queryMock
       .mockResolvedValueOnce([{ display_name: 'Test Admin' }])
+      .mockResolvedValueOnce([{ id: '43' }])
       .mockResolvedValueOnce([{
         is_locked: false,
         is_deleted: false,
@@ -162,7 +168,7 @@ describe('forum API reply', () => {
 
     expect(response.status).toBe(200);
     expect(requireAdminOrApiKeyMock).toHaveBeenCalledOnce();
-    expect(queryMock.mock.calls[2][1]).toEqual([
+    expect(queryMock.mock.calls[3][1]).toEqual([
       43, '2017TEST01', 'Test Admin', 'Fixed and deployed.',
       '2017TEST01', 'Test Admin', 43,
     ]);

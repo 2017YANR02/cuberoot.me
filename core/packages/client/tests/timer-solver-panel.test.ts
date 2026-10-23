@@ -120,6 +120,8 @@ it('phone uses fullscreen, Back closes nested content first, focus and body scro
   expect(document.querySelector('.solver-sheet')).toBeNull();
   const trigger = host.querySelector<HTMLButtonElement>('.solver-panel-head')!; trigger.focus();
   await click('.solver-panel-head');
+  // Opening the sheet must not focus the native select and open iOS's picker.
+  expect(document.activeElement).toBe(document.querySelector('.solver-sheet'));
   expect(document.querySelector('[data-solver-body]')?.getAttribute('data-solver-body')).toBe('compact');
   expect(document.body.style.overflow).toBe('hidden');
   fixture.nested = true;

@@ -24,6 +24,7 @@
   },
   "files": ["dist", "src"],
   "scripts": {
+    "dev:build": "pnpm run build",
     "build": "tsc -b",
     "typecheck": "tsc -b"
   },

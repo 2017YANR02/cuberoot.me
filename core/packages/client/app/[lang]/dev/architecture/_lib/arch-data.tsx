@@ -179,6 +179,454 @@ export interface TLEntry {
 }
 export const TIMELINE: TLEntry[] = ([
   {
+    "date": "2026-10-22",
+    "tag": "feature",
+    "zh": {
+      "title": "WCA 规则、公告和事件档案集中展示",
+      "body": "规则入口拆分为条款、公告文章与事件记录，补充中英文档案和检索入口。",
+      "expand": "公告与纪律、事件记录保留独立来源和内容，变更监测扩展到 WCA 公告；首页推荐支持对应内容入口。"
+    },
+    "en": {
+      "title": "WCA rules, announcements and incident archives",
+      "body": "The regulation hub separates rule clauses, announcement articles and incident records with bilingual archives and browsing tools.",
+      "expand": "Announcements, disciplinary records and incidents retain their own sources and content. Change monitoring expands to WCA announcements, and homepage features can link to the relevant content."
+    }
+  },
+  {
+    "date": "2026-10-22",
+    "tag": "dx",
+    "zh": {
+      "title": "团队质量标准独立展示，教程扩展连续演练",
+      "body": "团队协作规范与质量标准分开展示，工作区复用相同标准。",
+      "expand": "层先法提供连续演练，枫叶 3Y 教程补充状态和视频参考；颜色训练增加随机顶色与分颜色统计，Radio Jam接入共享工具。"
+    },
+    "en": {
+      "title": "Dedicated quality standards and continuous tutorial practice",
+      "body": "Team working practices and quality standards are shown separately, with the workspace reusing the same standards.",
+      "expand": "Layer-by-layer lessons gain continuous walkthroughs and Ivy 3Y adds case and video references. Color drills add random top colors and per-color statistics; Radio Jam joins shared tools."
+    }
+  },
+  {
+    "date": "2026-10-21",
+    "tag": "migration",
+    "zh": {
+      "title": "统计数据迁至可恢复的发布快照",
+      "body": "WCA 导出和生成统计从 Git 跟踪迁至最新 Release 快照。",
+      "expand": "发布保留校验与恢复基线，新检出可恢复数据；阶段统计复用已完成结果。原生最优求解服务补充表安装、预取优化和实测对比。"
+    },
+    "en": {
+      "title": "Statistics move to recoverable release snapshots",
+      "body": "WCA exports and generated statistics move from Git tracking into the latest Release snapshot.",
+      "expand": "Publication retains checksums and recovery baselines so new checkouts can restore data. Stage statistics reuse completed results. Native optimal solving adds table setup, prefetch improvements and measured comparisons."
+    }
+  },
+  {
+    "date": "2026-10-21",
+    "tag": "feature",
+    "zh": {
+      "title": "模拟器支持嵌入外部网页",
+      "body": "新增交互魔方嵌入入口，可将模拟器放入其他网页。",
+      "expand": "嵌入沿用站内的魔方与播放能力；WCA 事件和纪律记录增加变更监测，并补充双语调查声明。"
+    },
+    "en": {
+      "title": "Embeddable interactive puzzle simulators",
+      "body": "A dedicated embed entry lets other websites host the interactive puzzle simulator.",
+      "expand": "Embeds reuse the site’s puzzle and playback capabilities. WCA incident and disciplinary records gain change monitoring, alongside a bilingual investigation statement."
+    }
+  },
+  {
+    "date": "2026-10-20",
+    "tag": "feature",
+    "zh": {
+      "title": "智能魔方复盘加入批注收录队列",
+      "body": "管理员可在自动复盘报告中标记预期步骤，并提交待处理样本。",
+      "expand": "处理流程保留领取、续期、验证和回写状态，人工确认与待验收样本分开记录；练习链接和设备地址记忆也统一到共享规则。"
+    },
+    "en": {
+      "title": "Annotated smart cube reconstruction intake",
+      "body": "Administrators can mark expected steps in automatic reports and submit samples for processing.",
+      "expand": "The workflow records claiming, renewal, validation and writeback, keeping confirmed and pending samples distinct. Practice links and remembered device addresses also adopt shared rules."
+    }
+  },
+  {
+    "date": "2026-10-20",
+    "tag": "feature",
+    "zh": {
+      "title": "小程序账号原生操作与连续圆角说明完善",
+      "body": "小程序补齐资料、绑定方式、邮箱手机、密码和隐私说明的原生页面。",
+      "expand": "注销和解绑沿用账号校验；开发文档增加连续圆角说明，展示网站与安装端共用的圆角实现。F2L 与枫叶教程同步补充练习内容。"
+    },
+    "en": {
+      "title": "Native mini program account tools and continuous-corner documentation",
+      "body": "Mini programs expand native profile, linked-login, email, phone, password and privacy pages.",
+      "expand": "Deletion and unlinking retain account checks. Developer documentation explains continuous corners shared by web and installed clients. F2L and Ivy lessons gain further practice content."
+    }
+  },
+  {
+    "date": "2026-10-19",
+    "tag": "feature",
+    "zh": {
+      "title": "独立员工工作区与团队流程加入",
+      "body": "CubeRoot 员工使用独立工作区，团队介绍、协作规范、入职和离职入口集中管理。",
+      "expand": "工作区按本站角色提供访问能力；非官方比赛与纪录页面接入公共赛事数据，微信会员续费签约绑定当前账号。"
+    },
+    "en": {
+      "title": "An independent employee workspace and team workflows",
+      "body": "CubeRoot employees gain a dedicated workspace with team information, working standards, onboarding and offboarding entry points.",
+      "expand": "Workspace access follows site roles. Unofficial competition and record pages integrate public contest data, and WeChat renewal agreements bind to the current account."
+    }
+  },
+  {
+    "date": "2026-10-18",
+    "tag": "feature",
+    "zh": {
+      "title": "层先法引导练习与训练分段统计",
+      "body": "层先法教程加入引导练习，训练统计分别显示观察、执行和总时间。",
+      "expand": "智能魔方朝向与阶段回放保持一致，连接时预载复盘资料并复用缓存；公式图片可通过快捷操作导出。"
+    },
+    "en": {
+      "title": "Guided layer-by-layer practice and split timing statistics",
+      "body": "The layer-by-layer tutorial adds guided practice, and training reports separate observation, execution and total time.",
+      "expand": "Smart cube orientation stays consistent with stage replay. Reconstruction data is preloaded on connection and cached; algorithm images gain quick export actions."
+    }
+  },
+  {
+    "date": "2026-10-17",
+    "tag": "feature",
+    "zh": {
+      "title": "F2L 交互教程与模拟器双工作区加入",
+      "body": "F2L 教程提供交互演示，模拟器分别组织动画播放与图片绘制。",
+      "expand": "外观预设可以保存和撤销，项目选择器保留收藏与最近使用；旧训练入口转入计时器，双底 ZBLL 支持房间与分组练习。"
+    },
+    "en": {
+      "title": "Interactive F2L lessons and two simulator workspaces",
+      "body": "F2L lessons add interactive demonstrations, while the simulator separates animation from image creation.",
+      "expand": "Appearance presets support saving and undo, and puzzle selection remembers favorites and recent choices. Legacy trainers move into the timer; double ZBLL adds rooms and split practice."
+    }
+  },
+  {
+    "date": "2026-10-16",
+    "tag": "feature",
+    "zh": {
+      "title": "公式图片支持单张和批量下载",
+      "body": "公式库复用统一图片导出流程，可下载单个状态或当前筛选结果。",
+      "expand": "智能魔方训练增加起步方式并突出同题统计；手表接入离线三阶打乱与更多协议，Cat’s Cradle扩展模拟、打乱与预览。"
+    },
+    "en": {
+      "title": "Individual and batch algorithm image downloads",
+      "body": "Algorithm libraries share one image export pipeline for a single case or the current filtered selection.",
+      "expand": "Smart cube training adds start modes and highlights same-case statistics. The Watch integrates offline 3×3 scrambles and more protocols; Cat’s Cradle gains simulation, scrambles and previews."
+    }
+  },
+  {
+    "date": "2026-10-15",
+    "tag": "feature",
+    "zh": {
+      "title": "Apple Watch 接入计时与共享复盘",
+      "body": "手表端复用计时、成绩同步和复盘规则，提供独立设备连接入口。",
+      "expand": "分析摘要、阶段表和回放映射与其他客户端共用实现；各设备连接与真机验收分别记录。F2L 解法按标准插入归组，账号头像库同时扩展。"
+    },
+    "en": {
+      "title": "Apple Watch timing and shared reconstruction",
+      "body": "The Watch integrates shared timing, result synchronization and reconstruction rules with a direct device connection entry.",
+      "expand": "Analysis summaries, stage tables and replay mappings share implementations with other clients. Device support and hardware verification are tracked separately. F2L solutions group by standard insertion, and the avatar gallery expands."
+    }
+  },
+  {
+    "date": "2026-10-14",
+    "tag": "infra",
+    "zh": {
+      "title": "Android 更新按安装渠道区分",
+      "body": "Android 增加独立发布流程，更新检查区分商店与直接安装渠道。",
+      "expand": "版本产物和更新入口按渠道维护；助手补充用户反馈、运行监控和告警，求解器对比将不同实验条件分组展示。"
+    },
+    "en": {
+      "title": "Channel-aware Android updates",
+      "body": "Android gains an independent release workflow with separate update checks for store and direct installs.",
+      "expand": "Artifacts and update entry points are maintained by channel. The assistant gains feedback, monitoring and alerts, while solver comparisons separate experimental conditions."
+    }
+  },
+  {
+    "date": "2026-10-13",
+    "tag": "feature",
+    "zh": {
+      "title": "应用下载与求解器对比页加入",
+      "body": "下载页提供应用入口和版本信息，对比页展示最优求解器的实测结果。",
+      "expand": "测试条件、内存和样本分组分别列出；直接安装的 Android 应用增加网页付款入口，续费管理补充签约与扣款状态。"
+    },
+    "en": {
+      "title": "App downloads and measured solver comparisons",
+      "body": "A download page presents app entry points and versions, while solver comparisons show measured optimal-solving results.",
+      "expand": "Conditions, memory and sample groups are listed separately. Direct Android installs gain a web checkout entry, and renewal management adds agreement and charge states."
+    }
+  },
+  {
+    "date": "2026-10-13",
+    "tag": "feature",
+    "zh": {
+      "title": "复盘扩展桥式与 ZZ 阶段",
+      "body": "不同解法共用动作还原，并保留当前握法、阶段选择和完成后的实时分析结果。",
+      "expand": "时间轴支持拖动，公式库匹配处理隐含顶层调整；六层转面八面体、二阶直升机混合魔方与 Radio 系列扩展模拟器。"
+    },
+    "en": {
+      "title": "Roux and ZZ reconstruction stages",
+      "body": "Solve methods share gesture reconstruction while preserving the current grip, selected method and live analysis in completed reports.",
+      "expand": "The timeline supports dragging and library matching handles implicit top-layer adjustments. Six-layer FTO, 2×2–Helicopter and Radio puzzles expand the simulator."
+    }
+  },
+  {
+    "date": "2026-10-12",
+    "tag": "feature",
+    "zh": {
+      "title": "双底 ZBLL 说明页与断点选谱加入",
+      "body": "说明页介绍双底 ZBLL 语料和训练方法，生成任务支持断点继续。",
+      "expand": "候选按配对维度排序和选择，保留已完成结果；Android 安装包开始按版本提供，三阶与直升机混合魔方接入共享工具。"
+    },
+    "en": {
+      "title": "Double ZBLL documentation and resumable selection",
+      "body": "A guide explains the double ZBLL corpus and training, while generation can resume from saved progress.",
+      "expand": "Candidates are ranked and selected by pairs, preserving completed results. Android installers become versioned, and a 3×3–Helicopter hybrid joins shared tools."
+    }
+  },
+  {
+    "date": "2026-10-11",
+    "tag": "dx",
+    "zh": {
+      "title": "开发环境加入自助接入流程",
+      "body": "成员可提交设备与开发预览接入申请，由所有者确认授权范围。",
+      "expand": "SSH 设备登记、预览域名和本机启动入口纳入同一流程；智能魔方复盘同时补充多余转动标记与快速宽层转动识别。"
+    },
+    "en": {
+      "title": "Self-service development environment enrollment",
+      "body": "Members can request device and preview access for approval by the owner.",
+      "expand": "SSH device enrollment, preview hostnames and local launchers join one workflow. Smart cube reconstruction also adds wasted-move labels and improved recognition of fast wide turns."
+    }
+  },
+  {
+    "date": "2026-10-10",
+    "tag": "feature",
+    "zh": {
+      "title": "助手按需分析公开数据，训练集中到计时器",
+      "body": "助手可以计算公开数据问题，并核对表格与回答含义。",
+      "expand": "选手表格支持队伍信息；比赛目录保留有效缓存并增量同步。专项练习复用计时器的打乱、设备和设置入口。"
+    },
+    "en": {
+      "title": "On-demand public data analysis and centralized training",
+      "body": "The assistant can calculate answers from public data and check that tables match the answer.",
+      "expand": "Competitor tables gain team information, and competition catalogs retain valid caches during incremental updates. Specialist practice shares the timer’s scramble, device and settings controls."
+    }
+  },
+  {
+    "date": "2026-10-09",
+    "tag": "feature",
+    "zh": {
+      "title": "双底 ZBLL 支持最优公式和离线练习",
+      "body": "训练加入双底 ZBLL 语料，可按打乱方式选择并保存到本地。",
+      "expand": "离线保存显示进度与完成状态；魔板、大魔板、二阶五魔方及混合结构魔方扩展模拟、预览和计时入口。"
+    },
+    "en": {
+      "title": "Optimal double ZBLL algorithms and offline practice",
+      "body": "Double ZBLL training adds an algorithm corpus with scramble choices and local saving.",
+      "expand": "Offline saving shows progress and completion. Rubik’s Magic, Master Magic, Kilominx and mixed-geometry puzzles expand simulation, previews and timing."
+    }
+  },
+  {
+    "date": "2026-10-08",
+    "tag": "feature",
+    "zh": {
+      "title": "三阶魔方发展史加入",
+      "body": "按品牌与型号浏览有来源的产品档案、图片和上市资料。",
+      "expand": "支持品牌与型号组合搜索及旗舰筛选；资料保留来源，后续补充代际划分和价格标签。"
+    },
+    "en": {
+      "title": "A sourced history of 3×3 cubes",
+      "body": "Browse product records, photos and launch information by brand and model.",
+      "expand": "Combined brand-and-model search and flagship filtering help exploration. Records retain sources, with later updates refining generations and price labels."
+    }
+  },
+  {
+    "date": "2026-10-08",
+    "tag": "feature",
+    "zh": {
+      "title": "实名验证与账号引导完善",
+      "body": "账号接入实名人脸验证，新手引导进度随账号保存。",
+      "expand": "验证失败与重试状态分别反馈；复盘中的公式可跳转到对应学习页，二重奏同步接入模拟器、打乱与计时器。"
+    },
+    "en": {
+      "title": "Identity verification and account onboarding",
+      "body": "Accounts gain real-name face verification and synchronized onboarding progress.",
+      "expand": "Verification failures and retry states receive distinct feedback. Reconstruction algorithms link to learning pages, and Pyraminx Duo joins the simulator, scramble tools and timer."
+    }
+  },
+  {
+    "date": "2026-10-07",
+    "tag": "feature",
+    "zh": {
+      "title": "智能魔方按训练阶段自动停表",
+      "body": "训练扩展多个阶段目标，并按固定朝向判断完成状态。",
+      "expand": "桥式训练保留指定握法，F2L 从已完成十字开始；安装端接入原生文件保存和屏幕常亮，大型比赛成绩表按可见区域分批展示。"
+    },
+    "en": {
+      "title": "Smart cube timing ends at the selected training goal",
+      "body": "Training adds stage-specific goals and checks completion in a fixed orientation.",
+      "expand": "Roux training preserves the selected grip, and F2L starts with a solved cross. Installed clients gain native file saving and wake locks; large competition tables render around the viewport."
+    }
+  },
+  {
+    "date": "2026-10-06",
+    "tag": "migration",
+    "zh": {
+      "title": "计时器历史、统计与对战界面共享",
+      "body": "网站和安装端复用历史记录、统计、回放、数据设置及完整对战页面。",
+      "expand": "在线房间增加 ao12、ao50 与 ao100；随机打乱、同步种子和求解提示共用生成与消费规则。运维增加统一流量防护开关。"
+    },
+    "en": {
+      "title": "Shared timer history, statistics and battle views",
+      "body": "Web and installed clients share history, statistics, replay, data settings and complete battle pages.",
+      "expand": "Online rooms add ao12, ao50 and ao100. Random scrambles, synchronization seeds and solver hints share generation and consumption rules. Operations gain a unified traffic defense switch."
+    }
+  },
+  {
+    "date": "2026-10-05",
+    "tag": "migration",
+    "zh": {
+      "title": "设备控制与在线成绩传递跨端统一",
+      "body": "外接计时器面板、魔方校准、房间恢复和本地对战复用共同流程。",
+      "expand": "在线成绩保留待发送队列，重连后可继续传递；打乱统计增加无杠分类，复盘评论支持赞与踩。"
+    },
+    "en": {
+      "title": "Shared device controls and online result delivery",
+      "body": "External timer panels, cube calibration, room recovery and local battles share common flows.",
+      "expand": "A persistent queue retains online results for delivery after reconnection. Scramble statistics add no-bar categories, and reconstruction comments gain reactions."
+    }
+  },
+  {
+    "date": "2026-10-05",
+    "tag": "feature",
+    "zh": {
+      "title": "开发支出明细加入",
+      "body": "开发文档展示基础设施支出和一次性设备投入。",
+      "expand": "支出按类别列出，并提供对应说明，便于了解项目维护成本。"
+    },
+    "en": {
+      "title": "Development expense details",
+      "body": "Developer documentation presents infrastructure expenses and one-time equipment investments.",
+      "expand": "Costs are grouped by category with supporting explanations of project maintenance expenses."
+    }
+  },
+  {
+    "date": "2026-10-04",
+    "tag": "feature",
+    "zh": {
+      "title": "教学二维码和会员购买流程完善",
+      "body": "教学二维码连接课程与交易流程，会员权益支持管理员编辑中英文内容。",
+      "expand": "Google Play 支付完成代码接入，购买结果按平台凭证处理；拓展十字表可在本地生成和下载间选择先完成的有效结果。"
+    },
+    "en": {
+      "title": "Teaching QR codes and membership purchasing",
+      "body": "Teaching QR codes connect lessons with commerce, and administrators can edit bilingual membership benefits.",
+      "expand": "Google Play billing is integrated in code and processes platform purchase proofs. XCross tables race verified local generation against downloading."
+    }
+  },
+  {
+    "date": "2026-10-04",
+    "tag": "feature",
+    "zh": {
+      "title": "商业计划与演示提纲加入",
+      "body": "合作资料扩展为图文商业计划，说明市场、产品与分阶段合作方式。",
+      "expand": "相关论据链接到公开产品和来源页面，并提供配套演示提纲。"
+    },
+    "en": {
+      "title": "Business plan and presentation notes",
+      "body": "Partnership materials expand into an illustrated business plan covering the market, product and staged collaboration.",
+      "expand": "Claims link to public product and source pages, with accompanying presentation notes."
+    }
+  },
+  {
+    "date": "2026-10-03",
+    "tag": "feature",
+    "zh": {
+      "title": "智能魔方实时复盘与年度参赛统计",
+      "body": "还原过程中显示已记录的转动和阶段，选手资料增加年度参赛统计。",
+      "expand": "实时与完成后的报告复用阶段判断；手机日历、成绩详情和纪录快讯保持一致的显示格式。"
+    },
+    "en": {
+      "title": "Live smart cube reconstruction and annual participation",
+      "body": "Recorded moves and stages appear during a solve, and competitor profiles gain annual participation statistics.",
+      "expand": "Live and completed reports share stage analysis. Mobile calendars, result details and record news use consistent display formats."
+    }
+  },
+  {
+    "date": "2026-10-02",
+    "tag": "feature",
+    "zh": {
+      "title": "项目介绍、合作方案与世锦赛信息页加入",
+      "body": "项目介绍展示产品能力和合作方向，世锦赛信息页整理已公布的赛事信息。",
+      "expand": "比赛中心增加个人成绩弹窗，纪录通知可以直接打开对应比赛成绩；助手支持站内功能导航和按访客时区理解相对日期。"
+    },
+    "en": {
+      "title": "Project overview, partnership proposal and championship information",
+      "body": "The project overview presents product capabilities and partnership options, alongside a page for announced World Championship information.",
+      "expand": "Competition pages add personal-result dialogs, and record notifications can open the relevant results. The assistant links to site tools and interprets relative dates in the visitor’s time zone."
+    }
+  },
+  {
+    "date": "2026-10-01",
+    "tag": "feature",
+    "zh": {
+      "title": "成绩计算与个人查询修正",
+      "body": "滚动三次平均不再剔除失败成绩，最少步单位和平均规则保持一致。",
+      "expand": "助手补齐个人最好成绩与参赛国家查询；复制纪录快讯保留旗帜和统一标签，计时器完整展开长打乱。"
+    },
+    "en": {
+      "title": "Corrected averages and personal queries",
+      "body": "Rolling means of three retain failed attempts, and Fewest Moves units and averaging rules stay consistent.",
+      "expand": "The assistant improves personal-best and competition-country queries. Copied record news preserves flags and consistent labels, while timers expand long scrambles."
+    }
+  },
+  {
+    "date": "2026-09-29",
+    "tag": "migration",
+    "zh": {
+      "title": "计时器设置与分析跨端复用",
+      "body": "训练朝向、色中立、观察提示、节拍器和数据导出使用共同规则。",
+      "expand": "复盘分析移到后台线程，减少主界面等待；小程序外接计时器复用协议。另补充账号删除说明，并接入 iOS 订阅与纪录推送。"
+    },
+    "en": {
+      "title": "Shared timer preferences and analysis",
+      "body": "Training orientation, color neutrality, inspection cues, metronomes and exports use common rules.",
+      "expand": "Reconstruction runs in background workers to reduce main-thread blocking. Mini program external timers share protocols. Account deletion instructions, iOS subscription integration and record push support are added."
+    }
+  },
+  {
+    "date": "2026-09-28",
+    "tag": "feature",
+    "zh": {
+      "title": "站内助手提供有来源的问答",
+      "body": "助手结合公开页面、选手成绩和统计资料回答问题，支持连续追问和流式显示。",
+      "expand": "查询过程显示进度，回答附可打开的来源；个人相关查询依据已验证身份，统计读取限定在公开数据范围。"
+    },
+    "en": {
+      "title": "A site assistant with traceable answers",
+      "body": "The assistant answers from public pages, competitor results and statistics, with follow-up questions and streamed responses.",
+      "expand": "Queries show progress and link to their sources. Personal queries use verified identity, and statistics access stays within public data."
+    }
+  },
+  {
+    "date": "2026-09-28",
+    "tag": "feature",
+    "zh": {
+      "title": "多智能体魔方实验与沟通工具扩展",
+      "body": "新增魔方智能体实验页，记录 Qwen 与 DeepSeek 的任务过程和比较结果。",
+      "expand": "聊天增加私人表情收藏和已读回执；会议支持预约与入会准备，日历可查看 WCA 比赛并保留备份颜色。"
+    },
+    "en": {
+      "title": "Cube agent experiments and communication tools",
+      "body": "A cube agent experiment page records task traces and comparisons between Qwen and DeepSeek.",
+      "expand": "Chat adds private sticker favorites and read receipts. Meetings gain scheduling and prejoin preparation; calendars include WCA events and preserve colors in backups."
+    }
+  },
+  {
     "date": "2026-09-27",
     "tag": "infra",
     "zh": {

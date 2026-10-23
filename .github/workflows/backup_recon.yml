@@ -8,6 +8,10 @@ on:
     - cron: '0 20 * * 0'
   workflow_dispatch: # 支持手动触发
 
+concurrency:
+  group: backup-recon-data
+  cancel-in-progress: false
+
 permissions:
   contents: write
 

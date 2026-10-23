@@ -75,6 +75,33 @@
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
+/* Keep the lavender outline separate from the shared glass background. */
+.landing-page .landing-search-input:not(.is-drag-over) {
+  --landing-search-lavender: #b9a0ea;
+  border-color: transparent;
+}
+
+.landing-page .landing-search-input:not(.is-drag-over)::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  padding: 1.5px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(115deg,
+    var(--landing-search-lavender),
+    color-mix(in srgb, var(--landing-search-lavender) 55%, white) 48%,
+    color-mix(in srgb, var(--landing-search-lavender) 80%, var(--signal-info)));
+  -webkit-mask: linear-gradient(black 0 0) content-box, linear-gradient(black 0 0);
+  mask: linear-gradient(black 0 0) content-box, linear-gradient(black 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.landing-page .landing-search-input:not(.is-drag-over):focus-within {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--landing-search-lavender) 18%, transparent);
+}
+
 .landing-search-input.landing-search-voice {
   padding: 8px;
   gap: 8px;
@@ -309,12 +336,12 @@
 
 .landing-search-mic.landing-search-send {
   margin: -4px -8px -4px 0;
-  background: color-mix(in srgb, var(--signal-info) 55%, black);
-  color: var(--destructive-foreground);
+  background: var(--user-accent, color-mix(in srgb, var(--signal-info) 55%, black));
+  color: var(--user-accent-foreground, var(--destructive-foreground));
 }
 
 .landing-search-input:focus-within .landing-search-mic.landing-search-send {
-  background: color-mix(in srgb, var(--signal-info) 78%, black);
+  background: var(--user-accent, color-mix(in srgb, var(--signal-info) 78%, black));
 }
 
 .landing-search-input .landing-search-voice-button,
@@ -341,7 +368,7 @@
 }
 
 .landing-search-input:focus-within .landing-search-mic.landing-search-send:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--signal-info) 88%, black);
+  background: var(--user-accent, color-mix(in srgb, var(--signal-info) 88%, black));
 }
 
 .landing-search-mic.landing-search-send:disabled {

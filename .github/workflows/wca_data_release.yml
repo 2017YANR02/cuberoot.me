@@ -74,6 +74,8 @@ jobs:
     concurrency:
       group: deploy-core-production
       cancel-in-progress: false
+      # Distinct owner patches must not evict each other from the pending queue.
+      queue: max
     permissions:
       contents: write
     steps:

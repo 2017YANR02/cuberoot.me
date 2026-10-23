@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { getIp } from '../utils/analytics_helpers.js';
 import { answerSiteQuestion, assistantConfig } from '../utils/site_assistant.js';
 import { reserveAssistantQuestion } from '../utils/site_assistant_quota.js';
-import { SITE_ASSISTANT_TIMEOUT_MS, SITE_ASSISTANT_MAX_IMAGES, SITE_ASSISTANT_IMAGE_BYTES, SITE_ASSISTANT_BODY_BYTES, type AssistantStreamEvent } from '@cuberoot/shared/site-assistant';
+import { assistantTimeoutMs, boundAssistantHistory, SITE_ASSISTANT_QUESTION_MAX_LENGTH, SITE_ASSISTANT_HISTORY_MESSAGE_MAX_LENGTH, SITE_ASSISTANT_MAX_IMAGES, SITE_ASSISTANT_IMAGE_BYTES, SITE_ASSISTANT_BODY_BYTES, type AssistantStreamEvent } from '@cuberoot/shared/site-assistant';
 import { AssistantFailure, assistantDeadline, assistantFailureCode, assistantStage } from '../utils/site_assistant_diagnostics.js';
 import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
 import { getUserById } from '../utils/account.js';
@@ -50,11 +50,12 @@ const imageSchema = z.object({
 const imagesSchema = z.array(imageSchema).max(SITE_ASSISTANT_MAX_IMAGES);
 const inputSchema = z.object({
   conversationId: z.string().uuid().optional(), parentId: z.string().uuid().optional(), retryOf: z.string().uuid().optional(),
-  question: z.string().trim().max(500), lang: z.enum(['zh', 'en']),
+  question: z.string().trim().max(SITE_ASSISTANT_QUESTION_MAX_LENGTH), lang: z.enum(['zh', 'en']),
+  thinking: z.enum(['auto', 'fast', 'deep']).default('auto'),
   images: imagesSchema.optional(),
   timeZone: z.string().max(100).refine(zone => { try { new Intl.DateTimeFormat('en', { timeZone: zone }); return true; } catch { return false; } }, 'Invalid time zone').optional(),
   viewerWcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/).optional(),
-  history: z.array(z.object({ role: z.enum(['user', 'assistant']), content: z.string().max(6000), images: imagesSchema.optional() }).strict()
+  history: z.array(z.object({ role: z.enum(['user', 'assistant']), content: z.string().max(SITE_ASSISTANT_HISTORY_MESSAGE_MAX_LENGTH), images: imagesSchema.optional() }).strict()
     .refine(message => message.role === 'user' || !message.images?.length, { path: ['images'] })).max(10).default([]),
 }).strict().refine(input => input.question.length > 0 || !!input.images?.length)
   .refine(input => (input.images?.length ?? 0) + input.history.reduce((count, message) => count + (message.images?.length ?? 0), 0) <= SITE_ASSISTANT_MAX_IMAGES, { path: ['images'] });
@@ -75,23 +76,24 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
       throw error;
     }));
     if (!parsed.success) { const error = parsed.error.issues.some(issue => issue.path.includes('images')) ? 'invalid_image' : 'invalid_question'; await deps.entry?.(error); return c.json({ error }, 400); }
-    const hasImages = !!parsed.data.images?.length || parsed.data.history.some(message => !!message.images?.length);
+    const history = boundAssistantHistory(parsed.data.history);
+    const hasImages = !!parsed.data.images?.length || history.some(message => !!message.images?.length);
     const config = deps.config(hasImages);
     if (!config) { const error = hasImages ? 'vision_unavailable' : 'unavailable'; await deps.entry?.(error); return c.json({ error }, 503); }
     // Authentication is part of the same total deadline and precedes quota/model work.
     const disconnect = new AbortController();
-    const signal = AbortSignal.any([disconnect.signal, c.req.raw.signal, AbortSignal.timeout(SITE_ASSISTANT_TIMEOUT_MS - 2000)]);
+    const signal = AbortSignal.any([disconnect.signal, c.req.raw.signal, AbortSignal.timeout(assistantTimeoutMs(parsed.data.thinking) - 2000)]);
     let admitted = false, recordingFailed = false;
     let monitor: Awaited<ReturnType<typeof startAssistantMonitor>> | undefined;
     const answer = (user: { wcaId: string }, emit?: (event: AssistantStreamEvent) => Promise<void>) => {
-      const run = () => deps.answer(parsed.data.question, parsed.data.lang, config, signal, undefined, parsed.data.history, user.wcaId, emit, parsed.data.timeZone, parsed.data.images);
+      const run = () => deps.answer(parsed.data.question, parsed.data.lang, config, signal, undefined, history, user.wcaId, emit, parsed.data.timeZone, parsed.data.images, parsed.data.thinking);
       return monitor ? monitor.run(run) : run();
     };
     const failure = (error: unknown) => monitor?.finish(disconnect.signal.aborted || c.req.raw.signal.aborted ? 'cancelled' : 'error', assistantFailureCode(error));
     try { return await assistantStage('total',()=>assistantDeadline(async()=>{
       const user = await assistantStage('auth',()=>deps.authenticate(c));
       signal.throwIfAborted();
-      try { monitor = await deps.monitor?.({ uid: user.uid, startedAt: requestStarted, question: parsed.data.question, lang: parsed.data.lang, model: config.model, streaming: !!c.req.header('Accept')?.includes('text/event-stream'), imageCount: (parsed.data.images?.length ?? 0) + parsed.data.history.reduce((n, m) => n + (m.images?.length ?? 0), 0), historyCount: parsed.data.history.length, conversationId: parsed.data.conversationId, parentId: parsed.data.parentId, retryOf: parsed.data.retryOf }); } catch(error) { recordingFailed=true;throw error; }
+      try { monitor = await deps.monitor?.({ uid: user.uid, startedAt: requestStarted, question: parsed.data.question, lang: parsed.data.lang, model: config.model, streaming: !!c.req.header('Accept')?.includes('text/event-stream'), imageCount: (parsed.data.images?.length ?? 0) + history.reduce((n, m) => n + (m.images?.length ?? 0), 0), historyCount: history.length, conversationId: parsed.data.conversationId, parentId: parsed.data.parentId, retryOf: parsed.data.retryOf, thinking: parsed.data.thinking }); } catch(error) { recordingFailed=true;throw error; }
       if (monitor?.id) c.header('X-Assistant-Request-Id', monitor.id);
       signal.throwIfAborted();
       const now = deps.now();
@@ -121,6 +123,11 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
         admitted = false; // The stream owns the concurrency slot until it closes.
         return streamSSE(c, async stream => {
           stream.onAbort(() => disconnect.abort());
+          // A deep model can be silent longer than a proxy's idle-read timeout.
+          // SSE comments keep the transport alive without inventing progress or text.
+          const heartbeat = setInterval(() => {
+            void stream.write(': keepalive\n\n').catch(() => disconnect.abort());
+          }, 15_000);
           let emittedAnswer = false;
           const emit = async (event: AssistantStreamEvent) => {
             signal.throwIfAborted();
@@ -137,7 +144,7 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
           } catch (error) {
             await failure(error)?.catch(() => {});
             if (!disconnect.signal.aborted) await stream.writeSSE({ data: JSON.stringify({ type: 'error', error: assistantFailureCode(error) }) });
-          } finally { disconnect.abort(); active--; }
+          } finally { clearInterval(heartbeat); disconnect.abort(); active--; }
         });
       }
       const result = await answer(user);

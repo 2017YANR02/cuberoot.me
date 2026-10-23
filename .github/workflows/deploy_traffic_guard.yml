@@ -11,6 +11,10 @@ on:
       - 'ops/systemd/cuberoot-traffic-guard.*'
       - '.github/workflows/deploy_traffic_guard.yml'
 
+concurrency:
+  group: deploy-traffic-guard
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest

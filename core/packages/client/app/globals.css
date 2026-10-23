@@ -1,4 +1,5 @@
 @import "@cuberoot/timer-ui/search-input.css";
+@import "./accent-colors.css";
 @import "tailwindcss";
 /* battle dark-lock removed — battle now dual-theme (2026-06-01) */
 @source "../app/**/*.{tsx,ts,jsx,js}";
@@ -16,6 +17,13 @@
   select {
     font-size: 16px !important;
   }
+}
+
+/* 全站横向滚动到边缘即停止；仅约束 x 轴，保留纵向滚动与回弹。
+   important 防止组件的 overscroll-behavior: contain 简写重新打开横向回弹。
+   新增滚动容器自动适用，回归约束见 horizontal-overscroll.test.ts。 */
+* {
+  overscroll-behavior-x: none !important;
 }
 
 /* Mobile double-tap zoom off */
@@ -68,7 +76,7 @@ body {
   --signal-warning: #d4a259;
   --signal-info: #4a9eff;
   --signal-danger: #e05c5c;
-  /* iOS 风开关「开启态」色(PillToggle 等);全站开关统一走它,新开关直接 var(--toggle-on) 别再挑色 */
+  /* Shared switch color: green by default, overridden by the user's accent choice. */
   --toggle-on: #34c759;
   --border-default: #e5e5e5;
   --border-strong: #d4d4d4;
@@ -702,7 +710,7 @@ html[data-appearance-preview] body {
 }
 .appearance-sec-label {
   padding: 6px 10px 3px;
-  font-size: 0.7rem;
+  font-size: 16px;
   color: var(--foreground);
   white-space: nowrap;
 }
@@ -789,7 +797,7 @@ html[data-appearance-preview] body {
   border-radius: 8px;
   border: none;
   background: var(--accent);
-  color: white;
+  color: var(--accent-foreground);
   cursor: pointer;
   font-size: 1rem;
   font-weight: 600;

@@ -14,3 +14,50 @@
   grid-column: 3;
 }
 .shell-topbar.timer-solo-topbar--fullscreen { display: none; }
+
+/* Narrow layouts need the full remaining width, without a mirrored home gutter. */
+@media (max-width: 1023px) {
+  .shell-topbar.timer-solo-topbar:has(.shell-topbar-left) {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    column-gap: 4px;
+  }
+  .shell-topbar.timer-solo-topbar .shell-topbar-left {
+    flex-wrap: nowrap;
+    justify-self: stretch;
+    gap: 2px;
+  }
+  .shell-topbar.timer-solo-topbar .shell-topbar-right:empty {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .shell-topbar.timer-solo-topbar:has(.shell-topbar-left) {
+    column-gap: 0;
+    padding-inline: max(4px, env(safe-area-inset-left)) max(4px, env(safe-area-inset-right));
+  }
+  .shell-topbar.timer-solo-topbar .shell-topbar-home {
+    width: 44px;
+    height: 44px;
+  }
+  .shell-topbar.timer-solo-topbar .shell-topbar-left {
+    --timer-topbar-control-size: 44px;
+    gap: 0;
+  }
+  .shell-topbar.timer-solo-topbar .shell-topbar-left > :not(.shell-topbar-diff) {
+    flex: 1 1 0;
+    min-width: 0;
+    margin-inline: 0;
+  }
+  .shell-topbar.timer-solo-topbar .timer-practice-control :is(.timer-practice-control, .pp, .timer-scramble-source-select) {
+    width: 100%;
+    min-width: 0;
+  }
+  .shell-topbar.timer-solo-topbar .shell-topbar-left :is(.shell-device-center-trigger, .pp-trigger, .timer-scramble-source-trigger, .solver-panel-head, .solo-layout-toggle, .settings-popover-trigger) {
+    width: 100%;
+    height: 44px;
+    min-height: 44px;
+    padding-inline: 2px;
+    justify-content: center;
+  }
+}

@@ -3,9 +3,10 @@ import { spawn, execFileSync } from 'node:child_process';
 import { createConnection } from 'node:net';
 import { resolve, join } from 'node:path';
 import { existsSync } from 'node:fs';
+import { resolveWorkspacePath } from './resolve-workspace-path.mjs';
 
 const core = resolve(import.meta.dirname, '..');
-const client = join(core, 'packages/client');
+const client = join(core, resolveWorkspacePath('@cuberoot/client', core));
 const url = 'http://127.0.0.1:3000/zh';
 function listening(): Promise<boolean> {
   return new Promise(resolve => {
@@ -30,7 +31,8 @@ async function main() {
     console.log(`Reusing the running CubeRoot server: ${url}`); openBrowser(); return;
   }
   const next = join(client, 'node_modules/next/dist/bin/next');
-  if (!existsSync(next)) throw Error('Dependencies missing. Run pnpm install in core.');
+  const turbo = join(core, 'node_modules/turbo/bin/turbo');
+  if (!existsSync(next) || !existsSync(turbo)) throw Error('Dependencies missing. Run pnpm install in core.');
   // Reuse the existing asset generators; do not duplicate their implementation.
   for (const args of [
     ['--import', 'tsx', 'packages/client/scripts/build-cube-history.ts'],
@@ -38,8 +40,8 @@ async function main() {
     ['scripts/build-cubing-worker.mjs', 'packages/client/public/cubing-chunks'],
   ]) execFileSync(process.execPath, args, { cwd: core, stdio: 'inherit' });
   if (await listening()) throw Error('Port 3000 became occupied. Run cuberoot again to reuse it.');
-  const child = spawn(process.execPath, [next, 'dev', '-H', '127.0.0.1', '-p', '3000'], {
-    cwd: client, stdio: 'inherit', detached: process.platform !== 'win32',
+  const child = spawn(process.execPath, [turbo, 'watch', 'dev:serve', '--filter=@cuberoot/client', '--concurrency=2', '--ui=stream', '--env-mode=loose'], {
+    cwd: core, stdio: 'inherit', detached: process.platform !== 'win32',
   });
   let ended = false;
   function stop() {

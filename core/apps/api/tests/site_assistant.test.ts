@@ -1,4 +1,4 @@
-import { SITE_ASSISTANT_BODY_BYTES } from '@cuberoot/shared/site-assistant';
+import { SITE_ASSISTANT_ANSWER_MAX_LENGTH, SITE_ASSISTANT_BODY_BYTES, SITE_ASSISTANT_QUESTION_MAX_LENGTH } from '@cuberoot/shared/site-assistant';
 import { modelResponse } from './fixtures/site_assistant_model.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createSiteAssistantRoutes as createRoutes } from '../src/routes/site_assistant.js';
@@ -20,6 +20,99 @@ const ask = () => new Request('https://api.example/site-assistant', {
 });
 
 describe('site assistant grounding', () => {
+  it.each([
+    ['你好', '你好，有什么想聊的？'],
+    ['解释一下光合作用', '光合作用把光能转化为化学能。'],
+    ['Translate this sentence into English: 今天的天气很好。', 'The weather is nice today.'],
+    ['帮我写一封给老师的感谢信', '老师您好：谢谢您一直以来的耐心指导。'],
+    ['为什么练习要分散到每天，而不是一次练很久？', '分散练习有助于在反复提取和休息之间巩固学习。'],
+  ])('answers ordinary conversation without a statistics/RAG dependency: %s',async(question,answer)=>{
+    const fetcher=vi.fn<typeof fetch>(async input=>{
+      expect(String(input)).toBe(config.baseUrl+'/chat/completions');
+      return modelResponse({answerKind:'general',answer});
+    });
+    const result=await answerSiteQuestion(question,'zh',config,AbortSignal.timeout(5000),fetcher);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(result).toMatchObject({answer,sources:[],artifacts:[]});
+    const request=JSON.parse(String(fetcher.mock.calls[0][1]?.body));
+    expect(request.messages[0].content).not.toContain('Never answer factual questions from training memory');
+    expect(request.messages[0].content).not.toContain('For unrelated requests explain the cubing/site scope');
+  });
+  it('keeps a substantive general explanation when recommending an optional verified page',async()=>{
+    const explanation='CFOP 包括十字、前两层、顶层朝向和顶层排列。'.repeat(14);
+    const model=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(modelResponse({calls:[{tool:'navigation',query:'OLL',kind:'algorithms'}]}))
+      .mockResolvedValueOnce(modelResponse({answerKind:'general',answer:explanation,sourceIds:['alg:3x3:oll']}));
+    const fetcher:typeof fetch=(url,init)=>String(url).endsWith('/assistant/pages.json')?Promise.resolve(Response.json({pages:[]})):model(url,init);
+    const result=await answerSiteQuestion('解释 CFOP，然后给我一个 OLL 公式库入口','zh',config,AbortSignal.timeout(5000),fetcher);
+    expect(model).toHaveBeenCalledTimes(2);
+    expect(result.answer).toContain(explanation);
+    expect(result.sources).toEqual([{id:'alg:3x3:oll',title:'3x3 OLL',href:'/alg/3x3/oll',read:false}]);
+    expect(result.actions?.map(action=>action.href)).toEqual(['/alg/3x3/oll']);
+  });
+  it('does not promote unused retrieved sources into citations on a general answer',async()=>{
+    const fetcher=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(modelResponse({calls:[{tool:'glossary',query:'CFOP'}]}))
+      .mockResolvedValueOnce(Response.json({sections:[{entries:[{headEn:'CFOP',bodyEn:'A solving method.'}]}]}))
+      .mockResolvedValueOnce(modelResponse({answerKind:'general',answer:'A separate general explanation.',sourceIds:['invented']}));
+    const result=await answerSiteQuestion('Explain this general concept.','en',config,AbortSignal.timeout(5000),fetcher);
+    expect(result.answer).toBe('A separate general explanation.');
+    expect(result.sources).toEqual([]);
+    expect(result.actions).toEqual([]);
+  });
+  it('repairs an oversized writing response into a complete continuation part instead of slicing it',async()=>{
+    const part='第一部分：从问题开始。\n\n'+'先确定读者和目标，再逐步展开。'.repeat(150)+'\n\n这一部分先写到这里。下一部分介绍具体练习，回复“继续”即可。';
+    const fetcher=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(modelResponse({answerKind:'general',answer:'长'.repeat(SITE_ASSISTANT_ANSWER_MAX_LENGTH+1)}))
+      .mockResolvedValueOnce(modelResponse({answerKind:'general',answer:part}));
+    const result=await answerSiteQuestion('写一篇两万字的学习指南。','zh',config,AbortSignal.timeout(5000),fetcher);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(result.answer).toBe(part);
+    const initial=JSON.parse(String(fetcher.mock.calls[0][1]?.body));
+    const repaired=JSON.parse(String(fetcher.mock.calls[1][1]?.body));
+    expect(initial.messages[0].content).toContain(`at most ${SITE_ASSISTANT_ANSWER_MAX_LENGTH} characters`);
+    expect(repaired.messages.at(-1).content).toContain(`at most ${SITE_ASSISTANT_ANSWER_MAX_LENGTH} characters`);
+    expect(repaired.messages.at(-1).content).toContain('first complete part');
+    expect(repaired.messages.at(-1).content).toContain('Do not claim the full requested length');
+  });
+  it('preserves a valid full-length answer without overflowing the budget when adding citations',async()=>{
+    const ending='完整结尾。';
+    const answer='文'.repeat(SITE_ASSISTANT_ANSWER_MAX_LENGTH-ending.length)+ending;
+    const fetcher=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(modelResponse({calls:[{tool:'glossary',query:'CFOP'}]}))
+      .mockResolvedValueOnce(Response.json({sections:[{entries:[{headEn:'CFOP',bodyEn:'A solving method.'}]}]}))
+      .mockResolvedValueOnce(modelResponse({answerKind:'general',answer,sourceIds:['wiki']}));
+    const result=await answerSiteQuestion('解释相关概念并附上来源。','zh',config,AbortSignal.timeout(5000),fetcher);
+    expect(result.answer).toBe(answer);
+    expect(result.answer.length).toBe(SITE_ASSISTANT_ANSWER_MAX_LENGTH);
+    expect(result.sources.map(source=>source.id)).toEqual(['wiki']);
+    expect(fetcher).toHaveBeenCalledTimes(3);
+  });
+  it('repairs invented provenance on a retrieved factual answer without citing all available sources',async()=>{
+    const fetcher=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(modelResponse({calls:[{tool:'glossary',query:'CFOP'}]}))
+      .mockResolvedValueOnce(Response.json({sections:[{entries:[{headEn:'CFOP',bodyEn:'A solving method.'}]}]}))
+      .mockResolvedValueOnce(modelResponse({answerKind:'grounded',answer:'The source says this.',sourceIds:['invented']}))
+      .mockResolvedValueOnce(modelResponse({answerKind:'grounded',answer:'CFOP is a solving method.',sourceIds:['wiki']}));
+    const result=await answerSiteQuestion('What does the glossary say about CFOP?','en',config,AbortSignal.timeout(5000),fetcher);
+    expect(fetcher).toHaveBeenCalledTimes(4);
+    expect(result.answer).toBe('CFOP is a solving method. [[wiki]]');
+    expect(result.sources.map(source=>source.id)).toEqual(['wiki']);
+    expect(JSON.parse(String(fetcher.mock.calls[3][1]?.body)).messages.at(-1).content).toContain('Repair the answer citations');
+  });
+  it.each(['auto','fast','deep'] as const)('honors %s thinking when the model requests deliberate reasoning',async mode=>{
+    const fetcher=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(modelResponse({calls:[{tool:'deliberate'}]}))
+      .mockResolvedValueOnce(modelResponse({answerKind:'general',answer:'The argument follows from these assumptions.'}));
+    const result=await answerSiteQuestion('Work through this comparison carefully.','en',{...config,baseUrl:'https://api.deepseek.com'},AbortSignal.timeout(5000),fetcher,[],undefined,undefined,'UTC',[],mode);
+    expect(result.answer).toBe('The argument follows from these assumptions.');
+    const bodies=fetcher.mock.calls.map(([,init])=>JSON.parse(String(init?.body)));
+    expect(bodies[0].thinking.type).toBe(mode==='deep'?'enabled':'disabled');
+    expect(bodies[1].thinking.type).toBe(mode==='fast'?'disabled':'enabled');
+    expect(bodies[1].max_tokens).toBe(mode==='fast'?4096:16384);
+    expect(result.sources).toEqual([]);
+    expect(bodies.every(body=>body.messages.every((message:{content?:string})=>!message.content?.includes('private-reasoning-')))).toBe(true);
+  });
   it('requires schema discovery and retries a failed analysis without treating the failure as evidence',async()=>{
     const call={tool:'analysis_query',title:'Monthly competitions',description:'Distinct competition IDs by month',query:{}};
     vi.mocked(runAnalysisQuery).mockReset()
@@ -37,7 +130,7 @@ describe('site assistant grounding', () => {
     expect(JSON.parse(String(model.mock.calls[1][1]?.body)).messages[1].content).toContain('Call analysis_schema');
     const repair=JSON.parse(String(model.mock.calls[2][1]?.body));
     expect(repair.messages[1].content).toContain('Correct the grouping');
-    expect(repair.max_tokens).toBe(3200);
+    expect(repair.max_tokens).toBe(4096);
     expect(answer.artifacts).toHaveLength(1);expect(answer.sources.map(s=>s.id)).toEqual(['analysis:test']);
   });
   it('reviews a computed draft and executes the missing derived measure before returning it',async()=>{
@@ -336,19 +429,19 @@ describe('site assistant grounding', () => {
     vi.stubEnv('SITE_ASSISTANT_PROVIDER', 'bailian');
     expect(assistantConfig()).toEqual({key:'bailian-test-key',baseUrl:'https://dashscope.aliyuncs.com/compatible-mode/v1',model:'qwen3.8-flash'});
   });
-  it('enables bounded DeepSeek thinking without changing the other provider', async () => {
+  it('keeps the first auto planning pass fast across providers', async () => {
     const fetcher=vi.fn<typeof fetch>().mockImplementation(async()=>modelResponse({answer:'请提供要查询的选手。'}));
     await answerSiteQuestion('查选手','zh',{key:'deepseek-test-key',baseUrl:'https://api.deepseek.com',model:'deepseek-flash'},AbortSignal.timeout(5000),withCatalog(fetcher));
     const [url,init]=fetcher.mock.calls[0];
     expect(url).toBe('https://api.deepseek.com/chat/completions');
     expect(new Headers(init?.headers).get('authorization')).toBe('Bearer deepseek-test-key');
     const body=JSON.parse(String(init?.body));
-    expect(body).toMatchObject({model:'deepseek-flash',thinking:{type:'enabled'},reasoning_effort:'low',response_format:{type:'json_object'},max_tokens:8192});
+    expect(body).toMatchObject({model:'deepseek-flash',thinking:{type:'disabled'},response_format:{type:'json_object'},max_tokens:4096});
     expect(body).not.toHaveProperty('enable_thinking');
-    expect(body).not.toHaveProperty('temperature');
+    expect(body.temperature).toBe(0);
     await answerSiteQuestion('查选手','zh',config,AbortSignal.timeout(5000),withCatalog(fetcher));
     const other=JSON.parse(String(fetcher.mock.calls.at(-1)?.[1]?.body));
-    expect(other).toMatchObject({enable_thinking:false,temperature:0,max_tokens:1200});
+    expect(other).toMatchObject({enable_thinking:false,temperature:0,max_tokens:4096});
     expect(other).not.toHaveProperty('thinking');
   });
   it('uses the fast final response after a navigation-only lookup',async()=>{
@@ -360,8 +453,8 @@ describe('site assistant grounding', () => {
     };
     await answerSiteQuestion('打开数帧','zh',{...config,baseUrl:'https://api.deepseek.com'},AbortSignal.timeout(5000),withCatalog(fetcher));
     expect(bodies).toHaveLength(2);
-    expect(bodies[0]).toMatchObject({thinking:{type:'enabled'},reasoning_effort:'low'});
-    expect(bodies[1]).toMatchObject({thinking:{type:'disabled'},max_tokens:1200});
+    expect(bodies[0]).toMatchObject({thinking:{type:'disabled'}});
+    expect(bodies[1]).toMatchObject({thinking:{type:'disabled'},max_tokens:4096});
     expect(bodies[1]).not.toHaveProperty('reasoning_effort');
   });
   it('raises reasoning effort after statistical evidence without trusting its labels',async()=>{
@@ -419,8 +512,8 @@ describe('site assistant grounding', () => {
     expect(result.artifacts).toEqual([{kind:'table',title:'可选统计条件',columns:['条件组合'],rows:[['World'],['Asia']]}]);
     expect(result.answer).toContain('2 个可用分表');
   });
-  it('reads an explicitly named statistic before accepting an unevidenced model clarification',async()=>{
-    const model=vi.fn(async()=>modelResponse({answer:'Please choose a country.'}));
+  it('resolves an explicitly named statistic during native catalog discovery',async()=>{
+    const model=vi.fn(async()=>modelResponse({calls:[{tool:'statistics'}]}));
     const fetcher:typeof fetch=async url=>String(url).endsWith('/index.json')?Response.json({categories:[{stats:[{id:'known_stat',titleEn:'Known statistic',titleZh:'已知统计'}]}]}):String(url).endsWith('/known_stat.json')?Response.json({sections:[{title:'Single',rows:[[1]]},{title:'Average',rows:[[2]]}]}):model();
     const result=await answerSiteQuestion('已知统计，先说明可选条件','zh',config,AbortSignal.timeout(5000),fetcher);
     expect(result.sources[0].id).toBe('stat:known_stat');
@@ -468,7 +561,7 @@ describe('site assistant grounding', () => {
       [lang==='zh'?'二阶':'2×2','1.00','—','2.00','—'],
     ]});
     expect(result.answer).toBe(lang==='zh'?'已列出Max Park全部 2 个有成绩项目的官方个人最佳成绩。 [[person:2012PARK03]]':"Showing Max Park's official personal bests for all 2 events with results. [[person:2012PARK03]]");
-    const context=JSON.parse(JSON.parse(String(model.mock.calls[3][1]?.body)).messages[1].content);
+    const context=JSON.parse(JSON.parse(String(model.mock.calls[3][1]?.body)).messages[3].content);
     expect(context.evidence.at(-1).tool).toMatchObject({event:'all'});
     expect(context.evidence.at(-1).data.personalRecords.map((r:{event:string})=>r.event)).toEqual(['333','222']);
   });
@@ -499,9 +592,10 @@ describe('site assistant grounding', () => {
       const fetcher=vi.fn<typeof fetch>().mockResolvedValue(modelResponse({answer:'answer'}));
       await answerSiteQuestion(question,'zh',config,AbortSignal.timeout(5000), withCatalog(fetcher),[{role:'user',content:'看看耿暄一的三阶成绩'}],'2017YANR02');
       const request=JSON.parse(String(fetcher.mock.calls[0][1]?.body));
-      const context=JSON.parse(request.messages[1].content);
+      const context=JSON.parse(request.messages[2].content);
       expect(context.viewerWcaId).toBe('2017YANR02');
-      expect(context.history[0].content).toContain('耿暄一');
+      expect(request.messages[1].content).toContain('耿暄一');
+      expect(context).not.toHaveProperty('history');
       expect(request.messages[0].content).toContain('never to replace an explicitly named person or a third-person subject from history');
     }
   });
@@ -569,13 +663,14 @@ describe('site assistant grounding', () => {
     await expect(answerSiteQuestion('他的平均呢？','zh',config,AbortSignal.timeout(5000), withCatalog(fetcher),history)).rejects.toMatchObject({code:'model_unavailable'});
     expect(fetcher.mock.calls.filter(([url])=>String(url).includes('worldcubeassociation.org'))).toHaveLength(0);
     expect(fetcher.mock.calls.filter(([url])=>String(url).startsWith(config.baseUrl))).toHaveLength(3);
-    const data=JSON.parse(JSON.parse(String(fetcher.mock.calls[0][1]?.body)).messages[1].content);
-    expect(data.history).toEqual(history);
+    const messages=JSON.parse(String(fetcher.mock.calls[0][1]?.body)).messages;
+    expect(messages.slice(1,3)).toEqual(history);
+    expect(JSON.parse(messages[3].content)).not.toHaveProperty('history');
   });
 
   it('requires content evidence before explaining a navigation destination',async()=>{
     const corpus={version:2,updated:'2026-10-10T00:00:00.000Z',pages:[{lang:'zh',href:'/timer',title:'计时器训练',text:'打开训练菜单，选择公式集，再选择要练习的情况。'}]};
-    const responses=[modelResponse({calls:[{tool:'navigation',query:'计时器训练',kind:'all',pageIds:['timer']}]}),modelResponse({answer:'Unsupported navigation-only instructions.',sourceIds:['timer']}),modelResponse({answer:'Read but cited only navigation.',sourceIds:['timer']})];
+    const responses=[modelResponse({calls:[{tool:'navigation',query:'计时器训练',kind:'all',pageIds:['timer']}]}),modelResponse({answerKind:'site_content',answer:'Unsupported navigation-only instructions.',sourceIds:['timer']}),modelResponse({answerKind:'site_content',answer:'Read but cited only navigation.',sourceIds:['timer']})];
     const model=vi.fn<typeof fetch>(async (input,init)=>{
       if(String(input).endsWith('/assistant/pages.json'))return Response.json(corpus);
       if(responses.length)return responses.shift()!;
@@ -642,7 +737,7 @@ describe('site assistant authenticated route', () => {
   it('rejects oversized, malformed and unexpected fields before spending tokens', async () => {
     const answer = vi.fn();
     const route = createSiteAssistantRoutes({ answer, config: () => config, now: () => 120000 });
-    for (const body of ['not json', JSON.stringify({ question: 'x'.repeat(501), lang: 'zh' }), JSON.stringify({ question: 'hello', lang: 'en', url: 'http://localhost' })]) {
+    for (const body of ['not json', JSON.stringify({ question: 'x'.repeat(SITE_ASSISTANT_QUESTION_MAX_LENGTH+1), lang: 'zh' }), JSON.stringify({ question: 'hello', lang: 'en', url: 'http://localhost' })]) {
       expect((await route.request('/site-assistant', { method: 'POST', body })).status).toBe(400);
     }
     expect((await route.request('/site-assistant', { method: 'POST', body: 'x'.repeat(SITE_ASSISTANT_BODY_BYTES + 1) })).status).toBe(413);

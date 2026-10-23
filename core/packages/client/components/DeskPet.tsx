@@ -83,10 +83,13 @@ const VC: Record<ThemeId, [number, number]> = {
   rootbeast: [0.5, 0.64],
 };
 
-// Viewport size excluding the scrollbar — CSS right/bottom anchor to this, not
-// to window.innerWidth (which includes the scrollbar → a ~15px drift per step).
-const vpW = () => document.documentElement.clientWidth;
-const vpH = () => document.documentElement.clientHeight;
+// Desktop fixed anchors exclude the scrollbar. Mobile layout overflow can widen
+// the fixed-position containing block beyond clientWidth/clientHeight; use its size
+// for coordinates, then clamp against visualViewport below.
+const vpW = () => window.matchMedia('(max-width: 767px)').matches
+  ? window.innerWidth : document.documentElement.clientWidth;
+const vpH = () => window.matchMedia('(max-width: 767px)').matches
+  ? window.innerHeight : document.documentElement.clientHeight;
 
 // Clamp the bottom-right anchor (right/bottom px) so the pet's visual center
 // (fraction fx,fy of its square box) may travel a touch PAST each viewport edge,
@@ -98,19 +101,21 @@ const PEEK = 0.08;
 const clampAnchor = (right: number, bottom: number, w: number, h: number, fx: number, fy: number) => {
   const cw = vpW(), ch = vpH();
   const mX = -w * PEEK, mY = -h * PEEK;
-  // Native navigation bars cannot receive WebView pointer events. Keep the
-  // entire pet vertically inside the visible WebView, including restored pets.
+  // Native navigation bars and mobile browser chrome cannot receive page pointer
+  // events. Keep the entire pet inside the visible height, including restored pets.
   // WeChat is included when iOS has not supplied the mini-program marker yet.
   const viewport = window.visualViewport;
-  const safe = mayUseMiniProgramBridge();
+  const safe = mayUseMiniProgramBridge() || window.matchMedia('(max-width: 767px)').matches;
   const style = safe ? getComputedStyle(document.documentElement) : null;
   const top = (viewport?.offsetTop ?? 0) + (parseFloat(style?.getPropertyValue('--sat') ?? '') || 0) + 8;
   const bottomEdge = Math.min(ch, (viewport?.offsetTop ?? 0) + (viewport?.height ?? ch))
     - (parseFloat(style?.getPropertyValue('--sab') ?? '') || 0) - 8;
   const minBottom = safe ? ch - bottomEdge : mY - h * (1 - fy);
   const maxBottom = safe ? Math.max(minBottom, ch - top - h) : ch - mY - h * (1 - fy);
+  const left = safe ? (viewport?.offsetLeft ?? 0) : 0;
+  const rightEdge = safe ? left + (viewport?.width ?? cw) : cw;
   return {
-    right: Math.min(Math.max(mX - w * (1 - fx), right), cw - mX - w * (1 - fx)),
+    right: Math.min(Math.max(cw - rightEdge + mX - w * (1 - fx), right), cw - left - mX - w * (1 - fx)),
     bottom: Math.min(Math.max(minBottom, bottom), maxBottom),
   };
 };
@@ -395,6 +400,8 @@ export default function DeskPet() {
       if (!box) return;
       mount.disconnect();
       resize.observe(box);
+      // Keyboard/URL-bar changes resize the parent even if the input stays the same size.
+      if (box.parentElement) resize.observe(box.parentElement);
       // Responsive pet sizing and expanded tools can settle after the search mounts.
       // Repositioning changes only offsets, so these size observations do not loop.
       if (rootRef.current) resize.observe(rootRef.current);

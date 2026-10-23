@@ -35,6 +35,10 @@ on:
     # UTC 每天 23:30 — stats.yml 当天 20:00 开跑后 3h30min,wca_competitions 已最新
     - cron: '30 23 * * *'
 
+concurrency:
+  group: dump-comp-snapshots
+  cancel-in-progress: false
+
 jobs:
   dump:
     runs-on: ubuntu-latest

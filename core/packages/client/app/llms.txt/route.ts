@@ -52,6 +52,15 @@ Association. WCA competition data is derived from the WCA's public export.
   Regulations rewritten with diagrams and 3D examples, one page per article.
 - [Full official text](${BASE}/regulation/full): the complete regulations
   verbatim, for citation.
+- [English–Chinese translation reference](${BASE}/regulation/translation):
+  regulatory terminology, phrasing, context distinctions and known translation
+  discrepancies. Read this before translating WCA-related content into Chinese.
+- [Translation reference in Markdown](${BASE}/regulation/wca-translation-reference.md):
+  the same bilingual reference as a directly readable, downloadable file.
+- [Parallel clauses in Markdown](${BASE}/regulation/wca-regulations-bilingual.md):
+  English and Chinese aligned by clause ID, with source versions and attribution.
+  Alignment does not certify translation quality; consult the reference's known
+  discrepancies, check versions, and use the current English for authority.
 - The illustrated Article 12 content is part of the [Move notation guide](${BASE}/notation).
   Other per-article pages include
   [Scrambling](${BASE}/regulation/scrambling), [Events](${BASE}/regulation/events),

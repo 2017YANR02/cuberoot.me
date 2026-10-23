@@ -1,0 +1,24 @@
+.reg-translation-downloads {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 16px 0 24px;
+}
+.reg-translation-downloads a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  color: var(--accent);
+}
+.reg-translation-reference { min-width: 0; line-height: 1.75; overflow-wrap: anywhere; }
+.reg-translation-reference h1 { font-size: clamp(28px, 5vw, 44px); line-height: 1.2; margin: 0 0 24px; }
+.reg-translation-reference h2 { font-size: clamp(21px, 3vw, 28px); line-height: 1.35; margin: 40px 0 16px; }
+.reg-translation-reference p { margin: 16px 0; }
+.reg-translation-reference ul, .reg-translation-reference ol { padding-inline-start: 24px; }
+.reg-translation-reference li { margin: 10px 0; }
+.reg-translation-reference a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.reg-translation-reference table { display: block; width: 100%; overflow-x: auto; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+.reg-translation-reference th, .reg-translation-reference td { min-width: 8rem; padding: 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border-default); }
+.reg-translation-reference th { font-weight: 650; }
+.reg-translation-reference td:nth-child(3) { min-width: 15rem; }

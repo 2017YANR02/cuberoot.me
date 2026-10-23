@@ -19,9 +19,9 @@ on:
     paths:
       - 'core/sorcalc/**'
 
-# 按事件分组:push 语法门不排在数小时的周更 run 后面;schedule 与 dispatch 各自串行
+# push 只编译；schedule 与 dispatch 写同一 /tmp/sor_import，必须共用队列。
 concurrency:
-  group: sor-${{ github.event_name }}
+  group: ${{ github.event_name == 'push' && 'sor-check' || 'sor-production' }}
   cancel-in-progress: false
 
 jobs:

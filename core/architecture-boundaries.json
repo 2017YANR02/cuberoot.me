@@ -21,6 +21,21 @@
   },
   "manualContracts": [
     {
+      "id": "nginx-cache-purge-isolated-regression",
+      "from": "packages/client/tests/nginx-api-cache-purge.test.ts",
+      "to": "local Node subprocesses operating only on test temporary directories",
+      "phase": "subprocess-native",
+      "mechanism": "Run the production purge script with its fixed root substituted in a test-only copy; a separate Node process writes concurrent cache fixtures.",
+      "owner": "deployment workflows",
+      "rationale": "Verify deletion scope, symlink rejection, concurrent writes and real permission failures without accessing production caches or SSH.",
+      "replacement": "Keep execution isolated to temporary fixtures and preserve the production script's fixed path.",
+      "subprocessCalls": [
+        {"file":"packages/client/tests/nginx-api-cache-purge.test.ts","mechanism":"spawnSync","target":"<dynamic>","count":1},
+        {"file":"packages/client/tests/nginx-api-cache-purge.test.ts","mechanism":"spawn","target":"<dynamic>","count":1}
+      ],
+      "evidence": [{"file":"ops/nginx/purge-api-cache.ts","contains":"const cacheRoot = '/var/cache/nginx/api'"}]
+    },
+    {
       "id": "client-small-fmc-quotient-native-export",
       "from": "packages/client/scripts/fmc-goal-exact-distributions.mts",
       "to": "solver/target/release/dist_htr_fr",
@@ -30,19 +45,9 @@
       "rationale": "Reuse the Rust exact HTR and FR models without disk-table managers or the FR full-state HashMap. HTR construction arrays are bounded below 24 MiB and FR below 4 MiB.",
       "replacement": "Keep this offline adapter behind the existing serial small-distribution guard; accept only htr-dr/fr-htr and a result path, never arbitrary commands.",
       "subprocessCalls": [
-        {
-          "file": "packages/client/scripts/fmc-goal-exact-distributions.mts",
-          "mechanism": "spawnSync",
-          "target": "<dynamic>",
-          "count": 1
-        }
+        {"file":"packages/client/scripts/fmc-goal-exact-distributions.mts","mechanism":"spawnSync","target":"<dynamic>","count":1}
       ],
-      "evidence": [
-        {
-          "file": "solver/src/bin/dist_htr_fr.rs",
-          "contains": "No table manager, mmap or disk-table load"
-        }
-      ]
+      "evidence": [{"file":"solver/src/bin/dist_htr_fr.rs","contains":"No table manager, mmap or disk-table load"}]
     },
     {
       "id": "client-small-puzzle-distribution-measurement",
@@ -54,25 +59,10 @@
       "rationale": "Measure bounded full-state distributions one puzzle at a time while recording a fixed swap baseline, process-tree RSS and conservative memory headroom.",
       "replacement": "Keep this local-only measurement CLI separate from product runtime and large-table computation scopes; do not accept arbitrary worker commands.",
       "subprocessCalls": [
-        {
-          "file": "packages/client/scripts/measure-small-puzzle-distributions.mts",
-          "mechanism": "execFileSync",
-          "target": "<dynamic>",
-          "count": 1
-        },
-        {
-          "file": "packages/client/scripts/measure-small-puzzle-distributions.mts",
-          "mechanism": "spawn",
-          "target": "<dynamic>",
-          "count": 1
-        }
+        {"file":"packages/client/scripts/measure-small-puzzle-distributions.mts","mechanism":"execFileSync","target":"<dynamic>","count":1},
+        {"file":"packages/client/scripts/measure-small-puzzle-distributions.mts","mechanism":"spawn","target":"<dynamic>","count":1}
       ],
-      "evidence": [
-        {
-          "file": "core/packages/client/scripts/measure-small-puzzle-distributions.mts",
-          "contains": "const rssLimitBytes = 512 * 2 ** 20"
-        }
-      ]
+      "evidence": [{"file":"core/packages/client/scripts/measure-small-puzzle-distributions.mts","contains":"const rssLimitBytes = 512 * 2 ** 20"}]
     },
     {
       "id": "watch-reconstruction-test-inputs",

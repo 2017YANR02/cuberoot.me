@@ -97,6 +97,10 @@ pnpm --filter @cuberoot/client dev
 
 本地 Web 的 `/v1/*` 通过 Next rewrites 代理线上 API；`/tools/`、`/stats/` 使用现役 Next route handler，静态资源的发布边界见 `.github/workflows/sync_toolkit.yml`。
 
+`dev`、`dev:clean`、`dev:safe` 和 `local-dev.ts` 都通过 Turborepo Watch 启动：先按依赖顺序执行 Web 依赖的 `dev:build`，再启动 Next；共享包源码改动后自动重新构建，Next 自身负责热更新。`dev:build` 只登记需要输出 `dist` 的 TypeScript 共享包，复用各包的 `build`，不运行 WASM 建表或统计任务。新增同类编译包时，在该包添加 `dev:build` 脚本即可由 workspace 依赖图纳入。保持终端运行，Ctrl+C 同时退出监听和开发服务器。
+
+这避免源码已更新、Node 仍读取旧 `dist` 导致的缺失导出错误；真正的源码编译错误仍须修复。已有开发进程不会自动切换到新的启动流程，下次启动生效。
+
 ## Web Timer 布局
 
 Web 与 App 的蓝牙按钮下挂共享智能魔方面板，未连接、连接中、MAC 输入和已连接态沿用同一面板。已连接态只保留设备名、电量、重置和断开；「重置魔方」同时校准可用的陀螺仪并重置软件/设备状态。括号备注只从展示名称移除，不修改设备标识。复盘的陀螺仪开关与速度控件同行；分段动作及末尾标签使用行内排版，避免选中文字复制时把标签拆成独立行。

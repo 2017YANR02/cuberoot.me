@@ -5,6 +5,9 @@
   "type": "module",
   "description": "魔方速拧视频自动复盘工具 (TypeScript 重构)",
   "scripts": {
+    "research:status": "tsx scripts/research-status.ts",
+    "data:audit": "tsx scripts/dataset-audit.ts",
+    "evaluate": "tsx scripts/evaluate-reconstruction.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsgo --noEmit",

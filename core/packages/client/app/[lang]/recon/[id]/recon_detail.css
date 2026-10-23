@@ -30,9 +30,6 @@
 .detail-result { white-space: nowrap; }
 
 .detail-method-badge {
-  padding: 4px 8px;
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 600;
   white-space: nowrap;
@@ -74,9 +71,11 @@
 /* 全屏(与 /sim 的「全屏魔方」同款):藏头部 + 统计栏,player 铺满整页。
    .detail-page 本就 position:static + height:100dvh,fixed 起来盖过全局通知条,
    与 /sim 的 .sim-page--fullscreen 一致。 */
-.detail-page--fullscreen {
+.detail-page.detail-page--fullscreen {
   position: fixed;
   inset: 0;
+  height: 100dvh;
+  overflow: hidden;
   z-index: 50;
   background: var(--background);
 }
@@ -85,7 +84,19 @@
   display: none;
 }
 .detail-page--fullscreen .detail-player-pane {
-  border-right: none;
+  flex: 1 1 0;
+  height: auto;
+  min-height: 0;
+  width: 100%;
+  border: none;
+}
+.detail-page--fullscreen .detail-layout {
+  overflow: hidden;
+}
+.detail-page--fullscreen .cuber-recon-scramble-net,
+.detail-page--fullscreen .recon-player-backview,
+.detail-page--fullscreen .cuber-recon-backview-control {
+  display: none;
 }
 
 .detail-player-pane {
@@ -196,7 +207,7 @@
 .detail-caption-header {
   font-family: 'Roboto Mono', monospace;
   font-size: 0.85rem;
-  color: var(--muted-foreground);
+  color: var(--foreground);
   margin: 0 0 6px;
 }
 
@@ -389,8 +400,7 @@
   vertical-align: middle;
 }
 
-.compact-select-trigger.recon-btn.detail-title-edit {
-  border-radius: 8px;
+.compact-select-trigger.detail-title-edit {
   font-size: 0.9rem;
   font-weight: normal;
 }
@@ -535,11 +545,27 @@
 }
 
 /* 标题后的编辑按钮——图标按钮,跟标题在一行 */
-.detail-title-edit {
+.detail-title-edit,
+.compact-select-trigger.detail-title-edit {
   padding: 4px 6px !important;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
   vertical-align: middle;
   display: inline-flex;
   align-items: center;
+}
+.detail-title-edit--accent { color: var(--accent); }
+.detail-title-edit:hover,
+.compact-select-trigger.detail-title-edit:hover {
+  background: transparent;
+  color: var(--foreground);
+}
+.detail-title-edit:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 
 .alt-solution-text {

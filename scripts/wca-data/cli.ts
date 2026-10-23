@@ -6,6 +6,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { REPO, FILES, check, run, pack, unpack, parseManifest, assertFresh, obsoleteAssets, type Manifest } from './common.ts';
 
 import { endpoint, gh, api, release, upload, download } from './github.ts';
+import { withLocalLock } from './local-lock.ts';
 
 const scripts = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scripts, '../..');
@@ -43,6 +44,7 @@ async function publish(candidate: string, out: string) {
     }
     check(/^candidate-[a-f0-9]{64}\.json$/.test(candidate), 'Invalid candidate name');
     let r = release();
+    const previousArchive = currentManifest(r)?.archive.name;
     const manifestPath = join(out, candidate);
     if (!existsSync(manifestPath)) download(r, candidate, manifestPath);
     const m = parseManifest(JSON.parse(readFileSync(manifestPath, 'utf8')));
@@ -74,7 +76,7 @@ async function publish(candidate: string, out: string) {
     console.log(deploy('finalize'));
     // Delete only the previous current archive and this completed candidate. Concurrent
     // staged candidates belong to queued runs and must not be removed underneath them.
-    for (const asset of obsoleteAssets(r.assets, m.archive.name, candidate)) gh(['api', `${endpoint}/assets/${asset.id}`, '--method', 'DELETE']);
+    for (const asset of obsoleteAssets(r.assets, m.archive.name, candidate, Date.now(), previousArchive)) gh(['api', `${endpoint}/assets/${asset.id}`, '--method', 'DELETE']);
     console.log(JSON.stringify({ release: r.html_url, archive: m.archive.name, exportDate: m.exportDate, generatedAt: m.generatedAt, files: m.files.length }));
   } catch (error) {
     if (activated && !committed && !commitUncertain) remoteRun(`node ${remote}/deploy.ts rollback /www/wwwroot/toolkit/stats`);
@@ -119,6 +121,9 @@ try {
   if (command === 'pack') console.log(JSON.stringify(pack(resolve(argument ?? 'stats'), out, run('git', ['rev-parse', 'HEAD'])), null, 2));
   else if (command === 'submit') await submit(resolve(argument ?? 'stats'), out);
   else if (command === 'publish') await publish(argument ?? 'server', out);
-  else if (command === 'hydrate') hydrate(resolve(argument ?? join(repoRoot, 'stats')), out);
+  else if (command === 'hydrate') {
+    const target = resolve(argument ?? join(repoRoot, 'stats'));
+    await withLocalLock(join(target, '.stats-release-base.json.lock'), () => hydrate(target, out));
+  }
   else throw new Error('Usage: node scripts/wca-data/cli.ts pack|hydrate|submit|publish [directory|candidate]');
 } finally { rmSync(out, { recursive: true, force: true }); }

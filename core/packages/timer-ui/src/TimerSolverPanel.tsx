@@ -2,7 +2,7 @@
 
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronRight, Maximize2, X } from 'lucide-react';
+import { ChevronRight, Lightbulb, Maximize2, X } from 'lucide-react';
 import { Spinner } from './Spinner';
 import { useTimerWideLayout } from './TimerWorkspace';
 import { useModalDismiss } from './useModalDismiss';
@@ -39,6 +39,7 @@ function SolverViewSelect({ view, onViewChange, language }: ViewProps & { langua
 
 export interface TimerSolverPanelProps {
   scramble: string;
+  onScrambleChange?(scramble: string): void;
   language: 'en' | 'zh';
   sheetOpen: boolean;
   onSheetOpenChange(open: boolean, replace?: boolean): void;
@@ -108,15 +109,15 @@ function useScrambleSwipe({ onPrevScramble, onNextScramble }: ScrambleNav) {
   return { onPointerDown, onPointerMove, onPointerUp: onPointerEnd, onPointerCancel: onPointerEnd, onClickCapture };
 }
 
-function SolverBody({ view, scramble, language, compact, settingsSlot, onPrevScramble, onNextScramble, onDismissChange, onBlockingChange }: Pick<TimerSolverPanelProps, 'scramble' | 'language' | 'onDismissChange' | 'onBlockingChange'> & ScrambleNav & { view: SolverView; compact: boolean; settingsSlot?: HTMLElement | null }) {
+function SolverBody({ view, scramble, onScrambleChange, language, compact, settingsSlot, onPrevScramble, onNextScramble, onDismissChange, onBlockingChange }: Pick<TimerSolverPanelProps, 'scramble' | 'onScrambleChange' | 'language' | 'onDismissChange' | 'onBlockingChange'> & ScrambleNav & { view: SolverView; compact: boolean; settingsSlot?: HTMLElement | null }) {
   return <Suspense fallback={<div className="solver-panel-loading"><Spinner size={16} label={{ zh: '加载中', en: 'Loading' }[language]} /></div>}>
-    <TimerSolverBody view={view} scramble={scramble} language={language} compact={compact}
+    <TimerSolverBody view={view} scramble={scramble} onScrambleChange={onScrambleChange} language={language} compact={compact}
       settingsSlot={settingsSlot} onPrevScramble={onPrevScramble} onNextScramble={onNextScramble} onDismissChange={onDismissChange} onBlockingChange={onBlockingChange} />
   </Suspense>;
 }
 
 /** Full-screen sheet. Escape and body-scroll-lock follow its mount lifecycle. */
-function SolverSheet({ view, onViewChange, scramble, language, compact, onClose, onPrevScramble, onNextScramble, onDismissChange, onBlockingChange }: Pick<TimerSolverPanelProps, 'scramble' | 'language' | 'onDismissChange' | 'onBlockingChange'> & ScrambleNav & ViewProps & { compact: boolean; onClose: () => void }) {
+function SolverSheet({ view, onViewChange, scramble, onScrambleChange, language, compact, onClose, onPrevScramble, onNextScramble, onDismissChange, onBlockingChange }: Pick<TimerSolverPanelProps, 'scramble' | 'onScrambleChange' | 'language' | 'onDismissChange' | 'onBlockingChange'> & ScrambleNav & ViewProps & { compact: boolean; onClose: () => void }) {
   const [settingsSlot, setSettingsSlot] = useState<HTMLSpanElement | null>(null);
   const tr = (text: { en: string; zh: string }) => text[language];
   const dialog = useRef<HTMLDivElement>(null);
@@ -136,11 +137,12 @@ function SolverSheet({ view, onViewChange, scramble, language, compact, onClose,
   }, [dismiss, onDismissChange]);
   useEffect(() => {
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const focusFirst = () => { if (dialog.current) (modalFocusableElements(dialog.current)[0] ?? dialog.current).focus(); };
-    focusFirst();
+    // Focusing the native select during a tap opens its picker on iOS.
+    const focusDialog = () => dialog.current?.focus({ preventScroll: true });
+    focusDialog();
     const onFocus = (event: FocusEvent) => {
       if (event.target instanceof Element && event.target.closest('[aria-modal="true"]') !== dialog.current && event.target.closest('[aria-modal="true"]')) return;
-      if (dialog.current && event.target instanceof Node && !dialog.current.contains(event.target)) focusFirst();
+      if (dialog.current && event.target instanceof Node && !dialog.current.contains(event.target)) focusDialog();
     };
     document.addEventListener('focusin', onFocus);
     return () => { document.removeEventListener('focusin', onFocus); if (previous?.isConnected) previous.focus(); };
@@ -154,7 +156,7 @@ function SolverSheet({ view, onViewChange, scramble, language, compact, onClose,
         if (event.key !== 'Tab' || !dialog.current) return;
         const elements = modalFocusableElements(dialog.current); const first = elements[0]; const last = elements[elements.length - 1];
         if (!first) { event.preventDefault(); dialog.current.focus(); }
-        else if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog.current)) { event.preventDefault(); last.focus(); }
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
       }}>
       <div className="solver-sheet-head">
@@ -170,7 +172,7 @@ function SolverSheet({ view, onViewChange, scramble, language, compact, onClose,
         </button>
       </div>
       <div className="solver-sheet-body">
-        <SolverBody view={view} onDismissChange={registerDismiss} onBlockingChange={reportBlocking} scramble={scramble} language={language} compact={compact} settingsSlot={settingsSlot} onPrevScramble={onPrevScramble} onNextScramble={onNextScramble} />
+        <SolverBody view={view} onDismissChange={registerDismiss} onBlockingChange={reportBlocking} scramble={scramble} onScrambleChange={onScrambleChange} language={language} compact={compact} settingsSlot={settingsSlot} onPrevScramble={onPrevScramble} onNextScramble={onNextScramble} />
       </div>
     </div>
   );
@@ -178,6 +180,7 @@ function SolverSheet({ view, onViewChange, scramble, language, compact, onClose,
 
 export default function TimerSolverPanel({
   scramble,
+  onScrambleChange,
   language,
   sheetOpen,
   onSheetOpenChange,
@@ -301,8 +304,12 @@ export default function TimerSolverPanel({
             className="solver-panel-head"
             onClick={toggle}
             aria-expanded={open}
+            aria-label={view === 'steps' ? tr(STEP_TITLE) : title}
+            title={view === 'steps' ? tr(STEP_TITLE) : title}
           >
-            <span className="solver-panel-title">{view === 'steps' ? tr(STEP_TITLE) : title}</span>
+            {isDesktopRail
+              ? <span className="solver-panel-title">{view === 'steps' ? tr(STEP_TITLE) : title}</span>
+              : <Lightbulb size={18} aria-hidden="true" />}
             {/* 收起时箭头留在入口内；展开时移到全屏按钮右侧。 */}
             {isDesktopRail && !railOpen && <ChevronRight size={14} className="solver-panel-chevron" />}
           </button>}
@@ -334,7 +341,7 @@ export default function TimerSolverPanel({
         </div>
         {railBodyOpen && (
           <div className="solver-panel-body">
-            <SolverBody view={view} onDismissChange={onDismissChange} onBlockingChange={onBlockingChange} scramble={scramble} language={language} compact settingsSlot={settingsSlot} onPrevScramble={onPrevScramble} onNextScramble={onNextScramble} />
+            <SolverBody view={view} onDismissChange={onDismissChange} onBlockingChange={onBlockingChange} scramble={scramble} onScrambleChange={onScrambleChange} language={language} compact settingsSlot={settingsSlot} onPrevScramble={onPrevScramble} onNextScramble={onNextScramble} />
           </div>
         )}
       </aside>
@@ -345,6 +352,7 @@ export default function TimerSolverPanel({
           view={view}
           onViewChange={setView}
           scramble={scramble}
+          onScrambleChange={onScrambleChange}
           language={language}
           compact={isPhone}
           onDismissChange={onDismissChange} onBlockingChange={onBlockingChange}

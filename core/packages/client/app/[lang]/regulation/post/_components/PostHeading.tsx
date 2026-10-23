@@ -1,10 +1,11 @@
 'use client';
 
-import { useRef, useState, type ReactNode } from 'react';
-import { ArrowLeft } from '@app-foundation/icons/lucide';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { ArrowLeft, Pin } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { useIsAdmin } from '@/lib/auth-store';
-import { featureHomepagePost } from '@/lib/page-notices-api';
+import { deletePageNotice, featureHomepagePost, fetchPageNotices, homepagePostNotice } from '@/lib/page-notices-api';
+import { Tooltip } from '@/components/Tooltip';
 import { useT } from '@/hooks/useT';
 
 type FeaturedPost = { id: string; title: { zh: string; en: string } };
@@ -14,15 +15,32 @@ export default function PostHeading({ children, href, backLabel, large = false, 
   const admin = useIsAdmin();
   const t = useT();
   const savingRef = useRef(false);
-  const [state, setState] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [state, setState] = useState<'loading' | 'idle' | 'saving'>('loading');
+  const [pinnedId, setPinnedId] = useState<number | null>(null);
   const [error, setError] = useState('');
+  useEffect(() => {
+    let active = true;
+    setPinnedId(null); setError(''); setState('loading');
+    if (!admin || !post) return;
+    fetchPageNotices().then(notices => {
+      if (active) setPinnedId(homepagePostNotice(notices, post.id)?.id ?? null);
+    }).catch(err => {
+      if (active) setError(err instanceof Error ? err.message : t('加载失败，请重试', 'Could not load. Please retry.'));
+    }).finally(() => { if (active) setState('idle'); });
+    return () => { active = false; };
+  }, [admin, post?.id, t]);
   async function feature() {
     if (!post || !admin || savingRef.current) return;
     savingRef.current = true;
     setState('saving'); setError('');
     try {
-      await featureHomepagePost(post);
-      setState('saved');
+      if (pinnedId !== null) {
+        await deletePageNotice(pinnedId);
+        setPinnedId(null);
+      } else {
+        setPinnedId((await featureHomepagePost(post)).id);
+      }
+      setState('idle');
     } catch (err) {
       setState('idle');
       setError(err instanceof Error ? err.message : t('设置失败，请重试', 'Could not save. Please retry.'));
@@ -34,11 +52,13 @@ export default function PostHeading({ children, href, backLabel, large = false, 
     </Link>
     <h1 className={large ? 'reg-title' : 'news-title'}>{children}</h1>
     {admin && post && <div className="news-feature-action">
-      <button type="button" className="news-feature-button" disabled={state === 'saving'} onClick={() => void feature()}
-        aria-label={t('一键设置为首页焦点', 'Set as homepage feature')}>
-        {state === 'saving' ? t('设置中…', 'Saving…') : t('一键设置', 'Feature')}
-      </button>
-      {state === 'saved' && <span role="status">{t('已设为首页焦点', 'Featured on homepage')} · <Link href="/">{t('查看首页', 'View home')}</Link></span>}
+      <Tooltip content={pinnedId !== null ? t('取消首页置顶', 'Unpin from homepage') : t('置顶到首页', 'Pin to homepage')}>
+        {tip => <button {...tip} type="button" className="news-feature-button" disabled={state !== 'idle'} onClick={() => void feature()}
+          aria-pressed={pinnedId !== null}
+          aria-label={pinnedId !== null ? t('取消首页置顶', 'Unpin from homepage') : t('置顶到首页', 'Pin to homepage')}>
+          <Pin size={18} fill={pinnedId !== null ? 'currentColor' : 'none'} aria-hidden="true" />
+        </button>}
+      </Tooltip>
       {error && <span role="alert">{error}</span>}
     </div>}
   </header>;

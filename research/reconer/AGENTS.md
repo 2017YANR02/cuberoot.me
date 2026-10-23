@@ -6,6 +6,8 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 魔方速拧视频自动复盘工具：输入第三人称速拧视频，输出标准 WCA notation 复盘公式（`F L2 D' L' U R' ...`）。准确率目标 ≥80%，允许人工修正剩余部分。设计与实验记录见 `plan.md` / `roadmap.md` / `human.md`（均为中文，是理解本项目的必读背景）。
 
+2026-10-23 执行入口见 `README.md` 与 `reports/2026-10-23-bootstrap.md`：`scripts/dataset-audit.ts` 清点素材，`vision/baseline.py` 提供独立的可见色块训练/图片推理，`scripts/evaluate-reconstruction.ts` 只在预测保存后评分。当前尚无新权重和模型质量证据，原片与独立像素标注待接收。下文旧三步链与实验成绩保留作历史诊断，不能据其宣称只输入视频即可自动复盘。硬件及依赖以 `pnpm research:status` 的当前报告为准。
+
 ## 相机几何（最关键的非直觉前提）
 
 第三人称机位与选手视角是**镜像**关系。相机主要看到的是 **B 面**（正对、大面积），不是 F 面：

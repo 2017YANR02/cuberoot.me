@@ -12,6 +12,7 @@
  * 复用 recon 的 normalize(同一套朝向状态机,已在复盘十字标准化中生产验证)。
  */
 import { normalize } from '@cuberoot/shared/recon-ground-truth';
+import { simplifyAlg } from '@cuberoot/shared/recon/cube3';
 
 // 可见预转体 y^n(n=0..3):无 / y / y2 / y'
 const Y_PREFIX = ['', 'y', 'y2', "y'"] as const;
@@ -55,22 +56,24 @@ export const Y_ROT_LABEL = ['', 'y', 'y2', "y'"] as const;
 
 /**
  * @param alg  原始解法(空格分隔,通常纯单层面转,也容忍含前导旋转)
- * @param n    预转体次数 0..3(会取模);0 原样返回
+ * @param n    预转体次数 0..3(会取模);0 仅合并前导转体
  *
  * 解法开头若带朝向前缀(如 `z` / `x'` / `x' y`,= 选面视角的整体旋转),y 预转体作用在
- * **该前缀之后**(显示成 `z y …` 而非 `y z …`):前缀原样保留,只对其后的实际转动重写朝向。
+ * **该前缀之后**(显示成 `z y …` 而非 `y z …`):只对其后的实际转动重写朝向,
+ * 再合并前缀中相邻的同轴转体(如 `y y2` → `y'`, `y y'` → 无)。
  */
 export function rotateSolutionY(alg: string, n: number): string {
   const k = ((Math.trunc(n) % 4) + 4) % 4;
   const body = alg.trim();
-  if (k === 0 || !body) return body;
+  if (!body) return body;
   // 剥离开头连续的整体旋转 token(x/y/z ± 2/'),y 预转体插在它们之后。
   const all = body.split(/\s+/);
   let p = 0;
   while (p < all.length && /^[xyz][2']?$/.test(all[p])) p++;
   const prefix = all.slice(0, p);
   const moves = all.slice(p);
-  if (moves.length === 0) return body; // 全是旋转,无实际转动可重写
-  const relabeled = rotateMovesToFrame(moves.join(' '), Y_PREFIX[k]);
-  return [...prefix, Y_PREFIX[k], relabeled].join(' ').trim();
+  if (moves.length === 0) return simplifyAlg(body); // 全是旋转,无实际转动可重写
+  const relabeled = k === 0 ? moves.join(' ') : rotateMovesToFrame(moves.join(' '), Y_PREFIX[k]);
+  const rotation = simplifyAlg([...prefix, Y_PREFIX[k]].filter(Boolean).join(' '));
+  return [rotation, relabeled].filter(Boolean).join(' ');
 }

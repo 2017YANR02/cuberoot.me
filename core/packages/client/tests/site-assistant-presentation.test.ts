@@ -2,7 +2,7 @@
 import { act, createElement, type AnchorHTMLAttributes, type ReactNode, type ComponentProps } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { AssistantAnswer } from '@cuberoot/shared/site-assistant';
+import { SITE_ASSISTANT_QUESTION_MAX_LENGTH, type AssistantAnswer } from '@cuberoot/shared/site-assistant';
 
 vi.mock('next/link',()=>({useLinkStatus:()=>({pending:false}),default:({children,prefetch:_prefetch,...props}:AnchorHTMLAttributes<HTMLAnchorElement> & {children?:ReactNode;prefetch?:boolean})=>createElement('a',props,children)}));
 vi.mock('next/navigation',()=>({useParams:()=>({lang:'zh'})}));
@@ -38,11 +38,33 @@ async function render(answer:AssistantAnswer,overrides:Partial<ComponentProps<ty
   const props:ComponentProps<typeof SiteAssistantDialog>={
     turns:[{question:'历年世锦赛时间',result:answer}],busy:false,error:null,lang:'zh',draft:'',images:[],onImagesChange:vi.fn(),
     onDraftChange:vi.fn(),onFeedback:vi.fn(),onAsk:vi.fn(),onStop:vi.fn(),onClose:vi.fn(),onNew:vi.fn(),
+    thinking:'auto',onThinkingChange:vi.fn(),
     ...overrides,
   };
   await act(async()=>root.render(createElement(SiteAssistantDialog,props)));
   return props;
 }
+
+describe('assistant general conversation controls',()=>{
+  it('accepts longer writing prompts and shows an editable thinking choice',async()=>{
+    const draft='内容'.repeat(1000);
+    const props=await render({answer:'',sources:[]},{draft,turns:[]});
+    expect(document.querySelector<HTMLTextAreaElement>('.site-assistant-compose textarea')?.maxLength).toBe(SITE_ASSISTANT_QUESTION_MAX_LENGTH);
+    expect(document.querySelector('.site-assistant-input-count')).toBeNull();
+    expect(document.body.textContent).toContain('写作与翻译');
+    const choose=document.querySelector<HTMLButtonElement>('button[aria-label="思考模式"]')!;
+    await act(async()=>choose.click());
+    await act(async()=>{Array.from(document.querySelectorAll<HTMLButtonElement>('[role="option"]')).find(option=>option.textContent==='深入思考')!.click();});
+    expect(props.onThinkingChange).toHaveBeenCalledWith('deep');
+    await act(async()=>document.querySelector<HTMLButtonElement>('.site-assistant-compose button[type="submit"]')!.click());
+    expect(props.onAsk).toHaveBeenCalledWith(draft,false,[]);
+  });
+  it('only shows the length count near the limit and keeps the mode fixed during generation',async()=>{
+    await render({answer:'',sources:[]},{draft:'x'.repeat(SITE_ASSISTANT_QUESTION_MAX_LENGTH),busy:true});
+    expect(document.querySelector('.site-assistant-input-count')?.textContent).toBe(`${SITE_ASSISTANT_QUESTION_MAX_LENGTH}/${SITE_ASSISTANT_QUESTION_MAX_LENGTH}`);
+    expect(document.querySelector<HTMLButtonElement>('button[aria-label="思考模式"]')?.disabled).toBe(true);
+  });
+});
 
 describe('assistant image interactions',()=>{
   const image={mediaType:'image/png' as const,data:'fixture'};
@@ -160,4 +182,16 @@ it('shows persisted feedback and keeps a failed change unsaved',async()=>{
   expect(document.body.textContent).toContain('反馈未保存');
   await act(async()=>document.querySelector<HTMLButtonElement>('button[aria-label="没帮助"]')!.click());
   expect(props.onFeedback).toHaveBeenCalledWith(id,'other');
+});
+
+it('renders verified public source metadata while rejecting private addresses and raw Markdown links',async()=>{
+  await render({answer:'公告。[[news:official]] [[external]] 不可信链接。[[bad]] [自行生成的链接](https://unverified.example/path)',sources:[
+    {id:'news:official',title:'Official news',href:'https://www.worldcubeassociation.org/posts/example',read:true},
+    {id:'external',title:'Retrieved documentation',href:'https://docs.example.org/guide',read:true},
+    {id:'bad',title:'Bad source',href:'https://localhost/private',read:true},
+  ]});
+  expect(document.querySelector('a[href="https://www.worldcubeassociation.org/posts/example"]')).not.toBeNull();
+  expect(document.querySelector('a[href="https://docs.example.org/guide"]')).not.toBeNull();
+  expect(document.querySelector('a[href*="localhost"]')).toBeNull();
+  expect(document.querySelector('a[href*="unverified.example"]')).toBeNull();
 });

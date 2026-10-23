@@ -1,7 +1,7 @@
 'use client';
 
 // 报名关系与比赛详情分别复用比赛中心已有的数据入口，确保两页口径一致。
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CompCardWithRounds, wcaRoundsSeed } from '@/components/CompCardWithRounds';
 import { useT } from '@/hooks/useT';
 import { loadLandingComps, type Comp } from '@/lib/comp-search';
@@ -11,27 +11,35 @@ import { toIsoDate } from '@/lib/wca-date';
 import './person_upcoming_comps.css';
 
 interface Props {
-  wcaId: string;
+  wcaId?: string;
   isZh: boolean;
-  title?: string;
+  title?: string | null;
+  followedIds?: ReadonlySet<string>;
   emptyMessage?: string;
+  compactDetails?: boolean;
+  onReady?: () => void;
 }
 
-export default function PersonUpcomingComps({ wcaId, isZh, title, emptyMessage }: Props) {
+export default function PersonUpcomingComps({ wcaId, isZh, title, followedIds, emptyMessage, compactDetails, onReady }: Props) {
   const t = useT();
-  const [competitions, setCompetitions] = useState<Comp[] | null>(null);
+  const [catalog, setCatalog] = useState<Comp[] | null>(null);
+  const [registeredIds, setRegisteredIds] = useState<string[]>([]);
   const [eventIdsByCompetition, setEventIdsByCompetition] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
     let cancelled = false;
+    setCatalog(null);
+    setRegisteredIds([]);
     setEventIdsByCompetition({});
 
-    Promise.all([fetchPersonUpcomingCompetitionIds(wcaId), loadLandingComps()])
+    Promise.all([wcaId ? fetchPersonUpcomingCompetitionIds(wcaId) : Promise.resolve([]), loadLandingComps()])
       .then(async ([competitionIds, allCompetitions]) => {
         const upcoming = selectPersonUpcomingCompetitions(competitionIds, allCompetitions, toIsoDate(new Date()));
         if (cancelled) return;
-        setCompetitions(upcoming);
+        setCatalog(allCompetitions);
+        setRegisteredIds(competitionIds);
 
+        if (!wcaId || compactDetails) return;
         const entries = await Promise.all(upcoming.map(async (competition) => [
           competition.id,
           await fetchCompPersonEventIds(competition.id, wcaId),
@@ -39,34 +47,44 @@ export default function PersonUpcomingComps({ wcaId, isZh, title, emptyMessage }
         if (!cancelled) setEventIdsByCompetition(Object.fromEntries(entries));
       })
       .catch(() => {
-        if (!cancelled) setCompetitions([]);
+        if (!cancelled) setCatalog([]);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [wcaId]);
+  }, [wcaId, compactDetails]);
+
+  const competitions = useMemo(() => catalog && selectPersonUpcomingCompetitions(
+    [...registeredIds, ...(followedIds ?? [])], catalog, toIsoDate(new Date()),
+  ), [catalog, registeredIds, followedIds]);
+
+  useEffect(() => {
+    if (catalog !== null) onReady?.();
+  }, [catalog, onReady]);
 
   if (!competitions) return null;
   if (competitions.length === 0) return emptyMessage ? <p className="landing-slot-message">{emptyMessage}</p> : null;
 
   return (
-    <section className="wp-card wp-upcoming-card" aria-labelledby="wp-upcoming-title">
-      <div className="wp-upcoming-head">
+    <section className="wp-card wp-upcoming-card" aria-labelledby={title === null ? undefined : 'wp-upcoming-title'}>
+      {title !== null && <div className="wp-upcoming-head">
         <h2 id="wp-upcoming-title" className="wp-upcoming-title">
           {title ?? t('未来比赛', 'Upcoming Competitions')}
         </h2>
-      </div>
+      </div>}
 
       <div className="reg-cards">
         {competitions.map((competition) => (
           <CompCardWithRounds
             key={competition.id}
-            comp={{ ...competition, events: eventIdsByCompetition[competition.id] ?? [] }}
+            comp={{ ...competition, events: registeredIds.includes(competition.id)
+              ? eventIdsByCompetition[competition.id] ?? [] : competition.events }}
             isZh={isZh}
+            compactDetails={compactDetails}
             lang={isZh ? 'zh' : 'en'}
-            roundsSeed={wcaRoundsSeed(competition.rounds)}
-            fetchIfMissing
+            roundsSeed={compactDetails ? undefined : wcaRoundsSeed(competition.rounds)}
+            fetchIfMissing={!compactDetails}
           />
         ))}
       </div>

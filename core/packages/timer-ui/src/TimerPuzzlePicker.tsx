@@ -12,6 +12,7 @@ import {
 } from './timer-overlay-control';
 import { CompactSelect } from './CompactSelect';
 import { SearchInput } from './SearchInput';
+import { usePopoverPosition } from './usePopoverPosition';
 
 export interface TimerPuzzlePickerItem {
   id: string;
@@ -62,8 +63,6 @@ export interface TimerPuzzlePickerProps extends TimerOverlayControlProps {
   showSubmenuHeading?: boolean;
   submenuLabel?: string;
 }
-
-const VIEWPORT_MARGIN_PX = 8;
 
 /**
  * The timer puzzle control shared verbatim by Web, Android, and iOS.
@@ -172,8 +171,8 @@ export function TimerPuzzlePicker({
 
   const closeSubmenu = useCallback(() => {
     const parent = submenuId;
+    if (parent) parentRefs.current.get(parent)?.focus();
     setSubmenuId(null);
-    requestAnimationFrame(() => { if (parent) parentRefs.current.get(parent)?.focus(); });
   }, [submenuId]);
 
   useLayoutEffect(() => {
@@ -226,23 +225,11 @@ export function TimerPuzzlePicker({
     return () => window.removeEventListener('resize', updateCompact);
   }, []);
 
-  useLayoutEffect(() => {
-    if (!open) return;
-    const panel = panelRef.current;
-    if (!panel) return;
-    const clamp = () => {
-      panel.style.marginLeft = '';
-      const left = panel.getBoundingClientRect().left;
-      const width = panel.offsetWidth;
-      const viewportWidth = document.documentElement.clientWidth;
-      const overflow = left + width - (viewportWidth - VIEWPORT_MARGIN_PX);
-      const shift = Math.max(VIEWPORT_MARGIN_PX - left, -Math.max(0, overflow));
-      if (shift !== 0) panel.style.marginLeft = `${shift}px`;
-    };
-    clamp();
-    window.addEventListener('resize', clamp);
-    return () => window.removeEventListener('resize', clamp);
-  }, [open, submenuId, query]);
+  const panelStyle = usePopoverPosition({
+    open, triggerRef, panelRef, allowAnchorOverlap: true,
+    contentKey: JSON.stringify([submenuId, query, compact, menuGroups.map(group => group.items.length)]),
+    scrollColumnSelector: hasSubmenus ? '.pp-cascade-column' : undefined,
+  });
 
   if (groups.length === 0) return null;
 
@@ -254,7 +241,14 @@ export function TimerPuzzlePicker({
 
   return (
     <>
-    <div className={`pp${compact ? ' pp--compact' : ''}`} data-no-timer={dataNoTimer ? '' : undefined} ref={rootRef}>
+    <div className={`pp${compact ? ' pp--compact' : ''}`} data-no-timer={dataNoTimer ? '' : undefined} ref={rootRef}
+      onKeyDown={event => {
+        if (!open || event.key !== 'Escape') return;
+        event.preventDefault();
+        event.stopPropagation();
+        if (submenuId) closeSubmenu();
+        else close('escape', true);
+      }}>
       <button
         aria-controls={open ? popupId : undefined}
         aria-expanded={open}
@@ -279,6 +273,7 @@ export function TimerPuzzlePicker({
       </button>
       {open && (
         <div className={`pp-popup${hasSubmenus ? ' pp-popup--nested' : ''}${discovery ? ' pp-popup--discovery' : ''}`} id={popupId} ref={panelRef} role="menu"
+          popover="manual" style={panelStyle}
           data-site-surface={hasSubmenus ? 'popover' : undefined}
           onKeyDown={event => {
             if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;

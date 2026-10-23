@@ -70,7 +70,7 @@
   padding: 0 32px 0 14px;
   background: var(--toggle-on, var(--signal-success));
   border-color: var(--toggle-on, var(--signal-success));
-  color: color-mix(in srgb, var(--toggle-on, var(--signal-success)) 20%, black);
+  color: var(--toggle-on-foreground, color-mix(in srgb, var(--toggle-on, var(--signal-success)) 20%, black));
 }
 
 .timer-222-mode-toggle:hover {

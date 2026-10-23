@@ -11,7 +11,7 @@
   --ink-dim: var(--muted-foreground);
   --ink-faint: var(--faint-foreground);
   --rule: var(--border-default);
-  --accent: #8B2E3C;
+  --accent: var(--user-accent, #8B2E3C);
   --accent-2: #2A4D69;
   --gold: #B8860B;
   --green: #3F7050;
@@ -33,9 +33,9 @@
 
 /* Slight accent lift in dark to keep contrast */
 @media (prefers-color-scheme: dark) {
-  html:not([data-theme=light]) .gt-page { --accent: #D97082; --accent-2: #6B8FCE; --gold: #E0B458; --green: #7BA88B; }
+  html:not([data-theme=light]) .gt-page { --accent: var(--user-accent, #D97082); --accent-2: #6B8FCE; --gold: #E0B458; --green: #7BA88B; }
 }
-html[data-theme=dark] .gt-page { --accent: #D97082; --accent-2: #6B8FCE; --gold: #E0B458; --green: #7BA88B; }
+html[data-theme=dark] .gt-page { --accent: var(--user-accent, #D97082); --accent-2: #6B8FCE; --gold: #E0B458; --green: #7BA88B; }
 
 .gt-page * { box-sizing: border-box; }
 
@@ -780,7 +780,7 @@ html[data-theme=dark] .gt-page { --accent: #D97082; --accent-2: #6B8FCE; --gold:
   letter-spacing: .04em;
   padding: 8px 14px;
   background: var(--accent);
-  color: white;
+  color: var(--user-accent-foreground, white);
   border: 0;
   border-radius: 4px;
   cursor: pointer;
@@ -812,7 +812,7 @@ html[data-theme=dark] .gt-page { --accent: #D97082; --accent-2: #6B8FCE; --gold:
 .gt-chip:hover { border-color: var(--accent); color: var(--accent); }
 .gt-chip-active {
   background: var(--accent);
-  color: white;
+  color: var(--user-accent-foreground, white);
   border-color: var(--accent);
 }
 
@@ -3784,7 +3784,7 @@ html[data-theme=dark] .gt-coset-cell { --coset-l: 40%; }
 .gt-lights-gauss-cell.off { background: var(--bg); color: var(--ink-dim); }
 .gt-lights-gauss-cell.on  { background: var(--ink); color: var(--bg); }
 .gt-lights-gauss-cell.pivot-cell { outline: 2px solid var(--green); outline-offset: 1px; }
-.gt-lights-gauss-cell.aug.on { background: var(--accent); color: white; }
+.gt-lights-gauss-cell.aug.on { background: var(--accent); color: var(--user-accent-foreground, white); }
 .gt-lights-gauss-bar { color: var(--ink-dim); padding: 0 4px; }
 .gt-lights-gauss-solution {
   display: flex;
@@ -4944,7 +4944,7 @@ html[data-theme=dark] .gt-coset-cell { --coset-l: 40%; }
 }
 .gt-rot-ss-pt.is-base {
   background: var(--accent);
-  color: #fff;
+  color: var(--user-accent-foreground, #fff);
   border-color: var(--accent);
 }
 .gt-rot-ss-gens {
@@ -4978,7 +4978,7 @@ html[data-theme=dark] .gt-coset-cell { --coset-l: 40%; }
 }
 .gt-rot-wilson-tabs .gt-wilson-tab.is-active {
   background: var(--accent);
-  color: #fff;
+  color: var(--user-accent-foreground, #fff);
   border-color: var(--accent);
 }
 .gt-rot-wilson-svg {

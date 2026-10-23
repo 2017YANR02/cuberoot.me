@@ -1587,6 +1587,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
               <SheetView
                 key={i}
                 sheet={convSheet(sh)}
+                compId={loadedCompId}
                 isZh={isZh}
                 t={t}
                 showPreview={showPreview}

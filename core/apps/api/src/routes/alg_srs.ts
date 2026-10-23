@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
+import { HTTPException } from 'hono/http-exception';
 import { getIp } from '../utils/analytics_helpers.js';
-import { query } from '../db/connection.js';
+import { query, withTransaction } from '../db/connection.js';
 import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
 import { normalizeCaseKeyForSet } from '../utils/sq1_cs.js';
 
@@ -179,8 +180,9 @@ algSrsRoutes.put('/alg/srs/:puzzle/:set', async (c) => {
   if (items.length > MAX_ITEMS_PER_PUT) return c.json({ error: 'too many items' }, 400);
 
   const now = Date.now();
-  const parsed: Array<{ k: string; d: number; iv: number; ef: number; n: number; l: number; st: number; t: number; h: number }> = [];
+  const byKey = new Map<string, { k: string; d: number; iv: number; ef: number; n: number; l: number; st: number; t: number; h: number }>();
   for (const it of items) {
+    if (!it || typeof it !== 'object') return c.json({ error: 'invalid record' }, 400);
     if (!validCaseKey(it.k)) return c.json({ error: 'invalid case key' }, 400);
     const d = num(it.d, 0, 4102444800000);          // ≤ 2100-01-01
     const iv = num(it.iv, 0, 3650);
@@ -194,9 +196,11 @@ algSrsRoutes.put('/alg/srs/:puzzle/:set', async (c) => {
     }
     // 时间戳只在 [0, now+5min] 内可信,其余按服务器时间(防客户端时钟漂移把 LWW 卡死)
     const tRaw = typeof it.t === 'number' && Number.isFinite(it.t) ? it.t : now;
-    const t = tRaw > 0 && tRaw <= now + 300_000 ? tRaw : now;
-    parsed.push({
-      k: normalizeCaseKeyForSet(puzzle, setSlug, it.k),
+    const t = Number.isSafeInteger(tRaw) && tRaw > 0 && tRaw <= now + 300_000 ? tRaw : now;
+    const k = normalizeCaseKeyForSet(puzzle, setSlug, it.k);
+    if (byKey.has(k) && byKey.get(k)!.t > t) continue;
+    byKey.set(k, {
+      k,
       d,
       iv,
       ef,
@@ -207,29 +211,30 @@ algSrsRoutes.put('/alg/srs/:puzzle/:set', async (c) => {
       h: Math.round(h),
     });
   }
-
-  const cnt = await query<{ n: number }>(
-    'SELECT COUNT(*)::int AS n FROM alg_case_srs WHERE wca_id = ?', [authUser.wcaId],
-  );
-  if ((cnt[0]?.n ?? 0) + parsed.length > MAX_RECS_PER_USER) {
-    return c.json({ error: 'srs limit reached' }, 409);
-  }
+  const parsed = [...byKey.values()];
 
   const values: unknown[] = [];
   const placeholders = parsed.map((p) => {
     values.push(authUser.wcaId, puzzle, setSlug, p.k, p.d, p.iv, p.ef, p.n, p.l, p.st, p.h, p.t);
     return '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
   });
-  await query(
-    `INSERT INTO alg_case_srs
-       (wca_id, puzzle, set_slug, case_key, due, ivl, ease, reps, lapses, streak, hist, reviewed_at)
-     VALUES ${placeholders.join(', ')}
-     ON CONFLICT (wca_id, puzzle, set_slug, case_key) DO UPDATE
-     SET due = EXCLUDED.due, ivl = EXCLUDED.ivl, ease = EXCLUDED.ease, reps = EXCLUDED.reps,
-         lapses = EXCLUDED.lapses, streak = EXCLUDED.streak, hist = EXCLUDED.hist,
-         reviewed_at = EXCLUDED.reviewed_at
-     WHERE alg_case_srs.reviewed_at <= EXCLUDED.reviewed_at`,
-    values,
-  );
+  await withTransaction(async run => {
+    await run("SELECT pg_advisory_xact_lock(hashtext('alg_case_srs'), hashtext(?))", [authUser.wcaId]);
+    await run(
+      `INSERT INTO alg_case_srs
+         (wca_id, puzzle, set_slug, case_key, due, ivl, ease, reps, lapses, streak, hist, reviewed_at)
+       VALUES ${placeholders.join(', ')}
+       ON CONFLICT (wca_id, puzzle, set_slug, case_key) DO UPDATE
+       SET due = EXCLUDED.due, ivl = EXCLUDED.ivl, ease = EXCLUDED.ease, reps = EXCLUDED.reps,
+           lapses = EXCLUDED.lapses, streak = EXCLUDED.streak, hist = EXCLUDED.hist,
+           reviewed_at = EXCLUDED.reviewed_at
+       WHERE alg_case_srs.reviewed_at <= EXCLUDED.reviewed_at`,
+      values,
+    );
+    const cnt = await run<{ n: number }>(
+      'SELECT COUNT(*)::int AS n FROM alg_case_srs WHERE wca_id = ?', [authUser.wcaId],
+    );
+    if ((cnt[0]?.n ?? 0) > MAX_RECS_PER_USER) throw new HTTPException(409, { message: 'srs limit reached' });
+  });
   return c.json({ ok: true, upserted: parsed.length });
 });

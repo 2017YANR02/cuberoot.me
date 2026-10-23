@@ -56,6 +56,7 @@ import { changeAppLanguage } from '@/i18n/i18n-client';
 
 describe('LandingSearch placeholder hydration', () => {
   beforeEach(() => {
+    localStorage.clear();
     routeState.lang = 'zh';
     authState.user = { uid: 66, wcaId: '2017YANR02' };
     speechState.error = null;
@@ -87,7 +88,7 @@ describe('LandingSearch placeholder hydration', () => {
     await act(async () => { input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); });
     expect(fetcher).toHaveBeenCalledTimes(1);
     expect(fetcher.mock.calls[0][1].headers.Authorization).toBe('Bearer session-test');
-    expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ conversationId: '00000000-0000-4000-8000-000000000066', question: '视频怎么数帧', lang: 'zh', timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone, history: [] });
+    expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ conversationId: '00000000-0000-4000-8000-000000000066', question: '视频怎么数帧', lang: 'zh', thinking: 'auto', timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone, history: [] });
     // The dialog and its controls render immediately; formatting arrives in its own chunk.
     await act(async () => { await import('react-markdown'); });
     expect(document.querySelector('.site-assistant-prose')?.textContent).toBe('打开数帧页面。数帧');
@@ -128,6 +129,25 @@ describe('LandingSearch placeholder hydration', () => {
     } finally { await act(async()=>root.unmount()); host.remove(); }
   });
 
+  it('keeps retrieved web sources through the request boundary and persists thinking choice',async()=>{
+    localStorage.setItem('cuberoot.assistant.thinking','deep');
+    const fetcher=vi.fn().mockImplementation(async()=>Response.json({answer:'查到的资料。 [[external]]',sources:[{id:'external',title:'来源',href:'https://docs.example.org/reference',read:true}]}));
+    vi.stubGlobal('fetch',fetcher);
+    const host=document.createElement('div');document.body.appendChild(host);const root=createRoot(host);
+    try {
+      await act(async()=>root.render(createElement(LandingSearch,{cards:[],lang:'zh',query:'a'.repeat(1200),persistentResults:true})));
+      await act(async()=>host.querySelector<HTMLButtonElement>('button[aria-label="提问"]')!.click());
+      expect(JSON.parse(fetcher.mock.calls[0][1].body)).toMatchObject({thinking:'deep',question:'a'.repeat(1200)});
+      expect(document.querySelector('a[href="https://docs.example.org/reference"]')).not.toBeNull();
+      expect(document.querySelector('button[aria-label="思考模式"]')?.textContent).toContain('深入思考');
+      await act(async()=>document.querySelector<HTMLButtonElement>('button[aria-label="思考模式"]')!.click());
+      await act(async()=>Array.from(document.querySelectorAll<HTMLButtonElement>('[role="option"]')).find(option=>option.textContent==='快速回答')!.click());
+      expect(localStorage.getItem('cuberoot.assistant.thinking')).toBe('fast');
+      await act(async()=>document.querySelector<HTMLButtonElement>('button[title="新对话"]')!.click());
+      expect(document.querySelector('button[aria-label="思考模式"]')?.textContent).toContain('快速回答');
+    } finally {await act(async()=>root.unmount());host.remove();}
+  });
+
   it('reports a dropped stream and keeps the partial answer visibly incomplete', async () => {
     const payload='data: '+JSON.stringify({type:'answer',answer:'已收到的内容',sources:[]})+'\n\n';
     vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response(payload,{headers:{'Content-Type':'text/event-stream'}})));
@@ -149,13 +169,13 @@ describe('LandingSearch placeholder hydration', () => {
       await act(async()=>root.render(createElement(LandingSearch,{cards:[],lang:'zh',query:'第一问',persistentResults:true})));
       await click('button[aria-label="提问"]');
       await click('button[title="重新生成"]');
-      expect(JSON.parse(fetcher.mock.calls[1][1].body)).toEqual({conversationId:'00000000-0000-4000-8000-000000000066',question:'第一问',lang:'zh',timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,history:[]});
+      expect(JSON.parse(fetcher.mock.calls[1][1].body)).toEqual({conversationId:'00000000-0000-4000-8000-000000000066',question:'第一问',lang:'zh',thinking:'auto',timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,history:[]});
       expect(document.querySelectorAll('.site-assistant-turn')).toHaveLength(1);
       await click('button[title="编辑问题"]');
       const textarea=document.querySelector('textarea[aria-label="编辑问题"]') as HTMLTextAreaElement;
       await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value')!.set!.call(textarea,'改过的问题');textarea.dispatchEvent(new Event('input',{bubbles:true}));});
       await act(async()=>{document.querySelector('.site-assistant-edit')!.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));});
-      expect(JSON.parse(fetcher.mock.calls[2][1].body)).toEqual({conversationId:'00000000-0000-4000-8000-000000000066',question:'改过的问题',lang:'zh',timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,history:[]});
+      expect(JSON.parse(fetcher.mock.calls[2][1].body)).toEqual({conversationId:'00000000-0000-4000-8000-000000000066',question:'改过的问题',lang:'zh',thinking:'auto',timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,history:[]});
       expect(document.querySelector('.site-assistant-question h3')?.textContent).toBe('改过的问题');
       expect(document.querySelectorAll('.site-assistant-turn')).toHaveLength(1);
     } finally {await act(async()=>root.unmount());host.remove();}

@@ -3071,6 +3071,7 @@ export function App({ host }: { host: InstalledAppHost }) {
       && previous.genDiffStage === next.genDiffStage
       && previous.genDiffColors === next.genDiffColors
       && previous.genDiffSlot === next.genDiffSlot
+      && previous.genDiffEoAxis === next.genDiffEoAxis
       && previous.genDiffSteps.join('.') === next.genDiffSteps.join('.')) return;
     randomDifficultySettingsRef.current = next;
     invalidateCurrentScramble();

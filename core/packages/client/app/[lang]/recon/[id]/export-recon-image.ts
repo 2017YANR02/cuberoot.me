@@ -23,7 +23,7 @@ export async function exportReconImages(source: HTMLElement, styles: readonly Re
     position: 'fixed', left: '-100000px', top: '0', width: 'max-content',
     maxWidth: 'none', margin: '0', padding: '12px', background: 'transparent',
   });
-  snapshot.querySelectorAll('.recon-cross-toggle, .detail-cursor').forEach(node => node.remove());
+  snapshot.querySelectorAll('.recon-cross-toggle, .detail-cursor, .normalized-cross-copy').forEach(node => node.remove());
   snapshot.querySelectorAll('.recon-move-current').forEach(node => node.classList.remove('recon-move-current'));
   snapshot.querySelectorAll<HTMLElement>('.detail-scramble-line, .detail-solution-text').forEach(node => {
     Object.assign(node.style, { whiteSpace: 'pre', wordBreak: 'normal', overflow: 'visible', maxWidth: 'none' });

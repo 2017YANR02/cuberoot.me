@@ -421,6 +421,8 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
   }
   if (value.genDiffSlot !== undefined
     && (!Number.isSafeInteger(value.genDiffSlot) || (value.genDiffSlot as number) < -1)) return null;
+  if (value.genDiffEoAxis !== undefined && value.genDiffEoAxis !== 'best'
+    && value.genDiffEoAxis !== 0 && value.genDiffEoAxis !== 1 && value.genDiffEoAxis !== 2) return null;
   if (value.genDiffSteps !== undefined
     && (!Array.isArray(value.genDiffSteps)
       || !value.genDiffSteps.every((step) => (
@@ -502,6 +504,7 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
     genDiffStage: value.genDiffStage as string | undefined,
     genDiffColors: value.genDiffColors as string | undefined,
     genDiffSlot: value.genDiffSlot as number | undefined,
+    genDiffEoAxis: value.genDiffEoAxis as 'best' | 0 | 1 | 2 | undefined,
     genDiffSteps: value.genDiffSteps as number[] | undefined,
   });
   return {

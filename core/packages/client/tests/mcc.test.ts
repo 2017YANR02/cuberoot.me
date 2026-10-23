@@ -6,7 +6,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
-  algSpeed, getESQ, getSTM, normalizeLine, replaceDouble,
+  algSpeed, analyzeMccGrip, getESQ, getSTM, normalizeLine, replaceDouble,
   MCC_DEFAULTS, ESQ_DEFAULTS, type EsqParams, type MccParams,
 } from '@/lib/mcc';
 import golden from './fixtures/mcc_golden.json';
@@ -54,5 +54,35 @@ describe('mcc golden regression', () => {
     expect(replaceDouble('R R U')).toBe('R2 U');
     expect(normalizeLine("U' U' R2'")).toBe('U2 R2');
     expect(getESQ('R U2', false, ESQ_DEFAULTS)).toBe(1 + 3);
+  });
+
+  it('diagnostic tracing preserves every full-algorithm golden score', () => {
+    for (const c of mccCases.filter(c => !c.ignoreErrors && !c.ignoreAuf)) {
+      const read = () => analyzeMccGrip(normalizeLine(c.alg), paramSets[c.params]);
+      if (typeof c.mcc === 'string') expect(read).toThrow(c.mcc);
+      else expect(read().mcc, c.alg).toBe(c.mcc);
+    }
+  });
+
+  it('keeps pregrip separate and accumulates indices across repeated resets', () => {
+    // Deliberately unsimplified wrist turns isolate the state/index bookkeeping.
+    const trace = analyzeMccGrip('R R R R R R R R');
+    expect(trace.start).toEqual({ left: 0, right: -1 });
+    expect(trace.regrips).toBe(2);
+    expect(trace.events.map(e => [e.kind, e.beforeMove, e.hand])).toEqual([
+      ['regrip', 4, 'right'], ['regrip', 7, 'right'],
+    ]);
+    expect(analyzeMccGrip('U R R R R R R R R U2').events.map(e => e.beforeMove)).toEqual([5, 8]);
+  });
+
+  it('does not count support changes or rotations as wrist regrips', () => {
+    expect(analyzeMccGrip("R U R' U'").events).toEqual([]);
+    const wide = analyzeMccGrip("r U R' U'");
+    expect(wide.regrips).toBe(0);
+    expect(wide.events.map(e => [e.kind, e.beforeMove])).toEqual([
+      ['support-switch', 1], ['support-switch', 3],
+    ]);
+    expect(analyzeMccGrip("R y R'").events.filter(e => e.kind === 'rotation-reset').length).toBe(1);
+    expect(analyzeMccGrip("R y R'").regrips).toBe(0);
   });
 });
