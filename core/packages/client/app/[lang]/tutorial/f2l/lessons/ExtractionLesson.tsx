@@ -46,11 +46,11 @@ export default function ExtractionLesson({ orientation, pauseBetween, onNextChap
             { id: 'mechanical', title: tr({ zh: '基础解法', en: 'Basic method' }), alg: extraction.alg },
             { id: 'smart', title: tr({ zh: '优化解法', en: 'Optimized method' }), alg: smartExtraction },
           ].map(method => <section className="f2l-extraction" key={method.id} aria-label={method.title}>
-            <h3>{method.title}</h3>
-            <div className="f2l-cube"><AlgPlayer key={method.id + ':' + extraction.setup} puzzle="3x3" set="f2l-tutorial" engine="sim" setup={extraction.setup} alg={method.alg}
+            <div className="f2l-cube"><AlgPlayer puzzle="3x3" set="f2l-tutorial" engine="sim" setup={extraction.setup} alg={method.alg}
               orientation={orientation} fillPane moveDurationMs={850}
               sectionPauseMs={2000} pauseAfterSteps={pauseBetween ? f2lPlaybackSections(method.alg).slice(0, -1).map(section => section.end) : NO_STOPS} /></div>
             <code className="f2l-alg f2l-player-alg" data-site-surface="panel">{method.alg}</code>
+            <h3>{method.title}</h3>
           </section>)}</div>
         </>}
         <StudyActions onContinue={() => {

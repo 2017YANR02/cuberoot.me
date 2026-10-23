@@ -23,7 +23,7 @@ export default function CaseCatalogLesson({ orientation, onNextChapter }: { orie
       </div></div>
       <section className="f2l-catalog-group f2l-study-main">
         <div className="f2l-recognition">{diagrams.filter(c => c.group === activeGroup).map(c => <figure key={c.name}>
-          <VisualCube view="iso" size={150} faceletColors={c.facelets} interactive enlargeable alt={c.name} />
+          <VisualCube view="iso" size={100} faceletColors={c.facelets} interactive enlargeable alt={c.name} />
           <figcaption>{c.name}</figcaption>
         </figure>)}</div>
         <StudyActions onContinue={() => {
