@@ -356,6 +356,7 @@ jobs:
             /.node-version
             /core/
             /solver/Cargo.toml
+            /solver/src/bin/dist_htr_fr.rs
             /solver/333opt/solve_h10.mts
             # Materialize the hook test workdir without checking out solver tables.
             /solver/experiments/cube48opt-rust/README.md
@@ -617,6 +618,7 @@ jobs:
             /.node-version
             /core/
             /solver/Cargo.toml
+            /solver/src/bin/dist_htr_fr.rs
             /solver/333opt/solve_h10.mts
             # Materialize the hook test workdir without checking out solver tables.
             /solver/experiments/cube48opt-rust/README.md
