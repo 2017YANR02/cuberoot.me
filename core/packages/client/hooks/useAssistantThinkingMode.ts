@@ -1,6 +1,7 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
+import { persistItem } from '@/lib/safe-storage';
 import type { AssistantThinkingMode } from '@cuberoot/shared/site-assistant';
 
 const key = 'cuberoot.assistant.thinking';
@@ -20,7 +21,7 @@ function subscribe(listener: () => void) {
 }
 function setMode(value: AssistantThinkingMode) {
   fallback = value;
-  try { localStorage.setItem(key, value); } catch { /* Private mode can deny storage. */ }
+  persistItem(key, value);
   window.dispatchEvent(new Event(eventName));
 }
 export function useAssistantThinkingMode() {

@@ -51,13 +51,15 @@ describe('architecture boundary guard', () => {
     // deployment-only pgvector provisioning and remote-access host commands, plus
     // five exact offline symmetry-coordinator identities (Node, caffeinate, vm_stat, sysctl and ps),
     // and the bounded recon intake CLI ESM loader and CubeOpt CLI symlink checks.
-    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 30);
+    // Five additional identities: two isolated nginx purge probes, the fixed FMC
+    // quotient binary and two bounded small-puzzle measurement subprocess calls.
+    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 35);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(144);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'cross-package-alias-import')).toHaveLength(0);
   });
 
   it('keeps every semantic edge contract tied to live repository evidence', () => {
-    expect(MANIFEST.manualContracts).toHaveLength(34);
+    expect(MANIFEST.manualContracts).toHaveLength(37);
     expect(validateManifestSchema(MANIFEST)).toEqual([]);
     expect(validateManualContracts(MANIFEST.manualContracts)).toEqual([]);
     expect(new Set(MANIFEST.manualContracts.map((item: { phase: string }) => item.phase))).toEqual(new Set([

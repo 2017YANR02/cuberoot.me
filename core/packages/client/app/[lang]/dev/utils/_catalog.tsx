@@ -73,6 +73,14 @@ export const UCATS: { id: UtilCat; zh: string; en: string }[] = [
 
 export const CATALOG: UtilEntry[] = [
   {
+    name: 'useAssistantThinkingMode',
+    sig: 'useAssistantThinkingMode(): readonly [AssistantThinkingMode, (value: AssistantThinkingMode) => void]',
+    imp: "import { useAssistantThinkingMode } from '@/hooks/useAssistantThinkingMode';",
+    category: 'hook',
+    zh: '同步助手思考模式；服务端首屏使用自动模式，浏览器通过安全存储保存选择并同步标签页。',
+    en: 'Synchronize assistant thinking mode with an automatic server snapshot, safe browser storage and cross-tab updates.',
+  },
+  {
     name: 'useIvyMode',
     sig: 'useIvyMode(): [IvyScrambleMode, typeof setIvyMode]',
     imp: "import { useIvyMode } from '@/hooks/useIvyMode';\nimport { ivyScrambleForMode } from '@/lib/scramble-ivy-mode';",
