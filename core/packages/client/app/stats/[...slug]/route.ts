@@ -6,7 +6,8 @@
 //   /www/wwwroot/toolkit/stats/ via nginx (CORS: *).
 // (Without this, /stats/all_upcoming_comps.json etc. 404 on Vercel.)
 
-import { promises as fs } from 'node:fs';
+import { createReadStream, promises as fs } from 'node:fs';
+import { Readable } from 'node:stream';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -51,13 +52,22 @@ export async function GET(
       : 'public, s-maxage=3600, stale-while-revalidate=86400',
   };
   // 强制下载:逐 bin 采样 txt(downloads/)+「下载全部」全量 gz(bundles/)。
-  const isForcedDownload = rel.startsWith('scramble/downloads/') || rel.startsWith('scramble/bundles/');
+  const isExactCorpus = /^scramble\/exact-puzzles\/[a-z0-9_-]+\/[a-f0-9]{64}\/(?:all\.csv|depth-\d+\.txt)\.gz$/.test(rel);
+  const isForcedDownload = rel.startsWith('scramble/downloads/') || rel.startsWith('scramble/bundles/') || isExactCorpus;
   if (isForcedDownload) {
     const base = path.basename(rel);
     headers['content-disposition'] = `attachment; filename="${base}"`;
   }
 
   try {
+    if (isExactCorpus) {
+      const info = await fs.stat(filePath);
+      if (!info.isFile()) return new Response('not found', { status: 404 });
+      headers['content-length'] = String(info.size);
+      headers['cache-control'] = 'public, max-age=31536000, immutable';
+      const stream = Readable.toWeb(createReadStream(filePath, { highWaterMark: 65536 }));
+      return new Response(stream as ReadableStream<Uint8Array>, { headers });
+    }
     const data = await fs.readFile(filePath);
     return new Response(new Uint8Array(data), { headers });
   } catch {
@@ -87,7 +97,7 @@ export async function GET(
     // timeouts). A .gz downloads regardless of content-disposition. Bundles redirect
     // even in dev (no local copy unless the stages build ran). Other non-download
     // stats only fall back on Vercel; dev 404s for genuinely-missing data.
-    if (process.env.VERCEL === '1' || rel.startsWith('scramble/bundles/')) {
+    if (process.env.VERCEL === '1' || rel.startsWith('scramble/bundles/') || (isExactCorpus && process.env.NODE_ENV !== 'development')) {
       return new Response(null, {
         status: 307,
         headers: { location: upstreamUrl, 'cache-control': 'public, s-maxage=86400' },

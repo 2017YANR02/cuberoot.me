@@ -68,7 +68,7 @@ export default function SuperFloppyDistView({ isZh }: { isZh: boolean }) {
     return c;
   }, []);
 
-  const examples = useMemo(() => superFloppyExamplesByLength(12), []);
+  const examples = useMemo<Record<number, string[]>>(() => ({ ...superFloppyExamplesByLength(12), 0: [''] }), []);
   const exampleBins = useMemo(
     () => Object.keys(examples).map(Number).sort((a, b) => a - b),
     [examples],
@@ -122,6 +122,7 @@ export default function SuperFloppyDistView({ isZh }: { isZh: boolean }) {
       <div className="scramble-stats-controls">
         <div className="scramble-stats-puzzle-meta">
           <span>{tr({ zh: '全空间精确枚举(非抽样)', en: 'Full state space, exactly enumerated (not sampled)' })}</span>
+          <span>{tr({ zh: '上帝之数：{n}', en: 'God’s number: {n}' }).replace('{n}', String(st?.max ?? ''))}</span>
           <span className="scramble-stats-puzzle-metric">{tr({ zh: '一次转动 = 1 步(R/L/U/D 90°/180°/270°)', en: 'one turn = 1 move (R/L/U/D 90°/180°/270°)' })}</span>
         </div>
         <button
@@ -129,7 +130,7 @@ export default function SuperFloppyDistView({ isZh }: { isZh: boolean }) {
           className="ivy-dl-all"
           onClick={downloadAll}
           disabled={dlBusy}
-          title={tr({ zh: '下载全部 ~3,041,279 条(约 80MB,生成需几秒)', en: 'Download all ~3,041,279 scrambles (~80MB, takes a few seconds to build)' })}
+          title={tr({ zh: '下载全部 3,041,280 个状态(约 80MB,生成需几秒)', en: 'Download all 3,041,280 states (~80MB, takes a few seconds to build)' })}
         >
           <Download size={14} aria-hidden />
           {dlBusy
@@ -175,18 +176,24 @@ export default function SuperFloppyDistView({ isZh }: { isZh: boolean }) {
             <ul className="scramble-stats-examples-list">
               {shown.map((scr, i) => (
                 <li key={i}>
-                  <Link
-                    className="scramble-stats-examples-cube"
-                    href={solverHref(scr)}
-                    prefetch={false}
-                    aria-label={tr({ zh: '在求解器中打开', en: 'Open in solver' })}
-                  >
-                    <ScramblePreview2D event="sfl" scramble={scr} size={26} />
-                  </Link>
-                  <div className="scramble-stats-examples-body">
-                    <Link className="scramble-stats-examples-scramble" href={solverHref(scr)} prefetch={false}>
-                      {scr}
+                  {scr ? (
+                    <Link
+                      className="scramble-stats-examples-cube"
+                      href={solverHref(scr)}
+                      prefetch={false}
+                      aria-label={tr({ zh: '在求解器中打开', en: 'Open in solver' })}
+                    >
+                      <ScramblePreview2D event="sfl" scramble={scr} size={26} />
                     </Link>
+                  ) : (
+                    <div className="scramble-stats-examples-cube">
+                      <ScramblePreview2D event="sfl" scramble="" size={26} />
+                    </div>
+                  )}
+                  <div className="scramble-stats-examples-body">
+                    {scr ? (
+                      <Link className="scramble-stats-examples-scramble" href={solverHref(scr)} prefetch={false}>{scr}</Link>
+                    ) : <span className="scramble-stats-examples-scramble">{tr({ zh: '已还原', en: 'Solved' })}</span>}
                   </div>
                 </li>
               ))}

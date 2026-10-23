@@ -3,12 +3,13 @@
  *
  * The Dino Cube is a random-STATE puzzle: cstimer ships its own dino solver
  * (tools/cstimer-scramble/scramble/redi.js → `redi.solveScramble`, an IDA* over
- * 3 edge-comb prune tables). Its reachable state space is A12 = 12!/2 =
- * 239,500,800 (cstimer treats all 12 edges as distinct; the 8 corner moves are
- * even 3-cycles generating the alternating group A12) — beyond TIER A (~2×10⁶
- * full BFS) and TIER B (~5×10⁷ packed table). So — unlike the TIER A/B puzzles
- * in this loop — we DO NOT build a distance table; we WRAP cstimer's own dino
- * solver as a near-optimal engine: `solveDino(scramble)` drives the worker
+ * 3 edge-comb prune tables). Its fixed-frame state space is A12 = 12!/2 =
+ * 239,500,800. The standard six-colour puzzle ignores 12 core rotations,
+ * leaving 19,958,400 states; its exact diameter is 11 for the original colour
+ * arrangement, or 10 when either mirror arrangement is accepted. Those
+ * distributions are separately enumerated by scripts/dino-exact-distribution.mts.
+ * This module retains csTimer's fixed-frame near-optimal engine:
+ * `solveDino(scramble)` drives the worker
  * (lib/cstimer-scramble → cstimerSolve('dino', scramble)), which loads the
  * cstimer engine once and runs `redi.solveScramble`. Validity
  * (scramble∘solution = solved) is the contract, cross-checked against the real
@@ -18,8 +19,8 @@
  * edge-only — its state is the 12-edge permutation (no orientation). Moves are
  * F L B R f l b r (the 8 corners), each an order-3 3-cycle, with an optional
  * prime ("'" = the inverse = its square). NOT provably optimal — the recorded
- * "length" is cstimer's near-optimal solution length (typically ~7–11; the dino
- * God's number is 10 in the face-turn metric).
+ * "length" is csTimer's near-optimal solution length. The quotient-space
+ * diameters above do not bound this fixed-frame solver's returned length.
  *
  * The cube-net preview (dino_svg) reuses the 24-sticker model ported faithfully
  * below from cstimer's edge model (cross-checked move-for-move against cstimer's
@@ -31,8 +32,8 @@
 import { cstimerSolve } from './cstimer-scramble';
 
 /**
- * The Dino Cube's God's number is 10 (face-turn metric); cstimer's IDA* searcher
- * caps depth at 15. We assert solution length ≤ this loose bound in tests (a
+ * csTimer's fixed-frame IDA* searcher caps depth at 15.
+ * We assert solution length ≤ this loose bound in tests (a
  * sanity ceiling on the near-optimal length, NOT an optimality claim).
  */
 export const DINO_SOLUTION_LENGTH_BOUND = 15;
@@ -70,8 +71,8 @@ export async function solveDino(scramble: string): Promise<DinoSolution> {
 // ──────────────────────────────────────────────────────────────────────────────
 // Edge model ported faithfully from cstimer redi.js (the dino IIFE). The dino
 // state is the 12-edge permutation; the 8 moves are 3-cycles via mathlib.acycle.
-// Used ONLY to compute the 24-facelet cube net for the preview SVG — NOT for
-// solving (the solve stays in the worker via the real cstimer engine).
+// Used for the 24-facelet preview and offline exact-distribution move semantics.
+// Interactive solving stays in the worker via the real csTimer engine.
 //
 // Move order = AXIS_LETTERS 'FLBRflbr'. edgeMoveSwaps[axis] is cstimer's 3-cycle.
 // A move's prime is its square (these moves have order 3): pow 1 = "", pow 2 = "'".

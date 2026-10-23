@@ -203,28 +203,29 @@ eoline 的 yk 与 yk+2 同目标(get_stats/enumerate 只跑 yk 0/1),dr 对 y 完
 | 2x2x2 face(口袋魔方) | 2x2x2 puzzle | — | 另一个 puzzle,引擎不适用 |
 | EO+DR | EO×CO×E-slice = 2048×2187×495≈2.2G | ✅ 已做(dr:IDA* + max(eo×slice, co×slice) 双 ~1M 微表;EO 阶段归 eoline 变体) |
 | Roux S1+S2(cstimer 条件式) | S1 后 M/U/R/r 受限 move 集 | — | 本站口径改为 **f2b 联合最优**(✅ 已做,UI key 123x2 = 方法 123 第 3 阶段);受限 move 集引擎仍无 |
-| Thistlethwaite HTR | DR 后 HTR 陪集 | 三轴 DR max 可采纳但弱(伪 HTR) | ❌ 暂缓(条件式阶段 + 弱启发式) |
+| Thistlethwaite HTR | DR 后 HTR 陪集 | 40320×70=2,822,400 精确坐标(29,400 陪集×96 等重纤维) | ✅ `htr_solver.rs` 已实现，最大最优距离 13；完整离线分布及全部陪集代表已接统计页 |
 
 至此 cstimer 全部 3x3 求解器语义已覆盖(Cross/XCross/EOLine/EOCross/Roux S1/S1+S2/
 2x2x2/Petrus 223/Cross+F2L=XXXXC/EO+DR)。
 
 设计新变体时先在此表对号入座,空间 ≤3000 万就走 block222 全表模板,否则走 pair/eo 启发式模板。
 
-## 7. 还没做的(待办路线图,2026-06-10)
+## 7. 后续路线(2026-10-23 核对现有源码)
 
 **现有 3x3 引擎里基本做完了。** 用户问"还要做哪些求解器"时,答案分三档:
 
-1. **直接能做、只是暂缓的(本引擎内,低风险)**
-   - **HTR(Thistlethwaite,DR 后再降到 HTR 陪集)**:件/坐标都能表达,难点是好的可采纳启发式(三轴 DR-max 偏弱 → 伪 HTR)。要做就照 dr_solver 的 IDA* 模板,先接受弱启发式跑通,再视速率加大表。这是唯一"3x3 引擎内还没做"的标准阶段。
+1. **已有引擎与完整离线分布**
+   - **HTR(DR→HTR)**：`htr_solver.rs` 已有完整 2,822,400 态精确距离表、10 种 G2 转动与最大值 13；无需弱启发式或新大表。本轮验证 96 元等重纤维并导出 29,400 个陪集的完整分布与代表，统计页 `htr-dr` 保留条件输入域及目标口径。
+   - **FR(HTR→FR)**：`fr_solver.rs` 已有 3,456 陪集、192 态目标子群与最大值 11；线上构造器仍生成 663,552 个完整 G3 状态的 HashMap。离线入口复用小陪集构造、跳过大映射，统计页 `fr-htr` 已接完整分布和全部陪集代表。不能用 3,456 字节距离表冒充线上总内存峰值。
 
-2. **需要先给引擎补能力(中风险,一次投入解锁多个)**
-   - **受限 move 集搜索**:真 Roux S1+S2(S2 限 `M/U/R/r`)、HTR phase-2(限 `⟨U,D,L2,R2,F2,B2⟩` 当**搜索空间**而非仅目标)、FMC 式分阶段都卡在这。现 `valid_moves()` 是 18 步全集 + 相邻面剪枝,没有"只许某子集"的开关。加一个 move-mask 参数贯穿 search/enumerate 即可,之后这些一次性都能做。
+2. **按真实缺口扩展受限搜索**
+   - `chain_solver.rs` 已支持 move-mask；`htr_phase2_solver.rs` 已实现仅六种半转的 663,552 态整解，God=15。HTR phase-2 的生成元是 `⟨U2,D2,L2,R2,F2,B2⟩`；含 U/D 四分之一转的 G2 是前一阶段 DR→HTR 的搜索域。新增真 Roux S1+S2(S2 限 `M/U/R/r`)时先核对这套现有能力，勿重复建引擎。
    - 注:本站口径已用 **f2b 联合最优**替代了 cstimer 的"Roux S1+S2 条件式",所以真受限 S2 不是刚需,属于 nice-to-have。
 
-3. **需要另写 puzzle 引擎(大投入,且偏离本引擎用途)**
-   - SQ1 S1+S2 / Pyraminx V / Skewb Face / 2x2x2(口袋魔方):都不是 3x3,`cube_common`(8角12棱模型)不覆盖,要各自的状态模型。**而且**本求解器舰队的用途是「3x3 打乱的分阶段难度统计」(喂 `/scramble/*`),这些 puzzle 属于另一个 feature,不在本管道范围 —— 真要做先跟用户确认是不是这个引擎该管。
+3. **其他 puzzle 复用各自模型**
+   - `pocket_solver.rs`、`pyraminx_solver.rs`、`skewb_solver.rs`、`sq1_solver.rs` 已有整解引擎及独立统计管线，见 §8 与 `SOLVER_LOOP.md`。SQ1 子阶段、Pyraminx V、Skewb Face 等新目标应先核对这些实现；它们不使用 3×3 的 8 角 12 棱坐标。
 
-**简言之**:3x3 分阶段统计这个目标基本收口;下一个自然增量是 HTR(档1),想更进一步先补受限 move 集(档2)。档3 是另一个项目级决策,别默认开工。
+上述 HTR/FR 已完成有界离线计算与独立见证回放；资源和全空间验证证据见 `docs/puzzle-exact-distributions-tracker.md`。计算授权及保护停止状态仍以当次任务和原记录为准，不因这里列出结果而重新运行大表。
 
 ## 8. 非 3x3 puzzle 统计管线范式(EPIC 3,2x2x2 pocket 先行,2026-06-11)
 

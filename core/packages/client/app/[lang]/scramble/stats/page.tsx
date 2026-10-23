@@ -13,6 +13,8 @@ import PuzzleDistView from './_components/PuzzleDistView';
 import NoBarStats from './_components/NoBarStats';
 import EnumeratedDistView from './_components/EnumeratedDistView';
 import { ENUM_SPECS } from './_components/enumerated-specs';
+import { PRECOMPUTED_EXACT_PUZZLES, PRECOMPUTED_EXACT_SPECS } from './_components/precomputed-exact-specs';
+import { PUBLISHED_EXACT_PUZZLES } from './_components/published-exact-specs';
 import Slide15DistView from './_components/Slide15DistView';
 import SuperFloppyDistView from './_components/SuperFloppyDistView';
 import BicDistView from './_components/BicDistView';
@@ -27,6 +29,7 @@ import FirstAppearanceTimeline, { type TimelineEntry } from './_components/First
 import FullScrambleList, { FullScrambleFilterBar } from './_components/FullScrambleList';
 import AvgExamplesPanel, { type AvgGroupCase } from './_components/AvgExamplesPanel';
 import ExactCoverageMatrix from './_components/ExactCoverageMatrix';
+import ExactDistributionCoverage from './_components/ExactDistributionCoverage';
 import ExactDistTable from './_components/ExactDistTable';
 import {
   EXACT_STAGE_VARIANT, EXACT_VARIANT_STAGES, FRAME_NOTE, SLOT_LABEL, SLOT_OK,
@@ -494,6 +497,8 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   const availableEvents = useMemo(() => {
     const all = new Set(lengthsData ? Object.keys(lengthsData.events) : []);
     if (tab === 'difficulty') {
+      // Exact WCA views remain discoverable while the remote corpus is loading.
+      for (const id of ['222', 'pyram', 'skewb', 'clock']) all.add(id);
       if (merged || dataset !== 'wca') for (const id of DIFFICULTY_EVENTS) if (id !== '333') all.delete(id);
     } else if (merged) {
       for (const id of MERGED_HIDDEN) all.delete(id);
@@ -528,7 +533,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   // difficulty tab's merged-family pseudo-event, always valid there). Non-WCA
   // solvable puzzles (ivy 等)走全空间分布 / 无长度数据,跳过此回退。
   useEffect(() => {
-    if (lengthsData && event !== '' && !CSTIMER_SOLVABLE_IDS.has(event) && !lengthsData.events[event]) {
+    if (lengthsData && event !== '' && !PUZZLE_EVENT_MAP[event] && !CSTIMER_SOLVABLE_IDS.has(event) && !ENUM_SPECS[event] && !lengthsData.events[event]) {
       const first = Object.keys(lengthsData.events)[0];
       if (first) setEvent(first);
     }
@@ -923,7 +928,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   const isPuzzleEvent = tab === 'difficulty' && !!PUZZLE_EVENT_MAP[event];
   // 同一个 URL 键跨项目复用；项目切换后把不适用的旧值仅在显示层折回 WCA，避免白屏或菜单悬空。
   const effectiveEssSrc: EssSrc = event === 'skewb'
-    ? (essSrc === 'skewb-fl' ? essSrc : 'wca')
+    ? (essSrc === 'skewb-fl' || (essSrc === 'all' && PRECOMPUTED_EXACT_SPECS.skewb) ? essSrc : 'wca')
     : event === '222'
       ? (essSrc === 'skewb-fl' ? 'wca' : essSrc)
       : event === 'pyram'
@@ -932,7 +937,8 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   // 2×2 / 金字塔的精确枚举视图，及斜转底层全状态精确视图。
   const isEssential = tab === 'difficulty' && (event === '222' || event === 'pyram') && effectiveEssSrc !== 'wca';
   const isSkewbFirstLayer = tab === 'difficulty' && event === 'skewb' && effectiveEssSrc === 'skewb-fl';
-  const isTheoreticalPuzzleView = isEssential || isSkewbFirstLayer;
+  const isSkewbFullSpace = tab === 'difficulty' && event === 'skewb' && effectiveEssSrc === 'all';
+  const isTheoreticalPuzzleView = isEssential || isSkewbFirstLayer || isSkewbFullSpace;
 
   // 长度 tab 第二计步口径钮(顶栏右侧):仅当所选项目带 counts_qtm 时出现。
   const lenCur = useMemo(() => resolveEventLen(lengthsData, event, merged), [lengthsData, event, merged]);
@@ -1233,7 +1239,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
       value={effectiveEssSrc}
       groups={event === 'skewb'
         ? [
-          { label: tr({ zh: '整解', en: 'Full solve' }), options: ['wca'] },
+          { label: tr({ zh: '整解', en: 'Full solve' }), options: PRECOMPUTED_EXACT_SPECS.skewb ? ['wca', 'all'] : ['wca'] },
           { label: tr({ zh: '子目标', en: 'Sub-goals' }), options: ['skewb-fl'] },
         ]
         : has222Stats
@@ -1270,6 +1276,11 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
               isZh={isZh}
               wcaEvents={availableEvents}
               availableEvents={CSTIMER_SOLVABLE_IDS}
+              additionalGroups={[{
+                id: 'precomputed-exact', label: tr({ zh: '更多完整分布', en: 'More full distributions' }),
+                items: [...PRECOMPUTED_EXACT_PUZZLES, ...PUBLISHED_EXACT_PUZZLES].filter(puzzle => !PUZZLE_EVENT_MAP[puzzle.id] && !CSTIMER_SOLVABLE_IDS.has(puzzle.id))
+                  .map(puzzle => ({ id: puzzle.id, label: tr(puzzle), iconClass: puzzle.icon })),
+              }]}
               selectedEvent={event}
               onSelect={setEvent}
             />
@@ -1316,13 +1327,14 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
           PuzzlePicker 承担,不重复渲染,故非 3×3 时它是空的 —— 直接不挂。 */}
       {!embedded && distPuzzle === '3x3' && <SolveTabs puzzle={distPuzzle} mode="dist" sub="distribution" />}
       {dataset === 'wca' && ['222', '333', '333oh', '333bf', '333mbf', '333fm', '333ft'].includes(event) && <NoBarStats event={event} isZh={isZh} />}
+      {!embedded && <ExactDistributionCoverage />}
     </div>
   );
 
   // Non-WCA "enumerated" puzzles: one config-driven view per ENUM_SPECS entry
   // (see _components/enumerated-specs.ts). The length tab has no data for these,
   // so it shows the spec's own note; difficulty renders <EnumeratedDistView>.
-  const enumSpec = ENUM_SPECS[event];
+  const enumSpec = event === 'skewb' && !isSkewbFullSpace ? undefined : ENUM_SPECS[event];
   if (enumSpec) {
     return (
       <div className="scramble-stats-page">
@@ -1330,7 +1342,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         {tab === 'length' ? (
           <div className="scramble-stats-loading">{tr(enumSpec.lengthNote)}</div>
         ) : (
-          <EnumeratedDistView spec={enumSpec} isZh={isZh} />
+          <EnumeratedDistView key={event} spec={enumSpec} isZh={isZh} />
         )}
       </div>
     );

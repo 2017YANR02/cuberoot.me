@@ -1,0 +1,34 @@
+name: Exact puzzle asset contract
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/exact-puzzles/**'
+      - '.github/workflows/exact_puzzle_assets.yml'
+  pull_request:
+    paths:
+      - 'scripts/exact-puzzles/**'
+      - '.github/workflows/exact_puzzle_assets.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  tiny-fixtures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.node-version
+            /scripts/exact-puzzles/
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.node-version'
+      - name: Check archive restoration and corruption rejection
+        # Ubuntu runners include system tar; fixtures never fetch or rebuild corpora.
+        run: node --test scripts/exact-puzzles/assets.test.ts

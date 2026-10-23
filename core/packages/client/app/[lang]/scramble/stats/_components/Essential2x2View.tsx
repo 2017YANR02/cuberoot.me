@@ -10,6 +10,7 @@ import '@cuberoot/timer-ui/compact-select.css';
 //                                       其中 fixff(固定底面)额外挂底面状态图库 —— 图库与该分布是
 //                                       同一底面子问题的两个对称档位(945 固定朝向 vs 258 去重 / 140 折镜像)
 import { useEffect, useMemo, useState } from 'react';
+import { Download } from '@app-foundation/icons/lucide';
 import dynamic from 'next/dynamic';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
 import BoolToggle from '@/components/BoolToggle';
@@ -22,6 +23,7 @@ import FirstStepGallery, { type GalleryRow } from './FirstStepGallery';
 import firstFace2x2 from '../_data/firstface_2x2.json';
 import './_essential-shared.css';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { downloadCsv } from '@/lib/scramble-dist/download';
 
 const Essential2x2CaseTable = dynamic(() => import('./Essential2x2CaseTable'), {
   ssr: false,
@@ -388,6 +390,11 @@ export default function Essential2x2View({ isZh, view }: { isZh: boolean; view: 
     <div className="ess-view">
       {/* 主分布:HTM / QTM 切换 */}
       <div className="scramble-stats-controls">
+        {mainStat && (
+          <span className="scramble-stats-puzzle-meta">
+            {tr({ zh: '上帝之数：{n}', en: 'God’s number: {n}' }).replace('{n}', String(mainStat.max))}
+          </span>
+        )}
         <div className="scramble-stats-puzzle-toggle">
           <span className="scramble-stats-puzzle-toggle-label">{tr({ zh: '度量', en: 'Metric' })}</span>
           <select
@@ -400,6 +407,20 @@ export default function Essential2x2View({ isZh, view }: { isZh: boolean; view: 
             <option value="false">{"QTM"}</option>
           </select>
         </div>
+        <span className="scramble-stats-puzzle-metric">{tr(metric === 'htm'
+          ? { zh: '90°、180°、270° 面转均计 1 步', en: '90°, 180° and 270° face turns each cost one move' }
+          : { zh: '90°、270° 计 1 步，180° 计 2 步', en: '90° and 270° cost one move; 180° costs two' })}</span>
+        <button type="button" className="ivy-dl-all" onClick={() => {
+          if (!mainCounts || !mainStat) return;
+          downloadCsv(`222_${metric}_distribution.csv`, 'depth,count,probability',
+            Array.from({ length: mainStat.max + 1 }, (_, depth) => {
+              const count = mainCounts[String(depth)] ?? 0;
+              return `${depth},${count},${count / mainStat.total}`;
+            }));
+        }}>
+          <Download size={14} aria-hidden />
+          {tr({ zh: '下载完整分布 (CSV)', en: 'Download complete distribution (CSV)' })}
+        </button>
       </div>
       <div className="scramble-stats-chart-wrapper">
         <DiscreteHistogram
@@ -414,6 +435,13 @@ export default function Essential2x2View({ isZh, view }: { isZh: boolean; view: 
           onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
           onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
         />
+      </div>
+
+      <div className="ess-note">
+        {tr({
+          zh: '本图为全空间精确计数；分步数状态样例尚未导出。比赛打乱样例在「WCA 真题」中查看。',
+          en: 'These are exact full-space counts; state examples by depth have not been exported. Competition examples are available under WCA.',
+        })}
       </div>
 
       {/* 联合 HTM×QTM 表 —— 全空间 BFS 精确计数(非采样),默认紧凑显示,可切精确值 */}

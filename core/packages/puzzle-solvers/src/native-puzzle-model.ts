@@ -4,20 +4,25 @@ import { KPuzzle } from 'cubing/kpuzzle';
 import { ExperimentalPGNotation, getPuzzleGeometryByDesc } from 'cubing/puzzle-geometry';
 import { NATIVE_PUZZLES, type NativePuzzleId } from './native-puzzles';
 
-const cachedPuzzles = new Map<NativePuzzleId, KPuzzle>();
+const cachedPuzzles = new Map<string, KPuzzle>();
 
-export function nativePuzzleKPuzzle(id: NativePuzzleId): KPuzzle {
-  let puzzle = cachedPuzzles.get(id);
+/** The shared native PG model, also used by catalog puzzles without a native scrambler. */
+export function puzzleGeometryKPuzzle(description: string): KPuzzle {
+  let puzzle = cachedPuzzles.get(description);
   if (!puzzle) {
     // Same options used by TwistyPlayer's description loader. Preserve its native
     // notation mapper, including opposite slices and v-suffixed whole rotations.
-    const pg = getPuzzleGeometryByDesc(NATIVE_PUZZLES[id].description, { allMoves: true, orientCenters: true, addRotations: true });
+    const pg = getPuzzleGeometryByDesc(description, { allMoves: true, orientCenters: true, addRotations: true });
     puzzle = new KPuzzle(pg.getKPuzzleDefinition(true), {
       experimentalPGNotation: new ExperimentalPGNotation(pg, pg.getOrbitsDef(true)),
     });
-    cachedPuzzles.set(id, puzzle);
+    cachedPuzzles.set(description, puzzle);
   }
   return puzzle;
+}
+
+export function nativePuzzleKPuzzle(id: NativePuzzleId): KPuzzle {
+  return puzzleGeometryKPuzzle(NATIVE_PUZZLES[id].description);
 }
 
 const MAX_LENGTH = 16_384;
@@ -40,7 +45,7 @@ function checkWork(alg: Alg, depth = 0): number {
   return work;
 }
 
-export function parseNativePuzzleAlg(id: NativePuzzleId, input: string): Alg {
+export function parsePuzzleGeometryAlg(description: string, input: string): Alg {
   if (input.length > MAX_LENGTH) throw new Error('Algorithm is too long');
   // Bound nesting before the recursive upstream parser itself sees the input.
   let depth = 0;
@@ -53,12 +58,16 @@ export function parseNativePuzzleAlg(id: NativePuzzleId, input: string): Alg {
   }
   const alg = new Alg(input);
   checkWork(alg);
-  const puzzle = nativePuzzleKPuzzle(id);
+  const puzzle = puzzleGeometryKPuzzle(description);
   // Validate the complete sequence atomically; do not silently ignore bad grips.
   for (const node of alg.experimentalExpand()) {
     if (node instanceof Move) puzzle.moveToTransformation(node);
   }
   return alg;
+}
+
+export function parseNativePuzzleAlg(id: NativePuzzleId, input: string): Alg {
+  return parsePuzzleGeometryAlg(NATIVE_PUZZLES[id].description, input);
 }
 
 /** Cancel using each native axis's real order (SuperZ mixes orders 3 and 4). */

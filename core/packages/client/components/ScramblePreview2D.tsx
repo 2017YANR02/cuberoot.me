@@ -39,6 +39,8 @@ interface Props {
    *  solved frame, so the gray travels with the piece through the scramble.
    *  Only the piece-model renderers honour it (NxN net, pyraminx, skewb, megaminx). */
   mask?: string;
+  /** Reuse the shared PG net for an existing catalog puzzle. */
+  puzzleDescription?: string;
 }
 
 export function ScramblePreview2D({
@@ -51,6 +53,7 @@ export function ScramblePreview2D({
   fullSizeLink,
   linkTitle,
   mask,
+  puzzleDescription,
 }: Props) {
   const customSvg = useMemo(() => {
     const renderMask: MaskRenderOptions | undefined = (() => {
@@ -64,8 +67,9 @@ export function ScramblePreview2D({
       sq1Colors,
       megaColors,
       mask: renderMask,
+      puzzleDescription,
     });
-  }, [event, scramble, clockColors, sq1Colors, megaColors, mask]);
+  }, [event, scramble, clockColors, sq1Colors, megaColors, mask, puzzleDescription]);
 
   // Object URL of the exact same SVG, for the "open full-size" link. Create AND
   // revoke inside one effect so React StrictMode's mount→unmount→remount (dev)

@@ -39,8 +39,8 @@ const SPEC: SolverSpec<ReturnType<typeof solveDiamond>> = {
   badge: badgeGodsNumber(DIAMOND_GODS_NUMBER),
   caveatTitle: CAVEAT_TITLE_OPTIMAL,
   caveatBody: {
-    zh: '钻石是八面体面转(8 个三角面、每面 4 个三角小贴纸 = 32 贴纸,4 个 90° 面转每个 order 3),可达状态共 138,240 个,整张图可在浏览器里一次性 BFS,所以这里给出的是真正的最短解,不是近似。任何打乱最多 10 步可还原,平均约 6.69 步。',
-    en: 'The Diamond is an octahedron face-turner (8 triangular faces, 4 triangular sub-stickers each = 32 stickers, 4 face turns each of order 3) with 138,240 reachable states, so the whole graph is BFS-ed in the browser and every solution here is a true shortest path, not an approximation. Any scramble solves in at most 10 moves, ~6.69 on average.',
+    zh: '钻石是八面体面转(8 个三角面、每面 4 个三角小贴纸 = 32 贴纸,4 个 120° 面转每个 order 3),可达状态共 138,240 个,整张图可在浏览器里一次性 BFS,所以这里给出的是真正的最短解,不是近似。任何打乱最多 10 步可还原,平均约 6.69 步。',
+    en: 'The Diamond is an octahedron face-turner (8 triangular faces, 4 triangular sub-stickers each = 32 stickers, 4 face turns of 120 degrees each, of order 3) with 138,240 reachable states, so the whole graph is BFS-ed in the browser and every solution here is a true shortest path, not an approximation. Any scramble solves in at most 10 moves, ~6.69 on average.',
   },
   validate: (line) => {
     for (const tok of line.trim().split(/\s+/)) {

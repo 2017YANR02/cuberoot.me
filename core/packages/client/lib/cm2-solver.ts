@@ -21,9 +21,8 @@
  * impose a parity restriction → exactly **165,888 = 24^4 / 2** reachable states. We BFS the whole graph
  * from solved once (memoized) and store, for every reachable state, the move stepping it toward solved —
  * so every solve is an optimal shortest path. In cstimer's metric (a `2` token counts as ONE move) God's
- * number is 10, mean 7.32576. (In pure quarter-turn metric the figure is 9 per jaapsch.net; cstimer's
- * face-turn-style metric with `2` moves gives the smaller 10-vs-QTM figure shown here.) The reachable
- * count + histogram are independently reproduced by a from-scratch 3D-geometry BFS in
+ * number is 10, mean 7.32576. The reachable count + histogram are independently reproduced
+ * by a from-scratch 3D-geometry BFS in
  * tests/cm2_solver.test.ts.
  */
 

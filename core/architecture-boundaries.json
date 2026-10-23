@@ -21,6 +21,60 @@
   },
   "manualContracts": [
     {
+      "id": "client-small-fmc-quotient-native-export",
+      "from": "packages/client/scripts/fmc-goal-exact-distributions.mts",
+      "to": "solver/target/release/dist_htr_fr",
+      "phase": "subprocess-native",
+      "mechanism": "One fixed shell-free native binary exports bounded HTR or FR quotient tables; native child remains in the guarded worker process group.",
+      "owner": "client puzzle solvers",
+      "rationale": "Reuse the Rust exact HTR and FR models without disk-table managers or the FR full-state HashMap. HTR construction arrays are bounded below 24 MiB and FR below 4 MiB.",
+      "replacement": "Keep this offline adapter behind the existing serial small-distribution guard; accept only htr-dr/fr-htr and a result path, never arbitrary commands.",
+      "subprocessCalls": [
+        {
+          "file": "packages/client/scripts/fmc-goal-exact-distributions.mts",
+          "mechanism": "spawnSync",
+          "target": "<dynamic>",
+          "count": 1
+        }
+      ],
+      "evidence": [
+        {
+          "file": "solver/src/bin/dist_htr_fr.rs",
+          "contains": "No table manager, mmap or disk-table load"
+        }
+      ]
+    },
+    {
+      "id": "client-small-puzzle-distribution-measurement",
+      "from": "packages/client/scripts/measure-small-puzzle-distributions.mts",
+      "to": "fixed local Node worker and macOS resource observation commands",
+      "phase": "subprocess-native",
+      "mechanism": "Shell-free serial Node workers with 128 MiB heaps; read-only vm_stat, sysctl, ps and git HEAD queries through one adapter",
+      "owner": "client puzzle solvers",
+      "rationale": "Measure bounded full-state distributions one puzzle at a time while recording a fixed swap baseline, process-tree RSS and conservative memory headroom.",
+      "replacement": "Keep this local-only measurement CLI separate from product runtime and large-table computation scopes; do not accept arbitrary worker commands.",
+      "subprocessCalls": [
+        {
+          "file": "packages/client/scripts/measure-small-puzzle-distributions.mts",
+          "mechanism": "execFileSync",
+          "target": "<dynamic>",
+          "count": 1
+        },
+        {
+          "file": "packages/client/scripts/measure-small-puzzle-distributions.mts",
+          "mechanism": "spawn",
+          "target": "<dynamic>",
+          "count": 1
+        }
+      ],
+      "evidence": [
+        {
+          "file": "core/packages/client/scripts/measure-small-puzzle-distributions.mts",
+          "contains": "const rssLimitBytes = 512 * 2 ** 20"
+        }
+      ]
+    },
+    {
       "id": "watch-reconstruction-test-inputs",
       "from": "client integration tests",
       "to": "app-ui timer persistence and native Watch DTO; shared reconstruction fixtures",

@@ -82,6 +82,21 @@ fn group_closure(pool: &[u8]) -> Vec<State> {
     all
 }
 
+fn canonical_key(g: &State, h_members: &[State]) -> [u8; 20] {
+    h_members
+        .iter()
+        .map(|h| key_of(&h.compose(g)))
+        .min()
+        .expect("empty FR subgroup")
+}
+
+struct FrCoordinateTables {
+    mt: Vec<u32>,
+    dist: Vec<u8>,
+    h_members: Vec<State>,
+    coset_canon: HashMap<[u8; 20], u32>,
+}
+
 pub struct FrSolver {
     /// H 子群成员的 cp(角置换)集合 —— 仅作 HTR/坐标合法性校验提示用。
     /// 陪集移动表 cosets×6(列 = G3_MOVES 序)。
@@ -101,33 +116,26 @@ impl Default for FrSolver {
 }
 
 impl FrSolver {
-    /// 全自包含构造(native/wasm 同路径,陪集表现场 BFS)。
-    pub fn new() -> Self {
+    /// Small coordinate construction shared by the online solver and offline
+    /// export. It deliberately omits the full G3 state-to-coset HashMap.
+    fn coordinate_tables() -> FrCoordinateTables {
         // 1) H = ⟨L2,R2,F2,B2⟩ 闭包(FR 目标集 / 陪集 0 的成员)。
         let h_members = group_closure(&FR_FINISH_MOVES);
 
-        // 陪集规范代表:H·g 的最小 key。预取 H 的逆元乘子。
-        // H·g = { h·g : h ∈ H };key 走 State 层 compose(h, g)。
-        let canon = |g: &State, h_members: &[State]| -> [u8; 20] {
-            let mut best = [u8::MAX; 20];
-            for h in h_members {
-                let hg = h.compose(g);
-                let k = key_of(&hg);
-                if k < best {
-                    best = k;
-                }
-            }
-            best
-        };
+        assert_eq!(h_members.len(), 192, "FR target subgroup size changed");
 
         // 2) 陪集空间 BFS:从 SOLVED 的陪集(= H,canon = SOLVED 所在陪集最小 key)
         //    出发,用 6 双转扩张,陪集编号 + 移动表 + 距离一次性现场建。
-        let mut coset_canon: HashMap<[u8; 20], u32> = HashMap::new();
-        let mut coset_rep: Vec<State> = Vec::new(); // 编号 → 一个代表 State(走 move 用)
-        let mut dist: Vec<u8> = Vec::new();
-        let mut mt: Vec<u32> = Vec::new();
+        let mut coset_canon: HashMap<[u8; 20], u32> = HashMap::with_capacity(3456);
+        assert!(
+            coset_canon.capacity() <= 8192,
+            "unexpected FR hash allocation"
+        );
+        let mut coset_rep: Vec<State> = Vec::with_capacity(3456);
+        let mut dist: Vec<u8> = Vec::with_capacity(3456);
+        let mut mt: Vec<u32> = Vec::with_capacity(3456 * 6);
 
-        let c0 = canon(&State::SOLVED, &h_members);
+        let c0 = canonical_key(&State::SOLVED, &h_members);
         coset_canon.insert(c0, 0);
         coset_rep.push(State::SOLVED);
         dist.push(0);
@@ -141,10 +149,11 @@ impl FrSolver {
                 let rep = coset_rep[ci as usize];
                 for (col, &m) in G3_MOVES.iter().enumerate() {
                     let ns = rep.applied(Move::from_index(m as usize));
-                    let ck = canon(&ns, &h_members);
+                    let ck = canonical_key(&ns, &h_members);
                     let nci = match coset_canon.get(&ck) {
                         Some(&id) => id,
                         None => {
+                            assert!(coset_rep.len() < 3456, "FR coset arena overflow");
                             let id = coset_rep.len() as u32;
                             coset_canon.insert(ck, id);
                             coset_rep.push(ns);
@@ -160,12 +169,36 @@ impl FrSolver {
             d += 1;
             frontier = next;
         }
+        assert_eq!(dist.len(), 3456, "FR coset closure incomplete");
+        FrCoordinateTables {
+            mt,
+            dist,
+            h_members,
+            coset_canon,
+        }
+    }
+
+    /// Full exact quotient for offline distribution, without constructing the
+    /// 663,552-member lookup map needed by the online arbitrary-state API.
+    pub fn exact_distribution_tables() -> (Vec<u8>, Vec<u32>, Vec<u8>, usize) {
+        let tables = Self::coordinate_tables();
+        (tables.dist, tables.mt, G3_MOVES.to_vec(), 0)
+    }
+
+    /// 全自包含构造(native/wasm 同路径,陪集表现场 BFS)。
+    pub fn new() -> Self {
+        let FrCoordinateTables {
+            mt,
+            dist,
+            h_members,
+            coset_canon,
+        } = Self::coordinate_tables();
 
         // 3) 把每个 G3 态映射到陪集编号(坐标提取查表用)。遍历 G3 全闭包。
         let g3 = group_closure(&G3_MOVES);
         let mut coset_id: HashMap<[u8; 20], u32> = HashMap::with_capacity(g3.len());
         for g in &g3 {
-            let ck = canon(g, &h_members);
+            let ck = canonical_key(g, &h_members);
             let id = *coset_canon.get(&ck).expect("G3 state coset missing");
             coset_id.insert(key_of(g), id);
         }

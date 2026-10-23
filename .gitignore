@@ -147,6 +147,10 @@ core/packages/client/public/maplibre/
 /solver/333opt/out.*.csv.rust-run-*.json
 /solver/333opt/out.*.csv.rust.jsonl
 
+# Bounded exact-puzzle run evidence and distance checkpoints stay on this host.
+/.local/small-puzzle-distributions-*/
+/.local/small-puzzle-distributions.lock
+
 # Retired front-end bundles; current applications build their own assets in CI.
 /_assets/
 
@@ -178,3 +182,7 @@ core/packages/client/public/maplibre/
 /stats/persons_search.json.gz.next
 /stats/data/nemesizer/
 /stats/data/persons_search.json.gz
+
+# Offline full-state mathematical corpora; regenerate locally, publish through artifact storage.
+/core/packages/client/public/generated/exact-puzzles/
+/stats/scramble/exact-puzzles/

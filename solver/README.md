@@ -22,6 +22,7 @@
 | eo_cross_analyzer | 全 5 阶段    | 默认档 OK,**golden bit-exact**(前 20 scramble),需 CUBE_ALLOW_HUGE_TABLES=1；high-memory 档本机表已生成，分析器待验收 | 默认加载约 23.1 GB；含可选 diagonal 的默认 full 33.8 GB；high-memory full 43.2 GB |
 | table_generator | -              | 统一磁盘建表入口：默认档 73 张，high-memory 追加 EO 5 张、SQ1 精确表与原生 H48 h10 | 本机生成与资源记录见 [HIGH_MEMORY_TABLE_PROFILE.md](HIGH_MEMORY_TABLE_PROFILE.md)；本地统计从 `core/` 运行 `pnpm stats:scramble:local` |
 | xcross_table_gen | XCross 内存建表 | 已接入 `/timer` / StageSolver 的缓存与下载/生成竞速；全表 SHA-256 校验 | 单线程 packed BFS，输出与原 `pt_cross_C4E0.bin` 一致；[基准记录](testdata/benchmarks/xcross-table-2026-10-04.json) |
+| dist_htr_fr | DR→HTR / HTR→FR(UD) | 复用现有精确模型的 29,400 / 3,456 陪集导出；已编译，正式结果见[跟踪表](../docs/puzzle-exact-distributions-tracker.md) | 零盘表输入；构造预算 24 / 4 MiB；仅由小分布串行 guard 调度，下载为全部陪集代表 |
 
 底层 (cube_common / move_tables / prune_tables / prune_create / executor /
 cross_solver / xcross_solver) 全部完成,golden bit-exact。

@@ -37,7 +37,7 @@ import { renderBakedNet } from '@/app/[lang]/scramble/gen/_svg/_baked_nets';
 import { renderPyraminxDuoSvg } from '@cuberoot/puzzle-render-core/pyraminx-duo-svg';
 import { renderMagicSvg } from '@cuberoot/puzzle-render-core/magic-svg';
 import { renderSphereScrambleSvg } from '@cuberoot/puzzle-render-core/sphere-svg';
-import { renderNativePuzzleSvg } from '@cuberoot/puzzle-render-core/native-puzzle-svg';
+import { renderNativePuzzleSvg, renderPuzzleGeometrySvg } from '@cuberoot/puzzle-render-core/native-puzzle-svg';
 import { NATIVE_PUZZLE_IDS, isNativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
 import {
   eventToCubeSize,
@@ -71,6 +71,8 @@ export interface ScramblePreviewSvgOptions {
   sq1Colors?: Record<string, string>;
   megaColors?: Record<string, string>;
   mask?: MaskRenderOptions;
+  /** Existing PG catalog definition, for puzzles without a registered scramble event. */
+  puzzleDescription?: string;
 }
 
 export function renderScramblePreviewSvg({
@@ -80,9 +82,11 @@ export function renderScramblePreviewSvg({
   sq1Colors,
   megaColors,
   mask,
+  puzzleDescription,
 }: ScramblePreviewSvgOptions): string | null {
   const eff = previewSource(event);
   try {
+    if (puzzleDescription) return renderPuzzleGeometrySvg({ id: event, description: puzzleDescription }, scramble);
     if (event === 'mirror_333') return renderMirrorBlocksScrambleSvg(scramble);
     if (event === 'sphere') return renderSphereScrambleSvg(scramble);
     if (isNativePuzzleId(eff)) return renderNativePuzzleSvg(eff, scramble);

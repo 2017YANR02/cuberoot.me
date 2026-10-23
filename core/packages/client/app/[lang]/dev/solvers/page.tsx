@@ -54,7 +54,7 @@ const NATIVE: NativeSolver[] = [
   { key: '223', stages: 1, fbRows: 1_297_444, rate: 19_000, tier: 'small', zhWhy: 'Petrus 2x2x3 (2角+5棱) 全空间 ~1.5G 态放不下全表, IDA* + max(1x2x3 全表, 角2+DB/DF 表) 可采纳下界', enWhy: 'Petrus 2x2x3 (2 corners + 5 edges) — 1.5G states, too big for a full table; IDA* with admissible h = max(1x2x3 full table, corners+DB/DF table)' },
   { key: 'eoline', stages: 2, fbRows: 1_297_444, rate: 350_000, tier: 'small', zhWhy: 'EO (2,048 态) + EOLine (294,912 态) 全空间微表, 零外部表, 精确距离直查零搜索', enWhy: 'EO (2,048 states) + EOLine (294,912 states) full-space micro-tables, zero external tables — exact lookups, zero search' },
   { key: 'dr', stages: 1, fbRows: 1_297_444, rate: 12_000, tier: 'small', zhWhy: 'DR (Kociemba phase-1) 全空间 ~2.2G 态, IDA* + max(eo×slice, co×slice) 双 ~1M 精确表, 全现场建零外部表', enWhy: 'DR (Kociemba phase 1) — ~2.2G states; IDA* with admissible h = max(eo×slice, co×slice), two ~1M exact tables built in RAM, zero external tables' },
-  { key: 'htr', stages: 1, fbRows: 0, rate: null, tier: 'small', zhWhy: 'DR→HTR 条件式阶段: 输入须处于该视角 DR 态, 非 DR 出哨兵;全空间 2,822,400 态精确表查表即最优;统计口径待定未接回填, 吞吐未实测', enWhy: 'conditional DR→HTR stage: input must already be in DR for the view, non-DR yields a sentinel; 2,822,400-state exact table — lookups are optimal; stats wiring pending, throughput not yet measured' },
+  { key: 'htr', stages: 1, fbRows: 0, rate: null, tier: 'small', zhWhy: 'DR→HTR 条件式阶段: 输入须处于该视角 DR 态, 非 DR 出哨兵;2,822,400 坐标精确查表。统计页已接 29,400 个等权陪集的完整分布,最大最优步数 13;真题回填未接,吞吐未实测', enWhy: 'conditional DR→HTR stage: input must already be in DR for the view, non-DR yields a sentinel; exact lookup over 2,822,400 coordinates. The stats page includes the complete 29,400-coset distribution with maximum 13; competition backfill is not connected and throughput has not been measured' },
   { key: 'htr2', stages: 1, fbRows: 0, rate: null, tier: 'small', zhWhy: 'HTR→solved 收尾阶段 (G3→G4): 输入须处于 HTR 态, 非 HTR 出哨兵;全空间 663,552 态精确表查表即最优;统计口径待定未接回填, 吞吐未实测', enWhy: 'HTR→solved finish stage (G3→G4): input must already be in HTR, non-HTR yields a sentinel; 663,552-state exact table — lookups are optimal; stats wiring pending, throughput not yet measured' },
   { key: 'fr', stages: 1, fbRows: 0, rate: null, tier: 'small', zhWhy: 'HTR→FR (Floppy 还原) 条件式阶段: 输入须处于 HTR 态, 非 HTR 出哨兵;FR 坐标 = G3 中 H=⟨L2,R2,F2,B2⟩ 的右陪集索引, 全空间仅 3,456 陪集精确表查表即最优, God 数实测 11;原生只作链式求解器内核 (无独立分析器 bin), 统计未接回填, 吞吐未实测', enWhy: 'conditional HTR→FR (Floppy Reduction) stage: input must already be in HTR, non-HTR yields a sentinel; FR coord = right-coset index of H=⟨L2,R2,F2,B2⟩ within G3 — a 3,456-coset exact table, lookups are optimal, measured God\'s number 11; native side is the chain-solver core only (no standalone analyzer bin), stats wiring pending, throughput not yet measured' },
   { key: 'pocket', stages: 1, fbRows: 0, rate: null, tier: 'small', puzzle: '2x2x2', event: '222', zhWhy: '非 3x3 独立 puzzle: 2x2x2 整魔方全空间 3,674,160 态 (7!·3^6, 固定 DBL 角消整体朝向) 精确距离表查表即最优, God 数实测 11 HTM;统计走 puzzle_distribution.json 新管线, 已灌注, 吞吐未实测', enWhy: 'standalone non-3x3 puzzle: the whole 2x2x2 — full-space 3,674,160-state (7!·3^6, DBL corner fixed to kill whole-cube rotation) exact distance table, lookups are optimal, measured God\'s number 11 HTM; stats go through the new puzzle_distribution.json pipeline, poured, throughput not yet measured' },
@@ -238,8 +238,8 @@ const TABLES: Record<string, SolverTbls> = {
   htr: {
     move: [],
     prune: [],
-    builtZh: '零盘表:DR→HTR 全空间精确距离表 (2,822,400 态 = 角置换 8! 40,320 × 轨道 4 棱位置组合 C(8,4)=70, ~2.8MB) 首查惰性内存 BFS (native ~5s);查长度 O(1), 枚举首达即最优, DR→HTR God 数实测 13;非 DR 输入出哨兵',
-    builtEn: 'no disk tables at all: exact full-space DR→HTR distance table (2,822,400 states = corner perm 8! 40,320 × C(8,4)=70 orbit-edge placements, ~2.8MB) lazily BFS-built in RAM on first query (~5s native); O(1) length lookups, first hit in enumeration is optimal — measured DR→HTR God\'s number 13; non-DR inputs yield a sentinel',
+    builtZh: '无在线盘表:2,822,400 坐标 = 角置换 40,320 × 棱位置组合 70,距离数组 2,822,400 字节,现场 BFS 改用固定 FIFO。离线统计压为 29,400 个等权陪集,每个对应 663,552 物理态;导出的本地证据表不由在线分析器加载。条件子目标最大最优步数 13。',
+    builtEn: 'no online disk tables: 2,822,400 coordinates = 40,320 corner permutations × 70 edge combinations, with a 2,822,400-byte distance array and fixed-FIFO BFS. Offline statistics use 29,400 equal-weight cosets of 663,552 physical states each; online analyzers do not load the local evidence export. Conditional subgoal maximum: 13.',
   },
   htr2: {
     move: [],
@@ -250,8 +250,8 @@ const TABLES: Record<string, SolverTbls> = {
   fr: {
     move: [],
     prune: [],
-    builtZh: '零盘表:HTR→FR 距离表 = G3 中 H=⟨L2,R2,F2,B2⟩ 右陪集索引 (3,456 陪集, ~3.4KB) 首查惰性内存 BFS (复用 htr2 的 G3 角 96 × 棱 6,912 微表);查长度 O(1), 枚举首达即最优, HTR→FR God 数实测 11;非 HTR 输入出哨兵',
-    builtEn: 'no disk tables at all: the HTR→FR distance table indexes right cosets of H=⟨L2,R2,F2,B2⟩ within G3 (3,456 cosets, ~3.4KB), lazily BFS-built in RAM on first query (reusing htr2\'s G3 corner-96 × edge-6,912 micro-tables); O(1) length lookups, first hit in enumeration is optimal — measured HTR→FR God\'s number 11; non-HTR inputs yield a sentinel',
+    builtZh: '无在线盘表:固定 UD 的 FR 目标子群 H=⟨L2,R2,F2,B2⟩ 有 192 态;G3 中 3,456 个陪集现场 BFS,距离数组 3,456 字节。在线任意状态查表仍构建 663,552 项映射;离线分布导出只建小陪集表,不构建该大映射。条件子目标最大最优步数 11。',
+    builtEn: 'no online disk tables: fixed-UD FR target H=⟨L2,R2,F2,B2⟩ has 192 states. BFS covers 3,456 cosets in G3 with a 3,456-byte distance array. Online arbitrary-state lookup still builds a 663,552-entry map; offline distribution export builds only the small coset table. Conditional subgoal maximum: 11.',
   },
   pocket: {
     move: [],

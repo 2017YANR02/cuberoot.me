@@ -6,6 +6,9 @@ import { SHAPE_MOD_EVENTS } from '@/lib/shape-mod-scramble';
 import { ALL_PUZZLE_TYPE_OPTIONS } from '../sim/puzzleOptions';
 
 const PROJECT_ICONS = [
+  { id: 'skewb-ultimate-exact', iconClass: 'puzzle-skewb-ultimate', en: 'Skewb Ultimate', zh: '终极斜转' },
+  { id: 'rubiks-ufo-ftm-exact', iconClass: 'puzzle-rubiks-ufo', en: "Rubik's UFO", zh: '鲁比克飞碟' },
+  { id: 'rubiks-ufo-stm-exact', iconClass: 'puzzle-rubiks-ufo', en: "Rubik's UFO", zh: '鲁比克飞碟' },
   ...CSTIMER_EVENTS,
   ...SHAPE_MOD_EVENTS,
   ...NATIVE_SCRAMBLE_EVENTS,

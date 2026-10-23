@@ -74,7 +74,8 @@
       "./timer-mega-hints": "runtime-neutral",
       "./magic": "runtime-neutral",
       "./native-puzzles": "runtime-neutral",
-      "./native-puzzle-model": "runtime-neutral"
+      "./native-puzzle-model": "runtime-neutral",
+      "./pyraminx-duo-geometry-reference": "runtime-neutral"
     }
   },
   "sideEffects": false,
@@ -403,6 +404,11 @@
       "types": "./src/native-puzzle-model.ts",
       "node": "./dist/native-puzzle-model.js",
       "default": "./src/native-puzzle-model.ts"
+    },
+    "./pyraminx-duo-geometry-reference": {
+      "types": "./src/pyraminx-duo-geometry-reference.ts",
+      "node": "./dist/pyraminx-duo-geometry-reference.js",
+      "default": "./src/pyraminx-duo-geometry-reference.ts"
     }
   },
   "scripts": {

@@ -883,3 +883,20 @@ JSON 的本地、服务器磁盘、公开 HTTPS 内容 SHA-256 一致。不是�
 管道的新旧速度对照。期间修复 WCA TSV 转义解码，以及近期项目打乱
 早于三阶最优计算刷新导致漏值的问题；本轮在发布前补齐 1,210 条。
 完整运行记录见 `testdata/benchmarks/stats-pipeline-2026-10-04.json`。
+
+## Phase 2026-10-23: HTR / FR small exact quotient export
+
+`dist_htr_fr` 复用现有 `HtrSolver` 与 `FrSolver`，不读取或生成大盘表。
+HTR 构造改为固定 u32 队列，连同 u8 距离和两张移动表的主数组为
+17,020,080 字节；再把 40320 个角排列按 Hc 的 96 元作用商成 420，
+逐态核对所有纤维的距离和转移，导出 420×70=29,400 个陪集。
+FR 提取原构造的前两步，复用 192 元目标闭包和 3,456 陪集图；离线
+路径不构造线上任意态查询所需的 663,552 元 HashMap，线上 API 保持。
+
+主分布按陪集计数。HTR / FR 每个陪集分别代表 663,552 / 192 个物理态，
+各档乘这个严格等重权重即完整条件物理空间分布；下载只称全部陪集代表。
+`core/packages/client/scripts/fmc-goal-exact-distributions.mts` 记录 native
+程序与完整 Rust 源码树哈希，检查独立物理陪集双射及全部生成元边，并用
+cubing.js 回放每档最短见证。原生子进程继承串行 guard 的进程组；
+构造预算 24 / 4 MiB，正式计算仅由 guard 调度。编译与静态检查不冒称
+一次枚举结果，实测证据归 `docs/puzzle-exact-distributions-tracker.md`。

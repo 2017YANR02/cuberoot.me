@@ -5,6 +5,7 @@ import '@cuberoot/timer-ui/compact-select.css';
 // 由难度 tab 的共享 WCA 项目选择器驱动:选中二阶/金字塔/斜转 → 传入对应 puzzleKey。
 // 数据 = stats/scramble/puzzle_distribution.json(222 / pyraminx / skewb;sq1 待 P5d)。
 import { useEffect, useMemo, useState } from 'react';
+import { Download } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
@@ -27,6 +28,7 @@ import {
 } from '@cuberoot/puzzle-solvers/clock';
 import { tr } from '@/i18n/tr';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { downloadCsv } from '@/lib/scramble-dist/download';
 
 // puzzle key → 在线求解器 event slug(/scramble/solver?event=;sq1 不在表里 → 示例卡不可点)。
 const PUZZLE_ROUTE: Record<string, string> = { '222': '222', pyraminx: 'pyram', skewb: 'skewb', clock: 'clock' };
@@ -59,7 +61,7 @@ const PUZZLE_COLOR: Record<string, string> = {
 /** 魔表理论精确曲线的颜色(与真题语料那条区分开)。 */
 const CLOCK_THEORY_COLOR = '#7a8896';
 
-// ── 魔表:唯一一个「全空间分布已知」的 WCA 项目 ────────────────────────────────
+// ── 魔表:已知全空间分布的理论曲线 ──────────────────────────────────────────
 // 12^14 个状态全被算穿(Rokicki 陪集法,God 12),所以除了真题语料直方图,还能叠一条**理论
 // 精确曲线**。因为 WCA 打乱是均匀随机态,这条曲线就是真题的极限分布 —— 语料越多两条越贴合,
 // 差距即抽样噪声。数据 + 三层核验见 @cuberoot/puzzle-solvers/clock 的 CLOCK_LENGTH_DISTRIBUTION 注释。
@@ -101,17 +103,17 @@ function clockNote(theoryOnly: boolean): { zh: string; en: string } {
   const n = (v: number) => v.toLocaleString('en-US');
   const hardest = n(CLOCK_LENGTH_DISTRIBUTION[CLOCK_GODS_NUMBER]);
   const which = theoryOnly
-    ? { zh: '图上这条就是它(全空间精确计数,不是抽样);真题语料还在生成中,灌进来后会另叠一条对照。',
-        en: 'the series above is exactly that (full-space exact counts, not sampled); the real-scramble corpus is still being generated and will be overlaid as a second series.' }
+    ? { zh: '图上这条就是它(全空间精确计数,不是抽样);当前未加载真题语料。',
+        en: 'the series above is exactly that (full-space exact counts, not sampled); the competition corpus is not currently loaded.' }
     : { zh: '灰色那条即它,真题语料与它的差距只是抽样噪声。',
         en: 'it is the grey series here, and any gap to the real-scramble histogram is just sampling noise.' };
   return {
-    zh: `魔表是唯一一个全空间分布已知的 WCA 项目:12¹⁴ = ${n(CLOCK_STATE_COUNT)} 个状态全部被算穿`
+    zh: `魔表的全空间分布已知:12¹⁴ = ${n(CLOCK_STATE_COUNT)} 个状态全部被算穿`
       + `(Tomas Rokicki 的陪集分解,分布表见 Jaap Scherphuis 的 Rubik's Clock 页;God's number = 12 由 Jakob Kogler 2014 年首证)。`
       + `因为 WCA 打乱就是均匀随机状态,那张精确表同时就是比赛打乱难度的极限分布 —— ${which.zh}`
       + `理论均值 ${CLOCK_MEAN_LENGTH.toFixed(4)} 步,需要满 12 步的状态全世界只有 ${hardest} 个(占 3×10⁻¹¹,真题里几乎不可能出现)。`
       + `本站不是照抄这张表就用:表格逐档求和自洽、d ≤ 4 各档用自己的招式模型精确重算、全部 ${hardest} 个 12 步状态逐个解出确为 12 步,三层核验都过。`,
-    en: `The clock is the only WCA event whose full-space distribution is known: all 12^14 = ${n(CLOCK_STATE_COUNT)} states have been solved optimally `
+    en: `The clock's full-space distribution is known: all 12^14 = ${n(CLOCK_STATE_COUNT)} states have been solved optimally `
       + `(Tomas Rokicki's coset decomposition; the table is published on Jaap Scherphuis' Rubik's Clock page, and God's number 12 was first proven by Jakob Kogler in 2014). `
       + `Since a WCA scramble is a uniform random state, that exact table is also the limiting difficulty distribution of competition scrambles — ${which.en} `
       + `The theoretical mean is ${CLOCK_MEAN_LENGTH.toFixed(4)} moves, and only ${hardest} states in the world need the full 12 (3×10⁻¹¹ — you will essentially never see one in competition). `
@@ -286,10 +288,10 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
     });
   }, [exampleBins, st]);
 
-  if (error) {
+  if (error && !isClock) {
     return <div className="scramble-stats-error">{tr({ zh: '加载失败', en: 'Load failed' })}: {error}</div>;
   }
-  if (!json) {
+  if (!json && !isClock) {
     return <div className="scramble-stats-loading"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator></div>;
   }
   if (!entry) {
@@ -320,6 +322,15 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
           <div className="scramble-stats-puzzle-meta">
             <span className="scramble-stats-puzzle-metric">{tr(note)}</span>
           </div>
+        )}
+        {isClock && (
+          <button type="button" className="ivy-dl-all" onClick={() => downloadCsv(
+            'clock_distribution.csv', 'depth,count,probability',
+            CLOCK_LENGTH_DISTRIBUTION.map((count, depth) => `${depth},${count},${count / CLOCK_STATE_COUNT}`),
+          )}>
+            <Download size={14} aria-hidden />
+            {tr({ zh: '下载完整分布 (CSV)', en: 'Download complete distribution (CSV)' })}
+          </button>
         )}
         {hasMetrics && stepMetrics && (
           <label className="scramble-stats-puzzle-target">
@@ -387,6 +398,15 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
         />
       </div>
 
+      {isClock && (
+        <div className="scramble-stats-meta">
+          {tr({
+            zh: `可回放示例仅来自 WCA 真题，当前示例步数：${exampleBins.length ? exampleBins.join('、') : '无'}。其余档本站尚未提供逐态示例，完整分布计数仍包含这些状态。`,
+            en: `Replayable examples come only from the WCA corpus; depths currently covered: ${exampleBins.length ? exampleBins.join(', ') : 'none'}. This site does not yet provide state examples at other depths, but their states remain included in the complete counts.`,
+          })}
+        </div>
+      )}
+
       {exEntry && activeBins && selectedBin !== null && (
         <PuzzleExamplesPanel
           isZh={isZh}
@@ -404,7 +424,7 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
 
       <div className="scramble-stats-meta">
         {/* 理论曲线是定理不是跑出来的数据 —— 语料还没灌进来时不该挂管道的生成时间。 */}
-        {!theoryOnly && (
+        {!theoryOnly && json && (
           <span>
             {tr({ zh: '生成时间', en: 'Generated' })}: {json.meta.generated_at}
           </span>

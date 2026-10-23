@@ -1,0 +1,2556 @@
+{
+  "schemaVersion": 1,
+  "puzzles": {
+    "133": {
+      "allStates": {
+        "url": "/stats/scramble/exact-puzzles/133/b87df3862f653464aac8e569de716099c3a51ee6b5ac0ad09054df22f85064a4/all.csv.gz",
+        "bytes": 645,
+        "rows": 192,
+        "sha256": "b87df3862f653464aac8e569de716099c3a51ee6b5ac0ad09054df22f85064a4"
+      },
+      "byDepth": {
+        "0": {
+          "url": "/stats/scramble/exact-puzzles/133/fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8/depth-0.txt.gz",
+          "bytes": 21,
+          "rows": 1,
+          "sha256": "fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8"
+        },
+        "1": {
+          "url": "/stats/scramble/exact-puzzles/133/50dc997430f387da9dc0b3d4706b7f0f763d352b3f8d9933c602312a89567ba2/depth-1.txt.gz",
+          "bytes": 28,
+          "rows": 4,
+          "sha256": "50dc997430f387da9dc0b3d4706b7f0f763d352b3f8d9933c602312a89567ba2"
+        },
+        "2": {
+          "url": "/stats/scramble/exact-puzzles/133/521badddc0f619ea4a8da8bb53bf90c1a43a708fc8bab7db2d596299ed952fba/depth-2.txt.gz",
+          "bytes": 51,
+          "rows": 10,
+          "sha256": "521badddc0f619ea4a8da8bb53bf90c1a43a708fc8bab7db2d596299ed952fba"
+        },
+        "3": {
+          "url": "/stats/scramble/exact-puzzles/133/b3dca9f95db5082be9e7557fc62520433faa7fa31e42b1edde2fe752d3a5897c/depth-3.txt.gz",
+          "bytes": 86,
+          "rows": 24,
+          "sha256": "b3dca9f95db5082be9e7557fc62520433faa7fa31e42b1edde2fe752d3a5897c"
+        },
+        "4": {
+          "url": "/stats/scramble/exact-puzzles/133/54f5b4a4b0477eb4e9d7a3512071eae31d025a11747531828c345a8bd22e3de3/depth-4.txt.gz",
+          "bytes": 167,
+          "rows": 53,
+          "sha256": "54f5b4a4b0477eb4e9d7a3512071eae31d025a11747531828c345a8bd22e3de3"
+        },
+        "5": {
+          "url": "/stats/scramble/exact-puzzles/133/2a0e93db8f658b23bc1c5ad34ef17d360bcb7e49e56755d1d537e2c8da02ae8e/depth-5.txt.gz",
+          "bytes": 218,
+          "rows": 64,
+          "sha256": "2a0e93db8f658b23bc1c5ad34ef17d360bcb7e49e56755d1d537e2c8da02ae8e"
+        },
+        "6": {
+          "url": "/stats/scramble/exact-puzzles/133/519bc84d8a077acde6cbf72db912027dcd8a5b4840f1623afc9c0972ea6de13b/depth-6.txt.gz",
+          "bytes": 135,
+          "rows": 31,
+          "sha256": "519bc84d8a077acde6cbf72db912027dcd8a5b4840f1623afc9c0972ea6de13b"
+        },
+        "7": {
+          "url": "/stats/scramble/exact-puzzles/133/deb2186d5c8b90169ad852cadf4c641933ae7d40c70567dfc5025b7669e36595/depth-7.txt.gz",
+          "bytes": 43,
+          "rows": 4,
+          "sha256": "deb2186d5c8b90169ad852cadf4c641933ae7d40c70567dfc5025b7669e36595"
+        },
+        "8": {
+          "url": "/stats/scramble/exact-puzzles/133/c14436c1f105bd4a4cd887a52dafdee1df250b4c8bf8f5be166ceaf52d5b2a8f/depth-8.txt.gz",
+          "bytes": 32,
+          "rows": 1,
+          "sha256": "c14436c1f105bd4a4cd887a52dafdee1df250b4c8bf8f5be166ceaf52d5b2a8f"
+        }
+      }
+    },
+    "223": {
+      "allStates": {
+        "url": "/stats/scramble/exact-puzzles/223/39f248c4c2994570ac5c601d29abc6ff11399219686123f6a04fe6769af723a2/all.csv.gz",
+        "bytes": 1635583,
+        "rows": 241920,
+        "sha256": "39f248c4c2994570ac5c601d29abc6ff11399219686123f6a04fe6769af723a2"
+      },
+      "byDepth": {
+        "0": {
+          "url": "/stats/scramble/exact-puzzles/223/fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8/depth-0.txt.gz",
+          "bytes": 21,
+          "rows": 1,
+          "sha256": "fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8"
+        },
+        "1": {
+          "url": "/stats/scramble/exact-puzzles/223/7a9209eef0d66cd7857f717a4abb49efb099337043c0f8604a2b882072b5d1ec/depth-1.txt.gz",
+          "bytes": 40,
+          "rows": 8,
+          "sha256": "7a9209eef0d66cd7857f717a4abb49efb099337043c0f8604a2b882072b5d1ec"
+        },
+        "2": {
+          "url": "/stats/scramble/exact-puzzles/223/40f4947d12df855999d08a082644c7750121caa6bbec0217acdd7d9904b8adfb/depth-2.txt.gz",
+          "bytes": 106,
+          "rows": 35,
+          "sha256": "40f4947d12df855999d08a082644c7750121caa6bbec0217acdd7d9904b8adfb"
+        },
+        "3": {
+          "url": "/stats/scramble/exact-puzzles/223/0545af648a82c71eaef3cbc9c54f9894fb509354d5d9aa8feeab867287f67fb1/depth-3.txt.gz",
+          "bytes": 421,
+          "rows": 157,
+          "sha256": "0545af648a82c71eaef3cbc9c54f9894fb509354d5d9aa8feeab867287f67fb1"
+        },
+        "4": {
+          "url": "/stats/scramble/exact-puzzles/223/3a8a8ced358fc2bd8281b956d8aa5b52209671474cb0f951fe7d7bae0c7df39a/depth-4.txt.gz",
+          "bytes": 2077,
+          "rows": 678,
+          "sha256": "3a8a8ced358fc2bd8281b956d8aa5b52209671474cb0f951fe7d7bae0c7df39a"
+        },
+        "5": {
+          "url": "/stats/scramble/exact-puzzles/223/7e84bf4d55082c3aead521455b0c804b27755a0efe1f9b8f52ad4ef6a346262f/depth-5.txt.gz",
+          "bytes": 9174,
+          "rows": 2527,
+          "sha256": "7e84bf4d55082c3aead521455b0c804b27755a0efe1f9b8f52ad4ef6a346262f"
+        },
+        "6": {
+          "url": "/stats/scramble/exact-puzzles/223/3681453cb7f3830775e552a70d23e7a1a142203386a25ed8a9e66cb87aae050f/depth-6.txt.gz",
+          "bytes": 31954,
+          "rows": 7442,
+          "sha256": "3681453cb7f3830775e552a70d23e7a1a142203386a25ed8a9e66cb87aae050f"
+        },
+        "7": {
+          "url": "/stats/scramble/exact-puzzles/223/eeaed461d044fbbae1b650a3469cfc914aa4f01dfc619aa0366d72b559067f74/depth-7.txt.gz",
+          "bytes": 84457,
+          "rows": 17088,
+          "sha256": "eeaed461d044fbbae1b650a3469cfc914aa4f01dfc619aa0366d72b559067f74"
+        },
+        "8": {
+          "url": "/stats/scramble/exact-puzzles/223/e35e0d87252cf116d9d770431aa7341f26ff450f280c7447c16fe45d2b704007/depth-8.txt.gz",
+          "bytes": 176520,
+          "rows": 31568,
+          "sha256": "e35e0d87252cf116d9d770431aa7341f26ff450f280c7447c16fe45d2b704007"
+        },
+        "9": {
+          "url": "/stats/scramble/exact-puzzles/223/7f079dff4889128ee7c8966594d8a6176140cf0bf8920b302aa99779380ee308/depth-9.txt.gz",
+          "bytes": 275487,
+          "rows": 44704,
+          "sha256": "7f079dff4889128ee7c8966594d8a6176140cf0bf8920b302aa99779380ee308"
+        },
+        "10": {
+          "url": "/stats/scramble/exact-puzzles/223/06d3f4c9f6b9c9c5b083bfe5cd3653bfba6b48f9eebbfb87d107a462f34f1268/depth-10.txt.gz",
+          "bytes": 313140,
+          "rows": 47216,
+          "sha256": "06d3f4c9f6b9c9c5b083bfe5cd3653bfba6b48f9eebbfb87d107a462f34f1268"
+        },
+        "11": {
+          "url": "/stats/scramble/exact-puzzles/223/7fcc4ad951ee52b4ef627cf6dcde588706f7c837ddde246942b626f17cd1f015/depth-11.txt.gz",
+          "bytes": 352877,
+          "rows": 49792,
+          "sha256": "7fcc4ad951ee52b4ef627cf6dcde588706f7c837ddde246942b626f17cd1f015"
+        },
+        "12": {
+          "url": "/stats/scramble/exact-puzzles/223/00ff911da4c5b5966a937b0b7a2d77991b7557220136ca69a20482ea0ce8ace6/depth-12.txt.gz",
+          "bytes": 218354,
+          "rows": 29024,
+          "sha256": "00ff911da4c5b5966a937b0b7a2d77991b7557220136ca69a20482ea0ce8ace6"
+        },
+        "13": {
+          "url": "/stats/scramble/exact-puzzles/223/2affe27d96adcf6cfd3316980f9b493e24a12a5094010961ae4dc340e2bca825/depth-13.txt.gz",
+          "bytes": 87196,
+          "rows": 11104,
+          "sha256": "2affe27d96adcf6cfd3316980f9b493e24a12a5094010961ae4dc340e2bca825"
+        },
+        "14": {
+          "url": "/stats/scramble/exact-puzzles/223/897c533eeba4745edff4cb619e2be6df17af47e9c96b8c1768a2f0c0de93dae5/depth-14.txt.gz",
+          "bytes": 4479,
+          "rows": 576,
+          "sha256": "897c533eeba4745edff4cb619e2be6df17af47e9c96b8c1768a2f0c0de93dae5"
+        }
+      }
+    },
+    "pyraminx_duo": {
+      "allStates": {
+        "url": "/stats/scramble/exact-puzzles/pyraminx_duo/975553fe8a58a342910148d14fb03ef8c16394d7f3710238c8af211aa36dffa5/all.csv.gz",
+        "bytes": 904,
+        "rows": 324,
+        "sha256": "975553fe8a58a342910148d14fb03ef8c16394d7f3710238c8af211aa36dffa5"
+      },
+      "byDepth": {
+        "0": {
+          "url": "/stats/scramble/exact-puzzles/pyraminx_duo/fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8/depth-0.txt.gz",
+          "bytes": 21,
+          "rows": 1,
+          "sha256": "fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8"
+        },
+        "1": {
+          "url": "/stats/scramble/exact-puzzles/pyraminx_duo/3df1e590deb7360388fa58e8a2a555073320c8bbb73a47fd69a0575acc253be7/depth-1.txt.gz",
+          "bytes": 40,
+          "rows": 8,
+          "sha256": "3df1e590deb7360388fa58e8a2a555073320c8bbb73a47fd69a0575acc253be7"
+        },
+        "2": {
+          "url": "/stats/scramble/exact-puzzles/pyraminx_duo/81221070d5ee2f5cadcc1477be0cce3d1f40338d5d237c6055828128b797b214/depth-2.txt.gz",
+          "bytes": 107,
+          "rows": 48,
+          "sha256": "81221070d5ee2f5cadcc1477be0cce3d1f40338d5d237c6055828128b797b214"
+        },
+        "3": {
+          "url": "/stats/scramble/exact-puzzles/pyraminx_duo/ffac610c82f7af78f93cf4b304cccecbe529b4aadeafe0477871ad3aa1b062a6/depth-3.txt.gz",
+          "bytes": 442,
+          "rows": 188,
+          "sha256": "ffac610c82f7af78f93cf4b304cccecbe529b4aadeafe0477871ad3aa1b062a6"
+        },
+        "4": {
+          "url": "/stats/scramble/exact-puzzles/pyraminx_duo/b1ef87d3aca88c20503492a4c4b29ec0df07968e4378c46efd3ed818d81c717b/depth-4.txt.gz",
+          "bytes": 260,
+          "rows": 79,
+          "sha256": "b1ef87d3aca88c20503492a4c4b29ec0df07968e4378c46efd3ed818d81c717b"
+        }
+      }
+    },
+    "gear": {
+      "allStates": {
+        "url": "/stats/scramble/exact-puzzles/gear/8db35239a9a71fee4087024f8741fac84fa150ebc975583f7d7df1d5f818de65/all.csv.gz",
+        "bytes": 116594,
+        "rows": 41472,
+        "sha256": "8db35239a9a71fee4087024f8741fac84fa150ebc975583f7d7df1d5f818de65"
+      },
+      "byDepth": {
+        "0": {
+          "url": "/stats/scramble/exact-puzzles/gear/fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8/depth-0.txt.gz",
+          "bytes": 21,
+          "rows": 1,
+          "sha256": "fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8"
+        },
+        "1": {
+          "url": "/stats/scramble/exact-puzzles/gear/47b0523c2a342dc0653c4e04b1522de4d7f44d3b067bb512ed718f8628d7d863/depth-1.txt.gz",
+          "bytes": 81,
+          "rows": 33,
+          "sha256": "47b0523c2a342dc0653c4e04b1522de4d7f44d3b067bb512ed718f8628d7d863"
+        },
+        "2": {
+          "url": "/stats/scramble/exact-puzzles/gear/385d8d8e200ac4fb6146d1be74cb5086f2bcb7ad770ad88ceabebf0da5a43472/depth-2.txt.gz",
+          "bytes": 1144,
+          "rows": 579,
+          "sha256": "385d8d8e200ac4fb6146d1be74cb5086f2bcb7ad770ad88ceabebf0da5a43472"
+        },
+        "3": {
+          "url": "/stats/scramble/exact-puzzles/gear/819759115de53d9c486143bafd86b95ddd8c825f3e168b0de25e424717d27eee/depth-3.txt.gz",
+          "bytes": 13859,
+          "rows": 5921,
+          "sha256": "819759115de53d9c486143bafd86b95ddd8c825f3e168b0de25e424717d27eee"
+        },
+        "4": {
+          "url": "/stats/scramble/exact-puzzles/gear/5a6339a76e1d5fc07c3cabecea2681e90174b2a0395a79775aa58b3ef3ee514b/depth-4.txt.gz",
+          "bytes": 47419,
+          "rows": 18072,
+          "sha256": "5a6339a76e1d5fc07c3cabecea2681e90174b2a0395a79775aa58b3ef3ee514b"
+        },
+        "5": {
+          "url": "/stats/scramble/exact-puzzles/gear/b27242946ec1cd291087c4449dbf7f4f56df4837d15778b62a1f060604eda833/depth-5.txt.gz",
+          "bytes": 40629,
+          "rows": 13977,
+          "sha256": "b27242946ec1cd291087c4449dbf7f4f56df4837d15778b62a1f060604eda833"
+        },
+        "6": {
+          "url": "/stats/scramble/exact-puzzles/gear/71286d13581403c0e25fe9404b9736b16e6b5d04460159b0a1d4658a4030acec/depth-6.txt.gz",
+          "bytes": 8805,
+          "rows": 2889,
+          "sha256": "71286d13581403c0e25fe9404b9736b16e6b5d04460159b0a1d4658a4030acec"
+        }
+      }
+    },
+    "ufo": {
+      "allStates": {
+        "url": "/stats/scramble/exact-puzzles/ufo/8a2a2b07a2a1b82d7b3728c704e4f3a6c50e451e1f8c5f56b5b69cce8cfed036/all.csv.gz",
+        "bytes": 212556,
+        "rows": 60480,
+        "sha256": "8a2a2b07a2a1b82d7b3728c704e4f3a6c50e451e1f8c5f56b5b69cce8cfed036"
+      },
+      "byDepth": {
+        "0": {
+          "url": "/stats/scramble/exact-puzzles/ufo/fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8/depth-0.txt.gz",
+          "bytes": 21,
+          "rows": 1,
+          "sha256": "fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8"
+        },
+        "1": {
+          "url": "/stats/scramble/exact-puzzles/ufo/070d91dfe1f66f6a72508b23c75ffb9730e888d86b69189b975c3898d6294dc9/depth-1.txt.gz",
+          "bytes": 38,
+          "rows": 8,
+          "sha256": "070d91dfe1f66f6a72508b23c75ffb9730e888d86b69189b975c3898d6294dc9"
+        },
+        "2": {
+          "url": "/stats/scramble/exact-puzzles/ufo/3d92d34cfd3077935f9778655be78b0d9afa857113977295989b7e12d8b91bf5/depth-2.txt.gz",
+          "bytes": 91,
+          "rows": 33,
+          "sha256": "3d92d34cfd3077935f9778655be78b0d9afa857113977295989b7e12d8b91bf5"
+        },
+        "3": {
+          "url": "/stats/scramble/exact-puzzles/ufo/2de88544be1f36697739706ff064b6efcad5087ecf447f4a1a56b71d372166e0/depth-3.txt.gz",
+          "bytes": 346,
+          "rows": 151,
+          "sha256": "2de88544be1f36697739706ff064b6efcad5087ecf447f4a1a56b71d372166e0"
+        },
+        "4": {
+          "url": "/stats/scramble/exact-puzzles/ufo/a8d253717d25b679560045f8725ec55bdc8f7ef3a7ef2aea50203aeb0b16a65c/depth-4.txt.gz",
+          "bytes": 1462,
+          "rows": 577,
+          "sha256": "a8d253717d25b679560045f8725ec55bdc8f7ef3a7ef2aea50203aeb0b16a65c"
+        },
+        "5": {
+          "url": "/stats/scramble/exact-puzzles/ufo/c138f5dcd5648d29f47d4248e171d7d4f171cdd4b7b45eb1096ac0db57c755b9/depth-5.txt.gz",
+          "bytes": 5309,
+          "rows": 1924,
+          "sha256": "c138f5dcd5648d29f47d4248e171d7d4f171cdd4b7b45eb1096ac0db57c755b9"
+        },
+        "6": {
+          "url": "/stats/scramble/exact-puzzles/ufo/5325b34533fd1c5da5fe749f0c26d6c48320a3385605facbcad3430841d13796/depth-6.txt.gz",
+          "bytes": 16615,
+          "rows": 5733,
+          "sha256": "5325b34533fd1c5da5fe749f0c26d6c48320a3385605facbcad3430841d13796"
+        },
+        "7": {
+          "url": "/stats/scramble/exact-puzzles/ufo/b84517ca55ec5cdafb0215b46adcf87adb38eaa3cef8fb5761cf4566a638eeb3/depth-7.txt.gz",
+          "bytes": 43401,
+          "rows": 13778,
+          "sha256": "b84517ca55ec5cdafb0215b46adcf87adb38eaa3cef8fb5761cf4566a638eeb3"
+        },
+        "8": {
+          "url": "/stats/scramble/exact-puzzles/ufo/053f676433d6c065329c363774092dc84aea08c3477a439b07a72965118d153e/depth-8.txt.gz",
+          "bytes": 73831,
+          "rows": 21715,
+          "sha256": "053f676433d6c065329c363774092dc84aea08c3477a439b07a72965118d153e"
+        },
+        "9": {
+          "url": "/stats/scramble/exact-puzzles/ufo/96da5f17c49520252c4a407bd0e53d01102289d62be208f4f6e55f4c1396d8d8/depth-9.txt.gz",
+          "bytes": 55132,
+          "rows": 14241,
+          "sha256": "96da5f17c49520252c4a407bd0e53d01102289d62be208f4f6e55f4c1396d8d8"
+        },
+        "10": {
+          "url": "/stats/scramble/exact-puzzles/ufo/2a36787c0671300e058bf932c3d07abf1ed456cf86b6b13cae053e4e1f36acec/depth-10.txt.gz",
+          "bytes": 11243,
+          "rows": 2319,
+          "sha256": "2a36787c0671300e058bf932c3d07abf1ed456cf86b6b13cae053e4e1f36acec"
+        }
+      }
+    },
+    "cm2": {
+      "allStates": {
+        "url": "/stats/scramble/exact-puzzles/cm2/303bc84bf908c754e671fd313ff95330d88ce34a0f238a4486d51d648308d987/all.csv.gz",
+        "bytes": 578621,
+        "rows": 165888,
+        "sha256": "303bc84bf908c754e671fd313ff95330d88ce34a0f238a4486d51d648308d987"
+      },
+      "byDepth": {
+        "0": {
+          "url": "/stats/scramble/exact-puzzles/cm2/fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8/depth-0.txt.gz",
+          "bytes": 21,
+          "rows": 1,
+          "sha256": "fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8"
+        },
+        "1": {
+          "url": "/stats/scramble/exact-puzzles/cm2/765c13413dd181e6044890c071790408f93ecc998ffcfce8f877bfb7bbe1b4d5/depth-1.txt.gz",
+          "bytes": 55,
+          "rows": 12,
+          "sha256": "765c13413dd181e6044890c071790408f93ecc998ffcfce8f877bfb7bbe1b4d5"
+        },
+        "2": {
+          "url": "/stats/scramble/exact-puzzles/cm2/1c0a2c0c1c0a828f945e1067aa21f54b2c6e31fdc7c8753d717beea64cb2e27a/depth-2.txt.gz",
+          "bytes": 194,
+          "rows": 86,
+          "sha256": "1c0a2c0c1c0a828f945e1067aa21f54b2c6e31fdc7c8753d717beea64cb2e27a"
+        },
+        "3": {
+          "url": "/stats/scramble/exact-puzzles/cm2/26c03881477453cb5c35eae9afe436bc5c70abb3bb2085323d011df25bcd52ba/depth-3.txt.gz",
+          "bytes": 1258,
+          "rows": 524,
+          "sha256": "26c03881477453cb5c35eae9afe436bc5c70abb3bb2085323d011df25bcd52ba"
+        },
+        "4": {
+          "url": "/stats/scramble/exact-puzzles/cm2/4161f5bb774983661ca527d651ada330edc7f37831a51ef94dbddfba17429145/depth-4.txt.gz",
+          "bytes": 6803,
+          "rows": 2577,
+          "sha256": "4161f5bb774983661ca527d651ada330edc7f37831a51ef94dbddfba17429145"
+        },
+        "5": {
+          "url": "/stats/scramble/exact-puzzles/cm2/2cf62664e38cd5a0081a1410be67f341a5e9e944ca720af84df9dfaa4aef8a17/depth-5.txt.gz",
+          "bytes": 27259,
+          "rows": 9564,
+          "sha256": "2cf62664e38cd5a0081a1410be67f341a5e9e944ca720af84df9dfaa4aef8a17"
+        },
+        "6": {
+          "url": "/stats/scramble/exact-puzzles/cm2/534b52ce1d2a629dfea2b3c2a45c131e983c1e9c2a4416a0a84872750d094eb2/depth-6.txt.gz",
+          "bytes": 83778,
+          "rows": 26964,
+          "sha256": "534b52ce1d2a629dfea2b3c2a45c131e983c1e9c2a4416a0a84872750d094eb2"
+        },
+        "7": {
+          "url": "/stats/scramble/exact-puzzles/cm2/82353f8da25558b074a88726b9f157dbeeefc7d2ff3f9e5ac711b7693c74e6c7/depth-7.txt.gz",
+          "bytes": 166486,
+          "rows": 49648,
+          "sha256": "82353f8da25558b074a88726b9f157dbeeefc7d2ff3f9e5ac711b7693c74e6c7"
+        },
+        "8": {
+          "url": "/stats/scramble/exact-puzzles/cm2/9b7951e66e2835bd909940d80a552790c17190039ff4bda1e02af1940de1f84e/depth-8.txt.gz",
+          "bytes": 170288,
+          "rows": 47712,
+          "sha256": "9b7951e66e2835bd909940d80a552790c17190039ff4bda1e02af1940de1f84e"
+        },
+        "9": {
+          "url": "/stats/scramble/exact-puzzles/cm2/75c6976a5aa732f3624cab68990ee144e2f2b226d5feefc209e86e037901e11b/depth-9.txt.gz",
+          "bytes": 89526,
+          "rows": 23644,
+          "sha256": "75c6976a5aa732f3624cab68990ee144e2f2b226d5feefc209e86e037901e11b"
+        },
+        "10": {
+          "url": "/stats/scramble/exact-puzzles/cm2/40b0f591780977edd2aca63df789ad486185d1ee512d5044f069f02006832231/depth-10.txt.gz",
+          "bytes": 20150,
+          "rows": 5156,
+          "sha256": "40b0f591780977edd2aca63df789ad486185d1ee512d5044f069f02006832231"
+        }
+      }
+    },
+    "dmd": {
+      "allStates": {
+        "url": "/stats/scramble/exact-puzzles/dmd/1670b336cc409250b7281dcb4f824db3994f4b173667f4f14c0954003d7a031f/all.csv.gz",
+        "bytes": 439546,
+        "rows": 138240,
+        "sha256": "1670b336cc409250b7281dcb4f824db3994f4b173667f4f14c0954003d7a031f"
+      },
+      "byDepth": {
+        "0": {
+          "url": "/stats/scramble/exact-puzzles/dmd/fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8/depth-0.txt.gz",
+          "bytes": 21,
+          "rows": 1,
+          "sha256": "fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8"
+        },
+        "1": {
+          "url": "/stats/scramble/exact-puzzles/dmd/27da3cc5fa4b8fce464aa506a8f108d0c42f4c24ab80875e3a0c7cd17e0d3b24/depth-1.txt.gz",
+          "bytes": 40,
+          "rows": 8,
+          "sha256": "27da3cc5fa4b8fce464aa506a8f108d0c42f4c24ab80875e3a0c7cd17e0d3b24"
+        },
+        "2": {
+          "url": "/stats/scramble/exact-puzzles/dmd/28fc7ac83da37edb45a931c5eb6560e680abf34b0bac0e8319f60df5103ffeb5/depth-2.txt.gz",
+          "bytes": 107,
+          "rows": 48,
+          "sha256": "28fc7ac83da37edb45a931c5eb6560e680abf34b0bac0e8319f60df5103ffeb5"
+        },
+        "3": {
+          "url": "/stats/scramble/exact-puzzles/dmd/db6e024a8c1a03b0236c2f5621aa3cb565c1c84d73d4c2c5f74aa2a4240d35ff/depth-3.txt.gz",
+          "bytes": 632,
+          "rows": 288,
+          "sha256": "db6e024a8c1a03b0236c2f5621aa3cb565c1c84d73d4c2c5f74aa2a4240d35ff"
+        },
+        "4": {
+          "url": "/stats/scramble/exact-puzzles/dmd/d324769250a6a623217bf36b06478ee9a89b5a932b3f22d97fc24722272ec75e/depth-4.txt.gz",
+          "bytes": 3929,
+          "rows": 1632,
+          "sha256": "d324769250a6a623217bf36b06478ee9a89b5a932b3f22d97fc24722272ec75e"
+        },
+        "5": {
+          "url": "/stats/scramble/exact-puzzles/dmd/6179e5033f8cced725846e167e89fbe3bc8bbd7271dd4a6d52f8ee6b568ba3b4/depth-5.txt.gz",
+          "bytes": 22449,
+          "rows": 8568,
+          "sha256": "6179e5033f8cced725846e167e89fbe3bc8bbd7271dd4a6d52f8ee6b568ba3b4"
+        },
+        "6": {
+          "url": "/stats/scramble/exact-puzzles/dmd/95ee52a70b5b8cdf2946c00a8b46bd2c05fa1f4198d1211819ebc77d96bb93bc/depth-6.txt.gz",
+          "bytes": 100549,
+          "rows": 36114,
+          "sha256": "95ee52a70b5b8cdf2946c00a8b46bd2c05fa1f4198d1211819ebc77d96bb93bc"
+        },
+        "7": {
+          "url": "/stats/scramble/exact-puzzles/dmd/d281caf03aed61d17bf3f314d7a1b6977b6a1ba0ade4a1d0b9fc88a65de02933/depth-7.txt.gz",
+          "bytes": 237131,
+          "rows": 74799,
+          "sha256": "d281caf03aed61d17bf3f314d7a1b6977b6a1ba0ade4a1d0b9fc88a65de02933"
+        },
+        "8": {
+          "url": "/stats/scramble/exact-puzzles/dmd/ac5bd42ffd4651b3c770eb778a16939c3cc9b7a89b073ccfeda5ad59b9d62058/depth-8.txt.gz",
+          "bytes": 65099,
+          "rows": 16547,
+          "sha256": "ac5bd42ffd4651b3c770eb778a16939c3cc9b7a89b073ccfeda5ad59b9d62058"
+        },
+        "9": {
+          "url": "/stats/scramble/exact-puzzles/dmd/58338299ef8cf4c98aa2feb1ffc7e309afdf8ee9aedb53b3f930f71da523eeb2/depth-9.txt.gz",
+          "bytes": 1268,
+          "rows": 220,
+          "sha256": "58338299ef8cf4c98aa2feb1ffc7e309afdf8ee9aedb53b3f930f71da523eeb2"
+        },
+        "10": {
+          "url": "/stats/scramble/exact-puzzles/dmd/d267fd6ef06a6ba9bb96c7335e23288233a2d6089c2160522410d81ac6ba40c2/depth-10.txt.gz",
+          "bytes": 144,
+          "rows": 15,
+          "sha256": "d267fd6ef06a6ba9bb96c7335e23288233a2d6089c2160522410d81ac6ba40c2"
+        }
+      }
+    },
+    "8p": {
+      "allStates": {
+        "url": "/stats/scramble/exact-puzzles/8p/20f84d9d2b94e34d1fa3487a3fabc3d4278a28b2d54546a3f63123d9658f643d/all.csv.gz",
+        "bytes": 1447870,
+        "rows": 181440,
+        "sha256": "20f84d9d2b94e34d1fa3487a3fabc3d4278a28b2d54546a3f63123d9658f643d"
+      },
+      "byDepth": {
+        "0": {
+          "url": "/stats/scramble/exact-puzzles/8p/fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8/depth-0.txt.gz",
+          "bytes": 21,
+          "rows": 1,
+          "sha256": "fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8"
+        },
+        "1": {
+          "url": "/stats/scramble/exact-puzzles/8p/724ddcbf89d5b0fe3b96c855f40ae3658bce5381025e70673d3640c0342fef18/depth-1.txt.gz",
+          "bytes": 24,
+          "rows": 2,
+          "sha256": "724ddcbf89d5b0fe3b96c855f40ae3658bce5381025e70673d3640c0342fef18"
+        },
+        "2": {
+          "url": "/stats/scramble/exact-puzzles/8p/4d6982a7879292b5a7195e7127eb360ac9fe4637e6e8880dacae61b7a071370d/depth-2.txt.gz",
+          "bytes": 33,
+          "rows": 4,
+          "sha256": "4d6982a7879292b5a7195e7127eb360ac9fe4637e6e8880dacae61b7a071370d"
+        },
+        "3": {
+          "url": "/stats/scramble/exact-puzzles/8p/7f7c0105f72dff1b8d870f49e18f4c1cfe2d67b121308ddbd71c04399385367c/depth-3.txt.gz",
+          "bytes": 51,
+          "rows": 8,
+          "sha256": "7f7c0105f72dff1b8d870f49e18f4c1cfe2d67b121308ddbd71c04399385367c"
+        },
+        "4": {
+          "url": "/stats/scramble/exact-puzzles/8p/5643a4f89f049ff44a6b7f6062314fe153e71861a5ba74ee6a6f1aa4b09b2bbf/depth-4.txt.gz",
+          "bytes": 77,
+          "rows": 16,
+          "sha256": "5643a4f89f049ff44a6b7f6062314fe153e71861a5ba74ee6a6f1aa4b09b2bbf"
+        },
+        "5": {
+          "url": "/stats/scramble/exact-puzzles/8p/74578215cab6e3a0534b9c6b522b76509c1b6b0c12d3469c68f5893911dbf8f1/depth-5.txt.gz",
+          "bytes": 99,
+          "rows": 20,
+          "sha256": "74578215cab6e3a0534b9c6b522b76509c1b6b0c12d3469c68f5893911dbf8f1"
+        },
+        "6": {
+          "url": "/stats/scramble/exact-puzzles/8p/b05eddf74813d7f72c41e23a8b2694a124e1b87aaacbee6df83a2bfcef72be33/depth-6.txt.gz",
+          "bytes": 163,
+          "rows": 39,
+          "sha256": "b05eddf74813d7f72c41e23a8b2694a124e1b87aaacbee6df83a2bfcef72be33"
+        },
+        "7": {
+          "url": "/stats/scramble/exact-puzzles/8p/a6cbdec66534a797176ae44337091fe04596e8c3e42a908e4b4fb125758c3673/depth-7.txt.gz",
+          "bytes": 246,
+          "rows": 62,
+          "sha256": "a6cbdec66534a797176ae44337091fe04596e8c3e42a908e4b4fb125758c3673"
+        },
+        "8": {
+          "url": "/stats/scramble/exact-puzzles/8p/5e9f293afe9ff6834e2c51b56c2847122eb2daffba0f6b1072d5a8c59ad75aef/depth-8.txt.gz",
+          "bytes": 458,
+          "rows": 116,
+          "sha256": "5e9f293afe9ff6834e2c51b56c2847122eb2daffba0f6b1072d5a8c59ad75aef"
+        },
+        "9": {
+          "url": "/stats/scramble/exact-puzzles/8p/d61471f19a6c8e52cd0cceab2e54d96a5e59efdb4c91425ea8005ca07c3cb60f/depth-9.txt.gz",
+          "bytes": 626,
+          "rows": 152,
+          "sha256": "d61471f19a6c8e52cd0cceab2e54d96a5e59efdb4c91425ea8005ca07c3cb60f"
+        },
+        "10": {
+          "url": "/stats/scramble/exact-puzzles/8p/5969755b2df4230391a85e1a48461251f497d3bd9b7604be4d2ceaefa4c08011/depth-10.txt.gz",
+          "bytes": 1228,
+          "rows": 286,
+          "sha256": "5969755b2df4230391a85e1a48461251f497d3bd9b7604be4d2ceaefa4c08011"
+        },
+        "11": {
+          "url": "/stats/scramble/exact-puzzles/8p/b9c9a9fcadf11fdddcc29f1b86a67bb294b8bb4da4fdf58caa664088c42d8d8e/depth-11.txt.gz",
+          "bytes": 1715,
+          "rows": 396,
+          "sha256": "b9c9a9fcadf11fdddcc29f1b86a67bb294b8bb4da4fdf58caa664088c42d8d8e"
+        },
+        "12": {
+          "url": "/stats/scramble/exact-puzzles/8p/6c6067a00961990afe3a5fb06e8e5360851a8f3a31163eb750ed7de425d7d2e5/depth-12.txt.gz",
+          "bytes": 3370,
+          "rows": 748,
+          "sha256": "6c6067a00961990afe3a5fb06e8e5360851a8f3a31163eb750ed7de425d7d2e5"
+        },
+        "13": {
+          "url": "/stats/scramble/exact-puzzles/8p/5feaba2575f026722f53b977a338015d8cc9e42b1534bf4d75f70bc38e6556f4/depth-13.txt.gz",
+          "bytes": 4854,
+          "rows": 1024,
+          "sha256": "5feaba2575f026722f53b977a338015d8cc9e42b1534bf4d75f70bc38e6556f4"
+        },
+        "14": {
+          "url": "/stats/scramble/exact-puzzles/8p/2ed9b23b082617df8e0709294a826f538dc2c718eaae1f3af5027b38472277e4/depth-14.txt.gz",
+          "bytes": 9460,
+          "rows": 1893,
+          "sha256": "2ed9b23b082617df8e0709294a826f538dc2c718eaae1f3af5027b38472277e4"
+        },
+        "15": {
+          "url": "/stats/scramble/exact-puzzles/8p/63f62b40e001f295a4f6555c1ddfe1931000ff80cacc24ca4e5167dc9b3f8d3d/depth-15.txt.gz",
+          "bytes": 13326,
+          "rows": 2512,
+          "sha256": "63f62b40e001f295a4f6555c1ddfe1931000ff80cacc24ca4e5167dc9b3f8d3d"
+        },
+        "16": {
+          "url": "/stats/scramble/exact-puzzles/8p/4f82c5c2e9865ebafbed2bb308cf7b8ed714d3a28603d43ad8a63fe294a0f080/depth-16.txt.gz",
+          "bytes": 24942,
+          "rows": 4485,
+          "sha256": "4f82c5c2e9865ebafbed2bb308cf7b8ed714d3a28603d43ad8a63fe294a0f080"
+        },
+        "17": {
+          "url": "/stats/scramble/exact-puzzles/8p/9fb6413ee0489f2b7e8ba43bf816bcdad0752ae513c02d21d454865eace0410e/depth-17.txt.gz",
+          "bytes": 33196,
+          "rows": 5638,
+          "sha256": "9fb6413ee0489f2b7e8ba43bf816bcdad0752ae513c02d21d454865eace0410e"
+        },
+        "18": {
+          "url": "/stats/scramble/exact-puzzles/8p/7c79a5a326b08d32ad7d8add7a5b96c8f1468a4313518704b1d8280bb5a87505/depth-18.txt.gz",
+          "bytes": 59058,
+          "rows": 9529,
+          "sha256": "7c79a5a326b08d32ad7d8add7a5b96c8f1468a4313518704b1d8280bb5a87505"
+        },
+        "19": {
+          "url": "/stats/scramble/exact-puzzles/8p/24c5e348573649759dcd5452ce0dad22d89f4c19f9560c2e56fa0398176fe864/depth-19.txt.gz",
+          "bytes": 71339,
+          "rows": 10878,
+          "sha256": "24c5e348573649759dcd5452ce0dad22d89f4c19f9560c2e56fa0398176fe864"
+        },
+        "20": {
+          "url": "/stats/scramble/exact-puzzles/8p/85126ee8cb33b370a3dddfe560d136cf3dd8f546ba5822691bcf5cf2ae5515ef/depth-20.txt.gz",
+          "bytes": 116569,
+          "rows": 16993,
+          "sha256": "85126ee8cb33b370a3dddfe560d136cf3dd8f546ba5822691bcf5cf2ae5515ef"
+        },
+        "21": {
+          "url": "/stats/scramble/exact-puzzles/8p/6ed985db23c2c0eddc9a6c1711dbd0f0947fedd023b259e807b46b5627c8ec78/depth-21.txt.gz",
+          "bytes": 124825,
+          "rows": 17110,
+          "sha256": "6ed985db23c2c0eddc9a6c1711dbd0f0947fedd023b259e807b46b5627c8ec78"
+        },
+        "22": {
+          "url": "/stats/scramble/exact-puzzles/8p/350243413c037b0a9673b89558c3fbc7107cbd7c4db9d914372210e6c4241c93/depth-22.txt.gz",
+          "bytes": 181900,
+          "rows": 23952,
+          "sha256": "350243413c037b0a9673b89558c3fbc7107cbd7c4db9d914372210e6c4241c93"
+        },
+        "23": {
+          "url": "/stats/scramble/exact-puzzles/8p/3847e966ccce8f45352f6db38d2263fb5fb16cd9ca869081b9a2dd15dbd1f32b/depth-23.txt.gz",
+          "bytes": 163750,
+          "rows": 20224,
+          "sha256": "3847e966ccce8f45352f6db38d2263fb5fb16cd9ca869081b9a2dd15dbd1f32b"
+        },
+        "24": {
+          "url": "/stats/scramble/exact-puzzles/8p/fb79dd0eea2d3b21f5631ffa6149facba56e6e04d5c9af64e38e3b0e59fdc9ff/depth-24.txt.gz",
+          "bytes": 201695,
+          "rows": 24047,
+          "sha256": "fb79dd0eea2d3b21f5631ffa6149facba56e6e04d5c9af64e38e3b0e59fdc9ff"
+        },
+        "25": {
+          "url": "/stats/scramble/exact-puzzles/8p/7d8bda840e1fbc87e1e8d85a584a405a069a7b9b10ee0f6a78c497dfdbaf17fa/depth-25.txt.gz",
+          "bytes": 138880,
+          "rows": 15578,
+          "sha256": "7d8bda840e1fbc87e1e8d85a584a405a069a7b9b10ee0f6a78c497dfdbaf17fa"
+        },
+        "26": {
+          "url": "/stats/scramble/exact-puzzles/8p/43cd8baf7dbb79f14c23b7a6d7c7e81fdbd8fbdc50a3f05ec4a3f399f49c5575/depth-26.txt.gz",
+          "bytes": 134104,
+          "rows": 14560,
+          "sha256": "43cd8baf7dbb79f14c23b7a6d7c7e81fdbd8fbdc50a3f05ec4a3f399f49c5575"
+        },
+        "27": {
+          "url": "/stats/scramble/exact-puzzles/8p/d2144539022b387c7437ab36594ca28463b187ea1dcc7f2a37ab4cf221b4c301/depth-27.txt.gz",
+          "bytes": 60999,
+          "rows": 6274,
+          "sha256": "d2144539022b387c7437ab36594ca28463b187ea1dcc7f2a37ab4cf221b4c301"
+        },
+        "28": {
+          "url": "/stats/scramble/exact-puzzles/8p/0d5e0d46e52d5864bc3555e173559383a6fdba62984e73d0e71f4f84ee0e6f5f/depth-28.txt.gz",
+          "bytes": 38923,
+          "rows": 3910,
+          "sha256": "0d5e0d46e52d5864bc3555e173559383a6fdba62984e73d0e71f4f84ee0e6f5f"
+        },
+        "29": {
+          "url": "/stats/scramble/exact-puzzles/8p/6f926c78a3e5aee822ffbe9fd707f2d4decfd1876377758256f1ab49b53f6c6d/depth-29.txt.gz",
+          "bytes": 7928,
+          "rows": 760,
+          "sha256": "6f926c78a3e5aee822ffbe9fd707f2d4decfd1876377758256f1ab49b53f6c6d"
+        },
+        "30": {
+          "url": "/stats/scramble/exact-puzzles/8p/1d8d0a3e117c53e665adf622e0908bd66dfede3b15ff4bd893051d48fe01f891/depth-30.txt.gz",
+          "bytes": 2485,
+          "rows": 221,
+          "sha256": "1d8d0a3e117c53e665adf622e0908bd66dfede3b15ff4bd893051d48fe01f891"
+        },
+        "31": {
+          "url": "/stats/scramble/exact-puzzles/8p/5e12d904e3c11e72dca1f09c56d6e5293cc0ad2cf76050ed6ce24062ef66e486/depth-31.txt.gz",
+          "bytes": 69,
+          "rows": 2,
+          "sha256": "5e12d904e3c11e72dca1f09c56d6e5293cc0ad2cf76050ed6ce24062ef66e486"
+        }
+      }
+    },
+    "ivy": {
+      "allStates": {
+        "url": "/stats/scramble/exact-puzzles/ivy/0b9e9de5736c0be7e48eb2b025f03fa1f7e4fa454219a87d0a410367d21e78db/all.csv.gz",
+        "bytes": 134211,
+        "rows": 29160,
+        "sha256": "0b9e9de5736c0be7e48eb2b025f03fa1f7e4fa454219a87d0a410367d21e78db"
+      },
+      "byDepth": {
+        "0": {
+          "url": "/stats/scramble/exact-puzzles/ivy/fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8/depth-0.txt.gz",
+          "bytes": 21,
+          "rows": 1,
+          "sha256": "fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8"
+        },
+        "1": {
+          "url": "/stats/scramble/exact-puzzles/ivy/6068d75cd46c894600682d5b666977ce1740067a2c38cc040f1e0d9193c2c5a0/depth-1.txt.gz",
+          "bytes": 38,
+          "rows": 8,
+          "sha256": "6068d75cd46c894600682d5b666977ce1740067a2c38cc040f1e0d9193c2c5a0"
+        },
+        "2": {
+          "url": "/stats/scramble/exact-puzzles/ivy/310128ac2aa2698fdab99c6848a1b475a2d314310a602fff2816aec6c6a03f87/depth-2.txt.gz",
+          "bytes": 123,
+          "rows": 48,
+          "sha256": "310128ac2aa2698fdab99c6848a1b475a2d314310a602fff2816aec6c6a03f87"
+        },
+        "3": {
+          "url": "/stats/scramble/exact-puzzles/ivy/a8a347195ea3bae2f215267fb12933e5b4835623df7450cfc90aa7aed4f3b100/depth-3.txt.gz",
+          "bytes": 731,
+          "rows": 288,
+          "sha256": "a8a347195ea3bae2f215267fb12933e5b4835623df7450cfc90aa7aed4f3b100"
+        },
+        "4": {
+          "url": "/stats/scramble/exact-puzzles/ivy/a241d9d16e310643a010393bc3b6bbcf1da934ac19874e93bbef3bac35e18c26/depth-4.txt.gz",
+          "bytes": 5096,
+          "rows": 1640,
+          "sha256": "a241d9d16e310643a010393bc3b6bbcf1da934ac19874e93bbef3bac35e18c26"
+        },
+        "5": {
+          "url": "/stats/scramble/exact-puzzles/ivy/4f98f51787a6dcdcccb1cfc59d56008029f8997c9fd8cfbc5c6ed84792b9e9e9/depth-5.txt.gz",
+          "bytes": 28774,
+          "rows": 7582,
+          "sha256": "4f98f51787a6dcdcccb1cfc59d56008029f8997c9fd8cfbc5c6ed84792b9e9e9"
+        },
+        "6": {
+          "url": "/stats/scramble/exact-puzzles/ivy/03276dd0db9314a983f9a6a7cf93e60dbe625f17956805b76d0a0262e6cc7f50/depth-6.txt.gz",
+          "bytes": 68180,
+          "rows": 15262,
+          "sha256": "03276dd0db9314a983f9a6a7cf93e60dbe625f17956805b76d0a0262e6cc7f50"
+        },
+        "7": {
+          "url": "/stats/scramble/exact-puzzles/ivy/2b4c2223dc9bbba28d2de406e5b772625cc278089949c84c6521b05af22450a6/depth-7.txt.gz",
+          "bytes": 21038,
+          "rows": 4221,
+          "sha256": "2b4c2223dc9bbba28d2de406e5b772625cc278089949c84c6521b05af22450a6"
+        },
+        "8": {
+          "url": "/stats/scramble/exact-puzzles/ivy/228edad882b28f31404c6ebd3563844da1988c3f9e12263f86804fc2240ed7f5/depth-8.txt.gz",
+          "bytes": 633,
+          "rows": 110,
+          "sha256": "228edad882b28f31404c6ebd3563844da1988c3f9e12263f86804fc2240ed7f5"
+        }
+      }
+    },
+    "sfl": {
+      "allStates": {
+        "url": "/stats/scramble/exact-puzzles/sfl/473cb0b6d3a29ca8933510d54007bcd8f262cde843f3bfef46aa450921640dee/all.csv.gz",
+        "bytes": 20916373,
+        "rows": 3041280,
+        "sha256": "473cb0b6d3a29ca8933510d54007bcd8f262cde843f3bfef46aa450921640dee"
+      },
+      "byDepth": {
+        "0": {
+          "url": "/stats/scramble/exact-puzzles/sfl/fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8/depth-0.txt.gz",
+          "bytes": 21,
+          "rows": 1,
+          "sha256": "fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8"
+        },
+        "1": {
+          "url": "/stats/scramble/exact-puzzles/sfl/7958aa1d6a5ab3581e63730ac4a82301649966cca954ebbf742d4364278dedf4/depth-1.txt.gz",
+          "bytes": 50,
+          "rows": 12,
+          "sha256": "7958aa1d6a5ab3581e63730ac4a82301649966cca954ebbf742d4364278dedf4"
+        },
+        "2": {
+          "url": "/stats/scramble/exact-puzzles/sfl/8b51c6678bcfa5374bbcd0acbc1c840ec8a659b8bca08067b0e08c120b000689/depth-2.txt.gz",
+          "bytes": 200,
+          "rows": 90,
+          "sha256": "8b51c6678bcfa5374bbcd0acbc1c840ec8a659b8bca08067b0e08c120b000689"
+        },
+        "3": {
+          "url": "/stats/scramble/exact-puzzles/sfl/549a7deb9940b033d9c6e40614e310d95a3984239a140b5df37b907b97de4021/depth-3.txt.gz",
+          "bytes": 1444,
+          "rows": 584,
+          "sha256": "549a7deb9940b033d9c6e40614e310d95a3984239a140b5df37b907b97de4021"
+        },
+        "4": {
+          "url": "/stats/scramble/exact-puzzles/sfl/7aa28feb9f230627c9c325d8b1c20b98e1f8aa9156e65b7e2ef3c01249683887/depth-4.txt.gz",
+          "bytes": 9849,
+          "rows": 3301,
+          "sha256": "7aa28feb9f230627c9c325d8b1c20b98e1f8aa9156e65b7e2ef3c01249683887"
+        },
+        "5": {
+          "url": "/stats/scramble/exact-puzzles/sfl/93d85d0ddc714456af1afd3f4d2e3b3d6d331984a52d62bb8ce654e6e3ece585/depth-5.txt.gz",
+          "bytes": 55727,
+          "rows": 15536,
+          "sha256": "93d85d0ddc714456af1afd3f4d2e3b3d6d331984a52d62bb8ce654e6e3ece585"
+        },
+        "6": {
+          "url": "/stats/scramble/exact-puzzles/sfl/739a5daa1961f2d1d0d58a7df97a6f57f6dcf99cc61cae55b014772d06726a6b/depth-6.txt.gz",
+          "bytes": 277153,
+          "rows": 64935,
+          "sha256": "739a5daa1961f2d1d0d58a7df97a6f57f6dcf99cc61cae55b014772d06726a6b"
+        },
+        "7": {
+          "url": "/stats/scramble/exact-puzzles/sfl/e0676ade881cf2f52acf79b55aa153da70586f156c3a8f9ceb5184939b2a363f/depth-7.txt.gz",
+          "bytes": 1123749,
+          "rows": 226464,
+          "sha256": "e0676ade881cf2f52acf79b55aa153da70586f156c3a8f9ceb5184939b2a363f"
+        },
+        "8": {
+          "url": "/stats/scramble/exact-puzzles/sfl/c41f1222d705fae191b15b72090bcd4ef24070e820e0a9017d9325404415b2c9/depth-8.txt.gz",
+          "bytes": 3440020,
+          "rows": 602629,
+          "sha256": "c41f1222d705fae191b15b72090bcd4ef24070e820e0a9017d9325404415b2c9"
+        },
+        "9": {
+          "url": "/stats/scramble/exact-puzzles/sfl/b34413f8bc5ba61081e1ff3df7710dd095b8bc71c4e8ba0ad0b863ccb1d0e5cb/depth-9.txt.gz",
+          "bytes": 6553198,
+          "rows": 1027956,
+          "sha256": "b34413f8bc5ba61081e1ff3df7710dd095b8bc71c4e8ba0ad0b863ccb1d0e5cb"
+        },
+        "10": {
+          "url": "/stats/scramble/exact-puzzles/sfl/7c1f9abd7e9f6a474c4062eba0ed66242e86839265c72ba23db8eabfa8856a51/depth-10.txt.gz",
+          "bytes": 5865649,
+          "rows": 861916,
+          "sha256": "7c1f9abd7e9f6a474c4062eba0ed66242e86839265c72ba23db8eabfa8856a51"
+        },
+        "11": {
+          "url": "/stats/scramble/exact-puzzles/sfl/c8e80b8ad1e2f772132ae66be20cd2aebd25cf5a2918cf8f59b58fd520cc9daa/depth-11.txt.gz",
+          "bytes": 1526768,
+          "rows": 230224,
+          "sha256": "c8e80b8ad1e2f772132ae66be20cd2aebd25cf5a2918cf8f59b58fd520cc9daa"
+        },
+        "12": {
+          "url": "/stats/scramble/exact-puzzles/sfl/b4b7382d04710b576db25828dc27f1b6711b39b66de9b9205596480952ebf636/depth-12.txt.gz",
+          "bytes": 46394,
+          "rows": 7600,
+          "sha256": "b4b7382d04710b576db25828dc27f1b6711b39b66de9b9205596480952ebf636"
+        },
+        "13": {
+          "url": "/stats/scramble/exact-puzzles/sfl/25ee06afb7c578951b5ce7b73126dfdafd1a75b562337f1b8faa417db44d8e76/depth-13.txt.gz",
+          "bytes": 220,
+          "rows": 32,
+          "sha256": "25ee06afb7c578951b5ce7b73126dfdafd1a75b562337f1b8faa417db44d8e76"
+        }
+      }
+    },
+    "lsemu-qtm": {
+      "allStates": {
+        "url": "/stats/scramble/exact-puzzles/lsemu-qtm/bdd78772b72e9f02536081818492102e828ca739b6901705bb3269bbd6e40cbb/all.csv.gz",
+        "bytes": 1425356,
+        "rows": 184320,
+        "sha256": "bdd78772b72e9f02536081818492102e828ca739b6901705bb3269bbd6e40cbb"
+      },
+      "byDepth": {
+        "0": {
+          "url": "/stats/scramble/exact-puzzles/lsemu-qtm/fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8/depth-0.txt.gz",
+          "bytes": 21,
+          "rows": 1,
+          "sha256": "fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8"
+        },
+        "1": {
+          "url": "/stats/scramble/exact-puzzles/lsemu-qtm/76ca89abd7be31dc6c3f2026330ab82a16c7136c9e7e6bfa11979b87fb13b3db/depth-1.txt.gz",
+          "bytes": 30,
+          "rows": 4,
+          "sha256": "76ca89abd7be31dc6c3f2026330ab82a16c7136c9e7e6bfa11979b87fb13b3db"
+        },
+        "2": {
+          "url": "/stats/scramble/exact-puzzles/lsemu-qtm/094ac132784ad24b5f52b8637f135b34506d9e63498a34dee7a280ac0f57f1b8/depth-2.txt.gz",
+          "bytes": 51,
+          "rows": 10,
+          "sha256": "094ac132784ad24b5f52b8637f135b34506d9e63498a34dee7a280ac0f57f1b8"
+        },
+        "3": {
+          "url": "/stats/scramble/exact-puzzles/lsemu-qtm/ed6ac4951fa0e3d5d0e323f973f2459cc852bc75f4be348739e2c31badffb5e1/depth-3.txt.gz",
+          "bytes": 89,
+          "rows": 24,
+          "sha256": "ed6ac4951fa0e3d5d0e323f973f2459cc852bc75f4be348739e2c31badffb5e1"
+        },
+        "4": {
+          "url": "/stats/scramble/exact-puzzles/lsemu-qtm/f0558dbcfc41976bd068143bfaf7363c7d14e96dd0b464698e4261da9f27925c/depth-4.txt.gz",
+          "bytes": 180,
+          "rows": 58,
+          "sha256": "f0558dbcfc41976bd068143bfaf7363c7d14e96dd0b464698e4261da9f27925c"
+        },
+        "5": {
+          "url": "/stats/scramble/exact-puzzles/lsemu-qtm/ce6f8a510032b7d230381d26ffebd706caf0aa204139648845862620e3025f75/depth-5.txt.gz",
+          "bytes": 441,
+          "rows": 140,
+          "sha256": "ce6f8a510032b7d230381d26ffebd706caf0aa204139648845862620e3025f75"
+        },
+        "6": {
+          "url": "/stats/scramble/exact-puzzles/lsemu-qtm/c0ce491802a0dd6ac6eac976e1240f2601c4946ca5dba1d1644ca967622d8de7/depth-6.txt.gz",
+          "bytes": 1088,
+          "rows": 338,
+          "sha256": "c0ce491802a0dd6ac6eac976e1240f2601c4946ca5dba1d1644ca967622d8de7"
+        },
+        "7": {
+          "url": "/stats/scramble/exact-puzzles/lsemu-qtm/b75cfa61a4c9fef385430141f67b36a505228fcb36a26f525f8a40613a24fee1/depth-7.txt.gz",
+          "bytes": 2794,
+          "rows": 816,
+          "sha256": "b75cfa61a4c9fef385430141f67b36a505228fcb36a26f525f8a40613a24fee1"
+        },
+        "8": {
+          "url": "/stats/scramble/exact-puzzles/lsemu-qtm/e2147e5d61c33efd588a72450039c628546df807723e4608b686c0d38ec9d13a/depth-8.txt.gz",
+          "bytes": 7344,
+          "rows": 1909,
+          "sha256": "e2147e5d61c33efd588a72450039c628546df807723e4608b686c0d38ec9d13a"
+        },
+        "9": {
+          "url": "/stats/scramble/exact-puzzles/lsemu-qtm/42c30b7629f8a174bd30207c690305e7c53d8dd9db5284f7204cfcfe54c9ef84/depth-9.txt.gz",
+          "bytes": 18917,
+          "rows": 4296,
+          "sha256": "42c30b7629f8a174bd30207c690305e7c53d8dd9db5284f7204cfcfe54c9ef84"
+        },
+        "10": {
+          "url": "/stats/scramble/exact-puzzles/lsemu-qtm/5b96b99169892362ecc308984189d8c6c761ff215ee74c3a42201ab6af3d0157/depth-10.txt.gz",
+          "bytes": 44183,
+          "rows": 8893,
+          "sha256": "5b96b99169892362ecc308984189d8c6c761ff215ee74c3a42201ab6af3d0157"
+        },
+        "11": {
+          "url": "/stats/scramble/exact-puzzles/lsemu-qtm/6cd3c52be12181adc250aaee95547ec39a871c790ec9894a77e9c8b172e07d62/depth-11.txt.gz",
+          "bytes": 95336,
+          "rows": 17160,
+          "sha256": "6cd3c52be12181adc250aaee95547ec39a871c790ec9894a77e9c8b172e07d62"
+        },
+        "12": {
+          "url": "/stats/scramble/exact-puzzles/lsemu-qtm/d7adc36eed813301a4af487d456a15344460953388720707093747fbcf2ece04/depth-12.txt.gz",
+          "bytes": 177343,
+          "rows": 28891,
+          "sha256": "d7adc36eed813301a4af487d456a15344460953388720707093747fbcf2ece04"
+        },
+        "13": {
+          "url": "/stats/scramble/exact-puzzles/lsemu-qtm/e60061d9527e31772c47c3396136882c78b90de3c8b3e2fca5d511e351ba5720/depth-13.txt.gz",
+          "bytes": 252826,
+          "rows": 37996,
+          "sha256": "e60061d9527e31772c47c3396136882c78b90de3c8b3e2fca5d511e351ba5720"
+        },
+        "14": {
+          "url": "/stats/scramble/exact-puzzles/lsemu-qtm/8e3378f88b53032a047f20185cadd819767d33bfa667ff6f7600c03b5ea513d3/depth-14.txt.gz",
+          "bytes": 267831,
+          "rows": 37678,
+          "sha256": "8e3378f88b53032a047f20185cadd819767d33bfa667ff6f7600c03b5ea513d3"
+        },
+        "15": {
+          "url": "/stats/scramble/exact-puzzles/lsemu-qtm/e46e4f192fb0376eefd5bf4b8803cad85b56a1f0364be9ab34499b25682a0ca8/depth-15.txt.gz",
+          "bytes": 203910,
+          "rows": 27186,
+          "sha256": "e46e4f192fb0376eefd5bf4b8803cad85b56a1f0364be9ab34499b25682a0ca8"
+        },
+        "16": {
+          "url": "/stats/scramble/exact-puzzles/lsemu-qtm/eb87bb0f11c75183f89d28bcd200821f81c5a09bfc6bd31058be48011dcb42a4/depth-16.txt.gz",
+          "bytes": 101569,
+          "rows": 13051,
+          "sha256": "eb87bb0f11c75183f89d28bcd200821f81c5a09bfc6bd31058be48011dcb42a4"
+        },
+        "17": {
+          "url": "/stats/scramble/exact-puzzles/lsemu-qtm/52cd70b1a0d6333966006b4ffc9dc5177828fe69ce963934505c7d1b1d6c4f56/depth-17.txt.gz",
+          "bytes": 33132,
+          "rows": 4128,
+          "sha256": "52cd70b1a0d6333966006b4ffc9dc5177828fe69ce963934505c7d1b1d6c4f56"
+        },
+        "18": {
+          "url": "/stats/scramble/exact-puzzles/lsemu-qtm/e8262efa2c3d467d2693b48157759e1a0da615fddc2d7d720b331eb318f0e8e9/depth-18.txt.gz",
+          "bytes": 9937,
+          "rows": 1199,
+          "sha256": "e8262efa2c3d467d2693b48157759e1a0da615fddc2d7d720b331eb318f0e8e9"
+        },
+        "19": {
+          "url": "/stats/scramble/exact-puzzles/lsemu-qtm/a03e86882f3acd28ef8ef8cb93ab3ca957ef3c79ddb756d534e15c4ee3b6864e/depth-19.txt.gz",
+          "bytes": 3137,
+          "rows": 372,
+          "sha256": "a03e86882f3acd28ef8ef8cb93ab3ca957ef3c79ddb756d534e15c4ee3b6864e"
+        },
+        "20": {
+          "url": "/stats/scramble/exact-puzzles/lsemu-qtm/895a7b94061c808e1d5e343291c6927522ad30ad56f76134e7006cd3e6aa9c49/depth-20.txt.gz",
+          "bytes": 1048,
+          "rows": 122,
+          "sha256": "895a7b94061c808e1d5e343291c6927522ad30ad56f76134e7006cd3e6aa9c49"
+        },
+        "21": {
+          "url": "/stats/scramble/exact-puzzles/lsemu-qtm/86f63e2e473f6bfdd99acd73f6ce82c0105e29f68ac3c362c822dcd5bbc918cc/depth-21.txt.gz",
+          "bytes": 363,
+          "rows": 36,
+          "sha256": "86f63e2e473f6bfdd99acd73f6ce82c0105e29f68ac3c362c822dcd5bbc918cc"
+        },
+        "22": {
+          "url": "/stats/scramble/exact-puzzles/lsemu-qtm/2db0e5ecf24c26eea3a1de19bd4817fdb5bcf8e47d7b894ffcc232f5a603e377/depth-22.txt.gz",
+          "bytes": 137,
+          "rows": 10,
+          "sha256": "2db0e5ecf24c26eea3a1de19bd4817fdb5bcf8e47d7b894ffcc232f5a603e377"
+        },
+        "23": {
+          "url": "/stats/scramble/exact-puzzles/lsemu-qtm/25763f42156ea029e918ba964d70f5ff317a815a68e8569a1ebaa296960302b7/depth-23.txt.gz",
+          "bytes": 57,
+          "rows": 2,
+          "sha256": "25763f42156ea029e918ba964d70f5ff317a815a68e8569a1ebaa296960302b7"
+        }
+      }
+    },
+    "roux-eolr-ac": {
+      "allStates": {
+        "url": "/stats/scramble/exact-puzzles/roux-eolr-ac/e5836455b22970b1d0e07eadb218b2cdcde6ec4cf8a3f2967c865c64588ec675/all.csv.gz",
+        "bytes": 1354711,
+        "rows": 184320,
+        "sha256": "e5836455b22970b1d0e07eadb218b2cdcde6ec4cf8a3f2967c865c64588ec675"
+      },
+      "byDepth": {
+        "0": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-ac/5d0b28dee1c1ef5c8fc7fd2e4855a1e8def422d639f5c76ef2bb4be2c03c1892/depth-0.txt.gz",
+          "bytes": 732,
+          "rows": 192,
+          "sha256": "5d0b28dee1c1ef5c8fc7fd2e4855a1e8def422d639f5c76ef2bb4be2c03c1892"
+        },
+        "1": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-ac/9ec8d418fe581bcc42438e0f2206c7f7ec0c0a1b636b234515c221d40c9e31dd/depth-1.txt.gz",
+          "bytes": 2241,
+          "rows": 576,
+          "sha256": "9ec8d418fe581bcc42438e0f2206c7f7ec0c0a1b636b234515c221d40c9e31dd"
+        },
+        "2": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-ac/1787b86308b41396bce81a0d6077857e2991b7c1f5a0e58c33cc791fc688884f/depth-2.txt.gz",
+          "bytes": 5842,
+          "rows": 1344,
+          "sha256": "1787b86308b41396bce81a0d6077857e2991b7c1f5a0e58c33cc791fc688884f"
+        },
+        "3": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-ac/df36ea4a39db9980c311987b53ec54afea6b5c89362f7ae5e0047ce5846963af/depth-3.txt.gz",
+          "bytes": 13579,
+          "rows": 2880,
+          "sha256": "df36ea4a39db9980c311987b53ec54afea6b5c89362f7ae5e0047ce5846963af"
+        },
+        "4": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-ac/ca4a39ff6bcca5b366e127d2b4137ad8075e30c12aa570bf6d81dd3742789d03/depth-4.txt.gz",
+          "bytes": 32280,
+          "rows": 5952,
+          "sha256": "ca4a39ff6bcca5b366e127d2b4137ad8075e30c12aa570bf6d81dd3742789d03"
+        },
+        "5": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-ac/6985932b9a3cf200e67e272ab100e8c7792d9272eaabe75a4e1f75fcb0b37f27/depth-5.txt.gz",
+          "bytes": 76083,
+          "rows": 14016,
+          "sha256": "6985932b9a3cf200e67e272ab100e8c7792d9272eaabe75a4e1f75fcb0b37f27"
+        },
+        "6": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-ac/487c73278793bf33deed72de990b94c178c4600a7529dd9141b4a865e526c3b6/depth-6.txt.gz",
+          "bytes": 114196,
+          "rows": 19200,
+          "sha256": "487c73278793bf33deed72de990b94c178c4600a7529dd9141b4a865e526c3b6"
+        },
+        "7": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-ac/805dd2479cad85693efb62e2b2bf8e688ff4ce1253abb2b355f3005e96c8bc55/depth-7.txt.gz",
+          "bytes": 258866,
+          "rows": 43008,
+          "sha256": "805dd2479cad85693efb62e2b2bf8e688ff4ce1253abb2b355f3005e96c8bc55"
+        },
+        "8": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-ac/a68992c983c6334f3365d8f2db73a38a1eefd740b3cffdf0f635dac8d17f03f6/depth-8.txt.gz",
+          "bytes": 207159,
+          "rows": 31680,
+          "sha256": "a68992c983c6334f3365d8f2db73a38a1eefd740b3cffdf0f635dac8d17f03f6"
+        },
+        "9": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-ac/2ede1513785533739ae88532c38bbcae9b7caa36e2dfe67a20adbe688c1d954d/depth-9.txt.gz",
+          "bytes": 240539,
+          "rows": 36288,
+          "sha256": "2ede1513785533739ae88532c38bbcae9b7caa36e2dfe67a20adbe688c1d954d"
+        },
+        "10": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-ac/bc3662091f83db38d4364a9a249a61fcd2d9e671ea46a856ff9631520db21bda/depth-10.txt.gz",
+          "bytes": 94796,
+          "rows": 13824,
+          "sha256": "bc3662091f83db38d4364a9a249a61fcd2d9e671ea46a856ff9631520db21bda"
+        },
+        "11": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-ac/f7e8ac5cd4bcc5a848d5aa0189b373ddd66272e5bc1656eb265b9627af2da6c5/depth-11.txt.gz",
+          "bytes": 88891,
+          "rows": 13056,
+          "sha256": "f7e8ac5cd4bcc5a848d5aa0189b373ddd66272e5bc1656eb265b9627af2da6c5"
+        },
+        "12": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-ac/cba76ce070863aadcc25efd35a30ffd5f0689598c0c03600a83f970de2b87c27/depth-12.txt.gz",
+          "bytes": 8477,
+          "rows": 1152,
+          "sha256": "cba76ce070863aadcc25efd35a30ffd5f0689598c0c03600a83f970de2b87c27"
+        },
+        "13": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-ac/5f0cd3e0f7859ec3b808d5bdfd8406641eb5c668a6f7eddfa422a0f4fac4c423/depth-13.txt.gz",
+          "bytes": 8308,
+          "rows": 1152,
+          "sha256": "5f0cd3e0f7859ec3b808d5bdfd8406641eb5c668a6f7eddfa422a0f4fac4c423"
+        }
+      }
+    },
+    "roux-eolr-mc": {
+      "allStates": {
+        "url": "/stats/scramble/exact-puzzles/roux-eolr-mc/4512c663f4caf5e7cf1ef8f3aafd6a57d818796350b39812d223e408772aa71f/all.csv.gz",
+        "bytes": 1354813,
+        "rows": 184320,
+        "sha256": "4512c663f4caf5e7cf1ef8f3aafd6a57d818796350b39812d223e408772aa71f"
+      },
+      "byDepth": {
+        "0": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-mc/d85ef8b6487b3ca48812fe4cb00e42065cc1a16be3953ba64cb437b197e108a4/depth-0.txt.gz",
+          "bytes": 725,
+          "rows": 192,
+          "sha256": "d85ef8b6487b3ca48812fe4cb00e42065cc1a16be3953ba64cb437b197e108a4"
+        },
+        "1": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-mc/dae2fb818c15d056d472d76f95b144014424d44557d04615cca3da5359ffad51/depth-1.txt.gz",
+          "bytes": 2187,
+          "rows": 576,
+          "sha256": "dae2fb818c15d056d472d76f95b144014424d44557d04615cca3da5359ffad51"
+        },
+        "2": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-mc/31d66bdd2c892c9920bbc743f638734fdc14b3b11910d8bab7221393783b997a/depth-2.txt.gz",
+          "bytes": 5905,
+          "rows": 1344,
+          "sha256": "31d66bdd2c892c9920bbc743f638734fdc14b3b11910d8bab7221393783b997a"
+        },
+        "3": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-mc/8f77bb38b42bd3b2db1dfc99b983ebaf8c9116d5d8cbf74c0f0a20b01ddbdcc6/depth-3.txt.gz",
+          "bytes": 13639,
+          "rows": 2880,
+          "sha256": "8f77bb38b42bd3b2db1dfc99b983ebaf8c9116d5d8cbf74c0f0a20b01ddbdcc6"
+        },
+        "4": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-mc/c2f85e45910b5c4c3e43c7c04d7e33e9c7063a2b94b59ca0255e914fdeae7d31/depth-4.txt.gz",
+          "bytes": 33123,
+          "rows": 5952,
+          "sha256": "c2f85e45910b5c4c3e43c7c04d7e33e9c7063a2b94b59ca0255e914fdeae7d31"
+        },
+        "5": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-mc/b53a427c4cb397df4a3e718899915f02fd77faab67ff7893d077dcf856f6431c/depth-5.txt.gz",
+          "bytes": 77255,
+          "rows": 14016,
+          "sha256": "b53a427c4cb397df4a3e718899915f02fd77faab67ff7893d077dcf856f6431c"
+        },
+        "6": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-mc/80e3e9fa5013442cfb48dc4bcdfb80693015d5239fa4f6cf0484e7c0f14bdfb2/depth-6.txt.gz",
+          "bytes": 115110,
+          "rows": 19200,
+          "sha256": "80e3e9fa5013442cfb48dc4bcdfb80693015d5239fa4f6cf0484e7c0f14bdfb2"
+        },
+        "7": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-mc/1a84385d643b4650d4681d395fad53c4689184adb1dbe33834d2dd808cc4945f/depth-7.txt.gz",
+          "bytes": 258439,
+          "rows": 43008,
+          "sha256": "1a84385d643b4650d4681d395fad53c4689184adb1dbe33834d2dd808cc4945f"
+        },
+        "8": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-mc/94df74555fca2b8886680da6a9b086e1b7b4c467d8906410388c501f72ae4921/depth-8.txt.gz",
+          "bytes": 207487,
+          "rows": 31680,
+          "sha256": "94df74555fca2b8886680da6a9b086e1b7b4c467d8906410388c501f72ae4921"
+        },
+        "9": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-mc/07f598116391ae63e0a65bc1af051777dd0e25ea2276df4b57158553d660baef/depth-9.txt.gz",
+          "bytes": 240367,
+          "rows": 36288,
+          "sha256": "07f598116391ae63e0a65bc1af051777dd0e25ea2276df4b57158553d660baef"
+        },
+        "10": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-mc/76ce8b5bc441d06d0222d4b8e6743889178834130129f6373e2988405a224284/depth-10.txt.gz",
+          "bytes": 93578,
+          "rows": 13824,
+          "sha256": "76ce8b5bc441d06d0222d4b8e6743889178834130129f6373e2988405a224284"
+        },
+        "11": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-mc/0c8c4732ec410c3654349e897ae258922b09629af461f5f36f4ba6ce23b108e0/depth-11.txt.gz",
+          "bytes": 87274,
+          "rows": 13056,
+          "sha256": "0c8c4732ec410c3654349e897ae258922b09629af461f5f36f4ba6ce23b108e0"
+        },
+        "12": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-mc/24d0e81795621b8f8f7f4509f69e9ed4e73404d65f1ef71e99f9392c41acaffd/depth-12.txt.gz",
+          "bytes": 8607,
+          "rows": 1152,
+          "sha256": "24d0e81795621b8f8f7f4509f69e9ed4e73404d65f1ef71e99f9392c41acaffd"
+        },
+        "13": {
+          "url": "/stats/scramble/exact-puzzles/roux-eolr-mc/48df37a8bbd1238391fb0adcca71930ba0f1dc8662ade8e064f7bc47f7e5c710/depth-13.txt.gz",
+          "bytes": 8120,
+          "rows": 1152,
+          "sha256": "48df37a8bbd1238391fb0adcca71930ba0f1dc8662ade8e064f7bc47f7e5c710"
+        }
+      }
+    },
+    "roux-eodm": {
+      "allStates": {
+        "url": "/stats/scramble/exact-puzzles/roux-eodm/cc11a4edf6b3fe7b8aa3a4f1fd0856f19f2aaefe7d1bb040d2625a6da79a85fc/all.csv.gz",
+        "bytes": 1359676,
+        "rows": 184320,
+        "sha256": "cc11a4edf6b3fe7b8aa3a4f1fd0856f19f2aaefe7d1bb040d2625a6da79a85fc"
+      },
+      "byDepth": {
+        "0": {
+          "url": "/stats/scramble/exact-puzzles/roux-eodm/e22dc898adf25837a4f7c84ff6925f6df1f925e27799f27d466a708f79565bf3/depth-0.txt.gz",
+          "bytes": 230,
+          "rows": 48,
+          "sha256": "e22dc898adf25837a4f7c84ff6925f6df1f925e27799f27d466a708f79565bf3"
+        },
+        "1": {
+          "url": "/stats/scramble/exact-puzzles/roux-eodm/d88e9634765cd483772a2ae154b7729f414a849e7322b3ef32042c750c03a0c3/depth-1.txt.gz",
+          "bytes": 640,
+          "rows": 144,
+          "sha256": "d88e9634765cd483772a2ae154b7729f414a849e7322b3ef32042c750c03a0c3"
+        },
+        "2": {
+          "url": "/stats/scramble/exact-puzzles/roux-eodm/7d86f5e9bbe2f0fa5f6c378c454bb4f7c866aaee39ef7a2ec612b33d9842f34b/depth-2.txt.gz",
+          "bytes": 1981,
+          "rows": 432,
+          "sha256": "7d86f5e9bbe2f0fa5f6c378c454bb4f7c866aaee39ef7a2ec612b33d9842f34b"
+        },
+        "3": {
+          "url": "/stats/scramble/exact-puzzles/roux-eodm/137d079e5232eb5d03b122981e71ea2f3db7180a23375d191803e4e7fc1340d2/depth-3.txt.gz",
+          "bytes": 5786,
+          "rows": 1296,
+          "sha256": "137d079e5232eb5d03b122981e71ea2f3db7180a23375d191803e4e7fc1340d2"
+        },
+        "4": {
+          "url": "/stats/scramble/exact-puzzles/roux-eodm/c03309f51c3162b4db79b6426c594424704d5195c358a62af8e34b6bf5c7acd5/depth-4.txt.gz",
+          "bytes": 15972,
+          "rows": 3168,
+          "sha256": "c03309f51c3162b4db79b6426c594424704d5195c358a62af8e34b6bf5c7acd5"
+        },
+        "5": {
+          "url": "/stats/scramble/exact-puzzles/roux-eodm/e9cfc2d44f8bfac4596d316830f2c58eb15a835bcf68ce04947fc9b3333601e9/depth-5.txt.gz",
+          "bytes": 40360,
+          "rows": 7584,
+          "sha256": "e9cfc2d44f8bfac4596d316830f2c58eb15a835bcf68ce04947fc9b3333601e9"
+        },
+        "6": {
+          "url": "/stats/scramble/exact-puzzles/roux-eodm/8c85aa380f031e040cf3c7ea9c755fcc5416008554a3d45bb88265367db4181d/depth-6.txt.gz",
+          "bytes": 82626,
+          "rows": 14592,
+          "sha256": "8c85aa380f031e040cf3c7ea9c755fcc5416008554a3d45bb88265367db4181d"
+        },
+        "7": {
+          "url": "/stats/scramble/exact-puzzles/roux-eodm/840364b3de40b8ed1dea0f0ca17ae595ec56778f2390dd3782d63316b971358f/depth-7.txt.gz",
+          "bytes": 158872,
+          "rows": 26688,
+          "sha256": "840364b3de40b8ed1dea0f0ca17ae595ec56778f2390dd3782d63316b971358f"
+        },
+        "8": {
+          "url": "/stats/scramble/exact-puzzles/roux-eodm/fae45535f5bb288058158b5a39db6daa40e3d887cc708f4479075a6e084a9e11/depth-8.txt.gz",
+          "bytes": 238128,
+          "rows": 38256,
+          "sha256": "fae45535f5bb288058158b5a39db6daa40e3d887cc708f4479075a6e084a9e11"
+        },
+        "9": {
+          "url": "/stats/scramble/exact-puzzles/roux-eodm/b3e6d7134a876415ca637ad91e5275d1297aebb5016c0be6d68f54a96720861b/depth-9.txt.gz",
+          "bytes": 307848,
+          "rows": 47952,
+          "sha256": "b3e6d7134a876415ca637ad91e5275d1297aebb5016c0be6d68f54a96720861b"
+        },
+        "10": {
+          "url": "/stats/scramble/exact-puzzles/roux-eodm/77dec2617574631be1f4ecd6861c3a3d0b19bc5e26c0992b1d58f2eba7cfb819/depth-10.txt.gz",
+          "bytes": 175203,
+          "rows": 26400,
+          "sha256": "77dec2617574631be1f4ecd6861c3a3d0b19bc5e26c0992b1d58f2eba7cfb819"
+        },
+        "11": {
+          "url": "/stats/scramble/exact-puzzles/roux-eodm/88794f6c71f5bc2f3a90f5a9ca3bfe55a2411aaa48a61512cc8e29303f2d563c/depth-11.txt.gz",
+          "bytes": 101775,
+          "rows": 14880,
+          "sha256": "88794f6c71f5bc2f3a90f5a9ca3bfe55a2411aaa48a61512cc8e29303f2d563c"
+        },
+        "12": {
+          "url": "/stats/scramble/exact-puzzles/roux-eodm/6c7168ea7c111db5a64266f4bb7d22dfb4509cb806d5eb4d075be9861099211e/depth-12.txt.gz",
+          "bytes": 10396,
+          "rows": 1440,
+          "sha256": "6c7168ea7c111db5a64266f4bb7d22dfb4509cb806d5eb4d075be9861099211e"
+        },
+        "13": {
+          "url": "/stats/scramble/exact-puzzles/roux-eodm/b688682c2f85cd785072c0022ce706d925be888df27538d1f415aef5c7b8a66b/depth-13.txt.gz",
+          "bytes": 10108,
+          "rows": 1440,
+          "sha256": "b688682c2f85cd785072c0022ce706d925be888df27538d1f415aef5c7b8a66b"
+        }
+      }
+    },
+    "bic": {
+      "allStates": {
+        "url": "/stats/scramble/exact-puzzles/bic/d6f8ce91697085d38df79bab69ac1172b841a0d4150c58576bf5f0cf33d57282/all.csv.gz",
+        "bytes": 14698159,
+        "rows": 1108800,
+        "sha256": "d6f8ce91697085d38df79bab69ac1172b841a0d4150c58576bf5f0cf33d57282"
+      },
+      "byDepth": {
+        "0": {
+          "url": "/stats/scramble/exact-puzzles/bic/fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8/depth-0.txt.gz",
+          "bytes": 21,
+          "rows": 1,
+          "sha256": "fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8"
+        },
+        "1": {
+          "url": "/stats/scramble/exact-puzzles/bic/c317b8e6a8471695b8e36d39606041a0e11cd6cdd5e1570e527320c57a440423/depth-1.txt.gz",
+          "bytes": 41,
+          "rows": 9,
+          "sha256": "c317b8e6a8471695b8e36d39606041a0e11cd6cdd5e1570e527320c57a440423"
+        },
+        "2": {
+          "url": "/stats/scramble/exact-puzzles/bic/318e743ebc132df10e327294aa1fb196bfbd9d98a49f373527c1e5ffdec142d8/depth-2.txt.gz",
+          "bytes": 87,
+          "rows": 24,
+          "sha256": "318e743ebc132df10e327294aa1fb196bfbd9d98a49f373527c1e5ffdec142d8"
+        },
+        "3": {
+          "url": "/stats/scramble/exact-puzzles/bic/523a22e1c6ddf7228b13836cd63837c53fa8a6e9076a786cc62c18b8019ae963/depth-3.txt.gz",
+          "bytes": 167,
+          "rows": 54,
+          "sha256": "523a22e1c6ddf7228b13836cd63837c53fa8a6e9076a786cc62c18b8019ae963"
+        },
+        "4": {
+          "url": "/stats/scramble/exact-puzzles/bic/6e2541d21d52bb8764fb47562efdcd95d6ad8080cd9e77b6797a1e6d71bd8fe9/depth-4.txt.gz",
+          "bytes": 344,
+          "rows": 102,
+          "sha256": "6e2541d21d52bb8764fb47562efdcd95d6ad8080cd9e77b6797a1e6d71bd8fe9"
+        },
+        "5": {
+          "url": "/stats/scramble/exact-puzzles/bic/b1be034cc4095b5086ebbcb232c6071894800658f60237cee215b7216287c2c9/depth-5.txt.gz",
+          "bytes": 617,
+          "rows": 168,
+          "sha256": "b1be034cc4095b5086ebbcb232c6071894800658f60237cee215b7216287c2c9"
+        },
+        "6": {
+          "url": "/stats/scramble/exact-puzzles/bic/6a461814cf4298b87ed15f77a6949fb5172839c6274bead2d523c65050829753/depth-6.txt.gz",
+          "bytes": 1202,
+          "rows": 296,
+          "sha256": "6a461814cf4298b87ed15f77a6949fb5172839c6274bead2d523c65050829753"
+        },
+        "7": {
+          "url": "/stats/scramble/exact-puzzles/bic/f35559c28087c1ac575cecbad7c70e8116ba8af11ec39e6e0d678da5b1d8bb78/depth-7.txt.gz",
+          "bytes": 2655,
+          "rows": 583,
+          "sha256": "f35559c28087c1ac575cecbad7c70e8116ba8af11ec39e6e0d678da5b1d8bb78"
+        },
+        "8": {
+          "url": "/stats/scramble/exact-puzzles/bic/331b01ab6b85a32ecf5489fdbf8d1a71da99d7697e476b434875181ed86728e7/depth-8.txt.gz",
+          "bytes": 5063,
+          "rows": 996,
+          "sha256": "331b01ab6b85a32ecf5489fdbf8d1a71da99d7697e476b434875181ed86728e7"
+        },
+        "9": {
+          "url": "/stats/scramble/exact-puzzles/bic/90f6d7f1c7d2882ace70c44ddac98a17430619e28e3584079d4598f58942eb91/depth-9.txt.gz",
+          "bytes": 10408,
+          "rows": 1817,
+          "sha256": "90f6d7f1c7d2882ace70c44ddac98a17430619e28e3584079d4598f58942eb91"
+        },
+        "10": {
+          "url": "/stats/scramble/exact-puzzles/bic/491123228aa04a7107bcf3284296cacb68f1cc09ad6b9532c2fa615ba8b66da4/depth-10.txt.gz",
+          "bytes": 20399,
+          "rows": 3196,
+          "sha256": "491123228aa04a7107bcf3284296cacb68f1cc09ad6b9532c2fa615ba8b66da4"
+        },
+        "11": {
+          "url": "/stats/scramble/exact-puzzles/bic/78f65d3c84f9eab76836c5f3dba71082e561892a515fed6e0843b62269b55113/depth-11.txt.gz",
+          "bytes": 41112,
+          "rows": 5739,
+          "sha256": "78f65d3c84f9eab76836c5f3dba71082e561892a515fed6e0843b62269b55113"
+        },
+        "12": {
+          "url": "/stats/scramble/exact-puzzles/bic/575d3cb20956cf5fe9b0aaf8689caf0f4eae5f6063e145a1c6b76e5e760a49c6/depth-12.txt.gz",
+          "bytes": 77310,
+          "rows": 9785,
+          "sha256": "575d3cb20956cf5fe9b0aaf8689caf0f4eae5f6063e145a1c6b76e5e760a49c6"
+        },
+        "13": {
+          "url": "/stats/scramble/exact-puzzles/bic/5a6da716ccb5076c975ba626b306f3b024a028b443e105bb6a8df4b16be52056/depth-13.txt.gz",
+          "bytes": 148181,
+          "rows": 17075,
+          "sha256": "5a6da716ccb5076c975ba626b306f3b024a028b443e105bb6a8df4b16be52056"
+        },
+        "14": {
+          "url": "/stats/scramble/exact-puzzles/bic/0075c20891dd9a5cab74725101a344a859b813122a6aad1dfbff9c9390c95531/depth-14.txt.gz",
+          "bytes": 275079,
+          "rows": 29279,
+          "sha256": "0075c20891dd9a5cab74725101a344a859b813122a6aad1dfbff9c9390c95531"
+        },
+        "15": {
+          "url": "/stats/scramble/exact-puzzles/bic/e0d3dd5cd5563bf59e5df9053b4d1c07cddf6b955ebb5c4c0f0e8fa158e682ae/depth-15.txt.gz",
+          "bytes": 490805,
+          "rows": 48552,
+          "sha256": "e0d3dd5cd5563bf59e5df9053b4d1c07cddf6b955ebb5c4c0f0e8fa158e682ae"
+        },
+        "16": {
+          "url": "/stats/scramble/exact-puzzles/bic/630c7047a83be456c789eea896d2cc4a73d3cadbc3d969fa13b0f5b13cc940cf/depth-16.txt.gz",
+          "bytes": 839979,
+          "rows": 77828,
+          "sha256": "630c7047a83be456c789eea896d2cc4a73d3cadbc3d969fa13b0f5b13cc940cf"
+        },
+        "17": {
+          "url": "/stats/scramble/exact-puzzles/bic/298d82bdb481f7be63d5dbf8f26399c4337e9f93861a14d9f177efd56a992113/depth-17.txt.gz",
+          "bytes": 1322944,
+          "rows": 115384,
+          "sha256": "298d82bdb481f7be63d5dbf8f26399c4337e9f93861a14d9f177efd56a992113"
+        },
+        "18": {
+          "url": "/stats/scramble/exact-puzzles/bic/b483e14dc5d6cf570a34d624cbac5dd652e4b2a61ada0f277bc83e2ff2907372/depth-18.txt.gz",
+          "bytes": 1888264,
+          "rows": 155444,
+          "sha256": "b483e14dc5d6cf570a34d624cbac5dd652e4b2a61ada0f277bc83e2ff2907372"
+        },
+        "19": {
+          "url": "/stats/scramble/exact-puzzles/bic/ee08b4563624bb66bd36ef8ce55a6bcdb290fba8e8969dde60d50b8ee5965bb8/depth-19.txt.gz",
+          "bytes": 2304440,
+          "rows": 179617,
+          "sha256": "ee08b4563624bb66bd36ef8ce55a6bcdb290fba8e8969dde60d50b8ee5965bb8"
+        },
+        "20": {
+          "url": "/stats/scramble/exact-puzzles/bic/d830c17500052b679dcf82ea01a3f9123d7ee22681ae1dcab982f36c43c64d00/depth-20.txt.gz",
+          "bytes": 2338393,
+          "rows": 172952,
+          "sha256": "d830c17500052b679dcf82ea01a3f9123d7ee22681ae1dcab982f36c43c64d00"
+        },
+        "21": {
+          "url": "/stats/scramble/exact-puzzles/bic/35a74f7188e69f2c7c1811812ff8f82d7a77f7a3d2afe016b96d0abb0854f01a/depth-21.txt.gz",
+          "bytes": 1889894,
+          "rows": 133159,
+          "sha256": "35a74f7188e69f2c7c1811812ff8f82d7a77f7a3d2afe016b96d0abb0854f01a"
+        },
+        "22": {
+          "url": "/stats/scramble/exact-puzzles/bic/143e17f925803913a0ba9fc5841f312e0668bdde2101d088431d3c029403043b/depth-22.txt.gz",
+          "bytes": 1225688,
+          "rows": 82486,
+          "sha256": "143e17f925803913a0ba9fc5841f312e0668bdde2101d088431d3c029403043b"
+        },
+        "23": {
+          "url": "/stats/scramble/exact-puzzles/bic/d19c7cd1ef8eb14a22d9668a7fbe590ad3fb5cf9b356456ed957ad3ef5483c33/depth-23.txt.gz",
+          "bytes": 667797,
+          "rows": 43199,
+          "sha256": "d19c7cd1ef8eb14a22d9668a7fbe590ad3fb5cf9b356456ed957ad3ef5483c33"
+        },
+        "24": {
+          "url": "/stats/scramble/exact-puzzles/bic/271aca85cfa63fd834e083754731e16ddd2fbe8f2066bd8c206cb508a771186d/depth-24.txt.gz",
+          "bytes": 311341,
+          "rows": 19613,
+          "sha256": "271aca85cfa63fd834e083754731e16ddd2fbe8f2066bd8c206cb508a771186d"
+        },
+        "25": {
+          "url": "/stats/scramble/exact-puzzles/bic/5df1387ac698b267e763467dbb68fd5a60fb0ac654e6794c0ae365b8e358bb44/depth-25.txt.gz",
+          "bytes": 125642,
+          "rows": 7781,
+          "sha256": "5df1387ac698b267e763467dbb68fd5a60fb0ac654e6794c0ae365b8e358bb44"
+        },
+        "26": {
+          "url": "/stats/scramble/exact-puzzles/bic/2d1a8d7273bfd9b23b32caa1d0df1d473e08df3ea54c4f1b42432ac306e90f72/depth-26.txt.gz",
+          "bytes": 45351,
+          "rows": 2833,
+          "sha256": "2d1a8d7273bfd9b23b32caa1d0df1d473e08df3ea54c4f1b42432ac306e90f72"
+        },
+        "27": {
+          "url": "/stats/scramble/exact-puzzles/bic/da8d01f8c4da30bb0246847a5da50d815b0c62f99496679e8d2cb744afd74039/depth-27.txt.gz",
+          "bytes": 12299,
+          "rows": 747,
+          "sha256": "da8d01f8c4da30bb0246847a5da50d815b0c62f99496679e8d2cb744afd74039"
+        },
+        "28": {
+          "url": "/stats/scramble/exact-puzzles/bic/4afd3656a3652b9f606c7628558c28dd5bb625e661232e35705a5e0629903df9/depth-28.txt.gz",
+          "bytes": 1345,
+          "rows": 81,
+          "sha256": "4afd3656a3652b9f606c7628558c28dd5bb625e661232e35705a5e0629903df9"
+        }
+      }
+    },
+    "htr-dr": {
+      "allStates": {
+        "url": "/stats/scramble/exact-puzzles/htr-dr/1610d5b7db2ddce34289ab690f60c9f53818e7d19428654046a3c20b52d42a62/all.csv.gz",
+        "bytes": 188598,
+        "rows": 29400,
+        "sha256": "1610d5b7db2ddce34289ab690f60c9f53818e7d19428654046a3c20b52d42a62"
+      },
+      "byDepth": {
+        "0": {
+          "url": "/stats/scramble/exact-puzzles/htr-dr/fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8/depth-0.txt.gz",
+          "bytes": 21,
+          "rows": 1,
+          "sha256": "fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8"
+        },
+        "1": {
+          "url": "/stats/scramble/exact-puzzles/htr-dr/dd10751b0be468a7e4d219dfda20de79135467cec7ec006538c8236c052cbaeb/depth-1.txt.gz",
+          "bytes": 24,
+          "rows": 2,
+          "sha256": "dd10751b0be468a7e4d219dfda20de79135467cec7ec006538c8236c052cbaeb"
+        },
+        "2": {
+          "url": "/stats/scramble/exact-puzzles/htr-dr/5cfdab5863c58a2c932c625230bd374683a4f4f64cba2cd62c156abf15d8e91c/depth-2.txt.gz",
+          "bytes": 49,
+          "rows": 9,
+          "sha256": "5cfdab5863c58a2c932c625230bd374683a4f4f64cba2cd62c156abf15d8e91c"
+        },
+        "3": {
+          "url": "/stats/scramble/exact-puzzles/htr-dr/e05eb00fd4f1922867a2c38e94cf28690c41a56c5955c479d7bc640b555f080b/depth-3.txt.gz",
+          "bytes": 137,
+          "rows": 36,
+          "sha256": "e05eb00fd4f1922867a2c38e94cf28690c41a56c5955c479d7bc640b555f080b"
+        },
+        "4": {
+          "url": "/stats/scramble/exact-puzzles/htr-dr/8b9956d77e5631d6a89b694725dee12240a856d6596d9b4515921263403a667b/depth-4.txt.gz",
+          "bytes": 419,
+          "rows": 124,
+          "sha256": "8b9956d77e5631d6a89b694725dee12240a856d6596d9b4515921263403a667b"
+        },
+        "5": {
+          "url": "/stats/scramble/exact-puzzles/htr-dr/954656d62fc63d5fe5e442c9980a504162f2cb42f2204eb8faf97b6aa7451f89/depth-5.txt.gz",
+          "bytes": 1949,
+          "rows": 530,
+          "sha256": "954656d62fc63d5fe5e442c9980a504162f2cb42f2204eb8faf97b6aa7451f89"
+        },
+        "6": {
+          "url": "/stats/scramble/exact-puzzles/htr-dr/c5dc62e2803b0a272d38d7e6cb6a3aa8339532fefd05fcb69634b67b737ee456/depth-6.txt.gz",
+          "bytes": 7708,
+          "rows": 1806,
+          "sha256": "c5dc62e2803b0a272d38d7e6cb6a3aa8339532fefd05fcb69634b67b737ee456"
+        },
+        "7": {
+          "url": "/stats/scramble/exact-puzzles/htr-dr/55bb515697381a21f32cd60b57f8fc9f88c08a3284a4ad206e6d5edd8e2562c5/depth-7.txt.gz",
+          "bytes": 18292,
+          "rows": 3732,
+          "sha256": "55bb515697381a21f32cd60b57f8fc9f88c08a3284a4ad206e6d5edd8e2562c5"
+        },
+        "8": {
+          "url": "/stats/scramble/exact-puzzles/htr-dr/9418e5ab1a7d2f0acb8b94baa9345831bc40d68f96ab0fac9936a2ea973ebcf7/depth-8.txt.gz",
+          "bytes": 28003,
+          "rows": 5158,
+          "sha256": "9418e5ab1a7d2f0acb8b94baa9345831bc40d68f96ab0fac9936a2ea973ebcf7"
+        },
+        "9": {
+          "url": "/stats/scramble/exact-puzzles/htr-dr/549f7a23ea762f3c91cb2eb96c275a51f5a3c2778172c42f3ff052f8989bd559/depth-9.txt.gz",
+          "bytes": 41268,
+          "rows": 7070,
+          "sha256": "549f7a23ea762f3c91cb2eb96c275a51f5a3c2778172c42f3ff052f8989bd559"
+        },
+        "10": {
+          "url": "/stats/scramble/exact-puzzles/htr-dr/10446453144ff7cb5dd63e7c50ed916be269a7c08f9c8699543dbdced001469b/depth-10.txt.gz",
+          "bytes": 45176,
+          "rows": 7218,
+          "sha256": "10446453144ff7cb5dd63e7c50ed916be269a7c08f9c8699543dbdced001469b"
+        },
+        "11": {
+          "url": "/stats/scramble/exact-puzzles/htr-dr/d3778034499f6d77e32793cbea14c4d7c6dded890bd5715185b8e8ec10f77e6c/depth-11.txt.gz",
+          "bytes": 21524,
+          "rows": 3202,
+          "sha256": "d3778034499f6d77e32793cbea14c4d7c6dded890bd5715185b8e8ec10f77e6c"
+        },
+        "12": {
+          "url": "/stats/scramble/exact-puzzles/htr-dr/7fa469beb6f001fe788964d3e0a9ddc28ad4a48e5b216bc8e16b4c9c4d9f6cb2/depth-12.txt.gz",
+          "bytes": 3312,
+          "rows": 488,
+          "sha256": "7fa469beb6f001fe788964d3e0a9ddc28ad4a48e5b216bc8e16b4c9c4d9f6cb2"
+        },
+        "13": {
+          "url": "/stats/scramble/exact-puzzles/htr-dr/1d983a2d5f8a5950f7954497159daa6f3e4dd5b83749e7c462591746e1e19f07/depth-13.txt.gz",
+          "bytes": 211,
+          "rows": 24,
+          "sha256": "1d983a2d5f8a5950f7954497159daa6f3e4dd5b83749e7c462591746e1e19f07"
+        }
+      }
+    },
+    "fr-htr": {
+      "allStates": {
+        "url": "/stats/scramble/exact-puzzles/fr-htr/a2c8b3458b909cc73f55288d347996d95ba503b48e4737515f2dc1b5402e3704/all.csv.gz",
+        "bytes": 12038,
+        "rows": 3456,
+        "sha256": "a2c8b3458b909cc73f55288d347996d95ba503b48e4737515f2dc1b5402e3704"
+      },
+      "byDepth": {
+        "0": {
+          "url": "/stats/scramble/exact-puzzles/fr-htr/fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8/depth-0.txt.gz",
+          "bytes": 21,
+          "rows": 1,
+          "sha256": "fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8"
+        },
+        "1": {
+          "url": "/stats/scramble/exact-puzzles/fr-htr/8fcf74e864c22cd77ad0b08b5617ca7070374b6f09bbddfb217ad7d356aa80b3/depth-1.txt.gz",
+          "bytes": 26,
+          "rows": 2,
+          "sha256": "8fcf74e864c22cd77ad0b08b5617ca7070374b6f09bbddfb217ad7d356aa80b3"
+        },
+        "2": {
+          "url": "/stats/scramble/exact-puzzles/fr-htr/d64cbbe517f50b1bab36fb589f3c3ac1e372cf7f41429a9ee1990e224b60ae6c/depth-2.txt.gz",
+          "bytes": 53,
+          "rows": 9,
+          "sha256": "d64cbbe517f50b1bab36fb589f3c3ac1e372cf7f41429a9ee1990e224b60ae6c"
+        },
+        "3": {
+          "url": "/stats/scramble/exact-puzzles/fr-htr/e97aae4d013ce98a69ab9e72a74e0aa9bec7991430a68536c6877ae5e9945ba0/depth-3.txt.gz",
+          "bytes": 110,
+          "rows": 30,
+          "sha256": "e97aae4d013ce98a69ab9e72a74e0aa9bec7991430a68536c6877ae5e9945ba0"
+        },
+        "4": {
+          "url": "/stats/scramble/exact-puzzles/fr-htr/e4f8b1925981b76a12347598d91801c7e2c9b05c3e18d122b9da3473503a2521/depth-4.txt.gz",
+          "bytes": 246,
+          "rows": 80,
+          "sha256": "e4f8b1925981b76a12347598d91801c7e2c9b05c3e18d122b9da3473503a2521"
+        },
+        "5": {
+          "url": "/stats/scramble/exact-puzzles/fr-htr/aaacf4e9fb6049feb9925880008fdc63bd86088f3b1864c06ea38defef9ca1a5/depth-5.txt.gz",
+          "bytes": 627,
+          "rows": 210,
+          "sha256": "aaacf4e9fb6049feb9925880008fdc63bd86088f3b1864c06ea38defef9ca1a5"
+        },
+        "6": {
+          "url": "/stats/scramble/exact-puzzles/fr-htr/6b3b6c5ef3346c0ec5f7b64ce0fdc01764fe81a67ba1c8dad2652c10afcc0241/depth-6.txt.gz",
+          "bytes": 1343,
+          "rows": 424,
+          "sha256": "6b3b6c5ef3346c0ec5f7b64ce0fdc01764fe81a67ba1c8dad2652c10afcc0241"
+        },
+        "7": {
+          "url": "/stats/scramble/exact-puzzles/fr-htr/e8d646101c4663bd9364b80705e956008a6dbc1cfc547fd14bbb8c0c026505ae/depth-7.txt.gz",
+          "bytes": 2373,
+          "rows": 736,
+          "sha256": "e8d646101c4663bd9364b80705e956008a6dbc1cfc547fd14bbb8c0c026505ae"
+        },
+        "8": {
+          "url": "/stats/scramble/exact-puzzles/fr-htr/4995084253e8ffa72b507141edc39d7911a799634b6465d161dbac9c155efdc3/depth-8.txt.gz",
+          "bytes": 3284,
+          "rows": 1000,
+          "sha256": "4995084253e8ffa72b507141edc39d7911a799634b6465d161dbac9c155efdc3"
+        },
+        "9": {
+          "url": "/stats/scramble/exact-puzzles/fr-htr/f5d1efbef42d86dadebd42f2e478966020e4db4c21084f240e81d016f8568603/depth-9.txt.gz",
+          "bytes": 2799,
+          "rows": 784,
+          "sha256": "f5d1efbef42d86dadebd42f2e478966020e4db4c21084f240e81d016f8568603"
+        },
+        "10": {
+          "url": "/stats/scramble/exact-puzzles/fr-htr/52f6e1e42f5c945085a1b94385145c56f166ce8d7d19ada86cd9cca290c149cf/depth-10.txt.gz",
+          "bytes": 630,
+          "rows": 164,
+          "sha256": "52f6e1e42f5c945085a1b94385145c56f166ce8d7d19ada86cd9cca290c149cf"
+        },
+        "11": {
+          "url": "/stats/scramble/exact-puzzles/fr-htr/8bea9bc5c0acbf64ff39d93a98d8ebfc47facb87eda59e46f81da281d637201d/depth-11.txt.gz",
+          "bytes": 107,
+          "rows": 16,
+          "sha256": "8bea9bc5c0acbf64ff39d93a98d8ebfc47facb87eda59e46f81da281d637201d"
+        }
+      }
+    },
+    "pyramorphix": {
+      "allStates": {
+        "url": "/stats/scramble/exact-puzzles/pyramorphix/a03fdd4697714d99b4f5e51e762c0d81018e33adcfb5925de25e787e6e1302c3/all.csv.gz",
+        "bytes": 798008,
+        "rows": 136080,
+        "sha256": "a03fdd4697714d99b4f5e51e762c0d81018e33adcfb5925de25e787e6e1302c3"
+      },
+      "byDepth": {
+        "0": {
+          "url": "/stats/scramble/exact-puzzles/pyramorphix/fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8/depth-0.txt.gz",
+          "bytes": 21,
+          "rows": 1,
+          "sha256": "fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8"
+        },
+        "1": {
+          "url": "/stats/scramble/exact-puzzles/pyramorphix/e407a893fe71677425359fb7006866d508a15e57b7b342300e47461529683f24/depth-1.txt.gz",
+          "bytes": 42,
+          "rows": 9,
+          "sha256": "e407a893fe71677425359fb7006866d508a15e57b7b342300e47461529683f24"
+        },
+        "2": {
+          "url": "/stats/scramble/exact-puzzles/pyramorphix/fd5b9563bd724b9ab5473e1250a274dba756cdfd0e140706d66425ae58fb2433/depth-2.txt.gz",
+          "bytes": 141,
+          "rows": 54,
+          "sha256": "fd5b9563bd724b9ab5473e1250a274dba756cdfd0e140706d66425ae58fb2433"
+        },
+        "3": {
+          "url": "/stats/scramble/exact-puzzles/pyramorphix/1d6f93a5776b711935665a0fc0483e3e66d7b506d296289ff05b2d0499115fa4/depth-3.txt.gz",
+          "bytes": 849,
+          "rows": 321,
+          "sha256": "1d6f93a5776b711935665a0fc0483e3e66d7b506d296289ff05b2d0499115fa4"
+        },
+        "4": {
+          "url": "/stats/scramble/exact-puzzles/pyramorphix/870d8e8049452c557f47f6c493ad5565c7abc2f84c83f7f2b16e71c9f24fb49b/depth-4.txt.gz",
+          "bytes": 5979,
+          "rows": 1835,
+          "sha256": "870d8e8049452c557f47f6c493ad5565c7abc2f84c83f7f2b16e71c9f24fb49b"
+        },
+        "5": {
+          "url": "/stats/scramble/exact-puzzles/pyramorphix/56b1ff9819c9b1d2e05584e193638283d0eb28362bd979410cee56ee5fe17487/depth-5.txt.gz",
+          "bytes": 38905,
+          "rows": 9716,
+          "sha256": "56b1ff9819c9b1d2e05584e193638283d0eb28362bd979410cee56ee5fe17487"
+        },
+        "6": {
+          "url": "/stats/scramble/exact-puzzles/pyramorphix/cbba881037cd5b580f932336dd9cfedbf6da3ea292d2d9aefcf08583671b160f/depth-6.txt.gz",
+          "bytes": 188586,
+          "rows": 39536,
+          "sha256": "cbba881037cd5b580f932336dd9cfedbf6da3ea292d2d9aefcf08583671b160f"
+        },
+        "7": {
+          "url": "/stats/scramble/exact-puzzles/pyramorphix/5111aa299122f81e151581ae1ac423d3fab85a460a0ba50925b2cb057eb88d3e/depth-7.txt.gz",
+          "bytes": 375001,
+          "rows": 68424,
+          "sha256": "5111aa299122f81e151581ae1ac423d3fab85a460a0ba50925b2cb057eb88d3e"
+        },
+        "8": {
+          "url": "/stats/scramble/exact-puzzles/pyramorphix/8f295abe19d74d4c3141d6ae81c549e6f612ba4331d6c0230eb99e587a911ec2/depth-8.txt.gz",
+          "bytes": 98820,
+          "rows": 16120,
+          "sha256": "8f295abe19d74d4c3141d6ae81c549e6f612ba4331d6c0230eb99e587a911ec2"
+        },
+        "9": {
+          "url": "/stats/scramble/exact-puzzles/pyramorphix/ac061e19203d35c3129ea6e0aeda0c2c5f72357af9e9a023ae4301eefd222ab4/depth-9.txt.gz",
+          "bytes": 476,
+          "rows": 64,
+          "sha256": "ac061e19203d35c3129ea6e0aeda0c2c5f72357af9e9a023ae4301eefd222ab4"
+        }
+      }
+    },
+    "pyramorphix-qtm": {
+      "allStates": {
+        "url": "/stats/scramble/exact-puzzles/pyramorphix-qtm/90c2051fdec7e7d9f8e248b1a7de471e0d463bc18d257ca0271a4215557151d1/all.csv.gz",
+        "bytes": 860794,
+        "rows": 136080,
+        "sha256": "90c2051fdec7e7d9f8e248b1a7de471e0d463bc18d257ca0271a4215557151d1"
+      },
+      "byDepth": {
+        "0": {
+          "url": "/stats/scramble/exact-puzzles/pyramorphix-qtm/fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8/depth-0.txt.gz",
+          "bytes": 21,
+          "rows": 1,
+          "sha256": "fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8"
+        },
+        "1": {
+          "url": "/stats/scramble/exact-puzzles/pyramorphix-qtm/cb1a08da372a99301bdc96454b74d934097334a37771940a555b39211ea9b49e/depth-1.txt.gz",
+          "bytes": 33,
+          "rows": 6,
+          "sha256": "cb1a08da372a99301bdc96454b74d934097334a37771940a555b39211ea9b49e"
+        },
+        "2": {
+          "url": "/stats/scramble/exact-puzzles/pyramorphix-qtm/bfa510070e9d6ecbdfcdcfe9ac4df07e195980a9ab8400e06a600ee16f7b1bf2/depth-2.txt.gz",
+          "bytes": 91,
+          "rows": 27,
+          "sha256": "bfa510070e9d6ecbdfcdcfe9ac4df07e195980a9ab8400e06a600ee16f7b1bf2"
+        },
+        "3": {
+          "url": "/stats/scramble/exact-puzzles/pyramorphix-qtm/78a2c1d8cb9f6b45968db8bee7d4ea22d299171cf731aec83c832d2053c7cb19/depth-3.txt.gz",
+          "bytes": 325,
+          "rows": 120,
+          "sha256": "78a2c1d8cb9f6b45968db8bee7d4ea22d299171cf731aec83c832d2053c7cb19"
+        },
+        "4": {
+          "url": "/stats/scramble/exact-puzzles/pyramorphix-qtm/276a0fb5af2ad1e62b9b44de664794d1090e14b9af157e398b1e3ab4337b3ef3/depth-4.txt.gz",
+          "bytes": 1603,
+          "rows": 534,
+          "sha256": "276a0fb5af2ad1e62b9b44de664794d1090e14b9af157e398b1e3ab4337b3ef3"
+        },
+        "5": {
+          "url": "/stats/scramble/exact-puzzles/pyramorphix-qtm/77f7c667fd9c1703ae4c404197ef40dc78d9fd5a871df120c4baf702fb5020c2/depth-5.txt.gz",
+          "bytes": 8149,
+          "rows": 2256,
+          "sha256": "77f7c667fd9c1703ae4c404197ef40dc78d9fd5a871df120c4baf702fb5020c2"
+        },
+        "6": {
+          "url": "/stats/scramble/exact-puzzles/pyramorphix-qtm/a85f5ee2ae67d618b6f768294777c969b7d5f5fb37856d81a86e892adf7b20de/depth-6.txt.gz",
+          "bytes": 36899,
+          "rows": 8633,
+          "sha256": "a85f5ee2ae67d618b6f768294777c969b7d5f5fb37856d81a86e892adf7b20de"
+        },
+        "7": {
+          "url": "/stats/scramble/exact-puzzles/pyramorphix-qtm/6cd85884a56e101eef09529e1d5776f1df5e3dcac4041080a24dcef4c7f8085c/depth-7.txt.gz",
+          "bytes": 129495,
+          "rows": 26174,
+          "sha256": "6cd85884a56e101eef09529e1d5776f1df5e3dcac4041080a24dcef4c7f8085c"
+        },
+        "8": {
+          "url": "/stats/scramble/exact-puzzles/pyramorphix-qtm/0285bd58b840b3787c3eb642376aadfaaaad11c708df1dfa3d9775ff37694a9d/depth-8.txt.gz",
+          "bytes": 271963,
+          "rows": 48585,
+          "sha256": "0285bd58b840b3787c3eb642376aadfaaaad11c708df1dfa3d9775ff37694a9d"
+        },
+        "9": {
+          "url": "/stats/scramble/exact-puzzles/pyramorphix-qtm/085eabec82e7060f81e1326261cb7caf9a905bea7bd013d0d7f2f5da773c3a58/depth-9.txt.gz",
+          "bytes": 242538,
+          "rows": 39312,
+          "sha256": "085eabec82e7060f81e1326261cb7caf9a905bea7bd013d0d7f2f5da773c3a58"
+        },
+        "10": {
+          "url": "/stats/scramble/exact-puzzles/pyramorphix-qtm/2163c7da84fbd64fe01802d66471e509d7b669b6096a25da6f2b0ba219cd3e24/depth-10.txt.gz",
+          "bytes": 68615,
+          "rows": 10260,
+          "sha256": "2163c7da84fbd64fe01802d66471e509d7b669b6096a25da6f2b0ba219cd3e24"
+        },
+        "11": {
+          "url": "/stats/scramble/exact-puzzles/pyramorphix-qtm/3afca27940e41c76c19920b4eb2b9b1b28a22af43db016a4a60482c95e7b3afc/depth-11.txt.gz",
+          "bytes": 1276,
+          "rows": 172,
+          "sha256": "3afca27940e41c76c19920b4eb2b9b1b28a22af43db016a4a60482c95e7b3afc"
+        }
+      }
+    },
+    "half": {
+      "allStates": {
+        "url": "/stats/scramble/exact-puzzles/half/71b027531ca74976e70e954b76ffd36d6bf21a10fb0bcd9555df3d59471da682/all.csv.gz",
+        "bytes": 5171364,
+        "rows": 663552,
+        "sha256": "71b027531ca74976e70e954b76ffd36d6bf21a10fb0bcd9555df3d59471da682"
+      },
+      "byDepth": {
+        "0": {
+          "url": "/stats/scramble/exact-puzzles/half/fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8/depth-0.txt.gz",
+          "bytes": 21,
+          "rows": 1,
+          "sha256": "fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8"
+        },
+        "1": {
+          "url": "/stats/scramble/exact-puzzles/half/7d1ab50e3c1e7763d87832bb685db70cdf5ce50ba08507d85004419f766ce454/depth-1.txt.gz",
+          "bytes": 38,
+          "rows": 6,
+          "sha256": "7d1ab50e3c1e7763d87832bb685db70cdf5ce50ba08507d85004419f766ce454"
+        },
+        "2": {
+          "url": "/stats/scramble/exact-puzzles/half/9f53cfa45f889e6089cefed8161bff38eaf163448411d724c120da9ae6fe98fc/depth-2.txt.gz",
+          "bytes": 98,
+          "rows": 27,
+          "sha256": "9f53cfa45f889e6089cefed8161bff38eaf163448411d724c120da9ae6fe98fc"
+        },
+        "3": {
+          "url": "/stats/scramble/exact-puzzles/half/1ea8499aa6ea7aa83e9a1dbdd7491c54853f5530b9ac5dd8d37b26226ea5a44d/depth-3.txt.gz",
+          "bytes": 441,
+          "rows": 120,
+          "sha256": "1ea8499aa6ea7aa83e9a1dbdd7491c54853f5530b9ac5dd8d37b26226ea5a44d"
+        },
+        "4": {
+          "url": "/stats/scramble/exact-puzzles/half/2b2c8ffcb97955ddb9fa5d27c3a593434c0cca709530c6350174e2b17b2b1410/depth-4.txt.gz",
+          "bytes": 1800,
+          "rows": 519,
+          "sha256": "2b2c8ffcb97955ddb9fa5d27c3a593434c0cca709530c6350174e2b17b2b1410"
+        },
+        "5": {
+          "url": "/stats/scramble/exact-puzzles/half/315654bb5ca4026ff30b68fec97e3f801ea1f6d1ac57fed112711d174a131542/depth-5.txt.gz",
+          "bytes": 7854,
+          "rows": 1932,
+          "sha256": "315654bb5ca4026ff30b68fec97e3f801ea1f6d1ac57fed112711d174a131542"
+        },
+        "6": {
+          "url": "/stats/scramble/exact-puzzles/half/5d1d5b92e21e7a47ed5785b51f1039ceeb982c3928ef1e73f490d9e18036966a/depth-6.txt.gz",
+          "bytes": 29578,
+          "rows": 6484,
+          "sha256": "5d1d5b92e21e7a47ed5785b51f1039ceeb982c3928ef1e73f490d9e18036966a"
+        },
+        "7": {
+          "url": "/stats/scramble/exact-puzzles/half/b35eb07e954e2166ff4939da7227a65abecb3374e6bcaa5e57505046100a11ea/depth-7.txt.gz",
+          "bytes": 103868,
+          "rows": 20310,
+          "sha256": "b35eb07e954e2166ff4939da7227a65abecb3374e6bcaa5e57505046100a11ea"
+        },
+        "8": {
+          "url": "/stats/scramble/exact-puzzles/half/950434a9f40615cce7041d80b0c3a53fa1e56422bc30aa48243ae79f72100dcd/depth-8.txt.gz",
+          "bytes": 314544,
+          "rows": 55034,
+          "sha256": "950434a9f40615cce7041d80b0c3a53fa1e56422bc30aa48243ae79f72100dcd"
+        },
+        "9": {
+          "url": "/stats/scramble/exact-puzzles/half/537080e335f85d7f9bfd36182300a640ecd6a781cb56d994d79e6c492c9f6e9b/depth-9.txt.gz",
+          "bytes": 725514,
+          "rows": 113892,
+          "sha256": "537080e335f85d7f9bfd36182300a640ecd6a781cb56d994d79e6c492c9f6e9b"
+        },
+        "10": {
+          "url": "/stats/scramble/exact-puzzles/half/a48939959fc862b473eaaa0c5d6615f0fae6f9ae375f9f743009e66fc557060b/depth-10.txt.gz",
+          "bytes": 1240426,
+          "rows": 178495,
+          "sha256": "a48939959fc862b473eaaa0c5d6615f0fae6f9ae375f9f743009e66fc557060b"
+        },
+        "11": {
+          "url": "/stats/scramble/exact-puzzles/half/7799fbacea7979f12763d49593d867f000ec7a293ff3428d450df3b5c7b45215/depth-11.txt.gz",
+          "bytes": 1332757,
+          "rows": 179196,
+          "sha256": "7799fbacea7979f12763d49593d867f000ec7a293ff3428d450df3b5c7b45215"
+        },
+        "12": {
+          "url": "/stats/scramble/exact-puzzles/half/2e4cee6b9d87b2886763f63122dbcf582ac1bdc1fa66047a24a8f6517b893bca/depth-12.txt.gz",
+          "bytes": 685082,
+          "rows": 89728,
+          "sha256": "2e4cee6b9d87b2886763f63122dbcf582ac1bdc1fa66047a24a8f6517b893bca"
+        },
+        "13": {
+          "url": "/stats/scramble/exact-puzzles/half/aaf88c0a93050e145af719a42fbf3f34c2f00a1bd5dec63069feff1cfd08c742/depth-13.txt.gz",
+          "bytes": 124002,
+          "rows": 16176,
+          "sha256": "aaf88c0a93050e145af719a42fbf3f34c2f00a1bd5dec63069feff1cfd08c742"
+        },
+        "14": {
+          "url": "/stats/scramble/exact-puzzles/half/2bfe9f6b9f3fc301cfc302fa68f1a4148f9b3bd39caa318a81f3ddd4b8fa37f9/depth-14.txt.gz",
+          "bytes": 10923,
+          "rows": 1488,
+          "sha256": "2bfe9f6b9f3fc301cfc302fa68f1a4148f9b3bd39caa318a81f3ddd4b8fa37f9"
+        },
+        "15": {
+          "url": "/stats/scramble/exact-puzzles/half/d4a839dc514c0bd1798f8c5580da423edc2ce7776976e30a7998d752a66c2b5e/depth-15.txt.gz",
+          "bytes": 1228,
+          "rows": 144,
+          "sha256": "d4a839dc514c0bd1798f8c5580da423edc2ce7776976e30a7998d752a66c2b5e"
+        }
+      }
+    },
+    "lsemu": {
+      "allStates": {
+        "url": "/stats/scramble/exact-puzzles/lsemu/f01eeeea987c90f7bbe458064ac056d154395a309d627ea2112f0f6dbcd70cae/all.csv.gz",
+        "bytes": 1405557,
+        "rows": 184320,
+        "sha256": "f01eeeea987c90f7bbe458064ac056d154395a309d627ea2112f0f6dbcd70cae"
+      },
+      "byDepth": {
+        "0": {
+          "url": "/stats/scramble/exact-puzzles/lsemu/fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8/depth-0.txt.gz",
+          "bytes": 21,
+          "rows": 1,
+          "sha256": "fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8"
+        },
+        "1": {
+          "url": "/stats/scramble/exact-puzzles/lsemu/4efd962657868e360ece21af1acedba1169741726408ea01916a447f26464edd/depth-1.txt.gz",
+          "bytes": 36,
+          "rows": 6,
+          "sha256": "4efd962657868e360ece21af1acedba1169741726408ea01916a447f26464edd"
+        },
+        "2": {
+          "url": "/stats/scramble/exact-puzzles/lsemu/a467b58850a742c140e1701a6f59977a0b5a599b3964e748c373b7c74a6844c1/depth-2.txt.gz",
+          "bytes": 67,
+          "rows": 18,
+          "sha256": "a467b58850a742c140e1701a6f59977a0b5a599b3964e748c373b7c74a6844c1"
+        },
+        "3": {
+          "url": "/stats/scramble/exact-puzzles/lsemu/f3e073f60f3ac59427e8c16390ae03784c1f13891e752718f506705bfa3a81b5/depth-3.txt.gz",
+          "bytes": 149,
+          "rows": 54,
+          "sha256": "f3e073f60f3ac59427e8c16390ae03784c1f13891e752718f506705bfa3a81b5"
+        },
+        "4": {
+          "url": "/stats/scramble/exact-puzzles/lsemu/56bd7cfd5e1fdfc3c105459e3ad843c59a30399b92836e553613f697ef70efc7/depth-4.txt.gz",
+          "bytes": 427,
+          "rows": 161,
+          "sha256": "56bd7cfd5e1fdfc3c105459e3ad843c59a30399b92836e553613f697ef70efc7"
+        },
+        "5": {
+          "url": "/stats/scramble/exact-puzzles/lsemu/ab664c9f8bbd29bc1e930a68d1580e864defb82cbfff102ebdd7503ac9512502/depth-5.txt.gz",
+          "bytes": 1297,
+          "rows": 472,
+          "sha256": "ab664c9f8bbd29bc1e930a68d1580e864defb82cbfff102ebdd7503ac9512502"
+        },
+        "6": {
+          "url": "/stats/scramble/exact-puzzles/lsemu/d88fe7ae1ae5461ed0e4257ec354d424e6f4d45a5148c95cf00450ceccaf7093/depth-6.txt.gz",
+          "bytes": 4167,
+          "rows": 1346,
+          "sha256": "d88fe7ae1ae5461ed0e4257ec354d424e6f4d45a5148c95cf00450ceccaf7093"
+        },
+        "7": {
+          "url": "/stats/scramble/exact-puzzles/lsemu/d3c8932c403f35dd71bc656cfaff619db25e0eb6ed37e3f571c1b9ce4f318104/depth-7.txt.gz",
+          "bytes": 12951,
+          "rows": 3523,
+          "sha256": "d3c8932c403f35dd71bc656cfaff619db25e0eb6ed37e3f571c1b9ce4f318104"
+        },
+        "8": {
+          "url": "/stats/scramble/exact-puzzles/lsemu/7f7518fcc2b4e03df6b4338f443057920c7ea29be2d0e863f4d3391a6e09ee21/depth-8.txt.gz",
+          "bytes": 38071,
+          "rows": 8374,
+          "sha256": "7f7518fcc2b4e03df6b4338f443057920c7ea29be2d0e863f4d3391a6e09ee21"
+        },
+        "9": {
+          "url": "/stats/scramble/exact-puzzles/lsemu/9dba82acb11859905caf104ac42d9b50266718abdad4d214ebfa3004e75ab102/depth-9.txt.gz",
+          "bytes": 89807,
+          "rows": 17254,
+          "sha256": "9dba82acb11859905caf104ac42d9b50266718abdad4d214ebfa3004e75ab102"
+        },
+        "10": {
+          "url": "/stats/scramble/exact-puzzles/lsemu/6e7ae114f6c1caeb779bd0ee0b5e5a54988e278ef0d10715cab9a9596b3b583c/depth-10.txt.gz",
+          "bytes": 182975,
+          "rows": 31575,
+          "sha256": "6e7ae114f6c1caeb779bd0ee0b5e5a54988e278ef0d10715cab9a9596b3b583c"
+        },
+        "11": {
+          "url": "/stats/scramble/exact-puzzles/lsemu/7a5672e7eb1336de85feb722d292db672aa9e0207b75ebe1d89970fe51bbc8fa/depth-11.txt.gz",
+          "bytes": 258226,
+          "rows": 40622,
+          "sha256": "7a5672e7eb1336de85feb722d292db672aa9e0207b75ebe1d89970fe51bbc8fa"
+        },
+        "12": {
+          "url": "/stats/scramble/exact-puzzles/lsemu/e6ba23dd974384dbd4874aec204edfb2cd4a1ef29fde3fde0807c21d9db8b0c9/depth-12.txt.gz",
+          "bytes": 275793,
+          "rows": 40200,
+          "sha256": "e6ba23dd974384dbd4874aec204edfb2cd4a1ef29fde3fde0807c21d9db8b0c9"
+        },
+        "13": {
+          "url": "/stats/scramble/exact-puzzles/lsemu/9cf4d04b0453e2fb93b80b7b69389ffe849a2b3a40ab29de6cd3391dbb2e6578/depth-13.txt.gz",
+          "bytes": 190582,
+          "rows": 25959,
+          "sha256": "9cf4d04b0453e2fb93b80b7b69389ffe849a2b3a40ab29de6cd3391dbb2e6578"
+        },
+        "14": {
+          "url": "/stats/scramble/exact-puzzles/lsemu/b654d480377790877a5f2da069f57a0bc3e91cd83dce18644497ba28d97d030c/depth-14.txt.gz",
+          "bytes": 82486,
+          "rows": 10643,
+          "sha256": "b654d480377790877a5f2da069f57a0bc3e91cd83dce18644497ba28d97d030c"
+        },
+        "15": {
+          "url": "/stats/scramble/exact-puzzles/lsemu/8f8ec501866c7920dfe15bd177a2c8202f393ecf1a886264755e2f6ba3b12782/depth-15.txt.gz",
+          "bytes": 23129,
+          "rows": 2816,
+          "sha256": "8f8ec501866c7920dfe15bd177a2c8202f393ecf1a886264755e2f6ba3b12782"
+        },
+        "16": {
+          "url": "/stats/scramble/exact-puzzles/lsemu/8888bf08d4faf79f835c9e94287783d30ca4a7b9a8aa63e111be2d378b656ab2/depth-16.txt.gz",
+          "bytes": 7565,
+          "rows": 882,
+          "sha256": "8888bf08d4faf79f835c9e94287783d30ca4a7b9a8aa63e111be2d378b656ab2"
+        },
+        "17": {
+          "url": "/stats/scramble/exact-puzzles/lsemu/bbc646645aea5e7ff754a66613340218827401a839ef2183b87700dca03f04ac/depth-17.txt.gz",
+          "bytes": 2813,
+          "rows": 320,
+          "sha256": "bbc646645aea5e7ff754a66613340218827401a839ef2183b87700dca03f04ac"
+        },
+        "18": {
+          "url": "/stats/scramble/exact-puzzles/lsemu/8c1d706beb84081d935de4b1e723225f92e919d31ff814d71231d6a0b2c31d6c/depth-18.txt.gz",
+          "bytes": 764,
+          "rows": 80,
+          "sha256": "8c1d706beb84081d935de4b1e723225f92e919d31ff814d71231d6a0b2c31d6c"
+        },
+        "19": {
+          "url": "/stats/scramble/exact-puzzles/lsemu/2e8eff5c7cd853000859955862ac3aedfcb778f780ed746499d8dd5f56e00766/depth-19.txt.gz",
+          "bytes": 163,
+          "rows": 12,
+          "sha256": "2e8eff5c7cd853000859955862ac3aedfcb778f780ed746499d8dd5f56e00766"
+        },
+        "20": {
+          "url": "/stats/scramble/exact-puzzles/lsemu/448e514e3ace9fcce39abda5fad2125d9a65d26a35476e32c7bb2c1dbb915aa9/depth-20.txt.gz",
+          "bytes": 57,
+          "rows": 2,
+          "sha256": "448e514e3ace9fcce39abda5fad2125d9a65d26a35476e32c7bb2c1dbb915aa9"
+        }
+      }
+    },
+    "jingpyraminx": {
+      "allStates": {
+        "url": "/stats/scramble/exact-puzzles/jingpyraminx/cc3b0b34077ce59f773131ca2019cc43b2d417c0ae7dc5c9ed796f7d50b3d47e/all.csv.gz",
+        "bytes": 28640835,
+        "rows": 3732480,
+        "sha256": "cc3b0b34077ce59f773131ca2019cc43b2d417c0ae7dc5c9ed796f7d50b3d47e"
+      },
+      "byDepth": {
+        "0": {
+          "url": "/stats/scramble/exact-puzzles/jingpyraminx/fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8/depth-0.txt.gz",
+          "bytes": 21,
+          "rows": 1,
+          "sha256": "fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8"
+        },
+        "1": {
+          "url": "/stats/scramble/exact-puzzles/jingpyraminx/a63af211fbcc8122531186f38496a9553ac68445f34ff0f8a1ad533dcd6c8a32/depth-1.txt.gz",
+          "bytes": 164,
+          "rows": 8,
+          "sha256": "a63af211fbcc8122531186f38496a9553ac68445f34ff0f8a1ad533dcd6c8a32"
+        },
+        "2": {
+          "url": "/stats/scramble/exact-puzzles/jingpyraminx/52533d9bfe6ff74061390bfcf08876358e398222d1d452d2ada4395e2976d243/depth-2.txt.gz",
+          "bytes": 521,
+          "rows": 48,
+          "sha256": "52533d9bfe6ff74061390bfcf08876358e398222d1d452d2ada4395e2976d243"
+        },
+        "3": {
+          "url": "/stats/scramble/exact-puzzles/jingpyraminx/99483797ea163f4c0fda8a32317181facd7ef23384f57249572a9dc0ee330fdb/depth-3.txt.gz",
+          "bytes": 1511,
+          "rows": 288,
+          "sha256": "99483797ea163f4c0fda8a32317181facd7ef23384f57249572a9dc0ee330fdb"
+        },
+        "4": {
+          "url": "/stats/scramble/exact-puzzles/jingpyraminx/7bef737a96c69395f359a1c97ee2093f1e14b56946a939b5cc05dab563037018/depth-4.txt.gz",
+          "bytes": 6896,
+          "rows": 1728,
+          "sha256": "7bef737a96c69395f359a1c97ee2093f1e14b56946a939b5cc05dab563037018"
+        },
+        "5": {
+          "url": "/stats/scramble/exact-puzzles/jingpyraminx/aed479405372cafbe6967115e3c88363db8b0ec473f1972ee6c2c13c334c9f5e/depth-5.txt.gz",
+          "bytes": 44157,
+          "rows": 10128,
+          "sha256": "aed479405372cafbe6967115e3c88363db8b0ec473f1972ee6c2c13c334c9f5e"
+        },
+        "6": {
+          "url": "/stats/scramble/exact-puzzles/jingpyraminx/6fca66a1189a0a9cd9cfc52cc7e42f2bcdd216432218d1d2223a832e88b87e61/depth-6.txt.gz",
+          "bytes": 292361,
+          "rows": 57780,
+          "sha256": "6fca66a1189a0a9cd9cfc52cc7e42f2bcdd216432218d1d2223a832e88b87e61"
+        },
+        "7": {
+          "url": "/stats/scramble/exact-puzzles/jingpyraminx/3790e56b3a0e0df4e0d8c26e3252fb5e37d2658a8b2f2722b0ba047990b5dce7/depth-7.txt.gz",
+          "bytes": 1779780,
+          "rows": 305483,
+          "sha256": "3790e56b3a0e0df4e0d8c26e3252fb5e37d2658a8b2f2722b0ba047990b5dce7"
+        },
+        "8": {
+          "url": "/stats/scramble/exact-puzzles/jingpyraminx/cbfb520d39321aad774abce193529c745bbc91402bc8b9fb5c785d3336fdcc82/depth-8.txt.gz",
+          "bytes": 8204591,
+          "rows": 1239266,
+          "sha256": "cbfb520d39321aad774abce193529c745bbc91402bc8b9fb5c785d3336fdcc82"
+        },
+        "9": {
+          "url": "/stats/scramble/exact-puzzles/jingpyraminx/667bd55d223505136060a2325e5660f110858101645f93566fc8aec20f9bf716/depth-9.txt.gz",
+          "bytes": 13867965,
+          "rows": 1879631,
+          "sha256": "667bd55d223505136060a2325e5660f110858101645f93566fc8aec20f9bf716"
+        },
+        "10": {
+          "url": "/stats/scramble/exact-puzzles/jingpyraminx/69de2ada3e9ba624149be41748d7a262fd1801b7dc694045c6456176cd2366a3/depth-10.txt.gz",
+          "bytes": 1893291,
+          "rows": 237320,
+          "sha256": "69de2ada3e9ba624149be41748d7a262fd1801b7dc694045c6456176cd2366a3"
+        },
+        "11": {
+          "url": "/stats/scramble/exact-puzzles/jingpyraminx/4058e167361589b4359c0e956de1ed5f17da70b1f8f5ec170cf57d7b6823d9a9/depth-11.txt.gz",
+          "bytes": 7575,
+          "rows": 778,
+          "sha256": "4058e167361589b4359c0e956de1ed5f17da70b1f8f5ec170cf57d7b6823d9a9"
+        },
+        "12": {
+          "url": "/stats/scramble/exact-puzzles/jingpyraminx/025a4134f6e095855968a6d79b826067cdd6500d6aa8169531a5acdee4b14ac9/depth-12.txt.gz",
+          "bytes": 305,
+          "rows": 21,
+          "sha256": "025a4134f6e095855968a6d79b826067cdd6500d6aa8169531a5acdee4b14ac9"
+        }
+      }
+    },
+    "skewb": {
+      "allStates": {
+        "url": "/stats/scramble/exact-puzzles/skewb/d84f37110c24b9e53b3b21bf2f5e3d4211945ecfd0120dfc89573cb7ba3ef24d/all.csv.gz",
+        "bytes": 21656035,
+        "rows": 3149280,
+        "sha256": "d84f37110c24b9e53b3b21bf2f5e3d4211945ecfd0120dfc89573cb7ba3ef24d"
+      },
+      "byDepth": {
+        "0": {
+          "url": "/stats/scramble/exact-puzzles/skewb/fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8/depth-0.txt.gz",
+          "bytes": 21,
+          "rows": 1,
+          "sha256": "fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8"
+        },
+        "1": {
+          "url": "/stats/scramble/exact-puzzles/skewb/185aa1ccc062d4edb7530de70b7d9fb2ceb1f660e0c58741e776433297584550/depth-1.txt.gz",
+          "bytes": 40,
+          "rows": 8,
+          "sha256": "185aa1ccc062d4edb7530de70b7d9fb2ceb1f660e0c58741e776433297584550"
+        },
+        "2": {
+          "url": "/stats/scramble/exact-puzzles/skewb/7cf1c70d45d43c0537dd593eb816b05468a203fa2cec49788b4eeff347bfb4c6/depth-2.txt.gz",
+          "bytes": 107,
+          "rows": 48,
+          "sha256": "7cf1c70d45d43c0537dd593eb816b05468a203fa2cec49788b4eeff347bfb4c6"
+        },
+        "3": {
+          "url": "/stats/scramble/exact-puzzles/skewb/6d6f37906078a3234a483ca323f3199b57d5e25a3444183de966fd90eb1e3da8/depth-3.txt.gz",
+          "bytes": 632,
+          "rows": 288,
+          "sha256": "6d6f37906078a3234a483ca323f3199b57d5e25a3444183de966fd90eb1e3da8"
+        },
+        "4": {
+          "url": "/stats/scramble/exact-puzzles/skewb/0585e3f660b508304fc50ebe275f2d4e67fd5b0d666dfa180456c68a35e32e5c/depth-4.txt.gz",
+          "bytes": 4737,
+          "rows": 1728,
+          "sha256": "0585e3f660b508304fc50ebe275f2d4e67fd5b0d666dfa180456c68a35e32e5c"
+        },
+        "5": {
+          "url": "/stats/scramble/exact-puzzles/skewb/c54cd18f03b66732e1139c2484add010c3266da5dee2146916d9b7f82aeb72ab/depth-5.txt.gz",
+          "bytes": 36122,
+          "rows": 10248,
+          "sha256": "c54cd18f03b66732e1139c2484add010c3266da5dee2146916d9b7f82aeb72ab"
+        },
+        "6": {
+          "url": "/stats/scramble/exact-puzzles/skewb/2513dd9c63d1e0fc31178650faeee335ac57146a809eb938d821e7304e116206/depth-6.txt.gz",
+          "bytes": 263168,
+          "rows": 59304,
+          "sha256": "2513dd9c63d1e0fc31178650faeee335ac57146a809eb938d821e7304e116206"
+        },
+        "7": {
+          "url": "/stats/scramble/exact-puzzles/skewb/961097448d98e72d3362f96f6455799b34db14f8f27ddc9b51ddfe37bc376bc7/depth-7.txt.gz",
+          "bytes": 1642308,
+          "rows": 315198,
+          "sha256": "961097448d98e72d3362f96f6455799b34db14f8f27ddc9b51ddfe37bc376bc7"
+        },
+        "8": {
+          "url": "/stats/scramble/exact-puzzles/skewb/1831ae4295e89ef8a38ec82f979b79aac3b3d4fa96ba817efbc4b00c0d2d38f2/depth-8.txt.gz",
+          "bytes": 7322032,
+          "rows": 1225483,
+          "sha256": "1831ae4295e89ef8a38ec82f979b79aac3b3d4fa96ba817efbc4b00c0d2d38f2"
+        },
+        "9": {
+          "url": "/stats/scramble/exact-puzzles/skewb/23841e6468c30ff7f8dc07312272efd6eb4f65efa7ab681b77d28f2a03fa99e4/depth-9.txt.gz",
+          "bytes": 9690040,
+          "rows": 1455856,
+          "sha256": "23841e6468c30ff7f8dc07312272efd6eb4f65efa7ab681b77d28f2a03fa99e4"
+        },
+        "10": {
+          "url": "/stats/scramble/exact-puzzles/skewb/bb0bac118586c19c1d6c318ac7272de39048112b0ccdd8966887a3cbeac49b2a/depth-10.txt.gz",
+          "bytes": 580769,
+          "rows": 81028,
+          "sha256": "bb0bac118586c19c1d6c318ac7272de39048112b0ccdd8966887a3cbeac49b2a"
+        },
+        "11": {
+          "url": "/stats/scramble/exact-puzzles/skewb/8bd10d75418630b4d789c0bcc8536508b96f5c5760c070ea04c4bcbe2cdb9d32/depth-11.txt.gz",
+          "bytes": 1028,
+          "rows": 90,
+          "sha256": "8bd10d75418630b4d789c0bcc8536508b96f5c5760c070ea04c4bcbe2cdb9d32"
+        }
+      }
+    },
+    "dino": {
+      "allStates": {
+        "url": "/stats/scramble/exact-puzzles/dino/a13cc8d505145b3a62597c7ba267e8514f721a862260902dd2ca4a4b4f2c5c79/all.csv.gz",
+        "bytes": 146389560,
+        "rows": 19958400,
+        "sha256": "a13cc8d505145b3a62597c7ba267e8514f721a862260902dd2ca4a4b4f2c5c79"
+      },
+      "byDepth": {
+        "0": {
+          "url": "/stats/scramble/exact-puzzles/dino/fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8/depth-0.txt.gz",
+          "bytes": 21,
+          "rows": 1,
+          "sha256": "fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8"
+        },
+        "1": {
+          "url": "/stats/scramble/exact-puzzles/dino/eb9bf601e5d9157ac1d627ed8dffca95582417f770a0f8d8ac9fa9a20dabad70/depth-1.txt.gz",
+          "bytes": 240,
+          "rows": 16,
+          "sha256": "eb9bf601e5d9157ac1d627ed8dffca95582417f770a0f8d8ac9fa9a20dabad70"
+        },
+        "2": {
+          "url": "/stats/scramble/exact-puzzles/dino/5bbfe27635c996677fc2c9f8e59ace0de7c08f19c2c3a1ec6fbbe4598f4aa3b0/depth-2.txt.gz",
+          "bytes": 1661,
+          "rows": 160,
+          "sha256": "5bbfe27635c996677fc2c9f8e59ace0de7c08f19c2c3a1ec6fbbe4598f4aa3b0"
+        },
+        "3": {
+          "url": "/stats/scramble/exact-puzzles/dino/1ea193cb4ed7a4382345fbce719ea201e89b55c58ce2008aa1e612aa4603180d/depth-3.txt.gz",
+          "bytes": 7139,
+          "rows": 1408,
+          "sha256": "1ea193cb4ed7a4382345fbce719ea201e89b55c58ce2008aa1e612aa4603180d"
+        },
+        "4": {
+          "url": "/stats/scramble/exact-puzzles/dino/a3cf99a1b30f6d28c72f1b10b3ad30a79124f8535bef64c91ffa1802fa1cdab9/depth-4.txt.gz",
+          "bytes": 44889,
+          "rows": 11712,
+          "sha256": "a3cf99a1b30f6d28c72f1b10b3ad30a79124f8535bef64c91ffa1802fa1cdab9"
+        },
+        "5": {
+          "url": "/stats/scramble/exact-puzzles/dino/e455f76d0e2103a747543d42a3bfbb3c1401776cef2dcbee45d2195a6c52b196/depth-5.txt.gz",
+          "bytes": 390053,
+          "rows": 90912,
+          "sha256": "e455f76d0e2103a747543d42a3bfbb3c1401776cef2dcbee45d2195a6c52b196"
+        },
+        "6": {
+          "url": "/stats/scramble/exact-puzzles/dino/51b9096aa2db5ec9a63b1e275ebe9d6472d206cef1cc84d2a85b799409a36f4f/depth-6.txt.gz",
+          "bytes": 3217167,
+          "rows": 640192,
+          "sha256": "51b9096aa2db5ec9a63b1e275ebe9d6472d206cef1cc84d2a85b799409a36f4f"
+        },
+        "7": {
+          "url": "/stats/scramble/exact-puzzles/dino/fca77a3434f1aa8cdee6144bf31b4de489b17530060243173d76a1f24568fcd8/depth-7.txt.gz",
+          "bytes": 22076533,
+          "rows": 3740838,
+          "sha256": "fca77a3434f1aa8cdee6144bf31b4de489b17530060243173d76a1f24568fcd8"
+        },
+        "8": {
+          "url": "/stats/scramble/exact-puzzles/dino/fe0df293ee3f9c0bf909152a9e7dd5b86090c28e7e04623ceeaa4e6fbe6a66ba/depth-8.txt.gz",
+          "bytes": 76782113,
+          "rows": 11138597,
+          "sha256": "fe0df293ee3f9c0bf909152a9e7dd5b86090c28e7e04623ceeaa4e6fbe6a66ba"
+        },
+        "9": {
+          "url": "/stats/scramble/exact-puzzles/dino/6c789ddc79fb1dbef4f548a2e3e0919aec660ccfbabb9a8c6f7346f5b20c40bd/depth-9.txt.gz",
+          "bytes": 33969391,
+          "rows": 4313963,
+          "sha256": "6c789ddc79fb1dbef4f548a2e3e0919aec660ccfbabb9a8c6f7346f5b20c40bd"
+        },
+        "10": {
+          "url": "/stats/scramble/exact-puzzles/dino/1a749964b648a65c80019711001e94278ff54a5a0e512f939865ea7ea6d05fd4/depth-10.txt.gz",
+          "bytes": 188022,
+          "rows": 20577,
+          "sha256": "1a749964b648a65c80019711001e94278ff54a5a0e512f939865ea7ea6d05fd4"
+        },
+        "11": {
+          "url": "/stats/scramble/exact-puzzles/dino/21d90a84be22d1723e6af30d281e946e6d7977d57683d7e91a397c1fe9c9e8fa/depth-11.txt.gz",
+          "bytes": 717,
+          "rows": 24,
+          "sha256": "21d90a84be22d1723e6af30d281e946e6d7977d57683d7e91a397c1fe9c9e8fa"
+        }
+      }
+    },
+    "dino-mirror": {
+      "allStates": {
+        "url": "/stats/scramble/exact-puzzles/dino-mirror/4f2510ca5c8793d4d5d6f22839f1029f945b9ee561164accd20773da6934ca9b/all.csv.gz",
+        "bytes": 146277393,
+        "rows": 19958400,
+        "sha256": "4f2510ca5c8793d4d5d6f22839f1029f945b9ee561164accd20773da6934ca9b"
+      },
+      "byDepth": {
+        "0": {
+          "url": "/stats/scramble/exact-puzzles/dino-mirror/f2738a2b5bde80ecefe5c159ddacb4ba095aa2d0361d48f9675f561db4d3846d/depth-0.txt.gz",
+          "bytes": 43,
+          "rows": 2,
+          "sha256": "f2738a2b5bde80ecefe5c159ddacb4ba095aa2d0361d48f9675f561db4d3846d"
+        },
+        "1": {
+          "url": "/stats/scramble/exact-puzzles/dino-mirror/0c3d711d8fc1681b61e70b3d8ec00f2533d68d0f9ed9797bde8a3c7fed5979a8/depth-1.txt.gz",
+          "bytes": 517,
+          "rows": 32,
+          "sha256": "0c3d711d8fc1681b61e70b3d8ec00f2533d68d0f9ed9797bde8a3c7fed5979a8"
+        },
+        "2": {
+          "url": "/stats/scramble/exact-puzzles/dino-mirror/d1657579811878a123653e6f7cac146da6bc7130f49a2f66e2d5acdef9837759/depth-2.txt.gz",
+          "bytes": 3526,
+          "rows": 320,
+          "sha256": "d1657579811878a123653e6f7cac146da6bc7130f49a2f66e2d5acdef9837759"
+        },
+        "3": {
+          "url": "/stats/scramble/exact-puzzles/dino-mirror/24c080cbbe0524ad8b384302f893b24d6988162d8cccda465a7fd0f312473368/depth-3.txt.gz",
+          "bytes": 16887,
+          "rows": 2816,
+          "sha256": "24c080cbbe0524ad8b384302f893b24d6988162d8cccda465a7fd0f312473368"
+        },
+        "4": {
+          "url": "/stats/scramble/exact-puzzles/dino-mirror/614cf7c84925af17599cfc7616aba6356eabe61cccf9a53e4d9442bb9f654637/depth-4.txt.gz",
+          "bytes": 122084,
+          "rows": 23424,
+          "sha256": "614cf7c84925af17599cfc7616aba6356eabe61cccf9a53e4d9442bb9f654637"
+        },
+        "5": {
+          "url": "/stats/scramble/exact-puzzles/dino-mirror/d31e7edb7dc783562f8032e9de1048698416fd068b25557c98c01b9bf663d486/depth-5.txt.gz",
+          "bytes": 985373,
+          "rows": 180084,
+          "sha256": "d31e7edb7dc783562f8032e9de1048698416fd068b25557c98c01b9bf663d486"
+        },
+        "6": {
+          "url": "/stats/scramble/exact-puzzles/dino-mirror/156eacafd1982a35f3536d4c0caaeb703d5de65f8518381a8ab47a8813d45ac0/depth-6.txt.gz",
+          "bytes": 7253335,
+          "rows": 1227084,
+          "sha256": "156eacafd1982a35f3536d4c0caaeb703d5de65f8518381a8ab47a8813d45ac0"
+        },
+        "7": {
+          "url": "/stats/scramble/exact-puzzles/dino-mirror/35f6b4b9184b8162357a939449835095f668e30ec4fd6c753031eb0b388610ca/depth-7.txt.gz",
+          "bytes": 39430787,
+          "rows": 6167660,
+          "sha256": "35f6b4b9184b8162357a939449835095f668e30ec4fd6c753031eb0b388610ca"
+        },
+        "8": {
+          "url": "/stats/scramble/exact-puzzles/dino-mirror/3ab40fae1aa5e3eccc2f74705ee9a017a30b3213ee1257826da41fbc3833f92c/depth-8.txt.gz",
+          "bytes": 77364008,
+          "rows": 10926002,
+          "sha256": "3ab40fae1aa5e3eccc2f74705ee9a017a30b3213ee1257826da41fbc3833f92c"
+        },
+        "9": {
+          "url": "/stats/scramble/exact-puzzles/dino-mirror/665ea754dc9f8c701de1db7441e36d08b5a10a1c774fce54cb287dbf809a19d3/depth-9.txt.gz",
+          "bytes": 11432176,
+          "rows": 1429972,
+          "sha256": "665ea754dc9f8c701de1db7441e36d08b5a10a1c774fce54cb287dbf809a19d3"
+        },
+        "10": {
+          "url": "/stats/scramble/exact-puzzles/dino-mirror/a5591a160a6541edb751b663269385456bb3ab0616d6cbe8066a7d1336c4bae1/depth-10.txt.gz",
+          "bytes": 12674,
+          "rows": 1004,
+          "sha256": "a5591a160a6541edb751b663269385456bb3ab0616d6cbe8066a7d1336c4bae1"
+        }
+      }
+    },
+    "tetraminx": {
+      "allStates": {
+        "url": "/stats/scramble/exact-puzzles/tetraminx/70833f473136b32e23f83fbc16dc98913d0d1232629179fbbd46df9b46f241b5/all.csv.gz",
+        "bytes": 6016352,
+        "rows": 933120,
+        "sha256": "70833f473136b32e23f83fbc16dc98913d0d1232629179fbbd46df9b46f241b5"
+      },
+      "byDepth": {
+        "0": {
+          "url": "/stats/scramble/exact-puzzles/tetraminx/fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8/depth-0.txt.gz",
+          "bytes": 21,
+          "rows": 1,
+          "sha256": "fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8"
+        },
+        "1": {
+          "url": "/stats/scramble/exact-puzzles/tetraminx/9d3e17c8481f310947b13ee8defa7b1edf5146a19a9eb10dc0b63671a747061f/depth-1.txt.gz",
+          "bytes": 78,
+          "rows": 8,
+          "sha256": "9d3e17c8481f310947b13ee8defa7b1edf5146a19a9eb10dc0b63671a747061f"
+        },
+        "2": {
+          "url": "/stats/scramble/exact-puzzles/tetraminx/4a22c047303638f9c1efbe94d9a505c694f3dbe295f863ea6a003299ebb30ab4/depth-2.txt.gz",
+          "bytes": 241,
+          "rows": 48,
+          "sha256": "4a22c047303638f9c1efbe94d9a505c694f3dbe295f863ea6a003299ebb30ab4"
+        },
+        "3": {
+          "url": "/stats/scramble/exact-puzzles/tetraminx/1326890ea1f61c2ba634a1e95f16fe103d693ac66da6ec58480aff5537d4d297/depth-3.txt.gz",
+          "bytes": 891,
+          "rows": 288,
+          "sha256": "1326890ea1f61c2ba634a1e95f16fe103d693ac66da6ec58480aff5537d4d297"
+        },
+        "4": {
+          "url": "/stats/scramble/exact-puzzles/tetraminx/8f772015e5e4429d39af11f8b48933111566f162505e1e7f2e56bd6e7c2155c3/depth-4.txt.gz",
+          "bytes": 5557,
+          "rows": 1728,
+          "sha256": "8f772015e5e4429d39af11f8b48933111566f162505e1e7f2e56bd6e7c2155c3"
+        },
+        "5": {
+          "url": "/stats/scramble/exact-puzzles/tetraminx/3749c694bf98182220bdddec2bb78bc3ed998afd59940a1a72fec17d670c9a40/depth-5.txt.gz",
+          "bytes": 38000,
+          "rows": 9896,
+          "sha256": "3749c694bf98182220bdddec2bb78bc3ed998afd59940a1a72fec17d670c9a40"
+        },
+        "6": {
+          "url": "/stats/scramble/exact-puzzles/tetraminx/a9884d7e45fc15d360dfa2e90b06df5607a6d916c238899fa435775ac28f3c5a/depth-6.txt.gz",
+          "bytes": 233893,
+          "rows": 51808,
+          "sha256": "a9884d7e45fc15d360dfa2e90b06df5607a6d916c238899fa435775ac28f3c5a"
+        },
+        "7": {
+          "url": "/stats/scramble/exact-puzzles/tetraminx/6d89bc87fcc811ee63fe280af845638e26d9b1f199716c9ba652cdb0c94b1360/depth-7.txt.gz",
+          "bytes": 1149852,
+          "rows": 220111,
+          "sha256": "6d89bc87fcc811ee63fe280af845638e26d9b1f199716c9ba652cdb0c94b1360"
+        },
+        "8": {
+          "url": "/stats/scramble/exact-puzzles/tetraminx/8cb5eae910b0167a77e16965c26225642dbd3469e4cb6e50bb8b6b15432278b1/depth-8.txt.gz",
+          "bytes": 2852706,
+          "rows": 480467,
+          "sha256": "8cb5eae910b0167a77e16965c26225642dbd3469e4cb6e50bb8b6b15432278b1"
+        },
+        "9": {
+          "url": "/stats/scramble/exact-puzzles/tetraminx/2cf1239e88891733243b73e119a06b7cdf1c9f30d97ea01a7319440a553ee13e/depth-9.txt.gz",
+          "bytes": 1089177,
+          "rows": 166276,
+          "sha256": "2cf1239e88891733243b73e119a06b7cdf1c9f30d97ea01a7319440a553ee13e"
+        },
+        "10": {
+          "url": "/stats/scramble/exact-puzzles/tetraminx/367d4c98f966bf8f1cb859944e2d537125bcaf6a6234a9d87ff39bc9fec610fd/depth-10.txt.gz",
+          "bytes": 17578,
+          "rows": 2457,
+          "sha256": "367d4c98f966bf8f1cb859944e2d537125bcaf6a6234a9d87ff39bc9fec610fd"
+        },
+        "11": {
+          "url": "/stats/scramble/exact-puzzles/tetraminx/dc1a2c4e2d58e85e4c34d158f654298925ba76fb696f2c84469ce7699daff9f3/depth-11.txt.gz",
+          "bytes": 294,
+          "rows": 32,
+          "sha256": "dc1a2c4e2d58e85e4c34d158f654298925ba76fb696f2c84469ce7699daff9f3"
+        }
+      }
+    },
+    "pyram-tips": {
+      "allStates": {
+        "url": "/stats/scramble/exact-puzzles/pyram-tips/baca67efa0cc644a9a5ba3bf95b8c7f5c799270276525b4ae46a831f1976a0a7/all.csv.gz",
+        "bytes": 286716097,
+        "rows": 75582720,
+        "sha256": "baca67efa0cc644a9a5ba3bf95b8c7f5c799270276525b4ae46a831f1976a0a7"
+      },
+      "byDepth": {
+        "0": {
+          "url": "/stats/scramble/exact-puzzles/pyram-tips/fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8/depth-0.txt.gz",
+          "bytes": 21,
+          "rows": 1,
+          "sha256": "fc14f5c87a36fd990a62a808a8cb1a06fd3ee68558875f88bf1481437a6cd8c8"
+        },
+        "1": {
+          "url": "/stats/scramble/exact-puzzles/pyram-tips/981f45b6aa9c50327b2cbe95e5c40b4e6680e5a0acdbf387e7ce18895789f022/depth-1.txt.gz",
+          "bytes": 220,
+          "rows": 16,
+          "sha256": "981f45b6aa9c50327b2cbe95e5c40b4e6680e5a0acdbf387e7ce18895789f022"
+        },
+        "2": {
+          "url": "/stats/scramble/exact-puzzles/pyram-tips/de4f388a973afd961d7d44635400de2b89d55dd28da43b983d6c916c92ee8d9e/depth-2.txt.gz",
+          "bytes": 1607,
+          "rows": 136,
+          "sha256": "de4f388a973afd961d7d44635400de2b89d55dd28da43b983d6c916c92ee8d9e"
+        },
+        "3": {
+          "url": "/stats/scramble/exact-puzzles/pyram-tips/2eee582e9f82fe32a80377ba7386c263ed8d2c3acd12e0c7707dc1c49efe2b7a/depth-3.txt.gz",
+          "bytes": 8193,
+          "rows": 896,
+          "sha256": "2eee582e9f82fe32a80377ba7386c263ed8d2c3acd12e0c7707dc1c49efe2b7a"
+        },
+        "4": {
+          "url": "/stats/scramble/exact-puzzles/pyram-tips/8be52ec0ead664bf4cfccc33eef304b7a5b2c40a26d5d76de237107e03cecefa/depth-4.txt.gz",
+          "bytes": 28176,
+          "rows": 5456,
+          "sha256": "8be52ec0ead664bf4cfccc33eef304b7a5b2c40a26d5d76de237107e03cecefa"
+        },
+        "5": {
+          "url": "/stats/scramble/exact-puzzles/pyram-tips/d6a53cae5ec8902e41867a4c835b5fb261c8450997ebe94526c6aa5a7635f670/depth-5.txt.gz",
+          "bytes": 123942,
+          "rows": 32296,
+          "sha256": "d6a53cae5ec8902e41867a4c835b5fb261c8450997ebe94526c6aa5a7635f670"
+        },
+        "6": {
+          "url": "/stats/scramble/exact-puzzles/pyram-tips/f96d88277ef594be6f23b941c58ee9385624dab9739cad083cb8f44cc3a6930d/depth-6.txt.gz",
+          "bytes": 729874,
+          "rows": 182432,
+          "sha256": "f96d88277ef594be6f23b941c58ee9385624dab9739cad083cb8f44cc3a6930d"
+        },
+        "7": {
+          "url": "/stats/scramble/exact-puzzles/pyram-tips/a95754b438d1a4bc03d4e59c5bb4238d2081e0fe98e8afd87b91dbbd700ad06f/depth-7.txt.gz",
+          "bytes": 3976606,
+          "rows": 931983,
+          "sha256": "a95754b438d1a4bc03d4e59c5bb4238d2081e0fe98e8afd87b91dbbd700ad06f"
+        },
+        "8": {
+          "url": "/stats/scramble/exact-puzzles/pyram-tips/cdd99c18b837614d14e87b76c7277d226f335d106a974239e96b1cca1670ea11/depth-8.txt.gz",
+          "bytes": 16120589,
+          "rows": 3829067,
+          "sha256": "cdd99c18b837614d14e87b76c7277d226f335d106a974239e96b1cca1670ea11"
+        },
+        "9": {
+          "url": "/stats/scramble/exact-puzzles/pyram-tips/191cd8bd0e1564872396f9a3f928f8eacda7257b4238a7a89eacc2e8d14ab8ad/depth-9.txt.gz",
+          "bytes": 43120625,
+          "rows": 11108868,
+          "sha256": "191cd8bd0e1564872396f9a3f928f8eacda7257b4238a7a89eacc2e8d14ab8ad"
+        },
+        "10": {
+          "url": "/stats/scramble/exact-puzzles/pyram-tips/3b743c27d81bffd1426c2a6b15174c95e758f35034f46a2c49e832793ed8f287/depth-10.txt.gz",
+          "bytes": 77666810,
+          "rows": 20736353,
+          "sha256": "3b743c27d81bffd1426c2a6b15174c95e758f35034f46a2c49e832793ed8f287"
+        },
+        "11": {
+          "url": "/stats/scramble/exact-puzzles/pyram-tips/63614772d5679f0065307c418ace18d118d8ade1b765fcf9c1318ef8e25218ea/depth-11.txt.gz",
+          "bytes": 87624606,
+          "rows": 22907032,
+          "sha256": "63614772d5679f0065307c418ace18d118d8ade1b765fcf9c1318ef8e25218ea"
+        },
+        "12": {
+          "url": "/stats/scramble/exact-puzzles/pyram-tips/406d75347326a7e14bf402bad5a958aa2ec5a29d8125965588c0a85f93b28104/depth-12.txt.gz",
+          "bytes": 53050730,
+          "rows": 13067528,
+          "sha256": "406d75347326a7e14bf402bad5a958aa2ec5a29d8125965588c0a85f93b28104"
+        },
+        "13": {
+          "url": "/stats/scramble/exact-puzzles/pyram-tips/811c3785566aaf975163977b1de95712be8c8c9e25d84ab7772c9ee909509845/depth-13.txt.gz",
+          "bytes": 11904154,
+          "rows": 2739808,
+          "sha256": "811c3785566aaf975163977b1de95712be8c8c9e25d84ab7772c9ee909509845"
+        },
+        "14": {
+          "url": "/stats/scramble/exact-puzzles/pyram-tips/725bb9a8382c28b69e7c15bd06ec70b8708f40e6b83e65d04c4433ab7e579e65/depth-14.txt.gz",
+          "bytes": 190019,
+          "rows": 40336,
+          "sha256": "725bb9a8382c28b69e7c15bd06ec70b8708f40e6b83e65d04c4433ab7e579e65"
+        },
+        "15": {
+          "url": "/stats/scramble/exact-puzzles/pyram-tips/9e9cd7e9829059a3ff0aa95c049d73b7fcd0b51fa652066c7a8cc8953c9e2843/depth-15.txt.gz",
+          "bytes": 2328,
+          "rows": 512,
+          "sha256": "9e9cd7e9829059a3ff0aa95c049d73b7fcd0b51fa652066c7a8cc8953c9e2843"
+        }
+      }
+    }
+  },
+  "inventorySha256": "176ac3d459e1e66efafd098a5c27c8740ba8695b666e9cb8afd53eaf5455b822"
+}

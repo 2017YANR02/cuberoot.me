@@ -247,32 +247,35 @@ impl HtrSolver {
 
         // 全空间 BFS(G2 move 集对取逆封闭 ⇒ 自目标正向扩张即距离)
         let mut dist = vec![255u8; CP8 * SPLIT];
-        let mut frontier: Vec<u32> = Vec::new();
+        // Fixed FIFO: an exact 5 bytes per coordinate (distance + queue),
+        // rather than simultaneously growing two frontier Vec capacities.
+        let mut queue = vec![0u32; CP8 * SPLIT];
+        let mut tail = 0;
         for cp in corner_htr_group() {
             let idx = perm8_rank(&cp) * SPLIT + split_solved;
             if dist[idx] == 255 {
                 dist[idx] = 0;
-                frontier.push(idx as u32);
+                queue[tail] = idx as u32;
+                tail += 1;
             }
         }
-        let mut d = 0u8;
-        while !frontier.is_empty() {
-            let mut next = Vec::new();
-            for &i in &frontier {
-                let c = i as usize / SPLIT;
-                let s = i as usize % SPLIT;
-                for &m in &G2_MOVES {
-                    let m = m as usize;
-                    let ni = mt_cp[c * 18 + m] as usize * SPLIT + mt_split[s * 18 + m] as usize;
-                    if dist[ni] == 255 {
-                        dist[ni] = d + 1;
-                        next.push(ni as u32);
-                    }
+        let mut head = 0;
+        while head < tail {
+            let i = queue[head] as usize;
+            head += 1;
+            let c = i / SPLIT;
+            let s = i % SPLIT;
+            for &m in &G2_MOVES {
+                let m = m as usize;
+                let ni = mt_cp[c * 18 + m] as usize * SPLIT + mt_split[s * 18 + m] as usize;
+                if dist[ni] == 255 {
+                    dist[ni] = dist[i] + 1;
+                    queue[tail] = ni as u32;
+                    tail += 1;
                 }
             }
-            d += 1;
-            frontier = next;
         }
+        assert_eq!(tail, CP8 * SPLIT, "HTR coordinate closure incomplete");
 
         HtrSolver {
             mt_cp,
@@ -291,6 +294,73 @@ impl HtrSolver {
             .filter(|&v| v != 255)
             .max()
             .unwrap_or(0)
+    }
+
+    /// Complete 29,400-coset table for offline statistics. The online solver
+    /// retains its original 2,822,400-coordinate API. Every compressed corner
+    /// fibre has exactly 96 elements; every distance and generator is checked.
+    pub fn exact_distribution_tables(&self) -> (Vec<u8>, Vec<u32>, Vec<u8>, usize) {
+        let group = corner_htr_group();
+        assert_eq!(group.len(), 96);
+        let mut compact = vec![u16::MAX; CP8];
+        let mut representatives = Vec::with_capacity(420);
+        for rank in 0..CP8 {
+            if compact[rank] != u16::MAX {
+                continue;
+            }
+            let id = representatives.len() as u16;
+            representatives.push(rank);
+            let cp = perm8_unrank(rank);
+            let mut count = 0;
+            for h in &group {
+                let mut product = [0u8; 8];
+                for slot in 0..8 {
+                    product[slot] = h[cp[slot] as usize];
+                }
+                let member = perm8_rank(&product);
+                assert_eq!(compact[member], u16::MAX, "overlapping HTR fibres");
+                compact[member] = id;
+                count += 1;
+            }
+            assert_eq!(count, 96);
+        }
+        assert_eq!(representatives.len(), 420);
+        let mut distance = vec![255u8; 420 * SPLIT];
+        let mut transitions = vec![0u32; 420 * SPLIT * G2_MOVES.len()];
+        for (c, &cp) in representatives.iter().enumerate() {
+            for split in 0..SPLIT {
+                let state = c * SPLIT + split;
+                distance[state] = self.dist[cp * SPLIT + split];
+                for (col, &m) in G2_MOVES.iter().enumerate() {
+                    transitions[state * G2_MOVES.len() + col] =
+                        compact[self.mt_cp[cp * 18 + m as usize] as usize] as u32 * SPLIT as u32
+                            + self.mt_split[split * 18 + m as usize];
+                }
+            }
+        }
+        for cp in 0..CP8 {
+            let canonical = compact[cp] as usize;
+            for split in 0..SPLIT {
+                assert_eq!(
+                    self.dist[cp * SPLIT + split],
+                    distance[canonical * SPLIT + split],
+                    "HTR fibre distance mismatch"
+                );
+            }
+            for &m in &G2_MOVES {
+                assert_eq!(
+                    compact[self.mt_cp[cp * 18 + m as usize] as usize],
+                    compact[self.mt_cp[representatives[canonical] * 18 + m as usize] as usize],
+                    "HTR quotient transition not well-defined"
+                );
+            }
+        }
+        let root = distance
+            .iter()
+            .position(|&d| d == 0)
+            .expect("HTR root missing");
+        assert_eq!(distance.iter().filter(|&&d| d == 0).count(), 1);
+        (distance, transitions, G2_MOVES.to_vec(), root)
     }
 
     /// DR 检查 + 坐标提取(规范帧 State)。非 DR → None。

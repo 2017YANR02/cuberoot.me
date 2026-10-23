@@ -90,6 +90,7 @@
 
 .scramble-stats-puzzle-meta {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: 0.75rem;
   font-size: 0.82rem;
@@ -579,11 +580,16 @@
   font-size: 0.82rem;
   color: var(--text-sub);
   cursor: pointer;
+  text-decoration: none;
   white-space: nowrap;
   transition: color 0.15s;
 }
 .ivy-dl-all:hover { color: var(--accent); }
 .ivy-dl-all svg { flex-shrink: 0; }
+.ivy-dl-all[download] {
+  max-width: 100%;
+  white-space: normal;
+}
 .scramble-len-footnote {
   font-size: 0.78rem;
   color: var(--text-sub);

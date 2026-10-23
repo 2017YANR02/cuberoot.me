@@ -2,7 +2,7 @@
  * Cmetrick (full / cm3) solver — pure TS, no worker, NO tables to download. TIER D (valid + bounded,
  * NOT optimal): a from-scratch SIGN-then-COMMUTATOR reduction. This is the 3×3 scaling of the
  * Cmetrick Mini (cm2): the Mini is 4 balls fully BFS-able (165,888 states); the full Cmetrick is a
- * 3×3 grid of 9 balls whose reachable state space is 165,112,971,264 = 24⁹/24 ≈ 1.65×10¹¹
+ * 3×3 grid of 9 balls whose reachable fixed-color state space is 165,112,971,264 = 24⁹/16 ≈ 1.65×10¹¹
  * (jaapsch.net/puzzles/cmetrick.htm), FAR beyond any full-BFS or packed-table tier — so the solver
  * core is a constructive reduction, NOT a distance table. The cube-rotation-group machinery
  * (ROT_MATS / MUL / X·Y generators / applyMove) is identical to cm2-solver and reused verbatim here.
@@ -30,7 +30,7 @@
  * test (tests/cm3_solver.test.ts) re-builds the rotation group + the 18 effects from scratch
  * INDEPENDENTLY and round-trips real cstimer cm3 scrambles — that independent geometry is the oracle.
  *
- * PRIOR ART (jaapsch.net/puzzles/cmetrick.htm, canonical): Cmetrick full = 165,112,971,264 = 24⁹/24
+ * PRIOR ART (jaapsch.net/puzzles/cmetrick.htm, canonical): Cmetrick full = 165,112,971,264 = 24⁹/16
  * positions; God's number 15 quarter-turns, mean 12.254 QTM. The classic solving method is a
  * layer-by-layer reduction using the centre ball (#4) as a reference. There is NO cstimer solver and
  * NO published geometry library for cm3, so the reduction here is implemented from scratch (informed
@@ -182,7 +182,7 @@ export const CM3_MOVE_NAMES: ReadonlyArray<string> = MOVES.map((m) => m.name);
 /** Solved state: all 9 balls in the identity orientation. */
 export const CM3_SOLVED: ReadonlyArray<number> = [IDENT, IDENT, IDENT, IDENT, IDENT, IDENT, IDENT, IDENT, IDENT];
 
-/** Reachable-state count (jaapsch.net): 24⁹/24, preformatted string (> 2^31, exact). */
+/** Fixed-color reachable-state count (jaapsch.net): 24⁹/16, preformatted string (> 2^31, exact). */
 export const CM3_STATE_COUNT_STR = '165,112,971,264';
 /**
  * Hard upper bound on solution length (cstimer face-turn metric). The reduction's measured max over

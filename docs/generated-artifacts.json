@@ -7,6 +7,88 @@
   },
   "artifacts": [
     {
+      "id": "client.precomputed-exact-puzzle-distributions",
+      "kind": "checked-in-generated",
+      "source": {
+        "locator": "Completed local bounded BFS reports with full-state proof checks and independently replayed witnesses",
+        "paths": [
+          "core/packages/client/scripts/tetraminx-exact-distribution.mts",
+          "core/packages/client/scripts/jing-pyraminx-exact-distribution.mts",
+          "core/packages/client/scripts/pyramorphix-exact-distribution.mts",
+          "core/packages/client/scripts/dino-exact-distribution.mts",
+          "core/packages/client/scripts/restricted333-exact-distribution.mts",
+          "core/packages/client/scripts/derive-pyraminx-tips-distribution.mts",
+          "core/packages/client/scripts/existing-exact-witness-models.ts",
+          "core/packages/client/scripts/exact-coordinate-bfs.mts",
+          "core/packages/client/scripts/small-puzzle-distribution-worker.ts",
+          "core/packages/client/app/[lang]/sim/pgCatalog.ts",
+          "core/packages/client/scripts/legacy-exact-offline.mts",
+          "core/packages/client/scripts/roux-goal-exact-distributions.mts",
+          "core/packages/client/scripts/fmc-goal-exact-distributions.mts",
+          "solver/src/bin/dist_htr_fr.rs",
+          "solver/src/htr_solver.rs",
+          "solver/src/fr_solver.rs",
+          "core/packages/client/scripts/exact-witness-models/",
+          "core/packages/puzzle-solvers/src/pyraminx-duo-geometry-reference.ts"
+        ]
+      },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "Derived mathematical counts and witness algorithms; geometry uses the existing attributed cubing.js PuzzleGeometry dependency"
+      },
+      "owner": "core/packages/client/scripts/export-exact-puzzle-distributions.mts",
+      "workingDirectory": "core/packages/client",
+      "command": "node --import tsx scripts/export-exact-puzzle-distributions.mts --report <completed-local-report.json> --write",
+      "outputs": [
+        "core/packages/client/app/[lang]/scramble/stats/_data/precomputed-exact-puzzles.json"
+      ],
+      "verification": [
+        "node --import tsx scripts/export-exact-puzzle-distributions.mts --check verifies counts, complete bin coverage and every witness against an independent puzzle model without BFS"
+      ],
+      "driftPolicy": "Export only completed resource-guarded exact runs. Preserve explicit move metrics and frame conventions. This small source artifact contains histograms and bounded witnesses; distance tables, whole-state exports, raw run reports and resource logs remain local or in the generated-data release boundary. Never replace an exact histogram with sampled lengths."
+    },
+    {
+      "id": "client.exact-puzzle-state-downloads",
+      "kind": "runtime-generated",
+      "source": {
+        "locator": "Serial bounded full-state enumeration or existing verified compact tables; stream rows to gzip without retaining the corpus",
+        "paths": [
+          "core/packages/client/scripts/export-exact-state-downloads.mts",
+          "core/packages/client/scripts/legacy-exact-offline.mts",
+          "core/packages/client/scripts/roux-goal-exact-distributions.mts",
+          "core/packages/client/scripts/fmc-goal-exact-distributions.mts",
+          "core/packages/client/scripts/prepare-exact-state-downloads.mts",
+          "core/packages/client/scripts/exact-coordinate-bfs.mts",
+          "core/packages/client/scripts/exact-coordinate-checkpoint.mts",
+          "core/packages/client/scripts/skewb-exact-state-downloads.mts",
+          "core/packages/client/scripts/dino-exact-distribution.mts",
+          "core/packages/client/scripts/derive-pyraminx-tips-distribution.mts",
+          "scripts/exact-puzzles/assets.ts",
+          "scripts/exact-puzzles/cli.ts"
+        ]
+      },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "Derived mathematical states and witness algorithms"
+      },
+      "owner": "core/packages/client/scripts/export-exact-state-downloads.mts",
+      "workingDirectory": "core",
+      "command": "node --max-old-space-size=128 --import tsx packages/client/scripts/measure-small-puzzle-distributions.mts --events <reviewed-events> --output-dir <new-local-directory>",
+      "outputs": [
+        "stats/scramble/exact-puzzles/**",
+        "core/packages/client/app/[lang]/scramble/stats/_data/exact-puzzle-downloads.json",
+        "core/packages/client/app/[lang]/scramble/stats/_data/exact-puzzle-publication.json"
+      ],
+      "verification": [
+        "Every output has row count, bytes and SHA-256; all-state and per-depth row counts equal the exact histogram; identity occurs once.",
+        "node --max-old-space-size=128 --import tsx packages/client/scripts/verify-exact-state-downloads.mts streams gzip and checks header, depth frequencies, identity and SHA-256 without retaining the corpus.",
+        "Resumable jobs persist completed distance tables and checksummed gzip prefixes every 250,000 rows. A completed export is reused only with matching generator/data identity and verified file hashes.",
+        "node --test scripts/exact-puzzles/assets.test.ts verifies tiny archives restored into an empty stats root, replay, corruption and unsafe-path rejection.",
+        "node scripts/exact-puzzles/cli.ts prepare OUTPUT creates independent checksum-named per-event tar archives and a manifest; hydrate verifies archive and per-file SHA before installation. No solver or BFS runs during publication."
+      ],
+      "driftPolicy": "Large CSV/TXT gzip corpora remain gitignored under stats/scramble/exact-puzzles/<event>/<sha256>/<file>, outside Next bundles. The independent exact-puzzle publication family reuses the wca-data-latest Release transport without changing its body or widening WCA snapshot owners/limits. Use scripts/exact-puzzles/cli.ts for explicit preparation, upload and hydration; verify-published streams static URLs and records the matching inventory SHA. Production hides corpus links until that publication receipt matches; development serves local files as streams. Preserve immutable hash paths, original computation reports and model fingerprints. See scripts/exact-puzzles/README.md."
+    },
+    {
       "id": "client.cube-history-catalog",
       "kind": "build-generated",
       "source": {

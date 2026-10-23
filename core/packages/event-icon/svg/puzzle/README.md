@@ -21,6 +21,17 @@ curved SVG because its planar PG approximation cannot depict physical curves.
 private copy so the project menu no longer uses the Super Gear icon. `custom.svg`
 is a cutting-plane symbol for the custom geometry editor.
 
+`skewb-ultimate.svg` projects one pentagonal face of a regular dodecahedron
+around its embedded cube, with the four central tetrahedral Skewb cutting
+planes. Its four visible regions follow the physical Skewb Ultimate seams;
+it does not use all dodecahedral vertex cuts. The same generator reconstructs
+it with `--only skewb-ultimate`.
+
+`rubiks-ufo.svg` depicts the two circular layers of [Rubik's UFO](https://www.jaapsch.net/puzzles/rubufo.htm),
+with all six upper sectors, the three visible lower sectors, and a transparent
+layer seam. It is separate from the simulator's three-sphere `unofficial-ufo`.
+Reconstruct it with `--only rubiks-ufo`.
+
 From `core/`:
 
 ```sh

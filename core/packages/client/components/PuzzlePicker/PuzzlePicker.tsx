@@ -73,6 +73,8 @@ interface Props {
   linkFor?: (id: string) => { href: string; hard?: boolean } | null;
   /** 页面自己的项目 catalog。传入后不再生成默认 WCA + csTimer 家族分组。 */
   groups?: readonly PuzzlePickerGroup[];
+  /** Extend the default catalog without duplicating its WCA and csTimer grouping. */
+  additionalGroups?: readonly PuzzlePickerGroup[];
   /** 自定义 catalog 的收起态名称;省略时保持项目选择器原有名称。 */
   placeholderLabel?: string;
   /** 是否显示收起态图标;纯文本触发器可关闭。 */
@@ -95,7 +97,7 @@ const menuLabel = (label: string): string => label.replaceAll('魔方', '').repl
 
 export default function PuzzlePicker({
   isZh = false, selectedEvent, selectedEvents, wcaEvents, availableEvents, onSelect, onToggle, linkFor,
-  discovery, groups: suppliedGroups, placeholderLabel, showArrow = false, showTriggerIcon = true, showItemIcons = true, popupFooter, itemAction, dataNoTimer,
+  discovery, groups: suppliedGroups, additionalGroups, placeholderLabel, showArrow = false, showTriggerIcon = true, showItemIcons = true, popupFooter, itemAction, dataNoTimer,
 }: Props) {
   const params = useParams();
   const prefix = params?.lang === 'zh' ? '/zh' : '';
@@ -134,8 +136,8 @@ export default function PuzzlePicker({
         })),
       });
     }
-    return out;
-  }, [suppliedGroups, wcaIds, cstimerGroups, isZh]);
+    return [...out, ...(additionalGroups ?? [])].filter(group => group.items.length > 0);
+  }, [suppliedGroups, additionalGroups, wcaIds, cstimerGroups, isZh]);
 
   const isMulti = selectedEvents !== undefined && onToggle !== undefined;
   const selectedItems = groups

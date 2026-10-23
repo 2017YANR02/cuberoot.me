@@ -1,7 +1,7 @@
 /** Complete unfolded nets; geometry, colors and notation come from native cubing.js. */
 import { getPuzzleGeometryByDesc } from 'cubing/puzzle-geometry';
 import { NATIVE_PUZZLES, type NativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
-import { parseNativePuzzleAlg, nativePuzzleKPuzzle } from '@cuberoot/puzzle-solvers/native-puzzle-model';
+import { parsePuzzleGeometryAlg, puzzleGeometryKPuzzle } from '@cuberoot/puzzle-solvers/native-puzzle-model';
 
 export function nativePuzzleSvgAspect(id: NativePuzzleId): number { return NATIVE_PUZZLES[id].aspect; }
 
@@ -17,12 +17,18 @@ interface Net {
   colors: Record<string, string[][]>;
   transform: string;
 }
-const cachedNets = new Map<NativePuzzleId, Net>();
+export interface PuzzleGeometrySvgSpec {
+  id: string;
+  description: string;
+  aspect?: number;
+  visibleFacelets?: number;
+}
+const cachedNets = new Map<string, Net>();
 
-function puzzleNet(id: NativePuzzleId): Net {
-  const cachedNet = cachedNets.get(id);
+function puzzleNet(spec: PuzzleGeometrySvgSpec, aspect: number): Net {
+  const key = `${spec.description}:${aspect}:${spec.visibleFacelets ?? ''}`;
+  const cachedNet = cachedNets.get(key);
   if (cachedNet) return cachedNet;
-  const spec = NATIVE_PUZZLES[id];
   const pg = getPuzzleGeometryByDesc(spec.description, { allMoves: true, orientCenters: true, addRotations: true });
   const facelets: Facelet[] = [];
   const colors: Record<string, string[][]> = {};
@@ -44,25 +50,35 @@ function puzzleNet(id: NativePuzzleId): Net {
       facelets.push({ face: face[1], orbit, piece, orientation, points });
     }
   }
-  if (facelets.length !== spec.visibleFacelets) throw new Error(`Unexpected native ${id} net: ${facelets.length}`);
+  if (facelets.length === 0 || (spec.visibleFacelets !== undefined && facelets.length !== spec.visibleFacelets)) {
+    throw new Error(`Unexpected ${spec.id} net: ${facelets.length}`);
+  }
   const xs = facelets.flatMap((f) => f.points.filter((_, i) => i % 2 === 0));
   const ys = facelets.flatMap((f) => f.points.filter((_, i) => i % 2 === 1));
   const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
-  const width = 480 * spec.aspect;
+  const width = 480 * aspect;
   const scale = Math.min((width - 16) / (maxX - minX), 464 / (maxY - minY));
   const x = (width - (maxX - minX) * scale) / 2 - minX * scale;
   const y = (480 - (maxY - minY) * scale) / 2 - minY * scale;
   const net = { facelets, colors, transform: `translate(${x} ${y}) scale(${scale})` };
-  cachedNets.set(id, net);
+  cachedNets.set(key, net);
   return net;
 }
 
 export function renderNativePuzzleSvg(id: NativePuzzleId, scramble: string): string {
-  const alg = parseNativePuzzleAlg(id, scramble);
-  const puzzle = nativePuzzleKPuzzle(id);
+  return renderPuzzleGeometrySvg({ id, ...NATIVE_PUZZLES[id] }, scramble);
+}
+
+/** Reuse the exact native PG net and notation path for an existing catalog definition. */
+export function renderPuzzleGeometrySvg(spec: PuzzleGeometrySvgSpec, scramble: string): string {
+  if (!/^[a-z0-9_-]+$/i.test(spec.id)) throw new Error('Invalid puzzle SVG identifier');
+  const aspect = spec.aspect ?? 4 / 3;
+  if (!Number.isFinite(aspect) || aspect <= 0) throw new Error('Invalid puzzle SVG aspect ratio');
+  const alg = parsePuzzleGeometryAlg(spec.description, scramble);
+  const puzzle = puzzleGeometryKPuzzle(spec.description);
   const pattern = puzzle.defaultPattern().applyAlg(alg).patternData;
-  const net = puzzleNet(id);
-  const out = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${480 * nativePuzzleSvgAspect(id)} 480" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${id}">`,
+  const net = puzzleNet(spec, aspect);
+  const out = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${480 * aspect} 480" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${spec.id}">`,
     `<g transform="${net.transform}" stroke="#000000" stroke-width="1.2" stroke-linejoin="round">`];
   for (const f of net.facelets) {
     const orbit = pattern[f.orbit];

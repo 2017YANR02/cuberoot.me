@@ -11,7 +11,7 @@
  * below are the cstimer poly3dlib "dmd" move table (`getFamousPuzzle('dmd')` → `polyParam [8,[-5,0],[],
  * [-5]]` → `makePuzzle`), extracted move-for-move via PolyScrambler's parser; the apply convention is
  * cstimer's `permMult` (compose(a,b)[i] = a[b[i]], state apply newState[i] = state[perm[i]]). `X` = the
- * 90°/120° base generator; `X'` = compose(genX, genX).
+ * 120° base generator; `X'` = compose(genX, genX).
  *
  * The whole reachable graph is 138,240 states (== cstimer SchreierSims |G| on the same 4 gens). We BFS
  * it from solved once (memoized) and store, for every reachable state, the move stepping it toward

@@ -1,0 +1,73 @@
+.exact-distribution-coverage {
+  margin-top: 0.8rem;
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
+}
+.exact-distribution-coverage > summary {
+  width: fit-content;
+  cursor: pointer;
+}
+.exact-distribution-coverage-content {
+  margin-top: 0.75rem;
+}
+.exact-distribution-coverage-content p {
+  margin: 0.3rem 0 0;
+  line-height: 1.55;
+}
+.exact-distribution-coverage-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.75rem 0;
+}
+.exact-distribution-coverage-search {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  border: 1px solid var(--input);
+  border-radius: 8px;
+  padding: 0.25rem 0.45rem;
+}
+.exact-distribution-coverage-search input {
+  width: min(15rem, 58vw);
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  padding: 0.15rem 0;
+}
+.exact-distribution-coverage-search:focus-within {
+  outline: 1px solid var(--ring);
+}
+.exact-distribution-coverage-search input:focus {
+  outline: none;
+}
+.exact-distribution-coverage-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0;
+  display: grid;
+  gap: 0.9rem;
+}
+.exact-distribution-coverage-row,
+.exact-distribution-coverage-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.65rem;
+}
+.exact-distribution-coverage-row {
+  color: var(--foreground);
+}
+.exact-distribution-coverage-status {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+.exact-distribution-coverage-facts {
+  margin-top: 0.25rem;
+}
+.exact-distribution-coverage-content a {
+  color: var(--accent);
+}
