@@ -340,6 +340,7 @@
   gap: 4px;
 }
 .comp-info-link:hover { text-decoration: underline; }
+.comp-info-address { color: inherit; }
 .comp-info-past-popover {
   position: relative;
   display: inline-block;
@@ -607,6 +608,7 @@
 .comp-table tbody tr.row-advanced { background: color-mix(in srgb, var(--signal-success) 16%, transparent); }
 .comp-table tbody tr.row-advanced.row-odd { background: color-mix(in srgb, var(--signal-success) 22%, transparent); }
 .comp-table tbody tr:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.comp-table tbody tr.comp-row-clickable:hover { background: color-mix(in srgb, var(--accent) 14%, transparent); }
 .comp-table tbody tr.row-advanced:hover { background: color-mix(in srgb, var(--signal-success) 28%, transparent); }
 .th-avg, .td-avg, .th-best, .td-best { font-variant-numeric: tabular-nums; }
 .comp-table thead th.th-avg,
@@ -678,9 +680,7 @@ td.is-pr {
 .cuber-name.cuber-link:hover { text-decoration: underline; color: var(--accent); }
 
 .comp-row-clickable { cursor: pointer; }
-.comp-row-clickable:hover td {
-  background: color-mix(in srgb, var(--accent) 8%, transparent);
-}
+/* 高亮只由 tr 绘制，避免 td 叠色及 flex 姓名格未铺满列宽时出现断带。 */
 
 .td-person { display: flex; align-items: center; gap: 8px; }
 

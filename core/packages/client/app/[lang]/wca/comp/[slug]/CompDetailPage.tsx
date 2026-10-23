@@ -776,8 +776,8 @@ export default function CompDetailPage() {
   // 比赛关注「盯一下」— 与首页 / 比赛列表共用同一份 server 关注集合
   const { loggedIn: followLoggedIn, follows, toggle: toggleFollow } = useCompFollows();
 
-  // URL 状态走 nuqs。导航型(项目 / 轮次 / 视图 / 预排名多选)默认 push,后退可逐步返回;
-  // 筛选 / 赛程布局 / 数据源覆盖是过滤/子开关,走 replace 不堆历史。多键联动(项目+轮次)
+  // URL 状态走 nuqs。导航型(项目 / 轮次 / 视图)默认 push,后退可逐步返回;
+  // 项目多选 / 筛选 / 赛程布局 / 数据源覆盖走 replace 不堆历史。多键联动(项目+轮次)
   // 用各自 setter 同 tick 调用,nuqs 自动合并;需要 replace 写入时传 per-call { history: 'replace' }。
   const [eventQuery, setEventParam] = useQueryState(
     'event',
@@ -793,11 +793,11 @@ export default function CompDetailPage() {
   );
   const [psychEventParam, setPsychEventParam] = useQueryState(
     'psychEvent',
-    parseAsString.withDefault('').withOptions({ history: 'push', scroll: false }),
+    parseAsString.withDefault('').withOptions({ history: 'replace', scroll: false }),
   );
   const [schedEventParam, setSchedEventParam] = useQueryState(
     'schedEvent',
-    parseAsString.withDefault('').withOptions({ history: 'push', scroll: false }),
+    parseAsString.withDefault('').withOptions({ history: 'replace', scroll: false }),
   );
   const [filterParam, setFilterParam] = useQueryState(
     'filter',
@@ -2241,6 +2241,36 @@ function renderWcaText(text: string): React.ReactNode {
   return out.length ? out : text;
 }
 
+function renderMapAddress(address: string, isZh: boolean): React.ReactNode {
+  // WCA 地址可能包含 Markdown 链接；搜索和展示都使用其地址文本，避免嵌套链接。
+  const text = address.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '$1');
+  const query = new URLSearchParams({ keyword: text, src: 'cuberoot', callnative: '1' });
+  const googleUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(text)}`;
+  return (
+    <a
+      className="comp-info-link comp-info-address"
+      href={isZh ? `https://uri.amap.com/search?${query}` : googleUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={(event) => {
+        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        const isIos = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+          || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        if (!isIos && !isAndroid) return;
+        event.preventDefault();
+        if (!isZh) {
+          window.location.href = isIos ? `comgooglemaps://?q=${encodeURIComponent(text)}` : googleUrl;
+          return;
+        }
+        // 在用户点击时直接唤起 App，不依赖高德网页的二次跳转。
+        const nativeQuery = `sourceApplication=cuberoot&${isIos ? 'name' : 'keywords'}=${encodeURIComponent(text)}&dev=0`;
+        window.location.href = `${isIos ? 'iosamap' : 'androidamap'}://poi?${nativeQuery}`;
+      }}
+    >{text}</a>
+  );
+}
+
 function CompInfoPanel({
   info, isZh, cubingZh,
 }: { info: CompInfo; isZh: boolean; cubingZh: CubingZhMeta | null }) {
@@ -2294,9 +2324,9 @@ function CompInfoPanel({
     rows.push({ label: tr({ zh: '城市', en: 'City' }), value: cityStr });
   }
   if (isZh && cubingZh?.location) {
-    rows.push({ label: tr({ zh: '地点', en: 'Location' }), hideLabel: true, value: cubingZh.location });
+    rows.push({ label: tr({ zh: '地点', en: 'Location' }), hideLabel: true, value: renderMapAddress(cubingZh.location, isZh) });
   } else {
-    if (info.venue_address) rows.push({ label: tr({ zh: '地址', en: 'Address' }), value: renderWcaText(info.venue_address) });
+    if (info.venue_address) rows.push({ label: tr({ zh: '地址', en: 'Address' }), value: renderMapAddress(info.venue_address, isZh) });
     if (info.venue_details) rows.push({ label: tr({ zh: '详情', en: 'Details'
     }), value: renderWcaText(info.venue_details) });
   }
