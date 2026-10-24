@@ -10,17 +10,17 @@
 .xcr-muted { color: var(--muted-foreground); font-size: 13px; }
 .xcr-controls { margin: 16px 0; }
 .xcr-controls label { display: flex; align-items: center; gap: 8px; }
-.xcr-button, .xcr-controls select { color: var(--foreground); background: var(--card); border: 1px solid var(--border-default); border-radius: 8px; padding: 9px 12px; font: inherit; }
+.xcr-button, .xcr-select { color: var(--foreground); background: var(--card); border: 1px solid var(--border-default); border-radius: 8px; padding: 9px 12px; font: inherit; }
 .xcr-button { cursor: pointer; }
 .xcr-button:disabled { opacity: .55; cursor: default; }
-.xcr-button:focus-visible, .xcr-controls select:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.xcr-button:focus-visible, .xcr-select:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .xcr-input { position: relative; margin: 8px 0 12px; }
-.xcr-input textarea { width: 100%; min-height: 76px; padding: 12px 42px 12px 12px; border: 1px solid var(--input); border-radius: 8px; font: 15px/1.6 monospace; background: var(--background); color: var(--foreground); resize: vertical; }
+.xcr-scramble-field { width: 100%; min-height: 76px; padding: 12px 42px 12px 12px; border: 1px solid var(--input); border-radius: 8px; font: 15px/1.6 monospace; background: var(--background); color: var(--foreground); resize: vertical; }
 .xcr-actions { margin-bottom: 16px; }
 .xcr-error { color: var(--destructive); }
 .xcr-solutions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.xcr-exp .xcr-solutions button { display: flex; flex-direction: column; gap: 12px; text-align: start; background: transparent; }
-.xcr-exp .xcr-solutions button[aria-pressed='true'] { border-color: var(--accent); background: var(--accent-soft); }
+.xcr-button.xcr-solution { display: flex; flex-direction: column; gap: 12px; text-align: start; background: transparent; }
+.xcr-button.xcr-solution[aria-pressed='true'] { border-color: var(--accent); background: var(--accent-soft); }
 .xcr-solutions code { font: 16px/1.7 monospace; overflow-wrap: anywhere; }
 .xcr-player { display: flex; justify-content: center; margin-top: 16px; }
 .xcr-frame { min-height: 52px; text-align: center; }

@@ -96,11 +96,11 @@ export default function XCrossRankingExperiment() {
     <section aria-labelledby="xcr-compare">
       <h2 id="xcr-compare">{t('同一打乱，比较首条推荐', 'Compare the first recommendation')}</h2>
       <div className="xcr-controls">
-        <label>{t('示例', 'Example')}<select aria-label={t('示例', 'Example')} disabled={busy} value={sampleIndex < 0 ? '' : examples[sampleIndex].index} onChange={e => loadExample(Number(e.target.value))}>
+        <label>{t('示例', 'Example')}<select className="xcr-select" aria-label={t('示例', 'Example')} disabled={busy} value={sampleIndex < 0 ? '' : examples[sampleIndex].index} onChange={e => loadExample(Number(e.target.value))}>
           <option value="" disabled>{t('自定义', 'Custom')}</option>
           {[0, 1, 2].map(n => <option key={n} value={n}>{t('测试打乱', 'Test scramble')} {n + 1}</option>)}
         </select></label>
-        <label>{t('阶段', 'Stage')}<select aria-label={t('阶段', 'Stage')} disabled={busy} value={stage} onChange={e => {
+        <label>{t('阶段', 'Stage')}<select className="xcr-select" aria-label={t('阶段', 'Stage')} disabled={busy} value={stage} onChange={e => {
           const value = Number(e.target.value); setStage(value); setStep(0);
           if (sampleIndex >= 0) loadExample(examples[sampleIndex].index, value); else setResult(null);
         }}><option value={1}>XCross</option><option value={2}>XXCross</option></select></label>
@@ -108,7 +108,7 @@ export default function XCrossRankingExperiment() {
       </div>
       <label htmlFor="xcr-scramble">{t('打乱', 'Scramble')}</label>
       <div className="xcr-input">
-        <AlgInput ref={input} id="xcr-scramble" initialText={examples[0].scramble} rows={2} inputMode="text" autoResize
+        <AlgInput ref={input} id="xcr-scramble" className="xcr-scramble-field" initialText={examples[0].scramble} rows={2} inputMode="text" autoResize
           onChange={text => { if (busy) cancel(); setDraft(text); setResult(null); }} />
         {draft && <ClearButton onClick={() => { if (busy) cancel(); input.current?.setText(''); setDraft(''); setResult(null); }} />}
       </div>
@@ -120,7 +120,7 @@ export default function XCrossRankingExperiment() {
       {result && scores && <>
         <p className="xcr-muted">{result.live ? t('现场计算', 'Live result') : t('2026-10-24 结果快照', '2026-10-24 result snapshot')} · {t('最短', 'Optimum')} {result.min} HTM · {t('实验候选', 'Experimental candidates')} {result.candidates}</p>
         <div className="xcr-solutions">
-          {(['old', 'current'] as const).map(v => <button className="xcr-button" type="button" key={v} aria-pressed={version === v} onClick={() => { setVersion(v); setStep(0); }}>
+          {(['old', 'current'] as const).map(v => <button className="xcr-button xcr-solution" type="button" key={v} aria-pressed={version === v} onClick={() => { setVersion(v); setStep(0); }}>
             <span>{v === 'old' ? t('原排序首选', 'Baseline first') : t('实验排序首选', 'Experimental first')}</span>
             <code>{result[v].m || t('无需转动', 'No moves')}</code>
             <span className="xcr-muted">{scores[v].moves} HTM · {result[v].c} · {t('结构代价', 'Cost')} {number(scores[v].score)}</span>
