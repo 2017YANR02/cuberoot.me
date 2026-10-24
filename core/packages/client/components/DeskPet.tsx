@@ -24,6 +24,7 @@ import { ClearButton } from '@/components/ClearButton';
 import { persistItem } from '@/lib/safe-storage';
 import { mayUseMiniProgramBridge } from '@/lib/miniprogram-bridge';
 import { useDeskPetVisible } from '@/hooks/useDeskPetVisible';
+import { readDeskPetAnchor } from '@/lib/deskpet-position';
 import { subscribeBeat, getMetronomeState } from '@/lib/metronome';
 import { getDeskPetScene, PLAYTIME_SCENES } from '@/lib/deskpet-playtime';
 import { ORIGINAL_CHARACTERS, ORIGINAL_SCENES, type OriginalCharacterId } from '@/lib/deskpet-originals';
@@ -1112,8 +1113,10 @@ export default function DeskPet() {
     } catch {}
 
     const keepInViewport = () => {
+      if (dragging) return;
       const r = root.getBoundingClientRect();
-      let bottom = vpH() - r.bottom;
+      const anchor = readDeskPetAnchor(root, vpW(), vpH());
+      let bottom = anchor.bottom;
       const box = window.innerWidth <= 768 ? document.querySelector<HTMLElement>('.deskpet-search-box') : null;
       if (box?.parentElement) {
         // The search animates from the pet. Reserve its final layout position,
@@ -1130,7 +1133,7 @@ export default function DeskPet() {
           bottom += Math.min(controlBottom - input.top + 12, Math.max(0, r.top - 12));
         }
       }
-      const c = clampAnchor(vpW() - r.right, bottom, r.width, r.height, ...VC[character]);
+      const c = clampAnchor(anchor.right, bottom, r.width, r.height, ...VC[character]);
       const rightStyle = (mini ? miniRight(false) : c.right) + 'px';
       const bottomStyle = c.bottom + 'px';
       if (root.style.right !== rightStyle) root.style.right = rightStyle;
