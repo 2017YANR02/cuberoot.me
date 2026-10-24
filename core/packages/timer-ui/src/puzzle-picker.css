@@ -35,10 +35,6 @@
 .pp-trigger-chevron { color: var(--muted-foreground); flex-shrink: 0; }
 
 .pp-popup {
-  /* anchored-panel: clamped (shared visualViewport positioning + top layer) */
-  position: fixed;
-  inset: auto;
-  margin: 0;
   box-sizing: border-box;
   width: max-content;
   max-width: min(560px, calc(100vw - 32px));
@@ -56,7 +52,13 @@
 
 /* Only top-layer menus wait for anchored positioning to reveal them.
    Web link/multiselect menus share these classes but use usePanelClamp. */
-.pp-popup[popover] { visibility: hidden; }
+.pp-popup[popover] {
+  /* anchored-panel: clamped (shared visualViewport positioning + top layer) */
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  visibility: hidden;
+}
 
 .pp-group + .pp-group { margin-top: 4px; }
 .pp-group-title {

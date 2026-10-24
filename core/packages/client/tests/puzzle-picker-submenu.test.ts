@@ -21,6 +21,30 @@ const groups: PuzzlePickerGroup[] = [
 
 let host: HTMLDivElement;
 let root: Root;
+it.each(['shared-first', 'web-first'])('keeps flat menus anchored with %s CSS', (order) => {
+  const shared = readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/puzzle-picker.css')), 'utf8');
+  const web = readFileSync('components/PuzzlePicker/puzzle_picker.css', 'utf8');
+  const style = document.createElement('style');
+  style.textContent = (order === 'shared-first' ? [shared, web] : [web, shared]).join('\n');
+  document.head.appendChild(style);
+  try {
+    act(() => root.render(createElement(PuzzlePicker, {
+      groups: groups.slice(0, 1), selectedEvent: 'nxn', onSelect: vi.fn(),
+    })));
+    act(() => host.querySelector<HTMLButtonElement>('.pp-trigger')!.click());
+    const panel = host.querySelector<HTMLElement>('.pp-popup')!;
+    expect(getComputedStyle(panel).position).toBe('absolute');
+    expect(getComputedStyle(panel).top).toBe('calc(100% + 6px)');
+    expect(getComputedStyle(panel).left).toBe('0px');
+    panel.setAttribute('popover', 'manual');
+    expect(getComputedStyle(panel).position).toBe('fixed');
+    expect(getComputedStyle(panel).inset).toBe('auto');
+    expect(getComputedStyle(panel).top).not.toBe('calc(100% + 6px)');
+  } finally {
+    style.remove();
+  }
+});
+
 it('keeps flat menus visible while top-layer menus wait for positioning', () => {
   const style = document.createElement('style');
   style.textContent = readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/puzzle-picker.css')), 'utf8');
