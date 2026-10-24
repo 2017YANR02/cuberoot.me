@@ -234,7 +234,7 @@ describe('unified provider account-choice routes', () => {
     ['phone', '/auth/phone/verify', { phone: '+8613812345678', code: '123456' }],
     ['douyin', '/auth/douyin/miniprogram', { code: 'verified-code' }],
   ])('%s returns an opaque 409 choice without issuing or capturing a session', async (provider, path, body) => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({ me: { wca_id: '2017TEST01', name: 'Name', avatar: {} } })));
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({ me: { id: 123, wca_id: '2017TEST01', name: 'Name', avatar: {} } })));
     const response = await post(path as string, body);
     expect(response.status).toBe(409);
     expect(response.headers.get('cache-control')).toBe('no-store');
@@ -248,7 +248,7 @@ describe('unified provider account-choice routes', () => {
   it('legacy WCA callback returns a noncached choice instead of creating or redirecting with a session', async () => {
     vi.stubGlobal('fetch', vi.fn()
       .mockResolvedValueOnce(Response.json({ access_token: 'wca-only', refresh_token: 'wca-refresh', expires_in: 600 }))
-      .mockResolvedValueOnce(Response.json({ me: { wca_id: '2017TEST01', name: 'Name', avatar: {} } })));
+      .mockResolvedValueOnce(Response.json({ me: { id: 123, wca_id: '2017TEST01', name: 'Name', avatar: {} } })));
     const response = await app.request('/v1/auth/callback?code=code');
     expect(response.status).toBe(409);
     expect(response.headers.get('cache-control')).toBe('no-store');
