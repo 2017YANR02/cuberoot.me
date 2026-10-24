@@ -73,15 +73,24 @@ describe('battle overlay keyboard suppression', () => {
       expect(readout?.textContent).toBe('0.000');
       act(() => {
         const players = [...useBattleStore.getState().players];
-        players[0] = { ...players[0], time: 1234, hasFinished: true };
+        players[0] = { ...players[0], time: 1234, hasFinished: true, points: 3 };
         useBattleStore.setState({ players });
       });
       expect(host.querySelector('.time-display')).toBe(readout);
       expect(readout?.textContent).toContain('1.234');
-      expect(host.querySelector('.battle-readout-label')).not.toBeNull();
-      act(() => host.querySelectorAll<HTMLButtonElement>('.timer-penalty-actions button')[1].click());
+      expect(host.querySelector('.battle-readout-label .battle-readout-score')?.textContent).toBe('3');
+      act(() => host.querySelectorAll<HTMLButtonElement>('.timer-penalty-actions button')[0].click());
       expect(host.querySelector('.time-display')).toBe(readout);
       expect(readout?.textContent).toContain('3.234');
+      const buttons = [...host.querySelectorAll<HTMLButtonElement>('.timer-penalty-actions button')];
+      for (const index of [1, 0, 1]) {
+        act(() => buttons[index].click());
+        expect(buttons.map(button => button.getAttribute('aria-pressed')))
+          .toEqual(buttons.map((_, i) => String(i === index)));
+      }
+      act(() => buttons[1].click());
+      expect(buttons.map(button => button.getAttribute('aria-pressed'))).toEqual(['false', 'false']);
+      expect(readout?.textContent).toContain('1.234');
     } finally {
       act(() => root.unmount());
       host.remove();

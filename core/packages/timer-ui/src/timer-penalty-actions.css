@@ -8,6 +8,9 @@
 }
 
 .timer-penalty-actions > button {
+  /* Native button painting must not compete with the controlled pressed state. */
+  -webkit-appearance: none;
+  appearance: none;
   min-width: 48px;
   min-height: 44px;
   padding: 7px 10px;
@@ -22,18 +25,20 @@
   touch-action: manipulation;
 }
 
-.timer-penalty-actions > button:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .timer-penalty-actions > button:is([aria-checked="false"], [aria-pressed="false"]):hover:not(:disabled) {
+    background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  }
 }
 
-.timer-penalty-actions > button[aria-pressed="true"] {
+.timer-penalty-actions > button:is([aria-checked="true"], [aria-pressed="true"]) {
   border-color: var(--accent);
   color: var(--accent);
   background: var(--accent-soft);
 }
 
 .timer-penalty-actions > button:focus-visible {
-  outline: 2px solid var(--ring);
+  outline: 2px dotted var(--foreground);
   outline-offset: 2px;
 }
 

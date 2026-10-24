@@ -1,7 +1,7 @@
 import type { ComponentProps, ReactNode } from 'react';
 import { TimerBattleHistory } from './TimerBattleHistory';
 import { TimerBattleLayout } from './TimerBattleLayout';
-import { TimerBattlePlayer } from './TimerBattlePlayer';
+import { TimerBattlePlayer, battlePlayerLabel } from './TimerBattlePlayer';
 import { TimerBattleSettings } from './TimerBattleSettings';
 import { TimerBattleToolbar } from './TimerBattleToolbar';
 import { TimerStageLayout } from './TimerStageLayout';
@@ -36,9 +36,9 @@ export function TimerLocalBattlePlayer({ player, timing, average }: {
   timing: Omit<ComponentProps<typeof TimingSurface>, 'layout' | 'readoutLabel' | 'children'>;
   average?: ReactNode;
 }) {
-  const label = { en: `Player ${player.playerNumber}`, zh: `玩家 ${player.playerNumber}` }[player.language];
+  const label = battlePlayerLabel(player.playerNumber, player.language);
   return <TimerBattlePlayer {...player} hideHeader>
-    <TimingSurface {...timing} layout="local" readoutLabel={<strong className="battle-readout-label">{label}</strong>}>
+    <TimingSurface {...timing} layout="local" readoutLabel={<strong className="battle-readout-label">{label}<span className="battle-readout-score" aria-label={{ en: 'Score', zh: '得分' }[player.language]}>{player.score}</span></strong>}>
       {average}
     </TimingSurface>
   </TimerBattlePlayer>;

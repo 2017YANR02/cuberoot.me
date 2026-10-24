@@ -136,7 +136,8 @@
   border-top: 1px solid var(--shell-divider, var(--border-default));
 }
 .timer-battle-layout-controls:empty { display: none; }
-.battle-readout-label { font-size: 12px; line-height: 1.4; }
+.battle-readout-label { display: inline-flex; align-items: baseline; gap: 8px; font-size: 12px; line-height: 1.4; }
+.battle-readout-score { color: var(--accent); font-variant-numeric: tabular-nums; }
 
 /* Center when space permits; let either action group claim its full width
    before shifting the middle controls. Include the home variant explicitly

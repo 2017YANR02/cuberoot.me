@@ -12,9 +12,13 @@ export interface TimerBattlePlayerProps {
   children: ReactNode;
   className?: string;
 }
+export function battlePlayerLabel(playerNumber: number, language: 'en' | 'zh'): string {
+  return { en: `Player ${playerNumber}`, zh: `玩家${['一', '二', '三', '四'][playerNumber - 1] ?? playerNumber}` }[language];
+}
+
 const COPY = {
-  en: { player: (value: number) => `Player ${value}`, winner: 'Winner', score: 'Score' },
-  zh: { player: (value: number) => `玩家 ${value}`, winner: '胜者', score: '得分' },
+  en: { winner: 'Winner', score: 'Score' },
+  zh: { winner: '胜者', score: '得分' },
 };
 
 export function TimerBattlePlayer({ background, playerNumber, language, score, winner, controls, hideHeader, actions, children, className }: TimerBattlePlayerProps) {
@@ -22,7 +26,7 @@ export function TimerBattlePlayer({ background, playerNumber, language, score, w
   return <article className={`timer-battle-player${winner ? ' is-winner' : ''}${className ? ` ${className}` : ''}`}>
     {background && (background.color || background.image) && <div aria-hidden="true" className="timer-battle-player-background" style={{ backgroundColor: background.color || undefined, backgroundImage: background.image ? `url(${JSON.stringify(background.image)})` : undefined, opacity: background.opacity }} />}
     {!hideHeader && <header className="timer-battle-player-header" data-no-timer>
-      <strong>{copy.player(playerNumber)}</strong>
+      <strong>{battlePlayerLabel(playerNumber, language)}</strong>
       <span aria-label={copy.score}>{score}</span>
       {winner && <span className="timer-battle-player-winner">{copy.winner}</span>}
       <div className="timer-battle-player-controls">{controls}</div>

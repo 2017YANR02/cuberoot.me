@@ -406,7 +406,7 @@ export function TimerArea({ playerId, rotated, hideScramble, cellClass }: { play
         score: player.points,
         winner: store.winners.includes(playerId),
         actions: player.hasFinished && !player.isTiming && player.time > 0 ? (
-          <TimerPenaltyActions language={store.locale === 'zh' ? 'zh' : 'en'} value={player.penalty}
+          <TimerPenaltyActions toggleOnly language={store.locale === 'zh' ? 'zh' : 'en'} value={player.penalty}
             onChange={(penalty) => store.handlePenalty(playerId, penalty)} />
         ) : undefined
       }} timing={{
