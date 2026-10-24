@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { act, createElement } from 'react';
+import { readFileSync } from 'node:fs';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
@@ -20,6 +21,24 @@ const groups: PuzzlePickerGroup[] = [
 
 let host: HTMLDivElement;
 let root: Root;
+it('keeps flat menus visible while top-layer menus wait for positioning', () => {
+  const style = document.createElement('style');
+  style.textContent = readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/puzzle-picker.css')), 'utf8');
+  document.head.appendChild(style);
+  try {
+    act(() => root.render(createElement(PuzzlePicker, {
+      groups: groups.slice(0, 1), selectedEvent: 'nxn', onSelect: vi.fn(),
+    })));
+    act(() => host.querySelector<HTMLButtonElement>('.pp-trigger')!.click());
+    const panel = host.querySelector<HTMLElement>('.pp-popup')!;
+    expect(getComputedStyle(panel).visibility).toBe('visible');
+    panel.setAttribute('popover', 'manual');
+    expect(getComputedStyle(panel).visibility).toBe('hidden');
+  } finally {
+    style.remove();
+  }
+});
+
 beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.spyOn(window, 'requestAnimationFrame').mockImplementation(callback => { callback(0); return 1; });

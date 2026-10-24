@@ -40,7 +40,6 @@
   inset: auto;
   margin: 0;
   box-sizing: border-box;
-  visibility: hidden;
   width: max-content;
   max-width: min(560px, calc(100vw - 32px));
   max-height: calc(100dvh - 16px);
@@ -54,6 +53,10 @@
   z-index: 200;
   box-shadow: 0 8px 24px color-mix(in srgb, var(--foreground) 22%, transparent);
 }
+
+/* Only top-layer menus wait for anchored positioning to reveal them.
+   Web link/multiselect menus share these classes but use usePanelClamp. */
+.pp-popup[popover] { visibility: hidden; }
 
 .pp-group + .pp-group { margin-top: 4px; }
 .pp-group-title {
