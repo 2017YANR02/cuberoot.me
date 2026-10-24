@@ -26,12 +26,12 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .timer-penalty-actions > button:is([aria-checked="false"], [aria-pressed="false"]):hover:not(:disabled) {
+  .timer-penalty-actions > button[aria-pressed="false"]:hover:not(:disabled) {
     background: color-mix(in srgb, var(--foreground) 6%, transparent);
   }
 }
 
-.timer-penalty-actions > button:is([aria-checked="true"], [aria-pressed="true"]) {
+.timer-penalty-actions > button[aria-pressed="true"] {
   border-color: var(--accent);
   color: var(--accent);
   background: var(--accent-soft);

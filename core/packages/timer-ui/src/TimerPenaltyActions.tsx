@@ -15,28 +15,15 @@ const COPY = { en: 'Penalty', zh: '罚时' } as const;
 /** Hosts own result updates; the action order, labels and selection UI are shared. */
 export function TimerPenaltyActions({ value, language, disabled = false, toggleOnly = false, onChange }: TimerPenaltyActionsProps) {
   return (
-    <div className="timer-penalty-actions" role={toggleOnly ? 'group' : 'radiogroup'} aria-label={COPY[language]} data-no-timer>
-      {(toggleOnly ? PENALTIES.slice(1) : PENALTIES).map((penalty, index) => (
+    <div className="timer-penalty-actions" role="group" aria-label={COPY[language]} data-no-timer>
+      {(toggleOnly ? PENALTIES.slice(1) : PENALTIES).map((penalty) => (
         <button
           key={penalty}
           type="button"
-          role={toggleOnly ? undefined : 'radio'}
-          aria-checked={toggleOnly ? undefined : value === penalty}
-          aria-pressed={toggleOnly ? value === penalty : undefined}
-          tabIndex={toggleOnly || value === penalty ? 0 : -1}
+          aria-pressed={value === penalty}
           disabled={disabled}
           onClick={() => onChange(toggleOnly && value === penalty ? 'ok' : penalty)}
-          onKeyDown={(event) => {
-            if (toggleOnly) return;
-            const direction = ['ArrowRight', 'ArrowDown'].includes(event.key) ? 1
-              : ['ArrowLeft', 'ArrowUp'].includes(event.key) ? -1 : 0;
-            if (!direction) return;
-            event.preventDefault();
-            event.stopPropagation();
-            const next = (index + direction + PENALTIES.length) % PENALTIES.length;
-            onChange(PENALTIES[next]);
-            event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="radio"]')[next]?.focus();
-          }}
+
         >{penalty.toUpperCase()}</button>
       ))}
     </div>
