@@ -469,7 +469,11 @@ export async function correctReconFromLibrary(
     // formula; retain the old candidate order whenever recognition is ambiguous.
     const identified = !label[2] && cases?.length ? await identifyLibraryCase(line, cases, set).catch(() => undefined) : undefined;
     const candidates = identified ? [identified] : cases;
-    let corrected = candidates?.length ? await correctLibraryLine(line, candidates.flatMap(item => item.algs.flat())) : line;
+    // Named last-slot cases remain F2L. Preserve measured wide-turn gestures
+    // just as for ordinary pairs instead of substituting a library fingertrick.
+    const preserveWide = line.kind === 'f2l'
+      && line.moves.some(move => /^(?:[rludfb]|[RLUDFB]w)(?:2'?|')?$/.test(move));
+    let corrected = candidates?.length ? await correctLibraryLine(line, candidates.flatMap(item => item.algs.flat()), preserveWide) : line;
     // A last-slot formula is still F2L: recognizing its library name must not
     // move a recorded regrip across layer turns (for example y' R' -> F' y').
     // Retain the match proof, but use the original path and encoder timing.

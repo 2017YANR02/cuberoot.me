@@ -430,6 +430,18 @@ it('recognizes last-slot ZBLS without moving the recorded mid-formula regrip', a
   await equivalent(result.lines[0].moves, original.moves);
 });
 
+it('keeps a measured last-slot wide gesture instead of substituting a front-face library path', async () => {
+  const original = { ...line("y d U R' U2' R U' R' U R"), kind: 'f2l' as const, label: "OB/ZBLS-Q T'" };
+  const recon = { lines: [original], inspection: '', text: '' } as ReconTextResult;
+  const result = await correctReconFromLibrary(recon, async () => ({
+    cases: [{ name: "Q T'", algs: [[{ alg: "U2 F' U2 F U' F' U F" }]] }],
+  }) as AlgFile);
+  expect(result.lines[0].moves).toEqual(original.moves);
+  expect(result.lines[0].moveRanges).toEqual(original.moveRanges);
+  expect(result.lines[0].label).toBe(original.label);
+  expect(result.lines[0].libraryCorrection).toBeUndefined();
+});
+
 it('loads independent reconstruction libraries concurrently and shares F2L requests', async () => {
   const pending = new Map<string, (file: AlgFile) => void>();
   const load = vi.fn((set: string) => new Promise<AlgFile>(resolve => pending.set(set, resolve)));

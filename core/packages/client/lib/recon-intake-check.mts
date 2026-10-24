@@ -6,7 +6,7 @@ import { projectReconNotation } from '@cuberoot/timer-ui/reconstruct/report-pres
 import { snapshotReconNotation } from '@cuberoot/timer-ui/reconstruct/review-snapshot';
 import { applyScramble } from '@cuberoot/shared/timer/reconstruct/state';
 import { applyOneToken } from '@cuberoot/shared/timer/reconstruct/apply-token';
-import { isSolved, isCross } from '@cuberoot/shared/timer/reconstruct/cfop-detect';
+import { isSolved, isCross, isF2l } from '@cuberoot/shared/timer/reconstruct/cfop-detect';
 import { reconstructedTrack } from '@cuberoot/timer-ui/reconstruct/playback-track';
 
 /** ESM for direct Node/tsx execution with cubing's import-only exports.
@@ -38,9 +38,17 @@ export async function checkReconIntake(item: Pick<ReconIntakeCase, 'id' | 'input
     if (!track || JSON.stringify(track.map(m => m.m)) !== JSON.stringify(shown.lines.flatMap(l => l.moves)))
       errors.push('Displayed moves do not retain complete encoder coverage');
     let state = applyOneToken(applyScramble(3, solve.scramble), shown.inspection);
-    for (const line of shown.lines) {
+    for (const [index, line] of shown.lines.entries()) {
+      const beforeLine = state;
       state = applyOneToken(state, line.moves.join(' '));
-      if ((line.kind === 'cross' || line.kind === 'f2l') && (!isCross(state) || state.D[4] !== shown.crossColor))
+      // A final pair may include the first last-layer turn as a cancellation.
+      // Prove F2L was complete immediately before that turn; a label alone
+      // cannot excuse a broken intermediate pair or a sideways cross.
+      const cancelsIntoLastLayer = line.kind === 'f2l' && /\bcancel into$/.test(line.label ?? '')
+        && ['oll', 'pll'].includes(shown.lines[index + 1]?.kind ?? '') && line.moves.length > 1
+        && isF2l(applyOneToken(beforeLine, line.moves.slice(0, -1).join(' ')));
+      if ((line.kind === 'cross' || line.kind === 'f2l')
+        && ((!isCross(state) && !cancelsIntoLastLayer) || state.D[4] !== shown.crossColor))
         errors.push('Cross is not down after ' + line.key);
     }
     if (!isSolved(state)) errors.push('Displayed reconstruction does not solve the cube');

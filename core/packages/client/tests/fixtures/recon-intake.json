@@ -2,6 +2,4194 @@
   "version": 1,
   "cases": [
     {
+      "id": "03c8a2fd-2d76-4d4b-92e3-3a79ffddc52e",
+      "revision": 1,
+      "contentHash": "b280f50fadac88219530f872abb77fd4b7a291284f3a6a317c4702807de8f27e",
+      "input": {
+        "source": "",
+        "verdict": "correct",
+        "language": "zh",
+        "observed": {
+          "lines": [
+            {
+              "key": "cross",
+              "kind": "cross",
+              "label": "W xcross (GR)",
+              "moves": [
+                "D'",
+                "L",
+                "R",
+                "U2",
+                "L",
+                "F2",
+                "L'",
+                "F'",
+                "U",
+                "F",
+                "D",
+                "U"
+              ],
+              "toIdx": 13,
+              "fromIdx": 0
+            },
+            {
+              "key": "slot-FR",
+              "kind": "f2l",
+              "label": "GO",
+              "moves": [
+                "R'",
+                "U2",
+                "R"
+              ],
+              "toIdx": 17,
+              "fromIdx": 14
+            },
+            {
+              "key": "slot-BL",
+              "kind": "f2l",
+              "label": "RB",
+              "moves": [
+                "U'",
+                "L'",
+                "U",
+                "L",
+                "U",
+                "L'",
+                "U'",
+                "L"
+              ],
+              "toIdx": 25,
+              "fromIdx": 18
+            },
+            {
+              "key": "slot-BR",
+              "kind": "f2l",
+              "label": "OB/ZBLS",
+              "moves": [
+                "y'",
+                "U2",
+                "L'",
+                "U2",
+                "L",
+                "U'",
+                "R'",
+                "F",
+                "R",
+                "U",
+                "R'",
+                "F'",
+                "R"
+              ],
+              "toIdx": 39,
+              "fromIdx": 26
+            },
+            {
+              "key": "oll",
+              "kind": "oll",
+              "label": "ZBLL-HL9",
+              "moves": [
+                "U",
+                "R",
+                "U",
+                "R'",
+                "U",
+                "R",
+                "U",
+                "L'",
+                "U",
+                "R'",
+                "U'",
+                "L",
+                "U2"
+              ],
+              "toIdx": 53,
+              "fromIdx": 40
+            }
+          ],
+          "inspection": "x2 y"
+        },
+        "recording": {
+          "gyro": "RwIAswAABFITXwB7CVIXXgDtCU8bXwMMB08WYABaCFIRXwHCCVYMXQBcB1cJXACUB1UOXQBaCFMSXgOECVAVYADwCU0WYwIcBU8TYgC0CE8PYgBaCk0UYgA7CE0aYQBbBFAbXwC0Ak4WYgBcAUobZAGEA0sTZQAeBEkcZADSA0wVYwB4AkkcZAA++0oYZQCyAEsXZAGkA00WYgMMBk0ZYgDwCEodYwB4CUchZADwCksYYwAACE8UYQC0CFIPYAB4ClEWXgCWDE8QYQBADE0WYgEoCVATYAPABVISXwEOA1UOXQA8AFgKWwBb81gGWwBZ9VcKWwC0+FcNWwKy+VgIWwC0+FgCWwEO+Fj+WwMu/VgJWwA7AlQUXQA5A1IXXgBaBFAbXwEsBlAVYAHECk4WYQCUBlAUYAEOBFMQXwFKCFIOYAGGBFIRXwNmCFMPXwbMClETYAI6Bk8SYgB4CU8WYQAeBE0SYwA8/k0NZAAe/UsJZgLQAEwNZQRWAEsSZQHC/EwQZAGk/U0VYwB4AU8aYAAgCU0bYQA6D0wfYADSCksfYQBaB0kbZAEOC0odYgAABksaYwAeAUsYYwA8/EsZYwDS/0ofYgAeAkQbaABcAzwUbgB2AkAUbAB4AkkRZwAeBUsJZgBaCU8QYgAeC1EHYQAeDFT/XwBaDVb4XAFoDFf9XAFKDlcBXAHCClYFXQJYCFQIXgEsDVQHXgCiElEGYABsFk4FYgBaGksFYwCWGEsKYwBaFE4MYgAeEFEPXwBaDlQTXAHCC1EUXwH+CU4TYgC0D0wUYwFKEU8SYAC0FFIUXQAeGVIVWwBaIFYTVgA8IlsSUAA8IWISSAA8JWgbOACWJWwcMQBaIXIVKQAAH3YPHwAEIHgOGAA4G3oIFAAeGXsIEAA8FHwKDwAgG3sNCwBYGXoSDwAeHHoPDwBaG3oSCwA8FHsTDQA8DHwSEAAeB3wSEgDSDXwREgLuEnwLDwA/HXsIDAA5I3kGDABaH3oHDQHCHHsKDADwF3wHCQC0E30GBwBaD34DCQKZE30EDABzF3wCEAH+GHsHEwAeHHkIFwA8IHgJGwA8JXUJIACYKHIJJgBYLnAGJwB4LXIEIAAeJXcFGgB6GHsEFAACEX0DDwG+GHsLEgA8G3oMFQBaH3gHGAA8HHkLFQEOFXwFDgACDn7/CQHDEX0DCgXHFn0CDACoFH3/CQGGE334BgB7D330BgABCX3wBwB0Cn3tCwJYDnzrBwFKC33sBAA8En30BgAeGnv6DQCWGHz8EQBZFX3+DQESEX37DACxE33/CgDwEX0AEgAeEHwGEwAeEXsOFAA8EnwJFABaF3sHEwA+HHsJEABYF3wKDQAeD30QCAAeGHsTCwB4IHkSDgCZIXgNFABXIHkGEwB4GnsEEAAeE30EDwA+F3wGEAEqF3wKDgBcF3sQDA==",
+          "model": "moyu32",
+          "moves": [
+            {
+              "m": "U'",
+              "ts": 0
+            },
+            {
+              "m": "B",
+              "ts": 988
+            },
+            {
+              "m": "F",
+              "ts": 1789
+            },
+            {
+              "m": "D",
+              "ts": 3099
+            },
+            {
+              "m": "D",
+              "ts": 3445
+            },
+            {
+              "m": "B",
+              "ts": 3963
+            },
+            {
+              "m": "R",
+              "ts": 4386
+            },
+            {
+              "m": "R",
+              "ts": 4819
+            },
+            {
+              "m": "B'",
+              "ts": 5256
+            },
+            {
+              "m": "R'",
+              "ts": 7169
+            },
+            {
+              "m": "D",
+              "ts": 7467
+            },
+            {
+              "m": "R",
+              "ts": 7743
+            },
+            {
+              "m": "D",
+              "ts": 9366
+            },
+            {
+              "m": "U",
+              "ts": 9395
+            },
+            {
+              "m": "F'",
+              "ts": 11704
+            },
+            {
+              "m": "D",
+              "ts": 12480
+            },
+            {
+              "m": "D",
+              "ts": 12577
+            },
+            {
+              "m": "F",
+              "ts": 13343
+            },
+            {
+              "m": "D'",
+              "ts": 16726
+            },
+            {
+              "m": "B'",
+              "ts": 17111
+            },
+            {
+              "m": "D",
+              "ts": 18986
+            },
+            {
+              "m": "B",
+              "ts": 20033
+            },
+            {
+              "m": "D",
+              "ts": 20432
+            },
+            {
+              "m": "B'",
+              "ts": 20648
+            },
+            {
+              "m": "D'",
+              "ts": 21008
+            },
+            {
+              "m": "B",
+              "ts": 21360
+            },
+            {
+              "m": "D",
+              "ts": 26705
+            },
+            {
+              "m": "D",
+              "ts": 26792
+            },
+            {
+              "m": "L'",
+              "ts": 27001
+            },
+            {
+              "m": "D",
+              "ts": 27201
+            },
+            {
+              "m": "D",
+              "ts": 27288
+            },
+            {
+              "m": "L",
+              "ts": 28101
+            },
+            {
+              "m": "D'",
+              "ts": 29243
+            },
+            {
+              "m": "R'",
+              "ts": 30568
+            },
+            {
+              "m": "B",
+              "ts": 30792
+            },
+            {
+              "m": "R",
+              "ts": 31083
+            },
+            {
+              "m": "D",
+              "ts": 31366
+            },
+            {
+              "m": "R'",
+              "ts": 31567
+            },
+            {
+              "m": "B'",
+              "ts": 31855
+            },
+            {
+              "m": "R",
+              "ts": 32028
+            },
+            {
+              "m": "D",
+              "ts": 33104
+            },
+            {
+              "m": "R",
+              "ts": 34598
+            },
+            {
+              "m": "D",
+              "ts": 35473
+            },
+            {
+              "m": "R'",
+              "ts": 35795
+            },
+            {
+              "m": "D",
+              "ts": 36096
+            },
+            {
+              "m": "R",
+              "ts": 36313
+            },
+            {
+              "m": "D",
+              "ts": 36671
+            },
+            {
+              "m": "L'",
+              "ts": 36843
+            },
+            {
+              "m": "D",
+              "ts": 37041
+            },
+            {
+              "m": "R'",
+              "ts": 37202
+            },
+            {
+              "m": "D'",
+              "ts": 37440
+            },
+            {
+              "m": "L",
+              "ts": 37717
+            },
+            {
+              "m": "D",
+              "ts": 38152
+            },
+            {
+              "m": "D",
+              "ts": 38196
+            }
+          ],
+          "timeMs": 38196,
+          "scramble": "D2 B R' F2 U L D L' F L2 F2 U2 R2 L2 F' D2 F U2 B L2"
+        },
+        "annotations": [],
+        "hadOverride": false
+      },
+      "expected": {
+        "lines": [
+          {
+            "key": "cross",
+            "kind": "cross",
+            "label": "W xcross (GR)",
+            "moves": [
+              "D'",
+              "L",
+              "R",
+              "U2",
+              "L",
+              "F2",
+              "L'",
+              "F'",
+              "U",
+              "F",
+              "D",
+              "U"
+            ],
+            "toIdx": 13,
+            "fromIdx": 0
+          },
+          {
+            "key": "slot-FR",
+            "kind": "f2l",
+            "label": "GO",
+            "moves": [
+              "R'",
+              "U2",
+              "R"
+            ],
+            "toIdx": 17,
+            "fromIdx": 14
+          },
+          {
+            "key": "slot-BL",
+            "kind": "f2l",
+            "label": "RB",
+            "moves": [
+              "U'",
+              "L'",
+              "U",
+              "L",
+              "U",
+              "L'",
+              "U'",
+              "L"
+            ],
+            "toIdx": 25,
+            "fromIdx": 18
+          },
+          {
+            "key": "slot-BR",
+            "kind": "f2l",
+            "label": "OB/ZBLS",
+            "moves": [
+              "y'",
+              "U2",
+              "L'",
+              "U2",
+              "L",
+              "U'",
+              "R'",
+              "F",
+              "R",
+              "U",
+              "R'",
+              "F'",
+              "R"
+            ],
+            "toIdx": 39,
+            "fromIdx": 26
+          },
+          {
+            "key": "oll",
+            "kind": "oll",
+            "label": "ZBLL-HL9",
+            "moves": [
+              "U",
+              "R",
+              "U",
+              "R'",
+              "U",
+              "R",
+              "U",
+              "L'",
+              "U",
+              "R'",
+              "U'",
+              "L",
+              "U2"
+            ],
+            "toIdx": 53,
+            "fromIdx": 40
+          }
+        ],
+        "inspection": "x2 y"
+      }
+    },
+    {
+      "id": "18111eec-c5e9-4a5f-b81a-7be457e3350f",
+      "revision": 1,
+      "contentHash": "d3e79ea1181bbb541d6834bf84c502ea071a6c563fcf484fc7126ddc72c37ca2",
+      "input": {
+        "source": "",
+        "verdict": "correct",
+        "language": "zh",
+        "observed": {
+          "lines": [
+            {
+              "key": "cross",
+              "kind": "cross",
+              "label": "W cross",
+              "moves": [
+                "U'",
+                "B'",
+                "R",
+                "F2",
+                "D",
+                "F'",
+                "D"
+              ],
+              "toIdx": 7,
+              "fromIdx": 0
+            },
+            {
+              "key": "slot-BR",
+              "kind": "f2l",
+              "label": "OB",
+              "moves": [
+                "U2",
+                "R",
+                "U2'",
+                "R'",
+                "U'",
+                "R",
+                "U",
+                "R'"
+              ],
+              "toIdx": 17,
+              "fromIdx": 8
+            },
+            {
+              "key": "slot-FR",
+              "kind": "f2l",
+              "label": "GO",
+              "moves": [
+                "U2",
+                "L'",
+                "U2",
+                "L",
+                "U'",
+                "L'",
+                "U",
+                "L"
+              ],
+              "toIdx": 27,
+              "fromIdx": 18
+            },
+            {
+              "key": "slot-FL",
+              "kind": "f2l",
+              "label": "GR",
+              "moves": [
+                "y",
+                "R'",
+                "U",
+                "R2",
+                "U2'",
+                "R2'",
+                "U'",
+                "R"
+              ],
+              "toIdx": 37,
+              "fromIdx": 28
+            },
+            {
+              "key": "slot-BL",
+              "kind": "f2l",
+              "label": "RB",
+              "moves": [
+                "F'",
+                "U'",
+                "F"
+              ],
+              "toIdx": 40,
+              "fromIdx": 38
+            },
+            {
+              "key": "oll",
+              "kind": "oll",
+              "label": "OLL-V-",
+              "moves": [
+                "U",
+                "F",
+                "R'",
+                "F'",
+                "R",
+                "U2",
+                "R",
+                "U'",
+                "R'",
+                "U",
+                "R",
+                "U2'",
+                "R'"
+              ],
+              "toIdx": 55,
+              "fromIdx": 41
+            },
+            {
+              "key": "pll",
+              "kind": "pll",
+              "label": "PLL-Ra",
+              "moves": [
+                "R",
+                "U'",
+                "R2'",
+                "D'",
+                "R",
+                "U",
+                "R'",
+                "D",
+                "R",
+                "U'",
+                "R",
+                "U'",
+                "R'",
+                "U",
+                "R",
+                "U",
+                "R'",
+                "U"
+              ],
+              "toIdx": 74,
+              "fromIdx": 56
+            }
+          ],
+          "inspection": "x2 y'"
+        },
+        "recording": {
+          "gyro": "RwIAtgAA9Hzu8gBZ+n3v8wBQFXzx+gAsKXj0+wA5MHX48QAdLHX16wA8Hnb03QBbEHD3yAAAAmv8vAA7/WX8swBC+Fz9qAAZ+1z6qQA7A133qQDSB1/wrQABB2LvsQAPCF/prwA5AWDurwAR/GHxrwA9+WD3rgBD+WIDrwAW+WIIrwB4+179qwAeAVv1qQBp9Vf4pAAP5FEJowAl2k0NowA11kkNogBa3EcHnQA94UkEnQDv3EYBnABC10L/mwA21T/8mgDw2EP/nAB53EYAnQCz4UkAnQDw5Uv6nQAe4U79oQBh5VD9oQDT40z3nwA030n1ngCX4Uv6nwBC3k/0owAf5FHtpQEk5E74oAA84EzvoQCX20z2ogA73EsCoABD41D+ogFE3k79ogDR300CoQC14E4NogAd5VAMogDT7FANoABa4lISpQBB3lQaqwBc41cYrAA06FUTpwBE7lELoAAW7E0OngBb8EwPnQBZ7VEOoQAB71UOpABZ71cSpwAI6VgYqgBx6lofrwAG5lscsAAf2FgdswBD5lYJpwAP61cBpgBa61/3rgBb6nLo0QAA6Hrq9QBZ4Hv7/wAB43v3AQBZ6Hzu/wBb6HzxAgB47n30/wB48372AABa8n3y+wEs8H3v+AOD8Hzt/QBbAX3w8gA7/n337AA8/3718ABi+X3v9AAO6Hrq9AAn5Hnn+AAd8Xne+gBb+nnZ+gAe9XjY9wBZ8Hjc9ABa5Hbd8QAe6nvs9wAe8H3u/gDS43rt+gA96Xvq+QAd8H3v/wBa9X3rBAAe+HreBwA873vlBAAe833vBgCB/X3qCwAVAHznDwBe+3zpCwAb9XzoCAAe9n3tBwA78n3uAgA96nrm+gDR6Xvq+QAK53vu9QCM53rp9gAf63vq+AA77nvm+ACW8Hvo9ABl7Xzt/QBu633zAwAA7n30BwAR9373DAArA333FgAlBXvnDwA0EXrjDAA9EnvnBQAk+X3pAACP833s/QAB63zu/QAk5nz2+wBU7H33AAA88X70/QAd6nvv9gA82nfv8QA91XTq7wA82nft8gAj4Xrx9gBB4Hns9ACS5Hnq9QBT6Hrm9QBa3nfl9QA94Hbf9AA74Hjo8wAm6Xro9wCW8Hzs9QAW6Hnm8wBb7Xnh9wBD+Xrf9gCO9Xrg9ABb83rh+AA79Hvl+gBa83zq+gDS73zs9wDS23fs8gA83nTd8QBE43Xb7wAX4nfi8gAe9Hzr9gA8/n7zAgA8BX71DQBZA37xBgCB+nzn/wAF+H3p+QA17n34/wAY/X72BgA/+n77DAAi8378BgA05Hz4/gBg4nrt+gAB4Xjl9wA11XTk9wBb23bm9wA85nnk+gA76Xjf+gA97HbX+QA7/3fT/wAfAXHHBABaAnTN/wBaAXjW+gAd/XnZ+wAfBHfV/AA8+nna+wA7/nfU+wAl9Xja9QA18nrj9AA9+Xvi+A==",
+          "model": "moyu32",
+          "moves": [
+            {
+              "m": "D'",
+              "ts": 0
+            },
+            {
+              "m": "R'",
+              "ts": 142
+            },
+            {
+              "m": "B",
+              "ts": 220
+            },
+            {
+              "m": "L",
+              "ts": 821
+            },
+            {
+              "m": "L",
+              "ts": 908
+            },
+            {
+              "m": "U",
+              "ts": 1062
+            },
+            {
+              "m": "L'",
+              "ts": 1278
+            },
+            {
+              "m": "U",
+              "ts": 1411
+            },
+            {
+              "m": "D",
+              "ts": 2808
+            },
+            {
+              "m": "D",
+              "ts": 2869
+            },
+            {
+              "m": "B",
+              "ts": 3093
+            },
+            {
+              "m": "D'",
+              "ts": 3344
+            },
+            {
+              "m": "D'",
+              "ts": 3394
+            },
+            {
+              "m": "B'",
+              "ts": 3573
+            },
+            {
+              "m": "D'",
+              "ts": 3719
+            },
+            {
+              "m": "B",
+              "ts": 3786
+            },
+            {
+              "m": "D",
+              "ts": 3880
+            },
+            {
+              "m": "B'",
+              "ts": 3974
+            },
+            {
+              "m": "D",
+              "ts": 4726
+            },
+            {
+              "m": "D",
+              "ts": 4794
+            },
+            {
+              "m": "F'",
+              "ts": 5027
+            },
+            {
+              "m": "D",
+              "ts": 5134
+            },
+            {
+              "m": "D",
+              "ts": 5210
+            },
+            {
+              "m": "F",
+              "ts": 5298
+            },
+            {
+              "m": "D'",
+              "ts": 5549
+            },
+            {
+              "m": "F'",
+              "ts": 5616
+            },
+            {
+              "m": "D",
+              "ts": 5696
+            },
+            {
+              "m": "F",
+              "ts": 5817
+            },
+            {
+              "m": "R'",
+              "ts": 7899
+            },
+            {
+              "m": "D",
+              "ts": 7968
+            },
+            {
+              "m": "R",
+              "ts": 8108
+            },
+            {
+              "m": "R",
+              "ts": 8159
+            },
+            {
+              "m": "D'",
+              "ts": 8220
+            },
+            {
+              "m": "D'",
+              "ts": 8374
+            },
+            {
+              "m": "R'",
+              "ts": 8435
+            },
+            {
+              "m": "R'",
+              "ts": 8547
+            },
+            {
+              "m": "D'",
+              "ts": 8671
+            },
+            {
+              "m": "R",
+              "ts": 8790
+            },
+            {
+              "m": "B'",
+              "ts": 9005
+            },
+            {
+              "m": "D'",
+              "ts": 9140
+            },
+            {
+              "m": "B",
+              "ts": 9240
+            },
+            {
+              "m": "D",
+              "ts": 9707
+            },
+            {
+              "m": "B",
+              "ts": 10184
+            },
+            {
+              "m": "R'",
+              "ts": 10338
+            },
+            {
+              "m": "B'",
+              "ts": 10426
+            },
+            {
+              "m": "R",
+              "ts": 10576
+            },
+            {
+              "m": "D",
+              "ts": 10744
+            },
+            {
+              "m": "D",
+              "ts": 10833
+            },
+            {
+              "m": "R",
+              "ts": 11529
+            },
+            {
+              "m": "D'",
+              "ts": 11646
+            },
+            {
+              "m": "R'",
+              "ts": 11701
+            },
+            {
+              "m": "D",
+              "ts": 11810
+            },
+            {
+              "m": "R",
+              "ts": 11838
+            },
+            {
+              "m": "D'",
+              "ts": 11965
+            },
+            {
+              "m": "D'",
+              "ts": 11995
+            },
+            {
+              "m": "R'",
+              "ts": 12126
+            },
+            {
+              "m": "R",
+              "ts": 12815
+            },
+            {
+              "m": "D'",
+              "ts": 12880
+            },
+            {
+              "m": "R'",
+              "ts": 13001
+            },
+            {
+              "m": "R'",
+              "ts": 13080
+            },
+            {
+              "m": "U'",
+              "ts": 13191
+            },
+            {
+              "m": "R",
+              "ts": 13277
+            },
+            {
+              "m": "D",
+              "ts": 13366
+            },
+            {
+              "m": "R'",
+              "ts": 13400
+            },
+            {
+              "m": "U",
+              "ts": 13449
+            },
+            {
+              "m": "R",
+              "ts": 13525
+            },
+            {
+              "m": "D'",
+              "ts": 13629
+            },
+            {
+              "m": "R",
+              "ts": 13697
+            },
+            {
+              "m": "D'",
+              "ts": 13802
+            },
+            {
+              "m": "R'",
+              "ts": 13890
+            },
+            {
+              "m": "D",
+              "ts": 14290
+            },
+            {
+              "m": "R",
+              "ts": 14375
+            },
+            {
+              "m": "D",
+              "ts": 14485
+            },
+            {
+              "m": "R'",
+              "ts": 14603
+            },
+            {
+              "m": "D",
+              "ts": 14684
+            }
+          ],
+          "timeMs": 14684,
+          "scramble": "D2 R' F2 D L2 U' R2 F' L' B' D' R' F' R2 F' R2 F' D2"
+        },
+        "annotations": [],
+        "hadOverride": false
+      },
+      "expected": {
+        "lines": [
+          {
+            "key": "cross",
+            "kind": "cross",
+            "label": "W cross",
+            "moves": [
+              "U'",
+              "B'",
+              "R",
+              "F2",
+              "D",
+              "F'",
+              "D"
+            ],
+            "toIdx": 7,
+            "fromIdx": 0
+          },
+          {
+            "key": "slot-BR",
+            "kind": "f2l",
+            "label": "OB",
+            "moves": [
+              "U2",
+              "R",
+              "U2'",
+              "R'",
+              "U'",
+              "R",
+              "U",
+              "R'"
+            ],
+            "toIdx": 17,
+            "fromIdx": 8
+          },
+          {
+            "key": "slot-FR",
+            "kind": "f2l",
+            "label": "GO",
+            "moves": [
+              "U2",
+              "L'",
+              "U2",
+              "L",
+              "U'",
+              "L'",
+              "U",
+              "L"
+            ],
+            "toIdx": 27,
+            "fromIdx": 18
+          },
+          {
+            "key": "slot-FL",
+            "kind": "f2l",
+            "label": "GR",
+            "moves": [
+              "y",
+              "R'",
+              "U",
+              "R2",
+              "U2'",
+              "R2'",
+              "U'",
+              "R"
+            ],
+            "toIdx": 37,
+            "fromIdx": 28
+          },
+          {
+            "key": "slot-BL",
+            "kind": "f2l",
+            "label": "RB",
+            "moves": [
+              "F'",
+              "U'",
+              "F"
+            ],
+            "toIdx": 40,
+            "fromIdx": 38
+          },
+          {
+            "key": "oll",
+            "kind": "oll",
+            "label": "OLL-V-",
+            "moves": [
+              "U",
+              "F",
+              "R'",
+              "F'",
+              "R",
+              "U2",
+              "R",
+              "U'",
+              "R'",
+              "U",
+              "R",
+              "U2'",
+              "R'"
+            ],
+            "toIdx": 55,
+            "fromIdx": 41
+          },
+          {
+            "key": "pll",
+            "kind": "pll",
+            "label": "PLL-Ra",
+            "moves": [
+              "R",
+              "U'",
+              "R2'",
+              "D'",
+              "R",
+              "U",
+              "R'",
+              "D",
+              "R",
+              "U'",
+              "R",
+              "U'",
+              "R'",
+              "U",
+              "R",
+              "U",
+              "R'",
+              "U"
+            ],
+            "toIdx": 74,
+            "fromIdx": 56
+          }
+        ],
+        "inspection": "x2 y'"
+      }
+    },
+    {
+      "id": "1d8fb437-866a-44d8-8991-5d5a34d6c8dd",
+      "revision": 1,
+      "contentHash": "319e8ac18c3a377da2a9ad7111c2ba0db3b69b6f462d912752bde3e9bdfb2f2b",
+      "input": {
+        "source": "",
+        "verdict": "correct",
+        "language": "zh",
+        "observed": {
+          "lines": [
+            {
+              "key": "cross",
+              "kind": "cross",
+              "label": "W cross",
+              "moves": [
+                "R'",
+                "F",
+                "D'"
+              ],
+              "toIdx": 2,
+              "fromIdx": 0
+            },
+            {
+              "key": "slot-BL",
+              "kind": "f2l",
+              "label": "RB",
+              "moves": [
+                "U",
+                "R",
+                "U'",
+                "R'",
+                "L'",
+                "U",
+                "L"
+              ],
+              "toIdx": 9,
+              "fromIdx": 3
+            },
+            {
+              "key": "slot-FL",
+              "kind": "f2l",
+              "label": "GR",
+              "moves": [
+                "y",
+                "U",
+                "R",
+                "U'",
+                "R'",
+                "U'",
+                "F",
+                "U'",
+                "F'"
+              ],
+              "toIdx": 17,
+              "fromIdx": 10
+            },
+            {
+              "key": "slot-BR",
+              "kind": "f2l",
+              "label": "OB",
+              "moves": [
+                "y",
+                "U2",
+                "R",
+                "U'",
+                "R'"
+              ],
+              "toIdx": 22,
+              "fromIdx": 18
+            },
+            {
+              "key": "slot-FR",
+              "kind": "f2l",
+              "label": "GO",
+              "moves": [
+                "y'",
+                "U",
+                "R",
+                "U2'",
+                "R'",
+                "U'",
+                "R",
+                "U",
+                "R'"
+              ],
+              "toIdx": 31,
+              "fromIdx": 23
+            },
+            {
+              "key": "oll",
+              "kind": "oll",
+              "label": "OLL-V-",
+              "moves": [
+                "U",
+                "F",
+                "R'",
+                "F'",
+                "R",
+                "(U",
+                "U",
+                "U'",
+                "R",
+                "R'",
+                "U)",
+                "R",
+                "U'",
+                "R'",
+                "U",
+                "R",
+                "U2",
+                "R'"
+              ],
+              "toIdx": 50,
+              "fromIdx": 32
+            },
+            {
+              "key": "pll",
+              "kind": "pll",
+              "label": "PLL-Gc",
+              "moves": [
+                "R2'",
+                "F2",
+                "R",
+                "U2",
+                "R",
+                "U2'",
+                "R'",
+                "F",
+                "R",
+                "U",
+                "R'",
+                "U'",
+                "R'",
+                "F",
+                "R2",
+                "U'"
+              ],
+              "toIdx": 71,
+              "fromIdx": 51
+            }
+          ],
+          "inspection": "x2 y"
+        },
+        "recording": {
+          "gyro": "RwIApAAA6qkRqAAd5qoMpwC066YKqQAe6aUVrQAe8KMarwA88aMesABi7aIltgA08KIhsgA89KMfsABb86IXrwCV8aMSrQCW8aUNqgHg8acTqQBi7KYRqwBY8KcZqwBy8akeqgA9/accqgAdCakeqQA8DKsjqgA8BqojqQA8+6geqgBa/qkbqAAeBagdqgBa7acKqAB49KkKpQA87qsIowC2ALAYoAAGDbQdnwAcFLQboABUCrIaoAA8+KkUpgCW+KYVqQDT86gTpwAd8KoPpQA87K4LoQA838IAlgAf2fPsiQA76P7yhABG6wP1gwAU6Qf6gwA86gr+gwBb6wgFgwAH6wICgwDK5wINhAAA4wQMhQCA5wUDhABS6gj+gwA97A7xhABD7BPyhQAW8hX0hAA87xL2hAA88w78ggBD7RL4hAAX7xPxhABG6xbshgAU5xP0hgA85xP4hQB45BvziAAA2yrqkAAe4EHnmgA88EztnQAe8lTtowA88lfupwCC71jypwAy81vxqgCB+F7vrQA761r2qgA06FvyrABa8FvyqgBc7VLqowA680XimgA88jjXlwB46CnbkAAA5x/iiwA84xXniQAe4Qv0hgBa4gv5hQAA5Af9hABb5AX4hAA74QT+hQA83Qn5hwAs3gnvhwCm5wvrhgAI6wfrhQAW5AjwhgA83gztiABh3Ar2hwCQ4gj1hQAA5wn2hAE46gf6gwDF5gj2hAEs6wn1gwBE7wr6gwAG7w7+gwBN7RL6hAAG7hjyhQBU6hjshwAd4Q/thwA82wzkigBa5gj2hABa5wX8hAAA6AcGhAA84g0KhgA83REIhwBa4gwFhQC06Qn/gwC06QUDgwA85Af8hABk4gYBhQCT5gb9hABT4wkChQB43wcChgA84wIGhQAe5gADhABa5v4LhAAe2wQNhwAe4AELhgA85wQEhABi6gH/gwA03QUHhgA80wv1igAl2Qz2iAA84AvxhgBT4wr0hQDT5wr4hACV6Af9hAA96AQBgwCV6AEEgwA94wEIhQBZ4AUHhQA86gX1hAA88QvqhAAe8hLVigBa7xnRjgAe9RzRjgBa8RTTjAA98wrtgwAd7QT3gwBb7QP9ggBC7AHygwA16v/+gwA87/v+ggA87gD4gwAe7QXqhAA96wvnhgA77QnthAA96QX3hABZ6AfwhABD8Q3nhQAX6QnqhQA84wn0hQAe5gj4hAB/6wb6gwAG8ArvhAAS8Qn0gwA76g30hABh7Q7whAAG7hTjhwA2+BbghwA27Q3vhABZ4g33hgAA6Qv3hAA98Qr4gwBZ6g74hA==",
+          "model": "moyu32",
+          "moves": [
+            {
+              "m": "F'",
+              "ts": 0
+            },
+            {
+              "m": "R",
+              "ts": 158
+            },
+            {
+              "m": "U'",
+              "ts": 369
+            },
+            {
+              "m": "D",
+              "ts": 1482
+            },
+            {
+              "m": "F",
+              "ts": 1600
+            },
+            {
+              "m": "D'",
+              "ts": 1729
+            },
+            {
+              "m": "F'",
+              "ts": 2165
+            },
+            {
+              "m": "B'",
+              "ts": 2454
+            },
+            {
+              "m": "D",
+              "ts": 2589
+            },
+            {
+              "m": "B",
+              "ts": 2718
+            },
+            {
+              "m": "D",
+              "ts": 3576
+            },
+            {
+              "m": "L",
+              "ts": 3679
+            },
+            {
+              "m": "D'",
+              "ts": 3778
+            },
+            {
+              "m": "L'",
+              "ts": 3875
+            },
+            {
+              "m": "D'",
+              "ts": 4096
+            },
+            {
+              "m": "F",
+              "ts": 4144
+            },
+            {
+              "m": "D'",
+              "ts": 4304
+            },
+            {
+              "m": "F'",
+              "ts": 4437
+            },
+            {
+              "m": "D",
+              "ts": 5125
+            },
+            {
+              "m": "D",
+              "ts": 5125
+            },
+            {
+              "m": "B",
+              "ts": 5162
+            },
+            {
+              "m": "D'",
+              "ts": 5258
+            },
+            {
+              "m": "B'",
+              "ts": 5291
+            },
+            {
+              "m": "D",
+              "ts": 5860
+            },
+            {
+              "m": "L",
+              "ts": 5974
+            },
+            {
+              "m": "D'",
+              "ts": 6078
+            },
+            {
+              "m": "D'",
+              "ts": 6091
+            },
+            {
+              "m": "L'",
+              "ts": 6227
+            },
+            {
+              "m": "D'",
+              "ts": 6305
+            },
+            {
+              "m": "L",
+              "ts": 6374
+            },
+            {
+              "m": "D",
+              "ts": 6438
+            },
+            {
+              "m": "L'",
+              "ts": 6519
+            },
+            {
+              "m": "D",
+              "ts": 6853
+            },
+            {
+              "m": "F",
+              "ts": 7379
+            },
+            {
+              "m": "L'",
+              "ts": 7538
+            },
+            {
+              "m": "F'",
+              "ts": 7631
+            },
+            {
+              "m": "L",
+              "ts": 7781
+            },
+            {
+              "m": "D",
+              "ts": 8281
+            },
+            {
+              "m": "D",
+              "ts": 8313
+            },
+            {
+              "m": "D'",
+              "ts": 8524
+            },
+            {
+              "m": "L",
+              "ts": 8629
+            },
+            {
+              "m": "L'",
+              "ts": 8774
+            },
+            {
+              "m": "D",
+              "ts": 9049
+            },
+            {
+              "m": "L",
+              "ts": 9134
+            },
+            {
+              "m": "D'",
+              "ts": 9184
+            },
+            {
+              "m": "L'",
+              "ts": 9290
+            },
+            {
+              "m": "D",
+              "ts": 9372
+            },
+            {
+              "m": "L",
+              "ts": 9408
+            },
+            {
+              "m": "D",
+              "ts": 9522
+            },
+            {
+              "m": "D",
+              "ts": 9522
+            },
+            {
+              "m": "L'",
+              "ts": 9587
+            },
+            {
+              "m": "L'",
+              "ts": 10444
+            },
+            {
+              "m": "L'",
+              "ts": 10532
+            },
+            {
+              "m": "F",
+              "ts": 10638
+            },
+            {
+              "m": "F",
+              "ts": 10699
+            },
+            {
+              "m": "L",
+              "ts": 10795
+            },
+            {
+              "m": "D",
+              "ts": 10994
+            },
+            {
+              "m": "D",
+              "ts": 10994
+            },
+            {
+              "m": "L",
+              "ts": 11042
+            },
+            {
+              "m": "D'",
+              "ts": 11187
+            },
+            {
+              "m": "D'",
+              "ts": 11379
+            },
+            {
+              "m": "L'",
+              "ts": 11444
+            },
+            {
+              "m": "F",
+              "ts": 11513
+            },
+            {
+              "m": "L",
+              "ts": 11594
+            },
+            {
+              "m": "D",
+              "ts": 11709
+            },
+            {
+              "m": "L'",
+              "ts": 11749
+            },
+            {
+              "m": "D'",
+              "ts": 11921
+            },
+            {
+              "m": "L'",
+              "ts": 11967
+            },
+            {
+              "m": "F",
+              "ts": 12013
+            },
+            {
+              "m": "L",
+              "ts": 12066
+            },
+            {
+              "m": "L",
+              "ts": 12103
+            },
+            {
+              "m": "D'",
+              "ts": 12350
+            }
+          ],
+          "timeMs": 12340,
+          "scramble": "D2 U B D2 B D2 B2 R' D2 F2 U' R U2 F' L2 U' B2"
+        },
+        "annotations": [],
+        "hadOverride": false
+      },
+      "expected": {
+        "lines": [
+          {
+            "key": "cross",
+            "kind": "cross",
+            "label": "W cross",
+            "moves": [
+              "R'",
+              "F",
+              "D'"
+            ],
+            "toIdx": 2,
+            "fromIdx": 0
+          },
+          {
+            "key": "slot-BL",
+            "kind": "f2l",
+            "label": "RB",
+            "moves": [
+              "U",
+              "R",
+              "U'",
+              "R'",
+              "L'",
+              "U",
+              "L"
+            ],
+            "toIdx": 9,
+            "fromIdx": 3
+          },
+          {
+            "key": "slot-FL",
+            "kind": "f2l",
+            "label": "GR",
+            "moves": [
+              "y",
+              "U",
+              "R",
+              "U'",
+              "R'",
+              "U'",
+              "F",
+              "U'",
+              "F'"
+            ],
+            "toIdx": 17,
+            "fromIdx": 10
+          },
+          {
+            "key": "slot-BR",
+            "kind": "f2l",
+            "label": "OB",
+            "moves": [
+              "y",
+              "U2",
+              "R",
+              "U'",
+              "R'"
+            ],
+            "toIdx": 22,
+            "fromIdx": 18
+          },
+          {
+            "key": "slot-FR",
+            "kind": "f2l",
+            "label": "GO",
+            "moves": [
+              "y'",
+              "U",
+              "R",
+              "U2'",
+              "R'",
+              "U'",
+              "R",
+              "U",
+              "R'"
+            ],
+            "toIdx": 31,
+            "fromIdx": 23
+          },
+          {
+            "key": "oll",
+            "kind": "oll",
+            "label": "OLL-V-",
+            "moves": [
+              "U",
+              "F",
+              "R'",
+              "F'",
+              "R",
+              "(U",
+              "U",
+              "U'",
+              "R",
+              "R'",
+              "U)",
+              "R",
+              "U'",
+              "R'",
+              "U",
+              "R",
+              "U2",
+              "R'"
+            ],
+            "toIdx": 50,
+            "fromIdx": 32
+          },
+          {
+            "key": "pll",
+            "kind": "pll",
+            "label": "PLL-Gc",
+            "moves": [
+              "R2'",
+              "F2",
+              "R",
+              "U2",
+              "R",
+              "U2'",
+              "R'",
+              "F",
+              "R",
+              "U",
+              "R'",
+              "U'",
+              "R'",
+              "F",
+              "R2",
+              "U'"
+            ],
+            "toIdx": 71,
+            "fromIdx": 51
+          }
+        ],
+        "inspection": "x2 y"
+      }
+    },
+    {
+      "id": "4df88b64-bd0d-4ae3-88b2-0158695751e6",
+      "revision": 1,
+      "contentHash": "1b11b884a28c66cc677fcc5896883afb966da1adcd73418b5e638a74b858deb2",
+      "input": {
+        "source": "",
+        "verdict": "correct",
+        "language": "zh",
+        "observed": {
+          "lines": [
+            {
+              "key": "cross",
+              "kind": "cross",
+              "label": "W xxcross (GR+OB)",
+              "moves": [
+                "F'",
+                "L'",
+                "R2",
+                "U'",
+                "R2'",
+                "D'",
+                "R2",
+                "U",
+                "R'",
+                "U'",
+                "D'"
+              ],
+              "toIdx": 13,
+              "fromIdx": 0
+            },
+            {
+              "key": "slot-FR",
+              "kind": "f2l",
+              "label": "GO",
+              "moves": [
+                "R'",
+                "U'",
+                "R"
+              ],
+              "toIdx": 16,
+              "fromIdx": 14
+            },
+            {
+              "key": "slot-BL",
+              "kind": "f2l",
+              "label": "RB cancel into",
+              "moves": [
+                "L'",
+                "U'",
+                "L",
+                "R'"
+              ],
+              "toIdx": 20,
+              "fromIdx": 17
+            },
+            {
+              "key": "oll",
+              "kind": "oll",
+              "label": "BO",
+              "moves": [
+                "U",
+                "R",
+                "U",
+                "R'",
+                "U2'",
+                "R",
+                "U",
+                "R",
+                "D",
+                "R'",
+                "U2",
+                "R",
+                "D'",
+                "R'"
+              ],
+              "toIdx": 36,
+              "fromIdx": 21
+            }
+          ],
+          "inspection": "x2 y"
+        },
+        "recording": {
+          "gyro": "RwIAaAAAHUkcYAA7FlASXwA8FFEOXgCWEVQLXQC0DVMJXwKUD1QEXgDSElYBWwBbEVr6WAA7D1r/WACWD1oEWAC0FFgEWQBaEln/WQC0D1r9WABaEFn4WQBaFFf1WgCZGFT+XAA5F1EGXwAfGE8NYAB3FE8PYQDFGk0SYABnGFANXwCWGFAAXwBaFVMBXQA8FlMGXQA9FlMKXQDwE1YDXAA8E1f+WwB3E1f5WgABFlXzWwFJFlTuWwBbFVPzXAA8F1P9XQA7GFEJXgCWFFMLXQHgEFUHXQC0ClYHXAA9E1cEWgGFEVgBWgCWEFj5WgA9EFj1WQA7EVjsWAFoD1j6WgAhElYEXAB1FFQIXALuFlIPXQBeD1MMXgACCVMKXwByBlMFYABaAU8HYwBaBkgBaQC2EEwFZAA6EFAKYQBbFFQJXQBZFlQCXQVGF1MGXQPfGVEKXgNmHE0QYAAeHUsVYABZIE8UXAA8IVwPUAAfGmQPSQBZHWMLSgB4HV8OTgA9H1wQUQB3H1gOVQABHlYDWQAdHFP9XAA8GFL7XgDwGlD/XwFoHk4BYAB5Ikv+YQB3IE8BXgFpIFD8XQC2HVEFXQABHk8NXgBXH00RXwCWIUkSYQA7J0MSYwAeKz8UYwFLKkMRYgH+J0gNYAAdIkwGXwA8HU/6XwBaGVH5XgA8F1L9XgHCFVUAXAFoAFn0WgA8/1ntWQB4/ljmWAOF+FfjWACV+FXnWgCX+lftWwA7AVf3XAAhCVYCXQA6DlUJXQB4EFMNXgBcC1QKXgCTD1EKYAAhC1T/XgBYClT3XgBaCljxWgAeEVryVwA7ElX6XQA9DVX/Xg==",
+          "model": "moyu32",
+          "moves": [
+            {
+              "m": "R'",
+              "ts": 0
+            },
+            {
+              "m": "B'",
+              "ts": 960
+            },
+            {
+              "m": "F",
+              "ts": 1329
+            },
+            {
+              "m": "F",
+              "ts": 1781
+            },
+            {
+              "m": "D'",
+              "ts": 2074
+            },
+            {
+              "m": "F'",
+              "ts": 2377
+            },
+            {
+              "m": "F'",
+              "ts": 2456
+            },
+            {
+              "m": "U'",
+              "ts": 2747
+            },
+            {
+              "m": "F",
+              "ts": 3024
+            },
+            {
+              "m": "F",
+              "ts": 3087
+            },
+            {
+              "m": "D",
+              "ts": 3453
+            },
+            {
+              "m": "F'",
+              "ts": 4162
+            },
+            {
+              "m": "D'",
+              "ts": 4657
+            },
+            {
+              "m": "U'",
+              "ts": 5025
+            },
+            {
+              "m": "F'",
+              "ts": 6126
+            },
+            {
+              "m": "D'",
+              "ts": 6498
+            },
+            {
+              "m": "F",
+              "ts": 6672
+            },
+            {
+              "m": "B'",
+              "ts": 7059
+            },
+            {
+              "m": "D'",
+              "ts": 7345
+            },
+            {
+              "m": "B",
+              "ts": 7562
+            },
+            {
+              "m": "F'",
+              "ts": 11001
+            },
+            {
+              "m": "D",
+              "ts": 11204
+            },
+            {
+              "m": "F",
+              "ts": 11623
+            },
+            {
+              "m": "D",
+              "ts": 12491
+            },
+            {
+              "m": "F'",
+              "ts": 13021
+            },
+            {
+              "m": "D'",
+              "ts": 13302
+            },
+            {
+              "m": "D'",
+              "ts": 13455
+            },
+            {
+              "m": "F",
+              "ts": 14324
+            },
+            {
+              "m": "D",
+              "ts": 14733
+            },
+            {
+              "m": "F",
+              "ts": 15299
+            },
+            {
+              "m": "U",
+              "ts": 16396
+            },
+            {
+              "m": "F'",
+              "ts": 16785
+            },
+            {
+              "m": "D",
+              "ts": 17043
+            },
+            {
+              "m": "D",
+              "ts": 17140
+            },
+            {
+              "m": "F",
+              "ts": 17249
+            },
+            {
+              "m": "U'",
+              "ts": 17360
+            },
+            {
+              "m": "F'",
+              "ts": 17562
+            }
+          ],
+          "timeMs": 17562,
+          "scramble": "U' L F L2 U' F L2 U R2 D B' F D' U2 R D R'"
+        },
+        "annotations": [],
+        "hadOverride": false
+      },
+      "expected": {
+        "lines": [
+          {
+            "key": "cross",
+            "kind": "cross",
+            "label": "W xxcross (GR+OB)",
+            "moves": [
+              "F'",
+              "L'",
+              "R2",
+              "U'",
+              "R2'",
+              "D'",
+              "R2",
+              "U",
+              "R'",
+              "U'",
+              "D'"
+            ],
+            "toIdx": 13,
+            "fromIdx": 0
+          },
+          {
+            "key": "slot-FR",
+            "kind": "f2l",
+            "label": "GO",
+            "moves": [
+              "R'",
+              "U'",
+              "R"
+            ],
+            "toIdx": 16,
+            "fromIdx": 14
+          },
+          {
+            "key": "slot-BL",
+            "kind": "f2l",
+            "label": "RB cancel into",
+            "moves": [
+              "L'",
+              "U'",
+              "L",
+              "R'"
+            ],
+            "toIdx": 20,
+            "fromIdx": 17
+          },
+          {
+            "key": "oll",
+            "kind": "oll",
+            "label": "BO",
+            "moves": [
+              "U",
+              "R",
+              "U",
+              "R'",
+              "U2'",
+              "R",
+              "U",
+              "R",
+              "D",
+              "R'",
+              "U2",
+              "R",
+              "D'",
+              "R'"
+            ],
+            "toIdx": 36,
+            "fromIdx": 21
+          }
+        ],
+        "inspection": "x2 y"
+      }
+    },
+    {
+      "id": "52523f96-c160-4fcd-b789-c5d400154ae4",
+      "revision": 1,
+      "contentHash": "5dfce2bcb7e880a54bf1cf2348a95674c191f46beb6c8460332643aefc30f8c5",
+      "input": {
+        "source": "",
+        "verdict": "correct",
+        "language": "zh",
+        "observed": {
+          "lines": [
+            {
+              "key": "cross",
+              "kind": "cross",
+              "label": "Y xxcross (RG+BO)",
+              "moves": [
+                "r'",
+                "R",
+                "U'",
+                "F'",
+                "R'",
+                "D",
+                "r",
+                "y",
+                "R",
+                "U'",
+                "R'",
+                "L",
+                "U2",
+                "L'",
+                "y'",
+                "D"
+              ],
+              "toIdx": 14,
+              "fromIdx": 0
+            },
+            {
+              "key": "slot-FL",
+              "kind": "f2l",
+              "label": "OG",
+              "moves": [
+                "U",
+                "R",
+                "U'",
+                "R'",
+                "U'",
+                "L",
+                "U",
+                "L'"
+              ],
+              "toIdx": 22,
+              "fromIdx": 15
+            },
+            {
+              "key": "slot-BR",
+              "kind": "f2l",
+              "label": "BR/ZBLS",
+              "moves": [
+                "F'",
+                "L'",
+                "U2",
+                "L",
+                "U'",
+                "F",
+                "U'",
+                "R",
+                "U",
+                "R'"
+              ],
+              "toIdx": 33,
+              "fromIdx": 23
+            },
+            {
+              "key": "oll",
+              "kind": "oll",
+              "label": "ZBLL-TF7",
+              "moves": [
+                "U'",
+                "R'",
+                "U'",
+                "R'",
+                "D'",
+                "R",
+                "U",
+                "R'",
+                "D",
+                "R",
+                "U'",
+                "R",
+                "U'",
+                "R'",
+                "U2",
+                "R",
+                "U2"
+              ],
+              "toIdx": 52,
+              "fromIdx": 34
+            }
+          ],
+          "inspection": "y"
+        },
+        "recording": {
+          "gyro": "RwIBBgAAsANiBwAds/BiEABetuFgFgAaudVdGQB4utBbGwHCuc9YHwLQu9BXJwB/wtFWNAAYxtJVOgENwdJUNwBbu9FRNABZuNBPMgC0tsxLMQIcts5PLQBFttBSKAA0tdBUJAAdtNFVHQA8tNFXGADauNBZGwAWuc5VJACBu81VKACst85UIwCztshOJwAftr9GKQB/u7xHKgAWvbhFKQC0vbtJKAA9usVRJQAdsuVdGAAmqw9d/QA0qRtY9wDSqRZa9wNmrBdc9ABaqRNa8wBbqhNa7h9orxNf7gA7uBZk6gA9whpo5gAd1xtx4QA97xJ33QBZ+Al63wAB/AR84wB4AQN96ABaAgJ97ACWAwV96AEOBAl85QBiAw197QCNBAh97AIjCAd97AF/Bgh+8QCWBgV96wQaBwN85gSxBwJ96geeCAd97gFvCAN96gIVBwB85wIGBf584wFfA/573wCXB/174gB3CPx85gBbBPt85QA7Bv196AEtAwB85QBaAgN96QCWAwx97gCWAg598gEsBAx97gB5Bgd96gGFBgV85gPdCAN74gHhDAF64QKxBwF73wAeAgV63wA8/Ap53AA8+A542gAe9BF32gBa7xV22QAe6xh02QAf6Bdy1ABa4xdw0AA82hpv1wBZ0B9t3wAeySNq5QA9wh9n6AAevB1l6wA7txti7AA8sRlf8AA9rRVd8wBaqxFc9AKUqBBa9wDwpgxZ/AABpQpYAAA7pgRZAACVpgda+wGlpwta/gDSpw1a+gGjpxBZ9gDTqRdY8wOhqRhY7wEtqhRZ7gB3rBJc7AFLrxFd5gB4sRRc4ADvsxhb3AA8tBta1wBbth1Z1ABatiNV0gB4tyhT0AA7uCxQzgAfui9PywCVvTRMxwCXtzBMzQA8sy5N0QA8ryxN1gAdrCtN3ABbqCpM4gAepypM5gCzpCdM7AC0oyFO8QAeoRZR/gBaoAhSEAAfof5QHAAeo/pPJAA7pfZPJwBapvROKgEPpvVMLgEOpu1OKAAep+lPJAA7p+ZQIQH+p+pQJACXpu9QJABZo/NQIAA9ofdQHAA8oP1QFgAdoAJREAA8oAZSCwA8oQhUBAAeogpV/gA/owtV+QA6pQxX9AGGphFY9AENqQ9b8wSxrA9c7wEOrg1e7AJCsA5e5gAEsQ9e4QCnrhBc5gA8rBJb6gBbqRRZ7wFnqBZX8wOFqBNa+AFKpwxaAQC0qA5a/AHJqhJb+wGdqA1b/wB3qRFa8AC0pw1Y8gDTpQxX9wBDqBJa+wH2phNX/QYYqBJa+gFoqhRb9QWgrBVb8ADTqxRc9QA8qxFd/wA8qxZc+AAerRtb8gForxde8wEOsRVf7wBasQxh8gCVsBBg9AJZrhNe8wI5rRZc8AOjrxhc6wBasRtd6ALutBlg6QA8sRZf7gBErhRe8gCNqw9c7wH+qw9d9ANIrAtd8AC0rQhf8gCXrANe8AHgrgFf7QForQVe6wA8rA1c6QA8rBNa5wAerBlY5AA8qx1W4wBZqxtY6ADTqhZY6gCcqxla8AjiqBlX8wA8phpW9wJYqBZY+ABgqhNa9AObrBRc7wFLqRZa/AAepxRZBAErqhVaCQB5qBVZAgD2qxJc8wTKqBNZ8wGEqRZY7gHBqBpX8ADTqR9W8QErqBlX8gA9phRW9AcmpxdX8QCWqhtY7gIGqBhX8wEqpxdW7wNgphZW9ADwqBpX9QFopRZV8wEspRJV8wEOqBZX7QJYpxdW8QFopRRW9QGGpRFW+QEOpBRV+wBaoxVUAACWoRJSBAA8og1V/gBZowhW9wAAow9V9wBboRJS+ADwoxRT9ACXoxBU8wCUphRW8AA9qRdY8ABZphVX8wB5pBJV+ACWpRFX/wA8pA9WBQC0ogtUBQAeoQdUCAA7oAdSDgCXogZVCQCWogFUCgAFogJVBQCRogVV/wAAowpV+QB4ogdVAgA8oQhU/QBaoAhS9wCWowZV9QBipgxY9QCOoghV9gB4oghU8QDSpA1U7QCVpAlV8QHDpwlZ8QCdpgpY9gDppARW7gAAqAdU3QC0qAxX5gDwqgpa6gEsqRNX5wGjpxRW7ADxpw5Y7QCWqwxc8A==",
+          "model": "moyu32",
+          "moves": [
+            {
+              "m": "F'",
+              "ts": 0
+            },
+            {
+              "m": "B",
+              "ts": 1510
+            },
+            {
+              "m": "L'",
+              "ts": 2529
+            },
+            {
+              "m": "U'",
+              "ts": 3154
+            },
+            {
+              "m": "B'",
+              "ts": 3560
+            },
+            {
+              "m": "R",
+              "ts": 3839
+            },
+            {
+              "m": "F",
+              "ts": 4149
+            },
+            {
+              "m": "L",
+              "ts": 14532
+            },
+            {
+              "m": "U'",
+              "ts": 15174
+            },
+            {
+              "m": "L'",
+              "ts": 15717
+            },
+            {
+              "m": "R",
+              "ts": 21700
+            },
+            {
+              "m": "U",
+              "ts": 22059
+            },
+            {
+              "m": "U",
+              "ts": 22164
+            },
+            {
+              "m": "R'",
+              "ts": 22807
+            },
+            {
+              "m": "D",
+              "ts": 27687
+            },
+            {
+              "m": "U",
+              "ts": 28312
+            },
+            {
+              "m": "B",
+              "ts": 39273
+            },
+            {
+              "m": "U'",
+              "ts": 39912
+            },
+            {
+              "m": "B'",
+              "ts": 40457
+            },
+            {
+              "m": "U'",
+              "ts": 40932
+            },
+            {
+              "m": "F",
+              "ts": 45139
+            },
+            {
+              "m": "U",
+              "ts": 45566
+            },
+            {
+              "m": "F'",
+              "ts": 45847
+            },
+            {
+              "m": "R'",
+              "ts": 49006
+            },
+            {
+              "m": "F'",
+              "ts": 50644
+            },
+            {
+              "m": "U",
+              "ts": 50921
+            },
+            {
+              "m": "U",
+              "ts": 51039
+            },
+            {
+              "m": "F",
+              "ts": 51885
+            },
+            {
+              "m": "U'",
+              "ts": 52420
+            },
+            {
+              "m": "R",
+              "ts": 55395
+            },
+            {
+              "m": "U'",
+              "ts": 56331
+            },
+            {
+              "m": "B",
+              "ts": 56693
+            },
+            {
+              "m": "U",
+              "ts": 57083
+            },
+            {
+              "m": "B'",
+              "ts": 57406
+            },
+            {
+              "m": "U'",
+              "ts": 61468
+            },
+            {
+              "m": "B'",
+              "ts": 62831
+            },
+            {
+              "m": "U'",
+              "ts": 64828
+            },
+            {
+              "m": "B'",
+              "ts": 66384
+            },
+            {
+              "m": "D'",
+              "ts": 66906
+            },
+            {
+              "m": "B",
+              "ts": 67262
+            },
+            {
+              "m": "U",
+              "ts": 67617
+            },
+            {
+              "m": "B'",
+              "ts": 68050
+            },
+            {
+              "m": "D",
+              "ts": 68446
+            },
+            {
+              "m": "B",
+              "ts": 68796
+            },
+            {
+              "m": "U'",
+              "ts": 69240
+            },
+            {
+              "m": "B",
+              "ts": 69773
+            },
+            {
+              "m": "U'",
+              "ts": 70282
+            },
+            {
+              "m": "B'",
+              "ts": 70648
+            },
+            {
+              "m": "U",
+              "ts": 71057
+            },
+            {
+              "m": "U",
+              "ts": 71133
+            },
+            {
+              "m": "B",
+              "ts": 71822
+            },
+            {
+              "m": "U",
+              "ts": 72271
+            },
+            {
+              "m": "U",
+              "ts": 72326
+            }
+          ],
+          "timeMs": 72326,
+          "scramble": "D' B2 U' B2 D2 F2 U L2 U' L2 U2 L2 R' B' F R2 U B2 R F2"
+        },
+        "annotations": [],
+        "hadOverride": false
+      },
+      "expected": {
+        "lines": [
+          {
+            "key": "cross",
+            "kind": "cross",
+            "label": "Y xxcross (RG+BO)",
+            "moves": [
+              "r'",
+              "R",
+              "U'",
+              "F'",
+              "R'",
+              "D",
+              "r",
+              "y",
+              "R",
+              "U'",
+              "R'",
+              "L",
+              "U2",
+              "L'",
+              "y'",
+              "D"
+            ],
+            "toIdx": 14,
+            "fromIdx": 0
+          },
+          {
+            "key": "slot-FL",
+            "kind": "f2l",
+            "label": "OG",
+            "moves": [
+              "U",
+              "R",
+              "U'",
+              "R'",
+              "U'",
+              "L",
+              "U",
+              "L'"
+            ],
+            "toIdx": 22,
+            "fromIdx": 15
+          },
+          {
+            "key": "slot-BR",
+            "kind": "f2l",
+            "label": "BR/ZBLS",
+            "moves": [
+              "F'",
+              "L'",
+              "U2",
+              "L",
+              "U'",
+              "F",
+              "U'",
+              "R",
+              "U",
+              "R'"
+            ],
+            "toIdx": 33,
+            "fromIdx": 23
+          },
+          {
+            "key": "oll",
+            "kind": "oll",
+            "label": "ZBLL-TF7",
+            "moves": [
+              "U'",
+              "R'",
+              "U'",
+              "R'",
+              "D'",
+              "R",
+              "U",
+              "R'",
+              "D",
+              "R",
+              "U'",
+              "R",
+              "U'",
+              "R'",
+              "U2",
+              "R",
+              "U2"
+            ],
+            "toIdx": 52,
+            "fromIdx": 34
+          }
+        ],
+        "inspection": "y"
+      }
+    },
+    {
+      "id": "52e57634-3f3b-4bf2-852a-20fa49715f58",
+      "revision": 1,
+      "contentHash": "08e4eeec55fa7634d01469cafa793050ea57808d72be2644e6ac9a8ad1deca11",
+      "input": {
+        "source": "",
+        "verdict": "correct",
+        "language": "zh",
+        "observed": {
+          "lines": [
+            {
+              "key": "cross",
+              "kind": "cross",
+              "label": "W xxcross (GR+GO)",
+              "moves": [
+                "R",
+                "L'",
+                "U",
+                "L'",
+                "B",
+                "U2",
+                "L",
+                "R'",
+                "U",
+                "R",
+                "U",
+                "R",
+                "U",
+                "R2",
+                "F",
+                "R",
+                "D"
+              ],
+              "toIdx": 18,
+              "fromIdx": 0
+            },
+            {
+              "key": "slot-BR",
+              "kind": "f2l",
+              "label": "OB",
+              "moves": [
+                "R",
+                "U'",
+                "R'",
+                "F",
+                "U",
+                "F'"
+              ],
+              "toIdx": 24,
+              "fromIdx": 19
+            },
+            {
+              "key": "slot-BL",
+              "kind": "f2l",
+              "label": "RB/ZBLS",
+              "moves": [
+                "R",
+                "U",
+                "R'",
+                "U2",
+                "F'",
+                "L'",
+                "U2",
+                "L",
+                "U'",
+                "F"
+              ],
+              "toIdx": 36,
+              "fromIdx": 25
+            },
+            {
+              "key": "oll",
+              "kind": "oll",
+              "label": "ZBLL-TL6",
+              "moves": [
+                "U'",
+                "R",
+                "U",
+                "R'",
+                "U",
+                "R",
+                "U",
+                "R'",
+                "U2",
+                "L",
+                "R",
+                "U'",
+                "R'",
+                "U",
+                "L'",
+                "U2"
+              ],
+              "toIdx": 54,
+              "fromIdx": 37
+            }
+          ],
+          "inspection": "x2"
+        },
+        "recording": {
+          "gyro": "RwIAywAAJHkHBQENJngLCQBbI3gRCQBaJ3cVCgA8IXgWCwBaJ3cSCgB4LXYNCQDwKXcPDQFoLnUOCQEOKncLBgA8JHkLBQAeH3sHBAAeG3wCBACVGH39AwIBGnz0BAB2H3v7CQAeKncECQA8LnYICQCVMnMNDACWL3QRDQBaNHIQDQA9N3ASEQA8OW8VDQBaPW0SEAEsOW8UDgCWOHAPEAA8M3IMEwA/L3QMFABXK3UJFABaKnYFFAA8JXgFEQDSInkDEgCWKHcHEgBaMnMKFAEOMXQFEADwLXYEDgDSKHgBDwOELHb/DgBaLnUJDgAdMHQODgCEM3ISDgCKMHQPDwDxLXUMDwDSKHcKEAEsKHcGDgCVJXkDDhDhKHcBEQCWJngEDQNmKncGEAACJHkIDgB1KncNCwDTL3UPCQBaOHATCwA8PW0UDQBZQmoREwDSQ2gQFgGHRGYQGwA8PmwIGAA8Om8CFAAeNXL6DwA8MXT1DAB4LnXzCAC0KnbwBgA8KHfsBgEOKnbwCAAeLnb4CwA8NHMHDgCWOm4UDQAePmsXDgDwQGsTEAB4RGgTFAAARmUUFwC0SGMRHQC0R2MPIQFrQWgMHgA7OW4JGgA6L3QGFgA8LXUGEwBaKHcGEQEOJXkFDwDwIXkKEAWCJXgGEAB4I3kCDwFKKXcDEABaLXYKDAAeMHQOCgDSLnYJCAKyK3cGBgFKLnYJCQBaMHQNCgC0MXMSDAA8M3MPCgGGNHMKCwDwL3YECgAeK3cCCgEOJXkCCQFoIHoFCQDSI3oEDAFKIHoADACVKHgHCwA+MHQIDgA7NXIMDwH+OXAFEAAeMXMGFACWLXULDwADKncNDAHcLnUJDgIdKncGDgDwLnUGDwAeMnMHEAC0NnEIEwC0Om8LFAAeNnIIEAA8N3H+EQCWM3P9EAPeNHMBEATRMHQDEgCxL3UKEAEOLHYGEgBcLHYGDAAcJ3gCCwCWI3n+DQA8G3v/DAA+JngFDgAcLXUIEADSKXcKDwA+LHUMEgA8MnIKGACyNXIIFAB4N3AJFwCWOG4KGwCWNHEHGQABMXMFFAA6LnUHEwEsLHYLDgCXI3gPDgA8HHkQEgAdI3gTEQBaH3cXFAB4JHcTEQA9KnYOEABaMXQKDwEuMnMLEwEMNnELEgCWMXMJFAAALHUKFgAdMHMOFQaQMHQMEQCXLnUODAFqLXUJEADPMXQKEAbrM3MNDAOEMXQIDRIMNXIJDgMMNHIKEwDSN3EMDgCaOnAOCwDsPW0SDADSOnAQCwBaNnIQCQEOM3MQBgEsM3ISDADSOHEODAB4O28KEAAdPW4FEwDxOXAGEQHCN3IEDgjoMHUBDQBZKHj8DgCAJnj5EQLJI3n4DgA8KHj+DgAeMnQGDQA8NnIHDwFoNHIFEwP8M3MFDQAANHMKCgBaNHMHDgCWNXIEEwNmMnMCEQHCLXYCEAB4KncAEACWJXj9EABaKncDEABaMnMHEgAANXEKFAH+MXINFAEOMXMJFACWKnYFFQA+MXMDFACULnUMEQBaMHQFEQCVLHYEEACXK3cHDAB4K3YCEwB4J3f+FAAeKXYFFAA8MXIJFwHhNXAOGAB3LnMRGAC3NHEQFwA5MHMQEwA8MnIVDA==",
+          "model": "moyu32",
+          "moves": [
+            {
+              "m": "R",
+              "ts": 0
+            },
+            {
+              "m": "L'",
+              "ts": 480
+            },
+            {
+              "m": "D",
+              "ts": 1216
+            },
+            {
+              "m": "L'",
+              "ts": 1267
+            },
+            {
+              "m": "F",
+              "ts": 2364
+            },
+            {
+              "m": "D",
+              "ts": 2905
+            },
+            {
+              "m": "D",
+              "ts": 2972
+            },
+            {
+              "m": "L",
+              "ts": 3291
+            },
+            {
+              "m": "R'",
+              "ts": 4373
+            },
+            {
+              "m": "D",
+              "ts": 5340
+            },
+            {
+              "m": "R",
+              "ts": 6075
+            },
+            {
+              "m": "D",
+              "ts": 6949
+            },
+            {
+              "m": "R",
+              "ts": 11759
+            },
+            {
+              "m": "D",
+              "ts": 12454
+            },
+            {
+              "m": "R",
+              "ts": 12671
+            },
+            {
+              "m": "R",
+              "ts": 12755
+            },
+            {
+              "m": "B",
+              "ts": 14744
+            },
+            {
+              "m": "R",
+              "ts": 16102
+            },
+            {
+              "m": "U",
+              "ts": 16795
+            },
+            {
+              "m": "R",
+              "ts": 20997
+            },
+            {
+              "m": "D'",
+              "ts": 21859
+            },
+            {
+              "m": "R'",
+              "ts": 22381
+            },
+            {
+              "m": "B",
+              "ts": 23027
+            },
+            {
+              "m": "D",
+              "ts": 24232
+            },
+            {
+              "m": "B'",
+              "ts": 24865
+            },
+            {
+              "m": "R",
+              "ts": 27276
+            },
+            {
+              "m": "D",
+              "ts": 27735
+            },
+            {
+              "m": "R'",
+              "ts": 28093
+            },
+            {
+              "m": "D",
+              "ts": 28393
+            },
+            {
+              "m": "D",
+              "ts": 28424
+            },
+            {
+              "m": "B'",
+              "ts": 28945
+            },
+            {
+              "m": "L'",
+              "ts": 29530
+            },
+            {
+              "m": "D",
+              "ts": 29648
+            },
+            {
+              "m": "D",
+              "ts": 29725
+            },
+            {
+              "m": "L",
+              "ts": 29986
+            },
+            {
+              "m": "D'",
+              "ts": 30313
+            },
+            {
+              "m": "B",
+              "ts": 30747
+            },
+            {
+              "m": "D'",
+              "ts": 32909
+            },
+            {
+              "m": "R",
+              "ts": 46082
+            },
+            {
+              "m": "D",
+              "ts": 46624
+            },
+            {
+              "m": "R'",
+              "ts": 47046
+            },
+            {
+              "m": "D",
+              "ts": 47540
+            },
+            {
+              "m": "R",
+              "ts": 48307
+            },
+            {
+              "m": "D",
+              "ts": 48829
+            },
+            {
+              "m": "R'",
+              "ts": 50456
+            },
+            {
+              "m": "D",
+              "ts": 51012
+            },
+            {
+              "m": "D",
+              "ts": 51089
+            },
+            {
+              "m": "L",
+              "ts": 51473
+            },
+            {
+              "m": "R",
+              "ts": 51800
+            },
+            {
+              "m": "D'",
+              "ts": 52120
+            },
+            {
+              "m": "R'",
+              "ts": 52337
+            },
+            {
+              "m": "D",
+              "ts": 52628
+            },
+            {
+              "m": "L'",
+              "ts": 52889
+            },
+            {
+              "m": "D",
+              "ts": 53243
+            },
+            {
+              "m": "D",
+              "ts": 53288
+            }
+          ],
+          "timeMs": 53286.09999999404,
+          "scramble": "L' D' L' F' D2 R U' L' U' L2 D2 B' R2 U2 B' R2 U2 B2 D2 B2 U'"
+        },
+        "annotations": [],
+        "hadOverride": false
+      },
+      "expected": {
+        "lines": [
+          {
+            "key": "cross",
+            "kind": "cross",
+            "label": "W xxcross (GR+GO)",
+            "moves": [
+              "R",
+              "L'",
+              "U",
+              "L'",
+              "B",
+              "U2",
+              "L",
+              "R'",
+              "U",
+              "R",
+              "U",
+              "R",
+              "U",
+              "R2",
+              "F",
+              "R",
+              "D"
+            ],
+            "toIdx": 18,
+            "fromIdx": 0
+          },
+          {
+            "key": "slot-BR",
+            "kind": "f2l",
+            "label": "OB",
+            "moves": [
+              "R",
+              "U'",
+              "R'",
+              "F",
+              "U",
+              "F'"
+            ],
+            "toIdx": 24,
+            "fromIdx": 19
+          },
+          {
+            "key": "slot-BL",
+            "kind": "f2l",
+            "label": "RB/ZBLS",
+            "moves": [
+              "R",
+              "U",
+              "R'",
+              "U2",
+              "F'",
+              "L'",
+              "U2",
+              "L",
+              "U'",
+              "F"
+            ],
+            "toIdx": 36,
+            "fromIdx": 25
+          },
+          {
+            "key": "oll",
+            "kind": "oll",
+            "label": "ZBLL-TL6",
+            "moves": [
+              "U'",
+              "R",
+              "U",
+              "R'",
+              "U",
+              "R",
+              "U",
+              "R'",
+              "U2",
+              "L",
+              "R",
+              "U'",
+              "R'",
+              "U",
+              "L'",
+              "U2"
+            ],
+            "toIdx": 54,
+            "fromIdx": 37
+          }
+        ],
+        "inspection": "x2"
+      }
+    },
+    {
+      "id": "5e6f34e9-2fcf-4550-a115-15e35d78159a",
+      "revision": 1,
+      "contentHash": "e5893d557155ba40228a74be392930b35f6104e4471c4128694a372a9b66e723",
+      "input": {
+        "source": "",
+        "verdict": "correct",
+        "language": "zh",
+        "observed": {
+          "lines": [
+            {
+              "key": "cross",
+              "kind": "cross",
+              "label": "W xcross (GR)",
+              "moves": [
+                "D",
+                "L'",
+                "R'",
+                "D",
+                "L",
+                "F",
+                "L'",
+                "R",
+                "U'",
+                "R",
+                "D"
+              ],
+              "toIdx": 10,
+              "fromIdx": 0
+            },
+            {
+              "key": "slot-FR",
+              "kind": "f2l",
+              "label": "GO",
+              "moves": [
+                "U",
+                "R",
+                "U",
+                "R'"
+              ],
+              "toIdx": 14,
+              "fromIdx": 11
+            },
+            {
+              "key": "slot-BL",
+              "kind": "f2l",
+              "label": "RB",
+              "moves": [
+                "U'",
+                "y",
+                "R'",
+                "U'",
+                "R"
+              ],
+              "toIdx": 18,
+              "fromIdx": 15
+            },
+            {
+              "key": "slot-BR",
+              "kind": "f2l",
+              "label": "OB/ZBLS",
+              "moves": [
+                "r",
+                "U",
+                "r'",
+                "U'",
+                "R",
+                "U'",
+                "R'",
+                "L",
+                "F",
+                "L'"
+              ],
+              "toIdx": 28,
+              "fromIdx": 19
+            },
+            {
+              "key": "oll",
+              "kind": "oll",
+              "label": "ZBLL-UU9",
+              "moves": [
+                "(U'",
+                "U",
+                "U)",
+                "R",
+                "U",
+                "R'",
+                "U",
+                "R",
+                "U2'",
+                "R2'",
+                "U'",
+                "R",
+                "U'",
+                "R'",
+                "U2'",
+                "R",
+                "U2"
+              ],
+              "toIdx": 49,
+              "fromIdx": 29
+            }
+          ],
+          "inspection": "z2"
+        },
+        "recording": {
+          "gyro": "RwIAuAAADw33fQAdDwvwfQIdDgv1fQDwCwv6fgBdDAn1fgDOEQrzfQCXDA74fQAADQ78fgCVCA37fgCWCxD3fQDxBwr2fgA7CgnwfQA8EArsfAA8Dw3xfQCWDQnxfQAeBAX1fgBbAAL0fgAdAwPxfgAeBwf7fwA8BgcBfwEsEQYBfgAAGwb+fAB5Fwj8fQBZDwYHfgB4EQMMfQABEgUUfABaGAQOfAAjEgUKfQA2CgYFfgCXDwcDfgA7DAUGfgA/BQb/fwAbCQb8fgA9Cwb3fgA7EQj0fQBaEw3xfACWDw/1fQA9Dw76fQA8Dg0AfgCVDQ/7fQFsCwsAfgBaBwsFfgCSBg4BfgA9BwsFfgAgCA/+fgB1BBH7fgBbBxP3fQBBCxTzfAEICxLvfAC0CRH0fQDSChP5fQBaCRH9fQB4CQ4CfgGGDQwDfgP8Dg8AfQDVGxH0egH7Hw/yeQC0GxD0egQbEg/6fQAhDQ0BfgCSEhD8fQCXFRP6fAFKFxX3ewJ1FBX5fACWFRX+ewSwFhX6ewP8GRf3egP8FRf6ewCXEhX9fAI6FhL/fACWGQwBfABZGgYCfAABGgEGfAB3FvsCfQEsFvn9fQGHEuEBegA7D9MFdgA8CsUHcABaB7sMagA9CLcNZwBaB7QTZAH+B7ERYgGjAq4RYAC1/a4RXwEN+6sSXQB4+agUWQCW/KoRXAAgA6sPXgBYB60MXwB4DK8MYQDSD7MOYgAeFLYPZAC0FrkPZgEOErYOZQA9CrIPYgB3BLAPYQCWCLESYgDxBLARYQm5ArAWYARXA7ESYgSvALIbYQAe48AzXQAe0dA/VwA9zdNAVgErytdAVgCWzNtCWAB5zttGVgAd0N1JVQA9ztxEVwCW0txBXAB31ds+XwGl3tM4YwAh9b8qZAAaCrIbYAB7Cq8WXgCTB68RYAKVBLIQYwZxCLUPZQlhDrcQZgA7FbgRZQCWG7kRZAA9F7kPZQLwErcNZQA6DbcQZgJ1CLYRZQGHB7QVZAAe+rkgZAA73Mk2XwAezdY+WQDTz9pCWQCWzNg+WQCV1NI3XwA/+bwcZwA5ELQPYwFpDbQTYwCzCbQTZA+WBrIRYwHCALMOZAeBArQSZACzCLUQZQB5D7cMZgC3FrkKZgB+G7kKZgEjHrgMYwDcILcQYQFdHLoQZQRXH7sMZQPeG7kIZQAAErcIZgB4CrUKZQABBbQMZQCVArIPYwErBbURZQEsCrYSZQB5DrgUZgA8CLceYwAeELgbZAEsFLkYZQB4ErYeYQAADbUjYAAgCbQmXgBYDbYmXwA7FLklYQA8HL0iYgBaHr8dZQLRHLwYZQBcCrgYZQAOArEVYQAu/q4YXgViALEWYQAeBK8YXwA+Aa0aXAGkB7EYYQAbC7MVYgFpA7IWYgA7/a4VXwAi+6kZWQA586gcVgBa96ofWACW/K4fWwAeArQfYQCWArUbYwBZB7IQYwB5B7kFaQ==",
+          "model": "moyu32",
+          "moves": [
+            {
+              "m": "U",
+              "ts": 1.300000011920929
+            },
+            {
+              "m": "R'",
+              "ts": 898.3000000119209
+            },
+            {
+              "m": "L'",
+              "ts": 1442.300000011921
+            },
+            {
+              "m": "U",
+              "ts": 1701.300000011921
+            },
+            {
+              "m": "R",
+              "ts": 2343.300000011921
+            },
+            {
+              "m": "F",
+              "ts": 3149.300000011921
+            },
+            {
+              "m": "R'",
+              "ts": 3438.300000011921
+            },
+            {
+              "m": "L",
+              "ts": 3949.300000011921
+            },
+            {
+              "m": "D'",
+              "ts": 4404.300000011921
+            },
+            {
+              "m": "L",
+              "ts": 4786.300000011921
+            },
+            {
+              "m": "U",
+              "ts": 5276.300000011921
+            },
+            {
+              "m": "D",
+              "ts": 6456.300000011921
+            },
+            {
+              "m": "L",
+              "ts": 7521.300000011921
+            },
+            {
+              "m": "D",
+              "ts": 8128.300000011921
+            },
+            {
+              "m": "L'",
+              "ts": 9284.300000011921
+            },
+            {
+              "m": "D'",
+              "ts": 15818.300000011921
+            },
+            {
+              "m": "B'",
+              "ts": 17116.30000001192
+            },
+            {
+              "m": "D'",
+              "ts": 17509.30000001192
+            },
+            {
+              "m": "B",
+              "ts": 17796.30000001192
+            },
+            {
+              "m": "F",
+              "ts": 24082.30000001192
+            },
+            {
+              "m": "L",
+              "ts": 24820.30000001192
+            },
+            {
+              "m": "F'",
+              "ts": 25546.30000001192
+            },
+            {
+              "m": "D'",
+              "ts": 27899.30000001192
+            },
+            {
+              "m": "B",
+              "ts": 30602.30000001192
+            },
+            {
+              "m": "D'",
+              "ts": 31218.30000001192
+            },
+            {
+              "m": "B'",
+              "ts": 31583.30000001192
+            },
+            {
+              "m": "F",
+              "ts": 32738.30000001192
+            },
+            {
+              "m": "L",
+              "ts": 33119.30000001192
+            },
+            {
+              "m": "F'",
+              "ts": 33349.30000001192
+            },
+            {
+              "m": "D'",
+              "ts": 36087.30000001192
+            },
+            {
+              "m": "D",
+              "ts": 37830.30000001192
+            },
+            {
+              "m": "D",
+              "ts": 38112.30000001192
+            },
+            {
+              "m": "B",
+              "ts": 40788.30000001192
+            },
+            {
+              "m": "D",
+              "ts": 41674.30000001192
+            },
+            {
+              "m": "B'",
+              "ts": 43929.30000001192
+            },
+            {
+              "m": "D",
+              "ts": 44331.30000001192
+            },
+            {
+              "m": "B",
+              "ts": 44939.30000001192
+            },
+            {
+              "m": "D'",
+              "ts": 45300.30000001192
+            },
+            {
+              "m": "D'",
+              "ts": 45406.30000001192
+            },
+            {
+              "m": "B'",
+              "ts": 46463.30000001192
+            },
+            {
+              "m": "B'",
+              "ts": 46559.30000001192
+            },
+            {
+              "m": "D'",
+              "ts": 48044.30000001192
+            },
+            {
+              "m": "B",
+              "ts": 48461.30000001192
+            },
+            {
+              "m": "D'",
+              "ts": 48748.30000001192
+            },
+            {
+              "m": "B'",
+              "ts": 48849.30000001192
+            },
+            {
+              "m": "D'",
+              "ts": 48967.30000001192
+            },
+            {
+              "m": "D'",
+              "ts": 49049.30000001192
+            },
+            {
+              "m": "B",
+              "ts": 49485.30000001192
+            },
+            {
+              "m": "D",
+              "ts": 49578.30000001192
+            },
+            {
+              "m": "D",
+              "ts": 49633.30000001192
+            }
+          ],
+          "timeMs": 49633.30000001192,
+          "scramble": "B2 R2 D F2 D U R2 U L2 U' B2 L' F2 U B' R' D' L' U"
+        },
+        "annotations": [],
+        "hadOverride": false
+      },
+      "expected": {
+        "lines": [
+          {
+            "key": "cross",
+            "kind": "cross",
+            "label": "W xcross (GR)",
+            "moves": [
+              "D",
+              "L'",
+              "R'",
+              "D",
+              "L",
+              "F",
+              "L'",
+              "R",
+              "U'",
+              "R",
+              "D"
+            ],
+            "toIdx": 10,
+            "fromIdx": 0
+          },
+          {
+            "key": "slot-FR",
+            "kind": "f2l",
+            "label": "GO",
+            "moves": [
+              "U",
+              "R",
+              "U",
+              "R'"
+            ],
+            "toIdx": 14,
+            "fromIdx": 11
+          },
+          {
+            "key": "slot-BL",
+            "kind": "f2l",
+            "label": "RB",
+            "moves": [
+              "U'",
+              "y",
+              "R'",
+              "U'",
+              "R"
+            ],
+            "toIdx": 18,
+            "fromIdx": 15
+          },
+          {
+            "key": "slot-BR",
+            "kind": "f2l",
+            "label": "OB/ZBLS",
+            "moves": [
+              "r",
+              "U",
+              "r'",
+              "U'",
+              "R",
+              "U'",
+              "R'",
+              "L",
+              "F",
+              "L'"
+            ],
+            "toIdx": 28,
+            "fromIdx": 19
+          },
+          {
+            "key": "oll",
+            "kind": "oll",
+            "label": "ZBLL-UU9",
+            "moves": [
+              "(U'",
+              "U",
+              "U)",
+              "R",
+              "U",
+              "R'",
+              "U",
+              "R",
+              "U2'",
+              "R2'",
+              "U'",
+              "R",
+              "U'",
+              "R'",
+              "U2'",
+              "R",
+              "U2"
+            ],
+            "toIdx": 49,
+            "fromIdx": 29
+          }
+        ],
+        "inspection": "z2"
+      }
+    },
+    {
+      "id": "641b7a36-d15b-4e1b-8164-c880ebb50f1d",
+      "revision": 1,
+      "contentHash": "3deb9d29a887d2538a765b4126a129bf0ffc0db96883c10a8041f55d353ab85a",
+      "input": {
+        "source": "",
+        "verdict": "correct",
+        "language": "zh",
+        "observed": {
+          "lines": [
+            {
+              "key": "cross",
+              "kind": "cross",
+              "label": "W cross",
+              "moves": [
+                "R'",
+                "F2",
+                "R",
+                "U'",
+                "R'",
+                "D2"
+              ],
+              "toIdx": 7,
+              "fromIdx": 0
+            },
+            {
+              "key": "slot-BL",
+              "kind": "f2l",
+              "label": "RB",
+              "moves": [
+                "U'",
+                "R'",
+                "U'",
+                "R"
+              ],
+              "toIdx": 11,
+              "fromIdx": 8
+            },
+            {
+              "key": "slot-BR",
+              "kind": "f2l",
+              "label": "OB",
+              "moves": [
+                "y'",
+                "U'",
+                "R'",
+                "U",
+                "R",
+                "U'",
+                "R'",
+                "U'",
+                "R"
+              ],
+              "toIdx": 19,
+              "fromIdx": 12
+            },
+            {
+              "key": "slot-FR",
+              "kind": "f2l",
+              "label": "GO",
+              "moves": [
+                "U'",
+                "R",
+                "U'",
+                "R'",
+                "U",
+                "y'",
+                "R'",
+                "U",
+                "R"
+              ],
+              "toIdx": 27,
+              "fromIdx": 20
+            },
+            {
+              "key": "slot-FL",
+              "kind": "f2l",
+              "label": "GR",
+              "moves": [
+                "r",
+                "U'",
+                "r'",
+                "U2",
+                "r",
+                "U",
+                "r'"
+              ],
+              "toIdx": 35,
+              "fromIdx": 28
+            },
+            {
+              "key": "oll",
+              "kind": "oll",
+              "label": "OLL-Y+",
+              "moves": [
+                "R",
+                "U",
+                "R'",
+                "U",
+                "R'",
+                "F",
+                "R",
+                "F'",
+                "R",
+                "U2'",
+                "R'"
+              ],
+              "toIdx": 47,
+              "fromIdx": 36
+            },
+            {
+              "key": "pll",
+              "kind": "pll",
+              "label": "PLL-A+",
+              "moves": [
+                "U'",
+                "x",
+                "R'",
+                "U",
+                "R'",
+                "D2",
+                "R",
+                "U'",
+                "R'",
+                "D2",
+                "R2"
+              ],
+              "toIdx": 60,
+              "fromIdx": 48
+            }
+          ],
+          "inspection": "x2 y'"
+        },
+        "recording": {
+          "gyro": "RwIAigAA+lX6ogAe/1n4pgBc/130qgCgCGDvrwABA2DvrgCNAVv2qAAA/lj4pQCS/FX8ogA+91P8oQA66E7+nwBa7FD9nwA881D8ngAe8UwAnABa8UYBlwAg6UQClwA66UcFmgAl7E0MnQBd500KnwBQ708CngAe9FD/ngB/+1P7oABx/1b4owDSA1f2pACW/lL2oAAG9k/4nQA28kv5mwB47Uj5mgC06kX7mAHC7kL6lQAA9jT0jQA//xrvhQA5/BX0gwA89A33gwAe7//3ggA/7PX+gwCT7/H6gwFo8vH9gwCW7/T/gwBa6/MCgwCW8PMDgwA89PEDggBa8O4FgwBa6usMhQCC6e8NhQAF7O0VhgAt7fALhABe8PIHgwB08PcCggAe9PgAggB49/v9gQBd/f/3gQA/+fv9gQEm9/gAggH+9vcFggA88PQMgwAe6/YOhACW8vL+gwBh9O30hAAX5eDziQAe68rokQA88rnsmgA87rD1oAA876f9pwCW7qz2owAe7Kb7qQBa8ZoBtQA88p4CsQA88aMCqgA87qf9pwCW9KUHqABa+qUFqAB4+6UAqABa+aL+qwBa56LssQCAyazKyAAFxavNywAvw6nSzAAhxqrQygA5zajYwABg36TusQAG9KQCqQAz/qcCpQA5+aj9pQBa8Kf5pwA8z6jgugAetrHVzgA8t7PTygA80qjfuQAl/KgMpgDL+aMJqgDw96UGqAFQ+aUOqABU+KETrgAeAZgTuQAfCZUQvgBZBJgNuAAH/Z8HrwA196UFqAB4/qEHrAAe+aYBpwBD7672oQAh7bjtmwBu7rLroAAH9qv4owA1+K3zoQA89bLynQBC7LT4nQAY7a4DoQAl9aoJowBx664HogBa8qoFpABa9agIpQB49aUMqQB4/KUGqAC5/KIJqwDr/aINrAGk+KMGqgBD2qjgswAXu7+9zABAwrbHxABfv7rByQCOwbm+ywAMvMe0zwAvwse1xgA8wsq5vgA8w868twAexsjBtQA8w8q+uQBixcLAvAAFyrzFuQAvyMK/uQB+ycm/tABUybzCvAA8w7vAxQAkv7q/ywBywsK6xABExM26uQBSy8PCtA==",
+          "model": "moyu32",
+          "moves": [
+            {
+              "m": "B'",
+              "ts": 0
+            },
+            {
+              "m": "L",
+              "ts": 211
+            },
+            {
+              "m": "L",
+              "ts": 268
+            },
+            {
+              "m": "B",
+              "ts": 650
+            },
+            {
+              "m": "D'",
+              "ts": 724
+            },
+            {
+              "m": "B'",
+              "ts": 811
+            },
+            {
+              "m": "U",
+              "ts": 1079
+            },
+            {
+              "m": "U",
+              "ts": 1138
+            },
+            {
+              "m": "D'",
+              "ts": 1387
+            },
+            {
+              "m": "B'",
+              "ts": 1581
+            },
+            {
+              "m": "D'",
+              "ts": 1736
+            },
+            {
+              "m": "B",
+              "ts": 1883
+            },
+            {
+              "m": "D'",
+              "ts": 3576
+            },
+            {
+              "m": "L'",
+              "ts": 3850
+            },
+            {
+              "m": "D",
+              "ts": 3970
+            },
+            {
+              "m": "L",
+              "ts": 4055
+            },
+            {
+              "m": "D'",
+              "ts": 4175
+            },
+            {
+              "m": "L'",
+              "ts": 4303
+            },
+            {
+              "m": "D'",
+              "ts": 4496
+            },
+            {
+              "m": "L",
+              "ts": 4799
+            },
+            {
+              "m": "D'",
+              "ts": 5428
+            },
+            {
+              "m": "L",
+              "ts": 5624
+            },
+            {
+              "m": "D'",
+              "ts": 5725
+            },
+            {
+              "m": "L'",
+              "ts": 5880
+            },
+            {
+              "m": "D",
+              "ts": 6028
+            },
+            {
+              "m": "F'",
+              "ts": 6293
+            },
+            {
+              "m": "D",
+              "ts": 6411
+            },
+            {
+              "m": "F",
+              "ts": 6764
+            },
+            {
+              "m": "B",
+              "ts": 7213
+            },
+            {
+              "m": "R'",
+              "ts": 7331
+            },
+            {
+              "m": "B'",
+              "ts": 7501
+            },
+            {
+              "m": "D",
+              "ts": 7560
+            },
+            {
+              "m": "D",
+              "ts": 7628
+            },
+            {
+              "m": "B",
+              "ts": 7794
+            },
+            {
+              "m": "R",
+              "ts": 7917
+            },
+            {
+              "m": "B'",
+              "ts": 7973
+            },
+            {
+              "m": "F",
+              "ts": 8761
+            },
+            {
+              "m": "D",
+              "ts": 8883
+            },
+            {
+              "m": "F'",
+              "ts": 9023
+            },
+            {
+              "m": "D",
+              "ts": 9123
+            },
+            {
+              "m": "F'",
+              "ts": 9275
+            },
+            {
+              "m": "R",
+              "ts": 9324
+            },
+            {
+              "m": "F",
+              "ts": 9383
+            },
+            {
+              "m": "R'",
+              "ts": 9577
+            },
+            {
+              "m": "F",
+              "ts": 9674
+            },
+            {
+              "m": "D'",
+              "ts": 9739
+            },
+            {
+              "m": "D'",
+              "ts": 9796
+            },
+            {
+              "m": "F'",
+              "ts": 9908
+            },
+            {
+              "m": "D'",
+              "ts": 10558
+            },
+            {
+              "m": "F'",
+              "ts": 11103
+            },
+            {
+              "m": "R",
+              "ts": 11315
+            },
+            {
+              "m": "F'",
+              "ts": 11447
+            },
+            {
+              "m": "L",
+              "ts": 11594
+            },
+            {
+              "m": "L",
+              "ts": 11915
+            },
+            {
+              "m": "F",
+              "ts": 12056
+            },
+            {
+              "m": "R'",
+              "ts": 12124
+            },
+            {
+              "m": "F'",
+              "ts": 12230
+            },
+            {
+              "m": "L",
+              "ts": 12317
+            },
+            {
+              "m": "L",
+              "ts": 12367
+            },
+            {
+              "m": "F",
+              "ts": 12410
+            },
+            {
+              "m": "F",
+              "ts": 12455
+            }
+          ],
+          "timeMs": 12455,
+          "scramble": "F U L D B U' D' B D' F2 U2 R2 D2 B R2 B' D2 B' L2 F' U2"
+        },
+        "annotations": [],
+        "hadOverride": false
+      },
+      "expected": {
+        "lines": [
+          {
+            "key": "cross",
+            "kind": "cross",
+            "label": "W cross",
+            "moves": [
+              "R'",
+              "F2",
+              "R",
+              "U'",
+              "R'",
+              "D2"
+            ],
+            "toIdx": 7,
+            "fromIdx": 0
+          },
+          {
+            "key": "slot-BL",
+            "kind": "f2l",
+            "label": "RB",
+            "moves": [
+              "U'",
+              "R'",
+              "U'",
+              "R"
+            ],
+            "toIdx": 11,
+            "fromIdx": 8
+          },
+          {
+            "key": "slot-BR",
+            "kind": "f2l",
+            "label": "OB",
+            "moves": [
+              "y'",
+              "U'",
+              "R'",
+              "U",
+              "R",
+              "U'",
+              "R'",
+              "U'",
+              "R"
+            ],
+            "toIdx": 19,
+            "fromIdx": 12
+          },
+          {
+            "key": "slot-FR",
+            "kind": "f2l",
+            "label": "GO",
+            "moves": [
+              "U'",
+              "R",
+              "U'",
+              "R'",
+              "U",
+              "y'",
+              "R'",
+              "U",
+              "R"
+            ],
+            "toIdx": 27,
+            "fromIdx": 20
+          },
+          {
+            "key": "slot-FL",
+            "kind": "f2l",
+            "label": "GR",
+            "moves": [
+              "r",
+              "U'",
+              "r'",
+              "U2",
+              "r",
+              "U",
+              "r'"
+            ],
+            "toIdx": 35,
+            "fromIdx": 28
+          },
+          {
+            "key": "oll",
+            "kind": "oll",
+            "label": "OLL-Y+",
+            "moves": [
+              "R",
+              "U",
+              "R'",
+              "U",
+              "R'",
+              "F",
+              "R",
+              "F'",
+              "R",
+              "U2'",
+              "R'"
+            ],
+            "toIdx": 47,
+            "fromIdx": 36
+          },
+          {
+            "key": "pll",
+            "kind": "pll",
+            "label": "PLL-A+",
+            "moves": [
+              "U'",
+              "x",
+              "R'",
+              "U",
+              "R'",
+              "D2",
+              "R",
+              "U'",
+              "R'",
+              "D2",
+              "R2"
+            ],
+            "toIdx": 60,
+            "fromIdx": 48
+          }
+        ],
+        "inspection": "x2 y'"
+      }
+    },
+    {
+      "id": "ed692bc6-7ba9-4148-92ba-1d0f2a45cd97",
+      "revision": 1,
+      "contentHash": "3c32b345fc1712b54d3d99389c08210b4ef520f67902a0631cd1cc780afe176e",
+      "input": {
+        "source": "",
+        "verdict": "correct",
+        "language": "zh",
+        "observed": {
+          "lines": [
+            {
+              "key": "cross",
+              "kind": "cross",
+              "label": "Y xxcross (OG+BR)",
+              "moves": [
+                "R2",
+                "B",
+                "L2",
+                "U",
+                "L'",
+                "R",
+                "U'",
+                "R'",
+                "F",
+                "D",
+                "U"
+              ],
+              "toIdx": 12,
+              "fromIdx": 0
+            },
+            {
+              "key": "slot-BL",
+              "kind": "f2l",
+              "label": "BO",
+              "moves": [
+                "L'",
+                "U",
+                "L",
+                "U",
+                "R'",
+                "U",
+                "R",
+                "L'",
+                "U2",
+                "L",
+                "U",
+                "F",
+                "U'",
+                "F'"
+              ],
+              "toIdx": 27,
+              "fromIdx": 13
+            },
+            {
+              "key": "slot-FR",
+              "kind": "f2l",
+              "label": "RG/ZBLS",
+              "moves": [
+                "R'",
+                "U",
+                "R",
+                "U'",
+                "R'",
+                "U2'",
+                "R",
+                "U'",
+                "R'",
+                "U",
+                "R"
+              ],
+              "toIdx": 39,
+              "fromIdx": 28
+            },
+            {
+              "key": "oll",
+              "kind": "oll",
+              "label": "ZBLL-TFC",
+              "moves": [
+                "U",
+                "F",
+                "R",
+                "U",
+                "R'",
+                "U'",
+                "(R",
+                "U'",
+                "R'",
+                "U",
+                "R",
+                "U",
+                "R'",
+                "R",
+                "U'",
+                "R'",
+                "U'",
+                "R",
+                "U",
+                "R'",
+                "R",
+                "U'",
+                "R')",
+                "U'",
+                "R",
+                "U",
+                "R'",
+                "F'",
+                "U2"
+              ],
+              "toIdx": 69,
+              "fromIdx": 40
+            }
+          ],
+          "inspection": "y'"
+        },
+        "recording": {
+          "gyro": "RwIBCwAAVgNdAQBaUBJhCgACRShiEQA5RydeGgBaSh9bJABaRiNeIQAeRCdfHwBaQixdIAABOzJhGwA+NjhjFAA6OzBkEwAeSB9jDwB4TxhgDgAeUhddFAA7URdaHgDTUhRbGwAeUhBdFQA/UgpfEABWUQNiBgHDTwFjAAAdUgZhBQDTUwxfBQDRUg9fCQDVVRNcDQAbVBJeCACWUBJhCQNJUA1hCwDwThFiDQB7ThdhCgABSxxjCAA3SSBiBQFpTRphAgA7UhRf+wAfVg9c+gBZWgVZ/AI7XQNX/wCWWARbBAA7VQdeBgA9UQ1hCQB4ShdjFAAASR1hFwAdSx9gEgA8TRxgEAB5TRZhEQIbThJiDwEOTw1iDQC1URBfEAJ8UBJgCwDpTxdhCACWThtgBgJYURteCAEtUiFbCQADURtdCwB1URldDwMqURNfCgAeUQ9gBwA/UgxgBADPUhBfCQFJUhRfCQFoUBhfDAULThdhCQHCTxJhCgOETw9iBgA8TBRk/QAASBpk8wADRxxk7wA4Shlj7wB5SB9j8QA8RSZi8AC0Qypi7gCWRCdj8gApRx5k9QBtSxlj9QMqSRll+gBaQyBn/AENPyBp/gBbOidq/wA8Nypq/wH+Oidq/gNIPSRq/gKUQCBp/QDwPBptBABdMxhxDgA5MRVwGgDSMhlvGAGGNhZvFQAdOBdvEQA9ORluDQBbPxRsCQA7QRRrAAAePRlr8wA8PRlq6gB4PiBp9ABZRBto+wA8Rhhn/gCXSRVmAgCWQhdqAAB4PBtt/wB3PhhsAwBaQxdqAwAeRxdnAQC1Sxdk/wAATRZiAwDvTxVhBwA9URFgBwC0UwpfCQBcVQ9cEAA5VhhYEwBaVxJZEABGWRZWEgAVWg9WEwCWVxBZFAFUVQ1dEAAyVAleDACzTw1iCAB4SxFlBgBaRxVnBgFLRRloBQA8QRxpBQA8Ph9qBAB4OiNrAwGFPyBpAwB5Qh9oAgAdRRdoBACWShBmBQB5SxRkBwAdUA5hCQDSTBFkDQBbUA1hCgAAVgddCAB4UgRgEgA+TQtkBgBXSRFnAwAfPBxsAQA7MCZv/wEOLCtvAgAfKTFtBgA8JTpqCAA7JT5oCwBbKDxnEQBZLDhnEwABMzFnFgA8OydmGQA7PyRlHABbQyBjGwCWRx1jGAA8ShliFQBZTRVhEgGlUBJfEABZVBNdDgCXVg9bDwDSUw9fCgDSUAthCQWCTQ1kBwoUUAliBwA7VARfBwA9Wv5aBQB4WgNZBwErVQhdBwB4Ug1gBQA9ThFjBQBZSRVlBAGHTBJkAQFnTRFj/QC1UBRhAQB6Uw5f/wACVAte/QEnTglk/AAfQQ1sAAAdPQ5uBgEPQA1tBACzQwtsAAB5Rgpp/QBaSghn/ADRTgdk+wEtUgZh+AB4UgFg8QBgUghg/QBxUg1gBAMqUwpfBwBiVA1eAwFgVQde/gAeVwRc/ACBWgxZ/QA0XQNW+QAdYANR8QB5XAhX9AAeWAta9wBZWBRY8ABbXQpU8QAgYQlR9QBYXgNU9wA8XAJYBQBZWvxZAgB5XPVX/wA7XPZW+gAfW/pX9AA8WvhY7gBaWPxY6gA8WgBY7gA7XP5X9ABdUwtf/gA5UBFhAwEPTRNjBgEsShZlBQJYSxJkCACVTQ5kBQFLVAhfBgFKUgZhAgDSTwxjAwAdTBVjBgA9ShtjCABaSSBjCgCWSCZhBgA8SCpgAwGjRidjBAC3SxljBQA6TxFiAAB3TxFiBQBbThNiCwO/SR1jDAA9RyViDQNlRCljDAB5RiRjDgAeSh5iDABaTBpiCwCVThhhBwDxTRdiDQEQSiJhDAA5RylgCwEsRy5fBwBdRihiCwEqSh1iDQA8TRliDAMqRSVjDwBZQytiCwA9RyRiDQA+TBdjCABYTRJjBAAATBdjBwA8SxxiBABaTxpg+AADTSBg+gEKSiBi/gAfSCJjAwA+TRZjAgA5URBhAgGHVAtfAwFKTxNhBwAdRSVjDAA9RSliBgA7SCViAgAfTB1h/gA8TRdi+wA+TRli9wAbThtf8wA9TiBf9gA8Uhld8gA7URZf/AAfVQxd/gA8WgRZ+QBaXQFW9AA8XANX+AC0XQBW+wCWXAdX/wAeWAxaCAB4VQ9dCg==",
+          "model": "moyu32",
+          "moves": [
+            {
+              "m": "F",
+              "ts": 41.20000000298023
+            },
+            {
+              "m": "F",
+              "ts": 106.20000000298023
+            },
+            {
+              "m": "R",
+              "ts": 499.20000000298023
+            },
+            {
+              "m": "B",
+              "ts": 1135.2000000029802
+            },
+            {
+              "m": "B",
+              "ts": 1530.2000000029802
+            },
+            {
+              "m": "U",
+              "ts": 1937.2000000029802
+            },
+            {
+              "m": "B'",
+              "ts": 2281.2000000029802
+            },
+            {
+              "m": "F",
+              "ts": 3120.2000000029802
+            },
+            {
+              "m": "U'",
+              "ts": 3649.2000000029802
+            },
+            {
+              "m": "F'",
+              "ts": 4169.20000000298
+            },
+            {
+              "m": "L",
+              "ts": 4728.20000000298
+            },
+            {
+              "m": "D",
+              "ts": 5280.20000000298
+            },
+            {
+              "m": "U",
+              "ts": 5379.20000000298
+            },
+            {
+              "m": "B'",
+              "ts": 7926.20000000298
+            },
+            {
+              "m": "U",
+              "ts": 8327.20000000298
+            },
+            {
+              "m": "B",
+              "ts": 9381.20000000298
+            },
+            {
+              "m": "U",
+              "ts": 10095.20000000298
+            },
+            {
+              "m": "F'",
+              "ts": 13646.20000000298
+            },
+            {
+              "m": "U",
+              "ts": 17371.20000000298
+            },
+            {
+              "m": "F",
+              "ts": 18461.20000000298
+            },
+            {
+              "m": "B'",
+              "ts": 20055.20000000298
+            },
+            {
+              "m": "U",
+              "ts": 20176.20000000298
+            },
+            {
+              "m": "U",
+              "ts": 20262.20000000298
+            },
+            {
+              "m": "B",
+              "ts": 20778.20000000298
+            },
+            {
+              "m": "U",
+              "ts": 22306.20000000298
+            },
+            {
+              "m": "L",
+              "ts": 22625.20000000298
+            },
+            {
+              "m": "U'",
+              "ts": 22895.20000000298
+            },
+            {
+              "m": "L'",
+              "ts": 23091.20000000298
+            },
+            {
+              "m": "F'",
+              "ts": 31246.20000000298
+            },
+            {
+              "m": "U",
+              "ts": 31659.20000000298
+            },
+            {
+              "m": "F",
+              "ts": 33075.20000000298
+            },
+            {
+              "m": "U'",
+              "ts": 34110.20000000298
+            },
+            {
+              "m": "F'",
+              "ts": 34443.20000000298
+            },
+            {
+              "m": "U'",
+              "ts": 34609.20000000298
+            },
+            {
+              "m": "U'",
+              "ts": 34673.20000000298
+            },
+            {
+              "m": "F",
+              "ts": 34808.20000000298
+            },
+            {
+              "m": "U'",
+              "ts": 34892.20000000298
+            },
+            {
+              "m": "F'",
+              "ts": 34991.20000000298
+            },
+            {
+              "m": "U",
+              "ts": 35062.20000000298
+            },
+            {
+              "m": "F",
+              "ts": 35871.20000000298
+            },
+            {
+              "m": "U",
+              "ts": 37120.20000000298
+            },
+            {
+              "m": "L",
+              "ts": 37533.20000000298
+            },
+            {
+              "m": "F",
+              "ts": 38179.20000000298
+            },
+            {
+              "m": "U",
+              "ts": 38892.20000000298
+            },
+            {
+              "m": "F'",
+              "ts": 39124.20000000298
+            },
+            {
+              "m": "U'",
+              "ts": 39519.20000000298
+            },
+            {
+              "m": "F",
+              "ts": 40358.20000000298
+            },
+            {
+              "m": "U'",
+              "ts": 40935.20000000298
+            },
+            {
+              "m": "F'",
+              "ts": 41432.20000000298
+            },
+            {
+              "m": "U",
+              "ts": 41844.20000000298
+            },
+            {
+              "m": "F",
+              "ts": 42170.20000000298
+            },
+            {
+              "m": "U",
+              "ts": 42601.20000000298
+            },
+            {
+              "m": "F'",
+              "ts": 42945.20000000298
+            },
+            {
+              "m": "F",
+              "ts": 43780.20000000298
+            },
+            {
+              "m": "U'",
+              "ts": 43898.20000000298
+            },
+            {
+              "m": "F'",
+              "ts": 43999.20000000298
+            },
+            {
+              "m": "U'",
+              "ts": 44138.20000000298
+            },
+            {
+              "m": "F",
+              "ts": 44244.20000000298
+            },
+            {
+              "m": "U",
+              "ts": 44462.20000000298
+            },
+            {
+              "m": "F'",
+              "ts": 44607.20000000298
+            },
+            {
+              "m": "F",
+              "ts": 45395.20000000298
+            },
+            {
+              "m": "U'",
+              "ts": 45478.20000000298
+            },
+            {
+              "m": "F'",
+              "ts": 45597.20000000298
+            },
+            {
+              "m": "U'",
+              "ts": 45675.20000000298
+            },
+            {
+              "m": "F",
+              "ts": 45746.20000000298
+            },
+            {
+              "m": "U",
+              "ts": 45854.20000000298
+            },
+            {
+              "m": "F'",
+              "ts": 45959.20000000298
+            },
+            {
+              "m": "L'",
+              "ts": 46415.20000000298
+            },
+            {
+              "m": "U",
+              "ts": 46872.20000000298
+            },
+            {
+              "m": "U",
+              "ts": 46945.20000000298
+            }
+          ],
+          "timeMs": 46919.70000000298,
+          "scramble": "F' D L' B R' B2 U F2 D' L' D2 F D2 F R2 U2 R2 D2 F' B' R2"
+        },
+        "annotations": [],
+        "hadOverride": false
+      },
+      "expected": {
+        "lines": [
+          {
+            "key": "cross",
+            "kind": "cross",
+            "label": "Y xxcross (OG+BR)",
+            "moves": [
+              "R2",
+              "B",
+              "L2",
+              "U",
+              "L'",
+              "R",
+              "U'",
+              "R'",
+              "F",
+              "D",
+              "U"
+            ],
+            "toIdx": 12,
+            "fromIdx": 0
+          },
+          {
+            "key": "slot-BL",
+            "kind": "f2l",
+            "label": "BO",
+            "moves": [
+              "L'",
+              "U",
+              "L",
+              "U",
+              "R'",
+              "U",
+              "R",
+              "L'",
+              "U2",
+              "L",
+              "U",
+              "F",
+              "U'",
+              "F'"
+            ],
+            "toIdx": 27,
+            "fromIdx": 13
+          },
+          {
+            "key": "slot-FR",
+            "kind": "f2l",
+            "label": "RG/ZBLS",
+            "moves": [
+              "R'",
+              "U",
+              "R",
+              "U'",
+              "R'",
+              "U2'",
+              "R",
+              "U'",
+              "R'",
+              "U",
+              "R"
+            ],
+            "toIdx": 39,
+            "fromIdx": 28
+          },
+          {
+            "key": "oll",
+            "kind": "oll",
+            "label": "ZBLL-TFC",
+            "moves": [
+              "U",
+              "F",
+              "R",
+              "U",
+              "R'",
+              "U'",
+              "(R",
+              "U'",
+              "R'",
+              "U",
+              "R",
+              "U",
+              "R'",
+              "R",
+              "U'",
+              "R'",
+              "U'",
+              "R",
+              "U",
+              "R'",
+              "R",
+              "U'",
+              "R')",
+              "U'",
+              "R",
+              "U",
+              "R'",
+              "F'",
+              "U2"
+            ],
+            "toIdx": 69,
+            "fromIdx": 40
+          }
+        ],
+        "inspection": "y'"
+      }
+    },
+    {
       "id": "f6b01d1e-d1b1-45dc-8887-0a15ea049d56",
       "revision": 1,
       "contentHash": "7b1bc9268fb35c4c794a8565fbc0860823a8cdbb0a41d0e98189c0bb16fb92ba",

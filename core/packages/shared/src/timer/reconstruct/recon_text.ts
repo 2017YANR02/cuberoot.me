@@ -385,6 +385,9 @@ function snapCrossAufBeforePause(
   if (at < 0 || at >= counted.length - 1) return rawEnd;
   const next = counted[at + 1];
   if (!/^U(?:2'?|')?$/.test(next.m)) return rawEnd;
+  // A later setup turn belongs to F2L even if the solver pauses again after it.
+  // Only a fast follow-through can still be part of the cross gesture.
+  if (next.ts - counted[at].endTs > 300) return rawEnd;
   const followingTs = counted[at + 2]?.ts ?? totalMs;
   return followingTs - next.endTs >= 1000 ? next.endIdx : rawEnd;
 }
@@ -529,6 +532,11 @@ function orientInspectionForCross(recon: ReconTextResult): ReconTextResult {
   if (!recon.crossColor) return recon;
   const state = applyOneToken(solved(3), `${recon.scramble} ${recon.inspection}`);
   if (state.D[4] === recon.crossColor) return recon;
+  const cross = recon.lines.find(line => line.kind === 'cross');
+  if (cross?.moves.some(move => /^(?:[rludfb]|[RLUDFB]w)(?:2'?|')?$/.test(move))) {
+    const afterCross = applyOneToken(state, cross.moves.join(' '));
+    if (afterCross.D[4] === recon.crossColor && isCross(afterCross)) return recon;
+  }
   const rotation = ['x', "x'", 'x2', 'z', "z'"].find(rotation =>
     applyOneToken(state, rotation).D[4] === recon.crossColor);
   if (!rotation) return recon;
@@ -1309,9 +1317,11 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
       );
       const fastSameFace = move.endTs - move.ts <= 200;
       if ((families.size > 1 || fastSameFace) && move.startIdx <= end && move.endIdx > end) {
-        // Two quick same-face turns may straddle completed F2L pairs. Do not
-        // move a valid stage boundary into the next pair's broken-cross state.
-        if (isCfop && span.kind === 'f2l' && families.size === 1
+        // Nearby turns may straddle completed F2L pairs. Keep intermediate
+        // pair boundaries out of a broken cross, including opposite-face pairs
+        // inferred as a slice. The final pair may cancel into the last layer.
+        if (isCfop && span.kind === 'f2l'
+          && (families.size === 1 || rawEnd !== segs.f2lEndIdx)
           && !isCross(applyOneToken(solved(3), `${scramble} ${moves.slice(0, move.endIdx + 1).map(item => item.m).join(' ')}`))) continue;
         end = move.endIdx;
       }
