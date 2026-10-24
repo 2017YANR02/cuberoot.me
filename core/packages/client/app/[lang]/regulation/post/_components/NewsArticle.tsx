@@ -2,7 +2,7 @@
 
 import { useTranslation } from 'react-i18next';
 import { ExternalLink } from '@app-foundation/icons/lucide';
-import PostHeading from './PostHeading';
+import PostHeading, { PostFeatureAction } from './PostHeading';
 import { CubingIcon } from '@/components/EventIcon';
 import { useT } from '@/hooks/useT';
 import { Callout, RegList } from '../../_components/primitives';
@@ -37,13 +37,14 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
   return <div className="reg-page news-article-page"><div className="reg-wrap">
     <div className="news-list">
 {slug === 'wic-investigation-2026' && (<article className="news-item" id={REG_NEWS['wic-investigation-2026'].id}>
-            <PostHeading href="/regulation/post" backLabel={t('公告', 'Posts')} post={REG_NEWS['wic-investigation-2026']}>{tr(REG_NEWS['wic-investigation-2026'].title)}</PostHeading>
+            <PostHeading href="/regulation/post" backLabel={t('公告', 'Posts')}>{tr(REG_NEWS['wic-investigation-2026'].title)}</PostHeading>
             <div className="news-meta">
               <span className="news-date">{REG_NEWS['wic-investigation-2026'].date}</span>
               <SourceLink
                 href="https://forum.worldcubeassociation.org/t/statement-from-the-wca-integrity-committee-regarding-a-recent-investigation/68143"
                 label={t('WCA 论坛官方声明', 'Official WCA Forum statement')}
               />
+              <PostFeatureAction post={REG_NEWS['wic-investigation-2026']} />
             </div>
             <p className="news-lede">
               {t(
@@ -89,10 +90,11 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
             </Callout>
           </article>)}
 {slug === '4-pad-2027' && (<article className="news-item" id={REG_NEWS['4-pad-2027'].id}>
-            <PostHeading href="/regulation/post" backLabel={t('公告', 'Posts')} post={REG_NEWS['4-pad-2027']}>{tr(REG_NEWS['4-pad-2027'].title)}</PostHeading>
+            <PostHeading href="/regulation/post" backLabel={t('公告', 'Posts')}>{tr(REG_NEWS['4-pad-2027'].title)}</PostHeading>
             <div className="news-meta">
               <span className="news-date">{REG_NEWS['4-pad-2027'].date}</span>
               <SourceLink href={POST_4_PAD} label={t('官方原文', 'Official post')} />
+              <PostFeatureAction post={REG_NEWS['4-pad-2027']} />
               <SourceLink href={FOUR_PAD_EXPLAINER} label={t('决策说明', 'Decision explainer')} />
               <SourceLink href={SPEED_STACKS_G5} label={t('G5 工作原理', 'How the G5 works')} />
               <SourceLink href={REG_A7G} label={t('现行 A7g 条款', 'Current Regulation A7g')} />
@@ -318,10 +320,11 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
             </ul>
           </article>)}
 {slug === 'official-events-2026' && (<article className="news-item" id={REG_NEWS['official-events-2026'].id}>
-            <PostHeading href="/regulation/post" backLabel={t('公告', 'Posts')} post={REG_NEWS['official-events-2026']}>{tr(REG_NEWS['official-events-2026'].title)}</PostHeading>
+            <PostHeading href="/regulation/post" backLabel={t('公告', 'Posts')}>{tr(REG_NEWS['official-events-2026'].title)}</PostHeading>
             <div className="news-meta">
               <span className="news-date">{REG_NEWS['official-events-2026'].date}</span>
               <SourceLink href={POST_EVENTS} label={t('官方原文', 'Official post')} />
+              <PostFeatureAction post={REG_NEWS['official-events-2026']} />
             </div>
             <p className="news-lede">
               {t(
@@ -404,10 +407,11 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
             </ul>
           </article>)}
 {slug === 'requirements-policy-5-5' && (<article className="news-item" id={REG_NEWS['requirements-policy-5-5'].id}>
-            <PostHeading href="/regulation/post" backLabel={t('公告', 'Posts')} post={REG_NEWS['requirements-policy-5-5']}>{tr(REG_NEWS['requirements-policy-5-5'].title)}</PostHeading>
+            <PostHeading href="/regulation/post" backLabel={t('公告', 'Posts')}>{tr(REG_NEWS['requirements-policy-5-5'].title)}</PostHeading>
             <div className="news-meta">
               <span className="news-date">{REG_NEWS['requirements-policy-5-5'].date}</span>
               <SourceLink href={POST_POLICY} label={t('官方原文', 'Official post')} />
+              <PostFeatureAction post={REG_NEWS['requirements-policy-5-5']} />
             </div>
             <p className="news-lede">
               {t(

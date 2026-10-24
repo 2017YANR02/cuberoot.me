@@ -14,7 +14,7 @@ vi.mock('@/lib/page-notices-api', async importOriginal => ({
   ...await importOriginal<typeof import('@/lib/page-notices-api')>(),
   fetchPageNotices: vi.fn(), featureHomepagePost: vi.fn(), deletePageNotice: vi.fn(),
 }));
-import PostHeading from '@/app/[lang]/regulation/post/_components/PostHeading';
+import { PostFeatureAction } from '@/app/[lang]/regulation/post/_components/PostHeading';
 import { fetchPageNotices, featureHomepagePost, deletePageNotice, type PageNotice } from '@/lib/page-notices-api';
 
 const post = { id: 'example', title: { zh: '公告', en: 'Post' } };
@@ -31,7 +31,7 @@ afterEach(async () => {
 async function render() {
   const host = document.createElement('div'); document.body.append(host);
   root = createRoot(host);
-  await act(async () => root!.render(createElement(PostHeading, { post, href: '/regulation/post', backLabel: '公告', children: '公告' })));
+  await act(async () => root!.render(createElement(PostFeatureAction, { post })));
   return host.querySelector<HTMLButtonElement>('button')!;
 }
 it('restores the pin after remount and removes only that post when toggled', async () => {

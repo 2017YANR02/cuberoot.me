@@ -9,9 +9,18 @@ import { Tooltip } from '@/components/Tooltip';
 import { useT } from '@/hooks/useT';
 
 type FeaturedPost = { id: string; title: { zh: string; en: string } };
-export default function PostHeading({ children, href, backLabel, large = false, post }: {
-  children: ReactNode; href: string; backLabel: string; large?: boolean; post?: FeaturedPost;
+export default function PostHeading({ children, href, backLabel, large = false }: {
+  children: ReactNode; href: string; backLabel: string; large?: boolean;
 }) {
+  return <header className="news-heading">
+    <Link href={href} className="reg-crumb-link news-heading-back" aria-label={backLabel}>
+      <ArrowLeft size={20} aria-hidden="true" />
+    </Link>
+    <h1 className={large ? 'reg-title' : 'news-title'}>{children}</h1>
+  </header>;
+}
+
+export function PostFeatureAction({ post }: { post: FeaturedPost }) {
   const admin = useIsAdmin();
   const t = useT();
   const savingRef = useRef(false);
@@ -46,12 +55,8 @@ export default function PostHeading({ children, href, backLabel, large = false, 
       setError(err instanceof Error ? err.message : t('设置失败，请重试', 'Could not save. Please retry.'));
     } finally { savingRef.current = false; }
   }
-  return <header className={'news-heading' + (admin && post ? ' news-heading-admin' : '')}>
-    <Link href={href} className="reg-crumb-link news-heading-back" aria-label={backLabel}>
-      <ArrowLeft size={20} aria-hidden="true" />
-    </Link>
-    <h1 className={large ? 'reg-title' : 'news-title'}>{children}</h1>
-    {admin && post && <div className="news-feature-action">
+  if (!admin) return null;
+  return <div className="news-feature-action">
       <Tooltip content={pinnedId !== null ? t('取消首页置顶', 'Unpin from homepage') : t('置顶到首页', 'Pin to homepage')}>
         {tip => <button {...tip} type="button" className="news-feature-button" disabled={state !== 'idle'} onClick={() => void feature()}
           aria-pressed={pinnedId !== null}
@@ -60,6 +65,5 @@ export default function PostHeading({ children, href, backLabel, large = false, 
         </button>}
       </Tooltip>
       {error && <span role="alert">{error}</span>}
-    </div>}
-  </header>;
+    </div>;
 }
