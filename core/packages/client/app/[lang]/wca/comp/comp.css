@@ -343,7 +343,17 @@
   gap: 4px;
 }
 .comp-info-link:hover { text-decoration: underline; }
-.comp-info-address { color: inherit; }
+.comp-address { display: inline-flex; align-items: flex-start; gap: 8px; max-width: 100%; }
+.comp-address-copy {
+  appearance: none; border: 0; background: none; padding: 0;
+  color: inherit; font: inherit; text-align: start; cursor: pointer;
+  min-width: 0; white-space: normal; overflow-wrap: anywhere;
+}
+.comp-address-copy > svg { display: inline-block; margin-left: 4px; vertical-align: middle; }
+.comp-address-maps { display: inline-flex; flex-shrink: 0; gap: 4px; }
+.comp-address-map { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; }
+.comp-address-map img { display: block; width: 24px; height: 24px; object-fit: contain; }
+.comp-address-copy:focus-visible, .comp-address-map:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .comp-info-past-popover {
   position: relative;
   display: inline-block;
@@ -395,14 +405,15 @@
 }
 .comp-info-past-item dd { margin: 0; }
 @media (max-width: 480px) {
-  /* 窄屏放不下两条并排:退回一条一行,标签列对齐 */
+  /* 日期和上限并排，其余信息独占一行；长日期放不下时自然折行。 */
   .comp-info-panel {
-    flex-direction: column;
-    column-gap: 0;
+    flex-direction: row;
+    column-gap: 18px;
     row-gap: 6px;
     align-items: stretch;
   }
   .comp-info-row {
+    flex-basis: 100%;
     display: grid;
     grid-template-columns: 56px minmax(0, 1fr);
     column-gap: 10px;
@@ -411,6 +422,7 @@
      改自适应宽度 + 不折行,保证一行(英文标签长,仍走 56px 固定列以免挤掉值列) */
   .comp-info-panel--zh .comp-info-row { grid-template-columns: max-content minmax(0, 1fr); }
   .comp-info-panel .comp-info-row--unlabelled { grid-template-columns: minmax(0, 1fr); }
+  .comp-info-panel .comp-info-row--compact { display: flex; flex-basis: auto; }
   .comp-info-panel--zh .comp-info-label { white-space: nowrap; }
 }
 

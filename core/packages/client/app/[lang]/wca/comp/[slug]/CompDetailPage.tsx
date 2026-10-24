@@ -20,6 +20,7 @@ import { summarizeCompRecords } from '@/lib/comp-records';
 import { SearchInput } from '@/components/SearchInput';
 import { useModalBackdrop } from '@/hooks/useModalDismiss';
 import { useCopy } from '@/hooks/useCopy';
+import { Tooltip } from '@/components/Tooltip';
 import { stripRecordNewsPrefix } from '@/lib/record-news';
 import { countryFlag } from '@cuberoot/shared/record-news';
 import { eventDisplayName, isWcaEvent } from '@/lib/wca-events';
@@ -1846,13 +1847,13 @@ export default function CompDetailPage() {
                 })}
               </div>
             )}
-            {!isWca && (
+            {isAdmin && !isWca && (
               <span className="comp-detail-fetched">
                 {tr({ zh: '更新于', en: 'Updated'
                 })} {new Date(data.fetchedAt).toLocaleTimeString()}
               </span>
             )}
-            {!isWca && <LiveIndicator status={wsStatus} isZh={isZh} source={isWcaLive ? 'wca_live' : 'cubing'} />}
+            {isAdmin && !isWca && <LiveIndicator status={wsStatus} isZh={isZh} source={isWcaLive ? 'wca_live' : 'cubing'} />}
             {!isWca && wsStatus !== 'open' && (
               <button type="button" className="comp-refresh-btn" onClick={refresh} disabled={refreshing} title={tr({ zh: '刷新', en: 'Refresh'
             })}>
@@ -2241,33 +2242,48 @@ function renderWcaText(text: string): React.ReactNode {
   return out.length ? out : text;
 }
 
-function renderMapAddress(address: string, isZh: boolean): React.ReactNode {
-  // WCA 地址可能包含 Markdown 链接；搜索和展示都使用其地址文本，避免嵌套链接。
+function CompAddress({ address, isZh }: { address: string; isZh: boolean }) {
+  const { copied, copy } = useCopy();
+  // WCA 地址可能包含 Markdown 链接；复制和地图检索都使用完整地址文本。
   const text = address.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '$1');
-  const query = new URLSearchParams({ keyword: text, src: 'cuberoot', callnative: '1' });
-  const googleUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(text)}`;
+  const encoded = encodeURIComponent(text);
+  const providers = isZh ? ['amap', 'baidu'] as const : ['google'] as const;
+  const maps = {
+    amap: { label: tr({ zh: '高德地图', en: 'Amap' }), url: 'https://uri.amap.com/search?keyword=' + encoded + '&src=cuberoot&callnative=1' },
+    baidu: { label: tr({ zh: '百度地图', en: 'Baidu Maps' }), url: 'https://api.map.baidu.com/geocoder?address=' + encoded + '&output=html&src=webapp.cuberoot.web' },
+    google: { label: 'Google Maps', url: 'https://www.google.com/maps/search/?api=1&query=' + encoded },
+  };
   return (
-    <a
-      className="comp-info-link comp-info-address"
-      href={isZh ? `https://uri.amap.com/search?${query}` : googleUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={(event) => {
-        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-        const isIos = /iPhone|iPad|iPod/i.test(navigator.userAgent)
-          || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-        const isAndroid = /Android/i.test(navigator.userAgent);
-        if (!isIos && !isAndroid) return;
-        event.preventDefault();
-        if (!isZh) {
-          window.location.href = isIos ? `comgooglemaps://?q=${encodeURIComponent(text)}` : googleUrl;
-          return;
-        }
-        // 在用户点击时直接唤起 App，不依赖高德网页的二次跳转。
-        const nativeQuery = `sourceApplication=cuberoot&${isIos ? 'name' : 'keywords'}=${encodeURIComponent(text)}&dev=0`;
-        window.location.href = `${isIos ? 'iosamap' : 'androidamap'}://poi?${nativeQuery}`;
-      }}
-    >{text}</a>
+    <span className="comp-address">
+      <Tooltip content={copied ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: '复制地址', en: 'Copy address' })}>
+        {(tip) => <button {...tip} type="button" className="comp-address-copy" onClick={() => copy(text)} aria-label={tr({ zh: '复制地址', en: 'Copy address' }) + ': ' + text}>
+          {text}{copied && <Check size={14} aria-hidden />}
+        </button>}
+      </Tooltip>
+      <span className="comp-address-maps">
+        {providers.map(provider => <Tooltip key={provider} content={maps[provider].label}>
+          {(tip) => <a {...tip} className="comp-address-map" href={maps[provider].url} target="_blank" rel="noopener noreferrer" aria-label={maps[provider].label}
+            onClick={event => {
+              if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+              const isIos = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+                || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+              const isAndroid = /Android/i.test(navigator.userAgent);
+              if (!isIos && !isAndroid) return;
+              event.preventDefault();
+              if (provider === 'google') {
+                window.location.href = isIos ? 'comgooglemaps://?q=' + encoded : maps.google.url;
+              } else if (provider === 'baidu') {
+                window.location.href = 'baidumap://map/geocoder?address=' + encoded + '&src=' + (isIos ? 'ios' : 'andr') + '.cuberoot.web';
+              } else {
+                window.location.href = (isIos ? 'iosamap' : 'androidamap') + '://poi?sourceApplication=cuberoot&' + (isIos ? 'name' : 'keywords') + '=' + encoded + '&dev=0';
+              }
+            }}>
+            <img src={'/icons/maps/' + provider + '.ico'} width={24} height={24} alt="" />
+          </a>}
+        </Tooltip>)}
+      </span>
+      <span className="sr-only" role="status">{copied ? tr({ zh: '已复制', en: 'Copied' }) : ''}</span>
+    </span>
   );
 }
 
@@ -2279,13 +2295,13 @@ function CompInfoPanel({
   const cityStr = [info.city ? localizeCity(info.city, isZh, info.country_iso2) : '', country].filter(Boolean).join(tr({ zh: '，', en: ', ' }));
   const todayIso = toIsoDate(new Date());
   const isPast = (iso: string) => !!iso && iso.slice(0, 10) < todayIso;
-  const rows: { label: string; value: React.ReactNode; past?: boolean; hideLabel?: boolean }[] = [];
+  const rows: { label: string; value: React.ReactNode; past?: boolean; hideLabel?: boolean; compact?: boolean }[] = [];
   if (dateStr) {
     const wd = weekdayRangeLabel(info.start_date, info.end_date, isZh);
-    rows.push({ label: tr({ zh: '日期', en: 'Date' }), hideLabel: true, value: wd ? `${dateStr} ${wd}` : dateStr });
+    rows.push({ label: tr({ zh: '日期', en: 'Date' }), hideLabel: true, compact: true, value: wd ? `${dateStr} ${wd}` : dateStr });
   }
   if (info.competitor_limit) {
-    rows.push({ label: tr({ zh: '上限', en: 'Limit' }), value: info.competitor_limit });
+    rows.push({ label: tr({ zh: '上限', en: 'Limit' }), compact: true, value: info.competitor_limit });
   }
   const regOpenIso = info.registration_open ? toIsoDate(new Date(info.registration_open)) : '';
   const regCloseIso = info.registration_close ? toIsoDate(new Date(info.registration_close)) : '';
@@ -2324,9 +2340,9 @@ function CompInfoPanel({
     rows.push({ label: tr({ zh: '城市', en: 'City' }), value: cityStr });
   }
   if (isZh && cubingZh?.location) {
-    rows.push({ label: tr({ zh: '地点', en: 'Location' }), hideLabel: true, value: renderMapAddress(cubingZh.location, isZh) });
+    rows.push({ label: tr({ zh: '地点', en: 'Location' }), hideLabel: true, value: <CompAddress address={cubingZh.location} isZh={isZh} /> });
   } else {
-    if (info.venue_address) rows.push({ label: tr({ zh: '地址', en: 'Address' }), value: renderMapAddress(info.venue_address, isZh) });
+    if (info.venue_address) rows.push({ label: tr({ zh: '地址', en: 'Address' }), value: <CompAddress address={info.venue_address} isZh={isZh} /> });
     if (info.venue_details) rows.push({ label: tr({ zh: '详情', en: 'Details'
     }), value: renderWcaText(info.venue_details) });
   }
@@ -2341,14 +2357,14 @@ function CompInfoPanel({
 function CompInfoRows({
   activeRows, pastRows, isZh,
 }: {
-  activeRows: { label: string; value: React.ReactNode; hideLabel?: boolean }[];
+  activeRows: { label: string; value: React.ReactNode; hideLabel?: boolean; compact?: boolean }[];
   pastRows: { label: string; value: React.ReactNode }[];
   isZh: boolean;
 }) {
   return (
     <dl className={`comp-info-panel${isZh ? ' comp-info-panel--zh' : ''}`}>
       {activeRows.map((r, i) => (
-        <div key={r.label} className={`comp-info-row${r.hideLabel ? ' comp-info-row--unlabelled' : ''}`}>
+        <div key={r.label} className={`comp-info-row${r.hideLabel ? ' comp-info-row--unlabelled' : ''}${r.compact ? ' comp-info-row--compact' : ''}`}>
           {!r.hideLabel && <dt className="comp-info-label">{r.label}</dt>}
           <dd className="comp-info-value">
             {r.value}
