@@ -147,9 +147,8 @@ core/packages/client/public/maplibre/
 /solver/333opt/out.*.csv.rust-run-*.json
 /solver/333opt/out.*.csv.rust.jsonl
 
-# Bounded exact-puzzle run evidence and distance checkpoints stay on this host.
-/.local/small-puzzle-distributions-*/
-/.local/small-puzzle-distributions.lock
+# Local screenshots, review scripts, reports and computation checkpoints stay on this host.
+/.local/
 
 # Retired front-end bundles; current applications build their own assets in CI.
 /_assets/
