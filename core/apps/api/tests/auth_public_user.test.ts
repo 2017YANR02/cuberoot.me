@@ -165,6 +165,23 @@ describe('auth public user ID', () => {
     });
   });
 
+  it.each([
+    [{ me: { id: 123, wca_id: null, name: 'New user' } }, 400, 'WCA_ID_REQUIRED'],
+    [{}, 502, 'WCA_UNAVAILABLE'],
+    [{ me: { wca_id: '2017YANR02' } }, 502, 'WCA_UNAVAILABLE'],
+  ])('distinguishes a missing WCA ID from invalid upstream data: %j', async (profile, status, code) => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(profile))));
+    const response = await authRoutes.request('/auth/exchange', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accessToken: 'valid-wca-token' }),
+    });
+    expect(response.status).toBe(status);
+    expect(await response.json()).toMatchObject({ code });
+    expect(mocks.loginWithIdentity).not.toHaveBeenCalled();
+    expect(mocks.signSession).not.toHaveBeenCalled();
+  });
+
   it('rejects an invalid WCA token through the real /auth/exchange route', async () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 401 }));
     vi.stubGlobal('fetch', fetchMock);

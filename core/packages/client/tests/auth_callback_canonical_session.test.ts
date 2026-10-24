@@ -67,6 +67,14 @@ describe('WCA callback canonical session', () => {
     });
   });
 
+  it('explains a missing WCA ID without saving a session', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      code: 'WCA_ID_REQUIRED', error: 'This WCA account has no WCA ID.',
+    }), { status: 400 })));
+    await expect(loginWca('valid-wca-token')).rejects.toThrow(/WCA ID/);
+    expect(localStorage.getItem('cuberoot_web_session_marker')).toBeNull();
+  });
+
   it('does not replace an existing legacy session with an invalid canonical response', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({
       token: 'c'.repeat(20),

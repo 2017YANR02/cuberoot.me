@@ -316,8 +316,11 @@ authRoutes.post('/auth/exchange', async (c) => {
       me: { id: number; wca_id: string; name: string; country_iso2?: string; gender?: unknown; avatar: { url: string } };
     };
     const user = data.me;
-    if (!user?.wca_id) {
-      return c.json(webSessionError('INVALID_WCA_TOKEN', 'Failed to get user info'), 401);
+    if (!user || !Number.isSafeInteger(user.id) || user.id <= 0) {
+      return c.json(webSessionError('WCA_UNAVAILABLE', 'WCA returned an invalid user profile'), 502);
+    }
+    if (!user.wca_id) {
+      return c.json(webSessionError('WCA_ID_REQUIRED', 'This WCA account has no WCA ID. Use another sign-in method.'), 400);
     }
     const countryIso2 = typeof user.country_iso2 === 'string'
       ? normalizeCountryIso2(user.country_iso2)

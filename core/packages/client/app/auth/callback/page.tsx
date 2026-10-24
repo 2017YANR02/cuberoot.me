@@ -14,7 +14,8 @@ import {
 } from '@/lib/auth-store';
 import { tr } from '@/i18n/tr';
 import { AuthCallbackStatus } from '../_components/AuthCallbackStatus';
-import { loginWca } from '@/lib/account-api';
+import { loginWca, linkWca } from '@/lib/account-api';
+import AppLink from '@/components/AppLink';
 import { AccountChoiceRequired, getIdentityChoice, identityChoiceEntryPath, identityReturnPath, rememberIdentityChoice, updateIdentityChoice } from '@/lib/identity-choice';
 
 export default function AuthCallbackPage() {
@@ -125,28 +126,16 @@ export default function AuthCallbackPage() {
   async function handleWcaLink(accessToken: string, returnUrl: string | null, signal: AbortSignal) {
     try {
       const jwt = getSessionToken();
-      if (!jwt) throw new Error('Sign in before linking');
-      if (jwt) {
-        const r = await sessionFetch(apiUrl('/v1/auth/link/wca'), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${jwt}` },
-          body: JSON.stringify({ accessToken }),
-          signal,
-        });
-        if (r.ok) {
-          const d = await r.json();
-          if (!mounted.current || signal.aborted) return;
-          if (d.token && d.user && !(await applySession(d.token, d.user, () => mounted.current && !signal.aborted))) throw new Error('session persistence failed');
-        } else {
-          const d = await r.json().catch(() => ({}));
-          setErrorMsg(tr({ zh: `绑定失败:${d.error ?? r.status}`, en: `Link failed: ${d.error ?? r.status}` }));
-          return;
-        }
+      if (!jwt) throw new Error(tr({ zh: '登录状态已失效，请重新登录后绑定。', en: 'Your session has expired. Sign in again before linking.' }));
+      const result = await linkWca(accessToken, signal);
+      if (!mounted.current || signal.aborted) return;
+      if (result.token && result.user && !(await applySession(result.token, result.user, () => mounted.current && !signal.aborted))) {
+        throw new Error(tr({ zh: '无法保存账号状态，请重试。', en: 'Could not save your account session. Please retry.' }));
       }
       if (mounted.current && !signal.aborted) router.replace(identityReturnPath(returnUrl || '/'));
-    } catch {
+    } catch (error) {
       if (!mounted.current || signal.aborted) return;
-      setErrorMsg(tr({ zh: '绑定失败,请重试', en: 'Link failed, please retry' }));
+      setErrorMsg(tr({ zh: `绑定失败：${(error as Error).message}`, en: `Link failed: ${(error as Error).message}` }));
     }
   }
 
@@ -154,6 +143,8 @@ export default function AuthCallbackPage() {
     <AuthCallbackStatus
       pendingLabel={tr({ zh: '正在登录 WCA...', en: 'Signing in to WCA...' })}
       error={errorMsg}
-    />
+    >
+      <AppLink href="/account" prefetch={false}>{tr({ zh: '账号设置', en: 'Account settings' })}</AppLink>
+    </AuthCallbackStatus>
   );
 }

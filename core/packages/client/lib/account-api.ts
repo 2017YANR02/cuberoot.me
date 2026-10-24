@@ -75,7 +75,13 @@ async function post<T>(path: string, body: unknown, auth = false, signal?: Abort
   if (existingIdentity && (getIdentityChoice()?.ticket !== existingIdentity || !existingAccountRequired())) {
     throw new DOMException('Account choice canceled', 'AbortError');
   }
-  if (!res.ok) throw accountChoiceError(res.status, data) ?? new Error((data.error as string) || `HTTP ${res.status}`);
+  if (!res.ok) {
+    if (data.code === 'WCA_ID_REQUIRED') throw new Error(tr({
+      zh: path === '/v1/auth/link/wca' ? '此 WCA 账号尚未关联 WCA ID，可以暂时跳过绑定。' : '此 WCA 账号尚未关联 WCA ID，请返回账号页面，使用其他方式登录。',
+      en: path === '/v1/auth/link/wca' ? 'This WCA account has no WCA ID. You can skip linking for now.' : 'This WCA account has no WCA ID. Return to the account page and use another sign-in method.',
+    }));
+    throw accountChoiceError(res.status, data) ?? new Error((data.error as string) || `HTTP ${res.status}`);
+  }
   return data as T;
 }
 
@@ -258,7 +264,7 @@ export const linkPhoneSend = (phone: string) => post<{ ok: true }>('/v1/auth/lin
 export const linkPhoneVerify = (phone: string, code: string) => post<{ ok: true; identities: Identity[] }>('/v1/auth/link/phone/verify', { phone, code }, true);
 // 换绑手机号:同 replaceEmailVerify,理由一样(0103 起手机也是一个账号一条)。
 export const replacePhoneVerify = (phone: string, code: string) => post<{ ok: true; identities: Identity[] }>('/v1/auth/phone/replace', { phone, code }, true);
-export const linkWca = (accessToken: string) => post<{ ok: true; token?: string; user?: SessionUser; identities: Identity[] }>('/v1/auth/link/wca', { accessToken }, true);
+export const linkWca = (accessToken: string, signal?: AbortSignal) => post<{ ok: true; token?: string; user?: SessionUser; identities: Identity[] }>('/v1/auth/link/wca', { accessToken }, true, signal);
 export const unlinkIdentity = (provider: string, providerUid?: string) => post<{ ok: true; token?: string; user?: SessionUser; identities: Identity[] }>('/v1/auth/unlink', { provider, providerUid }, true);
 
 // Google(浏览器经墙外中继换来的断言 → 后端离线验签;登录/绑定各一条,同 email/phone 的两段式)

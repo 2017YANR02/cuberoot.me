@@ -967,7 +967,7 @@ accountAuthRoutes.post('/auth/link/wca', async (c) => {
   } catch {
     return c.json({ error: 'WCA API unavailable' }, 502);
   }
-  if (!me.wca_id) return c.json({ error: 'this WCA account has no WCA ID (never competed)' }, 400);
+  if (!me.wca_id) return c.json(webSessionError('WCA_ID_REQUIRED', 'This WCA account has no WCA ID. You can skip linking for now.'), 400);
   const verifiedName = me.name?.normalize('NFC').trim();
   if (!verifiedName) return c.json({ error: 'WCA profile has no verified name' }, 502);
   const countryIso2 = typeof me.country_iso2 === 'string'
@@ -1032,7 +1032,7 @@ accountAuthRoutes.post('/auth/wechat/wca-link/complete', async (c) => {
   } catch {
     return c.json({ error: 'WCA API unavailable' }, 502);
   }
-  if (!me.wca_id) return c.json({ error: 'this WCA account has no WCA ID (never competed)' }, 400);
+  if (!me.wca_id) return c.json(webSessionError('WCA_ID_REQUIRED', 'This WCA account has no WCA ID. You can skip linking for now.'), 400);
   const verifiedName = me.name?.normalize('NFC').trim();
   if (!verifiedName) return c.json({ error: 'WCA profile has no verified name' }, 502);
   const uid = await consumeWechatWcaLink(ticket);

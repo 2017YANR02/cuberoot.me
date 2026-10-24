@@ -7,9 +7,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Callback from '@/app/auth/callback/page';
 import { AccountChoiceRequired, clearIdentityChoice, getIdentityChoice, rememberIdentityChoice, updateIdentityChoice } from '@/lib/identity-choice';
 
-const mocks = vi.hoisted(() => ({ loginWca: vi.fn(), applySession: vi.fn(), replace: vi.fn() }));
-vi.mock('@/lib/account-api', () => ({ loginWca: mocks.loginWca }));
-vi.mock('@/lib/auth-store', () => ({ applySession: mocks.applySession, getRolePreview: () => null, getSessionToken: () => null }));
+const mocks = vi.hoisted(() => ({ loginWca: vi.fn(), linkWca: vi.fn(), getSessionToken: vi.fn(), applySession: vi.fn(), replace: vi.fn() }));
+vi.mock('@/lib/account-api', () => ({ loginWca: mocks.loginWca, linkWca: mocks.linkWca }));
+vi.mock('@/lib/auth-store', () => ({ applySession: mocks.applySession, getRolePreview: () => null, getSessionToken: mocks.getSessionToken }));
+vi.mock('@/components/AppLink', () => ({ default: ({ children }: { children: React.ReactNode }) => createElement('a', { href: '/account' }, children) }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: mocks.replace }) }));
 vi.mock('@/i18n/tr', () => ({ tr: ({ en }: { en: string }) => en }));
 let root: Root; let host: HTMLDivElement;
@@ -33,6 +34,7 @@ beforeEach(async () => {
   window.history.replaceState({}, '', '/auth/callback#access_token=wca-assertion&state=csrf');
   sessionStorage.setItem('wca_oauth_state', 'csrf'); sessionStorage.setItem('wca_return_url', '/account?auth=mobile&next=original');
   mocks.applySession.mockReturnValue(true);
+  mocks.getSessionToken.mockReturnValue(null);
   mocks.loginWca.mockResolvedValue({ token: 'canonical', user: { uid: 42, wcaId: '2017YANR02' }, isNew: false });
   host = document.createElement('div'); document.body.append(host); root = createRoot(host);
 });
@@ -40,6 +42,22 @@ afterEach(async () => { await act(async () => root.unmount()); host.remove(); cl
 const render = async () => { await act(async () => root.render(createElement(StrictMode, null, createElement(Callback)))); };
 
 describe('WCA canonical-only first identity callback', () => {
+  it.each([false, true])('preserves the registration binding intent (failure: %s)', async (failure) => {
+    sessionStorage.setItem('wca_oauth_intent', 'link');
+    mocks.getSessionToken.mockReturnValue('existing-session');
+    if (failure) mocks.linkWca.mockRejectedValue(new Error('No WCA ID'));
+    else mocks.linkWca.mockResolvedValue({ ok: true });
+    await render();
+    expect(mocks.linkWca).toHaveBeenCalledExactlyOnceWith('wca-assertion', expect.any(AbortSignal));
+    expect(mocks.loginWca).not.toHaveBeenCalled();
+    expect(mocks.applySession).not.toHaveBeenCalled();
+    if (failure) {
+      expect(mocks.replace).not.toHaveBeenCalled();
+      expect(host.textContent).toContain('Link failed: No WCA ID');
+      expect(host.querySelector('a')?.getAttribute('href')).toBe('/account');
+    } else expect(mocks.replace).toHaveBeenCalledExactlyOnceWith('/account?auth=mobile&next=original');
+  });
+
   it('leaves no background login iframe after returning to the account page', async () => {
     // Reproduce the document bootstrap before React owns the callback route.
     // Executing the real body scripts catches DOM inserted outside the React root.
