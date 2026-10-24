@@ -18,7 +18,7 @@ import { stageStickerColors } from '@/lib/sim-stage-thumbnail';
 import { orientedCubeFaceColors } from '@/lib/cube-orientation';
 import { tr, T } from '@/i18n/tr';
 import { LBL_STEPS, LESSON_STICKERING, LBL_INITIAL_VIEW } from './content';
-import { practiceState } from './practice-state';
+import { practiceState, practiceTargetStates } from './practice-state';
 import AlgSteps from './AlgSteps';
 
 const practiceMoves = [
@@ -60,6 +60,7 @@ function Exercise({ step, index, onNext, textMoves, onTextMovesChange }: { step:
     const name = pickStickering('3x3', LESSON_STICKERING[step.id], 'sim')!;
     return stageStickerColors(3, stickeringMaskFn(3, name) ?? resolveStageMaskFn(3, name), orientedCubeFaceColors('z2'));
   }, [step.id]);
+  const targetStates = useMemo(() => practiceTargetStates(colors, target), [colors, target]);
   const [hint, setHint] = useState(false);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [generation, setGeneration] = useState(0);
@@ -94,13 +95,13 @@ function Exercise({ step, index, onNext, textMoves, onTextMovesChange }: { step:
     if (!checking) return;
     const timer = window.setInterval(() => {
       if (!player.current || player.current.isUserMovePending?.()) return;
-      const correct = practiceState(colors, `${setup} ${moves.current.join(' ')}`) === practiceState(colors, target);
+      const correct = targetStates.has(practiceState(colors, `${setup} ${moves.current.join(' ')}`));
       setFeedback(correct ? 'correct' : 'wrong');
       if (correct && finalExercise) setCompleted(true);
       setChecking(false);
     }, 100);
     return () => window.clearInterval(timer);
-  }, [checking, colors, setup, target, finalExercise]);
+  }, [checking, colors, setup, targetStates, finalExercise]);
   const last = index === step.examples.length - 1;
   const nextStep = LBL_STEPS[LBL_STEPS.findIndex(item => item.id === step.id) + 1];
   const actionRows = (rows: typeof practiceMoves) => rows.map(row => <div className="lbl-action-row" key={row.en}>
