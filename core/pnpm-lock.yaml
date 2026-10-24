@@ -505,6 +505,9 @@ importers:
 
   jobs/wb-build:
     dependencies:
+      '@cuberoot/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       cheerio:
         specifier: ^1.0.0
         version: 1.2.0

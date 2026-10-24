@@ -6,6 +6,8 @@ export type PredictionStatus = "completed" | "failed" | "abstained" | "timeout";
 export interface EvaluationMode {
   initialState: InitialStateMode;
   boundaries: BoundaryMode;
+  /** Absent in older reports; never pool those with explicitly automatic geometry. */
+  geometry?: "automatic" | "manual";
 }
 
 export interface ReferenceVideo {
@@ -265,6 +267,7 @@ export function parsePredictionDocument(value: unknown): PredictionDocument {
     const mode = record(run.mode, `${name}.mode`);
     if (mode.initialState !== "known" && mode.initialState !== "unknown") throw new Error(`${name}.mode.initialState must be known or unknown`);
     if (mode.boundaries !== "manual" && mode.boundaries !== "automatic") throw new Error(`${name}.mode.boundaries must be manual or automatic`);
+    if (mode.geometry !== undefined && mode.geometry !== "manual" && mode.geometry !== "automatic") throw new Error(`${name}.mode.geometry must be manual or automatic when supplied`);
     const predictions = array(run.predictions, `${name}.predictions`).map((entry, index): VideoPrediction => {
       const rowName = `${name}.predictions[${index}]`, row = record(entry, rowName);
       if (row.status !== "completed" && row.status !== "failed" && row.status !== "abstained" && row.status !== "timeout") {
@@ -280,10 +283,10 @@ export function parsePredictionDocument(value: unknown): PredictionDocument {
       return result;
     });
     uniqueIds(predictions, name);
-    return { mode: { initialState: mode.initialState, boundaries: mode.boundaries }, predictions };
+    return { mode: { initialState: mode.initialState, boundaries: mode.boundaries, ...(mode.geometry === undefined ? {} : { geometry: mode.geometry }) }, predictions };
   });
   if (!runs.length) throw new Error("predictions.runs must contain at least one run");
-  const modeKeys = runs.map((r) => `${r.mode.initialState}/${r.mode.boundaries}`);
+  const modeKeys = runs.map((r) => `${r.mode.initialState}/${r.mode.boundaries}/${r.mode.geometry ?? "unspecified"}`);
   if (new Set(modeKeys).size !== modeKeys.length) throw new Error("Duplicate evaluation mode; compare different models in separate reports");
   return { schemaVersion: 1, runs };
 }

@@ -7,7 +7,7 @@
  *   - y 插入是真实转体 (改变后续所有段的相机-面对应), 对 GT 中途 y 段必需
  *     (probs.json 跳过 y 段, 故作"不消费段"的插入处理)。
  *   - 初始 beam = 24 个 solved 朝向 (计时结束时朝向未知, 观测自然收敛);
- *     锚定 = 起点态 ∈ 打乱态的 24 个整体旋转变体 (观察前打乱后可任意持握)。
+ *     锚定按 initialOrientation 区分历史颜色重标与打乱后的实际持握。
  *
  * 评分 = Σ log(p_effective) + 视觉对数似然, p 来自 probs.json 面概率 × 词表先验。
  */
@@ -170,6 +170,19 @@ export function rawObsCodes(obs: RawFaceObs): number[] {
 }
 
 export interface AnchoredOptions {
+  /** Independent inference can supply a frozen event vocabulary, never answer-derived candidates. */
+  vocabulary?: readonly Candidate[];
+  /** Independent geometry evidence at the two endpoints, replacing the legacy observation scorer. */
+  scoreSegment?: (segment: number, startState: readonly number[], endState: readonly number[]) => number;
+  scoreFinal?: (state: readonly number[]) => number;
+  /** Keep distinct trajectories reaching the same state; default 1 preserves legacy behavior. */
+  pathsPerState?: number;
+  alternativesLimit?: number;
+  maxExpandedNodes?: number;
+  maxElapsedMs?: number;
+  /** Legacy diagnostics relabel colors on the left. Independent standard-color
+   * scrambles use a physical hold rotation after the scramble, on the right. */
+  initialOrientation?: "legacy-color-relabel" | "physical-hold";
   beamWidth?: number; // 默认 512
   floorProb?: number; // probs 未列出面的保底概率, 默认 0.03
   noopProb?: number; // 空段固定概率, 默认 0.015
@@ -265,6 +278,19 @@ export interface AnchoredResult {
   score: number;
   /** 未锚定时的兜底: 分数最高路径 (诊断用) */
   bestUnanchored?: { movesFlat: string[]; segTokens: string[]; score: number };
+  /** Surviving anchored trajectories only; beam pruning can hide other valid explanations. */
+  alternatives?: { movesFlat: string[]; segTokens: string[]; score: number; terminalState: number[] }[];
+  searchStats?: { expandedNodes: number; completedSegments: number; elapsedMs: number };
+}
+
+export class SearchBudgetExceeded extends Error {
+  constructor(
+    readonly reason: "expanded-nodes" | "elapsed-time",
+    readonly stats: { expandedNodes: number; completedSegments: number; elapsedMs: number },
+  ) {
+    super(`Search budget exhausted: ${reason}`);
+    this.name = "SearchBudgetExceeded";
+  }
 }
 
 function applyPermTo(sc: readonly number[], perm: Perm): number[] {
@@ -295,7 +321,7 @@ function collect(node: PathNode, forward = false): { movesFlat: string[]; segTok
 /**
  * 双端锚定波束搜索 (物理语义)。
  * @param probDists 每段面概率 (probs.json, 时间正序, 不含 y 段)
- * @param scrambleSc 已知打乱的空间状态 (任意持握朝向皆可; 锚定按 24 旋转变体判)
+ * @param scrambleSc 已知打乱的空间状态；24 朝向的复合顺序由 initialOrientation 决定
  */
 export function anchoredBeamSearch(
   probDists: ProbDist[],
@@ -309,7 +335,23 @@ export function anchoredBeamSearch(
   const maxRotInserts = opts.maxRotInserts ?? 3;
   const vw = opts.visualWeight ?? 1;
 
-  const vocab = buildVocabulary();
+  const vocab = opts.vocabulary ?? buildVocabulary();
+  const pathsPerState = opts.pathsPerState ?? 1;
+  const alternativesLimit = opts.alternativesLimit ?? 1;
+  const maxExpandedNodes = opts.maxExpandedNodes ?? Infinity;
+  const maxElapsedMs = opts.maxElapsedMs ?? Infinity;
+  if (!Number.isInteger(beamWidth) || beamWidth < 1 || !Number.isInteger(pathsPerState)
+    || pathsPerState < 1 || pathsPerState > 8 || !Number.isInteger(alternativesLimit) || alternativesLimit < 1
+    || !(maxExpandedNodes > 0) || !(maxElapsedMs > 0) || vocab.length === 0) {
+    throw new Error("Invalid search width, trajectory retention, vocabulary or budget");
+  }
+  const started = performance.now();
+  let expandedNodes = 0, completedSegments = 0;
+  const stats = () => ({ expandedNodes, completedSegments, elapsedMs: performance.now() - started });
+  const checkBudget = () => {
+    if (expandedNodes >= maxExpandedNodes) throw new SearchBudgetExceeded("expanded-nodes", stats());
+    if (performance.now() - started >= maxElapsedMs) throw new SearchBudgetExceeded("elapsed-time", stats());
+  };
   const yInvPerms = Y_INSERTS.map((r) => invertPerm(ROTATION_PERMS[r]));
 
   const logHit = Math.log(opts.rawHitProb ?? 0.85);
@@ -422,20 +464,26 @@ export function anchoredBeamSearch(
   };
 
   const fwd = opts.forward === true;
+  const orientInitial = (orientation: Perm): Perm => opts.initialOrientation === "physical-hold"
+    ? seqCompose(scrambleSc, orientation) : seqCompose(orientation, scrambleSc);
   const yPerms = Y_INSERTS.map((r) => ROTATION_PERMS[r]);
+  const checkedScore = (value: number): number => {
+    if (!Number.isFinite(value)) throw new Error("Independent observation scoring must return a finite value");
+    return value;
+  };
   /** 末帧观测评分 (逆序在初始 beam 上, 正向在末段之后) */
   const finalVis = (sc: readonly number[], pin: number): number =>
-    opts.finalObservation
+    opts.scoreFinal ? checkedScore(opts.scoreFinal(sc)) : opts.finalObservation
       ? vw * logObs(sc, opts.finalObservation)
       : finalRawCodes
         ? vw * robust(logRawObs(sc, finalRawCodes, logHit, logMiss, pinCombos[pin], finalRawLP), readOf(finalRawCodes))
         : 0;
 
   // 初始 beam × pin 组合: 逆序 = 24 solved 朝向 (末帧观测收敛朝向并淘汰错 pin);
-  // 正向 = 24 个打乱态朝向变体 {ω∘scramble} (锚定条件转移到末端)
+  // 正向 = orientInitial 定义的 24 个初态 (锚定条件转移到末端)。
   let beam: PathNode[] = ORIENTATION_PERMS.flatMap((o) =>
     pinCombos.map((_combo, pin) => ({
-      state: fwd ? [...seqCompose(o, scrambleSc)] : o.slice(),
+      state: fwd ? [...orientInitial(o)] : o.slice(),
       score: fwd ? 0 : finalVis(o, pin),
       move: null,
       isInsert: false,
@@ -446,13 +494,21 @@ export function anchoredBeamSearch(
   );
 
   for (let step = 0; step < probDists.length; step++) {
+    checkBudget();
     const t = fwd ? step : probDists.length - 1 - step;
     const dist = probDists[t];
-    const expanded = new Map<string, PathNode>();
+    const expanded = new Map<string, PathNode[]>();
     const push = (node: PathNode) => {
       const key = pinCombos.length > 1 ? `${node.pin}|${permKey(node.state)}` : permKey(node.state);
       const prev = expanded.get(key);
-      if (!prev || node.score > prev.score) expanded.set(key, node);
+      if (!prev) expanded.set(key, [node]);
+      else if (!prev.some((p) => p.parent === node.parent && p.move === node.move && p.isInsert === node.isInsert)) {
+        if (prev.length < pathsPerState || node.score > prev[prev.length - 1].score) {
+          prev.push(node);
+          prev.sort((a, b) => b.score - a.score);
+          if (prev.length > pathsPerState) prev.pop();
+        }
+      }
     };
 
     const segVocab = opts.candidateFilter
@@ -464,6 +520,7 @@ export function anchoredBeamSearch(
     const rawLP = rawLPs?.[t] ?? null;
     /** 段观测似然 (单 pin): startSc = 段起点态, endSc = 段终点态 (双端点语义) */
     const visOf = (startSc: readonly number[], endSc: readonly number[], pin: number): number => {
+      if (opts.scoreSegment) return checkedScore(opts.scoreSegment(t, startSc, endSc));
       if (obs) return vw * logObs(startSc, obs);
       if (!raw) return 0;
       const assigns = pinCombos[pin];
@@ -483,12 +540,14 @@ export function anchoredBeamSearch(
      * 正向时另推"段后紧跟 y"的插入子 (y 段无帧, 只付惩罚)。
      */
     const expand = (parent: PathNode, cand: Candidate, p: number) => {
+      if (expandedNodes >= maxExpandedNodes || expandedNodes % 1024 === 0) checkBudget();
+      expandedNodes++;
       const nextState = applyPermTo(parent.state, fwd ? cand.perm : cand.invPerm);
       const startSc = fwd ? parent.state : nextState;
       const endSc = fwd ? nextState : parent.state;
       const base = parent.score + Math.log(p);
       const children: PathNode[] = [];
-      if (drift && raw && !obs) {
+      if (drift && raw && !obs && !opts.scoreSegment) {
         const pins = visPerPin(raw, rawLP, startSc, endSc);
         const keep = pins[parent.pin];
         children.push({
@@ -574,7 +633,8 @@ export function anchoredBeamSearch(
       }
     }
 
-    beam = [...expanded.values()].sort((a, b) => b.score - a.score).slice(0, beamWidth);
+    beam = [...expanded.values()].flat().sort((a, b) => b.score - a.score).slice(0, beamWidth);
+    completedSegments++;
 
     if (opts.debugGtStates && opts.onSegmentTrace) {
       const gt = opts.debugGtStates[t];
@@ -590,23 +650,44 @@ export function anchoredBeamSearch(
   }
 
   // 正向: 末段之后计入末帧观测再重排 (逆序在初始 beam 已计)
-  if (fwd && (opts.finalObservation || finalRawCodes)) {
+  if (fwd && (opts.scoreFinal || opts.finalObservation || finalRawCodes)) {
     beam = beam
       .map((n) => ({ ...n, score: n.score + finalVis(n.state, n.pin) }))
       .sort((a, b) => b.score - a.score);
   }
 
-  // 锚定: 逆序 = 起点态 ∈ {ω∘打乱态}; 正向 = 末态 ∈ 24 复原朝向。
-  // 相机系 = GT 系差常数颜色重标 κ (共轭的外侧半): 真路径从初始朝向 ω=κ 出发,
-  // 必须左复合 {ω∘R}。右复合 {R∘o} 仅在 κ=id (纯仿真) 时相交于 o=id。
+  // 正向末态为 24 个复原朝向。逆序初态由显式语义决定：
+  // legacy-color-relabel 保留旧诊断的左复合颜色重标；
+  // physical-hold 使用标准配色打乱后实际换持握的右复合。
   const anchorKeys = fwd
     ? new Set(ORIENTATION_PERMS.map((o) => permKey(o)))
-    : new Set(ORIENTATION_PERMS.map((o) => permKey(seqCompose(o, scrambleSc))));
+    : new Set(ORIENTATION_PERMS.map((o) => permKey(orientInitial(o))));
   const best = beam.find((n) => anchorKeys.has(permKey(n.state))) ?? null;
   const bestAny = beam[0] ?? null;
+  // A finished search may use exactly its node budget, but must still honor the
+  // elapsed-time budget after the final batch, scoring and sort.
+  if (performance.now() - started >= maxElapsedMs) throw new SearchBudgetExceeded("elapsed-time", stats());
 
   if (best) {
-    return { anchored: true, ...collect(best, fwd), score: best.score };
+    const result: AnchoredResult = { anchored: true, ...collect(best, fwd), score: best.score };
+    if (opts.alternativesLimit !== undefined) {
+      const seen = new Set<string>();
+      result.alternatives = [];
+      for (const node of beam) {
+        if (!anchorKeys.has(permKey(node.state))) continue;
+        const path = collect(node, fwd);
+        const key = JSON.stringify([path.segTokens, path.movesFlat]);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        let root = node;
+        while (root.parent) root = root.parent;
+        result.alternatives.push({ ...path, score: node.score, terminalState: [...(fwd ? node.state : root.state)] });
+        if (result.alternatives.length >= alternativesLimit) break;
+      }
+    }
+    if (performance.now() - started >= maxElapsedMs) throw new SearchBudgetExceeded("elapsed-time", stats());
+    if (opts.maxExpandedNodes !== undefined || opts.maxElapsedMs !== undefined) result.searchStats = stats();
+    return result;
   }
   return {
     anchored: false,
@@ -614,5 +695,6 @@ export function anchoredBeamSearch(
     segTokens: [],
     score: -Infinity,
     bestUnanchored: bestAny ? { ...collect(bestAny, fwd), score: bestAny.score } : undefined,
+    ...(opts.maxExpandedNodes !== undefined || opts.maxElapsedMs !== undefined ? { searchStats: stats() } : {}),
   };
 }

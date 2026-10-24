@@ -34,9 +34,17 @@
   justify-content: flex-end;
 }
 @media (max-width: 767px) {
-  .timer-training-workspace__toolbar { grid-template-columns: minmax(0, 1fr); }
+  .timer-training-workspace__toolbar {
+    display: flex;
+    justify-content: space-evenly;
+    gap: 4px;
+    padding-inline: 8px;
+  }
   .timer-training-workspace__navigation,
-  .timer-training-workspace__context { grid-column: 1; }
+  .timer-training-workspace__context,
+  .timer-training-workspace .timer-training-workspace__context .settings-popover-context {
+    display: contents;
+  }
 }
 
 /* The training toolbar hosts the same TimerDeviceCenter as /timer's topbar.

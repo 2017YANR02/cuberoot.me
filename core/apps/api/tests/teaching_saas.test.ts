@@ -207,6 +207,42 @@ describe('teaching SaaS routes', () => {
     repo = repository();
   });
 
+  it('authenticates every endpoint before parsing input and preserves private error responses', async () => {
+    const authenticate = vi.fn(async () => { throw new Error('Authentication required'); });
+    const app = createTeachingSaasRoutes({ authenticate, repository: repo });
+    expect(app.routes).toHaveLength(97);
+    for (const route of app.routes) {
+      const requestId = `auth-${authenticate.mock.calls.length}`;
+      const response = await app.request(route.path.replace(/:[^/]+/g, 'invalid'), {
+        method: route.method,
+        headers: { 'X-Request-ID': requestId, 'Content-Type': 'application/json' },
+        ...(route.method === 'GET' ? {} : { body: '{' }),
+      });
+      expect(response.status, `${route.method} ${route.path}`).toBe(401);
+      expect(response.headers.get('Cache-Control')).toBe('no-store');
+      expect(await response.json()).toEqual({
+        error: { code: 'UNAUTHENTICATED', message: 'Authentication required', requestId },
+      });
+    }
+    expect(authenticate).toHaveBeenCalledTimes(97);
+    for (const method of Object.values(repo)) expect(method).not.toHaveBeenCalled();
+  });
+
+  it('catches asynchronous repository failures with the same request identity', async () => {
+    vi.mocked(repo.listOrganizations).mockRejectedValue(
+      new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Organization not found'),
+    );
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const response = await app.request('/teaching/organizations', {
+      headers: { 'X-Request-ID': 'async-failure' },
+    });
+    expect(response.status).toBe(404);
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+    expect(await response.json()).toEqual({
+      error: { code: 'RESOURCE_NOT_FOUND', message: 'Organization not found', requestId: 'async-failure' },
+    });
+  });
+
   it('keeps staff and learner daily boards separate and private', async () => {
     const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
     const id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';

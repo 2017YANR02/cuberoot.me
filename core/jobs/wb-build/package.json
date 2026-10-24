@@ -10,6 +10,7 @@
     "scrape": "tsx src/scrape.ts"
   },
   "dependencies": {
+    "@cuberoot/shared": "workspace:*",
     "cheerio": "^1.0.0"
   },
   "devDependencies": {

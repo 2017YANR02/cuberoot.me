@@ -218,13 +218,22 @@ function originForUrl(): string {
   return typeof window === 'undefined' ? 'http://localhost' : window.location.origin;
 }
 
-async function apiGet<T>(path: string, params: Record<string, string> = {}): Promise<T> {
+async function apiGet<T>(
+  path: string,
+  params: Record<string, string> = {},
+  options: { public?: boolean; signal?: AbortSignal } = {},
+): Promise<T> {
   const url = new URL(`${API_BASE}${path}`, originForUrl());
   url.searchParams.set('v', '2');
   for (const [k, v] of Object.entries(params)) {
     if (v) url.searchParams.set(k, v);
   }
-  return handleApi<T>(await sessionFetch(url.toString(), { headers: authHeaders(false) }));
+  // Public search has no viewer-dependent fields: do not wait for a web-session
+  // token or add an Authorization header that requires a cross-origin preflight.
+  const init: RequestInit = options.public
+    ? { credentials: 'omit', signal: options.signal }
+    : { headers: authHeaders(false), signal: options.signal };
+  return handleApi<T>(await sessionFetch(url.toString(), init));
 }
 
 async function apiSend<T>(method: string, path: string, body?: unknown): Promise<T> {
@@ -266,8 +275,8 @@ export async function fetchForumFeed(
   return apiGet<ForumFeedData>('/feed', { sort, page: String(page), size: String(size) });
 }
 
-export async function searchForum(q: string, page: number, size: number): Promise<SearchData> {
-  return apiGet<SearchData>('/search', { q, page: String(page), size: String(size) });
+export async function searchForum(q: string, page: number, size: number, signal?: AbortSignal): Promise<SearchData> {
+  return apiGet<SearchData>('/search', { q, page: String(page), size: String(size) }, { public: true, signal });
 }
 
 export async function createThread(

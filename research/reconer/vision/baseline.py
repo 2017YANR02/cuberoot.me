@@ -8,8 +8,11 @@ from __future__ import annotations
 
 import argparse
 from collections import defaultdict
+from contextlib import contextmanager
+import hashlib
 import importlib.metadata
 import importlib.util
+import io
 import json
 import math
 import os
@@ -22,10 +25,12 @@ import sys
 import tempfile
 import time
 
-from dataset import COLORS, DataError, assert_disjoint, dataset_summary, image_and_masks, load_dataset, provenance, sha256
+from dataset import (COLORS, DataError, assert_disjoint, dataset_summary, image_and_masks,
+                     iter_manifest_frames, load_dataset, prepare_frame_manifest, provenance, sha256)
 from metrics import match_instances, summarize_counts
 
 FORMAT = "reconer-visible-maskrcnn-v1"
+PREDICTION_FORMAT = "reconer-visible-stream-v1"
 
 
 def emit(value):
@@ -360,41 +365,310 @@ def evaluate(args, loaded):
     return {"status": "evaluated", "report": str(args.output), **report["summary"]}
 
 
-def predict(args):
-    # No dataset/annotations/answers argument exists in this entry point.
-    for path in args.image:
+def json_line(value):
+    return (json.dumps(value, ensure_ascii=False, separators=(",", ":"), allow_nan=False) + "\n").encode("utf-8")
+
+
+def prepare_prediction_input(args):
+    """Validate all input metadata and image bytes before importing a model."""
+    if args.frames_manifest:
+        header, root, count, fingerprint = prepare_frame_manifest(args.frames_manifest, args.images_root)
+        return header, root, count, fingerprint, lambda: iter_manifest_frames(args.frames_manifest, header, fingerprint)
+    if args.images_root:
+        raise DataError("--images-root applies only to --frames-manifest")
+    from PIL import Image
+    rows = []
+    for index, path in enumerate(args.image):
+        path = path.resolve()
         if not path.is_file():
             raise DataError(f"Image missing: {path}")
-    fresh_directory(args.output)
+        with Image.open(path) as source:
+            width, height = source.size
+            source.verify()
+        rows.append({"kind": "frame", "frameId": f"image-{index:08d}", "frameIndex": index,
+                     "imagePath": str(path), "imageHash": sha256(path), "width": width, "height": height,
+                     "sourcePts": None, "ptsSeconds": None, "realTimeMs": None, "sourceCrop": [0, 0, width, height]})
+    # Loose images have no proven video identity or temporal ordering.
+    header = {key: None for key in ("videoId", "sourceHash", "sourcePath", "sourceWidth", "sourceHeight", "timeBase", "timeMapping")}
+    return header, Path.cwd(), len(rows), hashlib.sha256(json_line(rows)).hexdigest(), lambda: iter(rows)
+
+
+def read_prediction_rgb(frame, root):
     import numpy as np
     from PIL import Image
-    torch, model, device, _ = load_checkpoint(args)
-    args.output.mkdir(parents=True, exist_ok=True)
-    results = []
-    started = time.monotonic()
-    for index, path in enumerate(args.image):
-        with Image.open(path) as source:
-            rgb = np.array(source.convert("RGB"), copy=True)
-        prediction = predict_one(torch, model, device, rgb)
-        instances = []
-        for i, score in enumerate(prediction["scores"].tolist()):
-            if score < args.threshold:
+    # Hash exactly the bytes decoded by this call, avoiding a separate hash/read race.
+    path = (root / frame["imagePath"]).resolve()
+    if not Path(frame["imagePath"]).is_absolute() and not path.is_relative_to(root):
+        raise DataError(f"Frame {frame['frameId']}: image path leaves the input root")
+    encoded = path.read_bytes()
+    if hashlib.sha256(encoded).hexdigest() != frame["imageHash"]:
+        raise DataError(f"Frame {frame['frameId']}: image changed after preflight")
+    with Image.open(io.BytesIO(encoded)) as source:
+        if source.size != (frame["width"], frame["height"]):
+            raise DataError(f"Frame {frame['frameId']}: decoded dimensions changed")
+        return np.array(source.convert("RGB"), copy=True)
+
+
+def visible_mask_geometry(mask):
+    """Statistics of visible pixels, never full-sticker centers or center identity.
+
+    Coordinates are frame-image pixels. Foreground pixel (x,y) has center
+    (x+.5,y+.5); bbox uses pixel edges. Up to 16 support points are selected
+    from actual foreground pixels in a deterministic 4x4 spatial partition.
+    """
+    import numpy as np
+    columns, rows = mask.sum(axis=0), mask.sum(axis=1)
+    area = int(columns.sum())
+    if area == 0:
+        return None
+    xs, ys = np.flatnonzero(columns), np.flatnonzero(rows)
+    x0, x1, y0, y1 = int(xs[0]), int(xs[-1]) + 1, int(ys[0]), int(ys[-1]) + 1
+    centroid = [float(np.dot(np.arange(mask.shape[1]) + 0.5, columns) / area),
+                float(np.dot(np.arange(mask.shape[0]) + 0.5, rows) / area)]
+    support = []
+    x_edges, y_edges = np.linspace(x0, x1, 5, dtype=int), np.linspace(y0, y1, 5, dtype=int)
+    for top, bottom in zip(y_edges[:-1], y_edges[1:]):
+        for left, right in zip(x_edges[:-1], x_edges[1:]):
+            if top == bottom or left == right:
                 continue
-            mask_name = f"image-{index:04d}-mask-{i:03d}.png"
-            mask = (prediction["masks"][i, 0].numpy() >= 0.5).astype(np.uint8) * 255
-            atomic_write(args.output / mask_name, lambda stream: Image.fromarray(mask).save(stream, format="PNG"))
-            instances.append({"color": COLORS[prediction["labels"][i].item() - 1], "detection_score": score,
-                              "box_xyxy": prediction["boxes"][i].tolist(), "visible_mask": mask_name,
-                              "color_distribution": None, "is_center": None})
-        results.append({"image": str(path.resolve()), "image_sha256": sha256(path),
-                        "width": rgb.shape[1], "height": rgb.shape[0], "instances": instances,
-                        "rejected_predictions": int((prediction["scores"] < args.threshold).sum())})
-    report = {"format": FORMAT, "status": "predicted", "checkpoint_sha256": sha256(args.checkpoint),
-              "threshold": args.threshold, "mask_threshold": 0.5, "scores_calibrated": False,
-              "frames": results, "elapsed_seconds": time.monotonic() - started,
-              "reconstruction_complete": False}
-    atomic_json(args.output / "predictions.json", report)
-    return {"status": "predicted", "report": str(args.output / "predictions.json"), "images": len(results)}
+            yy, xx = np.nonzero(mask[top:bottom, left:right])
+            if len(xx):
+                distance = (xx + 0.5 - (right - left) / 2) ** 2 + (yy + 0.5 - (bottom - top) / 2) ** 2
+                nearest = int(distance.argmin())
+                support.append([float(left + xx[nearest] + 0.5), float(top + yy[nearest] + 0.5)])
+    return {"visibleAreaPx": area, "visibleCentroidXY": centroid,
+            "visibleBBoxXYXY": [x0, y0, x1, y1], "visibleSupportXY": support}
+
+
+@contextmanager
+def prediction_output_lock(output, resume):
+    # The runtime budget backend supports Linux/macOS; the same scope provides flock.
+    import fcntl
+    if not resume:
+        fresh_directory(output)
+    elif not output.is_dir():
+        raise DataError("--resume requires an existing prediction run directory")
+    output.mkdir(parents=True, exist_ok=True)
+    with (output / ".prediction.lock").open("a+") as lock:
+        try:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise DataError("Another process owns this prediction output directory") from exc
+        try:
+            if not resume and any(path.name != ".prediction.lock" for path in output.iterdir()):
+                raise DataError("Prediction output became nonempty before its lock was acquired")
+            yield
+        finally:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+
+
+def restore_prediction_stream(output, state, header, frames):
+    """Verify committed records/assets before truncating only an uncommitted tail."""
+    path = output / "predictions.jsonl"
+    committed, next_index = state.get("committedBytes"), state.get("nextFrameIndex")
+    if type(committed) is not int or type(next_index) is not int or committed <= 0 or not 0 <= next_index <= state["frameCount"]:
+        raise DataError("Invalid prediction checkpoint offsets")
+    if not path.is_file() or path.stat().st_size < committed:
+        raise DataError("Prediction stream is shorter than its committed checkpoint")
+    digest, count, last_id = hashlib.sha256(), 0, None
+    expected_frames = frames()
+    with path.open("rb") as stream:
+        while stream.tell() < committed:
+            raw = stream.readline(min(2 * 1024 * 1024, committed - stream.tell()) + 1)
+            if stream.tell() > committed or not raw.endswith(b"\n"):
+                raise DataError("Committed prediction record is incomplete or too large")
+            row = json.loads(raw)
+            if not isinstance(row, dict):
+                raise DataError("Committed prediction records must be objects")
+            if stream.tell() == len(raw):
+                if row != header or hashlib.sha256(raw).hexdigest() != state["headerHash"]:
+                    raise DataError("Prediction header does not match this run")
+            else:
+                expected = next(expected_frames, None)
+                if expected is None or row.get("kind") != "frame" or any(row.get(k) != v for k, v in expected.items()):
+                    raise DataError("Committed prediction frame identity differs from input")
+                if not isinstance(row.get("instances"), list):
+                    raise DataError("Committed prediction frame is missing its instances")
+                for instance in row["instances"]:
+                    mask = instance["visibleMask"]
+                    asset = (output / mask["path"]).resolve()
+                    if not asset.is_relative_to(output.resolve()) or not asset.is_file() or sha256(asset) != mask["sha256"]:
+                        raise DataError("A committed visible mask is missing, outside the run, or changed")
+                count += 1
+                last_id = row["frameId"]
+            digest.update(raw)
+    if digest.hexdigest() != state["committedStreamHash"] or count != next_index or last_id != state["lastFrameId"] or state["lastFrameIndex"] != (count - 1 if count else None):
+        raise DataError("Prediction checkpoint does not match its committed stream")
+    with path.open("r+b") as stream:
+        stream.truncate(committed)
+        stream.flush()
+        os.fsync(stream.fileno())
+    return digest
+
+
+def predict(args):
+    # No dataset, annotation, solution or GT argument exists in this entry point.
+    started = time.monotonic()
+    source_header, root, frame_count, input_hash, frames = prepare_prediction_input(args)
+    if not args.checkpoint.is_file():
+        raise DataError(f"Checkpoint missing: {args.checkpoint}")
+    checkpoint_hash = sha256(args.checkpoint)
+    manifest_hash = input_hash if args.frames_manifest else None
+    header = {**source_header, "schemaVersion": 1,
+              "kind": "reconer-visible-predictions" if args.frames_manifest else "reconer-image-predictions",
+              "format": PREDICTION_FORMAT, "checkpointHash": checkpoint_hash, "framesManifestHash": manifest_hash,
+              "coordinateSpace": "frame-image-pixels", "threshold": args.threshold,
+              "maskThreshold": 0.5, "scoresCalibrated": False}
+    header_bytes = json_line(header)
+    identity = {"schemaVersion": 1, "kind": "reconer-prediction-run", "format": PREDICTION_FORMAT,
+                "videoId": header["videoId"], "sourceHash": header["sourceHash"],
+                "checkpointHash": checkpoint_hash, "framesManifestHash": manifest_hash, "inputHash": input_hash,
+                "headerHash": hashlib.sha256(header_bytes).hexdigest(), "frameCount": frame_count,
+                "device": args.device, "threads": args.threads, "codeHashes": code_fingerprint(),
+                "versions": {name: importlib.metadata.version(name) for name in ("torch", "torchvision", "numpy", "pillow")},
+                "pythonVersion": sys.version.split()[0]}
+    session_id = f"{time.time_ns()}-{os.getpid()}"
+    run_path, stream_path = args.output / "run.json", args.output / "predictions.jsonl"
+    stopped, stop_reason = False, None
+    with prediction_output_lock(args.output, args.resume):
+        if args.resume:
+            state = json.loads(run_path.read_text(encoding="utf-8"))
+            if not isinstance(state, dict):
+                raise DataError("Prediction run metadata must be an object")
+            if any(state.get(k) != value for k, value in identity.items()):
+                raise DataError("Prediction input, weights, settings, code or runtime differ; use a new run directory")
+            if state.get("status") not in ("running", "partial", "completed") or state.get("completed") is not (state.get("status") == "completed"):
+                raise DataError("Prediction run has an invalid completion state")
+            for key in ("elapsedTotalSeconds", "peakRssMiB"):
+                value = state.get(key)
+                if type(value) not in (int, float) or not math.isfinite(value) or value < 0:
+                    raise DataError("Prediction run has invalid accumulated resource evidence")
+            digest = restore_prediction_stream(args.output, state, header, frames)
+            if state["completed"]:
+                if state["nextFrameIndex"] != frame_count:
+                    raise DataError("Completed run has missing frames")
+                return {"status": "completed", "alreadyCompleted": True, "report": str(stream_path), "run": str(run_path),
+                        "completedFrames": frame_count, "frameCount": frame_count, "reconstructionComplete": False}
+        else:
+            atomic_write(stream_path, lambda stream: stream.write(header_bytes))
+            digest = hashlib.sha256(header_bytes)
+            state = {**identity, "status": "running", "completed": False, "nextFrameIndex": 0,
+                     "lastFrameIndex": None, "lastFrameId": None, "committedBytes": len(header_bytes),
+                     "committedStreamHash": digest.hexdigest(), "elapsedTotalSeconds": 0, "peakRssMiB": 0}
+        prior_elapsed, prior_peak = state["elapsedTotalSeconds"], state["peakRssMiB"]
+
+        def save(status, reason=None):
+            usage = resources(started)
+            state.update({"status": status, "completed": status == "completed", "stopReason": reason,
+                          "sessionId": session_id, "resourceUsage": usage,
+                          "elapsedTotalSeconds": prior_elapsed + usage["elapsed_seconds"],
+                          "peakRssMiB": max(prior_peak, usage["peak_rss_mib"]),
+                          "runtimeLimits": {"maxSeconds": args.max_seconds, "maxRssMiB": args.max_rss_mib}})
+            atomic_json(run_path, state)
+
+        def check_limits():
+            nonlocal stopped, stop_reason
+            usage = resources(started)
+            # Explicit resume does not silently reset accumulated budget evidence.
+            reason = resource_reason(args, {**usage, "elapsed_seconds": prior_elapsed + usage["elapsed_seconds"],
+                                            "peak_rss_mib": max(prior_peak, usage["peak_rss_mib"])})
+            if reason:
+                stopped, stop_reason = True, reason
+            return usage
+
+        def request_stop(_signum, _frame):
+            nonlocal stopped, stop_reason
+            stopped, stop_reason = True, "signal"
+
+        previous_handlers = {sig: signal.getsignal(sig) for sig in (signal.SIGINT, signal.SIGTERM)}
+        for sig in previous_handlers:
+            signal.signal(sig, request_stop)
+        try:
+            save("running")
+            # A crash after the last committed frame needs only metadata recovery,
+            # not another model allocation. Preflight and restore verified all bytes.
+            if state["nextFrameIndex"] == frame_count:
+                save("completed")
+                return {"status": "completed", "report": str(stream_path), "run": str(run_path),
+                        "completedFrames": frame_count, "frameCount": frame_count,
+                        "stopReason": None, "reconstructionComplete": False}
+            check_limits()
+            exhausted = False
+            if not stopped:
+                from PIL import Image
+                import numpy as np
+                # One resident model for the whole stream, including all logical frame batches.
+                torch, model, device, _ = load_checkpoint(args)
+                if sha256(args.checkpoint) != checkpoint_hash:
+                    raise DataError("Checkpoint bytes changed during model initialization")
+                check_limits()
+                with stream_path.open("r+b") as stream:
+                    stream.seek(state["committedBytes"])
+                    for frame in frames():
+                        if frame["frameIndex"] < state["nextFrameIndex"]:
+                            continue
+                        check_limits()
+                        if stopped:
+                            break
+                        if frame["frameIndex"] >= frame_count:
+                            raise DataError("Frame manifest grew after preflight")
+                        frame_started = time.monotonic()
+                        rgb = read_prediction_rgb(frame, root)
+                        prediction = predict_one(torch, model, device, rgb)
+                        instances, rejected, empty_masks = [], 0, 0
+                        for index, score in enumerate(prediction["scores"].tolist()):
+                            if not math.isfinite(score) or not 0 <= score <= 1:
+                                raise DataError("Model produced an invalid detection score")
+                            if score < args.threshold:
+                                rejected += 1
+                                continue
+                            label = int(prediction["labels"][index])
+                            box = prediction["boxes"][index].tolist()
+                            if not 1 <= label <= len(COLORS) or len(box) != 4 or not all(math.isfinite(v) for v in box):
+                                raise DataError("Model produced an invalid visible-instance label/box")
+                            mask = prediction["masks"][index, 0].numpy() >= 0.5
+                            geometry = visible_mask_geometry(mask)
+                            if geometry is None:
+                                empty_masks += 1
+                                continue
+                            # A new attempt path preserves any uncommitted crash artifacts on resume.
+                            relative = Path("masks") / f"{frame['frameIndex']:08d}" / session_id / f"{index:03d}.png"
+                            mask_path = args.output / relative
+                            atomic_write(mask_path, lambda stream: Image.fromarray(mask.astype(np.uint8) * 255).save(stream, format="PNG"))
+                            instances.append({"instanceId": f"{frame['frameId']}:mask-{index:03d}", "color": COLORS[label - 1],
+                                              "detectionScore": score, "detectorBoxXYXY": box,
+                                              "visibleMask": {"path": relative.as_posix(), "sha256": sha256(mask_path)},
+                                              **geometry, "colorDistribution": None, "isCenter": None})
+                        usage = check_limits()
+                        row = {**frame, "instances": instances, "rejectedPredictions": rejected,
+                               "emptyMaskPredictions": empty_masks, "elapsedSeconds": time.monotonic() - frame_started,
+                               "processId": os.getpid(), "sessionId": session_id, "resourceUsage": usage}
+                        raw = json_line(row)
+                        stream.write(raw)
+                        stream.flush()
+                        os.fsync(stream.fileno())
+                        digest.update(raw)
+                        state.update({"nextFrameIndex": frame["frameIndex"] + 1, "lastFrameIndex": frame["frameIndex"],
+                                      "lastFrameId": frame["frameId"], "committedBytes": stream.tell(),
+                                      "committedStreamHash": digest.hexdigest()})
+                        save("running", stop_reason)
+                        emit({"status": "predicting", "frameId": frame["frameId"], "nextFrameIndex": state["nextFrameIndex"],
+                              "frameCount": frame_count, "sessionId": session_id, **usage})
+                        del rgb, prediction, row, instances
+                    else:
+                        # The iterator also verifies the final manifest byte hash here.
+                        exhausted = True
+            complete = exhausted and state["nextFrameIndex"] == frame_count
+            save("completed" if complete else "partial", stop_reason)
+            return {"status": state["status"], "report": str(stream_path), "run": str(run_path),
+                    "completedFrames": state["nextFrameIndex"], "frameCount": frame_count,
+                    "stopReason": stop_reason, "reconstructionComplete": False}
+        except BaseException as exc:
+            save("partial", f"{type(exc).__name__}: {exc}")
+            raise
+        finally:
+            for sig, handler in previous_handlers.items():
+                signal.signal(sig, handler)
 
 
 def parser():
@@ -430,7 +704,13 @@ def parser():
             sub.add_argument("--split", choices=("val", "test"), default="val")
             sub.add_argument("--validation-report", type=Path)
         elif name == "predict":
-            sub.add_argument("--image", required=True, type=Path, action="append")
+            inputs = sub.add_mutually_exclusive_group(required=True)
+            inputs.add_argument("--image", type=Path, action="append")
+            inputs.add_argument("--frames-manifest", type=Path)
+            sub.add_argument("--images-root", type=Path)
+            sub.add_argument("--resume", action="store_true")
+            sub.add_argument("--max-seconds", type=float, default=3600)
+            sub.add_argument("--max-rss-mib", type=float, default=8192)
     return p
 
 
@@ -446,8 +726,12 @@ def main(argv=None):
             raise DataError("threshold must be between 0 and 1")
         if args.command == "train" and (min(args.epochs, args.batch_size, args.min_size, args.max_size, args.checkpoint_every) < 1 or args.max_size < args.min_size or not all(math.isfinite(v) and v > 0 for v in (args.lr, args.max_seconds, args.max_rss_mib))):
             raise DataError("Invalid positive training parameters or image-size range")
+        if args.command == "predict" and not all(math.isfinite(v) and v > 0 for v in (args.max_seconds, args.max_rss_mib)):
+            raise DataError("Prediction time/RSS budgets must be positive and finite")
         if args.command == "predict":
-            emit(predict(args))
+            result = predict(args)
+            emit(result)
+            return 0 if result["status"] == "completed" else 3
         else:
             splits = ("train", "val") if args.command == "train" else (args.split,) if args.command == "evaluate" else ()
             loaded = load_dataset(args.dataset, args.images_root, splits, training=args.command == "train")

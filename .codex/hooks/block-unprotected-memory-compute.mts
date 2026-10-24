@@ -15,14 +15,27 @@ const cubeoptRoot = resolve(repoRoot, 'solver/experiments/cube48opt-rust');
 const cubeoptLabel = 'cube48opt Opt1–9 / Rust Opt10 / Rust H0–H10 研究计算';
 const cubeoptComputations = ['validate.mjs', 'benchmark.mjs', 'wasm-benchmark.mjs', 'wasm-browser-benchmark.mjs', 'nxopt-benchmark.mjs', 'verify-h10.mjs', 'validate-h10.mjs', 'h10-benchmark.mjs', 'zbll-benchmark.mjs'];
 const reconVisionEntry = resolve(repoRoot, 'research/reconer/vision/baseline.py');
+const reconResearchRoot = resolve(repoRoot, 'research/reconer');
+const reconPipelineEntries = ['prepare-video-frames.ts', 'reconstruct-observations.ts']
+  .map(name => resolve(reconResearchRoot, 'scripts', name));
 
 function blockedReconVision(words: string[], cwd: string): boolean {
   // These are local PyTorch workloads. An SSH command runs on the remote host,
   // whose resource policy is separate from this Mac's no-swap policy.
   const executable = words.find(word => !/^\w+=/.test(word) && base(word) !== 'env');
   if (base(executable ?? '') === 'ssh') return false;
+  const directoryOption = words.findIndex(word => ['-C', '--dir', '--prefix'].includes(word));
+  const runDirectory = directoryOption >= 0 && words[directoryOption + 1] ? resolve(cwd, words[directoryOption + 1]) : cwd;
+  if (runDirectory === reconResearchRoot && ['pnpm', 'npm', 'yarn'].includes(base(executable ?? ''))
+    && words.some(word => ['video:prepare', 'video:reconstruct'].includes(word))
+    && !words.some(word => ['--plan', '--help', '-h'].includes(word))) return true;
   for (const [index, word] of words.entries()) {
     const file = resolve(cwd, word.replaceAll('\\', '/'));
+    if (reconPipelineEntries.includes(file)) {
+      const args = words.slice(index + 1);
+      if (!args.some(arg => ['--plan', '--help', '-h'].includes(arg))) return true;
+      continue;
+    }
     const module = words[index - 1] === '-m' && (
       word === 'vision.baseline' && resolve(cwd, 'vision/baseline.py') === reconVisionEntry
       || word === 'baseline' && resolve(cwd, 'baseline.py') === reconVisionEntry
@@ -168,7 +181,7 @@ export function blockedCompute(command: string, depth = 0, cwd = repoRoot): stri
     // Static TypeScript checking reads the entry file; it never executes it.
     // Keep this segment-local so a following compute command is still checked.
     if (['tsgo', 'tsc'].includes(first) && words.includes('--noEmit')) continue;
-    if (blockedReconVision(words, cwd)) return 'Reconer 视觉模型训练/批量推理';
+    if (blockedReconVision(words, cwd)) return 'Reconer 视觉模型训练/批量推理、视频处理或观测搜索';
     if (blockedCubeopt(words, cwd)) return cubeoptLabel;
     // H9-only generation was explicitly authorized on 2026-10-13. The guard
     // validates the exact target, directory, threads and process-tree budget.

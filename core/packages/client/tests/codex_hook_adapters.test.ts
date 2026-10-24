@@ -62,6 +62,11 @@ describe('unprotected memory computation command guard', () => {
     'python3 research/reconer/vision/baseline.py doctor; python3 research/reconer/vision/baseline.py train',
     'NO_SWAP=1 python3 research/reconer/vision/baseline.py train',
     'python3 research/reconer/vision/baseline.py train --output ssh',
+    'node --import tsx research/reconer/scripts/prepare-video-frames.ts --video sample.mp4',
+    'cd research/reconer && pnpm video:reconstruct --request request.json',
+    'pnpm -C research/reconer video:prepare --video sample.mp4',
+    'cd research/reconer && node --import tsx scripts/reconstruct-observations.ts --request request.json',
+    'cd research/reconer && pnpm video:prepare --plan; pnpm video:prepare --video sample.mp4',
     'pnpm --filter @cuberoot/alg-build double-zbll --plan',
     'node .tmp/double-zbll-auf-20261011/run.mts --solve',
     'node .tmp/double-zbll-auf-20261011/full.mts --run',
@@ -246,6 +251,9 @@ describe('unprotected memory computation command guard', () => {
     'python3 research/reconer/vision/baseline.py train --help',
     'cd research/reconer && python3 -m vision.baseline --help',
     'ssh gpu-host python3 /srv/cuberoot.me/research/reconer/vision/baseline.py train',
+    'cd research/reconer && pnpm video:prepare --plan --video sample.mp4',
+    'node --import tsx research/reconer/scripts/reconstruct-observations.ts --help',
+    'pnpm -C research/reconer video:reconstruct --plan --request request.json',
     '# pnpm --filter @cuberoot/alg-build double-zbll\nnode --version',
   ])('allows ordinary development and inspection: %s', command => {
     const result = runAdapter(COMMAND_ADAPTER, MEMORY_COMPUTE_HOOK, {

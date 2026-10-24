@@ -4,7 +4,7 @@
  * Landing-page site search — full port of packages/client-vite/src/components/LandingSearch.tsx.
  *
  * Data layer lives in lib/site-search.ts (cards/tools/lookups/stats/persons/comps/
- * recons/glossary/about/stack/algSets — 11 categories total). This component is
+ * recons/glossary/about/stack/algSets/platform/forum). This component is
  * the dropdown UI shell.
  *
  * Next.js adaptations (vs Vite):
@@ -20,7 +20,7 @@ import Link from '@/components/AppLink';
 import { useRouter, useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import {
-  ImagePlus, Plus, Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin,
+  ImagePlus, Plus, Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin, MessageSquare,
   CalendarDays, LayoutGrid, Wrench, ArrowRight, ArrowUp, X, Square, Search, Clipboard,
   ScanSearch, BookA, BookOpen, Library, Code as CodeIcon, Mic, Sparkles, type LucideIcon,
 } from '@app-foundation/icons/lucide';
@@ -352,6 +352,7 @@ export default function LandingSearch({
     personMatches, compMatches,
     reconMatches, glossaryMatches, aboutMatches, stackMatches, algSetMatches,
     platformMatches, platformSearchError,
+    forumMatches, forumTotal, forumSearchPending, forumSearchError,
     totalCount, yearMatch,
   } = useSiteSearch(query, 'lazy', { cards });
 
@@ -426,6 +427,7 @@ export default function LandingSearch({
   const goFirstResult = () => {
     if (yearMatch) { pushInternal(langHref('/wca/comp', `year=${yearMatch}`)); return; }
     if (pasteIntent) { goPasteIntent(pasteIntent); return; }
+    if (forumMatches.length > 0) { pushInternal(langHref(`/forum/t/${forumMatches[0].id}`)); return; }
     if (platformMatches.length > 0) { pushInternal(langHref(platformMatches[0].href)); return; }
     if (cardMatches.length > 0) { goCard(cardMatches[0]); return; }
     if (toolMatches.length > 0) { pushInternal(langHref(toolMatches[0].path)); return; }
@@ -699,6 +701,34 @@ export default function LandingSearch({
                     {query.trim().slice(0, 60)}{query.trim().length > 60 ? '…' : ''}
                   </span>
                 </button>
+              </div>
+            </section>
+          )}
+
+          {(forumMatches.length > 0 || forumSearchError) && (
+            <section className="landing-search-section">
+              <div className="landing-search-section-header">
+                <MessageSquare size={14} strokeWidth={1.75} />
+                <h3>{tr({ zh: '论坛', en: 'Forum' })}</h3>
+                {forumTotal > forumMatches.length && <HeaderMore
+                  overflow={forumTotal - forumMatches.length}
+                  title={tr({ zh: '查看全部论坛结果', en: 'View all forum results' })}
+                  href={'/forum/search?q=' + encodeURIComponent(query.trim())}
+                  onClick={closeAfter}
+                />}
+              </div>
+              {forumSearchError && <p role="status">{tr({ zh: '论坛搜索暂时不可用。', en: 'Forum search is temporarily unavailable.' })}</p>}
+              <div className="landing-search-grid">
+                {forumMatches.map(thread => <Link
+                  key={thread.id}
+                  href={`/forum/t/${thread.id}`}
+                  prefetch={false}
+                  className="landing-search-item"
+                  onClick={closeAfter}
+                >
+                  <span className="landing-search-item-name">{thread.title}</span>
+                  {thread.snippet && <span className="landing-search-item-meta">{thread.snippet}</span>}
+                </Link>)}
               </div>
             </section>
           )}
@@ -1025,13 +1055,13 @@ export default function LandingSearch({
           {yearMatch && personsSection}
 
           {localSearchError && <div className="landing-search-empty" role="status">{tr({zh:'部分搜索资料加载失败，请重新输入以重试。',en:'Some search data could not load. Edit your search to retry.'})}</div>}
-          {!assistantAnswer && !assistantBusy && totalCount === 0 && !pasteIntent && !yearMatch && (xLoaded || !xSearchEnabled) && !localSearchPending && !localSearchError && (
+          {!assistantAnswer && !assistantBusy && totalCount === 0 && !pasteIntent && !yearMatch && (xLoaded || !xSearchEnabled) && !localSearchPending && !localSearchError && !forumSearchPending && !forumSearchError && (
             <div className="landing-search-empty">
               {tr({ zh: '未找到匹配项', en: 'No matches found.'
             })}
             </div>
           )}
-          {!assistantAnswer && !assistantBusy && totalCount === 0 && !pasteIntent && !yearMatch && (localSearchPending || (xSearchEnabled && !xLoaded)) && (
+          {!assistantAnswer && !assistantBusy && totalCount === 0 && !pasteIntent && !yearMatch && (forumSearchPending || localSearchPending || (xSearchEnabled && !xLoaded)) && (
             <div className="landing-search-empty">
               {tr({ zh: '搜索中…', en: 'Searching…'
             })}

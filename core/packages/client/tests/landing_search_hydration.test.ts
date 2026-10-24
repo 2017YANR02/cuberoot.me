@@ -46,7 +46,11 @@ vi.mock('@/lib/site-search', () => ({
     algSetMatches: [],
     platformMatches: [],
     platformSearchError: false,
-    totalCount: query.trim() ? options.cards.length : 0,
+    forumMatches: query === '蓝牙' ? [{ id: 8, title: '智能魔方开发接入指南', snippet: '正文中的低功耗蓝牙介绍' }] : [],
+    forumTotal: query === '蓝牙' ? 15 : 0,
+    forumSearchPending: false,
+    forumSearchError: false,
+    totalCount: query === '蓝牙' ? 15 : query.trim() ? options.cards.length : 0,
     yearMatch: null,
   }),
 }));
@@ -324,6 +328,22 @@ describe('LandingSearch placeholder hydration', () => {
     expect(host.querySelector('.landing-search--page')).not.toBeNull();
     expect(host.querySelector<HTMLInputElement>('.landing-search-field')?.getAttribute('aria-label'))
       .toBe(lang === 'zh' ? '全站搜索' : 'Site search');
+  });
+
+  it.each(['zh', 'en'] as const)('renders forum body hits and all-results links in %s', lang => {
+    routeState.lang = lang;
+    changeAppLanguage(lang);
+    const host = document.createElement('div');
+    host.innerHTML = renderToStaticMarkup(createElement(LandingSearch, {
+      cards: [], lang, query: '蓝牙', persistentResults: true,
+    }));
+    const prefix = lang === 'zh' ? '/zh' : '';
+    expect(host.querySelector('.landing-search-item')?.getAttribute('href')).toBe(`${prefix}/forum/t/8`);
+    expect(host.textContent).toContain('正文中的低功耗蓝牙介绍');
+    expect(host.textContent).not.toContain('未找到匹配项');
+    expect(host.querySelector('.landing-search-header-more')?.getAttribute('href'))
+      .toBe(`${prefix}/forum/search?q=${encodeURIComponent('蓝牙')}`);
+    expect(host.querySelector('.landing-search-header-more')?.textContent).toBe('+14');
   });
 
   it('keeps the controlled URL query when a standalone-search result is opened', async () => {

@@ -15,46 +15,10 @@ import {
   superFloppyExamplesByLength, streamSuperFloppyScrambles, superFloppyScramblesForLength,
 } from '@/lib/superfloppy-solver';
 import { tr } from '@/i18n/tr';
+import { blobFromLines, downloadBlob } from '@/lib/scramble-dist/download';
+import { computeStats as stats } from '@/lib/scramble-dist/stats';
 
 const SUPERFLOPPY_COLOR = '#3a86ff'; // 长方体蓝(数据色,非 UI 灰阶)
-
-function downloadBlob(filename: string, blob: Blob) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 0);
-}
-
-// Build a Blob from an iterable of lines without ever holding the whole text in one string. We batch
-// lines into chunks of ~64k and push each chunk as a separate Blob part, so peak memory stays bounded
-// even at ~3M lines (~80MB) — the browser concatenates the parts lazily inside the Blob.
-function blobFromLines(lines: Iterable<string>): Blob {
-  const parts: string[] = [];
-  let buf: string[] = [];
-  for (const line of lines) {
-    buf.push(line);
-    if (buf.length >= 65536) { parts.push(buf.join('\n') + '\n'); buf = []; }
-  }
-  if (buf.length) parts.push(buf.join('\n'));
-  return new Blob(parts, { type: 'text/plain;charset=utf-8' });
-}
-
-function stats(counts: Record<string, number>) {
-  const entries = Object.entries(counts)
-    .map(([k, v]) => [Number(k), v] as [number, number])
-    .sort((a, b) => a[0] - b[0]);
-  if (entries.length === 0) return null;
-  let total = 0, sum = 0, mode = entries[0][0], modeN = 0;
-  for (const [x, v] of entries) { total += v; sum += x * v; if (v > modeN) { modeN = v; mode = x; } }
-  const pct = (p: number) => {
-    const t = total * p; let c = 0;
-    for (const [x, v] of entries) { c += v; if (c >= t) return x; }
-    return entries[entries.length - 1][0];
-  };
-  return { mean: total > 0 ? sum / total : 0, median: pct(0.5), mode, max: entries[entries.length - 1][0] };
-}
 
 export default function SuperFloppyDistView({ isZh }: { isZh: boolean }) {
   const [yMode, setYMode] = useState<'percent' | 'count'>('percent');

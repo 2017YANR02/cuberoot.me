@@ -35,14 +35,19 @@ function score(alg: string, ignoreAUF = true): number {
   return value;
 }
 
-/** Only breaks score/length ties; this is a notation preference, not another MCC metric. */
+/** Count two-layer turns, not half-turns or single middle slices (M/E/S). */
+export function wideTurnCount(alg: string): number {
+  return alg.trim().split(/\s+/).filter(token => /^(?:[rlufbd]|[RLUFBD]w)(?:2'?|')?$/.test(token)).length;
+}
+
+/** Only breaks MCC ties; this is a notation preference, not another MCC metric. */
 export function compareZbllNotation(a: string, b: string): number {
-  const wideOrSliceCount = (alg: string) => alg.trim().split(/\s+/).filter(token => /^[rluEMS]/.test(token)).length;
-  return wideOrSliceCount(a) - wideOrSliceCount(b) || a.localeCompare(b);
+  return wideTurnCount(a) - wideTurnCount(b) || a.localeCompare(b);
 }
 
 function compare(a: Candidate, b: Candidate): number {
-  return a.score - b.score || a.alg.split(' ').length - b.alg.split(' ').length
+  return a.score - b.score || wideTurnCount(a.alg) - wideTurnCount(b.alg)
+    || a.alg.split(' ').length - b.alg.split(' ').length
     || compareZbllNotation(a.alg, b.alg);
 }
 
@@ -88,7 +93,7 @@ function getTransitions(): Array<Map<string, Transition[]>> {
  * moves are allowed. This beam search is deliberately bounded and does not
  * claim a globally minimum MCC.
  */
-export function improveNotation(alg: string, options: { preserveOrientation?: boolean; beamPerFrame?: number; completeBoundaryAUF?: boolean } = {}): string[] {
+export function improveNotation(alg: string, options: { preserveOrientation?: boolean; beamPerFrame?: number; completeBoundaryAUF?: boolean; ignoreBoundaryAUF?: boolean } = {}): string[] {
   const tokens = alg.trim().split(/\s+/).filter(Boolean);
   if (tokens.some(token => !/^(?:[URFDLB]w?|[urfdlbMESxyz])(?:2'?|')?$/.test(token)))
     throw Error('Notation optimizer requires ordinary 3x3 move tokens');
@@ -111,7 +116,7 @@ export function improveNotation(alg: string, options: { preserveOrientation?: bo
         for (const candidate of candidates) {
           const nextAlg = candidate.alg ? `${candidate.alg} ${transition.token}` : transition.token;
           if (beam.some(existing => existing.alg === nextAlg)) continue;
-          beam.push({ alg: nextAlg, score: score(nextAlg, !options.completeBoundaryAUF || at + transition.moves.length === outer.length) });
+          beam.push({ alg: nextAlg, score: score(nextAlg, options.ignoreBoundaryAUF !== false && (!options.completeBoundaryAUF || at + transition.moves.length === outer.length)) });
         }
         beam.sort(compare);
         beam.length = Math.min(beam.length, options.beamPerFrame ?? BEAM_PER_FRAME);
@@ -122,8 +127,8 @@ export function improveNotation(alg: string, options: { preserveOrientation?: bo
     buckets[at].clear();
   }
   const finalBuckets = options.preserveOrientation ? [buckets[outer.length].get(0) ?? []] : [...buckets[outer.length].values()];
-  const best = finalBuckets.flat().map(c => ({alg: c.alg, score: score(c.alg)})).sort(compare).slice(0, RETURN_BEST);
+  const best = finalBuckets.flat().map(c => ({alg: c.alg, score: score(c.alg, options.ignoreBoundaryAUF !== false)})).sort(compare).slice(0, RETURN_BEST);
   const output = [...new Set([...best.map(candidate => candidate.alg), ...fallback])].filter(a => !options.preserveOrientation || strictOuterForm(a.split(" ")).rotation.length === 0);
   assertEquivalentAlgorithms(output, canonical);
-  return output.sort((a, b) => compare({ alg: a, score: score(a) }, { alg: b, score: score(b) }));
+  return output.sort((a, b) => compare({ alg: a, score: score(a, options.ignoreBoundaryAUF !== false) }, { alg: b, score: score(b, options.ignoreBoundaryAUF !== false) }));
 }

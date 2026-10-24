@@ -6,7 +6,7 @@ import { normalize } from '../../../core/packages/shared/src/recon_ground_truth.
 import { strictOuterForm } from '../../../core/packages/shared/src/timer/reconstruct/library_correction.ts';
 import { canonicalize3x3WideMoves } from '../../../core/packages/shared/src/alg_notation.ts';
 import { algSpeed, normalizeLine, MCC_DEFAULTS, getSTM } from '../../../core/packages/client/lib/mcc.ts';
-import { compareZbllNotation, improveNotation, isAllowedZbllAlgorithm, ZBLL_ALLOWED_FAMILIES } from './zbll-mcc-notation.mts';
+import { compareZbllNotation, improveNotation, isAllowedZbllAlgorithm, ZBLL_ALLOWED_FAMILIES, wideTurnCount } from './zbll-mcc-notation.mts';
 
 const root = resolve(import.meta.dirname, '../../..');
 const out = resolve(root, '.tmp/zbll-mcc-20261023');
@@ -95,7 +95,7 @@ async function report() {
     const previous = unique.get(key);
     if (!previous || compare(candidate, previous) < 0) unique.set(key, candidate);
   }
-  function compare(a: any, b: any) {return a.mcc - b.mcc || a.stm - b.stm || a.outerHtm - b.outerHtm || compareZbllNotation(a.algorithm, b.algorithm);}
+  function compare(a: any, b: any) {return a.mcc - b.mcc || wideTurnCount(a.algorithm) - wideTurnCount(b.algorithm) || a.stm - b.stm || a.outerHtm - b.outerHtm || compareZbllNotation(a.algorithm, b.algorithm);}
   for (const row of rows) {
     const q = queries.get(row.id);
     assert(q && !seen.has(row.id), 'Unknown or repeated native output'); seen.add(row.id);

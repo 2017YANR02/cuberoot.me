@@ -21,6 +21,7 @@ predictions.json:
 {"schemaVersion":1,"runs":[{"mode":{"initialState":"known","boundaries":"automatic"},"predictions":[{"videoId":"solve-1","status":"completed","moves":["R","U2"],"completionTimesMs":[105,210]}]}]}
 
 Modes: initialState=known|unknown; boundaries=manual|automatic.
+Optional mode.geometry=manual|automatic is scored separately; older unspecified geometry is not pooled with either.
 Statuses: completed|failed|abstained|timeout. completed requires moves (possibly []).
 Optional times must align one-to-one with moves. Unreadable truth intervals are null.
 See exported document/report types in src/evaluation.ts.

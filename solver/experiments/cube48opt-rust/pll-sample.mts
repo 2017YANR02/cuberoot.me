@@ -1,4 +1,7 @@
-/** PLL generation benchmark. Reference algorithms never enter solver queries. */
+/** PLL generation benchmark. Reference algorithms never enter solver queries.
+ * Use report-oriented for the corrected starting-frame report. The legacy
+ * report branch remains for reproducing the original frozen experiment only.
+ */
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync, existsSync, appendFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -25,12 +28,13 @@ const score = (algorithm: string) => { const base = mcc(algorithm); return { alg
 const compare = (a: any, b: any) => a.trialScore - b.trialScore || a.midRegrips.length - b.midRegrips.length || a.mcc - b.mcc || a.stm - b.stm || a.algorithm.localeCompare(b.algorithm);
 const family = (s: string) => ['', 'D', 'D2', "D'"].map(d => canonical(`${d} ${canonical(s)} ${inverse(d)}`)).sort()[0];
 
-if (process.argv[2] === 'prepare') {
+if (process.argv[2] === 'report-oriented') {
+  await import('./pll-orientation-report.mts');
+} else if (process.argv[2] === 'prepare') {
   const source = JSON.parse(readFileSync(resolve(out, 'source.json'), 'utf8'));
   assert.equal(source.cases.length, 21);
-  const aliases: Record<string, string> = { 'A+': 'Aa', 'A-': 'Ab', L: 'Ja', 'U+': 'Ub' };
   const cases = source.cases.map((c: any, i: number) => ({ id: `p${String(i + 1).padStart(2, '0')}`, dbId: c.id,
-    name: aliases[c.name] ?? c.name, sourceName: c.name, setup: canonical(clean(c.setup)) }));
+    name: c.name, sourceName: c.name, setup: canonical(clean(c.setup)) }));
   const u = identity.applyAlg('U').patternData;
   for (const c of cases) {
     const d = identity.applyAlg(c.setup).patternData;
@@ -80,8 +84,12 @@ if (process.argv[2] === 'prepare') {
   const existing = existsSync(checkpoint) ? readFileSync(checkpoint, 'utf8').trim().split('\n').filter(Boolean).map(s => JSON.parse(s)) : [];
   const results: any[] = [];
   for (const c of q.cases) {
+    // The website owns display names, including when reading older checkpoints.
+    const websiteCase = source.cases.find((s: any) => s.id === c.dbId);
+    assert(websiteCase, `Missing website case ${c.dbId}`);
+    c.name = websiteCase.name;
     const saved = existing.find((e: any) => e.id === c.id);
-    if (saved) { results.push(saved); continue; }
+    if (saved) { results.push({ ...saved, name: websiteCase.name }); continue; }
     const bucket = new Map<string, any>();
     let verified = 0, incomplete = 0;
     for (const row of rows.filter((r: any) => r.id.startsWith(c.id + 'q'))) {
@@ -161,4 +169,4 @@ if (process.argv[2] === 'prepare') {
   writeFileSync(resolve(out, 'all-candidates.txt'), format(200), { flag: 'wx' });
   writeFileSync(resolve(out, 'overview.txt'), header + results.map(c => `${c.name}：${c.candidates.length} 条；首选 ${c.candidates[0]?.algorithm ?? '暂无'}\n参考试排位置 ${c.referenceHypotheticalRank ?? '无'}；参考路径${c.referenceFamiliesGenerated ? '已生成' : '未生成'}`).join('\n\n') + '\n', { flag: 'wx' });
   console.log(JSON.stringify(summary));
-} else throw new Error('Use prepare or report');
+} else throw new Error('Use prepare or report-oriented (report reproduces the historical fixed-frame experiment)');

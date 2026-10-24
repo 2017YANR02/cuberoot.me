@@ -773,6 +773,30 @@ export const CATALOG: UtilEntry[] = [
 
   // ── util ──────────────────────────────────
   {
+    name: 'installIntroEffects',
+    sig: 'installIntroEffects(root: HTMLElement, options: IntroEffectOptions): () => void',
+    imp: "import { installIntroEffects } from '@/app/[lang]/dev/_shared/intro-effects';",
+    category: 'util',
+    zh: '介绍页共用的渐入、视差、目录高亮与锚点滚动。在内容挂载后调用，effect 返回其清理函数；各页保留自己的选择器、渐入间隔与颜色。',
+    en: 'Shared intro-page reveal, parallax, navigation highlighting and anchor scrolling. Install after content mounts and return its cleanup from the effect; keep page-specific selectors, stagger and colors.',
+  },
+  {
+    name: 'createTutorialContentOptions',
+    sig: 'createTutorialContentOptions(replace?: (element: TutorialElement, options: HTMLReactParserOptions) => ReactElement | undefined): HTMLReactParserOptions',
+    imp: "import { createTutorialContentOptions } from '@/app/[lang]/tutorial-legacy/_components/tutorial-content-parser';",
+    category: 'util',
+    zh: '旧教程 HTML 的共享解析规则，保留公式指法、图片地址与内链转换。调用方先清洗 HTML；可传入 CFOP 标题等专用节点处理。',
+    en: 'Shared legacy-tutorial parsing for algorithm markup, media URLs and internal links. Sanitize HTML before parsing; optionally supply a specialized node renderer such as CFOP headings.',
+  },
+  {
+    name: 'downloadBlob / blobFromLines',
+    sig: 'downloadBlob(filename: string, blob: Blob): void\nblobFromLines(lines: Iterable<string>): Blob',
+    imp: "import { downloadBlob, blobFromLines } from '@/lib/scramble-dist/download';",
+    category: 'util',
+    zh: '打乱统计的 Blob 下载与每 65536 行分块组装；点击下载后在下一次定时器回调释放对象 URL。',
+    en: 'Blob downloads and 65536-line chunks for scramble statistics; release the object URL on the next timer callback after clicking the download link.',
+  },
+  {
     name: 'countryName',
     sig: 'countryName(iso2: string, isZh: boolean): string',
     imp: "import { countryName } from '@/lib/country-name';",

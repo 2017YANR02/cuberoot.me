@@ -9851,930 +9851,603 @@ export function createTeachingSaasRoutes(deps: {
   const authenticate = deps.authenticate ?? authenticateTeachingActor;
   const repository = deps.repository ?? teachingSaasRepository;
 
-  routes.get('/teaching/organizations', async (c) => {
+  async function withActor(
+    c: Context,
+    handler: (actor: TeachingActor, requestId: string) => Promise<Response>,
+  ): Promise<Response> {
     const requestId = requestIdOf(c);
     c.header('Cache-Control', 'no-store');
     try {
       const actor = await authenticate(c);
-      return c.json({ organizations: await repository.listOrganizations(actor) });
+      return await handler(actor, requestId);
     } catch (error) {
       return errorResponse(c, error, requestId);
     }
-  });
+  }
 
-  routes.post('/teaching/organizations', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const key = idempotencyKeyOf(c);
-      const body = await jsonBody(c);
-      const result = await repository.createOrganization(actor, parseOrganizationInput(body.value), key, sha256(body.raw), requestId);
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations', (c) => withActor(c, async (actor) => {
+    return c.json({ organizations: await repository.listOrganizations(actor) });
+  }));
 
-  routes.get('/teaching/organizations/:orgSlug', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      return c.json({ organization: await repository.getOrganization(actor, c.req.param('orgSlug'), requestId) });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.post('/teaching/organizations', (c) => withActor(c, async (actor, requestId) => {
+    const key = idempotencyKeyOf(c);
+    const body = await jsonBody(c);
+    const result = await repository.createOrganization(actor, parseOrganizationInput(body.value), key, sha256(body.raw), requestId);
+    return c.json(result.body, result.status);
+  }));
 
-  routes.get('/teaching/organizations/:orgSlug/summary', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      return c.json({ summary: await repository.getOrganizationSummary(actor, c.req.param('orgSlug'), requestId) });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug', (c) => withActor(c, async (actor, requestId) => {
+    return c.json({ organization: await repository.getOrganization(actor, c.req.param('orgSlug'), requestId) });
+  }));
 
-  routes.get('/teaching/organizations/:orgSlug/operations/overview', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      return c.json({ operationsOverview: await repository.getOperationsOverview(actor, c.req.param('orgSlug'), requestId) });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug/summary', (c) => withActor(c, async (actor, requestId) => {
+    return c.json({ summary: await repository.getOrganizationSummary(actor, c.req.param('orgSlug'), requestId) });
+  }));
 
-  routes.get('/teaching/organizations/:orgSlug/audit-events', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const page = await repository.listAuditEvents(
-        actor,
-        c.req.param('orgSlug'),
-        auditEventFilterOf(c),
-        trainingPaginationOf(c, ['q', 'outcome']),
-        requestId,
-      );
-      return c.json({ auditEvents: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug/operations/overview', (c) => withActor(c, async (actor, requestId) => {
+    return c.json({ operationsOverview: await repository.getOperationsOverview(actor, c.req.param('orgSlug'), requestId) });
+  }));
 
-  routes.get('/teaching/organizations/:orgSlug/members', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const page = await repository.listMembers(actor, c.req.param('orgSlug'), paginationOf(c), requestId);
-      return c.json({ members: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug/audit-events', (c) => withActor(c, async (actor, requestId) => {
+    const page = await repository.listAuditEvents(
+      actor,
+      c.req.param('orgSlug'),
+      auditEventFilterOf(c),
+      trainingPaginationOf(c, ['q', 'outcome']),
+      requestId,
+    );
+    return c.json({ auditEvents: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+  }));
 
-  routes.post('/teaching/organizations/:orgSlug/members', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const key = idempotencyKeyOf(c);
-      const body = await jsonBody(c);
-      const result = await repository.createMember(actor, c.req.param('orgSlug'), parseMemberInput(body.value), key, sha256(body.raw), requestId);
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug/members', (c) => withActor(c, async (actor, requestId) => {
+    const page = await repository.listMembers(actor, c.req.param('orgSlug'), paginationOf(c), requestId);
+    return c.json({ members: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+  }));
 
-  routes.get('/teaching/organizations/:orgSlug/students', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const page = await repository.listStudents(actor, c.req.param('orgSlug'), paginationOf(c), requestId);
-      return c.json({ students: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.post('/teaching/organizations/:orgSlug/members', (c) => withActor(c, async (actor, requestId) => {
+    const key = idempotencyKeyOf(c);
+    const body = await jsonBody(c);
+    const result = await repository.createMember(actor, c.req.param('orgSlug'), parseMemberInput(body.value), key, sha256(body.raw), requestId);
+    return c.json(result.body, result.status);
+  }));
 
-  routes.post('/teaching/organizations/:orgSlug/students', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const key = idempotencyKeyOf(c);
-      const body = await jsonBody(c);
-      const result = await repository.createStudent(actor, c.req.param('orgSlug'), parseStudentInput(body.value), key, sha256(body.raw), requestId);
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug/students', (c) => withActor(c, async (actor, requestId) => {
+    const page = await repository.listStudents(actor, c.req.param('orgSlug'), paginationOf(c), requestId);
+    return c.json({ students: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+  }));
 
-  routes.post('/teaching/organizations/:orgSlug/students/:studentId/account-binding-invites', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const body = await jsonBody(c, 1_024);
-      const result = await repository.createStudentAccountBindingInvite(
-        actor,
-        c.req.param('orgSlug'),
-        uuidParam(c.req.param('studentId'), 'studentId'),
-        parseStudentAccountBindingInviteInput(body.value),
-        requestId,
-      );
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.post('/teaching/organizations/:orgSlug/students', (c) => withActor(c, async (actor, requestId) => {
+    const key = idempotencyKeyOf(c);
+    const body = await jsonBody(c);
+    const result = await repository.createStudent(actor, c.req.param('orgSlug'), parseStudentInput(body.value), key, sha256(body.raw), requestId);
+    return c.json(result.body, result.status);
+  }));
 
-  routes.get('/teaching/organizations/:orgSlug/students/:studentId/account-binding-invite', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const result = await repository.getCurrentStudentAccountBindingInvite(
-        actor,
-        c.req.param('orgSlug'),
-        uuidParam(c.req.param('studentId'), 'studentId'),
-        requestId,
-      );
-      return c.json(result);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.post('/teaching/organizations/:orgSlug/students/:studentId/account-binding-invites', (c) => withActor(c, async (actor, requestId) => {
+    const body = await jsonBody(c, 1_024);
+    const result = await repository.createStudentAccountBindingInvite(
+      actor,
+      c.req.param('orgSlug'),
+      uuidParam(c.req.param('studentId'), 'studentId'),
+      parseStudentAccountBindingInviteInput(body.value),
+      requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
+
+  routes.get('/teaching/organizations/:orgSlug/students/:studentId/account-binding-invite', (c) => withActor(c, async (actor, requestId) => {
+    const result = await repository.getCurrentStudentAccountBindingInvite(
+      actor,
+      c.req.param('orgSlug'),
+      uuidParam(c.req.param('studentId'), 'studentId'),
+      requestId,
+    );
+    return c.json(result);
+  }));
 
   routes.post(
     '/teaching/organizations/:orgSlug/students/:studentId/account-binding-invites/:inviteId/revoke',
-    async (c) => {
-      const requestId = requestIdOf(c);
-      c.header('Cache-Control', 'no-store');
-      try {
-        const actor = await authenticate(c);
-        const key = idempotencyKeyOf(c);
-        const body = await jsonBody(c, 1_024);
-        assertOnlyKeys(body.value, [], 'student account binding invite revoke input');
-        const result = await repository.revokeStudentAccountBindingInvite(
-          actor,
-          c.req.param('orgSlug'),
-          uuidParam(c.req.param('studentId'), 'studentId'),
-          uuidParam(c.req.param('inviteId'), 'inviteId'),
-          key,
-          sha256(body.raw),
-          requestId,
-        );
-        return c.json(result.body, result.status);
-      } catch (error) {
-        return errorResponse(c, error, requestId);
-      }
-    },
-  );
-
-  routes.post('/teaching/me/student-account-binding/preview', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
+    (c) => withActor(c, async (actor, requestId) => {
+      const key = idempotencyKeyOf(c);
       const body = await jsonBody(c, 1_024);
-      const parsed = parseStudentAccountBindingConsumeInput(body.value);
-      const result = await repository.previewStudentAccountBindingInvite(
+      assertOnlyKeys(body.value, [], 'student account binding invite revoke input');
+      const result = await repository.revokeStudentAccountBindingInvite(
         actor,
-        { tokenHash: sha256(parsed.token) },
-        requestId,
-      );
-      return c.json(result);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
-
-  routes.post('/teaching/me/student-account-binding/consume', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const body = await jsonBody(c, 1_024);
-      const parsed = parseStudentAccountBindingConsumeInput(body.value);
-      const result = await repository.consumeStudentAccountBindingInvite(
-        actor,
-        { tokenHash: sha256(parsed.token) },
+        c.req.param('orgSlug'),
+        uuidParam(c.req.param('studentId'), 'studentId'),
+        uuidParam(c.req.param('inviteId'), 'inviteId'),
+        key,
+        sha256(body.raw),
         requestId,
       );
       return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+    }),
+  );
+
+  routes.post('/teaching/me/student-account-binding/preview', (c) => withActor(c, async (actor, requestId) => {
+    const body = await jsonBody(c, 1_024);
+    const parsed = parseStudentAccountBindingConsumeInput(body.value);
+    const result = await repository.previewStudentAccountBindingInvite(
+      actor,
+      { tokenHash: sha256(parsed.token) },
+      requestId,
+    );
+    return c.json(result);
+  }));
+
+  routes.post('/teaching/me/student-account-binding/consume', (c) => withActor(c, async (actor, requestId) => {
+    const body = await jsonBody(c, 1_024);
+    const parsed = parseStudentAccountBindingConsumeInput(body.value);
+    const result = await repository.consumeStudentAccountBindingInvite(
+      actor,
+      { tokenHash: sha256(parsed.token) },
+      requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
 
   routes.post(
     '/teaching/organizations/:orgSlug/students/:studentId/guardian-links/:guardianLinkId/account-binding-invites',
-    async (c) => {
-      const requestId = requestIdOf(c);
-      c.header('Cache-Control', 'no-store');
-      try {
-        const actor = await authenticate(c);
-        const body = await jsonBody(c, 1_024);
-        const result = await repository.createGuardianAccountBindingInvite(
-          actor,
-          c.req.param('orgSlug'),
-          uuidParam(c.req.param('studentId'), 'studentId'),
-          uuidParam(c.req.param('guardianLinkId'), 'guardianLinkId'),
-          parseGuardianAccountBindingInviteInput(body.value),
-          requestId,
-        );
-        return c.json(result.body, result.status);
-      } catch (error) {
-        return errorResponse(c, error, requestId);
-      }
-    },
+    (c) => withActor(c, async (actor, requestId) => {
+      const body = await jsonBody(c, 1_024);
+      const result = await repository.createGuardianAccountBindingInvite(
+        actor,
+        c.req.param('orgSlug'),
+        uuidParam(c.req.param('studentId'), 'studentId'),
+        uuidParam(c.req.param('guardianLinkId'), 'guardianLinkId'),
+        parseGuardianAccountBindingInviteInput(body.value),
+        requestId,
+      );
+      return c.json(result.body, result.status);
+    }),
   );
 
   routes.get(
     '/teaching/organizations/:orgSlug/students/:studentId/guardian-links/:guardianLinkId/account-binding-invite',
-    async (c) => {
-      const requestId = requestIdOf(c);
-      c.header('Cache-Control', 'no-store');
-      try {
-        const actor = await authenticate(c);
-        const result = await repository.getCurrentGuardianAccountBindingInvite(
-          actor,
-          c.req.param('orgSlug'),
-          uuidParam(c.req.param('studentId'), 'studentId'),
-          uuidParam(c.req.param('guardianLinkId'), 'guardianLinkId'),
-          requestId,
-        );
-        return c.json(result);
-      } catch (error) {
-        return errorResponse(c, error, requestId);
-      }
-    },
+    (c) => withActor(c, async (actor, requestId) => {
+      const result = await repository.getCurrentGuardianAccountBindingInvite(
+        actor,
+        c.req.param('orgSlug'),
+        uuidParam(c.req.param('studentId'), 'studentId'),
+        uuidParam(c.req.param('guardianLinkId'), 'guardianLinkId'),
+        requestId,
+      );
+      return c.json(result);
+    }),
   );
 
   routes.post(
     '/teaching/organizations/:orgSlug/students/:studentId/guardian-links/:guardianLinkId/account-binding-invites/:inviteId/revoke',
-    async (c) => {
-      const requestId = requestIdOf(c);
-      c.header('Cache-Control', 'no-store');
-      try {
-        const actor = await authenticate(c);
-        const key = idempotencyKeyOf(c);
-        const body = await jsonBody(c, 1_024);
-        assertOnlyKeys(body.value, [], 'guardian account binding invite revoke input');
-        const result = await repository.revokeGuardianAccountBindingInvite(
-          actor,
-          c.req.param('orgSlug'),
-          uuidParam(c.req.param('studentId'), 'studentId'),
-          uuidParam(c.req.param('guardianLinkId'), 'guardianLinkId'),
-          uuidParam(c.req.param('inviteId'), 'inviteId'),
-          key,
-          sha256(body.raw),
-          requestId,
-        );
-        return c.json(result.body, result.status);
-      } catch (error) {
-        return errorResponse(c, error, requestId);
-      }
-    },
-  );
-
-  routes.post('/teaching/me/guardian-account-binding/preview', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
+    (c) => withActor(c, async (actor, requestId) => {
+      const key = idempotencyKeyOf(c);
       const body = await jsonBody(c, 1_024);
-      const parsed = parseGuardianAccountBindingConsumeInput(body.value);
-      const result = await repository.previewGuardianAccountBindingInvite(
+      assertOnlyKeys(body.value, [], 'guardian account binding invite revoke input');
+      const result = await repository.revokeGuardianAccountBindingInvite(
         actor,
-        { tokenHash: sha256(parsed.token) },
-        requestId,
-      );
-      return c.json(result);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
-
-  routes.post('/teaching/me/guardian-account-binding/consume', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const body = await jsonBody(c, 1_024);
-      const parsed = parseGuardianAccountBindingConsumeInput(body.value);
-      const result = await repository.consumeGuardianAccountBindingInvite(
-        actor,
-        { tokenHash: sha256(parsed.token) },
+        c.req.param('orgSlug'),
+        uuidParam(c.req.param('studentId'), 'studentId'),
+        uuidParam(c.req.param('guardianLinkId'), 'guardianLinkId'),
+        uuidParam(c.req.param('inviteId'), 'inviteId'),
+        key,
+        sha256(body.raw),
         requestId,
       );
       return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+    }),
+  );
 
-  routes.get('/teaching/me/learning-contexts', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      return c.json({
-        learningContexts: await repository.listLearningContexts(actor, null, requestId),
-      });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.post('/teaching/me/guardian-account-binding/preview', (c) => withActor(c, async (actor, requestId) => {
+    const body = await jsonBody(c, 1_024);
+    const parsed = parseGuardianAccountBindingConsumeInput(body.value);
+    const result = await repository.previewGuardianAccountBindingInvite(
+      actor,
+      { tokenHash: sha256(parsed.token) },
+      requestId,
+    );
+    return c.json(result);
+  }));
 
-  routes.get('/teaching/organizations/:orgSlug/me/students', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      return c.json({
-        learningContexts: await repository.listLearningContexts(
-          actor,
-          c.req.param('orgSlug'),
-          requestId,
-        ),
-      });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.post('/teaching/me/guardian-account-binding/consume', (c) => withActor(c, async (actor, requestId) => {
+    const body = await jsonBody(c, 1_024);
+    const parsed = parseGuardianAccountBindingConsumeInput(body.value);
+    const result = await repository.consumeGuardianAccountBindingInvite(
+      actor,
+      { tokenHash: sha256(parsed.token) },
+      requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
+
+  routes.get('/teaching/me/learning-contexts', (c) => withActor(c, async (actor, requestId) => {
+    return c.json({
+      learningContexts: await repository.listLearningContexts(actor, null, requestId),
+    });
+  }));
+
+  routes.get('/teaching/organizations/:orgSlug/me/students', (c) => withActor(c, async (actor, requestId) => {
+    return c.json({
+      learningContexts: await repository.listLearningContexts(
+        actor,
+        c.req.param('orgSlug'),
+        requestId,
+      ),
+    });
+  }));
 
   routes.get(
     '/teaching/organizations/:orgSlug/students/:studentId/conversations',
-    async (c) => {
-      const requestId = requestIdOf(c);
-      c.header('Cache-Control', 'no-store');
-      try {
-        const actor = await authenticate(c);
-        const page = await repository.listConversations(
-          actor,
-          c.req.param('orgSlug'),
-          uuidParam(c.req.param('studentId'), 'studentId'),
-          trainingPaginationOf(c),
-          requestId,
-        );
-        return c.json({
-          conversations: page.items,
-          total: page.total,
-          page: page.page,
-          pageSize: page.pageSize,
-        });
-      } catch (error) {
-        return errorResponse(c, error, requestId);
-      }
-    },
+    (c) => withActor(c, async (actor, requestId) => {
+      const page = await repository.listConversations(
+        actor,
+        c.req.param('orgSlug'),
+        uuidParam(c.req.param('studentId'), 'studentId'),
+        trainingPaginationOf(c),
+        requestId,
+      );
+      return c.json({
+        conversations: page.items,
+        total: page.total,
+        page: page.page,
+        pageSize: page.pageSize,
+      });
+    }),
   );
 
   routes.post(
     '/teaching/organizations/:orgSlug/students/:studentId/conversations',
-    async (c) => {
-      const requestId = requestIdOf(c);
-      c.header('Cache-Control', 'no-store');
-      try {
-        const actor = await authenticate(c);
-        const studentId = uuidParam(c.req.param('studentId'), 'studentId');
-        // JSON may encode CJK text as UTF-8 or \uXXXX escapes; keep the byte cap above
-        // the strict 10,000-character field limit so valid localized content is accepted.
-        const body = await jsonBody(c, 65_536);
-        const input = parseCreateConversationInput(body.value);
-        const result = await repository.createConversation(
-          actor,
-          c.req.param('orgSlug'),
-          studentId,
-          input,
-          idempotencyKeyOf(c),
-          sha256(stableJson({ studentId, input })),
-          requestId,
-        );
-        return c.json(result.body, result.status);
-      } catch (error) {
-        return errorResponse(c, error, requestId);
-      }
-    },
+    (c) => withActor(c, async (actor, requestId) => {
+      const studentId = uuidParam(c.req.param('studentId'), 'studentId');
+      // JSON may encode CJK text as UTF-8 or \uXXXX escapes; keep the byte cap above
+      // the strict 10,000-character field limit so valid localized content is accepted.
+      const body = await jsonBody(c, 65_536);
+      const input = parseCreateConversationInput(body.value);
+      const result = await repository.createConversation(
+        actor,
+        c.req.param('orgSlug'),
+        studentId,
+        input,
+        idempotencyKeyOf(c),
+        sha256(stableJson({ studentId, input })),
+        requestId,
+      );
+      return c.json(result.body, result.status);
+    }),
   );
 
   routes.get(
     '/teaching/organizations/:orgSlug/students/:studentId/conversations/:conversationId',
-    async (c) => {
-      const requestId = requestIdOf(c);
-      c.header('Cache-Control', 'no-store');
-      try {
-        const actor = await authenticate(c);
-        assertQueryKeys(c, []);
-        const conversation = await repository.getConversation(
-          actor,
-          c.req.param('orgSlug'),
-          uuidParam(c.req.param('studentId'), 'studentId'),
-          uuidParam(c.req.param('conversationId'), 'conversationId'),
-          requestId,
-        );
-        return c.json({ conversation });
-      } catch (error) {
-        return errorResponse(c, error, requestId);
-      }
-    },
+    (c) => withActor(c, async (actor, requestId) => {
+      assertQueryKeys(c, []);
+      const conversation = await repository.getConversation(
+        actor,
+        c.req.param('orgSlug'),
+        uuidParam(c.req.param('studentId'), 'studentId'),
+        uuidParam(c.req.param('conversationId'), 'conversationId'),
+        requestId,
+      );
+      return c.json({ conversation });
+    }),
   );
 
   routes.get(
     '/teaching/organizations/:orgSlug/students/:studentId/conversations/:conversationId/messages',
-    async (c) => {
-      const requestId = requestIdOf(c);
-      c.header('Cache-Control', 'no-store');
-      try {
-        const actor = await authenticate(c);
-        const page = await repository.listConversationMessages(
-          actor,
-          c.req.param('orgSlug'),
-          uuidParam(c.req.param('studentId'), 'studentId'),
-          uuidParam(c.req.param('conversationId'), 'conversationId'),
-          conversationMessagePaginationOf(c),
-          requestId,
-        );
-        return c.json({
-          messages: page.items,
-          afterSequence: page.afterSequence,
-          nextAfterSequence: page.nextAfterSequence,
-          hasMore: page.hasMore,
-        });
-      } catch (error) {
-        return errorResponse(c, error, requestId);
-      }
-    },
+    (c) => withActor(c, async (actor, requestId) => {
+      const page = await repository.listConversationMessages(
+        actor,
+        c.req.param('orgSlug'),
+        uuidParam(c.req.param('studentId'), 'studentId'),
+        uuidParam(c.req.param('conversationId'), 'conversationId'),
+        conversationMessagePaginationOf(c),
+        requestId,
+      );
+      return c.json({
+        messages: page.items,
+        afterSequence: page.afterSequence,
+        nextAfterSequence: page.nextAfterSequence,
+        hasMore: page.hasMore,
+      });
+    }),
   );
 
   routes.post(
     '/teaching/organizations/:orgSlug/students/:studentId/conversations/:conversationId/messages',
-    async (c) => {
-      const requestId = requestIdOf(c);
-      c.header('Cache-Control', 'no-store');
-      try {
-        const actor = await authenticate(c);
-        const studentId = uuidParam(c.req.param('studentId'), 'studentId');
-        const conversationId = uuidParam(c.req.param('conversationId'), 'conversationId');
-        const body = await jsonBody(c, 65_536);
-        const input = parseReplyConversationInput(body.value);
-        const result = await repository.replyConversation(
-          actor,
-          c.req.param('orgSlug'),
-          studentId,
-          conversationId,
-          input,
-          idempotencyKeyOf(c),
-          sha256(stableJson({ studentId, conversationId, input })),
-          requestId,
-        );
-        return c.json(result.body, result.status);
-      } catch (error) {
-        return errorResponse(c, error, requestId);
-      }
-    },
+    (c) => withActor(c, async (actor, requestId) => {
+      const studentId = uuidParam(c.req.param('studentId'), 'studentId');
+      const conversationId = uuidParam(c.req.param('conversationId'), 'conversationId');
+      const body = await jsonBody(c, 65_536);
+      const input = parseReplyConversationInput(body.value);
+      const result = await repository.replyConversation(
+        actor,
+        c.req.param('orgSlug'),
+        studentId,
+        conversationId,
+        input,
+        idempotencyKeyOf(c),
+        sha256(stableJson({ studentId, conversationId, input })),
+        requestId,
+      );
+      return c.json(result.body, result.status);
+    }),
   );
 
   routes.post(
     '/teaching/organizations/:orgSlug/students/:studentId/conversations/:conversationId/read',
-    async (c) => {
-      const requestId = requestIdOf(c);
-      c.header('Cache-Control', 'no-store');
-      try {
-        const actor = await authenticate(c);
-        const studentId = uuidParam(c.req.param('studentId'), 'studentId');
-        const conversationId = uuidParam(c.req.param('conversationId'), 'conversationId');
-        const body = await jsonBody(c, 1_024);
-        const input = parseMarkConversationReadInput(body.value);
-        const result = await repository.markConversationRead(
-          actor,
-          c.req.param('orgSlug'),
-          studentId,
-          conversationId,
-          input,
-          idempotencyKeyOf(c),
-          sha256(stableJson({ studentId, conversationId, input })),
-          requestId,
-        );
-        return c.json(result.body, result.status);
-      } catch (error) {
-        return errorResponse(c, error, requestId);
-      }
-    },
+    (c) => withActor(c, async (actor, requestId) => {
+      const studentId = uuidParam(c.req.param('studentId'), 'studentId');
+      const conversationId = uuidParam(c.req.param('conversationId'), 'conversationId');
+      const body = await jsonBody(c, 1_024);
+      const input = parseMarkConversationReadInput(body.value);
+      const result = await repository.markConversationRead(
+        actor,
+        c.req.param('orgSlug'),
+        studentId,
+        conversationId,
+        input,
+        idempotencyKeyOf(c),
+        sha256(stableJson({ studentId, conversationId, input })),
+        requestId,
+      );
+      return c.json(result.body, result.status);
+    }),
   );
 
   routes.get(
     '/teaching/organizations/:orgSlug/me/students/:studentId/weekly-reports',
-    async (c) => {
-      const requestId = requestIdOf(c);
-      c.header('Cache-Control', 'no-store');
-      try {
-        const actor = await authenticate(c);
-        const page = await repository.listLearnerWeeklyReports(
-          actor,
-          c.req.param('orgSlug'),
-          uuidParam(c.req.param('studentId'), 'studentId'),
-          paginationOf(c),
-          requestId,
-        );
-        return c.json({
-          weeklyReports: page.items,
-          total: page.total,
-          page: page.page,
-          pageSize: page.pageSize,
-        });
-      } catch (error) {
-        return errorResponse(c, error, requestId);
-      }
-    },
+    (c) => withActor(c, async (actor, requestId) => {
+      const page = await repository.listLearnerWeeklyReports(
+        actor,
+        c.req.param('orgSlug'),
+        uuidParam(c.req.param('studentId'), 'studentId'),
+        paginationOf(c),
+        requestId,
+      );
+      return c.json({
+        weeklyReports: page.items,
+        total: page.total,
+        page: page.page,
+        pageSize: page.pageSize,
+      });
+    }),
   );
 
   routes.get(
     '/teaching/organizations/:orgSlug/me/students/:studentId/weekly-reports/:reportId',
-    async (c) => {
-      const requestId = requestIdOf(c);
-      c.header('Cache-Control', 'no-store');
-      try {
-        const actor = await authenticate(c);
-        const weeklyReport = await repository.getLearnerWeeklyReport(
-          actor,
-          c.req.param('orgSlug'),
-          uuidParam(c.req.param('studentId'), 'studentId'),
-          uuidParam(c.req.param('reportId'), 'reportId'),
-          requestId,
-        );
-        return c.json({ weeklyReport });
-      } catch (error) {
-        return errorResponse(c, error, requestId);
-      }
-    },
+    (c) => withActor(c, async (actor, requestId) => {
+      const weeklyReport = await repository.getLearnerWeeklyReport(
+        actor,
+        c.req.param('orgSlug'),
+        uuidParam(c.req.param('studentId'), 'studentId'),
+        uuidParam(c.req.param('reportId'), 'reportId'),
+        requestId,
+      );
+      return c.json({ weeklyReport });
+    }),
   );
 
   routes.get(
     '/teaching/organizations/:orgSlug/me/students/:studentId/lesson-feedback',
-    async (c) => {
-      const requestId = requestIdOf(c);
-      c.header('Cache-Control', 'no-store');
-      try {
-        const actor = await authenticate(c);
-        const page = await repository.listLearnerLessonFeedback(
-          actor,
-          c.req.param('orgSlug'),
-          uuidParam(c.req.param('studentId'), 'studentId'),
-          paginationOf(c),
-          requestId,
-        );
-        return c.json({
-          feedback: page.items,
-          total: page.total,
-          page: page.page,
-          pageSize: page.pageSize,
-        });
-      } catch (error) {
-        return errorResponse(c, error, requestId);
-      }
-    },
+    (c) => withActor(c, async (actor, requestId) => {
+      const page = await repository.listLearnerLessonFeedback(
+        actor,
+        c.req.param('orgSlug'),
+        uuidParam(c.req.param('studentId'), 'studentId'),
+        paginationOf(c),
+        requestId,
+      );
+      return c.json({
+        feedback: page.items,
+        total: page.total,
+        page: page.page,
+        pageSize: page.pageSize,
+      });
+    }),
   );
 
-  routes.get('/teaching/organizations/:orgSlug/me/students/:studentId/sessions', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const studentId = uuidParam(c.req.param('studentId'), 'studentId');
-      const page = await repository.listLearnerSessions(
-        actor, c.req.param('orgSlug'), studentId, paginationOf(c), requestId,
-      );
-      return c.json({ sessions: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug/me/students/:studentId/sessions', (c) => withActor(c, async (actor, requestId) => {
+    const studentId = uuidParam(c.req.param('studentId'), 'studentId');
+    const page = await repository.listLearnerSessions(
+      actor, c.req.param('orgSlug'), studentId, paginationOf(c), requestId,
+    );
+    return c.json({ sessions: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+  }));
 
   routes.get(
     '/teaching/organizations/:orgSlug/me/students/:studentId/sessions/:sessionId/leave-requests',
-    async (c) => {
-      const requestId = requestIdOf(c);
-      c.header('Cache-Control', 'no-store');
-      try {
-        const actor = await authenticate(c);
-        const studentId = uuidParam(c.req.param('studentId'), 'studentId');
-        const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
-        const page = await repository.listLearnerLeaveRequests(
-          actor, c.req.param('orgSlug'), studentId, sessionId, paginationOf(c), requestId,
-        );
-        return c.json({
-          leaveRequests: page.items, total: page.total, page: page.page, pageSize: page.pageSize,
-        });
-      } catch (error) {
-        return errorResponse(c, error, requestId);
-      }
-    },
+    (c) => withActor(c, async (actor, requestId) => {
+      const studentId = uuidParam(c.req.param('studentId'), 'studentId');
+      const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
+      const page = await repository.listLearnerLeaveRequests(
+        actor, c.req.param('orgSlug'), studentId, sessionId, paginationOf(c), requestId,
+      );
+      return c.json({
+        leaveRequests: page.items, total: page.total, page: page.page, pageSize: page.pageSize,
+      });
+    }),
   );
 
   routes.post(
     '/teaching/organizations/:orgSlug/me/students/:studentId/sessions/:sessionId/attendance/:attendanceId/leave-requests',
-    async (c) => {
-      const requestId = requestIdOf(c);
-      c.header('Cache-Control', 'no-store');
-      try {
-        const actor = await authenticate(c);
-        const studentId = uuidParam(c.req.param('studentId'), 'studentId');
-        const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
-        const attendanceId = uuidParam(c.req.param('attendanceId'), 'attendanceId');
-        const body = await jsonBody(c, 4_096);
-        const input = parseLeaveRequestInput(body.value);
-        const result = await repository.createLearnerLeaveRequest(
-          actor, c.req.param('orgSlug'), studentId, sessionId, attendanceId, input,
-          idempotencyKeyOf(c), sha256(stableJson({ studentId, sessionId, attendanceId, input })), requestId,
-        );
-        return c.json(result.body, result.status);
-      } catch (error) {
-        return errorResponse(c, error, requestId);
-      }
-    },
+    (c) => withActor(c, async (actor, requestId) => {
+      const studentId = uuidParam(c.req.param('studentId'), 'studentId');
+      const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
+      const attendanceId = uuidParam(c.req.param('attendanceId'), 'attendanceId');
+      const body = await jsonBody(c, 4_096);
+      const input = parseLeaveRequestInput(body.value);
+      const result = await repository.createLearnerLeaveRequest(
+        actor, c.req.param('orgSlug'), studentId, sessionId, attendanceId, input,
+        idempotencyKeyOf(c), sha256(stableJson({ studentId, sessionId, attendanceId, input })), requestId,
+      );
+      return c.json(result.body, result.status);
+    }),
   );
 
   routes.post(
     '/teaching/organizations/:orgSlug/me/students/:studentId/sessions/:sessionId/attendance/:attendanceId/leave-requests/:leaveRequestId/cancel',
-    async (c) => {
-      const requestId = requestIdOf(c);
-      c.header('Cache-Control', 'no-store');
-      try {
-        const actor = await authenticate(c);
-        const studentId = uuidParam(c.req.param('studentId'), 'studentId');
-        const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
-        const attendanceId = uuidParam(c.req.param('attendanceId'), 'attendanceId');
-        const leaveRequestId = uuidParam(c.req.param('leaveRequestId'), 'leaveRequestId');
-        const body = await jsonBody(c, 4_096);
-        const input = parseLeaveRequestInput(body.value);
-        const result = await repository.cancelLearnerLeaveRequest(
-          actor, c.req.param('orgSlug'), studentId, sessionId, attendanceId, leaveRequestId, input,
-          idempotencyKeyOf(c),
-          sha256(stableJson({ studentId, sessionId, attendanceId, leaveRequestId, input })), requestId,
-        );
-        return c.json(result.body, result.status);
-      } catch (error) {
-        return errorResponse(c, error, requestId);
-      }
-    },
+    (c) => withActor(c, async (actor, requestId) => {
+      const studentId = uuidParam(c.req.param('studentId'), 'studentId');
+      const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
+      const attendanceId = uuidParam(c.req.param('attendanceId'), 'attendanceId');
+      const leaveRequestId = uuidParam(c.req.param('leaveRequestId'), 'leaveRequestId');
+      const body = await jsonBody(c, 4_096);
+      const input = parseLeaveRequestInput(body.value);
+      const result = await repository.cancelLearnerLeaveRequest(
+        actor, c.req.param('orgSlug'), studentId, sessionId, attendanceId, leaveRequestId, input,
+        idempotencyKeyOf(c),
+        sha256(stableJson({ studentId, sessionId, attendanceId, leaveRequestId, input })), requestId,
+      );
+      return c.json(result.body, result.status);
+    }),
   );
 
-  routes.get('/teaching/organizations/:orgSlug/me/training/assignments', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const page = await repository.listSelfTrainingAssignments(
-        actor,
-        c.req.param('orgSlug'),
-        paginationOf(c),
-        requestId,
-      );
-      return c.json({ assignments: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug/me/training/assignments', (c) => withActor(c, async (actor, requestId) => {
+    const page = await repository.listSelfTrainingAssignments(
+      actor,
+      c.req.param('orgSlug'),
+      paginationOf(c),
+      requestId,
+    );
+    return c.json({ assignments: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+  }));
 
-  const dailyBoardHandler = (learner: boolean) => async (c: Context) => {
-      const requestId = requestIdOf(c);
-      c.header('Cache-Control', 'no-store');
-      try {
-        const actor = await authenticate(c);
-        const date = c.req.query('date') || null;
-        const rankEvent = c.req.query('rankEvent') || null;
-        if (rankEvent && !/^[a-zA-Z0-9_-]{1,64}$/.test(rankEvent)) throw new TeachingApiException('INVALID_INPUT', 400, 'Invalid ranking event');
-        if (date && (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date.startsWith('0000-') || !Number.isFinite(Date.parse(`${date}T00:00:00Z`)) || new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) !== date)) {
-          throw new TeachingApiException('INVALID_INPUT', 400, 'Invalid calendar date');
-        }
-        const slug = c.req.param('orgSlug');
-        const assignmentId = c.req.param('assignmentId');
-        if (!slug || !assignmentId) throw new TeachingApiException('INVALID_INPUT', 400, 'Missing training assignment');
-        return c.json(await repository.getTrainingDailyBoard(actor, slug, uuidParam(assignmentId, 'assignmentId'), date, learner, trainingPaginationOf(c, ['date', 'rankEvent']), requestId, rankEvent));
-      } catch (error) { return errorResponse(c, error, requestId); }
-  };
+  const dailyBoardHandler = (learner: boolean) => (c: Context) => withActor(c, async (actor, requestId) => {
+    const date = c.req.query('date') || null;
+    const rankEvent = c.req.query('rankEvent') || null;
+    if (rankEvent && !/^[a-zA-Z0-9_-]{1,64}$/.test(rankEvent)) throw new TeachingApiException('INVALID_INPUT', 400, 'Invalid ranking event');
+    if (date && (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date.startsWith('0000-') || !Number.isFinite(Date.parse(`${date}T00:00:00Z`)) || new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) !== date)) {
+      throw new TeachingApiException('INVALID_INPUT', 400, 'Invalid calendar date');
+    }
+    const slug = c.req.param('orgSlug');
+    const assignmentId = c.req.param('assignmentId');
+    if (!slug || !assignmentId) throw new TeachingApiException('INVALID_INPUT', 400, 'Missing training assignment');
+    return c.json(await repository.getTrainingDailyBoard(actor, slug, uuidParam(assignmentId, 'assignmentId'), date, learner, trainingPaginationOf(c, ['date', 'rankEvent']), requestId, rankEvent));
+  });
   routes.get('/teaching/organizations/:orgSlug/training/assignments/:assignmentId/daily', dailyBoardHandler(false));
   routes.get('/teaching/organizations/:orgSlug/me/training/assignments/:assignmentId/daily', dailyBoardHandler(true));
 
-  routes.post('/teaching/organizations/:orgSlug/me/training/evidence', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
+  routes.post('/teaching/organizations/:orgSlug/me/training/evidence', (c) => withActor(c, async (actor, requestId) => {
+    const body = await jsonBody(c, TRAINING_EVIDENCE_MAX_BODY_BYTES);
+    let input: TrainingEvidenceV1;
     try {
-      const actor = await authenticate(c);
-      const body = await jsonBody(c, TRAINING_EVIDENCE_MAX_BODY_BYTES);
-      let input: TrainingEvidenceV1;
-      try {
-        input = parseTrainingEvidenceV1(body.value);
-      } catch (error) {
-        if (error instanceof TrainingEvidenceValidationError) {
-          throw new TeachingApiException('EVIDENCE_INVALID', 400, error.message);
-        }
-        throw error;
+      input = parseTrainingEvidenceV1(body.value);
+    } catch (error) {
+      if (error instanceof TrainingEvidenceValidationError) {
+        throw new TeachingApiException('EVIDENCE_INVALID', 400, error.message);
       }
-      const result = await repository.createSelfTrainingEvidence(
-        actor,
-        c.req.param('orgSlug'),
-        input,
-        requestId,
+      throw error;
+    }
+    const result = await repository.createSelfTrainingEvidence(
+      actor,
+      c.req.param('orgSlug'),
+      input,
+      requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
+
+  routes.get('/teaching/organizations/:orgSlug/training/templates', (c) => withActor(c, async (actor, requestId) => {
+    const page = await repository.listTrainingTemplates(
+      actor, c.req.param('orgSlug'), trainingPaginationOf(c), requestId,
+    );
+    return c.json({ templates: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+  }));
+
+  routes.post('/teaching/organizations/:orgSlug/training/templates', (c) => withActor(c, async (actor, requestId) => {
+    const key = idempotencyKeyOf(c);
+    const body = await jsonBody(c, TRAINING_EVIDENCE_MAX_BODY_BYTES);
+    const result = await repository.createTrainingTemplate(
+      actor, c.req.param('orgSlug'), parseTrainingTemplateInput(body.value),
+      key, sha256(body.raw), requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
+
+  routes.get('/teaching/organizations/:orgSlug/training/templates/:templateId', (c) => withActor(c, async (actor, requestId) => {
+    assertQueryKeys(c, []);
+    const template = await repository.getTrainingTemplate(
+      actor, c.req.param('orgSlug'), uuidParam(c.req.param('templateId'), 'templateId'), requestId,
+    );
+    return c.json({ template });
+  }));
+
+  routes.get('/teaching/organizations/:orgSlug/training/templates/:templateId/versions', (c) => withActor(c, async (actor, requestId) => {
+    const page = await repository.listTrainingTemplateVersions(
+      actor, c.req.param('orgSlug'), uuidParam(c.req.param('templateId'), 'templateId'),
+      trainingPaginationOf(c), requestId,
+    );
+    return c.json({ templateVersions: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+  }));
+
+  routes.post('/teaching/organizations/:orgSlug/training/templates/:templateId/versions', (c) => withActor(c, async (actor, requestId) => {
+    const key = idempotencyKeyOf(c);
+    const body = await jsonBody(c, TRAINING_EVIDENCE_MAX_BODY_BYTES);
+    const result = await repository.createTrainingTemplateVersion(
+      actor, c.req.param('orgSlug'), uuidParam(c.req.param('templateId'), 'templateId'),
+      parseTrainingTemplateVersionInput(body.value), key, sha256(body.raw), requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
+
+  routes.post('/teaching/organizations/:orgSlug/training/templates/:templateId/archive', (c) => withActor(c, async (actor, requestId) => {
+    const key = idempotencyKeyOf(c);
+    const body = await jsonBody(c, TRAINING_EVIDENCE_MAX_BODY_BYTES);
+    assertOnlyKeys(body.value, [], 'training template archive input');
+    const result = await repository.archiveTrainingTemplate(
+      actor, c.req.param('orgSlug'), uuidParam(c.req.param('templateId'), 'templateId'),
+      key, sha256(body.raw), requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
+
+  routes.get('/teaching/organizations/:orgSlug/training/assignments', (c) => withActor(c, async (actor, requestId) => {
+    const page = await repository.listTrainingAssignments(
+      actor, c.req.param('orgSlug'), trainingAssignmentFilterOf(c),
+      trainingPaginationOf(c, ['status']), requestId,
+    );
+    return c.json({ assignments: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+  }));
+
+  routes.post('/teaching/organizations/:orgSlug/training/assignments', (c) => withActor(c, async (actor, requestId) => {
+    const key = idempotencyKeyOf(c);
+    const body = await jsonBody(c, TRAINING_EVIDENCE_MAX_BODY_BYTES);
+    const result = await repository.createTrainingAssignment(
+      actor, c.req.param('orgSlug'), parseTrainingAssignmentInput(body.value),
+      key, sha256(body.raw), requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
+
+  routes.get('/teaching/organizations/:orgSlug/training/assignments/:assignmentId', (c) => withActor(c, async (actor, requestId) => {
+    assertQueryKeys(c, []);
+    return c.json(await repository.getTrainingAssignment(
+      actor, c.req.param('orgSlug'), uuidParam(c.req.param('assignmentId'), 'assignmentId'), requestId,
+    ));
+  }));
+
+  routes.post('/teaching/organizations/:orgSlug/training/assignments/:assignmentId/revise', (c) => withActor(c, async (actor, requestId) => {
+    const key = idempotencyKeyOf(c);
+    const body = await jsonBody(c, TRAINING_EVIDENCE_MAX_BODY_BYTES);
+    const result = await repository.reviseTrainingAssignment(
+      actor, c.req.param('orgSlug'), uuidParam(c.req.param('assignmentId'), 'assignmentId'),
+      parseTrainingAssignmentInput(body.value), key, sha256(body.raw), requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
+
+  const trainingAssignmentLifecycleHandler = (action: 'publish' | 'close') => (c: Context) => withActor(c, async (actor, requestId) => {
+    const key = idempotencyKeyOf(c);
+    const body = await jsonBody(c, TRAINING_EVIDENCE_MAX_BODY_BYTES);
+    assertOnlyKeys(body.value, [], `training assignment ${action} input`);
+    const orgSlug = c.req.param('orgSlug') ?? '';
+    const assignmentId = uuidParam(c.req.param('assignmentId') ?? '', 'assignmentId');
+    const result = action === 'publish'
+      ? await repository.publishTrainingAssignment(
+        actor, orgSlug, assignmentId, key, sha256(body.raw), requestId,
+      )
+      : await repository.closeTrainingAssignment(
+        actor, orgSlug, assignmentId, key, sha256(body.raw), requestId,
       );
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
+    return c.json(result.body, result.status);
   });
-
-  routes.get('/teaching/organizations/:orgSlug/training/templates', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const page = await repository.listTrainingTemplates(
-        actor, c.req.param('orgSlug'), trainingPaginationOf(c), requestId,
-      );
-      return c.json({ templates: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
-
-  routes.post('/teaching/organizations/:orgSlug/training/templates', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const key = idempotencyKeyOf(c);
-      const body = await jsonBody(c, TRAINING_EVIDENCE_MAX_BODY_BYTES);
-      const result = await repository.createTrainingTemplate(
-        actor, c.req.param('orgSlug'), parseTrainingTemplateInput(body.value),
-        key, sha256(body.raw), requestId,
-      );
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
-
-  routes.get('/teaching/organizations/:orgSlug/training/templates/:templateId', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      assertQueryKeys(c, []);
-      const template = await repository.getTrainingTemplate(
-        actor, c.req.param('orgSlug'), uuidParam(c.req.param('templateId'), 'templateId'), requestId,
-      );
-      return c.json({ template });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
-
-  routes.get('/teaching/organizations/:orgSlug/training/templates/:templateId/versions', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const page = await repository.listTrainingTemplateVersions(
-        actor, c.req.param('orgSlug'), uuidParam(c.req.param('templateId'), 'templateId'),
-        trainingPaginationOf(c), requestId,
-      );
-      return c.json({ templateVersions: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
-
-  routes.post('/teaching/organizations/:orgSlug/training/templates/:templateId/versions', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const key = idempotencyKeyOf(c);
-      const body = await jsonBody(c, TRAINING_EVIDENCE_MAX_BODY_BYTES);
-      const result = await repository.createTrainingTemplateVersion(
-        actor, c.req.param('orgSlug'), uuidParam(c.req.param('templateId'), 'templateId'),
-        parseTrainingTemplateVersionInput(body.value), key, sha256(body.raw), requestId,
-      );
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
-
-  routes.post('/teaching/organizations/:orgSlug/training/templates/:templateId/archive', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const key = idempotencyKeyOf(c);
-      const body = await jsonBody(c, TRAINING_EVIDENCE_MAX_BODY_BYTES);
-      assertOnlyKeys(body.value, [], 'training template archive input');
-      const result = await repository.archiveTrainingTemplate(
-        actor, c.req.param('orgSlug'), uuidParam(c.req.param('templateId'), 'templateId'),
-        key, sha256(body.raw), requestId,
-      );
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
-
-  routes.get('/teaching/organizations/:orgSlug/training/assignments', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const page = await repository.listTrainingAssignments(
-        actor, c.req.param('orgSlug'), trainingAssignmentFilterOf(c),
-        trainingPaginationOf(c, ['status']), requestId,
-      );
-      return c.json({ assignments: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
-
-  routes.post('/teaching/organizations/:orgSlug/training/assignments', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const key = idempotencyKeyOf(c);
-      const body = await jsonBody(c, TRAINING_EVIDENCE_MAX_BODY_BYTES);
-      const result = await repository.createTrainingAssignment(
-        actor, c.req.param('orgSlug'), parseTrainingAssignmentInput(body.value),
-        key, sha256(body.raw), requestId,
-      );
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
-
-  routes.get('/teaching/organizations/:orgSlug/training/assignments/:assignmentId', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      assertQueryKeys(c, []);
-      return c.json(await repository.getTrainingAssignment(
-        actor, c.req.param('orgSlug'), uuidParam(c.req.param('assignmentId'), 'assignmentId'), requestId,
-      ));
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
-
-  routes.post('/teaching/organizations/:orgSlug/training/assignments/:assignmentId/revise', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const key = idempotencyKeyOf(c);
-      const body = await jsonBody(c, TRAINING_EVIDENCE_MAX_BODY_BYTES);
-      const result = await repository.reviseTrainingAssignment(
-        actor, c.req.param('orgSlug'), uuidParam(c.req.param('assignmentId'), 'assignmentId'),
-        parseTrainingAssignmentInput(body.value), key, sha256(body.raw), requestId,
-      );
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
-
-  const trainingAssignmentLifecycleHandler = (action: 'publish' | 'close') => async (c: Context) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const key = idempotencyKeyOf(c);
-      const body = await jsonBody(c, TRAINING_EVIDENCE_MAX_BODY_BYTES);
-      assertOnlyKeys(body.value, [], `training assignment ${action} input`);
-      const orgSlug = c.req.param('orgSlug') ?? '';
-      const assignmentId = uuidParam(c.req.param('assignmentId') ?? '', 'assignmentId');
-      const result = action === 'publish'
-        ? await repository.publishTrainingAssignment(
-          actor, orgSlug, assignmentId, key, sha256(body.raw), requestId,
-        )
-        : await repository.closeTrainingAssignment(
-          actor, orgSlug, assignmentId, key, sha256(body.raw), requestId,
-        );
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  };
 
   routes.post(
     '/teaching/organizations/:orgSlug/training/assignments/:assignmentId/publish',
@@ -10785,825 +10458,503 @@ export function createTeachingSaasRoutes(deps: {
     trainingAssignmentLifecycleHandler('close'),
   );
 
-  routes.get('/teaching/organizations/:orgSlug/training/assignments/:assignmentId/targets', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const page = await repository.listTrainingAssignmentTargets(
-        actor, c.req.param('orgSlug'), uuidParam(c.req.param('assignmentId'), 'assignmentId'),
-        trainingTargetFilterOf(c), trainingPaginationOf(c, ['targetKind']), requestId,
-      );
-      return c.json({ targets: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug/training/assignments/:assignmentId/targets', (c) => withActor(c, async (actor, requestId) => {
+    const page = await repository.listTrainingAssignmentTargets(
+      actor, c.req.param('orgSlug'), uuidParam(c.req.param('assignmentId'), 'assignmentId'),
+      trainingTargetFilterOf(c), trainingPaginationOf(c, ['targetKind']), requestId,
+    );
+    return c.json({ targets: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+  }));
 
-  routes.get('/teaching/organizations/:orgSlug/training/assignments/:assignmentId/targets/:studentId/evidence', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const page = await repository.listTrainingTargetEvidence(
-        actor, c.req.param('orgSlug'), uuidParam(c.req.param('assignmentId'), 'assignmentId'),
-        uuidParam(c.req.param('studentId'), 'studentId'), trainingPaginationOf(c), requestId,
-      );
-      return c.json({ evidence: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug/training/assignments/:assignmentId/targets/:studentId/evidence', (c) => withActor(c, async (actor, requestId) => {
+    const page = await repository.listTrainingTargetEvidence(
+      actor, c.req.param('orgSlug'), uuidParam(c.req.param('assignmentId'), 'assignmentId'),
+      uuidParam(c.req.param('studentId'), 'studentId'), trainingPaginationOf(c), requestId,
+    );
+    return c.json({ evidence: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+  }));
 
-  routes.get('/teaching/organizations/:orgSlug/training/assignments/:assignmentId/targets/:studentId/reviews', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const page = await repository.listTrainingTargetReviews(
-        actor, c.req.param('orgSlug'), uuidParam(c.req.param('assignmentId'), 'assignmentId'),
-        uuidParam(c.req.param('studentId'), 'studentId'), trainingPaginationOf(c), requestId,
-      );
-      return c.json({ reviews: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug/training/assignments/:assignmentId/targets/:studentId/reviews', (c) => withActor(c, async (actor, requestId) => {
+    const page = await repository.listTrainingTargetReviews(
+      actor, c.req.param('orgSlug'), uuidParam(c.req.param('assignmentId'), 'assignmentId'),
+      uuidParam(c.req.param('studentId'), 'studentId'), trainingPaginationOf(c), requestId,
+    );
+    return c.json({ reviews: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+  }));
 
-  routes.post('/teaching/organizations/:orgSlug/training/assignments/:assignmentId/targets/:studentId/reviews', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const key = idempotencyKeyOf(c);
-      const body = await jsonBody(c, TRAINING_EVIDENCE_MAX_BODY_BYTES);
-      const assignmentId = uuidParam(c.req.param('assignmentId'), 'assignmentId');
-      const studentId = uuidParam(c.req.param('studentId'), 'studentId');
-      const result = await repository.createTrainingTargetReview(
-        actor, c.req.param('orgSlug'), assignmentId, studentId, parseTrainingReviewInput(body.value),
-        key, trainingReviewRequestHash(assignmentId, studentId, body.raw), requestId,
-      );
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.post('/teaching/organizations/:orgSlug/training/assignments/:assignmentId/targets/:studentId/reviews', (c) => withActor(c, async (actor, requestId) => {
+    const key = idempotencyKeyOf(c);
+    const body = await jsonBody(c, TRAINING_EVIDENCE_MAX_BODY_BYTES);
+    const assignmentId = uuidParam(c.req.param('assignmentId'), 'assignmentId');
+    const studentId = uuidParam(c.req.param('studentId'), 'studentId');
+    const result = await repository.createTrainingTargetReview(
+      actor, c.req.param('orgSlug'), assignmentId, studentId, parseTrainingReviewInput(body.value),
+      key, trainingReviewRequestHash(assignmentId, studentId, body.raw), requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
 
-  routes.get('/teaching/organizations/:orgSlug/students/:studentId', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const student = await repository.getStudent(
-        actor, c.req.param('orgSlug'), uuidParam(c.req.param('studentId'), 'studentId'), requestId,
-      );
-      return c.json({ student });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug/students/:studentId', (c) => withActor(c, async (actor, requestId) => {
+    const student = await repository.getStudent(
+      actor, c.req.param('orgSlug'), uuidParam(c.req.param('studentId'), 'studentId'), requestId,
+    );
+    return c.json({ student });
+  }));
 
-  routes.get('/teaching/organizations/:orgSlug/campuses', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const page = await repository.listCampuses(actor, c.req.param('orgSlug'), paginationOf(c), requestId);
-      return c.json({ campuses: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug/campuses', (c) => withActor(c, async (actor, requestId) => {
+    const page = await repository.listCampuses(actor, c.req.param('orgSlug'), paginationOf(c), requestId);
+    return c.json({ campuses: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+  }));
 
-  routes.post('/teaching/organizations/:orgSlug/campuses', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const key = idempotencyKeyOf(c);
-      const body = await jsonBody(c);
-      const result = await repository.createCampus(
-        actor, c.req.param('orgSlug'), parseCampusInput(body.value), key, sha256(body.raw), requestId,
-      );
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.post('/teaching/organizations/:orgSlug/campuses', (c) => withActor(c, async (actor, requestId) => {
+    const key = idempotencyKeyOf(c);
+    const body = await jsonBody(c);
+    const result = await repository.createCampus(
+      actor, c.req.param('orgSlug'), parseCampusInput(body.value), key, sha256(body.raw), requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
 
-  routes.get('/teaching/organizations/:orgSlug/campuses/:campusId', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const campus = await repository.getCampus(
-        actor, c.req.param('orgSlug'), uuidParam(c.req.param('campusId'), 'campusId'), requestId,
-      );
-      return c.json({ campus });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug/campuses/:campusId', (c) => withActor(c, async (actor, requestId) => {
+    const campus = await repository.getCampus(
+      actor, c.req.param('orgSlug'), uuidParam(c.req.param('campusId'), 'campusId'), requestId,
+    );
+    return c.json({ campus });
+  }));
 
-  routes.post('/teaching/organizations/:orgSlug/campuses/:campusId/archive', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const key = idempotencyKeyOf(c);
-      const body = await jsonBody(c);
-      if (Object.keys(body.value).length) {
-        throw new TeachingApiException('INVALID_INPUT', 400, 'Campus archive body must be empty');
-      }
-      const result = await repository.archiveCampus(
-        actor, c.req.param('orgSlug'), uuidParam(c.req.param('campusId'), 'campusId'),
-        key, sha256(body.raw), requestId,
-      );
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
+  routes.post('/teaching/organizations/:orgSlug/campuses/:campusId/archive', (c) => withActor(c, async (actor, requestId) => {
+    const key = idempotencyKeyOf(c);
+    const body = await jsonBody(c);
+    if (Object.keys(body.value).length) {
+      throw new TeachingApiException('INVALID_INPUT', 400, 'Campus archive body must be empty');
     }
-  });
+    const result = await repository.archiveCampus(
+      actor, c.req.param('orgSlug'), uuidParam(c.req.param('campusId'), 'campusId'),
+      key, sha256(body.raw), requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
 
-  routes.get('/teaching/organizations/:orgSlug/groups', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const page = await repository.listGroups(actor, c.req.param('orgSlug'), paginationOf(c), requestId);
-      return c.json({ groups: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug/groups', (c) => withActor(c, async (actor, requestId) => {
+    const page = await repository.listGroups(actor, c.req.param('orgSlug'), paginationOf(c), requestId);
+    return c.json({ groups: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+  }));
 
-  routes.post('/teaching/organizations/:orgSlug/groups', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const key = idempotencyKeyOf(c);
-      const body = await jsonBody(c);
-      const result = await repository.createGroup(
-        actor, c.req.param('orgSlug'), parseGroupInput(body.value), key, sha256(body.raw), requestId,
-      );
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.post('/teaching/organizations/:orgSlug/groups', (c) => withActor(c, async (actor, requestId) => {
+    const key = idempotencyKeyOf(c);
+    const body = await jsonBody(c);
+    const result = await repository.createGroup(
+      actor, c.req.param('orgSlug'), parseGroupInput(body.value), key, sha256(body.raw), requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
 
-  routes.get('/teaching/organizations/:orgSlug/groups/:groupId', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const group = await repository.getGroup(
-        actor, c.req.param('orgSlug'), uuidParam(c.req.param('groupId'), 'groupId'), requestId,
-      );
-      return c.json({ group });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug/groups/:groupId', (c) => withActor(c, async (actor, requestId) => {
+    const group = await repository.getGroup(
+      actor, c.req.param('orgSlug'), uuidParam(c.req.param('groupId'), 'groupId'), requestId,
+    );
+    return c.json({ group });
+  }));
 
-  routes.post('/teaching/organizations/:orgSlug/groups/:groupId/archive', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const key = idempotencyKeyOf(c);
-      const body = await jsonBody(c);
-      if (Object.keys(body.value).length) {
-        throw new TeachingApiException('INVALID_INPUT', 400, 'Group archive body must be empty');
-      }
-      const result = await repository.archiveGroup(
-        actor, c.req.param('orgSlug'), uuidParam(c.req.param('groupId'), 'groupId'),
-        key, sha256(body.raw), requestId,
-      );
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
+  routes.post('/teaching/organizations/:orgSlug/groups/:groupId/archive', (c) => withActor(c, async (actor, requestId) => {
+    const key = idempotencyKeyOf(c);
+    const body = await jsonBody(c);
+    if (Object.keys(body.value).length) {
+      throw new TeachingApiException('INVALID_INPUT', 400, 'Group archive body must be empty');
     }
-  });
+    const result = await repository.archiveGroup(
+      actor, c.req.param('orgSlug'), uuidParam(c.req.param('groupId'), 'groupId'),
+      key, sha256(body.raw), requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
 
-  routes.get('/teaching/organizations/:orgSlug/groups/:groupId/students', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const page = await repository.listGroupStudents(
-        actor, c.req.param('orgSlug'), uuidParam(c.req.param('groupId'), 'groupId'), paginationOf(c), requestId,
-      );
-      return c.json({ memberships: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug/groups/:groupId/students', (c) => withActor(c, async (actor, requestId) => {
+    const page = await repository.listGroupStudents(
+      actor, c.req.param('orgSlug'), uuidParam(c.req.param('groupId'), 'groupId'), paginationOf(c), requestId,
+    );
+    return c.json({ memberships: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+  }));
 
-  routes.post('/teaching/organizations/:orgSlug/groups/:groupId/students', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const key = idempotencyKeyOf(c);
-      const body = await jsonBody(c);
-      const result = await repository.createStudentGroupMembership(
-        actor, c.req.param('orgSlug'), uuidParam(c.req.param('groupId'), 'groupId'),
-        parseStudentGroupMembershipInput(body.value), key, sha256(body.raw), requestId,
-      );
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.post('/teaching/organizations/:orgSlug/groups/:groupId/students', (c) => withActor(c, async (actor, requestId) => {
+    const key = idempotencyKeyOf(c);
+    const body = await jsonBody(c);
+    const result = await repository.createStudentGroupMembership(
+      actor, c.req.param('orgSlug'), uuidParam(c.req.param('groupId'), 'groupId'),
+      parseStudentGroupMembershipInput(body.value), key, sha256(body.raw), requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
 
-  routes.post('/teaching/organizations/:orgSlug/student-group-memberships/:membershipId/revoke', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const key = idempotencyKeyOf(c);
-      const body = await jsonBody(c);
-      if (Object.keys(body.value).length) {
-        throw new TeachingApiException('INVALID_INPUT', 400, 'Membership revoke body must be empty');
-      }
-      const result = await repository.revokeStudentGroupMembership(
-        actor, c.req.param('orgSlug'), uuidParam(c.req.param('membershipId'), 'membershipId'),
-        key, sha256(body.raw), requestId,
-      );
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
+  routes.post('/teaching/organizations/:orgSlug/student-group-memberships/:membershipId/revoke', (c) => withActor(c, async (actor, requestId) => {
+    const key = idempotencyKeyOf(c);
+    const body = await jsonBody(c);
+    if (Object.keys(body.value).length) {
+      throw new TeachingApiException('INVALID_INPUT', 400, 'Membership revoke body must be empty');
     }
-  });
+    const result = await repository.revokeStudentGroupMembership(
+      actor, c.req.param('orgSlug'), uuidParam(c.req.param('membershipId'), 'membershipId'),
+      key, sha256(body.raw), requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
 
-  routes.get('/teaching/organizations/:orgSlug/teacher-assignments', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const page = await repository.listTeacherAssignments(
-        actor, c.req.param('orgSlug'), teacherAssignmentTargetOf(c), paginationOf(c), requestId,
-      );
-      return c.json({ assignments: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug/teacher-assignments', (c) => withActor(c, async (actor, requestId) => {
+    const page = await repository.listTeacherAssignments(
+      actor, c.req.param('orgSlug'), teacherAssignmentTargetOf(c), paginationOf(c), requestId,
+    );
+    return c.json({ assignments: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+  }));
 
-  routes.post('/teaching/organizations/:orgSlug/teacher-assignments', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const key = idempotencyKeyOf(c);
-      const body = await jsonBody(c);
-      const result = await repository.createTeacherAssignment(
-        actor, c.req.param('orgSlug'), parseTeacherAssignmentInput(body.value), key, sha256(body.raw), requestId,
-      );
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.post('/teaching/organizations/:orgSlug/teacher-assignments', (c) => withActor(c, async (actor, requestId) => {
+    const key = idempotencyKeyOf(c);
+    const body = await jsonBody(c);
+    const result = await repository.createTeacherAssignment(
+      actor, c.req.param('orgSlug'), parseTeacherAssignmentInput(body.value), key, sha256(body.raw), requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
 
-  routes.post('/teaching/organizations/:orgSlug/teacher-assignments/:assignmentId/revoke', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const key = idempotencyKeyOf(c);
-      const body = await jsonBody(c);
-      if (Object.keys(body.value).length) {
-        throw new TeachingApiException('INVALID_INPUT', 400, 'Assignment revoke body must be empty');
-      }
-      const result = await repository.revokeTeacherAssignment(
-        actor, c.req.param('orgSlug'), uuidParam(c.req.param('assignmentId'), 'assignmentId'),
-        key, sha256(body.raw), requestId,
-      );
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
+  routes.post('/teaching/organizations/:orgSlug/teacher-assignments/:assignmentId/revoke', (c) => withActor(c, async (actor, requestId) => {
+    const key = idempotencyKeyOf(c);
+    const body = await jsonBody(c);
+    if (Object.keys(body.value).length) {
+      throw new TeachingApiException('INVALID_INPUT', 400, 'Assignment revoke body must be empty');
     }
-  });
+    const result = await repository.revokeTeacherAssignment(
+      actor, c.req.param('orgSlug'), uuidParam(c.req.param('assignmentId'), 'assignmentId'),
+      key, sha256(body.raw), requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
 
-  routes.get('/teaching/organizations/:orgSlug/package-products', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const page = await repository.listPackageProducts(actor, c.req.param('orgSlug'), paginationOf(c), requestId);
-      return c.json({ packageProducts: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug/package-products', (c) => withActor(c, async (actor, requestId) => {
+    const page = await repository.listPackageProducts(actor, c.req.param('orgSlug'), paginationOf(c), requestId);
+    return c.json({ packageProducts: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+  }));
 
-  routes.post('/teaching/organizations/:orgSlug/package-products', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const key = idempotencyKeyOf(c);
-      const body = await jsonBody(c);
-      const result = await repository.createPackageProduct(
-        actor, c.req.param('orgSlug'), parsePackageProductInput(body.value), key, sha256(body.raw), requestId,
-      );
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.post('/teaching/organizations/:orgSlug/package-products', (c) => withActor(c, async (actor, requestId) => {
+    const key = idempotencyKeyOf(c);
+    const body = await jsonBody(c);
+    const result = await repository.createPackageProduct(
+      actor, c.req.param('orgSlug'), parsePackageProductInput(body.value), key, sha256(body.raw), requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
 
-  routes.get('/teaching/organizations/:orgSlug/students/:studentId/packages', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const page = await repository.listStudentPackages(
-        actor, c.req.param('orgSlug'), uuidParam(c.req.param('studentId'), 'studentId'), paginationOf(c), requestId,
-      );
-      return c.json({ studentPackages: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug/students/:studentId/packages', (c) => withActor(c, async (actor, requestId) => {
+    const page = await repository.listStudentPackages(
+      actor, c.req.param('orgSlug'), uuidParam(c.req.param('studentId'), 'studentId'), paginationOf(c), requestId,
+    );
+    return c.json({ studentPackages: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+  }));
 
-  routes.post('/teaching/organizations/:orgSlug/students/:studentId/packages', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const key = idempotencyKeyOf(c);
-      const body = await jsonBody(c);
-      const result = await repository.createStudentPackage(
-        actor, c.req.param('orgSlug'), uuidParam(c.req.param('studentId'), 'studentId'),
-        parseStudentPackageInput(body.value), key, sha256(body.raw), requestId,
-      );
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.post('/teaching/organizations/:orgSlug/students/:studentId/packages', (c) => withActor(c, async (actor, requestId) => {
+    const key = idempotencyKeyOf(c);
+    const body = await jsonBody(c);
+    const result = await repository.createStudentPackage(
+      actor, c.req.param('orgSlug'), uuidParam(c.req.param('studentId'), 'studentId'),
+      parseStudentPackageInput(body.value), key, sha256(body.raw), requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
 
-  routes.get('/teaching/organizations/:orgSlug/student-packages/:studentPackageId/ledger', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const page = await repository.listStudentPackageLedger(
-        actor, c.req.param('orgSlug'), uuidParam(c.req.param('studentPackageId'), 'studentPackageId'),
-        paginationOf(c), requestId,
-      );
-      return c.json({ ledger: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug/student-packages/:studentPackageId/ledger', (c) => withActor(c, async (actor, requestId) => {
+    const page = await repository.listStudentPackageLedger(
+      actor, c.req.param('orgSlug'), uuidParam(c.req.param('studentPackageId'), 'studentPackageId'),
+      paginationOf(c), requestId,
+    );
+    return c.json({ ledger: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+  }));
 
-  routes.post('/teaching/organizations/:orgSlug/student-packages/:packageId/refunds', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const key = idempotencyKeyOf(c);
-      const packageId = uuidParam(c.req.param('packageId'), 'packageId');
-      const body = await jsonBody(c, 4_096);
-      const result = await repository.refundStudentPackageCredits(
-        actor,
-        c.req.param('orgSlug'),
-        packageId,
-        parseCreditRefundInput(body.value),
-        key,
-        sha256(JSON.stringify([packageId, body.raw])),
-        requestId,
-      );
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.post('/teaching/organizations/:orgSlug/student-packages/:packageId/refunds', (c) => withActor(c, async (actor, requestId) => {
+    const key = idempotencyKeyOf(c);
+    const packageId = uuidParam(c.req.param('packageId'), 'packageId');
+    const body = await jsonBody(c, 4_096);
+    const result = await repository.refundStudentPackageCredits(
+      actor,
+      c.req.param('orgSlug'),
+      packageId,
+      parseCreditRefundInput(body.value),
+      key,
+      sha256(JSON.stringify([packageId, body.raw])),
+      requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
 
   routes.post(
     '/teaching/organizations/:orgSlug/student-packages/:packageId/ledger/:ledgerId/reversal',
-    async (c) => {
-      const requestId = requestIdOf(c);
-      c.header('Cache-Control', 'no-store');
-      try {
-        const actor = await authenticate(c);
-        const key = idempotencyKeyOf(c);
-        const packageId = uuidParam(c.req.param('packageId'), 'packageId');
-        const ledgerId = bigintParam(c.req.param('ledgerId'), 'ledgerId');
-        const body = await jsonBody(c, 4_096);
-        const result = await repository.reverseStudentPackageLedgerEntry(
-          actor,
-          c.req.param('orgSlug'),
-          packageId,
-          ledgerId,
-          parseCreditReversalInput(body.value),
-          key,
-          sha256(JSON.stringify([packageId, ledgerId, body.raw])),
-          requestId,
-        );
-        return c.json(result.body, result.status);
-      } catch (error) {
-        return errorResponse(c, error, requestId);
-      }
-    },
+    (c) => withActor(c, async (actor, requestId) => {
+      const key = idempotencyKeyOf(c);
+      const packageId = uuidParam(c.req.param('packageId'), 'packageId');
+      const ledgerId = bigintParam(c.req.param('ledgerId'), 'ledgerId');
+      const body = await jsonBody(c, 4_096);
+      const result = await repository.reverseStudentPackageLedgerEntry(
+        actor,
+        c.req.param('orgSlug'),
+        packageId,
+        ledgerId,
+        parseCreditReversalInput(body.value),
+        key,
+        sha256(JSON.stringify([packageId, ledgerId, body.raw])),
+        requestId,
+      );
+      return c.json(result.body, result.status);
+    }),
   );
 
-  routes.get('/teaching/organizations/:orgSlug/operations/credit-adjustments', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const page = await repository.listCreditAdjustments(
-        actor, c.req.param('orgSlug'), paginationOf(c), requestId,
-      );
-      return c.json({
-        creditAdjustments: page.items,
-        total: page.total,
-        page: page.page,
-        pageSize: page.pageSize,
-      });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug/operations/credit-adjustments', (c) => withActor(c, async (actor, requestId) => {
+    const page = await repository.listCreditAdjustments(
+      actor, c.req.param('orgSlug'), paginationOf(c), requestId,
+    );
+    return c.json({
+      creditAdjustments: page.items,
+      total: page.total,
+      page: page.page,
+      pageSize: page.pageSize,
+    });
+  }));
 
-  routes.get('/teaching/organizations/:orgSlug/weekly-reports', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const page = await repository.listWeeklyReports(
-        actor,
-        c.req.param('orgSlug'),
-        weeklyReportFilterOf(c),
-        paginationOf(c),
-        requestId,
-      );
-      return c.json({
-        weeklyReports: page.items,
-        total: page.total,
-        page: page.page,
-        pageSize: page.pageSize,
-      });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug/weekly-reports', (c) => withActor(c, async (actor, requestId) => {
+    const page = await repository.listWeeklyReports(
+      actor,
+      c.req.param('orgSlug'),
+      weeklyReportFilterOf(c),
+      paginationOf(c),
+      requestId,
+    );
+    return c.json({
+      weeklyReports: page.items,
+      total: page.total,
+      page: page.page,
+      pageSize: page.pageSize,
+    });
+  }));
 
-  routes.post('/teaching/organizations/:orgSlug/weekly-reports/generate', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const key = idempotencyKeyOf(c);
-      const body = await jsonBody(c);
-      const result = await repository.generateWeeklyReport(
-        actor,
-        c.req.param('orgSlug'),
-        parseGenerateWeeklyReportInput(body.value),
-        key,
-        sha256(body.raw),
-        requestId,
-      );
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.post('/teaching/organizations/:orgSlug/weekly-reports/generate', (c) => withActor(c, async (actor, requestId) => {
+    const key = idempotencyKeyOf(c);
+    const body = await jsonBody(c);
+    const result = await repository.generateWeeklyReport(
+      actor,
+      c.req.param('orgSlug'),
+      parseGenerateWeeklyReportInput(body.value),
+      key,
+      sha256(body.raw),
+      requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
 
-  routes.get('/teaching/organizations/:orgSlug/weekly-reports/:reportId', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const weeklyReport = await repository.getWeeklyReport(
-        actor,
-        c.req.param('orgSlug'),
-        uuidParam(c.req.param('reportId'), 'reportId'),
-        requestId,
-      );
-      return c.json({ weeklyReport });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug/weekly-reports/:reportId', (c) => withActor(c, async (actor, requestId) => {
+    const weeklyReport = await repository.getWeeklyReport(
+      actor,
+      c.req.param('orgSlug'),
+      uuidParam(c.req.param('reportId'), 'reportId'),
+      requestId,
+    );
+    return c.json({ weeklyReport });
+  }));
 
-  routes.post('/teaching/organizations/:orgSlug/weekly-reports/:reportId/publish', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const key = idempotencyKeyOf(c);
-      const body = await jsonBody(c);
-      const reportId = uuidParam(c.req.param('reportId'), 'reportId');
-      const result = await repository.publishWeeklyReport(
-        actor,
-        c.req.param('orgSlug'),
-        reportId,
-        parsePublishWeeklyReportInput(body.value),
-        key,
-        sha256(body.raw),
-        requestId,
-      );
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.post('/teaching/organizations/:orgSlug/weekly-reports/:reportId/publish', (c) => withActor(c, async (actor, requestId) => {
+    const key = idempotencyKeyOf(c);
+    const body = await jsonBody(c);
+    const reportId = uuidParam(c.req.param('reportId'), 'reportId');
+    const result = await repository.publishWeeklyReport(
+      actor,
+      c.req.param('orgSlug'),
+      reportId,
+      parsePublishWeeklyReportInput(body.value),
+      key,
+      sha256(body.raw),
+      requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
 
-  routes.get('/teaching/organizations/:orgSlug/sessions', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const page = await repository.listSessions(actor, c.req.param('orgSlug'), paginationOf(c), requestId);
-      return c.json({ sessions: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug/sessions', (c) => withActor(c, async (actor, requestId) => {
+    const page = await repository.listSessions(actor, c.req.param('orgSlug'), paginationOf(c), requestId);
+    return c.json({ sessions: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+  }));
 
-  routes.post('/teaching/organizations/:orgSlug/sessions', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const key = idempotencyKeyOf(c);
-      const body = await jsonBody(c);
-      const result = await repository.createSession(
-        actor, c.req.param('orgSlug'), parseSessionInput(body.value), key, sha256(body.raw), requestId,
-      );
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.post('/teaching/organizations/:orgSlug/sessions', (c) => withActor(c, async (actor, requestId) => {
+    const key = idempotencyKeyOf(c);
+    const body = await jsonBody(c);
+    const result = await repository.createSession(
+      actor, c.req.param('orgSlug'), parseSessionInput(body.value), key, sha256(body.raw), requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
 
-  routes.get('/teaching/organizations/:orgSlug/sessions/:sessionId', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const session = await repository.getSession(
-        actor, c.req.param('orgSlug'), uuidParam(c.req.param('sessionId'), 'sessionId'), requestId,
-      );
-      return c.json({ session });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug/sessions/:sessionId', (c) => withActor(c, async (actor, requestId) => {
+    const session = await repository.getSession(
+      actor, c.req.param('orgSlug'), uuidParam(c.req.param('sessionId'), 'sessionId'), requestId,
+    );
+    return c.json({ session });
+  }));
 
-  routes.get('/teaching/organizations/:orgSlug/sessions/:sessionId/leave-requests', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
-      const page = await repository.listLeaveRequests(
-        actor, c.req.param('orgSlug'), sessionId, paginationOf(c), requestId,
-      );
-      return c.json({
-        leaveRequests: page.items, total: page.total, page: page.page, pageSize: page.pageSize,
-      });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug/sessions/:sessionId/leave-requests', (c) => withActor(c, async (actor, requestId) => {
+    const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
+    const page = await repository.listLeaveRequests(
+      actor, c.req.param('orgSlug'), sessionId, paginationOf(c), requestId,
+    );
+    return c.json({
+      leaveRequests: page.items, total: page.total, page: page.page, pageSize: page.pageSize,
+    });
+  }));
 
   routes.post(
     '/teaching/organizations/:orgSlug/sessions/:sessionId/attendance/:attendanceId/leave-requests',
-    async (c) => {
-      const requestId = requestIdOf(c);
-      c.header('Cache-Control', 'no-store');
-      try {
-        const actor = await authenticate(c);
-        const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
-        const attendanceId = uuidParam(c.req.param('attendanceId'), 'attendanceId');
-        const body = await jsonBody(c, 4_096);
-        const input = parseLeaveRequestInput(body.value);
-        const result = await repository.createLeaveRequest(
-          actor, c.req.param('orgSlug'), sessionId, attendanceId, input, idempotencyKeyOf(c),
-          sha256(stableJson({ sessionId, attendanceId, input })), requestId,
-        );
-        return c.json(result.body, result.status);
-      } catch (error) {
-        return errorResponse(c, error, requestId);
-      }
-    },
+    (c) => withActor(c, async (actor, requestId) => {
+      const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
+      const attendanceId = uuidParam(c.req.param('attendanceId'), 'attendanceId');
+      const body = await jsonBody(c, 4_096);
+      const input = parseLeaveRequestInput(body.value);
+      const result = await repository.createLeaveRequest(
+        actor, c.req.param('orgSlug'), sessionId, attendanceId, input, idempotencyKeyOf(c),
+        sha256(stableJson({ sessionId, attendanceId, input })), requestId,
+      );
+      return c.json(result.body, result.status);
+    }),
   );
 
   routes.post(
     '/teaching/organizations/:orgSlug/sessions/:sessionId/attendance/:attendanceId/leave-requests/:leaveRequestId/decision',
-    async (c) => {
-      const requestId = requestIdOf(c);
-      c.header('Cache-Control', 'no-store');
-      try {
-        const actor = await authenticate(c);
-        const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
-        const attendanceId = uuidParam(c.req.param('attendanceId'), 'attendanceId');
-        const leaveRequestId = uuidParam(c.req.param('leaveRequestId'), 'leaveRequestId');
-        const body = await jsonBody(c, 4_096);
-        const input = parseLeaveDecisionInput(body.value);
-        const result = await repository.decideLeaveRequest(
-          actor, c.req.param('orgSlug'), sessionId, attendanceId, leaveRequestId, input,
-          idempotencyKeyOf(c),
-          sha256(stableJson({ sessionId, attendanceId, leaveRequestId, input })), requestId,
-        );
-        return c.json(result.body, result.status);
-      } catch (error) {
-        return errorResponse(c, error, requestId);
-      }
-    },
+    (c) => withActor(c, async (actor, requestId) => {
+      const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
+      const attendanceId = uuidParam(c.req.param('attendanceId'), 'attendanceId');
+      const leaveRequestId = uuidParam(c.req.param('leaveRequestId'), 'leaveRequestId');
+      const body = await jsonBody(c, 4_096);
+      const input = parseLeaveDecisionInput(body.value);
+      const result = await repository.decideLeaveRequest(
+        actor, c.req.param('orgSlug'), sessionId, attendanceId, leaveRequestId, input,
+        idempotencyKeyOf(c),
+        sha256(stableJson({ sessionId, attendanceId, leaveRequestId, input })), requestId,
+      );
+      return c.json(result.body, result.status);
+    }),
   );
 
   routes.post(
     '/teaching/organizations/:orgSlug/sessions/:sessionId/attendance/:attendanceId/leave-requests/:leaveRequestId/cancel',
-    async (c) => {
-      const requestId = requestIdOf(c);
-      c.header('Cache-Control', 'no-store');
-      try {
-        const actor = await authenticate(c);
-        const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
-        const attendanceId = uuidParam(c.req.param('attendanceId'), 'attendanceId');
-        const leaveRequestId = uuidParam(c.req.param('leaveRequestId'), 'leaveRequestId');
-        const body = await jsonBody(c, 4_096);
-        const input = parseLeaveRequestInput(body.value);
-        const result = await repository.cancelLeaveRequest(
-          actor, c.req.param('orgSlug'), sessionId, attendanceId, leaveRequestId, input,
-          idempotencyKeyOf(c),
-          sha256(stableJson({ sessionId, attendanceId, leaveRequestId, input })), requestId,
-        );
-        return c.json(result.body, result.status);
-      } catch (error) {
-        return errorResponse(c, error, requestId);
-      }
-    },
+    (c) => withActor(c, async (actor, requestId) => {
+      const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
+      const attendanceId = uuidParam(c.req.param('attendanceId'), 'attendanceId');
+      const leaveRequestId = uuidParam(c.req.param('leaveRequestId'), 'leaveRequestId');
+      const body = await jsonBody(c, 4_096);
+      const input = parseLeaveRequestInput(body.value);
+      const result = await repository.cancelLeaveRequest(
+        actor, c.req.param('orgSlug'), sessionId, attendanceId, leaveRequestId, input,
+        idempotencyKeyOf(c),
+        sha256(stableJson({ sessionId, attendanceId, leaveRequestId, input })), requestId,
+      );
+      return c.json(result.body, result.status);
+    }),
   );
 
   routes.get(
     '/teaching/organizations/:orgSlug/sessions/:sessionId/attendance/:attendanceId/makeups',
-    async (c) => {
-      const requestId = requestIdOf(c);
-      c.header('Cache-Control', 'no-store');
-      try {
-        const actor = await authenticate(c);
-        const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
-        const attendanceId = uuidParam(c.req.param('attendanceId'), 'attendanceId');
-        const page = await repository.listMakeupAttempts(
-          actor, c.req.param('orgSlug'), sessionId, attendanceId, paginationOf(c), requestId,
-        );
-        return c.json({
-          makeupAttempts: page.items, total: page.total, page: page.page, pageSize: page.pageSize,
-        });
-      } catch (error) {
-        return errorResponse(c, error, requestId);
-      }
-    },
+    (c) => withActor(c, async (actor, requestId) => {
+      const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
+      const attendanceId = uuidParam(c.req.param('attendanceId'), 'attendanceId');
+      const page = await repository.listMakeupAttempts(
+        actor, c.req.param('orgSlug'), sessionId, attendanceId, paginationOf(c), requestId,
+      );
+      return c.json({
+        makeupAttempts: page.items, total: page.total, page: page.page, pageSize: page.pageSize,
+      });
+    }),
   );
 
   routes.get(
     '/teaching/organizations/:orgSlug/sessions/:sessionId/attendance/:attendanceId/makeups/candidates',
-    async (c) => {
-      const requestId = requestIdOf(c);
-      c.header('Cache-Control', 'no-store');
-      try {
-        const actor = await authenticate(c);
-        const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
-        const attendanceId = uuidParam(c.req.param('attendanceId'), 'attendanceId');
-        const page = await repository.listMakeupCandidates(
-          actor, c.req.param('orgSlug'), sessionId, attendanceId, paginationOf(c), requestId,
-        );
-        return c.json({ candidates: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
-      } catch (error) {
-        return errorResponse(c, error, requestId);
-      }
-    },
+    (c) => withActor(c, async (actor, requestId) => {
+      const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
+      const attendanceId = uuidParam(c.req.param('attendanceId'), 'attendanceId');
+      const page = await repository.listMakeupCandidates(
+        actor, c.req.param('orgSlug'), sessionId, attendanceId, paginationOf(c), requestId,
+      );
+      return c.json({ candidates: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+    }),
   );
 
   routes.post(
     '/teaching/organizations/:orgSlug/sessions/:sessionId/attendance/:attendanceId/makeups',
-    async (c) => {
-      const requestId = requestIdOf(c);
-      c.header('Cache-Control', 'no-store');
-      try {
-        const actor = await authenticate(c);
-        const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
-        const attendanceId = uuidParam(c.req.param('attendanceId'), 'attendanceId');
-        const body = await jsonBody(c, 4_096);
-        const input = parseMakeupScheduleInput(body.value);
-        const result = await repository.scheduleMakeup(
-          actor, c.req.param('orgSlug'), sessionId, attendanceId, input, idempotencyKeyOf(c),
-          sha256(stableJson({ sessionId, attendanceId, input })), requestId,
-        );
-        return c.json(result.body, result.status);
-      } catch (error) {
-        return errorResponse(c, error, requestId);
-      }
-    },
+    (c) => withActor(c, async (actor, requestId) => {
+      const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
+      const attendanceId = uuidParam(c.req.param('attendanceId'), 'attendanceId');
+      const body = await jsonBody(c, 4_096);
+      const input = parseMakeupScheduleInput(body.value);
+      const result = await repository.scheduleMakeup(
+        actor, c.req.param('orgSlug'), sessionId, attendanceId, input, idempotencyKeyOf(c),
+        sha256(stableJson({ sessionId, attendanceId, input })), requestId,
+      );
+      return c.json(result.body, result.status);
+    }),
   );
 
-  routes.post('/teaching/organizations/:orgSlug/sessions/:sessionId/attendance/batch', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const key = idempotencyKeyOf(c);
-      const body = await jsonBody(c);
-      const result = await repository.saveAttendanceBatch(
-        actor, c.req.param('orgSlug'), uuidParam(c.req.param('sessionId'), 'sessionId'),
-        parseAttendanceBatchInput(body.value), key, sha256(body.raw), requestId,
-      );
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.post('/teaching/organizations/:orgSlug/sessions/:sessionId/attendance/batch', (c) => withActor(c, async (actor, requestId) => {
+    const key = idempotencyKeyOf(c);
+    const body = await jsonBody(c);
+    const result = await repository.saveAttendanceBatch(
+      actor, c.req.param('orgSlug'), uuidParam(c.req.param('sessionId'), 'sessionId'),
+      parseAttendanceBatchInput(body.value), key, sha256(body.raw), requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
 
-  routes.post('/teaching/organizations/:orgSlug/sessions/:sessionId/complete', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const key = idempotencyKeyOf(c);
-      const body = await jsonBody(c);
-      if (Object.keys(body.value).length) {
-        throw new TeachingApiException('INVALID_INPUT', 400, 'Session completion body must be empty');
-      }
-      const result = await repository.completeSession(
-        actor, c.req.param('orgSlug'), uuidParam(c.req.param('sessionId'), 'sessionId'),
-        key, sha256(body.raw), requestId,
-      );
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
+  routes.post('/teaching/organizations/:orgSlug/sessions/:sessionId/complete', (c) => withActor(c, async (actor, requestId) => {
+    const key = idempotencyKeyOf(c);
+    const body = await jsonBody(c);
+    if (Object.keys(body.value).length) {
+      throw new TeachingApiException('INVALID_INPUT', 400, 'Session completion body must be empty');
     }
-  });
+    const result = await repository.completeSession(
+      actor, c.req.param('orgSlug'), uuidParam(c.req.param('sessionId'), 'sessionId'),
+      key, sha256(body.raw), requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
 
-  routes.post('/teaching/organizations/:orgSlug/sessions/:sessionId/cancel', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
-      const body = await jsonBody(c, 4_096);
-      const input = parseSessionCancelInput(body.value);
-      const result = await repository.cancelSession(
-        actor, c.req.param('orgSlug'), sessionId, input, idempotencyKeyOf(c),
-        sha256(stableJson({ sessionId, input })), requestId,
-      );
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.post('/teaching/organizations/:orgSlug/sessions/:sessionId/cancel', (c) => withActor(c, async (actor, requestId) => {
+    const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
+    const body = await jsonBody(c, 4_096);
+    const input = parseSessionCancelInput(body.value);
+    const result = await repository.cancelSession(
+      actor, c.req.param('orgSlug'), sessionId, input, idempotencyKeyOf(c),
+      sha256(stableJson({ sessionId, input })), requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
 
-  routes.get('/teaching/organizations/:orgSlug/sessions/:sessionId/feedback', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const page = await repository.listLessonFeedback(
-        actor,
-        c.req.param('orgSlug'),
-        uuidParam(c.req.param('sessionId'), 'sessionId'),
-        paginationOf(c),
-        requestId,
-      );
-      return c.json({ feedback: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.get('/teaching/organizations/:orgSlug/sessions/:sessionId/feedback', (c) => withActor(c, async (actor, requestId) => {
+    const page = await repository.listLessonFeedback(
+      actor,
+      c.req.param('orgSlug'),
+      uuidParam(c.req.param('sessionId'), 'sessionId'),
+      paginationOf(c),
+      requestId,
+    );
+    return c.json({ feedback: page.items, total: page.total, page: page.page, pageSize: page.pageSize });
+  }));
 
-  routes.post('/teaching/organizations/:orgSlug/sessions/:sessionId/students/:studentId/feedback', async (c) => {
-    const requestId = requestIdOf(c);
-    c.header('Cache-Control', 'no-store');
-    try {
-      const actor = await authenticate(c);
-      const key = idempotencyKeyOf(c);
-      const body = await jsonBody(c);
-      const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
-      const studentId = uuidParam(c.req.param('studentId'), 'studentId');
-      const result = await repository.createLessonFeedback(
-        actor,
-        c.req.param('orgSlug'),
-        sessionId,
-        studentId,
-        parseLessonFeedbackInput(body.value),
-        key,
-        sha256(JSON.stringify([sessionId, studentId, body.raw])),
-        requestId,
-      );
-      return c.json(result.body, result.status);
-    } catch (error) {
-      return errorResponse(c, error, requestId);
-    }
-  });
+  routes.post('/teaching/organizations/:orgSlug/sessions/:sessionId/students/:studentId/feedback', (c) => withActor(c, async (actor, requestId) => {
+    const key = idempotencyKeyOf(c);
+    const body = await jsonBody(c);
+    const sessionId = uuidParam(c.req.param('sessionId'), 'sessionId');
+    const studentId = uuidParam(c.req.param('studentId'), 'studentId');
+    const result = await repository.createLessonFeedback(
+      actor,
+      c.req.param('orgSlug'),
+      sessionId,
+      studentId,
+      parseLessonFeedbackInput(body.value),
+      key,
+      sha256(JSON.stringify([sessionId, studentId, body.raw])),
+      requestId,
+    );
+    return c.json(result.body, result.status);
+  }));
 
   return routes;
 }

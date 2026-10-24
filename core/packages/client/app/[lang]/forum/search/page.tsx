@@ -32,15 +32,14 @@ export default function ForumSearchPage() {
 
   useEffect(() => {
     if (query.length < MIN_QUERY_LEN) { setData(null); setError(''); setLoading(false); return; }
-    let cancelled = false;
+    const controller = new AbortController();
     setLoading(true);
-    const timer = setTimeout(() => {
-      searchForum(query, page, size)
-        .then(d => { if (!cancelled) { setData(d); setError(''); } })
-        .catch(e => { if (!cancelled) setError((e as Error).message); })
-        .finally(() => { if (!cancelled) setLoading(false); });
-    }, 300);
-    return () => { cancelled = true; clearTimeout(timer); };
+    setError('');
+    searchForum(query, page, size, controller.signal)
+      .then(d => { if (!controller.signal.aborted) setData(d); })
+      .catch(e => { if (!controller.signal.aborted) setError((e as Error).message); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
   }, [query, page, size]);
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / size)) : 1;
@@ -56,6 +55,7 @@ export default function ForumSearchPage() {
 
       <SearchInput
         value={q}
+        debounceMs={300}
         onChange={v => { setQ(v || null); setPage(1); }}
         placeholder={tr({ zh: '搜标题和帖子内容', en: 'Search titles and post bodies' })}
         className="forum-search-box"

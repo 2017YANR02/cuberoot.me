@@ -16,6 +16,7 @@ import { API_ORIGIN, apiUrl } from '@/lib/api-base';
 import type { StackToolMeta } from '@/app/[lang]/dev/stack/_lib/stack_meta';
 import { WR_METRICS, resultsQueryForMetric } from '@/lib/wr-metrics';
 import { ALG_CATALOG } from '@cuberoot/shared/alg';
+import { searchForum, type SearchData, type SearchThread } from '@/lib/forum-api';
 
 export interface SiteSearchCard {
   id: string;
@@ -376,6 +377,10 @@ export interface SiteSearchResult {
   algSetMatches: AlgSetHit[];
   platformMatches: PlatformSearchHit[];
   platformSearchError: boolean;
+  forumMatches: SearchThread[];
+  forumTotal: number;
+  forumSearchPending: boolean;
+  forumSearchError: boolean;
   totalCount: number;
   yearMatch: string | null;
   statIndexLoaded: boolean;
@@ -396,6 +401,7 @@ export function useSiteSearch(
   const [reconMatches, setReconMatches] = useState<ReconHit[]>([]);
   const [platformMatches, setPlatformMatches] = useState<PlatformSearchHit[]>([]);
   const [platformSearchError, setPlatformSearchError] = useState(false);
+  const [forumSearch, setForumSearch] = useState<{ query: string; data: SearchData | null; error: boolean } | null>(null);
   const [algSetMatches, setAlgSetMatches] = useState<AlgSetHit[]>([]);
   const compsRef = useRef<Comp[] | null>(null);
   const reconsRef = useRef<ReconRecord[] | null>(null);
@@ -410,6 +416,25 @@ export function useSiteSearch(
   const qRaw = deferredRawQuery.trim();
   const xSearchEnabled = qRaw.length >= (hasNonLatin(qRaw) ? 1 : MIN_LEN_LATIN);
   const tokens = useMemo(() => tokenize(q), [q]);
+
+  const forumSearchEnabled = qRaw.length >= 2;
+  const currentForumSearch = forumSearchEnabled && forumSearch?.query === qRaw ? forumSearch : null;
+  const forumMatches = currentForumSearch?.data?.threads ?? [];
+  const forumTotal = currentForumSearch?.data?.total ?? 0;
+  const forumSearchPending = forumSearchEnabled && currentForumSearch === null;
+  const forumSearchError = currentForumSearch?.error ?? false;
+
+  useEffect(() => {
+    setForumSearch(null);
+    if (!forumSearchEnabled) return;
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      void searchForum(qRaw, 1, INITIAL_RENDER_CAP, controller.signal)
+        .then(data => { if (!controller.signal.aborted) setForumSearch({ query: qRaw, data, error: false }); })
+        .catch(() => { if (!controller.signal.aborted) setForumSearch({ query: qRaw, data: null, error: true }); });
+    }, 300);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [qRaw, forumSearchEnabled]);
 
   useEffect(() => {
     setPlatformMatches([]);
@@ -615,7 +640,7 @@ export function useSiteSearch(
     glossaryMatches.length +
     aboutMatches.length +
     stackMatches.length +
-    algSetMatches.length + platformMatches.length;
+    algSetMatches.length + platformMatches.length + forumTotal;
 
   return {
     q, qRaw, xSearchEnabled, xLoaded,
@@ -624,6 +649,7 @@ export function useSiteSearch(
     personMatches, compMatches,
     reconMatches, glossaryMatches, aboutMatches, stackMatches, algSetMatches,
     platformMatches, platformSearchError,
+    forumMatches, forumTotal, forumSearchPending, forumSearchError,
     totalCount,
     yearMatch,
     statIndexLoaded: statIndex !== null,

@@ -1,15 +1,19 @@
-"""Python boundary for the COCO contract in src/dataset-manifest.ts.
+"""Python boundary for visible-instance COCO and decoded-frame JSONL inputs.
 
 No model, solution notation, old grid, or synthetic label is consulted here.
 Unknown regions remain explicit; this baseline cannot train with ignore masks.
+The COCO contract is shared with src/dataset-manifest.ts; frame metadata is
+produced by the TypeScript video intake, never reconstructed from GT.
 """
 from __future__ import annotations
 
 from collections import Counter, defaultdict
+from fractions import Fraction
 import hashlib
 import json
 import math
-from pathlib import Path
+from pathlib import Path, PurePosixPath
+import re
 
 COLORS = ("W", "Y", "R", "O", "B", "G")
 SPLITS = {"train", "val", "test", "development", "unassigned"}
@@ -28,7 +32,189 @@ def sha256(path: Path) -> str:
 
 
 def number(value) -> bool:
-    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+    try:
+        return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+    except OverflowError:
+        return False
+
+
+FRAME_MANIFEST_KIND = "reconer-frame-manifest"
+MAX_MANIFEST_LINE_BYTES = 1024 * 1024
+
+
+def _object_fields(value, fields, label, optional=()):
+    if not isinstance(value, dict) or not set(fields).issubset(value) or set(value) - set(fields) - set(optional):
+        raise DataError(f"{label}: expected exactly {', '.join(fields)}")
+
+
+def _nonempty(value, label):
+    if not isinstance(value, str) or not value.strip() or value != value.strip():
+        raise DataError(f"{label}: nonempty string without surrounding whitespace required")
+
+
+def _hash(value, label):
+    if not isinstance(value, str) or re.fullmatch(r"[a-f0-9]{64}", value) is None:
+        raise DataError(f"{label}: lowercase SHA-256 required")
+
+
+def _positive_int(value, label):
+    if type(value) is not int or value <= 0 or value > 2 ** 53 - 1:
+        raise DataError(f"{label}: positive JSON-safe integer required")
+
+
+def _pts(value, label):
+    if not isinstance(value, str) or re.fullmatch(r"0|-?[1-9][0-9]*", value) is None:
+        raise DataError(f"{label}: exact decimal integer string required")
+    return int(value)
+
+
+def _read_jsonl_line(stream, label):
+    line = stream.readline(MAX_MANIFEST_LINE_BYTES + 1)
+    if not line:
+        return None, line
+    if len(line) > MAX_MANIFEST_LINE_BYTES:
+        raise DataError(f"{label}: JSONL record exceeds 1 MiB")
+    try:
+        return json.loads(line), line
+    except (ValueError, UnicodeDecodeError) as exc:
+        raise DataError(f"{label}: malformed JSONL record") from exc
+
+
+def read_frame_manifest_header(path):
+    """Image stream input only. It has no annotation, solution or split fields."""
+    if path.name.endswith(".partial.jsonl"):
+        raise DataError("A partial extraction manifest is not a completed frame input")
+    with path.open("rb") as stream:
+        header, _ = _read_jsonl_line(stream, "Frame manifest header")
+    _object_fields(header, ("schemaVersion", "kind", "videoId", "sourceHash", "sourcePath",
+                            "sourceWidth", "sourceHeight", "timeBase", "timeMapping"), "Frame manifest header",
+                   optional=("sampling", "producerConfigHash"))
+    if type(header["schemaVersion"]) is not int or header["schemaVersion"] != 1 or header["kind"] != FRAME_MANIFEST_KIND:
+        raise DataError("Unsupported frame manifest format")
+    for key in ("videoId", "sourcePath"):
+        _nonempty(header[key], key)
+    _hash(header["sourceHash"], "sourceHash")
+    for key in ("sourceWidth", "sourceHeight"):
+        _positive_int(header[key], key)
+    base = header["timeBase"]
+    _object_fields(base, ("numerator", "denominator"), "timeBase")
+    for key in base:
+        _positive_int(base[key], f"timeBase.{key}")
+    mapping = header["timeMapping"]
+    _object_fields(mapping, ("ptsOrigin", "realTimeOriginMs", "realSecondsPerPtsSecond", "verified"), "timeMapping")
+    _pts(mapping["ptsOrigin"], "timeMapping.ptsOrigin")
+    if not number(mapping["realTimeOriginMs"]) or mapping["realTimeOriginMs"] < 0 or type(mapping["verified"]) is not bool:
+        raise DataError("timeMapping needs a nonnegative real origin and explicit boolean verified")
+    scale = mapping["realSecondsPerPtsSecond"]
+    if scale is not None and (not number(scale) or scale <= 0):
+        raise DataError("realSecondsPerPtsSecond must be positive or null")
+    if mapping["verified"] and scale is None:
+        raise DataError("Verified real-time mapping requires a known scale")
+    if "sampling" in header:
+        _object_fields(header["sampling"], ("kind", "duplicatesVerified"), "sampling")
+        if header["sampling"]["kind"] != "all-decoded-frames" or header["sampling"]["duplicatesVerified"] is not False:
+            raise DataError("This baseline requires declared all-decoded-frames sampling without a deduplication claim")
+    if "producerConfigHash" in header:
+        _hash(header["producerConfigHash"], "producerConfigHash")
+    return header
+
+
+def frame_real_time_ms(header, source_pts):
+    """Never infer real time from nominal FPS or an unverified slow-motion scale."""
+    mapping = header["timeMapping"]
+    if not mapping["verified"]:
+        return None
+    base = header["timeBase"]
+    elapsed = Fraction((source_pts - _pts(mapping["ptsOrigin"], "ptsOrigin")) * base["numerator"], base["denominator"])
+    return float(elapsed) * mapping["realSecondsPerPtsSecond"] * 1000 + mapping["realTimeOriginMs"]
+
+
+def validate_frame_record(frame, header, index, previous_pts):
+    _object_fields(frame, ("kind", "frameId", "frameIndex", "imagePath", "imageHash", "width", "height",
+                           "sourcePts", "ptsSeconds", "realTimeMs", "sourceCrop"), f"Frame {index}")
+    if frame["kind"] != "frame" or type(frame["frameIndex"]) is not int or frame["frameIndex"] != index:
+        raise DataError(f"Frame {index}: frameIndex must be contiguous and start at zero")
+    for key in ("frameId", "imagePath"):
+        _nonempty(frame[key], key)
+    image_path = PurePosixPath(frame["imagePath"])
+    if image_path.is_absolute() or ".." in image_path.parts or "\\" in frame["imagePath"] or str(image_path) != frame["imagePath"]:
+        raise DataError(f"Frame {index}: imagePath must be a normalized relative POSIX path without '..'")
+    _hash(frame["imageHash"], "imageHash")
+    for key in ("width", "height"):
+        _positive_int(frame[key], key)
+    pts = _pts(frame["sourcePts"], "sourcePts")
+    if previous_pts is not None and pts <= previous_pts:
+        raise DataError(f"Frame {index}: decoded source PTS must increase strictly")
+    base = header["timeBase"]
+    try:
+        pts_seconds = float(Fraction(pts * base["numerator"], base["denominator"]))
+        real_time = frame_real_time_ms(header, pts)
+    except OverflowError as exc:
+        raise DataError(f"Frame {index}: PTS/time mapping exceeds finite numeric range") from exc
+    if not number(frame["ptsSeconds"]) or not math.isclose(frame["ptsSeconds"], pts_seconds, rel_tol=1e-12, abs_tol=1e-6):
+        raise DataError(f"Frame {index}: ptsSeconds does not match exact sourcePts/timeBase")
+    if real_time is None:
+        if frame["realTimeMs"] is not None:
+            raise DataError(f"Frame {index}: unverified real-time mapping requires realTimeMs=null")
+    elif not number(real_time) or real_time < 0 or not number(frame["realTimeMs"]) or not math.isclose(frame["realTimeMs"], real_time, rel_tol=1e-12, abs_tol=1e-3):
+        raise DataError(f"Frame {index}: realTimeMs does not match verified timeMapping")
+    crop = frame["sourceCrop"]
+    if not isinstance(crop, list) or len(crop) != 4 or not all(number(v) for v in crop):
+        raise DataError(f"Frame {index}: sourceCrop must be [x,y,width,height]")
+    x, y, width, height = crop
+    if min(x, y) < 0 or min(width, height) <= 0 or x + width > header["sourceWidth"] or y + height > header["sourceHeight"]:
+        raise DataError(f"Frame {index}: sourceCrop leaves the source image")
+    return pts
+
+
+def iter_manifest_frames(path, header, expected_hash=None):
+    """Yield one metadata record at a time; no video frames or predictions accumulate."""
+    digest = hashlib.sha256()
+    frame_ids = set()
+    with path.open("rb") as stream:
+        actual_header, line = _read_jsonl_line(stream, "Frame manifest header")
+        if actual_header != header:
+            raise DataError("Frame manifest header changed after preparation")
+        digest.update(line)
+        index, previous_pts = 0, None
+        while True:
+            frame, line = _read_jsonl_line(stream, f"Frame {index}")
+            if frame is None and not line:
+                break
+            digest.update(line)
+            previous_pts = validate_frame_record(frame, header, index, previous_pts)
+            if frame["frameId"] in frame_ids:
+                raise DataError(f"Duplicate frameId: {frame['frameId']}")
+            frame_ids.add(frame["frameId"])
+            yield frame
+            index += 1
+    if expected_hash is not None and digest.hexdigest() != expected_hash:
+        raise DataError("Frame manifest bytes changed during the run; do not treat partial output as complete")
+
+
+def verify_frame_image(frame, root):
+    path = (root / frame["imagePath"]).resolve()
+    if not path.is_relative_to(root) or not path.is_file() or sha256(path) != frame["imageHash"]:
+        raise DataError(f"Frame {frame['frameId']}: missing image or imageHash mismatch")
+    from PIL import Image
+    with Image.open(path) as image:
+        if image.size != (frame["width"], frame["height"]):
+            raise DataError(f"Frame {frame['frameId']}: image dimensions differ from manifest")
+        image.verify()
+
+
+def prepare_frame_manifest(path, images_root=None):
+    path = path.resolve()
+    header = read_frame_manifest_header(path)
+    manifest_hash = sha256(path)
+    root = (images_root or path.parent).resolve()
+    count = 0
+    for frame in iter_manifest_frames(path, header, manifest_hash):
+        verify_frame_image(frame, root)
+        count += 1
+    if not count:
+        raise DataError("Frame manifest has no decoded frames")
+    return header, root, count, manifest_hash
 
 
 def load_dataset(path: Path, root: Path | None = None, splits=(), training=False):

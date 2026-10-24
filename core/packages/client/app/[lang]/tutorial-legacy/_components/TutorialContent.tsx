@@ -4,15 +4,9 @@
  * - html-react-parser 解析，在 <span class="tutorial-chip"> 位置注入 AlgChip
  * - 旧教程内链被改到 legacy 路由并替换成 Next Link
  */
-import parse, {
-  domToReact,
-  type HTMLReactParserOptions,
-  type DOMNode,
-} from 'html-react-parser';
+import parse from 'html-react-parser';
 import DOMPurify from 'dompurify';
-import Link from '@/components/AppLink';
-import { AlgChip } from './AlgChip';
-import { tutorialMediaUrl } from '../_lib/useTutorialCatalog';
+import { createTutorialContentOptions } from './tutorial-content-parser';
 
 interface TutorialContentProps {
   html: string;
@@ -23,70 +17,10 @@ const SANITIZE_CONFIG = {
   ADD_ATTR: ['data-alg', 'data-see-also', 'loading', 'decoding'],
 };
 
-/** 把 chip span 的子节点序列化成 markup 字符串(用于传给 AlgChip 的 algHtml) */
-function serializeChipChildren(children: DOMNode[]): string {
-  return children
-    .map((c: any) => {
-      if (c.type === 'text') return c.data ?? '';
-      if (c.type !== 'tag') return '';
-      const tag = String(c.name ?? '').toLowerCase();
-      const inner = serializeChipChildren(c.children ?? []);
-      // Only known safe tags pass through; others unwrap
-      if (['u', 's', 'em', 'strong', 'sub', 'sup', 'i', 'b'].includes(tag)) {
-        return `<${tag}>${inner}</${tag}>`;
-      }
-      return inner;
-    })
-    .join('');
-}
-
 export function TutorialContent({ html }: TutorialContentProps) {
   const clean = DOMPurify.sanitize(html, SANITIZE_CONFIG);
 
-  const options: HTMLReactParserOptions = {
-    replace: node => {
-      if (node.type !== 'tag') return;
-      const el = node as unknown as {
-        name: string;
-        attribs: Record<string, string>;
-        children: DOMNode[];
-      };
-
-      // alg chip
-      if (el.name === 'span' && el.attribs?.class?.includes('tutorial-chip')) {
-        const alg = el.attribs['data-alg'] ?? '';
-        if (alg) {
-          const inner = serializeChipChildren(el.children);
-          // 只有当 chip 内部含 markup 标签时才传 algHtml
-          const algHtml = /<[a-z]+>/i.test(inner) ? inner : undefined;
-          return <AlgChip alg={alg} algHtml={algHtml} />;
-        }
-      }
-
-      // 正文图片的 /stats/… 路径 → static origin(免 Vercel 307 + 函数调用)。
-      // 原地改 attribs、返回 undefined 走默认渲染,其余属性原样保留。
-      if (el.name === 'img' && el.attribs?.src?.startsWith('/stats/')) {
-        el.attribs.src = tutorialMediaUrl(el.attribs.src);
-        return undefined;
-      }
-
-      // 旧正文里的 /tutorial/... → legacy 路由
-      if (el.name === 'a') {
-        const href = el.attribs.href ?? '';
-        if (href.startsWith('/tutorial/')) {
-          const className = el.attribs.class;
-          const legacyHref = href.replace('/tutorial/', '/tutorial-legacy/');
-          return (
-            // allow-nested-link: html-react-parser replaces the source anchor node.
-            <Link href={legacyHref} className={className}>
-              {domToReact(el.children, options)}
-            </Link>
-          );
-        }
-      }
-      return undefined;
-    },
-  };
+  const options = createTutorialContentOptions();
 
   return <div className="tutorial-content">{parse(clean, options)}</div>;
 }

@@ -143,6 +143,7 @@
       "./wca-format-result": "runtime-neutral",
       "./record-news": "runtime-neutral",
       "./wca-records": "runtime-neutral",
+      "./wb": "runtime-neutral",
       "./page-share": "runtime-neutral",
       "./contact": "runtime-neutral",
       "./cube-unfolded-svg": "runtime-neutral",
@@ -617,6 +618,10 @@
     "./deskpet": {
       "node": "./dist/deskpet.js",
       "default": "./src/deskpet.ts"
+    },
+    "./wb": {
+      "node": "./dist/wb.js",
+      "default": "./src/wb.ts"
     },
     "./auth/web-session": {
       "node": "./dist/auth/web_session.js",

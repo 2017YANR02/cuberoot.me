@@ -7,6 +7,8 @@
   "scripts": {
     "research:status": "tsx scripts/research-status.ts",
     "data:audit": "tsx scripts/dataset-audit.ts",
+    "video:prepare": "tsx scripts/prepare-video-frames.ts",
+    "video:reconstruct": "tsx scripts/reconstruct-observations.ts",
     "evaluate": "tsx scripts/evaluate-reconstruction.ts",
     "test": "vitest run",
     "test:watch": "vitest",

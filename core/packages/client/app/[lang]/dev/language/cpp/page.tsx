@@ -1,5 +1,6 @@
 'use client';
 
+import { installIntroEffects } from '../../_shared/intro-effects';
 import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -446,80 +447,17 @@ export default function CppIntroPage() {
     const root = rootRef.current;
     if (!root) return;
 
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach((e) => {
-        if (e.isIntersecting) {
-          e.target.classList.add('visible');
-          io.unobserve(e.target);
-        }
-      });
-    }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
-
-    const targets = root.querySelectorAll<HTMLElement>(
-      '.tl-item, .why-card, .def-card, .logo-card, .future-card, .bar, .compare-col, .cmp-table tr, .ts-card, .ai-stat, .ai-tool, .spotlight, .ai-reverse, .ai-takeaway, .quote-block'
-    );
-    targets.forEach((el) => { el.classList.add('fade-up'); io.observe(el); });
-
-    root.querySelectorAll<HTMLElement>('.tl-item').forEach((el, i) => { el.style.transitionDelay = `${Math.min(i * 60, 400)}ms`; });
-    root.querySelectorAll<HTMLElement>('.why-card').forEach((el, i) => { el.style.transitionDelay = `${(i % 3) * 80}ms`; });
-    root.querySelectorAll<HTMLElement>('.logo-card').forEach((el, i) => { el.style.transitionDelay = `${(i % 6) * 60}ms`; });
-    root.querySelectorAll<HTMLElement>('.ts-card').forEach((el, i) => { el.style.transitionDelay = `${(i % 4) * 70}ms`; });
-    root.querySelectorAll<HTMLElement>('.ai-tool').forEach((el, i) => { el.style.transitionDelay = `${(i % 4) * 50}ms`; });
-
-    const floats = root.querySelectorAll<HTMLElement>('.float');
-    let mx = 0, my = 0, tx = 0, ty = 0;
-    const onMouse = (e: MouseEvent) => {
-      mx = (e.clientX / window.innerWidth - 0.5) * 2;
-      my = (e.clientY / window.innerHeight - 0.5) * 2;
-    };
-    window.addEventListener('mousemove', onMouse);
-    let raf = 0;
-    const loop = () => {
-      tx += (mx - tx) * 0.06;
-      ty += (my - ty) * 0.06;
-      floats.forEach((el, i) => {
-        const depth = (i % 3 + 1) * 6;
-        el.style.translate = `${tx * depth}px ${ty * depth}px`;
-      });
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-
-    const navLinks = root.querySelectorAll<HTMLAnchorElement>('.nav-links a');
-    const sections = Array.from(root.querySelectorAll<HTMLElement>('section[id]'));
-    const setActive = () => {
-      const y = window.scrollY + 120;
-      let cur = sections[0]?.id;
-      for (const s of sections) if (s.offsetTop <= y) cur = s.id;
-      navLinks.forEach((a) => {
-        a.style.color = a.getAttribute('href') === '#' + cur ? 'var(--ts-bright)' : '';
-      });
-    };
-    window.addEventListener('scroll', setActive, { passive: true });
-    setActive();
-
-    const onAnchorClick = (e: Event) => {
-      const a = e.currentTarget as HTMLAnchorElement;
-      const href = a.getAttribute('href');
-      if (!href || !href.startsWith('#')) return;
-      const id = href.slice(1);
-      const target = id === 'top' ? root : root.querySelector('#' + id);
-      if (target) {
-        e.preventDefault();
-        const top = (target as HTMLElement).getBoundingClientRect().top + window.scrollY - 60;
-        window.scrollTo({ top, behavior: 'smooth' });
-      }
-    };
-    const anchors = root.querySelectorAll<HTMLAnchorElement>('a[href^="#"]');
-    anchors.forEach((a) => a.addEventListener('click', onAnchorClick));
-
-    return () => {
-      io.disconnect();
-      window.removeEventListener('mousemove', onMouse);
-      window.removeEventListener('scroll', setActive);
-      cancelAnimationFrame(raf);
-      anchors.forEach((a) => a.removeEventListener('click', onAnchorClick));
-    };
+    return installIntroEffects(root, {
+      revealSelector: '.tl-item, .why-card, .def-card, .logo-card, .future-card, .bar, .compare-col, .cmp-table tr, .ts-card, .ai-stat, .ai-tool, .spotlight, .ai-reverse, .ai-takeaway, .quote-block',
+      activeColor: 'var(--ts-bright)',
+      stagger: () => {
+        root.querySelectorAll<HTMLElement>('.tl-item').forEach((el, i) => { el.style.transitionDelay = `${Math.min(i * 60, 400)}ms`; });
+        root.querySelectorAll<HTMLElement>('.why-card').forEach((el, i) => { el.style.transitionDelay = `${(i % 3) * 80}ms`; });
+        root.querySelectorAll<HTMLElement>('.logo-card').forEach((el, i) => { el.style.transitionDelay = `${(i % 6) * 60}ms`; });
+        root.querySelectorAll<HTMLElement>('.ts-card').forEach((el, i) => { el.style.transitionDelay = `${(i % 4) * 70}ms`; });
+        root.querySelectorAll<HTMLElement>('.ai-tool').forEach((el, i) => { el.style.transitionDelay = `${(i % 4) * 50}ms`; });
+      },
+    });
   }, []);
 
   return (

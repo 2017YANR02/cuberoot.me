@@ -15,19 +15,11 @@ import {
   solveSlide15Grid, SLIDE15_MEAN_OPTIMAL, SLIDE15_STATE_COUNT_APPROX,
 } from '@/lib/slide15-solver';
 import { tr } from '@/i18n/tr';
+import { downloadText } from '@/lib/scramble-dist/download';
 
 const SLIDE15_COLOR = '#3a86ff'; // 数据蓝(非 UI 灰阶)
 const DEFAULT_SAMPLE = 400;      // 默认采样个数(均匀随机态,异步分批,可重采/取消)
 const BATCH = 1;                 // 每个 macrotask 只解 1 个:均匀深态单条可能很慢,逐个让出主线程保响应
-
-function downloadText(filename: string, text: string) {
-  const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 0);
-}
 
 // 可复现 PRNG(seeded):同一 seed → 同一组采样,样本可下载、可复算。
 function mulberry32(seed: number) {
