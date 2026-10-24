@@ -111,9 +111,11 @@ jobs:
           ENTRY_DIR=$(dirname "$(find .next/standalone -name 'server.js' -not -path '*/node_modules/*' | head -1)")
           echo "ENTRY_DIR=$ENTRY_DIR"
           # static/ + public/ must sit under ENTRY_DIR
-          mkdir -p "$ENTRY_DIR/.next"
-          cp -r .next/static "$ENTRY_DIR/.next/static"
-          cp -r public "$ENTRY_DIR/public"
+          mkdir -p "$ENTRY_DIR/.next/static" "$ENTRY_DIR/public"
+          cp -r .next/static/. "$ENTRY_DIR/.next/static/"
+          cp -r public/. "$ENTRY_DIR/public/"
+          # standalone may already contain public/: copy contents, not a nested directory.
+          diff -qr public "$ENTRY_DIR/public"
           # Wrapper that systemd invokes — knows the entry path relative to LIVE.
           REL=$(realpath --relative-to=.next/standalone "$ENTRY_DIR")
           cat > .next/standalone/start.sh <<EOF
