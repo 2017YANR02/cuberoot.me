@@ -3,7 +3,7 @@ const BASE = '/tools/solver/rust-cross';
 const TABLES_BASE = 'https://static.cuberoot.me/tools/solver/rust-cross/tables';
 const TV = 'tv=1';
 // Worker, glue and WASM must change versions together; table contents are unchanged.
-const V = 'v=20261004a';
+const V = 'v=20261024a';
 export { BASE, TABLES_BASE, TV, V };
 
 let hostTablesBase: string | undefined;

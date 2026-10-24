@@ -451,6 +451,10 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'dev/ops': { title: { zh: '运维', en: 'Ops' } },
   'dev/schema': { title: { zh: '数据库 Schema', en: 'Database schema' } },
   'dev/solvers': { title: { zh: '求解器', en: 'Solvers' } },
+  'dev/solvers/xcross-ranking': {
+    title: { zh: 'XC / XXC 结构排序实验', en: 'XC / XXC Structural Ranking Experiment' },
+    description: { zh: '比较原排序与实验排序，逐步查看解法、结构代价和候选搜索方法。包含可输入打乱的现场对照及算法局限。', en: 'Compare baseline and experimental rankings with solution playback, structural costs and bounded candidate search. Includes live scramble comparison and explicit limitations.' },
+  },
   'dev/solvers/compare': {
     title: { zh: '三阶最优求解器 Benchmark', en: 'Optimal 3×3 Solver Benchmark' },
     description: { zh: '三阶 HTM 最优求解器本机实测：Opt8 使用 8 GB 档、100 条打乱；Opt9 使用 16 GB 档、1000 条打乱，按测试组与运行环境分别比较。', en: 'Local optimal 3×3 HTM solver benchmarks: Opt8 at 8 GB with 100 scrambles and Opt9 at 16 GB with 1000 scrambles, compared within each test group and runtime.' },

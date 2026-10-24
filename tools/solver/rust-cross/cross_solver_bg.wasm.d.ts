@@ -31,6 +31,7 @@ export const crosssolverwasm_attach_xcross: (a: number, b: number, c: number) =>
 export const crosssolverwasm_has_xcross: (a: number) => number;
 export const crosssolverwasm_new: (a: number, b: number) => number;
 export const crosssolverwasm_solve: (a: number, b: number, c: number, d: number) => [number, number];
+export const crosssolverwasm_solve_candidates: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => [number, number];
 export const crosssolverwasm_solve_cumulative: (a: number, b: number, c: number, d: number) => [number, number];
 export const crosssolverwasm_solve_face: (a: number, b: number, c: number, d: number, e: number) => number;
 export const crosssolverwasm_solve_face_masked: (a: number, b: number, c: number, d: number, e: number, f: number) => number;

@@ -1172,6 +1172,24 @@ impl CrossSolverWasm {
         sols_json(len, &items)
     }
 
+    /// Supplemental bounded XC/XXC candidates; exact minimum comes from the
+    /// existing solve_moves call. No new pruning tables or statistical metric.
+    #[allow(clippy::too_many_arguments)]
+    pub fn solve_candidates(
+        &self, scramble: &str, variant: u32, face: u32, min_depth: u32,
+        extra: u32, combo: &str, mask: u32,
+    ) -> String {
+        let rot = ROTS[(face as usize).min(5)];
+        let paths = self.xcross().enumerate_candidates(
+            &string_to_alg(scramble), rot, variant as usize, &parse_combo(combo),
+            min_depth, min_depth.saturating_add(extra.min(6)), mask,
+        );
+        let items = paths.iter().map(|(combo, p)| (
+            fmt_moves(rot, p), combo.iter().map(|&s| SLOT_LABELS[s]).collect::<Vec<_>>().join(" "),
+        )).collect::<Vec<_>>();
+        sols_json(min_depth, &items)
+    }
+
     /// 受限步法版 solve_face:`mask` = 18 个 move 的 bitmask(bit m=1 表示 move m 允许)。
     /// cross(variant 0)走 CrossSolver masked;xcross/F2L(variant 1..=4)走 XCrossSolver
     /// 小表 cascade masked(per-slot pt_cross_C4E0 可采纳下界,XCROSS_MASK_DEPTH 封顶)。

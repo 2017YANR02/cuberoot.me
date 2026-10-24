@@ -1267,6 +1267,7 @@ impl XCrossSolver {
         out: &mut Vec<Vec<u8>>,
         cap: usize,
         vm: &ValidMovesTable,
+        budget: &mut usize,
     ) {
         if out.len() >= cap {
             return;
@@ -1282,9 +1283,10 @@ impl XCrossSolver {
         let n = coords.len();
         let mut next = [(0usize, 0usize, 0usize, 0usize); 4];
         for ki in 0..count {
-            if out.len() >= cap {
+            if out.len() >= cap || *budget == 0 {
                 return;
             }
+            *budget -= 1;
             let m = row[ki] as usize;
             let mut pruned = false;
             let mut max_h = 0u32;
@@ -1311,10 +1313,66 @@ impl XCrossSolver {
             if depth == 1 {
                 out.push(path.clone());
             } else if max_h > 0 {
-                self.enumerate_multi_masked(&next[..n], depth - 1, m as u8, path, out, cap, vm);
+                self.enumerate_multi_masked(&next[..n], depth - 1, m as u8, path, out, cap, vm, budget);
             }
             path.pop();
         }
+    }
+
+    /// Bounded candidate coverage for inspection ranking, separate from exact
+    /// distance/length-ordered enumeration. Reserve a quota for EACH depth,
+    /// slot combination and first move so short solutions cannot fill the pool.
+    /// A budget stop means incomplete candidates, never an impossibility proof.
+    #[allow(clippy::too_many_arguments)]
+    pub fn enumerate_candidates(
+        &self,
+        alg: &[Move],
+        rot: &str,
+        k: usize,
+        fixed: &[usize],
+        min_depth: u32,
+        max_depth: u32,
+        mask: MoveMask,
+    ) -> Vec<(Vec<usize>, Vec<u8>)> {
+        if !(1..=2).contains(&k) || min_depth == 0 || min_depth > 16
+            || fixed.iter().any(|&s| s >= 4)
+            || (!fixed.is_empty() && fixed.len() != k) {
+            return Vec::new();
+        }
+        let combos: Vec<Vec<usize>> = if !fixed.is_empty() {
+            vec![fixed.to_vec()]
+        } else if k == 1 {
+            (0..4).map(|s| vec![s]).collect()
+        } else {
+            (0..4).flat_map(|a| ((a + 1)..4).map(move |b| vec![a, b])).collect()
+        };
+        let mut a: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
+        alg_rotation(&mut a, rot);
+        let st: [VirtState; 4] = std::array::from_fn(|j| self.get_virt(&a, j));
+        let vm = valid_moves_masked(mask);
+        let mut out = Vec::new();
+        for depth in min_depth..=max_depth.min(min_depth + 6).min(16) {
+            for combo in &combos {
+                let h = combo.iter().map(|&s| self.slot_h(&st[s])).max().unwrap();
+                if h == 0 || h > depth { continue; }
+                let coords: Vec<_> = combo.iter().map(|&s| (
+                    st[s].im as usize, st[s].ic as usize * 18, st[s].ie as usize * 18, s,
+                )).collect();
+                for &first in &vm.0[18][..vm.1[18] as usize] {
+                    let mut branch = vm;
+                    branch.0[18][0] = first;
+                    branch.1[18] = 1;
+                    let mut paths = Vec::new();
+                    // At most 6 * 7 * 18 * 8,000 attempted moves and 3,024
+                    // candidates. No extra tables or unbounded browser search.
+                    let mut budget = 8_000;
+                    self.enumerate_multi_masked(&coords, depth, 18, &mut Vec::new(),
+                        &mut paths, 4, &branch, &mut budget);
+                    out.extend(paths.into_iter().map(|p| (combo.clone(), p)));
+                }
+            }
+        }
+        out
     }
 
     /// enumerate_best 的受限版:挑最优 combo(<= max_depth)后枚举多解;限制下无解返回 (99, []).
@@ -1452,6 +1510,7 @@ impl XCrossSolver {
                     );
                 }
                 let mut combo_out: Vec<Vec<u8>> = Vec::new();
+                let mut budget = usize::MAX;
                 self.enumerate_multi_masked(
                     &coords[..n],
                     d,
@@ -1460,6 +1519,7 @@ impl XCrossSolver {
                     &mut combo_out,
                     cap - out.len(),
                     vm,
+                    &mut budget,
                 );
                 for sol in combo_out {
                     emit(combo, &sol);

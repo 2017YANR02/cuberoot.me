@@ -648,6 +648,11 @@ export default function SolversPage() {
               {tr({ zh: '三阶最优求解器对比：Rust Opt9 / Opt10', en: '3×3 optimal solver comparison: Rust Opt9 / Opt10' })}
             </Link>
           </p>
+          <p className="solv-sub">
+            <Link href="/dev/solvers/xcross-ranking" prefetch={false}>
+              {tr({ zh: '实验：XC / XXC 结构排序', en: 'Experiment: XC / XXC structural ranking' })}
+            </Link>
+          </p>
           <div className="solv-herostats">
             <div className="solv-stat"><span className="solv-stat-num">{NATIVE.length}</span><span className="solv-stat-label">{zh ? '原生分析器' : 'native analyzers'}</span></div>
             <div className="solv-stat"><span className="solv-stat-num">~51<small>GB</small></span><span className="solv-stat-label">{zh ? '现有剪枝表' : 'current prune tables'}</span></div>

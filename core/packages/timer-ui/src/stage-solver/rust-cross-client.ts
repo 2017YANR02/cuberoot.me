@@ -144,7 +144,7 @@ export interface RustCrossPool {
     scramble: string,
     variant: number,
     face: number,
-    opts?: { extra?: number; cap?: number; combo?: string; mask?: number },
+    opts?: { extra?: number; cap?: number; combo?: string; mask?: number; practical?: boolean },
     onPartial?: (sol: SolItem, len: number) => void,
   ): Promise<MovesTimed>;
   /** or18 式受限最优十字(6面+6宽+3中层+3旋转)单视角步数(含解里整体旋转计数)。
@@ -578,6 +578,7 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
       return submit({
         type: 'moves', id: nextId++, scramble, variant, face,
         extra: opts.extra ?? 0, cap: opts.cap ?? 50, combo: opts.combo ?? '',
+        practical: opts.practical ?? false,
         ...(opts.mask != null ? { mask: opts.mask } : {}),
       }, onPartial) as Promise<MovesTimed>;
     },

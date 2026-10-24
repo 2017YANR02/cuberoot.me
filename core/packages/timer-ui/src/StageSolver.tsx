@@ -39,6 +39,7 @@ import { onXCrossProgress, type XCrossProgress } from './stage-solver/rust-cross
 import { getRustCrossPool, dropRustCrossPool, isRustCrossPoolReady, poolSizeForDevice, type PoolNeed } from './stage-solver/rust-cross-pool';
 import { normalizeWcaScramble as normalizeScramble } from '@cuberoot/shared/normalize-wca-scramble';
 import { bestErgonomicOrientationIndex, rotateSolutionY } from './stage-solver/rotate-solution';
+import { rankXCrossSolutions } from './stage-solver/xcross-ranking';
 import { VARIANT_STAGES } from '@cuberoot/shared/timer/scramble-variants';
 import { countQtm } from '@cuberoot/shared/scramble-length';
 import './StageSolver.css';
@@ -403,12 +404,14 @@ interface Props {
   /** gen 行内:更紧凑的间距 + 略小播放器。 */
   compact?: boolean;
   expandedSolutions?: boolean;
+  /** Opt-in experimental ranking; ordinary callers retain length order. */
+  practicalSolutions?: boolean;
   settingsSlot?: HTMLElement | null;
   onPrevScramble?: () => void;
   onNextScramble?: () => void;
 }
 
-export default function StageSolver({ scramble, lang, initialMethod = 'std', initialStage = 0, initialFace, onSelectionChange, initialSlot = '', onSlotChange, initialBase = '', onBaseChange, compact = false, expandedSolutions = false, settingsSlot, onPrevScramble, onNextScramble, onDismissChange, onBlockingChange }: Props) {
+export default function StageSolver({ scramble, lang, initialMethod = 'std', initialStage = 0, initialFace, onSelectionChange, initialSlot = '', onSlotChange, initialBase = '', onBaseChange, compact = false, expandedSolutions = false, practicalSolutions = false, settingsSlot, onPrevScramble, onNextScramble, onDismissChange, onBlockingChange }: Props) {
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
   // 视角格 / 解法头的目标描述(块类方法按 method+stage 给语义,其余 = 该面十字)。
@@ -811,13 +814,14 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     setMovesLoading(true);
     setMoves(null);
     setSelSol(0);
+    const practical = practicalSolutions && method === 'std' && (stage === 1 || stage === 2) && !useCrRef.current;
 
     // 流式累积:支持流式的引擎(std 6 面 cross/xcross/F2L + 受限 54-move xcross)每枚举到
     // 一条解就经 onPartial 推来。同长解在一个 DFS 深度内几乎同时枚举完(亚帧),整批刷会「一次蹦出」;
     // 这里把「到达」与「揭示」解耦——逐帧少量铺开成肉眼可见的瀑布,跨深度的真实时间间隔原样保留。
     // 同 HTM 再按 QTM 升序;Array.sort 稳定 → 原到达序(长度升序)兜底。
     const sortSols = (xs: SolItem[]) =>
-      [...xs].sort((a, b) => (moveLen(a.m) - moveLen(b.m)) || (countQtm(a.m) - countQtm(b.m)));
+      practical ? xs : [...xs].sort((a, b) => (moveLen(a.m) - moveLen(b.m)) || (countQtm(a.m) - countQtm(b.m)));
     const acc: SolItem[] = [];
     const seen = new Set<string>();
     let bestLen = Infinity;
@@ -869,7 +873,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       const res = kind === 'std'
         ? (useCrRef.current
           ? await getXcrPool().solveXCrossRestrictMoves(scr, f, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current, slack, cap, engineStage, combo, onPartial)
-          : await pool.solveMoves(scr, engineStage, f, { extra: slack, cap, combo, mask: movesMask }, onPartial))
+          : await pool.solveMoves(scr, engineStage, f, { extra: slack, cap, combo, mask: movesMask, practical }, practical ? undefined : onPartial))
         : kind === 'f2leo'
           ? await pool.solveF2leoMoves(scr, method === 'pseudo_f2leo', f, stage, { extra: slack, cap, combo, mask: movesMask })
           : kind === 'daisy'
@@ -890,6 +894,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                       ? await pool.solveFrMoves(scr, f, { extra: slack, cap })
                       : await pool.solveVariantMoves(scr, VARIANT_ID[method as 'pair' | 'eo' | 'pseudo' | 'pseudo_pair'], f, stage, { extra: slack, cap, combo, base, mask: movesMask });
       if (movesReq.current === my) {
+        if (practical) res.sols = rankXCrossSolutions(scr, res.sols, limit);
         // 最终权威结果(已去重/排序/截断)接管累积集,瀑布继续排空到它为止(同集合同序 → 无跳动)。
         acc.length = 0;
         acc.push(...res.sols);
@@ -907,7 +912,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     } finally {
       if (movesReq.current === my) setMovesLoading(false);
     }
-  }, [method, stage, limit, slack]);
+  }, [method, stage, limit, slack, practicalSolutions]);
 
   const clickFace = useCallback((f: number) => {
     wantAuto.current = false;

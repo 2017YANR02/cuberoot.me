@@ -210,15 +210,30 @@ self.onmessage = async (e) => {
       const t0 = performance.now();
       // 流式:每枚举到一条解,Rust 即回调 onSol → 立刻 postMessage 给主线程(算一条出一条)。
       // 同步求解仍最终返回完整 JSON(权威结果);partial 仅作渐进显示。
-      const onSol = (m, c, len) => self.postMessage({ type: 'moves_partial', id: msg.id, m, c, len });
+      const practical = msg.practical === true && (msg.variant === 1 || msg.variant === 2);
+      const cap = practical ? Math.max(msg.cap ?? 50, 32) : (msg.cap ?? 50);
+      // Practical candidates must be ranked together before they are shown.
+      const onSol = (m, c, len) => {
+        if (!practical) self.postMessage({ type: 'moves_partial', id: msg.id, m, c, len });
+      };
       const json = (msg.mask != null)
         ? solver.solve_moves_masked(
-            msg.scramble, msg.variant, msg.face, msg.extra ?? 0, msg.cap ?? 50, msg.combo ?? '', msg.mask >>> 0, onSol,
+            msg.scramble, msg.variant, msg.face, msg.extra ?? 0, cap, msg.combo ?? '', msg.mask >>> 0, onSol,
           )
         : solver.solve_moves(
-            msg.scramble, msg.variant, msg.face, msg.extra ?? 0, msg.cap ?? 50, msg.combo ?? '', onSol,
+            msg.scramble, msg.variant, msg.face, msg.extra ?? 0, cap, msg.combo ?? '', onSol,
           );
-      self.postMessage({ type: 'moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
+      const data = JSON.parse(json);
+      if (practical && data.len > 0 && data.len < 99) {
+        const extra = JSON.parse(solver.solve_candidates(msg.scramble, msg.variant, msg.face,
+          data.len, msg.extra ?? 0, msg.combo ?? '', (msg.mask ?? 0x3ffff) >>> 0));
+        const seen = new Set(data.sols.map(s => `${s.m}|${s.c}`));
+        for (const sol of extra.sols) {
+          const key = `${sol.m}|${sol.c}`;
+          if (!seen.has(key)) { seen.add(key); data.sols.push(sol); }
+        }
+      }
+      self.postMessage({ type: 'moves', id: msg.id, data, ms: performance.now() - t0 });
     } else if (msg.type === 'cr_face') {
       // 受限最优十字单视角:54-bit allowed mask = (hi<<32)|lo;返回该视角最优步数
       // (含解里的整体旋转计数,与 or18 max_rot 计步一致);受限无解 → 0xFFFFFFFF 哨兵。

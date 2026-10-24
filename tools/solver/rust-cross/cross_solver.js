@@ -277,6 +277,34 @@ export class CrossSolverWasm {
         return v2;
     }
     /**
+     * Supplemental bounded XC/XXC candidates; exact minimum comes from the
+     * existing solve_moves call. No new pruning tables or statistical metric.
+     * @param {string} scramble
+     * @param {number} variant
+     * @param {number} face
+     * @param {number} min_depth
+     * @param {number} extra
+     * @param {string} combo
+     * @param {number} mask
+     * @returns {string}
+     */
+    solve_candidates(scramble, variant, face, min_depth, extra, combo, mask) {
+        let deferred3_0;
+        let deferred3_1;
+        try {
+            const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ptr1 = passStringToWasm0(combo, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len1 = WASM_VECTOR_LEN;
+            const ret = wasm.crosssolverwasm_solve_candidates(this.__wbg_ptr, ptr0, len0, variant, face, min_depth, extra, ptr1, len1, mask);
+            deferred3_0 = ret[0];
+            deferred3_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
+        }
+    }
+    /**
      * 累计变体:一次返回 cross..variant 全部阶段,长度 (variant+1)*6。
      * 对应 analyzer 的 "cross,x" / "cross,x,xx" / "cross,x,xx,xxx" 选项。
      * @param {string} scramble

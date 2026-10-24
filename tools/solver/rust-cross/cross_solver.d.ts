@@ -108,6 +108,11 @@ export class CrossSolverWasm {
      */
     solve(scramble: string, variant: number): Uint32Array;
     /**
+     * Supplemental bounded XC/XXC candidates; exact minimum comes from the
+     * existing solve_moves call. No new pruning tables or statistical metric.
+     */
+    solve_candidates(scramble: string, variant: number, face: number, min_depth: number, extra: number, combo: string, mask: number): string;
+    /**
      * 累计变体:一次返回 cross..variant 全部阶段,长度 (variant+1)*6。
      * 对应 analyzer 的 "cross,x" / "cross,x,xx" / "cross,x,xx,xxx" 选项。
      */
@@ -549,6 +554,7 @@ export interface InitOutput {
     readonly crosssolverwasm_has_xcross: (a: number) => number;
     readonly crosssolverwasm_new: (a: number, b: number) => number;
     readonly crosssolverwasm_solve: (a: number, b: number, c: number, d: number) => [number, number];
+    readonly crosssolverwasm_solve_candidates: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => [number, number];
     readonly crosssolverwasm_solve_cumulative: (a: number, b: number, c: number, d: number) => [number, number];
     readonly crosssolverwasm_solve_face: (a: number, b: number, c: number, d: number, e: number) => number;
     readonly crosssolverwasm_solve_face_masked: (a: number, b: number, c: number, d: number, e: number, f: number) => number;
