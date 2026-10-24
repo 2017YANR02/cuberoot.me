@@ -90,6 +90,10 @@
 }
 .rs-scard-cube {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
   flex-shrink: 0;
   line-height: 0;
 }
@@ -158,7 +162,8 @@
 .rs-recon-link {
   display: inline-flex;
   align-items: center;
-  align-self: flex-start;
+  align-self: flex-end;
+  line-height: 1.2;
   gap: 0.35rem;
   padding: 0.35rem 0.65rem;
   border: 1px solid var(--accent);

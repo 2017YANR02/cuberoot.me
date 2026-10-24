@@ -82,7 +82,7 @@ export default function LazyVisible({
 
   const Container = inline ? 'span' : 'div';
   return (
-    <Container ref={ref} className={className} style={{ ...(!show ? { minHeight } : {}), ...style }}>
+    <Container ref={ref} className={className} data-lazy-visible={show} style={{ ...(!show ? { minHeight } : {}), ...style }}>
       {show ? children : null}
     </Container>
   );

@@ -366,6 +366,11 @@ function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, dotColors
   return (
     <div className="rs-scard">
       <div className="rs-scard-cube">
+        {scramble.trim() && (
+          <AppLink href={`/recon/submit?${reconParams}`} prefetch={false} className="rs-recon-link">
+            {tr({ zh: '复盘', en: 'Reconstruct' })}
+          </AppLink>
+        )}
         <ScramblePreview2D event={event} scramble={scramble} size={58} fullSizeLink linkTitle={tr({ zh: '查看大图', en: 'View full size' })} />
         {dotList.length > 0 && (
           <span className="rs-scard-dot" title={dotTitle} aria-label={dotTitle} aria-hidden={dotTitle ? undefined : true}>
@@ -387,11 +392,6 @@ function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, dotColors
           title={optimal ? tr({ zh: '最优等态打乱:与该场原打乱同一魔方态,步数最短', en: 'Optimal equivalent scramble — same cube state as the original, fewest moves' }) : undefined}
         >{scramble}</Link>
         {m && <CompSource m={m} lp={lp} isZh={isZh} row />}
-        {scramble.trim() && (
-          <AppLink href={`/recon/submit?${reconParams}`} prefetch={false} className="rs-recon-link">
-            {tr({ zh: '复盘', en: 'Reconstruct' })}
-          </AppLink>
-        )}
       </div>
     </div>
   );

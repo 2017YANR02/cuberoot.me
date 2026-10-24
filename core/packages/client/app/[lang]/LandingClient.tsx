@@ -515,6 +515,7 @@ export default function LandingPage() {
         <PersonUpcomingComps key={personalKey} wcaId={user.wcaId || undefined} isZh={lang === 'zh'}
           onReady={onPersonalReady}
           compactDetails
+          hideHomeCountryFlag
           title={null}
           followedIds={compFollows.follows} />
       </div>}

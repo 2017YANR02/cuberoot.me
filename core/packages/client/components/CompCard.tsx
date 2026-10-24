@@ -64,12 +64,13 @@ export interface CompCardFollow {
   onRequireLogin?: () => void;
 }
 
-export function CompCard({ comp, isZh, lang, pill, dimmed, follow, competitorLimit, eventRounds, topCubers, compactDetails = false, children }: {
+export function CompCard({ comp, isZh, lang, pill, dimmed, follow, competitorLimit, eventRounds, topCubers, compactDetails = false, showCountryFlag = true, children }: {
   comp: CompCardComp;
   isZh: boolean;
   lang: 'zh' | 'en';
   /** Homepage cards: shorten Chinese competition names and show only name/date. */
   compactDetails?: boolean;
+  showCountryFlag?: boolean;
   /** 报名状态 pill(调用方按各自里程碑口径算好);null/缺省则不渲染 pill */
   pill?: CompCardPill | null;
   /** 已截止 / 已取消等淡化样式 */
@@ -110,7 +111,7 @@ export function CompCard({ comp, isZh, lang, pill, dimmed, follow, competitorLim
       )}
       <Link {...compLinkProps(comp.id, undefined, lang)} className="rc-main">
         <div className="rc-title">
-          <Flag iso2={comp.country} spanClassName="rc-flag" imgClassName="rc-flag-img" />
+          {showCountryFlag && <Flag iso2={comp.country} spanClassName="rc-flag" imgClassName="rc-flag-img" />}
           <span className="rc-name">{displayName}</span>
         </div>
         <div className={compactDetails ? 'rc-details rc-details--compact' : 'rc-details'}>

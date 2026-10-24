@@ -8,6 +8,7 @@ import { loadLandingComps, type Comp } from '@/lib/comp-search';
 import { fetchCompPersonEventIds } from '@/lib/comp-wcif';
 import { fetchPersonUpcomingCompetitionIds, selectPersonUpcomingCompetitions } from '@/lib/person-upcoming';
 import { toIsoDate } from '@/lib/wca-date';
+import { countryToIso2, loadFlagData, personFlagIso2 } from '@/lib/country-flags';
 import './person_upcoming_comps.css';
 
 interface Props {
@@ -17,14 +18,28 @@ interface Props {
   followedIds?: ReadonlySet<string>;
   emptyMessage?: string;
   compactDetails?: boolean;
+  /** Homepage only: omit flags matching this logged-in person's WCA country. */
+  hideHomeCountryFlag?: boolean;
   onReady?: () => void;
 }
 
-export default function PersonUpcomingComps({ wcaId, isZh, title, followedIds, emptyMessage, compactDetails, onReady }: Props) {
+export default function PersonUpcomingComps({ wcaId, isZh, title, followedIds, emptyMessage, compactDetails, hideHomeCountryFlag = false, onReady }: Props) {
   const t = useT();
   const [catalog, setCatalog] = useState<Comp[] | null>(null);
   const [registeredIds, setRegisteredIds] = useState<string[]>([]);
   const [eventIdsByCompetition, setEventIdsByCompetition] = useState<Record<string, string[]>>({});
+  const [wcaCountry, setWcaCountry] = useState({ id: '', iso2: '' });
+  const normalizedWcaId = wcaId?.trim().toUpperCase() ?? '';
+  const hiddenCountry = hideHomeCountryFlag && normalizedWcaId && wcaCountry.id === normalizedWcaId ? wcaCountry.iso2 : '';
+
+  useEffect(() => {
+    if (!hideHomeCountryFlag || !normalizedWcaId) return;
+    let cancelled = false;
+    void loadFlagData().then(() => {
+      if (!cancelled) setWcaCountry({ id: normalizedWcaId, iso2: countryToIso2(personFlagIso2(normalizedWcaId)) });
+    });
+    return () => { cancelled = true; };
+  }, [hideHomeCountryFlag, normalizedWcaId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -82,6 +97,7 @@ export default function PersonUpcomingComps({ wcaId, isZh, title, followedIds, e
               ? eventIdsByCompetition[competition.id] ?? [] : competition.events }}
             isZh={isZh}
             compactDetails={compactDetails}
+            showCountryFlag={!hiddenCountry || countryToIso2(competition.country) !== hiddenCountry}
             lang={isZh ? 'zh' : 'en'}
             roundsSeed={compactDetails ? undefined : wcaRoundsSeed(competition.rounds)}
             fetchIfMissing={!compactDetails}
