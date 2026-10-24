@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Alg } from 'cubing/alg';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import { VisualCube } from '@/components/VisualCube';
@@ -19,7 +19,22 @@ export default function BasicCaseLesson({ stepId, orientation, pauseBetween, cas
   const lesson = chapterCases.find(item => item.id === caseId) ?? chapterCases[0];
   const [alignment, setAlignment] = useState<string>(F2L_TOP_ADJUSTMENTS[0]);
   const player = useRef<AlgPlayerHandle>(null);
-  const playbackKey = lesson.id + ':' + orientation;
+  const alignmentDemo = useRef<HTMLDivElement>(null);
+  const [diagramHeight, setDiagramHeight] = useState(260);
+  useLayoutEffect(() => {
+    if (stepId !== 'lesson-3') return;
+    const stage = alignmentDemo.current?.querySelector('.sim-stage');
+    if (!stage) return;
+    const measure = () => {
+      const height = Math.round(stage.getBoundingClientRect().height);
+      if (height > 0) setDiagramHeight(current => current === height ? current : height);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(stage);
+    return () => observer.disconnect();
+  }, [stepId, orientation]);
+  const playbackKey = stepId + ':' + lesson.id + ':' + orientation;
   const [playback, setPlayback] = useState({ key: '', step: 0 });
   const playbackStep = playback.key === playbackKey ? playback.step : 0;
   const setPlaybackStep = (step: number) => setPlayback({ key: playbackKey, step });
@@ -64,23 +79,28 @@ export default function BasicCaseLesson({ stepId, orientation, pauseBetween, cas
           <div className="f2l-study-main">
             {stepId === 'lesson-3' ? <>
 
-              <div className="f2l-lesson f2l-study-lesson">
+              <div className="f2l-lesson f2l-study-lesson f2l-alignment-lesson">
                 <section className="f2l-demo" aria-label={tr({ zh: '顶层对位演示', en: 'Top-layer alignment demonstration' })}>
-                  <div className="f2l-cube"><AlgPlayer key={lesson.id + ':' + alignment} puzzle="3x3" set="f2l-tutorial" engine="sim"
+                  <div className="f2l-cube" ref={alignmentDemo}><AlgPlayer key={orientation} puzzle="3x3" set="f2l-tutorial" engine="sim"
                     setup={f2lAlignmentSetup(lesson.alg, alignment)} alg={alignment} orientation={orientation} fillPane moveDurationMs={850} /></div>
                   <code className="f2l-alg f2l-player-alg" data-site-surface="panel">{alignment}</code>
 
                 </section>
-                <section className="f2l-guidance">
+                <section className="f2l-guidance f2l-alignment-reference">
 
-                  {chosenDiagram && <VisualCube view="iso" size={190} faceletColors={chosenDiagram} alt={tr({ zh: '对位后的三步标态', en: 'The aligned three-move case' })} />}
+                  {chosenDiagram && <>
+                    <div className="f2l-alignment-picture" style={{ height: diagramHeight }}>
+                      <VisualCube view="iso" size={Math.max(1, diagramHeight - 32)} faceletColors={chosenDiagram} alt={tr({ zh: '对位后的三步标态', en: 'The aligned three-move case' })} />
+                    </div>
+                    <p className="f2l-caption">{tr({ zh: `公式中的${lesson.name}起始朝向`, en: `Starting orientation for the ${lesson.name} algorithm` })}</p>
+                  </>}
 
                 </section>
               </div>
             </> : <div className="f2l-lesson f2l-study-lesson">
               <section className="f2l-demo" aria-label={tr({ zh: '魔方演示', en: 'Cube demonstration' })}>
                 <div className="f2l-cube">
-                  <AlgPlayer key={lesson.id + ':' + orientation} ref={player} puzzle="3x3" set="f2l-tutorial" engine="sim"
+                  <AlgPlayer key={orientation} ref={player} puzzle="3x3" set="f2l-tutorial" engine="sim"
                     alg={lesson.alg} orientation={orientation} fillPane moveDurationMs={850}
                     sectionPauseMs={2000} pauseAfterSteps={pauseBetween ? boundaries : NO_STOPS} onStepChange={setPlaybackStep} />
                 </div>

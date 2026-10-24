@@ -15,16 +15,16 @@ function IntroComparison({ orientation, onContinue }: { orientation: string; onC
   return <div className="f2l-intro-comparison">
     <div className="f2l-intro-players">
       <section className="f2l-demo" aria-label={tr({ zh: '层先法逐块复原演示', en: 'LBL piece-by-piece demonstration' })}>
-        <h3>LBL</h3>
         <div className="f2l-cube"><AlgPlayer puzzle="3x3" set="f2l-overview" engine="sim" alg={LBL_INTRO_ALG}
           orientation={orientation} fillPane moveDurationMs={650} stickeringAtStep={lblIntroStickering}
           autoPlay playRequest={playRequest} /></div>
+        <h3>LBL</h3>
       </section>
       <section className="f2l-demo" aria-label={tr({ zh: 'F2L 成对复原演示', en: 'F2L pair-by-pair demonstration' })}>
-        <h3>F2L</h3>
         <div className="f2l-cube"><AlgPlayer puzzle="3x3" set="f2l-overview" engine="sim" alg={F2L_INTRO_ALG}
           orientation={orientation} fillPane moveDurationMs={650} stickeringAtStep={f2lIntroStickering}
           autoPlay playRequest={playRequest} /></div>
+        <h3>F2L</h3>
       </section>
     </div>
     <StudyActions onContinue={onContinue}>
@@ -75,7 +75,7 @@ export default function IntroLessons({ stepId, orientation, onNextChapter }: {
 
         </figure>} */}
 
-        <IntroComparison key={orientation} orientation={orientation} onContinue={onNextChapter} />
+        <IntroComparison orientation={orientation} onContinue={onNextChapter} />
         </div>
       </div>}
 

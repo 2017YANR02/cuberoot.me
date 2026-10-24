@@ -33,10 +33,9 @@ export default function PracticeLesson({ orientation, pauseBetween, onNextChapte
           <div className="f2l-section-list"><p className="f2l-section-label" aria-current="true"><T zh="练习三步标态" en="Practice the three-move cases" /></p></div>
         </aside>
         <div className="f2l-study-main">
-          <div className="f2l-study-scramble"><h3><T zh="打乱公式" en="Scramble" /></h3><code className="f2l-alg">{practice.setup}</code></div>
           <div className="f2l-lesson f2l-study-lesson">
             <section className="f2l-demo" aria-label={tr({ zh: '三步标态练习演示', en: 'Three-move case practice demonstration' })}>
-              <div className="f2l-cube"><AlgPlayer key={practice.id} ref={player} puzzle="3x3" set="f2l-overview" engine="sim"
+              <div className="f2l-cube"><AlgPlayer key={orientation} ref={player} puzzle="3x3" set="f2l-overview" engine="sim"
                 setup={practice.setup} alg={practice.alg} orientation={orientation} fillPane moveDurationMs={850}
                 onStepChange={setPlaybackStep} sectionPauseMs={2000} pauseAfterSteps={pauseBetween ? practice.boundaries : NO_STOPS} /></div>
               <code className="f2l-alg f2l-player-alg" data-site-surface="panel">{practice.alg}</code>
@@ -44,7 +43,10 @@ export default function PracticeLesson({ orientation, pauseBetween, onNextChapte
             <section className="f2l-guidance">
               <ol start={0} className="f2l-stage-list">
                 <li><button type="button" className="f2l-stage-button" aria-current={playbackStep === 0 ? 'step' : undefined} onClick={() => seek(0)}>
-                  <span className="f2l-stage-number">00</span><span className="f2l-stage-content"><span className="f2l-stage-title"><T zh="初始状态" en="Initial state" /></span></span>
+                  <span className="f2l-stage-number">00</span><span className="f2l-stage-content">
+                    <span className="f2l-stage-title"><T zh="初始状态" en="Initial state" /></span>
+                    <span className="f2l-stage-scramble"><span><T zh="打乱:" en="Scramble:" /></span><code>{practice.setup}</code></span>
+                  </span>
                 </button></li>
                 {practiceSections.map((section, index) => <li key={section.start}>
                   <button type="button" className="f2l-stage-button" aria-current={playbackStep > 0 && practiceActiveSection === index ? 'step' : undefined} onClick={() => seek(section.end)}>
