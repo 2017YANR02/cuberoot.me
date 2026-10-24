@@ -28,7 +28,7 @@ const STATUS: Record<ReconTestStatus, { zh: string; en: string }> = {
   running: { zh: '检查中', en: 'Running' }, 'not-run': { zh: '未检查', en: 'Not checked' },
   interrupted: { zh: '未完成', en: 'Interrupted' },
 };
-const title = (sample: ReconTestCase) => tr(TITLES[sample.id] ?? { zh: sample.issue, en: sample.issue });
+const title = (sample: ReconTestCase) => tr(TITLES[sample.id] ?? (sample.id.startsWith('intake-') ? { zh: '收录样本', en: 'Intake sample' } : { zh: sample.issue, en: sample.issue }));
 const textRows = (rows: ReconTestRow[]) => rows.map(row => `${row.moves}${row.label ? '  ' + row.label : ''}${row.colors.length ? ' [' + row.colors.join(' / ') + ']' : ''}`).join('\n');
 type History = ReconTestHistory & { cases?: ReconTestCase[]; hasMore?: boolean };
 
@@ -92,7 +92,7 @@ export default function RegressionResults() {
   return <main className="gt-page">
     <header className="gt-header"><div className="gt-title-row"><div>
       <h1>{tr({ zh: '智能魔方回归测试', en: 'Smart cube regression tests' })}</h1>
-      <p>{tr({ zh: '只有你明确说“收录到回归测试”的样例才正式启用。测试通过不会自动收录；原始记录和检查历史都会保留。', en: 'Only cases you explicitly ask to include in regression tests become active. Passing a check never enrolls a case. Original recordings and history are retained.' })}</p>
+      <p>{tr({ zh: '已确认启用的样本统一参加每次全量回归；待验收样本保留在收录队列。', en: 'All confirmed active samples participate in every full regression run. Samples awaiting review remain in the intake queue.' })}</p>
     </div><button className="gt-refresh" type="button" disabled={loading} onClick={() => { attempted.current.clear(); void load(); }}>{tr({ zh: '刷新', en: 'Refresh' })}</button></div>
     {history?.scope === 'local' && <p className="gt-run-note">{tr(syncState === 'done' ? { zh: '本机记录已同步，线上也可查看。', en: 'Local records synchronized and available online.' } : syncState === 'failed' ? { zh: '本机记录已保存，尚未同步到线上。服务上线或连接恢复后，刷新会重试。', en: 'Saved locally; cloud sync is pending. Refresh to retry when the service is available.' } : { zh: '正在读取本机检查记录。', en: 'Reading local check records.' })}</p>}
     </header>
@@ -123,11 +123,11 @@ export default function RegressionResults() {
       </button>)}
     </section><section className="gt-detail" aria-label={tr({ zh: '样例结果', en: 'Case result' })}>
       {selected ? <><div className="gt-detail-head"><div><h2>{title(selected)}</h2><p>{tr(selected.approved ? { zh: '正式启用', en: 'Active' } : { zh: '待确认 · 不参加正式检查', en: 'Awaiting confirmation · excluded' })}</p></div>
-        <Link className="gt-source-link" href={`/timer?share=${encodeURIComponent(selected.id)}`} prefetch={false} target="_blank">{tr({ zh: '打开具体复盘', en: 'Open reconstruction' })}</Link></div>
+        {(!selected.id.startsWith('intake-') || /^https?:\/\//.test(selected.source) || selected.source.startsWith('/')) && <Link className="gt-source-link" href={selected.source || `/timer?share=${encodeURIComponent(selected.id)}`} prefetch={false} target="_blank">{tr({ zh: '打开具体复盘', en: 'Open reconstruction' })}</Link>}</div>
         {!selected.approved && <p className="gt-warning">{tr({ zh: '下面保留的答案尚未确认。以前显示“通过”，只说明程序当时与这份答案一致，不代表答案正确。', en: 'The saved answer below is unconfirmed. An earlier pass only means the program matched that answer, not that the answer was correct.' })}</p>}
         <p>{tr({ zh: '所选历史记录', en: 'Selected historical run' })}：{tr(STATUS[selectedResult?.status ?? 'not-run'])}</p>
         {!!selectedResult?.errors.length && <pre className="gt-run-errors">{selectedResult.errors.join('\n\n')}</pre>}
-        <div className="gt-text-compare"><div><h3>{tr(selected.approved ? { zh: '预期显示', en: 'Expected display' } : { zh: '保留的答案（待确认）', en: 'Saved answer (unconfirmed)' })}</h3><pre>{textRows(selected.expected)}</pre></div>
+        <div className="gt-text-compare"><div><h3>{tr(selected.approved ? { zh: '预期显示', en: 'Expected display' } : { zh: '保留的答案（待确认）', en: 'Saved answer (unconfirmed)' })}</h3><pre>{textRows(selectedResult?.expected ?? selected.expected)}</pre></div>
         <div><h3>{tr({ zh: '所选历史记录的实际显示', en: 'Actual display in the selected historical run' })}</h3><pre>{selectedResult?.actual ? textRows(selectedResult.actual) : tr({ zh: '本次没有生成显示结果。', en: 'No display output was produced in this run.' })}</pre></div></div>
       </> : <p>{tr({ zh: '当前没有符合筛选条件的样例。', en: 'No cases match this filter.' })}</p>}
     </section></div>

@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { verifyPageRole } from '@/lib/page-admin-session';
-import { findCheckoutRoot, readTestRuns, readWorkbookCases } from '@/lib/recon-test-history.server';
+import { findCheckoutRoot, readTestRuns, readRegressionCases } from '@/lib/recon-test-history.server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,7 +16,7 @@ export async function GET(request: Request): Promise<Response> {
     if (!root) return Response.json({ runs: [], cases: [], scope: 'cloud' }, { headers });
     const offset = Math.max(0, Math.min(100000, Math.floor(Number(new URL(request.url).searchParams.get('offset')) || 0)));
     const runs = readTestRuns(root);
-    const cases = readWorkbookCases(root);
+    const cases = readRegressionCases(root);
     const result = spawnSync(process.execPath, [join(root, 'core/scripts/recon-ground-truth-gate.mjs'), 'fingerprint'], { encoding: 'utf8', timeout: 5000 });
     return Response.json({ runs: runs.slice(offset, offset + 20), hasMore: runs.length > offset + 20,
       cases, scope: 'local', currentFingerprint: result.status === 0 ? result.stdout.trim() : null }, { headers });

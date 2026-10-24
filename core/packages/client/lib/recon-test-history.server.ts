@@ -3,6 +3,9 @@ import { join, resolve } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import type { ReconTestCase, ReconTestRun } from './recon-test-results.ts';
 
+import type { ReconIntakeCase } from '@cuberoot/shared/recon-ground-truth';
+import { intakeRegressionId, intakeRegressionRows } from './recon-intake-regression.ts';
+
 type WorkbookFixture = {
   recording?: unknown; displayRows: ReconTestCase['expected']; source: string; issue: string;
   approval?: { status: string; instruction?: string; confirmedBy?: string; confirmedAt?: string; contentHash?: string };
@@ -26,6 +29,20 @@ export function readWorkbookCases(root: string): ReconTestCase[] {
     return { id: file.slice(0, -5), source: fixture.source, issue: fixture.issue, expected: fixture.displayRows,
       approved: isApprovedFixture(fixture), status: 'not-run', errors: [] };
   });
+}
+
+/** The export contains only explicitly approved, active revisions. */
+export function readRegressionCases(root: string): ReconTestCase[] {
+  const cases = readWorkbookCases(root);
+  const path = join(root, 'core/packages/client/tests/fixtures/recon-intake.json');
+  if (!existsSync(path)) return cases;
+  const snapshot = JSON.parse(readFileSync(path, 'utf8'));
+  if (snapshot.version !== 1 || !Array.isArray(snapshot.cases)) throw new Error('Invalid intake export');
+  return [...cases, ...snapshot.cases.map((item: ReconIntakeCase): ReconTestCase => {
+    if (!item.expected) throw new Error('Intake export is missing its approved expectation');
+    return { id: intakeRegressionId(item), source: item.input.source, issue: '',
+      expected: intakeRegressionRows(item.expected), approved: true, status: 'not-run', errors: [] };
+  })];
 }
 
 export function historyDirectory(root: string) { return join(root, '.tmp/recon-ground-truth-runs'); }

@@ -718,6 +718,39 @@ function omitSolvedTailRotations(recon: ReconTextResult): ReconTextResult {
     text: [...(recon.inspection ? [`${recon.inspection} // insp`] : []), ...lines.map(formatReconLine)].join('\n') };
 }
 
+/** Simplified notation keeps only the net final AUF, but owns every raw turn. */
+function simplifyFinalAuf(recon: ReconTextResult): ReconTextResult {
+  const line = recon.lines.at(-1);
+  if (!line || !['oll', 'pll'].includes(line.kind)) return recon;
+  let from = line.moves.length;
+  while (from > 0 && /^U(?:2'?|')?$/.test(line.moves[from - 1])) from--;
+  if (line.moves.length - from < 2 || !line.wasteGroups?.slice(from).some(group => group != null)) return recon;
+  const quarters = line.moves.slice(from).reduce((sum, token) => sum +
+    (token.includes('2') ? (token.endsWith("'") ? -2 : 2) : token.endsWith("'") ? -1 : 1), 0);
+  const amount = ((quarters % 4) + 4) % 4;
+  const token = amount ? quarterToken('U', quarters) : null;
+  const tail = line.moveRanges?.slice(from);
+  let ranges = line.moveRanges?.slice(0, from);
+  if (tail?.length) {
+    const merged = retainOmittedRanges([tail[0]], tail.slice(1));
+    if (!merged) return recon;
+    if (token) ranges = [...ranges!, { ...merged[0], token }];
+    else {
+      const retained = retainOmittedRanges(ranges, tail);
+      if (retained === null) return recon;
+      ranges = retained;
+    }
+  }
+  const moves = [...line.moves.slice(0, from), ...(token ? [token] : [])];
+  const lines = [...recon.lines.slice(0, -1), { ...line, moves, moveRanges: ranges,
+    wasteGroups: [...(line.wasteGroups?.slice(0, from) ?? []), ...(token ? [null] : [])],
+    algorithmGroups: line.algorithmGroups?.filter(group => group.from < from)
+      .map(group => ({ ...group, to: Math.min(group.to, from) })),
+  }];
+  return { ...recon, lines, text: [...(recon.inspection ? [`${recon.inspection} // insp`] : []),
+    ...lines.map(formatReconLine)].join('\n') };
+}
+
 /** Cross-down can rename an already matched algorithm. Restore its library yaw
  * only when the complete library body matches token for token in that frame. */
 function restoreLibraryYaw(recon: ReconTextResult): ReconTextResult {
@@ -899,9 +932,9 @@ export function simplifyF2lRotations(source: ReconTextResult): ReconTextResult {
   let lines: ReconTextLine[];
   try { lines = restoreCrossAtBoundaries(recon, expanded).map(withoutF2lZ); }
   catch { return recon; }
-  if (recon === source && lines.length === recon.lines.length && lines.every((line, i) => line === recon.lines[i])) return omitBoundaryRotationLoops(omitSolvedTailRotations(restoreLibraryYaw(preferF2lSideTurns(recon))));
-  return omitBoundaryRotationLoops(omitSolvedTailRotations(restoreLibraryYaw(preferF2lSideTurns({ ...recon, lines,
-    text: [...(recon.inspection ? [`${recon.inspection} // insp`] : []), ...lines.map(formatReconLine)].join('\n') }))));
+  if (recon === source && lines.length === recon.lines.length && lines.every((line, i) => line === recon.lines[i])) return simplifyFinalAuf(omitBoundaryRotationLoops(omitSolvedTailRotations(restoreLibraryYaw(preferF2lSideTurns(recon)))));
+  return simplifyFinalAuf(omitBoundaryRotationLoops(omitSolvedTailRotations(restoreLibraryYaw(preferF2lSideTurns({ ...recon, lines,
+    text: [...(recon.inspection ? [`${recon.inspection} // insp`] : []), ...lines.map(formatReconLine)].join('\n') })))));
 }
 
 export function formatReconLine(line: ReconTextLine): string {
@@ -1277,7 +1310,10 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   const { key: currentKey, zh: currentZh, en: currentEn } = METHODS[input.method ?? 'cfop'].stages[currentIndex];
   const currentStage = { key: currentKey, zh: currentZh, en: currentEn };
   const kinds = ['cross', 'f2l', 'oll', 'pll'] as const;
-  const sourceSpans: Span[] = isCfop ? stepSpans(segs, metrics, slots, moves)
+  // Stage indices are detected in the canonical cross-down frame. A measured
+  // inspection grip can be tilted, so its U face cannot identify final AUF.
+  const stageMoves = isCfop ? normalizeSolve(physical.scramble, physical.moves).moves : moves;
+  const sourceSpans: Span[] = isCfop ? stepSpans(segs, metrics, slots, stageMoves)
     : (methodWalk?.stages ?? []).flatMap((stage, index) => stage.endIdx === null ? [] : [{
       kind: kinds[index] ?? 'pll', key: stage.key, endIdx: stage.endIdx,
       label: input.language === 'zh' ? stage.zh : stage.en,

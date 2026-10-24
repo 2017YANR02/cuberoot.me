@@ -118,6 +118,7 @@ describe('reconstruction ground-truth commit gate', () => {
       for (const path of ['core/scripts/recon-ground-truth-gate.mjs',
         'core/scripts/recon-ground-truth-results.mts',
         'core/packages/client/lib/recon-test-history.server.ts',
+        'core/packages/client/lib/recon-intake-regression.ts',
         'core/packages/client/scripts/recon-ground-truth-gate.mjs', '.githooks/pre-commit',
         'core/packages/client/scripts/sync-recon-ground-truth.mjs',
         'core/packages/client/tests/fixtures/recon-ground-truth.json']) {

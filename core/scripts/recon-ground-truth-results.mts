@@ -4,11 +4,11 @@ import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { saveTestRun, historyDirectory, readTestRuns, readWorkbookCases } from '../packages/client/lib/recon-test-history.server.ts';
+import { saveTestRun, historyDirectory, readTestRuns, readRegressionCases } from '../packages/client/lib/recon-test-history.server.ts';
 import type { ReconTestRun } from '../packages/client/lib/recon-test-results.ts';
 
 export function startResult(root: string, fingerprint: string, trigger: string) {
-  const cases = readWorkbookCases(root);
+  const cases = readRegressionCases(root);
   const git = (...args: string[]) => spawnSync('git', ['-C', root, ...args], { encoding: 'utf8' }).stdout?.trim() ?? '';
   const run: ReconTestRun = { version: 1, id: randomUUID(), startedAt: new Date().toISOString(),
     status: 'running', trigger, commit: git('rev-parse', 'HEAD'), dirty: !!git('status', '--porcelain'),

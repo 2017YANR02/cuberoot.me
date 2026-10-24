@@ -54,7 +54,7 @@ import { detectRotations } from './rotation_detect';
 import type { RotationEvent } from './rotation_detect';
 import { conjugateToken, notationQuaternion } from './gyro_orient';
 import type { FacePerm } from './gyro_orient';
-import { quatMul, type Quat } from '../../smart_cube/orientation';
+import { quatMul, quatAngleTo, type Quat } from '../../smart_cube/orientation';
 
 /** 时间窗前后各放宽这么多毫秒,见文件头。 */
 export const CORE_EVENT_SLACK_MS = 250;
@@ -160,6 +160,46 @@ export function buildCoreTrack(
       && (move.m[0] === a.m[0] || move.m[0] === b.m[0]))) continue;
     events.push(first, back);
     events.sort((left, right) => left.tMs - right.tMs);
+  }
+  // Global yaw drift can split a closed wide-turn trigger into extra regrips.
+  // Recover only a locally closed excursion with two opposite encoder turns:
+  // both gyro transitions must coincide with those turns, and the measured
+  // endpoint must return to the starting grip. Raw samples remain untouched.
+  if (calibrated) for (let i = 1; i < moves.length - 2; i++) {
+    const a = moves[i];
+    if (!/^[UDFBLR]'?$/.test(a.m) || a.ts - moves[i - 1].ts < 500) continue;
+    const j = moves.findIndex((move, index) => index > i && move.m[0] === a.m[0]);
+    if (j <= i + 1) continue;
+    const b = moves[j];
+    if (b.m !== inverseRotation(a.m) || b.ts - a.ts > 10000) continue;
+    const axis = 'LR'.includes(a.m[0]) ? 'x' : 'UD'.includes(a.m[0]) ? 'y' : 'z';
+    const negative = a.m.endsWith("'") !== 'RUF'.includes(a.m[0]);
+    const expectedRotation = axis + (negative ? "'" : '');
+    let from = -1;
+    for (let index = 0; index < samples.length && samples[index].tMs <= moves[i - 1].ts; index++) from = index;
+    // Prefer a settled grip during the encoder pause. Dead-zone compression
+    // records that grip once, followed by a gap before the hand starts moving.
+    for (let index = Math.max(0, from); index + 1 < samples.length && samples[index + 1].tMs < a.ts; index++) {
+      if (samples[index + 1].tMs - samples[index].tMs >= CORE_EVENT_SLACK_MS) from = index;
+    }
+    if (from < 0) continue;
+    const until = Math.min(b.ts + 500, moves[j + 1]?.ts ?? Infinity);
+    const local = samples.slice(from).filter(sample => sample.tMs <= until);
+    if (local.length < 3 || quatAngleTo(local[0].q, local.at(-1)!.q) > 35 * Math.PI / 180) continue;
+    const recovered = detectRotations(local).map(convert);
+    if (recovered.length !== 2) continue;
+    const [first, back] = recovered;
+    if (first.token !== expectedRotation || back.token !== inverseRotation(first.token)
+      || Math.abs(first.tMs - a.ts) > 120 || Math.abs(back.tMs - b.ts) > 120) continue;
+    const existing = events.filter(event => event.tMs >= local[0].tMs && event.tMs <= until);
+    if (existing.some(event => event.token[0] !== axis)) continue;
+    if (existing.length === 2 && existing[0].token === first.token && existing[1].token === back.token
+      && Math.abs((existing[0].notationMs ?? existing[0].tMs) - a.ts) <= 120
+      && Math.abs((existing[1].notationMs ?? existing[1].tMs) - b.ts) <= 120) continue;
+    for (const event of existing) events.splice(events.indexOf(event), 1);
+    events.push({ ...first, notationMs: a.ts }, { ...back, notationMs: b.ts });
+    events.sort((left, right) => left.tMs - right.tMs);
+    i = j;
   }
   return { events, ...(calibrated ? { frame: 'scramble' as const } : {}) };
 }

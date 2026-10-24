@@ -63,6 +63,34 @@ describe('durable ground-truth results', () => {
       expect(readTestRuns(root)[0].cases[0].status).toBe('not-run');
     }
   });
+  it('includes active intake revisions in the same catalog, captures failures and rejects missing evidence', () => {
+    const { root } = setup();
+    const id = '03c8a2fd-2d76-4d4b-92e3-3a79ffddc52e';
+    const expected = { inspection: 'x', lines: [{ key: 'cross', kind: 'cross',
+      fromIdx: 0, toIdx: 1, moves: ['R', 'U'], label: null }] };
+    writeFileSync(join(root, 'core/packages/client/tests/fixtures/recon-intake.json'), JSON.stringify({
+      version: 1, cases: [{ id, revision: 2, input: { source: '' }, expected }],
+    }));
+    for (const evidence of ['complete', 'missing-capture', 'wrong-revision', 'failed']) {
+      const context = startResult(root, 'c'.repeat(64), 'manual'); report(context);
+      const sample = context.run.cases[1];
+      expect(sample).toMatchObject({ id: `intake-${id}-v2`, approved: true, status: 'not-run' });
+      expect(sample.expected.map(row => row.moves)).toEqual(['x', 'R U']);
+      const result = JSON.parse(readFileSync(context.reportFile, 'utf8'));
+      result.numTotalTests = 2;
+      result.numPassedTests = evidence === 'failed' ? 1 : 2;
+      result.numFailedTests = evidence === 'failed' ? 1 : 0;
+      result.testResults[0].assertionResults.push({
+        title: `intake-${id}-v${evidence === 'wrong-revision' ? 1 : 2}.json`,
+        status: evidence === 'failed' ? 'failed' : 'passed', failureMessages: evidence === 'failed' ? ['Wrong moves'] : [],
+      });
+      writeFileSync(context.reportFile, JSON.stringify(result));
+      if (evidence !== 'missing-capture') writeFileSync(join(context.captureDirectory, sample.id + '.json'), JSON.stringify(sample.expected));
+      expect(finishResult(root, context, 0)).toBe(evidence === 'complete' ? 0 : 2);
+      expect(isReconTestRun(context.run)).toBe(true);
+      if (evidence === 'failed') expect(sample.errors).toEqual(['Wrong moves']);
+    }
+  });
   it('records an exited process as interrupted and retains it for synchronization', () => {
     const { root, context } = setup(); context.run.pid = 2147483647; saveTestRun(root, context.run);
     const run = readTestRuns(root)[0]; expect(run.status).toBe('interrupted'); expect(run.finishedAt).toBeTruthy();

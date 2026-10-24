@@ -76,6 +76,7 @@ const EXACT_GUARDED_PATHS = new Set([
   'core/packages/client/lib/recon-test-results.ts',
   'core/packages/client/lib/session-fetch.ts',
   'core/packages/client/lib/recon-test-history.server.ts',
+  'core/packages/client/lib/recon-intake-regression.ts',
   'core/scripts/recon-ground-truth-results.mts',
   'core/packages/client/app/api/admin/recon-tests/route.ts',
   'core/apps/api/migrations/0278_recon_test_runs.sql',

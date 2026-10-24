@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ role: vi.fn(), runs: vi.fn(), cases: vi.fn(), root: vi.fn(), spawn: vi.fn() }));
 vi.mock('@/lib/page-admin-session', () => ({ verifyPageRole: mocks.role }));
-vi.mock('@/lib/recon-test-history.server', () => ({ readTestRuns: mocks.runs, readWorkbookCases: mocks.cases, findCheckoutRoot: mocks.root }));
+vi.mock('@/lib/recon-test-history.server', () => ({ readTestRuns: mocks.runs, readRegressionCases: mocks.cases, findCheckoutRoot: mocks.root }));
 vi.mock('node:child_process', () => ({ spawnSync: mocks.spawn }));
 vi.mock('node:fs', async original => ({ ...await original<typeof import('node:fs')>(), readdirSync: () => [] }));
 import { GET } from '@/app/api/admin/recon-tests/route';

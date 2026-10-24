@@ -1,0 +1,188 @@
+{
+  "gyro": "RwIA6AAANY0B/gAOKoj6AAALHoXy/gJ7H4bw+gFoIofs+gAHKYnz+QA1LIn2+wB4Lor7/QDwMoz1+gBaNYz7/gAAOY4EAQBaPZEI/wC0QZMKAAFKRJULAwA8UJ4I/wAIZbQD/AAFcsgA+QBrdM3/9wEsdtH++wFoeNYA+QCWedoA9wCWet4B8gCWed0A7gA8eNgA8gAld9QB9QA1dc8A+APedc/8/QAedM38CAB4c8v/DgAecMcCEgBabcMCFQCdar0BFgAXZ7oBGQBaYLL+HgDwYbICGwCeY7UFGQAFZrgHFAAvabsKEAC0bsIKDgAAcMcKDAAec8wLCwA8ddAMCQBadtMOBACWdtMP/wDSdM4RAwBadc8MAgKhddIQAQEfdtMP/AaQdtQQ+A+WddMT9gpQdNQY9gHgddca8w18c9Ye8xHtctYi8BQncdcm8A/Vb9cp7grFbdYs6w0+btQq8ACWb9En9wBacNEj+QDwctIh/gA8cM4g+QB4b8sd9QK0bcgg9wCUbswj9gDSbcwm+gC0a8kn+ACWbM4s+QC0bNEv+ABabc8r+AAPbcwl9ADDbs8j7wA8b9Ai6wCWb9Eg5gDSb9Ij6wAlbs4j8ABxbcsj9AEsbc0m7wEsbMom8gCWbMkl+gB4a8Yk/QKUbcsn/QCWacYq/QA8ZcAr/QAeYbst/gHCYr8u/ADwZcMu/QBeaMYt+wBWZsQt9gJYZ8cv+gA8asor8gB4bM4r9AC0a8wr+ADwbtEp9AAecNMm+QKybtEo9QDSbNAs8wFobdIu9wCWbtUt9AGJbtkw8gBXbdoy7gWCa9Yz8QDwbNs18AA8adw67AEyYuBG6AA2VeNU4gBDQell3AAXMu5t2ACWL/Ft1QEOLfRt0wDSLu9s0gDSMO9t1wUKMfFu2wCWMfRw3wJfMPZx4wCtMPZx3wBaLPNw2QAHKfBu0wA1Je5u0AA8Iu5tzABaHvJuygDVHPZtxgBXHPRrwwClI+9owwAtQt1azwA8W85C4AC0Xc1A4wC0Xss+6ABaYc4+7AGkYsw56wNIZc847gB4adQ27wAea9g07wC0bdox7gBabNoy6gBaado14wCWaN023wEOaNo14gBaaNY15QCWZ9E06gEOZ80z7QKUac8w7wNmacou8gCWac0v7AC0adAy6wB4aNM15wDwaNg35gLQatw36AB4atk37ABaats05gB/a9c08AFhadU26wAeaNI06AA8ZtAy4wAeZ9Uz4QA8aNoy2wEOZ9sw1QEsZ9w12QBaaNg35AGlZ9U25wEratg26gCWa9457gB/a9k17QHZadQ16wHCatY28AFobNo08QC0cN4w8gC0b9409gAAb90w8gBEb90y9wDKbt41+gFobNk2+ABaZ9E5+AEsZc469QPAZNA88gQaY8489wH+ZNE99ADSY8877gDSZtM66wA8aNY47AAeatY28gHCaNI38wFKZ9M47QJYZdU76AGkZtc87ADwads77QC0at856QMMauE87QY2beI15wBEbuMw5AAWceYr4gBcc+kn4wDQcukr5QCWbuIx5wAAatk36wA8ZNI+8QA8YM9C9wKyYdJD9ADwXtFG9gBbW85I+ABZVsdK9wGkVchK8gBaUsVL8QB4UsVM9QAeWMxL9wA8X9VI9AB4Y9dC8AAAaN8+7gAlbu078QCPcfk39AABc/029gLPcvk39QB4bu878wA8auY/8wA8aOFB8QAAZNxD8ABaYtlF7QA8X9hG5wDSXtlG4gHCXdZH5gcmW9RJ5wDSV9BL5wAeWtVK5gB4WNBL6gBaW9VK6wCWXdlL6wCWX9ZF5wBDX9NB5ABTYtQ94wGNYdlB4AAXXt1J5ABaYN5J6Q==",
+  "model": "moyu32",
+  "moves": [
+    {
+      "m": "R'",
+      "ts": 0
+    },
+    {
+      "m": "D'",
+      "ts": 986
+    },
+    {
+      "m": "L'",
+      "ts": 2189
+    },
+    {
+      "m": "U'",
+      "ts": 2910
+    },
+    {
+      "m": "R'",
+      "ts": 3555
+    },
+    {
+      "m": "F",
+      "ts": 4587
+    },
+    {
+      "m": "U'",
+      "ts": 41863
+    },
+    {
+      "m": "R'",
+      "ts": 42531
+    },
+    {
+      "m": "U",
+      "ts": 42812
+    },
+    {
+      "m": "R",
+      "ts": 43036
+    },
+    {
+      "m": "L",
+      "ts": 44357
+    },
+    {
+      "m": "F'",
+      "ts": 45258
+    },
+    {
+      "m": "L'",
+      "ts": 45892
+    },
+    {
+      "m": "F",
+      "ts": 46470
+    },
+    {
+      "m": "D'",
+      "ts": 50503
+    },
+    {
+      "m": "B'",
+      "ts": 52781
+    },
+    {
+      "m": "U",
+      "ts": 53414
+    },
+    {
+      "m": "B",
+      "ts": 53710
+    },
+    {
+      "m": "D",
+      "ts": 54466
+    },
+    {
+      "m": "F'",
+      "ts": 59277
+    },
+    {
+      "m": "U",
+      "ts": 60417
+    },
+    {
+      "m": "F",
+      "ts": 60877
+    },
+    {
+      "m": "R",
+      "ts": 61423
+    },
+    {
+      "m": "U",
+      "ts": 61725
+    },
+    {
+      "m": "R'",
+      "ts": 62033
+    },
+    {
+      "m": "U'",
+      "ts": 63068
+    },
+    {
+      "m": "L'",
+      "ts": 64319
+    },
+    {
+      "m": "U",
+      "ts": 64667
+    },
+    {
+      "m": "U",
+      "ts": 64806
+    },
+    {
+      "m": "L",
+      "ts": 65412
+    },
+    {
+      "m": "U",
+      "ts": 67667
+    },
+    {
+      "m": "F",
+      "ts": 68778
+    },
+    {
+      "m": "L'",
+      "ts": 70936
+    },
+    {
+      "m": "U'",
+      "ts": 73419
+    },
+    {
+      "m": "L",
+      "ts": 73950
+    },
+    {
+      "m": "U",
+      "ts": 74295
+    },
+    {
+      "m": "L",
+      "ts": 75073
+    },
+    {
+      "m": "F'",
+      "ts": 75646
+    },
+    {
+      "m": "L'",
+      "ts": 75862
+    },
+    {
+      "m": "L'",
+      "ts": 76021
+    },
+    {
+      "m": "U",
+      "ts": 79389
+    },
+    {
+      "m": "L",
+      "ts": 80055
+    },
+    {
+      "m": "U'",
+      "ts": 80589
+    },
+    {
+      "m": "U",
+      "ts": 81046
+    },
+    {
+      "m": "U",
+      "ts": 81203
+    }
+  ],
+  "timeMs": 81166.29999999702,
+  "scramble": "L' D F R F L2 F D2 R2 D F2 D' L2 F2 L2 U B2 D B U2"
+}
