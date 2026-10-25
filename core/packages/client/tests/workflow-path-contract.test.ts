@@ -3,6 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runInNewContext } from 'node:vm';
 import { describe, expect, it } from 'vitest';
+import { STAGE_SOLVER_ASSETS } from '../../../scripts/copy-stage-solver-assets.mts';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
 
@@ -854,16 +855,34 @@ describe('deployment workflow path contracts', () => {
       const block = workflow.slice(start, next < 0 ? undefined : start + 1 + next);
       for (const asset of [
         '/tools/cstimer-scramble/',
-        '/tools/solver/rust-cross/cross-solver-worker.js',
-        '/tools/solver/rust-cross/xcross-table-worker.js',
-        '/tools/solver/rust-cross/cross_solver.js',
-        '/tools/solver/rust-cross/cross_solver_bg.wasm',
+        ...STAGE_SOLVER_ASSETS.map(asset => `/tools/solver/rust-cross/${asset}`),
       ]) expect(block, `${job}: ${asset}`).toContain(asset);
+    }
+    for (const name of ['android_release.yml', 'app_release.yml']) {
+      const buildJob = readWorkflow(name).split('\n  build:\n')[1]?.split('\n  publish:\n')[0];
+      expect(buildJob, name).toBeDefined();
+      // Release jobs use cone mode and select the complete vendored directories.
+      expect(buildJob, name).toMatch(/^\s+tools\/solver\/rust-cross\s*$/m);
+      expect(buildJob, name).toMatch(/^\s+tools\/cstimer-scramble\s*$/m);
     }
     for (const domain of ['mobile', 'desktop']) {
       expect(workflowTriggers(readStepFilterPaths('test.yml', 'Detect affected inputs', domain), [
         repoPath('.github', 'workflows', 'test.yml'),
       ]), domain).toBe(true);
+    }
+  });
+
+  it('checks out the real Cross startup fixtures in both client test jobs', () => {
+    const startup = readFileSync(join(REPO_ROOT, packagePath('client', 'tests', 'rust_cross_startup.test.ts')), 'utf8');
+    const fixtures = [...startup.matchAll(/readFileSync\(path\.join\(assets, '([^']+)'\)/g)].map(match => match[1]);
+    expect(fixtures).toEqual(['cross-solver-worker.js', 'tables/pt_cross.bin.gz']);
+    const workflow = readWorkflow('test.yml');
+    for (const job of ['test', 'client-tests']) {
+      const start = workflow.indexOf(`\n  ${job}:\n`);
+      expect(start, job).toBeGreaterThan(-1);
+      const next = workflow.slice(start + 1).search(/\n  [a-z][a-z-]*:\n/);
+      const block = workflow.slice(start, next < 0 ? undefined : start + 1 + next);
+      for (const fixture of fixtures) expect(block, `${job}: ${fixture}`).toContain(`/tools/solver/rust-cross/${fixture}`);
     }
   });
 
