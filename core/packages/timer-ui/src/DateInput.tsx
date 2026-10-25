@@ -349,7 +349,7 @@ export function DateInput({
             {labels.today}
           </button>
         </div>,
-        document.body,
+        inputRef.current?.closest('dialog[open]') ?? document.body,
       )}
     </span>
   );

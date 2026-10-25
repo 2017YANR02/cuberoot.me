@@ -3198,4 +3198,11 @@ export const CATALOG: ComponentEntry[] = [
     zh: '工作台排期共用的甘特图：分组任务、里程碑、日周月尺度与键盘编辑入口，沿用工作台主题。',
     en: 'Workspace Gantt timeline with grouped tasks, milestones, day/week/month scales and keyboard editing, using workspace theme tokens.',
   },
+  {
+    name: 'WorkspaceButton / WorkspaceDialog',
+    import: "import { WorkspaceButton, WorkspaceDialog } from '@/app/[lang]/workspace/WorkspaceControls';",
+    category: 'more',
+    zh: '工作台共用的图标操作和编辑弹窗：无障碍名称、悬停提示、保存锁定、未保存确认与焦点恢复。报告、项目、清单、排期和成员共用。',
+    en: 'Workspace actions and editor dialogs with accessible names, tooltips, save locking, unsaved-change confirmation and focus restoration. Shared by reports, projects, checklists, schedules and members.',
+  },
 ];

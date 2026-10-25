@@ -100,6 +100,6 @@ export function Tooltip({ content, children, disabled = false, onlyWhenOverflow 
       ref={panel} id={id} role="tooltip" className="site-tooltip" data-site-surface="popover"
       onPointerEnter={() => { hovered.current = true; clearLeave(); }}
       onPointerLeave={() => { hovered.current = false; leave(); }}
-    >{content}</div>, document.fullscreenElement?.contains(anchor) ? document.fullscreenElement : document.body)}
+    >{content}</div>, anchor.closest('dialog[open]') ?? (document.fullscreenElement?.contains(anchor) ? document.fullscreenElement : document.body))}
   </>;
 }
