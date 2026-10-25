@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { SiteCorners } from "@2017yanr02/continuous-corners/react";
 import { shareOrDownloadBackup } from './file-export';
 import { InstalledUpdateNotice } from './AndroidUpdateNotice';
@@ -483,6 +484,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   const primaryNavRef = useRef<HTMLElement>(null);
   const [connection, setConnection] = useState<ConnectionState>('checking');
   const [wcaDifficultyCoverage, setWcaDifficultyCoverage] = useState<TimerWcaDifficultyCoverage>('idle');
+  const [wcaSourceSlot, setWcaSourceSlot] = useState<HTMLDivElement | null>(null);
   const [wcaTopControlsSlot, setWcaTopControlsSlot] = useState<HTMLSpanElement | null>(null);
   const [wcaDifficultyToggleSlot, setWcaDifficultyToggleSlot] = useState<HTMLSpanElement | null>(null);
   const [mobileWcaPool] = useState(createMobileWcaPool);
@@ -1494,9 +1496,8 @@ export function App({ host }: { host: InstalledAppHost }) {
       return;
     }
 
-    // Canonical Web behavior: projects without a WCA-pool mapping keep the
-    // Real source selected but use that same project's local provider. This is
-    // not a network-error fallback, and it must never turn into a 333 scramble.
+    // A restored event may reach generation before source normalization runs.
+    // Unsupported real sources use the event's own provider during that handoff.
     if (!timerSupportsRealWcaScrambles(event)) {
       generateRandomScramble(liveEntry, requestId);
       return;
@@ -2977,6 +2978,13 @@ export function App({ host }: { host: InstalledAppHost }) {
     applyScrambleHistory({ list: [], idx: -1 });
   }, [applyScrambleHistory, timer.cancelArm]);
 
+  useEffect(() => {
+    if (!sourceControlsEnabled || scrambleSource !== 'wca'
+      || timerSupportsRealWcaScrambles(activeEvent)) return;
+    invalidateCurrentScramble();
+    setScrambleSource('random');
+  }, [activeEvent, sourceControlsEnabled, scrambleSource, invalidateCurrentScramble]);
+
   const updateSettings = useCallback((changes: TimerSettingsUpdate) => {
     const revision = storeSnapshotGateRef.current.beginMutation();
     void repository.updateSettings(changes).then((data) => {
@@ -4006,6 +4014,8 @@ export function App({ host }: { host: InstalledAppHost }) {
                     onOpenChange={handleTimerOverlayOpenChange}
                     open={openOverlay === TIMER_OVERLAY_IDS.scrambleSource}
                     popupClassName="shell-scramble-source-popup"
+                    realAvailable={timerSupportsRealWcaScrambles(activeEvent)}
+                    realMenuContent={<div ref={setWcaSourceSlot} />}
                     realValue="wca"
                     triggerClassName="shell-players-select"
                     value={scrambleSource}
@@ -4036,7 +4046,8 @@ export function App({ host }: { host: InstalledAppHost }) {
                     className="mobile-scramble-source-config mobile-wca-source-config"
                     disabled={!sourceControlsEnabled}
                   >
-                    <TimerWcaSourceConfig
+                    {wcaSourceSlot && createPortal(<TimerWcaSourceConfig
+                      popupContainer={wcaSourceSlot}
                       adapter={wcaSourceAdapter}
                       competitionDisplayName={(competitionId, canonicalName) => (
                         displayMobileWcaCompetitionName(competitionId, canonicalName, language)
@@ -4046,8 +4057,6 @@ export function App({ host }: { host: InstalledAppHost }) {
                       maxDate={toLocalIsoDate()}
                       minDate={TIMER_WCA_MIN_DATE}
                       onChange={updateWcaSourceSettings}
-                      onOpenChange={handleTimerOverlayOpenChange}
-                      open={openOverlay === TIMER_OVERLAY_IDS.wcaCompetition}
                       renderCountry={(country) => <Flag iso2={country} />}
                       renderDateRange={(props) => (
                         <DateRangeInput
@@ -4069,7 +4078,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                         <span className="mobile-wca-shared-controls" ref={setWcaTopControlsSlot} />
                       )}
                       wcaEventId={timerWcaScrambleEventId(activeEvent)}
-                    />
+                    />, wcaSourceSlot)}
                     <TimerWcaDifficultyConfig
                       adapter={mobileTimerWcaDifficultyAdapter}
                       disabled={!sourceControlsEnabled}

@@ -749,3 +749,5 @@ Web 与安装端共同消费 useLiveSmartCubeAttempt：物理转动仍同步记�
 ### 2026-10-25 编排层对齐：专项观察与统计
 
 安装端将 first-turn/scrambled/manual 接入共享计时状态机，记录 trainingStartMode；手动模式只在目标匹配时开始观察，智能魔方执行期间仍屏蔽手动停表。训练观察不使用 WCA 超时罚则。Web/App 共用观察提示与 observation/execution/total 统计计算；当前阶段动作统一使用 cubeFooter。控制器 12 项、Web 计时机/训练复盘 33 项回归、shared build 与两端 typecheck 通过，未代替实体魔方验收。
+
+真题比赛选择从安装端常驻画布行移入来源子菜单，使用共享 popupContainer 内联弹层；难度配置保持挂载并继续投射到工具栏。无真题池的项目自动归一为随机来源。App typecheck 与来源/真题练习契约 36 项通过；比赛快捷时间/国家筛选仍待统一。
