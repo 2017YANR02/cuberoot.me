@@ -42,6 +42,8 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
 ];
 
 const TABLES: Table[] = [
+  { name: 'wca_translation_sync', domain: 'comp', origin: '0289', purpose: { zh: '官方译文同步版本、来源许可与失败状态', en: 'Official translation sync provenance, licenses and failure state' } },
+  { name: 'wca_translation_units', domain: 'comp', origin: '0289', purpose: { zh: '可检索的官方英中条目与翻译状态', en: 'Searchable official English–Chinese units and translation states' } },
   { name: 'recon_intake', domain: 'recon', origin: '0286', purpose: { zh: '复盘收录、原始记录、批注、确认版本和领取租约', en: 'Reconstruction intake, recordings, annotations, approvals and leases' } },
   { name: 'recon_intake_revisions', domain: 'recon', origin: '0286', purpose: { zh: '原始批注与人工预期的版本历史', en: 'Version history of annotations and human expectations' } },
   { name: 'recon_intake_runs', domain: 'recon', origin: '0286', purpose: { zh: '复盘待办的不可变测试报告', en: 'Immutable intake test reports' } },
@@ -579,8 +581,8 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
-  { n: 290, slug: 'workspace_schedules', desc: { zh: '可复用团队排期、分组任务及里程碑', en: 'Reusable team schedules, grouped tasks and milestones' } },
-  { n: 289, slug: 'workspace_checklists', desc: { zh: '按分类共享公司与项目清单，完成状态和版本冲突保护', en: 'Categorized company and project checklists with completion and version checks' } },
+  { n: 292, slug: 'workspace_schedules', desc: { zh: '可复用团队排期、分组任务及里程碑', en: 'Reusable team schedules, grouped tasks and milestones' } },
+  { n: 291, slug: 'workspace_checklists', desc: { zh: '按分类共享公司与项目清单，完成状态和版本冲突保护', en: 'Categorized company and project checklists with completion and version checks' } },
   { n: 288, slug: 'multiple_home_features', desc: { zh: '首页支持多个独立置顶内容', en: 'Multiple independent homepage features' } },
   { n: 287, slug: 'alg_mark_tombstones', desc: { zh: '保留学习标记清除时间，阻止旧设备迟到写入复活标记', en: 'Retain learning-mark deletion timestamps to reject stale device writes' } },
   { n: 282, slug: 'workspace_account_deletion', desc: { zh: '员工账号注销：清理私有数据、撤销权限并保留匿名团队记录', en: 'Employee account deletion: purge private data and retain anonymous team records' } },
@@ -872,6 +874,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 275, slug: 'recon_favorites', desc: { zh: '所有登录用户可收藏复盘，按账号持久保存。', en: 'Persistent reconstruction favorites for every signed-in account.' } },
   { n: 274, slug: 'dev_preview_health', desc: { zh: '独立记录开发网址的连通验收与检查时间，过期不显示可用。', en: 'Track independent preview connectivity checks; stale evidence does not imply availability.' } },
   { n: 272, slug: 'remote_access', desc: { zh: '员工远程连接申请、负责人审批及主机同步确认。', en: 'Employee remote access requests, host-owner approval and host acknowledgements.' } },
+  { n: 289, slug: 'wca_translations', desc: { zh: 'WCA 官方英中翻译与来源状态，原子同步及检索。', en: 'Official WCA English–Chinese translations with provenance, atomic sync and retrieval.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

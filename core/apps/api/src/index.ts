@@ -59,6 +59,8 @@ import { simMasksRoutes } from './routes/sim_masks.js';
 import { wcaFormatRoutes } from './routes/wca_format.js';
 import { wcaRecentRecordsRoutes, startRecentRecordsPoller } from './routes/wca_recent_records.js';
 import { wcaTeamRoutes } from './routes/wca_teams.js';
+import { wcaTranslationRoutes } from './routes/wca_translations.js';
+import { startTranslationSync } from './utils/wca_translations.js';
 import { wcaTrainingInstitutionRoutes } from './routes/wca_training_institutions.js';
 import { wcaTeacherRoutes } from './routes/wca_teachers.js';
 import { timerBackupsRoutes } from './routes/timer_backups.js';
@@ -227,6 +229,7 @@ app.route('/v1', wcaFormatRoutes);
 app.route('/v1', wcaRecentRecordsRoutes);
 app.route('/v1', wcaTeacherRoutes);
 app.route('/v1', wcaTeamRoutes);
+app.route('/v1', wcaTranslationRoutes);
 app.route('/v1', wcaTrainingInstitutionRoutes);
 app.route('/v1', timerBackupsRoutes);
 app.route('/v1', timerBootTelemetryRoutes);
@@ -408,6 +411,7 @@ startPrewarmCron();
 startMonitors();
 startIdentityChoiceCleanup();
 startAssistantMonitorCleanup();
+startTranslationSync();
 
 // /calendar 日程提醒:每分钟扫一遍「该发提醒了吗」,命中写站内通知(+ 邮件旁路)。
 // 去重靠 calendar_reminder_log 的主键抢占,重启 / 窗口重叠都不会重复发。

@@ -39,7 +39,7 @@ suite('workspace shared planning persistence', () => {
     await exec(`CREATE SCHEMA ${schema}; SET search_path TO ${schema}`);
     await exec('CREATE TABLE app_users(id BIGINT PRIMARY KEY,display_name TEXT,is_admin BOOLEAN,forum_banned BOOLEAN DEFAULT FALSE,merged_into_user_id BIGINT,wca_id TEXT)');
     await exec("INSERT INTO app_users(id,display_name,is_admin) VALUES (1,'Admin',TRUE),(2,'Alice',FALSE),(3,'Bob',FALSE),(4,'Outside',FALSE)");
-    for (const file of ['0281_workspace', '0282_workspace_account_deletion', '0284_workspace_admin_access', '0289_workspace_checklists', '0290_workspace_schedules']) {
+    for (const file of ['0281_workspace', '0282_workspace_account_deletion', '0284_workspace_admin_access', '0291_workspace_checklists', '0292_workspace_schedules']) {
       await exec(readFileSync(new URL(`../migrations/${file}.sql`, import.meta.url), 'utf8'));
     }
     service = createWorkspaceService(q, transaction);

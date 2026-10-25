@@ -1831,30 +1831,6 @@
         "node scripts/recon-ground-truth-gate.mjs run --offline"
       ],
       "driftPolicy": "Explicit authenticated export only. Preserve approved expectations; ordinary offline CI does not fetch new samples. An empty export is not proof of reconstruction correctness."
-    },
-    {
-      "id": "client.wca-website-bilingual",
-      "kind": "checked-in-generated",
-      "source": {
-        "url": "https://github.com/thewca/worldcubeassociation.org",
-        "paths": [
-          "docs/wca-website-translations/snapshot.json"
-        ]
-      },
-      "license": {
-        "spdx": "GPL-3.0-only",
-        "evidence": "Pinned upstream LICENSE linked in generated Markdown; WCA locale strings and translation contributors are attributed."
-      },
-      "owner": "core/packages/client/scripts/wca-website-bilingual.mts",
-      "workingDirectory": "core",
-      "command": "node packages/client/scripts/wca-website-bilingual.mts",
-      "outputs": [
-        "core/packages/client/public/regulation/wca-website-bilingual.md"
-      ],
-      "verification": [
-        "Compare locale keys and original strings with the pinned snapshot; review known mismatches before using a pair as a translation example."
-      ],
-      "driftPolicy": "Manual pinned-source refresh, independently of regulation versions. The curated reference is never overwritten."
     }
   ]
 }
