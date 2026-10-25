@@ -21,7 +21,7 @@ export function createAppReleaseRoutes(options: {
   routes.get('/admin/app-releases', async c => {
     await authorize(c);
     try { return c.json(await service.status()); }
-    catch { throw new HTTPException(502, { message: 'Unable to read release status' }); }
+    catch { return c.json({ error: 'Unable to read release status' }, 502); }
   });
   routes.post('/admin/app-releases', bodyLimit({ maxSize: 20_000 }), async c => {
     const actor = await authorize(c);
@@ -34,8 +34,8 @@ export function createAppReleaseRoutes(options: {
       diagnosticLog('app_release_requested', { actor: actor.wcaId, requestId: request.requestId, platform: request.platform, commit: request.commit, state: receipt.state });
       return c.json(receipt, 202);
     } catch (error) {
-      if (error instanceof HTTPException) throw error;
-      throw new HTTPException(502, { message: 'Unable to submit release. Refresh status before retrying.' });
+      if (error instanceof HTTPException) return c.json({ error: error.message }, error.status);
+      return c.json({ error: 'Unable to submit release. Refresh status before retrying.' }, 502);
     }
   });
   return routes;

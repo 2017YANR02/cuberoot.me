@@ -1368,6 +1368,21 @@
       "driftPolicy": "These outputs and local configuration are gitignored and never become editable source or tracked generated artifacts. An Android build is not iOS evidence and neither platform's local build is signing or store evidence."
     },
     {
+      "id": "apps.official-distribution",
+      "kind": "build-output",
+      "source": {
+        "locator": "Exact reviewed main commit selected by an administrator; native artifacts owned by Mobile and Desktop",
+        "paths": [".github/workflows/app_release.yml", "core/scripts/android-release/distribute.ts", "core/scripts/android-release/publish-server.mjs", "core/packages/shared/src/android-release.ts"]
+      },
+      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and packaged dependency licenses" },
+      "owner": "core/scripts/android-release",
+      "workingDirectory": "core",
+      "command": "Manually dispatch app_release.yml through the administrator download-page entry",
+      "transientOutputs": ["release-staging/**"],
+      "verification": ["verify native identity, Android production signing certificate and artifact checksums before promoting the public latest.json", "verify both Windows EXEs before publishing their shared manifest"],
+      "driftPolicy": "Versioned APK/EXE artifacts and per-platform manifests live on static.cuberoot.me/downloads, never in Git. Daily push builds do not publish them; an administrator release allocates a monotonically increasing sequence."
+    },
+    {
       "id": "desktop.tauri-build",
       "kind": "build-output",
       "source": {

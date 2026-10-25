@@ -7,7 +7,7 @@
 - 页面复用 `/icons/icon-512.png` 的现有 App 图标；Google Play 入口使用本地托管的官方中英文徽章，素材来源见 `core/packages/client/public/badges/README.md`。
 - `core/packages/client/lib/app-downloads.ts` 集中维护官网分发链接。Google Play 指向公开的 `me.cuberoot.app` 商品页。
 - 下载页读取 `https://static.cuberoot.me/downloads/android/latest.json` 的版本、不可变 APK 地址；首屏和网络失败回退到同源 `latest.apk`。两者均禁止缓存，分别由服务端原子替换，APK 就绪后才更新版本清单。页面保留独立点击统计。
-- Windows、iOS、macOS、HarmonyOS NEXT 仅显示「即将发布」。
+- Windows 提供安装版和免安装 EXE 两个入口，读取同源 `/downloads/windows/latest.json`；尚无有效清单时禁用，不回退到本机旧包。iOS、macOS、HarmonyOS NEXT 仍显示「即将发布」。
 - 官网 APK 使用维护者长期正式上传密钥，不能覆盖 Google Play 不同签名的安装版。页面明确提示 Play 用户继续通过 Play 更新，避免卸载丢失本地记录；本轮没有连接真机，未完成安装/升级及真实业务验收。不得把 debug、unsigned 或 CI 临时签名包用于官网分发。
 - 将验证后的包上传到受控 HTTPS 静态存储，使用带版本号的不可变地址；确认响应、文件大小、SHA-256、续传和国内访问后再切换最新版本指针。安装包不提交源码 Git，不经业务 API 转发。静态文件位于服务器 `/www/wwwroot/toolkit/downloads/android/`，由 `ops/nginx/static.cuberoot.me.conf` 提供附件下载与单段 Range；nginx 配置仍通过 `deploy_nginx.yml` 发布。
 - 发布新包先完成文件校验，再切换链接；撤回时改回已验证旧版或置 `null`，不覆盖同名版本文件。
@@ -72,7 +72,7 @@ App「我的」页由宿主提供原生版本和渠道：direct 检查官网清�
 
 ## 基础统计
 
-`POST /v1/downloads/events` 接收 `{ "channel": "play" | "apk", "language": "en" | "zh" }`，返回 `204`。上限 256 字节、每个来源 IP 每分钟 30 次，非法字段返回 `400`，超限返回 `429`。IP 仅用于现有进程内限流，不进入本事件日志。
+`POST /v1/downloads/events` 接收 `{ "channel": "play" | "apk" | "windows-installer" | "windows-portable", "language": "en" | "zh" }`，返回 `204`。上限 256 字节、每个来源 IP 每分钟 30 次，非法字段返回 `400`，超限返回 `429`。IP 仅用于现有进程内限流，不进入本事件日志。
 
 点击普通链接时独立发送 `keepalive` 请求，不等待统计响应、不带账号凭据；统计故障不阻断商店跳转或文件下载。禁用按钮不记录事件。暂不记录页面浏览、访客 ID、完整 URL、Referer、User-Agent 或安装数据。
 

@@ -13,8 +13,8 @@ const mode = process.argv[2];
 const output = join(root, 'release-staging');
 const notes = process.env.RELEASE_NOTES ?? '';
 if (!notes.trim() || notes.length > 4000) throw new Error('Release notes required');
-function run(command: string, args: string[]) {
-  const result = spawnSync(command, args, { encoding: 'utf8' });
+function run(command: string, args: string[], env = process.env) {
+  const result = spawnSync(command, args, { encoding: 'utf8', env });
   if (result.error || result.status !== 0) throw new Error(`Artifact verification failed: ${command}`);
   return result.stdout.trim();
 }
@@ -52,9 +52,14 @@ if (mode === 'prepare') {
     certificateSha256: ANDROID_RELEASE_CERTIFICATE, minSdk: Number(manifest('min-sdk')), commit, publishedAt: new Date().toISOString() });
   writeFileSync(join(output, 'latest.json'), JSON.stringify({ ...metadata, notes }, null, 2));
 } else if (mode === 'windows') {
+  if (process.platform !== 'win32') throw new Error('Windows packaging requires Windows');
   const release = join(root, 'core/apps/desktop/src-tauri/target/release');
   const installers = readdirSync(join(release, 'bundle/nsis')).filter(n => n.endsWith('.exe'));
   if (installers.length !== 1) throw new Error('Expected one Windows installer');
+  for (const path of [join(release, 'cuberoot-desktop.exe'), join(release, 'bundle/nsis', installers[0]!)]) {
+    const version = run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', '(Get-Item -LiteralPath $env:CUBEROOT_VERIFY_EXE).VersionInfo.ProductVersion'], { ...process.env, CUBEROOT_VERIFY_EXE: path });
+    if (version.split('.').slice(0, 3).join('.') !== identity.versionName) throw new Error('Windows binary version mismatch');
+  }
   const prefix = `CubeRoot-${identity.versionName}-${identity.versionCode}-x64`;
   const metadata = parseWindowsRelease({ schemaVersion: 1, platform: 'windows', arch: 'x64', ...identity, commit,
     publishedAt: new Date().toISOString(), notes, files: {

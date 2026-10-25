@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { HTTPException } from 'hono/http-exception';
+import { Hono } from 'hono';
 import { createReleaseService } from '../src/releases/service.js';
 import { createAppReleaseRoutes } from '../src/routes/app_releases.js';
 
@@ -57,5 +58,14 @@ describe('administrator release orchestration', () => {
     expect(response.status).toBe(502); expect(await response.text()).not.toContain('secret');
     expect((await app.request('/admin/app-releases', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...request, platform: 'macos' }) })).status).toBe(400);
     expect(service.dispatch).not.toHaveBeenCalled();
+  });
+  it('preserves release status codes under the API root error handler', async () => {
+    const service = { status: vi.fn(), dispatch: vi.fn().mockRejectedValue(new HTTPException(409, { message: 'Main changed' })) };
+    const app = new Hono();
+    app.onError((_error, c) => c.json({ error: 'root failure' }, 500));
+    app.route('/v1', createAppReleaseRoutes({ service, authorize: async () => ({ wcaId: 'admin' }) }));
+    const response = await app.request('/v1/admin/app-releases', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request) });
+    expect(response.status).toBe(409);
+    expect(response.headers.get('Cache-Control')).toBe('private, no-store');
   });
 });

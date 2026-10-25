@@ -44,6 +44,13 @@
 .download-upcoming { margin-top: 40px; border-top: 1px solid var(--border-default); padding-top: 16px; }
 .download-platform { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 24px; padding: 12px 0; color: var(--muted-foreground); font-size: .9rem; }
 .download-platform > :last-child { color: var(--faint-foreground); }
+.download-windows { margin: 32px 0; }
+.download-release-manager { margin-top: 20px; }
+.download-release-manager label { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
+.download-release-manager select { align-self: flex-start; font: inherit; }
+.download-release-manager textarea { width: 100%; box-sizing: border-box; font: inherit; resize: vertical; }
+.download-release-manager code { overflow-wrap: anywhere; }
+.download-release-manager li { margin: 12px 0; }
 @media (max-width: 420px) {
   .download-actions { flex-direction: column; align-items: flex-start; }
 }

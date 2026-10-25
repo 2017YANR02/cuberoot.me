@@ -23,6 +23,11 @@ describe('download click statistics', () => {
     });
   });
 
+  it.each(['windows-installer', 'windows-portable'])('records %s with the correct platform', async channel => {
+    expect((await post(JSON.stringify({ channel, language: 'en' }))).status).toBe(204);
+    expect(diagnosticLog).toHaveBeenCalledWith('download_click', { platform: 'windows', channel, language: 'en' });
+  });
+
   it.each([
     'not-json', 'null', '[]', '{}',
     JSON.stringify({ channel: 'windows', language: 'en' }),

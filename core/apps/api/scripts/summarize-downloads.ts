@@ -6,8 +6,8 @@ for await (const line of createInterface({ input: process.stdin, crlfDelay: Infi
   let entry: Record<string, unknown>;
   try { entry = JSON.parse(line); }
   catch { continue; }
-  if (!entry || entry.event !== 'download_click' || entry.platform !== 'android'
-    || !['play', 'apk'].includes(entry.channel as string)
+  if (!entry || entry.event !== 'download_click' || !['android', 'windows'].includes(entry.platform as string)
+    || !['play', 'apk', 'windows-installer', 'windows-portable'].includes(entry.channel as string)
     || !['zh', 'en'].includes(entry.language as string)
     || typeof entry.time !== 'string' || !Number.isFinite(Date.parse(entry.time))) continue;
   const date = new Date(entry.time).toISOString().slice(0, 10);

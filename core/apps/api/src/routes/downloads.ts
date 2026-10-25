@@ -24,10 +24,10 @@ downloadRoutes.post('/downloads/events', bodyLimit({ maxSize: 256 }), async (c) 
   }
   const event = body as Record<string, unknown>;
   if (Object.keys(event).some((key) => key !== 'channel' && key !== 'language')
-    || !['play', 'apk'].includes(event.channel as string)
+    || !['play', 'apk', 'windows-installer', 'windows-portable'].includes(event.channel as string)
     || !['en', 'zh'].includes(event.language as string)) {
     return c.json({ error: 'Invalid download event' }, 400);
   }
-  diagnosticLog('download_click', { platform: 'android', channel: event.channel, language: event.language });
+  diagnosticLog('download_click', { platform: String(event.channel).startsWith('windows-') ? 'windows' : 'android', channel: event.channel, language: event.language });
   return c.body(null, 204);
 });

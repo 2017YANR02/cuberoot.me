@@ -93,6 +93,7 @@ jobs:
         run: |
           set -euo pipefail
           pnpm install --frozen-lockfile
+          node --test scripts/android-release/*.test.ts
           node scripts/android-release/distribute.ts prepare
           pnpm --filter @cuberoot/desktop build:deps
           pnpm --filter @cuberoot/app-ui typecheck
