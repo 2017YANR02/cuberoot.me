@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { ADMIN_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
 import { canReadReport, reportReadScope, canWriteProject, decideReportChange, isWorkDate, isResultUrl, type WorkspaceActor, type ReportState } from '@app-foundation/workspace-policy';
 import type { QueryRunner } from '../db/connection.js';
+import { reportHoursInput } from './report-hours.js';
 
 export type Actor = WorkspaceActor & { name: string; memberId?: number };
 export type Identity = { uid: number; isAdmin: boolean; name: string };
@@ -19,7 +20,7 @@ const reportInput = z.object({ id: uuid, projectId: uuid.nullable().default(null
 const commentInput = z.object({ id: uuid, reportId: uuid, body: z.string().trim().min(1).max(2000) });
 const now = () => Math.floor(Date.now() / 1000);
 const key = (actor: Actor) => `${actor.kind}:${actor.id}`;
-export type Report = ReportState & { id: string; name: string; projectName: string | null; projectActive: boolean | null; progress: string; resultUrl: string; help: string; next: string; createdAt: number; updatedAt: number };
+export type Report = ReportState & { id: string; name: string; projectName: string | null; projectActive: boolean | null; progress: string; resultUrl: string; help: string; next: string; startHour?: number | null; endHour?: number | null; createdAt: number; updatedAt: number };
 const reportColumns = `r.id, r.member_id AS "memberId", r.project_id AS "projectId", r.work_date::text AS "workDate", r.status, r.visibility, r.version, r.payload, r.created_at AS "createdAt", r.updated_at AS "updatedAt", m.name, p.name AS "projectName", p.active AS "projectActive"`;
 const reportFrom = 'workspace_reports r JOIN workspace_members m ON m.id=r.member_id LEFT JOIN workspace_projects p ON p.id=r.project_id';
 const flatten = (row: Report & { payload: Pick<Report, 'progress'|'resultUrl'|'help'|'next'> }): Report => { const { payload, ...rest } = row; return { ...rest, ...payload }; };
@@ -136,7 +137,12 @@ export function createWorkspaceService(query: QueryRunner, transact: Transaction
             const [previous]=await q<ReportState>('SELECT member_id AS "memberId", project_id AS "projectId", work_date::text AS "workDate",status,visibility,version FROM workspace_reports WHERE id=?',[d.id]);
             const decision=decideReportChange(author,previous??null,d);if(decision!=='allow')throw new WorkspaceError(decision,decision==='not-author'?403:409);
             await projectWrite(q,a,d.projectId);
-            const payload={progress:d.progress,resultUrl:d.resultUrl,help:d.help,next:d.next};const time=now();
+            const hours=reportHoursInput.parse(input);
+            const [existing]=await q<{payload:{startHour?:number|null;endHour?:number|null}}>('SELECT payload FROM workspace_reports WHERE id=?',[d.id]);
+            const payload={progress:d.progress,resultUrl:d.resultUrl,help:d.help,next:d.next,
+              startHour:hours.startHour===undefined ? existing?.payload.startHour??null : hours.startHour,
+              endHour:hours.endHour===undefined ? existing?.payload.endHour??null : hours.endHour};const time=now();
+            reportHoursInput.parse(payload);
             await q('INSERT INTO workspace_reports(id,member_id,project_id,work_date,status,visibility,version,payload,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET status=EXCLUDED.status,visibility=EXCLUDED.visibility,version=EXCLUDED.version,payload=EXCLUDED.payload,updated_at=EXCLUDED.updated_at',[d.id,author.id,d.projectId,d.workDate,d.status,d.visibility,d.version+1,payload,time,time]);
             const saved=(await detail(q,a,d.id)).report;
             await q('INSERT INTO workspace_revisions(report_id,version,snapshot,created_at) VALUES (?,?,?,?)',[d.id,saved.version,saved,time]);await audit(q,a,'report.save',d.id);return {id:d.id,version:saved.version};

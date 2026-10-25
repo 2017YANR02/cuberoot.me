@@ -34,3 +34,9 @@ pnpm --filter @cuberoot/server exec vitest run tests/workspace-http.test.ts
 - [最终 API 部署 39355684610](https://github.com/2017YANR02/cuberoot.me/actions/runs/39355684610) 已成功完成，生产求解服务 ready=true，最终版本保持启用，无回滚。
 
 管理员自动权限：`0284_workspace_admin_access.sql` 记录独立的 `admin_access`，服务端用既有数据库管理员与共享 WCA 管理员清单自动同步全部管理员，复用现有成员 ID。显式员工授权的 `active/role` 独立保留；移除管理员资格即撤销派生权限，原本有显式授权的成员仍可作为员工使用。成员页将管理员标注为自动开通；管理员个人记录使用员工 ID，管理审计继续使用管理员身份。
+
+## 工作时段
+
+“我的工作”记录同一工作日期内的起止小时，支持 `0:00–24:00`，结束须晚于开始。提交时选择时段；草稿可暂不填写。时段随报告保存、展示和进入历史修订，旧记录保留未填写状态，不推算工时。仍为每人、每项目、每天一条记录。
+
+时段保存在既有报告 `payload` 中，无需 SQL 迁移。共享报告界面沿用 `workspace-ui@0.1.0`，扩展由现有 pnpm patch 管理，源码、运行产物与声明同步生成；不复制报告编辑器。
