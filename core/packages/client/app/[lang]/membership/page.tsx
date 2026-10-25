@@ -21,7 +21,7 @@ import CubeRootLogo from '@/components/CubeRootLogo';
 import { Spinner } from '@/components/Spinner/Spinner';
 import {
   listPlans, getMyMembership, getOrderStatus, membershipExpiry,
-  reconcileVisiblePlan, isAutoRenewPlanSlug, renewalAvailability,
+  reconcileVisiblePlan, isAutoRenewPlanSlug,
   type MembershipPlan, type Membership, type PayChannels,
 } from '@/lib/membership-api';
 import AdminPanel from './AdminPanel';
@@ -87,15 +87,6 @@ export default function MembershipPage() {
   const [payEnabled, setPayEnabled] = useState(false);
   const [channels, setChannels] = useState<PayChannels>();
   const [buyPlan, setBuyPlan] = useState<MembershipPlan | null>(null);
-  const [renewalStatus, setRenewalStatus] = useState<Awaited<ReturnType<typeof renewalAvailability>> | null>(null);
-  useEffect(() => {
-    if (commerceRestricted !== false) return;
-    let cancelled = false;
-    setRenewalStatus(null);
-    void renewalAvailability().then(value => { if (!cancelled) setRenewalStatus(value); })
-      .catch(() => { if (!cancelled) setRenewalStatus({ available: false, termsVersion: '' }); });
-    return () => { cancelled = true; };
-  }, [commerceRestricted, user?.wcaId]);
   const [loadErr, setLoadErr] = useState<string | null>(null);
   const [membership, setMembership] = useState<Membership | null>(null);
   const [justPaid, setJustPaid] = useState(false);
@@ -252,13 +243,10 @@ export default function MembershipPage() {
     const priceCents = annual ? yearly : monthly;
     const priceReady = priceCents === plan.priceCents;
     const saving = annual ? monthly * 12 - yearly : (enterprise ? 10000 : 1000);
-    const available = renewal ? isAutoRenewPlanSlug(plan.slug) && priceReady && Boolean(renewalStatus?.available) && (enterprise ? renewalStatus?.plans?.[plan.slug] === true : renewalStatus?.plans?.[plan.slug] !== false) : payEnabled && priceReady;
+    // Account-specific signing availability is checked in AutoRenewModal after login.
+    const available = renewal ? isAutoRenewPlanSlug(plan.slug) && priceReady : payEnabled && priceReady;
     const extraPerks = plan.perks.filter(perk => !universalPerkSet.has(perk) && (!enterprise || !enterpriseSharedPerkSet.has(perk)));
-    const unavailable = renewal
-      ? enterprise ? tr({ zh: '企业自动续费暂未开放', en: 'Enterprise auto-renewal is not yet available' })
-        : renewalStatus === null ? tr({ zh: '正在确认签约状态…', en: 'Checking availability…' })
-          : tr({ zh: '自动续费暂未开放', en: 'Auto-renewal is not yet available' })
-      : tr({ zh: '暂不可购买', en: 'Currently unavailable' });
+    const unavailable = tr({ zh: '暂不可购买', en: 'Currently unavailable' });
     return (
       <div key={plan.slug} className={'mem-plan' + (renewal ? ' is-autorenew' : '')}>
         <span className="mem-plan-tag">{renewal ? tr({ zh: '自动续费', en: 'Auto-renewal' }) : tr({ zh: '仅购买本期', en: 'One-time purchase' })}</span>
@@ -279,7 +267,7 @@ export default function MembershipPage() {
           if (renewal) setSelectedAutoRenewPlan(plan);
           else if (priceReady) setBuyPlan(plan);
         }}>
-          {!available ? unavailable : !loggedIn ? tr({ zh: '登录后继续', en: 'Sign in to continue' }) : renewal ? tr({ zh: '前往微信签约', en: 'Authorize in WeChat' }) : tr({ zh: '支付本期费用', en: 'Pay for this period' })}
+          {!available ? unavailable : tr({ zh: '可以开通', en: 'Subscribe' })}
         </button>
       </div>
     );

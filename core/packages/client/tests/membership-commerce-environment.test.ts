@@ -36,6 +36,7 @@ describe('membership in the WeChat browser', () => {
     (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone) MicroMessenger/8.0');
     mocks.getEnv.mockReset().mockImplementation((callback) => { reply = callback; });
+    mocks.login.mockReset();
     mocks.listPlans.mockReset().mockResolvedValue({
       plans: [{ slug: 'monthly', nameZh: '月度会员', nameEn: 'Monthly', period: 'month', periodCount: 1, priceCents: 3999, currency: 'CNY', perks: [] }],
       renewalPlans: [{ slug: 'monthly_auto_renew', nameZh: '连续包月', nameEn: 'Monthly auto-renewal', period: 'month', periodCount: 1, priceCents: 2999, currency: 'CNY', perks: [], active: false }],
@@ -67,14 +68,18 @@ describe('membership in the WeChat browser', () => {
     } else {
       expect(mocks.listPlans).toHaveBeenCalledTimes(1);
       expect(host.textContent).not.toContain('小程序内暂不提供');
-      expect(host.querySelector('.mem-plan-cta')?.textContent).toBe('自动续费暂未开放');
-      expect((host.querySelector('.mem-plan-cta') as HTMLButtonElement).disabled).toBe(true);
+      expect(host.querySelector('.mem-plan-cta')?.textContent).toBe('可以开通');
+      expect((host.querySelector('.mem-plan-cta') as HTMLButtonElement).disabled).toBe(false);
+      await act(async () => (host.querySelector('.mem-plan-cta') as HTMLButtonElement).click());
+      expect(mocks.login).toHaveBeenCalledTimes(1);
       expect(host.querySelectorAll('.mem-plan-cta')).toHaveLength(1);
       expect(host.textContent).toContain('微信签约后按所选周期自动续费');
       const select = host.querySelector('#membership-payment-mode') as HTMLSelectElement;
       await act(async () => { select.value = 'manual'; select.dispatchEvent(new Event('change', { bubbles: true })); });
       expect(host.textContent).toContain('仅支付本期费用，不会自动扣款');
-      expect(host.querySelector('.mem-plan-cta')?.textContent).toBe('登录后继续');
+      expect(host.querySelector('.mem-plan-cta')?.textContent).toBe('可以开通');
+      await act(async () => (host.querySelector('.mem-plan-cta') as HTMLButtonElement).click());
+      expect(mocks.login).toHaveBeenCalledTimes(2);
     }
   });
 });

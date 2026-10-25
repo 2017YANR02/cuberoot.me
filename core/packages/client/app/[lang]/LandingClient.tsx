@@ -12,7 +12,7 @@ import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'r
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { parseAsBoolean, useQueryState } from 'nuqs';
-import { ArrowRight, Crown, Download, Heart, Lock, LockOpen, LogIn, User, type LucideIcon } from '@app-foundation/icons/lucide';
+import { ArrowRight, Check, Crown, Download, Heart, Lock, LockOpen, LogIn, Pencil, User, type LucideIcon } from '@app-foundation/icons/lucide';
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortable';
 import Link from '@/components/AppLink';
@@ -214,6 +214,8 @@ export default function LandingPage() {
   // 是 hydration-safe(SSG 首帧按未登录渲染,挂载后才切到已登录),避免 SSG/CSR 错配。
 
   const isAdmin = Boolean(user?.isAdmin || isAdminWcaId(user?.wcaId));
+  const [editingCards, setEditingCards] = useState(false);
+  const canEditCards = isAdmin && editingCards;
   const [pinnedRecons, setPinnedRecons] = useRetainedState<ReconSolve[] | null>('home:pinnedRecons', null);
   const [savingPins, setSavingPins] = useState<Set<number>>(new Set());
   const [pinError, setPinError] = useState<string | null>(null);
@@ -279,7 +281,7 @@ export default function LandingPage() {
       : <User size={16} aria-hidden />
   );
 
-  const renderLock = (id: string, locked: boolean, adminOnly = false, label?: string) => isAdmin && (
+  const renderLock = (id: string, locked: boolean, adminOnly = false, label?: string) => canEditCards && (
     <button type="button" className="landing-card-lock" aria-pressed={locked}
       disabled={adminOnly || !locksLoaded || savingLocks.has(id)}
       title={adminOnly ? tr({ zh: '仅管理员可见', en: 'Administrators only' }) : !locksLoaded ? tr({ zh: '锁定状态尚未加载', en: 'Lock status has not loaded' }) : locked ? tr({ zh: '解锁', en: 'Unlock' }) : tr({ zh: '锁定', en: 'Lock' })}
@@ -371,7 +373,7 @@ export default function LandingPage() {
       <SortableCard
         key={card.id}
         id={card.id}
-        draggable={isAdmin}
+        draggable={canEditCards}
         tourKey={CARD_ID_TO_TOUR[card.id]}
       >
         {renderLock(card.id, locked, card.adminOnly)}
@@ -388,7 +390,7 @@ export default function LandingPage() {
     if (visibleCards.length === 0) return null;
     const handleDragEnd = (event: DragEndEvent) => {
       const { active, over } = event;
-      if (!isAdmin || !over || active.id === over.id) return;
+      if (!canEditCards || !over || active.id === over.id) return;
       const current = orderedCards.map((card) => card.id);
       const oldIndex = current.indexOf(String(active.id));
       const newIndex = current.indexOf(String(over.id));
@@ -476,6 +478,13 @@ export default function LandingPage() {
     {/* Keep the data loader mounted while the first personalized layout settles. */}
     <div className="landing-page" style={personalLoading ? { display: 'none' } : undefined}>
       <div className="landing-auth">
+        {isAdmin && <Tooltip content={editingCards ? tr({ zh: '完成编辑', en: 'Finish editing' }) : tr({ zh: '编辑', en: 'Edit' })}>
+          {(tip) => <button {...tip} type="button" className="landing-auth-icon" aria-pressed={editingCards}
+            aria-label={editingCards ? tr({ zh: '完成编辑', en: 'Finish editing' }) : tr({ zh: '编辑', en: 'Edit' })}
+            onClick={() => setEditingCards(current => !current)}>
+            {editingCards ? <Check size={16} aria-hidden="true" /> : <Pencil size={16} aria-hidden="true" />}
+          </button>}
+        </Tooltip>}
         {isAdmin && <Tooltip content={tr({ zh: '下载', en: 'Download' })}>
           {(tip) => <Link {...tip} href="/download" className="landing-auth-icon"
             aria-label={tr({ zh: '下载', en: 'Download' })} prefetch={false}>
