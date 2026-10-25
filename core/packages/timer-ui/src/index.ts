@@ -376,3 +376,4 @@ export { TimerResultsTabs } from './TimerResultsTabs';
 export { TimerPracticeContentPicker } from './TimerPracticeContentPicker';
 export { TimerPracticeMethodPicker, type TimerPracticeMethod } from './TimerPracticeMethodPicker';
 export { useTimerWcaCompetitionFilters } from './wca-competition-filters';
+export { timerTrainingSummaries } from './training-statistics';

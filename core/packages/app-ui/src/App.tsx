@@ -1,3 +1,4 @@
+import { timerTrainingSummaries } from '@cuberoot/timer-ui';
 import { createPortal } from 'react-dom';
 import { useTimerWcaCompetitionFilters, TimerPracticeContentPicker, TimerPracticeMethodPicker, TimerResultsTabs, TimerSoloLayoutEditor } from '@cuberoot/timer-ui';
 import { timerPracticeContents, selectedTimerPracticeContent, type TimerPracticeContent } from '@cuberoot/shared/timer';
@@ -41,7 +42,7 @@ import { timerHidesRunningUi } from '@cuberoot/shared/timer';
 import { startWatchTimerSync } from './watch-timer-sync';
 import type { TimerSettingsUpdate } from './data/timer-repository';
 import { TimerKeymapSettings, useTimerRound, TimerGoalSettings, TimerRoundSettings, TimerGoalProgress, TimerRoundPanel, TimerTargetTime, useTimerTargetFeedback } from '@cuberoot/timer-ui';
-import { normalizeTimerTrainingSettings, timerSupportsTrainingTiming, timerTrainingSummaries } from '@cuberoot/shared/timer';
+import { normalizeTimerTrainingSettings, timerSupportsTrainingTiming } from '@cuberoot/shared/timer';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
 import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';

@@ -1,7 +1,7 @@
-import type { EventId, Solve } from './types';
-import { summarize } from './stats';
-import { timerSupportsTrainingTiming, type TrainingStartMode } from './training-settings';
-import { trainingSolveMetrics } from './reconstruct/recon_text';
+import type { EventId, Solve } from '@cuberoot/shared/timer';
+import { summarize } from '@cuberoot/shared/timer';
+import { timerSupportsTrainingTiming, type TrainingStartMode } from '@cuberoot/shared/timer';
+import { trainingSolveMetrics } from '@cuberoot/shared/timer/reconstruct/recon-text';
 
 /** Observation/execution/total use one population; penalties apply to total only. */
 export function timerTrainingSummaries(solves: Solve[], event: EventId, mode: TrainingStartMode) {

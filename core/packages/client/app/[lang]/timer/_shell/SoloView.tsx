@@ -2,7 +2,7 @@
 import { TimerResultsTabs } from '@cuberoot/timer-ui';
 import { useLiveSmartCubeAttempt, TimerLiveSolutionPanel, TimerTrainingTimingStatus } from '@cuberoot/timer-ui';
 
-import { timerTrainingSummaries } from '@cuberoot/shared/timer';
+import { timerTrainingSummaries } from '@cuberoot/timer-ui';
 import { useDouyinToolSurface } from '@/lib/douyin-content';
 import { TimerSoloPage, timerSoloModalState, useTimerSoloCompactLayout } from '@cuberoot/timer-ui/TimerSoloPage';
 import SoloLayoutEditor from '../_components/SoloLayoutEditor';

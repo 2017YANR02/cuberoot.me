@@ -50,7 +50,6 @@ export * from './stage-segments';
 export * from './stage-segments-producer';
 export * from './reconstruct/solve-metrics';
 export * from './stats';
-export * from './training-statistics';
 export * from './solo-layout';
 export * from './training-events';
 export * from './training-catalog';
