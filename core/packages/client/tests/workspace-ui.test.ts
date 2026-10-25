@@ -36,7 +36,7 @@ const host: WorkspaceHost = {
       return { id: (body as { id: string }).id, version: (body as { version: number }).version + 1 } as T;
     }
     const params = new URLSearchParams(action.split('?')[1]);
-    const result = action === 'projects' ? { projects } : action.startsWith('checklists') ? { checklists: lists, categories: [...new Set(lists.map(list => list.category))], hasMore: false } : { schedules, selected: schedules.find(row => row.id === params.get('id')) ?? null, hasMore: false };
+    const result = action === 'projects' ? { projects } : action.startsWith('checklists') ? { checklists: lists, hasMore: false } : { schedules, selected: schedules.find(row => row.id === params.get('id')) ?? null, hasMore: false };
     if (pendingRead) await pendingRead;
     return result as T;
   },
@@ -52,7 +52,7 @@ beforeEach(() => {
   HTMLDialogElement.prototype.close = function () { this.removeAttribute('open'); };
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   container = document.createElement('div'); document.body.append(container); root = createRoot(container); calls = []; rejectSave = false; pendingSave = undefined; pendingRead = undefined;
-  lists = [{ id: 'list', projectId: null, name: 'Launch', category: 'Product', version: 1, active: true, canEdit: true, projectName: null, projectActive: null, items: [{ id: 'a', text: 'First', done: false }, { id: 'b', text: 'Second', done: false }] }];
+  lists = [{ id: 'list', projectId: null, name: 'Launch', version: 1, active: true, canEdit: true, projectName: null, projectActive: null, items: [{ id: 'a', text: 'First', done: false }, { id: 'b', text: 'Second', done: false }] }];
   projects = [];
   schedules = [{ id: 'schedule', projectId: null, name: 'Launch', version: 1, active: true, canEdit: true, projectName: null, projectActive: null, tasks: [{ id: 'task', name: 'Build', group: 'Product', owner: '', start: '2026-12-30', end: '2027-01-02', progress: 50, kind: 'task' }] }];
 });
@@ -294,6 +294,17 @@ it('persists checkbox completion and restores original order when unchecked', as
   expect(container.querySelector('.is-done')?.textContent).toContain('First');
   await act(async () => container.querySelector<HTMLInputElement>('.is-done input')!.click());
   expect([...container.querySelectorAll('.workspace-check-text')].map(node => node.textContent)).toEqual(['First', 'Second']);
+});
+
+it('creates a checklist using only its name and sharing settings', async () => {
+  await mount(h(Checklists));
+  expect(container.textContent).not.toContain('All categories');
+  await click('New checklist');
+  expect(container.querySelector('[name="category"]')).toBeNull();
+  await setInput(container.querySelector<HTMLInputElement>('[name="name"]')!, 'Named list');
+  await click('Save');
+  expect(calls.at(-1)).toMatchObject({ action: 'checklist', body: { name: 'Named list', projectId: null, active: true, items: [] } });
+  expect(calls.at(-1)?.body).not.toHaveProperty('category');
 });
 
 it('keeps the checkbox unchanged when saving conflicts', async () => {

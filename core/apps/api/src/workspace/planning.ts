@@ -10,7 +10,6 @@ const boardInput = z.object({
   name: z.string().trim().min(1).max(80), active: z.boolean(),
 });
 export const checklistInput = boardInput.extend({
-  category: z.string().trim().min(1).max(60),
   items: z.array(z.object({ id: uuid, text: z.string().trim().min(1).max(160), done: z.boolean() })).max(200),
 }).refine(value => new Set(value.items.map(item => item.id)).size === value.items.length, 'Duplicate item ID');
 
@@ -71,10 +70,8 @@ export function planningService(q: QueryRunner, access: PlanningAccess) {
     },
     async checklists(search = new URLSearchParams()) {
       const { page, active, offset } = pageOptions(search);
-      const category = z.string().max(60).parse(search.get('category') ?? '');
-      const categories = await q<{ category: string }>(`SELECT DISTINCT b.category FROM workspace_checklists b WHERE ${readable}${active} ORDER BY b.category`, params);
-      const rows = await q<Checklist>(`SELECT ${columns},b.category,b.items FROM workspace_checklists b LEFT JOIN workspace_projects p ON p.id=b.project_id WHERE ${readable}${active}${category ? ' AND b.category=?' : ''} ORDER BY b.category,b.created_at,b.id LIMIT 21 OFFSET ?`, [...params,...(category ? [category] : []),offset]);
-      return { checklists: rows.slice(0,20).map(row => ({ ...row, canEdit: row.projectActive !== false })), categories: categories.map(row => row.category), hasMore: rows.length > 20, page };
+      const rows = await q<Checklist>(`SELECT ${columns},b.items FROM workspace_checklists b LEFT JOIN workspace_projects p ON p.id=b.project_id WHERE ${readable}${active} ORDER BY b.created_at,b.id LIMIT 21 OFFSET ?`, [...params,offset]);
+      return { checklists: rows.slice(0,20).map(row => ({ ...row, canEdit: row.projectActive !== false })), hasMore: rows.length > 20, page };
     },
     async saveChecklist(input: unknown) {
       const data = checklistInput.parse(input);
@@ -86,9 +83,9 @@ export function planningService(q: QueryRunner, access: PlanningAccess) {
       await access.projectWrite(data.projectId);
       const time = Math.floor(Date.now() / 1000);
       if (old) {
-        await q('UPDATE workspace_checklists SET name=?,category=?,items=?,active=?,version=?,updated_at=? WHERE id=?', [data.name,data.category,data.items,data.active,data.version+1,time,data.id]);
+        await q('UPDATE workspace_checklists SET name=?,items=?,active=?,version=?,updated_at=? WHERE id=?', [data.name,data.items,data.active,data.version+1,time,data.id]);
       } else {
-        await q('INSERT INTO workspace_checklists(id,project_id,name,category,items,active,version,created_at,updated_at) VALUES (?,?,?,?,?,?,1,?,?)', [data.id,data.projectId,data.name,data.category,data.items,data.active,time,time]);
+        await q('INSERT INTO workspace_checklists(id,project_id,name,items,active,version,created_at,updated_at) VALUES (?,?,?,?,?,1,?,?)', [data.id,data.projectId,data.name,data.items,data.active,time,time]);
       }
       await access.audit('checklist.save', data.id);
       return { id: data.id, version: data.version + 1 };

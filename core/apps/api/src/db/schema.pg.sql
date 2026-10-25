@@ -9510,7 +9510,6 @@ CREATE TABLE workspace_checklists (
   id UUID PRIMARY KEY,
   project_id UUID REFERENCES workspace_projects(id),
   name TEXT NOT NULL CHECK (length(name) BETWEEN 1 AND 80),
-  category TEXT NOT NULL CHECK (length(category) BETWEEN 1 AND 60),
   items JSONB NOT NULL CHECK (jsonb_typeof(items) = 'array'),
   active BOOLEAN NOT NULL DEFAULT TRUE,
   version INTEGER NOT NULL CHECK (version > 0),

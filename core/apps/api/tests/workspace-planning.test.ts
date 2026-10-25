@@ -4,7 +4,7 @@ import postgres from 'postgres';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createWorkspaceService, type Identity, type Transaction } from '../src/workspace/service';
 import type { QueryRunner } from '../src/db/connection';
-import { planningService } from '../src/workspace/planning';
+import { checklistInput, planningService } from '../src/workspace/planning';
 
 describe('workspace planning JSON parameter encoding', () => {
   it.each(['checklist', 'schedule'] as const)('keeps %s arrays through the production driver on create and update', async kind => {
@@ -15,7 +15,7 @@ describe('workspace planning JSON parameter encoding', () => {
     const q: QueryRunner = async <T>(text: string, params: unknown[] = []) => {
       if (text.startsWith('SELECT')) return (old ? [old] : []) as T[];
       const inserting = text.startsWith('INSERT');
-      const index = kind === 'checklist' ? (inserting ? 4 : 2) : (inserting ? 3 : 1);
+      const index = inserting ? 3 : 1;
       const encoded = driver.options.serializers[3802](params[index]);
       expect(JSON.parse(String(encoded))).toEqual(expected);
       old = { id, projectId: null, version: (old?.version ?? 0) + 1 };
@@ -32,12 +32,18 @@ describe('workspace planning JSON parameter encoding', () => {
     try {
       for (const [version, entries] of [[], [item], []].entries()) {
         expected = entries;
-        const input = { id, projectId: null, name: 'Plan', category: 'Product', active: true, version };
+        const input = { id, projectId: null, name: 'Plan', active: true, version };
         if (kind === 'checklist') await service.saveChecklist({ ...input, items: entries });
         else await service.saveSchedule({ ...input, tasks: entries });
       }
     } finally { await driver.end(); }
   });
+});
+
+it('accepts named checklists without categories and ignores legacy category input', () => {
+  const input = { id: randomUUID(), projectId: null, name: 'Release', version: 0, active: true, items: [] };
+  expect(checklistInput.parse(input)).toEqual(input);
+  expect(checklistInput.parse({ ...input, category: 'Old group' })).toEqual(input);
 });
 
 // Explicit disposable database only. Optional PGlite is a local test harness, not an app dependency.
@@ -56,6 +62,8 @@ suite('workspace shared planning persistence', () => {
   const outsider: Identity = { uid: 4, isAdmin: false, name: 'Outside' };
   let aliceId: number, bobId: number;
   const project = randomUUID();
+  const legacyChecklist = randomUUID();
+  const legacyItems = [{ id: randomUUID(), text: 'Keep this task', done: true }];
   const schema = `workspace_planning_${randomUUID().replaceAll('-', '')}`;
   const sqlParams = (sql: string) => { let n = 0; return sql.replace(/\?/g, () => `$${++n}`); };
   beforeAll(async () => {
@@ -81,6 +89,8 @@ suite('workspace shared planning persistence', () => {
     for (const file of ['0281_workspace', '0282_workspace_account_deletion', '0284_workspace_admin_access', '0291_workspace_checklists', '0292_workspace_schedules']) {
       await exec(readFileSync(new URL(`../migrations/${file}.sql`, import.meta.url), 'utf8'));
     }
+    await q("INSERT INTO workspace_checklists(id,project_id,name,category,items,active,version,created_at,updated_at) VALUES (?,NULL,'Legacy','Old group',?,FALSE,7,1,2)", [legacyChecklist, legacyItems]);
+    await exec(readFileSync(new URL('../migrations/0293_workspace_remove_checklist_categories.sql', import.meta.url), 'utf8'));
     service = createWorkspaceService(q, transaction);
     aliceId = (await service.post(admin, 'member', { userId: 2, name: 'Alice', role: 'manager', active: true })).id as number;
     bobId = (await service.post(admin, 'member', { userId: 3, name: 'Bob', role: 'member', active: true })).id as number;
@@ -88,7 +98,13 @@ suite('workspace shared planning persistence', () => {
     await service.post(admin, 'project', { id: project, version: 0, name: 'Project', url: '', active: true, memberIds: [aliceId, bobId] });
   }, 30000);
   afterAll(async () => { if (exec) await exec(`DROP SCHEMA ${schema} CASCADE`); await close?.(); });
-  const checklist = (projectId: string | null = project) => ({ id: randomUUID(), projectId, version: 0, name: 'Release', category: 'Product', active: true, items: [{ id: randomUUID(), text: 'Review', done: false }] });
+  const checklist = (projectId: string | null = project) => ({ id: randomUUID(), projectId, version: 0, name: 'Release', active: true, items: [{ id: randomUUID(), text: 'Review', done: false }] });
+
+  it('drops only the category column and retains pre-migration checklist content and versions', async () => {
+    const [row] = await q('SELECT * FROM workspace_checklists WHERE id=?', [legacyChecklist]);
+    expect(row).toMatchObject({ id: legacyChecklist, project_id: null, name: 'Legacy', items: legacyItems, active: false, version: 7, created_at: 1, updated_at: 2 });
+    expect(row).not.toHaveProperty('category');
+  });
 
   it('persists shared checklists, permits member completion, rejects stale writes and scope changes', async () => {
     const input = checklist();
@@ -98,7 +114,10 @@ suite('workspace shared planning persistence', () => {
     await service.post(bob, 'checklist', done);
     await expect(service.post(alice, 'checklist', done)).rejects.toMatchObject({ status: 409 });
     await expect(service.post(alice, 'checklist', { ...done, version: 2, projectId: null })).rejects.toMatchObject({ status: 409 });
-    expect(await service.get(outsider, 'checklists', new URLSearchParams())).toMatchObject({ checklists: [], categories: [] });
+    expect(await service.get(outsider, 'checklists', new URLSearchParams())).toMatchObject({ checklists: [] });
+    const response = await service.get(bob, 'checklists', new URLSearchParams());
+    expect(response).not.toHaveProperty('categories');
+    expect(response).not.toHaveProperty('checklists.0.category');
     await expect(service.post(outsider, 'checklist', { ...done, version: 2 })).rejects.toMatchObject({ status: 404 });
     await expect(service.post(outsider, 'checklist', { ...input, projectId: null })).rejects.toMatchObject({ code: '23505' });
     expect(await service.get(alice, 'checklists', new URLSearchParams())).toMatchObject({ checklists: [{ version: 2, items: [{ done: true }] }] });
@@ -151,13 +170,14 @@ suite('workspace shared planning persistence', () => {
     await expect(service.get(alice, 'checklists', new URLSearchParams())).rejects.toMatchObject({ status: 401 });
   });
 
-  it('bounds list responses and filters categories before pagination', async () => {
-    for (let index = 0; index < 22; index++) await service.post(outsider, 'checklist', { ...checklist(null), category: 'Paging', name: `List ${index}` });
-    const first = await service.get(outsider, 'checklists', new URLSearchParams({ category: 'Paging' })) as { checklists: { id: string }[]; hasMore: boolean };
-    const second = await service.get(outsider, 'checklists', new URLSearchParams({ category: 'Paging', page: '2' })) as typeof first;
+  it('paginates named lists without filtering by obsolete category parameters', async () => {
+    const before = await service.get(outsider, 'checklists', new URLSearchParams()) as { checklists: { id: string }[]; hasMore: boolean };
+    for (let index = 0; index < 22; index++) await service.post(outsider, 'checklist', { ...checklist(null), name: `List ${index}` });
+    const first = await service.get(outsider, 'checklists', new URLSearchParams({ category: 'obsolete' })) as typeof before;
+    const second = await service.get(outsider, 'checklists', new URLSearchParams({ page: '2' })) as typeof first;
     expect(first.checklists).toHaveLength(20); expect(first.hasMore).toBe(true);
-    expect(second.checklists).toHaveLength(2); expect(second.hasMore).toBe(false);
-    expect(new Set([...first.checklists, ...second.checklists].map(row => row.id)).size).toBe(22);
+    expect(second.checklists).toHaveLength(before.checklists.length + 2); expect(second.hasMore).toBe(false);
+    expect(new Set([...first.checklists, ...second.checklists].map(row => row.id)).size).toBe(before.checklists.length + 22);
     await expect(service.get(outsider, 'checklists', new URLSearchParams({ page: '-1' }))).rejects.toThrow();
   });
 });

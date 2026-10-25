@@ -5,7 +5,7 @@ export type WorkspaceBoard = {
   active: boolean; projectName: string | null; projectActive: boolean | null;
   canEdit: boolean;
 };
-export type Checklist = WorkspaceBoard & { category: string; items: ChecklistItem[] };
+export type Checklist = WorkspaceBoard & { items: ChecklistItem[] };
 
 /** Stable partition: restoring an item returns it to its original position. */
 export function orderChecklistItems(items: readonly ChecklistItem[]): ChecklistItem[] {
