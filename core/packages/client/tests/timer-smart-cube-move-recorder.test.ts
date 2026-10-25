@@ -54,7 +54,9 @@ describe('TimerSmartCubeMoveRecorder', () => {
   it('uses the authoritative smart-cube state for the online room preview', () => {
     const net = readFileSync(new URL('../app/[lang]/timer/_shell/NetBattleView.tsx', import.meta.url), 'utf8');
     const netPage = readFileSync(new URL('./TimerNetBattlePage.tsx', import.meta.resolve('@cuberoot/timer-ui')), 'utf8');
-    const css = readFileSync(new URL('../app/[lang]/timer/_shell/net.css', import.meta.url), 'utf8');
+    const css = readFileSync(new URL('./net-live.css', import.meta.resolve('@cuberoot/timer-ui')), 'utf8');
+    const arena = readFileSync(new URL('./TimerNetPkArena.tsx', import.meta.resolve('@cuberoot/timer-ui')), 'utf8');
+    const remote = readFileSync(new URL('./TimerRemoteLiveCube.tsx', import.meta.resolve('@cuberoot/timer-ui')), 'utf8');
     expect(net).toContain("import LiveCubeState from '../_components/LiveCubeState';");
     expect(net).toContain("import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';");
     expect(net).toContain('liveAnchor.observeFacelets(bluetoothCube.facelets);');
@@ -66,11 +68,11 @@ describe('TimerSmartCubeMoveRecorder', () => {
     expect(net).toContain('stage: ownTimingStage');
     expect(netPage).toContain('<TimerNetBattleStage {...room.stage}');
     expect(netPage).toContain('<TimingSurface {...timing}');
-    expect(net).toContain('className="net-pk-arena"');
+    expect(arena).toContain('className="net-pk-arena"');
     expect(netPage).toContain('<TimerRoomPlayers {...room.players}');
     expect(net).toContain('viewedPlayerId: viewedCubePlayerId');
     expect(net).toContain('onViewPlayer: setViewedCubePlayerId');
-    expect(net).toContain('useGyro={false}');
+    expect(remote).toContain('useGyro={false}');
     expect(css).toContain("grid-template-areas: 'self opponent'");
     expect(css).toContain("'opponent'\n      'self'");
   });

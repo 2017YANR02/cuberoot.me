@@ -1,4 +1,5 @@
 'use client';
+import { TimerNetPkArena, TimerRemoteLiveCube, useNetBattleLiveView } from '@cuberoot/timer-ui';
 
 import {
   TimerNetBattleEvent,
@@ -69,7 +70,6 @@ import {
   TimerDeviceCenter,
   TimerPuzzlePicker,
   TimerRoomIdentity,
-  TimingSurface,
   timerRoomPlayerName,
 } from '@cuberoot/timer-ui';
 import { useTranslation } from 'react-i18next';
@@ -109,7 +109,6 @@ import {
   type NetBattleEventId,
   type NetIdentity,
   type NetPenalty,
-  type NetResult,
   type NetRoomState,
 } from '@/lib/battle-room-api';
 import {
@@ -117,7 +116,6 @@ import {
   blendClockOffset,
   createNetAdmissionGate,
   decodeNetBattleSession,
-  effectiveNetMs,
   isNetAdmin,
   isNetBattleRoomCode,
   isNetOnline,
@@ -130,7 +128,6 @@ import {
   pendingCount,
   playerEventOf,
   selectorIdToNetEvent,
-  sortedNetPlayers,
   syncGate,
   type NetBattleSession,
 } from '@/lib/battle-room-logic';
@@ -162,61 +159,6 @@ function netPlayerName(p: { name: string; wcaId?: string }, isZh: boolean): stri
   return timerRoomPlayerName(p, isZh ? 'zh' : 'en');
 }
 
-interface RemoteTimerDigitsProps {
-  player: NetRoomState['players'][string] | null;
-  result?: NetResult;
-  online: boolean;
-  clockOffsetMs: number | null;
-  precision: Parameters<typeof formatMs>[1];
-}
-
-function remoteTimerText(
-  player: NetRoomState['players'][string] | null,
-  result: NetResult | undefined,
-  online: boolean,
-  clockOffsetMs: number | null,
-  precision: Parameters<typeof formatMs>[1],
-): string {
-  if (result) {
-    if (result.p === 'dnf') return 'DNF';
-    return `${formatMs(effectiveNetMs(result), precision)}${result.p === '+2' ? '+' : ''}`;
-  }
-  if (!player || !online || player.ph !== 'solving') return formatMs(0, precision);
-  return formatMs(Math.max(0, Date.now() + (clockOffsetMs ?? 0) - player.at), 2);
-}
-
-/** Keep the opponent's fast clock updates isolated from the room shell. */
-function RemoteTimerDigits({
-  player,
-  result,
-  online,
-  clockOffsetMs,
-  precision,
-}: RemoteTimerDigitsProps) {
-  const [text, setText] = useState(() => remoteTimerText(player, result, online, clockOffsetMs, precision));
-  useEffect(() => {
-    let raf = 0;
-    let previous = '';
-    const tick = () => {
-      const next = remoteTimerText(player, result, online, clockOffsetMs, precision);
-      if (next !== previous) {
-        previous = next;
-        setText(next);
-      }
-      if (!result && player?.ph === 'solving' && online) raf = requestAnimationFrame(tick);
-    };
-    tick();
-    return () => cancelAnimationFrame(raf);
-  }, [clockOffsetMs, online, player, precision, result]);
-  return <SegmentTime text={text} />;
-}
-
-interface NetPkLock {
-  code: string;
-  round: number;
-  opponentId: string;
-  opponentName: string;
-}
 function readSession(): SavedSession | null {
   try {
     const raw = sessionStorage.getItem(SS_KEY);
@@ -887,66 +829,10 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     return () => { subs.delete(publish); };
   }, [publishLiveMove]);
 
-  const roomPlayers = useMemo(() => room ? sortedNetPlayers(room.players) : [], [room]);
-  const [viewedCubePlayerId, setViewedCubePlayerId] = useState<string | null>(null);
-  useEffect(() => { setViewedCubePlayerId(pid); }, [pid, room?.code]);
-  useEffect(() => {
-    if (!viewedCubePlayerId || viewedCubePlayerId === pid) return;
-    const live = liveCubePlayers[viewedCubePlayerId];
-    if (!room
-      || !live?.connected
-      || !live.smart
-      || live.round !== room.round
-      || !live.facelets) {
-      setViewedCubePlayerId(pid);
-    }
-  }, [liveCubePlayers, pid, room, viewedCubePlayerId]);
-
-  const [pkLock, setPkLock] = useState<NetPkLock | null>(null);
-  useEffect(() => {
-    setPkLock((current) => {
-      if (!room || !pid) return null;
-      if (current?.code === room.code && current.round === room.round) return current;
-      const contenders = roomPlayers.filter((player) => (
-        isNetOnline(player, room.now) && isNetRoundParticipant(room, player.id)
-      ));
-      if (contenders.length !== 2 || !contenders.some((player) => player.id === pid)) return null;
-      const hasCurrentSnapshot = (playerId: string): boolean => {
-        const live = liveCubePlayers[playerId];
-        if (playerId === pid) {
-          return liveRoomReady
-            && cubeConnected
-            && !!bluetoothCube.facelets
-            && !!live?.connected
-            && live.smart
-            && live.round === room.round;
-        }
-        return !!live?.connected
-          && live.smart
-          && live.round === room.round
-          && !!live.facelets;
-      };
-      if (!contenders.every((player) => hasCurrentSnapshot(player.id))) return null;
-      const opponent = contenders.find((player) => player.id !== pid);
-      return opponent ? {
-        code: room.code,
-        round: room.round,
-        opponentId: opponent.id,
-        opponentName: netPlayerName(opponent, isZh),
-      } : null;
-    });
-  }, [
-    bluetoothCube.facelets,
-    cubeConnected,
-    isZh,
-    liveCubePlayers,
-    liveRoomReady,
-    pid,
-    room,
-    roomPlayers,
-  ]);
-  const activePkLock = room && pkLock?.code === room.code && pkLock.round === room.round ? pkLock : null;
-
+  const { activePkLock, viewedCubePlayerId, setViewedCubePlayerId } = useNetBattleLiveView({
+    room, pid, cubeConnected, localFacelets: bluetoothCube.facelets, liveCubePlayers, liveRoomReady,
+    language: isZh ? 'zh' : 'en',
+  });
   // dev 专用假魔方(生产构建里整段是空操作)。房里这条路和 Solo 不是同一条 —— 起表
   // 门控、打乱校验、录制都是这个文件自己的 —— 所以没硬件时也要能真的走一遍。
   const scrambleForFakeRef = useRef<string>('');
@@ -1044,7 +930,6 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   const pressUpRef = useRef(timer.onPressUp); pressUpRef.current = timer.onPressUp;
 
   const surfaceRef = useRef<HTMLDivElement | null>(null);
-  const opponentSurfaceRef = useRef<HTMLDivElement | null>(null);
   const inRoom = !!room;
   useEffect(() => {
     if (!inRoom) return;
@@ -1233,43 +1118,14 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
         onExit: onExitNet
       }} />;
   }
-  const curResults = room.results[String(room.round)] ?? {};
   const serverNowEst = Date.now() + (offsetRef.current ?? 0);
   const displayScramble = myScr ? formatScrambleForEvent(myEvent,
     cubeConnected && timerSupportsNetBattleSmartCube(myEvent)
       ? normalizeWcaScramble(myScr) ?? myScr
       : myScr) : '';
-  const renderRemoteCubeSlot = (
-    playerId: string,
-    live: NetBattleLiveCubePlayer,
-    ownerLabel?: string,
-    reconnecting = false,
-  ): ReactNode => (
-    <div className="shell-corner-net net-remote-cube-slot">
-      {ownerLabel && <div className="net-cube-owner">{ownerLabel} · {tr({ zh: '实况', en: 'live' })}</div>}
-      <div className="shell-corner-net-imgbox">
-        <div
-          className="timer-live-cube"
-          data-no-timer
-          title={tr({ zh: '对方智能魔方实时状态', en: "Opponent's live smart-cube state" })}
-        >
-          <LiveCubeState
-            key={`${playerId}:${live.round ?? room.round}`}
-            facelets={live.facelets}
-            moves={[...live.moves]}
-            algAnchored={live.algAnchored}
-            mode={settings.liveCubeView}
-            useGyro={false}
-          />
-        </div>
-      </div>
-      {reconnecting && (
-        <div className="net-cube-connection-state">
-          {tr({ zh: '实况重连中…', en: 'Reconnecting live feed…' })}
-        </div>
-      )}
-    </div>
-  );
+  const renderRemoteCubeSlot = (playerId: string, live: NetBattleLiveCubePlayer, ownerLabel?: string, reconnecting = false) => (
+    <TimerRemoteLiveCube playerId={playerId} live={live} ownerLabel={ownerLabel} reconnecting={reconnecting}
+      mode={settings.liveCubeView} language={isZh ? 'zh' : 'en'} />);
   const ownLiveCubeSlot = bluetoothCube.facelets ? (
     <div className="shell-corner-net">
       <div className="shell-corner-net-imgbox">
@@ -1326,46 +1182,6 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     )
     : ownDefaultCubeSlot;
 
-  const opponentId = activePkLock?.opponentId ?? null;
-  const opponent = opponentId ? room.players[opponentId] ?? null : null;
-  const opponentResult = opponentId ? curResults[opponentId] : undefined;
-  const opponentLive = opponentId ? liveCubePlayers[opponentId] : undefined;
-  const opponentOnline = !!opponent && isNetOnline(opponent, room.now);
-  const opponentFeedReady = !!opponentLive?.connected
-    && opponentLive.smart
-    && opponentLive.round === room.round;
-  const opponentPhase = opponentResult
-    ? 'stopped'
-    : opponent?.ph === 'solving'
-      ? 'running'
-      : opponent?.ph === 'inspecting'
-        ? 'inspecting'
-        : opponent?.ph === 'ready'
-          ? 'ready'
-          : 'idle';
-  const opponentColorClass = `${opponentResult?.p === 'dnf'
-    ? 'dnf'
-    : opponentPhase === 'running'
-      ? 'running'
-      : opponentPhase === 'inspecting'
-        ? 'inspection'
-        : opponentPhase === 'ready'
-          ? 'ready'
-          : ''
-    } tf-${settings.timerFont}`.trim();
-  const opponentStatus = !opponentOnline
-    ? tr({ zh: '对手离线', en: 'Opponent offline' })
-    : !opponentFeedReady
-      ? tr({ zh: '实况重连中…', en: 'Reconnecting live feed…' })
-      : opponentResult
-        ? tr({ zh: '已完成', en: 'Finished' })
-        : opponent?.ph === 'solving'
-          ? tr({ zh: '计时中', en: 'Solving' })
-          : opponent?.ph === 'inspecting'
-            ? tr({ zh: '观察中', en: 'Inspecting' })
-            : opponent?.ph === 'ready'
-              ? tr({ zh: '已准备', en: 'Ready' })
-              : tr({ zh: '待开始', en: 'Waiting' });
   const ownPkStatus = !cubeConnected || !liveRoomReady
     ? tr({ zh: '实况重连中…', en: 'Reconnecting live feed…' })
     : myResult
@@ -1377,14 +1193,6 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
           : gate.ready
             ? tr({ zh: '已准备', en: 'Ready' })
             : tr({ zh: '待开始', en: 'Waiting' });
-  const myPlayer = pid ? room.players[pid] : undefined;
-  const myPkName = myPlayer ? netPlayerName(myPlayer, isZh) : tr({ zh: '我', en: 'Me' });
-  const opponentPkName = opponent
-    ? netPlayerName(opponent, isZh)
-    : activePkLock?.opponentName ?? tr({ zh: '对手', en: 'Opponent' });
-  const opponentCubeSlot = opponentId && opponentLive?.facelets
-    ? renderRemoteCubeSlot(opponentId, opponentLive, undefined, !opponentFeedReady)
-    : undefined;
   /** 房内是否存在多种项目(决定玩家条/历史是否显示各自项目图标)。 */
 
   const ownTimingStage: TimerNetBattleStageProps = {
@@ -1464,40 +1272,10 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       },
       stage: ownTimingStage,
       renderStage: (ownTimingSurface) => (activePkLock ? (
-        <div className="net-pk-arena">
-          <section className="net-pk-side is-self" aria-label={tr({ zh: '我的计时与智能魔方', en: 'My timer and smart cube' })}>
-            <header className="net-pk-side-head surface-chrome">
-              <span className="net-pk-side-name">{myPkName}</span>
-              <span className="net-pk-side-role">{tr({ zh: '我', en: 'Me' })}</span>
-              <span className="net-pk-side-status">{ownPkStatus}</span>
-            </header>
-            {ownTimingSurface}
-          </section>
-          <section className="net-pk-side is-opponent" aria-label={tr({ zh: '对手计时与智能魔方', en: 'Opponent timer and smart cube' })}>
-            <header className="net-pk-side-head surface-chrome">
-              <span className="net-pk-side-name">{opponentPkName}</span>
-              <span className="net-pk-side-status">{opponentStatus}</span>
-            </header>
-            <TimingSurface
-              phase={opponentPhase}
-              colorClass={opponentColorClass}
-              fontSize={fontSize}
-              digits={(
-                <RemoteTimerDigits
-                  player={opponent}
-                  result={opponentResult}
-                  online={opponentOnline}
-                  clockOffsetMs={offsetRef.current}
-                  precision={settings.precision}
-                />
-              )}
-              surfaceRef={opponentSurfaceRef}
-              cornerSlot={opponentCubeSlot}
-              className="net-pk-opponent-timing"
-              ariaLabel={tr({ zh: '对手计时', en: 'Opponent timer' })}
-            />
-          </section>
-        </div>
+        <TimerNetPkArena room={room} pid={pid!} lock={activePkLock} liveCubePlayers={liveCubePlayers}
+          ownStatus={ownPkStatus} language={isZh ? 'zh' : 'en'} liveCubeView={settings.liveCubeView}
+          timerFont={settings.timerFont} timerFontScale={settings.timerFontScale} fontSize={fontSize}
+          precision={settings.precision} clockOffsetMs={offsetRef.current}>{ownTimingSurface}</TimerNetPkArena>
       ) : ownTimingSurface),
       admin: showAdmin && iAmAdmin && {
         room: room,
