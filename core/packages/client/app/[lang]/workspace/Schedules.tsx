@@ -1,0 +1,114 @@
+'use client';
+/** @module Reusable schedules with grouped tasks, milestones and shifted copies. */
+import { useEffect, useRef, useState } from 'react';
+import { parseAsInteger, parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
+import { ErrorNotice, Field, Form, useResource, useWorkspace, value, today, type ProjectList, type StaffActor } from '@app-foundation/workspace-ui';
+import { copyScheduleTasks, planningDate, scheduleRange, type Schedule, type ScheduleTask } from '@cuberoot/shared/workspace-planning';
+import { useT } from '@/hooks/useT';
+import ScheduleTimeline from './ScheduleTimeline';
+
+export default function Schedules({ actor }: { actor: StaffActor }) {
+  const t = useT();
+  const { api, Button } = useWorkspace();
+  const [selected, setSelected] = useQueryState('schedule', parseAsString.withDefault(''));
+  const [page, setPage] = useQueryState('schedulePage', parseAsInteger.withDefault(1));
+  const [scale, setScale] = useQueryState('scale', parseAsStringEnum(['day', 'week', 'month']).withDefault('day'));
+  const [status, setStatus] = useState('active');
+  const resource = useResource<{ schedules: Schedule[]; selected: Schedule | null; hasMore: boolean }>(`schedules?${new URLSearchParams({ page: String(page), archived: String(status === 'all'), id: selected })}`);
+  const projects = useResource<ProjectList>('projects');
+  const [editing, setEditing] = useState<'new' | 'settings' | 'copy' | null>(null);
+  const [task, setTask] = useState<ScheduleTask | null>(null);
+  const [editorScope, setEditorScope] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const operation = useRef(0);
+  const live = useRef(false);
+  useEffect(() => { live.current = true; return () => { live.current = false; operation.current++; }; }, []);
+  useEffect(() => { operation.current++; setTask(null); setEditing(null); }, [selected]);
+  const newId = useRef('');
+  const manager = actor.kind === 'admin' || actor.role === 'manager';
+  const schedules = resource.data?.schedules ?? [];
+  const schedule = resource.data?.selected ?? schedules.find(row => row.id === selected) ?? schedules[0];
+  const choices = schedule && !schedules.some(row => row.id === schedule.id) ? [schedule, ...schedules] : schedules;
+  const editable = Boolean(schedule?.canEdit && schedule.active);
+  const groups = [...new Set(schedule?.tasks.map(row => row.group) ?? [])];
+  const range = scheduleRange(schedule?.tasks ?? []);
+  async function mutate(body: unknown, done: (saved: { id: string }) => void) {
+    const token = operation.current;
+    setBusy(true);
+    try {
+      const saved = await api<{ id: string }>('schedule', body);
+      if (live.current && token === operation.current) { done(saved); resource.reload(); }
+    } finally { if (live.current) setBusy(false); }
+  }
+  async function saveTasks(tasks: ScheduleTask[]) {
+    if (!schedule) return;
+    if ((scheduleRange(tasks)?.days ?? 0) > 732) throw new Error(t('单份排期最多跨两年', 'A schedule can span up to two years'));
+    await mutate({ ...schedule, tasks }, () => setTask(null));
+  }
+  function begin(mode: 'new' | 'settings' | 'copy') { operation.current++; setEditorScope(schedule?.id ?? null); newId.current = crypto.randomUUID(); setEditing(mode); setTask(null); }
+  function editTask(next: ScheduleTask) { operation.current++; setEditorScope(schedule?.id ?? null); setEditing(null); setTask(next); }
+  return <fieldset disabled={busy} className="workspace-controls" aria-busy={busy}>
+    <div className="staff-actions workspace-toolbar">
+      {manager && <Button onClick={() => begin('new')}>{t('新建排期', 'New schedule')}</Button>}
+      <Button variant="secondary" onClick={() => { setEditing(null); setTask(null); resource.reload(); }}>{t('重新加载', 'Reload')}</Button>
+      <Field label={t('排期', 'Schedule')}><select value={schedule?.id ?? ''} onChange={event => { void setSelected(event.target.value); setEditing(null); setTask(null); }}><option value="" disabled>{t('选择排期', 'Select schedule')}</option>{choices.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></Field>
+      <Field label={t('视图', 'View')}><select value={scale} onChange={event => void setScale(event.target.value as typeof scale)}><option value="day">{t('日', 'Day')}</option><option value="week">{t('周', 'Week')}</option><option value="month">{t('月', 'Month')}</option></select></Field>
+      <Field label={t('状态', 'Status')}><select value={status} onChange={event => { setStatus(event.target.value); setEditing(null); setTask(null); }}><option value="active">{t('进行中', 'Active')}</option><option value="all">{t('含已归档', 'Include archived')}</option></select></Field>
+    </div>
+    <ErrorNotice error={resource.error} retry={resource.reload} />
+    <ErrorNotice error={projects.error} retry={projects.reload} />
+    {resource.loading && <p role="status">{t('正在加载…', 'Loading…')}</p>}
+    {editing && editorScope === (schedule?.id ?? null) && <section className="staff-panel"><h2>{editing === 'new' ? t('新建排期', 'New schedule') : editing === 'copy' ? t('复制排期', 'Copy schedule') : t('排期设置', 'Schedule settings')}</h2>
+      <Form key={`${editing}:${schedule?.id ?? ''}`} submit={async data => {
+        if (!projects.data || !resource.data) throw new Error(t('请先加载排期和项目', 'Load schedules and projects first'));
+        const current = editing === 'settings' ? schedule : undefined;
+        const tasks = editing === 'copy' && schedule ? copyScheduleTasks(schedule.tasks, value(data, 'start'), () => crypto.randomUUID()) : current?.tasks ?? [];
+        await mutate({ id: current?.id ?? newId.current, version: current?.version ?? 0, name: value(data, 'name'), projectId: current ? current.projectId : value(data, 'projectId') || null, active: value(data, 'active') === 'true', tasks }, saved => { void setSelected(saved.id); setEditing(null); });
+      }}>
+        <Field label={t('名称', 'Name')}><input name="name" required maxLength={80} defaultValue={editing === 'settings' ? schedule?.name : editing === 'copy' ? `${schedule?.name ?? ''} ${t('副本', 'copy')}`.slice(0, 80) : ''} /></Field>
+        <div className="staff-form-row">
+          <Field label={t('共享范围', 'Shared with')}><select name="projectId" disabled={editing === 'settings' || !projects.data} defaultValue={editing === 'new' ? '' : schedule?.projectId ?? ''}><option value="">{t('公司全员', 'All employees')}</option>{projects.data?.projects.filter(project => project.active || project.id === schedule?.projectId).map(project => <option key={project.id} value={project.id}>{project.name}</option>)}</select></Field>
+          <Field label={t('状态', 'Status')}><select name="active" defaultValue={String(editing === 'settings' ? schedule?.active : true)}><option value="true">{t('进行中', 'Active')}</option><option value="false">{t('已归档', 'Archived')}</option></select></Field>
+        </div>
+        {editing === 'copy' && !!schedule?.tasks.length && <Field label={t('新的开始日期', 'New start date')}><input type="date" name="start" required defaultValue={planningDate(scheduleRange(schedule.tasks)!.start)} /></Field>}
+        <div className="staff-actions"><Button type="submit">{t('保存', 'Save')}</Button><Button variant="secondary" onClick={() => setEditing(null)}>{t('取消', 'Cancel')}</Button></div>
+      </Form>
+    </section>}
+    {schedule && <>
+      <div className="workspace-list-heading workspace-schedule-heading"><span className="staff-muted">{schedule.projectName ?? t('公司全员', 'All employees')}{!schedule.active && ` · ${t('已归档', 'Archived')}`}</span>
+        {range && <span className="staff-muted">{planningDate(range.start)} – {planningDate(range.end)}</span>}
+        <div className="staff-actions">
+          {editable && <Button onClick={() => editTask({ id: crypto.randomUUID(), name: '', group: groups[0] ?? t('默认分组', 'General'), owner: '', start: today(), end: today(), kind: 'task', progress: 0 })}>{t('新增任务', 'New task')}</Button>}
+          {schedule.canEdit && <Button variant="secondary" onClick={() => begin('settings')}>{t('设置', 'Settings')}</Button>}
+          {manager && <Button variant="secondary" onClick={() => begin('copy')}>{t('复制排期', 'Copy schedule')}</Button>}
+        </div>
+      </div>
+      {task && editable && editorScope === schedule.id && <TaskEditor key={`${schedule.id}:${task.id}`} task={task} groups={groups} existing={schedule.tasks.some(row => row.id === task.id)} onCancel={() => setTask(null)} onSave={async next => {
+        const tasks = next === null ? schedule.tasks.filter(row => row.id !== task.id) : schedule.tasks.some(row => row.id === next.id) ? schedule.tasks.map(row => row.id === next.id ? next : row) : [...schedule.tasks, next];
+        await saveTasks(tasks);
+      }} />}
+      <ScheduleTimeline tasks={schedule.tasks} scale={scale} editable={editable} onEdit={editTask} />
+    </>}
+    {resource.data && !schedule && !editing && <p className="staff-empty">{t('暂无排期', 'No schedules')}</p>}
+    {resource.data && (page > 1 || resource.data.hasMore) && <div className="staff-pagination"><Button variant="secondary" disabled={page <= 1} onClick={() => { void setSelected(''); void setPage(page - 1); }}>{t('上一页', 'Previous')}</Button><span>{page}</span><Button variant="secondary" disabled={!resource.data.hasMore} onClick={() => { void setSelected(''); void setPage(page + 1); }}>{t('下一页', 'Next')}</Button></div>}
+  </fieldset>;
+}
+
+function TaskEditor({ task, groups, existing, onSave, onCancel }: { task: ScheduleTask; groups: string[]; existing: boolean; onSave: (task: ScheduleTask | null) => Promise<void>; onCancel: () => void }) {
+  const t = useT();
+  const { Button } = useWorkspace();
+  const [kind, setKind] = useState(task.kind);
+  const [start, setStart] = useState(task.start);
+  return <section className="staff-panel workspace-task-editor"><h2>{existing ? t('编辑任务', 'Edit task') : t('新增任务', 'New task')}</h2><Form submit={async (data, action) => {
+    if (action === 'remove') { await onSave(null); return; }
+    const end = kind === 'milestone' ? start : value(data, 'end');
+    if (start > end) throw new Error(t('结束日期须不早于开始日期', 'End date must not precede start date'));
+    await onSave({ id: task.id, name: value(data, 'name'), group: value(data, 'group'), owner: value(data, 'owner'), start, end, kind, progress: Number(value(data, 'progress')) });
+  }}>
+    <Field label={t('名称', 'Name')}><input name="name" required maxLength={120} defaultValue={task.name} /></Field>
+    <div className="staff-form-row"><Field label={t('分组', 'Group')}><input name="group" required maxLength={60} defaultValue={task.group} list="workspace-schedule-groups" /><datalist id="workspace-schedule-groups">{groups.map(group => <option key={group} value={group} />)}</datalist></Field><Field label={t('负责人（选填）', 'Owner (optional)')}><input name="owner" maxLength={60} defaultValue={task.owner} /></Field></div>
+    <div className="staff-form-row"><Field label={t('类型', 'Type')}><select value={kind} onChange={event => setKind(event.target.value as ScheduleTask['kind'])}><option value="task">{t('任务', 'Task')}</option><option value="milestone">{t('里程碑', 'Milestone')}</option></select></Field><Field label={t('进度 %', 'Progress %')}><input name="progress" type="number" min={0} max={100} step={1} required defaultValue={task.progress} /></Field></div>
+    <div className="staff-form-row"><Field label={t('开始日期', 'Start date')}><input type="date" required value={start} onChange={event => setStart(event.target.value)} /></Field>{kind === 'task' && <Field label={t('结束日期', 'End date')}><input name="end" type="date" required min={start} defaultValue={task.end} /></Field>}</div>
+    <div className="staff-actions"><Button type="submit">{t('保存', 'Save')}</Button><Button variant="secondary" onClick={onCancel}>{t('取消', 'Cancel')}</Button>{existing && <Button type="submit" variant="secondary" value="remove" formNoValidate>{t('移除任务', 'Remove task')}</Button>}</div>
+  </Form></section>;
+}

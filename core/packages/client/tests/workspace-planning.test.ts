@@ -1,9 +1,27 @@
 import { expect, it } from 'vitest';
-import { orderChecklistItems } from '@cuberoot/shared/workspace-planning';
+import { orderChecklistItems, copyScheduleTasks, isPlanningDate, planningDay, scheduleRange, type ScheduleTask } from '@cuberoot/shared/workspace-planning';
 
 it('moves completed items to the bottom without changing the original restore order', () => {
   const items = [{ id: 'a', text: 'A', done: true }, { id: 'b', text: 'B', done: false }, { id: 'c', text: 'C', done: true }];
   expect(orderChecklistItems(items).map(item => item.id)).toEqual(['b', 'a', 'c']);
   expect(orderChecklistItems(items.map(item => ({ ...item, done: false }))).map(item => item.id)).toEqual(['a', 'b', 'c']);
   expect(items.map(item => item.id)).toEqual(['a', 'b', 'c']);
+});
+
+it('copies cross-year tasks and milestones with equal calendar offsets and reset progress', () => {
+  const tasks: ScheduleTask[] = [{ id: 'a', name: 'Build', group: 'Product', owner: '', start: '2026-12-30', end: '2027-01-02', kind: 'task', progress: 80 }, { id: 'b', name: 'Launch', group: 'Product', owner: '', start: '2027-01-04', end: '2027-01-04', kind: 'milestone', progress: 100 }];
+  let id = 0;
+  const copied = copyScheduleTasks(tasks, '2028-02-28', () => `copy-${id++}`);
+  expect(copied.map(task => [task.id, task.start, task.end, task.progress])).toEqual([['copy-0', '2028-02-28', '2028-03-02', 0], ['copy-1', '2028-03-04', '2028-03-04', 0]]);
+  expect(scheduleRange(tasks)?.days).toBe(6);
+  expect(scheduleRange(copied)?.days).toBe(6);
+  expect(tasks[0].progress).toBe(80);
+  expect(copyScheduleTasks([], '', () => '')).toEqual([]);
+  expect(scheduleRange([])).toBeNull();
+});
+
+it('validates calendar dates and keeps day offsets independent of daylight saving time', () => {
+  expect(isPlanningDate('2028-02-29')).toBe(true);
+  for (const date of ['2027-02-29', '2026-02-31', '2026-13-01', '2026-1-01', 'invalid']) expect(isPlanningDate(date)).toBe(false);
+  expect(planningDay('2026-03-09') - planningDay('2026-03-07')).toBe(2);
 });

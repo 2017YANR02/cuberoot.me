@@ -3191,4 +3191,11 @@ export const CATALOG: ComponentEntry[] = [
     zh: `协作资源共用的成员权限面板：搜索 WCA 用户、邀请为编辑者或查看者、修改权限和移除成员。文档与在线表格共用同一实现。`,
     en: `Shared member-permissions panel for collaborative resources: search WCA users, invite editors or viewers, change roles, and remove members. Used by both documents and online spreadsheets.`,
   },
+  {
+    name: 'ScheduleTimeline',
+    import: "import ScheduleTimeline from '@/app/[lang]/workspace/ScheduleTimeline';",
+    category: 'more',
+    zh: '工作台排期共用的甘特图：分组任务、里程碑、日周月尺度与键盘编辑入口，沿用工作台主题。',
+    en: 'Workspace Gantt timeline with grouped tasks, milestones, day/week/month scales and keyboard editing, using workspace theme tokens.',
+  },
 ];

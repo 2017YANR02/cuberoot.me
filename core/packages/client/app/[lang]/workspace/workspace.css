@@ -25,6 +25,38 @@
 .workspace-add-item { display: flex; align-items: end; gap: 12px; }
 .workspace-add-item .staff-field { flex: 1; min-width: 0; }
 
+.workspace-schedule-heading { justify-content: space-between; margin-bottom: 20px; }
+.workspace-controls { border: 0; padding: 0; margin: 0; min-width: 0; }
+.workspace-task-editor { margin-block: 24px; }
+.workspace-gantt-scroll { max-width: 100%; overflow: auto; max-height: 70vh; border: 1px solid var(--border-default); border-radius: 8px; }
+.workspace-gantt { width: max-content; min-width: 100%; font-variant-numeric: tabular-nums; }
+.workspace-gantt-row { display: flex; min-height: 62px; }
+.workspace-gantt-label { position: sticky; left: 0; z-index: 2; flex: 0 0 220px; width: 220px; box-sizing: border-box; padding: 10px 12px; background: var(--background); border-right: 1px solid var(--border-default); overflow-wrap: anywhere; }
+.workspace-gantt-track { position: relative; flex: 0 0 var(--gantt-width); width: var(--gantt-width); background: repeating-linear-gradient(to right, var(--border-default) 0 1px, transparent 1px var(--gantt-day)); }
+.workspace-gantt-header { position: sticky; top: 0; z-index: 3; min-height: 42px; background: var(--background); font-size: 12px; }
+.workspace-gantt-tick { position: absolute; top: 12px; box-sizing: border-box; padding-left: 3px; white-space: nowrap; overflow: hidden; }
+.workspace-gantt-group { min-height: 38px; color: var(--gantt-color); }
+.workspace-gantt-group .workspace-gantt-label { background: var(--muted); }
+.workspace-gantt-group .workspace-gantt-track { background-color: var(--muted); }
+.workspace-task-label { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; width: 100%; padding: 0; border: 0; background: transparent; color: var(--foreground); text-align: start; font: inherit; cursor: pointer; overflow-wrap: anywhere; }
+.workspace-task-label:disabled { cursor: default; opacity: 1; }
+.workspace-task-label small { font-size: 12px; color: var(--muted-foreground); }
+.workspace-gantt-bar, .workspace-gantt-milestone { position: absolute; top: 50%; transform: translateY(-50%); height: 28px; padding: 0; border: 1px solid var(--gantt-color); background: color-mix(in srgb, var(--gantt-color) 18%, var(--background)); color: var(--foreground); cursor: pointer; }
+.workspace-gantt-bar { border-radius: 5px; overflow: hidden; }
+.workspace-gantt-progress { position: absolute; inset: 0 auto 0 0; background: color-mix(in srgb, var(--gantt-color) 38%, transparent); }
+.workspace-gantt-percent { position: relative; z-index: 1; font-size: 12px; }
+.workspace-gantt-milestone { width: 14px; height: 14px; transform: translate(-50%, -50%) rotate(45deg); background: var(--gantt-color); }
+.workspace-gantt-bar:disabled, .workspace-gantt-milestone:disabled { opacity: 1; cursor: default; }
+.workspace-gantt-row.is-done .workspace-task-label > span { text-decoration: line-through; color: var(--muted-foreground); }
+.workspace-gantt-today { position: absolute; inset-block: 0; border-left: 1px dashed var(--destructive); pointer-events: none; z-index: 1; }
+.workspace-gantt-scroll:focus-visible, .workspace-task-label:focus-visible, .workspace-gantt-bar:focus-visible, .workspace-gantt-milestone:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+@media (max-width: 600px) {
+  .workspace-gantt-label { flex-basis: 150px; width: 150px; }
+  .workspace-toolbar .staff-field { max-width: 100%; }
+  .workspace-toolbar select { max-width: 100%; }
+  .workspace-list-heading .staff-actions { flex-wrap: wrap; }
+}
+
 .staff-workspace .staff-header,
 .staff-workspace .staff-nav {
   border-bottom: 0;

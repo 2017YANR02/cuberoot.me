@@ -46,3 +46,13 @@ pnpm --filter @cuberoot/server exec vitest run tests/workspace-http.test.ts
 入口 `?section=checklists`。可按自定义分类创建多份清单，公司清单对员工共享，项目清单仅项目成员与管理员可见；有项目资格的成员均可编辑。共享范围创建后固定，避免误将项目内容公开。完成项稳定置底并变灰，取消勾选恢复原顺序。清单可改名、归类、归档和恢复；归档项目停止写入。
 
 `0289_workspace_checklists.sql` 新增 `workspace_checklists`，`GET checklists` 按权限与分类过滤后每页返回 20 份清单，`POST checklist` 校验整个清单（最多 200 项）、项目资格和版本；写入复用工作台事务锁及审计。冲突返回 409，界面保留输入并提供重新加载，不自动覆盖。团队内容在账号注销后保留，不新增私人账号关联。
+
+## 总排期
+
+入口 `?section=schedule`，可保存多份排期，通过 `schedule` 和 `scale=day|week|month` 查询参数选择排期与时间尺度。甘特图按自定义分组展示任务、进度、负责人和单日里程碑，支持跨月、跨年及横向滚动；点击任务名称或时间条打开同一编辑表单。日期精确到天，结束日期包含当天；每份最多 150 项、跨度最多 732 天。
+
+负责人和管理员可创建、编辑、归档、恢复排期；普通成员只读。公司排期对员工可见，项目排期按成员资格过滤，项目归档后不能写入。共享范围创建后固定。复制排期可选择目标范围和新的开始日期，所有任务及里程碑按相同天数平移，生成新 ID，完成进度归零；原排期保持不变。
+
+`0290_workspace_schedules.sql` 新增 `workspace_schedules`，接口为 `GET schedules` / `POST schedule`。列表每页 20 份，链接指定的排期独立按权限读取。服务端校验日期、进度、重复 ID、两年跨度、资格及版本；采用与报告和清单相同的事务锁、审计和账号生命周期。两个新增表均为团队记录，不建立个人账号外键。发布时由现有部署流程应用增量迁移；应先确认新版 API 就绪再开放新版前端，避免旧 API 忽略小时字段。
+
+本地数据库测试可使用显式的一次性 `WORKSPACE_TEST_DATABASE_URL` 运行 `tests/workspace-planning.test.ts`；无 PostgreSQL 服务时，可将 `WORKSPACE_TEST_PGLITE_MODULE` 指向本机临时 PGlite 模块执行相同 SQL/事务测试。后者不是生产依赖，也不能替代 PostgreSQL 13 部署验证。

@@ -579,6 +579,7 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 290, slug: 'workspace_schedules', desc: { zh: '可复用团队排期、分组任务及里程碑', en: 'Reusable team schedules, grouped tasks and milestones' } },
   { n: 289, slug: 'workspace_checklists', desc: { zh: '按分类共享公司与项目清单，完成状态和版本冲突保护', en: 'Categorized company and project checklists with completion and version checks' } },
   { n: 288, slug: 'multiple_home_features', desc: { zh: '首页支持多个独立置顶内容', en: 'Multiple independent homepage features' } },
   { n: 287, slug: 'alg_mark_tombstones', desc: { zh: '保留学习标记清除时间，阻止旧设备迟到写入复活标记', en: 'Retain learning-mark deletion timestamps to reject stale device writes' } },

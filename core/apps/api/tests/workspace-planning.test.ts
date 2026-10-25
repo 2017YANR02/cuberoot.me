@@ -39,7 +39,7 @@ suite('workspace shared planning persistence', () => {
     await exec(`CREATE SCHEMA ${schema}; SET search_path TO ${schema}`);
     await exec('CREATE TABLE app_users(id BIGINT PRIMARY KEY,display_name TEXT,is_admin BOOLEAN,forum_banned BOOLEAN DEFAULT FALSE,merged_into_user_id BIGINT,wca_id TEXT)');
     await exec("INSERT INTO app_users(id,display_name,is_admin) VALUES (1,'Admin',TRUE),(2,'Alice',FALSE),(3,'Bob',FALSE),(4,'Outside',FALSE)");
-    for (const file of ['0281_workspace', '0282_workspace_account_deletion', '0284_workspace_admin_access', '0289_workspace_checklists']) {
+    for (const file of ['0281_workspace', '0282_workspace_account_deletion', '0284_workspace_admin_access', '0289_workspace_checklists', '0290_workspace_schedules']) {
       await exec(readFileSync(new URL(`../migrations/${file}.sql`, import.meta.url), 'utf8'));
     }
     service = createWorkspaceService(q, transaction);
@@ -75,12 +75,31 @@ suite('workspace shared planning persistence', () => {
     expect(await service.get(alice, 'detail', new URLSearchParams({ id: input.id }))).toHaveProperty('report.version', 2);
   });
 
+  it('restricts schedule edits to assigned managers, persists edits and rejects invalid timelines', async () => {
+    const task = { id: randomUUID(), group: 'Product', name: 'Build', owner: '', start: '2026-12-30', end: '2027-01-02', kind: 'task', progress: 50 };
+    const input = { id: randomUUID(), name: 'Plan', projectId: project, version: 0, active: true, tasks: [task] };
+    await expect(service.post(bob, 'schedule', input)).rejects.toMatchObject({ status: 403 });
+    await expect(service.post(outsider, 'schedule', input)).rejects.toMatchObject({ status: 403 });
+    await service.post(alice, 'schedule', input);
+    expect(await service.get(bob, 'schedules', new URLSearchParams())).toMatchObject({ schedules: [{ canEdit: false, tasks: [task] }] });
+    expect(await service.get(outsider, 'schedules', new URLSearchParams({ id: input.id }))).toMatchObject({ schedules: [], selected: null });
+    await service.post(admin, 'schedule', { ...input, version: 1, tasks: [{ ...task, progress: 100 }] });
+    await expect(service.post(alice, 'schedule', { ...input, version: 1 })).rejects.toMatchObject({ status: 409 });
+    for (const tasks of [[{ ...task, end: '2026-02-31' }], [{ ...task, kind: 'milestone' }], [{ ...task, progress: 101 }], [task, task], [{ ...task, end: '2030-01-01' }]]) {
+      await expect(service.post(alice, 'schedule', { ...input, version: 2, tasks })).rejects.toThrow();
+    }
+    expect(await service.get(alice, 'schedules', new URLSearchParams())).toMatchObject({ schedules: [{ version: 2, tasks: [{ progress: 100 }] }] });
+  });
+
   it('rejects malformed items and protects archived projects and revoked members', async () => {
     const input = checklist();
     await expect(service.post(alice, 'checklist', { ...input, items: [input.items[0], input.items[0]] })).rejects.toThrow();
     await service.post(admin, 'project', { id: project, version: 1, name: 'Project', url: '', active: false, memberIds: [aliceId, bobId] });
     await expect(service.post(bob, 'checklist', input)).rejects.toMatchObject({ status: 403 });
     expect(await service.get(bob, 'checklists', new URLSearchParams())).toMatchObject({ checklists: [{ canEdit: false }] });
+    const schedules = await service.get(alice, 'schedules', new URLSearchParams()) as { schedules: { id: string; version: number }[] };
+    expect(schedules).toMatchObject({ schedules: [{ canEdit: false }] });
+    await expect(service.post(alice, 'schedule', { ...schedules.schedules[0], active: true })).rejects.toMatchObject({ status: 403 });
     await service.post(admin, 'member', { userId: 3, name: 'Bob', role: 'member', active: false });
     await expect(service.get(bob, 'checklists', new URLSearchParams())).rejects.toMatchObject({ status: 403 });
   });

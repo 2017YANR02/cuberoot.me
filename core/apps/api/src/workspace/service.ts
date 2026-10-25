@@ -106,6 +106,7 @@ export function createWorkspaceService(query: QueryRunner, transact: Transaction
         }
         case 'detail': return detail(query,a,search.get('id')??'');
         case 'checklists': return planning(query, a).checklists(search);
+        case 'schedules': return planning(query, a).schedules(search);
         case 'reports': {
           const filter=await readFilter(query,a);let clause=filter.sql;const params=filter.params;
           if(search.get('mine')==='true') {clause+=' AND r.member_id=?';params.push(employee(a).id);} else clause+=" AND r.status='submitted'";
@@ -125,6 +126,7 @@ export function createWorkspaceService(query: QueryRunner, transact: Transaction
       return write(identity,async(q,a)=>{
         switch(action){
           case 'checklist': return planning(q, a).saveChecklist(input);
+          case 'schedule': return planning(q, a).saveSchedule(input);
           case 'member': {
             admin(a);const data=memberInput.parse(input);
             const [user]=await q('SELECT id FROM app_users WHERE id=? AND merged_into_user_id IS NULL AND NOT forum_banned',[data.userId]);if(!user)throw new WorkspaceError('CubeRoot 用户不存在 / User unavailable',404);
