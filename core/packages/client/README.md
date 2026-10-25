@@ -32,6 +32,8 @@ dev server 运行时不要同时执行 `next build`，两者共用 `.next/`。Vi
 - `public/`：由 Next 直接提供的静态资源
 - `tests/`：Vitest 测试与架构守卫
 
+`app/not-found.tsx` 统一承接未匹配 URL 与页面调用 `notFound()` 的兜底，沿用根布局的主题和背景。404 不重定向首页；页面提供品牌首页链接、计时器及公式库入口。根兜底不依赖 `[lang]` provider，通过现有 `LANG_BOOTSTRAP` 设置的 HTML 语言选择中英文内容，链接显式保留对应语言。
+
 `tests/next-only-frontend.test.ts` 会阻止旧网站包、Vite 配置、Vite 运行时依赖和 `import.meta.env` 回流到现役网站代码。
 
 Web GAN v4 电量按通知更新：连接握手后的 `0xEF` 回复通过驱动 `onBattery` 回调刷新状态，首次请求 1 秒未收到有效回复时重试一次（对齐 DCTimer-BLE）。连接和重连保留握手期间已收到的电量，异步读取不能覆盖较新的通知；断开后清理重试并忽略旧会话回调。回归测试见 `tests/bluetooth_cube_reconnect.test.ts`。
