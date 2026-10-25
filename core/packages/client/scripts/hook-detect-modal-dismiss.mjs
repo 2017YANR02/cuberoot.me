@@ -17,18 +17,53 @@ export function scanModalDismiss(source, filePath = 'source.tsx') {
     ts.forEachChild(node, collect);
   }
   collect(sf);
+  function unwrap(node) {
+    while (node && ts.isParenthesizedExpression(node)) node = node.expression;
+    return node;
+  }
+  function booleanGuard(node) {
+    let negated = false;
+    node = unwrap(node);
+    while (node && ts.isPrefixUnaryExpression(node) && node.operator === ts.SyntaxKind.ExclamationToken) {
+      negated = !negated; node = unwrap(node.operand);
+    }
+    return node && ts.isIdentifier(node) ? { name: node.text, negated } : null;
+  }
+  function emptyClass(node) {
+    node = unwrap(node);
+    return node && ((ts.isIdentifier(node) && node.text === 'undefined')
+      || node.kind === ts.SyntaxKind.NullKeyword || node.kind === ts.SyntaxKind.FalseKeyword
+      || (ts.isStringLiteral(node) && node.text === ''));
+  }
+  function conditionalBackdropWired(expression, initializer) {
+    const spread = unwrap(expression);
+    const cls = initializer && ts.isJsxExpression(initializer) ? unwrap(initializer.expression) : null;
+    if (!spread || !ts.isConditionalExpression(spread) || !cls || !ts.isConditionalExpression(cls)) return false;
+    const classGuard = booleanGuard(cls.condition), spreadGuard = booleanGuard(spread.condition);
+    if (!classGuard || !spreadGuard || classGuard.name !== spreadGuard.name) return false;
+    // Accept conditional props only when the very same condition removes the backdrop class.
+    const modalClass = node => ts.isStringLiteral(unwrap(node)) && /backdrop|scrim|overlay|dialog-layer/.test(unwrap(node).text);
+    const activeOnTrue = modalClass(cls.whenTrue) && emptyClass(cls.whenFalse);
+    const activeOnFalse = modalClass(cls.whenFalse) && emptyClass(cls.whenTrue);
+    if (!activeOnTrue && !activeOnFalse) return false;
+    const guardValue = activeOnTrue !== classGuard.negated;
+    const activeProps = unwrap(guardValue !== spreadGuard.negated ? spread.whenTrue : spread.whenFalse);
+    return ts.isIdentifier(activeProps) && backdropBindings.has(activeProps.text);
+  }
   const hits = [];
   function visit(node) {
     if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
       const attrs = node.attributes.properties;
-      const className = attrs.find(a => a.name?.getText(sf) === 'className')?.initializer?.getText(sf) ?? '';
+      const classInitializer = attrs.find(a => a.name?.getText(sf) === 'className')?.initializer;
+      const className = classInitializer?.getText(sf) ?? '';
       const element = ts.isJsxOpeningElement(node) ? node.parent : node;
       const isBackdrop = /(?:backdrop|scrim|modal-overlay|dialog-layer)(?:\b|_)/.test(className)
         || (/overlay/.test(className) && /(?:aria-modal|role=["']dialog["'])/.test(element.getText(sf)));
       const wired = attrs.some(a =>
         /^(onClick|onMouseDown|onPointerDown)$/.test(a.name?.getText(sf) ?? '')
           ? !!a.initializer && !/^(?:\{(?:undefined|null|false)\})$/.test(a.initializer.getText(sf))
-          : ts.isJsxSpreadAttribute(a) && backdropBindings.has(a.expression.getText(sf)));
+          : ts.isJsxSpreadAttribute(a) && (backdropBindings.has(a.expression.getText(sf))
+            || conditionalBackdropWired(a.expression, classInitializer)));
       if (isBackdrop && /^[a-z]/.test(node.tagName.getText(sf)) && !wired) {
         hits.push({ line: sf.getLineAndCharacterOfPosition(node.getStart(sf)).line + 1, className });
       }

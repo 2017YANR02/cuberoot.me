@@ -33,6 +33,18 @@ describe('modal backdrop dismissal guard', () => {
   it('leaves non-modal loading, video and canvas layers alone', () => {
     expect(scanModalDismiss('<><div className="loading-overlay" role="status" /><canvas className="canvas-overlay" /><div className="sim-image-overlay" /></>')).toEqual([]);
   });
+  it('accepts embedded modal wiring only when the overlay and shared props use the same branch', () => {
+    const binding = 'const backdropProps = useModalDismiss(close, busy); ';
+    for (const spread of ['!embedded ? backdropProps : {}', 'embedded ? {} : backdropProps']) {
+      expect(scanModalDismiss(`${binding}<div className={embedded ? undefined : "fb-overlay"} {...(${spread})} role={embedded ? undefined : "dialog"} aria-modal={embedded ? undefined : true} />`)).toEqual([]);
+    }
+    expect(scanModalDismiss(`${binding}<div className={!embedded ? "modal-backdrop" : null} {...(embedded ? {} : backdropProps)} />`)).toEqual([]);
+    for (const spread of ['embedded ? backdropProps : {}', '!other ? backdropProps : {}', '!embedded ? unrelated : {}']) {
+      expect(scanModalDismiss(`${binding}<div className={embedded ? undefined : "modal-backdrop"} {...(${spread})} />`)).toHaveLength(1);
+    }
+    expect(scanModalDismiss(`${binding}<div className="modal-backdrop" {...(!embedded ? backdropProps : {})} />`)).toHaveLength(1);
+    expect(scanModalDismiss(`${binding}<div className={embedded ? "other-backdrop" : "modal-backdrop"} {...(!embedded ? backdropProps : {})} />`)).toHaveLength(1);
+  });
   it('checks reconstructed edits and keeps unrelated paths out of scope', () => {
     const file = 'D:/cube/cuberoot.me/core/packages/client/components/Demo.tsx';
     const source = '<div className="modal-backdrop" onClick={close} />';

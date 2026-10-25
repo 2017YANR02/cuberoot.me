@@ -272,8 +272,10 @@ describe('移动端复盘不再挤压计时区', () => {
     expect(src).toContain('panelOpen={Boolean(panelTab) && !liveSolutionPanel}');
     expect(src).toContain('narrowRecap={liveSolutionPanel}');
     const soloPage = read(fileURLToPath(import.meta.resolve('@cuberoot/timer-ui/TimerSoloPage')));
-    expect(soloPage).toContain('{!wide && narrowRecap}');
-    expect(src).toMatch(/className="shell-recap-body">\s*<LiveReconstructReport/);
+    expect(soloPage).toMatch(/\{!wide && narrowRecap && <div data-no-timer style=\{\{ display: 'contents' \}\}>\{narrowRecap\}<\/div>\}/);
+    expect(src).toMatch(/<TimerLiveSolutionPanel[^>]*>\s*<LiveReconstructReport[\s\S]*?<\/TimerLiveSolutionPanel>/);
+    const livePanel = read(join(ROOT, '..', 'timer-ui', 'src', 'live-smart-cube-attempt.tsx'));
+    expect(livePanel).toContain('<div className="shell-recap-body">{children}</div>');
     const workspaceCss = read(fileURLToPath(import.meta.resolve('@cuberoot/timer-ui/timer-workspace.css')));
     expect(workspaceCss).toMatch(/\.shell-recap-rail > \.shell-recap\s*\{[^}]*height:\s*100%/);
     expect(shell).toMatch(/\.timer-shell \.timer-workspace-panel\s*\{[^}]*contain:\s*size;[^}]*max-height:\s*calc\(100dvh - var\(--page-notice-h, 0px\)\);[^}]*overflow:\s*hidden/);
@@ -289,14 +291,17 @@ describe('移动端复盘不再挤压计时区', () => {
   });
 
   it('打乱和来源区完整展开，计时数字在后续行中排布', () => {
-    const surface = shell.match(/\.timer-shell \.timing-surface--solo,\s*\.timer-shell \.timing-surface--net\s*\{([^}]*)\}/)?.[1];
+    const sharedSurface = read(fileURLToPath(import.meta.resolve('@cuberoot/timer-ui/timing-surface.css')));
+    // Canonical flow rules now live in the shared surface consumed by all hosts.
+    // Inspect the final matching rule so an earlier base style cannot mask drift.
+    const surface = [...sharedSurface.matchAll(/\.timing-surface--solo,\s*\.timing-surface--net\s*\{([^}]*)\}/g)].at(-1)?.[1];
     expect(surface).toBeDefined();
     expect(surface).toContain('flex: 1 0 auto;');
     expect(surface).not.toContain('container-type: size');
     expect(surface).toContain('grid-template-rows: auto auto;');
     expect(surface).toContain('align-content: center;');
     expect(surface).toContain('row-gap: clamp(12px, 2dvh, 24px);');
-    expect(shell).toMatch(/\.timer-shell :is\([^}]+\) \.timing-surface-scramble-top\s*\{[^}]*max-height:\s*none;[^}]*overflow:\s*visible/);
-    expect(shell).toMatch(/\.timer-shell \.timer-stage-source\s*\{[^}]*max-height:\s*none;[^}]*overflow:\s*visible/);
+    expect(sharedSurface).toMatch(/\.timing-surface:is\([^}]+\) \.timing-surface-scramble-top\s*\{[^}]*max-height:\s*none;[^}]*overflow:\s*visible/);
+    expect(sharedSurface).toMatch(/\.timer-stage-source\s*\{[^}]*max-height:\s*none;[^}]*overflow:\s*visible/);
   });
 });

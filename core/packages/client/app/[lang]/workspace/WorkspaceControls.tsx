@@ -27,7 +27,7 @@ export function WorkspaceMemberPicker({ name, label, members, defaultValue }: Wo
   const visible = options.filter(member => `${member.name} ${member.id}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
   return <fieldset className="workspace-member-picker">
     <legend>{label}</legend>
-    <div className="workspace-member-picker-toolbar"><SearchInput value={query} onChange={setQuery} inputClassName="staff-input" placeholder={t('搜索成员', 'Search members')} onKeyDown={event => { if (event.key === 'Enter') event.preventDefault(); }} /><span className="staff-muted" role="status">{t('已选', 'Selected')}: {selected.length}</span></div>
+    <div className="workspace-member-picker-toolbar">{/* allow-manual-search: Filtering is live via onChange; Enter only prevents accidental project-form submission. */}<SearchInput value={query} onChange={setQuery} inputClassName="staff-input" placeholder={t('搜索成员', 'Search members')} onKeyDown={event => { if (event.key === 'Enter') event.preventDefault(); }} /><span className="staff-muted" role="status">{t('已选', 'Selected')}: {selected.length}</span></div>
     {selected.map(id => <input key={id} type="hidden" name={name} value={id} />)}
     <div className="workspace-member-options">
       {visible.map(member => <label className="workspace-member-option" key={member.id}>

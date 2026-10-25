@@ -31,6 +31,7 @@ describe('Web solo attempt recording lifecycle', () => {
     const producer = new SmartCubeAttemptProducer();
     const ref = <T>(current: T) => ({ current });
     const entry = { scramble: 'R U', wca: null, scrambleSource: null, caseId: 'fixture' };
+    const clearLiveSolve = vi.fn();
     const context: Record<string, unknown> = {
       performance: { now: () => 1_000 },
       competitionRef: ref({ enabled: false }),
@@ -50,9 +51,7 @@ describe('Web solo attempt recording lifecycle', () => {
       timerSmartCubeAttemptScramble,
       bluetoothCubeRef: ref({ status: { connected: true, brand: 'gan-v4', deviceName: 'GAN16ui' } }),
       smartCubeAttemptProducerRef: ref(producer),
-      setLiveSolve: vi.fn(),
-      liveSolvePublishRef: ref(null),
-      clearTimeout: vi.fn(),
+      clearLiveSolve,
       phaseSnapshotRef: ref('ready'),
       cubeStartedRef: ref(false),
       gyroStartRef: ref(0),
@@ -84,5 +83,6 @@ describe('Web solo attempt recording lifecycle', () => {
       expect(shouldAutoRecap(recording, { autoRecap: true })).toBe(true);
       expect(shouldAutoRecap(recording, { autoRecap: false })).toBe(false);
     }
+    expect(clearLiveSolve).toHaveBeenCalledTimes(2);
   });
 });

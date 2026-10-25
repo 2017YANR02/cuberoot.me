@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { act, createElement, useState } from 'react';
+import { act, createElement, useState, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import TimerSolverBody from '@cuberoot/timer-ui/TimerSolverBody';
 
-vi.mock('@cuberoot/timer-ui/StageSolver', () => ({ default: ({ scramble }: { scramble: string }) =>
-  createElement('div', { 'data-solver-scramble': scramble }) }));
+// Keep the real parent-supplied editing action while substituting only the solver engine.
+vi.mock('@cuberoot/timer-ui/StageSolver', () => ({ default: ({ scramble, scrambleEditAction }: { scramble: string; scrambleEditAction?: ReactNode }) =>
+  createElement('div', { 'data-solver-scramble': scramble }, scrambleEditAction) }));
 
 let host: HTMLDivElement;
 let root: Root;
