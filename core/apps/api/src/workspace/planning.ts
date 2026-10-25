@@ -68,6 +68,18 @@ export function planningService(q: QueryRunner, access: PlanningAccess) {
       await access.audit('schedule.save', data.id);
       return { id: data.id, version: data.version + 1 };
     },
+    async deleteSchedule(input: unknown) {
+      if (!access.manager) access.fail('需要负责人权限 / Manager access required', 403);
+      const data = z.object({ id: uuid, version }).parse(input);
+      const old = await existing(data.id, 'workspace_schedules');
+      if (!old) access.fail('排期不存在或无权访问 / Schedule unavailable', 404);
+      if (old.version !== data.version) access.fail('排期已更新，请重新加载 / Reload schedule before deleting', 409);
+      await access.projectWrite(old.projectId);
+      const deleted = await q<{ id: string }>('DELETE FROM workspace_schedules WHERE id=? AND version=? RETURNING id', [data.id, data.version]);
+      if (!deleted.length) access.fail('排期已更新，请重新加载 / Reload schedule before deleting', 409);
+      await access.audit('schedule.delete', data.id);
+      return { id: data.id };
+    },
     async checklists(search = new URLSearchParams()) {
       const { page, active, offset } = pageOptions(search);
       const rows = await q<Checklist>(`SELECT ${columns},b.items FROM workspace_checklists b LEFT JOIN workspace_projects p ON p.id=b.project_id WHERE ${readable}${active} ORDER BY b.created_at,b.id LIMIT 21 OFFSET ?`, [...params,offset]);

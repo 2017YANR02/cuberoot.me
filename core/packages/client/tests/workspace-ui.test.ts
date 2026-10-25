@@ -30,6 +30,7 @@ const host: WorkspaceHost = {
       if (pendingSave) await pendingSave;
       if (action === 'checklist') lists = lists.map(list => list.id === (body as Checklist).id ? { ...body as Checklist, version: list.version + 1 } : list);
       if (action === 'checklist-delete') lists = lists.filter(list => list.id !== (body as Checklist).id);
+      if (action === 'schedule-delete') schedules = schedules.filter(row => row.id !== (body as Schedule).id);
       if (action === 'schedule') {
         const saved = { ...body as Schedule, version: (body as Schedule).version + 1, canEdit: true, projectName: null, projectActive: null };
         schedules = schedules.some(row => row.id === saved.id) ? schedules.map(row => row.id === saved.id ? saved : row) : [...schedules, saved];
@@ -384,6 +385,56 @@ it('hides checklist deletion when the project is read-only', async () => {
   lists[0].canEdit = false;
   await mount(h(Checklists));
   expect(container.querySelector('[aria-label="Delete checklist: Launch"]')).toBeNull();
+});
+
+it('confirms deletion in schedule settings and retains edits on cancellation or failure', async () => {
+  await mount(h(Schedules, { actor: { kind: 'staff', id: 1, role: 'manager', name: 'Manager' } }));
+  await click('Settings');
+  await setInput(container.querySelector<HTMLInputElement>('[name="name"]')!, 'Unsaved name');
+  await click('Delete current schedule');
+  expect(container.querySelector('[role="alert"]')?.textContent).toContain('Launch');
+  expect(container.querySelector('[role="alert"]')?.textContent).toContain('Tasks: 1');
+  expect(calls).toHaveLength(0);
+  await click('Cancel deletion');
+  expect(container.querySelector<HTMLInputElement>('[name="name"]')?.value).toBe('Unsaved name');
+  await click('Delete current schedule');
+  rejectSave = true;
+  await click('Confirm deletion');
+  expect(container.querySelector('dialog')?.textContent).toContain('Reload before saving');
+  expect(container.querySelector('.workspace-gantt')).not.toBeNull();
+  rejectSave = false;
+  await click('Confirm deletion');
+  expect(calls.at(-1)).toEqual({ action: 'schedule-delete', body: { id: 'schedule', version: 1 } });
+  expect(container.querySelector('dialog')).toBeNull();
+  expect(container.querySelector('.workspace-gantt')).toBeNull();
+  expect(container.textContent).toContain('No schedules');
+});
+
+it('keeps deleted schedules out of delayed reads and locks dismissal while deleting', async () => {
+  await mount(h(Schedules, { actor: { kind: 'staff', id: 1, role: 'manager', name: 'Manager' } }));
+  let resolveRead!: () => void;
+  pendingRead = new Promise<void>(resolve => { resolveRead = resolve; });
+  await click('Reload');
+  await click('Settings');
+  await click('Delete current schedule');
+  let resolveSave!: () => void;
+  pendingSave = new Promise<void>(resolve => { resolveSave = resolve; });
+  await click('Confirm deletion');
+  await act(async () => container.querySelector('dialog')!.dispatchEvent(new Event('cancel', { cancelable: true })));
+  expect(container.querySelector('dialog')).not.toBeNull();
+  expect(container.querySelector('select')!.matches(':disabled')).toBe(true);
+  await act(async () => resolveSave());
+  expect(container.querySelector('.workspace-gantt')).toBeNull();
+  await act(async () => resolveRead());
+  expect(container.querySelector('.workspace-gantt')).toBeNull();
+  expect(container.querySelector('select')?.textContent).not.toContain('Launch');
+});
+
+it('does not expose schedule settings or deletion to read-only members', async () => {
+  schedules[0].canEdit = false;
+  await mount(h(Schedules, { actor: { kind: 'staff', id: 1, role: 'member', name: 'Member' } }));
+  expect(container.querySelector('[aria-label="Settings"]')).toBeNull();
+  expect(container.textContent).not.toContain('Delete current schedule');
 });
 
 it('opens the same editor from a timeline task and copies a schedule with shifted dates', async () => {

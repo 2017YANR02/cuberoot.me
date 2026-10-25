@@ -128,6 +128,7 @@ export function createWorkspaceService(query: QueryRunner, transact: Transaction
           case 'checklist': return planning(q, a).saveChecklist(input);
           case 'checklist-delete': return planning(q, a).deleteChecklist(input);
           case 'schedule': return planning(q, a).saveSchedule(input);
+          case 'schedule-delete': return planning(q, a).deleteSchedule(input);
           case 'member': {
             admin(a);const data=memberInput.parse(input);
             const [user]=await q('SELECT id FROM app_users WHERE id=? AND merged_into_user_id IS NULL AND NOT forum_banned',[data.userId]);if(!user)throw new WorkspaceError('CubeRoot 用户不存在 / User unavailable',404);

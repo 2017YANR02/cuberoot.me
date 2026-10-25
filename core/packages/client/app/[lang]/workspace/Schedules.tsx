@@ -18,27 +18,32 @@ export default function Schedules({ actor }: { actor: StaffActor }) {
   const resource = useResource<{ schedules: Schedule[]; selected: Schedule | null; hasMore: boolean }>(`schedules?${new URLSearchParams({ page: String(page), archived: String(status === 'all'), id: selected })}`);
   const projects = useResource<ProjectList>('projects');
   const [editing, setEditing] = useState<'new' | 'settings' | 'copy' | null>(null);
+  const [removing, setRemoving] = useState(false);
+  const [deletedIds, setDeletedIds] = useState(() => new Set<string>());
   const [task, setTask] = useState<ScheduleTask | null>(null);
   const [editorScope, setEditorScope] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const operation = useRef(0);
   const live = useRef(false);
   useEffect(() => { live.current = true; return () => { live.current = false; operation.current++; }; }, []);
-  useEffect(() => { operation.current++; setTask(null); setEditing(null); }, [selected]);
+  useEffect(() => { operation.current++; setTask(null); setEditing(null); setRemoving(false); }, [selected]);
   const newId = useRef('');
   const manager = actor.kind === 'admin' || actor.role === 'manager';
-  const schedules = resource.data?.schedules ?? [];
-  const schedule = resource.data?.selected ?? schedules.find(row => row.id === selected) ?? schedules[0];
+  const schedules = (resource.data?.schedules ?? []).filter(row => !deletedIds.has(row.id));
+  const selectedSchedule = resource.data?.selected;
+  const schedule = (selectedSchedule && !deletedIds.has(selectedSchedule.id) ? selectedSchedule : undefined) ?? schedules.find(row => row.id === selected) ?? schedules[0];
   const choices = schedule && !schedules.some(row => row.id === schedule.id) ? [schedule, ...schedules] : schedules;
   const editable = Boolean(schedule?.canEdit && schedule.active);
   const groups = [...new Set(schedule?.tasks.map(row => row.group) ?? [])];
   const range = scheduleRange(schedule?.tasks ?? []);
-  async function mutate(body: unknown, done: (saved: { id: string }) => void) {
+  async function mutate(body: unknown, done: (saved: { id: string }) => void, action: 'schedule' | 'schedule-delete' = 'schedule') {
     const token = operation.current;
     setBusy(true);
     try {
-      const saved = await api<{ id: string }>('schedule', body);
+      const saved = await api<{ id: string }>(action, body);
+      if (live.current && action === 'schedule-delete') setDeletedIds(ids => new Set([...ids, saved.id]));
       if (live.current && token === operation.current) { done(saved); resource.reload(); }
+      else if (live.current && action === 'schedule-delete') resource.reload();
     } finally { if (live.current) setBusy(false); }
   }
   async function saveTasks(tasks: ScheduleTask[]) {
@@ -46,7 +51,7 @@ export default function Schedules({ actor }: { actor: StaffActor }) {
     if ((scheduleRange(tasks)?.days ?? 0) > 732) throw new Error(t('单份排期最多跨两年', 'A schedule can span up to two years'));
     await mutate({ ...schedule, tasks }, () => setTask(null));
   }
-  function begin(mode: 'new' | 'settings' | 'copy') { operation.current++; setEditorScope(schedule?.id ?? null); newId.current = crypto.randomUUID(); setEditing(mode); setTask(null); }
+  function begin(mode: 'new' | 'settings' | 'copy') { operation.current++; setEditorScope(schedule?.id ?? null); newId.current = crypto.randomUUID(); setEditing(mode); setRemoving(false); setTask(null); }
   function editTask(next: ScheduleTask) { operation.current++; setEditorScope(schedule?.id ?? null); setEditing(null); setTask(next); }
   return <fieldset disabled={busy} className="workspace-controls workspace-schedules" aria-busy={busy}>
     <div className="staff-actions workspace-toolbar">
@@ -63,7 +68,15 @@ export default function Schedules({ actor }: { actor: StaffActor }) {
     <ErrorNotice error={projects.error} retry={projects.reload} />
     {resource.loading && <p role="status">{t('正在加载…', 'Loading…')}</p>}
     {editing && editorScope === (schedule?.id ?? null) && <EditorDialog title={editing === 'new' ? t('新建排期', 'New schedule') : editing === 'copy' ? t('复制排期', 'Copy schedule') : t('排期设置', 'Schedule settings')} onClose={() => setEditing(null)}>
-      <Form key={`${editing}:${schedule?.id ?? ''}`} submit={async data => {
+      <Form key={`${editing}:${schedule?.id ?? ''}`} submit={async (data, action) => {
+        if (action === 'remove') {
+          if (!removing || editing !== 'settings' || !schedule?.canEdit) return;
+          await mutate({ id: schedule.id, version: schedule.version }, () => {
+            setEditing(null); setRemoving(false); void setSelected('');
+            if (schedules.length === 1 && page > 1) void setPage(page - 1);
+          }, 'schedule-delete');
+          return;
+        }
         if (!projects.data || !resource.data) throw new Error(t('请先加载排期和项目', 'Load schedules and projects first'));
         const current = editing === 'settings' ? schedule : undefined;
         const tasks = editing === 'copy' && schedule ? copyScheduleTasks(schedule.tasks, value(data, 'start'), () => crypto.randomUUID()) : current?.tasks ?? [];
@@ -75,7 +88,8 @@ export default function Schedules({ actor }: { actor: StaffActor }) {
           <Field label={t('状态', 'Status')}><select name="active" defaultValue={String(editing === 'settings' ? schedule?.active : true)}><option value="true">{t('进行中', 'Active')}</option><option value="false">{t('已归档', 'Archived')}</option></select></Field>
         </div>
         {editing === 'copy' && !!schedule?.tasks.length && <Field width="date" label={t('新的开始日期', 'New start date')}><DateInput name="start" required defaultValue={planningDate(scheduleRange(schedule.tasks)!.start)} /></Field>}
-        <div className="staff-actions staff-form-actions"><Button action="save" type="submit">{t('保存', 'Save')}</Button></div>
+        {removing && schedule && <p role="alert"><strong>{schedule.name}</strong> · {t('任务数', 'Tasks')}: {schedule.tasks.length}<br />{t('排期及其中全部任务、里程碑将被删除，无法恢复。', 'This schedule and all its tasks and milestones will be permanently deleted.')}</p>}
+        <div className="staff-actions staff-form-actions">{editing === 'settings' && schedule?.canEdit && (removing ? <><Button variant="secondary" disabled={busy} onClick={() => setRemoving(false)}>{t('取消删除', 'Cancel deletion')}</Button><Button action="delete" iconOnly={false} className="workspace-danger-action" type="submit" value="remove" formNoValidate disabled={busy}>{t('确认删除', 'Confirm deletion')}</Button></> : <Button action="delete" iconOnly={false} className="workspace-danger-action" disabled={busy} onClick={() => setRemoving(true)}>{t('删除当前排期', 'Delete current schedule')}</Button>)}{!removing && <Button action="save" type="submit">{t('保存', 'Save')}</Button>}</div>
       </Form>
     </EditorDialog>}
     {schedule && <>

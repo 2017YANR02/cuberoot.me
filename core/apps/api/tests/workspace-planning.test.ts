@@ -162,6 +162,23 @@ suite('workspace shared planning persistence', () => {
     expect(await service.get(alice, 'schedules', new URLSearchParams())).toMatchObject({ schedules: [{ version: 2, tasks: [{ progress: 100 }] }] });
   });
 
+  it('restricts schedule deletion to authorized managers with version and audit checks', async () => {
+    const input = { id: randomUUID(), name: 'Disposable plan', projectId: project, version: 0, active: true, tasks: [{ id: randomUUID(), group: 'Release', name: 'Ship', owner: '', start: '2026-10-25', end: '2026-10-25', kind: 'milestone', progress: 0 }] };
+    await service.post(alice, 'schedule', input);
+    await expect(service.post(bob, 'schedule-delete', { id: input.id, version: 1 })).rejects.toMatchObject({ status: 403 });
+    await expect(service.post(outsider, 'schedule-delete', { id: input.id, version: 1 })).rejects.toMatchObject({ status: 404 });
+    await expect(service.post(alice, 'schedule-delete', { id: input.id, version: 0 })).rejects.toMatchObject({ status: 409 });
+    expect(await q('SELECT id FROM workspace_schedules WHERE id=?', [input.id])).toHaveLength(1);
+    expect(await service.post(alice, 'schedule-delete', { id: input.id, version: 1 })).toEqual({ id: input.id });
+    expect(await q('SELECT id FROM workspace_schedules WHERE id=?', [input.id])).toHaveLength(0);
+    expect(await q("SELECT target FROM workspace_audit WHERE action='schedule.delete' AND target=?", [input.id])).toEqual([{ target: input.id }]);
+    await expect(service.post(alice, 'schedule-delete', { id: input.id, version: 1 })).rejects.toMatchObject({ status: 404 });
+    const company = { ...input, id: randomUUID(), projectId: null, active: false };
+    await service.post(alice, 'schedule', company);
+    await service.post(admin, 'schedule-delete', { id: company.id, version: 1 });
+    expect(await q('SELECT id FROM workspace_schedules WHERE id=?', [company.id])).toHaveLength(0);
+  });
+
   it('rejects malformed items and protects archived projects and revoked members', async () => {
     const input = checklist();
     await expect(service.post(alice, 'checklist', { ...input, items: [input.items[0], input.items[0]] })).rejects.toThrow();
@@ -172,6 +189,7 @@ suite('workspace shared planning persistence', () => {
     await expect(service.post(bob, 'checklist-delete', archived.checklists[0])).rejects.toMatchObject({ status: 403 });
     const schedules = await service.get(alice, 'schedules', new URLSearchParams()) as { schedules: { id: string; version: number }[] };
     expect(schedules).toMatchObject({ schedules: [{ canEdit: false }] });
+    await expect(service.post(alice, 'schedule-delete', schedules.schedules[0])).rejects.toMatchObject({ status: 403 });
     await expect(service.post(alice, 'schedule', { ...schedules.schedules[0], active: true })).rejects.toMatchObject({ status: 403 });
     await service.post(admin, 'member', { userId: 3, name: 'Bob', role: 'member', active: false });
     await expect(service.get(bob, 'checklists', new URLSearchParams())).rejects.toMatchObject({ status: 403 });
