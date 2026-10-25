@@ -1,0 +1,33 @@
+.shell-panel-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-default);
+}
+.shell-panel-tab {
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.shell-panel-tab:hover { background: var(--muted); color: var(--foreground); }
+.shell-panel-tab.active { background: var(--accent-soft); color: var(--accent); }
+.shell-panel-close {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.shell-panel-close:hover { background: var(--muted); color: var(--foreground); }

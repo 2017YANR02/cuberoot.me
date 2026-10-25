@@ -1,4 +1,5 @@
 'use client';
+import { TimerResultsTabs } from '@cuberoot/timer-ui';
 import { useLiveSmartCubeAttempt, TimerLiveSolutionPanel, TimerTrainingTimingStatus } from '@cuberoot/timer-ui';
 
 import { timerTrainingSummaries } from '@cuberoot/shared/timer';
@@ -50,7 +51,6 @@ import {
   LayoutTemplate,
   ArrowLeft,
   Box,
-  X,
 } from '@app-foundation/icons/lucide';
 import HomeLink from '@/components/HomeLink';
 import { petReact } from '@/lib/deskpet';
@@ -3419,14 +3419,8 @@ children: <>
       </>}
         history={panelTab && !liveSolutionPanel && (
         <aside className={`timer-workspace-panel shell-panel${isDesktop ? ' shell-panel--rail' : ' shell-panel--sheet'}`}>
-          <div className="shell-panel-tabs">
-            <button type="button" className={`shell-panel-tab${panelTab === 'times' ? ' active' : ''}`} onClick={() => setPanelTab('times')}>{tr({ zh: '成绩', en: 'Times'
-          })}</button>
-            <button type="button" className={`shell-panel-tab${panelTab === 'stats' ? ' active' : ''}`} onClick={() => setPanelTab('stats')}>{tr({ zh: '统计', en: 'Stats'
-          })}</button>
-            <button type="button" className="shell-panel-close" onClick={() => setPanelTab(null)} aria-label={tr({ zh: '关闭', en: 'Close'
-          })}><X size={16} /></button>
-          </div>
+          <TimerResultsTabs value={panelTab === 'stats' ? 'stats' : 'times'} onChange={setPanelTab}
+            onClose={() => setPanelTab(null)} language={isZh ? 'zh' : 'en'} />
           <div className="shell-panel-body timer-workspace-panel-body">{renderPanelBody()}</div>
         </aside>
       )}

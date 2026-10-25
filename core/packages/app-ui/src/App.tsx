@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import { TimerSoloLayoutEditor } from '@cuberoot/timer-ui';
+import { TimerResultsTabs, TimerSoloLayoutEditor } from '@cuberoot/timer-ui';
 import { SiteCorners } from "@2017yanr02/continuous-corners/react";
 import { shareOrDownloadBackup } from './file-export';
 import { InstalledUpdateNotice } from './AndroidUpdateNotice';
@@ -529,7 +529,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   const fullscreenRef = useRef(fullscreen);
   const [manualEntryOpen, setManualEntryOpen] = useState(false);
   const historyWorkspaceRef = useRef<TimerHistoryWorkspaceHandle>(null);
-  const [historyTab, setHistoryTab] = useState<'history' | 'stats' | 'chart'>('history');
+  const [historyTab, setHistoryTab] = useState<'history' | 'stats'>('history');
   const [statsOpen, setStatsOpen] = useState(false);
   const [replayImportOpen, setReplayImportOpen] = useState(false);
   const [replaySolve, setReplaySolve] = useState<Solve | null>(null);
@@ -4593,7 +4593,9 @@ children: <>
 
         {view === 'history' && !liveSolutionPanel && (
           <section className="history-view timer-workspace-panel" aria-labelledby="history-title" data-no-timer>
-            {dockHistory && viewHeader}
+            <TimerResultsTabs value={historyTab === 'history' ? 'times' : 'stats'} language={language}
+              onChange={tab => { historyWorkspaceRef.current?.dismiss(); setHistoryTab(tab === 'times' ? 'history' : 'stats'); }}
+              onClose={() => { historyWorkspaceRef.current?.dismiss(); setView('timer'); }} />
             <div className="timer-workspace-panel-body">
             <header className="section-heading">
               <h1 id="history-title">{copy.history}</h1>
@@ -4611,10 +4613,7 @@ children: <>
               sessions={store!.database.sessions}
               viewportBottomInset={primaryNavBottomInset}
             />
-            <select aria-label={{en:'Results view',zh:'成绩视图'}[language]} value={historyTab} onChange={event => { historyWorkspaceRef.current?.dismiss(); setHistoryTab(event.target.value as typeof historyTab); }}>
-              <option value="history">{{en:'History',zh:'历史'}[language]}</option><option value="stats">{{en:'Stats',zh:'统计'}[language]}</option><option value="chart">{{en:'Charts',zh:'图表'}[language]}</option>
-            </select>
-            {historyTab !== 'history' && <TimerStatisticsWorkspace view={historyTab} language={language} event={activeEvent} solves={solves}
+            {historyTab !== 'history' && <TimerStatisticsWorkspace compact view={historyTab} language={language} event={activeEvent} solves={solves}
               labels={timerStatsPanelLabels(language)} rollingColumns={store!.settings.statsRollingColumns}
               onRollingColumnsChange={statsRollingColumns => updateSettings({statsRollingColumns})}
               sessionData={store!.database.sessions.map(session => ({session,byEvent:store!.database.dataBySession[session.id] ?? {}}))}
