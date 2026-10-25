@@ -14,6 +14,24 @@
 
 ## 手动一键 Android 发布
 
+### 管理员官网发布（Android / Windows）
+
+新的正式入口为下载页「版本管理」及手动 `app_release.yml`。普通 push 继续由 `test.yml` 检查和构建，不发布下载包。旧 `android_release.yml` / Mac 命令保留为独立 Play 和历史制品恢复入口；官网日常发布使用新入口，不交替操作两个发布协调器。
+
+`app_release.yml` 固定已审核 main 提交，使用环境 `app-release`。该环境必须仅允许 main 部署；如配置每次人工审批，网页任务会等待审批，不能宣称无人值守一键发布。授权的管理员发布无需额外审批时不设置 required reviewers。工作流的 `run_number=N` 是正式发布序号，版本为 `1.floor(N/1000).(N%1000)`，Android versionCode 为 `1000000+N`；首次为 `1.0.1 / 1000001`。失败允许跳号，重试同一 run 保持版本；不要删除并重建该工作流以重置序号。发布端拒绝降级及同版本内容替换。Windows 两份 EXE 共用同一版本，全部公网哈希校验通过后才原子替换清单。
+
+环境 secrets（不写源码、不输出日志）：
+
+- `ANDROID_KEYSTORE_BASE64`：现有正式 JKS 的 Base64；必须对应 `ANDROID_RELEASE_CERTIFICATE`，不得新建替代密钥。
+- `ANDROID_STORE_PASSWORD`、`ANDROID_KEY_PASSWORD`、`ANDROID_KEY_ALIAS`：该 JKS 的密码与别名。
+- `APP_RELEASE_SSH_KEY`、`APP_RELEASE_SSH_HOST`（`user@host`）、`APP_RELEASE_KNOWN_HOSTS`：静态站发布 SSH 凭据及预先核验的主机公钥，不在运行时无验证接受新主机密钥。
+
+这是对原「私钥仅留 Mac」流程的明确变更：维护者已授权将正式签名凭据配置到受保护 CI 环境。代码落地不代表这些 secrets 已配置。构建任务只在签名步骤获得 Android 密钥；发布任务仅获得 SSH 凭据。Windows 当前不做 Authenticode 签名，首次下载可能显示 SmartScreen 提示；Tauri updater 尚未启用，应用内更新入口下载新版供用户安装。
+
+发布任务分别保留 Android/Windows 制品 30 天。官网不可变文件保留在静态服务器；Windows 使用 `/downloads/windows/latest.json`，包含安装版、免安装 EXE 的 URL、大小和 SHA-256。免安装 EXE 需要现有 WebView2，数据仍使用应用数据目录，不承诺移动 EXE 即携带数据。发布前需验证干净 Windows 上安装/启动、登录回跳、覆盖更新与成绩保留；构建通过不替代这些验收。
+
+每个平台独立切换清单，另一平台失败不回退已成功的平台。失败可重跑失败 job，完整重跑已发布 run 会因不可变制品保护而拒绝不同内容。撤回官网入口只能阻止后续下载；已安装用户需要以更高版本发布修正版，不能强制降级。
+
 ### 本机 Mac 点击入口
 
 2026-10-14 已在维护者 Mac 的 Apple「快捷指令」App 创建「发布 Android」，按维护者选择仅放在 App 内，不加入 Dock 或菜单栏。点击播放后自动打开终端进度窗口，运行下面的官网 APK + Play 正式版命令，无需输入命令。仍须先把目标代码推送到 main，运行期间保持 Mac 联网；官网发布和 Google 审核状态分别看结果。

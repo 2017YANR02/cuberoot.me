@@ -1,0 +1,182 @@
+name: Publish Apps
+run-name: App release ${{ inputs.request_id }}
+
+# Daily push checks remain in test.yml. Only this manual workflow consumes versions.
+on:
+  workflow_dispatch:
+    inputs:
+      request_id:
+        description: Admin request UUID
+        required: true
+        type: string
+      source_commit:
+        description: Exact reviewed main commit
+        required: true
+        type: string
+      platform:
+        description: Website distribution
+        required: true
+        type: choice
+        options: [android, windows, both]
+      notes:
+        description: Release notes
+        required: true
+        type: string
+
+permissions:
+  contents: read
+concurrency:
+  group: official-app-release
+  cancel-in-progress: false
+  queue: max
+env:
+  RELEASE_COMMIT: ${{ inputs.source_commit }}
+  RELEASE_NOTES: ${{ inputs.notes }}
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    environment: app-release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: android
+            os: ubuntu-latest
+          - platform: windows
+            os: windows-latest
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        if: inputs.platform == matrix.platform || inputs.platform == 'both'
+        with:
+          ref: ${{ inputs.source_commit }}
+          fetch-depth: 0
+          filter: blob:none
+          sparse-checkout: |
+            core
+            tools/cstimer-scramble
+            tools/solver/rust-cross
+      - name: Validate source
+        if: inputs.platform == matrix.platform || inputs.platform == 'both'
+        shell: bash
+        env:
+          REQUEST_ID: ${{ inputs.request_id }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_COMMIT" =~ ^[a-f0-9]{40}$ ]]
+          [[ "$REQUEST_ID" =~ ^[a-f0-9-]{36}$ ]]
+          git merge-base --is-ancestor "$RELEASE_COMMIT" origin/main
+          test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"
+      - uses: pnpm/action-setup@v6
+        if: inputs.platform == matrix.platform || inputs.platform == 'both'
+        with:
+          package_json_file: core/package.json
+      - uses: actions/setup-node@v6
+        if: inputs.platform == matrix.platform || inputs.platform == 'both'
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: core/pnpm-lock.yaml
+      - uses: actions/setup-java@v5
+        if: matrix.platform == 'android' && inputs.platform != 'windows'
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: dtolnay/rust-toolchain@stable
+        if: matrix.platform == 'windows' && inputs.platform != 'android'
+      - name: Install and assign release version
+        if: inputs.platform == matrix.platform || inputs.platform == 'both'
+        working-directory: core
+        run: |
+          pnpm install --frozen-lockfile
+          node scripts/android-release/distribute.ts prepare
+          pnpm --filter @cuberoot/desktop build:deps
+          pnpm --filter @cuberoot/app-ui typecheck
+          pnpm --filter @cuberoot/app-ui test
+      - name: Validate Android host
+        if: matrix.platform == 'android' && inputs.platform != 'windows'
+        working-directory: core
+        run: |
+          pnpm --filter @cuberoot/mobile typecheck
+          pnpm --filter @cuberoot/mobile test
+          pnpm --filter @cuberoot/mobile cap:sync:android
+      - name: Sign Android with the existing production key
+        if: matrix.platform == 'android' && inputs.platform != 'windows'
+        working-directory: core
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          MOBILE_UPLOAD_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          MOBILE_UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          MOBILE_UPLOAD_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          export MOBILE_UPLOAD_KEYSTORE_FILE="$RUNNER_TEMP/cuberoot-upload.jks"
+          trap 'rm -f "$MOBILE_UPLOAD_KEYSTORE_FILE"' EXIT
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$MOBILE_UPLOAD_KEYSTORE_FILE"
+          chmod 600 "$MOBILE_UPLOAD_KEYSTORE_FILE"
+          chmod +x apps/mobile/android/gradlew
+          node apps/mobile/scripts/build-android.ts direct
+          node scripts/android-release/distribute.ts android
+      - name: Build Windows installer and standalone executable
+        if: matrix.platform == 'windows' && inputs.platform != 'android'
+        working-directory: core
+        run: |
+          pnpm --filter @cuberoot/desktop test
+          pnpm --filter @cuberoot/desktop exec tauri build --bundles nsis
+          node scripts/android-release/distribute.ts windows
+      - uses: actions/upload-artifact@v4
+        if: inputs.platform == matrix.platform || inputs.platform == 'both'
+        with:
+          name: app-release-${{ matrix.platform }}-${{ github.run_id }}
+          path: release-staging/
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    needs: build
+    if: always() && github.ref == 'refs/heads/main' && !cancelled()
+    environment: app-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [android, windows]
+    steps:
+      - uses: actions/checkout@v6
+        if: inputs.platform == matrix.platform || inputs.platform == 'both'
+        with:
+          ref: ${{ inputs.source_commit }}
+          sparse-checkout: core/scripts/android-release
+      # Missing/failed platform artifacts fail this job and keep that platform's old manifest.
+      - uses: actions/download-artifact@v4
+        if: inputs.platform == matrix.platform || inputs.platform == 'both'
+        with:
+          name: app-release-${{ matrix.platform }}-${{ github.run_id }}
+          path: release-staging
+      - name: Upload, verify and atomically publish
+        if: inputs.platform == matrix.platform || inputs.platform == 'both'
+        env:
+          DEPLOY_KEY: ${{ secrets.APP_RELEASE_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.APP_RELEASE_SSH_HOST }}
+          KNOWN_HOSTS: ${{ secrets.APP_RELEASE_KNOWN_HOSTS }}
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_KEY" && test -n "$KNOWN_HOSTS"
+          [[ "$DEPLOY_HOST" =~ ^[a-zA-Z0-9_.@-]+$ ]]
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/app_release
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/app_release ~/.ssh/known_hosts
+          trap 'rm -f ~/.ssh/app_release' EXIT
+          stage="/tmp/cuberoot-app-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${PLATFORM}"
+          ssh -i ~/.ssh/app_release -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_HOST" "mkdir -m 700 '$stage'"
+          scp -i ~/.ssh/app_release -o StrictHostKeyChecking=yes release-staging/* core/scripts/android-release/publish-server.mjs "$DEPLOY_HOST:$stage/"
+          ssh -i ~/.ssh/app_release -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_HOST" "mkdir -p /www/wwwroot/toolkit/downloads/$PLATFORM && flock /www/wwwroot/toolkit/downloads/$PLATFORM/.publish.lock node '$stage/publish-server.mjs' '$stage' '$PLATFORM'"
+          curl --fail --silent --show-error "https://static.cuberoot.me/downloads/$PLATFORM/latest.json" > published.json
+          node -e 'const fs=require("fs");const a=JSON.parse(fs.readFileSync("release-staging/latest.json"));const b=JSON.parse(fs.readFileSync("published.json"));if(a.versionCode!==b.versionCode||a.commit!==b.commit)process.exit(1)'
