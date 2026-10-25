@@ -1,4 +1,5 @@
 import { createPortal } from 'react-dom';
+import { TimerSoloLayoutEditor } from '@cuberoot/timer-ui';
 import { SiteCorners } from "@2017yanr02/continuous-corners/react";
 import { shareOrDownloadBackup } from './file-export';
 import { InstalledUpdateNotice } from './AndroidUpdateNotice';
@@ -262,11 +263,12 @@ import {
 import {
   Clock3,
   Grid2X2,
+  LayoutTemplate,
   Settings as SettingsIcon,
   UserRound,
   X,
 } from 'lucide-react';
-import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode, type MouseEvent as ReactMouseEvent } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ChangeEvent, type ReactNode, type MouseEvent as ReactMouseEvent } from 'react';
 
 import {
   COPY,
@@ -576,7 +578,11 @@ export function App({ host }: { host: InstalledAppHost }) {
   const timerContextMutationBusyRef = useRef(false);
   const [solverBlocking, setSolverBlocking] = useState(false);
   const solverBlockingRef = useRef(false); solverBlockingRef.current = solverBlocking;
-  const timerOverlayBlocking = solverBlocking || openOverlay !== null || statsOpen || historyModalOpen || replayBlocking;
+  const [layoutEditing, setLayoutEditing] = useState(false);
+  const layoutEditingRef = useRef(false);
+  const finishLayoutEditing = useCallback(() => { layoutEditingRef.current = false; setLayoutEditing(false); }, []);
+  useEffect(() => { if (view !== 'timer' || timerMode !== 1) finishLayoutEditing(); }, [view, timerMode, finishLayoutEditing]);
+  const timerOverlayBlocking = layoutEditing || solverBlocking || openOverlay !== null || statsOpen || historyModalOpen || replayBlocking;
   const openOverlayRef = useRef<TimerOverlayId | null>(openOverlay);
   const [solverOpenRequest, setSolverOpenRequest] = useState(0);
   const changeSolverSheet = useCallback((open: boolean) => {
@@ -2169,6 +2175,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     void host.addBackButtonListener(() => {
       if (toolsBlePickerRef.current) { toolsBlePickerRef.current.cancel(); return; }
       const current = viewRef.current;
+      if (layoutEditingRef.current) { finishLayoutEditing(); return; }
       if (trainerSubsetOpenRef.current) { trainerSubsetOpenRef.current = null; setTrainerSubsetOpen(null); return; }
       if (replayBlockingRef.current) { setReplayImportOpen(false); setReplaySolve(null); return; }
       if (statsOpenRef.current) { setStatsOpen(false); return; }
@@ -2335,7 +2342,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     sourceMatches: slotMatchesActiveSource,
   });
   const attemptCanStartRef = useRef(attemptCanStart);
-  attemptCanStartRef.current = attemptCanStart;
+  attemptCanStartRef.current = !layoutEditing && attemptCanStart;
   const attemptRef = useRef<MobileScrambleAttemptSnapshot | null>(null);
   const smartCubeAttemptProducerRef = useRef(new SmartCubeAttemptProducer());
   const smartCubeMoveSubscribersRef = useRef(new Set<(move: string, timestamp: number) => void>());
@@ -3613,7 +3620,7 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   useEffect(() => {
     const modalState = () => timerSoloModalState(
-      viewRef.current === 'settings'
+      layoutEditingRef.current || viewRef.current === 'settings'
       || !timerVisibleRef.current
       || (openOverlayRef.current !== null && openOverlayRef.current !== TIMER_OVERLAY_IDS.stageSolver)
       || solverBlockingRef.current || statsOpenRef.current || historyModalOpenRef.current || replayBlockingRef.current
@@ -3893,7 +3900,15 @@ export function App({ host }: { host: InstalledAppHost }) {
       className={`app-shell app-shell--${dockHistory || view === 'settings' ? 'timer' : view}${shellViewport.classNameSuffix}${fullscreen ? ' app-shell--timer-fullscreen' : ''}${timer.machine.phase === 'running' ? ' is-solving' : ''}`}
       data-timer-hide-ui={timerMode === 1 && store && timerHidesRunningUi(timer.machine.phase, store.settings) ? '' : undefined}
       data-wide={wideLayout ? 'true' : undefined}
-      style={shellViewport.style}
+      data-layout-editing={layoutEditing ? '' : undefined}
+      style={{ ...shellViewport.style,
+        '--solo-scramble-gap': `${store?.settings.soloLayout.scrambleGap ?? 16}px`,
+        '--solo-source-gap': `${store?.settings.soloLayout.sourceGap ?? 16}px`,
+        '--solo-timer-gap': `${store?.settings.soloLayout.timerGap ?? 20}px`,
+        '--solo-cube-gap': `${store?.settings.soloLayout.cubeGap ?? 8}px`,
+        '--solo-source-scale': store?.settings.soloLayout.sourceScale ?? 1,
+        '--solo-cube-scale': store?.settings.soloLayout.cubeScale ?? 1,
+      } as CSSProperties}
     >
       <SiteCorners exclude=".site-glass-engine, .maplibregl-map" containers=".cg-card, .rc-card, .recon-card, .sortable-card, .timer-workspace-panel" />
       <TimerPrintController
@@ -4025,6 +4040,13 @@ export function App({ host }: { host: InstalledAppHost }) {
                     data-no-timer
                     ref={setWcaDifficultyToggleSlot}
                   />
+                  <button type="button" className="timer-toolbar-icon solo-layout-toggle" data-no-timer
+                    aria-label={language === 'zh' ? '调整布局' : 'Edit layout'} aria-pressed={layoutEditing}
+                    disabled={!layoutEditing && (timer.machine.phase !== 'idle' && timer.machine.phase !== 'stopped' || timerContextMutationBusy)}
+                    onClick={() => {
+                      if (layoutEditing) finishLayoutEditing();
+                      else { layoutEditingRef.current = true; setLayoutEditing(true); }
+                    }}><LayoutTemplate size={18} strokeWidth={1.6} /></button>
                   <button
                     aria-label={copy.settings}
                     className="timer-toolbar-icon settings-popover-trigger"
@@ -4972,6 +4994,10 @@ children: <>
             </>}
           </TimerSettingsPanel>
         )}
+        {layoutEditing && store && <TimerSoloLayoutEditor surfaceRef={surfaceRef}
+          contentKey={`${scramble}:${store.settings.showCubePreview}:${smartCube.phase}`}
+          getSettings={() => storeRef.current!.settings} updateSettings={updateSettings}
+          language={language} onDone={finishLayoutEditing} />}
       </TimerWorkspace>
 
       {replayImportOpen && <TimerReplayImportModal language={language} onClose={() => setReplayImportOpen(false)}

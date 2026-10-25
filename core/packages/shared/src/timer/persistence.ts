@@ -1,4 +1,5 @@
 import { normalizeTimerSyncSeed, type TimerSyncSeedSettings } from './sync-seed';
+import { normalizeSoloLayout, type SoloLayout } from './solo-layout';
 import { normalizeTimerRankScopes, type TimerRankScope } from './settings-contract';
 import { normalizeTimerAutoBackupEvery, DEFAULT_TIMER_AUTO_BACKUP_EVERY } from './backup-settings';
 import { normalizeTimerPreScrambleSettings, type TimerPreScrambleSettings } from './pre-scramble';
@@ -93,6 +94,7 @@ export interface TimerStoreSettings extends TimerSyncSeedSettings,
   TimerSmartCubeSettings,
   TimerScramblePreviewSettings {
   rankScopes: TimerRankScope[];
+  soloLayout: SoloLayout;
   rankCountry: string;
   autoBackupEvery: number;
   event: EventId;
@@ -547,6 +549,7 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
     scrambleClickStartMigrated: true,
     ...scramblePreview,
     ...normalizeTimerTypography(value),
+    soloLayout: normalizeSoloLayout(value.soloLayout),
     ...normalizeTimerDisplaySettings(value),
     ...normalizeTimerPreScrambleSettings(value),
     ...normalizeTimerSoundSettings(value),
@@ -710,6 +713,7 @@ export function createTimerStoreSettings(language: 'en' | 'zh' = 'en'): TimerSto
     cnMode: 'none',
     ...normalizeTimerSyncSeed(),
     ...DEFAULT_TIMER_TYPOGRAPHY,
+    soloLayout: normalizeSoloLayout(undefined),
     ...normalizeTimerDisplaySettings(),
     ...normalizeTimerPreScrambleSettings(),
     ...normalizeTimerSoundSettings(),

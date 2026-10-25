@@ -1,4 +1,4 @@
-.timer-shell[data-layout-editing] .timing-surface--solo :is(.scramble-text, .scramble-src-row, .timer-display-wrap, .timing-surface-cube-frame) {
+[data-layout-editing] .timing-surface--solo :is(.scramble-text, .scramble-src-row, .timer-display-wrap, .timing-surface-cube-frame) {
   position: relative;
 }
 .solo-layout-handles {
@@ -52,7 +52,7 @@
   color: var(--background);
   box-shadow: 0 2px 8px color-mix(in srgb, var(--foreground) 12%, transparent);
 }
-.timer-shell[data-layout-editing] .timing-surface--solo { touch-action: pan-y; }
+[data-layout-editing] .timing-surface--solo { touch-action: pan-y; }
 .timer-shell .tb-btn.solo-layout-toggle[aria-pressed='true'] { color: var(--foreground); background: var(--shell-hover); }
 .solo-layout-toolbar {
   position: absolute;

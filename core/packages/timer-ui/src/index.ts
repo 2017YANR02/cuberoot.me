@@ -371,3 +371,4 @@ export { TimerNetBattlePage, TimerNetBattleStage, TimerNetBattleEvent, type Time
 
 export { TimerDifficultyDialog } from './TimerDifficultyDialog';
 export { ReconCrossToggle } from './recon/ReconCrossToggle';
+export { TimerSoloLayoutEditor, type TimerSoloLayoutSettings } from './TimerSoloLayoutEditor';

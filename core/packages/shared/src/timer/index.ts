@@ -51,6 +51,7 @@ export * from './stage-segments-producer';
 export * from './reconstruct/solve-metrics';
 export * from './stats';
 export * from './training-statistics';
+export * from './solo-layout';
 export * from './stats-buckets';
 export * from './trainer-scramble';
 export * from './types';

@@ -379,8 +379,10 @@ describe('mobile timer repository contract', () => {
     await repo.addSolve({ timeMs: 12340, penalty: 'ok', scramble: 'R', event: '333' });
     const fonts = { timerFont: 'sans', timerFontScale: 1.5, scrambleFont: 'mono', scrambleFontScale: 1.25 } as const;
     await repo.updateSettings(fonts);
+    await repo.updateSettings(current => ({ soloLayout: { ...current.soloLayout, timerGap: 48, cubeScale: 1.5 } }));
     const loaded = await repository(driver).repo.load();
     expect(loaded.settings).toMatchObject(fonts);
+    expect(loaded.settings.soloLayout).toMatchObject({ timerGap: 48, cubeScale: 1.5 });
     const solves = activeTimerSolves(loaded, '333');
     (driver.data as TimerStoreData).settings = { ...loaded.settings,
       timerFont: 'invalid' as 'sans', timerFontScale: Infinity, scrambleFontScale: 20 };

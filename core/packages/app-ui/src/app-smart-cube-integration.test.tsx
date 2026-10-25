@@ -149,6 +149,28 @@ afterEach(async () => {
 });
 
 describe('installed App GAN lifecycle integration', () => {
+  it('edits and persists layout while blocking cube auto-start, and Back exits editing', async () => {
+    const edit = container.querySelector<HTMLButtonElement>('[aria-label="Edit layout"]')!;
+    await act(async () => edit.click());
+    expect(container.querySelector('[data-layout-editing]')).not.toBeNull();
+    const handle = container.querySelector<HTMLButtonElement>('[aria-label="Timer digits · Drag vertically"]')!;
+    expect(handle).not.toBeNull();
+    await act(async () => handle.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true })));
+    await settle();
+    expect((memory.data as TimerStoreData).settings.soloLayout.timerGap).toBe(24);
+    const scrambleBefore = container.querySelector('.scramble-moves')!.textContent;
+    await act(async () => window.dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowRight', key: 'ArrowRight', bubbles: true })));
+    await settle();
+    expect(container.querySelector('.scramble-moves')!.textContent).toBe(scrambleBefore);
+    await act(async () => move('R', 1100));
+    await act(async () => move("R'", 1300));
+    expect(phase).toBe('idle');
+    expect(saved()).toHaveLength(0);
+    await act(async () => backListener?.());
+    expect(container.querySelector('[data-layout-editing]')).toBeNull();
+    expect(container.querySelector('[aria-label="Edit layout"]')).not.toBeNull();
+  });
+
   it('continues from an unfinished cube into the next training target without a reset', async () => {
     await act(async () => root.unmount());
     const data = createTimerStoreData(Date.now(), 'continuous-session', 'en');
@@ -394,6 +416,9 @@ describe('installed App GAN lifecycle integration', () => {
     ['touch', '.timer-display-value'], ['mouse', '.timer-display-value'],
     ['touch', '.scramble-moves'], ['mouse', '.scramble-moves'],
   ])('uses the shared %s press lifecycle on %s', async (pointerType, selector) => {
+    // Manual timing owns input only after the cube disconnects.
+    await act(async () => setRadio({ ...radio, phase: 'idle', deviceName: '', facelets: '' }));
+    await settle();
     const clipboard = vi.spyOn(host, 'writeClipboardText');
     const scramble = container.querySelector<HTMLElement>('.scramble-moves')!;
     const originalScramble = scramble.textContent;

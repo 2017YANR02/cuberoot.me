@@ -751,3 +751,7 @@ Web 与安装端共同消费 useLiveSmartCubeAttempt：物理转动仍同步记�
 安装端将 first-turn/scrambled/manual 接入共享计时状态机，记录 trainingStartMode；手动模式只在目标匹配时开始观察，智能魔方执行期间仍屏蔽手动停表。训练观察不使用 WCA 超时罚则。Web/App 共用观察提示与 observation/execution/total 统计计算；当前阶段动作统一使用 cubeFooter。控制器 12 项、Web 计时机/训练复盘 33 项回归、shared build 与两端 typecheck 通过，未代替实体魔方验收。
 
 真题比赛选择从安装端常驻画布行移入来源子菜单，使用共享 popupContainer 内联弹层；难度配置保持挂载并继续投射到工具栏。无真题池的项目自动归一为随机来源。App typecheck 与来源/真题练习契约 36 项通过；比赛快捷时间/国家筛选仍待统一。
+
+### 2026-10-25 共享布局编辑器
+
+Web 的拖动/缩放编辑实现与样式迁入 timer-ui，两端调用同一组件；六个布局参数和默认值/边界归一迁入 shared，安装端沿用现有设置存储向后兼容保存。安装端新增工具栏入口，编辑中阻止计时、魔方自动起表和全局成绩/切题快捷键，Back 优先退出编辑。App 真实组件集成 32 项通过；无实体设备视觉验收，不将编译或 JSDOM 当作像素一致证据。
