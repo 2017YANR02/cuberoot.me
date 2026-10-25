@@ -72,7 +72,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   smart_cube_macs scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wca_teams wca_training_institutions wca_translations wechat_jssdk wechat_pc_opensdk wiki
 //   platform_competitions platform_competition_attempts platform_competition_evidence platform_competition_settlements platform_competition_device_reports platform_organizer_applications platform_refunds
-//   enterprise_verification contests workspace
+//   enterprise_verification contests workspace app_releases
 //   mcp mcp_oauth onboarding timer_replay_shares site_assistant cube_agents
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
@@ -88,7 +88,9 @@ const ENDPOINTS: Ep[] = [
   { d: 'account', m: 'GET', p: '/v1/workspace/:action', g: 'login', c: 'no-store', zh: '员工身份、项目、工作时段报告、讨论、清单和排期；按资格过滤后分页', en: 'Employee session, projects, work-hour reports, discussion, checklists and schedules; access-filtered pagination' },
   { d: 'account', m: 'POST', p: '/v1/workspace/:action', g: 'login', c: 'no-store', zh: '报告、评论与共享清单；checklist-delete / schedule-delete 按 id/version 删除整份清单或排期；排期写入和删除需负责人，member/project 需管理员；逐次检查项目资格和版本', en: 'Reports, comments and checklists; checklist-delete / schedule-delete remove a whole list or schedule by id/version; schedule writes and deletions require managers, member/project require admins; project and version checks on every write' },
   { d: 'comp', m: 'GET', p: '/v1/contests', g: 'public', c: 'short', zh: 'Contests 公开项目、比赛、纪录、排名及选手；view 选择资源，支持 event/region/group/category/type/history/id/q/offset，成绩格式由 RecordRanks 提供', en: 'Public Contests catalog, competitions, records, rankings and persons; select view, filter by event/region/group/category/type/history/id/q/offset; RecordRanks formats results' },
-  { d: 'content', m: 'POST', p: '/v1/downloads/events', g: 'public', c: 'no-store', zh: '匿名记录 Android 下载入口点击；仅接受 play/apk 渠道与 en/zh 语言，正文最多 256 字节，按 IP 限流', en: 'Record anonymous Android download-entry clicks; accepts only play/apk channels and en/zh languages, with a 256-byte body limit and per-IP rate limiting' },
+  { d: 'content', m: 'POST', p: '/v1/downloads/events', g: 'public', c: 'no-store', zh: '匿名记录 Android / Windows 下载入口点击；接受 play、apk、windows-installer、windows-portable 渠道与 en/zh 语言，正文最多 256 字节，按 IP 限流', en: 'Record anonymous Android / Windows download clicks; accepts play, apk, windows-installer and windows-portable channels and en/zh languages, with a 256-byte body limit and per-IP rate limiting' },
+  { d: 'content', m: 'GET', p: '/v1/admin/app-releases', g: 'admin', c: 'no-store', zh: '读取发布配置状态、当前提交、待处理请求和构建结果', en: 'Read release configuration status, current commit, pending request and build results' },
+  { d: 'content', m: 'POST', p: '/v1/admin/app-releases', g: 'admin', c: 'no-store', zh: '按请求 ID、精确提交及平台派发发布，返回防重试回执', en: 'Dispatch a release by request ID, exact commit and platform, returning an idempotent receipt' },
   { d: 'enterprise-verification', m: 'POST', p: '/v1/enterprise-verification/admin/applications/:id/receipt', g: 'admin', c: 'no-store', zh: '登记实际银行到账，包含异常或过期来款，不授予认证', en: 'Record actual bank receipts, including mismatches and late transfers, without granting certification' },
   { d: 'enterprise-verification', m: 'GET', p: '/v1/enterprise-verification/organizations/:slug', g: 'login', c: 'no-store', zh: '读取企业认证状态', en: 'Read enterprise verification' },
   { d: 'enterprise-verification', m: 'POST', p: '/v1/enterprise-verification/organizations/:slug', g: 'login', c: 'no-store', zh: '申请对公账户认证', en: 'Apply for corporate account verification' },
