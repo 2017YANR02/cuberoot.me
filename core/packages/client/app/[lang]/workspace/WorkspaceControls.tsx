@@ -12,7 +12,7 @@ export function WorkspaceButton({ action, iconOnly = true, variant, size, childr
   const Icon = action && icons[action];
   const label = props['aria-label'] ?? (typeof children === 'string' ? children : undefined);
   const compact = Boolean(Icon && iconOnly && label);
-  const button = (tip = {}) => <button type="button" {...tip} {...props} aria-label={compact ? label : props['aria-label']} className={`btn ${variant === 'secondary' ? 'btn-secondary' : 'btn-primary'} workspace-action${compact ? ' workspace-icon-action' : ''} ${className}`} data-size={size}>
+  const button = (tip = {}) => <button type="button" {...tip} {...props} aria-label={compact ? label : props['aria-label']} className={`btn ${compact ? 'workspace-icon-action' : variant === 'secondary' ? 'btn-secondary' : 'btn-primary'} workspace-action ${className}`} data-emphasis={variant === 'secondary' ? 'quiet' : 'accent'} data-size={size}>
     {Icon && <Icon size={20} aria-hidden="true" />}{!compact && children}
   </button>;
   return compact ? <Tooltip content={label!}>{tip => button(tip)}</Tooltip> : button();

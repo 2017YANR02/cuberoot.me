@@ -7,6 +7,7 @@
   --workspace-muted: var(--muted-foreground);
   --workspace-accent: var(--accent);
   --workspace-error: var(--destructive);
+  --workspace-control-height: 44px;
 }
 
 .workspace-toolbar { flex-wrap: wrap; align-items: end; gap: 12px; margin: 0 0 32px; }
@@ -150,7 +151,9 @@
 /* Use content width for metadata; reserve the full editor width for prose. */
 .staff-workspace { font-size: 16px; line-height: 1.65; }
 .cuberoot-workspace-navigation { --af-nav-font-size: 16px; }
-.staff-workspace .staff-header-actions, .staff-workspace .staff-muted, .staff-workspace .staff-report-meta, .staff-workspace .staff-field > span { font-size: 14px; }
+.staff-workspace .staff-header-actions, .staff-workspace .staff-muted, .staff-workspace .staff-report-meta, .staff-workspace .staff-field > span:first-child { font-size: 14px; }
+.staff-workspace .staff-field > .date-input { font-size: 16px; }
+.staff-workspace .staff-input:is(input, select), .staff-workspace .date-input__display { box-sizing: border-box; height: var(--workspace-control-height); min-height: var(--workspace-control-height); line-height: 1.25; }
 .staff-workspace h2 { font-size: 20px; line-height: 1.4; }
 .staff-workspace h3 { font-size: 18px; line-height: 1.4; }
 .staff-workspace .staff-form { gap: 20px; margin-top: 0; }
@@ -181,7 +184,9 @@
 .workspace-member-row > div:first-child { flex: 1 1 16rem; }
 .workspace-member-row h2, .workspace-member-row p { margin: 0; }
 .workspace-action.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; font-size: 16px; font-weight: 500; flex-shrink: 0; }
-.workspace-icon-action.btn { width: 44px; height: 44px; min-width: 44px; padding: 0; }
+.workspace-icon-action.btn { width: 44px; height: 44px; min-width: 44px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--accent); box-shadow: none; cursor: pointer; transition: color .15s, background-color .15s; }
+.workspace-icon-action[data-emphasis="quiet"] { color: var(--muted-foreground); }
+.workspace-icon-action.btn:is(:hover, :focus-visible):not(:disabled) { background: var(--accent-soft); color: var(--accent); }
 .workspace-action:active:not(:disabled) { transform: scale(.96); }
 .workspace-dialog.staff-workspace { position: fixed; min-height: 0; width: min(640px, calc(100vw - 32px)); max-width: none; max-height: calc(100dvh - 48px); margin: auto; padding: 0; border: 0; background: transparent; color: var(--foreground); overflow: visible; }
 .workspace-dialog-wide.staff-workspace { width: min(800px, calc(100vw - 32px)); }
