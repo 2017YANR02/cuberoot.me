@@ -1,4 +1,4 @@
-import type { AlgPuzzle } from '../alg';
+import type { AlgPuzzle } from '../alg_catalog';
 
 /** Route identities only: importing a directory must not load a question bank or solver. */
 export const RECOGNITION_TRAINING_SETS = {

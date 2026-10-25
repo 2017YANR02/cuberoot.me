@@ -1,4 +1,4 @@
-import { ALG_CATALOG, ALG_PUZZLES } from '../alg';
+import { ALG_CATALOG, ALG_PUZZLES } from '../alg_catalog';
 import { EVENT_DISPLAY_EN, EVENT_DISPLAY_ZH } from '../wca_events';
 import { stageLabel, variantLabel } from './scramble-variants';
 import { timerEventIdFromSelector, timerPuzzleSelection } from './event-catalog';

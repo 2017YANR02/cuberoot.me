@@ -1,4 +1,4 @@
-import type { AlgPuzzle } from '../alg';
+import type { AlgPuzzle } from '../alg_catalog';
 import { SCRAMBLE_222_TYPE_CATALOG, isScramble222Type, type Scramble222Type } from './scramble-222';
 import { TIMER_333_SCRAMBLE_TYPES, TIMER_333_TRAINING_GROUPS, timerEventIdFromSelector } from './event-catalog';
 import { eventInfo, type EventId } from './types';
