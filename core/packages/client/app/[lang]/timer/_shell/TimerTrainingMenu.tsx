@@ -1,4 +1,5 @@
 'use client';
+import '@/components/training-settings.css';
 import { useDouyinToolSurface } from '@/lib/douyin-content';
 import { DOUYIN_BASIC_TIMER_EVENTS } from '@cuberoot/shared/douyin-content';
 
