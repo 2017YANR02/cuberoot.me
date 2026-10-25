@@ -70,7 +70,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   chat comp_follows creator_gallery cube cubeopt_solve cubing_live documents downloads drive feedback forum friends geo health historical_ranks pb private_vault
 //   membership membership_benefits membership_apple membership_google membership_subscriptions music nav_sites pets nemesizer notifications ops remote_access dev_preview page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth recon_intake scramble_555 teacher_directory teaching teaching_saas
 //   smart_cube_macs scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
-//   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wca_teams wca_training_institutions wechat_jssdk wechat_pc_opensdk wiki
+//   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wca_teams wca_training_institutions wca_translations wechat_jssdk wechat_pc_opensdk wiki
 //   platform_competitions platform_competition_attempts platform_competition_evidence platform_competition_settlements platform_competition_device_reports platform_organizer_applications platform_refunds
 //   enterprise_verification contests workspace
 //   mcp mcp_oauth onboarding timer_replay_shares site_assistant cube_agents
@@ -102,6 +102,9 @@ const ENDPOINTS: Ep[] = [
   { d: 'enterprise-verification', m: 'POST', p: '/v1/enterprise-verification/admin/applications/:id/revoke', g: 'admin', c: 'no-store', zh: '撤销认证', en: 'Revoke enterprise verification' },
   { d: 'wca-data', m: 'GET', p: '/v1/wca/training-institutions', g: 'public', c: 'no-store', zh: '公开培训机构目录及学生机构归属，支持未参赛学生', en: 'Public training institutions and WCA/named student affiliations' },
   { d: 'wca-data', m: 'PUT', p: '/v1/wca/training-institutions/:studentKey', g: 'admin', zh: '管理员独立设置或清除学生培训机构，不修改老师或战队', en: 'Admin sets or clears an institution independently of teacher and team' },
+  { d: 'wca-data', m: 'GET', p: '/v1/wca/translations', g: 'public', c: 'short', zh: '官方英中译文检索；重复 q 批量查询，返回来源版本与后备链接', en: 'Official bilingual lookup; repeated q for batches, with provenance and fallback links' },
+  { d: 'wca-data', m: 'GET', p: '/v1/wca/translations/status', g: 'public', c: 'no-store', zh: '翻译索引覆盖范围及同步状态', en: 'Translation index coverage and sync status' },
+  { d: 'wca-data', m: 'POST', p: '/v1/wca/translations/sync', g: 'admin', c: 'no-store', zh: '从 WCA Weblate 原子同步官方译文', en: 'Atomically synchronize translations from WCA Weblate' },
   { d: 'wca-data', m: 'GET', p: '/v1/wca/teams', g: 'public', c: 'no-store', zh: '战队目录及选手战队批量查询', en: 'Team directory and batch cuber assignments' },
   { d: 'wca-data', m: 'PUT', p: '/v1/wca/teams/:wcaId', g: 'admin', zh: '管理员选择、自定义或清除选手战队', en: 'Admin assigns, creates, or clears a cuber team' },
   { m: 'GET', p: '/v1/auth/onboarding', d: 'auth', g: 'login', c: 'no-store', zh: '读取当前账号的首页导览已看标记；不缓存', en: 'Read the signed-in account’s homepage tour status; no cache' },
