@@ -193,7 +193,7 @@ index 26a3c352bb56da7799ab3a17921352aa8e81a618..4d4d64a7c06f24c9967ae6a153f4b52d
  export declare function ReportDetailPanel({ actor, id }: {
      actor: StaffActor;
 diff --git a/dist/panels.js b/dist/panels.js
-index 2a118e5869ae24647192c6c3c63f065c1147c7f8..2387f5674210f206618487e98eb892eb573635b4 100644
+index 2a118e5869ae24647192c6c3c63f065c1147c7f8..d5838efa85efedeeea859598123bc323a9aa5fae 100644
 --- a/dist/panels.js
 +++ b/dist/panels.js
 @@ -18,26 +18,32 @@ function ReportEditor({ report, onSaved }) {
@@ -263,13 +263,13 @@ index 2a118e5869ae24647192c6c3c63f065c1147c7f8..2387f5674210f206618487e98eb892eb
 -                            setEditing(null);
 -                            resource.reload();
 -                        }, children: [(0, jsx_runtime_1.jsx)(client_1.Field, { label: t("项目名称"), children: (0, jsx_runtime_1.jsx)("input", { name: "name", required: true, maxLength: 80, defaultValue: project?.name }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("项目网址（选填）"), children: (0, jsx_runtime_1.jsx)("input", { name: "url", type: "url", maxLength: 2000, defaultValue: project?.url }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("状态"), children: (0, jsx_runtime_1.jsxs)("select", { name: "active", defaultValue: String(project?.active ?? true), children: [(0, jsx_runtime_1.jsx)("option", { value: "true", children: t("进行中") }), (0, jsx_runtime_1.jsx)("option", { value: "false", children: t("已归档") })] }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("项目成员（可多选）"), children: (0, jsx_runtime_1.jsx)("select", { name: "memberIds", multiple: true, size: Math.min(8, Math.max(3, directory.length)), defaultValue: project?.memberIds.map(String) ?? [], children: directory.map(member => (0, jsx_runtime_1.jsxs)("option", { value: member.id, children: [member.name, member.active ? "" : t("（已停用）")] }, member.id)) }) }), (0, jsx_runtime_1.jsx)("p", { className: "staff-muted", children: t("成员可查看项目共享记录；项目内的负责人还可查看受限记录。归档后保留历史，停止新增与修改。") }), (0, jsx_runtime_1.jsxs)("div", { className: "staff-actions", children: [(0, jsx_runtime_1.jsx)(Button, { type: "submit", children: t("保存项目") }), (0, jsx_runtime_1.jsx)(Button, { type: "button", variant: "secondary", onClick: () => setEditing(null), children: t("取消") })] })] }, project?.id ?? "new")] }), resource.data?.projects.length === 0 && (0, jsx_runtime_1.jsx)("p", { className: "staff-empty", children: t("暂无可访问的项目。") }), (0, jsx_runtime_1.jsx)("div", { className: "staff-feed", children: resource.data?.projects.map(item => (0, jsx_runtime_1.jsxs)("article", { className: "staff-panel", children: [(0, jsx_runtime_1.jsxs)("div", { className: "staff-report-meta", children: [(0, jsx_runtime_1.jsx)("h2", { children: item.name }), (0, jsx_runtime_1.jsx)("span", { children: item.active ? t("进行中") : t("已归档") })] }), (0, jsx_runtime_1.jsxs)("div", { className: "staff-actions", children: [item.url && (0, jsx_runtime_1.jsx)("a", { href: item.url, target: "_blank", rel: "noopener noreferrer", children: t("打开项目 ↗") }), actor.kind === "admin" && (0, jsx_runtime_1.jsx)(Button, { variant: "secondary", onClick: () => setEditing(item), children: t("成员与设置") })] })] }, item.id)) })] });
-+    return (0, jsx_runtime_1.jsxs)(jsx_runtime_1.Fragment, { children: [(0, jsx_runtime_1.jsx)(client_1.ErrorNotice, { error: resource.error, retry: resource.reload }), resource.loading && (0, jsx_runtime_1.jsx)("p", { role: "status", children: t("正在加载项目…") }), actor.kind === "admin" && (0, jsx_runtime_1.jsx)("div", { className: "staff-actions workspace-toolbar", children: (0, jsx_runtime_1.jsx)(Button, { action: "add", onClick: () => { newId.current = crypto.randomUUID(); setEditing("new"); }, children: t("新建项目") }) }), actor.kind === "admin" && editing && (0, jsx_runtime_1.jsx)(client_1.EditorDialog, { title: project ? t("编辑项目") : t("新建项目"), onClose: () => setEditing(null), children: (0, jsx_runtime_1.jsxs)(client_1.Form, { submit: async (data) => {
++    return (0, jsx_runtime_1.jsxs)("section", { className: "staff-projects", "aria-label": t("项目"), children: [(0, jsx_runtime_1.jsx)(client_1.ErrorNotice, { error: resource.error, retry: resource.reload }), resource.loading && !resource.data && (0, jsx_runtime_1.jsx)("p", { role: "status", children: t("正在加载项目…") }), actor.kind === "admin" && editing && (0, jsx_runtime_1.jsx)(client_1.EditorDialog, { title: project ? t("编辑项目") : t("新建项目"), onClose: () => setEditing(null), children: (0, jsx_runtime_1.jsxs)(client_1.Form, { submit: async (data) => {
 +                        await api("project", { id: project?.id ?? newId.current, version: project?.version ?? 0,
 +                            name: (0, client_1.value)(data, "name"), url: (0, client_1.value)(data, "url"), active: (0, client_1.value)(data, "active") === "true",
 +                            memberIds: data.getAll("memberIds").map(Number) });
 +                        setEditing(null);
 +                        resource.reload();
-+                    }, children: [(0, jsx_runtime_1.jsx)(client_1.Field, { label: t("项目名称"), children: (0, jsx_runtime_1.jsx)("input", { name: "name", required: true, maxLength: 80, defaultValue: project?.name }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("项目网址（选填）"), children: (0, jsx_runtime_1.jsx)("input", { name: "url", type: "url", maxLength: 2000, defaultValue: project?.url }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("状态"), children: (0, jsx_runtime_1.jsxs)("select", { name: "active", defaultValue: String(project?.active ?? true), children: [(0, jsx_runtime_1.jsx)("option", { value: "true", children: t("进行中") }), (0, jsx_runtime_1.jsx)("option", { value: "false", children: t("已归档") })] }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("项目成员（可多选）"), children: (0, jsx_runtime_1.jsx)("select", { name: "memberIds", multiple: true, size: Math.min(8, Math.max(3, directory.length)), defaultValue: project?.memberIds.map(String) ?? [], children: directory.map(member => (0, jsx_runtime_1.jsxs)("option", { value: member.id, children: [member.name, member.active ? "" : t("（已停用）")] }, member.id)) }) }), (0, jsx_runtime_1.jsx)("p", { className: "staff-muted", children: t("成员可查看项目共享记录；项目内的负责人还可查看受限记录。归档后保留历史，停止新增与修改。") }), (0, jsx_runtime_1.jsx)("div", { className: "staff-actions staff-form-actions", children: (0, jsx_runtime_1.jsx)(Button, { action: "save", type: "submit", children: t("保存项目") }) })] }, project?.id ?? "new") }), resource.data?.projects.length === 0 && (0, jsx_runtime_1.jsx)("p", { className: "staff-empty", children: t("暂无可访问的项目。") }), (0, jsx_runtime_1.jsx)("div", { className: "staff-feed", children: resource.data?.projects.map(item => (0, jsx_runtime_1.jsxs)("article", { className: "staff-panel", children: [(0, jsx_runtime_1.jsxs)("div", { className: "staff-report-meta", children: [(0, jsx_runtime_1.jsx)("h2", { children: item.name }), (0, jsx_runtime_1.jsx)("span", { children: item.active ? t("进行中") : t("已归档") })] }), (0, jsx_runtime_1.jsxs)("div", { className: "staff-actions", children: [item.url && (0, jsx_runtime_1.jsx)("a", { href: item.url, target: "_blank", rel: "noopener noreferrer", children: t("打开项目 ↗") }), actor.kind === "admin" && (0, jsx_runtime_1.jsx)(Button, { action: "settings", variant: "secondary", onClick: () => setEditing(item), children: t("成员与设置") })] })] }, item.id)) })] });
++                    }, children: [(0, jsx_runtime_1.jsx)(client_1.Field, { label: t("项目名称"), children: (0, jsx_runtime_1.jsx)("input", { name: "name", required: true, maxLength: 80, defaultValue: project?.name }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("项目网址（选填）"), children: (0, jsx_runtime_1.jsx)("input", { name: "url", type: "url", maxLength: 2000, defaultValue: project?.url }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("状态"), children: (0, jsx_runtime_1.jsxs)("select", { name: "active", defaultValue: String(project?.active ?? true), children: [(0, jsx_runtime_1.jsx)("option", { value: "true", children: t("进行中") }), (0, jsx_runtime_1.jsx)("option", { value: "false", children: t("已归档") })] }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("项目成员（可多选）"), children: (0, jsx_runtime_1.jsx)("select", { name: "memberIds", multiple: true, size: Math.min(8, Math.max(3, directory.length)), defaultValue: project?.memberIds.map(String) ?? [], children: directory.map(member => (0, jsx_runtime_1.jsxs)("option", { value: member.id, children: [member.name, member.active ? "" : t("（已停用）")] }, member.id)) }) }), (0, jsx_runtime_1.jsx)("p", { className: "staff-muted", children: t("成员可查看项目共享记录；项目内的负责人还可查看受限记录。归档后保留历史，停止新增与修改。") }), (0, jsx_runtime_1.jsx)("div", { className: "staff-actions staff-form-actions", children: (0, jsx_runtime_1.jsx)(Button, { action: "save", type: "submit", children: t("保存项目") }) })] }, project?.id ?? "new") }), resource.data?.projects.length === 0 && (0, jsx_runtime_1.jsx)("p", { className: "staff-empty", children: t("暂无可访问的项目。") }), (0, jsx_runtime_1.jsx)("div", { className: "staff-project-list", children: resource.data?.projects.map(item => (0, jsx_runtime_1.jsxs)("article", { className: "staff-project-row", children: [(0, jsx_runtime_1.jsxs)("div", { className: "staff-project-summary", children: [(0, jsx_runtime_1.jsx)("h2", { className: "staff-project-name", children: item.url ? (0, jsx_runtime_1.jsxs)("a", { href: item.url, target: "_blank", rel: "noopener noreferrer", children: [item.name, " \u2197"] }) : item.name }), (0, jsx_runtime_1.jsx)("span", { className: "staff-muted", children: item.active ? t("进行中") : t("已归档") })] }), actor.kind === "admin" && (0, jsx_runtime_1.jsx)(Button, { action: "settings", variant: "secondary", onClick: () => setEditing(item), children: t("成员与设置") })] }, item.id)) }), actor.kind === "admin" && (0, jsx_runtime_1.jsx)(Button, { className: "workspace-project-add", action: "add", iconOnly: false, variant: "secondary", onClick: () => { newId.current = crypto.randomUUID(); setEditing("new"); }, children: t("新建项目") })] });
  }
 diff --git a/src/client.tsx b/src/client.tsx
 index 6ed636e011b9052afbc4d7bce30642b353ab6d83..2bebb0112930d140a086b75e6f0b4b538eda9fec 100644
@@ -385,7 +385,7 @@ index 5fc4e9791e41cca4db0fcbd3f4c9dc41135d229a..68205f6e8d848ab8a9c32a3881207439
    "记录今日进展": "Record today's progress",
    "写清结果与需要的协助；草稿仅自己可见。每个项目每天一条，可以继续补充。": "Record results and requests for help. Drafts are private. One report per project per day.",
 diff --git a/src/panels.tsx b/src/panels.tsx
-index 377c241ead98ceccf1d09a8b5a5979887a7060dc..cfd899e92067d2cb6f2e336de6b51b99c5f9148b 100644
+index 377c241ead98ceccf1d09a8b5a5979887a7060dc..a49bf2dc193676fbe29353a6af26607024d3bb11 100644
 --- a/src/panels.tsx
 +++ b/src/panels.tsx
 @@ -1,7 +1,7 @@
@@ -492,19 +492,23 @@ index 377c241ead98ceccf1d09a8b5a5979887a7060dc..cfd899e92067d2cb6f2e336de6b51b99
    </>;
  }
  export function Projects({ actor, directory }: { actor: StaffActor; directory: MemberDirectory }) {
-@@ -90,9 +99,8 @@ export function Projects({ actor, directory }: { actor: StaffActor; directory: M
-   return <>
+@@ -87,12 +96,10 @@ export function Projects({ actor, directory }: { actor: StaffActor; directory: M
+   const [editing, setEditing] = useState<StaffProject | "new" | null>(null);
+   const newId = useRef<string | undefined>(undefined);
+   const project = editing && editing !== "new" ? editing : undefined;
+-  return <>
++  return <section className="staff-projects" aria-label={t("项目")}>
      <ErrorNotice error={resource.error} retry={resource.reload} />
-     {resource.loading && <p role="status">{t("正在加载项目…")}</p>}
+-    {resource.loading && <p role="status">{t("正在加载项目…")}</p>}
 -    {actor.kind === "admin" && !editing && <Button onClick={() => { newId.current = crypto.randomUUID(); setEditing("new"); }}>{t("新建项目")}</Button>}
 -    {actor.kind === "admin" && editing && <section className="staff-panel">
 -      <h2>{project ? t("编辑项目") : t("新建项目")}</h2>
-+    {actor.kind === "admin" && <div className="staff-actions workspace-toolbar"><Button action="add" onClick={() => { newId.current = crypto.randomUUID(); setEditing("new"); }}>{t("新建项目")}</Button></div>}
++    {resource.loading && !resource.data && <p role="status">{t("正在加载项目…")}</p>}
 +    {actor.kind === "admin" && editing && <EditorDialog title={project ? t("编辑项目") : t("新建项目")} onClose={() => setEditing(null)}>
        <Form key={project?.id ?? "new"} submit={async data => {
          await api("project", { id: project?.id ?? newId.current, version: project?.version ?? 0,
            name: value(data, "name"), url: value(data, "url"), active: value(data, "active") === "true",
-@@ -106,15 +114,15 @@ export function Projects({ actor, directory }: { actor: StaffActor; directory: M
+@@ -106,16 +113,14 @@ export function Projects({ actor, directory }: { actor: StaffActor; directory: M
            {directory.map(member => <option key={member.id} value={member.id}>{member.name}{member.active ? "" : t("（已停用）")}</option>)}
          </select></Field>
          <p className="staff-muted">{t("成员可查看项目共享记录；项目内的负责人还可查看受限记录。归档后保留历史，停止新增与修改。")}</p>
@@ -514,15 +518,20 @@ index 377c241ead98ceccf1d09a8b5a5979887a7060dc..cfd899e92067d2cb6f2e336de6b51b99
 -    </section>}
 +    </EditorDialog>}
      {resource.data?.projects.length === 0 && <p className="staff-empty">{t("暂无可访问的项目。")}</p>}
-     <div className="staff-feed">{resource.data?.projects.map(item => <article className="staff-panel" key={item.id}>
-       <div className="staff-report-meta"><h2>{item.name}</h2><span>{item.active ? t("进行中") : t("已归档")}</span></div>
-       <div className="staff-actions">
-         {item.url && <a href={item.url} target="_blank" rel="noopener noreferrer">{t("打开项目 ↗")}</a>}
+-    <div className="staff-feed">{resource.data?.projects.map(item => <article className="staff-panel" key={item.id}>
+-      <div className="staff-report-meta"><h2>{item.name}</h2><span>{item.active ? t("进行中") : t("已归档")}</span></div>
+-      <div className="staff-actions">
+-        {item.url && <a href={item.url} target="_blank" rel="noopener noreferrer">{t("打开项目 ↗")}</a>}
 -        {actor.kind === "admin" && <Button variant="secondary" onClick={() => setEditing(item)}>{t("成员与设置")}</Button>}
-+        {actor.kind === "admin" && <Button action="settings" variant="secondary" onClick={() => setEditing(item)}>{t("成员与设置")}</Button>}
-       </div>
+-      </div>
++    <div className="staff-project-list">{resource.data?.projects.map(item => <article className="staff-project-row" key={item.id}>
++      <div className="staff-project-summary"><h2 className="staff-project-name">{item.url ? <a href={item.url} target="_blank" rel="noopener noreferrer">{item.name} ↗</a> : item.name}</h2><span className="staff-muted">{item.active ? t("进行中") : t("已归档")}</span></div>
++      {actor.kind === "admin" && <Button action="settings" variant="secondary" onClick={() => setEditing(item)}>{t("成员与设置")}</Button>}
      </article>)}</div>
-   </>;
+-  </>;
++    {actor.kind === "admin" && <Button className="workspace-project-add" action="add" iconOnly={false} variant="secondary" onClick={() => { newId.current = crypto.randomUUID(); setEditing("new"); }}>{t("新建项目")}</Button>}
++  </section>;
+ }
 diff --git a/workspace.css b/workspace.css
 index 98bb474aedc6e0fb91f81be2089669339ba0166f..231c83a881229dba17a5a353225369762b0f61c9 100644
 --- a/workspace.css
