@@ -81,6 +81,32 @@ it('uses bare icon actions while keeping explicit report submissions styled as b
   expect(container.querySelector('.btn-primary')?.textContent).toBe('Submit report');
 });
 
+it('collapses overlapping work into lanes while retaining milestones and editable task identity', async () => {
+  const base = schedules[0].tasks[0];
+  const tasks = [base, { ...base, id: 'parallel', name: 'Publish Android' }, { ...base, id: 'goal', name: 'Release target', kind: 'milestone' as const, start: '2027-01-02', end: '2027-01-02' }];
+  const onEdit = vi.fn();
+  await mount(h(ScheduleTimeline, { tasks, scale: 'fit', editable: true, onEdit }));
+  expect(container.querySelectorAll('.workspace-gantt-phase')).toHaveLength(1);
+  expect(container.querySelectorAll('.workspace-gantt-task')).toHaveLength(1);
+  expect(container.querySelector('.workspace-gantt-key-label')?.textContent).toContain('Release target');
+  const toggle = container.querySelector<HTMLButtonElement>('.workspace-lane-toggle')!;
+  expect(toggle.getAttribute('aria-expanded')).toBe('false');
+  await act(async () => container.querySelector<HTMLButtonElement>('.workspace-gantt-phase')!.click());
+  expect(toggle.getAttribute('aria-expanded')).toBe('true');
+  expect(container.querySelectorAll('.workspace-gantt-task')).toHaveLength(3);
+  await act(async () => container.querySelector<HTMLButtonElement>('.workspace-gantt-bar')!.click());
+  expect(onEdit).toHaveBeenCalledWith(base);
+  await act(async () => toggle.click());
+  expect(container.querySelectorAll('.workspace-gantt-task')).toHaveLength(1);
+  await mount(h(ScheduleTimeline, { tasks, scale: 'week', editable: false, onEdit }));
+  expect(container.querySelectorAll('.workspace-gantt-task')).toHaveLength(3);
+  expect(container.querySelector('.workspace-lane-toggle')).toBeNull();
+  await mount(h(ScheduleTimeline, { tasks, scale: 'fit', editable: false, onEdit }));
+  await act(async () => container.querySelector<HTMLButtonElement>('.workspace-lane-toggle')!.click());
+  expect(container.querySelectorAll('.workspace-gantt-task')).toHaveLength(3);
+  expect(onEdit).toHaveBeenCalledTimes(1);
+});
+
 it('fits a cross-year plan and thins ticks on narrow screens without moving tasks', async () => {
   let resize: (entries: { contentRect: { width: number } }[]) => void = () => {};
   const disconnect = vi.fn();

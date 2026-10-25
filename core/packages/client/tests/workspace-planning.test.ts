@@ -1,5 +1,27 @@
 import { expect, it } from 'vitest';
 import { orderChecklistItems, copyScheduleTasks, isPlanningDate, planningDay, scheduleRange, type ScheduleTask } from '@cuberoot/shared/workspace-planning';
+import { schedulePhases, scheduleTaskLabel } from '@/lib/workspace-schedule';
+
+it('summarizes overlapping tasks without hiding gaps, merging adjacent stages or mutating records', () => {
+  const base: ScheduleTask = { id: 'a', name: 'Stage', group: 'Launch', owner: '', start: '2026-12-01', end: '2026-12-04', kind: 'task', progress: 0 };
+  const tasks = [
+    { ...base, id: 'late', start: '2026-12-12', end: '2026-12-13' }, base,
+    { ...base, id: 'parallel', start: '2026-12-02', end: '2026-12-05' },
+    { ...base, id: 'next', start: '2026-12-06', end: '2026-12-07' },
+    { ...base, id: 'goal', start: '2026-12-05', end: '2026-12-05', kind: 'milestone' as const },
+  ];
+  const before = structuredClone(tasks);
+  expect(schedulePhases(tasks).map(phase => [phase.start, phase.end, phase.tasks.map(task => task.id)])).toEqual([
+    ['2026-12-01', '2026-12-05', ['a', 'parallel']],
+    ['2026-12-06', '2026-12-07', ['next']],
+    ['2026-12-12', '2026-12-13', ['late']],
+  ]);
+  expect(tasks).toEqual(before);
+  expect(schedulePhases([])).toEqual([]);
+  expect(schedulePhases([tasks[4]])).toEqual([]);
+  expect(scheduleTaskLabel('21 微信备案初审（06、20 后）')).toBe('微信备案初审');
+  expect(scheduleTaskLabel('32 华为上架（现有包）')).toBe('华为上架（现有包）');
+});
 
 it('moves completed items to the bottom without changing the original restore order', () => {
   const items = [{ id: 'a', text: 'A', done: true }, { id: 'b', text: 'B', done: false }, { id: 'c', text: 'C', done: true }];

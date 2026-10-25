@@ -48,12 +48,16 @@ export default function Schedules({ actor }: { actor: StaffActor }) {
   }
   function begin(mode: 'new' | 'settings' | 'copy') { operation.current++; setEditorScope(schedule?.id ?? null); newId.current = crypto.randomUUID(); setEditing(mode); setTask(null); }
   function editTask(next: ScheduleTask) { operation.current++; setEditorScope(schedule?.id ?? null); setEditing(null); setTask(next); }
-  return <fieldset disabled={busy} className="workspace-controls" aria-busy={busy}>
+  return <fieldset disabled={busy} className="workspace-controls workspace-schedules" aria-busy={busy}>
     <div className="staff-actions workspace-toolbar">
       <Field label={t('排期', 'Schedule')}><select className="workspace-toolbar-select" value={schedule?.id ?? ''} onChange={event => { void setSelected(event.target.value); setEditing(null); setTask(null); }}><option value="" disabled>{t('选择排期', 'Select schedule')}</option>{choices.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></Field>
       <Field label={t('视图', 'View')}><select className="workspace-toolbar-select" value={scale} onChange={event => void setScale(event.target.value as typeof scale)}><option value="fit">{t('总览', 'Overview')}</option><option value="day">{t('日', 'Day')}</option><option value="week">{t('周', 'Week')}</option><option value="month">{t('月', 'Month')}</option></select></Field>
       <Field label={t('状态', 'Status')}><select className="workspace-toolbar-select" value={status} onChange={event => { setStatus(event.target.value); setEditing(null); setTask(null); }}><option value="active">{t('进行中', 'Active')}</option><option value="all">{t('含已归档', 'Include archived')}</option></select></Field>
-      <div className="staff-toolbar-actions"><Button action="reload" variant="secondary" onClick={() => { setEditing(null); setTask(null); resource.reload(); }}>{t('重新加载', 'Reload')}</Button>{manager && <Button action="add" onClick={() => begin('new')}>{t('新建排期', 'New schedule')}</Button>}</div>
+      <div className="staff-toolbar-actions"><Button action="reload" variant="secondary" onClick={() => { setEditing(null); setTask(null); resource.reload(); }}>{t('重新加载', 'Reload')}</Button>{manager && <Button action="add" onClick={() => begin('new')}>{t('新建排期', 'New schedule')}</Button>}
+        {editable && <Button action="add" onClick={() => editTask({ id: crypto.randomUUID(), name: '', group: groups[0] ?? t('默认分组', 'General'), owner: '', start: today(), end: today(), kind: 'task', progress: 0 })}>{t('新增任务', 'New task')}</Button>}
+        {schedule?.canEdit && <Button action="settings" variant="secondary" onClick={() => begin('settings')}>{t('设置', 'Settings')}</Button>}
+        {schedule && manager && <Button action="copy" variant="secondary" onClick={() => begin('copy')}>{t('复制排期', 'Copy schedule')}</Button>}
+      </div>
     </div>
     <ErrorNotice error={resource.error} retry={resource.reload} />
     <ErrorNotice error={projects.error} retry={projects.reload} />
@@ -77,17 +81,12 @@ export default function Schedules({ actor }: { actor: StaffActor }) {
     {schedule && <>
       <div className="workspace-list-heading workspace-schedule-heading"><span className="staff-muted">{schedule.projectName ?? t('公司全员', 'All employees')}{!schedule.active && ` · ${t('已归档', 'Archived')}`}</span>
         {range && <span className="staff-muted">{planningDate(range.start)} – {planningDate(range.end)}</span>}
-        <div className="staff-actions">
-          {editable && <Button action="add" onClick={() => editTask({ id: crypto.randomUUID(), name: '', group: groups[0] ?? t('默认分组', 'General'), owner: '', start: today(), end: today(), kind: 'task', progress: 0 })}>{t('新增任务', 'New task')}</Button>}
-          {schedule.canEdit && <Button action="settings" variant="secondary" onClick={() => begin('settings')}>{t('设置', 'Settings')}</Button>}
-          {manager && <Button action="copy" variant="secondary" onClick={() => begin('copy')}>{t('复制排期', 'Copy schedule')}</Button>}
-        </div>
       </div>
       {task && editable && editorScope === schedule.id && <TaskEditor key={`${schedule.id}:${task.id}`} task={task} groups={groups} existing={schedule.tasks.some(row => row.id === task.id)} onCancel={() => setTask(null)} onSave={async next => {
         const tasks = next === null ? schedule.tasks.filter(row => row.id !== task.id) : schedule.tasks.some(row => row.id === next.id) ? schedule.tasks.map(row => row.id === next.id ? next : row) : [...schedule.tasks, next];
         await saveTasks(tasks);
       }} />}
-      <ScheduleTimeline tasks={schedule.tasks} scale={scale} editable={editable} onEdit={editTask} />
+      <ScheduleTimeline key={schedule.id} tasks={schedule.tasks} scale={scale} editable={editable} onEdit={editTask} />
     </>}
     {resource.data && !schedule && !editing && <p className="staff-empty">{t('暂无排期', 'No schedules')}</p>}
     {resource.data && (page > 1 || resource.data.hasMore) && <div className="staff-pagination"><Button action="previous" variant="secondary" disabled={page <= 1} onClick={() => { void setSelected(''); void setPage(page - 1); }}>{t('上一页', 'Previous')}</Button><span>{page}</span><Button action="next" variant="secondary" disabled={!resource.data.hasMore} onClick={() => { void setSelected(''); void setPage(page + 1); }}>{t('下一页', 'Next')}</Button></div>}

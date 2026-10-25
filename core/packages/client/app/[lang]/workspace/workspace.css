@@ -27,6 +27,9 @@
 .workspace-add-item .staff-field { flex: 1; min-width: 0; }
 
 .workspace-schedule-heading { justify-content: space-between; margin-bottom: 12px; }
+.workspace-schedules .workspace-toolbar { margin-bottom: 8px; gap: 8px 16px; }
+.workspace-schedules .workspace-schedule-heading { justify-content: flex-start; gap: 8px 24px; margin-bottom: 16px; }
+.workspace-schedules .staff-toolbar-actions { gap: 0; }
 .workspace-controls { border: 0; padding: 0; margin: 0; min-width: 0; }
 .workspace-task-editor { margin-block: 24px; }
 .workspace-gantt-scroll { max-width: 100%; overflow: auto; max-height: 70vh; border: 1px solid var(--border-default); border-radius: 8px; }
@@ -47,8 +50,20 @@
 .workspace-gantt-group strong { overflow: hidden; white-space: nowrap; }
 .workspace-gantt-group small { font-size: 14px; color: var(--muted-foreground); }
 .workspace-gantt-group .workspace-gantt-track { background-color: color-mix(in srgb, var(--gantt-color) 9%, var(--background)); }
-.workspace-gantt-task .workspace-gantt-label { background: color-mix(in srgb, var(--gantt-color) 3%, var(--background)); }
-.workspace-gantt-task .workspace-gantt-track { background-color: color-mix(in srgb, var(--gantt-color) 3%, var(--background)); }
+.workspace-gantt-group.workspace-gantt-lane { min-height: 56px; }
+.workspace-gantt-group.workspace-gantt-lane .workspace-gantt-label,
+.workspace-gantt-group.workspace-gantt-lane .workspace-gantt-track { background-color: var(--background); }
+.workspace-lane-toggle { display: flex; align-items: center; gap: 6px; width: 100%; min-height: 44px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; font-weight: 600; text-align: start; cursor: pointer; }
+.workspace-lane-toggle svg { flex-shrink: 0; }
+.workspace-lane-toggle span { overflow: hidden; white-space: nowrap; }
+.workspace-lane-toggle:active { transform: translateY(1px); }
+.workspace-lane-toggle:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.workspace-gantt-bar.workspace-gantt-phase { height: 28px; background: color-mix(in srgb, var(--gantt-color) 32%, var(--background)); border: 0; }
+.workspace-gantt-phase:active { transform: translateY(-50%) scaleY(.92); }
+.workspace-gantt-key-label { position: absolute; top: 50%; transform: translate(12px, -50%); max-width: min(280px, 45%); overflow: hidden; white-space: nowrap; font-size: 14px; font-weight: 600; color: var(--gantt-color); pointer-events: none; }
+.workspace-gantt-key-label.is-end { transform: translate(calc(-100% - 12px), -50%); }
+.workspace-gantt-task .workspace-gantt-label { background: var(--background); }
+.workspace-gantt-task .workspace-gantt-track { background-color: var(--background); }
 .workspace-task-label { display: flex; align-items: center; width: 100%; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--foreground); text-align: start; font: inherit; font-size: 14px; line-height: 1.4; cursor: pointer; }
 .workspace-task-label > span { overflow: hidden; white-space: nowrap; }
 .workspace-task-label[aria-disabled="true"] { cursor: default; opacity: 1; }
@@ -237,4 +252,6 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .workspace-action:active:not(:disabled) { transform: none; }
+  .workspace-lane-toggle:active { transform: none; }
+  .workspace-gantt-phase:active { transform: translateY(-50%); }
 }
