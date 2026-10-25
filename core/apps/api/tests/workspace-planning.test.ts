@@ -4,6 +4,41 @@ import postgres from 'postgres';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createWorkspaceService, type Identity, type Transaction } from '../src/workspace/service';
 import type { QueryRunner } from '../src/db/connection';
+import { planningService } from '../src/workspace/planning';
+
+describe('workspace planning JSON parameter encoding', () => {
+  it.each(['checklist', 'schedule'] as const)('keeps %s arrays through the production driver on create and update', async kind => {
+    const driver = postgres(); // No connection: exercise the installed production serializer.
+    const id = randomUUID();
+    let old: { id: string; projectId: null; version: number } | undefined;
+    let expected: unknown[] = [];
+    const q: QueryRunner = async <T>(text: string, params: unknown[] = []) => {
+      if (text.startsWith('SELECT')) return (old ? [old] : []) as T[];
+      const inserting = text.startsWith('INSERT');
+      const index = kind === 'checklist' ? (inserting ? 4 : 2) : (inserting ? 3 : 1);
+      const encoded = driver.options.serializers[3802](params[index]);
+      expect(JSON.parse(String(encoded))).toEqual(expected);
+      old = { id, projectId: null, version: (old?.version ?? 0) + 1 };
+      return [];
+    };
+    const service = planningService(q, {
+      memberId: 1, admin: true, manager: true,
+      projectWrite: async () => {}, audit: async () => {},
+      fail: message => { throw new Error(message); },
+    });
+    const item = kind === 'checklist'
+      ? { id: randomUUID(), text: 'Review', done: false }
+      : { id: randomUUID(), group: 'Product', name: 'Build', owner: '', start: '2026-10-25', end: '2026-10-25', kind: 'task', progress: 0 };
+    try {
+      for (const [version, entries] of [[], [item], []].entries()) {
+        expected = entries;
+        const input = { id, projectId: null, name: 'Plan', category: 'Product', active: true, version };
+        if (kind === 'checklist') await service.saveChecklist({ ...input, items: entries });
+        else await service.saveSchedule({ ...input, tasks: entries });
+      }
+    } finally { await driver.end(); }
+  });
+});
 
 // Explicit disposable database only. Optional PGlite is a local test harness, not an app dependency.
 const pgUrl = process.env.WORKSPACE_TEST_DATABASE_URL;
@@ -31,9 +66,13 @@ suite('workspace shared planning persistence', () => {
       transaction = async run => await sql.begin(tx => run(runner(tx as unknown as typeof sql))) as never;
     } else {
       const { PGlite } = await import(/* @vite-ignore */ embeddedModule!);
-      const db = new PGlite();
+      // PGlite otherwise accepts pre-encoded JSON strings, masking postgres.js double encoding.
+      const driver = postgres();
+      const db = new PGlite({ serializers: {
+        114: driver.options.serializers[114], 3802: driver.options.serializers[3802],
+      } });
       q = async <T>(text: string, params: unknown[] = []) => (await db.query(sqlParams(text), params)).rows as T[];
-      exec = text => db.exec(text); close = () => db.close();
+      exec = text => db.exec(text); close = async () => { await db.close(); await driver.end(); };
       transaction = run => db.transaction((tx: { query: (text: string, params: unknown[]) => Promise<{ rows: unknown[] }> }) => run(async <T>(text: string, params: unknown[] = []) => (await tx.query(sqlParams(text), params)).rows as T[]));
     }
     await exec(`CREATE SCHEMA ${schema}; SET search_path TO ${schema}`);
