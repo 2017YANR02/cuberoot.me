@@ -180,7 +180,7 @@ export function createWatchCubeBridge() {
       onStatus: status => { if (current()) { deviceModel = status.protocol; emit({ kind: 'status', ...status, canReset: deviceModel !== 'gan-v1' }); } },
       onDiagnostic: event => { if (current()) emit({ kind: 'diagnostic', ...event, now }); },
     };
-    const driver = model === 'moyu32' ? new Moyu32CubeConnection(transport, callbacks)
+    const driver = model === 'moyu32' ? new Moyu32CubeConnection(transport, callbacks, 'verified-probe')
       : model === 'qiyi' ? new QiyiCubeConnection(transport, callbacks)
       : new GanCubeConnection(transport, callbacks);
     connection = driver;

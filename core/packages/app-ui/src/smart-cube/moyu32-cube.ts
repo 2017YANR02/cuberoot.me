@@ -17,7 +17,8 @@ import {
 import type { GyroSink } from '@cuberoot/shared/smart-cube/gan-crypto';
 
 import { macStringToBytes } from '@cuberoot/shared/timer/external/mac';
-import { resolveMoyu32Address, moyu32ManufacturerMac } from '@cuberoot/shared/smart-cube/moyu32';
+import { moyu32Mac, resolveMoyu32Address, moyu32ManufacturerMac } from '@cuberoot/shared/smart-cube/moyu32';
+import { cubieStateFromFacelets } from '@cuberoot/shared/smart-cube/cubie';
 
 import type { BleDeviceRef, BleTransport } from './transport';
 
@@ -74,6 +75,8 @@ export class Moyu32CubeConnection {
   constructor(
     private readonly transport: BleTransport,
     private readonly callbacks: Moyu32CubeCallbacks,
+    // Watch owns its connection lifecycle separately and retains verified discovery.
+    private readonly addressMode: 'normal' | 'verified-probe' = 'normal',
   ) {}
 
   connect(device: BleDeviceRef): Promise<void> {
@@ -115,19 +118,25 @@ export class Moyu32CubeConnection {
       throw new Error('MoYu32 service or characteristic unavailable');
     }
 
-    const address = await resolveMoyu32Address({
-      id: device.id, name: device.name,
-      hints: [device.id, moyu32ManufacturerMac(device.manufacturerData), device.macAddress],
-      requestMac: () => this.callbacks.onNeedMac?.(device.name) ?? Promise.resolve(null),
-      onVerified: this.callbacks.onVerifiedMac,
-      io: {
-        current,
-        write: frame => this.transport.write(device.id, MOYU32_SERVICE_UUID, MOYU32_WRITE_CHARACTERISTIC_UUID, frame),
-        subscribe: receive => this.transport.subscribe(device.id, MOYU32_SERVICE_UUID,
-          MOYU32_NOTIFY_CHARACTERISTIC_UUID, value => receive(bytesFromView(value))),
-      },
-    });
+    // Match Web's normal handshake: no speculative keys or temporary state probe.
+    // Windows/Android expose a native MAC; UUID hosts use a supplied or saved one.
+    const address = this.addressMode === 'verified-probe'
+      ? await resolveMoyu32Address({
+        id: device.id, name: device.name,
+        hints: [device.id, moyu32ManufacturerMac(device.manufacturerData), device.macAddress],
+        requestMac: () => this.callbacks.onNeedMac?.(device.name) ?? Promise.resolve(null),
+        onVerified: this.callbacks.onVerifiedMac,
+        io: {
+          current,
+          write: frame => this.transport.write(device.id, MOYU32_SERVICE_UUID, MOYU32_WRITE_CHARACTERISTIC_UUID, frame),
+          subscribe: receive => this.transport.subscribe(device.id, MOYU32_SERVICE_UUID,
+            MOYU32_NOTIFY_CHARACTERISTIC_UUID, value => receive(bytesFromView(value))),
+        },
+      })
+      : moyu32Mac(device.id) ?? moyu32Mac(device.macAddress)
+        ?? moyu32Mac(await this.callbacks.onNeedMac?.(device.name));
     if (!current()) throw new Error('smart cube connection closed');
+    if (!address) throw new Error('Cube MAC address required');
     const cipher = createMoyu32Cipher(macStringToBytes(address));
     let writeTail: Promise<void> = Promise.resolve();
     const send = (command: Uint8Array, strict = true, begin?: () => boolean): Promise<void> => {
@@ -148,6 +157,7 @@ export class Moyu32CubeConnection {
     this.sendCommand = send;
 
     let stateReady = false;
+    let addressVerified = this.addressMode === 'verified-probe';
     const protocolError = { value: false };
     const decodeState = createMoyu32DecodeState();
     const reportProtocolError = () => {
@@ -164,6 +174,10 @@ export class Moyu32CubeConnection {
         const notification = decodeMoyu32Notification(plain, decodeState);
         if (decodeState.historyLost) { reportProtocolError(); return; }
         if (notification.state) {
+          if (!addressVerified && cubieStateFromFacelets(notification.state)) {
+            addressVerified = true;
+            this.callbacks.onVerifiedMac?.(address);
+          }
           stateReady = true;
           this.callbacks.onState?.(notification.state);
         }

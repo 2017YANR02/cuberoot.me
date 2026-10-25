@@ -392,6 +392,12 @@ export function useInstalledSmartCube(
         }
       } catch (error) {
         if (suppliedMac) knownMacsRef.current.delete(device.id);
+        // Without the old address probe, a failed ordinary handshake must also
+        // evict stale saved addresses so UUID hosts can ask again on retry.
+        if (current() && namedModel === 'moyu32') {
+          knownMacsRef.current.delete(device.id);
+          try { localStorage.removeItem(macKey); } catch { /* optional storage */ }
+        }
         throw error;
       } finally {
         if (cancelReadyRef.current === cancelReady) cancelReadyRef.current = null;

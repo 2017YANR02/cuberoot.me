@@ -170,6 +170,18 @@ describe('useInstalledSmartCube', () => {
     }));
   });
 
+  it('evicts a saved MoYu address after a failed ordinary handshake', async () => {
+    await act(async () => { await cube.disconnect(); });
+    const id = 'moyu-cached-uuid';
+    const key = `cuberoot.moyu32.mac.${id}`;
+    localStorage.setItem(key, 'CF:30:16:00:A1:B2');
+    vi.mocked(transport.requestDevice).mockResolvedValueOnce({ id, name: 'WCU_MY32_A1B2' });
+    state.connect.mockRejectedValueOnce(new Error('handshake failed'));
+    await act(async () => { await cube.connect().catch(() => undefined); });
+    expect(cube.phase).toBe('error');
+    expect(localStorage.getItem(key)).toBeNull();
+  });
+
   it('opens the native service picker for QiYi and exposes its protocol model', async () => {
     await act(async () => { await cube.disconnect(); });
     transport.getServices = vi.fn(async () => []);
