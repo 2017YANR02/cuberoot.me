@@ -58,3 +58,17 @@ pnpm --filter @cuberoot/server exec vitest run tests/workspace-http.test.ts
 本地数据库测试可使用显式的一次性 `WORKSPACE_TEST_DATABASE_URL` 运行 `tests/workspace-planning.test.ts`；无 PostgreSQL 服务时，可将 `WORKSPACE_TEST_PGLITE_MODULE` 指向本机临时 PGlite 模块执行相同 SQL/事务测试。后者不是生产依赖，也不能替代 PostgreSQL 13 部署验证。
 
 JSONB 写入直接传数组，由 `postgres.js` 编码；提前 `JSON.stringify` 会被再次编码成 JSON 字符串，违反清单和排期的数组约束。`workspace-planning.test.ts` 无数据库时仍运行生产驱动序列化回归，覆盖新增空表、填充与清空；PGlite 测试显式复用同一 JSON 序列化器，避免其默认行为掩盖问题。
+
+## 界面与交互
+
+设计参考：[Refactoring UI skill](https://github.com/jaywilburn/refactoring-ui-skill/blob/main/skills/refactoring-ui/SKILL.md)。工作台采用内容优先、适中密度的工具界面，沿用全站主题、字体、圆角与导航组件。
+
+- 层级：正文与输入 16px、辅助信息 14px、分组标题 20px；手册阅读区同步字号，示意图中的缩略示例保留自身比例。
+- 布局：筛选从内容区左上方开始，常用操作同排排列；宽屏列表保持左对齐，甘特图保留横向滚动。日期约 12rem、小时约 8rem，下拉框按选项内容取宽度并受容器上限约束；长文本使用编辑器宽度。
+- 编辑：报告、项目、成员、清单设置、清单事项和排期任务使用同一个编辑弹窗。新增清单事项保留一行快捷输入；勾选完成不打开弹窗。列表刷新保留同一路径的旧内容，切换权限或筛选路径时不混用缓存。
+- 操作：新增、编辑、保存、复制、刷新与翻页用图标，提供 Tooltip 和无障碍名称；提交工作与保存草稿保留图标和文字，避免混淆。
+- 弹窗：原生 dialog 提供模态焦点与背景隔离；复用遮罩关闭逻辑，保存期间禁止关闭，未保存时提供放弃确认，关闭恢复触发控件焦点。移除排期任务需确认。
+- 浮层：日期面板和 Tooltip 优先挂载到所属打开的 dialog，避免落在模态层后方；日期面板的 Escape 优先关闭面板。
+- 材质：列表以间距和细分隔线分组，编辑弹窗复用全站 popover 表面，不新增颜色或独立玻璃效果。
+- 响应式：工具栏换行，短字段保持可读宽度，编辑弹窗限制视口高度并内部滚动，常用操作按钮不小于 44px。减少动态效果偏好禁用按压缩放。
+- 实现：共享报告/项目面板、Field、Form 和宿主契约继续通过既有 workspace-ui pnpm patch 扩展，源码、dist 与声明同步；CubeRoot 的图标、弹窗和日期组件由 host 注入，不复制业务面板。`WorkspaceControls` 已登记组件目录。
