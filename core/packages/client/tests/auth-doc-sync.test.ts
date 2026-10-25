@@ -11,6 +11,11 @@ const page = (sources = entries, reason = 'Reviewed sign-in, linking, merging an
   `/* auth-doc-review ${JSON.stringify({ fingerprint: fingerprintAuthSources(sources), reason })} */`;
 
 describe('/dev/auth source-review drift', () => {
+  it('tracks the administrator release boundary and Windows handoff adapters', () => {
+    for (const path of ['apps/api/src/routes/app_releases.ts', 'apps/api/src/releases/service.ts',
+      'packages/client/lib/app-release-api.ts', 'packages/client/app/[lang]/download/ReleaseManager.tsx',
+      'apps/desktop/src/tauri-host.ts', 'apps/desktop/src-tauri/src/lib.rs']) expect(isAuthDocSource(path)).toBe(true);
+  });
   it('tracks private smart-cube addresses and their account lifecycle', () => {
     for (const path of [...['src/routes/smart_cube_macs.ts', 'migrations/0285_smart_cube_macs.sql']
       .map(file => relative(CORE_ROOT, workspaceFixturePath('@cuberoot/server', file))),
@@ -36,7 +41,7 @@ describe('/dev/auth source-review drift', () => {
       'src/lib/native-route-page.ts',
     ]) {
       expect(sources.map(([path]) => path))
-        .toContain(relative(CORE_ROOT, workspaceFixturePath('@cuberoot/miniprogram', file)));
+        .toContain(relative(CORE_ROOT, workspaceFixturePath('@cuberoot/miniprogram', file)).replaceAll('\\', '/'));
     }
     expect(sources.some(([path]) => path.endsWith('/external-timer/index.ts'))).toBe(true);
     expect(sources.map(([path]) => path)).toContain('packages/client/app/[lang]/calendar/_components/GoogleBackupPanel.tsx');

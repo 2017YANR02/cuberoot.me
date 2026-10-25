@@ -3,11 +3,11 @@ import assert from 'node:assert/strict';
 import { compareReleaseVersions, parseAppReleaseRequest, parseWindowsRelease, releaseIdentity } from '../../packages/shared/src/android-release.ts';
 
 test('release numbers are monotonic across version boundaries and reject invalid sequences', () => {
-  for (const n of [1, 999, 1000, 1001, 64999999]) {
+  for (const n of [1, 999, 1000, 1001, 999999]) {
     assert.equal(releaseIdentity(n).versionCode, 1000000 + n);
     if (n > 1) assert.ok(compareReleaseVersions(releaseIdentity(n).versionName, releaseIdentity(n - 1).versionName) > 0);
   }
-  for (const n of [0, -1, 1.1, NaN, 65000000]) assert.throws(() => releaseIdentity(n));
+  for (const n of [0, -1, 1.1, NaN, 1000000]) assert.throws(() => releaseIdentity(n));
 });
 
 test('Windows requires both immutable artifacts and rejects foreign URLs', () => {

@@ -283,6 +283,7 @@ const TEST_PATHS = [
   repoPath('.github', 'workflows', 'sq1_pbl_drift.yml'),
   repoPath('.github', 'workflows', 'stats.yml'),
   repoPath('.github', 'workflows', 'test.yml'),
+  repoPath('.github', 'workflows', 'app_release.yml'),
   repoPath('.github', 'workflows', 'update_upcoming.yml'),
 ] as const;
 

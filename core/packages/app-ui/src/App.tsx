@@ -1,6 +1,6 @@
 import { SiteCorners } from "@2017yanr02/continuous-corners/react";
 import { shareOrDownloadBackup } from './file-export';
-import { AndroidUpdateNotice } from './AndroidUpdateNotice';
+import { InstalledUpdateNotice } from './AndroidUpdateNotice';
 import { UURemotePanel } from './UURemotePanel';
 import { TimerSoloPage, timerSoloModalState, useTimerSoloCompactLayout } from '@cuberoot/timer-ui/TimerSoloPage';
 import { InstalledBleHost, installedBleRequestPort } from './installed-ble-host';
@@ -4455,7 +4455,7 @@ children: <>
               hidden={view !== surface}
               key={surface}
             >
-              {surface === 'account' && <AndroidUpdateNotice host={host} language={language} />}
+              {surface === 'account' && <InstalledUpdateNotice host={host} language={language} />}
               {surface === 'account' && <UURemotePanel host={host} language={language} />}
               {showState && (
                 <div className="web-surface-state" role={status === 'error' ? 'alert' : 'status'}>

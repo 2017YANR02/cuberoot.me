@@ -120,4 +120,6 @@ export interface InstalledAppHost {
   version: string;
   /** Native version/channel; absent on hosts without an Android update channel. */
   getAndroidUpdateInfo?(): Promise<{ versionName: string; versionCode: number; channel: 'direct' | 'play' }>;
+  /** Only the Windows host exposes Windows downloads; version comes from the running binary. */
+  getWindowsUpdateInfo?(): Promise<{ versionName: string }>;
 }

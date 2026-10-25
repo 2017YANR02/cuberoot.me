@@ -17,6 +17,8 @@ const ROOTS = [
   'packages/client/app/api/identity-choice', 'packages/client/app/[lang]/dev/team',
 ];
 const EXACT = new Set([
+  'apps/api/src/routes/app_releases.ts', 'apps/api/src/releases/service.ts',
+  'packages/client/lib/app-release-api.ts', 'packages/client/app/[lang]/download/ReleaseManager.tsx',
   'apps/api/src/routes/smart_cube_macs.ts', 'apps/api/migrations/0285_smart_cube_macs.sql',
   "apps/api/src/payment/membership-handoff.ts",
   "apps/api/src/routes/membership_subscriptions.ts",

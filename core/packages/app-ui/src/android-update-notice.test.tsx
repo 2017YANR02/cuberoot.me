@@ -17,7 +17,7 @@ afterEach(async () => { await act(async () => root.unmount()); element.remove();
 const host = (channel: 'play' | 'direct') => ({ getAndroidUpdateInfo: vi.fn().mockResolvedValue({ versionName: '0.1.0', versionCode: 1005, channel }), openExternal: vi.fn().mockResolvedValue(undefined) }) as unknown as InstalledAppHost;
 it('direct channel checks versions, exposes download and retains local-data installation guidance', async () => {
   const adapter = host('direct');
-  fetchRelease.mockResolvedValue({ versionName: '0.1.0', versionCode: 1006, url: 'https://static.cuberoot.me/downloads/android/CubeRoot-0.1.0-1006.apk' });
+  fetchRelease.mockResolvedValue({ channel: 'direct', versionName: '0.1.0', versionCode: 1006, url: 'https://static.cuberoot.me/downloads/android/CubeRoot-0.1.0-1006.apk' });
   await act(async () => root.render(createElement(AndroidUpdateNotice, { host: adapter, language: 'zh' })));
   expect(element.textContent).toContain('发现新版本: 0.1.0 (1006)');
   expect(element.textContent).toContain('请勿卸载旧版');

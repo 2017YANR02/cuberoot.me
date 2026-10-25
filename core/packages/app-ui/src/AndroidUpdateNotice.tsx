@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { fetchAndroidRelease, GOOGLE_PLAY_APP_URL, type AndroidRelease } from '@cuberoot/shared/android-release';
+import { compareReleaseVersions, fetchAndroidRelease, fetchWindowsRelease, GOOGLE_PLAY_APP_URL, type AndroidRelease, type WindowsRelease } from '@cuberoot/shared/android-release';
 import type { InstalledAppHost } from './platform';
 
 const messages = {
@@ -8,10 +8,10 @@ const messages = {
 };
 
 /** Native update controls beside the canonical account surface, without another account UI. */
-export function AndroidUpdateNotice({ host, language }: { host: InstalledAppHost; language: 'zh' | 'en' }) {
+export function InstalledUpdateNotice({ host, language }: { host: InstalledAppHost; language: 'zh' | 'en' }) {
   const copy = messages[language];
-  const [info, setInfo] = useState<Awaited<ReturnType<NonNullable<InstalledAppHost['getAndroidUpdateInfo']>>> | null>(null);
-  const [release, setRelease] = useState<AndroidRelease | null>(null);
+  const [info, setInfo] = useState<({ platform: 'android' } & Awaited<ReturnType<NonNullable<InstalledAppHost['getAndroidUpdateInfo']>>>) | { platform: 'windows'; versionName: string } | null>(null);
+  const [release, setRelease] = useState<AndroidRelease | WindowsRelease | null>(null);
   const [status, setStatus] = useState<'idle' | 'checking' | 'current' | 'failed' | 'openFailed'>('idle');
   const pending = useRef<AbortController | null>(null);
   const check = useCallback(async () => {
@@ -22,41 +22,58 @@ export function AndroidUpdateNotice({ host, language }: { host: InstalledAppHost
     setStatus('checking');
     try {
       const native = await Promise.race([
-        host.getAndroidUpdateInfo!(),
+        host.getAndroidUpdateInfo ? host.getAndroidUpdateInfo().then(value => ({ ...value, platform: 'android' as const }))
+          : host.getWindowsUpdateInfo!().then(value => ({ ...value, platform: 'windows' as const })),
         new Promise<never>((_, reject) => controller.signal.addEventListener('abort', () => reject(new Error('Update check timed out')), { once: true })),
       ]);
       if (pending.current !== controller) return;
       if (controller.signal.aborted) throw new Error('Update check timed out');
       setInfo(native);
-      if (native.channel === 'play') { setRelease(null); setStatus('idle'); return; }
-      const latest = await fetchAndroidRelease(controller.signal);
+      if (native.platform === 'android' && native.channel === 'play') { setRelease(null); setStatus('idle'); return; }
+      const latest = native.platform === 'windows' ? await fetchWindowsRelease(controller.signal) : await fetchAndroidRelease(controller.signal);
       if (pending.current !== controller) return;
-      setRelease(latest.versionCode > native.versionCode ? latest : null);
-      setStatus(latest.versionCode > native.versionCode ? 'idle' : 'current');
+      const newer = native.platform === 'windows' ? compareReleaseVersions(latest.versionName, native.versionName) > 0 : latest.versionCode > native.versionCode;
+      setRelease(newer ? latest : null);
+      setStatus(newer ? 'idle' : 'current');
     } catch {
       if (pending.current === controller) { setRelease(null); setStatus('failed'); }
     } finally { clearTimeout(timeout); }
   }, [host]);
   useEffect(() => {
-    if (host.getAndroidUpdateInfo) void check();
+    if (host.getAndroidUpdateInfo || host.getWindowsUpdateInfo) void check();
     return () => { pending.current?.abort(); pending.current = null; };
   }, [check, host]);
-  if (!host.getAndroidUpdateInfo) return null;
+  if (!host.getAndroidUpdateInfo && !host.getWindowsUpdateInfo) return null;
   const open = (url: string) => { void host.openExternal(url).catch(() => setStatus('openFailed')); };
   return <aside className="android-update-notice" aria-label={copy.title}>
     <div className="action-row">
-      <span>{copy.title}{info ? ` · ${info.versionName} (${info.versionCode})` : ''}</span>
-      {info?.channel === 'play'
+      <span>{copy.title}{info ? ` · ${info.versionName}${info.platform === 'android' ? ` (${info.versionCode})` : ''}` : ''}</span>
+      {info?.platform === 'android' && info.channel === 'play'
         ? <button type="button" className="secondary-action" onClick={() => open(GOOGLE_PLAY_APP_URL)}>{copy.play}</button>
         : <button type="button" className="secondary-action" disabled={status === 'checking'} onClick={() => void check()}>{status === 'checking' ? copy.checking : copy.check}</button>}
     </div>
     <div role="status">
       {status === 'current' || status === 'failed' || status === 'openFailed' ? <p>{copy[status]}</p> : null}
-      {release && info?.channel === 'direct' ? <>
+      {release && 'channel' in release && info?.platform === 'android' && info.channel === 'direct' ? <>
         <p>{copy.available}: {release.versionName} ({release.versionCode})</p>
         <button type="button" className="primary-action" onClick={() => open(release.url)}>{copy.download}</button>
         <p>{copy.help}</p>
       </> : null}
+      {release && 'files' in release && info?.platform === 'windows' ? <>
+        <p>{copy.available}: {release.versionName}</p>
+        <div className="action-row">
+          <button type="button" className="primary-action" onClick={() => open(release.files.installer.url)}>{windowsCopy[language].installer}</button>
+          <button type="button" className="secondary-action" onClick={() => open(release.files.portable.url)}>{windowsCopy[language].portable}</button>
+        </div>
+        <p>{windowsCopy[language].help}</p>
+      </> : null}
     </div>
   </aside>;
 }
+
+const windowsCopy = {
+  zh: { installer: '下载安装版', portable: '下载免安装版', help: '安装版运行新安装程序即可更新。免安装版请退出应用后替换 EXE；保留应用数据目录以保留本地成绩。' },
+  en: { installer: 'Download installer', portable: 'Download standalone EXE', help: 'Run the new installer to update. For the standalone version, exit the app before replacing the EXE. Keep the app data folder to preserve local solves.' },
+};
+// Preserve the existing public component name for consumers and Android regression coverage.
+export const AndroidUpdateNotice = InstalledUpdateNotice;

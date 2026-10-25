@@ -64,7 +64,8 @@ export function compareReleaseVersions(a: string, b: string): number {
 
 /** Only manual release workflow runs consume a sequence; retries retain their identity. */
 export function releaseIdentity(sequence: number) {
-  if (!Number.isSafeInteger(sequence) || sequence < 1 || sequence > 64_999_999) throw new Error('Invalid release sequence');
+  // Gradle's existing semantic-version contract limits minor and patch to 999.
+  if (!Number.isSafeInteger(sequence) || sequence < 1 || sequence > 999_999) throw new Error('Invalid release sequence');
   return { versionName: `1.${Math.floor(sequence / 1000)}.${sequence % 1000}`, versionCode: 1_000_000 + sequence };
 }
 

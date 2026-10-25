@@ -43,6 +43,7 @@ on:
       - '.github/workflows/sq1_pbl_drift.yml'
       - '.github/workflows/stats.yml'
       - '.github/workflows/test.yml'
+      - '.github/workflows/app_release.yml'
       - '.github/workflows/update_upcoming.yml'
 
 concurrency:
@@ -50,6 +51,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  app-release-contract:
+    name: App release contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            core/scripts/android-release
+            core/packages/shared/src
+            .github/workflows
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+      - name: Check release identities, signing boundaries and atomic publication
+        working-directory: core
+        run: node --test scripts/android-release/*.test.ts
+
   # Keep the workflow-level trigger broad so required checks are still created,
   # then skip expensive jobs when their package dependency closure is untouched.
   changes:
@@ -1042,7 +1063,7 @@ jobs:
   pr-checks:
     name: PR checks
     if: ${{ always() }}
-    needs: [changes, test, client-tests, mobile, desktop-ui, desktop, analyzer-worker]
+    needs: [changes, test, client-tests, mobile, desktop-ui, desktop, analyzer-worker, app-release-contract]
     runs-on: ubuntu-latest
     timeout-minutes: 2
     permissions: {}

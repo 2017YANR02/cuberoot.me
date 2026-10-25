@@ -9,6 +9,18 @@ mod native_print;
 
 const SERVICE: &str = "me.cuberoot.app";
 
+#[tauri::command]
+fn prepare_auth_callback(_app: tauri::AppHandle) -> Result<(), String> {
+    // Standalone Windows binaries have no installer to register their login callback.
+    // Register only when signing in, not every time a second installation is launched.
+    #[cfg(target_os = "windows")]
+    {
+        use tauri_plugin_deep_link::DeepLinkExt;
+        _app.deep_link().register_all().map_err(|error| error.to_string())?;
+    }
+    Ok(())
+}
+
 fn entry(key: &str) -> Result<Entry, String> {
     if !matches!(key, "session" | "pending_auth" | "net_battle_session") {
         return Err("unsupported secure-storage key".into());
@@ -55,7 +67,7 @@ pub fn run() {
                 let _ = screen_awake::apply(false);
             }
         })
-        .invoke_handler(tauri::generate_handler![screen_awake::set_keep_awake, native_print::print_document, file_export::export_file, secure_get, secure_set, secure_remove, ble_notifications::ble_subscribe, ble_address::ble_device_mac])
+        .invoke_handler(tauri::generate_handler![prepare_auth_callback, screen_awake::set_keep_awake, native_print::print_document, file_export::export_file, secure_get, secure_set, secure_remove, ble_notifications::ble_subscribe, ble_address::ble_device_mac])
         .run(tauri::generate_context!())
         .expect("error while running CubeRoot");
 }

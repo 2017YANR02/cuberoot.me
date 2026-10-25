@@ -1,6 +1,7 @@
 import { printDesktopDocument } from './native-print';
 import { createStackmatMicSource } from '@cuberoot/timer-ui/external';
 import { invoke } from '@tauri-apps/api/core';
+import { getVersion } from '@tauri-apps/api/app';
 import { getCurrent, onOpenUrl } from '@tauri-apps/plugin-deep-link';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import {
@@ -39,7 +40,10 @@ const desktopAuth = new InstalledAuthClient({
     return new Uint8Array(await crypto.subtle.digest('SHA-256', buffer));
   },
   getAppId: async () => 'me.cuberoot.app',
-  openBrowser: openUrl,
+  async openBrowser(url) {
+    await invoke('prepare_auth_callback');
+    await openUrl(url);
+  },
   closeBrowser: async () => undefined,
 });
 
@@ -88,4 +92,5 @@ export const desktopHost: InstalledAppHost = {
   useSmartCube: (options) => useInstalledSmartCube(() => new TauriBleTransport(), options),
   useTimerEffects: (phase) => useInstalledTimerEffects(phase, undefined, requestDesktopScreenWakeLock),
   version: packageInfo.version,
+  ...(navigator.userAgent.includes('Windows') ? { getWindowsUpdateInfo: async () => ({ versionName: await getVersion() }) } : {}),
 };
