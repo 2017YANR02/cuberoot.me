@@ -314,7 +314,7 @@ export default function TimerSolverPanel({
           onClick={() => { if (sheetOpen) closeSheet(); else toggle(); }}>
           <Lightbulb size={18} aria-hidden="true" />
         </button>, triggerSlot)}
-      {(isDesktopRail || !triggerSlot) && <aside className="solver-panel surface-chrome" data-open={open} data-layout={isDesktopRail ? 'rail' : 'trigger'} data-no-timer>
+      {((isDesktopRail && open) || !triggerSlot) && <aside className="solver-panel surface-chrome" data-open={open} data-layout={isDesktopRail ? 'rail' : 'trigger'} data-no-timer>
         {/* display:contents 兜底(见 shell.css):除「桌面左栏已展开」外,头部仍是
             单独一颗 pill,加这层不改任何现有形态。 */}
         <div className="solver-panel-headrow">

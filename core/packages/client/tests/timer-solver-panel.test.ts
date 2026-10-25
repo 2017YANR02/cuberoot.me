@@ -160,6 +160,7 @@ it.each([390, 1280])('keeps the topbar light and one solver at width %i', async 
   await act(async () => root.render(createElement(TopbarHarness)));
   const trigger = document.querySelector('.solver-trigger-slot .solver-light-trigger')!;
   expect(trigger.getAttribute('data-lit')).toBe('false');
+  expect(document.querySelector('.solver-panel')).toBeNull();
   await click('.solver-light-trigger');
   expect(trigger.getAttribute('data-lit')).toBe('true');
   expect(fixture.mounts).toBe(1);
@@ -167,4 +168,5 @@ it.each([390, 1280])('keeps the topbar light and one solver at width %i', async 
   expect(trigger.isConnected).toBe(true);
   expect(trigger.getAttribute('data-lit')).toBe('false');
   expect(fixture.mounts).toBe(0);
+  expect(document.querySelector('.solver-panel')).toBeNull();
 });
