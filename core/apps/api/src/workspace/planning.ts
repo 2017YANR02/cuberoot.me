@@ -62,9 +62,9 @@ export function planningService(q: QueryRunner, access: PlanningAccess) {
       await access.projectWrite(data.projectId);
       const time = Math.floor(Date.now() / 1000);
       if (old) {
-        await q('UPDATE workspace_schedules SET name=?,tasks=?,active=?,version=?,updated_at=? WHERE id=?', [data.name,JSON.stringify(data.tasks),data.active,data.version+1,time,data.id]);
+        await q('UPDATE workspace_schedules SET name=?,tasks=?,active=?,version=?,updated_at=? WHERE id=?', [data.name,data.tasks,data.active,data.version+1,time,data.id]);
       } else {
-        await q('INSERT INTO workspace_schedules(id,project_id,name,tasks,active,version,created_at,updated_at) VALUES (?,?,?,?,?,1,?,?)', [data.id,data.projectId,data.name,JSON.stringify(data.tasks),data.active,time,time]);
+        await q('INSERT INTO workspace_schedules(id,project_id,name,tasks,active,version,created_at,updated_at) VALUES (?,?,?,?,?,1,?,?)', [data.id,data.projectId,data.name,data.tasks,data.active,time,time]);
       }
       await access.audit('schedule.save', data.id);
       return { id: data.id, version: data.version + 1 };
@@ -86,9 +86,9 @@ export function planningService(q: QueryRunner, access: PlanningAccess) {
       await access.projectWrite(data.projectId);
       const time = Math.floor(Date.now() / 1000);
       if (old) {
-        await q('UPDATE workspace_checklists SET name=?,category=?,items=?,active=?,version=?,updated_at=? WHERE id=?', [data.name,data.category,JSON.stringify(data.items),data.active,data.version+1,time,data.id]);
+        await q('UPDATE workspace_checklists SET name=?,category=?,items=?,active=?,version=?,updated_at=? WHERE id=?', [data.name,data.category,data.items,data.active,data.version+1,time,data.id]);
       } else {
-        await q('INSERT INTO workspace_checklists(id,project_id,name,category,items,active,version,created_at,updated_at) VALUES (?,?,?,?,?,?,1,?,?)', [data.id,data.projectId,data.name,data.category,JSON.stringify(data.items),data.active,time,time]);
+        await q('INSERT INTO workspace_checklists(id,project_id,name,category,items,active,version,created_at,updated_at) VALUES (?,?,?,?,?,?,1,?,?)', [data.id,data.projectId,data.name,data.category,data.items,data.active,time,time]);
       }
       await access.audit('checklist.save', data.id);
       return { id: data.id, version: data.version + 1 };

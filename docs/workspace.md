@@ -56,3 +56,5 @@ pnpm --filter @cuberoot/server exec vitest run tests/workspace-http.test.ts
 `0292_workspace_schedules.sql` 新增 `workspace_schedules`，接口为 `GET schedules` / `POST schedule`。列表每页 20 份，链接指定的排期独立按权限读取。服务端校验日期、进度、重复 ID、两年跨度、资格及版本；采用与报告和清单相同的事务锁、审计和账号生命周期。两个新增表均为团队记录，不建立个人账号外键。发布时由现有部署流程应用增量迁移；应先确认新版 API 就绪再开放新版前端，避免旧 API 忽略小时字段。
 
 本地数据库测试可使用显式的一次性 `WORKSPACE_TEST_DATABASE_URL` 运行 `tests/workspace-planning.test.ts`；无 PostgreSQL 服务时，可将 `WORKSPACE_TEST_PGLITE_MODULE` 指向本机临时 PGlite 模块执行相同 SQL/事务测试。后者不是生产依赖，也不能替代 PostgreSQL 13 部署验证。
+
+JSONB 写入直接传数组，由 `postgres.js` 编码；提前 `JSON.stringify` 会被再次编码成 JSON 字符串，违反清单和排期的数组约束。`workspace-planning.test.ts` 无数据库时仍运行生产驱动序列化回归，覆盖新增空表、填充与清空；PGlite 测试显式复用同一 JSON 序列化器，避免其默认行为掩盖问题。
