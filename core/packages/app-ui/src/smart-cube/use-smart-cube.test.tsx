@@ -267,11 +267,36 @@ describe('useInstalledSmartCube', () => {
   });
 
   it('clears tracked cube state on an unexpected disconnect', async () => {
+    vi.useFakeTimers();
     await act(async () => state.callbacks?.onDisconnect());
-    expect(cube.phase).toBe('idle');
-    expect(cube.deviceName).toBe('');
+    expect(cube.phase).toBe('connecting');
+    expect(cube.deviceName).toBe('GAN16ui');
     expect(cube.lastMove).toBe('');
     expect(cube.facelets).toBe('');
+    const requests = vi.mocked(transport.requestDevice).mock.calls.length;
+    await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+    expect(cube.phase).toBe('connected');
+    expect(transport.requestDevice).toHaveBeenCalledTimes(requests);
+  });
+
+  it('cancels scheduled reconnection when the user disconnects', async () => {
+    vi.useFakeTimers();
+    await act(async () => state.callbacks?.onDisconnect());
+    const attempts = state.connect.mock.calls.length;
+    await act(async () => { await cube.disconnect(); await vi.advanceTimersByTimeAsync(31_000); });
+    expect(state.connect).toHaveBeenCalledTimes(attempts);
+    expect(cube.phase).toBe('idle');
+  });
+
+  it('bounds failed automatic retries to the shared five-attempt cadence', async () => {
+    vi.useFakeTimers();
+    state.connect.mockRejectedValue(new Error('radio unavailable'));
+    const attempts = state.connect.mock.calls.length;
+    await act(async () => state.callbacks?.onDisconnect());
+    await act(async () => { await vi.advanceTimersByTimeAsync(31_000); });
+    expect(state.connect).toHaveBeenCalledTimes(attempts + 5);
+    expect(cube.phase).toBe('error');
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   it('does not let an older failed connection cleanup overwrite a newer connected session', async () => {

@@ -55,6 +55,7 @@ import { moyu32Driver } from './moyu32';
 import { qiyiDriver } from './qiyi';
 import {
   SmartCubeSessionController,
+  SMART_CUBE_RECONNECT_DELAYS,
   type SmartCubeSessionLease,
 } from '@cuberoot/shared/smart-cube/session';
 import type { TimerDeviceConnectionEvent } from '@cuberoot/shared/timer/device-contract';
@@ -111,7 +112,7 @@ export function normalizeMiniProgramCubeBrand(brand: string | undefined): CubeBr
 
 export type BluetoothConnectionEvent = TimerDeviceConnectionEvent;
 
-const RECONNECT_BACKOFF_MS = [1000, 2000, 4000, 8000, 16000];
+const RECONNECT_BACKOFF_MS = SMART_CUBE_RECONNECT_DELAYS;
 const RECONNECT_MAX_ATTEMPTS = RECONNECT_BACKOFF_MS.length;
 const GAN_V1_SHARED_SERVICE = '0000fff0-0000-1000-8000-00805f9b34fb';
 const GAN_V1_DEVICE_INFORMATION_SERVICE = '0000180a-0000-1000-8000-00805f9b34fb';

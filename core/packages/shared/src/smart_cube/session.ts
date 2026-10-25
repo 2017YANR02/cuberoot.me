@@ -4,6 +4,9 @@ import {
 } from './cubie';
 import { MoveClock, type MoveClockStampOptions } from './move_clock';
 
+/** Shared retry cadence; native GATT and browser GATT retain their own cleanup. */
+export const SMART_CUBE_RECONNECT_DELAYS = [1000, 2000, 4000, 8000, 16000] as const;
+
 export interface SmartCubeSessionSnapshot<Metadata = unknown> {
   active: boolean;
   facelets: string | null;

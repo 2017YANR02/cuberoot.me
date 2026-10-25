@@ -8,7 +8,7 @@ import { GAN_V4_SERVICE_UUID } from '@cuberoot/shared/smart-cube/gan-v4';
 import { MOYU32_SERVICE_UUID } from '@cuberoot/shared/smart-cube/moyu32';
 import { QIYI_SERVICE_UUID } from '@cuberoot/shared/smart-cube/qiyi';
 import { normalizeMac } from '@cuberoot/shared/timer/external/mac';
-import { SmartCubeSessionController } from '@cuberoot/shared/smart-cube/session';
+import { SmartCubeSessionController, SMART_CUBE_RECONNECT_DELAYS } from '@cuberoot/shared/smart-cube/session';
 import type { TimerDeviceConnectionEvent } from '@cuberoot/shared/timer/device-contract';
 import type { GyroQuaternion, GyroVelocity } from '@cuberoot/shared/smart-cube/gan-crypto';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -86,6 +86,14 @@ export function useInstalledSmartCube(
   const connectionRef = useRef<SmartCubeConnection | null>(null);
   const generationRef = useRef(0);
   const busyRef = useRef(false);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectGenerationRef = useRef(0);
+  const scheduleReconnectRef = useRef<(device: BleDeviceRef, attempt: number) => void>(() => {});
+  const cancelReconnect = useCallback(() => {
+    reconnectGenerationRef.current++;
+    if (reconnectTimerRef.current !== null) clearTimeout(reconnectTimerRef.current);
+    reconnectTimerRef.current = null;
+  }, []);
   const calibratingRef = useRef(false);
   const cleanupRef = useRef<Promise<void>>(Promise.resolve());
   const scannedDevicesRef = useRef(new Map<string, BleDeviceRef>());
@@ -173,7 +181,7 @@ export function useInstalledSmartCube(
     await cleanup;
   }, []);
 
-  const disconnect = useCallback(async () => {
+  const disconnectSession = useCallback(async () => {
     generationRef.current++;
     calibratingRef.current = false;
     cancelMacRef.current?.();
@@ -189,6 +197,11 @@ export function useInstalledSmartCube(
     resetCubeState();
     await Promise.all([stopScan(), disposeConnection(connection)]);
   }, [disposeConnection, resetCubeState, stopScan]);
+
+  const disconnect = useCallback(() => {
+    cancelReconnect();
+    return disconnectSession();
+  }, [cancelReconnect, disconnectSession]);
 
   const scanDevices = useCallback(async () => {
     const transport = transportRef.current!;
@@ -240,11 +253,12 @@ export function useInstalledSmartCube(
     await startup;
   }, [language, stopScan]);
 
-  const connect = useCallback(async (deviceId?: string): Promise<string> => {
+  const connectDevice = useCallback(async (deviceId?: string, retryDevice?: BleDeviceRef): Promise<string> => {
     if (busyRef.current) throw new Error('connection already in progress');
-    const scannedDevice = deviceId ? scannedDevicesRef.current.get(deviceId) : undefined;
+    if (!retryDevice) cancelReconnect();
+    const scannedDevice = retryDevice ?? (deviceId ? scannedDevicesRef.current.get(deviceId) : undefined);
     if (deviceId && !scannedDevice) throw new Error('smart cube is no longer available');
-    const cleanup = disconnect();
+    const cleanup = disconnectSession();
     busyRef.current = true;
     const generation = ++generationRef.current;
     const current = () => generationRef.current === generation;
@@ -272,6 +286,7 @@ export function useInstalledSmartCube(
       // Old MoYu is a turn-only protocol; its software baseline starts solved, like Web.
       const session = sessionController.open({ publishInitialState: namedModel === 'moyu' });
       let connection!: SmartCubeConnection;
+      let readyForReconnect = false;
       let resolveReady!: () => void;
       let rejectReady!: (error: Error) => void;
       const ready = new Promise<void>((resolve, reject) => { resolveReady = resolve; rejectReady = reject; });
@@ -294,6 +309,7 @@ export function useInstalledSmartCube(
         },
         onNeedMac: async (deviceName: string): Promise<string | null> => {
           if (!current()) throw new Error('smart cube connection closed');
+          if (retryDevice) return knownMacsRef.current.get(device.id) ?? null;
           if (namedModel === 'moyu32') {
             knownMacsRef.current.delete(device.id);
             try { localStorage.removeItem(macKey); } catch { /* optional storage */ }
@@ -324,6 +340,7 @@ export function useInstalledSmartCube(
           setDeviceName('');
           resetCubeState();
           setPhase('idle');
+          if (readyForReconnect) scheduleReconnectRef.current(device, 0);
         },
         onMove: (
           move: string,
@@ -410,6 +427,7 @@ export function useInstalledSmartCube(
       scannedDevicesRef.current = new Map();
       setAvailableDevices([]);
       setPhase('connected');
+      readyForReconnect = true;
       return device.name;
     } catch (error) {
       if (current()) {
@@ -421,7 +439,7 @@ export function useInstalledSmartCube(
             retryable: true,
           },
         });
-        const cleanup = disconnect();
+        const cleanup = disconnectSession();
         const cleanupGeneration = generationRef.current;
         await cleanup;
         // Disconnect permits retry immediately. Its asynchronous transport
@@ -441,7 +459,31 @@ export function useInstalledSmartCube(
     } finally {
       if (current()) busyRef.current = false;
     }
-  }, [disconnect, disposeConnection, language, resetCubeState, sessionController]);
+  }, [cancelReconnect, disconnect, disconnectSession, disposeConnection, language, resetCubeState, sessionController]);
+
+  scheduleReconnectRef.current = (device, attempt) => {
+    const delay = SMART_CUBE_RECONNECT_DELAYS[attempt];
+    if (delay === undefined) {
+      setPhase('error');
+      onConnectionEventRef.current?.({ kind: 'reconnect-failed', attempts: attempt });
+      return;
+    }
+    if (reconnectTimerRef.current !== null) return;
+    const generation = reconnectGenerationRef.current;
+    setPhase('connecting');
+    setDeviceName(device.name);
+    onConnectionEventRef.current?.({ kind: 'reconnecting', attempt: attempt + 1,
+      maxAttempts: SMART_CUBE_RECONNECT_DELAYS.length, delayMs: delay });
+    reconnectTimerRef.current = setTimeout(() => {
+      reconnectTimerRef.current = null;
+      void connectDevice(undefined, device).then(() => {
+        if (generation === reconnectGenerationRef.current) onConnectionEventRef.current?.({ kind: 'reconnected' });
+      }, () => {
+        if (generation === reconnectGenerationRef.current) scheduleReconnectRef.current(device, attempt + 1);
+      });
+    }, delay);
+  };
+  const connect = useCallback((deviceId?: string) => connectDevice(deviceId), [connectDevice]);
 
   const resetState = useCallback(() => {
     sessionController.resetState();
@@ -470,6 +512,7 @@ export function useInstalledSmartCube(
   }, []);
 
   useEffect(() => () => {
+    cancelReconnect();
     generationRef.current++;
     cancelMacRef.current?.();
     cancelReadyRef.current?.();
@@ -481,7 +524,7 @@ export function useInstalledSmartCube(
     sessionController.dispose();
     void disposeConnection(connectionRef.current);
     connectionRef.current = null;
-  }, [disposeConnection, sessionController]);
+  }, [cancelReconnect, disposeConnection, sessionController]);
 
   const supportsDeviceScan = Boolean(transportRef.current?.scanDevices);
   return {
