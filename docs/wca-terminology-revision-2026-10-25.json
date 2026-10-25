@@ -1,0 +1,850 @@
+{
+  "at": "2026-10-25T07:28:01.629Z",
+  "source": "https://github.com/thewca/worldcubeassociation.org/blob/b0f6f610e2d677f1094915a88c883f0d8d9f3e2a/config/locales/zh-CN.yml",
+  "replacements": [
+    [
+      "诚信委员会",
+      "廉政委员会"
+    ],
+    [
+      "廉正委员会",
+      "廉政委员会"
+    ],
+    [
+      "沟通团队",
+      "通讯组"
+    ],
+    [
+      "比赛公告团队",
+      "比赛公示组"
+    ],
+    [
+      "市场推广团队",
+      "市场营销组"
+    ],
+    [
+      "市场团队",
+      "市场营销组"
+    ],
+    [
+      "大型锦标赛团队",
+      "大型锦标赛组"
+    ],
+    [
+      "档案团队",
+      "档案组"
+    ],
+    [
+      "软件团队",
+      "软件组"
+    ],
+    [
+      "成绩团队",
+      "成绩组"
+    ],
+    [
+      "执行助理团队",
+      "董事会助理团队"
+    ],
+    [
+      "行政助理团队",
+      "董事会助理团队"
+    ],
+    [
+      "质量保障委员会",
+      "质量保证委员会"
+    ],
+    [
+      "高级职员",
+      "干事"
+    ]
+  ],
+  "changes": [
+    {
+      "key": "posts:/posts/2017-year-end-message",
+      "before": "1c018c14a74e058441169e0a4db73429b7ad580b69ccfb3e74fc419326a6bc3d",
+      "after": "32dca61f86380cc02163942207382075412a00635e40e12c7e283f811f0bf34f",
+      "archive": "docs/wca-post-translations/versions/2017-year-end-message/1c018c14a74e058441169e0a4db73429b7ad580b69ccfb3e74fc419326a6bc3d.json"
+    },
+    {
+      "key": "posts:/posts/2018-year-end-message",
+      "before": "f0cc8cb9f872caf5745eb4e4cec19f7cf4fb7e1b46add6fdd82f7dff56d98a13",
+      "after": "59c70a8c9251147bddb4ca1e199dfb42ccf15b48bec3dd2e345f3d2442a10b88",
+      "archive": "docs/wca-post-translations/versions/2018-year-end-message/f0cc8cb9f872caf5745eb4e4cec19f7cf4fb7e1b46add6fdd82f7dff56d98a13.json"
+    },
+    {
+      "key": "posts:/posts/amendments-to-the-motions-approved-january-2020",
+      "before": "3135cf15b8a9b7b685acfb64991e6b2a4839ac0e3b41a5b44e80fbc539431e19",
+      "after": "0678177806dae50b1d05f7d4d8e9839797503d77720d814c552d54012523f951",
+      "archive": "docs/wca-post-translations/versions/amendments-to-the-motions-approved-january-2020/3135cf15b8a9b7b685acfb64991e6b2a4839ac0e3b41a5b44e80fbc539431e19.json"
+    },
+    {
+      "key": "posts:/posts/amendments-to-the-motions-approved-june-2019",
+      "before": "2fb662c623ea6b2ae5b1980b0f52b9ac546051f7671bbf874a7ebafb7e40cfdb",
+      "after": "9882c9e5d217f91a4e6e9255b6fb85877139c39c03314590a50b2d74fd89b0c8",
+      "archive": "docs/wca-post-translations/versions/amendments-to-the-motions-approved-june-2019/2fb662c623ea6b2ae5b1980b0f52b9ac546051f7671bbf874a7ebafb7e40cfdb.json"
+    },
+    {
+      "key": "posts:/posts/amendments-to-the-motions-approved-september-2024",
+      "before": "1d65e39b0b8eeaba2bac3abeb793bd20b1dd861c7f94cd5cfacf319a8d38866b",
+      "after": "90386d29a12c546762be0c3384ba026c2efe2af4ff126571e87f783cc5fc9cac",
+      "archive": "docs/wca-post-translations/versions/amendments-to-the-motions-approved-september-2024/1d65e39b0b8eeaba2bac3abeb793bd20b1dd861c7f94cd5cfacf319a8d38866b.json"
+    },
+    {
+      "key": "posts:/posts/announcement-of-four-new-committee-team-leaders",
+      "before": "4fad057196d6ef9c9947e6b010f690b63184267aa58f827f79c661ee92a0d0f5",
+      "after": "4341b4c1e558692ddd2163d2789d7f8729baca14f589c856d05b4fa728fcfea3",
+      "archive": "docs/wca-post-translations/versions/announcement-of-four-new-committee-team-leaders/4fad057196d6ef9c9947e6b010f690b63184267aa58f827f79c661ee92a0d0f5.json"
+    },
+    {
+      "key": "posts:/posts/announcing-the-moyu-wca-world-championship-2027",
+      "before": "2ca745ace1b9e8f5792a0dc6b6edbd9ee18f6feb729bcce7801b401af047dd76",
+      "after": "148cb99e32f2a52b32ee79945b625d5bf7a82eb1c477034d052fd54ef27d4d44",
+      "archive": "docs/wca-post-translations/versions/announcing-the-moyu-wca-world-championship-2027/2ca745ace1b9e8f5792a0dc6b6edbd9ee18f6feb729bcce7801b401af047dd76.json"
+    },
+    {
+      "key": "posts:/posts/applications-for-new-committee-team-members",
+      "before": "9b3a1dc534cd3e3376a5850986e06d2b67c4a2706776392901bd3a83f09aea1f",
+      "after": "d276e50ca0f344a04dc4669a30a83096e43c6a1428049fac2a413968fe9f3e73",
+      "archive": "docs/wca-post-translations/versions/applications-for-new-committee-team-members/9b3a1dc534cd3e3376a5850986e06d2b67c4a2706776392901bd3a83f09aea1f.json"
+    },
+    {
+      "key": "posts:/posts/applications-for-wca-continental-championships-2026-july-2025",
+      "before": "204244f0ed4f339458efeef7c1ec22daf90a5a3eddf1b9dbbd71f168a182e088",
+      "after": "c6dfe78ffcaa9cfb90c0624d31882e655542a5ae1a31793ee858cfb7fbcdee46",
+      "archive": "docs/wca-post-translations/versions/applications-for-wca-continental-championships-2026-july-2025/204244f0ed4f339458efeef7c1ec22daf90a5a3eddf1b9dbbd71f168a182e088.json"
+    },
+    {
+      "key": "posts:/posts/applications-for-wca-world-championship-2027",
+      "before": "7378ce93c98b5131d520a494bc16bad4266f5548f3b091e46d4db5ec021ead1f",
+      "after": "76f5642088dc44f44300587636538f68ab511e53ea067638b77f861fdfb2489e",
+      "archive": "docs/wca-post-translations/versions/applications-for-wca-world-championship-2027/7378ce93c98b5131d520a494bc16bad4266f5548f3b091e46d4db5ec021ead1f.json"
+    },
+    {
+      "key": "posts:/posts/appointment-of-new-wmt-leader-july-2018",
+      "before": "8222319a993f2bce6ce556c26109657c67ca83eaa59c88ca0301996598ba1e41",
+      "after": "023a1821d1ccf23e20ed4913549cfbe84d85cf4a276768005e0f2f9662ac26d9",
+      "archive": "docs/wca-post-translations/versions/appointment-of-new-wmt-leader-july-2018/8222319a993f2bce6ce556c26109657c67ca83eaa59c88ca0301996598ba1e41.json"
+    },
+    {
+      "key": "posts:/posts/approval-of-motions-january-2019",
+      "before": "bd61d2764d52a0d417492425f8d950c7d0f49c391c1a8e9569a39394da46c28b",
+      "after": "334c4c66a0003628627565e911a6adfd0dc6df0e2a692d1e309a3ee550117c60",
+      "archive": "docs/wca-post-translations/versions/approval-of-motions-january-2019/bd61d2764d52a0d417492425f8d950c7d0f49c391c1a8e9569a39394da46c28b.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-gear-team-members-for-wmt-2019",
+      "before": "29ce58153b020c6faf051d871ea45b058ba19a91c520dfbf45f6b1dfe25c0767",
+      "after": "65c8b58e91fe063a5fafe08e806faa0ffd8bd11341c61738a87ce7982fd2b5dd",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-gear-team-members-for-wmt-2019/29ce58153b020c6faf051d871ea45b058ba19a91c520dfbf45f6b1dfe25c0767.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-head-of-merch-within-the-wca-marketing-team-february-2026",
+      "before": "809570acc1e6b0839e902b3d8a53af627b44513352223b038c952bacfa87b6d2",
+      "after": "15d9ffd6185d949610d6598f41bd9b722e22b2f1d0214c15c1e75c180d4582bd",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-head-of-merch-within-the-wca-marketing-team-february-2026/809570acc1e6b0839e902b3d8a53af627b44513352223b038c952bacfa87b6d2.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wac-leader-august-2024",
+      "before": "ebe0f127df71c4327c2d52956b26f5ba865e8184b6e803492503532ecee16326",
+      "after": "1b55a8002948749a995a47ee5be7903a7176706e47b1cb5b6b3ba46f721c1dc3",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wac-leader-august-2024/ebe0f127df71c4327c2d52956b26f5ba865e8184b6e803492503532ecee16326.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wac-members-february-2026",
+      "before": "24b761c3d3033305b316b4e7df63536924d158f398a55f1edc579570572d6aaf",
+      "after": "3d8100a4987c6d7a1f72e50983e289ee57d1243641e4d3ecdffb83f3759f36fb",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wac-members-february-2026/24b761c3d3033305b316b4e7df63536924d158f398a55f1edc579570572d6aaf.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wat-leader-may-2022",
+      "before": "180f4515f45f05dc9a4231e52718a0ccb352b17ddf6fca9dfd85e9bd433c2499",
+      "after": "efbf942c4c76817a55098ca6326ff85d1dea892a2e705e26c00016f3dd3cbc7c",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wat-leader-may-2022/180f4515f45f05dc9a4231e52718a0ccb352b17ddf6fca9dfd85e9bd433c2499.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wat-members-july-2021",
+      "before": "305d402311811a3853ef08107362d0107b9974015d8f530c8e90450ba6d5017a",
+      "after": "1968805f948e9f20dc0311f851e5dd10aefe2b1594f2a5363f7e681bf64c7a8b",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wat-members-july-2021/305d402311811a3853ef08107362d0107b9974015d8f530c8e90450ba6d5017a.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wat-members-october-2022",
+      "before": "c347886603a1972a1a3b2f336cef9a664e5584efe9da5fa43248f69cfd7058ea",
+      "after": "cb4c62b3832b7e65274a551090d647d9fc54cd9991643c7f22695b36794bcf0e",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wat-members-october-2022/c347886603a1972a1a3b2f336cef9a664e5584efe9da5fa43248f69cfd7058ea.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wca-communication-team-wct-members-october-2022",
+      "before": "c44ccab035ebad5ff402f6a325f5afc9fef5df7d366ac0fe3167e196250abc14",
+      "after": "dee58b8b253edea71ffed35810e95d8cacd266f5d03cab0a5e0155e497a7e240",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wca-communication-team-wct-members-october-2022/c44ccab035ebad5ff402f6a325f5afc9fef5df7d366ac0fe3167e196250abc14.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wca-competition-announcement-team-members-march-2025",
+      "before": "7bd458e4259a1dd78686c4f98fde6f42bc47a5d6c404bf18cf887d5d0da77aa3",
+      "after": "e901e5ea06ff185ebe1fc9e0148286bac5359add366775518c5eb2b88e06e6ef",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wca-competition-announcement-team-members-march-2025/7bd458e4259a1dd78686c4f98fde6f42bc47a5d6c404bf18cf887d5d0da77aa3.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wca-major-championship-team-members-november-2025",
+      "before": "75ac68156232a8da83f076e5f590a387d27c842762e47d6e775293e8b7cd43a3",
+      "after": "de565491aaa803024ac83d2ba3addee4e65ef3009529eaa403a438c2e6fb0f4c",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wca-major-championship-team-members-november-2025/75ac68156232a8da83f076e5f590a387d27c842762e47d6e775293e8b7cd43a3.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wca-marketing-team-leader-january-2025",
+      "before": "00b2a88109b0ac95845abfd123823150d80f887ac296e4a25223bf964ec206e6",
+      "after": "d0c31b52f58c16e5aa369d80b4ebf323ac4024b3694cdd723bc5a5c1e2c93be1",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wca-marketing-team-leader-january-2025/00b2a88109b0ac95845abfd123823150d80f887ac296e4a25223bf964ec206e6.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wca-regulations-committee-leader-february-2026",
+      "before": "8f40e30c557ac37fcdb507fffb2d2d68067547e27695481072cc1322cfcabf05",
+      "after": "b04d0d685b76403b26682cb205b852c29d7f81d04791df5a05cd7d910f53d308",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wca-regulations-committee-leader-february-2026/8f40e30c557ac37fcdb507fffb2d2d68067547e27695481072cc1322cfcabf05.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wca-results-team-wrt-members-august-2022",
+      "before": "5fa351e402f3cac057c4e198f6cfc269b861a3c7f1d42ad3d5eed014f49e407b",
+      "after": "d2f030657889a66bfb811349cc887c3d8cb69c0cf65b61c9ef55618a3a42b854",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wca-results-team-wrt-members-august-2022/5fa351e402f3cac057c4e198f6cfc269b861a3c7f1d42ad3d5eed014f49e407b.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wca-software-team-leader-may-2025",
+      "before": "49e10d6518e437e2ce99cd3f40e345b24e09cbffb995bd69558771ddabca2113",
+      "after": "80f3305fcc0f21924397f0a24a6667f6c63f9cdd46f9d0817ed7c3158b928eb4",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wca-software-team-leader-may-2025/49e10d6518e437e2ce99cd3f40e345b24e09cbffb995bd69558771ddabca2113.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wcat-leader-november-2019",
+      "before": "2bf27679d878e0b2e7cf0d1ba5b7ebfd00c00dfab5d1844ebe7296b9e3db79ac",
+      "after": "a32eef27c2ead63abb0909839b013f5b6428171a87c70b99b50b8672ad02a602",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wcat-leader-november-2019/2bf27679d878e0b2e7cf0d1ba5b7ebfd00c00dfab5d1844ebe7296b9e3db79ac.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wcat-leader-november-2023",
+      "before": "6d5c559a1b16ea8b19ce5a6a5ea0c66a9d3c8d84ceb46bbdc669292d2a7666ee",
+      "after": "434ae5e9078ba0e354040321c8659ecf4aa2f9f44187dba9c1d8ad215e1d513b",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wcat-leader-november-2023/6d5c559a1b16ea8b19ce5a6a5ea0c66a9d3c8d84ceb46bbdc669292d2a7666ee.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wcat-members-february-2023",
+      "before": "e00571eca8f24c8cb4c48c3286ab05f9f90b353ee5a3f24c7b795e2023b1c553",
+      "after": "bd2b8fa62cdc2e09ba48d9444800e16d0fc8e96bd1e647f0c943ad5f740ba80f",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wcat-members-february-2023/e00571eca8f24c8cb4c48c3286ab05f9f90b353ee5a3f24c7b795e2023b1c553.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wcat-members-june-2024",
+      "before": "ed779d7697432701930fcbcc9933cb91d380c3867a2db798628c40b599a62f5d",
+      "after": "e947e00742a0893094b47b37305fadb03594209ef8b6844f283f8971618ab294",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wcat-members-june-2024/ed779d7697432701930fcbcc9933cb91d380c3867a2db798628c40b599a62f5d.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wcat-members-october-2018",
+      "before": "9eec50dd4e50cae04da150a1bceab6f61b8941ccddee5f4d9294b9c7b17d288a",
+      "after": "f2eb211e888fd159c0b7b06c0077afdb5a1d76e82f1495bffcda1b6aacc3411b",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wcat-members-october-2018/9eec50dd4e50cae04da150a1bceab6f61b8941ccddee5f4d9294b9c7b17d288a.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wcat-members-october-2020",
+      "before": "77edc7a52ef317cab64c25b7652ee1e23f39a1ca9642b083721c5d84b4a4fa4e",
+      "after": "1f984bf0bdba1259b4b07b296a062f3769553813e148274dbe50413544c4b140",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wcat-members-october-2020/77edc7a52ef317cab64c25b7652ee1e23f39a1ca9642b083721c5d84b4a4fa4e.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wct-graphic-designer-may-2018",
+      "before": "50b4c4decbefc9e71b42834220379bb0812380c0bf10425f716ae6af8e6a4bfb",
+      "after": "28ca1b52e7138ccd94a9511600995500c5aa8cf3d58fa683244385a8184e6627",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wct-graphic-designer-may-2018/50b4c4decbefc9e71b42834220379bb0812380c0bf10425f716ae6af8e6a4bfb.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wct-leader-october-2021",
+      "before": "4608872b2b643c7c763ffacf91281168c7d639d3c367e272664b8c33574484e7",
+      "after": "c88abc69a71e8b26529f530a7069020c8bf3e1a92edce365a7bea3a5fb2b63db",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wct-leader-october-2021/4608872b2b643c7c763ffacf91281168c7d639d3c367e272664b8c33574484e7.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wct-leader-october-2023",
+      "before": "3e11fa15e69a11e17d572ee44ef6b045cae3f6509b274d219594449df3b38f4e",
+      "after": "cf36dd647fce06f1363e7c89c02adaede199f9796bef978335b9faf758dc8b52",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wct-leader-october-2023/3e11fa15e69a11e17d572ee44ef6b045cae3f6509b274d219594449df3b38f4e.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wct-members-january-2024",
+      "before": "d6c14a5ad0b13d19b5d32151010703ba8e112ca610692cd63b52b087cecf9100",
+      "after": "918545c8c6e80176fe5c47f44579b856313acc0f6fd6c7f7c4dd792c932c25b7",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wct-members-january-2024/d6c14a5ad0b13d19b5d32151010703ba8e112ca610692cd63b52b087cecf9100.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wct-members-march-2019",
+      "before": "519a4286ef326370c841748c41224dd523d246314ec04cc3eb2f25c030bf8cbb",
+      "after": "43047c476bbf2ce2b076f495750febb52ddd3ffda5b5bffa578fc2789a15ad60",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wct-members-march-2019/519a4286ef326370c841748c41224dd523d246314ec04cc3eb2f25c030bf8cbb.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-weat-leader-july-2025",
+      "before": "33d04f29495c5e0facb2e5c9061c5de77b57ec6458983e6131b22bfcb482f6ef",
+      "after": "d5622d06038429fda83b713b31595be77a01eb528aa5a8b67c6593319f6fa46b",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-weat-leader-july-2025/33d04f29495c5e0facb2e5c9061c5de77b57ec6458983e6131b22bfcb482f6ef.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-weat-members-april-2022",
+      "before": "3e37c7eaf61672852a874833e8ae633bb35994c1f3d415abcb4445d41b25a6a8",
+      "after": "2ecb4aa89558803b649b97b14e8a26d11d712d6a3030ed192a3d75fd1b2c6b9b",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-weat-members-april-2022/3e37c7eaf61672852a874833e8ae633bb35994c1f3d415abcb4445d41b25a6a8.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wic-members-november-2024",
+      "before": "b85838ee4c2b1a8217d7777f1ef5f212362b7c25b92055c4c4bd7e2764c4d59f",
+      "after": "5c5c13553d01822dd967f38fc3b032c2ebab6d3e9418d67a323e5962a30c7b52",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wic-members-november-2024/b85838ee4c2b1a8217d7777f1ef5f212362b7c25b92055c4c4bd7e2764c4d59f.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wmct-members-january-2025",
+      "before": "48a82ba9cca8ee2de7d41785d76ae4fca594dae19da8b09ca90b7f14e2bf7203",
+      "after": "7b287ed5ef5ab69b992a1a61a982c7780f86d120cdb9d525bbd3601dafd7da5f",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wmct-members-january-2025/48a82ba9cca8ee2de7d41785d76ae4fca594dae19da8b09ca90b7f14e2bf7203.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wmt-leader-february-2019",
+      "before": "ac1d18c702f20eb1dd35461caff15b6af0a158c9cf71efd8442c444ff16d998f",
+      "after": "5de06783b0aab91b30ca2aa930bba2cab2543cbc5ab74629192f97e1af1500c7",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wmt-leader-february-2019/ac1d18c702f20eb1dd35461caff15b6af0a158c9cf71efd8442c444ff16d998f.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wmt-leader-january-2021",
+      "before": "dd6f1aa255347da545e646685f9c1f7f88719a94df311c1dc4c295c68b46f69b",
+      "after": "d95ae357b228a22953fac0392c199bdd47bf721841936c1e42b0c4760bc41fbe",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wmt-leader-january-2021/dd6f1aa255347da545e646685f9c1f7f88719a94df311c1dc4c295c68b46f69b.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wmt-members-april-2020",
+      "before": "3e532891a7da3825923f0ff16516cef214acf31ad08e060a84d7f0eee3153490",
+      "after": "2e33bdbd812d5fe9cdac05995f9719c3096d1f0f96a0a2596a370bce79ec9171",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wmt-members-april-2020/3e532891a7da3825923f0ff16516cef214acf31ad08e060a84d7f0eee3153490.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wmt-members-february-2022",
+      "before": "4f33a5cbf07387f9018b21fe6e1ba647cd3d3a4ead6e7eb6ff7d62a0cfe8ee0e",
+      "after": "0380506ec037730909c397ad95f8dfe7b41eac187df8a795f6b2949c867d22c9",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wmt-members-february-2022/4f33a5cbf07387f9018b21fe6e1ba647cd3d3a4ead6e7eb6ff7d62a0cfe8ee0e.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wmt-members-january-2023",
+      "before": "d4b787d524ece52cae9245b81c275127b012cd0f043f3a3b40c4f339d2bd7d28",
+      "after": "66049730e22f8c775d54e049fb74db0e1789dedd6124ad34c998d5f5df54ffdf",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wmt-members-january-2023/d4b787d524ece52cae9245b81c275127b012cd0f043f3a3b40c4f339d2bd7d28.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wmt-members-january-2024",
+      "before": "7af5bf59cedd888252d63f30cd6bb79d260c1c2e5eac515eddbf8440f5c72a24",
+      "after": "1c22620ce518f32af2d175fe8ea91c96a89572d7ef750a4bc973fcce2b8dadab",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wmt-members-january-2024/7af5bf59cedd888252d63f30cd6bb79d260c1c2e5eac515eddbf8440f5c72a24.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wmt-members-may-2021",
+      "before": "28e07e8a7f65291c7cbc5741eed388df1f19684d3954c807e28f9ae0b4c32062",
+      "after": "c5e826a4d1c204a3de34388623ec9ef005bd616aa1ccbd60e01d4fff0b21a774",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wmt-members-may-2021/28e07e8a7f65291c7cbc5741eed388df1f19684d3954c807e28f9ae0b4c32062.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wmt-team-members-august-2018",
+      "before": "7859195d9dfad85600c392ba59911455a6fb33c751d6e03c2acf079a4bc38eac",
+      "after": "94320fdd066a5a8c465da5c90a36c831be398942ce5f2385f3e0f0fa0871707c",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wmt-team-members-august-2018/7859195d9dfad85600c392ba59911455a6fb33c751d6e03c2acf079a4bc38eac.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wqac-leader-october-2019",
+      "before": "49063d5ac2c6de4f07259c84e77545d239557b0b416468b2c7344c557f4797e6",
+      "after": "4e10de91ae458e4a86abb699a129e379c7ecf5ddcc1318d1788b597413f175ce",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wqac-leader-october-2019/49063d5ac2c6de4f07259c84e77545d239557b0b416468b2c7344c557f4797e6.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wrc-leader-april-2024",
+      "before": "34ddd479f1c7c9329991550d474704bc76ea730a433639db752f4afe98dcc30d",
+      "after": "e73c669760670233226eb33c026adbf200631ec0860bfd065c30cf1a385fe82a",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wrc-leader-april-2024/34ddd479f1c7c9329991550d474704bc76ea730a433639db752f4afe98dcc30d.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wrt-leader-august-2021",
+      "before": "520c6386085e78a1d635c97be1e756502a44c4c41c28e7d39da83a48c9f4369f",
+      "after": "cedb611382b81b085a594de91aa48643a86a83c7a126db962e1e818ed6de2a1f",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wrt-leader-august-2021/520c6386085e78a1d635c97be1e756502a44c4c41c28e7d39da83a48c9f4369f.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wrt-leader-november-2023",
+      "before": "98fb40f63d4c01df0e8ecabaffc2a1ff0373511cc17fa712033494e3b8653367",
+      "after": "530bce4045d602f12944d9005e9619d03918d23369d2b86e0bb44097c947f747",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wrt-leader-november-2023/98fb40f63d4c01df0e8ecabaffc2a1ff0373511cc17fa712033494e3b8653367.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wrt-members-january-2020",
+      "before": "5ee98218f1d66cb5e333273cea1cf31e0f2e5022faf784a7b18fb54e6808b2f5",
+      "after": "6e3842950d80b11021982cdb015cf1cf6e49bee9971d7f2c986d2354abb3dd1e",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wrt-members-january-2020/5ee98218f1d66cb5e333273cea1cf31e0f2e5022faf784a7b18fb54e6808b2f5.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wrt-members-june-2024",
+      "before": "b3722b364f2b940fda4072df32e3bb922ecb2e8905e3967bd1ab6302a5fc8bb9",
+      "after": "8a35138ed8797df8ff501bd3e17f46fe97c0cf361a7b1513c7239d61d64204eb",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wrt-members-june-2024/b3722b364f2b940fda4072df32e3bb922ecb2e8905e3967bd1ab6302a5fc8bb9.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wsot-leader-october-2024",
+      "before": "6c3e7230c541490a6e77f5d97db505b8af522321ebd85be17d02830eebe638ec",
+      "after": "6baedb3d4820870c1f96c04d18cd6bef08615c975ed6c3522f595d45a0a971a7",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wsot-leader-october-2024/6c3e7230c541490a6e77f5d97db505b8af522321ebd85be17d02830eebe638ec.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wst-leader-august-2019",
+      "before": "a29ea70a6879f2e4595fdde1bbfc544cc9c3951618cb3e9c56e74a812d4f9b4c",
+      "after": "d33ed7911c26fd43537a9ab5e4d3e0098ac86d5f92feaaf6a6abe45820b14f0b",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wst-leader-august-2019/a29ea70a6879f2e4595fdde1bbfc544cc9c3951618cb3e9c56e74a812d4f9b4c.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wst-leader-may-2021",
+      "before": "0c450acd3bc6c55452e274b17e66aaafde792cb74b18f6fcf3193dcf1033e811",
+      "after": "22a85a0e3ac9755d4d14a46bc4ac0c605470c01dfc451332cd9108ba3eba1aea",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wst-leader-may-2021/0c450acd3bc6c55452e274b17e66aaafde792cb74b18f6fcf3193dcf1033e811.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wst-leader-october-2020",
+      "before": "c17ebcf35caf5a735595e5fafc67b5b5eaebb34617b0596331e6b55006ac8ba5",
+      "after": "2cc5534e8d1e40ed8ec5b291e19f75dc95a92a5a908d89e381e14891b3760af7",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wst-leader-october-2020/c17ebcf35caf5a735595e5fafc67b5b5eaebb34617b0596331e6b55006ac8ba5.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wst-members-july-2019",
+      "before": "eaf5879399361824b1218abee0f2b3f5a839c34f20271d5f74bcfe77517839a2",
+      "after": "d8b4018a8afc4d362348ddff65f9917aeaf5c966b3a004aaab1c7c196061ae96",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wst-members-july-2019/eaf5879399361824b1218abee0f2b3f5a839c34f20271d5f74bcfe77517839a2.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wst-members-march-2021",
+      "before": "5f897ee146154c30f52231fa77a0f2dfb5aae9116db576aa7b90023bf9c483cc",
+      "after": "29d3d4ccadcd3321fb5ab93de39d999a7c6c40be9b41949e2af8644b2fda6bae",
+      "archive": "docs/wca-post-translations/versions/call-for-applicants-wst-members-march-2021/5f897ee146154c30f52231fa77a0f2dfb5aae9116db576aa7b90023bf9c483cc.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applications-wca-appeals-committee-members-march-2025",
+      "before": "2e07c2a8a5f5633dddfe0759a65040ca809e9c4f49c7041f4652459b70caec4f",
+      "after": "25b5d8786899fab8e3d92763a32b65759e34e73459ff0f5828b57072699ac4e6",
+      "archive": "docs/wca-post-translations/versions/call-for-applications-wca-appeals-committee-members-march-2025/2e07c2a8a5f5633dddfe0759a65040ca809e9c4f49c7041f4652459b70caec4f.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applications-wca-communication-team-leader-october-2025",
+      "before": "5ae10bf29f436b61e61e16f5edac718ab7a1aae880fa5a436aa6eaf5446d4f69",
+      "after": "a3f51f557a151226548ca1586f7586a1282e2f7e8c98ac9bb9abea2631073e54",
+      "archive": "docs/wca-post-translations/versions/call-for-applications-wca-communication-team-leader-october-2025/5ae10bf29f436b61e61e16f5edac718ab7a1aae880fa5a436aa6eaf5446d4f69.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applications-wca-competition-announcement-team-leader-october-2025",
+      "before": "fe3175e3e5818a47ffbf1979513851a95e3924664b823e59b216c7c19ce0bad4",
+      "after": "4450e3d5d00e7fb407fee577d389cf1ebc740df231bc391ce0763dc50acb1561",
+      "archive": "docs/wca-post-translations/versions/call-for-applications-wca-competition-announcement-team-leader-october-2025/fe3175e3e5818a47ffbf1979513851a95e3924664b823e59b216c7c19ce0bad4.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applications-wca-executive-assistants-team-april-2025",
+      "before": "1ac1a2dde58efedbad4ccb42fd1b6996343d986b8061e7fbe8fe16cb569bd181",
+      "after": "caf3325746a4430d30607fad1bcb3333ea39aa29b6d69f7143f024ac5a3a0b6e",
+      "archive": "docs/wca-post-translations/versions/call-for-applications-wca-executive-assistants-team-april-2025/1ac1a2dde58efedbad4ccb42fd1b6996343d986b8061e7fbe8fe16cb569bd181.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applications-wca-quality-assurance-committee-leader-october-2025",
+      "before": "5ca33a72f536099385da96f56ba51a01c9bcb028bf0012d077066f3b092a3b80",
+      "after": "5938ed8ba48863afa1b181c7826ddcb4421c4f0664fe948d2578fe4c346409bf",
+      "archive": "docs/wca-post-translations/versions/call-for-applications-wca-quality-assurance-committee-leader-october-2025/5ca33a72f536099385da96f56ba51a01c9bcb028bf0012d077066f3b092a3b80.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applications-wfc-leader-august-2024",
+      "before": "95303548415df70594b22581067fe717a20a10160c12ebce002a466916cf8d00",
+      "after": "3eded3b4aaaf4b291c1026c7601b45659efd39189657ce759910b4910a8d5161",
+      "archive": "docs/wca-post-translations/versions/call-for-applications-wfc-leader-august-2024/95303548415df70594b22581067fe717a20a10160c12ebce002a466916cf8d00.json"
+    },
+    {
+      "key": "posts:/posts/call-for-applications-wmct-leader-october-2024",
+      "before": "8b1998704f2886ffbfb182bd03c64ed93f1043f5addae1169db51e75fee27134",
+      "after": "6d09bd24c516f2a682f5a65f0432f0ba829162576643e68858bfc29469f24ed5",
+      "archive": "docs/wca-post-translations/versions/call-for-applications-wmct-leader-october-2024/8b1998704f2886ffbfb182bd03c64ed93f1043f5addae1169db51e75fee27134.json"
+    },
+    {
+      "key": "posts:/posts/call-for-contributors-wca-software-team-september-2020",
+      "before": "941e1ad6e5d06f4b3ba5777cec022bf1be1dfdf568eac6ee322126a8d949e5d3",
+      "after": "b14909f04c2153f87058ca7daa291b95e511607ccad66a46f3f7f69a4563d276",
+      "archive": "docs/wca-post-translations/versions/call-for-contributors-wca-software-team-september-2020/941e1ad6e5d06f4b3ba5777cec022bf1be1dfdf568eac6ee322126a8d949e5d3.json"
+    },
+    {
+      "key": "posts:/posts/changes-of-countries-recognized-by-the-wca",
+      "before": "370eb45b0e9973b4c71f4b14630c167816250edeef2a72d20dd290c3fe1ed1b7",
+      "after": "5c6914125977ace1c0cfb117185abc8a603bd38dbb56317f5d1081079a7f824f",
+      "archive": "docs/wca-post-translations/versions/changes-of-countries-recognized-by-the-wca/370eb45b0e9973b4c71f4b14630c167816250edeef2a72d20dd290c3fe1ed1b7.json"
+    },
+    {
+      "key": "posts:/posts/collaboration-between-the-wca-and-guinness-world-records",
+      "before": "2c7a758f046d7924d09af3967d49b7955b8f6b24e49a61a60187a8f0935c4ca1",
+      "after": "d6350dab766d0f5e8d40701aed0a32d47a0b374c41d584af0d9c43e94277b6a3",
+      "archive": "docs/wca-post-translations/versions/collaboration-between-the-wca-and-guinness-world-records/2c7a758f046d7924d09af3967d49b7955b8f6b24e49a61a60187a8f0935c4ca1.json"
+    },
+    {
+      "key": "posts:/posts/executive-assistants-leader-announcement-august-2025",
+      "before": "328b414606f1fcc2e2b922f1f41174c2db55890dc893d611b2570aabf4f0065b",
+      "after": "966947c8f8a23c903c0e75b51e9d3e223c494179af08b7b8c1d426a473638942",
+      "archive": "docs/wca-post-translations/versions/executive-assistants-leader-announcement-august-2025/328b414606f1fcc2e2b922f1f41174c2db55890dc893d611b2570aabf4f0065b.json"
+    },
+    {
+      "key": "posts:/posts/expression-of-interest-for-2026-wca-continental-championships-march-2025",
+      "before": "0c5bce7829b4ae1f7425531bf09ccb1751ed4693a91a264c1fd4d1708e0aa989",
+      "after": "f25e43b9adb871bf45f516fcd22247988dcfe7ad99b361adca388ce549e9a842",
+      "archive": "docs/wca-post-translations/versions/expression-of-interest-for-2026-wca-continental-championships-march-2025/0c5bce7829b4ae1f7425531bf09ccb1751ed4693a91a264c1fd4d1708e0aa989.json"
+    },
+    {
+      "key": "posts:/posts/india-southeast-asia-merchandise-collaboration-announcement",
+      "before": "a988bdc6a6db458dffe5e20ceb03e0eeec3171d61ca1db641675a20ef49b44af",
+      "after": "3b3946952d48477d273f55d38b6342697c52d994d2dc276f95b4e87d8ecda0fb",
+      "archive": "docs/wca-post-translations/versions/india-southeast-asia-merchandise-collaboration-announcement/a988bdc6a6db458dffe5e20ceb03e0eeec3171d61ca1db641675a20ef49b44af.json"
+    },
+    {
+      "key": "posts:/posts/new-wcat-leader",
+      "before": "ed7a4f6ce02412f2b90291497f977c7c0d94ea1a5a22b43e5f2b0dc6179980db",
+      "after": "5aeb692ee3b6709797ea3f8f84fdb24123b002936e30792b7ec95df839d5bc68",
+      "archive": "docs/wca-post-translations/versions/new-wcat-leader/ed7a4f6ce02412f2b90291497f977c7c0d94ea1a5a22b43e5f2b0dc6179980db.json"
+    },
+    {
+      "key": "posts:/posts/new-wcat-leader-january-2020",
+      "before": "d247ab0cd6787d64609809f52a46ac24b27f5bb88f78f14911ac8beabb722377",
+      "after": "36e9690dfab969d2e0c3a3c9025a513cb880085e5c9c33c9a1b23e3289d784a4",
+      "archive": "docs/wca-post-translations/versions/new-wcat-leader-january-2020/d247ab0cd6787d64609809f52a46ac24b27f5bb88f78f14911ac8beabb722377.json"
+    },
+    {
+      "key": "posts:/posts/new-wmt-leader-chosen",
+      "before": "8f962d58dcc490797260d174e8ba713b48ea483e5348201aafb460137411287d",
+      "after": "ff9fbccd971fd3cf7181a173e088818bcf9e6e80763caf84ab35fd1b4a9e68da",
+      "archive": "docs/wca-post-translations/versions/new-wmt-leader-chosen/8f962d58dcc490797260d174e8ba713b48ea483e5348201aafb460137411287d.json"
+    },
+    {
+      "key": "posts:/posts/new-wrt-leader-october-2021",
+      "before": "4c59b7b6375dd27c54f1f1fd0e64778277dd8fbc9d7f250d002c780045414ef4",
+      "after": "a338e5acf2be19212a55a85bc4e24b0e23efdfe1c3498a2551f50172da21eda5",
+      "archive": "docs/wca-post-translations/versions/new-wrt-leader-october-2021/4c59b7b6375dd27c54f1f1fd0e64778277dd8fbc9d7f250d002c780045414ef4.json"
+    },
+    {
+      "key": "posts:/posts/new-wst-leader-october-2019",
+      "before": "212e5d5127c70aeb67ed3caea5b5dab740c0b27a950335101360d841369af458",
+      "after": "23d48aba0e0d9cbda2cc8f9dae0f48a7b839d8e27595ffa49997910232e1ef23",
+      "archive": "docs/wca-post-translations/versions/new-wst-leader-october-2019/212e5d5127c70aeb67ed3caea5b5dab740c0b27a950335101360d841369af458.json"
+    },
+    {
+      "key": "posts:/posts/newcomer-month-exceptions-for-wcrp-to-return-in-march-2025",
+      "before": "6e14c64d9361b3c1aa017b3fb6a04572e16c6a0b36de4b628e52ce2865ebc5f3",
+      "after": "1a709dbdd09271c31f1ee2678d8e37aec51fbfa953ef3f78be3aa7ab063e05fb",
+      "archive": "docs/wca-post-translations/versions/newcomer-month-exceptions-for-wcrp-to-return-in-march-2025/6e14c64d9361b3c1aa017b3fb6a04572e16c6a0b36de4b628e52ce2865ebc5f3.json"
+    },
+    {
+      "key": "posts:/posts/notification-of-data-breach-to-data-subjects",
+      "before": "f6c8038908122bb584a04da564786ad32be4317cba0a78930c6539da792a2779",
+      "after": "47f204934f1426f76494973deeedfc562afbd17196d4447b146e1cf01f1ead70",
+      "archive": "docs/wca-post-translations/versions/notification-of-data-breach-to-data-subjects/f6c8038908122bb584a04da564786ad32be4317cba0a78930c6539da792a2779.json"
+    },
+    {
+      "key": "posts:/posts/planned-wca-website-outage-june-2023",
+      "before": "22131aa842441e0a82b9459bdec86227fadd573f1545a19a1405508c8d3646e7",
+      "after": "4602b00c3ef2ed50fe6fb47247da4532564ae3ff676d53bcf080a70fc302edfc",
+      "archive": "docs/wca-post-translations/versions/planned-wca-website-outage-june-2023/22131aa842441e0a82b9459bdec86227fadd573f1545a19a1405508c8d3646e7.json"
+    },
+    {
+      "key": "posts:/posts/result-of-the-wmt-leader-application-period",
+      "before": "6a7d27ef11739e25643168b7ac06e90e1aa430884240735ecae5f09c6d646903",
+      "after": "92cbdbdb058c80946201ba7b7b66f5128bd4e7d6836a36d75b2ca11046c54207",
+      "archive": "docs/wca-post-translations/versions/result-of-the-wmt-leader-application-period/6a7d27ef11739e25643168b7ac06e90e1aa430884240735ecae5f09c6d646903.json"
+    },
+    {
+      "key": "posts:/posts/software-team-leader-announcement-june-2025",
+      "before": "9b2728a6e69023de0713739deba47cc5e340b7b8abb0016b17e11f05537d8cfb",
+      "after": "dca378aeacc4c960d5401a2952ffa37f2a37106a9344600c8088f5c119c22380",
+      "archive": "docs/wca-post-translations/versions/software-team-leader-announcement-june-2025/9b2728a6e69023de0713739deba47cc5e340b7b8abb0016b17e11f05537d8cfb.json"
+    },
+    {
+      "key": "posts:/posts/start-up-of-the-wca-communication-team",
+      "before": "5bb0e8cf402654b1c7154f21d23947e3ee2beb3f329a30cd2f9f90b2f6347c37",
+      "after": "3e74eda0f6a8e18bc1707cd7eee63e1af757bc3ee4ec8259759bad7424d43855",
+      "archive": "docs/wca-post-translations/versions/start-up-of-the-wca-communication-team/5bb0e8cf402654b1c7154f21d23947e3ee2beb3f329a30cd2f9f90b2f6347c37.json"
+    },
+    {
+      "key": "posts:/posts/start-up-of-the-wca-financial-committee",
+      "before": "2131a9e6dcb5ecaaca49cc1c1fa1f2ae4e11d47fb158e5722493d826dfc0d423",
+      "after": "6d93f527f28db44118c291db47cda334d30c79d153af99764228a0fc699e0268",
+      "archive": "docs/wca-post-translations/versions/start-up-of-the-wca-financial-committee/2131a9e6dcb5ecaaca49cc1c1fa1f2ae4e11d47fb158e5722493d826dfc0d423.json"
+    },
+    {
+      "key": "posts:/posts/tim-reynolds-and-sebastien-auroux-in-wca-board",
+      "before": "0b30ad74850bcf964caf9383b07aa987236d1cea5f183885b2250d4303259b70",
+      "after": "74e0511b4126ea2403053b390b090255f653f04a5b8bb8eec50a6eb9af515106",
+      "archive": "docs/wca-post-translations/versions/tim-reynolds-and-sebastien-auroux-in-wca-board/0b30ad74850bcf964caf9383b07aa987236d1cea5f183885b2250d4303259b70.json"
+    },
+    {
+      "key": "posts:/posts/wat-leader-announcement-august-2026",
+      "before": "b356603fb5623221331838e672dbf9b46013ea7eb237491eea7fff5e623210f6",
+      "after": "27dba91adf1ad920df47b6e78babde37ddfec7653ff4643fdd835f7f56a38bc2",
+      "archive": "docs/wca-post-translations/versions/wat-leader-announcement-august-2026/b356603fb5623221331838e672dbf9b46013ea7eb237491eea7fff5e623210f6.json"
+    },
+    {
+      "key": "posts:/posts/wat-leader-announcement-july-2022",
+      "before": "b3daf4d19140bab2b92c46599797ae837f0f4d1f5e32ab98620b06373730773b",
+      "after": "6799c8afae2ee2304ce0cf9ac96a5ecd159131af5f9a09fa215a688a8937cb71",
+      "archive": "docs/wca-post-translations/versions/wat-leader-announcement-july-2022/b3daf4d19140bab2b92c46599797ae837f0f4d1f5e32ab98620b06373730773b.json"
+    },
+    {
+      "key": "posts:/posts/wca-asian-championship-2026-update-march-2026",
+      "before": "8fdb856956c2b4643bf9e292bfc11e28bf6665374c4d0d98c39c5f85cbc06bfc",
+      "after": "0413d26536c01fc4fa34f48f6c08895a7a5823dfbf50d1a8a6edbb1185231f1d",
+      "archive": "docs/wca-post-translations/versions/wca-asian-championship-2026-update-march-2026/8fdb856956c2b4643bf9e292bfc11e28bf6665374c4d0d98c39c5f85cbc06bfc.json"
+    },
+    {
+      "key": "posts:/posts/wca-communication-team-leader-announcement-december-2025",
+      "before": "2d3bd77399241503cd6b7cf67194b54561a53fe28a5ae2cc3086f39e025e3004",
+      "after": "d66512bd72cd2551bfca6c686337c29832ec3d1a966d33507bc15a855dad1210",
+      "archive": "docs/wca-post-translations/versions/wca-communication-team-leader-announcement-december-2025/2d3bd77399241503cd6b7cf67194b54561a53fe28a5ae2cc3086f39e025e3004.json"
+    },
+    {
+      "key": "posts:/posts/wca-competition-announcement-team-leader-announcement-december-2025",
+      "before": "268b680d3826e78a52bbdd759bdc1b1eb53805d5572389701643969bf815898b",
+      "after": "b4a22cce42bf93051b06229f11358bb46a88283e4733332dacfcbbe9249785d0",
+      "archive": "docs/wca-post-translations/versions/wca-competition-announcement-team-leader-announcement-december-2025/268b680d3826e78a52bbdd759bdc1b1eb53805d5572389701643969bf815898b.json"
+    },
+    {
+      "key": "posts:/posts/wca-competition-requirements-policy-update-5-5-may-2026",
+      "before": "0510ac72a7fd2187d6692c141fc5b8f65cb77a32a332f498a3627f0cf7070ca1",
+      "after": "0a8349f6fb15d0a586af694a9e932502a4fbb957e9dd13a77d335e31a8609ccd",
+      "archive": "docs/wca-post-translations/versions/wca-competition-requirements-policy-update-5-5-may-2026/0510ac72a7fd2187d6692c141fc5b8f65cb77a32a332f498a3627f0cf7070ca1.json"
+    },
+    {
+      "key": "posts:/posts/wca-continental-championships-2026-host-cities-announcement-october-2025",
+      "before": "d57dd4f5be0fde41f7b67ca9830ebffd6edb2f5e4047d47590c9745f2dc5a1a9",
+      "after": "3dc9afeeee46f05e251c8fcfeea3f3db46b36d35cabbf4a4823e6e192513e2c5",
+      "archive": "docs/wca-post-translations/versions/wca-continental-championships-2026-host-cities-announcement-october-2025/d57dd4f5be0fde41f7b67ca9830ebffd6edb2f5e4047d47590c9745f2dc5a1a9.json"
+    },
+    {
+      "key": "posts:/posts/wca-european-championship-2026-announcement",
+      "before": "d611a2b9883f04080dd5a2521f470586fb0e6091bdc6d33f1e69e966d91faf70",
+      "after": "f68f1c2934dbcad0f9c5e580465e5f20edad2e3276db1432c60a7bf0b82b24a2",
+      "archive": "docs/wca-post-translations/versions/wca-european-championship-2026-announcement/d611a2b9883f04080dd5a2521f470586fb0e6091bdc6d33f1e69e966d91faf70.json"
+    },
+    {
+      "key": "posts:/posts/wca-north-american-championship-2026-host-city-announcement-december-2025",
+      "before": "5cb7d61324cc3267cf3da9b5da06bb70e2362318ba7b6544657754003e93f837",
+      "after": "f59480fd9821a070484b40c5b8514ad48ea8244ab19d0a82a8119e20c0dcb69f",
+      "archive": "docs/wca-post-translations/versions/wca-north-american-championship-2026-host-city-announcement-december-2025/5cb7d61324cc3267cf3da9b5da06bb70e2362318ba7b6544657754003e93f837.json"
+    },
+    {
+      "key": "posts:/posts/wca-world-championship-2027-host-city-announcement-july-2025",
+      "before": "16d9be955e6020f6b64a83f948490966086516f8d41d9a05039029ebe0f1f5c4",
+      "after": "4ef3f1611996eb7f9afa8c3ed8eda0c1acdae7c47e17761d312f096ca15a392c",
+      "archive": "docs/wca-post-translations/versions/wca-world-championship-2027-host-city-announcement-july-2025/16d9be955e6020f6b64a83f948490966086516f8d41d9a05039029ebe0f1f5c4.json"
+    },
+    {
+      "key": "posts:/posts/wcat-leader-announcement-december-2023",
+      "before": "27cd3a24bcdd1952d567d074623b211b51c79c3ab9cf1436d0c4466e0825e6f3",
+      "after": "1ba10ff43fe4800a1a59da53d814dcb2c0016bcad07efe01e836851598fc5fd0",
+      "archive": "docs/wca-post-translations/versions/wcat-leader-announcement-december-2023/27cd3a24bcdd1952d567d074623b211b51c79c3ab9cf1436d0c4466e0825e6f3.json"
+    },
+    {
+      "key": "posts:/posts/wcat-leader-announcement-october-2026",
+      "before": "b0e780b8b2c65088c0960cddfc51da0e04cc24af59f95436c414e3d89b315b59",
+      "after": "236b98d2744a0cba066f18f5d65a7a6051b3422219e8e2c2e0bcd8a4a5d7400b",
+      "archive": "docs/wca-post-translations/versions/wcat-leader-announcement-october-2026/b0e780b8b2c65088c0960cddfc51da0e04cc24af59f95436c414e3d89b315b59.json"
+    },
+    {
+      "key": "posts:/posts/wct-leader-announcement-december-2023",
+      "before": "17dff1130a2716c92c5a4208723fc86133b50fee452de3da9d91d005e2637273",
+      "after": "2ca1f39f9c55ad6ad1a8272a36eb0e30405baddf638531d463bf70635c504bd1",
+      "archive": "docs/wca-post-translations/versions/wct-leader-announcement-december-2023/17dff1130a2716c92c5a4208723fc86133b50fee452de3da9d91d005e2637273.json"
+    },
+    {
+      "key": "posts:/posts/wmct-leader-announcement-december-2024",
+      "before": "a42b162679431883019a4f9c39ac1fd0cdbdf8d9a0244682615d980ee4195216",
+      "after": "de7d9db6fe3c390435dd8af7d3f8f76e55b47bea809f13d4b9a8250a42004d37",
+      "archive": "docs/wca-post-translations/versions/wmct-leader-announcement-december-2024/a42b162679431883019a4f9c39ac1fd0cdbdf8d9a0244682615d980ee4195216.json"
+    },
+    {
+      "key": "posts:/posts/wmct-leader-announcement-september-2026",
+      "before": "0ba07c0fda578de52281f612825360762f3cfc99cbdf953c469ebb0ee260a113",
+      "after": "e5a873a449ea51b78ca152175f63c1810bcba6e1e34229f2cf9021293eb4cb40",
+      "archive": "docs/wca-post-translations/versions/wmct-leader-announcement-september-2026/0ba07c0fda578de52281f612825360762f3cfc99cbdf953c469ebb0ee260a113.json"
+    },
+    {
+      "key": "posts:/posts/wmt-leader-announcement-march-2021",
+      "before": "678dbb2516a234664706b45e514619dba76108d569b13f47be7c61cd46a88ba0",
+      "after": "1c29ff2093d8182ee63cf8b36db154eaef43f826f24b10ec754d98c321a244c1",
+      "archive": "docs/wca-post-translations/versions/wmt-leader-announcement-march-2021/678dbb2516a234664706b45e514619dba76108d569b13f47be7c61cd46a88ba0.json"
+    },
+    {
+      "key": "posts:/posts/wmt-leader-announcement-september-2026",
+      "before": "77a2df6de56bde54340db3f3a9dbfce627404868587b03e1d1b5a07f8a8df6b3",
+      "after": "708f79942aa00220b048ea7481ec33f0a997a49edebd0f3a368b92ed76f2d518",
+      "archive": "docs/wca-post-translations/versions/wmt-leader-announcement-september-2026/77a2df6de56bde54340db3f3a9dbfce627404868587b03e1d1b5a07f8a8df6b3.json"
+    },
+    {
+      "key": "posts:/posts/wqac-digest-2026-q1-q2",
+      "before": "1d2885a143f48c50855fe5e6aac80adcfede70ccc857313a503984df1d01956a",
+      "after": "f00dcd6eda97b2229df103d4c8525b92c929f9bc1643ccdc26a195f1a48f17de",
+      "archive": "docs/wca-post-translations/versions/wqac-digest-2026-q1-q2/1d2885a143f48c50855fe5e6aac80adcfede70ccc857313a503984df1d01956a.json"
+    },
+    {
+      "key": "posts:/posts/wrc-digest-2024-q1",
+      "before": "e9e01c86b5b1866ad60eaebb4255601edba228b5b1afff95803fbaf8d22c759e",
+      "after": "e6dcb44fc6b73574512308a57c534a101c6a45897adeb0576455a197c2085483",
+      "archive": "docs/wca-post-translations/versions/wrc-digest-2024-q1/e9e01c86b5b1866ad60eaebb4255601edba228b5b1afff95803fbaf8d22c759e.json"
+    },
+    {
+      "key": "posts:/posts/wrt-leader-announcement-january-2024",
+      "before": "db1b9031a87f6367029824c3ba892ac9a3572a8c18096a564c25cd4bdccfd8d1",
+      "after": "cbc4657d6a79f16adb9f4f3f68db274cda7175c153331d51842ffd3b4b49b515",
+      "archive": "docs/wca-post-translations/versions/wrt-leader-announcement-january-2024/db1b9031a87f6367029824c3ba892ac9a3572a8c18096a564c25cd4bdccfd8d1.json"
+    },
+    {
+      "key": "posts:/posts/wst-leader-announcement-june-2021",
+      "before": "a166b0ea22f5d0b28b10859e9b475b08a65e1d1358309fb56e6e573ba8e914d8",
+      "after": "473d9a75716cc183a765b6c3bb666c27803d12994c202d43dfdf70e5396d8c67",
+      "archive": "docs/wca-post-translations/versions/wst-leader-announcement-june-2021/a166b0ea22f5d0b28b10859e9b475b08a65e1d1358309fb56e6e573ba8e914d8.json"
+    },
+    {
+      "key": "posts:/posts/wst-leader-application-november-2020",
+      "before": "3649dedca9144d3406efd5c34c6c1f6a32f8f5637062b6aabf26e8ae533be78e",
+      "after": "de9e42c5881f043ee01665c4d272b29525f0979080d3dae20d5288ee184577de",
+      "archive": "docs/wca-post-translations/versions/wst-leader-application-november-2020/3649dedca9144d3406efd5c34c6c1f6a32f8f5637062b6aabf26e8ae533be78e.json"
+    },
+    {
+      "key": "posts:/posts/year-end-message-2019",
+      "before": "2b956792f0ae186aa0631fcdb5022209c7905ad694727f2387e8642fa19de57c",
+      "after": "dedaf590b1cc51da1bd37d4e85ec035fa1f5015ecb6e97a16306bbb431cf394c",
+      "archive": "docs/wca-post-translations/versions/year-end-message-2019/2b956792f0ae186aa0631fcdb5022209c7905ad694727f2387e8642fa19de57c.json"
+    },
+    {
+      "key": "posts:/posts/year-end-message-2020",
+      "before": "80595e590675f03d309cd2bd5d92ed35b8db2e768cce24e0127c9e9f86a90df2",
+      "after": "86997fab1496d6e21c45600d9fde998baef527c55ac286dc38ae0d2513821f60",
+      "archive": "docs/wca-post-translations/versions/year-end-message-2020/80595e590675f03d309cd2bd5d92ed35b8db2e768cce24e0127c9e9f86a90df2.json"
+    },
+    {
+      "key": "posts:/posts/year-end-message-2021",
+      "before": "c2aeb2fc6ae846e7ee3b4dcce74859da045e6b52ed04973ad7aefd137722b0a5",
+      "after": "31c8a681981a93859959e6a72a3eba2f4fe55dc744e8ae6baf9c1a86cc682db5",
+      "archive": "docs/wca-post-translations/versions/year-end-message-2021/c2aeb2fc6ae846e7ee3b4dcce74859da045e6b52ed04973ad7aefd137722b0a5.json"
+    },
+    {
+      "key": "posts:/posts/year-end-message-2022",
+      "before": "7e759c5149ee87b4058927f50751fcd71d287ea64844d07790ec710cfa5c790d",
+      "after": "a26855eb3466181b8d585c54393f32028211da26a9d4843a6f729a1b05d8b2c0",
+      "archive": "docs/wca-post-translations/versions/year-end-message-2022/7e759c5149ee87b4058927f50751fcd71d287ea64844d07790ec710cfa5c790d.json"
+    },
+    {
+      "key": "posts:/posts/year-end-message-2023",
+      "before": "b5a2d410ac6b9c51e1fcf2e2ef572e391c7a75eb4ce823eaf581522ec1a95cd3",
+      "after": "dfd49bb1bb1755aa90b0f45b68961678096d04895341ac77c8257bb9e2183396",
+      "archive": "docs/wca-post-translations/versions/year-end-message-2023/b5a2d410ac6b9c51e1fcf2e2ef572e391c7a75eb4ce823eaf581522ec1a95cd3.json"
+    },
+    {
+      "key": "posts:/posts/year-end-message-2024",
+      "before": "d9b8499de98d99c82f6e9f185117f3af7bbf370fceceb957a9b44a223a3e8a11",
+      "after": "66bbe5103174c9b7e71243c52d725c3ee98ef1cfb83d045b8b0893b9ba34ae03",
+      "archive": "docs/wca-post-translations/versions/year-end-message-2024/d9b8499de98d99c82f6e9f185117f3af7bbf370fceceb957a9b44a223a3e8a11.json"
+    },
+    {
+      "key": "disciplinary:/posts/call-for-applicants-wca-integrity-committee-leader-december-2025",
+      "before": "50852bccf6c0a108ff27923488d2879206db78813ac99f5a73faafccc45f0453",
+      "after": "9cc21bf2279f808e811a92137c846f3491a8e9f7cacfe8ea9e5be6e7c75ab104",
+      "archive": "docs/wca-log-translations/versions/disciplinary-call-for-applicants-wca-integrity-committee-leader-december-2025/50852bccf6c0a108ff27923488d2879206db78813ac99f5a73faafccc45f0453-v1.json"
+    },
+    {
+      "key": "disciplinary:/posts/call-for-applicants-wca-integrity-committee-members-august-2025",
+      "before": "2e49420878d8982bc6c11ae55d2b07aa1b41905c08e9b8a794a7f7c03be963c6",
+      "after": "cd68c3b8ba50d860446071ef967c039aeb8b68b3e0b4bbbf25724d3c8232c71b",
+      "archive": "docs/wca-log-translations/versions/disciplinary-call-for-applicants-wca-integrity-committee-members-august-2025/2e49420878d8982bc6c11ae55d2b07aa1b41905c08e9b8a794a7f7c03be963c6-v2.json"
+    },
+    {
+      "key": "disciplinary:/posts/call-for-applicants-wdc-leader-december-2023",
+      "before": "8dbb4825fe71ba53d73e88d608be2d9d0cf9696f1639dabb7c65ecd96e6c59ed",
+      "after": "2126bbe45f43c4bc78ac24eb6d0c85d4dcee6f0c385623dbbfa8834c63c89d6e",
+      "archive": "docs/wca-log-translations/versions/disciplinary-call-for-applicants-wdc-leader-december-2023/8dbb4825fe71ba53d73e88d608be2d9d0cf9696f1639dabb7c65ecd96e6c59ed-v1.json"
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2024-q4",
+      "before": "be586009fa2055a5a54cc9f0c1abd64a95825b15895ef19481fb338d33c91390",
+      "after": "fa8ab3b870aae0e6ec119742e0fd620880151061d7325162694e789801675b12",
+      "archive": "docs/wca-log-translations/versions/disciplinary-integrity-committee-digest-2024-q4/be586009fa2055a5a54cc9f0c1abd64a95825b15895ef19481fb338d33c91390-v1.json"
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2025-q1",
+      "before": "1edd0182a0c143d058d0de6a637fd8161eef9ca0105e330ed2d554a12a13b5a0",
+      "after": "21dc70a4b781d38d5c2bdcf50c83ee3bd6584bd3b3e6a4f23d1f3a96f68fcb2a",
+      "archive": "docs/wca-log-translations/versions/disciplinary-integrity-committee-digest-2025-q1/1edd0182a0c143d058d0de6a637fd8161eef9ca0105e330ed2d554a12a13b5a0-v1.json"
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2025-q2",
+      "before": "9c95e3634e0ed7e18e83395947592919ba27293818582585cf0b4b6cf171c73d",
+      "after": "65f2e48869f67566c2736fc52f4749f86395e7d1fe60a916f20c9add39fddb9b",
+      "archive": "docs/wca-log-translations/versions/disciplinary-integrity-committee-digest-2025-q2/9c95e3634e0ed7e18e83395947592919ba27293818582585cf0b4b6cf171c73d-v1.json"
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2025-q3",
+      "before": "fece5dad6b94ec5fb42fa9b1a49d509ee0439afb8d6681c3d24bf4cda7428bd3",
+      "after": "f21af7d2b10179e22d035fab604a96901e0d53648efd1790a12c9ab1ddacad9d",
+      "archive": "docs/wca-log-translations/versions/disciplinary-integrity-committee-digest-2025-q3/fece5dad6b94ec5fb42fa9b1a49d509ee0439afb8d6681c3d24bf4cda7428bd3-v1.json"
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2025-q4",
+      "before": "81ba030894da29f4f4bebdbc50490bd2d6bd95510d22e6b6207a22bd8fa2a0f8",
+      "after": "594885d9afd7ade87178cb2f20961498831b9c986e59468a7a7fb61b28cebf48",
+      "archive": "docs/wca-log-translations/versions/disciplinary-integrity-committee-digest-2025-q4/81ba030894da29f4f4bebdbc50490bd2d6bd95510d22e6b6207a22bd8fa2a0f8-v1.json"
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2026-q1",
+      "before": "3d518237642c66c9c88da01d7cc1b95f4b3223ed34cdf2799b6ccbd507b60f56",
+      "after": "c2441fb653a25edf147ad6734ce70e0e4538bf5320cd864ddfb79f35851c359c",
+      "archive": "docs/wca-log-translations/versions/disciplinary-integrity-committee-digest-2026-q1/3d518237642c66c9c88da01d7cc1b95f4b3223ed34cdf2799b6ccbd507b60f56-v1.json"
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2026-q2",
+      "before": "ef51ee4a7fd96bf7335c31a0b80341642c46751c36d971d7e165c9ff42db25af",
+      "after": "33ed29b9939cceefa5b5bd0d6d084d5c56ab955fd08581a7ad3114eec1986916",
+      "archive": "docs/wca-log-translations/versions/disciplinary-integrity-committee-digest-2026-q2/ef51ee4a7fd96bf7335c31a0b80341642c46751c36d971d7e165c9ff42db25af-v2.json"
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2026-q3",
+      "before": "dbd8ee497df2a3f0d8860db96c6a574e70716b6512b2271842068bb38b113d9f",
+      "after": "d3dd434ca0d8ff7b0143506b811f102267e3293386801cb7081756bec282092b",
+      "archive": "docs/wca-log-translations/versions/disciplinary-integrity-committee-digest-2026-q3/dbd8ee497df2a3f0d8860db96c6a574e70716b6512b2271842068bb38b113d9f-v2.json"
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-report-on-a-case-of-cheating-sep-2025",
+      "before": "f3c4dc0cdade9b859b11ce87469b11065bd4cba35f279d99ca976301d6f5bdc7",
+      "after": "4803c855d72392d92b316cddbcd9286ac7d6b9daeea4d6a771d6694a1807a67e",
+      "archive": "docs/wca-log-translations/versions/disciplinary-integrity-committee-report-on-a-case-of-cheating-sep-2025/f3c4dc0cdade9b859b11ce87469b11065bd4cba35f279d99ca976301d6f5bdc7-v2.json"
+    },
+    {
+      "key": "disciplinary:/posts/wca-integrity-committee-team-leader-announcement-january-2026",
+      "before": "409b87ca331919b35d389769aee61d176ddef8e123f08d5f0f52c4a82a60b3de",
+      "after": "2603b776ba919e1b8d700c8a7b5b24fefc7c207c478184b36887db28db9a270d",
+      "archive": "docs/wca-log-translations/versions/disciplinary-wca-integrity-committee-team-leader-announcement-january-2026/409b87ca331919b35d389769aee61d176ddef8e123f08d5f0f52c4a82a60b3de-v1.json"
+    },
+    {
+      "key": "disciplinary:/posts/wdc-digest-september-2022",
+      "before": "c84888b221a40b6e69364ddfe5ede276f96f85a7751d75efa64c8ee16cabc479",
+      "after": "bc31a622a5c089f5946af54a6c84730fcc235149a64209e5a2e59de342627b5b",
+      "archive": "docs/wca-log-translations/versions/disciplinary-wdc-digest-september-2022/c84888b221a40b6e69364ddfe5ede276f96f85a7751d75efa64c8ee16cabc479-v1.json"
+    },
+    {
+      "key": "disciplinary:/posts/wic-digest-2024-q3",
+      "before": "f0469b5117427c85a5238766b95c0ac39e313ecb18e6529a89c8222b60915591",
+      "after": "f3271bb8ce7a9ec41c398a43f188eb8383783d29654e028ca2d85b7169837330",
+      "archive": "docs/wca-log-translations/versions/disciplinary-wic-digest-2024-q3/f0469b5117427c85a5238766b95c0ac39e313ecb18e6529a89c8222b60915591-v1.json"
+    },
+    {
+      "key": "posts:/posts/changes-in-wca-officers-may-2026",
+      "before": "f669e73f203d1137cde119787af937fbe506914216c2ec9ab1c427ab90c731ee",
+      "after": "7c0c39e70cd76688e25c7bd3062674ae3bd239cbce3fbb6b1fd6a83f5b8d7e24",
+      "archive": "docs/wca-post-translations/versions/changes-in-wca-officers-may-2026/f669e73f203d1137cde119787af937fbe506914216c2ec9ab1c427ab90c731ee.json"
+    }
+  ]
+}

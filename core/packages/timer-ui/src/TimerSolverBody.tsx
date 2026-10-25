@@ -6,9 +6,9 @@ import './TimerStepSolve.css';
 import './manual-scramble-queue.css';
 const TimerStepSolve = lazy(() => import('./TimerStepSolve'));
 
-export default function TimerSolverBody({ view = 'solutions', scramble, onScrambleChange, language, compact, settingsSlot, onPrevScramble, onNextScramble, onDismissChange, onBlockingChange }: {
+export default function TimerSolverBody({ view = 'solutions', scramble, onScrambleChange, language, compact, settingsSlot, navigationSlot, onPrevScramble, onNextScramble, onDismissChange, onBlockingChange }: {
   view?: 'solutions' | 'steps';
-  scramble: string; language: 'en' | 'zh'; compact: boolean; settingsSlot?: HTMLElement | null;
+  scramble: string; language: 'en' | 'zh'; compact: boolean; settingsSlot?: HTMLElement | null; navigationSlot?: HTMLElement | null;
   onScrambleChange?(scramble: string): void;
   onPrevScramble?(): void; onNextScramble?(): void;
   onBlockingChange?(blocked: boolean): void;
@@ -62,11 +62,11 @@ export default function TimerSolverBody({ view = 'solutions', scramble, onScramb
           aria-label={tr({ zh: '取消', en: 'Cancel' })}><X size={16} /></button>
       </form> : (scramble.trim() || onScrambleChange) && <div className="solver-panel-scramble solver-scramble-row">
         <span>{scramble}</span>
-        {onScrambleChange && <button type="button" className="solver-layout-action" data-no-swipe
-          aria-label={tr({ zh: '编辑打乱', en: 'Edit scramble' })}
-          onClick={() => { setDraft(scramble); setEditing(true); }}><Pencil size={16} /></button>}
       </div>}
-      <StageSolver scramble={scramble} lang={language} compact={compact} expandedSolutions={!compact} settingsSlot={settingsSlot}
+      <StageSolver scramble={scramble} lang={language} compact={compact} expandedSolutions={!compact} settingsSlot={settingsSlot} navigationSlot={navigationSlot}
+        scrambleEditAction={onScrambleChange && <button type="button" className="stsv-settings-toggle" data-no-swipe
+          disabled={editing} aria-label={tr({ zh: '编辑打乱', en: 'Edit scramble' })}
+          onClick={() => { setDraft(scramble); setEditing(true); }}><Pencil size={18} /></button>}
         onPrevScramble={onPrevScramble} onNextScramble={onNextScramble} onDismissChange={registerStage} onBlockingChange={setStageBlocking} />
     </> : <Suspense fallback={null}>
       <TimerStepSolve scramble={scramble} isZh={language === 'zh'} onDismissChange={registerCompare} onBlockingChange={setCompareBlocking} />

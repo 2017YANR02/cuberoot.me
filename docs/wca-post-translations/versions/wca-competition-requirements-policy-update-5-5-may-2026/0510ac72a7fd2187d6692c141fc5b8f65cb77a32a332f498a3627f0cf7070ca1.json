@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/wca-competition-requirements-policy-update-5-5-may-2026",
+  "source": {
+    "key": "posts:/posts/wca-competition-requirements-policy-update-5-5-may-2026",
+    "kind": "posts",
+    "title": "WCA Competition Requirements Policy Update 5.5 (May 2026)",
+    "date": "2026-05-29T20:35:17.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/wca-competition-requirements-policy-update-5-5-may-2026",
+    "content": "Dear WCA Community,\n\nThe WCA Competition Announcement Team (WCAT) has updated the[ WCA Competition Requirements Policy](https://documents.worldcubeassociation.org/documents/policies/external/Competition%20Requirements.pdf) to Version 5.5. You can view the full details of the updates on the[ Github PR](https://github.com/thewca/wca-documents/pull/510/changes). A list of all major updates are available below:\n\n<!-- break -->\n**The addition of a “Quiet Championship”**\n\nCountries can now have a separate championship featuring Blindfolded events and Fewest Moves. For further information, please view this [*explainer document*](https://docs.google.com/document/d/1oYeA8YZQaVIwml0nA5KtZmJJp3WrAb2zcOnoyksIRBg/).\n\n\n**Qualification times can have a start date.**\n\nFor competitions which require qualification times, the organisers can now set a start date of which the qualification results must have been achieved. This change is made to ensure that competitors may not qualify for a competition solely from an old result which does not represent their current skill.\n\nExample: A qualification for 3x3x3 Blindfolded can be a single time better than 3 minutes that is set between January 1st 2020 and November 1st 2026.\n\nFor further information on smaller changes, please refer to the [forums announcement](https://forum.worldcubeassociation.org/t/wca-competition-requirements-policy-update-5-5/66944). \n\nIf you have any questions regarding the changes to the WCA Competition Requirements Policy, please contact your local delegates or use the [WCA Contact Form](https://www.worldcubeassociation.org/contact).",
+    "hash": "1b80595685e015a1bcebe6aa7335358cee3c9a1eb9d4c89ec618aa901abf3938",
+    "format": "markdown",
+    "sourceId": 14250
+  },
+  "translation": {
+    "version": 2,
+    "sourceHash": "1b80595685e015a1bcebe6aa7335358cee3c9a1eb9d4c89ec618aa901abf3938",
+    "language": "zh-Hans",
+    "title": "《WCA 比赛要求政策》5.5 版更新（2026 年 5 月）",
+    "content": "亲爱的 WCA 社区成员：\n\nWCA 比赛公告团队（WCAT）已将[《WCA 比赛要求政策》](https://documents.worldcubeassociation.org/documents/policies/external/Competition%20Requirements.pdf)更新至 5.5 版。完整更新内容可在 [GitHub PR](https://github.com/thewca/wca-documents/pull/510/changes) 中查看。主要变更如下：\n\n**新增“安静锦标赛”**\n\n各国现在可以另行举办包含盲拧项目与最少步项目的锦标赛。更多信息请参阅这份[说明文件](https://docs.google.com/document/d/1oYeA8YZQaVIwml0nA5KtZmJJp3WrAb2zcOnoyksIRBg/)。\n\n**可限定达标成绩的取得日期。**\n\n对于要求达标成绩的比赛，主办方现在可以设置一个起始日期，要求用于达标的成绩在该日期之后取得。这项变更是为了避免选手仅凭无法反映其当前水平的旧成绩获得参赛资格。\n\n例如，三阶盲拧的资格要求可以是：在 2020 年 1 月 1 日至 2026 年 11 月 1 日之间取得优于 3 分钟的单次成绩。\n\n其他较小的变更请参阅[论坛公告](https://forum.worldcubeassociation.org/t/wca-competition-requirements-policy-update-5-5/66944)。\n\n如果您对《WCA 比赛要求政策》的变更有疑问，请联系当地代表，或使用 [WCA 联系表单](https://www.worldcubeassociation.org/contact)。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:40:49.172Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "0510ac72a7fd2187d6692c141fc5b8f65cb77a32a332f498a3627f0cf7070ca1"
+}

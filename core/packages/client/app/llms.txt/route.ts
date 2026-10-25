@@ -57,6 +57,11 @@ Association. WCA competition data is derived from the WCA's public export.
   discrepancies. Read this before translating WCA-related content into Chinese.
 - [Translation reference in Markdown](${BASE}/regulation/wca-translation-reference.md):
   the same bilingual reference as a directly readable, downloadable file.
+- [WCA website bilingual corpus](${BASE}/regulation/wca-website-bilingual.md):
+  official organization names, navigation, FAQ, team responsibilities, resources
+  and results terminology aligned by locale key. Use WIC = 廉政委员会, WCT = 通讯组,
+  WCAT = 比赛公示组. Preserve historical acronyms; do not rename WDC to WIC.
+  Coverage and known source discrepancies are documented in the corpus.
 - [Parallel clauses in Markdown](${BASE}/regulation/wca-regulations-bilingual.md):
   English and Chinese aligned by clause ID, with source versions and attribution.
   Alignment does not certify translation quality; consult the reference's known

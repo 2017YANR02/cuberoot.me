@@ -13,17 +13,17 @@
   },
   "translation": {
     "language": "zh-Hans",
-    "version": 2,
-    "title": "诚信委员会关于一宗作弊案件的报告（2025 年 9 月）",
-    "content": "亲爱的 WCA 社群：\n\n本报告也已译为西班牙语，方便受影响地区阅读。[点击此处](https://drive.google.com/drive/folders/1xm2tnGC2XWBEeQp76BX-C_WdgZbbh6Zt?usp=drive_link)查看西班牙语版。\n\n诚信委员会已结束一宗调查：一名曾持国家纪录的选手，在多场比赛多个项目中作弊。因此，其被禁止参赛 2 年 6 个月。\n\n选手最初否认任何不当行为，直至看到证据。除三阶最少步外，其跨越数年的成绩也被取消。由于不配合调查，WIC 取消了所有存在成绩合法性疑虑的比赛中该选手的计时成绩。\n\n本报告旨在公开禁赛及取消成绩的理由，警示裁判不专注可能导致的事件，并展示 WIC 在所有地区维护公平的承诺。报告后文还说明委员会目前对作弊案件取消成绩的总体立场。\n\n鉴于被指控选手的年龄，WIC 决定将报告完全匿名化，并强烈劝阻社群公开其姓名。完整报告见[此处](https://drive.google.com/file/d/1LW6YcbRNm30U6h-JlUi7es2KHkWal5eN/view?usp=drive_link)。\n\n谨致问候，\nShain Longbehn，WIC 负责人\n代表 WCA 诚信委员会",
+    "version": 3,
+    "title": "廉政委员会关于一宗作弊案件的报告（2025 年 9 月）",
+    "content": "亲爱的 WCA 社群：\n\n本报告也已译为西班牙语，方便受影响地区阅读。[点击此处](https://drive.google.com/drive/folders/1xm2tnGC2XWBEeQp76BX-C_WdgZbbh6Zt?usp=drive_link)查看西班牙语版。\n\n廉政委员会已结束一宗调查：一名曾持国家纪录的选手，在多场比赛多个项目中作弊。因此，其被禁止参赛 2 年 6 个月。\n\n选手最初否认任何不当行为，直至看到证据。除三阶最少步外，其跨越数年的成绩也被取消。由于不配合调查，WIC 取消了所有存在成绩合法性疑虑的比赛中该选手的计时成绩。\n\n本报告旨在公开禁赛及取消成绩的理由，警示裁判不专注可能导致的事件，并展示 WIC 在所有地区维护公平的承诺。报告后文还说明委员会目前对作弊案件取消成绩的总体立场。\n\n鉴于被指控选手的年龄，WIC 决定将报告完全匿名化，并强烈劝阻社群公开其姓名。完整报告见[此处](https://drive.google.com/file/d/1LW6YcbRNm30U6h-JlUi7es2KHkWal5eN/view?usp=drive_link)。\n\n谨致问候，\nShain Longbehn，WIC 负责人\n代表 WCA 廉政委员会",
     "translatedAt": "2026-10-22T06:05:15.716Z",
     "translator": "Codex / subscription",
     "sourceHash": "4b2e09eadf615c68880831b7bbd61de22d9164ed8698e7358f36469060fb1de6",
-    "revisedAt": "2026-10-22T06:25:36.680Z",
-    "revisionReason": "独立审校 round-1 的精确修正建议"
+    "revisedAt": "2026-10-25T07:28:01.629Z",
+    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
   },
   "review": {
-    "status": "independently_verified",
+    "status": "pending_independent_recheck",
     "checks": [
       "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
     ],
@@ -49,6 +49,11 @@
       "sourceHash": "4b2e09eadf615c68880831b7bbd61de22d9164ed8698e7358f36469060fb1de6",
       "reviewedTranslationHash": "f3c4dc0cdade9b859b11ce87469b11065bd4cba35f279d99ca976301d6f5bdc7",
       "verdict": "pass"
+    },
+    "terminologyRevision": {
+      "at": "2026-10-25T07:28:01.629Z",
+      "previousTranslationHash": "f3c4dc0cdade9b859b11ce87469b11065bd4cba35f279d99ca976301d6f5bdc7",
+      "scope": "机构名称专项校订；此前独立审校证据仍绑定旧译文，不视为新版本独立审校。"
     }
   },
   "publication": {

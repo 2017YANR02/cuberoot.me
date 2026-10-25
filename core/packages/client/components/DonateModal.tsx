@@ -1,4 +1,5 @@
 'use client';
+import './settings-typography.css';
 
 import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { Info } from '@app-foundation/icons/lucide';
@@ -9,17 +10,18 @@ import './donate-modal.css';
 interface Props {
   lang: 'zh' | 'en';
   onClose: () => void;
+  embedded?: boolean;
 }
 
 const ICON_SIZE = 14;
 
-export default function DonateModal({ lang, onClose }: Props) {
+export default function DonateModal({ lang, onClose, embedded = false }: Props) {
   const backdropProps = useModalDismiss(onClose);
 
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
   if (installedMembershipStore()) return (
-    <div className="donate-overlay" {...backdropProps}>
-      <section className="donate-modal">
+    <div className={embedded ? undefined : "donate-overlay"} {...(!embedded ? backdropProps : {})}>
+      <section className="donate-modal settings-typography">
         <AppLink href="/membership" onClick={onClose}>{t('前往 App 内会员订阅', 'Open in-app membership subscriptions')}</AppLink>
         <button onClick={onClose}>{t('关闭', 'Close')}</button>
       </section>
@@ -27,8 +29,8 @@ export default function DonateModal({ lang, onClose }: Props) {
   );
 
   return (
-    <div className="donate-overlay" {...backdropProps} role="dialog" aria-modal="true">
-      <div className="donate-modal">
+    <div className={embedded ? undefined : "donate-overlay"} {...(!embedded ? backdropProps : {})} role={embedded ? undefined : "dialog"} aria-modal={embedded ? undefined : true}>
+      <div className="donate-modal settings-typography">
         <button className="donate-close" onClick={onClose} aria-label={t('关闭', 'Close')}>✕</button>
         <h2 className="donate-title">{t('谢谢你的支持 ♡', 'Thanks for your support ♡')}</h2>
 

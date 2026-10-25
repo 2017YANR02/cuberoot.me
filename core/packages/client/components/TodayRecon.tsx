@@ -73,7 +73,7 @@ export default function TodayRecon({ lang, pinnedRecons, pinnedOnly = false, isA
   return (
     <div className="today-recon" data-tour="today-replay">
       <div className="tr-head">
-        <span className="tr-title">{tr({ zh: '今日复盘', en: 'Recon of the Day' })}</span>
+        <span className="tr-title">{tr({ zh: '复盘', en: 'Reconstructions' })}</span>
         <Link href="/recon" prefetch={false} className="tr-all">{tr({ zh: '全部', en: 'All recons' })}</Link>
       </div>
 

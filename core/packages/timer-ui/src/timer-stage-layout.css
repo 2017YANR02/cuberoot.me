@@ -21,6 +21,18 @@
 .timer-stage-footer[hidden], .timer-stage-source[hidden] { display: none; }
 .timer-stage-statistics { min-width: 0; }
 .timer-stage-devices { flex: 0 0 auto; }
+.timer-stage-rankings { min-width: 0; margin-inline: auto; }
+.timer-stage-footer:has(.timer-stage-rankings):not([hidden]) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+.timer-stage-footer:has(.timer-stage-rankings) .timer-stage-devices { justify-self: end; }
+@media (max-width: 480px) {
+  .timer-stage-footer:has(.timer-stage-rankings) { grid-template-columns: minmax(0, 1fr) auto; }
+  .timer-stage-rankings { grid-column: 1 / -1; grid-row: 2; }
+  .timer-stage-footer:has(.timer-stage-rankings) .timer-stage-devices { grid-column: 2; grid-row: 1; }
+}
 
 .timer-stage-footer .shell-stat-rail,
 .timer-stage-footer .shell-device-center {

@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
-import { REG_NEWS } from '../../_data/news';
+import { REG_NEWS } from '@/lib/regulation-posts';
 import posts from '../../_data/posts.json';
-import {ALL_NEWS} from '../../_data/news-catalog';
+import {ALL_NEWS} from '@/lib/regulation-posts';
 import PostArticle from '../_components/PostArticle';
 import NewsArticle from '../_components/NewsArticle';
 

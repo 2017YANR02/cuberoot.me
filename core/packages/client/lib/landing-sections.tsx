@@ -2,9 +2,9 @@
 // website and Mini Program. Destinations, order and copy stay in one catalog.
 
 import {
-  Film, ScanSearch, BookOpen, Shuffle, Library, BookA,
-  Compass, Grid2x2, Trophy, Timer as TimerIcon, Code as CodeIcon,
-  Brain, Box, Sigma, Scale, Sprout, Brush, MessageCircle, MessagesSquare, Shapes, Blocks, Eye, Palette,
+  Film, BookOpen, Library, BookA,
+  Compass, Grid2x2, Trophy, Code as CodeIcon,
+  Brain, Sigma, Scale, Sprout, Brush, MessageCircle, MessagesSquare, Shapes, Eye, Palette,
   CircleQuestionMark, Globe2, CalendarDays, Video, GraduationCap, School, Building2,
   FileText, Table2, Award, Radio, PanelsTopLeft, UserRound, UsersRound, HardDrive, ListOrdered,
   Images, Music2, Gamepad2, History,
@@ -16,6 +16,8 @@ import {
   type SiteDirectoryEntry,
 } from '@cuberoot/shared/site-directory';
 import { type LandingSearchCard } from '@/components/LandingSearch';
+import StackmatIcon from '@/components/StackmatIcon';
+import CheckeredFlagIcon from '@/components/CheckeredFlagIcon';
 import { PAGE_META } from '@/lib/page-meta';
 import { SITE_ANNOUNCEMENTS } from '@cuberoot/shared/site-announcements';
 import { PLATFORM_ROUTES } from '@/lib/platform-routes';
@@ -35,6 +37,9 @@ export interface CardConfig {
   tier: Tier;
   Icon?: LucideIcon;
   iconImg?: string;
+  record?: string;
+  iconText?: string;
+  puzzleIcon?: string;
   nameKey: keyof typeof TEXTS;
   comingSoon?: boolean;
   adminOnly?: boolean;
@@ -55,18 +60,21 @@ export { applyCardOrder as applyLandingCardOrder } from './card-order';
 interface CardVisual {
   Icon?: LucideIcon;
   iconImg?: string;
+  record?: string;
+  iconText?: string;
+  puzzleIcon?: string;
 }
 
 const CARD_VISUALS: Partial<Record<SiteDirectoryEntry['id'], CardVisual>> = {
-  timer: { Icon: TimerIcon },
-  algdb: { Icon: Blocks },
-  sim: { Icon: Box },
+  timer: { Icon: StackmatIcon },
+  algdb: { iconText: "R' F R F'" },
+  sim: { puzzleIcon: 'puzzle-333-outline' },
   space: { Icon: Shapes },
   'paper-odyssey': { Icon: Gamepad2 },
-  recon: { Icon: ScanSearch },
-  scramble: { Icon: Shuffle },
-  competitions: { Icon: Radio },
-  'wca-records': { Icon: Trophy },
+  recon: { iconText: '// xcross' },
+  scramble: { iconText: "S' U' M'" },
+  competitions: { Icon: CheckeredFlagIcon },
+  'wca-records': { record: 'WR' },
   'wca-results': { Icon: ListOrdered },
   'wca-stats': { iconImg: '/icons/wca.svg' },
   memo: { Icon: Brain },

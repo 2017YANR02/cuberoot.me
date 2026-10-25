@@ -12,14 +12,16 @@
     "sourceId": 11582
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "cdc9d4db221ecf1907f58a2f957cd235822ef06f74987ff69dd7dc7f37ebdf18",
     "language": "zh-Hans",
-    "title": "WCA 市场团队新负责人确定",
-    "content": "我们很高兴地宣布，Somya Srivastava 已获任命，担任 WCA 市场团队（WMT）负责人。\n\n按照关于 WCA 委员会和团队的 [10.2019.0 号议案](https://www.worldcubeassociation.org/documents/motions/10.2019.0%20-%20Committees%20and%20Teams.pdf)第 4 节，WCA 董事会选定 Somya，并经现任委员会、团队负责人及高级代表投票批准。\n\n祝 Somya 履新顺利！\n\nSomya Srivastava 是本岗位的唯一申请人。如有兴趣，可在[此处](https://drive.google.com/drive/folders/1vZ4NrK40KENKUMP13H8VkoiSttHjmLxr)查看她的申请材料。",
+    "title": "WCA 市场营销组新负责人确定",
+    "content": "我们很高兴地宣布，Somya Srivastava 已获任命，担任 WCA 市场营销组（WMT）负责人。\n\n按照关于 WCA 委员会和团队的 [10.2019.0 号议案](https://www.worldcubeassociation.org/documents/motions/10.2019.0%20-%20Committees%20and%20Teams.pdf)第 4 节，WCA 董事会选定 Somya，并经现任委员会、团队负责人及高级代表投票批准。\n\n祝 Somya 履新顺利！\n\nSomya Srivastava 是本岗位的唯一申请人。如有兴趣，可在[此处](https://drive.google.com/drive/folders/1vZ4NrK40KENKUMP13H8VkoiSttHjmLxr)查看她的申请材料。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.141Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "pending_independent_review",
+    "revisedAt": "2026-10-25T07:28:01.629Z",
+    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
   },
-  "translationHash": "8f962d58dcc490797260d174e8ba713b48ea483e5348201aafb460137411287d"
+  "translationHash": "ff9fbccd971fd3cf7181a173e088818bcf9e6e80763caf84ab35fd1b4a9e68da"
 }

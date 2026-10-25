@@ -85,6 +85,37 @@ describe('shared timer puzzle picker', () => {
     expect(onSelect).toHaveBeenLastCalledWith('length', '');
   });
 
+  it('opens both method levels on mouse hover without selecting or stealing focus', () => {
+    const onSelect = vi.fn();
+    act(() => root.render(createElement(MethodStagePicker, {
+      method: 'std', stage: 'cross', methods: ['std', 'pseudo'], isZh: true,
+      stagesOf: () => ['cross', 'xcross'], onSelect,
+    })));
+    const trigger = host.querySelector<HTMLButtonElement>('.pp-trigger')!;
+    trigger.focus();
+    const enter = (element: Element, pointerType: string) => act(() => {
+      const event = new MouseEvent('pointerover', { bubbles: true });
+      Object.defineProperty(event, 'pointerType', { value: pointerType });
+      element.dispatchEvent(event);
+    });
+    enter(trigger, 'touch');
+    expect(host.querySelector('.pp-popup')).toBeNull();
+    enter(trigger, 'mouse');
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(host.querySelectorAll('.pp-cascade-options > button')).toHaveLength(2);
+    expect(host.querySelector('.pp-cascade-options .pp-item--active')?.textContent).toBe('十字');
+    expect(document.activeElement).toBe(trigger);
+    const parents = host.querySelectorAll<HTMLButtonElement>('.pp-group-items > button');
+    enter(parents[1], 'mouse');
+    expect(parents[1].getAttribute('aria-expanded')).toBe('true');
+    expect(host.querySelector('.pp-cascade-options .pp-item--active')).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+    expect(onSelect).not.toHaveBeenCalled();
+    act(() => host.querySelectorAll<HTMLButtonElement>('.pp-cascade-options > button')[1].click());
+    expect(onSelect).toHaveBeenCalledWith('pseudo', 'xcross');
+    expect(host.querySelector('.pp-popup')).toBeNull();
+  });
+
   it('highlights only the expanded family when browsing away from the selected family', () => {
     const onSelect = vi.fn();
     act(() => root.render(createElement(TimerPuzzlePicker, {

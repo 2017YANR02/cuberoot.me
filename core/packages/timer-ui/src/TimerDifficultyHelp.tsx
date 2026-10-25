@@ -3,6 +3,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { usePanelClamp } from './usePanelClamp';
 import { usePopoverDismiss } from './usePopoverDismiss';
+import './random-difficulty-config.css';
 
 export function TimerDifficultyHelp({ content, label, hover = false, question = false }: {
   content: string;

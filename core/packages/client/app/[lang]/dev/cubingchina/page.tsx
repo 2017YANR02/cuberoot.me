@@ -788,7 +788,7 @@ export default function CubingChinaIntroPage() {
                     sw: <L zh="en · zh-Hans" en="en · zh-Hans" /> },
                   { k: <L zh="主维护" en="Maintainers" />,
                     ts: <L zh={<>~94% 一人(董百强)</>} en={<>~94% one person (Baiqiang)</>} />,
-                    js: <L zh="WCA 软件团队 (WST)" en="WCA Software Team (WST)" />,
+                    js: <L zh="WCA 软件组 (WST)" en="WCA Software Team (WST)" />,
                     sw: <L zh="自有" en="In-house" /> },
                 ].map((row, i) => (
                   <tr key={i}>

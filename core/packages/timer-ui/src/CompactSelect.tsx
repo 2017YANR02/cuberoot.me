@@ -28,6 +28,8 @@ export interface CompactSelectProps<T extends string | number> {
   /** Multi-selection uses the same menu; onChange toggles the chosen value. */
   selectedValues?: readonly T[];
   onChange: (value: T) => void;
+  /** Transient option preview; null restores the committed value. */
+  onPreview?: (value: T | null) => void;
   ariaLabel: string;
   valueText?: string;
   title?: string;
@@ -57,6 +59,8 @@ export interface CompactSelectProps<T extends string | number> {
   /** Optional host control for modal/back-button coordination. */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /** Host-owned persistent panel, instead of an anchored popup. */
+  panelContainer?: HTMLElement | null;
 }
 
 /**
@@ -72,6 +76,7 @@ export function CompactSelect<T extends string | number>({
   value,
   selectedValues,
   onChange,
+  onPreview,
   ariaLabel,
   valueText,
   title,
@@ -92,6 +97,7 @@ export function CompactSelect<T extends string | number>({
   viewportBottomInset = 0,
   open: controlledOpen,
   onOpenChange,
+  panelContainer,
 }: CompactSelectProps<T>) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
@@ -105,13 +111,13 @@ export function CompactSelect<T extends string | number>({
   const previousOpenRef = useRef(open);
   const close = () => setOpen(false);
   const hasPanelContent = panelContent != null;
-  usePopoverDismiss(open, close, panelRef, triggerRef);
+  usePopoverDismiss(open && !panelContainer, close, panelRef, triggerRef);
 
   useEffect(() => {
     const wasOpen = previousOpenRef.current;
     previousOpenRef.current = open;
-    if (controlledOpen !== undefined && wasOpen && !open && !disabled) triggerRef.current?.focus();
-  }, [controlledOpen, disabled, open]);
+    if (controlledOpen !== undefined && wasOpen && !open && !disabled && !panelContainer) triggerRef.current?.focus();
+  }, [controlledOpen, disabled, open, panelContainer]);
 
   useEffect(() => {
     if (disabled) setOpen(false);
@@ -157,7 +163,7 @@ export function CompactSelect<T extends string | number>({
   }, [open, dismissOnMouseLeave, side]);
 
   const panelStyle = usePopoverPosition({
-    open, triggerRef, panelRef, contentAnchorRef, align, side, viewportBottomInset,
+    open: open && !panelContainer, triggerRef, panelRef, contentAnchorRef, align, side, viewportBottomInset,
     contentKey: String(items.length) + ':' + hasPanelContent,
   });
 
@@ -227,10 +233,16 @@ export function CompactSelect<T extends string | number>({
                   key={item.value}
                   className={`compact-select-option${active ? ' active' : ''}`}
                   disabled={item.disabled}
+                  onPointerEnter={event => {
+                    if (!item.disabled && event.pointerType === 'mouse') onPreview?.(item.value);
+                  }}
+                  onPointerLeave={() => onPreview?.(null)}
+                  onFocus={() => { if (!item.disabled) onPreview?.(item.value); }}
+                  onBlur={() => onPreview?.(null)}
                   onClick={() => {
                     if (item.disabled) return;
                     onChange(item.value);
-                    close();
+                    if (!panelContainer) close();
                   }}
                 >
                   {item.label}
@@ -242,7 +254,7 @@ export function CompactSelect<T extends string | number>({
         </div>,
         // Native modal dialogs make the rest of the document inert. Keep the
         // shared, viewport-clamped popup in its trigger's top-layer surface.
-        triggerRef.current?.closest('dialog, [role="dialog"]') ?? document.body,
+        panelContainer ?? triggerRef.current?.closest('dialog, [role="dialog"]') ?? document.body,
       )}
     </div>
   );

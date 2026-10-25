@@ -36,6 +36,7 @@ import {
 import { primaryCaseName } from '@/lib/alg_case_display';
 import { caseKey } from '@/lib/trainer-case-key';
 import { tr } from '@/i18n/tr';
+import { useTrainingHost } from '@/lib/training-host';
 import '../alg.css';
 import './progress.css';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -454,6 +455,7 @@ function WeakCards({ recs }: { recs: Record<string, SrsRecs> }) {
 // ── 页面 ───────────────────────────────────────────────────────
 
 export default function AlgProgressPage() {
+  const trainingHost = useTrainingHost();
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const [marks, setMarks] = useState<MarkOverview | null>(null);
@@ -605,7 +607,7 @@ export default function AlgProgressPage() {
         <Link href="/alg" className="alg-back">
           <ArrowLeft size={14} /> {tr({ zh: '公式库', en: 'Algorithms' })}
         </Link>
-        <h1 className="alg-cat-title">
+        <h1 className={trainingHost ? 'sr-only' : 'alg-cat-title'}>
           <span>{tr({ zh: '学习进度', en: 'Learning Progress' })}</span>
         </h1>
       </div>

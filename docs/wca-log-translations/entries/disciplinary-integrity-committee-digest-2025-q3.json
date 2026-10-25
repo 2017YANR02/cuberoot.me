@@ -13,15 +13,17 @@
   },
   "translation": {
     "language": "zh-Hans",
-    "version": 1,
-    "title": "诚信委员会简报：2025 年第三季度",
+    "version": 2,
+    "title": "廉政委员会简报：2025 年第三季度",
     "content": "亲爱的 WCA 社群：\n\n上季度 WIC 立案 19 件、结案 18 件，均为委员会纪录。作出 7 项禁赛、5 项警告，6 件未采取措施。部分重要案件如下：\n- WIC 近期公布了一名曾持国家纪录的选手故意不当停表的报告。其被禁止参赛两年半，多场比赛成绩被取消，详情见[报告](https://www.worldcubeassociation.org/posts/integrity-committee-report-on-a-case-of-cheating-sep-2025)。\n- 接报一名选手比赛中不当触碰观众。观众称此前也有未经同意的类似行为。WIC 联系证人，获得佐证。依据证词可信度、多方观察到的即时情绪影响，以及证人对受害者反应的确认，WIC 认定事件可信且有依据。该选手被多年禁止参赛、到场及参与 WCA 论坛。\n- 收到确凿视频，显示选手在观察时转动魔方。向其出示证据后，WIC 认为其调查中的悔意与合作并非完全真诚，只在被发现后才后悔。其被多年禁止参赛，多场比赛成绩被取消。\n- 接报选手多次发表违反行为准则 2.2.1 的不当言论。选手否认违规，但多名证人证实其行为。其被禁止参赛及到场。\n- 多场比赛的多名代表报告一名选手篡改多张成绩单。选手承认修改部分成绩，因此被短期禁止参赛。提醒参与录入的代表和志愿者仔细检查可疑修改。\n- 收到邮件，报告选手讲带暴力性质、不恰当且不受欢迎的笑话，违反行为准则 2.2.1。询问时，选手否认并不再回复后续邮件。其被禁止参赛及到场。\n\n如有问题，欢迎[发邮件](mailto:integrity@worldcubeassociation.org)。",
     "translatedAt": "2026-10-22T06:05:15.716Z",
     "translator": "Codex / subscription",
-    "sourceHash": "d66f044685ba3d5846fc62a934eb0793bc59c120cbff16b30f96613530ec909f"
+    "sourceHash": "d66f044685ba3d5846fc62a934eb0793bc59c120cbff16b30f96613530ec909f",
+    "revisedAt": "2026-10-25T07:28:01.629Z",
+    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
   },
   "review": {
-    "status": "independently_verified",
+    "status": "pending_independent_recheck",
     "checks": [
       "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
     ],
@@ -36,7 +38,12 @@
       "verdict": "pass",
       "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
     },
-    "unresolvedNotes": []
+    "unresolvedNotes": [],
+    "terminologyRevision": {
+      "at": "2026-10-25T07:28:01.629Z",
+      "previousTranslationHash": "fece5dad6b94ec5fb42fa9b1a49d509ee0439afb8d6681c3d24bf4cda7428bd3",
+      "scope": "机构名称专项校订；此前独立审校证据仍绑定旧译文，不视为新版本独立审校。"
+    }
   },
   "publication": {
     "status": "not_authorized"

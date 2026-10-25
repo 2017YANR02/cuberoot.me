@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-10-22T08:55:56.334Z",
+  "updatedAt": "2026-10-25T07:28:01.629Z",
   "snapshot": "snapshots/2026-10-22.json",
   "counts": {
     "total": 494,
@@ -18,8 +18,8 @@
       "date": "2018-01-02T02:36:38.000Z",
       "status": "translated",
       "path": "entries/2017-year-end-message.json",
-      "translationVersion": 1,
-      "translationHash": "1c018c14a74e058441169e0a4db73429b7ad580b69ccfb3e74fc419326a6bc3d",
+      "translationVersion": 2,
+      "translationHash": "32dca61f86380cc02163942207382075412a00635e40e12c7e283f811f0bf34f",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -31,8 +31,8 @@
       "date": "2019-01-01T07:39:29.000Z",
       "status": "translated",
       "path": "entries/2018-year-end-message.json",
-      "translationVersion": 1,
-      "translationHash": "f0cc8cb9f872caf5745eb4e4cec19f7cf4fb7e1b46add6fdd82f7dff56d98a13",
+      "translationVersion": 2,
+      "translationHash": "59c70a8c9251147bddb4ca1e199dfb42ccf15b48bec3dd2e345f3d2442a10b88",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -83,8 +83,8 @@
       "date": "2020-01-31T06:05:45.000Z",
       "status": "translated",
       "path": "entries/amendments-to-the-motions-approved-january-2020.json",
-      "translationVersion": 1,
-      "translationHash": "3135cf15b8a9b7b685acfb64991e6b2a4839ac0e3b41a5b44e80fbc539431e19",
+      "translationVersion": 2,
+      "translationHash": "0678177806dae50b1d05f7d4d8e9839797503d77720d814c552d54012523f951",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -96,8 +96,8 @@
       "date": "2019-06-01T17:10:30.000Z",
       "status": "translated",
       "path": "entries/amendments-to-the-motions-approved-june-2019.json",
-      "translationVersion": 1,
-      "translationHash": "2fb662c623ea6b2ae5b1980b0f52b9ac546051f7671bbf874a7ebafb7e40cfdb",
+      "translationVersion": 2,
+      "translationHash": "9882c9e5d217f91a4e6e9255b6fb85877139c39c03314590a50b2d74fd89b0c8",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -122,8 +122,8 @@
       "date": "2024-09-11T03:10:18.000Z",
       "status": "translated",
       "path": "entries/amendments-to-the-motions-approved-september-2024.json",
-      "translationVersion": 1,
-      "translationHash": "1d65e39b0b8eeaba2bac3abeb793bd20b1dd861c7f94cd5cfacf319a8d38866b",
+      "translationVersion": 2,
+      "translationHash": "90386d29a12c546762be0c3384ba026c2efe2af4ff126571e87f783cc5fc9cac",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -174,8 +174,8 @@
       "date": "2017-12-18T15:16:59.000Z",
       "status": "translated",
       "path": "entries/announcement-of-four-new-committee-team-leaders.json",
-      "translationVersion": 1,
-      "translationHash": "4fad057196d6ef9c9947e6b010f690b63184267aa58f827f79c661ee92a0d0f5",
+      "translationVersion": 2,
+      "translationHash": "4341b4c1e558692ddd2163d2789d7f8729baca14f589c856d05b4fa728fcfea3",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -226,8 +226,8 @@
       "date": "2026-10-18T13:00:00.000Z",
       "status": "translated",
       "path": "entries/announcing-the-moyu-wca-world-championship-2027.json",
-      "translationVersion": 1,
-      "translationHash": "2ca745ace1b9e8f5792a0dc6b6edbd9ee18f6feb729bcce7801b401af047dd76",
+      "translationVersion": 2,
+      "translationHash": "148cb99e32f2a52b32ee79945b625d5bf7a82eb1c477034d052fd54ef27d4d44",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -434,8 +434,8 @@
       "date": "2018-01-01T00:26:40.000Z",
       "status": "translated",
       "path": "entries/applications-for-new-committee-team-members.json",
-      "translationVersion": 1,
-      "translationHash": "9b3a1dc534cd3e3376a5850986e06d2b67c4a2706776392901bd3a83f09aea1f",
+      "translationVersion": 2,
+      "translationHash": "d276e50ca0f344a04dc4669a30a83096e43c6a1428049fac2a413968fe9f3e73",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -499,8 +499,8 @@
       "date": "2025-07-23T16:00:16.000Z",
       "status": "translated",
       "path": "entries/applications-for-wca-continental-championships-2026-july-2025.json",
-      "translationVersion": 2,
-      "translationHash": "204244f0ed4f339458efeef7c1ec22daf90a5a3eddf1b9dbbd71f168a182e088",
+      "translationVersion": 3,
+      "translationHash": "c6dfe78ffcaa9cfb90c0624d31882e655542a5ae1a31793ee858cfb7fbcdee46",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -564,8 +564,8 @@
       "date": "2025-02-28T16:36:28.000Z",
       "status": "translated",
       "path": "entries/applications-for-wca-world-championship-2027.json",
-      "translationVersion": 2,
-      "translationHash": "7378ce93c98b5131d520a494bc16bad4266f5548f3b091e46d4db5ec021ead1f",
+      "translationVersion": 3,
+      "translationHash": "76f5642088dc44f44300587636538f68ab511e53ea067638b77f861fdfb2489e",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -746,8 +746,8 @@
       "date": "2018-07-14T19:29:44.000Z",
       "status": "translated",
       "path": "entries/appointment-of-new-wmt-leader-july-2018.json",
-      "translationVersion": 1,
-      "translationHash": "8222319a993f2bce6ce556c26109657c67ca83eaa59c88ca0301996598ba1e41",
+      "translationVersion": 2,
+      "translationHash": "023a1821d1ccf23e20ed4913549cfbe84d85cf4a276768005e0f2f9662ac26d9",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -772,8 +772,8 @@
       "date": "2018-12-31T04:31:12.000Z",
       "status": "translated",
       "path": "entries/approval-of-motions-january-2019.json",
-      "translationVersion": 1,
-      "translationHash": "bd61d2764d52a0d417492425f8d950c7d0f49c391c1a8e9569a39394da46c28b",
+      "translationVersion": 2,
+      "translationHash": "334c4c66a0003628627565e911a6adfd0dc6df0e2a692d1e309a3ee550117c60",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -863,8 +863,8 @@
       "date": "2019-02-24T18:34:00.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-gear-team-members-for-wmt-2019.json",
-      "translationVersion": 1,
-      "translationHash": "29ce58153b020c6faf051d871ea45b058ba19a91c520dfbf45f6b1dfe25c0767",
+      "translationVersion": 2,
+      "translationHash": "65c8b58e91fe063a5fafe08e806faa0ffd8bd11341c61738a87ce7982fd2b5dd",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -876,8 +876,8 @@
       "date": "2026-02-20T15:01:40.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-head-of-merch-within-the-wca-marketing-team-february-2026.json",
-      "translationVersion": 1,
-      "translationHash": "809570acc1e6b0839e902b3d8a53af627b44513352223b038c952bacfa87b6d2",
+      "translationVersion": 2,
+      "translationHash": "15d9ffd6185d949610d6598f41bd9b722e22b2f1d0214c15c1e75c180d4582bd",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -954,8 +954,8 @@
       "date": "2024-08-13T22:35:47.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wac-leader-august-2024.json",
-      "translationVersion": 1,
-      "translationHash": "ebe0f127df71c4327c2d52956b26f5ba865e8184b6e803492503532ecee16326",
+      "translationVersion": 2,
+      "translationHash": "1b55a8002948749a995a47ee5be7903a7176706e47b1cb5b6b3ba46f721c1dc3",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1006,8 +1006,8 @@
       "date": "2026-02-04T19:34:08.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wac-members-february-2026.json",
-      "translationVersion": 1,
-      "translationHash": "24b761c3d3033305b316b4e7df63536924d158f398a55f1edc579570572d6aaf",
+      "translationVersion": 2,
+      "translationHash": "3d8100a4987c6d7a1f72e50983e289ee57d1243641e4d3ecdffb83f3759f36fb",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1019,8 +1019,8 @@
       "date": "2022-05-12T03:25:42.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wat-leader-may-2022.json",
-      "translationVersion": 1,
-      "translationHash": "180f4515f45f05dc9a4231e52718a0ccb352b17ddf6fca9dfd85e9bd433c2499",
+      "translationVersion": 2,
+      "translationHash": "efbf942c4c76817a55098ca6326ff85d1dea892a2e705e26c00016f3dd3cbc7c",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1032,8 +1032,8 @@
       "date": "2021-07-08T13:04:21.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wat-members-july-2021.json",
-      "translationVersion": 1,
-      "translationHash": "305d402311811a3853ef08107362d0107b9974015d8f530c8e90450ba6d5017a",
+      "translationVersion": 2,
+      "translationHash": "1968805f948e9f20dc0311f851e5dd10aefe2b1594f2a5363f7e681bf64c7a8b",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1045,8 +1045,8 @@
       "date": "2022-10-28T00:17:12.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wat-members-october-2022.json",
-      "translationVersion": 1,
-      "translationHash": "c347886603a1972a1a3b2f336cef9a664e5584efe9da5fa43248f69cfd7058ea",
+      "translationVersion": 2,
+      "translationHash": "cb4c62b3832b7e65274a551090d647d9fc54cd9991643c7f22695b36794bcf0e",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1071,8 +1071,8 @@
       "date": "2022-10-19T09:31:38.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wca-communication-team-wct-members-october-2022.json",
-      "translationVersion": 1,
-      "translationHash": "c44ccab035ebad5ff402f6a325f5afc9fef5df7d366ac0fe3167e196250abc14",
+      "translationVersion": 2,
+      "translationHash": "dee58b8b253edea71ffed35810e95d8cacd266f5d03cab0a5e0155e497a7e240",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1084,8 +1084,8 @@
       "date": "2025-03-15T20:37:17.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wca-competition-announcement-team-members-march-2025.json",
-      "translationVersion": 1,
-      "translationHash": "7bd458e4259a1dd78686c4f98fde6f42bc47a5d6c404bf18cf887d5d0da77aa3",
+      "translationVersion": 2,
+      "translationHash": "e901e5ea06ff185ebe1fc9e0148286bac5359add366775518c5eb2b88e06e6ef",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1143,8 +1143,8 @@
       "date": "2025-11-10T20:20:14.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wca-major-championship-team-members-november-2025.json",
-      "translationVersion": 1,
-      "translationHash": "75ac68156232a8da83f076e5f590a387d27c842762e47d6e775293e8b7cd43a3",
+      "translationVersion": 2,
+      "translationHash": "de565491aaa803024ac83d2ba3addee4e65ef3009529eaa403a438c2e6fb0f4c",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1156,8 +1156,8 @@
       "date": "2025-01-30T22:06:27.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wca-marketing-team-leader-january-2025.json",
-      "translationVersion": 1,
-      "translationHash": "00b2a88109b0ac95845abfd123823150d80f887ac296e4a25223bf964ec206e6",
+      "translationVersion": 2,
+      "translationHash": "d0c31b52f58c16e5aa369d80b4ebf323ac4024b3694cdd723bc5a5c1e2c93be1",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1182,8 +1182,8 @@
       "date": "2026-02-06T22:16:46.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wca-regulations-committee-leader-february-2026.json",
-      "translationVersion": 1,
-      "translationHash": "8f40e30c557ac37fcdb507fffb2d2d68067547e27695481072cc1322cfcabf05",
+      "translationVersion": 2,
+      "translationHash": "b04d0d685b76403b26682cb205b852c29d7f81d04791df5a05cd7d910f53d308",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1195,8 +1195,8 @@
       "date": "2022-08-13T14:07:34.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wca-results-team-wrt-members-august-2022.json",
-      "translationVersion": 1,
-      "translationHash": "5fa351e402f3cac057c4e198f6cfc269b861a3c7f1d42ad3d5eed014f49e407b",
+      "translationVersion": 2,
+      "translationHash": "d2f030657889a66bfb811349cc887c3d8cb69c0cf65b61c9ef55618a3a42b854",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1208,8 +1208,8 @@
       "date": "2025-05-05T16:08:31.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wca-software-team-leader-may-2025.json",
-      "translationVersion": 1,
-      "translationHash": "49e10d6518e437e2ce99cd3f40e345b24e09cbffb995bd69558771ddabca2113",
+      "translationVersion": 2,
+      "translationHash": "80f3305fcc0f21924397f0a24a6667f6c63f9cdd46f9d0817ed7c3158b928eb4",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1234,8 +1234,8 @@
       "date": "2019-11-14T04:45:41.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wcat-leader-november-2019.json",
-      "translationVersion": 1,
-      "translationHash": "2bf27679d878e0b2e7cf0d1ba5b7ebfd00c00dfab5d1844ebe7296b9e3db79ac",
+      "translationVersion": 2,
+      "translationHash": "a32eef27c2ead63abb0909839b013f5b6428171a87c70b99b50b8672ad02a602",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1247,8 +1247,8 @@
       "date": "2023-11-03T07:32:55.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wcat-leader-november-2023.json",
-      "translationVersion": 1,
-      "translationHash": "6d5c559a1b16ea8b19ce5a6a5ea0c66a9d3c8d84ceb46bbdc669292d2a7666ee",
+      "translationVersion": 2,
+      "translationHash": "434ae5e9078ba0e354040321c8659ecf4aa2f9f44187dba9c1d8ad215e1d513b",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1286,8 +1286,8 @@
       "date": "2023-02-27T09:12:08.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wcat-members-february-2023.json",
-      "translationVersion": 1,
-      "translationHash": "e00571eca8f24c8cb4c48c3286ab05f9f90b353ee5a3f24c7b795e2023b1c553",
+      "translationVersion": 2,
+      "translationHash": "bd2b8fa62cdc2e09ba48d9444800e16d0fc8e96bd1e647f0c943ad5f740ba80f",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1312,8 +1312,8 @@
       "date": "2024-06-16T10:36:53.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wcat-members-june-2024.json",
-      "translationVersion": 1,
-      "translationHash": "ed779d7697432701930fcbcc9933cb91d380c3867a2db798628c40b599a62f5d",
+      "translationVersion": 2,
+      "translationHash": "e947e00742a0893094b47b37305fadb03594209ef8b6844f283f8971618ab294",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1325,8 +1325,8 @@
       "date": "2018-10-23T12:34:19.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wcat-members-october-2018.json",
-      "translationVersion": 1,
-      "translationHash": "9eec50dd4e50cae04da150a1bceab6f61b8941ccddee5f4d9294b9c7b17d288a",
+      "translationVersion": 2,
+      "translationHash": "f2eb211e888fd159c0b7b06c0077afdb5a1d76e82f1495bffcda1b6aacc3411b",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1338,8 +1338,8 @@
       "date": "2020-10-11T05:59:45.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wcat-members-october-2020.json",
-      "translationVersion": 1,
-      "translationHash": "77edc7a52ef317cab64c25b7652ee1e23f39a1ca9642b083721c5d84b4a4fa4e",
+      "translationVersion": 2,
+      "translationHash": "1f984bf0bdba1259b4b07b296a062f3769553813e148274dbe50413544c4b140",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1351,8 +1351,8 @@
       "date": "2018-05-21T04:31:20.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wct-graphic-designer-may-2018.json",
-      "translationVersion": 1,
-      "translationHash": "50b4c4decbefc9e71b42834220379bb0812380c0bf10425f716ae6af8e6a4bfb",
+      "translationVersion": 2,
+      "translationHash": "28ca1b52e7138ccd94a9511600995500c5aa8cf3d58fa683244385a8184e6627",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1377,8 +1377,8 @@
       "date": "2021-10-23T18:49:06.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wct-leader-october-2021.json",
-      "translationVersion": 1,
-      "translationHash": "4608872b2b643c7c763ffacf91281168c7d639d3c367e272664b8c33574484e7",
+      "translationVersion": 2,
+      "translationHash": "c88abc69a71e8b26529f530a7069020c8bf3e1a92edce365a7bea3a5fb2b63db",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1390,8 +1390,8 @@
       "date": "2023-10-12T01:46:00.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wct-leader-october-2023.json",
-      "translationVersion": 1,
-      "translationHash": "3e11fa15e69a11e17d572ee44ef6b045cae3f6509b274d219594449df3b38f4e",
+      "translationVersion": 2,
+      "translationHash": "cf36dd647fce06f1363e7c89c02adaede199f9796bef978335b9faf758dc8b52",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1403,8 +1403,8 @@
       "date": "2024-01-11T04:11:49.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wct-members-january-2024.json",
-      "translationVersion": 1,
-      "translationHash": "d6c14a5ad0b13d19b5d32151010703ba8e112ca610692cd63b52b087cecf9100",
+      "translationVersion": 2,
+      "translationHash": "918545c8c6e80176fe5c47f44579b856313acc0f6fd6c7f7c4dd792c932c25b7",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1416,8 +1416,8 @@
       "date": "2019-03-18T05:01:06.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wct-members-march-2019.json",
-      "translationVersion": 1,
-      "translationHash": "519a4286ef326370c841748c41224dd523d246314ec04cc3eb2f25c030bf8cbb",
+      "translationVersion": 2,
+      "translationHash": "43047c476bbf2ce2b076f495750febb52ddd3ffda5b5bffa578fc2789a15ad60",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1497,8 +1497,8 @@
       "date": "2025-07-10T05:10:43.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-weat-leader-july-2025.json",
-      "translationVersion": 1,
-      "translationHash": "33d04f29495c5e0facb2e5c9061c5de77b57ec6458983e6131b22bfcb482f6ef",
+      "translationVersion": 2,
+      "translationHash": "d5622d06038429fda83b713b31595be77a01eb528aa5a8b67c6593319f6fa46b",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1510,8 +1510,8 @@
       "date": "2022-04-21T03:06:30.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-weat-members-april-2022.json",
-      "translationVersion": 1,
-      "translationHash": "3e37c7eaf61672852a874833e8ae633bb35994c1f3d415abcb4445d41b25a6a8",
+      "translationVersion": 2,
+      "translationHash": "2ecb4aa89558803b649b97b14e8a26d11d712d6a3030ed192a3d75fd1b2c6b9b",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1705,8 +1705,8 @@
       "date": "2024-11-17T21:40:51.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wic-members-november-2024.json",
-      "translationVersion": 1,
-      "translationHash": "b85838ee4c2b1a8217d7777f1ef5f212362b7c25b92055c4c4bd7e2764c4d59f",
+      "translationVersion": 2,
+      "translationHash": "5c5c13553d01822dd967f38fc3b032c2ebab6d3e9418d67a323e5962a30c7b52",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1718,8 +1718,8 @@
       "date": "2025-01-03T13:24:40.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wmct-members-january-2025.json",
-      "translationVersion": 1,
-      "translationHash": "48a82ba9cca8ee2de7d41785d76ae4fca594dae19da8b09ca90b7f14e2bf7203",
+      "translationVersion": 2,
+      "translationHash": "7b287ed5ef5ab69b992a1a61a982c7780f86d120cdb9d525bbd3601dafd7da5f",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1731,8 +1731,8 @@
       "date": "2019-02-19T04:27:41.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wmt-leader-february-2019.json",
-      "translationVersion": 1,
-      "translationHash": "ac1d18c702f20eb1dd35461caff15b6af0a158c9cf71efd8442c444ff16d998f",
+      "translationVersion": 2,
+      "translationHash": "5de06783b0aab91b30ca2aa930bba2cab2543cbc5ab74629192f97e1af1500c7",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1744,8 +1744,8 @@
       "date": "2021-01-19T01:24:21.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wmt-leader-january-2021.json",
-      "translationVersion": 1,
-      "translationHash": "dd6f1aa255347da545e646685f9c1f7f88719a94df311c1dc4c295c68b46f69b",
+      "translationVersion": 2,
+      "translationHash": "d95ae357b228a22953fac0392c199bdd47bf721841936c1e42b0c4760bc41fbe",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1757,8 +1757,8 @@
       "date": "2020-04-05T07:19:07.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wmt-members-april-2020.json",
-      "translationVersion": 1,
-      "translationHash": "3e532891a7da3825923f0ff16516cef214acf31ad08e060a84d7f0eee3153490",
+      "translationVersion": 2,
+      "translationHash": "2e33bdbd812d5fe9cdac05995f9719c3096d1f0f96a0a2596a370bce79ec9171",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1770,8 +1770,8 @@
       "date": "2022-02-19T23:46:40.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wmt-members-february-2022.json",
-      "translationVersion": 1,
-      "translationHash": "4f33a5cbf07387f9018b21fe6e1ba647cd3d3a4ead6e7eb6ff7d62a0cfe8ee0e",
+      "translationVersion": 2,
+      "translationHash": "0380506ec037730909c397ad95f8dfe7b41eac187df8a795f6b2949c867d22c9",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1783,8 +1783,8 @@
       "date": "2023-01-21T11:38:49.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wmt-members-january-2023.json",
-      "translationVersion": 1,
-      "translationHash": "d4b787d524ece52cae9245b81c275127b012cd0f043f3a3b40c4f339d2bd7d28",
+      "translationVersion": 2,
+      "translationHash": "66049730e22f8c775d54e049fb74db0e1789dedd6124ad34c998d5f5df54ffdf",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1796,8 +1796,8 @@
       "date": "2024-01-17T23:49:15.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wmt-members-january-2024.json",
-      "translationVersion": 1,
-      "translationHash": "7af5bf59cedd888252d63f30cd6bb79d260c1c2e5eac515eddbf8440f5c72a24",
+      "translationVersion": 2,
+      "translationHash": "1c22620ce518f32af2d175fe8ea91c96a89572d7ef750a4bc973fcce2b8dadab",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1809,8 +1809,8 @@
       "date": "2021-05-29T23:29:36.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wmt-members-may-2021.json",
-      "translationVersion": 1,
-      "translationHash": "28e07e8a7f65291c7cbc5741eed388df1f19684d3954c807e28f9ae0b4c32062",
+      "translationVersion": 2,
+      "translationHash": "c5e826a4d1c204a3de34388623ec9ef005bd616aa1ccbd60e01d4fff0b21a774",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1822,8 +1822,8 @@
       "date": "2018-08-19T23:49:44.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wmt-team-members-august-2018.json",
-      "translationVersion": 1,
-      "translationHash": "7859195d9dfad85600c392ba59911455a6fb33c751d6e03c2acf079a4bc38eac",
+      "translationVersion": 2,
+      "translationHash": "94320fdd066a5a8c465da5c90a36c831be398942ce5f2385f3e0f0fa0871707c",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1835,8 +1835,8 @@
       "date": "2019-10-29T03:44:41.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wqac-leader-october-2019.json",
-      "translationVersion": 1,
-      "translationHash": "49063d5ac2c6de4f07259c84e77545d239557b0b416468b2c7344c557f4797e6",
+      "translationVersion": 2,
+      "translationHash": "4e10de91ae458e4a86abb699a129e379c7ecf5ddcc1318d1788b597413f175ce",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1900,8 +1900,8 @@
       "date": "2024-04-20T06:09:59.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wrc-leader-april-2024.json",
-      "translationVersion": 1,
-      "translationHash": "34ddd479f1c7c9329991550d474704bc76ea730a433639db752f4afe98dcc30d",
+      "translationVersion": 2,
+      "translationHash": "e73c669760670233226eb33c026adbf200631ec0860bfd065c30cf1a385fe82a",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -1991,8 +1991,8 @@
       "date": "2021-08-14T06:51:56.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wrt-leader-august-2021.json",
-      "translationVersion": 1,
-      "translationHash": "520c6386085e78a1d635c97be1e756502a44c4c41c28e7d39da83a48c9f4369f",
+      "translationVersion": 2,
+      "translationHash": "cedb611382b81b085a594de91aa48643a86a83c7a126db962e1e818ed6de2a1f",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -2004,8 +2004,8 @@
       "date": "2023-11-05T06:46:26.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wrt-leader-november-2023.json",
-      "translationVersion": 1,
-      "translationHash": "98fb40f63d4c01df0e8ecabaffc2a1ff0373511cc17fa712033494e3b8653367",
+      "translationVersion": 2,
+      "translationHash": "530bce4045d602f12944d9005e9619d03918d23369d2b86e0bb44097c947f747",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -2017,8 +2017,8 @@
       "date": "2020-01-09T04:54:44.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wrt-members-january-2020.json",
-      "translationVersion": 1,
-      "translationHash": "5ee98218f1d66cb5e333273cea1cf31e0f2e5022faf784a7b18fb54e6808b2f5",
+      "translationVersion": 2,
+      "translationHash": "6e3842950d80b11021982cdb015cf1cf6e49bee9971d7f2c986d2354abb3dd1e",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -2030,8 +2030,8 @@
       "date": "2024-06-09T19:15:13.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wrt-members-june-2024.json",
-      "translationVersion": 1,
-      "translationHash": "b3722b364f2b940fda4072df32e3bb922ecb2e8905e3967bd1ab6302a5fc8bb9",
+      "translationVersion": 2,
+      "translationHash": "8a35138ed8797df8ff501bd3e17f46fe97c0cf361a7b1513c7239d61d64204eb",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -2056,8 +2056,8 @@
       "date": "2024-10-07T13:49:25.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wsot-leader-october-2024.json",
-      "translationVersion": 1,
-      "translationHash": "6c3e7230c541490a6e77f5d97db505b8af522321ebd85be17d02830eebe638ec",
+      "translationVersion": 2,
+      "translationHash": "6baedb3d4820870c1f96c04d18cd6bef08615c975ed6c3522f595d45a0a971a7",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -2069,8 +2069,8 @@
       "date": "2019-08-14T04:21:05.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wst-leader-august-2019.json",
-      "translationVersion": 1,
-      "translationHash": "a29ea70a6879f2e4595fdde1bbfc544cc9c3951618cb3e9c56e74a812d4f9b4c",
+      "translationVersion": 2,
+      "translationHash": "d33ed7911c26fd43537a9ab5e4d3e0098ac86d5f92feaaf6a6abe45820b14f0b",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -2082,8 +2082,8 @@
       "date": "2021-05-20T14:00:01.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wst-leader-may-2021.json",
-      "translationVersion": 1,
-      "translationHash": "0c450acd3bc6c55452e274b17e66aaafde792cb74b18f6fcf3193dcf1033e811",
+      "translationVersion": 2,
+      "translationHash": "22a85a0e3ac9755d4d14a46bc4ac0c605470c01dfc451332cd9108ba3eba1aea",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -2095,8 +2095,8 @@
       "date": "2020-10-07T04:24:24.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wst-leader-october-2020.json",
-      "translationVersion": 1,
-      "translationHash": "c17ebcf35caf5a735595e5fafc67b5b5eaebb34617b0596331e6b55006ac8ba5",
+      "translationVersion": 2,
+      "translationHash": "2cc5534e8d1e40ed8ec5b291e19f75dc95a92a5a908d89e381e14891b3760af7",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -2108,8 +2108,8 @@
       "date": "2019-07-30T01:20:42.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wst-members-july-2019.json",
-      "translationVersion": 1,
-      "translationHash": "eaf5879399361824b1218abee0f2b3f5a839c34f20271d5f74bcfe77517839a2",
+      "translationVersion": 2,
+      "translationHash": "d8b4018a8afc4d362348ddff65f9917aeaf5c966b3a004aaab1c7c196061ae96",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -2121,8 +2121,8 @@
       "date": "2021-03-06T06:22:03.000Z",
       "status": "translated",
       "path": "entries/call-for-applicants-wst-members-march-2021.json",
-      "translationVersion": 1,
-      "translationHash": "5f897ee146154c30f52231fa77a0f2dfb5aae9116db576aa7b90023bf9c483cc",
+      "translationVersion": 2,
+      "translationHash": "29d3d4ccadcd3321fb5ab93de39d999a7c6c40be9b41949e2af8644b2fda6bae",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -2134,8 +2134,8 @@
       "date": "2025-03-13T18:25:51.000Z",
       "status": "translated",
       "path": "entries/call-for-applications-wca-appeals-committee-members-march-2025.json",
-      "translationVersion": 1,
-      "translationHash": "2e07c2a8a5f5633dddfe0759a65040ca809e9c4f49c7041f4652459b70caec4f",
+      "translationVersion": 2,
+      "translationHash": "25b5d8786899fab8e3d92763a32b65759e34e73459ff0f5828b57072699ac4e6",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -2147,8 +2147,8 @@
       "date": "2025-10-20T19:01:43.000Z",
       "status": "translated",
       "path": "entries/call-for-applications-wca-communication-team-leader-october-2025.json",
-      "translationVersion": 1,
-      "translationHash": "5ae10bf29f436b61e61e16f5edac718ab7a1aae880fa5a436aa6eaf5446d4f69",
+      "translationVersion": 2,
+      "translationHash": "a3f51f557a151226548ca1586f7586a1282e2f7e8c98ac9bb9abea2631073e54",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -2160,8 +2160,8 @@
       "date": "2025-10-22T14:38:48.000Z",
       "status": "translated",
       "path": "entries/call-for-applications-wca-competition-announcement-team-leader-october-2025.json",
-      "translationVersion": 1,
-      "translationHash": "fe3175e3e5818a47ffbf1979513851a95e3924664b823e59b216c7c19ce0bad4",
+      "translationVersion": 2,
+      "translationHash": "4450e3d5d00e7fb407fee577d389cf1ebc740df231bc391ce0763dc50acb1561",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -2173,8 +2173,8 @@
       "date": "2025-04-26T18:54:58.000Z",
       "status": "translated",
       "path": "entries/call-for-applications-wca-executive-assistants-team-april-2025.json",
-      "translationVersion": 1,
-      "translationHash": "1ac1a2dde58efedbad4ccb42fd1b6996343d986b8061e7fbe8fe16cb569bd181",
+      "translationVersion": 2,
+      "translationHash": "caf3325746a4430d30607fad1bcb3333ea39aa29b6d69f7143f024ac5a3a0b6e",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -2199,8 +2199,8 @@
       "date": "2025-10-18T20:24:22.000Z",
       "status": "translated",
       "path": "entries/call-for-applications-wca-quality-assurance-committee-leader-october-2025.json",
-      "translationVersion": 1,
-      "translationHash": "5ca33a72f536099385da96f56ba51a01c9bcb028bf0012d077066f3b092a3b80",
+      "translationVersion": 2,
+      "translationHash": "5938ed8ba48863afa1b181c7826ddcb4421c4f0664fe948d2578fe4c346409bf",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -2212,8 +2212,8 @@
       "date": "2024-08-12T18:28:28.000Z",
       "status": "translated",
       "path": "entries/call-for-applications-wfc-leader-august-2024.json",
-      "translationVersion": 1,
-      "translationHash": "95303548415df70594b22581067fe717a20a10160c12ebce002a466916cf8d00",
+      "translationVersion": 2,
+      "translationHash": "3eded3b4aaaf4b291c1026c7601b45659efd39189657ce759910b4910a8d5161",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -2225,8 +2225,8 @@
       "date": "2024-10-09T03:04:35.000Z",
       "status": "translated",
       "path": "entries/call-for-applications-wmct-leader-october-2024.json",
-      "translationVersion": 1,
-      "translationHash": "8b1998704f2886ffbfb182bd03c64ed93f1043f5addae1169db51e75fee27134",
+      "translationVersion": 2,
+      "translationHash": "6d09bd24c516f2a682f5a65f0432f0ba829162576643e68858bfc29469f24ed5",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -2238,8 +2238,8 @@
       "date": "2020-09-08T04:34:33.000Z",
       "status": "translated",
       "path": "entries/call-for-contributors-wca-software-team-september-2020.json",
-      "translationVersion": 1,
-      "translationHash": "941e1ad6e5d06f4b3ba5777cec022bf1be1dfdf568eac6ee322126a8d949e5d3",
+      "translationVersion": 2,
+      "translationHash": "b14909f04c2153f87058ca7daa291b95e511607ccad66a46f3f7f69a4563d276",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -2589,8 +2589,8 @@
       "date": "2026-05-24T05:29:13.000Z",
       "status": "translated",
       "path": "entries/changes-in-wca-officers-may-2026.json",
-      "translationVersion": 1,
-      "translationHash": "f669e73f203d1137cde119787af937fbe506914216c2ec9ab1c427ab90c731ee",
+      "translationVersion": 2,
+      "translationHash": "7c0c39e70cd76688e25c7bd3062674ae3bd239cbce3fbb6b1fd6a83f5b8d7e24",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -2602,8 +2602,8 @@
       "date": "2017-06-19T19:27:19.000Z",
       "status": "translated",
       "path": "entries/changes-of-countries-recognized-by-the-wca.json",
-      "translationVersion": 1,
-      "translationHash": "370eb45b0e9973b4c71f4b14630c167816250edeef2a72d20dd290c3fe1ed1b7",
+      "translationVersion": 2,
+      "translationHash": "5c6914125977ace1c0cfb117185abc8a603bd38dbb56317f5d1081079a7f824f",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -2693,8 +2693,8 @@
       "date": "2019-10-31T14:29:56.000Z",
       "status": "translated",
       "path": "entries/collaboration-between-the-wca-and-guinness-world-records.json",
-      "translationVersion": 1,
-      "translationHash": "2c7a758f046d7924d09af3967d49b7955b8f6b24e49a61a60187a8f0935c4ca1",
+      "translationVersion": 2,
+      "translationHash": "d6350dab766d0f5e8d40701aed0a32d47a0b374c41d584af0d9c43e94277b6a3",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -2940,8 +2940,8 @@
       "date": "2025-08-07T19:06:12.000Z",
       "status": "translated",
       "path": "entries/executive-assistants-leader-announcement-august-2025.json",
-      "translationVersion": 1,
-      "translationHash": "328b414606f1fcc2e2b922f1f41174c2db55890dc893d611b2570aabf4f0065b",
+      "translationVersion": 2,
+      "translationHash": "966947c8f8a23c903c0e75b51e9d3e223c494179af08b7b8c1d426a473638942",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -2953,8 +2953,8 @@
       "date": "2025-03-03T17:08:45.000Z",
       "status": "translated",
       "path": "entries/expression-of-interest-for-2026-wca-continental-championships-march-2025.json",
-      "translationVersion": 1,
-      "translationHash": "0c5bce7829b4ae1f7425531bf09ccb1751ed4693a91a264c1fd4d1708e0aa989",
+      "translationVersion": 2,
+      "translationHash": "f25e43b9adb871bf45f516fcd22247988dcfe7ad99b361adca388ce549e9a842",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -3185,8 +3185,8 @@
       "date": "2020-02-09T18:22:27.000Z",
       "status": "translated",
       "path": "entries/india-southeast-asia-merchandise-collaboration-announcement.json",
-      "translationVersion": 1,
-      "translationHash": "a988bdc6a6db458dffe5e20ceb03e0eeec3171d61ca1db641675a20ef49b44af",
+      "translationVersion": 2,
+      "translationHash": "3b3946952d48477d273f55d38b6342697c52d994d2dc276f95b4e87d8ecda0fb",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -3453,8 +3453,8 @@
       "date": "2018-10-20T15:17:47.000Z",
       "status": "translated",
       "path": "entries/new-wcat-leader.json",
-      "translationVersion": 1,
-      "translationHash": "ed7a4f6ce02412f2b90291497f977c7c0d94ea1a5a22b43e5f2b0dc6179980db",
+      "translationVersion": 2,
+      "translationHash": "5aeb692ee3b6709797ea3f8f84fdb24123b002936e30792b7ec95df839d5bc68",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -3466,8 +3466,8 @@
       "date": "2020-01-10T11:54:57.000Z",
       "status": "translated",
       "path": "entries/new-wcat-leader-january-2020.json",
-      "translationVersion": 1,
-      "translationHash": "d247ab0cd6787d64609809f52a46ac24b27f5bb88f78f14911ac8beabb722377",
+      "translationVersion": 2,
+      "translationHash": "36e9690dfab969d2e0c3a3c9025a513cb880085e5c9c33c9a1b23e3289d784a4",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -3518,8 +3518,8 @@
       "date": "2019-03-17T20:28:02.000Z",
       "status": "translated",
       "path": "entries/new-wmt-leader-chosen.json",
-      "translationVersion": 1,
-      "translationHash": "8f962d58dcc490797260d174e8ba713b48ea483e5348201aafb460137411287d",
+      "translationVersion": 2,
+      "translationHash": "ff9fbccd971fd3cf7181a173e088818bcf9e6e80763caf84ab35fd1b4a9e68da",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -3557,8 +3557,8 @@
       "date": "2021-10-13T06:14:21.000Z",
       "status": "translated",
       "path": "entries/new-wrt-leader-october-2021.json",
-      "translationVersion": 1,
-      "translationHash": "4c59b7b6375dd27c54f1f1fd0e64778277dd8fbc9d7f250d002c780045414ef4",
+      "translationVersion": 2,
+      "translationHash": "a338e5acf2be19212a55a85bc4e24b0e23efdfe1c3498a2551f50172da21eda5",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -3570,8 +3570,8 @@
       "date": "2019-10-03T03:57:53.000Z",
       "status": "translated",
       "path": "entries/new-wst-leader-october-2019.json",
-      "translationVersion": 1,
-      "translationHash": "212e5d5127c70aeb67ed3caea5b5dab740c0b27a950335101360d841369af458",
+      "translationVersion": 2,
+      "translationHash": "23d48aba0e0d9cbda2cc8f9dae0f48a7b839d8e27595ffa49997910232e1ef23",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -3583,8 +3583,8 @@
       "date": "2024-11-25T02:46:51.000Z",
       "status": "translated",
       "path": "entries/newcomer-month-exceptions-for-wcrp-to-return-in-march-2025.json",
-      "translationVersion": 1,
-      "translationHash": "6e14c64d9361b3c1aa017b3fb6a04572e16c6a0b36de4b628e52ce2865ebc5f3",
+      "translationVersion": 2,
+      "translationHash": "1a709dbdd09271c31f1ee2678d8e37aec51fbfa953ef3f78be3aa7ab063e05fb",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -3596,8 +3596,8 @@
       "date": "2023-06-11T04:17:02.000Z",
       "status": "translated",
       "path": "entries/notification-of-data-breach-to-data-subjects.json",
-      "translationVersion": 1,
-      "translationHash": "f6c8038908122bb584a04da564786ad32be4317cba0a78930c6539da792a2779",
+      "translationVersion": 2,
+      "translationHash": "47f204934f1426f76494973deeedfc562afbd17196d4447b146e1cf01f1ead70",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -3635,8 +3635,8 @@
       "date": "2023-05-20T11:05:11.000Z",
       "status": "translated",
       "path": "entries/planned-wca-website-outage-june-2023.json",
-      "translationVersion": 1,
-      "translationHash": "22131aa842441e0a82b9459bdec86227fadd573f1545a19a1405508c8d3646e7",
+      "translationVersion": 2,
+      "translationHash": "4602b00c3ef2ed50fe6fb47247da4532564ae3ff676d53bcf080a70fc302edfc",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -3778,8 +3778,8 @@
       "date": "2018-08-19T23:15:08.000Z",
       "status": "translated",
       "path": "entries/result-of-the-wmt-leader-application-period.json",
-      "translationVersion": 1,
-      "translationHash": "6a7d27ef11739e25643168b7ac06e90e1aa430884240735ecae5f09c6d646903",
+      "translationVersion": 2,
+      "translationHash": "92cbdbdb058c80946201ba7b7b66f5128bd4e7d6836a36d75b2ca11046c54207",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -4168,8 +4168,8 @@
       "date": "2025-06-08T19:37:03.000Z",
       "status": "translated",
       "path": "entries/software-team-leader-announcement-june-2025.json",
-      "translationVersion": 1,
-      "translationHash": "9b2728a6e69023de0713739deba47cc5e340b7b8abb0016b17e11f05537d8cfb",
+      "translationVersion": 2,
+      "translationHash": "dca378aeacc4c960d5401a2952ffa37f2a37106a9344600c8088f5c119c22380",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -4194,8 +4194,8 @@
       "date": "2017-05-01T16:08:14.000Z",
       "status": "translated",
       "path": "entries/start-up-of-the-wca-communication-team.json",
-      "translationVersion": 1,
-      "translationHash": "5bb0e8cf402654b1c7154f21d23947e3ee2beb3f329a30cd2f9f90b2f6347c37",
+      "translationVersion": 2,
+      "translationHash": "3e74eda0f6a8e18bc1707cd7eee63e1af757bc3ee4ec8259759bad7424d43855",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -4207,8 +4207,8 @@
       "date": "2017-06-27T05:25:59.000Z",
       "status": "translated",
       "path": "entries/start-up-of-the-wca-financial-committee.json",
-      "translationVersion": 1,
-      "translationHash": "2131a9e6dcb5ecaaca49cc1c1fa1f2ae4e11d47fb158e5722493d826dfc0d423",
+      "translationVersion": 2,
+      "translationHash": "6d93f527f28db44118c291db47cda334d30c79d153af99764228a0fc699e0268",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -4233,8 +4233,8 @@
       "date": "2012-07-28T12:27:01.000Z",
       "status": "translated",
       "path": "entries/tim-reynolds-and-sebastien-auroux-in-wca-board.json",
-      "translationVersion": 1,
-      "translationHash": "0b30ad74850bcf964caf9383b07aa987236d1cea5f183885b2250d4303259b70",
+      "translationVersion": 2,
+      "translationHash": "74e0511b4126ea2403053b390b090255f653f04a5b8bb8eec50a6eb9af515106",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -4662,8 +4662,8 @@
       "date": "2026-09-17T20:14:14.000Z",
       "status": "translated",
       "path": "entries/wat-leader-announcement-august-2026.json",
-      "translationVersion": 2,
-      "translationHash": "b356603fb5623221331838e672dbf9b46013ea7eb237491eea7fff5e623210f6",
+      "translationVersion": 3,
+      "translationHash": "27dba91adf1ad920df47b6e78babde37ddfec7653ff4643fdd835f7f56a38bc2",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -4675,8 +4675,8 @@
       "date": "2022-07-30T11:03:22.000Z",
       "status": "translated",
       "path": "entries/wat-leader-announcement-july-2022.json",
-      "translationVersion": 1,
-      "translationHash": "b3daf4d19140bab2b92c46599797ae837f0f4d1f5e32ab98620b06373730773b",
+      "translationVersion": 2,
+      "translationHash": "6799c8afae2ee2304ce0cf9ac96a5ecd159131af5f9a09fa215a688a8937cb71",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -4727,8 +4727,8 @@
       "date": "2026-03-04T10:49:15.000Z",
       "status": "translated",
       "path": "entries/wca-asian-championship-2026-update-march-2026.json",
-      "translationVersion": 1,
-      "translationHash": "8fdb856956c2b4643bf9e292bfc11e28bf6665374c4d0d98c39c5f85cbc06bfc",
+      "translationVersion": 2,
+      "translationHash": "0413d26536c01fc4fa34f48f6c08895a7a5823dfbf50d1a8a6edbb1185231f1d",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -4766,8 +4766,8 @@
       "date": "2025-12-16T16:50:06.000Z",
       "status": "translated",
       "path": "entries/wca-communication-team-leader-announcement-december-2025.json",
-      "translationVersion": 1,
-      "translationHash": "2d3bd77399241503cd6b7cf67194b54561a53fe28a5ae2cc3086f39e025e3004",
+      "translationVersion": 2,
+      "translationHash": "d66512bd72cd2551bfca6c686337c29832ec3d1a966d33507bc15a855dad1210",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -4792,8 +4792,8 @@
       "date": "2025-12-17T17:41:26.000Z",
       "status": "translated",
       "path": "entries/wca-competition-announcement-team-leader-announcement-december-2025.json",
-      "translationVersion": 1,
-      "translationHash": "268b680d3826e78a52bbdd759bdc1b1eb53805d5572389701643969bf815898b",
+      "translationVersion": 2,
+      "translationHash": "b4a22cce42bf93051b06229f11358bb46a88283e4733332dacfcbbe9249785d0",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -4805,8 +4805,8 @@
       "date": "2026-05-29T20:35:17.000Z",
       "status": "translated",
       "path": "entries/wca-competition-requirements-policy-update-5-5-may-2026.json",
-      "translationVersion": 2,
-      "translationHash": "0510ac72a7fd2187d6692c141fc5b8f65cb77a32a332f498a3627f0cf7070ca1",
+      "translationVersion": 3,
+      "translationHash": "0a8349f6fb15d0a586af694a9e932502a4fbb957e9dd13a77d335e31a8609ccd",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -4818,8 +4818,8 @@
       "date": "2025-10-24T13:59:45.000Z",
       "status": "translated",
       "path": "entries/wca-continental-championships-2026-host-cities-announcement-october-2025.json",
-      "translationVersion": 1,
-      "translationHash": "d57dd4f5be0fde41f7b67ca9830ebffd6edb2f5e4047d47590c9745f2dc5a1a9",
+      "translationVersion": 2,
+      "translationHash": "3dc9afeeee46f05e251c8fcfeea3f3db46b36d35cabbf4a4823e6e192513e2c5",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -4870,8 +4870,8 @@
       "date": "2025-02-18T14:00:50.000Z",
       "status": "translated",
       "path": "entries/wca-european-championship-2026-announcement.json",
-      "translationVersion": 1,
-      "translationHash": "d611a2b9883f04080dd5a2521f470586fb0e6091bdc6d33f1e69e966d91faf70",
+      "translationVersion": 2,
+      "translationHash": "f68f1c2934dbcad0f9c5e580465e5f20edad2e3276db1432c60a7bf0b82b24a2",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -4907,8 +4907,8 @@
       "date": "2025-12-27T17:00:07.000Z",
       "status": "translated",
       "path": "entries/wca-north-american-championship-2026-host-city-announcement-december-2025.json",
-      "translationVersion": 1,
-      "translationHash": "5cb7d61324cc3267cf3da9b5da06bb70e2362318ba7b6544657754003e93f837",
+      "translationVersion": 2,
+      "translationHash": "f59480fd9821a070484b40c5b8514ad48ea8244ab19d0a82a8119e20c0dcb69f",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -5414,8 +5414,8 @@
       "date": "2025-07-07T02:02:21.000Z",
       "status": "translated",
       "path": "entries/wca-world-championship-2027-host-city-announcement-july-2025.json",
-      "translationVersion": 1,
-      "translationHash": "16d9be955e6020f6b64a83f948490966086516f8d41d9a05039029ebe0f1f5c4",
+      "translationVersion": 2,
+      "translationHash": "4ef3f1611996eb7f9afa8c3ed8eda0c1acdae7c47e17761d312f096ca15a392c",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -5427,8 +5427,8 @@
       "date": "2023-12-22T19:10:44.000Z",
       "status": "translated",
       "path": "entries/wcat-leader-announcement-december-2023.json",
-      "translationVersion": 1,
-      "translationHash": "27cd3a24bcdd1952d567d074623b211b51c79c3ab9cf1436d0c4466e0825e6f3",
+      "translationVersion": 2,
+      "translationHash": "1ba10ff43fe4800a1a59da53d814dcb2c0016bcad07efe01e836851598fc5fd0",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -5440,8 +5440,8 @@
       "date": "2026-10-12T23:05:56.000Z",
       "status": "translated",
       "path": "entries/wcat-leader-announcement-october-2026.json",
-      "translationVersion": 2,
-      "translationHash": "b0e780b8b2c65088c0960cddfc51da0e04cc24af59f95436c414e3d89b315b59",
+      "translationVersion": 3,
+      "translationHash": "236b98d2744a0cba066f18f5d65a7a6051b3422219e8e2c2e0bcd8a4a5d7400b",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -5453,8 +5453,8 @@
       "date": "2023-12-21T06:04:04.000Z",
       "status": "translated",
       "path": "entries/wct-leader-announcement-december-2023.json",
-      "translationVersion": 1,
-      "translationHash": "17dff1130a2716c92c5a4208723fc86133b50fee452de3da9d91d005e2637273",
+      "translationVersion": 2,
+      "translationHash": "2ca1f39f9c55ad6ad1a8272a36eb0e30405baddf638531d463bf70635c504bd1",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -5871,8 +5871,8 @@
       "date": "2024-12-03T16:58:03.000Z",
       "status": "translated",
       "path": "entries/wmct-leader-announcement-december-2024.json",
-      "translationVersion": 1,
-      "translationHash": "a42b162679431883019a4f9c39ac1fd0cdbdf8d9a0244682615d980ee4195216",
+      "translationVersion": 2,
+      "translationHash": "de7d9db6fe3c390435dd8af7d3f8f76e55b47bea809f13d4b9a8250a42004d37",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -5884,8 +5884,8 @@
       "date": "2026-09-27T18:05:51.000Z",
       "status": "translated",
       "path": "entries/wmct-leader-announcement-september-2026.json",
-      "translationVersion": 2,
-      "translationHash": "0ba07c0fda578de52281f612825360762f3cfc99cbdf953c469ebb0ee260a113",
+      "translationVersion": 3,
+      "translationHash": "e5a873a449ea51b78ca152175f63c1810bcba6e1e34229f2cf9021293eb4cb40",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -5897,8 +5897,8 @@
       "date": "2021-03-17T04:12:24.000Z",
       "status": "translated",
       "path": "entries/wmt-leader-announcement-march-2021.json",
-      "translationVersion": 1,
-      "translationHash": "678dbb2516a234664706b45e514619dba76108d569b13f47be7c61cd46a88ba0",
+      "translationVersion": 2,
+      "translationHash": "1c29ff2093d8182ee63cf8b36db154eaef43f826f24b10ec754d98c321a244c1",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -5910,8 +5910,8 @@
       "date": "2026-10-09T18:21:39.000Z",
       "status": "translated",
       "path": "entries/wmt-leader-announcement-september-2026.json",
-      "translationVersion": 2,
-      "translationHash": "77a2df6de56bde54340db3f3a9dbfce627404868587b03e1d1b5a07f8a8df6b3",
+      "translationVersion": 3,
+      "translationHash": "708f79942aa00220b048ea7481ec33f0a997a49edebd0f3a368b92ed76f2d518",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -6014,8 +6014,8 @@
       "date": "2026-07-14T14:17:22.000Z",
       "status": "translated",
       "path": "entries/wqac-digest-2026-q1-q2.json",
-      "translationVersion": 2,
-      "translationHash": "1d2885a143f48c50855fe5e6aac80adcfede70ccc857313a503984df1d01956a",
+      "translationVersion": 3,
+      "translationHash": "f00dcd6eda97b2229df103d4c8525b92c929f9bc1643ccdc26a195f1a48f17de",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -6079,8 +6079,8 @@
       "date": "2024-04-12T07:29:49.000Z",
       "status": "translated",
       "path": "entries/wrc-digest-2024-q1.json",
-      "translationVersion": 1,
-      "translationHash": "e9e01c86b5b1866ad60eaebb4255601edba228b5b1afff95803fbaf8d22c759e",
+      "translationVersion": 2,
+      "translationHash": "e6dcb44fc6b73574512308a57c534a101c6a45897adeb0576455a197c2085483",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -6196,8 +6196,8 @@
       "date": "2024-01-13T05:53:46.000Z",
       "status": "translated",
       "path": "entries/wrt-leader-announcement-january-2024.json",
-      "translationVersion": 1,
-      "translationHash": "db1b9031a87f6367029824c3ba892ac9a3572a8c18096a564c25cd4bdccfd8d1",
+      "translationVersion": 2,
+      "translationHash": "cbc4657d6a79f16adb9f4f3f68db274cda7175c153331d51842ffd3b4b49b515",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -6235,8 +6235,8 @@
       "date": "2021-06-30T05:13:25.000Z",
       "status": "translated",
       "path": "entries/wst-leader-announcement-june-2021.json",
-      "translationVersion": 1,
-      "translationHash": "a166b0ea22f5d0b28b10859e9b475b08a65e1d1358309fb56e6e573ba8e914d8",
+      "translationVersion": 2,
+      "translationHash": "473d9a75716cc183a765b6c3bb666c27803d12994c202d43dfdf70e5396d8c67",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -6248,8 +6248,8 @@
       "date": "2020-11-11T04:56:41.000Z",
       "status": "translated",
       "path": "entries/wst-leader-application-november-2020.json",
-      "translationVersion": 1,
-      "translationHash": "3649dedca9144d3406efd5c34c6c1f6a32f8f5637062b6aabf26e8ae533be78e",
+      "translationVersion": 2,
+      "translationHash": "de9e42c5881f043ee01665c4d272b29525f0979080d3dae20d5288ee184577de",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -6261,8 +6261,8 @@
       "date": "2020-01-01T04:34:10.000Z",
       "status": "translated",
       "path": "entries/year-end-message-2019.json",
-      "translationVersion": 1,
-      "translationHash": "2b956792f0ae186aa0631fcdb5022209c7905ad694727f2387e8642fa19de57c",
+      "translationVersion": 2,
+      "translationHash": "dedaf590b1cc51da1bd37d4e85ec035fa1f5015ecb6e97a16306bbb431cf394c",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -6274,8 +6274,8 @@
       "date": "2021-01-01T04:42:00.000Z",
       "status": "translated",
       "path": "entries/year-end-message-2020.json",
-      "translationVersion": 1,
-      "translationHash": "80595e590675f03d309cd2bd5d92ed35b8db2e768cce24e0127c9e9f86a90df2",
+      "translationVersion": 2,
+      "translationHash": "86997fab1496d6e21c45600d9fde998baef527c55ac286dc38ae0d2513821f60",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -6287,8 +6287,8 @@
       "date": "2022-01-01T01:20:04.000Z",
       "status": "translated",
       "path": "entries/year-end-message-2021.json",
-      "translationVersion": 1,
-      "translationHash": "c2aeb2fc6ae846e7ee3b4dcce74859da045e6b52ed04973ad7aefd137722b0a5",
+      "translationVersion": 2,
+      "translationHash": "31c8a681981a93859959e6a72a3eba2f4fe55dc744e8ae6baf9c1a86cc682db5",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -6300,8 +6300,8 @@
       "date": "2023-01-02T22:07:02.000Z",
       "status": "translated",
       "path": "entries/year-end-message-2022.json",
-      "translationVersion": 1,
-      "translationHash": "7e759c5149ee87b4058927f50751fcd71d287ea64844d07790ec710cfa5c790d",
+      "translationVersion": 2,
+      "translationHash": "a26855eb3466181b8d585c54393f32028211da26a9d4843a6f729a1b05d8b2c0",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -6313,8 +6313,8 @@
       "date": "2024-01-01T11:23:08.000Z",
       "status": "translated",
       "path": "entries/year-end-message-2023.json",
-      "translationVersion": 1,
-      "translationHash": "b5a2d410ac6b9c51e1fcf2e2ef572e391c7a75eb4ce823eaf581522ec1a95cd3",
+      "translationVersion": 2,
+      "translationHash": "dfd49bb1bb1755aa90b0f45b68961678096d04895341ac77c8257bb9e2183396",
       "reviewStatus": "pending_independent_review"
     },
     {
@@ -6326,8 +6326,8 @@
       "date": "2025-01-08T18:34:09.000Z",
       "status": "translated",
       "path": "entries/year-end-message-2024.json",
-      "translationVersion": 1,
-      "translationHash": "d9b8499de98d99c82f6e9f185117f3af7bbf370fceceb957a9b44a223a3e8a11",
+      "translationVersion": 2,
+      "translationHash": "66bbe5103174c9b7e71243c52d725c3ee98ef1cfb83d045b8b0893b9ba34ae03",
       "reviewStatus": "pending_independent_review"
     },
     {

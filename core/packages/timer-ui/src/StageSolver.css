@@ -445,9 +445,9 @@ html[data-theme='dark'] .stsv {
 }
 .stsv-angle[data-empty='true'] { opacity: 0.38; }
 .stsv-angle:hover { filter: brightness(1.07); }
-/* 选中:用 accent 描边而非改背景,保留底面色可辨 */
-.stsv-angle.is-sel { outline: 1px solid var(--sv-accent); outline-offset: 1px; }
-.stsv-angle:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+/* 选中时直接高亮原边框，保留底面色，不叠加外圈。 */
+.stsv-angle.is-sel { border: 2px solid var(--sv-accent); }
+.stsv-angle:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
 .stsv-angle-n { font-size: 14px; font-weight: 700; line-height: 1; color: var(--face-fg, var(--sv-text)); }
 .stsv-angle-dot { color: var(--face-fg, var(--sv-text-mute)); font-size: 12px; line-height: 1; }
 .stsv-angle-best {
@@ -625,15 +625,11 @@ html[data-theme='dark'] .stsv {
 }
 .stsv-settings-toggle:hover,
 .stsv-settings-toggle[aria-expanded="true"] { color: var(--accent); }
+.stsv-settings-dialog { max-width: 440px; }
 .stsv-settings {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 12px;
-  margin-bottom: 12px;
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
-  background: var(--card);
 }
 .stsv-settings-limits { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
 .stsv-settings-limits .stsv-control { flex-direction: row; align-items: center; gap: 8px; }

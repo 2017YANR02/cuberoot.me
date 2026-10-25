@@ -14,6 +14,7 @@ import { tr, T, useLang } from '@/i18n/tr';
 import BoolToggle from './BoolToggle';
 import { DateInput } from './DateInput';
 import { persistItem } from '@/lib/safe-storage';
+import { regulationPostForHref } from '@/lib/regulation-posts';
 import {
   type PageNotice, type NoticeLevel, type NoticePlacement, type PageNoticeInput,
   fetchPageNotices, fetchAllPageNotices, savePageNotice, deletePageNotice,
@@ -295,9 +296,10 @@ export default function PageNoticeBar() {
 
   if (!renders) return null;
 
+  const linkedPost = form?.placement === 'home_featured' ? regulationPostForHref(form.href.trim()) : undefined;
   const canSave = form != null
     && form.path.trim() !== ''
-    && (form.bodyZh.trim() !== '' || form.bodyEn.trim() !== '')
+    && (linkedPost != null || form.bodyZh.trim() !== '' || form.bodyEn.trim() !== '')
     && (form.placement !== 'home_featured' || form.href.trim() !== '');
 
   return (
@@ -464,7 +466,7 @@ export default function PageNoticeBar() {
                 )}
           </p>
 
-          <div className="page-notice-field">
+          {!linkedPost && <div className="page-notice-field">
             <div className="page-notice-presets">
               {PRESETS.map((p) => {
                 const PIcon = ICONS[p.icon] ?? LEVEL_ICON[p.level];
@@ -478,16 +480,17 @@ export default function PageNoticeBar() {
                 );
               })}
             </div>
-          </div>
+          </div>}
 
+          {linkedPost && <p className="page-notice-hint"><T en="Title follows the article." zh="标题随文章同步。" /></p>}
           <label className="page-notice-field">
             <span><T en="Chinese text" zh="中文" /></span>
-            <textarea className="page-notice-input" value={form.bodyZh} onChange={(e) => setForm({ ...form, bodyZh: e.target.value })}
+            <textarea className="page-notice-input" readOnly={!!linkedPost} value={linkedPost?.title.zh ?? form.bodyZh} onChange={(e) => setForm({ ...form, bodyZh: e.target.value })}
               placeholder={tr({ en: 'e.g. This page is under maintenance', zh: '例:本页正在维护,稍后恢复' })} />
           </label>
           <label className="page-notice-field">
             <span><T en="English text" zh="英文" /></span>
-            <textarea className="page-notice-input" value={form.bodyEn} onChange={(e) => setForm({ ...form, bodyEn: e.target.value })}
+            <textarea className="page-notice-input" readOnly={!!linkedPost} value={linkedPost?.title.en ?? form.bodyEn} onChange={(e) => setForm({ ...form, bodyEn: e.target.value })}
               placeholder="e.g. This page is under maintenance" />
           </label>
 

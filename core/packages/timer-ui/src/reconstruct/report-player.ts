@@ -25,6 +25,7 @@ export function reportPlayerAction(state:ReportPlayerState,action:ReportAction,t
 export function reportPlayback(state:ReportPlayerState,total:number,totalMs:number,hasGyro:boolean,hasSide:boolean,tr:ReconstructLocalize):ReportNode {
   const control=(id:string,label:string,action:ReportAction,disabled:boolean,icon:string)=>buttonNode(id,label,action,`reconstruct-pb-btn${id==='play'?' is-play':''}`,{disabled,icon});
   return groupNode('playback',[
+    hasSide&&groupNode('side',[{id:'notation',kind:'slot'}],'reconstruct-playback-side'),
     groupNode('main',[
       groupNode('top',[textNode('caption',tr({zh:'回放',en:'replay'}),'reconstruct-playback-cap'),groupNode('controls',[
         hasGyro?{id:'gyro',kind:'toggle',text:tr({zh:'陀螺仪',en:'Gyro'}),value:state.posed,action:{type:'gyro'}}:null,
@@ -41,7 +42,6 @@ export function reportPlayback(state:ReportPlayerState,total:number,totalMs:numb
         control('end',tr({zh:'到结尾',en:'To end'}),{type:'end'},state.index>=total,'end'),
       ],'reconstruct-playback-buttons','row'),
     ],'reconstruct-playback-main'),
-    hasSide&&groupNode('side',[{id:'notation',kind:'slot'}],'reconstruct-playback-side'),
   ],`reconstruct-playback${hasSide?' has-side':''}`);
 }
 

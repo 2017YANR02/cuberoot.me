@@ -28,7 +28,18 @@ interface Rule {
   fix: string;
 }
 
+// Official organization names, independent of the community glossary.
+// Current generated translations are checked too; archived versions stay intact.
+const WCA_RULES: Rule[] = [
+  { term: 'WCA Integrity Committee', ban: /(?:诚信|廉正)委员会/, fix: '廉政委员会' },
+  { term: 'WCA Communication Team', ban: /WCA\s*沟通团队/, fix: 'WCA 通讯组' },
+  { term: 'WCA Competition Announcement Team', ban: /WCA\s*比赛公告团队/, fix: 'WCA 比赛公示组' },
+  { term: 'WCA Marketing Team', ban: /WCA\s*市场(?:推广)?团队/, fix: 'WCA 市场营销组' },
+  { term: 'WCA organization names', ban: /WCA\s*(?:档案团队|软件团队|成绩团队|大型锦标赛团队|执行助理团队|行政助理团队|质量保障委员会)/, fix: '按 WCA 翻译参考中的官方机构名称表' },
+];
+
 const RULES: Rule[] = [
+  ...WCA_RULES,
   // trangium MCC:同一手指连续使用要等它回位 —— 社区叫「复用」,不是劳累义的直译
   { term: 'overwork', ban: /过劳/, fix: '复用' },
   // glossary: Finger Trick 指法
@@ -91,6 +102,13 @@ describe('魔方术语错译黑名单(termbase = wiki/glossary.json)', () => {
         if (SEXY_BAN.test(lines[i])) {
           violations.push(`${p}:${i + 1} [sexy] 应作「sexy」: ${lines[i].trim().slice(0, 120)}`);
         }
+      }
+    }
+    for (const name of ['posts.json', 'posts-index.json', 'logs.json']) {
+      const p = join(ROOT, 'app/[lang]/regulation/_data', name);
+      const text = readFileSync(p, 'utf8');
+      for (const rule of WCA_RULES) {
+        if (rule.ban.test(text)) violations.push(`${p} [${rule.term}] 应作「${rule.fix}」`);
       }
     }
     expect(

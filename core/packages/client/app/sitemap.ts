@@ -1,4 +1,4 @@
-import { ALL_NEWS } from './[lang]/regulation/_data/news-catalog';
+import { ALL_NEWS } from '@/lib/regulation-posts';
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { MetadataRoute } from 'next';

@@ -3,7 +3,8 @@
  * extract alg from recon-prefixed text. Ported from packages/client-vite/src/utils/recon_alg_utils.ts.
  */
 import { etm } from '@cuberoot/shared/alg-notation';
-import { wastedDisplaySpans } from '@cuberoot/shared/timer/reconstruct/error-detect';
+import { detectWastedWork, wastedDisplaySpans } from '@cuberoot/shared/timer/reconstruct/error-detect';
+import { simplifyAlg } from '@/lib/cube3';
 import { parseSq1Tokens } from '@cuberoot/shared/sq1-notation';
 import { orientedFaceColors, orientationForBottomFace } from '@/lib/cube-orientation';
 import { CUBE_COLOR_LETTER_FOR_FACE, CUBE_FACE_FOR_COLOR_LETTER } from '@/lib/cube-colors';
@@ -147,6 +148,46 @@ export function findTokenPositions(text: string): TokenPosition[] {
     offset += line.length + 1;
   }
   return tokens;
+}
+
+/** A separate, equivalent 3x3 solution; keep source line comments and never edit the record. */
+export function removeReconWaste(text: string, scramble: string): string | null {
+  const source = text.replace(/\r\n?/g, '\n');
+  const code = source.replace(/\/\/[^\n]*/g, comment => ' '.repeat(comment.length));
+  // Only plain move streams have a lossless source-to-move mapping here.
+  if (/[\[\]:,]/.test(code) || /\)\s*\d/.test(code) || /[^\s()]/.test(code.replace(TOKEN_RE, ''))) return null;
+  let depth = 0;
+  for (const char of code) {
+    if (char === '(') depth++;
+    if (char === ')' && --depth < 0) return null;
+  }
+  if (depth) return null;
+  const original = findTokenPositions(source);
+  let tokens = original.map(token => ({ ...token, line: source.slice(0, token.start).split('\n').length - 1 }));
+  let changed = false;
+  for (;;) {
+    const spans = detectWastedWork(cleanForPlayer(scramble), tokens.map((token, ts) => ({ m: token.text, ts })))?.spans ?? [];
+    const kept = tokens.filter((_, i) => !spans.some(span => i >= span.fromIdx && i <= span.toIdx));
+    const next: typeof tokens = [];
+    for (const token of kept) {
+      const prev = next.at(-1);
+      // Preserve rotations and stage placement; combine only adjacent turns of the same face.
+      if (prev && !/^[xyz]/.test(token.text) && prev.text.replace(/[2']/g, '') === token.text.replace(/[2']/g, '')) {
+        const combined = simplifyAlg(`${prev.text} ${token.text}`);
+        next.pop();
+        if (combined) next.push({ ...prev, text: combined });
+      } else next.push(token);
+    }
+    if (next.length === tokens.length) break;
+    changed = true;
+    tokens = next;
+  }
+  if (!changed) return null;
+  return source.split('\n').map((line, index) => {
+    const commentAt = line.indexOf('//');
+    const comment = commentAt < 0 ? '' : line.slice(commentAt);
+    return [tokens.filter(token => token.line === index).map(token => token.text).join(' '), comment].filter(Boolean).join(' ');
+  }).join('\n');
 }
 
 /** Display decorations indexed into the unchanged source; never feed these to playback. */

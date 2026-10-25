@@ -4,6 +4,8 @@
 
 A reference for translating regulations, competition announcements and incident reports. It distinguishes regulatory terminology from CubeRoot community usage. Source wording is preserved separately in the [parallel-clause Markdown](https://cuberoot.me/regulation/wca-regulations-bilingual.md).
 
+官网组织名称、导航及 FAQ 等页面另见[官网双语对照 Markdown](https://cuberoot.me/regulation/wca-website-bilingual.md)，也可在[网页展开阅读](https://cuberoot.me/zh/regulation/translation#website-corpus)。 / Official organization names, navigation and page text such as FAQs are included in the [website corpus](https://cuberoot.me/regulation/wca-website-bilingual.md), also [readable on the website](https://cuberoot.me/regulation/translation#website-corpus).
+
 ## 来源与范围 / Sources and scope
 
 - 规则基线 / Regulation baseline: **2026-04-01**（EN: April 1, 2026; ZH: 2026年4月1日）。整理日期 / Compiled: **2026-10-23**。
@@ -21,6 +23,32 @@ A reference for translating regulations, competition announcements and incident 
 3. 确定主体、动作、条件、例外和处罚范围。保留义务强弱、否定、数字、单位、编号及转动记号。 / Identify the actor, action, conditions, exceptions and penalty scope. Preserve modality, negation, numbers, units, IDs and notation.
 4. 复核 event / round / group、attempt / solve、cutoff / time limit、average / mean、extra / provisional attempt 等易混项。 / Review the context-sensitive distinctions below.
 5. 疑似错译须引用英文并单列理由；不得把校订写回原始对照后仍称原文，也不补出原文没有的判罚。 / Flag suspected errors with English evidence; keep corrections separate from the source corpus and do not invent rulings.
+
+## 官方机构名称 / Official organization names
+
+以下名称按 [WCA 团队、委员会和理事会](https://www.worldcubeassociation.org/teams-committees)及[官方简体中文语言文件](https://github.com/thewca/worldcubeassociation.org/blob/b0f6f610e2d677f1094915a88c883f0d8d9f3e2a/config/locales/zh-CN.yml)整理，核对日期 **2026-10-25**。缩写用于识别机构，不能凭通用词义另造中文名。 / Names follow the WCA website and its Chinese locale, checked on **2026-10-25**. Identify organizations by acronym and use the established Chinese name.
+
+| Acronym | English | 官方中文 / Official Chinese |
+| --- | --- | --- |
+| WAPC | WCA Appeals Committee | WCA 申诉委员会 |
+| WAT | WCA Archive Team | WCA 档案组 |
+| WCT | WCA Communication Team | WCA 通讯组 |
+| WCAT | WCA Competition Announcement Team | WCA 比赛公示组 |
+| WEAT | WCA Executive Assistants Team | WCA 董事会助理团队 |
+| WFC | WCA Financial Committee | WCA 财务委员会 |
+| WIC | WCA Integrity Committee | WCA 廉政委员会 |
+| WMCT | WCA Major Championship Team | WCA 大型锦标赛组 |
+| WMT | WCA Marketing Team | WCA 市场营销组 |
+| WQAC | WCA Quality Assurance Committee | WCA 质量保证委员会 |
+| WRC | WCA Regulations Committee | WCA 规则委员会 |
+| WRT | WCA Results Team | WCA 成绩组 |
+| WST | WCA Software Team | WCA 软件组 |
+| WSOT | WCA Sports Organization Team | WCA 体育组织团队 |
+
+- WIC 统一译“廉政委员会”，不译“诚信委员会”；WCT 用“通讯组”，WCAT 用“比赛公示组”，WMT 用“市场营销组”。此约定适用于公告标题、正文、新闻摘要、索引和新译稿。 / Apply these names consistently to titles, bodies, summaries, indexes and new translations.
+- Team 不统一直译“团队”：上述专名分别使用“组”或“团队”；committee 是“委员会”，council 是“理事会”，Board 是“董事会”，officer 是“干事”。普通组织团队不套用某个 WCA 专名。 / Preserve established proper names and distinguish teams, committees, councils, the Board and officers.
+- 历史 WCA Disciplinary Committee（WDC）保留“WCA 纪律委员会”；旧公告中的 WCA Appeals Committee（WAC）保留 WAC，不替换成今天页面的 WAPC。官方当前职责说明本身仍有 WAC，不能把名称一致误当作缩写已同步。 / Keep historical WDC and WAC names and acronyms; do not rewrite them as current organizations or acronyms.
+- [官网语料](https://cuberoot.me/regulation/wca-website-bilingual.md)保留原译，专名以上表为准。官网干事说明将 officers 译成“董事”，新译文应区分“干事”和“董事”；这类疑点不作为优质范例直接模仿。 / The website corpus preserves source translations. Its officers description conflates officers with directors; flag this discrepancy rather than copying it into new translations.
 
 ## 人员与组织 / People and organization
 

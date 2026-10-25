@@ -3197,7 +3197,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               ariaLabel: tr({ zh: '出题来源', en: 'Question source' }),
               real: tr({ zh: '真题', en: 'Real' }),
               realOption: tr({ zh: 'WCA 真题', en: 'WCA real' }),
-              random: randomSourceOptionLabel,
+              random: tr({ zh: '随机', en: 'Random' }),
               randomOption: randomSourceOptionLabel,
               manual: tr({ zh: '手动', en: 'Manual' }),
               manualOption: tr({ zh: '手动输入', en: 'Manual input' }),
@@ -3237,6 +3237,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         stage={{
           className: "shell-main",
           fullscreen: fullscreen,
+          rankings: settings.rankScopes.length > 0 && rankBadgePhase && solves.length > 0 ? (
+            <RankBadge eventId={event} centis={rankCentis} type="single" country={rankCountry} isZh={isZh} scopes={settings.rankScopes} wcaId={authUser?.wcaId} />
+          ) : undefined,
           source: !douyin && <ScrambleSourceBar disabled={!sourceControlsEnabled} event={event} isZh={isZh} diffSlot={diffSlot} mergeSlot={mergeSlot} wcaSourceSlot={wcaSourceSlot} />,
           statistics: <TimerStatRail
             ariaExpanded={panelTab != null}
@@ -3372,9 +3375,6 @@ cubeFooter: <>
   {timer.phase === 'running' && liveSolve && <div ref={setLiveStageTarget} className="timer-live-stage" data-no-timer />}
 </>,
 cornerAspect: cubeConnected || cubeStartedRef.current ? undefined : timerCubePreviewAspect(event, previewScramble),
-digitsCorner: settings.rankScopes.length > 0 && rankBadgePhase && solves.length > 0 ? (
-            <RankBadge eventId={event} centis={rankCentis} type="single" country={rankCountry} isZh={isZh} scopes={settings.rankScopes} wcaId={authUser?.wcaId} />
-          ) : undefined,
 children: <>
           {/* sub-content under the digits */}
           {trainingTimingActive && timer.phase === 'inspecting' && <div className="timer-live-tps">

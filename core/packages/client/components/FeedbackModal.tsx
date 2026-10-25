@@ -1,4 +1,5 @@
 'use client';
+import './settings-typography.css';
 
 // 桌宠「反馈」弹窗 — 需求 / Bug / 其他。登录后可提;支持 Ctrl+V / 拖拽 / 选择截图
 // (客户端缩放转 webp)+ 一段短视频(≤15s ≤20MB,落服务端磁盘)。提交时静默捕获
@@ -17,6 +18,7 @@ import './feedback-modal.css';
 interface Props {
   lang: 'zh' | 'en';
   onClose: () => void;
+  embedded?: boolean;
 }
 
 const ICON = 15;
@@ -40,7 +42,7 @@ function probeDuration(url: string): Promise<number> {
   });
 }
 
-export default function FeedbackModal({ lang, onClose }: Props) {
+export default function FeedbackModal({ lang, onClose, embedded = false }: Props) {
   const user = useAuthStore((s) => s.user);
   const login = useAuthStore((s) => s.login);
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
@@ -55,7 +57,7 @@ export default function FeedbackModal({ lang, onClose }: Props) {
   const [error, setError] = useState<string | null>(null);
   const videoUrlRef = useRef<string | null>(null);
 
-  useModalDismiss(onClose, submitting);
+  const backdropProps = useModalDismiss(onClose, submitting);
   useEffect(() => () => {
     if (videoUrlRef.current) URL.revokeObjectURL(videoUrlRef.current);
   }, []);
@@ -150,9 +152,9 @@ export default function FeedbackModal({ lang, onClose }: Props) {
   };
 
   return (
-    <div className="fb-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget && !submitting) onClose(); }}
-      role="dialog" aria-modal="true">
-      <div className="fb-modal" onPaste={onPaste}>
+    <div className={embedded ? undefined : "fb-overlay"} {...(!embedded ? backdropProps : {})}
+      role={embedded ? undefined : "dialog"} aria-modal={embedded ? undefined : true}>
+      <div className="fb-modal settings-typography" onPaste={onPaste}>
         <button className="fb-close" onClick={onClose} aria-label={t('关闭', 'Close')} disabled={submitting}>
           <X size={ICON} />
         </button>

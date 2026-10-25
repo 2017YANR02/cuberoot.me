@@ -86,10 +86,31 @@ async function buildOpt(tablesBase, name, Ctor) {
 // (BFS 剪枝表)还得 fetch。`need='cross'` 因此只拉 pt_cross(gz 50KB)就能算纯十字;
 // xcross 及以上要的 pt_cross_C4E0(gz 20MB)走 ensureXCross 惰性补(见下)。
 async function init(glueUrl, wasmUrl, tablesBase, need, wantXCross, xcrossGz, xcrossBytes) {
-  const mod = await import(glueUrl);
-  await mod.default(wasmUrl);
-  const get = (n) => n === 'pt_cross_C4E0' && xcrossBytes
-    ? Promise.resolve(new Uint8Array(xcrossBytes)) : fetchTable(tableUrl(tablesBase, n));
+  const pendingTables = new Map();
+  const get = (n) => {
+    if (!pendingTables.has(n)) {
+      // The 49 KB cross table ships beside the engine, including installed hosts.
+      // Older deployments can still fall back to their configured table origin.
+      const localUrl = new URL(`tables/${n}.bin.gz${tableQuery ? '?' + tableQuery : ''}`, glueUrl).href;
+      const remoteUrl = tableUrl(tablesBase, n);
+      pendingTables.set(n, n === 'pt_cross_C4E0' && xcrossBytes
+        ? Promise.resolve(new Uint8Array(xcrossBytes))
+        : n === 'pt_cross' && localUrl !== remoteUrl
+          ? fetchTable(localUrl).catch(() => fetchTable(remoteUrl))
+          : fetchTable(remoteUrl));
+    }
+    return pendingTables.get(n);
+  };
+  // Independent downloads must overlap, rather than paying three network waits.
+  const moduleReady = Promise.all([import(glueUrl), fetch(wasmUrl)]).then(async ([mod, response]) => {
+    if (!response.ok) throw new Error(`fetch ${wasmUrl}: ${response.status}`);
+    await mod.default({ module_or_path: response });
+    return mod;
+  });
+  const [mod] = await Promise.all([
+    moduleReady,
+    ['cross', 'f2leo'].includes(need) ? get('pt_cross') : null,
+  ]);
   if (need === 'f2leo') {
     // f2leo / pseudo:唯一下载 pt_cross;4 张 mt 现场生成。pseudo 首次求解再现场建剪枝表。
     f2leoSolver = new mod.F2leoSolverWasm(await get('pt_cross'));

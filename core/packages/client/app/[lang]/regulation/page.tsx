@@ -8,7 +8,7 @@ import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import { useT } from '../../../hooks/useT';
 import './regulation.css';
-import { LATEST_NEWS as LATEST_REG_NEWS } from './_data/news-catalog';
+import { LATEST_NEWS as LATEST_REG_NEWS } from '@/lib/regulation-posts';
 import { tr } from '@/i18n/tr';
 
 export default function RegulationHub() {

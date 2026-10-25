@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "key": "disciplinary:/posts/integrity-committee-digest-2026-q2",
+  "source": {
+    "key": "disciplinary:/posts/integrity-committee-digest-2026-q2",
+    "kind": "disciplinary",
+    "title": "Integrity Committee Digest - 2026 Q2",
+    "date": "2026-07-14T02:15:51Z",
+    "url": "https://www.worldcubeassociation.org/posts/integrity-committee-digest-2026-q2",
+    "content": "<p>Hi WCA Community,</p><p>Below you can find a summary of some of the notable cases the WCA Integrity Committee has worked on, as well as some general WIC updates from the past three months.</p><p>In the last quarter, the WCA Integrity Committee opened <strong>10</strong> cases and closed <strong>12</strong>. This resulted in <strong>2</strong> bans and <strong>4</strong> warnings, while <strong>6</strong> cases ended with no action. Below, you can find summaries of some notable cases:</p><ul><li>An investigation was opened after repeated reports of a competitor being disruptive in competition settings, which Volunteers shared with the WIC made them uncomfortable with hosting events the competitor specialized in. The WIC reached out to the competitor and discussed means of mediating their behavioural issues but found their responses unsatisfactory. The competitor received a short ban.</li><li>An investigation was opened after suspicions that a competitor’s behaviour in blindfolded events was consistent with the possibility that they were looking under the blindfold. Based on video evidence and delegate testimony, the WIC concluded that peeking did indeed occur in these official attempts. The WIC also believes the competitor’s account of the situation was not entirely truthful. The solves in suspicion were disqualified and the competitor was issued a formal warning.</li><li>The WIC received a report detailing competitors making jokes involving inappropriate symbols with hurtful connotations. It was detailed that these competitors had pretended to conduct official attempts with puzzles showing patterns of these symbols rather than official scrambles. The competitor responsible apologized and was issued a formal warning.</li></ul><p>General WIC updates:</p><p>After a recent application period, 8 new members have joined the WCA Integrity Committee:</p><ul><li>Blake Thompson (2010THOM03)</li><li>Carmen Teo Bin Jie (2012JIET01)</li><li>Joran Busser (2022BUSS04)</li><li>Jordan Halford (2022HALF02)</li><li>Kajtek Kwiatkowski (2023KWIA01)</li><li>Lars Johan Folde (2018FOLD01)</li><li>Rocío Fernández Usero (2014USER01)</li><li>Tyler Williams (2017WILL05)</li></ul><p>Cade Beck (2018BECK05) was recently appointed as Leader of the Conduct sub-team. We congratulate him and wish him the best of luck in his new role.</p><p>Amanda Schmid (2017SCHM12) was recently appointed as Senior Member of the WCA Integrity Committee. We congratulate her and wish her the best of luck in her new role.</p><p>Carter Kucala (2015KUCA01), Glib Vedmid (2016VEDM01), Yash Budhiraja (2018BUDH01), and Yuji Yoshida (2015YOSH01) recently stepped down from their positions as WIC members. Thank you so much for your work Carter, Glib and Yash, and Yuji!</p><p>Do you have questions for the WCA Integrity Committee? Feel free to send us an email. Our inboxes are always open!</p>",
+    "hash": "742850af272350dfed2faf596d75b4cfa120fc735107adaf78c25c95a2433660",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 2,
+    "title": "诚信委员会简报：2026 年第二季度",
+    "content": "WCA 社群，你们好：\n\n以下是过去三个月 WIC 部分重要案件与一般动态。上季度立案 **10** 件、结案 **12** 件，作出 **2** 项禁赛、**4** 项警告，**6** 件未采取措施。\n\n- 多次接报一名选手在比赛环境中扰乱秩序，志愿者表示，这使他们对承办该选手擅长的项目感到不安，因此展开调查。WIC 联系选手，讨论调解行为问题的办法，但认为其回应不令人满意，给予短期禁赛。\n- 因怀疑某选手盲拧表现与从眼罩下偷看相符而展开调查。依据视频及代表证词，WIC 认定正式尝试中确有偷看，并认为其说明并非完全真实。相关可疑成绩被取消，并给予正式警告。\n- 收到报告，选手以具有伤害含义的不当符号开玩笑，假装进行正式尝试，却使用摆成这些符号图案而非正式打乱的魔方。负责此事的选手道歉并获正式警告。\n\n**一般动态**\n\n近期招募后，8 名新成员加入：\n- Blake Thompson（2010THOM03）；\n- Carmen Teo Bin Jie（2012JIET01）；\n- Joran Busser（2022BUSS04）；\n- Jordan Halford（2022HALF02）；\n- Kajtek Kwiatkowski（2023KWIA01）；\n- Lars Johan Folde（2018FOLD01）；\n- Rocío Fernández Usero（2014USER01）；\n- Tyler Williams（2017WILL05）。\n\nCade Beck（2018BECK05）获任行为小组负责人，Amanda Schmid（2017SCHM12）获任高级成员，祝贺并祝履职顺利。\n\nCarter Kucala（2015KUCA01）、Glib Vedmid（2016VEDM01）、Yash Budhiraja（2018BUDH01）、Yuji Yoshida（2015YOSH01）近期卸任成员，感谢他们的工作。\n\n如有问题，欢迎给 WIC 发邮件，我们的邮箱始终开放。",
+    "translatedAt": "2026-10-22T06:05:15.716Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "742850af272350dfed2faf596d75b4cfa120fc735107adaf78c25c95a2433660",
+    "revisedAt": "2026-10-22T06:25:36.680Z",
+    "revisionReason": "独立审校 round-1 的精确修正建议"
+  },
+  "review": {
+    "status": "independently_verified",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_1",
+      "reviewedAt": "2026-10-22T06:23:54.689Z",
+      "report": "reviews/round-1/report-1.json",
+      "sourceHash": "742850af272350dfed2faf596d75b4cfa120fc735107adaf78c25c95a2433660",
+      "reviewedTranslationHash": "265237661a1bda3a5cfce43ffc4dc18ded0c92f79469482049f90b4d9f58840a",
+      "verdict": "correction_required",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": [],
+    "recheck": {
+      "reviewer": "review_1",
+      "reviewedAt": "2026-10-22T06:26:33.824Z",
+      "report": "reviews/round-1/recheck-1.json",
+      "sourceHash": "742850af272350dfed2faf596d75b4cfa120fc735107adaf78c25c95a2433660",
+      "reviewedTranslationHash": "ef51ee4a7fd96bf7335c31a0b80341642c46751c36d971d7e165c9ff42db25af",
+      "verdict": "pass"
+    }
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

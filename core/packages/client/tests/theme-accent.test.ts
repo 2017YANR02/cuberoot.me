@@ -2,7 +2,7 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 import { ACCENT_COLORS, ACCENT_KEY, findAccentColor, setAccentRoot } from '@/lib/accent-colors';
 import { THEME_BOOTSTRAP } from '@/lib/theme-bootstrap';
-import { applyAccent, applyPalette, previewTheme, readAccent, restorePersistedAppearance } from '@/lib/theme';
+import { applyAccent, applyPalette, previewAccent, previewTheme, readAccent, restorePersistedAppearance } from '@/lib/theme';
 
 beforeEach(() => {
   localStorage.clear();
@@ -37,6 +37,18 @@ it('keeps the accent independent of palette selection and temporary scheme previ
   expect(readAccent()).toBeNull();
 });
 
+it('previews colors and palette-following without changing the saved accent', () => {
+  applyAccent('purple');
+  previewAccent('cyan');
+  expect(document.documentElement.dataset.accent).toBe('cyan');
+  expect(readAccent()).toBe('purple');
+  previewAccent(null);
+  expect(document.documentElement.dataset.accent).toBeUndefined();
+  expect(readAccent()).toBe('purple');
+  restorePersistedAppearance();
+  expect(document.documentElement.dataset.accent).toBe('purple');
+});
+
 it('ignores invalid stored colors and does not rewrite unchanged root attributes', async () => {
   localStorage.setItem(ACCENT_KEY, 'invalid');
   window.eval(THEME_BOOTSTRAP);
@@ -58,6 +70,30 @@ function luminance(hex: string) {
   });
   return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
 }
+
+it('restores custom HEX before hydration and preserves it across previews', () => {
+  applyAccent('#f077af');
+  expect(readAccent()).toBe('#F077AF');
+  document.documentElement.removeAttribute('style');
+  window.eval(THEME_BOOTSTRAP);
+  expect(document.documentElement.style.getPropertyValue('--user-accent-light')).toBe('#F077AF');
+  expect(document.documentElement.style.getPropertyValue('--user-accent-dark')).toBe('#F077AF');
+  expect(document.documentElement.style.getPropertyValue('--user-accent-custom-foreground')).toBe('#000000');
+  previewAccent('blue');
+  restorePersistedAppearance();
+  expect(document.documentElement.dataset.accent).toBe('#F077AF');
+  applyAccent('blue');
+  expect(document.documentElement.style.getPropertyValue('--user-accent-custom-foreground')).toBe('');
+});
+
+it('rejects incomplete and non-HEX custom values', () => {
+  for (const value of ['#123', '#12345Z', '#1234567', 'red', '#123456; color:red']) {
+    expect(findAccentColor(value)).toBeNull();
+    localStorage.setItem(ACCENT_KEY, value);
+    window.eval(THEME_BOOTSTRAP);
+    expect(document.documentElement.dataset.accent).toBeUndefined();
+  }
+});
 
 it('keeps button text readable for every color in both schemes', () => {
   for (const color of ACCENT_COLORS) {

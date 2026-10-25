@@ -12,14 +12,16 @@
     "sourceId": 14181
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "12b3c3fe323525ccd6051d32294c417a5b1ac9db2501553f571a3b6559e971d9",
     "language": "zh-Hans",
-    "title": "WCA 大型锦标赛团队负责人任命公告（2024 年 12 月）",
-    "content": "亲爱的 WCA 社区成员：\n\n我们很高兴地宣布，Rubén López de Juan 将担任 WCA 大型锦标赛团队（WMCT）的新负责人。\n\n根据[《WCA 委员会与团队动议》](https://documents.worldcubeassociation.org/documents/motions/10.2024.0%2520-%2520Committees%2520and%2520Teams.pdf)第 5 节，WCA 董事会选定了 Rubén，并通过投票批准其任命。任命于 2024 年 11 月 27 日生效。\n\nRubén 将成为 WCA 首位大型锦标赛团队负责人，祝他在新岗位上一切顺利。\n\n我们共收到四份申请，Rubén 是其中一位申请者。全部申请材料可在[这里](https://drive.google.com/drive/folders/1044OOtUd9zIU91MzhZara-EDVjaiuLMW)查看。",
+    "title": "WCA 大型锦标赛组负责人任命公告（2024 年 12 月）",
+    "content": "亲爱的 WCA 社区成员：\n\n我们很高兴地宣布，Rubén López de Juan 将担任 WCA 大型锦标赛组（WMCT）的新负责人。\n\n根据[《WCA 委员会与团队动议》](https://documents.worldcubeassociation.org/documents/motions/10.2024.0%2520-%2520Committees%2520and%2520Teams.pdf)第 5 节，WCA 董事会选定了 Rubén，并通过投票批准其任命。任命于 2024 年 11 月 27 日生效。\n\nRubén 将成为 WCA 首位大型锦标赛组负责人，祝他在新岗位上一切顺利。\n\n我们共收到四份申请，Rubén 是其中一位申请者。全部申请材料可在[这里](https://drive.google.com/drive/folders/1044OOtUd9zIU91MzhZara-EDVjaiuLMW)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:40:49.164Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "pending_independent_review",
+    "revisedAt": "2026-10-25T07:28:01.629Z",
+    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
   },
-  "translationHash": "a42b162679431883019a4f9c39ac1fd0cdbdf8d9a0244682615d980ee4195216"
+  "translationHash": "de7d9db6fe3c390435dd8af7d3f8f76e55b47bea809f13d4b9a8250a42004d37"
 }

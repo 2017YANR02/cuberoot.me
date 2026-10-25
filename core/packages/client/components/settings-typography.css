@@ -1,0 +1,20 @@
+/* One typography contract for settings panels and their portaled menus.
+   These reuse controls with independent standalone typography. The opt-in scope
+   intentionally wins over those skins, including active options and headings;
+   it does not change control geometry, icons, colors or interaction styles. */
+.settings-typography {
+  font: 400 0.875rem/1.5 var(--font-sans) !important;
+  letter-spacing: normal;
+}
+
+.settings-typography :where(:not(svg, svg *)) {
+  font: inherit !important;
+  letter-spacing: inherit !important;
+}
+
+/* Match the site's iOS input zoom guard without enlarging only form fields. */
+@media (max-width: 768px) {
+  .settings-typography {
+    font-size: 1rem !important;
+  }
+}

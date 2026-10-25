@@ -13,16 +13,16 @@ import '@/app/[lang]/sim/player-controls.css';
 import './cuber-recon-player.css';
 export * from '@cuberoot/timer-ui/CuberReconPlayer';
 
-type Props = ComponentProps<typeof SharedCuberReconPlayer> & { showPlaybackOptions?: boolean; reconText?: string };
+type Props = ComponentProps<typeof SharedCuberReconPlayer> & { showPlaybackOptions?: boolean; reconText?: string; showScrambleNet?: boolean };
 
 /** Only the full reconstruction pane opts into the simulator's extra controls. */
-export default function CuberReconPlayer({ showPlaybackOptions, reconText, ...props }: Props) {
+export default function CuberReconPlayer({ showPlaybackOptions, reconText, showScrambleNet = true, ...props }: Props) {
   return showPlaybackOptions && !props.hideControls
-    ? <CuberWithOptions {...props} reconText={reconText} />
+    ? <CuberWithOptions {...props} reconText={reconText} showScrambleNet={showScrambleNet} />
     : <SharedCuberReconPlayer {...props} />;
 }
 
-function CuberWithOptions({ reconText, ...props }: ComponentProps<typeof SharedCuberReconPlayer> & { reconText?: string }) {
+function CuberWithOptions({ reconText, showScrambleNet, ...props }: ComponentProps<typeof SharedCuberReconPlayer> & { reconText?: string; showScrambleNet: boolean }) {
   const [stage, setStage] = useState('full');
   const text = reconText ?? props.alg;
   const source = `${props.scramble}\n${text}`;
@@ -30,7 +30,7 @@ function CuberWithOptions({ reconText, ...props }: ComponentProps<typeof SharedC
   const [manualOrientation, setManualOrientation] = useState<{ source: string; value: string } | null>(null);
   const orientation = manualOrientation?.source === source ? manualOrientation.value : automaticOrientation;
   const setOrientation = (value: string) => setManualOrientation({ source, value });
-  const [backView, setBackView] = useState(props.backView ?? true);
+  const [backView, setBackView] = useState(props.backView ?? false);
   const { rows } = useSimMasks();
   const mask = useMemo(() => isPresetMask(stage) ? presetMaskFn(props.order, stage, rows) : undefined, [stage, rows, props.order]);
   return <div className="cuber-recon-preview">
@@ -49,7 +49,7 @@ function CuberWithOptions({ reconText, ...props }: ComponentProps<typeof SharedC
       stepForward: tr({ zh: '下一步', en: 'Step forward' }), skipEnd: tr({ zh: '跳到末尾', en: 'Skip to end' }),
       scrub: tr({ zh: '拖动播放进度', en: 'Scrub playback' }),
     }} />
-    {!props.mirror && props.scramble.trim() && <div className="cuber-recon-scramble-net"
+    {showScrambleNet && !props.mirror && props.scramble.trim() && <div className="cuber-recon-scramble-net"
       role="img" aria-label={tr({ zh: '打乱平面展开图', en: 'Scramble net' })}>
       <ScramblePreview2D event={String(props.order).repeat(3)} scramble={props.scramble} size={44} />
     </div>}

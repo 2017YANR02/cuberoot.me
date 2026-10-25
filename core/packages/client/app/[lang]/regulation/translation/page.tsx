@@ -11,6 +11,7 @@ import './translation.css';
 // the tables readable to crawlers and avoids shipping the full corpus to JS.
 export default async function RegulationTranslation() {
   const markdown = await readFile(path.join(process.cwd(), 'public/regulation/wca-translation-reference.md'), 'utf8');
+  const websiteMarkdown = await readFile(path.join(process.cwd(), 'public/regulation/wca-website-bilingual.md'), 'utf8');
   return (
     <div className="reg-page">
       <div className="reg-wrap">
@@ -24,8 +25,15 @@ export default async function RegulationTranslation() {
           <a href="/regulation/wca-regulations-bilingual.md" download>
             <Download size={16} aria-hidden="true" />条款对照 / Parallel clauses (.md)
           </a>
+          <a href="/regulation/wca-website-bilingual.md" download>
+            <Download size={16} aria-hidden="true" />官网对照 / Website corpus (.md)
+          </a>
         </nav>
         <article className="reg-translation-reference">{renderArticleMarkdown(markdown)}</article>
+        <details className="reg-translation-reference" id="website-corpus">
+          <summary>官网菜单与页面双语对照 / Website menus and page translations</summary>
+          {renderArticleMarkdown(websiteMarkdown)}
+        </details>
         <JsonLd data={{
           '@context': 'https://schema.org',
           '@type': 'Article',

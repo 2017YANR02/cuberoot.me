@@ -3,6 +3,7 @@ import { createElement, type ReactNode } from 'react';
 import { Check, Copy, Forward, ThumbsUp, ThumbsDown, ChevronDown, ChevronRight, SkipBack, SkipForward, ChevronLeft, Play, Pause, ArrowRightLeft } from 'lucide-react';
 import '../recon/recon-cross-toggle.css';
 import BoolToggle from '../BoolToggle';
+import { TimerDifficultyHelp } from '../TimerDifficultyHelp';
 import CubeColorChip from '../CubeColorChip';
 import { useReconstructHost } from './ReconstructHost';
 import { getTextOffsetInElement, snapCaretToLine } from '../recon/text-cursor';
@@ -48,7 +49,9 @@ export default function ReportContent({node,dispatch,slots={}}:{node:ReportNode|
     }}>{node.text}</span>:<span className={node.className}>{node.text}</span>;
     case 'bar':return <div className="sa-bar" role="img" aria-label={node.text}>{node.segments?.map(s=><span key={s.id} className="sa-bar-seg" data-tone={s.tone} style={{width:s.fraction*100+'%'}} title={s.label}/>)}</div>;
     case 'slot':return slots[node.id]??null;
-    case 'text':return node.tag==='fragment'?<>{node.text}</>:createElement(node.tag??'span',{className:node.className,title:node.title},node.text);
+    case 'text':return node.icon==='info'&&node.title
+      ? <TimerDifficultyHelp content={node.title} label={node.text??''}/>
+      : node.tag==='fragment'?<>{node.text}</>:createElement(node.tag??'span',{className:node.className,title:node.title},node.text);
     case 'button':{
       const Icon=node.icon?icons[node.icon as keyof typeof icons]:undefined;
       return <button type="button" className={node.className} disabled={node.disabled} aria-pressed={node.selected} title={node.title??node.text} aria-label={node.text} onClick={()=>node.action&&dispatch(node.action)}>{Icon?<Icon size={15}/>:node.text}{children}</button>;

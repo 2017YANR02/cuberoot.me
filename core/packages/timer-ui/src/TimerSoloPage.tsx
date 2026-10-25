@@ -1,5 +1,6 @@
 'use client';
-import { useSyncExternalStore, type ComponentProps, type ReactNode } from 'react';
+import { useRef, useState, useSyncExternalStore, type ComponentProps, type ReactNode } from 'react';
+import { SolverTriggerContext } from './solver-trigger-context';
 import { TimerTopbar, type TimerTopbarProps } from './TimerChrome';
 import { TimerStageLayout, type TimerStageLayoutProps } from './TimerStageLayout';
 import { TimerWorkspaceDivider, useTimerWideLayout } from './TimerWorkspace';
@@ -24,14 +25,19 @@ export interface TimerSoloPageProps {
  * this component owns responsive placement and renders exactly one solver. */
 export function TimerSoloPage({ title, resizeLabel = 'Resize panel', topbar, stage, timing, solver, afterTiming, narrowRecap, hints, history, tools }: TimerSoloPageProps) {
   const wide = useTimerWideLayout();
-  return <>
+  const [solverTriggerSlot, setSolverTriggerSlot] = useState<HTMLSpanElement | null>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const { surfaceRef, onContextMenu, onMouseDown, onMouseUp, onPointerDown, onPointerUp, onPointerCancel, ...canvas } = timing;
+  return <SolverTriggerContext.Provider value={solverTriggerSlot}>
     <TimerTopbar {...topbar} className={`timer-solo-topbar${stage.fullscreen ? ' timer-solo-topbar--fullscreen' : ''}${topbar.className ? ` ${topbar.className}` : ''}`}
-      controls={<>{topbar.controls}{!wide && solver}</>} />
-    <TimerStageLayout {...stage} className={`timer-solo-main timer-workspace-main timer-solver-stage${stage.className ? ` ${stage.className}` : ''}`}>
+      controls={<>{topbar.controls}{solver && <span className="solver-trigger-slot" ref={setSolverTriggerSlot} />}{!wide && solver}</>} />
+    <TimerStageLayout {...stage} inputRef={surfaceRef}
+      inputHandlers={{ onContextMenu, onMouseDown, onMouseUp, onPointerDown, onPointerUp, onPointerCancel }}
+      className={`timer-solo-main timer-workspace-main timer-solver-stage${stage.className ? ` ${stage.className}` : ''}`}>
       {title && <h1 className="sr-only">{title}</h1>}
-      <TimingSurface {...timing} layout="solo" />
-      {!wide && narrowRecap}
-      <div className="timer-solo-after-timing surface-chrome" hidden={stage.fullscreen}>
+      <TimingSurface {...canvas} surfaceRef={canvasRef} layout="solo" />
+      {!wide && narrowRecap && <div data-no-timer style={{ display: 'contents' }}>{narrowRecap}</div>}
+      <div className="timer-solo-after-timing surface-chrome" data-no-timer hidden={stage.fullscreen}>
         {afterTiming}
         {hints}
       </div>
@@ -40,7 +46,7 @@ export function TimerSoloPage({ title, resizeLabel = 'Resize panel', topbar, sta
     </TimerStageLayout>
     {history}
     {tools && <TimerTools {...tools} />}
-  </>;
+  </SolverTriggerContext.Provider>;
 }
 /** Solver sheets permit navigation keys; every other overlay blocks them. */
 export function timerSoloModalState(blocking: boolean, solverSheet: boolean): 'blocking' | 'hints-only' | 'none' {

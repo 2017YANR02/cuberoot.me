@@ -156,7 +156,7 @@ export function reportFeedback(state:ReportUIState,tr:ReconstructLocalize) {
   return groupNode('feedback',[
     textNode('question',tr({zh:'复盘对不对?',en:'Reconstruction correct?'}),'rc-feedback-q'),
     ...[true,false].map(value=>buttonNode(String(value),value?tr({zh:'切分是对的',en:'The split is right'}):tr({zh:'切分不对',en:'The split is wrong'}),{type:'feedback',value},`rc-feedback-btn${state.feedback===value?value?' is-on':' is-off':''}`,{selected:state.feedback===value,icon:value?'thumb-up':'thumb-down'})),
-    {...textNode('hint','ⓘ','rc-feedback-info'),title:tr({zh:'阶段边界是从动作流推出来的,不是魔方报的。推错了这里说一声 —— 不影响任何数字,只是留个记号。',en:'The stage boundaries are inferred from the turn stream, not reported by the cube. Say so if they are wrong — it changes no number, it just leaves a marker.'})},
+    {...textNode('hint',tr({zh:'复盘反馈说明',en:'About reconstruction feedback'})),icon:'info',title:tr({zh:'阶段边界是从动作流推出来的,不是魔方报的。推错了这里说一声 —— 不影响任何数字,只是留个记号。',en:'The stage boundaries are inferred from the turn stream, not reported by the cube. Say so if they are wrong — it changes no number, it just leaves a marker.'})},
   ],'rc-feedback','row');
 }
 export function reportNoGyro(recordGyro:boolean,canEnable:boolean,tr:ReconstructLocalize) {

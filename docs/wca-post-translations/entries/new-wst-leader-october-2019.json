@@ -12,14 +12,16 @@
     "sourceId": 13031
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "efb67c48996abb0734ca51ba736d57fe3914ff925776d9e894e620967df64e91",
     "language": "zh-Hans",
-    "title": "WCA 软件团队新负责人（2019 年 10 月）",
-    "content": "我们很高兴地宣布，Philippe Virouleau 将成为 WCA 软件团队（WST）的新负责人。Philippe 此前已是 WST 成员。\n\n按照 WCA 委员会与团队[动议 10.2019.0](https://www.worldcubeassociation.org/documents/motions/10.2019.0%20-%20Committees%20and%20Teams.pdf)第 4 节的规定，WCA 董事会选定 Philippe，并由现任委员会负责人和高级代表投票通过。\n\n感谢 Jeremy Fleischman 为 WST 所做的工作，祝 Philippe 在新的岗位上工作顺利。\n\n新负责人将立即就任。Philippe 是唯一的申请者，他的申请材料可在[此处](https://drive.google.com/drive/folders/1NBsDZQbn5fsM5kz9TVKJ7Yv9JsDQ9Te1)查看。",
+    "title": "WCA 软件组新负责人（2019 年 10 月）",
+    "content": "我们很高兴地宣布，Philippe Virouleau 将成为 WCA 软件组（WST）的新负责人。Philippe 此前已是 WST 成员。\n\n按照 WCA 委员会与团队[动议 10.2019.0](https://www.worldcubeassociation.org/documents/motions/10.2019.0%20-%20Committees%20and%20Teams.pdf)第 4 节的规定，WCA 董事会选定 Philippe，并由现任委员会负责人和高级代表投票通过。\n\n感谢 Jeremy Fleischman 为 WST 所做的工作，祝 Philippe 在新的岗位上工作顺利。\n\n新负责人将立即就任。Philippe 是唯一的申请者，他的申请材料可在[此处](https://drive.google.com/drive/folders/1NBsDZQbn5fsM5kz9TVKJ7Yv9JsDQ9Te1)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:54.118Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "pending_independent_review",
+    "revisedAt": "2026-10-25T07:28:01.629Z",
+    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
   },
-  "translationHash": "212e5d5127c70aeb67ed3caea5b5dab740c0b27a950335101360d841369af458"
+  "translationHash": "23d48aba0e0d9cbda2cc8f9dae0f48a7b839d8e27595ffa49997910232e1ef23"
 }

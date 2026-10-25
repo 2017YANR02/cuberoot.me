@@ -157,7 +157,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   },
   {
     Icon: History,
-    title: { zh: '近期打乱', en: 'Recent scrambles' },
+    title: { zh: '打乱', en: 'Scrambles' },
     body: {
       zh: '查看比赛官方打乱、历史打乱记录，直接点开就能复盘这把还原。',
       en: 'Official and historical scrambles — open any of them to reconstruct the solve.',
@@ -168,7 +168,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   },
   {
     Icon: Film,
-    title: { zh: '今日复盘', en: "Today's reconstructions" },
+    title: { zh: '复盘', en: 'Reconstructions' },
     body: {
       zh: '浏览顶级选手的比赛复盘案例，学习高手的观察与还原思路。',
       en: 'Top solvers’ competition reconstructions — learn how the best look ahead.',

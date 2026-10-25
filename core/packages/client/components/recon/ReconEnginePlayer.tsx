@@ -44,9 +44,10 @@ import './recon-engine-player.css';
 const NXN_RE = /^[2-7]x[2-7]x[2-7]$/;
 
 export default function ReconEnginePlayer({
-  event, scramble, solution, anchorAtEnd = false, playerRef, fillPane = false, backView, hideControls = false, fullscreenButton,
+  event, scramble, solution, anchorAtEnd = false, playerRef, fillPane = false, backView, hideControls = false, fullscreenButton, showScrambleNet = true,
 }: {
   event: string;
+  showScrambleNet?: boolean;
   scramble: string;
   /** Solution to play. sq1 gets it raw; NxN / skewb / pyra go through cleanForPlayer. */
   solution: string;
@@ -56,7 +57,7 @@ export default function ReconEnginePlayer({
   playerRef?: RefObject<any>;
   fillPane?: boolean;
   /** Force the back-view mini window on the sq1 / cubing.js players.
-   *  undefined = leave each player's own default (CuberReconPlayer always shows it;
+   *  undefined = leave each player's own default (CuberReconPlayer starts collapsed;
    *  skewb / pyra omit it — ReconPlayerBase's face-hint letters are NxN-shaped). */
   backView?: boolean;
   hideControls?: boolean;
@@ -97,6 +98,8 @@ export default function ReconEnginePlayer({
   if (NXN_RE.test(puzzleId) || puzzleId === 'mirror' || puzzleId === 'mirror2') {
     return (
       <CuberReconPlayer showPlaybackOptions
+        backView={backView}
+        showScrambleNet={showScrambleNet}
         reconText={solution}
         segmentEnds={reconPlaybackSegments(solution)}
         scramble={scramble}

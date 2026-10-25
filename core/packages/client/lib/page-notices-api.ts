@@ -4,6 +4,7 @@ import { sessionFetch } from '@/lib/session-fetch';
 import { apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 import { tr } from '@/i18n/tr';
+import { regulationPostForHref } from './regulation-posts';
 
 export type NoticeLevel = 'info' | 'warning' | 'maintenance';
 export type NoticePlacement = 'page_top' | 'home_featured';
@@ -47,8 +48,11 @@ export interface PageNoticeInput {
   endsAt: string | null;
 }
 
-function currentNoticeLink(notice: PageNotice): PageNotice {
+function currentNoticeContent(notice: PageNotice): PageNotice {
   const href = notice.href?.replace(/^(\/(?:zh\/|en\/)?regulation\/)news(?=\/|[?#]|$)/, '$1post');
+  const post = notice.placement === 'home_featured' ? regulationPostForHref(href) : undefined;
+  // Stored bodies are compatibility snapshots, never the authority for article titles.
+  if (post) return { ...notice, href, bodyZh: post.title.zh, bodyEn: post.title.en };
   return href === notice.href ? notice : { ...notice, href };
 }
 
@@ -59,7 +63,7 @@ export function fetchPageNotices(): Promise<PageNotice[]> {
   if (!pendingNotices) {
     const request = sessionFetch(apiUrl('/v1/page-notices'), { cache: 'no-cache' })
       .then((r) => handleApi<PageNotice[]>(r))
-      .then((rows) => rows.map(currentNoticeLink))
+      .then((rows) => rows.map(currentNoticeContent))
       .finally(() => {
         if (pendingNotices === request) pendingNotices = null;
       });
@@ -71,11 +75,13 @@ export function fetchPageNotices(): Promise<PageNotice[]> {
 /** 全部通知含 disabled(admin,行内编辑器预填用)。 */
 export async function fetchAllPageNotices(): Promise<PageNotice[]> {
   const r = await sessionFetch(apiUrl('/v1/page-notices/manage'), { headers: authHeaders(false), cache: 'no-store' });
-  return (await handleApi<PageNotice[]>(r)).map(currentNoticeLink);
+  return (await handleApi<PageNotice[]>(r)).map(currentNoticeContent);
 }
 
 /** 按 path/placement upsert，首页焦点额外按 href 区分(admin)。 */
 export async function savePageNotice(body: PageNoticeInput): Promise<PageNotice> {
+  const post = body.placement === 'home_featured' ? regulationPostForHref(body.href) : undefined;
+  if (post) body = { ...body, bodyZh: post.title.zh, bodyEn: post.title.en };
   const r = await sessionFetch(apiUrl(body.placement === 'home_featured' ? '/v1/page-notices/home-feature' : '/v1/page-notices'), {
     method: 'PUT',
     headers: authHeaders(),
@@ -86,7 +92,7 @@ export async function savePageNotice(body: PageNoticeInput): Promise<PageNotice>
   }
   const notice = await handleApi<PageNotice>(r);
   pendingNotices = null;
-  return notice;
+  return currentNoticeContent(notice);
 }
 
 export function homepagePostNotice(notices: PageNotice[], postId: string): PageNotice | undefined {

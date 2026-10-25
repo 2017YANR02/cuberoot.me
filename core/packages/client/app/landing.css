@@ -233,6 +233,8 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 }
 .landing-page .landing-pinned-recons {
     grid-column: span 2;
+    width: 100%;
+    max-width: 542px;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-auto-rows: max-content;
@@ -242,10 +244,10 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     overflow-y: auto;
 }
 .landing-page .landing-training-links {
-    grid-column: span 2;
     display: flex;
     flex-wrap: wrap;
-    align-self: start;
+    align-self: stretch;
+    flex-shrink: 0;
     gap: 8px;
 }
 .landing-page .landing-training-links > .landing-card {
@@ -255,9 +257,13 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     gap: 6px;
     border-radius: 10px;
 }
-.landing-page .landing-training-links .landing-card-name {
+.landing-page .landing-training-links .landing-card-name,
+.landing-page .landing-personal-comps .rc-name {
     font-family: inherit;
-    font-size: 0.875rem;
+    font-size: var(--home-shortcut-font-size, 0.875rem);
+    font-weight: 400;
+    line-height: 1.25;
+    letter-spacing: normal;
     white-space: nowrap;
 }
 .landing-pinned-recons .recon-card,
@@ -328,6 +334,22 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     box-sizing: border-box;
     margin: 0 auto 2.5rem;
     padding-inline: 0;
+}
+.landing-page .landing-featured-notices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 1100px;
+    margin-bottom: 0.75rem;
+}
+.landing-page .landing-featured-notices:empty { display: none; }
+.landing-page .landing-featured-notices > .landing-featured-news {
+    flex: 1 1 22rem;
+    min-width: 0;
+    max-width: none;
+    margin: 0;
+    box-sizing: border-box;
 }
 .landing-page .landing-featured-news {
     --home-news-color: var(--accent);
@@ -432,6 +454,20 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     height: 34px;
     color: var(--accent);
 }
+.landing-page .landing-card-icon .record-badge {
+    font-size: 22px;
+}
+
+.landing-page .landing-card-icon-text {
+    font-family: var(--font-mono);
+    font-size: 20px;
+    white-space: nowrap;
+}
+
+.landing-page .landing-card-icon .cubing-icon {
+    font-size: 34px;
+}
+
 .landing-page .landing-card-logo {
     width: 34px;
     height: 34px;
@@ -960,11 +996,21 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 .landing-widget > .forum-feed-preview[aria-busy="true"] {
     min-height: var(--home-widget-placeholder-height);
 }
-.landing-page .landing-personal-comps {
+.landing-page .landing-personal-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
     width: 100%;
     max-width: 1100px;
+    margin-bottom: 0.75rem;
+}
+.landing-page .landing-personal-comps {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
     max-height: 12rem;
-    margin: 0 auto 0.75rem;
+    margin: 0;
     overflow-y: auto;
 }
 .landing-page .landing-personal-comps:empty { display: none; }
@@ -972,8 +1018,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 .landing-page .landing-personal-comps .reg-cards {
     display: flex;
     flex-wrap: wrap;
-    /* Match the first two columns of the four-column training grid. */
-    width: calc((100% - 1rem) / 2);
+    width: 100%;
     gap: 8px;
 }
 .landing-page .landing-personal-comps .rc-card { min-width: 0; }
@@ -989,6 +1034,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     .landing-page .landing-personal-comps .reg-cards { width: 100%; }
 }
 @media (max-width: 560px) {
+    .landing-page .landing-personal-row { --home-shortcut-font-size: 0.75rem; }
     .landing-page .landing-personal-comps .reg-cards { gap: 4px; }
     .landing-page .landing-personal-comps .rc-main { padding: 6px; gap: 3px; }
     .landing-page .landing-personal-comps .rc-title {
@@ -999,7 +1045,6 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     }
     .landing-page .landing-personal-comps :is(.rc-flag, .rc-flag-img) { margin-inline-end: 3px; }
     .landing-page .landing-personal-comps .rc-name {
-        font-size: inherit;
         white-space: normal;
     }
     .landing-page .landing-personal-comps .rc-details--compact { font-size: 0.6rem; }

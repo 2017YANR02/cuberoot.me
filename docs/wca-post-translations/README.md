@@ -40,3 +40,7 @@ GitHub .github/workflows/wca_news_drift.yml 每日 08:23 UTC 和手动运行 che
 本地浏览器已核验最新公告单篇阅读与2006年筛选/最早公告正文；列表仅日期、标题及分页筛选。8项页面元数据/术语检查、6项安全渲染检查通过。08:53 UTC 的页面类型检查通过；最终 09:00 UTC 前后全项目复验受同期模拟器未提交改动阻挡：PuzzleDrawWorkspace.tsx 的 DrawExport/null 回调类型，以及 SimPage.tsx 引用已删除的 FtoImageGenerator 和相关属性类型。相关模拟器文件不属于本任务，未修改。最新数据以构建脚本从账本生成。网站、译文及交接文档没有提交、推送或部署；仅明确获授权的监测工作流已更新并通过GitHub运行。
 
 2026-10-22 路径调整：公告列表及正文迁至 `/zh/regulation/post`（英文 `/regulation/post`），旧 `/news` 列表及正文直接404，不设重定向。规则首页新增“全部公告”入口，最新动态卡片继续保留。既有论坛声明路径为 `/zh/regulation/post/wic-investigation-2026`。当前站内链接、页面元数据和站点地图均已更新；历史数据库通知的旧目标在读取时规范为新链接，不修改远端数据库。HTTP验收见 `validation/post-route-migration.json`。
+
+## 2026-10-25 机构专名校订
+
+按 WCA 官方中文统一 WIC、WCT、WCAT、WMT 等机构名称；现行译文已更新，旧译文完整归档，源文及历史缩写不变。改动清单与前后 hash 见 `../wca-terminology-revision-2026-10-25.json`。本轮仅机构译名专项自查；改动版本不继承旧 hash 的独立审校通过状态，当前计数以 progress.json 为准。使用 `core/packages/client/scripts/build-wca-logs.mts` 与 `build-wca-posts.mts` 重建网站数据。后续翻译先读 i18n skill 和 WCA 英中翻译参考的官方机构表。

@@ -37,7 +37,8 @@ it('shares source/content/footer order, real actions and fullscreen behavior acr
         .toEqual(['timer-stage-source', 'timing-surface', 'timer-stage-footer']);
       const readout = host.querySelector('.timer-display');
       const footer = host.querySelector<HTMLElement>('.timer-stage-footer')!;
-      expect(footer.hasAttribute('data-no-timer')).toBe(true);
+      expect(footer.hasAttribute('data-no-timer')).toBe(false);
+      expect(footer.querySelector('.timer-stage-statistics')?.hasAttribute('data-no-timer')).toBe(true);
       await act(async () => host.querySelector<HTMLButtonElement>('.shell-stat-rail')!.click());
       await act(async () => host.querySelector<HTMLButtonElement>('.shell-device-center-trigger')!.click());
       await act(async () => host.querySelector<HTMLButtonElement>('[role="menuitem"]')!.click());

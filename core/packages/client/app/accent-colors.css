@@ -1,7 +1,7 @@
 /* Independent action colors; surfaces and semantic status colors keep their palette. */
 html:root[data-accent] {
   --user-accent: var(--user-accent-light);
-  --user-accent-foreground: #FFFFFF;
+  --user-accent-foreground: var(--user-accent-custom-foreground, #FFFFFF);
   --accent: var(--user-accent);
   --accent-foreground: var(--user-accent-foreground);
   --primary: var(--user-accent);
@@ -16,12 +16,12 @@ html:root[data-accent] {
 @media (prefers-color-scheme: dark) {
   html:root[data-accent]:not([data-theme=light]) {
     --user-accent: var(--user-accent-dark);
-    --user-accent-foreground: #171717;
+    --user-accent-foreground: var(--user-accent-custom-foreground, #171717);
   }
 }
 html:root[data-accent][data-theme=dark] {
   --user-accent: var(--user-accent-dark);
-  --user-accent-foreground: #171717;
+  --user-accent-foreground: var(--user-accent-custom-foreground, #171717);
 }
 
 /* Soft mode can soften surfaces without breaking the selected button/text pair. */

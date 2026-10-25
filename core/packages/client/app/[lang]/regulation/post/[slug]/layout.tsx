@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { metadataFromEntry } from '@/lib/page-meta';
 import JsonLd, { articleJsonLd, SITE_URL } from '@/components/JsonLd';
-import { ALL_NEWS } from '../../_data/news-catalog';
+import { ALL_NEWS } from '@/lib/regulation-posts';
 
 type Params = Promise<{ lang: string; slug: string }>;
 const description = { zh: 'WCA 官方公告与中文译文。', en: 'WCA announcement and Chinese translation.' };

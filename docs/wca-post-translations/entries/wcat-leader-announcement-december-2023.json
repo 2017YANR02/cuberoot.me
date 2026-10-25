@@ -12,14 +12,16 @@
     "sourceId": 14138
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "9498fdbe8e47404a64c173f82f07eb1b9163814efc764f70b5d830bb3dd1afb0",
     "language": "zh-Hans",
-    "title": "WCA 比赛公告团队负责人任命公告（2023 年 12 月）",
-    "content": "我们很高兴地宣布，WCA 比赛公告团队（WCAT）成员 Zeke Mackay 将出任团队新负责人。\n\n根据[《WCA 委员会与团队动议》](https://www.worldcubeassociation.org/documents/motions/10.2022.0%20-%20Committees%20and%20Teams.pdf)第 4 节，WCA 董事会选定了 Zeke，并经现任委员会负责人和高级代表投票批准。\n\n感谢 Wilson Alvis 为 WCAT 所做的工作。我们将支持 Zeke 履行新职责，祝他工作顺利。\n\nZeke 是此次唯一的申请者，其获选的申请材料可在[这里](https://drive.google.com/drive/folders/18mxz0-wCIu0ZN_rbpRx4vtrC9j8UBKRp)查看。",
+    "title": "WCA 比赛公示组负责人任命公告（2023 年 12 月）",
+    "content": "我们很高兴地宣布，WCA 比赛公示组（WCAT）成员 Zeke Mackay 将出任团队新负责人。\n\n根据[《WCA 委员会与团队动议》](https://www.worldcubeassociation.org/documents/motions/10.2022.0%20-%20Committees%20and%20Teams.pdf)第 4 节，WCA 董事会选定了 Zeke，并经现任委员会负责人和高级代表投票批准。\n\n感谢 Wilson Alvis 为 WCAT 所做的工作。我们将支持 Zeke 履行新职责，祝他工作顺利。\n\nZeke 是此次唯一的申请者，其获选的申请材料可在[这里](https://drive.google.com/drive/folders/18mxz0-wCIu0ZN_rbpRx4vtrC9j8UBKRp)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.563Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "pending_independent_review",
+    "revisedAt": "2026-10-25T07:28:01.629Z",
+    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
   },
-  "translationHash": "27cd3a24bcdd1952d567d074623b211b51c79c3ab9cf1436d0c4466e0825e6f3"
+  "translationHash": "1ba10ff43fe4800a1a59da53d814dcb2c0016bcad07efe01e836851598fc5fd0"
 }

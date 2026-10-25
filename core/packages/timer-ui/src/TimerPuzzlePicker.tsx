@@ -62,6 +62,8 @@ export interface TimerPuzzlePickerProps extends TimerOverlayControlProps {
   showMenuHeadings?: boolean;
   showSubmenuHeading?: boolean;
   submenuLabel?: string;
+  /** Mouse hover opens both levels at the current selection. Touch remains click-driven. */
+  openOnHover?: boolean;
 }
 
 /**
@@ -87,6 +89,7 @@ export function TimerPuzzlePicker({
   showMenuHeadings = true,
   showSubmenuHeading = showMenuHeadings,
   submenuLabel,
+  openOnHover = false,
 }: TimerPuzzlePickerProps) {
   const [query, setQuery] = useState('');
   const [preferences, setPreferences] = useState<{ recent: string[]; favorites: string[] }>({ recent: [], favorites: [] });
@@ -136,6 +139,13 @@ export function TimerPuzzlePicker({
   const previousOpenRef = useRef(open);
   const popupId = useId();
   const [submenuId, setSubmenuId] = useState<string | null>(null);
+  const focusSubmenu = useRef(true);
+  const hoverCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelHoverClose = () => {
+    if (hoverCloseTimer.current !== null) clearTimeout(hoverCloseTimer.current);
+    hoverCloseTimer.current = null;
+  };
+  useEffect(() => cancelHoverClose, []);
   const submenuRef = useRef<HTMLDivElement>(null);
   const parentRefs = useRef(new Map<string, HTMLButtonElement>());
   const hasSubmenus = !query.trim() && availableItems.some(item => item.children?.length);
@@ -176,7 +186,7 @@ export function TimerPuzzlePicker({
   }, [submenuId]);
 
   useLayoutEffect(() => {
-    if (open && submenuId) submenuRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
+    if (open && submenuId && focusSubmenu.current) submenuRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
   }, [open, submenuId]);
 
   useEffect(() => {
@@ -242,6 +252,12 @@ export function TimerPuzzlePicker({
   return (
     <>
     <div className={`pp${compact ? ' pp--compact' : ''}`} data-no-timer={dataNoTimer ? '' : undefined} ref={rootRef}
+      onPointerEnter={cancelHoverClose}
+      onPointerLeave={event => {
+        if (!openOnHover || event.pointerType !== 'mouse') return;
+        cancelHoverClose();
+        hoverCloseTimer.current = setTimeout(() => close('outside'), 150);
+      }}
       onKeyDown={event => {
         if (!open || event.key !== 'Escape') return;
         event.preventDefault();
@@ -256,12 +272,26 @@ export function TimerPuzzlePicker({
         aria-label={triggerLabel ?? selectedChoice?.label ?? puzzleLabel}
         className={`pp-trigger${selectedItem ? ' pp-trigger--active' : ''}`}
         disabled={disabled}
+        onPointerEnter={event => {
+          if (!openOnHover || disabled || event.pointerType !== 'mouse' || open) return;
+          cancelHoverClose();
+          focusSubmenu.current = false;
+          setActiveMenu('puzzle');
+          setSubmenuId(selectedItem?.children?.length ? selectedItem.id : null);
+          changeOpen(true, 'trigger');
+        }}
         onKeyDown={event => {
           if (event.key !== 'ArrowDown') return;
           event.preventDefault(); setActiveMenu('puzzle'); changeOpen(true, 'trigger');
           requestAnimationFrame(() => panelRef.current?.querySelector<HTMLElement>('input, [role="menuitem"]')?.focus());
         }}
-        onClick={() => { setActiveMenu('puzzle'); setSubmenuId(null); changeOpen(!open, 'trigger'); }}
+        onClick={() => {
+          cancelHoverClose();
+          focusSubmenu.current = true;
+          setActiveMenu('puzzle');
+          setSubmenuId(!open && openOnHover && selectedItem?.children?.length ? selectedItem.id : null);
+          changeOpen(!open, 'trigger');
+        }}
         ref={triggerRef}
         type="button"
       >
@@ -317,14 +347,20 @@ export function TimerPuzzlePicker({
                       className={`pp-item${active ? ' pp-item--active' : ''}`}
                       key={item.id}
                       ref={node => { if (node) parentRefs.current.set(item.id, node); else parentRefs.current.delete(item.id); }}
+                      onPointerEnter={event => {
+                        if (!openOnHover || item.disabled || event.pointerType !== 'mouse') return;
+                        focusSubmenu.current = false;
+                        setSubmenuId(hasChildren ? item.id : null);
+                      }}
                       onKeyDown={event => {
                         if (hasChildren && event.key === 'ArrowRight') {
                           event.preventDefault();
+                          focusSubmenu.current = true;
                           setSubmenuId(item.id);
                         }
                       }}
                       onClick={() => {
-                        if (hasChildren) { setSubmenuId(item.id); return; }
+                        if (hasChildren) { focusSubmenu.current = true; setSubmenuId(item.id); return; }
                         select(item.id);
                         close('select', true);
                       }}
@@ -403,6 +439,7 @@ export function MethodStagePicker({ method, stage, methods, stagesOf, isZh, onSe
   const label = !stageName ? methodName : method === 'std' || methodName === stageName
     ? stageName : [methodName, stageName].join(' ');
   return <TimerPuzzlePicker
+    openOnHover
     disabled={disabled} showArrow={false} showItemIcons={false}
     showMenuHeadings={false} showSubmenuHeading={false}
     puzzleLabel={labels[isZh ? 'zh' : 'en']} triggerLabel={label}

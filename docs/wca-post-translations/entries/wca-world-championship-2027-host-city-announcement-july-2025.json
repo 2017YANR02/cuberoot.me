@@ -12,14 +12,16 @@
     "sourceId": 14206
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "cfe84556b363fd1193db9bcafa1886cabe372f149d9dd59f661faf87f4fa6b26",
     "language": "zh-Hans",
     "title": "2027 年 WCA 世锦赛举办城市公告（2025 年 7 月）",
-    "content": "各位 WCA 社区成员：\n\nWCA 董事会和大型锦标赛团队（WMCT）很高兴地正式宣布，**瑞典乌普萨拉**已获选为 2027 年 WCA 世锦赛的举办城市。\n\n在西雅图成功举办 2025 年 Rubik’s WCA 世锦赛之后，乌普萨拉获选。这也意味着 WCA 的最高级别赛事将自 2017 年巴黎世锦赛以来，首次回到欧洲。\n\n瑞典地区组织 SveKub 将与 WMCT 合作，让 2027 年 WCA 世锦赛展现魔方速拧社区的精神和实力。WCA 世锦赛是一场凝聚全球魔友的盛会，大家可以在这里见证世界顶尖选手同场竞技，并决出 WCA 全部 17 个正式项目的世界冠军。\n\n未来 24 个月的世锦赛筹备工作将十分紧张，董事会和 WMCT 期待与 SveKub 一起完成这些工作。\n\n申办材料可在[这里](https://drive.google.com/file/d/1O4pnhDBxCHoYhPZIoPC0CgnP7HrE5NbD/view?usp=sharing)查看。瑞典是本届世锦赛的唯一申办方。\n\nWMCT 还很高兴地告知大家，2026 年其余各洲锦标赛也将很快开放申办。",
+    "content": "各位 WCA 社区成员：\n\nWCA 董事会和大型锦标赛组（WMCT）很高兴地正式宣布，**瑞典乌普萨拉**已获选为 2027 年 WCA 世锦赛的举办城市。\n\n在西雅图成功举办 2025 年 Rubik’s WCA 世锦赛之后，乌普萨拉获选。这也意味着 WCA 的最高级别赛事将自 2017 年巴黎世锦赛以来，首次回到欧洲。\n\n瑞典地区组织 SveKub 将与 WMCT 合作，让 2027 年 WCA 世锦赛展现魔方速拧社区的精神和实力。WCA 世锦赛是一场凝聚全球魔友的盛会，大家可以在这里见证世界顶尖选手同场竞技，并决出 WCA 全部 17 个正式项目的世界冠军。\n\n未来 24 个月的世锦赛筹备工作将十分紧张，董事会和 WMCT 期待与 SveKub 一起完成这些工作。\n\n申办材料可在[这里](https://drive.google.com/file/d/1O4pnhDBxCHoYhPZIoPC0CgnP7HrE5NbD/view?usp=sharing)查看。瑞典是本届世锦赛的唯一申办方。\n\nWMCT 还很高兴地告知大家，2026 年其余各洲锦标赛也将很快开放申办。",
     "notes": [],
     "translatedAt": "2026-10-22T08:40:49.154Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "pending_independent_review",
+    "revisedAt": "2026-10-25T07:28:01.629Z",
+    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
   },
-  "translationHash": "16d9be955e6020f6b64a83f948490966086516f8d41d9a05039029ebe0f1f5c4"
+  "translationHash": "4ef3f1611996eb7f9afa8c3ed8eda0c1acdae7c47e17761d312f096ca15a392c"
 }

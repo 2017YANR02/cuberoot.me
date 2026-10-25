@@ -156,7 +156,7 @@ function countStmFromTokens(recon: string): number {
   return stm(recon);
 }
 
-function computeStm(recon: string, event?: string): number {
+export function computeStm(recon: string, event?: string): number {
   const fromHeader = parseStmFromHeader(recon);
   if (fromHeader != null) return fromHeader;
   // SQ1 记号("(a,b)/"式)不适用 3x3 字符剥离法;按"/"切片计(即求解器页的

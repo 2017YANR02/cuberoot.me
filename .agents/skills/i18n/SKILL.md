@@ -41,6 +41,13 @@ description: "Use for any new or edited user-visible React text, 中英双语、
 - 方法名:Roux=桥式(FB=左桥,SB=右桥,Last Pair=末槽);LBL=层先法;Petrus=彼得鲁斯法;CFOP/ZZ/DR/EOLR/CMLL/LSE 留原名。zh UI 落中文名。
 - 守卫:CI `tests/i18n-cubing-term-blacklist.test.ts`(已修错译黑名单,发现新错译修完即加入);豁免行内 `allow-cubing-term: <理由>`;外部作品原标题《…》自动豁免。
 
+## WCA 官方专名与网页语料
+
+- WCA 机构、导航、公告翻译先查上述参考的“官方机构名称”表，再按 locale key 查同目录 `wca-website-bilingual.md`（组织职责、FAQ、资源与成绩等页面）。网页 `/regulation/translation` 可展开全文，`/llms.txt` 提供公开入口。
+- WIC = 廉政委员会；WCT = 通讯组；WCAT = 比赛公示组；WMT = 市场营销组；WAT = 档案组；WRT = 成绩组；WST = 软件组；WEAT = 董事会助理团队。完整 14 个专名以参考表为准，不凭通用语感另造名称。
+- 历史 WDC = 纪律委员会，旧文 WAC 保留 WAC，不因现官网写 WAPC 而改历史缩写。官方中文也需核对，officer（干事）与 Board member（董事）按英文角色区分。
+- 修正全站译法时查标题、正文、摘要与索引。公告和日志真源是 `docs/wca-post-translations/entries` / `docs/wca-log-translations/entries`；先归档旧版并更新 hash、版本和审校状态，再运行 `build-wca-logs.mts` → `build-wca-posts.mts`，不手改生成的 posts/logs JSON。旧审校仅适用于其绑定的 hash。
+
 ## 命名空间
 
 看 `i18n/en.json` 顶层。复用优先 `common.*`(loading / back / loadFailed / unknownError / cases)。新 `t()` 键必须同时进 en.json + zh.json,`{{x}}` 两边都要有。

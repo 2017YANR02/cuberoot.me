@@ -84,6 +84,8 @@ export default function XPage() {
 
 ## 国际化
 
+机构名称和网页用语也查参考中的“官方机构名称”表及 `wca-website-bilingual.md`，后者按官方 locale key 对齐菜单和页面内容。WIC 固定为“廉政委员会”，历史 WDC/WAC 保留当时名称与缩写。官网语料快照在 `docs/wca-website-translations/snapshot.json`，离线重导出在 `core/` 运行 `node packages/client/scripts/wca-website-bilingual.mts`；它独立于规则条款版本，不由 `reg:clauses` 更新。更新来源需固定同一上游提交、复核差异，并保留原译疑点说明。
+
 翻译前先读 [`WCA 英中翻译参考`](../../../core/packages/client/public/regulation/wca-translation-reference.md)，再按条款号查同目录 `wca-regulations-bilingual.md`。后者随 `reg:clauses` 自动从 `_full.json` 生成；仅重导出现有数据用 `pnpm -F @cuberoot/client reg:clauses --from-json`。人工参考是网页 `/regulation/translation` 与下载共用的唯一正文；规则改版后需复核其中的术语、基线日期和已知原译疑点，不能自动覆盖成人工已审校。公共发现入口在 `/llms.txt`，仓库发现入口在根 `AGENTS.md` 和 `i18n` skill。
 
 遵循 `i18n` Skill,仅 en + zh-Hans;文案用 `tr`/`T`/`useT` 或 locale JSON,禁止内联语言三元;不恢复繁体字段、生成器或已删除的 `zh:*` 检查命令。

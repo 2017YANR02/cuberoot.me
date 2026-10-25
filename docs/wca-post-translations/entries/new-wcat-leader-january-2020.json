@@ -12,14 +12,16 @@
     "sourceId": 13777
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "0cc7f02da8f320608209e8cbe20e4fc426b830bf852cdab9252635a3459f74a1",
     "language": "zh-Hans",
-    "title": "WCA 比赛公告团队新负责人（2020 年 1 月）",
-    "content": "我们很高兴地宣布，**Wilson Alvis** 将担任 **WCA 比赛公告团队（WCAT）**的新负责人。\n\n按照关于 WCA 委员会和团队的 [10.2019.0 号议案](https://www.worldcubeassociation.org/documents/motions/10.2019.0%20-%20Committees%20and%20Teams.pdf)第 4 节，WCA 董事会选定 Wilson，并经现任委员会负责人和高级代表投票批准。\n\n感谢 Henrik 在担任 WCAT 负责人期间所做的工作，祝 Wilson Alvis 履新顺利。\n\n新负责人的任命已生效。本次共有两位申请人，Wilson Alvis 是其中之一。如有兴趣，可在[此处](https://drive.google.com/open?id=1MrEB9E7E8hh0axrXZ6uiU3PdbD-767sV)查看申请材料。",
+    "title": "WCA 比赛公示组新负责人（2020 年 1 月）",
+    "content": "我们很高兴地宣布，**Wilson Alvis** 将担任 **WCA 比赛公示组（WCAT）**的新负责人。\n\n按照关于 WCA 委员会和团队的 [10.2019.0 号议案](https://www.worldcubeassociation.org/documents/motions/10.2019.0%20-%20Committees%20and%20Teams.pdf)第 4 节，WCA 董事会选定 Wilson，并经现任委员会负责人和高级代表投票批准。\n\n感谢 Henrik 在担任 WCAT 负责人期间所做的工作，祝 Wilson Alvis 履新顺利。\n\n新负责人的任命已生效。本次共有两位申请人，Wilson Alvis 是其中之一。如有兴趣，可在[此处](https://drive.google.com/open?id=1MrEB9E7E8hh0axrXZ6uiU3PdbD-767sV)查看申请材料。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.141Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "pending_independent_review",
+    "revisedAt": "2026-10-25T07:28:01.629Z",
+    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
   },
-  "translationHash": "d247ab0cd6787d64609809f52a46ac24b27f5bb88f78f14911ac8beabb722377"
+  "translationHash": "36e9690dfab969d2e0c3a3c9025a513cb880085e5c9c33c9a1b23e3289d784a4"
 }

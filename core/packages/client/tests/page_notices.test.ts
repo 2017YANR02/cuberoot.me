@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { deletePageNotice, featureHomepagePost, fetchPageNotices, homepagePostNotice, matchNotices, type PageNotice } from '@/lib/page-notices-api';
+import { deletePageNotice, featureHomepagePost, fetchAllPageNotices, fetchPageNotices, homepagePostNotice, matchNotices, type PageNotice } from '@/lib/page-notices-api';
 
 function notice(overrides: Partial<PageNotice>): PageNotice {
   return {
@@ -17,6 +17,21 @@ function notice(overrides: Partial<PageNotice>): PageNotice {
 
 describe('public notice request sharing', () => {
   afterEach(() => vi.unstubAllGlobals());
+
+  it.each([fetchPageNotices, fetchAllPageNotices])('resolves pinned titles from current articles for %s', async (read) => {
+    const rows = [
+      notice({ id: 31, placement: 'home_featured', href: '/zh/regulation/news/wic-investigation-2026', bodyZh: 'WCA 诚信委员会关于近期调查的声明', color: 'green', endsAt: '2027-01-01T00:00:00Z' }),
+      notice({ id: 28, placement: 'home_featured', href: '/regulation/post#integrity-committee-digest-2026-q3', bodyZh: '诚信委员会简报：2026 年第三季度' }),
+      notice({ id: 3, placement: 'home_featured', href: '/regulation/post/missing' }),
+      notice({ id: 4, placement: 'home_featured', href: 'https://example.org/regulation/post/wic-investigation-2026' }),
+      notice({ id: 5, placement: 'page_top', href: '/regulation/post/wic-investigation-2026' }),
+    ];
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json(rows)));
+    const resolved = await read();
+    expect(resolved[0]).toEqual({ ...rows[0], href: '/zh/regulation/post/wic-investigation-2026', bodyZh: 'WCA 廉政委员会关于近期调查的声明', bodyEn: 'Statement from the WCA Integrity Committee Regarding a Recent Investigation' });
+    expect(resolved[1]).toEqual({ ...rows[1], bodyZh: '廉政委员会简报：2026 年第三季度', bodyEn: 'Integrity Committee Digest - 2026 Q3' });
+    expect(resolved.slice(2)).toEqual(rows.slice(2));
+  });
 
   it('updates stored announcement destinations without changing unrelated links', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json([
@@ -110,7 +125,7 @@ describe('homepage article feature', () => {
     expect(request.method).toBe('PUT');
     expect(JSON.parse(request.body)).toEqual({
       path: '/', placement: 'home_featured', level: 'info', icon: 'megaphone', color: 'terracotta',
-      bodyZh: '声明', bodyEn: 'Statement', href: '/regulation/post/wic-investigation-2026',
+      bodyZh: 'WCA 廉政委员会关于近期调查的声明', bodyEn: 'Statement from the WCA Integrity Committee Regarding a Recent Investigation', href: '/regulation/post/wic-investigation-2026',
       enabled: true, dismissible: false, startsAt: null, endsAt: null,
     });
   });

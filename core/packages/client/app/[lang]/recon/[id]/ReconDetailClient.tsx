@@ -49,7 +49,7 @@ import { CompCell } from '@/components/CompCell/CompCell';
 import { Flag } from '@/components/Flag';
 import { localizeCompName } from '@/lib/comp-localize';
 import { displayCity } from '@/lib/city-display';
-import { cleanForPlayer, countMovesExpanded } from '@/lib/recon-alg-utils';
+import { cleanForPlayer, countMovesExpanded, removeReconWaste } from '@/lib/recon-alg-utils';
 import ScrambleStatistics from '@/components/ScrambleStatistics';
 import {
   extractPersonCompetitionResults, fetchAttempts, fetchCubingAttempts, fetchScrambles, fetchWcaResults, matchRoundType,
@@ -71,12 +71,14 @@ import { useAuthStore, useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import { RecordBadge } from '@/components/RecordBadge';
 import ReconPlayerCanvas from '@/components/recon/ReconPlayerCanvas';
+import { ScramblePreview2D } from '@/components/ScramblePreview2D';
+import { getPuzzleId } from '@/lib/recon-utils';
 import SolutionView from '@/components/SolutionView';
 import { canonicalSq1Alg, formatScrambleForEvent, compactSq1Solution } from '@cuberoot/shared/sq1-notation';
 import {
   buildNormalizedSolution, findCrossLineIndex, hasNormalizableCrossMove,
 } from '@/lib/recon-norm-cross-extract';
-import { computeAllStats, buildCaptionHeader } from '@/lib/recon-stats';
+import { computeAllStats, buildCaptionHeader, computeStm } from '@/lib/recon-stats';
 import {
   DiscussionComposer, DiscussionEditBox, UserHeadline, AuthorName, ItemMenu, UserAvatarFallback,
 } from '@/components/Discussion';
@@ -278,7 +280,9 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
                     <CompCell compId={solve.compWcaId ?? ''} compName={solve.comp} country={solve.country} isZh={isZh} date={solve.date ?? null} />
                   </Link>
                 ) : <CompCell compId={solve.compWcaId ?? ''} compName={solve.comp} country={solve.country} isZh={isZh} date={solve.date ?? null} />}
-                {solve.round && (isZh ? `，${localizeRound(solve.round, t)}` : `, ${localizeRound(solve.round, t)}`)}
+                {solve.round && tr({ zh: `，${localizeRound(solve.round, t)}`, en: `, ${localizeRound(solve.round, t)}` })}
+                {solve.groupId && tr({ zh: ` ${solve.groupId} 组`, en: ` Group ${solve.groupId}` })}
+                {solve.solveNum != null && tr({ zh: ` 第 ${solve.solveNum} 把`, en: ` Attempt ${solve.solveNum}` })}
               </span>
             </span>
           )}
@@ -330,6 +334,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
   const [crossNormalized, setCrossNormalized] = useState(false);
+  const [wasteRemoved, setWasteRemoved] = useState(false);
   const imageRef = useRef<HTMLDivElement>(null);
   const downloadImage = async (style: ReconImageStyle | 'both', font: ReconImageFont) => {
     if (!imageRef.current) throw new Error('Reconstruction image unavailable');
@@ -347,7 +352,12 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
     [solutionText, canToggle],
   );
   const isSq1 = solve.event === 'sq1';
-  const rawDisplayText = crossNormalized && normalizedText ? normalizedText : solutionText;
+  const puzzleId = getPuzzleId(solve.event);
+  const scrambleCubeOrder = /^[2-7]x[2-7]x[2-7]$/.test(puzzleId) ? parseInt(puzzleId, 10) : null;
+  const orientedText = crossNormalized && normalizedText ? normalizedText : solutionText;
+  const wasteFreeText = useMemo(() => scrambleCubeOrder === 3
+    ? removeReconWaste(orientedText, scramble) : null, [scrambleCubeOrder, orientedText, scramble]);
+  const rawDisplayText = wasteRemoved && wasteFreeText !== null ? wasteFreeText : orientedText;
   // 展示层转 compact 简写(保留每行 // 注释),旧数据 / 手输可能存量为 canonical 记号。
   const displayText = useMemo(
     () => isSq1 ? compactSq1Solution(rawDisplayText) : rawDisplayText,
@@ -355,8 +365,8 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   );
   const crossLineIdx = useMemo(() => findCrossLineIndex(displayText), [displayText]);
   const captionHeader = useMemo(
-    () => solutionText ? buildCaptionHeader(solutionText, (isBldEvent(solve.event) ? solve.execTime : solve.rawTime) ?? 0, solve.event) : '',
-    [solutionText, solve.event, solve.execTime, solve.rawTime],
+    () => solutionText ? wasteRemoved ? `${computeStm(rawDisplayText, solve.event)}STM` : buildCaptionHeader(solutionText, (isBldEvent(solve.event) ? solve.execTime : solve.rawTime) ?? 0, solve.event) : '',
+    [solutionText, solve.event, solve.execTime, solve.rawTime, wasteRemoved, rawDisplayText],
   );
 
   // SQ1 renders with the cuber WebGL engine (Sq1ReconPlayer, same as /sim &
@@ -401,6 +411,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
         {/* 有解法 → 播放复盘;无解法(只录了 WCA 成绩 + 打乱)→ alg 为空,
             player 停在 setup(打乱)后的 3D 状态,至少能看到这个打乱。 */}
         <ReconPlayerCanvas
+          showScrambleNet={!scrambleCubeOrder}
           event={solve.event}
           scramble={scramble}
           displayText={displayText}
@@ -413,15 +424,26 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
       }
       <div className="detail-content-pane">
         {solutionText && (
-          <ExternalLinks event={solve.event} scramble={playerScramble} alg={solutionText} solveId={solve.id} copyText={fullCopyText} shareTarget={shareTarget} onDownload={solve.recordType !== 'timing' ? downloadImage : undefined} />
+          <ExternalLinks event={solve.event} scramble={playerScramble} alg={rawDisplayText} solveId={solve.id} copyText={fullCopyText} shareTarget={shareTarget} onDownload={solve.recordType !== 'timing' ? downloadImage : undefined} />
         )}
 
         {solve.recordType !== 'timing' && (scramble || solutionText) && (
           <div className="detail-section detail-scramble-solution" ref={imageRef}>
             {captionHeader && (
-              <div className="detail-caption-header">{captionHeader}</div>
+              <div className="detail-caption-header">{captionHeader}
+            {wasteFreeText !== null && <button type="button" className={`recon-cross-toggle${wasteRemoved ? ' active' : ''}`}
+              aria-pressed={wasteRemoved} onClick={() => setWasteRemoved(value => !value)}>
+              {wasteRemoved ? tr({ zh: '恢复废步', en: 'Restore wasted moves' }) : tr({ zh: '消去废步', en: 'Remove wasted moves' })}
+            </button>}
+              </div>
             )}
             <div className="detail-scramble-line">
+              <span className="recon-case-line">
+              {scramble && scrambleCubeOrder && <span className="recon-case-diagram">
+                <ScramblePreview2D event={String(scrambleCubeOrder).repeat(3)} scramble={scramble}
+                  size={14} enlargeable />
+              </span>}
+              <span className="recon-case-line-text">
               {scramble ? <>{displayScramble}{optimalScrambleTag}</> : tr({ zh: '暂无打乱', en: 'No scramble available' })}
               {scramble && <> <button
                 type="button"
@@ -432,6 +454,8 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
               >
                 {scrambleCopied ? <Check size={14} /> : <Copy size={14} />}
               </button></>}
+              </span>
+              </span>
             </div>
             {solutionText && (
               <SolutionView
@@ -439,7 +463,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
                 text={displayText}
                 event={solve.event}
                 scramble={scramble}
-                sourceText={solutionText}
+                sourceText={rawDisplayText}
                 playerRef={playerRef}
                 crossLineIdx={canToggle ? crossLineIdx : -1}
                 crossNormalized={crossNormalized}

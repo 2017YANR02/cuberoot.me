@@ -13,15 +13,17 @@
   },
   "translation": {
     "language": "zh-Hans",
-    "version": 1,
-    "title": "WCA 诚信委员会负责人任命公告（2026 年 1 月）",
-    "content": "亲爱的 WCA 社群：\n\n很高兴宣布，Zachary Miller 成为 WCA 诚信委员会（WIC）新任负责人。他此前已担任 WIC 高级成员。\n\n按[委员会与团队动议](https://documents.worldcubeassociation.org/documents/motions/10.2025.0%20-%20Committees%20and%20Teams.pdf)第 5 节，Zachary 由理事会选出并经投票批准，任命自 2026 年 1 月 13 日生效。\n\n感谢 Shain Longbehn 担任负责人期间的工作，他将留任高级成员。祝 Zachary 顺利履行新职责。\n\nZachary 是唯一申请人，其获选申请文件见[此处](https://drive.google.com/drive/folders/1lmZaa6cUdQW-RAVnkVg4-Bq7YjKhqp2u)。",
+    "version": 2,
+    "title": "WCA 廉政委员会负责人任命公告（2026 年 1 月）",
+    "content": "亲爱的 WCA 社群：\n\n很高兴宣布，Zachary Miller 成为 WCA 廉政委员会（WIC）新任负责人。他此前已担任 WIC 高级成员。\n\n按[委员会与团队动议](https://documents.worldcubeassociation.org/documents/motions/10.2025.0%20-%20Committees%20and%20Teams.pdf)第 5 节，Zachary 由理事会选出并经投票批准，任命自 2026 年 1 月 13 日生效。\n\n感谢 Shain Longbehn 担任负责人期间的工作，他将留任高级成员。祝 Zachary 顺利履行新职责。\n\nZachary 是唯一申请人，其获选申请文件见[此处](https://drive.google.com/drive/folders/1lmZaa6cUdQW-RAVnkVg4-Bq7YjKhqp2u)。",
     "translatedAt": "2026-10-22T06:05:15.716Z",
     "translator": "Codex / subscription",
-    "sourceHash": "c8963510efd2d9425ded79e4e4ab4d12480a21ef31ab7d20751f78b76709a359"
+    "sourceHash": "c8963510efd2d9425ded79e4e4ab4d12480a21ef31ab7d20751f78b76709a359",
+    "revisedAt": "2026-10-25T07:28:01.629Z",
+    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
   },
   "review": {
-    "status": "independently_verified",
+    "status": "pending_independent_recheck",
     "checks": [
       "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
     ],
@@ -36,7 +38,12 @@
       "verdict": "pass",
       "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
     },
-    "unresolvedNotes": []
+    "unresolvedNotes": [],
+    "terminologyRevision": {
+      "at": "2026-10-25T07:28:01.629Z",
+      "previousTranslationHash": "409b87ca331919b35d389769aee61d176ddef8e123f08d5f0f52c4a82a60b3de",
+      "scope": "机构名称专项校订；此前独立审校证据仍绑定旧译文，不视为新版本独立审校。"
+    }
   },
   "publication": {
     "status": "not_authorized"

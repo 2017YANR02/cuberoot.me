@@ -366,17 +366,19 @@ function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, dotColors
   return (
     <div className="rs-scard">
       <div className="rs-scard-cube">
-        {scramble.trim() && (
-          <AppLink href={`/recon/submit?${reconParams}`} prefetch={false} className="rs-recon-link">
-            {tr({ zh: '复盘', en: 'Reconstruct' })}
-          </AppLink>
-        )}
-        <ScramblePreview2D event={event} scramble={scramble} size={58} fullSizeLink linkTitle={tr({ zh: '查看大图', en: 'View full size' })} />
+        <div className="rs-scard-actions">
         {dotList.length > 0 && (
           <span className="rs-scard-dot" title={dotTitle} aria-label={dotTitle} aria-hidden={dotTitle ? undefined : true}>
             <SubsetSwatch colors={dotList} highlight={dotList.length > 1 ? color : undefined} />
           </span>
         )}
+        {scramble.trim() && (
+          <AppLink href={`/recon/submit?${reconParams}`} prefetch={false} className="rs-recon-link">
+            {tr({ zh: '复盘', en: 'Reconstruct' })}
+          </AppLink>
+        )}
+        </div>
+        <ScramblePreview2D event={event} scramble={scramble} size={58} fullSizeLink linkTitle={tr({ zh: '查看大图', en: 'View full size' })} />
       </div>
       <div className="rs-scard-body">
         {rarity && (
@@ -510,7 +512,7 @@ export default function RecentScrambles({ lang }: Props) {
       onTouchStart={loadExtras}
     >
       <div className="rs-topbar">
-        <span className="rs-title" title={dateRange || undefined}>{tr({ zh: '近期打乱', en: 'Recent Scrambles' })}</span>
+        <span className="rs-title" title={dateRange || undefined}>{tr({ zh: '打乱', en: 'Scrambles' })}</span>
         <PuzzlePicker showArrow={false} isZh={isZh} selectedEvent={curEvent} groups={pickerGroups} onSelect={setEvent} />
       </div>
       {curEvent === '333'

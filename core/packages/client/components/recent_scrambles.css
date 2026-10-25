@@ -98,11 +98,17 @@
   line-height: 0;
 }
 .rs-scard-cube img { display: block; }
-/* 卡内底色标识:复用 picker swatch 的圆角方块,贴在魔方图左上角 */
+.rs-scard-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  align-self: stretch;
+  gap: 8px;
+}
+.rs-scard-actions:empty { display: none; }
+/* 底色标识和复盘入口在同一行垂直居中。 */
 .rs-scard-dot {
-  position: absolute;
-  top: -5px;
-  left: -5px;
+  flex-shrink: 0;
   width: 1.05rem;
   height: 1.05rem;
   border-radius: 4px;
@@ -162,7 +168,7 @@
 .rs-recon-link {
   display: inline-flex;
   align-items: center;
-  align-self: flex-end;
+  margin-inline-start: auto;
   line-height: 1.2;
   gap: 0.35rem;
   padding: 0.35rem 0.65rem;

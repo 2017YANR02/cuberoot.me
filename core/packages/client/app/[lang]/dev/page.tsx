@@ -397,7 +397,7 @@ const CARDS: Card[] = [
     zh: {
       title: 'WCA 官网',
       sub: 'worldcubeassociation.org',
-      tagline: '世界魔方协会官网源码:官方成绩 / 排名 / 纪录的唯一真相源。一个 2008 年起、GPL-3.0 开源的 Ruby on Rails 单体,由 WCA 软件团队领着 200 多人维护,正把前端迁往 Next.js',
+      tagline: '世界魔方协会官网源码:官方成绩 / 排名 / 纪录的唯一真相源。一个 2008 年起、GPL-3.0 开源的 Ruby on Rails 单体,由 WCA 软件组领着 200 多人维护,正把前端迁往 Next.js',
       meta: '2008 起 · Rails · GPL-3.0 · 迁往 Next.js',
     },
     en: {

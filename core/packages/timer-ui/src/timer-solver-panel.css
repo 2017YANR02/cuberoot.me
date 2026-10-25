@@ -32,6 +32,8 @@
    桌面收起态的 pill 形态里当它不存在,原有布局一字不改;只有右栏展开态(见 ≥1024 段)
    才把它变成真的 flex 行,好把按钮摆到标题那条分隔线上。 */
 .solver-panel-headrow { display: contents; }
+.solver-toolbar-start, .solver-toolbar-end { display: contents; }
+.solver-toolbar-navigation { display: flex; align-items: center; gap: 4px; }
 /* 手机形态:顶栏那排控件里的一员,但不画框 —— 纯文字入口,高度对齐旁边的下拉。 */
 .shell-topbar-left .solver-panel-head {
   height: 32px;
@@ -126,29 +128,51 @@
 }
 @media (prefers-reduced-motion: reduce) { .solver-sheet { animation: none; } }
 .solver-sheet-head {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 8px;
   flex: 0 0 auto;
   padding: calc(10px + env(safe-area-inset-top)) var(--solver-sheet-padding) 10px;
   border-bottom: 1px solid var(--shell-divider, var(--border-default));
 }
+.solver-view-picker { align-self: center; flex: 0 0 auto; min-width: 0; }
 .solver-view-select {
   flex: 0 0 auto;
   align-self: center;
   max-width: 100%;
   padding: 6px 8px;
   appearance: none;
-  border: 1px solid var(--border-default);
-  border-radius: 6px;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  box-shadow: none;
   background: transparent;
   color: inherit;
   font: inherit;
   font-weight: 400;
+  white-space: nowrap;
   cursor: pointer;
+}
+.solver-view-select:focus-visible {
+  color: var(--accent);
 }
 .solver-sheet-head .solver-settings-slot { justify-content: flex-start; }
 .solver-settings-slot { display: flex; align-items: center; flex: 1; gap: 4px; }
+.solver-sheet-head .solver-toolbar-start,
+.solver-sheet-head .solver-toolbar-end,
+.timer-solver-rail .solver-panel[data-open='true'] .solver-toolbar-start,
+.timer-solver-rail .solver-panel[data-open='true'] .solver-toolbar-end {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.solver-sheet-head .solver-toolbar-end,
+.timer-solver-rail .solver-toolbar-end { justify-content: flex-end; }
+.solver-toolbar-start .solver-settings-slot { flex: 0 0 auto; }
+.solver-toolbar-start .solver-view-picker { flex: 0 0 auto; }
+.solver-toolbar-start .solver-view-select { min-width: 0; }
 /* Toolbar convention: title left, close right — the one place a spacer is right. */
 .solver-sheet-close {
   margin-left: auto;
@@ -219,6 +243,7 @@
 
   /* Panels flow inside the rail (no longer each self-absolute). */
   .timer-solver-rail .solver-panel {
+    container: solver-toolbar / inline-size;
     position: static;
     align-items: stretch;
     width: auto;
@@ -234,7 +259,8 @@
   /* Header, rail expanded: full-width bar + bottom divider. 分隔线挂在 headrow 上,
      好让标题按钮与形态开关共用同一条底边。 */
   .timer-workspace:has(.timer-solver-rail .solver-panel[data-open='true']) .timer-solver-rail .solver-panel-headrow {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     gap: 4px;
     padding: 6px 12px;
@@ -282,6 +308,36 @@
   }
 }
 
+/* The dock can be narrow even on a wide screen. Relax centering before
+   sacrificing the title, and keep each action group together. */
+@container solver-toolbar (max-width: 360px) {
+  .timer-workspace:has(.timer-solver-rail .solver-panel[data-open='true']) .timer-solver-rail .solver-panel-headrow {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 4px;
+    padding-inline: 8px;
+  }
+  .solver-panel-headrow :is(.solver-toolbar-start, .solver-toolbar-navigation, .solver-toolbar-end) {
+    flex: 0 0 auto;
+    gap: 2px;
+  }
+  .solver-panel-headrow :is(.stsv-settings-toggle, .solver-layout-action) {
+    width: 28px;
+    min-width: 28px;
+    padding-inline: 0;
+  }
+  .solver-panel-headrow .solver-view-select { padding-inline: 2px; }
+}
+
+@container solver-toolbar (max-width: 260px) {
+  .solver-panel-headrow .solver-toolbar-navigation {
+    order: 1;
+    flex-basis: 100%;
+    justify-content: center;
+  }
+}
+
 
 .timer-solver-stage.timer-solver-stage { position: relative; }
 .timer-solver-stage[data-stage-fullscreen='true'] .timer-solver-rail { display: none; }
@@ -294,10 +350,10 @@
   .solver-sheet { --solver-sheet-padding: 28px; --solver-sheet-content-width: 640px; }
   .solver-sheet-head {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, var(--solver-sheet-content-width)) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     column-gap: 0;
   }
-  .solver-sheet-head .solver-view-select { justify-self: start; min-width: 0; }
+  .solver-sheet-head .solver-view-picker { justify-self: start; min-width: 0; }
   .solver-sheet .solver-sheet-body { padding: 20px 28px; scrollbar-gutter: stable both-edges; }
   .solver-sheet-body > [data-no-timer] {
     display: grid;

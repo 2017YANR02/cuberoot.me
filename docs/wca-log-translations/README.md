@@ -42,3 +42,7 @@ node docs/wca-log-translations/validate.mts
 原文待核验 13 条：Incidents `4, 11, 26, 48, 53, 62, 74, 115, 169`；Disciplinary `integrity-committee-digest-2024-q4`、`integrity-committee-digest-2025-q2`、`wdc-monthly-digest-july-2019`、`wic-digest-2024-q3`。详见逐条备注，不猜改数字、主体、机构或条款号。旧论坛首帖全文缺口已补齐，未扩展到其他外链报告。
 
 公开 push、PR、merge、部署或将内容写入网站/Issue 评论前，需确认内容许可并取得对具体材料及目标的用户授权。审校通过不等于公开授权，也不自动关闭 drift Issues。本轮没有新建定时任务、修改监测基线或合并旧 main；仓库内其他并发工作的改动均未触碰。
+
+## 2026-10-25 机构专名校订
+
+按 WCA 官方中文统一 WIC、WCT、WCAT、WMT 等机构名称；现行译文已更新，旧译文完整归档，源文及历史缩写不变。改动清单与前后 hash 见 `../wca-terminology-revision-2026-10-25.json`。本轮仅机构译名专项自查；改动版本不继承旧 hash 的独立审校通过状态，当前计数以 progress.json 为准。使用 `core/packages/client/scripts/build-wca-logs.mts` 与 `build-wca-posts.mts` 重建网站数据。后续翻译先读 i18n skill 和 WCA 英中翻译参考的官方机构表。

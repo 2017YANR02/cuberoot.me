@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
-import { act, createElement } from 'react';
+import { act, createElement, useRef } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import Bulk from '@cuberoot/timer-ui/TimerBulkScrambleModal';
 import Bld from '@cuberoot/timer-ui/TimerBldHelperModal';
 import { TimerTools } from '@cuberoot/timer-ui/TimerTools';
 import { TimerSoloPage, timerSoloModalState } from '@cuberoot/timer-ui/TimerSoloPage';
+import { shouldIgnoreTimerTarget, useGestureWheel } from '@cuberoot/timer-ui';
 import { createGeneralSolver } from '@cuberoot/timer-ui/scramble/general-solver';
 import { applySequence, parseMoves, solvedCubie } from '@cuberoot/puzzle-solvers/kociemba/cube';
 
@@ -22,6 +23,37 @@ beforeEach(() => {
 });
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); vi.unstubAllGlobals(); });
 const button = (label: string) => [...document.querySelectorAll<HTMLButtonElement>('button')].find(b => b.textContent === label)!;
+it('starts a press from footer whitespace but leaves statistics and cube dragging alone', async () => {
+  const down = vi.fn(), up = vi.fn();
+  function Harness() {
+    const surfaceRef = useRef<HTMLDivElement>(null);
+    useGestureWheel({ surfaceRef, canGesture: () => false, enabledFor: () => [], fireAction: vi.fn(),
+      onPressDown: down, onPressUp: up, onPressCancel: vi.fn(), onArmCancel: vi.fn(), ignoreTarget: shouldIgnoreTimerTarget });
+    return createElement(TimerSoloPage, {
+      topbar: { controls: null }, stage: { statistics: createElement('button', null, 'Statistics') },
+      narrowRecap: createElement('div', { 'data-fixture-recap': true }, 'Reconstruction'),
+      timing: { phase: 'idle', digits: '0.00', colorClass: '', surfaceRef,
+        cornerSlot: createElement('div', { 'data-no-timer': true, 'data-fixture-cube': true }, 'Cube') },
+    });
+  }
+  await act(async () => root.render(createElement(Harness)));
+  const press = async (element: Element) => act(async () => {
+    for (const type of ['pointerdown', 'pointerup']) {
+      const event = new Event(type, { bubbles: true, cancelable: true });
+      Object.defineProperties(event, { pointerId: { value: 1 }, pointerType: { value: 'mouse' }, button: { value: 0 } });
+      element.dispatchEvent(event);
+    }
+  });
+  await press(container.querySelector('.timer-stage-footer')!);
+  await press(container.querySelector('.timer-display')!);
+  expect(down).toHaveBeenCalledTimes(2);
+  expect(up).toHaveBeenCalledTimes(2);
+  await press(button('Statistics'));
+  await press(container.querySelector('[data-fixture-cube]')!);
+  await press(container.querySelector('[data-fixture-recap]')!);
+  expect(down).toHaveBeenCalledTimes(2);
+  expect(up).toHaveBeenCalledTimes(2);
+});
 const bulkProps = () => ({ defaultEvent: '333' as const, language: 'en' as const, onClose: vi.fn(), transport, randomOptions: { cnMode: 'none' as const, scramble222Mode: 'wca' as const } });
 const setNumber = async (n: number) => act(async () => {
   const input = document.querySelector('input[type="number"]')!;

@@ -1,4 +1,5 @@
 'use client';
+import './settings-typography.css';
 
 // Desk-pet search overlay — reuses the homepage LandingSearch in a centered
 // modal, with the pet controls (character / size / lang / theme / rest / reset)
@@ -20,6 +21,7 @@ import HeaderToggles from '@/components/HeaderToggles';
 import WcaAuth from '@/components/WcaAuth';
 import DonateModal from '@/components/DonateModal';
 import FeedbackModal from '@/components/FeedbackModal';
+import FloatingMetronome from '@/components/FloatingMetronome';
 import { SEARCH_CARDS, isLandingSearchCardVisible } from '@/lib/landing-sections';
 import { isAdmin } from '@/lib/auth-store';
 import { useFeedbackUnread, refreshFeedbackUnread } from '@/lib/feedback-unread';
@@ -30,15 +32,21 @@ const CSS = `
 .deskpet-search-backdrop{position:fixed;left:0;right:0;top:0;height:100dvh;z-index:100010;
   background:color-mix(in srgb, var(--background) 88%, transparent);
   backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
-.deskpet-search-backdrop:has(.landing-search-panel,.appearance-menu){z-index:100025;}
-.deskpet-navigation.af-navigation{--af-nav-expanded:144px;--af-nav-header-height:0px;
-  --af-nav-sidebar-bg:transparent;--af-nav-content-bg:transparent;--af-nav-text:var(--foreground);
-  --af-nav-active:var(--accent);--af-nav-hover:color-mix(in srgb,var(--foreground) 9%,transparent);
+.deskpet-search-backdrop:has(.landing-search-panel,.appearance-menu,.deskpet-detail-column){z-index:100025;}
+/* Accent options are portaled to body, outside the sidebar's stacking context. */
+body:has(.deskpet-navigation .appearance-menu) .accent-color-menu{z-index:100030;}
+.deskpet-navigation.af-navigation{--af-nav-expanded:144px;--af-nav-header-height:48px;
+  --af-nav-sidebar-bg:var(--background);--af-nav-content-bg:transparent;--af-nav-text:var(--muted-foreground);
+  --af-nav-font-size:0.875rem;
+  --af-nav-active:var(--accent);--af-nav-hover:transparent;
   --af-nav-selected:var(--accent-soft);height:100%;min-height:0;pointer-events:none;}
 .deskpet-navigation .af-nav-body{height:calc(100% - var(--af-nav-header-height));}
 .deskpet-navigation .af-nav-sidebar{pointer-events:auto;}
 .deskpet-navigation .af-nav-backdrop,.deskpet-navigation .af-nav-mobile-toggle{pointer-events:auto;}
-.deskpet-navigation-header{display:none;}
+.deskpet-navigation-header{display:flex;align-items:center;height:var(--af-nav-header-height);
+  box-sizing:border-box;padding:0 10px;position:relative;z-index:2;pointer-events:auto;
+  background:var(--background);box-shadow:inset 0 -0.5px 0 var(--border-default);}
+.deskpet-navigation-header .af-nav-toggle{margin:0;}
 .deskpet-navigation .deskpet-search-main{display:flex;align-items:flex-end;justify-content:center;padding:16px 16px max(12vh,48px);}
 .deskpet-search-box{min-width:0;width:min(720px,100%);pointer-events:auto;will-change:transform,opacity;}
 .deskpet-search-box:has(.landing-search-plus-menu){z-index:1;}
@@ -48,21 +56,31 @@ const CSS = `
 /* Adapt existing controls to the shared navigation rows. */
 .deskpet-navigation .header-toggles,.deskpet-navigation .lang-toggle-wrap,
 .deskpet-navigation .deskpet-character-select{width:100%;}
-.deskpet-navigation .af-nav-link{width:100%;border:0;background:transparent;font-family:inherit;text-align:left;cursor:pointer;}
-.deskpet-navigation .af-nav-link:hover{background:var(--af-nav-hover);}
-.deskpet-navigation .af-nav-link.is-active{color:var(--af-nav-active);}
 .deskpet-navigation .af-nav-link.char-btn{position:relative;justify-content:flex-start;}
 .deskpet-navigation .char-btn .compact-select-current{display:contents;}
 .deskpet-navigation .char-btn .compact-select-arrow{display:none;}
 .deskpet-navigation .af-nav-link > svg,.deskpet-navigation .wca-auth-avatar,
 .deskpet-navigation .wca-auth-fallback,.deskpet-toolbar-thumb{width:18px;height:18px;flex:0 0 18px;object-fit:contain;}
 .deskpet-navigation .heart-icon{fill:var(--destructive);color:var(--destructive);}
-/* anchored-panel: safe (fixed within backdrop, width excludes the sidebar) */
-.deskpet-navigation .appearance-menu[data-backgrounds]{position:fixed;top:16px;bottom:auto;
-  left:calc(var(--af-nav-width) + 8px);right:auto;transform:none;
-  width:min(580px,calc(100% - var(--af-nav-width) - 24px));max-width:calc(100% - var(--af-nav-width) - 24px);max-height:calc(100% - 32px);}
 @media (min-width:768px){
-  .deskpet-navigation .af-nav-sidebar{position:static;top:auto;height:100%;}
+  .deskpet-navigation .af-nav-sidebar{position:static;top:auto;height:100%;
+    box-shadow:inset -0.5px 0 0 var(--border-default);}
+  .deskpet-navigation .appearance-menu[data-backgrounds],
+  .deskpet-navigation .deskpet-detail-column{pointer-events:auto;
+    max-width:none;max-height:none;margin:0;padding:24px 16px;align-content:start;
+    grid-template-columns:minmax(0,1fr);border:0;border-radius:0;
+    box-shadow:inset -0.5px 0 0 var(--border-default);}
+  .deskpet-navigation .appearance-menu[data-backgrounds='true']{grid-template-columns:minmax(0,1fr);}
+  .deskpet-navigation .appearance-menu[data-backgrounds='true'] .site-background-grid{grid-column:1;grid-row:3;margin-top:16px;}
+  .deskpet-navigation .deskpet-detail-column .deskpet-character-menu,
+  .deskpet-navigation .deskpet-detail-column :is(.cr-metro,.fb-modal,.donate-modal){position:relative;inset:auto;
+    width:100%;max-width:none;max-height:none;visibility:visible;padding:0;
+    border:0;border-radius:0;box-shadow:none;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;}
+  .deskpet-detail-column .deskpet-character-menu{overflow:visible;}
+  .deskpet-detail-column .cr-metro{touch-action:auto;}
+  .deskpet-detail-column .cr-metro-grab{cursor:default;}
+  .deskpet-detail-column .donate-qr-row{flex-wrap:wrap;}
+  .deskpet-detail-column .donate-qr{min-width:0;}
 }
 @media (max-width:767px){
   .deskpet-navigation.af-navigation{--af-nav-header-height:48px;}
@@ -79,7 +97,6 @@ const CSS = `
   /* The search overlay already dims the page; do not dim the toolbar a second time. */
   .deskpet-navigation .af-nav-backdrop{position:absolute;inset:0;background:transparent;}
   .deskpet-navigation .af-nav-link{height:48px;margin:0;padding:0 12px;font-size:14px;gap:10px;}
-  .deskpet-navigation .af-nav-link[aria-expanded='true']{background:var(--af-nav-selected);}
   .deskpet-navigation .appearance-menu[data-backgrounds]{top:56px;left:8px;right:8px;
     width:auto;max-width:none;max-height:calc(100% - 64px);}
 }
@@ -158,8 +175,12 @@ export default function DeskPetSearch({
   const backdropRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const backdropProps = useModalBackdrop(onClose);
-  const [donateOpen, setDonateOpen] = useState(false);
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [activePanel, setActivePanel] = useState<'settings' | 'pet' | 'music' | 'feedback' | 'donate' | null>(null);
+  const [petPanelContainer, setPetPanelContainer] = useState<HTMLElement | null>(null);
+  const donateOpen = activePanel === 'donate';
+  const feedbackOpen = activePanel === 'feedback';
+  const setDonateOpen = (open: boolean) => setActivePanel(open ? 'donate' : null);
+  const setFeedbackOpen = (open: boolean) => setActivePanel(open ? 'feedback' : null);
   const fbUnread = useFeedbackUnread();
 
   // 反馈按钮红点跟共享未读数;关掉反馈弹窗后复查一次(可能刚读过)。轮询由桌宠统一做。
@@ -211,12 +232,16 @@ export default function DeskPetSearch({
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       // Check before the shared menu's document handler dismisses it.
+      if (e.key === 'Escape' && activePanel && !donateOpen && !feedbackOpen) {
+        setActivePanel(null);
+        return;
+      }
       if (e.key === 'Escape' && !donateOpen && !feedbackOpen
         && !document.querySelector('.deskpet-character-menu, .deskpet-gallery-overlay, .deskpet-navigation .appearance-menu, .deskpet-navigation[data-mobile-open="true"]')) onClose();
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [onClose, donateOpen, feedbackOpen]);
+  }, [onClose, donateOpen, feedbackOpen, activePanel]);
 
   // Prefetch the donate QRs on hover, not on open: fetching them at mount put two
   // WebPs on the wire during the entrance animation for every user who opens
@@ -266,21 +291,22 @@ export default function DeskPetSearch({
     { id: 'account', href: '/account', label: t('我的', 'Account'), icon: null },
     { id: 'feedback', href: '#feedback', label: t('反馈', 'Feedback'), icon: <MessageSquarePlus />, badge: fbUnread || undefined },
     { id: 'donate', href: '#donate', label: t('赞助', 'Donate'), icon: <Heart className="heart-icon" /> },
-  ];
+  ].map(item => ({ ...item, active: item.id === activePanel }));
   const renderNavigationItem = ({ href, ...props }: NavigationLinkProps) => {
     if (href === '/') return <HomeLink {...props} prefetch={false} onClick={() => { props.onClick?.(); onClose(); }} />;
-    if (href === '#settings') return <HeaderToggles triggerClassName={props.className} triggerLabel={t('外观', 'Appearance')} labelClassName="af-nav-label" showLabels />;
+    if (href === '#settings') return <HeaderToggles appearanceOpen={activePanel === 'settings'} onAppearanceOpenChange={open => { if (open) props.onClick?.(); setActivePanel(current => open ? 'settings' : current === 'settings' ? null : current); }} appearanceColumn={!mobile} triggerClassName={props.className} triggerLabel={t('外观', 'Appearance')} labelClassName="af-nav-label" showLabels />;
     if (href === '/account') return <WcaAuth linkClassName={props.className} labelClassName="af-nav-label" onNavigate={() => { props.onClick?.(); onClose(); }} showLabel />;
     if (href === '#pet') return <CompactSelect
-          openOnHover
+          open={activePanel === 'pet' && (mobile || !!petPanelContainer)}
+          onOpenChange={open => { if (open) props.onClick?.(); setActivePanel(current => open ? 'pet' : current === 'pet' ? null : current); }}
+          panelContainer={mobile ? undefined : petPanelContainer}
           unstyledTrigger
           side={mobile ? 'vertical' : 'right'}
           className="deskpet-character-select"
           triggerClassName={`${props.className} char-btn`}
-          popupClassName="deskpet-character-menu"
+          popupClassName="deskpet-character-menu settings-typography"
           ariaLabel={tr({ zh: '选择桌宠形象', en: 'Choose pet character' })}
-          title={currentCharacter ? tr(currentCharacter.label) : undefined}
-          valueText={currentCharacter ? tr(currentCharacter.label) : undefined}
+                    valueText={currentCharacter ? tr(currentCharacter.label) : undefined}
           value={character}
           onChange={onSelectChar}
           label={props.children}
@@ -379,25 +405,30 @@ export default function DeskPetSearch({
             </>
           )}
         />;
-    return <button type="button" className={`${props.className}${href === '#music' && metronomeOpen ? ' is-active' : ''}`}
+    return <button type="button" className={`${props.className}${href === '#music' && (activePanel === 'music' || metronomeOpen) ? ' is-active' : ''}`}
       aria-label={props['aria-label']} title={props.title}
+      aria-expanded={['#music', '#feedback', '#donate'].includes(href) ? activePanel === href.slice(1) : undefined}
       onPointerEnter={href === '#donate' ? prefetchDonate : undefined}
       onFocus={href === '#donate' ? prefetchDonate : undefined}
       onClick={() => {
         props.onClick?.();
         if (href === '#donate') setDonateOpen(true);
         else if (href === '#feedback') setFeedbackOpen(true);
-        else if (href === '#music') onToggleMetronome();
+        else if (href === '#music') {
+          if (mobile) onToggleMetronome();
+          else setActivePanel(current => current === 'music' ? null : 'music');
+        }
       }}>{props.children}</button>;
   };
 
   return (
     <div className="deskpet-search-backdrop" ref={backdropRef} {...backdropProps}>
       <style>{CSS}</style>
-      <NavigationShell className="deskpet-navigation" mainClassName="deskpet-search-main" contentAs="div"
+      <NavigationShell className="deskpet-navigation" iconOnly togglePlacement="header" collapseTarget="panel" onPanelOpen={() => setActivePanel('settings')} panelVisible={!mobile && !!activePanel} mainClassName="deskpet-search-main" contentAs="div"
         items={navigation} renderLink={renderNavigationItem}
-        labels={{ navigation: t('桌宠工具栏', 'Pet toolbar'), show: t('展开侧栏', 'Expand sidebar'), hide: t('收起侧栏', 'Collapse sidebar'), openMobile: t('设置', 'Settings'), closeMobile: t('关闭设置', 'Close settings') }}
-        header={toggle => <div className="deskpet-navigation-header">
+        labels={{ navigation: t('桌宠工具栏', 'Pet toolbar'), show: t('展开设置面板', 'Expand settings panel'), hide: t('收起设置面板', 'Collapse settings panel'), openMobile: t('设置', 'Settings'), closeMobile: t('关闭设置', 'Close settings') }}
+        header={(toggle, desktopToggle) => <div className="deskpet-navigation-header">
+          {desktopToggle}
           {isValidElement<ButtonHTMLAttributes<HTMLButtonElement>>(toggle) ? cloneElement(toggle, {
             children: <Settings size={22} aria-hidden="true" />,
             onClick: event => {
@@ -406,12 +437,20 @@ export default function DeskPetSearch({
             },
           }) : toggle}
         </div>}>
+        {!mobile && activePanel && activePanel !== 'settings' && <section
+          className="deskpet-detail-column af-nav-panel" data-site-surface="panel"
+          aria-label={navigation.find(item => item.id === activePanel)?.label}
+          ref={activePanel === 'pet' ? setPetPanelContainer : undefined}>
+          {activePanel === 'music' && <FloatingMetronome embedded lang={lang} onClose={() => setActivePanel(null)} />}
+          {donateOpen && <DonateModal embedded lang={lang} onClose={() => setDonateOpen(false)} />}
+          {feedbackOpen && <FeedbackModal embedded lang={lang} onClose={() => setFeedbackOpen(false)} />}
+        </section>}
         <div className="deskpet-search-box" ref={boxRef}>
           <LandingSearch cards={searchCards} lang={lang} />
         </div>
       </NavigationShell>
-      {donateOpen && <DonateModal lang={lang} onClose={() => setDonateOpen(false)} />}
-      {feedbackOpen && <FeedbackModal lang={lang} onClose={() => setFeedbackOpen(false)} />}
+      {mobile && donateOpen && <DonateModal lang={lang} onClose={() => setDonateOpen(false)} />}
+      {mobile && feedbackOpen && <FeedbackModal lang={lang} onClose={() => setFeedbackOpen(false)} />}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 'use client';
+import './settings-typography.css';
 import '@cuberoot/timer-ui/compact-select.css';
 
 // Draggable site-wide audio center. Music and the metronome survive client-side
@@ -130,7 +131,7 @@ function clampPos(p: { left: number; top: number }, el: HTMLElement | null): { l
   };
 }
 
-export default function FloatingMetronome({ lang, onClose }: { lang: 'zh' | 'en'; onClose: () => void }) {
+export default function FloatingMetronome({ lang, onClose, embedded = false }: { lang: 'zh' | 'en'; onClose: () => void; embedded?: boolean }) {
   const s = useMetronome();
   const music = useMusicPlayer();
   const t = (z: string, e: string) => (lang === 'zh' ? z : e);
@@ -237,9 +238,9 @@ export default function FloatingMetronome({ lang, onClose }: { lang: 'zh' | 'en'
   return (
     <div
       ref={cardRef}
-      className={`cr-metro${collapsed ? ' is-collapsed' : ''}${dragging ? ' is-dragging' : ''}`}
+      className={`cr-metro settings-typography${collapsed ? ' is-collapsed' : ''}${dragging ? ' is-dragging' : ''}`}
       data-mode={mode}
-      style={{ left: pos.left, top: pos.top }}
+      style={embedded ? undefined : { left: pos.left, top: pos.top }}
       role="group"
       aria-label={t('音频中心', 'Audio center')}
     >
@@ -247,7 +248,7 @@ export default function FloatingMetronome({ lang, onClose }: { lang: 'zh' | 'en'
 
       <div
         className="cr-metro-head cr-metro-grab"
-        onPointerDown={onPointerDown}
+        onPointerDown={embedded ? undefined : onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}

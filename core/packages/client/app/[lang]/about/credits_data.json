@@ -1011,6 +1011,12 @@
     "long_en": "Roux-method trainer collection — first-block / analyzer / FS / SS / CMLL / LSE trainers + in-browser Roux solver + three.js cube renderer, ported to React (MUI removed) and embedded under the `/alg/roux` page (author Onionhoney, GPL-3.0)"
   },
   {
+    "name": "WCA Website — English and Chinese locale contributors",
+    "url": "https://github.com/thewca/worldcubeassociation.org",
+    "zh": "/regulation/translation 的官网双语素材来自 WCA 官网中英语言文件，按相同 locale key 对齐，保留来源提交和原译疑点；感谢 WCA 及中文翻译贡献者",
+    "en": "The website bilingual corpus at /regulation/translation aligns the WCA website's English and Chinese locale strings, retaining the source commit and known discrepancies; credit to the WCA and Chinese translation contributors"
+  },
+  {
     "name": "WCA Regulations & 5b5f Visual Guide",
     "url": "https://www.worldcubeassociation.org/regulations/full/",
     "zh": "/regulation 规则页:检查 / 打乱 / 判定 / 罚时等核心条款整理自 WCA 官方《竞赛规则与指南》;末节「拼装缺陷判定」的 11 张配图 + 文字移植自 WCA Regulations Committee《Regulation 5b5f Visual Guide》(均已注明来源)",

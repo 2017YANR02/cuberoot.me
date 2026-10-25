@@ -14,9 +14,10 @@ import { type ReactNode, type RefObject } from 'react';
 import ReconEnginePlayer from './ReconEnginePlayer';
 
 export default function ReconPlayerCanvas({
-  event, scramble, displayText, playerRef, fillPane = false, hideControls = false, fullscreenButton,
+  event, scramble, displayText, playerRef, fillPane = false, hideControls = false, fullscreenButton, showScrambleNet = true,
 }: {
   event: string;
+  showScrambleNet?: boolean;
   /** 原始打乱(各 player 内部自行处理紧凑/canonical 形) */
   scramble: string;
   /** 要播放的解法(可能是 normalize 过的 displayText) */
@@ -34,6 +35,7 @@ export default function ReconPlayerCanvas({
   return (
     <ReconEnginePlayer
       event={event}
+      showScrambleNet={showScrambleNet}
       scramble={scramble}
       solution={displayText}
       anchorAtEnd={!scramble}

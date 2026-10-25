@@ -15,11 +15,23 @@ export const ACCENT_COLORS = [
   { id: 'white', swatch: '#FFFFFF', zh: '白色', en: 'White', light: '#52525B', dark: '#F4F4F5' },
 ] as const;
 
-export type AccentId = (typeof ACCENT_COLORS)[number]['id'];
-export type AccentColor = (typeof ACCENT_COLORS)[number];
+export type AccentId = (typeof ACCENT_COLORS)[number]['id'] | `#${string}`;
+export type AccentColor = { id: AccentId; swatch: string; light: string; dark: string; foreground?: string };
+
+// Shared with the pre-paint bootstrap; accept only complete six-digit HEX colors.
+export function customAccentColor(value: string | null | undefined): AccentColor | null {
+  if (!value || !/^#[0-9a-f]{6}$/i.test(value)) return null;
+  const hex = value.toUpperCase() as AccentId;
+  const channels = [1, 3, 5].map(index => {
+    const c = parseInt(hex.slice(index, index + 2), 16) / 255;
+    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  const luminance = channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+  return { id: hex, swatch: hex, light: hex, dark: hex, foreground: luminance > 0.179 ? '#000000' : '#FFFFFF' };
+}
 
 export function findAccentColor(value: string | null | undefined): AccentColor | null {
-  return ACCENT_COLORS.find(color => color.id === value) ?? null;
+  return ACCENT_COLORS.find(color => color.id === value) ?? customAccentColor(value);
 }
 
 // Self-contained so the pre-paint bootstrap and hydrated UI use exactly the same writer.
@@ -29,6 +41,10 @@ export function setAccentRoot(root: HTMLElement, color: AccentColor | null) {
   } else if (root.hasAttribute('data-accent')) {
     root.removeAttribute('data-accent');
   }
+  const foregroundToken = '--user-accent-custom-foreground';
+  if (color?.foreground) {
+    if (root.style.getPropertyValue(foregroundToken) !== color.foreground) root.style.setProperty(foregroundToken, color.foreground);
+  } else if (root.style.getPropertyValue(foregroundToken)) root.style.removeProperty(foregroundToken);
   for (const scheme of ['light', 'dark'] as const) {
     const token = `--user-accent-${scheme}`;
     const value = color?.[scheme] ?? '';

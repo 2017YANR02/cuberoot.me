@@ -238,6 +238,10 @@ export function previewContrast(level: ContrastLevel) {
   applyContrastRoot(level);
 }
 
+export function previewAccent(id: AccentId | null) {
+  setAccentRoot(document.documentElement, findAccentColor(id));
+}
+
 export function restorePersistedAppearance() {
   const palette = readPalette();
   if (palette) applyPaletteRoot(palette);

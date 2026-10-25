@@ -13,15 +13,17 @@
   },
   "translation": {
     "language": "zh-Hans",
-    "version": 1,
-    "title": "诚信委员会简报：2025 年第四季度",
-    "content": "WCA 社群，你们好：\n\n上季度 WIC 立案 **24** 件、结案 **19** 件，均创委员会纪录。作出 **5** 项禁赛、**8** 项警告，**6** 件未采取措施。部分重要案件如下：\n- 接报一名选手故意提前停表，并被指为避免发现而选择显示屏关闭或没有显示屏的比赛台。录像有限，最初无法立即确认，但持续观察其还原后最终发现证据。WIC 联系选手征询说明，多次给予机会，选手仍未承认不当行为。其被多年禁赛，相关成绩被取消。虽然违规类型与下文第三案相同，但因加重情节，处分更重。\n- 接报选手在观察阶段转动魔方。其承认部分正式尝试存在此行为，但 WIC 认为作弊范围大于承认范围。WIC 决定取消部分成绩并给予短期禁赛。\n- 接报选手进步速度快得可疑，代表也怀疑其用手腕提前停表作弊。在后续比赛中收集到作弊证据，相关成绩被取消，并给予短期禁赛。\n- 证据显示两名选手相互篡改成绩单，记录实际并未取得的时间。两人多场比赛成绩被取消，并获正式警告。\n- 接报选手在盲拧中从眼罩下偷看。WIC 根据证据认定其多次作弊，经内部讨论给予正式警告，并取消其全部盲拧项目成绩。\n\nWIC 其他动态：\n\nZachary Miller（2017MILL04）成为新任负责人，祝履职顺利！衷心感谢 Shain Papalotl Longbehn（2020LONG05）过去两年担任负责人期间的表现和投入。\n\n新成员：\n- Daniel Darcy（2022DARC03）；\n- Elian Beguec（2014BEGU01）；\n- Finn Trass（2016TRAS01）；\n- Jakub Hanuszkiewicz（2014HANU01）；\n- Max Kwok U Sam（2018SAMK01）；\n- Meng Chon Kuok（2023KUOK01）；\n- Pauline Bonnaudet（2009BONN01）；\n- Yash Budhiraja（2018BUDH01）。\n\nJonas Balsfulland（2012BALS01）近期卸任成员，感谢其工作！\n\nWIC 将与 WCA 大型锦标赛团队（WMCT）密切合作，协助重大赛事主办方选择志愿者。\n\n如有问题，随时欢迎[发邮件](integrity@worldcubeassociation.org)。",
+    "version": 2,
+    "title": "廉政委员会简报：2025 年第四季度",
+    "content": "WCA 社群，你们好：\n\n上季度 WIC 立案 **24** 件、结案 **19** 件，均创委员会纪录。作出 **5** 项禁赛、**8** 项警告，**6** 件未采取措施。部分重要案件如下：\n- 接报一名选手故意提前停表，并被指为避免发现而选择显示屏关闭或没有显示屏的比赛台。录像有限，最初无法立即确认，但持续观察其还原后最终发现证据。WIC 联系选手征询说明，多次给予机会，选手仍未承认不当行为。其被多年禁赛，相关成绩被取消。虽然违规类型与下文第三案相同，但因加重情节，处分更重。\n- 接报选手在观察阶段转动魔方。其承认部分正式尝试存在此行为，但 WIC 认为作弊范围大于承认范围。WIC 决定取消部分成绩并给予短期禁赛。\n- 接报选手进步速度快得可疑，代表也怀疑其用手腕提前停表作弊。在后续比赛中收集到作弊证据，相关成绩被取消，并给予短期禁赛。\n- 证据显示两名选手相互篡改成绩单，记录实际并未取得的时间。两人多场比赛成绩被取消，并获正式警告。\n- 接报选手在盲拧中从眼罩下偷看。WIC 根据证据认定其多次作弊，经内部讨论给予正式警告，并取消其全部盲拧项目成绩。\n\nWIC 其他动态：\n\nZachary Miller（2017MILL04）成为新任负责人，祝履职顺利！衷心感谢 Shain Papalotl Longbehn（2020LONG05）过去两年担任负责人期间的表现和投入。\n\n新成员：\n- Daniel Darcy（2022DARC03）；\n- Elian Beguec（2014BEGU01）；\n- Finn Trass（2016TRAS01）；\n- Jakub Hanuszkiewicz（2014HANU01）；\n- Max Kwok U Sam（2018SAMK01）；\n- Meng Chon Kuok（2023KUOK01）；\n- Pauline Bonnaudet（2009BONN01）；\n- Yash Budhiraja（2018BUDH01）。\n\nJonas Balsfulland（2012BALS01）近期卸任成员，感谢其工作！\n\nWIC 将与 WCA 大型锦标赛组（WMCT）密切合作，协助重大赛事主办方选择志愿者。\n\n如有问题，随时欢迎[发邮件](integrity@worldcubeassociation.org)。",
     "translatedAt": "2026-10-22T06:05:15.716Z",
     "translator": "Codex / subscription",
-    "sourceHash": "580e10ce2c1f29ab8fcdb139882d79518364b86a8c3ce275c25d4b06735df4f1"
+    "sourceHash": "580e10ce2c1f29ab8fcdb139882d79518364b86a8c3ce275c25d4b06735df4f1",
+    "revisedAt": "2026-10-25T07:28:01.629Z",
+    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
   },
   "review": {
-    "status": "independently_verified",
+    "status": "pending_independent_recheck",
     "checks": [
       "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
     ],
@@ -41,7 +43,12 @@
     },
     "unresolvedNotes": [
       "原文末尾邮箱href缺少mailto:；译文原样保留，未验证该链接能否正常发邮件。此为来源链接问题，未改译文目标。"
-    ]
+    ],
+    "terminologyRevision": {
+      "at": "2026-10-25T07:28:01.629Z",
+      "previousTranslationHash": "81ba030894da29f4f4bebdbc50490bd2d6bd95510d22e6b6207a22bd8fa2a0f8",
+      "scope": "机构名称专项校订；此前独立审校证据仍绑定旧译文，不视为新版本独立审校。"
+    }
   },
   "publication": {
     "status": "not_authorized"

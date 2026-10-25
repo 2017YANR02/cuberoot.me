@@ -14,6 +14,37 @@
   grid-column: 3;
 }
 .shell-topbar.timer-solo-topbar--fullscreen { display: none; }
+.solver-trigger-slot { display: inline-flex; align-items: center; }
+.shell-topbar.timer-solo-topbar .shell-topbar-left :is(.pp-trigger, .compact-select-trigger,
+  .timer-scramble-source-trigger, .timer-difficulty-trigger, .solo-layout-toggle,
+  .settings-popover-trigger, .solver-light-trigger):not(:disabled) {
+  color: var(--foreground);
+  opacity: 1;
+}
+.shell-topbar.timer-solo-topbar .solver-light-trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--timer-topbar-control-size, 32px);
+  height: var(--timer-topbar-control-size, 32px);
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+.solver-light-trigger svg { position: relative; }
+.solver-light-trigger[data-lit='true']::before {
+  content: '';
+  position: absolute;
+  top: calc(50% - 9px);
+  left: calc(50% - 6px);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--signal-warning) 75%, transparent);
+  box-shadow: 0 0 8px 3px color-mix(in srgb, var(--signal-warning) 45%, transparent);
+  pointer-events: none;
+}
 
 /* Narrow layouts need the full remaining width, without a mirrored home gutter. */
 @media (max-width: 1023px) {

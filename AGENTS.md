@@ -270,7 +270,7 @@ H11 在本机仅允许源码实现、静态检查和不接触 H11 表文件的�
 - 文案走 `tr({en,zh})` / `<T en zh/>` / `useT()`;长文/复用走 `t()` + `en.json`/`zh.json`;HTML lang `en`/`zh-Hans`。
 - 禁内联 `isZh`/`i18n.language` 文案三元(`isZh ? '中' : 'EN'`);`isZh` 仅可作 util 参数。守卫:hook + CI ratchet。细则调 skill `i18n`。
 - 魔方术语 zh 以 `client/app/[lang]/wiki/glossary.json` 为准,禁直译;陷阱表+黑名单守卫见 skill `i18n`。
-- 翻译 WCA 规则、公告或意外事件记录前，先读 [WCA 英中翻译参考](core/packages/client/public/regulation/wca-translation-reference.md)，再按条款号查同目录 `wca-regulations-bilingual.md`；网页入口 `/regulation/translation`。保留版本、主体、义务强弱和处罚范围，原译疑点单列，不把对齐语料视为已逐句审核。一般社区术语仍查词典。
+- 翻译 WCA 规则、公告或意外事件记录前，先读 [WCA 英中翻译参考](core/packages/client/public/regulation/wca-translation-reference.md)，再按条款号查同目录 `wca-regulations-bilingual.md`；机构、菜单和页面用语查同目录 `wca-website-bilingual.md`（如 WIC = 廉政委员会）。网页入口 `/regulation/translation`。保留版本、主体、义务强弱和处罚范围，历史 WDC/WAC 不替换成当前机构或缩写，原译疑点单列，不把对齐语料视为已逐句审核。一般社区术语仍查词典。
 - 教程项目选择器的 ivy 中文短名固定为「枫叶」,禁加通用品类后缀。
 - 站内违禁词表 `.codex/banned-words.json`(hook `block-banned-words` 写入即拦,`.codex/` 自身豁免);用户说「添加违禁词:x」= 往该表加 `{word,use,why}` 一条。行内豁免注释 `allow-banned-word`。
 

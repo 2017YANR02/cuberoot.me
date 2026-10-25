@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/new-wmt-leader-chosen",
+  "source": {
+    "key": "posts:/posts/new-wmt-leader-chosen",
+    "kind": "posts",
+    "title": "New WMT Leader Chosen",
+    "date": "2019-03-17T20:28:02.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/new-wmt-leader-chosen",
+    "content": "We are happy to announce that we have a new Committee Leader. Somya Srivastava has been appointed as the Leader of the WCA Marketing Team (WMT).\n\nSomya was selected by the WCA Board and approved in a voting among the current Committee/Team Leaders and Senior Delegates, following Section 4 of our [Motion 10.2019.0](https://www.worldcubeassociation.org/documents/motions/10.2019.0%20-%20Committees%20and%20Teams.pdf) about WCA Committees and Teams.\n\nWe wish Somya the best of luck in fulfilling her new duty!\n\nSomya Srivastava was the only applicant for the position. Her candidacy document can be found [here](https://drive.google.com/drive/folders/1vZ4NrK40KENKUMP13H8VkoiSttHjmLxr) if you are interested in viewing it.",
+    "hash": "cdc9d4db221ecf1907f58a2f957cd235822ef06f74987ff69dd7dc7f37ebdf18",
+    "format": "markdown",
+    "sourceId": 11582
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "cdc9d4db221ecf1907f58a2f957cd235822ef06f74987ff69dd7dc7f37ebdf18",
+    "language": "zh-Hans",
+    "title": "WCA 市场团队新负责人确定",
+    "content": "我们很高兴地宣布，Somya Srivastava 已获任命，担任 WCA 市场团队（WMT）负责人。\n\n按照关于 WCA 委员会和团队的 [10.2019.0 号议案](https://www.worldcubeassociation.org/documents/motions/10.2019.0%20-%20Committees%20and%20Teams.pdf)第 4 节，WCA 董事会选定 Somya，并经现任委员会、团队负责人及高级代表投票批准。\n\n祝 Somya 履新顺利！\n\nSomya Srivastava 是本岗位的唯一申请人。如有兴趣，可在[此处](https://drive.google.com/drive/folders/1vZ4NrK40KENKUMP13H8VkoiSttHjmLxr)查看她的申请材料。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.141Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "8f962d58dcc490797260d174e8ba713b48ea483e5348201aafb460137411287d"
+}

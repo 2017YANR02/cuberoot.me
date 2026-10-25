@@ -179,7 +179,7 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
   const contentLabel = content ? tr(content.title) : tr(target?.title ?? { zh: '请选择', en: 'Choose content' });
   const casesLabel = method === 'memo' && ownsSession && selectedCount === 0
     ? params.get('train.scope') ? tr({ zh: '当前分组', en: 'Current group' }) : tr({ zh: '全部情况', en: 'All cases' })
-    : tr({ zh: '选定情况', en: 'Selected cases' });
+    : tr({ zh: '选定', en: 'Selected' });
   const sourceItems = [
     ...(content?.timer ? [{ value: 'random', label: tr({ zh: '随机状态', en: 'Random state' }) }] : []),
     ...(content?.selectPath ? [{ value: 'cases', label: tr({ zh: '选定情况', en: 'Selected cases' }) }] : []),
@@ -197,7 +197,7 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
           disabled={sourceLocked || sourceItems.length === 0}
           ariaLabel={tr({ zh: '出题来源', en: 'Question source' })}
           label={training ? casesLabel : settings.scrambleSource === 'manual'
-            ? tr({ zh: '手动输入', en: 'Manual input' }) : tr({ zh: '随机状态', en: 'Random state' })}
+            ? tr({ zh: '手动', en: 'Manual' }) : tr({ zh: '随机', en: 'Random' })}
           value={training ? 'cases' : settings.scrambleSource === 'manual' ? 'manual' : 'random'}
           items={sourceItems}
           onChange={source => {

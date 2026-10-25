@@ -343,7 +343,7 @@
   margin-left: 5px;
 }
 
-/* 左魔方 右分步。两栏是同一件事的两种读法,分开折叠就得来回开关,而「对着看」
+/* 左分步 右魔方。两栏是同一件事的两种读法,分开折叠就得来回开关,而「对着看」
    正是回放的全部意义。窄屏落成上下两段(grid 单列),顺序不变。 */
 .reconstruct-playback {
   margin-top: 10px;
@@ -352,7 +352,7 @@
   gap: 12px;
 }
 .reconstruct-playback.has-side {
-  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
   align-items: start;
 }
 
@@ -718,15 +718,11 @@
 .reconstruct-bld-memo-val { font-family: var(--font-mono); letter-spacing: 0.05em; }
 
 .rc-summary {
-  display: flex; flex-wrap: wrap; margin: 10px 0 14px; padding: 0;
-  border: 1px solid var(--border-default);  border: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
-  border-radius: 8px; overflow: hidden;
+  display: flex; margin: 10px 0 14px; padding: 0;
 }
 .rc-summary-cell {
-  flex: 1 1 96px; min-width: 96px; padding: 8px 12px;
-  border-left: 1px solid var(--border-default);  border-left: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
+  flex: 1 1 0; min-width: 0; padding: 8px 12px;
 }
-.rc-summary-cell:first-child { border-left: 0; }
 .rc-summary dt {
   font-size: 11px; color: var(--muted-foreground); margin: 0 0 2px;
   letter-spacing: 0.02em;
@@ -746,7 +742,7 @@
 }
 
 @media (max-width: 480px) {
-  .rc-summary-cell { flex-basis: 33.33%; min-width: 0; }
+  .rc-summary-cell { padding: 8px 6px; }
   .rc-summary-big { font-size: 16px; }
 }
 
@@ -778,10 +774,6 @@
   background: var(--muted);  background: color-mix(in srgb, var(--destructive) 14%, transparent);
 }
 .rc-feedback-btn:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
-.rc-feedback-info {
-  display: inline-flex; align-items: center;
-  color: var(--faint-foreground); cursor: help;
-}
 
 /* 「这把没录姿态」——只在真猜过的时候出现,所以按提示写,不做成警告条(没有框)。
    图标不跟着文字换行:自己一列,文字在旁边整块折。 */

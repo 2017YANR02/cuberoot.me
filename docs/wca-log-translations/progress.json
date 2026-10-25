@@ -9,12 +9,12 @@
     "disciplinary": 44,
     "translated": 188,
     "pending": 0,
-    "independentlyReviewed": 175,
-    "pendingIndependentReview": 13,
+    "independentlyReviewed": 163,
+    "pendingIndependentReview": 25,
     "entriesWithReviewNotes": 21,
     "linkOnlyAnnouncements": 1,
     "independentReviewCoverage": 188,
-    "pendingIndependentRecheck": 0,
+    "pendingIndependentRecheck": 12,
     "pendingSourceVerification": 13,
     "pendingPermission": 0,
     "linkedAnnouncementsFullTextTranslated": 1
@@ -40,13 +40,13 @@
       "url": "https://www.worldcubeassociation.org/posts/call-for-applicants-wca-integrity-committee-leader-december-2025",
       "sourceDate": "2025-12-07T22:53:24Z",
       "sourceHash": "d4c8df09a9e2f619590864bfc49e41c7a96e2cf5550b284a1197a4de9623aded",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-call-for-applicants-wca-integrity-committee-leader-december-2025.json",
       "translatedAt": "2026-10-22T06:02:27.941Z",
-      "translationHash": "50852bccf6c0a108ff27923488d2879206db78813ac99f5a73faafccc45f0453"
+      "translationHash": "9cc21bf2279f808e811a92137c846f3491a8e9f7cacfe8ea9e5be6e7c75ab104"
     },
     {
       "key": "disciplinary:/posts/call-for-applicants-wca-integrity-committee-members-august-2025",
@@ -54,13 +54,13 @@
       "url": "https://www.worldcubeassociation.org/posts/call-for-applicants-wca-integrity-committee-members-august-2025",
       "sourceDate": "2025-08-09T16:22:13Z",
       "sourceHash": "04318d274d1ccd29a7b5be57b0f22899df1ae9661848cca8ae3056769c25fb0f",
-      "translationVersion": 2,
+      "translationVersion": 3,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-call-for-applicants-wca-integrity-committee-members-august-2025.json",
       "translatedAt": "2026-10-22T06:02:27.941Z",
-      "translationHash": "2e49420878d8982bc6c11ae55d2b07aa1b41905c08e9b8a794a7f7c03be963c6"
+      "translationHash": "cd68c3b8ba50d860446071ef967c039aeb8b68b3e0b4bbbf25724d3c8232c71b"
     },
     {
       "key": "disciplinary:/posts/call-for-applicants-wdc-leader-december-2023",
@@ -68,13 +68,13 @@
       "url": "https://www.worldcubeassociation.org/posts/call-for-applicants-wdc-leader-december-2023",
       "sourceDate": "2023-12-16T07:36:14Z",
       "sourceHash": "e300fb324204fb513e6b0bd0e87c7753d172fdf11b06fbb5b43674ee93cd6b5e",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-call-for-applicants-wdc-leader-december-2023.json",
       "translatedAt": "2026-10-22T06:02:27.941Z",
-      "translationHash": "8dbb4825fe71ba53d73e88d608be2d9d0cf9696f1639dabb7c65ecd96e6c59ed"
+      "translationHash": "2126bbe45f43c4bc78ac24eb6d0c85d4dcee6f0c385623dbbfa8834c63c89d6e"
     },
     {
       "key": "disciplinary:/posts/call-for-applicants-wdc-leader-january-2021",
@@ -152,13 +152,13 @@
       "url": "https://www.worldcubeassociation.org/posts/integrity-committee-digest-2024-q4",
       "sourceDate": "2025-01-02T01:15:41Z",
       "sourceHash": "206965c3e76461eca9177b30197f35fec6e1a9f709161086d5be57fd807f6c83",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
       "verificationStatus": "pending_source_verification",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-integrity-committee-digest-2024-q4.json",
       "translatedAt": "2026-10-22T06:02:27.941Z",
-      "translationHash": "be586009fa2055a5a54cc9f0c1abd64a95825b15895ef19481fb338d33c91390"
+      "translationHash": "fa8ab3b870aae0e6ec119742e0fd620880151061d7325162694e789801675b12"
     },
     {
       "key": "disciplinary:/posts/integrity-committee-digest-2025-q1",
@@ -166,13 +166,13 @@
       "url": "https://www.worldcubeassociation.org/posts/integrity-committee-digest-2025-q1",
       "sourceDate": "2025-04-08T23:26:58Z",
       "sourceHash": "6a13109d7dda9cb45ec024aee1f6f1566a6a515637e9e985ac8d4da991a12dd8",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-integrity-committee-digest-2025-q1.json",
       "translatedAt": "2026-10-22T06:02:27.941Z",
-      "translationHash": "1edd0182a0c143d058d0de6a637fd8161eef9ca0105e330ed2d554a12a13b5a0"
+      "translationHash": "21dc70a4b781d38d5c2bdcf50c83ee3bd6584bd3b3e6a4f23d1f3a96f68fcb2a"
     },
     {
       "key": "disciplinary:/posts/integrity-committee-digest-2025-q2",
@@ -180,13 +180,13 @@
       "url": "https://www.worldcubeassociation.org/posts/integrity-committee-digest-2025-q2",
       "sourceDate": "2025-08-11T15:25:31Z",
       "sourceHash": "543edad848e97c3441c90a991a700e5cc5c3b3b4d9b11a95601b334047b48dfc",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
       "verificationStatus": "pending_source_verification",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-integrity-committee-digest-2025-q2.json",
       "translatedAt": "2026-10-22T06:05:15.716Z",
-      "translationHash": "9c95e3634e0ed7e18e83395947592919ba27293818582585cf0b4b6cf171c73d"
+      "translationHash": "65f2e48869f67566c2736fc52f4749f86395e7d1fe60a916f20c9add39fddb9b"
     },
     {
       "key": "disciplinary:/posts/integrity-committee-digest-2025-q3",
@@ -194,13 +194,13 @@
       "url": "https://www.worldcubeassociation.org/posts/integrity-committee-digest-2025-q3",
       "sourceDate": "2025-11-14T20:31:44Z",
       "sourceHash": "d66f044685ba3d5846fc62a934eb0793bc59c120cbff16b30f96613530ec909f",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-integrity-committee-digest-2025-q3.json",
       "translatedAt": "2026-10-22T06:05:15.716Z",
-      "translationHash": "fece5dad6b94ec5fb42fa9b1a49d509ee0439afb8d6681c3d24bf4cda7428bd3"
+      "translationHash": "f21af7d2b10179e22d035fab604a96901e0d53648efd1790a12c9ab1ddacad9d"
     },
     {
       "key": "disciplinary:/posts/integrity-committee-digest-2025-q4",
@@ -208,13 +208,13 @@
       "url": "https://www.worldcubeassociation.org/posts/integrity-committee-digest-2025-q4",
       "sourceDate": "2026-02-09T17:10:51Z",
       "sourceHash": "580e10ce2c1f29ab8fcdb139882d79518364b86a8c3ce275c25d4b06735df4f1",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-integrity-committee-digest-2025-q4.json",
       "translatedAt": "2026-10-22T06:05:15.716Z",
-      "translationHash": "81ba030894da29f4f4bebdbc50490bd2d6bd95510d22e6b6207a22bd8fa2a0f8"
+      "translationHash": "594885d9afd7ade87178cb2f20961498831b9c986e59468a7a7fb61b28cebf48"
     },
     {
       "key": "disciplinary:/posts/integrity-committee-digest-2026-q1",
@@ -222,13 +222,13 @@
       "url": "https://www.worldcubeassociation.org/posts/integrity-committee-digest-2026-q1",
       "sourceDate": "2026-04-07T06:09:09Z",
       "sourceHash": "67795c0bee5d1b515002e49f9f8b3a1477d248ee22f241c9a9c6b2cd690539b9",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-integrity-committee-digest-2026-q1.json",
       "translatedAt": "2026-10-22T06:05:15.716Z",
-      "translationHash": "3d518237642c66c9c88da01d7cc1b95f4b3223ed34cdf2799b6ccbd507b60f56"
+      "translationHash": "c2441fb653a25edf147ad6734ce70e0e4538bf5320cd864ddfb79f35851c359c"
     },
     {
       "key": "disciplinary:/posts/integrity-committee-digest-2026-q2",
@@ -236,13 +236,13 @@
       "url": "https://www.worldcubeassociation.org/posts/integrity-committee-digest-2026-q2",
       "sourceDate": "2026-07-14T02:15:51Z",
       "sourceHash": "742850af272350dfed2faf596d75b4cfa120fc735107adaf78c25c95a2433660",
-      "translationVersion": 2,
+      "translationVersion": 3,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-integrity-committee-digest-2026-q2.json",
       "translatedAt": "2026-10-22T06:05:15.716Z",
-      "translationHash": "ef51ee4a7fd96bf7335c31a0b80341642c46751c36d971d7e165c9ff42db25af"
+      "translationHash": "33ed29b9939cceefa5b5bd0d6d084d5c56ab955fd08581a7ad3114eec1986916"
     },
     {
       "key": "disciplinary:/posts/integrity-committee-digest-2026-q3",
@@ -250,13 +250,13 @@
       "url": "https://www.worldcubeassociation.org/posts/integrity-committee-digest-2026-q3",
       "sourceDate": "2026-10-08T14:17:34Z",
       "sourceHash": "0f0378d09864f1d9cc898a125f6d825ee8ecdc38d371430fbff091e4b1406031",
-      "translationVersion": 2,
+      "translationVersion": 3,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-integrity-committee-digest-2026-q3.json",
       "translatedAt": "2026-10-22T06:05:15.716Z",
-      "translationHash": "dbd8ee497df2a3f0d8860db96c6a574e70716b6512b2271842068bb38b113d9f"
+      "translationHash": "d3dd434ca0d8ff7b0143506b811f102267e3293386801cb7081756bec282092b"
     },
     {
       "key": "disciplinary:/posts/integrity-committee-report-on-a-case-of-cheating-sep-2025",
@@ -264,13 +264,13 @@
       "url": "https://www.worldcubeassociation.org/posts/integrity-committee-report-on-a-case-of-cheating-sep-2025",
       "sourceDate": "2025-09-24T03:19:35Z",
       "sourceHash": "4b2e09eadf615c68880831b7bbd61de22d9164ed8698e7358f36469060fb1de6",
-      "translationVersion": 2,
+      "translationVersion": 3,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-integrity-committee-report-on-a-case-of-cheating-sep-2025.json",
       "translatedAt": "2026-10-22T06:05:15.716Z",
-      "translationHash": "f3c4dc0cdade9b859b11ce87469b11065bd4cba35f279d99ca976301d6f5bdc7"
+      "translationHash": "4803c855d72392d92b316cddbcd9286ac7d6b9daeea4d6a771d6694a1807a67e"
     },
     {
       "key": "disciplinary:/posts/wca-integrity-committee-team-leader-announcement-january-2026",
@@ -278,13 +278,13 @@
       "url": "https://www.worldcubeassociation.org/posts/wca-integrity-committee-team-leader-announcement-january-2026",
       "sourceDate": "2026-01-26T03:10:32Z",
       "sourceHash": "c8963510efd2d9425ded79e4e4ab4d12480a21ef31ab7d20751f78b76709a359",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-wca-integrity-committee-team-leader-announcement-january-2026.json",
       "translatedAt": "2026-10-22T06:05:15.716Z",
-      "translationHash": "409b87ca331919b35d389769aee61d176ddef8e123f08d5f0f52c4a82a60b3de"
+      "translationHash": "2603b776ba919e1b8d700c8a7b5b24fefc7c207c478184b36887db28db9a270d"
     },
     {
       "key": "disciplinary:/posts/wdc-action-on-a-misscrambling-incident",
@@ -404,13 +404,13 @@
       "url": "https://www.worldcubeassociation.org/posts/wdc-digest-september-2022",
       "sourceDate": "2022-09-30T06:59:18Z",
       "sourceHash": "e247c3d40e5748a0a67ec53e028529f85498dc507a21f5504f48c9019d8444ed",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-wdc-digest-september-2022.json",
       "translatedAt": "2026-10-22T06:07:32.458Z",
-      "translationHash": "c84888b221a40b6e69364ddfe5ede276f96f85a7751d75efa64c8ee16cabc479"
+      "translationHash": "bc31a622a5c089f5946af54a6c84730fcc235149a64209e5a2e59de342627b5b"
     },
     {
       "key": "disciplinary:/posts/wdc-leader-announcement-february-2021",
@@ -628,13 +628,13 @@
       "url": "https://www.worldcubeassociation.org/posts/wic-digest-2024-q3",
       "sourceDate": "2024-10-01T17:09:26Z",
       "sourceHash": "f00fb0252ed1e826ae1444d8c136845f0b4a4d3bd32e4c900228eb6f19308b39",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
       "verificationStatus": "pending_source_verification",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-wic-digest-2024-q3.json",
       "translatedAt": "2026-10-22T06:10:02.357Z",
-      "translationHash": "f0469b5117427c85a5238766b95c0ac39e313ecb18e6529a89c8222b60915591"
+      "translationHash": "f3271bb8ce7a9ec41c398a43f188eb8383783d29654e028ca2d85b7169837330"
     },
     {
       "key": "incidents:1",
@@ -2653,7 +2653,7 @@
       "translationHash": "908f5ba11b87fa03314bee5f3a43f4d93487865d4738f80aa981ac3aa300442d"
     }
   ],
-  "updatedAt": "2026-10-22T06:53:07.762Z",
+  "updatedAt": "2026-10-25T07:28:01.629Z",
   "coverage": {
     "scope": "官方日志正文；不含其外链论坛及附件全文",
     "officialBodiesTranslated": 188,

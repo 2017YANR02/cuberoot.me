@@ -8,7 +8,7 @@ import { useT } from '@/hooks/useT';
 import { Callout, RegList } from '../../_components/primitives';
 import '../../regulation.css';
 import '../news.css';
-import { REG_NEWS } from '../../_data/news';
+import { REG_NEWS } from '@/lib/regulation-posts';
 import { tr } from '@/i18n/tr';
 
 const POST_4_PAD = 'https://www.worldcubeassociation.org/posts/adoption-of-4-pad-timing-august-2026';
@@ -54,7 +54,7 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
             </p>
             <p className="news-lede">
               {t(
-                'WCA 诚信委员会（WIC）已完成一项调查，涉及一名选手在 2025 年末至 2026 年初多场比赛中的若干次还原。该选手尚未成年。依照我们此前处理涉及未成年选手案件的惯例，以及青少年体育领域的普遍做法，我们不会公开其姓名，并请社区成员不要猜测其身份，尊重其隐私。我们发布本声明的唯一目的，是防止有关此案的不实说法和猜测在社区内传播。WCA 论坛将删除此类消息。',
+                'WCA 廉政委员会（WIC）已完成一项调查，涉及一名选手在 2025 年末至 2026 年初多场比赛中的若干次还原。该选手尚未成年。依照我们此前处理涉及未成年选手案件的惯例，以及青少年体育领域的普遍做法，我们不会公开其姓名，并请社区成员不要猜测其身份，尊重其隐私。我们发布本声明的唯一目的，是防止有关此案的不实说法和猜测在社区内传播。WCA 论坛将删除此类消息。',
                 'The WCA Integrity Committee (WIC) has concluded an investigation into a competitor’s attempts at several competitions between late 2025 and early 2026. The competitor is a minor. In line with our previous practice in cases involving minor competitors and with common practice in youth sport, we are not naming them, and we ask the Community not to speculate about their identity, and to respect their privacy. We are solely releasing this statement to prevent false narratives and speculation regarding this case from spreading across the community. Any such messages will be removed from the WCA Forum.',
               )}
             </p>
@@ -84,7 +84,7 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
             </p>
             <Callout tone="info" label={t('本站说明', 'About this translation')}>
               {t(
-                '以上为 WCA 诚信委员会官方声明的中文翻译。本文不涉及任何选手身份推测；处罚、纪录修订及申诉事项均以 WCA 官方信息为准。',
+                '以上为 WCA 廉政委员会官方声明的中文翻译。本文不涉及任何选手身份推测；处罚、纪录修订及申诉事项均以 WCA 官方信息为准。',
                 'The Chinese text above translates the official WCA Integrity Committee statement. No competitor identity is inferred; the official WCA statement governs sanctions, record updates and appeals.',
               )}
             </Callout>

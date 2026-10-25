@@ -129,8 +129,12 @@
      stretch edge-to-edge; won't grow past 800, the player pane eats the rest. */
   flex: 0 1 800px;
   overflow-y: auto;
+  scrollbar-width: none;
   max-width: 800px;
   padding: 12px 20px 24px;
+}
+.detail-content-pane::-webkit-scrollbar {
+  display: none;
 }
 
 /* 平板(768-1023): 上下堆叠 */
@@ -201,7 +205,7 @@
   padding: 0;
 }
 .detail-scramble-solution:has(.recon-case-diagram) > .detail-caption-header,
-.detail-scramble-solution:has(.recon-case-diagram) > .detail-scramble-line {
+.detail-scramble-solution:has(.recon-case-diagram) > .detail-scramble-line:not(:has(.recon-case-diagram)) {
   padding-inline-start: var(--recon-diagram-indent);
 }
 .detail-caption-header {
@@ -784,12 +788,10 @@
 .detail-person-link {
   color: inherit;
   text-decoration: none;
-  border-bottom: 1px dotted color-mix(in srgb, var(--foreground) 30%, transparent);
-  transition: border-color 0.12s, color 0.12s;
+  transition: color 0.12s;
 }
 .detail-person-link:hover {
   color: var(--accent);
-  border-bottom-color: var(--accent);
 }
 /* 多选手(共同完成):每个「旗 + 名」是不可断的整体,前面的空格给换行机会,
    整组在窄屏会整体折到下一行而不是溢出视口 */

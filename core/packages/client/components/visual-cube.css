@@ -6,6 +6,14 @@
   box-shadow: none;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
+  /* Let empty dialog space reach the shared backdrop dismissal handler. */
+  pointer-events: none;
+}
+
+/* Only painted cube geometry is interactive, not its rectangular SVG viewport.
+   Events still bubble to the cube button, which captures rotation gestures. */
+.visualcube-preview .puzzle-art svg :is(polygon, path, rect:not([fill="none"])) {
+  pointer-events: visiblePainted;
 }
 
 .visualcube-preview .timer-room-dialog-head {

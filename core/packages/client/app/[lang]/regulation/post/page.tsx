@@ -8,7 +8,7 @@ import Link from '@/components/AppLink';
 import {ClearButton} from '@/components/ClearButton';
 import {useT} from '@/hooks/useT';
 import {tr} from '@/i18n/tr';
-import {ALL_NEWS,NEWS_INDEX} from '../_data/news-catalog';
+import {ALL_NEWS,NEWS_INDEX} from '@/lib/regulation-posts';
 import '../regulation.css';
 import './news.css';
 import PostHeading from './_components/PostHeading';

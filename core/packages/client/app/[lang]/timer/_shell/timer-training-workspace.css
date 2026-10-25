@@ -11,7 +11,6 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  border-bottom: 1px solid var(--border-default);
 }
 
 .timer-training-workspace__navigation {
@@ -36,14 +35,35 @@
 @media (max-width: 767px) {
   .timer-training-workspace__toolbar {
     display: flex;
+    flex-wrap: nowrap;
     justify-content: space-evenly;
-    gap: 4px;
-    padding-inline: 8px;
+    gap: 3px;
+    padding-inline: 4px;
   }
   .timer-training-workspace__navigation,
   .timer-training-workspace__context,
   .timer-training-workspace .timer-training-workspace__context .settings-popover-context {
     display: contents;
+  }
+  .timer-training-workspace__toolbar .timer-practice-control,
+  .timer-training-workspace__toolbar .timer-training-workspace__settings {
+    flex-shrink: 0;
+  }
+  .timer-training-workspace__toolbar .timer-practice-control,
+  .timer-training-workspace__toolbar .trainer-progress-link,
+  .timer-training-workspace__toolbar .trainer-recap-progress,
+  .timer-training-workspace__toolbar .alg-pdf-btn {
+    font-size: 11px;
+  }
+  .timer-training-workspace__toolbar .trainer-top-actions {
+    gap: 4px;
+  }
+  .timer-training-workspace__toolbar .trainer-round-input {
+    width: 3.5em;
+    padding-inline: 2px;
+  }
+  .timer-training-workspace__toolbar .pp-trigger-label {
+    white-space: nowrap;
   }
 }
 
@@ -101,6 +121,122 @@
   min-width: 0;
 }
 
+/* Running drills occupy the visible viewport; review content lives in dialogs. */
+.timer-training-workspace:has(.trainer-root--fixed) {
+  position: fixed;
+  inset: 0;
+  height: 100dvh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.timer-training-workspace:has(.trainer-root--fixed) > .timer-training-workspace__toolbar {
+  flex-shrink: 0;
+}
+.timer-training-workspace__content:has(.trainer-root--fixed) {
+  flex: 1;
+  min-height: 0;
+}
+.trainer-root.trainer-root--fixed {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 8px 16px;
+  display: flex;
+  flex-direction: column;
+  --trainer-figure-height: min(140px, 23dvh);
+}
+.trainer-root--fixed.trainer-root--multi {
+  --trainer-figure-height: min(100px, 12dvh);
+}
+.trainer-root--fixed > .trainer-topbar {
+  order: 2;
+  justify-content: center;
+  margin-bottom: 0;
+  flex-shrink: 0;
+  min-height: 32px;
+}
+.trainer-root--fixed > .trainer-run {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+}
+.trainer-root--fixed .trainer-run > .trainer-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0;
+  min-height: 0;
+}
+.trainer-root--fixed .trainer-stage :is(img, svg):not(.lucide) {
+  max-height: var(--trainer-figure-height);
+  max-width: 100%;
+  object-fit: contain;
+}
+.trainer-root--fixed .trainer-stage .puzzle-art {
+  max-height: var(--trainer-figure-height);
+  max-width: var(--trainer-figure-height);
+}
+.trainer-root--fixed .trainer-stage .trainer-scramble-text {
+  font-size: clamp(16px, 3.4dvh, 28px);
+  margin-block: 8px;
+}
+.trainer-root--fixed.trainer-root--multi .trainer-stage .trainer-scramble-text {
+  font-size: clamp(14px, 2.5dvh, 22px);
+  margin-block: 4px;
+}
+.trainer-root--fixed .trainer-scramble-multi {
+  gap: 8px;
+}
+.trainer-root--fixed .trainer-scramble-row {
+  display: grid;
+  grid-template-columns: minmax(28px, 1fr) var(--trainer-figure-height) minmax(28px, 1fr);
+  justify-items: center;
+  gap: 4px;
+}
+.trainer-root--fixed .trainer-scramble-row > :not(.trainer-scramble-line) {
+  grid-area: 1 / 2;
+}
+.trainer-root--fixed .trainer-scramble-row > .trainer-stage-marks {
+  grid-area: 1 / 1;
+  align-self: center;
+  justify-self: end;
+}
+.trainer-root--fixed .trainer-scramble-row > .trainer-scramble-line {
+  grid-area: 2 / 1 / auto / -1;
+}
+.trainer-review-dialog .trainer-stats-card {
+  border: 0;
+  background: none;
+  padding: 0;
+}
+.trainer-review-dialog .alg-admin-modal-head {
+  border-bottom: 0;
+}
+.trainer-review-dialog .alg-admin-modal-body {
+  gap: 20px;
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 380px) {
+  .timer-training-workspace__toolbar {
+    gap: 2px;
+    --timer-topbar-control-size: 26px;
+  }
+  .timer-training-workspace__toolbar .pp-trigger {
+    padding-inline: 0;
+  }
+  .timer-training-workspace__toolbar .trainer-round-input {
+    width: 3ch;
+  }
+  .timer-training-workspace__toolbar .trainer-recap-round {
+    margin-right: 2px;
+  }
+}
+
 .timer-practice-control {
   display: inline-flex;
   align-items: center;
@@ -123,6 +259,14 @@
 .timer-practice-control .pp-trigger,
 .timer-practice-control .compact-select-trigger {
   font-size: inherit;
+}
+
+/* Plain selects underline on hover by default; toolbar controls never do,
+   including touch browsers that retain the hover state after tapping. */
+:is(.shell-topbar, .timer-training-workspace__toolbar) :is(a, button),
+:is(.shell-topbar, .timer-training-workspace__toolbar) :is(a, button):is(:hover, :focus, :active),
+:is(.shell-topbar, .timer-training-workspace__toolbar) .compact-select--plain .compact-select-trigger:hover:not(:disabled) {
+  text-decoration: none;
 }
 
 .timer-practice-control--content .pp-trigger {

@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
-import { act, createElement, useEffect, useState } from 'react';
+import { act, createElement, useEffect, useRef, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import TimerSolverPanel from '@cuberoot/timer-ui/TimerSolverPanel';
+import { TimerSoloPage } from '@cuberoot/timer-ui/TimerSoloPage';
 
 const fixture = vi.hoisted(() => ({ nested: false, mounts: 0 }));
 let reportBlocking: ((blocked: boolean) => void) | undefined;
@@ -79,11 +80,10 @@ it('keeps one solver while docking/fullscreen, persists collapse, and does not r
 it('switches solution views from the title and preserves the choice across fullscreen and close', async () => {
   await act(async () => root.render(createElement(Harness)));
   const chooseView = async (view: string) => {
-    const select = document.querySelector<HTMLSelectElement>('.solver-view-select')!;
-    await act(async () => {
-      select.value = view;
-      select.dispatchEvent(new Event('change', { bubbles: true }));
-    });
+    if (document.querySelector('.solver-view-select')?.getAttribute('aria-expanded') !== 'true') await click('.solver-view-select');
+    const label = view === 'steps' ? 'Step-by-step' : 'Solve';
+    const option = [...document.querySelectorAll<HTMLButtonElement>('[role="option"]')].find(item => item.textContent === label)!;
+    await act(async () => option.click());
   };
   await click('.solver-view-select');
   expect(document.querySelector('[data-view]')?.getAttribute('data-view')).toBe('solutions');
@@ -145,4 +145,26 @@ it('Escape consumes inner dismiss before outer close, and Tab stays in the full 
   expect(document.querySelector('.solver-sheet')).not.toBeNull();
   await act(async () => sheet.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
   expect(document.querySelector('.solver-sheet')).toBeNull();
+});
+
+function TopbarHarness() {
+  const surfaceRef = useRef<HTMLDivElement>(null);
+  return createElement(TimerSoloPage, { topbar: { controls: null }, stage: {},
+    timing: { phase: 'idle', digits: '0.00', colorClass: '', surfaceRef },
+    solver: createElement(Harness),
+  });
+}
+it.each([390, 1280])('keeps the topbar light and one solver at width %i', async (viewport) => {
+  width = viewport;
+  localStorage.setItem('timer.solverHints.panelOpen', '0');
+  await act(async () => root.render(createElement(TopbarHarness)));
+  const trigger = document.querySelector('.solver-trigger-slot .solver-light-trigger')!;
+  expect(trigger.getAttribute('data-lit')).toBe('false');
+  await click('.solver-light-trigger');
+  expect(trigger.getAttribute('data-lit')).toBe('true');
+  expect(fixture.mounts).toBe(1);
+  await click('.solver-light-trigger');
+  expect(trigger.isConnected).toBe(true);
+  expect(trigger.getAttribute('data-lit')).toBe('false');
+  expect(fixture.mounts).toBe(0);
 });
