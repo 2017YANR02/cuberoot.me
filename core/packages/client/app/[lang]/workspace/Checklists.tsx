@@ -35,8 +35,8 @@ export default function Checklists() {
     <div className="staff-actions workspace-toolbar">
       <Button onClick={() => { newId.current = crypto.randomUUID(); setEditing('new'); }}>{t('新建清单', 'New checklist')}</Button>
       <Button variant="secondary" onClick={() => { setEditing(null); resource.reload(); }}>{t('重新加载', 'Reload')}</Button>
-      <Field label={t('分类', 'Category')}><select value={category} onChange={event => { void setCategory(event.target.value); void setPage(1); setEditing(null); }}><option value="">{t('全部分类', 'All categories')}</option>{categories.map(name => <option key={name}>{name}</option>)}</select></Field>
-      <Field label={t('状态', 'Status')}><select value={status} onChange={event => { void setStatus(event.target.value as typeof status); void setPage(1); setEditing(null); }}><option value="active">{t('进行中', 'Active')}</option><option value="all">{t('含已归档', 'Include archived')}</option></select></Field>
+      <Field label={t('分类', 'Category')}><select className="workspace-toolbar-select" value={category} onChange={event => { void setCategory(event.target.value); void setPage(1); setEditing(null); }}><option value="">{t('全部分类', 'All categories')}</option>{categories.map(name => <option key={name}>{name}</option>)}</select></Field>
+      <Field label={t('状态', 'Status')}><select className="workspace-toolbar-select" value={status} onChange={event => { void setStatus(event.target.value as typeof status); void setPage(1); setEditing(null); }}><option value="active">{t('进行中', 'Active')}</option><option value="all">{t('含已归档', 'Include archived')}</option></select></Field>
     </div>
     <ErrorNotice error={resource.error} retry={resource.reload} />
     <ErrorNotice error={projects.error} retry={projects.reload} />
