@@ -3909,14 +3909,6 @@ export function App({ host }: { host: InstalledAppHost }) {
                     triggerLabel={copy.more}
                     viewportBottomInset={primaryNavBottomInset}
                   />
-                  <button
-                    aria-label={copy.settings}
-                    className="timer-toolbar-icon"
-                    data-no-timer
-                    disabled={timer.machine.phase === 'running' || timerContextMutationBusy}
-                    onClick={() => { setSettingsCategory('timer'); setView('settings'); }}
-                    type="button"
-                  ><SettingsIcon aria-hidden="true" size={17} /></button>
                 </>
               ),
           controls: (
@@ -3985,11 +3977,20 @@ export function App({ host }: { host: InstalledAppHost }) {
                     data-no-timer
                     ref={setWcaDifficultyToggleSlot}
                   />
+                  <button
+                    aria-label={copy.settings}
+                    className="timer-toolbar-icon settings-popover-trigger"
+                    data-no-timer
+                    disabled={timer.machine.phase === 'running' || timerContextMutationBusy}
+                    onClick={() => { setSettingsCategory('timer'); setView('settings'); }}
+                    type="button"
+                  ><SettingsIcon aria-hidden="true" size={17} /></button>
 
                 </>
               )}}
         stage={{
           className: "mobile-timer-stage timer-view",
+          rankings: solves.length > 0 && <TimerRankBadge eventId={activeEvent} centis={rankCentis} type="single" country={rankCountry} isZh={language === 'zh'} scopes={store!.settings.rankScopes} wcaId={rankWcaId} host={timerRankHost} />,
           fullscreen: fullscreen,
           source: <>
                 {scrambleSource === 'wca' && timerSupportsRealWcaScrambles(activeEvent) && (
@@ -4139,7 +4140,6 @@ export function App({ host }: { host: InstalledAppHost }) {
                 />}}
         solver={solverHintPanel}
         timing={{
-digitsCorner: solves.length > 0 && <TimerRankBadge eventId={activeEvent} centis={rankCentis} type="single" country={rankCountry} isZh={language === 'zh'} scopes={store!.settings.rankScopes} wcaId={rankWcaId} host={timerRankHost} />,
 className: targetFeedbackClass,
 ariaLabel: copy.timer,
 colorClass: `${timerColorClass} tf-${store!.settings.timerFont}`,

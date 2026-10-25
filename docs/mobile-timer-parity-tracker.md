@@ -731,3 +731,5 @@ Web 与五端 App 已接同一视频 API 契约、授权生命周期、画面与
 ### 2026-10-25 Windows Timer 布局同步
 
 Web 私有 shell 中的单人/联机计时画布正常流布局、单人间距、宽屏数字缩放与魔方预览剩余高度分配迁入 `timer-ui/timing-surface.css`；Web 与安装端消费同一规则，宿主仅保留视口与导航约束。Web 的布局编辑器仍属 Web 接入，安装端暂用共享默认间距。已有 live-cube visibility 与 session wrapper 定向回归 5/5 通过；未进行浏览器自动化或真机视觉验收，整体继续 **ACTIVE — NOT COMPLETE**。
+
+安装端单人排名接入共享 stage footer，与 Web 一致；设置按钮归入中央工具栏并复用窄屏触控尺寸规则，More 保留右侧。App typecheck 通过；训练导航与布局编辑器接入仍是未完成项。
