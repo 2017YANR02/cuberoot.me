@@ -38,7 +38,7 @@ export default function DownloadPage() {
     <main className="download-page">
       <div className="download-nav">
         <HomeLink className="download-home"><ArrowLeft size={16} aria-hidden="true" />CubeRoot</HomeLink>
-        <HeaderToggles />
+        <HeaderToggles triggerClassName="theme-toggle-inline download-settings" />
       </div>
       <h1>{tr({ zh: '下载', en: 'Download' })}</h1>
       <div className="download-app">
