@@ -10,7 +10,15 @@
   --glass-border: color-mix(in srgb, var(--foreground) 22%, transparent);
   --glass-edge: var(--glass-border);
   --glass-filter: blur(10px);
+  --glass-scroll-filter: blur(6px);
   --glass-shadow: none;
+}
+/* Homepage cards move over a fixed landscape. Native blur avoids applying the
+   SVG displacement pipeline to every card on every scroll frame. Keep the old
+   material available only during an explicitly requested diagnostic recording.
+   :where keeps the no-scenery fallback below at equal specificity. */
+body:where(:has(.landing-page)):not([data-scroll-diagnostic='original']) {
+  --site-glass-refraction: var(--glass-scroll-filter) !important;
 }
 /* A solid backdrop has nothing to refract. SVG displacement can pull the
    surface's light edge into an otherwise uniform dark card. Keep the shared
@@ -28,6 +36,7 @@ body[data-site-scenery='transparent'] {
     --glass-menu-filter: none;
     --glass-background: var(--card);
     --glass-filter: none;
+    --glass-scroll-filter: none;
   }
 }
 @media (prefers-reduced-transparency: reduce) {
@@ -39,6 +48,7 @@ body[data-site-scenery='transparent'] {
     --glass-menu-filter: none;
     --glass-background: var(--card);
     --glass-filter: none;
+    --glass-scroll-filter: none;
   }
   body { --site-glass-refraction: none !important; }
 }
@@ -54,6 +64,7 @@ body[data-site-scenery='transparent'] {
     --glass-menu-filter: none;
     --glass-background: var(--card);
     --glass-filter: none;
+    --glass-scroll-filter: none;
     --glass-shadow: none;
   }
   body { --site-glass-refraction: none !important; }

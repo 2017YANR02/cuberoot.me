@@ -285,6 +285,14 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
                 onChange={(enabled) => pickContrast(enabled ? 'soft' : 'normal')}
                 label={L.lowContrast}
               />
+              <button type="button" role="menuitem" className="lang-menu-item"
+                onClick={() => {
+                  closeMenu();
+                  void import('@/components/ScrollDiagnostics').then(({ openScrollDiagnostics }) => openScrollDiagnostics())
+                    .catch(() => alert(t('诊断工具加载失败，请重试。', 'Could not load diagnostics. Please try again.')));
+                }}>
+                {t('滚动诊断', 'Scroll diagnostics')}
+              </button>
             </div>
           </div>
 

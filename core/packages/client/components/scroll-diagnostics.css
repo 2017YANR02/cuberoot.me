@@ -40,25 +40,24 @@
 .scroll-diagnostics-options {
   z-index: 2147483001;
   background: var(--popover) !important;
-  backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 /* Temporary A/B modes. Removing the attribute restores the exact cascade. */
 body[data-scroll-diagnostic='lighter'],
 body[data-scroll-diagnostic='lighter'] :is(.palette-scope, .contrast-scope) {
-  --glass-filter: blur(6px) !important;
-  --site-glass-refraction: blur(6px) !important;
+  --site-glass-refraction: var(--glass-scroll-filter) !important;
 }
 body[data-scroll-diagnostic='no-blur'] *,
 body[data-scroll-diagnostic='no-blur'] *::before,
 body[data-scroll-diagnostic='no-blur'] *::after {
-  backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 body[data-scroll-diagnostic='no-image'] .site-scenery { visibility: hidden; }
 /* The measuring controls themselves never add backdrop work. */
 [data-scroll-diagnostic-ui] *, [data-scroll-diagnostic-ui] *::before, [data-scroll-diagnostic-ui] *::after {
-  backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }

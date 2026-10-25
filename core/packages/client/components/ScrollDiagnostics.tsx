@@ -10,8 +10,8 @@ import './scroll-diagnostics.css';
 
 const STORAGE_KEY = 'scroll-diagnostics.v1';
 const MODES = [
-  {value:'original', zh:'原效果', en:'Original'},
-  {value:'lighter', zh:'较轻毛玻璃', en:'Lighter glass'},
+  {value:'original', zh:'原版效果', en:'Original effect'},
+  {value:'lighter', zh:'轻量模糊', en:'Lighter blur'},
   {value:'no-blur', zh:'关闭毛玻璃', en:'No backdrop filters'},
   {value:'no-image', zh:'隐藏背景图', en:'Hide scenery'},
 ] as const;
@@ -101,7 +101,7 @@ function ScrollDiagnostics({onClose}: {onClose: () => void}) {
       <button className="scroll-diagnostics-button" type="button" onClick={() => { recorder.current?.mark(); setMarked(true); }}>{marked ? tr({zh:'已标记，可再次标记',en:'Marked; tap to mark again'}) : tr({zh:'刚才卡住了',en:'It just froze'})}</button>
       <button className="scroll-diagnostics-button" type="button" onClick={stop}>{tr({zh:'停止并查看',en:'Stop and review'})}</button>
     </div> : <>
-      <p>{tr({zh:'先选原效果，点开始后上下滑动。再在同一页、同一位置换一种模式重复。诊断结束会恢复原效果。',en:'Start with Original and scroll up and down. Repeat another mode at the same position on the same page. The original appearance returns when recording ends.'})}</p>
+      <p>{tr({zh:'选原版效果后开始记录并上下滑动，再在同一位置比较轻量模糊和关闭毛玻璃。结束后恢复当前默认效果。',en:'Record Original effect while scrolling, then compare Lighter blur and No backdrop filters at the same position. Recording ends by restoring the current default appearance.'})}</p>
       <CompactSelect value={mode} onChange={setMode} label={tr(MODES.find(item => item.value === mode)!)}
         popupClassName="scroll-diagnostics-options"
         ariaLabel={tr({zh:'诊断对照模式',en:'Diagnostic comparison mode'})}
