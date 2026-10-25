@@ -90,7 +90,7 @@ describe('shared smart-cube device modal', () => {
         expect(panel.style.top).toBe('58px');
         expect(panel.hasAttribute('aria-modal')).toBe(false);
         expect(document.querySelector('.timer-smart-cube-device__overlay')).toBeNull();
-        expect(panel.textContent).not.toContain('(C2:AF)');
+        expect(panel.textContent).toContain('GAN16ui (C2:AF)');
         anchor.focus();
         expect(document.activeElement).toBe(anchor);
       }
@@ -99,6 +99,14 @@ describe('shared smart-cube device modal', () => {
     } finally {
       anchor.remove();
     }
+  });
+
+  it.each(['WCU_MY32_ (A1:B2)', 'WCU_MY32_A1B2'])('preserves the MoYu identity suffix in %s', async (deviceName) => {
+    await act(async () => root.render(createElement(TimerSmartCubeDeviceModal, {
+      language: 'en', onClose: vi.fn(),
+      snapshot: { ...connectedSnapshot, deviceName, protocol: 'moyu32' },
+    })));
+    expect(document.querySelector('.timer-smart-cube-device__name')?.textContent).toBe(deviceName);
   });
 
   it('renders a selectable scan list without exposing device addresses', async () => {

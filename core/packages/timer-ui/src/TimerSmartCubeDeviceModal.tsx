@@ -390,7 +390,7 @@ export function TimerSmartCubeDeviceModal({
             {(connected || !listMode) && <section className="timer-smart-cube-device__summary bt-connected-summary modal-section">
               <div className="timer-smart-cube-device__primary bt-connected-primary">
                 <strong className="timer-smart-cube-device__name bt-connected-device">
-                  {snapshot.deviceName?.replace(/\s*[（(][^()（）]*[)）]/g, '').trim() || copy.deviceFallback}
+                  {snapshot.deviceName?.trim() || copy.deviceFallback}
                 </strong>
                 {!connected && <span
                   aria-live="polite"
