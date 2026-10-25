@@ -10,6 +10,7 @@ import Checklists from '@/app/[lang]/workspace/Checklists';
 import Schedules from '@/app/[lang]/workspace/Schedules';
 import { WorkspaceButton, WorkspaceDialog } from '@/app/[lang]/workspace/WorkspaceControls';
 import { DateInput } from '@/components/DateInput';
+import ScheduleTimeline from '@/app/[lang]/workspace/ScheduleTimeline';
 
 vi.mock('@/hooks/useT', () => ({ useT: () => (_zh: string, en: string) => en }));
 let container: HTMLDivElement;
@@ -70,6 +71,41 @@ function ExternalNavigation() {
   const [, setSelected] = useQueryState('schedule', parseAsString.withDefault(''));
   return h('button', { onClick: () => void setSelected('') }, 'External navigation');
 }
+
+it('uses bare icon actions while keeping explicit report submissions styled as buttons', async () => {
+  await mount(h(Fragment, null, h(WorkspaceButton, { action: 'add', children: 'New task' }), h(WorkspaceButton, { action: 'send', iconOnly: false, children: 'Submit report' })));
+  const icon = container.querySelector('[aria-label="New task"]')!;
+  expect(icon.classList.contains('workspace-icon-action')).toBe(true);
+  expect(icon.classList.contains('btn-primary')).toBe(false);
+  expect(icon.classList.contains('btn-secondary')).toBe(false);
+  expect(container.querySelector('.btn-primary')?.textContent).toBe('Submit report');
+});
+
+it('separates cross-year calendar headings from day ticks and uses proportional task positions', async () => {
+  await mount(h(ScheduleTimeline, { tasks: schedules[0].tasks, scale: 'day', editable: true, onEdit: vi.fn() }));
+  expect([...container.querySelectorAll('.workspace-gantt-period')].map(node => node.getAttribute('datetime'))).toEqual(['2026-12', '2027-01']);
+  expect([...container.querySelectorAll('.workspace-gantt-tick time')].map(node => node.textContent)).toEqual(['30', '31', '01', '02', '03', '04', '05']);
+  const bar = container.querySelector<HTMLButtonElement>('.workspace-gantt-bar')!;
+  expect(bar.style.left).toContain('%');
+  expect(bar.style.width).toContain('%');
+  expect(bar.textContent).toContain('Build');
+});
+
+it('aligns week ticks to Mondays and month ticks to real calendar boundaries across leap February', async () => {
+  const tasks = [{ ...schedules[0].tasks[0], start: '2028-02-28', end: '2028-03-02' }];
+  await mount(h(ScheduleTimeline, { tasks, scale: 'week', editable: true, onEdit: vi.fn() }));
+  expect([...container.querySelectorAll('.workspace-gantt-tick time')].map(node => node.getAttribute('datetime'))).toEqual(['2028-02-28', '2028-03-06', '2028-03-13', '2028-03-20']);
+  await mount(h(ScheduleTimeline, { tasks, scale: 'month', editable: true, onEdit: vi.fn() }));
+  const ticks = [...container.querySelectorAll<HTMLElement>('.workspace-gantt-tick')];
+  expect(ticks.map(node => node.textContent)).toEqual(['2028-02', '2028-03', '2028-04']);
+  expect(parseFloat(ticks[1].style.left)).toBeCloseTo(29 / 90 * 100);
+  expect(parseFloat(ticks[2].style.left)).toBeCloseTo(60 / 90 * 100);
+  await mount(h(ScheduleTimeline, { tasks: [{ ...tasks[0], start: '2027-05-31', end: '2027-06-02' }], scale: 'week', editable: true, onEdit: vi.fn() }));
+  const partialMonth = container.querySelector('.workspace-gantt-period')!;
+  expect(partialMonth.getAttribute('aria-label')).toBe('2027-05');
+  expect(partialMonth.textContent).toBe('');
+  expect(container.querySelector('.workspace-gantt-tick time')?.textContent).toBe('05-31');
+});
 
 it('uses the installed patched report editor to submit integer hours and reject reversed ranges', async () => {
   await mount(h(ReportEditor));
