@@ -21,6 +21,7 @@ import Offboarding from '../dev/team/Offboarding';
 import Sop from '../dev/team/Sop';
 import QualityStandards from '../dev/team/QualityStandards';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import Checklists from './Checklists';
 
 // Product adapter: only CubeRoot auth headers and CubeRoot API are used here.
 async function api<T>(action: string, body?: unknown): Promise<T> {
@@ -37,7 +38,7 @@ function workspaceHref(href: string) {
 }
 function Link({href,...props}:AnchorHTMLAttributes<HTMLAnchorElement>&{href:string}) { return <AppLink {...props} href={workspaceHref(href)} prefetch={false} />; }
 function Button({variant,size,...props}:ButtonHTMLAttributes<HTMLButtonElement>&{variant?:'secondary';size?:'sm'}) { return <button type="button" {...props} className={`btn ${variant==='secondary'?'btn-secondary':'btn-primary'} ${props.className??''}`} data-size={size} />; }
-const sections=['mine','updates','projects','members','detail','onboarding','offboarding','sop','quality'] as const;
+const sections=['mine','updates','projects','checklists','members','detail','onboarding','offboarding','sop','quality'] as const;
 function Workspace() {
   const lang=useLang();const router=useRouter();
   const host=useMemo(()=>({api,Link,Button,t:(text:string)=>workspaceText(lang,text),navigate:(href:string)=>router.push(`${lang==='zh'?'/zh':''}${workspaceHref(href)}`)}),[lang,router]);
@@ -51,8 +52,8 @@ function SignedInWorkspace() {
   const t=useT();const [section]=useQueryState('section',parseAsStringEnum([...sections]).withDefault('mine'));
   const [id]=useQueryState('id',parseAsString.withDefault(''));
   const session=useResource<{actor:StaffActor;employee:StaffActor;directory:MemberDirectory}>('session');const actor=session.data?.actor;const employee=session.data?.employee;
-  const items=[{key:'mine',label:t('我的工作','My work')},{key:'updates',label:t('团队动态','Team updates')},{key:'projects',label:t('项目','Projects')},...(actor?.kind==='admin'?[{key:'members',label:t('成员与权限','Members and access')}]:[])];
-  const icons = { mine: ClipboardList, updates: Users, projects: FolderKanban, members: ShieldCheck };
+  const items=[{key:'mine',label:t('我的工作','My work')},{key:'updates',label:t('团队动态','Team updates')},{key:'projects',label:t('项目','Projects')},{key:'checklists',label:t('清单','Checklists')},...(actor?.kind==='admin'?[{key:'members',label:t('成员与权限','Members and access')}]:[])];
+  const icons = { mine: ClipboardList, updates: Users, projects: FolderKanban, checklists: ClipboardList, members: ShieldCheck };
   const navigation = items.map(item => { const Icon = icons[item.key as keyof typeof icons]; return { id: item.key, href: `/workspace?section=${item.key}`, label: item.label, icon: <Icon size={18} />, active: section === item.key }; });
   const handbookItems = [{ key: 'onboarding', label: t('入职','Onboarding'), icon: UserRoundPlus }, { key: 'sop', label: 'SOP', icon: Workflow }, { key: 'quality', label: t('质量标准','Quality standards'), icon: ScanEye }, { key: 'offboarding', label: t('离职','Offboarding'), icon: LogOut }];
   const handbook = handbookItems.some(item => item.key === section);
@@ -71,6 +72,7 @@ function SignedInWorkspace() {
       {section==='mine'&&employee&&<><ReportEditor /><Reports actor={employee} directory={session.data!.directory} mine /></>}
       {section==='updates'&&<Reports actor={actor} directory={session.data!.directory} />}
       {section==='projects'&&<Projects actor={actor} directory={session.data!.directory} />}
+      {section==='checklists'&&<Checklists />}
       {section==='detail'&&id&&employee&&<ReportDetailPanel actor={employee} id={id} />}
       {section==='members'&&actor.kind==='admin'&&<Members onSaved={session.reload} />}
     </>}

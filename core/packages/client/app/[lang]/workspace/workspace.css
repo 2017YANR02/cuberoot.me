@@ -9,6 +9,22 @@
   --workspace-error: var(--destructive);
 }
 
+.workspace-toolbar { flex-wrap: wrap; align-items: end; margin-bottom: 24px; }
+.workspace-toolbar .staff-field { width: auto; }
+.workspace-category { margin-block: 32px; }
+.workspace-list-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.workspace-list-heading h3 { margin: 0; }
+.workspace-list-heading > .btn:last-child { margin-left: auto; }
+.workspace-checklist { margin-block: 24px; }
+.workspace-check-items { list-style: none; padding: 0; margin: 12px 0; }
+.workspace-check-item { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+.workspace-check-item > input[type="checkbox"] { width: 18px; height: 18px; flex: 0 0 auto; accent-color: var(--accent); }
+.workspace-check-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.workspace-check-item.is-done .workspace-check-text { color: var(--muted-foreground); text-decoration: line-through; }
+.workspace-check-item > form { flex: 1; min-width: 0; }
+.workspace-add-item { display: flex; align-items: end; gap: 12px; }
+.workspace-add-item .staff-field { flex: 1; min-width: 0; }
+
 .staff-workspace .staff-header,
 .staff-workspace .staff-nav {
   border-bottom: 0;

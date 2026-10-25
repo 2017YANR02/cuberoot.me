@@ -3,6 +3,7 @@ import { ADMIN_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
 import { canReadReport, reportReadScope, canWriteProject, decideReportChange, isWorkDate, isResultUrl, type WorkspaceActor, type ReportState } from '@app-foundation/workspace-policy';
 import type { QueryRunner } from '../db/connection.js';
 import { reportHoursInput } from './report-hours.js';
+import { planningService } from './planning.js';
 
 export type Actor = WorkspaceActor & { name: string; memberId?: number };
 export type Identity = { uid: number; isAdmin: boolean; name: string };
@@ -86,6 +87,11 @@ export function createWorkspaceService(query: QueryRunner, transact: Transaction
     return {report,comments,revisions};
   }
   async function directory(q: QueryRunner) { return q('SELECT id,name,(active OR admin_access) AS active FROM workspace_members WHERE user_id IS NOT NULL ORDER BY id'); }
+  function planning(q: QueryRunner, a: Actor) {
+    return planningService(q, { memberId: employee(a).id, admin: a.kind === 'admin', manager: a.role === 'manager' || a.kind === 'admin',
+      projectWrite: id => projectWrite(q, a, id), audit: (action, id) => audit(q, a, action, id),
+      fail: (message, status) => { throw new WorkspaceError(message, status); } });
+  }
   return {
     async get(identity: Identity, action: string, search: URLSearchParams) {
       return transact(async query => {
@@ -99,6 +105,7 @@ export function createWorkspaceService(query: QueryRunner, transact: Transaction
           return {projects:await Promise.all(projects.map(async p=>({...p,memberIds:a.kind==='admin'?(await query<{id:number}>('SELECT member_id AS id FROM workspace_project_members WHERE project_id=?',[p.id])).map(m=>m.id):[]})))};
         }
         case 'detail': return detail(query,a,search.get('id')??'');
+        case 'checklists': return planning(query, a).checklists(search);
         case 'reports': {
           const filter=await readFilter(query,a);let clause=filter.sql;const params=filter.params;
           if(search.get('mine')==='true') {clause+=' AND r.member_id=?';params.push(employee(a).id);} else clause+=" AND r.status='submitted'";
@@ -117,6 +124,7 @@ export function createWorkspaceService(query: QueryRunner, transact: Transaction
     async post(identity: Identity, action: string, input: unknown) {
       return write(identity,async(q,a)=>{
         switch(action){
+          case 'checklist': return planning(q, a).saveChecklist(input);
           case 'member': {
             admin(a);const data=memberInput.parse(input);
             const [user]=await q('SELECT id FROM app_users WHERE id=? AND merged_into_user_id IS NULL AND NOT forum_banned',[data.userId]);if(!user)throw new WorkspaceError('CubeRoot 用户不存在 / User unavailable',404);

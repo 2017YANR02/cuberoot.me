@@ -33,6 +33,7 @@
       "./meeting": "runtime-neutral",
       "./chat": "runtime-neutral",
       "./friends": "runtime-neutral",
+      "./workspace-planning": "runtime-neutral",
       "./competition-access": "runtime-neutral",
       "./dev-preview": "runtime-neutral",
       "./remote-access": "runtime-neutral",
@@ -347,6 +348,10 @@
     "./friends": {
       "node": "./dist/friends.js",
       "default": "./src/friends.ts"
+    },
+    "./workspace-planning": {
+      "node": "./dist/workspace-planning.js",
+      "default": "./src/workspace-planning.ts"
     },
     "./competition-access": {
       "node": "./dist/competition-access.js",

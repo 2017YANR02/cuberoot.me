@@ -9,7 +9,7 @@ import { createWorkspaceService, WorkspaceError } from '../workspace/service.js'
 export const workspaceRoutes = new Hono();
 const service = createWorkspaceService(query, withTransaction);
 workspaceRoutes.use('/workspace/*', async (c, next) => { c.header('Cache-Control', 'private, no-store'); await next(); });
-workspaceRoutes.use('/workspace/*', bodyLimit({ maxSize: 32768 }));
+workspaceRoutes.use('/workspace/*', bodyLimit({ maxSize: 262144 }));
 workspaceRoutes.all('/workspace/:action', async c => {
   const decoded = jwt.decode((c.req.header('Authorization') ?? '').replace(/^Bearer /, ''));
   if (decoded && typeof decoded === 'object' && decoded.previewId) return c.json({error:'请使用本人账号 / Use your own account'},403);
