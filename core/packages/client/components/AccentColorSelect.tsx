@@ -75,7 +75,7 @@ export default function AccentColorSelect() {
         items={[]} onChange={() => {}} showArrow={false} unstyledTrigger
         panelContent={<HexColorPicker color={accent ?? customHex}
           onChange={value => applyAccent(value as AccentId)} />} />
-      <input type="text" value={customHex} maxLength={7} spellCheck={false}
+      <input className="accent-color-hex-input" type="text" value={customHex} maxLength={7} spellCheck={false}
         aria-label={tr({ zh: 'HEX 色值', en: 'HEX color' })}
         aria-invalid={!findAccentColor(customHex)}
         onChange={event => {

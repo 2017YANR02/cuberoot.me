@@ -50,8 +50,8 @@
 .download-windows { margin: 32px 0; }
 .download-release-manager { margin-top: 20px; }
 .download-release-manager label { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
-.download-release-manager select { align-self: flex-start; font: inherit; }
-.download-release-manager textarea { width: 100%; box-sizing: border-box; font: inherit; resize: vertical; }
+.download-release-platform { align-self: flex-start; font: inherit; }
+.download-release-notes { width: 100%; box-sizing: border-box; font: inherit; resize: vertical; }
 .download-release-manager code { overflow-wrap: anywhere; }
 .download-release-manager li { margin: 12px 0; }
 @media (max-width: 420px) {

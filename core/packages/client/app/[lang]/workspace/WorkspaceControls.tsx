@@ -32,7 +32,7 @@ export function WorkspaceMemberPicker({ name, label, members, defaultValue }: Wo
     <div className="workspace-member-options">
       {visible.map(member => <label className="workspace-member-option" key={member.id}>
         {/* allow-checkbox: Select project members, not an immediate settings toggle. */}
-        <input type="checkbox" checked={selected.includes(member.id)} onChange={event => setSelected(ids => event.target.checked ? [...ids, member.id] : ids.filter(id => id !== member.id))} />
+        <input className="workspace-member-checkbox" type="checkbox" checked={selected.includes(member.id)} onChange={event => setSelected(ids => event.target.checked ? [...ids, member.id] : ids.filter(id => id !== member.id))} />
         <span>{member.name}</span>{!member.active && <small>{t('已停用', 'Inactive')}</small>}
       </label>)}
       {!visible.length && <p className="staff-muted">{query ? t('未找到成员', 'No matching members') : t('暂无成员', 'No members')}</p>}

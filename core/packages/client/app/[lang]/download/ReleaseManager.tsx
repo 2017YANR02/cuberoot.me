@@ -78,12 +78,12 @@ export default function ReleaseManager({ onPublished }: { onPublished: () => voi
     {data?.configured && <>
       <p>{tr({ zh: '待发布提交', en: 'Source commit' })}: <code>{data.commit?.slice(0, 12)}</code></p>
       <label>{tr({ zh: '平台', en: 'Platform' })}
-        <select value={platform} disabled={busy || uncertain || Boolean(active)} onChange={e => setPlatform(e.target.value as ReleasePlatform)}>
+        <select className="download-release-platform" value={platform} disabled={busy || uncertain || Boolean(active)} onChange={e => setPlatform(e.target.value as ReleasePlatform)}>
           <option value="both">Android + Windows</option><option value="android">Android</option><option value="windows">Windows</option>
         </select>
       </label>
       <label>{tr({ zh: '更新说明', en: 'Release notes' })}
-        <textarea value={notes} maxLength={4000} rows={4} disabled={busy || uncertain || Boolean(active)} onChange={e => setNotes(e.target.value)} />
+        <textarea className="download-release-notes" value={notes} maxLength={4000} rows={4} disabled={busy || uncertain || Boolean(active)} onChange={e => setNotes(e.target.value)} />
       </label>
       <p>{tr({ zh: '发布时自动递增版本号。Windows 安装版与免安装版使用同一版本。', en: 'Publishing assigns the next version. Both Windows downloads share that version.' })}</p>
       <button type="button" className="download-button" disabled={busy || Boolean(active) || !notes.trim() || !data.commit} onClick={() => void publish()}>

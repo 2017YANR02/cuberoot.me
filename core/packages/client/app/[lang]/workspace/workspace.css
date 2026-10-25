@@ -235,7 +235,7 @@
 .workspace-member-options { max-height: 240px; overflow-y: auto; overscroll-behavior: contain; border-block: 1px solid var(--border-default); padding-block: 4px; }
 .workspace-member-option { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 8px; box-sizing: border-box; cursor: pointer; border-radius: 6px; }
 .workspace-member-option:hover, .workspace-member-option:has(:checked) { background: var(--accent-soft); }
-.workspace-member-option > input { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--accent); }
+.workspace-member-checkbox { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--accent); }
 .workspace-member-option > span { overflow-wrap: anywhere; }
 .workspace-member-option > small { margin-left: auto; flex-shrink: 0; font-size: 14px; color: var(--muted-foreground); }
 .workspace-action.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; font-size: 16px; font-weight: 500; flex-shrink: 0; }
