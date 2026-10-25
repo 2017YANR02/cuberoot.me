@@ -38,7 +38,7 @@ import { timerHidesRunningUi } from '@cuberoot/shared/timer';
 import { startWatchTimerSync } from './watch-timer-sync';
 import type { TimerSettingsUpdate } from './data/timer-repository';
 import { TimerKeymapSettings, useTimerRound, TimerGoalSettings, TimerRoundSettings, TimerGoalProgress, TimerRoundPanel, TimerTargetTime, useTimerTargetFeedback } from '@cuberoot/timer-ui';
-import { normalizeTimerTrainingSettings } from '@cuberoot/shared/timer';
+import { normalizeTimerTrainingSettings, timerSupportsTrainingTiming, timerTrainingSummaries } from '@cuberoot/shared/timer';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
 import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
@@ -47,7 +47,7 @@ import {
   TIMER_DEVICE_REGISTRATIONS,
 } from '@cuberoot/shared/timer/device-contract';
 import { SmartCubeAttemptProducer } from '@cuberoot/shared/timer/smart-cube-attempt';
-import { useLiveSmartCubeAttempt, TimerLiveSolutionPanel } from '@cuberoot/timer-ui';
+import { useLiveSmartCubeAttempt, TimerLiveSolutionPanel, TimerTrainingTimingStatus } from '@cuberoot/timer-ui';
 import { sensorBasisForBrand, mirrorForBrand, type Quat } from '@cuberoot/shared/smart-cube/orientation';
 import LiveCubeState from '@cuberoot/timer-ui/LiveCubeState';
 import { encodeReplayUrl } from '@cuberoot/shared/timer/replay-encode';
@@ -814,6 +814,8 @@ export function App({ host }: { host: InstalledAppHost }) {
   const solvesRef = useRef(solves);
   solvesRef.current = solves;
   const stats = useMemo(() => summarize(solves, activeEvent), [activeEvent, solves]);
+  const trainingStatistics = useMemo(() => timerTrainingSummaries(solves, activeEvent, trainingSettings.trainingStartMode),
+    [solves, activeEvent, trainingSettings.trainingStartMode]);
   const historyMoveTargets = useMemo(() => store
     ? timerHistoryMoveTargets(store.database.sessions, store.database.activeSessionId)
     : [], [store]);
@@ -2351,6 +2353,8 @@ export function App({ host }: { host: InstalledAppHost }) {
   const [smartCubeRenderedView, setSmartCubeRenderedView] = useState('net');
   const connectedSmartCubeRef = useRef<Solve['device']>(undefined);
   const smartCubeAttemptDeviceRef = useRef<Solve['device']>(undefined);
+  const trainingTimingMode = () => timerSupportsTrainingTiming(activeEventRef.current) && connectedSmartCubeRef.current
+    ? storeRef.current?.settings.trainingStartMode ?? 'first-turn' : undefined;
   const [attemptSplitState, setAttemptSplitState] = useState<TimerAttemptSplitState>({ stages: {} });
   const [attemptSplitRecorder] = useState(() => new TimerAttemptSplitRecorder(setAttemptSplitState));
   const attemptStartedAtRef = useRef(0);
@@ -2385,6 +2389,7 @@ export function App({ host }: { host: InstalledAppHost }) {
       ...(attempt.caseId ? { caseId: attempt.caseId } : {}),
       event: attempt.event,
       inspectionMs: result.inspectionMs || undefined,
+      ...(result.trainingStartMode ? { trainingStartMode: result.trainingStartMode } : {}),
       ...(bld ? { bld } : {}),
       ...(stages ? { stages } : {}),
       penalty: result.autoPenalty,
@@ -2459,7 +2464,12 @@ export function App({ host }: { host: InstalledAppHost }) {
   const timer = useTimerController({
     inputBlocked: () => externalActiveRef.current,
     smartCubeActive: () => Boolean(connectedSmartCubeRef.current || smartCubeAttemptDeviceRef.current),
-    onTransition: onTimerSoundTransition,
+    trainingStartMode: trainingTimingMode,
+    canManualArmTraining: () => smartCubeGuidance.match === true,
+    onTransition: transition => {
+      timerPhaseRef.current = transition.state.phase;
+      onTimerSoundTransition(transition);
+    },
     canStart: attemptCanStart,
     enabled: view !== 'settings' && timerVisible
       && timerMode === 1
@@ -2600,14 +2610,15 @@ export function App({ host }: { host: InstalledAppHost }) {
     onChange: setSmartCubeAnchor,
   }));
   const smartCubeSoloController = useMemo(() => new SmartCubeSoloTimerController({
-    armFromCube: () => {
-      const armed = timerRef.current.armFromCube();
-      if (armed) timerPhaseRef.current = (storeRef.current?.settings.inspectionSec ?? 0) > 0
-        ? 'inspecting'
-        : 'ready';
+    armFromCube: (timestamp) => {
+      const armed = timerRef.current.armFromCube(timestamp);
+      if (armed) timerPhaseRef.current = trainingTimingMode()
+        ? trainingTimingMode() === 'first-turn' ? 'ready' : 'inspecting'
+        : (storeRef.current?.settings.inspectionSec ?? 0) > 0 ? 'inspecting' : 'ready';
       return armed;
     },
-    autoReadyOnScramble: () => storeRef.current?.settings.bluetoothAutoReady === 'scrambled',
+    autoReadyOnScramble: () => trainingTimingMode() ? trainingTimingMode() !== 'manual'
+      : storeRef.current?.settings.bluetoothAutoReady === 'scrambled',
     canStartAttempt: () => attemptCanStartRef.current,
     getPhase: () => timerPhaseRef.current,
     isTimingEnabled: () => timingEnabledRef.current,
@@ -2678,6 +2689,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   if (smartCube.facelets) smartCubeLastFaceletsRef.current = smartCube.facelets;
   useAutoReady({
     enabled: view !== 'settings' && timerVisible && timerMode === 1 && smartCube.phase === 'connected' && timingEnabled
+      && !trainingTimingMode()
       && attemptCanStart
       && !moreOpen && !manualEntryOpen && !timerOverlayBlocking
       && (timer.machine.phase === 'idle' || timer.machine.phase === 'inspecting' || timer.machine.phase === 'stopped')
@@ -2876,6 +2888,7 @@ export function App({ host }: { host: InstalledAppHost }) {
       ? Math.max(0, timer.nowMs - (timer.machine.inspectionStartedAtMs ?? timer.nowMs))
       : 0,
     inspectionLimitSec: timer.machine.inspectionSec ?? 0,
+    trainingObservation: Boolean(timer.machine.trainingStartMode),
     lastPenalty,
     phase: timer.machine.phase,
     precision: resultPrecision,
@@ -4161,6 +4174,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                   disabled={timer.machine.phase === 'running' || timerContextMutationBusy}
                   language={language}
                   summary={stats}
+                  trainingSummaries={trainingStatistics}
                   onClick={() => setView('history')}
                 />}}
         solver={solverHintPanel}
@@ -4329,8 +4343,10 @@ scrambleSlot: (
                   </TimerScrambleStrip>
                 ),
 surfaceRef: surfaceRef,
+cubeFooter: timer.machine.phase === 'running' && liveSolve && <div ref={setLiveStageTarget} className="timer-live-stage" data-no-timer />,
 children: <>
-                {timer.machine.phase === 'running' && liveSolve && <div ref={setLiveStageTarget} className="timer-live-stage" data-no-timer />}
+                <TimerTrainingTimingStatus mode={trainingTimingMode()} phase={timer.machine.phase}
+                  matched={smartCubeGuidance.match === true} language={language} />
                 <span aria-live="polite" className="sr-only">{timerInstruction}</span>
                 {timer.machine.phase === 'running' && <TimerTargetTime targetMs={targetMs} displayMs={displayMs} localize={value => value[language]} />}
                 {timer.machine.phase === 'running' && (multiStageActive || bldMemoActive) && (
@@ -4788,7 +4804,7 @@ children: <>
                   stageVisible={timerSupportsStageSplits(activeEvent)}
                   value={store!.settings}
                 />
-                <TimerGoalSettings value={store!.settings} event={activeEvent} onChange={updateSettings} localize={value => value[language]} />
+                <TimerGoalSettings value={store!.settings} event={activeEvent} onChange={updateSettings} localize={value => value[language]} trainingTiming />
               </section>
             )}
 

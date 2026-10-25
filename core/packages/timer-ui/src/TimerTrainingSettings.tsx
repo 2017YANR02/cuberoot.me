@@ -7,6 +7,16 @@ import { formatTargetTime, parseTargetTime, parseDailySolveGoal, timerSettingFie
   type EventId, type RoundConfig, type RoundFormat, type TimerSettingCopy, type TimerSettingFieldId, type TimerTrainingSettings } from '@cuberoot/shared/timer';
 import { TimerSettingRow, TimerSettingsSection } from './TimerTimingSettingsSections';
 
+export function TimerTrainingTimingStatus({ mode, phase, matched, language }: {
+  mode?: TimerTrainingSettings['trainingStartMode']; phase: string; matched: boolean; language: 'en' | 'zh';
+}) {
+  const copy = mode && phase === 'inspecting'
+    ? { zh: '观察中 · 起手后自动记录分段', en: 'Observing · turn to record the attempt' }
+    : mode === 'manual' && (phase === 'idle' || phase === 'stopped') && matched
+      ? { zh: '按空格或点击计时区开始观察', en: 'Press Space or tap the timer to start observation' } : null;
+  return copy ? <div className="timer-live-tps">{copy[language]}</div> : null;
+}
+
 export const TIMER_TRAINING_SETTING_FIELD_IDS = [
   'settings.training.start-mode',
   'settings.training.target-time', 'settings.training.daily-goal', 'settings.training.round-enabled',

@@ -1,7 +1,7 @@
 'use client';
-import { useLiveSmartCubeAttempt, TimerLiveSolutionPanel } from '@cuberoot/timer-ui';
+import { useLiveSmartCubeAttempt, TimerLiveSolutionPanel, TimerTrainingTimingStatus } from '@cuberoot/timer-ui';
 
-import { trainingSolveMetrics } from '@cuberoot/shared/timer/reconstruct/recon-text';
+import { timerTrainingSummaries } from '@cuberoot/shared/timer';
 import { useDouyinToolSurface } from '@/lib/douyin-content';
 import { TimerSoloPage, timerSoloModalState, useTimerSoloCompactLayout } from '@cuberoot/timer-ui/TimerSoloPage';
 import SoloLayoutEditor from '../_components/SoloLayoutEditor';
@@ -2744,17 +2744,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
   // ── Derived display (digits text + color class) ─────────────────
   const stats = useMemo(() => summarize(solves, event), [solves, event]);
-  const trainingStatistics = useMemo(() => {
-    if (!timerSupportsTrainingTiming(event)) return undefined;
-    const repetitions = solves.filter(solve => solve.moves?.length
-      && (solve.trainingStartMode ?? 'first-turn') === settings.trainingStartMode);
-    const samples = repetitions.map(solve => ({ solve, metrics: trainingSolveMetrics(solve) }));
-    return (['observationMs', 'executionMs', 'totalMs'] as const).map(key => summarize(
-      samples.map(({ solve, metrics }) => ({ ...solve, timeMs: metrics[key],
-        // Penalties belong to the total; do not add +2 to each component.
-        penalty: key === 'totalMs' ? solve.penalty : solve.penalty === '+2' ? 'ok' as const : solve.penalty,
-      })), event));
-  }, [solves, event, settings.trainingStartMode]);
+  const trainingStatistics = useMemo(() => timerTrainingSummaries(solves, event, settings.trainingStartMode),
+    [solves, event, settings.trainingStartMode]);
   const inspectionLimit = settings.inspectionSec;
   const colorClass = useMemo(() => {
     if (timer.phase === 'holding') return 'holding';
@@ -3356,12 +3347,8 @@ cubeFooter: <>
 cornerAspect: cubeConnected || cubeStartedRef.current ? undefined : timerCubePreviewAspect(event, previewScramble),
 children: <>
           {/* sub-content under the digits */}
-          {trainingTimingActive && timer.phase === 'inspecting' && <div className="timer-live-tps">
-            {tr({ zh: '观察中 · 起手后自动记录分段', en: 'Observing · turn to record the attempt' })}
-          </div>}
-          {trainingTimingActive && settings.trainingStartMode === 'manual'
-            && (timer.phase === 'idle' || timer.phase === 'stopped') && scrambleGuidance.match === true
-            && <div className="timer-live-tps">{tr({ zh: '按空格或点击计时区开始观察', en: 'Press Space or tap the timer to start observation' })}</div>}
+          <TimerTrainingTimingStatus mode={trainingTimingActive ? settings.trainingStartMode : undefined}
+            phase={timer.phase} matched={scrambleGuidance.match === true} language={isZh ? 'zh' : 'en'} />
           {timer.phase === 'running' && <TimerTargetTime targetMs={targetMs} displayMs={timer.displayMs} localize={tr} />}
           {!trainingTimingActive && timer.phase === 'inspecting' && inspectionIllegalCount > 0 && (
             <div className="inspection-illegal-warn" title={tr({ zh: 'WCA 4d: 观察期间只允许整体旋转 (x/y/z)，转面会判 DNF', en: 'WCA 4d: only rotations (x/y/z) are legal during inspection — face turns are DNF'

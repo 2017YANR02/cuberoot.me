@@ -15,6 +15,8 @@ function Probe({
   inspectionSec,
   onStart,
   smartCubeActive,
+  trainingStartMode,
+  canManualArmTraining,
   onController,
 }: {
   canStart: boolean;
@@ -22,6 +24,8 @@ function Probe({
   inspectionSec: number;
   onStart?(startedAtMs: number): void;
   smartCubeActive?: () => boolean;
+  trainingStartMode?: () => 'first-turn' | 'scrambled' | 'manual' | undefined;
+  canManualArmTraining?: () => boolean;
   onController(controller: TimerController): void;
 }) {
   const controller = useTimerController({
@@ -32,6 +36,8 @@ function Probe({
     onComplete: () => undefined,
     onStart,
     smartCubeActive,
+    trainingStartMode,
+    canManualArmTraining,
   });
   useEffect(() => onController(controller), [controller, onController]);
   return null;
@@ -98,6 +104,23 @@ describe('mobile timer controller source invalidation', () => {
     expect(controller.machine.phase).toBe('running');
     await act(async () => { expect(controller.stopFromCube()).toBe(true); });
     expect(controller.machine.phase).toBe('stopped');
+  });
+
+  it.each(['first-turn', 'scrambled', 'manual'] as const)('uses shared %s training timing without WCA penalties', async mode => {
+    await act(async () => root.render(<Probe canStart enabled inspectionSec={15}
+      trainingStartMode={() => mode} canManualArmTraining={() => true}
+      smartCubeActive={() => true} onController={value => { controller = value; }} />));
+    await act(async () => {
+      expect(mode === 'manual' ? controller.pressDown() : controller.armFromCube()).toBe(true);
+    });
+    expect(controller.machine.phase).toBe(mode === 'first-turn' ? 'ready' : 'inspecting');
+    expect(controller.machine.trainingStartMode).toBe(mode);
+    await act(async () => { await vi.advanceTimersByTimeAsync(20_000); });
+    await act(async () => { expect(controller.startFromCube()).toBe(true); });
+    expect(controller.machine.phase).toBe('running');
+    expect(controller.machine.autoPenalty).toBe('ok');
+    await act(async () => { expect(controller.pressDown()).toBe(false); });
+    expect(controller.machine.phase).toBe('running');
   });
 
   const release = async () => {

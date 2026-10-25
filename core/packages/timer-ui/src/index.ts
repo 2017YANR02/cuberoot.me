@@ -324,7 +324,7 @@ export { TimerWorkspace, useTimerWideLayout, TIMER_WIDE_QUERY } from './TimerWor
 
 export { TimerSettingsPanel } from './TimerSettingsPanel';
 
-export { TimerGoalSettings, TimerRoundSettings, TIMER_TRAINING_SETTING_FIELD_IDS } from './TimerTrainingSettings';
+export { TimerGoalSettings, TimerRoundSettings, TimerTrainingTimingStatus, TIMER_TRAINING_SETTING_FIELD_IDS } from './TimerTrainingSettings';
 export { TimerGoalProgress } from './TimerGoalProgress';
 export { TimerRoundPanel, type RoundPanelProps } from './TimerRoundPanel';
 export { TimerTargetTime, useTimerTargetFeedback } from './TimerTargetTime';
