@@ -13,7 +13,7 @@ export default function Schedules({ actor }: { actor: StaffActor }) {
   const { api, Button } = useWorkspace();
   const [selected, setSelected] = useQueryState('schedule', parseAsString.withDefault(''));
   const [page, setPage] = useQueryState('schedulePage', parseAsInteger.withDefault(1));
-  const [scale, setScale] = useQueryState('scale', parseAsStringEnum(['day', 'week', 'month']).withDefault('day'));
+  const [scale, setScale] = useQueryState('scale', parseAsStringEnum(['fit', 'day', 'week', 'month']).withDefault('fit'));
   const [status, setStatus] = useState('active');
   const resource = useResource<{ schedules: Schedule[]; selected: Schedule | null; hasMore: boolean }>(`schedules?${new URLSearchParams({ page: String(page), archived: String(status === 'all'), id: selected })}`);
   const projects = useResource<ProjectList>('projects');
@@ -51,7 +51,7 @@ export default function Schedules({ actor }: { actor: StaffActor }) {
   return <fieldset disabled={busy} className="workspace-controls" aria-busy={busy}>
     <div className="staff-actions workspace-toolbar">
       <Field label={t('排期', 'Schedule')}><select className="workspace-toolbar-select" value={schedule?.id ?? ''} onChange={event => { void setSelected(event.target.value); setEditing(null); setTask(null); }}><option value="" disabled>{t('选择排期', 'Select schedule')}</option>{choices.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></Field>
-      <Field label={t('视图', 'View')}><select className="workspace-toolbar-select" value={scale} onChange={event => void setScale(event.target.value as typeof scale)}><option value="day">{t('日', 'Day')}</option><option value="week">{t('周', 'Week')}</option><option value="month">{t('月', 'Month')}</option></select></Field>
+      <Field label={t('视图', 'View')}><select className="workspace-toolbar-select" value={scale} onChange={event => void setScale(event.target.value as typeof scale)}><option value="fit">{t('总览', 'Overview')}</option><option value="day">{t('日', 'Day')}</option><option value="week">{t('周', 'Week')}</option><option value="month">{t('月', 'Month')}</option></select></Field>
       <Field label={t('状态', 'Status')}><select className="workspace-toolbar-select" value={status} onChange={event => { setStatus(event.target.value); setEditing(null); setTask(null); }}><option value="active">{t('进行中', 'Active')}</option><option value="all">{t('含已归档', 'Include archived')}</option></select></Field>
       <div className="staff-toolbar-actions"><Button action="reload" variant="secondary" onClick={() => { setEditing(null); setTask(null); resource.reload(); }}>{t('重新加载', 'Reload')}</Button>{manager && <Button action="add" onClick={() => begin('new')}>{t('新建排期', 'New schedule')}</Button>}</div>
     </div>

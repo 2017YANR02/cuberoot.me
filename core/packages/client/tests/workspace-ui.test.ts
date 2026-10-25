@@ -81,6 +81,31 @@ it('uses bare icon actions while keeping explicit report submissions styled as b
   expect(container.querySelector('.btn-primary')?.textContent).toBe('Submit report');
 });
 
+it('fits a cross-year plan and thins ticks on narrow screens without moving tasks', async () => {
+  let resize: (entries: { contentRect: { width: number } }[]) => void = () => {};
+  const disconnect = vi.fn();
+  vi.stubGlobal('ResizeObserver', class {
+    constructor(callback: typeof resize) { resize = callback; }
+    observe() {}
+    disconnect = disconnect;
+  });
+  try {
+    const tasks = [{ ...schedules[0].tasks[0], start: '2026-10-25', end: '2027-01-15' }];
+    await mount(h(ScheduleTimeline, { tasks, scale: 'fit', editable: true, onEdit: vi.fn() }));
+    expect(container.querySelector('.workspace-gantt-fit')).not.toBeNull();
+    const bar = container.querySelector<HTMLButtonElement>('.workspace-gantt-bar')!;
+    const position = [bar.style.left, bar.style.width];
+    await act(async () => resize([{ contentRect: { width: 1100 } }]));
+    const wideTicks = container.querySelectorAll('.workspace-gantt-tick').length;
+    await act(async () => resize([{ contentRect: { width: 180 } }]));
+    expect(container.querySelectorAll('.workspace-gantt-tick').length).toBeLessThan(wideTicks);
+    expect(container.querySelectorAll('.workspace-gantt-tick').length).toBeGreaterThan(0);
+    expect([bar.style.left, bar.style.width]).toEqual(position);
+    await mount(h(ScheduleTimeline, { tasks: [], scale: 'fit', editable: true, onEdit: vi.fn() }));
+    expect(disconnect).toHaveBeenCalled();
+  } finally { vi.unstubAllGlobals(); }
+});
+
 it('separates cross-year calendar headings from day ticks and uses proportional task positions', async () => {
   await mount(h(ScheduleTimeline, { tasks: schedules[0].tasks, scale: 'day', editable: true, onEdit: vi.fn() }));
   expect([...container.querySelectorAll('.workspace-gantt-period')].map(node => node.getAttribute('datetime'))).toEqual(['2026-12', '2027-01']);
@@ -88,7 +113,9 @@ it('separates cross-year calendar headings from day ticks and uses proportional 
   const bar = container.querySelector<HTMLButtonElement>('.workspace-gantt-bar')!;
   expect(bar.style.left).toContain('%');
   expect(bar.style.width).toContain('%');
-  expect(bar.textContent).toContain('Build');
+  expect(bar.textContent).toContain('12-30');
+  expect(bar.textContent).not.toContain('Build');
+  expect(bar.getAttribute('aria-label')).toContain('Build');
 });
 
 it('aligns week ticks to Mondays and month ticks to real calendar boundaries across leap February', async () => {

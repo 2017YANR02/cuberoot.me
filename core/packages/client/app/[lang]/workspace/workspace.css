@@ -26,32 +26,35 @@
 .workspace-add-item { display: flex; align-items: end; gap: 12px; }
 .workspace-add-item .staff-field { flex: 1; min-width: 0; }
 
-.workspace-schedule-heading { justify-content: space-between; margin-bottom: 20px; }
+.workspace-schedule-heading { justify-content: space-between; margin-bottom: 12px; }
 .workspace-controls { border: 0; padding: 0; margin: 0; min-width: 0; }
 .workspace-task-editor { margin-block: 24px; }
 .workspace-gantt-scroll { max-width: 100%; overflow: auto; max-height: 70vh; border: 1px solid var(--border-default); border-radius: 8px; }
-.workspace-gantt { --gantt-label-width: 220px; width: 100%; min-width: calc(var(--gantt-label-width) + var(--gantt-min-width)); font-variant-numeric: tabular-nums; }
-.workspace-gantt-row { display: flex; min-height: 72px; }
-.workspace-gantt-label { position: sticky; left: 0; z-index: 2; flex: 0 0 var(--gantt-label-width); width: var(--gantt-label-width); box-sizing: border-box; padding: 12px 16px; background: var(--background); border-right: 1px solid var(--border-default); overflow-wrap: anywhere; }
+.workspace-gantt { --gantt-label-width: 260px; width: 100%; min-width: calc(var(--gantt-label-width) + var(--gantt-min-width)); font-variant-numeric: tabular-nums; }
+.workspace-gantt.workspace-gantt-fit { min-width: 0; }
+.workspace-gantt-row { display: flex; min-height: 44px; }
+.workspace-gantt-label { position: sticky; left: 0; z-index: 2; flex: 0 0 var(--gantt-label-width); width: var(--gantt-label-width); box-sizing: border-box; padding: 0 12px; background: var(--background); border-right: 1px solid var(--border-default); min-width: 0; }
 .workspace-gantt-track { position: relative; flex: 1 1 0; min-width: 0; background-image: var(--gantt-grid), var(--gantt-weekends); }
-.workspace-gantt-header { position: sticky; top: 0; z-index: 3; height: 80px; background: var(--background); font-size: 14px; border-bottom: 1px solid var(--border-default); }
+.workspace-gantt-header { position: sticky; top: 0; z-index: 3; height: 64px; background: var(--background); font-size: 14px; border-bottom: 1px solid var(--border-default); }
 .workspace-gantt-header .workspace-gantt-label { display: flex; flex-direction: column; justify-content: center; gap: 4px; }
 .workspace-gantt-header small { font-size: 14px; color: var(--muted-foreground); }
 .workspace-gantt-period { position: absolute; top: 0; height: 30px; box-sizing: border-box; padding: 4px; border-bottom: 1px solid var(--border-default); white-space: nowrap; overflow: hidden; color: var(--muted-foreground); }
 .workspace-gantt-tick { position: absolute; top: 30px; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; white-space: nowrap; gap: 0; line-height: 1.4; }
 .workspace-gantt-tick time { font-size: 14px; }
 .workspace-gantt-tick.is-weekend { color: var(--muted-foreground); }
-.workspace-gantt-group { min-height: 44px; color: var(--gantt-color); border-top: 1px solid var(--border-default); }
-.workspace-gantt-group .workspace-gantt-label { display: flex; align-items: center; gap: 12px; padding-block: 8px; background: color-mix(in srgb, var(--gantt-color) 9%, var(--background)); }
+.workspace-gantt-group { min-height: 32px; color: var(--gantt-color); border-top: 1px solid var(--border-default); }
+.workspace-gantt-group .workspace-gantt-label { display: flex; align-items: center; padding-block: 4px; font-size: 14px; background: color-mix(in srgb, var(--gantt-color) 9%, var(--background)); }
+.workspace-gantt-group strong { overflow: hidden; white-space: nowrap; }
 .workspace-gantt-group small { font-size: 14px; color: var(--muted-foreground); }
 .workspace-gantt-group .workspace-gantt-track { background-color: color-mix(in srgb, var(--gantt-color) 9%, var(--background)); }
 .workspace-gantt-task .workspace-gantt-label { background: color-mix(in srgb, var(--gantt-color) 3%, var(--background)); }
 .workspace-gantt-task .workspace-gantt-track { background-color: color-mix(in srgb, var(--gantt-color) 3%, var(--background)); }
-.workspace-gantt-task + .workspace-gantt-task { border-top: 1px solid var(--border-default); }
-.workspace-task-label { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; width: 100%; padding: 0; border: 0; background: transparent; color: var(--foreground); text-align: start; font: inherit; cursor: pointer; overflow-wrap: anywhere; }
-.workspace-task-label:disabled { cursor: default; opacity: 1; }
+.workspace-task-label { display: flex; align-items: center; width: 100%; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--foreground); text-align: start; font: inherit; font-size: 14px; line-height: 1.4; cursor: pointer; }
+.workspace-task-label > span { overflow: hidden; white-space: nowrap; }
+.workspace-task-label[aria-disabled="true"] { cursor: default; opacity: 1; }
+.workspace-task-label:active:not([aria-disabled="true"]) { color: var(--gantt-color); }
 .workspace-task-label small { font-size: 14px; color: var(--muted-foreground); }
-.workspace-gantt-bar, .workspace-gantt-milestone { position: absolute; top: 50%; transform: translateY(-50%); height: 32px; padding: 0; border: 1px solid var(--gantt-color); background: color-mix(in srgb, var(--gantt-color) 18%, var(--background)); color: var(--foreground); cursor: pointer; box-sizing: border-box; }
+.workspace-gantt-bar, .workspace-gantt-milestone { position: absolute; top: 50%; transform: translateY(-50%); height: 24px; padding: 0; border: 1px solid var(--gantt-color); background: color-mix(in srgb, var(--gantt-color) 18%, var(--background)); color: var(--foreground); cursor: pointer; box-sizing: border-box; }
 .workspace-gantt-bar { display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 5px; overflow: hidden; }
 .workspace-gantt-bar-name { position: relative; z-index: 1; min-width: 0; padding-left: 8px; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .workspace-gantt-bar:is(:hover, :focus-visible):not(:disabled) { background: color-mix(in srgb, var(--gantt-color) 28%, var(--background)); }
@@ -63,7 +66,7 @@
 .workspace-gantt-today { position: absolute; inset-block: 0; border-left: 1px dashed var(--destructive); pointer-events: none; z-index: 1; }
 .workspace-gantt-scroll:focus-visible, .workspace-task-label:focus-visible, .workspace-gantt-bar:focus-visible, .workspace-gantt-milestone:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 @media (max-width: 600px) {
-  .workspace-gantt { --gantt-label-width: 150px; }
+  .workspace-gantt { --gantt-label-width: 136px; }
   .workspace-toolbar .staff-field { max-width: 100%; }
   .workspace-toolbar-select { max-width: 100%; }
   .workspace-list-heading .staff-actions { flex-wrap: wrap; }
@@ -124,6 +127,7 @@
 .cuberoot-workspace-navigation .staff-header { position: sticky; top: 0; z-index: 45; box-sizing: border-box; height: var(--af-nav-header-height); background: var(--af-nav-sidebar-bg); padding: 0 20px; justify-content: flex-start; }
 .cuberoot-workspace-navigation .staff-header-actions { margin-left: auto; }
 .cuberoot-workspace-navigation .staff-main { box-sizing: border-box; margin: 0; max-width: 1440px; padding: 32px clamp(20px, 3vw, 48px) 64px; }
+.cuberoot-workspace-navigation .staff-main:has(.workspace-gantt) { max-width: none; }
 
 .staff-workspace .staff-workspace-handbook {
   max-width: none;

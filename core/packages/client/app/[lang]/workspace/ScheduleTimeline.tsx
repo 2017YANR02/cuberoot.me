@@ -1,15 +1,29 @@
 'use client';
 /** @module Calendar-aligned timeline shared by all workspace schedules. */
-import { Fragment, useEffect, useState, type CSSProperties } from 'react';
+import { Fragment, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { planningDay, planningDate, scheduleRange, type ScheduleTask } from '@cuberoot/shared/workspace-planning';
 import { today } from '@app-foundation/workspace-ui';
 import { useT } from '@/hooks/useT';
+import { Tooltip } from '@/components/Tooltip';
 
-export default function ScheduleTimeline({ tasks, scale, editable, onEdit }: {
-  tasks: ScheduleTask[]; scale: 'day' | 'week' | 'month'; editable: boolean; onEdit: (task: ScheduleTask) => void;
+export default function ScheduleTimeline({ tasks, scale: requestedScale, editable, onEdit }: {
+  tasks: ScheduleTask[]; scale: 'fit' | 'day' | 'week' | 'month'; editable: boolean; onEdit: (task: ScheduleTask) => void;
 }) {
   const t = useT();
   const [currentDay, setCurrentDay] = useState<number | null>(null);
+  const headerTrack = useRef<HTMLDivElement>(null);
+  const [trackWidth, setTrackWidth] = useState(800);
+  const hasTasks = tasks.length > 0;
+  useEffect(() => {
+    const element = headerTrack.current;
+    if (!element || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(([entry]) => {
+      const width = Math.round(entry.contentRect.width);
+      if (width > 0) setTrackWidth(previous => previous === width ? previous : width);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [hasTasks]);
   useEffect(() => {
     const refresh = () => setCurrentDay(planningDay(today()));
     refresh(); const timer = window.setInterval(refresh, 60000);
@@ -17,7 +31,8 @@ export default function ScheduleTimeline({ tasks, scale, editable, onEdit }: {
   }, []);
   const range = scheduleRange(tasks);
   if (!range) return <p className="staff-empty">{t('暂无任务', 'No tasks')}</p>;
-  const dayWidth = { day: 56, week: 14, month: 6 }[scale];
+  const fit = requestedScale === 'fit';
+  const scale = fit ? (range.days <= 14 ? 'day' : range.days <= 120 ? 'week' : 'month') : requestedScale;
   // Complete weeks/months avoid narrow partial ticks at either edge.
   const start = scale === 'month' ? planningDay(`${planningDate(range.start).slice(0, 7)}-01`)
     : scale === 'week' ? range.start - (range.start + 3) % 7 : range.start;
@@ -26,11 +41,18 @@ export default function ScheduleTimeline({ tasks, scale, editable, onEdit }: {
   const visibleDays = scale === 'month'
     ? Math.max(Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth() + 1, 1), Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth() + 3, 1)) / 86400000 - start
     : scale === 'week' ? Math.max(28, Math.ceil((range.end - start + 1) / 7) * 7) : Math.max(range.days, 7);
+  const dayWidth = fit ? trackWidth / visibleDays : { day: 36, week: 10, month: 4 }[scale];
   const percent = (days: number) => `${days / visibleDays * 100}%`;
   const days = Array.from({ length: visibleDays }, (_, offset) => ({ date: planningDate(start + offset), offset, weekday: (start + offset + 4) % 7 }));
   const groups = [...new Set(tasks.map(task => task.group))];
   const colors = ['var(--accent)', 'var(--signal-info)', 'var(--signal-success)', 'var(--signal-warning)'];
-  const ticks = days.filter(({ date, offset }) => scale === 'day' || (scale === 'week' ? offset % 7 === 0 : date.endsWith('-01')));
+  let lastTick = -Infinity;
+  const ticks = days.filter(({ date, offset }) => {
+    const candidate = scale === 'day' || (scale === 'week' ? offset % 7 === 0 : date.endsWith('-01'));
+    if (!candidate || (fit && ((offset - lastTick) * dayWidth < 52 || (visibleDays - offset) * dayWidth < 36))) return false;
+    lastTick = offset;
+    return true;
+  });
   const periods = days.filter(({ date, offset }) => offset === 0 || (scale === 'month' ? date.endsWith('-01-01') : date.endsWith('-01')));
   const weekdays = [t('日', 'Su'), t('一', 'Mo'), t('二', 'Tu'), t('三', 'We'), t('四', 'Th'), t('五', 'Fr'), t('六', 'Sa')];
   const grid = `linear-gradient(to right, ${ticks.flatMap(({ offset }) => [`transparent ${percent(offset)}`, `var(--border-default) ${percent(offset)}`, `var(--border-default) calc(${percent(offset)} + 1px)`, `transparent calc(${percent(offset)} + 1px)`]).join(', ')})`;
@@ -44,10 +66,10 @@ export default function ScheduleTimeline({ tasks, scale, editable, onEdit }: {
   const todayLine = todayOffset !== null && todayOffset >= 0 && todayOffset < visibleDays
     ? <span aria-hidden="true" className="workspace-gantt-today" style={{ left: percent(todayOffset + 0.5) }} /> : null;
   return <div className="workspace-gantt-scroll" tabIndex={0} role="region" aria-label={t('排期时间表', 'Schedule timeline')}>
-    <div className="workspace-gantt" style={{ '--gantt-min-width': `${visibleDays * dayWidth}px`, '--gantt-grid': grid, '--gantt-weekends': weekendShade } as CSSProperties}>
+    <div className={`workspace-gantt${fit ? ' workspace-gantt-fit' : ''}`} style={{ '--gantt-min-width': `${visibleDays * dayWidth}px`, '--gantt-grid': grid, '--gantt-weekends': weekendShade } as CSSProperties}>
       <div className="workspace-gantt-row workspace-gantt-header" data-site-surface="heading">
-        <div className="workspace-gantt-label"><strong>{t('任务', 'Task')}</strong><small>{t('负责人 · 日期', 'Owner · Dates')}</small></div>
-        <div className="workspace-gantt-track">
+        <div className="workspace-gantt-label"><strong>{t('任务', 'Task')}</strong></div>
+        <div className="workspace-gantt-track" ref={headerTrack}>
           {periods.map(({ date, offset }, index) => {
             const length = (periods[index + 1]?.offset ?? visibleDays) - offset;
             const period = date.slice(0, scale === 'month' ? 4 : 7);
@@ -58,18 +80,18 @@ export default function ScheduleTimeline({ tasks, scale, editable, onEdit }: {
         </div>
       </div>
       {groups.map((group, groupIndex) => <Fragment key={group}>
-        <div className="workspace-gantt-row workspace-gantt-group" style={{ '--gantt-color': colors[groupIndex % colors.length] } as CSSProperties}><div className="workspace-gantt-label"><strong>{group}</strong><small>{tasks.filter(task => task.group === group).length}</small></div><div className="workspace-gantt-track">{todayLine}</div></div>
+        <div className="workspace-gantt-row workspace-gantt-group" style={{ '--gantt-color': colors[groupIndex % colors.length] } as CSSProperties}><div className="workspace-gantt-label"><strong>{group}</strong></div><div className="workspace-gantt-track">{todayLine}</div></div>
         {tasks.filter(task => task.group === group).map(task => {
           const offset = planningDay(task.start) - start;
           const duration = planningDay(task.end) - planningDay(task.start) + 1;
           const milestone = task.kind === 'milestone';
           const label = `${task.name}${task.owner ? ` · ${task.owner}` : ''} · ${task.start}${milestone ? '' : ` – ${task.end}`} · ${task.progress}%`;
           return <div key={task.id} className={`workspace-gantt-row workspace-gantt-task${task.progress === 100 ? ' is-done' : ''}`} style={{ '--gantt-color': colors[groupIndex % colors.length] } as CSSProperties}>
-            <div className="workspace-gantt-label"><button type="button" className="workspace-task-label" disabled={!editable} onClick={() => onEdit(task)}><span>{task.name}</span><small>{task.owner && `${task.owner} · `}{task.start.slice(5)}{!milestone && ` – ${task.end.slice(5)}`}</small></button></div>
+            <div className="workspace-gantt-label"><Tooltip content={label}>{tip => <button {...tip} type="button" className="workspace-task-label" aria-disabled={!editable} aria-label={label} onClick={() => { if (editable) onEdit(task); }}><span>{task.name}</span></button>}</Tooltip></div>
             <div className="workspace-gantt-track">
               {todayLine}
-              <button type="button" disabled={!editable} onClick={() => onEdit(task)} aria-label={label} className={milestone ? 'workspace-gantt-milestone' : 'workspace-gantt-bar'} style={{ left: milestone ? percent(offset + 0.5) : `calc(${percent(offset)} + 2px)`, ...(milestone ? {} : { width: `calc(${percent(duration)} - 4px)` }) }}>
-                {!milestone && <><span className="workspace-gantt-progress" style={{ width: `${task.progress}%` }} />{duration * dayWidth >= 140 && <span className="workspace-gantt-bar-name">{task.name}</span>}{duration * dayWidth >= 42 && <span className="workspace-gantt-percent">{task.progress}%</span>}</>}
+              <button type="button" disabled={!editable} onClick={() => onEdit(task)} aria-label={label} className={milestone ? 'workspace-gantt-milestone' : 'workspace-gantt-bar'} style={{ left: milestone ? percent(offset + 0.5) : percent(offset), ...(milestone ? {} : { width: `max(2px, ${percent(duration)})` }) }}>
+                {!milestone && <><span className="workspace-gantt-progress" style={{ width: `${task.progress}%` }} />{duration * dayWidth >= 130 && <span className="workspace-gantt-bar-name">{task.start.slice(5)} – {task.end.slice(5)}</span>}{task.progress > 0 && duration * dayWidth >= 52 && <span className="workspace-gantt-percent">{task.progress}%</span>}</>}
               </button>
             </div>
           </div>;
