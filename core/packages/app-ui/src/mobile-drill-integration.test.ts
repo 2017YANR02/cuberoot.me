@@ -8,7 +8,12 @@ describe('Mobile Timer drill integration', () => {
   it('uses the shared picker and strict shared generator without a Web fallback', () => {
     expect(app).toContain('generateTimerDrillScramble(target, Math.random, storeRef.current?.settings.cnMode)');
     expect(app).toContain('<TimerDrillPicker');
-    expect(app).not.toContain('/timer?');
+    // Generic practice navigation can open canonical Web training routes. Drill
+    // generation and the drill picker must still stay in the installed runtime.
+    const drillGeneration = app.slice(app.indexOf('const target = timerEventSupportsDrill(event)'), app.indexOf("if (source === 'random') {", app.indexOf('const target = timerEventSupportsDrill(event)')));
+    expect(drillGeneration).toContain('generateTimerDrillScramble');
+    expect(drillGeneration).not.toContain('openToolsRoute');
+    expect(drillGeneration).not.toContain('/timer?');
     expect(moreActions).toContain("'more.drill',");
   });
 

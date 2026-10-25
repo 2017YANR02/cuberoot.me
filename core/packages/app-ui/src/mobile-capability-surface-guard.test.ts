@@ -45,7 +45,8 @@ describe('Mobile capability surface guard', () => {
   it('keeps the installed timer surface aligned with the shared Web layout contract', () => {
     expect(app).toContain('<TimerSoloPage');
     expect(app).toContain('timing={{');
-    expect(solo).toContain('<TimingSurface {...timing}');
+    expect(solo).toContain('...canvas } = timing');
+    expect(solo).toContain('<TimingSurface {...canvas}');
     expect(solo).toContain('layout="solo"');
     expect(app).toContain('<TimerScrambleStrip');
     expect(app).toContain('<LiveCubeState');
@@ -72,12 +73,12 @@ describe('Mobile capability surface guard', () => {
     expect(onMove).toContain('const futureHistory = metadata?.futureHistory === true');
     expect(onMove).toContain('if (!futureHistory) battleSmartCubeHandlersRef.current?.onMove');
     expect(onMove).toContain('smartCubeSoloController.move({ facelets, metadata, move, timestamp })');
-    expect(onMove).toContain('smartCubeAnchorController.move(move)');
-    expect(onMove!.indexOf('smartCubeAnchorController.move(move)'))
+    expect(onMove).toContain('smartCubeAnchorController.move(move, timestamp)');
+    expect(onMove!.indexOf('smartCubeAnchorController.move(move, timestamp)'))
       .toBeLessThan(onMove!.indexOf('smartCubeSoloController.move'));
     expect(controller).toContain('canStartAttempt: () => attemptCanStartRef.current');
     expect(controller).toContain('isTimingEnabled: () => timingEnabledRef.current');
-    expect(controller).toContain("autoReadyOnScramble: () => storeRef.current?.settings.bluetoothAutoReady === 'scrambled'");
+    expect(controller).toMatch(/autoReadyOnScramble: \(\) => trainingTimingMode\(\) \? trainingTimingMode\(\) !== 'manual'\s*: storeRef\.current\?\.settings\.bluetoothAutoReady === 'scrambled'/);
     expect(controller).toContain('startFromCube: (timestamp) => timerRef.current.startFromCube(timestamp)');
     expect(controller).toContain('smartCubeAttemptProducerRef.current.recordMove(move, timestamp)');
     expect(controller).toContain('attemptSplitRecorder.observeMoves');
@@ -107,7 +108,7 @@ describe('Mobile capability surface guard', () => {
     expect(controller).toContain('timerRef.current.stopFromCube(timestamp)');
     // Scramble verification and the shared still/double-flick gesture are the
     // two explicit ready sources; neither may bypass the shared controller.
-    expect(controller).toContain('timerRef.current.armFromCube()');
+    expect(controller).toContain('timerRef.current.armFromCube(timestamp)');
     expect(app).toContain('useAutoReady({');
     expect(battleModes.match(/timer\.armFromCube\(\)/g)).toHaveLength(1);
   });

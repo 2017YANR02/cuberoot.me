@@ -239,8 +239,8 @@ describe('mobile displayed-scramble history', () => {
     expect(app).toContain('histForward(scrambleHistoryRef.current)');
     expect(app).toContain('const { wheelRef: gestureWheelRef } = useGestureWheel({');
     expect(app).toMatch(/active: storeLoaded\s+&& view !== 'settings'\s+&& timerVisible\s+&& !timerOverlayBlocking\s+&& !moreOpen\s+&& !manualEntryOpen/);
-    expect(app).toContain('const timerOverlayBlocking = solverBlocking || openOverlay !== null || statsOpen || historyModalOpen || replayBlocking');
-    expect(app).toMatch(/const modalState = \(\) => timerSoloModalState\(\s+viewRef\.current === 'settings'\s+\|\| !timerVisibleRef\.current/);
+    expect(app).toContain('const timerOverlayBlocking = layoutEditing || solverBlocking || openOverlay !== null || statsOpen || historyModalOpen || replayBlocking');
+    expect(app).toMatch(/const modalState = \(\) => timerSoloModalState\(\s+layoutEditingRef\.current \|\| viewRef\.current === 'settings'\s+\|\| !timerVisibleRef\.current/);
     expect(app).toContain('|| statsOpenRef.current || historyModalOpenRef.current || replayBlockingRef.current');
     expect(app).toContain('<GestureWheel ref={gestureWheelRef}');
     for (const actionId of TIMER_GESTURE_ACTION_IDS) {
@@ -289,7 +289,11 @@ describe('mobile displayed-scramble history', () => {
     expect(app).toContain('deviceControls={smartCubeDeviceCenter}');
     const page = readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/TimerSoloPage')), 'utf8');
     expect(page).toContain('<TimerStageLayout');
-    expect(page).toContain('<TimingSurface {...timing} layout="solo" />');
+    // Pointer handlers belong to the complete stage; the canvas only renders timing content.
+    expect(page).toContain('...canvas } = timing');
+    expect(page).toContain('<TimerStageLayout {...stage} inputRef={surfaceRef}');
+    expect(page).toContain('inputHandlers={{ onContextMenu, onMouseDown, onMouseUp, onPointerDown, onPointerUp, onPointerCancel }}');
+    expect(page).toContain('<TimingSurface {...canvas} surfaceRef={canvasRef} layout="solo" />');
     expect(app.match(/<TimerDeviceCenter/g)).toHaveLength(1);
     expect(app).not.toContain('app-shell--device-footer');
     expect(css).not.toContain('touch-action: pan-y');

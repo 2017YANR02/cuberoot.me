@@ -95,7 +95,7 @@ describe('mobile visible viewport layout', () => {
     ]);
     expect(app).toContain('return observeVisibleViewportHeight(setViewportHeight)');
     expect(app).toContain('const shellViewport = mobileShellViewportLayout(viewportHeight)');
-    expect(app).toContain('style={shellViewport.style}');
+    expect(app).toContain('style={{ ...shellViewport.style,');
   });
 
   it('keeps the bottom navigation outside a vertically scrollable, non-horizontal content area', () => {

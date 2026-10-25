@@ -93,7 +93,8 @@ describe('Mobile shared keyboard integration', () => {
     expect(app).toContain('target: timerKeyboardTargetContext(event.target)');
     expect(app).toContain('const attemptCanStart = timerCanStartAttempt({');
     expect(app).toContain('canStart: attemptCanStart');
-    expect(controller).toContain('timerCanHandleAttemptPress(machineRef.current.phase, canStartRef.current)');
+    expect(controller).toContain('timerCanHandleAttemptPress(machineRef.current.phase, canStartRef.current, smartCubeActiveRef.current?.())');
+    expect(app).toContain('smartCubeActive: () => Boolean(connectedSmartCubeRef.current || smartCubeAttemptDeviceRef.current)');
     for (const id of [
       'delete-last',
       'toggle-plus2',

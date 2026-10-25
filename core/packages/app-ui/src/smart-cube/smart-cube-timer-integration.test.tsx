@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 import { createGanV4Cipher } from '@cuberoot/shared/smart-cube/gan-v4';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
+import { SMART_CUBE_RECONNECT_DELAYS } from '@cuberoot/shared/smart-cube/session';
 import { activeTimerSolves, TimerSmartCubeMoveRecorder, type TimerPhase, type TimerStoreData } from '@cuberoot/shared/timer';
+import type { TimerDeviceConnectionEvent } from '@cuberoot/shared/timer/device-contract';
 import { act, useRef } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -26,6 +28,7 @@ describe('installed smart-cube timing and move persistence', () => {
   let notify: (value: DataView) => void;
   let disconnectRadio: () => void;
   let writes: Promise<unknown>[];
+  let connectionEvents: TimerDeviceConnectionEvent[];
   const cipher = createGanV4Cipher(Uint8Array.of(0xab, 0xcd, 0xef, 0x01, 0x23, 0x45));
   const feed = (frame: readonly number[]) => {
     const encrypted = cipher.encrypt(Uint8Array.from(frame));
@@ -35,7 +38,7 @@ describe('installed smart-cube timing and move persistence', () => {
   beforeEach(async () => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     vi.useFakeTimers();
-    clock = 10_000; recoverTail = false; writes = [];
+    clock = 10_000; recoverTail = false; writes = []; connectionEvents = [];
     vi.spyOn(performance, 'now').mockImplementation(() => clock);
     let stored: TimerStoreData | undefined;
     const driver: TimerStoreDriver = {
@@ -79,6 +82,7 @@ describe('installed smart-cube timing and move persistence', () => {
       });
       phase.current = timer.machine.phase;
       cube = useInstalledSmartCube(() => transport, { language: 'en',
+        onConnectionEvent: event => connectionEvents.push(event),
         onMove: (move, timestamp, facelets) => {
           if (phase.current === 'running' || timer.startFromCube(timestamp)) recorder.current.record(move, timestamp);
           else if (facelets === smartCubeTargetFacelets('R')) timer.armFromCube();
@@ -134,7 +138,14 @@ describe('installed smart-cube timing and move persistence', () => {
     await act(async () => { for (const move of GAN_V4_FIXTURE.moves.slice(1, 3)) feed(move); });
     await act(async () => disconnectRadio());
     await act(async () => feed(GAN_V4_FIXTURE.moves[3]));
-    expect(cube.phase).toBe('idle'); expect(timer.machine.phase).toBe('running');
+    // The hook waits for automatic reconnection, but the old radio session is already closed.
+    expect(cube.phase).toBe('connecting');
+    expect(connectionEvents).toEqual([
+      { kind: 'disconnected', reason: 'gatt-lost' },
+      { kind: 'reconnecting', attempt: 1, maxAttempts: SMART_CUBE_RECONNECT_DELAYS.length, delayMs: SMART_CUBE_RECONNECT_DELAYS[0] },
+    ]);
+    expect(timer.machine.phase).toBe('running');
+    expect(writes).toHaveLength(0);
     clock = 11_000;
     await act(async () => { timer.pressDown(clock); });
     await Promise.all(writes);

@@ -61,7 +61,13 @@ describe('Android Back priority', () => {
     expect(app).toContain('quickMenuOpen={openOverlay === TIMER_OVERLAY_IDS.historyQuickMenu}');
     expect(app).toContain('open={openOverlay === TIMER_OVERLAY_IDS.puzzlePicker}');
     expect(app).toContain('open={openOverlay === TIMER_OVERLAY_IDS.scrambleSource}');
-    expect(app).toContain('open={openOverlay === TIMER_OVERLAY_IDS.wcaCompetition}');
+    expect(app).toContain('open={openOverlay === TIMER_OVERLAY_IDS.practiceContent}');
+    expect(app).toContain('open={openOverlay === TIMER_OVERLAY_IDS.practiceMethod}');
+    expect(app).toContain("handleTimerOverlayOpenChange(open, { id: TIMER_OVERLAY_IDS.practiceMethod, reason: 'trigger' })");
+    // Competition browsing now lives inside the controlled scramble-source menu.
+    expect(app).toContain('realMenuContent={<div ref={setWcaSourceSlot} />}');
+    expect(app).toContain('wcaSourceSlot && createPortal(<TimerWcaSourceConfig');
+    expect(app).toContain('popupContainer={wcaSourceSlot}');
     expect(app).toContain('open={openOverlay === TIMER_OVERLAY_IDS.sessionSwitcher}');
     expect(app).toContain('openOverlay === TIMER_OVERLAY_IDS.smartCubeDevice');
     expect(app).toMatch(/open=\{openOverlay === TIMER_OVERLAY_IDS\.wcaScrambleMarks\s+&& wcaMarksOverlayIdentityRef\.current === currentWcaMarkIdentity\}/);
