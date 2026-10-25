@@ -275,7 +275,7 @@ describe('installed App GAN lifecycle integration', () => {
     await act(async () => container.querySelector<HTMLButtonElement>('.shell-stat-rail')!.click());
     expect(container.querySelector('.timing-surface')).toBe(timerNode);
     expect(container.querySelector('.timer-workspace[data-panel-open]')).not.toBeNull();
-    expect(container.querySelector('.history-view .app-titlebar')).not.toBeNull();
+    expect(container.querySelector('.history-view .shell-panel-tabs')).not.toBeNull();
     await act(async () => nav[0].click());
     expect(container.querySelector('.timing-surface')).toBe(timerNode);
     await act(async () => container.querySelector<HTMLButtonElement>('.shell-stat-rail')!.click());
@@ -653,8 +653,8 @@ it('records one exact Stackmat reading with its starting scramble and keeps the 
 it('blocks cube starts in full statistics and Back closes the dialog before history', async () => {
   await act(async () => { wideViewport = true; mediaListeners.forEach(fn => fn()); });
   await act(async () => container.querySelector<HTMLButtonElement>('.shell-stat-rail')!.click());
-  const view = container.querySelector<HTMLSelectElement>('[aria-label="Results view"]')!;
-  await act(async () => { view.value='stats'; view.dispatchEvent(new Event('change',{bubbles:true})); });
+  const view = [...container.querySelectorAll<HTMLButtonElement>('.shell-panel-tab')].find(button => button.textContent === 'Stats')!;
+  await act(async () => view.click());
   const full=[...container.querySelectorAll<HTMLButtonElement>('button')].find(button=>button.textContent==='Full stats')!;
   await act(async () => full.click());
   expect(document.querySelector('.stats-modal')).not.toBeNull();

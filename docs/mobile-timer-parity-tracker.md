@@ -769,3 +769,7 @@ Web 的拖动/缩放编辑实现与样式迁入 timer-ui，两端调用同一组
 Web 与安装端共同消费 timer-ui 的实况 WebSocket 编排、观战选择/PK 锁、远端魔方和双人舞台；宿主仅提供连接地址、凭据和求解器。动作序号、丢包重同步、旧连接隔离、短断保留本轮 PK 与换轮释放由同一实现负责。安装端接入本地实时锚点、品牌姿态与实况设置，短断保留本局设备型号；不支持智能魔方的项目退出连接并恢复手动输入。联机组件 17 项、共享协议/训练目录/公式加载等定向 125 项回归与两端类型检查通过。双设备联机、MoYu32 实物姿态和系统断线恢复仍需真机验收。
 
 目录数据拆为 alg_catalog，alg 原入口保持兼容导出；训练统计展示组合放在 timer-ui，避免中性的 timer 契约入口间接载入完整复盘/公式加载器。未改变加载器的环境选择和网络行为。以上为代码与自动验证进展，不代表五端全部视觉、离线及设备验收完成。
+
+### 2026-10-25 本地预览构建
+
+代码基线 ee813f6a5a：Windows `pnpm --filter @cuberoot/desktop tauri build --bundles nsis` 已产出主程序和 NSIS 安装包；Android `pnpm --filter @cuberoot/mobile cap:sync:android` 后使用 JDK 21 执行 `gradlew.bat assembleDebug -PmobileDistribution=direct --no-daemon --max-workers=2` 成功产出 direct 调试 APK。两端产物均于本轮代码完成后重建，未递增公开版本、未推送或发布。`pnpm audit:boundaries` 通过；提交钩子的复盘验收集 297 项通过、19 项跳过。编译证据不替代 MoYu32 姿态、实时复盘、重连和双设备联机的实体设备验收。
