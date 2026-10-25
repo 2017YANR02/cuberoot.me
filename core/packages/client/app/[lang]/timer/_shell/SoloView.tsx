@@ -1,4 +1,5 @@
 'use client';
+import { useLiveSmartCubeAttempt, TimerLiveSolutionPanel } from '@cuberoot/timer-ui';
 
 import { trainingSolveMetrics } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { useDouyinToolSurface } from '@/lib/douyin-content';
@@ -195,7 +196,6 @@ import {
   parseManualScrambleQueue,
   takeManualScramble,
   SmartCubeAttemptProducer,
-  type GyroSample,
 } from '@cuberoot/shared/timer';
 import { AutoRecapDismissGesture, shouldAutoRecap } from '../_lib/reconstruct/recap';
 import { reconstructionAnalyzer } from '@cuberoot/timer-ui/reconstruct-analysis';
@@ -1382,9 +1382,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const caseIdAtStartRef = useRef<string | null>(null);
   const smartCubeAttemptProducerRef = useRef(new SmartCubeAttemptProducer());
   const abortingSmartCubeRef = useRef(false);
-  const [liveSolve, setLiveSolve] = useState<(Solve & { liveGyroSamples?: readonly GyroSample[] }) | null>(null);
-  const liveSolvePublishRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => { if (liveSolvePublishRef.current !== null) clearTimeout(liveSolvePublishRef.current); }, []);
+  const { solve: liveSolve, publish: publishLiveSolve, clear: clearLiveSolve } = useLiveSmartCubeAttempt(
+    smartCubeAttemptProducerRef.current, () => phaseSnapshotRef.current === 'running'
+      ? { startedAt: attemptStartedAtRef.current, event: eventAtStartRef.current, scramble: scrambleAtStartRef.current }
+      : null);
   const [liveStageTarget, setLiveStageTarget] = useState<HTMLDivElement | null>(null);
   const autoRecapDismissGestureRef = useRef(new AutoRecapDismissGesture());
   const autoRecapInputBlockedRef = useRef(false);
@@ -1504,9 +1505,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       ? { reference: scrambleGyroRef.current, initial: gyroQuatRef.current,
         orientation: timerSmartCubeTrainingOrientation(event, getSettings().preScrT) }
       : undefined);
-    if (liveSolvePublishRef.current !== null) clearTimeout(liveSolvePublishRef.current);
-    liveSolvePublishRef.current = null;
-    setLiveSolve(null);
+    clearLiveSolve();
   }, () => ({ trainingStartMode: trainingTimingModeRef.current() }));
   cancelArmForScrambleChangeRef.current = competition.enabled ? () => {} : timer.cancelArm;
   useLayoutEffect(() => { timer.reset(); smartCubeAttemptProducerRef.current.reset(); }, [competition.enabled, competition.attemptKey, timer.reset]);
@@ -1655,21 +1654,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       if (!smartCubeAttemptProducerRef.current.recordMove(move, timestamp)) return;
       // Use only this attempt's accepted moves, never the 3D anchor's scramble log.
       const moves = smartCubeAttemptProducerRef.current.snapshotMoves();
-      // Coalesce only the expensive presentation snapshot, never physical moves
-      // or split/stop detection. The final recording is drained synchronously.
-      if (liveSolvePublishRef.current === null) {
-        const attempt = attemptStartedAtRef.current;
-        liveSolvePublishRef.current = setTimeout(() => {
-          liveSolvePublishRef.current = null;
-          if (phaseSnapshotRef.current !== 'running' || attempt !== attemptStartedAtRef.current) return;
-          const { moves, device, gyroSamples } = smartCubeAttemptProducerRef.current.snapshotLive();
-          setLiveSolve({
-            id: `live-${attempt}`, event: eventAtStartRef.current,
-            scramble: scrambleAtStartRef.current, timeMs: moves.at(-1)?.ts ?? 0,
-            penalty: 'ok', ts: 0, moves, device, liveGyroSamples: gyroSamples,
-          });
-        }, 100);
-      }
+      publishLiveSolve();
       attemptSplitRecorder.observeMoves({
         event: eventAtStartRef.current,
         moves,
@@ -2918,15 +2903,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // Live and completed reconstruction share the desktop dock. Both expand
   // naturally with the document; narrow screens show live moves below the timer.
   const liveSolutionPanel = timer.phase === 'running' && liveSolve ? (
-    <section className="shell-recap timer-live-solution" data-no-timer
-      aria-label={tr({ zh: '实时解法', en: 'Live solution' })}>
-      <div className="shell-recap-head timer-live-solution-label">
-        {tr({ zh: '实时解法', en: 'Live solution' })}
-      </div>
-      <div className="shell-recap-body">
-        <LiveReconstructReport key={liveSolve.id} solve={liveSolve} liveGyroSamples={liveSolve.liveGyroSamples} isZh={isZh} live liveStageTarget={liveStageTarget} />
-      </div>
-    </section>
+    <TimerLiveSolutionPanel language={isZh ? 'zh' : 'en'}>
+      <LiveReconstructReport key={liveSolve.id} solve={liveSolve} liveGyroSamples={liveSolve.liveGyroSamples} isZh={isZh} live liveStageTarget={liveStageTarget} />
+    </TimerLiveSolutionPanel>
   ) : null;
 
   // 桌面复盘占右栏；窄屏在 recordSolve 中直接进入整屏成绩详情。

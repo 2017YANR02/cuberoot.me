@@ -2,6 +2,7 @@
 // Other modules can be dropped when unused: importing one shared hook must
 // not eagerly load online video, statistics or reconstruction workspaces.
 import './timing-surface.css';
+export { useLiveSmartCubeAttempt, TimerLiveSolutionPanel } from './live-smart-cube-attempt';
 import './timer-chrome.css';
 import './timer-stage-layout.css';
 import './timer-battle-layout.css';

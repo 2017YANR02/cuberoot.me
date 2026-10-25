@@ -73,3 +73,39 @@
   .timer-solver-stage:not([data-stage-fullscreen='true']):has(.solver-panel[data-open='true']) > .timer-workspace-divider--left { display: flex; }
   :is(.hide-ui, [data-timer-hide-ui]) .timer-workspace-divider { visibility: hidden; }
 }
+
+.shell-recap.timer-live-solution {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.timer-live-solution-label {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.timer-workspace[data-live-reconstruction] .shell-recap-rail {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+.timer-workspace[data-live-reconstruction] .timing-surface--solo {
+  grid-template-rows: 1fr;
+}
+.timer-workspace[data-live-reconstruction] .timing-surface-scramble-top {
+  display: none;
+}
+.timer-workspace[data-live-reconstruction] .timing-surface-core {
+  grid-row: 1;
+  align-self: center;
+}
+@media (max-width: 1023px) {
+  .timer-workspace[data-live-reconstruction] .timer-stage-source,
+  .timer-workspace[data-live-reconstruction] .timer-stage-footer,
+  .timer-workspace[data-live-reconstruction] .shell-undersurface {
+    display: none;
+  }
+  .shell-recap.timer-live-solution {
+    flex: 0 0 auto;
+    height: auto;
+  }
+}

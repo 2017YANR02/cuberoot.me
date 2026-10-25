@@ -47,6 +47,7 @@ import {
   TIMER_DEVICE_REGISTRATIONS,
 } from '@cuberoot/shared/timer/device-contract';
 import { SmartCubeAttemptProducer } from '@cuberoot/shared/timer/smart-cube-attempt';
+import { useLiveSmartCubeAttempt, TimerLiveSolutionPanel } from '@cuberoot/timer-ui';
 import { sensorBasisForBrand, mirrorForBrand, type Quat } from '@cuberoot/shared/smart-cube/orientation';
 import LiveCubeState from '@cuberoot/timer-ui/LiveCubeState';
 import { encodeReplayUrl } from '@cuberoot/shared/timer/replay-encode';
@@ -2336,6 +2337,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   const smartCubeAttemptProducerRef = useRef(new SmartCubeAttemptProducer());
   const smartCubeMoveSubscribersRef = useRef(new Set<(move: string, timestamp: number) => void>());
   const smartCubeQuatRef = useRef<Quat | null>(null);
+  const smartCubeLastFaceletsRef = useRef<string | null>(null);
   const smartCubeReferenceRef = useRef<Quat | null>(null);
   const [smartCubeCalibration, setSmartCubeCalibration] = useState(0);
   const calibrationReferenceRef = useRef<Quat | null>(null);
@@ -2352,6 +2354,11 @@ export function App({ host }: { host: InstalledAppHost }) {
   const [attemptSplitState, setAttemptSplitState] = useState<TimerAttemptSplitState>({ stages: {} });
   const [attemptSplitRecorder] = useState(() => new TimerAttemptSplitRecorder(setAttemptSplitState));
   const attemptStartedAtRef = useRef(0);
+  const { solve: liveSolve, publish: publishLiveSolve, clear: clearLiveSolve } = useLiveSmartCubeAttempt(
+    smartCubeAttemptProducerRef.current, () => timerPhaseRef.current === 'running' && attemptRef.current
+      ? { startedAt: attemptStartedAtRef.current, event: attemptRef.current.event, scramble: attemptRef.current.scramble }
+      : null);
+  const [liveStageTarget, setLiveStageTarget] = useState<HTMLDivElement | null>(null);
   const timerDisplayMsRef = useRef(0);
   const externalAttemptRef = useRef<{kind: 'smart-timer' | 'stackmat'; sessionId: string; snapshot: MobileScrambleAttemptSnapshot; running: boolean} | null>(null);
   const externalActiveRef = useRef(false);
@@ -2481,6 +2488,7 @@ export function App({ host }: { host: InstalledAppHost }) {
         };
       }
       attemptStartedAtRef.current = startedAtMs;
+      clearLiveSolve();
       smartCubeAttemptDeviceRef.current = connectedSmartCubeRef.current;
       attemptSplitRecorder.begin({
         bldMemo: (storeRef.current?.settings.bldMemo ?? true) && isBldEvent(entry.event),
@@ -2609,6 +2617,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     },
     recordMove: ({ move, timestamp }) => {
       if (!smartCubeAttemptProducerRef.current.recordMove(move, timestamp)) return;
+      publishLiveSolve();
       const attempt = attemptRef.current;
       if (!attempt) return;
       attemptSplitRecorder.observeMoves({
@@ -2642,7 +2651,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     },
     onMove: (move, timestamp, facelets, metadata) => {
       const futureHistory = metadata?.futureHistory === true;
-      smartCubeAnchorController.move(move);
+      smartCubeAnchorController.move(move, timestamp);
       if (timerModeRef.current !== 1) {
         if (!futureHistory) battleSmartCubeHandlersRef.current?.onMove(move, timestamp, facelets);
         return;
@@ -2666,6 +2675,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   connectedSmartCubeRef.current = smartCube.phase === 'connected' && smartCube.deviceName
     ? { model: smartCube.model ?? 'gan-v4', name: smartCube.deviceName }
     : undefined;
+  if (smartCube.facelets) smartCubeLastFaceletsRef.current = smartCube.facelets;
   useAutoReady({
     enabled: view !== 'settings' && timerVisible && timerMode === 1 && smartCube.phase === 'connected' && timingEnabled
       && attemptCanStart
@@ -3225,6 +3235,13 @@ export function App({ host }: { host: InstalledAppHost }) {
     onEnableGyro: () => updateSettings({ recordGyro: true }),
   };
   const recapSolve = solves.find((solve) => solve.id === recapSolveId) ?? null;
+  const liveSolutionPanel = timer.machine.phase === 'running' && liveSolve ? (
+    <TimerLiveSolutionPanel language={language}>
+      <Suspense fallback={null}><ReconstructReport key={liveSolve.id} solve={liveSolve}
+        host={reconstructionHost} isZh={language === 'zh'} live
+        liveGyroSamples={liveSolve.liveGyroSamples} liveStageTarget={liveStageTarget} /></Suspense>
+    </TimerLiveSolutionPanel>
+  ) : null;
   const solveRecap = recapSolve && (
     <Suspense fallback={<Spinner label={{ en: 'Loading', zh: '加载中' }[language]} />}>
       <SolveRecap
@@ -3891,7 +3908,9 @@ export function App({ host }: { host: InstalledAppHost }) {
 
 
 
-      <TimerWorkspace className="view-container" active={timerMode === 1 && timerVisible} panelOpen={dockHistory} recap={solveRecap}>
+      <TimerWorkspace className="view-container" active={timerMode === 1 && timerVisible}
+        data-live-reconstruction={liveSolutionPanel ? '' : undefined}
+        panelOpen={dockHistory && !liveSolutionPanel} recap={liveSolutionPanel ?? solveRecap}>
         {timerVisible && timerMode === 1 && (
           <TimerSoloPage tools={{
           tool: openOverlay === TIMER_OVERLAY_IDS.bulkTool ? 'bulk' : openOverlay === TIMER_OVERLAY_IDS.bldTool ? 'bld-helper' : openOverlay === TIMER_OVERLAY_IDS.solverTool ? 'solver' : null,
@@ -4145,27 +4164,29 @@ export function App({ host }: { host: InstalledAppHost }) {
                   onClick={() => setView('history')}
                 />}}
         solver={solverHintPanel}
+        narrowRecap={liveSolutionPanel}
         timing={{
 className: targetFeedbackClass,
 ariaLabel: copy.timer,
 colorClass: `${timerColorClass} tf-${store!.settings.timerFont}`,
 fontScale: store!.settings.timerFontScale,
-cornerAspect: smartCube.phase === 'connected' ? undefined : timerCubePreviewAspect(activeEvent, scramble),
-cornerSlot: smartCube.phase === 'connected' ? (
+cornerAspect: smartCube.phase === 'connected' || smartCubeAttemptDeviceRef.current ? undefined : timerCubePreviewAspect(activeEvent, scramble),
+cornerSlot: smartCube.phase === 'connected' || smartCubeAttemptDeviceRef.current ? (
                   <div className="timer-live-cube">
                     <LiveCubeState
                       algAnchored={smartCubeAnchor.algAnchored}
                       displayOrientation={trainingOrientation}
                       calibrateToken={smartCubeCalibration}
                       calibrationReference={calibrationReferenceRef.current}
-                      facelets={smartCube.facelets || null}
+                      facelets={smartCube.facelets || (smartCubeAttemptDeviceRef.current ? smartCubeLastFaceletsRef.current : null)}
                       language={language}
                       mode={store!.settings.liveCubeView}
                       moves={[...smartCubeAnchor.moves]}
+                      liveSource={smartCubeAnchorController}
                       onViewChange={setSmartCubeRenderedView}
                       useGyro={store!.settings.gyroEnabled}
-                      sensorBasis={sensorBasisForBrand(smartCube.model)}
-                      mirror={mirrorForBrand(smartCube.model)}
+                      sensorBasis={sensorBasisForBrand(smartCube.model ?? smartCubeAttemptDeviceRef.current?.model)}
+                      mirror={mirrorForBrand(smartCube.model ?? smartCubeAttemptDeviceRef.current?.model)}
                       quatRef={store!.settings.gyroEnabled ? smartCubeQuatRef : undefined}
                     />
                   </div>
@@ -4309,6 +4330,7 @@ scrambleSlot: (
                 ),
 surfaceRef: surfaceRef,
 children: <>
+                {timer.machine.phase === 'running' && liveSolve && <div ref={setLiveStageTarget} className="timer-live-stage" data-no-timer />}
                 <span aria-live="polite" className="sr-only">{timerInstruction}</span>
                 {timer.machine.phase === 'running' && <TimerTargetTime targetMs={targetMs} displayMs={displayMs} localize={value => value[language]} />}
                 {timer.machine.phase === 'running' && (multiStageActive || bldMemoActive) && (
@@ -4522,7 +4544,7 @@ children: <>
           );
         })}
 
-        {view === 'history' && (
+        {view === 'history' && !liveSolutionPanel && (
           <section className="history-view timer-workspace-panel" aria-labelledby="history-title" data-no-timer>
             {dockHistory && viewHeader}
             <div className="timer-workspace-panel-body">
