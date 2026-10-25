@@ -1,3 +1,10 @@
+import { useNetBattleLiveCube, useNetBattleLiveView, TimerNetPkArena, TimerRemoteLiveCube, timerRoomPlayerName } from '@cuberoot/timer-ui';
+import { NET_BATTLE_LIVE_PATH, type TimerSmartCubeSettings } from '@cuberoot/shared/timer';
+import LiveCubeState from '@cuberoot/timer-ui/LiveCubeState';
+import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
+import { sensorBasisForBrand, mirrorForBrand } from '@cuberoot/shared/smart-cube/orientation';
+import { solveMobileSmartCubeAnchor } from './smart-cube/fixup';
+
 import { createRandomScrambleClient } from '@cuberoot/timer-ui/random-scramble';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
@@ -778,6 +785,7 @@ const emptySubscribe = () => () => { };
 const emptySnapshot = () => null;
 
 export interface NetBattleModeProps extends BattleModeBaseProps {
+  smartCubeSettings?: Pick<TimerSmartCubeSettings, 'liveCubeView' | 'gyroEnabled'>;
   sessionId?: string;
   recordGyro?: boolean;
   recordingOutbox?: NetRecordingOutbox;
@@ -803,6 +811,7 @@ function netResultText(timeMs: number, penalty: NetPenalty, precision: 2 | 3): s
 
 /** Shared-contract online room host; no room DTO, scoring or transport is reimplemented here. */
 export function NetBattleMode({
+  smartCubeSettings = { liveCubeView: 'net', gyroEnabled: true },
   sessionId, recordGyro, onRecordSolve, recordingOutbox, renderRecordedSolve,
   accountIdentity,
   capability,
@@ -864,6 +873,33 @@ export function NetBattleMode({
   const surfaceRef = useRef<HTMLDivElement>(null);
   roomRef.current = room;
   credentialsRef.current = credentials;
+  const event = room && credentials ? playerEventOf(room, credentials.playerId) : lobbyEvent;
+  const cubeConnected = timerSupportsNetBattleSmartCube(event) && smartCube?.phase === 'connected';
+  useEffect(() => {
+    if (!timerSupportsNetBattleSmartCube(event) && smartCube?.phase === 'connected') void smartCube.disconnect();
+  }, [event, smartCube?.phase, smartCube?.disconnect]);
+  const liveQuatRef = useRef<Quat | null>(null);
+  const cubeAttemptRef = useRef(false);
+  const cubeAttemptModelRef = useRef<string | undefined>(undefined);
+  const lastCubeFaceletsRef = useRef<string | null>(null);
+  if (smartCube?.facelets) lastCubeFaceletsRef.current = smartCube.facelets;
+  const [liveAnchorSnapshot, setLiveAnchorSnapshot] = useState<LiveSmartCubeAnchorSnapshot>({ moves: [], algAnchored: false });
+  const [liveAnchor] = useState(() => new LiveSmartCubeAnchor({ solve: solveMobileSmartCubeAnchor, onChange: setLiveAnchorSnapshot }));
+  useEffect(() => {
+    liveAnchor.setConnection(cubeConnected ? smartCube?.deviceName || 'cube' : null);
+  }, [liveAnchor, cubeConnected, smartCube?.deviceName]);
+  useEffect(() => { if (smartCube?.facelets) liveAnchor.observeFacelets(smartCube.facelets); }, [liveAnchor, smartCube?.facelets]);
+  useEffect(() => () => liveAnchor.setConnection(null), [liveAnchor]);
+  const { players: liveCubePlayers, ready: liveRoomReady, publishMove: publishLiveMove } = useNetBattleLiveCube({
+    code: room?.code ?? null, credentials, round: room?.round ?? 1,
+    localConnected: cubeConnected, localFacelets: smartCube?.facelets || null,
+    solve: solveMobileSmartCubeAnchor,
+    websocketUrl: mobileApiUrl(NET_BATTLE_LIVE_PATH).replace(/^http/, 'ws'),
+  });
+  const { activePkLock, viewedCubePlayerId, setViewedCubePlayerId } = useNetBattleLiveView({
+    room, pid: credentials?.playerId ?? null, cubeConnected, localFacelets: smartCube?.facelets || null,
+    liveCubePlayers, liveRoomReady, language,
+  });
 
   useEffect(() => {
     const wcaId = accountIdentity?.wcaId;
@@ -897,7 +933,6 @@ export function NetBattleMode({
     ? recordingOutbox?.result({ code: room.code, playerId: credentials.playerId, round: room.round })
     ?? room.results[String(room.round)]?.[credentials.playerId]
     : undefined;
-  const event = room && credentials ? playerEventOf(room, credentials.playerId) : lobbyEvent;
   const scramble = room && credentials ? myScramble(room, credentials.playerId) ?? '' : '';
 
   const fail = useCallback((reason: unknown) => {
@@ -932,6 +967,7 @@ export function NetBattleMode({
   }, [roomController, capability, fail, persistRecording]);
 
   const timer = useTimerController({
+    smartCubeActive: () => cubeConnected || cubeAttemptRef.current,
     canStart: !inputBlocked && !showAdmin && !showHistory && !qrOpen && !renameOpen && Boolean(room && credentials && scramble && !myResult),
     holdMs,
     inspectionSec,
@@ -941,16 +977,19 @@ export function NetBattleMode({
       if (!current || !auth) return;
       attemptAuthRef.current = { ...auth };
       netTimerPhaseRef.current = 'running';
+      cubeAttemptRef.current = cubeConnected;
+      cubeAttemptModelRef.current = cubeConnected ? smartCube?.model ?? undefined : undefined;
       setRecordedSolve(null);
       netAttemptRef.current.begin({
         code: current.code, playerId: auth.playerId, round: current.round,
         sessionId: sessionId ?? '', id: netAttemptSolveId({ code: current.code, playerId: auth.playerId, round: current.round }), ts: Date.now(),
         event: playerEventOf(current, auth.playerId), scramble: myScramble(current, auth.playerId) ?? ''
       }, startedAtMs,
-        smartCube?.phase === 'connected' ? { model: smartCube.model ?? '', name: smartCube.deviceName } : undefined);
+        cubeConnected ? { model: smartCube?.model ?? '', name: smartCube?.deviceName ?? '' } : undefined);
     },
   });
   const timerPhase = timer.machine.phase;
+  useEffect(() => { if (timerPhase !== 'running') cubeAttemptRef.current = false; }, [timerPhase]);
   const inRoundRoster = room && credentials
     ? isNetRoundParticipant(room, credentials.playerId)
     : false;
@@ -986,9 +1025,13 @@ export function NetBattleMode({
     if (!onSmartCubeHandlersChange) return undefined;
     const handlers: BattleSmartCubeHandlers = {
       onGyro(quaternion, timestamp) {
-        if (recordGyro && netTimerPhaseRef.current === 'running') netAttemptRef.current.recordGyro(quaternion, timestamp);
+        liveQuatRef.current = quaternion;
+        if (recordGyro && cubeAttemptRef.current && netTimerPhaseRef.current === 'running') netAttemptRef.current.recordGyro(quaternion, timestamp);
       },
       onMove(move, timestamp, facelets) {
+        if (!netSmartCubeSupported) return;
+        liveAnchor.move(move, timestamp);
+        publishLiveMove(move);
         if (netTimerPhaseRef.current === 'running') {
           netAttemptRef.current.recordMove(move, timestamp);
           return;
@@ -1027,6 +1070,7 @@ export function NetBattleMode({
     netSmartCubeTarget,
     netSmartCubeSupported,
     onSmartCubeHandlersChange,
+    liveAnchor, publishLiveMove,
     timer.startFromCube,
     timer.armFromCube,
     timer.stopFromCube,
@@ -1314,6 +1358,29 @@ export function NetBattleMode({
       });
   const colorClass = currentResult?.p === 'dnf' ? 'dnf' : timer.machine.phase;
   const amAdmin = isNetAdmin(room, credentials.playerId);
+  const ownLiveCubeSlot = (cubeConnected || cubeAttemptRef.current) && lastCubeFaceletsRef.current ? (
+    <div className="shell-corner-net"><div className="shell-corner-net-imgbox"><div className="timer-live-cube" data-no-timer>
+      <LiveCubeState facelets={smartCube?.facelets || lastCubeFaceletsRef.current}
+        moves={[...liveAnchorSnapshot.moves]} algAnchored={liveAnchorSnapshot.algAnchored} liveSource={liveAnchor}
+        mode={smartCubeSettings.liveCubeView} language={language} useGyro={smartCubeSettings.gyroEnabled}
+        quatRef={smartCubeSettings.gyroEnabled ? liveQuatRef : undefined}
+        sensorBasis={sensorBasisForBrand(smartCube?.model ?? cubeAttemptModelRef.current)}
+        mirror={mirrorForBrand(smartCube?.model ?? cubeAttemptModelRef.current)} />
+    </div></div></div>
+  ) : undefined;
+  const selectedRemote = viewedCubePlayerId && viewedCubePlayerId !== credentials.playerId
+    ? liveCubePlayers[viewedCubePlayerId] : undefined;
+  const remoteCubeSlot = selectedRemote?.connected && selectedRemote.smart && selectedRemote.round === room.round && selectedRemote.facelets
+    ? <TimerRemoteLiveCube playerId={selectedRemote.playerId} live={selectedRemote}
+      ownerLabel={room.players[selectedRemote.playerId] ? timerRoomPlayerName(room.players[selectedRemote.playerId], language) : undefined}
+      mode={smartCubeSettings.liveCubeView} language={language} /> : undefined;
+  const liveCubeSlot = activePkLock ? ownLiveCubeSlot : remoteCubeSlot ?? ownLiveCubeSlot;
+  const ownPkStatus = !cubeConnected || !liveRoomReady
+    ? language === 'zh' ? '实况重连中…' : 'Reconnecting live feed…'
+    : myResult ? language === 'zh' ? '已完成' : 'Finished'
+      : timerPhase === 'running' ? language === 'zh' ? '计时中' : 'Solving'
+        : timerPhase === 'inspecting' ? language === 'zh' ? '观察中' : 'Inspecting'
+          : gate.ready ? language === 'zh' ? '已准备' : 'Ready' : language === 'zh' ? '待开始' : 'Waiting';
 
   return <TimerNetBattlePage language={language} className="battle-mode battle-mode--net" ariaLabel={copy.battleOnlineTitle}
     solving={timerPhase === 'running'} topbar={{
@@ -1367,12 +1434,19 @@ export function NetBattleMode({
         onAdmin: amAdmin ? () => { setShowAdmin(true); setShowHistory(false); } : undefined,
         onLeave: () => void leaveRoom()
       },
-      players: {
+      players: activePkLock ? undefined : {
         room: room,
         currentPlayerId: credentials.playerId,
         language: language,
         precision: precision,
         nowMs: Date.now() + (offsetRef.current ?? 0),
+        viewedPlayerId: viewedCubePlayerId,
+        onViewPlayer: setViewedCubePlayerId,
+        canViewPlayer: id => {
+          const live = liveCubePlayers[id];
+          return id === credentials.playerId ? cubeConnected && !!smartCube?.facelets
+            : !!live?.connected && live.smart && live.round === room.round && !!live.facelets;
+        },
         onRename: !accountIdentity ? (name) => {
           const player = room.players[credentials.playerId];
           setName(name);
@@ -1395,8 +1469,8 @@ export function NetBattleMode({
           ariaLabel: copy.timer,
           colorClass: `${colorClass} tf-${typographySettings.timerFont}`,
           fontScale: typographySettings.timerFontScale,
-          cornerAspect: timerCubePreviewAspect(event, scramble),
-          cornerSlot: scramblePreviewSettings.showCubePreview && scramble ? (
+          cornerAspect: liveCubeSlot ? undefined : timerCubePreviewAspect(event, scramble),
+          cornerSlot: liveCubeSlot ?? (scramblePreviewSettings.showCubePreview && scramble ? (
             <TimerCubePreview
               ariaLabel={copy.cubeState}
               event={event}
@@ -1404,7 +1478,7 @@ export function NetBattleMode({
               scramble={scramble}
               visualization={scramblePreviewSettings.prefer3D ? '3D' : '2D'}
             />
-          ) : undefined,
+          ) : undefined),
           digits: <SegmentTime text={timerText} />,
           interactive: Boolean(scramble && !currentResult && inRoundRoster && (
             gate.gated || canManuallyStart || timerPhase === 'running'
@@ -1466,6 +1540,12 @@ export function NetBattleMode({
           onNext: advanceRound
         }, error
       },
+      renderStage: own => activePkLock ? <TimerNetPkArena room={room} pid={credentials.playerId}
+        lock={activePkLock} liveCubePlayers={liveCubePlayers} ownStatus={ownPkStatus} language={language}
+        liveCubeView={smartCubeSettings.liveCubeView} timerFont={typographySettings.timerFont}
+        timerFontScale={typographySettings.timerFontScale} precision={precision} clockOffsetMs={offsetRef.current}>
+        {own}
+      </TimerNetPkArena> : own,
       admin: showAdmin && amAdmin && {
         room: room,
         currentPlayerId: credentials.playerId,

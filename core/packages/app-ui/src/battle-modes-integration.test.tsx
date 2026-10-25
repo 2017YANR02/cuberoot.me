@@ -89,6 +89,13 @@ describe('installed app multiplayer modes', () => {
   let root: Root;
 
   beforeEach(() => {
+    // Room fixtures never contact the production live relay.
+    vi.stubGlobal('WebSocket', class extends EventTarget {
+      static OPEN = 1;
+      readyState = 0;
+      send() {}
+      close() { this.readyState = 3; }
+    });
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     const captures = new WeakMap<HTMLElement, Set<number>>();
     Object.defineProperty(HTMLElement.prototype, 'setPointerCapture', {
@@ -129,6 +136,7 @@ describe('installed app multiplayer modes', () => {
     await act(async () => root.unmount());
     host.remove();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
     vi.useRealTimers();
   });
 
@@ -369,6 +377,28 @@ describe('installed app multiplayer modes', () => {
     expect(document.querySelector('.timer-room-dialog')).toBeNull();
   });
 
+  it('allows manual timing on unsupported events while a previous cube disconnect is pending', async () => {
+    const state = roomState();
+    state.event = '222'; state.players.abcdef.event = '222'; state.scrambles = { '222': 'R U' };
+    const credentials = { playerId: 'abcdef', playerToken: 'x'.repeat(48) };
+    const capability: InstalledAppNetBattle = {
+      client: { createNetRoom: async () => ({ state, credentials }), getNetRoom: async () => state,
+        ensureNetScramble: async () => state, postNetStatus: async () => state } as unknown as NetBattleClient,
+      sessions: { clear: async () => {}, load: async () => null, save: async () => {} },
+    };
+    const disconnect = vi.fn(async () => {});
+    await act(async () => root.render(<NetBattleMode {...baseProps} capability={capability}
+      smartCube={{ phase: 'connected', model: 'moyu32', deviceName: 'WCU_MY32_test', facelets: SOLVED_3X3,
+        lastMove: '', connect: async () => '', disconnect }} />));
+    await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-lobby-actions button')!.click());
+    expect(disconnect).toHaveBeenCalled();
+    expect(host.querySelector('.timer-live-cube')).toBeNull();
+    const surface = host.querySelector<HTMLElement>('.timer-room-stage .timing-surface')!;
+    await act(async () => dispatchPointer(surface, 'pointerdown', 1));
+    expect(surface.querySelector('.timer-display')?.classList).toContain('holding');
+    await act(async () => dispatchPointer(surface, 'pointercancel', 1));
+  });
+
   it('routes a batched smart-cube scramble completion and first solve move through the online timer', async () => {
     const openDevice = vi.fn();
     const onRecordSolve = vi.fn(async (_record: import('@cuberoot/shared/timer').NetRecordedAttempt) => undefined);
@@ -416,6 +446,8 @@ describe('installed app multiplayer modes', () => {
     ));
     await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-lobby-actions button')!.click());
     expect(handlers).not.toBeNull();
+
+    expect(host.querySelector('.timer-live-cube')).not.toBeNull();
 
     await act(async () => host.querySelector<HTMLButtonElement>('[data-device-controls]')!.click());
     expect(openDevice).toHaveBeenCalledOnce();

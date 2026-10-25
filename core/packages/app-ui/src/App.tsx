@@ -4498,6 +4498,7 @@ children: <>
 
         {view === 'timer' && timerMode === 'net' && (
           <NetBattleMode
+            smartCubeSettings={store!.settings}
             sessionId={store!.database.activeSessionId}
             recordGyro={store!.settings.recordGyro}
             recordingOutbox={netRecordingOutbox}
