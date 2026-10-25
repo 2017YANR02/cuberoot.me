@@ -17,6 +17,7 @@ import {
 
 interface TimerControllerOptions {
   inputBlocked?: () => boolean;
+  smartCubeActive?: () => boolean;
   canStart?: boolean;
   enabled?: boolean;
   holdMs: number;
@@ -44,6 +45,7 @@ export interface TimerController {
 
 export function useTimerController({
   inputBlocked,
+  smartCubeActive,
   canStart = true,
   enabled = true,
   holdMs,
@@ -61,6 +63,8 @@ export function useTimerController({
   const onTransitionRef = useRef(onTransition);
   const inputBlockedRef = useRef(inputBlocked);
   inputBlockedRef.current = inputBlocked;
+  const smartCubeActiveRef = useRef(smartCubeActive);
+  smartCubeActiveRef.current = smartCubeActive;
   const canStartRef = useRef(canStart);
   const enabledRef = useRef(enabled);
   const configRef = useRef<TimerMachineConfig>({
@@ -133,12 +137,12 @@ export function useTimerController({
 
   const pressDown = useCallback((atMs = performance.now()): boolean => (
     !inputBlockedRef.current?.() && enabledRef.current
-    && timerCanHandleAttemptPress(machineRef.current.phase, canStartRef.current)
+    && timerCanHandleAttemptPress(machineRef.current.phase, canStartRef.current, smartCubeActiveRef.current?.())
     && apply({ type: 'press-down', nowMs: atMs }).accepted === true
   ), [apply]);
 
   const pressUp = useCallback((atMs = performance.now()): boolean => {
-    if (inputBlockedRef.current?.() || !enabledRef.current) return false;
+    if (inputBlockedRef.current?.() || smartCubeActiveRef.current?.() || !enabledRef.current) return false;
     if (!canStartRef.current && machineRef.current.phase !== 'running') {
       clearHoldTimeout();
       apply({ type: 'cancel-arm' });

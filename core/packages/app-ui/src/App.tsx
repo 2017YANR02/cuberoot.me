@@ -47,7 +47,7 @@ import {
   TIMER_DEVICE_REGISTRATIONS,
 } from '@cuberoot/shared/timer/device-contract';
 import { SmartCubeAttemptProducer } from '@cuberoot/shared/timer/smart-cube-attempt';
-import type { Quat } from '@cuberoot/shared/smart-cube/orientation';
+import { sensorBasisForBrand, mirrorForBrand, type Quat } from '@cuberoot/shared/smart-cube/orientation';
 import LiveCubeState from '@cuberoot/timer-ui/LiveCubeState';
 import { encodeReplayUrl } from '@cuberoot/shared/timer/replay-encode';
 import { shouldAutoRecap } from '@cuberoot/shared/timer/reconstruct/recap';
@@ -2348,6 +2348,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   };
   const [smartCubeRenderedView, setSmartCubeRenderedView] = useState('net');
   const connectedSmartCubeRef = useRef<Solve['device']>(undefined);
+  const smartCubeAttemptDeviceRef = useRef<Solve['device']>(undefined);
   const [attemptSplitState, setAttemptSplitState] = useState<TimerAttemptSplitState>({ stages: {} });
   const [attemptSplitRecorder] = useState(() => new TimerAttemptSplitRecorder(setAttemptSplitState));
   const attemptStartedAtRef = useRef(0);
@@ -2450,6 +2451,7 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   const timer = useTimerController({
     inputBlocked: () => externalActiveRef.current,
+    smartCubeActive: () => Boolean(connectedSmartCubeRef.current || smartCubeAttemptDeviceRef.current),
     onTransition: onTimerSoundTransition,
     canStart: attemptCanStart,
     enabled: view !== 'settings' && timerVisible
@@ -2479,6 +2481,7 @@ export function App({ host }: { host: InstalledAppHost }) {
         };
       }
       attemptStartedAtRef.current = startedAtMs;
+      smartCubeAttemptDeviceRef.current = connectedSmartCubeRef.current;
       attemptSplitRecorder.begin({
         bldMemo: (storeRef.current?.settings.bldMemo ?? true) && isBldEvent(entry.event),
         multiStage: (storeRef.current?.settings.multiStage ?? false)
@@ -2497,6 +2500,9 @@ export function App({ host }: { host: InstalledAppHost }) {
     },
   });
   timingRunningRef.current = timer.machine.phase === 'running';
+  useEffect(() => {
+    if (timer.machine.phase !== 'running') smartCubeAttemptDeviceRef.current = undefined;
+  }, [timer.machine.phase]);
   timerPhaseRef.current = timer.machine.phase;
   cancelTimerArmRef.current = timer.cancelArm;
   const timerRef = useRef(timer);
@@ -4158,6 +4164,8 @@ cornerSlot: smartCube.phase === 'connected' ? (
                       moves={[...smartCubeAnchor.moves]}
                       onViewChange={setSmartCubeRenderedView}
                       useGyro={store!.settings.gyroEnabled}
+                      sensorBasis={sensorBasisForBrand(smartCube.model)}
+                      mirror={mirrorForBrand(smartCube.model)}
                       quatRef={store!.settings.gyroEnabled ? smartCubeQuatRef : undefined}
                     />
                   </div>

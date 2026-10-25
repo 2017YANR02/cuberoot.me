@@ -14,12 +14,14 @@ function Probe({
   enabled,
   inspectionSec,
   onStart,
+  smartCubeActive,
   onController,
 }: {
   canStart: boolean;
   enabled: boolean;
   inspectionSec: number;
   onStart?(startedAtMs: number): void;
+  smartCubeActive?: () => boolean;
   onController(controller: TimerController): void;
 }) {
   const controller = useTimerController({
@@ -29,6 +31,7 @@ function Probe({
     inspectionSec,
     onComplete: () => undefined,
     onStart,
+    smartCubeActive,
   });
   useEffect(() => onController(controller), [controller, onController]);
   return null;
@@ -77,6 +80,25 @@ describe('mobile timer controller source invalidation', () => {
       controller.pressDown();
     });
   };
+
+  it('blocks manual presses without blocking the smart-cube attempt', async () => {
+    await act(async () => root.render(<Probe canStart enabled inspectionSec={0}
+      smartCubeActive={() => true} onController={value => { controller = value; }} />));
+    await act(async () => {
+      expect(controller.pressDown()).toBe(false);
+      expect(controller.pressUp()).toBe(false);
+      expect(controller.armFromCube()).toBe(true);
+      expect(controller.startFromCube()).toBe(true);
+    });
+    expect(controller.machine.phase).toBe('running');
+    await act(async () => {
+      expect(controller.pressDown()).toBe(false);
+      expect(controller.pressUp()).toBe(false);
+    });
+    expect(controller.machine.phase).toBe('running');
+    await act(async () => { expect(controller.stopFromCube()).toBe(true); });
+    expect(controller.machine.phase).toBe('stopped');
+  });
 
   const release = async () => {
     await act(async () => {
