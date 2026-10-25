@@ -29,6 +29,7 @@ const host: WorkspaceHost = {
       if (rejectSave) throw new Error('Reload before saving');
       if (pendingSave) await pendingSave;
       if (action === 'checklist') lists = lists.map(list => list.id === (body as Checklist).id ? { ...body as Checklist, version: list.version + 1 } : list);
+      if (action === 'checklist-delete') lists = lists.filter(list => list.id !== (body as Checklist).id);
       if (action === 'schedule') {
         const saved = { ...body as Schedule, version: (body as Schedule).version + 1, canEdit: true, projectName: null, projectActive: null };
         schedules = schedules.some(row => row.id === saved.id) ? schedules.map(row => row.id === saved.id ? saved : row) : [...schedules, saved];
@@ -329,6 +330,9 @@ it('preserves unsaved task text when another checklist item is completed', async
 
 it('does not let a delayed refresh overwrite a successfully saved checkbox version', async () => {
   await mount(h(Checklists));
+  rejectSave = true;
+  await act(async () => container.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click());
+  rejectSave = false;
   let resolveRead!: () => void;
   pendingRead = new Promise<void>(resolve => { resolveRead = resolve; });
   await click('Reload');
@@ -337,6 +341,49 @@ it('does not let a delayed refresh overwrite a successfully saved checkbox versi
   expect(container.querySelector('.is-done')?.textContent).toContain('First');
   await act(async () => container.querySelector<HTMLInputElement>('.is-done input')!.click());
   expect(calls.at(-1)).toMatchObject({ action: 'checklist', body: { version: 2 } });
+});
+
+it('confirms whole-checklist deletion, supports cancellation and retains failed deletions', async () => {
+  await mount(h(Checklists));
+  expect(container.querySelector('.workspace-toolbar [aria-label="Reload"]')).toBeNull();
+  expect(container.querySelector('.workspace-check-items [aria-label*="Delete"]')).toBeNull();
+  await click('Delete checklist: Launch');
+  expect(container.querySelector('dialog')?.textContent).toContain('Launch');
+  expect(container.querySelector('dialog')?.textContent).toContain('2 tasks');
+  expect(calls).toHaveLength(0);
+  await click('Cancel');
+  expect(container.querySelector('dialog')).toBeNull();
+  expect(container.querySelector('.workspace-checklist')).not.toBeNull();
+  await click('Delete checklist: Launch');
+  rejectSave = true;
+  await click('Delete checklist');
+  expect(container.querySelector('dialog')?.textContent).toContain('Reload before saving');
+  expect(container.querySelector('.workspace-checklist')).not.toBeNull();
+  rejectSave = false;
+  await click('Delete checklist');
+  expect(calls.at(-1)).toEqual({ action: 'checklist-delete', body: { id: 'list', version: 1 } });
+  expect(container.querySelector('.workspace-checklist')).toBeNull();
+});
+
+it('does not restore a deleted checklist from an older pending read', async () => {
+  await mount(h(Checklists));
+  rejectSave = true;
+  await act(async () => container.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click());
+  rejectSave = false;
+  let resolveRead!: () => void;
+  pendingRead = new Promise<void>(resolve => { resolveRead = resolve; });
+  await click('Reload');
+  await click('Delete checklist: Launch');
+  await click('Delete checklist');
+  expect(container.querySelector('.workspace-checklist')).toBeNull();
+  await act(async () => resolveRead());
+  expect(container.querySelector('.workspace-checklist')).toBeNull();
+});
+
+it('hides checklist deletion when the project is read-only', async () => {
+  lists[0].canEdit = false;
+  await mount(h(Checklists));
+  expect(container.querySelector('[aria-label="Delete checklist: Launch"]')).toBeNull();
 });
 
 it('opens the same editor from a timeline task and copies a schedule with shifted dates', async () => {

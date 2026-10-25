@@ -123,6 +123,19 @@ suite('workspace shared planning persistence', () => {
     expect(await service.get(alice, 'checklists', new URLSearchParams())).toMatchObject({ checklists: [{ version: 2, items: [{ done: true }] }] });
   });
 
+  it('deletes entire checklists with access, version and audit checks', async () => {
+    const input = checklist();
+    await service.post(alice, 'checklist', input);
+    await expect(service.post(outsider, 'checklist-delete', { id: input.id, version: 1 })).rejects.toMatchObject({ status: 404 });
+    await expect(service.post(bob, 'checklist-delete', { id: input.id, version: 0 })).rejects.toMatchObject({ status: 409 });
+    expect(await q('SELECT id FROM workspace_checklists WHERE id=?', [input.id])).toHaveLength(1);
+    expect(await service.post(bob, 'checklist-delete', { id: input.id, version: 1 })).toEqual({ id: input.id });
+    expect(await q('SELECT id FROM workspace_checklists WHERE id=?', [input.id])).toHaveLength(0);
+    expect(await q("SELECT target FROM workspace_audit WHERE action='checklist.delete' AND target=?", [input.id])).toEqual([{ target: input.id }]);
+    expect(await q('SELECT id FROM workspace_checklists WHERE id=?', [legacyChecklist])).toHaveLength(1);
+    await expect(service.post(bob, 'checklist-delete', { id: input.id, version: 1 })).rejects.toMatchObject({ status: 404 });
+  });
+
   it('retains report hours and revision snapshots across older clients', async () => {
     const input = { id: randomUUID(), projectId: null, version: 0, workDate: '2026-10-19', status: 'submitted', visibility: 'company', progress: 'Done', resultUrl: '', help: '', next: '', startHour: 9, endHour: 18 };
     await service.post(alice, 'report', input);
@@ -155,11 +168,14 @@ suite('workspace shared planning persistence', () => {
     await service.post(admin, 'project', { id: project, version: 1, name: 'Project', url: '', active: false, memberIds: [aliceId, bobId] });
     await expect(service.post(bob, 'checklist', input)).rejects.toMatchObject({ status: 403 });
     expect(await service.get(bob, 'checklists', new URLSearchParams())).toMatchObject({ checklists: [{ canEdit: false }] });
+    const archived = await service.get(bob, 'checklists', new URLSearchParams()) as { checklists: { id: string; version: number }[] };
+    await expect(service.post(bob, 'checklist-delete', archived.checklists[0])).rejects.toMatchObject({ status: 403 });
     const schedules = await service.get(alice, 'schedules', new URLSearchParams()) as { schedules: { id: string; version: number }[] };
     expect(schedules).toMatchObject({ schedules: [{ canEdit: false }] });
     await expect(service.post(alice, 'schedule', { ...schedules.schedules[0], active: true })).rejects.toMatchObject({ status: 403 });
     await service.post(admin, 'member', { userId: 3, name: 'Bob', role: 'member', active: false });
     await expect(service.get(bob, 'checklists', new URLSearchParams())).rejects.toMatchObject({ status: 403 });
+    await expect(service.post(bob, 'checklist-delete', archived.checklists[0])).rejects.toMatchObject({ status: 403 });
   });
 
   it('preserves shared company content after its author account is deleted', async () => {

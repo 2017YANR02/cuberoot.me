@@ -90,5 +90,16 @@ export function planningService(q: QueryRunner, access: PlanningAccess) {
       await access.audit('checklist.save', data.id);
       return { id: data.id, version: data.version + 1 };
     },
+    async deleteChecklist(input: unknown) {
+      const data = z.object({ id: uuid, version }).parse(input);
+      const old = await existing(data.id);
+      if (!old) access.fail('清单不存在或无权访问 / Checklist unavailable', 404);
+      if (old.version !== data.version) access.fail('清单已更新，请重新加载 / Reload checklist before deleting', 409);
+      await access.projectWrite(old.projectId);
+      const deleted = await q<{ id: string }>('DELETE FROM workspace_checklists WHERE id=? AND version=? RETURNING id', [data.id, data.version]);
+      if (!deleted.length) access.fail('清单已更新，请重新加载 / Reload checklist before deleting', 409);
+      await access.audit('checklist.delete', data.id);
+      return { id: data.id };
+    },
   };
 }

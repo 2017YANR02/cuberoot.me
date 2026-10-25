@@ -126,6 +126,7 @@ export function createWorkspaceService(query: QueryRunner, transact: Transaction
       return write(identity,async(q,a)=>{
         switch(action){
           case 'checklist': return planning(q, a).saveChecklist(input);
+          case 'checklist-delete': return planning(q, a).deleteChecklist(input);
           case 'schedule': return planning(q, a).saveSchedule(input);
           case 'member': {
             admin(a);const data=memberInput.parse(input);

@@ -30,9 +30,10 @@
 .workspace-schedules .workspace-toolbar { margin-bottom: 8px; gap: 8px 16px; }
 .workspace-schedules .workspace-schedule-heading { justify-content: flex-start; gap: 8px 24px; margin-bottom: 16px; }
 .workspace-schedules .staff-toolbar-actions { gap: 0; }
-.workspace-schedule-picker { display: flex; align-items: end; flex-wrap: wrap; gap: 8px; max-width: 100%; }
 .workspace-text-action.btn { padding-inline: 8px; border: 0; background: transparent; color: var(--accent); box-shadow: none; }
 .workspace-text-action.btn:is(:hover, :focus-visible):not(:disabled) { background: var(--accent-soft); }
+.workspace-danger-action.btn { color: var(--destructive); background: transparent; border: 0; box-shadow: none; }
+.workspace-danger-action.btn:is(:hover, :focus-visible):not(:disabled) { background: color-mix(in srgb, var(--destructive) 10%, transparent); }
 .workspace-controls { border: 0; padding: 0; margin: 0; min-width: 0; }
 .workspace-task-editor { margin-block: 24px; }
 .workspace-gantt-scroll { max-width: 100%; overflow: auto; max-height: 70vh; border: 1px solid var(--border-default); border-radius: 8px; }
