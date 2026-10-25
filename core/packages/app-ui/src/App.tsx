@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom';
-import { TimerResultsTabs, TimerSoloLayoutEditor } from '@cuberoot/timer-ui';
+import { TimerPracticeContentPicker, TimerPracticeMethodPicker, TimerResultsTabs, TimerSoloLayoutEditor } from '@cuberoot/timer-ui';
+import { timerPracticeContents, selectedTimerPracticeContent, type TimerPracticeContent } from '@cuberoot/shared/timer';
 import { SiteCorners } from "@2017yanr02/continuous-corners/react";
 import { shareOrDownloadBackup } from './file-export';
 import { InstalledUpdateNotice } from './AndroidUpdateNotice';
@@ -104,8 +105,6 @@ import {
   formatTimerTimingDisplay,
   generateTimerDrillScramble,
   isCnEligible,
-  TIMER_333_TRAINING_GROUPS,
-  timerPuzzleSelection,
   generateTimerScramble,
   histBack,
   histForward,
@@ -647,6 +646,8 @@ export function App({ host }: { host: InstalledAppHost }) {
   const manualScrambles = store?.settings.manualScrambles ?? '';
   const scramble222Mode = store?.settings.scramble222Mode ?? 'optimal';
   const scramble222Type = store?.settings.scramble222Type ?? 'full';
+  const practiceContents = useMemo(() => timerPracticeContents(activeEvent), [activeEvent]);
+  const practiceContent = selectedTimerPracticeContent(practiceContents, activeEvent, scramble222Type, null);
   const byStepsSettings: TimerByStepsSettings = {
     genByStepsOn: store?.settings.genByStepsOn ?? DEFAULT_TIMER_BY_STEPS_SETTINGS.genByStepsOn,
     genStepsMetric: store?.settings.genStepsMetric ?? DEFAULT_TIMER_BY_STEPS_SETTINGS.genStepsMetric,
@@ -3180,6 +3181,28 @@ export function App({ host }: { host: InstalledAppHost }) {
     });
   }, [activeEvent, announce, applyStoreSnapshot, beginTimerContextMutation, copy.actionFailed, copy.finishAttemptFirst, endTimerContextMutation, invalidateCurrentScramble, recoverLatestStoreSnapshot, smartCube, timer]);
 
+  const openPractice = (entry: TimerPracticeContent, method: 'train' | 'memo' | 'recognize', select = false) => {
+    if (!sourceControlsEnabled) return;
+    const path = method === 'recognize' ? entry.recognizePath
+      : select ? entry.selectPath ?? entry.runPath : entry.runPath ?? entry.path;
+    if (!path) return;
+    const [pathname, search] = path.split('?');
+    const params = new URLSearchParams({ event: activeEvent, training: pathname });
+    for (const [key, value] of new URLSearchParams(search)) params.set(`train.${key}`, value);
+    if (method !== 'recognize') params.set('train.mode', method === 'memo' ? 'memo' : 'recap');
+    openToolsRoute(`/timer?${params}`);
+  };
+  const choosePracticeContent = (id: string) => {
+    if (!sourceControlsEnabled) return;
+    const entry = practiceContents.find(item => item.id === id);
+    if (!entry || entry.id === practiceContent?.id) return;
+    if (!entry.timer) { openPractice(entry, 'train', !!entry.selectPath); return; }
+    invalidateCurrentScramble();
+    if (entry.id !== 'solve') setScrambleSource('random');
+    if (entry.timer.type222) updateScramble222Type(entry.timer.type222);
+    selectTimerEvent(entry.timer.event);
+  };
+
   const updateSolve = useCallback((solve: Solve, changes: Partial<Pick<Solve, 'penalty' | 'comment' | 'bld' | 'reconOk'>>) => {
     const last = solvesRef.current[solvesRef.current.length - 1];
     if (last?.id === solve.id && changes.penalty) setLastPenalty(changes.penalty);
@@ -3977,32 +4000,35 @@ export function App({ host }: { host: InstalledAppHost }) {
                   {smartCubeDeviceCenter}
                   <TimerPuzzlePicker
                     showArrow={false}
-                    combineScrambleTypes={timerPuzzleSelection(activeEvent).puzzle === '333'}
+                    combineScrambleTypes
                     dataNoTimer
                     disabled={timer.machine.phase === 'running' || timerContextMutationBusy}
                     groups={eventPickerGroups}
                     onOpenChange={handleTimerOverlayOpenChange}
-                    onSelect={selectTimerEvent}
+                    onSelect={id => {
+                      if (id === '222') updateScramble222Type('full');
+                      selectTimerEvent(id);
+                    }}
                     open={openOverlay === TIMER_OVERLAY_IDS.puzzlePicker}
                     puzzleLabel={copy.puzzle}
                     scrambleTypeLabel={copy.scrambleType}
                     selectedEvent={activeEvent}
                   />
+                  <TimerPracticeContentPicker entries={practiceContents} selectedId={practiceContent?.id}
+                    label={practiceContent?.title[language] ?? (language === 'zh' ? '请选择' : 'Choose content')}
+                    disabled={!sourceControlsEnabled} language={language} onSelect={choosePracticeContent}
+                    open={openOverlay === TIMER_OVERLAY_IDS.practiceContent} onOpenChange={handleTimerOverlayOpenChange} />
+                  {practiceContent && (practiceContent.runPath || practiceContent.recognizePath) && <TimerPracticeMethodPicker
+                    value="train" recall={!!practiceContent.runPath} recognize={!!practiceContent.recognizePath}
+                    disabled={!sourceControlsEnabled} language={language}
+                    open={openOverlay === TIMER_OVERLAY_IDS.practiceMethod}
+                    onOpenChange={open => handleTimerOverlayOpenChange(open, { id: TIMER_OVERLAY_IDS.practiceMethod, reason: 'trigger' })}
+                    onChange={method => { if (method !== 'train') openPractice(practiceContent, method); }} />}
                   <TimerScrambleSourceSelect
                     showArrow={false}
                     language={language}
-                    trainingItems={timerPuzzleSelection(activeEvent).puzzle === '333'
-                      ? eventPickerGroups.flatMap(group => group.items)
-                        .filter(item => TIMER_333_TRAINING_GROUPS.some(group => (group.events as readonly string[]).includes(item.id)))
-                        .map(item => ({ value: item.id, label: item.label }))
-                      : []}
-                    trainingValue={timerPuzzleSelection(activeEvent).puzzle === '333' && activeEvent !== '333' ? activeEvent : undefined}
-                    onTrainingChange={id => {
-                      if (!sourceControlsEnabled) return;
-                      invalidateCurrentScramble();
-                      setScrambleSource('random');
-                      selectTimerEvent(id);
-                    }}
+                    trainingItems={practiceContent?.selectPath ? [{ value: 'cases', label: language === 'zh' ? '选定情况' : 'Selected cases' }] : []}
+                    onTrainingChange={() => { if (practiceContent) openPractice(practiceContent, 'train', true); }}
                     className="shell-scramble-source-select"
                     disabled={!sourceControlsEnabled}
                     labels={{
@@ -4019,12 +4045,9 @@ export function App({ host }: { host: InstalledAppHost }) {
                         announce(copy.finishAttemptFirst);
                         return;
                       }
-                      const selection = timerPuzzleSelection(activeEvent);
-                      const leavingTraining = source !== 'manual' && selection.puzzle === '333' && activeEvent !== '333';
-                      if (source === scrambleSourceRef.current && !leavingTraining) return;
+                      if (source === scrambleSourceRef.current) return;
                       invalidateCurrentScramble();
                       setScrambleSource(source);
-                      if (leavingTraining) selectTimerEvent('333');
                     }}
                     onOpenChange={handleTimerOverlayOpenChange}
                     open={openOverlay === TIMER_OVERLAY_IDS.scrambleSource}

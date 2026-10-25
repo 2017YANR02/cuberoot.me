@@ -1,6 +1,8 @@
 import { useCallback, useRef, useState } from 'react';
 
 export const TIMER_OVERLAY_IDS = {
+  practiceContent: 'timer.practice-content',
+  practiceMethod: 'timer.practice-method',
   drillPicker: 'timer.drill-picker',
   stageSolver: 'timer.stage-solver',
   bulkTool: 'timer.bulk-tool',

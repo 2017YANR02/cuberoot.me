@@ -1,0 +1,40 @@
+.timer-practice-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  /* Match the shared timer toolbar, including non-button labels. */
+  font-size: 13px;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.shell-players-select.timer-practice-players {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.shell-topbar-left > .timer-practice-control {
+  margin-inline: 4px;
+}
+
+.timer-practice-control .pp-trigger,
+.timer-practice-control .compact-select-trigger {
+  font-size: inherit;
+}
+
+/* Plain selects underline on hover by default; toolbar controls never do,
+   including touch browsers that retain the hover state after tapping. */
+:is(.shell-topbar, .timer-training-workspace__toolbar) :is(a, button),
+:is(.shell-topbar, .timer-training-workspace__toolbar) :is(a, button):is(:hover, :focus, :active),
+:is(.shell-topbar, .timer-training-workspace__toolbar) .compact-select--plain .compact-select-trigger:hover:not(:disabled) {
+  text-decoration: none;
+}
+
+.timer-practice-control--content .pp-trigger {
+  color: var(--foreground);
+}
+
+.timer-practice-control--content .pp-trigger-label {
+  font-weight: 500;
+}
+

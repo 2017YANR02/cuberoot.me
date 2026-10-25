@@ -149,6 +149,30 @@ afterEach(async () => {
 });
 
 describe('installed App GAN lifecycle integration', () => {
+  it('keeps the selected content when changing source and opens recall in the shared training surface', async () => {
+    const clickText = async (selector: string, text: string) => {
+      const button = [...document.querySelectorAll<HTMLButtonElement>(selector)].find(node => node.textContent?.trim() === text)!;
+      expect(button).toBeDefined();
+      await act(async () => button.click());
+    };
+    await act(async () => container.querySelector<HTMLButtonElement>('.timer-practice-control--content button')!.click());
+    await clickText('[role="menuitem"]', 'CFOP');
+    await clickText('[role="menuitem"]', 'PLL');
+    await settle();
+    expect((memory.data as TimerStoreData).settings.event).toBe('pll');
+    await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Scramble source"]')!.click());
+    await clickText('[role="option"]', 'Manual input');
+    expect((memory.data as TimerStoreData).settings.event).toBe('pll');
+    await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Practice method"]')!.click());
+    await clickText('[role="option"]', 'Recall');
+    const frame = container.querySelector<HTMLIFrameElement>('iframe')!;
+    const url = new URL(frame.src);
+    expect(url.pathname).toContain('/timer');
+    expect(url.searchParams.get('event')).toBe('pll');
+    expect(url.searchParams.get('training')).toBe('/alg/3x3/pll/run');
+    expect(url.searchParams.get('train.mode')).toBe('memo');
+  });
+
   it('edits and persists layout while blocking cube auto-start, and Back exits editing', async () => {
     const edit = container.querySelector<HTMLButtonElement>('[aria-label="Edit layout"]')!;
     await act(async () => edit.click());

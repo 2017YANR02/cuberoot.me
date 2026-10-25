@@ -5,7 +5,7 @@ import { DOUYIN_BASIC_TIMER_EVENTS } from '@cuberoot/shared/douyin-content';
 
 import { useMemo, type ReactNode } from 'react';
 import { Settings } from '@app-foundation/icons/lucide';
-import { TimerPuzzlePicker } from '@cuberoot/timer-ui';
+import { TimerPracticeMethodPicker, TimerPracticeContentPicker, TimerPuzzlePicker } from '@cuberoot/timer-ui';
 import { TIMER_EVENT_PICKER_GROUPS, timerEventIdFromSelector, type EventId } from '@cuberoot/shared/timer';
 import { useTimerSearchParams as useSearchParams } from '@/lib/timer-practice-url-adapter';
 import { parseAsString, useQueryState, useQueryStates } from 'nuqs';
@@ -176,7 +176,6 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
     } else startTimer(content);
   };
   const hasPractice = !!(content?.runPath || content?.timer);
-  const specialGroups = [...new Map(contents.filter(item => item.group).map(item => [item.group!.id, item.group!])).values()];
   const contentLabel = content ? tr(content.title) : tr(target?.title ?? { zh: '请选择', en: 'Choose content' });
   const casesLabel = method === 'memo' && ownsSession && selectedCount === 0
     ? params.get('train.scope') ? tr({ zh: '当前分组', en: 'Current group' }) : tr({ zh: '全部情况', en: 'All cases' })
@@ -227,37 +226,11 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
         }}
       />
     </span>}
-    <span className="timer-practice-control timer-practice-control--content">
-      <TimerPuzzlePicker
-        showArrow={false}
-        disabled={navigationDisabled} puzzleLabel={tr({ zh: '内容', en: 'Content' })}
-        triggerLabel={contentLabel} selectedEvent={content?.id ?? ''} showSubmenuHeading={false}
-        showItemIcons={false} dataNoTimer
-        groups={[{ id: 'content', label: '', items: contents.filter(item => !item.group).map(item => ({ id: item.id, label: tr(item.title) })) },
-          { id: 'tools', label: '', items: specialGroups.map(group => ({
-            id: group.id, label: tr(group.title),
-            children: contents.filter(item => item.group?.id === group.id).map(item => ({ id: item.id, label: tr(item.title) })),
-          })) }]}
-        onSelect={chooseContent}
-      />
-    </span>
-    {hasPractice && (content?.runPath || content?.recognizePath) && <span className="timer-practice-control">
-      <CompactSelect<'train' | 'recognize' | 'memo'>
-        align="center"
-        variant="plain" showArrow={false} disabled={methodLocked || restrictMethod} dataNoTimer
-        ariaLabel={tr({ zh: '练习方式', en: 'Practice method' })}
-        label={method === 'recognize' ? tr({ zh: '识别', en: 'Recognition' })
-          : method === 'memo' ? tr({ zh: '记忆', en: 'Recall' }) : tr({ zh: '训练', en: 'Training' })}
-        value={method === 'recognize' || method === 'memo' ? method : 'train'}
-        items={[
-          { value: 'train', label: tr({ zh: '训练', en: 'Training' }) },
-          ...(content?.recognizePath ? [{ value: 'recognize' as const, label: tr({ zh: '识别', en: 'Recognition' }) }] : []),
-          ...(content?.runPath ? [{ value: 'memo' as const, label: tr({ zh: '记忆', en: 'Recall' }) }] : []),
-        ]} onChange={task => {
-          chooseMethod(task);
-        }}
-      />
-    </span>}
+    <TimerPracticeContentPicker entries={contents} selectedId={content?.id} label={contentLabel}
+      disabled={navigationDisabled} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} onSelect={chooseContent} />
+    {hasPractice && (content?.runPath || content?.recognizePath) && <TimerPracticeMethodPicker
+      value={method} recall={!!content.runPath} recognize={!!content.recognizePath} disabled={methodLocked || restrictMethod}
+      language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} onChange={chooseMethod} />}
     {practiceSource}
     {beforeSettings}
     {practiceSource && !isRun && onAdvancedSettings && <>
