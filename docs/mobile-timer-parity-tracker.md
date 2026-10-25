@@ -728,3 +728,6 @@ Web/App 共用 replay 输入/解码/短链读取与复盘弹窗，More 12/12 已
 ### 2026-10-06 联机视频共享增量
 
 Web 与五端 App 已接同一视频 API 契约、授权生命周期、画面与控制条；权限和网络放行保留在宿主。迟到 token/媒体授权、代际切换、退出和后台清理已有定向回归。源码、本地构建和真实设备缺口见 `mobile-app-roadmap.md` 同日“联机视频共享接入”记录；Harmony HAP 与 Windows native、真实音视频及五平台完整矩阵未验收。多人多魔方按用户要求暂不推进，入口不变；整体继续 **ACTIVE — NOT COMPLETE**。
+### 2026-10-25 Windows Timer 布局同步
+
+Web 私有 shell 中的单人/联机计时画布正常流布局、单人间距、宽屏数字缩放与魔方预览剩余高度分配迁入 `timer-ui/timing-surface.css`；Web 与安装端消费同一规则，宿主仅保留视口与导航约束。Web 的布局编辑器仍属 Web 接入，安装端暂用共享默认间距。已有 live-cube visibility 与 session wrapper 定向回归 5/5 通过；未进行浏览器自动化或真机视觉验收，整体继续 **ACTIVE — NOT COMPLETE**。
