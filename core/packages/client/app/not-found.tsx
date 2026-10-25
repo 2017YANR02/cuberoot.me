@@ -10,11 +10,13 @@ export const metadata: Metadata = {
 const messages = {
   en: {
     description: 'This page could not be found. Your next solve is still here',
+    home: 'Back to home',
     timer: 'Timer',
     algorithms: 'Algorithms',
   },
   zh: {
     description: '这个页面不存在，不过下一次复原还在这里',
+    home: '回到首页',
     timer: '计时器',
     algorithms: '公式库',
   },
@@ -38,6 +40,7 @@ export default function NotFound() {
             <p className={styles.description}>{copy.description}</p>
             <nav className={styles.links}>
               {/* Object hrefs preserve the locale even outside [lang]/layout. */}
+              <AppLink href={{ pathname: prefix || '/' }} prefetch={false}>{copy.home}</AppLink>
               <AppLink href={{ pathname: `${prefix}/timer` }} prefetch={false}>{copy.timer}</AppLink>
               <AppLink href={{ pathname: `${prefix}/alg` }} prefetch={false}>{copy.algorithms}</AppLink>
             </nav>
