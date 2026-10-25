@@ -5,6 +5,7 @@ import { parseAsInteger, parseAsString, parseAsStringEnum, useQueryState } from 
 import { ErrorNotice, Field, Form, useResource, useWorkspace, value, today, type ProjectList, type StaffActor } from '@app-foundation/workspace-ui';
 import { copyScheduleTasks, planningDate, scheduleRange, type Schedule, type ScheduleTask } from '@cuberoot/shared/workspace-planning';
 import { useT } from '@/hooks/useT';
+import { DateInput } from '@/components/DateInput';
 import ScheduleTimeline from './ScheduleTimeline';
 
 export default function Schedules({ actor }: { actor: StaffActor }) {
@@ -51,9 +52,9 @@ export default function Schedules({ actor }: { actor: StaffActor }) {
     <div className="staff-actions workspace-toolbar">
       {manager && <Button onClick={() => begin('new')}>{t('新建排期', 'New schedule')}</Button>}
       <Button variant="secondary" onClick={() => { setEditing(null); setTask(null); resource.reload(); }}>{t('重新加载', 'Reload')}</Button>
-      <Field label={t('排期', 'Schedule')}><select value={schedule?.id ?? ''} onChange={event => { void setSelected(event.target.value); setEditing(null); setTask(null); }}><option value="" disabled>{t('选择排期', 'Select schedule')}</option>{choices.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></Field>
-      <Field label={t('视图', 'View')}><select value={scale} onChange={event => void setScale(event.target.value as typeof scale)}><option value="day">{t('日', 'Day')}</option><option value="week">{t('周', 'Week')}</option><option value="month">{t('月', 'Month')}</option></select></Field>
-      <Field label={t('状态', 'Status')}><select value={status} onChange={event => { setStatus(event.target.value); setEditing(null); setTask(null); }}><option value="active">{t('进行中', 'Active')}</option><option value="all">{t('含已归档', 'Include archived')}</option></select></Field>
+      <Field label={t('排期', 'Schedule')}><select className="workspace-toolbar-select" value={schedule?.id ?? ''} onChange={event => { void setSelected(event.target.value); setEditing(null); setTask(null); }}><option value="" disabled>{t('选择排期', 'Select schedule')}</option>{choices.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></Field>
+      <Field label={t('视图', 'View')}><select className="workspace-toolbar-select" value={scale} onChange={event => void setScale(event.target.value as typeof scale)}><option value="day">{t('日', 'Day')}</option><option value="week">{t('周', 'Week')}</option><option value="month">{t('月', 'Month')}</option></select></Field>
+      <Field label={t('状态', 'Status')}><select className="workspace-toolbar-select" value={status} onChange={event => { setStatus(event.target.value); setEditing(null); setTask(null); }}><option value="active">{t('进行中', 'Active')}</option><option value="all">{t('含已归档', 'Include archived')}</option></select></Field>
     </div>
     <ErrorNotice error={resource.error} retry={resource.reload} />
     <ErrorNotice error={projects.error} retry={projects.reload} />
@@ -70,7 +71,7 @@ export default function Schedules({ actor }: { actor: StaffActor }) {
           <Field label={t('共享范围', 'Shared with')}><select name="projectId" disabled={editing === 'settings' || !projects.data} defaultValue={editing === 'new' ? '' : schedule?.projectId ?? ''}><option value="">{t('公司全员', 'All employees')}</option>{projects.data?.projects.filter(project => project.active || project.id === schedule?.projectId).map(project => <option key={project.id} value={project.id}>{project.name}</option>)}</select></Field>
           <Field label={t('状态', 'Status')}><select name="active" defaultValue={String(editing === 'settings' ? schedule?.active : true)}><option value="true">{t('进行中', 'Active')}</option><option value="false">{t('已归档', 'Archived')}</option></select></Field>
         </div>
-        {editing === 'copy' && !!schedule?.tasks.length && <Field label={t('新的开始日期', 'New start date')}><input type="date" name="start" required defaultValue={planningDate(scheduleRange(schedule.tasks)!.start)} /></Field>}
+        {editing === 'copy' && !!schedule?.tasks.length && <Field label={t('新的开始日期', 'New start date')}><DateInput name="start" required defaultValue={planningDate(scheduleRange(schedule.tasks)!.start)} /></Field>}
         <div className="staff-actions"><Button type="submit">{t('保存', 'Save')}</Button><Button variant="secondary" onClick={() => setEditing(null)}>{t('取消', 'Cancel')}</Button></div>
       </Form>
     </section>}
@@ -108,7 +109,7 @@ function TaskEditor({ task, groups, existing, onSave, onCancel }: { task: Schedu
     <Field label={t('名称', 'Name')}><input name="name" required maxLength={120} defaultValue={task.name} /></Field>
     <div className="staff-form-row"><Field label={t('分组', 'Group')}><input name="group" required maxLength={60} defaultValue={task.group} list="workspace-schedule-groups" /><datalist id="workspace-schedule-groups">{groups.map(group => <option key={group} value={group} />)}</datalist></Field><Field label={t('负责人（选填）', 'Owner (optional)')}><input name="owner" maxLength={60} defaultValue={task.owner} /></Field></div>
     <div className="staff-form-row"><Field label={t('类型', 'Type')}><select value={kind} onChange={event => setKind(event.target.value as ScheduleTask['kind'])}><option value="task">{t('任务', 'Task')}</option><option value="milestone">{t('里程碑', 'Milestone')}</option></select></Field><Field label={t('进度 %', 'Progress %')}><input name="progress" type="number" min={0} max={100} step={1} required defaultValue={task.progress} /></Field></div>
-    <div className="staff-form-row"><Field label={t('开始日期', 'Start date')}><input type="date" required value={start} onChange={event => setStart(event.target.value)} /></Field>{kind === 'task' && <Field label={t('结束日期', 'End date')}><input name="end" type="date" required min={start} defaultValue={task.end} /></Field>}</div>
+    <div className="staff-form-row"><Field label={t('开始日期', 'Start date')}><DateInput required value={start} onChange={setStart} /></Field>{kind === 'task' && <Field label={t('结束日期', 'End date')}><DateInput name="end" required min={start} defaultValue={task.end} /></Field>}</div>
     <div className="staff-actions"><Button type="submit">{t('保存', 'Save')}</Button><Button variant="secondary" onClick={onCancel}>{t('取消', 'Cancel')}</Button>{existing && <Button type="submit" variant="secondary" value="remove" formNoValidate>{t('移除任务', 'Remove task')}</Button>}</div>
   </Form></section>;
 }

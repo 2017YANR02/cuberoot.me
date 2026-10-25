@@ -53,7 +53,7 @@
 @media (max-width: 600px) {
   .workspace-gantt-label { flex-basis: 150px; width: 150px; }
   .workspace-toolbar .staff-field { max-width: 100%; }
-  .workspace-toolbar select { max-width: 100%; }
+  .workspace-toolbar-select { max-width: 100%; }
   .workspace-list-heading .staff-actions { flex-wrap: wrap; }
 }
 
