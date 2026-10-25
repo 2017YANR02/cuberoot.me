@@ -375,3 +375,4 @@ export { TimerSoloLayoutEditor, type TimerSoloLayoutSettings } from './TimerSolo
 export { TimerResultsTabs } from './TimerResultsTabs';
 export { TimerPracticeContentPicker } from './TimerPracticeContentPicker';
 export { TimerPracticeMethodPicker, type TimerPracticeMethod } from './TimerPracticeMethodPicker';
+export { useTimerWcaCompetitionFilters } from './wca-competition-filters';

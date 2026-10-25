@@ -23,6 +23,7 @@ import {
   type TimerWcaSourceSettings,
 } from '@cuberoot/shared/timer';
 import {
+  useTimerWcaCompetitionFilters,
   TimerWcaDifficultyConfig,
   TimerWcaSourceConfig,
   type TimerWcaSourceDataAdapter,
@@ -56,16 +57,8 @@ export default function WcaSourceConfig({
   const wcaEventId = timerWcaScrambleEventId(event);
   const [today, setToday] = useState('');
   useEffect(() => setToday(toLocalIsoDate()), []);
-  const [period, setPeriod] = useState('all');
-  const [country, setCountry] = useState('');
-  const periodFrom = useMemo(() => {
-    if (!today || period === 'all') return '';
-    const [year, month, day] = today.split('-').map(Number);
-    const date = new Date(year, month - 1, day);
-    // Inclusive calendar-day ranges; local fields avoid timezone/DST shifts.
-    date.setDate(date.getDate() - Number(period) + 1);
-    return toLocalIsoDate(date);
-  }, [period, today]);
+  const competitionFilters = useTimerWcaCompetitionFilters({ today, language: isZh ? 'zh' : 'en', disabled,
+    renderCountry: props => <CountryInput {...props} /> });
   const [topControlsSlot, setTopControlsSlot] = useState<HTMLSpanElement | null>(null);
   const sourceAdapter = useMemo<TimerWcaSourceDataAdapter>(() => ({
     async loadCompetitions() {
@@ -99,33 +92,7 @@ export default function WcaSourceConfig({
   const sourceControls = (
       <TimerWcaSourceConfig
         popupContainer={sourceSlot ?? undefined}
-        competitionFilters={{
-          from: periodFrom,
-          country,
-          render: (countries) => (
-            <fieldset className="wca-src-filters" disabled={disabled} aria-label={tr({ zh: '筛选比赛', en: 'Filter competitions' })}>
-              <select
-                className="timer-wca-source-select"
-                aria-label={tr({ zh: '时间范围', en: 'Time range' })}
-                value={period}
-                onChange={(event) => setPeriod(event.target.value)}
-              >
-                <option value="all">{tr({ zh: '全部时间', en: 'All time' })}</option>
-                <option value="7">{tr({ zh: '近一周', en: 'Past week' })}</option>
-                <option value="30">{tr({ zh: '近一个月', en: 'Past month' })}</option>
-                <option value="365">{tr({ zh: '近一年', en: 'Past year' })}</option>
-              </select>
-              <CountryInput
-                ariaLabel={tr({ zh: '国家', en: 'Country' })}
-                placeholder={tr({ zh: '全部国家', en: 'All countries' })}
-                allLabel={tr({ zh: '全部国家', en: 'All countries' })}
-                restrictTo={country ? [...new Set([...countries, country])] : countries}
-                value={country}
-                onChange={(iso2) => setCountry(iso2.toUpperCase())}
-              />
-            </fieldset>
-          ),
-        }}
+        competitionFilters={competitionFilters}
         adapter={sourceAdapter}
         disabled={disabled}
         competitionDisplayName={(competitionId, canonicalName) => (

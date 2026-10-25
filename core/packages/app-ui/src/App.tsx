@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import { TimerPracticeContentPicker, TimerPracticeMethodPicker, TimerResultsTabs, TimerSoloLayoutEditor } from '@cuberoot/timer-ui';
+import { useTimerWcaCompetitionFilters, TimerPracticeContentPicker, TimerPracticeMethodPicker, TimerResultsTabs, TimerSoloLayoutEditor } from '@cuberoot/timer-ui';
 import { timerPracticeContents, selectedTimerPracticeContent, type TimerPracticeContent } from '@cuberoot/shared/timer';
 import { SiteCorners } from "@2017yanr02/continuous-corners/react";
 import { shareOrDownloadBackup } from './file-export';
@@ -2919,6 +2919,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   // and fades them only once timing is actually running.
   const sourceControlsEnabled = timer.machine.phase !== 'running'
     && !timerContextMutationBusy;
+  const wcaCompetitionFilters = useTimerWcaCompetitionFilters({ today: toLocalIsoDate(), language, disabled: !sourceControlsEnabled });
   const scrambleReady = attemptCanStart;
   const mappedRealSource = scrambleSource === 'wca'
     && timerSupportsRealWcaScrambles(activeEvent);
@@ -4093,6 +4094,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                   >
                     {wcaSourceSlot && createPortal(<TimerWcaSourceConfig
                       popupContainer={wcaSourceSlot}
+                      competitionFilters={wcaCompetitionFilters}
                       adapter={wcaSourceAdapter}
                       competitionDisplayName={(competitionId, canonicalName) => (
                         displayMobileWcaCompetitionName(competitionId, canonicalName, language)
