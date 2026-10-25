@@ -23,7 +23,7 @@ import QualityStandards from '../dev/team/QualityStandards';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Checklists from './Checklists';
 import Schedules from './Schedules';
-import { WorkspaceButton as Button, WorkspaceDialog } from './WorkspaceControls';
+import { WorkspaceButton as Button, WorkspaceDialog, WorkspaceMemberPicker } from './WorkspaceControls';
 import { DateInput } from '@/components/DateInput';
 
 // Product adapter: only CubeRoot auth headers and CubeRoot API are used here.
@@ -43,7 +43,7 @@ function Link({href,...props}:AnchorHTMLAttributes<HTMLAnchorElement>&{href:stri
 const sections=['mine','updates','projects','checklists','schedule','members','detail','onboarding','offboarding','sop','quality'] as const;
 function Workspace() {
   const lang=useLang();const router=useRouter();
-  const host=useMemo(()=>({api,Link,Button,Dialog:WorkspaceDialog,DateInput,t:(text:string)=>workspaceText(lang,text),navigate:(href:string)=>router.push(`${lang==='zh'?'/zh':''}${workspaceHref(href)}`)}),[lang,router]);
+  const host=useMemo(()=>({api,Link,Button,Dialog:WorkspaceDialog,DateInput,MemberPicker:WorkspaceMemberPicker,t:(text:string)=>workspaceText(lang,text),navigate:(href:string)=>router.push(`${lang==='zh'?'/zh':''}${workspaceHref(href)}`)}),[lang,router]);
   return <WorkspaceProvider host={host}><WorkspaceContent /></WorkspaceProvider>;
 }
 function WorkspaceContent() {

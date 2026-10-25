@@ -4,11 +4,11 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { parseAsString, useQueryState } from 'nuqs';
-import { WorkspaceProvider, ReportEditor, useResource, workspaceText, type WorkspaceHost } from '@app-foundation/workspace-ui';
+import { WorkspaceProvider, ReportEditor, Projects, useResource, workspaceText, type WorkspaceHost, type StaffProject } from '@app-foundation/workspace-ui';
 import type { Checklist, Schedule } from '@cuberoot/shared/workspace-planning';
 import Checklists from '@/app/[lang]/workspace/Checklists';
 import Schedules from '@/app/[lang]/workspace/Schedules';
-import { WorkspaceButton, WorkspaceDialog } from '@/app/[lang]/workspace/WorkspaceControls';
+import { WorkspaceButton, WorkspaceDialog, WorkspaceMemberPicker } from '@/app/[lang]/workspace/WorkspaceControls';
 import { DateInput } from '@/components/DateInput';
 import ScheduleTimeline from '@/app/[lang]/workspace/ScheduleTimeline';
 
@@ -18,6 +18,7 @@ let root: Root;
 let calls: { action: string; body: unknown }[];
 let lists: Checklist[];
 let schedules: Schedule[];
+let projects: StaffProject[];
 let rejectSave = false;
 let pendingSave: Promise<void> | undefined;
 let pendingRead: Promise<void> | undefined;
@@ -35,7 +36,7 @@ const host: WorkspaceHost = {
       return { id: (body as { id: string }).id, version: (body as { version: number }).version + 1 } as T;
     }
     const params = new URLSearchParams(action.split('?')[1]);
-    const result = action === 'projects' ? { projects: [] } : action.startsWith('checklists') ? { checklists: lists, categories: [...new Set(lists.map(list => list.category))], hasMore: false } : { schedules, selected: schedules.find(row => row.id === params.get('id')) ?? null, hasMore: false };
+    const result = action === 'projects' ? { projects } : action.startsWith('checklists') ? { checklists: lists, categories: [...new Set(lists.map(list => list.category))], hasMore: false } : { schedules, selected: schedules.find(row => row.id === params.get('id')) ?? null, hasMore: false };
     if (pendingRead) await pendingRead;
     return result as T;
   },
@@ -44,6 +45,7 @@ const host: WorkspaceHost = {
   Button: WorkspaceButton,
   Dialog: WorkspaceDialog,
   DateInput,
+  MemberPicker: WorkspaceMemberPicker,
 };
 beforeEach(() => {
   HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', ''); };
@@ -51,6 +53,7 @@ beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   container = document.createElement('div'); document.body.append(container); root = createRoot(container); calls = []; rejectSave = false; pendingSave = undefined; pendingRead = undefined;
   lists = [{ id: 'list', projectId: null, name: 'Launch', category: 'Product', version: 1, active: true, canEdit: true, projectName: null, projectActive: null, items: [{ id: 'a', text: 'First', done: false }, { id: 'b', text: 'Second', done: false }] }];
+  projects = [];
   schedules = [{ id: 'schedule', projectId: null, name: 'Launch', version: 1, active: true, canEdit: true, projectName: null, projectActive: null, tasks: [{ id: 'task', name: 'Build', group: 'Product', owner: '', start: '2026-12-30', end: '2027-01-02', progress: 50, kind: 'task' }] }];
 });
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); });
@@ -71,6 +74,26 @@ function ExternalNavigation() {
   const [, setSelected] = useQueryState('schedule', parseAsString.withDefault(''));
   return h('button', { onClick: () => void setSelected('') }, 'External navigation');
 }
+
+it('preserves filtered member selections, retains failed edits and allows clearing all members', async () => {
+  projects = [{ id: 'project', name: 'Launch', url: '', active: true, version: 1, createdAt: 0, memberIds: [1] }];
+  await mount(h(Projects, { actor: { kind: 'admin', id: 1, role: 'admin', name: 'Admin' }, directory: [{ id: 1, name: 'Alex', active: true }, { id: 2, name: 'Vicky', active: true }] }));
+  await click('Members and settings');
+  const search = container.querySelector<HTMLInputElement>('[aria-label="Search members"]')!;
+  await setInput(search, 'Vicky');
+  await act(async () => container.querySelector<HTMLInputElement>('.workspace-member-option input')!.click());
+  rejectSave = true;
+  await click('Save project');
+  expect(calls.at(-1)).toMatchObject({ action: 'project', body: { memberIds: [1, 2] } });
+  expect(container.querySelector('dialog')).not.toBeNull();
+  expect(container.querySelector('.workspace-member-picker [role="status"]')?.textContent).toContain('2');
+  await setInput(search, '');
+  for (const checkbox of [...container.querySelectorAll<HTMLInputElement>('.workspace-member-option input')]) await act(async () => checkbox.click());
+  rejectSave = false;
+  await click('Save project');
+  expect(calls.at(-1)).toMatchObject({ action: 'project', body: { memberIds: [] } });
+  expect(container.querySelector('dialog')).toBeNull();
+});
 
 it('uses bare icon actions while keeping explicit report submissions styled as buttons', async () => {
   await mount(h(Fragment, null, h(WorkspaceButton, { action: 'add', children: 'New task' }), h(WorkspaceButton, { action: 'send', iconOnly: false, children: 'Submit report' })));
