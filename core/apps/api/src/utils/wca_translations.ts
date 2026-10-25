@@ -25,8 +25,9 @@ export async function searchTranslations(queries: string[], limit: number, compo
           state, approved, checks AS "hasFailingChecks", source_url AS "sourceUrl", source_updated_at AS "sourceUpdatedAt",
           CASE WHEN lower(key) = lower(replace(terms.value, '.', '->')) THEN 0
             WHEN lower(en) = lower(terms.value) OR lower(zh) = lower(terms.value) THEN 1
-            WHEN lower(reverse(split_part(reverse(key), '>-', 1))) = lower(terms.value) THEN 2
-            WHEN position(lower(terms.value) in lower(key)) > 0 THEN 3 ELSE 4 END AS rank
+            WHEN lower(key) = 'page->teams_committees_councils->groups_name->' || lower(terms.value) THEN 2
+            WHEN lower(reverse(split_part(reverse(key), '>-', 1))) = lower(terms.value) THEN 3
+            WHEN position(lower(terms.value) in lower(key)) > 0 THEN 4 ELSE 5 END AS rank
         FROM wca_translation_units
         WHERE usable AND (?::text IS NULL OR component = ?)
           AND (position(lower(terms.value) in lower(en)) > 0 OR position(lower(terms.value) in lower(zh)) > 0

@@ -75,6 +75,17 @@ describe.skipIf(process.env.WCA_TRANSLATION_TEST_PG !== '1')('WCA mirror persist
     expect(status.lastError).toContain('previous snapshot retained');
     expect(status.ready).toBe(true);
   });
+  it('prefers the official organization-name context to conflicting form labels for acronyms', async () => {
+    const { syncTranslations } = await import('../src/utils/wca_translations.js');
+    const { wcaTranslationRoutes: app } = await import('../src/routes/wca_translations.js');
+    await syncTranslations(true, fixtureFetch(d => {
+      if (!d.results?.length) return;
+      Object.assign(d.results[0], { context: 'competitions->competition_form->wcat', source: ['WCA Competition Announcement Team'], target: ['WCA 比赛公告小组'] });
+      Object.assign(d.results[1], { context: 'page->teams_committees_councils->groups_name->wcat', source: ['WCA Competition Announcement Team'], target: ['WCA比赛公示组 (WCAT)'] });
+    }));
+    const data = await (await app.request('/wca/translations?q=WCAT&component=locales&limit=2')).json();
+    expect(data.results[0].matches.map((m: any) => m.zh)).toEqual(['WCA比赛公示组 (WCAT)', 'WCA 比赛公告小组']);
+  });
   it('rejects public mutation and malformed or unbounded searches', async () => {
     const { wcaTranslationRoutes: app } = await import('../src/routes/wca_translations.js');
     expect((await app.request('/wca/translations/sync', { method: 'POST' })).status).toBe(403);
