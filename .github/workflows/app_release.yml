@@ -89,7 +89,9 @@ jobs:
       - name: Install and assign release version
         if: inputs.platform == matrix.platform || inputs.platform == 'both'
         working-directory: core
+        shell: bash
         run: |
+          set -euo pipefail
           pnpm install --frozen-lockfile
           node scripts/android-release/distribute.ts prepare
           pnpm --filter @cuberoot/desktop build:deps
@@ -124,7 +126,9 @@ jobs:
       - name: Build Windows installer and standalone executable
         if: matrix.platform == 'windows' && inputs.platform != 'android'
         working-directory: core
+        shell: bash
         run: |
+          set -euo pipefail
           pnpm --filter @cuberoot/desktop test
           pnpm --filter @cuberoot/desktop exec tauri build --bundles nsis
           node scripts/android-release/distribute.ts windows

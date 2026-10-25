@@ -26,6 +26,10 @@
 - `ANDROID_STORE_PASSWORD`、`ANDROID_KEY_PASSWORD`、`ANDROID_KEY_ALIAS`：该 JKS 的密码与别名。
 - `APP_RELEASE_SSH_KEY`、`APP_RELEASE_SSH_HOST`（`user@host`）、`APP_RELEASE_KNOWN_HOSTS`：静态站发布 SSH 凭据及预先核验的主机公钥，不在运行时无验证接受新主机密钥。
 
+API 配置 `APP_RELEASE_GITHUB_TOKEN`：限定 `2017YANR02/cuberoot.me`、Contents read / Actions write 的 fine-grained token，仅留在 API 服务器环境，不传给网页。`GET/POST /v1/admin/app-releases` 使用现有 Bearer 登录与 `requireAdmin`，不接受通用 X-Admin-Key。GET 返回 main 提交、最近任务与待确认请求；POST 只接受 UUID、main 的精确 SHA、android/windows/both 和更新说明。main 已变化返回 409，需刷新后重新确认。没有 token 时管理页显示未配置，不假装已发包。
+
+请求回执默认保存在 API 主机持久目录 `/root/core-api/data/app-release-requests.json`，可用 `APP_RELEASE_STATE_PATH` 指定同一共享持久卷；PG advisory transaction lock 协调同机多进程。没有数据库 schema 变更。部署不可清除此文件；如果未来多机运行 API，必须共用该文件或迁入事务存储。网络超时保留 unknown 状态，先根据请求 UUID 在 Actions 核对是否启动，不自动重发。若人工确认 GitHub 从未接收，维护者在持有同一 advisory lock 的维护窗口将该条回执标记 rejected 后才可新建发布，不能以超时为理由直接删除回执。completed 回执永久保留以支持幂等，历史任务从 GitHub 列表淘汰后不会再次阻塞。
+
 这是对原「私钥仅留 Mac」流程的明确变更：维护者已授权将正式签名凭据配置到受保护 CI 环境。代码落地不代表这些 secrets 已配置。构建任务只在签名步骤获得 Android 密钥；发布任务仅获得 SSH 凭据。Windows 当前不做 Authenticode 签名，首次下载可能显示 SmartScreen 提示；Tauri updater 尚未启用，应用内更新入口下载新版供用户安装。
 
 发布任务分别保留 Android/Windows 制品 30 天。官网不可变文件保留在静态服务器；Windows 使用 `/downloads/windows/latest.json`，包含安装版、免安装 EXE 的 URL、大小和 SHA-256。免安装 EXE 需要现有 WebView2，数据仍使用应用数据目录，不承诺移动 EXE 即携带数据。发布前需验证干净 Windows 上安装/启动、登录回跳、覆盖更新与成绩保留；构建通过不替代这些验收。
