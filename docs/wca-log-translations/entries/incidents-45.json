@@ -13,15 +13,15 @@
   },
   "translation": {
     "language": "zh-Hans",
-    "version": 1,
+    "version": 2,
     "title": "选手停表后立即明显触碰魔方",
-    "content": "Skewb 项目中，一名选手在停表后立即触碰了魔方。松手后，魔方落到选手腿上，又弹回垫子。\n\n这违反了 A6e：\n> [A6e](https://www.worldcubeassociation.org/regulations/#A6e) 松开魔方后，在裁判检查之前，选手不得触碰或移动魔方。处罚为该次尝试 DNF。例外：若未发生转动，裁判可酌情改判加 2 秒。\n\n指导 A6e+ 明确指出，这种情况属于触碰：\n> [A6e+](https://www.worldcubeassociation.org/regulations/guidelines.html#A6e+) 澄清：停表后魔方掉到选手腿上，视为触碰魔方。\n\n复核视频后，WRC 认为本案不能与[另一事件](https://www.worldcubeassociation.org/incidents/23)相比，因为本案选手明显触碰了魔方。WRC 认定应对该次尝试给予 **+2 秒处罚**。",
-    "translatedAt": "2026-10-22T05:52:51.924Z",
+    "content": "Skewb 项目中，一名选手在停表后立即触碰了魔方。松手后，魔方落到选手腿上，又弹回垫子。\n\n这违反了 A6e：\n> [A6e](https://www.worldcubeassociation.org/regulations/#A6e) 松开魔方后，在裁判检查之前，选手不得触碰或移动魔方。处罚为该次尝试 DNF。例外：若未发生转动，裁判可酌情改判加 2 秒。\n\n指南 A6e+ 明确指出，这种情况属于触碰：\n> [A6e+](https://www.worldcubeassociation.org/regulations/guidelines.html#A6e+) 澄清：停表后魔方掉到选手腿上，视为触碰魔方。\n\n复核视频后，WRC 认为本案不能与[另一事件](https://www.worldcubeassociation.org/incidents/23)相比，因为本案选手明显触碰了魔方。WRC 认定应对该次尝试给予 **+2 秒处罚**。",
+    "translatedAt": "2026-10-25T09:29:00.613Z",
     "translator": "Codex / subscription",
     "sourceHash": "8fad922ffd4454e051177c633256b40246e5a7c175c8fcd4e42913de79ba8c40"
   },
   "review": {
-    "status": "independently_verified",
+    "status": "pending_independent_recheck",
     "checks": [
       "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
     ],
@@ -36,7 +36,13 @@
       "verdict": "pass",
       "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
     },
-    "unresolvedNotes": []
+    "unresolvedNotes": [],
+    "complianceRevision": {
+      "at": "2026-10-25T09:29:00.613Z",
+      "previousTranslationHash": "945ed9828b7c03c2b8988bfca7ca12c86016e2b45ac7006470bf0b5ed2768fdc",
+      "report": "../wca-translation-compliance-2026-10-25.json",
+      "scope": "Targeted source comparison; independent prior evidence remains bound to the previous hash."
+    }
   },
   "publication": {
     "status": "not_authorized"

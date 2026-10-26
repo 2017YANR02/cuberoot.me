@@ -1,54 +1,85 @@
 'use client';
 import './settings-typography.css';
 
-// Desk-pet search overlay — reuses the homepage LandingSearch in a centered
-// modal, with the pet controls (character / size / lang / theme / rest / reset)
-// in a vertical toolbar on the left. Lazy-loaded by DeskPet so
-// the site-search data layer only loads when the user actually opens search.
+// Desk-pet workspace — shared navigation plus independent conversations.
+// The existing LandingSearch assistant owns each request/composer; the workspace
+// only coordinates selection and page-session snapshots. Lazy-loaded by DeskPet.
 
-import { cloneElement, isValidElement, useEffect, useLayoutEffect, useRef, useState, type ButtonHTMLAttributes } from 'react';
-import { NavigationShell, type NavigationItem, type NavigationLinkProps } from '@app-foundation/navigation-ui';
+import { cloneElement, isValidElement, useEffect, useLayoutEffect, useRef, useState, useCallback, useSyncExternalStore, type ComponentProps } from 'react';
+import { NavigationShell, SidebarToggle, type NavigationItem, type NavigationLinkProps } from '@app-foundation/navigation-ui';
 import '@app-foundation/navigation-ui/navigation.css';
-import { Check, Lock, LockOpen, ArrowLeft, ArrowRight, Pencil, Trash2, RotateCcw, Maximize2, Coffee, Sun, Heart, Home, Sparkles, Shuffle, MessageSquarePlus, Music, Settings } from '@app-foundation/icons/lucide';
+import { Check, Lock, LockOpen, ArrowLeft, ArrowRight, Pencil, Trash2, RotateCcw, Maximize2, Coffee, Sun, Heart, Home, Sparkles, Shuffle, MessageSquarePlus, Music, MessageSquare, SquarePen } from '@app-foundation/icons/lucide';
 import type { DeskPetEntry } from '@cuberoot/shared/deskpet';
 import { CompactSelect } from '@/components/CompactSelect';
 import BoolToggle from '@/components/BoolToggle';
 import { useDeskPetVisible } from '@/hooks/useDeskPetVisible';
-import { useIsMobile } from '@/hooks/useIsMobile';
 import HomeLink from '@/components/HomeLink';
-import LandingSearch from '@/components/LandingSearch';
+import AssistantConversationView from '@/components/AssistantConversationView';
+import { assistantConversations } from '@/lib/assistant-conversations';
 import HeaderToggles from '@/components/HeaderToggles';
 import WcaAuth from '@/components/WcaAuth';
 import DonateModal from '@/components/DonateModal';
 import FeedbackModal from '@/components/FeedbackModal';
 import FloatingMetronome from '@/components/FloatingMetronome';
 import { SEARCH_CARDS, isLandingSearchCardVisible } from '@/lib/landing-sections';
-import { isAdmin } from '@/lib/auth-store';
+import { isAdmin, useAuthUser } from '@/lib/auth-store';
 import { useFeedbackUnread, refreshFeedbackUnread } from '@/lib/feedback-unread';
 import { tr } from '@/i18n/tr';
-import { useModalBackdrop } from '@/hooks/useModalDismiss';
+import { ClearButton } from '@/components/ClearButton';
+import { ResizeDivider } from '@app-foundation/navigation-ui/resize-divider';
+import '@app-foundation/navigation-ui/resize-divider.css';
 
 const CSS = `
-.deskpet-search-backdrop{position:fixed;left:0;right:0;top:0;height:100dvh;z-index:100010;
-  background:color-mix(in srgb, var(--background) 88%, transparent);
-  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
-.deskpet-search-backdrop:has(.landing-search-panel,.appearance-menu,.deskpet-detail-column){z-index:100025;}
+.deskpet-search-workspace{position:fixed;left:0;right:0;top:0;height:100dvh;z-index:100010;
+  background:var(--background);}
+.deskpet-search-workspace:has(.landing-search-panel,.appearance-menu,.deskpet-detail-column,.site-assistant-embedded){z-index:100025;}
 /* Accent options are portaled to body, outside the sidebar's stacking context. */
 body:has(.deskpet-navigation .appearance-menu) .accent-color-menu{z-index:100030;}
-.deskpet-navigation.af-navigation{--af-nav-expanded:144px;--af-nav-header-height:48px;
+.deskpet-navigation.af-navigation{--af-nav-expanded:144px;--af-nav-header-height:48px;--deskpet-divider-size:0.5px;
+  --af-nav-width:clamp(58px,var(--deskpet-rail-width,58px),min(200px,calc(100vw - 240px)));
+  --af-nav-panel-width:clamp(240px,var(--deskpet-panel-width,280px),calc(100vw - var(--af-nav-width)));
   --af-nav-sidebar-bg:var(--background);--af-nav-content-bg:transparent;--af-nav-text:var(--muted-foreground);
-  --af-nav-font-size:0.875rem;
+  --af-nav-font-size:0.875rem;--af-nav-outline:transparent;
   --af-nav-active:var(--accent);--af-nav-hover:transparent;
   --af-nav-selected:var(--accent-soft);height:100%;min-height:0;pointer-events:none;}
+.deskpet-navigation[data-panel-visible='true'][data-panel-collapsed='false']{--af-nav-outline:var(--border-default);}
 .deskpet-navigation .af-nav-body{height:calc(100% - var(--af-nav-header-height));}
 .deskpet-navigation .af-nav-sidebar{pointer-events:auto;}
 .deskpet-navigation .af-nav-backdrop,.deskpet-navigation .af-nav-mobile-toggle{pointer-events:auto;}
 .deskpet-navigation-header{display:flex;align-items:center;height:var(--af-nav-header-height);
   box-sizing:border-box;padding:0 10px;position:relative;z-index:2;pointer-events:auto;
-  background:var(--background);box-shadow:inset 0 -0.5px 0 var(--border-default);}
+  background:var(--background);}
+.deskpet-navigation-header::after{content:'';position:absolute;bottom:0;right:0;
+  left:calc(var(--af-nav-width) + 64px);height:var(--deskpet-divider-size);background:var(--border-default);pointer-events:none;}
 .deskpet-navigation-header .af-nav-toggle{margin:0;}
-.deskpet-navigation .deskpet-search-main{display:flex;align-items:flex-end;justify-content:center;padding:16px 16px max(12vh,48px);}
-.deskpet-search-box{min-width:0;width:min(720px,100%);pointer-events:auto;will-change:transform,opacity;}
+/* Native-window control colors sampled from the supplied macOS reference;
+   this control keeps its red appearance independently of the site palette. */
+.deskpet-navigation-header .deskpet-workspace-close{
+  --window-close-top:#f8675b;--window-close-middle:#f34f46;--window-close-bottom:#ee695f;
+  --window-close-rim:#ffb0a6;--window-close-glyph:#8c0000;
+  position:relative;inset:auto;width:14px;height:14px;margin-inline:12px 15px;border-radius:50%;cursor:default;
+  background:linear-gradient(var(--window-close-top),var(--window-close-middle) 52%,var(--window-close-bottom));
+  box-shadow:inset 0 0 0 .5px var(--window-close-rim),inset 0 .5px .5px color-mix(in srgb,var(--window-close-rim) 70%,transparent);
+  color:var(--window-close-glyph);transition:none;}
+.deskpet-workspace-close .clear-btn-icon{width:12px;height:12px;opacity:0;}
+.deskpet-workspace-close .clear-btn-icon path{stroke-width:1.4;}
+.deskpet-workspace-close:is(:hover,:focus-visible) .clear-btn-icon{opacity:1;}
+.deskpet-navigation-header .deskpet-workspace-close:active{
+  background:linear-gradient(color-mix(in srgb,var(--window-close-top) 85%,black),
+    color-mix(in srgb,var(--window-close-middle) 85%,black) 52%,color-mix(in srgb,var(--window-close-bottom) 85%,black));}
+.deskpet-workspace-close:focus-visible{outline:2px solid var(--ring);outline-offset:3px;}
+@media (hover:none){.deskpet-workspace-close .clear-btn-icon{opacity:1;}}
+.deskpet-navigation .deskpet-search-main{display:flex;align-items:stretch;min-height:0;height:100%;padding:0;}
+.deskpet-search-box{min-width:0;width:100%;height:100%;pointer-events:auto;}
+.deskpet-conversation{height:100%;min-width:0;}
+.deskpet-conversation[hidden]{display:none;}
+.deskpet-conversation-title{display:flex;align-items:center;gap:10px;min-width:0;position:absolute;left:104px;right:48px;margin:0;padding:0 12px;border:0;background:transparent;color:var(--foreground);font:400 .875rem/1.5 var(--font-sans);text-align:left;cursor:pointer;transition:left 240ms ease;}
+.deskpet-conversation-title::before{content:'';position:absolute;top:0;bottom:0;left:calc(-1 * var(--deskpet-divider-size));
+  width:var(--deskpet-divider-size);background:var(--border-default);pointer-events:none;}
+.deskpet-conversation-title svg{flex:none;}
+.deskpet-conversation-title span,.deskpet-chat-list .af-nav-link span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.deskpet-navigation .deskpet-chat-list .af-nav-link{font-weight:400;gap:8px;}
+.deskpet-chat-list .af-nav-link[aria-current='page']{font-weight:400;}
 .deskpet-search-box:has(.landing-search-plus-menu){z-index:1;}
 .deskpet-search-box .landing-search{margin:0;}
 /* Results open above the bottom-anchored search. */
@@ -62,43 +93,44 @@ body:has(.deskpet-navigation .appearance-menu) .accent-color-menu{z-index:100030
 .deskpet-navigation .af-nav-link > svg,.deskpet-navigation .wca-auth-avatar,
 .deskpet-navigation .wca-auth-fallback,.deskpet-toolbar-thumb{width:18px;height:18px;flex:0 0 18px;object-fit:contain;}
 .deskpet-navigation .heart-icon{fill:var(--destructive);color:var(--destructive);}
+.deskpet-navigation .af-nav-sidebar{position:static;top:auto;height:100%;}
+.deskpet-navigation .appearance-menu[data-backgrounds],
+.deskpet-navigation .deskpet-detail-column{pointer-events:auto;
+  max-width:none;max-height:none;margin:0;padding:24px 16px;align-content:start;
+  grid-template-columns:minmax(0,1fr);border:0;border-radius:0;
+  box-shadow:inset var(--deskpet-divider-size) 0 0 var(--af-nav-outline),inset calc(-1 * var(--deskpet-divider-size)) 0 0 var(--af-nav-outline);}
+.deskpet-navigation .appearance-menu[data-backgrounds='true']{grid-template-columns:minmax(0,1fr);}
+.deskpet-navigation .appearance-menu[data-backgrounds='true'] .site-background-grid{grid-column:1;grid-row:3;margin-top:16px;}
+.deskpet-navigation .deskpet-detail-column .deskpet-character-menu,
+.deskpet-navigation .deskpet-detail-column :is(.cr-metro,.fb-modal,.donate-modal){position:relative;inset:auto;
+  width:100%;max-width:none;max-height:none;visibility:inherit;padding:0;
+  border:0;border-radius:0;box-shadow:none;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;}
+.deskpet-detail-column .deskpet-character-menu{overflow:visible;}
+.deskpet-detail-column .cr-metro{touch-action:auto;}
+.deskpet-detail-column .cr-metro-grab{cursor:default;}
+.deskpet-detail-column .donate-qr-row{flex-wrap:wrap;}
+.deskpet-detail-column .donate-qr{min-width:0;}
+.deskpet-navigation .deskpet-divider{position:fixed;top:var(--af-nav-header-height);pointer-events:auto;}
+.deskpet-divider--rail{left:calc(var(--af-nav-width) - 12px);}
+.deskpet-divider--panel{left:calc(var(--af-nav-width) + min(var(--af-nav-panel-width),100vw - var(--af-nav-width)) - 12px);}
+.deskpet-navigation[data-panel-collapsed='true'] .deskpet-divider--panel{display:none;}
+.deskpet-navigation:has(.resize-divider.is-dragging) :is(.af-nav-body,.af-nav-main,.af-nav-corner,.deskpet-conversation-title){transition:none;}
 @media (min-width:768px){
-  .deskpet-navigation .af-nav-sidebar{position:static;top:auto;height:100%;
-    box-shadow:inset -0.5px 0 0 var(--border-default);}
-  .deskpet-navigation .appearance-menu[data-backgrounds],
-  .deskpet-navigation .deskpet-detail-column{pointer-events:auto;
-    max-width:none;max-height:none;margin:0;padding:24px 16px;align-content:start;
-    grid-template-columns:minmax(0,1fr);border:0;border-radius:0;
-    box-shadow:inset -0.5px 0 0 var(--border-default);}
-  .deskpet-navigation .appearance-menu[data-backgrounds='true']{grid-template-columns:minmax(0,1fr);}
-  .deskpet-navigation .appearance-menu[data-backgrounds='true'] .site-background-grid{grid-column:1;grid-row:3;margin-top:16px;}
-  .deskpet-navigation .deskpet-detail-column .deskpet-character-menu,
-  .deskpet-navigation .deskpet-detail-column :is(.cr-metro,.fb-modal,.donate-modal){position:relative;inset:auto;
-    width:100%;max-width:none;max-height:none;visibility:visible;padding:0;
-    border:0;border-radius:0;box-shadow:none;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;}
-  .deskpet-detail-column .deskpet-character-menu{overflow:visible;}
-  .deskpet-detail-column .cr-metro{touch-action:auto;}
-  .deskpet-detail-column .cr-metro-grab{cursor:default;}
-  .deskpet-detail-column .donate-qr-row{flex-wrap:wrap;}
-  .deskpet-detail-column .donate-qr{min-width:0;}
+  .deskpet-navigation[data-panel-visible='true'][data-panel-collapsed='false'] .deskpet-conversation-title{
+    left:calc(var(--af-nav-width) + var(--af-nav-panel-width));
+  }
+  .deskpet-navigation.af-navigation{
+    --af-nav-width:clamp(58px,var(--deskpet-rail-width,58px),min(200px,calc(100vw - 560px)));
+    --af-nav-panel-width:clamp(240px,var(--deskpet-panel-width,280px),calc(100vw - var(--af-nav-width) - 320px));
+  }
 }
 @media (max-width:767px){
-  .deskpet-navigation.af-navigation{--af-nav-header-height:48px;}
-  .deskpet-navigation-header{display:flex;align-items:center;height:48px;padding:0 8px;}
-  .deskpet-navigation .af-nav-mobile-toggle{width:44px;height:44px;}
-  .deskpet-navigation .af-nav-mobile-toggle[aria-expanded='true']{background:var(--af-nav-selected);color:var(--af-nav-active);}
-  .deskpet-navigation .deskpet-search-main{height:100%;box-sizing:border-box;padding:12px 8px max(12px,var(--sab,0px));}
-  .deskpet-navigation .af-nav-sidebar{position:absolute;top:4px;left:8px;bottom:auto;
-    width:min(360px,calc(100% - 16px));height:auto;max-height:calc(100% - 80px);padding:8px;
-    border:1px solid var(--border-default);border-radius:16px;background:var(--glass-popover-bg,var(--popover));
-    overscroll-behavior:contain;}
-  .deskpet-navigation .af-nav-menu{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;}
-  .deskpet-navigation .af-nav-row:last-child{grid-column:1 / -1;}
-  /* The search overlay already dims the page; do not dim the toolbar a second time. */
-  .deskpet-navigation .af-nav-backdrop{position:absolute;inset:0;background:transparent;}
-  .deskpet-navigation .af-nav-link{height:48px;margin:0;padding:0 12px;font-size:14px;gap:10px;}
-  .deskpet-navigation .appearance-menu[data-backgrounds]{top:56px;left:8px;right:8px;
-    width:auto;max-width:none;max-height:calc(100% - 64px);}
+  .deskpet-navigation .deskpet-search-main{height:100%;box-sizing:border-box;padding:0;}
+  .deskpet-navigation[data-panel-visible='true'][data-panel-collapsed='false'] .deskpet-search-box{visibility:hidden;pointer-events:none;}
+  .deskpet-navigation .appearance-menu[data-backgrounds],.deskpet-navigation .deskpet-detail-column{padding:24px 12px max(16px,var(--sab,0px));}
+}
+@media (pointer:coarse){
+  .deskpet-workspace-close::after{content:'';position:absolute;inset:-15px;}
 }
 
 /* anchored-panel: clamped (CompactSelect body portal and visualViewport bounds) */
@@ -145,8 +177,6 @@ export default function DeskPetSearch({
   onToggleRest,
   randomMode,
   onToggleRandom,
-  metronomeOpen,
-  onToggleMetronome,
   onOpenPetHome,
 }: {
   lang: 'zh' | 'en';
@@ -165,18 +195,32 @@ export default function DeskPetSearch({
   onToggleRest: () => void;
   randomMode: boolean;
   onToggleRandom: () => void;
-  metronomeOpen: boolean;
-  onToggleMetronome: () => void;
   onOpenPetHome: () => void;
 }) {
   const [petVisible, setPetVisible] = useDeskPetVisible();
-  const mobile = useIsMobile(767);
+  const user = useAuthUser();
+  const owner = user ? JSON.stringify([user.uid, user.wcaId]) : 'guest';
+  const readConversations = useCallback(() => assistantConversations.read(owner), [owner]);
+  const chats = useSyncExternalStore(assistantConversations.subscribe, readConversations, assistantConversations.serverSnapshot);
+  useEffect(() => {
+    if (!assistantConversations.read(owner).conversations.length) assistantConversations.create(owner, crypto.randomUUID());
+  }, [owner]);
+  const newChat = () => {
+    assistantConversations.create(owner, crypto.randomUUID());
+    setActivePanel(window.matchMedia('(max-width:767px)').matches ? null : 'chats');
+  };
+  const selectChat = (id: string) => {
+    assistantConversations.select(owner, id);
+    if (window.matchMedia('(max-width:767px)').matches) setActivePanel(null);
+  };
   const searchCards = SEARCH_CARDS.filter((card) => isLandingSearchCardVisible(card, isAdmin()));
-  const backdropRef = useRef<HTMLDivElement>(null);
+  const workspaceRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
-  const backdropProps = useModalBackdrop(onClose);
-  const [activePanel, setActivePanel] = useState<'settings' | 'pet' | 'music' | 'feedback' | 'donate' | null>(null);
+  const [activePanel, setActivePanel] = useState<'chats' | 'settings' | 'pet' | 'music' | 'feedback' | 'donate' | null>('chats');
   const [petPanelContainer, setPetPanelContainer] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    if (activePanel) boxRef.current?.querySelector<HTMLInputElement | HTMLTextAreaElement>('input, textarea')?.blur();
+  }, [activePanel]);
   const donateOpen = activePanel === 'donate';
   const feedbackOpen = activePanel === 'feedback';
   const setDonateOpen = (open: boolean) => setActivePanel(open ? 'donate' : null);
@@ -189,6 +233,10 @@ export default function DeskPetSearch({
   }, [feedbackOpen]);
   const zh = lang === 'zh';
   const t = (z: string, e: string) => (zh ? z : e);
+  const chatTitle = (id: string) => {
+    const chat = chats.conversations.find(item => item.id === id);
+    return chat?.snapshot.turns[0]?.question || chat?.snapshot.draft.trim() || t('新聊天', 'New chat');
+  };
   const currentCharacter = characters.find(item => item.id === character);
   const [editingName, setEditingName] = useState(false);
   const [nameZh, setNameZh] = useState('');
@@ -207,7 +255,7 @@ export default function DeskPetSearch({
 
   // Entrance: the box grows from the pet's position out to its centered spot.
   useLayoutEffect(() => {
-    const box = boxRef.current, backdrop = backdropRef.current;
+    const box = boxRef.current, backdrop = workspaceRef.current;
     if (!box) return;
     // Focus synchronously in the commit phase: on touch this still runs inside
     // the tap gesture, so mobile browsers raise the keyboard (a deferred
@@ -265,7 +313,7 @@ export default function DeskPetSearch({
     const vv = window.visualViewport;
     if (!vv) return;
     const apply = () => {
-      const b = backdropRef.current;
+      const b = workspaceRef.current;
       if (!b) return;
       const height = `${vv.height}px`, top = `${vv.offsetTop}px`;
       const width = `${vv.width}px`, left = `${vv.offsetLeft}px`;
@@ -283,7 +331,21 @@ export default function DeskPetSearch({
     };
   }, []);
 
+  const resizeColumn = (handle: HTMLElement, requested: number, column: 'rail' | 'panel') => {
+    const navigation = handle.closest<HTMLElement>('.deskpet-navigation');
+    if (!navigation) return;
+    const available = workspaceRef.current?.clientWidth ?? window.innerWidth;
+    const contentMinimum = available >= 768 ? 320 : 0;
+    const railWidth = navigation.querySelector('.af-nav-sidebar')?.getBoundingClientRect().width ?? 58;
+    const minimum = column === 'rail' ? 58 : 240;
+    const maximum = column === 'rail' ? Math.min(200, available - 240 - contentMinimum) : available - railWidth - contentMinimum;
+    const next = Math.round(Math.max(Math.min(minimum, maximum), Math.min(requested, maximum)));
+    navigation.style.setProperty(column === 'rail' ? '--deskpet-rail-width' : '--deskpet-panel-width', `${next}px`);
+    return next;
+  };
+
   const navigation: NavigationItem[] = [
+    { id: 'chats', href: '#chats', label: t('聊天', 'Chats'), icon: <MessageSquare /> },
     { id: 'settings', href: '#settings', label: t('外观', 'Appearance'), icon: null },
     { id: 'pet', href: '#pet', label: t('桌宠', 'Pet'), icon: currentCharacter && <img src={currentCharacter.thumb} alt="" className="deskpet-toolbar-thumb" style={{ transform: `scale(${currentCharacter.thumbScale ?? 1})` }} /> },
     { id: 'music', href: '#music', label: t('音乐', 'Music'), icon: <Music /> },
@@ -294,14 +356,14 @@ export default function DeskPetSearch({
   ].map(item => ({ ...item, active: item.id === activePanel }));
   const renderNavigationItem = ({ href, ...props }: NavigationLinkProps) => {
     if (href === '/') return <HomeLink {...props} prefetch={false} onClick={() => { props.onClick?.(); onClose(); }} />;
-    if (href === '#settings') return <HeaderToggles appearanceOpen={activePanel === 'settings'} onAppearanceOpenChange={open => { if (open) props.onClick?.(); setActivePanel(current => open ? 'settings' : current === 'settings' ? null : current); }} appearanceColumn={!mobile} triggerClassName={props.className} triggerLabel={t('外观', 'Appearance')} labelClassName="af-nav-label" showLabels />;
+    if (href === '#settings') return <HeaderToggles appearanceOpen={activePanel === 'settings'} onAppearanceOpenChange={open => { if (open) props.onClick?.(); setActivePanel(current => open ? 'settings' : current === 'settings' ? null : current); }} appearanceColumn triggerClassName={props.className} triggerLabel={t('外观', 'Appearance')} labelClassName="af-nav-label" showLabels />;
     if (href === '/account') return <WcaAuth linkClassName={props.className} labelClassName="af-nav-label" onNavigate={() => { props.onClick?.(); onClose(); }} showLabel />;
     if (href === '#pet') return <CompactSelect
-          open={activePanel === 'pet' && (mobile || !!petPanelContainer)}
+          open={activePanel === 'pet' && !!petPanelContainer}
           onOpenChange={open => { if (open) props.onClick?.(); setActivePanel(current => open ? 'pet' : current === 'pet' ? null : current); }}
-          panelContainer={mobile ? undefined : petPanelContainer}
+          panelContainer={petPanelContainer}
           unstyledTrigger
-          side={mobile ? 'vertical' : 'right'}
+          side="right"
           className="deskpet-character-select"
           triggerClassName={`${props.className} char-btn`}
           popupClassName="deskpet-character-menu settings-typography"
@@ -405,52 +467,70 @@ export default function DeskPetSearch({
             </>
           )}
         />;
-    return <button type="button" className={`${props.className}${href === '#music' && (activePanel === 'music' || metronomeOpen) ? ' is-active' : ''}`}
+    return <button type="button" className={props.className}
       aria-label={props['aria-label']} title={props.title}
-      aria-expanded={['#music', '#feedback', '#donate'].includes(href) ? activePanel === href.slice(1) : undefined}
+      aria-expanded={['#chats', '#music', '#feedback', '#donate'].includes(href) ? activePanel === href.slice(1) : undefined}
       onPointerEnter={href === '#donate' ? prefetchDonate : undefined}
       onFocus={href === '#donate' ? prefetchDonate : undefined}
       onClick={() => {
         props.onClick?.();
-        if (href === '#donate') setDonateOpen(true);
+        if (href === '#chats') setActivePanel('chats');
+        else if (href === '#donate') setDonateOpen(true);
         else if (href === '#feedback') setFeedbackOpen(true);
         else if (href === '#music') {
-          if (mobile) onToggleMetronome();
-          else setActivePanel(current => current === 'music' ? null : 'music');
+          setActivePanel(current => current === 'music' ? null : 'music');
         }
       }}>{props.children}</button>;
   };
 
   return (
-    <div className="deskpet-search-backdrop" ref={backdropRef} {...backdropProps}>
+    // This workspace closes explicitly; blank space is not a dismiss target.
+    <div className="deskpet-search-workspace" ref={workspaceRef}>
       <style>{CSS}</style>
-      <NavigationShell className="deskpet-navigation" iconOnly togglePlacement="header" collapseTarget="panel" onPanelOpen={() => setActivePanel('settings')} panelVisible={!mobile && !!activePanel} mainClassName="deskpet-search-main" contentAs="div"
+      <NavigationShell className="deskpet-navigation" iconOnly mobileLayout="rail" togglePlacement="header" collapseTarget="panel" onPanelOpen={() => setActivePanel('chats')} panelVisible={!!activePanel} mainClassName="deskpet-search-main" contentAs="div"
         items={navigation} renderLink={renderNavigationItem}
         labels={{ navigation: t('桌宠工具栏', 'Pet toolbar'), show: t('展开设置面板', 'Expand settings panel'), hide: t('收起设置面板', 'Collapse settings panel'), openMobile: t('设置', 'Settings'), closeMobile: t('关闭设置', 'Close settings') }}
-        header={(toggle, desktopToggle) => <div className="deskpet-navigation-header">
-          {desktopToggle}
-          {isValidElement<ButtonHTMLAttributes<HTMLButtonElement>>(toggle) ? cloneElement(toggle, {
-            children: <Settings size={22} aria-hidden="true" />,
-            onClick: event => {
-              if (!toggle.props['aria-expanded']) boxRef.current?.querySelector<HTMLInputElement>('input')?.blur();
-              toggle.props.onClick?.(event);
+        header={(_mobileToggle, toggle) => <div className="deskpet-navigation-header">
+          <ClearButton variant="standalone" className="deskpet-workspace-close"
+            ariaLabel={t('关闭窗口', 'Close window')} onClick={onClose} />
+          {isValidElement<ComponentProps<typeof SidebarToggle>>(toggle) ? cloneElement(toggle, {
+            onToggle: () => {
+              if (toggle.props.collapsed) boxRef.current?.querySelector<HTMLInputElement | HTMLTextAreaElement>('input, textarea')?.blur();
+              toggle.props.onToggle();
             },
           }) : toggle}
+          <button type="button" className="deskpet-conversation-title" onClick={() => {
+            setActivePanel('chats');
+            if (isValidElement<ComponentProps<typeof SidebarToggle>>(toggle) && toggle.props.collapsed) toggle.props.onToggle();
+          }} aria-label={t('查看聊天列表', 'Show conversations')}><SquarePen size={18} /><span>{chatTitle(chats.activeId)}</span></button>
         </div>}>
-        {!mobile && activePanel && activePanel !== 'settings' && <section
+        {activePanel && activePanel !== 'settings' && <section
           className="deskpet-detail-column af-nav-panel" data-site-surface="panel"
           aria-label={navigation.find(item => item.id === activePanel)?.label}
           ref={activePanel === 'pet' ? setPetPanelContainer : undefined}>
+          {activePanel === 'chats' && <nav className="deskpet-chat-list settings-typography" aria-label={t('聊天列表', 'Conversations')}>
+            <button type="button" className="af-nav-link" onClick={newChat}>
+              <span className="af-nav-icon" aria-hidden="true"><SquarePen size={18}/></span><span>{t('新聊天', 'New chat')}</span>
+            </button>
+            {chats.conversations.filter(chat => chat.snapshot.turns.length > 0 || chat.snapshot.draft.trim() || chat.snapshot.images.length > 0).map(chat => <button type="button" key={chat.id} className="af-nav-link" aria-current={chat.id === chats.activeId ? 'page' : undefined} onClick={() => selectChat(chat.id)}>
+              <span className="af-nav-icon" aria-hidden="true"><MessageSquare size={18} /></span>
+              <span>{chatTitle(chat.id)}</span>
+            </button>)}
+          </nav>}
           {activePanel === 'music' && <FloatingMetronome embedded lang={lang} onClose={() => setActivePanel(null)} />}
           {donateOpen && <DonateModal embedded lang={lang} onClose={() => setDonateOpen(false)} />}
           {feedbackOpen && <FeedbackModal embedded lang={lang} onClose={() => setFeedbackOpen(false)} />}
         </section>}
+        <ResizeDivider className="deskpet-divider deskpet-divider--rail" label={t('调整图标栏宽度', 'Resize icon rail')}
+          getSize={handle => handle.closest('.deskpet-navigation')?.querySelector('.af-nav-sidebar')?.getBoundingClientRect().width ?? 58}
+          onResize={(handle, requested) => resizeColumn(handle, requested, 'rail')} />
+        {activePanel && <ResizeDivider className="deskpet-divider deskpet-divider--panel" label={t('调整侧栏宽度', 'Resize side panel')}
+          getSize={handle => handle.closest('.deskpet-navigation')?.querySelector('.af-nav-panel')?.getBoundingClientRect().width ?? 400}
+          onResize={(handle, requested) => resizeColumn(handle, requested, 'panel')} />}
         <div className="deskpet-search-box" ref={boxRef}>
-          <LandingSearch cards={searchCards} lang={lang} />
+          {chats.conversations.map(chat => <AssistantConversationView key={`${owner}:${chat.id}`} owner={owner} conversation={chat} active={chat.id === chats.activeId} cards={searchCards} lang={lang} />)}
         </div>
       </NavigationShell>
-      {mobile && donateOpen && <DonateModal lang={lang} onClose={() => setDonateOpen(false)} />}
-      {mobile && feedbackOpen && <FeedbackModal lang={lang} onClose={() => setFeedbackOpen(false)} />}
     </div>
   );
 }

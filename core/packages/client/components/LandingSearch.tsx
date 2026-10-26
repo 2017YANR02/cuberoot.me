@@ -52,6 +52,7 @@ import { assistantTimeoutMs, SITE_ASSISTANT_QUESTION_MAX_LENGTH, isAssistantSour
 import { ASSISTANT_ERROR_TEXT, assistantResponseError } from '@/lib/site-assistant-errors';
 import { useAssistantThinkingMode } from '@/hooks/useAssistantThinkingMode';
 import { requestSiteAssistant, assistantImageHistory } from '@/lib/site-assistant-request';
+import type { AssistantConversationSnapshot } from '@/lib/assistant-conversations';
 import { ALG_PUZZLES, type AlgCase } from '@cuberoot/shared/alg';
 
 // EventIcon inlines all WCA event SVGs (~68KB gzip);only used in recon hits.
@@ -187,6 +188,9 @@ function HeaderMore({ overflow, title, href, onClick }: {
 }
 
 interface Props {
+  /** Reuse the same request/composer implementation inside the chat workspace. */
+  conversation?: { initial: AssistantConversationSnapshot; active: boolean; onChange: (snapshot: AssistantConversationSnapshot) => void };
+
   cards: LandingSearchCard[];
   lang: 'zh' | 'en';
   /** Controlled query for the standalone /search page. Omit on the homepage. */
@@ -204,6 +208,7 @@ export default function LandingSearch({
   onQueryChange,
   persistentResults = false,
   autoFocus = false,
+  conversation,
 }: Props) {
   const isZh = lang === 'zh';
   const assistantUser = useAuthUser();
@@ -240,11 +245,11 @@ export default function LandingSearch({
   const router = useRouter();
   const wrapRef = useRef<HTMLDivElement>(null);
   const [assistantDialog, setAssistantDialog] = useState(false);
-  const [assistantDraft, setAssistantDraft] = useState('');
-  const [assistantImages, setAssistantImages] = useState<AssistantImage[]>([]);
+  const [assistantDraft, setAssistantDraft] = useState(conversation?.initial.draft ?? '');
+  const [assistantImages, setAssistantImages] = useState<AssistantImage[]>(conversation?.initial.images ?? []);
   const [assistantThinking, setAssistantThinking] = useAssistantThinkingMode();
-  const [assistantTurns, setAssistantTurns] = useState<AssistantTurn[]>([]);
-  const assistantConversation = useRef<string | null>(null);
+  const [assistantTurns, setAssistantTurns] = useState<AssistantTurn[]>(conversation?.initial.turns ?? []);
+  const assistantConversation = useRef<string | null>(conversation?.initial.conversationId ?? null);
   const assistantRequest = useRef<AbortController | null>(null);
   const [assistantBusy, setAssistantBusy] = useState(false);
   const [assistantStatus, setAssistantStatus] = useState<AssistantStatus>({ phase: 'planning' });
@@ -252,6 +257,7 @@ export default function LandingSearch({
   const [assistantAnswer, setAssistantAnswer] = useState<AssistantAnswer | null>(null);
 
   useEffect(() => {
+    if (conversation) return;
     assistantRequest.current?.abort();
     assistantRequest.current = null;
     setAssistantBusy(false);
@@ -271,6 +277,11 @@ export default function LandingSearch({
     setAssistantAnswer(null);
     return () => { assistantRequest.current?.abort(); assistantRequest.current = null; };
   }, [query, lang]);
+
+  const onConversationChange = conversation?.onChange;
+  useEffect(() => {
+    onConversationChange?.({ draft: assistantDraft, images: assistantImages, turns: assistantTurns, conversationId: assistantConversation.current });
+  }, [assistantDraft, assistantImages, assistantTurns, onConversationChange]);
 
   const stopAssistant = () => { assistantRequest.current?.abort(); assistantRequest.current = null; setAssistantBusy(false); };
   const closeAssistant = useCallback(() => { assistantRequest.current?.abort(); assistantRequest.current = null; setAssistantBusy(false); setAssistantDialog(false); }, []);
@@ -514,6 +525,9 @@ export default function LandingSearch({
     </section>
   ) : null;
 
+  const assistantView = <SiteAssistantDialog embedded={!!conversation} active={conversation?.active ?? true} key={`${assistantUser?.uid ?? "guest"}:${assistantUser?.wcaId ?? ""}`} images={assistantImages} onImagesChange={setAssistantImages} thinking={assistantThinking} onThinkingChange={setAssistantThinking} lang={lang} draft={assistantDraft} onDraftChange={setAssistantDraft} turns={assistantTurns} onFeedback={(id,value)=>setAssistantTurns(turns=>turns.map(turn=>turn.requestId===id?{...turn,feedback:value}:turn))} status={assistantStatus} busy={assistantBusy} error={assistantError} onAsk={(question, replaceLast, images) => void askAssistant(question, replaceLast, images)} onStop={stopAssistant} onClose={closeAssistant} onNew={() => { assistantConversation.current = null; stopAssistant(); setAssistantDraft(''); setAssistantImages([]); setAssistantTurns([]); setAssistantAnswer(null); setAssistantError(null); }} />;
+  if (conversation) return assistantView;
+
   return (
     <div className={`landing-search${persistentResults ? ' landing-search--page' : ''}`} ref={wrapRef}>
       <div className="landing-search-controls">
@@ -645,7 +659,7 @@ export default function LandingSearch({
         </p>
       )}
 
-      {assistantDialog && <SiteAssistantDialog key={`${assistantUser?.uid ?? "guest"}:${assistantUser?.wcaId ?? ""}`} images={assistantImages} onImagesChange={setAssistantImages} thinking={assistantThinking} onThinkingChange={setAssistantThinking} lang={lang} draft={assistantDraft} onDraftChange={setAssistantDraft} turns={assistantTurns} onFeedback={(id,value)=>setAssistantTurns(turns=>turns.map(turn=>turn.requestId===id?{...turn,feedback:value}:turn))} status={assistantStatus} busy={assistantBusy} error={assistantError} onAsk={(question, replaceLast, images) => void askAssistant(question, replaceLast, images)} onStop={stopAssistant} onClose={closeAssistant} onNew={() => { assistantConversation.current = null; stopAssistant(); setAssistantDraft(''); setAssistantImages([]); setAssistantTurns([]); setAssistantAnswer(null); setAssistantError(null); }} />}
+      {assistantDialog && assistantView}
 
       {showDropdown && !assistantDialog && (
         <div className="landing-search-panel">

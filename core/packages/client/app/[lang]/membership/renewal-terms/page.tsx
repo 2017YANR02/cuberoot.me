@@ -1,6 +1,7 @@
 'use client';
 
 import AppLink from '@/components/AppLink';
+import { MEMBERSHIP_COPY } from '@/lib/membership-copy';
 import { CONTACT_EMAIL } from '@cuberoot/shared/contact';
 import { useT } from '@/hooks/useT';
 import '../membership.css';
@@ -9,7 +10,7 @@ export default function RenewalTermsPage() {
   const t = useT();
   return (
     <main className="mem-page mem-service-document">
-      <h1>{t('自动续费服务协议', 'Auto-renewal Agreement')}</h1>
+      <h1>{t(MEMBERSHIP_COPY.agreement.zh, MEMBERSHIP_COPY.agreement.en)}</h1>
       <p className="mem-note">{t('本协议说明自动续费的授权、扣费与取消规则。只有在微信签约成功后，自动续费约定才对该笔订阅生效；阅读本协议不代表授权扣款。', 'This agreement explains authorization, billing, and cancellation for auto-renewal. It takes effect for a subscription only after successful authorization in WeChat. Reading this agreement does not authorize any charges.')}</p>
 
       <h2>{t('服务内容与提供方', 'Service and provider')}</h2>
@@ -28,7 +29,7 @@ export default function RenewalTermsPage() {
       <h2>{t('取消自动续费', 'Cancel auto-renewal')}</h2>
       <p>{t('网站取消入口为“会员 → 管理自动续费”。取消须由微信解约结果确认，页面不能仅凭点击按钮显示取消成功。你也可在微信支付的相应扣费服务中关闭授权。取消后不再发起续费扣款，不收取取消费用。', 'The website cancellation entry is Membership → Manage auto-renewal. Cancellation must be confirmed by WeChat, not simply by a button click. You may also revoke authorization in the corresponding WeChat Pay debit service. No further renewal charges will be initiated after cancellation, and there is no cancellation fee.')}</p>
       <p>{t('取消自动续费不等于退款，已经购买的会员权益可使用至已付服务期结束。若取消时已有扣费处理中、取消结果不明确或取消后仍出现扣费，请及时联系客服核对处理；不要把关闭网页或退出账号当作取消授权。', 'Cancellation is separate from a refund; paid benefits remain available until the paid service period ends. If a debit is pending, cancellation is unclear, or a charge appears after cancellation, contact support for reconciliation. Closing a webpage or signing out does not revoke authorization.')}</p>
-      <AppLink href="/membership/subscription" prefetch={false}>{t('管理自动续费', 'Manage auto-renewal')}</AppLink>
+      <AppLink href="/membership/subscription" prefetch={false}>{t(MEMBERSHIP_COPY.manage.zh, MEMBERSHIP_COPY.manage.en)}</AppLink>
 
       <h2>{t('售后、退款与联系', 'Support, refunds, and contact')}</h2>
       <p>{t('如需查询订单、申请退款、开具发票或反馈服务问题，请提供 CubeRoot 账号、订单号和问题说明，由客服核对实际支付及服务履行情况处理。你的法定消费者权益不因本协议受到排除或限制。请勿发送支付密码、验证码或密钥。', 'For order enquiries, refund requests, invoices, or service issues, provide your CubeRoot account, order number, and a description. Support will review the payment and service delivery. These terms do not exclude or limit your statutory consumer rights. Never send payment passwords, verification codes, or secret keys.')}</p>

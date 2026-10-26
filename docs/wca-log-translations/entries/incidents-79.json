@@ -13,15 +13,15 @@
   },
   "translation": {
     "language": "zh-Hans",
-    "version": 1,
+    "version": 2,
     "title": "严重的打乱保密与还原流程问题",
-    "content": "2013—2022 年间，越南多场比赛违反了多项规则和指导，包括：\n- 使用不合规计时器，违反原 8a7、现 7f1a；\n- 用成绩单替代魔方罩，违反 A2c1 和 A2c1+；\n- Stackmat 计时器未固定在垫子上，违反 7f2；\n- 缺少秒表，未计量观察时间，违反 A3b2；\n- 成绩单选手签名栏空白，按 A7c4 应改为 DNF；\n- 观众紧贴比赛台，违反 7b；\n- 打乱区完全没有隔离。\n\n逐场依据代表报告和公开证据调查后，WRC 同意按以下标准保留或删除成绩；符合删除条件时，优先删除：\n- 垫子未固定或缺失：保留成绩；\n- 使用不合规计时器：删除受影响比赛的全部成绩；\n- 用成绩单遮盖：2013 年之前保留全部成绩；自 2013 年起，删除受影响轮次全部成绩。\n\n此决定获 WCA 理事会批准。\n\n详情见[调查报告](https://drive.google.com/file/d/1E-J8WRfld6mpbHslM3rW10fNSsXgkl2y/view?usp=share_link)和[公告](https://www.worldcubeassociation.org/posts/wrc-investigation-vietnamese-competitions-results-removal)，另见[相关事件](https://www.worldcubeassociation.org/incidents/70)。",
-    "translatedAt": "2026-10-22T05:54:37.260Z",
+    "content": "2013—2022 年间，越南多场比赛违反了多项规则和指南，包括：\n- 使用不合规计时器，违反原 8a7、现 7f1a；\n- 用成绩单替代魔方罩，违反 A2c1 和 A2c1+；\n- Stackmat 计时器未固定在垫子上，违反 7f2；\n- 缺少秒表，未计量观察时间，违反 A3b2；\n- 成绩单选手签名栏空白，按 A7c4 应改为 DNF；\n- 观众紧贴比赛台，违反 7b；\n- 打乱区完全没有隔离。\n\n逐场依据代表报告和公开证据调查后，WRC 同意按以下标准保留或删除成绩；符合删除条件时，优先删除：\n- 垫子未固定或缺失：保留成绩；\n- 使用不合规计时器：删除受影响比赛的全部成绩；\n- 用成绩单遮盖：2013 年之前保留全部成绩；自 2013 年起，删除受影响轮次全部成绩。\n\n此决定获 WCA 董事会批准。\n\n详情见[调查报告](https://drive.google.com/file/d/1E-J8WRfld6mpbHslM3rW10fNSsXgkl2y/view?usp=share_link)和[公告](https://www.worldcubeassociation.org/posts/wrc-investigation-vietnamese-competitions-results-removal)，另见[相关事件](https://www.worldcubeassociation.org/incidents/70)。",
+    "translatedAt": "2026-10-25T09:29:00.613Z",
     "translator": "Codex / subscription",
     "sourceHash": "1453a0067b55952ece2bce0827d741c03f1fa7c4d97c188f17df9b2222f0ac7e"
   },
   "review": {
-    "status": "independently_verified",
+    "status": "pending_independent_recheck",
     "checks": [
       "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
     ],
@@ -36,7 +36,13 @@
       "verdict": "pass",
       "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
     },
-    "unresolvedNotes": []
+    "unresolvedNotes": [],
+    "complianceRevision": {
+      "at": "2026-10-25T09:29:00.613Z",
+      "previousTranslationHash": "072d48d14384ccb2fcd39e2459243e0ad35d1e835d7d6b50da98ce04c6bf59ca",
+      "report": "../wca-translation-compliance-2026-10-25.json",
+      "scope": "Targeted source comparison; independent prior evidence remains bound to the previous hash."
+    }
   },
   "publication": {
     "status": "not_authorized"

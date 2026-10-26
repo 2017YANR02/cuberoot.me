@@ -13,15 +13,15 @@
   },
   "translation": {
     "language": "zh-Hans",
-    "version": 1,
+    "version": 2,
     "title": "选手获准提前参加三阶决赛并使用不同打乱",
-    "content": "一名晋级三阶决赛的选手因需赶飞机，请求提前完成平均。由于比赛晚点，决赛将远晚于原定时间开始，WCA 代表同意了请求。五魔方第二组进行期间，该选手使用三阶单手决赛尚未使用的备用打乱完成了平均。\n\n其他选手也因需离开而错过决赛，但代表直到决赛开始、这些人已经离开后才得知。由于有人缺席，代表邀请仍在场的前 20 名选手参赛。\n\n指导 1h++ 建议决赛使用相同打乱：\n> [1h++](https://www.worldcubeassociation.org/regulations/guidelines.html#1h++) 建议：某项目决赛的所有尝试，以及全部三阶最少步尝试，所有选手应使用相同打乱序列，即只有一组。\n\nWRC 建议按上述指导在决赛使用相同打乱；若有提前参赛的机会，应告知所有可能需要提前离场的选手。WRC 也鼓励因正当理由需要提前离场的选手主动联系 WCA 代表。\n\n由于 [TNoodle](https://www.worldcubeassociation.org/regulations/scrambles/) 生成三阶与三阶单手打乱的方式相同，WRC 决定**允许所有这些尝试成绩**。",
-    "translatedAt": "2026-10-22T05:50:48.611Z",
+    "content": "一名晋级三阶决赛的选手因需赶飞机，请求提前完成平均。由于比赛晚点，决赛将远晚于原定时间开始，WCA 代表同意了请求。五魔方第二组进行期间，该选手使用三阶单手决赛尚未使用的备用打乱完成了平均。\n\n其他选手也因需离开而错过决赛，但代表直到决赛开始、这些人已经离开后才得知。由于有人缺席，代表邀请仍在场的前 20 名选手参赛。\n\n指南 1h++ 建议决赛使用相同打乱：\n> [1h++](https://www.worldcubeassociation.org/regulations/guidelines.html#1h++) 建议：某项目决赛的所有尝试，以及全部三阶最少步尝试，所有选手应使用相同打乱序列，即只有一组。\n\nWRC 建议按上述指南在决赛使用相同打乱；若有提前参赛的机会，应告知所有可能需要提前离场的选手。WRC 也鼓励因正当理由需要提前离场的选手主动联系 WCA 代表。\n\n由于 [TNoodle](https://www.worldcubeassociation.org/regulations/scrambles/) 生成三阶与三阶单手打乱的方式相同，WRC 决定**允许所有这些尝试成绩**。",
+    "translatedAt": "2026-10-25T09:29:00.613Z",
     "translator": "Codex / subscription",
     "sourceHash": "3b09903e5c7495bd9a6942ea51d1033c16cf1be9bfbe96ed1fd41074b25890c6"
   },
   "review": {
-    "status": "independently_verified",
+    "status": "pending_independent_recheck",
     "checks": [
       "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
     ],
@@ -36,7 +36,13 @@
       "verdict": "pass",
       "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
     },
-    "unresolvedNotes": []
+    "unresolvedNotes": [],
+    "complianceRevision": {
+      "at": "2026-10-25T09:29:00.613Z",
+      "previousTranslationHash": "eacb855e38cabcf06a069b3ab1756c6429b11bfa700a8b9051ed918f035198ec",
+      "report": "../wca-translation-compliance-2026-10-25.json",
+      "scope": "Targeted source comparison; independent prior evidence remains bound to the previous hash."
+    }
   },
   "publication": {
     "status": "not_authorized"

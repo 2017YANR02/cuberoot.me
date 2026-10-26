@@ -17,6 +17,8 @@ import { benefitCopy } from '@cuberoot/shared/membership-benefits';
 import { useMembershipBenefits } from '@/hooks/useMembershipBenefits';
 import BenefitsEditor from './BenefitsEditor';
 import AppLink from '@/components/AppLink';
+import { MEMBERSHIP_COPY } from '@/lib/membership-copy';
+import { CompactSelect } from '@/components/CompactSelect';
 import CubeRootLogo from '@/components/CubeRootLogo';
 import { Spinner } from '@/components/Spinner/Spinner';
 import {
@@ -83,7 +85,6 @@ export default function MembershipPage() {
   const [plans, setPlans] = useState<MembershipPlan[] | null>(null);
   const [renewalPrices, setRenewalPrices] = useState<MembershipPlan[]>([]);
   const [paymentMode, setPaymentMode] = useState<'renewal' | 'manual'>('renewal');
-  const [enterprisePaymentMode, setEnterprisePaymentMode] = useState<'renewal' | 'manual'>('renewal');
   const [payEnabled, setPayEnabled] = useState(false);
   const [channels, setChannels] = useState<PayChannels>();
   const [buyPlan, setBuyPlan] = useState<MembershipPlan | null>(null);
@@ -209,6 +210,7 @@ export default function MembershipPage() {
     if (perks.length === 0 && !(admin && group) && !heading) return null;
     const list = (
       <ul className="mem-plan-perks">
+        {group === 'enterprise' && <li><Check size={13} /> {tr({ zh: '包含以上个人用户权益，以及以下企业专属权益。', en: 'Includes all individual benefits above, plus these enterprise benefits.' })}</li>}
         {perks.map((perk) => (
           <li key={perk}><Check size={13} /> {tr(benefitMap.has(perk) ? benefitCopy(benefitMap.get(perk)!) : { zh: perk, en: perk })}</li>
         ))}
@@ -217,25 +219,19 @@ export default function MembershipPage() {
     return admin && (group || perks.some(perk => benefitMap.has(perk))) ? <BenefitsEditor onSaved={setBenefits} group={group} benefitIds={perks} language={isZh ? 'zh' : 'en'} heading={heading}>{list}</BenefitsEditor> : <>{heading && <h2 id={heading.id} className="mem-plan-section-title">{heading.text}</h2>}{list}</>;
   }
 
-  function renderPaymentChoice(enterprise: boolean) {
-    const id = enterprise ? 'enterprise-payment-mode' : 'membership-payment-mode';
-    return <div className="mem-payment-choice">
-      <select id={id} aria-label={tr({ zh: '付费方式', en: 'Payment method' })} className="mem-payment-select" value={enterprise ? enterprisePaymentMode : paymentMode}
-        onChange={event => (enterprise ? setEnterprisePaymentMode : setPaymentMode)(event.target.value as 'renewal' | 'manual')}>
-        <option value="renewal">{tr({ zh: '自动续费', en: 'Auto-renewal' })}</option>
-        <option value="manual">{tr({ zh: '仅购买本期', en: 'One-time purchase' })}</option>
-      </select>
-    </div>;
-  }
-
-  function renderPaymentNote(mode: 'renewal' | 'manual') {
-    return <p className="mem-payment-note" role="status">{mode === 'renewal'
-      ? tr({ zh: '微信签约后按所选周期自动续费，扣费前通知，可随时取消。', en: 'Authorize in WeChat to renew each billing period. Notice before charging; cancel anytime.' })
-      : tr({ zh: '仅支付本期费用，不会自动扣款。', en: 'Pay for this period only; no automatic charges.' })}</p>;
+  function renderPaymentChoice() {
+    const items = [
+      { value: 'renewal' as const, label: tr(MEMBERSHIP_COPY.renewal) },
+      { value: 'manual' as const, label: tr(MEMBERSHIP_COPY.manual) },
+    ];
+    return <CompactSelect className="mem-plan-tag" triggerClassName="mem-plan-mode-trigger" unstyledTrigger
+      ariaLabel={tr({ zh: '付费方式', en: 'Payment method' })}
+      label={items.find(item => item.value === paymentMode)!.label} items={items} value={paymentMode}
+      onChange={setPaymentMode} />;
   }
 
   function renderPlan(plan: MembershipPlan, enterprise = false) {
-    const renewal = (enterprise ? enterprisePaymentMode : paymentMode) === 'renewal';
+    const renewal = paymentMode === 'renewal';
     const annual = plan.period === 'year';
     // Keep checkout disabled until the deployed price matches the reviewed offer.
     const monthly = enterprise ? (renewal ? 29900 : 39900) : (renewal ? 2999 : 3999);
@@ -249,16 +245,17 @@ export default function MembershipPage() {
     const unavailable = tr({ zh: '暂不可购买', en: 'Currently unavailable' });
     return (
       <div key={plan.slug} className={'mem-plan' + (renewal ? ' is-autorenew' : '')}>
-        <span className="mem-plan-tag">{renewal ? tr({ zh: '自动续费', en: 'Auto-renewal' }) : tr({ zh: '仅购买本期', en: 'One-time purchase' })}</span>
-        <div className="mem-plan-name">{plan.period === 'year' ? tr({ zh: '年度会员', en: 'Annual membership' }) : tr({ zh: '月度会员', en: 'Monthly membership' })}</div>
+        {renderPaymentChoice()}
+        <div className="mem-plan-heading">
+        <div className="mem-plan-name">{plan.period === 'year' ? tr(MEMBERSHIP_COPY.annual) : tr(MEMBERSHIP_COPY.monthly)}</div>
+        <p className="mem-plan-saving">{annual || renewal
+          ? tr({ zh: '怒省 {amount}', en: 'Save {amount}' }).replace('{amount}', fmtPrice(saving, plan.currency))
+            : tr({ zh: '灵活购买，无后续扣款', en: 'Flexible purchase. No recurring charges.' })}</p>
+        </div>
         <div className="mem-plan-price">
           <span className="mem-plan-amount">{fmtPrice(priceCents, plan.currency)}</span>
           <span className="mem-plan-unit">/ {planUnit(plan, isZh)}</span>
         </div>
-        <p className="mem-plan-saving">{annual
-          ? tr({ zh: '比按月购买一年省 {amount}', en: 'Save {amount} versus 12 monthly payments' }).replace('{amount}', fmtPrice(saving, plan.currency))
-          : renewal ? tr({ zh: '比仅购买本期每月省 {amount}', en: 'Save {amount} each month versus one-time purchase' }).replace('{amount}', fmtPrice(saving, plan.currency))
-            : tr({ zh: '灵活购买，无后续扣款', en: 'Flexible purchase. No recurring charges.' })}</p>
         <ul className="mem-plan-perks">
           {extraPerks.map(perk => <li key={perk}><Check size={13} />{tr(benefitMap.has(perk) ? benefitCopy(benefitMap.get(perk)!) : { zh: perk, en: perk })}</li>)}
         </ul>
@@ -267,7 +264,7 @@ export default function MembershipPage() {
           if (renewal) setSelectedAutoRenewPlan(plan);
           else if (priceReady) setBuyPlan(plan);
         }}>
-          {!available ? unavailable : tr({ zh: '可以开通', en: 'Subscribe' })}
+          {!available ? unavailable : tr(MEMBERSHIP_COPY.subscribe)}
         </button>
       </div>
     );
@@ -283,19 +280,17 @@ export default function MembershipPage() {
         </h1>
       </header>
 
-      <p className="mem-sub" role="status">
-        {directApp
-          ? tr({ zh: '支付成功后开通会员，订阅周期与续费规则以确认页面为准。', en: 'Membership starts after successful payment. See the confirmation page for the subscription period and renewal terms.' })
-          : tr({ zh: '解锁专属权益，支持魔方根。', en: 'Unlock member benefits. Support CubeRoot.' })}
-      </p>
+      {directApp && <p className="mem-sub" role="status">
+        {tr({ zh: '支付成功后开通会员，订阅周期与续费规则以确认页面为准。', en: 'Membership starts after successful payment. See the confirmation page for the subscription period and renewal terms.' })}
+      </p>}
       {directApp && <p className="mem-note">
         {tr({ zh: '已有商店订阅仍由原商店自动续费，切换安装渠道不会取消。网站、Apple 与 Google Play 会员期并存，取较晚到期日，不叠加时长；购买前请核对原订阅。', en: 'Existing store subscriptions continue renewing in their original store; switching app distribution does not cancel them. Website, Apple and Google Play memberships run concurrently, using the latest expiry without adding durations. Check existing subscriptions before buying.' })}
         {' '}<a href="https://play.google.com/store/account/subscriptions?package=me.cuberoot.app" target="_blank" rel="noopener noreferrer">{tr({ zh: '管理 Google Play 订阅', en: 'Manage Google Play subscriptions' })}</a>
       </p>}
 
       <nav className="mem-service-links" aria-label={tr({ zh: '会员服务', en: 'Membership services' })}>
-        <AppLink href="/membership/subscription" prefetch={false}>{tr({ zh: '管理自动续费', en: 'Manage auto-renewal' })}</AppLink>
-        <AppLink href="/membership/renewal-terms" prefetch={false}>{tr({ zh: '自动续费服务协议', en: 'Auto-renewal Agreement' })}</AppLink>
+        <AppLink href="/membership/subscription" prefetch={false}>{tr(MEMBERSHIP_COPY.manage)}</AppLink>
+        <AppLink href="/membership/renewal-terms" prefetch={false}>{tr(MEMBERSHIP_COPY.agreement)}</AppLink>
         <AppLink href="/contact" prefetch={false}>{tr({ zh: '会员客服', en: 'Membership support' })}</AppLink>
       </nav>
 
@@ -351,99 +346,28 @@ export default function MembershipPage() {
       ) : (
         <div className="mem-plan-sections">
           <section className="mem-plan-section" aria-labelledby="universal-perks-title">
-            {renderPerks(universalPerks, 'common', { id: 'universal-perks-title', text: tr({ zh: '个人用户权益', en: 'Individual benefits' }) })}
+            {renderPerks(universalPerks, 'common', { id: 'universal-perks-title', text: tr({ zh: '个人用户', en: 'Individual' }) })}
           </section>
-          <section className="mem-plan-section" aria-labelledby="personal-plans-title">
-            <div className="mem-purchase-heading">
-              <h2 id="personal-plans-title" className="mem-plan-section-title">{tr({ zh: '个人用户', en: 'Individual' })}</h2>
-              {renderPaymentChoice(false)}
-            </div>
+          <section id="personal-plans-title" className="mem-plan-section" aria-labelledby="universal-perks-title">
             <div className="mem-plans">
               {(paymentMode === 'renewal' ? autoRenewPlans : personalPlans).map(plan => renderPlan(plan))}
               {paymentMode === 'renewal' && autoRenewPlans.length === 0 && <p role="status">{tr({ zh: '自动续费暂不可用，请稍后重试。', en: 'Auto-renewal is temporarily unavailable. Please try again later.' })}</p>}
             </div>
-            {renderPaymentNote(paymentMode)}
           </section>
           <section className="mem-plan-section" aria-labelledby="enterprise-perks-title">
-            <p>{tr({ zh: '包含以上个人用户权益，以及以下企业专属权益。', en: 'Includes all individual benefits above, plus these enterprise benefits.' })}</p>
-            {renderPerks(enterpriseSharedPerks, 'enterprise', { id: 'enterprise-perks-title', text: tr({ zh: '企业用户权益', en: 'Enterprise benefits' }) })}
+            {renderPerks(enterpriseSharedPerks, 'enterprise', { id: 'enterprise-perks-title', text: tr({ zh: '企业用户', en: 'Enterprise' }) })}
           </section>
-          <section className="mem-plan-section" aria-labelledby="enterprise-plans-title">
-            <div className="mem-purchase-heading">
-              <h2 id="enterprise-plans-title" className="mem-plan-section-title">{tr({ zh: '企业用户', en: 'Enterprise' })}</h2>
-              {renderPaymentChoice(true)}
-            </div>
-            <div className="mem-plans">{(enterprisePaymentMode === 'renewal' && enterpriseRenewalPlans.length === 1 ? enterpriseRenewalPlans : enterprisePlans).map(plan => renderPlan(plan, true))}</div>
-            {renderPaymentNote(enterprisePaymentMode)}
+          <section id="enterprise-plans-title" className="mem-plan-section" aria-labelledby="enterprise-perks-title">
+            <div className="mem-plans">{(paymentMode === 'renewal' && enterpriseRenewalPlans.length === 1 ? enterpriseRenewalPlans : enterprisePlans).map(plan => renderPlan(plan, true))}</div>
           </section>
         </div>
       )}
 
-      <details className="mem-plan-section mem-details">
-        <summary id="renewal-disclosure-title">
-          {tr({ zh: '续费与取消说明', en: 'Renewal and cancellation' })}
-        </summary>
-        <p>{tr({ zh: '月度、年度订阅在你确认签约后按所选周期自动续费，可随时取消。', en: 'Monthly and annual subscriptions renew automatically for the selected period after you authorize them. You can cancel anytime.' })}</p>
-        {renewalPrices.length > 0 && <div className="mem-service-links" aria-label={tr({ zh: '自动续费价目表', en: 'Auto-renewal prices' })}>
-          {renewalPrices.map((plan) => <span key={plan.slug}>
-            {tr({ zh: plan.nameZh, en: plan.nameEn })} {fmtPrice(plan.priceCents, plan.currency)} / {planUnit(plan, isZh)}
-          </span>)}
-        </div>}
-        <p>{tr({ zh: '付款与续费：仅在你主动同意协议并在微信确认签约后，才建立扣款授权。首期及后续每期金额、续费周期以签约确认页和微信签约内容为准；续费扣款前会通知金额、预计扣费时间与周期，扣款成功后延长相应会员服务期。', en: 'Payment and renewal: debit authorization is established only after you actively agree to the terms and confirm in WeChat. The first and subsequent charges and billing period are shown on the confirmation and WeChat authorization pages. Renewal notices will state the amount, expected charge time, and period; membership is extended after successful payment.' })}</p>
-        <p>{tr({ zh: '退订路径：会员 → 管理自动续费 → 登录 → 对应签约记录 → 取消自动续费 → 确认取消。可查看当前签约状态，随时申请解除委托代扣；以微信确认的解约结果为准，不以点击按钮作为取消成功。也可在微信支付的对应扣费服务中解除授权。', en: 'To cancel: Membership → Manage auto-renewal → Sign in → Select the authorization → Cancel auto-renewal → Confirm cancellation. View your authorization status and request cancellation at any time. Cancellation is effective only when confirmed by WeChat, not simply when a button is clicked. You may also revoke authorization in the corresponding WeChat Pay debit service.' })}</p>
-        <p>{tr({ zh: '取消后：不再发起后续续费扣款，不收取取消费用；已购买权益保留至已付服务期结束，不会自动退款。若已有扣费处理中、取消结果不明确或取消后仍出现扣费，请联系会员客服核对。关闭页面或退出账号不会取消自动续费。', en: 'After cancellation: no further renewal charges will be initiated and there is no cancellation fee. Paid benefits remain until the paid period ends; cancellation does not automatically issue a refund. Contact membership support for pending charges, uncertain cancellation results, or charges after cancellation. Closing the page or signing out does not cancel auto-renewal.' })}</p>
-        <nav className="mem-service-links" aria-label={tr({ zh: '退订与服务规则', en: 'Cancellation and service rules' })}>
-          <AppLink href="/membership/subscription" prefetch={false}>{tr({ zh: '管理自动续费 / 退订', en: 'Manage / cancel auto-renewal' })}</AppLink>
-          <AppLink href="/membership/renewal-terms" prefetch={false}>{tr({ zh: '查看完整自动续费协议', en: 'Read the full auto-renewal agreement' })}</AppLink>
-          <AppLink href="/contact" prefetch={false}>{tr({ zh: '联系会员客服', en: 'Contact membership support' })}</AppLink>
-        </nav>
-      </details>
 
-      <details className="mem-details">
-        <summary>{tr({ zh: '未来权益规划', en: 'Planned benefits' })}</summary>
-      <section className="mem-plan-sections" aria-labelledby="planned-benefits-title">
-        <div>
-          <h2 id="planned-benefits-title" className="mem-plan-section-title">
-            {tr({ zh: '新增权益规划', en: 'Planned membership benefits' })}
-          </h2>
-          <p className="mem-sub">
-            {tr({ zh: '以下为规划中的新增权益，暂不包含在当前购买的套餐内。具体开放时间、适用套餐、额度和服务范围将在上线前公布；现有价格与已包含权益不变。', en: 'These planned additions are not included in current purchases. Availability, eligible plans, allowances, and service scope will be announced before launch. Existing prices and included benefits remain unchanged.' })}
-          </p>
-        </div>
-        <section aria-labelledby="planned-personal-title">
-          <h3 id="planned-personal-title" className="mem-plan-section-title">{tr({ zh: '个人用户规划', en: 'Planned for individuals' })}</h3>
-          <ul className="mem-plan-perks">
-            <li>{tr({ zh: '训练分析报告：查看成绩趋势、稳定性与薄弱公式，了解下一步练什么。', en: 'Training reports: track performance trends, consistency, and weak algorithms to identify what to practice next.' })}</li>
-            <li>{tr({ zh: '个性化训练计划：根据目标与每日可用时间，安排训练和复习。', en: 'Personalized practice plans: organize training and reviews around your goals and available time.' })}</li>
-            <li>{tr({ zh: '高级公式管理：自建公式集、记录备注与掌握程度，针对薄弱项练习。', en: 'Advanced algorithm management: create sets, add notes, track mastery, and practice weak areas.' })}</li>
-            <li>{tr({ zh: '复盘档案：集中保存视频、教练批注和改进建议，对比不同阶段的表现。', en: 'Solve review archive: keep videos, coach feedback, and improvement suggestions together to compare progress over time.' })}</li>
-            <li>{tr({ zh: '会员专题课与集体答疑：围绕还原技巧、训练方法和比赛准备开展专题活动。', en: 'Member workshops and group Q&A: focused sessions on solving techniques, practice methods, and competition preparation.' })}</li>
-            <li>{tr({ zh: '云端计算扩展：规划优先排队与更多计算任务额度，具体适用任务和上限另行公布，不减少现有求解权益。', en: 'Expanded cloud computing: planned priority queuing and additional task allowances, with eligible tasks and limits to be announced. Existing solving benefits will not be reduced.' })}</li>
-          </ul>
-        </section>
-        <section aria-labelledby="planned-enterprise-title">
-          <h3 id="planned-enterprise-title" className="mem-plan-section-title">{tr({ zh: '企业用户规划', en: 'Planned for organizations' })}</h3>
-          <ul className="mem-plan-perks">
-            <li>{tr({ zh: '班级与学员管理：分班、分配老师，集中查看学员训练情况。', en: 'Class and student management: organize classes, assign teachers, and review student practice in one place.' })}</li>
-            <li>{tr({ zh: '布置作业与批改：下发公式训练、计时和视频任务，查看完成情况并反馈。', en: 'Assignments and feedback: assign algorithm practice, timed solves, and video tasks, then track completion and provide feedback.' })}</li>
-            <li>{tr({ zh: '学员成长报告：整理阶段成绩和学习进度，便于向学员与家长反馈。', en: 'Student progress reports: summarize results and learning progress for students and parents.' })}</li>
-            <li>{tr({ zh: '机构教学资料库：供老师共享机构自有或已获授权的教案、公式集和视频。', en: 'Teaching resource library: share lesson plans, algorithm sets, and videos owned or licensed by the organization.' })}</li>
-            <li>{tr({ zh: '教师账号与权限：按角色分配管理范围，支持教学资料与学员交接。', en: 'Teacher accounts and permissions: assign role-based access and support handovers of teaching resources and students.' })}</li>
-            <li>{tr({ zh: '机构品牌展示扩展：在现有机构主页基础上，扩展课程介绍与报告中的机构名称、Logo 展示。', en: 'Expanded organization branding: build on existing profile pages with course introductions and organization names and logos on reports.' })}</li>
-            <li>{tr({ zh: '集中分配学习权益：由机构统一向学员分配课程或工具额度。', en: 'Centralized learning access: let organizations allocate course access or tool allowances to students.' })}</li>
-            <li>{tr({ zh: '入驻指导：规划初始化设置、数据导入或教师培训，服务次数与范围另行公布。', en: 'Onboarding assistance: planned setup, data import, or teacher training, with session limits and scope to be announced.' })}</li>
-          </ul>
-          <p className="mem-sub">
-            {tr({ zh: '教师账号数、学员数、存储空间、人工服务额度及课程定制范围尚待确定，不承诺无限使用或无限定制。', en: 'Teacher seats, student capacity, storage, human-service allowances, and course customization scope are not yet set. Unlimited usage or customization is not promised.' })}
-          </p>
-        </section>
-      </section>
 
-      </details>
+
 
       <p className="mem-foot-note">
-        {tr({ zh: '订阅将在扣费前通知，可随时在“管理自动续费”中取消。取消后，已付会员权益保留至到期。', en: 'You will be notified before renewal charges. Cancel anytime in Manage auto-renewal; paid benefits remain until expiry.' })}
-        {' '}
         <span className="mem-foot-links">
           <AppLink href="/support">{tr({ zh: '查看致谢名单 →', en: 'See supporters →'
           })}</AppLink>

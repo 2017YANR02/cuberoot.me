@@ -11,10 +11,10 @@
 
 .contact-details-columns {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  grid-template-columns: 8fr 8fr 5fr;
   align-items: start;
-  gap: 2rem;
-  margin-top: 1.35rem;
+  gap: 1.5rem;
+  margin-top: 0;
 }
 
 .contact-details {
@@ -56,34 +56,12 @@
   overflow-wrap: anywhere;
 }
 
-.contact-social-details {
-  grid-template-columns: max-content minmax(0, 1fr);
-}
-
-.contact-social-details .contact-details-row dt,
-.contact-social-details .contact-details-link-row a {
-  min-width: 0;
-  white-space: nowrap;
-}
-
-.contact-social-details .contact-details-row > dt {
-  grid-column: 1;
-}
-
 .contact-qr-slot {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 16px;
   flex: 0 0 16px;
-}
-
-.contact-social-details .contact-details-row > dd {
-  display: contents;
-}
-
-.contact-social-details .contact-secondary-actions {
-  grid-column: 2;
 }
 
 .contact-secondary-actions {
@@ -99,10 +77,9 @@
 }
 
 .contact-app-platform-list {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 0.35rem 0.8rem;
-  align-items: baseline;
+  display: flex;
+  gap: 0;
+  align-items: center;
   font-size: 0.84rem;
   text-align: left;
 }
@@ -115,7 +92,8 @@
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  margin: 0 0 0.9rem;
+  margin: 0 0 0.5rem;
+  padding-left: 10px;
   font-size: 0.84rem;
   font-weight: 650;
   text-align: left;
@@ -128,7 +106,37 @@
 .contact-app-platform-label {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  justify-content: center;
+  flex: 1 1 44px;
+  min-width: 44px;
+  max-width: 44px;
+}
+
+.contact-app-platform-label .contact-qr-trigger {
+  justify-content: center;
+  width: 100%;
+  height: 44px;
+}
+
+.contact-device-icon,
+.contact-mini-icon {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.contact-device-brand {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.contact-mini-icon > svg:last-child {
+  position: absolute;
+  right: -3px;
+  bottom: -2px;
 }
 
 .contact-app-platform-label a,
@@ -220,6 +228,11 @@
   outline-offset: 3px;
 }
 
+.contact-qr-trigger.contact-coming-soon {
+  color: var(--faint-foreground);
+  cursor: default;
+}
+
 .contact-qr-popover {
   padding: 0;
   border: 0;
@@ -274,20 +287,127 @@
   font-weight: 500;
 }
 
-
 .contact-qr {
   display: block;
   width: min(260px, 44vw);
   height: auto;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 1040px) {
   .contact-details-columns {
     grid-template-columns: 1fr;
-    gap: 1.5rem;
+    gap: 1.25rem;
   }
 
   .contact-qr {
     width: min(280px, 82vw);
   }
+}
+
+.contact-social-details {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.contact-social-logo {
+  flex: 0 0 44px;
+  min-width: 44px;
+  max-width: 44px;
+  height: 44px;
+  justify-content: center;
+}
+
+.contact-direct-details {
+  display: flex;
+  gap: 0;
+}
+
+.contact-direct-details dt > :is(a, button) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+}
+
+.contact-direct-details dd:empty {
+  display: none;
+}
+
+.contact-direct-details .contact-details-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.contact-social-logo > svg,
+.contact-direct-details .contact-details-icon > svg {
+  width: 24px;
+  height: 24px;
+}
+
+@media (max-width: 480px) {
+  .contact-app-platform-label,
+  .contact-social-logo {
+    flex: 1 1 0;
+    min-width: 32px;
+  }
+}
+
+.contact-social-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100dvh - 2rem);
+}
+
+.contact-social-dialog::backdrop {
+  background: color-mix(in srgb, var(--background) 72%, transparent);
+}
+
+.contact-social-panel {
+  position: relative;
+  padding: 1.5rem;
+  border-radius: 12px;
+  min-width: 220px;
+  text-align: center;
+}
+
+.contact-social-close {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+}
+
+.contact-social-heading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem;
+  white-space: nowrap;
+}
+
+.contact-social-panel h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.contact-social-panel .contact-qr {
+  margin: 0.75rem auto;
+  max-width: 100%;
+}
+
+.contact-social-panel .contact-qr-link {
+  display: inline-block;
+  margin-top: 0.5rem;
 }

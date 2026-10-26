@@ -1,0 +1,27 @@
+{
+  "key": "posts:/posts/2018-year-end-message",
+  "source": {
+    "key": "posts:/posts/2018-year-end-message",
+    "kind": "posts",
+    "title": "2018 Year End Message",
+    "date": "2019-01-01T07:39:29.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/2018-year-end-message",
+    "content": "Dear WCA Community,\n\nThank you all for another great year for cubing! It has been a successful year for the WCA and we would like to share our achievements of 2018 with you.\n\nTen new countries held WCA competitions and we welcomed over 25,000 new competitors to the WCA. Throughout the year, 85 world records, 271 continental records, and 4,039 national records were broken.\n\nThe greatest change for the WCA as an organization this year was becoming recognized as a non-profit organization in October! We also established two new Teams, the WCA Marketing Team and the WCA Competition Announcement Team whose work helps the WCA run smoothly. Additionally, 53 new Delegates delegated their first competition this year. \n\nWithin our Committees and Teams, there have been 1,148 competition results posted by the WCA Results Team, 1,196 competition announcements posted by the WCA Board, the WCA Quality Assurance Committee, and later the WCA Competition Announcement Team, about 27 investigations opened by the WCA Disciplinary Committee, 130 Instagram and 166 Facebook posts published by the WCA Communication Team, and 1,106 pull requests merged by the WCA Software Team! So much to keep up with throughout the year!\n\nWith the help of our community, we anticipate more growth and organizational adjustments into 2019. We also look forward to celebrating cubing together at World Championship 2019 in July! Thank you for another great year and for all the volunteers that keep our organization running. We could not do it without everyone’s help and support. Happy New Year!",
+    "hash": "9ecb5f88d238690b730e71fdf7e636ac591eadd88e0cabbdbb50e9f8bc15c4c7",
+    "format": "markdown",
+    "sourceId": 10999
+  },
+  "translation": {
+    "version": 2,
+    "sourceHash": "9ecb5f88d238690b730e71fdf7e636ac591eadd88e0cabbdbb50e9f8bc15c4c7",
+    "language": "zh-Hans",
+    "title": "2018 年年终寄语",
+    "content": "各位 WCA 社区成员：\n\n感谢大家共同度过又一个精彩的魔方年！2018 年对 WCA 来说成果丰硕，我们想与大家分享这一年的成绩。\n\n10 个国家首次举办了 WCA 比赛，超过 25,000 名新选手加入了 WCA。全年共打破 85 项世界纪录、271 项洲际纪录和 4,039 项国家纪录。\n\n今年 WCA 在组织层面最大的变化，是于 10 月获认可为非营利组织！我们还成立了两个新团队：WCA 市场营销组和 WCA 比赛公示团队，他们的工作帮助 WCA 顺利运作。此外，53 位新代表在今年第一次履行比赛代表职责。\n\n各委员会与团队也忙碌了一整年：WCA 成绩组发布了 1,148 场比赛的成绩；WCA 董事会、WCA 质量保证委员会及后来成立的 WCA 比赛公示团队公示了 1,196 场比赛；WCA 纪律委员会启动了约 27 起调查；WCA 通讯组发布了 130 条 Instagram 帖文和 166 条 Facebook 帖文；WCA 软件组合并了 1,106 个拉取请求！一整年要跟进的工作实在不少！\n\n在社区的帮助下，我们期待 2019 年有更多发展，并继续调整组织架构。也期待 7 月在 2019 年世界锦标赛上，与大家一同享受魔方的乐趣！感谢大家带来又一个精彩的年份，感谢所有让协会正常运作的志愿者。没有每个人的帮助和支持，我们无法做到这些。新年快乐！",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.174Z",
+    "reviewStatus": "pending_independent_review",
+    "revisedAt": "2026-10-25T07:28:01.629Z",
+    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+  },
+  "translationHash": "59c70a8c9251147bddb4ca1e199dfb42ccf15b48bec3dd2e345f3d2442a10b88"
+}

@@ -32,8 +32,8 @@ interface Rule {
 // Current generated translations are checked too; archived versions stay intact.
 const WCA_RULES: Rule[] = [
   { term: 'WCA Integrity Committee', ban: /(?:诚信|廉正)委员会/, fix: '廉政委员会' },
-  { term: 'WCA Communication Team', ban: /WCA\s*沟通团队/, fix: 'WCA 通讯组' },
-  { term: 'WCA Competition Announcement Team', ban: /WCA\s*比赛公告团队/, fix: 'WCA 比赛公示组' },
+  { term: 'WCA Communication Team', ban: /WCA\s*(?:沟通|传播|宣传)团队/, fix: 'WCA 通讯组' },
+  { term: 'WCA Competition Announcement Team', ban: /WCA\s*比赛(?:公告|公示)团队/, fix: 'WCA 比赛公示组' },
   { term: 'WCA Marketing Team', ban: /WCA\s*市场(?:推广)?团队/, fix: 'WCA 市场营销组' },
   { term: 'WCA organization names', ban: /WCA\s*(?:档案团队|软件团队|成绩团队|大型锦标赛团队|执行助理团队|行政助理团队|质量保障委员会)/, fix: '按 WCA 翻译参考中的官方机构名称表' },
 ];

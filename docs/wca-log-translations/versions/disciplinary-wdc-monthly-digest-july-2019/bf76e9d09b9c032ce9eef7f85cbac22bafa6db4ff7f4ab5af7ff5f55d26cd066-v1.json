@@ -21,16 +21,34 @@
     "sourceHash": "8904de8d783cf098f53c1e672db3bb338562969759a7f9148490a7d719314b25"
   },
   "review": {
-    "status": "pending_independent_review",
+    "status": "pending_source_verification",
     "checks": [
       "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
     ],
     "notes": [
-      "公开信原文写 ‘almost a decade ago’，与2007及2019时间差不一致；按原文译为近十年，不擅自改为十二年。"
+      "公开信原文写 ‘almost a decade ago’，与2007及2019时间差不一致；按原文译为近十年，不擅自改为十二年。",
+      "源文公开信称 2007 年的作弊发生于 almost a decade ago，与 2019 年简报时间相差约十二年不一致；译文忠实保留为近十年，年代问题 unresolved。本轮仅对照所给正文，未作事实核验。"
     ],
-    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_2",
+      "reviewedAt": "2026-10-22T06:22:43.237972Z",
+      "report": "reviews/round-1/report-2.json",
+      "sourceHash": "8904de8d783cf098f53c1e672db3bb338562969759a7f9148490a7d719314b25",
+      "reviewedTranslationHash": "bf76e9d09b9c032ce9eef7f85cbac22bafa6db4ff7f4ab5af7ff5f55d26cd066",
+      "verdict": "pending_source_verification",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": [
+      "源文公开信称 2007 年的作弊发生于 almost a decade ago，与 2019 年简报时间相差约十二年不一致；译文忠实保留为近十年，年代问题 unresolved。本轮仅对照所给正文，未作事实核验。"
+    ]
   },
   "publication": {
     "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
   }
 }

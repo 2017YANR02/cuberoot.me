@@ -13,10 +13,10 @@
   },
   "translation": {
     "language": "zh-Hans",
-    "version": 1,
+    "version": 2,
     "title": "选手因手抖得到低于 0.06 秒的时间",
-    "content": "说明：此事件处理后，[A6b1](https://www.worldcubeassociation.org/regulations/full/#A6b1) 已修改，更清楚地说明低于 0.06 秒停表的处理方式。\n\n选手停表时间低于 0.06 秒，现场按器材故障给予额外尝试，但裁判称可能是选手手抖造成。\n\nWRC 认为最可能原因是手抖而非计时器故障，依据 A6b1 决定判 DNF：\n> A6b1：若魔方还原前计时器停止，且显示时间严格小于 0.06 秒，则以额外尝试替代。若代表认定选手故意停表，则取消获得额外尝试的权利。\n\n申诉至原文所称“WRC Board”后，理事会推翻 WRC 决定，指出手抖不属于**故意**停表。因此，将 DNF 改为额外尝试的时间。",
-    "translatedAt": "2026-10-22T06:00:02.853Z",
+    "content": "说明：此事件处理后，[A6b1](https://www.worldcubeassociation.org/regulations/full/#A6b1) 已修改，更清楚地说明低于 0.06 秒停表的处理方式。\n\n选手停表时间低于 0.06 秒，现场按器材故障给予额外尝试，但裁判称可能是选手手抖造成。\n\nWRC 认为最可能原因是手抖而非计时器故障，依据 A6b1 决定判 DNF：\n> A6b1：若魔方还原前计时器停止，且显示时间严格小于 0.06 秒，则以额外尝试替代。若代表认定选手故意停表，则取消获得额外尝试的权利。\n\n申诉至原文所称“WRC Board”后，该机构推翻 WRC 决定，指出手抖不属于**故意**停表。因此，将 DNF 改为额外尝试的时间。",
+    "translatedAt": "2026-10-25T09:29:00.613Z",
     "translator": "Codex / subscription",
     "sourceHash": "412e2cab624cfda7dd182532d04eb4ae13df320c6b153e2f0578e0281a1b72df"
   },
@@ -41,7 +41,13 @@
     },
     "unresolvedNotes": [
       "现有 review.notes 所列 “WRC Board” 机构名称疑点未解决。源文申诉机构与常见称谓的关系无法仅据本条确认；译文忠实标为原文所称 WRC Board，未擅改 WCA Board。本审校没有联网或事实核验。"
-    ]
+    ],
+    "complianceRevision": {
+      "at": "2026-10-25T09:29:00.613Z",
+      "previousTranslationHash": "0fcbd160746ec02ac6d194d699564f1fa8ee77541e047b7e3655e57397826ea4",
+      "report": "../wca-translation-compliance-2026-10-25.json",
+      "scope": "Targeted source comparison; independent prior evidence remains bound to the previous hash."
+    }
   },
   "publication": {
     "status": "not_authorized"

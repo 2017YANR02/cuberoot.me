@@ -88,3 +88,9 @@
 完成条件：模板审核与配置 → 发布迁移/API/Web → 既有小程序正式版本确实包含签约页 → 企业签约、金额、到账权益和取消验收。模板创建成功不等于企业自动续费已上线。
 
 官方依据：[接入流程](https://pay.wechatpay.cn/doc/v2/merchant/4011986709)、[签约解约通知](https://pay.wechatpay.cn/doc/v2/merchant/4011987586)、[周期扣费](https://pay.wechatpay.cn/doc/v2/merchant/4011986682)。
+
+### 2026-10-25 企业模板登记
+
+维护者提供微信支付后台截图，企业月度模板 `226122` 为「使用中」，价格 299 元/月，延迟 24 小时扣费，解约通知地址与现有接口一致。已在生产配置 `WECHAT_PAPAY_ENTERPRISE_MONTHLY_PLAN_ID=226122` 和 `WECHAT_PAPAY_ENTERPRISE_MONTHLY_APPROVED=226122`，保留配置备份并重载 API。
+
+维护者随后明确要求三个套餐一起开放，已将生产 `WECHAT_PAPAY_RELEASE_ENABLED`、`WECHAT_PAPAY_DEBIT_ENABLED`、`WECHAT_PAPAY_SYNC_ENABLED` 设为 `true`，保存配置备份并重载 API。匿名 availability 返回 `available=true`，三个套餐配置均为 `true`，公开价格接口返回个人 29.99 元/月、299 元/年和企业 299 元/月。套餐数据库的 `active=false` 仍用于隔离普通一次性购买；自动续费通过独立签约接口准入。此次完成配置开放，未亲自执行真实签约或扣款，不代表到账、权益和取消链路已经验收。

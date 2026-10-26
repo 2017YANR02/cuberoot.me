@@ -49,18 +49,6 @@
 
 .timer-workspace-divider { display: none; }
 @media (min-width: 1024px) {
-  .timer-workspace-divider {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    z-index: 43;
-    width: 24px;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    cursor: col-resize;
-    touch-action: none;
-  }
   .timer-workspace-divider--right {
     display: flex;
     right: calc(var(--timer-right-dock-width, 360px) - 12px);

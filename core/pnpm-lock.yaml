@@ -525,8 +525,8 @@ importers:
   packages/app-ui:
     dependencies:
       '@2017yanr02/continuous-corners':
-        specifier: file:../../vendor/continuous-corners-0.3.1.tgz
-        version: file:vendor/continuous-corners-0.3.1.tgz(react@19.2.4)
+        specifier: file:../../vendor/continuous-corners-0.3.2.tgz
+        version: file:vendor/continuous-corners-0.3.2.tgz(react@19.2.4)
       '@cuberoot/puzzle-solvers':
         specifier: workspace:*
         version: link:../puzzle-solvers
@@ -574,8 +574,8 @@ importers:
   packages/client:
     dependencies:
       '@2017yanr02/continuous-corners':
-        specifier: file:../../vendor/continuous-corners-0.3.1.tgz
-        version: file:vendor/continuous-corners-0.3.1.tgz(react@19.2.4)
+        specifier: file:../../vendor/continuous-corners-0.3.2.tgz
+        version: file:vendor/continuous-corners-0.3.2.tgz(react@19.2.4)
       '@airwallex/components-sdk':
         specifier: ^1.35.1
         version: 1.35.1
@@ -583,8 +583,8 @@ importers:
         specifier: file:../../vendor/app-foundation/app-foundation-icons-0.1.0.tgz
         version: file:vendor/app-foundation/app-foundation-icons-0.1.0.tgz(lucide-react@1.8.0(react@19.2.4))(react@19.2.4)
       '@app-foundation/navigation-ui':
-        specifier: file:../../vendor/app-foundation/app-foundation-navigation-ui-0.2.5.tgz
-        version: file:vendor/app-foundation/app-foundation-navigation-ui-0.2.5.tgz(@2017yanr02/continuous-corners@file:vendor/continuous-corners-0.3.1.tgz(react@19.2.4))(react@19.2.4)
+        specifier: file:../../vendor/app-foundation/app-foundation-navigation-ui-0.2.9.tgz
+        version: file:vendor/app-foundation/app-foundation-navigation-ui-0.2.9.tgz(@2017yanr02/continuous-corners@file:vendor/continuous-corners-0.3.2.tgz(react@19.2.4))(react@19.2.4)
       '@app-foundation/registration-ui':
         specifier: file:../../vendor/app-foundation/app-foundation-registration-ui-0.1.0.tgz
         version: file:vendor/app-foundation/app-foundation-registration-ui-0.1.0.tgz(react@19.2.4)
@@ -1078,6 +1078,9 @@ importers:
 
   packages/timer-ui:
     dependencies:
+      '@app-foundation/navigation-ui':
+        specifier: file:../../vendor/app-foundation/app-foundation-navigation-ui-0.2.9.tgz
+        version: file:vendor/app-foundation/app-foundation-navigation-ui-0.2.9.tgz(@2017yanr02/continuous-corners@file:vendor/continuous-corners-0.3.2.tgz(react@19.2.4))(react@19.2.4)
       '@cuberoot/event-icon':
         specifier: workspace:*
         version: link:../event-icon
@@ -1149,9 +1152,9 @@ importers:
 
 packages:
 
-  '@2017yanr02/continuous-corners@file:vendor/continuous-corners-0.3.1.tgz':
-    resolution: {integrity: sha512-DKOri0eSNLDaldxHOWxZfv8zc9meHnFa20hv2oGgxQM+PKm+JXlfwS6/ucqYY12UTYG0lHGYzbbmcOl5VVN0vA==, tarball: file:vendor/continuous-corners-0.3.1.tgz}
-    version: 0.3.1
+  '@2017yanr02/continuous-corners@file:vendor/continuous-corners-0.3.2.tgz':
+    resolution: {integrity: sha512-OnXQ5mhp020Gma4ICXpIiFIDzZwzT+xk19556scOn0WDRwpq8g077ZE1sQ5mWltnsLi59QsWQ8Po74iOYa8zLQ==, tarball: file:vendor/continuous-corners-0.3.2.tgz}
+    version: 0.3.2
     engines: {node: '>=18'}
     peerDependencies:
       react: '>=18'
@@ -1224,12 +1227,12 @@ packages:
     version: 0.1.0
     engines: {node: '>=22'}
 
-  '@app-foundation/navigation-ui@file:vendor/app-foundation/app-foundation-navigation-ui-0.2.5.tgz':
-    resolution: {integrity: sha512-iqdn1A68YNO7++sKA4/yHjI0PqISsP8UICqo7OYx6OyqlW/bFa/B4cxihZ0yxI5M8fywLe3G0MmAUAzaTxcuKg==, tarball: file:vendor/app-foundation/app-foundation-navigation-ui-0.2.5.tgz}
-    version: 0.2.5
+  '@app-foundation/navigation-ui@file:vendor/app-foundation/app-foundation-navigation-ui-0.2.9.tgz':
+    resolution: {integrity: sha512-mWo/S3yJMOQhrTmgjUeP/yGKgLpd0AbeTqneYhT1GSJGaV1xWoYEM7hPBBkb99i8JGZPayvUhWbjbi2qNhvrrw==, tarball: file:vendor/app-foundation/app-foundation-navigation-ui-0.2.9.tgz}
+    version: 0.2.9
     engines: {node: '>=22'}
     peerDependencies:
-      '@2017yanr02/continuous-corners': 0.3.1
+      '@2017yanr02/continuous-corners': ^0.3.1
       react: '>=19'
 
   '@app-foundation/payments@https://github.com/2017YANR02/app-foundation/releases/download/v0.1.0/app-foundation-payments-0.1.0.tgz':
@@ -6580,7 +6583,7 @@ packages:
 
 snapshots:
 
-  '@2017yanr02/continuous-corners@file:vendor/continuous-corners-0.3.1.tgz(react@19.2.4)':
+  '@2017yanr02/continuous-corners@file:vendor/continuous-corners-0.3.2.tgz(react@19.2.4)':
     optionalDependencies:
       react: 19.2.4
 
@@ -6644,9 +6647,9 @@ snapshots:
 
   '@app-foundation/messaging@https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-messaging-0.1.0.tgz': {}
 
-  '@app-foundation/navigation-ui@file:vendor/app-foundation/app-foundation-navigation-ui-0.2.5.tgz(@2017yanr02/continuous-corners@file:vendor/continuous-corners-0.3.1.tgz(react@19.2.4))(react@19.2.4)':
+  '@app-foundation/navigation-ui@file:vendor/app-foundation/app-foundation-navigation-ui-0.2.9.tgz(@2017yanr02/continuous-corners@file:vendor/continuous-corners-0.3.2.tgz(react@19.2.4))(react@19.2.4)':
     dependencies:
-      '@2017yanr02/continuous-corners': file:vendor/continuous-corners-0.3.1.tgz(react@19.2.4)
+      '@2017yanr02/continuous-corners': file:vendor/continuous-corners-0.3.2.tgz(react@19.2.4)
       react: 19.2.4
 
   '@app-foundation/payments@https://github.com/2017YANR02/app-foundation/releases/download/v0.1.0/app-foundation-payments-0.1.0.tgz': {}

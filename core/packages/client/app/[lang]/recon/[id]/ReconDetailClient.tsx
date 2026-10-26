@@ -433,7 +433,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
               <div className="detail-caption-header">{captionHeader}
             {wasteFreeText !== null && <button type="button" className={`recon-cross-toggle${wasteRemoved ? ' active' : ''}`}
               aria-pressed={wasteRemoved} onClick={() => setWasteRemoved(value => !value)}>
-              {wasteRemoved ? tr({ zh: '恢复废步', en: 'Restore wasted moves' }) : tr({ zh: '消去废步', en: 'Remove wasted moves' })}
+              {wasteRemoved ? tr({ zh: '恢复废步', en: 'Restore wasted moves' }) : tr({ zh: '消步', en: 'Remove wasted moves' })}
             </button>}
               </div>
             )}

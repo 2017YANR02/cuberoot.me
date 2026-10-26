@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/wca-forum-launch",
+  "source": {
+    "key": "posts:/posts/wca-forum-launch",
+    "kind": "posts",
+    "title": "WCA Forum Launch",
+    "date": "2020-04-02T04:33:38.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/wca-forum-launch",
+    "content": "We are excited to announce the launch of the [WCA Forum](https://forum.worldcubeassociation.org/), a project that the WCA Advisory Council has worked hard to create for the community! \n\nThe WAC hopes to use this tool to improve the connection between WCA Staff and the Community. It is a space for all WCA members to join together to discuss topics such as competitions, records, regulations, and more. This is also a great place to connect with others in your regional community. Most importantly for the WCA, this is a place where everyone gets to have their say as we make changes to our organization for the future.\n\nWe invite you to log in, explore the site, and get involved in some conversations. Thank you for your continued support of our organization!",
+    "hash": "67df29ccd0392c6651a4af0ecf2eb9c50899fc1f5c46d641e475a2b6bdbb98d9",
+    "format": "markdown",
+    "sourceId": 13970
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "67df29ccd0392c6651a4af0ecf2eb9c50899fc1f5c46d641e475a2b6bdbb98d9",
+    "language": "zh-Hans",
+    "title": "WCA 论坛上线",
+    "content": "[WCA 论坛](https://forum.worldcubeassociation.org/)正式上线！这是 WCA 咨询理事会为社区精心筹备的项目。\n\nWAC 希望通过论坛加强 WCA 工作人员与社区的联系。所有 WCA 成员都可以在这里讨论比赛、纪录、规则等话题，也可以结识自己所在地区的魔友。更重要的是，当 WCA 为未来发展作出调整时，每个人都可以在这里表达意见。\n\n欢迎登录论坛，四处看看，加入讨论。感谢大家一直以来对协会的支持！",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:49:54.086Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "e9f7346efe603438945bc3ff3c60d5c8397fdaf7ced0bb2c8370cbc3cf956440"
+}

@@ -44,10 +44,10 @@
     "dev:serve:safe": "node scripts/dev-safe.mjs"
   },
   "dependencies": {
-    "@2017yanr02/continuous-corners": "file:../../vendor/continuous-corners-0.3.1.tgz",
+    "@2017yanr02/continuous-corners": "file:../../vendor/continuous-corners-0.3.2.tgz",
     "@airwallex/components-sdk": "^1.35.1",
     "@app-foundation/icons": "file:../../vendor/app-foundation/app-foundation-icons-0.1.0.tgz",
-    "@app-foundation/navigation-ui": "file:../../vendor/app-foundation/app-foundation-navigation-ui-0.2.5.tgz",
+    "@app-foundation/navigation-ui": "file:../../vendor/app-foundation/app-foundation-navigation-ui-0.2.9.tgz",
     "@app-foundation/registration-ui": "file:../../vendor/app-foundation/app-foundation-registration-ui-0.1.0.tgz",
     "@app-foundation/workspace-policy": "https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz",
     "@app-foundation/workspace-ui": "https://github.com/2017YANR02/app-foundation/releases/download/v0.7.0/app-foundation-workspace-ui-0.1.0.tgz",

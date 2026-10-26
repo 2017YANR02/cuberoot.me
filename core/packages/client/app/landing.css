@@ -910,13 +910,117 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 }
 
 /* ── 页脚 ── */
+.landing-page .landing-footer-layout {
+    --footer-row-height: 44px;
+    --footer-row-gap: 4px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(440px, 1fr);
+    align-items: start;
+    gap: 2rem;
+    width: min(100%, 1100px);
+    margin: 2rem auto 1rem;
+}
+
+.landing-footer-info {
+    min-width: 0;
+    display: grid;
+    gap: var(--footer-row-gap);
+    text-align: left;
+}
+
+.landing-page .landing-footer-info .beian {
+    margin: 0;
+    padding: 0;
+    flex-wrap: wrap;
+    min-height: var(--footer-row-height);
+    justify-content: flex-start;
+    line-height: 20px;
+}
+
+.landing-page .landing-footer-info .footer {
+    min-height: var(--footer-row-height);
+    justify-content: flex-start;
+    line-height: 20px;
+}
+
+.landing-page .landing-footer-info .company-contact {
+    display: contents;
+    text-align: left;
+}
+
+.landing-footer-info .company-contact > span {
+    display: flex;
+    align-items: center;
+    min-height: var(--footer-row-height);
+}
+
 .landing-page .landing-contact-details {
-    width: min(100%, 920px);
-    margin: 1.5rem auto 1rem;
+    min-width: 0;
+    margin: 0;
+}
+
+.landing-contact-details .contact-details-columns {
+    grid-template-columns: 1fr;
+    gap: var(--footer-row-gap);
+}
+
+.landing-contact-details .contact-details-columns > section {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    align-items: center;
+    min-height: var(--footer-row-height);
+    gap: 0.5rem;
+}
+
+.landing-contact-details .contact-column-heading {
+    margin: 0;
+    padding: 0;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--muted-foreground);
+}
+
+.landing-contact-details .contact-column-heading > svg,
+.landing-contact-details .contact-column-heading .contact-details-icon > svg {
+    width: 14px;
+    height: 14px;
+}
+
+.landing-contact-details .contact-app-platform-label .contact-qr-trigger > svg,
+.landing-contact-details .contact-social-logo > svg,
+.landing-contact-details .contact-direct-details .contact-details-icon > svg,
+.landing-contact-details .contact-device-icon > svg,
+.landing-contact-details .contact-mini-icon > svg:first-child {
+    width: 18px;
+    height: 18px;
+}
+
+.landing-contact-details .contact-device-brand > svg,
+.landing-contact-details .contact-mini-icon > svg:last-child {
+    width: 8px;
+    height: 8px;
+}
+
+@media (max-width: 900px) {
+    .landing-page .landing-footer-layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1.5rem;
+    }
+    .landing-page .landing-contact-details {
+        width: min(100%, 440px);
+        justify-self: start;
+    }
+}
+
+@media (max-width: 520px) {
+    .landing-contact-details .contact-details-columns > section {
+        grid-template-columns: 1fr;
+        gap: 0.25rem;
+    }
 }
 
 .landing-page .footer {
-    margin-top: 0.5rem;
+    margin-top: 0;
     font-size: 0.75rem;
     color: var(--text-sub);
     display: flex;

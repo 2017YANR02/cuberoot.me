@@ -21,16 +21,34 @@
     "sourceHash": "412e2cab624cfda7dd182532d04eb4ae13df320c6b153e2f0578e0281a1b72df"
   },
   "review": {
-    "status": "pending_independent_review",
+    "status": "pending_source_verification",
     "checks": [
       "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
     ],
     "notes": [
-      "原文写 ‘WRC Board’，与常见机构名称 WCA Board 不一致；保留原称并待核验。"
+      "原文写 ‘WRC Board’，与常见机构名称 WCA Board 不一致；保留原称并待核验。",
+      "现有 review.notes 所列 “WRC Board” 机构名称疑点未解决。源文申诉机构与常见称谓的关系无法仅据本条确认；译文忠实标为原文所称 WRC Board，未擅改 WCA Board。本审校没有联网或事实核验。"
     ],
-    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_4",
+      "reviewedAt": "2026-10-22T06:22:38.727845Z",
+      "report": "reviews/round-1/report-4.json",
+      "sourceHash": "412e2cab624cfda7dd182532d04eb4ae13df320c6b153e2f0578e0281a1b72df",
+      "reviewedTranslationHash": "0fcbd160746ec02ac6d194d699564f1fa8ee77541e047b7e3655e57397826ea4",
+      "verdict": "pending_source_verification",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": [
+      "现有 review.notes 所列 “WRC Board” 机构名称疑点未解决。源文申诉机构与常见称谓的关系无法仅据本条确认；译文忠实标为原文所称 WRC Board，未擅改 WCA Board。本审校没有联网或事实核验。"
+    ]
   },
   "publication": {
     "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
   }
 }

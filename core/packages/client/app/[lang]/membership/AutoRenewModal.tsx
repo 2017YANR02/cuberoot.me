@@ -5,6 +5,7 @@ import { renewalAvailability, enrollMembershipSubscription, createMembershipMini
 import { SiWechat } from 'react-icons/si';
 import { ClearButton } from '@/components/ClearButton';
 import AppLink from '@/components/AppLink';
+import { MEMBERSHIP_COPY } from '@/lib/membership-copy';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { tr } from '@/i18n/tr';
 
@@ -49,11 +50,11 @@ export default function AutoRenewModal({ price, period, planSlug, priceCents, on
   }
   const copy = period === 'year'
     ? {
-        title: { zh: '开通连续包年', en: 'Start annual auto-renewal' },
+        title: MEMBERSHIP_COPY.annual,
         unit: { zh: '年', en: 'year' },
       }
     : {
-        title: { zh: '开通连续包月', en: 'Start monthly auto-renewal' },
+        title: MEMBERSHIP_COPY.monthly,
         unit: { zh: '月', en: 'month' },
       };
 
@@ -69,7 +70,7 @@ export default function AutoRenewModal({ price, period, planSlug, priceCents, on
           onClick={onClose}
         />
 
-        <h2 id="mem-autorenew-title" className="mem-pay-title">{tr(copy.title)}</h2>
+        <h2 id="mem-autorenew-title" className="mem-pay-title">{tr(copy.title)} · {tr(MEMBERSHIP_COPY.renewal)}</h2>
         <div className="mem-pay-price">{price}<span className="mem-autorenew-price-unit">/{tr(copy.unit)}</span></div>
 
         <div className="mem-autorenew-consent">
@@ -83,7 +84,7 @@ export default function AutoRenewModal({ price, period, planSlug, priceCents, on
           />
           <span>
             <label htmlFor="mem-autorenew-consent">{tr({ zh: '我已阅读并同意', en: 'I have read and agree to ' })}</label>
-            <AppLink href="/membership/renewal-terms" target="_blank" rel="noopener" prefetch={false}>{tr({ zh: '《自动续费服务协议》', en: 'the Auto-renewal Agreement' })}</AppLink>
+            <AppLink href="/membership/renewal-terms" target="_blank" rel="noopener" prefetch={false}>{tr(MEMBERSHIP_COPY.agreement)}</AppLink>
           </span>
         </div>
 
@@ -99,7 +100,7 @@ export default function AutoRenewModal({ price, period, planSlug, priceCents, on
           {busy ? tr({ zh: '正在打开…', en: 'Opening…' }) : available ? tr({ zh: '前往微信签约', en: 'Authorize in WeChat' }) : tr({ zh: '微信签约暂不可用', en: 'WeChat authorization unavailable' })}
         </button>
         <p className="mem-autorenew-caption">
-          <AppLink href="/membership/subscription" prefetch={false}>{tr({ zh: '管理自动续费 / 退订', en: 'Manage / cancel auto-renewal' })}</AppLink>
+          <AppLink href="/membership/subscription" prefetch={false}>{tr(MEMBERSHIP_COPY.manage)}</AppLink>
         </p>
       </section>
     </div>

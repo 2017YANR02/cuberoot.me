@@ -13,15 +13,15 @@
   },
   "translation": {
     "language": "zh-Hans",
-    "version": 1,
+    "version": 2,
     "title": "招募 WDC 成员（2019 年 9 月）",
-    "content": "**WCA 纪律委员会（WDC）**正在招募新成员协助履行使命！人人可申请，鼓励目前未在 WCA 任职的社群成员申请。\n\n**WDC 做什么？**\n- 就特殊个案向理事会提供意见，例如涉嫌违反 WCA 规则；\n- WCA 成员遇到有关比赛的重要个人事务时可联系 WDC。\n\n更多工作信息见[纪律日志](https://www.worldcubeassociation.org/disciplinary)。暂停资格及其他处分见[动议 15.2019.1](https://www.worldcubeassociation.org/documents/motions/15.2019.1%20-%20Suspensions%20and%20other%20Sanctions.pdf)，正式权利和职责见[动议 10.2019.2](https://www.worldcubeassociation.org/documents/motions/10.2019.2%20-%20Disciplinary%20Committee.pdf)。\n\n**期望素质与要求：**清白的背景、个人时间管理能力、讨论推理和想法的能力、熟悉 WCA 活动。\n\n申请期为即日起至 **2019 年 9 月 23 日 23:59 UTC**，请发送至 Lorenzo Vigani Poli（[lpoli@worldcubeassociation.org](mailto:lpoli@worldcubeassociation.org)）。\n\n申请文件必须为 PDF，应包含简短自我介绍、在魔方社群中所做活动、加入 WDC 的动机。非 PDF 文件将自动弃置。\n\n申请人会收到收件确认，之后可能获邀面试。有疑问可联系 [Lorenzo Vigani Poli](mailto:lpoli@worldcubeassociation.org)。申请期后由 WDC 负责人遴选，在申请人接受职位后公布新成员。\n\n感谢愿意协助 WDC 和 WCA！",
-    "translatedAt": "2026-10-22T06:02:27.941Z",
+    "content": "**WCA 纪律委员会（WDC）**正在招募新成员协助履行使命！人人可申请，鼓励目前未在 WCA 任职的社群成员申请。\n\n**WDC 做什么？**\n- 就特殊个案向董事会提供意见，例如涉嫌违反 WCA 规则；\n- WCA 成员遇到有关比赛的重要个人事务时可联系 WDC。\n\n更多工作信息见[纪律日志](https://www.worldcubeassociation.org/disciplinary)。暂停资格及其他处分见[动议 15.2019.1](https://www.worldcubeassociation.org/documents/motions/15.2019.1%20-%20Suspensions%20and%20other%20Sanctions.pdf)，正式权利和职责见[动议 10.2019.2](https://www.worldcubeassociation.org/documents/motions/10.2019.2%20-%20Disciplinary%20Committee.pdf)。\n\n**期望素质与要求：**清白的背景、个人时间管理能力、讨论推理和想法的能力、熟悉 WCA 活动。\n\n申请期为即日起至 **2019 年 9 月 23 日 23:59 UTC**，请发送至 Lorenzo Vigani Poli（[lpoli@worldcubeassociation.org](mailto:lpoli@worldcubeassociation.org)）。\n\n申请文件必须为 PDF，应包含简短自我介绍、在魔方社群中所做活动、加入 WDC 的动机。非 PDF 文件将自动弃置。\n\n申请人会收到收件确认，之后可能获邀面试。有疑问可联系 [Lorenzo Vigani Poli](mailto:lpoli@worldcubeassociation.org)。申请期后由 WDC 负责人遴选，在申请人接受职位后公布新成员。\n\n感谢愿意协助 WDC 和 WCA！",
+    "translatedAt": "2026-10-25T09:29:00.613Z",
     "translator": "Codex / subscription",
     "sourceHash": "adc31e9908de74dc3246318856f9bebfd4c5b304b122dde5cc0032744db273de"
   },
   "review": {
-    "status": "independently_verified",
+    "status": "pending_independent_recheck",
     "checks": [
       "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
     ],
@@ -36,7 +36,13 @@
       "verdict": "pass",
       "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
     },
-    "unresolvedNotes": []
+    "unresolvedNotes": [],
+    "complianceRevision": {
+      "at": "2026-10-25T09:29:00.613Z",
+      "previousTranslationHash": "58655f17936989aa5d5ef6dfad4d89a794f9ff5f66a4394c8c92a9befd8f369a",
+      "report": "../wca-translation-compliance-2026-10-25.json",
+      "scope": "Targeted source comparison; independent prior evidence remains bound to the previous hash."
+    }
   },
   "publication": {
     "status": "not_authorized"

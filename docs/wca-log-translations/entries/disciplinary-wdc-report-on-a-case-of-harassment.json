@@ -13,15 +13,15 @@
   },
   "translation": {
     "language": "zh-Hans",
-    "version": 1,
+    "version": 2,
     "title": "WDC 关于一宗骚扰案件的报告",
-    "content": "亲爱的 WCA 社群：\n\n纪律委员会近期处理完一宗选手行为不当事件。该人曾为 WCA 代表，因此我们的调查之前，伦理委员会已决定将其从正式职务降职。我们已准备公开调查报告，希望与大家分享。\n\n报告讨论性骚扰，可能不适合所有读者。虽然话题令人不快，但社群应知道 WCA 会坚决回应此类行为。\n\n我们支持所有遭受骚扰或其他不当行为的人。若曾在 WCA 活动中处于不舒服的境地，鼓励向当地社群代表或 WDC 讲述。\n\n上述调查报告见[此处](https://drive.google.com/file/d/1iUSG1NpuLakjNcb_Iaq5JGfJ2yMDhF_-/view?usp=sharing)。\n\n谨致问候，\nSebastiano Tronto\n代表纪律委员会",
-    "translatedAt": "2026-10-22T06:10:02.357Z",
+    "content": "亲爱的 WCA 社群：\n\n纪律委员会近期处理完一宗选手行为不当事件。该人曾为 WCA 代表，因此我们的调查之前，道德委员会已决定将其从正式职务降职。我们已准备公开调查报告，希望与大家分享。\n\n报告讨论性骚扰，可能不适合所有读者。虽然话题令人不快，但社群应知道 WCA 会坚决回应此类行为。\n\n我们支持所有遭受骚扰或其他不当行为的人。若曾在 WCA 活动中处于不舒服的境地，鼓励向当地社群代表或 WDC 讲述。\n\n上述调查报告见[此处](https://drive.google.com/file/d/1iUSG1NpuLakjNcb_Iaq5JGfJ2yMDhF_-/view?usp=sharing)。\n\n谨致问候，\nSebastiano Tronto\n代表纪律委员会",
+    "translatedAt": "2026-10-25T09:29:00.613Z",
     "translator": "Codex / subscription",
     "sourceHash": "d9e014f6eea2bac1924f614c35aa6ddae0941c51ad4f618fd5a29515e4d28271"
   },
   "review": {
-    "status": "independently_verified",
+    "status": "pending_independent_recheck",
     "checks": [
       "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
     ],
@@ -38,7 +38,13 @@
       "verdict": "pass",
       "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
     },
-    "unresolvedNotes": []
+    "unresolvedNotes": [],
+    "complianceRevision": {
+      "at": "2026-10-25T09:29:00.613Z",
+      "previousTranslationHash": "bdaeee268f12da8beb2a8fdd67031a28c6a4f50f3bc9b17f406de1106f9f8a20",
+      "report": "../wca-translation-compliance-2026-10-25.json",
+      "scope": "Targeted source comparison; independent prior evidence remains bound to the previous hash."
+    }
   },
   "publication": {
     "status": "not_authorized"

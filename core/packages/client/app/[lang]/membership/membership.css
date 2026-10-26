@@ -151,6 +151,17 @@
   color: var(--accent-foreground);
   background: var(--accent);
 }
+.mem-plan-mode-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
 .mem-plan-name {
   font-size: 16px;
   font-weight: 600;
@@ -201,20 +212,11 @@
 }
 .mem-purchase-heading { display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin-bottom: 18px; }
 .mem-purchase-heading .mem-plan-section-title { margin: 0; }
-.mem-payment-choice { display: flex; align-items: center; gap: 10px; font-size: 13px; }
-.mem-payment-select {
-  align-self: flex-start;
-  max-width: 100%;
-  min-height: 44px;
-  padding: 10px 12px;
-  border: 1px solid var(--input);
-  border-radius: 10px;
-  background: var(--background);
-  color: var(--foreground);
-  font: inherit;
-}
 .mem-payment-note { margin: 12px 0 0; color: var(--muted-foreground); font-size: 13px; line-height: 1.6; }
-.mem-plan-saving { margin: 8px 0 0; font-size: 13px; color: var(--accent); line-height: 1.5; }
+.mem-plan-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px 12px; margin-bottom: 10px; }
+.mem-plan-heading .mem-plan-name { flex-shrink: 0; margin: 0; }
+.mem-plan-heading .mem-plan-saving { text-align: right; }
+.mem-plan-saving { margin: 0; font-size: 13px; color: var(--accent); line-height: 1.5; }
 .mem-details { margin-top: 24px; }
 .mem-details > summary { cursor: pointer; padding: 12px 0; font-size: 14px; font-weight: 600; }
 .mem-plan.is-feature .mem-plan-cta { background: var(--accent); color: var(--accent-foreground); }
@@ -224,7 +226,18 @@
 .mem-store { overflow-wrap: anywhere; }
 .mem-store-benefits { margin-bottom: 20px; }
 .mem-note.mem-store-notice { margin: 0 0 24px; }
-.mem-store .mem-plan-name { margin-top: 0; }
+.mem-store .mem-plan-mode-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.mem-plan-name { margin-top: 0; }
 .mem-store .mem-plan-price { margin-top: 0; flex-wrap: wrap; }
 .mem-store .mem-plan-cta { min-height: 44px; margin-top: auto; }
 .mem-store-actions {

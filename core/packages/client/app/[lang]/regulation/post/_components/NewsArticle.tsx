@@ -66,7 +66,7 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
             </p>
             <p className="news-lede">
               {t(
-                '依据 WCA 规则，这些还原已分别受到加罚 2 秒、加罚 4 秒或判定为 DNF（还原无效）的处理。由于相关成绩受到影响，纪录历史也已相应更新。未被确认存在违规的还原不受影响。',
+                '依据 WCA 规则，这些尝试已分别受到加罚 2 秒、加罚 4 秒或取消此次尝试成绩（DNF）的处理。由于相关成绩受到影响，纪录历史也已相应更新。未被确认存在违规的尝试不受影响。',
                 'These attempts have been penalized under the Regulations with +2 or +4 second penalties or disqualification (DNF). The record history is impacted due to the affected results, and it has been updated accordingly. Attempts without a confirmed violation are unaffected.',
               )}
             </p>
@@ -328,8 +328,8 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
             </div>
             <p className="news-lede">
               {t(
-                '这是自 2014 年增加斜转(Skewb)以来,WCA 首次调整官方项目列表:新增一个项目,并退役一个项目。',
-                'For the first time since Skewb was added in 2014, the WCA is changing its list of official events: one event is added, and one is retired.',
+                'WCA 将新增一个官方项目,并退役一个项目。FTO 是自 2014 年增加斜转(Skewb)以来首个新增的官方项目。',
+                'The WCA will add one official event and retire another. FTO is the first new official event since Skewb was added in 2014.',
               )}
             </p>
 
@@ -345,7 +345,7 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
                 </div>
                 <p>
                   {t(
-                    '自 2014 年斜转以来首个新增的 WCA 官方项目,采用与目前多数项目相同的"五次计平均"(Ao5)赛制。',
+                    '自 2014 年斜转以来首个新增的 WCA 官方项目,采用与目前多数项目相同的"5 次取去尾平均"(Ao5)赛制。',
                     'The first new WCA event since Skewb was added in 2014. It uses the same Average of 5 format as most current events.',
                   )}
                 </p>
@@ -376,7 +376,7 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
                 <p>
                   <strong>{t('移除原因:', 'Why: ')}</strong>
                   {t(
-                    'WCA 董事会指出,魔表与其它项目所用的魔方存在根本性差异:它极易发生比赛事故,难以正确打乱,还需要与其它速拧项目不同的流程或设备;无论从远处判断是否还原、还是观察复原进展都很困难,大幅削弱了观赏性。移除魔表能强化 WCA 作为"专注于三维几何形态转动谜题"的组织定位。',
+                    'WCA 董事会指出,魔表与其它项目所用的魔方存在根本性差异:它极易出现意外事件,难以正确打乱,还需要与其它速拧项目不同的流程或设备;无论从远处判断是否还原、还是观察还原进展都很困难,大幅削弱了观赏性。移除魔表能强化 WCA 作为"专注于三维几何转动益智玩具"的组织定位。',
                     'The WCA Board cited fundamental design issues — Clock is highly prone to incidents and difficult to scramble correctly, and whether a Clock is solved is not easily visible at a distance, substantially diminishing spectator appeal. Clock differs fundamentally from other puzzles in the WCA’s portfolio, and its removal strengthens the WCA’s identity as an organization for three-dimensional geometrical twisty puzzles.',
                   )}
                 </p>

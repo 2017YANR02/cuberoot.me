@@ -9,12 +9,12 @@
     "disciplinary": 44,
     "translated": 188,
     "pending": 0,
-    "independentlyReviewed": 163,
-    "pendingIndependentReview": 25,
+    "independentlyReviewed": 138,
+    "pendingIndependentReview": 50,
     "entriesWithReviewNotes": 21,
     "linkOnlyAnnouncements": 1,
     "independentReviewCoverage": 188,
-    "pendingIndependentRecheck": 12,
+    "pendingIndependentRecheck": 37,
     "pendingSourceVerification": 13,
     "pendingPermission": 0,
     "linkedAnnouncementsFullTextTranslated": 1
@@ -40,13 +40,13 @@
       "url": "https://www.worldcubeassociation.org/posts/call-for-applicants-wca-integrity-committee-leader-december-2025",
       "sourceDate": "2025-12-07T22:53:24Z",
       "sourceHash": "d4c8df09a9e2f619590864bfc49e41c7a96e2cf5550b284a1197a4de9623aded",
-      "translationVersion": 2,
+      "translationVersion": 3,
       "status": "translated",
       "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-call-for-applicants-wca-integrity-committee-leader-december-2025.json",
-      "translatedAt": "2026-10-22T06:02:27.941Z",
-      "translationHash": "9cc21bf2279f808e811a92137c846f3491a8e9f7cacfe8ea9e5be6e7c75ab104"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "512381e8b417ea61d77c015dc087dd8e328ff7e0a7eacff407f8b9556e10a5ce"
     },
     {
       "key": "disciplinary:/posts/call-for-applicants-wca-integrity-committee-members-august-2025",
@@ -68,13 +68,13 @@
       "url": "https://www.worldcubeassociation.org/posts/call-for-applicants-wdc-leader-december-2023",
       "sourceDate": "2023-12-16T07:36:14Z",
       "sourceHash": "e300fb324204fb513e6b0bd0e87c7753d172fdf11b06fbb5b43674ee93cd6b5e",
-      "translationVersion": 2,
+      "translationVersion": 3,
       "status": "translated",
       "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-call-for-applicants-wdc-leader-december-2023.json",
-      "translatedAt": "2026-10-22T06:02:27.941Z",
-      "translationHash": "2126bbe45f43c4bc78ac24eb6d0c85d4dcee6f0c385623dbbfa8834c63c89d6e"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "88440874a3695344f78831f7939b773f465fc88df3c701d43a31e5a96e499ad5"
     },
     {
       "key": "disciplinary:/posts/call-for-applicants-wdc-leader-january-2021",
@@ -82,13 +82,13 @@
       "url": "https://www.worldcubeassociation.org/posts/call-for-applicants-wdc-leader-january-2021",
       "sourceDate": "2021-01-07T03:39:17Z",
       "sourceHash": "8653313ebeb1e46f0708505bd502f1fa8ccbd8b77252b29cbf12c28a4ac7ff12",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-call-for-applicants-wdc-leader-january-2021.json",
-      "translatedAt": "2026-10-22T06:02:27.941Z",
-      "translationHash": "a46df975b7891d9a7b9486499e1bc813ffc50171b69236bc208de42786194065"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "320491417ebe80071cc55b46affe690182090926406ae242e08fec01570299e6"
     },
     {
       "key": "disciplinary:/posts/call-for-applicants-wdc-leader-october-2020",
@@ -96,13 +96,13 @@
       "url": "https://www.worldcubeassociation.org/posts/call-for-applicants-wdc-leader-october-2020",
       "sourceDate": "2020-10-22T03:57:18Z",
       "sourceHash": "51d31cf375745670de6a329276337a34d32d7b2fc46e8c1eca7bb0a951fd75b6",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-call-for-applicants-wdc-leader-october-2020.json",
-      "translatedAt": "2026-10-22T06:02:27.941Z",
-      "translationHash": "c19b675d54bcd3ad40772664455fddaa867a79480b5cebb81f3a1f151b0cca1c"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "0d9106028d2644a157f7a1ff2e1b4b017cafa5be32aa6bb8d42f5ea94880c388"
     },
     {
       "key": "disciplinary:/posts/call-for-applicants-wdc-members-august-2023",
@@ -124,13 +124,13 @@
       "url": "https://www.worldcubeassociation.org/posts/call-for-applicants-wdc-members-september-2019",
       "sourceDate": "2019-09-09T01:22:52Z",
       "sourceHash": "adc31e9908de74dc3246318856f9bebfd4c5b304b122dde5cc0032744db273de",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-call-for-applicants-wdc-members-september-2019.json",
-      "translatedAt": "2026-10-22T06:02:27.941Z",
-      "translationHash": "58655f17936989aa5d5ef6dfad4d89a794f9ff5f66a4394c8c92a9befd8f369a"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "8337e4d0c7110652c792dbefbb3f9f462a5d47203d2a0f5d8eb27e17ae50dfe4"
     },
     {
       "key": "disciplinary:/posts/important-announcement-about-blindfolded-solving",
@@ -222,13 +222,13 @@
       "url": "https://www.worldcubeassociation.org/posts/integrity-committee-digest-2026-q1",
       "sourceDate": "2026-04-07T06:09:09Z",
       "sourceHash": "67795c0bee5d1b515002e49f9f8b3a1477d248ee22f241c9a9c6b2cd690539b9",
-      "translationVersion": 2,
+      "translationVersion": 3,
       "status": "translated",
       "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-integrity-committee-digest-2026-q1.json",
-      "translatedAt": "2026-10-22T06:05:15.716Z",
-      "translationHash": "c2441fb653a25edf147ad6734ce70e0e4538bf5320cd864ddfb79f35851c359c"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "d1fcac35f70d63b0438b3e2de6b3a616a71942ce2f0f44ea8614118f0daec178"
     },
     {
       "key": "disciplinary:/posts/integrity-committee-digest-2026-q2",
@@ -278,13 +278,13 @@
       "url": "https://www.worldcubeassociation.org/posts/wca-integrity-committee-team-leader-announcement-january-2026",
       "sourceDate": "2026-01-26T03:10:32Z",
       "sourceHash": "c8963510efd2d9425ded79e4e4ab4d12480a21ef31ab7d20751f78b76709a359",
-      "translationVersion": 2,
+      "translationVersion": 3,
       "status": "translated",
       "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-wca-integrity-committee-team-leader-announcement-january-2026.json",
-      "translatedAt": "2026-10-22T06:05:15.716Z",
-      "translationHash": "2603b776ba919e1b8d700c8a7b5b24fefc7c207c478184b36887db28db9a270d"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "560efe76962d52616f4ac9af3eb12978bad8b14ac4efb0f6c8d9e605eea212f9"
     },
     {
       "key": "disciplinary:/posts/wdc-action-on-a-misscrambling-incident",
@@ -362,13 +362,13 @@
       "url": "https://www.worldcubeassociation.org/posts/wdc-digest-beginning-of-2020",
       "sourceDate": "2020-04-03T14:40:38Z",
       "sourceHash": "09a45901257ea9ed07705971c5faf642a38aa339ed99ba73e8c8b56e681ff176",
-      "translationVersion": 2,
+      "translationVersion": 3,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-wdc-digest-beginning-of-2020.json",
-      "translatedAt": "2026-10-22T06:07:32.458Z",
-      "translationHash": "56e8e247101dc51bff6820509bf257d2b9fa2fb72a5000b924556b051d99cbcd"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "b9fdf5d8d4285ddb06ee9f34740a8f22159ffa6855d3db066c969ff4904c4ee9"
     },
     {
       "key": "disciplinary:/posts/wdc-digest-december-2022",
@@ -418,13 +418,13 @@
       "url": "https://www.worldcubeassociation.org/posts/wdc-leader-announcement-february-2021",
       "sourceDate": "2021-02-24T04:41:41Z",
       "sourceHash": "8c636510d099a1c5019169830e8b238b35019a158503a183383bf70c21fb99ca",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-wdc-leader-announcement-february-2021.json",
-      "translatedAt": "2026-10-22T06:07:32.458Z",
-      "translationHash": "b2bd01b43b7f68a9841de98439681c41d62f458ba67abe33780694652e543bc0"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "297fd860b1f19ca09a4e9fc94b06da14d6c955f1053d95fa7f5c1bcc181a35a7"
     },
     {
       "key": "disciplinary:/posts/wdc-leader-announcement-february-2024",
@@ -432,13 +432,13 @@
       "url": "https://www.worldcubeassociation.org/posts/wdc-leader-announcement-february-2024",
       "sourceDate": "2024-02-12T04:03:17Z",
       "sourceHash": "2c5a9ee778ca43f2f01b0892f8faa6bac7fda28ce3d5b9216d3f8a69806046c2",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-wdc-leader-announcement-february-2024.json",
-      "translatedAt": "2026-10-22T06:07:32.458Z",
-      "translationHash": "421b4ac95687f6a40d9149370f02e056c0ad75176eea7e3b0d820a958da3a531"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "0b2cdaec3ae70bd3d6391bbdda1763d079b29796e0dd3021fd5330d4d6ea96ff"
     },
     {
       "key": "disciplinary:/posts/wdc-leader-application-december-2020",
@@ -446,13 +446,13 @@
       "url": "https://www.worldcubeassociation.org/posts/wdc-leader-application-december-2020",
       "sourceDate": "2020-12-20T22:37:33Z",
       "sourceHash": "41c71ffaab9290422ee3140ec9da60e9a2f5824b1883880fd2ee49cd496fd3d8",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-wdc-leader-application-december-2020.json",
-      "translatedAt": "2026-10-22T06:07:32.458Z",
-      "translationHash": "7e8235f9b1cf0696a5ebf7476b6e5454c21ec2e42401a2d3f17904575048f466"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "131a297aa3ef0cfd7d598c62a27530c6733d119246f07e803256d76c474e0327"
     },
     {
       "key": "disciplinary:/posts/wdc-monthly-digest-august-september-2019",
@@ -474,13 +474,13 @@
       "url": "https://www.worldcubeassociation.org/posts/wdc-monthly-digest-december-2019",
       "sourceDate": "2020-01-29T14:14:23Z",
       "sourceHash": "893d648851b41c26c3d3ce980e25dfd002cb8c7df348ccfb1382697c5ad903cf",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-wdc-monthly-digest-december-2019.json",
-      "translatedAt": "2026-10-22T06:07:32.458Z",
-      "translationHash": "ca02625cbc6632a2bef9af89ac0d58d23af691104e37c1d94a3539029425541c"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "a9521d93dd4c89f1a4ff63b75119fe20b778882068b438cd17de8e03aadb71ef"
     },
     {
       "key": "disciplinary:/posts/wdc-monthly-digest-february-2019",
@@ -516,13 +516,13 @@
       "url": "https://www.worldcubeassociation.org/posts/wdc-monthly-digest-july-2019",
       "sourceDate": "2019-08-20T06:43:04Z",
       "sourceHash": "8904de8d783cf098f53c1e672db3bb338562969759a7f9148490a7d719314b25",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
       "verificationStatus": "pending_source_verification",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-wdc-monthly-digest-july-2019.json",
-      "translatedAt": "2026-10-22T06:10:02.357Z",
-      "translationHash": "bf76e9d09b9c032ce9eef7f85cbac22bafa6db4ff7f4ab5af7ff5f55d26cd066"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "3bdf96aa8b7eeb93599d1d9a1852511d338ab2adc2195a72cd35e87aec74d632"
     },
     {
       "key": "disciplinary:/posts/wdc-monthly-digest-march-april-2019",
@@ -614,13 +614,13 @@
       "url": "https://www.worldcubeassociation.org/posts/wdc-report-on-a-case-of-harassment",
       "sourceDate": "2023-05-18T21:06:41Z",
       "sourceHash": "d9e014f6eea2bac1924f614c35aa6ddae0941c51ad4f618fd5a29515e4d28271",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/disciplinary-wdc-report-on-a-case-of-harassment.json",
-      "translatedAt": "2026-10-22T06:10:02.357Z",
-      "translationHash": "bdaeee268f12da8beb2a8fdd67031a28c6a4f50f3bc9b17f406de1106f9f8a20"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "339b1054c680a38167e111ed0f56180c9ee5d4627fd7cc168d190c44b915705a"
     },
     {
       "key": "disciplinary:/posts/wic-digest-2024-q3",
@@ -810,13 +810,13 @@
       "url": "https://www.worldcubeassociation.org/incidents/110",
       "sourceDate": "2024-05-31T11:04:17.000Z",
       "sourceHash": "729133657cec1e00ee3432cbd1a187ad32e245729a9235c7248ddf8ca55df72e",
-      "translationVersion": 2,
+      "translationVersion": 3,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/incidents-110.json",
-      "translatedAt": "2026-10-22T05:56:15.197Z",
-      "translationHash": "867e92211bbab64959ec063a28fc598fa01f24f6935f8e152f8e7819aaba11ae"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "2f9e549f0569e8164dc0bd789251ef5c4db5d364a7437164f77ec2f162ae3352"
     },
     {
       "key": "incidents:111",
@@ -1244,13 +1244,13 @@
       "url": "https://www.worldcubeassociation.org/incidents/14",
       "sourceDate": "2018-04-04T18:30:27.000Z",
       "sourceHash": "d0e990ce1bff3f153bff88bd022ba40b6b95a505b2c2424b13d8f341a3301e6d",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/incidents-14.json",
-      "translatedAt": "2026-10-22T05:48:51.542Z",
-      "translationHash": "434ccb26ddb3e1b3d8256acbebb7cda7921cabd690ae0669e5f3bcd04d3f2a71"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "626b9648f9c21edbc9acfaa350e3fb572250037a0dd0ab312a8da65cdc147666"
     },
     {
       "key": "incidents:140",
@@ -1300,13 +1300,13 @@
       "url": "https://www.worldcubeassociation.org/incidents/143",
       "sourceDate": "2024-10-25T20:10:52.000Z",
       "sourceHash": "284c565d9a179290f281a93c9cb0dccc7e79863f21fcb80fed4bff1df9508159",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/incidents-143.json",
-      "translatedAt": "2026-10-22T06:00:02.853Z",
-      "translationHash": "92d029f3c14d9910f9a2143cfad0b9a0d815e537d9ef1c373760d5e28a90aa82"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "5f9e99d36560fa7ed51325b18726361cb36567caad0776fc8a8472d3a45dd3c0"
     },
     {
       "key": "incidents:145",
@@ -1510,13 +1510,13 @@
       "url": "https://www.worldcubeassociation.org/incidents/169",
       "sourceDate": "2025-06-18T18:36:58.000Z",
       "sourceHash": "412e2cab624cfda7dd182532d04eb4ae13df320c6b153e2f0578e0281a1b72df",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
       "verificationStatus": "pending_source_verification",
       "publicationStatus": "not_authorized",
       "path": "entries/incidents-169.json",
-      "translatedAt": "2026-10-22T06:00:02.853Z",
-      "translationHash": "0fcbd160746ec02ac6d194d699564f1fa8ee77541e047b7e3655e57397826ea4"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "f2e326af93a13f7fee0c37c5a5e2e43a2a4b428e70104313fbea5cb96caa74b0"
     },
     {
       "key": "incidents:17",
@@ -1734,13 +1734,13 @@
       "url": "https://www.worldcubeassociation.org/incidents/31",
       "sourceDate": "2019-03-11T02:23:57.000Z",
       "sourceHash": "06a8fc9793e9a2da61acd7ceabbf344d33cc4b9cb36ae566f1541b528fe11aa0",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/incidents-31.json",
-      "translatedAt": "2026-10-22T05:50:48.611Z",
-      "translationHash": "f03892749840f396840021b1386e9c104a6074918dbeab15661233d97b05409c"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "9573c02354fdb9cdba6d2e2da46aa4fa7b9da23b1cd2362b4896a1fb2d0f9bc4"
     },
     {
       "key": "incidents:33",
@@ -1762,13 +1762,13 @@
       "url": "https://www.worldcubeassociation.org/incidents/34",
       "sourceDate": "2019-08-28T07:02:48.000Z",
       "sourceHash": "daa3023459f0ad67376c6e176b016d94cd35837a54042ad3b667b2ec2d76bad3",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/incidents-34.json",
-      "translatedAt": "2026-10-22T05:50:48.611Z",
-      "translationHash": "27e72a45987a5c0b7db886901c0975ff170b7adbe7690e640479f52d40f23635"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "d91fc0b73b348c2d2b344f595be426698d0e847d1aeebe9fc977c1c4fd037145"
     },
     {
       "key": "incidents:35",
@@ -1846,13 +1846,13 @@
       "url": "https://www.worldcubeassociation.org/incidents/40",
       "sourceDate": "2019-09-13T17:45:11.000Z",
       "sourceHash": "3b09903e5c7495bd9a6942ea51d1033c16cf1be9bfbe96ed1fd41074b25890c6",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/incidents-40.json",
-      "translatedAt": "2026-10-22T05:50:48.611Z",
-      "translationHash": "eacb855e38cabcf06a069b3ab1756c6429b11bfa700a8b9051ed918f035198ec"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "42a9f4d36b4bfffd9c782c91a7886430e3733597c248a765a0c5890510c23ff3"
     },
     {
       "key": "incidents:41",
@@ -1916,13 +1916,13 @@
       "url": "https://www.worldcubeassociation.org/incidents/45",
       "sourceDate": "2019-11-15T08:09:26.000Z",
       "sourceHash": "8fad922ffd4454e051177c633256b40246e5a7c175c8fcd4e42913de79ba8c40",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/incidents-45.json",
-      "translatedAt": "2026-10-22T05:52:51.924Z",
-      "translationHash": "945ed9828b7c03c2b8988bfca7ca12c86016e2b45ac7006470bf0b5ed2768fdc"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "ff3d23ca89327c925eac50b368169b3528807b701c84b57f7382c3d88232bde0"
     },
     {
       "key": "incidents:46",
@@ -1958,13 +1958,13 @@
       "url": "https://www.worldcubeassociation.org/incidents/48",
       "sourceDate": "2019-12-22T19:51:01.000Z",
       "sourceHash": "981d56eda1c65f818adafc21319f85602bb5581c33927a8ce54a9cdcdeab5b7a",
-      "translationVersion": 2,
+      "translationVersion": 3,
       "status": "translated",
       "verificationStatus": "pending_source_verification",
       "publicationStatus": "not_authorized",
       "path": "entries/incidents-48.json",
-      "translatedAt": "2026-10-22T05:52:51.924Z",
-      "translationHash": "475d96f5a36f9561bca478423bfeb1b8428944ab56f263bc7b21f0b7eb0414d3"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "90d942816d9f9651d7fbb4116b97257eae1c4c2e75822ffb5b268591139eb5f9"
     },
     {
       "key": "incidents:49",
@@ -1986,13 +1986,13 @@
       "url": "https://www.worldcubeassociation.org/incidents/5",
       "sourceDate": "2018-03-31T13:40:59.000Z",
       "sourceHash": "617ebe15fc7cef6607dfe907b0c127961c6c09f11f8b5af32e0b170394029c67",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/incidents-5.json",
-      "translatedAt": "2026-10-22T05:48:51.542Z",
-      "translationHash": "a933eadaf814c474e807b6a0d1b75d465ca26298109925cab83addaa6001a6dd"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "3138f392253774f32616e537545dcd3ce494b5e6bb3d615ace97c152293b3550"
     },
     {
       "key": "incidents:50",
@@ -2154,13 +2154,13 @@
       "url": "https://www.worldcubeassociation.org/incidents/60",
       "sourceDate": "2021-05-05T21:12:57.000Z",
       "sourceHash": "c0c63185b8e5200799531c66230d625c89e5bff1c1569f1171db492c930f1549",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/incidents-60.json",
-      "translatedAt": "2026-10-22T05:52:51.924Z",
-      "translationHash": "c420c2e54e3d845b8e5a387e393683082482a938b0bb05fe2449be93466ee6a6"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "827c289aaccde04e9c60b1902da569e000b172ce51be6e2911c20913837d9f9c"
     },
     {
       "key": "incidents:61",
@@ -2168,13 +2168,13 @@
       "url": "https://www.worldcubeassociation.org/incidents/61",
       "sourceDate": "2021-05-05T21:12:43.000Z",
       "sourceHash": "90a9c20d23332cb61d25baf0a3a13d4b67b7fdbf4ce73b60f03725e61f6b23da",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/incidents-61.json",
-      "translatedAt": "2026-10-22T05:52:51.924Z",
-      "translationHash": "4d338f2e8a4bf1ce77db83912e633737590a0b13d64f98b2ede5ec375cb872da"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "1d531db8915e4d66237bbe72538ff40d209f079854699e4784d96db5a2b57e4d"
     },
     {
       "key": "incidents:62",
@@ -2252,13 +2252,13 @@
       "url": "https://www.worldcubeassociation.org/incidents/69",
       "sourceDate": "2022-12-07T14:45:33.000Z",
       "sourceHash": "d715041f7053c0a1d09a9d5e5b5ec58671ff8725c44f72cfa103e1cb91ae1acc",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/incidents-69.json",
-      "translatedAt": "2026-10-22T05:54:37.260Z",
-      "translationHash": "ac0c47578c547e7a5a8ee6c55f2cea8b36317d87027da797e0f7118375b8dfd0"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "b2220d52d56aa1e29e91461569373ba9c91787b3fe2f69550ceed85787cc7d55"
     },
     {
       "key": "incidents:7",
@@ -2378,13 +2378,13 @@
       "url": "https://www.worldcubeassociation.org/incidents/78",
       "sourceDate": "2023-01-09T20:02:29.000Z",
       "sourceHash": "ba4da0924970b90a24d36f9c0a4b2900ba916ced9f8fc46c550770d78f3d73c7",
-      "translationVersion": 2,
+      "translationVersion": 3,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/incidents-78.json",
-      "translatedAt": "2026-10-22T05:54:37.260Z",
-      "translationHash": "f3c3ffcf650dfde3f0716ff68ad9b78ad0fee6654850b79b902536ca0c0aa992"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "c66d5fde8633a2d06e72739c9c0c4d015738d6037e91a470e043552fb03a8182"
     },
     {
       "key": "incidents:79",
@@ -2392,13 +2392,13 @@
       "url": "https://www.worldcubeassociation.org/incidents/79",
       "sourceDate": "2023-01-29T18:03:43.000Z",
       "sourceHash": "1453a0067b55952ece2bce0827d741c03f1fa7c4d97c188f17df9b2222f0ac7e",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/incidents-79.json",
-      "translatedAt": "2026-10-22T05:54:37.260Z",
-      "translationHash": "072d48d14384ccb2fcd39e2459243e0ad35d1e835d7d6b50da98ce04c6bf59ca"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "8c07bad6f435d735f11151840dfdce62ec14319ed7ad35767b1ee160d4dc6409"
     },
     {
       "key": "incidents:8",
@@ -2518,13 +2518,13 @@
       "url": "https://www.worldcubeassociation.org/incidents/87",
       "sourceDate": "2023-06-09T00:13:14.000Z",
       "sourceHash": "f2c7e5b831386a4e5acdb12abaa0a54037fc571cbe4e5af542df6087d5f2d7d7",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/incidents-87.json",
-      "translatedAt": "2026-10-22T05:56:15.197Z",
-      "translationHash": "154fda3ab66c48150c62ce4fe9facbdf5cc55b01404cd5ef8a002ad160363145"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "d9acbd8ae733da76143628c16cdd16ad2b2ad8cb4b873513bfe735d0deb91251"
     },
     {
       "key": "incidents:88",
@@ -2602,13 +2602,13 @@
       "url": "https://www.worldcubeassociation.org/incidents/92",
       "sourceDate": "2023-09-21T03:03:46.000Z",
       "sourceHash": "c65d1fc4b15045bda62549a666704650eb0a9246f85a18440848bb67b258ba7a",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/incidents-92.json",
-      "translatedAt": "2026-10-22T05:56:15.197Z",
-      "translationHash": "90d78ba9b51fca5328f95f42e04b83269c9987b3b02eba46cac7d72b38c09223"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "f190d3d9bd311046dbba5e8b4949c5980341c51aba68e3ed0f21339d02e51612"
     },
     {
       "key": "incidents:93",
@@ -2644,16 +2644,16 @@
       "url": "https://www.worldcubeassociation.org/incidents/98",
       "sourceDate": "2024-04-27T00:22:23.000Z",
       "sourceHash": "367b7cc232f1eec0ae6ab9a8ddce6615caf7f1bdf40eb18b3cee2952a5eb3e13",
-      "translationVersion": 1,
+      "translationVersion": 2,
       "status": "translated",
-      "verificationStatus": "independently_verified",
+      "verificationStatus": "pending_independent_recheck",
       "publicationStatus": "not_authorized",
       "path": "entries/incidents-98.json",
-      "translatedAt": "2026-10-22T05:56:15.197Z",
-      "translationHash": "908f5ba11b87fa03314bee5f3a43f4d93487865d4738f80aa981ac3aa300442d"
+      "translatedAt": "2026-10-25T09:29:00.613Z",
+      "translationHash": "5d07d7a0f56e9dd793189a36ce77335fd972d9f5fbed94ecffe7ddf970f45db9"
     }
   ],
-  "updatedAt": "2026-10-25T07:28:01.629Z",
+  "updatedAt": "2026-10-25T09:29:00.613Z",
   "coverage": {
     "scope": "官方日志正文；不含其外链论坛及附件全文",
     "officialBodiesTranslated": 188,

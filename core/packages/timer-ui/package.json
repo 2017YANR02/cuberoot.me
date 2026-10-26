@@ -304,6 +304,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@app-foundation/navigation-ui": "file:../../vendor/app-foundation/app-foundation-navigation-ui-0.2.9.tgz",
     "@livekit/components-react": "^2.9.23",
     "livekit-client": "^2.21.0",
     "@cuberoot/event-icon": "workspace:*",

@@ -1328,15 +1328,6 @@ export default function DeskPet() {
           onToggleRest={() => { if (resting) ctrlRef.current?.wake(); else ctrlRef.current?.rest(); }}
           randomMode={randomMode}
           onToggleRandom={toggleRandom}
-          metronomeOpen={metronomeOpen}
-          onToggleMetronome={() => {
-            const next = !metronomeOpen;
-            setMetronomeOpen(next);
-            if (next) {
-              setSearchOpen(false);
-              setTouchActionsVisible(false);
-            }
-          }}
         />
       )}
 

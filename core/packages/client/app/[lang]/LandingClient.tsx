@@ -651,10 +651,8 @@ export default function LandingPage() {
         </section>
       )}
 
-      <div className="landing-contact-details">
-        <ContactDetails />
-      </div>
-
+      <footer className="landing-footer-layout">
+      <div className="landing-footer-info">
       <div className="footer">
         {/* allow-nested-link: footer entries are sibling links with text-only contents. */}
         <Link href={ABOUT_FOOTER_ENTRY.href} className="footer-about" prefetch={false}>
@@ -701,6 +699,11 @@ export default function LandingPage() {
           />
         </div>
       )}
+      </div>
+      <div className="landing-contact-details">
+        <ContactDetails />
+      </div>
+      </footer>
       <OnboardingGuideModal open={guideOpen && !personalLoading} onClose={closeGuide} />
     </div>
     </>

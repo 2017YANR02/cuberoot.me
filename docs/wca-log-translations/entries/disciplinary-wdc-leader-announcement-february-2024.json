@@ -13,15 +13,15 @@
   },
   "translation": {
     "language": "zh-Hans",
-    "version": 1,
+    "version": 2,
     "title": "WDC 负责人任命公告（2024 年 2 月）",
-    "content": "很高兴宣布，Shain Longbehn 将成为 **WCA 纪律委员会（WDC）**新任负责人。他此前已是 WDC 成员。\n\n根据[委员会与团队动议](https://documents.worldcubeassociation.org/documents/motions/10.2022.0%20-%20Committees%20and%20Teams.pdf)第 4 节，由理事会选出，并经现任委员会负责人及高级代表投票批准。\n\n感谢 Sebastiano Tronto 过去 3 年领导 WDC 的重要工作，祝 Shain 履行新职责顺利。\n\nShain 是唯一申请人，获选申请文件见[此处](https://drive.google.com/file/d/1s3bSstwi-INW4-DU_glqtxNc-d2ITuc7/view)。",
-    "translatedAt": "2026-10-22T06:07:32.458Z",
+    "content": "很高兴宣布，Shain Longbehn 将成为 **WCA 纪律委员会（WDC）**新任负责人。他此前已是 WDC 成员。\n\n根据[委员会与团队动议](https://documents.worldcubeassociation.org/documents/motions/10.2022.0%20-%20Committees%20and%20Teams.pdf)第 4 节，由董事会选出，并经现任委员会负责人及高级代表投票批准。\n\n感谢 Sebastiano Tronto 过去 3 年领导 WDC 的重要工作，祝 Shain 履行新职责顺利。\n\nShain 是唯一申请人，获选申请文件见[此处](https://drive.google.com/file/d/1s3bSstwi-INW4-DU_glqtxNc-d2ITuc7/view)。",
+    "translatedAt": "2026-10-25T09:29:00.613Z",
     "translator": "Codex / subscription",
     "sourceHash": "2c5a9ee778ca43f2f01b0892f8faa6bac7fda28ce3d5b9216d3f8a69806046c2"
   },
   "review": {
-    "status": "independently_verified",
+    "status": "pending_independent_recheck",
     "checks": [
       "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
     ],
@@ -36,7 +36,13 @@
       "verdict": "pass",
       "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
     },
-    "unresolvedNotes": []
+    "unresolvedNotes": [],
+    "complianceRevision": {
+      "at": "2026-10-25T09:29:00.613Z",
+      "previousTranslationHash": "421b4ac95687f6a40d9149370f02e056c0ad75176eea7e3b0d820a958da3a531",
+      "report": "../wca-translation-compliance-2026-10-25.json",
+      "scope": "Targeted source comparison; independent prior evidence remains bound to the previous hash."
+    }
   },
   "publication": {
     "status": "not_authorized"

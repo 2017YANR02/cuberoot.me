@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "key": "incidents:48",
+  "source": {
+    "key": "incidents:48",
+    "kind": "incidents",
+    "title": "A competitor did not sign for an attempt and did not qualify for the finals",
+    "url": "https://www.worldcubeassociation.org/incidents/48",
+    "date": "2019-12-22T19:51:01.000Z",
+    "content": "A competitor did not sign for an attempt in R2 and did not qualify for the final round. This was discovered after the competition. This violates Regulation A7c4:\n> [A7c4](https://www.worldcubeassociation.org/regulations/#A7c4)) The competitor should not sign an attempt before the judge has recorded and signed the attempt. The competitor is ultimately responsible for ensuring that they and the judge have signed an attempt. If an attempt is found to be missing one or both signatures after the judge delivered the score sheet to the score taker (see [Regulation A7f](https://www.worldcubeassociation.org/regulations/#A7f)), it will be considered unfinished (DNF).\n\nAlthough the [Guideline A7c4+](https://www.worldcubeassociation.org/regulations/guidelines.html#A7c4+) allows a competitor to add a missing signature if it is found by the score taker. The missing signature was found after the competition and thus, the guideline does not apply here.\n\nThe WRC agreed that the original attempt should be a **DNF** and therefore the attempts from the finals should be removed. In addition, there is an existing [Incident Log](https://www.worldcubeassociation.org/incidents/19) that followed a similar reasoning.\n\nMore generally, this is what WRC decided to apply when results were wrongly entered, and someone mistakenly proceeded to the next round:\n\n- Keep the results if the competitor proceeded thanks to an error in someone else's results\n- Remove the results if the competitor proceeded thanks to an error in their own results",
+    "hash": "981d56eda1c65f818adafc21319f85602bb5581c33927a8ce54a9cdcdeab5b7a",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 2,
+    "title": "选手某次尝试未签名，且未晋级决赛",
+    "content": "一名选手在第二轮某次尝试中未签名，且未晋级决赛；赛后才发现此事。这违反了 A7c4：\n> [A7c4](https://www.worldcubeassociation.org/regulations/#A7c4) 裁判记录并签署成绩前，选手不应签名。选手最终有责任确保自己和裁判均已签名。如果裁判将成绩单交给录入员后（见 [A7f](https://www.worldcubeassociation.org/regulations/#A7f)）发现缺少一方或双方签名，该次尝试将被视为未完成（DNF）。\n\n虽然[指导 A7c4+](https://www.worldcubeassociation.org/regulations/guidelines.html#A7c4+)允许在录入员发现漏签时由选手补签，但本案在赛后才发现，因此不适用。\n\nWRC 同意将原尝试判为 **DNF**，并删除其决赛成绩。[已有事件日志](https://www.worldcubeassociation.org/incidents/19)采用了类似理由。\n\n更一般地，针对错误录入导致选手误晋级，WRC 决定：\n- 因他人成绩错误而晋级，保留其成绩；\n- 因自己成绩错误而晋级，删除其成绩。",
+    "translatedAt": "2026-10-22T05:52:51.924Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "981d56eda1c65f818adafc21319f85602bb5581c33927a8ce54a9cdcdeab5b7a",
+    "revisedAt": "2026-10-22T06:25:36.680Z",
+    "revisionReason": "独立审校 round-1 的精确修正建议"
+  },
+  "review": {
+    "status": "pending_source_verification",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [
+      "原文标题/开头称未晋级，后文却要求删除决赛成绩；v2已恢复“未晋级”且删除推断性因果，没有自行消解源文冲突。",
+      "原文标题及开头称 did not qualify，后文却要求删除决赛成绩；修正后的译文忠实保留冲突，仍待源方澄清。"
+    ],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_5",
+      "reviewedAt": "2026-10-22T06:22:53.079981Z",
+      "report": "reviews/round-1/report-5.json",
+      "sourceHash": "981d56eda1c65f818adafc21319f85602bb5581c33927a8ce54a9cdcdeab5b7a",
+      "reviewedTranslationHash": "1eb75e980ac17052f659d73d5c023e4110f0123dd7d1da84f0382581bafa90e2",
+      "verdict": "correction_required",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": [
+      "原文标题及开头称 did not qualify，后文却要求删除决赛成绩；修正后的译文忠实保留冲突，仍待源方澄清。"
+    ],
+    "recheck": {
+      "reviewer": "review_5",
+      "reviewedAt": "2026-10-22T06:46:40.870Z",
+      "report": "reviews/round-1/recheck-5.json",
+      "sourceHash": "981d56eda1c65f818adafc21319f85602bb5581c33927a8ce54a9cdcdeab5b7a",
+      "reviewedTranslationHash": "475d96f5a36f9561bca478423bfeb1b8428944ab56f263bc7b21f0b7eb0414d3",
+      "verdict": "pending_source_verification"
+    }
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

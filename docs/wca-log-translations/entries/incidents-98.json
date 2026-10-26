@@ -13,15 +13,15 @@
   },
   "translation": {
     "language": "zh-Hans",
-    "version": 1,
+    "version": 2,
     "title": "裁判提前揭罩，选手申请额外尝试",
-    "content": "一名选手叫来代表申请额外尝试，称自己尚未表示准备好，裁判就揭开了罩。代表给予额外尝试，理由是事件发生时没有代表可立即处理：一位正在比赛，一位监督打乱台，一位在房间外。最初以为选手直到还原结束才提出请求。\n\n代表向 WRC 说明后，WRC 起初决定推翻代表决定，采用原尝试，依据是：\n- [11e](https://www.worldcubeassociation.org/regulations/#11e)：选手应在事件发生时向裁判和代表口头或书面申诉；\n- [11e+++](https://www.worldcubeassociation.org/regulations/guidelines.html#11e+++)：按代表描述，WRC 认为情况不够特殊；\n- [类似事件](https://www.worldcubeassociation.org/incidents/69)。\n\nWRC 不认为代表暂时无法到场构成应获额外尝试的极端情况。代表几乎不可能在观察期间赶到选手面前。事件发生在观察刚开始时，选手应立即停止观察，等代表有空再提出申请。\n\n继续完成还原，会让选手有机会根据原打乱上的结果决定是否要求额外尝试。这正是此情况下给予额外尝试带来的不公平优势，也是 11e+++ 的理由。\n\n该决定被申诉至 WCA 理事会。处理申诉期间出现新证据，证明裁判提前揭罩时，选手确实已向裁判申诉。理事会决定推翻 WRC 决定，恢复额外尝试。理事会声明见[此处](https://forum.worldcubeassociation.org/t/wca-statement-regarding-yiheng-wangs-0-93-2x2-average/49637)。",
-    "translatedAt": "2026-10-22T05:56:15.197Z",
+    "content": "一名选手叫来代表申请额外尝试，称自己尚未表示准备好，裁判就揭开了罩。代表给予额外尝试，理由是事件发生时没有代表可立即处理：一位正在比赛，一位监督打乱台，一位在房间外。最初以为选手直到还原结束才提出请求。\n\n代表向 WRC 说明后，WRC 起初决定推翻代表决定，采用原尝试，依据是：\n- [11e](https://www.worldcubeassociation.org/regulations/#11e)：选手应在事件发生时向裁判和代表口头或书面申诉；\n- [11e+++](https://www.worldcubeassociation.org/regulations/guidelines.html#11e+++)：按代表描述，WRC 认为情况不够特殊；\n- [类似事件](https://www.worldcubeassociation.org/incidents/69)。\n\nWRC 不认为代表暂时无法到场构成应获额外尝试的极端情况。代表几乎不可能在观察期间赶到选手面前。事件发生在观察刚开始时，选手应立即停止观察，等代表有空再提出申请。\n\n继续完成还原，会让选手有机会根据原打乱上的结果决定是否要求额外尝试。这正是此情况下给予额外尝试带来的不公平优势，也是 11e+++ 的理由。\n\n该决定被申诉至 WCA 董事会。处理申诉期间出现新证据，证明裁判提前揭罩时，选手确实已向裁判申诉。董事会决定推翻 WRC 决定，恢复额外尝试。董事会声明见[此处](https://forum.worldcubeassociation.org/t/wca-statement-regarding-yiheng-wangs-0-93-2x2-average/49637)。",
+    "translatedAt": "2026-10-25T09:29:00.613Z",
     "translator": "Codex / subscription",
     "sourceHash": "367b7cc232f1eec0ae6ab9a8ddce6615caf7f1bdf40eb18b3cee2952a5eb3e13"
   },
   "review": {
-    "status": "independently_verified",
+    "status": "pending_independent_recheck",
     "checks": [
       "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
     ],
@@ -36,7 +36,13 @@
       "verdict": "pass",
       "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
     },
-    "unresolvedNotes": []
+    "unresolvedNotes": [],
+    "complianceRevision": {
+      "at": "2026-10-25T09:29:00.613Z",
+      "previousTranslationHash": "908f5ba11b87fa03314bee5f3a43f4d93487865d4738f80aa981ac3aa300442d",
+      "report": "../wca-translation-compliance-2026-10-25.json",
+      "scope": "Targeted source comparison; independent prior evidence remains bound to the previous hash."
+    }
   },
   "publication": {
     "status": "not_authorized"

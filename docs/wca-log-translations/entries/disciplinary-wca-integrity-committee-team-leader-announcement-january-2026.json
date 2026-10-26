@@ -13,10 +13,10 @@
   },
   "translation": {
     "language": "zh-Hans",
-    "version": 2,
+    "version": 3,
     "title": "WCA 廉政委员会负责人任命公告（2026 年 1 月）",
-    "content": "亲爱的 WCA 社群：\n\n很高兴宣布，Zachary Miller 成为 WCA 廉政委员会（WIC）新任负责人。他此前已担任 WIC 高级成员。\n\n按[委员会与团队动议](https://documents.worldcubeassociation.org/documents/motions/10.2025.0%20-%20Committees%20and%20Teams.pdf)第 5 节，Zachary 由理事会选出并经投票批准，任命自 2026 年 1 月 13 日生效。\n\n感谢 Shain Longbehn 担任负责人期间的工作，他将留任高级成员。祝 Zachary 顺利履行新职责。\n\nZachary 是唯一申请人，其获选申请文件见[此处](https://drive.google.com/drive/folders/1lmZaa6cUdQW-RAVnkVg4-Bq7YjKhqp2u)。",
-    "translatedAt": "2026-10-22T06:05:15.716Z",
+    "content": "亲爱的 WCA 社群：\n\n很高兴宣布，Zachary Miller 成为 WCA 廉政委员会（WIC）新任负责人。他此前已担任 WIC 高级成员。\n\n按[委员会与团队动议](https://documents.worldcubeassociation.org/documents/motions/10.2025.0%20-%20Committees%20and%20Teams.pdf)第 5 节，Zachary 由董事会选出并经投票批准，任命自 2026 年 1 月 13 日生效。\n\n感谢 Shain Longbehn 担任负责人期间的工作，他将留任高级成员。祝 Zachary 顺利履行新职责。\n\nZachary 是唯一申请人，其获选申请文件见[此处](https://drive.google.com/drive/folders/1lmZaa6cUdQW-RAVnkVg4-Bq7YjKhqp2u)。",
+    "translatedAt": "2026-10-25T09:29:00.613Z",
     "translator": "Codex / subscription",
     "sourceHash": "c8963510efd2d9425ded79e4e4ab4d12480a21ef31ab7d20751f78b76709a359",
     "revisedAt": "2026-10-25T07:28:01.629Z",
@@ -43,6 +43,12 @@
       "at": "2026-10-25T07:28:01.629Z",
       "previousTranslationHash": "409b87ca331919b35d389769aee61d176ddef8e123f08d5f0f52c4a82a60b3de",
       "scope": "机构名称专项校订；此前独立审校证据仍绑定旧译文，不视为新版本独立审校。"
+    },
+    "complianceRevision": {
+      "at": "2026-10-25T09:29:00.613Z",
+      "previousTranslationHash": "2603b776ba919e1b8d700c8a7b5b24fefc7c207c478184b36887db28db9a270d",
+      "report": "../wca-translation-compliance-2026-10-25.json",
+      "scope": "Targeted source comparison; independent prior evidence remains bound to the previous hash."
     }
   },
   "publication": {

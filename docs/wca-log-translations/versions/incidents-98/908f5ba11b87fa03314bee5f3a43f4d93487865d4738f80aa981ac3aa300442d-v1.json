@@ -21,14 +21,29 @@
     "sourceHash": "367b7cc232f1eec0ae6ab9a8ddce6615caf7f1bdf40eb18b3cee2952a5eb3e13"
   },
   "review": {
-    "status": "pending_independent_review",
+    "status": "independently_verified",
     "checks": [
       "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
     ],
     "notes": [],
-    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_6",
+      "reviewedAt": "2026-10-22T06:24:59.959967Z",
+      "report": "reviews/round-1/report-6.json",
+      "sourceHash": "367b7cc232f1eec0ae6ab9a8ddce6615caf7f1bdf40eb18b3cee2952a5eb3e13",
+      "reviewedTranslationHash": "908f5ba11b87fa03314bee5f3a43f4d93487865d4738f80aa981ac3aa300442d",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
   },
   "publication": {
     "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
   }
 }

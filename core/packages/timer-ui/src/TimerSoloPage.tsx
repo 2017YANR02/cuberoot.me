@@ -30,7 +30,7 @@ export function TimerSoloPage({ title, resizeLabel = 'Resize panel', topbar, sta
   const { surfaceRef, onContextMenu, onMouseDown, onMouseUp, onPointerDown, onPointerUp, onPointerCancel, ...canvas } = timing;
   return <SolverTriggerContext.Provider value={solverTriggerSlot}>
     <TimerTopbar {...topbar} className={`timer-solo-topbar${stage.fullscreen ? ' timer-solo-topbar--fullscreen' : ''}${topbar.className ? ` ${topbar.className}` : ''}`}
-      controls={<>{topbar.controls}{solver && <span className="solver-trigger-slot" ref={setSolverTriggerSlot} />}{!wide && solver}</>} />
+      controls={<>{solver && <span className="solver-trigger-slot" ref={setSolverTriggerSlot} />}{topbar.controls}{!wide && solver}</>} />
     <TimerStageLayout {...stage} inputRef={surfaceRef}
       inputHandlers={{ onContextMenu, onMouseDown, onMouseUp, onPointerDown, onPointerUp, onPointerCancel }}
       className={`timer-solo-main timer-workspace-main timer-solver-stage${stage.className ? ` ${stage.className}` : ''}`}>

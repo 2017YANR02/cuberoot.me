@@ -13,15 +13,15 @@
   },
   "translation": {
     "language": "zh-Hans",
-    "version": 1,
+    "version": 2,
     "title": "WDC 月度简报：2019 年 12 月",
-    "content": "亲爱的 WCA 社群：\n\n2019 年最后一期简报，回顾一个月前结束的这一年 WDC 的工作。\n\n工作数据：\n- 立案 55 件；\n- 结案 53 件；\n- 19 件已结案件对一人或多人发出正式警告；\n- 14 件已结案件导致禁赛；\n- 2 项调查仍在进行。\n\n委员会动态：\n- Anuj Menta、JP Bulman 两名成员卸任；\n- 新增 6 名成员：Arthur Garcin、Chris Tabar、Christopher Morris、Jules Desjardin、Martin Vædele Egdal、Sebastiano Tronto；\n- 理事会将我的负责人任期续延一年，现定于 2020 年 12 月结束。\n\n最后提醒大家充分理解规则和流程，有疑问时询问代表。若认为成绩受到损害或看到可疑行为，请立即找最近的代表报告。\n\n感谢支持 WCA 精神与使命。\n\nLorenzo Vigani Poli\nWDC 负责人，代表纪律委员会",
-    "translatedAt": "2026-10-22T06:07:32.458Z",
+    "content": "亲爱的 WCA 社群：\n\n2019 年最后一期简报，回顾一个月前结束的这一年 WDC 的工作。\n\n工作数据：\n- 立案 55 件；\n- 结案 53 件；\n- 19 件已结案件对一人或多人发出正式警告；\n- 14 件已结案件导致禁赛；\n- 2 项调查仍在进行。\n\n委员会动态：\n- Anuj Menta、JP Bulman 两名成员卸任；\n- 新增 6 名成员：Arthur Garcin、Chris Tabar、Christopher Morris、Jules Desjardin、Martin Vædele Egdal、Sebastiano Tronto；\n- 董事会将我的负责人任期续延一年，现定于 2020 年 12 月结束。\n\n最后提醒大家充分理解规则和流程，有疑问时询问代表。若认为成绩受到损害或看到可疑行为，请立即找最近的代表报告。\n\n感谢支持 WCA 精神与使命。\n\nLorenzo Vigani Poli\nWDC 负责人，代表纪律委员会",
+    "translatedAt": "2026-10-25T09:29:00.613Z",
     "translator": "Codex / subscription",
     "sourceHash": "893d648851b41c26c3d3ce980e25dfd002cb8c7df348ccfb1382697c5ad903cf"
   },
   "review": {
-    "status": "independently_verified",
+    "status": "pending_independent_recheck",
     "checks": [
       "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
     ],
@@ -36,7 +36,13 @@
       "verdict": "pass",
       "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
     },
-    "unresolvedNotes": []
+    "unresolvedNotes": [],
+    "complianceRevision": {
+      "at": "2026-10-25T09:29:00.613Z",
+      "previousTranslationHash": "ca02625cbc6632a2bef9af89ac0d58d23af691104e37c1d94a3539029425541c",
+      "report": "../wca-translation-compliance-2026-10-25.json",
+      "scope": "Targeted source comparison; independent prior evidence remains bound to the previous hash."
+    }
   },
   "publication": {
     "status": "not_authorized"

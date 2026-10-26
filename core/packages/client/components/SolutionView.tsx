@@ -12,6 +12,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import { ReconCrossToggle } from '@cuberoot/timer-ui';
+import { useTranslation } from 'react-i18next';
 import { useReconLineDiagrams } from './ReconLineDiagrams';
 import Link from '@/components/ReconCaseLink';
 import { reconCommentLinks } from '@/lib/recon-comment-links';
@@ -61,6 +62,7 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
   onToggleCross?: () => void;
 }) {
   const preRef = useRef<HTMLPreElement>(null);
+  const { t } = useTranslation();
   const cursorOffsetRef = useRef<number | null>(null);
   // 光标字符偏移 + 当前招式高亮区间(声明式渲染)。text 变化时清空(偏移失效)。
   const [cursorOffset, setCursorOffset] = useState<number | null>(null);
@@ -176,7 +178,7 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
         const lineStart = lineStarts[i];
         const toggle = i === crossLineIdx && onToggleCross ? (
           <ReconCrossToggle normalized={crossNormalized} onToggle={onToggleCross}
-            label={crossNormalized ? 'Show original' : 'Normalize cross'} tabIndex={-1} />
+            label={t(crossNormalized ? 'recon.showOriginal' : 'recon.normalizeCross')} tabIndex={-1} />
         ) : null;
 
         const links = linkComments ? reconCommentLinks(line, commentCases, set => libraryLinks.get(i)?.get(set)).flatMap(link => {

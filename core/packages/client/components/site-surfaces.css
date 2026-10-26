@@ -282,7 +282,7 @@ body[data-site-scenery] .mem-reminder {
    Important is limited to the neutral fill because legacy pages set it inline. */
 body[data-site-scenery] :is(
   select,
-  textarea,
+  textarea:not(.site-assistant-draft),
   input:not([type]),
   input[type='text'],
   input[type='search'],

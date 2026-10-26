@@ -49,7 +49,8 @@ description: "Use for any new or edited user-visible React text, 中英双语、
 - Weblate 权限须区分：2026-10-25 实测匿名条目 REST API 可读，ZIP/CSV 文件导出仍返回 403。服务器从官方 API 原子同步并保留版本与状态；不手改镜像译文，不自动写回 Weblate。公开接口仅覆盖已开放的 Locales、Regulations、Glossary；Payload CMS 等不可用组件不冒充已同步。
 - WCA 机构、导航、公告翻译先读参考中的“官方机构名称”与疑点说明，再通过我们的接口及必要的 Weblate 后备核对对应语境。参考网页 `/regulation/translation`、公开入口 `/llms.txt` 均链接官方翻译项目。
 - WIC = 廉政委员会；WCT = 通讯组；WCAT = 比赛公示组；WMT = 市场营销组；WAT = 档案组；WRT = 成绩组；WST = 软件组；WEAT = 董事会助理团队。完整 14 个专名以参考表为准，不凭通用语感另造名称。
-- 历史 WDC = 纪律委员会，旧文 WAC 保留 WAC，不因现官网写 WAPC 而改历史缩写。官方中文也需核对，officer（干事）与 Board member（董事）按英文角色区分。
+- 历史 WDC = 纪律委员会、WEC = 道德委员会。旧文 WAC 必须看英文全称：Advisory Council 为顾问理事会（本站历史译法），Appeals Committee 为申诉委员会；都保留原缩写，不因现官网写 WAPC 而改历史缩写。Board = 董事会、Council = 理事会；officer（干事）与 Board member（董事）按英文角色区分。来源写错或含混时保留英文并记疑点，不猜测机构。
+- 机构名称优先官方 `page->teams_committees_councils->groups_name`；Weblate 表单标签可能与机构条目不同（如 WCAT）。不要盲取搜索第一条；完整上下文和已知冲突见参考 MD。历史 WCA Guidelines 统一“指南”，普通动词 guidance 不机械替换。
 - 修正全站译法时查标题、正文、摘要与索引。公告和日志真源是 `docs/wca-post-translations/entries` / `docs/wca-log-translations/entries`；先归档旧版并更新 hash、版本和审校状态，再运行 `build-wca-logs.mts` → `build-wca-posts.mts`，不手改生成的 posts/logs JSON。旧审校仅适用于其绑定的 hash。
 
 ## 命名空间

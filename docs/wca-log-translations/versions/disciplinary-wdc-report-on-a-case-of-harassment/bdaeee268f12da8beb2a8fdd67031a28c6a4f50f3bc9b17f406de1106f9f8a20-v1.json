@@ -21,16 +21,31 @@
     "sourceHash": "d9e014f6eea2bac1924f614c35aa6ddae0941c51ad4f618fd5a29515e4d28271"
   },
   "review": {
-    "status": "pending_independent_review",
+    "status": "independently_verified",
     "checks": [
       "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
     ],
     "notes": [
       "官网公告正文已译，外链完整调查报告未读取、未翻译；不补充公告未说明的身份或处分。"
     ],
-    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_2",
+      "reviewedAt": "2026-10-22T06:22:43.237972Z",
+      "report": "reviews/round-1/report-2.json",
+      "sourceHash": "d9e014f6eea2bac1924f614c35aa6ddae0941c51ad4f618fd5a29515e4d28271",
+      "reviewedTranslationHash": "bdaeee268f12da8beb2a8fdd67031a28c6a4f50f3bc9b17f406de1106f9f8a20",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": []
   },
   "publication": {
     "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
   }
 }

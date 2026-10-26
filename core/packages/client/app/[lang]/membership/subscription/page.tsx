@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import AppLink from '@/components/AppLink';
+import { MEMBERSHIP_COPY } from '@/lib/membership-copy';
 import { useT } from '@/hooks/useT';
 import { useModalBackdrop } from '@/hooks/useModalDismiss';
 import { nextQuery, useOwnerKey } from '@/lib/auth-store';
@@ -138,14 +139,14 @@ export default function SubscriptionPage() {
   const pathname = usePathname();
   return (
     <main className="mem-page mem-service-document">
-      <h1>{t('管理自动续费', 'Manage auto-renewal')}</h1>
+      <h1>{t(MEMBERSHIP_COPY.manage.zh, MEMBERSHIP_COPY.manage.en)}</h1>
       <p>{t('本页列表管理网站的自动续费合约。通过 Apple 或 Google Play 购买的订阅，请到对应商店管理；App 内会员页也提供管理和恢复购买入口。', 'This list manages website renewal contracts. Manage Apple or Google Play subscriptions in their respective stores; the in-app membership page also offers management and restore actions.')}</p>
       <p><a href="https://play.google.com/store/account/subscriptions?package=me.cuberoot.app" target="_blank" rel="noreferrer">Google Play</a>{' · '}<a href="https://apps.apple.com/account/subscriptions" target="_blank" rel="noreferrer">Apple</a></p>
       {owner ? <SubscriptionManager key={owner} /> : <p><AppLink href={`/account${nextQuery(pathname)}`} prefetch={false}>{t('登录后管理自动续费', 'Sign in to manage auto-renewal')}</AppLink></p>}
       <p>{t('取消自动续费与退款分开处理；已购买权益可使用至已付服务期结束。若发现取消后扣款，请保留订单号并联系客服核对。', 'Cancellation and refunds are handled separately. Purchased benefits remain available until the paid service period ends. If a charge appears after cancellation, keep the order number and contact support.')}</p>
       <nav className="mem-service-links" aria-label={t('会员服务', 'Membership services')}>
         <AppLink href="/contact" prefetch={false}>{t('联系会员客服', 'Contact membership support')}</AppLink>
-        <AppLink href="/membership/renewal-terms" prefetch={false}>{t('自动续费服务协议', 'Auto-renewal Agreement')}</AppLink>
+        <AppLink href="/membership/renewal-terms" prefetch={false}>{t(MEMBERSHIP_COPY.agreement.zh, MEMBERSHIP_COPY.agreement.en)}</AppLink>
         <AppLink href="/membership" prefetch={false}>{t('会员权益与有效期', 'Membership benefits and validity')}</AppLink>
       </nav>
     </main>

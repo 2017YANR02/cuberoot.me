@@ -21,14 +21,33 @@
     "sourceHash": "51d31cf375745670de6a329276337a34d32d7b2fc46e8c1eca7bb0a951fd75b6"
   },
   "review": {
-    "status": "pending_independent_review",
+    "status": "independently_verified",
     "checks": [
       "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
     ],
-    "notes": [],
-    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。"
+    "notes": [
+      "原文“at least 4-6 hours per week on average”自身将最低值与范围并列，译文忠实保留；未核验招聘方实际工时解释。"
+    ],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_1",
+      "reviewedAt": "2026-10-22T06:23:54.689Z",
+      "report": "reviews/round-1/report-1.json",
+      "sourceHash": "51d31cf375745670de6a329276337a34d32d7b2fc46e8c1eca7bb0a951fd75b6",
+      "reviewedTranslationHash": "c19b675d54bcd3ad40772664455fddaa867a79480b5cebb81f3a1f151b0cca1c",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": [
+      "原文“at least 4-6 hours per week on average”自身将最低值与范围并列，译文忠实保留；未核验招聘方实际工时解释。"
+    ]
   },
   "publication": {
     "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
   }
 }

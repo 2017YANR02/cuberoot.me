@@ -7,7 +7,8 @@
  * 返回二维码(微信 Native / 虎皮椒 PC)→ 弹窗内扫码 + 轮询查单,成功 onPaid()。
  */
 import { useEffect, useRef, useState } from 'react';
-import { X, Smartphone, Check, CreditCard } from '@app-foundation/icons/lucide';
+import { Smartphone, Check, CreditCard } from '@app-foundation/icons/lucide';
+import { ClearButton } from '@/components/ClearButton';
 import { SiAlipay, SiWechat } from 'react-icons/si';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { tr } from '@/i18n/tr';
@@ -198,13 +199,10 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
   return (
     <div className="mem-pay-backdrop" {...backdropProps}>
       <div className="mem-pay">
-        <button className="mem-pay-close" onClick={onClose} aria-label={tr({ zh: '关闭', en: 'Close'
-        })}><X size={18} /></button>
+        <ClearButton variant="standalone" className="mem-pay-close" onClick={onClose}
+          ariaLabel={tr({ zh: '关闭', en: 'Close' })} />
         <h2 className="mem-pay-title">{isZh ? plan.nameZh : plan.nameEn}</h2>
         <div className="mem-pay-price">{fmtPrice(plan.priceCents, plan.currency)}</div>
-        <p className="mem-pay-tip">
-          {tr({ zh: '本次仅支付所选服务期，不会开通自动续费，也不会在到期后自动扣款。', en: 'This payment covers only the selected period. It does not authorize auto-renewal or any future charges.' })}
-        </p>
 
         {!order ? (
           <>

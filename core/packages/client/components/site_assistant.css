@@ -44,7 +44,10 @@
 .site-assistant-draft:focus { outline:none; }
 .site-assistant-draft::placeholder { color:var(--muted-foreground); opacity:1; }
 .site-assistant-input-actions { display:flex; align-items:center; justify-content:flex-end; gap:8px; }
-.site-assistant-input-actions .site-assistant-thinking { margin-right:auto; width:auto; min-width:0; flex:1; align-self:center; }
+.site-assistant-attachments { flex:none; margin-right:auto; }
+.site-assistant-attachment-option { display:flex; align-items:center; gap:8px; }
+.compact-select-popup.site-assistant-menu { z-index:100031; }
+.site-assistant-input-actions .site-assistant-thinking { width:auto; min-width:0; flex:none; align-self:center; }
 .site-assistant-input-count { display:block; text-align:right; font-size:11px; color:var(--muted-foreground); white-space:nowrap; }
 .site-assistant-input-actions .site-assistant-action { width:36px; height:36px; flex-shrink:0; padding:0; border:0; border-radius:50%; }
 .site-assistant-mic { background:transparent; }
@@ -86,3 +89,8 @@
 .site-assistant-edit-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
 .site-assistant-edit-actions .site-assistant-action { border-radius:20px; padding:8px 16px; }
 @media(hover:hover) and (pointer:fine) { .site-assistant-question-actions { opacity:0; } .site-assistant-question:hover .site-assistant-question-actions,.site-assistant-question:focus-within .site-assistant-question-actions { opacity:1; } }
+
+/* The workspace supplies its own title bar and lifecycle; reuse the same chat
+   content and composer without a second modal surface or focus trap. */
+.site-assistant-dialog.site-assistant-embedded { width:100%;height:100%;border:0;border-radius:0;box-shadow:none;background:transparent; }
+.site-assistant-embedded .site-assistant-messages { padding-top:24px; }

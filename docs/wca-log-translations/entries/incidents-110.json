@@ -13,17 +13,17 @@
   },
   "translation": {
     "language": "zh-Hans",
-    "version": 2,
+    "version": 3,
     "title": "赛后数天选手询问魔方是否不合规",
-    "content": "赛后数天，一名选手联系代表，询问比赛中使用、并用于创造纪录的一个魔方是否合规。\n\n选手称某个角块所处位置不同时，魔方声音不同；还提到一个中心盖的触感略有差别，因此该魔方可能不符合盲拧项目的规则要求，而该纪录正是在盲拧中取得。\n\n最终决定保留成绩，依据是：\n1. 声音差异微乎其微，需要完全安静的环境才可能察觉，三阶盲拧比赛不太可能如此；\n2. 赛后才注意到声音差异，视频也显示没有获得优势；\n3. 代表在现场已认定触感差异合理。\n\n[3j1](https://www.worldcubeassociation.org/regulations/#3j1) 允许魔方有合理磨损。鼓励选手向当地代表提出合规疑虑。[指导 3j++](https://www.worldcubeassociation.org/regulations/guidelines.html#3j++) 中的[图示指南](https://drive.google.com/file/d/1m6THsA8fXRN7QFM4ApJbm6eVODKGbMLx/view)也是良好参考。",
-    "translatedAt": "2026-10-22T05:56:15.197Z",
+    "content": "赛后数天，一名选手联系代表，询问比赛中使用、并用于创造纪录的一个魔方是否合规。\n\n选手称某个角块所处位置不同时，魔方声音不同；还提到一个中心盖的触感略有差别，因此该魔方可能不符合盲拧项目的规则要求，而该纪录正是在盲拧中取得。\n\n最终决定保留成绩，依据是：\n1. 声音差异微乎其微，需要完全安静的环境才可能察觉，三阶盲拧比赛不太可能如此；\n2. 赛后才注意到声音差异，视频也显示没有获得优势；\n3. 代表在现场已认定触感差异合理。\n\n[3j1](https://www.worldcubeassociation.org/regulations/#3j1) 允许魔方有合理磨损。鼓励选手向当地代表提出合规疑虑。[指南 3j++](https://www.worldcubeassociation.org/regulations/guidelines.html#3j++) 中的[图示指南](https://drive.google.com/file/d/1m6THsA8fXRN7QFM4ApJbm6eVODKGbMLx/view)也是良好参考。",
+    "translatedAt": "2026-10-25T09:29:00.613Z",
     "translator": "Codex / subscription",
     "sourceHash": "729133657cec1e00ee3432cbd1a187ad32e245729a9235c7248ddf8ca55df72e",
     "revisedAt": "2026-10-22T06:25:36.680Z",
     "revisionReason": "独立审校 round-1 的精确修正建议"
   },
   "review": {
-    "status": "independently_verified",
+    "status": "pending_independent_recheck",
     "checks": [
       "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
     ],
@@ -46,6 +46,12 @@
       "sourceHash": "729133657cec1e00ee3432cbd1a187ad32e245729a9235c7248ddf8ca55df72e",
       "reviewedTranslationHash": "867e92211bbab64959ec063a28fc598fa01f24f6935f8e152f8e7819aaba11ae",
       "verdict": "pass"
+    },
+    "complianceRevision": {
+      "at": "2026-10-25T09:29:00.613Z",
+      "previousTranslationHash": "867e92211bbab64959ec063a28fc598fa01f24f6935f8e152f8e7819aaba11ae",
+      "report": "../wca-translation-compliance-2026-10-25.json",
+      "scope": "Targeted source comparison; independent prior evidence remains bound to the previous hash."
     }
   },
   "publication": {

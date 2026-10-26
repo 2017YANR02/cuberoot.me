@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "key": "disciplinary:/posts/call-for-applicants-wdc-leader-december-2023",
+  "source": {
+    "key": "disciplinary:/posts/call-for-applicants-wdc-leader-december-2023",
+    "kind": "disciplinary",
+    "title": "Call for Applicants - WDC Leader (December 2023)",
+    "date": "2023-12-16T07:36:14Z",
+    "url": "https://www.worldcubeassociation.org/posts/call-for-applicants-wdc-leader-december-2023",
+    "content": "<p>There will be an appointment of a new WCA Disciplinary Committee Leader, as Sebastiano Tronto’s term is ending as the Leader of the WCA Disciplinary Committee Team. The WCA would like to take this opportunity to thank Sebastiano for leading the WDC for the last 3 years.</p><p>Candidates are expected to fulfill their terms (24 months) and to spend at least 7 hours per week on average to work for the committee. The qualities expected of candidates are:</p><ul><li>Strong leadership skills</li><li>Experience in conducting independent investigations.</li><li>Strong analytical and problem-solving skills.</li><li>Commitment to confidentiality and ethical conduct</li><li>Good judgment and decision-making skills</li><li>Familiarity with WCA activities</li><li>Excellent communication skills</li></ul><p>The application period for candidates to submit their candidacy documents is from now <strong>until January 7th, 2024, 23:59 UTC</strong>. Interested candidates can send the application privately to the Executive Assistant Team (<a href=\"mailto:assistants@worldcubeassociation.org\">assistants@worldcubeassociation.org</a>), CC’ing the WCA Board (<a href=\"mailto:board@worldcubeassociation.org\">board@worldcubeassociation.org</a>).</p><p>The candidacy documents must be in PDF format, and must include:</p><ul><li>Brief personal introduction.</li><li>Summary of activities done for the WCA.</li><li>Ambitions as the WDC Leader of the WCA.</li></ul><p>Candidates are additionally asked to send a copy of their applications which can be made public at the end of the application period.</p><p>The rights and duties of the WDC can be found in <a href=\"https://www.worldcubeassociation.org/documents/motions/10.2022.3%20-%20Disciplinary%20Committee.pdf\">WCA Motion 10.2022.3.</a></p><p>After the application period, the WCA Board will make a selection by voting and will announce the new Leader, after confirmation among Senior Delegates and sitting Committee/Team Leaders by voting, as described in Section 4 of <a href=\"https://www.worldcubeassociation.org/documents/motions/10.2022.0%20-%20Committees%20and%20Teams.pdf\">WCA Motion 10.2022.0.</a></p><p>Thanks for your candidacies and support.</p>",
+    "hash": "e300fb324204fb513e6b0bd0e87c7753d172fdf11b06fbb5b43674ee93cd6b5e",
+    "fetchedAt": "2026-10-22T05:46:42.654Z"
+  },
+  "translation": {
+    "language": "zh-Hans",
+    "version": 2,
+    "title": "招募 WDC 负责人（2023 年 12 月）",
+    "content": "Sebastiano Tronto 的 WCA 纪律委员会负责人任期即将结束，将任命新的负责人。WCA 感谢 Sebastiano 过去 3 年对 WDC 的领导。\n\n候选人应履行 24 个月任期，平均每周投入至少 7 小时。期望素质包括：强领导力；独立调查经验；出色的分析与解决问题能力；保密和遵守伦理的承诺；良好判断与决策；熟悉 WCA 活动；出色沟通能力。\n\n申请期为即日起至 **2024 年 1 月 7 日 23:59 UTC**。请私下发送至董事会助理团队 [assistants@worldcubeassociation.org](mailto:assistants@worldcubeassociation.org)，抄送理事会 [board@worldcubeassociation.org](mailto:board@worldcubeassociation.org)。\n\n申请必须为 PDF，包括简短自我介绍、为 WCA 所做活动、担任 WDC 负责人的目标。另请提交一份可在申请期结束后公开的副本。\n\nWDC 权利与职责见[动议 10.2022.3](https://www.worldcubeassociation.org/documents/motions/10.2022.3%20-%20Disciplinary%20Committee.pdf)。申请期结束后，理事会投票遴选，并经高级代表及在任委员会、团队负责人投票确认后宣布新负责人，流程见[动议 10.2022.0](https://www.worldcubeassociation.org/documents/motions/10.2022.0%20-%20Committees%20and%20Teams.pdf)第 4 节。\n\n感谢申请与支持。",
+    "translatedAt": "2026-10-22T06:02:27.941Z",
+    "translator": "Codex / subscription",
+    "sourceHash": "e300fb324204fb513e6b0bd0e87c7753d172fdf11b06fbb5b43674ee93cd6b5e",
+    "revisedAt": "2026-10-25T07:28:01.629Z",
+    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+  },
+  "review": {
+    "status": "pending_independent_recheck",
+    "checks": [
+      "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
+    ],
+    "notes": [],
+    "scope": "仅所列官方日志正文；引用的论坛、附件和其他页面保留链接，不计作已翻译。",
+    "independent": {
+      "reviewer": "review_1",
+      "reviewedAt": "2026-10-22T06:23:54.689Z",
+      "report": "reviews/round-1/report-1.json",
+      "sourceHash": "e300fb324204fb513e6b0bd0e87c7753d172fdf11b06fbb5b43674ee93cd6b5e",
+      "reviewedTranslationHash": "8dbb4825fe71ba53d73e88d608be2d9d0cf9696f1639dabb7c65ecd96e6c59ed",
+      "verdict": "pass",
+      "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
+    },
+    "unresolvedNotes": [],
+    "terminologyRevision": {
+      "at": "2026-10-25T07:28:01.629Z",
+      "previousTranslationHash": "8dbb4825fe71ba53d73e88d608be2d9d0cf9696f1639dabb7c65ecd96e6c59ed",
+      "scope": "机构名称专项校订；此前独立审校证据仍绑定旧译文，不视为新版本独立审校。"
+    }
+  },
+  "publication": {
+    "status": "not_authorized"
+  },
+  "rights": {
+    "status": "not_confirmed",
+    "audit": "rights-audit.json",
+    "publicTranslationPermission": "not_confirmed"
+  }
+}

@@ -13,15 +13,15 @@
   },
   "translation": {
     "language": "zh-Hans",
-    "version": 1,
+    "version": 2,
     "title": "盲拧中裁判未能停表，选手自行停止官方秒表",
-    "content": "说明：截至 2025 年，[A6a1](https://www.worldcubeassociation.org/regulations/#A6a1) 已更新，允许裁判未停表时由选手自行停止秒表。\n\n选手完成尝试后示意裁判停止官方秒表，但裁判离比赛台太远，无法操作，选手便自行停表，违反了[指导 2i+](https://www.worldcubeassociation.org/regulations/guidelines.html#2i+)。\n\n尽管按 2i+ 应判 DNF，**WRC 同意保留成绩**，依据如下：\n- **代表或裁判亲眼见到此情况，这是最终决定的关键因素。**\n- 裁判没有遵守 [B5b](https://www.worldcubeassociation.org/regulations/#B5b)；\n- 选手无意作弊，也无意取得不公平优势；\n- 对高阶盲拧和多盲，额外尝试过于严苛，且会造成不必要的精神消耗。",
-    "translatedAt": "2026-10-22T05:56:15.197Z",
+    "content": "说明：截至 2025 年，[A6a1](https://www.worldcubeassociation.org/regulations/#A6a1) 已更新，允许裁判未停表时由选手自行停止秒表。\n\n选手完成尝试后示意裁判停止官方秒表，但裁判离比赛台太远，无法操作，选手便自行停表，违反了[指南 2i+](https://www.worldcubeassociation.org/regulations/guidelines.html#2i+)。\n\n尽管按 2i+ 应判 DNF，**WRC 同意保留成绩**，依据如下：\n- **代表或裁判亲眼见到此情况，这是最终决定的关键因素。**\n- 裁判没有遵守 [B5b](https://www.worldcubeassociation.org/regulations/#B5b)；\n- 选手无意作弊，也无意取得不公平优势；\n- 对高阶盲拧和多盲，额外尝试过于严苛，且会造成不必要的精神消耗。",
+    "translatedAt": "2026-10-25T09:29:00.613Z",
     "translator": "Codex / subscription",
     "sourceHash": "c65d1fc4b15045bda62549a666704650eb0a9246f85a18440848bb67b258ba7a"
   },
   "review": {
-    "status": "independently_verified",
+    "status": "pending_independent_recheck",
     "checks": [
       "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
     ],
@@ -36,7 +36,13 @@
       "verdict": "pass",
       "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
     },
-    "unresolvedNotes": []
+    "unresolvedNotes": [],
+    "complianceRevision": {
+      "at": "2026-10-25T09:29:00.613Z",
+      "previousTranslationHash": "90d78ba9b51fca5328f95f42e04b83269c9987b3b02eba46cac7d72b38c09223",
+      "report": "../wca-translation-compliance-2026-10-25.json",
+      "scope": "Targeted source comparison; independent prior evidence remains bound to the previous hash."
+    }
   },
   "publication": {
     "status": "not_authorized"

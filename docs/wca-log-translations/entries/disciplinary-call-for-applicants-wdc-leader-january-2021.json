@@ -13,15 +13,15 @@
   },
   "translation": {
     "language": "zh-Hans",
-    "version": 1,
+    "version": 2,
     "title": "招募 WDC 负责人（2021 年 1 月）",
-    "content": "将任命新的 **WCA 纪律委员会（WDC）负责人**。申请向所有 WCA 成员开放，申请人无需目前在 WCA 任职。\n\n候选人应履行 24 个月任期，平均每周投入至少 5 小时。期望具备强领导力、注重细节、能够讨论推理和想法、熟悉 WCA 活动、出色沟通能力。\n\n申请期为即日起至 **2021 年 1 月 18 日 23:59 UTC**。请私下发送至理事会 [board@worldcubeassociation.org](mailto:board@worldcubeassociation.org)。\n\n文件必须为 PDF，包括简短自我介绍、为 WCA 所做活动、担任 WDC 负责人的目标。另请提供可在申请期结束后公开的副本。\n\n权利与职责见[动议 10.2019.2](https://www.worldcubeassociation.org/documents/motions/10.2019.2%20-%20Disciplinary%20Committee.pdf)。申请期后，理事会投票遴选，经高级代表及在任委员会、团队负责人投票确认后宣布新负责人，流程见[动议 10.2020.0](https://www.worldcubeassociation.org/documents/motions/10.2020.0%20-%20Committees%20and%20Teams.pdf)第 4 节。\n\n感谢申请与支持。",
-    "translatedAt": "2026-10-22T06:02:27.941Z",
+    "content": "将任命新的 **WCA 纪律委员会（WDC）负责人**。申请向所有 WCA 成员开放，申请人无需目前在 WCA 任职。\n\n候选人应履行 24 个月任期，平均每周投入至少 5 小时。期望具备强领导力、注重细节、能够讨论推理和想法、熟悉 WCA 活动、出色沟通能力。\n\n申请期为即日起至 **2021 年 1 月 18 日 23:59 UTC**。请私下发送至董事会 [board@worldcubeassociation.org](mailto:board@worldcubeassociation.org)。\n\n文件必须为 PDF，包括简短自我介绍、为 WCA 所做活动、担任 WDC 负责人的目标。另请提供可在申请期结束后公开的副本。\n\n权利与职责见[动议 10.2019.2](https://www.worldcubeassociation.org/documents/motions/10.2019.2%20-%20Disciplinary%20Committee.pdf)。申请期后，董事会投票遴选，经高级代表及在任委员会、团队负责人投票确认后宣布新负责人，流程见[动议 10.2020.0](https://www.worldcubeassociation.org/documents/motions/10.2020.0%20-%20Committees%20and%20Teams.pdf)第 4 节。\n\n感谢申请与支持。",
+    "translatedAt": "2026-10-25T09:29:00.613Z",
     "translator": "Codex / subscription",
     "sourceHash": "8653313ebeb1e46f0708505bd502f1fa8ccbd8b77252b29cbf12c28a4ac7ff12"
   },
   "review": {
-    "status": "independently_verified",
+    "status": "pending_independent_recheck",
     "checks": [
       "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
     ],
@@ -36,7 +36,13 @@
       "verdict": "pass",
       "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
     },
-    "unresolvedNotes": []
+    "unresolvedNotes": [],
+    "complianceRevision": {
+      "at": "2026-10-25T09:29:00.613Z",
+      "previousTranslationHash": "a46df975b7891d9a7b9486499e1bc813ffc50171b69236bc208de42786194065",
+      "report": "../wca-translation-compliance-2026-10-25.json",
+      "scope": "Targeted source comparison; independent prior evidence remains bound to the previous hash."
+    }
   },
   "publication": {
     "status": "not_authorized"

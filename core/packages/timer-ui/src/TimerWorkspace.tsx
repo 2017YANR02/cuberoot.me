@@ -1,5 +1,7 @@
-import { useRef, useState, useSyncExternalStore, type HTMLAttributes, type ReactNode } from 'react';
+import { useSyncExternalStore, type HTMLAttributes, type ReactNode } from 'react';
 import './timer-workspace.css';
+import { ResizeDivider } from '@app-foundation/navigation-ui/resize-divider';
+import '@app-foundation/navigation-ui/resize-divider.css';
 
 export const TIMER_WIDE_QUERY = '(min-width: 1024px)';
 function subscribe(notify: () => void) {
@@ -32,9 +34,6 @@ export function TimerWorkspace({ active = true, panelOpen = false, recap, resize
 
 /** One pointer/keyboard resizing contract for both desktop dock boundaries. */
 export function TimerWorkspaceDivider({ side, label }: { side: 'left' | 'right'; label: string }) {
-  const drag = useRef<{ x: number; width: number } | null>(null);
-  const [dragging, setDragging] = useState(false);
-  const [width, setWidth] = useState<number>();
   const panel = (element: HTMLElement) => element.closest('.timer-workspace')?.querySelector<HTMLElement>(side === 'left' ? '.timer-solver-rail' : '.timer-workspace-panel');
   const resize = (element: HTMLElement, requested: number) => {
     const workspace = element.closest<HTMLElement>('.timer-workspace');
@@ -44,35 +43,9 @@ export function TimerWorkspaceDivider({ side, label }: { side: 'left' | 'right';
     const maximum = Math.max(160, workspace.clientWidth - otherWidth - 320);
     const next = Math.round(Math.max(Math.min(240, maximum), Math.min(requested, maximum)));
     workspace.style.setProperty(side === 'left' ? '--timer-left-dock-width' : '--timer-right-dock-width', `${next}px`);
-    setWidth(next);
+    return next;
   };
-  return <button type="button" role="separator" aria-orientation="vertical" aria-label={label}
-    aria-valuenow={width} title={label} data-no-timer
-    className={`timer-workspace-divider timer-workspace-divider--${side}${dragging ? ' is-dragging' : ''}`}
-    onPointerDown={event => {
-      if (event.button !== 0) return;
-      event.preventDefault();
-      event.stopPropagation();
-      drag.current = { x: event.clientX, width: panel(event.currentTarget)?.getBoundingClientRect().width ?? 0 };
-      event.currentTarget.setPointerCapture(event.pointerId);
-      setDragging(true);
-    }}
-    onPointerMove={event => {
-      if (!drag.current) return;
-      resize(event.currentTarget, drag.current.width + (event.clientX - drag.current.x) * (side === 'left' ? 1 : -1));
-    }}
-    onPointerUp={event => {
-      drag.current = null;
-      setDragging(false);
-      if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
-    }}
-    onLostPointerCapture={() => { drag.current = null; setDragging(false); }}
-    onPointerCancel={() => { drag.current = null; setDragging(false); }}
-    onKeyDown={event => {
-      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
-      event.preventDefault();
-      event.stopPropagation();
-      const direction = (event.key === 'ArrowRight' ? 1 : -1) * (side === 'left' ? 1 : -1);
-      resize(event.currentTarget, (panel(event.currentTarget)?.getBoundingClientRect().width ?? 0) + direction * 16);
-    }} />;
+  return <ResizeDivider label={label} direction={side === 'left' ? 1 : -1}
+    getSize={element => panel(element)?.getBoundingClientRect().width ?? 0} onResize={resize}
+    data-no-timer className={`timer-workspace-divider timer-workspace-divider--${side}`} />;
 }

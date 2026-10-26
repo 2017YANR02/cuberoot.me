@@ -13,15 +13,15 @@
   },
   "translation": {
     "language": "zh-Hans",
-    "version": 1,
+    "version": 2,
     "title": "选手停表后请求额外尝试",
-    "content": "一名选手在四阶盲拧还原结束、结果为 DNF 后，但在签署成绩单、结束该次尝试之前，声称受到干扰。代表依据 [11e](https://www.worldcubeassociation.org/regulations/#11e) 给予了额外尝试。\n\nWRC 进一步讨论后，同意**保留原尝试成绩**。\n\n尝试中发生事件时，选手有三种选择，各有收益与风险：\n1. 立即停止尝试并申请额外尝试；\n2. 按[指导 11e+](https://www.worldcubeassociation.org/regulations/guidelines.html#11e+)，保持尝试进行，同时申诉请求额外尝试；\n3. 完成尝试后再提出请求。\n\nWRC 强烈建议选择前两种方式，因为这样代表更容易判断申诉是否公平，也能排除选手根据还原结果决定是否提出请求的可能。",
-    "translatedAt": "2026-10-22T05:54:37.260Z",
+    "content": "一名选手在四阶盲拧还原结束、结果为 DNF 后，但在签署成绩单、结束该次尝试之前，声称受到干扰。代表依据 [11e](https://www.worldcubeassociation.org/regulations/#11e) 给予了额外尝试。\n\nWRC 进一步讨论后，同意**保留原尝试成绩**。\n\n尝试中发生事件时，选手有三种选择，各有收益与风险：\n1. 立即停止尝试并申请额外尝试；\n2. 按[指南 11e+](https://www.worldcubeassociation.org/regulations/guidelines.html#11e+)，保持尝试进行，同时申诉请求额外尝试；\n3. 完成尝试后再提出请求。\n\nWRC 强烈建议选择前两种方式，因为这样代表更容易判断申诉是否公平，也能排除选手根据还原结果决定是否提出请求的可能。",
+    "translatedAt": "2026-10-25T09:29:00.613Z",
     "translator": "Codex / subscription",
     "sourceHash": "d715041f7053c0a1d09a9d5e5b5ec58671ff8725c44f72cfa103e1cb91ae1acc"
   },
   "review": {
-    "status": "independently_verified",
+    "status": "pending_independent_recheck",
     "checks": [
       "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
     ],
@@ -36,7 +36,13 @@
       "verdict": "pass",
       "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
     },
-    "unresolvedNotes": []
+    "unresolvedNotes": [],
+    "complianceRevision": {
+      "at": "2026-10-25T09:29:00.613Z",
+      "previousTranslationHash": "ac0c47578c547e7a5a8ee6c55f2cea8b36317d87027da797e0f7118375b8dfd0",
+      "report": "../wca-translation-compliance-2026-10-25.json",
+      "scope": "Targeted source comparison; independent prior evidence remains bound to the previous hash."
+    }
   },
   "publication": {
     "status": "not_authorized"
