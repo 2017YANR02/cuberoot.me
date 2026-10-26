@@ -57,6 +57,12 @@ describe('homepage development cards', () => {
       const host = document.createElement('div');
       const root = createRoot(host);
       await act(async () => root.render(renderLanding()));
+      const edit = host.querySelector<HTMLButtonElement>('button[aria-label="编辑"]');
+      if (edit) {
+        expect(host.querySelector('.landing-card-lock')).toBeNull();
+        await act(async () => edit.click());
+        expect(edit.getAttribute('aria-pressed')).toBe('true');
+      }
       const result = host.querySelector('[data-testid="home-upcoming-comps"]')?.cloneNode(true) as Element | undefined;
       await act(async () => root.unmount());
       return result ?? null;
@@ -77,6 +83,12 @@ describe('homepage development cards', () => {
     const root = createRoot(host);
     try {
       await act(async () => root.render(renderLanding()));
+      const edit = host.querySelector<HTMLButtonElement>('button[aria-label="编辑"]');
+      if (edit) {
+        expect(host.querySelector('.landing-card-lock')).toBeNull();
+        await act(async () => edit.click());
+        expect(edit.getAttribute('aria-pressed')).toBe('true');
+      }
       const admin = user?.wcaId === ADMIN_WCA_IDS[0];
       for (const [id, href] of [['platform', '/zh/platform'], ['teaching-management', '/zh/org'], ['learning-center', '/zh/learn']]) {
         const card = host.querySelector(`#card-${id}`)!;
@@ -112,8 +124,10 @@ describe('homepage development cards', () => {
       if (admin) {
         const contactDetails = host.querySelector('.landing-contact-details');
         expect(contactDetails).not.toBeNull();
-        expect(adminArea?.nextElementSibling).toBe(contactDetails);
-        expect(contactDetails?.nextElementSibling).toBe(host.querySelector('.footer'));
+        const footer = host.querySelector('.landing-footer-layout');
+        expect(adminArea?.nextElementSibling).toBe(footer);
+        expect(contactDetails?.parentElement).toBe(footer);
+        expect(footer?.querySelector('.landing-footer-info .footer')).toBe(host.querySelector('.footer'));
         for (const config of [...PRIMARY_CARDS, ...WCA_CARDS, ...SECTIONS.flatMap((section) => section.cards)]) {
           const cards = host.querySelectorAll(`#card-${config.id}`);
           expect(cards).toHaveLength(1);
@@ -137,6 +151,12 @@ describe('homepage development cards', () => {
     const button = () => card().parentElement!.querySelector<HTMLButtonElement>('.landing-card-lock')!;
     try {
       await act(async () => root.render(renderLanding()));
+      const edit = host.querySelector<HTMLButtonElement>('button[aria-label="编辑"]');
+      if (edit) {
+        expect(host.querySelector('.landing-card-lock')).toBeNull();
+        await act(async () => edit.click());
+        expect(edit.getAttribute('aria-pressed')).toBe('true');
+      }
       expect(card().classList.contains('is-disabled')).toBe(true);
       expect(card().closest('#landing-admin-content')).not.toBeNull();
       expect(button().disabled).toBe(false);
@@ -166,6 +186,12 @@ describe('homepage development cards', () => {
     const alert = vi.spyOn(window, 'alert').mockImplementation(() => {});
     try {
       await act(async () => root.render(renderLanding()));
+      const edit = host.querySelector<HTMLButtonElement>('button[aria-label="编辑"]');
+      if (edit) {
+        expect(host.querySelector('.landing-card-lock')).toBeNull();
+        await act(async () => edit.click());
+        expect(edit.getAttribute('aria-pressed')).toBe('true');
+      }
       const card = () => host.querySelector('#card-teaching')!;
       const button = () => card().parentElement!.querySelector<HTMLButtonElement>('.landing-card-lock')!;
       expect(card().closest('#landing-admin-content')).toBeNull();
@@ -206,6 +232,12 @@ describe('homepage development cards', () => {
     const button = (id: string) => section(id)!.querySelector<HTMLButtonElement>('button')!;
     try {
       await act(async () => root.render(renderLanding()));
+      const edit = host.querySelector<HTMLButtonElement>('button[aria-label="编辑"]');
+      if (edit) {
+        expect(host.querySelector('.landing-card-lock')).toBeNull();
+        await act(async () => edit.click());
+        expect(edit.getAttribute('aria-pressed')).toBe('true');
+      }
       expect(button('enterprise').getAttribute('aria-pressed')).toBe('true');
       expect(button('individual').getAttribute('aria-pressed')).toBe('true');
       expect(section('enterprise')?.closest('#landing-admin-content')).not.toBeNull();
@@ -254,6 +286,12 @@ describe('homepage development cards', () => {
     });
     try {
       await act(async () => root.render(renderLanding()));
+      const edit = host.querySelector<HTMLButtonElement>('button[aria-label="编辑"]');
+      if (edit) {
+        expect(host.querySelector('.landing-card-lock')).toBeNull();
+        await act(async () => edit.click());
+        expect(edit.getAttribute('aria-pressed')).toBe('true');
+      }
       const expected = ['ONE', 'TWO', 'TEN', 'BIG1', 'BIG2', 'NONE', 'INVALID'];
       expect(ids('individual')).toEqual(expected);
       for (const query of ['测试二', 'two', ' vip2 ', 'VIP000002']) {
@@ -282,6 +320,12 @@ describe('homepage development cards', () => {
     const root = createRoot(host);
     try {
       await act(async () => root.render(renderLanding()));
+      const edit = host.querySelector<HTMLButtonElement>('button[aria-label="编辑"]');
+      if (edit) {
+        expect(host.querySelector('.landing-card-lock')).toBeNull();
+        await act(async () => edit.click());
+        expect(edit.getAttribute('aria-pressed')).toBe('true');
+      }
       expect(host.querySelector('[id^="card-"]')).toBeNull();
       expect(host.querySelector('#enterprise-members-title')).toBeNull();
       expect(host.querySelector('#individual-members-title')).toBeNull();

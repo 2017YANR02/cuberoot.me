@@ -379,7 +379,7 @@
   text-align: center;
 }
 
-.contact-social-close {
+.clear-btn.contact-social-close {
   position: absolute;
   top: 0.4rem;
   right: 0.4rem;

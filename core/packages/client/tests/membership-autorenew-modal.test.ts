@@ -39,7 +39,7 @@ describe('auto-renewal before merchant approval', () => {
     expect(sign.disabled).toBe(true);
     expect(host.querySelector('a[href="/membership/renewal-terms"]')).not.toBeNull();
     expect(host.querySelector('a[href="/membership/subscription"]')).not.toBeNull();
-    expect(host.querySelector('a[href="/membership/subscription"]')?.textContent).toBe('管理自动续费 / 退订');
+    expect(host.querySelector('a[href="/membership/subscription"]')?.textContent).toBe('管理自动续费');
   });
   it('opens the mini handoff only after consent without creating an H5 contract', async () => {
     api.renewalAvailability.mockResolvedValue({ available: true, channel: 'miniprogram', termsVersion: '2026-10-14' });
