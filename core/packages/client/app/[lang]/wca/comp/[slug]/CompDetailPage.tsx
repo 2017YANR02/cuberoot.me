@@ -27,7 +27,7 @@ import { eventDisplayName, isWcaEvent } from '@/lib/wca-events';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { countryToIso2, loadFlagData, compFlagIso2 } from '@/lib/country-flags';
 import { countryName } from '@/lib/country-name';
-import { localizeCompName, resolveCompName, stripCompYear } from '@/lib/comp-localize';
+import { localizeCompName, resolveCompName, resolveCompLocation, stripCompYear } from '@/lib/comp-localize';
 import { nameToCubingSlug, wcaIdToCubingSlug } from '@cuberoot/shared/cubing-slug';
 import { fetchRankForWca, getCachedRankForWca, prefetchRanksForWca, type RankResult } from '@/lib/rank-client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -60,6 +60,7 @@ import { useWcaLiveStream, type WcaLiveRoundUpdate } from '@/hooks/useWcaLiveStr
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import LangToggle from '@/components/LangToggle';
 import { useCompFollows, FollowStar } from '@/components/CompFollow';
+import { CompetitionCalendarButton } from '@/components/CompetitionCalendarButton';
 import { personRoundChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, effectiveAttemptPenaltyNote, effectiveAttemptVideos, pendingAttemptVideos, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty, recordAttemptVideos, splitChainByStatus } from '@/lib/result-watch-api';
 import { AttemptPopover } from '@/components/persons/sections/results/AttemptPopover';
 import { SolveValue } from '@/components/persons/sections/results/SolveValue';
@@ -1824,6 +1825,13 @@ export default function CompDetailPage() {
                     loggedIn={followLoggedIn}
                     onRequireLogin={login}
                   />
+                  <CompetitionCalendarButton key={slug} competition={{
+                    id: slug,
+                    title: resolveCompName(slug, decodeEntities(data.name), isZh, { explicitNameZh: cubingZh?.nameZh }),
+                    startDate: compInfo?.start_date ?? '',
+                    endDate: compInfo?.end_date ?? '',
+                    location: resolveCompLocation(compInfo, cubingZh, isZh).text,
+                  }} />
                 </>
               );
             })()}
@@ -2292,6 +2300,7 @@ function CompInfoPanel({
 }: { info: CompInfo; isZh: boolean; cubingZh: CubingZhMeta | null }) {
   const dateStr = info.start_date ? formatDateRangeIso(info.start_date, info.end_date) : '';
   const country = info.country_iso2 ? countryName(info.country_iso2.toUpperCase(), isZh) : '';
+  const location = resolveCompLocation(info, cubingZh, isZh);
   const cityStr = [info.city ? localizeCity(info.city, isZh, info.country_iso2) : '', country].filter(Boolean).join(tr({ zh: '，', en: ', ' }));
   const todayIso = toIsoDate(new Date());
   const isPast = (iso: string) => !!iso && iso.slice(0, 10) < todayIso;
@@ -2336,13 +2345,13 @@ function CompInfoPanel({
     rows.push({ label: tr({ zh: '候补截止', en: 'Waiting list deadline'
     }), value: d, past: isPast(d) });
   }
-  if (cityStr && !(isZh && cubingZh?.location)) {
+  if (cityStr && !location.hasLocalizedAddress) {
     rows.push({ label: tr({ zh: '城市', en: 'City' }), value: cityStr });
   }
-  if (isZh && cubingZh?.location) {
-    rows.push({ label: tr({ zh: '地点', en: 'Location' }), hideLabel: true, value: <CompAddress address={cubingZh.location} isZh={isZh} /> });
+  if (location.hasLocalizedAddress) {
+    rows.push({ label: tr({ zh: '地点', en: 'Location' }), hideLabel: true, value: <CompAddress address={location.address} isZh={isZh} /> });
   } else {
-    if (info.venue_address) rows.push({ label: tr({ zh: '地址', en: 'Address' }), value: <CompAddress address={info.venue_address} isZh={isZh} /> });
+    if (location.address) rows.push({ label: tr({ zh: '地址', en: 'Address' }), value: <CompAddress address={location.address} isZh={isZh} /> });
     if (info.venue_details) rows.push({ label: tr({ zh: '详情', en: 'Details'
     }), value: renderWcaText(info.venue_details) });
   }

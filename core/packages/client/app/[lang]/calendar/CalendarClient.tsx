@@ -9,13 +9,13 @@
 //   1. 数据源是「主事件 + 重复规则」,格子里的块是客户端展开的(lib/calendar-store);
 //   2. 改重复事件一定先问作用域(此次 / 此后 / 全部),拖拽也一样 —— 不问就等于替用户
 //      做了不可逆的决定;
-//   3. 事件自带时区,顶栏可以切「显示时区」,两者不是一回事:出差时把显示时区切到当地,
+//   3. 事件自带时区,设置可以切「显示时区」,两者不是一回事:出差时把显示时区切到当地,
 //      北京时间的会自动落到当地钟点上,事件本身不动。
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import {
-  CalendarDays, ChevronLeft, ChevronRight, Download, Globe, Menu, Plus, Search, Settings,
+  CalendarDays, ChevronLeft, ChevronRight, Download, Menu, Plus, Search, Settings,
   Share2, Undo2, Upload, X,
 } from '@app-foundation/icons/lucide';
 import HeaderToggles from '@/components/HeaderToggles';
@@ -24,7 +24,6 @@ import { ListSelect } from '@/components/ListSelect';
 import { ClearButton } from '@/components/ClearButton';
 import { useAuthUser, nextQuery } from '@/lib/auth-store';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
 import { tr, useLang } from '@/i18n/tr';
 import { localZone, isValidZone, formatOffset, zoneOffsetMinutes } from '@cuberoot/shared/tz';
 import { eventsToIcs, type CalEvent, type CalendarImport, type EditScope } from '@cuberoot/shared/calendar';
@@ -129,11 +128,6 @@ export default function CalendarClient() {
   const [settingsSection, setSettingsSection] = useQueryState('settings', parseAsStringEnum([...SETTINGS_SECTIONS]));
   const settingsOpen = settingsSection !== null;
   const closeSettings = useCallback(() => { void setSettingsSection(null); }, [setSettingsSection]);
-  const [tzOpen, setTzOpen] = useState(false);
-  // 顶栏两个浮层:点外面 / Esc 关。它们是 fixed 定位、挂在顶栏外面,所以触发钮要单独排除,
-  // 否则「点钮 → 先关再开」,看着就是按不动。
-  const tzBtnRef = useRef<HTMLButtonElement>(null);
-  const tzPopRef = useRef<HTMLDivElement>(null);
   const setBtnRef = useRef<HTMLButtonElement>(null);
   // 导入记录只在真去看设置时才拉 —— 首屏没人关心,不该多一个请求。
   useEffect(() => {
@@ -141,7 +135,6 @@ export default function CalendarClient() {
     void listImports().then(setImports).catch(() => { /* 没登录 / 离线时不打扰 */ });
   }, [settingsSection]);
 
-  usePopoverDismiss(tzOpen, () => setTzOpen(false), tzPopRef, tzBtnRef);
   const [query, setQuery] = useState('');
   const [dialog, setDialog] = useState<DialogDraft | null>(null);
   const [competition, setCompetition] = useState<CalendarCompetition | null>(null);
@@ -500,7 +493,7 @@ export default function CalendarClient() {
       const el = e.target as HTMLElement | null;
       if (e.defaultPrevented || e.isComposing || el?.isContentEditable || (el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
-      if (dialog || competition || shareOpen || scopeAsk || settingsOpen || tzOpen) return;
+      if (dialog || competition || shareOpen || scopeAsk || settingsOpen) return;
       if (el?.closest('[role=dialog], .list-select')) return;
       // 窄屏的侧栏是覆盖式抽屉,开着时汉堡钮被它盖住 —— Esc 得能退出来(遮罩也能点关)。
       if (e.key === 'Escape' && sidebarOpen) { setSidebarOpen(false); return; }
@@ -523,7 +516,7 @@ export default function CalendarClient() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [dialog, competition, shareOpen, scopeAsk, sidebarOpen, settingsOpen, tzOpen, prefs.keyboardShortcuts, setSettingsSection, setViewParam, openCreateNow]);
+  }, [dialog, competition, shareOpen, scopeAsk, sidebarOpen, settingsOpen, prefs.keyboardShortcuts, setSettingsSection, setViewParam, openCreateNow]);
 
   const zoneItems = useMemo(() => zoneOptions().map((z) => ({
     value: z.tz,
@@ -552,7 +545,7 @@ export default function CalendarClient() {
   }
 
   return (
-    <div className={`cal-page${sidebarOpen ? ' sidebar-open' : ''}${prefs.sidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
+    <div className={`cal-page${settingsOpen ? ' cal-page--settings' : ''}${sidebarOpen ? ' sidebar-open' : ''}${prefs.sidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
       <div className="cal-topbar">
         <button
           type="button"
@@ -605,23 +598,12 @@ export default function CalendarClient() {
         />
 
         <button
-          ref={tzBtnRef}
-          type="button"
-          className="cal-icon-btn"
-          aria-label={tr({ zh: '显示时区', en: 'Display time zone' })}
-          aria-expanded={tzOpen}
-          title={zoneLabel(displayTz, isZh)}
-          onClick={() => { closeSettings(); setTzOpen((v) => !v); }}
-        >
-          <Globe size={17} aria-hidden />
-        </button>
-        <button
           ref={setBtnRef}
           type="button"
           className="cal-icon-btn"
           aria-label={tr({ zh: '设置', en: 'Settings' })}
           aria-expanded={settingsOpen}
-          onClick={() => { setTzOpen(false); void setSettingsSection(settingsOpen ? null : 'general'); }}
+          onClick={() => { void setSettingsSection(settingsOpen ? null : 'general'); }}
         >
           <Settings size={17} aria-hidden />
         </button>
@@ -635,41 +617,6 @@ export default function CalendarClient() {
         </button>
         <HeaderToggles />
       </div>
-
-      {tzOpen && (
-        <div className="cal-pop cal-pop-tz" data-site-surface="popover" ref={tzPopRef}>
-          <div className="cal-pop-head">
-            <span className="cal-field-label">{tr({ zh: '显示时区', en: 'Display time zone' })}</span>
-            <button
-              type="button"
-              className="cal-icon-btn"
-              onClick={() => setTzOpen(false)}
-              aria-label={tr({ zh: '关闭', en: 'Close' })}
-            >
-              <X size={16} aria-hidden />
-            </button>
-          </div>
-          <ListSelect
-            items={zoneItems}
-            value={displayTz}
-            allLabel={tr({ zh: '本机时区', en: 'Device zone' })}
-            clearable={false}
-            searchable
-            maxVisible={80}
-            searchPlaceholder={tr({ zh: '搜城市 / 时区', en: 'Search city or zone' })}
-            onChange={(tzNext) => { store.setPrefs({ tz: tzNext }); setTzOpen(false); }}
-          />
-          <p className="cal-hint">
-            {tr({
-              zh: '只改「怎么摆」,不改日程本身;出差时切到当地看最方便。',
-              en: 'Changes how events are laid out, not the events themselves — handy when travelling.',
-            })}
-          </p>
-          <AppLink className="cal-link-btn" href="/timezone" prefetch={false}>
-            {tr({ zh: '打开时区换算', en: 'Open the time zone converter' })}
-          </AppLink>
-        </div>
-      )}
 
       {settingsSection && (
         <CalendarSettings

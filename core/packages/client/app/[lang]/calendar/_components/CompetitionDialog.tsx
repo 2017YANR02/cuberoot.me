@@ -7,9 +7,8 @@ import { ClearButton } from '@/components/ClearButton';
 import { DateRangeInput } from '@/components/DateRangeInput';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { useCopy } from '@/hooks/useCopy';
-import { fetchCompInfo, type CompInfo } from '@/lib/comp-wcif';
-import { localizeCompName } from '@/lib/comp-localize';
-import { localizeCity } from '@/lib/city-localize';
+import { fetchCompInfo, fetchCubingZh, type CompInfo, type CubingZhMeta } from '@/lib/comp-wcif';
+import { localizeCompName, resolveCompLocation } from '@/lib/comp-localize';
 import { formatDateRangeIso } from '@/lib/wca-date';
 import { tr, useLang } from '@/i18n/tr';
 import { addDaysToKey } from '../_lib/format';
@@ -20,6 +19,7 @@ export default function CompetitionDialog({ competition: c, onClose }: { competi
   const isZh = useLang() === 'zh';
   const backdropProps = useModalDismiss(onClose);
   const [info, setInfo] = useState<CompInfo | null>(null);
+  const [cubingZh, setCubingZh] = useState<CubingZhMeta | null>(null);
   const [loading, setLoading] = useState(true);
   const [origin, setOrigin] = useState('');
   const [departure, setDeparture] = useState(addDaysToKey(c.start_date, -1));
@@ -27,25 +27,43 @@ export default function CompetitionDialog({ competition: c, onClose }: { competi
   const { copied, copy } = useCopy();
   useEffect(() => {
     let active = true;
-    void fetchCompInfo(c.id).then((data) => { if (active) { setInfo(data); setLoading(false); } });
+    setInfo(null);
+    setCubingZh(null);
+    setLoading(true);
+    void (async () => {
+      try {
+        const data = await fetchCompInfo(c.id);
+        if (!active) return;
+        setInfo(data);
+        if (isZh && data?.country_iso2?.toLowerCase() === 'cn') {
+          const meta = await fetchCubingZh(c.id);
+          if (active) setCubingZh(meta);
+        }
+      } catch { /* Keep available WCA details if the localized source is unavailable. */ }
+      finally { if (active) setLoading(false); }
+    })();
     return () => { active = false; };
-  }, [c.id]);
-  const name = localizeCompName(c.id, info?.name || c.name, isZh, { date: c.start_date });
-  const city = localizeCity(info?.city || c.city || '', isZh);
-  const address = info?.venue_address || '';
-  const destination = address ? [address, info?.city || c.city, info?.country_iso2 || c.country].filter(Boolean).join(', ') : (Number.isFinite(c.latitude_degrees) && Number.isFinite(c.longitude_degrees)
-    ? `${c.latitude_degrees},${c.longitude_degrees}` : `${c.city || ''} ${c.country}`);
+  }, [c.id, isZh]);
+  const localized = isZh ? cubingZh : null;
+  const name = localizeCompName(c.id, info?.name || c.name, isZh, { date: c.start_date, explicitNameZh: localized?.nameZh });
+  const { address, text: location, hasLocalizedAddress } = resolveCompLocation({
+    city: info?.city || c.city || '',
+    country_iso2: info?.country_iso2 || c.country,
+    venue_address: info?.venue_address || '',
+  }, cubingZh, isZh);
+  const destination = (hasLocalizedAddress ? address : '') || (address ? [address, info?.city || c.city, info?.country_iso2 || c.country].filter(Boolean).join(', ') : (Number.isFinite(c.latitude_degrees) && Number.isFinite(c.longitude_degrees)
+    ? `${c.latitude_degrees},${c.longitude_degrees}` : `${c.city || ''} ${c.country}`));
   const mapQuery = new URLSearchParams({ api: '1', destination, travelmode: 'transit' });
   if (origin.trim()) mapQuery.set('origin', origin.trim());
   const itinerary = tr({
-    zh: `${name}\n比赛：${formatDateRangeIso(c.start_date, c.end_date)}\n地点：${city}${address ? ` · ${address}` : ''}\n出发地：${origin}\n出发：${departure}\n返程：${returnDate}`,
-    en: `${name}\nCompetition: ${formatDateRangeIso(c.start_date, c.end_date)}\nLocation: ${city}${address ? ` · ${address}` : ''}\nFrom: ${origin}\nDeparture: ${departure}\nReturn: ${returnDate}`,
+    zh: `${name}\n比赛：${formatDateRangeIso(c.start_date, c.end_date)}\n地点：${location}\n出发地：${origin}\n出发：${departure}\n返程：${returnDate}`,
+    en: `${name}\nCompetition: ${formatDateRangeIso(c.start_date, c.end_date)}\nLocation: ${location}\nFrom: ${origin}\nDeparture: ${departure}\nReturn: ${returnDate}`,
   });
   return (
     <div className="cal-modal-backdrop" {...backdropProps}>
       <section className="cal-modal cal-competition-dialog" data-site-surface="popover" role="dialog" aria-modal="true" aria-label={name}>
         <header className="cal-settings-head">
-          <h2>{name}</h2>
+          <h2><AppLink href={`/wca/comp/${c.id}`} prefetch={false}>{name}</AppLink></h2>
           <ClearButton variant="standalone" ariaLabel={tr({ zh: '关闭比赛', en: 'Close competition' })} onClick={onClose} />
         </header>
         <div className="cal-settings-content">
@@ -53,7 +71,7 @@ export default function CompetitionDialog({ competition: c, onClose }: { competi
           {info?.cancelled_at && <p role="status">{tr({ zh: '这场比赛已取消。', en: 'This competition has been cancelled.' })}</p>}
           <strong>{formatDateRangeIso(c.start_date, c.end_date)}</strong>
           <p className="cal-hint">{tr({ zh: '日期按比赛当地日期显示；具体轮次时间以比赛赛程为准。', en: 'Dates follow the competition’s local calendar. See its schedule for round times.' })}</p>
-          <div className="cal-competition-location"><MapPin size={18} aria-hidden /><span>{city}{address && <><br />{address}</>}</span></div>
+          <div className="cal-competition-location"><MapPin size={18} aria-hidden /><span>{location}</span></div>
           {loading && <p className="cal-hint" role="status"><LoadingIndicator>{tr({ zh: '正在加载场馆地址…', en: 'Loading venue address…' })}</LoadingIndicator></p>}
           {!loading && !address && <p className="cal-hint">{tr({ zh: '暂未取得详细地址，请在比赛官网核对场馆。', en: 'The detailed address is unavailable. Check the venue on the official competition page.' })}</p>}
           <div className="cal-pop-actions">

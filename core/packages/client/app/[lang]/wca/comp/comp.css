@@ -261,6 +261,14 @@
 .comp-title-icon-lucide svg {
   display: block;
 }
+.comp-calendar-button {
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+.comp-calendar-button:disabled { cursor: default; }
+.comp-calendar-error { font-size: 0.8rem; font-weight: normal; }
 .comp-title-icon:hover {
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
