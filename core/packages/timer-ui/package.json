@@ -6,6 +6,7 @@
   "cuberoot": {
     "kind": "library",
     "externalRuntime": {
+      "@app-foundation/navigation-ui": "react-dom",
       "@livekit/components-react": "react-dom",
       "livekit-client": "react-dom",
       "cubing": "react-dom",
