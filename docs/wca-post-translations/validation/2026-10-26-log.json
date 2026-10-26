@@ -1,0 +1,90 @@
+{
+  "checkedAt": "2026-10-26T06:48:53.466Z",
+  "ok": true,
+  "counts": {
+    "total": 188,
+    "incidents": 144,
+    "disciplinary": 44,
+    "translated": 188,
+    "pending": 0,
+    "independentlyReviewed": 138,
+    "pendingIndependentReview": 50,
+    "entriesWithReviewNotes": 21,
+    "linkOnlyAnnouncements": 1,
+    "independentReviewCoverage": 188,
+    "pendingIndependentRecheck": 37,
+    "pendingSourceVerification": 13,
+    "pendingPermission": 0,
+    "linkedAnnouncementsFullTextTranslated": 1,
+    "files": 188,
+    "entriesWithNotes": 21,
+    "sourceLinkOccurrencesPreserved": 293,
+    "checkpoints": 15
+  },
+  "checkpointEntryBindingsVerified": 2004,
+  "recovery": [
+    {
+      "path": "checkpoints/020.json",
+      "recoverableTranslatedEntries": 20
+    },
+    {
+      "path": "checkpoints/040.json",
+      "recoverableTranslatedEntries": 40
+    },
+    {
+      "path": "checkpoints/060.json",
+      "recoverableTranslatedEntries": 60
+    },
+    {
+      "path": "checkpoints/080.json",
+      "recoverableTranslatedEntries": 80
+    },
+    {
+      "path": "checkpoints/100.json",
+      "recoverableTranslatedEntries": 100
+    },
+    {
+      "path": "checkpoints/122.json",
+      "recoverableTranslatedEntries": 122
+    },
+    {
+      "path": "checkpoints/144.json",
+      "recoverableTranslatedEntries": 144
+    },
+    {
+      "path": "checkpoints/155.json",
+      "recoverableTranslatedEntries": 155
+    },
+    {
+      "path": "checkpoints/166.json",
+      "recoverableTranslatedEntries": 166
+    },
+    {
+      "path": "checkpoints/177.json",
+      "recoverableTranslatedEntries": 177
+    },
+    {
+      "path": "checkpoints/188-compliance-2026-10-25.json",
+      "recoverableTranslatedEntries": 188
+    },
+    {
+      "path": "checkpoints/188-review-round-1-applied.json",
+      "recoverableTranslatedEntries": 188
+    },
+    {
+      "path": "checkpoints/188-review-round-1-final.json",
+      "recoverableTranslatedEntries": 188
+    },
+    {
+      "path": "checkpoints/188-validated.json",
+      "recoverableTranslatedEntries": 188
+    },
+    {
+      "path": "checkpoints/188.json",
+      "recoverableTranslatedEntries": 188
+    }
+  ],
+  "snapshotSha256": "7563eb080a4e2895c2ce331d40c61a2c4124018afe1d472905047a1fd783de59",
+  "errors": [],
+  "scope": "结构、版本、覆盖、链接、独立审校证据及检查点恢复一致性；独立审校为原译文语义对照，不代表外部事实核验或公开译载许可。"
+}
