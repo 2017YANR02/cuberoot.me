@@ -481,8 +481,7 @@ html:root[data-theme=dark]:has(.cal-page) {
 
 /* Settings replace the calendar workspace; no overlay or dialog material. */
 .cal-page--settings > :is(.cal-topbar, .cal-body, .cal-fab) { display: none; }
-body[data-site-scenery] .cal-page.cal-page--settings { background: var(--background); }
-.cal-settings { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.cal-settings { background: var(--background); display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .cal-settings-head { display: flex; align-items: center; gap: 20px; padding: 18px 24px; border-bottom: 1px solid var(--border-default); flex: none; }
 .cal-settings-head h1 { margin: 0; font-size: 22px; font-weight: 400; }
 .cal-settings-layout { display: flex; flex: 1; min-height: 0; }
