@@ -9,7 +9,6 @@ import {
   Database,
   GitBranch,
   ScanSearch,
-  Sparkles,
   Timer,
   type LucideIcon,
 } from '@app-foundation/icons/lucide';
@@ -411,7 +410,7 @@ export default function AchievementsPage() {
       </header>
 
       <section className="achievements-hero">
-        <p className="achievements-kicker"><Sparkles size={15} aria-hidden />{tr({ zh: '从 0 到 1', en: 'BUILT FROM ZERO' })}</p>
+
         <h1>{tr({ zh: '把想法做到可以使用、验证和继续生长。', en: 'Ideas made usable, verifiable, and ready to keep growing.' })}</h1>
         <p className="achievements-intro">{tr({
           zh: 'CubeRoot 不只是一个工具集合。这里沉淀的是我围绕魔方做出的求解算法、计算实验、交互系统与数据产品。下面每项成果都可以直接打开，亲手验证。',

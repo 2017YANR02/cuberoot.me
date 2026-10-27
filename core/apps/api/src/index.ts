@@ -1,3 +1,4 @@
+import { startWechatPayoutRecovery } from './platform/wechat_payout.js';
 import { workspaceRoutes } from "./routes/workspace.js";
 import { Hono } from 'hono';
 import { contestsRoutes } from './routes/contests.js';
@@ -441,6 +442,7 @@ startDouyinOrderSync();
 startMembershipContractSync();
 startMembershipRenewals();
 startPlatformRefundReconciliation();
+startWechatPayoutRecovery();
 
 const PORT = Number(process.env.PORT) || 3001;
 

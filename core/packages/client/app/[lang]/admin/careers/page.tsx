@@ -59,7 +59,7 @@ export default function CareersAdmin() {
     finally { setDeleting(null); }
   };
   return <main className="admin-hub careers-admin">
-    <header className="admin-hub__heading"><p className="admin-hub__eyebrow">{t('管理', 'Administration')}</p><h1>{t('招聘申请', 'Career applications')}</h1></header>
+    <header className="admin-hub__heading"><h1>{t('招聘申请', 'Career applications')}</h1></header>
     {!admin ? <p>{t('请使用管理员账号登录后查看。', 'Sign in with an administrator account to view applications.')} <AppLink href="/account" prefetch={false}>{t('前往账号页', 'Go to account')}</AppLink></p>
       : status === 'loading' ? <p role="status">{t('正在读取…', 'Loading…')}</p>
       : status === 'error' ? <p role="alert">{t('读取失败，请检查管理员登录状态并刷新页面。', 'Unable to load applications. Check your administrator session and refresh.')}</p>

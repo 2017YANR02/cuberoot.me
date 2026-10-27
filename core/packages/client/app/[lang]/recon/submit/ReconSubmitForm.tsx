@@ -2362,6 +2362,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 />
               ) : (
                 <ReconSolutionField
+                  event={form.event}
                   ref={solutionFieldRef}
                   value={form.solution || ''}
                   onChange={(text) => setField('solution', text)}

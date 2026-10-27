@@ -74,9 +74,7 @@ export default function UnitDistancePage() {
 
         {/* ─────────────── 1. HERO ─────────────── */}
         <section className="ud-hero">
-          <div className="ud-eyebrow">
-            {t('数学 · 离散几何 · 数论', 'Mathematics · Discrete Geometry · Number Theory')}
-          </div>
+
           <h1 className="ud-title">
             {t('平面单位距离问题', 'Planar Unit Distance Problem')}
             <span className="ud-title-sub">

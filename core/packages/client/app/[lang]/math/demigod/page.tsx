@@ -89,9 +89,7 @@ export default function DemigodPage() {
 
         {/* ─────────────── 1. HERO ─────────────── */}
         <section className="dg-hero">
-          <div className="dg-hero-eyebrow">
-            {t('数学 · 组合 · 概率论证', 'Mathematics · Combinatorics · Probabilistic Argument')}
-          </div>
+
           <h1 className="dg-title">
             {t('半神之数 ', "Demigod's Number ")}
             <span className="dg-title-sub">

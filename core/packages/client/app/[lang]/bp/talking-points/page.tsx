@@ -10,7 +10,7 @@ import '../bp.css';
 export default function TalkingPointsPage() {
   return <main className="overview-page bp-page">
     <header className="overview-nav overview-wrap"><strong>{tr({ zh: '魔方根 · 业务交流提纲', en: 'CubeRoot · business discussion notes' })}</strong><HeaderToggles /></header>
-    <section className="overview-section overview-wrap"><p className="overview-kicker">{tr({ zh: '市场 → 业务 → 执行', en: 'MARKET → BUSINESS → EXECUTION' })}</p><h1>{tr({ zh: '先讲清楚市场，\n再展示如何服务。', en: 'Explain the market.\nShow how to serve it.' })}</h1>
+    <section className="overview-section overview-wrap"><h1>{tr({ zh: '先讲清楚市场，\n再展示如何服务。', en: 'Explain the market.\nShow how to serve it.' })}</h1>
       <AppLink href="/bp" prefetch={false} className="overview-text-link">{tr({ zh: '打开商业计划书', en: 'Open the business plan' })}<ArrowUpRight size={16} /></AppLink>
       <div className="bp-detail-columns">{[
         { title: { zh: '市场已有规模', en: 'An established market' }, body: { zh: '《人民日报》报道，2024 年国内约有 700 万魔方爱好者，预计 2026 年达 800 万；国内已有 1400 多家培训机构，预计 2026 年底培训市场达 6 亿元。', en: 'People’s Daily reported about 7 million enthusiasts in China in 2024, forecasting 8 million in 2026, more than 1,400 training organisations and CNY 600 million in training spending by end-2026. ' } },

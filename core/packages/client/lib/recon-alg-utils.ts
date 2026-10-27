@@ -5,6 +5,7 @@
 import { etm } from '@cuberoot/shared/alg-notation';
 import { detectWastedWork, wastedDisplaySpans } from '@cuberoot/shared/timer/reconstruct/error-detect';
 import { simplifyAlg } from '@/lib/cube3';
+import { getPuzzleId } from '@/lib/recon-utils';
 import { parseSq1Tokens } from '@cuberoot/shared/sq1-notation';
 import { orientedFaceColors, orientationForBottomFace } from '@/lib/cube-orientation';
 import { CUBE_COLOR_LETTER_FOR_FACE, CUBE_FACE_FOR_COLOR_LETTER } from '@/lib/cube-colors';
@@ -65,6 +66,12 @@ export function reconPlaybackSegments(text: string): number[] {
 export function cleanForAlgCubingNet(text: string): string {
   const cleaned = cleanForPlayer(text);
   return cleaned.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+/** Even-order cubes do not have fixed center stickers for this orientation indicator. */
+export function showReconInspectionColors(event?: string): boolean {
+  if (!event) return true;
+  return !['2x2x2', '4x4x4', '6x6x6', 'mirror2'].includes(getPuzzleId(event));
 }
 
 /** Display-only U/F colors after initial inspection rotations; never change source text. */

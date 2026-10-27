@@ -6,7 +6,7 @@ export default function MarketOpening() {
   return <section id="bp-market-size" className="bp-market-opening overview-wrap" aria-labelledby="bp-title">
     <div className="bp-market-heading">
       <div>
-        <p className="overview-kicker">{tr({ zh: '中国魔方市场 / 商业计划书 · 2026.10', en: 'CHINA’S CUBING MARKET / BUSINESS PLAN · 2026.10' })}</p>
+
         <h1 id="bp-title">{tr({ zh: '数百万人的热爱。\n一个持续进阶的市场。', en: 'Millions of enthusiasts.\nA market for learning and practice.' })}</h1>
         <p className="overview-lead">{tr({ zh: '魔方根连接个人练习者、老师与培训机构，以个人和机构订阅、课程及线上赛事，服务从学习到持续进阶的需求。', en: 'CubeRoot connects practitioners, teachers and training organisations through individual and institutional subscriptions, courses and online competitions.' })}</p>
       </div>

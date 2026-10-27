@@ -45,7 +45,7 @@ export default function AdminPage() {
   if (!isAdmin) {
     return (
       <main className="admin-hub">
-        <p className="admin-hub__eyebrow">{t('管理', 'Administration')}</p>
+
         <h1>{t('管理后台', 'Administration')}</h1>
         <p className="admin-hub__status">{t('只有管理员可以进入此页面。', 'Only administrators can access this page.')}</p>
         <AppLink className="admin-hub__account-link" href="/account" prefetch={false}>{t('前往账号页', 'Go to account')}</AppLink>
@@ -56,7 +56,7 @@ export default function AdminPage() {
   return (
     <main className="admin-hub admin-hub--dashboard">
       <header className="admin-hub__heading">
-        <p className="admin-hub__eyebrow">{t('管理', 'Administration')}</p>
+
         <h1>{t('管理后台', 'Administration')}</h1>
         <p>{t('集中查看用户增长、访问量、收入和待处理事项。', 'User growth, traffic, revenue and pending work in one place.')}</p>
       </header>

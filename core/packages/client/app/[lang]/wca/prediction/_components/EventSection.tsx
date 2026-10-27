@@ -183,8 +183,7 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
       {event.id === '333' && (
         <Link href="/wca/prediction/333" className="pred-333-inline-cta">
           <div className="pred-333-inline-cta-text">
-            <div className="pred-333-inline-cta-eyebrow">{tr({ zh: '深度阅读', en: 'Deep Dive'
-            })}</div>
+
             <div className="pred-333-inline-cta-title">
               {tr({ zh: '3x3 极限预测 — 25 章节, 24 万字英文长文', en: '3x3 Ultimate Limits — 25 sections, ~240k English words'
             })}

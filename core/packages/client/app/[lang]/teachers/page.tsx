@@ -111,7 +111,7 @@ function TeachersDirectoryClient() {
     <main className="teachers-page">
       <div className="teachers-back-row"><BackHome /></div>
       <header className="teachers-hero">
-        <p className="directory-kicker">{tr({ zh: '学习资源', en: 'Learn from people' })}</p>
+
         <h1>{tr({ zh: '魔方老师与机构', en: 'Cube Teachers & Schools' })}</h1>
         <p className="teachers-intro">{tr({ zh: '寻找适合自己的魔方老师、线上课程或本地培训机构，也可以把自己的教学服务加入名录。', en: 'Find a cube teacher, online lesson, or local training school—or add your own teaching service.' })}</p>
         <p className="teachers-trust">{tr({ zh: '资料由站方或用户提交。联系、付费或报名之前，请自行核实教学内容与身份。', en: 'Entries are submitted by CubeRoot or its users. Verify identity and course details before contacting, paying, or enrolling.' })}</p>

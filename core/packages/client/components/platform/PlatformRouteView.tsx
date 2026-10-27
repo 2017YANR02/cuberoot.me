@@ -191,7 +191,7 @@ function PlatformLanding() {
   return (
     <div className="platform-landing">
       <header className="platform-home-hero">
-        <span className="platform-kicker">{t('CubeRoot 学习空间', 'CubeRoot Learning')}</span>
+
         <h1>{t('每一次转动，', 'Every turn.')}<br /><span>{t('都有新收获。', 'A new discovery.')}</span></h1>
         <p>{t('从第一次复原，到下一次突破。跟随讲师的镜头，把热爱练成自己的本领。', 'From your first solve to your next breakthrough. Learn alongside your instructor, one move at a time.')}</p>
         <div className="platform-home-actions">
@@ -206,7 +206,7 @@ function PlatformLanding() {
         <Image className="platform-feature-photo" src="/images/ruimin/gallery/photo-03.webp" width={3200} height={2400} sizes="(max-width: 1160px) 100vw, 1120px" priority alt={t('颜瑞民在魔方比赛现场展示复原结果', 'Yan Ruimin demonstrating a solve at a cubing competition')} />
         <span className="platform-feature-caption platform-glass">{t('热爱，在这里发生。', 'This is where it begins.')}</span>
         <div className="platform-feature-copy platform-glass">
-          <span className="platform-kicker">{t('跟着老师，一起练', 'Meet your instructor')}</span>
+
           <h2 id="platform-feature-title">{t('颜瑞民课程', 'Yan Ruimin Courses')}</h2>
           <p>{t('认识魔方，也认识每一步的道理。引言、试听课与正式课，循序渐进地学。', 'Understand the cube, and the reason behind every move. Explore the introduction, trial lessons, and full course at your own pace.')}</p>
           <AppLink className="platform-home-secondary" href="/platform/courses/yan-ruimin-3x3-beginner" prefetch={false}><span className="platform-play-orb" aria-hidden><Play /></span>{t('了解课程', 'Explore the course')}<ArrowRight aria-hidden /></AppLink>
@@ -215,7 +215,7 @@ function PlatformLanding() {
 
       <section className="platform-instructors" aria-labelledby="platform-instructors-title">
         <div className="platform-instructors-heading">
-          <span className="platform-kicker">{t('不同专长，同样热爱', 'Different specialties. Shared passion.')}</span>
+
           <h2 id="platform-instructors-title">{t('找到合拍的老师。', 'Find your kind of teacher.')}</h2>
           <p>{t('一个项目，不止一位老师。一位老师，也不止一种可能。', 'More than one teacher for every puzzle. More than one path with every teacher.')}</p>
         </div>

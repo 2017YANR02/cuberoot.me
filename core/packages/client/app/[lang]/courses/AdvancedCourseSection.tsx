@@ -155,7 +155,7 @@ export default function AdvancedCourseSection({ isAdmin }: { isAdmin: boolean })
       <div className="teaching-course-head">
         <div className="teaching-course-number" aria-hidden="true">04</div>
         <div>
-          <p className="teaching-kicker"><T zh="后续课程" en="Further courses" /></p>
+
           <h2 id="advanced-title"><T zh="CFOP 之后，继续拓展解法与能力" en="Beyond CFOP: expand methods and solving skills" /></h2>
           <p><T zh="完成 CFOP 后，可按目标继续学习高级三阶与二阶内容。课程标题、双语说明、口播提纲、时长和顺序均可由管理员维护。" en="After CFOP, continue with advanced 3×3 and 2×2 topics. Administrators can maintain titles, bilingual notes, narration outlines, durations, and order." /></p>
           <dl className="teaching-course-meta">

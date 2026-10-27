@@ -14,10 +14,13 @@
     "pages/web/index",
     "pages/payment/index",
     "pages/membership/index",
-    "pages/preferences/index"
+    "pages/preferences/index",
+    "pages/payouts/index"
   ],
   "lazyCodeLoading": "requiredComponents",
-  "navigateToMiniProgramAppIdList": ["wxbd687630cd02ce1d"],
+  "navigateToMiniProgramAppIdList": [
+    "wxbd687630cd02ce1d"
+  ],
   "darkmode": true,
   "themeLocation": "theme.json",
   "window": {
@@ -33,9 +36,18 @@
     "backgroundColor": "@tabBarBackgroundColor",
     "borderStyle": "@tabBarBorderStyle",
     "list": [
-      { "pagePath": "pages/timer/index", "text": "计时" },
-      { "pagePath": "pages/tools/index", "text": "工具" },
-      { "pagePath": "pages/account/index", "text": "我的" }
+      {
+        "pagePath": "pages/timer/index",
+        "text": "计时"
+      },
+      {
+        "pagePath": "pages/tools/index",
+        "text": "工具"
+      },
+      {
+        "pagePath": "pages/account/index",
+        "text": "我的"
+      }
     ]
   },
   "sitemapLocation": "sitemap.json",

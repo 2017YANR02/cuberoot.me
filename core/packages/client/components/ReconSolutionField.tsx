@@ -10,7 +10,7 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRe
 import AlgInput from './AlgInput';
 import ReconAutofill from './ReconAutofill';
 import CubeKeyboardSection from './CubeKeyboardSection';
-import { normalizeSolutionSlashes, reconInspectionOrientations } from '@/lib/recon-alg-utils';
+import { normalizeSolutionSlashes, reconInspectionOrientations, showReconInspectionColors } from '@/lib/recon-alg-utils';
 import { normalizeReconMoveSuffixOrder } from '@cuberoot/shared/recon-completion';
 import CubeColorChip from './CubeColorChip/CubeColorChip';
 import { getCaretRect } from '@/lib/textarea_caret';
@@ -27,6 +27,7 @@ interface Props {
   onChange: (text: string) => void;
   onCaretSync?: (textBeforeCaret: string) => void;
   scramble: string;
+  event?: string;
   isMobile: boolean;
   /** Mobile keyboard visibility — omit when this is the only editable field
    *  (keyboard follows CubeKeyboardSection's default: always shown on mobile). */
@@ -43,11 +44,11 @@ function autoResize(el: HTMLTextAreaElement) {
 }
 
 const ReconSolutionField = forwardRef<ReconSolutionFieldHandle, Props>(function ReconSolutionField({
-  value, onChange, onCaretSync, scramble, isMobile,
+  value, onChange, onCaretSync, scramble, event, isMobile,
   mobileKeyboardVisible, onFocusField, onBlurField, autoFocus, placeholder,
 }, ref) {
   const elRef = useRef<HTMLTextAreaElement | null>(null);
-  const inspections = useMemo(() => reconInspectionOrientations(value), [value]);
+  const inspections = useMemo(() => showReconInspectionColors(event) ? reconInspectionOrientations(value) : [], [value, event]);
   const [inspectionChips, setInspectionChips] = useState<{ left: number; top: number; colors: string }[]>([]);
 
   useEffect(() => {

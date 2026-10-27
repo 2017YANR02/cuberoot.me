@@ -195,6 +195,7 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
                 )}
               </span>
               <ReconSolutionField
+                event={parent.event}
                 value={solution}
                 onChange={setSolution}
                 onCaretSync={(textBefore) => syncReconPlayerCursorFromText(playerRef.current, textBefore)}

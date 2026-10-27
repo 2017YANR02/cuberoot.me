@@ -47,7 +47,7 @@ function NarrativeSection({ section }: { section: BpSection }) {
     : [Users, Layers3, ChartNoAxesColumnIncreasing, Globe2, ShieldCheck, Clock3];
   return (
     <section id={section.id} className={'overview-section overview-wrap bp-chapter bp-chapter-' + visual.style} aria-labelledby={section.id + '-title'}>
-      <p className="overview-kicker">{tr(section.label)}</p>
+
       <h2 id={section.id + '-title'}>{tr(section.title)}</h2>
       <div className="bp-roadmap-composition">
       <figure className="bp-roadmap-art"><img src="/images/overview/bp-learning-steps-v1.webp" width={1100} height={619} loading="lazy" alt={tr({ zh: '由玻璃与石材阶梯构成的进阶概念图', en: 'A conceptual progression of glass and stone platforms' })} /><figcaption>{tr({ zh: 'AI 概念图 · 持续进阶', en: 'AI concept illustration · steady progress' })}</figcaption></figure>
@@ -117,7 +117,7 @@ export default function BusinessPlanPage() {
       </nav>
 
       <section id="bp-summary" className="overview-section overview-wrap" aria-labelledby="bp-summary-title">
-        <p className="overview-kicker">{tr({ zh: '执行摘要', en: 'Executive summary' })}</p>
+
         <h2 id="bp-summary-title">{tr({ zh: '订阅、课程与线上赛事，\n围绕同一条学习路径展开。', en: 'Subscriptions, courses and online events.\nOne connected learning journey.' })}</h2>
         <p className="overview-intro">{tr({ zh: '以计时、训练和复盘承接日常练习，以订阅和课程提供持续服务。以真实付费会员为基础，将课程、订阅与线上赛事纳入业务布局。AI 编程加快功能开发与维护，缩短迭代周期，让小团队更快把用户需求变成可用产品。', en: 'Timing, training and reconstruction support daily practice; subscriptions and courses provide continuing service. Real paid memberships provide a foundation for a business model spanning courses, subscriptions and online events. AI-assisted coding accelerates development and maintenance, shortening iteration cycles so a small team can turn user needs into usable products sooner.' })}</p>
         <div className="bp-source-links"><AppLink href="/membership" prefetch={false} target="_blank" rel="noopener noreferrer" className="overview-text-link">{tr({ zh: '查看当前会员权益', en: 'View current membership benefits' })}<ArrowUpRight size={16} aria-hidden /></AppLink><AppLink href="/achievements" prefetch={false} target="_blank" rel="noopener noreferrer" className="overview-text-link">{tr({ zh: '查看已完成的产品与技术成果', en: 'Explore existing products and technical work' })}<ArrowUpRight size={16} aria-hidden /></AppLink></div>
@@ -137,7 +137,7 @@ export default function BusinessPlanPage() {
       <InvestorStory />
 
       <section id="bp-product" className="overview-section overview-wrap" aria-labelledby="bp-product-title">
-        <p className="overview-kicker">{tr({ zh: '产品与已有使用', en: 'Product & existing use' })}</p>
+
         <div className="overview-section-head"><h2 id="bp-product-title">{tr({ zh: '训练不是一次性需求，\n产品围绕持续使用展开。', en: 'Practice is a recurring need.\nThe product supports repeated use.' })}</h2></div>
         <p className="overview-intro">{tr({ zh: '持续练习需要计时、训练与复盘。用户已在计时器和训练器中使用多项功能，日常工具也为专业服务提供入口。', en: 'Regular practice needs timing, training and reflection. Multiple timer and trainer functions are already in use, providing an entry point for specialist services.' })}</p>
         <div className="bp-product-story">
@@ -166,7 +166,7 @@ export default function BusinessPlanPage() {
       </section>
 
       <section id="bp-founder" className="overview-section overview-wrap overview-founder" aria-labelledby="bp-founder-title">
-        <div><p className="overview-kicker">{tr({ zh: '创始人与专业积累', en: 'Founder & expertise' })}</p><h2 id="bp-founder-title">{tr({ zh: '懂专业，也能把产品做出来。', en: 'Domain expertise with product execution.' })}</h2><AppLink href="/about/ruimin" prefetch={false} className="overview-text-link">{tr({ zh: '颜瑞民 · 公开履历与获奖档案', en: 'Ruimin Yan · profile and awards' })}<ArrowUpRight size={16} aria-hidden /></AppLink><div className="overview-founder-note"><School size={24} aria-hidden /><p>{tr({ zh: '数学与物理 × 参赛与教学 × 内容与开发', en: 'Mathematics & physics × competing & teaching × content & development' })}</p></div></div>
+        <div><h2 id="bp-founder-title">{tr({ zh: '懂专业，也能把产品做出来。', en: 'Domain expertise with product execution.' })}</h2><AppLink href="/about/ruimin" prefetch={false} className="overview-text-link">{tr({ zh: '颜瑞民 · 公开履历与获奖档案', en: 'Ruimin Yan · profile and awards' })}<ArrowUpRight size={16} aria-hidden /></AppLink><div className="overview-founder-note"><School size={24} aria-hidden /><p>{tr({ zh: '数学与物理 × 参赛与教学 × 内容与开发', en: 'Mathematics & physics × competing & teaching × content & development' })}</p></div></div>
         <div className="bp-founder-profile"><div className="bp-founder-art" data-site-surface="panel"><span className="bp-founder-monogram" aria-hidden>∑</span><span className="bp-founder-name"><PersonLink wcaId={CREATOR_PROFILE.wcaId} title={tr({ zh: '查看个人成绩主页', en: 'View competition results' })}>{tr({ zh: '颜瑞民', en: 'Ruimin Yan' })}</PersonLink></span><p>{tr({ zh: '创始人 · 数学硕士 · 魔方内容创作者', en: 'Founder · mathematics graduate · cubing creator' })}</p><div className="bp-founder-credentials"><span>{tr({ zh: '南开大学', en: 'Nankai University' })}</span><span>{tr({ zh: '乔治华盛顿大学', en: 'George Washington University' })}</span></div></div><FounderEvidence /><details className="bp-detail"><summary>{tr({ zh: '创始人的专业与教学经历', en: 'Founder’s professional and teaching background' })}<ChevronDown size={18} aria-hidden /></summary><div className="overview-story bp-detail-body">
           <p>{tr({ zh: '颜瑞民拥有南开大学数学与金融数学、物理学学士学位，以及乔治华盛顿大学数学硕士学位。曾两次获全国高中数学联赛一等奖，并获中国数学奥林匹克铜牌。专业训练为求解算法、数据分析和复杂产品开发提供基础。', en: 'Ruimin Yan holds bachelor’s degrees in Mathematics and Financial Mathematics, and Physics from Nankai University, and a master’s in Mathematics from George Washington University. He won first prize twice in the National High School Mathematics League and a bronze medal at the Chinese Mathematical Olympiad.' })}</p>
           <p>{tr({ zh: '自 2017 年起参加 WCA 比赛，持续开展速拧课程、公式库和自媒体内容工作，著有《超脑思维：魔方游戏技巧从入门到精通》。内容创作、教学与亲身训练使他能够把专业能力转换为用户理解和使用的产品。', en: 'Competing in WCA events since 2017, he works on speedcubing courses, algorithms and media, and wrote Superbrain Thinking: Rubik’s Cube Skills from Beginner to Mastery. Teaching, content and practice help translate expertise into usable products.' })}</p>
@@ -174,7 +174,7 @@ export default function BusinessPlanPage() {
       </section>
 
       <section id="bp-business" className="overview-section overview-wrap" aria-labelledby="bp-business-title">
-        <p className="overview-kicker">{tr({ zh: '商业模式与会员价值', en: 'Business model & membership value' })}</p>
+
         <h2 id="bp-business-title">{tr({ zh: '订阅服务长期练习，\n课程与赛事推动持续参与。', en: 'Subscriptions support practice.\nCourses and events sustain participation.' })}</h2>
         <p className="overview-intro">{tr({ zh: '个人与机构订阅、课程、线上赛事分别核算。基础计时和训练保持开放，付费服务与交付范围以当前会员权益和课程为准。', en: 'Account separately for individual and institutional subscriptions, courses and online events. Basic timing and training remain open; paid scope follows published memberships and courses.' })}</p>
         <BusinessStreams />
@@ -204,7 +204,7 @@ export default function BusinessPlanPage() {
       {BUSINESS_SECTIONS.filter(section => section.id === 'bp-roadmap').map(section => <NarrativeSection key={section.id} section={section} />)}
 
       <section id="bp-costs" className="overview-section overview-wrap" aria-labelledby="bp-costs-title">
-        <p className="overview-kicker">{tr({ zh: '已有投入与运营成本', en: 'Existing resources & operating costs' })}</p>
+
         <h2 id="bp-costs-title">{tr({ zh: '让持续交付的成本可管理，\n让已有设备继续发挥作用。', en: 'Manage the cost of delivery.\nKeep using existing equipment.' })}</h2>
         <p className="overview-intro">{tr({ zh: '网站已记录 AI 开发工具、服务器、发布服务和工作设备等投入。本节列出成本类别与用途。下一阶段围绕订阅、课程和线上赛事安排开发与服务工作，已有设备按实际需要复用。', en: 'The site records development AI, hosting, distribution and equipment costs. This section lists cost categories and purposes. Plan development and delivery around subscriptions, courses and online events while reusing existing equipment.' })}</p>
         <div className="overview-cost-grid">
@@ -216,7 +216,7 @@ export default function BusinessPlanPage() {
       </section>
 
       <section className="overview-section overview-wrap bp-appendix" aria-labelledby="bp-appendix-title">
-        <p className="overview-kicker">{tr({ zh: '经营与执行', en: 'OPERATIONS & EXECUTION' })}</p>
+
         <h2 id="bp-appendix-title">{tr({ zh: '关键说明，按需展开。', en: 'The detail, when you need it.' })}</h2>
         {BUSINESS_SECTIONS.filter(section => section.id !== 'bp-roadmap').map(section => <details id={section.id} className="bp-detail" key={section.id}>
           <summary>{tr(section.label)}<ChevronDown size={18} aria-hidden /></summary>
@@ -227,7 +227,7 @@ export default function BusinessPlanPage() {
       <CooperationOpportunity />
 
       <section id="bp-sources" className="overview-section overview-wrap bp-sources" aria-labelledby="bp-sources-title">
-        <p className="overview-kicker">{tr({ zh: '相关资料', en: 'Further reading' })}</p>
+
         <h2 id="bp-sources-title">{tr({ zh: '市场、产品与经历，都有据可查。', en: 'Inspect the market, product and founder’s record.' })}</h2>
         <p className="overview-small"><a href={MARKET_SOURCE.url} target="_blank" rel="noopener noreferrer">{tr({ zh: '市场来源：《人民日报》2026-06-01《小小魔方，为何让人如此着迷》', en: 'Market source: People’s Daily, June 1, 2026, “Why is the little cube so captivating?”' })}</a></p>
         <div className="bp-source-links">{[

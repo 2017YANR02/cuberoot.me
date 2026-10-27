@@ -45,7 +45,7 @@ export default function RuiminProfilePage() {
         <main>
           <header className="ruimin-hero">
             <div className="ruimin-hero-copy">
-              <p className="ruimin-kicker">{tr({ zh: 'CubeRoot 创始人与维护者', en: 'Founder and maintainer of CubeRoot' })}</p>
+
               <h1>
                 <span className="ruimin-name-zh">颜瑞民</span>
                 <span className="ruimin-name-en">Ruimin Yan</span>

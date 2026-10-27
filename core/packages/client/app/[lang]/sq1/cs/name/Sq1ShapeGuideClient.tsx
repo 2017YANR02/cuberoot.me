@@ -51,7 +51,7 @@ export default function Sq1ShapeGuideClient() {
         <div className="recognition-guide-heading">
           <span className="recognition-guide-set-mark" aria-hidden>SQ1</span>
           <div>
-            <p className="recognition-guide-kicker">{tr(SQ1_SHAPE_GUIDE.kicker)}</p>
+
             <h1>{tr(SQ1_SHAPE_GUIDE.title)}</h1>
             <p className="recognition-guide-intro">{tr(SQ1_SHAPE_GUIDE.intro)}</p>
           </div>
@@ -70,7 +70,7 @@ export default function Sq1ShapeGuideClient() {
       <section className="recognition-guide-library" aria-labelledby="sq1-shape-library-title">
         <div className="recognition-guide-library-head">
           <div>
-            <p className="recognition-guide-kicker">{tr({ zh: '形状图鉴', en: 'Shape library' })}</p>
+
             <h2 id="sq1-shape-library-title">{tr(SQ1_SHAPE_GUIDE.libraryTitle)}</h2>
           </div>
         </div>

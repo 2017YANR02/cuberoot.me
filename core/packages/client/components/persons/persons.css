@@ -133,6 +133,7 @@ html[data-theme=dark] .wp-page {
     border-radius: 0;
 }
 .wp-combos-bodies .sor-pb-events { flex-wrap: wrap; }
+.wp-combos-bodies .sor-pb-anatomy { border-bottom: none; }
 .wp-combos-bodies .sor-pb-combo { min-width: 0; max-width: 100%; }
 
 /* ── 成绩变更面板(PersonResultChanges)── 仅在该选手有往期成绩变更时渲染 */
@@ -149,50 +150,60 @@ html[data-theme=dark] .wp-page {
 .wp-rc-chart-track { height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--foreground) 6%, transparent); }
 .wp-rc-chart-bar { display: block; height: 100%; border-radius: inherit; background: color-mix(in srgb, var(--foreground) 60%, transparent); }
 .wp-rc-chart-count { text-align: right; color: var(--foreground); }
-.wp-rc-groups { display: grid; gap: 28px; }
-.wp-rc-group { min-width: 0; }
-.wp-rc-comp { margin: 0 0 14px; font-size: 0.9rem; font-weight: 500; color: var(--foreground); overflow-wrap: anywhere; }
+.wp-rc-groups { column-count: 4; column-gap: 16px; }
+.wp-rc-group { display: inline-block; width: 100%; box-sizing: border-box; break-inside: avoid; margin-bottom: 16px; min-width: 0; padding: 16px; border: 1px solid var(--border-default); border-radius: 12px; }
+.wp-rc-comp { display: flex; align-items: baseline; gap: 10px; margin: 0 0 14px; font-size: 0.9rem; font-weight: 500; color: var(--foreground); white-space: nowrap; overflow-x: auto; }
+.wp-rc-comp > a { flex: none; }
+.wp-rc-comp-date { flex: none; font-size: 0.74rem; font-weight: 400; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
 .wp-rc-comp a { color: inherit; text-decoration: none; text-underline-offset: 3px; }
 .wp-rc-comp a:hover { text-decoration: underline; }
-.wp-rc-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 28px; align-items: start; list-style: none; margin: 0; padding: 0; }
+.wp-rc-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; list-style: none; margin: 0; padding: 0; }
 .wp-rc-row {
+    position: relative;
+    --wp-rc-inline-gap: 6px;
     display: grid; gap: 8px; min-width: 0;
-    padding: 14px;
-    border: 1px solid var(--border-default);
-    border-radius: 12px;
-    font-size: 0.85rem; font-variant-numeric: tabular-nums;
+    padding: 0;
+    border-radius: 4px;
+    /* All change text inherits this single typography contract. Record badges retain their semantic styling. */
+    font-size: 0.85rem; font-weight: 400; line-height: 1.4;
+    color: var(--foreground); font-variant-numeric: tabular-nums;
 }
-.wp-rc-context { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
-.wp-rc-badge {
-    margin-left: auto; flex: none; font-size: 0.68rem; font-weight: 500; padding: 1px 6px; border-radius: 5px;
+.wp-rc-result-link { position: absolute; inset: 0; border-radius: inherit; z-index: 1; }
+.wp-rc-result-link:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.wp-rc-context { display: flex; align-items: center; flex-wrap: wrap; gap: var(--wp-rc-inline-gap); line-height: 1.4; }
+.wp-rc-badge, .wp-rc-source {
+    flex: none; font-size: 0.68rem; font-weight: 500; padding: 1px 6px; border-radius: 5px;
 }
+.wp-rc-badge { margin-left: auto; }
 .wp-rc-badge-removed { color: var(--destructive); background: color-mix(in srgb, var(--destructive) 10%, transparent); }
 .wp-rc-badge-modified { color: var(--accent); background: var(--accent-soft); }
-.wp-rc-evt { font-size: 1.05em; color: var(--muted-foreground); flex: none; }
-.wp-rc-event { color: var(--foreground); font-weight: 550; }
-.wp-rc-round { color: var(--muted-foreground); }
+.wp-rc-evt { font-size: 1em; color: inherit; flex: none; }
 .wp-rc-vals { display: flex; flex-wrap: wrap; gap: 10px 20px; min-width: 0; }
-.wp-rc-pair { display: grid; align-content: start; gap: 3px; min-width: 0; }
-.wp-rc-context > .wp-rc-pair { display: flex; align-items: baseline; gap: 8px; margin-left: 6px; }
-.wp-rc-comparison { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; }
-.wp-rc-flabel { color: var(--muted-foreground); font-size: 0.72rem; }
-.wp-rc-old, .wp-rc-new { font-size: inherit; font-weight: 400; overflow-wrap: anywhere; }
-.wp-rc-old { color: var(--muted-foreground); text-decoration: line-through; }
-.wp-rc-arrow { color: var(--muted-foreground); }
-.wp-rc-new { color: var(--foreground); }
+.wp-rc-pair { display: flex; align-items: center; gap: var(--wp-rc-inline-gap); min-width: 0; line-height: 1.4; }
+.wp-rc-comparison { display: flex; align-items: center; flex-wrap: wrap; gap: var(--wp-rc-inline-gap); }
+.wp-rc-comparison > span { display: inline-flex; align-items: center; gap: var(--wp-rc-inline-gap); }
+.wp-rc-round, .wp-rc-event, .wp-rc-flabel, .wp-rc-old, .wp-rc-new, .wp-rc-arrow {
+    font: inherit; color: inherit;
+}
+.wp-rc-old, .wp-rc-new { overflow-wrap: anywhere; }
+.wp-rc-place {
+    display: inline-grid; place-items: center; flex: none;
+    min-width: 1.65em; aspect-ratio: 1; padding: 0.12em;
+    border: 1px solid currentColor; border-radius: 50%;
+    line-height: 1; box-sizing: border-box;
+}
 .wp-rc-source {
-    flex: none; font-size: 0.68rem; font-weight: 600; padding: 1px 6px; border-radius: 999px;
     color: var(--muted-foreground); background: var(--muted);
 }
 .wp-rc-note {
     margin: 0; overflow-wrap: anywhere;
     color: var(--muted-foreground); font-size: 0.78rem; line-height: 1.45;
 }
-@media (max-width: 1000px) {
-    .wp-rc-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 1100px) {
+    .wp-rc-groups { column-count: 2; }
 }
 @media (max-width: 600px) {
-    .wp-rc-list { grid-template-columns: minmax(0, 1fr); }
+    .wp-rc-groups { column-count: 1; }
 }
 
 /* ── Hero ──────────────────────────────────────────────────────────── */
@@ -711,12 +722,6 @@ html[data-theme=dark] .wp-page {
     font-weight: 600;
     color: var(--wp-text);
 }
-/* 成绩变更:全部成绩表里某行被后来取消 / 修正时,在当前值前补划掉的旧值。
-   行内划值 + 编辑器样式见 sections/results/result-change.css(跨页共享);此处只留选手表专属的行级指引细条。 */
-.wp-bycomp-table tbody tr.wp-row-changed td:first-child {
-    box-shadow: inset 2px 0 0 color-mix(in srgb, var(--wp-pink) 65%, transparent);
-}
-
 /* rank tier color (1-3 pink / 4-10 green / 11-100 blue / 100+ gray) — plain colored number, no box */
 .wp-rank {
     display: inline-flex; align-items: center; justify-content: center;
@@ -1015,6 +1020,7 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-ao
 .wp-bycomp-table .wp-cell-result { text-align: center; }
 .wp-metric-th { display: inline-flex; align-items: center; gap: 2px; }
 .wp-metric-th .compact-select { width: auto; }
+.wp-metric-th .compact-select-trigger { font-size: inherit; }
 .wp-metric-sort { padding: 2px; }
 /* MBLD(多盲)单次 = 「点数 时:分:秒」复合值,居中会让各行冒号错位 → 右对齐(同 WCA)。
    .record-num-cell 固定 padding-right + badge 绝对定位不占流 → 数字右缘恒定 → 冒号逐行对齐。 */

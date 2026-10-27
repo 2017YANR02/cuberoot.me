@@ -129,7 +129,7 @@ export default function RecognitionGuideClient() {
         <div className="recognition-guide-heading">
           <span className="recognition-guide-set-mark" aria-hidden>{setId.toUpperCase()}</span>
           <div>
-            <p className="recognition-guide-kicker">{tr(spec.kicker)}</p>
+
             <h1>{tr(spec.title)}</h1>
             <p className="recognition-guide-intro">{tr(spec.intro)}</p>
           </div>
@@ -172,7 +172,7 @@ export default function RecognitionGuideClient() {
       <section className="recognition-guide-library" aria-labelledby="recognition-guide-cases-title">
         <div className="recognition-guide-library-head">
           <div>
-            <p className="recognition-guide-kicker">{tr({ zh: '情况速查', en: 'Case field guide' })}</p>
+
             <h2 id="recognition-guide-cases-title">
               {tr({
                 zh: `${spec.caseCount} 个 ${setId.toUpperCase()} 情况`,

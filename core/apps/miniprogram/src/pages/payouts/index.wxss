@@ -1,0 +1,1 @@
+.page{padding:32rpx;color:var(--cr-text);background:var(--cr-bg);min-height:100vh}.card{padding:28rpx;margin-bottom:24rpx;border:1rpx solid var(--cr-line);border-radius:24rpx}.title{font-weight:600;margin-bottom:24rpx}input{padding:24rpx 0}button{margin-top:24rpx;min-height:88rpx}checkbox-group{margin:24rpx 0}

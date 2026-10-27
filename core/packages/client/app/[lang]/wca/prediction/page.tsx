@@ -385,8 +385,7 @@ export default function PredictionPage() {
           {/* Pointer to 3x3 deep-dive */}
           <Link href="/wca/prediction/333" className="pred-333-deepdive-cta">
             <div className="pred-333-cta-left">
-              <div className="pred-333-cta-eyebrow">{tr({ zh: '深度章节', en: 'Deep Dive'
-            })}</div>
+
               <div className="pred-333-cta-title">{tr({ zh: '三阶魔方: 终极极限预测', en: '3x3: The Ultimate Limits Forecast'
             })}</div>
               <div className="pred-333-cta-sub">
@@ -400,8 +399,7 @@ export default function PredictionPage() {
           {/* Pointer to lucky-scramble forecast */}
           <Link href="/wca/prediction/lucky" className="pred-333-deepdive-cta pred-lucky-cta">
             <div className="pred-333-cta-left">
-              <div className="pred-333-cta-eyebrow">{tr({ zh: '运气预测  累积概率', en: 'Luck Forecast · Cumulative Probability'
-            })}</div>
+
               <div className="pred-333-cta-title">{tr({ zh: '撞上最幸运打乱的概率: 何时高?', en: 'When Does Cumulative P of Hitting the Luckiest Scramble Become High?'
             })}</div>
               <div className="pred-333-cta-sub">

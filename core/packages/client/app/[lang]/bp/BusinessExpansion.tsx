@@ -14,14 +14,14 @@ export function BusinessStreams() {
 export default function BusinessExpansion() {
   return <>
     <section id="bp-courses" className="overview-section overview-wrap" aria-labelledby="bp-courses-title">
-      <p className="overview-kicker">{tr({ zh: '课程 / 专业内容与练习相连接', en: 'COURSES / CONNECT TEACHING AND PRACTICE' })}</p>
+
       <h2 id="bp-courses-title">{tr({ zh: '学完之后，\n有地方继续练。', en: 'After a lesson,\nkeep practising.' })}</h2>
       <p className="overview-intro">{tr({ zh: '课程连接专业教学与日常训练。创始人的教学、著作和公式内容提供专业基础，网站承接学习后的反复练习与复盘。课程内容与教学入口见下方链接。', en: 'Courses connect specialist teaching with daily practice. The founder’s teaching, book and algorithm content provide expertise; the website supports practice and reflection after learning. Explore the course content and learning options below.' })}</p>
       <AppLink href="/courses" prefetch={false} className="overview-text-link">{tr({ zh: '查看课程入口', en: 'Explore courses' })}<ArrowUpRight size={16} aria-hidden /></AppLink>
       <div className="bp-network" data-site-surface="panel"><Users size={32} aria-hidden /><div><h3>{tr({ zh: '已有教师社群，连接机构需求。', en: 'An existing teacher community connects educator needs.' })}</h3><p>{tr({ zh: '创始人是一个约 500 人魔方老师群的群主，群内有来自多家培训机构的老师与负责人。目前正与部分机构洽谈合作，可围绕课程、教学工具和课后训练组织演示与试用。', en: 'The founder runs a cubing-teacher group of about 500 members, including teachers and leaders from multiple training organisations. Discussions with some institutions are underway, creating opportunities to demonstrate and trial courses, teaching tools and after-class practice.' })}</p><AppLink href="/contact" prefetch={false} target="_blank" rel="noopener noreferrer" className="overview-text-link">{tr({ zh: '查看公开社群介绍与联系方式', en: 'View the community directory and contact details' })}<ArrowUpRight size={16} aria-hidden /></AppLink></div></div>
     </section>
     <section id="bp-events" className="overview-section overview-wrap" aria-labelledby="bp-events-title">
-      <p className="overview-kicker">{tr({ zh: '线上赛事 / 业务模式与收入测算', en: 'ONLINE EVENTS / BUSINESS MODEL & REVENUE SCENARIO' })}</p>
+
       <h2 id="bp-events-title">{tr({ zh: '每月四场，\n让训练有一个共同目标。', en: 'Four events a month.\nA shared goal for practice.' })}</h2>
       <p className="overview-intro">{tr({ zh: '赛事业务聚焦线上，以定期比赛连接日常训练。参赛方案涵盖普通魔方与智能魔方，兼顾不同设备用户的参与需求。', en: 'The event business focuses on online competition, connecting regular events with daily practice. The format covers conventional and smart cubes to accommodate users with different devices.' })}</p>
       <div className="bp-event-inputs">{[

@@ -37,6 +37,7 @@ function createAccountCopy() {
     : { en: 'WeChat', zh: '微信' });
   return {
     accountEyebrow: tr({ en: 'ACCOUNT', zh: '账号' }),
+    payouts: isDouyinMiniProgram() ? null : tr({ en: 'Commission payouts', zh: '佣金提现' }),
     editName: tr({ en: 'Edit display name', zh: '修改展示名' }),
     saveName: tr({ en: 'Save', zh: '保存' }),
     clearName: tr({ en: 'Clear display name', zh: '清除展示名' }),
@@ -944,6 +945,7 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     }
   },
 
+  openPayouts() { miniProgramApi().navigateTo({ url: '/pages/payouts/index' }); },
   openSecuritySettings() { this.openNativeAccountPage('account-settings'); },
   openDeleteAccount() { this.openNativeAccountPage('account-delete'); },
   openNativeAccountPage(page: 'account-settings' | 'account-delete') {

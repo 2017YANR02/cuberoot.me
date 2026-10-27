@@ -578,7 +578,7 @@ export default function CompSimPage() {
       <main className="practice-page">
         <header className="practice-topbar">
           <div>
-            <span className="practice-eyebrow">{tr({ zh: '赛前训练', en: 'Competition Practice' })}</span>
+
             <h1 ref={liveHeadingRef} tabIndex={-1}>
               {session.stage === 'results'
                 ? tr({ zh: '本轮复盘', en: 'Round review' })
@@ -1078,9 +1078,7 @@ export default function CompSimPage() {
         </section>
         <aside className="practice-aside">
           <section className="practice-card practice-overview">
-            <span className="practice-eyebrow">
-              {tr({ zh: '专注一轮，持续进步', en: 'One round at a time' })}
-            </span>
+
             <h2>
               {eventId ? eventDisplayName(eventId, isZh) : tr({ zh: '你的下一轮', en: 'Your next round' })}
             </h2>

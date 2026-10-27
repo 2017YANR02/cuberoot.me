@@ -42,7 +42,7 @@ function Result({ score, onRestart }: { score: number; onRestart: () => void }) 
 
   return (
     <section className="color-quiz-result" aria-live="polite">
-      <p className="color-quiz-result-kicker">{tr({ zh: '本轮成绩', en: 'ROUND COMPLETE' })}</p>
+
       <div className="color-quiz-result-score">
         <strong>{score}</strong>
         <span>/ {ALL_COLOR_PAIRS.length}</span>

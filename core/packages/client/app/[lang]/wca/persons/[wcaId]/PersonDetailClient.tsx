@@ -257,7 +257,7 @@ export default function PersonDetailClient() {
               mode={resultView === 'historical' ? 'historical' : 'current'}
             />
             <PersonBestCombos wcaId={profile.person.wca_id} isZh={isZh} inclCancelled={inclCancelled} />
-            <PersonResultChanges wcaId={profile.person.wca_id} isZh={isZh} results={results} />
+            <PersonResultChanges wcaId={profile.person.wca_id} isZh={isZh} results={results} comps={comps} />
             <PersonTabs profile={profile} results={results} comps={comps} liveResults={liveResults} liveComps={liveComps} reconLookup={reconLookup} isZh={isZh} femaleRecordLookup={femaleRecordLookup} />
           </>
         )}

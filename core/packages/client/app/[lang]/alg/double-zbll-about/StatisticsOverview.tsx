@@ -32,7 +32,7 @@ export default function StatisticsOverview({ pll, data, selected, onSelect }: {
   const unit = metric.toUpperCase();
   return <section className="dz-overview" aria-labelledby="dz-overview-title">
     <div className="dz-about-section-head">
-      <div><span className="dz-about-eyebrow">01 / {t('全模式总览', 'ALL MODES')}</span><h2 id="dz-overview-title">{t('八种打乱，放在一起看', 'Eight scramble modes, side by side')}</h2></div>
+      <div><h2 id="dz-overview-title">{t('八种打乱，放在一起看', 'Eight scramble modes, side by side')}</h2></div>
       <label>{t('统一计步标准', 'Shared counting metric')} <select aria-label={t('统一计步标准', 'Shared counting metric')} className="dz-about-symmetry-select" value={metric} onChange={e => setMetric(e.target.value as Metric)}>
         {(['htm', 'stm', 'sqtm', 'qtm'] as const).map(m => <option key={m} value={m}>{m.toUpperCase()}</option>)}
       </select></label>

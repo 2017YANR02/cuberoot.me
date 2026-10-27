@@ -36,7 +36,7 @@ export default function InterviewPage() {
 
   return <main className="admin-hub interview-page">
     <header className="admin-hub__heading">
-      <p className="admin-hub__eyebrow">{t('管理员专属', 'Administrators only')}</p>
+
       <h1>{t('采访准备', 'Interview preparation')}</h1>
       <p>{t('口述稿与备稿资料', 'Spoken answers and preparation notes')}</p>
     </header>

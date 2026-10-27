@@ -144,6 +144,7 @@
   >
     {{copy.accountButtonLabel}}
   </button>
+  <button wx:if="{{copy.payouts}}" hover-class="press-feedback" class="text-button account-name-edit" bindtap="openPayouts">{{copy.payouts}}</button>
   <button hover-class="press-feedback" class="text-button account-name-edit" disabled="{{identityMutationBusy || nameBusy}}" bindtap="signOut">{{copy.signOut}}</button>
   <button hover-class="press-feedback" wx:if="{{!requiresAgreement}}" class="text-button account-name-edit" disabled="{{identityMutationBusy || nameBusy}}" bindtap="openSecuritySettings">{{copy.securitySettings}}</button>
   <button hover-class="press-feedback" class="text-button account-name-edit" disabled="{{identityMutationBusy || nameBusy}}" bindtap="openDeleteAccount">{{copy.deleteAccount}}</button>

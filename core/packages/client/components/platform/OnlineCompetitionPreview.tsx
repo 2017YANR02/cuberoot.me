@@ -156,7 +156,6 @@ export function OnlineCompetitionPreview() {
     </div>
     <header className="oc-hero">
       <div>
-        <p className="oc-eyebrow">CUBEROOT ONLINE</p>
         <h1>{t('在你的空间，\n认真比一场。', 'Your space.\nYour next competition.')}</h1>
         <p className="oc-intro">{t('选择适合你的场次。普通魔方、智能魔方都能参与，全程有监督员在线。', 'Choose a session that fits your schedule. Compete with a standard or smart cube, with a supervisor online throughout.')}</p>
         <div className="oc-facts"><span><Video />{t('线上参赛', 'Online')}</span><span><ShieldCheck />{t('实时监督', 'Live supervision')}</span><span><Trophy />{t('独立分组排名', 'Separate rankings')}</span></div>

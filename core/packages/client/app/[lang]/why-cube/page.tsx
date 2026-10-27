@@ -72,12 +72,12 @@ function Ref({ href, children }: { href: string; children: ReactNode }) {
 }
 
 /* ── Section wrapper ─────────────────────────────────────────── */
-function Sec({ id, eyebrow, title, lede, children }: {
-  id?: string; eyebrow?: ReactNode; title: ReactNode; lede?: ReactNode; children?: ReactNode;
+function Sec({ id, title, lede, children }: {
+  id?: string; title: ReactNode; lede?: ReactNode; children?: ReactNode;
 }) {
   return (
     <section className="wc-sec" id={id}>
-      {eyebrow != null && <div className="wc-sec-eyebrow">{eyebrow}</div>}
+
       <h2 className="wc-sec-title">{title}</h2>
       {lede != null && <p className="wc-sec-lede">{lede}</p>}
       {children}
@@ -165,7 +165,7 @@ export default function WhyCubePage() {
         {/* ── Hero ──────────────────────────────────────────── */}
         <header className="wc-hero">
           <div className="wc-hero-text">
-            <div className="wc-eyebrow"><Sprout size={16} />{t('写给孩子和家长', 'For kids and parents')}</div>
+
             <h1 className="wc-title">
               {t('为什么让孩子', 'Why your child should ')}
               <span className="wc-accent">{t('学魔方', 'learn the cube')}</span>
@@ -197,7 +197,6 @@ export default function WhyCubePage() {
 
         {/* ── Reassurance: it's a learnable skill ───────────── */}
         <Sec
-          eyebrow={t('先说给家长', 'First, for parents')}
           title={t('这不是天才的游戏', 'It’s not a game for geniuses')}
           lede={t(
             '很多家长担心“我家孩子没那么聪明，学得会吗”。会的。',
@@ -226,7 +225,6 @@ export default function WhyCubePage() {
 
         {/* ── Thirty areas of growth ────────────────────── */}
         <Sec
-          eyebrow={t('核心能力', 'Core abilities')}
           title={t('一块魔方，展开三十种成长', 'One puzzle, thirty areas of growth')}
         >
           <AbilityAtlas />
@@ -235,7 +233,6 @@ export default function WhyCubePage() {
 
         {/* ── What research actually says ───────────────────── */}
         <Sec
-          eyebrow={t('研究怎么说', 'What the research says')}
           title={t('把“好处”交给证据', 'Letting the evidence do the talking')}
           lede={t(
             '关于魔方的好处，网上说法很多。我们只讲有据可查的部分，也老实告诉你哪些被夸大了。',
@@ -284,7 +281,6 @@ export default function WhyCubePage() {
 
         {/* ── Memory / blindfolded ──────────────────────────── */}
         <Sec
-          eyebrow={t('记忆力', 'Memory')}
           title={t('记忆，也是一种可以训练的技术', 'Memory is a trainable technique, too')}
           lede={t(
             '在“盲拧”项目里，选手先看几眼、把整个魔方记进脑子，再蒙上眼睛还原。这背后是一套真实可学的记忆方法。',
@@ -307,7 +303,6 @@ export default function WhyCubePage() {
 
         {/* ── Math ──────────────────────────────────────────── */}
         <Sec
-          eyebrow={t('魔方与数学', 'The cube & math')}
           title={t('一道你能拿在手里的数学题', 'A math problem you can hold in your hands')}
           lede={t(
             '魔方本身就是一个活生生的数学对象 —— 数学家管它叫“魔方群”。',
@@ -359,7 +354,6 @@ export default function WhyCubePage() {
 
         {/* ── Computational thinking ────────────────────────── */}
         <Sec
-          eyebrow={t('魔方与编程思维', 'The cube & coding')}
           title={t('解魔方，就是在写算法', 'Solving a cube is writing algorithms')}
           lede={t(
             '计算机科学家把“计算思维”拆成四块，而解魔方刚好把这四块都练了一遍。',
@@ -397,7 +391,6 @@ export default function WhyCubePage() {
 
         {/* ── Beyond memorizing algorithms ─────────────────── */}
         <Sec
-          eyebrow={t('从会还原到速拧', 'From solving to speedcubing')}
           title={t('公式只是通行证', 'Algorithms are only the entry ticket')}
           lede={t(
             '记住流程和公式，能让孩子把魔方还原；真正的速拧，则是在几秒钟里把观察、判断、执行和调整连成一个不停顿的闭环。',
@@ -444,7 +437,6 @@ export default function WhyCubePage() {
 
         {/* ── Screen-free ───────────────────────────────────── */}
         <Sec
-          eyebrow={t('不用屏幕', 'Screen-free')}
           title={t('一间装进口袋的“离线大脑健身房”', 'A pocket-sized, offline brain gym')}
           lede={t(
             '在屏幕越来越多的童年里，魔方难得地把动手、动脑和专注重新拉回到屏幕之外。',
@@ -472,7 +464,6 @@ export default function WhyCubePage() {
 
         {/* ── Beyond 3x3 ────────────────────────────────────── */}
         <Sec
-          eyebrow={t('不止三阶', 'Beyond the 3×3')}
           title={t('学会三阶，只是开始', 'The 3×3 is just the beginning')}
           lede={t(
             'WCA(世界魔方协会)一共有 17 个官方项目，每一个都在练不同的能力。孩子总能找到自己最喜欢的那一个。',
@@ -535,7 +526,6 @@ export default function WhyCubePage() {
 
         {/* ── How to start ──────────────────────────────────── */}
         <Sec
-          eyebrow={t('怎么开始', 'How to start')}
           title={t('一个便宜的魔方，加上几个公式', 'One cheap cube and a few formulas')}
           lede={t(
             '入门的门槛低到惊人 —— 这大概是它最适合孩子的地方之一。',
@@ -571,7 +561,6 @@ export default function WhyCubePage() {
 
         {/* ── What age ──────────────────────────────────────── */}
         <Sec
-          eyebrow={t('几岁可以开始', 'What age to start')}
           title={t('比年龄更重要的，是兴趣', 'Interest matters more than age')}
         >
           <p className="wc-prose">
@@ -584,7 +573,6 @@ export default function WhyCubePage() {
 
         {/* ── Competition culture + records ─────────────────── */}
         <Sec
-          eyebrow={t('走进赛场', 'Into competition')}
           title={t('这是给所有人的运动', 'A sport for everyone')}
         >
           <div className="wc-trust wc-trust-tight">
@@ -618,7 +606,6 @@ export default function WhyCubePage() {
 
         {/* ── China context ─────────────────────────────────── */}
         <Sec
-          eyebrow={t('中国孩子的舞台', 'China’s stage')}
           title={t('中国是名副其实的速拧强国', 'China is a true speedcubing powerhouse')}
           lede={t(
             '对中国家庭来说，这还是一项孩子真有机会站上世界顶端的运动。',
@@ -636,7 +623,6 @@ export default function WhyCubePage() {
 
         {/* ── Long-term value and learning portfolio ────────── */}
         <Sec
-          eyebrow={t('长期价值', 'Long-term value')}
           title={t('把兴趣变成一段看得见的成长', 'Turn an interest into visible growth')}
           lede={t(
             '魔方真正有说服力的地方，不是“会背几个公式”，而是学员能留下过程、成果和自己的思考。',
@@ -685,7 +671,6 @@ export default function WhyCubePage() {
 
         {/* ── Parent FAQ ────────────────────────────────────── */}
         <Sec
-          eyebrow={t('家长最常问的', 'Parents’ FAQ')}
           title={t('报班前，你大概想知道这些', 'What you probably want to know before signing up')}
         >
           <div className="wc-faq">
@@ -712,7 +697,6 @@ export default function WhyCubePage() {
 
         {/* ── History ───────────────────────────────────────── */}
         <Sec
-          eyebrow={t('一个为教学而生的玩具', 'A toy born to teach')}
           title={t('它一开始，就是个教具', 'It started life as a teaching tool')}
         >
           <p className="wc-prose">
@@ -735,7 +719,6 @@ export default function WhyCubePage() {
 
         {/* ── CTA: start on CubeRoot ────────────────────────── */}
         <Sec
-          eyebrow={t('在 CubeRoot 上开始', 'Start on CubeRoot')}
           title={t('准备好了，就动手试试', 'Ready? Give it a try')}
         >
           <div className="wc-cta-grid">

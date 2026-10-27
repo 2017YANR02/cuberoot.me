@@ -270,7 +270,7 @@ export default function AlgTimeAttackPage() {
     <main className="alg-root alg-time-attack-page">
       <header className="alg-time-attack-header">
         <div>
-          <p className="alg-time-attack-kicker">{tr({ zh: '公式集', en: 'Algorithm sets' })}</p>
+
           <h1>{tr({ zh: '连拧', en: 'Time Attack' })}</h1>
           <p className="alg-time-attack-intro">
             {tr({ zh: '只看图，按当前顺序连续还原。拖动图旁的手柄即可重排。', en: 'Solve continuously from diagrams alone. Drag the handle beside any diagram to reorder it.' })}

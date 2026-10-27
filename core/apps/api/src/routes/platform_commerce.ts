@@ -1,3 +1,7 @@
+import { createInstructorPayout } from '../platform/instructor_payout.js';
+import { dispatchWechatPayout, refreshWechatPayout, notifyWechatPayout, validateWechatPayout, rejectManualWechatPayout, wechatPayoutRuntime, payoutLimits, payoutProfile } from '../platform/wechat_payout.js';
+import { findUserByIdentity } from '../utils/account.js';
+import { exchangeWechatMiniProgramCode } from '../utils/wechat_miniprogram.js';
 import { createHash, randomBytes } from 'node:crypto';
 import type { Context } from 'hono';
 import { getIp } from '../utils/analytics_helpers.js';
@@ -84,10 +88,6 @@ function merchantAccount(provider: PlatformPaymentProvider): string {
 
 function orderNumber(): string {
   return `PLT-${randomBytes(10).toString('hex').toUpperCase()}`;
-}
-
-function payoutNumber(): string {
-  return `PLT-PO-${randomBytes(8).toString('hex').toUpperCase()}`;
 }
 
 function hashReference(value: string): string {
@@ -1792,16 +1792,17 @@ platformCommerceRoutes.get('/instructor/payout-profile', async (c) => {
   const actor = await requirePlatformActor(c);
   const instructorId = await requireInstructor(platformDb(), actor);
   const rows = await platformQuery<{
-    configured: boolean; payout_key_version: number | null; updated_at: string;
+    configured: boolean; payout_key_version: number | null; payout_profile_encrypted: Buffer | null; updated_at: string;
   }>(platformDb(), `
     SELECT payout_profile_encrypted IS NOT NULL AS configured,
-           payout_key_version, updated_at
+           payout_key_version, payout_profile_encrypted, updated_at
     FROM platform_instructors WHERE id = $1::uuid
   `, [instructorId]);
   privateNoStore(c);
   return c.json({
     instructorId,
     configured: rows[0]?.configured ?? false,
+    method: rows[0]?.payout_profile_encrypted && rows[0].payout_key_version != null ? decryptPlatformPrivateData(rows[0].payout_profile_encrypted,rows[0].payout_key_version).method : null,
     keyVersion: rows[0]?.payout_key_version ?? null,
     updatedAt: rows[0]?.updated_at ?? null,
   });
@@ -1847,59 +1848,7 @@ platformCommerceRoutes.post('/admin/instructor-payouts/generate', async (c) => {
   const instructorId = resourceId(stringField(body, 'instructorId', { required: true, max: 128 })!, 'instructorId');
   const currency = stringField(body, 'currency', { required: true, max: 3, pattern: /^[A-Za-z]{3}$/ })!.toUpperCase();
   const result = await withIdempotency(c, actor, `commerce.payout.generate:${instructorId}:${currency}`, body, async (db) => {
-    const instructors = await platformQuery<{
-      id: string; payout_profile_encrypted: Buffer | null; payout_key_version: number | null;
-    }>(db, `
-      SELECT id::text, payout_profile_encrypted, payout_key_version
-      FROM platform_instructors WHERE id = $1::uuid AND status = 'active' FOR UPDATE
-    `, [instructorId]);
-    const instructor = instructors[0];
-    if (!instructor) notFound('Instructor');
-    if (!instructor.payout_profile_encrypted || instructor.payout_key_version == null) {
-      conflict('Instructor payout profile is not configured');
-    }
-    const ledger = await platformQuery<{ id: string; delta_amount_minor: number | string }>(db, `
-      SELECT revenue.id::text, revenue.delta_amount_minor
-      FROM platform_instructor_revenue_ledger revenue
-      WHERE revenue.instructor_id = $1::uuid AND revenue.currency = $2
-        AND NOT EXISTS (
-          SELECT 1 FROM platform_instructor_payout_items item
-          WHERE item.revenue_ledger_id = revenue.id AND item.released_at IS NULL
-        )
-      ORDER BY revenue.created_at, revenue.id
-      FOR UPDATE OF revenue SKIP LOCKED
-    `, [instructorId, currency]);
-    if (!ledger.length) conflict('No unsettled instructor revenue is available');
-    const amountMinor = ledger.reduce((sum, entry) => sum + safeSignedMoney(entry.delta_amount_minor, 'revenue amount'), 0);
-    if (!Number.isSafeInteger(amountMinor) || amountMinor <= 0) conflict('No positive payout balance is available');
-    const payouts = await platformQuery<{ id: string; payout_number: string }>(db, `
-      INSERT INTO platform_instructor_payouts (
-        instructor_id, payout_number, status, amount_minor, currency,
-        payout_profile_snapshot_encrypted, payout_key_version
-      ) VALUES ($1::uuid, $2, 'draft', $3, $4, $5, $6)
-      RETURNING id::text, payout_number
-    `, [instructorId, payoutNumber(), amountMinor, currency,
-      Buffer.from(instructor.payout_profile_encrypted), instructor.payout_key_version]);
-    const payout = payouts[0]!;
-    for (const entry of ledger) {
-      await platformQuery(db, `
-        INSERT INTO platform_instructor_payout_items (payout_id, revenue_ledger_id, amount_minor, currency)
-        VALUES ($1::uuid, $2::uuid, $3, $4)
-      `, [payout.id, entry.id, safeSignedMoney(entry.delta_amount_minor, 'revenue amount'), currency]);
-    }
-    await platformQuery(db, `
-      INSERT INTO platform_audit_events (
-        actor_user_id, actor_key, action, resource_type, resource_id, outcome, metadata
-      ) VALUES ($1, $2, 'commerce.payout.generate', 'platform_instructor_payout', $3, 'allowed', $4::jsonb)
-    `, [actor.userId, actor.ownerKey, payout.id, { instructorId, currency, ledgerEntries: ledger.length }]);
-    await enqueuePlatformEvent(db, 'platform.instructor_payout.generated', 'platform_instructor_payout', payout.id,
-      `payout:${payout.id}:generated`, { payoutId: payout.id, instructorId, amountMinor, currency });
-    return {
-      status: 201,
-      body: { id: payout.id, payoutNumber: payout.payout_number, instructorId, status: 'draft', amountMinor, currency, itemCount: ledger.length },
-      resourceType: 'platform_instructor_payout',
-      resourceId: payout.id,
-    };
+    return createInstructorPayout(db, actor, instructorId, currency);
   });
   return sendMutation(c, result);
 });
@@ -1908,7 +1857,8 @@ platformCommerceRoutes.get('/admin/instructor-payouts', async (c) => {
   await requirePlatformAdmin(c);
   const { page, pageSize, offset } = pagination(c);
   const q=c.req.query('q')?.trim().slice(0,200)??'';
-  const rows = await platformQuery(platformDb(), `SELECT p.id::text, p.payout_number AS "payoutNumber", p.instructor_id::text AS "instructorId", p.status, p.amount_minor AS "amountMinor", p.currency, p.provider_reference AS "providerReference", p.failure_code AS "failureCode", p.created_at AS "createdAt" FROM platform_instructor_payouts p WHERE ($3='' OR p.payout_number ILIKE '%'||$3||'%') ORDER BY p.created_at DESC, p.id DESC LIMIT $1 OFFSET $2`, [pageSize, offset,q]);
+  const rows = await platformQuery(platformDb(), `SELECT p.id::text, p.payout_number AS "payoutNumber", p.instructor_id::text AS "instructorId", p.status, p.payout_profile_snapshot_encrypted, p.payout_key_version, (SELECT t.state FROM platform_wechat_payout_transfers t WHERE t.payout_id=p.id) AS "transferState", p.amount_minor AS "amountMinor", p.currency, p.provider_reference AS "providerReference", p.failure_code AS "failureCode", p.created_at AS "createdAt" FROM platform_instructor_payouts p WHERE ($3='' OR p.payout_number ILIKE '%'||$3||'%') ORDER BY p.created_at DESC, p.id DESC LIMIT $1 OFFSET $2`, [pageSize, offset,q]);
+  for (const row of rows) { row.payoutMode = payoutProfile(row as { payout_profile_snapshot_encrypted: Buffer; payout_key_version: number }).method; delete row.payout_profile_snapshot_encrypted; delete row.payout_key_version; }
   privateNoStore(c);
   const counts=await platformQuery<{total:number}>(platformDb(),`SELECT COUNT(*)::int AS total FROM platform_instructor_payouts WHERE TRUE AND ($1='' OR payout_number ILIKE '%'||$1||'%')`,[q]);
   return c.json({ items: rows, page, pageSize,total:counts[0]?.total??0 });
@@ -1919,8 +1869,8 @@ platformCommerceRoutes.post('/admin/instructor-payouts/:id/approve', async (c) =
   const id = resourceId(c.req.param('id'));
   const body = await readJsonObject(c);
   const result = await withIdempotency(c, actor, `commerce.payout.approve:${id}`, body, async (db) => {
-    const rows = await platformQuery<{ id: string; status: string; currency: string }>(db, `
-      SELECT id::text, status, currency FROM platform_instructor_payouts WHERE id = $1::uuid FOR UPDATE
+    const rows = await platformQuery<{ id: string; status: string; currency: string; amount_minor: number; payout_profile_snapshot_encrypted: Buffer; payout_key_version: number; user_id: number }>(db, `
+      SELECT p.*, i.user_id FROM platform_instructor_payouts p JOIN platform_instructors i ON i.id=p.instructor_id WHERE p.id = $1::uuid FOR UPDATE OF p
     `, [id]);
     if (!rows[0]) notFound('Payout');
     if (rows[0].status !== 'draft') throw new PlatformApiError('INVALID_STATE', 409, 'Only draft payouts can be approved');
@@ -1954,6 +1904,7 @@ platformCommerceRoutes.post('/admin/instructor-payouts/:id/approve', async (c) =
     `, [id]);
     const amountMinor = safeSignedMoney(totals[0]?.amount_minor ?? 0, 'payout amount');
     if (amountMinor <= 0) conflict('Payout balance is no longer positive after refunds');
+    await validateWechatPayout(db, rows[0], amountMinor);
     await platformQuery(db, `
       UPDATE platform_instructor_payouts
       SET status = 'approved', amount_minor = $2, approved_by_user_id = $3, approved_by_actor_key = $4, approved_at = NOW()
@@ -1968,7 +1919,8 @@ platformCommerceRoutes.post('/admin/instructor-payouts/:id/approve', async (c) =
       `payout:${id}:approved`, { payoutId: id });
     return { status: 200, body: { id, status: 'approved' }, resourceType: 'platform_instructor_payout', resourceId: id };
   });
-  return sendMutation(c, result);
+  const transfer = await dispatchWechatPayout(id);
+  return transfer ? c.json(transfer) : sendMutation(c, result);
 });
 
 platformCommerceRoutes.post('/admin/instructor-payouts/:id/paid', async (c) => {
@@ -1977,6 +1929,7 @@ platformCommerceRoutes.post('/admin/instructor-payouts/:id/paid', async (c) => {
   const body = await readJsonObject(c);
   const providerReference = stringField(body, 'providerReference', { required: true, max: 240 })!;
   const result = await withIdempotency(c, actor, `commerce.payout.paid:${id}`, body, async (db) => {
+    await rejectManualWechatPayout(db, id);
     const rows = await platformQuery<{ id: string; status: string }>(db, `SELECT id::text, status FROM platform_instructor_payouts WHERE id = $1::uuid FOR UPDATE`, [id]);
     if (!rows[0]) notFound('Payout');
     if (!['approved', 'processing'].includes(rows[0].status)) throw new PlatformApiError('INVALID_STATE', 409, 'Payout must be approved or processing');
@@ -1999,6 +1952,7 @@ platformCommerceRoutes.post('/admin/instructor-payouts/:id/reconcile-processing-
   const evidenceReferenceHash = hashReference(evidenceReference);
   const providerReferenceHash = providerReference ? hashReference(providerReference) : null;
   const result = await withIdempotency(c, actor, `commerce.payout.reconcile-processing-refund:${id}`, body, async (db) => {
+    await rejectManualWechatPayout(db, id);
     const rows = await platformQuery<{ id: string; status: string; failure_code: string | null }>(db, `
       SELECT id::text, status, failure_code
       FROM platform_instructor_payouts WHERE id = $1::uuid FOR UPDATE
@@ -2184,4 +2138,79 @@ platformCommerceRoutes.post('/admin/reconciliation/:id/resolve', async (c) => {
     return { status: 200, body: { id, resolved: true }, resourceType: 'platform_reconciliation_record', resourceId: id };
   });
   return sendMutation(c, result);
+});
+
+async function payoutWechatIdentity(code: string) {
+  try { return await exchangeWechatMiniProgramCode(code); }
+  catch { throw new PlatformApiError('SERVICE_UNAVAILABLE', 503, '微信身份核对失败，请重新尝试'); }
+}
+
+// Binding uses a fresh code from the receiving Mini Program and the existing account identity.
+platformCommerceRoutes.post('/instructor/payout-profile/wechat', async c => {
+  const actor = await requirePlatformActor(c);
+  const body = await readJsonObject(c);
+  const code = stringField(body,'code',{required:true,max:512})!;
+  const accountName = stringField(body,'accountName',{required:true,max:60})!;
+  if (body.agreed !== true) badRequest('请确认本人微信收款');
+  const runtime = wechatPayoutRuntime(); payoutLimits();
+  const identity = await payoutWechatIdentity(code);
+  const account = identity.unionid ? await findUserByIdentity('wechat',identity.unionid) : null;
+  if (!account || account.id !== actor.userId) throw new PlatformApiError('FORBIDDEN',403,'当前微信与登录账号不一致');
+  const profile = {method:'wechat',appId:runtime.appId,merchantId:runtime.merchantId,openId:identity.openid,unionId:identity.unionid,userId:actor.userId,accountName};
+  const result = await withIdempotency(c,actor,'commerce.payout-profile.wechat',{method:'wechat',accountName,agreed:true},async db => {
+    const instructorId = await requireInstructor(db,actor);
+    const linked = await platformQuery(db, `SELECT user_id FROM auth_identities WHERE provider='wechat' AND provider_uid=$1 AND user_id=$2 FOR SHARE`, [identity.unionid, actor.userId]);
+    if (linked.length !== 1) conflict('微信关联已变化，请重新登录');
+    const encrypted = encryptPlatformPrivateData(profile);
+    await platformQuery(db,`UPDATE platform_instructors SET payout_profile_encrypted=$2,payout_key_version=$3 WHERE id=$1::uuid`,[instructorId,encrypted.payload,encrypted.keyVersion]);
+    await platformQuery(db,`INSERT INTO platform_audit_events(actor_user_id,actor_key,action,resource_type,resource_id,outcome) VALUES($1,$2,'commerce.payout_profile.wechat','platform_instructor',$3,'allowed')`,[actor.userId,actor.ownerKey,instructorId]);
+    return {status:200,body:{configured:true,method:'wechat'}};
+  });
+  return sendMutation(c,result);
+});
+platformCommerceRoutes.post('/admin/instructor-payouts/:id/refresh-wechat',async c => {
+  await requirePlatformAdmin(c); privateNoStore(c);
+  return c.json(await dispatchWechatPayout(resourceId(c.req.param('id'))));
+});
+platformCommerceRoutes.post('/instructor/payouts', async c => {
+  const actor = await requirePlatformActor(c);
+  const body = await readJsonObject(c);
+  if (body.agreed !== true) badRequest('请确认申请提现');
+  const amountMinor = integerField(body, 'amountMinor', { required: true, min: 1 })!;
+  const method = enumField(body, 'method', ['wechat', 'bank_transfer'] as const, { required: true })!;
+  const result = await withIdempotency(c, actor, 'commerce.payout.request', { amountMinor, method, agreed: true }, async db => {
+    const instructorId = await requireInstructor(db, actor);
+    return createInstructorPayout(db, actor, instructorId, 'CNY', { amountMinor, method });
+  });
+  return sendMutation(c, result);
+});
+platformCommerceRoutes.get('/instructor/payouts',async c => {
+  const actor=await requirePlatformActor(c), instructorId=await requireInstructor(platformDb(),actor);
+  privateNoStore(c);
+  const rows=await platformQuery(platformDb(),`SELECT p.id::text,p.payout_number AS "payoutNumber",p.amount_minor::text AS "amountMinor",p.currency,p.status,t.state AS "transferState" FROM platform_instructor_payouts p LEFT JOIN platform_wechat_payout_transfers t ON t.payout_id=p.id WHERE p.instructor_id=$1::uuid ORDER BY p.created_at DESC LIMIT 100`,[instructorId]);
+  const [balance] = await platformQuery<{ amount: string }>(platformDb(), `SELECT COALESCE(SUM(r.delta_amount_minor),0)::text AS amount FROM platform_instructor_revenue_ledger r WHERE r.instructor_id=$1::uuid AND r.currency='CNY' AND NOT EXISTS (SELECT 1 FROM platform_instructor_payout_items i WHERE i.revenue_ledger_id=r.id AND i.released_at IS NULL)`, [instructorId]);
+  const availableMinor = Math.max(0, safeSignedMoney(balance.amount));
+  return c.json({payouts:rows, availableMinor});
+});
+platformCommerceRoutes.post('/instructor/payouts/:id/receipt',async c => {
+  const actor=await requirePlatformActor(c), instructorId=await requireInstructor(platformDb(),actor),id=resourceId(c.req.param('id'));
+  const body=await readJsonObject(c),code=stringField(body,'code',{required:true,max:512})!;
+  const [row]=await platformQuery(platformDb(),`SELECT p.* FROM platform_instructor_payouts p WHERE p.id=$1::uuid AND p.instructor_id=$2::uuid`,[id,instructorId]);
+  if(!row) notFound('Payout');
+  const profile=payoutProfile(row as {payout_profile_snapshot_encrypted:Buffer;payout_key_version:number});
+  const identity=await payoutWechatIdentity(code);
+  const account=identity.unionid?await findUserByIdentity('wechat',identity.unionid):null;
+  if(profile.method!=='wechat'||!account||account.id!==actor.userId||profile.openId!==identity.openid||profile.unionId!==identity.unionid) throw new PlatformApiError('FORBIDDEN',403,'当前微信与原提现收款账号不一致');
+  await refreshWechatPayout(id);
+  const [transfer]=await platformQuery(platformDb(),`SELECT state,package_info FROM platform_wechat_payout_transfers WHERE payout_id=$1::uuid`,[id]);
+  privateNoStore(c);
+  return c.json(transfer?.state==='WAIT_USER_CONFIRM' ? {state:transfer.state,appId:profile.appId,mchId:profile.merchantId,package:transfer.package_info} : {state:transfer?.state||'NOT_SENT'});
+});
+platformCommerceRoutes.post('/payouts/wechat/notify', async c => {
+  try {
+    const {readWechatNotification}=await import('../platform/wechat_notification.js');
+    const {body,headers}=await readWechatNotification(c.req.raw);
+    await notifyWechatPayout(body,headers);
+    return c.body(null,204);
+  } catch { return c.json({code:'FAIL',message:'Notification not accepted'},503); }
 });
