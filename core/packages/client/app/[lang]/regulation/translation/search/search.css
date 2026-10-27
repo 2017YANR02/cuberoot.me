@@ -5,8 +5,8 @@
 .translation-search-input { width: 100%; }
 .translation-search-status { min-height: 1.5em; margin: 16px 0; color: var(--muted-foreground); font-size: 13px; }
 .translation-search-examples { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; font-size: 14px; color: var(--muted-foreground); }
-.translation-search-examples button { appearance: none; border: 0; background: none; color: var(--accent); cursor: pointer; padding: 12px 0; font: inherit; }
-.translation-search-examples button:hover { text-decoration: underline; }
+.translation-search-example { appearance: none; border: 0; background: none; color: var(--accent); cursor: pointer; padding: 12px 0; font: inherit; }
+.translation-search-example:hover { text-decoration: underline; }
 .translation-search-columns, .translation-search-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
 .translation-search-columns { padding: 8px 0 12px; color: var(--muted-foreground); font-size: 13px; border-bottom: 1px solid var(--border-default); }
 .translation-search-result { padding: 16px 0; border-bottom: 1px solid var(--border-default); }
