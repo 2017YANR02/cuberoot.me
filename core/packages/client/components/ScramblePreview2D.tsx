@@ -10,9 +10,9 @@
  * synchronous custom SVG renderer, so no need to pull in cubing/twisty (which
  * triggers the search worker code path that conflicts with Turbopack prerender).
  */
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { renderScramblePreviewSvg } from '@/components/scramble-preview-svg';
-import { TimerRoomDialog } from '@cuberoot/timer-ui';
+import { DiagramPreview } from '@/components/DiagramPreview';
 import { tr } from '@/i18n/tr';
 import './visual-cube.css';
 import { magicSvgAspect } from '@cuberoot/puzzle-render-core/magic-svg';
@@ -61,6 +61,7 @@ export function ScramblePreview2D({
   puzzleDescription,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
+  const thumbnail = useRef<HTMLButtonElement>(null);
   const customSvg = useMemo(() => {
     const renderMask: MaskRenderOptions | undefined = (() => {
       const rm = toRenderMask(mask);
@@ -116,19 +117,16 @@ export function ScramblePreview2D({
   if (enlargeable) {
     const title = tr({ zh: '打乱平面展开图', en: 'Scramble net' });
     return <>
-      <button type="button" aria-label={title} aria-haspopup="dialog"
+      <button ref={thumbnail} type="button" aria-label={title} aria-haspopup="dialog"
         style={{ display: 'inline-flex', padding: 0, border: 0, background: 'transparent', cursor: 'zoom-in' }}
         onClick={event => { event.stopPropagation(); setExpanded(true); }}>
         {inner}
       </button>
-      {expanded && <TimerRoomDialog title={title} className="visualcube-preview"
-        language={tr({ zh: 'zh', en: 'en' }) as 'zh' | 'en'} onClose={() => setExpanded(false)}>
-        <div className="visualcube-preview-body">
+      {expanded && thumbnail.current && <DiagramPreview source={thumbnail.current} title={title} onClose={() => setExpanded(false)}>
           <div className="puzzle-art" role="img" aria-label={title}
-            style={{ width: '100%', maxWidth: 300, pointerEvents: 'auto' }}
+            style={{ width: '100%', maxWidth: 300, aspectRatio: `${hostStyle.width} / ${hostStyle.height}`, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto' }}
             dangerouslySetInnerHTML={{ __html: customSvg }} />
-        </div>
-      </TimerRoomDialog>}
+      </DiagramPreview>}
     </>;
   }
   if (fullSizeLink && fullSizeHref) {

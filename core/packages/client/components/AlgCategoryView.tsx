@@ -14,7 +14,8 @@ import '@cuberoot/timer-ui/compact-select.css';
  * Keeps: subgroup picker (umbrella sets), second-level picker, ori switcher,
  * per-case ori cycle, grouped case sections, sticker/setup/HTML alg rendering.
  */
-import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { captureAlgCaseNavigation, useAlgViewTransition } from '@/hooks/useAlgViewTransition';
 import { parseAsBoolean, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import { useTrainingQueryState as useQueryState, useTrainingQueryStates as useQueryStates } from '@/lib/training-host';
 import Link from '@/components/AppLink';
@@ -984,6 +985,10 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     ];
   }, [isSq1Ep, sq1EpHasParity, visibleCases]);
 
+  const motionRoot = useRef<HTMLDivElement>(null);
+  const motionLayout = useMemo(() => ({ grouped, effectiveView, showOtherAlgs }), [grouped, effectiveView, showOtherAlgs]);
+  const changeLayout = useAlgViewTransition(motionRoot, motionLayout);
+
   /** 整个 set 的 case → 唯一短链 slug(点卡片跳转用)。落地解析用同一份算法,见 alg_case_link。 */
   const slugMap = useMemo(() => (data ? buildCaseSlugMap(data.cases, set) : null), [data, set]);
   const caseDetailHref = useCallback(
@@ -1106,7 +1111,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   const buildPdfSheet = () => algSheetFromCases(buildExportOptions());
 
   return (
-    <div className="alg-root">
+    <div className="alg-root" ref={motionRoot} onClickCapture={captureAlgCaseNavigation}>
       <div className="alg-cat-header alg-cat-header--list">
         <Link href={backTo} className="alg-back">
           <ArrowLeft size={14} /> <span className="sr-only">{tr({ zh: '返回', en: 'Back' })}</span>
@@ -1123,7 +1128,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
         {data && (
           <AlgListSettings
             view={view}
-            onViewChange={changeView}
+            onViewChange={next => changeLayout(() => changeView(next), next)}
             showCaseNumbers={showCaseNumbers}
             onShowCaseNumbersChange={setShowCaseNumbers}
             showViewMode={!collection?.cardsOnly}
@@ -1136,7 +1141,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
           >
             {!collection?.cardsOnly && <BoolToggle
               value={showOtherAlgs}
-              onChange={value => void setShowOtherAlgs(value)}
+              onChange={value => changeLayout(() => { void setShowOtherAlgs(value); }, effectiveView)}
               label={tr({ zh: '显示其他公式', en: 'Show other algorithms' })}
             />}
             {data && canShowAllCases && (
@@ -1589,6 +1594,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                       ...buildExportOptions(), cases: [c], filename: `${puzzleParam}-${set}-${c.name}`,
                     })}>
                     <article
+                      data-alg-motion-case={c.id ?? c.name}
+                      data-alg-motion-ori={oriIdx}
                       className={`alg-case${flashId === c.id ? ' is-flash' : ''}${selectedId === c.id ? ' is-selected' : ''}${isAdmin && c.id != null && invalidIds.has(c.id) ? ' is-invalid' : ''}`}
                       id={c.id != null ? `case-${c.id}` : undefined}
                       title={isAdmin && c.id != null && invalidIds.has(c.id)
@@ -1679,7 +1686,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                           <div className="alg-case-name">
                             <Link href={caseDetailHref(c)} prefetch={false} className="alg-case-detail-link"
                               aria-label={tr({ zh: `查看 ${cardName} 详情`, en: `View ${cardName} details` })}>
-                            <span className={`alg-case-letter${set === 'zbll' ? ' alg-case-letter--zbll' : ''}`}>
+                            <span data-alg-shared-title={cardName} className={`alg-case-letter${set === 'zbll' ? ' alg-case-letter--zbll' : ''}`}>
                               {cardName}
                               {set === 'zbll' && c.meta?.ollcp && (
                                 <span className="alg-case-index"> ({displayAlgCaseName(puzzleParam, set, c.name).replace(/^ZBLL\s+/i, '').replace(/\s+/g, '')})</span>

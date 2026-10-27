@@ -3,6 +3,8 @@
 /* Default to classic blue; an explicit user accent takes priority.
    Everything else inherits :root tokens via theme-tokens. */
 .alg-root {
+  --alg-card-columns: 6;
+  --alg-full-columns: 2;
   --accent: var(--user-accent, #0066cc);
   --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
 
@@ -12,6 +14,9 @@
   min-height: 100vh;
   padding-bottom: 48px;
 }
+
+.alg-root[data-alg-view-animating] { overflow-x: clip; }
+[data-alg-shared-title] { display: inline-block; }
 
 html[data-theme=dark] .alg-root {
   --accent: var(--user-accent, #4ea1ff);
@@ -516,13 +521,13 @@ html[data-theme=dark] .alg-root {
 
 .alg-case-list {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--alg-full-columns, 2), minmax(0, 1fr));
   gap: 12px;
 }
 /* 「只看图」列表:密排画廊(缩略图居中 + 名字),点整卡进详情页看公式。公式/社区区不渲染。 */
 .alg-case-list.is-cards {
   /* 桌面最多六列。固定上限避免宽屏偷偷排到七列；每组恰好六个的二阶 LS 可完整放在一行。 */
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--alg-card-columns, 6), minmax(0, 1fr));
 }
 .alg-case-list.is-cards .alg-case {
   padding: 14px 12px;
@@ -545,7 +550,7 @@ html[data-theme=dark] .alg-root {
 }
 
 @media (max-width: 900px) {
-  .alg-case-list.is-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .alg-root { --alg-card-columns: 4; }
 }
 /* 图 / 公式 开关:header 是 baseline 对齐,胶囊按自身高度垂直居中才不偏 */
 .alg-view-toggle {
@@ -1427,12 +1432,12 @@ a.alg-community-author:hover {
 
 /* 公式卡片需要给长公式和投稿元信息留出可读宽度；只看图画廊仍由更高优先级的 is-cards 规则保持多列。 */
 @media (max-width: 680px) {
-  .alg-case-list { grid-template-columns: 1fr; }
+  .alg-root { --alg-full-columns: 1; }
 }
 
 @media (max-width: 480px) {
   /* 只看图时窄屏仍保持两列画廊 —— 一列太空、认图效率低 */
-  .alg-case-list.is-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .alg-root { --alg-card-columns: 2; }
   /* 套列表 / 子组选择窄屏都走四列 —— 一屏能看全一个魔方的所有套(或一组的所有子组),
      不用来回滚。卡片随之收窄:内边距 / 字号 / 缩略图(size 由组件按视口给)一起降档。 */
   .alg-bento { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 0 12px; }

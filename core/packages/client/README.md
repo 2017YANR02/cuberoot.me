@@ -40,4 +40,8 @@ dev server 运行时不要同时执行 `next build`，两者共用 `.next/`。Vi
 
 Web GAN v4 电量按通知更新：连接握手后的 `0xEF` 回复通过驱动 `onBattery` 回调刷新状态，首次请求 1 秒未收到有效回复时重试一次（对齐 DCTimer-BLE）。连接和重连保留握手期间已收到的电量，异步读取不能覆盖较新的通知；断开后清理重试并忽略旧会话回调。回归测试见 `tests/bluetooth_cube_reconnect.test.ts`。
 
+公式库通用列表 `AlgCategoryView` 的图／公式及其他公式开关使用原生 FLIP，只移动切换前后可见的图片、名称和首条文字。按 CSS 列数保守预备目标条目，最多测量 60 张卡片；深滚动或大窗口超出预算时直接切换，保留图片懒加载。点击列表进入 case 详情时，仅配对当前 case 的 2D 图、名称及显示内容一致的打乱／解法；不缩放文字、不动画 3D 播放器，也不改变导航与数据加载流程。坐标快照只保留一次导航，超时或窗口变化时放弃过渡。直接打开链接、嵌入详情和减少动态效果模式不触发进入动画。
+
+`VisualCube` 与 `ScramblePreview2D` 的放大预览共用 `DiagramPreview`，只动画当前图片的平移、等比缩放与透明度。关闭动画结束后再卸载共享弹窗，保留遮罩关闭、Esc、焦点恢复和拖动旋转；快速关闭从当前动画位置返回，窗口变化、卸载或减少动态效果设置变化时清理动画。
+
 稳定的跨端契约和纯逻辑进 `@cuberoot/shared` 的显式 subpath；不从 server、mobile、miniprogram 或已退役 `packages/platform` 导入应用源码。

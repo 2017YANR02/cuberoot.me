@@ -5,7 +5,7 @@ import { renderFromSimpleQuery, buildSimpleOptions, renderCubeSVG, Axis, type IC
 import { ORBIT_K } from '@cuberoot/puzzle-render-core/engine/viewControls';
 import { tr } from '@/i18n/tr';
 import { apiUrl } from '@/lib/api-base';
-import { TimerRoomDialog } from '@cuberoot/timer-ui';
+import { DiagramPreview } from '@/components/DiagramPreview';
 import LazyVisible from '@/components/LazyVisible';
 import './visual-cube.css';
 import { COLORS, STICKER_INNER, STICKER_OUTLINE_WIDTH } from '@cuberoot/puzzle-render-core/engine/define';
@@ -83,12 +83,15 @@ export function VisualCube(props: Props) {
   return <VisualCubeContent {...props} />;
 }
 
-function VisualCubeContent(props: Props) {
+type Orbit = { x: number; y: number; z: number };
+
+function VisualCubeContent(props: Props & { initialOrbit?: Orbit | null }) {
   const { algorithm = '', setup, view, mask, faceletColors, stickerColors, stickerMaskColor, viewportRotations, outlineMaskedTop, outlinedFacelets, faceletAlg, scheme, showLastLayerColor, planSimplify, size = 88, puzzleSize = 3, alt = 'Cube state', loading, local, hideGreySides, interactive = false, enlargeable = false } = props;
   const [expanded, setExpanded] = useState(false);
+  const thumbnail = useRef<HTMLButtonElement>(null);
   const dragged = useRef(false);
   const isPlan = view === 'plan' || view === 'oll' || view === 'pll';
-  const [orbit, setOrbit] = useState<{ x: number; y: number; z: number } | null>(null);
+  const [orbit, setOrbit] = useState<Orbit | null>(props.initialOrbit ?? null);
   const pointer = useRef<{ id: number; x: number; y: number; startX: number; startY: number } | null>(null);
   const rotate = (dx: number, dy: number) => setOrbit(previous => {
     const current = previous ?? { x: -30, y: 30, z: 0 };
@@ -145,7 +148,7 @@ function VisualCubeContent(props: Props) {
 
   // puzzle-art:柔和度的统一钩子(见 globals.css),贴纸色不走 token,靠它跟。
   if (interactive && svg) {
-    return <><button type="button" className="puzzle-art"
+    return <><button ref={thumbnail} type="button" className="puzzle-art"
       aria-label={alt + (enlargeable ? tr({ zh: '；单击放大，拖动旋转', en: '; click to enlarge, drag to rotate' }) : tr({ zh: '；拖动或用方向键旋转，移开复位', en: '; drag or use arrow keys to rotate, leave to reset' }))}
       aria-haspopup={enlargeable ? 'dialog' : undefined}
       style={{ display: 'inline-flex', width: size, height: size, padding: 0, border: 0, background: 'none', cursor: pointer.current ? 'grabbing' : 'grab', touchAction: 'none', userSelect: 'none', flexShrink: 0 }}
@@ -185,13 +188,9 @@ function VisualCubeContent(props: Props) {
       <span style={{ display: 'inline-flex', width: size, height: size, transform: isPlan && orbit ? `rotate(${orbit.z}deg)` : undefined }}
         dangerouslySetInnerHTML={{ __html: svg }} />
     </button>
-      {expanded && <TimerRoomDialog title={alt} className="visualcube-preview" language={tr({ zh: 'zh', en: 'en' }) as 'zh' | 'en'} onClose={() => setExpanded(false)}>
-        <div className="visualcube-preview-body" onKeyDownCapture={event => {
-          if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); setExpanded(false); }
-        }}>
-          <VisualCube {...props} size={220} local interactive enlargeable={false} />
-        </div>
-      </TimerRoomDialog>}
+      {expanded && thumbnail.current && <DiagramPreview source={thumbnail.current} title={alt} onClose={() => setExpanded(false)}>
+        <VisualCubeContent {...props} initialOrbit={orbit} size={220} local interactive enlargeable={false} />
+      </DiagramPreview>}
     </>;
   }
   if (svg) {

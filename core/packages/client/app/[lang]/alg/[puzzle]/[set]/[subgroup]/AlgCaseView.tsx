@@ -16,6 +16,7 @@ import { alignAlgFile, caseAlgIssue, loadAlg } from '@/lib/alg_case_alignment';
  * AdminCaseEditor supplies editable fields directly to this layout; no separate edit screen.
  */
 import { Fragment, useEffect, useMemo, useState, useRef } from 'react';
+import { useAlgCaseEntryTransition } from '@/hooks/useAlgViewTransition';
 import Link from '@/components/AppLink';
 import { ArrowLeft, ChevronLeft, ChevronRight, ExternalLink, Copy, Check, Shuffle, FlipHorizontal2, HelpCircle, AlertTriangle } from '@app-foundation/icons/lucide';
 import type { AlgCase, AlgEntry, AlgFile, AlgPuzzle, AlgSubmission } from '@cuberoot/shared';
@@ -192,6 +193,8 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
    * 代价是关联缩略图(镜像/逆)那份 `data` 会短暂过期,刷新即一致。
    */
   const [caseObj, setCaseObj] = useState(caseProp);
+  const motionRoot = useRef<HTMLDivElement>(null);
+  useAlgCaseEntryTransition(motionRoot, String(caseObj.id ?? caseObj.name), !embedded);
   const [insertionCases, setInsertionCases] = useState(data.cases);
   useEffect(() => { setInsertionCases(data.cases); }, [data.cases]);
   useEffect(() => {
@@ -452,14 +455,14 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
   }
 
   const renderDetail = (editor?: InlineCaseEditorParts) => (
-    <div className={`alg-case-detail${editor ? ' alg-case-inline-editor' : ''}${useF2lOrientationGrid ? ' is-f2l-orientation-grid' : ''}`}>
+    <div ref={motionRoot} className={`alg-case-detail${editor ? ' alg-case-inline-editor' : ''}${useF2lOrientationGrid ? ' is-f2l-orientation-grid' : ''}`}>
       <div className="alg-case-detail-head">
         <Link href={backHref} className="alg-case-detail-back" prefetch={false}>
           <ArrowLeft size={16} />
           <span className="sr-only">{tr({ zh: '返回', en: 'Back' })}</span>
         </Link>
         <h1 className="alg-case-detail-title">
-          {editor ? editor.name : primary}
+          {editor ? editor.name : <span data-alg-shared-title={primary}>{primary}</span>}
           {showSub && <span className="alg-meta-head-sub">{sub}</span>}
           <Link href={backHref} className="alg-meta-head-open" prefetch={false} title={tr({ zh: '在列表中打开', en: 'Open in the list' })}>
             <ExternalLink size={14} />
@@ -628,7 +631,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
                 return <Fragment key={`${oi}:${i}`}>{row}</Fragment>;
               });
               return (
-                <div key={oi} className="alg-case-detail-ori">
+                <div key={oi} data-alg-motion-ori={oi} className="alg-case-detail-ori">
                   {multiOri && <div className="alg-case-detail-ori-label">
                     <AlgImageDownloadButton build={() => caseImageBatch({
                       puzzle, set, cases: [caseObj], title: primary,

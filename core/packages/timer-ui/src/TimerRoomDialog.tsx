@@ -8,12 +8,13 @@ export interface TimerRoomDialogProps {
   title: string;
   className?: string;
   headerControls?: ReactNode;
+  hideHeader?: boolean;
   language: 'en' | 'zh';
   onClose(): void;
   children: ReactNode;
 }
 
-export function TimerRoomDialog({ title, className, headerControls, language, onClose, children }: TimerRoomDialogProps) {
+export function TimerRoomDialog({ title, className, headerControls, hideHeader = false, language, onClose, children }: TimerRoomDialogProps) {
   const ref = useRef<HTMLDivElement>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
@@ -48,7 +49,7 @@ export function TimerRoomDialog({ title, className, headerControls, language, on
         else if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
       }}>
-      <header className="timer-room-dialog-head"><h2 id={titleId}>{title}</h2>{headerControls}<button type="button" aria-label={close} onClick={onClose}><X size={18} /></button></header>
+      <header className="timer-room-dialog-head" hidden={hideHeader} style={hideHeader ? { display: 'none' } : undefined}><h2 id={titleId}>{title}</h2>{headerControls}<button type="button" hidden={hideHeader} aria-label={close} onClick={onClose}><X size={18} /></button></header>
       {children}
     </div>
   </div>, document.body);
