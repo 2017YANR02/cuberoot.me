@@ -11,7 +11,7 @@ export function SegmentTime({ text }: { text: string }) {
             <span className="timer-capital-d" role="img" aria-label="D">
               <span className="timer-capital-d-text">D</span>
               <svg className="timer-capital-d-segments" viewBox="0 0 585 800" aria-hidden="true" focusable="false">
-                <g fill="currentColor">
+                <g fill="currentColor" transform="translate(21 0) skewX(-3)">
                   <path d="M55 0h330l50 50-50 50H140Z" />
                   <path d="M45 10 130 95v235l-85 45Z" />
                   <path d="m45 405 85 45v255l-85 85Z" />
