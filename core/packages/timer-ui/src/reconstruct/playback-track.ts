@@ -75,6 +75,24 @@ export function reconstructedTrack(lines: ReconTextLine[] | undefined, raw: Solv
       out.push({ m: range.token, ts, endTs: Math.max(ts, range.endTs), rawAfter: consumed });
     }
   }
+  // Synthesized rotations and replacement gestures can share a zero-length
+  // encoder timestamp. Divide the available gap before the next gesture so
+  // each can animate without moving the recorded endpoint or queuing a batch.
+  for (let from = 0; from < out.length;) {
+    let to = from + 1;
+    while (to < out.length && out[to].ts === out[from].ts) to++;
+    const next = out[to]?.ts;
+    const hasSynthetic = out.slice(from, to).some((move, i) => move.rawAfter === (out[from + i - 1]?.rawAfter ?? 0));
+    if (to - from > 1 && hasSynthetic && next !== undefined && next > out[from].ts
+      && out.slice(from, to).every(move => move.endTs === move.ts)) {
+      const start = out[from].ts, duration = next - start;
+      for (let i = from; i < to; i++) {
+        out[i].ts = start + duration * (i - from) / (to - from);
+        out[i].endTs = start + duration * (i - from + 1) / (to - from);
+      }
+    }
+    from = to;
+  }
   return covered.size === raw.length && out.length > 0 ? out : null;
 }
 

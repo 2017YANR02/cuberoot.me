@@ -30,10 +30,10 @@
  * 去,免得 React 用离散位置盖掉它闪一下。
  */
 
-import { useImperativeHandle, useLayoutEffect, useMemo, useRef } from 'react';
+import { useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { useReconstructHost } from './ReconstructHost';
-import { reconstructionTimeline } from './timeline-model';
+import { reconstructionTimeline, timelineExecutionAt, timelineTooltipOffset } from './timeline-model';
 
 import type { ReconTextLine } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import type { SolveMove } from '@cuberoot/shared/timer/reconstruct/stage-segments';
@@ -72,12 +72,29 @@ export default function SolveTimeline({
   const { localize: tr } = useReconstructHost();
   const span = Math.max(1, totalMs);
   const cursorRef = useRef<HTMLSpanElement | null>(null);
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
   /** 播放时钟接管时的位置(ms);null = 没人接管,听 `currentIdx` 的。 */
   const playheadRef = useRef<number | null>(null);
   const pointerRef = useRef<number | null>(null);
+  const [hoverKey, setHoverKey] = useState<string | null>(null);
 
   // 一行两段:识别(暗)+ 执行(亮)。识别数缺席时整行都算执行 —— 不为它编一个停顿。
   const { segs, stages } = useMemo(() => reconstructionTimeline(lines, moves, method, tr), [lines, moves, method, tr]);
+  const hovered = segs.find(segment => segment.key === hoverKey);
+
+  useLayoutEffect(() => {
+    const tooltip = tooltipRef.current;
+    if (!tooltip) return;
+    const placeTooltip = () => {
+      tooltip.style.transform = 'translateX(-50%)';
+      const rect = tooltip.getBoundingClientRect();
+      const offset = timelineTooltipOffset(rect.left, rect.right, window.innerWidth);
+      tooltip.style.transform = `translateX(calc(-50% + ${offset}px))`;
+    };
+    placeTooltip();
+    window.addEventListener('resize', placeTooltip);
+    return () => window.removeEventListener('resize', placeTooltip);
+  }, [hovered, span]);
 
   if (moves.length === 0) return null;
 
@@ -130,6 +147,13 @@ export default function SolveTimeline({
 
       <Track
         className="stl-track"
+        onPointerLeave={() => setHoverKey(null)}
+        onPointerMove={(e: React.PointerEvent<HTMLElement>) => {
+          if (pointerRef.current === e.pointerId) seek(e);
+          const rect = e.currentTarget.getBoundingClientRect();
+          const at = rect.width > 0 ? (e.clientX - rect.left) / rect.width * span : -1;
+          setHoverKey(timelineExecutionAt(segs, at)?.key ?? null);
+        }}
         {...(onSeek
           ? {
             type: 'button' as const,
@@ -139,9 +163,6 @@ export default function SolveTimeline({
               e.currentTarget.setPointerCapture(e.pointerId);
               seek(e);
               e.preventDefault();
-            },
-            onPointerMove: (e: React.PointerEvent<HTMLElement>) => {
-              if (pointerRef.current === e.pointerId) seek(e);
             },
             onPointerUp: (e: React.PointerEvent<HTMLElement>) => {
               if (pointerRef.current !== e.pointerId) return;
@@ -187,6 +208,12 @@ export default function SolveTimeline({
           <span ref={cursorRef} className="stl-cursor" style={{ left: pct(Math.min(1, cursorMs / span)) }} />
         )}
       </Track>
+
+      {hovered && <div ref={tooltipRef} className="stl-tooltip" role="tooltip"
+        style={{ left: pct((hovered.fromMs + hovered.toMs) / (2 * span)) }}>
+        <span>{hovered.label}</span>
+        <span className="stl-tooltip-moves">{hovered.moves || '—'}</span>
+      </div>}
 
       {showLabels && (
         <div className="stl-row stl-names">

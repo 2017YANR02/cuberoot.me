@@ -378,9 +378,9 @@
   justify-content: flex-end;
   gap: 10px;
 }
-.reconstruct-playback-speed-cap {
-  font-size: 11px; color: var(--muted-foreground); margin-right: 2px;
-}
+.reconstruct-playback-speed-cap { color: var(--muted-foreground); margin-right: 2px; }
+.reconstruct-playback-controls .bool-toggle-label,
+.reconstruct-playback-speed-cap { font-size: 13px; }
 
 .reconstruct-playback-cube {
   display: flex;
@@ -791,7 +791,17 @@
 /* ── 时间轴:一步两段,亮 = 在拧,暗 = 在看 ────────────────────────────
    段的位置就是它在时间上的位置,所以不能用 flex 均分 —— 一律绝对定位。
    全页只有一根:回放那根(阶段名 + 阶段用时 + 游标,可点着跳)。 */
-.stl { width: 100%; }
+.stl { position: relative; width: 100%; }
+.stl-tooltip {
+  position: absolute; z-index: 2; bottom: 100%; transform: translateX(-50%);
+  display: flex; flex-direction: column; gap: 3px;
+  width: max-content; max-width: calc(100vw - 16px); box-sizing: border-box;
+  margin-bottom: 4px; padding: 6px 8px;
+  border: 1px solid var(--border); border-radius: 5px;
+  background: var(--background); color: var(--foreground);
+  font-size: 12px; pointer-events: none;
+}
+.stl-tooltip-moves { font-family: var(--font-mono); overflow-wrap: anywhere; }
 .stl-track {
   position: relative; width: 100%; height: 12px;
   border-radius: 6px; overflow: hidden;

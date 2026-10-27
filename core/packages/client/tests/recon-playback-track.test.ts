@@ -269,6 +269,20 @@ it('maps pure rotations without consuming encoder events and keeps waste tokens'
   expect(reconstructedTrack(waste, raw.slice(0, 2))!.map(move => move.m)).toEqual(['R', "R'"]);
 });
 
+it('gives a synthesized rotation and its simultaneous turn separate animation time', () => {
+  const recorded = [{ m: 'R', ts: 100 }, { m: 'U', ts: 300 }];
+  const mapped = [{ ...lines[0], moves: ['y', 'R', 'U'], moveRanges: [
+    { token: 'y', ts: 100, endTs: 100, startIdx: 0, endIdx: -1 },
+    { token: 'R', ts: 100, endTs: 100, startIdx: 0, endIdx: 0 },
+    { token: 'U', ts: 300, endTs: 300, startIdx: 1, endIdx: 1 },
+  ] }];
+  const track = reconstructedTrack(mapped, recorded)!;
+  expect(track.map(move => move.ts)).toEqual([100, 200, 300]);
+  expect(track.map(move => move.rawAfter)).toEqual([0, 1, 2]);
+  expect(playbackMoveDurationTicks(track, 1, 300, 1)).toBe(6);
+  expect(playbackMoveDurationTicks(track, 2, 300, 1)).toBe(6);
+});
+
 it.each([2, 4])('fits %i replacement moves into the original interval including the final animation', count => {
   const raw = ['R', 'U', "R'", "U'"].map((m, i) => ({ m, ts: 100 + i * 100 }));
   const moves = Array.from({ length: count }, (_, i) => i % 2 ? 'U2' : 'R');

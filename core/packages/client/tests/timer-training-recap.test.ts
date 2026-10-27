@@ -8,7 +8,7 @@ import { notationQuaternion } from '@cuberoot/shared/timer/reconstruct/gyro-orie
 import { invertAlg } from '@cuberoot/shared/alg-transform';
 import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
-import { reconstructionTimeline } from '@cuberoot/timer-ui/reconstruct/timeline-model';
+import { reconstructionTimeline, timelineExecutionAt, timelineTooltipOffset } from '@cuberoot/timer-ui/reconstruct/timeline-model';
 import { reconstructedTrack } from '@cuberoot/timer-ui/reconstruct/playback-track';
 import ReconstructReport from '@cuberoot/timer-ui/reconstruct-report';
 import { detectSolveMethod } from '@cuberoot/shared/timer/reconstruct/method-walk';
@@ -19,6 +19,11 @@ import { reportNotation } from '@cuberoot/timer-ui/reconstruct/report-notation';
 const solve: Solve = { id: 'current', event: 'pll', caseId: 'T', scramble: '', ts: 100, timeMs: 2_100,
   penalty: 'ok', trainingStartMode: 'scrambled', moves: [{ m: 'U', ts: 500 }, { m: 'R', ts: 800 }, { m: 'U', ts: 1_000 }, { m: "R'", ts: 2_100 }] };
 const tr = <T>(copy: { en: T; zh: T }) => copy.en;
+it('keeps the timeline formula within the viewport while preserving centered placement when it fits', () => {
+  expect(timelineTooltipOffset(100, 300, 400)).toBe(0);
+  expect(timelineTooltipOffset(250, 430, 400)).toBe(-38);
+  expect(timelineTooltipOffset(-20, 160, 400)).toBe(28);
+});
 vi.mock('@cuberoot/shared/timer/reconstruct/method-walk', async original => ({
   ...await original<typeof import('@cuberoot/shared/timer/reconstruct/method-walk')>(),
   detectSolveMethod: vi.fn(() => { throw new Error('Training must never classify a full solve'); }),
@@ -74,6 +79,11 @@ describe('training observation and execution', () => {
     expect(timeline.stages.map(stage => [stage.label, stage.fromMs, stage.toMs])).toEqual([
       ['Observation', 0, 600], ['PLL', 600, 2_100],
     ]);
+    expect(timeline.segs.map(segment => [segment.label, segment.moves])).toEqual(
+      recon.lines.map(line => [line.label ?? line.key, line.moves.join(' ')]),
+    );
+    expect(timelineExecutionAt(timeline.segs, 300)).toBeUndefined();
+    expect(timelineExecutionAt(timeline.segs, 900)?.moves).toBe(recon.lines[1].moves.join(' '));
     const track = reconstructedTrack(recon.lines, repetition.moves!)!;
     expect(track).not.toBeNull();
     expect(smartCubeTargetFacelets(`${repetition.scramble} ${recon.inspection} ${track.map(move => move.m).join(' ')}`))

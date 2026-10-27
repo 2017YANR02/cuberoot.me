@@ -23,6 +23,16 @@ interface Seg {
   pause: boolean;
   fromMs: number;
   toMs: number;
+  moves: string;
+  label: string;
+}
+
+export function timelineExecutionAt(segs: readonly Seg[], at: number) {
+  return segs.find(segment => !segment.pause && at >= segment.fromMs && at < segment.toMs);
+}
+
+export function timelineTooltipOffset(left: number, right: number, viewportWidth: number) {
+  return right > viewportWidth - 8 ? viewportWidth - 8 - right : left < 8 ? 8 - left : 0;
 }
 
 const stageOfLine = (kind: ReconTextLine['kind']): StageKey => (
@@ -45,10 +55,11 @@ export function reconstructionTimeline(lines: ReconTextLine[], moves: SolveMove[
       // 识别时间是分步分析表算好的,可能因为四舍五入比这一步还长 —— 钳住,
       // 否则执行段会算出负宽度盖到下一步头上。
       const recog = Math.max(0, Math.min(line.recognitionMs ?? 0, toMs - fromMs));
+      const details = { moves: line.moves.join(' '), label: line.label ?? stage };
       if (recog > 0) {
-        out.push({ key: `${line.key}-p`, stage, color, shade, pause: true, fromMs, toMs: fromMs + recog });
+        out.push({ key: `${line.key}-p`, stage, color, shade, pause: true, fromMs, toMs: fromMs + recog, ...details });
       }
-      out.push({ key: line.key, stage, color, shade, pause: method === 'training' && line.kind === 'inspection', fromMs: fromMs + recog, toMs });
+      out.push({ key: line.key, stage, color, shade, pause: method === 'training' && line.kind === 'inspection', fromMs: fromMs + recog, toMs, ...details });
     }
     return out;
   })();
