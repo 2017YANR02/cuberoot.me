@@ -109,7 +109,6 @@
     "fflate": "0.8.3",
     "fuse.js": "^7.3.0",
     "google-auth-library": "^10.9.1",
-    "gsap": "^3.15.0",
     "html-react-parser": "^6.0.1",
     "html-to-image": "^1.11.13",
     "hyperformula": "^3.4.0",

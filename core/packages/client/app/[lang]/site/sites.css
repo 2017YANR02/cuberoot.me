@@ -888,6 +888,7 @@ body[data-site-scenery] .site-avatar-image {
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 12px;
 }
+.sites-list.is-grid > .sites-list-head { display: none; }
 
 /* Keep offscreen directory entries out of layout/paint during view changes.
    Remember measured heights when available; estimates only reserve scroll space. */
@@ -919,14 +920,10 @@ body[data-site-scenery] .site-card:where(.sites-list.is-grid *) {
   transform: translateY(-2px);
 }
 
-/* Flip owns transforms while the two layouts morph; hover transitions must not lag behind it. */
-.sites-list .is-flip-surface {
-  transition: none;
+/* Moving children must remain visible without changing their surface paint. */
+.sites-list [data-view-transition] {
   overflow: visible;
   content-visibility: visible;
-}
-.sites-list .is-flipping {
-  will-change: transform;
 }
 
 .site-card-primary-link:where(.sites-list.is-grid *) {

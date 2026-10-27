@@ -12,8 +12,6 @@ import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
  * ?countries countries, ?view list|grid) is managed via nuqs.
  */
 import { Suspense, memo, useMemo, useCallback, useState, useEffect, useLayoutEffect, useRef } from 'react';
-import { gsap } from 'gsap';
-import { Flip } from 'gsap/Flip';
 import { useQueryState, useQueryStates, parseAsArrayOf, parseAsString, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { Search, AlertTriangle, Pencil, Trash2, ArrowUp, ArrowDown, Plus, LayoutGrid, List } from '@app-foundation/icons/lucide';
@@ -53,8 +51,7 @@ const DEFAULT_GROUP: GroupId = 'competition';
 type ViewMode = 'list' | 'grid';
 const VIEW_MODES: ViewMode[] = ['list', 'grid'];
 const FLIP_TARGETS = '[data-flip-id]';
-// Flip documents `kill`, but its bundled FlipStateVars omits this option.
-const FLIP_STATE_OPTIONS: Flip.FlipStateVars & { kill: boolean } = { kill: false };
+type ViewSnapshot = Map<Element, DOMRect>;
 
 function visibleSiteElements(list: HTMLElement): Element[] {
   const visible: Element[] = [];
@@ -68,7 +65,11 @@ function visibleSiteElements(list: HTMLElement): Element[] {
   }
   return visible;
 }
-gsap.registerPlugin(Flip);
+function captureView(list: HTMLElement): ViewSnapshot {
+  return new Map(visibleSiteElements(list).flatMap(root =>
+    [...root.querySelectorAll(FLIP_TARGETS)].map(element => [element, element.getBoundingClientRect()] as const),
+  ));
+}
 
 const GROUP_COLOR: Record<GroupId, string> = {
   competition: '#2f6fd8',
@@ -505,8 +506,16 @@ function SitesPageInner() {
     parseAsStringEnum<ViewMode>(VIEW_MODES).withDefault('list').withOptions({ history: 'replace', clearOnDefault: false }),
   );
   const listRef = useRef<HTMLDivElement>(null);
-  const flipState = useRef<ReturnType<typeof Flip.getState> | null>(null);
-  const flipAnimation = useRef<gsap.core.Timeline | null>(null);
+  const flipState = useRef<ViewSnapshot | null>(null);
+  const flipAnimation = useRef<Animation[]>([]);
+  const preparedView = useRef<{ state: ViewSnapshot; time: number } | null>(null);
+
+  function prepareView(next: ViewMode) {
+    const list = listRef.current;
+    if (next === viewMode || !list || flipAnimation.current.some(animation => animation.playState === 'running')
+      || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    preparedView.current = { state: captureView(list), time: performance.now() };
+  }
 
   function changeViewMode(next: ViewMode, animate: boolean) {
     if (next === viewMode) return;
@@ -515,18 +524,13 @@ function SitesPageInner() {
     // This lets a quick reversal continue from where the cards actually are.
     flipState.current = null;
     if (list && animate && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      // Measuring every descendant forces thousands of layout reads on a long
-      // directory. Only visible source rows need a shared-element starting state.
-      const targets = visibleSiteElements(list).flatMap(element => [...element.querySelectorAll(FLIP_TARGETS)]);
-      if (targets.length) flipState.current = Flip.getState(targets, {
-        ...FLIP_STATE_OPTIONS,
-        // Resting layouts have no scale/rotation. Interrupted frames still need
-        // the full matrix calculation to preserve their current geometry.
-        simple: !flipAnimation.current || flipAnimation.current.progress() === 1,
-      });
+      const prepared = preparedView.current;
+      flipState.current = prepared && performance.now() - prepared.time < 1000 && !flipAnimation.current.some(animation => animation.playState === 'running')
+        ? prepared.state : captureView(list);
     }
-    flipAnimation.current?.progress(1).kill();
-    flipAnimation.current = null;
+    preparedView.current = null;
+    flipAnimation.current.forEach(animation => animation.cancel());
+    flipAnimation.current = [];
     void setViewMode(next);
   }
 
@@ -918,6 +922,28 @@ function SitesPageInner() {
   ]);
 
   useLayoutEffect(() => {
+    preparedView.current = null;
+    const invalidate = () => { preparedView.current = null; };
+    // A hover snapshot is only reusable while the actual geometry is unchanged.
+    window.addEventListener('scroll', invalidate, true);
+    window.addEventListener('resize', invalidate);
+    const list = listRef.current;
+    const observer = new ResizeObserver(invalidate);
+    if (list) {
+      observer.observe(list);
+      list.addEventListener('load', invalidate, true);
+    }
+    document.fonts.addEventListener('loadingdone', invalidate);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('scroll', invalidate, true);
+      window.removeEventListener('resize', invalidate);
+      list?.removeEventListener('load', invalidate, true);
+      document.fonts.removeEventListener('loadingdone', invalidate);
+    };
+  }, [viewMode, filtered, admin, lang]);
+
+  useLayoutEffect(() => {
     const state = flipState.current;
     flipState.current = null;
     const list = listRef.current;
@@ -928,49 +954,53 @@ function SitesPageInner() {
     // The directory has hundreds of entries. Only tween rows that intersect the
     // viewport in either layout, including all of their shared child elements.
     const inViewport = (bounds: DOMRect) => bounds.bottom > 0 && bounds.top < window.innerHeight;
-    const visibleBefore = new Set(state.elementStates.filter(({ bounds }) => inViewport(bounds)).map(({ id }) => id.replace(/-(icon|name)$/, '')));
+    const visibleBefore = new Set<Element | null>([...state].filter(([, bounds]) => inViewport(bounds)).map(([element]) => element.closest('article')));
     const visibleAfter = new Set(visibleSiteElements(list));
-    const roots = Array.from(list.children).filter(element => visibleAfter.has(element) || visibleBefore.has(element.getAttribute('data-flip-id') ?? ''));
+    const roots = Array.from(list.children).filter(element => visibleAfter.has(element) || visibleBefore.has(element));
     // Only the icon and name move between layouts. Resizing a text-bearing
     // ancestor either stretches glyphs or forces layout on every animation frame.
     const targets = roots.flatMap(element => [...element.querySelectorAll(FLIP_TARGETS)]);
     if (targets.length === 0) return;
-    list.classList.add('is-view-transitioning');
-    roots.forEach(element => element.classList.add('is-flip-surface'));
+    roots.forEach(element => element.setAttribute('data-view-transition', ''));
     const clearTransition = () => {
-      list.classList.remove('is-view-transitioning');
-      roots.forEach(element => element.classList.remove('is-flip-surface'));
+      roots.forEach(element => element.removeAttribute('data-view-transition'));
     };
-    const animation = Flip.from(state, {
-      targets,
-      paused: true,
-      duration: 0.42,
-      ease: 'power2.inOut',
-      // Keep this transform-only: resolve the size difference immediately,
-      // then tween translation without ever stretching text or changing layout.
-      scale: true,
-      simple: true,
-      custom: { scaleX: { duration: 0 }, scaleY: { duration: 0 } },
-      prune: true,
-      toggleClass: 'is-flipping',
-      onEnter: (elements) => elements.length ? gsap.from(elements, { opacity: 0, duration: 0.2, clearProps: 'opacity' }) : undefined,
-      onComplete: clearTransition,
+    // Batch all destination reads before writing transforms. Flip's size fitting
+    // inserts matrix probes even with zero-duration scale tweens, forcing repeated
+    // layout. These shared elements only need translation, never size fitting.
+    const offsets = new Map(targets.map(element => {
+      const before = state.get(element);
+      const after = element.getBoundingClientRect();
+      return [element, { x: before ? before.left - after.left : 0, y: before ? before.top - after.top : 0 }];
+    }));
+    // Native transform animations keep running on the compositor while the
+    // shared corner observer updates paint on the main thread.
+    const animations = targets.map(element => {
+      const offset = offsets.get(element)!;
+      return state.has(element)
+        ? element.animate([
+          { transform: `translate(${offset.x}px, ${offset.y}px)` },
+          { transform: 'translate(0, 0)' },
+        ], { duration: 320, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' })
+        : element.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200 });
     });
     const details = roots.flatMap(element => [...element.querySelectorAll('.site-row-host, .site-row-author, .site-row-desc')]);
-    if (details.length) animation.from(details, { opacity: 0, duration: 0.2, clearProps: 'opacity' }, 0);
-    flipAnimation.current = animation;
-    // Let layout and the shared surface observer settle before starting the
-    // motion clock, so their initial work does not consume the tween's frames.
-    let startFrame = requestAnimationFrame(() => {
-      startFrame = requestAnimationFrame(() => animation.play());
+    animations.push(...details.map(element => element.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200 })));
+    flipAnimation.current = animations;
+    let disposed = false;
+    void Promise.allSettled(animations.map(animation => animation.finished)).then(() => {
+      if (!disposed) clearTransition();
     });
-    const finish = () => { cancelAnimationFrame(startFrame); animation.progress(1).kill(); };
+    const finish = () => {
+      disposed = true;
+      animations.forEach(animation => animation.cancel());
+      clearTransition();
+    };
     window.addEventListener('resize', finish);
     reducedMotion.addEventListener('change', finish);
     return () => {
       finish();
-      clearTransition();
-      flipAnimation.current = null;
+      flipAnimation.current = [];
       window.removeEventListener('resize', finish);
       reducedMotion.removeEventListener('change', finish);
     };
@@ -1073,10 +1103,10 @@ function SitesPageInner() {
               )}
             </div>
             <div className="sites-view-toggle" role="group" aria-label={t('视图', 'View')}>
-              <button type="button" className={`sites-view-btn${viewMode === 'list' ? ' is-active' : ''}`} onClick={(event) => changeViewMode('list', event.detail > 0)} aria-label={t('列表视图', 'List view')} aria-pressed={viewMode === 'list'} title={t('列表视图', 'List view')}>
+              <button type="button" className={`sites-view-btn${viewMode === 'list' ? ' is-active' : ''}`} onPointerEnter={() => prepareView('list')} onPointerDown={() => prepareView('list')} onFocus={() => prepareView('list')} onClick={(event) => changeViewMode('list', event.detail > 0)} aria-label={t('列表视图', 'List view')} aria-pressed={viewMode === 'list'} title={t('列表视图', 'List view')}>
                 <List size={16} />
               </button>
-              <button type="button" className={`sites-view-btn${viewMode === 'grid' ? ' is-active' : ''}`} onClick={(event) => changeViewMode('grid', event.detail > 0)} aria-label={t('卡片视图', 'Card view')} aria-pressed={viewMode === 'grid'} title={t('卡片视图', 'Card view')}>
+              <button type="button" className={`sites-view-btn${viewMode === 'grid' ? ' is-active' : ''}`} onPointerEnter={() => prepareView('grid')} onPointerDown={() => prepareView('grid')} onFocus={() => prepareView('grid')} onClick={(event) => changeViewMode('grid', event.detail > 0)} aria-label={t('卡片视图', 'Card view')} aria-pressed={viewMode === 'grid'} title={t('卡片视图', 'Card view')}>
                 <LayoutGrid size={16} />
               </button>
             </div>
@@ -1255,14 +1285,12 @@ function SitesPageInner() {
           <div className="sites-empty">{TEXTS.noResults[lang]}</div>
         ) : (
           <div ref={listRef} className={`sites-list${viewMode === 'grid' ? ' is-grid' : ''}`}>
-            {viewMode === 'list' && (
-              <div className="sites-list-head" aria-hidden>
-                <span />
-                <span>{TEXTS.colName[lang]}</span>
-                <span>{TEXTS.colAuthor[lang]}</span>
-                <span>{TEXTS.colDesc[lang]}</span>
-              </div>
-            )}
+            <div className="sites-list-head" aria-hidden>
+              <span />
+              <span>{TEXTS.colName[lang]}</span>
+              <span>{TEXTS.colAuthor[lang]}</span>
+              <span>{TEXTS.colDesc[lang]}</span>
+            </div>
             {filtered.map((s, i) => {
               const rowProps = {
                 site: s,

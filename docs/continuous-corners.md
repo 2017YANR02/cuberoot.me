@@ -78,4 +78,6 @@ Web 与共享 app-ui 使用同一组 `.cg-card, .rc-card, .recon-card, .sortable
 
 回归位于 `core/packages/client/tests/continuous-corners-runtime.test.ts`，覆盖批量插入、局部样式更新、尺寸通知、临时探针、选中/主题、删除重排、视口进出及销毁重挂。浏览器采样和共享消费者验证只代表本机 Chromium / React DOM；未扩展为 Safari、Android、HarmonyOS 或桌面原生安装包的设备验收。
 
+后续真实点击采样发现，圆角重绘仍会占用交互后的首帧。调度现在在 rAF 中只安排后续 task，先让浏览器呈现布局，再计算装饰 SVG；两个阶段继续合并为一个待处理批次，销毁时同时取消 rAF 和 task。新增回归覆盖首帧回调不执行绘制，以及回调后、task 前销毁的取消路径。目录视图同时改为预备可见坐标和 Web Animations 位移，不再使用 GSAP 尺寸拟合或等待两帧才启动动画；说明见 client README。
+
 本地验证：client 圆角运行时与目录列对齐共 13 项、app-ui 智能连接集成 33 项通过，client/app-ui 类型检查通过，冻结锁文件安装通过。Chromium 验证视图快速反转、减少动态效果、375px 窄屏、搜索和末项可达；动画只涉及当次窗口的 12 个条目（24 个图标/名称），采样字体变换比例保持 1:1。屏外内容跳过布局后，该次切换的最长任务为 126ms，仍有布局准备成本，不能据此宣称所有设备零掉帧。首页、排名页和模拟器完成加载冒烟，未作全站业务流程或原生设备验收。

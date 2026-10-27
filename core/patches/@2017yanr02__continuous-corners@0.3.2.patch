@@ -1,19 +1,21 @@
 diff --git a/dist/src/site.js b/dist/src/site.js
-index 428f4da0143dd0eb356a10f949ecc03aa92a722f..f7e68fb939ca6336748dbf036d45e0f6e0f5b9a0 100644
+index 428f4da0143dd0eb356a10f949ecc03aa92a722f..5283cd3f46bee9b474f328d73e47da8b814efd1c 100644
 --- a/dist/src/site.js
 +++ b/dist/src/site.js
-@@ -66,6 +66,11 @@ export function installSiteCorners(root, options = {}) {
+@@ -66,7 +66,12 @@ export function installSiteCorners(root, options = {}) {
          return result;
      };
      const pending = new Set();
+-    let frame = 0, destroyed = false, paints = 0, passes = 0;
 +    const subtrees = new Set();
 +    const removedRules = new Set();
 +    const watched = new Set();
 +    const visible = new Set();
 +    let structureChanged = false;
-     let frame = 0, destroyed = false, paints = 0, passes = 0;
++    let frame = 0, paintTask = 0, destroyed = false, paints = 0, passes = 0;
      const sheet = new win.CSSStyleSheet();
      doc.adoptedStyleSheets = [...doc.adoptedStyleSheets, sheet];
+     // Structural selectors leave React-owned attributes and children untouched.
 @@ -83,7 +88,17 @@ export function installSiteCorners(root, options = {}) {
          return `:root > ${parts.join(" > ")}`;
      };
@@ -71,7 +73,7 @@ index 428f4da0143dd0eb356a10f949ecc03aa92a722f..f7e68fb939ca6336748dbf036d45e0f6
          set(el, entry, "border-image-source", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`);
          set(el, entry, "border-image-slice", "0 fill");
          set(el, entry, "border-image-width", "0");
-@@ -157,7 +185,7 @@ export function installSiteCorners(root, options = {}) {
+@@ -157,28 +185,76 @@ export function installSiteCorners(root, options = {}) {
          set(el, entry, "background-image", "none");
          paints++;
      };
@@ -80,8 +82,9 @@ index 428f4da0143dd0eb356a10f949ecc03aa92a722f..f7e68fb939ca6336748dbf036d45e0f6
      const flush = () => {
          if (destroyed)
              return;
-@@ -165,20 +193,67 @@ export function installSiteCorners(root, options = {}) {
+         collect(observer.takeRecords());
          frame = 0;
++        paintTask = 0;
          observer.disconnect();
          passes++;
 -        sheet.disabled = true;
@@ -152,7 +155,7 @@ index 428f4da0143dd0eb356a10f949ecc03aa92a722f..f7e68fb939ca6336748dbf036d45e0f6
              observe();
          }
      };
-@@ -186,19 +261,64 @@ export function installSiteCorners(root, options = {}) {
+@@ -186,19 +262,66 @@ export function installSiteCorners(root, options = {}) {
          if (destroyed || node.closest("[data-cc-decoration], [data-continuous-corners], svg"))
              return;
          pending.add(node);
@@ -163,7 +166,10 @@ index 428f4da0143dd0eb356a10f949ecc03aa92a722f..f7e68fb939ca6336748dbf036d45e0f6
 -            }
 +        if (subtree) subtrees.add(node);
          if (!frame)
-             frame = win.requestAnimationFrame(flush);
+-            frame = win.requestAnimationFrame(flush);
++            // Let the browser present the input/layout update before computing
++            // decorative SVG paint. Keep one pending batch across both phases.
++            frame = win.requestAnimationFrame(() => { paintTask = win.setTimeout(flush, 0); });
      };
 -    const resize = new win.ResizeObserver(items => { for (const item of items)
 -        schedule(item.target, true); });
@@ -224,7 +230,12 @@ index 428f4da0143dd0eb356a10f949ecc03aa92a722f..f7e68fb939ca6336748dbf036d45e0f6
              // Structural selectors (:first-child, :nth-child, :has) can also change
              // existing descendants' paint. Keep invalidation correct; batch it per frame.
              if (target instanceof win.HTMLElement)
-@@ -240,6 +360,11 @@ export function installSiteCorners(root, options = {}) {
+@@ -237,9 +360,16 @@ export function installSiteCorners(root, options = {}) {
+             destroyed = true;
+             if (frame)
+                 win.cancelAnimationFrame(frame);
++            if (paintTask)
++                win.clearTimeout(paintTask);
              observer.disconnect();
              theme.disconnect();
              resize.disconnect();

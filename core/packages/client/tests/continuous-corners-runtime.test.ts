@@ -14,7 +14,7 @@ describe('continuous corners on large dynamic lists', () => {
     const batch = [...frames.values()];
     frames.clear();
     batch.forEach(callback => callback(0));
-    await Promise.resolve();
+    await new Promise(resolve => window.setTimeout(resolve, 0));
   }
 
   function card() {
@@ -55,6 +55,32 @@ describe('continuous corners on large dynamic lists', () => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     document.body.replaceChildren();
+  });
+
+  it('leaves the rendering callback free before computing decorative paint', async () => {
+    document.body.append(card());
+    controller = installSiteCorners(document.body);
+    await Promise.resolve();
+    const batch = [...frames.values()];
+    frames.clear();
+    batch.forEach(callback => callback(0));
+    expect(controller.stats().passes).toBe(0);
+    expect(document.adoptedStyleSheets[0].cssRules.length).toBe(0);
+    await new Promise(resolve => window.setTimeout(resolve, 0));
+    expect(controller.stats().surfaces).toBe(1);
+  });
+
+  it('cancels paint when destroyed between the rendering callback and its task', async () => {
+    document.body.append(card());
+    controller = installSiteCorners(document.body);
+    await Promise.resolve();
+    const batch = [...frames.values()];
+    frames.clear();
+    batch.forEach(callback => callback(0));
+    controller.destroy();
+    await new Promise(resolve => window.setTimeout(resolve, 0));
+    expect(controller.stats().passes).toBe(0);
+    expect(document.adoptedStyleSheets).toHaveLength(0);
   });
 
   it('scans a parent subtree once for a batch of appended rows', async () => {
