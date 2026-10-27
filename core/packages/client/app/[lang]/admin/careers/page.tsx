@@ -5,6 +5,7 @@ import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import { apiUrl } from '@/lib/api-base';
 import { authHeaders, handleApi } from '@/lib/admin-api';
+import { sessionFetch } from '@/lib/session-fetch';
 import { useIsAdmin } from '@/lib/auth-store';
 import '../admin.css';
 import './careers-admin.css';
@@ -25,7 +26,7 @@ export default function CareersAdmin() {
     if (!admin) return;
     const controller = new AbortController();
     setStatus('loading');
-    void fetch(apiUrl(`/v1/career-applications?offset=${offset}`), { headers: authHeaders(false), cache: 'no-store', signal: controller.signal })
+    void sessionFetch(apiUrl(`/v1/career-applications?offset=${offset}`), { headers: authHeaders(false), cache: 'no-store', signal: controller.signal })
       .then(response => handleApi<{ applications: Application[]; hasMore: boolean }>(response))
       .then(data => { if (!controller.signal.aborted) { setApplications(data.applications); setHasMore(data.hasMore); setStatus('ready'); } })
       .catch(() => { if (!controller.signal.aborted) setStatus('error'); });
@@ -34,7 +35,7 @@ export default function CareersAdmin() {
   const download = async (id: string, kind: 'resume' | 'photo', filename: string) => {
     setDownloadError(false);
     try {
-      const response = await fetch(apiUrl(`/v1/career-applications/${encodeURIComponent(id)}/${kind}`), { headers: authHeaders(false), cache: 'no-store' });
+      const response = await sessionFetch(apiUrl(`/v1/career-applications/${encodeURIComponent(id)}/${kind}`), { headers: authHeaders(false), cache: 'no-store' });
       if (!response.ok) throw new Error('Download failed');
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
@@ -51,7 +52,7 @@ export default function CareersAdmin() {
     setDeleteError(false);
     setDeleting(id);
     try {
-      await handleApi(await fetch(apiUrl(`/v1/career-applications/${encodeURIComponent(id)}`), { method: 'DELETE', headers: authHeaders(false), cache: 'no-store' }));
+      await handleApi(await sessionFetch(apiUrl(`/v1/career-applications/${encodeURIComponent(id)}`), { method: 'DELETE', headers: authHeaders(false), cache: 'no-store' }));
       if (applications.length === 1 && offset > 0) setOffset(value => Math.max(0, value - 50));
       else setRevision(value => value + 1);
     } catch { setDeleteError(true); }
