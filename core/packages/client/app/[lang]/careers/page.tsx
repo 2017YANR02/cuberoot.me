@@ -40,8 +40,8 @@ export default function CareersPage() {
     </section>
     <CareersBrowser positions={positions}
       labels={{ filters: tr({ zh: '职位筛选', en: 'Position filters' }), search: tr({ zh: '职位搜索', en: 'Search positions' }), placeholder: tr({ zh: '搜索职位关键词', en: 'Search by keyword' }), categories: tr({ zh: '职位类别', en: 'Category' }), results: tr({ zh: '职位列表', en: 'Open positions' }), empty: tr({ zh: '没有匹配的职位。', en: 'No matching positions.' }), clearFilters: tr({ zh: '清除筛选', en: 'Clear filters' }) }}
-      classes={{ browser: 'careers-browser', filters: 'careers-filters', searchWrap: 'careers-search', filterRow: 'careers-filter', results: 'careers-positions', empty: 'careers-empty' }}
-      renderClear={clear => <ClearButton onClick={clear} />}
+      classes={{ browser: 'careers-browser', filters: 'careers-filters', searchWrap: 'careers-search', search: 'careers-search-input', filterRow: 'careers-filter', results: 'careers-positions', empty: 'careers-empty' }}
+      renderClear={clear => <ClearButton className="careers-search-clear" onClick={clear} />}
       renderPosition={position => <AppLink className="careers-position" href={`/careers/${position.id}`} prefetch={false}><div><h3>{position.title}</h3><p>{position.category}</p></div><ChevronRight size={20} aria-hidden="true" /></AppLink>}
     />
   </main>;

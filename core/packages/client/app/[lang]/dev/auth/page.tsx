@@ -1,6 +1,6 @@
 'use client';
 
-/* auth-doc-review {"fingerprint":"090a20a5a6811efb3ed0382c2e0f14f729ce0b73475a350dcd3d6a579fc3ecbb","reason":"Reviewed homepage assistant navigation and account-scoped browser pins; they do not change sign-in or session authentication. Public assistant shares are owned by the account and cascade on account deletion, documented below. Enterprise renewal availability and mini-program link creation now verify active owner or administrator membership in a verified enterprise, also documented below. Existing consent, linking and merge boundaries remain unchanged; local browser pins are not remotely deleted."} */
+/* auth-doc-review {"fingerprint":"e191d84c7ed2070db719b8d181089247fe4f89771fe569eda3efdff3d9d309e9","reason":"Reviewed the homepage careers link, administrator careers destination and assistant example/focus changes; none changes login, account identity, session verification or the existing role gate. Reviewed homepage assistant navigation and account-scoped browser pins; they do not change sign-in or session authentication. Public assistant shares are owned by the account and cascade on account deletion, documented below. Enterprise renewal availability and mini-program link creation now verify active owner or administrator membership in a verified enterprise, also documented below. Existing consent, linking and merge boundaries remain unchanged; local browser pins are not remotely deleted."} */
 
 import type { ReactNode } from 'react';
 import AppLink from '@/components/AppLink';

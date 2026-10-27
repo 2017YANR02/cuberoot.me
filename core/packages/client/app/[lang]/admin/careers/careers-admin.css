@@ -5,6 +5,6 @@
 .careers-admin-item dt { color: var(--muted-foreground); }
 .careers-admin-item dd { margin: 0; overflow-wrap: anywhere; }
 .careers-admin-files, .careers-admin-pages { display: flex; flex-wrap: wrap; gap: 16px; }
-.careers-admin-files button, .careers-admin-pages button { color: var(--accent); text-align: left; overflow-wrap: anywhere; }
-.careers-admin-pages button:disabled { color: var(--faint-foreground); }
+.careers-admin-action, .careers-admin-page-button { color: var(--accent); text-align: left; overflow-wrap: anywhere; }
+.careers-admin-page-button:disabled { color: var(--faint-foreground); }
 .careers-admin-files .careers-admin-delete { color: var(--destructive); }
