@@ -1,3 +1,11 @@
+.timer-room-overlay:has(> .visualcube-preview) {
+  /* The smart-cube full-screen solve detail is at 100. Its child preview
+     portals to body, so it needs its own layer above that detail. */
+  z-index: 110;
+  /* Clip only at the viewport edge, not at the centered dialog's bounds. */
+  overflow: clip;
+}
+
 .timer-room-overlay > .timer-room-dialog.visualcube-preview {
   width: min(100%, 360px);
   background: transparent;
@@ -6,6 +14,9 @@
   box-shadow: none;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
+  /* FLIP travels between the thumbnail and the centered image. The generic
+     dialog's overflow:auto would clip that path and create scrollbars. */
+  overflow: visible;
   /* Let empty dialog space reach the shared backdrop dismissal handler. */
   pointer-events: none;
 }
