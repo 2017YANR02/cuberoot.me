@@ -13,7 +13,7 @@ const deferred = <T>() => {
 describe('algorithm library snapshots', () => {
   it('hands aligned data to only the intended route and drops it after edits or expiry', async () => {
     const { prepareAlgNavigationFile, peekAlgNavigationFile, invalidateAlgLibrary, algLibraryGeneration, rememberAlgNavigationVersion } = await import('@/lib/alg-library-cache');
-    const file = { puzzle: '3x3', set: 'pll', cases: [] } as unknown as import('@cuberoot/shared').AlgFile;
+    const file = { puzzle: '3x3', set: 'pll', cases: [] } as unknown as import('@cuberoot/shared/alg').AlgFile;
     const generation = algLibraryGeneration('3x3', 'pll');
     rememberAlgNavigationVersion(file, generation);
     prepareAlgNavigationFile('/zh/alg/3x3/pll/a+?angle=u', file);

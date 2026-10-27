@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { AlgCase } from '@cuberoot/shared';
+import type { AlgCase } from '@cuberoot/shared/alg';
 import { adjacentAlgCases } from '@/lib/alg_case_navigation';
 import { algCaseHref } from '@/lib/alg_case_link';
 

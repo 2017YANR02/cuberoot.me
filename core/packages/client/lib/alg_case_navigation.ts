@@ -1,4 +1,4 @@
-import type { AlgCase } from '@cuberoot/shared';
+import type { AlgCase } from '@cuberoot/shared/alg';
 import { primaryCaseName } from '@/lib/alg_case_display';
 import { sortByCp } from '@/lib/alg_cp_order';
 import { sortAlgItemsBySignedLabel } from '@/lib/alg_group_order';

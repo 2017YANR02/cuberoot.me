@@ -129,7 +129,13 @@
           "file": "packages/client/tests/recon-ground-truth-gate.test.ts",
           "mechanism": "spawnSync",
           "target": "<dynamic>",
-          "count": 2
+          "count": 3
+        },
+        {
+          "file": "packages/client/tests/recon-ground-truth-gate.test.ts",
+          "mechanism": "spawnSync",
+          "target": "git",
+          "count": 1
         }
       ],
       "evidence": [
