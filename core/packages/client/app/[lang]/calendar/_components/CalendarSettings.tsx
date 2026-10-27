@@ -1,11 +1,10 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { Settings } from '@app-foundation/icons/lucide';
+import AppLink from '@/components/AppLink';
+import { ArrowLeft } from '@app-foundation/icons/lucide';
 import BoolToggle from '@/components/BoolToggle';
-import { ClearButton } from '@/components/ClearButton';
 import { ListSelect, type ListSelectItem } from '@/components/ListSelect';
-import { useModalDismiss } from '@/hooks/useModalDismiss';
 import type { CalendarPrefs } from '@/lib/calendar-store';
 import { tr } from '@/i18n/tr';
 import { VIEW_KEYS, VIEW_LABELS } from '../_lib/format';
@@ -32,14 +31,11 @@ interface Props {
 }
 
 export default function CalendarSettings({ section, onSection, prefs, onPrefs, displayTz, zoneItems, onClose, children }: Props) {
-  const backdropProps = useModalDismiss(onClose);
   return (
-    <div className="cal-modal-backdrop" {...backdropProps}>
-      <section className="cal-modal cal-settings" data-site-surface="popover" role="dialog" aria-modal="true" aria-label={tr({ zh: '日历设置', en: 'Calendar settings' })}>
+    <section className="cal-settings" aria-label={tr({ zh: '日历设置', en: 'Calendar settings' })}>
         <header className="cal-settings-head">
-          <Settings size={20} aria-hidden />
-          <h2>{tr({ zh: '设置', en: 'Settings' })}</h2>
-          <ClearButton variant="standalone" ariaLabel={tr({ zh: '关闭设置', en: 'Close settings' })} onClick={onClose} />
+          <button type="button" className="cal-icon-btn" aria-label={tr({ zh: '返回日历', en: 'Back to calendar' })} onClick={onClose}><ArrowLeft size={22} aria-hidden /></button>
+          <h1>{tr({ zh: '设置', en: 'Settings' })}</h1>
         </header>
         <div className="cal-settings-layout">
           <nav className="cal-settings-nav" aria-label={tr({ zh: '设置分类', en: 'Settings sections' })}>
@@ -62,6 +58,9 @@ export default function CalendarSettings({ section, onSection, prefs, onPrefs, d
                 <ListSelect items={zoneItems} value={displayTz} allLabel="" clearable={false} searchable maxVisible={80} searchPlaceholder={tr({ zh: '搜城市 / 时区', en: 'Search city or zone' })} onChange={(tz) => onPrefs({ tz })} />
               </div>
               <p className="cal-hint">{tr({ zh: '日程按这个时区显示，原来的时间和时区保持不变。', en: 'Events are displayed in this time zone. Their original times and time zones stay the same.' })}</p>
+              <AppLink className="cal-link-btn" href="/timezone" prefetch={false}>
+                {tr({ zh: '打开时区换算', en: 'Open the time zone converter' })}
+              </AppLink>
             </>}
             {section === 'events' && <>
               <div className="cal-settings-field">
@@ -100,7 +99,6 @@ export default function CalendarSettings({ section, onSection, prefs, onPrefs, d
             {section !== 'import' && <p className="cal-settings-note">{tr({ zh: '偏好设置自动保存在当前浏览器。', en: 'Preferences are saved automatically in this browser.' })}</p>}
           </div>
         </div>
-      </section>
-    </div>
+    </section>
   );
 }
