@@ -11,6 +11,31 @@ const deferred = <T>() => {
 };
 
 describe('algorithm library snapshots', () => {
+  it('hands aligned data to only the intended route and drops it after edits or expiry', async () => {
+    const { prepareAlgNavigationFile, peekAlgNavigationFile, invalidateAlgLibrary, algLibraryGeneration, rememberAlgNavigationVersion } = await import('@/lib/alg-library-cache');
+    const file = { puzzle: '3x3', set: 'pll', cases: [] } as unknown as import('@cuberoot/shared').AlgFile;
+    const generation = algLibraryGeneration('3x3', 'pll');
+    rememberAlgNavigationVersion(file, generation);
+    prepareAlgNavigationFile('/zh/alg/3x3/pll/a+?angle=u', file);
+    // Identity matters: alignment and imported-OH provenance use WeakMaps/Sets.
+    expect(peekAlgNavigationFile('/zh/alg/3x3/pll/a+')).toBe(file);
+    expect(peekAlgNavigationFile('/zh/alg/3x3/pll/j')).toBeNull();
+    invalidateAlgLibrary('3x3', 'pll');
+    expect(peekAlgNavigationFile('/zh/alg/3x3/pll/a+')).toBeNull();
+    // A stale visible list must not re-stamp its data after invalidation.
+    prepareAlgNavigationFile('/zh/alg/3x3/pll/a+', file);
+    expect(peekAlgNavigationFile('/zh/alg/3x3/pll/a+')).toBeNull();
+    prepareAlgNavigationFile('/zh/alg/3x3/pll/a+', { ...file });
+    expect(peekAlgNavigationFile('/zh/alg/3x3/pll/a+')).toBeNull();
+    const refreshedFile = { ...file };
+    rememberAlgNavigationVersion(refreshedFile, algLibraryGeneration('3x3', 'pll'));
+    prepareAlgNavigationFile('/zh/alg/3x3/pll/j', refreshedFile);
+    expect(peekAlgNavigationFile('/zh/alg/3x3/pll/a+')).toBeNull();
+    expect(peekAlgNavigationFile('/zh/alg/3x3/pll/j')).toBe(refreshedFile);
+    vi.advanceTimersByTime(30_000);
+    expect(peekAlgNavigationFile('/zh/alg/3x3/pll/j')).toBeNull();
+  });
+
   it('deduplicates first loads and immediately returns a cached snapshot during revalidation', async () => {
     const { readAlgLibrary, subscribeAlgLibrary } = await import('@/lib/alg-library-cache');
     const first = deferred<{ revision: number }>();

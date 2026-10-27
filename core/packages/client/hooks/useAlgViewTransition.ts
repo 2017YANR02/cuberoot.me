@@ -119,7 +119,8 @@ export function useAlgViewTransition(root: RefObject<HTMLDivElement | null>, lay
 type EntryPart = { rect: DOMRect; text: string };
 // Browser-only, one pending navigation. No DOM nodes or generated diagrams retained.
 let entry: { path: string; id: string; orientation: string; expires: number; width: number; height: number; parts: Map<string, EntryPart> } | null = null;
-const textOf = (element: Element) => (element.getAttribute('data-alg-shared-title') ?? element.textContent ?? '').replace(/\s+/g, '');
+const textOf = (element: Element) => (element.getAttribute('data-alg-shared-title')
+  ?? (element instanceof HTMLInputElement ? element.value : element.textContent) ?? '').replace(/\s+/g, '');
 const sameText = (key: string, left: string, right: string) => key === 'title'
   ? left === right
   : left.replace(/[()·]/g, '') === right.replace(/[()·]/g, '');
@@ -165,7 +166,7 @@ export function useAlgCaseEntryTransition(root: RefObject<HTMLDivElement | null>
     const image = orientationImage ?? (before.orientation === '0' ? container.querySelector<HTMLElement>('.alg-meta-related-card.is-current .puzzle-art') : null);
     if (image) candidates.set('image', [image]);
     for (const [key, selector] of [
-      ['title', '[data-alg-shared-title]'],
+      ['title', '[data-alg-shared-title], .alg-case-name-input'],
       ['setup', '.alg-case-standard code, .alg-meta-scramble-row .alg-meta-algline-code'],
       ['algorithm', '.alg-alg-text, .alg-meta-case-algs .alg-meta-algline-code'],
     ]) candidates.set(key, Array.from(container.querySelectorAll<HTMLElement>(selector)).slice(0, LIMIT));
@@ -173,7 +174,11 @@ export function useAlgCaseEntryTransition(root: RefObject<HTMLDivElement | null>
     for (const [key, elements] of candidates) {
       const source = before.parts.get(key);
       if (!source) continue;
-      const element = elements.find(element => key === 'image' || sameText(key, textOf(element), source.text));
+      // The case id already matches. An admin edits the DB name (Aa/Jb),
+      // whereas the public title can be its display alias (A+/J).
+      const element = elements.find(element => key === 'image'
+        || (key === 'title' && element.matches('.alg-case-name-input'))
+        || sameText(key, textOf(element), source.text));
       if (!element) continue;
       const rect = element.getBoundingClientRect();
       if (!visible(rect) || !rect.width || !rect.height) continue;

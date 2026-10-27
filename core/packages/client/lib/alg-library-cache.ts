@@ -15,6 +15,28 @@ const initialReads = new Map<string, Promise<unknown>>();
 const listeners = new Map<string, Set<() => void>>();
 const generations = new Map<string, number>();
 
+// One intent-prepared destination; reuse the already aligned list data, including
+// in-memory provenance that must not be serialized (e.g. merged OH formulas).
+let navigationFile: { path: string; file: AlgFile; generation: number; expires: number } | null = null;
+const navigationVersions = new WeakMap<AlgFile, number>();
+export const algLibraryGeneration = (puzzle: string, set: string): number => generations.get(algLibraryKey(puzzle, set)) ?? 0;
+/** Called only when a guarded library load finishes, never for optimistic edits. */
+export function rememberAlgNavigationVersion(file: AlgFile, generation: number): AlgFile {
+  navigationVersions.set(file, generation);
+  return file;
+}
+export function prepareAlgNavigationFile(href: string, file: AlgFile): void {
+  const generation = navigationVersions.get(file);
+  if (generation === undefined) { navigationFile = null; return; }
+  const path = new URL(href, window.location.href).pathname;
+  navigationFile = { path, file, generation, expires: Date.now() + 30_000 };
+}
+export function peekAlgNavigationFile(path: string): AlgFile | null {
+  if (typeof window === 'undefined' || navigationFile?.path !== path || Date.now() >= navigationFile.expires) return null;
+  const { file, generation } = navigationFile;
+  return generation === (generations.get(algLibraryKey(file.puzzle, file.set)) ?? 0) ? file : null;
+}
+
 function notify(key: string) { for (const listener of listeners.get(key) ?? []) listener(); }
 export function subscribeAlgLibrary(key: string, listener: () => void): () => void {
   const group = listeners.get(key) ?? new Set();

@@ -12,10 +12,10 @@ import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
  * 整个 set 只加载一次:是子组就交给 {@link AlgCategoryView}(把已加载的数据当 initialData 传下去,
  * 不再拉),是 case 就交给 {@link AlgCaseView}。
  */
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { useTrainingPathname as usePathname, useTrainingHost } from '@/lib/training-host';
 import { type AlgFile, type AlgPuzzle } from '@cuberoot/shared/alg';
-import { algLibraryKey, loadLibrarySource, subscribeAlgLibrary } from '@/lib/alg-library-cache';
+import { algLibraryKey, algLibraryGeneration, loadLibrarySource, subscribeAlgLibrary, peekAlgNavigationFile, rememberAlgNavigationVersion } from '@/lib/alg-library-cache';
 import { warmAlgValidation } from '@/lib/alg_validation';
 import { alignAlgSelection } from '@/lib/alg_case_alignment';
 import AlgCategoryView from '@/components/AlgCategoryView';
@@ -30,6 +30,9 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 function firstParam(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
+const noSubscription = () => () => {};
+const serverPath = () => '';
+const serverFile = () => null;
 
 export default function AlgSubOrCaseClient() {
   const pathname = usePathname();
@@ -37,24 +40,29 @@ export default function AlgSubOrCaseClient() {
   const hostPuzzle = firstParam(trainingHost?.params.puzzle);
   const hostSet = firstParam(trainingHost?.params.set);
   const hostSubgroup = firstParam(trainingHost?.params.subgroup);
-  const [route, setRoute] = useState<{ puzzle: string; set: string; slug: string; edit: boolean } | null>(null);
-  useEffect(() => {
-    const m = (trainingHost?.path ?? window.location.pathname).match(/\/alg\/([^/]+)\/([^/]+)\/([^/?#]+)(?:\/(edit))?\/?$/);
-    setRoute(m ? {
+  // Keep rewritten-route hydration stable, but read the real path immediately
+  // on client navigation instead of painting an empty route for one effect.
+  const routePath = useSyncExternalStore(noSubscription,
+    useCallback(() => trainingHost?.path ?? window.location.pathname, [pathname, trainingHost?.path]), serverPath);
+  const route = useMemo(() => {
+    const m = routePath.match(/\/alg\/([^/]+)\/([^/]+)\/([^/?#]+)(?:\/(edit))?\/?$/);
+    return m ? {
       puzzle: hostPuzzle ?? decodeURIComponent(m[1]),
       set: hostSet ?? decodeURIComponent(m[2]),
       slug: hostSubgroup ?? decodeURIComponent(m[3]),
       edit: m[4] === 'edit',
-    } : null);
-  }, [pathname, trainingHost?.path, hostPuzzle, hostSet, hostSubgroup]);
+    } : null;
+  }, [routePath, hostPuzzle, hostSet, hostSubgroup]);
   const puzzle = route?.puzzle ?? '';
   const set = route?.set ?? '';
   const slug = route?.slug ?? '';
   const refreshKey = useContentRefreshKey(!route?.edit);
 
-  const [data, setData] = useState<AlgFile | null>(null);
+  const prepared = useSyncExternalStore(noSubscription,
+    useCallback(() => peekAlgNavigationFile(routePath), [routePath]), serverFile);
+  const [loaded, setLoaded] = useState<{ path: string; file: AlgFile } | null>(null);
+  const data = loaded?.path === routePath ? loaded.file : prepared;
   const [error, setError] = useState(false);
-  useEffect(() => { setData(null); }, [puzzle, set, slug]);
   useEffect(() => {
     setError(false);
     if (!puzzle || !set || !slug) return;
@@ -62,6 +70,7 @@ export default function AlgSubOrCaseClient() {
     let revision = 0;
     const refresh = () => {
       const request = ++revision;
+      const generation = algLibraryGeneration(puzzle, set);
       void warmAlgValidation(puzzle).catch(() => {});
       loadLibrarySource(puzzle as AlgPuzzle, set).then(file => {
         const subSlug = canonicalZbllSubgroupSlug(set, slug.toLowerCase());
@@ -71,15 +80,15 @@ export default function AlgSubOrCaseClient() {
         });
         const caseObj = selected.length ? null : resolveCaseSlug(file.cases, slug, puzzle, set);
         return alignAlgSelection(file, selected.length ? selected : caseObj ? [caseObj] : []);
-      }).then(d => { if (live && request === revision) { setData(d); setError(false); } })
+      }).then(d => { if (live && request === revision) { setLoaded({ path: routePath, file: rememberAlgNavigationVersion(d, generation) }); setError(false); } })
         .catch(() => { if (live && request === revision) setError(true); });
     };
     const unsubscribe = subscribeAlgLibrary(algLibraryKey(puzzle, set), refresh);
     refresh();
     return () => { live = false; unsubscribe(); };
-  }, [puzzle, set, slug, refreshKey]);
+  }, [puzzle, set, slug, refreshKey, routePath]);
 
-  if (error) {
+  if (error && !data) {
     return <div className="alg-root"><div className="alg-empty">{tr({ zh: '加载失败', en: 'Failed to load.' })}</div></div>;
   }
   if (!route || !data) {

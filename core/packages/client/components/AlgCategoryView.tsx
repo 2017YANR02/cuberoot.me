@@ -17,7 +17,7 @@ import '@cuberoot/timer-ui/compact-select.css';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { captureAlgCaseNavigation, useAlgViewTransition } from '@/hooks/useAlgViewTransition';
 import { parseAsBoolean, parseAsInteger, parseAsStringEnum } from 'nuqs';
-import { useTrainingQueryState as useQueryState, useTrainingQueryStates as useQueryStates } from '@/lib/training-host';
+import { useTrainingQueryState as useQueryState, useTrainingQueryStates as useQueryStates, useTrainingRouter } from '@/lib/training-host';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ChevronRight, Shuffle, Plus, ShieldCheck, AlertTriangle, HelpCircle } from '@app-foundation/icons/lucide';
@@ -29,7 +29,7 @@ import {
 } from '@cuberoot/shared';
 import { alignAlgSelection, alignAlgFile, caseAlgIssue, commonCaseSetup } from '@/lib/alg_case_alignment';
 import { warmAlgValidation } from '@/lib/alg_validation';
-import { algLibraryKey, loadLibrarySource, subscribeAlgLibrary } from '@/lib/alg-library-cache';
+import { algLibraryKey, algLibraryGeneration, loadLibrarySource, subscribeAlgLibrary, prepareAlgNavigationFile, rememberAlgNavigationVersion } from '@/lib/alg-library-cache';
 import dynamic from 'next/dynamic';
 import { SET_GOAL } from '@/lib/alg_goals';
 import { VisualCube } from '@/components/VisualCube';
@@ -751,12 +751,13 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     let revision = 0;
     const refresh = () => {
       const request = ++revision;
+      const generation = algLibraryGeneration(puzzleParam, set);
       if (!meta.umbrella || needsCaseList || collection) void warmAlgValidation(puzzleParam).catch(() => {});
       loadLibrarySource(puzzleParam, set).then(file => {
         const indexOnly = puzzleParam === '3x3' && meta.umbrella && !subgroupParam && !needsCaseList && !collection;
         return alignAlgSelection(file, indexOnly ? [] : collection ? file.cases.filter(collection.include) : file.cases);
       }).then(d => {
-        if (live && request === revision) { setData(d); setError(null); }
+        if (live && request === revision) { setData(rememberAlgNavigationVersion(d, generation)); setError(null); }
       }).catch(e => { if (live && request === revision) setError(String(e)); });
     };
     const unsubscribe = subscribeAlgLibrary(algLibraryKey(puzzleParam, set), refresh);
@@ -988,6 +989,19 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   const motionRoot = useRef<HTMLDivElement>(null);
   const motionLayout = useMemo(() => ({ grouped, effectiveView, showOtherAlgs }), [grouped, effectiveView, showOtherAlgs]);
   const changeLayout = useAlgViewTransition(motionRoot, motionLayout);
+  const navigation = useTrainingRouter();
+  const preparedHref = useRef('');
+  const prepareCase = (target: EventTarget) => {
+    const link = target instanceof Element ? target.closest<HTMLAnchorElement>('a.alg-case-cardlink, a.alg-case-detail-link') : null;
+    if (!link || !data) return null;
+    if (preparedHref.current !== link.href) {
+      preparedHref.current = link.href;
+      navigation.prefetch(link.pathname + link.search);
+      // Load only the case the user intends to open, not every card's route.
+      void import('@/app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgCaseView').catch(() => {});
+    }
+    return link;
+  };
 
   /** 整个 set 的 case → 唯一短链 slug(点卡片跳转用)。落地解析用同一份算法,见 alg_case_link。 */
   const slugMap = useMemo(() => (data ? buildCaseSlugMap(data.cases, set) : null), [data, set]);
@@ -1111,7 +1125,15 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   const buildPdfSheet = () => algSheetFromCases(buildExportOptions());
 
   return (
-    <div className="alg-root" ref={motionRoot} onClickCapture={captureAlgCaseNavigation}>
+    <div className="alg-root" ref={motionRoot}
+      onPointerOver={event => prepareCase(event.target)} onFocusCapture={event => prepareCase(event.target)}
+      onClickCapture={event => {
+        const link = prepareCase(event.target);
+        if (link && data && event.button === 0 && !event.defaultPrevented && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && (!link.target || link.target === '_self')) {
+          prepareAlgNavigationFile(link.href, data);
+        }
+        captureAlgCaseNavigation(event);
+      }}>
       <div className="alg-cat-header alg-cat-header--list">
         <Link href={backTo} className="alg-back">
           <ArrowLeft size={14} /> <span className="sr-only">{tr({ zh: '返回', en: 'Back' })}</span>
