@@ -30,11 +30,11 @@ async function api<T>(action: string, body?: unknown): Promise<T> {
   if(!response.ok)throw new RequestError(typeof data.error === 'string' ? data.error : 'Workspace unavailable',response.status);
   return data as T;
 }
-function workspaceHref(href: string) {
+export function workspaceHref(href: string) {
   if(!href.startsWith('/workspace'))return href;
   const parts=href.split('/').filter(Boolean);
-  if(parts[1]==='updates' && parts[2])return `/workspace?section=detail&id=${encodeURIComponent(parts[2])}`;
-  return parts[1] ? `/workspace?section=${encodeURIComponent(parts[1])}` : '/workspace';
+  if(parts[1]==='updates' && parts[2])return `/admin/team?section=detail&id=${encodeURIComponent(parts[2])}`;
+  return parts[1] ? `/admin/team?section=${encodeURIComponent(parts[1])}` : '/admin/team';
 }
 function Link({href,...props}:AnchorHTMLAttributes<HTMLAnchorElement>&{href:string}) { return <AppLink {...props} href={workspaceHref(href)} prefetch={false} />; }
 const sections=['mine','updates','projects','checklists','schedule','members','detail','onboarding','offboarding','sop','quality'] as const;

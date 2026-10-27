@@ -81,7 +81,7 @@ export default function DownloadPage() {
           ? tr({ zh: 'Windows x64。推荐安装版；免安装版需已安装 WebView2。', en: 'Windows x64. The installer is recommended; the standalone EXE requires WebView2.' })
           : tr({ zh: 'Windows 下载准备中。', en: 'Windows downloads are being prepared.' })}</p>
       </section>
-      {isAdmin && <AppLink className="download-button" href="/workspace/admin/releases" prefetch={false}>{tr({ zh: '版本管理', en: 'Release management' })}</AppLink>}
+      {isAdmin && <AppLink className="download-button" href="/admin/releases" prefetch={false}>{tr({ zh: '版本管理', en: 'Release management' })}</AppLink>}
       <section className="download-upcoming" aria-label={tr({ zh: '其他平台', en: 'Other platforms' })}>
         {['iOS', 'macOS', 'HarmonyOS NEXT'].map((platform) => (
           <div className="download-platform" key={platform}>

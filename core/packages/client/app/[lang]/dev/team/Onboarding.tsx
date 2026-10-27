@@ -160,7 +160,7 @@ export default function GetStartedPage() {
         <ArrowRight className="team-lifecycle-delivery-arrow" size={24} aria-hidden="true" />
         <div className="team-lifecycle-delivery-card"><span className="team-lifecycle-role">{t('由你核验', 'Your acceptance')}</span><strong>{t('打开实际页面', 'Open the actual page')}</strong><span>{t('文字是否清楚，按钮是否可用', 'Check the copy and use the buttons')}</span><span>{t('交接：成果链接与未完成项', 'Handoff: result link and open items')}</span></div>
       </div>
-      <div className="team-lifecycle-next"><AppLink className="team-lifecycle-link" href="/workspace?section=sop" prefetch={false}>{t('查看工作流程', 'Open the workflow')}<ArrowRight size={16} aria-hidden="true" /></AppLink><AppLink className="team-lifecycle-link" href="/workspace?section=quality" prefetch={false}>{t('对照质量标准', 'Check quality standards')}<ArrowRight size={16} aria-hidden="true" /></AppLink></div>
+      <div className="team-lifecycle-next"><AppLink className="team-lifecycle-link" href="/admin/team?section=sop" prefetch={false}>{t('查看工作流程', 'Open the workflow')}<ArrowRight size={16} aria-hidden="true" /></AppLink><AppLink className="team-lifecycle-link" href="/admin/team?section=quality" prefetch={false}>{t('对照质量标准', 'Check quality standards')}<ArrowRight size={16} aria-hidden="true" /></AppLink></div>
     </section>
   </section>;
 }

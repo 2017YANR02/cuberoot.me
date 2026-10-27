@@ -129,8 +129,8 @@ export default function Dashboard() {
     </div>
     {!loading && (!users || !data) && <p className="admin-dashboard__notice" role="status">{t('部分统计暂时无法加载，请刷新重试。已显示的数据和管理入口仍可使用。', 'Some statistics could not load. Refresh to retry; available data and management links remain usable.')}</p>}
     <div className="admin-dashboard__metrics">
-      <AppLink href="/workspace/admin/users" prefetch={false} data-site-surface="panel"><span>{t('累计用户', 'Total users')}</span><strong>{count(users?.summary.totalUsers)}</strong><small>{users ? `${t('今日注册', 'Registered today')} ${count(users.summary.registeredToday)} · UTC` : unavailable}</small></AppLink>
-      <AppLink href="/workspace/admin/users" prefetch={false} data-site-surface="panel"><span>{t('最近 7 天注册', 'Registrations · last 7 days')}</span><strong>{count(users?.summary.registeredLast7Days)}</strong><small>{users?.membershipSummary ? `${t('有效个人 / 企业会员', 'Active personal / enterprise members')} ${count(users.membershipSummary.activePersonal)} / ${count(users.membershipSummary.activeEnterprise)}` : t('会员统计暂不可用', 'Membership totals unavailable')}</small></AppLink>
+      <AppLink href="/admin/users" prefetch={false} data-site-surface="panel"><span>{t('累计用户', 'Total users')}</span><strong>{count(users?.summary.totalUsers)}</strong><small>{users ? `${t('今日注册', 'Registered today')} ${count(users.summary.registeredToday)} · UTC` : unavailable}</small></AppLink>
+      <AppLink href="/admin/users" prefetch={false} data-site-surface="panel"><span>{t('最近 7 天注册', 'Registrations · last 7 days')}</span><strong>{count(users?.summary.registeredLast7Days)}</strong><small>{users?.membershipSummary ? `${t('有效个人 / 企业会员', 'Active personal / enterprise members')} ${count(users.membershipSummary.activePersonal)} / ${count(users.membershipSummary.activeEnterprise)}` : t('会员统计暂不可用', 'Membership totals unavailable')}</small></AppLink>
       <div data-site-surface="panel"><span>{t('最近完整小时请求', 'Latest complete hour · requests')}</span><strong>{count(requests)}</strong><small>{traffic?.stale ? t('历史快照，报表已过期', 'Historical snapshot · report is stale') : traffic ? t('仅已接入服务器日志，非访客数', 'Connected server logs only, not visitors') : unavailable}</small></div>
       <div data-site-surface="panel"><span>{t('当前待处理', 'Pending now')}</span><strong>{count(pendingTotal)}</strong><small>{t('反馈、论坛审核、举报及赞助认领', 'Feedback, moderation, reports and claims')}</small></div>
     </div>
@@ -140,7 +140,7 @@ export default function Dashboard() {
           { name: t('注册', 'Registrations'), type: 'bar', data: registrations.map(row => row.count) },
           ...(memberships ? [{ name: t('个人会员', 'Personal memberships'), type: 'line' as const, data: growthDates.map(date => memberships.find(row => row.date === date)?.personal ?? null) }, { name: t('企业会员', 'Enterprise memberships'), type: 'line' as const, data: growthDates.map(date => memberships.find(row => row.date === date)?.enterprise ?? null) }] : []),
         ]} /> : <p className="admin-dashboard__empty">{unavailable}</p>}
-        <AppLink href="/workspace/admin/users" prefetch={false}>{t('查看用户与增长', 'View users and growth')}</AppLink>
+        <AppLink href="/admin/users" prefetch={false}>{t('查看用户与增长', 'View users and growth')}</AppLink>
       </section>
       <section className="admin-dashboard__panel" data-site-surface="panel"><h3>{t('收入 · 订单收退款', 'Revenue · order cash flow')}</h3><p>{t('按实际收款与成功退款日期统计，未扣手续费、分成及拒付，不代表利润。', 'By receipt and successful refund date, before fees, revenue shares and chargebacks. Not profit.')}</p>
         {currencies.length > 0 && <label>{t('币种', 'Currency')} <select className="admin-dashboard-select" aria-label={t('币种', 'Currency')} value={selectedCurrency} onChange={event => setCurrency(event.target.value)}>{currencies.map(code => <option key={code}>{code}</option>)}</select></label>}

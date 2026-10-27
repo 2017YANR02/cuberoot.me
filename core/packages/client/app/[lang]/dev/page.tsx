@@ -23,7 +23,7 @@ const CARDS: Card[] = [
     en: { title: 'Continuous Corners', sub: 'Design & Geometry', tagline: 'SwiftUI path reconstruction, Bézier mathematics, concentric corners and error measurements', meta: 'Interactive labs / Mathematics / TypeScript' },
   },
   {
-    href: '/workspace',
+    href: '/admin/team',
     glyph: '↗',
     accent: 'var(--accent)',
     zh: { title: 'Workspace', sub: '', tagline: '项目、工作记录与团队协作', meta: '入职 / 离职 / SOP' },

@@ -120,7 +120,7 @@ export default function StaffSopPage() {
             <div><span className="sop-guide-label"><UserRound size={15} aria-hidden="true" />{t('员工负责', 'People own')}</span><p>{step.human}</p></div>
             <div><span className="sop-guide-label"><Sparkles size={15} aria-hidden="true" />{t('AI 执行', 'AI helps with')}</span><p>{step.ai}</p></div>
           </div>
-          <div className="sop-guide-output"><span>{t('本步交付', 'Output')}</span><strong>{step.output}</strong>{index === 3 && <AppLink href="/workspace?section=quality" prefetch={false} className="sop-guide-text-link">{t('质量标准', 'Quality standards')}<ArrowRight size={14} aria-hidden="true" /></AppLink>}</div>
+          <div className="sop-guide-output"><span>{t('本步交付', 'Output')}</span><strong>{step.output}</strong>{index === 3 && <AppLink href="/admin/team?section=quality" prefetch={false} className="sop-guide-text-link">{t('质量标准', 'Quality standards')}<ArrowRight size={14} aria-hidden="true" /></AppLink>}</div>
           <div className="sop-guide-comparison">
             <div className="sop-guide-avoid"><span className="sop-guide-label"><X size={15} aria-hidden="true" />{t('不要这样', 'Avoid')}</span><p>{step.avoid}</p></div>
             <div className="sop-guide-prefer"><span className="sop-guide-label"><Check size={15} aria-hidden="true" />{t('这样做', 'Do this')}</span><p>{step.prefer}</p></div>

@@ -25,7 +25,7 @@ export default function AdminReleasesPage() {
       <h1>{t('应用版本管理', 'App releases')}</h1>
       <p>{t('发布 Android 和 Windows 版本，查看发布状态。', 'Publish Android and Windows releases and check their status.')}</p>
     </header>
-    <AppLink href="/workspace/admin?section=system" prefetch={false}>{t('返回系统工具', 'Back to system tools')}</AppLink>
+    <AppLink href="/admin?section=system" prefetch={false}>{t('返回系统工具', 'Back to system tools')}</AppLink>
     <ReleaseManager onPublished={onPublished} />
   </main>;
 }

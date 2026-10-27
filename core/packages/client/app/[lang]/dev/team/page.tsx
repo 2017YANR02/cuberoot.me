@@ -10,7 +10,7 @@ function LegacyHandbook() {
   const lang = useLang();
   const [section] = useQueryState('section', parseAsStringEnum(['onboarding', 'offboarding', 'sop']).withDefault('onboarding'));
   useEffect(() => {
-    router.replace(`${lang === 'zh' ? '/zh' : ''}/workspace?section=${section}`);
+    router.replace(`${lang === 'zh' ? '/zh' : ''}/admin/team?section=${section}`);
   }, [lang, router, section]);
   return null;
 }

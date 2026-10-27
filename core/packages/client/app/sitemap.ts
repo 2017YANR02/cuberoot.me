@@ -27,8 +27,8 @@ export const dynamic = 'force-static';
 const BASE = 'https://cuberoot.me';
 
 // Kept OUT (dev/poc/internal pages, no SEO value). Locale-stripped path, exact.
-// account/sop redirects to the noindex workspace; neither belongs in the sitemap.
-const EXCLUDE = new Set(['chat', 'chat/share', 'sim/embed', 'workspace', 'workspace/admin', 'workspace/admin/users', 'workspace/admin/disk', 'workspace/admin/interview', 'workspace/admin/releases', 'account/sop', 'competition-verify', 'ffmpeg-poc', 'jsonEditor', 'courses', 'search', 'partnership', 'bp', 'admin', 'admin/users', 'admin/disk', 'admin/interview', 'admin/releases', 'account/mcp']);
+// account/sop redirects to the noindex team workspace; neither belongs in the sitemap.
+const EXCLUDE = new Set(['chat', 'chat/share', 'sim/embed', 'account/sop', 'competition-verify', 'ffmpeg-poc', 'jsonEditor', 'courses', 'search', 'partnership', 'bp', 'admin', 'admin/team', 'admin/users', 'admin/disk', 'admin/interview', 'admin/releases', 'account/mcp']);
 
 // Dynamic-segment pages worth indexing at a specific value (the scan skips
 // [param] dirs since it can't know which values are valid).

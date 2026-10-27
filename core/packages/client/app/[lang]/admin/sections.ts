@@ -10,8 +10,8 @@ export const SYSTEM_VIEW_LABELS: Record<SystemView, [string, string]> = {
   tax: ['税务办理', 'Tax filing'],
 };
 export const SYSTEM_DESTINATION_VIEWS: Record<string, SystemView> = {
-  '/workspace/admin/disk': 'tools', '/workspace/admin/releases': 'tools', '/dev/ops': 'tools',
-  '/workspace/admin/interview': 'workspace', '/docs': 'workspace', '/sheets': 'workspace',
+  '/admin/disk': 'tools', '/admin/releases': 'tools', '/dev/ops': 'tools',
+  '/admin/interview': 'workspace', '/docs': 'workspace', '/sheets': 'workspace',
 };
 
 export const ADMIN_SECTION_LABELS: Record<AdminSection, [string, string]> = {
@@ -23,8 +23,8 @@ export const ADMIN_SECTION_LABELS: Record<AdminSection, [string, string]> = {
 };
 
 export const DESTINATION_SECTIONS: Record<string, Exclude<AdminSection, 'overview'>> = {
-  '/workspace/admin/interview': 'system', '/workspace/admin/disk': 'system', '/workspace/admin/users': 'users',
-  '/workspace/admin/releases': 'system', '/platform/admin': 'commerce', '/platform/admin/invites': 'commerce',
+  '/admin/interview': 'system', '/admin/disk': 'system', '/admin/users': 'users',
+  '/admin/releases': 'system', '/platform/admin': 'commerce', '/platform/admin/invites': 'commerce',
   '/support': 'users', '/feedback/admin': 'content', '/forum/review': 'content',
   '/account?view=submissions': 'content', '/dev/ops': 'system', '/quiz/manage': 'content',
   '/music/manage': 'content', '/recon/ground-truth': 'content', '/wca/result-watch': 'content',
