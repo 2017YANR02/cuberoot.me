@@ -1,6 +1,11 @@
 .alg-admin-modal-backdrop.recon-case-backdrop { z-index: 1100; }
 .alg-admin-modal.recon-case-dialog { width: min(1000px, 95vw); }
 .recon-case-dialog .alg-case-detail-back { display: none; }
+.recon-case-dialog .f2l-solution-choices label {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 8px;
+}
 
 /* The page's viewport breakpoints do not describe the narrower dialog. */
 .recon-case-dialog > .alg-admin-modal-body {
