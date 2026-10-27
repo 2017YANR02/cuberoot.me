@@ -29,6 +29,7 @@ on:
       - 'core/patches/**'
       - 'core/scripts/build-cubing-worker.mjs'
       - 'core/scripts/resolve-workspace-path.mjs'
+      - 'docs/benchmarks/assistant-phase1-cases.json'
       - 'ops/systemd/cuberoot-drive-compression.service'
       - 'ops/bin/provision-assistant-reader.sql'
       - 'ops/nginx/purge-api-cache.ts'
@@ -55,6 +56,7 @@ jobs:
           sparse-checkout: |
             .node-version
             core
+            docs/benchmarks
             ops/nginx
             ops/systemd
             ops/bin
