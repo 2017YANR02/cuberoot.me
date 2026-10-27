@@ -16,7 +16,8 @@ const AlgCaseView = lazy(() => import('../app/[lang]/alg/[puzzle]/[set]/[subgrou
 
 function CaseDialog({ href, onClose }: { href: string; onClose: () => void }) {
   const backdrop = useModalDismiss(onClose);
-  const [, puzzle, set, slug] = /^\/alg\/([^/]+)\/([^/]+)\/([^/?#]+)/.exec(href)!;
+  const [currentHref, setCurrentHref] = useState(href);
+  const [, puzzle, set, slug] = /^\/alg\/([^/]+)\/([^/]+)\/([^/?#]+)/.exec(currentHref)!;
   const [data, setData] = useState<AlgFile | null>(null);
   const [failed, setFailed] = useState(false);
   useEffect(() => {
@@ -42,12 +43,12 @@ function CaseDialog({ href, onClose }: { href: string; onClose: () => void }) {
     <div className="alg-admin-modal-backdrop recon-case-backdrop" {...backdrop} role="dialog" aria-modal="true" aria-label={tr({ zh: '公式详情', en: 'Algorithm details' })}>
       <div className="alg-admin-modal recon-case-dialog">
         <div className="alg-admin-modal-head">
-          <AppLink href={href} prefetch={false} target="_blank" rel="noopener noreferrer">{tr({ zh: '打开完整公式页', en: 'Open full algorithm page' })}</AppLink>
+          <AppLink href={currentHref} prefetch={false} target="_blank" rel="noopener noreferrer">{tr({ zh: '打开完整公式页', en: 'Open full algorithm page' })}</AppLink>
           <ClearButton variant="standalone" onClick={onClose} ariaLabel={tr({ zh: '关闭公式详情', en: 'Close algorithm details' })} />
         </div>
         <div className="alg-admin-modal-body alg-root">
           {failed || (data && !caseObj) ? <p>{tr({ zh: '无法加载此公式，请打开完整公式页。', en: 'Could not load this case. Open the full algorithm page.' })}</p>
-            : data && caseObj ? <Suspense fallback={loading}><AlgCaseView puzzle={puzzle as AlgPuzzle} set={set} caseObj={caseObj} data={data} embedded /></Suspense> : loading}
+            : data && caseObj ? <Suspense fallback={loading}><AlgCaseView puzzle={puzzle as AlgPuzzle} set={set} caseObj={caseObj} data={data} onEmbeddedCaseChange={setCurrentHref} embedded /></Suspense> : loading}
         </div>
       </div>
     </div>, document.body,

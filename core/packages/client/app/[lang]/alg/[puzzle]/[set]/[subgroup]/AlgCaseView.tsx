@@ -185,7 +185,7 @@ function PlayableAlgRow({ entry, puzzle, set, mirror, ori = 0, viewAngle, sq1Not
   );
 }
 
-export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embedded = false }: { puzzle: AlgPuzzle; set: string; caseObj: AlgCase; data: AlgFile; embedded?: boolean; }) {
+export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embedded = false, onEmbeddedCaseChange }: { puzzle: AlgPuzzle; set: string; caseObj: AlgCase; data: AlgFile; embedded?: boolean; onEmbeddedCaseChange?: (href: string) => void; }) {
   /**
    * 显示的这张 case 自己拿一份 —— admin 改完 / 拖完就地更新,不回写上层的 `data`:
    * 上层是按 **slug** 解析出这张 case 的,改了名字再回写会当场解析失败(整页变「没找到」)。
@@ -408,7 +408,10 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
     name: member.name,
     caseObj: member.caseObj,
     current: member.current,
-    href: member.current ? undefined : hrefFor(member.caseObj),
+    href: member.current || onEmbeddedCaseChange ? undefined : hrefFor(member.caseObj),
+    onSelect: !member.current && onEmbeddedCaseChange ? () => {
+      if (!editor || editor.confirmDiscard()) onEmbeddedCaseChange(hrefFor(member.caseObj));
+    } : undefined,
     onRotate: member.current && rotateCurrentCase ? async () => {
       if (!editor || editor.confirmDiscard()) await rotateCurrentCase();
     } : undefined,
@@ -545,16 +548,19 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
         {editor?.actions && <div className="alg-case-inline-actions">{editor.actions}</div>}
       </div>
 
-      {!embedded && <nav className="alg-case-navigation" aria-label={tr({ zh: '切换 case', en: 'Navigate cases' })}>
+      <nav className="alg-case-navigation" aria-label={tr({ zh: '切换 case', en: 'Navigate cases' })}>
         {([['previous', adjacent.previous], ['next', adjacent.next]] as const).map(([direction, target]) => {
           const label = direction === 'previous' ? tr({ zh: '上一条', en: 'Previous' }) : tr({ zh: '下一条', en: 'Next' });
           const content = <>{direction === 'previous' && <ChevronLeft size={16} />}{label}{direction === 'next' && <ChevronRight size={16} />}</>;
-          return target ? <Link key={direction} href={hrefFor(target)} prefetch={false} className="alg-case-navigation-link"
+          return target && onEmbeddedCaseChange ? <button key={direction} type="button" className="alg-case-navigation-link"
+            onClick={() => { if (!editor || editor.confirmDiscard()) onEmbeddedCaseChange(hrefFor(target)); }}
+            aria-label={`${label}: ${primaryCaseName(puzzle, set, target)}`}>{content}</button>
+            : target ? <Link key={direction} href={hrefFor(target)} prefetch={false} className="alg-case-navigation-link"
             onClick={event => { if (editor && !editor.confirmDiscard()) event.preventDefault(); }}
             aria-label={`${label}: ${primaryCaseName(puzzle, set, target)}`}>{content}</Link>
             : <span key={direction} className="alg-case-navigation-link" aria-disabled="true">{content}</span>;
         })}
-      </nav>}
+      </nav>
 
       {editor?.error && <div className="alg-case-inline-status">{editor.error}</div>}
       {editor && effectiveViewAngle !== 'default' && <p>{tr({ zh: '切回默认角度可编辑公式，未保存的修改会保留。', en: 'Return to the default angle to edit algorithms. Your unsaved changes are kept.' })}</p>}
@@ -572,7 +578,9 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
             editing={!!editor && effectiveViewAngle === 'default'}
             setupEditor={editor?.setup}
             byNo={byNo}
-            jump={{ kind: 'link', href: hrefFor }}
+            jump={onEmbeddedCaseChange ? { kind: 'callback', onJump: target => {
+              if (!editor || editor.confirmDiscard()) onEmbeddedCaseChange(hrefFor(target));
+            } } : { kind: 'link', href: hrefFor }}
             scrambleKind={scrambleKind}
             onScrambleKindChange={setScrambleKind}
             viewAngle={effectiveViewAngle}

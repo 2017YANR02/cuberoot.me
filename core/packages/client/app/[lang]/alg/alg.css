@@ -1991,6 +1991,9 @@ a.alg-community-author:hover {
   color: var(--muted-foreground);
   font-size: 14px;
 }
+button.alg-case-navigation-link { background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; }
+button.alg-case-navigation-link:hover { color: var(--accent); }
+button.alg-case-navigation-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 a.alg-case-navigation-link:hover { color: var(--accent); }
 a.alg-case-navigation-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 a.alg-case-navigation-link:active { transform: scale(.97); }
