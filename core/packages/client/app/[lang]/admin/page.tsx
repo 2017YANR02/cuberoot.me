@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ComponentType } from 'react';
 import { useRouter } from 'next/navigation';
+import { parseAsStringEnum, useQueryState } from 'nuqs';
 import { Gift, HardDrive, HeartHandshake, Inbox, MessageSquare, ShieldCheck, Users, Wrench } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
@@ -9,6 +10,7 @@ import { loginHref, useAuthStore, useIsAdmin } from '@/lib/auth-store';
 import BootDiagnostics from './BootDiagnostics';
 import Dashboard from './Dashboard';
 import AssistantMonitoring from './AssistantMonitoring';
+import { ADMIN_SECTIONS, ADMIN_SECTION_LABELS, DESTINATION_SECTIONS, SYSTEM_DESTINATION_VIEWS, SYSTEM_VIEWS, SYSTEM_VIEW_LABELS } from './sections';
 import './admin.css';
 
 interface AdminDestination {
@@ -56,6 +58,8 @@ export default function AdminPage() {
   const user = useAuthStore((state) => state.user);
   const isAdmin = useIsAdmin();
   const [mounted, setMounted] = useState(false);
+  const [section] = useQueryState('section', parseAsStringEnum([...ADMIN_SECTIONS]).withDefault('overview'));
+  const [view] = useQueryState('view', parseAsStringEnum([...SYSTEM_VIEWS]).withDefault('tools'));
   useEffect(() => setMounted(true), []);
   useEffect(() => {
     if (mounted && !user) router.replace(loginHref());
@@ -77,14 +81,12 @@ export default function AdminPage() {
     <main className="admin-hub admin-hub--dashboard">
       <header className="admin-hub__heading">
         <p className="admin-hub__eyebrow">{t('管理', 'Administration')}</p>
-        <h1>{t('管理后台', 'Administration')}</h1>
-        <p>{t('集中查看用户增长、访问量、收入和待处理事项。', 'User growth, traffic, revenue and pending work in one place.')}</p>
+        <h1>{section === 'system' ? t(...SYSTEM_VIEW_LABELS[view]) : t(...ADMIN_SECTION_LABELS[section])}</h1>
+        <p>{section === 'overview' ? t('查看用户增长、访问量、收入和待处理事项。', 'Review user growth, traffic, revenue and pending work.') : section === 'system' && view === 'monitoring' ? t('查看助手状态和应用启动诊断。', 'Review assistant status and app startup diagnostics.') : section === 'system' && view === 'tax' ? t('访问官方办税服务。', 'Open official tax services.') : t('选择要使用的管理工具。', 'Choose a management tool.')}</p>
       </header>
-      <Dashboard />
-      <AssistantMonitoring />
-      <h2 className="admin-dashboard__tools-title">{t('管理工具', 'Management tools')}</h2>
-      <nav className="admin-hub__nav" aria-label={t('管理工具', 'Administration tools')}>
-        {DESTINATIONS.map(({ href, Icon, title }) => (
+      {section === 'overview' && <Dashboard />}
+      {section !== 'overview' && (section !== 'system' || view === 'tools' || view === 'workspace') && <nav className="admin-hub__nav" aria-label={t('管理工具', 'Administration tools')}>
+        {DESTINATIONS.filter(({ href }) => DESTINATION_SECTIONS[href] === section && (section !== 'system' || SYSTEM_DESTINATION_VIEWS[href] === view)).map(({ href, Icon, title }) => (
           <AppLink key={href} href={href} prefetch={false} className="admin-hub__link">
             <Icon size={20} aria-hidden />
             <span>
@@ -92,8 +94,9 @@ export default function AdminPage() {
             </span>
           </AppLink>
         ))}
-      </nav>
-      <section aria-labelledby="admin-tax-title">
+      </nav>}
+      {section === 'system' && view === 'monitoring' && <><AssistantMonitoring /><BootDiagnostics /></>}
+      {section === 'system' && view === 'tax' && <section aria-labelledby="admin-tax-title">
         <h2 id="admin-tax-title" className="admin-dashboard__tools-title">{t('税务办理', 'Tax filing')}</h2>
         <nav className="admin-hub__nav" aria-label={t('官方办税入口', 'Official tax portals')}>
           <a className="admin-hub__link" href="https://etax.shanghai.chinatax.gov.cn/" target="_blank" rel="noopener noreferrer">
@@ -116,7 +119,7 @@ export default function AdminPage() {
           {/* Add the verified filing steps here once the actual workflow is documented. */}
         </details>
       </section>
-      <BootDiagnostics />
+      }
     </main>
   );
 }

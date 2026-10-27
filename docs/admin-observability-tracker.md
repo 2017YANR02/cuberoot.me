@@ -88,7 +88,7 @@ type MembershipSummary = {
 
 ### `/admin`
 
-后台首页是简洁的管理目录，不做通用 SaaS 卡片墙。页面按“账号与增长”“内容与社区”“运营与系统”分组，入口只链接到已经存在且管理员可使用的页面。每个入口显示名称、用途和当前最重要的一项状态；内部跳转使用真实链接，支持中键和新标签页。
+后台复用 Workspace 的导航框架：`/admin` 显示运营总览，`?section=users|content|commerce|system` 分别显示用户与会员、内容与社区、课程与商业、运营与系统的入口。运营与系统再以 `view=tools|workspace|monitoring|tax` 分为系统工具、工作资料、助手与诊断、税务办理；进入 `/admin/users`、`/admin/releases` 等子页面时保留导航。分区与工具使用真实链接，支持中键和新标签页；移动端使用共享导航抽屉。
 
 ### `/admin/users`
 
