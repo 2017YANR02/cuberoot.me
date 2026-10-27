@@ -8,6 +8,9 @@
 .recon-test-panel button { font: inherit; color: inherit; cursor: pointer; }
 .recon-test-heading, .recon-test-filters, .recon-test-pages { display: flex; align-items: center; gap: 8px; }
 .recon-test-heading { justify-content: space-between; }
+.recon-test-people { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+.recon-test-people label { display: flex; flex-direction: column; gap: 4px; max-width: 100%; }
+.recon-test-people select { width: fit-content; max-width: 100%; font: inherit; }
 .recon-test-heading button, .recon-test-filters button, .recon-test-pages button, .recon-test-use {
   padding: 4px 8px; border: 1px solid var(--border-default); border-radius: 4px; background: transparent;
 }

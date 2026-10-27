@@ -22,12 +22,16 @@ const statusLabel: Record<NonNullable<ReconTestSource['intakeStatus']>, { zh: st
   'needs-review': { zh: '待验收', en: 'Needs review' },
   active: { zh: '已启用', en: 'Active' },
 };
+interface SourceChoice { id: string; name: string }
 
 export default function ReconTestPicker({ canSelect, onSelect }: {
   canSelect: boolean; onSelect: (source: ReconTestSource) => boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<'pending' | 'collected'>('pending');
+  const [personId, setPersonId] = useState('2023GENG02');
+  const [collectorId, setCollectorId] = useState('2017YANR02');
+  const [choices, setChoices] = useState<{ persons: SourceChoice[]; collectors: SourceChoice[] }>({ persons: [], collectors: [] });
   const [offset, setOffset] = useState(0);
   const [items, setItems] = useState<ReconTestSource[]>([]);
   const [selected, setSelected] = useState<ReconTestSource | null>(null);
@@ -36,34 +40,50 @@ export default function ReconTestPicker({ canSelect, onSelect }: {
   const [error, setError] = useState('');
   const [refresh, setRefresh] = useState(0);
   const mounted = useRef(true);
+  const requestVersion = useRef(0);
+  const requestScope = `${open}:${filter}:${offset}:${personId}:${collectorId}:${refresh}`;
+  const scopeRef = useRef(requestScope);
+  scopeRef.current = requestScope;
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const reload = useCallback(() => setRefresh(value => value + 1), []);
+  const sourceQuery = useCallback((status: string, page: number) => `/sources?${new URLSearchParams({ status, offset: String(page), personId, collectorId })}`, [personId, collectorId]);
+  useEffect(() => {
+    if (!open) return;
+    let active = true;
+    void intakeRequest<typeof choices>('/sources/filters').then(result => { if (active) setChoices(result); })
+      .catch(() => { if (active) setError(tr({ zh: '无法加载筛选项，请重试。', en: 'Could not load filters. Try again.' })); });
+    return () => { active = false; };
+  }, [open, refresh]);
   useEffect(() => {
     window.addEventListener('recon-intake:changed', reload);
     return () => window.removeEventListener('recon-intake:changed', reload);
   }, [reload]);
   useEffect(() => {
     if (!open) return;
+    ++requestVersion.current;
     let active = true;
     setLoading(true); setError('');
-    void intakeRequest<{ items: ReconTestSource[]; hasMore: boolean }>(`/sources?status=${filter}&offset=${offset}`)
+    void intakeRequest<{ items: ReconTestSource[]; hasMore: boolean }>(sourceQuery(filter, offset))
       .then(result => { if (active) { setItems(result.items); setHasMore(result.hasMore); } })
       .catch(() => { if (active) { setItems([]); setError(tr({ zh: '无法加载复盘，请重试。', en: 'Could not load reconstructions. Try again.' })); } })
       .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, [open, filter, offset, refresh]);
+    return () => { active = false; ++requestVersion.current; };
+  }, [open, filter, offset, refresh, sourceQuery]);
   const nextPending = async () => {
+    const version = ++requestVersion.current;
+    const scope = requestScope;
+    const isCurrent = () => mounted.current && requestVersion.current === version && scopeRef.current === scope;
     setLoading(true); setError('');
     try {
-      const result = await intakeRequest<{ items: ReconTestSource[]; hasMore: boolean }>('/sources?status=pending&offset=0');
-      if (!mounted.current) return;
+      const result = await intakeRequest<{ items: ReconTestSource[]; hasMore: boolean }>(sourceQuery('pending', 0));
+      if (!isCurrent()) return;
       const next = result.items.find(item => item.id !== selected?.id);
       if (!next) { setError(tr({ zh: '没有其他未收录复盘。', en: 'No other uncollected reconstruction.' })); return; }
       setFilter('pending'); setOffset(0); setItems(result.items); setHasMore(result.hasMore);
       setSelected(next);
       if (!onSelect(next)) setError(tr({ zh: '当前无法切换打乱，请检查设备和计时状态。', en: 'Cannot change the scramble now. Check the device and timer.' }));
-    } catch { if (mounted.current) setError(tr({ zh: '无法加载复盘，请重试。', en: 'Could not load reconstructions. Try again.' })); }
-    finally { if (mounted.current) setLoading(false); }
+    } catch { if (isCurrent()) setError(tr({ zh: '无法加载复盘，请重试。', en: 'Could not load reconstructions. Try again.' })); }
+    finally { if (isCurrent()) setLoading(false); }
   };
   return <div className="recon-test" data-no-timer>
     <Tooltip content={tr({ zh: '复盘测试', en: 'Recon testing' })}>{tip =>
@@ -71,8 +91,22 @@ export default function ReconTestPicker({ canSelect, onSelect }: {
         aria-expanded={open} onClick={() => setOpen(value => !value)}><Waypoints size={18} aria-hidden="true" /></button>}
     </Tooltip>
     {open && <section className="recon-test-panel" aria-label={tr({ zh: '复盘测试', en: 'Recon testing' })} data-site-surface="panel">
-      <div className="recon-test-heading"><strong>{tr({ zh: '耿暄一 · 三阶', en: 'Xuanyi Geng · 3×3' })}</strong>
+      <div className="recon-test-heading"><strong>{tr({ zh: '三阶复盘', en: '3×3 reconstructions' })}</strong>
         <button type="button" onClick={() => setOpen(false)}>{tr({ zh: '收起', en: 'Close' })}</button></div>
+      <div className="recon-test-people">
+        <label>{tr({ zh: '选手', en: 'Solver' })}<select value={personId} disabled={loading} onChange={event => {
+          setPersonId(event.target.value); setOffset(0); setSelected(null);
+        }}><option value="">{tr({ zh: '全部', en: 'All' })}</option>
+          {!choices.persons.some(choice => choice.id === '2023GENG02') && <option value="2023GENG02">{tr({ zh: '耿暄一', en: 'Xuanyi Geng' })}</option>}
+          {choices.persons.map(choice => <option key={choice.id} value={choice.id}>{choice.name}</option>)}
+        </select></label>
+        <label>{tr({ zh: '收录者', en: 'Collector' })}<select value={collectorId} disabled={loading} onChange={event => {
+          setCollectorId(event.target.value); setOffset(0); setSelected(null);
+        }}><option value="">{tr({ zh: '全部', en: 'All' })}</option>
+          {!choices.collectors.some(choice => choice.id === '2017YANR02') && <option value="2017YANR02">{tr({ zh: '颜瑞民', en: 'Ruimin Yan' })}</option>}
+          {choices.collectors.map(choice => <option key={choice.id} value={choice.id}>{choice.name}</option>)}
+        </select></label>
+      </div>
       <div className="recon-test-filters">{(['pending', 'collected'] as const).map(value => <button key={value} type="button"
         aria-pressed={filter === value} onClick={() => { setFilter(value); setOffset(0); }}>
         {value === 'pending' ? tr({ zh: '未收录', en: 'Not collected' }) : tr({ zh: '已收录', en: 'Collected' })}</button>)}</div>

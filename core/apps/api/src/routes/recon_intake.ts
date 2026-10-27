@@ -88,9 +88,27 @@ reconIntakeRoutes.use('/recon-intake/*', async (c, next) => {
 });
 // This list is an administrator workflow over source reconstructions, not a
 // public search. Only a successful collection changes its intake status.
+reconIntakeRoutes.get('/recon-intake/sources/filters', async c => {
+  const rows = await query<{ role: 'person' | 'collector'; id: string; name: string }>(
+    `WITH sources AS (
+      SELECT person_id, person, added_by_id, added_by FROM recons
+      WHERE event = '3x3'
+        AND COALESCE(NULLIF(BTRIM(optimal_scramble), ''), NULLIF(BTRIM(wca_scramble), ''), BTRIM(scramble), '') <> ''
+        AND COALESCE(BTRIM(solution), '') <> ''
+    )
+    SELECT 'person' AS role, person_id AS id, COALESCE(MAX(NULLIF(BTRIM(person), '')), person_id) AS name
+      FROM sources WHERE COALESCE(person_id, '') <> '' GROUP BY person_id
+    UNION ALL
+    SELECT 'collector' AS role, added_by_id AS id, COALESCE(MAX(NULLIF(BTRIM(added_by), '')), added_by_id) AS name
+      FROM sources WHERE COALESCE(added_by_id, '') <> '' GROUP BY added_by_id
+    ORDER BY name, id`);
+  return c.json({ persons: rows.filter(row => row.role === 'person'), collectors: rows.filter(row => row.role === 'collector') });
+});
 reconIntakeRoutes.get('/recon-intake/sources', async c => {
   const status = c.req.query('status') ?? 'pending';
   if (!['pending', 'collected', 'all'].includes(status)) throw new HTTPException(400);
+  const personId = parse(z.string().max(100), c.req.query('personId') ?? '2023GENG02');
+  const collectorId = parse(z.string().max(100), c.req.query('collectorId') ?? '2017YANR02');
   const offset = Math.max(0, Math.min(100000, Math.trunc(Number(c.req.query('offset')) || 0)));
   const rows = await query<{ id: number; scramble: string; solution: string; comp: string | null; date: string | null;
     value: string | null; intake_status: string | null; intake_id: string | null; truth_status: string | null; source_changed: boolean; source_hash: string }>(
@@ -106,7 +124,7 @@ reconIntakeRoutes.get('/recon-intake/sources', async c => {
         OR g.source_solution IS DISTINCT FROM COALESCE(r.solution, '')))) AS source_changed
      FROM recons r LEFT JOIN recon_intake i ON i.source_recon_id = r.id
      LEFT JOIN recon_ground_truth_cases g ON g.recon_id = r.id
-     WHERE r.event = '3x3' AND r.person_id = '2023GENG02'
+     WHERE r.event = '3x3' AND (? = '' OR r.person_id = ?) AND (? = '' OR r.added_by_id = ?)
        AND COALESCE(NULLIF(BTRIM(r.optimal_scramble), ''), NULLIF(BTRIM(r.wca_scramble), ''), BTRIM(r.scramble), '') <> ''
        AND COALESCE(BTRIM(r.solution), '') <> ''
        AND (? = 'all' OR (? = 'pending' AND i.id IS NULL AND
@@ -118,7 +136,7 @@ reconIntakeRoutes.get('/recon-intake/sources', async c => {
           AND g.source_added_by_id IS NOT DISTINCT FROM r.added_by_id AND g.source_scramble =
           COALESCE(NULLIF(BTRIM(r.optimal_scramble), ''), NULLIF(BTRIM(r.wca_scramble), ''), BTRIM(r.scramble), '')
           AND g.source_solution = COALESCE(r.solution, '')))))
-     ORDER BY r.id DESC LIMIT 51 OFFSET ?`, [status, status, status, offset]);
+     ORDER BY r.id DESC LIMIT 51 OFFSET ?`, [personId, personId, collectorId, collectorId, status, status, status, offset]);
   return c.json({ items: rows.slice(0, 50).map(row => ({ id: row.id, scramble: row.scramble,
     solution: row.solution, competition: row.comp, date: row.date, value: row.value,
     intakeId: row.intake_id, intakeStatus: row.intake_status, truthStatus: row.truth_status,
@@ -148,7 +166,7 @@ reconIntakeRoutes.post('/recon-intake', async c => {
         COALESCE(NULLIF(BTRIM(optimal_scramble), ''), NULLIF(BTRIM(wca_scramble), ''), BTRIM(scramble), '') AS scramble,
         COALESCE(solution, '') AS solution, added_by_id,
         md5(jsonb_build_array(COALESCE(NULLIF(BTRIM(optimal_scramble), ''), NULLIF(BTRIM(wca_scramble), ''), BTRIM(scramble), ''), COALESCE(solution, ''))::text) AS source_hash FROM recons
-        WHERE id = ? AND event = '3x3' AND person_id = '2023GENG02' FOR SHARE`, [input.sourceReconId]);
+        WHERE id = ? AND event = '3x3' FOR SHARE`, [input.sourceReconId]);
       const normalize = (value: string) => value.trim().replace(/\s+/g, ' ');
       if (!source || !source.solution.trim() || !source.scramble || source.source_hash !== input.sourceReconHash
         || normalize(source.scramble) !== normalize(input.recording.scramble))
