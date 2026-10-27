@@ -548,19 +548,16 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
         {editor?.actions && <div className="alg-case-inline-actions">{editor.actions}</div>}
       </div>
 
-      <nav className="alg-case-navigation" aria-label={tr({ zh: '切换 case', en: 'Navigate cases' })}>
+      {!embedded && <nav className="alg-case-navigation" aria-label={tr({ zh: '切换 case', en: 'Navigate cases' })}>
         {([['previous', adjacent.previous], ['next', adjacent.next]] as const).map(([direction, target]) => {
           const label = direction === 'previous' ? tr({ zh: '上一条', en: 'Previous' }) : tr({ zh: '下一条', en: 'Next' });
           const content = <>{direction === 'previous' && <ChevronLeft size={16} />}{label}{direction === 'next' && <ChevronRight size={16} />}</>;
-          return target && onEmbeddedCaseChange ? <button key={direction} type="button" className="alg-case-navigation-link"
-            onClick={() => { if (!editor || editor.confirmDiscard()) onEmbeddedCaseChange(hrefFor(target)); }}
-            aria-label={`${label}: ${primaryCaseName(puzzle, set, target)}`}>{content}</button>
-            : target ? <Link key={direction} href={hrefFor(target)} prefetch={false} className="alg-case-navigation-link"
+          return target ? <Link key={direction} href={hrefFor(target)} prefetch={false} className="alg-case-navigation-link"
             onClick={event => { if (editor && !editor.confirmDiscard()) event.preventDefault(); }}
             aria-label={`${label}: ${primaryCaseName(puzzle, set, target)}`}>{content}</Link>
             : <span key={direction} className="alg-case-navigation-link" aria-disabled="true">{content}</span>;
         })}
-      </nav>
+      </nav>}
 
       {editor?.error && <div className="alg-case-inline-status">{editor.error}</div>}
       {editor && effectiveViewAngle !== 'default' && <p>{tr({ zh: '切回默认角度可编辑公式，未保存的修改会保留。', en: 'Return to the default angle to edit algorithms. Your unsaved changes are kept.' })}</p>}
