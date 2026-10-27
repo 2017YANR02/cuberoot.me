@@ -21,6 +21,7 @@ import { WCA_AUTHOR_BY_CREDIT } from './data/wca-authors';
 import type { GroupId, Site } from './data/types';
 import { GROUPS } from './data/categories';
 import { SITE_ICON_CACHE_STORAGE_PREFIX, siteIconSources } from './site-icons';
+import { captureView, visibleSiteElements, type ViewSnapshot } from './view-transition';
 import { isAdmin } from '@/lib/auth-store';
 import { firstGlyph } from '@/lib/first-glyph';
 import BackHome from '@/components/BackHome';
@@ -51,25 +52,6 @@ const DEFAULT_GROUP: GroupId = 'competition';
 type ViewMode = 'list' | 'grid';
 const VIEW_MODES: ViewMode[] = ['list', 'grid'];
 const FLIP_TARGETS = '[data-flip-id]';
-type ViewSnapshot = Map<Element, DOMRect>;
-
-function visibleSiteElements(list: HTMLElement): Element[] {
-  const visible: Element[] = [];
-  // Both layouts preserve DOM order. Stop after the viewport instead of reading
-  // rectangles for the entire directory, including hundreds of offscreen rows.
-  for (const element of list.children) {
-    if (!element.hasAttribute('data-flip-id')) continue;
-    const bounds = element.getBoundingClientRect();
-    if (bounds.top >= window.innerHeight) break;
-    if (bounds.bottom > 0) visible.push(element);
-  }
-  return visible;
-}
-function captureView(list: HTMLElement): ViewSnapshot {
-  return new Map(visibleSiteElements(list).flatMap(root =>
-    [...root.querySelectorAll(FLIP_TARGETS)].map(element => [element, element.getBoundingClientRect()] as const),
-  ));
-}
 
 const GROUP_COLOR: Record<GroupId, string> = {
   competition: '#2f6fd8',
@@ -514,7 +496,7 @@ function SitesPageInner() {
     const list = listRef.current;
     if (next === viewMode || !list || flipAnimation.current.some(animation => animation.playState === 'running')
       || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    preparedView.current = { state: captureView(list), time: performance.now() };
+    preparedView.current = { state: captureView(list, next), time: performance.now() };
   }
 
   function changeViewMode(next: ViewMode, animate: boolean) {
@@ -526,7 +508,7 @@ function SitesPageInner() {
     if (list && animate && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       const prepared = preparedView.current;
       flipState.current = prepared && performance.now() - prepared.time < 1000 && !flipAnimation.current.some(animation => animation.playState === 'running')
-        ? prepared.state : captureView(list);
+        ? prepared.state : captureView(list, next);
     }
     preparedView.current = null;
     flipAnimation.current.forEach(animation => animation.cancel());
@@ -961,8 +943,10 @@ function SitesPageInner() {
     // ancestor either stretches glyphs or forces layout on every animation frame.
     const targets = roots.flatMap(element => [...element.querySelectorAll(FLIP_TARGETS)]);
     if (targets.length === 0) return;
+    list.setAttribute('data-view-animating', '');
     roots.forEach(element => element.setAttribute('data-view-transition', ''));
     const clearTransition = () => {
+      list.removeAttribute('data-view-animating');
       roots.forEach(element => element.removeAttribute('data-view-transition'));
     };
     // Batch all destination reads before writing transforms. Flip's size fitting

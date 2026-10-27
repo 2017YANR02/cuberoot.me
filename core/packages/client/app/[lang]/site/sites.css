@@ -732,8 +732,15 @@
 .sites-list {
   --sites-list-columns: 40px minmax(0, 1.3fr) minmax(0, 0.8fr) minmax(0, 2.1fr);
   --sites-list-column-gap: 14px;
-  gap: 6px;
+  --site-list-gap: 6px;
+  --site-list-min-height: 60px;
+  --site-grid-gap: 12px;
+  --site-grid-min-width: 250px;
+  --site-grid-min-height: 190px;
+  --site-grid-column-count: 0;
+  gap: var(--site-list-gap);
 }
+.site-row:where(.sites-list:not(.is-grid) *) { min-height: var(--site-list-min-height); }
 
 .sites-list-head,
 .site-row-main:where(.sites-list:not(.is-grid) *) {
@@ -885,8 +892,8 @@ body[data-site-scenery] .site-avatar-image {
 
 .sites-list.is-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(var(--site-grid-min-width), 1fr));
+  gap: var(--site-grid-gap);
 }
 .sites-list.is-grid > .sites-list-head { display: none; }
 
@@ -901,7 +908,7 @@ body[data-site-scenery] .site-avatar-image {
 .site-card:where(.sites-list.is-grid *) {
   position: relative;
   min-width: 0;
-  min-height: 190px;
+  min-height: var(--site-grid-min-height);
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
   border-radius: 10px;
@@ -921,6 +928,7 @@ body[data-site-scenery] .site-card:where(.sites-list.is-grid *) {
 }
 
 /* Moving children must remain visible without changing their surface paint. */
+.sites-list[data-view-animating] { overflow-x: clip; }
 .sites-list [data-view-transition] {
   overflow: visible;
   content-visibility: visible;
@@ -1084,10 +1092,11 @@ body[data-site-scenery] .site-card:where(.sites-list.is-grid *) {
   .site-row-author:where(.sites-list:not(.is-grid) *) { grid-area: author; }
   .site-row-desc:where(.sites-list:not(.is-grid) *) { grid-area: desc; }
   .site-row-alts:where(.sites-list:not(.is-grid) *) { padding: 0 14px 10px 61px; }
-  .sites-list.is-grid { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+  .sites-list { --site-grid-min-width: 210px; --site-grid-gap: 10px; }
 }
 
 @media (max-width: 480px) {
+  .sites-list { --site-grid-column-count: 1; }
   .sites-list.is-grid { grid-template-columns: 1fr; }
   .sites-page-actions { align-items: stretch; }
   .sites-view-toggle { margin-left: auto; }
