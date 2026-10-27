@@ -8,8 +8,7 @@ vi.mock('next/navigation', () => ({ usePathname: () => state.pathname }));
 vi.mock('nuqs', () => ({ parseAsString: {}, useQueryState: (key: string) => [key === 'view' ? state.view : state.section] }));
 vi.mock('@/lib/auth-store', () => ({ useIsAdmin: () => state.admin }));
 vi.mock('@/hooks/useT', () => ({ useT: () => (_zh: string, en: string) => en }));
-vi.mock('@/components/AppLink', () => ({ default: ({ children }: { children: React.ReactNode }) => createElement('a', null, children) }));
-vi.mock('@app-foundation/navigation-ui', () => ({ NavigationShell: ({ items, children }: { items: Array<{ id: string; active: boolean }>; children: React.ReactNode }) => createElement('div', null, items.map(item => createElement('span', { key: item.id, 'data-active': item.active }, item.id)), children) }));
+vi.mock('@/components/AppLink', () => ({ default: ({ children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => createElement('a', props, children) }));
 import AdminShell from '../app/[lang]/admin/AdminShell';
 
 it('shows navigation only for administrators and follows the active page', async () => {
@@ -21,12 +20,19 @@ it('shows navigation only for administrators and follows the active page', async
   expect(node.textContent).toBe('Page content');
   state.admin = true;
   await act(async () => root.render(createElement(AdminShell, null, 'Page content')));
-  expect(node.querySelector('[data-active="true"]')?.textContent).toBe('content');
+  expect(node.querySelector('[aria-current="page"]')?.textContent).toContain('Content and community');
+  const group = node.querySelector('details')!;
+  expect(group.open).toBe(false);
+  await act(async () => group.querySelector('summary')!.click());
+  expect(group.open).toBe(true);
+  await act(async () => group.querySelector('summary')!.click());
+  expect(group.open).toBe(false);
   state.pathname = '/zh/admin/users';
   await act(async () => root.render(createElement(AdminShell, null, 'Page content')));
-  expect(node.querySelector('[data-active="true"]')?.textContent).toBe('users');
+  expect(node.querySelector('[aria-current="page"]')?.textContent).toContain('Users and memberships');
   state.pathname = '/admin'; state.section = 'system'; state.view = 'monitoring';
   await act(async () => root.render(createElement(AdminShell, null, 'Page content')));
-  expect(node.querySelector('[data-active="true"]')?.textContent).toBe('system-monitoring');
+  expect(node.querySelector('details')?.open).toBe(true);
+  expect(node.querySelector('[aria-current="page"]')?.textContent).toContain('Assistant and diagnostics');
   await act(async () => root.unmount());
 });

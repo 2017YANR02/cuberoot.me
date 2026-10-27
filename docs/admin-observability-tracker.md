@@ -88,7 +88,7 @@ type MembershipSummary = {
 
 ### `/admin`
 
-后台复用 Workspace 的导航框架：`/admin` 显示运营总览，`?section=users|content|commerce|system` 分别显示用户与会员、内容与社区、课程与商业、运营与系统的入口。运营与系统再以 `view=tools|workspace|monitoring|tax` 分为系统工具、工作资料、助手与诊断、税务办理；进入 `/admin/users`、`/admin/releases` 等子页面时保留导航。分区与工具使用真实链接，支持中键和新标签页；移动端使用共享导航抽屉。
+后台复用 Workspace 的导航框架：`/admin` 显示运营总览，`?section=users|content|commerce|system` 分别显示用户与会员、内容与社区、课程与商业、运营与系统的入口。运营与系统是可展开和收起的导航组，以 `view=tools|workspace|monitoring|tax` 分为系统工具、工作资料、助手与诊断、税务办理；进入 `/admin/users`、`/admin/releases` 等子页面时保留导航。分区与工具使用真实链接，支持中键和新标签页；移动端使用共享导航抽屉。
 
 ### `/admin/users`
 

@@ -6,6 +6,9 @@
 .admin-navigation__brand:focus-visible, .admin-navigation__account:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
 .admin-navigation__content { min-width: 0; }
 .admin-navigation .af-nav-link[href*="view="] { padding-left: 28px; font-size: .9em; }
+.admin-navigation .af-nav-group > summary::after { content: '›'; margin-left: auto; font-size: 1.1rem; transform: rotate(90deg); }
+.admin-navigation .af-nav-group[open] > summary::after { transform: rotate(-90deg); }
+@media (min-width: 768px) { .admin-navigation[data-collapsed="true"] .af-nav-group > summary::after { display: none; } }
 @media (min-width: 768px) { .admin-navigation[data-collapsed="true"] .af-nav-link[href*="view="] { padding-left: 10px; } }
 .admin-navigation .admin-hub { padding-top: 40px; }
 @media (max-width: 640px) { .admin-navigation__header { padding: 0 16px; } .admin-navigation__brand span { display: none; } .admin-navigation .admin-hub { padding-top: 28px; } }
