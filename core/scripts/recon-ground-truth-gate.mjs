@@ -12,6 +12,7 @@ import { dirname, relative, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { startResult, finishResult } from './recon-ground-truth-results.mts';
+import { runSnapshotGroundTruth, verifyStagedSnapshot } from './recon-staged-snapshot.mjs';
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const CORE_ROOT = resolve(SCRIPT_DIR, '..');
@@ -100,6 +101,7 @@ const EXACT_GUARDED_PATHS = new Set([
   'core/packages/shared/src/timer/replay_encode.ts',
   'core/packages/shared/src/timer/replay-client.ts',
   'core/scripts/recon-ground-truth-gate.mjs',
+  'core/scripts/recon-staged-snapshot.mjs',
   'core/apps/api/src/routes/recon_ground_truth.ts',
   'core/apps/api/migrations/0105_recon_ground_truth.sql',
   'core/apps/api/migrations/0106_recon_ground_truth_candidates.sql',
@@ -201,9 +203,10 @@ function checkStaged({ preflight = false, allowRun = true } = {}) {
   if (unstaged === null || untracked === null) return 0;
 
   const worktreeOnly = [...unstaged, ...untracked].filter(isGuardedRepoPath);
-  if (worktreeOnly.length > 0) {
+  const partiallyStaged = worktreeOnly.filter(path => guardedStaged.includes(path));
+  if (partiallyStaged.length > 0) {
     process.stderr.write(
-      `Ground-truth verification blocked: guarded staged and working-tree content differ:\n${worktreeOnly.join('\n')}\n`,
+      `Ground-truth verification blocked: guarded staged and working-tree content differ:\n${partiallyStaged.join('\n')}\n`,
     );
     return 3;
   }
@@ -217,6 +220,11 @@ function checkStaged({ preflight = false, allowRun = true } = {}) {
       return 3;
     }
     return 0;
+  }
+
+  if (worktreeOnly.length > 0) {
+    process.stdout.write('Other reconstruction work is in progress; verifying the staged snapshot with independent dependencies.\n');
+    return verifyStagedSnapshot({ repoRoot: REPO_ROOT, verify: runSnapshotGroundTruth });
   }
 
   const stamp = readStamp();

@@ -1,7 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-const css = readFileSync(new URL('../app/[lang]/site/sites.css', import.meta.url), 'utf8');
+const source = readFileSync(new URL('../app/[lang]/site/sites.css', import.meta.url), 'utf8');
+// Both layouts reuse the same DOM. Strip the zero-specificity layout guards
+// when checking the existing column/action-spacing contract below.
+const css = source.replaceAll(':where(.sites-list:not(.is-grid) *)', '').replaceAll(':where(.sites-list.is-grid *)', '');
 
 function mediaBlock(source: string, query: string): string {
   const start = source.indexOf(`@media ${query}`);

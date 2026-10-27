@@ -1,0 +1,238 @@
+diff --git a/dist/src/site.js b/dist/src/site.js
+index 428f4da0143dd0eb356a10f949ecc03aa92a722f..f7e68fb939ca6336748dbf036d45e0f6e0f5b9a0 100644
+--- a/dist/src/site.js
++++ b/dist/src/site.js
+@@ -66,6 +66,11 @@ export function installSiteCorners(root, options = {}) {
+         return result;
+     };
+     const pending = new Set();
++    const subtrees = new Set();
++    const removedRules = new Set();
++    const watched = new Set();
++    const visible = new Set();
++    let structureChanged = false;
+     let frame = 0, destroyed = false, paints = 0, passes = 0;
+     const sheet = new win.CSSStyleSheet();
+     doc.adoptedStyleSheets = [...doc.adoptedStyleSheets, sheet];
+@@ -83,7 +88,17 @@ export function installSiteCorners(root, options = {}) {
+         return `:root > ${parts.join(" > ")}`;
+     };
+     const set = (_el, entry, name, value) => entry.rules.set(name, value);
+-    const remove = (el, _entry) => { entries.delete(el); concentricElements.delete(el); resize.unobserve(el); };
++    const remove = (el, entry) => {
++        if (entry.rule) {
++            // A removed sibling's structural selector can now match a live node.
++            // Stop applying its paint before measuring any remaining surface.
++            entry.rule.style.cssText = "";
++            removedRules.add(entry.rule);
++        }
++        entries.delete(el);
++        concentricElements.delete(el);
++        resize.unobserve(el);
++    };
+     const paint = (el) => {
+         let entry = entries.get(el);
+         entry?.rules.clear();
+@@ -93,6 +108,15 @@ export function installSiteCorners(root, options = {}) {
+             return reject();
+         if (el.closest(exclude))
+             return reject();
++        // Native CSS remains the offscreen/SSR fallback. Build SVG geometry only
++        // near the viewport, rather than eagerly decorating an entire long page.
++        if (viewport) {
++            if (!watched.has(el)) {
++                watched.add(el);
++                viewport.observe(el);
++            }
++            if (!visible.has(el)) return reject();
++        }
+         const style = win.getComputedStyle(el);
+         // Clearing our paint sheet restarts native paint transitions. Sampling that
+         // intermediate value captures our transparent override instead of the author
+@@ -120,7 +144,9 @@ export function installSiteCorners(root, options = {}) {
+         if (["IMG"].includes(el.tagName)) {
+             entry ??= { rules: new Map() };
+             entries.set(el, entry);
+-            resize.observe(el);
++            entry.width = width;
++            entry.height = height;
++            resize.observe(el, { box: "border-box" });
+             const d = continuousCornerRadii({ width, height, radii }).d;
+             set(el, entry, "border-radius", "0px");
+             set(el, entry, "clip-path", `path("${d}")`);
+@@ -147,7 +173,9 @@ export function installSiteCorners(root, options = {}) {
+         const svg = `<svg xmlns="${svgNS}" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><defs><clipPath id="c"><path d="${d}"/></clipPath>${gradient}</defs>${shape}${stroke}</svg>`;
+         entry ??= { rules: new Map() };
+         entries.set(el, entry);
+-        resize.observe(el);
++        entry.width = width;
++        entry.height = height;
++        resize.observe(el, { box: "border-box" });
+         set(el, entry, "border-image-source", `url("data:image/svg+xml,${encodeURIComponent(svg)}")`);
+         set(el, entry, "border-image-slice", "0 fill");
+         set(el, entry, "border-image-width", "0");
+@@ -157,7 +185,7 @@ export function installSiteCorners(root, options = {}) {
+         set(el, entry, "background-image", "none");
+         paints++;
+     };
+-    const observe = () => observer.observe(root, { subtree: true, childList: true, attributes: true, attributeFilter: ["class", "style", "data-theme", "data-color-scheme", "data-corner-shape", "data-corner-container", "data-corner-style", "data-corner-minimum", "data-corner-uniform", "data-active", "aria-current", "aria-selected", "aria-pressed", "aria-expanded", "aria-checked", "disabled", "open"] });
++    const observe = () => observer.observe(root, { subtree: true, childList: true, attributes: true, attributeOldValue: true, attributeFilter: ["class", "style", "data-theme", "data-color-scheme", "data-corner-shape", "data-corner-container", "data-corner-style", "data-corner-minimum", "data-corner-uniform", "data-active", "aria-current", "aria-selected", "aria-pressed", "aria-expanded", "aria-checked", "disabled", "open"] });
+     const flush = () => {
+         if (destroyed)
+             return;
+@@ -165,20 +193,67 @@ export function installSiteCorners(root, options = {}) {
+         frame = 0;
+         observer.disconnect();
+         passes++;
+-        sheet.disabled = true;
+         geometry.clear();
+         try {
++            // React can append hundreds of siblings in one mutation batch. Expand
++            // each invalidated subtree once, after dropping roots covered by an ancestor.
++            for (const node of subtrees) {
++                let parent = node.parentElement;
++                while (parent && !subtrees.has(parent)) parent = parent.parentElement;
++                if (parent) continue;
++                for (const el of node.querySelectorAll("*")) {
++                    if (el instanceof win.HTMLElement && !el.closest("[data-cc-decoration], svg")) pending.add(el);
++                }
++            }
++            subtrees.clear();
+             const batch = [...pending];
+             pending.clear();
+             for (const [el, entry] of entries)
+-                if (!el.isConnected)
++                if (el !== root && !root.contains(el))
+                     remove(el, entry);
++            if (structureChanged) {
++                for (const el of watched) {
++                    if (el === root || root.contains(el)) continue;
++                    viewport.unobserve(el);
++                    watched.delete(el);
++                    visible.delete(el);
++                }
++            }
++            // Reveal author styles only for dirty surfaces. Disabling the whole
++            // sheet forces every unrelated surface through style/layout again.
++            for (const el of batch) {
++                const entry = entries.get(el);
++                if (entry?.rule) entry.rule.style.cssText = "";
++            }
+             for (const el of batch)
+                 paint(el);
+-            sheet.replaceSync([...entries].map(([el, entry]) => `${selectorFor(el)}{${[...entry.rules].map(([key, value]) => `${key}:${value} !important;`).join("")}}`).join("\n"));
++            if (removedRules.size) {
++                for (let i = sheet.cssRules.length - 1; i >= 0; i--)
++                    if (removedRules.has(sheet.cssRules[i])) sheet.deleteRule(i);
++                removedRules.clear();
++            }
++            // Structural selectors need updating after insertion/removal, not on
++            // each pointer event. Keep unaffected CSSRule identities and declarations.
++            if (structureChanged) {
++                for (const [el, entry] of entries) {
++                    if (!entry.rule) continue;
++                    const selector = selectorFor(el);
++                    if (entry.rule.selectorText !== selector) entry.rule.selectorText = selector;
++                }
++                structureChanged = false;
++            }
++            for (const el of batch) {
++                const entry = entries.get(el);
++                if (!entry) continue;
++                const text = [...entry.rules].map(([key, value]) => `${key}:${value} !important;`).join("");
++                if (entry.rule) entry.rule.style.cssText = text;
++                else {
++                    const index = sheet.insertRule(`${selectorFor(el)}{${text}}`, sheet.cssRules.length);
++                    entry.rule = sheet.cssRules[index];
++                }
++            }
+         }
+         finally {
+-            sheet.disabled = false;
+             observe();
+         }
+     };
+@@ -186,19 +261,64 @@ export function installSiteCorners(root, options = {}) {
+         if (destroyed || node.closest("[data-cc-decoration], [data-continuous-corners], svg"))
+             return;
+         pending.add(node);
+-        if (subtree)
+-            for (const el of node.querySelectorAll("*")) {
+-                if (el instanceof win.HTMLElement && !el.closest("[data-cc-decoration], svg"))
+-                    pending.add(el);
+-            }
++        if (subtree) subtrees.add(node);
+         if (!frame)
+             frame = win.requestAnimationFrame(flush);
+     };
+-    const resize = new win.ResizeObserver(items => { for (const item of items)
+-        schedule(item.target, true); });
++    const resize = new win.ResizeObserver(items => {
++        for (const item of items) {
++            const entry = entries.get(item.target);
++            const box = item.borderBoxSize?.[0];
++            // observe() emits an initial notification even when nothing resized.
++            if (entry && box && Math.abs(box.inlineSize - entry.width) < .01 && Math.abs(box.blockSize - entry.height) < .01) continue;
++            schedule(item.target, true);
++        }
++    });
++    const viewport = typeof win.IntersectionObserver === "function" ? new win.IntersectionObserver(items => {
++        for (const item of items) {
++            if (item.isIntersecting) visible.add(item.target);
++            else visible.delete(item.target);
++            schedule(item.target);
++        }
++    }, { rootMargin: "200px" }) : null;
++    const previousStyle = doc.createElement("div").style;
++    const compositorProperties = new Set(["transform", "translate", "rotate", "scale", "opacity", "will-change"]);
+     const collect = (records) => {
++        // Geometry libraries temporarily append measurement probes and remove
++        // them in the same turn. Their final DOM has not changed; rescanning an
++        // entire parent for those probes turns a small Flip into a page repaint.
++        const firstChange = new Map();
++        for (const record of records) {
++            // A pre-existing node may be moved and then removed in one turn.
++            // Only nodes first seen being added can be temporary probes.
++            for (const node of record.removedNodes) if (!firstChange.has(node)) firstChange.set(node, "removed");
++            for (const node of record.addedNodes) if (!firstChange.has(node)) firstChange.set(node, "added");
++        }
++        const styled = new Set();
+         for (const record of records) {
+             const target = record.target;
++            if (target !== root && !root.contains(target)) continue;
++            if (record.type === "attributes" && record.attributeName === "style" && target instanceof win.HTMLElement) {
++                if (styled.has(target)) continue;
++                styled.add(target);
++                previousStyle.cssText = record.oldValue ?? "";
++                const changed = new Set([...Array.from(previousStyle), ...Array.from(target.style)]
++                    .filter(name => previousStyle.getPropertyValue(name) !== target.style.getPropertyValue(name)
++                        || previousStyle.getPropertyPriority(name) !== target.style.getPropertyPriority(name)));
++                if ([...changed].every(name => compositorProperties.has(name))) {
++                    // Compositor-only animation does not alter local SVG paint.
++                    // Transform changes still invalidate concentric descendants,
++                    // whose geometry depends on the ancestor coordinate system.
++                    if ([...changed].some(name => ["transform", "translate", "rotate", "scale"].includes(name))
++                        && (target.closest(containerSelector) || target.querySelector(containerSelector)))
++                        for (const el of viewport ? watched : entries.keys())
++                            if (target.contains(el) && el.parentElement?.closest(containerSelector)) schedule(el);
++                    continue;
++                }
++            }
++            if (record.type === "childList" && [...record.addedNodes, ...record.removedNodes]
++                .every(node => firstChange.get(node) === "added" && !root.contains(node))) continue;
++            if (record.type === "childList") structureChanged = true;
+             // Structural selectors (:first-child, :nth-child, :has) can also change
+             // existing descendants' paint. Keep invalidation correct; batch it per frame.
+             if (target instanceof win.HTMLElement)
+@@ -240,6 +360,11 @@ export function installSiteCorners(root, options = {}) {
+             observer.disconnect();
+             theme.disconnect();
+             resize.disconnect();
++            viewport?.disconnect();
++            watched.clear();
++            visible.clear();
++            pending.clear();
++            subtrees.clear();
+             for (const name of events)
+                 root.removeEventListener(name, interaction, true);
+             win.removeEventListener("resize", refresh);

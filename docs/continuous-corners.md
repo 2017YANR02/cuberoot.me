@@ -1,10 +1,10 @@
 # CubeRoot 连续圆角接入跟踪
 
-更新：2026-10-19。本批只作本地提交，不 Push、不发布 npm、不部署。
+更新：2026-10-27。本批只作本地提交，不 Push、不发布 npm、不部署。
 
 ## 共用标准
 
-独立仓库 [continuous-corners](https://github.com/2017YANR02/continuous-corners)，初始研究基线 `5d96cef` 已在此前推送，后续实现尚未推送。产品本地升级为 `@2017yanr02/continuous-corners@0.3.1`，几何版本 `swiftui-27-uniform-v1` / `swiftui-27-independent-v1`。安装包随本仓库跟踪，使用相对 `file:` 引用；不跨仓库 import 或依赖开发者路径、业务数据。
+独立仓库 [continuous-corners](https://github.com/2017YANR02/continuous-corners)，初始研究基线 `5d96cef` 已在此前推送，后续实现尚未推送。产品引用 `@2017yanr02/continuous-corners@0.3.2`，并通过 `core/patches/` 中的 pnpm 补丁修复自动装饰调度；几何版本仍为 `swiftui-27-uniform-v1` / `swiftui-27-independent-v1`。安装包随本仓库跟踪，使用相对 `file:` 引用；不跨仓库 import 或依赖开发者路径、业务数据。
 
 核心以苹果公开 SwiftUI `.continuous` 的原始路径为基准：每角三段三次贝塞尔，按尺寸限制半径和过渡段。578 组 macOS/iOS 模拟器原始样本相同；TypeScript 重建最大坐标误差约 0.0000283 个逻辑单位。不是苹果官方源码，也不宣称逐位或逐像素等同。公开算法研究与来源见共享包 `docs/geometry.md`。
 
@@ -65,3 +65,17 @@ Web 与共享 app-ui 使用同一组 `.cg-card, .rc-card, .recon-card, .sortable
 新增不依赖鼠标/焦点事件的选中迁移、清除和观察器收敛回归；本地 Chromium 45 项检查通过。真实页面按聊天→外观→桌宠→音乐→聊天→外观切换，状态和绘制背景均只有一个选中项。库类型检查通过；本轮未提交、发布、部署，未扩展为 Safari / 真机验收。
 
 0.3.2 归档 SHA-256：`aa823bd6feb689f5d2a49d9e05a08cc7958734364681ea450c6a762b9dd6d7eb`。
+
+## 2026-10-27 长列表交互阻塞修复（0.3.2 pnpm 补丁）
+
+`/site` 的 386 条目录在内容出现后仍有秒级交互阻塞。Chromium 本地对照中，悬停前四行反复出现约 1.0–1.17 秒主线程任务；临时关闭 SiteCorners 后，同样的 DOM 和交互没有超过 50ms 的任务，恢复引擎后问题重新出现。线上也观察到约 603–1180ms 的悬停任务。此项为圆角调度问题，区别于首页已修复的玻璃模糊开销。
+
+历史提交 `8a25f6dc65` 已将微任务改为逐帧刷新并排除背景过渡控件，但同一批追加节点仍会重复扫描父子树，每次悬停还会禁用、重建全部装饰规则。现在按帧合并待扫描子树，按脏元素更新 CSSRule，忽略没有实际尺寸变化的 ResizeObserver 首次通知。通过 IntersectionObserver 只为视口附近元素生成 SVG；屏外、SSR 和不支持观察器时分别保持原生 CSS 后备或原有主动绘制路径。
+
+临时测量节点在同一批内新增并删除时不触发整页扫描；真实节点移动、删除仍刷新结构选择器。移除规则在重新测量前清空，避免旧 `:nth-child` 规则误套到后继节点。按目标合并 style 变化，纯 transform/opacity 等合成变化不重绘局部 SVG；受坐标系影响的同心容器后代仍失效，没有容器的子树不扫描全页观察集合。保留 `7417382d58` 的动态选中属性监听，以及 `6196852f2d` 的模拟器原生控件边界。
+
+全站代码扫描确认安装入口只有 Web 根布局和共享 app-ui，两者及导航包的 peer 解析均消费同一补丁；不在各业务页添加引擎禁用开关。补丁由 `pnpm-workspace.yaml` 的 `patchedDependencies` 和锁文件登记，不修改归档内容或复制几何实现。更新上游归档时须核对补丁是否已经合入并同步调整登记。
+
+回归位于 `core/packages/client/tests/continuous-corners-runtime.test.ts`，覆盖批量插入、局部样式更新、尺寸通知、临时探针、选中/主题、删除重排、视口进出及销毁重挂。浏览器采样和共享消费者验证只代表本机 Chromium / React DOM；未扩展为 Safari、Android、HarmonyOS 或桌面原生安装包的设备验收。
+
+本地验证：client 圆角运行时与目录列对齐共 13 项、app-ui 智能连接集成 33 项通过，client/app-ui 类型检查通过，冻结锁文件安装通过。Chromium 验证视图快速反转、减少动态效果、375px 窄屏、搜索和末项可达；动画只涉及当次窗口的 12 个条目（24 个图标/名称），采样字体变换比例保持 1:1。屏外内容跳过布局后，该次切换的最长任务为 126ms，仍有布局准备成本，不能据此宣称所有设备零掉帧。首页、排名页和模拟器完成加载冒烟，未作全站业务流程或原生设备验收。

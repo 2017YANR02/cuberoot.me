@@ -1,10 +1,10 @@
 // guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, expect, it } from 'vitest';
-import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, existsSync, rmSync } from 'node:fs';
+import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, existsSync, rmSync, copyFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CLIENT_ROOT = join(HERE, '..');
@@ -34,6 +34,7 @@ describe('reconstruction ground-truth commit gate', () => {
     expect(isGuarded('core/apps/api/migrations/0106_recon_ground_truth_candidates.sql')).toBe(true);
     expect(isGuarded('.githooks/pre-commit')).toBe(true);
     expect(isGuarded('core/scripts/recon-ground-truth-gate.mjs')).toBe(true);
+    expect(isGuarded('core/scripts/recon-staged-snapshot.mjs')).toBe(true);
     expect(isGuarded('core/pnpm-lock.yaml')).toBe(true);
     for (const path of [
       'core/packages/timer-ui/src/reconstruct/StepMoveList.tsx',
@@ -116,6 +117,7 @@ describe('reconstruction ground-truth commit gate', () => {
     try {
       expect(run('git', ['init', '-q']).status).toBe(0);
       for (const path of ['core/scripts/recon-ground-truth-gate.mjs',
+        'core/scripts/recon-staged-snapshot.mjs',
         'core/scripts/recon-ground-truth-results.mts',
         'core/packages/client/lib/recon-test-history.server.ts',
         'core/packages/client/lib/recon-intake-regression.ts',
@@ -201,6 +203,72 @@ describe('reconstruction ground-truth commit gate', () => {
     } finally { rmSync(temp, { recursive: true, force: true }); }
   // Windows runs many real Git/Node child processes here; startup alone can
   // exceed 15 seconds. Keep every gate assertion and give the integration time.
+  }, process.platform === 'win32' ? 60_000 : 15_000);
+
+  it('verifies only the index, preserves other work, and binds evidence to the exact staged tree', () => {
+    const temp = mkdtempSync(join(tmpdir(), 'recon-snapshot-test-'));
+    const isolatedEnv = {
+      ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_'))),
+      NODE_ENV: process.env.NODE_ENV ?? 'test',
+    };
+    const runGit = (args: string[], env = isolatedEnv) => spawnSync('git', args, { cwd: temp, env, encoding: 'utf8' });
+    const helper = pathToFileURL(join(REPO_ROOT, 'core/scripts/recon-staged-snapshot.mjs')).href;
+    const verify = (expected: string, status = 0, mutate = false, env = isolatedEnv) => spawnSync(process.execPath, ['--input-type=module', '-e', `
+      import { verifyStagedSnapshot } from ${JSON.stringify(helper)};
+      import { readFileSync, writeFileSync, appendFileSync, existsSync } from 'node:fs';
+      import { join } from 'node:path';
+      import { spawnSync } from 'node:child_process';
+      const root = process.cwd();
+      const result = verifyStagedSnapshot({repoRoot: root, verify(snapshot, cleanEnv) {
+        appendFileSync(join(root, 'calls.log'), 'verified\\n');
+        writeFileSync(join(root, 'snapshot-path.txt'), snapshot);
+        if (readFileSync(join(snapshot, 'source.txt'), 'utf8') !== ${JSON.stringify(expected)}) return 21;
+        if (existsSync(join(snapshot, 'untracked.txt'))) return 22;
+        if (Object.keys(cleanEnv).some(key => key.startsWith('GIT_')) || cleanEnv.NODE_PATH) return 23;
+        if (${mutate}) {
+          writeFileSync(join(root, 'source.txt'), 'changed during verification');
+          spawnSync('git', ['add', 'source.txt'], {cwd: root});
+        }
+        return ${status};
+      }});
+      process.exitCode = result;
+    `], { cwd: temp, env, encoding: 'utf8' });
+    try {
+      expect(runGit(['init', '-q']).status).toBe(0);
+      writeFileSync(join(temp, 'source.txt'), 'staged');
+      expect(runGit(['add', 'source.txt']).status).toBe(0);
+      writeFileSync(join(temp, 'source.txt'), 'other work');
+      writeFileSync(join(temp, 'untracked.txt'), 'keep me');
+      // Local export attributes are not in the tree and must not remove tests.
+      writeFileSync(join(temp, '.git', 'info', 'attributes'), 'source.txt export-ignore\n');
+      const indexBefore = runGit(['write-tree']).stdout;
+      const checked = verify('staged');
+      expect(checked.status, checked.stderr).toBe(0);
+      expect(runGit(['write-tree']).stdout).toBe(indexBefore);
+      expect(readFileSync(join(temp, 'source.txt'), 'utf8')).toBe('other work');
+      expect(readFileSync(join(temp, 'untracked.txt'), 'utf8')).toBe('keep me');
+      expect(existsSync(readFileSync(join(temp, 'snapshot-path.txt'), 'utf8'))).toBe(false);
+      expect(verify('staged').status).toBe(0);
+      expect(readFileSync(join(temp, 'calls.log'), 'utf8')).toBe('verified\n');
+
+      // A failed verification must not reuse or issue evidence for a different tree.
+      expect(runGit(['add', 'source.txt']).status).toBe(0);
+      expect(verify('other work', 19).status).toBe(19);
+      expect(verify('other work', 19).status).toBe(19);
+      expect(verify('other work', 0, true).status).toBe(3);
+
+      // `git commit --only` supplies an alternate index; inspect that one while
+      // clearing all Git variables from the snapshot's independent test process.
+      const normalTree = runGit(['write-tree']).stdout;
+      const alternate = join(temp, '.git', 'alternate-index');
+      copyFileSync(join(temp, '.git', 'index'), alternate);
+      const alternateEnv = { ...isolatedEnv, GIT_INDEX_FILE: alternate };
+      writeFileSync(join(temp, 'source.txt'), 'alternate index');
+      expect(runGit(['add', 'source.txt'], alternateEnv).status).toBe(0);
+      const alternateCheck = verify('alternate index', 0, false, alternateEnv);
+      expect(alternateCheck.status, alternateCheck.stderr).toBe(0);
+      expect(runGit(['write-tree']).stdout).toBe(normalTree);
+    } finally { rmSync(temp, { recursive: true, force: true }); }
   }, process.platform === 'win32' ? 60_000 : 15_000);
 
 });
