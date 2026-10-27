@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "updatedAt": "2026-10-25T09:33:51.846Z",
-  "snapshot": "snapshots/2026-10-22.json",
+  "updatedAt": "2026-10-26T06:48:33.821Z",
+  "snapshot": "snapshots/2026-10-26T06-44-22-473Z.json",
   "counts": {
-    "total": 494,
+    "total": 495,
     "linkedDisciplinary": 44,
-    "translated": 450,
+    "translated": 451,
     "pending": 0
   },
   "entries": [
@@ -774,6 +774,19 @@
       "path": "entries/approval-of-motions-january-2019.json",
       "translationVersion": 3,
       "translationHash": "54b33ca78257f7ddf023ddb9f031b6194effc8d93fd9a716b69c9dee1e9a8768",
+      "reviewStatus": "pending_independent_review"
+    },
+    {
+      "key": "posts:/posts/asia-west-south-senior-delegate-announcement-october-2026",
+      "sourceId": 14268,
+      "url": "https://www.worldcubeassociation.org/posts/asia-west-south-senior-delegate-announcement-october-2026",
+      "sourceHash": "09e618acbf69bba5310e117b70eba17d1dd2a1c12c422aec1a643937ab7b6076",
+      "title": "Asia West & South Senior Delegate Announcement (October 2026)",
+      "date": "2026-10-25T18:26:22.000Z",
+      "status": "translated",
+      "path": "entries/asia-west-south-senior-delegate-announcement-october-2026.json",
+      "translationVersion": 1,
+      "translationHash": "da317c9027d609229bc2792724450b17b4a50b391f24d997b7ee86b728ac474c",
       "reviewStatus": "pending_independent_review"
     },
     {
