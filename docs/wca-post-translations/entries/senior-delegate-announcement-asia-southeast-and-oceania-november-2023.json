@@ -12,14 +12,31 @@
     "sourceId": 14132
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "4a93f1a94381778be677969f006d96c49de958e8c79613049e97d713af66c535",
     "language": "zh-Hans",
     "title": "东南亚及大洋洲高级代表任命公告（2023 年 11 月）",
     "content": "我们很高兴地宣布以下两位高级代表的任命：\n\n* Leow Yi Jun——东南亚（再次申请任职）\n* Charlie Van Ooran——大洋洲（新任）\n\nWCA 董事会依照[《关于高级代表的议案》](https://www.worldcubeassociation.org/documents/motions/09.2022.1%2520-%2520Senior%2520Delegates.pdf)第 4 节，经董事投票选出两人。西亚与南亚、中部欧亚地区及非洲的高级代表职位没有收到申请，因此现阶段将由董事会承担这些职责。\n\n感谢此前担任这些地区高级代表的 Serhii Koksharov、Akash Rupela 和 Edward Hollingdale。\n\n我们支持 Leow 和 Charlie 承担新的职责，并祝他们工作顺利。两人的高级代表任期自 2023 年 10 月 1 日开始。\n\nLeow 是东南亚职位的唯一申请人。除 Charlie 外，大洋洲职位还有以下申请人：\n\n* Patrick Kleverlaan\n\n如有兴趣，申请材料可在[这里](https://drive.google.com/drive/folders/1ORyVEE_mn8Asse7j3Lev5uYu2cC_H4QU?usp=drive_link)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:42:40.564Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "52954afd80c518e82ed16363f728b28b3543ce3457d95eb4da8aa10005e76c37"
+  "translationHash": "896e734e7178701d2692797c54aa4da4b925c0226bd78bb7a46ccad4b4ef1bd9",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:25.168Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "4a93f1a94381778be677969f006d96c49de958e8c79613049e97d713af66c535",
+    "reviewedTranslationHash": "896e734e7178701d2692797c54aa4da4b925c0226bd78bb7a46ccad4b4ef1bd9",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/senior-delegate-announcement-asia-southeast-and-oceania-november-2023.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "52954afd80c518e82ed16363f728b28b3543ce3457d95eb4da8aa10005e76c37"
+  }
 }

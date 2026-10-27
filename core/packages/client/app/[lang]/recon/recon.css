@@ -11,7 +11,7 @@
   max-width: 1400px;
   margin: 0 auto;
   padding: 20px 16px;
-  font-family: 'Inter', Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .recon-page h1 {
@@ -83,7 +83,7 @@
   background: color-mix(in srgb, var(--foreground) 5%, transparent);
   color: var(--muted-foreground);
   font-size: 0.85rem;
-  font-family: 'Inter', Arial, sans-serif;
+  font-family: var(--font-sans);
   cursor: pointer;
   outline: none;
   transition: border-color 0.2s;
@@ -133,7 +133,7 @@
   background: color-mix(in srgb, var(--foreground) 5%, transparent);
   color: var(--foreground);
   font-size: 0.85rem;
-  font-family: 'Inter', Arial, sans-serif;
+  font-family: var(--font-sans);
   outline: none;
   transition: border-color 0.2s;
 }
@@ -392,7 +392,7 @@ img.recon-inline-flag {
   height: 36px;
   padding: 0 14px;
   font-size: 0.82rem;
-  font-family: 'Inter', Arial, sans-serif;
+  font-family: var(--font-sans);
   border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
   background: color-mix(in srgb, var(--foreground) 4%, transparent);
   color: var(--faint-foreground);

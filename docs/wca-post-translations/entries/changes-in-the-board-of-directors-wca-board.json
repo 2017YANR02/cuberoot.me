@@ -12,14 +12,33 @@
     "sourceId": 7544
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "51410b1c91df831f18ea44979213dba9885bf28688e1a8a1dfaa708dfda832fc",
     "language": "zh-Hans",
     "title": "WCA 董事会成员变动",
     "content": "亲爱的 WCA 社区成员：\n\nWCA 有投票权的会员通过不记名投票选举了 WCA 董事。现将选举结果及董事会相应变动告知大家。\n\n我们很高兴地宣布，[Olivér Perge](https://www.worldcubeassociation.org/persons/2007PERG01)成为 WCA 董事会新成员。[Pedro Santos Guimarães](https://www.worldcubeassociation.org/persons/2007GUIM01)成功连任董事，[Ilkyoo Choi](https://www.worldcubeassociation.org/persons/2008CHOI04)则将结束其董事任期。上述变动已于 2017 年 7 月 1 日生效。\n\n感谢 Ilkyoo 为 WCA 和社区所做的工作。他自 2013 年起担任 WCA 董事，为协会发展投入了大量时间和精力，作出了重要贡献，帮助 WCA 在世界各地成长。他将继续担任韩国的 WCA 代表。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.166Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "968a1b1945b2934c9338573b3e39172bdc72b1a1b7f2fa59f9957cf114afc9c1"
+  "translationHash": "092e0729189113829a4c8e41d8d0000232e5205cff3634d1ae3272c0e10f3c7a",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:12:23.464Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "51410b1c91df831f18ea44979213dba9885bf28688e1a8a1dfaa708dfda832fc",
+    "reviewedTranslationHash": "092e0729189113829a4c8e41d8d0000232e5205cff3634d1ae3272c0e10f3c7a",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/changes-in-the-board-of-directors-wca-board.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照标题和正文；各届赛事城市及取消/退款范围、董事候选名单、当选与连任区别、任期及生效日期、保留职务和干事分工均与原文一致。"
+    ],
+    "inputTranslationHash": "968a1b1945b2934c9338573b3e39172bdc72b1a1b7f2fa59f9957cf114afc9c1"
+  }
 }

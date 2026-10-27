@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/wac-leader-application-october-2020",
+  "path": "docs/wca-post-translations/entries/wac-leader-application-october-2020.json",
+  "sourceHash": "5599cc895d72b6839d2271accf571bb0a9dcfc99c252ddf23ba9751c15898a80",
+  "inputTranslationHash": "7f99dd0aca88b88fee3069f8a08accb78004dbad8bf4f3c6699668a0909fab0a",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:59.337Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

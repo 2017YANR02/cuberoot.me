@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/european-rubik-s-cube-championship-2016-on-july-15-17-2016-in-prague-czech-republic",
+  "source": {
+    "key": "posts:/posts/european-rubik-s-cube-championship-2016-on-july-15-17-2016-in-prague-czech-republic",
+    "kind": "posts",
+    "title": "European Rubik's Cube Championship 2016 on July 15 - 17, 2016 in Prague, Czech Republic",
+    "date": "2015-12-14T23:01:40.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/european-rubik-s-cube-championship-2016-on-july-15-17-2016-in-prague-czech-republic",
+    "content": "The [European Rubik's Cube Championship 2016](https://www.worldcubeassociation.org/results/c.php?i=Euro2016) will take place on July 15 - 17, 2016 in Prague, Czech Republic. Check out the [European Rubik's Cube Championship 2016 website](https://euro2016.cubing.net/) for more information and registration.",
+    "hash": "02bc9862100b5492ab5a0481eb4fd7be98288dc083714a7fc4c2ceaaf294bc3b",
+    "format": "markdown",
+    "sourceId": 5177
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "02bc9862100b5492ab5a0481eb4fd7be98288dc083714a7fc4c2ceaaf294bc3b",
+    "language": "zh-Hans",
+    "title": "2016 年欧洲魔方锦标赛将于 7 月 15–17 日在捷克布拉格举行",
+    "content": "[2016 年欧洲魔方锦标赛](https://www.worldcubeassociation.org/results/c.php?i=Euro2016)将于 2016 年 7 月 15–17 日在捷克布拉格举行。更多信息及报名请访问[赛事网站](https://euro2016.cubing.net/)。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.167Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "dcaa74d9376b23f328caf6c02e40847b7a3821ff0dc96b60968bf13a80f9a66b"
+}

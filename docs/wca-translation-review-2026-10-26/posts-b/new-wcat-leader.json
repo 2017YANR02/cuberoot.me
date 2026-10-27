@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/new-wcat-leader",
+  "path": "docs/wca-post-translations/entries/new-wcat-leader.json",
+  "sourceHash": "9ae735cd0870f3311daee29264cffcf540dc7569bbdd8fd0f9fcc1323d020917",
+  "inputTranslationHash": "5aeb692ee3b6709797ea3f8f84fdb24123b002936e30792b7ec95df839d5bc68",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:44.904Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

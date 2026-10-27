@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/in-memoriam-raj-gala",
+  "path": "docs/wca-post-translations/entries/in-memoriam-raj-gala.json",
+  "sourceHash": "b4dc0e923e01784342af10efc53e235759fa041b624f799b5c1495f99417712a",
+  "inputTranslationHash": "8a609ba3c2502c8466c8f4006b415b0815fdb9e5ea8dd3ade4088c979e663b39",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:36.320Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

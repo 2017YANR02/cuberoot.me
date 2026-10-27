@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-input-wca-competition-events",
+  "path": "docs/wca-post-translations/entries/call-for-input-wca-competition-events.json",
+  "sourceHash": "32c0f1383ed8e8a2210beff7ef5aeb3a91017ff1f353ecb5ef86df705c32f76c",
+  "inputTranslationHash": "98cc2ce5bf17d38d39d5a43a123e554950659ba207c8782ea63090859633e023",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:12:00.207Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照正文及标题；申请条件、薪酬福利和地域、岗位职责、2024/2025 任命程序及 2019 草案条目逐项核对。"
+  ],
+  "changes": []
+}

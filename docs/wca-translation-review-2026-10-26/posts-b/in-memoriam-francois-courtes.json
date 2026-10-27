@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/in-memoriam-francois-courtes",
+  "path": "docs/wca-post-translations/entries/in-memoriam-francois-courtes.json",
+  "sourceHash": "9f52f6827fb4a9581e90941886e43a92cb74a436a5a57fc046f516bfd3d51536",
+  "inputTranslationHash": "b690b13bb0232555306dc1922fe35f2d8d2067be1084f8606c7361ed9bcf30a2",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:36.319Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

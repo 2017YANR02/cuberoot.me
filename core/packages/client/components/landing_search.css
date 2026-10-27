@@ -464,6 +464,7 @@
 }
 
 .landing-search-item {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -490,6 +491,10 @@
   font-weight: 500;
   line-height: 1.25;
   overflow-wrap: anywhere;
+}
+
+.landing-search-date {
+  white-space: nowrap;
 }
 
 .landing-search-item-meta {
@@ -576,9 +581,17 @@
     margin-bottom: 1.75rem;
   }
   .landing-search-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .landing-search-panel {
     max-height: 60vh;
   }
+}
+.landing-search-translations :is(.landing-search-item-name, .landing-search-item-meta) {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }

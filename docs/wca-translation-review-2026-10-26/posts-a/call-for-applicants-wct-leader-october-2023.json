@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wct-leader-october-2023",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wct-leader-october-2023.json",
+  "sourceHash": "3fdab556572df424fa1324dc804b6b9873ce75ebc79ab31530d709eaec0a6483",
+  "inputTranslationHash": "cf36dd647fce06f1363e7c89c02adaede199f9796bef978335b9faf758dc8b52",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:10:04.271Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇核对全文及标题，职位、历史机构、任期、工时、申请资料、截止日期和投票程序一致。"
+  ],
+  "changes": []
+}

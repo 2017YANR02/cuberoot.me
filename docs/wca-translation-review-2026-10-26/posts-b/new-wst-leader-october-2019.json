@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/new-wst-leader-october-2019",
+  "path": "docs/wca-post-translations/entries/new-wst-leader-october-2019.json",
+  "sourceHash": "efb67c48996abb0734ca51ba736d57fe3914ff925776d9e894e620967df64e91",
+  "inputTranslationHash": "23d48aba0e0d9cbda2cc8f9dae0f48a7b839d8e27595ffa49997910232e1ef23",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:44.905Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

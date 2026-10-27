@@ -1,0 +1,27 @@
+{
+  "key": "posts:/posts/call-for-applicants-wst-members-july-2019",
+  "source": {
+    "key": "posts:/posts/call-for-applicants-wst-members-july-2019",
+    "kind": "posts",
+    "title": "Call for Applicants - WST Members (July 2019)",
+    "date": "2019-07-30T01:20:42.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/call-for-applicants-wst-members-july-2019",
+    "content": "The WCA Software Team (WST) is looking for new members! The applications are open to everyone; it’s not a requirement to hold a current position in the WCA to be considered. The WST plays a central role on the WCA developing, scaling, and maintaining the software solutions that help the organization handle the continuous community growth. Some examples of such software solutions are:\n\n- A website\n- TNoodle\n- Workbook Assistant\n\nAll of the above are open-sourced and can be found on the WCA’s GitHub. The technologies used on these projects is very varied: Ruby on Rails, JavaScript, CSS, MySQL, Chef, React, Java, etc, so developers of all backgrounds are encouraged to apply!\n\nInterested applicants should reach out to **Alberto Pérez de Rada Fiol (WST’s Project Manager) at afiol@worldcubeassociation.org** with an introduction of themselves that includes their experience as developers. Adding activities done for the WCA and goals as a team member is a plus.\n\n<!-- break -->\n\nAmong the projects the team has, the ones we are trying to deliver first are:\n\n1. Website redesign:\n   - To port the remaining parts of the old PHP website to RoR\n   - To implement an already prepared redesign\n\n2. WCA Live\n   - To build a modern platform for live results able to communicate with the other softwares\n\n3. WCA Forum\n   - Provide a Discourse forum with several integrations\n\nApplicants will be asked to contribute to the projects before being formally invited to the team. For this purpose, and specifically for the website, we have labeled some issues as [good first issues](https://github.com/thewca/worldcubeassociation.org/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22) and [good second issues](https://github.com/thewca/worldcubeassociation.org/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+second+issue%22).\n\nSuccessful applicants will be added to the team on a rolling basis. It’s worth noting that the WST is always looking for new members, so we encourage interested developers to reach out to us at any time!\n\nThank you for your applications and support!",
+    "hash": "7b2aedd6c30e26830a5e47a490175d947b3eeb40686dae87c9cafa7d8cf43db6",
+    "format": "markdown",
+    "sourceId": 12543
+  },
+  "translation": {
+    "version": 2,
+    "sourceHash": "7b2aedd6c30e26830a5e47a490175d947b3eeb40686dae87c9cafa7d8cf43db6",
+    "language": "zh-Hans",
+    "title": "WCA 软件组招募成员（2019 年 7 月）",
+    "content": "WCA 软件组（WST）正在招募新成员！所有人都可以申请，不要求目前在 WCA 任职。WST 通过开发、扩展和维护各类软件，帮助 WCA 应对社区的持续增长，是协会运作的重要一环。这些软件包括：\n\n* WCA 网站。\n* TNoodle。\n* Workbook Assistant。\n\n以上项目均已开源，可在 WCA 的 GitHub 上找到。项目采用的技术多种多样，包括 Ruby on Rails、JavaScript、CSS、MySQL、Chef、React、Java 等，欢迎不同技术背景的开发者申请！\n\n有意申请者，请通过 **afiol@worldcubeassociation.org 联系 WST 项目经理 Alberto Pérez de Rada Fiol**，作自我介绍并说明开发经验。如果还能介绍自己为 WCA 所做的工作，以及加入团队后的目标，将更有助于申请。\n\n目前，团队优先推进的项目有：\n\n1. 网站改版：\n   * 将旧 PHP 网站的剩余部分迁移至 Ruby on Rails。\n   * 实现已经准备好的新版设计。\n2. WCA Live：\n   * 建立现代化的实时成绩平台，并能与其他软件通信。\n3. WCA 论坛：\n   * 搭建 Discourse 论坛，并接入多项集成功能。\n\n申请者须先为项目作出贡献，之后才会收到正式入队邀请。为方便入门，网站项目的一些问题已标记为 [good first issues](https://github.com/thewca/worldcubeassociation.org/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22) 和 [good second issues](https://github.com/thewca/worldcubeassociation.org/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+second+issue%22)。\n\n符合要求的申请者将陆续加入团队。WST 长期欢迎新成员，感兴趣的开发者随时都可以联系我们！\n\n感谢大家的申请和支持！",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.165Z",
+    "reviewStatus": "pending_independent_review",
+    "revisedAt": "2026-10-25T07:28:01.629Z",
+    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+  },
+  "translationHash": "d8b4018a8afc4d362348ddff65f9917aeaf5c966b3a004aaab1c7c196061ae96"
+}

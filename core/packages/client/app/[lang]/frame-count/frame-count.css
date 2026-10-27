@@ -5,7 +5,7 @@
 
 /* ── 页面基础 ── */
 .frame-count-page {
-  font-family: 'Inter', Arial, sans-serif;
+  font-family: var(--font-sans);
   background-color: #3a3a3a;
   color: #e8e8e8;
   /* NOTE: dvh 跟随 iOS Safari 工具栏伸缩，避免 vh 留黑边 */
@@ -1315,7 +1315,7 @@
   border-radius: 4px;
   padding: 2px 8px;
   font-size: 0.72rem;
-  font-family: 'Inter', monospace;
+  font-family: var(--font-sans);
   color: #ddd;
   min-width: 20px;
   text-align: center;

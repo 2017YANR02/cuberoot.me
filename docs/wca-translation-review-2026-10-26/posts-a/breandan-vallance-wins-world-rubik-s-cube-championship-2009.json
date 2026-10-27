@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/breandan-vallance-wins-world-rubik-s-cube-championship-2009",
+  "path": "docs/wca-post-translations/entries/breandan-vallance-wins-world-rubik-s-cube-championship-2009.json",
+  "sourceHash": "9980e8effc044c1c5360938d735ca1934b25dc4aa15f33b397213f93739fbf00",
+  "inputTranslationHash": "33d1086ab5f80e770eee13ace16d1642039aa45d99938a48464e9c763e70968e",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:06:36.461Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇全文对照：含招募资格、时限、工作量、程序、历史机构；比赛报告核对人物、项目、成绩与纪录类别。"
+  ],
+  "changes": []
+}

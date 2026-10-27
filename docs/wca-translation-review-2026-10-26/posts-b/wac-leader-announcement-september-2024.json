@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/wac-leader-announcement-september-2024",
+  "path": "docs/wca-post-translations/entries/wac-leader-announcement-september-2024.json",
+  "sourceHash": "e668aeb967e8b51c465626191df94de92aabb0dbdbb1908365b355d8499d0fc1",
+  "inputTranslationHash": "bd179439daff1614d0908b6c8b3c7501f32057131c51e8e570b26660c30dce18",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:59.337Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

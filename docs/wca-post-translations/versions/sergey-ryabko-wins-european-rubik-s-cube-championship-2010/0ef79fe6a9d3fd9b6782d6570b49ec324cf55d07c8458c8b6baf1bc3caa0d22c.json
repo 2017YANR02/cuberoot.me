@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/sergey-ryabko-wins-european-rubik-s-cube-championship-2010",
+  "source": {
+    "key": "posts:/posts/sergey-ryabko-wins-european-rubik-s-cube-championship-2010",
+    "kind": "posts",
+    "title": "Sergey Ryabko wins European Rubik's Cube Championship 2010",
+    "date": "2010-10-03T19:35:58.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/sergey-ryabko-wins-european-rubik-s-cube-championship-2010",
+    "content": "[Sergey Ryabko](https://www.worldcubeassociation.org/results/p.php?i=2009RYAB01) won the [European Rubik's Cube Championship 2010](https://www.worldcubeassociation.org/results/c.php?i=Euro2010) with an average of 10.31 seconds. [Erik Akkersdijk](https://www.worldcubeassociation.org/results/p.php?i=2005AKKE01) finished second (10.38) and [Cornelius Dieckmann](https://www.worldcubeassociation.org/results/p.php?i=2009DIEC01) finished third (10.78).  \n\r World records: Bálint Bodor Megaminx 47.53 (single) 51.45 (average), Brúnó Bereczki Pyraminx 2.65 (single).  \n\r European records: Maarten Smit Rubik's Clock 6.63 (single) 7.88 (average), Michal Halczuk 5x5 Cube 1:15.28 (average), Rafal Guzewicz 3x3 multi blind 11/11 in 55:10.",
+    "hash": "7bbc519d35a1005d6583530f8cec544f722f5c75222a4ff585f85f4781b7a28b",
+    "format": "markdown",
+    "sourceId": 1006
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "7bbc519d35a1005d6583530f8cec544f722f5c75222a4ff585f85f4781b7a28b",
+    "language": "zh-Hans",
+    "title": "Sergey Ryabko 夺得 2010 年欧洲魔方锦标赛冠军",
+    "content": "[Sergey Ryabko](https://www.worldcubeassociation.org/results/p.php?i=2009RYAB01)以 10.31 秒的平均成绩夺得 [2010 年欧洲魔方锦标赛](https://www.worldcubeassociation.org/results/c.php?i=Euro2010)冠军。[Erik Akkersdijk](https://www.worldcubeassociation.org/results/p.php?i=2005AKKE01)以 10.38 秒获得亚军，[Cornelius Dieckmann](https://www.worldcubeassociation.org/results/p.php?i=2009DIEC01)以 10.78 秒获得季军。\n\n**世界纪录：**Bálint Bodor：五魔单次 47.53、平均 51.45；Brúnó Bereczki：金字塔单次 2.65。\n\n**欧洲纪录：**Maarten Smit：魔表单次 6.63、平均 7.88；Michal Halczuk：五阶平均 1:15.28；Rafal Guzewicz：多盲 11/11，用时 55:10。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:55:00.979Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "0ef79fe6a9d3fd9b6782d6570b49ec324cf55d07c8458c8b6baf1bc3caa0d22c"
+}

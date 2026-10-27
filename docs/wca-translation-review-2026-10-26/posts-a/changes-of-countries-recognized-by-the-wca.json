@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/changes-of-countries-recognized-by-the-wca",
+  "path": "docs/wca-post-translations/entries/changes-of-countries-recognized-by-the-wca.json",
+  "sourceHash": "5e5f45d378fad4e9e9f5d37cd0d1becc8602c5a4e7b085a25a91c5afb4c21dbf",
+  "inputTranslationHash": "5c6914125977ace1c0cfb117185abc8a603bd38dbb56317f5d1081079a7f824f",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:12:38.682Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "全文对照标题、名单变更/历史范围、项目实施日期、条件和例外、合同授权条件、准则对象及纪录合作流程。"
+  ],
+  "changes": []
+}

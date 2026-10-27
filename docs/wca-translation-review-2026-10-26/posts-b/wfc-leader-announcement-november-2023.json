@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/wfc-leader-announcement-november-2023",
+  "path": "docs/wca-post-translations/entries/wfc-leader-announcement-november-2023.json",
+  "sourceHash": "cfc55b3b467183c39ce07fb0047923524badd5f3fb9d552e2d227de0dd1e3a16",
+  "inputTranslationHash": "e58f16f3b29db82cf9c5313f8e9a07a47727934e82a8f55c33c18018142c557a",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:10:59.922Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [
+    "完整核对案件归因、处分条件、匿名处理、数量及任命程序。"
+  ],
+  "changes": []
+}

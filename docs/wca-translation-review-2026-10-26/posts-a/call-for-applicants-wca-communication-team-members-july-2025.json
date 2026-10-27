@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wca-communication-team-members-july-2025",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wca-communication-team-members-july-2025.json",
+  "sourceHash": "97948e39909bd4426a1dc392f9406a226d4fc5bcab81d8318208722b9ef8bf60",
+  "inputTranslationHash": "3f11080888b64059205a9280002145b02ef4cb30b56975651a936b948f518644",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:07:01.627Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照招募正文、职责条目、必需/可选资格、年龄、时限和程序；未扩展外链材料。"
+  ],
+  "changes": []
+}

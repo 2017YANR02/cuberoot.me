@@ -12,7 +12,7 @@
     "sourceId": 10429
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "f5a7d7f0468b9d9950dadacf9d4245025a84fa1b55d257aff4a992ea8e44146b",
     "language": "zh-Hans",
     "title": "招募 WCA 规则委员会新负责人（2018 年 10 月）",
@@ -21,7 +21,26 @@
       "原文邮件链接目标缺少 mailto:，原样保留，供主任务链接渲染层核验。"
     ],
     "translatedAt": "2026-10-22T08:52:41.123Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "4e9476938ddb77eb822384052316d997b864f7d6463551cd86560d060d4f1060"
+  "translationHash": "d49c0142ca632c0b08fae5e69c038df64f88da705516535279e5987a038bd8f0",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:06:14.455Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "f5a7d7f0468b9d9950dadacf9d4245025a84fa1b55d257aff4a992ea8e44146b",
+    "reviewedTranslationHash": "d49c0142ca632c0b08fae5e69c038df64f88da705516535279e5987a038bd8f0",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/appointment-of-a-new-wrc-leader-october-2018.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照正文与标题；核对全部申请/任命主体、时间、权限、附录条目及材料要求。"
+    ],
+    "inputTranslationHash": "4e9476938ddb77eb822384052316d997b864f7d6463551cd86560d060d4f1060"
+  }
 }

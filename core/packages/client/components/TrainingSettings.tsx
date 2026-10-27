@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Settings } from '@app-foundation/icons/lucide';
+import { ClearButton } from '@/components/ClearButton';
+import { useModalDismiss } from '@/hooks/useModalDismiss';
 import BoolToggle from '@/components/BoolToggle';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
@@ -63,6 +65,45 @@ export function useTrainingAutoAdvance() {
   return useMemo(() => ({ enabled, setEnabled, schedule, cancel }), [cancel, enabled, schedule, setEnabled]);
 }
 
+function SettingsDialog({ label, panelClassName, onClose, children }: {
+  label: string;
+  panelClassName?: string;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  const backdropProps = useModalDismiss(onClose);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const previousFocus = document.activeElement;
+    dialogRef.current?.focus();
+    return () => {
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
+    };
+  }, []);
+  return createPortal(
+    <div className="settings-dialog-backdrop" {...backdropProps} data-no-timer>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={label} tabIndex={-1}
+        className="settings-dialog" onKeyDown={event => {
+          if (event.key !== 'Tab') return;
+          const controls = [...event.currentTarget.querySelectorAll<HTMLElement>('button, a[href], input, select, textarea, [tabindex]')]
+            .filter(element => element.tabIndex >= 0 && !element.matches(':disabled') && element.getClientRects().length > 0);
+          const first = controls[0];
+          const last = controls.at(-1);
+          if (event.shiftKey && (document.activeElement === first || document.activeElement === event.currentTarget)) {
+            event.preventDefault(); last?.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault(); first?.focus();
+          }
+        }}>
+        <div className={`settings-popover-panel settings-dialog-panel${panelClassName ? ` ${panelClassName}` : ''}`} data-site-surface="popover">
+          <ClearButton variant="standalone" className="settings-dialog-close" ariaLabel={tr({ zh: '关闭', en: 'Close' })} onClick={onClose} />
+          {children}
+        </div>
+      </div>
+    </div>, document.body,
+  );
+}
+
 export function SettingsPopover({
   label,
   className,
@@ -75,6 +116,7 @@ export function SettingsPopover({
   onOpenChange,
   ignoreTimer = false,
   hosted = false,
+  modal = false,
   children,
 }: {
   label: string;
@@ -89,6 +131,7 @@ export function SettingsPopover({
   ignoreTimer?: boolean;
   /** Explicit opt-in: specialized trainers keep their own settings placement. */
   hosted?: boolean;
+  modal?: boolean;
   children?: ReactNode;
 }) {
   const trainingHost = useTrainingHost();
@@ -102,8 +145,9 @@ export function SettingsPopover({
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  usePanelClamp(open, panelRef);
-  usePopoverDismiss(open, () => setOpen(false), rootRef, triggerRef);
+  usePanelClamp(open && !modal, panelRef);
+  usePopoverDismiss(open && !modal, () => setOpen(false), rootRef, triggerRef);
+  const close = useCallback(() => setOpen(false), [setOpen]);
 
   const popover = (
     <div
@@ -124,7 +168,8 @@ export function SettingsPopover({
         <Settings size={iconSize} aria-hidden="true" />
       </button>
       {!settingsHost && triggerSuffix}
-      {open && (
+      {open && modal && <SettingsDialog label={label} panelClassName={panelClassName} onClose={close}>{children}</SettingsDialog>}
+      {open && !modal && (
         // Nested fixed menus portal into this unfiltered dialog boundary, so
         // outside dismissal and viewport coordinates both remain correct.
         <div role="dialog" aria-label={label}>

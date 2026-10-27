@@ -12,16 +12,33 @@
     "sourceId": 10527
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "15fe32e60ece445a9b645b3113c8c8ebdb18869fda2eba81db8ec6e99c922d5a",
     "language": "zh-Hans",
     "title": "WCA 比赛公示组成员招募（2018 年 10 月）",
     "content": "WCA 比赛公示组（WCAT）正在招募新成员，一起完成比赛公告工作！\n\n**我们希望成员具备以下条件：**\n\n- 注重细节。\n- 乐于服务他人。\n- 遵守工作流程，能够帮助代表在合理时间内公布比赛。\n- 熟悉 WCA 规则和比赛政策。\n\n预计每周需投入 4–6 小时。关于 WCAT 的政策，详情见《[WCA 比赛公告政策 2.0 版](https://www.worldcubeassociation.org/documents/policies/Competition%20Announcement.pdf)》。\n\n<!-- break -->\n\n**WCAT 成员的工作包括：**\n\n- 准确审核并公布提交的比赛申请。\n- 处理比赛信息的修改申请。\n- 培训代表正确使用 WCA 提供的工具。\n- 经常就需要批准的比赛事项参与投票。\n\n**申请材料须为 PDF 格式，包含：**\n\n- 简短的自我介绍。\n- 为 WCA 所做工作的总结。\n- 对 WCAT 工作的设想，以及申请加入的原因。\n\n申请面向所有有兴趣的人开放，截止时间为 **2018 年 11 月 5 日 23:59 UTC**。请将材料发送给 Henrik Aagaard（henrikthedane@gmail.com）。\n\n如果你认为社区中有人适合加入这个新团队，请把消息转告他们。申请人无须目前已在 WCA 任职。\n\n谢谢大家！",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.147Z",
-    "reviewStatus": "pending_independent_review",
-    "revisedAt": "2026-10-25T07:28:01.629Z",
-    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "f2eb211e888fd159c0b7b06c0077afdb5a1d76e82f1495bffcda1b6aacc3411b"
+  "translationHash": "ff6e54469548509504c33d64397fb80f3feb5f40fc57f39c916a23c04ec6c0d3",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:09:54.049Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "15fe32e60ece445a9b645b3113c8c8ebdb18869fda2eba81db8ec6e99c922d5a",
+    "reviewedTranslationHash": "ff6e54469548509504c33d64397fb80f3feb5f40fc57f39c916a23c04ec6c0d3",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/call-for-applicants-wcat-members-october-2018.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整核对标题及正文，招募资格、工作时长、申请截止日期、收件人、申请材料与程序一致。"
+    ],
+    "inputTranslationHash": "f2eb211e888fd159c0b7b06c0077afdb5a1d76e82f1495bffcda1b6aacc3411b"
+  }
 }

@@ -12,14 +12,33 @@
     "sourceId": 14152
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "ca74c93a4c7fafb248fb262df5263e99acee3c7bd61c0f100e6b9c2490c05506",
     "language": "zh-Hans",
     "title": "WCA 纪律委员会简报：2024 年第一季度",
     "content": "亲爱的 WCA 社区成员：\n\n过去三个月，WDC 新立案 17 起、结案 17 起；已结案件中，有些于 2023 年底立案。其中两起作出禁赛处分，七起给予正式警告。以下介绍部分案件情况。\n\n<!-- break -->\n\n* 一名选手长期在观察阶段转动魔方，WDC 就此发布了一份匿名公开报告。该选手被禁赛 2 年 6 个月。详情见[此处](https://www.worldcubeassociation.org/posts/wdc-report-on-a-case-of-cheating)。\n* 一名年幼选手被发现多次在最少步比赛中使用部分逆打乱，并故意在解法中加入整体转动以作掩饰。该选手受到正式警告，代表也被建议仔细检查其今后的还原尝试。\n* 有几起案件涉及未先征得同意便触碰、戳碰及/或拥抱其他选手。WDC 提醒大家尊重他人的个人空间和界限，接触他人身体前务必先询问。\n* 一名选手联系代表，承认过去有过两次作弊行为：一次是在成绩字迹不清时坚持按较快的成绩记录，另一次是在停止计时后转动了一步。考虑具体情况及代表的建议，WDC 决定无须进一步采取措施。\n* WDC 近期受理了数起涉及提前停止计时、从眼罩下偷看的案件。认真执裁和充分的裁判培训可以避免此类事件。WDC 提醒裁判在选手还原时保持专注，并正确放置遮挡板；也提醒代表在比赛中进一步强调认真执裁的重要性。\n\n2 月，Sebastiano Tronto 任期结束后，高级代表与委员会负责人投票选出了 WDC 新负责人。我，Shain Papalotl Longbehn，当选新任负责人。感谢大家给我机会带领这支热心、出色的团队。再次感谢 Sebastiano 在过去三年对团队的付出。\n\n如有问题想询问 WDC，欢迎给我们发[邮件](mailto:disciplinary@worldcubeassociation.org)，或在 [WCA 论坛纪律事务板块](https://forum.worldcubeassociation.org/c/wca-disciplinary/26)提问。",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.552Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "6bc01a44410441555674e72d21c091293a528eb869b37eb836555f7b5da80216"
+  "translationHash": "2df99a12099ef5d179a5c594a028a5a1bcc390fd30cf3af2dec09e4d4acbbcf8",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:10:59.921Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "ca74c93a4c7fafb248fb262df5263e99acee3c7bd61c0f100e6b9c2490c05506",
+    "reviewedTranslationHash": "2df99a12099ef5d179a5c594a028a5a1bcc390fd30cf3af2dec09e4d4acbbcf8",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wdc-digest-2024-q1.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整核对案件归因、处分条件、匿名处理、数量及任命程序。"
+    ],
+    "inputTranslationHash": "6bc01a44410441555674e72d21c091293a528eb869b37eb836555f7b5da80216"
+  }
 }

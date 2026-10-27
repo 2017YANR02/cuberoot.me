@@ -1,0 +1,18 @@
+{
+  "key": "posts:/posts/scramble-accountability-policy-announcement-august-2021",
+  "path": "docs/wca-post-translations/entries/scramble-accountability-policy-announcement-august-2021.json",
+  "sourceHash": "ff3f91f84313a6a30223255fbebcbd62af0214127ce32468bfcc9204afa15ad0",
+  "inputTranslationHash": "1c20241778aeedb9dcd96f85adb85b3ca03c4d57e425c2eda683c223ad9b27b5",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:14:15.622Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "correction_required",
+  "notes": [
+    "服务器精确查询Scramble Accountability Policy未命中；这里统一本站既有译名，英文文件及链接保留。"
+  ],
+  "changes": [
+    "Scramble Accountability Policy统一本站既有政策名称，不标为官方中文名称。"
+  ],
+  "title": "《打乱问责政策》发布（2021 年 8 月）",
+  "content": "WCA 质量保证委员会与 WCA 规则委员会（WRC）讨论合作，并征求董事会、高级代表及委员会/团队负责人的意见后，现已实施《[打乱问责政策](https://www.worldcubeassociation.org/documents/policies/external/Scramble%20Accountability.pdf)》。\n\n这份政策规定了 WCA 官方打乱必须遵循的管理标准，由 WRC 负责执行。政策面向 WCA 代表和比赛组织团队，通过打乱公式、打乱操作及场地布置的标准，说明如何保障打乱的公正与保密。\n\n欢迎通过 [WCA 论坛](https://forum.worldcubeassociation.org/c/wca-quality-assurance/18)发帖，或发邮件至 [quality@worldcubeassociation.org](mailto:quality@worldcubeassociation.org)，提出意见和问题。"
+}

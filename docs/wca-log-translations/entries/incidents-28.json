@@ -13,14 +13,14 @@
   },
   "translation": {
     "language": "zh-Hans",
-    "version": 2,
-    "title": "TNoodle 0.13.4 及更早版本中的 Skewb 打乱截断问题",
-    "content": "TNoodle 0.13.4 及更早版本的一个漏洞，导致正式比赛的 86 个 Skewb 打乱意外被截断，生成方式不符合[规则 4b3](https://www.worldcubeassociation.org/regulations/#4b3)。其中 73 个用于 [CubingUSA Nationals 2018](https://www.worldcubeassociation.org/competitions/CubingUSANationals2018/)。WRC 决定保留这些成绩。\n\n[TNoodle 0.13.5 公告](https://www.worldcubeassociation.org/posts/tnoodle-0-13-5)说明：\n\n> 根据 WCA 规则，Skewb 正式打乱必须从至少需要 7 步才能还原的状态（[4b3c](https://www.worldcubeassociation.org/regulations/#4b3c)）中产生随机状态（[4b3](https://www.worldcubeassociation.org/regulations/#4b3)）。\n>\n> 为使打乱表上的短解打乱难以被辨认，TNoodle 将所有生成的 Skewb 打乱序列设为至少 11 步，即使存在更短的解。然而，`0.13.5` 之前的线程安全漏洞可能使打乱序列被截断：\n>\n> - 截断后的序列只要仍至少需要 7 步还原，就会被使用，因此仍符合 4b3c；\n> - 但截断没有保留随机打乱分布，违反了 4b3。\n>\n> 详情见 [TNoodle 的 GitHub 项目](https://github.com/thewca/tnoodle/pull/368)。\n>\n> 对历史打乱解长的分析提示，过去绝大多数比赛的状态分布可能未受影响。但至少有一场大型比赛 [CubingUSA Nationals 2018](https://www.worldcubeassociation.org/competitions/CubingUSANationals2018) 的状态明显偏向较短最优解，因此发现了此漏洞。感谢 Sébastien Auroux 提醒我们注意该问题，也感谢 Tim Reynolds 与 Jeremy Fleischman 在过去的周末共同定位并准备 TNoodle 修复。\n\n我们还确认，其他魔方的打乱未受类似漏洞影响。\n\n受影响打乱的完整列表见[此处](https://github.com/SAuroux/wca-analysis/blob/master/results-scripts/scramble_validity_analysis/skewb_outliers_20181005.txt)。CubingUSA Nationals 2018 的 Skewb 打乱最优解长度分布如下：\n\n| 最优解长度 | 预期打乱数 | 实际打乱数 |\n| --- | --- | --- |\n| 7 步 | ≈20 | 51 |\n| 8 步 | ≈78 | 84 |\n| 9 步 | ≈93 | 61 |\n| 10 步 | ≈5 | 0 |\n| 11 步 | ≈0 | 0 |\n\n我们认为，该比赛尝试次数很多，使生成 CubingUSA Nationals 2018 打乱所用电脑更容易出现触发漏洞的条件。\n\n尽管打乱分布所受影响可以测量，WRC 决定保留这 86 个截断打乱对应的全部 Skewb 成绩，理由如下：\n1. 我们不认为此前有人知道这个漏洞，也不认为主办方、代表或选手曾故意利用它。该漏洞由 WRC 和 WST 负责。\n2. 代表正确遵守了规则，使用当时官方版本 TNoodle 的输出，且按[规则 4b1](https://www.worldcubeassociation.org/regulations/#4b1)要求，没有提前检查或分析打乱。\n3. 所有这些打乱的最优解仍至少需要 7 步。\n4. 受影响程度尚未使选手相对于未来的 Skewb 选手获得明显不公平的优势。\n\n对于未来事件，请注意：如果打乱不符合规则，是因为并非来自当时现行的官方打乱程序，相关尝试仍应删除，例如[意外使用旧版 TNoodle 的事件](https://www.worldcubeassociation.org/incidents/24)。",
+    "version": 3,
+    "title": "TNoodle 0.13.4 及更早版本中的斜转打乱截断问题",
+    "content": "TNoodle 0.13.4 及更早版本的一个漏洞，导致正式比赛的 86 个斜转打乱意外被截断，生成方式不符合[规则 4b3](https://www.worldcubeassociation.org/regulations/#4b3)。其中 73 个用于 [CubingUSA Nationals 2018](https://www.worldcubeassociation.org/competitions/CubingUSANationals2018/)。WRC 决定保留这些成绩。\n\n[TNoodle 0.13.5 公告](https://www.worldcubeassociation.org/posts/tnoodle-0-13-5)说明：\n\n> 根据 WCA 规则，斜转正式打乱必须从至少需要 7 步才能还原的状态（[4b3c](https://www.worldcubeassociation.org/regulations/#4b3c)）中产生随机状态（[4b3](https://www.worldcubeassociation.org/regulations/#4b3)）。\n>\n> 为使打乱表上的短解打乱难以被辨认，TNoodle 将所有生成的斜转打乱序列设为至少 11 步，即使存在更短的解。然而，`0.13.5` 之前的线程安全漏洞可能使打乱序列被截断：\n>\n> - 截断后的序列只要仍至少需要 7 步还原，就会被使用，因此仍符合 4b3c；\n> - 但截断没有保留随机打乱分布，违反了 4b3。\n>\n> 详情见 [TNoodle 的 GitHub 项目](https://github.com/thewca/tnoodle/pull/368)。\n>\n> 对历史打乱解长的分析提示，过去绝大多数比赛的状态分布可能未受影响。但至少有一场大型比赛 [CubingUSA Nationals 2018](https://www.worldcubeassociation.org/competitions/CubingUSANationals2018) 的状态明显偏向较短最优解，因此发现了此漏洞。感谢 Sébastien Auroux 提醒我们注意该问题，也感谢 Tim Reynolds 与 Jeremy Fleischman 在过去的周末共同定位并准备 TNoodle 修复。\n\n我们还确认，其他魔方的打乱未受类似漏洞影响。\n\n受影响打乱的完整列表见[此处](https://github.com/SAuroux/wca-analysis/blob/master/results-scripts/scramble_validity_analysis/skewb_outliers_20181005.txt)。CubingUSA Nationals 2018 的斜转打乱最优解长度分布如下：\n\n| 最优解长度 | 预期打乱数 | 实际打乱数 |\n| --- | --- | --- |\n| 7 步 | ≈20 | 51 |\n| 8 步 | ≈78 | 84 |\n| 9 步 | ≈93 | 61 |\n| 10 步 | ≈5 | 0 |\n| 11 步 | ≈0 | 0 |\n\n我们认为，该比赛尝试次数很多，使生成 CubingUSA Nationals 2018 打乱所用电脑更容易出现触发漏洞的条件。\n\n尽管打乱分布所受影响可以测量，WRC 决定保留这 86 个截断打乱对应的全部斜转成绩，理由如下：\n1. 我们不认为此前有人知道这个漏洞，也不认为主办方、代表或选手曾故意利用它。该漏洞由 WRC 和 WST 负责。\n2. 代表正确遵守了规则，使用当时官方版本 TNoodle 的输出，且按[规则 4b1](https://www.worldcubeassociation.org/regulations/#4b1)要求，没有提前检查或分析打乱。\n3. 所有这些打乱的最优解仍至少需要 7 步。\n4. 受影响程度尚未使选手相对于未来的斜转选手获得明显不公平的优势。\n\n对于未来事件，请注意：如果打乱不符合规则，是因为并非来自当时现行的官方打乱程序，相关尝试仍应删除，例如[意外使用旧版 TNoodle 的事件](https://www.worldcubeassociation.org/incidents/24)。",
     "translatedAt": "2026-10-22T05:50:48.611Z",
     "translator": "Codex / subscription",
     "sourceHash": "8b6b2f8d36c3a2b0e497f1f0f81e3b4fec329da411026647f4567e1ecd1a0ebf",
-    "revisedAt": "2026-10-22T06:25:36.680Z",
-    "revisionReason": "独立审校 round-1 的精确修正建议"
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
   "review": {
     "status": "independently_verified",
@@ -40,12 +40,20 @@
     },
     "unresolvedNotes": [],
     "recheck": {
-      "reviewer": "review_4",
-      "reviewedAt": "2026-10-22T06:26:29.980Z",
-      "report": "reviews/round-1/recheck-4.json",
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.689Z",
+      "report": "../wca-translation-review-2026-10-26/final-report.json",
       "sourceHash": "8b6b2f8d36c3a2b0e497f1f0f81e3b4fec329da411026647f4567e1ecd1a0ebf",
-      "reviewedTranslationHash": "15c3c7314c25376e899566d9259ff7c2a48f634dc6ce6d8349f1d5780cdcf6cc",
-      "verdict": "pass"
+      "reviewedTranslationHash": "9ab5c264261d07585c864ccdcaa98bd0473fcab01520a905e97e34b7946f0f33",
+      "verdict": "pass",
+      "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。"
+    },
+    "currentReview": {
+      "round": "2026-10-26",
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/incidents-28.json",
+      "sourceConcern": false,
+      "notes": [],
+      "inputTranslationHash": "15c3c7314c25376e899566d9259ff7c2a48f634dc6ce6d8349f1d5780cdcf6cc"
     }
   },
   "publication": {

@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wca-competition-announcement-team-members-march-2025",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wca-competition-announcement-team-members-march-2025.json",
+  "sourceHash": "6c54b4c4e7df8d04f73881935f318e07f509837115d8b78d635d3c5065f2c3c9",
+  "inputTranslationHash": "e901e5ea06ff185ebe1fc9e0148286bac5359add366775518c5eb2b88e06e6ef",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:07:01.627Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照招募正文、职责条目、必需/可选资格、年龄、时限和程序；未扩展外链材料。"
+  ],
+  "changes": []
+}

@@ -23,7 +23,7 @@
     "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
   },
   "review": {
-    "status": "pending_independent_recheck",
+    "status": "independently_verified",
     "checks": [
       "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
     ],
@@ -43,17 +43,25 @@
     },
     "unresolvedNotes": [],
     "recheck": {
-      "reviewer": "review_1",
-      "reviewedAt": "2026-10-22T06:26:33.824Z",
-      "report": "reviews/round-1/recheck-1.json",
+      "reviewer": "/root/review_logs",
+      "reviewedAt": "2026-10-26T11:10:07.703Z",
+      "report": "../wca-translation-review-2026-10-26/final-report.json",
       "sourceHash": "4b2e09eadf615c68880831b7bbd61de22d9164ed8698e7358f36469060fb1de6",
-      "reviewedTranslationHash": "f3c4dc0cdade9b859b11ce87469b11065bd4cba35f279d99ca976301d6f5bdc7",
-      "verdict": "pass"
+      "reviewedTranslationHash": "4803c855d72392d92b316cddbcd9286ac7d6b9daeea4d6a771d6694a1807a67e",
+      "verdict": "pass",
+      "scope": "复用已通过的旧版全文独立审校；人工阅读旧版与现版全部文字差异及对应英文段落，确认本轮之前的差异限于官方机构名称或 Guidelines 的“指南”译法；另复核本轮项目名命中语境。"
     },
     "terminologyRevision": {
       "at": "2026-10-25T07:28:01.629Z",
       "previousTranslationHash": "f3c4dc0cdade9b859b11ce87469b11065bd4cba35f279d99ca976301d6f5bdc7",
       "scope": "机构名称专项校订；此前独立审校证据仍绑定旧译文，不视为新版本独立审校。"
+    },
+    "currentReview": {
+      "round": "2026-10-26",
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/disciplinary-integrity-committee-report-on-a-case-of-cheating-sep-2025.json",
+      "sourceConcern": false,
+      "notes": [],
+      "inputTranslationHash": "4803c855d72392d92b316cddbcd9286ac7d6b9daeea4d6a771d6694a1807a67e"
     }
   },
   "publication": {

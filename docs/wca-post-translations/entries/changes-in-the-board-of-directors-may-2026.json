@@ -12,14 +12,33 @@
     "sourceId": 14248
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "dc0a8be4c753e3c06cb9527fbc60fc4e54111c8e9ac0e8633ed82aa21a603c10",
     "language": "zh-Hans",
     "title": "董事会人员变动（2026 年 5 月）",
     "content": "亲爱的 WCA 社区成员：\n\n随着董事会成员 Blake Thompson 和 Nick Silvestri 的任期即将结束，WCA 于 2026 年 5 月 1 日举行了不记名选举。选举依照 WCA《[董事选举议案](https://documents.worldcubeassociation.org/documents/motions/05.2025.1%20-%20Election%20of%20Directors.pdf)》进行。\n\n董事会收到了以下人员的申请：\n\n- Callum James Goodyear-Jørgensen\n- Glib Vedmid\n- Oliver Hexter\n- Rubén López de Juan\n- Sachin Arvind\n\n我们很高兴宣布，Glib、Oliver、Rubén 和 Sachin 已当选为 WCA 董事会成员。\n\n这些变动立即生效。\n\n申请材料可在[此处](https://drive.google.com/drive/folders/1vhadNJj_uIkDkL-ZAD6kCrxxob3Rf1Fv)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:40:49.169Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "e31774ddf342bcd70afd555c837cdc504f00e0313a9819eb82f2a6107edfe52b"
+  "translationHash": "c00a555e49dba2e233562a826837ede0f35eafe7cc85eccf23c7a98d90ff67ea",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:12:23.464Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "dc0a8be4c753e3c06cb9527fbc60fc4e54111c8e9ac0e8633ed82aa21a603c10",
+    "reviewedTranslationHash": "c00a555e49dba2e233562a826837ede0f35eafe7cc85eccf23c7a98d90ff67ea",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/changes-in-the-board-of-directors-may-2026.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照标题和正文；各届赛事城市及取消/退款范围、董事候选名单、当选与连任区别、任期及生效日期、保留职务和干事分工均与原文一致。"
+    ],
+    "inputTranslationHash": "e31774ddf342bcd70afd555c837cdc504f00e0313a9819eb82f2a6107edfe52b"
+  }
 }

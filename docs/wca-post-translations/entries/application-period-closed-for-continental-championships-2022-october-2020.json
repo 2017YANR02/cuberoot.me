@@ -12,14 +12,33 @@
     "sourceId": 13992
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "33e1d4a4708d8a1e966457f743d6735d2cb17eb7ed6cff6099851253a8c22dae",
     "language": "zh-Hans",
-    "title": "2022 年洲际锦标赛申办截止（2020 年 10 月）",
+    "title": "2022 年大洲锦标赛申办截止（2020 年 10 月）",
     "content": "2022 年非洲、南美洲和大洋洲锦标赛的申办现已截止。我们很高兴地公布收到的申办城市：\n\n**WCA 非洲锦标赛：**\n\n* 埃及开罗\n* 南非开普敦\n\n**WCA 南美洲锦标赛：**\n\n* 巴西巴西利亚\n\n董事会未收到大洋洲锦标赛的申办申请。\n\n申办材料将在决定作出后公开，最终举办地点将在 10 月底前公布。感谢所有提交方案的团队！",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:54.093Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "d172352e57e034c32ebd2680599cf7b4b9d38d90ccfb9ce6542804b271810291"
+  "translationHash": "68ab524bab6904e8af549a3dd17c1d373cfee17fab7c073a0212f540ce0dd790",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:16:58.345Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "33e1d4a4708d8a1e966457f743d6735d2cb17eb7ed6cff6099851253a8c22dae",
+    "reviewedTranslationHash": "68ab524bab6904e8af549a3dd17c1d373cfee17fab7c073a0212f540ce0dd790",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/application-period-closed-for-continental-championships-2022-october-2020.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+    ],
+    "inputTranslationHash": "d172352e57e034c32ebd2680599cf7b4b9d38d90ccfb9ce6542804b271810291"
+  }
 }

@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wqac-members-october-2024",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wqac-members-october-2024.json",
+  "sourceHash": "4a5c2b9b75a236222d46f0e204b68214a2102e3d5b637c93c19a55874a7ae880",
+  "inputTranslationHash": "13f5196ef9ff8f8033bfba44969fcb66b6bd760347b3a8ce014e573b9601045e",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:11:12.892Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "已完整对照标题与正文；核对规则/成绩/质量保证团队职责、必需与可选资格、招募人数、任期工时及各篇申请日期、联系人与投票程序。历史 Guidelines 按参考保留指南。"
+  ],
+  "changes": []
+}

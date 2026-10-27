@@ -1,4 +1,5 @@
 import { recordAssistantRetrieval } from './site_assistant_monitor.js';
+import { assistantRerankConfig, rerankKnowledge } from './site_assistant_rerank.js';
 import postgres, { type Sql } from 'postgres';
 import { databaseSettings } from '../db/settings.js';
 import { assistantEmbeddingConfig, embedKnowledge } from './site_assistant_embedding.js';
@@ -62,15 +63,17 @@ export async function indexKnowledge(db: Sql, index: KnowledgeIndex, identity: s
 }
 
 /** Both rankings operate on the current complete snapshot and language/source filter. */
-export async function retrieveKnowledge(db: Sql, input: { corpusHash: string; identity: string; lang: 'zh'|'en'; query: string; hrefs: string[]; vector?: number[] }, signal: AbortSignal): Promise<KnowledgeChunk[]> {
+export async function retrieveKnowledge(db: Sql, input: { corpusHash: string; identity: string; lang: 'zh'|'en'; query: string; hrefs: string[]; vector?: number[]; limit?: number; includeDeveloper?: boolean }, signal: AbortSignal): Promise<KnowledgeChunk[]> {
   signal.throwIfAborted();
   const tokens = knowledgeTokens(input.query.slice(0,500), input.lang).slice(0,40);
   const tsquery = tokens.map(token => `'${token.replace(/'/g,"''")}'`).join(' | ');
   const vector = input.vector ? vectorLiteral(input.vector) : null;
+  const limit = Number.isSafeInteger(input.limit) ? Math.max(1, Math.min(40, input.limit!)) : 6;
   const task = db`WITH corpus AS (
       SELECT c.* FROM site_assistant_knowledge_chunks c JOIN site_assistant_knowledge_state s USING(generation)
       WHERE s.singleton AND s.corpus_hash=${input.corpusHash} AND s.embedding_identity=${input.identity}
         AND c.lang=${input.lang} AND (${input.hrefs.length === 0} OR c.href=ANY(${input.hrefs}::text[]))
+        AND (${input.includeDeveloper !== false} OR c.href !~ '^/dev(/|[?#]|$)')
     ), lexical AS (
       SELECT id,row_number() OVER(ORDER BY ts_rank_cd(search,to_tsquery('simple',${tsquery})) DESC,id) AS rank FROM corpus
       WHERE ${!!tsquery} AND search @@ to_tsquery('simple',${tsquery}) ORDER BY rank LIMIT 20
@@ -82,14 +85,14 @@ export async function retrieveKnowledge(db: Sql, input: { corpusHash: string; id
         SELECT id,1.0/(60+rank) AS score FROM lexical UNION ALL SELECT id,1.0/(60+rank) FROM semantic
       ) r GROUP BY id
     ) SELECT c.id,c.document_id AS "documentId",c.lang,c.href,c.title,c.content,c.fingerprint,r.score
-      FROM ranked r JOIN corpus c USING(id) ORDER BY r.score DESC,c.id LIMIT 6`;
+      FROM ranked r JOIN corpus c USING(id) ORDER BY r.score DESC,c.id LIMIT ${limit}`;
   const abort = () => task.cancel();
   signal.addEventListener('abort', abort, { once: true });
   try { const rows = await task; signal.throwIfAborted(); return [...rows] as KnowledgeChunk[]; }
   finally { signal.removeEventListener('abort', abort); }
 }
 
-export async function hybridKnowledge(index: KnowledgeIndex, query: string, lang: 'zh'|'en', hrefs: string[], signal: AbortSignal) {
+export async function hybridKnowledge(index: KnowledgeIndex, query: string, lang: 'zh'|'en', hrefs: string[], signal: AbortSignal, includeDeveloper = true) {
   const config = assistantEmbeddingConfig();
   if (process.env.SITE_ASSISTANT_KNOWLEDGE_ENABLED === '0' || !config) { recordAssistantRetrieval({ mode: 'fallback', reason: 'disabled_or_unconfigured', hits: [] }); return []; }
   const db = knowledgeDatabase();
@@ -99,7 +102,10 @@ export async function hybridKnowledge(index: KnowledgeIndex, query: string, lang
     if(state?.corpus_hash!==corpusHash || state?.embedding_identity!==config.identity) { recordAssistantRetrieval({ mode: 'fallback', reason: 'index_mismatch', generation: state?.generation, hits: [] }); return []; }
     let vector: number[] | undefined;
     try { [vector] = await embedKnowledge([query.slice(0,500)], signal); } catch { signal.throwIfAborted(); }
-    const hits = await retrieveKnowledge(db, { corpusHash, identity: config.identity, query, lang, hrefs, vector }, signal);
+    let rerank = false;
+    try { rerank = !!assistantRerankConfig(); } catch { /* Invalid optional config preserves baseline retrieval. */ }
+    const candidates = await retrieveKnowledge(db, { corpusHash, identity: config.identity, query, lang, hrefs, vector, limit: rerank ? 40 : 6, includeDeveloper }, signal);
+    const hits = rerank ? await rerankKnowledge(query, candidates, signal) : candidates;
     recordAssistantRetrieval({ mode: vector ? 'hybrid' : 'database_lexical', ...(vector ? {} : { reason: 'embedding_unavailable' }), generation: state.generation, hits });
     return hits;
   } finally { await db.end({ timeout: 0 }); }

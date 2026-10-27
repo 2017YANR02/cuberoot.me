@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/appointment-of-a-new-wca-ethics-committee-leader-july-2019",
+  "path": "docs/wca-post-translations/entries/appointment-of-a-new-wca-ethics-committee-leader-july-2019.json",
+  "sourceHash": "c677dab0c832bf38851c83fe0d8e7bb68d04ff8b0501c103e5f14917c5e14b84",
+  "inputTranslationHash": "c7f8acedfb56a713431301d4e64820b037e90b067ebf9c94ccc2fc67d47547bb",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:06:14.457Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "原文称有下方附录但保存的官方正文未包含附录；译文忠实保留其指向，不补造附录。"
+  ],
+  "changes": []
+}

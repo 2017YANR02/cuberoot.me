@@ -1,0 +1,19 @@
+{
+  "key": "disciplinary:/posts/wdc-report-on-a-case-of-harassment",
+  "path": "docs/wca-log-translations/entries/disciplinary-wdc-report-on-a-case-of-harassment.json",
+  "sourceHash": "d9e014f6eea2bac1924f614c35aa6ddae0941c51ad4f618fd5a29515e4d28271",
+  "inputTranslationHash": "339b1054c680a38167e111ed0f56180c9ee5d4627fd7cc168d190c44b915705a",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "复用已通过的旧版全文独立审校；人工阅读旧版与现版全部文字差异及对应英文段落，确认本轮之前的差异限于官方机构名称或 Guidelines 的“指南”译法；另复核本轮项目名命中语境。",
+  "verdict": "pass",
+  "notes": [],
+  "changes": [],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/report-2.json",
+    "reviewedTranslationHash": "bdaeee268f12da8beb2a8fdd67031a28c6a4f50f3bc9b17f406de1106f9f8a20",
+    "verdict": "pass",
+    "archivedVersion": "docs/wca-log-translations/versions/disciplinary-wdc-report-on-a-case-of-harassment/bdaeee268f12da8beb2a8fdd67031a28c6a4f50f3bc9b17f406de1106f9f8a20-v1.json"
+  },
+  "sourceUncertainty": false
+}

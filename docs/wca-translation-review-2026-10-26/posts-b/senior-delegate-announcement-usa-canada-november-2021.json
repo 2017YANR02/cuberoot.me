@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/senior-delegate-announcement-usa-canada-november-2021",
+  "path": "docs/wca-post-translations/entries/senior-delegate-announcement-usa-canada-november-2021.json",
+  "sourceHash": "56950f42e4ba83bc327216b12746e222168cc29ae76ca313e57951c64c8d2189",
+  "inputTranslationHash": "4b3cf71ccff5dc70d5969a1b0f7263ff085774a4d6f4a405cea3366fba1d770d",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:25.168Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

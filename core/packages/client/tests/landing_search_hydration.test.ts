@@ -1,9 +1,12 @@
 // @vitest-environment jsdom
 
-import { act, createElement, type AnchorHTMLAttributes, type ReactNode } from 'react';
+import { act, createElement, StrictMode, type AnchorHTMLAttributes, type ReactNode } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ReconHit } from '@/lib/site-search';
+
+const searchState = vi.hoisted(() => ({ recons: [] as ReconHit[] }));
 
 const authState = vi.hoisted(() => ({ user: { uid: 66, wcaId: '2017YANR02' } as { uid: number; wcaId: string } | null, login: vi.fn() }));
 vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => authState.user, useAuthStore: { getState: () => authState } }));
@@ -39,7 +42,7 @@ vi.mock('@/lib/site-search', () => ({
     statMatches: [],
     personMatches: [],
     compMatches: [],
-    reconMatches: [],
+    reconMatches: searchState.recons,
     glossaryMatches: [],
     aboutMatches: [],
     stackMatches: [],
@@ -50,16 +53,24 @@ vi.mock('@/lib/site-search', () => ({
     forumTotal: query === '蓝牙' ? 15 : 0,
     forumSearchPending: false,
     forumSearchError: false,
-    totalCount: query === '蓝牙' ? 15 : query.trim() ? options.cards.length : 0,
+    translationMatches: [],
+    translationSearchPending: false,
+    translationSearchError: false,
+    translationStale: false,
+    totalCount: (query === '蓝牙' ? 15 : query.trim() ? options.cards.length : 0) + searchState.recons.length,
     yearMatch: null,
   }),
 }));
 
 import LandingSearch from '@/components/LandingSearch';
+import AssistantConversationView from '@/components/AssistantConversationView';
+import { useAssistantWorkspace } from '@/hooks/useAssistantWorkspace';
+import { assistantConversations, assistantOwner } from '@/lib/assistant-conversations';
 import { changeAppLanguage } from '@/i18n/i18n-client';
 
 describe('LandingSearch placeholder hydration', () => {
   beforeEach(() => {
+    searchState.recons = [];
     localStorage.clear();
     routeState.lang = 'zh';
     authState.user = { uid: 66, wcaId: '2017YANR02' };
@@ -76,6 +87,96 @@ describe('LandingSearch placeholder hydration', () => {
     vi.useRealTimers();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+  });
+
+  it.each([
+    ['zh', '广州公开赛2026', '2026-10-05', '广州公开赛'],
+    ['en', 'Guangzhou Grand Open 2026', '2026-10-05', 'Guangzhou Grand Open'],
+    ['zh', '广州公开赛2026', undefined, '广州公开赛2026'],
+    ['zh', '广州公开赛2026', '2025-10-05', '广州公开赛2026'],
+  ] as const)('formats recon competition %s / %s beside date %s', (lang, comp, date, expected) => {
+    routeState.lang = lang;
+    const hit: ReconHit = { id: 42, person: '耿暄一', personIso2: 'cn', valueStr: '2.51', event: '333', compWcaId: 'GuangzhouGrandOpen2026', comp, date };
+    searchState.recons = [hit];
+    const host = document.createElement('div');
+    host.innerHTML = renderToStaticMarkup(createElement(LandingSearch, { cards: [], lang, query: '耿暄一', persistentResults: true }));
+    const meta = host.querySelector('.landing-search-item-meta')!;
+    expect(meta.textContent).toBe(expected + (date ? ` · ${date}` : ''));
+    expect(meta.querySelector('.landing-search-date')?.textContent ?? null).toBe(date ? ` · ${date}` : null);
+    expect(hit.comp).toBe(comp);
+  });
+
+  it('shares the home draft and attachments, submits once, and retains a background reply when closed', async () => {
+    authState.user = { uid: 777, wcaId: '2017YANR02' };
+    const owner = assistantOwner(authState.user);
+    let finish!: (response: Response) => void;
+    const fetcher = vi.fn(() => new Promise<Response>(resolve => { finish = resolve; }));
+    vi.stubGlobal('fetch', fetcher);
+    let changes = 0;
+    const unsubscribe = assistantConversations.subscribe(() => { if (++changes > 80) throw new Error('workspace notification loop'); });
+    function SharedSurface() {
+      const state = useAssistantWorkspace(owner);
+      return createElement('div', null,
+        createElement(LandingSearch, { cards: [], lang: 'zh', workspaceEntry: true }),
+        state.opened && state.conversations.map(chat => createElement(AssistantConversationView, {
+          key: chat.id, owner, conversation: chat, active: state.open && state.activeId === chat.id, cards: [], lang: 'zh',
+        })),
+      );
+    }
+    const host = document.createElement('div'); document.body.appendChild(host);
+    const root = createRoot(host);
+    const inputText = async (element: HTMLInputElement | HTMLTextAreaElement, text: string) => act(async () => {
+      const prototype = element instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+      Object.getOwnPropertyDescriptor(prototype, 'value')!.set!.call(element, text);
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    try {
+      await act(async () => root.render(createElement(StrictMode, null, createElement(SharedSurface))));
+      await inputText(host.querySelector('input[aria-label="全站搜索"]')!, 'WIC');
+      await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="图片提问"]')!.click());
+      const chatId = assistantConversations.read(owner).activeId;
+      expect(host.querySelector<HTMLTextAreaElement>('textarea[aria-label="继续提问"]')!.value).toBe('WIC');
+      await inputText(host.querySelector('textarea[aria-label="继续提问"]')!, '解释 WIC');
+      const images = [{ mediaType: 'image/png' as const, data: 'dGVzdA==' }];
+      await act(async () => {
+        assistantConversations.patch(owner, chatId, { images });
+        assistantConversations.setOpen(owner, false);
+      });
+      expect(host.querySelector<HTMLInputElement>('input[aria-label="全站搜索"]')!.value).toBe('解释 WIC');
+      await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="提问"]')!.click());
+      expect(fetcher).toHaveBeenCalledTimes(1);
+      const body = JSON.parse((fetcher.mock.calls as unknown as [string, RequestInit][])[0][1].body as string);
+      expect(body).toMatchObject({ question: '解释 WIC', images });
+      await inputText(host.querySelector('textarea[aria-label="继续提问"]')!, '下一问');
+      await act(async () => assistantConversations.setOpen(owner, false));
+      await act(async () => finish(Response.json({ answer: '廉政委员会', sources: [] })));
+      const saved = assistantConversations.read(owner).conversations.find(chat => chat.id === chatId)!;
+      expect(saved.snapshot.draft).toBe('下一问');
+      expect(saved.snapshot.turns.at(-1)?.result?.answer).toBe('廉政委员会');
+      expect(saved.snapshot.turns.at(-1)?.images).toEqual(images);
+      expect(fetcher).toHaveBeenCalledTimes(1);
+      expect(changes).toBeLessThan(80);
+    } finally { unsubscribe(); await act(async () => root.unmount()); host.remove(); }
+  });
+
+  it('consumes a queued homepage submission once when the workspace first mounts in StrictMode', async () => {
+    authState.user = { uid: 778, wcaId: '2017YANR02' };
+    const owner = assistantOwner(authState.user);
+    assistantConversations.create(owner, 'cold-chat');
+    assistantConversations.submit(owner, 'cold-chat', '首次提问', []);
+    const fetcher = vi.fn().mockResolvedValue(Response.json({ answer: '已收到', sources: [] }));
+    vi.stubGlobal('fetch', fetcher);
+    function Workspace() {
+      const state = useAssistantWorkspace(owner);
+      return createElement(AssistantConversationView, { owner, conversation: state.conversations[0], active: true, lang: 'zh', cards: [] });
+    }
+    const host = document.createElement('div'); document.body.appendChild(host); const root = createRoot(host);
+    try {
+      await act(async () => root.render(createElement(StrictMode, null, createElement(Workspace))));
+      expect(fetcher).toHaveBeenCalledTimes(1);
+      expect(fetcher.mock.calls[0][1].signal.aborted).toBe(false);
+      expect(assistantConversations.read(owner).conversations[0].snapshot.turns.at(-1)?.result?.answer).toBe('已收到');
+    } finally { await act(async () => root.unmount()); host.remove(); }
   });
 
   it('only asks on submission, ignores IME Enter and renders a real source link', async () => {
@@ -172,7 +273,7 @@ describe('LandingSearch placeholder hydration', () => {
     try {
       await act(async()=>root.render(createElement(LandingSearch,{cards:[],lang:'zh',query:'第一问',persistentResults:true})));
       await click('button[aria-label="提问"]');
-      await click('button[title="重新生成"]');
+      await click('button[aria-label="重试"]');
       expect(JSON.parse(fetcher.mock.calls[1][1].body)).toEqual({conversationId:'00000000-0000-4000-8000-000000000066',question:'第一问',lang:'zh',thinking:'auto',timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,history:[]});
       expect(document.querySelectorAll('.site-assistant-turn')).toHaveLength(1);
       await click('button[title="编辑问题"]');
@@ -198,7 +299,7 @@ describe('LandingSearch placeholder hydration', () => {
       expect(document.querySelectorAll('.site-assistant-prose li')).toHaveLength(2);
       expect(document.querySelectorAll('.site-assistant-prose a')).toHaveLength(1);
       expect(document.querySelector('.site-assistant-prose script')).toBeNull();
-      await click('button[title="复制回答"]');
+      await click('button[aria-label="复制"]');
       expect(writeText.mock.calls[0][0]).toContain('项目\t成绩\n三阶\t5.00');
       expect(writeText.mock.calls[0][0]).toContain('[数帧](');
       const textarea=document.querySelector('textarea[aria-label="继续提问"]') as HTMLTextAreaElement;
@@ -228,7 +329,7 @@ describe('LandingSearch placeholder hydration', () => {
       await act(async () => { root.render(createElement(LandingSearch, { cards: [], lang: 'zh', query: '世界纪录', persistentResults: true })); });
       await act(async () => { host.querySelector('button[aria-label="提问"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
       expect(fetcher).not.toHaveBeenCalled();
-      expect(document.body.textContent).toContain('请先登录并绑定 WCA 账号');
+      expect(document.body.textContent).toContain('登录后继续聊天');
       expect(host.querySelector('input')?.value).toBe('世界纪录');
     } finally { await act(async () => root.unmount()); host.remove(); }
   });

@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/tnoodle-0-8-4",
+  "source": {
+    "key": "posts:/posts/tnoodle-0-8-4",
+    "kind": "posts",
+    "title": "TNoodle 0.8.4",
+    "date": "2014-02-11T01:23:57.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/tnoodle-0-8-4",
+    "content": "TNoodle 0.8.4 is now available from [https://www.worldcubeassociation.org/regulations/scrambles](https://www.worldcubeassociation.org/regulations/scrambles)\n\nThis addresses the following compared to TNoodle 0.8.2:\n\n- Fixed a bug that could result in 6x6x6 scrambles with redundant turns.\n<!--break-->\n\nPlease remember that official competitions must always use the current version of the official scramble program. This is always available from: [https://www.worldcubeassociation.org/regulations/scrambles/](https://www.worldcubeassociation.org/regulations/scrambles/)",
+    "hash": "a951ea82e2fd3c316d3f99518e7c88c64c8b3ac400be489c1ad25e0d7d06a754",
+    "format": "markdown",
+    "sourceId": 3171
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "a951ea82e2fd3c316d3f99518e7c88c64c8b3ac400be489c1ad25e0d7d06a754",
+    "language": "zh-Hans",
+    "title": "TNoodle 0.8.4",
+    "content": "TNoodle 0.8.4 现已可从[https://www.worldcubeassociation.org/regulations/scrambles](https://www.worldcubeassociation.org/regulations/scrambles)下载。\n\n与 TNoodle 0.8.2 相比，本版修复了以下问题：\n\n- 修复六阶打乱可能包含多余转动的问题。\n\n请记住，正式比赛必须始终使用官方打乱程序当前的版本，可随时从[https://www.worldcubeassociation.org/regulations/scrambles/](https://www.worldcubeassociation.org/regulations/scrambles/)下载。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:55:00.992Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "df29f5f057469ebfa83bdd85d1511aa5ab6f61dae5ec03f3da74ec14e0dcc7bb"
+}

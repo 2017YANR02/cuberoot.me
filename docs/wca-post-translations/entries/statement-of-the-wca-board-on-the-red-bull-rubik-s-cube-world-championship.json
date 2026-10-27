@@ -12,14 +12,31 @@
     "sourceId": 8186
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "7ec0b99504431274f051fa9cfcd6fe9ef3bfcf87f69a29ba40bc15abe59e2654",
     "language": "zh-Hans",
     "title": "WCA 董事会就红牛魔方世界锦标赛发表声明",
     "content": "各位 WCA 社区成员：\n\n2017 年 10 月 25 日，红牛宣布举办红牛魔方世界锦标赛。该赛事将在若干国家举办资格赛，胜者获得前往美国波士顿参加决赛的资格。更多信息见：https://www.redbullmindgamers.com/rubiks\n\n得知这一消息后，我们认为有必要向所有为 WCA 工作、曾参加 WCA 比赛，或关心并支持 WCA 及其理念的人作出说明。社区中已经出现了许多传言。作为 WCA 的领导者，我们有责任告诉大家我们对此事的看法，以及对未来的立场。\n\n红牛与 Rubik’s Brand Ltd. 合作，在世界各地举办自己的速拧比赛。这些比赛在 WCA 不知情的情况下公布，采用的规则、项目和赛制也与 WCA 不同。因此，WCA 不会公示这些比赛，也不会认可其成绩。\n\nWCA 成员及工作人员可以自由参加红牛比赛。WCA 不会处罚任何希望参赛的人。我们仍然欢迎所有人参加 WCA 比赛，并会平等、友善地对待每个人。我们也希望 WCA 成员友善对待参加红牛比赛的选手。\n\nWCA 的所有工作人员都应忠于 WCA 的使命，维护并保护 WCA 的诚信。目前关于红牛比赛的信息不足以判断 WCA 能否、以及是否会支持这些赛事。得到更多信息后，我们会进一步通知工作人员。在此之前，如有疑问，欢迎在代表群组中提出，或直接询问董事会。\n\n请大家放心，WCA 为每一位魔友而存在。无论年龄大小、速拧水平如何，我们都欢迎你加入。我们提供多种项目和玩法，也允许选手自由选择参赛魔方的品牌及型号。WCA 还在继续成长，预计 2018 年将在全球约 90 个国家举办超过 1,000 场比赛。我们是独立的组织，也会努力保持独立。\n\nWCA 为十多年来取得的成绩感到自豪，并会继续把精力放在做好及改进工作上。我们认为，坚持目标与使命、守护自身价值观，是继续前进的根本。这是一段持续的历程，而非一个终点，因此，我们必须了解当前的问题，不断学习，并根据社区的需求作出调整。\n\n作为一个不断发展的组织，我们始终努力提高专业程度和工作质量。目前，成为非营利组织的程序已进入最后阶段。我们也在寻求与企业和赞助商合作，让世界各地的人都能参加 WCA 比赛。此外，我们正在考虑借助外部力量，争取更好、更有吸引力的媒体报道，让社区之外的人认识魔方。只要合作条件符合 WCA 及其成员的利益，我们愿意与任何其他方面合作，实现自己的目标。\n\n我们期待后续的发展。我们为所有给 WCA 作出贡献的人感到自豪，也将不懈努力，代表 WCA 及其成员发声。\n\n此致\nWCA 董事会",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.991Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "61c4dd54e2c990f2b1697cd5f619e815a854147abc8674e368ed013108c7517d"
+  "translationHash": "e37c9145c781f52a84fb417d91b45288074e6ef17a7724a6c5fdeb0ed5fd926a",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:25.169Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "7ec0b99504431274f051fa9cfcd6fe9ef3bfcf87f69a29ba40bc15abe59e2654",
+    "reviewedTranslationHash": "e37c9145c781f52a84fb417d91b45288074e6ef17a7724a6c5fdeb0ed5fd926a",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/statement-of-the-wca-board-on-the-red-bull-rubik-s-cube-world-championship.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "61c4dd54e2c990f2b1697cd5f619e815a854147abc8674e368ed013108c7517d"
+  }
 }

@@ -12,14 +12,33 @@
     "sourceId": 14085
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "c3eb03f10dafcff8b9fa0e7fb0fa4136979b7b787b41b89c817ed38eb95e0215",
     "language": "zh-Hans",
     "title": "WCA 规则委员会负责人任命公告（2022 年 12 月）",
     "content": "我们很高兴地宣布，Antonio Kam 已成为 WCA 规则委员会（WRC）的新任负责人。Antonio 此前已是 WRC 成员。\n\n依照 WCA 委员会与团队[动议](https://www.worldcubeassociation.org/documents/motions/10.2022.0%20-%20Committees%20and%20Teams.pdf)第 4 节，WCA 董事会选定 Antonio，并经现任委员会负责人和高级代表投票批准。\n\n感谢 Iván Brigidano Pérez 为 WRC 所做的工作，也祝 Antonio Kam 在新的岗位上工作顺利。\n\n本次共有两位申请人，包括 Antonio。有兴趣的成员可在[此处](https://drive.google.com/drive/folders/1HTRzeD4vYqn3-Pi4M7rneYelId-O2Uyp?usp=share_link)查看两人的申请材料。\n\n另一位申请人为：\n\n* Samuel Baird",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.559Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "6ca7eed5fede7de7f01d57259742fec9222dc53321a878a7ace6e4cd4c432769"
+  "translationHash": "24a02b0772348b1d2ac528262d519b78951a171ae4510ff48bd2c6718abadb42",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:12:24.811Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "c3eb03f10dafcff8b9fa0e7fb0fa4136979b7b787b41b89c817ed38eb95e0215",
+    "reviewedTranslationHash": "24a02b0772348b1d2ac528262d519b78951a171ae4510ff48bd2c6718abadb42",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wrc-leader-announcement-december-2022.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇核对新任、前任、成员职衔、遴选批准程序、申请人数和日期。"
+    ],
+    "inputTranslationHash": "6ca7eed5fede7de7f01d57259742fec9222dc53321a878a7ace6e4cd4c432769"
+  }
 }

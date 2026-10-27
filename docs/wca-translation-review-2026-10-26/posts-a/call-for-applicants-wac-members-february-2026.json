@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wac-members-february-2026",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wac-members-february-2026.json",
+  "sourceHash": "ad8562b03efaee09cfece0d6b0daeed54e22f5ea5eb27b244c416acf6aae151b",
+  "inputTranslationHash": "3d8100a4987c6d7a1f72e50983e289ee57d1243641e4d3ecdffb83f3759f36fb",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:06:36.462Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇全文对照：含招募资格、时限、工作量、程序、历史机构；比赛报告核对人物、项目、成绩与纪录类别。"
+  ],
+  "changes": []
+}

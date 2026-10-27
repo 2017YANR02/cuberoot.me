@@ -40,12 +40,20 @@
     },
     "unresolvedNotes": [],
     "recheck": {
-      "reviewer": "review_3",
-      "reviewedAt": "2026-10-22T06:26:21.801Z",
-      "report": "reviews/round-1/recheck-3.json",
+      "reviewer": "/root/review_logs",
+      "reviewedAt": "2026-10-26T11:10:07.703Z",
+      "report": "../wca-translation-review-2026-10-26/final-report.json",
       "sourceHash": "3fbdb6add92837776cde5b5cf00f3ba88ccafa9b8a0f859ee05ebbe2b2786683",
       "reviewedTranslationHash": "0994515d43f2c0d78408e969002561284db23645efa0b58d412d84a868bfa2e4",
-      "verdict": "pass"
+      "verdict": "pass",
+      "scope": "复用当前译文哈希绑定的既有全文独立审校；本轮全量检索项目名和机构残留，并核对命中语境。"
+    },
+    "currentReview": {
+      "round": "2026-10-26",
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/incidents-145.json",
+      "sourceConcern": false,
+      "notes": [],
+      "inputTranslationHash": "0994515d43f2c0d78408e969002561284db23645efa0b58d412d84a868bfa2e4"
     }
   },
   "publication": {

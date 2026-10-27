@@ -12,14 +12,31 @@
     "sourceId": 14035
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "a060cf7724e705c050a1d08a16df6f22b515e3d75d271b29b4e7f62ff3514e4f",
     "language": "zh-Hans",
     "title": "WCA 比赛要求政策和会费政策更新（2021 年 9 月）",
     "content": "WCA 董事会近日批准了以下政策的更新：\n\n* [WCA 比赛要求政策](https://www.worldcubeassociation.org/documents/policies/external/Competition%20Requirements.pdf)：新增对系列赛的介绍，扩大其适用范围，并对原有章节作出多项调整。完整改动列表见[此处](https://github.com/thewca/wca-documents/pull/258)。\n* [WCA 会费政策](https://www.worldcubeassociation.org/documents/policies/external/Dues%20System.pdf)：改动将于 2022 年 1 月 1 日生效，具体内容见[此处](https://github.com/thewca/wca-documents/pull/253/files#diff-9c4c9b91069f0ac66a52c3409dd14c72581d06f17bbf0f6ce7059541b7409a70)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:54.085Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "1fb48912b1d9220a2137bd2b7913e1877c8ea5bb3fb159fadf270bec293ba2e4"
+  "translationHash": "f54dddbff6b556aac8b8892dd07285b80b1b584de48ce7f15c623d4093391a06",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:59.336Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "a060cf7724e705c050a1d08a16df6f22b515e3d75d271b29b4e7f62ff3514e4f",
+    "reviewedTranslationHash": "f54dddbff6b556aac8b8892dd07285b80b1b584de48ce7f15c623d4093391a06",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/updates-on-wca-competition-requirements-policy-wca-dues-policy-september-2021.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "1fb48912b1d9220a2137bd2b7913e1877c8ea5bb3fb159fadf270bec293ba2e4"
+  }
 }

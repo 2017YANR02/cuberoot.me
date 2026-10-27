@@ -12,14 +12,33 @@
     "sourceId": 13971
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "e503283ad85c8bc445461c7d36e87eb199f27b896ead141a88d4a1d90182af42",
     "language": "zh-Hans",
     "title": "2020 年 WCA 欧洲锦标赛取消",
     "content": "我们很遗憾地宣布，受新冠疫情影响，[2020 年 WCA 欧洲锦标赛](https://www.worldcubeassociation.org/competitions/Euro2020)取消。由于情况仍不明朗，比赛不会改期至今年晚些时候举行。已报名选手将在接下来几周收到退款。\n\n更多信息请见 2020 年 WCA 欧洲锦标赛[官网](https://www.wcaeuro2020.nl/news/cancellation/)。\n\n感谢社区在这段充满不确定性的时期给予理解。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:00.948Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "bd2e8840a7404da999474ced44a2e2c630bd75c1e5f8f1c8c4641d8b3573d2b6"
+  "translationHash": "800574dea8b9f7b5b504a2d33a89be45ca40aba0d7e762e55a5c0261a32b1883",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:12:23.463Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "e503283ad85c8bc445461c7d36e87eb199f27b896ead141a88d4a1d90182af42",
+    "reviewedTranslationHash": "800574dea8b9f7b5b504a2d33a89be45ca40aba0d7e762e55a5c0261a32b1883",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/cancellation-of-wca-european-championship-2020.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照标题和正文；各届赛事城市及取消/退款范围、董事候选名单、当选与连任区别、任期及生效日期、保留职务和干事分工均与原文一致。"
+    ],
+    "inputTranslationHash": "bd2e8840a7404da999474ced44a2e2c630bd75c1e5f8f1c8c4641d8b3573d2b6"
+  }
 }

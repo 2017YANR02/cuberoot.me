@@ -12,14 +12,33 @@
     "sourceId": 10127
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "ae660a6170dea24d9cbad1015238275b71803e9e1d0d49143035b8a87c30c163",
     "language": "zh-Hans",
     "title": "WCA 道德委员会招募成员（2018 年 8 月）",
     "content": "WCA 道德委员会（WEC）正在招募合适的成员，共同完成委员会的工作！\n\n**WEC 负责什么？**\n\nWEC 负责确保 WCA 工作人员及外部工作人员遵守道德准则；若有关人员的行为不符合准则，则开展独立调查。任何注册速拧选手均可请求调查，WEC 会为他们保密处理相关事项。此外，若相关方不服 WCA 纪律委员会的决定，WEC 也作为申诉机构处理。\n<!-- break -->\n**我们希望申请人具备：**\n\n- 背景清白。\n- 值得信任。\n- 能独立判断。\n- 有责任心。\n\n申请从即日起开放，请于 **2018 年 9 月 4 日 23:59 UTC** 前将材料发送给 Walker Welch（[walkerewelch@gmail.com](mailto:walkerewelch@gmail.com)）。所有人均可申请，无需目前在 WCA 任职。\n\n**申请材料须为 PDF 格式，包含：**\n\n- 简短的个人介绍。\n- 为 WCA 所做工作的概述。\n- 作为 WCA 道德委员会成员的工作设想。\n\n提交后，我们会确认材料是否完整，或说明有哪些缺漏。\n\n关于 WEC 和本岗位的更多信息见[此文档](https://docs.google.com/document/d/15cm2bkPIaPJe0Y1AXd87waRBnCom8Wa3e7FJBIL0Xdk/edit?usp=sharing)。WEC 的权利与职责见 [WCA 议案 10.2017.8](https://www.worldcubeassociation.org/documents/motions/10.2017.8%20-%20Ethics%20Committee.pdf)。\n\n申请截止后，WEC 负责人将作出选择，并在候选人接受岗位后公布新成员。\n\n感谢你愿意帮助 WCA 发展！",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.138Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "0af45fc7dc022629ad7c9af709330407cba35f5d7ae5b63a8dbca0d39391c678"
+  "translationHash": "597bb81080336823f85a8f59320f4fd245f6c861399fbdf92b8dd1910202f288",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:10:20.415Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "ae660a6170dea24d9cbad1015238275b71803e9e1d0d49143035b8a87c30c163",
+    "reviewedTranslationHash": "597bb81080336823f85a8f59320f4fd245f6c861399fbdf92b8dd1910202f288",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/call-for-applicants-wec-members-august-2018.json",
+    "sourceConcern": false,
+    "notes": [
+      "全文对照；历史 WEC/纪律委员会职责、申请资格、任期工时、截止日期及任命流程保持原意。"
+    ],
+    "inputTranslationHash": "0af45fc7dc022629ad7c9af709330407cba35f5d7ae5b63a8dbca0d39391c678"
+  }
 }

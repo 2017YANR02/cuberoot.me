@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/wca-regulations-january-2022",
+  "source": {
+    "key": "posts:/posts/wca-regulations-january-2022",
+    "kind": "posts",
+    "title": "WCA Regulations — January 2022",
+    "date": "2021-12-26T22:54:24.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/wca-regulations-january-2022",
+    "content": "Dear WCA Community,\n\nThe WRC would like to inform you about the versions of the WCA Regulations and Guidelines, which are going into effect January 1, 2022.\n\nYou can review all changes in [this comparison on GitHub](https://github.com/thewca/wca-regulations/compare/official-2021-05-01...draft). You can click on “Files changed” to see the complete files of the Regulation and Guidelines, where all changes and additions are marked green and removals are red.\n\nHere is a summary of the changes in the new version of the Regulations and the Guidelines:\n\n* Approving Speed Stacks Stackmat timer Generation 5. ([commit](https://github.com/thewca/wca-regulations/commit/ec0b013345d306c5bd5f58d7f14ab5e77b6eab06) | [discussion](https://forum.worldcubeassociation.org/t/wssa-g5-timer-discussion/12695))\n* Clarification on how disqualifications affect results. ([commit](https://github.com/thewca/wca-regulations/commit/52a1b70442aac0c65101b2414170b70f96fec42e) | [discussion](https://forum.worldcubeassociation.org/t/2j2-clarity/13699))\n* Clarification on late competitors to rounds with cumulative time limits. ([commit](https://github.com/thewca/wca-regulations/commit/1e687e8095367a313246281a2a88d564dd3e4b37) | [commit](https://github.com/thewca/wca-regulations/commit/23bf9a2c8713edabce10adf6cae7775992213056) | [discussion](https://forum.worldcubeassociation.org/t/clarify-rules-regarding-late-competitors-to-rounds-with-cumulative-time-limits/1277))\n* Clarification on Clock hardware, which is approved at WCA Delegate discretion. ([commit](https://github.com/thewca/wca-regulations/commit/30617996c04b468a56fde3fa730f76cbda8198d5) | [commit](https://github.com/thewca/wca-regulations/commit/21d0680f1f693fccfe87bae79e5efb3173af720f) | [discussion](https://forum.worldcubeassociation.org/t/proposal-anything-goes-for-clock/3118))\n* Puzzles are allowed to have transparent parts as long as they do not provide additional information. ([commit](https://github.com/thewca/wca-regulations/commit/78f10a5ae9b9a892d0f301fe35b4597fc67cb4c3) | [discussion](https://forum.worldcubeassociation.org/t/update-3h2a/3192))\n* Strongly recommend competitors to turn off notifications and calls. ([commit](https://github.com/thewca/wca-regulations/commit/ec50bdf6261d021e688402f195a56655443ffe4a) | [discussion](https://forum.worldcubeassociation.org/t/proposal-a-competitor-must-not-interact-with-a-mobile-phone/3215))",
+    "hash": "b3913e70003b3f48c8f91282f3b96ec688446702de45217f474a06f87e3221ce",
+    "format": "markdown",
+    "sourceId": 14045
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "b3913e70003b3f48c8f91282f3b96ec688446702de45217f474a06f87e3221ce",
+    "language": "zh-Hans",
+    "title": "WCA 竞赛规则更新（2022 年 1 月）",
+    "content": "各位 WCA 社区成员：\n\nWCA 规则委员会（WRC）在此通知，新版《WCA 竞赛规则与指南》将于 2022 年 1 月 1 日生效。\n\n所有改动可在 [GitHub 版本对比](https://github.com/thewca/wca-regulations/compare/official-2021-05-01...draft)中查看。点击“Files changed”即可查看规则与指南的完整文件，其中新增和修改的内容标为绿色，删除的内容标为红色。\n\n新版规则与指南的改动概要如下：\n\n* 认可 Speed Stacks 第五代 Stackmat 计时器。（[提交记录](https://github.com/thewca/wca-regulations/commit/ec0b013345d306c5bd5f58d7f14ab5e77b6eab06) | [讨论](https://forum.worldcubeassociation.org/t/wssa-g5-timer-discussion/12695)）\n* 明确取消资格对成绩的影响。（[提交记录](https://github.com/thewca/wca-regulations/commit/52a1b70442aac0c65101b2414170b70f96fec42e) | [讨论](https://forum.worldcubeassociation.org/t/2j2-clarity/13699)）\n* 明确设有累计时限的轮次中选手迟到的处理。（[提交记录](https://github.com/thewca/wca-regulations/commit/1e687e8095367a313246281a2a88d564dd3e4b37) | [提交记录](https://github.com/thewca/wca-regulations/commit/23bf9a2c8713edabce10adf6cae7775992213056) | [讨论](https://forum.worldcubeassociation.org/t/clarify-rules-regarding-late-competitors-to-rounds-with-cumulative-time-limits/1277)）\n* 明确魔表硬件的要求，由 WCA 代表酌情判断是否认可。（[提交记录](https://github.com/thewca/wca-regulations/commit/30617996c04b468a56fde3fa730f76cbda8198d5) | [提交记录](https://github.com/thewca/wca-regulations/commit/21d0680f1f693fccfe87bae79e5efb3173af720f) | [讨论](https://forum.worldcubeassociation.org/t/proposal-anything-goes-for-clock/3118)）\n* 允许魔方含有透明部件，前提是这些部件不提供额外信息。（[提交记录](https://github.com/thewca/wca-regulations/commit/78f10a5ae9b9a892d0f301fe35b4597fc67cb4c3) | [讨论](https://forum.worldcubeassociation.org/t/update-3h2a/3192)）\n* 强烈建议选手关闭通知和来电。（[提交记录](https://github.com/thewca/wca-regulations/commit/ec50bdf6261d021e688402f195a56655443ffe4a) | [讨论](https://forum.worldcubeassociation.org/t/proposal-a-competitor-must-not-interact-with-a-mobile-phone/3215)）",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:49:54.087Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "70e8ae7e8f8a41bdf1046e23ef21ac3603922420a0471a6a69e4e6a510749a14"
+}

@@ -12,14 +12,31 @@
     "sourceId": 14084
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "499a23b2cd084fa55760e067984450eb0070da363486741cf9eff8ee8bc1b108",
     "language": "zh-Hans",
     "title": "2022 年 WCA 社区问卷",
     "content": "各位 WCA 社区成员：\n\n**2022 年 WCA 社区问卷**现已开放！\n\n这份问卷让社区成员可以就不同事项提出反馈，帮助我们确定今后需要改进的方向。\n\n每位用户都有自己的专属问卷链接。登录后，可在 [WCA 官网首页](https://worldcubeassociation.org)找到该链接。问卷匿名填写，即使尚未参加过比赛，也欢迎参与。请**不要将自己的链接分享给任何人**！通过同一链接提交的所有答卷，以及通过无效链接提交的答卷，**均会被删除**！\n\n请在 **2023 年 1 月 15 日 23:59 UTC** 前提交答卷。\n\n如有疑问或遇到技术问题，请通过 [advisory@worldcubeassociation.org](mailto:advisory@worldcubeassociation.org) 联系 WCA 顾问理事会。",
     "notes": [],
     "translatedAt": "2026-10-25T09:29:00.729Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "e2eb1a5f0f4e43494155c6d3409c6cbf8cbd668329f656c9b7c1aa1bb8d8943a"
+  "translationHash": "03c8681736f11460a757b0267871e252e04d847952c0303b294ccc86f1b27976",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:07:08.714Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "499a23b2cd084fa55760e067984450eb0070da363486741cf9eff8ee8bc1b108",
+    "reviewedTranslationHash": "03c8681736f11460a757b0267871e252e04d847952c0303b294ccc86f1b27976",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wca-community-survey-2022.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "e2eb1a5f0f4e43494155c6d3409c6cbf8cbd668329f656c9b7c1aa1bb8d8943a"
+  }
 }

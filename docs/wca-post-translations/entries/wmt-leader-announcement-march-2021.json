@@ -12,16 +12,31 @@
     "sourceId": 14014
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "d8505d265726186cc12fdcccab2ae85267f79019a0c58cd1311eb5b65a57597c",
     "language": "zh-Hans",
     "title": "WCA 市场营销组负责人任命公告（2021 年 3 月）",
     "content": "我们很高兴地宣布，WCA 市场营销组（WMT）成员 Saransh Grover 将出任团队新负责人。\n\n根据[《WCA 委员会与团队动议》](https://www.worldcubeassociation.org/documents/motions/10.2020.0%20-%20Committees%20and%20Teams.pdf)第 4 节，WCA 董事会选定了 Saransh，并经现任委员会负责人和高级代表投票批准。\n\n感谢 Somya Srivastava 为 WMT 所做的工作，祝 Saransh 在新岗位上工作顺利。\n\n董事会还收到了以下申请者的材料：\n\n* Xia Yan\n\n感谢 Xia 提交申请。两份申请材料均可在[这里](https://drive.google.com/drive/folders/1IZkEwon7t-WGqSJTS7iLTuM2Riil7qEs?usp=sharing)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:54.104Z",
-    "reviewStatus": "pending_independent_review",
-    "revisedAt": "2026-10-25T07:28:01.629Z",
-    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "1c29ff2093d8182ee63cf8b36db154eaef43f826f24b10ec754d98c321a244c1"
+  "translationHash": "1807f733b7e5a6b9c5d18566aa5cc0933c83672643b5962afa463fe3c6f936fa",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:11:14.399Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "d8505d265726186cc12fdcccab2ae85267f79019a0c58cd1311eb5b65a57597c",
+    "reviewedTranslationHash": "1807f733b7e5a6b9c5d18566aa5cc0933c83672643b5962afa463fe3c6f936fa",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wmt-leader-announcement-march-2021.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "1c29ff2093d8182ee63cf8b36db154eaef43f826f24b10ec754d98c321a244c1"
+  }
 }

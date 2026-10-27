@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/applications-for-new-committee-team-members",
+  "path": "docs/wca-post-translations/entries/applications-for-new-committee-team-members.json",
+  "sourceHash": "94561b4f53cd3739df15f5ce6958eddc203710c9fc4e645a4c9028609d83157a",
+  "inputTranslationHash": "d276e50ca0f344a04dc4669a30a83096e43c6a1428049fac2a413968fe9f3e73",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:05:49.185Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照申办地区、申请时段、材料要求、评选主体及全部预算/场馆/人员条目。"
+  ],
+  "changes": []
+}

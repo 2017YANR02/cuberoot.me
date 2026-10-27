@@ -13,7 +13,9 @@ description: "Use when regenerating comp_names_zh.json, debugging 比赛名本�
 
 - 表格 / 列表用 `<CompCell … date={comp.start_date} />`；`date` **必填**（`string | null`），逼你表态。
 - 其它渲染点 `localizeCompName(id, name, isZh, { date })`。
-- 页面上**没写**年份的地方（搜索下拉、无日期列的榜单、比赛详情页 H1 与复制名）传 `null` / 不传 —— 那里年号是唯一的区分信息。
+- 页面上**没写**年份的地方（不显示日期的搜索下拉、无日期列的榜单、比赛详情页 H1 与复制名）传 `null` / 不传 —— 那里年号是唯一的区分信息。按实际展示内容判断，不能因为是搜索结果就保留年号。
+- 首页与聊天共用 `LandingSearch`；比赛和复盘结果均复用 `<CompCell noFlag … date={实际展示日期 ?? null} />`，禁止直接显示 `r.comp`。搜索命中保留原始名称与 `compWcaId`，只在渲染时处理。日期使用 `.landing-search-date` 保持完整、不在连字符处断行。
+- `tests/landing_search_hydration.test.ts` 覆盖真实搜索卡片的重复年份回归；正则守卫只防重复实现，不能代替调用点的渲染检查。
 - 唯一实现是 `stripCompYear`，**禁**在调用点手写 `/\s*20\d\d\s*$/` 之类正则。守卫：写入即拦 `core/packages/client/scripts/hook-detect-comp-year-regex.mjs` + CI `tests/comp-year-single-source.test.ts`。
 
 ## 数据：`stats/comp_names_zh.json`

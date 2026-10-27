@@ -36,6 +36,7 @@ import QRCode from 'qrcode';
 import { query, withTransaction } from '../db/connection.js';
 import { grantMembershipInTransaction, membershipPaymentEvidence, settleMembershipPayment, MEMBERSHIP_PERIOD_UNITS, type MembershipProvider } from '../payment/membership-settlement.js';
 import { requireAuth, requireAdmin, checkRateLimit } from '../utils/recon_helpers.js';
+import { canPurchaseEnterpriseMembership } from '../utils/enterprise_membership.js';
 import { hasActiveMembership } from '../utils/membership.js';
 import { signXunhupay, verifyXunhupaySign, type SignParams } from '@cuberoot/shared/payment';
 import { ADMIN_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
@@ -354,6 +355,7 @@ membershipRoutes.get('/membership/me', async (c) => {
   return c.json({
     membership,
     isMember: user.isAdmin || !!membership?.active,
+    canPurchaseEnterprise: await canPurchaseEnterpriseMembership(user.wcaId),
     profile,
   });
 });
@@ -441,6 +443,9 @@ membershipRoutes.post('/membership/orders', async (c) => {
   const planSlug = String(b.plan || '');
   if (['enterprise_yearly', 'enterprise_yearly_auto_renew'].includes(planSlug)) return c.json({ error: 'plan no longer available' }, 400);
   if (!PLAN_SLUG_RE.test(planSlug)) return c.json({ error: 'invalid plan' }, 400);
+  if (planSlug.startsWith('enterprise_') && !await canPurchaseEnterpriseMembership(user.wcaId)) {
+    return c.json({ error: 'verified enterprise management access required' }, 403);
+  }
   if (AUTO_RENEW_PLAN_SLUGS.has(planSlug)) {
     return c.json({ error: 'automatic renewal is not available' }, 503);
   }

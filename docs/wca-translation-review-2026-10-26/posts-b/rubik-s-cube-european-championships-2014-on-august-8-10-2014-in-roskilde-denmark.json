@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/rubik-s-cube-european-championships-2014-on-august-8-10-2014-in-roskilde-denmark",
+  "path": "docs/wca-post-translations/entries/rubik-s-cube-european-championships-2014-on-august-8-10-2014-in-roskilde-denmark.json",
+  "sourceHash": "ca86f6de57ea47f474be30c33e5dc55c67edbdbca90cd732efca6346bf0b9848",
+  "inputTranslationHash": "98104f882db98e734fbabcf5fc75a9752d363fbafec52d875d2611f33383b81e",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:15.857Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

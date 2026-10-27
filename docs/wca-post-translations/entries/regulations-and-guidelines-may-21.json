@@ -12,14 +12,31 @@
     "sourceId": 2615
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "fa61427016cc39a56c7e7f2f6e3a23207426e2229788d5ab07d2cb9b7c917af7",
     "language": "zh-Hans",
     "title": "规则与指南更新：5 月 21 日",
     "content": "根据 5 月 11 日规则更新后收到的反馈，WRC 对规则和指南作出以下修改。这些修改涉及一次尝试结束时的魔方故障：\n\n- 修正 [5b5d](https://www.worldcubeassociation.org/regulations/#5b5d) 和 [5b5++](https://www.worldcubeassociation.org/regulations/guidelines.html#5b5++) 的措辞。\n- 简化 [5b5+](https://www.worldcubeassociation.org/regulations/guidelines.html#5b5+) 和 [5b5++](https://www.worldcubeassociation.org/regulations/guidelines.html#5b5++) 中的示例。\n\n这些修改适用于从 2013 年 5 月 21 日起举行的所有正式比赛。\n\n这些修改不应改变规则的原意，而是希望帮助代表和选手更准确地理解规则。\n\n新版规则见 [https://www.worldcubeassociation.org/regulations/](https://www.worldcubeassociation.org/regulations/)。\n\n具体修改记录可[在 GitHub 查看](https://github.com/cubing/wca-documents/compare/official-2013-05-10...official-2013-05-21)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.917Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "311bf1608ccb1caf628ebf3fe08245036396933b81642b2a73ff6a87b8ab041d"
+  "translationHash": "3e217e05ec5f98e33b8a633393defa835c8f720e5cdf98babcba295d12fd4b4c",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:55.472Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "fa61427016cc39a56c7e7f2f6e3a23207426e2229788d5ab07d2cb9b7c917af7",
+    "reviewedTranslationHash": "3e217e05ec5f98e33b8a633393defa835c8f720e5cdf98babcba295d12fd4b4c",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/regulations-and-guidelines-may-21.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "311bf1608ccb1caf628ebf3fe08245036396933b81642b2a73ff6a87b8ab041d"
+  }
 }

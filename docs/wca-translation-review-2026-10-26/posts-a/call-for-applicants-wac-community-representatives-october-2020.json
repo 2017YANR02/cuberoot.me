@@ -1,0 +1,16 @@
+{
+  "key": "posts:/posts/call-for-applicants-wac-community-representatives-october-2020",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wac-community-representatives-october-2020.json",
+  "sourceHash": "a397c376f83344e9e88f4da9d6225e87f01e91bb00f4c0250f3b19b8a77e4c21",
+  "inputTranslationHash": "98a3d3a88c38d11772d6458ac09e33359c6f1c23ce5faf525f4c41414ec103c6",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:06:36.463Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "correction_required",
+  "notes": [],
+  "changes": [
+    "WAC内部WCA Representatives指工作人员代表，展开表述以避免与WCA Delegate（比赛代表）混淆。"
+  ],
+  "title": "WCA 顾问理事会招募社区代表（2020 年 10 月）",
+  "content": "**WCA 顾问理事会（WAC）**正在招募新成员。\n\n本次申请面向所有 WCA 成员。\n\n**WAC 是什么，负责哪些工作？**\n\nWAC 最重要的职责是在社区与 WCA 工作人员之间沟通，让社区在重要议题的讨论中有发言机会。社区代表是这一过程的重要参与者。WAC 主要职能的更多说明见 [WCA 议案 20.2019.01](https://www.worldcubeassociation.org/documents/motions/20.2019.1%20-%20Advisory%20Council.pdf)。\n\n理事会下设社区代表和 WCA 工作人员代表两个小组。本次招募的是社区代表，他们占理事会多数席位，且不属于 WCA 工作人员。也就是说，除 WCA 工作人员外，任何人都可申请。如果你此前从未在 WCA 担任正式职务，这将是参与改进 WCA 的好机会！\n\n目前，理事会的主要项目包括论坛审核和管理，以及建立收集社区反馈的渠道，为 WCA 提供参考。\n<!-- break -->\n**我们希望申请人具备：**\n\n* 沟通能力：*内部交流使用英语，因此需要中等水平的英语能力。*\n* 工作态度：*成员须定期参与工作，不能连续多天不理会消息。预计每周需投入 2–4 小时。*\n* 改进意识：*我们会花较多时间讨论工作方式，收集值得关注的议题。如果你认为 WCA 已经完美无缺，这个岗位可能不适合你。*\n* 兴趣：*最好喜欢与社区成员讨论 WCA 事务。*\n* 成熟的判断：*线上讨论应能启发思考、取得实际进展。反馈社区意见时，你代表的是社区，而非个人观点。*\n* 擅长的领域：*团队希望覆盖社区中的不同群体，因此成员可以部分专注于自己了解、关心的领域，例如某个地区或某类魔友，如高水平／速度较慢的魔友、年轻／年长的魔友。*\n\n申请从即日起开放，请于 **2020 年 11 月 25 日 23:59 UTC** 前将材料发送至 WCA 董事会（[board@worldcubeassociation.org](mailto:board@worldcubeassociation.org)）。\n\n申请材料须为 PDF 格式，包含：\n\n* 姓名。\n* 简短的个人介绍。\n* 参与 WCA 事务的经历。\n* 说明自己如何符合所需条件。\n* 作为 WCA 顾问理事会成员的工作目标。\n\n感谢大家的申请与支持！"
+}

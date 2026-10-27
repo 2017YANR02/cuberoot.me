@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/changes-to-the-wca-board-of-directors-october-2024",
+  "path": "docs/wca-post-translations/entries/changes-to-the-wca-board-of-directors-october-2024.json",
+  "sourceHash": "9db7db8536c9f1e89cdc2b433789f13c75caf232b40a54c22d43493b2e936916",
+  "inputTranslationHash": "f44b7ce18f2ddbfe1f235101ab3576caaf95bb297de95158f1f1ee75c482b933",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:12:38.683Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "全文对照标题、名单变更/历史范围、项目实施日期、条件和例外、合同授权条件、准则对象及纪录合作流程。"
+  ],
+  "changes": []
+}

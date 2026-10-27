@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/wca-regulations-january-2022-now-in-effect",
+  "path": "docs/wca-post-translations/entries/wca-regulations-january-2022-now-in-effect.json",
+  "sourceHash": "979fc3d1d964013890835217b63f09e1de9b1544f046a32581b63979275a2b80",
+  "inputTranslationHash": "2f1df97a3cb0dd4651194692b49749b26652352f38fc95520eb69ef52f7679df",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:09:46.861Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [
+    "全文核对规则变更条件、数字、项目中文、权限强度及链接。"
+  ],
+  "changes": []
+}

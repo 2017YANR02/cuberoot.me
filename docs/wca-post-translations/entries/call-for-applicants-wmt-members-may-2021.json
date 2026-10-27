@@ -12,7 +12,7 @@
     "sourceId": 14020
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "42f6ce07261c9407cf6f380c341237cc47f3489845e9f13f8f0ffcee77270113",
     "language": "zh-Hans",
     "title": "WCA 市场营销组成员招募（2021 年 5 月）",
@@ -21,9 +21,26 @@
       "原文标题为 2021 年 5 月，但申请截止日期写为 June 26th, 2020；译文忠实保留原日期，未自行更正。"
     ],
     "translatedAt": "2026-10-22T08:49:54.111Z",
-    "reviewStatus": "pending_independent_review",
-    "revisedAt": "2026-10-25T07:28:01.629Z",
-    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+    "reviewStatus": "pending_source_verification",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "c5e826a4d1c204a3de34388623ec9ef005bd616aa1ccbd60e01d4fff0b21a774"
+  "translationHash": "4c805874a4dc63c316d3ef148490b589bbf0a9519a57ce874e4b59f4ed5d49e2",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:10:56.904Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "42f6ce07261c9407cf6f380c341237cc47f3489845e9f13f8f0ffcee77270113",
+    "reviewedTranslationHash": "4c805874a4dc63c316d3ef148490b589bbf0a9519a57ce874e4b59f4ed5d49e2",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "pending_source_verification",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/call-for-applicants-wmt-members-may-2021.json",
+    "sourceConcern": true,
+    "notes": [
+      "源标题为 2021 年 5 月，正文申请截止日却为 June 26th, 2020；译文忠实保留原日期，未擅自推测改为 2021，需原作者确认。其余全文对照一致。"
+    ],
+    "inputTranslationHash": "c5e826a4d1c204a3de34388623ec9ef005bd616aa1ccbd60e01d4fff0b21a774"
+  }
 }

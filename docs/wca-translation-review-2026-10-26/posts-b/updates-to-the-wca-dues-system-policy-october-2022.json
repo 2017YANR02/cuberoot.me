@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/updates-to-the-wca-dues-system-policy-october-2022",
+  "path": "docs/wca-post-translations/entries/updates-to-the-wca-dues-system-policy-october-2022.json",
+  "sourceHash": "3c9ca9e925fd1eb765eeea8c81b0d3adc61ecb467cfe38fdf0b0358043b089a5",
+  "inputTranslationHash": "99b30f1e725743ee28d89845dd78e613b428f082a12ec725fca4085b1fe42782",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:59.336Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

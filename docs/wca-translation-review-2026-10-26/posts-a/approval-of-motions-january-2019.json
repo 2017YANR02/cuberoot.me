@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/approval-of-motions-january-2019",
+  "path": "docs/wca-post-translations/entries/approval-of-motions-january-2019.json",
+  "sourceHash": "f353e3b8e5ef57006f07fe363723ffdf2a00ed45895f297c36d976d527451de9",
+  "inputTranslationHash": "54b33ca78257f7ddf023ddb9f031b6194effc8d93fd9a716b69c9dee1e9a8768",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:06:14.457Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照正文与标题；核对全部申请/任命主体、时间、权限、附录条目及材料要求。"
+  ],
+  "changes": []
+}

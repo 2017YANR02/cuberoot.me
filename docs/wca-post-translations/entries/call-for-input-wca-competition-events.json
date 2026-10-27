@@ -12,14 +12,33 @@
     "sourceId": 14178
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "32c0f1383ed8e8a2210beff7ef5aeb3a91017ff1f353ecb5ef86df705c32f76c",
     "language": "zh-Hans",
     "title": "征求意见：WCA 比赛项目",
     "content": "比赛项目工作组（CEWG）已成立，负责研究在 WCA 比赛中增设项目的可行性。我们准备结合 WCA 工作人员与社区的意见，制定一套比赛项目框架。\n\n<!-- break -->\n\n今年早些时候，我们已直接向 WCA 工作人员征求过意见。现在，我们向整个 WCA 社区征集意见（WCA 工作人员也可以参与此次征集）。公开征集截止时间为 2024 年 12 月 15 日 23:59 UTC。在提出任何具体方案之前，CEWG 将认真审阅这些反馈。\n\n请注意：\n\n* CEWG 并未预先设定要增加或移除任何特定项目。\n* 在形成完整框架前，我们会继续与主要相关方讨论，考虑他们对各种想法和重要事项的意见。\n\n请通过[此表单](https://docs.google.com/forms/d/e/1FAIpQLSdoMMPPUena0LMUhCDiJvuPoz7mp3TqUc2AhTFGfiXl-q341Q/viewform)提交意见，也欢迎在[这篇论坛帖子](https://forum.worldcubeassociation.org/t/call-for-input-wca-competition-events/58121)下讨论。",
     "notes": [],
     "translatedAt": "2026-10-22T08:40:49.158Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "98cc2ce5bf17d38d39d5a43a123e554950659ba207c8782ea63090859633e023"
+  "translationHash": "c2e8bdf0407a93e48ae7cac136a729ffd78b37bd9f8954eb8b9f1f200ca52098",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:12:00.207Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "32c0f1383ed8e8a2210beff7ef5aeb3a91017ff1f353ecb5ef86df705c32f76c",
+    "reviewedTranslationHash": "c2e8bdf0407a93e48ae7cac136a729ffd78b37bd9f8954eb8b9f1f200ca52098",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/call-for-input-wca-competition-events.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照正文及标题；申请条件、薪酬福利和地域、岗位职责、2024/2025 任命程序及 2019 草案条目逐项核对。"
+    ],
+    "inputTranslationHash": "98cc2ce5bf17d38d39d5a43a123e554950659ba207c8782ea63090859633e023"
+  }
 }

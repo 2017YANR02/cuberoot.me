@@ -12,16 +12,33 @@
     "sourceId": 14235
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "7dcca0c76d9cf6906554565054aef06ea0c40943db56e383b7f62765160bcd76",
     "language": "zh-Hans",
     "title": "WCA 规则委员会负责人招募（2026 年 2 月）",
     "content": "各位 WCA 社区成员：\n\nCarter Kucala 即将卸任，WCA 将任命新的规则委员会（WRC）负责人。借此机会，我们感谢 Carter 自 2024 年 6 月以来对 WRC 的领导。\n\n候选人须能完成 24 个月的任期，并平均每周至少投入 8 小时处理规则委员会的工作。我们希望候选人具备以下能力：\n\n* 出色的领导能力。\n* 注重细节。\n* 精通竞赛规则。\n* 较强的分析和解决问题的能力。\n* 良好的判断和决策能力。\n* 出色的沟通能力。\n\n申请自即日起开放，截止时间为 2026 年 2 月 22 日 23:59 UTC。有意申请者可将材料私下发送至董事会助理团队（[assistants@worldcubeassociation.org](mailto:assistants@worldcubeassociation.org)），并抄送 WCA 董事会（[board@worldcubeassociation.org](mailto:board@worldcubeassociation.org)）。\n\n申请材料须为 PDF 格式，并包括：\n\n1. 简短的个人介绍。\n2. 为 WCA 所做工作的概述。\n3. 担任 WRC 负责人后的工作设想。\n\n申请者还须提供一份可在申请截止后公开的申请材料副本。\n\nWRC 的权利与职责见 [WCA 动议 10.2025.9](https://documents.worldcubeassociation.org/documents/motions/10.2025.9%20-%20Regulations%20Committee.pdf)。\n\n申请截止后，WCA 董事会将按照 [WCA 动议 10.2025.0](https://documents.worldcubeassociation.org/documents/motions/10.2025.0%20-%20Committees%20and%20Teams.pdf)第 5 节的规定，面试最符合条件的申请者，通过投票选定并公布新负责人。\n\n感谢大家的申请与支持。",
     "notes": [],
     "translatedAt": "2026-10-22T08:40:49.166Z",
-    "reviewStatus": "pending_independent_review",
-    "revisedAt": "2026-10-25T07:28:01.629Z",
-    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "b04d0d685b76403b26682cb205b852c29d7f81d04791df5a05cd7d910f53d308"
+  "translationHash": "732e52e9059f70f13e0b7253729b9d7459aa8d91707e3b00c2eabf891ffc4d05",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:07:01.629Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "7dcca0c76d9cf6906554565054aef06ea0c40943db56e383b7f62765160bcd76",
+    "reviewedTranslationHash": "732e52e9059f70f13e0b7253729b9d7459aa8d91707e3b00c2eabf891ffc4d05",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/call-for-applicants-wca-regulations-committee-leader-february-2026.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照招募正文、职责条目、必需/可选资格、年龄、时限和程序；未扩展外链材料。"
+    ],
+    "inputTranslationHash": "b04d0d685b76403b26682cb205b852c29d7f81d04791df5a05cd7d910f53d308"
+  }
 }

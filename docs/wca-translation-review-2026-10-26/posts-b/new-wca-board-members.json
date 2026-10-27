@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/new-wca-board-members",
+  "path": "docs/wca-post-translations/entries/new-wca-board-members.json",
+  "sourceHash": "b5e863f0c9787744ae1ed5defd47828f4faf477c6f28ddd6ce2dbac9d7b1d18a",
+  "inputTranslationHash": "4f68d0c9b9048eaccf6fc4be11c0bf82d718c035e4c56aac19a8b922a63cb140",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:44.904Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

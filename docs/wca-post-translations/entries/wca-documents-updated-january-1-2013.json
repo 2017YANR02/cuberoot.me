@@ -12,14 +12,31 @@
     "sourceId": 2354
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "22de0d66230d916536e4efa004f881af38019e7ffe0a013113508bbe953f9941",
     "language": "zh-Hans",
     "title": "WCA 文件更新：2013 年 1 月 1 日生效",
     "content": "大家好：\n\n世界魔方协会已发布新版文件，自 2013 年 1 月 1 日起生效。全部文件可通过 [https://www.worldcubeassociation.org/regulations/](https://www.worldcubeassociation.org/regulations/) 查看。\n\nWCA 竞赛规则即日起生效，适用于所有经世界魔方协会认可的官方比赛。WCA 指南作为规则的补充。规则本身应视为完整文件，而指南提供额外的澄清和解释。\n\nWCA 也新增了一款可用于官方比赛的打乱程序 TNoodle，同样可从上述链接下载。\n\n特别感谢：\n\n- WCA 董事会（Tyson Mao、Ron van Bruchem、Tim Reynolds、Sébastien Auroux）、独立顾问委员会（Anders Larsson）、众多 WCA 代表以及社区成员提供的建设性反馈和审阅意见。\n- TNoodle 官方 WCA 打乱程序项目的主要负责人和首席架构师 Jeremy Fleischman。\n- 最后，感谢整个 WRC 委员会（Clément Gallet、Lucas Garron、Sébastien Auroux、Shelley Chang 和我本人）的持续努力。每位 WRC 成员都花了大量时间收集资料、审阅代表和社区反馈，并讨论规则的利弊。\n\n新年快乐！",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.932Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "2affcf50a10535b435053ffda76b147672ba50337257d90d054cbcd2f2ae1ef9"
+  "translationHash": "26ec898e8db92088b74498e2f4049ecbbcca39f54c917d59b955d41cbb9ee479",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:07:08.715Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "22de0d66230d916536e4efa004f881af38019e7ffe0a013113508bbe953f9941",
+    "reviewedTranslationHash": "26ec898e8db92088b74498e2f4049ecbbcca39f54c917d59b955d41cbb9ee479",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wca-documents-updated-january-1-2013.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "2affcf50a10535b435053ffda76b147672ba50337257d90d054cbcd2f2ae1ef9"
+  }
 }

@@ -1,0 +1,19 @@
+{
+  "key": "disciplinary:/posts/integrity-committee-report-on-a-case-of-cheating-sep-2025",
+  "path": "docs/wca-log-translations/entries/disciplinary-integrity-committee-report-on-a-case-of-cheating-sep-2025.json",
+  "sourceHash": "4b2e09eadf615c68880831b7bbd61de22d9164ed8698e7358f36469060fb1de6",
+  "inputTranslationHash": "4803c855d72392d92b316cddbcd9286ac7d6b9daeea4d6a771d6694a1807a67e",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "复用已通过的旧版全文独立审校；人工阅读旧版与现版全部文字差异及对应英文段落，确认本轮之前的差异限于官方机构名称或 Guidelines 的“指南”译法；另复核本轮项目名命中语境。",
+  "verdict": "pass",
+  "notes": [],
+  "changes": [],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/recheck-1.json",
+    "reviewedTranslationHash": "f3c4dc0cdade9b859b11ce87469b11065bd4cba35f279d99ca976301d6f5bdc7",
+    "verdict": "pass",
+    "archivedVersion": "docs/wca-log-translations/versions/disciplinary-integrity-committee-report-on-a-case-of-cheating-sep-2025/f3c4dc0cdade9b859b11ce87469b11065bd4cba35f279d99ca976301d6f5bdc7-v2.json"
+  },
+  "sourceUncertainty": false
+}

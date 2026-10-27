@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/annual-members-meeting-october-2024",
+  "source": {
+    "key": "posts:/posts/annual-members-meeting-october-2024",
+    "kind": "posts",
+    "title": "Annual Members Meeting (October 2024)",
+    "date": "2024-10-02T22:52:18.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/annual-members-meeting-october-2024",
+    "content": "Dear WCA Community,\n\nThe Board is providing notice as required by Bylaw 2.12 of the Annual Meeting of WCA members which will be held on October 19 at 03:00 UTC. Members will be able to tune into this meeting via a livestream hosted on the WCA’s [Twitch](https://www.twitch.tv/worldcubeassociation). In this [folder](https://drive.google.com/drive/folders/1Fl3KWIzM2JgzCpahQZhvH1ON2bz-xe1L), you will find the information packet related to the annual meeting which contains all relevant documentation which will be discussed at the meeting.\n\nWe look forward to your participation in the upcoming annual meeting.",
+    "hash": "3897d838c3e933ea83ab679533b23a89e1e83d9c59dc35933e49f1ebeaa618e2",
+    "format": "markdown",
+    "sourceId": 14169
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "3897d838c3e933ea83ab679533b23a89e1e83d9c59dc35933e49f1ebeaa618e2",
+    "language": "zh-Hans",
+    "title": "WCA 年度会员大会（2024 年 10 月）",
+    "content": "各位 WCA 社区成员：\n\n董事会根据章程第 2.12 条，现通知大家：WCA 年度会员大会将于 10 月 19 日 03:00 UTC 举行。会员可通过 WCA 的 [Twitch](https://www.twitch.tv/worldcubeassociation) 直播观看。本次年会的资料包位于[此文件夹](https://drive.google.com/drive/folders/1Fl3KWIzM2JgzCpahQZhvH1ON2bz-xe1L)，其中包含会议将讨论的全部相关文件。\n\n期待大家参加本次年度会员大会。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:45:43.540Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "1d452f1d5edfd6cd0feb3a1e571c1fb34355c7edf8dda4d12bedfba8236164e0"
+}

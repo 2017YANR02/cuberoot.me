@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/wca-regulations-april-2026-misscramble-changes",
+  "path": "docs/wca-post-translations/entries/wca-regulations-april-2026-misscramble-changes.json",
+  "sourceHash": "235bf8005affaf2853673ed0e2b62c459369b985d2fd4f4c9e89a4526e5dc1f3",
+  "inputTranslationHash": "efd58d878fdb4d60ff3a7a5738386953af8ca4136eb94bdabcb39938373a3d68",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:09:31.431Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [
+    "已核对完整正文、规则编号、日期、条件及项目术语。"
+  ],
+  "changes": []
+}

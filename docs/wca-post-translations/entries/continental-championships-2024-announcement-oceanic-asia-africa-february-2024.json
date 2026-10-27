@@ -12,14 +12,33 @@
     "sourceId": 14148
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "3bc6eac689861f6d49105b9f6c7cc10560956602a674be1aff0dbcab9a7f19fb",
     "language": "zh-Hans",
-    "title": "2024 年洲际锦标赛举办地公告：大洋洲、亚洲与非洲（2024 年 2 月）",
+    "title": "2024 年大洲锦标赛举办地公告：大洋洲、亚洲与非洲（2024 年 2 月）",
     "content": "我们很高兴宣布，**澳大利亚西澳州珀斯**将举办 2024 年 WCA 大洋洲锦标赛，**马来西亚吉隆坡**将举办 2024 年 WCA 亚洲锦标赛，**南非开普敦**将举办 2024 年 WCA 非洲锦标赛。\n\n同时感谢哈萨克斯坦阿斯塔纳申办 2024 年 WCA 亚洲锦标赛。\n\n申请材料可分别通过以下链接查看：[WCA 亚洲锦标赛](https://drive.google.com/drive/folders/1FTyMePmF7ctIaszNNVzgpT4GyaCR918M)、[WCA 大洋洲锦标赛](https://drive.google.com/drive/folders/1xyyiKYoDox5Uw5uoO5W9j-4WwsYjznSD)和 [WCA 非洲锦标赛](https://drive.google.com/drive/folders/1UF2bjyzVKsO4uyk1DyH8QjEwYyLxf4a8)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.549Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "bc80c556ef171b4cda1a2908f6cdca20d955c5232b5426404725f652454fa859"
+  "translationHash": "3f346ee977422219f7820e6c8bf95123ee96b92579d7f6dfee2b345419cacd6a",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:17:37.013Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "3bc6eac689861f6d49105b9f6c7cc10560956602a674be1aff0dbcab9a7f19fb",
+    "reviewedTranslationHash": "3f346ee977422219f7820e6c8bf95123ee96b92579d7f6dfee2b345419cacd6a",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/continental-championships-2024-announcement-oceanic-asia-africa-february-2024.json",
+    "sourceConcern": false,
+    "notes": [
+      "全文已对照，赛事地点、申办日期及表格、未决定/未收到申请的限定保持一致。"
+    ],
+    "inputTranslationHash": "bc80c556ef171b4cda1a2908f6cdca20d955c5232b5426404725f652454fa859"
+  }
 }

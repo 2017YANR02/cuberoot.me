@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applications-wca-executive-officer-october-2025",
+  "path": "docs/wca-post-translations/entries/call-for-applications-wca-executive-officer-october-2025.json",
+  "sourceHash": "268248f3aa18ad6daa029329aec7bbdea99c6886cb7812b157517a8628d8294e",
+  "inputTranslationHash": "97e59d2cac995ac8c01e4e40a47e38827991805b093632447f11f1f8ee83f668",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:12:00.206Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照正文及标题；申请条件、薪酬福利和地域、岗位职责、2024/2025 任命程序及 2019 草案条目逐项核对。"
+  ],
+  "changes": []
+}

@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/wca-regulations-june-2022-now-in-effect",
+  "path": "docs/wca-post-translations/entries/wca-regulations-june-2022-now-in-effect.json",
+  "sourceHash": "77f558fb7bb764c996e4d57655aa32d686952e784e094ec8601790d95e8ee066",
+  "inputTranslationHash": "493de610a795627d0d0b60e4dc5f32977f57dde8e7a03b988cc737a96fb38607",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:10:32.386Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

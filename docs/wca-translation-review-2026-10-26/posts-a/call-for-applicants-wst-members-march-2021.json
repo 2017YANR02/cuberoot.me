@@ -1,0 +1,17 @@
+{
+  "key": "posts:/posts/call-for-applicants-wst-members-march-2021",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wst-members-march-2021.json",
+  "sourceHash": "d50cea03c61dcbcb9cf60b94bd91831d2f7e680abbff54c1961eacc6c635898b",
+  "inputTranslationHash": "29d3d4ccadcd3321fb5ab93de39d999a7c6c40be9b41949e2af8644b2fda6bae",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:11:22.964Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "correction_required",
+  "notes": [],
+  "changes": [
+    "until March 31 包含截止当天；避免“日之前”被理解为提前一天结束。",
+    "独立复核补正：PDF 必须，内容应包含，区分 must/should。"
+  ],
+  "content": "**WCA 软件组**正在招募新成员！WST 负责开发、扩展和维护各类软件，帮助 WCA 应对社区的持续增长，是组织的重要组成部分。\n\n这些软件包括：\n\n* 你可能经常访问的 WCA 网站。\n* TNoodle：所有代表在比赛中使用的打乱库及其前端。\n* WCA Live：比赛录入成绩及查看实时成绩的主要平台。\n\nWST 的全部项目均为开源项目，托管在 [WCA 的 GitHub](https://github.com/thewca/) 上。\n\n我们欢迎所有人申请，同时也在寻找以下特定岗位的人选。如果你符合条件，请在申请中说明：\n\n* 项目经理：管理 GitHub 上的任务、问题及优先级，协调 WCA 各团队和委员会的软件需求，并及时向他们通报进展。\n* 前端开发：开发 WCA 网站面向用户的部分，包括正在进行的部分页面 React 迁移工作，改善用户体验与满意度。\n* 开发运维：负责部署方案，处理相关问题并改进现有系统。我们的平台运行于 AWS。\n<!-- break -->\nWST 的大多数项目以 Web 为主，所用技术如下：\n\n* 网站基于 Ruby on Rails 框架，使用 SQL 数据库，部分前端组件用 React 编写。我们希望将更多常用部分迁移到 React，推进网站改版。\n  * 这是目前最缺人手的项目。随着 WCA 各团队和委员会不断发展，我们持续收到新的功能需求。\n  * 网站相关项目的概况可在[此处](https://github.com/thewca/worldcubeassociation.org/projects)查看。\n* WCA Live 前端使用 React，后端 GraphQL API 使用 Elixir，参见[项目概览文档](https://github.com/thewca/wca-live/blob/master/README.md)。\n* TNoodle 分为 Java 编写的打乱库 tnoodle-lib，以及包含 Kotlin 后端和 React 前端的服务器 tnoodle。\n\n你可以查看标有“[good first issue](https://github.com/thewca/worldcubeassociation.org/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22)”的问题，了解我们对首次参与贡献者的期望。请注意，你不需要已经掌握上述某项或全部技术。申请这一岗位，只需具备软件基础知识，并愿意认真学习。\n\n申请从即日起开放，请最迟于 **2021 年 3 月 31 日**将材料发送至 WCA 董事会（[board@worldcubeassociation.org](mailto:board@worldcubeassociation.org)）。\n\n申请材料须为 PDF 格式，并应包含：\n\n* 姓名。\n* 简短的个人介绍。\n* 参与 WCA 事务的经历。\n* 技术背景和经验概述。\n* 作为 WCA 软件组成员的工作目标。\n\n感谢大家的申请与支持！",
+  "title": "WCA 软件组招募成员（2021 年 3 月）"
+}

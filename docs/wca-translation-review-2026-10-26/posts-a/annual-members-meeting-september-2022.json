@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/annual-members-meeting-september-2022",
+  "path": "docs/wca-post-translations/entries/annual-members-meeting-september-2022.json",
+  "sourceHash": "f0ce3f870ee7e8c801f7be25bb39ce76d2b0cdf03656eb342e329befabfdb6e7",
+  "inputTranslationHash": "bd196bf690b4ad74320866c6bef49d0f68eaf1aa4d8f5fbe811a17aa31113902",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:05:11.623Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+  ],
+  "changes": []
+}

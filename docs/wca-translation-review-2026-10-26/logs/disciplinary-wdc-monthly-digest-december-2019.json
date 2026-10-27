@@ -1,0 +1,19 @@
+{
+  "key": "disciplinary:/posts/wdc-monthly-digest-december-2019",
+  "path": "docs/wca-log-translations/entries/disciplinary-wdc-monthly-digest-december-2019.json",
+  "sourceHash": "893d648851b41c26c3d3ce980e25dfd002cb8c7df348ccfb1382697c5ad903cf",
+  "inputTranslationHash": "a9521d93dd4c89f1a4ff63b75119fe20b778882068b438cd17de8e03aadb71ef",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "复用已通过的旧版全文独立审校；人工阅读旧版与现版全部文字差异及对应英文段落，确认本轮之前的差异限于官方机构名称或 Guidelines 的“指南”译法；另复核本轮项目名命中语境。",
+  "verdict": "pass",
+  "notes": [],
+  "changes": [],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/report-2.json",
+    "reviewedTranslationHash": "ca02625cbc6632a2bef9af89ac0d58d23af691104e37c1d94a3539029425541c",
+    "verdict": "pass",
+    "archivedVersion": "docs/wca-log-translations/versions/disciplinary-wdc-monthly-digest-december-2019/ca02625cbc6632a2bef9af89ac0d58d23af691104e37c1d94a3539029425541c-v1.json"
+  },
+  "sourceUncertainty": false
+}

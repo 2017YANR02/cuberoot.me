@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/wca-regulations-2010-are-final",
+  "path": "docs/wca-post-translations/entries/wca-regulations-2010-are-final.json",
+  "sourceHash": "ed211e4491198818f3a08013247ccc21f81155feceb227a34d1c9b2b586082a9",
+  "inputTranslationHash": "5937c1604efe84ec2abf3169bae6a57f5804a9a137cb233056263ae43d13c347",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:07:15.679Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

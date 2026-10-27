@@ -1,13 +1,34 @@
 /** Explicit, private real-model benchmark. Never mounted as an HTTP endpoint. */
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 import { createSiteAssistantRoutes, requireAssistantUser } from '../src/routes/site_assistant.js';
 import { answerSiteQuestion, assistantConfig } from '../src/utils/site_assistant.js';
 import { getUserById } from '../src/utils/account.js';
 import { signSession } from '../src/utils/session.js';
-import { knowledgeIndexSchema } from '../src/utils/site_assistant_knowledge.js';
+import { knowledgeIndexSchema, knowledgeGeneration } from '../src/utils/site_assistant_knowledge.js';
+import { parseEvaluationCases, evaluateStructure, type EvaluationCase } from './assistant-evaluation.js';
+import { startAssistantMonitor } from '../src/utils/site_assistant_monitor.js';
 import { SITE_ASSISTANT_DAILY_LIMIT, SITE_ASSISTANT_QUESTION_MAX_LENGTH, type AssistantMessage, type AssistantThinkingMode } from '@cuberoot/shared/site-assistant';
 
 export interface BenchmarkCase { id:string; category:string; question:string; expected:string; statId?:string; lang?:'zh'|'en'; history?:AssistantMessage[]; thinking?:AssistantThinkingMode; timeZone?:string }
+const fingerprint = (value: string | Buffer) => createHash('sha256').update(value).digest('hex');
+
+/** Controlled real-model runs use one frozen bundle. Unbundled tsx runs remain
+ * usable for diagnostics but cannot claim complete code identity. No .env reads. */
+export function benchmarkCodeFingerprint() {
+  const moduleFile = fileURLToPath(import.meta.url);
+  const bundled = /\.[cm]?js$/.test(moduleFile) && moduleFile === path.resolve(process.argv[1] ?? '');
+  return { codeFingerprint: bundled ? fingerprint(readFileSync(moduleFile)) : null,
+    codeScope: bundled ? 'executed-bundle' : 'unbundled-unverified' };
+}
+export function selectEvaluationCases(cases: EvaluationCase[], split = 'development', ids?: string) {
+  if (!['development', 'holdout'].includes(split)) throw new Error('Select development or holdout explicitly');
+  const selected = cases.filter(c => c.split === split && (!ids || ids.split(',').includes(c.id)));
+  if (!selected.length || (ids && new Set(ids.split(',')).size !== selected.length)) throw new Error('Unknown, duplicate or wrong-split case IDs');
+  return selected;
+}
 export function parseBenchmarkQuestions(markdown:string): BenchmarkCase[] {
   return markdown.split('\n').filter(line=>/^\| [RDS]\d+ \|/.test(line)).map(line=>{
     const [id,category,question,expected,statId,lang]=line.split('|').slice(1,-1).map(cell=>cell.trim());
@@ -16,7 +37,8 @@ export function parseBenchmarkQuestions(markdown:string): BenchmarkCase[] {
   });
 }
 
-export async function runAssistantBenchmark(cases:BenchmarkCase[], accountId:number, expectedWcaId:string, publicIndexPath?:string) {
+export async function runAssistantBenchmark(cases:BenchmarkCase[], accountId:number, expectedWcaId:string, publicIndexPath?:string, variant: 'A'|'B'|'C' = 'A') {
+  if ((variant === 'C') !== (process.env.SITE_ASSISTANT_RERANK_ENABLED === '1')) throw new Error('Use a separate process per variant: C requires rerank=1; A/B require rerank disabled');
   if(cases.length<1 || cases.length>100 || new Set(cases.map(c=>c.id)).size!==cases.length) throw new Error('Expected 1–100 unique cases');
   const config = assistantConfig();
   const publicIndex=publicIndexPath ? JSON.parse(readFileSync(publicIndexPath,'utf8')) : undefined;
@@ -38,8 +60,19 @@ export async function runAssistantBenchmark(cases:BenchmarkCase[], accountId:num
     writeFileSync(ledger,JSON.stringify({day,questions:count+1}),{mode:0o600});
     return {allowed:true,retryAfter:86400};
   };
-  console.log(JSON.stringify({benchmarkRun:true,started:new Date().toISOString(),cases:cases.length,model:config.model,providerOrigin:new URL(config.baseUrl).origin,budget:'isolated-800-per-Beijing-day',productionDailyLimit:SITE_ASSISTANT_DAILY_LIMIT,surface:'in-process real API handler; real account lookup; real configured model; real public data; no browser/network ingress',requestCache:'fresh per question',providerCache:'uncontrolled'}));
+  console.log(JSON.stringify({benchmarkRun:true,started:new Date().toISOString(),cases:cases.length,model:config.model,providerOrigin:new URL(config.baseUrl).origin,corpusGeneration:publicIndex?knowledgeGeneration(publicIndex):null,
+    ...benchmarkCodeFingerprint(), casesFingerprint:fingerprint(JSON.stringify(cases)),
+    configurationFingerprint:fingerprint(JSON.stringify({model:config.model,baseUrl:config.baseUrl,node:process.version,
+      // Whitelist non-secret settings; rerank enabled is the A/C experiment variable.
+      settings:Object.fromEntries(['SITE_ASSISTANT_EMBEDDING_MODEL','SITE_ASSISTANT_EMBEDDING_BASE_URL',
+        'SITE_ASSISTANT_KNOWLEDGE_ENABLED','SITE_ASSISTANT_KNOWLEDGE_DB_NAME','SITE_ASSISTANT_RERANK_BASE_URL',
+        'SITE_ASSISTANT_WEB_ENABLED','SITE_ASSISTANT_WEB_MODEL','SITE_ASSISTANT_WEB_BASE_URL']
+        .map(name=>[name,process.env[name] ?? null])),
+      configuredKeys:['SITE_ASSISTANT_API_KEY','SITE_ASSISTANT_EMBEDDING_API_KEY','SITE_ASSISTANT_RERANK_API_KEY','SITE_ASSISTANT_WEB_API_KEY']
+        .map(name=>!!process.env[name])})),
+    rerank:process.env.SITE_ASSISTANT_RERANK_ENABLED==='1',budget:'isolated-800-per-Beijing-day',productionDailyLimit:SITE_ASSISTANT_DAILY_LIMIT,surface:'in-process real API handler; real account lookup; real configured model; real public data; no browser/network ingress',requestCache:'fresh per question',providerCache:'uncontrolled'}));
   for(const item of cases) {
+    let metrics: Record<string, any> = {};
     const modelSteps:unknown[]=[];
     const fetcher:typeof fetch=async(input,init)=>{
       if(publicIndex && String(input)==='https://next.cuberoot.me/assistant/pages.json') return Response.json(publicIndex);
@@ -57,12 +90,20 @@ export async function runAssistantBenchmark(cases:BenchmarkCase[], accountId:num
     // Fresh process-local rate window per case avoids measuring deliberate 429s.
     // The normal production burst/concurrency policy remains covered separately.
     const route=createSiteAssistantRoutes({config:assistantConfig,authenticate:requireAssistantUser,now:Date.now,reserve,
-      answer:(q,l,c,s,_f,h,v,emit,timeZone,images,thinkingMode)=>answerSiteQuestion(q,l,c,s,fetcher,h,v,emit,timeZone,images,thinkingMode)});
+      // Capture the normal telemetry in memory, never write diagnostics to production monitoring.
+      monitor:input=>startAssistantMonitor(input,async <T>(statement:string,params:unknown[] = [])=>{
+        if(statement.startsWith('UPDATE')) metrics=params[7] as Record<string,any>;
+        return [] as T[];
+      }),
+      answer:(q,l,c,s,_f,h,v,emit,timeZone,images,thinkingMode)=>variant==='B'
+        ? answerSiteQuestion(q,l,c,s,fetcher,h,v,emit,timeZone,images,thinkingMode,{forceKnowledge:true})
+        : answerSiteQuestion(q,l,c,s,fetcher,h,v,emit,timeZone,images,thinkingMode)});
     const history=item.history ?? (item.id==='D08'?[{role:'user',content:'我想看 2009ZEMD01 的三阶成绩'},{role:'assistant',content:'我们正在查看 2009ZEMD01 的三阶成绩。'}]:[]);
     const started=performance.now();
     const response=await route.request('/site-assistant',{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({question:item.question,lang:item.lang ?? 'zh',history,timeZone:item.timeZone ?? 'America/Los_Angeles',thinking:item.thinking ?? 'auto'})});
     const result=await response.json();
-    console.log(JSON.stringify({benchmark:true,id:item.id,question:item.question,statId:item.statId,thinking:item.thinking ?? 'auto',timeZone:item.timeZone ?? 'America/Los_Angeles',historyCount:history.length,durationMs:Math.round(performance.now()-started),status:response.status,result,modelSteps,rssMb:Math.round(process.memoryUsage().rss/1048576)}));
+    const evaluation='toolPolicy' in item ? evaluateStructure(item as EvaluationCase,response.status,result,Object.keys(metrics.tools ?? {})) : undefined;
+    console.log(JSON.stringify({benchmark:true,variant,id:item.id,question:item.question,statId:item.statId,thinking:item.thinking ?? 'auto',timeZone:item.timeZone ?? 'America/Los_Angeles',historyCount:history.length,durationMs:Math.round(performance.now()-started),status:response.status,result,modelSteps,metrics,evaluation,rssMb:Math.round(process.memoryUsage().rss/1048576)}));
     if(response.status===429) break;
   }
   console.log(JSON.stringify({benchmarkEnd:true,peakRssMb:Math.round(process.resourceUsage().maxRSS/1024)}));
@@ -73,6 +114,10 @@ if(process.argv.includes('--run')) {
   const value=(name:string)=>process.argv.find(arg=>arg.startsWith(`--${name}=`))?.slice(name.length+3);
   const file=value('questions'), accountId=Number(value('account-id')), wcaId=value('wca-id');
   if(!file || !Number.isSafeInteger(accountId) || accountId<1 || !wcaId || !/^\d{4}[A-Z]{4}\d{2}$/.test(wcaId)) throw new Error('Required: --run --questions=path.md --account-id=N --wca-id=YYYYXXXXNN');
-  await runAssistantBenchmark(parseBenchmarkQuestions(readFileSync(file,'utf8')),accountId,wcaId,value('content-index'));
+  const input=readFileSync(file,'utf8');
+  const cases=file.endsWith('.json') ? selectEvaluationCases(parseEvaluationCases(JSON.parse(input)),value('split'),value('ids')) : parseBenchmarkQuestions(input);
+  const variant=value('variant') ?? 'A';
+  if(!['A','B','C'].includes(variant)) throw new Error('Unknown experiment variant');
+  await runAssistantBenchmark(cases,accountId,wcaId,value('content-index'),variant as 'A'|'B'|'C');
   process.exit(0);
 }

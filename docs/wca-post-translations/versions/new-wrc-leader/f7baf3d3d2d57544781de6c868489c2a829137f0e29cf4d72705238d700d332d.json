@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/new-wrc-leader",
+  "source": {
+    "key": "posts:/posts/new-wrc-leader",
+    "kind": "posts",
+    "title": "New WRC Leader",
+    "date": "2018-11-29T02:09:07.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/new-wrc-leader",
+    "content": "We are happy to announce that we have a new Committee Leader. Lucas Garron will replace Laura Ohrndorf as the Leader of the WCA Regulations Committee (WRC). Lucas was already working as a member of the WRC.\n\nLucas was selected by the WCA Board and approved in a voting among the current Committee/Team Leaders and Senior Delegates, following Section 4 of our Motion [10.2017.0](https://www.worldcubeassociation.org/documents/motions/10.2017.0%20-%20Committees%20and%20Teams.pdf) about WCA Committees and Teams.\n\nWe wish Lucas the best of luck in fulfilling his new duty!\n\nThe new Leader will be promoted immediately. Lucas Garron was the only applicant and his candidacy document can be found [here](https://drive.google.com/open?id=1Hglw0sNprA--aqwGH_OyIFyhv6nMeGw8) if you are interested in viewing it.",
+    "hash": "9cf3cdbced49cf4ac6db13e91a3686aa18be9a3da223b271a3ee7cbd7bcc45eb",
+    "format": "markdown",
+    "sourceId": 10778
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "9cf3cdbced49cf4ac6db13e91a3686aa18be9a3da223b271a3ee7cbd7bcc45eb",
+    "language": "zh-Hans",
+    "title": "WCA 规则委员会新任负责人",
+    "content": "我们很高兴地宣布，Lucas Garron 将接替 Laura Ohrndorf，担任 WCA 规则委员会（WRC）负责人。Lucas 此前已是 WRC 成员。\n\n依照 WCA 委员会与团队动议 [10.2017.0](https://www.worldcubeassociation.org/documents/motions/10.2017.0%20-%20Committees%20and%20Teams.pdf)第 4 节，WCA 董事会选定 Lucas，并经现任委员会、团队负责人和高级代表投票批准。\n\n祝 Lucas 在新的岗位上工作顺利！\n\n新负责人将立即上任。Lucas Garron 是本次职位的唯一申请人，有兴趣的成员可在[此处](https://drive.google.com/open?id=1Hglw0sNprA--aqwGH_OyIFyhv6nMeGw8)查看他的申请材料。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.157Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "f7baf3d3d2d57544781de6c868489c2a829137f0e29cf4d72705238d700d332d"
+}

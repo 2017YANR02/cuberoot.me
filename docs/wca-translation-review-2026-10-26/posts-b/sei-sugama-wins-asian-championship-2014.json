@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/sei-sugama-wins-asian-championship-2014",
+  "path": "docs/wca-post-translations/entries/sei-sugama-wins-asian-championship-2014.json",
+  "sourceHash": "fc5d6a53df03b0487ddf62e7e08b04266c4ab9657ad2e8ae125a74a28e0b274d",
+  "inputTranslationHash": "44e78467784e29b67bf34be865cbf5d0fca48320b92a337c8e2bd0bb58447dd5",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:15.858Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

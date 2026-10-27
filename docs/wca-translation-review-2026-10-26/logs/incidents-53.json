@@ -1,0 +1,30 @@
+{
+  "key": "incidents:53",
+  "path": "docs/wca-log-translations/entries/incidents-53.json",
+  "sourceHash": "cc1f586a301614c5dfa289fa3484e073487634b2a600941ce4c587259d5cd257",
+  "inputTranslationHash": "1ab9b35f27e38dfcfe27de55481a12cc20169de430489f96740a5993cb841afd",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "本轮完整阅读英中正文及既有审校疑点，保留原文矛盾或含混，不擅自纠正历史事实。官方现行来源已重新读取，相关正文与保存版本一致。 本轮修改仅为有出处的项目/机构称谓。",
+  "verdict": "correction_required",
+  "notes": [
+    "现有 review.notes 所指冲突成立：原文由三轮改为两轮、以前轮定排名，却写 removing all second attempts。译文以“原文接着称”忠实标注保留；到底应删除何轮或哪些尝试仍待源方确认。",
+    "2026-10-26 重新读取官方来源，疑点仍存在；这是源文事实/措辞的保留结论，不是遗漏翻译或已确认的译文错误。"
+  ],
+  "changes": [
+    {
+      "reason": "WCA 官方 events->skewb 译为“斜转”，正文与标题不再保留未翻译的项目名称；已逐处对照全文，链接不受影响。",
+      "before": "Skewb",
+      "after": "斜转",
+      "sourceUrl": "https://translate.worldcubeassociation.org/translate/wca/locales/zh_Hans/?checksum=6eab8ca347f70d1d"
+    }
+  ],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/report-5.json",
+    "reviewedTranslationHash": "1ab9b35f27e38dfcfe27de55481a12cc20169de430489f96740a5993cb841afd",
+    "verdict": "pending_source_verification"
+  },
+  "sourceUncertainty": true,
+  "title": "斜转一轮中出现多个错误打乱",
+  "content": "因组织失误，斜转决赛中发现多个错误打乱。一名打乱员不熟悉斜转记号，意外将部分魔方打乱错误。\n\n分析视频后，WRC 认定错误打乱的数量对决赛产生了显著影响，同意将该项目**由三轮改为两轮**，理由是：\n1. 超过一半的尝试使用了错误打乱；\n2. 因组织错误而任意取消部分选手成绩、保留其他人成绩，处理不一致；\n3. 错误打乱与原定打乱明显不同。\n\n原文接着称，此决定意味着追溯删除所有“第二次尝试”。因此，最终排名以前一轮成绩确定。"
+}

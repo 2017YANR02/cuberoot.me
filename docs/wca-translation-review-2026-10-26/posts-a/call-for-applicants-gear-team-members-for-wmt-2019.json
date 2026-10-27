@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-gear-team-members-for-wmt-2019",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-gear-team-members-for-wmt-2019.json",
+  "sourceHash": "fb86c786e173f5c0c49ddc1c756d6c51ad3d6f4659d8d07369b47f28fa30bef3",
+  "inputTranslationHash": "65c8b58e91fe063a5fafe08e806faa0ffd8bd11341c61738a87ce7982fd2b5dd",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:06:36.461Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇全文对照：含招募资格、时限、工作量、程序、历史机构；比赛报告核对人物、项目、成绩与纪录类别。"
+  ],
+  "changes": []
+}

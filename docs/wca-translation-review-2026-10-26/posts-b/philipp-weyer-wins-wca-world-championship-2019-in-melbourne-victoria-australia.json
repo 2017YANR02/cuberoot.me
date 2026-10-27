@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/philipp-weyer-wins-wca-world-championship-2019-in-melbourne-victoria-australia",
+  "path": "docs/wca-post-translations/entries/philipp-weyer-wins-wca-world-championship-2019-in-melbourne-victoria-australia.json",
+  "sourceHash": "2b01632ef1c8f9e2e8d6c742cb39982b144d34669079483c04c8a4c391fa067e",
+  "inputTranslationHash": "3ec232d34fa5e59720031d6f17a2399ea988bf9c4c92f48b38f03efb9a68a999",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:55.471Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

@@ -12,14 +12,31 @@
     "sourceId": 8000
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "ea3f137145713c4a3b94990fd712421ec88b7bb66fe319d039a6b3a2c323c636",
     "language": "zh-Hans",
     "title": "TNoodle 0.12.0 发布",
     "content": "现在可从 <https://www.worldcubeassociation.org/regulations/scrambles/> 下载 TNoodle-WCA-0.12.0。\n\n相较 TNoodle 0.11.5，本次更新包括：\n\n- TNoodle 现会额外生成可裁切的最少步打乱纸条，以及黑白答题纸，分别保存为独立文件。这样可以减少较贵的彩色打印。\n- 支持多组、多次尝试的三阶多盲。此前，WCA 代表需要生成多个组，才能得到多次尝试的打乱。\n- 修复了 TNoodle 用户界面的一个问题。\n\n请记住，官方比赛必须使用官方打乱程序的当前有效版本，下载地址始终为：\n<https://www.worldcubeassociation.org/regulations/scrambles/>",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.931Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "11ff36f386d43e6cfccafbea130392037b17e0ad6fc1d174b14e1280c391a9db"
+  "translationHash": "bc830b529fb9fc1262aca0f46a42082c65855c97043ff7b210ede695843a6f56",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:48.601Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "ea3f137145713c4a3b94990fd712421ec88b7bb66fe319d039a6b3a2c323c636",
+    "reviewedTranslationHash": "bc830b529fb9fc1262aca0f46a42082c65855c97043ff7b210ede695843a6f56",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/tnoodle-0-12-0.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "11ff36f386d43e6cfccafbea130392037b17e0ad6fc1d174b14e1280c391a9db"
+  }
 }

@@ -12,14 +12,31 @@
     "sourceId": 14124
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "17bf2e81f2395d713e3d74b219b05d0efb0ea50746b38dd7e588824bf77366b1",
     "language": "zh-Hans",
     "title": "论坛话题精选（2023 年 10 月）",
     "content": "以下是 WCA 论坛在 2023 年第三季度的一些值得关注的话题。\n\n[**将 WCA 注册为体育组织**](https://forum.worldcubeassociation.org/t/registration-of-the-wca-as-a-sports-organization/37190)\nWCA 目前正努力成为获认可的体育组织。这个帖子讨论了社区就“什么算体育运动”以及“如何让速拧成为正式认可的体育运动”提出的疑问。\n\n[**Timebase 原型展示**](https://forum.worldcubeassociation.org/t/timebase-the-future-of-competitions/41504)\n两位美国魔友提出了一种新方案，可以不再使用传统的成绩单和签名。他们已在自己组织的几场比赛中测试 Timebase。这是一个很好的想法，也正在逐步落地。不过，根据现行规则，它目前还不能作为主要的成绩记录方式。\n\n[**大型锦标赛使用统一打乱**](https://forum.worldcubeassociation.org/t/ensuring-fairness-and-consistency-a-call-for-uniform-scramble-sets-at-major-championships/39282)\n这一讨论始于 2023 年世界锦标赛结束后。提议要求大型比赛的决赛及倒数第二轮使用同一套打乱，以公平地决出优胜者。\n\n[**为首次参赛者安排试拧**](https://forum.worldcubeassociation.org/t/trial-rounds-for-new-competitors/40072)\n首次参赛者往往不熟悉 Speed Stacks 计时器的使用，因而需要由代表安排额外还原。这个提议讨论是否应要求首次参赛者在比赛位上先试拧一次相应项目。\n\n**Cube Talk 话题小结**\n推出 Cube Talk，是希望围绕大家最感兴趣的问题，让魔友们在论坛上聊起来。最近以下四个话题收到了不少精彩回答：\n\n* 你最喜欢哪个项目？\n* 你更喜欢传魔方、当裁判、打乱还是录入成绩？\n* 你最喜欢哪位 WCA 代表？\n* 你怎么看为首次参赛者预留比赛名额？\n\n我们希望继续这个系列，向社区提出更多问题。\n\n如有疑问、意见或反馈，欢迎发送邮件至 [advisory@worldcubeassociation.org](mailto:advisory@worldcubeassociation.org)。\n\n感谢大家参与论坛！",
     "notes": [],
     "translatedAt": "2026-10-22T08:42:40.588Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "06a09e43efa7d4f55ab17fdc775eac03382239329bf6c65418a52340f144a79d"
+  "translationHash": "70d336a0f7c6efc357138e2fcc638784e31e615fac461e4a521ef22d17e8f3a3",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:36.319Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "17bf2e81f2395d713e3d74b219b05d0efb0ea50746b38dd7e588824bf77366b1",
+    "reviewedTranslationHash": "70d336a0f7c6efc357138e2fcc638784e31e615fac461e4a521ef22d17e8f3a3",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/forum-digest-october-2023.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "06a09e43efa7d4f55ab17fdc775eac03382239329bf6c65418a52340f144a79d"
+  }
 }

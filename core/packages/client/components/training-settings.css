@@ -53,6 +53,38 @@
   align-self: stretch;
 }
 
+.settings-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgb(0 0 0 / 50%);
+}
+
+.settings-dialog {
+  width: min(100%, 420px);
+  outline: none;
+}
+
+.settings-dialog .settings-popover-panel.settings-dialog-panel {
+  position: relative;
+  inset: auto;
+  transform: none;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.settings-dialog-close {
+  align-self: flex-end;
+}
+
 .training-settings-more > summary {
   cursor: pointer;
   font-size: 0.85rem;

@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/incident-at-china-championship-2017-and-beijing-open-2017",
+  "source": {
+    "key": "posts:/posts/incident-at-china-championship-2017-and-beijing-open-2017",
+    "kind": "posts",
+    "title": "Incident at China Championship 2017 and Beijing Open 2017",
+    "date": "2017-12-12T11:03:29.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/incident-at-china-championship-2017-and-beijing-open-2017",
+    "content": "Dear WCA community,\n\nThe WRC was informed by several community members that the puzzles Kaijun Lin used for both his current world records in 4x4x4 Blindfolded and 5x5x5 Blindfolded had an overlay sticker. According to [Regulation 3l2](https://www.worldcubeassociation.org/regulations/#3l2), such puzzles are not allowed in blindfolded events.\n\nWe have investigated in this case and received a confirmation by the WCA Delegates of the competitions that they checked the puzzles and decided the logos are not distinguishable by feel. Accordingly, they did not grant extra attempts, which could be used to replace the affected results now. For these reasons, we have decided to keep the results.\n<!-- break -->\nAs a reaction to the recent incidents concerning overlay stickers used in blindfolded attempts and ongoing discussions about the allowance of certain types of logos, we have decided to forbid all logos for blindfolded events. Furthermore, by the addition of 3k2, all results for attempts done with illegal puzzles will be disqualified (DNF). These regulations will become effective on January 1st, 2018:\n\n*3k1) If a puzzle is found to be not permitted during a round, the competitor must submit a replacement.\n3k2) Penalty for attempts done with not permitted puzzles: disqualification of the attempt (DNF). Exception: If a puzzle is found to be not permitted during a round, earlier results may be replaced with an extra attempt, at the discretion of the WCA Delegate.*\n\nWe know that this is a sharp change, but we believe it is the right way to assure fair and equal conditions for competitors in Blindfolded events around the world.\n\nAdditionally, we want to remind all competitors that they are ultimately responsible for their puzzles. If you are unsure if a puzzle is allowed, please ask your WCA Delegate before submitting it.\n\nOn behalf of the WRC,\nLaura Ohrndorf",
+    "hash": "29c585788c0843373e5113b8cc3f2acdb331d86a21841e9367d8fb4f3c6ff52c",
+    "format": "markdown",
+    "sourceId": 8465
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "29c585788c0843373e5113b8cc3f2acdb331d86a21841e9367d8fb4f3c6ff52c",
+    "language": "zh-Hans",
+    "title": "2017 中国锦标赛及 2017 北京公开赛的器材事件",
+    "content": "亲爱的 WCA 社区成员：\n\n多位社区成员向 WCA 规则委员会（WRC）反映，林恺俊创造目前四盲和五盲世界纪录时所用的魔方，都带有覆盖贴纸。根据[规则 3l2](https://www.worldcubeassociation.org/regulations/#3l2)，这类魔方不允许用于盲拧项目。\n\n我们调查了此事。相关比赛的 WCA 代表确认，他们当时检查过魔方，并认定标志无法通过触感辨认。因此，他们没有安排额外还原，现在也就没有可用于替换受影响成绩的额外还原成绩。基于这些原因，我们决定保留成绩。\n\n针对近期盲拧中使用覆盖贴纸的事件，以及关于哪些标志应被允许的持续讨论，我们决定禁止在盲拧项目中使用任何标志。此外，新增规则 3k2 将规定，使用不合规魔方完成的还原均取消成绩，记为 DNF。以下规则将于 2018 年 1 月 1 日生效：\n\n*3k1）如果在一轮中发现魔方不符合规定，选手必须提交替代魔方。*\n\n*3k2）使用不符合规定的魔方进行还原，处罚为取消该次成绩（DNF）。例外：如果在一轮中发现魔方不符合规定，WCA 代表可酌情允许以额外还原替换此前的成绩。*\n\n我们知道这是一次较大的变化，但相信这样能够让世界各地的盲拧选手在公平、一致的条件下参赛。\n\n另外，也提醒所有选手：你最终须对自己的魔方负责。如果不确定某个魔方是否允许使用，请在提交前询问 WCA 代表。\n\nLaura Ohrndorf\n\n代表 WRC",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.168Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "cbd9e252935de05afb98a2b5bd7a41f43bb22d85af962c1f180b4bb8e13290f6"
+}

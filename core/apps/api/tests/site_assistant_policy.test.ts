@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { assistantReasoningPolicy } from '../src/utils/site_assistant_policy.js';
+import { assistantReasoningPolicy, assistantToolKey } from '../src/utils/site_assistant_policy.js';
 
 describe('assistant effort policy', () => {
+  it('does not rerun the same query for renamed headings or reordered object keys',()=>{
+    expect(assistantToolKey({tool:'analysis_query',title:'First',description:'Old',query:{from:{dataset:'results',as:'r'},limit:20}}))
+      .toBe(assistantToolKey({query:{limit:20,from:{as:'r',dataset:'results'}},description:'New',title:'Recheck',tool:'analysis_query'}));
+    expect(assistantToolKey({tool:'analysis_query',query:{limit:20}})).not.toBe(assistantToolKey({tool:'analysis_query',query:{limit:30}}));
+  });
   it('keeps ordinary answers and direct site lookups in auto mode fast', () => {
     for(const tools of [[], ['navigation'], ['pages'], ['find_person','person']]) {
       expect(assistantReasoningPolicy('auto',{tools,repair:false,review:false})).toEqual({thinking:false,effort:'high',maxTokens:4096});

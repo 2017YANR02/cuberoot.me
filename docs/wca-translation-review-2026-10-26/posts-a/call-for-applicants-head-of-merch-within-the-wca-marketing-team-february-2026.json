@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-head-of-merch-within-the-wca-marketing-team-february-2026",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-head-of-merch-within-the-wca-marketing-team-february-2026.json",
+  "sourceHash": "f63785c99a76cc38db6c99e11f24608c7fa6492aae261df55a8f86e48663d91b",
+  "inputTranslationHash": "15d9ffd6185d949610d6598f41bd9b722e22b2f1d0214c15c1e75c180d4582bd",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:06:36.461Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇全文对照：含招募资格、时限、工作量、程序、历史机构；比赛报告核对人物、项目、成绩与纪录类别。"
+  ],
+  "changes": []
+}

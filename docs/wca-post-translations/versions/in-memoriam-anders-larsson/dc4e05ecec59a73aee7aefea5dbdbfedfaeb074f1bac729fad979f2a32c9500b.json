@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/in-memoriam-anders-larsson",
+  "source": {
+    "key": "posts:/posts/in-memoriam-anders-larsson",
+    "kind": "posts",
+    "title": "In Memoriam: Anders Larsson",
+    "date": "2015-08-11T05:44:46.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/in-memoriam-anders-larsson",
+    "content": "Our dear friend Anders Larsson died in a tragic accident, falling from height in South Korea on August 6, 2015. He was only 51 years old.\n \n In our [In Memoriam: Anders Larsson](https://www.worldcubeassociation.org/forum/viewtopic.php?f=9&t=1982) we summarise the important role of Anders in the development of WCA.\n \n Anders will be missed by many of us. All the great moments we had with Anders will never be forgotten.",
+    "hash": "a0491d5faebf778093580f305db0cc5baf15661ead0a8ac954c8b8fce813d28c",
+    "format": "markdown",
+    "sourceId": 4734
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "a0491d5faebf778093580f305db0cc5baf15661ead0a8ac954c8b8fce813d28c",
+    "language": "zh-Hans",
+    "title": "悼念 Anders Larsson",
+    "content": "我们亲爱的朋友 Anders Larsson 于 2015 年 8 月 6 日在韩国意外坠落身亡，年仅 51 岁。\n\n在[《悼念 Anders Larsson》](https://www.worldcubeassociation.org/forum/viewtopic.php?f=9&t=1982)中，我们回顾了 Anders 在 WCA 发展过程中发挥的重要作用。\n\n我们中的许多人都会怀念 Anders。与他共度的美好时光，永远不会被遗忘。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:55:00.989Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "dc4e05ecec59a73aee7aefea5dbdbfedfaeb074f1bac729fad979f2a32c9500b"
+}

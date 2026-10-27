@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wst-members-july-2019",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wst-members-july-2019.json",
+  "sourceHash": "7b2aedd6c30e26830a5e47a490175d947b3eeb40686dae87c9cafa7d8cf43db6",
+  "inputTranslationHash": "d8b4018a8afc4d362348ddff65f9917aeaf5c966b3a004aaab1c7c196061ae96",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:11:22.963Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题及正文；核对软件技术专名、申请要求及申请期、历史 WAC 缩写和申诉流程、新旧任命程序。"
+  ],
+  "changes": []
+}

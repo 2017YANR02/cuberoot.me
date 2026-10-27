@@ -12,14 +12,31 @@
     "sourceId": 7623
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "b0fede61bbac9b7f422793463201ed3b998c47760ef4c0ce43d48cc56fc52197",
     "language": "zh-Hans",
     "title": "Max Park 在法国巴黎夺得 2017 年魔方世锦赛冠军",
-    "content": "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)以 6.85 秒的平均成绩夺得 [2017 年魔方世锦赛](https://www.worldcubeassociation.org/competitions/WC2017)冠军。[Seung Hyuk Nahm（남승혁）](https://www.worldcubeassociation.org/persons/2013NAHM01)以 7.02 秒获得亚军，[Lucas Etter](https://www.worldcubeassociation.org/persons/2011ETTE01)以 7.24 秒获得季军。\n\n**世界纪录：**Drew Brads：金字塔平均 2.04；Feliks Zemdegs：五阶单次 38.52、平均 46.24，六阶单次 1:20.03、平均 1:27.79，七阶单次 2:06.73、平均 2:15.07；Max Park：三阶单手平均 10.31。\n\n**非洲纪录：**Moez Boussarsar：金字塔平均 4.78。\n\n**亚洲纪录：**Seung Hyuk Nahm（남승혁）：五阶单次 46.36、平均 51.21、单次 45.54、平均 49.51；吴宇伦（Yulun Wu）：金字塔平均 2.48。\n\n**大洋洲纪录：**Jack Cai：三盲单次 23.44；Jayden McNeill：金字塔单次 2.10，Square-1 平均 10.36、单次 7.47、平均 10.07；Tom Nelson：五盲单次 5:43.86。\n\n**欧洲纪录：**Charlie Stark：Square-1 平均 9.07；Ciarán Beahan：六阶平均 1:45.57；Jules Desjardin：金字塔平均 2.32；Oscar Roth Andersen：五魔平均 45.07；Sebastian Weyer：五阶平均 50.88。\n\n**北美洲纪录：**Bill Wang：四阶单次 20.69、四盲单次 2:09.94；Max Park：五阶单次 45.38、平均 48.09、单次 42.63。",
+    "content": "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)以 6.85 秒的平均成绩夺得 [2017 年魔方世锦赛](https://www.worldcubeassociation.org/competitions/WC2017)冠军。[Seung Hyuk Nahm（남승혁）](https://www.worldcubeassociation.org/persons/2013NAHM01)以 7.02 秒获得亚军，[Lucas Etter](https://www.worldcubeassociation.org/persons/2011ETTE01)以 7.24 秒获得季军。\n\n**世界纪录：**Drew Brads：金字塔平均 2.04；Feliks Zemdegs：五阶单次 38.52、平均 46.24，六阶单次 1:20.03、平均 1:27.79，七阶单次 2:06.73、平均 2:15.07；Max Park：三阶单手平均 10.31。\n\n**非洲纪录：**Moez Boussarsar：金字塔平均 4.78。\n\n**亚洲纪录：**Seung Hyuk Nahm（남승혁）：五阶单次 46.36、平均 51.21、单次 45.54、平均 49.51；吴宇伦（Yulun Wu）：金字塔平均 2.48。\n\n**大洋洲纪录：**Jack Cai：三盲单次 23.44；Jayden McNeill：金字塔单次 2.10，Square-1 平均 10.36、单次 7.47、平均 10.07；Tom Nelson：五盲单次 5:43.86。\n\n**欧洲纪录：**Charlie Stark：Square-1 平均 9.07；Ciarán Beahan：六阶平均 1:45.57；Jules Desjardin：金字塔平均 2.32；Oscar Roth Andersen：五魔方平均 45.07；Sebastian Weyer：五阶平均 50.88。\n\n**北美洲纪录：**Bill Wang：四阶单次 20.69、四盲单次 2:09.94；Max Park：五阶单次 45.38、平均 48.09、单次 42.63。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.978Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "2b29a63bbd0983922106bcbae00acf467b56d386b31f7174e513ef38ddb18a87"
+  "translationHash": "50bdf2286aca05caa0337f76010f80e74c4862f397d046fcd99f3b88c7424161",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:22:51.360Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "b0fede61bbac9b7f422793463201ed3b998c47760ef4c0ce43d48cc56fc52197",
+    "reviewedTranslationHash": "50bdf2286aca05caa0337f76010f80e74c4862f397d046fcd99f3b88c7424161",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/max-park-wins-world-rubik-s-cube-championship-2017-in-paris-france.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "2b29a63bbd0983922106bcbae00acf467b56d386b31f7174e513ef38ddb18a87"
+  }
 }

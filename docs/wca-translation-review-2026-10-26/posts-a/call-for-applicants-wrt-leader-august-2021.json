@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wrt-leader-august-2021",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wrt-leader-august-2021.json",
+  "sourceHash": "7f82035d910668dc7d058ffbb37e18121d7a428b3c0fa91475807b41ca77cce9",
+  "inputTranslationHash": "cedb611382b81b085a594de91aa48643a86a83c7a126db962e1e818ed6de2a1f",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:11:12.894Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "已完整对照标题与正文；核对规则/成绩/质量保证团队职责、必需与可选资格、招募人数、任期工时及各篇申请日期、联系人与投票程序。历史 Guidelines 按参考保留指南。"
+  ],
+  "changes": []
+}

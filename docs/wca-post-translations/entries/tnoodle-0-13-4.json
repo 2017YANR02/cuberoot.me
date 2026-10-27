@@ -12,14 +12,31 @@
     "sourceId": 9803
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "c22d5da0ef4d7d66d54364f17ce566ad7c6349f2508a2b07b09651b05d26ccd1",
     "language": "zh-Hans",
     "title": "TNoodle 0.13.4 发布",
     "content": "现在可从 https://www.worldcubeassociation.org/regulations/scrambles/ 下载 `TNoodle-WCA-0.13.4`。\n\n相较 `TNoodle-WCA-0.13.3`，本次更新包括：\n\n- 多盲轮次不再默认设置魔方数量。为比赛生成打乱时，需要根据预计参赛选手设置足够大的数量。\n- TNoodle 不再在打乱 JSON 数据中为最少步生成备用打乱。\n- 更新了最少步答题纸的韩语译文。\n- 旧版打乱界面的项目名称现与竞赛规则一致。\n- “scramble group”现改称“scramble set”，以免与选手分组混淆。\n- 修复了新版界面中失效的网站图标链接。\n\n即将举行的比赛应尽可能使用 `TNoodle-WCA-0.13.4` 重新生成打乱。\n\n不过，由于本次更新没有直接影响选手的改动，`TNoodle-WCA-0.13.3` 将在短期内继续作为官方允许使用的版本。未来一周比赛若已用 `TNoodle-WCA-0.13.3` 生成打乱，仍可使用。\n\n请记住，官方比赛必须使用官方打乱程序的当前有效版本，下载地址始终为：\nhttps://www.worldcubeassociation.org/regulations/scrambles/",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.142Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "04de0dbfed89e3a883cdacf36c204ec866859c737824f44f83f5f4e5cbac3676"
+  "translationHash": "83ad90f94fcfb5e741e4b98b8b131e0b215e6ddf2b99ff65ff30eed28660e080",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:48.602Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "c22d5da0ef4d7d66d54364f17ce566ad7c6349f2508a2b07b09651b05d26ccd1",
+    "reviewedTranslationHash": "83ad90f94fcfb5e741e4b98b8b131e0b215e6ddf2b99ff65ff30eed28660e080",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/tnoodle-0-13-4.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "04de0dbfed89e3a883cdacf36c204ec866859c737824f44f83f5f4e5cbac3676"
+  }
 }

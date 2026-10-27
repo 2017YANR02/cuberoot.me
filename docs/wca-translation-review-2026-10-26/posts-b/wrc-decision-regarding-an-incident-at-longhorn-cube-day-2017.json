@@ -1,0 +1,18 @@
+{
+  "key": "posts:/posts/wrc-decision-regarding-an-incident-at-longhorn-cube-day-2017",
+  "path": "docs/wca-post-translations/entries/wrc-decision-regarding-an-incident-at-longhorn-cube-day-2017.json",
+  "sourceHash": "91cc143c35ca22873b497f54e3ac7d5f9727ae75629fdddd787316589415d633",
+  "inputTranslationHash": "ab2df6330405d6c759be04453e8173170e2e831857b9029a6ef168c18362bbee",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:11:37.702Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "correction_required",
+  "notes": [
+    "未成年人匿名、17.35及29.40/21.78/DNF替代成绩、暂定补赛与裁定理由完整核对。"
+  ],
+  "changes": [
+    "标题展开组织中文名称。"
+  ],
+  "title": "WCA 规则委员会对 Longhorn Cube Day 2017 意外事件的裁定",
+  "content": "亲爱的 WCA 社区成员：\n\n在 Longhorn Cube Day 2017 的三阶盲拧第三轮中，一名未满 18 岁的选手使用了带有叠加贴纸、不符合规定的魔方。这一事件受到特别关注，因为它涉及一次 17.35 秒的单次成绩；该成绩原本将成为新的三阶盲拧世界纪录。\n\nWCA 规则要求魔方必须经过 WCA 代表批准。遗憾的是，本轮比赛前未进行这项检查，因此赛事代表决定给予该选手本轮的暂定额外还原机会。WRC 现已决定，用这些暂定额外还原替代原来的还原。成绩将由 DNF、DNF、17.35 改为 29.40、21.78、DNF。\n\n我们为这名选手感到非常遗憾。不过，我们也提醒大家，WCA 规则要求每位选手熟悉规则，并且只提供符合全部规定的魔方。原来的还原违反了规则，而现有有效的替代还原，因此我们认为这是正确的决定。这也与其他比赛中的多个先例一致；仅因为涉及一项可能破纪录的成绩，就对本次事件采取不同处理，并不公平。\n\n此致\n\nLaura Ohrndorf，代表 WCA 规则委员会（WRC）"
+}

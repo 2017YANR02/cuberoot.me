@@ -12,14 +12,33 @@
     "sourceId": 1912
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "26f8b5e8e678909122194d7d516a49b518ead46831314ef007ee32a5107449ef",
     "language": "zh-Hans",
     "title": "2012 年亚洲锦标赛将于 10 月 5 至 7 日在香港九龙钻石山举行",
     "content": "[2012 年亚洲锦标赛](https://www.worldcubeassociation.org/results/c.php?i=AsianChampionship2012)将于 2012 年 10 月 5 至 7 日在香港九龙钻石山举行。更多信息及报名，请查看[2012 年亚洲锦标赛网站](http://hkrcu.net/ac2012)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.985Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "f48a21398ca4baffd1b06b5aae69cd92baac9d6970fd2a107fa9d363647b202c"
+  "translationHash": "6dd30759e5fd9534f2cb4f8cd2bdde4b2c70469756ebe33db7a94139c233779e",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:06:36.460Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "26f8b5e8e678909122194d7d516a49b518ead46831314ef007ee32a5107449ef",
+    "reviewedTranslationHash": "6dd30759e5fd9534f2cb4f8cd2bdde4b2c70469756ebe33db7a94139c233779e",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/asian-championship-2012-on-october-5-7-2012-in-diamond-hill-kowloon-hong-kong.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇全文对照：含招募资格、时限、工作量、程序、历史机构；比赛报告核对人物、项目、成绩与纪录类别。"
+    ],
+    "inputTranslationHash": "f48a21398ca4baffd1b06b5aae69cd92baac9d6970fd2a107fa9d363647b202c"
+  }
 }

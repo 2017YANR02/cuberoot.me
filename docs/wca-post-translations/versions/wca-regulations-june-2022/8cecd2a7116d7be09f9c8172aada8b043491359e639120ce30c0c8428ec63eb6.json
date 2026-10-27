@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/wca-regulations-june-2022",
+  "source": {
+    "key": "posts:/posts/wca-regulations-june-2022",
+    "kind": "posts",
+    "title": "WCA Regulations — June 2022",
+    "date": "2022-05-20T06:43:11.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/wca-regulations-june-2022",
+    "content": "Dear WCA Community,\n\nThe WRC would like to inform you about the versions of the WCA Regulations and Guidelines, which are going into effect June 1, 2022.\n\nYou can review all changes in [this comparison on GitHub](https://github.com/thewca/wca-regulations/pull/1042/files). You can click on “Files changed” to see the complete files of the Regulation and Guidelines, where all changes and additions are marked green and removals are red.\n\n<!-- break -->\n\nHere is a summary of the changes in the new version of the Regulations and the Guidelines:\n\n* Removing Article Y and its references.\n* Adding Regulation 2a4 to allow for safety measures deemed necessary by the WCA Delegate.\n* Allowing competitions not to have Competitors Waiting Area (Regulation 7h).",
+    "hash": "1eb9bf3767d11a717c199a59547d7eb406b0ba3c03e68ee58f55de3ea1e253db",
+    "format": "markdown",
+    "sourceId": 14058
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "1eb9bf3767d11a717c199a59547d7eb406b0ba3c03e68ee58f55de3ea1e253db",
+    "language": "zh-Hans",
+    "title": "WCA 规则更新：2022 年 6 月",
+    "content": "亲爱的 WCA 社区成员：\n\nWRC 在此介绍将于 2022 年 6 月 1 日生效的新版《WCA 规则与指南》。\n\n全部改动可通过 [GitHub 上的对比](https://github.com/thewca/wca-regulations/pull/1042/files)查看。点击“Files changed”即可查看《规则》和《指南》的完整文件；修改和新增内容标为绿色，删除内容标为红色。\n\n<!-- break -->\n\n新版《规则与指南》的改动摘要如下：\n\n* 删除 Y 章及对该章的引用。\n* 增加规则 2a4，允许采取 WCA 代表认为必要的安全措施。\n* 允许比赛不设置选手等候区（规则 7h）。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:45:43.551Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "8cecd2a7116d7be09f9c8172aada8b043491359e639120ce30c0c8428ec63eb6"
+}

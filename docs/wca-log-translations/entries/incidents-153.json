@@ -13,12 +13,14 @@
   },
   "translation": {
     "language": "zh-Hans",
-    "version": 1,
+    "version": 2,
     "title": "国家纪录尝试很可能使用了错误打乱",
-    "content": "一名选手打破 Skewb 单次国家纪录，远快于其平均水平。因欢呼和兴奋，代表与选手直到比赛结束才核查打乱。多次尝试后，选手称不熟悉本应收到的正确打乱。\n\n代表鼓励其待打乱公布后在家试做，但选手请求帮助理解记号，引发对纪录有效性的疑虑。代表还发现该次成绩单缺少打乱员签名。这些因素使人高度怀疑打乱不正确。\n\nWRC 同意打乱很可能有误，决定按错误打乱处理。由于现场没有给予额外尝试，依据 [11i1](https://www.worldcubeassociation.org/regulations/full/#11i1) 判为 DNS。\n\n为减少因收到错误打乱而必须对选手施加的后果，WRC 建议：\n- 预计可能达到 [11i1](https://www.worldcubeassociation.org/regulations/full/#11i1) 标准的选手，打乱应由第二名打乱员复核（[11i1+](https://www.worldcubeassociation.org/regulations/full/#11i1+)）；\n- 成绩达到 [11i1](https://www.worldcubeassociation.org/regulations/full/#11i1) 标准后，应在合理可行时尽快核查打乱；\n- 若当时无法明确裁定，可以给予暂定的额外尝试（[11e+++++](https://www.worldcubeassociation.org/regulations/full/#11e+++++)）。",
+    "content": "一名选手打破斜转单次国家纪录，远快于其平均水平。因欢呼和兴奋，代表与选手直到比赛结束才核查打乱。多次尝试后，选手称不熟悉本应收到的正确打乱。\n\n代表鼓励其待打乱公布后在家试做，但选手请求帮助理解记号，引发对纪录有效性的疑虑。代表还发现该次成绩单缺少打乱员签名。这些因素使人高度怀疑打乱不正确。\n\nWRC 同意打乱很可能有误，决定按错误打乱处理。由于现场没有给予额外尝试，依据 [11i1](https://www.worldcubeassociation.org/regulations/full/#11i1) 判为 DNS。\n\n为减少因收到错误打乱而必须对选手施加的后果，WRC 建议：\n- 预计可能达到 [11i1](https://www.worldcubeassociation.org/regulations/full/#11i1) 标准的选手，打乱应由第二名打乱员复核（[11i1+](https://www.worldcubeassociation.org/regulations/full/#11i1+)）；\n- 成绩达到 [11i1](https://www.worldcubeassociation.org/regulations/full/#11i1) 标准后，应在合理可行时尽快核查打乱；\n- 若当时无法明确裁定，可以给予暂定的额外尝试（[11e+++++](https://www.worldcubeassociation.org/regulations/full/#11e+++++)）。",
     "translatedAt": "2026-10-22T06:00:02.853Z",
     "translator": "Codex / subscription",
-    "sourceHash": "f687d431d8f4fd747df070d1a5f59803d26e7f5bf355aff8083af7df750f02c9"
+    "sourceHash": "f687d431d8f4fd747df070d1a5f59803d26e7f5bf355aff8083af7df750f02c9",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
   "review": {
     "status": "independently_verified",
@@ -36,7 +38,23 @@
       "verdict": "pass",
       "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
     },
-    "unresolvedNotes": []
+    "unresolvedNotes": [],
+    "recheck": {
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.688Z",
+      "report": "../wca-translation-review-2026-10-26/final-report.json",
+      "sourceHash": "f687d431d8f4fd747df070d1a5f59803d26e7f5bf355aff8083af7df750f02c9",
+      "reviewedTranslationHash": "9d528de5f43495b1f4b3e10385e5db8d8c37c89f846c53c2fb7e52403aa3d398",
+      "verdict": "pass",
+      "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。"
+    },
+    "currentReview": {
+      "round": "2026-10-26",
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/incidents-153.json",
+      "sourceConcern": false,
+      "notes": [],
+      "inputTranslationHash": "12cb841d48d252f1af7fa0e80964d01820cb3efa922159f8bd6b3e067152a18c"
+    }
   },
   "publication": {
     "status": "not_authorized"

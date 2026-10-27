@@ -1,0 +1,16 @@
+{
+  "key": "posts:/posts/wec-leader-announcement-november-2023",
+  "path": "docs/wca-post-translations/entries/wec-leader-announcement-november-2023.json",
+  "sourceHash": "77036610fb6dfa2259d598b884fcd7bfdd346ce1b4ca9e657fcc9851988d842c",
+  "inputTranslationHash": "4578e93fcbb78bbbde93a2f0912205498573600c884d8f5ea92de650c0be4ed9",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:10:59.922Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "correction_required",
+  "notes": [],
+  "changes": [
+    "Senior Member统一为高级成员。"
+  ],
+  "title": "WCA 道德委员会负责人任命公告（2023 年 11 月）",
+  "content": "我们很高兴地宣布，WCA 道德委员会（WEC）高级成员 Stone Amsbaugh 将出任委员会新负责人。\n\n根据[《WCA 委员会与团队动议》第 4 节](https://www.worldcubeassociation.org/documents/motions/10.2022.0%20-%20Committees%20and%20Teams.pdf)，WCA 董事会选定了 Stone，并经现任委员会负责人和高级代表投票批准。\n\n感谢 Enzo Mattos 为 WEC 所做的工作。我们将支持 Stone 履行新职责，祝他工作顺利。\n\n我们共收到五份申请，Stone 是其中一位申请者。他和另外两位申请者的材料可在[这里](https://drive.google.com/drive/folders/1KTJ6k0LsJ38pA_z6YD-v0J7jLGDFB6aC)查看。"
+}

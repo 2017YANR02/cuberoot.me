@@ -2,7 +2,7 @@ import postgres from 'postgres';
 import { createHash } from 'node:crypto';
 import { displayCuberName } from '@cuberoot/shared/cuber-name-display';
 import { databaseSettings } from '../db/settings.js';
-import { ANALYSIS_DATASETS, ANALYSIS_PLAN_GUIDE, AnalysisInputError, compileAnalysis, type AnalysisDataset } from './site_assistant_analysis.js';
+import { ANALYSIS_DATASETS, ANALYSIS_PLAN_GUIDE, AnalysisInputError, compileAnalysis, analysisCountLabel, type AnalysisDataset } from './site_assistant_analysis.js';
 import type { ToolResult } from './site_assistant_tools.js';
 
 export function describeAnalysis(datasets:AnalysisDataset[]):ToolResult {
@@ -73,11 +73,12 @@ export async function runAnalysisQuery(call:{title:string;description:string;que
     }
     const id='analysis:'+createHash('sha256').update(JSON.stringify([compiled.sql,compiled.params])).digest('hex').slice(0,16);
     const label={zh:'现场计算',en:'Computed analysis'}[lang];
+    const columns=compiled.columns.map(c=>({...c,...(c.countMeasure?{countUnit:analysisCountLabel(c.countMeasure,lang)}:{})}));
     return {sources:[{id,title:call.title,href:ANALYSIS_DATASETS[compiled.datasets[0]].href,read:true}],
       factualSummary:{zh:'现场计算结果见下表。',en:'The computed results are shown below.'}[lang],
-      artifacts:[{kind:'table',title:call.title,columns:compiled.columns.map(c=>c.label),rows}],
-      evidence:{description:call.description,datasets:compiled.datasets,importedAt:result.importedAt,columns:compiled.columns,rows,truncated,returnedRows:rows.length,
-        basis:label,instruction:'Review the actual query predicates and these rows against the question before finalizing. Description and column headings were authored by you; they do not prove the query implements that method. If a displayed total/denominator contradicts its components, correct the query and use only the corrected source ID; NEVER silently fix the number in prose while leaving a wrong table. Include derived rates/differences in the database query. These rows were computed before output limiting. State actual filters, units and denominator; imported WCA data is not live. Never aggregate truncated rows or treat NULL as zero. Empty rows alone are not a zero count. Cite this analysis source; do not claim broader coverage than these projections.'},
+      artifacts:[{kind:'table',title:call.title,columns:columns.map(c=>c.countUnit && !c.label.includes(c.countUnit)?`${c.label} · ${c.countUnit}`:c.label),rows}],
+      evidence:{description:call.description,datasets:compiled.datasets,importedAt:result.importedAt,columns,rows,truncated,returnedRows:rows.length,
+        basis:label,instruction:'Review the actual query predicates and these rows against the question before finalizing. Description and column headings were authored by you; they do not prove the query implements that method. If a displayed total/denominator contradicts its components, correct the query and use only the corrected source ID; NEVER silently fix the number in prose while leaving a wrong table. Include derived rates/differences in the database query. These rows were computed before output limiting. State actual filters, units and denominator; imported WCA data is not live. Returned database aggregate/window values were computed BEFORE the output limit and remain valid for their actual query scope even if detail rows are truncated. Truncation alone does not invalidate those totals; do not replace a correct aggregate with a sum/count of visible rows. Never aggregate truncated rows or treat NULL as zero. Empty rows alone are not a zero count. Cite this analysis source; do not claim broader coverage than these projections.'},
     };
   } catch(error) {
     signal.throwIfAborted();

@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/senior-delegate-announcement-usa-and-canada-november-2025",
+  "path": "docs/wca-post-translations/entries/senior-delegate-announcement-usa-and-canada-november-2025.json",
+  "sourceHash": "02382795b2eb55a5fdb7e5f6fcca3058da7143d047ac32c57ce4fabdbf00b578",
+  "inputTranslationHash": "b574d676669cda71206abce520d8965bee39f1e09d60e3b61daaf1ce6cb31de5",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:25.168Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

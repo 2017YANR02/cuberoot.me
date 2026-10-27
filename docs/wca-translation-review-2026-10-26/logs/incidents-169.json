@@ -1,0 +1,21 @@
+{
+  "key": "incidents:169",
+  "path": "docs/wca-log-translations/entries/incidents-169.json",
+  "sourceHash": "412e2cab624cfda7dd182532d04eb4ae13df320c6b153e2f0578e0281a1b72df",
+  "inputTranslationHash": "f2e326af93a13f7fee0c37c5a5e2e43a2a4b428e70104313fbea5cb96caa74b0",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "本轮完整阅读英中正文及既有审校疑点，保留原文矛盾或含混，不擅自纠正历史事实。官方现行来源已重新读取，相关正文与保存版本一致。",
+  "verdict": "source_uncertain",
+  "notes": [
+    "现有 review.notes 所列 “WRC Board” 机构名称疑点未解决。源文申诉机构与常见称谓的关系无法仅据本条确认；译文忠实标为原文所称 WRC Board，未擅改 WCA Board。本审校没有联网或事实核验。",
+    "2026-10-26 重新读取官方来源，疑点仍存在；这是源文事实/措辞的保留结论，不是遗漏翻译或已确认的译文错误。"
+  ],
+  "changes": [],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/report-4.json",
+    "reviewedTranslationHash": "0fcbd160746ec02ac6d194d699564f1fa8ee77541e047b7e3655e57397826ea4",
+    "verdict": "pending_source_verification"
+  },
+  "sourceUncertainty": true
+}

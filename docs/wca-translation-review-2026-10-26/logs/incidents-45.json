@@ -1,0 +1,28 @@
+{
+  "key": "incidents:45",
+  "path": "docs/wca-log-translations/entries/incidents-45.json",
+  "sourceHash": "8fad922ffd4454e051177c633256b40246e5a7c175c8fcd4e42913de79ba8c40",
+  "inputTranslationHash": "ff3d23ca89327c925eac50b368169b3528807b701c84b57f7382c3d88232bde0",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "复用已通过的旧版全文独立审校；人工阅读旧版与现版全部文字差异及对应英文段落，确认本轮之前的差异限于官方机构名称或 Guidelines 的“指南”译法；另复核本轮项目名命中语境。 本轮完整对照含 Skewb 的该条英中正文，确认成绩、规则号、处罚条件及链接保留。",
+  "verdict": "correction_required",
+  "notes": [],
+  "changes": [
+    {
+      "reason": "WCA 官方 events->skewb 译为“斜转”，正文与标题不再保留未翻译的项目名称；已逐处对照全文，链接不受影响。",
+      "before": "Skewb",
+      "after": "斜转",
+      "sourceUrl": "https://translate.worldcubeassociation.org/translate/wca/locales/zh_Hans/?checksum=6eab8ca347f70d1d"
+    }
+  ],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/report-5.json",
+    "reviewedTranslationHash": "945ed9828b7c03c2b8988bfca7ca12c86016e2b45ac7006470bf0b5ed2768fdc",
+    "verdict": "pass",
+    "archivedVersion": "docs/wca-log-translations/versions/incidents-45/945ed9828b7c03c2b8988bfca7ca12c86016e2b45ac7006470bf0b5ed2768fdc-v1.json"
+  },
+  "sourceUncertainty": false,
+  "title": "选手停表后立即明显触碰魔方",
+  "content": "斜转项目中，一名选手在停表后立即触碰了魔方。松手后，魔方落到选手腿上，又弹回垫子。\n\n这违反了 A6e：\n> [A6e](https://www.worldcubeassociation.org/regulations/#A6e) 松开魔方后，在裁判检查之前，选手不得触碰或移动魔方。处罚为该次尝试 DNF。例外：若未发生转动，裁判可酌情改判加 2 秒。\n\n指南 A6e+ 明确指出，这种情况属于触碰：\n> [A6e+](https://www.worldcubeassociation.org/regulations/guidelines.html#A6e+) 澄清：停表后魔方掉到选手腿上，视为触碰魔方。\n\n复核视频后，WRC 认为本案不能与[另一事件](https://www.worldcubeassociation.org/incidents/23)相比，因为本案选手明显触碰了魔方。WRC 认定应对该次尝试给予 **+2 秒处罚**。"
+}

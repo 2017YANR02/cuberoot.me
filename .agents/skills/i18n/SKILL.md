@@ -52,6 +52,8 @@ description: "Use for any new or edited user-visible React text, 中英双语、
 - 历史 WDC = 纪律委员会、WEC = 道德委员会。旧文 WAC 必须看英文全称：Advisory Council 为顾问理事会（本站历史译法），Appeals Committee 为申诉委员会；都保留原缩写，不因现官网写 WAPC 而改历史缩写。Board = 董事会、Council = 理事会；officer（干事）与 Board member（董事）按英文角色区分。来源写错或含混时保留英文并记疑点，不猜测机构。
 - 机构名称优先官方 `page->teams_committees_councils->groups_name`；Weblate 表单标签可能与机构条目不同（如 WCAT）。不要盲取搜索第一条；完整上下文和已知冲突见参考 MD。历史 WCA Guidelines 统一“指南”，普通动词 guidance 不机械替换。
 - 修正全站译法时查标题、正文、摘要与索引。公告和日志真源是 `docs/wca-post-translations/entries` / `docs/wca-log-translations/entries`；先归档旧版并更新 hash、版本和审校状态，再运行 `build-wca-logs.mts` → `build-wca-posts.mts`，不手改生成的 posts/logs JSON。旧审校仅适用于其绑定的 hash。
+- 公告和日志正文中的项目名也必须本地化，不只检查机构名：Skewb＝斜转、Megaminx＝五魔方（简称五魔）、Pyraminx＝金字塔、Clock＝魔表；查官方 `events` key 与共享 `core/packages/shared/src/wca_events.ts`。Square-1 官方保留原名，本站可用 SQ1，不编造“平方一”。FTO 首次写“转面八面体（FTO）”，FMC 首次写“三阶最少步（FMC）”。比赛专名、人名、软件名、URL、公式记号及明确的英文引文不按普通项目名替换。
+- 全量审校按来源与译文 hash 保存逐篇证据；相同模板可复用固定段落的判断，但日期、岗位、资格、金额和截止时间逐篇核对。修改后只复审差异及必要上下文；结构校验、术语扫描不冒充全文语义审校。原文事实矛盾与译文错误分开记账，不能猜补原文或把未查明事实标为已核实。
 
 ## 命名空间
 

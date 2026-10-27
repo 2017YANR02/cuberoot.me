@@ -6,7 +6,7 @@ interface PopoverPositionOptions {
   panelRef: RefObject<HTMLElement | null>;
   contentAnchorRef?: RefObject<HTMLElement | null>;
   align?: 'start' | 'center';
-  side?: 'vertical' | 'right';
+  side?: 'vertical' | 'right' | 'top';
   viewportBottomInset?: number;
   /** Use the full viewport when neither side of the trigger fits the menu. */
   allowAnchorOverlap?: boolean;
@@ -85,7 +85,9 @@ export function usePopoverPosition({
         + (parseFloat(panelCss.paddingTop) || 0) + (parseFloat(panelCss.paddingBottom) || 0) : 0;
       const contentHeight = columnHeight || panel.scrollHeight;
       const desiredHeight = contentHeight ? contentHeight + borderHeight : panelRect.height;
-      const placeBelow = belowSpace >= Math.min(desiredHeight, aboveSpace);
+      const placeBelow = side === 'top'
+        ? aboveSpace < Math.min(desiredHeight, belowSpace)
+        : belowSpace >= Math.min(desiredHeight, aboveSpace);
       const availableHeight = side === 'right' || allowAnchorOverlap
         ? safeBottom - safeTop : placeBelow ? belowSpace : aboveSpace;
       const maxHeight = Math.min(Math.max(0, desiredHeight), availableHeight);

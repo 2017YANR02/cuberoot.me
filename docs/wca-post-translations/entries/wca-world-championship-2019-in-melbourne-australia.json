@@ -12,14 +12,33 @@
     "sourceId": 10167
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "5bc7ee5a17a145535e702d7d67e513e3975d95408beafc7649b414ea8838a06f",
     "language": "zh-Hans",
     "title": "2019 WCA 世锦赛将在澳大利亚墨尔本举行",
     "content": "我们现公布，**澳大利亚墨尔本**成功获得 **2019 WCA 世锦赛**的主办权！\n\n我们认为，在四个申办方案中，墨尔本的方案最为出色，相信他们的团队将在明年成功举办本届世锦赛。\n\n感谢白俄罗斯布列斯特，以及中国北京、广州的申办团队提交方案。全部申请材料可在[这里](https://drive.google.com/drive/folders/1Q_KJo0UVs0kzL0YDpjm_EhipAQCFu5vZ)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.171Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "195311ae81fe5b21a81c54c8518c8da00d6785a328f5d3143aef8364f11fb9e6"
+  "translationHash": "992318cbdef63324d5cbaf473773465f1ddefb2c06949c1164a4b9bcc0ad9f5f",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:10:42.567Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "5bc7ee5a17a145535e702d7d67e513e3975d95408beafc7649b414ea8838a06f",
+    "reviewedTranslationHash": "992318cbdef63324d5cbaf473773465f1ddefb2c06949c1164a4b9bcc0ad9f5f",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wca-world-championship-2019-in-melbourne-australia.json",
+    "sourceConcern": false,
+    "notes": [
+      "全文核对；历史公告的当时判断、参赛人数、日期及任命程序均保留。"
+    ],
+    "inputTranslationHash": "195311ae81fe5b21a81c54c8518c8da00d6785a328f5d3143aef8364f11fb9e6"
+  }
 }

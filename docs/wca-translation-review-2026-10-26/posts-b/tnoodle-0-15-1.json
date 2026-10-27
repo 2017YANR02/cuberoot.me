@@ -1,0 +1,16 @@
+{
+  "key": "posts:/posts/tnoodle-0-15-1",
+  "path": "docs/wca-post-translations/entries/tnoodle-0-15-1.json",
+  "sourceHash": "e2f9d813cb1cf33ba69188f87f33536bfd45723c68243bea93635adf0608bb92",
+  "inputTranslationHash": "623e1b5ad78f13dc5a33444760072afc3040ab3a4fe7d5e210b7c8de05c56e28",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:48.604Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "correction_required",
+  "notes": [],
+  "changes": [
+    "FMC sheet 是最少步答题纸，不是成绩单。"
+  ],
+  "title": "TNoodle 0.15.1",
+  "content": "TNoodle-WCA-0.15.1 现已可在打乱页面下载。\n\n**相比上一版本的修改：**\n\n* 更新最少步答题纸中的整体转动记号，与 2020 年规则保持一致。\n* 从项目列表中移除三阶脚拧。\n\n请记住，正式比赛必须使用现行版本的官方打乱程序。下载地址始终为：\nhttps://www.worldcubeassociation.org/regulations/scrambles/"
+}

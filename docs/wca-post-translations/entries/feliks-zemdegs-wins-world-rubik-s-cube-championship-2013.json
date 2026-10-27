@@ -12,14 +12,33 @@
     "sourceId": 2730
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "6d0dcbcb160949fda8b5bb16a634b26a104cae3d3723b809ff5c95a3b9516802",
     "language": "zh-Hans",
     "title": "Feliks Zemdegs 获得 2013 年世界魔方锦标赛冠军",
     "content": "[Feliks Zemdegs](https://www.worldcubeassociation.org/results/p.php?i=2009ZEMD01) 以 8.18 秒的平均成绩获得 [2013 年世界魔方锦标赛](https://www.worldcubeassociation.org/results/c.php?i=WC2013)冠军。[Mats Valk](https://www.worldcubeassociation.org/results/p.php?i=2007VALK01) 以 8.65 秒获得亚军，[Sebastian Weyer](https://www.worldcubeassociation.org/results/p.php?i=2010WEYE02) 以 8.86 秒获得季军。\n\n世界纪录：Evan Liu，魔表平均 6.79 秒；Kevin Hays，七阶平均 2:54.77；Marcell Endrey，五阶盲拧单次 6:06.41。\n\n大洋洲纪录：Feliks Zemdegs，四阶平均 30.49 秒、三阶单手单次 10.12 秒、三阶最少步单次 31 步、五魔方平均 55.67 秒、单次 52.97 秒、六阶单次 1:54.43、七阶平均 3:00.35、单次 2:55.44；Jayden McNeill，三阶最少步单次 31 步；Zane Carney，五阶盲拧单次 8:26.37。\n\n欧洲纪录：Bence Barát，七阶平均 2:59.40、单次 2:48.55；Jakub Kipa，三阶脚拧平均 38.22 秒。\n\n北美洲纪录：Drew Brads，金字塔平均 3.16 秒；Evan Liu，魔表单次 5.45 秒；Gabriel Alejandro Orozco Casillas，三阶盲拧单次 25.32 秒；Kevin Hays，五阶平均 59.06 秒、单次 51.85 秒，七阶平均 3:02.31、单次 2:42.80；Louis Cormier，三阶脚拧单次 39.00 秒，五魔方平均 52.45 秒、单次 46.90 秒；Rowe Hessler，四阶单次 29.30 秒；Tim Wong，三阶多盲单次 20/23，用时 57:51。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.149Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "1ccbd9c4648c7fcbd8bc2ddd5ab3f83c0fbe5bdfbccc8d3cbb42c877bd68207d"
+  "translationHash": "eafb83170a97ef7038802c2f0bb806351162e06da06a66ffefe8ebde95b066a0",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:13:29.852Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "6d0dcbcb160949fda8b5bb16a634b26a104cae3d3723b809ff5c95a3b9516802",
+    "reviewedTranslationHash": "eafb83170a97ef7038802c2f0bb806351162e06da06a66ffefe8ebde95b066a0",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/feliks-zemdegs-wins-world-rubik-s-cube-championship-2013.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照标题与正文；疫情取消区间/新赛条件、COO履历与金额人数、赛事日期地点、意向征集要求及各条历史纪录的选手/项目/单次平均/数值逐项核对一致。"
+    ],
+    "inputTranslationHash": "1ccbd9c4648c7fcbd8bc2ddd5ab3f83c0fbe5bdfbccc8d3cbb42c877bd68207d"
+  }
 }

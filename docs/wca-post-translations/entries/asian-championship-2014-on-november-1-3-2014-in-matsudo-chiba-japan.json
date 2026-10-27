@@ -12,14 +12,33 @@
     "sourceId": 3539
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "812d18c06288779431c9557e6724d05d189a1eb5962b5370996948f43d836756",
     "language": "zh-Hans",
     "title": "2014 年亚洲锦标赛将于 11 月 1 至 3 日在日本千叶县松户市举行",
     "content": "[2014 年亚洲锦标赛](https://www.worldcubeassociation.org/results/c.php?i=AsianChampionship2014)将于 2014 年 11 月 1 至 3 日在日本千叶县松户市举行。更多信息及报名，请查看[2014 年亚洲锦标赛网站](http://jrca.cc/ac2014/)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.985Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "598644c0bbefe96b7ffc95ce0a7a4c8b9b142c5a6c558a44c1660976f3669433"
+  "translationHash": "22b051083e173dd4b8829d8ec0489a005be11a5203359aa26fa7a9701a2e5ec0",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:06:36.461Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "812d18c06288779431c9557e6724d05d189a1eb5962b5370996948f43d836756",
+    "reviewedTranslationHash": "22b051083e173dd4b8829d8ec0489a005be11a5203359aa26fa7a9701a2e5ec0",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/asian-championship-2014-on-november-1-3-2014-in-matsudo-chiba-japan.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇全文对照：含招募资格、时限、工作量、程序、历史机构；比赛报告核对人物、项目、成绩与纪录类别。"
+    ],
+    "inputTranslationHash": "598644c0bbefe96b7ffc95ce0a7a4c8b9b142c5a6c558a44c1660976f3669433"
+  }
 }

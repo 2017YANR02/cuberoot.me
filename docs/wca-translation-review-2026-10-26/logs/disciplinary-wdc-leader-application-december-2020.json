@@ -1,0 +1,19 @@
+{
+  "key": "disciplinary:/posts/wdc-leader-application-december-2020",
+  "path": "docs/wca-log-translations/entries/disciplinary-wdc-leader-application-december-2020.json",
+  "sourceHash": "41c71ffaab9290422ee3140ec9da60e9a2f5824b1883880fd2ee49cd496fd3d8",
+  "inputTranslationHash": "131a297aa3ef0cfd7d598c62a27530c6733d119246f07e803256d76c474e0327",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "复用已通过的旧版全文独立审校；人工阅读旧版与现版全部文字差异及对应英文段落，确认本轮之前的差异限于官方机构名称或 Guidelines 的“指南”译法；另复核本轮项目名命中语境。",
+  "verdict": "pass",
+  "notes": [],
+  "changes": [],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/report-1.json",
+    "reviewedTranslationHash": "7e8235f9b1cf0696a5ebf7476b6e5454c21ec2e42401a2d3f17904575048f466",
+    "verdict": "pass",
+    "archivedVersion": "docs/wca-log-translations/versions/disciplinary-wdc-leader-application-december-2020/7e8235f9b1cf0696a5ebf7476b6e5454c21ec2e42401a2d3f17904575048f466-v1.json"
+  },
+  "sourceUncertainty": false
+}

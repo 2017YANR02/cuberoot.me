@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/wca-world-championship-2019-in-melbourne-australia",
+  "path": "docs/wca-post-translations/entries/wca-world-championship-2019-in-melbourne-australia.json",
+  "sourceHash": "5bc7ee5a17a145535e702d7d67e513e3975d95408beafc7649b414ea8838a06f",
+  "inputTranslationHash": "195311ae81fe5b21a81c54c8518c8da00d6785a328f5d3143aef8364f11fb9e6",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:10:42.567Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [
+    "全文核对；历史公告的当时判断、参赛人数、日期及任命程序均保留。"
+  ],
+  "changes": []
+}

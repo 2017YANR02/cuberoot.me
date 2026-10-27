@@ -12,14 +12,33 @@
     "sourceId": 8235
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "b247f042ae3f9bef5788918af214491cf9c7e5d6daf2fdda1224bc5369bd63aa",
     "language": "zh-Hans",
     "title": "开放申办 2018 年南美锦标赛",
     "content": "WCA 董事会正在寻找主办团队，承办 2018 年南美锦标赛！\n\n请与本国代表讨论，你们是否有意愿和能力承办。举办这一规模的比赛，在赛前和比赛期间都需要投入大量时间和精力。\n\n如有意申办，请将申请材料发送给 Pedro Santos Guimarães，邮箱为 [pedrosino@gmail.com](mailto:pedrosino@gmail.com)。申办截止日期为 2017 年 12 月 31 日。\n\n申办材料至少应包含以下信息：\n\n你们希望何时举办比赛？\n\n1.1 比赛天数。\n1.2 与学校假期的重合情况。\n1.3 与本国法定假日的重合情况。\n\n你们希望在本国的哪个地点举办 2018 年南美锦标赛？\n\n2.1 城市应对海外访客有吸引力，并有观光游览的机会。\n2.2 国际、国内及市内交通的便利程度。\n2.3 是否有不同价位的酒店或公寓可供选择。\n2.4 场地应能容纳赛台、观众、练习桌及附属房间。\n2.5 可用的技术设施，如网络、视频直播、灯光及音响设备。\n2.6 可容纳的选手和观众人数。\n\n主办团队和工作人员如何安排？\n\n3.1 核心团队成员。\n3.2 核心团队的经验。\n3.3 其他合作方的参与情况。\n3.4 当地志愿者的数量与能力；建议配备 80–120 名工作人员。\n3.5 需要海外代表提供哪些支持。\n\n比赛总体预算是多少？\n\n4.1 支出：场地、赛台、器材、装饰、网站、证件/挂绳/礼包、奖品等。\n4.2 收入：报名费、赞助、地方政府支持等。\n\n当地赞助商可以是 Rubik 的合作伙伴，或最好是益智玩具行业以外的企业。\n\n以下示例表格列出了大型比赛需要安排和编列预算的部分事项，并非完整清单：[https://docs.google.com/spreadsheets/d/1w6uxOHrr40of1R4-NjU1vy7fVJXRHiRZBn53Hc-IOk8](https://docs.google.com/spreadsheets/d/1w6uxOHrr40of1R4-NjU1vy7fVJXRHiRZBn53Hc-IOk8)\n\nPedro Santos Guimarães 将负责主持申办遴选流程。董事会将投票，并可能在投票前咨询社区其他成员。\n如果其他董事参与了申办团队，将邀请其他成员参与投票，例如高级代表或委员会负责人。\n\n我们希望比赛重点做到三件事：\n\n- 会员能否一起度过愉快的时光？\n- 能否在公平、实力最强者获胜的比赛中，为会员提供创造个人好成绩的机会？\n- 能否让赞助商满意，并为我们的社区做好宣传？\n\n提前感谢大家的配合！\n\n（Lauren Clement 代表世界魔方协会发布）",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.909Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "74205c078bf93140e14f51cbddafa0f893c2bcfffa6e7bbb90222effe65efb64"
+  "translationHash": "5c3d69151b80c08ce6b94b5c44ee918781a61b858f590082fa248fcb0b6b790c",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:05:49.185Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "b247f042ae3f9bef5788918af214491cf9c7e5d6daf2fdda1224bc5369bd63aa",
+    "reviewedTranslationHash": "5c3d69151b80c08ce6b94b5c44ee918781a61b858f590082fa248fcb0b6b790c",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/applications-for-south-american-championship-2018.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照申办地区、申请时段、材料要求、评选主体及全部预算/场馆/人员条目。"
+    ],
+    "inputTranslationHash": "74205c078bf93140e14f51cbddafa0f893c2bcfffa6e7bbb90222effe65efb64"
+  }
 }

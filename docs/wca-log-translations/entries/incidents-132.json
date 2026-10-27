@@ -13,12 +13,14 @@
   },
   "translation": {
     "language": "zh-Hans",
-    "version": 1,
+    "version": 2,
     "title": "选手认为记录时间比实际更快",
-    "content": "完成 Skewb 平均后，选手告诉代表，第二次记录的 6.52 错了，应为 7.52。成绩单确实写着 6.52，选手和裁判均已签名，没有视频。讨论中，选手开始怀疑自己的记忆，越来越不确定实际时间。现场给予暂定的额外尝试。\n\nWRC 建议**不要**采用额外尝试，时间究竟为 6.52 还是 7.52，应交由代表酌情判断。这需要评估全部证据，而现场代表通常最适合做此判断。可能不可靠的记忆本身并不是强证据。",
+    "content": "完成斜转平均后，选手告诉代表，第二次记录的 6.52 错了，应为 7.52。成绩单确实写着 6.52，选手和裁判均已签名，没有视频。讨论中，选手开始怀疑自己的记忆，越来越不确定实际时间。现场给予暂定的额外尝试。\n\nWRC 建议**不要**采用额外尝试，时间究竟为 6.52 还是 7.52，应交由代表酌情判断。这需要评估全部证据，而现场代表通常最适合做此判断。可能不可靠的记忆本身并不是强证据。",
     "translatedAt": "2026-10-22T05:57:56.837Z",
     "translator": "Codex / subscription",
-    "sourceHash": "77804fc9c275d78ac33ba144e0aaa526c8f6652d413d573c759477fc5ac5a2cb"
+    "sourceHash": "77804fc9c275d78ac33ba144e0aaa526c8f6652d413d573c759477fc5ac5a2cb",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
   "review": {
     "status": "independently_verified",
@@ -36,7 +38,23 @@
       "verdict": "pass",
       "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
     },
-    "unresolvedNotes": []
+    "unresolvedNotes": [],
+    "recheck": {
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.688Z",
+      "report": "../wca-translation-review-2026-10-26/final-report.json",
+      "sourceHash": "77804fc9c275d78ac33ba144e0aaa526c8f6652d413d573c759477fc5ac5a2cb",
+      "reviewedTranslationHash": "a0e8fcdf8de99c01df02165159cad548813cab93ce5df9bb6f9fea0b3b8ecd11",
+      "verdict": "pass",
+      "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。"
+    },
+    "currentReview": {
+      "round": "2026-10-26",
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/incidents-132.json",
+      "sourceConcern": false,
+      "notes": [],
+      "inputTranslationHash": "2941edccf517c6982d9c47826a2f865f3045939a12a7be60a389265954398dcb"
+    }
   },
   "publication": {
     "status": "not_authorized"

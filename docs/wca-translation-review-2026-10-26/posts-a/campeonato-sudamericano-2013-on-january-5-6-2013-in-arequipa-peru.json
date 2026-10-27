@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/campeonato-sudamericano-2013-on-january-5-6-2013-in-arequipa-peru",
+  "path": "docs/wca-post-translations/entries/campeonato-sudamericano-2013-on-january-5-6-2013-in-arequipa-peru.json",
+  "sourceHash": "99b7a5000605cff25ede2b413db2435ca50799b971bf5969ffa9e31d404bcd52",
+  "inputTranslationHash": "14864035be77ff4bea082ccef7b06e93f73b54197359fb8d49a4c2f1d03a5802",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:12:23.462Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题和正文；各届赛事城市及取消/退款范围、董事候选名单、当选与连任区别、任期及生效日期、保留职务和干事分工均与原文一致。"
+  ],
+  "changes": []
+}

@@ -12,14 +12,31 @@
     "sourceId": 257
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "731b02f7df192c96398e4d2cce20e5176f7bd26b9313255f211b6be02c2df950",
     "language": "zh-Hans",
     "title": "Tomasz Zolnowski 夺得 2008 年欧洲锦标赛冠军",
     "content": "[Tomasz Zolnowski](https://www.worldcubeassociation.org/results/p.php?i=2005ZOLN01) 以 11.71 秒的平均成绩赢得[2008 年欧洲锦标赛](https://www.worldcubeassociation.org/results/c.php?i=Euro2008)冠军。[Erik Akkersdijk](https://www.worldcubeassociation.org/results/p.php?i=2005AKKE01) 以 12.15 秒获得亚军，[Edouard Chambon](https://www.worldcubeassociation.org/results/p.php?i=2004CHAM01) 以 12.47 秒获得季军。\n\n世界纪录：Erik Akkersdijk，五阶单次 1:18.59；Edouard Chambon，二阶平均 3.43 秒；Maté Horvath，十二板平均 1.95 秒。\n\n欧洲纪录：Rafal Guzewicz，四盲 7:54.35、五盲 16:15。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.931Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "f84cff507afa13ca63bb12ea2b323a437281cc25e316c98f89d28dde6be80d4c"
+  "translationHash": "ccdd7780bc148ae7a8b63d6de7ecd56c230e49040414e4631462affb986e3a23",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:59.335Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "731b02f7df192c96398e4d2cce20e5176f7bd26b9313255f211b6be02c2df950",
+    "reviewedTranslationHash": "ccdd7780bc148ae7a8b63d6de7ecd56c230e49040414e4631462affb986e3a23",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/tomasz-zolnowski-wins-european-championship-2008.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "f84cff507afa13ca63bb12ea2b323a437281cc25e316c98f89d28dde6be80d4c"
+  }
 }

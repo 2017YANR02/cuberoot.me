@@ -12,14 +12,31 @@
     "sourceId": 5586
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "a1b14f37f7e7d4fff164fc7ca02c645010b12d2cfe5edbb106fa627df5a1af2f",
     "language": "zh-Hans",
     "title": "TNoodle 0.11.1 发布",
     "content": "TNoodle-WCA-0.11.1 现已发布，可在 [https://www.worldcubeassociation.org/regulations/scrambles](https://www.worldcubeassociation.org/regulations/scrambles) 获取。\n\n相较于 TNoodle 0.10.0，本次改动如下：\n\n- 五魔方和 Square-1 的配色改为目前广泛使用的配色。\n- 修改最少步打乱的生成流程。最少步打乱现在更长，打乱序列不再与其生成的魔方状态直接相关。具体来说，所有最少步打乱序列的开头和结尾均补上 *R' U' F*。\n\n请注意，正式比赛必须使用当前版本的官方打乱程序。最新版始终可在 [https://www.worldcubeassociation.org/regulations/scrambles](https://www.worldcubeassociation.org/regulations/scrambles) 获取。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.158Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "736bd798442e8e06bff4c9a5ba90818599c4b5f7e1ce1bd59f7642b1b886a6f7"
+  "translationHash": "a8bd990c3a388c492a7ea7e3b36cd40e18d3cdb90ca40eb88311fe7e67d666c4",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:48.601Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "a1b14f37f7e7d4fff164fc7ca02c645010b12d2cfe5edbb106fa627df5a1af2f",
+    "reviewedTranslationHash": "a8bd990c3a388c492a7ea7e3b36cd40e18d3cdb90ca40eb88311fe7e67d666c4",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/tnoodle-0-11-1.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "736bd798442e8e06bff4c9a5ba90818599c4b5f7e1ce1bd59f7642b1b886a6f7"
+  }
 }

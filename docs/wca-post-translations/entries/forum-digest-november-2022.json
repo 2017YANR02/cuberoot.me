@@ -12,14 +12,31 @@
     "sourceId": 14082
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "139014c1d6ec91d193543bc346e58a2ea96b29a712834c219ed06426e5b90aab",
     "language": "zh-Hans",
     "title": "WCA 论坛精选（2022 年 11 月）",
-    "content": "以下是 2022 年下半年 WCA 论坛上值得关注的几个话题。\n\n[**WCA 竞赛规则简明版**](https://forum.worldcubeassociation.org/t/summarised-version-of-the-wca-regulations/23927)\n\n该帖建议为整套规则制作简明版，让新选手和年纪较小的选手更容易了解比赛要求，提高大家对规则的熟悉程度。WCA 的教学资源就是用浅显方式说明规则的一个例子。\n\n[**鼓励举办系列赛**](https://forum.worldcubeassociation.org/t/incentives-for-organizing-series-competitions/25638)\n\n系列赛可以缓解参赛需求过旺的问题。该帖讨论如何在魔友密集的地区举办系列赛，而不是继续增加大型比赛，以满足当地魔友的参赛需求。\n\n[**WCA 非官方语言版块公告**](https://forum.worldcubeassociation.org/t/unofficial-wca-languages-announcement/25113)\n\n论坛新增了阿拉伯语、德语、俄语、西班牙语和瑞典语五个语言子版块，希望让英语非母语的成员更容易参与论坛，分享反馈和想法。\n\n[**允许选手选择不公开报名信息**](https://forum.worldcubeassociation.org/t/allow-competitors-to-opt-out-of-having-their-competition-registration-made-public/22908)\n\n该帖建议修改报名流程，不再强制公开已报名选手的姓名，而是显示名额和报名状态，让选手自行选择是否展示姓名。\n\n[**用 3D 打印 Square-1 魔方罩防止错位**](https://forum.worldcubeassociation.org/t/3d-printed-square-1-cover-to-prevent-misalignments-after-scrambling/22093)\n\n该帖介绍了一种 3D 打印的 Square-1 魔方罩，可防止打乱后的魔方在送往还原桌途中错位。这是一种方便的办法，已有部分主办方采用，以减少比赛中可能出现的争议和困惑。\n\n如有问题、意见或反馈，欢迎发送邮件至 advisory@worldcubeassociation.org。\n\n感谢大家参与论坛！",
+    "content": "以下是 2022 年下半年 WCA 论坛上值得关注的几个话题。\n\n[**WCA 竞赛规则简明版**](https://forum.worldcubeassociation.org/t/summarised-version-of-the-wca-regulations/23927)\n\n该帖建议为整套规则制作简明版，让新选手和年纪较小的选手更容易了解比赛要求，提高大家对规则的熟悉程度。WCA 的教学资源就是用浅显方式说明规则的一个例子。\n\n[**鼓励举办系列赛**](https://forum.worldcubeassociation.org/t/incentives-for-organizing-series-competitions/25638)\n\n系列赛可以缓解参赛需求过旺的问题。该帖讨论如何在魔友密集的地区举办系列赛，而不是继续增加大型比赛，以满足当地魔友的参赛需求。\n\n[**WCA 非官方语言版块公告**](https://forum.worldcubeassociation.org/t/unofficial-wca-languages-announcement/25113)\n\n论坛新增了阿拉伯语、德语、俄语、西班牙语和瑞典语五个语言子版块，希望让英语非母语的成员更容易参与论坛，分享反馈和想法。\n\n[**允许选手选择不公开报名信息**](https://forum.worldcubeassociation.org/t/allow-competitors-to-opt-out-of-having-their-competition-registration-made-public/22908)\n\n该帖建议修改报名流程，不再强制公开已报名选手的姓名，而是显示名额和报名状态，让选手自行选择是否展示姓名。\n\n[**用 3D 打印 Square-1 魔方罩防止错位**](https://forum.worldcubeassociation.org/t/3d-printed-square-1-cover-to-prevent-misalignments-after-scrambling/22093)\n\n该帖介绍了一种 3D 打印的 Square-1 魔方罩，可防止打乱后的魔方在送往比赛位途中错位。这是一种方便的办法，已有部分主办方采用，以减少比赛中可能出现的争议和困惑。\n\n如有问题、意见或反馈，欢迎发送邮件至 advisory@worldcubeassociation.org。\n\n感谢大家参与论坛！",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.556Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "da02b0f8b0fdbf4e6d8e55e8df228f083b3214fec40e33eb38533f92a707de6e"
+  "translationHash": "1bc9a3037e3492f8fb176453467321b8f2c270d00a45f78d70fa2400cda488f0",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:16:44.876Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "139014c1d6ec91d193543bc346e58a2ea96b29a712834c219ed06426e5b90aab",
+    "reviewedTranslationHash": "1bc9a3037e3492f8fb176453467321b8f2c270d00a45f78d70fa2400cda488f0",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/forum-digest-november-2022.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "da02b0f8b0fdbf4e6d8e55e8df228f083b3214fec40e33eb38533f92a707de6e"
+  }
 }

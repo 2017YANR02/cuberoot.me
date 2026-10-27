@@ -13,7 +13,7 @@
     --s555-wca: #2563EB;
     --s555-wca-soft: rgba(37, 99, 235, 0.10);
 
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: var(--font-sans);
     background: var(--s555-bg);
     color: var(--s555-text);
     min-height: 100vh;

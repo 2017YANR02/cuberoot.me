@@ -126,8 +126,8 @@ export default function MultiBlindChapter() {
 
         <Callout tone="danger" label={t('什么时候算 DNF', 'When the attempt is a DNF')} icon={<Ban size={17} />} style={{ marginTop: 30 }}>
           {t(
-            '光看“成功几个”还不够:如果净得分小于 0(失败多于成功),或者只成功还原了 1 个魔方,整次尝试都记 DNF(规则 9f12c)。换句话说,多盲至少要成功还原 2 个、且成功数多于失败数,才算有成绩 —— 这也是挑战数量要量力而行的原因。',
-            'Counting how many you solved is not the whole story: if the net score is below 0 (more failures than successes), or only a single cube is solved, the entire attempt is a DNF (Regulation 9f12c). In other words, a Multi-Blind result needs at least 2 cubes solved and more solved than not — which is why you should pick a count you can actually handle.'
+            '如果净得分小于 0(失败多于成功),或者只成功还原了 1 个魔方,整次尝试记 DNF(规则 9f12c)。成功至少 2 个且成功数不少于失败数时,不会仅因这一条被判 DNF。例如成功 2 个、失败 2 个,净得分为 0,仍可有有效成绩;其他规则仍须满足。',
+            'The attempt is a DNF if the net score is below 0 (more failures than successes), or only one puzzle is solved (9f12c). With at least two solved and no more failures than successes, this rule alone does not cause a DNF. For example, two solved and two unsolved gives zero points and can be a valid result, provided the other rules are met.'
           )}
         </Callout>
       </RegSection>

@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/feliks-zemdegs-wins-world-rubik-s-cube-championship-2013",
+  "path": "docs/wca-post-translations/entries/feliks-zemdegs-wins-world-rubik-s-cube-championship-2013.json",
+  "sourceHash": "6d0dcbcb160949fda8b5bb16a634b26a104cae3d3723b809ff5c95a3b9516802",
+  "inputTranslationHash": "1ccbd9c4648c7fcbd8bc2ddd5ab3f83c0fbe5bdfbccc8d3cbb42c877bd68207d",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:13:29.852Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题与正文；疫情取消区间/新赛条件、COO履历与金额人数、赛事日期地点、意向征集要求及各条历史纪录的选手/项目/单次平均/数值逐项核对一致。"
+  ],
+  "changes": []
+}

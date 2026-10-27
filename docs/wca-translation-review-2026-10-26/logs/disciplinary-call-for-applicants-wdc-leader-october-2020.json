@@ -1,0 +1,21 @@
+{
+  "key": "disciplinary:/posts/call-for-applicants-wdc-leader-october-2020",
+  "path": "docs/wca-log-translations/entries/disciplinary-call-for-applicants-wdc-leader-october-2020.json",
+  "sourceHash": "51d31cf375745670de6a329276337a34d32d7b2fc46e8c1eca7bb0a951fd75b6",
+  "inputTranslationHash": "0d9106028d2644a157f7a1ff2e1b4b017cafa5be32aa6bb8d42f5ea94880c388",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "复用已通过的旧版全文独立审校；人工阅读旧版与现版全部文字差异及对应英文段落，确认本轮之前的差异限于官方机构名称或 Guidelines 的“指南”译法；另复核本轮项目名命中语境。",
+  "verdict": "pass",
+  "notes": [
+    "原文“at least 4-6 hours per week on average”自身将最低值与范围并列，译文忠实保留；未核验招聘方实际工时解释。"
+  ],
+  "changes": [],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/report-1.json",
+    "reviewedTranslationHash": "c19b675d54bcd3ad40772664455fddaa867a79480b5cebb81f3a1f151b0cca1c",
+    "verdict": "pass",
+    "archivedVersion": "docs/wca-log-translations/versions/disciplinary-call-for-applicants-wdc-leader-october-2020/c19b675d54bcd3ad40772664455fddaa867a79480b5cebb81f3a1f151b0cca1c-v1.json"
+  },
+  "sourceUncertainty": false
+}

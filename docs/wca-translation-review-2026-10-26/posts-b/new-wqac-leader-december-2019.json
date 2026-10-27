@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/new-wqac-leader-december-2019",
+  "path": "docs/wca-post-translations/entries/new-wqac-leader-december-2019.json",
+  "sourceHash": "031145e9b817aea332d8b6f104ff04f8fd369d09ee3647001eb7259578df4405",
+  "inputTranslationHash": "baa012d2a0f7dd2bc95ddc762d0b354e58562a994d2f510a3991499863350046",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:44.905Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

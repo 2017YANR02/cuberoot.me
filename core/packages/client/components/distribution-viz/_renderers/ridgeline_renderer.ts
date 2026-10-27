@@ -244,8 +244,8 @@ export function drawRidgeline(
       ? ink(0.95)
       : ink(0.45);
     ctx.font = isHighlighted
-      ? '500 11px Inter, sans-serif'
-      : '11px Inter, sans-serif';
+      ? '500 11px "SF Pro Text", "SF Pro SC", sans-serif'
+      : '11px "SF Pro Text", "SF Pro SC", sans-serif';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     ctx.fillText(labelText, ml - 10, baseY - ROW_HEIGHT * 0.3);

@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/tnoodle-0-14-0",
+  "source": {
+    "key": "posts:/posts/tnoodle-0-14-0",
+    "kind": "posts",
+    "title": "TNoodle 0.14.0",
+    "date": "2018-12-04T01:05:42.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/tnoodle-0-14-0",
+    "content": "`TNoodle-WCA-0.14.0` is now available from https://www.worldcubeassociation.org/regulations/scrambles/\nThe following changes have been made since `TNoodle-WCA-0.13.5`:\n\n- The generated `.zip` folder now contains a nested `.zip` file called `... Computer Display PDFs.zip`. This contains the scramble set PDFs, each encrypted with a unique passcode that can be found in `... Computer Display PDF Passcodes - SECRET.txt`. Please read the directions at https://www.worldcubeassociation.org/regulations/scrambles/#scramble-secrecy if you are a Delegate.\n- The other files in the .zip folder have been rearranged to highlight the existence of the computer display PDFs.\n\nUpcoming competitions should use `TNoodle-WCA-0.14.0` to generate new scrambles, when possible.\nHowever, since there are no changes that directly affect competitors since the previous version, `TNoodle-WCA-0.13.5` will briefly remain an officially permitted version. (Competition scrambles for the coming week that have already been generated using `TNoodle-WCA-0.13.5` can still be used.)\n\nPlease remember that official competitions must use a current version of the official scramble program. This is always available from:\nhttps://www.worldcubeassociation.org/regulations/scrambles/",
+    "hash": "45a768ee02feefa3317bb60c4c598b7ada6692fd24b202e62cc32d7d5abad7a3",
+    "format": "markdown",
+    "sourceId": 10808
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "45a768ee02feefa3317bb60c4c598b7ada6692fd24b202e62cc32d7d5abad7a3",
+    "language": "zh-Hans",
+    "title": "TNoodle 0.14.0",
+    "content": "`TNoodle-WCA-0.14.0` 现已可从 https://www.worldcubeassociation.org/regulations/scrambles/ 下载。\n与 `TNoodle-WCA-0.13.5` 相比，作出了以下调整：\n\n- 生成的 `.zip` 压缩包中新增了一个名为 `... Computer Display PDFs.zip` 的嵌套压缩包，其中包含各套打乱的 PDF 文件。每个 PDF 都有独立密码，密码列在 `... Computer Display PDF Passcodes - SECRET.txt` 中。代表请阅读 https://www.worldcubeassociation.org/regulations/scrambles/#scramble-secrecy 上的说明。\n- 调整了压缩包内其他文件的组织方式，让用于电脑显示的 PDF 文件更醒目。\n\n即将举行的比赛应尽可能使用 `TNoodle-WCA-0.14.0` 生成新的打乱。\n不过，由于与上一版本相比没有直接影响选手的改动，`TNoodle-WCA-0.13.5` 将暂时继续作为官方允许的版本。（未来一周比赛中已经使用 `TNoodle-WCA-0.13.5` 生成的打乱仍可使用。）\n\n请记住，正式比赛必须使用官方打乱程序当前获准使用的版本，可随时从以下页面下载：\nhttps://www.worldcubeassociation.org/regulations/scrambles/",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.182Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "5ad5a360fb29265ec3a42a5b512660592f4329be84d9454ff83a84967f6e342b"
+}

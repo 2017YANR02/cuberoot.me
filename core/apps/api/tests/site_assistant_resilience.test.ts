@@ -4,7 +4,7 @@ import { SITE_ASSISTANT_TIMEOUT_MS } from '@cuberoot/shared/site-assistant';
 import { answerSiteQuestion } from '../src/utils/site_assistant.js';
 import { createSiteAssistantRoutes as createRoutes } from '../src/routes/site_assistant.js';
 import { AssistantFailure } from '../src/utils/site_assistant_diagnostics.js';
-import { modelResponse as model } from './fixtures/site_assistant_model.js';
+import { modelResponse as model, wireEvidence } from './fixtures/site_assistant_model.js';
 import { chunkKnowledge } from '../src/utils/site_assistant_knowledge.js';
 
 const config={key:'private-model-key',baseUrl:'https://model.example/v1',model:'test'};
@@ -18,13 +18,14 @@ describe('assistant resilience',()=>{
       const fetcher=vi.fn<typeof fetch>()
         .mockResolvedValueOnce(model([{tool:'news',limit:5}]))
         .mockResolvedValueOnce(new Response('<rss><channel><item><title>Official update</title><link>https://www.worldcubeassociation.org/posts/update</link><pubDate>2026-10-20T12:00:00Z</pubDate><description>Published facts.</description></item></channel></rss>'))
+        .mockResolvedValueOnce(model({answer:'本周 WCA 官方消息：公告已更新。[[news:update]]',sourceIds:['news:update']}))
         .mockResolvedValueOnce(model({answer:'本周 WCA 官方消息：公告已更新。[[news:update]]',sourceIds:['news:update']}));
       const result=await answerSiteQuestion('这周魔方圈有什么新闻？','zh',config,new AbortController().signal,withCatalog(fetcher),[],undefined,undefined,'Asia/Shanghai');
       expect(fetcher.mock.calls[1][0]).toBe('https://www.worldcubeassociation.org/rss.xml');
-      expect(fetcher).toHaveBeenCalledTimes(3);
+      expect(fetcher).toHaveBeenCalledTimes(4); // Includes the final evidence review.
       expect(result.sources[0].href).toBe('https://www.worldcubeassociation.org/posts/update');
-      const context=JSON.parse(JSON.parse(String(fetcher.mock.calls[2][1]?.body)).messages[1].content);
-      expect(context.evidence[0].data).toMatchObject({from:'2026-10-19',to:'2026-10-25',timeZone:'Asia/Shanghai'});
+      const evidence=wireEvidence(JSON.parse(String(fetcher.mock.calls[2][1]?.body)));
+      expect(evidence[0].data).toMatchObject({from:'2026-10-19',to:'2026-10-25',timeZone:'Asia/Shanghai'});
     } finally { vi.useRealTimers(); }
   });
   it.each(['timeout','network','gateway'])('recovers one transient %s data read without repeating model planning',async failure=>{
@@ -51,8 +52,8 @@ describe('assistant resilience',()=>{
       .mockResolvedValueOnce(model({answer:'Please choose a listed statistic.'}));
     await answerSiteQuestion('Example','en',config,AbortSignal.timeout(5000),withCatalog(fetcher));
     expect(fetcher).toHaveBeenCalledTimes(2);
-    const context=JSON.parse(JSON.parse(String(fetcher.mock.calls[1][1]?.body)).messages[1].content);
-    expect(context.evidence[0].tool).toMatchObject({tool:'statistics',id:'example'});
+    const request=JSON.parse(String(fetcher.mock.calls[1][1]?.body));
+    expect(wireEvidence(request)[0].tool).toMatchObject({tool:'statistics',id:'example'});
   });
   it('recovers one transient model failure inside the original request, but never retries denied credentials',async()=>{
     const fetcher=vi.fn<typeof fetch>().mockRejectedValueOnce(new TypeError('fetch failed')).mockResolvedValueOnce(model({answer:'Please specify a person.'}));
@@ -69,6 +70,7 @@ describe('assistant resilience',()=>{
       .mockResolvedValueOnce(model({calls:[{tool:'pages',query:'frames',pageIds:['frame-count']}]}))
       .mockResolvedValueOnce(new Response('',{status:404}))
       .mockResolvedValueOnce(new Response('<main>Count frames.</main>',{headers:{'content-type':'text/html'}}))
+      .mockResolvedValueOnce(model({answer:'Count frames.',sourceIds:['frame-count']}))
       .mockResolvedValueOnce(model({answer:'Count frames.',sourceIds:['frame-count']}));
     await answerSiteQuestion('Frame counting','en',config,AbortSignal.timeout(5000), withCatalog(fetcher));
     for(const i of [1,2]) {
@@ -97,11 +99,32 @@ describe('assistant resilience',()=>{
       .mockResolvedValueOnce(model({calls:[{tool:'pages',query:'PLL',pageIds:['frame-count','page:/recognize/pll']}]}))
       .mockResolvedValueOnce(Response.json(corpus))
       .mockResolvedValueOnce(new Response('',{status:404}))
+      .mockResolvedValueOnce(model({answer:'Look for bars.',sourceIds:[passage.id]}))
       .mockResolvedValueOnce(model({answer:'Look for bars.',sourceIds:[passage.id]}));
     const result=await answerSiteQuestion('PLL','en',config,AbortSignal.timeout(5000), withCatalog(fetcher));
     expect(result.sources).toEqual([{id:passage.id,title:'PLL',href:'/recognize/pll',read:true}]);
-    const context=JSON.parse(JSON.parse(String(fetcher.mock.calls[3][1]?.body)).messages[1].content);
-    expect(context.evidence[0].data.pages).toHaveLength(1);
+    const evidence=wireEvidence(JSON.parse(String(fetcher.mock.calls[3][1]?.body)));
+    expect(evidence[0].data.pages).toHaveLength(1);
+  });
+  it.each(['zh','en'] as const)('reads a verified %s dynamic page whose index entry only contains navigation',async lang=>{
+    const href='/math/group/conjugation',id=`page:${href}`;
+    const corpus={updated:'2026-10-26T00:00:00.000Z',pages:[{lang,href,title:'Conjugation',text:''}]};
+    const fetcher=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(model({calls:[{tool:'pages',query:'conjugation setup',pageIds:[id]}]}))
+      .mockResolvedValueOnce(Response.json(corpus))
+      .mockResolvedValueOnce(new Response('<main>Apply setup, perform the operation, then undo the setup.</main>',{headers:{'content-type':'text/html'}}))
+      .mockResolvedValueOnce(model({answer:'Apply setup, operate, undo setup.',sourceIds:[id]}))
+      .mockResolvedValueOnce(model({answer:'Apply setup, operate, undo setup.',sourceIds:[id]}));
+    const result=await answerSiteQuestion('Explain this page',lang,config,AbortSignal.timeout(5000),withCatalog(fetcher));
+    expect(fetcher.mock.calls[2][0]).toBe(`https://next.cuberoot.me${lang==='zh'?'/zh':''}${href}`);
+    expect(result.sources).toEqual([{id,href,title:'Conjugation',read:true}]);
+  });
+  it('does not turn an invented page ID into an on-demand URL',async()=>{
+    const fetcher=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(model({calls:[{tool:'pages',query:'unknown',pageIds:['page:/unknown-public-route']}]}))
+      .mockResolvedValueOnce(Response.json({updated:'2026-10-26T00:00:00.000Z',pages:[]}));
+    await expect(answerSiteQuestion('Read it','en',config,AbortSignal.timeout(5000),withCatalog(fetcher))).rejects.toMatchObject({code:'source_unavailable'});
+    expect(fetcher).toHaveBeenCalledTimes(2);
   });
   it('logs stage timing without recording question, provider body or model key',async()=>{
     const log=vi.spyOn(console,'log').mockImplementation(()=>{});

@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/tnoodle-0-13-1",
+  "source": {
+    "key": "posts:/posts/tnoodle-0-13-1",
+    "kind": "posts",
+    "title": "TNoodle 0.13.1",
+    "date": "2018-01-29T17:04:08.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/tnoodle-0-13-1",
+    "content": "TNoodle-WCA-0.13.1 is now available from https://www.worldcubeassociation.org/regulations/scrambles/\nThe following changes have been made since TNoodle 0.12.0:\n\n - TNoodle now supports connecting to the WCA website to retrieve the events and rounds of a competition.\n - FMC sheets are now available in 22 languages. The full list is available here: https://github.com/thewca/tnoodle/tree/v0.13.1/webscrambles/src/i18n.\n\t\nPlease remember that official competitions must use the current version of the official scramble program. This is always available from:\nhttps://www.worldcubeassociation.org/regulations/scrambles/",
+    "hash": "3bc88c1d6fee2291ed799b8e04d9f7da0c1c4cc951c184c5c9f5a0702f995858",
+    "format": "markdown",
+    "sourceId": 8744
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "3bc88c1d6fee2291ed799b8e04d9f7da0c1c4cc951c184c5c9f5a0702f995858",
+    "language": "zh-Hans",
+    "title": "TNoodle 0.13.1 发布",
+    "content": "TNoodle-WCA-0.13.1 现已发布，可在 https://www.worldcubeassociation.org/regulations/scrambles/ 获取。\n\n相较于 TNoodle 0.12.0，本次改动如下：\n\n- TNoodle 现可连接 WCA 网站，获取比赛的项目和轮次信息。\n- 最少步纸张现提供 22 种语言。完整列表见：https://github.com/thewca/tnoodle/tree/v0.13.1/webscrambles/src/i18n.\n\n请注意，正式比赛必须使用当前版本的官方打乱程序。最新版始终可在 https://www.worldcubeassociation.org/regulations/scrambles/ 获取。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.158Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "4fbfa1effe40fb1d565959ffd3574490937aaddeffa22e3f9bc3a0a0e0c2072b"
+}

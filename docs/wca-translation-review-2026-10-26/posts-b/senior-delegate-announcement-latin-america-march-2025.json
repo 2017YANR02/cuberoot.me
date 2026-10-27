@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/senior-delegate-announcement-latin-america-march-2025",
+  "path": "docs/wca-post-translations/entries/senior-delegate-announcement-latin-america-march-2025.json",
+  "sourceHash": "5328f41ddde1317832b7ee9018967468414635c6137d91b7fcfb48675acf3ded",
+  "inputTranslationHash": "ccc55ab5c75b1a321f601a66d8e89b68bff89cd44c1323df33895e72eca2a08b",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:25.168Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

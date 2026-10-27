@@ -12,14 +12,31 @@
     "sourceId": 1006
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "7bbc519d35a1005d6583530f8cec544f722f5c75222a4ff585f85f4781b7a28b",
     "language": "zh-Hans",
     "title": "Sergey Ryabko 夺得 2010 年欧洲魔方锦标赛冠军",
-    "content": "[Sergey Ryabko](https://www.worldcubeassociation.org/results/p.php?i=2009RYAB01)以 10.31 秒的平均成绩夺得 [2010 年欧洲魔方锦标赛](https://www.worldcubeassociation.org/results/c.php?i=Euro2010)冠军。[Erik Akkersdijk](https://www.worldcubeassociation.org/results/p.php?i=2005AKKE01)以 10.38 秒获得亚军，[Cornelius Dieckmann](https://www.worldcubeassociation.org/results/p.php?i=2009DIEC01)以 10.78 秒获得季军。\n\n**世界纪录：**Bálint Bodor：五魔单次 47.53、平均 51.45；Brúnó Bereczki：金字塔单次 2.65。\n\n**欧洲纪录：**Maarten Smit：魔表单次 6.63、平均 7.88；Michal Halczuk：五阶平均 1:15.28；Rafal Guzewicz：多盲 11/11，用时 55:10。",
+    "content": "[Sergey Ryabko](https://www.worldcubeassociation.org/results/p.php?i=2009RYAB01)以 10.31 秒的平均成绩夺得 [2010 年欧洲魔方锦标赛](https://www.worldcubeassociation.org/results/c.php?i=Euro2010)冠军。[Erik Akkersdijk](https://www.worldcubeassociation.org/results/p.php?i=2005AKKE01)以 10.38 秒获得亚军，[Cornelius Dieckmann](https://www.worldcubeassociation.org/results/p.php?i=2009DIEC01)以 10.78 秒获得季军。\n\n**世界纪录：**Bálint Bodor：五魔方单次 47.53、平均 51.45；Brúnó Bereczki：金字塔单次 2.65。\n\n**欧洲纪录：**Maarten Smit：魔表单次 6.63、平均 7.88；Michal Halczuk：五阶平均 1:15.28；Rafal Guzewicz：多盲 11/11，用时 55:10。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.979Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "0ef79fe6a9d3fd9b6782d6570b49ec324cf55d07c8458c8b6baf1bc3caa0d22c"
+  "translationHash": "ea12cb778e10c7b9d2a32d378ae79bb4f2181a2d7fbbb418ae7cda5a5a30bae2",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:21:56.581Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "7bbc519d35a1005d6583530f8cec544f722f5c75222a4ff585f85f4781b7a28b",
+    "reviewedTranslationHash": "ea12cb778e10c7b9d2a32d378ae79bb4f2181a2d7fbbb418ae7cda5a5a30bae2",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/sergey-ryabko-wins-european-rubik-s-cube-championship-2010.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "0ef79fe6a9d3fd9b6782d6570b49ec324cf55d07c8458c8b6baf1bc3caa0d22c"
+  }
 }

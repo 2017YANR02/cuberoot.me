@@ -27,8 +27,8 @@ export default function SpeedSolvingChapter() {
   const START_STEPS: { zh: string; en: string; zhDesc: string; enDesc: string }[] = [
     {
       zh: '魔方落桌', en: 'Puzzle on the mat',
-      zhDesc: '观察结束后,把魔方放回桌垫上,任意朝向都行。还原全程魔方一直摆在桌面/桌垫上,不是悬在手里开计时。',
-      enDesc: 'When inspection is over, set the puzzle back on the mat in any orientation. Throughout the solve the puzzle rests on the surface — you do not start the clock with it hovering in your hands.',
+      zhDesc: '观察结束后,把魔方以任意朝向完全放在桌垫上,不得压住计时器。启动计时器时不能接触魔方;开始计时后可以拿起魔方还原,并非要求全程放在桌垫上(A3d / A4b1)。',
+      enDesc: 'After inspection, place the whole puzzle on the mat in any orientation, without resting it on the timer. Do not touch the puzzle while starting the timer. Once timing starts, you may pick it up to solve; it need not stay on the mat throughout the solve (A3d / A4b1).',
     },
     {
       zh: '手指放上计时器,掌心向下', en: 'Fingers on the timer, palms down',

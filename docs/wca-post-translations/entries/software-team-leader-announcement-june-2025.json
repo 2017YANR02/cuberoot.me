@@ -12,16 +12,31 @@
     "sourceId": 14204
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "5efc9d064cba4b941ede211935d04aef32bba96e5ad29f0d2c5dc68ab78f0b8f",
     "language": "zh-Hans",
     "title": "WCA 软件组负责人任命公告（2025 年 6 月）",
     "content": "我们很高兴地宣布，Gregor Billing 再次获任 WCA 软件组（WST）负责人。Gregor 的新任期将**持续至 2027 年 6 月 24 日**。\n\n根据[《WCA 委员会与团队动议》](https://documents.worldcubeassociation.org/documents/motions/10.2025.0%20-%20Committees%20and%20Teams.pdf)第 5 节，WCA 董事会选定了 Gregor，并通过投票批准其任命。\n\n董事会衷心感谢 Gregor 愿意继续担任 WST 负责人，祝他在新任期内工作顺利。\n\n我们共收到两份申请，Gregor 是其中一位申请者。全部申请材料可在[这里](https://drive.google.com/drive/folders/1V_ZxFABJBNydKjIbXkMcCjzHpkguhjTe)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:40:49.164Z",
-    "reviewStatus": "pending_independent_review",
-    "revisedAt": "2026-10-25T07:28:01.629Z",
-    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "dca378aeacc4c960d5401a2952ffa37f2a37106a9344600c8088f5c119c22380"
+  "translationHash": "880d527b8c3276a87bbe1ed4990d3c05e3a9a4cdf43d29657c2c5be60ff29f45",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:33.089Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "5efc9d064cba4b941ede211935d04aef32bba96e5ad29f0d2c5dc68ab78f0b8f",
+    "reviewedTranslationHash": "880d527b8c3276a87bbe1ed4990d3c05e3a9a4cdf43d29657c2c5be60ff29f45",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/software-team-leader-announcement-june-2025.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "dca378aeacc4c960d5401a2952ffa37f2a37106a9344600c8088f5c119c22380"
+  }
 }

@@ -12,14 +12,31 @@
     "sourceId": 14167
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "e668aeb967e8b51c465626191df94de92aabb0dbdbb1908365b355d8499d0fc1",
     "language": "zh-Hans",
     "title": "WCA 申诉委员会负责人任命公告（2024 年 9 月）",
     "content": "我们很高兴地宣布，Rui Reis 将担任 WCA 申诉委员会（WAC）的新负责人。\n\n按照关于 WCA 委员会和团队的[议案](https://documents.worldcubeassociation.org/documents/motions/10.2024.0%20-%20Committees%20and%20Teams.pdf)第 5 节，WCA 董事会选定 Rui，并通过投票批准任命。任命自 2024 年 9 月 14 日起生效。\n\n感谢 Stone Amsbaugh 为 WEC 以及在代理 WAC 负责人期间所做的工作，祝 Rui 履新顺利。\n\nRui 是本次岗位的唯一申请人。他的申请材料可在[此处](https://drive.google.com/file/d/1m5dp7wZxJv8wiUPGprrEDh8cJL_bnk_l/view)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.543Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "bd179439daff1614d0908b6c8b3c7501f32057131c51e8e570b26660c30dce18"
+  "translationHash": "bf6b5d32c9f2d7f493d8b62194bc7e56fd31defc3f47b3f05f8567aede2c22bd",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:59.337Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "e668aeb967e8b51c465626191df94de92aabb0dbdbb1908365b355d8499d0fc1",
+    "reviewedTranslationHash": "bf6b5d32c9f2d7f493d8b62194bc7e56fd31defc3f47b3f05f8567aede2c22bd",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wac-leader-announcement-september-2024.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "bd179439daff1614d0908b6c8b3c7501f32057131c51e8e570b26660c30dce18"
+  }
 }

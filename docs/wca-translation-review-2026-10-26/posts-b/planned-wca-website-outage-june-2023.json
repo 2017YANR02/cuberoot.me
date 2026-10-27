@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/planned-wca-website-outage-june-2023",
+  "path": "docs/wca-post-translations/entries/planned-wca-website-outage-june-2023.json",
+  "sourceHash": "e44b9694fa7b1dbcbe172431858e746f43a799287c40b3b3c6d7d80ab86e6e18",
+  "inputTranslationHash": "4602b00c3ef2ed50fe6fb47247da4532564ae3ff676d53bcf080a70fc302edfc",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:55.471Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

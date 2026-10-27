@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wmt-team-members-august-2018",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wmt-team-members-august-2018.json",
+  "sourceHash": "76a34d1a947368bc1c3f06ac18998cecdaac0691f4196bf09c805732f83afbee",
+  "inputTranslationHash": "94320fdd066a5a8c465da5c90a36c831be398942ce5f2385f3e0f0fa0871707c",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:10:56.904Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇全文核对招募领域、地域限制、工时、材料和截止日期。"
+  ],
+  "changes": []
+}

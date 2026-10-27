@@ -1,0 +1,18 @@
+{
+  "key": "disciplinary:/posts/important-announcement-about-blindfolded-solving",
+  "path": "docs/wca-log-translations/entries/disciplinary-important-announcement-about-blindfolded-solving.json",
+  "sourceHash": "ec28925700d25462e3b3394780445a4cca1c28a73140fd82d179b24cc3f6a8d5",
+  "inputTranslationHash": "3bbacac3075561c71f72c7ec5d6cff887dbbe82b96990193d38483c225d85096",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "复用当前译文哈希绑定的既有全文独立审校；本轮全量检索项目名和机构残留，并核对命中语境。",
+  "verdict": "pass",
+  "notes": [],
+  "changes": [],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/recheck-forum-full.json",
+    "reviewedTranslationHash": "3bbacac3075561c71f72c7ec5d6cff887dbbe82b96990193d38483c225d85096",
+    "verdict": "pass"
+  },
+  "sourceUncertainty": false
+}

@@ -47,6 +47,25 @@
       "previousTranslationHash": "bf76e9d09b9c032ce9eef7f85cbac22bafa6db4ff7f4ab5af7ff5f55d26cd066",
       "report": "../wca-translation-compliance-2026-10-25.json",
       "scope": "Targeted source comparison; independent prior evidence remains bound to the previous hash."
+    },
+    "recheck": {
+      "reviewer": "/root/review_logs",
+      "reviewedAt": "2026-10-26T11:10:07.703Z",
+      "report": "../wca-translation-review-2026-10-26/final-report.json",
+      "sourceHash": "8904de8d783cf098f53c1e672db3bb338562969759a7f9148490a7d719314b25",
+      "reviewedTranslationHash": "3bdf96aa8b7eeb93599d1d9a1852511d338ab2adc2195a72cd35e87aec74d632",
+      "verdict": "pass",
+      "scope": "本轮完整阅读英中正文及既有审校疑点，保留原文矛盾或含混，不擅自纠正历史事实。官方现行来源已重新读取，相关正文与保存版本一致。"
+    },
+    "currentReview": {
+      "round": "2026-10-26",
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/disciplinary-wdc-monthly-digest-july-2019.json",
+      "sourceConcern": true,
+      "notes": [
+        "源文公开信称 2007 年的作弊发生于 almost a decade ago，与 2019 年简报时间相差约十二年不一致；译文忠实保留为近十年，年代问题 unresolved。本轮仅对照所给正文，未作事实核验。",
+        "2026-10-26 重新读取官方来源，疑点仍存在；这是源文事实/措辞的保留结论，不是遗漏翻译或已确认的译文错误。"
+      ],
+      "inputTranslationHash": "3bdf96aa8b7eeb93599d1d9a1852511d338ab2adc2195a72cd35e87aec74d632"
     }
   },
   "publication": {

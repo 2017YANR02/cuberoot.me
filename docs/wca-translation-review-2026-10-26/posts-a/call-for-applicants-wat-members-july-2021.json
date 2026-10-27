@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wat-members-july-2021",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wat-members-july-2021.json",
+  "sourceHash": "97955bf7596c869c486fe842758bd7176e2c0cc29e5ee11b0d251161f452f270",
+  "inputTranslationHash": "1968805f948e9f20dc0311f851e5dd10aefe2b1594f2a5363f7e681bf64c7a8b",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:07:01.626Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照招募正文、职责条目、必需/可选资格、年龄、时限和程序；未扩展外链材料。"
+  ],
+  "changes": []
+}

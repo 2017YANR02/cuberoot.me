@@ -1,38 +1,73 @@
-/* Inter — 正文 */
 @font-face {
-  font-family: 'Inter';
+  font-family: 'SF Pro Text';
   font-style: normal;
   font-weight: 300;
   font-display: swap;
-  src: url('./assets/inter-latin-300-normal.woff2') format('woff2');
+  src: url('./assets/sf-pro-text_light.woff2') format('woff2');
 }
+
 @font-face {
-  font-family: 'Inter';
+  font-family: 'SF Pro Text';
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('./assets/inter-latin-400-normal.woff2') format('woff2');
+  src: url('./assets/sf-pro-text_regular.woff2') format('woff2');
 }
+
 @font-face {
-  font-family: 'Inter';
+  font-family: 'SF Pro Text';
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: url('./assets/inter-latin-500-normal.woff2') format('woff2');
+  src: url('./assets/sf-pro-text_medium.woff2') format('woff2');
 }
+
 @font-face {
-  font-family: 'Inter';
+  font-family: 'SF Pro Text';
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src: url('./assets/inter-latin-600-normal.woff2') format('woff2');
+  src: url('./assets/sf-pro-text_semibold.woff2') format('woff2');
 }
+
 @font-face {
-  font-family: 'Inter';
+  font-family: 'SF Pro Text';
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('./assets/inter-latin-700-normal.woff2') format('woff2');
+  src: url('./assets/sf-pro-text_bold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'SF Pro SC';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('./assets/PingFangSC-Light.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'SF Pro SC';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/PingFangSC-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'SF Pro SC';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('./assets/PingFangSC-Medium.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'SF Pro SC';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./assets/PingFangSC-Semibold.woff2') format('woff2');
 }
 
 /* Roboto Mono — recon 表格成绩列 */
@@ -54,5 +89,5 @@
 
 :root {
   --font-mono: 'Roboto Mono', ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, 'Liberation Mono', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: 'SF Pro Text', 'SF Pro SC', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 }

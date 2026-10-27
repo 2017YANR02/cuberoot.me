@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wcat-leader-november-2023",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wcat-leader-november-2023.json",
+  "sourceHash": "df442c27e17592ff7beef544ef93ccef1f805e4f9fb896c90872d4d8276741ad",
+  "inputTranslationHash": "434ae5e9078ba0e354040321c8659ecf4aa2f9f44187dba9c1d8ad215e1d513b",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:09:54.048Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整核对标题及正文，招募资格、工作时长、申请截止日期、收件人、申请材料与程序一致。"
+  ],
+  "changes": []
+}

@@ -21,7 +21,7 @@
     "sourceHash": "90a9c20d23332cb61d25baf0a3a13d4b67b7fdbf4ce73b60f03725e61f6b23da"
   },
   "review": {
-    "status": "pending_independent_recheck",
+    "status": "independently_verified",
     "checks": [
       "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
     ],
@@ -42,6 +42,22 @@
       "previousTranslationHash": "4d338f2e8a4bf1ce77db83912e633737590a0b13d64f98b2ede5ec375cb872da",
       "report": "../wca-translation-compliance-2026-10-25.json",
       "scope": "Targeted source comparison; independent prior evidence remains bound to the previous hash."
+    },
+    "recheck": {
+      "reviewer": "/root/review_logs",
+      "reviewedAt": "2026-10-26T11:10:07.703Z",
+      "report": "../wca-translation-review-2026-10-26/final-report.json",
+      "sourceHash": "90a9c20d23332cb61d25baf0a3a13d4b67b7fdbf4ce73b60f03725e61f6b23da",
+      "reviewedTranslationHash": "1d531db8915e4d66237bbe72538ff40d209f079854699e4784d96db5a2b57e4d",
+      "verdict": "pass",
+      "scope": "复用已通过的旧版全文独立审校；人工阅读旧版与现版全部文字差异及对应英文段落，确认本轮之前的差异限于官方机构名称或 Guidelines 的“指南”译法；另复核本轮项目名命中语境。"
+    },
+    "currentReview": {
+      "round": "2026-10-26",
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/incidents-61.json",
+      "sourceConcern": false,
+      "notes": [],
+      "inputTranslationHash": "1d531db8915e4d66237bbe72538ff40d209f079854699e4784d96db5a2b57e4d"
     }
   },
   "publication": {

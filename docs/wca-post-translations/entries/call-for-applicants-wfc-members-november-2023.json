@@ -12,14 +12,33 @@
     "sourceId": 14133
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "1f7c4373b1ed74d49896e25cef100036e57715472c1c5102b1cb306cf8e6df81",
     "language": "zh-Hans",
     "title": "WCA 财务委员会招募成员（2023 年 11 月）",
     "content": "WCA 财务委员会（WFC）正在招募新成员，协助管理 WCA 的财务及相关计划。所有人都可以申请，不要求目前在 WCA 任职。\n\n**WFC 负责什么？**\n\n* 日常记账，记录所有收支并保存相应凭证。\n* 管理 WCA 会费制度，包括计算、开票和制定政策。\n* 预测收入与支出，管理 WCA 年度预算。\n* 编制有关 WCA 财务及资助计划的公开报告和内部报告。\n* 代表 WCA 填报税务及其他合规表格，或联系外部财务专业人员完成这些工作。\n* 管理 WCA 资助计划并制定相关政策，包括差旅资助和器材资助。\n* 完成 WCA 董事会要求或 WCA 动议规定的其他财务工作。\n\n有关 WFC 职责的更多信息，请参阅 [WCA 动议 10.2021.6——财务委员会](https://www.worldcubeassociation.org/documents/motions/10.2021.6%20-%20Financial%20Committee.pdf)及 [WCA 动议 11.2023.1——财务](https://www.worldcubeassociation.org/documents/motions/11.2023.1%20-%20Finances.pdf)。[WCA 文件](https://www.worldcubeassociation.org/documents)页面“财务”栏目中的年度财务报告，也能帮助你了解委员会的工作。\n\nWFC 的职责很多，无法用一份技能清单涵盖所有合适的申请者，但**以下基本能力是必需的：**\n\n* 能用书面英语清楚沟通。\n* 平均每周能投入约 5 小时参与委员会工作。\n* 能持续在 24–48 小时内查阅并回复委员会的邮件或消息。\n\n**如你对以下一个或多个领域感兴趣，请在申请材料中说明。**不过，申请者不必一定对某个特定领域感兴趣，仍可获得考虑：\n\n* WCA 会费制度。\n* WCA 器材资助计划。\n* WCA 差旅资助计划。\n* 与 WCA 认可的地区组织保持联系。\n* 编制预算，并监督 WCA 支出是否符合预算。\n* 编制有关 WCA 财务和资助计划的报告。\n\n根据你感兴趣的工作领域，以下部分或全部条件可能有助于申请。请在材料中突出你具备的条件，并说明它们与你加入 WFC 的动机及希望承担的工作有何关联：\n\n* 创造性解决问题的能力。\n* 较强的数学或数据分析能力。\n* 使用电子表格及 Google G Suite 的经验。\n* 财务、税务或会计经验。\n* 申请资助或管理资助计划的经验。\n* 了解非营利组织或企业的政策制定。\n* 了解非营利组织或企业财务。\n* 了解美国税法和美国国税局的规定。\n\n**申请时请准备以下材料：**\n\n* 【必需】申请信，包含自我介绍、截至目前参与魔方社区或 WCA 的经历，以及加入 WFC 的原因。\n* 【建议】职业简历。\n* 【建议】一页纸的新 WCA 资助计划提案，包括成本估算和计划预期带来的益处。\n\n请于 **2023 年 12 月 20 日（星期三）23:59 UTC** 前，将申请材料发送给 WCA 财务主管兼 WFC 负责人 Raymond Goslow（rgoslow@worldcubeassociation.org）。你会很快收到确认收件的回复。申请将由 WFC 负责人和资深成员审阅，过程中可能邀请你参加线上面试。\n\n如有疑问，欢迎在提交申请前先联系我们。感谢你有意加入 WFC，我们期待收到你的申请！",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.562Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "ed32c74919dff6031c55432428cc5386e2f0f1f5c972a79875fd098665e6858a"
+  "translationHash": "72cc644ff80aac0ce6d22a714f098515540d561cb44fbbd1d6a1d47bb8c544ef",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:10:42.787Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "1f7c4373b1ed74d49896e25cef100036e57715472c1c5102b1cb306cf8e6df81",
+    "reviewedTranslationHash": "72cc644ff80aac0ce6d22a714f098515540d561cb44fbbd1d6a1d47bb8c544ef",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/call-for-applicants-wfc-members-november-2023.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照标题与正文；核对财务职责、非必需技能、WIC 三组人数与条件、WMCT 多舞台经验及申请流程。"
+    ],
+    "inputTranslationHash": "ed32c74919dff6031c55432428cc5386e2f0f1f5c972a79875fd098665e6858a"
+  }
 }

@@ -1,0 +1,29 @@
+{
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "total": 188,
+  "correctionRequired": 12,
+  "sourceUncertainty": 13,
+  "sourceUncertaintyKeys": [
+    "disciplinary:/posts/integrity-committee-digest-2024-q4",
+    "disciplinary:/posts/integrity-committee-digest-2025-q2",
+    "disciplinary:/posts/wdc-monthly-digest-july-2019",
+    "disciplinary:/posts/wic-digest-2024-q3",
+    "incidents:11",
+    "incidents:115",
+    "incidents:169",
+    "incidents:26",
+    "incidents:4",
+    "incidents:48",
+    "incidents:53",
+    "incidents:62",
+    "incidents:74"
+  ],
+  "eventNameAffected": 10,
+  "coverage": "138 existing hash-bound passes; 37 complete terminology-delta reviews against prior hash-bound passes; 13 full source-uncertainty reviews with live source recheck. Event name matches reviewed in full context. No entry/progress/generated-data mutation.",
+  "counts": {
+    "pass": 166,
+    "correction_required": 12,
+    "source_uncertain": 10
+  }
+}

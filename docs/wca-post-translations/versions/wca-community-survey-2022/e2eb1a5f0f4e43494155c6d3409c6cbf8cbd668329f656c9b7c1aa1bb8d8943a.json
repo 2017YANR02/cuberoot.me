@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/wca-community-survey-2022",
+  "source": {
+    "key": "posts:/posts/wca-community-survey-2022",
+    "kind": "posts",
+    "title": "WCA Community Survey 2022",
+    "date": "2022-12-06T00:00:02.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/wca-community-survey-2022",
+    "content": "Dear WCA Community,\n\nWe are glad to announce the **WCA Community Survey 2022**! \n\nThis survey is an instance for the community to provide feedback on different matters. Your feedback is important for us to define the different areas to develop.\n\n<!-- break -->\n\nEach user has their own unique link to the survey, you can find your link on the main WCA website page [here](https://worldcubeassociation.org) (you have to be logged in to get the link). The survey is anonymous. You are welcome to participate even if you have not attended a competition yet. Please **do not share your link with anyone**! All the responses submitted using the same links, as well as the responses submitted via invalid links, **will be deleted**! \n\nYou are welcome to submit your response until **January 15th 2023 23:59 UTC**. \n\nIf you have any questions or technical issues, do not hesitate to contact the WCA Advisory Council at [advisory@worldcubeassociation.org](mailto:advisory@worldcubeassociation.org).",
+    "hash": "499a23b2cd084fa55760e067984450eb0070da363486741cf9eff8ee8bc1b108",
+    "format": "markdown",
+    "sourceId": 14084
+  },
+  "translation": {
+    "version": 2,
+    "sourceHash": "499a23b2cd084fa55760e067984450eb0070da363486741cf9eff8ee8bc1b108",
+    "language": "zh-Hans",
+    "title": "2022 年 WCA 社区问卷",
+    "content": "各位 WCA 社区成员：\n\n**2022 年 WCA 社区问卷**现已开放！\n\n这份问卷让社区成员可以就不同事项提出反馈，帮助我们确定今后需要改进的方向。\n\n每位用户都有自己的专属问卷链接。登录后，可在 [WCA 官网首页](https://worldcubeassociation.org)找到该链接。问卷匿名填写，即使尚未参加过比赛，也欢迎参与。请**不要将自己的链接分享给任何人**！通过同一链接提交的所有答卷，以及通过无效链接提交的答卷，**均会被删除**！\n\n请在 **2023 年 1 月 15 日 23:59 UTC** 前提交答卷。\n\n如有疑问或遇到技术问题，请通过 [advisory@worldcubeassociation.org](mailto:advisory@worldcubeassociation.org) 联系 WCA 顾问理事会。",
+    "notes": [],
+    "translatedAt": "2026-10-25T09:29:00.729Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "e2eb1a5f0f4e43494155c6d3409c6cbf8cbd668329f656c9b7c1aa1bb8d8943a"
+}

@@ -1,0 +1,21 @@
+{
+  "key": "incidents:62",
+  "path": "docs/wca-log-translations/entries/incidents-62.json",
+  "sourceHash": "62d4219783f6c42486e9c392b5afb6d03cea19c8680cf20902dc59ffd44d4709",
+  "inputTranslationHash": "39bc3955df8e872da4a16558083496e0a1e08caf8bcba23aaa812478fd5250c3",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "本轮完整阅读英中正文及既有审校疑点，保留原文矛盾或含混，不擅自纠正历史事实。官方现行来源已重新读取，相关正文与保存版本一致。",
+  "verdict": "source_uncertain",
+  "notes": [
+    "原文标题说选手询问，正文明确说裁判询问代表；可能有转述关系，但所给正文未说明。译文忠实保留，不推断谁直接提出询问，待源方澄清。",
+    "2026-10-26 重新读取官方来源，疑点仍存在；这是源文事实/措辞的保留结论，不是遗漏翻译或已确认的译文错误。"
+  ],
+  "changes": [],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/report-5.json",
+    "reviewedTranslationHash": "39bc3955df8e872da4a16558083496e0a1e08caf8bcba23aaa812478fd5250c3",
+    "verdict": "pending_source_verification"
+  },
+  "sourceUncertainty": true
+}

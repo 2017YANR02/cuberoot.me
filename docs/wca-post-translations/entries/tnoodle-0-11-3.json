@@ -12,14 +12,31 @@
     "sourceId": 6340
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "2013f16fe001774858623710223cf62fbdbdf43682306623276f869ec41b8587",
     "language": "zh-Hans",
     "title": "TNoodle 0.11.3",
     "content": "TNoodle-WCA-0.11.3 现已可在 [https://www.worldcubeassociation.org/regulations/scrambles](https://www.worldcubeassociation.org/regulations/scrambles) 下载。\n\n相比 TNoodle 0.11.1，有以下修改：\n\n* 修复了可能生成错误最少步打乱的问题。\n* 生成的 PDF 现在会嵌入字体，以便在不同平台上保持更一致的显示效果。\n* 修复了在 Chrome 中保存 PDF 时出现报错的问题。\n\n请记住，正式比赛必须使用现行版本的官方打乱程序。下载地址始终为：[https://www.worldcubeassociation.org/regulations/scrambles](https://www.worldcubeassociation.org/regulations/scrambles)",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.920Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "e6bf2418ca5a95dac1f1b6e4bb134478d25ce21eedbed66cdf99ef4987af3314"
+  "translationHash": "e0f31969a3190f70dd48eb049e3360455532543c1a6732a92fbc79e9b8d2ab83",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:48.601Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "2013f16fe001774858623710223cf62fbdbdf43682306623276f869ec41b8587",
+    "reviewedTranslationHash": "e0f31969a3190f70dd48eb049e3360455532543c1a6732a92fbc79e9b8d2ab83",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/tnoodle-0-11-3.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "e6bf2418ca5a95dac1f1b6e4bb134478d25ce21eedbed66cdf99ef4987af3314"
+  }
 }

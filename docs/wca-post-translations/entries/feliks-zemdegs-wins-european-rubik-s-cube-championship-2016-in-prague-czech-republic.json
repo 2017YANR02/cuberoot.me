@@ -12,14 +12,33 @@
     "sourceId": 5983
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "af0f1720891e23de6b79a3dfa17c7cce57038c70932edb7b260beba325e8f17c",
     "language": "zh-Hans",
     "title": "Feliks Zemdegs 在捷克布拉格夺得 2016 年欧洲魔方锦标赛冠军",
-    "content": "[Feliks Zemdegs](https://www.worldcubeassociation.org/results/p.php?i=2009ZEMD01)以 7.07 秒的平均成绩夺得 [2016 年欧洲魔方锦标赛](https://www.worldcubeassociation.org/competitions/Euro2016)冠军。[Philipp Weyer](https://www.worldcubeassociation.org/results/p.php?i=2010WEYE01)以 7.88 秒获得亚军，[Mats Valk](https://www.worldcubeassociation.org/results/p.php?i=2007VALK01)以 8.06 秒获得季军。\n\n**世界纪录：**Feliks Zemdegs：五阶平均 49.32、三阶单手平均 10.70、六阶平均 1:43.21、七阶单次 2:20.66、七阶平均 2:25.06。\n\n**非洲纪录：**Conor Cronin：Square-1 单次 15.39、平均 20.44，魔表平均 8.15，七阶平均 4:37.31。\n\n**大洋洲纪录：**Feliks Zemdegs：五魔单次 42.29、平均 44.25、单次 39.04、平均 43.02，六阶单次 1:38.29；Jayden McNeill：三阶脚拧单次 54.33、平均 59.12，Square-1 单次 9.03。\n\n**欧洲纪录：**Antonie Paterakis：二阶平均 1.65；Emanuel Rheinert：Square-1 平均 10.97；Mats Valk：三阶单次 5.13；Michał Pleskowicz：三阶单手平均 11.37；Sebastian Weyer：五阶平均 57.36。\n\n**北美洲纪录：**Kevin Hays：五阶单次 50.33、平均 54.73，六阶平均 1:45.35。",
+    "content": "[Feliks Zemdegs](https://www.worldcubeassociation.org/results/p.php?i=2009ZEMD01)以 7.07 秒的平均成绩夺得 [2016 年欧洲魔方锦标赛](https://www.worldcubeassociation.org/competitions/Euro2016)冠军。[Philipp Weyer](https://www.worldcubeassociation.org/results/p.php?i=2010WEYE01)以 7.88 秒获得亚军，[Mats Valk](https://www.worldcubeassociation.org/results/p.php?i=2007VALK01)以 8.06 秒获得季军。\n\n**世界纪录：**Feliks Zemdegs：五阶平均 49.32、三阶单手平均 10.70、六阶平均 1:43.21、七阶单次 2:20.66、七阶平均 2:25.06。\n\n**非洲纪录：**Conor Cronin：Square-1 单次 15.39、平均 20.44，魔表平均 8.15，七阶平均 4:37.31。\n\n**大洋洲纪录：**Feliks Zemdegs：五魔方单次 42.29、平均 44.25、单次 39.04、平均 43.02，六阶单次 1:38.29；Jayden McNeill：三阶脚拧单次 54.33、平均 59.12，Square-1 单次 9.03。\n\n**欧洲纪录：**Antonie Paterakis：二阶平均 1.65；Emanuel Rheinert：Square-1 平均 10.97；Mats Valk：三阶单次 5.13；Michał Pleskowicz：三阶单手平均 11.37；Sebastian Weyer：五阶平均 57.36。\n\n**北美洲纪录：**Kevin Hays：五阶单次 50.33、平均 54.73，六阶平均 1:45.35。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.975Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "60c5e435690d9dbd5058285d08f3b1372e645f785d70496e54d8f68de54a7231"
+  "translationHash": "8cb7537a1e4561fd14a1f6b7144c29a22744aaa03456819863e43598c158ceb5",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:18:38.751Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "af0f1720891e23de6b79a3dfa17c7cce57038c70932edb7b260beba325e8f17c",
+    "reviewedTranslationHash": "8cb7537a1e4561fd14a1f6b7144c29a22744aaa03456819863e43598c158ceb5",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/feliks-zemdegs-wins-european-rubik-s-cube-championship-2016-in-prague-czech-republic.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐项检查所有纪录数值、单次/平均及选手归属，均保持不变。"
+    ],
+    "inputTranslationHash": "60c5e435690d9dbd5058285d08f3b1372e645f785d70496e54d8f68de54a7231"
+  }
 }

@@ -1,0 +1,19 @@
+{
+  "key": "disciplinary:/posts/wca-integrity-committee-team-leader-announcement-january-2026",
+  "path": "docs/wca-log-translations/entries/disciplinary-wca-integrity-committee-team-leader-announcement-january-2026.json",
+  "sourceHash": "c8963510efd2d9425ded79e4e4ab4d12480a21ef31ab7d20751f78b76709a359",
+  "inputTranslationHash": "560efe76962d52616f4ac9af3eb12978bad8b14ac4efb0f6c8d9e605eea212f9",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "复用已通过的旧版全文独立审校；人工阅读旧版与现版全部文字差异及对应英文段落，确认本轮之前的差异限于官方机构名称或 Guidelines 的“指南”译法；另复核本轮项目名命中语境。",
+  "verdict": "pass",
+  "notes": [],
+  "changes": [],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/report-1.json",
+    "reviewedTranslationHash": "409b87ca331919b35d389769aee61d176ddef8e123f08d5f0f52c4a82a60b3de",
+    "verdict": "pass",
+    "archivedVersion": "docs/wca-log-translations/versions/disciplinary-wca-integrity-committee-team-leader-announcement-january-2026/409b87ca331919b35d389769aee61d176ddef8e123f08d5f0f52c4a82a60b3de-v1.json"
+  },
+  "sourceUncertainty": false
+}

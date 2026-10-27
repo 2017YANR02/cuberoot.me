@@ -12,14 +12,31 @@
     "sourceId": 14251
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "a6c9ec5be7c0876c53e4a8e434a6888a0c3508eb74858b8d3ec3f4129bb90d21",
     "language": "zh-Hans",
     "title": "WCA 竞赛规则征集提案",
     "content": "亲爱的 WCA 社区成员：\n\n规则委员会已开始筹备新一轮规则修订，计划于 2027 年 1 月 1 日生效。依据《[规则修订议案](https://documents.worldcubeassociation.org/documents/motions/14.2025.1%20-%20Amendments%20of%20Regulations.pdf)》第 1.1 节，我们现向社区征集提案。如要提交提案，请在 [WCA 论坛的 WCA 规则分类](https://forum.worldcubeassociation.org/c/regulations/proposals)下发帖，并在帖子标题中包含“[January 2027 Regulations]”。\n\nWRC 将考虑所有在 2026 年 7 月 25 日或之前提交的提案。之后，我们会开始内部讨论并起草提案。今年晚些时候，我们将公布下一轮规则修订草案，征求社区与志愿者的反馈。我们不会自动讨论此前规则修订周期中提交过的提案，因此欢迎社区成员重新提交以前讨论过的提案。\n\n如果您对流程有任何疑问，可以在[论坛公告帖](https://forum.worldcubeassociation.org/t/request-for-proposals-january-2027-regulations/66952)中提问。",
     "notes": [],
     "translatedAt": "2026-10-22T08:26:07.753Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "e7a0a2eda1dc3244052e90311a8f29a90fadac1021d46650da0a4a34b3037772"
+  "translationHash": "6abe193f1e4918544666da9b8e74f88a286dd95b5e475e656d91bb734e711c18",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:10:32.386Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "a6c9ec5be7c0876c53e4a8e434a6888a0c3508eb74858b8d3ec3f4129bb90d21",
+    "reviewedTranslationHash": "6abe193f1e4918544666da9b8e74f88a286dd95b5e475e656d91bb734e711c18",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wca-regulations-requests-for-proposals.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "e7a0a2eda1dc3244052e90311a8f29a90fadac1021d46650da0a4a34b3037772"
+  }
 }

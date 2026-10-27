@@ -201,7 +201,7 @@
     text-transform: uppercase;
     letter-spacing: 0.04em;
     border-bottom: 1px solid var(--avg-border);
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-sans);
 }
 
 .avg-th-num {

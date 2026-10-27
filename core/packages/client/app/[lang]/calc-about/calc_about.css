@@ -8,7 +8,7 @@
   --calca-border: #e5e5e5;
   --calca-accent: #059669;
 
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-sans);
   background: var(--calca-bg);
   color: var(--calca-text);
   min-height: 100vh;

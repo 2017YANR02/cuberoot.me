@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/forum-digest-october-2023",
+  "path": "docs/wca-post-translations/entries/forum-digest-october-2023.json",
+  "sourceHash": "17bf2e81f2395d713e3d74b219b05d0efb0ea50746b38dd7e588824bf77366b1",
+  "inputTranslationHash": "06a09e43efa7d4f55ab17fdc775eac03382239329bf6c65418a52340f144a79d",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:36.319Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

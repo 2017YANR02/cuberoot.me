@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/amendments-to-the-motions-approved-january-2020",
+  "path": "docs/wca-post-translations/entries/amendments-to-the-motions-approved-january-2020.json",
+  "sourceHash": "8568c647d5d6c9d368528c31b19e4c02517dc98c5d0ac5d63fcca9f4ebf2eef0",
+  "inputTranslationHash": "0678177806dae50b1d05f7d4d8e9839797503d77720d814c552d54012523f951",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:05:11.621Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+  ],
+  "changes": []
+}

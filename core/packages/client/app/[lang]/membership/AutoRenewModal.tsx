@@ -50,11 +50,11 @@ export default function AutoRenewModal({ price, period, planSlug, priceCents, on
   }
   const copy = period === 'year'
     ? {
-        title: MEMBERSHIP_COPY.annual,
+        title: planSlug?.startsWith('enterprise_') ? MEMBERSHIP_COPY.enterpriseAnnual : MEMBERSHIP_COPY.annual,
         unit: { zh: '年', en: 'year' },
       }
     : {
-        title: MEMBERSHIP_COPY.monthly,
+        title: planSlug?.startsWith('enterprise_') ? MEMBERSHIP_COPY.enterpriseMonthly : MEMBERSHIP_COPY.monthly,
         unit: { zh: '月', en: 'month' },
       };
 

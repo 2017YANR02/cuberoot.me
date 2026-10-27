@@ -1,5 +1,5 @@
 // 本地全量 WCA 选手索引 —— 替代 WCA /search/users 的网络请求
-// 数据源：stats/persons_search.json.gz （由 stats-build 周更）
+// 默认读取已发布索引；显式本地统计模式与其他统计数据遵循同一配置。
 // 首次访问后台拉一次（~3.7MB gzip → ~10MB JSON），之后客户端内存搜索 O(n) 但 n=28万 + SIMD includes 通常 <20ms
 import type { WcaPerson } from '../types';
 import { statsUrl } from './stats-base';
@@ -19,7 +19,7 @@ let loadPromise: Promise<Loaded> | null = null;
 function yieldMain() { return new Promise<void>(r => setTimeout(r, 0)); }
 
 async function fetchAndParse(): Promise<Loaded> {
-  const resp = await fetch(statsUrl(URL), { cache: 'force-cache' });
+  const resp = await fetch(statsUrl(URL));
   if (!resp.ok) throw new Error(`persons index fetch ${resp.status}`);
   const ds = new DecompressionStream('gzip');
   const stream = resp.body!.pipeThrough(ds);
@@ -42,7 +42,10 @@ async function fetchAndParse(): Promise<Loaded> {
 export function loadPersonsIndex(): Promise<Loaded> {
   if (loaded) return Promise.resolve(loaded);
   if (loadPromise) return loadPromise;
-  loadPromise = fetchAndParse().then(d => { loaded = d; return d; });
+  loadPromise = fetchAndParse().then(d => { loaded = d; return d; }).catch(error => {
+    loadPromise = null;
+    throw error;
+  });
   return loadPromise;
 }
 

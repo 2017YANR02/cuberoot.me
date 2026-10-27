@@ -11,7 +11,7 @@
     --ga-accent: #C15F3C;
     --ga-accent-soft: rgba(193, 95, 60, 0.08);
 
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: var(--font-sans);
     background: var(--ga-bg);
     color: var(--ga-text);
     min-height: 100vh;

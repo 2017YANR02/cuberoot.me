@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/update-on-covid-19",
+  "path": "docs/wca-post-translations/entries/update-on-covid-19.json",
+  "sourceHash": "a93ec614001586405918faced122c4319a50771219aeadb6fb08eaeafde713fd",
+  "inputTranslationHash": "9a8ba77b178b8cc7899802e12059eef369d838865e2767f8e93d2d1d49bef841",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:59.336Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

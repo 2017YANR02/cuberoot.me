@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/wsot-leader-announcement-january-2025",
+  "path": "docs/wca-post-translations/entries/wsot-leader-announcement-january-2025.json",
+  "sourceHash": "ccfdbda8add2c807b3da1a1709a31d63872eb6bec60673bac176bf07fda35da2",
+  "inputTranslationHash": "4c5ff58dd2d3336e1039c079c90f40c6b6bf64820e1697900c687b5e90ca8382",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:12:24.812Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [
+    "逐篇核对新任、前任、成员职衔、遴选批准程序、申请人数和日期。"
+  ],
+  "changes": []
+}

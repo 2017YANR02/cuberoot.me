@@ -12,14 +12,31 @@
     "sourceId": 14258
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "a4d3d5edd4c21df496b86625e23086c10571b40d7f656b1b6900ba7de3b990e1",
     "language": "zh-Hans",
-    "title": "WAC 负责人任命公告（2026 年 8 月）",
-    "content": "亲爱的 WCA 社区成员：\n\n我们很高兴宣布，Glenn Koster 将担任 WCA 申诉委员会（WAC）的新任负责人。Glenn 此前已是 WAC 的资深成员。\n\nWCA 董事会依据《WCA 委员会与团队[议案](https://documents.worldcubeassociation.org/documents/motions/10.2025.0%2520-%2520Committees%2520and%2520Teams.pdf)》第 5 节，选出 Glenn，并通过投票批准了这一任命。任命自 2026 年 8 月 26 日生效。\n\n我们感谢 Rui Reis 担任负责人期间所做的工作。他将继续留任 WAC 资深成员。我们也祝 Glenn 在新的岗位上一切顺利。\n\n我们只收到了 Glenn 的申请。其申请材料可在[此处](https://drive.google.com/drive/folders/197lt-fxEy7cyjoWST_1xMZUO9J8uFukX?usp=sharing)查看。",
+    "title": "WCA 申诉委员会负责人任命公告（2026 年 8 月）",
+    "content": "亲爱的 WCA 社区成员：\n\n我们很高兴宣布，Glenn Koster 将担任 WCA 申诉委员会（WAC）的新任负责人。Glenn 此前已是 WAC 的高级成员。\n\nWCA 董事会依据《WCA 委员会与团队[议案](https://documents.worldcubeassociation.org/documents/motions/10.2025.0%2520-%2520Committees%2520and%2520Teams.pdf)》第 5 节，选出 Glenn，并通过投票批准了这一任命。任命自 2026 年 8 月 26 日生效。\n\n我们感谢 Rui Reis 担任负责人期间所做的工作。他将继续留任 WAC 高级成员。我们也祝 Glenn 在新的岗位上一切顺利。\n\n我们只收到了 Glenn 的申请。其申请材料可在[此处](https://drive.google.com/drive/folders/197lt-fxEy7cyjoWST_1xMZUO9J8uFukX?usp=sharing)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:40:49.171Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "165d85a4d7b1c2ac9a5c8e435a7af2bfba18a9a18c3f61128ff727d8cb4f2803"
+  "translationHash": "522b61332298bdbfc0c23d462aa23d679676d3c11d92aa40c463173d4d5be9ba",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:16:44.876Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "a4d3d5edd4c21df496b86625e23086c10571b40d7f656b1b6900ba7de3b990e1",
+    "reviewedTranslationHash": "522b61332298bdbfc0c23d462aa23d679676d3c11d92aa40c463173d4d5be9ba",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wac-leader-announcement-august-2026.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "165d85a4d7b1c2ac9a5c8e435a7af2bfba18a9a18c3f61128ff727d8cb4f2803"
+  }
 }

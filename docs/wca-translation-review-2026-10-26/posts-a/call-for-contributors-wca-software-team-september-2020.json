@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-contributors-wca-software-team-september-2020",
+  "path": "docs/wca-post-translations/entries/call-for-contributors-wca-software-team-september-2020.json",
+  "sourceHash": "5792d664bc9983b8a4cf5d20284ff5812db8c013aeef8193fb13228c826755ff",
+  "inputTranslationHash": "b14909f04c2153f87058ca7daa291b95e511607ccad66a46f3f7f69a4563d276",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:12:00.207Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照正文及标题；申请条件、薪酬福利和地域、岗位职责、2024/2025 任命程序及 2019 草案条目逐项核对。"
+  ],
+  "changes": []
+}

@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/applications-for-south-american-championship-2018",
+  "path": "docs/wca-post-translations/entries/applications-for-south-american-championship-2018.json",
+  "sourceHash": "b247f042ae3f9bef5788918af214491cf9c7e5d6daf2fdda1224bc5369bd63aa",
+  "inputTranslationHash": "74205c078bf93140e14f51cbddafa0f893c2bcfffa6e7bbb90222effe65efb64",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:05:49.185Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照申办地区、申请时段、材料要求、评选主体及全部预算/场馆/人员条目。"
+  ],
+  "changes": []
+}

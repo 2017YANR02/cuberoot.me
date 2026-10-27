@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/gilles-roux-retires-as-member-of-wca-board",
+  "path": "docs/wca-post-translations/entries/gilles-roux-retires-as-member-of-wca-board.json",
+  "sourceHash": "dc5740c0084c996b6c04a588e39e7821b5abe5cb68cfa2fe3de1f65774a198ee",
+  "inputTranslationHash": "c259a4842097c25f7ff4d4fedffdda91a56f9e7ec3a65ee66ad921e580c01794",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:36.319Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

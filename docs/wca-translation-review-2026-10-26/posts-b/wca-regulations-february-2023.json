@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/wca-regulations-february-2023",
+  "path": "docs/wca-post-translations/entries/wca-regulations-february-2023.json",
+  "sourceHash": "6c7fbbd09dba6da15d3ddbf742727797a3d10c6792e6c41878809f914c953c3f",
+  "inputTranslationHash": "f29944a2b57445130873ef6614778599fb0aa4ce0a4d85406cb0ed5a2f04b60d",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:09:31.431Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [
+    "已核对完整正文、规则编号、日期、条件及项目术语。"
+  ],
+  "changes": []
+}

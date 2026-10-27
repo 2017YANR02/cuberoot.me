@@ -1,0 +1,27 @@
+{
+  "key": "posts:/posts/new-wcat-leader",
+  "source": {
+    "key": "posts:/posts/new-wcat-leader",
+    "kind": "posts",
+    "title": "New WCAT Leader",
+    "date": "2018-10-20T15:17:47.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/new-wcat-leader",
+    "content": "We are happy to announce that we have a new Committee Leader. Henrik Buus Aagaard will become the Leader of the WCA Competition Announcement Team (WCAT).\n\nHenrik was selected by the WCA Board and approved in a voting among the current Committee/Team Leaders and Senior Delegates, following Section 4 of our [Motion 10.2017.0](https://www.worldcubeassociation.org/documents/motions/10.2017.0%20-%20Committees%20and%20Teams.pdf) about WCA Committees and Teams.\n\nWe wish Henrik the best of luck in fulfilling his new duty!\n\nThe new Leader will be promoted immediately. Henrik Buus Aagaard was among the five applicants we had and his candidacy document (and the others) can be found [here](https://drive.google.com/drive/folders/1h0Il-T-r01ZVS9u2dgs2-uxFz91WPeoR?usp=sharing) if you are interested in viewing it. \n\nList of the other candidates who applied:\n- Jacob Ambrose\n- Clément Cherblanc\n- Abhijeet Ghodgaonkar\n- Sam Spendla",
+    "hash": "9ae735cd0870f3311daee29264cffcf540dc7569bbdd8fd0f9fcc1323d020917",
+    "format": "markdown",
+    "sourceId": 10494
+  },
+  "translation": {
+    "version": 2,
+    "sourceHash": "9ae735cd0870f3311daee29264cffcf540dc7569bbdd8fd0f9fcc1323d020917",
+    "language": "zh-Hans",
+    "title": "WCA 比赛公示组新任负责人",
+    "content": "我们很高兴地宣布，Henrik Buus Aagaard 将担任 WCA 比赛公示组（WCAT）负责人。\n\n依照 WCA 委员会与团队[动议 10.2017.0](https://www.worldcubeassociation.org/documents/motions/10.2017.0%20-%20Committees%20and%20Teams.pdf)第 4 节，WCA 董事会选定 Henrik，并经现任委员会、团队负责人和高级代表投票批准。\n\n祝 Henrik 在新的岗位上工作顺利！\n\n新负责人将立即上任。本次共有五位申请人，包括 Henrik Buus Aagaard。有兴趣的成员可在[此处](https://drive.google.com/drive/folders/1h0Il-T-r01ZVS9u2dgs2-uxFz91WPeoR?usp=sharing)查看他及其他申请人的材料。\n\n其他申请人为：\n\n- Jacob Ambrose\n- Clément Cherblanc\n- Abhijeet Ghodgaonkar\n- Sam Spendla",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.156Z",
+    "reviewStatus": "pending_independent_review",
+    "revisedAt": "2026-10-25T07:28:01.629Z",
+    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+  },
+  "translationHash": "5aeb692ee3b6709797ea3f8f84fdb24123b002936e30792b7ec95df839d5bc68"
+}

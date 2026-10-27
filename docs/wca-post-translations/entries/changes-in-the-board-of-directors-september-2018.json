@@ -12,14 +12,33 @@
     "sourceId": 10185
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "71a2da6cd54b5fded0730c282610335f1de87339941e60f20b035fb8e48530b3",
     "language": "zh-Hans",
     "title": "WCA 董事会成员变动（2018 年 9 月）",
     "content": "我们很高兴地宣布，Chris Wright 成为 WCA 董事会的新成员！\n\n依照[动议 5.2018.1](https://www.worldcubeassociation.org/documents/motions/05.2018.1%20-%20Election%20of%20Directors.pdf)，WCA 各负责人及代表进行了不记名投票，通过了 Chris 的申请。欢迎 Chris 加入 WCA 董事会，祝他在新的岗位上工作顺利。\n\n这一变动立即生效。\n\n有兴趣了解的成员可在[此处](https://drive.google.com/drive/folders/1lV3bRMMWBdQ3bSo7JNRjd2GAN0IZ1Chi?usp=sharing)查看 Chris 的申请材料。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.180Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "5b68efc1b4ded4e4a56052daa69c9832da838851a4b2984b18832bcb6dc44af7"
+  "translationHash": "293b4a5146823a37714da1eafe693f08c1077c31b996063983469b4ab2614a49",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:12:23.464Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "71a2da6cd54b5fded0730c282610335f1de87339941e60f20b035fb8e48530b3",
+    "reviewedTranslationHash": "293b4a5146823a37714da1eafe693f08c1077c31b996063983469b4ab2614a49",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/changes-in-the-board-of-directors-september-2018.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照标题和正文；各届赛事城市及取消/退款范围、董事候选名单、当选与连任区别、任期及生效日期、保留职务和干事分工均与原文一致。"
+    ],
+    "inputTranslationHash": "5b68efc1b4ded4e4a56052daa69c9832da838851a4b2984b18832bcb6dc44af7"
+  }
 }

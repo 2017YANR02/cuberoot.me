@@ -39,7 +39,7 @@
 }
 /* placeholder(打乱 / 解法)走正文字体,跟上方「公式」标题一致,不用 mono */
 .sim-player-input::placeholder {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-sans);
 }
 
 /* Ivy live-input red highlight. A mirror layer renders the same text behind the

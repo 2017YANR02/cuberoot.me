@@ -83,6 +83,22 @@ A reference for translating regulations, competition announcements and incident 
 - 同一官网不同 key 也可能不一致，例如 WCAT 在报名表标签中出现“比赛公告小组”，机构名条目为“比赛公示组”。翻译机构名称时优先 `page->teams_committees_councils->groups_name`，不要直接采用第一条命中或把长句中的用词当成机构正式名称。 / Different official contexts can disagree. For organization names prioritize the groups_name key over form labels or descriptions.
 - 核对时发现官网干事说明（`page.officers_and_board.officers_description`）将 officers 译成“董事”，新译文应区分“干事”和“董事”；直接查官方来源时仍须留意这类疑点。 / The checked officers description conflates officers with directors in Chinese; flag this discrepancy when consulting the official source instead of copying it.
 
+## 项目名称 / Event names
+
+公告、意外事件和纪律处分的中文正文也须使用中文项目名。官方 `events` 条目已提供译名时，不直接留下英文；本站紧凑名称复用 `core/packages/shared/src/wca_events.ts`。下列官方译名已通过翻译检索服务于 **2026-10-26** 核对。 / Use localized event names in Chinese prose, not just in menus. Official event entries were checked through the translation API on **2026-10-26**; compact site labels share the event catalog.
+
+| English | 中文 / Chinese | 使用说明 / Usage |
+| --- | --- | --- |
+| Skewb | 斜转 | 官方 `events->skewb`。 / Official event name. |
+| Megaminx | 五魔方；五魔 | 正文可用全称，紧凑名称用五魔。 / Full or compact name by context. |
+| Pyraminx | 金字塔 | 官方 `events->pyram`。 / Official event name. |
+| Clock | 魔表 | 不译成普通时钟。 / The puzzle, not a generic clock. |
+| Square-1 | Square-1；SQ1 | 官方保留英文，本站简称 SQ1；不编造中文名称。 / Official wording retains the name; SQ1 is the site's short form. |
+| Face-Turning Octahedron (FTO) | 转面八面体（FTO） | 本站词典名称；首次展开，后文可保留缩写。 / Site glossary wording; expand on first use. |
+| 3×3×3 Fewest Moves (FMC) | 三阶最少步（FMC） | 首次展开；步数不能写成用时。 / Expand on first use; results are move counts, not times. |
+
+项目名检查须区分语境：比赛专名、选手姓名、产品及软件名、URL、公式记号和明确的英文引文保持原样；不能对整个文件机械替换。Square-1 等保留名称不是漏译。 / Preserve competition and personal names, products, software, URLs, notation, and explicit English quotations; do not blindly replace entire files. Retained official names such as Square-1 are not untranslated omissions.
+
 ## 人员与组织 / People and organization
 
 | English | 推荐中文 / Chinese | 语境 / Usage | 条款 / Reference |

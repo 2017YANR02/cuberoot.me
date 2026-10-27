@@ -12,14 +12,33 @@
     "sourceId": 14188
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "ccfdbda8add2c807b3da1a1709a31d63872eb6bec60673bac176bf07fda35da2",
     "language": "zh-Hans",
     "title": "WCA 体育组织团队负责人任命公告（2025 年 1 月）",
     "content": "各位 WCA 社区成员：\n\n我们很高兴地宣布，Sean Moran 将出任 WCA 体育组织团队（WSOT）的新任负责人。Sean 此前已是 WSOT 成员。\n\nWCA 董事会依照[《关于 WCA 委员会与团队的议案》](https://documents.worldcubeassociation.org/documents/motions/10.2024.0%20-%20Committees%20and%20Teams.pdf)第 5 节的规定，选出 Sean 并投票通过了这一任命。任命自 2025 年 1 月 5 日起生效。\n\n感谢 Ethan Pride 在负责人任内所做的工作。他将继续担任 WSOT 高级成员。祝 Sean 在新的岗位上一切顺利。\n\n我们共收到两份申请，Sean 是其中一位申请人。所有申请材料可在[这里](https://drive.google.com/drive/folders/1CEkrAxz-0c1EgvmiK61qScaHqcjoYiyd)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:42:40.566Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "4c5ff58dd2d3336e1039c079c90f40c6b6bf64820e1697900c687b5e90ca8382"
+  "translationHash": "7e8f3ea28296f056216471643df29f5007ab03592623c2a9af04c3f85e4ddd34",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:12:24.812Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "ccfdbda8add2c807b3da1a1709a31d63872eb6bec60673bac176bf07fda35da2",
+    "reviewedTranslationHash": "7e8f3ea28296f056216471643df29f5007ab03592623c2a9af04c3f85e4ddd34",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wsot-leader-announcement-january-2025.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇核对新任、前任、成员职衔、遴选批准程序、申请人数和日期。"
+    ],
+    "inputTranslationHash": "4c5ff58dd2d3336e1039c079c90f40c6b6bf64820e1697900c687b5e90ca8382"
+  }
 }

@@ -12,14 +12,33 @@
     "sourceId": 13024
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "9f82eac30bfc2c4e7a7e29bc5a3f7261dc4e8864ae8235c36acba98b6bccda75",
     "language": "zh-Hans",
     "title": "新任高级代表公告（2019 年 10 月）",
     "content": "我们很高兴宣布，两位新高级代表已获任命：\n\n- Leow Yi Jun——东南亚\n- Serhii Koksharov——欧亚中部\n\n<!-- break -->\n\nWCA 董事会依照关于高级代表的[决议 9.2019.1](https://www.worldcubeassociation.org/documents/motions/09.2019.1%20-%20Senior%20Delegates.pdf)第 4 节，通过内部投票选定了他们。\n\n两人的高级代表任期自 2019 年 10 月 1 日起生效。\n\n申请材料可在[此处](https://drive.google.com/drive/folders/1FXmw3EErv9qBf3H-C1oZqe2Pl0ahuItF?usp=sharing)查看。\n\nIlya Tsiareshka 也提交了欧亚中部高级代表的申请。感谢所有申请人愿意在现有工作的基础上，继续为 WCA 和速拧社区多出一份力。祝 Yi Jun 和 Serhii 在新岗位上一切顺利！",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:54.059Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "05940a0caf87393adcf5f8899ac6beda200769bbbcbf96514e79930af5dd7f84"
+  "translationHash": "db4c9b1cb9e7bdf14287cad0813bcacb2bd79c93d099d0515fecb84e77c4efd7",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:06:14.456Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "9f82eac30bfc2c4e7a7e29bc5a3f7261dc4e8864ae8235c36acba98b6bccda75",
+    "reviewedTranslationHash": "db4c9b1cb9e7bdf14287cad0813bcacb2bd79c93d099d0515fecb84e77c4efd7",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/appointment-of-new-senior-delegates-october-2019.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照正文与标题；核对全部申请/任命主体、时间、权限、附录条目及材料要求。"
+    ],
+    "inputTranslationHash": "05940a0caf87393adcf5f8899ac6beda200769bbbcbf96514e79930af5dd7f84"
+  }
 }

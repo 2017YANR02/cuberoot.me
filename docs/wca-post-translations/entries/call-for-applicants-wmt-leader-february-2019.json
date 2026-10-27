@@ -12,7 +12,7 @@
     "sourceId": 11388
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "dcfd6f594792a4d86b736f7614f65992b5826d2f6f16afb40bfe5f49a9ac495e",
     "language": "zh-Hans",
     "title": "WCA 市场营销组负责人招募（2019 年 2 月）",
@@ -21,9 +21,26 @@
       "原文将 WMT 称为 Advisory Committee，按原文保留咨询委员会表述。"
     ],
     "translatedAt": "2026-10-22T08:49:00.946Z",
-    "reviewStatus": "pending_independent_review",
-    "revisedAt": "2026-10-25T07:28:01.629Z",
-    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "5de06783b0aab91b30ca2aa930bba2cab2543cbc5ab74629192f97e1af1500c7"
+  "translationHash": "efe26eb604f20b105b4e45f91488c4f0f8aba6447c1b5bfb5d3aac3f68ef345b",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:10:42.788Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "dcfd6f594792a4d86b736f7614f65992b5826d2f6f16afb40bfe5f49a9ac495e",
+    "reviewedTranslationHash": "efe26eb604f20b105b4e45f91488c4f0f8aba6447c1b5bfb5d3aac3f68ef345b",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/call-for-applicants-wmt-leader-february-2019.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照标题与正文；核对财务职责、非必需技能、WIC 三组人数与条件、WMCT 多舞台经验及申请流程。"
+    ],
+    "inputTranslationHash": "5de06783b0aab91b30ca2aa930bba2cab2543cbc5ab74629192f97e1af1500c7"
+  }
 }

@@ -12,14 +12,31 @@
     "sourceId": 14262
   },
   "translation": {
-    "version": 3,
+    "version": 4,
     "sourceHash": "118b580406e9e519b4a6098d1a1512edd68fbf5ca6f6974e113a8428e046a8a3",
     "language": "zh-Hans",
-    "title": "WCT 负责人任命公告（2026 年 9 月）",
-    "content": "亲爱的 WCA 社区成员：\n\n我们很高兴宣布，Carter Thomas 已成为 WCA 通讯组（WCT）的新任负责人。Carter 此前已是 WCT 的资深成员。\n\nWCA 董事会依据《WCA 委员会与团队[议案](https://documents.worldcubeassociation.org/documents/motions/10.2025.0%2520-%2520Committees%2520and%2520Teams.pdf)》第 5 节，选出 Carter，并通过投票批准了这一任命。任命自 2026 年 9 月 5 日生效。\n\n我们感谢 Kyle Renatus 担任负责人期间所做的工作，并祝 Carter 在新的岗位上一切顺利。\n\n我们只收到了 Carter 的申请。其申请材料可在[此处](https://drive.google.com/drive/folders/18MjCLXRTAvCC7U3ixwbJYyBvFUFMFOlb?usp=sharing)查看。",
+    "title": "WCA 通讯组负责人任命公告（2026 年 9 月）",
+    "content": "亲爱的 WCA 社区成员：\n\n我们很高兴宣布，Carter Thomas 已成为 WCA 通讯组（WCT）的新任负责人。Carter 此前已是 WCT 的高级成员。\n\nWCA 董事会依据《WCA 委员会与团队[议案](https://documents.worldcubeassociation.org/documents/motions/10.2025.0%2520-%2520Committees%2520and%2520Teams.pdf)》第 5 节，选出 Carter，并通过投票批准了这一任命。任命自 2026 年 9 月 5 日生效。\n\n我们感谢 Kyle Renatus 担任负责人期间所做的工作，并祝 Carter 在新的岗位上一切顺利。\n\n我们只收到了 Carter 的申请。其申请材料可在[此处](https://drive.google.com/drive/folders/18MjCLXRTAvCC7U3ixwbJYyBvFUFMFOlb?usp=sharing)查看。",
     "notes": [],
     "translatedAt": "2026-10-25T09:29:00.730Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "1e9332b2858e2c503f1a78ebfc4d6e8fec0469a919c67ea227d7d51ea49986db"
+  "translationHash": "6b8f0cfe28b32d14e7d688808298ce1a1e4f6e86fe691ac2a66fe5497f64b957",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:16:44.877Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "118b580406e9e519b4a6098d1a1512edd68fbf5ca6f6974e113a8428e046a8a3",
+    "reviewedTranslationHash": "6b8f0cfe28b32d14e7d688808298ce1a1e4f6e86fe691ac2a66fe5497f64b957",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wct-leader-announcement-september-2026.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "1e9332b2858e2c503f1a78ebfc4d6e8fec0469a919c67ea227d7d51ea49986db"
+  }
 }

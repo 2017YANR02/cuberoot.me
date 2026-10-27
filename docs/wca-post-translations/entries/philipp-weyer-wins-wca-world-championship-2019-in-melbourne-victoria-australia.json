@@ -12,14 +12,31 @@
     "sourceId": 12444
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "2b01632ef1c8f9e2e8d6c742cb39982b144d34669079483c04c8a4c391fa067e",
     "language": "zh-Hans",
     "title": "Philipp Weyer 夺得澳大利亚墨尔本 2019 年 WCA 世锦赛冠军",
     "content": "[Philipp Weyer](https://www.worldcubeassociation.org/persons/2010WEYE01) 以 6.74 秒的平均成绩赢得了 [2019 年 WCA 世锦赛](https://www.worldcubeassociation.org/competitions/WC2019)冠军。[Sean Patrick Villanueva](https://www.worldcubeassociation.org/persons/2017VILL41) 以 6.78 秒获得亚军，[Sebastian Weyer](https://www.worldcubeassociation.org/persons/2010WEYE02) 以 6.81 秒获得季军。\n\n世界纪录：Andrew Huang，斜转单次 0.93；Max Park，七阶单次 1:44.02、平均 1:50.10；Stanley Chapel，四阶盲拧单次 1:08.07、平均 1:21.81，五阶盲拧单次 2:38.77。\n\n非洲纪录：Timothy Lawrance，三阶最少步单次 25 步、平均 28.00 步。\n\n亚洲纪录：Lim Hung，三阶脚拧单次 17.10、平均 23.29；Makoto Takaoka（高岡誠），Square-1 平均 7.50；Seung Hyuk Nahm（남승혁），四阶单次 19.87、平均 23.57，五阶平均 45.75、单次 40.66、平均 44.78，六阶单次 1:24.61。\n\n大洋洲纪录：David Epstein，Square-1 平均 8.68；Tom Nelson，三阶多盲单次 29/31，57:09。\n\n欧洲纪录：Amos Nordman，五魔方平均 34.50；Ciarán Beahan，五阶单次 38.96、六阶平均 1:27.23；Martin Vædele Egdal，三阶盲拧平均 21.52、平均 19.94。\n\n北美洲纪录：Max Hilliard，三阶盲拧单次 16.23。\n\n南美洲纪录：Manuel Gutman，三阶盲拧平均 20.81、五阶盲拧单次 6:13.53。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:00.951Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "3ec232d34fa5e59720031d6f17a2399ea988bf9c4c92f48b38f03efb9a68a999"
+  "translationHash": "89682e028a798fef17e66c152d2579277053939c8446f2770fc48e21ffa6be8c",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:55.471Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "2b01632ef1c8f9e2e8d6c742cb39982b144d34669079483c04c8a4c391fa067e",
+    "reviewedTranslationHash": "89682e028a798fef17e66c152d2579277053939c8446f2770fc48e21ffa6be8c",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/philipp-weyer-wins-wca-world-championship-2019-in-melbourne-victoria-australia.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "3ec232d34fa5e59720031d6f17a2399ea988bf9c4c92f48b38f03efb9a68a999"
+  }
 }

@@ -12,14 +12,31 @@
     "sourceId": 2197
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "f034e19f18ba2aff449dc4b6a4e512d1ea1e896a10bbf3db27db83d11a43ca35",
     "language": "zh-Hans",
     "title": "Richard Jay S. Apagar 夺得 2012 年亚洲锦标赛冠军",
     "content": "[Richard Jay S. Apagar](https://www.worldcubeassociation.org/results/p.php?i=2010APAG01) 以 9.45 秒的平均成绩赢得[2012 年亚洲锦标赛](https://www.worldcubeassociation.org/results/c.php?i=AsianChampionship2012)冠军。[Nipat Charoenpholphant（นิพัฒน์ เจริญพลพันธุ์）](https://www.worldcubeassociation.org/results/p.php?i=2009CHAR03)以 9.47 秒获得亚军，[Weixing Zhang（张炜星）](https://www.worldcubeassociation.org/results/p.php?i=2009ZHAN53)以 10.21 秒获得季军。\n\n亚洲纪录：Weixing Zhang（张炜星），四阶单次 28.10 秒。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.931Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "4fcf9d1123f351acba2b0c3a9c005c37ac9bf5317cfa11567c064f74d352411c"
+  "translationHash": "0a675bdcccebe6c3891e13de0d615070ce8dbf102aa464cb8127528f14c095c7",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:15.857Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "f034e19f18ba2aff449dc4b6a4e512d1ea1e896a10bbf3db27db83d11a43ca35",
+    "reviewedTranslationHash": "0a675bdcccebe6c3891e13de0d615070ce8dbf102aa464cb8127528f14c095c7",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/richard-jay-s-apagar-wins-asian-championship-2012.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "4fcf9d1123f351acba2b0c3a9c005c37ac9bf5317cfa11567c064f74d352411c"
+  }
 }

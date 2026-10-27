@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applications-wca-competition-announcement-team-leader-october-2025",
+  "path": "docs/wca-post-translations/entries/call-for-applications-wca-competition-announcement-team-leader-october-2025.json",
+  "sourceHash": "8a6d1f01d3dd044f9d2f3046f48998ab0483420b971a8cd4106e82146276a2b4",
+  "inputTranslationHash": "4450e3d5d00e7fb407fee577d389cf1ebc740df231bc391ce0763dc50acb1561",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:11:22.964Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题及正文；核对软件技术专名、申请要求及申请期、历史 WAC 缩写和申诉流程、新旧任命程序。"
+  ],
+  "changes": []
+}

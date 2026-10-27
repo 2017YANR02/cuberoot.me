@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/wca-regulations-june-2022-now-in-effect",
+  "source": {
+    "key": "posts:/posts/wca-regulations-june-2022-now-in-effect",
+    "kind": "posts",
+    "title": "WCA Regulations — June 2022: Now in Effect",
+    "date": "2022-05-31T20:26:13.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/wca-regulations-june-2022-now-in-effect",
+    "content": "New WCA [Regulations](https://www.worldcubeassociation.org/regulations/) and [Guidelines](https://www.worldcubeassociation.org/regulations/guidelines.html) are in effect as of June 1, 2022. Please see the [original announcement](https://www.worldcubeassociation.org/posts/wca-regulations-june-2022) for details.",
+    "hash": "77f558fb7bb764c996e4d57655aa32d686952e784e094ec8601790d95e8ee066",
+    "format": "markdown",
+    "sourceId": 14060
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "77f558fb7bb764c996e4d57655aa32d686952e784e094ec8601790d95e8ee066",
+    "language": "zh-Hans",
+    "title": "2022 年 6 月版 WCA 规则已生效",
+    "content": "新版 WCA [规则](https://www.worldcubeassociation.org/regulations/)和[指南](https://www.worldcubeassociation.org/regulations/guidelines.html)已于 2022 年 6 月 1 日生效。详情请参阅[此前的公告](https://www.worldcubeassociation.org/posts/wca-regulations-june-2022)。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:45:43.538Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "493de610a795627d0d0b60e4dc5f32977f57dde8e7a03b988cc737a96fb38607"
+}

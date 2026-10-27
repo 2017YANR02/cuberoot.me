@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/postponement-of-wca-world-championship-2021-december-2020",
+  "path": "docs/wca-post-translations/entries/postponement-of-wca-world-championship-2021-december-2020.json",
+  "sourceHash": "ae192d4852c57acdf4c2ada35007a9da04f6770dbb95dfe5812384d15054b3f7",
+  "inputTranslationHash": "7f4fb5c4846dd203d0a1a474dc38be99ac0a33bcfe7a35c35920c4414fb04bf0",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:55.471Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

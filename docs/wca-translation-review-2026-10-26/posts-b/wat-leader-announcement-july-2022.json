@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/wat-leader-announcement-july-2022",
+  "path": "docs/wca-post-translations/entries/wat-leader-announcement-july-2022.json",
+  "sourceHash": "9d64633282a28937e0c19e79f813160ea4b44e24ba82c4070ad843f1d4cd8098",
+  "inputTranslationHash": "6799c8afae2ee2304ce0cf9ac96a5ecd159131af5f9a09fa215a688a8937cb71",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:59.338Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

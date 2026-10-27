@@ -1,0 +1,19 @@
+{
+  "key": "disciplinary:/posts/wdc-digest-beginning-of-2020",
+  "path": "docs/wca-log-translations/entries/disciplinary-wdc-digest-beginning-of-2020.json",
+  "sourceHash": "09a45901257ea9ed07705971c5faf642a38aa339ed99ba73e8c8b56e681ff176",
+  "inputTranslationHash": "b9fdf5d8d4285ddb06ee9f34740a8f22159ffa6855d3db066c969ff4904c4ee9",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "复用已通过的旧版全文独立审校；人工阅读旧版与现版全部文字差异及对应英文段落，确认本轮之前的差异限于官方机构名称或 Guidelines 的“指南”译法；另复核本轮项目名命中语境。",
+  "verdict": "pass",
+  "notes": [],
+  "changes": [],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/recheck-1.json",
+    "reviewedTranslationHash": "56e8e247101dc51bff6820509bf257d2b9fa2fb72a5000b924556b051d99cbcd",
+    "verdict": "pass",
+    "archivedVersion": "docs/wca-log-translations/versions/disciplinary-wdc-digest-beginning-of-2020/56e8e247101dc51bff6820509bf257d2b9fa2fb72a5000b924556b051d99cbcd-v2.json"
+  },
+  "sourceUncertainty": false
+}

@@ -12,16 +12,33 @@
     "sourceId": 14266
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "76cfd6cf9edc602756b8039adf4e871b29599ded6e2557839d44b566aa38105d",
     "language": "zh-Hans",
     "title": "2027 年魔域 WCA 世界锦标赛公布",
     "content": "亲爱的 WCA 社区成员：\n\nWCA 大型锦标赛组（WMCT）很高兴地公布[2027 年魔域 WCA 世界锦标赛的详情](https://www.worldcubeassociation.org/competitions/WC2027)：比赛将于 2027 年 7 月 22 日至 25 日在瑞典乌普萨拉举行！\n\n这将是第 13 届世界锦标赛，也是 WCA 这项最高级别赛事自 2017 年巴黎世锦赛以来首次重返欧洲。\n\n我们还要衷心感谢魔域，让本届世锦赛得以举办。2027 年魔域 WCA 世界锦标赛是魔域首次赞助 WCA 世界锦标赛，我们非常高兴能在这一全球舞台上与魔域合作。\n\nWCA 世界锦标赛是一场凝聚全球社群的盛会，也是观看世界顶尖速拧选手同场竞技、见证各个官方项目世界冠军诞生的机会。瑞典魔方协会正与 WMCT 紧密合作，努力让 2027 年世锦赛充分展现我们社群的精神和才华。我们期待在明年夏天与大家相见！\n\n完整比赛信息可在 [WCA 比赛页面](https://www.worldcubeassociation.org/competitions/WC2027)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:19:15.615Z",
-    "reviewStatus": "pending_independent_review",
-    "revisedAt": "2026-10-25T07:28:01.629Z",
-    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "148cb99e32f2a52b32ee79945b625d5bf7a82eb1c477034d052fd54ef27d4d44"
+  "translationHash": "64345031eab9d1fd9d87d56201a21716dc6f9578a0858fcbb9958710c204a163",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:05:11.622Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "76cfd6cf9edc602756b8039adf4e871b29599ded6e2557839d44b566aa38105d",
+    "reviewedTranslationHash": "64345031eab9d1fd9d87d56201a21716dc6f9578a0858fcbb9958710c204a163",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/announcing-the-moyu-wca-world-championship-2027.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+    ],
+    "inputTranslationHash": "148cb99e32f2a52b32ee79945b625d5bf7a82eb1c477034d052fd54ef27d4d44"
+  }
 }

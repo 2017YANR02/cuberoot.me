@@ -12,14 +12,33 @@
     "sourceId": 14091
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "16f2d590aa97680f9af64404762b62e792f2cda6ca8ff77c6a1f91e454534d9a",
     "language": "zh-Hans",
     "title": "WCA 规则委员会调查：移除越南部分比赛成绩",
     "content": "各位 WCA 社区成员：\n\nWCA 规则委员会（WRC）近期完成了对越南 WCA 比赛的调查，并因此移除了 2013 至 2022 年间多场比赛的大量成绩。\n\nWRC 发现，许多比赛使用成绩单充当魔方罩，违反了规则 [A2c1](https://www.worldcubeassociation.org/regulations/#A2c1) 和指南 [A2c1+](https://www.worldcubeassociation.org/regulations/guidelines.html#A2c1+)。这些小纸片无法充分遮住魔方，导致选手在还原开始前就能看到打乱后的状态。打乱保密是必须严肃对待的问题，违反保密要求的情况不能忽视。\n\n此外，少数比赛使用了裕鑫计时器，而这类计时器不在规则 [8a7](https://www.worldcubeassociation.org/regulations/history/official/2016-04-18/#8a7) 认可的计时器之列。现行规则中的对应条款为 [7f1a](https://www.worldcubeassociation.org/regulations/#7f1a)。由于这些计时器存在不一致的问题，使用它们的比赛成绩必须移除。\n\n这并非首次因这些问题移除成绩。[这起事件](https://www.worldcubeassociation.org/incidents/31)以及 [Hanoi Open 2022](https://www.worldcubeassociation.org/incidents/70) 都曾因使用成绩单作魔方罩而被移除成绩；[Vancouver Island 2019](https://www.worldcubeassociation.org/incidents/80) 也曾因使用裕鑫计时器而被移除成绩。尽管这些问题不是选手的过错，相关成绩并非在符合 WCA 竞赛规则的条件下取得，因此必须移除。\n\n本次调查影响了越南 19 场比赛的成绩，其中 9 场比赛已无任何有效成绩。超过 900 名选手受到影响，共移除了超过 18,000 次还原成绩；许多选手也因成绩缺失而被重新分配 WCA ID，或失去了 WCA ID。我们完全理解这会让大家感到失望，但规则经过仔细制定，就是为了防止选手获得任何不公平优势。如果不遵守规则，我们便无法保证成绩的公正可信。\n\n这项决定当然也影响了大量原本可能有效的还原。但鉴于这些轮次中的其他还原存在诸多明确违规，我们无法有把握地认可这些成绩。\n\n借此机会，我们再次提醒大家：理解竞赛规则十分重要。如有规则方面的疑问，请联系所在地区的 WCA 代表，或通过 [regulations@worldcubeassociation.org](mailto:regulations@worldcubeassociation.org) 联系 WCA 规则委员会。\n\n本次调查的完整报告见[此处](https://drive.google.com/file/d/1E-J8WRfld6mpbHslM3rW10fNSsXgkl2y/view?usp=sharing)，事件日志条目见[此处](https://www.worldcubeassociation.org/incidents/79)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.559Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "153f3878627cb163affa736095ea1d52c58c2705040a9c092adaf3169e9ab17d"
+  "translationHash": "d0648412f84b0ca7daf25b0306d57d92ea32e46e6a6f2b6e30c39e22f9514253",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:12:16.169Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "16f2d590aa97680f9af64404762b62e792f2cda6ca8ff77c6a1f91e454534d9a",
+    "reviewedTranslationHash": "d0648412f84b0ca7daf25b0306d57d92ea32e46e6a6f2b6e30c39e22f9514253",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wrc-investigation-vietnamese-competitions-results-removal.json",
+    "sourceConcern": false,
+    "notes": [
+      "全文核对19/9场、900+/18000+、2013—2022、WCAID及部分原本可能有效成绩的限定。"
+    ],
+    "inputTranslationHash": "153f3878627cb163affa736095ea1d52c58c2705040a9c092adaf3169e9ab17d"
+  }
 }

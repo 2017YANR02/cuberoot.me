@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/wca-regulations-august-2020",
+  "source": {
+    "key": "posts:/posts/wca-regulations-august-2020",
+    "kind": "posts",
+    "title": "WCA Regulations — August 2020",
+    "date": "2020-07-20T07:50:45.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/wca-regulations-august-2020",
+    "content": "Dear WCA Community,\n\nThe WCA Regulations Committee would like to inform you about a new version of the WCA Regulations and Guidelines, which are going into effect August 1, 2020.\n\nThe WRC has been working on a new WCA Regulations and Guidelines amendment in conjunction with the WCA Board of Directors. This amendment is meant to complement the [WCA Competition Safety Policy](https://www.worldcubeassociation.org/documents/policies/external/Competition%20Safety.pdf) and to guarantee safer conditions in WCA Competitions in light of the COVID-19 pandemic.\n\nYou can review all changes in [this comparison on GitHub](https://github.com/thewca/wca-regulations/compare/official-2020-01-01...official-2020-08-01). You can click on “Files changed” to see the complete files of the Regulation and Guidelines, where all changes and additions are marked green and removals are red.\n\nHere is a summary of the changes in the new version of the Regulations and the Guidelines ([commit](https://github.com/thewca/wca-regulations/commit/5b01c75bde72d26a42e1d80906984dc90b694e33) | [discussion](https://forum.worldcubeassociation.org/t/wca-regulations-temporary-regulations/7346)):\n\n- A new article Y is added to the Regulations which complements the Safety Policy. It is expected that the changes will be reverted once it is safe to do so.\n- WCA Delegates can impose additional requirements on attendees like wearing masks or not having COVID symptoms, if it is necessary and if it is clearly announced before the competition (Regulations Y3 and Y3a through Y3d).\n- The competitor resets the timer instead of the judge. The judge reminds the competitor to do so (Regulation Y7d1).\n- Competitors who behave unsafely might be disqualified by the WCA Delegate (Regulation 2k3) and requested to leave the venue (Regulation 11h).\n- Some additions that make the Regulations more inline with the Safety Policy:\n  - Competitors should bring their own pens (Regulation Y4), judges may bring their own stopwatches (Regulation Y5).\n  - Competitors, without touching the scoresheet, must sign the result recorded by their judge using their own pen (Regulation Y7e1).\n  - There should be fixed seats and there should not be a Competitor Area if unnecessary (Regulations Y6a, Y7a).\n  - The competitor places the puzzle inside the cover after the attempt (Regulation Y7f).",
+    "hash": "8a1f9b4d82fadce96c7f9ee4633b1863bdeda996a89bcbcee5951e08b665a1a2",
+    "format": "markdown",
+    "sourceId": 13979
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "8a1f9b4d82fadce96c7f9ee4633b1863bdeda996a89bcbcee5951e08b665a1a2",
+    "language": "zh-Hans",
+    "title": "2020 年 8 月版 WCA 规则",
+    "content": "各位 WCA 社区成员：\n\nWCA 规则委员会在此通知大家，新版 WCA 规则与指南将于 2020 年 8 月 1 日生效。\n\nWRC 与 WCA 董事会共同制定了本次规则和指南修订，旨在配合[《WCA 比赛安全政策》](https://www.worldcubeassociation.org/documents/policies/external/Competition%20Safety.pdf)，在新冠疫情期间为 WCA 比赛提供更安全的条件。\n\n全部修改可在 [GitHub 版本对比](https://github.com/thewca/wca-regulations/compare/official-2020-01-01...official-2020-08-01)中查看。点击“Files changed”可查看完整的规则和指南文件；修改及新增内容标为绿色，删除内容标为红色。\n\n以下为新版规则与指南的修改概述（[提交记录](https://github.com/thewca/wca-regulations/commit/5b01c75bde72d26a42e1d80906984dc90b694e33) | [讨论](https://forum.worldcubeassociation.org/t/wca-regulations-temporary-regulations/7346)）：\n\n- 规则新增 Y 章，作为《比赛安全政策》的补充。预计在安全条件允许时撤销这些修改。\n- 必要时，WCA 代表可以要求到场人员遵守额外要求，例如佩戴口罩或没有新冠症状，但必须在赛前明确公告（规则 Y3、Y3a 至 Y3d）。\n- 由选手而非裁判重置计时器，裁判负责提醒选手（规则 Y7d1）。\n- 对行为不安全的选手，WCA 代表可以取消其参赛资格（规则 2k3），并要求其离开场地（规则 11h）。\n- 另有一些补充，使规则与《比赛安全政策》更加一致：\n  - 选手应自带笔（规则 Y4），裁判可以自带秒表（规则 Y5）。\n  - 选手必须用自己的笔为裁判记录的成绩签名确认，且不得触碰成绩单（规则 Y7e1）。\n  - 应设置固定座位；没有必要时，不应设置选手等候区（规则 Y6a、Y7a）。\n  - 每次尝试结束后，由选手将魔方放回遮盖物内（规则 Y7f）。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:49:54.039Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "9712216a42228c40070ddfe0ebcee714d09168736ea7d360c9d33d585f9c46d8"
+}

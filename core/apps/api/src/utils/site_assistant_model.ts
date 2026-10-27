@@ -8,7 +8,7 @@ import { AssistantFailure, checkAssistantResponse } from './site_assistant_diagn
 import type { AssistantConfig } from './site_assistant.js';
 import { recordAssistantModel } from './site_assistant_monitor.js';
 
-const answerSchema = z.object({ answerKind: z.enum(['general','site_content','grounded','image']).optional(), answer: z.string().max(SITE_ASSISTANT_ANSWER_MAX_LENGTH), sourceIds: z.array(z.string()).max(100) });
+const answerSchema = z.object({ answerKind: z.enum(['general','site_content','grounded','image']).optional(), answer: z.string().max(SITE_ASSISTANT_ANSWER_MAX_LENGTH), sourceIds: z.array(z.string()).max(100), reviewedSourceIds: z.array(z.string()).max(12).optional() });
 
 /** One provider conversation per HTTP request. Reasoning stays here, never in UI/logs. */
 export function createAssistantModel(config: AssistantConfig, fetcher: typeof fetch, signal: AbortSignal, guide: string, history: AssistantMessage[] = [], images: AssistantImage[] = []) {
@@ -56,6 +56,7 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
     record(raw: unknown, result: unknown) {
       const call = pending.find(item => item.raw === raw);
       if (call) call.result = result;
+      return !!call;
     },
     async complete(options: {
       system: string; context: unknown; finalOnly: boolean; thinking: boolean;

@@ -1,0 +1,16 @@
+{
+  "key": "posts:/posts/wat-leader-announcement-august-2026",
+  "path": "docs/wca-post-translations/entries/wat-leader-announcement-august-2026.json",
+  "sourceHash": "bc7dc9b71706f57fcc82c21b27dc0ac1300abb889aa8d65a44db14f3b0052ffb",
+  "inputTranslationHash": "27dba91adf1ad920df47b6e78babde37ddfec7653ff4643fdd835f7f56a38bc2",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:59.338Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "correction_required",
+  "notes": [],
+  "changes": [
+    "标题展开WAT的官方中文机构名。"
+  ],
+  "title": "WCA 档案组负责人任命公告（2026 年 8 月）",
+  "content": "亲爱的 WCA 社区成员：\n\n我们很高兴宣布，Sherry Tao 将担任 WCA 档案组（WAT）的新任负责人。Sherry 此前已是 WAT 的成员。\n\nWCA 董事会依据《WCA 委员会与团队[议案](https://documents.worldcubeassociation.org/documents/motions/10.2025.0%2520-%2520Committees%2520and%2520Teams.pdf)》第 5 节，选出 Sherry，并通过投票批准了这一任命。任命自 2026 年 8 月 14 日生效。\n\n我们感谢 William Gan 担任负责人期间所做的工作，并祝 Sherry 在新的岗位上一切顺利。\n\nSherry 的公开申请材料可在[此处](https://drive.google.com/drive/folders/1sWB33p6HPThS80ZtHUqQAIYmMGgtw64c?usp=sharing)查看。我们还收到了几份希望成为 WAT 新成员的申请，期待团队在 Sherry 的领导下发展壮大并履行职责。"
+}

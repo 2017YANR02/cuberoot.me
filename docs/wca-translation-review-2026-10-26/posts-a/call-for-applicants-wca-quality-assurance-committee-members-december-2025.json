@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wca-quality-assurance-committee-members-december-2025",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wca-quality-assurance-committee-members-december-2025.json",
+  "sourceHash": "641f7a6fc50c1da0f185f52a85f47908cebab08a0c62248652ae92ab8ee36a96",
+  "inputTranslationHash": "fefaaf8043fd42063479c90fc7e8663c396fb9b90e399dd5e19193c88b7a41e1",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:07:01.628Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照招募正文、职责条目、必需/可选资格、年龄、时限和程序；未扩展外链材料。"
+  ],
+  "changes": []
+}

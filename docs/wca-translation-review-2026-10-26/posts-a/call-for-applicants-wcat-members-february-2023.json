@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wcat-members-february-2023",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wcat-members-february-2023.json",
+  "sourceHash": "af9421f5ccd5f460cec167356bbd4c26825fd2eb344cf34fb86fcc3989fd47f6",
+  "inputTranslationHash": "bd2b8fa62cdc2e09ba48d9444800e16d0fc8e96bd1e647f0c943ad5f740ba80f",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:09:54.049Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整核对标题及正文，招募资格、工作时长、申请截止日期、收件人、申请材料与程序一致。"
+  ],
+  "changes": []
+}

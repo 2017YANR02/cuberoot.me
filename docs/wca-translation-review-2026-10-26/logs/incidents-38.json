@@ -1,0 +1,27 @@
+{
+  "key": "incidents:38",
+  "path": "docs/wca-log-translations/entries/incidents-38.json",
+  "sourceHash": "debd94ad00949514b7e27379c73318bc92d4a55b9bb6c25fac8a6dfa7ba7b5d5",
+  "inputTranslationHash": "39984543ae8864306a94a3e058cd0640bf11a94bc5aeb3b21ff84f822bfbb081",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "复用当前译文哈希绑定的既有全文独立审校；本轮全量检索项目名和机构残留，并核对命中语境。 本轮完整对照含 Skewb 的该条英中正文，确认成绩、规则号、处罚条件及链接保留。",
+  "verdict": "correction_required",
+  "notes": [],
+  "changes": [
+    {
+      "reason": "WCA 官方 events->skewb 译为“斜转”，正文与标题不再保留未翻译的项目名称；已逐处对照全文，链接不受影响。",
+      "before": "Skewb",
+      "after": "斜转",
+      "sourceUrl": "https://translate.worldcubeassociation.org/translate/wca/locales/zh_Hans/?checksum=6eab8ca347f70d1d"
+    }
+  ],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/report-4.json",
+    "reviewedTranslationHash": "39984543ae8864306a94a3e058cd0640bf11a94bc5aeb3b21ff84f822bfbb081",
+    "verdict": "pass"
+  },
+  "sourceUncertainty": false,
+  "title": "选手还原结束后才发现拿到了他人的斜转",
+  "content": "由于两名选手姓名相似，一名选手收到了另一人的成绩单和斜转。还原结束后，选手发现成绩单姓名与自己不符，才意识到问题。现场给予了额外尝试。\n\nWRC 决定用**额外尝试**替代原尝试。"
+}

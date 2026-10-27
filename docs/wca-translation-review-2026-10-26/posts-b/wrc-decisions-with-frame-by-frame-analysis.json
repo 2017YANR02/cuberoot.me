@@ -1,0 +1,18 @@
+{
+  "key": "posts:/posts/wrc-decisions-with-frame-by-frame-analysis",
+  "path": "docs/wca-post-translations/entries/wrc-decisions-with-frame-by-frame-analysis.json",
+  "sourceHash": "c9ca8a767abca82e01f2f0104042e57aad8ce3055114c24dc13509cede42445c",
+  "inputTranslationHash": "557935f4f5bd3c083e3bfb1ee13771591961d632f2b024dd4590323591616306",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:11:37.703Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "correction_required",
+  "notes": [
+    "完整核对各尝试+2/+4、仅启动不含停表、追溯范围、60日申诉及隐私要求。"
+  ],
+  "changes": [
+    "标题展开组织中文名称。"
+  ],
+  "title": "WCA 规则委员会关于逐帧分析的裁决",
+  "content": "各位 WCA 社区成员：\n\n在 WCA 董事会的支持下，WCA 规则委员会（WRC）决定，将此前公布的[逐帧分析方法](https://forum.worldcubeassociation.org/t/wrc-statement-on-frame-by-frame-analysis/55294)追溯用于部分历史成绩。处理过程已记录在这篇[意外事件日志](https://www.worldcubeassociation.org/incidents/143)中。\n\n此前，WRC 根据[这起事件](https://www.worldcubeassociation.org/incidents/50)所确立的做法，只以正常速度观看视频来判断是否应予处罚。但我们逐渐发现，这种方式无法识别某些虽带来明显优势、却在正常播放速度下看不出的违规。最受关注的例子便是二阶 0.78 秒平均世界纪录。\n\n为解决这一问题，WRC 改变了做法，开始对特定成绩进行逐帧审查。最初，这一方法只适用于公告发布后创造的成绩，历史成绩不能通过逐帧分析重新审查。这就导致部分历史成绩虽然违反 WCA 竞赛规则，却无法受到处罚，即使违规行为带来了明显优势。\n\n进一步讨论后，WCA 董事会决定将 0.78 秒平均成绩的裁决交回 WRC 处理，并授权对历史成绩采用逐帧分析，以作出必要的处罚。\n\nWRC 审查了多项符合逐帧分析适用条件的历史成绩，并对每次还原分别投票，最终作出裁决。根据这一方法，只能对启动计时器时的违规作出处罚，不能通过逐帧分析审查停止计时器的动作。只有在 WRC 高度确信存在违规的情况下，才会对相应还原作出处罚。\n\n围绕此事的讨论，很大一部分涉及二阶 0.78 秒平均世界纪录。逐帧分析这些还原后，WRC 认定其中多次还原违反了 WCA 竞赛规则。与二阶世界纪录相关的调查结果如下。所有加 2 秒处罚均因违反[规则 A4b](https://www.worldcubeassociation.org/regulations/#A4b)，所有加 4 秒处罚均因同时违反[规则 A4b](https://www.worldcubeassociation.org/regulations/#A4b)及[规则 A4b1](https://www.worldcubeassociation.org/regulations/#A4b1)。\n\n二阶 0.78 秒世界纪录平均（Johor Cube Open 2024 第一轮）\n\n* 第 1 次：0.74 秒，**加 4 秒**。\n* 第 2 次：0.70 秒，**加 2 秒**。\n* 第 3 次：0.97 秒，**加 2 秒**。\n* 第 5 次：0.81 秒，**加 4 秒**。\n\n二阶 0.90 秒世界第二平均（Dalian Open 2024 第一轮）\n\n* 第 2 次：0.49 秒，**加 4 秒**。\n\n有关上述还原的公开分析报告可在[此处](https://drive.google.com/file/d/1Hos7FEmNd_obKW2YOpUZEDHRhLOeTggi/view?usp=sharing)查看。为尊重相关选手的隐私，我们不会公开其他受到处罚的成绩信息。请社区成员不要试图大范围传播被处罚者的身份，在讨论这些事件时也请保持尊重。\n\n排名将于近期更新，以反映上述调整。依照[争议处理动议](https://documents.worldcubeassociation.org/documents/motions/16.2024.1%2520-%2520Disputes.pdf)，受影响的当事方如需申诉，须在公告发布后 60 天内通过 appeals@worldcubeassociation.org 向 WCA 申诉委员会（WAC）提出。\n\n如果社区成员认为某项成绩存在违规，且符合逐帧分析的适用条件，欢迎通过 regulations@worldcubeassociation.org 私下提交给 WRC。\n\n再次衷心感谢社区在我们讨论并作出决定期间的耐心。确保 WCA 竞赛规则得到遵守、维护 WCA 比赛成绩的公正性，始终是 WRC 的首要任务。\n\nWCA 规则委员会"
+}

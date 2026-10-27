@@ -12,14 +12,31 @@
     "sourceId": 14134
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "51f4fcceef25bc74214e9ac205407830ab48853641598214c7e31f8bffd44bf6",
     "language": "zh-Hans",
     "title": "WCA 质量保证委员会负责人任命公告（2023 年 12 月）",
     "content": "我们很高兴地宣布，Deni Mintsaev 将担任 WCA 质量保证委员会（WQAC）的新任负责人。Deni 此前已在委员会担任高级成员。\n\n依照 WCA 委员会与团队[动议](https://www.worldcubeassociation.org/documents/motions/10.2022.0%2520-%2520Committees%2520and%2520Teams.pdf)第 4 节，WCA 董事会选定 Deni，并经现任委员会负责人和高级代表投票批准。\n\n感谢 Daniel Vædele Egdal 为 WQAC 所做的工作。我们也支持 Deni 承担新的职责，祝他工作顺利。\n\n董事会还收到了以下申请人的材料：\n\n* Arash Zuhayr Udoy\n\n感谢 Arash 提交申请。两人的申请材料均可在[此处](https://drive.google.com/drive/folders/155TTaYwao8RuE0FEs4rsHl5TsRbn78Pm)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:42:40.580Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "47545848dcee69a2501dc683079e34f7750448da36fd247780e8f0ba9c30007f"
+  "translationHash": "756dfb7ad9d2d73ea74929c4ad767653b59382d8889ebae2d10c43b5cbdd48cb",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:11:37.702Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "51f4fcceef25bc74214e9ac205407830ab48853641598214c7e31f8bffd44bf6",
+    "reviewedTranslationHash": "756dfb7ad9d2d73ea74929c4ad767653b59382d8889ebae2d10c43b5cbdd48cb",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wqac-leader-announcement-december-2023.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "47545848dcee69a2501dc683079e34f7750448da36fd247780e8f0ba9c30007f"
+  }
 }

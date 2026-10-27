@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/wst-leader-application-november-2020",
+  "path": "docs/wca-post-translations/entries/wst-leader-application-november-2020.json",
+  "sourceHash": "4a210ef9ce0848a0a70c43f3cbfe0232639b7a23d39ead4c0b64f5579406809e",
+  "inputTranslationHash": "de9e42c5881f043ee01665c4d272b29525f0979080d3dae20d5288ee184577de",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:12:24.812Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [
+    "逐篇核对新任、前任、成员职衔、遴选批准程序、申请人数和日期。"
+  ],
+  "changes": []
+}

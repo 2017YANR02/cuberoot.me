@@ -12,14 +12,33 @@
     "sourceId": 14165
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "7b21e1b5a5127d3990aab253b67299a250ef98141cb6f78fc04ebfae952e7cbd",
     "language": "zh-Hans",
     "title": "WCA 财务委员会负责人任命公告（2024 年 9 月）",
     "content": "我们很高兴地宣布，Edward Hollingdale 将成为 WCA 财务委员会（WFC）的新负责人。Edward 此前已担任委员会的临时负责人。\n\nWCA 董事会依照 [WCA 动议 10.2024.0](https://documents.worldcubeassociation.org/documents/motions/10.2024.0%20-%20Committees%20and%20Teams.pdf)第 5 节的规定，通过投票选定了 Edward。任命自 8 月 25 日起生效。\n\n我们支持 Edward，并祝愿他顺利履行新的职责。\n\nEdward 是这一职位的唯一申请者。他的申请材料可在[此处](https://drive.google.com/file/d/1AAOy0RSpks9e5kq9GMp3aUIwz1wkm8V_/view?usp=sharing)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:42:40.590Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "247e5d951e1df63787567977767a7614b53316cd145d5692912d4b99e640c3ba"
+  "translationHash": "a897521e818e7b569e500ef46ab3acba3c3684ae106449aba1b7041dd79aab44",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:10:59.922Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "7b21e1b5a5127d3990aab253b67299a250ef98141cb6f78fc04ebfae952e7cbd",
+    "reviewedTranslationHash": "a897521e818e7b569e500ef46ab3acba3c3684ae106449aba1b7041dd79aab44",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wfc-leader-announcement-september-2024.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整核对案件归因、处分条件、匿名处理、数量及任命程序。"
+    ],
+    "inputTranslationHash": "247e5d951e1df63787567977767a7614b53316cd145d5692912d4b99e640c3ba"
+  }
 }

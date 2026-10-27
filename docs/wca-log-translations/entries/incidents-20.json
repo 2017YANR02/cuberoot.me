@@ -13,12 +13,14 @@
   },
   "translation": {
     "language": "zh-Hans",
-    "version": 1,
+    "version": 2,
     "title": "选手签名前，裁判已将魔方送回打乱台",
-    "content": "Skewb 决赛中，一名选手取得好成绩，表现兴奋。就在他短暂分神时，裁判没有记录成绩，而是将魔方送回打乱台。直到选手意识到自己尚未签名，才发现此事。比赛现场给予了暂定的额外尝试。\n\nWRC 决定保留原成绩。裁判没有遵循规则规定的流程，具体而言，未记录成绩，忽略了 [A7b](https://www.worldcubeassociation.org/regulations/#A7b)。我们认为不应因此让选手承受不利后果。此外，还有充分证据证明原成绩有效，包括录像和目击证人。",
+    "content": "斜转决赛中，一名选手取得好成绩，表现兴奋。就在他短暂分神时，裁判没有记录成绩，而是将魔方送回打乱台。直到选手意识到自己尚未签名，才发现此事。比赛现场给予了暂定的额外尝试。\n\nWRC 决定保留原成绩。裁判没有遵循规则规定的流程，具体而言，未记录成绩，忽略了 [A7b](https://www.worldcubeassociation.org/regulations/#A7b)。我们认为不应因此让选手承受不利后果。此外，还有充分证据证明原成绩有效，包括录像和目击证人。",
     "translatedAt": "2026-10-22T05:48:51.542Z",
     "translator": "Codex / subscription",
-    "sourceHash": "7dd6bcc5b26f3d5acc739575bc3b4b83b0ea6d2c421a144de290f67064a5a3bc"
+    "sourceHash": "7dd6bcc5b26f3d5acc739575bc3b4b83b0ea6d2c421a144de290f67064a5a3bc",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
   "review": {
     "status": "independently_verified",
@@ -36,7 +38,23 @@
       "verdict": "pass",
       "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
     },
-    "unresolvedNotes": []
+    "unresolvedNotes": [],
+    "recheck": {
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.689Z",
+      "report": "../wca-translation-review-2026-10-26/final-report.json",
+      "sourceHash": "7dd6bcc5b26f3d5acc739575bc3b4b83b0ea6d2c421a144de290f67064a5a3bc",
+      "reviewedTranslationHash": "5135039b7b6a4e6594130cf67da5c4a8a9256a3fae9d4601f9892d5ccb190336",
+      "verdict": "pass",
+      "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。"
+    },
+    "currentReview": {
+      "round": "2026-10-26",
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/incidents-20.json",
+      "sourceConcern": false,
+      "notes": [],
+      "inputTranslationHash": "5b1cd86a5c4833af4f4da1c80ad7addab88eeae6a746a46a49ee8ffc1887aa58"
+    }
   },
   "publication": {
     "status": "not_authorized"

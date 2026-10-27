@@ -12,14 +12,33 @@
     "sourceId": 8280
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "77e184990759e702ea769599456d440e4704ac04123ae25ce9fb9fe9680e1235",
     "language": "zh-Hans",
     "title": "WCA 董事会成员变动（2017 年 11 月）",
     "content": "各位 WCA 社区成员：\n\nWCA 有投票权的成员再次以无记名方式进行了董事选举，现公布结果及董事会的相应变动。\n\n我们很高兴地宣布，[Bob Burton](https://www.worldcubeassociation.org/persons/2003BURT01) 和 [Alberto Pérez de Rada Fiol](https://www.worldcubeassociation.org/persons/2011FIOL01) 加入 WCA 董事会；[Chris Hardwick](https://www.worldcubeassociation.org/persons/2003HARD01) 则将卸任董事。感谢 Chris 为 WCA 和社区所做的工作。他自 2016 年 7 月起担任董事，为 WCA 发展投入了大量时间和精力。他将继续担任 WCA 财务委员会负责人及美国佐治亚州的 WCA 代表。\n\n上述变动自 2017 年 11 月 9 日起生效。\n\n三位候选人均同意公开申请材料，可在此查看：\n<https://drive.google.com/drive/folders/199Gr_MmpepvFwx36vVtpb_fnTnB-rfDR?usp=sharing>",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.929Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "e1e2bd7022e4f15ae160afd72ccae7ff0ad331426dbaa6d9373ca0c01a8a89d5"
+  "translationHash": "109a4ab99c271628848f21f53ff783b28541c3c9d37000d01c90b1812a97955b",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:12:23.464Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "77e184990759e702ea769599456d440e4704ac04123ae25ce9fb9fe9680e1235",
+    "reviewedTranslationHash": "109a4ab99c271628848f21f53ff783b28541c3c9d37000d01c90b1812a97955b",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/changes-in-the-board-of-directors-november-2017.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照标题和正文；各届赛事城市及取消/退款范围、董事候选名单、当选与连任区别、任期及生效日期、保留职务和干事分工均与原文一致。"
+    ],
+    "inputTranslationHash": "e1e2bd7022e4f15ae160afd72ccae7ff0ad331426dbaa6d9373ca0c01a8a89d5"
+  }
 }

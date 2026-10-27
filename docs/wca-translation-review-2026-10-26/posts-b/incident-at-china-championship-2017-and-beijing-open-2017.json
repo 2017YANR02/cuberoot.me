@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/incident-at-china-championship-2017-and-beijing-open-2017",
+  "path": "docs/wca-post-translations/entries/incident-at-china-championship-2017-and-beijing-open-2017.json",
+  "sourceHash": "29c585788c0843373e5113b8cc3f2acdb331d86a21841e9367d8fb4f3c6ff52c",
+  "inputTranslationHash": "cbd9e252935de05afb98a2b5bd7a41f43bb22d85af962c1f180b4bb8e13290f6",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:36.320Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

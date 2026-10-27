@@ -12,14 +12,33 @@
     "sourceId": 13248
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "d9ded30fbc13b32b1c5f75197ad36016c5313d7dab0a20ce9eae89b0277db0f9",
     "language": "zh-Hans",
     "title": "大洋洲高级代表任命公告",
     "content": "我们很高兴地宣布，**Edward Hollingdale** 将出任大洋洲地区的新任高级代表。感谢 Tim McMahon 担任该地区高级代表期间所做的工作。\n\nWCA 董事会依照[《关于高级代表的议案》](https://www.worldcubeassociation.org/documents/motions/09.2019.1%20-%20Senior%20Delegates.pdf)第 4 节，经董事投票选出 Edward。\n\n祝 Edward Hollingdale 在新的岗位上一切顺利。他的高级代表任期从今天（2019 年 11 月 1 日）开始。\n\n如有兴趣，Edward 的申请材料可在[这里](https://drive.google.com/drive/folders/1OkF7grfyPMaw791cjnwylnESgMu73Rzu)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.121Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "c4e1010711a01ddbdf1919e27c31ebbbbc9efcbed0f909794e1ffc02cba1592c"
+  "translationHash": "c223666a64864edc4a78b558dc7640ef03bb1c2106eab1a096f802f5f582c0c9",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:05:11.622Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "d9ded30fbc13b32b1c5f75197ad36016c5313d7dab0a20ce9eae89b0277db0f9",
+    "reviewedTranslationHash": "c223666a64864edc4a78b558dc7640ef03bb1c2106eab1a096f802f5f582c0c9",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/announcement-of-a-new-senior-delegate-oceania.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+    ],
+    "inputTranslationHash": "c4e1010711a01ddbdf1919e27c31ebbbbc9efcbed0f909794e1ffc02cba1592c"
+  }
 }

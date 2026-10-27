@@ -23,7 +23,7 @@
     "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
   },
   "review": {
-    "status": "pending_independent_recheck",
+    "status": "independently_verified",
     "checks": [
       "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
     ],
@@ -49,6 +49,22 @@
       "previousTranslationHash": "2126bbe45f43c4bc78ac24eb6d0c85d4dcee6f0c385623dbbfa8834c63c89d6e",
       "report": "../wca-translation-compliance-2026-10-25.json",
       "scope": "Targeted source comparison; independent prior evidence remains bound to the previous hash."
+    },
+    "recheck": {
+      "reviewer": "/root/review_logs",
+      "reviewedAt": "2026-10-26T11:10:07.703Z",
+      "report": "../wca-translation-review-2026-10-26/final-report.json",
+      "sourceHash": "e300fb324204fb513e6b0bd0e87c7753d172fdf11b06fbb5b43674ee93cd6b5e",
+      "reviewedTranslationHash": "88440874a3695344f78831f7939b773f465fc88df3c701d43a31e5a96e499ad5",
+      "verdict": "pass",
+      "scope": "复用已通过的旧版全文独立审校；人工阅读旧版与现版全部文字差异及对应英文段落，确认本轮之前的差异限于官方机构名称或 Guidelines 的“指南”译法；另复核本轮项目名命中语境。"
+    },
+    "currentReview": {
+      "round": "2026-10-26",
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/disciplinary-call-for-applicants-wdc-leader-december-2023.json",
+      "sourceConcern": false,
+      "notes": [],
+      "inputTranslationHash": "88440874a3695344f78831f7939b773f465fc88df3c701d43a31e5a96e499ad5"
     }
   },
   "publication": {

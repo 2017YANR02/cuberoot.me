@@ -12,14 +12,31 @@
     "sourceId": 10538
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "e15f5e65fafe660d6637d220ab17ebabfe53531625c0feacbcb574fbbab36bc8",
     "language": "zh-Hans",
     "title": "WCA 获得 501(c)(3) 非营利组织资格",
     "content": "我们终于可以高兴地宣布，世界魔方协会已获认定为非营利组织！我们刚刚收到美国国税局的认定函，确认 WCA 根据《国内税收法》第 501(c)(3) 条享有联邦所得税豁免资格。\n\n借此机会，感谢大家多年来对协会及其使命的投入。一路走来并不容易，而更好的未来还在前方！",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.128Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "900046d7038ce2009fc75ba10d7a8c97ac2427b926ab2dddafa68188771cd788"
+  "translationHash": "b83491efc8f15616601acb915a18b3844508ea86be300f4845e74af2f60342bb",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:55.472Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "e15f5e65fafe660d6637d220ab17ebabfe53531625c0feacbcb574fbbab36bc8",
+    "reviewedTranslationHash": "b83491efc8f15616601acb915a18b3844508ea86be300f4845e74af2f60342bb",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/recognition-of-wca-as-a-501-c-3-non-profit-organization.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "900046d7038ce2009fc75ba10d7a8c97ac2427b926ab2dddafa68188771cd788"
+  }
 }

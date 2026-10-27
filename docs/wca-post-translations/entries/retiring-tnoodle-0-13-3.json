@@ -12,14 +12,31 @@
     "sourceId": 9851
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "54956d8da2b9cd8da6ce4770b6ef0c1d8bef7f82eed7c3e4c96ca3a1819ff3ad",
     "language": "zh-Hans",
     "title": "停止使用 TNoodle 0.13.3",
     "content": "上周发布 `TNoodle-WCA-0.13.4` 时，我们曾宣布，`TNoodle-WCA-0.13.3` 将在短期内继续作为正式允许使用的版本。现在已过去一周，`TNoodle-WCA-0.13.3` 正式停用，`TNoodle-WCA-0.13.4` 成为唯一的官方打乱程序版本。\n\n详情请参阅[上周的 `TNoodle-WCA-0.13.4` 公告](https://www.worldcubeassociation.org/posts/tnoodle-0-13-4)。\n\n请记住，正式比赛必须使用现行版本的官方打乱程序。下载地址始终为：\nhttps://www.worldcubeassociation.org/regulations/scrambles/",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.129Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "00015e34e0946798183a2c50cb99af67e5b21949cac1c64a101dfaed17fa0bc5"
+  "translationHash": "63ef3a264853c60be26ea907fdf296dc964d9bba6713cf7c84e3cc25966fa425",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:15.857Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "54956d8da2b9cd8da6ce4770b6ef0c1d8bef7f82eed7c3e4c96ca3a1819ff3ad",
+    "reviewedTranslationHash": "63ef3a264853c60be26ea907fdf296dc964d9bba6713cf7c84e3cc25966fa425",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/retiring-tnoodle-0-13-3.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "00015e34e0946798183a2c50cb99af67e5b21949cac1c64a101dfaed17fa0bc5"
+  }
 }

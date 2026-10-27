@@ -1,0 +1,28 @@
+{
+  "key": "disciplinary:/posts/integrity-committee-digest-2026-q3",
+  "path": "docs/wca-log-translations/entries/disciplinary-integrity-committee-digest-2026-q3.json",
+  "sourceHash": "0f0378d09864f1d9cc898a125f6d825ee8ecdc38d371430fbff091e4b1406031",
+  "inputTranslationHash": "d3dd434ca0d8ff7b0143506b811f102267e3293386801cb7081756bec282092b",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "复用已通过的旧版全文独立审校；人工阅读旧版与现版全部文字差异及对应英文段落，确认本轮之前的差异限于官方机构名称或 Guidelines 的“指南”译法；另复核本轮项目名命中语境。 本轮完整对照含 Skewb 的该条英中正文，确认成绩、规则号、处罚条件及链接保留。",
+  "verdict": "correction_required",
+  "notes": [],
+  "changes": [
+    {
+      "reason": "WCA 官方 events->skewb 译为“斜转”，正文与标题不再保留未翻译的项目名称；已逐处对照全文，链接不受影响。",
+      "before": "Skewb",
+      "after": "斜转",
+      "sourceUrl": "https://translate.worldcubeassociation.org/translate/wca/locales/zh_Hans/?checksum=6eab8ca347f70d1d"
+    }
+  ],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/recheck-1.json",
+    "reviewedTranslationHash": "dbd8ee497df2a3f0d8860db96c6a574e70716b6512b2271842068bb38b113d9f",
+    "verdict": "pass",
+    "archivedVersion": "docs/wca-log-translations/versions/disciplinary-integrity-committee-digest-2026-q3/dbd8ee497df2a3f0d8860db96c6a574e70716b6512b2271842068bb38b113d9f-v2.json"
+  },
+  "sourceUncertainty": false,
+  "title": "廉政委员会简报：2026 年第三季度",
+  "content": "WCA 社群，你们好：\n\n以下是过去三个月 WIC 部分重要案件与一般动态。上季度立案 **17** 件、结案 **10** 件，作出 **6 项禁赛、3 项警告**，**1 件未采取措施**。\n\n**已发布公开报告的案件**\n- WIC 与其他团队合作，结束了一项历时数月、针对某国社群问题的调查，导致多名 WCA 代表降职，一名组织者受到重大处分。详情见[论坛帖子](https://forum.worldcubeassociation.org/t/statement-from-the-wca-integrity-committee-regarding-investigation-in-turkiye/67571)。\n- 一名选手取得高水平最少步成绩，引起部分顶尖选手怀疑。其随后向公众及通过邮件向 WIC 承认成绩作弊。比赛代表取消了相关成绩，简短调查后给予禁赛。详情见[报告](https://drive.google.com/file/d/1C-D8XBzppSybpxVd_Z_ikaph6h9eiLPq/view?usp=drive_link)。\n- 一名选手在 2025 年取得突出斜转成绩，包括单次洲纪录。一群顶尖选手报告疑虑后，经数月调查，WIC 认定这些成绩不可能由人类完成，涉及某种规则违反，可能是意外，也可能是故意。因此取消两项成绩，并追溯撤销一项斜转洲纪录。详情见[报告](https://drive.google.com/file/d/12yeSGOosgr07ZFi3EUdTg4r4jQdrK3qH/view?usp=sharing)。\n\n**同期其他案件**\n\n本季度处理了多起提前停表事件：\n1. 一名选手被报告在比赛中故意提前停表。联系后其非常配合，还承认了代表未发现或未取消的其他情况。鉴于比赛经验相对不足且诚实，仅给予较短禁赛，并取消成绩。\n2. 另一场比赛发生类似事件。考虑年龄较小、仅涉及少量轮次，WIC 选择警告并取消相关成绩。两案相近，但年龄是后一案没有禁赛的重要因素。\n3. WIC 注意到今年已报告多起提前停表。未来引入四触点模式有望改善问题，但仍请担任裁判的读者认真警觉地观察还原，确保正确停表。\n\n- 有选手在场馆内将魔方还原成带仇恨含义的符号图案。联系后他们承担责任并道歉，均获警告。\n- 两名选手被发现串通，为彼此取得相对其他选手的优势，其中一人被直接观察到故意错误打乱另一人的魔方。两人均被禁赛，成绩被取消。\n- 一名选手向 WIC 报告在比赛中受到欺凌和骚扰。虽然多数行为发生在 WIC 管辖范围外，但部分行为确实在比赛中发生并被观察到。实施行为的选手获警告。\n- 一名选手因不当行为被场馆管理方请离，多人向 WIC 报告。询问多名选手和代表后，WIC 确认该行为严重，且至少在另一场比赛也发生过。因此禁止其参赛及到场。\n\n**一般动态**\n- Shain Papalotl Longbehn（2020LONG05）近期卸任高级成员。衷心感谢其过去四年工作，特别感谢担任 WIC 和 WDC 负责人期间的出色贡献。\n- Lars Johan Folde（2018FOLD01）获任高级成员，祝贺并祝履职顺利。\n- 新设保护小组已开始工作，由少量专业人员处理选手保护问题，并按必要知情原则处理个案。相关引导信息即将完善。如对 WCA 认可活动中儿童及处于风险中的选手的安全、福祉有疑问或忧虑，可联系 [safeguarding@worldcubeassociation.org](mailto:safeguarding@worldcubeassociation.org)。\n\n如有问题，欢迎[发邮件](mailto:integrity@worldcubeassociation.org)，我们的邮箱始终开放。"
+}

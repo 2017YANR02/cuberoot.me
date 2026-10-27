@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/result-of-the-wmt-leader-application-period",
+  "path": "docs/wca-post-translations/entries/result-of-the-wmt-leader-application-period.json",
+  "sourceHash": "3a350915813974ad5c6974a27225b3e6294d0066d05893b26d23e19854a7a37c",
+  "inputTranslationHash": "92cbdbdb058c80946201ba7b7b66f5128bd4e7d6836a36d75b2ca11046c54207",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:15.857Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

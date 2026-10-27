@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/appointment-of-executive-assistants-april-2019",
+  "path": "docs/wca-post-translations/entries/appointment-of-executive-assistants-april-2019.json",
+  "sourceHash": "aa4d5e596e38ea3a790c4d58cb387589b3c122683dd011d59b9568d4c3c35296",
+  "inputTranslationHash": "f20850653590a09451d62bf72b1b3ea8119b311f51bceca2e14315e20a07f3bb",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:06:14.456Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照正文与标题；核对全部申请/任命主体、时间、权限、附录条目及材料要求。"
+  ],
+  "changes": []
+}

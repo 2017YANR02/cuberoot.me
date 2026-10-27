@@ -13,12 +13,14 @@
   },
   "translation": {
     "language": "zh-Hans",
-    "version": 1,
+    "version": 2,
     "title": "赛后发现成绩单缺少签名",
-    "content": "赛后发现，Skewb 某次尝试缺少选手和裁判双方的签名。WRC 决定将该成绩改为 DNF。\n\n此事件违反并忽略了 [A7b](https://www.worldcubeassociation.org/regulations/#A7b) 和 [A7c](https://www.worldcubeassociation.org/regulations/#A7c)。具体而言，裁判没有确认成绩正确、完整、格式规范且清晰可读，选手也没有核对并签署成绩；这些都是结束一次尝试的必要步骤。\n\n尽管这一决定可能显得严厉，我们认为这些规则对确保成绩正确、有效十分重要。因此，未按 [A7b](https://www.worldcubeassociation.org/regulations/#A7b) 和 [A7c](https://www.worldcubeassociation.org/regulations/#A7c) 完成的成绩，不应被接受为有效成绩。",
+    "content": "赛后发现，斜转某次尝试缺少选手和裁判双方的签名。WRC 决定将该成绩改为 DNF。\n\n此事件违反并忽略了 [A7b](https://www.worldcubeassociation.org/regulations/#A7b) 和 [A7c](https://www.worldcubeassociation.org/regulations/#A7c)。具体而言，裁判没有确认成绩正确、完整、格式规范且清晰可读，选手也没有核对并签署成绩；这些都是结束一次尝试的必要步骤。\n\n尽管这一决定可能显得严厉，我们认为这些规则对确保成绩正确、有效十分重要。因此，未按 [A7b](https://www.worldcubeassociation.org/regulations/#A7b) 和 [A7c](https://www.worldcubeassociation.org/regulations/#A7c) 完成的成绩，不应被接受为有效成绩。",
     "translatedAt": "2026-10-22T05:48:51.542Z",
     "translator": "Codex / subscription",
-    "sourceHash": "32a038966a6a6b8683e403aa29de3c1928f21d367c5afd5424f72b20dbfbd181"
+    "sourceHash": "32a038966a6a6b8683e403aa29de3c1928f21d367c5afd5424f72b20dbfbd181",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
   "review": {
     "status": "independently_verified",
@@ -36,7 +38,23 @@
       "verdict": "pass",
       "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
     },
-    "unresolvedNotes": []
+    "unresolvedNotes": [],
+    "recheck": {
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.689Z",
+      "report": "../wca-translation-review-2026-10-26/final-report.json",
+      "sourceHash": "32a038966a6a6b8683e403aa29de3c1928f21d367c5afd5424f72b20dbfbd181",
+      "reviewedTranslationHash": "94c88d5f1fc813ed7e08290f536871be99ed52de0a2591c7a347885fdc0ee160",
+      "verdict": "pass",
+      "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。"
+    },
+    "currentReview": {
+      "round": "2026-10-26",
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/incidents-19.json",
+      "sourceConcern": false,
+      "notes": [],
+      "inputTranslationHash": "d56b30b6a3265d53b702a10324623e48d2611747f1b47582bfcd3a37106e7aeb"
+    }
   },
   "publication": {
     "status": "not_authorized"

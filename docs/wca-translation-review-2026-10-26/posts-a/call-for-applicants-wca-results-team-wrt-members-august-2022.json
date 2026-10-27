@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wca-results-team-wrt-members-august-2022",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wca-results-team-wrt-members-august-2022.json",
+  "sourceHash": "2ee92eae8fffd8de03f6ad60b0fef01bf12713c1bf4d7ae888f9b3105621bdfb",
+  "inputTranslationHash": "d2f030657889a66bfb811349cc887c3d8cb69c0cf65b61c9ef55618a3a42b854",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:07:01.629Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照招募正文、职责条目、必需/可选资格、年龄、时限和程序；未扩展外链材料。"
+  ],
+  "changes": []
+}

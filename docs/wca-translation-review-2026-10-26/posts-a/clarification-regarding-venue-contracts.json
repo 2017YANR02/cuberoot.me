@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/clarification-regarding-venue-contracts",
+  "path": "docs/wca-post-translations/entries/clarification-regarding-venue-contracts.json",
+  "sourceHash": "28ce8acaa294ee3f8044d10c8807cb6e18275a243cb643943f3a093889670865",
+  "inputTranslationHash": "a1ad095e20c2064aa6570448c77407e96bfa5afadd36330145e01a5703c3dc63",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:12:38.683Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "全文对照标题、名单变更/历史范围、项目实施日期、条件和例外、合同授权条件、准则对象及纪录合作流程。"
+  ],
+  "changes": []
+}

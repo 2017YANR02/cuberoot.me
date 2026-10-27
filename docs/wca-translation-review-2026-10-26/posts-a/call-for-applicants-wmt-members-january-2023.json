@@ -1,0 +1,18 @@
+{
+  "key": "posts:/posts/call-for-applicants-wmt-members-january-2023",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wmt-members-january-2023.json",
+  "sourceHash": "e1ce9718e03bd21ba0cdcdd37fe274fd145e04fceb6f8a0b00f6b31cb8d2ddcb",
+  "inputTranslationHash": "66049730e22f8c775d54e049fb74db0e1789dedd6124ad34c998d5f5df54ffdf",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:10:56.904Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "correction_required",
+  "notes": [
+    "逐篇全文核对招募领域、地域限制、工时、材料和截止日期。"
+  ],
+  "changes": [
+    "统一 Continental 为大洲赛事/纪录；官方规则11f1c为大洲锦标赛，避免跨洲歧义。"
+  ],
+  "title": "招募 WCA 市场营销组成员（2023 年 1 月）",
+  "content": "WCA 市场营销组正在招募新成员！所有人都可以申请，我们也鼓励尚未在 WCA 任职的人报名！\n\n**WCA 市场营销组负责什么？**\n\nWMT 负责管理 WCA 与外部伙伴的关系，同时参与 WCA 品牌相关工作，包括周边商品、公众参与、市场调研及合作伙伴事务。\n\n以下是 WMT 正在开展的一些项目：\n\n* 周边商品\n  * 你可能已经看到上线的 [WCA 周边商店](https://shop.worldcubeassociation.org/)。WMT 正在寻找能够帮助开发和拓展周边商品的成员。\n* 赞助\n  * WMT 与 Spin Master 等现有 WCA 赞助商合作，也在全球和当地范围内寻找潜在合作机会。特别欢迎曾为自己主办的比赛争取赞助的人申请。\n* 锦标赛支持\n  * WMT 希望招募能够协助推广各大洲锦标赛和世锦赛的成员，重点是宣传 WCA 品牌、扩大影响范围。\n* 器材小组\n  * WMT 负责处理世界各地代表提交的器材订单。有项目管理和沟通经验的人可以在这方面发挥作用。\n\n所有人都可以申请，不要求申请者目前已在 WCA 任职。\n\n**申请条件**\n\n* 对 WCA 品牌推广有兴趣或相关经验。\n* 每周可投入约 5–10 小时。\n* 有创意，能与团队合作。\n* 熟悉周边商品、赞助或供应商管理者优先。\n\n申请者须提交 PDF 格式的材料，包含简短的个人介绍、参与 WCA 的经历、申请加入 WMT 的原因，以及相关经验或技能。\n\n**请于即日起至 2023 年 2 月 20 日 23:59 UTC，将申请发送至 sgrover@worldcubeassociation.org。**"
+}

@@ -12,14 +12,31 @@
     "sourceId": 14007
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "cfe8583bdf1c506525433bde81041c1c91d85409ba4b56e2db167637cd58d833",
     "language": "zh-Hans",
     "title": "非洲高级代表任命公告（2021 年 1 月）",
     "content": "我们很高兴地宣布，Brent Boswell 将担任非洲地区的新任高级代表。感谢董事会在选拔新负责人期间承担该地区的管理工作。\n\nWCA 董事会依据[《高级代表动议》](https://www.worldcubeassociation.org/documents/motions/09.2020.1%20-%20Senior%20Delegates.pdf)第 4 节，通过投票选定了 Brent。\n\n祝 Brent 在新岗位上工作顺利。他的高级代表任期即刻开始。\n\n如有兴趣，Brent 的申请材料可在[这里](https://drive.google.com/drive/u/0/folders/1Sp91Cjhol1FvswmescHTThfyzu0-GZ80)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:54.101Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "0a70ba45acb0a75d9a0e81f4ed5248ccf5463a116439070929851fae2a8b6954"
+  "translationHash": "e928a4aba4333dbbd33f3825a00dd8638bab4c431ec86eebcfb0cfc10c394dec",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:25.167Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "cfe8583bdf1c506525433bde81041c1c91d85409ba4b56e2db167637cd58d833",
+    "reviewedTranslationHash": "e928a4aba4333dbbd33f3825a00dd8638bab4c431ec86eebcfb0cfc10c394dec",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/senior-delegate-announcement-africa-january-2021.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "0a70ba45acb0a75d9a0e81f4ed5248ccf5463a116439070929851fae2a8b6954"
+  }
 }

@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wac-leader-august-2024",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wac-leader-august-2024.json",
+  "sourceHash": "4e46ec2694e57df33dbb81714c4ce03148c0b676546607a2b79aae6478500057",
+  "inputTranslationHash": "1b55a8002948749a995a47ee5be7903a7176706e47b1cb5b6b3ba46f721c1dc3",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:06:36.462Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇全文对照：含招募资格、时限、工作量、程序、历史机构；比赛报告核对人物、项目、成绩与纪录类别。"
+  ],
+  "changes": []
+}

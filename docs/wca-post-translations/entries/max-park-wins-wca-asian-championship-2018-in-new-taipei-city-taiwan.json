@@ -12,14 +12,31 @@
     "sourceId": 10100
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "86bcac9f9e57fc0248e96d77fd08a3c5474cf3f8b0c24e714471604aa9b5b9f0",
     "language": "zh-Hans",
     "title": "Max Park 夺得台湾新北市 2018 年 WCA 亚洲锦标赛冠军",
     "content": "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03) 以 6.58 秒的平均成绩夺得 [2018 年 WCA 亚洲锦标赛](https://www.worldcubeassociation.org/competitions/AsianChampionship2018)冠军。[Seung Hyuk Nahm（남승혁）](https://www.worldcubeassociation.org/persons/2013NAHM01) 以 6.65 秒获得亚军，[Bill Wang](https://www.worldcubeassociation.org/persons/2010WANG68) 以 6.98 秒获得季军。\n\n世界纪录：Max Park，五阶平均 42.36 秒、六阶单次 1:13.82、六阶平均 1:17.10。\n\n亚洲纪录：Makoto Takaoka（高冈诚），Square-1 平均 7.90 秒；Seung Hyuk Nahm（남승혁），五阶单次 41.12 秒、五阶平均 45.77 秒；Wong Kin Lok（黄健乐），六阶平均 1:37.92；Yi-Fan Wu（吴亦凡），六阶单次 1:28.72。\n\n大洋洲纪录：Feliks Zemdegs，七阶单次 1:54.54、七阶平均 2:02.31；Jack Cai，三阶盲拧单次 19.20 秒；Tomoya Firman，三阶多盲单次 25/27，用时 54:50。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.181Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "8315730384412b66fd765d90b92d5e543289ae7d1b3cc9c25db0d1453dc710e5"
+  "translationHash": "b132542b8d6a2494f53a8591d8a3c409d50c463b6f002f57d013521fc3af9052",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:36.321Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "86bcac9f9e57fc0248e96d77fd08a3c5474cf3f8b0c24e714471604aa9b5b9f0",
+    "reviewedTranslationHash": "b132542b8d6a2494f53a8591d8a3c409d50c463b6f002f57d013521fc3af9052",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/max-park-wins-wca-asian-championship-2018-in-new-taipei-city-taiwan.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "8315730384412b66fd765d90b92d5e543289ae7d1b3cc9c25db0d1453dc710e5"
+  }
 }

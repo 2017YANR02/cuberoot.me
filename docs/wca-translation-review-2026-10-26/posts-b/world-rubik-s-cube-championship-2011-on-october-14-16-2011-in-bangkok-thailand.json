@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/world-rubik-s-cube-championship-2011-on-october-14-16-2011-in-bangkok-thailand",
+  "path": "docs/wca-post-translations/entries/world-rubik-s-cube-championship-2011-on-october-14-16-2011-in-bangkok-thailand.json",
+  "sourceHash": "f7112fef0f3253e30f8c3be110a429d199d3a199e7aff805cda3a5bc8bf0a7a8",
+  "inputTranslationHash": "4a2b2db5dc8c8d3c331ba0c415fa1e009dbf2dc7d0123bea898ebfe6acc5ec0b",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:11:14.400Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

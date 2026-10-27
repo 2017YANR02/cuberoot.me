@@ -7,6 +7,18 @@ import { apiUrl } from './api-base';
 import { authHeaders } from './admin-api';
 import { formatWcaResult } from './wca-format-result';
 import { computeWcaBestAverage, canRecompute } from './wca-compute';
+import type { WcaResultRow } from './wca-person-api';
+
+/** An unchanged official row with a new ID is a republication, not a cancellation. */
+export function isReplacedResultRemoval(change: ResultChange, results: readonly WcaResultRow[]): boolean {
+  const old = change.before;
+  if (change.source !== 'auto' || change.changeType !== 'removed' || !old || change.resultId == null) return false;
+  return results.some(row => !row.live && row.id != null && row.id !== change.resultId
+    && row.competition_id === old.c && row.event_id === old.e && row.round_type_id === old.r
+    && row.format_id === old.f && row.best === old.b && row.average === old.a && row.pos === old.p
+    && (row.regional_single_record ?? null) === old.rs && (row.regional_average_record ?? null) === old.ra
+    && row.attempts.length === old.at.length && row.attempts.every((value, index) => value === old.at[index]));
+}
 
 export interface ResultWatchPerson {
   wcaId: string;
@@ -90,7 +102,7 @@ export function splitChainByStatus(
 }
 
 export async function fetchResultWatchStatus(signal?: AbortSignal): Promise<ResultWatchStatus> {
-  const res = await sessionFetch(apiUrl('/v1/wca/result-watch/status'), { signal });
+  const res = await sessionFetch(apiUrl('/v1/wca/result-watch/status?v=2'), { signal });
   if (!res.ok) throw new Error(`result-watch/status ${res.status}`);
   return (await res.json()) as ResultWatchStatus;
 }
@@ -102,6 +114,7 @@ export async function fetchResultChanges(
   noStore = false,
 ): Promise<ResultChange[]> {
   const qs = new URLSearchParams();
+  qs.set('v', '2');
   if (wcaId) qs.set('wcaId', wcaId);
   qs.set('limit', String(limit));
   if (noStore) qs.set('_t', String(Date.now()));
@@ -132,7 +145,7 @@ export async function fetchResultChangesByComp(
   signal?: AbortSignal,
   noStore = false,
 ): Promise<ResultChange[]> {
-  const qs = new URLSearchParams({ compId, limit: String(limit) });
+  const qs = new URLSearchParams({ compId, limit: String(limit), v: '2' });
   if (noStore) qs.set('_t', String(Date.now()));
   const res = await sessionFetch(apiUrl(`/v1/wca/result-watch/changes?${qs.toString()}`), {
     signal,

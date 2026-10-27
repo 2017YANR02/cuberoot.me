@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wic-members-november-2024",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wic-members-november-2024.json",
+  "sourceHash": "7c6e52c3ebf2e465d7eeab91b314ba7a5ec023cb6531c2012f93612b7de5c5a6",
+  "inputTranslationHash": "5c5c13553d01822dd967f38fc3b032c2ebab6d3e9418d67a323e5962a30c7b52",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:10:42.788Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题与正文；核对财务职责、非必需技能、WIC 三组人数与条件、WMCT 多舞台经验及申请流程。"
+  ],
+  "changes": []
+}

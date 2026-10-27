@@ -12,14 +12,31 @@
     "sourceId": 14223
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "02382795b2eb55a5fdb7e5f6fcca3058da7143d047ac32c57ce4fabdbf00b578",
     "language": "zh-Hans",
     "title": "高级代表任命公告：美国和加拿大（2025 年 11 月）",
     "content": "我们很高兴地宣布，Abhimanyu Singhal 将担任美国和加拿大地区的新任高级代表。\n\nWCA 董事会依照高级代表动议第 4 节，经投票选出 Abhimanyu（“Manu”）。\n\n我们支持 Manu 履行新的职责，也祝他工作顺利。他的高级代表任期自 2025 年 11 月 18 日开始。\n\n本次美国和加拿大地区高级代表职位共有两人申请，其中包括 Manu。申请材料可在[此处](https://drive.google.com/drive/folders/1dWywBP07-x9xrt69JN1O3Q_FxNakLaUB)查看。\n\n除 Manu 外，另一名申请人为：\n\n* Sarah Strong",
     "notes": [],
     "translatedAt": "2026-10-22T08:40:49.161Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "b574d676669cda71206abce520d8965bee39f1e09d60e3b61daaf1ce6cb31de5"
+  "translationHash": "781d4f7ce65e2c5a834931bc67504c50b1ba4d7b6f95971b9580cfa1f8ec7327",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:25.168Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "02382795b2eb55a5fdb7e5f6fcca3058da7143d047ac32c57ce4fabdbf00b578",
+    "reviewedTranslationHash": "781d4f7ce65e2c5a834931bc67504c50b1ba4d7b6f95971b9580cfa1f8ec7327",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/senior-delegate-announcement-usa-and-canada-november-2025.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "b574d676669cda71206abce520d8965bee39f1e09d60e3b61daaf1ce6cb31de5"
+  }
 }

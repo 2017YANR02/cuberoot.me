@@ -12,16 +12,31 @@
     "sourceId": 13777
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "0cc7f02da8f320608209e8cbe20e4fc426b830bf852cdab9252635a3459f74a1",
     "language": "zh-Hans",
     "title": "WCA 比赛公示组新负责人（2020 年 1 月）",
     "content": "我们很高兴地宣布，**Wilson Alvis** 将担任 **WCA 比赛公示组（WCAT）**的新负责人。\n\n按照关于 WCA 委员会和团队的 [10.2019.0 号议案](https://www.worldcubeassociation.org/documents/motions/10.2019.0%20-%20Committees%20and%20Teams.pdf)第 4 节，WCA 董事会选定 Wilson，并经现任委员会负责人和高级代表投票批准。\n\n感谢 Henrik 在担任 WCAT 负责人期间所做的工作，祝 Wilson Alvis 履新顺利。\n\n新负责人的任命已生效。本次共有两位申请人，Wilson Alvis 是其中之一。如有兴趣，可在[此处](https://drive.google.com/open?id=1MrEB9E7E8hh0axrXZ6uiU3PdbD-767sV)查看申请材料。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.141Z",
-    "reviewStatus": "pending_independent_review",
-    "revisedAt": "2026-10-25T07:28:01.629Z",
-    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "36e9690dfab969d2e0c3a3c9025a513cb880085e5c9c33c9a1b23e3289d784a4"
+  "translationHash": "3b98b9c0088bfcd886dad061b9061a51c87e58808f4165a7f1c81adf397326bf",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:44.904Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "0cc7f02da8f320608209e8cbe20e4fc426b830bf852cdab9252635a3459f74a1",
+    "reviewedTranslationHash": "3b98b9c0088bfcd886dad061b9061a51c87e58808f4165a7f1c81adf397326bf",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/new-wcat-leader-january-2020.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "36e9690dfab969d2e0c3a3c9025a513cb880085e5c9c33c9a1b23e3289d784a4"
+  }
 }

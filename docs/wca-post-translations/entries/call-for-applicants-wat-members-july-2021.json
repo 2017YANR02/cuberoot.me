@@ -12,16 +12,33 @@
     "sourceId": 14027
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "97955bf7596c869c486fe842758bd7176e2c0cc29e5ee11b0d251161f452f270",
     "language": "zh-Hans",
     "title": "WCA 档案组招募成员（2021 年 7 月）",
     "content": "WCA 正在整理和保存组织创立以来的历史，以及一路走来各个重要节点的记录。为此，我们向大家介绍专门负责这项工作的 **WCA 档案组（WAT）**！团队正在招募成员参与相关项目，希望各地区都有人加入，提高工作的效率。所有人均可申请，无需目前在 WCA 任职。\n\n你是否好奇早期魔友的经历？想挖掘过去的魔方故事，从新的角度讲述它们？想进一步了解 WCA 的过去与未来？如果答案是肯定的，你可能很适合加入 WAT！\n<!-- break -->\n**WAT 负责什么？**\n\n* 收集并归档与 WCA 过去及未来有关的信息和影音资料，例如纪录与重要节点、大型锦标赛及活动、地区组织等。\n* 利用档案制作文字和视觉内容，用于 WCA 网站、其他平台和大型魔方活动，让不同受众更好地了解 WCA 与魔方。\n* 持续更新档案，与组织者及其他团队合作开展社区项目，保存 WCA 的历史。\n\nWAT 目前是根据 [WCA 章程](https://www.worldcubeassociation.org/documents/WCA%20Bylaws.pdf)第 5.3 节成立的顾问委员会。不会另在议案或委员会／团队页面为该团队建立更多文件。\n\n**我们希望成员具备：**\n\n* 细心，回复及时。\n* 良好的人际沟通能力，并愿意学习。\n* 较好的英语水平。\n* 熟悉 WCA 活动。\n\n以下能力会有帮助，但并非必需：\n\n* 熟练掌握其他语言。\n* 叙事写作、创意写作或任何形式的新闻工作经验。\n\n预计每周投入约 4–6 小时。\n\n申请从即日起开放，请于 **2021 年 8 月 1 日 23:59 UTC** 前将材料发送给 William Gan（[wgan@worldcubeassociation.org](mailto:wgan@worldcubeassociation.org)）。\n\n**申请材料须为 PDF 格式，包含：**\n\n* 简短的个人介绍。\n* 参与 WCA／魔方社区的经历。\n* 加入 WAT 的动机。\n* （选填）其他与 WAT 工作有关的经验。\n\n收到申请后，我们会回复确认。在申请期间及截止后的两周内，入围者可能受邀参加面试。如对 WAT 或申请流程有疑问，请联系 William Gan（[wgan@worldcubeassociation.org](mailto:wgan@worldcubeassociation.org)）。\n\n感谢大家的申请与支持！",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:00.920Z",
-    "reviewStatus": "pending_independent_review",
-    "revisedAt": "2026-10-25T07:28:01.629Z",
-    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "1968805f948e9f20dc0311f851e5dd10aefe2b1594f2a5363f7e681bf64c7a8b"
+  "translationHash": "04f66616deda8c4fc19a9e71763ba84e58c9d69b3a041a51ccaa8ec31b0f2fb9",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:07:01.626Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "97955bf7596c869c486fe842758bd7176e2c0cc29e5ee11b0d251161f452f270",
+    "reviewedTranslationHash": "04f66616deda8c4fc19a9e71763ba84e58c9d69b3a041a51ccaa8ec31b0f2fb9",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/call-for-applicants-wat-members-july-2021.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照招募正文、职责条目、必需/可选资格、年龄、时限和程序；未扩展外链材料。"
+    ],
+    "inputTranslationHash": "1968805f948e9f20dc0311f851e5dd10aefe2b1594f2a5363f7e681bf64c7a8b"
+  }
 }

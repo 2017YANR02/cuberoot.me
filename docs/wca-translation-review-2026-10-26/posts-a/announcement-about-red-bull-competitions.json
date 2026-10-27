@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/announcement-about-red-bull-competitions",
+  "path": "docs/wca-post-translations/entries/announcement-about-red-bull-competitions.json",
+  "sourceHash": "aeb4ec3b368bc4c2e5071649de92667ab31e92bdf4ec370134f92f707d50c19f",
+  "inputTranslationHash": "77894279562ebff5534dd415b9e9eeaae51b7c97065fa195f369f8308209b91c",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:05:11.622Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+  ],
+  "changes": []
+}

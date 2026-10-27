@@ -12,14 +12,33 @@
     "sourceId": 14115
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "95574c3ad9c4e9e55f031b83e45a36fc84f0921d4d826e73bc0f2dc82fef8aa4",
     "language": "zh-Hans",
     "title": "年度会员大会（2023 年 7 月）",
     "content": "董事会依照[章程第 2.12 条](https://www.worldcubeassociation.org/documents/WCA%20Bylaws.pdf)发出通知：WCA 年度会员大会将于 **8 月 12 日 18:30 KST（09:30 UTC）**举行。会员可到松岛 ConvensiA 会展中心现场参会，本次会议不设直播。有关年度大会的资料包已放入[此文件夹](https://drive.google.com/drive/u/1/folders/1ungHPRpeOQLE9NkI1ieTwNzU1fvZ0kbs)，其中包含本次会议将讨论的全部相关文件。\n\n期待大家参加即将举行的年度大会。",
     "notes": [],
     "translatedAt": "2026-10-22T08:42:40.584Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "d71fe43c64c629d90f2e557f9e2c5551ba240df6bb6f0eafe9571265496842a4"
+  "translationHash": "722d4c80a7d500f83606280b8ab3486abdd6470644dbbf1848ce024f87c0a83f",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:05:11.623Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "95574c3ad9c4e9e55f031b83e45a36fc84f0921d4d826e73bc0f2dc82fef8aa4",
+    "reviewedTranslationHash": "722d4c80a7d500f83606280b8ab3486abdd6470644dbbf1848ce024f87c0a83f",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/annual-members-meeting-july-2023.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+    ],
+    "inputTranslationHash": "d71fe43c64c629d90f2e557f9e2c5551ba240df6bb6f0eafe9571265496842a4"
+  }
 }

@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/martin-fronescu-wins-u-r-a-spring-of-colors-2018-in-bucharest-romania",
+  "path": "docs/wca-post-translations/entries/martin-fronescu-wins-u-r-a-spring-of-colors-2018-in-bucharest-romania.json",
+  "sourceHash": "b7dd4a8954872ed3ee519aee7c260636d1f7f64624692d7ee5c5a11fda55e6a1",
+  "inputTranslationHash": "bd89b1ce6083e51aa99e5061edc77d3f968756cf634e55c5c8abee0d1e49a0b9",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:36.321Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

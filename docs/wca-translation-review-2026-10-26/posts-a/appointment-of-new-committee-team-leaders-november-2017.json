@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/appointment-of-new-committee-team-leaders-november-2017",
+  "path": "docs/wca-post-translations/entries/appointment-of-new-committee-team-leaders-november-2017.json",
+  "sourceHash": "a6a13a41ab69fb8dbb612c3b495a201e80c65d7e7322b93b54418bdbf3cd013e",
+  "inputTranslationHash": "9e3efd8cdccbbe6727fbf6606d91d5f89fb375159e550f3ad9783e721194d1cd",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:06:14.456Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照正文与标题；核对全部申请/任命主体、时间、权限、附录条目及材料要求。"
+  ],
+  "changes": []
+}

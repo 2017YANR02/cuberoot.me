@@ -11,7 +11,7 @@
     --pat-accent: var(--accent);
     --pat-accent-soft: color-mix(in srgb, var(--accent) 8%, transparent);
 
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: var(--font-sans);
     background: var(--pat-bg);
     color: var(--pat-text);
     min-height: 100vh;

@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/wca-documents-updated-january-1-2013",
+  "source": {
+    "key": "posts:/posts/wca-documents-updated-january-1-2013",
+    "kind": "posts",
+    "title": "WCA Documents: Updated January 1, 2013",
+    "date": "2013-01-07T12:43:09.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/wca-documents-updated-january-1-2013",
+    "content": "Hello all,\n \n The World Cube Association has released a new set of documents, effective January 1, 2013. All documents can be accessed via [https://www.worldcubeassociation.org/regulations/](https://www.worldcubeassociation.org/regulations/).\n \n The WCA Regulations go into effect immediately, and govern all official competitions sanctioned by the World Cube Association. The WCA Regulations are also supplemented by the WCA Guidelines. The Regulations should be considered a complete document, but the Guidelines contain additional clarifications and explanations.\n \n The WCA has also added another scramble program to be used for official competitions; TNoodle can also be found at the link above.\n \n Special thanks to: \n - The WCA Board (Tyson Mao, Ron van Bruchem, Tim Reynolds, and Sébastien Auroux), Independent Advisory Committee (Anders Larsson), the WCA Delegates (too many to list) and members of the community for constructive feedback and review;\n - Jeremy Fleischman, the point man and lead architect of the TNoodle Official WCA Scrambler project; and lastly,\n - The entire WRC committee (Clément Gallet, Lucas Garron, Sébastien Auroux, Shelley Chang, and myself) for their their tireless efforts. Each of the members of the WRC spent an inordinate amount of time collecting data, reviewing Delegate and community feedback, and debating the merits of the WCA Regulations.\n \n Happy New Year!",
+    "hash": "22de0d66230d916536e4efa004f881af38019e7ffe0a013113508bbe953f9941",
+    "format": "markdown",
+    "sourceId": 2354
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "22de0d66230d916536e4efa004f881af38019e7ffe0a013113508bbe953f9941",
+    "language": "zh-Hans",
+    "title": "WCA 文件更新：2013 年 1 月 1 日生效",
+    "content": "大家好：\n\n世界魔方协会已发布新版文件，自 2013 年 1 月 1 日起生效。全部文件可通过 [https://www.worldcubeassociation.org/regulations/](https://www.worldcubeassociation.org/regulations/) 查看。\n\nWCA 竞赛规则即日起生效，适用于所有经世界魔方协会认可的官方比赛。WCA 指南作为规则的补充。规则本身应视为完整文件，而指南提供额外的澄清和解释。\n\nWCA 也新增了一款可用于官方比赛的打乱程序 TNoodle，同样可从上述链接下载。\n\n特别感谢：\n\n- WCA 董事会（Tyson Mao、Ron van Bruchem、Tim Reynolds、Sébastien Auroux）、独立顾问委员会（Anders Larsson）、众多 WCA 代表以及社区成员提供的建设性反馈和审阅意见。\n- TNoodle 官方 WCA 打乱程序项目的主要负责人和首席架构师 Jeremy Fleischman。\n- 最后，感谢整个 WRC 委员会（Clément Gallet、Lucas Garron、Sébastien Auroux、Shelley Chang 和我本人）的持续努力。每位 WRC 成员都花了大量时间收集资料、审阅代表和社区反馈，并讨论规则的利弊。\n\n新年快乐！",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:55:00.932Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "2affcf50a10535b435053ffda76b147672ba50337257d90d054cbcd2f2ae1ef9"
+}

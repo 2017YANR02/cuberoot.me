@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/announcement-about-red-bull-competitions",
+  "source": {
+    "key": "posts:/posts/announcement-about-red-bull-competitions",
+    "kind": "posts",
+    "title": "Announcement about Red Bull competitions",
+    "date": "2018-10-04T07:32:50.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/announcement-about-red-bull-competitions",
+    "content": "Dear WCA Community,\n\nAs most of you know Red Bull has created their own series of speedcubing competitions in 2018 without the involvement of the WCA.\n\nTheir series has finished for this year with their finals in Boston, but they will surely continue for future seasons too. Regarding the 2019 season, we are in talks with them about a possible cooperation between the two parties. So far nothing has been decided, the negotiations have not yet started, but we wanted to inform you that we are in communication with Red Bull right now.\n<!-- break -->\nThe start of their 2018 season was controversial among the speedcubing community, especially because they called their series “World Championship”. To fix this confusion, Red Bull already decided to change their name to “World Cup” in advance to avoid misunderstandings and to not have 2 World Championships in the same year, by two different organizations.\n\nWe will update everyone once the negotiations are finished and will announce the outcome.\n\nWCA Board of Directors",
+    "hash": "aeb4ec3b368bc4c2e5071649de92667ab31e92bdf4ec370134f92f707d50c19f",
+    "format": "markdown",
+    "sourceId": 10384
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "aeb4ec3b368bc4c2e5071649de92667ab31e92bdf4ec370134f92f707d50c19f",
+    "language": "zh-Hans",
+    "title": "关于红牛比赛的公告",
+    "content": "各位 WCA 社区成员：\n\n相信大多数人已经知道，红牛于 2018 年推出了自己的速拧系列赛，WCA 并未参与。\n\n该系列赛今年已在波士顿举行总决赛，之后也会继续举办新的赛季。关于 2019 赛季，我们正在与红牛沟通，探讨双方合作的可能性。目前尚未作出任何决定，正式谈判也还没有开始，但我们希望先告知大家，双方已经建立联系。\n\n2018 赛季开始时，这一赛事在速拧社区引起了争议，尤其是它使用了“世界锦标赛”的名称。为消除混淆，避免同一年由两个不同组织举办两场“世界锦标赛”，红牛已提前决定将赛事更名为“世界杯”。\n\n谈判结束后，我们会向大家通报进展并公布结果。\n\nWCA 董事会",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.174Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "77894279562ebff5534dd415b9e9eeaae51b7c97065fa195f369f8308209b91c"
+}

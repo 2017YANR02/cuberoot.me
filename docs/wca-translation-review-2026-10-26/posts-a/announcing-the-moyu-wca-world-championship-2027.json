@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/announcing-the-moyu-wca-world-championship-2027",
+  "path": "docs/wca-post-translations/entries/announcing-the-moyu-wca-world-championship-2027.json",
+  "sourceHash": "76cfd6cf9edc602756b8039adf4e871b29599ded6e2557839d44b566aa38105d",
+  "inputTranslationHash": "148cb99e32f2a52b32ee79945b625d5bf7a82eb1c477034d052fd54ef27d4d44",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:05:11.622Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+  ],
+  "changes": []
+}

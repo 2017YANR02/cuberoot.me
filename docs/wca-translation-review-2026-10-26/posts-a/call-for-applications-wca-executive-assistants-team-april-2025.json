@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applications-wca-executive-assistants-team-april-2025",
+  "path": "docs/wca-post-translations/entries/call-for-applications-wca-executive-assistants-team-april-2025.json",
+  "sourceHash": "1ccc3c2612f80c92814f1dcb3c74f8ce31463123587b4899e067e7399519c2e2",
+  "inputTranslationHash": "caf3325746a4430d30607fad1bcb3333ea39aa29b6d69f7143f024ac5a3a0b6e",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:12:00.205Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照正文及标题；申请条件、薪酬福利和地域、岗位职责、2024/2025 任命程序及 2019 草案条目逐项核对。"
+  ],
+  "changes": []
+}

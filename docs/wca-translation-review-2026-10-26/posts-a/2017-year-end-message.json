@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/2017-year-end-message",
+  "path": "docs/wca-post-translations/entries/2017-year-end-message.json",
+  "sourceHash": "98f3ef492990c92a096f5fcb60fee3186a5335035ad595547aec2c67b831a911",
+  "inputTranslationHash": "32dca61f86380cc02163942207382075412a00635e40e12c7e283f811f0bf34f",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:05:11.620Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+  ],
+  "changes": []
+}

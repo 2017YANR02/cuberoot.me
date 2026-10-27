@@ -1,0 +1,19 @@
+{
+  "key": "disciplinary:/posts/call-for-applicants-wdc-members-september-2019",
+  "path": "docs/wca-log-translations/entries/disciplinary-call-for-applicants-wdc-members-september-2019.json",
+  "sourceHash": "adc31e9908de74dc3246318856f9bebfd4c5b304b122dde5cc0032744db273de",
+  "inputTranslationHash": "8337e4d0c7110652c792dbefbb3f9f462a5d47203d2a0f5d8eb27e17ae50dfe4",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "复用已通过的旧版全文独立审校；人工阅读旧版与现版全部文字差异及对应英文段落，确认本轮之前的差异限于官方机构名称或 Guidelines 的“指南”译法；另复核本轮项目名命中语境。",
+  "verdict": "pass",
+  "notes": [],
+  "changes": [],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/report-1.json",
+    "reviewedTranslationHash": "58655f17936989aa5d5ef6dfad4d89a794f9ff5f66a4394c8c92a9befd8f369a",
+    "verdict": "pass",
+    "archivedVersion": "docs/wca-log-translations/versions/disciplinary-call-for-applicants-wdc-members-september-2019/58655f17936989aa5d5ef6dfad4d89a794f9ff5f66a4394c8c92a9befd8f369a-v1.json"
+  },
+  "sourceUncertainty": false
+}

@@ -12,14 +12,33 @@
     "sourceId": 14256
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "6093fecedd182442405ffc78924eb568209a0217081bcee35dfda5d0065347d0",
     "language": "zh-Hans",
     "title": "年度会员大会（2026 年 9 月）",
     "content": "亲爱的 WCA 社区成员：\n\n董事会依照章程第 2.12 条发出通知：2026 年年度会员大会将于 9 月 27 日 17:00 UTC 举行。会员可通过 [WCA Twitch 频道](https://www.twitch.tv/worldcubeassociation)的直播观看会议。在这个[文件夹](https://drive.google.com/drive/folders/1MEVM0MChBjC5-gCXvQyJ5s2CqgB41RpX)中，您可以找到本次年度大会的资料包，其中包括所有将在会上讨论的相关文件。\n\n我们期待您参与即将举行的年度大会。\n\n此致，\nOliver Hexter，代表董事会",
     "notes": [],
     "translatedAt": "2026-10-22T08:26:07.750Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "8c106dc793a797724d98084a82e49a2b2a5a77243c16e8b2dee9b8604b14babb"
+  "translationHash": "cf697e33b739d81d2447fa65ef566d381475cbf1a11d3cade5be6dd3a1036684",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:05:11.623Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "6093fecedd182442405ffc78924eb568209a0217081bcee35dfda5d0065347d0",
+    "reviewedTranslationHash": "cf697e33b739d81d2447fa65ef566d381475cbf1a11d3cade5be6dd3a1036684",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/annual-members-meeting-september-2026.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+    ],
+    "inputTranslationHash": "8c106dc793a797724d98084a82e49a2b2a5a77243c16e8b2dee9b8604b14babb"
+  }
 }

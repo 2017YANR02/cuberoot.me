@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wac-leader-may-2022",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wac-leader-may-2022.json",
+  "sourceHash": "3245abb5303c5d206d61e2538e9ea1a21f1980c4bc3c1318175c2c8d0d6fbc30",
+  "inputTranslationHash": "cd4b3243e9da92a7790a1e862da1d1d4f118d6a8e10d0d051c3f466c96597bb4",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:06:36.462Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇全文对照：含招募资格、时限、工作量、程序、历史机构；比赛报告核对人物、项目、成绩与纪录类别。"
+  ],
+  "changes": []
+}

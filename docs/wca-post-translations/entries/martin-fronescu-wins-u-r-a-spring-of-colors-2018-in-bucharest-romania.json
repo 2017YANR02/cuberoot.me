@@ -12,14 +12,31 @@
     "sourceId": 9376
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "b7dd4a8954872ed3ee519aee7c260636d1f7f64624692d7ee5c5a11fda55e6a1",
     "language": "zh-Hans",
     "title": "Martin Fronescu 夺得罗马尼亚布加勒斯特 U.R.A. Spring of Colors 2018 冠军",
     "content": "[Martin Fronescu](https://www.worldcubeassociation.org/persons/2013FRON01) 以 8.68 秒的平均成绩夺得 [U.R.A. Spring of Colors 2018](https://www.worldcubeassociation.org/competitions/URASpringofColors2018) 冠军。[Sorin Turculeț](https://www.worldcubeassociation.org/persons/2017TURC02) 以 10.53 秒获得亚军，[János Bereczki](https://www.worldcubeassociation.org/persons/2018BERE01) 以 10.78 秒获得季军。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.989Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "bd89b1ce6083e51aa99e5061edc77d3f968756cf634e55c5c8abee0d1e49a0b9"
+  "translationHash": "1085f435ec9579290a1671da47d217705dc1403c10cfcd9155e5252ec2ad4348",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:36.321Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "b7dd4a8954872ed3ee519aee7c260636d1f7f64624692d7ee5c5a11fda55e6a1",
+    "reviewedTranslationHash": "1085f435ec9579290a1671da47d217705dc1403c10cfcd9155e5252ec2ad4348",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/martin-fronescu-wins-u-r-a-spring-of-colors-2018-in-bucharest-romania.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "bd89b1ce6083e51aa99e5061edc77d3f968756cf634e55c5c8abee0d1e49a0b9"
+  }
 }

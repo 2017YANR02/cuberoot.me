@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/wca-continental-championships-2026-host-cities-announcement-october-2025",
+  "path": "docs/wca-post-translations/entries/wca-continental-championships-2026-host-cities-announcement-october-2025.json",
+  "sourceHash": "7b4e053ad0ceba55c2467bacce23763fb87a3300d40fec4ad46ea18be210ab53",
+  "inputTranslationHash": "3dc9afeeee46f05e251c8fcfeea3f3db46b36d35cabbf4a4823e6e192513e2c5",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:07:08.715Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

@@ -27,7 +27,7 @@ export function reportPlayback(state:ReportPlayerState,total:number,totalMs:numb
   return groupNode('playback',[
     hasSide&&groupNode('side',[{id:'notation',kind:'slot'}],'reconstruct-playback-side'),
     groupNode('main',[
-      groupNode('top',[textNode('caption',tr({zh:'回放',en:'replay'}),'reconstruct-playback-cap'),groupNode('controls',[
+      groupNode('top',[groupNode('controls',[
         hasGyro?{id:'gyro',kind:'toggle',text:tr({zh:'陀螺仪',en:'Gyro'}),value:state.posed,action:{type:'gyro'}}:null,
         groupNode('speeds',[textNode('label',tr({zh:'速度',en:'Speed'}),'reconstruct-playback-speed-cap'),...REPLAY_SPEEDS.map(value=>buttonNode(String(value),value+'x',{type:'speed',value},`reconstruct-playback-speed-btn ${state.speed===value?'active':''}`,{selected:state.speed===value}))],'reconstruct-playback-speed','row'),
       ],'reconstruct-playback-controls','row')],'reconstruct-playback-top','row'),

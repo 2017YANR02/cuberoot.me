@@ -171,10 +171,31 @@ function diffFp(before: Fp, after: Fp): ChangeField[] {
 }
 
 /** 旧快照 → 新快照的 removed/modified 清单(忽略 added)。 */
-function detectChanges(oldMap: FpMap, newMap: FpMap): DetectedChange[] {
+export function detectChanges(oldMap: FpMap, newMap: FpMap): DetectedChange[] {
   const out: DetectedChange[] = [];
+  // WCA can replace database IDs when republishing results. Match a unique
+  // newly added row by competition/event/round before declaring a removal.
+  const identity = (fp: Fp) => JSON.stringify([fp.c, fp.e, fp.r]);
+  const added = new Map<string, [string, Fp][]>();
+  const missing = new Map<string, number>();
+  for (const [id, fp] of Object.entries(newMap)) {
+    if (oldMap[id]) continue;
+    const key = identity(fp);
+    added.set(key, [...(added.get(key) ?? []), [id, fp]]);
+  }
+  for (const [id, fp] of Object.entries(oldMap)) {
+    if (!newMap[id]) missing.set(identity(fp), (missing.get(identity(fp)) ?? 0) + 1);
+  }
   for (const [id, before] of Object.entries(oldMap)) {
-    const after = newMap[id];
+    const candidates = added.get(identity(before));
+    if (!newMap[id] && candidates?.length && (missing.get(identity(before)) !== 1 || candidates.length !== 1)) {
+      // Leave the previous snapshot intact for retry/investigation rather than
+      // publishing an unproven cancellation and absorbing an ambiguous import.
+      throw new Error(`Ambiguous WCA result replacement: ${identity(before)}`);
+    }
+    const replacement = !newMap[id] && missing.get(identity(before)) === 1 && candidates?.length === 1
+      ? candidates[0] : undefined;
+    const after = newMap[id] ?? replacement?.[1];
     if (!after) {
       out.push({
         resultId: Number(id),
@@ -191,7 +212,7 @@ function detectChanges(oldMap: FpMap, newMap: FpMap): DetectedChange[] {
     const fields = diffFp(before, after);
     if (fields.length > 0) {
       out.push({
-        resultId: Number(id),
+        resultId: Number(replacement?.[0] ?? id),
         competitionId: after.c,
         eventId: after.e,
         roundTypeId: after.r,

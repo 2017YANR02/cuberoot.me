@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wcat-members-october-2018",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wcat-members-october-2018.json",
+  "sourceHash": "15fe32e60ece445a9b645b3113c8c8ebdb18869fda2eba81db8ec6e99c922d5a",
+  "inputTranslationHash": "f2eb211e888fd159c0b7b06c0077afdb5a1d76e82f1495bffcda1b6aacc3411b",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:09:54.049Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整核对标题及正文，招募资格、工作时长、申请截止日期、收件人、申请材料与程序一致。"
+  ],
+  "changes": []
+}

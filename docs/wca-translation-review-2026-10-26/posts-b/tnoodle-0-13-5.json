@@ -1,0 +1,17 @@
+{
+  "key": "posts:/posts/tnoodle-0-13-5",
+  "path": "docs/wca-post-translations/entries/tnoodle-0-13-5.json",
+  "sourceHash": "f1e71e3c3b0118b7c5ce2e7aab244ecd4b5ce91859d03c173c574c40a3355fd5",
+  "inputTranslationHash": "13ee74cb80a8d735c667bacdc5308ff4ae0ed9739fe9d066c52100f2579577e9",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:48.605Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "correction_required",
+  "notes": [],
+  "changes": [
+    "项目名 Skewb 采用官方中文斜转。",
+    "保留 suggests 的证据强弱，不把分析提示写成绝对结论。"
+  ],
+  "title": "TNoodle 0.13.5 发布",
+  "content": "TNoodle-WCA-0.13.5 现已可从 https://www.worldcubeassociation.org/regulations/scrambles/ 下载。\n\n与 TNoodle-WCA-0.13.4 相比，本次作出了以下修改：\n\n* 修复了斜转打乱可能短于预期 11 步的问题。\n\n根据 WCA 规则，官方斜转打乱必须从至少需要 7 步才能还原的状态中（[4b3c](https://www.worldcubeassociation.org/regulations/#4b3c)），生成随机状态（[4b3](https://www.worldcubeassociation.org/regulations/#4b3)）。\n\n为避免从打乱纸上轻易辨认出解法较短的打乱，TNoodle 的设计确保生成的所有斜转打乱序列至少有 11 步，即使该状态存在更短的解法。然而，0.13.5 之前版本的 TNoodle 存在线程安全问题，可能导致打乱序列被截断，具体表现为：\n\n* 如果截断后的打乱仍需要至少 7 步才能还原，该序列就会被采用，仍满足规则 4b3c；但\n* 截断操作破坏了打乱的随机分布，违反规则 4b3。\n\n更多细节可在 [GitHub 上的 TNoodle 项目](https://github.com/thewca/tnoodle/pull/368)中查看。\n\n对历史打乱解法长度的分析显示，过去绝大多数比赛的状态分布似乎未受影响。然而，至少有一场大型比赛（[CubingUSA Nationals 2018](https://www.worldcubeassociation.org/competitions/CubingUSANationals2018)）的状态明显偏向最优解较短的情况，这也促成了问题的发现。感谢 Sébastien Auroux 向我们反映此事，也感谢 Tim Reynolds 在刚过去的周末与 Jeremy Fleischman 一起定位问题，并为 TNoodle 准备了修复。\n\n我们不认为有人故意利用这一问题获取优势。不过，分析工作仍未完成；完成后，我们会在 WRC [意外事件日志](https://www.worldcubeassociation.org/incidents)中记录此事。\n\n请记住，官方比赛必须使用当前有效版本的官方打乱程序。最新版本始终可从以下页面获取：\nhttps://www.worldcubeassociation.org/regulations/scrambles/"
+}

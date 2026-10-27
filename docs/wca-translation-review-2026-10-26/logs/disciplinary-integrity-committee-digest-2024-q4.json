@@ -1,0 +1,30 @@
+{
+  "key": "disciplinary:/posts/integrity-committee-digest-2024-q4",
+  "path": "docs/wca-log-translations/entries/disciplinary-integrity-committee-digest-2024-q4.json",
+  "sourceHash": "206965c3e76461eca9177b30197f35fec6e1a9f709161086d5be57fd807f6c83",
+  "inputTranslationHash": "fa8ab3b870aae0e6ec119742e0fd620880151061d7325162694e789801675b12",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "本轮完整阅读英中正文及既有审校疑点，保留原文矛盾或含混，不擅自纠正历史事实。官方现行来源已重新读取，相关正文与保存版本一致。 本轮修改仅为有出处的项目/机构称谓。",
+  "verdict": "correction_required",
+  "notes": [
+    "原文称结案14件，但列举8项禁赛、3项警告、2件无措施合计13；译文忠实保留，未补造案件，统计待来源核验。",
+    "原文“permanent until”及连续不出席达到原禁令时长的条件已照译；具体政策性质未核验，不能称已解决该原文措辞疑义。",
+    "2026-10-26 重新读取官方来源，疑点仍存在；这是源文事实/措辞的保留结论，不是遗漏翻译或已确认的译文错误。"
+  ],
+  "changes": [
+    {
+      "before": "WCA 论坛诚信板块",
+      "after": "WCA 论坛廉政委员会板块",
+      "reason": "该 Integrity 论坛板块专指 WIC 工作，统一委员会专名，不改普通 honesty/integrity 的“诚实与诚信”。"
+    }
+  ],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/report-1.json",
+    "reviewedTranslationHash": "be586009fa2055a5a54cc9f0c1abd64a95825b15895ef19481fb338d33c91390",
+    "verdict": "pending_source_verification"
+  },
+  "sourceUncertainty": true,
+  "title": "廉政委员会简报：2024 年第四季度",
+  "content": "亲爱的 WCA 社群：\n\n上季度 WCA 廉政委员会立案 16 件、结案 14 件，作出 8 项禁赛、3 项警告，2 件未采取措施。部分重要案件如下：\n\n- 接报两名选手在多场比赛中行为不当。联系多名潜在证人后，发现持续存在欺凌、骚扰、虐待和恐吓，损害 WCA 精神、使命及行为准则。WIC 认为需要更强措施来保护速拧社群、恢复该地区选手对 WCA 的信任，并明确此类行为不会被容忍。两人在比赛现场的存在被认定具有高度破坏性，因此给予多年禁止参赛及到场的处分。\n- 接报一名选手在多场比赛中反复扰乱秩序。联系相关代表后，确认其持续未妥善完成各类工作任务，也不遵从代表指示。鉴于其曾因同类行为被禁赛，决定再次禁止其参赛。\n- 接报一名选手反复出现问题行为。代表称该选手未受事先挑衅，却对另一名选手越界。鉴于已因相同行为两度被禁赛，决定多年禁止其参赛及到场。\n- 接报一名受处分选手仍到场参加多场比赛。其原处分同时禁止参赛及到场，因此将禁令改为永久，直到其连续不出席比赛的时间达到原禁令期限。\n- 接报一名选手盲拧时被发现使用 CFOP 公式，代表也指出口琴架使用不当。选手承认作弊，但称此前没有作弊；然而我们在网上找到另一段以类似方式完成的盲拧视频。相关成绩被取消，选手被短期禁赛。\n\nWIC 上月开放招募，新成员即将加入。以下人员接受了职位：\n- Alexander Mutch（2014MUTC01）—加拿大，不列颠哥伦比亚；\n- Amanda Schmid（2017SCHM12）—美国，俄亥俄；\n- Amélie Dieterich（2016DIET01）—德国；\n- Austin Reed（2011REED01）—美国，纽约；\n- Bertie Longden（2014LONG06）—英国，南部；\n- Hayden Ng（2018NGHA02）—澳大利亚，昆士兰；\n- Jason Chang（2023CHAN15）—美国，加利福尼亚；\n- Mohamed Arif（2019ARIF05）—印度；\n- Noah Swor（2017SWOR01）—美国，佛罗里达；\n- Yuji Yoshida（2015YOSH01）—菲律宾；\n- Zachary Miller（2017MILL04）—美国，马萨诸塞。\n\n2025 年，WIC 计划加强代表培训与指导，重点是选手安全和福祉。这些工作自 2024 年已开始，仍有许多待完成。新成员带来的丰富个人和职业经验，将帮助 WIC 更有效地分配职责与项目。祝贺所有新成员！\n\n如有问题，可发送邮件至 [integrity@worldcubeassociation.org](mailto:integrity@worldcubeassociation.org)，或在 [WCA 论坛廉政委员会板块](https://forum.worldcubeassociation.org/c/wca-integrity/26)提问。"
+}

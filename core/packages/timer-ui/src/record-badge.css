@@ -112,7 +112,6 @@
 .record-cancelled {
     background: #9333ea;
     position: relative;
-    overflow: hidden;
 }
 
 .record-cancelled::after {

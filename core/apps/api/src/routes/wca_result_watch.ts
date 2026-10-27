@@ -22,6 +22,7 @@ import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { requireAdminOrApiKey, requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
 import { isPenaltyOnlyFields } from '@cuberoot/shared/result-penalty';
+import { visibleResultChangeSql } from '../utils/wca_result_change_visibility.js';
 
 export const wcaResultWatchRoutes = new Hono();
 
@@ -56,13 +57,13 @@ wcaResultWatchRoutes.get('/wca/result-watch/status', async (c) => {
             s.country_iso2,
             s.result_count,
             s.checked_at,
-            (SELECT COUNT(*) FROM wca_result_changes ch WHERE ch.wca_id = wp.wca_id) AS change_count
+            (SELECT COUNT(*) FROM wca_result_changes ch WHERE ch.wca_id = wp.wca_id AND ${visibleResultChangeSql}) AS change_count
        FROM watched_persons wp
        LEFT JOIN wca_person_results_snapshot s ON s.wca_id = wp.wca_id
        ORDER BY change_count DESC, name ASC NULLS LAST`,
   );
   const totals = await query<{ total: string | number; pending: string | number; last_checked: string | null }>(
-    `SELECT (SELECT COUNT(*) FROM wca_result_changes) AS total,
+    `SELECT (SELECT COUNT(*) FROM wca_result_changes ch WHERE ${visibleResultChangeSql}) AS total,
             (SELECT COUNT(*) FROM wca_result_changes WHERE status = 'pending') AS pending,
             (SELECT MAX(checked_at) FROM wca_person_results_snapshot) AS last_checked`,
   );
@@ -123,7 +124,7 @@ wcaResultWatchRoutes.get('/wca/result-watch/changes', async (c) => {
   const conds: string[] = [];
   if (wcaId) { conds.push('ch.wca_id = ?'); params.push(wcaId); }
   if (compId) { conds.push('ch.competition_id = ?'); params.push(compId); }
-  conds.push(pendingOnly ? "ch.status = 'pending'" : "ch.status <> 'rejected'");
+  conds.push(pendingOnly ? "ch.status = 'pending'" : visibleResultChangeSql);
   const whereSql = `WHERE ${conds.join(' AND ')}`;
   params.push(limit);
 

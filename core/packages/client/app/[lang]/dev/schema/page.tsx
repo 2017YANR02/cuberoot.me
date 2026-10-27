@@ -42,6 +42,7 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
 ];
 
 const TABLES: Table[] = [
+  { name: 'site_assistant_shares', domain: 'community', origin: '0294', purpose: { zh: '用户主动创建的单条文字分享；可撤销，注销级联删除', en: 'Explicit single-message public snapshots; revocable, cascade on account deletion' } },
   { name: 'wca_translation_sync', domain: 'comp', origin: '0289', purpose: { zh: '官方译文同步版本、来源许可与失败状态', en: 'Official translation sync provenance, licenses and failure state' } },
   { name: 'wca_translation_units', domain: 'comp', origin: '0289', purpose: { zh: '可检索的官方英中条目与翻译状态', en: 'Searchable official English–Chinese units and translation states' } },
   { name: 'recon_intake', domain: 'recon', origin: '0286', purpose: { zh: '复盘收录、原始记录、批注、确认版本和领取租约', en: 'Reconstruction intake, recordings, annotations, approvals and leases' } },
@@ -581,6 +582,7 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 294, slug: 'assistant_message_shares', desc: { zh: '可撤销的聊天单条消息公开分享', en: 'Revocable public single-message shares' } },
   { n: 293, slug: 'workspace_remove_checklist_categories', desc: { zh: '移除清单分类字段，保留清单名称、事项与共享权限', en: 'Remove checklist categories while retaining names, items and sharing permissions' } },
   { n: 292, slug: 'workspace_schedules', desc: { zh: '可复用团队排期、分组任务及里程碑', en: 'Reusable team schedules, grouped tasks and milestones' } },
   { n: 291, slug: 'workspace_checklists', desc: { zh: '按分类共享公司与项目清单，完成状态和版本冲突保护', en: 'Categorized company and project checklists with completion and version checks' } },

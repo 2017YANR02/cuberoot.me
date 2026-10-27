@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/wca-regulations-may-2019-now-in-effect",
+  "source": {
+    "key": "posts:/posts/wca-regulations-may-2019-now-in-effect",
+    "kind": "posts",
+    "title": "WCA Regulations — May 2019: Now in Effect",
+    "date": "2019-05-01T02:04:08.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/wca-regulations-may-2019-now-in-effect",
+    "content": "New WCA [Regulations](https://www.worldcubeassociation.org/regulations/) and [Guidelines](https://www.worldcubeassociation.org/regulations/guidelines.html) are in effect as of May 1, 2019. Please see the [original announcement](https://www.worldcubeassociation.org/posts/wca-regulations-may-2019) for details.",
+    "hash": "8278f782cb04346939b72416a61660b627bdde6291b74a97ca01ec24ed25e1b7",
+    "format": "markdown",
+    "sourceId": 11939
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "8278f782cb04346939b72416a61660b627bdde6291b74a97ca01ec24ed25e1b7",
+    "language": "zh-Hans",
+    "title": "2019 年 5 月版 WCA 规则已生效",
+    "content": "新版 WCA [规则](https://www.worldcubeassociation.org/regulations/)和[指南](https://www.worldcubeassociation.org/regulations/guidelines.html)已于 2019 年 5 月 1 日生效。详情请参阅[此前的公告](https://www.worldcubeassociation.org/posts/wca-regulations-may-2019)。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.133Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "55b290a44d0339efa105ef8ddb9387d592314b235cce5eab47c43e93ea12e2bc"
+}

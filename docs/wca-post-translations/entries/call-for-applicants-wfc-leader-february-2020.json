@@ -12,14 +12,33 @@
     "sourceId": 13962
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "50e68df1920f1d990cde038cad043abcde416f06520ff8369399dee809013a45",
     "language": "zh-Hans",
     "title": "WCA 财务委员会招募负责人（2020 年 2 月）",
     "content": "Chris Wright 将卸任 **WCA 财务委员会（WFC）负责人**，委员会将任命新负责人。感谢 Chris Wright 在带领委员会期间所做的工作。\n\n申请者应能完成 24 个月的任期，并平均每周投入至少 7 小时参与委员会工作。我们希望申请者具备：\n\n* 基本了解 WCA 的组织架构和内部工作流程。\n* 有财务工作经验，尤其是记账和报税经验。\n* 英语熟练。\n* 每天能安排适当时间履行职责。\n* 具备团队管理能力。\n\n申请材料提交时间为即日起至 **2020 年 3 月 15 日 23:59 UTC**。有意申请者可私下将材料发送至 WCA 董事会（[board@worldcubeassociation.org](mailto:board@worldcubeassociation.org)）。\n\n申请材料须为 PDF 格式，并包含：\n\n* 简短的自我介绍。\n* 为 WCA 所做工作的概述。\n* 担任 WFC 负责人的工作设想。\n\n此外，请提供一份可在申请截止后公开的申请材料副本。\n\nWFC 的权利与职责见 [WCA 动议 10.2017.3](https://www.worldcubeassociation.org/documents/motions/10.2017.3%20-%20Financial%20Committee.pdf)。\n\n申请截止后，WCA 董事会将投票选定人选，并依据 [WCA 动议 10.2020.0](https://www.worldcubeassociation.org/documents/motions/10.2020.0%20-%20Committees%20and%20Teams.pdf) 第 4 节，由高级代表及现任委员会、团队负责人投票确认后，公布新负责人。\n\n感谢大家的申请和支持。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.164Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "fe753fbff327cf3551086e31a39d55107cb38aa6e15e5f724259890267d7ba2d"
+  "translationHash": "0b27174b8b9a83c2cc7cf1a5ad760419a1287860feb956dce741dd215422d159",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:10:20.416Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "50e68df1920f1d990cde038cad043abcde416f06520ff8369399dee809013a45",
+    "reviewedTranslationHash": "0b27174b8b9a83c2cc7cf1a5ad760419a1287860feb956dce741dd215422d159",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/call-for-applicants-wfc-leader-february-2020.json",
+    "sourceConcern": false,
+    "notes": [
+      "全文对照；历史 WEC/纪律委员会职责、申请资格、任期工时、截止日期及任命流程保持原意。"
+    ],
+    "inputTranslationHash": "fe753fbff327cf3551086e31a39d55107cb38aa6e15e5f724259890267d7ba2d"
+  }
 }

@@ -1,0 +1,17 @@
+{
+  "key": "archive:forum_topics/388#p1640",
+  "path": "docs/wca-log-translations/supplements/forum-388-full.json",
+  "sourceHash": "55e46a7fade54683f615f9350c57d7b5befa61ff6bc4abc6aacd801027a9a6e2",
+  "inputTranslationHash": "4016df0686461177d8c56ad3e5a45fb504768d861aa3b7928c6bf21669adbbff",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:37.623Z",
+  "scope": "全文对照补充的归档首帖；处罚期限、申诉条件、匿名要求、历史年份和项目名已核对；复用绑定当前hash的既有独立审校。",
+  "verdict": "pass",
+  "notes": [],
+  "changes": [],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/recheck-forum-full.json",
+    "reviewedTranslationHash": "4016df0686461177d8c56ad3e5a45fb504768d861aa3b7928c6bf21669adbbff",
+    "verdict": "pass"
+  }
+}

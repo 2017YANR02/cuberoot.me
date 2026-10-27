@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/new-hope-open-winter-2019-on-january-20-2019-in-new-hope-pennsylvania-united-states",
+  "path": "docs/wca-post-translations/entries/new-hope-open-winter-2019-on-january-20-2019-in-new-hope-pennsylvania-united-states.json",
+  "sourceHash": "657b5834606f110133eccc56ad01bdeea4bba069467f40463df9ac5a7e49a83a",
+  "inputTranslationHash": "5b8988f02f3d434a659fab1d120a9ec6740ecfb3539d5e05a4ce4f64bf8be85d",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:44.904Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

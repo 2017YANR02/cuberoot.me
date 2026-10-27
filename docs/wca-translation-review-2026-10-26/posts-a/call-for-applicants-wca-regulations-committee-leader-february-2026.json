@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wca-regulations-committee-leader-february-2026",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wca-regulations-committee-leader-february-2026.json",
+  "sourceHash": "7dcca0c76d9cf6906554565054aef06ea0c40943db56e383b7f62765160bcd76",
+  "inputTranslationHash": "b04d0d685b76403b26682cb205b852c29d7f81d04791df5a05cd7d910f53d308",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:07:01.629Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照招募正文、职责条目、必需/可选资格、年龄、时限和程序；未扩展外链材料。"
+  ],
+  "changes": []
+}

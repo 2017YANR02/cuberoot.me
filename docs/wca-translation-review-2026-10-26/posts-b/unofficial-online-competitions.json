@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/unofficial-online-competitions",
+  "path": "docs/wca-post-translations/entries/unofficial-online-competitions.json",
+  "sourceHash": "4a165be37b9b448b637167b2a6991dac2bce20e672bdd9356174c98f9abdb9a6",
+  "inputTranslationHash": "10bd137bcb361732ecd0f3c093f6794d0837ec1eb64793e6f6a16db63b4da09e",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:59.336Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

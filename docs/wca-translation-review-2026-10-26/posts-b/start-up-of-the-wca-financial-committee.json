@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/start-up-of-the-wca-financial-committee",
+  "path": "docs/wca-post-translations/entries/start-up-of-the-wca-financial-committee.json",
+  "sourceHash": "85e950a4b8844ec2bf015e815b9c17d17c3944e09026f41630b535abae1c909f",
+  "inputTranslationHash": "6d93f527f28db44118c291db47cda334d30c79d153af99764228a0fc699e0268",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:25.169Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/wca-regulations-2007-final",
+  "source": {
+    "key": "posts:/posts/wca-regulations-2007-final",
+    "kind": "posts",
+    "title": "WCA regulations 2007: Final!",
+    "date": "2007-02-01T18:15:32.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/wca-regulations-2007-final",
+    "content": "Fellow cubers, \n \n Today we finalised the WCA competition regulations 2007. \n \n The document can be found on the WCA site: \n [WCA regulations 2007](https://www.worldcubeassociation.org/regulations)\n \n The new regulations must be used for all WCA competitions starting today. \n \n We want to thank all WCA members who gave feedback.\n \n Kind regards,\n \n Ron van Bruchem",
+    "hash": "21ada621a6cf80d5a64b3963a0adedacca21cd7021e376fbccdaec7316faddca",
+    "format": "markdown",
+    "sourceId": 8
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "21ada621a6cf80d5a64b3963a0adedacca21cd7021e376fbccdaec7316faddca",
+    "language": "zh-Hans",
+    "title": "2007 年 WCA 竞赛规则正式定稿！",
+    "content": "各位魔友：\n\n今天，2007 年 WCA 竞赛规则正式定稿。\n\n文件可在 WCA 网站查看：\n[2007 年 WCA 竞赛规则](https://www.worldcubeassociation.org/regulations)\n\n从今天起，所有 WCA 比赛均须使用新规则。\n\n感谢所有提供反馈的 WCA 成员。\n\n此致\nRon van Bruchem",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:55:00.993Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "8170fb9d59860c8e280268072802e8ba372762e869b5e6f601febd349b434c9b"
+}

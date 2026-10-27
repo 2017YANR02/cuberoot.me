@@ -1,0 +1,109 @@
+{
+  "scope": "Thirteen previously unresolved source wording/fact issues; all are unchanged in the current official source. No upstream source mutated.",
+  "entries": [
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2024-q4",
+      "url": "https://www.worldcubeassociation.org/posts/integrity-committee-digest-2024-q4",
+      "checkedAt": "2026-10-26T11:10:37.621Z",
+      "sourceHash": "206965c3e76461eca9177b30197f35fec6e1a9f709161086d5be57fd807f6c83",
+      "currentHash": "206965c3e76461eca9177b30197f35fec6e1a9f709161086d5be57fd807f6c83",
+      "sameContent": true
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2025-q2",
+      "url": "https://www.worldcubeassociation.org/posts/integrity-committee-digest-2025-q2",
+      "checkedAt": "2026-10-26T11:10:37.622Z",
+      "sourceHash": "543edad848e97c3441c90a991a700e5cc5c3b3b4d9b11a95601b334047b48dfc",
+      "currentHash": "543edad848e97c3441c90a991a700e5cc5c3b3b4d9b11a95601b334047b48dfc",
+      "sameContent": true
+    },
+    {
+      "key": "disciplinary:/posts/wdc-monthly-digest-july-2019",
+      "url": "https://www.worldcubeassociation.org/posts/wdc-monthly-digest-july-2019",
+      "checkedAt": "2026-10-26T11:10:37.622Z",
+      "sourceHash": "8904de8d783cf098f53c1e672db3bb338562969759a7f9148490a7d719314b25",
+      "currentHash": "8904de8d783cf098f53c1e672db3bb338562969759a7f9148490a7d719314b25",
+      "sameContent": true
+    },
+    {
+      "key": "disciplinary:/posts/wic-digest-2024-q3",
+      "url": "https://www.worldcubeassociation.org/posts/wic-digest-2024-q3",
+      "checkedAt": "2026-10-26T11:10:37.623Z",
+      "sourceHash": "f00fb0252ed1e826ae1444d8c136845f0b4a4d3bd32e4c900228eb6f19308b39",
+      "currentHash": "f00fb0252ed1e826ae1444d8c136845f0b4a4d3bd32e4c900228eb6f19308b39",
+      "sameContent": true
+    },
+    {
+      "key": "incidents:11",
+      "url": "https://www.worldcubeassociation.org/incidents/11",
+      "checkedAt": "2026-10-26T11:10:37.623Z",
+      "sourceHash": "0f38fe9423de7d19c800589e931609e343573da19b112d8bab61a808039bdd2c",
+      "sameTitle": true,
+      "sameContent": true
+    },
+    {
+      "key": "incidents:115",
+      "url": "https://www.worldcubeassociation.org/incidents/115",
+      "checkedAt": "2026-10-26T11:10:37.623Z",
+      "sourceHash": "7fb23ca92061d3efe05ca1bbeae6f7dc8db9a01c39dda7b7e1bb902f38a95392",
+      "sameTitle": true,
+      "sameContent": true
+    },
+    {
+      "key": "incidents:169",
+      "url": "https://www.worldcubeassociation.org/incidents/169",
+      "checkedAt": "2026-10-26T11:10:37.623Z",
+      "sourceHash": "412e2cab624cfda7dd182532d04eb4ae13df320c6b153e2f0578e0281a1b72df",
+      "sameTitle": true,
+      "sameContent": true
+    },
+    {
+      "key": "incidents:26",
+      "url": "https://www.worldcubeassociation.org/incidents/26",
+      "checkedAt": "2026-10-26T11:10:37.623Z",
+      "sourceHash": "c40c27fae99ac11f0024f27d8704879a14189ba3d3efc7ac8ad7ccd864cbac90",
+      "sameTitle": true,
+      "sameContent": true
+    },
+    {
+      "key": "incidents:4",
+      "url": "https://www.worldcubeassociation.org/incidents/4",
+      "checkedAt": "2026-10-26T11:10:37.623Z",
+      "sourceHash": "e67f78eb5b4d983d627eded9b262191058c68b3a90b4cce6457e8da30ee184f2",
+      "sameTitle": true,
+      "sameContent": true
+    },
+    {
+      "key": "incidents:48",
+      "url": "https://www.worldcubeassociation.org/incidents/48",
+      "checkedAt": "2026-10-26T11:10:37.623Z",
+      "sourceHash": "981d56eda1c65f818adafc21319f85602bb5581c33927a8ce54a9cdcdeab5b7a",
+      "sameTitle": true,
+      "sameContent": true
+    },
+    {
+      "key": "incidents:53",
+      "url": "https://www.worldcubeassociation.org/incidents/53",
+      "checkedAt": "2026-10-26T11:10:37.623Z",
+      "sourceHash": "cc1f586a301614c5dfa289fa3484e073487634b2a600941ce4c587259d5cd257",
+      "sameTitle": true,
+      "sameContent": true
+    },
+    {
+      "key": "incidents:62",
+      "url": "https://www.worldcubeassociation.org/incidents/62",
+      "checkedAt": "2026-10-26T11:10:37.623Z",
+      "sourceHash": "62d4219783f6c42486e9c392b5afb6d03cea19c8680cf20902dc59ffd44d4709",
+      "sameTitle": true,
+      "sameContent": true
+    },
+    {
+      "key": "incidents:74",
+      "url": "https://www.worldcubeassociation.org/incidents/74",
+      "checkedAt": "2026-10-26T11:10:37.623Z",
+      "sourceHash": "0cfed4e9b0fe16e472891069c49916dc2d3df0810c52413993052f4650c45697",
+      "sameTitle": true,
+      "sameContent": true
+    }
+  ]
+}

@@ -12,14 +12,33 @@
     "sourceId": 11722
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "14d00199020211d8191da83d1898861665d62d1b925ca8e708b1556959159a0e",
     "language": "zh-Hans",
     "title": "执行助理招募（2019 年 4 月）",
     "content": "WCA 董事会正在设立一个负责董事会行政事务的职位。为让董事职位对符合条件的工作人员更有吸引力、减少工作耗时，并使董事会能够长期稳定运作，董事会将任命 2 至 3 名执行助理，协助董事处理日常事务。\n\n工作可能包括：\n\n- 管理 WCA 董事会的 Trello 看板。\n- 在 GitHub 上维护政策、章程和动议。\n- 管理 G-Suite 用户。\n- 管理 WCA 董事会的团队云端硬盘。\n- 代表董事会起草邮件。\n- 汇总和审阅表单回复中的信息。\n\n执行助理须平均**每周至少投入 5 小时**协助董事会工作。申请向所有人开放，不必目前在 WCA 担任职务。我们希望候选人具备以下条件：\n\n- 出色的组织能力。\n- 出色的沟通能力。\n- 经常有时间处理工作。\n- 值得信赖。\n\n申请现已开放，请于 **2019 年 4 月 15 日 23:59 UTC 前**，将材料私下发送至 WCA 董事会（[board@worldcubeassociation.org](mailto:board@worldcubeassociation.org)）。\n\n**申请材料须为 PDF 格式，并包括：**\n\n- 简短的个人介绍。\n- 为 WCA 社区所做工作的概述。\n- 说明自己适合这一职位的原因。\n\n申请截止后的下一周，WCA 董事会将投票选定并公布执行助理人选。\n\n提前感谢大家的申请与支持！",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:54.108Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "faa4fa46e8a302172f2516a2da6d0d5b6cb3e3649e7f8ee69b57ed3929e34247"
+  "translationHash": "2c13fe5a6eea58b3a23e691cf7b8dcb15b1493687a68113535cf106cb4a8f4ce",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:06:36.461Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "14d00199020211d8191da83d1898861665d62d1b925ca8e708b1556959159a0e",
+    "reviewedTranslationHash": "2c13fe5a6eea58b3a23e691cf7b8dcb15b1493687a68113535cf106cb4a8f4ce",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/call-for-applicants-executive-assistants-april-2019.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇全文对照：含招募资格、时限、工作量、程序、历史机构；比赛报告核对人物、项目、成绩与纪录类别。"
+    ],
+    "inputTranslationHash": "faa4fa46e8a302172f2516a2da6d0d5b6cb3e3649e7f8ee69b57ed3929e34247"
+  }
 }

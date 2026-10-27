@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/wca-south-american-championship-2018-on-december-15-16-2018-in-poa-sp-brazil",
+  "path": "docs/wca-post-translations/entries/wca-south-american-championship-2018-on-december-15-16-2018-in-poa-sp-brazil.json",
+  "sourceHash": "52639a54686329389b1e4595dba4838e445652d2c2b383095a39cadc3f9110ab",
+  "inputTranslationHash": "4dc0df02f9d3aa55ff239d918f033eaefaef583f09b4c6c2fa3f581d6b699a6d",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:10:32.387Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

@@ -1,0 +1,18 @@
+{
+  "key": "posts:/posts/continental-championships-2024-announcement-europe-north-america",
+  "path": "docs/wca-post-translations/entries/continental-championships-2024-announcement-europe-north-america.json",
+  "sourceHash": "8ae62bc9f5d2c3ff7addf339446457f7760f096f5301c3cd8cce7d8a0be585ff",
+  "inputTranslationHash": "18db62d08f97096c3f1bf3ce2e03573defd08c1eaffe39ea41504f804f6abb15",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:13:03.045Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "correction_required",
+  "notes": [
+    "全文已对照，赛事地点、申办日期及表格、未决定/未收到申请的限定保持一致。"
+  ],
+  "changes": [
+    "Continental Championship 指一个大洲的锦标赛；按官方规则11f1c用大洲锦标赛，避免洲际跨洲歧义。"
+  ],
+  "title": "2024 年大洲锦标赛举办地公布：欧洲及北美洲",
+  "content": "正如各自锦标赛闭幕式上公布的消息，**西班牙潘普洛纳**将举办 2024 年 WCA 欧洲锦标赛，**美国明尼苏达州明尼阿波利斯**将举办 2024 年 WCA 北美洲锦标赛。\n\n申办材料可分别在[此处](https://drive.google.com/drive/folders/1Zqj38Vx7Cy3ApUpEZOI6MOoIneMUro9A)（欧洲锦标赛）和[此处](https://drive.google.com/drive/folders/1OrcxDLsSC8vOXInsX82zbOheBan5T26_)（北美洲锦标赛）查看。这两项锦标赛均无其他申办团队。\n\n此外，我们此前也开放了 2024 年亚洲和南美洲锦标赛的申办，但未收到申请。新的申办窗口将于近期开放。"
+}

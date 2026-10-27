@@ -12,14 +12,31 @@
     "sourceId": 8465
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "29c585788c0843373e5113b8cc3f2acdb331d86a21841e9367d8fb4f3c6ff52c",
     "language": "zh-Hans",
     "title": "2017 中国锦标赛及 2017 北京公开赛的器材事件",
     "content": "亲爱的 WCA 社区成员：\n\n多位社区成员向 WCA 规则委员会（WRC）反映，林恺俊创造目前四盲和五盲世界纪录时所用的魔方，都带有覆盖贴纸。根据[规则 3l2](https://www.worldcubeassociation.org/regulations/#3l2)，这类魔方不允许用于盲拧项目。\n\n我们调查了此事。相关比赛的 WCA 代表确认，他们当时检查过魔方，并认定标志无法通过触感辨认。因此，他们没有安排额外还原，现在也就没有可用于替换受影响成绩的额外还原成绩。基于这些原因，我们决定保留成绩。\n\n针对近期盲拧中使用覆盖贴纸的事件，以及关于哪些标志应被允许的持续讨论，我们决定禁止在盲拧项目中使用任何标志。此外，新增规则 3k2 将规定，使用不合规魔方完成的还原均取消成绩，记为 DNF。以下规则将于 2018 年 1 月 1 日生效：\n\n*3k1）如果在一轮中发现魔方不符合规定，选手必须提交替代魔方。*\n\n*3k2）使用不符合规定的魔方进行还原，处罚为取消该次成绩（DNF）。例外：如果在一轮中发现魔方不符合规定，WCA 代表可酌情允许以额外还原替换此前的成绩。*\n\n我们知道这是一次较大的变化，但相信这样能够让世界各地的盲拧选手在公平、一致的条件下参赛。\n\n另外，也提醒所有选手：你最终须对自己的魔方负责。如果不确定某个魔方是否允许使用，请在提交前询问 WCA 代表。\n\nLaura Ohrndorf\n\n代表 WRC",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.168Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "cbd9e252935de05afb98a2b5bd7a41f43bb22d85af962c1f180b4bb8e13290f6"
+  "translationHash": "f67da1bca9c8e52996b54964d643b1813426d7d29182603d59c4a5bd2d584503",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:36.320Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "29c585788c0843373e5113b8cc3f2acdb331d86a21841e9367d8fb4f3c6ff52c",
+    "reviewedTranslationHash": "f67da1bca9c8e52996b54964d643b1813426d7d29182603d59c4a5bd2d584503",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/incident-at-china-championship-2017-and-beijing-open-2017.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "cbd9e252935de05afb98a2b5bd7a41f43bb22d85af962c1f180b4bb8e13290f6"
+  }
 }

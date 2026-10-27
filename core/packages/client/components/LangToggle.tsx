@@ -25,7 +25,7 @@ interface LangToggleProps {
 
 function TranslateIcon({ size = 14 }: { size?: number }) {
   const cnFont = "system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif";
-  const enFont = "ui-sans-serif, 'Inter', -apple-system, sans-serif";
+  const enFont = 'var(--font-sans)';
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 16 16" aria-hidden="true">
       <rect x="0.5" y="0.5" width="10" height="10" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1" />

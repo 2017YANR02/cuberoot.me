@@ -14,7 +14,7 @@ export const REG_NEWS = {
     "id": "4-pad-2027",
     "date": "2026-08-23",
     "title": {
-      "zh": "WCA 将要求使用 4-pad 计时",
+      "zh": "WCA 将要求使用四触点计时",
       "en": "WCA to require 4-pad timing"
     }
   },

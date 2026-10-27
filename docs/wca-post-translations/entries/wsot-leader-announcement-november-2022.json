@@ -12,14 +12,33 @@
     "sourceId": 14081
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "49545c724e7d644e5b4c82434aa312d430d5a51cedf71dde104a4ed6c2fdec1b",
     "language": "zh-Hans",
     "title": "WCA 体育组织团队负责人任命公告（2022 年 11 月）",
     "content": "我们很高兴地宣布，Ethan Pride 将担任 WCA 体育组织团队（WSOT）的新负责人。\n\n按照关于 WCA 委员会和团队的[议案](https://www.worldcubeassociation.org/documents/motions/10.2022.0 - Committees and Teams.pdf)第 4 节，WCA 董事会选定 Ethan，并经现任委员会负责人和高级代表投票批准。\n\nWSOT 是新成立的团队，祝 Ethan Pride 履新顺利。\n\n如有兴趣，可在[此处](https://drive.google.com/file/d/14cti23WTQrtc01gZRwoTGerFiqIniDRn/view?usp=share_link)查看 Ethan 的申请材料。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:00.933Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "b1d8dff79b8e84b3f333e13127cb03fc2d1b0374bd69dbe81d333489cd7e3654"
+  "translationHash": "5c3e6059abf6412659bda455a6337be077a2daf1fb59157b5f93f288e0a60c39",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:12:24.812Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "49545c724e7d644e5b4c82434aa312d430d5a51cedf71dde104a4ed6c2fdec1b",
+    "reviewedTranslationHash": "5c3e6059abf6412659bda455a6337be077a2daf1fb59157b5f93f288e0a60c39",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wsot-leader-announcement-november-2022.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇核对新任、前任、成员职衔、遴选批准程序、申请人数和日期。"
+    ],
+    "inputTranslationHash": "b1d8dff79b8e84b3f333e13127cb03fc2d1b0374bd69dbe81d333489cd7e3654"
+  }
 }

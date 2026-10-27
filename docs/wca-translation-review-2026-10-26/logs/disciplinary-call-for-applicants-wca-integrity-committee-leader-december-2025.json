@@ -1,0 +1,19 @@
+{
+  "key": "disciplinary:/posts/call-for-applicants-wca-integrity-committee-leader-december-2025",
+  "path": "docs/wca-log-translations/entries/disciplinary-call-for-applicants-wca-integrity-committee-leader-december-2025.json",
+  "sourceHash": "d4c8df09a9e2f619590864bfc49e41c7a96e2cf5550b284a1197a4de9623aded",
+  "inputTranslationHash": "512381e8b417ea61d77c015dc087dd8e328ff7e0a7eacff407f8b9556e10a5ce",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "复用已通过的旧版全文独立审校；人工阅读旧版与现版全部文字差异及对应英文段落，确认本轮之前的差异限于官方机构名称或 Guidelines 的“指南”译法；另复核本轮项目名命中语境。",
+  "verdict": "pass",
+  "notes": [],
+  "changes": [],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/report-1.json",
+    "reviewedTranslationHash": "50852bccf6c0a108ff27923488d2879206db78813ac99f5a73faafccc45f0453",
+    "verdict": "pass",
+    "archivedVersion": "docs/wca-log-translations/versions/disciplinary-call-for-applicants-wca-integrity-committee-leader-december-2025/50852bccf6c0a108ff27923488d2879206db78813ac99f5a73faafccc45f0453-v1.json"
+  },
+  "sourceUncertainty": false
+}

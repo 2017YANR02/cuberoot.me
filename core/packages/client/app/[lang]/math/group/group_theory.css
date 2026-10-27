@@ -18,7 +18,7 @@
   --warn: #C2410C;
 
   --serif: 'EB Garamond', 'Charter', 'Iowan Old Style', 'Georgia', 'Times New Roman', serif;
-  --sans: 'Inter', 'IBM Plex Sans', 'Segoe UI Variable', system-ui, -apple-system, sans-serif;
+  --sans: var(--font-sans);
   --mono: 'Cascadia Code', 'SF Mono', Consolas, monospace;
   --math: 'STIX Two Math', 'Latin Modern Math', 'Cambria Math', 'Times New Roman', serif;
 

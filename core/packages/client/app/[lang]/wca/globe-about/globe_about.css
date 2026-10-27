@@ -8,7 +8,7 @@
   --gla-border: #e5e5e5;
   --gla-accent: #7C3AED;
 
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-sans);
   background: var(--gla-bg);
   color: var(--gla-text);
   min-height: 100vh;

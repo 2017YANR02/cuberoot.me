@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/announcement-of-a-new-senior-delegate-oceania",
+  "path": "docs/wca-post-translations/entries/announcement-of-a-new-senior-delegate-oceania.json",
+  "sourceHash": "d9ded30fbc13b32b1c5f75197ad36016c5313d7dab0a20ce9eae89b0277db0f9",
+  "inputTranslationHash": "c4e1010711a01ddbdf1919e27c31ebbbbc9efcbed0f909794e1ffc02cba1592c",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:05:11.622Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+  ],
+  "changes": []
+}

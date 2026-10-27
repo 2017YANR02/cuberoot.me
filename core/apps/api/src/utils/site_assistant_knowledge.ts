@@ -40,7 +40,8 @@ export async function chunkKnowledge(index: KnowledgeIndex): Promise<KnowledgeCh
 }
 
 let lexicalCache: { generation: string; chunks: KnowledgeChunk[]; search: Record<'zh'|'en', MiniSearch<KnowledgeChunk>> } | undefined;
-export async function lexicalKnowledge(index: KnowledgeIndex, query: string, lang: 'zh'|'en', hrefs: string[] = []) {
+export const isDeveloperKnowledge = (href: string) => /^\/dev(?:\/|[?#]|$)/.test(href);
+export async function lexicalKnowledge(index: KnowledgeIndex, query: string, lang: 'zh'|'en', hrefs: string[] = [], includeDeveloper = true) {
   const generation = knowledgeGeneration(index);
   if (lexicalCache?.generation !== generation) {
     const chunks = await chunkKnowledge(index);
@@ -52,7 +53,8 @@ export async function lexicalKnowledge(index: KnowledgeIndex, query: string, lan
     lexicalCache = { generation, chunks, search: { zh: create('zh'), en: create('en') } };
   }
   const { chunks, search } = lexicalCache;
-  const ids = search[lang].search(query, { filter: result => !hrefs.length || hrefs.includes(result.href) }).slice(0,6).map(hit => hit.id);
+  const allowed = (href: string) => (includeDeveloper || !isDeveloperKnowledge(href)) && (!hrefs.length || hrefs.includes(href));
+  const ids = search[lang].search(query, { filter: result => allowed(result.href) }).slice(0,6).map(hit => hit.id);
   // Explicit source reads can return a source even if the paraphrased query has no lexical match.
-  return (ids.length ? ids.flatMap(id => chunks.find(chunk => chunk.id === id) ?? []) : hrefs.length ? chunks.filter(chunk => chunk.lang === lang && hrefs.includes(chunk.href)) : []).slice(0,6);
+  return (ids.length ? ids.flatMap(id => chunks.find(chunk => chunk.id === id) ?? []) : hrefs.length ? chunks.filter(chunk => chunk.lang === lang && allowed(chunk.href)) : []).slice(0,6);
 }

@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/unofficial-online-competitions",
+  "source": {
+    "key": "posts:/posts/unofficial-online-competitions",
+    "kind": "posts",
+    "title": "Unofficial Online Competitions",
+    "date": "2020-03-25T18:32:07.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/unofficial-online-competitions",
+    "content": "Due to the current situation regarding COVID-19 and the measures taken by many governments to confine people to their homes, several members of the WCA community have started projects to keep the competitive spirit alive in cubing! **Please note that these competitions are not sanctioned or monitored by the WCA and do not have to abide by WCA regulations. The results will not count towards your WCA profile.**\n\nThe information about upcoming unofficial competitions has been moved to the [WCA Forum](https://forum.worldcubeassociation.org/c/wca-competitions/unofficial-online-competitions). If you would like to submit your upcoming event, please create a topic on the Forum!\n\nStay home and safe.",
+    "hash": "4a165be37b9b448b637167b2a6991dac2bce20e672bdd9356174c98f9abdb9a6",
+    "format": "markdown",
+    "sourceId": 13968
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "4a165be37b9b448b637167b2a6991dac2bce20e672bdd9356174c98f9abdb9a6",
+    "language": "zh-Hans",
+    "title": "非官方线上比赛",
+    "content": "受当前新冠疫情影响，多国政府采取居家限制措施。一些 WCA 社区成员发起了线上项目，让大家继续享受魔方竞赛！**请注意，这些比赛未经 WCA 认可或监督，也不必遵守 WCA 竞赛规则。成绩不会计入你的 WCA 个人页面。**\n\n即将举行的非官方比赛信息已移至 [WCA 论坛](https://forum.worldcubeassociation.org/c/wca-competitions/unofficial-online-competitions)。如果你想发布活动信息，请在论坛新建帖子！\n\n请留在家中，注意安全。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:49:00.928Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "10bd137bcb361732ecd0f3c093f6794d0837ec1eb64793e6f6a16db63b4da09e"
+}

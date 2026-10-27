@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/software-team-leader-announcement-june-2025",
+  "path": "docs/wca-post-translations/entries/software-team-leader-announcement-june-2025.json",
+  "sourceHash": "5efc9d064cba4b941ede211935d04aef32bba96e5ad29f0d2c5dc68ab78f0b8f",
+  "inputTranslationHash": "dca378aeacc4c960d5401a2952ffa37f2a37106a9344600c8088f5c119c22380",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:33.089Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

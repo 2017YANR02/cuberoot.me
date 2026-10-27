@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/red-bull-wca-collaboration-2019",
+  "path": "docs/wca-post-translations/entries/red-bull-wca-collaboration-2019.json",
+  "sourceHash": "db7b0215daf6d1db77fe5e7dca1639b2ef251081b5e15fb37bfcfdc46e763f51",
+  "inputTranslationHash": "626da76ba83a63fbf0841a0ac0a90de6180e5c00e9a1a9f308a45f7ad9a61175",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:55.472Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

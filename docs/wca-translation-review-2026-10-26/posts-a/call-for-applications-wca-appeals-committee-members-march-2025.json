@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applications-wca-appeals-committee-members-march-2025",
+  "path": "docs/wca-post-translations/entries/call-for-applications-wca-appeals-committee-members-march-2025.json",
+  "sourceHash": "e36441d1a7ab725e3a3827074b4a044a6d79495ac9b75c92530bebcba6409d57",
+  "inputTranslationHash": "25b5d8786899fab8e3d92763a32b65759e34e73459ff0f5828b57072699ac4e6",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:11:22.964Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题及正文；核对软件技术专名、申请要求及申请期、历史 WAC 缩写和申诉流程、新旧任命程序。"
+  ],
+  "changes": []
+}

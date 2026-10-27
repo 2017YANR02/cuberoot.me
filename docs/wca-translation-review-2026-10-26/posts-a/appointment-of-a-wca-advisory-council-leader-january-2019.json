@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/appointment-of-a-wca-advisory-council-leader-january-2019",
+  "path": "docs/wca-post-translations/entries/appointment-of-a-wca-advisory-council-leader-january-2019.json",
+  "sourceHash": "98fdc13e946d18d258271906fc7cfefafe7f05b2ec14e8865f56903e0d81dcb0",
+  "inputTranslationHash": "f419406d221be5d5b471bf966290f14da897aea9065345a299718865d38b81eb",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:06:14.456Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照正文与标题；核对全部申请/任命主体、时间、权限、附录条目及材料要求。"
+  ],
+  "changes": []
+}

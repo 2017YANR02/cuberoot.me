@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/changes-in-the-board-of-directors-september-2018",
+  "path": "docs/wca-post-translations/entries/changes-in-the-board-of-directors-september-2018.json",
+  "sourceHash": "71a2da6cd54b5fded0730c282610335f1de87339941e60f20b035fb8e48530b3",
+  "inputTranslationHash": "5b68efc1b4ded4e4a56052daa69c9832da838851a4b2984b18832bcb6dc44af7",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:12:23.464Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题和正文；各届赛事城市及取消/退款范围、董事候选名单、当选与连任区别、任期及生效日期、保留职务和干事分工均与原文一致。"
+  ],
+  "changes": []
+}

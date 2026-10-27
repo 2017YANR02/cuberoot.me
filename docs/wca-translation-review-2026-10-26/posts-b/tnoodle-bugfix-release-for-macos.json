@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/tnoodle-bugfix-release-for-macos",
+  "path": "docs/wca-post-translations/entries/tnoodle-bugfix-release-for-macos.json",
+  "sourceHash": "5cfa70b10b61cdaac99503069be6a3be586ed5bdf15de9673a6fab88d2212624",
+  "inputTranslationHash": "a005c9319a91970b84b15f3d0edbe30b2bfd6098b1e27d67078361aef78477b8",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:48.604Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

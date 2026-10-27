@@ -12,14 +12,31 @@
     "sourceId": 13983
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "034fcf2139f533dea186e5052fc5811c8f6db47281a81d47fbda35cbe4e71ddd",
     "language": "zh-Hans",
     "title": "TNoodle 1.0.1 正式发布",
-    "content": "TNoodle-WCA-1.0.1 现已在打乱页面提供下载。与上一版本相比，本次更新包括：\n\n* **新界面：**“旧版界面”和“使用 WCA 登录”两项功能已合并为一个单页应用。\n* **WCIF：**TNoodle 增加了更多便捷功能，并改善了与工作流程中其他软件的集成。\n* **Square-1 现在采用专用求解器，**感谢 Chen Shuang 的贡献。如果比赛包含 Square-1 项目，生成打乱的总耗时应会大幅减少。\n\n即将举行的比赛应尽可能使用 TNoodle-WCA-1.0.1 生成新打乱。考虑到目前的比赛限制，过渡期有所延长，**TNoodle-WCA-0.15.1 将继续作为官方版本保留三周，直至 2020 年 9 月 7 日**。此前已用 TNoodle-WCA-0.15.1 生成的打乱，在该日期前仍可使用。\n\n请记住，官方比赛必须使用当前有效版本的官方打乱程序。最新版本始终可从以下页面获取：\n[https://www.worldcubeassociation.org/regulations/scrambles/](https://www.worldcubeassociation.org/regulations/scrambles/)",
+    "content": "TNoodle-WCA-1.0.1 现已在打乱页面提供下载。与上一版本相比，本次更新包括：\n\n* **新界面：**“旧版界面”和“使用 WCA 登录”两项功能已合并为一个单页应用。\n* **WCIF：**TNoodle 增加了更多便捷功能，并改善了与工作流程中其他软件的集成。\n* **Square-1 现在采用专用求解器，**感谢 Chen Shuang 的贡献。如果比赛包含 Square-1 项目，生成打乱的总耗时应会大幅减少。\n\n即将举行的比赛应尽可能使用 TNoodle-WCA-1.0.1 生成新打乱。考虑到目前的比赛限制，过渡期有所延长，**TNoodle-WCA-0.15.1 将继续作为官方版本保留三周，直至 2020 年 9 月 7 日**。此前已用 TNoodle-WCA-0.15.1 生成的打乱，截至该日期仍可使用。\n\n请记住，官方比赛必须使用当前有效版本的官方打乱程序。最新版本始终可从以下页面获取：\n[https://www.worldcubeassociation.org/regulations/scrambles/](https://www.worldcubeassociation.org/regulations/scrambles/)",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:54.101Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "6ff039434fcb7e5f586152ee3c1cd45e663de476f446412057c5615848e3439c"
+  "translationHash": "f357d7e830f74cb358300275b02befd931c27bd2d71561a8bd5c758ebfe5ac8a",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:16:44.876Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "034fcf2139f533dea186e5052fc5811c8f6db47281a81d47fbda35cbe4e71ddd",
+    "reviewedTranslationHash": "f357d7e830f74cb358300275b02befd931c27bd2d71561a8bd5c758ebfe5ac8a",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/tnoodle-1-0-1-official-release.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "6ff039434fcb7e5f586152ee3c1cd45e663de476f446412057c5615848e3439c"
+  }
 }

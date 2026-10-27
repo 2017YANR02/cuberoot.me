@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/collaboration-between-the-wca-and-guinness-world-records",
+  "path": "docs/wca-post-translations/entries/collaboration-between-the-wca-and-guinness-world-records.json",
+  "sourceHash": "b8e57c58ce3080f2c4ede8885f0df4f689ff7995abb87824ea49c9f448a8965b",
+  "inputTranslationHash": "d6350dab766d0f5e8d40701aed0a32d47a0b374c41d584af0d9c43e94277b6a3",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:12:38.683Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "全文对照标题、名单变更/历史范围、项目实施日期、条件和例外、合同授权条件、准则对象及纪录合作流程。"
+  ],
+  "changes": []
+}

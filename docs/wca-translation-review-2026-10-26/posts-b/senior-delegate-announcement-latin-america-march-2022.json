@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/senior-delegate-announcement-latin-america-march-2022",
+  "path": "docs/wca-post-translations/entries/senior-delegate-announcement-latin-america-march-2022.json",
+  "sourceHash": "fcfe5ad280f4fb64cbebbd5313dca87f65998b9ea3e8ca0aa6f86f38d1d58674",
+  "inputTranslationHash": "985360c2913ac26bb4e07cfdeed3853bf9ba6e9afa3c550f092d083a3ad26d37",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:25.168Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

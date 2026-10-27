@@ -12,14 +12,33 @@
     "sourceId": 14021
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "72eb27874ae0ceb24451d711696573042ba4711bc3cfde8a4777e8b4f2d79297",
     "language": "zh-Hans",
     "title": "2022／2023 年 WCA 锦标赛申办名单（2021 年 6 月）",
     "content": "我们很高兴地宣布，已收到以下城市承办 2022 年 WCA 大洋洲锦标赛及 2023 年 WCA 世界锦标赛的申请：\n\n**2022 年 WCA 大洋洲锦标赛：**\n\n* 澳大利亚墨尔本\n\n2022 年 WCA 大洋洲锦标赛遴选委员会成员为：Bob Burton、Callum Goodyear、Henrik Buus Aagaard、Saransh Grover 和 Akash Rupela。\n\n**2023 年 WCA 世界锦标赛：**\n\n* 韩国首尔\n* 美国芝加哥\n\n2023 年 WCA 世界锦标赛遴选委员会成员为：Callum Goodyear、Ethan Pride、Henrik Buus Aagaard、Akash Rupela 和 Wilson Alvis。\n\n遴选结束后，遴选委员会将公布最终举办地及相关材料。",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.569Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "7f43dc2e0a7a515207b8018ef812cbdfb760971984e6cdf75848fcf9409718cd"
+  "translationHash": "0abdd7a38d40d36ddafa5a5b25aca058a3efbf175884009489a124bdc4b01a4d",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:12:23.463Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "72eb27874ae0ceb24451d711696573042ba4711bc3cfde8a4777e8b4f2d79297",
+    "reviewedTranslationHash": "0abdd7a38d40d36ddafa5a5b25aca058a3efbf175884009489a124bdc4b01a4d",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/candidates-for-wca-championships-2022-2023-june-2021.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照标题和正文；各届赛事城市及取消/退款范围、董事候选名单、当选与连任区别、任期及生效日期、保留职务和干事分工均与原文一致。"
+    ],
+    "inputTranslationHash": "7f43dc2e0a7a515207b8018ef812cbdfb760971984e6cdf75848fcf9409718cd"
+  }
 }

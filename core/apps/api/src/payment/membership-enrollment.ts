@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto';
+import { canPurchaseEnterpriseMembership } from '../utils/enterprise_membership.js';
 import { withTransaction } from '../db/connection.js';
 import { createPapayEnrollment, createPapayMiniEnrollment, papayConfig, PapayUnavailable } from './wechat-papay.js';
 import { RENEWAL_TEMPLATES, RENEWAL_TERMS_VERSION, renewalChannel, renewalEnrollmentAllowed, renewalPlanConfigured, type RenewalSlug } from './membership-renewal-policy.js';
@@ -20,6 +21,9 @@ export async function enrollMembership(owner: string, input: unknown, ip: string
     const [account] = await tx(`SELECT id FROM app_users WHERE (wca_id = ? OR 'u' || id::text = ?)
       AND merged_into_user_id IS NULL FOR UPDATE`, [owner, owner]);
     if (!account) throw new Error('account unavailable');
+    if (slug.startsWith('enterprise_') && !await canPurchaseEnterpriseMembership(owner, tx)) {
+      throw new Error('verified enterprise management access required');
+    }
     const [existing] = await tx<MembershipContractRow & { enrollment_serial: string }>(
       `SELECT * FROM membership_contracts WHERE wca_id = ? AND state <> 'terminated' FOR UPDATE`, [owner]);
     if (existing) {

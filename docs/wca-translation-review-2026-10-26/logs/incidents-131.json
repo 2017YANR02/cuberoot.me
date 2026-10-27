@@ -1,0 +1,27 @@
+{
+  "key": "incidents:131",
+  "path": "docs/wca-log-translations/entries/incidents-131.json",
+  "sourceHash": "328f4df097491ca7e370a45b60f643a4a2c823d98565a9aca16385e5506885cb",
+  "inputTranslationHash": "f3688d984357ad727fbb4f40e2eef1dc1504fe3bde9818b3a1516a6ac29c1586",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "复用当前译文哈希绑定的既有全文独立审校；本轮全量检索项目名和机构残留，并核对命中语境。 本轮完整对照含 Skewb 的该条英中正文，确认成绩、规则号、处罚条件及链接保留。",
+  "verdict": "correction_required",
+  "notes": [],
+  "changes": [
+    {
+      "reason": "WCA 官方 events->skewb 译为“斜转”，正文与标题不再保留未翻译的项目名称；已逐处对照全文，链接不受影响。",
+      "before": "Skewb",
+      "after": "斜转",
+      "sourceUrl": "https://translate.worldcubeassociation.org/translate/wca/locales/zh_Hans/?checksum=6eab8ca347f70d1d"
+    }
+  ],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/report-3.json",
+    "reviewedTranslationHash": "f3688d984357ad727fbb4f40e2eef1dc1504fe3bde9818b3a1516a6ac29c1586",
+    "verdict": "pass"
+  },
+  "sourceUncertainty": false,
+  "title": "还原中计时器翻转",
+  "content": "选手正常开始还原，但计时器松脱，翻转后倒扣在垫子上。选手继续完成还原，再将计时器摆正并停表。选手似乎因器材故障、而非自身过错受损，现场给予了暂定的额外尝试。\n\n提醒，规则 [11e](https://www.worldcubeassociation.org/regulations/#11e) 规定：\n> ……为取得额外尝试资格，选手应在事件发生时、原尝试结束前，向裁判和代表口头或书面申诉……\n\n虽然应在事件发生时申诉，但本案发生在速度很快的斜转项目，计时器位移的影响可能直到准备停表时才明显。现场代表最有条件综合判断证据，因此此类情况交由代表酌情处理，并建议给予额外尝试。"
+}

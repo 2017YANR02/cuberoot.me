@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/updates-on-wca-competition-requirements-policy-wca-dues-policy-september-2021",
+  "source": {
+    "key": "posts:/posts/updates-on-wca-competition-requirements-policy-wca-dues-policy-september-2021",
+    "kind": "posts",
+    "title": "Updates on WCA Competition Requirements Policy & WCA Dues Policy (September 2021)",
+    "date": "2021-09-20T00:29:10.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/updates-on-wca-competition-requirements-policy-wca-dues-policy-september-2021",
+    "content": "The WCA Board has recently approved the updates to the following policies:\n\n* [WCA Competition Requirements Policy](https://www.worldcubeassociation.org/documents/policies/external/Competition%20Requirements.pdf) - Includes an introduction and increased scope of series competitions and a variety of adjustments to previously created sections. The full list of changes can be found [here](https://github.com/thewca/wca-documents/pull/258).\n* [WCA Dues Policy](https://www.worldcubeassociation.org/documents/policies/external/Dues%20System.pdf) - These changes will take effect starting January 1, 2022 and can be viewed [here](https://github.com/thewca/wca-documents/pull/253/files#diff-9c4c9b91069f0ac66a52c3409dd14c72581d06f17bbf0f6ce7059541b7409a70).",
+    "hash": "a060cf7724e705c050a1d08a16df6f22b515e3d75d271b29b4e7f62ff3514e4f",
+    "format": "markdown",
+    "sourceId": 14035
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "a060cf7724e705c050a1d08a16df6f22b515e3d75d271b29b4e7f62ff3514e4f",
+    "language": "zh-Hans",
+    "title": "WCA 比赛要求政策和会费政策更新（2021 年 9 月）",
+    "content": "WCA 董事会近日批准了以下政策的更新：\n\n* [WCA 比赛要求政策](https://www.worldcubeassociation.org/documents/policies/external/Competition%20Requirements.pdf)：新增对系列赛的介绍，扩大其适用范围，并对原有章节作出多项调整。完整改动列表见[此处](https://github.com/thewca/wca-documents/pull/258)。\n* [WCA 会费政策](https://www.worldcubeassociation.org/documents/policies/external/Dues%20System.pdf)：改动将于 2022 年 1 月 1 日生效，具体内容见[此处](https://github.com/thewca/wca-documents/pull/253/files#diff-9c4c9b91069f0ac66a52c3409dd14c72581d06f17bbf0f6ce7059541b7409a70)。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:49:54.085Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "1fb48912b1d9220a2137bd2b7913e1877c8ea5bb3fb159fadf270bec293ba2e4"
+}

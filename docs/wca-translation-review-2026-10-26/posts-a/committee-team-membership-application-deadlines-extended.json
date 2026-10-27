@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/committee-team-membership-application-deadlines-extended",
+  "path": "docs/wca-post-translations/entries/committee-team-membership-application-deadlines-extended.json",
+  "sourceHash": "b4a681d41f5136bce9fc7d67788360b7d8d3dbbbb45299b9e705264c5ede224e",
+  "inputTranslationHash": "923690a0199de524db5eafe91066002903c3c81afbda6169e48f1d9263647a5a",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:13:03.042Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "已全文核对，保留历史政策语境；逐项核对疫情阈值、面积人数、疫苗天数/检测小时、例外以及锦标赛申办表所有日期和暂定限定。"
+  ],
+  "changes": []
+}

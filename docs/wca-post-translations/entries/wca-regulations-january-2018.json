@@ -12,14 +12,33 @@
     "sourceId": 8516
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "69bdb9f91f620c4cabc296bed901cac730cce3f299a55186fde60da143d36900",
     "language": "zh-Hans",
     "title": "WCA 竞赛规则：2018 年 1 月更新",
     "content": "各位 WCA 社区成员：\n\nWRC 现公布新版竞赛规则，将于 2018 年 1 月 1 日生效。\n\n全部改动可在 [GitHub 版本对比](https://github.com/thewca/wca-regulations/compare/official...Fixes-2017)中查看。如果不想逐项打开修改，可点击“Files changed”查看完整的规则与指南文件。修改和新增内容标为绿色，删除内容标为红色。\n\n与选手最相关的主要变化：\n\n* 盲拧项目不允许使用带标志的魔方。（[提交](https://github.com/thewca/wca-regulations/pull/516/commits/3b8e7239ea5a3b10bbf0eabd1b93b9d469dd5265)｜无公开讨论）\n* 三阶脚拧赛制改为“五次去尾平均”。WRC 和 WCA 董事会将在内部确定的一段时间后，评估赛制变化对该项目受欢迎程度的影响，再决定该项目的未来。（[提交](https://github.com/thewca/wca-regulations/commit/ee259ddee5b0862334f91339b57ccdb058ef5440)｜[讨论](https://github.com/thewca/wca-regulations/issues/299)）\n* 调整成绩记录流程：裁判必须在记录成绩后立即签名；选手须在裁判记录并签名后核对成绩、签名。确保自己和裁判都已为该次还原签名，最终责任在选手。（[提交](https://github.com/thewca/wca-regulations/pull/524/commits/3c3e9526c7a9cd8030520939652a57f7adf41b00)｜[讨论](https://github.com/thewca/wca-regulations/issues/443)）\n* 一次尝试期间不得使用电子头戴式或入耳式耳机，即使已关闭或断开连接也不例外。（[提交](https://github.com/thewca/wca-regulations/pull/483/files)｜无公开讨论）\n* 三阶脚拧观察期间，选手现可用手接触魔方。（[提交](https://github.com/thewca/wca-regulations/commit/bd445f506a9d77c399b9ff4ca63aac679cb3a02b)｜[讨论](https://github.com/thewca/wca-regulations/issues/460)）\n* 使用不合规魔方完成的成绩将被取消资格，记为 DNF。例外：若在轮次进行中发现魔方不合规，WCA 代表可酌情用补赛替代此前的成绩。（[提交](https://github.com/thewca/wca-regulations/pull/516/commits/72afb6a8030a514b324baf845bcef8a7617f089c)｜无公开讨论）\n\n其他重要变化：\n<!-- break -->\n* 所有项目均允许使用面包魔方。（[提交](https://github.com/thewca/wca-regulations/commit/afddf80607fca22aa87f8a3388dd96a34a2e12c3)｜[讨论](https://github.com/thewca/wca-regulations/issues/195)）\n* 三阶、二阶、四阶、五阶、三阶单手、三阶脚拧、魔表、五魔方、金字塔、斜转和 Square-1 的默认赛制为“五次去尾平均”，组合轮次则为“两次取最佳／五次去尾平均”。这些项目采用其他赛制须获董事会批准。（[提交](https://github.com/thewca/wca-regulations/pull/479/commits/1d99d03b6c717334f75d9f291286a8c3f67d32bd)｜无公开讨论）\n* 三阶单手还原中，若选手意外用身体其他部位触碰魔方，裁判可酌情不判 DNF。（[提交](https://github.com/thewca/wca-regulations/pull/511/commits/925d6a48878621ae9b3e53d573d62fd2853b3d0c)｜[讨论](https://github.com/thewca/wca-regulations/issues/464)）\n* 停表后魔方掉到选手大腿上，视为触碰魔方，因此加罚 2 秒。（[提交](https://github.com/thewca/wca-regulations/commit/4057d66c433e7dc3649c218a5f1e0dd73a1f0f61)｜[讨论](https://github.com/thewca/wca-regulations/issues/464)）\n* 选手在一次尝试期间，除裁判外，现在也可以与 WCA 代表交谈。（[提交](https://github.com/thewca/wca-regulations/commit/650625cfbad7104b4fd654c0c360c9810fe573cd)｜[讨论](https://github.com/thewca/wca-regulations/issues/297)）\n* 明确了 A6c 与 A6e 的关系：违反 A6c 不再同时触发 A6e。（[提交](https://github.com/thewca/wca-regulations/commit/bd3ccdef5936960c357fa20bed4513eba2783ec2)｜[讨论](https://github.com/thewca/wca-regulations/issues/373)）\n* 取消组合轮次按排名设置的及格线，只保留按成绩设置的及格线。（[提交](https://github.com/thewca/wca-regulations/pull/449/commits/8789fa6eab6b27140220d9543ec956d68b3aafe7)｜[讨论](https://github.com/thewca/wca-regulations/issues/425)）\n* 晋级下一轮的条件必须在当前轮次开始前公布，之后不应更改。（[提交](https://github.com/thewca/wca-regulations/commit/a8c3bef750edef70c8181faa29c2c9058b12b7e9)｜[讨论](https://github.com/thewca/wca-regulations/issues/391)）\n* 所有尝试必须使用 Stackmat；例外是没有观察时间、且预计选手用时超过 10 分钟的项目，可选择不使用 Stackmat。（[提交](https://github.com/thewca/wca-regulations/commit/f455cb011584d94ee048a2f366701f9be1bdf1d1)｜[讨论](https://github.com/thewca/wca-regulations/issues/375)）\n* 多盲的魔方应摆成尽量接近正方形的形状，例如 8 个魔方应分为三行，两行各 3 个、一行 2 个。（[提交](https://github.com/thewca/wca-regulations/commit/315144c87794aa35cf319c03258cb2136a2bf21c)｜[讨论](https://github.com/thewca/wca-regulations/issues/444)）\n* 报名管理新增三项限制（[提交](https://github.com/thewca/wca-regulations/commit/f30fffa659a9155a43e0b813a75e62e63a352e94)｜[讨论](https://github.com/thewca/wca-regulations/issues/469)）：\n  1. 达到人数上限后，不得再接受现场报名。\n  2. 应公布人数上限，只有获董事会批准后才能更改。\n  3. 额外开放报名时，必须至少提前 48 小时公告。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.933Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "5e01714837bbeab40c18100c49dee1eb1929c335d3a6b32c59d531683f57d09d"
+  "translationHash": "bac25c4c52e12b75a7af2367038fa4ca4c4c983b27fc2a835280e0c11659e0cd",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:09:46.860Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "69bdb9f91f620c4cabc296bed901cac730cce3f299a55186fde60da143d36900",
+    "reviewedTranslationHash": "bac25c4c52e12b75a7af2367038fa4ca4c4c983b27fc2a835280e0c11659e0cd",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wca-regulations-january-2018.json",
+    "sourceConcern": false,
+    "notes": [
+      "全文核对规则变更条件、数字、项目中文、权限强度及链接。"
+    ],
+    "inputTranslationHash": "5e01714837bbeab40c18100c49dee1eb1929c335d3a6b32c59d531683f57d09d"
+  }
 }

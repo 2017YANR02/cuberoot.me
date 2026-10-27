@@ -95,7 +95,19 @@ pnpm --filter @cuberoot/client dev
 # → http://127.0.0.1:3000/
 ```
 
-本地 Web 的 `/v1/*` 通过 Next rewrites 代理线上 API；`/tools/`、`/stats/` 使用现役 Next route handler，静态资源的发布边界见 `.github/workflows/sync_toolkit.yml`。
+本地 Web 的 `/v1/*` 默认通过 Next rewrites 代理线上 API；修改业务数据时使用 `LOCAL_DOMAINS` 选择本地 API 域，步骤见 [`core/apps/api/scripts/README.md`](../core/apps/api/scripts/README.md)。
+
+统计数据（选手、报名、比赛、打乱统计等）默认在本地和生产都读取 `static.cuberoot.me` 已发布的快照，不要求开发者准备本地 `stats/`。Web 与共享加载器复用 `@cuberoot/shared/stats-base`；直接访问开发站点 `/stats/*` 也遵循同一来源。服务器快照仍有上游同步间隔，不等于实时报名状态。
+
+需要预览本地生成但尚未发布的数据时，在 `core/` 启动：
+
+```sh
+NEXT_PUBLIC_STATS_SOURCE=local pnpm --filter @cuberoot/client dev
+```
+
+也可在 `core/packages/client/.env.development.local` 设置 `NEXT_PUBLIC_STATS_SOURCE=local`，不要提交此个人配置。未设置或设为 `published` 即读服务器；切换后重启开发服务并刷新页面，清除页面内存中的旧索引。启动终端显示 `[stats] source=...`。该配置只在开发环境生效，生产始终读已发布数据。使用非默认端口时通过 `PORT` 设置端口，让服务端渲染也读取同一开发服务。
+
+本地模式严格读取仓库 `stats/`，文件缺失或读取失败会返回明确错误并在终端记录，不回退服务器；本地响应不缓存。自动化测试使用固定样本，不依赖线上最新快照。`NEXT_PUBLIC_STATIC_ORIGIN` 只控制模型、音乐等非统计资源，不再控制统计来源；`/tools/` 保持现有规则。静态资源发布边界见 `.github/workflows/sync_toolkit.yml`。
 
 `dev`、`dev:clean`、`dev:safe` 和 `local-dev.ts` 都通过 Turborepo Watch 启动：先按依赖顺序执行 Web 依赖的 `dev:build`，再启动 Next；共享包源码改动后自动重新构建，Next 自身负责热更新。`dev:build` 只登记需要输出 `dist` 的 TypeScript 共享包，复用各包的 `build`，不运行 WASM 建表或统计任务。新增同类编译包时，在该包添加 `dev:build` 脚本即可由 workspace 依赖图纳入。保持终端运行，Ctrl+C 同时退出监听和开发服务器。
 

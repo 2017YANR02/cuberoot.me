@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/recognition-of-wca-as-a-501-c-3-non-profit-organization",
+  "path": "docs/wca-post-translations/entries/recognition-of-wca-as-a-501-c-3-non-profit-organization.json",
+  "sourceHash": "e15f5e65fafe660d6637d220ab17ebabfe53531625c0feacbcb574fbbab36bc8",
+  "inputTranslationHash": "900046d7038ce2009fc75ba10d7a8c97ac2427b926ab2dddafa68188771cd788",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:55.472Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

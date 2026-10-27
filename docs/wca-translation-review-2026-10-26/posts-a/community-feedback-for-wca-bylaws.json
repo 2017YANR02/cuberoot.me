@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/community-feedback-for-wca-bylaws",
+  "path": "docs/wca-post-translations/entries/community-feedback-for-wca-bylaws.json",
+  "sourceHash": "e48c361983ba4f371d081de29ef908ffc42cedd25459151049a54076970f04fd",
+  "inputTranslationHash": "adafb405a7fcd84dc61ff59b70b7ab17d74df2781acb79249a25873a5f93ca94",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:13:03.043Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "已全文核对，保留历史政策语境；逐项核对疫情阈值、面积人数、疫苗天数/检测小时、例外以及锦标赛申办表所有日期和暂定限定。"
+  ],
+  "changes": []
+}

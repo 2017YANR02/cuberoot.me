@@ -1,0 +1,27 @@
+{
+  "key": "posts:/posts/wca-regulations-2009-are-final",
+  "source": {
+    "key": "posts:/posts/wca-regulations-2009-are-final",
+    "kind": "posts",
+    "title": "WCA Regulations 2009 are final",
+    "date": "2009-02-06T15:38:58.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/wca-regulations-2009-are-final",
+    "content": "The WCA Regulations 2009 are now final.\n \n See https://www.worldcubeassociation.org/regulations for the new version.\n See https://www.worldcubeassociation.org/regulations/regulations\\_history2009.html for all changes.\n See https://www.worldcubeassociation.org/regulations/regulations2009new.html for the 2009 version with all changes marked.\n See https://www.worldcubeassociation.org/regulations/WCARegulations2009v1.pdf for the 2009 version in PDF.\n \n All competitions starting today (February 6, 2009) must use this new version of the regulations.\n \n Most important changes are:\n = Added 6x6x6 Cube and 7x7x7 Cube as official events.\n = Preferred format for Rubik's Clock and Square-1 to 'Average of 5'.\n = Maximum Time limit for Multiple Blindfolded to 1 hour.\n \n Other changes for competitors:\n = Surface may be used for one-handed solving.\n = Restriction of specific combinations of events is possible.\n \n Other changes for competition organisers:\n = A main judge may compete in an event if the WCA delegate is also the main judge.\n = Random positions for 2x2x2 required, based on new scramble program.\n = Random positions for Pyraminx required, based on new scramble program.\n = Reduced options for closed competitions.\n = More remaining time announcements for Fewest Moves event.\n \n Thank you all for your feedback and contributions.\n We did our best to cover all your feedback, but it is never possible to make everyone happy.\n Feedback is always welcome in the WCA Forum.\n \n Happy cubing,\n \n Ron van Bruchem\n World Cube Association",
+    "hash": "59be0f918711d751a5110e73f1ffe5dc1dc4a7675d9feb77a6dad1a9d7c4760a",
+    "format": "markdown",
+    "sourceId": 354
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "59be0f918711d751a5110e73f1ffe5dc1dc4a7675d9feb77a6dad1a9d7c4760a",
+    "language": "zh-Hans",
+    "title": "2009 年 WCA 规则正式定稿",
+    "content": "2009 年 WCA 规则现已定稿。\n\n新版规则见：https://www.worldcubeassociation.org/regulations\n全部修改见：https://www.worldcubeassociation.org/regulations/regulations\\_history2009.html\n标出全部修改的 2009 年版规则见：https://www.worldcubeassociation.org/regulations/regulations2009new.html\n2009 年版规则 PDF 见：https://www.worldcubeassociation.org/regulations/WCARegulations2009v1.pdf\n\n从今天（2009 年 2 月 6 日）起举行的所有比赛，都必须使用新版规则。\n\n最重要的修改：\n\n- 将六阶和七阶加入正式项目。\n- 魔表和 Square-1 的优先赛制改为“五次去尾平均”。\n- 多盲最长时限改为 1 小时。\n\n与选手有关的其他修改：\n\n- 单手还原时可以使用桌面。\n- 可以限制某些项目组合的兼报。\n\n与比赛主办方有关的其他修改：\n\n- 如果 WCA 代表同时担任主裁判，主裁判可以参加该项目。\n- 二阶必须使用新打乱程序生成的随机状态打乱。\n- 金字塔必须使用新打乱程序生成的随机状态打乱。\n- 缩小了封闭比赛的可选范围。\n- 最少步项目增加剩余时间提醒。\n\n感谢大家的反馈和贡献。\n我们尽力考虑了所有反馈，但不可能让每个人都满意。\n欢迎继续在 WCA 论坛提出意见。\n\n祝大家玩魔方愉快！\n\nRon van Bruchem\n世界魔方协会",
+    "notes": [
+      "原文 regulations\\_history2009.html 含 Markdown 转义，保留源串供渲染器正确处理。原文 closed competitions 译为“封闭比赛”，未扩写其政策含义。"
+    ],
+    "translatedAt": "2026-10-22T08:55:00.921Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "48ab721815c5fcea58e16377b426fa0991fc0ac8d8a87fd90d8aa7d85759f04a"
+}

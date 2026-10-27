@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/wca-championship-2022-and-2023-hosts-announcement-june-2021",
+  "path": "docs/wca-post-translations/entries/wca-championship-2022-and-2023-hosts-announcement-june-2021.json",
+  "sourceHash": "6f0e447d822f908d893c40ec8f17d1e9e9402fdb529b298f807a86b8d2d46cec",
+  "inputTranslationHash": "7fa2224e24174d055cf96afe9b2e62e670477cf8f3639a37092b8d3323aef224",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:07:08.714Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

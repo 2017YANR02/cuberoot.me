@@ -1,0 +1,27 @@
+{
+  "key": "incidents:132",
+  "path": "docs/wca-log-translations/entries/incidents-132.json",
+  "sourceHash": "77804fc9c275d78ac33ba144e0aaa526c8f6652d413d573c759477fc5ac5a2cb",
+  "inputTranslationHash": "2941edccf517c6982d9c47826a2f865f3045939a12a7be60a389265954398dcb",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "复用当前译文哈希绑定的既有全文独立审校；本轮全量检索项目名和机构残留，并核对命中语境。 本轮完整对照含 Skewb 的该条英中正文，确认成绩、规则号、处罚条件及链接保留。",
+  "verdict": "correction_required",
+  "notes": [],
+  "changes": [
+    {
+      "reason": "WCA 官方 events->skewb 译为“斜转”，正文与标题不再保留未翻译的项目名称；已逐处对照全文，链接不受影响。",
+      "before": "Skewb",
+      "after": "斜转",
+      "sourceUrl": "https://translate.worldcubeassociation.org/translate/wca/locales/zh_Hans/?checksum=6eab8ca347f70d1d"
+    }
+  ],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/report-3.json",
+    "reviewedTranslationHash": "2941edccf517c6982d9c47826a2f865f3045939a12a7be60a389265954398dcb",
+    "verdict": "pass"
+  },
+  "sourceUncertainty": false,
+  "title": "选手认为记录时间比实际更快",
+  "content": "完成斜转平均后，选手告诉代表，第二次记录的 6.52 错了，应为 7.52。成绩单确实写着 6.52，选手和裁判均已签名，没有视频。讨论中，选手开始怀疑自己的记忆，越来越不确定实际时间。现场给予暂定的额外尝试。\n\nWRC 建议**不要**采用额外尝试，时间究竟为 6.52 还是 7.52，应交由代表酌情判断。这需要评估全部证据，而现场代表通常最适合做此判断。可能不可靠的记忆本身并不是强证据。"
+}

@@ -216,6 +216,7 @@ export function publicMemberBadgeKind(member: Pick<PublicMember, 'planSlug'> | u
 
 export async function getMyMembership(): Promise<{
   membership: Membership | null;
+  canPurchaseEnterprise?: boolean;
   isMember?: boolean;
   profile?: EditableMemberProfile | null;
 }> {

@@ -5,6 +5,7 @@
  * ────────────────────────────────────────────────────────────────────────── */
 
 .wp-page {
+    --font-sans: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', sans-serif;
     --wp-bg: #fafafa;
     --wp-surface: #FFFFFF;
     --wp-text: #171717;
@@ -28,7 +29,7 @@
     --wp-bronze: #B07051;
     --wp-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.04);
 
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: var(--font-sans);
     background: var(--wp-bg);
     color: var(--wp-text);
     min-height: 100dvh;
@@ -141,19 +142,29 @@ html[data-theme=dark] .wp-page {
 }
 .wp-rc-head { display: flex; align-items: center; gap: 10px; }
 .wp-rc-title { margin: 0; font-size: 1rem; font-weight: 600; color: var(--wp-text); }
+.wp-rc-chart { margin: 0; width: 100%; max-width: 440px; display: grid; gap: 10px; font-size: 0.8rem; font-weight: 400; font-variant-numeric: tabular-nums; }
+.wp-rc-chart-row { display: grid; grid-template-columns: 5.5em minmax(0, 1fr); align-items: center; gap: 12px; }
+.wp-rc-chart-row dt { color: var(--muted-foreground); }
+.wp-rc-chart-row dd { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr) 4em; align-items: center; gap: 14px; }
+.wp-rc-chart-track { height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--foreground) 6%, transparent); }
+.wp-rc-chart-bar { display: block; height: 100%; border-radius: inherit; background: color-mix(in srgb, var(--foreground) 60%, transparent); }
+.wp-rc-chart-count { text-align: right; color: var(--foreground); }
 .wp-rc-groups { display: grid; gap: 28px; }
 .wp-rc-group { min-width: 0; }
-.wp-rc-comp { margin: 0 0 14px; font-size: 0.9rem; font-weight: 600; color: var(--foreground); overflow-wrap: anywhere; }
+.wp-rc-comp { margin: 0 0 14px; font-size: 0.9rem; font-weight: 500; color: var(--foreground); overflow-wrap: anywhere; }
 .wp-rc-comp a { color: inherit; text-decoration: none; text-underline-offset: 3px; }
 .wp-rc-comp a:hover { text-decoration: underline; }
 .wp-rc-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 28px; align-items: start; list-style: none; margin: 0; padding: 0; }
 .wp-rc-row {
     display: grid; gap: 8px; min-width: 0;
+    padding: 14px;
+    border: 1px solid var(--border-default);
+    border-radius: 12px;
     font-size: 0.85rem; font-variant-numeric: tabular-nums;
 }
 .wp-rc-context { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
 .wp-rc-badge {
-    margin-left: auto; flex: none; font-size: 0.68rem; font-weight: 600; padding: 1px 6px; border-radius: 5px;
+    margin-left: auto; flex: none; font-size: 0.68rem; font-weight: 500; padding: 1px 6px; border-radius: 5px;
 }
 .wp-rc-badge-removed { color: var(--destructive); background: color-mix(in srgb, var(--destructive) 10%, transparent); }
 .wp-rc-badge-modified { color: var(--accent); background: var(--accent-soft); }
@@ -162,11 +173,13 @@ html[data-theme=dark] .wp-page {
 .wp-rc-round { color: var(--muted-foreground); }
 .wp-rc-vals { display: flex; flex-wrap: wrap; gap: 10px 20px; min-width: 0; }
 .wp-rc-pair { display: grid; align-content: start; gap: 3px; min-width: 0; }
+.wp-rc-context > .wp-rc-pair { display: flex; align-items: baseline; gap: 8px; margin-left: 6px; }
 .wp-rc-comparison { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; }
 .wp-rc-flabel { color: var(--muted-foreground); font-size: 0.72rem; }
-.wp-rc-old { color: var(--muted-foreground); text-decoration: line-through; font-size: 0.8rem; overflow-wrap: anywhere; }
+.wp-rc-old, .wp-rc-new { font-size: inherit; font-weight: 400; overflow-wrap: anywhere; }
+.wp-rc-old { color: var(--muted-foreground); text-decoration: line-through; }
 .wp-rc-arrow { color: var(--muted-foreground); }
-.wp-rc-new { color: var(--foreground); font-weight: 650; overflow-wrap: anywhere; }
+.wp-rc-new { color: var(--foreground); }
 .wp-rc-source {
     flex: none; font-size: 0.68rem; font-weight: 600; padding: 1px 6px; border-radius: 999px;
     color: var(--muted-foreground); background: var(--muted);
@@ -914,16 +927,16 @@ html[data-theme=dark] .wp-page {
 }
 .wp-bycomp-table tbody td {
     padding: 8px 10px;
-    border-bottom: 1px solid var(--wp-border);
-    vertical-align: middle;
+    border-bottom: none;
+    vertical-align: top;
     white-space: nowrap;
 }
 .wp-bycomp-table tbody tr:last-child td { border-bottom: none; }
 /* per-event 全部成绩 表格内的 comp 单元格:比赛名 + 日期 stacked,首行加顶部分隔线 */
 .wp-bycomp-table .wp-cell-comp {
     display: table-cell; min-width: 0;
-    vertical-align: top;
-    padding-top: 10px;
+    vertical-align: middle;
+    padding-block: 8px;
     /* 比赛名强制单行(用户要求);超长名整张表在 .sticky-scroll 里横向滚动 */
     white-space: nowrap;
 }
@@ -966,27 +979,28 @@ a.wp-round-tag-link:hover {
 .wp-bycomp-table tbody tr.wp-row-anchorable {
     cursor: pointer;
 }
-/* 行高亮(hover / hash 锚点)一律跳过 AoXR 列:它是跨该场全部轮次的合并格,挂在组首行上,
+/* 行高亮(hover / hash 锚点)跳过比赛信息与 AoXR 列:它们是跨该场全部轮次的合并格,挂在组首行上,
    选中组首行时整格(跨 3—4 行)会一起染色,看着像高亮了一整组,与「只选中一行」矛盾。 */
-.wp-bycomp-table tbody tr.wp-row-anchorable:hover td:not(.wp-cell-aoxr) {
+.wp-bycomp-table tbody tr.wp-row-anchorable:hover td:not(.wp-cell-aoxr):not(.wp-cell-comp) {
     background: color-mix(in srgb, var(--wp-text) 3%, transparent);
 }
 /* hash 锚点命中的行持续高亮 — 仿 WCA regulations 行级锚点黄底,直到下次切换 hash.
    class 由 ByEventView / ByCompList useEffect 维护(SPA lazy mount 后 :target 不重绑) */
-.wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-aoxr),
-.wp-bycomp-table tbody tr.wp-row-target:hover td:not(.wp-cell-aoxr) {
+.wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-aoxr):not(.wp-cell-comp),
+.wp-bycomp-table tbody tr.wp-row-target:hover td:not(.wp-cell-aoxr):not(.wp-cell-comp) {
     background: rgba(255, 224, 70, 0.42);
 }
 /* 左侧实心强调条,让选中行一眼可辨 */
-.wp-bycomp-table tbody tr.wp-row-target td:first-child {
+.wp-bycomp-table tbody tr.wp-row-target td:first-child:not(.wp-cell-comp),
+.wp-bycomp-table tbody tr.wp-row-target .wp-cell-comp + td {
     box-shadow: inset 3px 0 0 #f5b301;
 }
 @media (prefers-color-scheme: dark) {
-    html:not([data-theme=light]) .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-aoxr) {
+    html:not([data-theme=light]) .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-aoxr):not(.wp-cell-comp) {
         background: rgba(255, 213, 79, 0.30);
     }
 }
-html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-aoxr) {
+html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-aoxr):not(.wp-cell-comp) {
     background: rgba(255, 213, 79, 0.30);
 }
 
@@ -1069,11 +1083,11 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-ao
 .wp-att-old-pad { visibility: hidden; white-space: nowrap; }
 /* 变更行:整行单元顶对齐 → 各当前值都贴第一行、彼此水平对齐(4.31=4.87);旧值落第二行。
    单次/平均/名次的旧值在流内撑高本行;详细成绩旧值是绝对定位,靠把数单元 padding-bottom 留出第二行。 */
-.wp-bycomp-table tbody tr.wp-row-changed td { vertical-align: top; }
+.wp-bycomp-table tbody tr.wp-row-changed td:not(.wp-cell-comp) { vertical-align: top; }
 .wp-row-changed .wp-cell-attempts { padding-bottom: 1.3em; }
 /* 复盘 STM/TPS 行:整行顶对齐 → 轮次列的 STM/TPS 标签与详细成绩列下方的 stm/tps 值同行对齐。
    轮次列改 flex 列(head 一行 + 两标签行,4px 行距 = 详细成绩网格 row-gap);标签/值同字号同行高 → 逐行对齐。 */
-.wp-bycomp-table tbody tr.wp-row-has-recon-stats td { vertical-align: top; }
+.wp-bycomp-table tbody tr.wp-row-has-recon-stats td:not(.wp-cell-comp) { vertical-align: top; }
 /* 有复盘 STM/TPS 子行的行:收紧首行(单次/平均/详细成绩)行高,让主值与其下 STM/TPS 两行贴近;
    五列(排名/单次/平均/详细成绩/轮次标签)统一同一行高 → 首行数值仍跨列对齐,子行整体上移。 */
 .wp-bycomp-table tbody tr.wp-row-has-recon-stats td { line-height: 1.25; }

@@ -12,14 +12,31 @@
     "sourceId": 13794
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "793bb626447628058dbeace1cc03222b5729c969a0d3909c89ef80314d8faa37",
     "language": "zh-Hans",
     "title": "2020 年 WCA 欧洲锦标赛将于 7 月 16–19 日在荷兰阿尔梅勒—阿姆斯特丹举行",
     "content": "[2020 年 WCA 欧洲锦标赛](https://www.worldcubeassociation.org/competitions/Euro2020)将于 2020 年 7 月 16–19 日在荷兰阿尔梅勒—阿姆斯特丹举行。详情及报名请查看[赛事官网](https://www.wcaeuro2020.com)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:54.071Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "47e47a269c30dcd8d85156c3261898fd7e7a460f2731c639dbfc3a4065051f6c"
+  "translationHash": "05b1242fd0db7a9e4d11c408a57679b543bacb7c349816feb99f6c7e121e02b7",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:07:08.715Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "793bb626447628058dbeace1cc03222b5729c969a0d3909c89ef80314d8faa37",
+    "reviewedTranslationHash": "05b1242fd0db7a9e4d11c408a57679b543bacb7c349816feb99f6c7e121e02b7",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wca-european-championship-2020-on-july-16-19-2020-in-almere-amsterdam-netherlands.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "47e47a269c30dcd8d85156c3261898fd7e7a460f2731c639dbfc3a4065051f6c"
+  }
 }

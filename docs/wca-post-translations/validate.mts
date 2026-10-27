@@ -38,6 +38,14 @@ for(const row of p.entries){
   check(digest(record.translation)===row.translationHash&&record.translationHash===row.translationHash,'Translation hash: '+row.key);
   check(record.translation.version===row.translationVersion,'Translation version: '+row.key);
   check(record.translation.reviewStatus===row.reviewStatus,'Review status: '+row.key);
+  if(['independently_verified','pending_source_verification'].includes(row.reviewStatus)){
+   const review=record.review;
+   check(review?.status===row.reviewStatus&&review?.sourceHash===row.sourceHash,'Review source binding: '+row.key);
+   check(review?.reviewedTranslationHash===row.translationHash,'Review translation binding: '+row.key);
+   const evidence=review?.report?read(review.report).entries.find((e:any)=>e.key===row.key):null;
+   check(evidence?.verdict==='pass'&&evidence?.sourceHash===row.sourceHash&&evidence?.reviewedTranslationHash===row.translationHash,'Independent review evidence: '+row.key);
+   check(Boolean(evidence?.sourceConcern)===(row.reviewStatus==='pending_source_verification'),'Source concern status: '+row.key);
+  }
   check(/[\u3400-\u9fff]/.test(record.translation.content)&&(/[\u3400-\u9fff]/.test(record.translation.title)||/^TNoodle [\d.]+$/i.test(record.translation.title)),'Chinese content: '+row.key);
   for(const url of new Set(urlTokens(source.content))){
    links++;

@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/appointment-of-new-wec-leader-july-2018",
+  "path": "docs/wca-post-translations/entries/appointment-of-new-wec-leader-july-2018.json",
+  "sourceHash": "590b51f573dafab8f47ba223ba3306079da884aae63b370315376654ab0d601e",
+  "inputTranslationHash": "24c94a1ba8996f37dceb6089157096b0f38b4eb100cbcdcb96dfada54c16ef78",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:06:14.456Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照正文与标题；核对全部申请/任命主体、时间、权限、附录条目及材料要求。"
+  ],
+  "changes": []
+}

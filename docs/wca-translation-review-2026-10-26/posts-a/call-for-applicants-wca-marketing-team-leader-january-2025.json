@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wca-marketing-team-leader-january-2025",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wca-marketing-team-leader-january-2025.json",
+  "sourceHash": "fce605939229557e3d658bb606992eec67175654d301aa2575a235d5add3fc32",
+  "inputTranslationHash": "d0c31b52f58c16e5aa369d80b4ebf323ac4024b3694cdd723bc5a5c1e2c93be1",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:07:01.628Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照招募正文、职责条目、必需/可选资格、年龄、时限和程序；未扩展外链材料。"
+  ],
+  "changes": []
+}

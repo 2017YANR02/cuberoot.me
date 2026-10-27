@@ -46,3 +46,7 @@ node docs/wca-log-translations/validate.mts
 ## 2026-10-25 机构专名校订
 
 按 WCA 官方中文统一 WIC、WCT、WCAT、WMT 等机构名称；现行译文已更新，旧译文完整归档，源文及历史缩写不变。改动清单与前后 hash 见 `../wca-terminology-revision-2026-10-25.json`。本轮仅机构译名专项自查；改动版本不继承旧 hash 的独立审校通过状态，当前计数以 progress.json 为准。使用 `core/packages/client/scripts/build-wca-logs.mts` 与 `build-wca-posts.mts` 重建网站数据。后续翻译先读 i18n skill 和 WCA 英中翻译参考的官方机构表。
+
+## 2026-10-26 全量校正与版本审校
+
+当前结果见 [全量校正记录](../wca-translation-review-2026-10-26/README.md)。全部639份唯一译文已具备本轮审校记录，其中107份标题或正文校正；原37条日志待重新审校已处理。18份原文自身疑点（公告5、日志13）保留具体结论，译文通过不等于原文事实已确认。旧状态和旧hash的通过记录仅代表当时版本。本轮已重建本地页面数据，未提交、推送或部署。

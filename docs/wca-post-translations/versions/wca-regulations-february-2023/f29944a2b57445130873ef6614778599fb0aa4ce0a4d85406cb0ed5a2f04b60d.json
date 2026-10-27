@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/wca-regulations-february-2023",
+  "source": {
+    "key": "posts:/posts/wca-regulations-february-2023",
+    "kind": "posts",
+    "title": "WCA Regulations - February 2023",
+    "date": "2023-01-20T05:35:10.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/wca-regulations-february-2023",
+    "content": "Dear WCA Community,\n\nThe WRC would like to inform you about the versions of the WCA Regulations and Guidelines, which are going into effect **February 1, 2023.**\n\nYou can review all changes in [this comparison on GitHub](https://github.com/thewca/wca-regulations/compare/official-2022-06-01...official-2023-02-01). You can click on “Files changed” to see the complete files of the Regulation and Guidelines, where all changes and additions are marked green and removals are red.\n\nBelow is a *summary* of the major changes in the new version of the Regulations and the Guidelines.\n\n**Major Changes**\n\n- Allow both a cumulative time limit and a time limit (per attempt) to be present at the same time ([PR](https://github.com/thewca/wca-regulations/pull/1063/files) | [discussion](https://forum.worldcubeassociation.org/t/proposal-allow-for-both-cumulative-time-limits-and-time-limits/16323))\n- Make Square-1 misalignments during inspection more clear ([PR](https://github.com/thewca/wca-regulations/pull/1073/files) | [discussion](https://forum.worldcubeassociation.org/t/move-vs-alignment-clarification-on-square-1-in-inspection/20873))\n- Remove Gen 2 Stackmats from the list of approved timers ([PR](https://github.com/thewca/wca-regulations/pull/1067/files))\n- Add 4g2 for clock ([PR](https://github.com/thewca/wca-regulations/pull/1070/files))\n- Defining clock better in the regulations ([PR](https://github.com/thewca/wca-regulations/pull/1076/files))\n- More clarification on extras in the guidelines ([PR](https://github.com/thewca/wca-regulations/pull/1060/files))",
+    "hash": "6c7fbbd09dba6da15d3ddbf742727797a3d10c6792e6c41878809f914c953c3f",
+    "format": "markdown",
+    "sourceId": 14088
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "6c7fbbd09dba6da15d3ddbf742727797a3d10c6792e6c41878809f914c953c3f",
+    "language": "zh-Hans",
+    "title": "WCA 竞赛规则更新（2023 年 2 月）",
+    "content": "各位 WCA 社区成员：\n\nWCA 规则委员会（WRC）在此通知，新版《WCA 竞赛规则与指南》将于 **2023 年 2 月 1 日**生效。\n\n所有改动可在 [GitHub 版本对比](https://github.com/thewca/wca-regulations/compare/official-2022-06-01...official-2023-02-01)中查看。点击“Files changed”即可查看规则与指南的完整文件，其中新增和修改的内容标为绿色，删除的内容标为红色。\n\n以下是新版规则与指南主要改动的*概要*。\n\n**主要改动**\n\n- 允许同时设置累计时限和单次还原时限（[PR](https://github.com/thewca/wca-regulations/pull/1063/files) | [讨论](https://forum.worldcubeassociation.org/t/proposal-allow-for-both-cumulative-time-limits-and-time-limits/16323)）\n- 进一步明确 Square-1 在观察期间未对齐的处理（[PR](https://github.com/thewca/wca-regulations/pull/1073/files) | [讨论](https://forum.worldcubeassociation.org/t/move-vs-alignment-clarification-on-square-1-in-inspection/20873)）\n- 将第二代 Stackmat 从认可计时器名单中移除（[PR](https://github.com/thewca/wca-regulations/pull/1067/files)）\n- 为魔表增加规则 4g2（[PR](https://github.com/thewca/wca-regulations/pull/1070/files)）\n- 在规则中进一步明确魔表的定义（[PR](https://github.com/thewca/wca-regulations/pull/1076/files)）\n- 在指南中进一步说明额外还原的处理（[PR](https://github.com/thewca/wca-regulations/pull/1060/files)）",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:45:43.557Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "f29944a2b57445130873ef6614778599fb0aa4ce0a4d85406cb0ed5a2f04b60d"
+}

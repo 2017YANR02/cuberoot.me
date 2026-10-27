@@ -12,14 +12,33 @@
     "sourceId": 14088
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "6c7fbbd09dba6da15d3ddbf742727797a3d10c6792e6c41878809f914c953c3f",
     "language": "zh-Hans",
     "title": "WCA 竞赛规则更新（2023 年 2 月）",
     "content": "各位 WCA 社区成员：\n\nWCA 规则委员会（WRC）在此通知，新版《WCA 竞赛规则与指南》将于 **2023 年 2 月 1 日**生效。\n\n所有改动可在 [GitHub 版本对比](https://github.com/thewca/wca-regulations/compare/official-2022-06-01...official-2023-02-01)中查看。点击“Files changed”即可查看规则与指南的完整文件，其中新增和修改的内容标为绿色，删除的内容标为红色。\n\n以下是新版规则与指南主要改动的*概要*。\n\n**主要改动**\n\n- 允许同时设置累计时限和单次还原时限（[PR](https://github.com/thewca/wca-regulations/pull/1063/files) | [讨论](https://forum.worldcubeassociation.org/t/proposal-allow-for-both-cumulative-time-limits-and-time-limits/16323)）\n- 进一步明确 Square-1 在观察期间未对齐的处理（[PR](https://github.com/thewca/wca-regulations/pull/1073/files) | [讨论](https://forum.worldcubeassociation.org/t/move-vs-alignment-clarification-on-square-1-in-inspection/20873)）\n- 将第二代 Stackmat 从认可计时器名单中移除（[PR](https://github.com/thewca/wca-regulations/pull/1067/files)）\n- 为魔表增加规则 4g2（[PR](https://github.com/thewca/wca-regulations/pull/1070/files)）\n- 在规则中进一步明确魔表的定义（[PR](https://github.com/thewca/wca-regulations/pull/1076/files)）\n- 在指南中进一步说明额外还原的处理（[PR](https://github.com/thewca/wca-regulations/pull/1060/files)）",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.557Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "f29944a2b57445130873ef6614778599fb0aa4ce0a4d85406cb0ed5a2f04b60d"
+  "translationHash": "75cdc97f0392cdf384fd008b6c3fca435f6070f3df504100921b6498f4e0b1a2",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:09:31.431Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "6c7fbbd09dba6da15d3ddbf742727797a3d10c6792e6c41878809f914c953c3f",
+    "reviewedTranslationHash": "75cdc97f0392cdf384fd008b6c3fca435f6070f3df504100921b6498f4e0b1a2",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wca-regulations-february-2023.json",
+    "sourceConcern": false,
+    "notes": [
+      "已核对完整正文、规则编号、日期、条件及项目术语。"
+    ],
+    "inputTranslationHash": "f29944a2b57445130873ef6614778599fb0aa4ce0a4d85406cb0ed5a2f04b60d"
+  }
 }

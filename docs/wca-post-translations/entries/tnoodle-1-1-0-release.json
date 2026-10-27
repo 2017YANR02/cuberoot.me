@@ -12,14 +12,31 @@
     "sourceId": 14016
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "fd04c57595542def72e1acc0b901db5ccd5b9383fe96ad85fbb016972065c39d",
     "language": "zh-Hans",
     "title": "TNoodle 1.1.0 发布",
     "content": "TNoodle-WCA-1.1.0 现已发布，可在 https://www.worldcubeassociation.org/regulations/scrambles 获取。\n\n相较于 TNoodle-WCA-1.0.1，主要可见改动如下：\n\n* 修复打开翻译时会触发打乱生成的问题\n* 修复最少步翻译取消选择后仍会打印的问题\n* 为各项目增加进度条\n* 修复生成包含非 ASCII 字符的 PDF 时可能出现的问题\n* 修复影响 TNoodle 发布的问题（因此本次没有一周的过渡期；近期比赛的负责代表已提前收到通知）\n* 令牌过期后退出登录\n* 生成打乱期间禁用用户操作（[shzcuber](https://github.com/shzcuber) 的首次贡献）\n* 增加可折叠侧栏（[JonEsparaz](https://github.com/JonEsparaz) 的首次贡献）\n* 赛程有误时跳过按顺序整理的打乱，而不是让整个流程失败\n* 修正部分提示中的空格\n* 含最少步项目的比赛只生成 1 张空白纸，而不是每轮生成 1 张，避免重复\n* 修复部分亚洲语言的最少步纸张翻译错误（此前未被报告的问题）\n\n完整改动列表见[此处](https://github.com/thewca/tnoodle/compare/v1.0.1...v1.1.0)。\n\n请注意，正式比赛必须使用当前版本的官方打乱程序。最新版始终可在 https://www.worldcubeassociation.org/regulations/scrambles 获取。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:00.952Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "a6137b5eb835389bdc86d5270be0a7c564700c32897252515a111c21ddc8109f"
+  "translationHash": "42bf7860b4471a4d00dff280a84925ddbd7c296b727d333a902ba43b058dd173",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:48.604Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "fd04c57595542def72e1acc0b901db5ccd5b9383fe96ad85fbb016972065c39d",
+    "reviewedTranslationHash": "42bf7860b4471a4d00dff280a84925ddbd7c296b727d333a902ba43b058dd173",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/tnoodle-1-1-0-release.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "a6137b5eb835389bdc86d5270be0a7c564700c32897252515a111c21ddc8109f"
+  }
 }

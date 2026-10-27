@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/appointment-of-a-new-wca-financial-committee-leader-may-2018",
+  "path": "docs/wca-post-translations/entries/appointment-of-a-new-wca-financial-committee-leader-may-2018.json",
+  "sourceHash": "444de67614da83ff73a5547fab7418b8321fc9247cfaebad540fe68097acd0ca",
+  "inputTranslationHash": "cdc83df111eb7b54a9b2a89eecba87b460f9174821d491d01127671a2415efae",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:06:14.455Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照正文与标题；核对全部申请/任命主体、时间、权限、附录条目及材料要求。"
+  ],
+  "changes": []
+}

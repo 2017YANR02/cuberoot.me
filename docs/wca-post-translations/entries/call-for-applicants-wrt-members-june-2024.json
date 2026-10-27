@@ -12,7 +12,7 @@
     "sourceId": 14156
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "1bb760a6f0d72499122372709a3b9e4e954c65f10318668a77eebd2a49b7ee97",
     "language": "zh-Hans",
     "title": "WCA 成绩组招募成员（2024 年 6 月）",
@@ -21,9 +21,26 @@
       "原文称权利与职责可在“here”查看，但没有提供对应链接；译文不补造链接。"
     ],
     "translatedAt": "2026-10-22T08:45:43.543Z",
-    "reviewStatus": "pending_independent_review",
-    "revisedAt": "2026-10-25T07:28:01.629Z",
-    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "8a35138ed8797df8ff501bd3e17f46fe97c0cf361a7b1513c7239d61d64204eb"
+  "translationHash": "658823b57b102cb80a00ee70b2fa57c434ec5665d3a9271b6ec4819ffe6e7e4b",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:11:12.894Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "1bb760a6f0d72499122372709a3b9e4e954c65f10318668a77eebd2a49b7ee97",
+    "reviewedTranslationHash": "658823b57b102cb80a00ee70b2fa57c434ec5665d3a9271b6ec4819ffe6e7e4b",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/call-for-applicants-wrt-members-june-2024.json",
+    "sourceConcern": false,
+    "notes": [
+      "已完整对照标题与正文；核对规则/成绩/质量保证团队职责、必需与可选资格、招募人数、任期工时及各篇申请日期、联系人与投票程序。历史 Guidelines 按参考保留指南。"
+    ],
+    "inputTranslationHash": "8a35138ed8797df8ff501bd3e17f46fe97c0cf361a7b1513c7239d61d64204eb"
+  }
 }

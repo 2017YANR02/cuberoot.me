@@ -12,14 +12,31 @@
     "sourceId": 139
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "801c5aaf86b0f9efc94b291fd2f2bcdcf937ca51219a91a63810f50a596639b3",
     "language": "zh-Hans",
     "title": "WCA 网站暂时下线维护",
     "content": "给大家带来不便，敬请谅解。\n\nWCA 论坛仍可正常访问：https://www.worldcubeassociation.org/forum\n\nWCA 成绩页面仍可正常访问：https://www.worldcubeassociation.org/results\n\nRon",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.152Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "75e3fc628dd08b993e3e4bc43a1fc7a2ada36bd697875d2dfd869270ce9ed247"
+  "translationHash": "a895a9626d65171f9e2827921b2a97e6c84b732938422fb170db61362a920b19",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:10:32.387Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "801c5aaf86b0f9efc94b291fd2f2bcdcf937ca51219a91a63810f50a596639b3",
+    "reviewedTranslationHash": "a895a9626d65171f9e2827921b2a97e6c84b732938422fb170db61362a920b19",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wca-site-temporarily-offline-for-maintenance.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "75e3fc628dd08b993e3e4bc43a1fc7a2ada36bd697875d2dfd869270ce9ed247"
+  }
 }

@@ -12,16 +12,31 @@
     "sourceId": 10494
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "9ae735cd0870f3311daee29264cffcf540dc7569bbdd8fd0f9fcc1323d020917",
     "language": "zh-Hans",
     "title": "WCA 比赛公示组新任负责人",
     "content": "我们很高兴地宣布，Henrik Buus Aagaard 将担任 WCA 比赛公示组（WCAT）负责人。\n\n依照 WCA 委员会与团队[动议 10.2017.0](https://www.worldcubeassociation.org/documents/motions/10.2017.0%20-%20Committees%20and%20Teams.pdf)第 4 节，WCA 董事会选定 Henrik，并经现任委员会、团队负责人和高级代表投票批准。\n\n祝 Henrik 在新的岗位上工作顺利！\n\n新负责人将立即上任。本次共有五位申请人，包括 Henrik Buus Aagaard。有兴趣的成员可在[此处](https://drive.google.com/drive/folders/1h0Il-T-r01ZVS9u2dgs2-uxFz91WPeoR?usp=sharing)查看他及其他申请人的材料。\n\n其他申请人为：\n\n- Jacob Ambrose\n- Clément Cherblanc\n- Abhijeet Ghodgaonkar\n- Sam Spendla",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.156Z",
-    "reviewStatus": "pending_independent_review",
-    "revisedAt": "2026-10-25T07:28:01.629Z",
-    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "5aeb692ee3b6709797ea3f8f84fdb24123b002936e30792b7ec95df839d5bc68"
+  "translationHash": "ff0b020a4d2f052971f01af517b9026b4894b5f518ab9ddde69690d9c13ea533",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:44.904Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "9ae735cd0870f3311daee29264cffcf540dc7569bbdd8fd0f9fcc1323d020917",
+    "reviewedTranslationHash": "ff0b020a4d2f052971f01af517b9026b4894b5f518ab9ddde69690d9c13ea533",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/new-wcat-leader.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "5aeb692ee3b6709797ea3f8f84fdb24123b002936e30792b7ec95df839d5bc68"
+  }
 }

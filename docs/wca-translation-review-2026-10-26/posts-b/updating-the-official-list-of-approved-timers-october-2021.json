@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/updating-the-official-list-of-approved-timers-october-2021",
+  "path": "docs/wca-post-translations/entries/updating-the-official-list-of-approved-timers-october-2021.json",
+  "sourceHash": "6d95f098372ea769c47e0c815d5643a867dafc32f1c1da3d2e471333faef3388",
+  "inputTranslationHash": "fe4d9ddf9ea59f7c5038ebf6e9c45a66a4113a494f521164450c9a6b6ee43cb2",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:59.336Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

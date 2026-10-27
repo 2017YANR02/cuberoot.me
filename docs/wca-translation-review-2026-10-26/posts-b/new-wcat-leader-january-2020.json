@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/new-wcat-leader-january-2020",
+  "path": "docs/wca-post-translations/entries/new-wcat-leader-january-2020.json",
+  "sourceHash": "0cc7f02da8f320608209e8cbe20e4fc426b830bf852cdab9252635a3459f74a1",
+  "inputTranslationHash": "36e9690dfab969d2e0c3a3c9025a513cb880085e5c9c33c9a1b23e3289d784a4",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:44.904Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

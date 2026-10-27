@@ -12,14 +12,31 @@
     "sourceId": 14053
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "fcfe5ad280f4fb64cbebbd5313dca87f65998b9ea3e8ca0aa6f86f38d1d58674",
     "language": "zh-Hans",
     "title": "拉丁美洲高级代表任命公告（2022 年 3 月）",
     "content": "我们很高兴地宣布，**Marlon de V. Marques** 将出任拉丁美洲地区的新任高级代表。\n\n祝 Marlon 在新的岗位上一切顺利。\n\n这一职位还有一位申请人：\n\n- Areli Rubi Gordillo Martínez\n\n两人的申请材料可在[这里](https://drive.google.com/drive/folders/1VjOhO0qiVCUk4Ab4zCH2B64eHgpt392b)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.537Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "985360c2913ac26bb4e07cfdeed3853bf9ba6e9afa3c550f092d083a3ad26d37"
+  "translationHash": "f55f82dfad916a09d92af17955c6d3901511f6b132bb5c0ab800b0a046ca21a4",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:25.168Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "fcfe5ad280f4fb64cbebbd5313dca87f65998b9ea3e8ca0aa6f86f38d1d58674",
+    "reviewedTranslationHash": "f55f82dfad916a09d92af17955c6d3901511f6b132bb5c0ab800b0a046ca21a4",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/senior-delegate-announcement-latin-america-march-2022.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "985360c2913ac26bb4e07cfdeed3853bf9ba6e9afa3c550f092d083a3ad26d37"
+  }
 }

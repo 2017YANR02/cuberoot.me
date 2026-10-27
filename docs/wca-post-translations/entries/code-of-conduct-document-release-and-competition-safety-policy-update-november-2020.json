@@ -12,14 +12,33 @@
     "sourceId": 14001
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "dfa567c070f6c422b580794c13fb85a1ec23d88daf218f3dfab4d76683a033b0",
     "language": "zh-Hans",
     "title": "《行为准则》发布及《比赛安全政策》更新（2020 年 11 月）",
     "content": "WCA 近期发布了《行为准则》，并更新了《比赛安全政策》。\n\n新的《行为准则》可在[这里](https://www.worldcubeassociation.org/documents/Code%20of%20Conduct.pdf)查看。这份文件为所有 WCA 成员的行为提供标准，包括已注册的速拧选手、比赛主办方、来宾、WCA 官员以及 WCA 官方论坛用户。\n\n更新后的安全政策明确，各地区必须能够安全地举办比赛才可办赛；同时重申，如果比赛已不再具备安全举办的条件，董事会有权取消比赛。新版《WCA 比赛安全政策》可在[这里](https://www.worldcubeassociation.org/documents/policies/external/Competition%20Safety.pdf)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:54.099Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "802957c0bf1fa954a6c411fa24a82034ea3e650b9214eb02344a2c3b8c089a18"
+  "translationHash": "933a37b6227524a5076262302fdbe30dd294ea40ba34f4d81b11c3074100e99b",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:12:38.683Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "dfa567c070f6c422b580794c13fb85a1ec23d88daf218f3dfab4d76683a033b0",
+    "reviewedTranslationHash": "933a37b6227524a5076262302fdbe30dd294ea40ba34f4d81b11c3074100e99b",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/code-of-conduct-document-release-and-competition-safety-policy-update-november-2020.json",
+    "sourceConcern": false,
+    "notes": [
+      "全文对照标题、名单变更/历史范围、项目实施日期、条件和例外、合同授权条件、准则对象及纪录合作流程。"
+    ],
+    "inputTranslationHash": "802957c0bf1fa954a6c411fa24a82034ea3e650b9214eb02344a2c3b8c089a18"
+  }
 }

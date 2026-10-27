@@ -12,14 +12,33 @@
     "sourceId": 11864
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "d044a62e980ba2c4f61b918dc563e571c857cbdf869ba65d9b2286aeaa3168de",
     "language": "zh-Hans",
     "title": "拉丁美洲高级代表任命公告（2019 年 4 月）",
     "content": "近期招募结束后，新一位高级代表已获任命。董事会收到 Natán Riggenbach 和 José Garrido 对拉丁美洲高级代表岗位的申请，经过讨论，决定任命 Natán Riggenbach。\n\n任命即日起生效。两人的申请材料可在[此处](https://drive.google.com/drive/u/0/folders/1BeB9QbpXIrYk-4E6WCFejrtlbwb93QM6)查看。\n\n感谢两位申请人愿意在已有工作之外，为 WCA 和速拧社区承担更多责任。祝 Natán 履新顺利！",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.136Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "ff19dec975fa1b23d2ad562c42af6a60ddcfdf5e712bc60a9ba9b666b54a9835"
+  "translationHash": "b8060241ba9b284c733a4757fd0b547e80bb863df73f3e390ac48af094eb6c5e",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:06:14.455Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "d044a62e980ba2c4f61b918dc563e571c857cbdf869ba65d9b2286aeaa3168de",
+    "reviewedTranslationHash": "b8060241ba9b284c733a4757fd0b547e80bb863df73f3e390ac48af094eb6c5e",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/appointment-of-a-new-senior-delegate-latin-america-april-2019.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照正文与标题；核对全部申请/任命主体、时间、权限、附录条目及材料要求。"
+    ],
+    "inputTranslationHash": "ff19dec975fa1b23d2ad562c42af6a60ddcfdf5e712bc60a9ba9b666b54a9835"
+  }
 }

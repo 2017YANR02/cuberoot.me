@@ -12,14 +12,31 @@
     "sourceId": 8
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "21ada621a6cf80d5a64b3963a0adedacca21cd7021e376fbccdaec7316faddca",
     "language": "zh-Hans",
     "title": "2007 年 WCA 竞赛规则正式定稿！",
     "content": "各位魔友：\n\n今天，2007 年 WCA 竞赛规则正式定稿。\n\n文件可在 WCA 网站查看：\n[2007 年 WCA 竞赛规则](https://www.worldcubeassociation.org/regulations)\n\n从今天起，所有 WCA 比赛均须使用新规则。\n\n感谢所有提供反馈的 WCA 成员。\n\n此致\nRon van Bruchem",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.993Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "8170fb9d59860c8e280268072802e8ba372762e869b5e6f601febd349b434c9b"
+  "translationHash": "ed4606adb6ff2bb94c9839a80b46ff51debff648dbb8d7ba09fb109bceb6319e",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:07:15.678Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "21ada621a6cf80d5a64b3963a0adedacca21cd7021e376fbccdaec7316faddca",
+    "reviewedTranslationHash": "ed4606adb6ff2bb94c9839a80b46ff51debff648dbb8d7ba09fb109bceb6319e",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wca-regulations-2007-final.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "8170fb9d59860c8e280268072802e8ba372762e869b5e6f601febd349b434c9b"
+  }
 }

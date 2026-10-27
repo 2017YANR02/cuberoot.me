@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/skewb-new-event-in-2014",
+  "path": "docs/wca-post-translations/entries/skewb-new-event-in-2014.json",
+  "sourceHash": "45de171ec41eca96e5e5bd1bf71c35e59b6822c4ddc38a8527bda0ac8cf135f0",
+  "inputTranslationHash": "92580bdacc9f20482f8d63067ccf621ef8016cda701cbca3de73bc5249cf9ae7",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:33.089Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

@@ -12,14 +12,33 @@
     "sourceId": 85
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "e75bf7c6c32048304f20dc4660bc1b08abd6e72c21145575ee5da15ff58cd70c",
     "language": "zh-Hans",
     "title": "Yu Nakajima 夺得 2007 年世界魔方锦标赛冠军",
     "content": "Yu Nakajima 以决赛平均 12.46 秒的成绩夺得 [2007 年世界魔方锦标赛](https://www.worldcubeassociation.org/results/c.php?i=WC2007)冠军。Andrew Kang 以 13.05 秒获得亚军，Mitsuki Gunji 以 13.05 秒获得季军。\n\n世界纪录：Mátyás Kuti，五阶平均 1:45.07；Ryan Patricio，三阶单手平均 21.13 秒；Lukasz Cialon，二阶平均 3.91 秒；Erik Akkersdijk，五魔方单次 1:17.46、平均 1:19.16。\n\n亚洲纪录：Shotaro Makisumi，三阶盲拧 1:39.56、二阶单次 2.82 秒；Mitsuki Gunji，三阶单手单次 18.06 秒；Yumu Tabuchi，三阶最少步 37 步、四阶盲拧 12:58.10；Bernett Orlando，五阶盲拧 55:39、三阶多盲 3 个魔方，用时 27:04。\n\n澳大利亚纪录：Peter Still，八板单次 2.91 秒、平均 3.17 秒。\n\n欧洲纪录：Tomasz Zolnowski，五阶单次 1:42.51。\n\n北美洲纪录：Andrew Kang，三阶平均 13.05 秒；Bob Burton，魔表平均 18.04 秒。\n\n南美洲纪录：Pedro Santos Guimarães，三阶单次 13.00 秒、三阶平均 16.67 秒、四阶单次 1:22.02、三阶盲拧 2:08.97、三阶单手单次 26.47 秒、三阶单手平均 27.30 秒。\n\n![](/images/wc2007.jpg)\n摄影：[Fumiki Koseki](http://www.5x5x5.net)",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.995Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "c72df3486a7dc81870f5853607823b5b10525ab48125f850b9a214d1d79a28e3"
+  "translationHash": "9855638c96d4aac0db5651f81a1d35f7dd6910ed2ba7bb57c7d1a7496b35ae21",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:12:54.763Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "e75bf7c6c32048304f20dc4660bc1b08abd6e72c21145575ee5da15ff58cd70c",
+    "reviewedTranslationHash": "9855638c96d4aac0db5651f81a1d35f7dd6910ed2ba7bb57c7d1a7496b35ae21",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/yu-nakajima-wins-world-rubik-s-cube-championship-2007.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整核对冠军及同为13.05的亚季军、各地区全部项目和成绩、历史八板与图片署名；源文Australian records按澳大利亚保留。"
+    ],
+    "inputTranslationHash": "c72df3486a7dc81870f5853607823b5b10525ab48125f850b9a214d1d79a28e3"
+  }
 }

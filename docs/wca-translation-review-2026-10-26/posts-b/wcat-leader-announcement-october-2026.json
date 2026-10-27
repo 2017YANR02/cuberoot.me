@@ -1,0 +1,16 @@
+{
+  "key": "posts:/posts/wcat-leader-announcement-october-2026",
+  "path": "docs/wca-post-translations/entries/wcat-leader-announcement-october-2026.json",
+  "sourceHash": "f3cf23382c31ea9bc7a6c9e0715a1e854efc3600f23191181993f9f7472774b9",
+  "inputTranslationHash": "236b98d2744a0cba066f18f5d65a7a6051b3422219e8e2c2e0bcd8a4a5d7400b",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:10:42.568Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "correction_required",
+  "notes": [],
+  "changes": [
+    "标题展开官方组织中文名称。"
+  ],
+  "title": "WCA 比赛公示组负责人任命公告（2026 年 10 月）",
+  "content": "亲爱的 WCA 社区成员：\n\n我们很高兴宣布，Lars Johan Folde 将担任 WCA 比赛公示组（WCAT）的新任负责人。Lars Johan 此前已担任 WCAT 临时负责人。\n\nWCA 董事会依据《WCA 委员会与团队[议案](https://documents.worldcubeassociation.org/documents/motions/10.2025.0%2520-%2520Committees%2520and%2520Teams.pdf)》第 5 节，选出 Lars Johan，并通过投票批准了这一任命。任命自 2026 年 10 月 1 日生效。\n\n我们感谢 Roman Wofford 担任负责人期间所做的工作，并祝 Lars Johan 履职顺利。\n\n我们共收到三份申请，Lars Johan 是其中一位申请人。所有申请材料均可在[此处](https://drive.google.com/drive/folders/1EtLQTtjVRdkOD54irl19-61iB0hn-Uyz?usp=drive_link)查看。"
+}

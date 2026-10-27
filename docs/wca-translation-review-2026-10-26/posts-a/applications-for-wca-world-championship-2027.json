@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/applications-for-wca-world-championship-2027",
+  "path": "docs/wca-post-translations/entries/applications-for-wca-world-championship-2027.json",
+  "sourceHash": "b4ecfedb7e119b4012e698213b7f3c7c218361ca311eb3167f20a10aefc05032",
+  "inputTranslationHash": "76f5642088dc44f44300587636538f68ab511e53ea067638b77f861fdfb2489e",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:06:14.455Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照正文与标题；核对全部申请/任命主体、时间、权限、附录条目及材料要求。"
+  ],
+  "changes": []
+}

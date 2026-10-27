@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/appointment-of-a-new-senior-delegate-africa-october-2018",
+  "path": "docs/wca-post-translations/entries/appointment-of-a-new-senior-delegate-africa-october-2018.json",
+  "sourceHash": "8d569fd95cca552058ead3580ccbf9541184cb46288f5b8177f878ccc84005e7",
+  "inputTranslationHash": "02852d3a5191165dea4c81c1f7f14f624ae8ad82557293bbec89fee111cb60e4",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:06:14.455Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照正文与标题；核对全部申请/任命主体、时间、权限、附录条目及材料要求。"
+  ],
+  "changes": []
+}

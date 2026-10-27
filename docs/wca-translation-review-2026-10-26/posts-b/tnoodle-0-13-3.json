@@ -1,0 +1,16 @@
+{
+  "key": "posts:/posts/tnoodle-0-13-3",
+  "path": "docs/wca-post-translations/entries/tnoodle-0-13-3.json",
+  "sourceHash": "d6172a2b427922aa69442ee6a357fa8539a89f1c9606349a0e02e67033f38764",
+  "inputTranslationHash": "cbec6de1db11671b935c40d08b46e50efbe1f6ce2e531df1ee563a2c9c84c2c0",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:48.604Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "correction_required",
+  "notes": [],
+  "changes": [
+    "FMC sheet 是最少步答题纸，不是成绩单。"
+  ],
+  "title": "TNoodle 0.13.3",
+  "content": "TNoodle-WCA-0.13.3 现已可在 https://www.worldcubeassociation.org/regulations/scrambles/ 下载。\n相比 TNoodle 0.12.0，有以下修改：\n\n- TNoodle 现在支持连接 WCA 网站，获取比赛的项目和轮次。\n- 最少步答题纸现提供 22 种语言版本。完整列表见：https://github.com/thewca/tnoodle/tree/v0.13.2/webscrambles/src/i18n.\n\n此次发布修复了 TNoodle 0.13.1 在部分浏览器中的一个严重问题：生成的 zip 文件会缺少扩展名。\n同时也修复了 TNoodle 0.13.2 和 TNoodle 0.13.1 的另一个严重问题：打乱 JSON 文件中的轮次 ID 生成错误，导致文件无法用于 Workbook Assistant。\n\n对于 TNoodle 连续发布多个版本给大家带来的不便，我们表示歉意。\n\n请记住，正式比赛必须使用现行版本的官方打乱程序。下载地址始终为：\nhttps://www.worldcubeassociation.org/regulations/scrambles/"
+}

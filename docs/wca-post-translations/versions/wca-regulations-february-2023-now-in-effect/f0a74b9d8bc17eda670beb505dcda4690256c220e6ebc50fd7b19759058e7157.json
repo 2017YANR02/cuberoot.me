@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/wca-regulations-february-2023-now-in-effect",
+  "source": {
+    "key": "posts:/posts/wca-regulations-february-2023-now-in-effect",
+    "kind": "posts",
+    "title": "WCA Regulations — February 2023: Now in Effect",
+    "date": "2023-02-01T04:45:20.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/wca-regulations-february-2023-now-in-effect",
+    "content": "New WCA [Regulations](https://www.worldcubeassociation.org/regulations/) and [Guidelines](https://www.worldcubeassociation.org/regulations/guidelines.html) are in effect as of February 1, 2023. Please see the [original announcement](https://www.worldcubeassociation.org/posts/wca-regulations-february-2023) for details.",
+    "hash": "9ed716e1662c2a2a758e8539457fa8295424db5809ef3920e059a53b18c9f27d",
+    "format": "markdown",
+    "sourceId": 14092
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "9ed716e1662c2a2a758e8539457fa8295424db5809ef3920e059a53b18c9f27d",
+    "language": "zh-Hans",
+    "title": "2023 年 2 月版 WCA 规则现已生效",
+    "content": "新版《[WCA 规则](https://www.worldcubeassociation.org/regulations/)》和《[指南](https://www.worldcubeassociation.org/regulations/guidelines.html)》已于 2023 年 2 月 1 日生效。详情请参阅[原公告](https://www.worldcubeassociation.org/posts/wca-regulations-february-2023)。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:45:43.551Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "f0a74b9d8bc17eda670beb505dcda4690256c220e6ebc50fd7b19759058e7157"
+}

@@ -1,7 +1,7 @@
 /* /dev/fonts — the site's font reference. Dual-theme: page chrome follows the
  * global tokens; each card renders a live specimen in the font's actual family. */
 
-/* Inter / Roboto Mono / Fraunces are already registered globally in app/fonts.css.
+/* Roboto Mono / Fraunces / LXGW WenKai are already registered globally in app/fonts.css.
  * The four page-local fonts below are normally only declared in their own page CSS
  * (battle.css, scramble/gen/gen.css, wca_about.css); re-declare them here so the
  * specimens on THIS page render in their real face. Keep in sync with those files. */

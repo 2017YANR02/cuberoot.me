@@ -12,14 +12,31 @@
     "sourceId": 9097
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "4a1da4241fdff4e2aeac8a9f7424475a70e8742bfddf818792f2ca5e60d7cd4a",
     "language": "zh-Hans",
     "title": "2018 年 WCA 亚洲锦标赛将于 8 月 17–19 日在台湾台北举行",
     "content": "[2018 年 WCA 亚洲锦标赛](https://www.worldcubeassociation.org/competitions/AsianChampionship2018)将于 2018 年 8 月 17–19 日在台湾台北举行。详情及报名请查看[赛事官网](https://cubing-tw.net/event/2018AsianChampionship/)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.151Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "d1f54dfd5436bd26cb9eade5cb2cb64042cfc22daacc8c33c540316b2d25ca54"
+  "translationHash": "cffbd499cd3609d1dece88bb2550d4872ae59ade5364332e8b1186df9ed81bff",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:07:08.714Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "4a1da4241fdff4e2aeac8a9f7424475a70e8742bfddf818792f2ca5e60d7cd4a",
+    "reviewedTranslationHash": "cffbd499cd3609d1dece88bb2550d4872ae59ade5364332e8b1186df9ed81bff",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wca-asian-championship-2018-on-august-17-19-2018-in-taipei-taiwan.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "d1f54dfd5436bd26cb9eade5cb2cb64042cfc22daacc8c33c540316b2d25ca54"
+  }
 }

@@ -12,14 +12,33 @@
     "sourceId": 4672
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "345a24a5b4a7a12e0002185e2a16366ddcd9cc11e25e486a280cd58f085082e4",
     "language": "zh-Hans",
     "title": "Feliks Zemdegs 夺得 2015 年魔方世锦赛冠军",
-    "content": "[Feliks Zemdegs](https://www.worldcubeassociation.org/results/p.php?i=2009ZEMD01)以 7.56 秒的平均成绩夺得 [2015 年魔方世锦赛](https://www.worldcubeassociation.org/results/c.php?i=WC2015)冠军。[Mats Valk](https://www.worldcubeassociation.org/results/p.php?i=2007VALK01)以 8.56 秒获得亚军，[Jakub Kipa](https://www.worldcubeassociation.org/results/p.php?i=2010KIPA01)以 8.63 秒获得季军。\n\n**世界纪录：**Feliks Zemdegs：七阶单次 2:23.55、平均 2:33.73；Jan Bentlage：斜转单次 1.68；Kevin Hays：六阶平均 1:46.41、平均 1:45.98。\n\n**大洋洲纪录：**Feliks Zemdegs：三阶单次 5.60、单次 5.39，五魔平均 50.75；Jayden McNeill：三阶脚拧单次 1:20.35、平均 1:32.15。\n\n**欧洲纪录：**Michał Pleskowicz：三阶单手单次 8.48。\n\n**北美洲纪录：**Kevin Hays：五阶单次 51.26、平均 55.66，七阶单次 2:30.35。\n\n**南美洲纪录：**Felipe Rueda Hernández：五魔平均 51.24；Gianfranco Huanqui：三盲单次 21.83、五盲单次 13:53.00；João Pedro Batista Ribeiro Costa：最少步平均 25.67；Pedro Alejandro Condo Tellez：六阶平均 2:07.81，七阶单次 3:11.59、平均 3:28.92、平均 3:33.26；Pedro Henrique da Silva Roque：四阶单次 27.73、平均 32.15，五阶平均 1:03.32。",
+    "content": "[Feliks Zemdegs](https://www.worldcubeassociation.org/results/p.php?i=2009ZEMD01)以 7.56 秒的平均成绩夺得 [2015 年魔方世锦赛](https://www.worldcubeassociation.org/results/c.php?i=WC2015)冠军。[Mats Valk](https://www.worldcubeassociation.org/results/p.php?i=2007VALK01)以 8.56 秒获得亚军，[Jakub Kipa](https://www.worldcubeassociation.org/results/p.php?i=2010KIPA01)以 8.63 秒获得季军。\n\n**世界纪录：**Feliks Zemdegs：七阶单次 2:23.55、平均 2:33.73；Jan Bentlage：斜转单次 1.68；Kevin Hays：六阶平均 1:46.41、平均 1:45.98。\n\n**大洋洲纪录：**Feliks Zemdegs：三阶单次 5.60、单次 5.39，五魔方平均 50.75；Jayden McNeill：三阶脚拧单次 1:20.35、平均 1:32.15。\n\n**欧洲纪录：**Michał Pleskowicz：三阶单手单次 8.48。\n\n**北美洲纪录：**Kevin Hays：五阶单次 51.26、平均 55.66，七阶单次 2:30.35。\n\n**南美洲纪录：**Felipe Rueda Hernández：五魔方平均 51.24；Gianfranco Huanqui：三阶盲拧单次 21.83、五阶盲拧单次 13:53.00；João Pedro Batista Ribeiro Costa：三阶最少步平均 25.67；Pedro Alejandro Condo Tellez：六阶平均 2:07.81，七阶单次 3:11.59、平均 3:28.92、平均 3:33.26；Pedro Henrique da Silva Roque：四阶单次 27.73、平均 32.15，五阶平均 1:03.32。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.977Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "8fcc18a2d23df1f83c29a0ad6c62c9bb4923b014966734341ca107d0c0bce581"
+  "translationHash": "4f9d73523f970fbf05072d1b75ae51c33597bc40eb2d14415602ccbbb33d7ba9",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:18:38.752Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "345a24a5b4a7a12e0002185e2a16366ddcd9cc11e25e486a280cd58f085082e4",
+    "reviewedTranslationHash": "4f9d73523f970fbf05072d1b75ae51c33597bc40eb2d14415602ccbbb33d7ba9",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/feliks-zemdegs-wins-world-rubik-s-cube-championship-2015.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐项检查所有纪录数值、单次/平均及选手归属，均保持不变。"
+    ],
+    "inputTranslationHash": "8fcc18a2d23df1f83c29a0ad6c62c9bb4923b014966734341ca107d0c0bce581"
+  }
 }

@@ -56,8 +56,7 @@
     /* Chrome's macOS PDF path can emit SFNS as fragile Type 3 subsets on later
        pages. Arial Unicode MS embeds as CID TrueType; other platforms simply
        continue through the normal system stack. */
-    font-family: "Arial Unicode MS", Inter, -apple-system, BlinkMacSystemFont,
-      "Segoe UI", sans-serif;
+    font-family: var(--font-sans);
     font-size: 9pt;
     line-height: 1.35;
   }

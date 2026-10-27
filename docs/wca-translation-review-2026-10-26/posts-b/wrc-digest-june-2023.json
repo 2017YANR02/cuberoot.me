@@ -1,0 +1,19 @@
+{
+  "key": "posts:/posts/wrc-digest-june-2023",
+  "path": "docs/wca-post-translations/entries/wrc-digest-june-2023.json",
+  "sourceHash": "13b4e3d4dd721f6418c1878f89657b3dc0b8284a2fa50a268b6c271f3f9684fb",
+  "inputTranslationHash": "bd3c87dfaa3f5a841f3aeebd46035f53f087c078b5050f267db54e227c68fc27",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:12:16.169Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "correction_required",
+  "notes": [
+    "完整核对6案与3项错打乱保留标准。"
+  ],
+  "changes": [
+    "统一WSAP政策中文名称。",
+    "four-pad mode统一四触点模式。"
+  ],
+  "title": "WCA 规则委员会工作简报（2023 年 6 月）",
+  "content": "各位 WCA 社区成员：\n\n2023 年上半年，WCA 规则委员会完成了不少工作。比赛数量增加，相关事件也随之增多。以下是近期较值得关注的案例：\n\n1. 一位选手完成全部还原后，复核打乱时发现其中一次仅有一步打乱错误，且只影响还原的最后一步。WCA 代表给予补赛，WRC 随后同意：虽然错误打乱的难度相同、还原只差最后一步，但既然有补赛，就应与通常的错误打乱处理一致，采用补赛成绩。事件记录见[此处](https://www.worldcubeassociation.org/incidents/86)。\n2. 一场比赛结束后，发现几位知名选手的多次还原使用了错误打乱。WRC 逐次调查，并根据以下标准决定是否保留：\n   * 如果错误打乱给选手带来明显优势，成绩应改为 DNF。\n   * 如果错误打乱与原打乱难度相近，成绩应保留。\n   * 如果无法分析错误打乱，例如没有还原视频，成绩应保留。\n   \n   事件记录见[此处](https://www.worldcubeassociation.org/incidents/87)。\n3. 一场比赛结束后，发现某些项目多次发出了错误打乱。由于数量较多，WRC 同意删除受影响轮次的成绩。事件记录见[此处](https://www.worldcubeassociation.org/incidents/88)。\n4. 一场比赛结束后，一位选手反映，自己的几次还原混用了前一组和本组的打乱。WCA 代表也确认，自己可能同时打开了连续两组的打乱。由于打乱保密受到破坏，WRC 同意删除受影响轮次的成绩，因此决赛成绩也一并删除。事件记录见[此处](https://www.worldcubeassociation.org/incidents/89)。\n5. 一位选手发邮件向 WRC 反映，该场比赛使用的部分遮盖物半透明，并附图证明从某些角度可以看到罩内魔方的打乱状态。WCA 代表回复称，他们已确保将半透明遮盖物叠放两层，使其足够不透明。WRC 审查公开渠道的视频证据后，同意保留成绩。事件记录见[此处](https://www.worldcubeassociation.org/incidents/90)。\n6. 一位选手在观察期间反映计时器处于四触点模式。后来发现，在报告计时器问题之前，选手已在观察期间触碰摄像机，违反了[规则 2i2b](https://www.worldcubeassociation.org/regulations/#2i2b)。WCA 代表给予了临时补赛，但 WRC 认为选手在发现计时器问题前已触碰摄像机，因此应保留 DNF。事件记录见[此处](https://www.worldcubeassociation.org/incidents/91)。\n\n大多数影响大量成绩的事件都与打乱有关，因此 WRC 希望提醒所有 WCA 代表、组织者和选手重视这一问题。所有比赛都必须遵守 [WCA 打乱问责政策](https://www.worldcubeassociation.org/documents/policies/external/Scramble%20Accountability.pdf)，避免给选手造成不利后果。"
+}

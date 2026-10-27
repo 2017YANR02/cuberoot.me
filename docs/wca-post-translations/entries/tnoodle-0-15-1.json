@@ -12,14 +12,31 @@
     "sourceId": 13718
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "e2f9d813cb1cf33ba69188f87f33536bfd45723c68243bea93635adf0608bb92",
     "language": "zh-Hans",
     "title": "TNoodle 0.15.1",
-    "content": "TNoodle-WCA-0.15.1 现已可在打乱页面下载。\n\n**相比上一版本的修改：**\n\n* 更新最少步成绩单中的整体转动记号，与 2020 年规则保持一致。\n* 从项目列表中移除三阶脚拧。\n\n请记住，正式比赛必须使用现行版本的官方打乱程序。下载地址始终为：\nhttps://www.worldcubeassociation.org/regulations/scrambles/",
+    "content": "TNoodle-WCA-0.15.1 现已可在打乱页面下载。\n\n**相比上一版本的修改：**\n\n* 更新最少步答题纸中的整体转动记号，与 2020 年规则保持一致。\n* 从项目列表中移除三阶脚拧。\n\n请记住，正式比赛必须使用现行版本的官方打乱程序。下载地址始终为：\nhttps://www.worldcubeassociation.org/regulations/scrambles/",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:54.036Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "623e1b5ad78f13dc5a33444760072afc3040ab3a4fe7d5e210b7c8de05c56e28"
+  "translationHash": "d5c6a78b4f501114273c564cfa6dd3ead7315a70a09705d85146aaa3fe30564f",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:16:44.876Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "e2f9d813cb1cf33ba69188f87f33536bfd45723c68243bea93635adf0608bb92",
+    "reviewedTranslationHash": "d5c6a78b4f501114273c564cfa6dd3ead7315a70a09705d85146aaa3fe30564f",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/tnoodle-0-15-1.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "623e1b5ad78f13dc5a33444760072afc3040ab3a4fe7d5e210b7c8de05c56e28"
+  }
 }

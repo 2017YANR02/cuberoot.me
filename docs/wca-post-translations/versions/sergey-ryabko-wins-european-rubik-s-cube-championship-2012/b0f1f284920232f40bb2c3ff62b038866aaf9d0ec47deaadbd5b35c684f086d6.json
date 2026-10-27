@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/sergey-ryabko-wins-european-rubik-s-cube-championship-2012",
+  "source": {
+    "key": "posts:/posts/sergey-ryabko-wins-european-rubik-s-cube-championship-2012",
+    "kind": "posts",
+    "title": "Sergey Ryabko wins European Rubik's Cube Championship 2012",
+    "date": "2012-10-16T18:22:27.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/sergey-ryabko-wins-european-rubik-s-cube-championship-2012",
+    "content": "[Sergey Ryabko](https://www.worldcubeassociation.org/results/p.php?i=2009RYAB01) won the [European Rubik's Cube Championship 2012](https://www.worldcubeassociation.org/results/c.php?i=Euro2012) with an average of 8.89 seconds. [Mats Valk](https://www.worldcubeassociation.org/results/p.php?i=2007VALK01) finished second (9.21) and [Michał Pleskowicz](https://www.worldcubeassociation.org/results/p.php?i=2009PLES01) finished third (9.24).  \n\r World records: Marcell Endrey 3x3 blindfolded 26.36 (single).  \n\r European records: Michał Pleskowicz 2x2 Cube 2.22 (average), Bence Barát 7x7 Cube 3:08.43 (single) 3:18.54 (average), Henrik Buus Aagaard 3x3 with feet 39.02 (average), Simon Crawford Square-1 11.76 (average).",
+    "hash": "52fe6154d95d6ffe16edd29d4f3295a0b55a88fea42bcc54b67633d96019f03a",
+    "format": "markdown",
+    "sourceId": 2041
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "52fe6154d95d6ffe16edd29d4f3295a0b55a88fea42bcc54b67633d96019f03a",
+    "language": "zh-Hans",
+    "title": "Sergey Ryabko 获得 2012 年欧洲魔方锦标赛冠军",
+    "content": "[Sergey Ryabko](https://www.worldcubeassociation.org/results/p.php?i=2009RYAB01) 以 8.89 秒的平均成绩获得 [2012 年欧洲魔方锦标赛](https://www.worldcubeassociation.org/results/c.php?i=Euro2012)冠军。[Mats Valk](https://www.worldcubeassociation.org/results/p.php?i=2007VALK01) 以 9.21 秒获得亚军，[Michał Pleskowicz](https://www.worldcubeassociation.org/results/p.php?i=2009PLES01) 以 9.24 秒获得季军。\n\n世界纪录：Marcell Endrey，三阶盲拧单次 26.36 秒。\n\n欧洲纪录：Michał Pleskowicz，二阶平均 2.22 秒；Bence Barát，七阶单次 3:08.43、平均 3:18.54；Henrik Buus Aagaard，三阶脚拧平均 39.02 秒；Simon Crawford，Square-1 平均 11.76 秒。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.150Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "b0f1f284920232f40bb2c3ff62b038866aaf9d0ec47deaadbd5b35c684f086d6"
+}

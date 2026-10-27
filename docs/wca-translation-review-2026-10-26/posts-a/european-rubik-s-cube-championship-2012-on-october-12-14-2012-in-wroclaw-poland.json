@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/european-rubik-s-cube-championship-2012-on-october-12-14-2012-in-wroclaw-poland",
+  "path": "docs/wca-post-translations/entries/european-rubik-s-cube-championship-2012-on-october-12-14-2012-in-wroclaw-poland.json",
+  "sourceHash": "df1813ff1f7331a768cfae622129ec2b8d7d4f3258605777afc6ae293d7dc3a7",
+  "inputTranslationHash": "7ec3678d2de3905bfdf586bf3923e511e732c2d82d6b756380222649dddc4db5",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:13:29.851Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题与正文；疫情取消区间/新赛条件、COO履历与金额人数、赛事日期地点、意向征集要求及各条历史纪录的选手/项目/单次平均/数值逐项核对一致。"
+  ],
+  "changes": []
+}

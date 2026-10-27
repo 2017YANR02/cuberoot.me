@@ -1,0 +1,21 @@
+{
+  "key": "disciplinary:/posts/wdc-digest-september-2022",
+  "path": "docs/wca-log-translations/entries/disciplinary-wdc-digest-september-2022.json",
+  "sourceHash": "e247c3d40e5748a0a67ec53e028529f85498dc507a21f5504f48c9019d8444ed",
+  "inputTranslationHash": "bc31a622a5c089f5946af54a6c84730fcc235149a64209e5a2e59de342627b5b",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "复用已通过的旧版全文独立审校；人工阅读旧版与现版全部文字差异及对应英文段落，确认本轮之前的差异限于官方机构名称或 Guidelines 的“指南”译法；另复核本轮项目名命中语境。",
+  "verdict": "pass",
+  "notes": [
+    "原文Carlos Miguel Pérez后仅标(2014)，译文照录。此项未补全也未事实核验，不应误标为已核实的完整WCA ID。"
+  ],
+  "changes": [],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/report-1.json",
+    "reviewedTranslationHash": "c84888b221a40b6e69364ddfe5ede276f96f85a7751d75efa64c8ee16cabc479",
+    "verdict": "pass",
+    "archivedVersion": "docs/wca-log-translations/versions/disciplinary-wdc-digest-september-2022/c84888b221a40b6e69364ddfe5ede276f96f85a7751d75efa64c8ee16cabc479-v1.json"
+  },
+  "sourceUncertainty": false
+}

@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/senior-delegate-announcement-asia-east-july-2021",
+  "path": "docs/wca-post-translations/entries/senior-delegate-announcement-asia-east-july-2021.json",
+  "sourceHash": "2d7f063c51976fc276d2598ad30d2bf76f8953de1ae479a41d35edd641e3e7b0",
+  "inputTranslationHash": "380e26e57c88cc4ab7c35d4f1e346fb151e77c989349571ddb5a276ee1ff5e5a",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:25.168Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

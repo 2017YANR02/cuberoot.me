@@ -12,14 +12,31 @@
     "sourceId": 10778
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "9cf3cdbced49cf4ac6db13e91a3686aa18be9a3da223b271a3ee7cbd7bcc45eb",
     "language": "zh-Hans",
     "title": "WCA 规则委员会新任负责人",
     "content": "我们很高兴地宣布，Lucas Garron 将接替 Laura Ohrndorf，担任 WCA 规则委员会（WRC）负责人。Lucas 此前已是 WRC 成员。\n\n依照 WCA 委员会与团队动议 [10.2017.0](https://www.worldcubeassociation.org/documents/motions/10.2017.0%20-%20Committees%20and%20Teams.pdf)第 4 节，WCA 董事会选定 Lucas，并经现任委员会、团队负责人和高级代表投票批准。\n\n祝 Lucas 在新的岗位上工作顺利！\n\n新负责人将立即上任。Lucas Garron 是本次职位的唯一申请人，有兴趣的成员可在[此处](https://drive.google.com/open?id=1Hglw0sNprA--aqwGH_OyIFyhv6nMeGw8)查看他的申请材料。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.157Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "f7baf3d3d2d57544781de6c868489c2a829137f0e29cf4d72705238d700d332d"
+  "translationHash": "77dae3b4861bde009d02739e403c168300acc01f782b91d51aa71f344f9b2560",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:44.905Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "9cf3cdbced49cf4ac6db13e91a3686aa18be9a3da223b271a3ee7cbd7bcc45eb",
+    "reviewedTranslationHash": "77dae3b4861bde009d02739e403c168300acc01f782b91d51aa71f344f9b2560",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/new-wrc-leader.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "f7baf3d3d2d57544781de6c868489c2a829137f0e29cf4d72705238d700d332d"
+  }
 }

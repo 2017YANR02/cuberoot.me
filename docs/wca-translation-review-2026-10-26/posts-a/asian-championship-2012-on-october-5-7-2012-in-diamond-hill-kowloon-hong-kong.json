@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/asian-championship-2012-on-october-5-7-2012-in-diamond-hill-kowloon-hong-kong",
+  "path": "docs/wca-post-translations/entries/asian-championship-2012-on-october-5-7-2012-in-diamond-hill-kowloon-hong-kong.json",
+  "sourceHash": "26f8b5e8e678909122194d7d516a49b518ead46831314ef007ee32a5107449ef",
+  "inputTranslationHash": "f48a21398ca4baffd1b06b5aae69cd92baac9d6970fd2a107fa9d363647b202c",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:06:36.460Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇全文对照：含招募资格、时限、工作量、程序、历史机构；比赛报告核对人物、项目、成绩与纪录类别。"
+  ],
+  "changes": []
+}

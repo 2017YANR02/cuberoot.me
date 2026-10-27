@@ -1,0 +1,27 @@
+{
+  "key": "posts:/posts/wst-leader-application-november-2020",
+  "source": {
+    "key": "posts:/posts/wst-leader-application-november-2020",
+    "kind": "posts",
+    "title": "WST Leader Application (November 2020)",
+    "date": "2020-11-11T04:56:41.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/wst-leader-application-november-2020",
+    "content": "Since we didn’t receive any applications for the position of WCA Software Team Leader, the WCA Board has stepped in as the WST Leader effective immediately. The Board will continue in this position until a new leader is found.",
+    "hash": "4a210ef9ce0848a0a70c43f3cbfe0232639b7a23d39ead4c0b64f5579406809e",
+    "format": "markdown",
+    "sourceId": 13999
+  },
+  "translation": {
+    "version": 2,
+    "sourceHash": "4a210ef9ce0848a0a70c43f3cbfe0232639b7a23d39ead4c0b64f5579406809e",
+    "language": "zh-Hans",
+    "title": "WCA 软件组负责人招募结果（2020 年 11 月）",
+    "content": "由于未收到 WCA 软件组（WST）负责人职位的申请，WCA 董事会即日起代行 WST 负责人的职责。董事会将继续承担这一职务，直至找到新的负责人。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:49:54.105Z",
+    "reviewStatus": "pending_independent_review",
+    "revisedAt": "2026-10-25T07:28:01.629Z",
+    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+  },
+  "translationHash": "de9e42c5881f043ee01665c4d272b29525f0979080d3dae20d5288ee184577de"
+}

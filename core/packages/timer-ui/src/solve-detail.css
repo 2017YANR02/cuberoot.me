@@ -262,6 +262,8 @@
   width: 36px;
   height: 36px;
   margin-left: auto;
+  border: 0;
+  background: transparent;
   color: var(--muted-foreground);
 }
 

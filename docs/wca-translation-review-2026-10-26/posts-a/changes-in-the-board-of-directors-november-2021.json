@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/changes-in-the-board-of-directors-november-2021",
+  "path": "docs/wca-post-translations/entries/changes-in-the-board-of-directors-november-2021.json",
+  "sourceHash": "52df641fe8aaccd142005140298e21b9914e9579d02ccd8ece96efa1c01bc4aa",
+  "inputTranslationHash": "2a10bc530aca2293dff8194eb853a49c99ece26b3959bfee578b0edb92a51272",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:12:23.464Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题和正文；各届赛事城市及取消/退款范围、董事候选名单、当选与连任区别、任期及生效日期、保留职务和干事分工均与原文一致。"
+  ],
+  "changes": []
+}

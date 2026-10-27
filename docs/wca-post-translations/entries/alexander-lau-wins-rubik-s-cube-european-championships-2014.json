@@ -12,14 +12,33 @@
     "sourceId": 3636
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "efa996afac63cd4a918585cbfbc41509f88e0249ff8f090b0f99ec8bf0ac2b07",
     "language": "zh-Hans",
     "title": "Alexander Lau 获得 2014 年欧洲魔方锦标赛冠军",
     "content": "[Alexander Lau](https://www.worldcubeassociation.org/results/p.php?i=2011LAUA01) 以 8.02 秒的平均成绩获得 [2014 年欧洲魔方锦标赛](https://www.worldcubeassociation.org/results/c.php?i=Euro2014)冠军。[Philipp Weyer](https://www.worldcubeassociation.org/results/p.php?i=2010WEYE01) 以 8.26 秒获得亚军，[Sebastian Weyer](https://www.worldcubeassociation.org/results/p.php?i=2010WEYE02) 以 8.38 秒获得季军。\n\n世界纪录：Louis Cormier，五魔方单次 39.57 秒、平均 45.77 秒；Sebastian Weyer，四阶单次 21.97 秒、平均 27.17 秒。\n\n非洲纪录：Conor Cronin，三阶盲拧单次 1:46.67、三阶最少步平均 43.00 步、五魔方单次 1:52.93、平均 2:05.49、魔表单次 7.17 秒、斜转单次 7.64 秒、平均 11.73 秒、六阶平均 3:42.39、七阶平均 5:21.99。\n\n欧洲纪录：Mattia Furlan，六阶平均 2:03.87；Michał Halczuk，六阶平均 2:03.07；Przemysław Kaleta，三阶单手单次 9.41 秒。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.145Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "c88413a367602196ce3a147572c19f630f899ff89228cd490f694a013a06d2c4"
+  "translationHash": "601be7db92ba341d83ba71c1d6e7b4871c9afa51a97a3fcc5f1a444664dc77c9",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:05:11.621Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "efa996afac63cd4a918585cbfbc41509f88e0249ff8f090b0f99ec8bf0ac2b07",
+    "reviewedTranslationHash": "601be7db92ba341d83ba71c1d6e7b4871c9afa51a97a3fcc5f1a444664dc77c9",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/alexander-lau-wins-rubik-s-cube-european-championships-2014.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+    ],
+    "inputTranslationHash": "c88413a367602196ce3a147572c19f630f899ff89228cd490f694a013a06d2c4"
+  }
 }

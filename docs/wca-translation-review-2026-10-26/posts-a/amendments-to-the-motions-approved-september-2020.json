@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/amendments-to-the-motions-approved-september-2020",
+  "path": "docs/wca-post-translations/entries/amendments-to-the-motions-approved-september-2020.json",
+  "sourceHash": "58dc0e86f1deceb766512237641acd8cbc2db91eed8b10f351d33c168d8df0ce",
+  "inputTranslationHash": "89d7bb8365de232b5d53fa4d8e86b52ebaf37f35761364bfcbe127e08f8895e6",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:05:11.621Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+  ],
+  "changes": []
+}

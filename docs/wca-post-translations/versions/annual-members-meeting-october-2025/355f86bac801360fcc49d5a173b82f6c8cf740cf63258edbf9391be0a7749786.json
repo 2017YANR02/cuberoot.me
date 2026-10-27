@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/annual-members-meeting-october-2025",
+  "source": {
+    "key": "posts:/posts/annual-members-meeting-october-2025",
+    "kind": "posts",
+    "title": "Annual Members Meeting (October 2025)",
+    "date": "2025-10-05T13:55:45.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/annual-members-meeting-october-2025",
+    "content": "Dear WCA Community,\n\nThe Board is providing notice (as required by Bylaw 2.12) of the Annual Meeting of WCA members which will be held on October 19 at 23:00 UTC. Members will be able to tune into this meeting via a livestream hosted on the [WCA’s Twitch channel](https://www.twitch.tv/worldcubeassociation). In this [folder](https://drive.google.com/drive/folders/1ZuXn9eLuFWWgmDusqOqwlDY9L93mA-Ni?usp=sharing), you will find the information packet related to the annual meeting which contains all relevant documentation which will be discussed at the meeting.\n\nWe look forward to your participation in the upcoming annual meeting.\n\nKind regards,\nBlake Thompson, on Behalf of the Board of Directors",
+    "hash": "8bb2901cfc6f3adf84a1e9822ee95a1adc3da21bbfd5be0458f85a2f50ad8290",
+    "format": "markdown",
+    "sourceId": 14215
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "8bb2901cfc6f3adf84a1e9822ee95a1adc3da21bbfd5be0458f85a2f50ad8290",
+    "language": "zh-Hans",
+    "title": "年度会员大会（2025 年 10 月）",
+    "content": "各位 WCA 社区成员：\n\n董事会依照章程第 2.12 条发出通知：WCA 年度会员大会将于 10 月 19 日 23:00 UTC 举行。会员可通过 [WCA Twitch 频道](https://www.twitch.tv/worldcubeassociation)观看会议直播。有关年度大会的资料包已放入[此文件夹](https://drive.google.com/drive/folders/1ZuXn9eLuFWWgmDusqOqwlDY9L93mA-Ni?usp=sharing)，其中包含本次会议将讨论的全部相关文件。\n\n期待大家参加即将举行的年度大会。\n\n此致\nBlake Thompson，代表董事会",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:40:49.165Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "355f86bac801360fcc49d5a173b82f6c8cf740cf63258edbf9391be0a7749786"
+}

@@ -12,14 +12,33 @@
     "sourceId": 14080
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "97afecb4f3fa5b32aaf332973fcea37bf1f69679d0f9f09879731055d9812035",
     "language": "zh-Hans",
     "title": "WCA 道德委员会负责人任命公告（2022 年 10 月）",
     "content": "我们很高兴地宣布，Enzo Mattos 将担任 WCA 道德委员会（WEC）的新负责人。Enzo 此前已是 WEC 成员。\n\n按照关于 WCA 委员会和团队的[议案](https://www.worldcubeassociation.org/documents/motions/10.2022.0 - Committees and Teams.pdf)第 4 节，WCA 董事会选定 Enzo，并经现任委员会负责人和高级代表投票批准。\n\n感谢 Blake Thompson 为 WEC 所做的工作，祝 Enzo 履新顺利。\n\n本次共有两位申请人，Enzo 是其中之一。如有兴趣，可在[此处](https://drive.google.com/drive/folders/1FyswkuRj2DzbUzUyZrv_26Wh75vyroCF)查看他的申请材料。\n\n董事会还收到了以下申请人的材料：\n\n* Shamika Dalvi\n\n感谢 Shamika 参与申请。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:00.930Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "a38deecd62f5b8fcf161113f183aabf7e54be69e73d92f917d6a403f5e3df071"
+  "translationHash": "a4829d0fefe7d28b33bd936ec5214f4ac1840a643cc868df1d5e83eca8413aa7",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:10:59.922Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "97afecb4f3fa5b32aaf332973fcea37bf1f69679d0f9f09879731055d9812035",
+    "reviewedTranslationHash": "a4829d0fefe7d28b33bd936ec5214f4ac1840a643cc868df1d5e83eca8413aa7",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wec-leader-announcement-october-2022.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整核对案件归因、处分条件、匿名处理、数量及任命程序。"
+    ],
+    "inputTranslationHash": "a38deecd62f5b8fcf161113f183aabf7e54be69e73d92f917d6a403f5e3df071"
+  }
 }

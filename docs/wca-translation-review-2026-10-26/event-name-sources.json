@@ -1,0 +1,74 @@
+{
+  "checkedAt": "2026-10-26T11:07:38.054Z",
+  "ready": true,
+  "stale": false,
+  "syncedAt": "2026-10-26T09:52:10.208934+00:00",
+  "digest": "a57b79b58598f6320d10a85ab4790c76b6b292862b9256fa2795d2ca941b62d6",
+  "results": [
+    {
+      "query": "Skewb",
+      "matches": [
+        {
+          "en": "Skewb",
+          "zh": "斜转",
+          "key": "events->skewb",
+          "sourceUrl": "https://translate.worldcubeassociation.org/translate/wca/locales/zh_Hans/?checksum=6eab8ca347f70d1d",
+          "approved": false,
+          "hasFailingChecks": false
+        }
+      ]
+    },
+    {
+      "query": "Megaminx",
+      "matches": [
+        {
+          "en": "Megaminx",
+          "zh": "五魔方",
+          "key": "events->minx",
+          "sourceUrl": "https://translate.worldcubeassociation.org/translate/wca/locales/zh_Hans/?checksum=54a7fc3e51663f5f",
+          "approved": false,
+          "hasFailingChecks": false
+        }
+      ]
+    },
+    {
+      "query": "Pyraminx",
+      "matches": [
+        {
+          "en": "Pyraminx",
+          "zh": "金字塔",
+          "key": "events->pyram",
+          "sourceUrl": "https://translate.worldcubeassociation.org/translate/wca/locales/zh_Hans/?checksum=630bbe970b7d7c5c",
+          "approved": false,
+          "hasFailingChecks": false
+        }
+      ]
+    },
+    {
+      "query": "Clock",
+      "matches": [
+        {
+          "en": "Clock",
+          "zh": "魔表",
+          "key": "events->clock",
+          "sourceUrl": "https://translate.worldcubeassociation.org/translate/wca/locales/zh_Hans/?checksum=a6810854a9ff607c",
+          "approved": false,
+          "hasFailingChecks": false
+        }
+      ]
+    },
+    {
+      "query": "Square-1",
+      "matches": [
+        {
+          "en": "Square-1",
+          "zh": "Square-1",
+          "key": "events->sq1",
+          "sourceUrl": "https://translate.worldcubeassociation.org/translate/wca/locales/zh_Hans/?checksum=285e5547ca6cd07d",
+          "approved": false,
+          "hasFailingChecks": false
+        }
+      ]
+    }
+  ]
+}

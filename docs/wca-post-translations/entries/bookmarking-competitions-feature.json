@@ -12,14 +12,33 @@
     "sourceId": 12775
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "620a634d6e3e436c0498387da21fd347992e38fab1b174eead0e618f96559e25",
     "language": "zh-Hans",
     "title": "新增比赛收藏功能",
     "content": "WCA 网站新增了比赛收藏功能！\n\n比赛公告后，你可以点击比赛名称旁的“收藏”图标：\n\n![比赛收藏按钮](https://www.worldcubeassociation.org/rails/active_storage/blobs/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBBbmtCIiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--fcf4a3bfe0a23fa4c37720846dcddfc0fdd35860/bookmark_button.png)\n\n收藏后，比赛会出现在“我的比赛”页面中。此外，在报名开始前 24 小时，我们会向所有收藏了该比赛的人，以及主办方和代表发送邮件提醒。\n\n希望这个功能能帮到大家！",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.123Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "10e9bead3c07d92439d9ff4261a81a34cde356c8df9751cf2453a87593377132"
+  "translationHash": "aed3bf29a352ed080fea949907456b8885a8b631299144d7edf0b916cf4f8138",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:06:36.461Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "620a634d6e3e436c0498387da21fd347992e38fab1b174eead0e618f96559e25",
+    "reviewedTranslationHash": "aed3bf29a352ed080fea949907456b8885a8b631299144d7edf0b916cf4f8138",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/bookmarking-competitions-feature.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇全文对照：含招募资格、时限、工作量、程序、历史机构；比赛报告核对人物、项目、成绩与纪录类别。"
+    ],
+    "inputTranslationHash": "10e9bead3c07d92439d9ff4261a81a34cde356c8df9751cf2453a87593377132"
+  }
 }

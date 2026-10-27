@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/wrc-investigation-vietnamese-competitions-results-removal",
+  "path": "docs/wca-post-translations/entries/wrc-investigation-vietnamese-competitions-results-removal.json",
+  "sourceHash": "16f2d590aa97680f9af64404762b62e792f2cda6ca8ff77c6a1f91e454534d9a",
+  "inputTranslationHash": "153f3878627cb163affa736095ea1d52c58c2705040a9c092adaf3169e9ab17d",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:12:16.169Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [
+    "全文核对19/9场、900+/18000+、2013—2022、WCAID及部分原本可能有效成绩的限定。"
+  ],
+  "changes": []
+}

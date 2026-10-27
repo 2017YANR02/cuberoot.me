@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/annual-members-meeting-october-2024",
+  "path": "docs/wca-post-translations/entries/annual-members-meeting-october-2024.json",
+  "sourceHash": "3897d838c3e933ea83ab679533b23a89e1e83d9c59dc35933e49f1ebeaa618e2",
+  "inputTranslationHash": "1d452f1d5edfd6cd0feb3a1e571c1fb34355c7edf8dda4d12bedfba8236164e0",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:05:11.623Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+  ],
+  "changes": []
+}

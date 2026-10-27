@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/announcement-of-four-new-committee-team-leaders",
+  "path": "docs/wca-post-translations/entries/announcement-of-four-new-committee-team-leaders.json",
+  "sourceHash": "cf46ed212ecff2c0f30102a2b9313d4db40c64e6f5eac45bce8b97bd5f98b4e9",
+  "inputTranslationHash": "4341b4c1e558692ddd2163d2789d7f8729baca14f589c856d05b4fa728fcfea3",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:05:11.622Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+  ],
+  "changes": []
+}

@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wrc-members-december-2024",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wrc-members-december-2024.json",
+  "sourceHash": "974112fbd41973fc91cbc0dda6b517bfce74ce266dfbac5d828ebbd181139452",
+  "inputTranslationHash": "ffa449e44903d06a37de37c56ef5862903b0f1888f52eaec054819011e887bb0",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:11:12.893Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "已完整对照标题与正文；核对规则/成绩/质量保证团队职责、必需与可选资格、招募人数、任期工时及各篇申请日期、联系人与投票程序。历史 Guidelines 按参考保留指南。"
+  ],
+  "changes": []
+}

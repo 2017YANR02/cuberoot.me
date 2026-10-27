@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/wac-leader-announcement-april-2021",
+  "path": "docs/wca-post-translations/entries/wac-leader-announcement-april-2021.json",
+  "sourceHash": "eb9798dc972541d3eb638dbb0ae38c9ed8d9ca272f2b91cc966d8fd5f56d525c",
+  "inputTranslationHash": "48e27a9222a9b6622914601df093ab400bf1e4012412fa244dc98fe128c6c639",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:59.337Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

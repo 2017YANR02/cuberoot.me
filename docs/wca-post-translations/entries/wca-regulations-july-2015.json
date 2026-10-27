@@ -12,14 +12,33 @@
     "sourceId": 4562
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "1c1756b0f76e04661774adcd4f2bdb3603af84c9ec2a1fcc1cb5b9aee781051c",
     "language": "zh-Hans",
     "title": "WCA 规则更新：2015 年 7 月",
     "content": "新版规则与指南将于 2015 年 7 月 1 日生效。打乱程序也将于近期更新，以配合这些改动。\n\n现行规则始终可从 [https://www.worldcubeassociation.org/regulations/](https://www.worldcubeassociation.org/regulations/) 获取。\n\n2014 年版至 2015 年版的完整改动，请[在 GitHub 上查看差异](https://github.com/cubing/wca-documents/compare/official-2014-04-03...official-2015-07-01#files_bucket)。\n\n主要改动如下：\n\n* 允许使用无贴纸魔方。（[#177](https://github.com/cubing/wca-documents/issues/177) | [580ea35](https://github.com/cubing/wca-documents/commit/580ea35f0561b1575e74228e80a3927062c3b9b8)、[a4e289c](https://github.com/cubing/wca-documents/commit/a4e289cfe828e24aa946c5ca18a2c942adf1149c)）\n* 当事件的处理结果尚不明确时，可以暂时安排选手进行额外还原，待后续决定是否采用。（[#245](https://github.com/cubing/wca-documents/issues/245) | [dd7527e](https://github.com/cubing/wca-documents/commit/dd7527e475bab28fbcea570cd2f29584d6b40b8f)）\n* 增加了安排额外还原的建议标准流程。（[#228](https://github.com/cubing/wca-documents/issues/228) | [45cf5a5](https://github.com/cubing/wca-documents/commit/45cf5a56f32aa67605594e928f33042579d832bd)）\n* 对于单独排定时间的某次还原，选手可以记为 DNS，且仍有资格参加之后的还原。（[#263](https://github.com/cubing/wca-documents/issues/263) | [3711345](https://github.com/cubing/wca-documents/commit/3711345b6f41d5bdd3ce0e772c5816b3d1ecdd0d)）\n* 选手不得以故意取得较差成绩或 DNF 为目的参赛。（[#203](https://github.com/cubing/wca-documents/issues/203)、[#225](https://github.com/cubing/wca-documents/issues/225) | [ba0308c](https://github.com/cubing/wca-documents/commit/ba0308c1e5ed93964811dddc27aaf9b0c39e17a2)）\n* 对于因比赛经验不足而出现问题的新人，可以安排额外还原。但只能重新进行完整的一次还原，不能免除单项处罚。（[#251](https://github.com/cubing/wca-documents/issues/251) | [65c3e7e](https://github.com/cubing/wca-documents/commit/65c3e7ec17be0157b8709e7d33be9513d480de03)）\n* 主办方可以要求使用物件固定 Square-1，防止送往计时台的途中状态改变。如使用这类卡片，选手须在观察期间将其取下，主办团队也须明确告知选手。（[#192](https://github.com/cubing/wca-documents/issues/192) | [3dc5d83](https://github.com/cubing/wca-documents/commit/3dc5d838e9cdc08e52fa2f8581f2e8965a3015d4)、[1946e9a](https://github.com/cubing/wca-documents/commit/1946e9a696318ab873301c179d6d4e7d978ee028)）\n* 明确在未遵守 WCA 规则的情况下，董事会有权修改成绩。（[#262](https://github.com/cubing/wca-documents/issues/262) | [5b002e0](https://github.com/cubing/wca-documents/commit/5b002e058a3491005e4642daa093e3fd17cc2d42)）\n* 强烈建议为计时器安装 O 形圈，并在电池仓内加装缓冲垫。（[#235](https://github.com/cubing/wca-documents/issues/235)、[#243](https://github.com/cubing/wca-documents/issues/243) | [67ab825](https://github.com/cubing/wca-documents/commit/67ab825f6a4d8be531b493f619a496858d53c701)）\n* 一次还原流程结束前，选手不得将计时器复位；同时明确裁判不得凭记忆填写成绩。（[#206](https://github.com/cubing/wca-documents/issues/206)、[#218](https://github.com/cubing/wca-documents/issues/218)、[#222](https://github.com/cubing/wca-documents/issues/222)、[#230](https://github.com/cubing/wca-documents/issues/230) | [e5a4879](https://github.com/cubing/wca-documents/commit/e5a48792af435c4d72f3ccf906bedf68e40342e6)、[fb14ded](https://github.com/cubing/wca-documents/commit/fb14deda3dff9d34cb55d72c3aff619d6f478b85)）\n* 允许选手在最少步比赛中使用时钟掌握时间。（[#217](https://github.com/cubing/wca-documents/issues/217) | [afea552](https://github.com/cubing/wca-documents/commit/afea552805f90f71162636ace95191850eda2263)）\n* 明确选手不必使用指定的最少步答题纸提交解法。（[#215](https://github.com/cubing/wca-documents/issues/215) | [a0382d7](https://github.com/cubing/wca-documents/commit/a0382d7b5969c57bb4a2bfacf5fa9d9c5dd50c67)）\n* 主办团队可以要求采取更严格的措施，确保打乱正确。（[#214](https://github.com/cubing/wca-documents/issues/214) | [9d7c310](https://github.com/cubing/wca-documents/commit/9d7c3107f7ba8b00144147bc8865a1594a98f3c0)）\n* 金字塔打乱须至少需要 6 步才能还原，由原来的 7 步下调，与当时金字塔世界纪录解法的步数一致。（[#213](https://github.com/cubing/wca-documents/issues/213) | [49c8503](https://github.com/cubing/wca-documents/commit/49c8503fbc37805399a28337e8108d0695e207f5)）\n* 明确允许使用相机，但选手不得与其交互。（[#178](https://github.com/cubing/wca-documents/issues/178) | [c24c70d](https://github.com/cubing/wca-documents/commit/c24c70d8ec0fa39081729624df7049d457bc1be2)、[04cdc58](https://github.com/cubing/wca-documents/commit/04cdc587adbba33cd4131a8f6effc824ae443b44)、[8699359](https://github.com/cubing/wca-documents/commit/86993595a2dd6ebf4ef46a963b869e12685c90f4)）\n* 明确还原开始前未将计时器复位属于裁判失误，应给予选手额外还原。（[#260](https://github.com/cubing/wca-documents/issues/260) | [52a4a03](https://github.com/cubing/wca-documents/commit/52a4a0347a7be0470037df11dbc79fb6dc2fc486)）\n* 魔表打乱的起始朝向不要求以特定一面朝前。（[#269](https://github.com/cubing/wca-documents/issues/269) | [3cd54d8](https://github.com/cubing/wca-documents/commit/3cd54d8acad2e0d2a48eb1abfdb92f4eb6e4aabe)）\n* 不允许通过视频证据恢复被选手复位清除的计时成绩。（[#270](https://github.com/cubing/wca-documents/issues/270) | [718f5a0](https://github.com/cubing/wca-documents/commit/718f5a0a6d34d5b5450b10f197fa3be5b6e84861)）\n* 进一步说明为视力障碍选手提供的例外安排。（[#271](https://github.com/cubing/wca-documents/issues/271) | [a9693fb](https://github.com/cubing/wca-documents/commit/a9693fb7b10ffc1fc3838d0bec99172d10db5c20)）\n* 明确耗时较长项目中 Stackmat 垫子的使用要求。（[#273](https://github.com/cubing/wca-documents/issues/273) | [4529c5b](https://github.com/cubing/wca-documents/commit/4529c5b821cc3da4b00fe5b642fa33e873bf5f31)）",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.981Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "65b9192c77b020e9e42a2284ed5671c7a6fba924aadcd0a465fce4a6a6fec1bf"
+  "translationHash": "507aac2eea1a715662627b9c3aea4e669c8a06313c0e66beb1547ec13bb9a7fb",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:10:32.386Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "1c1756b0f76e04661774adcd4f2bdb3603af84c9ec2a1fcc1cb5b9aee781051c",
+    "reviewedTranslationHash": "507aac2eea1a715662627b9c3aea4e669c8a06313c0e66beb1547ec13bb9a7fb",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wca-regulations-july-2015.json",
+    "sourceConcern": false,
+    "notes": [
+      "全部20项规则更新及其数字、例外、日期、项目名称已核对。"
+    ],
+    "inputTranslationHash": "65b9192c77b020e9e42a2284ed5671c7a6fba924aadcd0a465fce4a6a6fec1bf"
+  }
 }

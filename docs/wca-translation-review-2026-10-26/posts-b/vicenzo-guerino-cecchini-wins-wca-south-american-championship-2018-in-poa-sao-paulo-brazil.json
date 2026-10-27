@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/vicenzo-guerino-cecchini-wins-wca-south-american-championship-2018-in-poa-sao-paulo-brazil",
+  "path": "docs/wca-post-translations/entries/vicenzo-guerino-cecchini-wins-wca-south-american-championship-2018-in-poa-sao-paulo-brazil.json",
+  "sourceHash": "16ec212140480339d176f745aedbfbb7c5a59b349f3b25de925f0f40a6ef0dc0",
+  "inputTranslationHash": "95aacefdb45ad2b34559ebab8451b430000236017f73cbc486220ef782b7ac29",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:59.337Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

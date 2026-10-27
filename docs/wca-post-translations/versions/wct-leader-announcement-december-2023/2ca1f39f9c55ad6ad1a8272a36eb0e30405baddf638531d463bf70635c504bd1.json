@@ -1,0 +1,27 @@
+{
+  "key": "posts:/posts/wct-leader-announcement-december-2023",
+  "source": {
+    "key": "posts:/posts/wct-leader-announcement-december-2023",
+    "kind": "posts",
+    "title": "WCT Leader Announcement (December 2023)",
+    "date": "2023-12-21T06:04:04.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/wct-leader-announcement-december-2023",
+    "content": "We are happy to announce that we have a new Team Leader. Zain Ali will become the new Leader of the WCA Communication Leader (WCT). Zain was already working as a member in the team.\n\nZain was selected by the WCA Board and approved in a vote among the current Committee Leaders and Senior Delegates, following Section 4 of our [Motion](https://www.worldcubeassociation.org/documents/motions/10.2022.0%20-%20Committees%20and%20Teams.pdf) about WCA Committees and Teams.\n\nWe thank Rui Reis for the work he has done for the WCT and extend our support and best wishes to Zain as he takes on his new responsibilities.\n\nThere were two applications for the role and Zain’s successful candidacy document can be seen [here](https://drive.google.com/drive/folders/1_jZ_LxfV8uVfktj864_5UnN6pvrTUw-v).",
+    "hash": "45e23a53ee58488f0ee7b80df4592286b81573a1549a11e99e4f318de54702b7",
+    "format": "markdown",
+    "sourceId": 14137
+  },
+  "translation": {
+    "version": 2,
+    "sourceHash": "45e23a53ee58488f0ee7b80df4592286b81573a1549a11e99e4f318de54702b7",
+    "language": "zh-Hans",
+    "title": "WCA 通讯组负责人任命公告（2023 年 12 月）",
+    "content": "我们很高兴宣布，Zain Ali 将出任 WCA 通讯组（WCT）负责人。Zain 此前已是团队成员。\n\n根据关于 WCA 委员会与团队的[决议](https://www.worldcubeassociation.org/documents/motions/10.2022.0%20-%20Committees%20and%20Teams.pdf)第 4 节，WCA 董事会选定 Zain，并经现任委员会负责人及高级代表投票通过。\n\n感谢 Rui Reis 为 WCT 所做的工作。我们支持 Zain 承担新职责，并祝他工作顺利。\n\n本次共收到两份申请。Zain 的申请材料可在[此处](https://drive.google.com/drive/folders/1_jZ_LxfV8uVfktj864_5UnN6pvrTUw-v)查看。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:45:43.552Z",
+    "reviewStatus": "pending_independent_review",
+    "revisedAt": "2026-10-25T07:28:01.629Z",
+    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+  },
+  "translationHash": "2ca1f39f9c55ad6ad1a8272a36eb0e30405baddf638531d463bf70635c504bd1"
+}

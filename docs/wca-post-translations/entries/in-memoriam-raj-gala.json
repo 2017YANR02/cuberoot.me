@@ -12,14 +12,31 @@
     "sourceId": 2400
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "b4dc0e923e01784342af10efc53e235759fa041b624f799b5c1495f99417712a",
     "language": "zh-Hans",
     "title": "悼念 Raj Gala",
     "content": "亲爱的社区成员：\n\n2013 年 1 月 29 日，来自印度的 WCA 社区成员 Raj Gala 因登革热去世，年仅 18 岁。\n\nRaj 参加过 3 场 WCA 比赛，五魔方单次和平均均排名印度第 5。\n\n在 [WCA 论坛](https://www.worldcubeassociation.org/forum/viewtopic.php?f=9&t=1044)上，WCA 代表 Gaurav Taneja 以及 Raj 的朋友 Yogesh 和 Bhargav 写下了对他的回忆：他是印度魔方社区中一位友善、乐于助人的成员。\n\n我们向 Raj 的家人和朋友致以深切慰问。\n\nRon van Bruchem\n\nWCA 董事会",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.149Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "8a609ba3c2502c8466c8f4006b415b0815fdb9e5ea8dd3ade4088c979e663b39"
+  "translationHash": "06c8719956bdfcb8e430eba6cfc88dfdcfcf1d9a0e75c2c1785a00631f0800c3",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:36.320Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "b4dc0e923e01784342af10efc53e235759fa041b624f799b5c1495f99417712a",
+    "reviewedTranslationHash": "06c8719956bdfcb8e430eba6cfc88dfdcfcf1d9a0e75c2c1785a00631f0800c3",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/in-memoriam-raj-gala.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "8a609ba3c2502c8466c8f4006b415b0815fdb9e5ea8dd3ade4088c979e663b39"
+  }
 }

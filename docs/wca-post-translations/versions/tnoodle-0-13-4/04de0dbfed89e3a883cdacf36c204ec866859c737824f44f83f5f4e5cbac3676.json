@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/tnoodle-0-13-4",
+  "source": {
+    "key": "posts:/posts/tnoodle-0-13-4",
+    "kind": "posts",
+    "title": "TNoodle 0.13.4",
+    "date": "2018-07-02T23:45:06.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/tnoodle-0-13-4",
+    "content": "`TNoodle-WCA-0.13.4` is now available from https://www.worldcubeassociation.org/regulations/scrambles/\nThe following changes have been made since `TNoodle-WCA-0.13.3`:\n\n- Multiple Blindfolded rounds are no longer generated with a default number of puzzles. The person generating scrambles for a competition will have to pick a sufficiently high number based on expected competitors.\n- TNoodle no longer generates extra scrambles for Fewest Moves in the JSON data for the scrambles.\n- The Fewest Moves sheet translation for Korean has been updated.\n- Event names on the legacy scramble UI now match the Regulations.\n- A \"scramble group\" is now called a \"scramble set\", to avoid confusion with competitor groups.\n- A broken favicon link in the new UI has been fixed.\n\nUpcoming competitions should use `TNoodle-WCA-0.13.4` to generate new scrambles, when possible.\nHowever, since there are no changes that directly affect competitors since the previous version, `TNoodle-WCA-0.13.3` will briefly remain an officially permitted version. (Competition scrambles for the coming week that have already been generated using `TNoodle-WCA-0.13.3` can still be used.)\n\nPlease remember that official competitions must use a current version of the official scramble program. This is always available from:\nhttps://www.worldcubeassociation.org/regulations/scrambles/",
+    "hash": "c22d5da0ef4d7d66d54364f17ce566ad7c6349f2508a2b07b09651b05d26ccd1",
+    "format": "markdown",
+    "sourceId": 9803
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "c22d5da0ef4d7d66d54364f17ce566ad7c6349f2508a2b07b09651b05d26ccd1",
+    "language": "zh-Hans",
+    "title": "TNoodle 0.13.4 发布",
+    "content": "现在可从 https://www.worldcubeassociation.org/regulations/scrambles/ 下载 `TNoodle-WCA-0.13.4`。\n\n相较 `TNoodle-WCA-0.13.3`，本次更新包括：\n\n- 多盲轮次不再默认设置魔方数量。为比赛生成打乱时，需要根据预计参赛选手设置足够大的数量。\n- TNoodle 不再在打乱 JSON 数据中为最少步生成备用打乱。\n- 更新了最少步答题纸的韩语译文。\n- 旧版打乱界面的项目名称现与竞赛规则一致。\n- “scramble group”现改称“scramble set”，以免与选手分组混淆。\n- 修复了新版界面中失效的网站图标链接。\n\n即将举行的比赛应尽可能使用 `TNoodle-WCA-0.13.4` 重新生成打乱。\n\n不过，由于本次更新没有直接影响选手的改动，`TNoodle-WCA-0.13.3` 将在短期内继续作为官方允许使用的版本。未来一周比赛若已用 `TNoodle-WCA-0.13.3` 生成打乱，仍可使用。\n\n请记住，官方比赛必须使用官方打乱程序的当前有效版本，下载地址始终为：\nhttps://www.worldcubeassociation.org/regulations/scrambles/",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.142Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "04de0dbfed89e3a883cdacf36c204ec866859c737824f44f83f5f4e5cbac3676"
+}

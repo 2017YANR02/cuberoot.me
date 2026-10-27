@@ -12,14 +12,33 @@
     "sourceId": 13998
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "0148b00fa082d230003bd579360be5eb6b76c788919d7fd258eeee8494eafdba",
     "language": "zh-Hans",
-    "title": "2022 年洲际锦标赛举办地公告（2020 年 11 月）",
-    "content": "我们很高兴宣布，开普敦将举办 2022 年 WCA 非洲锦标赛。\n\n同时感谢埃及开罗的团队提交 2022 年非洲锦标赛申办方案。洲际锦标赛的申办材料可在[此处](https://drive.google.com/drive/folders/1vxgEF_hNNIq9ukDLdL1OLyS3pKpL_-eg)查看。\n\n2022 年 WCA 南美锦标赛举办地的决定已推迟。\n\n最后提醒大家，2022 年 WCA 大洋洲锦标赛的申办期为 2021 年 3 月 1 日至 5 月 31 日，与 2023 年世界锦标赛申办期一致。",
+    "title": "2022 年大洲锦标赛举办地公告（2020 年 11 月）",
+    "content": "我们很高兴宣布，开普敦将举办 2022 年 WCA 非洲锦标赛。\n\n同时感谢埃及开罗的团队提交 2022 年非洲锦标赛申办方案。大洲锦标赛的申办材料可在[此处](https://drive.google.com/drive/folders/1vxgEF_hNNIq9ukDLdL1OLyS3pKpL_-eg)查看。\n\n2022 年 WCA 南美锦标赛举办地的决定已推迟。\n\n最后提醒大家，2022 年 WCA 大洋洲锦标赛的申办期为 2021 年 3 月 1 日至 5 月 31 日，与 2023 年世界锦标赛申办期一致。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:54.067Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "d53b3f250f324df48659d41b13f48d22e4cb18a550bc640752438e6d0e9f7b38"
+  "translationHash": "c78c2a7da5f07b73608cd7671eb3ba7448a1321ea56177e240b72bad2b1f7657",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:17:37.012Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "0148b00fa082d230003bd579360be5eb6b76c788919d7fd258eeee8494eafdba",
+    "reviewedTranslationHash": "c78c2a7da5f07b73608cd7671eb3ba7448a1321ea56177e240b72bad2b1f7657",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/continental-championship-2022-announcement-november-2020.json",
+    "sourceConcern": false,
+    "notes": [
+      "全文已对照，赛事地点、申办日期及表格、未决定/未收到申请的限定保持一致。"
+    ],
+    "inputTranslationHash": "d53b3f250f324df48659d41b13f48d22e4cb18a550bc640752438e6d0e9f7b38"
+  }
 }

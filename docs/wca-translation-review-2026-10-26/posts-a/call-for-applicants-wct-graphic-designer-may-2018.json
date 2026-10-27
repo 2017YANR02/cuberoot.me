@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wct-graphic-designer-may-2018",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wct-graphic-designer-may-2018.json",
+  "sourceHash": "bb5bdfd63eea69fcd0494cf75fc422421323ff15fee42c9155108253b30da3de",
+  "inputTranslationHash": "28ca1b52e7138ccd94a9511600995500c5aa8cf3d58fa683244385a8184e6627",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:09:54.049Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整核对标题及正文，招募资格、工作时长、申请截止日期、收件人、申请材料与程序一致。"
+  ],
+  "changes": []
+}

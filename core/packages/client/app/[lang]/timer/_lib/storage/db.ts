@@ -51,6 +51,7 @@ import { BACKUP_LS_PREFIX, idbBackupGet, idbBackupList, idbBackupPut } from './b
 import { persistItem } from '@/lib/safe-storage';
 
 const KEY = 'cuberoot-timer.v3';
+const RECOVERY_PREFIX = `${KEY}.recovery.`;
 const LEGACY_V2_KEY = 'cuberoot-timer.v2';
 const LEGACY_V1_KEY = 'cuberoot-timer.v1';
 const SAVE_COUNTER_KEY = 'cuberoot-timer.saveCounter';
@@ -102,6 +103,9 @@ function loadRaw(): DbShapeV3 {
     if (s) {
       const parsed = parseTimerDatabaseJson(s, databaseEnvironment());
       if (parsed) return rememberDatabase(parsed);
+      // An unreadable current database is not a fresh install. In particular,
+      // do not replace it with an empty database or a stale legacy migration.
+      return volatileDatabase ?? rememberDatabase(emptyDb());
     }
     // Migrate forward: v2 first, then v1.
     const v2 = localStorage.getItem(LEGACY_V2_KEY);
@@ -131,6 +135,27 @@ function loadRaw(): DbShapeV3 {
 }
 
 function saveRaw(db: DbShapeV3): boolean {
+  try {
+    const current = localStorage.getItem(KEY);
+    if (current && !parseTimerDatabaseJson(current, databaseEnvironment())) {
+      // Keep the exact original bytes before any replacement, including an
+      // explicit import. Recovery copies are not rotating/evictable backups.
+      const base = `${RECOVERY_PREFIX}${Date.now()}`;
+      let key = base;
+      for (let suffix = 1; ; suffix++) {
+        const previous = localStorage.getItem(key);
+        if (previous === current) break;
+        if (previous === null) {
+          if (!persistItem(key, current)) return false;
+          break;
+        }
+        key = `${base}.${suffix}`;
+      }
+    }
+  } catch {
+    // A failed read must never become permission to overwrite unknown data.
+    return false;
+  }
   // 活库写入:配额满时 persistItem 会先驱逐可再生缓存再重试,尽量保住真实数据。
   const saved = persistItem(KEY, JSON.stringify(db));
   if (saved) volatileDatabase = db;
@@ -197,7 +222,7 @@ function bumpSaveCounter(): number {
 export function saveAll(byEvent: Record<string, Solve[]>): void {
   const db = loadRaw();
   db.dataBySession[db.activeSessionId] = byEvent as ByEvent;
-  saveRaw(db);
+  if (!saveRaw(db)) return;
   const n = bumpSaveCounter();
   const every = getSettings().autoBackupEvery | 0;
   if (every > 0 && n > 0 && n % every === 0) {

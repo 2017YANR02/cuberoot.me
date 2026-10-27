@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/wst-leader-announcement-june-2021",
+  "path": "docs/wca-post-translations/entries/wst-leader-announcement-june-2021.json",
+  "sourceHash": "409d662bf69cd7e771f44821d7345b1b9742caeb2dc8710b2a7b99953e7f5141",
+  "inputTranslationHash": "473d9a75716cc183a765b6c3bb666c27803d12994c202d43dfdf70e5396d8c67",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:12:24.812Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [
+    "逐篇核对新任、前任、成员职衔、遴选批准程序、申请人数和日期。"
+  ],
+  "changes": []
+}

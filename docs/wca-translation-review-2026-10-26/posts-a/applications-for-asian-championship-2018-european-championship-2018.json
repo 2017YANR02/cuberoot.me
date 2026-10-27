@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/applications-for-asian-championship-2018-european-championship-2018",
+  "path": "docs/wca-post-translations/entries/applications-for-asian-championship-2018-european-championship-2018.json",
+  "sourceHash": "8ef5e5692ada77500db6817611b3e27ce21496620499967706cabf48c3446b7e",
+  "inputTranslationHash": "30500f0de1193a705099c04abda359ecb1db700354462b3e67d01686c98b6a4f",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:05:11.623Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+  ],
+  "changes": []
+}

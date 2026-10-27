@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/annual-members-meeting-september-2020",
+  "source": {
+    "key": "posts:/posts/annual-members-meeting-september-2020",
+    "kind": "posts",
+    "title": "Annual Members Meeting (September 2020)",
+    "date": "2020-09-20T11:21:40.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/annual-members-meeting-september-2020",
+    "content": "Dear WCA Community,\n \nThe Board is providing notice as required by Bylaw 2.8 of the Annual Meeting of WCA members which will be held on October 4th at 19:00 UTC. Members will be able to tune into this meeting via a livestream hosted on the [WCA Twitch](https://www.twitch.tv/worldcubeassociation). In [this folder](https://drive.google.com/drive/folders/14Q-JS94G85EImQnWGaXFe9W-3IrCXVoB) you will find the information packet related to the annual meeting which contains all relevant documentation which will be discussed at the meeting.\n \nWe look forward to your participation in the upcoming annual meeting.\n \nKind Regards,\nEthan Pride, on Behalf of the Board of Directors",
+    "hash": "40d1b296e1bb703d455dd8eed0c417733a9e8cf9d96ccaf23fe8c3154d637b85",
+    "format": "markdown",
+    "sourceId": 13988
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "40d1b296e1bb703d455dd8eed0c417733a9e8cf9d96ccaf23fe8c3154d637b85",
+    "language": "zh-Hans",
+    "title": "WCA 年度会员大会（2020 年 9 月）",
+    "content": "各位 WCA 社区成员：\n\n董事会根据章程第 2.8 条，现通知大家：WCA 年度会员大会将于 10 月 4 日 19:00 UTC 举行。会员可通过 [WCA Twitch](https://www.twitch.tv/worldcubeassociation) 直播观看。本次年会的资料包位于[此文件夹](https://drive.google.com/drive/folders/14Q-JS94G85EImQnWGaXFe9W-3IrCXVoB)，其中包含会议将讨论的全部相关文件。\n\n期待大家参加本次年度会员大会。\n\n此致\n\nEthan Pride，代表 WCA 董事会",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:49:00.917Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "ba7be2164372777fe9e5224696a036463f859e820ee87f0bf2c7c7a8a18c018a"
+}

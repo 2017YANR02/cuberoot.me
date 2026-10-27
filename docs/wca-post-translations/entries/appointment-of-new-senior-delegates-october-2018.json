@@ -12,14 +12,33 @@
     "sourceId": 10369
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "38e7dc2ecc42ce77bbe1306b516c196dbde3d3e5e794488e15966634876f3bd3",
     "language": "zh-Hans",
     "title": "新任高级代表任命公告（2018 年 10 月）",
     "content": "近期申请结束后，两位高级代表的人选已确定。亚洲日本地区方面，董事会收到了 Yohei Suzuki 的申请，并决定续任。西欧地区方面，董事会收到了 Laura Ohrndorf 和 Lorenzo Vigani Poli 的申请，经讨论后决定任命 Laura Ohrndorf。\n\n南美洲与中美洲地区、非洲地区均未收到申请，因此在找到合适接任者之前，由 WCA 董事会代行这些职责。\n\n北美洲地区正在实施新制度，以加强该地区高级代表的工作。制度文件及说明见[此处](https://docs.google.com/document/d/1JXAD3HbqfBudN4lf2ilc08jTpjdhJQb5xneMzzXU-VQ/edit?usp=sharing)。\n\n这些任命将于 2018 年 10 月 1 日生效。所有申请材料可在[此处](https://drive.google.com/drive/folders/11N6skCjAfWbPNnktHAmZ40dV4B0b6MHx)查看。\n\n感谢 Daniel Sheppard、Donovan Hale、Tim Reynolds 和 Rafael Werneck de Andrade Cinoto 此前担任高级代表期间的辛勤工作与付出。同时，感谢所有申请者愿意在现有工作之外，进一步帮助 WCA 和速拧社区。祝新任高级代表工作顺利！",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.176Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "e7c1bdebaa775ccac87d97be6054a4e02aca96429509ad442facef7b38182967"
+  "translationHash": "6d2bb272f5ce7ae96c6d05bfff3f5d4ce5f62fad07218df8e7b3c260c2141fe0",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:06:14.456Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "38e7dc2ecc42ce77bbe1306b516c196dbde3d3e5e794488e15966634876f3bd3",
+    "reviewedTranslationHash": "6d2bb272f5ce7ae96c6d05bfff3f5d4ce5f62fad07218df8e7b3c260c2141fe0",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/appointment-of-new-senior-delegates-october-2018.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照正文与标题；核对全部申请/任命主体、时间、权限、附录条目及材料要求。"
+    ],
+    "inputTranslationHash": "e7c1bdebaa775ccac87d97be6054a4e02aca96429509ad442facef7b38182967"
+  }
 }

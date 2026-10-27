@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/wca-regulations-january-2018",
+  "path": "docs/wca-post-translations/entries/wca-regulations-january-2018.json",
+  "sourceHash": "69bdb9f91f620c4cabc296bed901cac730cce3f299a55186fde60da143d36900",
+  "inputTranslationHash": "5e01714837bbeab40c18100c49dee1eb1929c335d3a6b32c59d531683f57d09d",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:09:46.860Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [
+    "全文核对规则变更条件、数字、项目中文、权限强度及链接。"
+  ],
+  "changes": []
+}

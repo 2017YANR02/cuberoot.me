@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/notification-of-data-breach-to-data-subjects",
+  "path": "docs/wca-post-translations/entries/notification-of-data-breach-to-data-subjects.json",
+  "sourceHash": "4b6f4797915f22ea3a881d3db7fe2d5c42b53183915a13ecf96d575152f2d939",
+  "inputTranslationHash": "47f204934f1426f76494973deeedfc562afbd17196d4447b146e1cf01f1ead70",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:55.470Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

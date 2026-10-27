@@ -12,14 +12,33 @@
     "sourceId": 14002
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "62483b9352abeae420e5cd6c2fbe6fb72aba8ee115ccf621fb3760a9c3b0965c",
     "language": "zh-Hans",
     "title": "WCA 规则委员会负责人任命公告（2020 年 12 月）",
     "content": "我们很高兴地宣布，Iván Brigidano Pérez 将担任 WCA 规则委员会（WRC）的新负责人。Iván 此前已是 WRC 成员。\n<!-- break -->\n按照关于 WCA 委员会和团队的[议案](https://www.worldcubeassociation.org/documents/motions/10.2020.0%20-%20Committees%20and%20Teams.pdf)第 4 节，WCA 董事会选定 Iván，并经现任委员会负责人和高级代表投票批准。\n\n感谢 Lucas Garron 在担任 WRC 负责人期间所做的工作，祝 Iván 履新顺利。\n\n董事会还收到了 Oleg Gritsenko 的申请。\n\n感谢 Oleg 参与申请。两人的申请材料均可在[此处](https://drive.google.com/drive/u/0/folders/1qo27qNac5J1k_JCngz_6l9E99s-ZnKGx)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:00.932Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "0015682c1b9518fad2044f326c4dcfcd413b56a532cb273cf9c5cbfd1c641005"
+  "translationHash": "9ecb804c60d63e698947776060e0e9ec6bb92f7205646c452ee88158fcd7fe99",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:12:24.810Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "62483b9352abeae420e5cd6c2fbe6fb72aba8ee115ccf621fb3760a9c3b0965c",
+    "reviewedTranslationHash": "9ecb804c60d63e698947776060e0e9ec6bb92f7205646c452ee88158fcd7fe99",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wrc-leader-announcement-december-2020.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇核对新任、前任、成员职衔、遴选批准程序、申请人数和日期。"
+    ],
+    "inputTranslationHash": "0015682c1b9518fad2044f326c4dcfcd413b56a532cb273cf9c5cbfd1c641005"
+  }
 }

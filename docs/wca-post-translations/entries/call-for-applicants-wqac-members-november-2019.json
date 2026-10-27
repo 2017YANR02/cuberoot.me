@@ -12,14 +12,33 @@
     "sourceId": 13457
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "2f360ffab8c92672462f33f1442a1607a32d8df29fc385258b1723e7b27c5b19",
     "language": "zh-Hans",
     "title": "WCA 质量保证委员会招募成员（2019 年 11 月）",
     "content": "WCA 质量保证委员会（WQAC）正在招募新成员，一起完成委员会的工作！申请面向所有人开放，也欢迎目前未在 WCA 任职的社区成员申请。\n\n**WQAC 负责什么？**\n\nWQAC 负责制定并落实 WCA 内部的质量标准，包括为 WCA 社区编写教学材料，以及确保组织各岗位的工作人员保持履职所需的能力。WQAC 将深入参与与 WCA 代表工作有关的事务，并调查各地社区反映的质量问题。\n\nWQAC 的正式权利与职责见 [WCA 动议 10.2019.4](https://www.worldcubeassociation.org/documents/motions/10.2019.4%20-%20Quality%20Assurance%20Committee.pdf)。\n\n**我们希望申请者具备：**\n\n* 细心、务实的思考方式。\n* 熟悉比赛的组织和运行。\n* 良好的协作能力，并能及时回应。\n* 能够讨论想法及其依据。\n\n申请者可于即日起至 **2019 年 12 月 31 日 23:59 UTC**，将申请材料发送给 Daniel Vædele Egdal（[degdal@worldcubeassociation.org](mailto:degdal@worldcubeassociation.org)）。\n\n**申请材料须为 PDF 格式，应包含：**\n\n* 简短的自我介绍。\n* 参与 WCA 工作的经历。\n* 申请加入 WQAC 的原因。\n\n申请者会收到确认收件的回复，之后可能收到面试邀请。如有申请方面的问题，可联系 Daniel Vædele Egdal（[degdal@worldcubeassociation.org](mailto:degdal@worldcubeassociation.org)）。\n\n申请期结束后，WQAC 负责人将进行选拔，待获选者接受职位后公布新成员。\n\n感谢你愿意为 WQAC 和 WCA 出力！",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.164Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "e68e5716c86bf32001bac7d058ad95f13356ca2c466e4e5106c2aee79f4e4eaa"
+  "translationHash": "3b7a177c7717c2358bb296c2e9aedcc0dde59f0af45e948ddcc45cc8a8b42b65",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:11:12.892Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "2f360ffab8c92672462f33f1442a1607a32d8df29fc385258b1723e7b27c5b19",
+    "reviewedTranslationHash": "3b7a177c7717c2358bb296c2e9aedcc0dde59f0af45e948ddcc45cc8a8b42b65",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/call-for-applicants-wqac-members-november-2019.json",
+    "sourceConcern": false,
+    "notes": [
+      "已完整对照标题与正文；核对规则/成绩/质量保证团队职责、必需与可选资格、招募人数、任期工时及各篇申请日期、联系人与投票程序。历史 Guidelines 按参考保留指南。"
+    ],
+    "inputTranslationHash": "e68e5716c86bf32001bac7d058ad95f13356ca2c466e4e5106c2aee79f4e4eaa"
+  }
 }

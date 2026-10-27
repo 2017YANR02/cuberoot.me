@@ -12,14 +12,31 @@
     "sourceId": 14037
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "6d95f098372ea769c47e0c815d5643a867dafc32f1c1da3d2e471333faef3388",
     "language": "zh-Hans",
     "title": "官方认可计时器名单更新（2021 年 10 月）",
     "content": "经过数月征求意见和评估，WCA 规则委员会（WRC）与 WCA 董事会决定更新官方认可的计时器型号名单，参见[规则 7f1a](https://www.worldcubeassociation.org/regulations/#7f1a)。具体调整如下：\n\n* Speed Stacks 第五代 Stackmat 计时器将随 2022 年规则生效而获准使用。\n* Speed Stacks 第二代 Stackmat 计时器将随 2023 年规则生效而不再获准使用。\n\n取消对第二代计时器的认可，是为了解决部分 Stackmat 计时器故障方面的顾虑。仍在使用这些计时器的社区将有一年以上的过渡期，以安排更换。\n\n同时，认可名单的更新也将为组织者和 WCA 代表提供更多选择。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:00.929Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "fe4d9ddf9ea59f7c5038ebf6e9c45a66a4113a494f521164450c9a6b6ee43cb2"
+  "translationHash": "649ed2e8e6eec79d7b37ac95abccf53feb639d45989332421046cc9d8b81485b",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:59.336Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "6d95f098372ea769c47e0c815d5643a867dafc32f1c1da3d2e471333faef3388",
+    "reviewedTranslationHash": "649ed2e8e6eec79d7b37ac95abccf53feb639d45989332421046cc9d8b81485b",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/updating-the-official-list-of-approved-timers-october-2021.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "fe4d9ddf9ea59f7c5038ebf6e9c45a66a4113a494f521164450c9a6b6ee43cb2"
+  }
 }

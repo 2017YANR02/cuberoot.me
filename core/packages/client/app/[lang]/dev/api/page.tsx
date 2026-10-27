@@ -73,9 +73,12 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wca_teams wca_training_institutions wca_translations wechat_jssdk wechat_pc_opensdk wiki
 //   platform_competitions platform_competition_attempts platform_competition_evidence platform_competition_settlements platform_competition_device_reports platform_organizer_applications platform_refunds
 //   enterprise_verification contests workspace app_releases
-//   mcp mcp_oauth onboarding timer_replay_shares site_assistant cube_agents
+//   mcp mcp_oauth onboarding timer_replay_shares site_assistant site_assistant_shares cube_agents
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
+  { d: 'content', m: 'POST', p: '/v1/site-assistant/shares', g: 'login', c: 'no-store', zh: '本人问答显式创建单条文字快照，不含图片及其他对话', en: 'Explicit owner-only single-message text snapshot without images or other turns' },
+  { d: 'content', m: 'GET', p: '/v1/site-assistant/shares/:id', g: 'public', c: 'no-store', zh: '读取公开消息，不返回用户或请求身份；不缓存、不索引', en: 'Read shared text without owner/request identity; no caching or indexing' },
+  { d: 'content', m: 'DELETE', p: '/v1/site-assistant/shares/:id', g: 'login', c: 'no-store', zh: '仅分享创建者可撤销链接', en: 'Only the owner may revoke a link' },
   { d: 'recon', m: 'GET', p: '/v1/recon-intake', g: 'admin', zh: '读取复盘待办队列', en: 'List reconstruction intake' },
   { d: 'recon', m: 'POST', p: '/v1/recon-intake', g: 'admin', zh: '收录原始录像与批注', en: 'Collect recording and annotations' },
   { d: 'recon', m: 'GET', p: '/v1/recon-intake/:id', g: 'admin', zh: '样本与测试历史', en: 'Case and test history' },

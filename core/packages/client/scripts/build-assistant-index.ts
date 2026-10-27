@@ -179,7 +179,7 @@ async function main() {
     const existing=pages.find(page=>page.lang===lang && page.href===href);
     if(existing) existing.text=[existing.text,text].filter(Boolean).join('\n\n');
     else pages.push({lang,href,title:TIMER_TRAINING_HELP.title[lang],text});
-    destinations.set(lang+href,{lang,href,title:TIMER_TRAINING_HELP.title[lang]});
+    destinations.set(lang+href,{...destinations.get(lang+href),lang,href,title:TIMER_TRAINING_HELP.title[lang]});
   }
   await mkdir('public/assistant',{recursive:true});
   await writeFile('public/assistant/pages.json',JSON.stringify({version:2,updated:new Date().toISOString(),pages,destinations:[...destinations.values()]}));

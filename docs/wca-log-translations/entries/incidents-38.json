@@ -13,12 +13,14 @@
   },
   "translation": {
     "language": "zh-Hans",
-    "version": 1,
-    "title": "选手还原结束后才发现拿到了他人的 Skewb",
-    "content": "由于两名选手姓名相似，一名选手收到了另一人的成绩单和 Skewb。还原结束后，选手发现成绩单姓名与自己不符，才意识到问题。现场给予了额外尝试。\n\nWRC 决定用**额外尝试**替代原尝试。",
+    "version": 2,
+    "title": "选手还原结束后才发现拿到了他人的斜转",
+    "content": "由于两名选手姓名相似，一名选手收到了另一人的成绩单和斜转。还原结束后，选手发现成绩单姓名与自己不符，才意识到问题。现场给予了额外尝试。\n\nWRC 决定用**额外尝试**替代原尝试。",
     "translatedAt": "2026-10-22T05:50:48.611Z",
     "translator": "Codex / subscription",
-    "sourceHash": "debd94ad00949514b7e27379c73318bc92d4a55b9bb6c25fac8a6dfa7ba7b5d5"
+    "sourceHash": "debd94ad00949514b7e27379c73318bc92d4a55b9bb6c25fac8a6dfa7ba7b5d5",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
   "review": {
     "status": "independently_verified",
@@ -36,7 +38,23 @@
       "verdict": "pass",
       "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
     },
-    "unresolvedNotes": []
+    "unresolvedNotes": [],
+    "recheck": {
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.689Z",
+      "report": "../wca-translation-review-2026-10-26/final-report.json",
+      "sourceHash": "debd94ad00949514b7e27379c73318bc92d4a55b9bb6c25fac8a6dfa7ba7b5d5",
+      "reviewedTranslationHash": "df0d2b40b0c956012c6d1bdd9f25351ddb47b0d182bf88eceb4f8a45e3761fb4",
+      "verdict": "pass",
+      "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。"
+    },
+    "currentReview": {
+      "round": "2026-10-26",
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/incidents-38.json",
+      "sourceConcern": false,
+      "notes": [],
+      "inputTranslationHash": "39984543ae8864306a94a3e058cd0640bf11a94bc5aeb3b21ff84f822bfbb081"
+    }
   },
   "publication": {
     "status": "not_authorized"

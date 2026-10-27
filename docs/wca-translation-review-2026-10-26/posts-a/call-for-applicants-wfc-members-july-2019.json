@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wfc-members-july-2019",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wfc-members-july-2019.json",
+  "sourceHash": "6dd5a73cf41d58bd9f0665ccfc0b01b72418534ce8604d091657e4c97cee8d8d",
+  "inputTranslationHash": "a6e136e187c29e74eae3acca64d01de59680d7c9fb5a0e32911fbbe090d69e8d",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:10:42.787Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题与正文；核对财务职责、非必需技能、WIC 三组人数与条件、WMCT 多舞台经验及申请流程。"
+  ],
+  "changes": []
+}

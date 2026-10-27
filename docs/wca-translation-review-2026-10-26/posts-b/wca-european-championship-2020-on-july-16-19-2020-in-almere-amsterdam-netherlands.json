@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/wca-european-championship-2020-on-july-16-19-2020-in-almere-amsterdam-netherlands",
+  "path": "docs/wca-post-translations/entries/wca-european-championship-2020-on-july-16-19-2020-in-almere-amsterdam-netherlands.json",
+  "sourceHash": "793bb626447628058dbeace1cc03222b5729c969a0d3909c89ef80314d8faa37",
+  "inputTranslationHash": "47e47a269c30dcd8d85156c3261898fd7e7a460f2731c639dbfc3a4065051f6c",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:07:08.715Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

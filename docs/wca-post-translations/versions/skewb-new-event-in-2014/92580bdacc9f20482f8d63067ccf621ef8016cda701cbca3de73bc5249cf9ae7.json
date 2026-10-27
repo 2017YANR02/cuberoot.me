@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/skewb-new-event-in-2014",
+  "source": {
+    "key": "posts:/posts/skewb-new-event-in-2014",
+    "kind": "posts",
+    "title": "Skewb: New Event in 2014",
+    "date": "2013-12-06T23:58:56.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/skewb-new-event-in-2014",
+    "content": "The WCA Board has approved the addition of Skewb as an official WCA event, to take effect with the new Regulations on January 1, 2014.\n See the [announcement in the WCA forum](https://www.worldcubeassociation.org/forum/viewtopic.php?f=4&t=1163) for details.",
+    "hash": "45de171ec41eca96e5e5bd1bf71c35e59b6822c4ddc38a8527bda0ac8cf135f0",
+    "format": "markdown",
+    "sourceId": 3012
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "45de171ec41eca96e5e5bd1bf71c35e59b6822c4ddc38a8527bda0ac8cf135f0",
+    "language": "zh-Hans",
+    "title": "斜转将于 2014 年成为 WCA 正式项目",
+    "content": "WCA 董事会已批准将斜转列为 WCA 正式项目，自 2014 年 1 月 1 日起随新版规则一同生效。\n\n详情请见 [WCA 论坛公告](https://www.worldcubeassociation.org/forum/viewtopic.php?f=4&t=1163)。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.157Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "92580bdacc9f20482f8d63067ccf621ef8016cda701cbca3de73bc5249cf9ae7"
+}

@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/forum-digest-june-2022",
+  "path": "docs/wca-post-translations/entries/forum-digest-june-2022.json",
+  "sourceHash": "d7b6cdaaaef63a576c513baa43d36acc328b5d482143160097018583b85685c2",
+  "inputTranslationHash": "440205e0ee693f2e43180ffa7c5adbd83e33309239cd646fe04df25b91cf6f84",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:36.319Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

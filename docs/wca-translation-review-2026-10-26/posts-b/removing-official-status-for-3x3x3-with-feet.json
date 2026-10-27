@@ -1,0 +1,16 @@
+{
+  "key": "posts:/posts/removing-official-status-for-3x3x3-with-feet",
+  "path": "docs/wca-post-translations/entries/removing-official-status-for-3x3x3-with-feet.json",
+  "sourceHash": "2c60d12659a697e6d4ae9135885fd5ed5953e71718e092f782fa1f7ebdf77a39",
+  "inputTranslationHash": "9795208e8a9cf5bad37b71fbe0937003ca203a98e8718dfecdd05f83fcab9625",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:15.859Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "correction_required",
+  "notes": [],
+  "changes": [
+    "按原链接片段 #A5b+ 补全条款编号，源文本漏写 A。"
+  ],
+  "title": "取消三阶脚拧的正式项目资格",
+  "content": "各位 WCA 社区成员：\n\n经过一整年的意见收集和评估，WRC 与 WCA 董事会决定，按照[此前的计划](https://github.com/thewca/wca-regulations/issues/652)，于 2020 年 1 月 1 日将三阶脚拧从 WCA 正式项目列表中移除。我们清楚这一决定会给部分人带来很大影响，但在整个 2019 年，该项目的参与情况并未明显改变。三阶脚拧仍是参与人数最少的速拧项目，且与其他项目相差很大；主办方对卫生和现场组织安排的担忧也依然存在。\n\n我们知道，这一结果会让许多社区成员失望，也理解大家的挫败感：取消正式资格，会明显影响一个项目的普及程度。不过，各场比赛仍可将脚拧设为非正式项目；对于有医疗方面特殊情况的选手，主办方也可以允许其在三阶速拧项目中用脚还原。（参见[指南 A5b+](https://www.worldcubeassociation.org/regulations/guidelines.html#A5b+) 和[规则 2s](https://www.worldcubeassociation.org/regulations/#2s)。）\n\n我们也欢迎大家提出缩小非正式项目与正式项目之间差距的建议，例如：\n\n- 在正式报名时，也能方便地报名非正式项目。\n- 为 WCA 比赛中的非正式成绩设立统一的发布位置。\n\n同时，我们为此次决策流程中的不足表示歉意。社区的反馈让我们学到了很多；今后涉及项目变更时，我们会优先确保流程清晰、透明。\n\nLucas Garron\nWRC 负责人\n代表规则委员会"
+}

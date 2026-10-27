@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/wdc-digest-2024-q1",
+  "path": "docs/wca-post-translations/entries/wdc-digest-2024-q1.json",
+  "sourceHash": "ca74c93a4c7fafb248fb262df5263e99acee3c7bd61c0f100e6b9c2490c05506",
+  "inputTranslationHash": "6bc01a44410441555674e72d21c091293a528eb869b37eb836555f7b5da80216",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:10:59.921Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [
+    "完整核对案件归因、处分条件、匿名处理、数量及任命程序。"
+  ],
+  "changes": []
+}

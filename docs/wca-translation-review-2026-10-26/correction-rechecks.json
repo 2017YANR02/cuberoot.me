@@ -1,0 +1,1150 @@
+{
+  "entries": [
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2024-q4",
+      "contentHash": "ca911c92cdec5d976600e63f49e9616c3463002720c98dfeda4032878bc3674c",
+      "verdict": "pass",
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.685Z",
+      "scope": "核对全部词句差异、对应完整英文段落、官方events->skewb及WIC板块语境；确认仅项目名和板块名校正，清理替换产生的多余中文间空格，其余沿用绑定旧版的独立审校。"
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2026-q3",
+      "contentHash": "3029e2b914e2ae2b94f6b48046a8bb5361ff2d8cbcca84e102adb5f8e9ea601f",
+      "verdict": "pass",
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.686Z",
+      "scope": "核对全部词句差异、对应完整英文段落、官方events->skewb及WIC板块语境；确认仅项目名和板块名校正，清理替换产生的多余中文间空格，其余沿用绑定旧版的独立审校。"
+    },
+    {
+      "key": "disciplinary:/posts/wic-digest-2024-q3",
+      "contentHash": "14e84929a8c59930276e00acf1db4f6698eb1b36a6dfea88fef7e19c0f676762",
+      "verdict": "pass",
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.687Z",
+      "scope": "核对全部词句差异、对应完整英文段落、官方events->skewb及WIC板块语境；确认仅项目名和板块名校正，清理替换产生的多余中文间空格，其余沿用绑定旧版的独立审校。"
+    },
+    {
+      "key": "incidents:131",
+      "contentHash": "5221b46d00191cb4a160e8397f2fd82fa697b9b40b6c1753e938999493781c06",
+      "verdict": "pass",
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.688Z",
+      "scope": "核对全部词句差异、对应完整英文段落、官方events->skewb及WIC板块语境；确认仅项目名和板块名校正，清理替换产生的多余中文间空格，其余沿用绑定旧版的独立审校。"
+    },
+    {
+      "key": "incidents:132",
+      "contentHash": "1e2e5d4c7f6a6be440532ccef6715648f293e132489431d80d973342fa70db79",
+      "verdict": "pass",
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.688Z",
+      "scope": "核对全部词句差异、对应完整英文段落、官方events->skewb及WIC板块语境；确认仅项目名和板块名校正，清理替换产生的多余中文间空格，其余沿用绑定旧版的独立审校。"
+    },
+    {
+      "key": "incidents:153",
+      "contentHash": "6141ddc7837728445eec2c534591fab1f81f03195ec1a8cafef794382220b89c",
+      "verdict": "pass",
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.688Z",
+      "scope": "核对全部词句差异、对应完整英文段落、官方events->skewb及WIC板块语境；确认仅项目名和板块名校正，清理替换产生的多余中文间空格，其余沿用绑定旧版的独立审校。"
+    },
+    {
+      "key": "incidents:19",
+      "contentHash": "7323d8f2b1ffc2c73eff2eee7a788f3d5650e32453a711c9fd5566af74b43c5b",
+      "verdict": "pass",
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.689Z",
+      "scope": "核对全部词句差异、对应完整英文段落、官方events->skewb及WIC板块语境；确认仅项目名和板块名校正，清理替换产生的多余中文间空格，其余沿用绑定旧版的独立审校。"
+    },
+    {
+      "key": "incidents:20",
+      "contentHash": "c957d1086aaab385d31a3670be5a00f5112e0551159aad9937237af23d1dfdfc",
+      "verdict": "pass",
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.689Z",
+      "scope": "核对全部词句差异、对应完整英文段落、官方events->skewb及WIC板块语境；确认仅项目名和板块名校正，清理替换产生的多余中文间空格，其余沿用绑定旧版的独立审校。"
+    },
+    {
+      "key": "incidents:28",
+      "contentHash": "d39aa503da47a183209997ca0686acafd062b3ec84bf6eb0adbc71e114ece77a",
+      "verdict": "pass",
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.689Z",
+      "scope": "核对全部词句差异、对应完整英文段落、官方events->skewb及WIC板块语境；确认仅项目名和板块名校正，清理替换产生的多余中文间空格，其余沿用绑定旧版的独立审校。"
+    },
+    {
+      "key": "incidents:38",
+      "contentHash": "89a6d632c204d056a65695ea012bd1c86da063c4e56bc5be9dfe937e297af76b",
+      "verdict": "pass",
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.689Z",
+      "scope": "核对全部词句差异、对应完整英文段落、官方events->skewb及WIC板块语境；确认仅项目名和板块名校正，清理替换产生的多余中文间空格，其余沿用绑定旧版的独立审校。"
+    },
+    {
+      "key": "incidents:45",
+      "contentHash": "d46ad0331c5ffef4ad063944804f4fad7dc30356d66b0ebf7fe14d9c5b14f6a0",
+      "verdict": "pass",
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.690Z",
+      "scope": "核对全部词句差异、对应完整英文段落、官方events->skewb及WIC板块语境；确认仅项目名和板块名校正，清理替换产生的多余中文间空格，其余沿用绑定旧版的独立审校。"
+    },
+    {
+      "key": "incidents:53",
+      "contentHash": "7764b45686c91e66af74e12179e8d10469f899e60c0e7276409eedb1d72d8b28",
+      "verdict": "pass",
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.690Z",
+      "scope": "核对全部词句差异、对应完整英文段落、官方events->skewb及WIC板块语境；确认仅项目名和板块名校正，清理替换产生的多余中文间空格，其余沿用绑定旧版的独立审校。"
+    },
+    {
+      "key": "posts:/posts/adoption-of-4-pad-timing-august-2026",
+      "contentHash": "ff9a8492d86ee1833ecea8915e87e3fe7137a3bb3b2038e679a8f8c88d77cddb",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.874Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/applications-for-continental-championships-2022-february-2020",
+      "contentHash": "519bf898a56d0f161ee215f6e3c9c04cb970fd744844fa48ad138a1234db4d98",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.875Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/applications-for-wca-continental-championships-2024",
+      "contentHash": "b1d3ab3a81e511785d63272864e6eaa82cd7ab464627233a3d114ff43b3cdfbc",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.875Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/applications-for-wca-continental-championships-2026-july-2025",
+      "contentHash": "9cfb205610c502b2f82bd844039428960ebe9a7a96c8f6b9d401be9f623d1ccd",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.875Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/applications-for-wca-continental-championships-2026-october-2024",
+      "contentHash": "e7b47a7f115a78021c904c7ba487771c0bb0394f256b59a4b0ddb469088e3950",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wac-community-and-staff-representatives-january-2022",
+      "contentHash": "43a8eca523d373734bdee408fd44af614f2bd3961a7e567ff16e2706a331832c",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wac-community-and-staff-representatives-march-2024",
+      "contentHash": "0884645800cf4c70e2a937eab7ba205b4fb40c5573196597d4b4c5bec52c1eda",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wac-community-representatives-february-2019",
+      "contentHash": "d42abd2b516e038e3d082fb4019641c432ddf5cf9c1b1b076ed56ba6849f957f",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wac-community-representatives-october-2020",
+      "contentHash": "9a4420025bddae1bfb899b5ea87062c55c24b174e3ec0b3a7408252d98613350",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wca-financial-committee-members-march-2026",
+      "contentHash": "da75c4187d8d421662ad40b018475f9dd5b71e324188db9eb46938da19732f68",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wca-sports-organization-team-wsot-members-november-2022",
+      "contentHash": "fd0951520fab868d492d72fb25de3503d915a395a48e77d3e377591ec01bc01f",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/forum-digest-november-2022",
+      "contentHash": "fcba3a46f863d9d7d4d0eca2934e0814f03201a20f995ea127ce6f7825cbf372",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/important-changes-to-the-recognition-of-regions",
+      "contentHash": "a2dabbf68b3138fb2eac835a62490b9bf2fd734268db19f088a84b28ba6236bf",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/new-volunteer-position-board-april-2026",
+      "contentHash": "f011348ce0efab1c2cc939466f1af70c4dcef362fa929c266b85599b7e619d22",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/quality-assurance-committee-digest-2025-q1",
+      "contentHash": "55230a9742bec990ff5cc59d180f1432944abfeb55b6c6159f13d389b4e05473",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。",
+        "原文疑点按提案记录保留；此通过仅评价译文忠实度。"
+      ]
+    },
+    {
+      "key": "posts:/posts/regulations-committee-digest-q1-2025",
+      "contentHash": "315b913621d696a476114c1a061f97bd29a98f019f608fbb7cf1a90a708c9a1c",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/removing-official-status-for-3x3x3-with-feet",
+      "contentHash": "fcd703163f617b227f0cfd48a710e65a63869622c5abd6a35f77d1185d7dd273",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/special-exceptions-to-wcrp-for-march-2024",
+      "contentHash": "293bf6079303849662eb941e2e0697d9a27ea98f9c9e3c449aba40ad7a12de8b",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/tnoodle-0-13-3",
+      "contentHash": "ea66d0a681779dafcbb68f65bb3a9072cac8451cf41fdf43b58df6a9ff28e71b",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/tnoodle-0-15-1",
+      "contentHash": "f4931c341ac9ce8a27b270b99ec68aa9d1640f01976a80a8ed50f83f69efc396",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/tnoodle-1-0-1-official-release",
+      "contentHash": "923dda629ff63cd3621efb97a278f3c8a99c604b6baad9dfd8d524111b152d62",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wac-leader-announcement-august-2026",
+      "contentHash": "fea9ce8f6ef9cee329ad1505a66f2cbcf363e9bb89202381f6754575d485b7af",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wat-leader-announcement-august-2026",
+      "contentHash": "b5cb07902c9cdf4a155d7fd43b3094b4190d6c73de15a5945dfac6be8c2d6234",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wca-competition-requirements-policy-update-5-5-may-2026",
+      "contentHash": "b4f82c94addd434e3ad83e89819e9cb5b7e0ed7f43d817cc174c722e50daa9f8",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wca-quality-assurance-committee-leader-announcement-december-2025",
+      "contentHash": "55c83a16fc3ea325f1b9d3ae075d5c83286e56d8c61adbac32a5ad561da30ed3",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wca-regulations-and-guidelines-2014",
+      "contentHash": "257ae699b46dcfac5d9549b410192a2cbc7a33cd1c3fe2a67ba6d1da1d4c8bd5",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wca-regulations-committee-leader-announcement-april-2026",
+      "contentHash": "f35035908c1bbd1d66df07efefb309fa94795e6a8b0681e004738be87ca79c34",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wca-regulations-january-2024",
+      "contentHash": "2d90196852537af43a2ca6cd4960ed08a17a908d28dca6964e36b52c4af95fe5",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wca-regulations-january-2025",
+      "contentHash": "9e4b246df284722ac09d95205a950c7d3e4c38abd9a2e284f1da5370848d9edd",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wca-regulations-may-2021",
+      "contentHash": "5a1cf5d4b701fcf20f1967bac7e2bcb80660c21a73e51b400ea00a4e05b8cfcd",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wca-world-championship-2025-to-welcome-record-number-of-competitors-in-seattle",
+      "contentHash": "c1180e2b1ea3ab66579796c2e55bc10ee36209ffa152716567af05a77f492b38",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wcat-leader-announcement-october-2026",
+      "contentHash": "a2372fa133404aecd7495532b69711193a5fdf18db891f368621436d80829d5b",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.876Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wct-leader-announcement-september-2026",
+      "contentHash": "264b5714afcb2e4bdc1d7260c64081905aa5dd2c3b49074da7f7baa320f55303",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.877Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wdc-digest-2024-q2",
+      "contentHash": "2d2895f8cb57b6528cf587fa47defd1a767f178d5816dab2994a2c7767bcc2fb",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.877Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wec-leader-announcement-november-2023",
+      "contentHash": "59c8a78f8ec6717bc10040af797dd0edcd88904a7a84ac9548737c1fca10bc2e",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.877Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wmct-leader-announcement-september-2026",
+      "contentHash": "9d264f0950788a4a541e0b465c2cbd2465184e010a1d05cbc463dbfb2013272b",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.877Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wmt-leader-announcement-september-2026",
+      "contentHash": "7ea2deb762d3d9031cf39b6305cf685002bb2197acfbc26cfc3eca2733682816",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.877Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/world-cube-association-hosts-newcomer-month-inviting-everyone-to-join-the-thrilling-world-of-competitive-speedcubing",
+      "contentHash": "045c8a531fe81aa88ede8743abd8a3ac4359da48d2f5f64c81d1f387efbe57cb",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:44.877Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/2018-year-end-message",
+      "contentHash": "36d615f09e8735a4ca5eb748d828bfa3962b417718b2cd10f1b02a62da3cabca",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:58.344Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/application-period-closed-for-continental-championships-2020",
+      "contentHash": "f865d848dee32550d9ffed1b3ac24e4530888022cb1d72ea11e0f4a5388fce9b",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:58.345Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/application-period-closed-for-continental-championships-2022-october-2020",
+      "contentHash": "510c56263a7332bbcf6f7ead5471cf6d4fe7b99c44c83ea2f51b990ad86df5f7",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:16:58.345Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/applications-for-continental-championships-2020",
+      "contentHash": "e9e28d111868f583252174cb6a706e2281ac81c60bc39dd471a531d7528e6ec3",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:17:03.855Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/applications-for-continental-championships-2022-july-2020",
+      "contentHash": "eebef6ba9a45be7646be75c9d2466833a7d3fa6e4a0e8a48121c641bd48dd171",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:17:03.856Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/applications-for-continental-championships-2024-september-2023",
+      "contentHash": "df7d4589e31fbdac84aba60eec61278c1a362d2eac0ab369324dc48e3819daf4",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:17:03.856Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/applications-for-wca-continental-championships-2024-october-2022",
+      "contentHash": "f00da75937e4a49a36ba11d134676611f5946a3ff4ef1983f16b9cfbc5f12a46",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:17:10.159Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/applications-for-wca-world-championship-2025-and-continental-championships-2024-april-2023",
+      "contentHash": "7b5def33e22ce2187266949029b0d9261915ba9da859f2eee9625179d4402a68",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:17:10.159Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/applications-for-worlds-championship-2021-and-continental-championships-2022",
+      "contentHash": "7eb3ea4356d25eca33b7c332f3b4fd1d5abc6226f471aa0b5b0772f6962595cc",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:17:10.159Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wca-major-championship-team-members-november-2025",
+      "contentHash": "96071ada3eb41e992256c3be15d2b6247558a6e085dcb38ee4e2f63887f38227",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:17:30.146Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wmct-members-january-2025",
+      "contentHash": "20f56e18c578bbda2fe5832149569861f048abdea2e28ae41cc7745846fb5469",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:17:30.146Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wmt-members-february-2022",
+      "contentHash": "ed15fa50b550d544d749699acf16daace2cf3b9d9d7dfb867eb3a12eb54613d7",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:17:30.146Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wmt-members-january-2023",
+      "contentHash": "4b9d7a1c990c0dd3e485509d0fd206d5ac8de66fc7ad8d004c73d72f7634111a",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:17:30.146Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/continental-championship-2022-announcement-february-2021",
+      "contentHash": "829515ac4a47761ab4fc31181e1762c230c65564d00395cefdc57ec821bfa346",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:17:37.012Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/continental-championship-2022-announcement-november-2020",
+      "contentHash": "5ebf8d6c4402787dfd5dc7d98808f1684722b31e45e75ad1f647940b476beefe",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:17:37.012Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/continental-championship-locations-championship-announcements",
+      "contentHash": "ae6ae1b35d65f143152ea2c146504305fc09c4d77a13c01cc7726f50ee260a7d",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:17:37.013Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/continental-championships-2024-announcement-europe-north-america",
+      "contentHash": "6da33675dfded2852554b11e8de0b90fa11606ed2a97454add65d8c618a751f7",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:17:37.013Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/continental-championships-2024-announcement-oceanic-asia-africa-february-2024",
+      "contentHash": "da0f6a80ed623888de4081319c0053e7e71bf1ab786ac2eb45595a0c0a0bf22f",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:17:37.013Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/expression-of-interest-for-2026-wca-continental-championships-march-2025",
+      "contentHash": "82f70dc40354a6f4005ebed528645a2344b05eb388109fb660c81d13d32ac228",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:17:37.013Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/scramble-accountability-policy-announcement-august-2021",
+      "contentHash": "58eacbc56a2aecf92d97cf5896604d36d1c8377e28d5b3f8e64fb92c94ea07cb",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:17:42.969Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/tnoodle-0-13-5",
+      "contentHash": "b4adec629f3c5bdc35fb7889852b04f75786935a576ba08c7f26bd6ce6d824c8",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:17:42.970Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。",
+        "交叉复核已清理斜转中文之间的多余空格，保留suggests证据强弱。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wca-regulations-january-2026",
+      "contentHash": "c4918a8df9c16dac59a491b850f514ef0fad9853ba0855e55c65f248ab93bce3",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:17:42.970Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。",
+        "交叉复核补回intentional的故意条件；保留对timing和赛制的原文范围。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wqac-digest-2026-q1-q2",
+      "contentHash": "52c8c4c0b384a85d8a9898a9cf9a69c60761ed8ef36946e1179440055290aeba",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:18:02.204Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wqac-leader-announcement-july-2026",
+      "contentHash": "669b5069a0619e43da91f0319f0cb61dd338a20d9c28ec8de9694e22e19a709a",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:18:02.205Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wec-members-march-2024",
+      "contentHash": "1eec29afcd7c13fd79cbda85d7fd680b8b6fb5f04180afa37cb3424250e6c98c",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:18:19.272Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wfc-members-december-2024",
+      "contentHash": "8f67cac136d14f10f948c06b1b80c2f49b1155dc5ca81ab7421ebf5ec4d08a4a",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:18:19.273Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/call-for-applications-wfc-leader-august-2024",
+      "contentHash": "6b22def458af4142e5fb594b229bf803c5bb2cc870b966daab23134870fbe6e9",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:18:19.273Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/changes-to-the-wca-s-list-of-official-events-june-2026",
+      "contentHash": "265c8d2af88d499daa8df671c4773c3fe35b36144c18cec7f0ab7d0a0b1ce454",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:18:31.683Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/competition-safety-policy-changes-september-2021",
+      "contentHash": "200fdbd1789ab56c708f6430fbc8d65569f2ca24180c9f6c0b51ad79928e7294",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:18:31.684Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/feliks-zemdegs-wins-asian-championship-2010",
+      "contentHash": "640156b7d626fbafba8866f9d4b806451ad259671918bb31694eec037eb1068b",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:18:31.684Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/feliks-zemdegs-wins-european-rubik-s-cube-championship-2016-in-prague-czech-republic",
+      "contentHash": "bc80cbb021e446c3b1a212789568c69c7faa02b749bd0742c042eddb2c0eeae1",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:18:38.751Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/feliks-zemdegs-wins-world-rubik-s-cube-championship-2015",
+      "contentHash": "5a593e8f03011a21a6358a60845c8474f1cf10894ec24c82efd79388f3532385",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:18:38.752Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wrc-decision-regarding-an-incident-at-longhorn-cube-day-2017",
+      "contentHash": "457c2a29ba5b18754bc160871370a9f2fa9a0228488f4cf2363c5cbfb5fb57df",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:18:46.446Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wrc-decisions-with-frame-by-frame-analysis",
+      "contentHash": "ac6df37d342a8aa061453e964b97c046a36b2268af5baf5f98b8854a7a27b162",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:18:46.447Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wrc-leader-announcement-june-2024",
+      "contentHash": "8ba2e8bd39a37aa2df71ce048d474aa6474b15ea6849ff926a2d223c26836b12",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:19:17.424Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wrt-leader-announcement-january-2024",
+      "contentHash": "066bb4be4617765152ec8a8b6019b8a33b45dc7ef0585d21032135ea645c0ad2",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:19:17.425Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/call-for-applicants-wst-members-march-2021",
+      "contentHash": "41da11a053ce0149a1bed23fb4e4ff96a0a1ad3a5fdc71aac41285c5f645f53f",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:19:55.913Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。",
+        "交叉复核要求明确PDF格式must/材料条目should，最终稿已区分“须为/并应包含”。"
+      ]
+    },
+    {
+      "key": "posts:/posts/call-for-feedback-wca-regulations-2019-draft",
+      "contentHash": "478d1d1ef355f85f31c1998ac3a9c7fc94d5aacbf01f98a96617ef36725c5f2e",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:19:55.913Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。",
+        "交叉复核移除原文未给出的四舍五入算法，忠实保留取整；ETM保留英文术语并解释。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wca-regulations-may-2019",
+      "contentHash": "9a1e55d40fc6f57fd76a3a480d512bbd32823542ded3923f50bbe52eb12a9d25",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:21:24.235Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wrc-digest-june-2023",
+      "contentHash": "b8ad170603ce7c3f38c973c8a6605bcad969c844010def47edb39498c70accee",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:21:24.235Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wrc-digest-october-2023",
+      "contentHash": "9fbed3fab3271469c6aee7f110c56b3589ce7591666805ebe1cc0791fe7d27b7",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:21:24.235Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/year-end-message-2020",
+      "contentHash": "eeb6923b9db609800ba71465bbe22386650af15a490c4d3b8de32beb0795975e",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:21:24.236Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/year-end-message-2022",
+      "contentHash": "208966cbfec50c9ac806ff22c666fa8ecd70d1467bedf0e36dbdf49517b13fcb",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:21:24.236Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/year-end-message-2024",
+      "contentHash": "1e723e05a543c5550570fc917a97b03724b8eebb7d0a18398ac3fe09eab36080",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:21:24.236Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/regulations-and-guidelines-april-3-2014",
+      "contentHash": "c5019072216e1651a66aaa8e3bc9c0409e9f63d7f0be5ffb38b9e79e30a6e81d",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:21:48.956Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/rubik-s-cube-to-sponsor-the-2022-world-cube-association-continental-championships",
+      "contentHash": "5a875ed1d52f7027b6f7cf0b007e31273a1d688159b00d19e8bf3740d55832e5",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:21:56.580Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/rubik-s-returns-for-year-two-of-sponsorship-with-the-world-cube-association",
+      "contentHash": "b1580546dbaf368c154f2d255c6ce87c5db32d311b9c4a27313f48fb26f71035",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:21:56.581Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/sergey-ryabko-wins-european-rubik-s-cube-championship-2010",
+      "contentHash": "242b149cc7b695dc4da921eaa7d6efae1319a214da2f86ccd2eeb8ffc2df4b1e",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:21:56.581Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wca-asian-championship-2026-update-march-2026",
+      "contentHash": "35693bd9f915963b40ec14419dcbe12a8378f12d46839df9adf5de7ad503a308",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:21:56.581Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wca-european-championship-2026-announcement",
+      "contentHash": "806c3d6e812ce85a68ea12e676a7eb57cacd3946d3339338786fde4531e19270",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:22:01.556Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/world-and-continental-championship-locations-july-2020",
+      "contentHash": "447a1147a2f00001e7fe7cd0890a04609edfb9ff92606990737bdad9e7468e85",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:22:01.557Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/wrc-digest-a-summary-of-2022",
+      "contentHash": "f5fe13d1d65057c58717023b7029b48163dbaa6e729a6a6d61c5fe15695e54dc",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:22:01.557Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/year-end-message-2021",
+      "contentHash": "7a5273e9b815b44b16d9b4dc5a3793eb68fd335c4b6ae1a2ea3e4cee9c341727",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:22:25.408Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/max-park-wins-world-rubik-s-cube-championship-2017-in-paris-france",
+      "contentHash": "b0d058f355879a9c7c3f0e893c54397b966eb58208bc2924478afda261a09d15",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:22:51.360Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/regulations-committee-digest-q3-q4-2024",
+      "contentHash": "aa39f483b162eb863ad6bc565dcb9bd56241028cafd25654489660a9fb5b8400",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:22:51.361Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/year-end-message-2019",
+      "contentHash": "63c47c9d11a609821e0e4c760a4087675f960aa6b84043756ebe8ee39f4b3e0c",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:22:51.361Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    },
+    {
+      "key": "posts:/posts/year-end-message-2023",
+      "contentHash": "bca050fc9aef5dcd510a5cb1c95d5e3dd463365269f7ece6abcdab07dfe024d4",
+      "verdict": "pass",
+      "reviewer": "review_logs",
+      "reviewedAt": "2026-10-26T11:22:51.361Z",
+      "scope": "独立对照完整英文原文与修正后中文全文及修改点；未审外链全文或独立验证原文事实",
+      "notes": [
+        "保留原文数字、日期、范围与义务强度；修正术语符合官方或明确站内来源。"
+      ]
+    }
+  ]
+}

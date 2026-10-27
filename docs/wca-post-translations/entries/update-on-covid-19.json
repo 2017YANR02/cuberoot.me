@@ -12,14 +12,31 @@
     "sourceId": 13964
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "a93ec614001586405918faced122c4319a50771219aeadb6fb08eaeafde713fd",
     "language": "zh-Hans",
     "title": "新冠疫情相关通知",
     "content": "亲爱的 WCA 社区成员：\n\n世界卫生组织（WHO）已将新冠肺炎（COVID-19）认定为全球大流行。WCA 董事会现告知大家，我们正在制定有关举办 WCA 比赛的政策和建议。\n\n在此期间，我们敦促所有社区成员阅读并遵循世卫组织的建议，尤其是在决定是否参加比赛时。\n\n* [世卫组织新冠疫情专题页面](https://www.who.int/emergencies/diseases/novel-coronavirus-2019)\n* [如何保护自己](https://www.who.int/emergencies/diseases/novel-coronavirus-2019/advice-for-public)\n* [旅行建议](https://www.who.int/emergencies/diseases/novel-coronavirus-2019/travel-advice)\n\n请留意社交媒体上的大量不实信息，以世卫组织的指引，以及当地政府或卫生机构推荐的信息为准。\n\n也请注意，各国及政府采取的限制措施各不相同，并会不断调整。请及时了解并遵守你所在国家及旅行目的地的限制和建议。\n\n我们重视工作人员、社区成员和公众的健康与安全。每个人都有责任尽可能减少病毒传播。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:54.102Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "9a8ba77b178b8cc7899802e12059eef369d838865e2767f8e93d2d1d49bef841"
+  "translationHash": "e8f97a318f8599adb9698c98168b91f32cd369f3deeb3ef650b82f89d9268a47",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:59.336Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "a93ec614001586405918faced122c4319a50771219aeadb6fb08eaeafde713fd",
+    "reviewedTranslationHash": "e8f97a318f8599adb9698c98168b91f32cd369f3deeb3ef650b82f89d9268a47",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/update-on-covid-19.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "9a8ba77b178b8cc7899802e12059eef369d838865e2767f8e93d2d1d49bef841"
+  }
 }

@@ -12,14 +12,31 @@
     "sourceId": 14004
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "ae192d4852c57acdf4c2ada35007a9da04f6770dbb95dfe5812384d15054b3f7",
     "language": "zh-Hans",
     "title": "2021 WCA 世锦赛延期通知（2020 年 12 月）",
     "content": "由于全球新冠疫情仍在持续，WCA 董事会与核心主办团队决定，将 WCA 世锦赛推迟至 2021 年 12 月 28–31 日。\n\n我们认为，7 月如期举办世锦赛的可能性正在降低。届时，全球很可能仍有部分防疫限制尚未解除。改到 2021 年 12 月意味着延期 5 个月，这几个月对疫情发展可能至关重要，也能大幅提高我们完整举办一届世锦赛的可能性。\n\n提醒大家，锦标赛日期只有在比赛网站建立、比赛在 WCA 官网公布并显示于比赛列表后，才算正式确认。主办团队的公告可在[这里](https://www.wcaworlds2021.com/news/postponement/)阅读。\n\n感谢理解。希望 2021 年在阿尔梅勒与大家相见，请保重！",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:54.100Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "7f4fb5c4846dd203d0a1a474dc38be99ac0a33bcfe7a35c35920c4414fb04bf0"
+  "translationHash": "43bfcdd448f13139c28451290ef0558e144b334b66685b7784ebc6e727290dd1",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:55.471Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "ae192d4852c57acdf4c2ada35007a9da04f6770dbb95dfe5812384d15054b3f7",
+    "reviewedTranslationHash": "43bfcdd448f13139c28451290ef0558e144b334b66685b7784ebc6e727290dd1",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/postponement-of-wca-world-championship-2021-december-2020.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "7f4fb5c4846dd203d0a1a474dc38be99ac0a33bcfe7a35c35920c4414fb04bf0"
+  }
 }

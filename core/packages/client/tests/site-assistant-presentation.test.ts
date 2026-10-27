@@ -74,7 +74,7 @@ describe('assistant image interactions',()=>{
     await act(async()=>{document.querySelector<HTMLButtonElement>('.site-assistant-compose button[type="submit"]')!.click();});
     expect(props.onAsk).toHaveBeenCalledWith('',false,[image]);
     expect(props.onImagesChange).toHaveBeenCalledWith([]);
-    await act(async()=>{document.querySelector<HTMLButtonElement>('button[title="重新生成"]')!.click();});
+    await act(async()=>{document.querySelector<HTMLButtonElement>('button[aria-label="重试"]')!.click();});
     expect(props.onAsk).toHaveBeenCalledWith('',true,[image]);
     await act(async()=>{document.querySelector<HTMLButtonElement>('button[title="编辑问题"]')!.click();});
     expect(document.querySelector('.site-assistant-edit img')).not.toBeNull();
@@ -171,20 +171,76 @@ describe('assistant linked table presentation',()=>{
   });
 });
 
-it('shows persisted feedback and keeps a failed change unsaved',async()=>{
+it('keeps feedback in one menu and does not apply failed saves',async()=>{
   const id='aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa';
   const props=await render(result,{turns:[{question:'PLL?',result,requestId:id,feedback:'helpful'}]});
-  const up=document.querySelector<HTMLButtonElement>('button[aria-label="有帮助"]')!;
-  expect(up.getAttribute('aria-pressed')).toBe('true');
+  const open = async()=>act(async()=>document.querySelector<HTMLButtonElement>('button[aria-label="评价回答"]')!.click());
+  const bad = async()=>act(async()=>Array.from(document.querySelectorAll<HTMLElement>('[role="option"]')).find(el=>el.textContent?.includes('回复不佳'))!.click());
+  await open();
+  expect(document.querySelector('[role="option"][aria-selected="true"]')?.textContent).toContain('回复优秀');
   vi.mocked(sendAssistantEvent).mockRejectedValueOnce(new Error('offline'));
-  await act(async()=>document.querySelector<HTMLButtonElement>('button[aria-label="没帮助"]')!.click());
-  expect(up.getAttribute('aria-pressed')).toBe('true');expect(props.onFeedback).not.toHaveBeenCalled();
+  await bad();
+  expect(props.onFeedback).not.toHaveBeenCalled();
   expect(document.body.textContent).toContain('反馈未保存');
-  await act(async()=>document.querySelector<HTMLButtonElement>('button[aria-label="没帮助"]')!.click());
+  await open(); await bad();
   expect(props.onFeedback).toHaveBeenCalledWith(id,'other');
 });
 
-it('renders verified public source metadata while rejecting private addresses and raw Markdown links',async()=>{
+it('opens a single-message share preview without publishing it and offers branching',async()=>{
+  const fetcher=vi.spyOn(globalThis,'fetch');
+  const onBranch=vi.fn();
+  await render(result,{onBranch,turns:[{question:'PLL?',result,createdAt:1793034000000}]});
+  const labels=Array.from(document.querySelectorAll('.assistant-answer-toolbar button')).map(el=>el.getAttribute('aria-label'));
+  expect(labels.slice(0,3)).toEqual(['复制','朗读','分享']);
+  await act(async()=>document.querySelector<HTMLButtonElement>('button[aria-label="分享"]')!.click());
+  expect(document.querySelector('.assistant-share-dialog')?.textContent).toContain('分享这条消息的公开链接');
+  expect(fetcher.mock.calls.some(([url])=>String(url).includes('/site-assistant/shares'))).toBe(false);
+  await act(async()=>document.querySelector<HTMLButtonElement>('.assistant-share-dialog button[aria-label="关闭"]')!.click());
+  await act(async()=>document.querySelector<HTMLButtonElement>('button[aria-label="更多"]')!.click());
+  await act(async()=>Array.from(document.querySelectorAll<HTMLElement>('[role="option"]')).find(el=>el.textContent?.includes('创建对话分支'))!.click());
+  expect(onBranch).toHaveBeenCalledWith(0);
+  fetcher.mockRestore();
+});
+
+it('switches read aloud to stop and ignores queued speech after stopping',async()=>{
+  const speak = vi.fn(), cancel = vi.fn();
+  vi.stubGlobal('speechSynthesis', { speak, cancel });
+  vi.stubGlobal('SpeechSynthesisUtterance', class { constructor(public text: string) {} });
+  try {
+    await render({ answer: '这是用于验证朗读停止的长回答。'.repeat(50), sources: [] });
+    await act(async()=>document.querySelector<HTMLButtonElement>('button[aria-label="朗读"]')!.click());
+    expect(speak).toHaveBeenCalledTimes(1);
+    const first = speak.mock.calls[0][0];
+    await act(async()=>document.querySelector<HTMLButtonElement>('button[aria-label="停止朗读"]')!.click());
+    await act(async()=>first.onend());
+    expect(speak).toHaveBeenCalledTimes(1);
+    expect(cancel).toHaveBeenCalledTimes(2);
+    expect(document.querySelector('button[aria-label="朗读"]')).not.toBeNull();
+  } finally { vi.unstubAllGlobals(); }
+});
+
+it('links verified addresses in the answer body and preserves Markdown labels',async()=>{
+  await render({answer:'训练：/recognize/pll（PLL 观察）。也可打开 [识别训练](/zh/recognize/pll) 或 /timer?content=pll。',sources:[
+    {id:'pll',title:'观察',href:'/recognize/pll',read:true},
+  ],actions:[{id:'trainer',title:'公式训练',href:'/timer?content=pll'}]});
+  const links=[...document.querySelectorAll<HTMLAnchorElement>('.site-assistant-inline-link')];
+  expect(links.map(a=>[a.textContent,a.getAttribute('href')])).toEqual([
+    ['/recognize/pll','/zh/recognize/pll'],
+    ['识别训练','/zh/recognize/pll'],
+    ['/timer?content=pll','/zh/timer?content=pll'],
+  ]);
+});
+
+it('does not link code, unverified paths, or partial matches of a verified path',async()=>{
+  await render({answer:'`/recognize/pll` /recognize/pll/unknown /recognize/pll?unknown=1 https://evil.example/recognize/pll [未知](/unknown)\n\n```text\n/recognize/pll\n```',sources:[
+    {id:'pll',title:'观察',href:'/recognize/pll',read:true},
+  ]});
+  expect(document.querySelector('.site-assistant-inline-link')).toBeNull();
+  expect(document.querySelectorAll('code')).toHaveLength(2);
+  expect(document.querySelector('a[href="/zh/unknown"]')).toBeNull();
+});
+
+it('renders verified public source metadata while rejecting private addresses and unverified Markdown links',async()=>{
   await render({answer:'公告。[[news:official]] [[external]] 不可信链接。[[bad]] [自行生成的链接](https://unverified.example/path)',sources:[
     {id:'news:official',title:'Official news',href:'https://www.worldcubeassociation.org/posts/example',read:true},
     {id:'external',title:'Retrieved documentation',href:'https://docs.example.org/guide',read:true},

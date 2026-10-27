@@ -12,14 +12,31 @@
     "sourceId": 14257
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "6bfc6e6edaa74f31ccae96e76d27199e829b20e4efc0e37d4c11ccc144480883",
     "language": "zh-Hans",
-    "title": "WQAC 负责人任命公告（2026 年 7 月）",
-    "content": "亲爱的 WCA 社区成员：\n\n我们很高兴宣布，Roxana Johnson 已被任命为 WCA 质量保证委员会（WQAC）的新任负责人。Roxana 此前已是 WQAC 的资深成员。\n\nWCA 董事会依据《WCA 委员会与团队[议案](https://documents.worldcubeassociation.org/documents/motions/10.2025.0%2520-%2520Committees%2520and%2520Teams.pdf)》第 5 节，选出 Roxana，并通过投票批准了这一任命。任命自 2026 年 7 月 13 日生效。\n\n在遴选新负责人期间，Dan Smith 曾临时领导该团队，我们谨向他表示感谢，并祝 Roxana 在新的岗位上一切顺利。Dan 将暂时继续担任 WQAC 资深成员。\n\nRoxana 是这一岗位的唯一申请人，其申请材料可在[此处](https://drive.google.com/drive/folders/1MKm-6jg6nvIStwzJUn7PV-9JDTmddILR?usp=sharing)查看。",
+    "title": "WCA 质量保证委员会负责人任命公告（2026 年 7 月）",
+    "content": "亲爱的 WCA 社区成员：\n\n我们很高兴宣布，Roxana Johnson 已被任命为 WCA 质量保证委员会（WQAC）的新任负责人。Roxana 此前已是 WQAC 的高级成员。\n\nWCA 董事会依据《WCA 委员会与团队[议案](https://documents.worldcubeassociation.org/documents/motions/10.2025.0%2520-%2520Committees%2520and%2520Teams.pdf)》第 5 节，选出 Roxana，并通过投票批准了这一任命。任命自 2026 年 7 月 13 日生效。\n\n在遴选新负责人期间，Dan Smith 曾临时领导该团队，我们谨向他表示感谢，并祝 Roxana 在新的岗位上一切顺利。Dan 将暂时继续担任 WQAC 高级成员。\n\nRoxana 是这一岗位的唯一申请人，其申请材料可在[此处](https://drive.google.com/drive/folders/1MKm-6jg6nvIStwzJUn7PV-9JDTmddILR?usp=sharing)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:40:49.177Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "95d0b19d6f467f568d4735355200436abb9a17e69807f9deccdc9a58cabd98ff"
+  "translationHash": "3ab74c9dd3ab1f633eeae854f26eff6ac3e5e01e399dac581c4a4b2dd3b06e65",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:18:02.205Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "6bfc6e6edaa74f31ccae96e76d27199e829b20e4efc0e37d4c11ccc144480883",
+    "reviewedTranslationHash": "3ab74c9dd3ab1f633eeae854f26eff6ac3e5e01e399dac581c4a4b2dd3b06e65",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wqac-leader-announcement-july-2026.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "95d0b19d6f467f568d4735355200436abb9a17e69807f9deccdc9a58cabd98ff"
+  }
 }

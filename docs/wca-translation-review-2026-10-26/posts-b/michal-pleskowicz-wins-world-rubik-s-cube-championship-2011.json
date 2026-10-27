@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/michal-pleskowicz-wins-world-rubik-s-cube-championship-2011",
+  "path": "docs/wca-post-translations/entries/michal-pleskowicz-wins-world-rubik-s-cube-championship-2011.json",
+  "sourceHash": "75c90112d0c88dba663b39757b3955794f5adb0939fdbdcda75a589607803fa6",
+  "inputTranslationHash": "1f93f07d1315799bf45ce085d188811659643d0a72dbf37e901c3790fa65d81a",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:44.903Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

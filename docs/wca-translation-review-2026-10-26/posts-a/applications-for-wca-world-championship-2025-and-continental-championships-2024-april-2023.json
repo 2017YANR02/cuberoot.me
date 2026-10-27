@@ -1,0 +1,18 @@
+{
+  "key": "posts:/posts/applications-for-wca-world-championship-2025-and-continental-championships-2024-april-2023",
+  "path": "docs/wca-post-translations/entries/applications-for-wca-world-championship-2025-and-continental-championships-2024-april-2023.json",
+  "sourceHash": "b2fd278bd9268f5be0445a84c443d9645dad82157ac1269e1480972d155f9c46",
+  "inputTranslationHash": "1b27ba47695f67d4a7e84658f57929195ce4df2ca8f21ff214ea5be365b8973b",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:06:14.454Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "correction_required",
+  "notes": [
+    "完整对照正文与标题；核对全部申请/任命主体、时间、权限、附录条目及材料要求。"
+  ],
+  "changes": [
+    "统一 Continental 为大洲赛事/纪录；官方规则11f1c为大洲锦标赛，避免跨洲歧义。"
+  ],
+  "title": "2025 WCA 世锦赛及 2024 年大洲锦标赛申办通知（2023 年 4 月）",
+  "content": "WCA 董事会现征集 **2025 WCA 世锦赛**，以及以下地区 **2024 年大洲锦标赛**的申办方案：\n\n* 非洲\n* 亚洲\n* 大洋洲\n* 南美洲\n\n请与你所在国家的代表讨论，确认是否有意愿、有能力申办。请注意，举办这一规模的比赛，在赛前和比赛期间都需要投入大量时间与精力。\n\nWCA 世锦赛和大洲锦标赛仅接受 WCA 认可的地区组织申办。有意申办者，请于 **2023 年 7 月 25 日 23:59 UTC 前**，私下将申请材料发送至 [board@worldcubeassociation.org](mailto:board@worldcubeassociation.org)。**材料须以 PDF 格式提交两个版本：**一份包含所有申办细节的完整版，以及一份删去敏感内容（如有）、可供公开的版本。\n\n申请材料至少应包含以下信息：\n\n### 希望何时举办比赛？\n\n1a. 可选日期。\n1b. 比赛天数。\n1c. 与世界各地学校假期的重合情况。\n\n### 希望在本国哪个地方举办比赛？\n\n2a. 城市对外国游客的吸引力，以及可供游览的景点。\n2b. 国际、国内及本地交通的便利程度。\n2c. 不同价位的酒店或公寓供应情况。\n2d. 场馆、面积及布置，包括舞台、观众席、练习桌和附属房间。\n2e. 可用技术设施，包括网络、视频直播、灯光和音响。\n2f. 可容纳的选手与观众人数。\n\n### 主办团队和工作人员如何组成？\n\n3a. 核心团队成员。\n3b. 核心团队的经验。\n3c. 其他参与方。\n3d. 本地志愿者的人数和能力；建议约 20% 的选手担任工作人员。\n3e. 需要外国代表提供哪些支持。\n\n### 比赛总预算是多少？\n\n4a. 支出：场租、场馆服务、舞台、设备、装饰、网站、胸牌、挂绳、礼包和奖品等。\n4b. 收入：报名费、赞助和地方政府支持等。\n\n[这份示例表格](https://docs.google.com/spreadsheets/d/1w6uxOHrr40of1R4-NjU1vy7fVJXRHiRZBn53Hc-IOk8)列出了大型比赛需要安排和编入预算的部分事项，但并非完整清单。\n\n关于预算，请注意，我们正在敲定一项赞助安排，预计将为这些锦标赛提供可观的资金支持。细节确定后，会告知获选团队。\n\n申请期结束后，WCA 董事会将与申办方面谈，征询其他 WCA 工作人员的意见，并通过投票决定举办地点。如有董事参与某个申办团队，该董事在选拔流程中的职责将由其他人代替，例如高级代表或委员会、团队负责人。\n\n我们希望这些比赛能够体现 WCA 对大型赛事的理念，进一步提高协会的专业水平，为选手提供尽可能好的参赛体验，也为全世界呈现精彩的比赛。\n\n感谢大家的配合，期待收到你们的申办材料！"
+}

@@ -12,14 +12,33 @@
     "sourceId": 14030
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "756928c0a105de9d0727ee094310b9a512f70b9ea48be9831b949608ed4b625f",
     "language": "zh-Hans",
     "title": "比赛公示规定（2021 年 8 月）",
     "content": "WCA 董事会决定，比赛审批须遵循以下指引：\n\n参考数据：https://ourworldindata.org/coronavirus\n\n所在国家每百万人病例数低于 1：\n\n- 高级代表可批准比赛不受相关限制举办，即组织者不必遵循 WCA 比赛安全政策中“比赛举办”一节的要求。\n- 高级代表在批准不受限制的比赛前，应考虑感染更普遍地区的人员前来参赛的可能性。\n\n所在国家每百万人病例数低于 50：\n\n- 高级代表可批准比赛。\n- 应审查比赛安全方案，确认其已考虑 WCA 比赛安全政策中“比赛举办”一节的要求。\n- 获批人数上限最多为每 2 平方米 1 名到场人员（每 4 平方米 1 名选手）。\n- 如果每百万人病例数升至 50 以上但未超过 100，除确认安全方案足以应对病例增加外，无须采取其他行动。\n\n所在国家每百万人病例数低于 100：\n\n- 比赛由董事会负责审批。\n- 比赛安全方案将通过我们的 Google 表单链接提交审查，方案应完整涵盖 WCA 比赛安全政策中“比赛举办”一节的要求。\n- 获批人数上限最多为每 3 平方米 1 名到场人员（每 6 平方米 1 名选手）。\n- 如果在赛前两周至赛前 7 天这段时间内，每百万人病例数升至 100 以上，比赛将被取消，符合下一节条件的情况除外。\n\n所在国家每百万人病例数低于 200：\n\n- 如果所在国家每百万人病例数超过 100，将不再公示新的比赛。\n- 已公示的比赛，须同时符合以下 3 项要求方可继续举办：\n  - 超过 50% 的人口已接种第一剂新冠疫苗。\n  - 所有到场人员均须在比赛前至少 14 天完成最后一剂新冠疫苗接种，或出示比赛开始前不超过 96 小时内的新冠检测阴性证明。组织者／代表必须在每名到场人员进入场馆前核验相关证明。\n  - 比赛全程严格遵守 WCA 比赛安全政策的所有要求。\n- 如果在赛前两周至赛前 7 天这段时间内，每百万人病例数升至 200 以上，比赛一律取消。",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.569Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "10853eb4a61c06f38f708b76c3c46a64bc76d05dd832531eb67e158edf83dd51"
+  "translationHash": "5eb62afb37ec4a5de2cfeb866664287b9a05b70b0ad69702f7b2a0ad28681114",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:13:03.043Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "756928c0a105de9d0727ee094310b9a512f70b9ea48be9831b949608ed4b625f",
+    "reviewedTranslationHash": "5eb62afb37ec4a5de2cfeb866664287b9a05b70b0ad69702f7b2a0ad28681114",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/competition-announcement-rules-august-2021.json",
+    "sourceConcern": false,
+    "notes": [
+      "已全文核对，保留历史政策语境；逐项核对疫情阈值、面积人数、疫苗天数/检测小时、例外以及锦标赛申办表所有日期和暂定限定。"
+    ],
+    "inputTranslationHash": "10853eb4a61c06f38f708b76c3c46a64bc76d05dd832531eb67e158edf83dd51"
+  }
 }

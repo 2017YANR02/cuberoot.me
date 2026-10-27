@@ -12,16 +12,33 @@
     "sourceId": 14089
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "e1ce9718e03bd21ba0cdcdd37fe274fd145e04fceb6f8a0b00f6b31cb8d2ddcb",
     "language": "zh-Hans",
     "title": "招募 WCA 市场营销组成员（2023 年 1 月）",
-    "content": "WCA 市场营销组正在招募新成员！所有人都可以申请，我们也鼓励尚未在 WCA 任职的人报名！\n\n**WCA 市场营销组负责什么？**\n\nWMT 负责管理 WCA 与外部伙伴的关系，同时参与 WCA 品牌相关工作，包括周边商品、公众参与、市场调研及合作伙伴事务。\n\n以下是 WMT 正在开展的一些项目：\n\n* 周边商品\n  * 你可能已经看到上线的 [WCA 周边商店](https://shop.worldcubeassociation.org/)。WMT 正在寻找能够帮助开发和拓展周边商品的成员。\n* 赞助\n  * WMT 与 Spin Master 等现有 WCA 赞助商合作，也在全球和当地范围内寻找潜在合作机会。特别欢迎曾为自己主办的比赛争取赞助的人申请。\n* 锦标赛支持\n  * WMT 希望招募能够协助推广各洲锦标赛和世锦赛的成员，重点是宣传 WCA 品牌、扩大影响范围。\n* 器材小组\n  * WMT 负责处理世界各地代表提交的器材订单。有项目管理和沟通经验的人可以在这方面发挥作用。\n\n所有人都可以申请，不要求申请者目前已在 WCA 任职。\n\n**申请条件**\n\n* 对 WCA 品牌推广有兴趣或相关经验。\n* 每周可投入约 5–10 小时。\n* 有创意，能与团队合作。\n* 熟悉周边商品、赞助或供应商管理者优先。\n\n申请者须提交 PDF 格式的材料，包含简短的个人介绍、参与 WCA 的经历、申请加入 WMT 的原因，以及相关经验或技能。\n\n**请于即日起至 2023 年 2 月 20 日 23:59 UTC，将申请发送至 sgrover@worldcubeassociation.org。**",
+    "content": "WCA 市场营销组正在招募新成员！所有人都可以申请，我们也鼓励尚未在 WCA 任职的人报名！\n\n**WCA 市场营销组负责什么？**\n\nWMT 负责管理 WCA 与外部伙伴的关系，同时参与 WCA 品牌相关工作，包括周边商品、公众参与、市场调研及合作伙伴事务。\n\n以下是 WMT 正在开展的一些项目：\n\n* 周边商品\n  * 你可能已经看到上线的 [WCA 周边商店](https://shop.worldcubeassociation.org/)。WMT 正在寻找能够帮助开发和拓展周边商品的成员。\n* 赞助\n  * WMT 与 Spin Master 等现有 WCA 赞助商合作，也在全球和当地范围内寻找潜在合作机会。特别欢迎曾为自己主办的比赛争取赞助的人申请。\n* 锦标赛支持\n  * WMT 希望招募能够协助推广各大洲锦标赛和世锦赛的成员，重点是宣传 WCA 品牌、扩大影响范围。\n* 器材小组\n  * WMT 负责处理世界各地代表提交的器材订单。有项目管理和沟通经验的人可以在这方面发挥作用。\n\n所有人都可以申请，不要求申请者目前已在 WCA 任职。\n\n**申请条件**\n\n* 对 WCA 品牌推广有兴趣或相关经验。\n* 每周可投入约 5–10 小时。\n* 有创意，能与团队合作。\n* 熟悉周边商品、赞助或供应商管理者优先。\n\n申请者须提交 PDF 格式的材料，包含简短的个人介绍、参与 WCA 的经历、申请加入 WMT 的原因，以及相关经验或技能。\n\n**请于即日起至 2023 年 2 月 20 日 23:59 UTC，将申请发送至 sgrover@worldcubeassociation.org。**",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.534Z",
-    "reviewStatus": "pending_independent_review",
-    "revisedAt": "2026-10-25T07:28:01.629Z",
-    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "66049730e22f8c775d54e049fb74db0e1789dedd6124ad34c998d5f5df54ffdf"
+  "translationHash": "213c92981d971b6805a5e166f64a42d61a548425ed76a9f551be71da42a78dd7",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:17:30.146Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "e1ce9718e03bd21ba0cdcdd37fe274fd145e04fceb6f8a0b00f6b31cb8d2ddcb",
+    "reviewedTranslationHash": "213c92981d971b6805a5e166f64a42d61a548425ed76a9f551be71da42a78dd7",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/call-for-applicants-wmt-members-january-2023.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇全文核对招募领域、地域限制、工时、材料和截止日期。"
+    ],
+    "inputTranslationHash": "66049730e22f8c775d54e049fb74db0e1789dedd6124ad34c998d5f5df54ffdf"
+  }
 }

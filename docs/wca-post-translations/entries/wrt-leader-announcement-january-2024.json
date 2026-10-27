@@ -12,16 +12,31 @@
     "sourceId": 14143
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "1d58e6984e5dbd067d80104187335a1b27e8b2d4f30c0ce63c37a64a605cb072",
     "language": "zh-Hans",
     "title": "WCA 成绩组负责人任命公告（2024 年 1 月）",
-    "content": "我们很高兴地宣布，Callum Goodyear 将担任 WCA 成绩组（WRT）的新负责人。Callum 此前已是 WRT 的资深成员。\n\n按照 WCA 委员会和团队相关议案第 4 节，WCA 董事会选定 Callum，并经现任委员会负责人和高级代表投票批准。\n\n感谢 Sébastien Auroux 在过去 9 年中带领 WRT 所做的大量工作，祝 Callum 履新顺利。\n\nCallum 是本次岗位的唯一申请人，他的申请材料可在[此处](https://drive.google.com/drive/folders/1TvKJvF2usHgqXCCo13SGR9GNrd2RnZHn)查看。",
+    "content": "我们很高兴地宣布，Callum Goodyear 将担任 WCA 成绩组（WRT）的新负责人。Callum 此前已是 WRT 的高级成员。\n\n按照 WCA 委员会和团队相关议案第 4 节，WCA 董事会选定 Callum，并经现任委员会负责人和高级代表投票批准。\n\n感谢 Sébastien Auroux 在过去 9 年中带领 WRT 所做的大量工作，祝 Callum 履新顺利。\n\nCallum 是本次岗位的唯一申请人，他的申请材料可在[此处](https://drive.google.com/drive/folders/1TvKJvF2usHgqXCCo13SGR9GNrd2RnZHn)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:00.933Z",
-    "reviewStatus": "pending_independent_review",
-    "revisedAt": "2026-10-25T07:28:01.629Z",
-    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "cbc4657d6a79f16adb9f4f3f68db274cda7175c153331d51842ffd3b4b49b515"
+  "translationHash": "461ef79e90e4ee73f4fe10f7a9189ec4df4ae20a4b4fb78690f1336f9ddeec37",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:19:17.425Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "1d58e6984e5dbd067d80104187335a1b27e8b2d4f30c0ce63c37a64a605cb072",
+    "reviewedTranslationHash": "461ef79e90e4ee73f4fe10f7a9189ec4df4ae20a4b4fb78690f1336f9ddeec37",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wrt-leader-announcement-january-2024.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "cbc4657d6a79f16adb9f4f3f68db274cda7175c153331d51842ffd3b4b49b515"
+  }
 }

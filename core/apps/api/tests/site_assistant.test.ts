@@ -1,5 +1,5 @@
 import { SITE_ASSISTANT_ANSWER_MAX_LENGTH, SITE_ASSISTANT_BODY_BYTES, SITE_ASSISTANT_QUESTION_MAX_LENGTH } from '@cuberoot/shared/site-assistant';
-import { modelResponse } from './fixtures/site_assistant_model.js';
+import { modelResponse, wireEvidence } from './fixtures/site_assistant_model.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createSiteAssistantRoutes as createRoutes } from '../src/routes/site_assistant.js';
 import { answerSiteQuestion, assistantConfig, pageText, requestedAssistantLimit } from '../src/utils/site_assistant.js';
@@ -20,6 +20,33 @@ const ask = () => new Request('https://api.example/site-assistant', {
 });
 
 describe('site assistant grounding', () => {
+  it('supplies the configured model identity without exposing provider credentials',async()=>{
+    const model=vi.fn().mockResolvedValue(modelResponse({answer:'The configured model is fixture.',sourceIds:[]}));
+    await answerSiteQuestion('What model are you?','en',config,AbortSignal.timeout(5000),withCatalog(model));
+    const body=JSON.parse(String(model.mock.calls[0][1]?.body));
+    expect(JSON.parse(body.messages[1].content).runtime.model).toBe(config.model);
+    expect(body.messages[1].content).not.toContain(config.key);
+    expect(model).toHaveBeenCalledTimes(1);
+    expect(body.messages[0].content).not.toContain('pages {query:');
+    expect(body.tools.find((tool:any)=>tool.function.name==='pages').function.description).toContain('Default user searches exclude /dev');
+  });
+  it('withholds an unapproved conflicting table even if the final draft cites it',async()=>{
+    vi.mocked(runAnalysisQuery).mockReset().mockResolvedValue({sources:[{id:'analysis:wrong',title:'Wrong',href:'/wca/results',read:true}],artifacts:[{kind:'table',title:'Wrong',columns:['Competitions'],rows:[['178']]}],evidence:{columns:[{countMeasure:'results'}],rows:[['178']]}});
+    const model=vi.fn().mockResolvedValueOnce(modelResponse({calls:[{tool:'analysis_schema',datasets:['results']},{tool:'analysis_query',title:'Wrong',description:'Count',query:{}}]}))
+      .mockResolvedValueOnce(modelResponse({answer:'178 competitions',sourceIds:['analysis:wrong']}))
+      .mockResolvedValueOnce(modelResponse({answer:'178 competitions',sourceIds:['analysis:wrong'],reviewedSourceIds:[]}));
+    const result=await answerSiteQuestion('Count my competitions','en',config,AbortSignal.timeout(5000),withCatalog(model));
+    expect(result.artifacts).toEqual([]);expect(result.sources).toEqual([]);expect(result.answer).not.toContain('178');
+  });
+  it('preserves a reviewed evidence gap without displaying rejected calculations',async()=>{
+    vi.mocked(runAnalysisQuery).mockReset().mockResolvedValue({sources:[{id:'analysis:wrong',title:'Wrong',href:'/wca/results',read:true}],artifacts:[{kind:'table',title:'Wrong',columns:['Count'],rows:[['178']]}],evidence:{rows:[['178']]}});
+    const model=vi.fn().mockResolvedValueOnce(modelResponse({calls:[{tool:'analysis_schema',datasets:['results']},{tool:'analysis_query',title:'Wrong',description:'Count',query:{}}]}))
+      .mockResolvedValueOnce(modelResponse({answer:'178',sourceIds:['analysis:wrong']}))
+      .mockResolvedValueOnce(modelResponse({answer:'The available imported results cannot verify an event that just happened.',sourceIds:[],reviewedSourceIds:[]}));
+    const result=await answerSiteQuestion('Was a record broken just now?','en',config,AbortSignal.timeout(5000),withCatalog(model));
+    expect(result.artifacts).toEqual([]);expect(result.sources).toEqual([]);
+    expect(result.answer).toBe('The available imported results cannot verify an event that just happened.');
+  });
   it.each([
     ['你好', '你好，有什么想聊的？'],
     ['解释一下光合作用', '光合作用把光能转化为化学能。'],
@@ -123,13 +150,13 @@ describe('site assistant grounding', () => {
       .mockResolvedValueOnce(modelResponse({calls:[{tool:'analysis_schema',datasets:['results']},call]}))
       .mockResolvedValueOnce(modelResponse({calls:[call]}))
       .mockResolvedValueOnce(modelResponse({answer:'Computed from the imported results.',sourceIds:['analysis:test']}))
-      .mockResolvedValueOnce(modelResponse({answer:'Computed from the imported results.',sourceIds:['analysis:test']}));
+      .mockResolvedValueOnce(modelResponse({answer:'Computed from the imported results.',sourceIds:['analysis:test'],reviewedSourceIds:['analysis:test']}));
     const answer=await answerSiteQuestion('Compare my competition counts by month','en',config,AbortSignal.timeout(5000),withCatalog(model),[],'2017YANR02');
     expect(runAnalysisQuery).toHaveBeenCalledTimes(2);
     expect(vi.mocked(runAnalysisQuery).mock.calls[0][3]).toEqual(new Set(['2017YANR02']));
-    expect(JSON.parse(String(model.mock.calls[1][1]?.body)).messages[1].content).toContain('Call analysis_schema');
+    expect(JSON.stringify(JSON.parse(String(model.mock.calls[1][1]?.body)).messages)).toContain('Call analysis_schema');
     const repair=JSON.parse(String(model.mock.calls[2][1]?.body));
-    expect(repair.messages[1].content).toContain('Correct the grouping');
+    expect(JSON.stringify(repair.messages)).toContain('Correct the grouping');
     expect(repair.max_tokens).toBe(4096);
     expect(answer.artifacts).toHaveLength(1);expect(answer.sources.map(s=>s.id)).toEqual(['analysis:test']);
   });
@@ -143,7 +170,8 @@ describe('site assistant grounding', () => {
       .mockResolvedValueOnce(modelResponse({calls:[call]}))
       .mockResolvedValueOnce(modelResponse({answer:'Both months have no predecessor.',sourceIds:['analysis:counts']}))
       .mockResolvedValueOnce(modelResponse({calls:[{...call,query:{corrected:true}}]}))
-      .mockResolvedValueOnce(modelResponse({answer:'Computed counts and differences are below.',sourceIds:['analysis:complete']}));
+      .mockResolvedValueOnce(modelResponse({answer:'Computed counts and differences are below.',sourceIds:['analysis:complete']}))
+      .mockResolvedValueOnce(modelResponse({answer:'Computed counts and differences are below.',sourceIds:['analysis:complete'],reviewedSourceIds:['analysis:complete']}));
     const result=await answerSiteQuestion('Compare monthly counts and differences','en',config,AbortSignal.timeout(5000),withCatalog(model));
     const review=JSON.parse(String(model.mock.calls[3][1]?.body));
     expect(JSON.parse(review.messages[1].content).draftAnswer).toBe('Both months have no predecessor.');
@@ -164,7 +192,7 @@ describe('site assistant grounding', () => {
       .mockResolvedValueOnce(modelResponse({calls:[call]}))
       .mockResolvedValueOnce(modelResponse({calls:[{...call,query:{step:2}}]}))
       .mockResolvedValueOnce(modelResponse({answer:'All measures are complete.',sourceIds:['analysis:partial']}))
-      .mockResolvedValueOnce(modelResponse({answer:'All measures are complete.',sourceIds:['analysis:partial']}));
+      .mockResolvedValueOnce(modelResponse({answer:'All measures are complete.',sourceIds:['analysis:partial'],reviewedSourceIds:['analysis:partial']}));
     const result=await answerSiteQuestion('Compare the counts and changes','en',config,AbortSignal.timeout(5000),withCatalog(model));
     expect(result.answer).toContain('Some calculations could not be completed');
     expect(result.answer).not.toContain('All measures are complete');
@@ -227,14 +255,15 @@ describe('site assistant grounding', () => {
   });
   it.each(['WC 2027','2027年世锦赛的相关信息','世锦赛 2027 在哪办','明年世锦赛在哪里办','Where will next year\'s World Championship be held?'])('reads the official announcement summary before treating %s as a missing competition',async question=>{
     vi.useFakeTimers();vi.setSystemTime(new Date('2026-10-02T12:00:00Z'));
-    const fetcher=vi.fn<typeof fetch>().mockResolvedValueOnce(modelResponse({answer:'暂无比赛信息。'})).mockResolvedValueOnce(modelResponse({answer:'2027 年世锦赛将在瑞典乌普萨拉举办；2025 年 7 月公告未公布日期和报名安排。',sourceIds:['announcement:wc-2027']}));
+    const fetcher=vi.fn<typeof fetch>().mockResolvedValueOnce(modelResponse({answer:'暂无比赛信息。'})).mockResolvedValueOnce(modelResponse({answer:'2027 年世锦赛将在瑞典乌普萨拉举办；2025 年 7 月公告未公布日期和报名安排。',sourceIds:['announcement:wc-2027']}))
+      .mockResolvedValueOnce(modelResponse({answer:'2027 年世锦赛将在瑞典乌普萨拉举办；2025 年 7 月公告未公布日期和报名安排。',sourceIds:['announcement:wc-2027']}));
     const result=await answerSiteQuestion(question,'zh',config,AbortSignal.timeout(5000),withCatalog(fetcher));
     const request=JSON.parse(String(fetcher.mock.calls[1][1]?.body));
     expect(request.messages[1].content).toContain('瑞典乌普萨拉');
     expect(request.messages[1].content).toContain('未公布具体比赛日期');
     expect(result.actions?.map(a=>a.href)).toEqual(['/wca/wc-2027']);
     expect(result.sources[0].read).toBe(true);
-    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(fetcher).toHaveBeenCalledTimes(3);
   });
   it('retains the actual topic when the model searches with a broad paraphrase',async()=>{
     const destinations=[...Array.from({length:15},(_,i)=>({lang:'en',href:`/map-${i}`,title:`Site map ${i}`})),{lang:'en',href:'/dev/architecture',title:'Architecture Atlas'}];
@@ -266,8 +295,10 @@ describe('site assistant grounding', () => {
       if(String(input).includes('/assistant/pages.json')) return Response.json({pages:[]});
       const count=fetcher.mock.calls.filter(([url])=>String(url).includes('/chat/completions')).length;
       if(count===2) {
-        const context=JSON.parse(JSON.parse(String(init?.body)).messages[1].content);
-        const destinations=context.evidence[0].data.destinations;
+        const request=JSON.parse(String(init?.body));
+        const context=JSON.parse(request.messages[1].content);
+        expect(context.evidence).toEqual([]); // Native tool results are sent once, in the tool transcript.
+        const destinations=wireEvidence(request)[0].data.destinations;
         expect(destinations.every((p:any)=>!p.href.endsWith('/select'))).toBe(true);
         expect(destinations.some((p:any)=>p.href==='/alg/3x3/oll')).toBe(true);
       }
@@ -308,6 +339,43 @@ describe('site assistant grounding', () => {
     const result=await answerSiteQuestion('我要学习三阶 OL 和 PL 公式','zh',config,AbortSignal.timeout(5000),withCatalog(fetcher));
     expect(result.actions?.map(a=>a.href)).toEqual(['/alg/3x3/oll','/alg/3x3/pll','/alg/3x3/pll/select']);
     expect(result.sources.every(s=>s.read===false)).toBe(true);
+  });
+  it('does not confuse relative time periods with result limits',()=>{
+    for(const question of ['最近一个月 WCA 规则有改动吗？','最近三个月的比赛','前一个星期的新闻'])expect(requestedAssistantLimit(question)).toBeUndefined();
+    expect(requestedAssistantLimit('最近三场比赛')).toBe(3);
+    expect(requestedAssistantLimit('前 10 个比赛')).toBe(10);
+  });
+  it('discovers an entry before recovering an unsupported site draft',async()=>{
+    const model=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(modelResponse({answerKind:'site_content',answer:'Unverified steps.'}))
+      .mockResolvedValueOnce(modelResponse({answerKind:'general',answer:'打开计时器记录练习成绩。',sourceIds:['timer']}));
+    const fetcher=vi.fn<typeof fetch>().mockImplementation(async(input,init)=>String(input).includes('/assistant/pages.json')
+      ? Response.json({pages:[],destinations:[{lang:'zh',href:'/timer',title:'计时器',description:'记录练习成绩'}]}) : model(input,init));
+    const result=await answerSiteQuestion('我想记录练习成绩','zh',config,AbortSignal.timeout(5000),fetcher);
+    expect(result.answer).toContain('打开计时器');
+    expect(result.answer).not.toContain('Unverified');
+    expect(result.actions?.map(a=>a.href)).toEqual(['/timer']);
+    expect(model).toHaveBeenCalledTimes(2);
+    const request=JSON.parse(String(model.mock.calls[1][1]?.body));
+    expect(wireEvidence(request).map((item:any)=>item.tool.tool)).toEqual(['navigation']);
+  });
+  it('keeps full page names searchable when the menu label is shorter and surrounding words match many other pages',async()=>{
+    const fetcher=vi.fn<typeof fetch>().mockImplementation(async(input,init)=>{
+      if(String(input).includes('/assistant/pages.json')) return Response.json({pages:[{lang:'zh',href:'/timer',title:'计时器训练',text:''}],destinations:Array.from({length:20},(_,i)=>({lang:'zh',href:`/results-${i}`,title:'今天记录还原成绩 '+i}))});
+      const count=fetcher.mock.calls.filter(([url])=>String(url).includes('/chat/completions')).length;
+      if(count===2) {
+        const request=JSON.parse(String(init?.body));
+        expect(request.messages.map((m:any)=>typeof m.content==='string'?m.content:JSON.stringify(m.content)).join('\n')).toContain('"href":"/timer"');
+      }
+      return modelResponse(count===1 ? {calls:[{tool:'navigation',query:'计时器'}]} : {answer:'打开计时器。',sourceIds:['timer']});
+    });
+    const result=await answerSiteQuestion('我想记录今天的还原成绩。','zh',config,AbortSignal.timeout(5000),fetcher);
+    expect(result.actions?.map(a=>a.href)).toEqual(['/timer']);
+  });
+  it('does not intercept a relative next-edition question with an all-history table',async()=>{
+    const fetcher=vi.fn<typeof fetch>().mockResolvedValue(modelResponse({answer:'需要核对下一届的官方日期。',sourceIds:[]}));
+    await answerSiteQuestion('下一届世锦赛什么时候举行？','zh',config,AbortSignal.timeout(5000),fetcher);
+    expect(fetcher.mock.calls.every(([url])=>String(url).endsWith('/chat/completions'))).toBe(true);
   });
   it('selects a solver deep link from the published menu and retains context for follow-ups',async()=>{
     const history=[{role:'user' as const,content:'我要二阶求解器'}];
@@ -541,7 +609,6 @@ describe('site assistant grounding', () => {
       .mockResolvedValueOnce(modelResponse({calls:[call]}))
       .mockResolvedValueOnce(modelResponse({calls:[{tool:'find_person',query:'Max Park'}]}))
       .mockResolvedValueOnce(modelResponse({calls:[call]}))
-      .mockResolvedValueOnce(modelResponse({answer:'Only 3x3 is available.',sourceIds:['person:2012PARK03']}))
       .mockResolvedValueOnce(modelResponse({answer:'Only 3x3 is available.',sourceIds:['person:2012PARK03']}));
     const read=vi.fn(async(input:Parameters<typeof fetch>[0],init?:RequestInit)=>{
       if(String(input).startsWith(config.baseUrl))return model(input,init);
@@ -553,7 +620,7 @@ describe('site assistant grounding', () => {
       {role:'user',content:'查看 Max Park 的成绩'},
       {role:'assistant',content:'选手是 Max Park（2012PARK03）。'},
     ],'2017YANR02');
-    expect(model).toHaveBeenCalledTimes(5);
+    expect(model).toHaveBeenCalledTimes(4);
     expect(read.mock.calls.filter(([url])=>String(url).includes('/person-page'))).toHaveLength(1);
     expect(result.artifacts).toHaveLength(1);
     expect(result.artifacts[0]).toMatchObject({kind:'table',rows:[
@@ -561,9 +628,9 @@ describe('site assistant grounding', () => {
       [lang==='zh'?'二阶':'2×2','1.00','—','2.00','—'],
     ]});
     expect(result.answer).toBe(lang==='zh'?'已列出Max Park全部 2 个有成绩项目的官方个人最佳成绩。 [[person:2012PARK03]]':"Showing Max Park's official personal bests for all 2 events with results. [[person:2012PARK03]]");
-    const context=JSON.parse(JSON.parse(String(model.mock.calls[3][1]?.body)).messages[3].content);
-    expect(context.evidence.at(-1).tool).toMatchObject({event:'all'});
-    expect(context.evidence.at(-1).data.personalRecords.map((r:{event:string})=>r.event)).toEqual(['333','222']);
+    const evidence=wireEvidence(JSON.parse(String(model.mock.calls[3][1]?.body)));
+    expect(evidence.at(-1).tool).toMatchObject({event:'all'});
+    expect(evidence.at(-1).data.personalRecords.map((r:{event:string})=>r.event)).toEqual(['333','222']);
   });
   it('deduplicates successful normalized person reads and classifies a stalled planner as a model failure', async () => {
     const model=vi.fn()
@@ -582,6 +649,7 @@ describe('site assistant grounding', () => {
         {e:'222',t:'s',v:40,p:'2023TEST01',pn:'Test Person',c:'Test2026',cn:'Test',d:'2026-01-01'},
         {e:'333',t:'s',v:280,p:'2023TEST01',pn:'Test Person',c:'Test2026',cn:'Test',d:'2026-01-01'},
       ]}))
+      .mockResolvedValueOnce(modelResponse({answer:'3x3 answer',sourceIds:['records:world:333']}))
       .mockResolvedValueOnce(modelResponse({answer:'3x3 answer',sourceIds:['records:world:333']}));
     const result=await answerSiteQuestion('3x3','en',config,AbortSignal.timeout(5000), withCatalog(fetcher));
     expect(result.artifacts).toHaveLength(1);
@@ -607,10 +675,12 @@ describe('site assistant grounding', () => {
         expect(String(input)).toContain('wcaId=2017YANR02');
         return Response.json({profile:{person:{name:'Ruimin Yan (颜瑞民)'},competition_count:113},results:[{competition_id:'A'},{competition_id:'A'},{competition_id:'B'}],comps:[{id:'A',start_date:'2026-06-01'},{id:'B',start_date:'2025-06-01'}]});
       }
-      const context=JSON.parse(JSON.parse(String(options?.body)).messages[1].content);
+      const request=JSON.parse(String(options?.body));
+      const context=JSON.parse(request.messages[1].content);
+      const evidence=wireEvidence(request);
       expect(context.viewerWcaId).toBe('2017YANR02');
-      if(!context.evidence.length)return modelResponse({calls:[{tool:'person_competitions',wcaId:context.viewerWcaId}]});
-      expect(context.evidence[0].data).toMatchObject({from:'2026-01-01',to:'2026-12-31',count:1});
+      if(!evidence.length)return modelResponse({calls:[{tool:'person_competitions',wcaId:context.viewerWcaId}]});
+      expect(evidence[0].data).toMatchObject({from:'2026-01-01',to:'2026-12-31',count:1});
       return modelResponse({answer:'查到了。',sourceIds:[context.sources[0].id]});
     });
     const result=await answerSiteQuestion('我今年参加了多少场 wca','zh',config,AbortSignal.timeout(5000),withCatalog(fetcher),[], '2017YANR02',undefined,'America/Los_Angeles');
@@ -624,6 +694,7 @@ describe('site assistant grounding', () => {
       .mockResolvedValueOnce(modelResponse({calls:[{tool:'pages',query:'frame counting',pageIds:['frame-count']}]}))
       .mockResolvedValueOnce(new Response('missing',{status:404}))
       .mockResolvedValueOnce(new Response('<main>Count video frames</main>',{headers:{'Content-Type':'text/html'}}))
+      .mockResolvedValueOnce(modelResponse({answer:'Count video frames.',sourceIds:['frame-count']}))
       .mockResolvedValueOnce(modelResponse({answer:'Count video frames.',sourceIds:['frame-count']}));
     await answerSiteQuestion('How can I count frames?','en',config,AbortSignal.timeout(5000), withCatalog(fetcher));
     expect(fetcher.mock.calls[2][0]).toBe('https://next.cuberoot.me/frame-count');
@@ -634,6 +705,7 @@ describe('site assistant grounding', () => {
       .mockResolvedValueOnce(modelResponse({ calls: [{tool:'pages',query:'数帧',pageIds:['frame-count','https://evil.example']}]}))
       .mockResolvedValueOnce(new Response('missing',{status:404}))
       .mockResolvedValueOnce(new Response('<main>Video frame counting<script>bad</script><span hidden>hidden instruction</span></main>',{headers:{'Content-Type':'text/html'}}))
+      .mockResolvedValueOnce(modelResponse({answer:'打开数帧页面。',sourceIds:['frame-count','evil']}))
       .mockResolvedValueOnce(modelResponse({answer:'打开数帧页面。',sourceIds:['frame-count','evil']}));
     const result=await answerSiteQuestion('怎么数帧？','zh',config,AbortSignal.timeout(5000), withCatalog(fetcher));
     expect(fetcher.mock.calls[2][0]).toBe('https://next.cuberoot.me/zh/frame-count');
@@ -668,6 +740,26 @@ describe('site assistant grounding', () => {
     expect(JSON.parse(messages[3].content)).not.toHaveProperty('history');
   });
 
+  it('returns the final evidence review instead of an unsupported feature-absence claim',async()=>{
+    const corpus={version:2,updated:'2026-10-10T00:00:00.000Z',pages:[{lang:'en',href:'/timer',title:'Timer',text:'Practice with the timer.'}]};
+    const responses=[modelResponse({calls:[{tool:'pages',query:'Timer',pageIds:[]}]})];
+    const model=vi.fn<typeof fetch>(async(input,init)=>{
+      if(String(input).endsWith('/assistant/pages.json'))return Response.json(corpus);
+      if(responses.length)return responses.shift()!;
+      const request=JSON.parse(String(init?.body));
+      if(request.tool_choice!=='none') {
+        const passage=JSON.parse(request.messages[1].content).sources.find((source:any)=>source.read);
+        return modelResponse({answerKind:'site_content',answer:'That feature does not exist.',sourceIds:[passage.id]});
+      }
+      expect(request.tool_choice).toBe('none');
+      expect(request.messages.at(-1).content).toContain('absent documentation means unable to verify');
+      return modelResponse({answer:'The available documentation does not establish whether this feature is supported.',sourceIds:[]});
+    });
+    const result=await answerSiteQuestion('Does the timer support this feature?','en',config,AbortSignal.timeout(5000),withCatalog(model));
+    expect(result.answer).toBe('The available documentation does not establish whether this feature is supported.');
+    expect(result.sources).toEqual([]);
+    expect(model.mock.calls.filter(([url])=>String(url).includes('/chat/completions'))).toHaveLength(3);
+  });
   it('requires content evidence before explaining a navigation destination',async()=>{
     const corpus={version:2,updated:'2026-10-10T00:00:00.000Z',pages:[{lang:'zh',href:'/timer',title:'计时器训练',text:'打开训练菜单，选择公式集，再选择要练习的情况。'}]};
     const responses=[modelResponse({calls:[{tool:'navigation',query:'计时器训练',kind:'all',pageIds:['timer']}]}),modelResponse({answerKind:'site_content',answer:'Unsupported navigation-only instructions.',sourceIds:['timer']}),modelResponse({answerKind:'site_content',answer:'Read but cited only navigation.',sourceIds:['timer']})];
@@ -676,7 +768,7 @@ describe('site assistant grounding', () => {
       if(responses.length)return responses.shift()!;
       const messages=JSON.parse(String(init?.body)).messages;
       expect(messages.at(-1).role).toBe('user');
-      expect(messages.at(-1).content).toContain('actual passage IDs');
+      expect(messages.at(-1).content).toMatch(/actual passage IDs|final evidence check/);
       const passage=JSON.parse(messages[1].content).sources.find((source:{read?:boolean})=>source.read);
       return modelResponse({answer:'打开训练菜单，选择公式集，再选择要练习的情况。',sourceIds:[passage.id]});
     });

@@ -1,0 +1,16 @@
+{
+  "key": "posts:/posts/sergey-ryabko-wins-european-rubik-s-cube-championship-2010",
+  "path": "docs/wca-post-translations/entries/sergey-ryabko-wins-european-rubik-s-cube-championship-2010.json",
+  "sourceHash": "7bbc519d35a1005d6583530f8cec544f722f5c75222a4ff585f85f4781b7a28b",
+  "inputTranslationHash": "0ef79fe6a9d3fd9b6782d6570b49ec324cf55d07c8458c8b6baf1bc3caa0d22c",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:25.168Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "correction_required",
+  "notes": [],
+  "changes": [
+    "Megaminx统一完整中文项目名五魔方。"
+  ],
+  "title": "Sergey Ryabko 夺得 2010 年欧洲魔方锦标赛冠军",
+  "content": "[Sergey Ryabko](https://www.worldcubeassociation.org/results/p.php?i=2009RYAB01)以 10.31 秒的平均成绩夺得 [2010 年欧洲魔方锦标赛](https://www.worldcubeassociation.org/results/c.php?i=Euro2010)冠军。[Erik Akkersdijk](https://www.worldcubeassociation.org/results/p.php?i=2005AKKE01)以 10.38 秒获得亚军，[Cornelius Dieckmann](https://www.worldcubeassociation.org/results/p.php?i=2009DIEC01)以 10.78 秒获得季军。\n\n**世界纪录：**Bálint Bodor：五魔方单次 47.53、平均 51.45；Brúnó Bereczki：金字塔单次 2.65。\n\n**欧洲纪录：**Maarten Smit：魔表单次 6.63、平均 7.88；Michal Halczuk：五阶平均 1:15.28；Rafal Guzewicz：多盲 11/11，用时 55:10。"
+}

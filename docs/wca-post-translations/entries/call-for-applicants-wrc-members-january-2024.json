@@ -12,14 +12,33 @@
     "sourceId": 14144
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "947009e8a9942c73f0e25c72b790b0583003563c3c0ab74c27d7fdd9b068d64b",
     "language": "zh-Hans",
     "title": "WCA 规则委员会成员招募（2024 年 1 月）",
     "content": "WCA 规则委员会（WRC）正在招募新成员。欢迎各种背景的社区成员申请。申请面向所有人开放，无须已在 WCA 任职。\n\n**WRC 的工作是什么？**\n\n* 更新和完善《[WCA 规则](https://www.worldcubeassociation.org/regulations/)》。（参见我们的公开 [GitHub 仓库](https://github.com/thewca/wca-regulations)和 [WCA 论坛板块](https://forum.worldcubeassociation.org/c/regulations/5)。）\n* 阅读比赛报告，处理意外事件。\n* 与 WCA 社区交流，收集对规则的意见。\n* 处理与规则有关的问题和咨询。\n\nWRC 的正式权利和职责见 [WCA 决议 10.2021.9](https://www.worldcubeassociation.org/documents)。\n\n<!-- break -->\n\n**我们希望申请人满足以下条件：**\n\n* 经常查阅并回复邮件（每天约 5–10 封）。\n* 客观地依照 WCA 规则的条文及精神作出判断。\n* 讨论事件处理办法时，能体谅他人，并提出建设性的意见。\n* 每周能投入 5–10 小时。\n\n以下不是硬性要求，但具备其中任一方面的经验，将有助于开展 WRC 的工作：\n\n* 在跨语言沟通中使用流畅、清楚的书面英语。\n* 参与线上或线下魔方社区讨论。\n* 了解 WCA 规则的历史。\n* 使用 GitHub 及/或编程（尤其是 Python、JavaScript、Java、Ruby on Rails）。\n* 项目管理、领导工作、处理组织激励问题、倡议推广及/或法律工作。\n\n优先申请期为即日起至 **2024 年 2 月 4 日 23:59 UTC，请将材料私下发送给 Antonio Kam（[akam@worldcubeassociation.org](mailto:akam@worldcubeassociation.org)）**。申请材料须为 **PDF 格式**，包含：\n\n* 简短的自我介绍。\n* 能证明自己满足要求的经历或成果总结。\n* 申请加入 WRC 的原因。\n* 是否有特别希望协助 WRC 改善的议题或问题。\n* （可选）其他与 WRC 工作相关的经验。\n\n我们会回复确认材料是否完整，也可能邀请你参加 WRC 面试。\n\n如有疑问，欢迎联系 Antonio Kam（[akam@worldcubeassociation.org](mailto:akam@worldcubeassociation.org)）。\n\n感谢你愿意帮助 WRC 和 WCA！",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.547Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "b956073c830bb5af2054236a66fe2ea2d424274f942334964023b711e1645c7f"
+  "translationHash": "57f7364d915ec09619d6da370995c96c85cc5bede58853f342189580abac86a7",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:11:12.893Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "947009e8a9942c73f0e25c72b790b0583003563c3c0ab74c27d7fdd9b068d64b",
+    "reviewedTranslationHash": "57f7364d915ec09619d6da370995c96c85cc5bede58853f342189580abac86a7",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/call-for-applicants-wrc-members-january-2024.json",
+    "sourceConcern": false,
+    "notes": [
+      "已完整对照标题与正文；核对规则/成绩/质量保证团队职责、必需与可选资格、招募人数、任期工时及各篇申请日期、联系人与投票程序。历史 Guidelines 按参考保留指南。"
+    ],
+    "inputTranslationHash": "b956073c830bb5af2054236a66fe2ea2d424274f942334964023b711e1645c7f"
+  }
 }

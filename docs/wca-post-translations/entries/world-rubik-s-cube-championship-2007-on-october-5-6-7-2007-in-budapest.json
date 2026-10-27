@@ -12,14 +12,31 @@
     "sourceId": 35
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "c5e6da24742a2805bcac73241d632622dbaae8acd5a11b62e28aa3776d9d2412",
     "language": "zh-Hans",
     "title": "2007 年魔方世锦赛将于 10 月 5–7 日在布达佩斯举行",
     "content": "### 2007 年魔方世锦赛\n\n[![](/images/wc2007_logo.jpg)](http://www.speedcubing.com/events/wc2007)\n\n城市：匈牙利布达佩斯\n\n日期：2007 年 10 月 5、6、7 日\n\n场馆：[布达佩斯会议中心诺富特酒店（Novotel Budapest Congress）](http://www.novotel.com/novotel/fichehotel/gb/nov/0511/fiche_hotel.shtml)\n\n[赛事信息](http://www.speedcubing.com/events/wc2007)",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.981Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "d84189bf845d44ebe43324a9d1a999d85bc36e2e674c39f762822f109066f17d"
+  "translationHash": "2c4bd9e64f4a63ff680e67bda77eb813cd4b2a098982ba0e2637a84a171e23b9",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:11:14.399Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "c5e6da24742a2805bcac73241d632622dbaae8acd5a11b62e28aa3776d9d2412",
+    "reviewedTranslationHash": "2c4bd9e64f4a63ff680e67bda77eb813cd4b2a098982ba0e2637a84a171e23b9",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/world-rubik-s-cube-championship-2007-on-october-5-6-7-2007-in-budapest.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "d84189bf845d44ebe43324a9d1a999d85bc36e2e674c39f762822f109066f17d"
+  }
 }

@@ -12,14 +12,31 @@
     "sourceId": 10940
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "16ec212140480339d176f745aedbfbb7c5a59b349f3b25de925f0f40a6ef0dc0",
     "language": "zh-Hans",
     "title": "Vicenzo Guerino Cecchini 夺得巴西圣保罗州波阿 2018 年 WCA 南美洲锦标赛冠军",
     "content": "[Vicenzo Guerino Cecchini](https://www.worldcubeassociation.org/persons/2015CECC01) 以 7.74 秒的平均成绩夺得 [2018 年 WCA 南美洲锦标赛](https://www.worldcubeassociation.org/competitions/SouthAmericanChampionship2018)冠军。[Iuri Grangeiro Carvalho](https://www.worldcubeassociation.org/persons/2015CARV06) 以 8.52 秒获得亚军，[Juan Pablo Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN30) 以 8.62 秒获得季军。\n\n南美洲纪录：Antonio Gabriel Freitas da Silva，三阶单次 5.58 秒。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.183Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "95aacefdb45ad2b34559ebab8451b430000236017f73cbc486220ef782b7ac29"
+  "translationHash": "78dba1849cdebd354dc269c215e7aaacb7ccfe9add79c820d0f850fa2df29c43",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:59.337Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "16ec212140480339d176f745aedbfbb7c5a59b349f3b25de925f0f40a6ef0dc0",
+    "reviewedTranslationHash": "78dba1849cdebd354dc269c215e7aaacb7ccfe9add79c820d0f850fa2df29c43",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/vicenzo-guerino-cecchini-wins-wca-south-american-championship-2018-in-poa-sao-paulo-brazil.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "95aacefdb45ad2b34559ebab8451b430000236017f73cbc486220ef782b7ac29"
+  }
 }

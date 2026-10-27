@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/world-rubik-s-cube-championship-2017-on-july-13-16-2017-in-paris-france",
+  "path": "docs/wca-post-translations/entries/world-rubik-s-cube-championship-2017-on-july-13-16-2017-in-paris-france.json",
+  "sourceHash": "0f75db8db4528daac5f975202d2339540f7c76faa149209780c0688b9fe74c63",
+  "inputTranslationHash": "d4e4a5a64d9186e4897f042273e91f4d4e3bea6342c34a62377902ca0f733ba9",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:11:14.400Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

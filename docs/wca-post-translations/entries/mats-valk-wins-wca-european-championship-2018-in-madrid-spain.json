@@ -12,14 +12,31 @@
     "sourceId": 9943
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "ca39306b7f2e2eb3af2beb0e17620fd08428b04e24f4bcc28af8b4eac6fbdb9a",
     "language": "zh-Hans",
     "title": "Mats Valk 在西班牙马德里夺得 2018 年 WCA 欧洲锦标赛冠军",
     "content": "[Mats Valk](https://www.worldcubeassociation.org/persons/2007VALK01) 以 7.24 秒的平均成绩赢得 [2018 年 WCA 欧洲锦标赛](https://www.worldcubeassociation.org/competitions/Euro2018)冠军。[Sebastian Weyer](https://www.worldcubeassociation.org/persons/2010WEYE02) 以 7.36 秒获得亚军，[Philipp Weyer](https://www.worldcubeassociation.org/persons/2010WEYE01) 以 7.37 秒获得季军。\n\n世界纪录：Daniel Rose-Levine，三阶脚拧平均 22.22 秒；Juan Pablo Huanqui，五魔方单次 29.49 秒。\n\n欧洲纪录：Amos Nordman，五魔方平均 36.09 秒；Ciarán Beahan，六阶平均 1:32.71；Ádám Barta，三盲平均 24.06 秒。\n\n南美洲纪录：Juan Pablo Huanqui，五魔方平均 34.25 秒、33.55 秒；Pedro Alejandro Condo Tellez，四阶平均 28.81 秒、28.69 秒，五阶单次 44.81 秒、42.40 秒，六阶单次 1:32.36、平均 1:40.81。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.141Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "5d135cb27c1d3822fbcdb31fd1708dea3c7a2453a529aeb6d67df01e13dde518"
+  "translationHash": "84f6307bd7852d52881bbef662dc356f9fa9ab824df2d8b88ba3c0db585cb630",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:36.321Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "ca39306b7f2e2eb3af2beb0e17620fd08428b04e24f4bcc28af8b4eac6fbdb9a",
+    "reviewedTranslationHash": "84f6307bd7852d52881bbef662dc356f9fa9ab824df2d8b88ba3c0db585cb630",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/mats-valk-wins-wca-european-championship-2018-in-madrid-spain.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "5d135cb27c1d3822fbcdb31fd1708dea3c7a2453a529aeb6d67df01e13dde518"
+  }
 }

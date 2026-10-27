@@ -1,0 +1,181 @@
+{
+  "scope": "译文已复核，以下为源文本身的疑点；不代表已核实或已经解决。",
+  "entries": [
+    {
+      "key": "posts:/posts/call-for-applicants-wmt-members-may-2021",
+      "path": "docs/wca-post-translations/entries/call-for-applicants-wmt-members-may-2021.json",
+      "sourceHash": "42f6ce07261c9407cf6f380c341237cc47f3489845e9f13f8f0ffcee77270113",
+      "notes": [
+        "源标题为 2021 年 5 月，正文申请截止日却为 June 26th, 2020；译文忠实保留原日期，未擅自推测改为 2021，需原作者确认。其余全文对照一致。"
+      ],
+      "proposal": "docs/wca-translation-review-2026-10-26/posts-a/call-for-applicants-wmt-members-may-2021.json"
+    },
+    {
+      "key": "posts:/posts/forum-digest-december-2021",
+      "path": "docs/wca-post-translations/entries/forum-digest-december-2021.json",
+      "sourceHash": "2cd3cf7aebd66c8c2856beaf47e4bcebd001e5c44c4922d4e5bf0da49f1cbd05",
+      "notes": [
+        "原文标题称三次纪录、正文称 twice，同时列1.13/1.06/1.05三个成绩；译文忠实保留矛盾，不能以译者推断改成三次。"
+      ],
+      "proposal": "docs/wca-translation-review-2026-10-26/posts-b/forum-digest-december-2021.json"
+    },
+    {
+      "key": "posts:/posts/quality-assurance-committee-digest-2025-q1",
+      "path": "docs/wca-post-translations/entries/quality-assurance-committee-digest-2025-q1.json",
+      "sourceHash": "1d96a9ca517794d3232afa59089e78907424898fe1820c3b6138734c8ffc47c0",
+      "notes": [
+        "原文称 ten new members，但仅列出9人；译文忠实保留，不能补造第10位成员。"
+      ],
+      "proposal": "docs/wca-translation-review-2026-10-26/posts-b/quality-assurance-committee-digest-2025-q1.json"
+    },
+    {
+      "key": "posts:/posts/wrc-digest-2024-q1",
+      "path": "docs/wca-post-translations/entries/wrc-digest-2024-q1.json",
+      "sourceHash": "f572d0afdfa061dc2f0415d123e74891affdcef4d3e2e6e4b3ee0d998f32ee7c",
+      "notes": [
+        "全文已审：10项案例编号原文跳过7，中文保留；第2项原文为停表却引用A4b（启动计时器规则），属于源文规则引用疑点，不擅自替换。数字、处罚、不确定性及其余情节译义一致。"
+      ],
+      "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wrc-digest-2024-q1.json"
+    },
+    {
+      "key": "posts:/posts/wrc-digest-2024-q2",
+      "path": "docs/wca-post-translations/entries/wrc-digest-2024-q2.json",
+      "sourceHash": "e914dea36ecd9c53e64f4ad5986f0153df56ff2df09f38699088873742b9cb88",
+      "notes": [
+        "全文11案均已核对，70%、17秒、10秒、2周及裁量条件保留。第3案源文先说已corrected，后又说最后fix both，与twist-twist-fix-fix时序存在矛盾；中文忠实保留而不改写成自行推断的事实。"
+      ],
+      "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wrc-digest-2024-q2.json"
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2024-q4",
+      "path": "docs/wca-log-translations/entries/disciplinary-integrity-committee-digest-2024-q4.json",
+      "sourceHash": "206965c3e76461eca9177b30197f35fec6e1a9f709161086d5be57fd807f6c83",
+      "notes": [
+        "原文称结案14件，但列举8项禁赛、3项警告、2件无措施合计13；译文忠实保留，未补造案件，统计待来源核验。",
+        "原文“permanent until”及连续不出席达到原禁令时长的条件已照译；具体政策性质未核验，不能称已解决该原文措辞疑义。",
+        "2026-10-26 重新读取官方来源，疑点仍存在；这是源文事实/措辞的保留结论，不是遗漏翻译或已确认的译文错误。"
+      ],
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/disciplinary-integrity-committee-digest-2024-q4.json"
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2025-q2",
+      "path": "docs/wca-log-translations/entries/disciplinary-integrity-committee-digest-2025-q2.json",
+      "sourceHash": "543edad848e97c3441c90a991a700e5cc5c3b3b4d9b11a95601b334047b48dfc",
+      "notes": [
+        "原文称结案9件，但4项禁赛加6件无措施为10；译文忠实保留，未调整统计，待来源核验。",
+        "2026-10-26 重新读取官方来源，疑点仍存在；这是源文事实/措辞的保留结论，不是遗漏翻译或已确认的译文错误。"
+      ],
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/disciplinary-integrity-committee-digest-2025-q2.json"
+    },
+    {
+      "key": "disciplinary:/posts/wdc-monthly-digest-july-2019",
+      "path": "docs/wca-log-translations/entries/disciplinary-wdc-monthly-digest-july-2019.json",
+      "sourceHash": "8904de8d783cf098f53c1e672db3bb338562969759a7f9148490a7d719314b25",
+      "notes": [
+        "源文公开信称 2007 年的作弊发生于 almost a decade ago，与 2019 年简报时间相差约十二年不一致；译文忠实保留为近十年，年代问题 unresolved。本轮仅对照所给正文，未作事实核验。",
+        "2026-10-26 重新读取官方来源，疑点仍存在；这是源文事实/措辞的保留结论，不是遗漏翻译或已确认的译文错误。"
+      ],
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/disciplinary-wdc-monthly-digest-july-2019.json"
+    },
+    {
+      "key": "disciplinary:/posts/wic-digest-2024-q3",
+      "path": "docs/wca-log-translations/entries/disciplinary-wic-digest-2024-q3.json",
+      "sourceHash": "f00fb0252ed1e826ae1444d8c136845f0b4a4d3bd32e4c900228eb6f19308b39",
+      "notes": [
+        "源文称结案 17 件，但随后列 4 项禁赛、3 项警告及 13 件其他结局；若按互斥案件数理解则合计 20。是否处分数量与案件数口径不同或存在交叉，正文未说明。译文忠实照录；统计口径 unresolved，未作外部事实核验。",
+        "2026-10-26 重新读取官方来源，疑点仍存在；这是源文事实/措辞的保留结论，不是遗漏翻译或已确认的译文错误。"
+      ],
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/disciplinary-wic-digest-2024-q3.json"
+    },
+    {
+      "key": "incidents:11",
+      "path": "docs/wca-log-translations/entries/incidents-11.json",
+      "sourceHash": "0f38fe9423de7d19c800589e931609e343573da19b112d8bab61a808039bdd2c",
+      "notes": [
+        "原文 suspecting filtration of the solve 措辞含混；现译为怀疑还原情况泄露，是一种语境解释，需源文作者或来源确认。此处 unresolved；未读取外链或推断身份。",
+        "2026-10-26 重新读取官方来源，疑点仍存在；这是源文事实/措辞的保留结论，不是遗漏翻译或已确认的译文错误。"
+      ],
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/incidents-11.json"
+    },
+    {
+      "key": "incidents:115",
+      "path": "docs/wca-log-translations/entries/incidents-115.json",
+      "sourceHash": "7fb23ca92061d3efe05ca1bbeae6f7dc8db9a01c39dda7b7e1bb902f38a95392",
+      "notes": [
+        "原文写 their cumulative time limit was greater than 10 minutes but less than 12 minutes，而上下文讨论的似乎是选手累计用时。译文采用累计时间属语境解释，尚不能声称已确认源文措辞；需来源澄清，unresolved。",
+        "2026-10-26 重新读取官方来源，疑点仍存在；这是源文事实/措辞的保留结论，不是遗漏翻译或已确认的译文错误。"
+      ],
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/incidents-115.json"
+    },
+    {
+      "key": "incidents:169",
+      "path": "docs/wca-log-translations/entries/incidents-169.json",
+      "sourceHash": "412e2cab624cfda7dd182532d04eb4ae13df320c6b153e2f0578e0281a1b72df",
+      "notes": [
+        "现有 review.notes 所列 “WRC Board” 机构名称疑点未解决。源文申诉机构与常见称谓的关系无法仅据本条确认；译文忠实标为原文所称 WRC Board，未擅改 WCA Board。本审校没有联网或事实核验。",
+        "2026-10-26 重新读取官方来源，疑点仍存在；这是源文事实/措辞的保留结论，不是遗漏翻译或已确认的译文错误。"
+      ],
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/incidents-169.json"
+    },
+    {
+      "key": "incidents:26",
+      "path": "docs/wca-log-translations/entries/incidents-26.json",
+      "sourceHash": "c40c27fae99ac11f0024f27d8704879a14189ba3d3efc7ac8ad7ccd864cbac90",
+      "notes": [
+        "现有 review.notes 所列 “F article” 章节指代疑点未解决。源文在多盲事件中援引该章，译文忠实保留第 F 章；未据推测改章，也未核验历史规则或外链。",
+        "2026-10-26 重新读取官方来源，疑点仍存在；这是源文事实/措辞的保留结论，不是遗漏翻译或已确认的译文错误。"
+      ],
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/incidents-26.json"
+    },
+    {
+      "key": "incidents:4",
+      "path": "docs/wca-log-translations/entries/incidents-4.json",
+      "sourceHash": "e67f78eb5b4d983d627eded9b262191058c68b3a90b4cce6457e8da30ee184f2",
+      "notes": [
+        "原文记载成绩 7.51 秒，又仅以视频用时超过 7 秒解释慢计时；该比较不足以单独说明偏慢。译文忠实保留数字，需源方澄清，不能自行改为超过 7.51 秒或其他值。",
+        "2026-10-26 重新读取官方来源，疑点仍存在；这是源文事实/措辞的保留结论，不是遗漏翻译或已确认的译文错误。"
+      ],
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/incidents-4.json"
+    },
+    {
+      "key": "incidents:48",
+      "path": "docs/wca-log-translations/entries/incidents-48.json",
+      "sourceHash": "981d56eda1c65f818adafc21319f85602bb5581c33927a8ce54a9cdcdeab5b7a",
+      "notes": [
+        "原文标题及开头称 did not qualify，后文却要求删除决赛成绩；修正后的译文忠实保留冲突，仍待源方澄清。",
+        "2026-10-26 重新读取官方来源，疑点仍存在；这是源文事实/措辞的保留结论，不是遗漏翻译或已确认的译文错误。"
+      ],
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/incidents-48.json"
+    },
+    {
+      "key": "incidents:53",
+      "path": "docs/wca-log-translations/entries/incidents-53.json",
+      "sourceHash": "cc1f586a301614c5dfa289fa3484e073487634b2a600941ce4c587259d5cd257",
+      "notes": [
+        "现有 review.notes 所指冲突成立：原文由三轮改为两轮、以前轮定排名，却写 removing all second attempts。译文以“原文接着称”忠实标注保留；到底应删除何轮或哪些尝试仍待源方确认。",
+        "2026-10-26 重新读取官方来源，疑点仍存在；这是源文事实/措辞的保留结论，不是遗漏翻译或已确认的译文错误。"
+      ],
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/incidents-53.json"
+    },
+    {
+      "key": "incidents:62",
+      "path": "docs/wca-log-translations/entries/incidents-62.json",
+      "sourceHash": "62d4219783f6c42486e9c392b5afb6d03cea19c8680cf20902dc59ffd44d4709",
+      "notes": [
+        "原文标题说选手询问，正文明确说裁判询问代表；可能有转述关系，但所给正文未说明。译文忠实保留，不推断谁直接提出询问，待源方澄清。",
+        "2026-10-26 重新读取官方来源，疑点仍存在；这是源文事实/措辞的保留结论，不是遗漏翻译或已确认的译文错误。"
+      ],
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/incidents-62.json"
+    },
+    {
+      "key": "incidents:74",
+      "path": "docs/wca-log-translations/entries/incidents-74.json",
+      "sourceHash": "0cfed4e9b0fe16e472891069c49916dc2d3df0810c52413993052f4650c45697",
+      "notes": [
+        "源正文的 Regulation 3j1、引文标签 [3j2] 和目标链接 #3j1 不一致。原文未澄清正确编号，需后续核验官方源；本轮按要求未读取外链，不建议擅自改成任一编号。",
+        "2026-10-26 重新读取官方来源，疑点仍存在；这是源文事实/措辞的保留结论，不是遗漏翻译或已确认的译文错误。"
+      ],
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/incidents-74.json"
+    }
+  ]
+}

@@ -12,14 +12,31 @@
     "sourceId": 14025
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "2d7f063c51976fc276d2598ad30d2bf76f8953de1ae479a41d35edd641e3e7b0",
     "language": "zh-Hans",
     "title": "东亚高级代表任命公告（2021 年 7 月）",
     "content": "我们很高兴宣布，Ming Zheng 出任东亚高级代表。\n\nWCA 董事会依照关于高级代表的[决议](https://www.worldcubeassociation.org/documents/motions/09.2021.1%20-%20Senior%20Delegates.pdf)第 4 节，通过内部投票选定 Ming Zheng。\n\n祝 Ming Zheng 在新岗位上一切顺利。他的高级代表任期已于 2021 年 6 月 22 日开始。\n\nMing Zheng 的申请材料可在[此处](https://drive.google.com/drive/folders/1uuqVy9TJK55AsQh_BAeEdl9w79otBnvf?usp=sharing)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.550Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "380e26e57c88cc4ab7c35d4f1e346fb151e77c989349571ddb5a276ee1ff5e5a"
+  "translationHash": "efa4beb19dcc6c4e915ae495c29f627c453ea416ab29acf72bd557b6cd5c8219",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:25.168Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "2d7f063c51976fc276d2598ad30d2bf76f8953de1ae479a41d35edd641e3e7b0",
+    "reviewedTranslationHash": "efa4beb19dcc6c4e915ae495c29f627c453ea416ab29acf72bd557b6cd5c8219",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/senior-delegate-announcement-asia-east-july-2021.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "380e26e57c88cc4ab7c35d4f1e346fb151e77c989349571ddb5a276ee1ff5e5a"
+  }
 }

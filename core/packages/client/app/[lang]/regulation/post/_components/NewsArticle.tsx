@@ -101,22 +101,22 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
             </div>
             <p className="news-lede">
               {t(
-                '从 2027 年 1 月 2 日起,所有采用速拧计时器记录的 WCA 官方尝试,都必须使用 Speed Stacks G5 StackMat™ Pro Timer 的 4-pad 模式。WCA 表示,这一改变能更可靠地确认成绩符合规则,进一步保障官方成绩的公正性与可信度。',
+                '从 2027 年 1 月 2 日起,所有采用速拧计时器记录的 WCA 官方尝试,都必须使用 Speed Stacks G5 StackMat™ Pro Timer 的四触点模式。WCA 表示,这一改变能更可靠地确认成绩符合规则,进一步保障官方成绩的公正性与可信度。',
                 'From January 2, 2027, every official WCA attempt recorded with a speedsolving timer must use a Speed Stacks G5 StackMat™ Pro Timer in 4-pad mode. The WCA says the change will make it easier to verify that official times comply with the Regulations and strengthen the integrity of recognized results.',
               )}
             </p>
 
             <Callout tone="warn" label={t('现行规则尚未改变', 'Current rules remain in force')}>
               {t(
-                '新要求到 2027-01-02 才生效。在此之前,比赛仍应遵守现行的 2-pad 规定;启动与停止计时器的规则修订草案将在 2026 年 9 月公布并征求社区意见。本站会在正式规则发布后同步完整条款。',
+                '新要求到 2027-01-02 才生效。在此之前,比赛仍应遵守现行的双触点规定;启动与停止计时器的规则修订草案将在 2026 年 9 月公布并征求社区意见。本站会在正式规则发布后同步完整条款。',
                 'The new requirement does not take effect until 2027-01-02. Until then, competitions must continue to follow the current 2-pad rule. Draft changes covering how the timer is started and stopped will be published for community feedback in September 2026; this site will update its full text after the official Regulations are released.',
               )}
             </Callout>
 
-            <h3 className="news-sub-title">{t('2-pad 和 4-pad 到底是什么', 'What 2-pad and 4-pad actually mean')}</h3>
+            <h3 className="news-sub-title">{t('双触点与四触点模式', 'What 2-pad and 4-pad actually mean')}</h3>
             <p className="news-lede">
               {t(
-                '这里的 pad 指计时器上的触摸感应区,不是计时器或手的数量。G5 计时器共有四个感应区:左右两块供手指接触的主要感应区,以及计时器背面两块供拇指接触的较小感应区。Speed Stacks 官方说明,G5 可在 2-pad 与 4-pad 两种模式之间切换。',
+                '这里的 pad 指计时器上的触摸感应区,不是计时器或手的数量。G5 计时器共有四个感应区:左右两块供手指接触的主要感应区,以及计时器背面两块供拇指接触的较小感应区。Speed Stacks 官方说明,G5 可在双触点（2-pad）与四触点（4-pad）两种模式之间切换。',
                 'Here, pad means a touch-sensitive area on the timer, not a number of timers or hands. The G5 has four sensor areas: two main pads for the fingers and two smaller pads on the back for the thumbs. Speed Stacks explains that the G5 can switch between 2-pad and 4-pad modes.',
               )}
             </p>
@@ -132,13 +132,13 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
                 </thead>
                 <tbody>
                   <tr>
-                    <td>2-pad</td>
+                    <td>{t('双触点', '2-pad')}</td>
                     <td>{t('只要求左右两块主要感应区;G5 在此模式下与 G4 的工作方式相同。', 'Only the two main pads are required; in this mode, the G5 operates like a G4.')}</td>
                     <td>{t('双手手指接触两块主要感应区,计时器就绪后移开双手。', 'Touch the two main pads with the fingers of both hands, then lift both hands once the timer is ready.')}</td>
                     <td>{t('双手重新触及左右两块主要感应区。', 'Touch the left and right main pads again with both hands.')}</td>
                   </tr>
                   <tr>
-                    <td>4-pad</td>
+                    <td>{t('四触点', '4-pad')}</td>
                     <td>{t('左右两块主要感应区和背面两块拇指感应区,四块都必须触发。', 'Both main pads and both rear thumb pads are required, so all four must be activated.')}</td>
                     <td>{t('双手手指接触主要感应区,双手拇指同时接触背面小感应区;计时器就绪后移开双手。', 'Touch the main pads with the fingers and the two rear pads with the thumbs, then lift both hands once the timer is ready.')}</td>
                     <td>{t('双手回到计时器,同时触发全部四块感应区。', 'Return both hands to the timer and activate all four sensor areas.')}</td>
@@ -148,7 +148,7 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
             </div>
             <p className="news-lede" style={{ marginTop: 20 }}>
               {t(
-                '设备上长按 RESET 键 5 秒即可切换模式;显示屏与指示灯会显示当前模式。相比只检查两块主要感应区,4-pad 还要求双手拇指参与,从硬件上使不完整接触、手腕触碰等不规范启停方式更难触发计时器。',
+                '设备上长按 RESET 键 5 秒即可切换模式;显示屏与指示灯会显示当前模式。相比只检查两块主要感应区,四触点还要求双手拇指参与,从硬件上使不完整接触、手腕触碰等不规范启停方式更难触发计时器。',
                 'Holding RESET for five seconds switches modes, and the display and indicator light show the active mode. Compared with checking only the two main pads, 4-pad also requires both thumbs, making incomplete contact, wrist contact, and similar improper starts or stops much harder to register at the hardware level.',
               )}
             </p>
@@ -162,19 +162,19 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
             <h3 className="news-sub-title">{t('为什么要改', 'Why the change')}</h3>
             <p className="news-lede">
               {t(
-                '两感应垫计时器本身能够精确计时,但成绩成立仍依赖选手完全按规则启动和停止计时器。部分违规动作很难由现场裁判直接发现;逐帧复核录像虽然可行,却耗时且依赖高质量视频。WCA 表示,没有找到只修改规则措辞或沿用现有设备要求就能令人满意地解决问题的方法,因此选择切换到 4-pad 模式。',
+                '两感应垫计时器本身能够精确计时,但成绩成立仍依赖选手完全按规则启动和停止计时器。部分违规动作很难由现场裁判直接发现;逐帧复核录像虽然可行,却耗时且依赖高质量视频。WCA 表示,没有找到只修改规则措辞或沿用现有设备要求就能令人满意地解决问题的方法,因此选择切换到四触点模式。',
                 'Two-sensor timers can measure time precisely, but a valid result still depends on the competitor starting and stopping the timer exactly as required. Some infringements are difficult for a judge to see live, while frame-by-frame video review is slow and depends on high-quality footage. The WCA found no satisfactory wording change or other solution that could retain the existing timer requirements, so it chose 4-pad mode.',
               )}
             </p>
 
-            <h3 className="news-sub-title">{t('WCA 认为 4-pad 能解决什么', 'What the WCA expects 4-pad to solve')}</h3>
+            <h3 className="news-sub-title">{t('WCA 认为四触点能解决什么', 'What the WCA expects 4-pad to solve')}</h3>
             <RegList items={[
               t(
                 '几乎消除因意外或疏忽造成的计时器违规。',
                 'Nearly eliminate timer infringements caused by accidents or carelessness.',
               ),
               t(
-                '让通过计时器违规获取不当优势变得极其困难,实际操作上几乎不可行;4-pad 模式下的违规也会更加明显。',
+                '让通过计时器违规获取不当优势变得极其困难,实际操作上几乎不可行;四触点模式下的违规也会更加明显。',
                 'Make it extremely difficult and impractical to gain an unfair advantage through a timer infringement, while making infringements in 4-pad mode more apparent.',
               ),
               t(
@@ -201,7 +201,7 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
 
             <Callout tone="info" label={t('WCA 承认单一供应商的取舍', 'The WCA acknowledges the single-supplier trade-off')}>
               {t(
-                'WCA 说明,目前唯一可用的 4-pad 计时器由 Speed Stacks 生产,因此这一决定会把 WCA 限制在单一计时器供应商,并约束未来认可其他计时器的空间。WCA 明确认可这一商业取舍,并认为继续使用其历来认可的 Speed Stacks 计时器及最新 4-pad 技术,是目前对组织最有利的选择。',
+                'WCA 说明,目前唯一可用的四触点计时器由 Speed Stacks 生产,因此这一决定会把 WCA 限制在单一计时器供应商,并约束未来认可其他计时器的空间。WCA 明确认可这一商业取舍,并认为继续使用其历来认可的 Speed Stacks 计时器及最新四触点技术,是目前对组织最有利的选择。',
                 'The WCA notes that Speed Stacks currently makes the only available 4-pad timer. The decision therefore limits the WCA to one timer supplier and constrains the possibility of recognizing other timers in the future. The WCA explicitly accepts this commercial trade-off and considers continued use of the Speed Stacks timers it has historically recognized, now with 4-pad technology, the best outcome for the organization.',
               )}
             </Callout>
@@ -209,15 +209,15 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
             <h3 className="news-sub-title">{t('会发生哪些变化', 'What will change')}</h3>
             <RegList items={[
               t(
-                '认可计时器要求将由目前的 2-pad 模式以及允许 G3、G4 计时器,改为必须使用 G5 计时器的 4-pad 模式。',
+                '认可计时器要求将由目前的双触点模式以及允许 G3、G4 计时器,改为必须使用 G5 计时器的四触点模式。',
                 'The approved-timer requirements will move from today’s 2-pad mode, which also allows G3 and G4 timers, to mandatory G5 timers in 4-pad mode.',
               ),
               t(
-                '启动和停止速拧计时器的相关规则会配合 4-pad 模式修订。',
+                '启动和停止速拧计时器的相关规则会配合四触点模式修订。',
                 'The Regulations for starting and stopping the speedsolving timer will be revised for 4-pad mode.',
               ),
               t(
-                '目前没有 4-pad 设备的地区会在生效日前收到 G5 计时器,费用与物流由 WCA 承担。',
+                '目前没有四触点设备的地区会在生效日前收到 G5 计时器,费用与物流由 WCA 承担。',
                 'Regions that do not currently have 4-pad-capable equipment will receive G5 timers before the effective date, with the WCA covering costs and logistics.',
               ),
             ]} />
@@ -225,20 +225,20 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
             <h3 className="news-sub-title">{t('纪录与排名如何处理', 'Records and rankings')}</h3>
             <Callout tone="success" label={t('不重置纪录', 'No record reset')}>
               {t(
-                'WCA 认为,对绝大多数选手与项目而言,2-pad 和 4-pad 成绩的差异可以忽略。因此现有纪录继续有效,直到被 4-pad 成绩打破;4-pad 成绩也会与 2-pad 成绩共同计入排名。',
+                'WCA 认为,对绝大多数选手与项目而言,双触点和四触点成绩的差异可以忽略。因此现有纪录继续有效,直到被四触点成绩打破;四触点成绩也会与双触点成绩共同计入排名。',
                 'The WCA considers the difference between 2-pad and 4-pad results negligible for the vast majority of competitors and events. Existing records therefore remain valid until broken by a 4-pad result, and results from both modes will be ranked together.',
               )}
             </Callout>
             <p className="news-lede" style={{ marginTop: 20 }}>
               {t(
-                'WCA 排名页还会为二阶、魔表、金字塔和斜转增加筛选,可在“全部成绩”与“4-pad 成绩”之间切换。',
+                'WCA 排名页还会为二阶、魔表、金字塔和斜转增加筛选,可在“全部成绩”与“四触点成绩”之间切换。',
                 'The WCA Rankings page will also add a filter for 2×2, Clock, Pyraminx and Skewb, allowing users to switch between all results and 4-pad results.',
               )}
             </p>
 
             <p className="news-lede">
               {t(
-                'WCA 预计,4-pad 成绩会比 2-pad 成绩略慢。对绝大多数选手和项目而言影响可以忽略,但在部分项目的最顶尖水平可能较为明显。因此,切换后可能会有一段时间,计时较短项目的纪录比过去更难打破。根据这些项目顶尖专项选手的反馈,WCA 仍预计现有纪录最终都会被 4-pad 成绩打破。',
+                'WCA 预计,四触点成绩会比双触点成绩略慢。对绝大多数选手和项目而言影响可以忽略,但在部分项目的最顶尖水平可能较为明显。因此,切换后可能会有一段时间,计时较短项目的纪录比过去更难打破。根据这些项目顶尖专项选手的反馈,WCA 仍预计现有纪录最终都会被四触点成绩打破。',
                 'The WCA expects 4-pad times to be slightly slower than 2-pad times. The effect should be negligible for the vast majority of competitors and events, but may be significant at the very top of some events. Sprint-event records may therefore be harder to break for a period after the switch. Based on feedback from top specialists in those events, the WCA still expects every current record eventually to be broken in 4-pad mode.',
               )}
             </p>
@@ -246,7 +246,7 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
             <h3 className="news-sub-title">{t('过渡期对选手的影响', 'Effect on competitors during the transition')}</h3>
             <p className="news-lede">
               {t(
-                'WCA 预计,新选手学习 4-pad 计时器的过程会与目前学习 2-pad 计时器相近。经验较多的选手也可能需要时间适应新操作,但随着使用增加,4-pad 预计会逐渐成为自然习惯。',
+                'WCA 预计,新选手学习四触点计时器的过程会与目前学习双触点计时器相近。经验较多的选手也可能需要时间适应新操作,但随着使用增加,四触点预计会逐渐成为自然习惯。',
                 'The WCA expects new competitors to go through a learning process with 4-pad timers similar to the current process for 2-pad timers. More experienced competitors may also need time to adjust, but 4-pad operation is expected to become second nature with continued use.',
               )}
             </p>
@@ -263,7 +263,7 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
                 <span className="news-ms-date">{t('2025–2026 年初', '2025–early 2026')}</span>
                 <span className="news-ms-text">
                   {t(
-                    '2025 年至 2026 年初,WCA 规则委员会开始内部调查和讨论,并正式征询顶尖选手;收到的反馈强烈支持切换到 4-pad。',
+                    '2025 年至 2026 年初,WCA 规则委员会开始内部调查和讨论,并正式征询顶尖选手;收到的反馈强烈支持切换到四触点。',
                     'From 2025 into early 2026, the WCA Regulations Committee investigated and discussed the change internally and formally sought feedback from top competitors; the responses strongly favored a switch to 4-pad.',
                   )}
                 </span>
@@ -272,7 +272,7 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
                 <span className="news-ms-date">2026-04</span>
                 <span className="news-ms-text">
                   {t(
-                    'WCA 大型锦标赛组、规则委员会和 WCA 管理层(董事会与执行主任)正式讨论这一方案。讨论意见几乎全部支持切换,随后成立了负责过渡实施与物流的小型工作组。',
+                    'WCA 大型锦标赛组、规则委员会和 WCA 管理层(董事会与执行董事)正式讨论这一方案。讨论意见几乎全部支持切换,随后成立了负责过渡实施与物流的小型工作组。',
                     'The WCA Major Championships Team, the Regulations Committee, and WCA executives (the Board and Executive Director) formally discussed the proposal. The discussion was almost entirely in favor, and a smaller group was formed to implement the transition and its logistics.',
                   )}
                 </span>
@@ -281,7 +281,7 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
                 <span className="news-ms-date">2026-05</span>
                 <span className="news-ms-text">
                   {t(
-                    'WCA 又向相关利益方征求意见:顶尖选手提供不同项目、规则措辞和 4-pad 模式潜在作弊方式方面的反馈,高级代表评估对组织者、代表、新选手和有经验选手的影响。WCA 表示,这一阶段的反馈几乎全部支持对所有选手采用 4-pad。各地区设备存量调查结合与 Speed Stacks 的商业沟通表明,WCA 有资金与物流能力为有需要的地区供应 G5 计时器。',
+                    'WCA 又向相关利益方征求意见:顶尖选手提供不同项目、规则措辞和四触点模式潜在作弊方式方面的反馈,高级代表评估对组织者、代表、新选手和有经验选手的影响。WCA 表示,这一阶段的反馈几乎全部支持对所有选手采用四触点。各地区设备存量调查结合与 Speed Stacks 的商业沟通表明,WCA 有资金与物流能力为有需要的地区供应 G5 计时器。',
                     'The WCA then consulted relevant stakeholders: top competitors provided event-specific input on wording and possible cheating in 4-pad mode, while Senior Delegates assessed effects on organizers, Delegates, inexperienced competitors, and experienced competitors. The WCA says feedback at this stage was almost entirely in favor of switching all competitors to 4-pad. An equipment survey, together with commercial discussions with Speed Stacks, indicated that the WCA had the financial and logistical capacity to supply G5 timers where needed.',
                   )}
                 </span>
@@ -290,7 +290,7 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
                 <span className="news-ms-date">{t('2026 年夏季', 'Summer 2026')}</span>
                 <span className="news-ms-text">
                   {t(
-                    '经 WCA 董事会批准,WCA 正式决定在 2027 年规则周期切换到 4-pad 模式。',
+                    '经 WCA 董事会批准,WCA 正式决定在 2027 年规则周期切换到四触点模式。',
                     'With approval from the WCA Board, the WCA committed to the switch for the 2027 Regulations cycle.',
                   )}
                 </span>
@@ -302,7 +302,7 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
               <li className="news-ms">
                 <span className="news-ms-date">2026-08-23</span>
                 <span className="news-ms-text">
-                  {t('WCA 正式公布采用 4-pad 计时的决定。', 'The WCA announces its decision to adopt 4-pad timing.')}
+                  {t('WCA 正式公布采用四触点计时的决定。', 'The WCA announces its decision to adopt 4-pad timing.')}
                 </span>
               </li>
               <li className="news-ms">
@@ -314,7 +314,7 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
               <li className="news-ms">
                 <span className="news-ms-date">2027-01-02</span>
                 <span className="news-ms-text">
-                  <strong>{t('G5 计时器 4-pad 模式要求正式生效。', 'The G5 timer 4-pad requirement takes effect.')}</strong>
+                  <strong>{t('G5 计时器四触点模式要求正式生效。', 'The G5 timer 4-pad requirement takes effect.')}</strong>
                 </span>
               </li>
             </ul>
@@ -328,7 +328,7 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
             </div>
             <p className="news-lede">
               {t(
-                'WCA 将新增一个官方项目,并退役一个项目。FTO 是自 2014 年增加斜转(Skewb)以来首个新增的官方项目。',
+                'WCA 将新增一个官方项目,并退役一个项目。转面八面体（FTO）是自 2014 年增加斜转以来首个新增的官方项目。',
                 'The WCA will add one official event and retire another. FTO is the first new official event since Skewb was added in 2014.',
               )}
             </p>
@@ -339,8 +339,8 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
                 <div className="news-change-head">
                   <span className="news-evt"><CubingIcon icon="unofficial-fto" /></span>
                   <span className="news-change-name">
-                    FTO
-                    <small>{t('转面八面体 · Face-Turning Octahedron', 'Face-Turning Octahedron')}</small>
+                    {t('转面八面体', 'FTO')}
+                    <small>{t('FTO', 'Face-Turning Octahedron')}</small>
                   </span>
                 </div>
                 <p>
@@ -364,7 +364,7 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
                   <span className="news-evt"><CubingIcon icon="event-clock" /></span>
                   <span className="news-change-name">
                     {t('魔表', 'Clock')}
-                    <small>Clock</small>
+
                   </span>
                 </div>
                 <p>
@@ -388,8 +388,8 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
               <li className="news-ms">
                 <span className="news-ms-date">2027-01-02</span>
                 <span className="news-ms-text">
-                  <strong>{t('FTO 可纳入比赛。', 'FTO becomes available at competitions.')}</strong>
-                  {t(' FTO 规则将在 2027 年 1 月的规则修订周期发布并征求反馈。', ' Its regulations will be released for feedback during the January 2027 Regulations cycle.')}
+                  <strong>{t('转面八面体可纳入比赛。', 'FTO becomes available at competitions.')}</strong>
+                  {t(' 转面八面体规则将在 2027 年 1 月的规则修订周期发布并征求反馈。', ' Its regulations will be released for feedback during the January 2027 Regulations cycle.')}
                 </span>
               </li>
               <li className="news-ms">

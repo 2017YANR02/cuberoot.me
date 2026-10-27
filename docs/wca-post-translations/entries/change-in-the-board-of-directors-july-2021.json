@@ -12,14 +12,33 @@
     "sourceId": 14024
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "1799df1f38f90784ba8ba4e63aaa1748919ae23d82165ff6270778694d34d8c7",
     "language": "zh-Hans",
     "title": "WCA 董事会成员变动（2021 年 7 月）",
     "content": "Ethan Pride 的董事任期即将结束，WCA 于 2021 年 6 月 30 日举行了不记名选举，选出新一届成员。此次选举依据[动议 5.2021.1——董事选举](https://www.worldcubeassociation.org/documents/motions/05.2021.1%20-%20Election%20of%20Directors.pdf)进行。\n\n董事会收到以下申请：\n\n* Ethan Pride\n\n我们很高兴地宣布，选举顺利完成，Ethan 再次当选 WCA 董事！祝他履职顺利！\n\nEthan 的申请材料可在[这里](https://drive.google.com/drive/folders/1HVktU7HZLk5oLUNfpD4MDm2hTqaqOQHm?usp=sharing)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:54.098Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "648be6a8b1101a3670436c4b1794173f22abd1ab4abc69031dc1da51841a18f4"
+  "translationHash": "c9a1a12db1fb5771ebec337b0622c88940256fde99d5dda081ed6912faad95eb",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:12:23.463Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "1799df1f38f90784ba8ba4e63aaa1748919ae23d82165ff6270778694d34d8c7",
+    "reviewedTranslationHash": "c9a1a12db1fb5771ebec337b0622c88940256fde99d5dda081ed6912faad95eb",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/change-in-the-board-of-directors-july-2021.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照标题和正文；各届赛事城市及取消/退款范围、董事候选名单、当选与连任区别、任期及生效日期、保留职务和干事分工均与原文一致。"
+    ],
+    "inputTranslationHash": "648be6a8b1101a3670436c4b1794173f22abd1ab4abc69031dc1da51841a18f4"
+  }
 }

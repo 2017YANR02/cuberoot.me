@@ -12,14 +12,33 @@
     "sourceId": 14146
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "ab42194c0c86bfc7b3552568e0b8e9c8cadadb0c289cda52b67ea68410f5f557",
     "language": "zh-Hans",
     "title": "WCA 董事会成员变动（2024 年 1 月）",
     "content": "各位 WCA 社区成员：\n\n现通知一项 WCA 董事会成员变动：Somya Srivastava 自今天，即 1 月 26 日星期五起，结束在董事会的任职。\n\n感谢 Somya 在任期间所作的贡献。她为推进 WCA 的使命和精神付出了宝贵努力。\n\n董事会将确保工作平稳交接。我们对协会的未来充满信心，也会继续努力履行使命。",
     "notes": [],
     "translatedAt": "2026-10-22T08:42:40.576Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "6044ef17c6683b614f2c7742413db957ae943bf528511bbed17cbb39657482b1"
+  "translationHash": "41687b59d87fc8a1120d514323d4da1559168d9b8f4d2b5812e43394a9e276ac",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:12:38.683Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "ab42194c0c86bfc7b3552568e0b8e9c8cadadb0c289cda52b67ea68410f5f557",
+    "reviewedTranslationHash": "41687b59d87fc8a1120d514323d4da1559168d9b8f4d2b5812e43394a9e276ac",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/changes-to-the-wca-board-of-directors-january-2024.json",
+    "sourceConcern": false,
+    "notes": [
+      "全文对照标题、名单变更/历史范围、项目实施日期、条件和例外、合同授权条件、准则对象及纪录合作流程。"
+    ],
+    "inputTranslationHash": "6044ef17c6683b614f2c7742413db957ae943bf528511bbed17cbb39657482b1"
+  }
 }

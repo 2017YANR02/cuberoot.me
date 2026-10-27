@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/wmt-leader-announcement-march-2021",
+  "path": "docs/wca-post-translations/entries/wmt-leader-announcement-march-2021.json",
+  "sourceHash": "d8505d265726186cc12fdcccab2ae85267f79019a0c58cd1311eb5b65a57597c",
+  "inputTranslationHash": "1c29ff2093d8182ee63cf8b36db154eaef43f826f24b10ec754d98c321a244c1",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:11:14.399Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

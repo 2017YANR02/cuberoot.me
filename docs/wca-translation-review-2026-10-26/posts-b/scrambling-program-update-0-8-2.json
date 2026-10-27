@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/scrambling-program-update-0-8-2",
+  "path": "docs/wca-post-translations/entries/scrambling-program-update-0-8-2.json",
+  "sourceHash": "deef231676ac8ec7e0f80b25b50e4a30e5db489cc575f8c0e972e06a8e6417b7",
+  "inputTranslationHash": "da6116ab34375335e18db703ea122f6e78932dc0fdae390274cfa97872d00778",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:15.858Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

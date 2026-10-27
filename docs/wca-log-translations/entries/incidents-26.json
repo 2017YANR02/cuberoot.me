@@ -41,7 +41,26 @@
     },
     "unresolvedNotes": [
       "现有 review.notes 所列 “F article” 章节指代疑点未解决。源文在多盲事件中援引该章，译文忠实保留第 F 章；未据推测改章，也未核验历史规则或外链。"
-    ]
+    ],
+    "recheck": {
+      "reviewer": "/root/review_logs",
+      "reviewedAt": "2026-10-26T11:10:07.703Z",
+      "report": "../wca-translation-review-2026-10-26/final-report.json",
+      "sourceHash": "c40c27fae99ac11f0024f27d8704879a14189ba3d3efc7ac8ad7ccd864cbac90",
+      "reviewedTranslationHash": "f281910676a5554026326ad3283cd2050943ee15485d1134c82a593b8233ab6e",
+      "verdict": "pass",
+      "scope": "本轮完整阅读英中正文及既有审校疑点，保留原文矛盾或含混，不擅自纠正历史事实。官方现行来源已重新读取，相关正文与保存版本一致。"
+    },
+    "currentReview": {
+      "round": "2026-10-26",
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/incidents-26.json",
+      "sourceConcern": true,
+      "notes": [
+        "现有 review.notes 所列 “F article” 章节指代疑点未解决。源文在多盲事件中援引该章，译文忠实保留第 F 章；未据推测改章，也未核验历史规则或外链。",
+        "2026-10-26 重新读取官方来源，疑点仍存在；这是源文事实/措辞的保留结论，不是遗漏翻译或已确认的译文错误。"
+      ],
+      "inputTranslationHash": "f281910676a5554026326ad3283cd2050943ee15485d1134c82a593b8233ab6e"
+    }
   },
   "publication": {
     "status": "not_authorized"

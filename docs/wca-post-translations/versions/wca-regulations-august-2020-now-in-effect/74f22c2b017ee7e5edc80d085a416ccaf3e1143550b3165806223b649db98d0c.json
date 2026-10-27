@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/wca-regulations-august-2020-now-in-effect",
+  "source": {
+    "key": "posts:/posts/wca-regulations-august-2020-now-in-effect",
+    "kind": "posts",
+    "title": "WCA Regulations — August 2020: Now in Effect",
+    "date": "2020-07-31T18:12:46.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/wca-regulations-august-2020-now-in-effect",
+    "content": "New WCA [Regulations](https://www.worldcubeassociation.org/regulations/) and [Guidelines](https://www.worldcubeassociation.org/regulations/guidelines.html) are in effect as of August 1, 2020. Please see the [original announcement](https://www.worldcubeassociation.org/posts/wca-regulations-august-2020) for details.",
+    "hash": "db46ce4b8a26bf88a7ad3e6b07d7e5a21a5f450249f393b33efa379e03e53b5b",
+    "format": "markdown",
+    "sourceId": 13981
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "db46ce4b8a26bf88a7ad3e6b07d7e5a21a5f450249f393b33efa379e03e53b5b",
+    "language": "zh-Hans",
+    "title": "2020 年 8 月版 WCA 规则现已生效",
+    "content": "新版 WCA [规则](https://www.worldcubeassociation.org/regulations/)和[指南](https://www.worldcubeassociation.org/regulations/guidelines.html)已于 2020 年 8 月 1 日生效。详情请参阅[原公告](https://www.worldcubeassociation.org/posts/wca-regulations-august-2020)。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:49:54.102Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "74f22c2b017ee7e5edc80d085a416ccaf3e1143550b3165806223b649db98d0c"
+}

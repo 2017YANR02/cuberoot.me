@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wmt-leader-february-2019",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wmt-leader-february-2019.json",
+  "sourceHash": "dcfd6f594792a4d86b736f7614f65992b5826d2f6f16afb40bfe5f49a9ac495e",
+  "inputTranslationHash": "5de06783b0aab91b30ca2aa930bba2cab2543cbc5ab74629192f97e1af1500c7",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:10:42.788Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题与正文；核对财务职责、非必需技能、WIC 三组人数与条件、WMCT 多舞台经验及申请流程。"
+  ],
+  "changes": []
+}

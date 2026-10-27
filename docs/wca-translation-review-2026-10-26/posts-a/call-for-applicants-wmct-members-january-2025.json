@@ -1,0 +1,18 @@
+{
+  "key": "posts:/posts/call-for-applicants-wmct-members-january-2025",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wmct-members-january-2025.json",
+  "sourceHash": "9d98f25b1d28d1ad4919f3eaad2779106a526ae4d75b56e4b2a16c0452ff1a21",
+  "inputTranslationHash": "7b287ed5ef5ab69b992a1a61a982c7780f86d120cdb9d525bbd3601dafd7da5f",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:10:42.788Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "correction_required",
+  "notes": [
+    "完整对照标题与正文；核对财务职责、非必需技能、WIC 三组人数与条件、WMCT 多舞台经验及申请流程。"
+  ],
+  "changes": [
+    "统一 Continental 为大洲赛事/纪录；官方规则11f1c为大洲锦标赛，避免跨洲歧义。"
+  ],
+  "title": "招募 WCA 大型锦标赛组成员（2025 年 1 月）",
+  "content": "WCA 大型锦标赛组正在招募新成员！我们希望团队能汇集尽可能多来自不同洲、不同背景的人。所有人都可以申请，不要求申请者目前已在 WCA 任职，但组织过全国锦标赛或大型比赛的经验会受到特别重视。\n\n### WMCT 负责什么？\n\n团队的职责见 [WCA 议案 10.2024.14](https://documents.worldcubeassociation.org/documents/motions/10.2024.14%20-%20Major%20Championship%20Team.pdf)，近期还将进一步扩充。简单来说，团队负责各大洲锦标赛和世锦赛的申办流程，在申请期前后跟进各主办团队，并帮助历届锦标赛核心团队传递办赛经验。\n\n作为新成立的团队，WMCT 需要新成员一起确定工作方向，整理以往使用过的各类资料，并编写新资料。团队很快将参与 2026 年和 2027 年大型锦标赛的申办工作。\n\n### 申请条件\n\n**我们希望候选人具备以下条件：**\n\n* 每周可投入约 2–5 小时，部分时期工作会比较密集；能在压力下按严格期限完成任务。\n* 能够熟练地用英语沟通。\n* 曾组织全国锦标赛或大型锦标赛，或组织过设有多个赛台、有赞助商、预算较大、安排直播等的大规模比赛。\n* 曾参加大型锦标赛并担任工作人员。\n\n### 如何申请\n\n**申请材料须包含：**\n\n* 简短的个人介绍。\n* 曾为 WCA、地区组织或魔方社区开展的工作概述。\n* 详细介绍自己在全国、大规模或大型锦标赛筹办中的职责，以及这些经历能如何帮助 WMCT。\n* 加入 WMCT 的原因。\n* （选填）对今后大型锦标赛的建议。\n\n申请材料须为 PDF 格式。即日起至 **2025 年 1 月 31 日 23:59 UTC**，请将材料私下发送给 Rubén López de Juan（rjuan@worldcubeassociation.org）。\n\n我们会回复确认材料是否完整，也可能邀请你参加由 WMCT 负责人及最多另外两名成员主持的面试。\n\n如对 WMCT 工作或本次招募有疑问，可发邮件联系 Rubén López de Juan（rjuan@worldcubeassociation.org）。\n\n感谢你愿意加入 WMCT 和 WCA！"
+}

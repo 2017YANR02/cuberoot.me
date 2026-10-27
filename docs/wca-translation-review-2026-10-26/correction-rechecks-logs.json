@@ -1,0 +1,100 @@
+{
+  "entries": [
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2024-q4",
+      "contentHash": "ca911c92cdec5d976600e63f49e9616c3463002720c98dfeda4032878bc3674c",
+      "verdict": "pass",
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.685Z",
+      "scope": "核对全部词句差异、对应完整英文段落、官方events->skewb及WIC板块语境；确认仅项目名和板块名校正，清理替换产生的多余中文间空格，其余沿用绑定旧版的独立审校。"
+    },
+    {
+      "key": "disciplinary:/posts/integrity-committee-digest-2026-q3",
+      "contentHash": "3029e2b914e2ae2b94f6b48046a8bb5361ff2d8cbcca84e102adb5f8e9ea601f",
+      "verdict": "pass",
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.686Z",
+      "scope": "核对全部词句差异、对应完整英文段落、官方events->skewb及WIC板块语境；确认仅项目名和板块名校正，清理替换产生的多余中文间空格，其余沿用绑定旧版的独立审校。"
+    },
+    {
+      "key": "disciplinary:/posts/wic-digest-2024-q3",
+      "contentHash": "14e84929a8c59930276e00acf1db4f6698eb1b36a6dfea88fef7e19c0f676762",
+      "verdict": "pass",
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.687Z",
+      "scope": "核对全部词句差异、对应完整英文段落、官方events->skewb及WIC板块语境；确认仅项目名和板块名校正，清理替换产生的多余中文间空格，其余沿用绑定旧版的独立审校。"
+    },
+    {
+      "key": "incidents:131",
+      "contentHash": "5221b46d00191cb4a160e8397f2fd82fa697b9b40b6c1753e938999493781c06",
+      "verdict": "pass",
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.688Z",
+      "scope": "核对全部词句差异、对应完整英文段落、官方events->skewb及WIC板块语境；确认仅项目名和板块名校正，清理替换产生的多余中文间空格，其余沿用绑定旧版的独立审校。"
+    },
+    {
+      "key": "incidents:132",
+      "contentHash": "1e2e5d4c7f6a6be440532ccef6715648f293e132489431d80d973342fa70db79",
+      "verdict": "pass",
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.688Z",
+      "scope": "核对全部词句差异、对应完整英文段落、官方events->skewb及WIC板块语境；确认仅项目名和板块名校正，清理替换产生的多余中文间空格，其余沿用绑定旧版的独立审校。"
+    },
+    {
+      "key": "incidents:153",
+      "contentHash": "6141ddc7837728445eec2c534591fab1f81f03195ec1a8cafef794382220b89c",
+      "verdict": "pass",
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.688Z",
+      "scope": "核对全部词句差异、对应完整英文段落、官方events->skewb及WIC板块语境；确认仅项目名和板块名校正，清理替换产生的多余中文间空格，其余沿用绑定旧版的独立审校。"
+    },
+    {
+      "key": "incidents:19",
+      "contentHash": "7323d8f2b1ffc2c73eff2eee7a788f3d5650e32453a711c9fd5566af74b43c5b",
+      "verdict": "pass",
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.689Z",
+      "scope": "核对全部词句差异、对应完整英文段落、官方events->skewb及WIC板块语境；确认仅项目名和板块名校正，清理替换产生的多余中文间空格，其余沿用绑定旧版的独立审校。"
+    },
+    {
+      "key": "incidents:20",
+      "contentHash": "c957d1086aaab385d31a3670be5a00f5112e0551159aad9937237af23d1dfdfc",
+      "verdict": "pass",
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.689Z",
+      "scope": "核对全部词句差异、对应完整英文段落、官方events->skewb及WIC板块语境；确认仅项目名和板块名校正，清理替换产生的多余中文间空格，其余沿用绑定旧版的独立审校。"
+    },
+    {
+      "key": "incidents:28",
+      "contentHash": "d39aa503da47a183209997ca0686acafd062b3ec84bf6eb0adbc71e114ece77a",
+      "verdict": "pass",
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.689Z",
+      "scope": "核对全部词句差异、对应完整英文段落、官方events->skewb及WIC板块语境；确认仅项目名和板块名校正，清理替换产生的多余中文间空格，其余沿用绑定旧版的独立审校。"
+    },
+    {
+      "key": "incidents:38",
+      "contentHash": "89a6d632c204d056a65695ea012bd1c86da063c4e56bc5be9dfe937e297af76b",
+      "verdict": "pass",
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.689Z",
+      "scope": "核对全部词句差异、对应完整英文段落、官方events->skewb及WIC板块语境；确认仅项目名和板块名校正，清理替换产生的多余中文间空格，其余沿用绑定旧版的独立审校。"
+    },
+    {
+      "key": "incidents:45",
+      "contentHash": "d46ad0331c5ffef4ad063944804f4fad7dc30356d66b0ebf7fe14d9c5b14f6a0",
+      "verdict": "pass",
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.690Z",
+      "scope": "核对全部词句差异、对应完整英文段落、官方events->skewb及WIC板块语境；确认仅项目名和板块名校正，清理替换产生的多余中文间空格，其余沿用绑定旧版的独立审校。"
+    },
+    {
+      "key": "incidents:53",
+      "contentHash": "7764b45686c91e66af74e12179e8d10469f899e60c0e7276409eedb1d72d8b28",
+      "verdict": "pass",
+      "reviewer": "root",
+      "reviewedAt": "2026-10-26T11:12:36.690Z",
+      "scope": "核对全部词句差异、对应完整英文段落、官方events->skewb及WIC板块语境；确认仅项目名和板块名校正，清理替换产生的多余中文间空格，其余沿用绑定旧版的独立审校。"
+    }
+  ]
+}

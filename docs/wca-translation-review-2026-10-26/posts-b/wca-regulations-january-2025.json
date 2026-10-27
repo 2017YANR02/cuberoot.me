@@ -1,0 +1,16 @@
+{
+  "key": "posts:/posts/wca-regulations-january-2025",
+  "path": "docs/wca-post-translations/entries/wca-regulations-january-2025.json",
+  "sourceHash": "d32c291316254e4fb0d37f4b58eadeeb99c310d8a27f06725648f5d3b7b6eaeb",
+  "inputTranslationHash": "2b2602a083eed58266824367324fcac311889b398de793df6ef6a8a9850a38c9",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:10:32.385Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "correction_required",
+  "notes": [],
+  "changes": [
+    "corner twists按角块扭转准确表达。"
+  ],
+  "title": "WCA 竞赛规则更新（2025 年 1 月）",
+  "content": "各位 WCA 社区成员：\n\nWCA 规则委员会在此通知，新版《WCA 竞赛规则与指南》将适用于 2025 年 1 月 1 日及之后开始的比赛。\n\n所有改动可在 [GitHub 版本对比](https://github.com/thewca/wca-regulations/compare/official-2024-01-01...official-2025-01-01-fixed)中查看。点击“Files changed”即可查看规则与指南的完整文件，其中新增和修改的内容标为绿色，删除的内容标为红色。\n\n更详细的说明见这份[改动说明文档](https://docs.google.com/document/d/1q0XkRuSz-Nxy9BFcXSkzNLLl6D7u3_2VHhU_w_Pokyw/edit?usp=sharing)。以下是新版规则与指南的改动概要。\n\n主要改动：\n\n* 明确逐帧分析的要求 [改动](https://github.com/thewca/wca-regulations/pull/1268)\n* 引入处理错误打乱的明确流程 [改动](https://github.com/thewca/wca-regulations/pull/1266)\n* 允许三阶盲拧使用带标识的魔方 [改动](https://github.com/thewca/wca-regulations/pull/1265)\n* 放宽三阶最少步的判卷标准 [改动](https://github.com/thewca/wca-regulations/pull/1264)\n* 允许锦标赛将晋级资格限于相关地区的选手 [改动](https://github.com/thewca/wca-regulations/pull/1263)\n\n次要改动：\n\n* 取消规则 2e2 对更改代表国家的限制 [改动](https://github.com/thewca/wca-regulations/pull/1262)\n* 允许缺乏经验的选手事后补签成绩单 [改动](https://github.com/thewca/wca-regulations/pull/1261)\n* 将规则 9f2 的四舍五入改为截断 [改动](https://github.com/thewca/wca-regulations/pull/1259)\n* 明确遮挡板的放置要求 [改动](https://github.com/thewca/wca-regulations/pull/1257)\n* 重新编排魔表相关规则 [改动](https://github.com/thewca/wca-regulations/pull/1255)\n* 不因相机屏幕可见而事后追罚 [改动](https://github.com/thewca/wca-regulations/pull/1254)\n* 明确多个角块扭转的修复方式 [改动](https://github.com/thewca/wca-regulations/pull/1253)\n* 允许对规则 A6b 酌情处理 [改动](https://github.com/thewca/wca-regulations/pull/1252)\n* 将打乱保密要求加入规则 [改动](https://github.com/thewca/wca-regulations/pull/1251)\n* 明确规则 5b5f [改动](https://github.com/thewca/wca-regulations/pull/1250)\n* 避免规则 A6c 同时触发规则 A6e [改动](https://github.com/thewca/wca-regulations/pull/1249)\n* 定义无效还原 [改动](https://github.com/thewca/wca-regulations/pull/1248)\n* 明确签名要求 [改动](https://github.com/thewca/wca-regulations/pull/1247)\n* 禁止涂损成绩单 [改动](https://github.com/thewca/wca-regulations/pull/1246)\n* 允许选手在没有裁判时自行停止秒表 [改动](https://github.com/thewca/wca-regulations/pull/1244)\n* 进一步明确区分打乱员、裁判与选手的身份 [改动](https://github.com/thewca/wca-regulations/pull/1243)\n* 删除指南 9b+ [改动](https://github.com/thewca/wca-regulations/pull/1242)\n* 允许使用外接麦克风 [改动](https://github.com/thewca/wca-regulations/pull/1241)\n* 将规则 2g3 的例外扩展至三阶多盲 [改动](https://github.com/thewca/wca-regulations/pull/1240)\n* 明确规则 A3d [改动](https://github.com/thewca/wca-regulations/pull/1239)\n* 选手碰倒魔方罩时判罚 DNF [改动](https://github.com/thewca/wca-regulations/pull/1238)"
+}

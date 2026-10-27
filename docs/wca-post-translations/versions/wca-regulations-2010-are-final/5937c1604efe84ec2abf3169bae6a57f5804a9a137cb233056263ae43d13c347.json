@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/wca-regulations-2010-are-final",
+  "source": {
+    "key": "posts:/posts/wca-regulations-2010-are-final",
+    "kind": "posts",
+    "title": "WCA Regulations 2010 are final",
+    "date": "2010-04-14T16:51:41.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/wca-regulations-2010-are-final",
+    "content": "The WCA Regulations 2010 are now final.\n \n See https://www.worldcubeassociation.org/regulations for the new version.\n See https://www.worldcubeassociation.org/regulations/regulations\\_history2010.html for all changes.\n See https://www.worldcubeassociation.org/regulations/regulations2010new.html for the 2010 version with all changes marked.\n See https://www.worldcubeassociation.org/regulations/WCARegulations2010.pdf for the 2010 version in PDF.\n \n All competitions starting today (April 14, 2010) must use this new version of the regulations.\n \n Most important changes are:\n = Preferred format for Megaminx is now 'Average of 5'.\n \n Other changes for competitors:\n = Stricter rules for timer malfunctions. Timer shows 0.01 - 0.05: extra attempt (unless intentional by competitor). Timer shows 0.06 or higher: DNF (unless reproducible malfunctioning).\n = Puzzles with textures or painted colours are now accepted.\n = Blindfolded: Competitors must bring their own blindfold.\n = Fewest moves: Solutions maximum 80 moves and/or rotations.\n = Magic: No practice solves on timer.\n \n Other changes for competition organisers:\n = WCA delegate is now responsible for providing the scrambles.\n = Improved scramble programs.\n = At least 25% of competitors must not proceed to round.\n \n Thank you all for your feedback and contributions.\n We did our best to cover all your feedback, but it is never possible to make everyone happy.\n Feedback is always welcome in the WCA Forum.\n \n Happy cubing,\n \n Ron van Bruchem\n World Cube Association",
+    "hash": "ed211e4491198818f3a08013247ccc21f81155feceb227a34d1c9b2b586082a9",
+    "format": "markdown",
+    "sourceId": 783
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "ed211e4491198818f3a08013247ccc21f81155feceb227a34d1c9b2b586082a9",
+    "language": "zh-Hans",
+    "title": "2010 年 WCA 竞赛规则定稿",
+    "content": "2010 年 WCA 竞赛规则现已定稿。\n\n新版规则：https://www.worldcubeassociation.org/regulations\n\n全部修改：https://www.worldcubeassociation.org/regulations/regulations\\_history2010.html\n\n标注所有改动的 2010 年规则：https://www.worldcubeassociation.org/regulations/regulations2010new.html\n\n2010 年规则 PDF：https://www.worldcubeassociation.org/regulations/WCARegulations2010.pdf\n\n从今天（2010 年 4 月 14 日）起开始的所有比赛，必须使用新版规则。\n\n最重要的变化：\n\n- 五魔方的推荐赛制现改为“五次去尾平均”。\n\n其他与选手有关的变化：\n\n- 计时器故障的处理更严格：计时器显示 0.01–0.05 秒时给予补赛，除非是选手故意造成；显示 0.06 秒或以上时判 DNF，除非故障可以复现。\n- 现在允许使用带纹理或涂色的魔方。\n- 盲拧：选手必须自备眼罩。\n- 最少步：解法最多包含 80 次转动和／或整体转动。\n- 八板：不得在计时器上进行练习还原。\n\n其他与比赛组织者有关的变化：\n\n- WCA 代表现负责提供打乱。\n- 打乱程序有所改进。\n- 至少 25% 的选手不得晋级下一轮。\n\n感谢大家的反馈和贡献。我们已尽力考虑所有意见，但不可能让每个人都满意。欢迎继续在 WCA 论坛反馈。\n\n祝大家玩魔方愉快！\n\nRon van Bruchem\n\n世界魔方协会",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:55:00.932Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "5937c1604efe84ec2abf3169bae6a57f5804a9a137cb233056263ae43d13c347"
+}

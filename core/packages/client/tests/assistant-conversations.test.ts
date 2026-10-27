@@ -1,7 +1,43 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createAssistantConversations } from '@/lib/assistant-conversations';
 
 describe('assistant workspace conversations', () => {
+  it('restores pinned chats for the same account without persisting image bytes', () => {
+    const data = new Map<string, string>();
+    vi.stubGlobal('window', {});
+    vi.stubGlobal('localStorage', { getItem: (key: string) => data.get(key) ?? null, setItem: (key: string, value: string) => data.set(key, value) });
+    try {
+      const store = createAssistantConversations();
+      store.restorePinned('alice');
+      store.create('alice', 'a');
+      store.patch('alice', 'a', { turns: [{ question: 'picture', images: [{ data: 'secret-image', mediaType: 'image/png' }] }] });
+      store.setPinned('alice', 'a', true);
+      expect([...data.values()].join('')).not.toContain('secret-image');
+      const reopened = createAssistantConversations();
+      reopened.restorePinned('bob');
+      reopened.restorePinned('alice');
+      expect(reopened.read('bob').conversations).toEqual([]);
+      expect(reopened.read('alice').conversations[0]).toMatchObject({ id: 'a', pinned: true, snapshot: { turns: [{ question: 'picture', imagesExpired: true }] } });
+      reopened.setPinned('alice', 'a', false);
+      const again = createAssistantConversations();
+      again.restorePinned('alice');
+      expect(again.read('alice').conversations).toEqual([]);
+    } finally { vi.unstubAllGlobals(); }
+  });
+  it('branches through the selected answer without changing or aliasing the original', () => {
+    const store = createAssistantConversations();
+    store.create('alice', 'original');
+    const turns = [{ question: 'first', result: { answer: 'answer', sources: [] } }, { question: 'later' }];
+    store.patch('alice', 'original', { turns, conversationId: 'old-request' });
+    store.branch('alice', 'branch', turns.slice(0, 1));
+    const branch = store.read('alice').conversations[1];
+    expect(branch.snapshot.turns).toEqual([turns[0]]);
+    expect(branch.snapshot.conversationId).toBeNull();
+    branch.snapshot.turns[0].question = 'changed';
+    expect(turns[0].question).toBe('first');
+    expect(store.read('alice').activeId).toBe('branch');
+    expect(store.read('bob').conversations).toEqual([]);
+  });
   it('keeps drafts, images and context independent while switching and receiving a background reply', () => {
     const store = createAssistantConversations();
     store.create('alice', 'a');
@@ -40,5 +76,26 @@ describe('assistant workspace conversations', () => {
     store.subscribe(() => { notifications++; });
     store.update('alice', 'a', { ...store.read('alice').conversations[0].snapshot });
     expect(notifications).toBe(0);
+  });
+
+  it('hands a submission to one consumer without overwriting a newer draft or attachments', () => {
+    const store = createAssistantConversations();
+    store.create('alice', 'a');
+    const images = [{ data: 'test', mediaType: 'image/png' as const }];
+    store.patch('alice', 'a', { draft: 'translate WIC', images });
+    expect(store.submit('alice', 'a', 'translate WIC', images)).toBe(true);
+    expect(store.submit('alice', 'a', 'duplicate', [])).toBe(false);
+    expect(store.read('alice').open).toBe(true);
+    expect(store.read('alice').conversations[0].snapshot.draft).toBe('');
+    const submitted = store.takeSubmission('alice', 'a');
+    expect(submitted).toEqual({ question: 'translate WIC', images });
+    expect(store.takeSubmission('alice', 'a')).toBeNull();
+    store.patch('alice', 'a', { draft: 'next question', images });
+    store.setOpen('alice', false);
+    store.patch('alice', 'a', { turns: [{ question: 'translate WIC', result: { answer: '廉政委员会', sources: [] } }] });
+    expect(store.read('alice').conversations[0].snapshot).toMatchObject({ draft: 'next question', images });
+    expect(store.read('alice').opened).toBe(true);
+    expect(store.read('bob').open).toBe(false);
+    expect(store.read('bob').conversations).toEqual([]);
   });
 });

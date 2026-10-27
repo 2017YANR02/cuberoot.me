@@ -22,15 +22,15 @@
   border: none;
   background: none;
   color: var(--accent);
-  /* 与 /wca/records 徽章一致的 Inter sans(含 loading 占位 "WR …");不用 mono. */
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 0.82em;
-  font-weight: 600;
+  /* 与 /wca/records 徽章一致的 system sans(含 loading 占位 "WR …");不用 mono. */
+  font-family: var(--font-sans);
+  font-size: 0.75em;
+  font-weight: 400;
   line-height: 1.4;
   white-space: nowrap;
 }
 /* WR12/AsR9/NR9 segments: center-align text + any inline RecordBadge, even gaps
-   around the "/" separators. 字体继承 .rank-pill 的 Inter(已非 mono). */
+   around the "/" separators. 字体继承 .rank-pill 的 system(已非 mono). */
 .timer-display-wrap:has(> .timer-display-corner .rank-badge-row) {
   display: flex;
   flex-direction: column;

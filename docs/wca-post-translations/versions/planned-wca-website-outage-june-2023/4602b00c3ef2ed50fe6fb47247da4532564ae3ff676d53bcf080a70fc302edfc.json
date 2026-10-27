@@ -1,0 +1,27 @@
+{
+  "key": "posts:/posts/planned-wca-website-outage-june-2023",
+  "source": {
+    "key": "posts:/posts/planned-wca-website-outage-june-2023",
+    "kind": "posts",
+    "title": "Planned WCA website outage (June 2023)",
+    "date": "2023-05-20T11:05:11.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/planned-wca-website-outage-june-2023",
+    "content": "Dear WCA Community,\n\nThe WCA Software Team (WST) will be performing some important updates regarding payment integration on **Monday 5th of June 2023**. The WCA website and database will be unavailable between **UTC 06:00 - 12:00**. The work is expected to be completed in less than the allotted 6 hours.\n\nThank you for you patience and understanding as we work on making the WCA website a better platform!",
+    "hash": "e44b9694fa7b1dbcbe172431858e746f43a799287c40b3b3c6d7d80ab86e6e18",
+    "format": "markdown",
+    "sourceId": 14105
+  },
+  "translation": {
+    "version": 2,
+    "sourceHash": "e44b9694fa7b1dbcbe172431858e746f43a799287c40b3b3c6d7d80ab86e6e18",
+    "language": "zh-Hans",
+    "title": "WCA 网站计划停机维护（2023 年 6 月）",
+    "content": "各位 WCA 社区成员：\n\nWCA 软件组（WST）将于 **2023 年 6 月 5 日星期一**进行支付接入方面的重要更新。WCA 网站和数据库将在 **06:00–12:00 UTC** 期间暂停服务。预计实际维护时间会少于预留的 6 小时。\n\n我们正在改进 WCA 网站，感谢大家耐心等待和理解！",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:45:43.556Z",
+    "reviewStatus": "pending_independent_review",
+    "revisedAt": "2026-10-25T07:28:01.629Z",
+    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+  },
+  "translationHash": "4602b00c3ef2ed50fe6fb47247da4532564ae3ff676d53bcf080a70fc302edfc"
+}

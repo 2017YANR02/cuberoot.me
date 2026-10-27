@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/wcat-leader-announcement-december-2023",
+  "path": "docs/wca-post-translations/entries/wcat-leader-announcement-december-2023.json",
+  "sourceHash": "9498fdbe8e47404a64c173f82f07eb1b9163814efc764f70b5d830bb3dd1afb0",
+  "inputTranslationHash": "1ba10ff43fe4800a1a59da53d814dcb2c0016bcad07efe01e836851598fc5fd0",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:10:42.568Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [
+    "全文核对；历史公告的当时判断、参赛人数、日期及任命程序均保留。"
+  ],
+  "changes": []
+}

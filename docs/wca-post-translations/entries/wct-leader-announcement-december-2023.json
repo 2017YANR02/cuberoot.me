@@ -12,16 +12,33 @@
     "sourceId": 14137
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "45e23a53ee58488f0ee7b80df4592286b81573a1549a11e99e4f318de54702b7",
     "language": "zh-Hans",
     "title": "WCA 通讯组负责人任命公告（2023 年 12 月）",
     "content": "我们很高兴宣布，Zain Ali 将出任 WCA 通讯组（WCT）负责人。Zain 此前已是团队成员。\n\n根据关于 WCA 委员会与团队的[决议](https://www.worldcubeassociation.org/documents/motions/10.2022.0%20-%20Committees%20and%20Teams.pdf)第 4 节，WCA 董事会选定 Zain，并经现任委员会负责人及高级代表投票通过。\n\n感谢 Rui Reis 为 WCT 所做的工作。我们支持 Zain 承担新职责，并祝他工作顺利。\n\n本次共收到两份申请。Zain 的申请材料可在[此处](https://drive.google.com/drive/folders/1_jZ_LxfV8uVfktj864_5UnN6pvrTUw-v)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.552Z",
-    "reviewStatus": "pending_independent_review",
-    "revisedAt": "2026-10-25T07:28:01.629Z",
-    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "2ca1f39f9c55ad6ad1a8272a36eb0e30405baddf638531d463bf70635c504bd1"
+  "translationHash": "d3baa0e689359787d6f01f65d3c8eb394790deb696164d8e1970a53a5feff11d",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:10:42.568Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "45e23a53ee58488f0ee7b80df4592286b81573a1549a11e99e4f318de54702b7",
+    "reviewedTranslationHash": "d3baa0e689359787d6f01f65d3c8eb394790deb696164d8e1970a53a5feff11d",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wct-leader-announcement-december-2023.json",
+    "sourceConcern": false,
+    "notes": [
+      "全文核对；历史公告的当时判断、参赛人数、日期及任命程序均保留。"
+    ],
+    "inputTranslationHash": "2ca1f39f9c55ad6ad1a8272a36eb0e30405baddf638531d463bf70635c504bd1"
+  }
 }

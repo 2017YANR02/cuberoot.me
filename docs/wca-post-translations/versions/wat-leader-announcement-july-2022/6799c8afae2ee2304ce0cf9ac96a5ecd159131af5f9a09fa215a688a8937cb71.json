@@ -1,0 +1,27 @@
+{
+  "key": "posts:/posts/wat-leader-announcement-july-2022",
+  "source": {
+    "key": "posts:/posts/wat-leader-announcement-july-2022",
+    "kind": "posts",
+    "title": "WAT Leader Announcement (July 2022)",
+    "date": "2022-07-30T11:03:22.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/wat-leader-announcement-july-2022",
+    "content": "We are happy to announce that we have a new Committee Leader. **William Gan will become the new Leader of the WCA Archive Team (WAT).** \n\nWilliam was selected by the WCA Board and approved in a vote among the current Committee Leaders and Senior Delegates, following Section 4 of our [Motion](https://www.worldcubeassociation.org/documents/motions/10.2022.0%20-%20Committees%20and%20Teams.pdf) about WCA Committees and Teams.\n\nWilliam was among three applicants we had and all three candidacy documents can be found [here](https://drive.google.com/drive/folders/1B-qKJFfeqn5dPlWUaKyCiK-8nQnHjj_h) if you are interested in viewing them. \n\nList of the other candidates who applied:\n- Raymond Goslow\n- Quinn Lawson",
+    "hash": "9d64633282a28937e0c19e79f813160ea4b44e24ba82c4070ad843f1d4cd8098",
+    "format": "markdown",
+    "sourceId": 14066
+  },
+  "translation": {
+    "version": 2,
+    "sourceHash": "9d64633282a28937e0c19e79f813160ea4b44e24ba82c4070ad843f1d4cd8098",
+    "language": "zh-Hans",
+    "title": "WCA 档案组负责人任命公告（2022 年 7 月）",
+    "content": "我们很高兴地宣布，**William Gan 将担任 WCA 档案组（WAT）的新任负责人。**\n\n依照 WCA 委员会与团队[动议](https://www.worldcubeassociation.org/documents/motions/10.2022.0%20-%20Committees%20and%20Teams.pdf)第 4 节，WCA 董事会选定 William，并经现任委员会负责人和高级代表投票批准。\n\n本次共有三位申请人，包括 William。有兴趣的成员可在[此处](https://drive.google.com/drive/folders/1B-qKJFfeqn5dPlWUaKyCiK-8nQnHjj_h)查看三人的申请材料。\n\n其他申请人为：\n\n- Raymond Goslow\n- Quinn Lawson",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:49:54.085Z",
+    "reviewStatus": "pending_independent_review",
+    "revisedAt": "2026-10-25T07:28:01.629Z",
+    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+  },
+  "translationHash": "6799c8afae2ee2304ce0cf9ac96a5ecd159131af5f9a09fa215a688a8937cb71"
+}

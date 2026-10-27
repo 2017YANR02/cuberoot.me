@@ -166,7 +166,7 @@
 }
 
 .ao5-display {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: var(--font-sans);
     font-size: clamp(0.7rem, 2.5vw, 0.9rem);
     color: var(--faint-foreground);
     text-align: center;

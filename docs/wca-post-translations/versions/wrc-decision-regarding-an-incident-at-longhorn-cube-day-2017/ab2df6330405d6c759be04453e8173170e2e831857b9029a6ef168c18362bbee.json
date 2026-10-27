@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/wrc-decision-regarding-an-incident-at-longhorn-cube-day-2017",
+  "source": {
+    "key": "posts:/posts/wrc-decision-regarding-an-incident-at-longhorn-cube-day-2017",
+    "kind": "posts",
+    "title": "WRC decision regarding an incident at Longhorn Cube Day 2017",
+    "date": "2017-11-20T20:33:23.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/wrc-decision-regarding-an-incident-at-longhorn-cube-day-2017",
+    "content": "Dear WCA Community,\n\nAt Longhorn Cube Day 2017 a competitor [under 18 years old] used an invalid puzzle with an overlay sticker during the third round of 3x3x3 Blindfolded. This incident has generated special attention as it affects a single result of 17.35 seconds, which would be the new 3x3x3 Blindfolded World Record.\n\nThe WCA Regulations require that puzzles must be approved by a WCA Delegate. Unfortunately, this was not done before the round, so the delegates of the competition decided to grant the competitor provisional extra attempts for this round. The WRC has now decided that the provisional extra attempts should replace the original attempts. The results will be changed from DNF, DNF, 17.35 to 29.40, 21.78, DNF.  \n\nWe are very sorry for the competitor. However, we would like to remind that the WCA Regulations require every competitor to be familiar with the Regulations and to only provide puzzles that comply with all Regulations.  As the Regulations were broken in the original attempts and there are valid replacement attempts, we believe this is the correct decision. This decision is also consistent with several precedents at other competitions and it would be unfair to treat this incident differently only because it involves a potential record-breaking result.\n\nKind regards,\nLaura Ohrndorf, on behalf of the WCA Regulations Committee (WRC)",
+    "hash": "91cc143c35ca22873b497f54e3ac7d5f9727ae75629fdddd787316589415d633",
+    "format": "markdown",
+    "sourceId": 8340
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "91cc143c35ca22873b497f54e3ac7d5f9727ae75629fdddd787316589415d633",
+    "language": "zh-Hans",
+    "title": "WRC 对 Longhorn Cube Day 2017 意外事件的裁定",
+    "content": "亲爱的 WCA 社区成员：\n\n在 Longhorn Cube Day 2017 的三阶盲拧第三轮中，一名未满 18 岁的选手使用了带有叠加贴纸、不符合规定的魔方。这一事件受到特别关注，因为它涉及一次 17.35 秒的单次成绩；该成绩原本将成为新的三阶盲拧世界纪录。\n\nWCA 规则要求魔方必须经过 WCA 代表批准。遗憾的是，本轮比赛前未进行这项检查，因此赛事代表决定给予该选手本轮的暂定额外还原机会。WRC 现已决定，用这些暂定额外还原替代原来的还原。成绩将由 DNF、DNF、17.35 改为 29.40、21.78、DNF。\n\n我们为这名选手感到非常遗憾。不过，我们也提醒大家，WCA 规则要求每位选手熟悉规则，并且只提供符合全部规定的魔方。原来的还原违反了规则，而现有有效的替代还原，因此我们认为这是正确的决定。这也与其他比赛中的多个先例一致；仅因为涉及一项可能破纪录的成绩，就对本次事件采取不同处理，并不公平。\n\n此致\n\nLaura Ohrndorf，代表 WCA 规则委员会（WRC）",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.152Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "ab2df6330405d6c759be04453e8173170e2e831857b9029a6ef168c18362bbee"
+}

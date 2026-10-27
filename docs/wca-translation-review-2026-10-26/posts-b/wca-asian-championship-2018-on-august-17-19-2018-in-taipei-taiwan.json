@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/wca-asian-championship-2018-on-august-17-19-2018-in-taipei-taiwan",
+  "path": "docs/wca-post-translations/entries/wca-asian-championship-2018-on-august-17-19-2018-in-taipei-taiwan.json",
+  "sourceHash": "4a1da4241fdff4e2aeac8a9f7424475a70e8742bfddf818792f2ca5e60d7cd4a",
+  "inputTranslationHash": "d1f54dfd5436bd26cb9eade5cb2cb64042cfc22daacc8c33c540316b2d25ca54",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:07:08.714Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

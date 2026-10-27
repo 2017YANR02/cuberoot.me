@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/wca-north-american-championship-2026-host-city-announcement-december-2025",
+  "path": "docs/wca-post-translations/entries/wca-north-american-championship-2026-host-city-announcement-december-2025.json",
+  "sourceHash": "80e7d8722382db13bf0f64a69271c517d40ba232defcf22af8a5201da8debe99",
+  "inputTranslationHash": "f59480fd9821a070484b40c5b8514ad48ea8244ab19d0a82a8119e20c0dcb69f",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:07:08.716Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

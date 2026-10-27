@@ -19,7 +19,7 @@
 
 .landing-page {
     color-scheme: light dark;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: var(--font-sans);
     background-color: var(--bg);
     color: var(--text);
     min-height: 100vh;
@@ -911,8 +911,8 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 
 /* ── 页脚 ── */
 .landing-page .landing-footer-layout {
-    --footer-row-height: 44px;
-    --footer-row-gap: 4px;
+    --footer-row-height: 32px;
+    --footer-row-gap: 2px;
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(440px, 1fr);
     align-items: start;
@@ -980,6 +980,12 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     color: var(--muted-foreground);
 }
 
+.landing-contact-details .contact-app-platform-label .contact-qr-trigger,
+.landing-contact-details .contact-social-logo,
+.landing-contact-details .contact-direct-details dt > :is(a, button) {
+    height: var(--footer-row-height);
+}
+
 .landing-contact-details .contact-column-heading > svg,
 .landing-contact-details .contact-column-heading .contact-details-icon > svg {
     width: 14px;
@@ -1004,7 +1010,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 @media (max-width: 900px) {
     .landing-page .landing-footer-layout {
         grid-template-columns: minmax(0, 1fr);
-        gap: 1.5rem;
+        gap: 0.75rem;
     }
     .landing-page .landing-contact-details {
         width: min(100%, 440px);
@@ -1116,6 +1122,9 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     max-height: 12rem;
     margin: 0;
     overflow-y: auto;
+    /* Leave room inside the scroll clip for the cards' 1px hover lift. */
+    padding-top: 2px;
+    margin-top: -2px;
 }
 .landing-page .landing-personal-comps:empty { display: none; }
 .landing-page .landing-personal-comps .wp-upcoming-card { padding-inline: 0; }

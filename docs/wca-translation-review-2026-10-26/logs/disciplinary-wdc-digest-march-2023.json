@@ -1,0 +1,18 @@
+{
+  "key": "disciplinary:/posts/wdc-digest-march-2023",
+  "path": "docs/wca-log-translations/entries/disciplinary-wdc-digest-march-2023.json",
+  "sourceHash": "3ad58e0e594048b03162b7e4e6fe1abc8b19d3429e3452e3f73b0da24616ee56",
+  "inputTranslationHash": "3fa61fad73aa02452747a50f9c35df60a2d43dabecbbf136bffd22d6a3c7f8ed",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "复用当前译文哈希绑定的既有全文独立审校；本轮全量检索项目名和机构残留，并核对命中语境。",
+  "verdict": "pass",
+  "notes": [],
+  "changes": [],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/recheck-1.json",
+    "reviewedTranslationHash": "3fa61fad73aa02452747a50f9c35df60a2d43dabecbbf136bffd22d6a3c7f8ed",
+    "verdict": "pass"
+  },
+  "sourceUncertainty": false
+}

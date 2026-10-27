@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/richard-jay-s-apagar-wins-asian-championship-2012",
+  "path": "docs/wca-post-translations/entries/richard-jay-s-apagar-wins-asian-championship-2012.json",
+  "sourceHash": "f034e19f18ba2aff449dc4b6a4e512d1ea1e896a10bbf3db27db83d11a43ca35",
+  "inputTranslationHash": "4fcf9d1123f351acba2b0c3a9c005c37ac9bf5317cfa11567c064f74d352411c",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:15.857Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

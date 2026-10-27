@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wrc-leader-september-2020",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wrc-leader-september-2020.json",
+  "sourceHash": "66d91f00139a2aac9bc248543a53c1a28b10d359ca42d1b81ee5550c12523377",
+  "inputTranslationHash": "5c3ef7ca81857b84a21eeeb37a8c2d01bc57bbd5f6f83501d9b763b08d293235",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:11:12.893Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "已完整对照标题与正文；核对规则/成绩/质量保证团队职责、必需与可选资格、招募人数、任期工时及各篇申请日期、联系人与投票程序。历史 Guidelines 按参考保留指南。"
+  ],
+  "changes": []
+}

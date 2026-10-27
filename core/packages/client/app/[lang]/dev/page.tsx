@@ -227,14 +227,14 @@ const CARDS: Card[] = [
     zh: {
       title: '字体',
       sub: 'Typography',
-      tagline: '全站用到的每一款字体的集中速查:正文 Inter、等宽 Roboto Mono、衬线 Fraunces、计时器七段、打乱表 PDF 还原三件套。每款带真渲染样张、字重、用途、文件与许可',
-      meta: '7 款自托管 · 全部样张 · 设计令牌',
+      tagline: '全站用到的每一款字体的集中速查:正文 SF Pro、等宽 Roboto Mono、衬线 Fraunces、计时器七段、打乱表 PDF 还原三件套。每款带真渲染样张、字重、用途、文件与许可',
+      meta: '自托管 Web 字体 · 全部样张 · 设计令牌',
     },
     en: {
       title: 'Fonts',
       sub: 'Typography',
-      tagline: 'A quick reference for every font on the site: Inter for body, Roboto Mono for mono, Fraunces serif, the seven-segment timer face, and the three-font scramble-PDF parity set. Each with a live specimen, weights, usage, files and license',
-      meta: '7 self-hosted · live specimens · design tokens',
+      tagline: 'A quick reference for every font on the site: SF Pro for body, Roboto Mono for mono, Fraunces serif, the seven-segment timer face, and the three-font scramble-PDF parity set. Each with a live specimen, weights, usage, files and license',
+      meta: 'Self-hosted Web fonts · live specimens · design tokens',
     },
   },
   {

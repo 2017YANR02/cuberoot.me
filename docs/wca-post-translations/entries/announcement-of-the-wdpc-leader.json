@@ -12,14 +12,33 @@
     "sourceId": 11400
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "2c2dd381ac7818335337128be05f7088af55c828fc70936b24b57185ac2c9b9a",
     "language": "zh-Hans",
     "title": "WCA 数据保护委员会负责人任命公告",
     "content": "我们很高兴地宣布，Ronald Mansveld 已获任命为 WCA 数据保护委员会（WDPC）负责人。\n\n依照 WCA 委员会与团队[动议 10.2019.0](https://www.worldcubeassociation.org/documents/motions/10.2019.0%20-%20Committees%20and%20Teams.pdf)第 4 节，WCA 董事会选定 Ronald，并经现任委员会、团队负责人和高级代表投票批准。\n\n祝 Ronald 在新的岗位上工作顺利！\n\nRonald Mansveld 是本次职位的唯一申请人。有兴趣的成员可在[此处](https://drive.google.com/file/d/122QfMLhjVWWJsvJIquJ4aPJeF7Txz5OP/view)查看他的申请材料。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:00.943Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "93aacfe467767622c496434ca3dceb552df5d37c2cc1ecda157298cc20b94451"
+  "translationHash": "8ccfd48abfb709d7b7c2cffe6f8f9e31fbdbb5e3a25679bfd2cc5eaf2840c9ae",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:05:11.622Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "2c2dd381ac7818335337128be05f7088af55c828fc70936b24b57185ac2c9b9a",
+    "reviewedTranslationHash": "8ccfd48abfb709d7b7c2cffe6f8f9e31fbdbb5e3a25679bfd2cc5eaf2840c9ae",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/announcement-of-the-wdpc-leader.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+    ],
+    "inputTranslationHash": "93aacfe467767622c496434ca3dceb552df5d37c2cc1ecda157298cc20b94451"
+  }
 }

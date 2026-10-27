@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wsot-leader-october-2024",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wsot-leader-october-2024.json",
+  "sourceHash": "3f53a05e03224a426fe35159416ddb9994f75fc04f3b2d72c5aaa2af035a9c6e",
+  "inputTranslationHash": "6baedb3d4820870c1f96c04d18cd6bef08615c975ed6c3522f595d45a0a971a7",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:11:22.962Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题及正文；核对软件技术专名、申请要求及申请期、历史 WAC 缩写和申诉流程、新旧任命程序。"
+  ],
+  "changes": []
+}

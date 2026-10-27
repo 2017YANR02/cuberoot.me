@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/appointment-of-new-wmt-leader-july-2018",
+  "path": "docs/wca-post-translations/entries/appointment-of-new-wmt-leader-july-2018.json",
+  "sourceHash": "80d8c6037f2f503bd92747e0346498a105f82c7a3897baf420deed55cee6021c",
+  "inputTranslationHash": "023a1821d1ccf23e20ed4913549cfbe84d85cf4a276768005e0f2f9662ac26d9",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:06:14.456Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照正文与标题；核对全部申请/任命主体、时间、权限、附录条目及材料要求。"
+  ],
+  "changes": []
+}

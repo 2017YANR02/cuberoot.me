@@ -26,6 +26,12 @@
 
 聊天每一轮以及在线/离线向量调用均记录用量。输入含缓存 token，输出含思考 token，不重复累加。未返回用量或未知模型记为未估价，不能视为免费。
 
+2026-10-26 起，已支持价目的聊天调用另保存 `cacheAdjustedCny: {min,max}` 与缓存价目快照；后台问答详情显示这些调用的合计区间和覆盖数量。DeepSeek 用已核实的高峰/低谷标价给区间，避免猜测中国节假日；百炼已知缓存价目可给相同上下界。缓存用量缺失或不合法时不补造优惠估价。该区间只含已估价模型调用，不含其他工具费用，也不是账单实付。已有 `grossCny`、每日汇总与费用提醒继续使用保守标价，不回写历史。模型用量表同时纳入重排序调用。
+
+策略记录更新为 `2026-10-26`，可用于区分本轮上下文去重、计算复核和检索范围调整；需要发布后才会出现在生产新请求中。
+
+可选重排序另记 `metrics.reranks`（模型、候选数、tokens、耗时、状态、价目快照）和 `stages.rerank`。2026-10-26 按[百炼官方价格](https://help.aliyun.com/zh/model-studio/model-pricing)核实北京 `qwen3-rerank` 每百万输入 token 0.5 元，保存 `bailian-rerank-beijing-2026-10-26` 快照。缺少用量或未知端点仍保持费用 `null` 并计入 `unpricedCalls`，不能因返回 RRF 原结果而把失败调用算成免费。403、超时、非法响应会保留原排序；请求被取消则终止。该能力默认关闭，启用条件及评测边界见 [第一阶段记录](benchmarks/site-assistant-phase1-2026-10-26.md)。
+
 联网搜索另记 `metrics.searches`；北京百炼 turbo 搜索按 [官方联网搜索文档](https://help.aliyun.com/zh/model-studio/web-search/)的每千次 3 元保存 `bailian-web-turbo-2026-10-23` 价目快照。供应商返回的是搜索意图次数，只用于估算，不宣称与账单调用数一致。搜索内部模型 token 与搜索服务分别计费；缺少搜索计数时保持未估价，不记为零。
 
 价目快照 `bailian-beijing-2026-10-15`：按[百炼官方价格](https://help.aliyun.com/zh/model-studio/model-pricing)核实北京服务的 `qwen3.8-flash` 输入/输出 0.8/2.7 元每百万 token，`text-embedding-v4` 输入 0.5 元每百万 token。另按 [DeepSeek 官方人民币价格](https://api-docs.deepseek.com/zh-cn/quick_start/pricing/)保存 `deepseek-cny-peak-2026-10-15`：Flash 输入/输出 2/8 元每百万 token，V4 Pro 为 9/27 元；使用高峰未缓存标价，故未扣低谷和缓存优惠。快照保存在每次调用记录中，未知供应商不套用这些费率。展示未扣缓存折扣、免费额度和合同优惠的标价估算，实际支付以服务商账单为准。更换模型/地域/费率需更新估价规则及测试；旧记录不重算。

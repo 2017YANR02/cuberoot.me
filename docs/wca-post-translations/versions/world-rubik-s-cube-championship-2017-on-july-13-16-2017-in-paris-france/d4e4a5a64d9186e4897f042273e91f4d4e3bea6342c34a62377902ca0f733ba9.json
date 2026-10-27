@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/world-rubik-s-cube-championship-2017-on-july-13-16-2017-in-paris-france",
+  "source": {
+    "key": "posts:/posts/world-rubik-s-cube-championship-2017-on-july-13-16-2017-in-paris-france",
+    "kind": "posts",
+    "title": "World Rubik's Cube Championship 2017 on July 13 - 16, 2017 in Paris, France",
+    "date": "2017-02-19T17:27:31.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/world-rubik-s-cube-championship-2017-on-july-13-16-2017-in-paris-france",
+    "content": "The [World Rubik's Cube Championship 2017](https://www.worldcubeassociation.org/competitions/WC2017) will take place on July 13 - 16, 2017 in Paris, France. Check out the [World Rubik's Cube Championship 2017 website](http://www.rubiksworldparis2017.com) for more information and registration.",
+    "hash": "0f75db8db4528daac5f975202d2339540f7c76faa149209780c0688b9fe74c63",
+    "format": "markdown",
+    "sourceId": 6873
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "0f75db8db4528daac5f975202d2339540f7c76faa149209780c0688b9fe74c63",
+    "language": "zh-Hans",
+    "title": "2017 年魔方世锦赛将于 7 月 13–16 日在法国巴黎举行",
+    "content": "[2017 年魔方世锦赛](https://www.worldcubeassociation.org/competitions/WC2017)将于 2017 年 7 月 13–16 日在法国巴黎举行。更多信息及报名方式请见 [2017 年魔方世锦赛官网](http://www.rubiksworldparis2017.com)。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.160Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "d4e4a5a64d9186e4897f042273e91f4d4e3bea6342c34a62377902ca0f733ba9"
+}

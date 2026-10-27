@@ -12,14 +12,33 @@
     "sourceId": 10384
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "aeb4ec3b368bc4c2e5071649de92667ab31e92bdf4ec370134f92f707d50c19f",
     "language": "zh-Hans",
     "title": "关于红牛比赛的公告",
     "content": "各位 WCA 社区成员：\n\n相信大多数人已经知道，红牛于 2018 年推出了自己的速拧系列赛，WCA 并未参与。\n\n该系列赛今年已在波士顿举行总决赛，之后也会继续举办新的赛季。关于 2019 赛季，我们正在与红牛沟通，探讨双方合作的可能性。目前尚未作出任何决定，正式谈判也还没有开始，但我们希望先告知大家，双方已经建立联系。\n\n2018 赛季开始时，这一赛事在速拧社区引起了争议，尤其是它使用了“世界锦标赛”的名称。为消除混淆，避免同一年由两个不同组织举办两场“世界锦标赛”，红牛已提前决定将赛事更名为“世界杯”。\n\n谈判结束后，我们会向大家通报进展并公布结果。\n\nWCA 董事会",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.174Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "77894279562ebff5534dd415b9e9eeaae51b7c97065fa195f369f8308209b91c"
+  "translationHash": "b76e4e079aafb72583b776d6d874d92ecb82b97302a1172b5ea5ebb5f13add18",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:05:11.622Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "aeb4ec3b368bc4c2e5071649de92667ab31e92bdf4ec370134f92f707d50c19f",
+    "reviewedTranslationHash": "b76e4e079aafb72583b776d6d874d92ecb82b97302a1172b5ea5ebb5f13add18",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/announcement-about-red-bull-competitions.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+    ],
+    "inputTranslationHash": "77894279562ebff5534dd415b9e9eeaae51b7c97065fa195f369f8308209b91c"
+  }
 }

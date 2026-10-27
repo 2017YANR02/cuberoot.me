@@ -12,14 +12,33 @@
     "sourceId": 14099
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "45f0daa8d451d100c47600d2462efe96ffa6074e7bbeae1e988a434303041eb6",
     "language": "zh-Hans",
     "title": "WCA 论坛简报（2023 年 4 月）",
     "content": "以下是 2023 年第一季度 WCA 论坛上值得关注的部分话题。\n\n[**用专门的应用记录成绩，代替成绩单**](https://forum.worldcubeassociation.org/t/dedicated-app-for-recording-times-instead-of-scorecards/27910)\n\n这篇帖子提议用手机应用记录选手成绩，代替纸质成绩单，希望改善体验，并减少打印、裁切成绩单的组织工作。社区也讨论了实施这一方案可能带来的其他问题。\n\n[**允许盲拧使用带标志贴纸的魔方**](https://forum.worldcubeassociation.org/t/allow-logo-stickers-in-blindfolded/6050/44)\n\n社区继续讨论在盲拧项目中允许使用带标志贴纸的魔方会产生哪些影响。\n\n[**WCA 的发展：为组织者提供报酬**](https://forum.worldcubeassociation.org/t/wca-growth-compensatition-of-organizers/30031)\n\n这个话题提出，为组织者举办官方比赛所付出的精力和志愿服务时间提供补偿与奖励。同时也讨论了金钱奖励带来的主要问题、可能对比赛质量产生的负面影响，以及相应解决办法。\n\n[**WDC 关于三阶多盲作弊案件的报告**](https://forum.worldcubeassociation.org/t/wdc-report-on-a-case-of-cheating-in-3x3x3-multi-blind/30635)\n\n社区就该案的处理决定发表意见，讨论累积处罚的影响，并提出未来可能的解决办法。\n\n**世界纪录汇总**\n\n以下是过去几个月被打破、讨论较多的世界纪录：\n\n* Guanbo Wang 以 0.47 秒打破二阶单次世界纪录。\n* Zayn Khanani 以 1.01 秒打破二阶平均世界纪录。\n* Tommy Cherry 以 12.78 秒打破三阶盲拧单次世界纪录。\n* Elijah Brown 以 0.75 秒打破金字塔单次世界纪录。\n* Michał Krasowski 以 3.87 秒打破 Square-1 单次世界纪录。\n* Stanley Chapel 以 51.96 秒打破四阶盲拧单次世界纪录。\n\n如有问题、意见或反馈，欢迎发邮件至 advisory@worldcubeassociation.org。\n\n感谢大家参与论坛！",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.549Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "1fe1003a6a7634c8d1f44f20faafd3b5709d0219bbb7bbd7bbf6514c35582d11"
+  "translationHash": "b4fccd9ea57b39853ded0a8584d74ebe79e1aa4aa315c809952ad770a1f33130",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:13:29.852Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "45f0daa8d451d100c47600d2462efe96ffa6074e7bbeae1e988a434303041eb6",
+    "reviewedTranslationHash": "b4fccd9ea57b39853ded0a8584d74ebe79e1aa4aa315c809952ad770a1f33130",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/forum-digest-april-2023.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照标题与正文；疫情取消区间/新赛条件、COO履历与金额人数、赛事日期地点、意向征集要求及各条历史纪录的选手/项目/单次平均/数值逐项核对一致。"
+    ],
+    "inputTranslationHash": "1fe1003a6a7634c8d1f44f20faafd3b5709d0219bbb7bbd7bbf6514c35582d11"
+  }
 }

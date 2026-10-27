@@ -12,14 +12,31 @@
     "sourceId": 2860
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "53d9cbe6f45f608f9904ab2ac650543c8d40f6beab7f1b093adffe4b47e05f76",
     "language": "zh-Hans",
     "title": "打乱程序更新：TNoodle 0.7.12",
     "content": "WCA 规则委员会（WRC）将官方打乱程序从 TNoodle 0.7.8 更换为 TNoodle 0.7.12，以解决两个小问题：\n\n* 删除最少步答题纸中关于中层转动的说明。自 TNoodle 成为官方打乱程序起，中层转动就从未被允许使用。\n* 在 README 中说明打乱筛选方式。\n\n请记住，官方比赛必须始终使用当前版本的官方打乱程序。最新版本可从以下页面获取：[https://www.worldcubeassociation.org/regulations/scrambles/](https://www.worldcubeassociation.org/regulations/scrambles/)",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.979Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "7be6d7f5179e08615e2148605868831308754e982453a27f190972544ef25795"
+  "translationHash": "4c1b18fc66cd158d783832028abbbf04bfac809de5a92f58d549ca87276c1024",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:15.858Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "53d9cbe6f45f608f9904ab2ac650543c8d40f6beab7f1b093adffe4b47e05f76",
+    "reviewedTranslationHash": "4c1b18fc66cd158d783832028abbbf04bfac809de5a92f58d549ca87276c1024",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/scrambling-program-update-tnoodle-0-7-12.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "7be6d7f5179e08615e2148605868831308754e982453a27f190972544ef25795"
+  }
 }

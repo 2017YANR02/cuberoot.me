@@ -12,14 +12,31 @@
     "sourceId": 13980
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "d720c6004eb85171e6faa88ad6b24c423fdf7316e5ba728831f2606db7754c00",
     "language": "zh-Hans",
-    "title": "世界及洲际锦标赛举办地公布（2020 年 7 月）",
-    "content": "我们很高兴地公布 2021 年世界锦标赛及 2022 年洲际锦标赛的成功申办方：\n\n2021 年世界锦标赛将在荷兰阿尔梅勒举办。\n\n2022 年亚洲锦标赛将在哈萨克斯坦塞梅伊举办。\n\n2022 年欧洲锦标赛将在丹麦哥本哈根举办。\n\n2022 年北美洲锦标赛将在加拿大多伦多举办。\n\n同时感谢俄罗斯符拉迪沃斯托克团队提交世界锦标赛申请。世界锦标赛申办材料可在[此处](https://drive.google.com/drive/folders/16COjhWLQSkqwNuZrHNR_P5Ee5rK61TCI?usp=sharing)查看，洲际锦标赛材料可在[此处](https://drive.google.com/drive/folders/1BWbeGD9W9dn4AMCRRiqGkW0D754P2I7a?usp=sharing)查看。",
+    "title": "世界及大洲锦标赛举办地公布（2020 年 7 月）",
+    "content": "我们很高兴地公布 2021 年世界锦标赛及 2022 年大洲锦标赛的成功申办方：\n\n2021 年世界锦标赛将在荷兰阿尔梅勒举办。\n\n2022 年亚洲锦标赛将在哈萨克斯坦塞梅伊举办。\n\n2022 年欧洲锦标赛将在丹麦哥本哈根举办。\n\n2022 年北美洲锦标赛将在加拿大多伦多举办。\n\n同时感谢俄罗斯符拉迪沃斯托克团队提交世界锦标赛申请。世界锦标赛申办材料可在[此处](https://drive.google.com/drive/folders/16COjhWLQSkqwNuZrHNR_P5Ee5rK61TCI?usp=sharing)查看，大洲锦标赛材料可在[此处](https://drive.google.com/drive/folders/1BWbeGD9W9dn4AMCRRiqGkW0D754P2I7a?usp=sharing)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:00.930Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "fc6db7161f84c0351fa979d0e3239086b8683d70d2b7bdb7c5b3a58ca9c221c1"
+  "translationHash": "90ccb3959748c5cbe5cb2578e7b2af669cb786d918396cd83e9eba1a06504ebc",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:22:01.557Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "d720c6004eb85171e6faa88ad6b24c423fdf7316e5ba728831f2606db7754c00",
+    "reviewedTranslationHash": "90ccb3959748c5cbe5cb2578e7b2af669cb786d918396cd83e9eba1a06504ebc",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/world-and-continental-championship-locations-july-2020.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "fc6db7161f84c0351fa979d0e3239086b8683d70d2b7bdb7c5b3a58ca9c221c1"
+  }
 }

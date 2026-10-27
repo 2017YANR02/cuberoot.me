@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/senior-delegate-announcement-africa-october-2026",
+  "path": "docs/wca-post-translations/entries/senior-delegate-announcement-africa-october-2026.json",
+  "sourceHash": "aa98f876aa6162ebbdaeff14b07ef23f1e8c0f3c21b0efa7d70cf9a313ffece5",
+  "inputTranslationHash": "f268a3081bb26d277016ffe3b0c73d2884524826c800033f489d0c5be4219366",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:25.167Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

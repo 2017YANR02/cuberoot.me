@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/wca-european-championship-2018-on-july-19-22-2018-in-madrid-spain",
+  "source": {
+    "key": "posts:/posts/wca-european-championship-2018-on-july-19-22-2018-in-madrid-spain",
+    "kind": "posts",
+    "title": "WCA European Championship 2018 on July 19 - 22, 2018 in Madrid, Spain",
+    "date": "2017-12-14T16:19:10.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/wca-european-championship-2018-on-july-19-22-2018-in-madrid-spain",
+    "content": "The [WCA European Championship 2018](https://www.worldcubeassociation.org/competitions/Euro2018) will take place on July 19 - 22, 2018 in Madrid, Spain. Check out the [WCA European Championship 2018 website](https://euro2018.cubecomps.com) for more information and registration.",
+    "hash": "af01317d8a70934c43c30c1d861ea99d7150ae031961ca002690f7d165d44938",
+    "format": "markdown",
+    "sourceId": 8486
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "af01317d8a70934c43c30c1d861ea99d7150ae031961ca002690f7d165d44938",
+    "language": "zh-Hans",
+    "title": "2018 年 WCA 欧洲锦标赛将于 7 月 19–22 日在西班牙马德里举行",
+    "content": "[2018 年 WCA 欧洲锦标赛](https://www.worldcubeassociation.org/competitions/Euro2018)将于 2018 年 7 月 19–22 日在西班牙马德里举行。更多信息及报名请见[赛事网站](https://euro2018.cubecomps.com)。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:55:00.932Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "7e20e267fe727a494f1f7128bd09ebe0546f4e96e6712aeae0d354c0c370b976"
+}

@@ -268,7 +268,7 @@ export function drawLineView(
         ctx.save();
         const lineH = 18;
         const padX = 10, padY = 8;
-        ctx.font = '600 11px ui-monospace, Inter, sans-serif';
+        ctx.font = '600 11px ui-monospace, "SF Pro Text", "SF Pro SC", sans-serif';
         let maxW = 0;
         for (const ln of cardLines) {
           const w = ctx.measureText(ln.text).width;
@@ -306,7 +306,7 @@ export function drawLineView(
         ctx.textBaseline = 'top';
         for (let li = 0; li < cardLines.length; li++) {
           const ln = cardLines[li];
-          ctx.font = ln.bold ? '600 11px ui-monospace, Inter, sans-serif' : '11px Inter, sans-serif';
+          ctx.font = ln.bold ? '600 11px ui-monospace, "SF Pro Text", "SF Pro SC", sans-serif' : '11px "SF Pro Text", "SF Pro SC", sans-serif';
           ctx.fillStyle = ln.color;
           ctx.fillText(ln.text, cx + padX, cy + padY + li * lineH);
         }

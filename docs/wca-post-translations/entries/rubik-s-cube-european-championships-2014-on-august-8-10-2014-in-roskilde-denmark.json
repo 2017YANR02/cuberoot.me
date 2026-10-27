@@ -12,14 +12,31 @@
     "sourceId": 3242
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "ca86f6de57ea47f474be30c33e5dc55c67edbdbca90cd732efca6346bf0b9848",
     "language": "zh-Hans",
     "title": "2014 年欧洲魔方锦标赛将于 8 月 8–10 日在丹麦罗斯基勒举行",
     "content": "[2014 年欧洲魔方锦标赛](https://www.worldcubeassociation.org/results/c.php?i=Euro2014)将于 2014 年 8 月 8–10 日在丹麦罗斯基勒举行。详情及报名请查看[赛事官网](http://competition.odderen.dk/Euro2014)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.150Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "98104f882db98e734fbabcf5fc75a9752d363fbafec52d875d2611f33383b81e"
+  "translationHash": "1e5c174b8857b33a7939f9cc6319b14fa3c5d2d297f61312acb1cc214bf3bb88",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:15.857Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "ca86f6de57ea47f474be30c33e5dc55c67edbdbca90cd732efca6346bf0b9848",
+    "reviewedTranslationHash": "1e5c174b8857b33a7939f9cc6319b14fa3c5d2d297f61312acb1cc214bf3bb88",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/rubik-s-cube-european-championships-2014-on-august-8-10-2014-in-roskilde-denmark.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "98104f882db98e734fbabcf5fc75a9752d363fbafec52d875d2611f33383b81e"
+  }
 }

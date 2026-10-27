@@ -12,14 +12,31 @@
     "sourceId": 14058
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "1eb9bf3767d11a717c199a59547d7eb406b0ba3c03e68ee58f55de3ea1e253db",
     "language": "zh-Hans",
     "title": "WCA 规则更新：2022 年 6 月",
     "content": "亲爱的 WCA 社区成员：\n\nWRC 在此介绍将于 2022 年 6 月 1 日生效的新版《WCA 规则与指南》。\n\n全部改动可通过 [GitHub 上的对比](https://github.com/thewca/wca-regulations/pull/1042/files)查看。点击“Files changed”即可查看《规则》和《指南》的完整文件；修改和新增内容标为绿色，删除内容标为红色。\n\n<!-- break -->\n\n新版《规则与指南》的改动摘要如下：\n\n* 删除 Y 章及对该章的引用。\n* 增加规则 2a4，允许采取 WCA 代表认为必要的安全措施。\n* 允许比赛不设置选手等候区（规则 7h）。",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.551Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "8cecd2a7116d7be09f9c8172aada8b043491359e639120ce30c0c8428ec63eb6"
+  "translationHash": "6c797b08773d9071cf975b8560305c4e7e7fb1876998ae3890e787c30162e461",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:10:32.386Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "1eb9bf3767d11a717c199a59547d7eb406b0ba3c03e68ee58f55de3ea1e253db",
+    "reviewedTranslationHash": "6c797b08773d9071cf975b8560305c4e7e7fb1876998ae3890e787c30162e461",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wca-regulations-june-2022.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "8cecd2a7116d7be09f9c8172aada8b043491359e639120ce30c0c8428ec63eb6"
+  }
 }

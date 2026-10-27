@@ -12,14 +12,33 @@
     "sourceId": 10999
   },
   "translation": {
-    "version": 3,
+    "version": 4,
     "sourceHash": "9ecb5f88d238690b730e71fdf7e636ac591eadd88e0cabbdbb50e9f8bc15c4c7",
     "language": "zh-Hans",
     "title": "2018 年年终寄语",
-    "content": "各位 WCA 社区成员：\n\n感谢大家共同度过又一个精彩的魔方年！2018 年对 WCA 来说成果丰硕，我们想与大家分享这一年的成绩。\n\n10 个国家首次举办了 WCA 比赛，超过 25,000 名新选手加入了 WCA。全年共打破 85 项世界纪录、271 项洲际纪录和 4,039 项国家纪录。\n\n今年 WCA 在组织层面最大的变化，是于 10 月获认可为非营利组织！我们还成立了两个新团队：WCA 市场营销组和 WCA 比赛公示组，他们的工作帮助 WCA 顺利运作。此外，53 位新代表在今年第一次履行比赛代表职责。\n\n各委员会与团队也忙碌了一整年：WCA 成绩组发布了 1,148 场比赛的成绩；WCA 董事会、WCA 质量保证委员会及后来成立的 WCA 比赛公示组公示了 1,196 场比赛；WCA 纪律委员会启动了约 27 起调查；WCA 通讯组发布了 130 条 Instagram 帖文和 166 条 Facebook 帖文；WCA 软件组合并了 1,106 个拉取请求！一整年要跟进的工作实在不少！\n\n在社区的帮助下，我们期待 2019 年有更多发展，并继续调整组织架构。也期待 7 月在 2019 年世界锦标赛上，与大家一同享受魔方的乐趣！感谢大家带来又一个精彩的年份，感谢所有让协会正常运作的志愿者。没有每个人的帮助和支持，我们无法做到这些。新年快乐！",
+    "content": "各位 WCA 社区成员：\n\n感谢大家共同度过又一个精彩的魔方年！2018 年对 WCA 来说成果丰硕，我们想与大家分享这一年的成绩。\n\n10 个国家首次举办了 WCA 比赛，超过 25,000 名新选手加入了 WCA。全年共打破 85 项世界纪录、271 项大洲纪录和 4,039 项国家纪录。\n\n今年 WCA 在组织层面最大的变化，是于 10 月获认可为非营利组织！我们还成立了两个新团队：WCA 市场营销组和 WCA 比赛公示组，他们的工作帮助 WCA 顺利运作。此外，53 位新代表在今年第一次履行比赛代表职责。\n\n各委员会与团队也忙碌了一整年：WCA 成绩组发布了 1,148 场比赛的成绩；WCA 董事会、WCA 质量保证委员会及后来成立的 WCA 比赛公示组公示了 1,196 场比赛；WCA 纪律委员会启动了约 27 起调查；WCA 通讯组发布了 130 条 Instagram 帖文和 166 条 Facebook 帖文；WCA 软件组合并了 1,106 个拉取请求！一整年要跟进的工作实在不少！\n\n在社区的帮助下，我们期待 2019 年有更多发展，并继续调整组织架构。也期待 7 月在 2019 年世界锦标赛上，与大家一同享受魔方的乐趣！感谢大家带来又一个精彩的年份，感谢所有让协会正常运作的志愿者。没有每个人的帮助和支持，我们无法做到这些。新年快乐！",
     "notes": [],
     "translatedAt": "2026-10-25T09:29:00.718Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "a5470a6797a956b8cd0adfea6c8a80926402549098a54488010d6a75ef3e7c43"
+  "translationHash": "4fef316b1464513dbb475eb159fa1cc4a5dba1d230d86030ee593fe5e588fc76",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:16:58.344Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "9ecb5f88d238690b730e71fdf7e636ac591eadd88e0cabbdbb50e9f8bc15c4c7",
+    "reviewedTranslationHash": "4fef316b1464513dbb475eb159fa1cc4a5dba1d230d86030ee593fe5e588fc76",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/2018-year-end-message.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+    ],
+    "inputTranslationHash": "a5470a6797a956b8cd0adfea6c8a80926402549098a54488010d6a75ef3e7c43"
+  }
 }

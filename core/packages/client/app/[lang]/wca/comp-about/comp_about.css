@@ -8,7 +8,7 @@
   --ca-border: #e5e5e5;
   --ca-accent: #2563EB;
 
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-sans);
   background: var(--ca-bg);
   color: var(--ca-text);
   min-height: 100vh;

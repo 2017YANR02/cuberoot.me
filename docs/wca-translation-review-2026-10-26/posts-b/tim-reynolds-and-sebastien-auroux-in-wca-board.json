@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/tim-reynolds-and-sebastien-auroux-in-wca-board",
+  "path": "docs/wca-post-translations/entries/tim-reynolds-and-sebastien-auroux-in-wca-board.json",
+  "sourceHash": "60f703c3315d5f27cf9fda830c391c3af0a642220cd0e77f55dfe430e28240eb",
+  "inputTranslationHash": "74e0511b4126ea2403053b390b090255f653f04a5b8bb8eec50a6eb9af515106",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:25.170Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

@@ -12,14 +12,33 @@
     "sourceId": 909
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "25ccd02a6b1dc49daacdb0077c00c27fd2e45530da16e81947f48a54bc3abda3",
     "language": "zh-Hans",
     "title": "2010 年亚洲锦标赛将于 10 月 9–10 日在泰国曼谷举行",
     "content": "[2010 年亚洲锦标赛](https://www.worldcubeassociation.org/results/c.php?i=AsianChampionship2010)将于 2010 年 10 月 9–10 日在泰国曼谷举行。更多信息及报名请访问[赛事网站](http://www.thailandcube.com/ac2010)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.972Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "390fc7b545cf20525b4695b75c310f2cfa8bae745b6aae2251c8ecc9d336f9d9"
+  "translationHash": "95fc4618b858160d859eb12e0026da25c66e06132c0c577ab3aa98a8446963fa",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:06:36.460Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "25ccd02a6b1dc49daacdb0077c00c27fd2e45530da16e81947f48a54bc3abda3",
+    "reviewedTranslationHash": "95fc4618b858160d859eb12e0026da25c66e06132c0c577ab3aa98a8446963fa",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/asian-championship-2010-on-october-9-10-2010-in-bangkok-thailand.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇全文对照：含招募资格、时限、工作量、程序、历史机构；比赛报告核对人物、项目、成绩与纪录类别。"
+    ],
+    "inputTranslationHash": "390fc7b545cf20525b4695b75c310f2cfa8bae745b6aae2251c8ecc9d336f9d9"
+  }
 }

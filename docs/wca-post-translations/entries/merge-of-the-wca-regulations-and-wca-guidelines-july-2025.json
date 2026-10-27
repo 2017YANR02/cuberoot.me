@@ -12,14 +12,31 @@
     "sourceId": 14208
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "c2a0916ec53f80ac62b48c3e066adafeb92ff3557c33a50d22122a7b83bf885b",
     "language": "zh-Hans",
     "title": "《WCA 规则》与《WCA 指南》合并（2025 年 7 月）",
     "content": "亲爱的 WCA 社区成员：\n\nWCA 规则委员会在此通知大家：《WCA 指南》现已并入《WCA 规则》，两份重要文件已[合为一体](https://www.worldcubeassociation.org/regulations/)。这样更方便大家查阅信息，WCA 比赛中现行的要求并未改变。\n\n新版《WCA 规则》已发布，纳入了原《WCA 指南》的内容，适用于 2025 年 7 月 17 日及之后开始的比赛。\n\n<!-- break -->\n\n你可以通过 [GitHub 上的对比](https://github.com/thewca/wca-regulations/pull/1287)查看改动。点击“Files changed”即可查看《规则》和原《指南》的完整文件；修改和新增内容标为绿色，删除内容标为红色。\n\n本次改动包括：\n\n* 将原《指南》的全部条文移入《规则》。\n* 删除《指南》。\n* 更新指向原《指南》条文的交叉引用。\n* 修改开头的“说明”部分，使其与调整后的结构一致。\n\n本次仅调整文件结构，未实质性修改 WCA 比赛的任何现行流程。WCA 规则委员会将继续完善《WCA 规则》，计划下一次更新适用于 2026 年 1 月 1 日及之后开始的比赛。",
     "notes": [],
     "translatedAt": "2026-10-22T08:40:49.159Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "e309f219dd6cdf5056f2135d64390056c56143460c91cebc9332243ba731f36e"
+  "translationHash": "6ca9ffa42b45fa983579b0db3181f3572670b857b73730dbe264a05a10cc3c17",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:36.321Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "c2a0916ec53f80ac62b48c3e066adafeb92ff3557c33a50d22122a7b83bf885b",
+    "reviewedTranslationHash": "6ca9ffa42b45fa983579b0db3181f3572670b857b73730dbe264a05a10cc3c17",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/merge-of-the-wca-regulations-and-wca-guidelines-july-2025.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "e309f219dd6cdf5056f2135d64390056c56143460c91cebc9332243ba731f36e"
+  }
 }

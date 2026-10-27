@@ -12,16 +12,31 @@
     "sourceId": 13959
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "baf30329bd63bfb16c68481b869d3e6b6ab16d311a1396d1efe45c2588d4d176",
     "language": "zh-Hans",
     "title": "印度及东南亚周边商品合作公告",
     "content": "我们很高兴与 Cubelelo 合作，推出 WCA 官方周边商品！Cubelelo 将成为我们在东南亚及印度地区的周边合作伙伴。首款商品是一件 T 恤，目前已可在 [Cubelelo 网站](https://www.cubelelo.com/collections/cubing-top-wear/products/official-world-cube-association-t-shirt)购买。\n\n今后我们将在更多地区推出周边商品，请留意后续公告！\n\n为让更多地区可以买到我们的周边，我们正在寻找有意成为 WCA 周边合作伙伴的组织或个人。如你或你的组织有兴趣，请联系 [WCA 市场营销组](mailto:marketing@worldcubeassociation.org)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:54.117Z",
-    "reviewStatus": "pending_independent_review",
-    "revisedAt": "2026-10-25T07:28:01.629Z",
-    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "3b3946952d48477d273f55d38b6342697c52d994d2dc276f95b4e87d8ecda0fb"
+  "translationHash": "0de48853078e9bb11b865e5f1119845516016396a7e8a6e91e7f54d6ddf3c551",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:36.320Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "baf30329bd63bfb16c68481b869d3e6b6ab16d311a1396d1efe45c2588d4d176",
+    "reviewedTranslationHash": "0de48853078e9bb11b865e5f1119845516016396a7e8a6e91e7f54d6ddf3c551",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/india-southeast-asia-merchandise-collaboration-announcement.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "3b3946952d48477d273f55d38b6342697c52d994d2dc276f95b4e87d8ecda0fb"
+  }
 }

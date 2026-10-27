@@ -12,14 +12,33 @@
     "sourceId": 14114
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "9ebadb3c6e31dcafd3b5ccfd6f350f67bf8ed39748366a7909c42c69c2c366e9",
     "language": "zh-Hans",
     "title": "WCA 竞赛规则更新（2023 年 8 月）",
     "content": "各位 WCA 社区成员：\n\nWCA 规则委员会在此通知，新版《WCA 竞赛规则与指南》将于 **2023 年 8 月 1 日**生效。\n\n所有改动可在 [GitHub 版本对比](https://github.com/thewca/wca-regulations/compare/official-2023-02-01...official-2023-08-01)中查看。点击“Files changed”即可查看规则与指南的完整文件，其中新增和修改的内容标为绿色，删除的内容标为红色。\n\n以下是新版规则与指南主要改动的*概要*。\n\n- 修改规则 5b5f，并补充图示指南（[提交记录](https://github.com/thewca/wca-regulations/commit/af0c530b8e3553e64ece003d19dc540734d2c012)）\n- 加入《WCA 打乱问责政策》（[提交记录](https://github.com/thewca/wca-regulations/commit/c0438c65dbe1970e1b0fa1989f97bbd3fb567158)）\n- 放宽规则 A7c2（[提交记录](https://github.com/thewca/wca-regulations/commit/6169a1504def70326c3cde25c2addb4df3ff3ab3)）\n- 将规则 2i 中的“interact”（交互）改为“use”（使用）（[提交记录](https://github.com/thewca/wca-regulations/commit/6c610bb631ac2188568ed4bd437f19621002f362)）\n- 为规则 A5a 增加一项例外（[提交记录](https://github.com/thewca/wca-regulations/commit/f3dc1ddd9a6a01cb0f306ee33143f7bd5b760c27)）",
     "notes": [],
     "translatedAt": "2026-10-22T08:42:40.577Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "5d559c2639fff11519baf52ba0daf2668765170434f49f19eda9957a77ddc6bb"
+  "translationHash": "8bc86c7fccdd435e6254fbbbd569da5483f72ee45528134715eba3d2423314e3",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:09:31.431Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "9ebadb3c6e31dcafd3b5ccfd6f350f67bf8ed39748366a7909c42c69c2c366e9",
+    "reviewedTranslationHash": "8bc86c7fccdd435e6254fbbbd569da5483f72ee45528134715eba3d2423314e3",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wca-regulations-august-2023.json",
+    "sourceConcern": false,
+    "notes": [
+      "已核对完整正文、规则编号、日期、条件及项目术语。"
+    ],
+    "inputTranslationHash": "5d559c2639fff11519baf52ba0daf2668765170434f49f19eda9957a77ddc6bb"
+  }
 }

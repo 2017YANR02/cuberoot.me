@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/wrc-digest-2024-q1",
+  "path": "docs/wca-post-translations/entries/wrc-digest-2024-q1.json",
+  "sourceHash": "f572d0afdfa061dc2f0415d123e74891affdcef4d3e2e6e4b3ee0d998f32ee7c",
+  "inputTranslationHash": "e6dcb44fc6b73574512308a57c534a101c6a45897adeb0576455a197c2085483",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:12:01.755Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "source_uncertain",
+  "notes": [
+    "全文已审：10项案例编号原文跳过7，中文保留；第2项原文为停表却引用A4b（启动计时器规则），属于源文规则引用疑点，不擅自替换。数字、处罚、不确定性及其余情节译义一致。"
+  ],
+  "changes": []
+}

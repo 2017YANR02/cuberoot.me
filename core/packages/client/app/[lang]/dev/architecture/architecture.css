@@ -373,7 +373,7 @@
   --green: #4A7A4A;
   --warn: #C2410C;
 
-  --sans: 'Inter', 'IBM Plex Sans', 'Segoe UI Variable', system-ui, -apple-system, sans-serif;
+  --sans: var(--font-sans);
   --serif: 'Charter', 'Iowan Old Style', 'Georgia', 'Times New Roman', serif;
   --mono: 'Cascadia Code', 'SF Mono', Consolas, monospace;
 

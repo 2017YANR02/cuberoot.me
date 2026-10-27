@@ -17,6 +17,7 @@ import type { StackToolMeta } from '@/app/[lang]/dev/stack/_lib/stack_meta';
 import { WR_METRICS, resultsQueryForMetric } from '@/lib/wr-metrics';
 import { ALG_CATALOG } from '@cuberoot/shared/alg';
 import { searchForum, type SearchData, type SearchThread } from '@/lib/forum-api';
+import { useWcaTranslationSearch, type TranslationMatch } from '@/lib/wca-translation-search';
 
 export interface SiteSearchCard {
   id: string;
@@ -54,6 +55,7 @@ export interface ReconHit {
   valueStr: string;
   event: string;
   comp?: string;
+  compWcaId?: string;
   date?: string;
   aoType?: string;
   recordTag?: string;
@@ -235,6 +237,7 @@ function buildReconRecord(r: ReconSolve): ReconRecord {
     valueStr,
     event: r.event,
     comp: r.comp,
+    compWcaId: r.compWcaId,
     date: r.date,
     aoType: r.aoType,
     recordTag,
@@ -381,6 +384,10 @@ export interface SiteSearchResult {
   forumTotal: number;
   forumSearchPending: boolean;
   forumSearchError: boolean;
+  translationMatches: TranslationMatch[];
+  translationSearchPending: boolean;
+  translationSearchError: boolean;
+  translationStale: boolean;
   totalCount: number;
   yearMatch: string | null;
   statIndexLoaded: boolean;
@@ -410,12 +417,17 @@ export function useSiteSearch(
 
   const [localEntries, setLocalEntries] = useState<Partial<LocalEntries>>(() => ({ ...localEntriesCache }));
   const [localSearchError, setLocalSearchError] = useState(false);
+  const [personSearchError, setPersonSearchError] = useState(false);
+  const [personSearchPending, setPersonSearchPending] = useState(false);
 
   const deferredRawQuery = useDeferredValue(query);
   const q = deferredRawQuery.trim().toLowerCase();
   const qRaw = deferredRawQuery.trim();
   const xSearchEnabled = qRaw.length >= (hasNonLatin(qRaw) ? 1 : MIN_LEN_LATIN);
   const tokens = useMemo(() => tokenize(q), [q]);
+  const translationSearch = useWcaTranslationSearch(
+    xSearchEnabled && qRaw.length <= 200 && !/[\u0000-\u001f]/.test(qRaw) && !/^(19|20)\d{2}$/.test(qRaw) ? qRaw : '', 3, 300,
+  );
 
   const forumSearchEnabled = qRaw.length >= 2;
   const currentForumSearch = forumSearchEnabled && forumSearch?.query === qRaw ? forumSearch : null;
@@ -516,16 +528,34 @@ export function useSiteSearch(
     return () => { cancelled = true; };
   }, [prefetch, xSearchEnabled, xLoaded]);
 
+  // Publish persons as soon as their own index is ready. A failed load may be
+  // retried by the next query, independently of the other categories' xLoaded.
+  useEffect(() => {
+    setPersonMatches([]);
+    setPersonSearchError(false);
+    setPersonSearchPending(xSearchEnabled);
+    if (!xSearchEnabled) return;
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      void loadPersonsIndex().then(() => {
+        if (!cancelled) setPersonMatches(searchLocalPersons(qRaw, MATCH_HARD_CAP) ?? []);
+      }).catch(() => {
+        if (!cancelled) setPersonSearchError(true);
+      }).finally(() => {
+        if (!cancelled) setPersonSearchPending(false);
+      });
+    }, 200);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [qRaw, xSearchEnabled]);
+
   useEffect(() => {
     if (!xSearchEnabled) {
-      setPersonMatches([]);
       setCompMatches([]);
       setReconMatches([]);
       setAlgSetMatches([]);
       return;
     }
     const h = setTimeout(() => {
-      setPersonMatches(searchLocalPersons(qRaw, MATCH_HARD_CAP) ?? []);
       setCompMatches(compsRef.current ? searchComps(qRaw, compsRef.current, MATCH_HARD_CAP) : []);
 
       if (reconsRef.current && tokens.length > 0) {
@@ -640,16 +670,21 @@ export function useSiteSearch(
     glossaryMatches.length +
     aboutMatches.length +
     stackMatches.length +
-    algSetMatches.length + platformMatches.length + forumTotal;
+    algSetMatches.length + platformMatches.length + forumTotal + translationSearch.matches.length;
 
   return {
     q, qRaw, xSearchEnabled, xLoaded,
-    localSearchPending: q !== '' && (!localEntries.glossary || !localEntries.stack || !localEntries.about) && !localSearchError, localSearchError,
+    localSearchPending: personSearchPending || (q !== '' && (!localEntries.glossary || !localEntries.stack || !localEntries.about) && !localSearchError),
+    localSearchError: localSearchError || personSearchError,
     cardMatches, toolMatches, lookupMatches, statMatches,
     personMatches, compMatches,
     reconMatches, glossaryMatches, aboutMatches, stackMatches, algSetMatches,
     platformMatches, platformSearchError,
     forumMatches, forumTotal, forumSearchPending, forumSearchError,
+    translationMatches: translationSearch.matches,
+    translationSearchPending: translationSearch.loading,
+    translationSearchError: translationSearch.failed,
+    translationStale: translationSearch.data?.stale ?? false,
     totalCount,
     yearMatch,
     statIndexLoaded: statIndex !== null,

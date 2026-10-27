@@ -12,14 +12,31 @@
     "sourceId": 14051
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "ad528565d6fab814eb62015d91fb0fbea3913816bdf46be5205851a090a6e653",
     "language": "zh-Hans",
     "title": "WCA 就乌克兰局势采取的措施（2022 年 3 月）",
     "content": "亲爱的 WCA 社区成员：\n\n我们一直关注乌克兰近期的事态发展，并对此感到震惊。WCA 董事会与社区其他成员一样，希望当前局势能尽快以和平方式解决。我们也衷心希望，那些无辜卷入冲突的 WCA 社区成员能够平安。\n\n过去几天，WCA 董事会讨论了该地区近期赛事能否举行的问题，并批准采取以下措施：\n\n**WCA 将不认可白俄罗斯和俄罗斯所有即将举行及今后的赛事，包括目前已安排于 3 月在俄罗斯举行的两场赛事。此外，在另行通知前，不再公布白俄罗斯或俄罗斯的新赛事。**\n\nWCA 董事会强调，这一决定经过了慎重考虑。我们选择遵循国际奥林匹克委员会执行委员会于 2022 年 2 月 25 日提出的建议。",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.550Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "e8a4e160e393d3b3b6d528a1cd78331903587b43b8706efbd4af085879dd92ff"
+  "translationHash": "b44c481698c472dd3f22fc8431f2d7bd770b3ac1b0e0ad2c916f0ca3cb1e9536",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:07:08.713Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "ad528565d6fab814eb62015d91fb0fbea3913816bdf46be5205851a090a6e653",
+    "reviewedTranslationHash": "b44c481698c472dd3f22fc8431f2d7bd770b3ac1b0e0ad2c916f0ca3cb1e9536",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wca-action-regarding-situation-in-ukraine-march-2022.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "e8a4e160e393d3b3b6d528a1cd78331903587b43b8706efbd4af085879dd92ff"
+  }
 }

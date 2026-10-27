@@ -12,14 +12,33 @@
     "sourceId": 14070
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "f36a0f8fa1ada0e6b8f971bbc38812c5fa8631234a477bf94a9d30a351485797",
     "language": "zh-Hans",
     "title": "招募 WCA 财务委员会成员（2022 年 9 月）",
     "content": "WCA 财务委员会（WFC）计划招募几位新成员。所有人都可以申请，不要求申请者目前已在 WCA 任职。\n\nWFC 负责什么？\n\n* 使用 Xero 处理日常记账，管理 WCA 的财务与现金流。\n* 制定 WCA 年度预算及财务预测，包括参赛人数的分析和预测。\n* 管理会费制度，包括开具账单及应收款管理。\n* 代表 WCA 完成税务和其他监管合规表格。\n* 依据《器材资助政策》和《差旅报销政策》审核资助申请。\n* 完成 WCA 董事会要求的，或议案规定的其他财务工作。\n\nWFC 的正式权利与职责载于 [WCA 议案 10.2021.6](https://www.worldcubeassociation.org/documents/motions/10.2021.6%20-%20Financial%20Committee.pdf)。\n\n我们希望候选人具备以下条件：\n\n* 良好的数学或数据分析能力。\n* 良好的英语书面表达能力。\n* 每周可投入 2–5 小时。\n* 能及时查看和回复委员会邮件。\n\n以下经验并非必需，但会对 WFC 的工作有所帮助：\n\n* 财务、税务或会计经验。\n* 使用电子表格的经验，并熟悉 Google G-Suite。\n* 非营利组织或企业财务方面的知识和经验。\n* 了解美国税务及美国国税局（IRS）相关事务。\n\n申请材料须包含：\n\n* 简短的申请信和个人介绍，包括申请加入 WFC 的原因。\n* 一份 WCA 经历简历，列出截至目前参与魔方社区的情况。\n* 职业简历，尤其是数学、会计或财务相关经历。\n\n我们会及时回复，确认材料是否完整，也可能邀请你与 WFC 负责人面试。\n\n请于 **2022 年 10 月 11 日星期二 23:59 UTC** 前，将申请提交给 WCA 财务主管兼财务委员会负责人 James Molloy（jmolloy@worldcubeassociation.org）。申请将由 WFC 负责人及高级成员审核。如有疑问，欢迎在提交申请前先联系我们。\n\n感谢你愿意加入 WFC，期待收到你的申请！",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.533Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "c7135c599a66b9e6471544872e7b98f4ef2731fff17494c812d0cdedd1f1a1e0"
+  "translationHash": "f11fea8644af85656f8f7252ed477d65e26fb3d5eac24a8f7a797c6882e3c450",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:10:42.788Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "f36a0f8fa1ada0e6b8f971bbc38812c5fa8631234a477bf94a9d30a351485797",
+    "reviewedTranslationHash": "f11fea8644af85656f8f7252ed477d65e26fb3d5eac24a8f7a797c6882e3c450",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/call-for-applicants-wfc-members-september-2022.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照标题与正文；核对财务职责、非必需技能、WIC 三组人数与条件、WMCT 多舞台经验及申请流程。"
+    ],
+    "inputTranslationHash": "c7135c599a66b9e6471544872e7b98f4ef2731fff17494c812d0cdedd1f1a1e0"
+  }
 }

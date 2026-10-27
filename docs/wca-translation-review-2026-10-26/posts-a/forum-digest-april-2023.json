@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/forum-digest-april-2023",
+  "path": "docs/wca-post-translations/entries/forum-digest-april-2023.json",
+  "sourceHash": "45f0daa8d451d100c47600d2462efe96ffa6074e7bbeae1e988a434303041eb6",
+  "inputTranslationHash": "1fe1003a6a7634c8d1f44f20faafd3b5709d0219bbb7bbd7bbf6514c35582d11",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:13:29.852Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题与正文；疫情取消区间/新赛条件、COO履历与金额人数、赛事日期地点、意向征集要求及各条历史纪录的选手/项目/单次平均/数值逐项核对一致。"
+  ],
+  "changes": []
+}

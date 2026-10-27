@@ -12,14 +12,33 @@
     "sourceId": 896
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "c3b2faa3cdce4d63b7716fa653bc9e850d7c48921fde4a6ba4d6a6159a96bd00",
     "language": "zh-Hans",
     "title": "2010 年欧洲魔方锦标赛将于 10 月 1–3 日在匈牙利布达佩斯举行",
     "content": "[2010 年欧洲魔方锦标赛](https://www.worldcubeassociation.org/results/c.php?i=Euro2010)将于 2010 年 10 月 1–3 日在匈牙利布达佩斯举行。更多信息及报名请见[赛事网站](http://www.speedcubing.com/events/euro2010)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.930Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "c11562c6ef78445a00f7170759ce19242c12486342caa0b15558e892e41cb299"
+  "translationHash": "9aac5dc78c0d18e191ae9af67ca43cfe41e96742b9490e4de54d2eb2961dbcfd",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:13:29.851Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "c3b2faa3cdce4d63b7716fa653bc9e850d7c48921fde4a6ba4d6a6159a96bd00",
+    "reviewedTranslationHash": "9aac5dc78c0d18e191ae9af67ca43cfe41e96742b9490e4de54d2eb2961dbcfd",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/european-rubik-s-cube-championship-2010-on-october-1-3-2010-in-budapest-hungary.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照标题与正文；疫情取消区间/新赛条件、COO履历与金额人数、赛事日期地点、意向征集要求及各条历史纪录的选手/项目/单次平均/数值逐项核对一致。"
+    ],
+    "inputTranslationHash": "c11562c6ef78445a00f7170759ce19242c12486342caa0b15558e892e41cb299"
+  }
 }

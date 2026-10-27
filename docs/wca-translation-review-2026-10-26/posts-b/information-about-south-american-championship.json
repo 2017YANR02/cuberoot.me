@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/information-about-south-american-championship",
+  "path": "docs/wca-post-translations/entries/information-about-south-american-championship.json",
+  "sourceHash": "f8c98f9303d1f0820a070313304fd457af0fd800c2b536ad54d095fca6f105dc",
+  "inputTranslationHash": "b5d3546b145c6f2ad0fa21fc7fd69324ec9e408ddccc4af450312b93efce8438",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:36.320Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

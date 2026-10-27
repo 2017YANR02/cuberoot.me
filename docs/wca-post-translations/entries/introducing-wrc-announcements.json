@@ -12,14 +12,31 @@
     "sourceId": 2616
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "f08b5a7f4cd097eb19bed860df3510b3d850c4d449677936a56e11a123dd699d",
     "language": "zh-Hans",
     "title": "WRC 规则公告栏目上线",
     "content": "从 5 月 21 日的更新开始，WCA 规则与指南的所有重要更新，都将由 WCA 规则委员会（WRC）在 [www.worldcubeassociation.org/regulations/announcements](/regulations/announcements) 发布公告。\n\n这些公告也会在 [WCA 首页](https://www.worldcubeassociation.org/)置顶一段时间，方便大家看到。\n\nWRC 会尽量只在一周的前半段（星期一至星期三）公布并实施这些改动，让代表和选手有时间了解变化，也能及时反馈紧急问题。\n\n不过，我们仍建议代表和选手在比赛中使用保存或打印的规则前，先核对[现行英文规则](https://www.worldcubeassociation.org/regulations/)所标注的日期。\n\nWRC 公告列表可在 [https://www.worldcubeassociation.org/regulations/announcements/](/regulations/announcements/) 查看。\n\n也可通过 RSS 订阅 WRC 公告：[https://www.worldcubeassociation.org/regulations/announcements/rss.xml](/regulations/announcements/rss.xml)",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.978Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "f9bc3b7ce507a307a6b53a1d0ecca31200b59811eef3a0587acbc491c3fe749b"
+  "translationHash": "35e6a10d882058dff32ce9432e04aa2f942649d64a87813bf7c8e21470e833d9",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:36.320Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "f08b5a7f4cd097eb19bed860df3510b3d850c4d449677936a56e11a123dd699d",
+    "reviewedTranslationHash": "35e6a10d882058dff32ce9432e04aa2f942649d64a87813bf7c8e21470e833d9",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/introducing-wrc-announcements.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "f9bc3b7ce507a307a6b53a1d0ecca31200b59811eef3a0587acbc491c3fe749b"
+  }
 }

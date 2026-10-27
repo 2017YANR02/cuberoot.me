@@ -527,7 +527,7 @@ export default function LandingPage() {
         <img src={mounted && effectiveTheme === 'dark' ? '/icons/CubeRoot-dark.png' : '/icons/CubeRoot.png'} alt="" className="brand-logo" />
         <span className="brand-name">{t('brand')}</span>
       </div>
-      <LandingSearch cards={searchCards} lang={lang} />
+      <LandingSearch cards={searchCards} lang={lang} workspaceEntry />
       <div className="landing-personal-row">
       {user && compFollows.loaded && <div className="landing-personal-comps">
         <PersonUpcomingComps key={personalKey} wcaId={user.wcaId || undefined} isZh={lang === 'zh'}

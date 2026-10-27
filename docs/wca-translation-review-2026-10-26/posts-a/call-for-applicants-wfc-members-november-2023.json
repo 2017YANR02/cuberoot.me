@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wfc-members-november-2023",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wfc-members-november-2023.json",
+  "sourceHash": "1f7c4373b1ed74d49896e25cef100036e57715472c1c5102b1cb306cf8e6df81",
+  "inputTranslationHash": "ed32c74919dff6031c55432428cc5386e2f0f1f5c972a79875fd098665e6858a",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:10:42.787Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题与正文；核对财务职责、非必需技能、WIC 三组人数与条件、WMCT 多舞台经验及申请流程。"
+  ],
+  "changes": []
+}

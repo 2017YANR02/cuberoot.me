@@ -1521,6 +1521,7 @@ export default function TrainerRunClient() {
           className={trainingHost ? 'trainer-opts' : 'trainer-opts trainer-opts--top'}
           triggerClassName="trainer-opts-gear"
           panelClassName="trainer-opts-panel"
+          modal
           iconSize={22}
           open={optsOpen}
           onOpenChange={setOptsOpen}

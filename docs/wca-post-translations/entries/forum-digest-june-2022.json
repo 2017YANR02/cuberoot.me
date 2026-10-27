@@ -12,14 +12,31 @@
     "sourceId": 14062
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "d7b6cdaaaef63a576c513baa43d36acc328b5d482143160097018583b85685c2",
     "language": "zh-Hans",
     "title": "WCA 论坛摘要（2022 年 6 月）",
     "content": "以下是 2022 年上半年 WCA 论坛上部分值得关注的话题。\n\n[**新选手应获得额外报名时间**](https://forum.worldcubeassociation.org/t/new-competitors-should-have-extra-time-to-register/16915)\n社区成员分享了热门比赛名额很快报满、没有额外报名时间的经历，并提出其他报名方式，例如优先接纳首次参赛者，或通过增加系列赛来满足需求。\n\n[**WCA 名人堂提案**](https://forum.worldcubeassociation.org/t/wca-hall-of-fame/18293)\n有人提议向成绩卓著、贡献突出的魔友颁发证书，列出其全部成就。帖子讨论了是否应将仍在活跃参赛的魔友纳入其中。\n\n[**用排名总和决定比赛总冠军**](https://forum.worldcubeassociation.org/t/sum-of-ranks-to-win-a-competition/19158)\n帖子提出采用类似记忆运动的成绩评定方式，将在多个项目中取得最快成绩的选手评为比赛总冠军。\n\n[**将团队盲拧加入 WCA 正式项目**](https://forum.worldcubeassociation.org/t/add-team-bld-as-an-official-event/18948)\n帖子讨论了增设团队盲拧项目的组织问题。如果通过，它将成为 WCA 首个团队项目。主要顾虑是如何防作弊，以及如何安排选手配对和排名。\n\n[**2022 年 6 月 1 日生效的规则修改**](https://forum.worldcubeassociation.org/t/wca-regulations-june-2022/21096)\n规则修改后，比赛不再必须设置选手候场区。同时，删除新冠疫情临时规则的 Y 章，也放宽了比赛中的相关安全限制。\n\n[**2022 年世界纪录汇总**](https://forum.worldcubeassociation.org/c/wca-records-results/11)\n2022 年上半年共打破 20 次世界纪录，其中 Max Park 一人贡献了 9 次！目前仍保持的有 13 项。祝贺 Max Park、Patrick Ponce、Zayn Khanani、Max Siauw、Sameer Agarwal、David Epstein、Jasper Murray、Simon Kellum、Juan Pablo Huanqui 和 Tommy Cherry。\n\n如有疑问、意见或反馈，欢迎发邮件至 advisory@worldcubeassociation.org。\n\n感谢大家参与论坛！",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:00.926Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "440205e0ee693f2e43180ffa7c5adbd83e33309239cd646fe04df25b91cf6f84"
+  "translationHash": "c28bb527a4c3c564df0fd2a2d8f37a547b5fa4c53f5b8ca1fd506da09ce6e8a8",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:36.319Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "d7b6cdaaaef63a576c513baa43d36acc328b5d482143160097018583b85685c2",
+    "reviewedTranslationHash": "c28bb527a4c3c564df0fd2a2d8f37a547b5fa4c53f5b8ca1fd506da09ce6e8a8",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/forum-digest-june-2022.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "440205e0ee693f2e43180ffa7c5adbd83e33309239cd646fe04df25b91cf6f84"
+  }
 }

@@ -12,7 +12,7 @@
     "sourceId": 13991
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "58dc0e86f1deceb766512237641acd8cbc2db91eed8b10f351d33c168d8df0ce",
     "language": "zh-Hans",
     "title": "议案修订获通过（2020 年 9 月）",
@@ -21,7 +21,26 @@
       "原文首段对 13.2020.1 的名称仍含 Bylaws，后文明确删去；按原文各处分别保留，未擅自统一。"
     ],
     "translatedAt": "2026-10-22T08:49:54.024Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "89d7bb8365de232b5d53fa4d8e86b52ebaf37f35761364bfcbe127e08f8895e6"
+  "translationHash": "bc35f4e7f6841800a1d3e6c29f3a9683bce260e54e826a00bf2f2e6acac0ce8b",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:05:11.621Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "58dc0e86f1deceb766512237641acd8cbc2db91eed8b10f351d33c168d8df0ce",
+    "reviewedTranslationHash": "bc35f4e7f6841800a1d3e6c29f3a9683bce260e54e826a00bf2f2e6acac0ce8b",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/amendments-to-the-motions-approved-september-2020.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+    ],
+    "inputTranslationHash": "89d7bb8365de232b5d53fa4d8e86b52ebaf37f35761364bfcbe127e08f8895e6"
+  }
 }

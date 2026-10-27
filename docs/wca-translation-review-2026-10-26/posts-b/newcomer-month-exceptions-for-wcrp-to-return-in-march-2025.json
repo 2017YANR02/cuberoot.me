@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/newcomer-month-exceptions-for-wcrp-to-return-in-march-2025",
+  "path": "docs/wca-post-translations/entries/newcomer-month-exceptions-for-wcrp-to-return-in-march-2025.json",
+  "sourceHash": "fe576056dcfd47ebabf2b71c75e441ac7542d1218883453e0dced7c6bdddbe32",
+  "inputTranslationHash": "1a709dbdd09271c31f1ee2678d8e37aec51fbfa953ef3f78be3aa7ab063e05fb",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:44.905Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

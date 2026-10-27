@@ -376,7 +376,7 @@
   outline: none;
   color: var(--foreground);
   font-size: 0.95rem;
-  font-family: 'Inter', Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 .rr-search .rr-search-input::placeholder { color: var(--faint-foreground); }
 .rr-body {
@@ -658,7 +658,7 @@
   background: color-mix(in srgb, var(--foreground) 5%, transparent);
   color: var(--foreground);
   font-size: 0.98rem;
-  font-family: 'Inter', Arial, sans-serif;
+  font-family: var(--font-sans);
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
@@ -750,7 +750,7 @@
   background: transparent;
   color: var(--foreground);
   font-size: 0.88rem;
-  font-family: 'Inter', Arial, sans-serif;
+  font-family: var(--font-sans);
   outline: none;
 }
 

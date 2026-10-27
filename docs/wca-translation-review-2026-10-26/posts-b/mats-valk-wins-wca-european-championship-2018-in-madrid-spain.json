@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/mats-valk-wins-wca-european-championship-2018-in-madrid-spain",
+  "path": "docs/wca-post-translations/entries/mats-valk-wins-wca-european-championship-2018-in-madrid-spain.json",
+  "sourceHash": "ca39306b7f2e2eb3af2beb0e17620fd08428b04e24f4bcc28af8b4eac6fbdb9a",
+  "inputTranslationHash": "5d135cb27c1d3822fbcdb31fd1708dea3c7a2453a529aeb6d67df01e13dde518",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:36.321Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

@@ -12,16 +12,33 @@
     "sourceId": 14054
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "a865e979a03ea2723626126f5025d5719d7043b16ab3626fd8a06030e72ef8dc",
     "language": "zh-Hans",
     "title": "招募 WCA 董事会助理团队成员（2022 年 4 月）",
     "content": "**WCA 董事会助理团队**正在招募新成员！\n\nWCA 董事会助理团队（WEAT）协助 WCA 董事会处理行政事务。WEAT 的权利与职责可在[这里](https://www.worldcubeassociation.org/documents/motions/10.2021.5%20-%20Executive%20Assistants%20Team.pdf)查看。\n\n我们希望申请者具备以下条件：\n\n* 每周可投入约 2–4 小时。\n* 较强的组织能力。\n* 良好的沟通能力。\n* 值得信赖。\n\n申请材料须为 **PDF 格式**，并包含：\n\n* 简短的个人介绍。\n* 曾为 WCA 社区开展的工作概述。\n* 你适合这一职位的理由。\n\n请于即日起至 **2022 年 5 月 16 日 23:59 UTC**，将申请发送至 [board@worldcubeassociation.org](mailto:board@worldcubeassociation.org)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.532Z",
-    "reviewStatus": "pending_independent_review",
-    "revisedAt": "2026-10-25T07:28:01.629Z",
-    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "2ecb4aa89558803b649b97b14e8a26d11d712d6a3030ed192a3d75fd1b2c6b9b"
+  "translationHash": "57709b6088ef5e88007aa7868dc9ad13185e914a1e309e61fcaafd553312acaa",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:10:04.271Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "a865e979a03ea2723626126f5025d5719d7043b16ab3626fd8a06030e72ef8dc",
+    "reviewedTranslationHash": "57709b6088ef5e88007aa7868dc9ad13185e914a1e309e61fcaafd553312acaa",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/call-for-applicants-weat-members-april-2022.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇核对全文及标题，职位、历史机构、任期、工时、申请资料、截止日期和投票程序一致。"
+    ],
+    "inputTranslationHash": "2ecb4aa89558803b649b97b14e8a26d11d712d6a3030ed192a3d75fd1b2c6b9b"
+  }
 }

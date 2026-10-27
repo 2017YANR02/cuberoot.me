@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/applications-for-the-wca-world-championship-2021",
+  "path": "docs/wca-post-translations/entries/applications-for-the-wca-world-championship-2021.json",
+  "sourceHash": "ec3495965ab7ddfe5b242a931256891e8c546bb035f2c06f144e3141c6633bfa",
+  "inputTranslationHash": "71873e62e5179e60cb0a2c7b9d37a95d39e62b2fae1e09472ca6de99a7d94110",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:05:49.185Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照申办地区、申请时段、材料要求、评选主体及全部预算/场馆/人员条目。"
+  ],
+  "changes": []
+}

@@ -12,14 +12,31 @@
     "sourceId": 14238
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "e0070d1daa715d4b6bbe013e60dc63e4411ca99ba5dcc3ca53481de79ba71ec2",
     "language": "zh-Hans",
     "title": "欧洲高级代表任命公告（2026 年 2 月）",
     "content": "各位 WCA 社区成员：\n\n我们很高兴地宣布，Karol Zakrzewski 将出任欧洲地区的新任高级代表。\n\nWCA 董事会依照《关于高级代表的议案》第 4 节，经董事投票选出 Karol。\n\n我们支持 Karol 承担新的职责，并祝他工作顺利。他的高级代表任期自 2026 年 2 月 4 日开始。\n\nKarol 是这一职位的唯一申请人，其申请材料可在[这里](https://drive.google.com/drive/folders/1Ld6qdCbFyrDUjuleEP4L27dd-R24uyFM)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:40:49.153Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "47cb280ee65bae6afdd00b7ccbdea567fdbde4b5c688002e9d5d70e6a4d9bb58"
+  "translationHash": "757db67eb07b9731e0f9784fc3d2f11709c2d6f03042a20c806ea7c481a8fd7d",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:25.168Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "e0070d1daa715d4b6bbe013e60dc63e4411ca99ba5dcc3ca53481de79ba71ec2",
+    "reviewedTranslationHash": "757db67eb07b9731e0f9784fc3d2f11709c2d6f03042a20c806ea7c481a8fd7d",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/senior-delegate-announcement-europe-february-2026.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "47cb280ee65bae6afdd00b7ccbdea567fdbde4b5c688002e9d5d70e6a4d9bb58"
+  }
 }

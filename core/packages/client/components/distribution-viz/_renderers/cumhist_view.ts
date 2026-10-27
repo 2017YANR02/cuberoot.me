@@ -145,7 +145,7 @@ export function drawCumHistView(
   ctx.translate(16, mt + ph / 2);
   ctx.rotate(-Math.PI / 2);
   ctx.fillStyle = ink(0.2);
-  ctx.font = '11px Inter, sans-serif';
+  ctx.font = '11px "SF Pro Text", "SF Pro SC", sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('Count', 0, 0);
   ctx.restore();

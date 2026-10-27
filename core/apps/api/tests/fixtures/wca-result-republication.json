@@ -1,0 +1,383 @@
+[
+  {
+    "person": "2019WANY36",
+    "beforeId": 8431058,
+    "afterId": 8452464,
+    "fingerprint": {
+      "a": 0,
+      "b": 344,
+      "c": "MidAtlanticChampionship2026",
+      "e": "333",
+      "f": "h",
+      "p": 1,
+      "r": "f",
+      "at": [
+        387,
+        344,
+        428,
+        520,
+        407,
+        632,
+        510,
+        617,
+        368,
+        529,
+        452,
+        554,
+        403,
+        444,
+        493
+      ],
+      "ra": null,
+      "rs": null
+    }
+  },
+  {
+    "person": "2015MILL01",
+    "beforeId": 8561563,
+    "afterId": 8565514,
+    "fingerprint": {
+      "a": 591,
+      "b": 459,
+      "c": "LouisianaChampionship2026",
+      "e": "333",
+      "f": "a",
+      "p": 1,
+      "r": "f",
+      "at": [
+        459,
+        649,
+        646,
+        818,
+        479
+      ],
+      "ra": null,
+      "rs": null
+    }
+  },
+  {
+    "person": "2015MILL01",
+    "beforeId": 8561519,
+    "afterId": 8565470,
+    "fingerprint": {
+      "a": 3765,
+      "b": 3505,
+      "c": "LouisianaChampionship2026",
+      "e": "minx",
+      "f": "a",
+      "p": 1,
+      "r": "f",
+      "at": [
+        3837,
+        3505,
+        3741,
+        3716,
+        4130
+      ],
+      "ra": null,
+      "rs": null
+    }
+  },
+  {
+    "person": "2015MILL01",
+    "beforeId": 8561479,
+    "afterId": 8565430,
+    "fingerprint": {
+      "a": 6232,
+      "b": 5272,
+      "c": "LouisianaChampionship2026",
+      "e": "555",
+      "f": "a",
+      "p": 1,
+      "r": "f",
+      "at": [
+        6304,
+        6571,
+        6341,
+        5272,
+        6051
+      ],
+      "ra": null,
+      "rs": null
+    }
+  },
+  {
+    "person": "2015MILL01",
+    "beforeId": 8561465,
+    "afterId": 8565416,
+    "fingerprint": {
+      "a": 2725,
+      "b": 2514,
+      "c": "LouisianaChampionship2026",
+      "e": "444",
+      "f": "a",
+      "p": 1,
+      "r": "f",
+      "at": [
+        3154,
+        2655,
+        2681,
+        2514,
+        2838
+      ],
+      "ra": null,
+      "rs": null
+    }
+  },
+  {
+    "person": "2015MILL01",
+    "beforeId": 8561453,
+    "afterId": 8565404,
+    "fingerprint": {
+      "a": 1348,
+      "b": 998,
+      "c": "LouisianaChampionship2026",
+      "e": "333oh",
+      "f": "a",
+      "p": 1,
+      "r": "f",
+      "at": [
+        1284,
+        998,
+        1365,
+        1540,
+        1394
+      ],
+      "ra": null,
+      "rs": null
+    }
+  },
+  {
+    "person": "2015MILL01",
+    "beforeId": 8561424,
+    "afterId": 8565375,
+    "fingerprint": {
+      "a": 600,
+      "b": 462,
+      "c": "LouisianaChampionship2026",
+      "e": "333",
+      "f": "a",
+      "p": 1,
+      "r": "2",
+      "at": [
+        673,
+        462,
+        707,
+        514,
+        612
+      ],
+      "ra": null,
+      "rs": null
+    }
+  },
+  {
+    "person": "2015MILL01",
+    "beforeId": 8561410,
+    "afterId": 8565361,
+    "fingerprint": {
+      "a": 251,
+      "b": 167,
+      "c": "LouisianaChampionship2026",
+      "e": "222",
+      "f": "a",
+      "p": 3,
+      "r": "f",
+      "at": [
+        308,
+        279,
+        268,
+        167,
+        207
+      ],
+      "ra": null,
+      "rs": null
+    }
+  },
+  {
+    "person": "2015MILL01",
+    "beforeId": 8561331,
+    "afterId": 8565282,
+    "fingerprint": {
+      "a": 3815,
+      "b": 3645,
+      "c": "LouisianaChampionship2026",
+      "e": "minx",
+      "f": "a",
+      "p": 1,
+      "r": "d",
+      "at": [
+        3728,
+        3923,
+        3856,
+        3645,
+        3862
+      ],
+      "ra": null,
+      "rs": null
+    }
+  },
+  {
+    "person": "2015MILL01",
+    "beforeId": 8561325,
+    "afterId": 8565276,
+    "fingerprint": {
+      "a": 2901,
+      "b": 2212,
+      "c": "LouisianaChampionship2026",
+      "e": "clock",
+      "f": "a",
+      "p": 19,
+      "r": "d",
+      "at": [
+        3528,
+        2267,
+        2907,
+        2212,
+        3629
+      ],
+      "ra": null,
+      "rs": null
+    }
+  },
+  {
+    "person": "2015MILL01",
+    "beforeId": 8561263,
+    "afterId": 8565214,
+    "fingerprint": {
+      "a": 6283,
+      "b": 5970,
+      "c": "LouisianaChampionship2026",
+      "e": "555",
+      "f": "a",
+      "p": 1,
+      "r": "d",
+      "at": [
+        6754,
+        6083,
+        5970,
+        6484,
+        6281
+      ],
+      "ra": null,
+      "rs": null
+    }
+  },
+  {
+    "person": "2015MILL01",
+    "beforeId": 8561243,
+    "afterId": 8565194,
+    "fingerprint": {
+      "a": 2956,
+      "b": 2523,
+      "c": "LouisianaChampionship2026",
+      "e": "444",
+      "f": "a",
+      "p": 1,
+      "r": "d",
+      "at": [
+        3142,
+        2523,
+        2638,
+        3461,
+        3087
+      ],
+      "ra": null,
+      "rs": null
+    }
+  },
+  {
+    "person": "2015MILL01",
+    "beforeId": 8561217,
+    "afterId": 8565168,
+    "fingerprint": {
+      "a": 1352,
+      "b": 1199,
+      "c": "LouisianaChampionship2026",
+      "e": "333oh",
+      "f": "a",
+      "p": 1,
+      "r": "d",
+      "at": [
+        1359,
+        1199,
+        1519,
+        1279,
+        1417
+      ],
+      "ra": null,
+      "rs": null
+    }
+  },
+  {
+    "person": "2015MILL01",
+    "beforeId": 8561178,
+    "afterId": 8565129,
+    "fingerprint": {
+      "a": 690,
+      "b": 576,
+      "c": "LouisianaChampionship2026",
+      "e": "333",
+      "f": "a",
+      "p": 1,
+      "r": "1",
+      "at": [
+        576,
+        609,
+        825,
+        778,
+        684
+      ],
+      "ra": null,
+      "rs": null
+    }
+  },
+  {
+    "person": "2015MILL01",
+    "beforeId": 8561141,
+    "afterId": 8565092,
+    "fingerprint": {
+      "a": 257,
+      "b": 202,
+      "c": "LouisianaChampionship2026",
+      "e": "222",
+      "f": "a",
+      "p": 2,
+      "r": "1",
+      "at": [
+        264,
+        202,
+        226,
+        381,
+        282
+      ],
+      "ra": null,
+      "rs": null
+    }
+  },
+  {
+    "person": "2017GARR05",
+    "beforeId": 8431061,
+    "afterId": 8452467,
+    "fingerprint": {
+      "a": 0,
+      "b": 487,
+      "c": "MidAtlanticChampionship2026",
+      "e": "333",
+      "f": "h",
+      "p": 4,
+      "r": "f",
+      "at": [
+        667,
+        716,
+        487,
+        549,
+        568,
+        654,
+        516,
+        554
+      ],
+      "ra": null,
+      "rs": null
+    }
+  }
+]

@@ -12,14 +12,31 @@
     "sourceId": 14231
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "04591488e97021ec0b415258313c12abdf64081d8f34061e7d2daf3413e66d35",
     "language": "zh-Hans",
     "title": "Ryan Murphy 出任世界魔方协会执行董事（2026 年 1 月）",
     "content": "亲爱的 WCA 社区成员：\n\nWCA 董事会很高兴地宣布，Ryan Murphy 已于 2026 年 1 月 2 日出任执行董事。他将负责组织战略和对外关系，并着重推动竞技速拧运动在全球的发展。\n\nRyan 此前担任公平竞赛伙伴组织（Partnership for Clean Competition，PCC）的执行董事。PCC 是一家依据美国税法 501(c)(3) 条款设立的组织，通过支持高质量的反兴奋剂研究与开发，维护体育诚信和公共健康。PCC 于 2008 年由美国奥林匹克与残疾人奥林匹克委员会、美国国家橄榄球联盟、美国职业棒球大联盟及美国反兴奋剂机构共同成立。在 Ryan 任职期间，PCC 资助了全球超过 60% 的反兴奋剂研究。\n\nRyan 还担任乔治城大学体育产业管理硕士项目的兼职教授，教授企业社会责任、体育全球化等课程，并指导学生的毕业综合项目。\n\n在 2021 年加入 PCC 之前，Ryan 于 2009 至 2021 年在美国国务院体育外交部门担任项目官员。他直接负责国际体育项目倡议（ISPI），管理该部门每年面向全球的体育项目资助评选，重点通过体育开展国际外交工作。2004 至 2009 年，他曾任国际特殊奥林匹克运动会体育与竞赛高级经理，为全球特奥网络中的教练和管理人员开发体育资源。2003 至 2015 年，他还在国际兴奋剂检测与管理公司（IDTM）担任国际兴奋剂检查官，为世界各地的运动员开展兴奋剂检测。\n\nRyan 在英国切姆斯福德的安格利亚鲁斯金大学获得国际体育法文学硕士学位，在英国谢菲尔德大学获得体育与休闲管理理学硕士学位，并拥有宾夕法尼亚州西切斯特大学的运动机能学理学学士学位。\n\nWCA 董事会热烈欢迎 Ryan 加入。他丰富的管理经验，以及对全球体育诚信的坚定承诺，将帮助 WCA 继续发展，更好地服务社区。\n\n*[在 WCA 论坛讨论本文](https://forum.worldcubeassociation.org/t/welcome-the-wcas-new-executive-director/66453)*",
     "notes": [],
     "translatedAt": "2026-10-22T08:40:49.163Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "b36fe7fe871c48ce54bf74ce7e27cc7e3d4cbbd2452bcb562950b0ea6455eab7"
+  "translationHash": "1cf71ea78f208ab5a7e5bf70c7992d6dae5b24d2a6603a07f03d7785752ad776",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:15.857Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "04591488e97021ec0b415258313c12abdf64081d8f34061e7d2daf3413e66d35",
+    "reviewedTranslationHash": "1cf71ea78f208ab5a7e5bf70c7992d6dae5b24d2a6603a07f03d7785752ad776",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/ryan-murphy-appointed-executive-director-of-the-world-cube-association-january-2026.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "b36fe7fe871c48ce54bf74ce7e27cc7e3d4cbbd2452bcb562950b0ea6455eab7"
+  }
 }

@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wsot-leader-may-2022",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wsot-leader-may-2022.json",
+  "sourceHash": "76d82ceb68aab6eac7acada451fec64a74b6dc403d65f5a1930f2fb959b1b03d",
+  "inputTranslationHash": "4ccf72b91542303d64306f2c21b6cc9f34dda70f139411b07a606e0b440c4852",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:11:12.894Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "已完整对照标题与正文；核对规则/成绩/质量保证团队职责、必需与可选资格、招募人数、任期工时及各篇申请日期、联系人与投票程序。历史 Guidelines 按参考保留指南。"
+  ],
+  "changes": []
+}

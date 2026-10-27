@@ -1,0 +1,21 @@
+{
+  "key": "incidents:74",
+  "path": "docs/wca-log-translations/entries/incidents-74.json",
+  "sourceHash": "0cfed4e9b0fe16e472891069c49916dc2d3df0810c52413993052f4650c45697",
+  "inputTranslationHash": "69db724d00e6caab58bfc6fb5a250bf63a19e0fab1db43892478cd128509ca10",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "本轮完整阅读英中正文及既有审校疑点，保留原文矛盾或含混，不擅自纠正历史事实。官方现行来源已重新读取，相关正文与保存版本一致。",
+  "verdict": "source_uncertain",
+  "notes": [
+    "源正文的 Regulation 3j1、引文标签 [3j2] 和目标链接 #3j1 不一致。原文未澄清正确编号，需后续核验官方源；本轮按要求未读取外链，不建议擅自改成任一编号。",
+    "2026-10-26 重新读取官方来源，疑点仍存在；这是源文事实/措辞的保留结论，不是遗漏翻译或已确认的译文错误。"
+  ],
+  "changes": [],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/report-6.json",
+    "reviewedTranslationHash": "69db724d00e6caab58bfc6fb5a250bf63a19e0fab1db43892478cd128509ca10",
+    "verdict": "pending_source_verification"
+  },
+  "sourceUncertainty": true
+}

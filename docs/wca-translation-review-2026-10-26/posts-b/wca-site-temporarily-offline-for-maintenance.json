@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/wca-site-temporarily-offline-for-maintenance",
+  "path": "docs/wca-post-translations/entries/wca-site-temporarily-offline-for-maintenance.json",
+  "sourceHash": "801c5aaf86b0f9efc94b291fd2f2bcdcf937ca51219a91a63810f50a596639b3",
+  "inputTranslationHash": "75e3fc628dd08b993e3e4bc43a1fc7a2ada36bd697875d2dfd869270ce9ed247",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:10:32.387Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

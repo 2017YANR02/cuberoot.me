@@ -1,4 +1,5 @@
 import { Hono, type Context } from 'hono';
+import { canPurchaseEnterpriseMembership } from '../utils/enterprise_membership.js';
 import { HTTPException } from 'hono/http-exception';
 import { bodyLimit } from 'hono/body-limit';
 import { requireAuth, optionalAuth, checkRateLimit } from '../utils/recon_helpers.js';
@@ -18,11 +19,12 @@ export const membershipSubscriptionRoutes = new Hono();
 membershipSubscriptionRoutes.get('/membership/subscriptions/availability', async (c) => {
   c.header('Cache-Control', 'no-store');
   const user = await optionalAuth(c);
+  const enterpriseEligible = !!user && await canPurchaseEnterpriseMembership(user.wcaId);
   const pilot = !renewalReleased() && renewalPilotAllowed(user?.wcaId);
   return c.json({ available: miniEnrollmentAvailable(user?.wcaId) || (renewalChannel() === 'h5' && renewalReleased() && papayConfigured()
     && process.env.WECHAT_PAPAY_DEBIT_ENABLED === 'true' && process.env.WECHAT_PAPAY_SYNC_ENABLED === 'true'),
   pilot, pilotPayment: pilot && process.env.WECHAT_PAPAY_PILOT_DEBIT_ENABLED === 'true',
-  plans: Object.fromEntries(Object.keys(RENEWAL_TEMPLATES).map(slug => [slug, renewalPlanConfigured(slug)])),
+  plans: Object.fromEntries(Object.keys(RENEWAL_TEMPLATES).map(slug => [slug, renewalPlanConfigured(slug) && (!slug.startsWith('enterprise_') || enterpriseEligible)])),
   termsVersion: RENEWAL_TERMS_VERSION, channel: renewalChannel() });
 });
 for (const path of ['/membership/subscriptions', '/membership/subscriptions/*']) {
@@ -55,6 +57,9 @@ membershipSubscriptionRoutes.post('/membership/subscriptions/mini-link', bodyLim
   const body = await c.req.json().catch(() => null);
   try {
     if (!renewalPlanConfigured(body?.planSlug)) return c.json({ error: 'renewal template unavailable' }, 503);
+    if (body.planSlug.startsWith('enterprise_') && !await canPurchaseEnterpriseMembership(user.wcaId)) {
+      return c.json({ error: 'verified enterprise management access required' }, 403);
+    }
     const ticket = issueMembershipHandoff(user.wcaId, body?.planSlug);
     const urlLink = await generateWechatMiniProgramUrlLink(new URLSearchParams({ ticket }).toString(),
       Math.floor(Date.now() / 1000) + 600, 'pages/membership/index', renewalReleased() ? 'release' : 'develop');

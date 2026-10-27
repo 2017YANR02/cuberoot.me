@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wrt-members-june-2024",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wrt-members-june-2024.json",
+  "sourceHash": "1bb760a6f0d72499122372709a3b9e4e954c65f10318668a77eebd2a49b7ee97",
+  "inputTranslationHash": "8a35138ed8797df8ff501bd3e17f46fe97c0cf361a7b1513c7239d61d64204eb",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:11:12.894Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "已完整对照标题与正文；核对规则/成绩/质量保证团队职责、必需与可选资格、招募人数、任期工时及各篇申请日期、联系人与投票程序。历史 Guidelines 按参考保留指南。"
+  ],
+  "changes": []
+}

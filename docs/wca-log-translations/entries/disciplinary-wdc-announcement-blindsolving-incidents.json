@@ -36,7 +36,23 @@
       "verdict": "pass",
       "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
     },
-    "unresolvedNotes": []
+    "unresolvedNotes": [],
+    "recheck": {
+      "reviewer": "/root/review_logs",
+      "reviewedAt": "2026-10-26T11:10:07.703Z",
+      "report": "../wca-translation-review-2026-10-26/final-report.json",
+      "sourceHash": "451141f1a137cce6353e162f98aaa11afa5493b35420af7fe46abed1c2976e24",
+      "reviewedTranslationHash": "6b1a01a121de6621be2a236164f7fdee8fa83f8fafce1c8fbe26992494d98ced",
+      "verdict": "pass",
+      "scope": "复用当前译文哈希绑定的既有全文独立审校；本轮全量检索项目名和机构残留，并核对命中语境。"
+    },
+    "currentReview": {
+      "round": "2026-10-26",
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/disciplinary-wdc-announcement-blindsolving-incidents.json",
+      "sourceConcern": false,
+      "notes": [],
+      "inputTranslationHash": "6b1a01a121de6621be2a236164f7fdee8fa83f8fafce1c8fbe26992494d98ced"
+    }
   },
   "publication": {
     "status": "not_authorized"

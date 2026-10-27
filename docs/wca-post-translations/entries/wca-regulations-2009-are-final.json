@@ -12,7 +12,7 @@
     "sourceId": 354
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "59be0f918711d751a5110e73f1ffe5dc1dc4a7675d9feb77a6dad1a9d7c4760a",
     "language": "zh-Hans",
     "title": "2009 年 WCA 规则正式定稿",
@@ -21,7 +21,24 @@
       "原文 regulations\\_history2009.html 含 Markdown 转义，保留源串供渲染器正确处理。原文 closed competitions 译为“封闭比赛”，未扩写其政策含义。"
     ],
     "translatedAt": "2026-10-22T08:55:00.921Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "48ab721815c5fcea58e16377b426fa0991fc0ac8d8a87fd90d8aa7d85759f04a"
+  "translationHash": "8c3ddfa55cf1aac0b9618f889b24e7bcae4659e3a7ef202f0adf8b7e338843b0",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:07:15.679Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "59be0f918711d751a5110e73f1ffe5dc1dc4a7675d9feb77a6dad1a9d7c4760a",
+    "reviewedTranslationHash": "8c3ddfa55cf1aac0b9618f889b24e7bcae4659e3a7ef202f0adf8b7e338843b0",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wca-regulations-2009-are-final.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "48ab721815c5fcea58e16377b426fa0991fc0ac8d8a87fd90d8aa7d85759f04a"
+  }
 }

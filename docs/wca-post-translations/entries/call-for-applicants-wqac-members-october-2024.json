@@ -12,14 +12,33 @@
     "sourceId": 14174
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "4a5c2b9b75a236222d46f0e204b68214a2102e3d5b637c93c19a55874a7ae880",
     "language": "zh-Hans",
     "title": "WCA 质量保证委员会成员招募（2024 年 10 月）",
     "content": "WCA 质量保证委员会（WQAC）正在招募新成员，一起完成委员会的工作！所有人均可申请，目前未在 WCA 任职的社区成员也不例外。即使你觉得自己未必最适合这个岗位，也欢迎申请。我们希望营造友好、包容的工作环境，欢迎不同背景的朋友加入！\n\n### WQAC 的工作是什么？\n\nWQAC 负责制定并落实 WCA 内部的质量标准，包括为 WCA 社区（选手和组织者）及 WCA 代表制作培训资料，并确保组织内各岗位的工作人员保持任职所需的技能。\n\nWQAC 的正式权利和职责见 [WCA 决议 10.2024.8](https://documents.worldcubeassociation.org/documents/motions/10.2024.8%20-%20Quality%20Assurance%20Committee.pdf)。如果你想了解可以参与哪些项目，下面是其中几个重点。我们允许成员灵活选择参与的项目。\n\n* 工作人员培训系统：这是我们正在推进的大项目，目的是帮助工作人员更熟悉 WCA 规则和政策。测试系统是其中的重要部分，也会用到图解、视频等内容！这也是本次招募的主要原因，我们希望借此大幅扩充 WQAC。\n* 制作教程：我们为选手、裁判、打乱员等制作各种教程和信息图。今后也可能开始制作视频教程！\n* 组织者与代表资料：我们为组织者和代表制作培训资料，帮助大家分享经验、提高 WCA 比赛的办赛质量。\n\n这些是目前比较令人期待的项目，之后还会有更多工作。当然，与 WCA 的多数岗位一样，也有更新过时文档、审核代表晋升等基础事务需要处理。\n\n以下是我们对成员的一些期望。请注意，多数条件并非硬性要求，我们不要求任何人满足全部条件，甚至不要求满足一半。\n\n* （必须）年满 18 周岁。\n* 熟练使用英语。\n* 细致认真，思路务实，善于解决问题。\n* 善于合作，能够及时回应。\n* 了解比赛的组织和运行方式。\n* （加分项）了解代表的职责。\n* （加分项）有教育领域经验，例如教学。\n* （加分项）了解 GitHub 和 Markdown。\n* （加分项）了解 GIMP、Photoshop 或类似软件（我们使用 GIMP）。\n\n### 申请时间\n\n申请期为即日起至 2024 年 11 月 15 日 23:59 UTC。请将 PDF 或 ODT 格式的申请材料发送给 Deni Mintsaev（dmintsaev@worldcubeassociation.org），内容应包括：\n\n* 简短的自我介绍。\n* 在 WCA 或速拧社区参与工作的总结。\n* 申请加入 WQAC 的原因。\n* 说明自己为何适合这个岗位，以及具备上述哪些技能。\n\n申请人会收到确认收件的回复，之后可能受邀参加面试。如对申请有疑问，请联系 Deni Mintsaev（dmintsaev@worldcubeassociation.org）。\n\n感谢你愿意为 WQAC 和 WCA 出一份力！",
     "notes": [],
     "translatedAt": "2026-10-22T08:40:49.158Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "13f5196ef9ff8f8033bfba44969fcb66b6bd760347b3a8ce014e573b9601045e"
+  "translationHash": "14d56a611b45fa543af214d6ca84511f09f5009a2c2fb8a35d659349282d8cbd",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:11:12.892Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "4a5c2b9b75a236222d46f0e204b68214a2102e3d5b637c93c19a55874a7ae880",
+    "reviewedTranslationHash": "14d56a611b45fa543af214d6ca84511f09f5009a2c2fb8a35d659349282d8cbd",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/call-for-applicants-wqac-members-october-2024.json",
+    "sourceConcern": false,
+    "notes": [
+      "已完整对照标题与正文；核对规则/成绩/质量保证团队职责、必需与可选资格、招募人数、任期工时及各篇申请日期、联系人与投票程序。历史 Guidelines 按参考保留指南。"
+    ],
+    "inputTranslationHash": "13f5196ef9ff8f8033bfba44969fcb66b6bd760347b3a8ce014e573b9601045e"
+  }
 }

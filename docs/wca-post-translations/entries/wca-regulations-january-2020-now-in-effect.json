@@ -12,14 +12,33 @@
     "sourceId": 13724
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "8eddfaa39fde3df2abf294fbfaa8c84edb4825248ed33e3529bb1f6966ebc965",
     "language": "zh-Hans",
     "title": "2020 年 1 月版 WCA 竞赛规则现已生效",
     "content": "新版 WCA [竞赛规则](https://www.worldcubeassociation.org/regulations/)与[指南](https://www.worldcubeassociation.org/regulations/guidelines.html)已于 2020 年 1 月 1 日生效。详情请参阅[原公告](https://www.worldcubeassociation.org/posts/wca-regulations-january-2020)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:54.122Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "1a50c875493507fca52910031bbbb7dae9dcc7f9477c7aaf1bb0e385a8640af0"
+  "translationHash": "ef51478265a32119cf65ba23e3ae94301a8090f0a341bb3180c7ce5d6d53a0d5",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:09:46.861Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "8eddfaa39fde3df2abf294fbfaa8c84edb4825248ed33e3529bb1f6966ebc965",
+    "reviewedTranslationHash": "ef51478265a32119cf65ba23e3ae94301a8090f0a341bb3180c7ce5d6d53a0d5",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wca-regulations-january-2020-now-in-effect.json",
+    "sourceConcern": false,
+    "notes": [
+      "全文核对规则变更条件、数字、项目中文、权限强度及链接。"
+    ],
+    "inputTranslationHash": "1a50c875493507fca52910031bbbb7dae9dcc7f9477c7aaf1bb0e385a8640af0"
+  }
 }

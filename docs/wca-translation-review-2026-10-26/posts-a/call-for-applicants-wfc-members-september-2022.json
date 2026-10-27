@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wfc-members-september-2022",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wfc-members-september-2022.json",
+  "sourceHash": "f36a0f8fa1ada0e6b8f971bbc38812c5fa8631234a477bf94a9d30a351485797",
+  "inputTranslationHash": "c7135c599a66b9e6471544872e7b98f4ef2731fff17494c812d0cdedd1f1a1e0",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:10:42.788Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题与正文；核对财务职责、非必需技能、WIC 三组人数与条件、WMCT 多舞台经验及申请流程。"
+  ],
+  "changes": []
+}

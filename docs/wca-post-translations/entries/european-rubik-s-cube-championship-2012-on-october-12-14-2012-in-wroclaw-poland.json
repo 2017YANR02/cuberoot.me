@@ -12,14 +12,33 @@
     "sourceId": 2030
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "df1813ff1f7331a768cfae622129ec2b8d7d4f3258605777afc6ae293d7dc3a7",
     "language": "zh-Hans",
     "title": "2012 年欧洲魔方锦标赛将于 10 月 12–14 日在波兰弗罗茨瓦夫举行",
     "content": "[2012 年欧洲魔方锦标赛](https://www.worldcubeassociation.org/results/c.php?i=Euro2012)将于 2012 年 10 月 12–14 日在波兰弗罗茨瓦夫举行。更多信息及报名请见 [Euro 2012 网站](http://www.speedcubing.com/events/euro2012)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.915Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "7ec3678d2de3905bfdf586bf3923e511e732c2d82d6b756380222649dddc4db5"
+  "translationHash": "751752b4c8e4c75fcf9b46f736ffaeb7fd0d81047b2cb7ab41488c2a0a1ca39f",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:13:29.851Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "df1813ff1f7331a768cfae622129ec2b8d7d4f3258605777afc6ae293d7dc3a7",
+    "reviewedTranslationHash": "751752b4c8e4c75fcf9b46f736ffaeb7fd0d81047b2cb7ab41488c2a0a1ca39f",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/european-rubik-s-cube-championship-2012-on-october-12-14-2012-in-wroclaw-poland.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照标题与正文；疫情取消区间/新赛条件、COO履历与金额人数、赛事日期地点、意向征集要求及各条历史纪录的选手/项目/单次平均/数值逐项核对一致。"
+    ],
+    "inputTranslationHash": "7ec3678d2de3905bfdf586bf3923e511e732c2d82d6b756380222649dddc4db5"
+  }
 }

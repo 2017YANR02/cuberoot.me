@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/wca-regulations-2007-final",
+  "path": "docs/wca-post-translations/entries/wca-regulations-2007-final.json",
+  "sourceHash": "21ada621a6cf80d5a64b3963a0adedacca21cd7021e376fbccdaec7316faddca",
+  "inputTranslationHash": "8170fb9d59860c8e280268072802e8ba372762e869b5e6f601febd349b434c9b",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:07:15.678Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

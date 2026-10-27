@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/merge-of-the-wca-regulations-and-wca-guidelines-july-2025",
+  "source": {
+    "key": "posts:/posts/merge-of-the-wca-regulations-and-wca-guidelines-july-2025",
+    "kind": "posts",
+    "title": "Merge of the WCA Regulations and WCA Guidelines (July 2025)",
+    "date": "2025-07-17T18:21:40.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/merge-of-the-wca-regulations-and-wca-guidelines-july-2025",
+    "content": "Dear WCA Community,\n\nThe WCA Regulations Committee would like to inform you that the WCA Guidelines have now been merged into the WCA Regulations, bringing these important documents [together](https://www.worldcubeassociation.org/regulations/). This change improves the accessibility of this information without changing the requirements in place at WCA Competitions.  \n\nA new version of the WCA Regulations, incorporating the content previously contained in the WCA Guidelines, has been published. This version is in effect for competitions beginning on, or after, July 17th, 2025. <!-- break -->\n\nYou can review the changes made in [this comparison on GitHub](https://github.com/thewca/wca-regulations/pull/1287). You can click on “Files changed” to see the complete files of the Regulations and the former Guidelines, where all changes and additions are marked green and removals are marked red.\n\nChanges include:\n\n* Moving all former Guidelines into the Regulations\n* Removing the Guidelines\n* Updating cross-references to former Guidelines \n* Amending the ‘Notes’ header section to reflect the amended structure\n\nThe changes made are only structural, and no substantive changes to the procedures in place at WCA Competitions have been made at this time. The WCA Regulations Committee continues to work on the development of the WCA Regulations, and intends to publish the next update to the WCA Regulations to take effect for competitions beginning on, or after, January 1st, 2026.",
+    "hash": "c2a0916ec53f80ac62b48c3e066adafeb92ff3557c33a50d22122a7b83bf885b",
+    "format": "markdown",
+    "sourceId": 14208
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "c2a0916ec53f80ac62b48c3e066adafeb92ff3557c33a50d22122a7b83bf885b",
+    "language": "zh-Hans",
+    "title": "《WCA 规则》与《WCA 指南》合并（2025 年 7 月）",
+    "content": "亲爱的 WCA 社区成员：\n\nWCA 规则委员会在此通知大家：《WCA 指南》现已并入《WCA 规则》，两份重要文件已[合为一体](https://www.worldcubeassociation.org/regulations/)。这样更方便大家查阅信息，WCA 比赛中现行的要求并未改变。\n\n新版《WCA 规则》已发布，纳入了原《WCA 指南》的内容，适用于 2025 年 7 月 17 日及之后开始的比赛。\n\n<!-- break -->\n\n你可以通过 [GitHub 上的对比](https://github.com/thewca/wca-regulations/pull/1287)查看改动。点击“Files changed”即可查看《规则》和原《指南》的完整文件；修改和新增内容标为绿色，删除内容标为红色。\n\n本次改动包括：\n\n* 将原《指南》的全部条文移入《规则》。\n* 删除《指南》。\n* 更新指向原《指南》条文的交叉引用。\n* 修改开头的“说明”部分，使其与调整后的结构一致。\n\n本次仅调整文件结构，未实质性修改 WCA 比赛的任何现行流程。WCA 规则委员会将继续完善《WCA 规则》，计划下一次更新适用于 2026 年 1 月 1 日及之后开始的比赛。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:40:49.159Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "e309f219dd6cdf5056f2135d64390056c56143460c91cebc9332243ba731f36e"
+}

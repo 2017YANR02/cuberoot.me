@@ -1,0 +1,27 @@
+{
+  "key": "incidents:20",
+  "path": "docs/wca-log-translations/entries/incidents-20.json",
+  "sourceHash": "7dd6bcc5b26f3d5acc739575bc3b4b83b0ea6d2c421a144de290f67064a5a3bc",
+  "inputTranslationHash": "5b1cd86a5c4833af4f4da1c80ad7addab88eeae6a746a46a49ee8ffc1887aa58",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "复用当前译文哈希绑定的既有全文独立审校；本轮全量检索项目名和机构残留，并核对命中语境。 本轮完整对照含 Skewb 的该条英中正文，确认成绩、规则号、处罚条件及链接保留。",
+  "verdict": "correction_required",
+  "notes": [],
+  "changes": [
+    {
+      "reason": "WCA 官方 events->skewb 译为“斜转”，正文与标题不再保留未翻译的项目名称；已逐处对照全文，链接不受影响。",
+      "before": "Skewb",
+      "after": "斜转",
+      "sourceUrl": "https://translate.worldcubeassociation.org/translate/wca/locales/zh_Hans/?checksum=6eab8ca347f70d1d"
+    }
+  ],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/report-4.json",
+    "reviewedTranslationHash": "5b1cd86a5c4833af4f4da1c80ad7addab88eeae6a746a46a49ee8ffc1887aa58",
+    "verdict": "pass"
+  },
+  "sourceUncertainty": false,
+  "title": "选手签名前，裁判已将魔方送回打乱台",
+  "content": "斜转决赛中，一名选手取得好成绩，表现兴奋。就在他短暂分神时，裁判没有记录成绩，而是将魔方送回打乱台。直到选手意识到自己尚未签名，才发现此事。比赛现场给予了暂定的额外尝试。\n\nWRC 决定保留原成绩。裁判没有遵循规则规定的流程，具体而言，未记录成绩，忽略了 [A7b](https://www.worldcubeassociation.org/regulations/#A7b)。我们认为不应因此让选手承受不利后果。此外，还有充分证据证明原成绩有效，包括录像和目击证人。"
+}

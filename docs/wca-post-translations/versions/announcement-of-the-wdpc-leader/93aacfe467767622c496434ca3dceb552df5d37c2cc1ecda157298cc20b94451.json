@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/announcement-of-the-wdpc-leader",
+  "source": {
+    "key": "posts:/posts/announcement-of-the-wdpc-leader",
+    "kind": "posts",
+    "title": "Announcement of the WDPC Leader",
+    "date": "2019-02-21T17:00:07.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/announcement-of-the-wdpc-leader",
+    "content": "We are happy to announce that we have a new Committee Leader. Ronald Mansveld has been appointed as the Leader of the WCA Data Protection Committee (WDPC).\n\n\nRonald was selected by the WCA Board and approved in a voting among the current Committee/Team Leaders and Senior Delegates, following Section 4 of our [Motion 10.2019.0](https://www.worldcubeassociation.org/documents/motions/10.2019.0%20-%20Committees%20and%20Teams.pdf) about WCA Committees and Teams.\n\n\nWe wish Ronald the best of luck in fulfilling his new duty!\n\n\nRonald Mansveld was the only applicant for the position. His candidacy document can be found [here](https://drive.google.com/file/d/122QfMLhjVWWJsvJIquJ4aPJeF7Txz5OP/view) if you are interested in viewing it.",
+    "hash": "2c2dd381ac7818335337128be05f7088af55c828fc70936b24b57185ac2c9b9a",
+    "format": "markdown",
+    "sourceId": 11400
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "2c2dd381ac7818335337128be05f7088af55c828fc70936b24b57185ac2c9b9a",
+    "language": "zh-Hans",
+    "title": "WCA 数据保护委员会负责人任命公告",
+    "content": "我们很高兴地宣布，Ronald Mansveld 已获任命为 WCA 数据保护委员会（WDPC）负责人。\n\n依照 WCA 委员会与团队[动议 10.2019.0](https://www.worldcubeassociation.org/documents/motions/10.2019.0%20-%20Committees%20and%20Teams.pdf)第 4 节，WCA 董事会选定 Ronald，并经现任委员会、团队负责人和高级代表投票批准。\n\n祝 Ronald 在新的岗位上工作顺利！\n\nRonald Mansveld 是本次职位的唯一申请人。有兴趣的成员可在[此处](https://drive.google.com/file/d/122QfMLhjVWWJsvJIquJ4aPJeF7Txz5OP/view)查看他的申请材料。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:49:00.943Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "93aacfe467767622c496434ca3dceb552df5d37c2cc1ecda157298cc20b94451"
+}

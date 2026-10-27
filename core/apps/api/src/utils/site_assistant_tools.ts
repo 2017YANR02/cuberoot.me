@@ -37,7 +37,7 @@ export const toolCallSchema = z.discriminatedUnion('tool', [
   z.object({ tool: z.literal('forum'), query }).strict(),
   z.object({ tool: z.literal('algorithms'), puzzle: id.default('3x3'), set: id.optional() }).strict(),
   z.object({ tool: z.literal('statistics'), id: id.optional(), tableKey: z.string().regex(/^[0-9.]{1,40}$/).optional(), offset: z.number().int().min(0).max(50000).optional(), limit: z.number().int().min(1).max(20).default(10) }).strict().refine(value=>!value.tableKey || !!value.id, {path:['id'],message:'A tableKey requires its statistic id. Repeat the id from the previous result; table keys are not global.'}),
-  z.object({ tool: z.literal('pages'), query, pageIds: z.array(z.string().max(120)).max(3).default([]) }).strict(),
+  z.object({ tool: z.literal('pages'), query, pageIds: z.array(z.string().max(120)).max(3).default([]), audience: z.enum(['user','developer']).default('user') }).strict(),
   z.object({ tool: z.literal('navigation'), query, kind: z.enum(['all','algorithms','training','solver']).default('all'), pageIds: z.array(z.string().max(200)).max(3).default([]) }).strict(),
 ]);
 export type AssistantToolCall = z.infer<typeof toolCallSchema>;

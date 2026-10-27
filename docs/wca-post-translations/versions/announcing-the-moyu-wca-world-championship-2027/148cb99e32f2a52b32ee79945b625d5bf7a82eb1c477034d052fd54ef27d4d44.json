@@ -1,0 +1,27 @@
+{
+  "key": "posts:/posts/announcing-the-moyu-wca-world-championship-2027",
+  "source": {
+    "key": "posts:/posts/announcing-the-moyu-wca-world-championship-2027",
+    "kind": "posts",
+    "title": "Announcing the MoYu WCA World Championship 2027",
+    "date": "2026-10-18T13:00:00.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/announcing-the-moyu-wca-world-championship-2027",
+    "content": "Dear WCA Community,\n\nThe WCA Major Championships Team (WMCT) is excited to announce the [details](https://www.worldcubeassociation.org/competitions/WC2027) for the MoYu WCA World Championship 2027, taking place on July 22nd - July 25th, in Uppsala, Sweden!\n\n<!-- break -->\nThis is the 13th World Championship, and marks a return to Europe for the WCA’s premier event, the first time since Paris hosted the Championship in 2017.\n\nWe would also like to extend a huge thank you to MoYu for making this championship possible. The MoYu WCA World Championship 2027 marks MoYu’s first time sponsoring a WCA World Championship, and we are thrilled to be partnering with them on the global stage.\n\nThe WCA World Championship is a global gathering that unites our community as well as an opportunity to see the world’s best speedcubers compete and to crown the World Champions across all official WCA events. The Swedish Cube Association, in collaboration with the WMCT, is hard at work ensuring that the 2027 championship reflects the spirit and talent within the speedcubing community, and we are excited to see everyone next Summer!\n\nFull competition details can be found on the [WCA competition page.](https://www.worldcubeassociation.org/competitions/WC2027)",
+    "hash": "76cfd6cf9edc602756b8039adf4e871b29599ded6e2557839d44b566aa38105d",
+    "format": "markdown",
+    "sourceId": 14266
+  },
+  "translation": {
+    "version": 2,
+    "sourceHash": "76cfd6cf9edc602756b8039adf4e871b29599ded6e2557839d44b566aa38105d",
+    "language": "zh-Hans",
+    "title": "2027 年魔域 WCA 世界锦标赛公布",
+    "content": "亲爱的 WCA 社区成员：\n\nWCA 大型锦标赛组（WMCT）很高兴地公布[2027 年魔域 WCA 世界锦标赛的详情](https://www.worldcubeassociation.org/competitions/WC2027)：比赛将于 2027 年 7 月 22 日至 25 日在瑞典乌普萨拉举行！\n\n这将是第 13 届世界锦标赛，也是 WCA 这项最高级别赛事自 2017 年巴黎世锦赛以来首次重返欧洲。\n\n我们还要衷心感谢魔域，让本届世锦赛得以举办。2027 年魔域 WCA 世界锦标赛是魔域首次赞助 WCA 世界锦标赛，我们非常高兴能在这一全球舞台上与魔域合作。\n\nWCA 世界锦标赛是一场凝聚全球社群的盛会，也是观看世界顶尖速拧选手同场竞技、见证各个官方项目世界冠军诞生的机会。瑞典魔方协会正与 WMCT 紧密合作，努力让 2027 年世锦赛充分展现我们社群的精神和才华。我们期待在明年夏天与大家相见！\n\n完整比赛信息可在 [WCA 比赛页面](https://www.worldcubeassociation.org/competitions/WC2027)查看。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:19:15.615Z",
+    "reviewStatus": "pending_independent_review",
+    "revisedAt": "2026-10-25T07:28:01.629Z",
+    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+  },
+  "translationHash": "148cb99e32f2a52b32ee79945b625d5bf7a82eb1c477034d052fd54ef27d4d44"
+}

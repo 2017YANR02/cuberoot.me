@@ -12,14 +12,31 @@
     "sourceId": 13996
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "b0f350eae70ddaa1abaebb4c7370b235294108642c7fa1716f6a477bedf4b6e8",
     "language": "zh-Hans",
     "title": "高级代表任命公告：非洲、北欧及波罗的海地区",
     "content": "高级代表申请期结束后，非洲地区未收到任何申请，因此在另行通知前，该地区将由董事会负责。\n\n此外，北欧及波罗的海地区收到了一份申请。不过，该地区已并入欧洲地区，因此不再任命高级代表。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:00.952Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "ca22f385e227bc5a4cccc743737a6b2bf9852966eb60296ff6501c5341cca046"
+  "translationHash": "89956654457b8f560c62fa4624d66fc345421c683288bd80b920a2a7c9a77602",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:25.166Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "b0f350eae70ddaa1abaebb4c7370b235294108642c7fa1716f6a477bedf4b6e8",
+    "reviewedTranslationHash": "89956654457b8f560c62fa4624d66fc345421c683288bd80b920a2a7c9a77602",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/senior-delegate-announcement-africa-europe-north-and-baltic-states.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "ca22f385e227bc5a4cccc743737a6b2bf9852966eb60296ff6501c5341cca046"
+  }
 }

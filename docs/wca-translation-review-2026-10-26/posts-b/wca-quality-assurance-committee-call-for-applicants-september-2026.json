@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/wca-quality-assurance-committee-call-for-applicants-september-2026",
+  "path": "docs/wca-post-translations/entries/wca-quality-assurance-committee-call-for-applicants-september-2026.json",
+  "sourceHash": "0a9d2358a65ddd3c2b7713aa3b87122c51057c8e41f8a6d85f16e9255da693c4",
+  "inputTranslationHash": "88dc67d260ccfd57b9f150d8365606fa0a4dd8aeb965d89bdb4a90a355342ac5",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:07:15.678Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

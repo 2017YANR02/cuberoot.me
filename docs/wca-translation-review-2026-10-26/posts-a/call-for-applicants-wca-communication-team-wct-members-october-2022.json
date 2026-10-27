@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wca-communication-team-wct-members-october-2022",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wca-communication-team-wct-members-october-2022.json",
+  "sourceHash": "69be8addc24b54e3f2cf51c2cfccb6d41a898fd7a9dd360d96c0667bb24240f3",
+  "inputTranslationHash": "dee58b8b253edea71ffed35810e95d8cacd266f5d03cab0a5e0155e497a7e240",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:07:01.627Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照招募正文、职责条目、必需/可选资格、年龄、时限和程序；未扩展外链材料。"
+  ],
+  "changes": []
+}

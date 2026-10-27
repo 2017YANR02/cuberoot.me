@@ -12,14 +12,31 @@
     "sourceId": 14118
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "b673b4b75d6b987f4880f0773de1af72a689d82d3ff17afe9cbc58036860c2d3",
     "language": "zh-Hans",
     "title": "2024 及 2025 年 WCA 锦标赛举办地公告（2023 年 8 月）",
     "content": "我们很高兴地宣布，2025 年 **WCA 世界锦标赛**将在**美国西雅图**举行，2024 年 **WCA 南美洲锦标赛**将在**阿根廷布宜诺斯艾利斯**举行。\n\n感谢哈萨克斯坦阿斯塔纳申请承办 2025 年 WCA 世界锦标赛。遗憾的是，我们未收到 2024 年非洲、亚洲或大洋洲锦标赛的承办申请。有意组织这些比赛的团队，请联系 WCA 董事会（board@worldcubeassociation.org）。\n\n申请材料可分别在[此处](https://drive.google.com/drive/folders/1JIHlbGzATd-TH6pi696GSzlkp5IsLkrz)（WCA 世界锦标赛）及[此处](https://drive.google.com/drive/folders/1_SVg3Qhui1qWyCrY6xI9qKUExTcgrusk)（WCA 南美洲锦标赛）查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:42:40.589Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "6862820c6741b847eabcbdb3ea14ecc7d576ea7acc693116c267e59b8ce209ef"
+  "translationHash": "87579cf1cdbed8335a1642241d1a9a384fa6dcbcca4cd607a0851be42454703d",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:07:08.714Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "b673b4b75d6b987f4880f0773de1af72a689d82d3ff17afe9cbc58036860c2d3",
+    "reviewedTranslationHash": "87579cf1cdbed8335a1642241d1a9a384fa6dcbcca4cd607a0851be42454703d",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wca-championship-2024-and-2025-hosts-announcement-august-2023.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "6862820c6741b847eabcbdb3ea14ecc7d576ea7acc693116c267e59b8ce209ef"
+  }
 }

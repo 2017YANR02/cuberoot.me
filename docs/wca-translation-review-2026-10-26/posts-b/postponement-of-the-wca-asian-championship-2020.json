@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/postponement-of-the-wca-asian-championship-2020",
+  "path": "docs/wca-post-translations/entries/postponement-of-the-wca-asian-championship-2020.json",
+  "sourceHash": "0df65b7af76b168d64ed2043c0e064e97aafa5eb57e4edd191c5f1d64e74de73",
+  "inputTranslationHash": "1ee25cbfea302403f76def72132afc7c12d36a9ced7c54d016193fc3ec4d0fb8",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:55.471Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

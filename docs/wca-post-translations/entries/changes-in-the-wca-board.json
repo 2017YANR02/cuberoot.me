@@ -12,14 +12,33 @@
     "sourceId": 9793
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "123d38e61879e47f2d0c644b2bc5555d600a116c940320c731947166591ec870",
     "language": "zh-Hans",
     "title": "WCA 董事会成员变动",
     "content": "现宣布，自 2018 年 6 月 30 日起，WCA 董事会减至三名成员。Luis J. Iáñez 的任期已正式结束，Pedro Santos Guimarães 和 Ron van Bruchem 也已辞去董事职务。\n\n<!-- break -->\n\n衷心感谢 Luis、Pedro 和 Ron 的付出，以及他们为 WCA 发展至今所做的出色工作。尤其要感谢 Ron：他参与创立了世界魔方协会，并用近 15 年时间向世界各地传播 WCA 的使命与精神。祝三位今后的各项工作一切顺利！",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.148Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "e82c75050ab0bd1a5d22be34af8bb48915b1131dcc549eb0c82f336f39c3d5ea"
+  "translationHash": "401505b3bf230922e71ebd8feaaa007b1a216c30023b843fdd2611c58d1b2201",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:12:23.465Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "123d38e61879e47f2d0c644b2bc5555d600a116c940320c731947166591ec870",
+    "reviewedTranslationHash": "401505b3bf230922e71ebd8feaaa007b1a216c30023b843fdd2611c58d1b2201",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/changes-in-the-wca-board.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照标题和正文；各届赛事城市及取消/退款范围、董事候选名单、当选与连任区别、任期及生效日期、保留职务和干事分工均与原文一致。"
+    ],
+    "inputTranslationHash": "e82c75050ab0bd1a5d22be34af8bb48915b1131dcc549eb0c82f336f39c3d5ea"
+  }
 }

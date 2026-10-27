@@ -12,14 +12,31 @@
     "sourceId": 4297
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "29bf583eb653af5db85a02c1f281e4e7632552947652e055f1dca119c577843f",
     "language": "zh-Hans",
     "title": "TNoodle 0.9.0 发布",
     "content": "TNoodle-WCA-0.9.0 现已可从[https://www.worldcubeassociation.org/regulations/scrambles](https://www.worldcubeassociation.org/regulations/scrambles)获取。\n\n与 TNoodle 0.8.4 相比，主要改动如下：\n\n- 四阶打乱生成器的初始化速度大幅加快。\n- 较长打乱的相邻行采用交替高亮，方便阅读。\n\n<!--break-->\n\n请记住，官方比赛必须始终使用当前有效版本的官方打乱程序。最新版可从以下页面获取：[https://www.worldcubeassociation.org/regulations/scrambles/](https://www.worldcubeassociation.org/regulations/scrambles/)",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.151Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "c8f5ca851f83c9996ca00b48ef2f2a379adc8ea84f3a73cb793f687aaa1d11b9"
+  "translationHash": "263158540488ab1ddcc183aa6507de5cd4cd8baed37fe3ade867d667976d7736",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:48.603Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "29bf583eb653af5db85a02c1f281e4e7632552947652e055f1dca119c577843f",
+    "reviewedTranslationHash": "263158540488ab1ddcc183aa6507de5cd4cd8baed37fe3ade867d667976d7736",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/tnoodle-0-9-0.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "c8f5ca851f83c9996ca00b48ef2f2a379adc8ea84f3a73cb793f687aaa1d11b9"
+  }
 }

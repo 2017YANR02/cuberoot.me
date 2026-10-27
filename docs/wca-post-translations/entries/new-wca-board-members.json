@@ -12,14 +12,31 @@
     "sourceId": 5945
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "b5e863f0c9787744ae1ed5defd47828f4faf477c6f28ddd6ce2dbac9d7b1d18a",
     "language": "zh-Hans",
     "title": "WCA 董事会新增两位成员",
     "content": "我们很高兴宣布，WCA 董事会新增两位成员：[Chris Hardwick](https://www.worldcubeassociation.org/results/p.php?i=2003HARD01) 和 [Luis J. Iáñez](https://www.worldcubeassociation.org/results/p.php?i=2009PARE02)。他们由代表投票选出。\n\n两人的董事任期自 2016 年 7 月 1 日起生效。相信他们将为 WCA 作出重要贡献！",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.150Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "4f68d0c9b9048eaccf6fc4be11c0bf82d718c035e4c56aac19a8b922a63cb140"
+  "translationHash": "e86f4160a4fc828dcf03b3103bc982543f7b24a74942f6dbc6899b9eb2b3a747",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:44.904Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "b5e863f0c9787744ae1ed5defd47828f4faf477c6f28ddd6ce2dbac9d7b1d18a",
+    "reviewedTranslationHash": "e86f4160a4fc828dcf03b3103bc982543f7b24a74942f6dbc6899b9eb2b3a747",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/new-wca-board-members.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "4f68d0c9b9048eaccf6fc4be11c0bf82d718c035e4c56aac19a8b922a63cb140"
+  }
 }

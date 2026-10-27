@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, expect, it } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
 import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { CompactSelect } from '@cuberoot/timer-ui/compact-select';
@@ -7,13 +7,13 @@ import { CompactSelect } from '@cuberoot/timer-ui/compact-select';
 let root: Root;
 let host: HTMLDivElement;
 const popup = () => document.querySelector('[role="listbox"]');
-async function open(dismissOnMouseLeave?: boolean) {
+async function open(dismissOnMouseLeave?: boolean, side?: 'top') {
   host = document.createElement('div');
   document.body.append(host);
   root = createRoot(host);
   await act(async () => root.render(createElement(CompactSelect, {
     label: 'Role', ariaLabel: 'Role', items: [{ value: 'admin', label: 'Admin' }],
-    onChange: () => {}, openOnHover: true,
+    onChange: () => {}, openOnHover: true, side,
     ...(dismissOnMouseLeave === undefined ? {} : { dismissOnMouseLeave }),
   })));
   const trigger = host.querySelector('button')!;
@@ -28,6 +28,17 @@ async function move(target: Element, x: number, y: number, pointerType = 'mouse'
 afterEach(async () => {
   await act(async () => root?.unmount());
   host?.remove();
+  vi.restoreAllMocks();
+});
+
+it.each([[300, 194], [10, 48]])('prefers above and falls below near the top edge (y=%s)', async (y, expected) => {
+  vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(390);
+  vi.spyOn(document.documentElement, 'clientHeight', 'get').mockReturnValue(844);
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+    return this.tagName === 'BUTTON' ? new DOMRect(100, y, 32, 32) : new DOMRect(100, 0, 180, 100);
+  });
+  await open(false, 'top');
+  expect((popup() as HTMLElement).style.top).toBe(`${expected}px`);
 });
 
 it('keeps editor fields interactive and dismisses only on an outside press or Escape', async () => {

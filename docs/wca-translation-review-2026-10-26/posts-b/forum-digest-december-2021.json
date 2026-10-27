@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/forum-digest-december-2021",
+  "path": "docs/wca-post-translations/entries/forum-digest-december-2021.json",
+  "sourceHash": "2cd3cf7aebd66c8c2856beaf47e4bcebd001e5c44c4922d4e5bf0da49f1cbd05",
+  "inputTranslationHash": "253415cadd929f19fbc5580a31133170bb99aa29cc5c68f9c6be0a7447917420",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:36.321Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "source_uncertain",
+  "notes": [
+    "原文标题称三次纪录、正文称 twice，同时列1.13/1.06/1.05三个成绩；译文忠实保留矛盾，不能以译者推断改成三次。"
+  ],
+  "changes": []
+}

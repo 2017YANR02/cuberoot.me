@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wfc-leader-august-2023",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wfc-leader-august-2023.json",
+  "sourceHash": "3292e45a9c3ac08ab765e9270221980556f36cc64b61db00234af59278716b66",
+  "inputTranslationHash": "89abd5ed67dd1f1169c26831c1258e746da0248277663250359c1db4548c1714",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:10:20.415Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "全文对照；历史 WEC/纪律委员会职责、申请资格、任期工时、截止日期及任命流程保持原意。"
+  ],
+  "changes": []
+}

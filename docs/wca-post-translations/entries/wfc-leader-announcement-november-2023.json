@@ -12,14 +12,33 @@
     "sourceId": 14127
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "cfc55b3b467183c39ce07fb0047923524badd5f3fb9d552e2d227de0dd1e3a16",
     "language": "zh-Hans",
     "title": "WCA 财务委员会负责人任命公告（2023 年 11 月）",
     "content": "我们很高兴地宣布，Raymond Goslow 将担任 WCA 财务委员会（WFC）的新任负责人及 WCA 财务主管。Raymond 此前已在 WFC 担任高级成员。\n\n依照 WCA 委员会与团队[动议](https://www.worldcubeassociation.org/documents/motions/10.2022.0%20-%20Committees%20and%20Teams.pdf)第 4 节，WCA 董事会选定 Raymond，并经现任委员会负责人和高级代表投票批准。\n\n我们支持 Raymond 承担新的职责，祝他工作顺利。\n\n本次职位共收到 3 份申请。如想了解获选者 Raymond 的申请材料，可在[此处](https://drive.google.com/file/d/1awN1mv6r3YIVnWSXWYdNxeePcOGGyhGU/view?usp=drive_link)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:42:40.580Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "e58f16f3b29db82cf9c5313f8e9a07a47727934e82a8f55c33c18018142c557a"
+  "translationHash": "9f6cad1ef22f8288c752ad9813cdd41f204bba4a2239d233069f39de9c4be6da",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:10:59.922Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "cfc55b3b467183c39ce07fb0047923524badd5f3fb9d552e2d227de0dd1e3a16",
+    "reviewedTranslationHash": "9f6cad1ef22f8288c752ad9813cdd41f204bba4a2239d233069f39de9c4be6da",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wfc-leader-announcement-november-2023.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整核对案件归因、处分条件、匿名处理、数量及任命程序。"
+    ],
+    "inputTranslationHash": "e58f16f3b29db82cf9c5313f8e9a07a47727934e82a8f55c33c18018142c557a"
+  }
 }

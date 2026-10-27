@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/start-up-of-the-wca-communication-team",
+  "path": "docs/wca-post-translations/entries/start-up-of-the-wca-communication-team.json",
+  "sourceHash": "7e66dafd38f8baeb0f1a221922dfaea0248b6ab9f7204aa6577b09816770faed",
+  "inputTranslationHash": "3e74eda0f6a8e18bc1707cd7eee63e1af757bc3ee4ec8259759bad7424d43855",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:25.169Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

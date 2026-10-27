@@ -72,6 +72,29 @@ export default function AdminPage() {
           </AppLink>
         ))}
       </nav>
+      <section aria-labelledby="admin-tax-title">
+        <h2 id="admin-tax-title" className="admin-dashboard__tools-title">{t('税务办理', 'Tax filing')}</h2>
+        <nav className="admin-hub__nav" aria-label={t('官方办税入口', 'Official tax portals')}>
+          <a className="admin-hub__link" href="https://etax.shanghai.chinatax.gov.cn/" target="_blank" rel="noopener noreferrer">
+            <ShieldCheck size={20} aria-hidden />
+            <span>
+              <strong>{t('上海市电子税务局', 'Shanghai Electronic Tax Bureau')}</strong>
+              <small>{t('企业办税', 'Business tax services')}</small>
+            </span>
+          </a>
+          <a className="admin-hub__link" href="https://etax.chinatax.gov.cn/" target="_blank" rel="noopener noreferrer">
+            <Users size={20} aria-hidden />
+            <span>
+              <strong>{t('自然人电子税务局', 'Individual Electronic Tax Bureau')}</strong>
+              <small>{t('个人所得税、企业代扣代缴', 'Individual income tax and employer withholding')}</small>
+            </span>
+          </a>
+        </nav>
+        <details className="admin-dashboard__table">
+          <summary>{t('报税教程（待补充）', 'Tax filing guide (coming soon)')}</summary>
+          {/* Add the verified filing steps here once the actual workflow is documented. */}
+        </details>
+      </section>
       <BootDiagnostics />
     </main>
   );

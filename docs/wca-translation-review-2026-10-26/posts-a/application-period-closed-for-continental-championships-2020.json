@@ -1,0 +1,18 @@
+{
+  "key": "posts:/posts/application-period-closed-for-continental-championships-2020",
+  "path": "docs/wca-post-translations/entries/application-period-closed-for-continental-championships-2020.json",
+  "sourceHash": "21ee6c23519ccbcb1a1784e01a5cf37e0ff58026ce811fd54dcf8c41468dc17d",
+  "inputTranslationHash": "83c50c07edee492fb916565b0d1c8d207f5a3fff8058c8ee08edaeb501f1fa6b",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:05:11.623Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "correction_required",
+  "notes": [
+    "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+  ],
+  "changes": [
+    "统一 Continental 为大洲赛事/纪录；官方规则11f1c为大洲锦标赛，避免跨洲歧义。"
+  ],
+  "title": "2020 年大洲锦标赛申办已截止",
+  "content": "2020 年各大洲锦标赛的申办材料提交现已截止。感谢所有提交申办方案的团队！以下城市提出了申请，董事会将从中选出举办地。\n\n**亚洲锦标赛：**\n\n- 中国杭州\n- 哈萨克斯坦努尔苏丹\n- 马来西亚吉隆坡\n- 韩国首尔\n\n**欧洲锦标赛：**\n\n- 荷兰阿尔梅勒\n\n**北美洲锦标赛：**\n\n- 加拿大多伦多\n\n**大洋洲锦标赛：**\n\n- 新西兰奥克兰\n\n非洲和南美洲锦标赛没有收到申请。\n\n申办材料将在决定确定后公开。最终举办地名单将在 8 月底前公布，敬请关注！"
+}

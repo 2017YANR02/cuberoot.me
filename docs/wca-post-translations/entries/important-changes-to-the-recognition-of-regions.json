@@ -12,16 +12,35 @@
     "sourceId": 14109
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "ee4e8894b63ef58a127904ad5fd2eb8af70fbf541df536b1a0be3e42b39e9a09",
     "language": "zh-Hans",
     "title": "WCA 认可地区名称的重要调整",
-    "content": "亲爱的 WCA 社区成员：\n\n为使协会采用的标准与国际体育界保持一致，我们现公布几项重要调整。经认真考虑 WCA 体育组织团队（WSOT）专项工作组的建议，我们对以下地区名称作出变更，即日起生效：\n\n* 中国香港（原为香港）\n* 中国澳门（原为澳门）\n* 中华台北（原为台湾）\n\n此外，中华台北将使用 WCA 中华台北旗帜。相关变更将在未来一个月内逐步应用于 WCA 各项服务。\n\n我们希望强调，这并非草率作出的决定，其目的仅在于与国际奥委会（IOC）的标准保持一致。专项工作组为此投入了数月时间，征询了当地社区主要相关方，以及曾参与制定 WCA 认可地区名单的成员的意见。考虑这些反馈后，WCA 董事会一致同意采纳工作组提出的调整。\n\n如有任何疑问或顾虑，请联系 [board@worldcubeassocation.org](mailto:board@worldcubeassociation.org)。\n\n*补充说明（2023 年 6 月 24 日）：WCA 董事会对本公告目前造成的困惑表示歉意。董事会与 WSOT 正在整理这项决定的背景和依据，预计将在未来几天内发布报告。*\n\n*补充说明（2023 年 6 月 29 日）：感谢大家的耐心等待。欢迎前往 [WCA 论坛](https://forum.worldcubeassociation.org/t/further-details-on-changes-to-the-recognition-of-regions/37478)，相关主题中有对此项决定更详细的说明。*\n\n此致\n\nWCA 董事会",
+    "content": "亲爱的 WCA 社区成员：\n\n为使协会采用的标准与国际体育界保持一致，我们现公布几项重要调整。经认真考虑 WCA 体育组织团队（WSOT）专项工作组的建议，我们对以下地区名称作出变更，即日起生效：\n\n* 中国香港（原为香港）\n* 中国澳门（原为澳门）\n* 中华台北（原为台湾）\n\n此外，中华台北将使用 WCA 中华台北旗帜。相关变更将在未来一个月内逐步应用于 WCA 各项服务。\n\n我们希望强调，这并非草率作出的决定，其目的仅在于与国际奥委会（IOC）的标准保持一致。专项工作组为此投入了数月时间，征询了当地社区主要相关方，以及曾参与制定 WCA 认可地区名单的成员的意见。考虑这些反馈后，WCA 董事会一致同意采纳工作组提出的调整。\n\n如有任何疑问或顾虑，请联系 [board@worldcubeassociation.org](mailto:board@worldcubeassociation.org)。\n\n*补充说明（2023 年 6 月 24 日）：WCA 董事会对本公告目前造成的困惑表示歉意。董事会与 WSOT 正在整理这项决定的背景和依据，预计将在未来几天内发布报告。*\n\n*补充说明（2023 年 6 月 29 日）：感谢大家的耐心等待。欢迎前往 [WCA 论坛](https://forum.worldcubeassociation.org/t/further-details-on-changes-to-the-recognition-of-regions/37478)，相关主题中有对此项决定更详细的说明。*\n\n此致\n\nWCA 董事会",
     "notes": [
       "原文邮件链接显示文字 worldcubeassocation.org 少一个 i，但 mailto 目标正确；保留原文显示文字及链接目标。"
     ],
     "translatedAt": "2026-10-22T08:49:54.100Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "38a5d9807eaccb1bbd05cce9c1c098a0256b48ce200c0019bdb967a765129729"
+  "translationHash": "34bc831a4d1859c2873907562b7d8e47cb726f8a52cbe5e1221c8a5583280d11",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:16:44.876Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "ee4e8894b63ef58a127904ad5fd2eb8af70fbf541df536b1a0be3e42b39e9a09",
+    "reviewedTranslationHash": "34bc831a4d1859c2873907562b7d8e47cb726f8a52cbe5e1221c8a5583280d11",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/important-changes-to-the-recognition-of-regions.json",
+    "sourceConcern": false,
+    "notes": [
+      "源文邮件显示文本漏 i，但 mailto 地址正确；显示文本已据该目标校正。"
+    ],
+    "inputTranslationHash": "38a5d9807eaccb1bbd05cce9c1c098a0256b48ce200c0019bdb967a765129729"
+  }
 }

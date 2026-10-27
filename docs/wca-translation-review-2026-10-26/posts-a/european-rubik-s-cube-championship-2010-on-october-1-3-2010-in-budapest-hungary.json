@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/european-rubik-s-cube-championship-2010-on-october-1-3-2010-in-budapest-hungary",
+  "path": "docs/wca-post-translations/entries/european-rubik-s-cube-championship-2010-on-october-1-3-2010-in-budapest-hungary.json",
+  "sourceHash": "c3b2faa3cdce4d63b7716fa653bc9e850d7c48921fde4a6ba4d6a6159a96bd00",
+  "inputTranslationHash": "c11562c6ef78445a00f7170759ce19242c12486342caa0b15558e892e41cb299",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:13:29.851Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题与正文；疫情取消区间/新赛条件、COO履历与金额人数、赛事日期地点、意向征集要求及各条历史纪录的选手/项目/单次平均/数值逐项核对一致。"
+  ],
+  "changes": []
+}

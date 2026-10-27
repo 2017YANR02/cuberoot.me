@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/wct-leader-announcement-january-2022",
+  "path": "docs/wca-post-translations/entries/wct-leader-announcement-january-2022.json",
+  "sourceHash": "fc3f3a5f804c2dfb5ed64194262059a656297181b1de4f2a0d2fb564c73061ba",
+  "inputTranslationHash": "6ba1110e562e5479877d2c9363f1e8c5ebfda9dbf9608c6e8f1c8e7bbd2fcc32",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:10:42.568Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [
+    "全文核对；历史公告的当时判断、参赛人数、日期及任命程序均保留。"
+  ],
+  "changes": []
+}

@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/cancellation-of-wca-european-championship-2020",
+  "path": "docs/wca-post-translations/entries/cancellation-of-wca-european-championship-2020.json",
+  "sourceHash": "e503283ad85c8bc445461c7d36e87eb199f27b896ead141a88d4a1d90182af42",
+  "inputTranslationHash": "bd2e8840a7404da999474ced44a2e2c630bd75c1e5f8f1c8c4641d8b3573d2b6",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:12:23.463Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题和正文；各届赛事城市及取消/退款范围、董事候选名单、当选与连任区别、任期及生效日期、保留职务和干事分工均与原文一致。"
+  ],
+  "changes": []
+}

@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/wmct-leader-announcement-december-2024",
+  "path": "docs/wca-post-translations/entries/wmct-leader-announcement-december-2024.json",
+  "sourceHash": "12b3c3fe323525ccd6051d32294c417a5b1ac9db2501553f571a3b6559e971d9",
+  "inputTranslationHash": "de7d9db6fe3c390435dd8af7d3f8f76e55b47bea809f13d4b9a8250a42004d37",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:11:14.398Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

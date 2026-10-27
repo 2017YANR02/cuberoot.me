@@ -40,10 +40,17 @@ describe('private assistant monitoring', () => {
   it('estimates only verified provider/model tariffs and leaves unknown usage unpriced',()=>{
     expect(assistantPrice('qwen3.8-flash','https://dashscope.aliyuncs.com',1000000,1000000).grossCny).toBe(3.5);
     expect(assistantPrice('text-embedding-v4','https://dashscope.aliyuncs.com',1000000).grossCny).toBe(0.5);
+    expect(assistantPrice('qwen3-rerank','https://dashscope.aliyuncs.com',1000000).grossCny).toBe(0.5);
+    expect(assistantPrice('qwen3-rerank','https://model.example',1000000).grossCny).toBeNull();
+    expect(assistantPrice('qwen3-rerank','https://dashscope.aliyuncs.com',null).grossCny).toBeNull();
     expect(assistantPrice('qwen3.8-flash','https://other.invalid',100,100).grossCny).toBeNull();
     expect(assistantPrice('qwen3.8-flash','https://dashscope.aliyuncs.com',null,100).grossCny).toBeNull();
     expect(assistantPrice('unknown','https://dashscope.aliyuncs.com',100,100).grossCny).toBeNull();
     expect(assistantPrice('deepseek-flash','https://api.deepseek.com',1000000,1000000).grossCny).toBe(10);
+    expect(assistantPrice('deepseek-flash','https://api.deepseek.com',1000000,1000000,800000).cacheAdjustedCny).toEqual({min:4.216,max:8.432});
+    expect(assistantPrice('qwen3.8-flash','https://dashscope.aliyuncs.com',1000000,1000000,800000).cacheAdjustedCny).toEqual({min:2.94,max:2.94});
+    expect(assistantPrice('deepseek-flash','https://api.deepseek.com',100,10,101).cacheAdjustedCny).toBeNull();
+    expect(assistantPrice('deepseek-flash','https://api.deepseek.com',100,10).cacheAdjustedCny).toBeNull();
     expect(assistantPrice('deepseek-v4-pro','https://api.deepseek.com',1000000,1000000).grossCny).toBe(36);
     expect(assistantPrice('deepseek-flash','https://dashscope.aliyuncs.com',100,100).grossCny).toBeNull();
     expect(assistantPrice('deepseek-flash','https://api.deepseek.com',100,null).grossCny).toBeNull();

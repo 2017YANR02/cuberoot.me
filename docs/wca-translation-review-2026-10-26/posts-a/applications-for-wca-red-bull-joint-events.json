@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/applications-for-wca-red-bull-joint-events",
+  "path": "docs/wca-post-translations/entries/applications-for-wca-red-bull-joint-events.json",
+  "sourceHash": "b16cf39237a258f2644836a62b9c8762f2407cad32746dcae05a7da16456e29c",
+  "inputTranslationHash": "01b68b68a3a94bce9c593437a8911390d98e61938dbc55b1ef4dbb50c56e7079",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:05:49.186Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照申办地区、申请时段、材料要求、评选主体及全部预算/场馆/人员条目。"
+  ],
+  "changes": []
+}

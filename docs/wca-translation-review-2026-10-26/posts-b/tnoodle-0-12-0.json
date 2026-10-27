@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/tnoodle-0-12-0",
+  "path": "docs/wca-post-translations/entries/tnoodle-0-12-0.json",
+  "sourceHash": "ea3f137145713c4a3b94990fd712421ec88b7bb66fe319d039a6b3a2c323c636",
+  "inputTranslationHash": "11ff36f386d43e6cfccafbea130392037b17e0ad6fc1d174b14e1280c391a9db",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:48.601Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

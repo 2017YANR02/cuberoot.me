@@ -12,14 +12,31 @@
     "sourceId": 14267
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "aa98f876aa6162ebbdaeff14b07ef23f1e8c0f3c21b0efa7d70cf9a313ffece5",
     "language": "zh-Hans",
     "title": "非洲高级代表任命公告（2026 年 10 月）",
     "content": "亲爱的 WCA 社区成员：\n\n我们很高兴宣布，Anthony Rush 将担任非洲的新任高级代表。\n\nWCA 董事会依据《高级代表[议案](https://documents.worldcubeassociation.org/documents/motions/09.2025.1%2520-%2520Senior%2520Delegates.pdf)》第 4 节，经董事会成员投票选出 Anthony。\n\n我们将支持 Anthony 履行新的职责，并向他致以最美好的祝愿。他的高级代表任期自 2026 年 10 月 15 日开始。\n\nAnthony 是此次非洲高级代表职位的唯一申请人。其申请材料可在[此处](https://drive.google.com/drive/folders/1DIUJ_loEpqSaJPQb4ZKdEvRgIkWXP3tm?usp=drive_link)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:40:49.171Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "f268a3081bb26d277016ffe3b0c73d2884524826c800033f489d0c5be4219366"
+  "translationHash": "cdd095828682acc7fa8640012f4e9484886129f9cecbdf24d03181df5715dd43",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:25.167Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "aa98f876aa6162ebbdaeff14b07ef23f1e8c0f3c21b0efa7d70cf9a313ffece5",
+    "reviewedTranslationHash": "cdd095828682acc7fa8640012f4e9484886129f9cecbdf24d03181df5715dd43",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/senior-delegate-announcement-africa-october-2026.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "f268a3081bb26d277016ffe3b0c73d2884524826c800033f489d0c5be4219366"
+  }
 }

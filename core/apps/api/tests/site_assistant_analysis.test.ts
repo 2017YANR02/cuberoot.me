@@ -5,6 +5,14 @@ const col=(col:string)=>({col});
 const value=(value:string|number)=>({value});
 const base={from:{dataset:'results',as:'r'},select:[{as:'count',label:'Competitions',expr:{fn:'count',args:[col('r.comp_id')],distinct:true}}],where:{op:'=',args:[col('r.wca_id'),value('2017YANR02')]}};
 describe('assistant analysis compiler',()=>{
+  it('derives count units independently of misleading labels and follows deduplicated stages',()=>{
+    const rows={from:{dataset:'results',as:'r'},select:[{as:'n',label:'Competitions',expr:{fn:'count',args:[]}}]};
+    expect(compileAnalysis(rows).columns[0].countMeasure).toBe('results');
+    expect(compileAnalysis({...rows,joins:[{dataset:'competitions',as:'c',type:'inner',on:{op:'=',args:[col('r.comp_id'),col('c.id')]}}]}).columns[0].countMeasure).toBe('rows');
+    const stage={from:{dataset:'results',as:'r'},select:[{as:'id',expr:col('r.comp_id')}],groupBy:[col('r.comp_id')]};
+    expect(compileAnalysis({...rows,steps:[{name:'comps',query:stage}],from:{dataset:'comps',as:'r'}}).columns[0].countMeasure).toBe('competitions');
+    expect(compileAnalysis({...rows,select:[{as:'n',label:'Competitions',expr:{fn:'count',args:[col('r.comp_id')],distinct:true}}]}).columns[0].countMeasure).toBe('competitions');
+  });
   it('binds hostile literals and rejects private tables, columns, SQL, functions and cross joins',()=>{
     const hostile="'; DELETE FROM app_users; --";
     const result=compileAnalysis({...base,where:{op:'=',args:[col('r.wca_id'),value(hostile)]}});

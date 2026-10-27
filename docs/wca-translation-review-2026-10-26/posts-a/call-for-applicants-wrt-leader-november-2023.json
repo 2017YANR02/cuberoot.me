@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wrt-leader-november-2023",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wrt-leader-november-2023.json",
+  "sourceHash": "a38c18a79dec19f73168d0544374947e20c8a0318654f02b5f66635c147f732a",
+  "inputTranslationHash": "530bce4045d602f12944d9005e9619d03918d23369d2b86e0bb44097c947f747",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:11:12.894Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "已完整对照标题与正文；核对规则/成绩/质量保证团队职责、必需与可选资格、招募人数、任期工时及各篇申请日期、联系人与投票程序。历史 Guidelines 按参考保留指南。"
+  ],
+  "changes": []
+}

@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/wca-regulations-august-2020-now-in-effect",
+  "path": "docs/wca-post-translations/entries/wca-regulations-august-2020-now-in-effect.json",
+  "sourceHash": "db46ce4b8a26bf88a7ad3e6b07d7e5a21a5f450249f393b33efa379e03e53b5b",
+  "inputTranslationHash": "74f22c2b017ee7e5edc80d085a416ccaf3e1143550b3165806223b649db98d0c",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:09:31.431Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [
+    "已核对完整正文、规则编号、日期、条件及项目术语。"
+  ],
+  "changes": []
+}

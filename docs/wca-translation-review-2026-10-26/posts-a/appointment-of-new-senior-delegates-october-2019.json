@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/appointment-of-new-senior-delegates-october-2019",
+  "path": "docs/wca-post-translations/entries/appointment-of-new-senior-delegates-october-2019.json",
+  "sourceHash": "9f82eac30bfc2c4e7a7e29bc5a3f7261dc4e8864ae8235c36acba98b6bccda75",
+  "inputTranslationHash": "05940a0caf87393adcf5f8899ac6beda200769bbbcbf96514e79930af5dd7f84",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:06:14.456Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照正文与标题；核对全部申请/任命主体、时间、权限、附录条目及材料要求。"
+  ],
+  "changes": []
+}

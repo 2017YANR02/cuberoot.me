@@ -27,7 +27,7 @@ import {
 import { Flag } from '@/components/Flag';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import { displayCuberName } from '@/lib/cuber-name-display';
-import { localizeCompName } from '@/lib/comp-localize';
+import { CompCell } from '@/components/CompCell/CompCell';
 import { compLinkProps } from '@/lib/comp-link';
 import { reconPathSeg } from '@/lib/recon-seo';
 import { localizeCity } from '@/lib/city-localize';
@@ -43,6 +43,8 @@ import { detectPasteIntent, type PasteIntent } from '@/lib/smart-paste';
 import { useSpeechToText } from '@/hooks/useSpeechToText';
 import './landing_search.css';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
+import { ensureAssistantConversation, useAssistantWorkspace } from '@/hooks/useAssistantWorkspace';
+import { assistantConversations, assistantOwner, type AssistantConversation } from '@/lib/assistant-conversations';
 import { tr } from '@/i18n/tr';
 import { useAuthUser, useAuthStore } from '@/lib/auth-store';
 import { authHeaders } from '@/lib/admin-api';
@@ -189,7 +191,8 @@ function HeaderMore({ overflow, title, href, onClick }: {
 
 interface Props {
   /** Reuse the same request/composer implementation inside the chat workspace. */
-  conversation?: { initial: AssistantConversationSnapshot; active: boolean; onChange: (snapshot: AssistantConversationSnapshot) => void };
+  conversation?: { initial: AssistantConversationSnapshot; active: boolean; onChange: (snapshot: Partial<AssistantConversationSnapshot>) => void; owner: string; id: string; pending?: AssistantConversation['pending'] };
+  workspaceEntry?: boolean;
 
   cards: LandingSearchCard[];
   lang: 'zh' | 'en';
@@ -209,19 +212,27 @@ export default function LandingSearch({
   persistentResults = false,
   autoFocus = false,
   conversation,
+  workspaceEntry = false,
 }: Props) {
   const isZh = lang === 'zh';
   const assistantUser = useAuthUser();
+  const owner = assistantOwner(assistantUser);
+  const workspace = useAssistantWorkspace(owner);
+  const currentChat = workspace.conversations.find(chat => chat.id === workspace.activeId);
   const params = useParams<{ lang?: string }>();
   // Pattern B: English is the bare path → empty prefix; only Chinese is /zh.
   const effLang = params?.lang === 'zh' || params?.lang === 'en' ? params.lang : lang;
   const langPrefix = effLang === 'zh' ? '/zh' : '';
   const [internalQuery, setInternalQuery] = useState('');
-  const query = controlledQuery ?? internalQuery;
+  const query = conversation ? conversation.initial.draft : workspaceEntry ? currentChat?.snapshot.draft ?? '' : controlledQuery ?? internalQuery;
   const setQuery = useCallback((value: string) => {
+    if (workspaceEntry) {
+      assistantConversations.patch(owner, ensureAssistantConversation(owner).id, { draft: value });
+      return;
+    }
     if (controlledQuery === undefined) setInternalQuery(value);
     onQueryChange?.(value);
-  }, [controlledQuery, onQueryChange]);
+  }, [controlledQuery, onQueryChange, workspaceEntry, owner]);
   const [open, setOpen] = useState(false);
   const [voiceMode, setVoiceMode] = useState(false);
   const [voiceText, setVoiceText] = useState('');
@@ -245,8 +256,13 @@ export default function LandingSearch({
   const router = useRouter();
   const wrapRef = useRef<HTMLDivElement>(null);
   const [assistantDialog, setAssistantDialog] = useState(false);
-  const [assistantDraft, setAssistantDraft] = useState(conversation?.initial.draft ?? '');
-  const [assistantImages, setAssistantImages] = useState<AssistantImage[]>(conversation?.initial.images ?? []);
+  const [localDraft, setLocalDraft] = useState('');
+  const [localImages, setLocalImages] = useState<AssistantImage[]>([]);
+  const assistantDraft = conversation ? conversation.initial.draft : localDraft;
+  const assistantImages = conversation ? conversation.initial.images : localImages;
+  const updateConversation = conversation?.onChange;
+  const setAssistantDraft = useCallback((draft: string) => updateConversation ? updateConversation({ draft }) : setLocalDraft(draft), [updateConversation]);
+  const setAssistantImages = useCallback((images: AssistantImage[]) => updateConversation ? updateConversation({ images }) : setLocalImages(images), [updateConversation]);
   const [assistantThinking, setAssistantThinking] = useAssistantThinkingMode();
   const [assistantTurns, setAssistantTurns] = useState<AssistantTurn[]>(conversation?.initial.turns ?? []);
   const assistantConversation = useRef<string | null>(conversation?.initial.conversationId ?? null);
@@ -276,22 +292,34 @@ export default function LandingSearch({
     setAssistantError(null);
     setAssistantAnswer(null);
     return () => { assistantRequest.current?.abort(); assistantRequest.current = null; };
-  }, [query, lang]);
+  }, [conversation ? '' : query, lang]);
 
   const onConversationChange = conversation?.onChange;
   useEffect(() => {
-    onConversationChange?.({ draft: assistantDraft, images: assistantImages, turns: assistantTurns, conversationId: assistantConversation.current });
-  }, [assistantDraft, assistantImages, assistantTurns, onConversationChange]);
+    onConversationChange?.({ turns: assistantTurns, conversationId: assistantConversation.current });
+  }, [assistantTurns, onConversationChange]);
 
   const stopAssistant = () => { assistantRequest.current?.abort(); assistantRequest.current = null; setAssistantBusy(false); };
   const closeAssistant = useCallback(() => { assistantRequest.current?.abort(); assistantRequest.current = null; setAssistantBusy(false); setAssistantDialog(false); }, []);
   const askAssistant = async (question = query, replaceLast = false, images: AssistantImage[] = []) => {
     question = question.trim();
+    if (workspaceEntry) {
+      const chat = ensureAssistantConversation(owner);
+      const attachments = images.length ? images : chat.snapshot.images;
+      if ((!question && !attachments.length) || question.length > SITE_ASSISTANT_QUESTION_MAX_LENGTH) return;
+      micStop();
+      setOpen(false);
+      setPlusMenuOpen(false);
+      assistantConversations.submit(owner, chat.id, question, attachments);
+      router.push(`${langPrefix}/chat`);
+      return;
+    }
     if ((!question && !images.length) || question.length > SITE_ASSISTANT_QUESTION_MAX_LENGTH || assistantRequest.current) return;
     const completed = (replaceLast ? assistantTurns.slice(0, -1) : assistantTurns).filter(turn => turn.result);
     // Release older attachment bytes without erasing the visible conversation.
     const previous = completed.map((turn, index) => index < completed.length - 9 && turn.images?.length ? { ...turn, images: undefined, imagesExpired: true } : turn);
-    const nextTurns = [...previous, { question, images }];
+    const createdAt = Date.now();
+    const nextTurns = [...previous, { question, images, createdAt }];
     setAssistantTurns(nextTurns);
     setAssistantDialog(true);
     micStop();
@@ -316,7 +344,7 @@ export default function LandingSearch({
         history: assistantImageHistory(previous.filter(turn => !turn.partial).slice(-5).flatMap(turn => [{ role: 'user', content: turn.question, ...(turn.images?.length ? {images:turn.images} : {}) }, { role: 'assistant', content: turn.result!.answer }]), images),
       }, {headers: { ...authHeaders(), Accept: 'text/event-stream' },signal: controller.signal});
       const requestId = response.headers.get('X-Assistant-Request-Id') ?? undefined;
-      if (assistantRequest.current === controller) setAssistantTurns([...previous, { question, images, requestId }]);
+      if (assistantRequest.current === controller) setAssistantTurns([...previous, { question, images, requestId, createdAt }]);
       if (!response.ok) {
         const failure = await response.json().catch(() => null);
         if (assistantRequest.current === controller) setAssistantError(assistantResponseError(response, failure));
@@ -327,7 +355,7 @@ export default function LandingSearch({
         if (assistantRequest.current !== controller) return;
         const result: AssistantAnswer = { answer: data.answer, actions: data.actions?.filter(action => typeof action.href === 'string' && isAssistantSourceHref(action.href)), artifacts: Array.isArray(data.artifacts) ? data.artifacts : [], sources: data.sources.filter(source => typeof source.href === 'string' && isAssistantSourceHref(source.href)) };
         if (!partial) setAssistantAnswer(result);
-        setAssistantTurns([...previous, { question, images, result, partial, requestId }]);
+        setAssistantTurns([...previous, { question, images, result, partial, requestId, createdAt }]);
       };
       if (response.headers?.get('content-type')?.includes('text/event-stream')) {
         if (!response.body) throw new Error('missing stream');
@@ -353,19 +381,41 @@ export default function LandingSearch({
     }
   };
 
+  // Only the mounted conversation consumes a homepage submission. The atomic
+  // take prevents StrictMode or store notifications from sending it twice.
+  useEffect(() => {
+    if (!conversation?.pending || assistantRequest.current) return;
+    let active = true;
+    queueMicrotask(() => {
+      if (!active || assistantRequest.current) return;
+      const pending = assistantConversations.takeSubmission(conversation.owner, conversation.id);
+      if (pending) void askAssistant(pending.question, false, pending.images);
+    });
+    return () => { active = false; };
+  }, [conversation?.pending, conversation?.owner, conversation?.id, assistantBusy]);
+
+  useEffect(() => {
+    if (!workspaceEntry || !workspace.open) return;
+    setOpen(false);
+    setPlusMenuOpen(false);
+    textInputRef.current?.blur();
+    micStop();
+  }, [workspaceEntry, workspace.open]);
+
   useEffect(() => {
     setPlaceholderDay(dayOfYear(new Date()));
   }, []);
 
   const {
-    q, xSearchEnabled, xLoaded, localSearchPending, localSearchError,
+    q, localSearchError,
     cardMatches, toolMatches, lookupMatches, statMatches,
     personMatches, compMatches,
     reconMatches, glossaryMatches, aboutMatches, stackMatches, algSetMatches,
     platformMatches, platformSearchError,
-    forumMatches, forumTotal, forumSearchPending, forumSearchError,
+    forumMatches, forumTotal, forumSearchError,
+    translationMatches, translationSearchError, translationStale,
     totalCount, yearMatch,
-  } = useSiteSearch(query, 'lazy', { cards });
+  } = useSiteSearch((conversation && !conversation.active) || (workspaceEntry && workspace.open) ? '' : query, 'lazy', { cards });
 
   useEffect(() => {
     setExpandedPersons(false);
@@ -416,7 +466,8 @@ export default function LandingSearch({
 
   const closeAfter = () => {
     setOpen(false);
-    if (!persistentResults) setQuery('');
+    if (conversation) assistantConversations.setOpen(conversation.owner, false);
+    if (!persistentResults && !workspaceEntry && !conversation) setQuery('');
   };
   const goCard = (c: LandingSearchCard) => {
     closeAfter();
@@ -436,8 +487,10 @@ export default function LandingSearch({
   // top-to-bottom order the dropdown renders its sections in.
   const pushInternal = (href: string) => { closeAfter(); router.push(href); };
   const goFirstResult = () => {
+    if (personMatches.length > 0) { pushInternal(langHref(`/wca/persons/${personMatches[0].wcaId}`)); return; }
     if (yearMatch) { pushInternal(langHref('/wca/comp', `year=${yearMatch}`)); return; }
     if (pasteIntent) { goPasteIntent(pasteIntent); return; }
+    if (translationMatches.length > 0) { pushInternal(langHref('/regulation/translation/search', `q=${encodeURIComponent(query.trim())}`)); return; }
     if (forumMatches.length > 0) { pushInternal(langHref(`/forum/t/${forumMatches[0].id}`)); return; }
     if (platformMatches.length > 0) { pushInternal(langHref(platformMatches[0].href)); return; }
     if (cardMatches.length > 0) { goCard(cardMatches[0]); return; }
@@ -457,7 +510,6 @@ export default function LandingSearch({
       pushInternal(compLinkProps(compMatches[0].id, undefined, lang).href);
       return;
     }
-    if (personMatches.length > 0) { pushInternal(langHref(`/wca/persons/${personMatches[0].wcaId}`)); return; }
     if (reconMatches.length > 0) { pushInternal(langHref(`/recon/${reconPathSeg(reconMatches[0])}`)); return; }
   };
 
@@ -525,145 +577,10 @@ export default function LandingSearch({
     </section>
   ) : null;
 
-  const assistantView = <SiteAssistantDialog embedded={!!conversation} active={conversation?.active ?? true} key={`${assistantUser?.uid ?? "guest"}:${assistantUser?.wcaId ?? ""}`} images={assistantImages} onImagesChange={setAssistantImages} thinking={assistantThinking} onThinkingChange={setAssistantThinking} lang={lang} draft={assistantDraft} onDraftChange={setAssistantDraft} turns={assistantTurns} onFeedback={(id,value)=>setAssistantTurns(turns=>turns.map(turn=>turn.requestId===id?{...turn,feedback:value}:turn))} status={assistantStatus} busy={assistantBusy} error={assistantError} onAsk={(question, replaceLast, images) => void askAssistant(question, replaceLast, images)} onStop={stopAssistant} onClose={closeAssistant} onNew={() => { assistantConversation.current = null; stopAssistant(); setAssistantDraft(''); setAssistantImages([]); setAssistantTurns([]); setAssistantAnswer(null); setAssistantError(null); }} />;
-  if (conversation) return assistantView;
-
-  return (
-    <div className={`landing-search${persistentResults ? ' landing-search--page' : ''}`} ref={wrapRef}>
-      <div className="landing-search-controls">
-        {voiceMode ? (
-          <div className="landing-search-input landing-search-voice" onKeyDown={event => {
-            if (event.key === 'Escape') { micCancel(); setVoiceMode(false); setVoiceAction(null); }
-          }}>
-            <button type="button" className="landing-search-voice-button" aria-label={tr({ zh: '取消语音输入', en: 'Cancel voice input' })}
-              onClick={() => { micCancel(); setVoiceMode(false); setVoiceAction(null); setVoiceText(''); }}><X size={22} /></button>
-            <div className="landing-search-wave" role="status"
-              aria-label={micStatus === 'starting' ? tr({ zh: '正在启动语音输入', en: 'Starting voice input' })
-                : micStatus === 'stopping' ? tr({ zh: '正在识别', en: 'Transcribing' })
-                : listening ? tr({ zh: '正在聆听', en: 'Listening' }) : tr({ zh: '语音输入已结束', en: 'Voice input finished' })}>
-              <div className="landing-search-wave-track" aria-hidden="true" style={{ transform: `translateX(${-waveformOffset * 100 / waveform.length}%)` }}>
-                {waveform.map((amplitude, index) => <span key={index} style={{ height: `${3 + amplitude * 25}px` }} />)}
-              </div>
-            </div>
-            <Tooltip content={tr({ zh: '停止听写', en: 'Stop dictation' })}>{(tip) => <button {...tip} type="button" className="landing-search-voice-button landing-search-voice-stop" disabled={voiceAction !== null}
-              aria-label={tr({ zh: '停止并编辑文字', en: 'Stop and edit text' })}
-              onClick={() => { setVoiceAction('stop'); micStop(); }}>
-              <Square size={15} fill="currentColor" />
-            </button>}</Tooltip>
-            <button type="button" className="landing-search-voice-button landing-search-voice-send"
-              disabled={voiceAction !== null || !voiceText.trim() || voiceText.trim().length > SITE_ASSISTANT_QUESTION_MAX_LENGTH || assistantBusy}
-              aria-label={tr({ zh: '发送语音提问', en: 'Send voice question' })}
-              onClick={() => { setVoiceAction('send'); micStop(); }}><ArrowUp size={24} /></button>
-          </div>
-        ) : <div
-          className="landing-search-input"
-          onMouseDown={e => {
-            // 点击容器自身(上下 padding / 元素间 gap 死区)→ 聚焦输入框
-            if (e.target === e.currentTarget) {
-              e.preventDefault();
-              textInputRef.current?.focus();
-            }
-          }}
-        >
-          <button
-            type="button"
-            className="landing-search-plus"
-            onClick={() => setPlusMenuOpen(v => !v)}
-            title={tr({ zh: '智能粘贴', en: 'Smart paste'
-          })}
-            aria-label={tr({ zh: '添加', en: 'Add'
-          })}
-            aria-expanded={plusMenuOpen}
-          >
-            <Plus size={18} strokeWidth={1.75} />
-          </button>
-          {/* allow-manual-search: Results update while typing; Enter submits a natural-language question. */}
-          <input
-            ref={textInputRef}
-            type="text"
-            autoFocus={autoFocus}
-            className="landing-search-field"
-            value={query}
-            onChange={e => { setQuery(e.target.value); setOpen(true); }}
-            onFocus={() => setOpen(true)}
-            onPaste={e => {
-              const intent = detectPasteIntent(e.clipboardData.getData('text'));
-              if (intent) { e.preventDefault(); goPasteIntent(intent); }
-            }}
-            onKeyDown={e => {
-              if (e.key === 'Escape') {
-                setOpen(false);
-                (e.target as HTMLInputElement).blur();
-              } else if (e.key === 'ArrowRight' && !query && !e.nativeEvent.isComposing && e.keyCode !== 229
-                && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey
-                && !listening && micStatus !== 'starting' && micStatus !== 'stopping') {
-                e.preventDefault();
-                const input = e.currentTarget;
-                const suggestion = rotatingPlaceholder(isZh, placeholderDay);
-                setQuery(suggestion);
-                setOpen(true);
-                requestAnimationFrame(() => {
-                  if (document.activeElement === input && input.value === suggestion) {
-                    input.setSelectionRange(suggestion.length, suggestion.length);
-                  }
-                });
-              } else if (e.key === 'Enter' && !e.nativeEvent.isComposing && e.keyCode !== 229) {
-                e.preventDefault();
-                if (yearMatch || pasteIntent) goFirstResult();
-                else void askAssistant();
-              }
-            }}
-            placeholder={micStatus === 'starting' ? tr({ zh: '正在启动语音输入…', en: 'Starting voice input…' })
-              : micStatus === 'stopping' ? tr({ zh: '正在等待识别结果…', en: 'Waiting for speech results…' })
-                : listening ? tr({ zh: '请说…', en: 'Listening…' }) : rotatingPlaceholder(isZh, placeholderDay)}
-            aria-label={tr({ zh: '全站搜索', en: 'Site search' })}
-          />
-
-          <Tooltip content={tr({zh:'图片提问',en:'Ask with images'})}>{tip=><button {...tip} type="button" className="landing-search-mic" aria-label={tr({zh:'图片提问',en:'Ask with images'})} onClick={()=>{setAssistantDraft(query);setAssistantDialog(true);setPlusMenuOpen(false);}}><ImagePlus size={18}/></button>}</Tooltip>
-          {/* allow-manual-search: Dictation only fills speech text; typed search still updates through onChange. */}
-          <Tooltip content={tr({ zh: '听写', en: 'Dictate' })}>{(tip) => <button {...tip}
-            type="button"
-            className="landing-search-mic landing-search-dictation"
-            aria-pressed={listening}
-            disabled={micStatus === 'stopping'}
-            onClick={() => { setVoiceText(''); setVoiceAction(null); setVoiceMode(true); setOpen(false); setPlusMenuOpen(false); micStart(); }}
-            aria-label={tr({ zh: '听写', en: 'Dictate' })}
-          >
-            <Mic size={16} strokeWidth={1.75} />
-          </button>}</Tooltip>
-            <button type="button" className="landing-search-mic landing-search-send" disabled={assistantBusy || !query.trim() || query.trim().length > SITE_ASSISTANT_QUESTION_MAX_LENGTH}
-              onClick={() => void askAssistant()}
-              aria-label={tr({ zh: '提问', en: 'Ask' })} title={tr({ zh: '提问（回车）', en: 'Ask (Enter)' })}>
-              <ArrowUp size={20} strokeWidth={1.75} />
-            </button>
-        </div>}
-        {plusMenuOpen && (
-          <div ref={plusMenuRef} className="landing-search-plus-menu" data-site-surface="popover" role="menu">
-            <button type="button" className="landing-search-plus-menu-btn" role="menuitem" onClick={onSmartPaste}>
-              <Clipboard size={14} strokeWidth={1.75} />
-              <div className="landing-search-plus-menu-text">
-                <span className="landing-search-plus-menu-title">{tr({ zh: '智能粘贴', en: 'Smart paste'
-                })}</span>
-                <span className="landing-search-plus-menu-sub">{tr({ zh: 'WCA URL / 打乱 / 公式', en: 'WCA URL / scramble / alg'
-                })}</span>
-              </div>
-            </button>
-          </div>
-        )}
-      </div>
-
-      {(micError || (listening && microphone)) && (
-        <p className="landing-search-speech-status" role="status">
-          {microphone && <span>{tr({ zh: '麦克风：', en: 'Microphone: ' })}{microphone}{micError ? ' · ' : ''}</span>}
-          {micError && tr(SPEECH_ERRORS[micError] ?? SPEECH_ERRORS['service-not-allowed'])}
-        </p>
-      )}
-
-      {assistantDialog && assistantView}
-
-      {showDropdown && !assistantDialog && (
-        <div className="landing-search-panel">
-          {(assistantBusy || assistantError || assistantAnswer || query.trim().length > SITE_ASSISTANT_QUESTION_MAX_LENGTH) && (
+  const searchResults = (
+<div className={conversation ? "site-assistant-search-results" : "landing-search-panel"}>
+          {personsSection}
+          {!conversation && (assistantBusy || assistantError || assistantAnswer || query.trim().length > SITE_ASSISTANT_QUESTION_MAX_LENGTH) && (
           <section className="landing-search-section landing-search-answer" aria-live="polite" aria-busy={assistantBusy}>
             {assistantBusy ? <p>{tr({ zh: '正在回答…', en: 'Preparing an answer…' })}</p>
               : assistantError ? <>
@@ -719,6 +636,30 @@ export default function LandingSearch({
             </section>
           )}
 
+          {(translationMatches.length > 0 || translationSearchError) && (
+            <section className="landing-search-section landing-search-translations">
+              <div className="landing-search-section-header">
+                <BookA size={14} strokeWidth={1.75} />
+                <h3>{tr({ zh: 'WCA 官方译文', en: 'WCA official translations' })}</h3>
+                <Link href={'/regulation/translation/search?q=' + encodeURIComponent(query.trim())} prefetch={false} onClick={closeAfter}>
+                  {tr({ zh: '更多译文', en: 'More translations' })} →
+                </Link>
+              </div>
+              {translationSearchError && <p role="status">{tr({ zh: '译文查询暂时不可用，其他搜索不受影响。', en: 'Translation search is unavailable. Other searches are still available.' })}</p>}
+              {translationStale && <p role="status">{tr({ zh: '译文同步数据较旧，请核对官方出处。', en: 'The translation snapshot is older. Check the official source.' })}</p>}
+              <div className="landing-search-grid">
+                {translationMatches.map(match => <Link
+                  key={`${match.component}:${match.unitId}`}
+                  href={`/regulation/translation/search?q=${encodeURIComponent(query.trim())}#translation-${match.component}-${match.unitId}`}
+                  prefetch={false} className="landing-search-item" onClick={closeAfter}
+                >
+                  <span className="landing-search-item-name" lang="en">{match.en}</span>
+                  <span className="landing-search-item-meta" lang="zh-Hans">{match.zh}</span>
+                </Link>)}
+              </div>
+            </section>
+          )}
+
           {(forumMatches.length > 0 || forumSearchError) && (
             <section className="landing-search-section">
               <div className="landing-search-section-header">
@@ -747,7 +688,7 @@ export default function LandingSearch({
             </section>
           )}
 
-          {/* 纯年份查询只看年份相关(年份直达 + 比赛 + 选手沉底);
+          {/* 纯年份查询只看年份相关(选手 + 年份直达 + 比赛);
               抑制这些泛文本匹配类,否则 tagline/术语里碰巧含 "2026" 的会混进来 */}
           {!yearMatch && (
           <>
@@ -997,7 +938,6 @@ export default function LandingSearch({
               </div>
               <div className="landing-search-grid">
                 {visibleComps.map(c => {
-                  const displayName = localizeCompName(c.id, c.name, isZh, { date: c.start_date });
                   const cityStr = c.city ? localizeCity(c.city, isZh, c.country) : '';
                   return (
                     <Link
@@ -1008,9 +948,11 @@ export default function LandingSearch({
                     >
                       <Flag iso2={c.country} className="country-flag" />
                       <span className="landing-search-item-main">
-                        <span className="landing-search-item-name">{displayName}</span>
+                        <span className="landing-search-item-name">
+                          <CompCell compId={c.id} compName={c.name} isZh={isZh} date={c.start_date} noFlag />
+                        </span>
                         <span className="landing-search-item-meta">
-                          {formatDateRangeIso(c.start_date, c.end_date)}
+                          <span className="landing-search-date">{formatDateRangeIso(c.start_date, c.end_date)}</span>
                           {cityStr ? ` · ${cityStr}` : ''}
                         </span>
                       </span>
@@ -1021,7 +963,6 @@ export default function LandingSearch({
             </section>
           )}
 
-          {!yearMatch && personsSection}
 
           {reconMatches.length > 0 && (
             <section className="landing-search-section">
@@ -1055,9 +996,8 @@ export default function LandingSearch({
                         {r.aoType ? ` · ${r.aoType}` : ''}
                       </span>
                       <span className="landing-search-item-meta">
-                        {r.comp ? r.comp : ''}
-                        {r.comp && r.date ? ' · ' : ''}
-                        {r.date ?? ''}
+                        {r.comp && <CompCell compId={r.compWcaId ?? ''} compName={r.comp} isZh={isZh} date={r.date ?? null} noFlag />}
+                        {r.date && <span className="landing-search-date">{r.comp ? ' · ' : ''}{r.date}</span>}
                       </span>
                     </span>
                   </Link>
@@ -1066,23 +1006,155 @@ export default function LandingSearch({
             </section>
           )}
 
-          {yearMatch && personsSection}
 
           {localSearchError && <div className="landing-search-empty" role="status">{tr({zh:'部分搜索资料加载失败，请重新输入以重试。',en:'Some search data could not load. Edit your search to retry.'})}</div>}
-          {!assistantAnswer && !assistantBusy && totalCount === 0 && !pasteIntent && !yearMatch && (xLoaded || !xSearchEnabled) && !localSearchPending && !localSearchError && !forumSearchPending && !forumSearchError && (
-            <div className="landing-search-empty">
-              {tr({ zh: '未找到匹配项', en: 'No matches found.'
-            })}
-            </div>
-          )}
-          {!assistantAnswer && !assistantBusy && totalCount === 0 && !pasteIntent && !yearMatch && (forumSearchPending || localSearchPending || (xSearchEnabled && !xLoaded)) && (
-            <div className="landing-search-empty">
-              {tr({ zh: '搜索中…', en: 'Searching…'
-            })}
-            </div>
-          )}
         </div>
+  );
+
+  const assistantView = <SiteAssistantDialog onBranch={index => { assistantConversations.branch(owner, crypto.randomUUID(), assistantTurns.slice(0, index + 1)); router.push(`${langPrefix}/chat`); }} searchResults={conversation?.active && query.trim() && !assistantBusy ? searchResults : undefined} embedded={!!conversation} active={conversation?.active ?? true} key={`${assistantUser?.uid ?? "guest"}:${assistantUser?.wcaId ?? ""}`} images={assistantImages} onImagesChange={setAssistantImages} thinking={assistantThinking} onThinkingChange={setAssistantThinking} lang={lang} draft={assistantDraft} onDraftChange={setAssistantDraft} turns={assistantTurns} onFeedback={(id,value)=>setAssistantTurns(turns=>turns.map(turn=>turn.requestId===id?{...turn,feedback:value}:turn))} status={assistantStatus} busy={assistantBusy} error={assistantError} onAsk={(question, replaceLast, images) => void askAssistant(question, replaceLast, images)} onStop={stopAssistant} onClose={closeAssistant} onNew={() => { assistantConversation.current = null; stopAssistant(); setAssistantDraft(''); setAssistantImages([]); setAssistantTurns([]); setAssistantAnswer(null); setAssistantError(null); }} />;
+  if (conversation) return assistantView;
+
+  return (
+    <div className={`landing-search${persistentResults ? ' landing-search--page' : ''}`} ref={wrapRef} style={workspaceEntry && workspace.open ? { display: 'none' } : undefined}>
+      <div className="landing-search-controls">
+        {voiceMode ? (
+          <div className="landing-search-input landing-search-voice" onKeyDown={event => {
+            if (event.key === 'Escape') { micCancel(); setVoiceMode(false); setVoiceAction(null); }
+          }}>
+            <button type="button" className="landing-search-voice-button" aria-label={tr({ zh: '取消语音输入', en: 'Cancel voice input' })}
+              onClick={() => { micCancel(); setVoiceMode(false); setVoiceAction(null); setVoiceText(''); }}><X size={22} /></button>
+            <div className="landing-search-wave" role="status"
+              aria-label={micStatus === 'starting' ? tr({ zh: '正在启动语音输入', en: 'Starting voice input' })
+                : micStatus === 'stopping' ? tr({ zh: '正在识别', en: 'Transcribing' })
+                : listening ? tr({ zh: '正在聆听', en: 'Listening' }) : tr({ zh: '语音输入已结束', en: 'Voice input finished' })}>
+              <div className="landing-search-wave-track" aria-hidden="true" style={{ transform: `translateX(${-waveformOffset * 100 / waveform.length}%)` }}>
+                {waveform.map((amplitude, index) => <span key={index} style={{ height: `${3 + amplitude * 25}px` }} />)}
+              </div>
+            </div>
+            <Tooltip content={tr({ zh: '停止听写', en: 'Stop dictation' })}>{(tip) => <button {...tip} type="button" className="landing-search-voice-button landing-search-voice-stop" disabled={voiceAction !== null}
+              aria-label={tr({ zh: '停止并编辑文字', en: 'Stop and edit text' })}
+              onClick={() => { setVoiceAction('stop'); micStop(); }}>
+              <Square size={15} fill="currentColor" />
+            </button>}</Tooltip>
+            <button type="button" className="landing-search-voice-button landing-search-voice-send"
+              disabled={voiceAction !== null || !voiceText.trim() || voiceText.trim().length > SITE_ASSISTANT_QUESTION_MAX_LENGTH || assistantBusy}
+              aria-label={tr({ zh: '发送语音提问', en: 'Send voice question' })}
+              onClick={() => { setVoiceAction('send'); micStop(); }}><ArrowUp size={24} /></button>
+          </div>
+        ) : <div
+          className="landing-search-input"
+          onMouseDown={e => {
+            // 点击容器自身(上下 padding / 元素间 gap 死区)→ 聚焦输入框
+            if (e.target === e.currentTarget) {
+              e.preventDefault();
+              textInputRef.current?.focus();
+            }
+          }}
+        >
+          <button
+            type="button"
+            className="landing-search-plus"
+            onClick={() => setPlusMenuOpen(v => !v)}
+            title={tr({ zh: '添加', en: 'Add'
+          })}
+            aria-label={tr({ zh: '添加', en: 'Add'
+          })}
+            aria-expanded={plusMenuOpen}
+          >
+            <Plus size={18} strokeWidth={1.75} />
+          </button>
+          {/* allow-manual-search: Results update while typing; Enter submits a natural-language question. */}
+          <input
+            ref={textInputRef}
+            type="text"
+            autoFocus={autoFocus}
+            className="landing-search-field"
+            value={query}
+            onChange={e => { setQuery(e.target.value); setOpen(true); }}
+            onFocus={() => setOpen(true)}
+            onPaste={e => {
+              const intent = detectPasteIntent(e.clipboardData.getData('text'));
+              if (intent) { e.preventDefault(); goPasteIntent(intent); }
+            }}
+            onKeyDown={e => {
+              if (e.key === 'Escape') {
+                setOpen(false);
+                (e.target as HTMLInputElement).blur();
+              } else if (e.key === 'ArrowRight' && !query && !e.nativeEvent.isComposing && e.keyCode !== 229
+                && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey
+                && !listening && micStatus !== 'starting' && micStatus !== 'stopping') {
+                e.preventDefault();
+                const input = e.currentTarget;
+                const suggestion = rotatingPlaceholder(isZh, placeholderDay);
+                setQuery(suggestion);
+                setOpen(true);
+                requestAnimationFrame(() => {
+                  if (document.activeElement === input && input.value === suggestion) {
+                    input.setSelectionRange(suggestion.length, suggestion.length);
+                  }
+                });
+              } else if (e.key === 'Enter' && !e.nativeEvent.isComposing && e.keyCode !== 229) {
+                e.preventDefault();
+                if (yearMatch || pasteIntent) goFirstResult();
+                else void askAssistant();
+              }
+            }}
+            placeholder={micStatus === 'starting' ? tr({ zh: '正在启动语音输入…', en: 'Starting voice input…' })
+              : micStatus === 'stopping' ? tr({ zh: '正在等待识别结果…', en: 'Waiting for speech results…' })
+                : listening ? tr({ zh: '请说…', en: 'Listening…' }) : rotatingPlaceholder(isZh, placeholderDay)}
+            aria-label={tr({ zh: '全站搜索', en: 'Site search' })}
+          />
+
+          {/* allow-manual-search: Dictation only fills speech text; typed search still updates through onChange. */}
+          <Tooltip content={tr({ zh: '听写', en: 'Dictate' })}>{(tip) => <button {...tip}
+            type="button"
+            className="landing-search-mic landing-search-dictation"
+            aria-pressed={listening}
+            disabled={micStatus === 'stopping'}
+            onClick={() => { setVoiceText(''); setVoiceAction(null); setVoiceMode(true); setOpen(false); setPlusMenuOpen(false); micStart(); }}
+            aria-label={tr({ zh: '听写', en: 'Dictate' })}
+          >
+            <Mic size={16} strokeWidth={1.75} />
+          </button>}</Tooltip>
+            <button type="button" className="landing-search-mic landing-search-send" disabled={assistantBusy || !!currentChat?.pending || (!query.trim() && !(workspaceEntry && currentChat?.snapshot.images.length)) || query.trim().length > SITE_ASSISTANT_QUESTION_MAX_LENGTH}
+              onClick={() => void askAssistant()}
+              aria-label={tr({ zh: '提问', en: 'Ask' })} title={tr({ zh: '提问（回车）', en: 'Ask (Enter)' })}>
+              <ArrowUp size={20} strokeWidth={1.75} />
+            </button>
+        </div>}
+        {plusMenuOpen && (
+          <div ref={plusMenuRef} className="landing-search-plus-menu" data-site-surface="popover" role="menu">
+            <button type="button" className="landing-search-plus-menu-btn" role="menuitem" onClick={() => {
+              if (workspaceEntry) { ensureAssistantConversation(owner); assistantConversations.setOpen(owner, true); router.push(`${langPrefix}/chat`); }
+              else { setAssistantDraft(query); setAssistantDialog(true); }
+              setPlusMenuOpen(false);
+            }}>
+              <ImagePlus size={14} strokeWidth={1.75} />
+              <span className="landing-search-plus-menu-title">{tr({ zh: '图片提问', en: 'Ask with images' })}{workspaceEntry && !!currentChat?.snapshot.images.length && ` (${currentChat.snapshot.images.length})`}</span>
+            </button>
+            <button type="button" className="landing-search-plus-menu-btn" role="menuitem" onClick={onSmartPaste}>
+              <Clipboard size={14} strokeWidth={1.75} />
+              <div className="landing-search-plus-menu-text">
+                <span className="landing-search-plus-menu-title">{tr({ zh: '智能粘贴', en: 'Smart paste'
+                })}</span>
+                <span className="landing-search-plus-menu-sub">{tr({ zh: 'WCA URL / 打乱 / 公式', en: 'WCA URL / scramble / alg'
+                })}</span>
+              </div>
+            </button>
+          </div>
+        )}
+      </div>
+
+      {(micError || (listening && microphone)) && (
+        <p className="landing-search-speech-status" role="status">
+          {microphone && <span>{tr({ zh: '麦克风：', en: 'Microphone: ' })}{microphone}{micError ? ' · ' : ''}</span>}
+          {micError && tr(SPEECH_ERRORS[micError] ?? SPEECH_ERRORS['service-not-allowed'])}
+        </p>
       )}
+
+      {assistantDialog && assistantView}
+
+      {showDropdown && !assistantDialog && searchResults}
     </div>
   );
 }

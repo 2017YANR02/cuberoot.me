@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import path from "node:path";
 import dns from "node:dns";
 import { PLATFORM_CANONICAL_REWRITES } from "./lib/platform-routes";
+import { usesLocalStats, PUBLISHED_STATS_ORIGIN } from "@cuberoot/shared/stats-base";
 
 // Force IPv4 first for upstream rewrites — node fetch's default IPv6-first
 // order causes intermittent `getaddrinfo ENOTFOUND` on api.cuberoot.me proxy
@@ -14,6 +15,14 @@ const isProd = process.env.NODE_ENV === "production";
 // way; standalone + outputFileTracingRoot break Vercel's Turbopack path
 // resolution (vercel/next.js#88579 — doubles path, manifest ENOENT).
 const isVercel = process.env.VERCEL === "1";
+
+if (process.env.NODE_ENV === 'development') {
+  const source = process.env.NEXT_PUBLIC_STATS_SOURCE;
+  if (source && source !== 'local' && source !== 'published') {
+    throw new Error('NEXT_PUBLIC_STATS_SOURCE must be local or published');
+  }
+  console.info(`[stats] source=${usesLocalStats() ? 'local (repository stats/; missing files fail without remote fallback)' : `published (${PUBLISHED_STATS_ORIGIN})`}`);
+}
 
 const nextConfig: NextConfig = {
   // The build command requires native tsgo AFTER Next generates .next/types.

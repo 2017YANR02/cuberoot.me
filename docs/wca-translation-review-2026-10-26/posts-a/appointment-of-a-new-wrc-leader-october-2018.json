@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/appointment-of-a-new-wrc-leader-october-2018",
+  "path": "docs/wca-post-translations/entries/appointment-of-a-new-wrc-leader-october-2018.json",
+  "sourceHash": "f5a7d7f0468b9d9950dadacf9d4245025a84fa1b55d257aff4a992ea8e44146b",
+  "inputTranslationHash": "4e9476938ddb77eb822384052316d997b864f7d6463551cd86560d060d4f1060",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:06:14.455Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照正文与标题；核对全部申请/任命主体、时间、权限、附录条目及材料要求。"
+  ],
+  "changes": []
+}

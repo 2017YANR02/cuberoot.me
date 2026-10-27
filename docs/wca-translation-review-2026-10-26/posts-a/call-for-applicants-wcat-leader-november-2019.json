@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wcat-leader-november-2019",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wcat-leader-november-2019.json",
+  "sourceHash": "66256d1e6d8b4b68a9b6565bc23c6e549cce9c40702b849e4b9003ca5a11c20e",
+  "inputTranslationHash": "a32eef27c2ead63abb0909839b013f5b6428171a87c70b99b50b8672ad02a602",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:07:01.629Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照招募正文、职责条目、必需/可选资格、年龄、时限和程序；未扩展外链材料。"
+  ],
+  "changes": []
+}

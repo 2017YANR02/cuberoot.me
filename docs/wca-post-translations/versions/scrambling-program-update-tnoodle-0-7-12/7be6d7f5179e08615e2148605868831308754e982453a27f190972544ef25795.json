@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/scrambling-program-update-tnoodle-0-7-12",
+  "source": {
+    "key": "posts:/posts/scrambling-program-update-tnoodle-0-7-12",
+    "kind": "posts",
+    "title": "Scrambling Program Update: TNoodle 0.7.12",
+    "date": "2013-10-01T08:09:37.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/scrambling-program-update-tnoodle-0-7-12",
+    "content": "The WRC is changing the official scrambling program from TNoodle 0.7.8 to TNoodle 0.7.12. This addresses two minor issues:\n \n - Remove the reference to slice moves in the FMC sheet. (Slice moves have never been allowed since TNoodle has been official.)\n - Document scramble filtering in the readme.\n \n Please remember that official competitions must always use the current version of the official scramble program. This is always available from: [https://www.worldcubeassociation.org/regulations/scrambles/](https://www.worldcubeassociation.org/regulations/scrambles/)",
+    "hash": "53d9cbe6f45f608f9904ab2ac650543c8d40f6beab7f1b093adffe4b47e05f76",
+    "format": "markdown",
+    "sourceId": 2860
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "53d9cbe6f45f608f9904ab2ac650543c8d40f6beab7f1b093adffe4b47e05f76",
+    "language": "zh-Hans",
+    "title": "打乱程序更新：TNoodle 0.7.12",
+    "content": "WCA 规则委员会（WRC）将官方打乱程序从 TNoodle 0.7.8 更换为 TNoodle 0.7.12，以解决两个小问题：\n\n* 删除最少步答题纸中关于中层转动的说明。自 TNoodle 成为官方打乱程序起，中层转动就从未被允许使用。\n* 在 README 中说明打乱筛选方式。\n\n请记住，官方比赛必须始终使用当前版本的官方打乱程序。最新版本可从以下页面获取：[https://www.worldcubeassociation.org/regulations/scrambles/](https://www.worldcubeassociation.org/regulations/scrambles/)",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:55:00.979Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "7be6d7f5179e08615e2148605868831308754e982453a27f190972544ef25795"
+}

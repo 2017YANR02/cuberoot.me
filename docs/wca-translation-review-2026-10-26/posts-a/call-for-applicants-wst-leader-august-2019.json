@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wst-leader-august-2019",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wst-leader-august-2019.json",
+  "sourceHash": "856e3c6884cebc5dbc337e924aa51bd4530b5dcf89e995e27352f03826bd7b8f",
+  "inputTranslationHash": "d33ed7911c26fd43537a9ab5e4d3e0098ac86d5f92feaaf6a6abe45820b14f0b",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:11:22.963Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题及正文；核对软件技术专名、申请要求及申请期、历史 WAC 缩写和申诉流程、新旧任命程序。"
+  ],
+  "changes": []
+}

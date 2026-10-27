@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/application-documents-election-of-board-of-directors-2017",
+  "path": "docs/wca-post-translations/entries/application-documents-election-of-board-of-directors-2017.json",
+  "sourceHash": "fe4b0e7a5b63c8455941d735f14207332c2056199c3fc81dfd0090c86c4eb3ac",
+  "inputTranslationHash": "829a663c70db84048d344c5f238cd45b2973196e4c962dd496aef5c8807c859d",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:05:11.623Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+  ],
+  "changes": []
+}

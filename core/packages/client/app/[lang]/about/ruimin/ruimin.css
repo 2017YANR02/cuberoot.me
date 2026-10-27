@@ -58,7 +58,7 @@
 .ruimin-name-en {
   margin-top: 19px;
   color: var(--muted-foreground);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-sans);
   font-size: clamp(0.92rem, 1.7vw, 1.2rem);
   font-weight: 600;
   letter-spacing: 0.22em;

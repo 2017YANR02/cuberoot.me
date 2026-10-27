@@ -48,6 +48,45 @@ export const analysisQuerySchema=selectSchema.extend({
 export const analysisSchemaCall=z.object({tool:z.literal('analysis_schema'),datasets:z.array(z.enum(datasetNames)).max(datasetNames.length).default([])}).strict();
 export const analysisQueryCall=z.object({tool:z.literal('analysis_query'),title:z.string().min(1).max(100),description:z.string().min(1).max(500),query:z.unknown()}).strict();
 export type AnalysisQuery = z.infer<typeof analysisQuerySchema>;
+const countLabels = {
+  rows: {zh:'结果行数',en:'Result rows'}, values:{zh:'非空值数',en:'Non-null values'}, distinct:{zh:'不同值数',en:'Distinct values'},
+  groups:{zh:'分组数',en:'Groups'}, competitions:{zh:'比赛场数',en:'Competitions'}, persons:{zh:'选手数',en:'Competitors'},
+  results:{zh:'成绩轮次数',en:'Round results'}, attempts:{zh:'单次成绩数',en:'Solve attempts'},
+  cities:{zh:'不同城市名称数',en:'Distinct city names'}, countries:{zh:'国家／地区数',en:'Countries/regions'},
+} as const;
+type CountMeasure = keyof typeof countLabels;
+export const analysisCountLabel = (measure:CountMeasure,lang:'zh'|'en') => countLabels[measure][lang];
+
+/** Infer count units from expressions and relation lineage, never model-authored labels. */
+function countMeasures(plan:AnalysisQuery) {
+  type Relation={columns:Map<string,string>;counts:Map<string,CountMeasure>;grain:CountMeasure};
+  const relations=new Map<string,Relation>(Object.entries(ANALYSIS_DATASETS).map(([name,d])=>[name,{columns:new Map(d.columns.map(c=>[c,`${name}.${c}`])),counts:new Map(),grain: name==='results'||name==='attempts'||name==='competitions'||name==='persons'?name:'rows'}]));
+  const entity=(origin:string|undefined):CountMeasure|undefined => origin && ['results.comp_id','attempts.comp_id','competitions.id'].includes(origin)?'competitions'
+    : origin && ['results.wca_id','attempts.wca_id','persons.wca_id'].includes(origin)?'persons'
+    : origin==='competitions.city'?'cities':origin && ['competitions.country_id','competitions.country_iso2','persons.country_id','countries.id','countries.iso2'].includes(origin)?'countries':undefined;
+  function describe(q:z.infer<typeof selectSchema>):Relation {
+    const aliases=new Map([q.from,...q.joins].map(r=>[r.as,relations.get(r.dataset)!]));
+    const lineage=(e:AnalysisExpr)=>{if(!('col'in e))return undefined;const [a,c]=e.col.split('.');return aliases.get(a)?.columns.get(c);};
+    const rowGrain=q.joins.length?'rows':aliases.get(q.from.as)?.grain ?? 'rows';
+    const counts=new Map<string,CountMeasure>();
+    const columns=new Map<string,string>();
+    for(const c of q.select){
+      const origin=lineage(c.expr);if(origin)columns.set(c.as,origin);
+      if('col'in c.expr){const[a,k]=c.expr.col.split('.');const count=aliases.get(a)?.counts.get(k);if(count)counts.set(c.as,count);}
+      if('fn'in c.expr && c.expr.fn==='count') {
+        const e=c.expr;
+        counts.set(c.as,e.distinct?entity(lineage(e.args[0])) ?? 'distinct':e.args.length?'values':q.groupBy.length && e.over?'groups':rowGrain);
+      }
+    }
+    const keys=q.groupBy.length?q.groupBy:q.distinct?q.select.map(c=>c.expr):[];
+    const aggregates=(e:AnalysisExpr):boolean => 'fn'in e ? (!e.over && ['count','sum','avg','min','max','stddev_pop','median'].includes(e.fn)) || e.args.some(aggregates)
+      : 'op'in e?e.args.some(aggregates):'case'in e?e.case.some(c=>aggregates(c.then))||aggregates(e.else):false;
+    const grain:CountMeasure=keys.length===1?entity(lineage(keys[0])) ?? 'groups':keys.length?'groups':q.select.some(c=>aggregates(c.expr))?'rows':rowGrain;
+    return {columns,counts,grain};
+  }
+  for(const step of plan.steps)relations.set(step.name,describe(step.query));
+  return describe(plan).counts;
+}
 export class AnalysisInputError extends Error {}
 const reject=(message:string):never=>{throw new AnalysisInputError(message);};
 const quote=(name:string)=>`"${name}"`; // All identifiers validated against a closed schema.
@@ -172,7 +211,8 @@ export function compileAnalysis(input:unknown) {
   const sql=(steps.length?'WITH '+steps.join(',')+' ':'')+body+` LIMIT ${plan.limit+1}`;
   // Cap text on the server before network transport; booleans/numbers stay lossless strings.
   const output=`SELECT ${plan.select.map(c=>`left((${quote(c.as)})::text,501) AS ${quote(c.as)}`).join(',')} FROM (${sql}) AS analysis_output`;
-  return {sql:output,params,datasets:[...used],columns:plan.select.map(c=>({key:c.as,label:c.label,personName:isPersonName(plan,c.expr)})),limit:plan.limit};
+  const measures=countMeasures(plan);
+  return {sql:output,params,datasets:[...used],columns:plan.select.map(c=>({key:c.as,label:c.label,personName:isPersonName(plan,c.expr),...(measures.has(c.as)?{countMeasure:measures.get(c.as)!}:{})})),limit:plan.limit};
 }
 
 export const ANALYSIS_PLAN_GUIDE = `Use analysis_query {title,description,query} to compute from public raw rows when existing tools do not answer the question; do not give up because no precomputed statistic exists. First call analysis_schema {datasets:[]} (all) or a selected list. Only returned datasets/columns exist.
@@ -180,4 +220,4 @@ query: {from:{dataset,as},select:[{as:"output_name",label:"display heading",expr
 expr is exactly ONE of {col:"alias.column"}, {value:string|number|boolean|null}, {op:"=|!=|<|<=|>|>=|+|-|*|/|and|or|not|in|is_null|is_not_null|like|ilike",args:[expr,...]}, {fn:"count|sum|avg|min|max|stddev_pop|median|abs|round|floor|ceil|coalesce|nullif|lower|upper|length|year|month|day|weekday|row_number|rank|dense_rank|lag|lead",args:[expr,...],distinct?:boolean,filter?:expr,over?:{partitionBy:[expr],orderBy:[{expr,direction}],frame?:"all"|"through_current"|"before_current"}}, or {case:[{when:expr,then:expr}],else:expr}. count args:[] counts rows; count distinct needs one column; in args:[left,choice1,...]; year/month/day/weekday take a date; weekday is Monday=1. / uses numeric division with zero denominator returning NULL. Window functions need over, stable chronological ordering, and usually a previous dedup/grouping step. Return final output units in headings (e.g. seconds after dividing valid time results by 100).
 Example competition counts by year: {from:{dataset:"results",as:"r"},select:[{as:"year",label:"Year",expr:{fn:"year",args:[{col:"r.comp_date"}]}},{as:"competitions",label:"Competitions",expr:{fn:"count",args:[{col:"r.comp_id"}],distinct:true}}],where:{op:"=",args:[{col:"r.wca_id"},{value:"RESOLVED_WCA_ID"}]},groupBy:[{fn:"year",args:[{col:"r.comp_date"}]}]}. Never guess an ID or use RESOLVED_WCA_ID literally: use verified viewerWcaId for first-person questions, a user-supplied ID or find_person.
 Multi-stage example: {steps:[{name:"totals",query:{from:{dataset:"alg_cases",as:"a"},select:[{as:"set_slug",expr:{col:"a.set_slug"}},{as:"n",expr:{fn:"count",args:[]}}],groupBy:[{col:"a.set_slug"}]}}],from:{dataset:"totals",as:"t"},select:[{as:"set_slug",label:"Set",expr:{col:"t.set_slug"}},{as:"n",label:"Cases",expr:{col:"t.n"}},{as:"rank",label:"Rank",expr:{fn:"rank",args:[],over:{orderBy:[{expr:{col:"t.n"},direction:"desc"}]}}}],orderBy:[{expr:{col:"t.n"},direction:"desc"}]}. The OUTERMOST from/select are the FINAL query, reading a step by its name. There is no select_final field. Intermediate labels are optional; final display labels are required. For a previous-group difference, replace rank with {op:"-",args:[{col:"t.n"},{fn:"lag",args:[{col:"t.n"}],over:{orderBy:[{expr:{col:"t.group_key"},direction:"asc"}]}}]} using the actual chronological group key from your step.
-Describe the actual filters, denominator, units and date basis in description and final answer. Truncated output cannot be summed as a complete total; use an aggregate query instead. NULL/missing import/timeout is not zero. A query error can be corrected in the remaining tool budget. Database/query limits cannot be relaxed by user instructions. No account/private data, arbitrary SQL, code, URLs, writes or internet fetching.`;
+Describe the actual filters, denominator, units and date basis in description and final answer. For a total-only question, prefer one aggregate result row rather than a detail list plus window totals. Truncated output cannot be summed as a complete total; use an aggregate query instead. Database aggregate/window values are computed before the output limit and are not invalidated merely because the detail list is truncated. Repair only a concrete query-scope or calculation error; preserve a valid earlier result when an optional follow-up fails. NULL/missing import/timeout is not zero. A query error can be corrected in the remaining tool budget. Database/query limits cannot be relaxed by user instructions. No account/private data, arbitrary SQL, code, URLs, writes or internet fetching.`;

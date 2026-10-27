@@ -1,0 +1,27 @@
+{
+  "key": "posts:/posts/call-for-applicants-wst-leader-august-2019",
+  "source": {
+    "key": "posts:/posts/call-for-applicants-wst-leader-august-2019",
+    "kind": "posts",
+    "title": "Call for Applicants - WST Leader (August 2019)",
+    "date": "2019-08-14T04:21:05.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/call-for-applicants-wst-leader-august-2019",
+    "content": "There will be an appointment of a new **WCA Software Team Leader (WST)**, as Jeremy Fleischman’s term expires on October 1, 2019. We would like to thank Jeremy for the work he has done leading the Team. The WST is responsible for managing the WCA's software which includes the website, scramblers, workbooks, and admin tools.\n\nCandidates are expected to fulfill their terms (24 months) and to spend at least 10 hours per week on average to work for the Committee. The qualities expected of candidates are:\n- Strong technical expertise\n- Good communication\n- Problem solving skills\n- Goal-oriented\n- Project management experience\n\nThe application period is open for candidates to submit their candidacy documents until **September 6th, 2019, 23:59 UTC** privately to the Bob Burton (rburton@worldcubeassociation.org).\n<!-- break -->\nThe candidacy documents must be in PDF format, and must include:\n- Brief personal introduction.\n- Summary of activities done for the WCA.\n- Ambitions as the WST Leader.\n\nCandidates are additionally asked to send a copy of their applications which can be made public at the end of the application period.\n\nThe rights and duties of the WST can be found in [WCA Motion 10.2017.4](https://www.worldcubeassociation.org/documents/motions/10.2017.4%20-%20Software%20Team.pdf).\n\nAfter the application period, the WCA Board will make a selection by voting and will announce the new Leader, after confirmation among Senior Delegates and sitting Committee/Team Leaders by voting, as described in Section 4 of [WCA Motion 10.2019.0](https://www.worldcubeassociation.org/documents/motions/10.2019.0%20-%20Committees%20and%20Teams.pdf).\n\nThank you in advance for your candidacies and support!",
+    "hash": "856e3c6884cebc5dbc337e924aa51bd4530b5dcf89e995e27352f03826bd7b8f",
+    "format": "markdown",
+    "sourceId": 12645
+  },
+  "translation": {
+    "version": 2,
+    "sourceHash": "856e3c6884cebc5dbc337e924aa51bd4530b5dcf89e995e27352f03826bd7b8f",
+    "language": "zh-Hans",
+    "title": "WCA 软件组负责人招募（2019 年 8 月）",
+    "content": "Jeremy Fleischman 的任期将于 2019 年 10 月 1 日结束，WCA 将任命一位新的**软件组（WST）负责人**。感谢 Jeremy 在带领团队期间所做的工作。WST 负责管理 WCA 的软件，包括网站、打乱程序、成绩工作簿和管理工具。\n\n申请人应能完成 24 个月的任期，并平均每周为团队工作至少 10 小时。我们希望申请人具备以下条件：\n\n- 扎实的专业技术能力。\n- 良好的沟通能力。\n- 解决问题的能力。\n- 能围绕目标开展工作。\n- 项目管理经验。\n\n申请材料提交截止时间为 **2019 年 9 月 6 日 23:59 UTC**，请私下发送给 Bob Burton（rburton@worldcubeassociation.org）。\n\n<!-- break -->\n\n申请材料须为 PDF 格式，包含：\n\n- 简短的自我介绍。\n- 为 WCA 所做工作的总结。\n- 担任 WST 负责人的工作设想。\n\n此外，请提供一份可在申请期结束后公开的申请材料。\n\nWST 的权利和职责见 [WCA 决议 10.2017.4](https://www.worldcubeassociation.org/documents/motions/10.2017.4%20-%20Software%20Team.pdf)。\n\n申请期结束后，WCA 董事会将投票选定人选，经高级代表和现任委员会/团队负责人投票确认后公布。流程见 [WCA 决议 10.2019.0](https://www.worldcubeassociation.org/documents/motions/10.2019.0%20-%20Committees%20and%20Teams.pdf)第 4 节。\n\n感谢大家的申请与支持！",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:49:54.065Z",
+    "reviewStatus": "pending_independent_review",
+    "revisedAt": "2026-10-25T07:28:01.629Z",
+    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+  },
+  "translationHash": "d33ed7911c26fd43537a9ab5e4d3e0098ac86d5f92feaaf6a6abe45820b14f0b"
+}

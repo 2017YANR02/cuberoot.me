@@ -12,14 +12,31 @@
     "sourceId": 1592
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "75c90112d0c88dba663b39757b3955794f5adb0939fdbdcda75a589607803fa6",
     "language": "zh-Hans",
     "title": "Michał Pleskowicz 夺得 2011 年魔方世锦赛冠军",
     "content": "[Michał Pleskowicz](https://www.worldcubeassociation.org/results/p.php?i=2009PLES01) 以 8.65 秒的平均成绩赢得了 [2011 年魔方世锦赛](https://www.worldcubeassociation.org/results/c.php?i=WC2011)冠军。[Rowe Hessler](https://www.worldcubeassociation.org/results/p.php?i=2007HESS01) 以 9.56 秒获得亚军，[Feliks Zemdegs](https://www.worldcubeassociation.org/results/p.php?i=2009ZEMD01) 以 9.58 秒获得季军。\n\n世界纪录：Feliks Zemdegs，四阶平均 35.22，五阶单次 56.22、平均 59.94；Javier Tirado Ortiz，魔表单次 5.83；Marcell Endrey，三阶多盲 19/19，用时 53:48；Michał Pleskowicz，三阶单手平均 13.57。\n\n亚洲纪录：Mitsuki Gunji（郡司光貴），四阶单次 30.34；Yu Nakajima（中島 悠），五阶单次 58.53、平均 1:08.17；Gomain Ngernseng（โกเมน เงินเส็ง），五魔方单次 54.58、平均 1:00.11；Tong Boonrod（ต๋อง บุญรอด），三阶脚拧平均 44.59。\n\n欧洲纪录：Giovanni Contardi，四阶单次 31.21、平均 35.51；Daniel Sheppard，魔表平均 7.51。\n\n北美洲纪录：Dan Cohen，四阶单次 32.47，五阶单次 57.44、平均 1:08.12。\n\n大洋洲纪录：Feliks Zemdegs，六阶平均 2:13.86、七阶平均 3:54.41、金字塔单次 3.00；Zane Carney，三阶盲拧单次 31.41，三阶多盲 19/21，用时 49:56。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.156Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "1f93f07d1315799bf45ce085d188811659643d0a72dbf37e901c3790fa65d81a"
+  "translationHash": "38046a66cc3dc97361974f7b98350bc8a2b0b7541f309dc9b194b120f80f4ce1",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:44.903Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "75c90112d0c88dba663b39757b3955794f5adb0939fdbdcda75a589607803fa6",
+    "reviewedTranslationHash": "38046a66cc3dc97361974f7b98350bc8a2b0b7541f309dc9b194b120f80f4ce1",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/michal-pleskowicz-wins-world-rubik-s-cube-championship-2011.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "1f93f07d1315799bf45ce085d188811659643d0a72dbf37e901c3790fa65d81a"
+  }
 }

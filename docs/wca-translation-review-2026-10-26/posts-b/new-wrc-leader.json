@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/new-wrc-leader",
+  "path": "docs/wca-post-translations/entries/new-wrc-leader.json",
+  "sourceHash": "9cf3cdbced49cf4ac6db13e91a3686aa18be9a3da223b271a3ee7cbd7bcc45eb",
+  "inputTranslationHash": "f7baf3d3d2d57544781de6c868489c2a829137f0e29cf4d72705238d700d332d",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:44.905Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

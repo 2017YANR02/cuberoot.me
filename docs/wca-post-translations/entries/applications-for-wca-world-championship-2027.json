@@ -12,16 +12,33 @@
     "sourceId": 14192
   },
   "translation": {
-    "version": 3,
+    "version": 4,
     "sourceHash": "b4ecfedb7e119b4012e698213b7f3c7c218361ca311eb3167f20a10aefc05032",
     "language": "zh-Hans",
     "title": "2027 年 WCA 世界锦标赛承办申请",
     "content": "各位 WCA 社区成员：\n\nWCA 大型锦标赛组（WMCT）与 WCA 董事会现依照[动议 22.2024.1](https://documents.worldcubeassociation.org/documents/motions/22.2024.1%20-%20Major%20Championship%20Selection.pdf)的程序，开放 2027 年世界锦标赛的承办申请。\n\n举办如此规模的 WCA 锦标赛需要投入大量时间和精力，包括赛前筹备、比赛本身以及赛后工作。锦标赛组织者，以及所在国家相当一部分的 WCA 代表，都必须有意愿投入比赛的筹备与执行。另请注意，申请**必须**由 [WCA 认可的地区组织](https://www.worldcubeassociation.org/organizations)提交。\n\n有意申请者请在 **2025 年 5 月 31 日 23:59 UTC 之前**，将材料发送至 [assistants@worldcubeassociation.org](mailto:assistants@worldcubeassociation.org)，并抄送 [board@worldcubeassociation.org](mailto:board@worldcubeassociation.org) 和 [championships@worldcubeassociation.org](mailto:championships@worldcubeassociation.org)。邮件主题须为“<Location/Team> bid for World Championship 2027”。申请材料须以 PDF 格式提供两个版本：包含所有申请细节的完整版，以及删去敏感内容（如有）、可供公开的版本。\n\n我们强烈建议申请者根据需要，提供尽可能充分的信息、图表、计算和电子表格，以支持申请。申请至少须说明：\n\n1. **计划何时举办 2027 年世界锦标赛？**\n   - a. 可选日期。\n   - b. 比赛天数。\n   - c. 与当地学校假期的重合情况。\n\n2. **计划在本国何处举办 2027 年世界锦标赛？**\n   - a. 举办城市应有游览吸引力，并有充足的观光选择。\n   - b. 可接待的选手和观众人数。\n   - c. 国际、国内及当地交通的便利程度。\n   - d. 不同价位酒店及公寓的供应情况。\n   - e. 场馆、场馆面积及布置方案，包括舞台、观众区、练习桌和可用的附属房间。\n   - f. 可用技术条件，包括网络、视频直播、灯光及音响设备。\n\n3. **组织团队和比赛志愿者将如何安排？**\n   - a. 核心成员、各自职责及经验。\n   - b. 其他参与方。\n   - c. 当地志愿者人数。请注意，通常应有 20% 的选手加入志愿者团队。\n   - d. 需要外国代表提供哪些支持。\n\n4. **比赛预算如何？**\n   - a. 支出，包括场租、场馆服务、舞台、器材、装饰、网站、证件／挂绳／礼包、奖品等。\n   - b. 收入，包括报名费、赞助、当地政府支持等。\n\n2019 年起历届世界锦标赛的公开版申办材料，收录于[此文件夹](https://drive.google.com/drive/folders/1QJvZQ7mzQh2qA65d0d9ay3mWWFBXN9MR?usp=sharing)。[此电子表格](https://docs.google.com/spreadsheets/d/1FqlvtRb1EWz8ZuXwMOB0zOv307LDpJpDt3WsoY9m7VQ/edit?usp=sharing)较全面地列出了大型比赛需要安排和编制预算的事项。\n\n申请截止后，WCA 将任命遴选委员会。委员会将面试入围申请者，并通过投票确定 2027 年世界锦标赛的主办方。\n\n如有疑问或需要更多信息，请邮件联系 WMCT（[championships@worldcubeassociation.org](mailto:championships@worldcubeassociation.org)）。\n\n期待收到你们的申请！",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.985Z",
-    "reviewStatus": "pending_independent_review",
-    "revisedAt": "2026-10-25T07:28:01.629Z",
-    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "76f5642088dc44f44300587636538f68ab511e53ea067638b77f861fdfb2489e"
+  "translationHash": "d5f8533c55e743df34d33e0d57c0dafb114645555a5b56a0d7a6e6a6961ac80e",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:06:14.455Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "b4ecfedb7e119b4012e698213b7f3c7c218361ca311eb3167f20a10aefc05032",
+    "reviewedTranslationHash": "d5f8533c55e743df34d33e0d57c0dafb114645555a5b56a0d7a6e6a6961ac80e",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/applications-for-wca-world-championship-2027.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照正文与标题；核对全部申请/任命主体、时间、权限、附录条目及材料要求。"
+    ],
+    "inputTranslationHash": "76f5642088dc44f44300587636538f68ab511e53ea067638b77f861fdfb2489e"
+  }
 }

@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wcat-members-june-2022",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wcat-members-june-2022.json",
+  "sourceHash": "d8ad3aa06a574d327bea5e44d0d3199bc6b5e5fcbadacea41d9d4042b27ee72f",
+  "inputTranslationHash": "70853bf4aceeb571ebf06fbc8c174c2b4a10580a0d40a66af3168bb72659b480",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:09:54.049Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整核对标题及正文，招募资格、工作时长、申请截止日期、收件人、申请材料与程序一致。"
+  ],
+  "changes": []
+}

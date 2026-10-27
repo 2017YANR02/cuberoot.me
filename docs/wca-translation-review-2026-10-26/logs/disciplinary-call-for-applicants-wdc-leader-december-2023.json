@@ -1,0 +1,19 @@
+{
+  "key": "disciplinary:/posts/call-for-applicants-wdc-leader-december-2023",
+  "path": "docs/wca-log-translations/entries/disciplinary-call-for-applicants-wdc-leader-december-2023.json",
+  "sourceHash": "e300fb324204fb513e6b0bd0e87c7753d172fdf11b06fbb5b43674ee93cd6b5e",
+  "inputTranslationHash": "88440874a3695344f78831f7939b773f465fc88df3c701d43a31e5a96e499ad5",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "复用已通过的旧版全文独立审校；人工阅读旧版与现版全部文字差异及对应英文段落，确认本轮之前的差异限于官方机构名称或 Guidelines 的“指南”译法；另复核本轮项目名命中语境。",
+  "verdict": "pass",
+  "notes": [],
+  "changes": [],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/report-1.json",
+    "reviewedTranslationHash": "8dbb4825fe71ba53d73e88d608be2d9d0cf9696f1639dabb7c65ecd96e6c59ed",
+    "verdict": "pass",
+    "archivedVersion": "docs/wca-log-translations/versions/disciplinary-call-for-applicants-wdc-leader-december-2023/8dbb4825fe71ba53d73e88d608be2d9d0cf9696f1639dabb7c65ecd96e6c59ed-v1.json"
+  },
+  "sourceUncertainty": false
+}

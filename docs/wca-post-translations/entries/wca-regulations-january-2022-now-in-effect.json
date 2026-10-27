@@ -12,14 +12,33 @@
     "sourceId": 14046
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "979fc3d1d964013890835217b63f09e1de9b1544f046a32581b63979275a2b80",
     "language": "zh-Hans",
     "title": "2022 年 1 月版 WCA 规则已生效",
     "content": "新版 WCA [规则](https://www.worldcubeassociation.org/regulations/)和[指南](https://www.worldcubeassociation.org/regulations/guidelines.html)已于 2022 年 1 月 1 日生效。详情请参阅[此前的公告](https://www.worldcubeassociation.org/posts/wca-regulations-january-2022)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.538Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "2f1df97a3cb0dd4651194692b49749b26652352f38fc95520eb69ef52f7679df"
+  "translationHash": "1db1044c916a102ec0a77f88a2ba1d56c1fade890b8127a2f03688f9cf868b30",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:09:46.861Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "979fc3d1d964013890835217b63f09e1de9b1544f046a32581b63979275a2b80",
+    "reviewedTranslationHash": "1db1044c916a102ec0a77f88a2ba1d56c1fade890b8127a2f03688f9cf868b30",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wca-regulations-january-2022-now-in-effect.json",
+    "sourceConcern": false,
+    "notes": [
+      "全文核对规则变更条件、数字、项目中文、权限强度及链接。"
+    ],
+    "inputTranslationHash": "2f1df97a3cb0dd4651194692b49749b26652352f38fc95520eb69ef52f7679df"
+  }
 }

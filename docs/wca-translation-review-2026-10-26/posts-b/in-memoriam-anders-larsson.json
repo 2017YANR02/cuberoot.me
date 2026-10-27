@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/in-memoriam-anders-larsson",
+  "path": "docs/wca-post-translations/entries/in-memoriam-anders-larsson.json",
+  "sourceHash": "a0491d5faebf778093580f305db0cc5baf15661ead0a8ac954c8b8fce813d28c",
+  "inputTranslationHash": "dc4e05ecec59a73aee7aefea5dbdbfedfaeb074f1bac729fad979f2a32c9500b",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:36.319Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

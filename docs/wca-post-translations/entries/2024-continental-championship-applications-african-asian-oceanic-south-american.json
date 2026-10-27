@@ -12,14 +12,33 @@
     "sourceId": 14093
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "7cec7a07f26cedd2d3af1380fa583c4fecc057bc5301c6a327a45ec0814e80b1",
     "language": "zh-Hans",
     "title": "2024 年非洲、亚洲、大洋洲及南美洲锦标赛申办进展",
     "content": "[2022 年 9 月](https://www.worldcubeassociation.org/posts/applications-for-wca-continental-championships-2024-october-2022)，WCA 董事会曾征集以下锦标赛的举办城市：\n\n* 2024 WCA 非洲锦标赛\n* 2024 WCA 亚洲锦标赛\n* 2024 WCA 大洋洲锦标赛\n* 2024 WCA 南美洲锦标赛\n\n截至 2022 年 11 月 30 日申请截止，上述赛事均未收到申办方案。因此，董事会将在 2023 年稍后再次开放申请。\n\n新的时间安排将于近期公布，敬请关注。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:54.093Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "bc81c9e6211cb06946592b036daa0d5ac86adc792609272e3be744704b1cc87a"
+  "translationHash": "8a6d3b3f80cc0edf3451359eb05ab88eea95f4d163c00bf0f800158c051a784c",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:05:11.621Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "7cec7a07f26cedd2d3af1380fa583c4fecc057bc5301c6a327a45ec0814e80b1",
+    "reviewedTranslationHash": "8a6d3b3f80cc0edf3451359eb05ab88eea95f4d163c00bf0f800158c051a784c",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/2024-continental-championship-applications-african-asian-oceanic-south-american.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+    ],
+    "inputTranslationHash": "bc81c9e6211cb06946592b036daa0d5ac86adc792609272e3be744704b1cc87a"
+  }
 }

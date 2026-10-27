@@ -1,0 +1,19 @@
+{
+  "key": "incidents:98",
+  "path": "docs/wca-log-translations/entries/incidents-98.json",
+  "sourceHash": "367b7cc232f1eec0ae6ab9a8ddce6615caf7f1bdf40eb18b3cee2952a5eb3e13",
+  "inputTranslationHash": "5d07d7a0f56e9dd793189a36ce77335fd972d9f5fbed94ecffe7ddf970f45db9",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "复用已通过的旧版全文独立审校；人工阅读旧版与现版全部文字差异及对应英文段落，确认本轮之前的差异限于官方机构名称或 Guidelines 的“指南”译法；另复核本轮项目名命中语境。",
+  "verdict": "pass",
+  "notes": [],
+  "changes": [],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/report-6.json",
+    "reviewedTranslationHash": "908f5ba11b87fa03314bee5f3a43f4d93487865d4738f80aa981ac3aa300442d",
+    "verdict": "pass",
+    "archivedVersion": "docs/wca-log-translations/versions/incidents-98/908f5ba11b87fa03314bee5f3a43f4d93487865d4738f80aa981ac3aa300442d-v1.json"
+  },
+  "sourceUncertainty": false
+}

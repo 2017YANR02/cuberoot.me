@@ -12,14 +12,33 @@
     "sourceId": 581
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "9980e8effc044c1c5360938d735ca1934b25dc4aa15f33b397213f93739fbf00",
     "language": "zh-Hans",
     "title": "Breandan Vallance 夺得 2009 年世界魔方锦标赛冠军",
     "content": "[Breandan Vallance](https://www.worldcubeassociation.org/results/p.php?i=2007VALL01) 以 10.74 秒的平均成绩夺得 [2009 年世界魔方锦标赛](https://www.worldcubeassociation.org/results/c.php?i=WC2009)冠军。[Erik Akkersdijk](https://www.worldcubeassociation.org/results/p.php?i=2005AKKE01) 以 11.52 秒获得亚军，[Tomasz Zolnowski](https://www.worldcubeassociation.org/results/p.php?i=2005ZOLN01) 以 11.64 秒获得季军。\n\n世界纪录：Dan Cohen，四阶单次 36.46 秒；Yumu Tabuchi，三阶单手平均 16.90 秒；Michal Halczuk，七阶单次 3:43.15；Piotr Michal Padlewski，Square-1 单次 10.96 秒；Bálint Bodor，五魔方单次 57.94 秒。\n\n亚洲纪录：Yumu Tabuchi，三阶最少步单次 29 步、四阶盲拧单次 8:41.85；Ryosuke Mondo，五阶盲拧单次 26:30.00。\n\n欧洲纪录：Erik Akkersdijk，四阶单次 39.43 秒；Michal Halczuk，七阶平均 4:01.23；Piotr Michal Padlewski，Square-1 平均 15.21 秒；Rafal Guzewicz，五阶盲拧单次 15:43.00。\n\n北美洲纪录：Dan Cohen，四阶平均 46.94 秒、五魔方单次 1:20.34、五魔方平均 1:27.30；Timothy Sun，三阶脚拧单次 58.38 秒。\n\n南美洲纪录：Pedro Santos Guimarães，四阶单次 53.30 秒、四阶平均 1:07.85、三阶单手单次 18.27 秒、五魔方平均 1:35.77、四阶盲拧单次 13:09.00；Renan Mondini Cerpe，二阶单次 3.33 秒。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.986Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "33d1086ab5f80e770eee13ace16d1642039aa45d99938a48464e9c763e70968e"
+  "translationHash": "92ba7744754ba6af21c2297e95f1855ff9277c45f2263aa17eb0cb6859ef8dd4",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:06:36.461Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "9980e8effc044c1c5360938d735ca1934b25dc4aa15f33b397213f93739fbf00",
+    "reviewedTranslationHash": "92ba7744754ba6af21c2297e95f1855ff9277c45f2263aa17eb0cb6859ef8dd4",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/breandan-vallance-wins-world-rubik-s-cube-championship-2009.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇全文对照：含招募资格、时限、工作量、程序、历史机构；比赛报告核对人物、项目、成绩与纪录类别。"
+    ],
+    "inputTranslationHash": "33d1086ab5f80e770eee13ace16d1642039aa45d99938a48464e9c763e70968e"
+  }
 }

@@ -12,14 +12,31 @@
     "sourceId": 2753
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "e42dbe717af4904fcc76add01b5b25c29383f68cbe4e50c99b2bc1bc66e83191",
     "language": "zh-Hans",
     "title": "WCA 服务器迁移完成",
     "content": "WCA 网站团队刚刚完成 www.worldcubeassociation.org 向新服务器的迁移。网站各部分应已恢复正常运行。\n\n如果遇到新的问题，请[联系 WCA 网站团队](https://www.worldcubeassociation.org/contact/website)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.934Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "81757c7d405405a8192cfe2cd0fbeb877083fd4abb91867dd7e5d3d4ec317d83"
+  "translationHash": "3bb1a403dfeac4c420ba863bb1ac78fd4b623c277391a2d7dceced67d26ae012",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:10:32.386Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "e42dbe717af4904fcc76add01b5b25c29383f68cbe4e50c99b2bc1bc66e83191",
+    "reviewedTranslationHash": "3bb1a403dfeac4c420ba863bb1ac78fd4b623c277391a2d7dceced67d26ae012",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wca-server-move.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "81757c7d405405a8192cfe2cd0fbeb877083fd4abb91867dd7e5d3d4ec317d83"
+  }
 }

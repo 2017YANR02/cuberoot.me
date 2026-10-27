@@ -41,8 +41,8 @@ export interface CompactSelectProps<T extends string | number> {
   /** Align option content with an external row containing the trigger. */
   contentAnchorRef?: RefObject<HTMLElement | null>;
   align?: 'start' | 'center';
-  /** Sidebars can reserve the trigger column by opening to its right. */
-  side?: 'vertical' | 'right';
+  /** Prefer above for message actions, or right for sidebars; still clamp to the viewport. */
+  side?: 'vertical' | 'right' | 'top';
   variant?: 'pill' | 'plain';
   /** Some icon-only triggers are self-explanatory and do not need a caret. */
   showArrow?: boolean;

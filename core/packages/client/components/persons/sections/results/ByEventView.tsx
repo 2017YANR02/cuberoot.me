@@ -398,7 +398,8 @@ const EventRoundsList = memo(function EventRoundsList({
     deps: [displayRows, count],
   });
 
-  // AoXR 列跨「同一场比赛」的全部轮次合并成一格:组首行记组大小(= rowSpan),其余行记 0 不出格。
+  // 比赛信息与 AoXR 列跨同场比赛的全部轮次，避免名称和日期单独撑高首轮。
+  // 组首行记组大小(= rowSpan),其余行记 0 不出格。
   // 两个约束:① 排序视图(sort.key 非空)行已被拉平打散,同场行不再相邻 → 每行各自出格;
   // ② 渐进渲染只挂前 count 行,合并格不能跨到尚未挂出的行 → 组大小按已挂出的部分截断。
   const aoxrSpans = useMemo(() => {
@@ -479,7 +480,7 @@ const EventRoundsList = memo(function EventRoundsList({
         className={`wp-row-anchorable ${showComp ? 'wp-row-comp-first' : ''} ${hasChange ? 'wp-row-changed' : ''} ${r.live ? 'wp-row-live' : ''} ${hasReconStats || hasTimingStats ? 'wp-row-has-recon-stats' : ''}`}
         onClick={(e) => handleRowClick(e, r.competition_id, r.round_type_id)}
       >
-        <td className="wp-cell-comp">
+        {aoxrSpan > 0 && <td className="wp-cell-comp" rowSpan={aoxrSpan}>
           {showComp && cmp && (
             <>
               <Link
@@ -490,7 +491,7 @@ const EventRoundsList = memo(function EventRoundsList({
             </>
           )}
           {showComp && !cmp && r.competition_id}
-        </td>
+        </td>}
         <td>
           <span className="wp-round-cell">
             <span className="wp-round-head">

@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/wfc-leader-announcement-september-2024",
+  "path": "docs/wca-post-translations/entries/wfc-leader-announcement-september-2024.json",
+  "sourceHash": "7b21e1b5a5127d3990aab253b67299a250ef98141cb6f78fc04ebfae952e7cbd",
+  "inputTranslationHash": "247e5d951e1df63787567977767a7614b53316cd145d5692912d4b99e640c3ba",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:10:59.922Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [
+    "完整核对案件归因、处分条件、匿名处理、数量及任命程序。"
+  ],
+  "changes": []
+}

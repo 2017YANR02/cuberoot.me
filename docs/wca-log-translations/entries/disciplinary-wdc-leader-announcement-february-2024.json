@@ -21,7 +21,7 @@
     "sourceHash": "2c5a9ee778ca43f2f01b0892f8faa6bac7fda28ce3d5b9216d3f8a69806046c2"
   },
   "review": {
-    "status": "pending_independent_recheck",
+    "status": "independently_verified",
     "checks": [
       "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
     ],
@@ -42,6 +42,22 @@
       "previousTranslationHash": "421b4ac95687f6a40d9149370f02e056c0ad75176eea7e3b0d820a958da3a531",
       "report": "../wca-translation-compliance-2026-10-25.json",
       "scope": "Targeted source comparison; independent prior evidence remains bound to the previous hash."
+    },
+    "recheck": {
+      "reviewer": "/root/review_logs",
+      "reviewedAt": "2026-10-26T11:10:07.703Z",
+      "report": "../wca-translation-review-2026-10-26/final-report.json",
+      "sourceHash": "2c5a9ee778ca43f2f01b0892f8faa6bac7fda28ce3d5b9216d3f8a69806046c2",
+      "reviewedTranslationHash": "0b2cdaec3ae70bd3d6391bbdda1763d079b29796e0dd3021fd5330d4d6ea96ff",
+      "verdict": "pass",
+      "scope": "复用已通过的旧版全文独立审校；人工阅读旧版与现版全部文字差异及对应英文段落，确认本轮之前的差异限于官方机构名称或 Guidelines 的“指南”译法；另复核本轮项目名命中语境。"
+    },
+    "currentReview": {
+      "round": "2026-10-26",
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/disciplinary-wdc-leader-announcement-february-2024.json",
+      "sourceConcern": false,
+      "notes": [],
+      "inputTranslationHash": "0b2cdaec3ae70bd3d6391bbdda1763d079b29796e0dd3021fd5330d4d6ea96ff"
     }
   },
   "publication": {

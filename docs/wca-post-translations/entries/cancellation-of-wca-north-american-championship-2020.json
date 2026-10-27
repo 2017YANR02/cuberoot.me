@@ -12,14 +12,33 @@
     "sourceId": 13967
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "688e2f9e1eb3b40137066bf76429f218a7a5e587b6ba57886912f41303ec269d",
     "language": "zh-Hans",
     "title": "2020 年 WCA 北美锦标赛取消",
     "content": "我们很遗憾地宣布，受新冠疫情影响，[2020 年 WCA 北美锦标赛](https://www.worldcubeassociation.org/competitions/NA2020)取消。鉴于局势仍不稳定、充满不确定性，比赛不会延期至今年晚些时候举行。已报名选手将获得退款，预计在接下来几周处理。主办方的正式取消公告见[此处](https://nachamps2020.com/cancellation)。\n\n感谢社区在这段充满不确定性的时期给予理解。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:00.949Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "dfa73fa3b2ec19bfbff3b2fea496df3cd33aaa0de96fb6295b57be6ec6f19d95"
+  "translationHash": "350239fcb93532331a51d6ac3568f12a49f2be6153886cc91abccefd909dc0b0",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:12:23.463Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "688e2f9e1eb3b40137066bf76429f218a7a5e587b6ba57886912f41303ec269d",
+    "reviewedTranslationHash": "350239fcb93532331a51d6ac3568f12a49f2be6153886cc91abccefd909dc0b0",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/cancellation-of-wca-north-american-championship-2020.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照标题和正文；各届赛事城市及取消/退款范围、董事候选名单、当选与连任区别、任期及生效日期、保留职务和干事分工均与原文一致。"
+    ],
+    "inputTranslationHash": "dfa73fa3b2ec19bfbff3b2fea496df3cd33aaa0de96fb6295b57be6ec6f19d95"
+  }
 }

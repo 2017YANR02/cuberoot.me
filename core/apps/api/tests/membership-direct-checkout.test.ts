@@ -16,6 +16,17 @@ const order = (body: object) => membershipRoutes.request('/membership/orders', {
   method: 'POST', headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ plan: 'monthly', channel: 'wechat', clientType: 'wap', language: 'zh', checkoutContext: 'android-direct', ...body }),
 });
+it('rejects enterprise checkout before creating an order or calling a provider', async () => {
+  expect((await order({ plan: 'enterprise_monthly' })).status).toBe(403);
+  expect(mocks.query.mock.calls.some(([sql]) => sql.includes('INSERT'))).toBe(false);
+  expect(mocks.wechat).not.toHaveBeenCalled();
+});
+it('allows verified enterprise managers to purchase', async () => {
+  mocks.query.mockImplementation(async (sql: string) => sql.includes('AS eligible') ? [{ eligible: true }]
+    : sql.includes('FROM membership_plans') ? [{ slug: 'enterprise_monthly', name_zh: '企业月度会员', price_cents: 39900, currency: 'CNY' }] : []);
+  expect((await order({ plan: 'enterprise_monthly' })).status).toBe(200);
+  expect(mocks.wechat).toHaveBeenCalledTimes(1);
+});
 it('uses the existing order pipeline and a return page that makes no payment claim', async () => {
   const response = await order({ channel: 'alipay' });
   expect(response.status).toBe(200);

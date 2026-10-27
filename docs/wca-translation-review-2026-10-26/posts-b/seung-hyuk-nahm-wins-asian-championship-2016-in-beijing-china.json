@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/seung-hyuk-nahm-wins-asian-championship-2016-in-beijing-china",
+  "path": "docs/wca-post-translations/entries/seung-hyuk-nahm-wins-asian-championship-2016-in-beijing-china.json",
+  "sourceHash": "98bb1a517ac067600300561dc8209fd508f70d4cc243149e69b16a84787c2a7e",
+  "inputTranslationHash": "135f599e27b565eaa528579895a482240f917514aa4dcd31e536c596c8f82448",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:33.088Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

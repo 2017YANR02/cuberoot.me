@@ -12,16 +12,33 @@
     "sourceId": 12543
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "7b2aedd6c30e26830a5e47a490175d947b3eeb40686dae87c9cafa7d8cf43db6",
     "language": "zh-Hans",
     "title": "WCA 软件组招募成员（2019 年 7 月）",
     "content": "WCA 软件组（WST）正在招募新成员！所有人都可以申请，不要求目前在 WCA 任职。WST 通过开发、扩展和维护各类软件，帮助 WCA 应对社区的持续增长，是协会运作的重要一环。这些软件包括：\n\n* WCA 网站。\n* TNoodle。\n* Workbook Assistant。\n\n以上项目均已开源，可在 WCA 的 GitHub 上找到。项目采用的技术多种多样，包括 Ruby on Rails、JavaScript、CSS、MySQL、Chef、React、Java 等，欢迎不同技术背景的开发者申请！\n\n有意申请者，请通过 **afiol@worldcubeassociation.org 联系 WST 项目经理 Alberto Pérez de Rada Fiol**，作自我介绍并说明开发经验。如果还能介绍自己为 WCA 所做的工作，以及加入团队后的目标，将更有助于申请。\n\n目前，团队优先推进的项目有：\n\n1. 网站改版：\n   * 将旧 PHP 网站的剩余部分迁移至 Ruby on Rails。\n   * 实现已经准备好的新版设计。\n2. WCA Live：\n   * 建立现代化的实时成绩平台，并能与其他软件通信。\n3. WCA 论坛：\n   * 搭建 Discourse 论坛，并接入多项集成功能。\n\n申请者须先为项目作出贡献，之后才会收到正式入队邀请。为方便入门，网站项目的一些问题已标记为 [good first issues](https://github.com/thewca/worldcubeassociation.org/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22) 和 [good second issues](https://github.com/thewca/worldcubeassociation.org/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+second+issue%22)。\n\n符合要求的申请者将陆续加入团队。WST 长期欢迎新成员，感兴趣的开发者随时都可以联系我们！\n\n感谢大家的申请和支持！",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.165Z",
-    "reviewStatus": "pending_independent_review",
-    "revisedAt": "2026-10-25T07:28:01.629Z",
-    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "d8b4018a8afc4d362348ddff65f9917aeaf5c966b3a004aaab1c7c196061ae96"
+  "translationHash": "9db571b71062610c58db0f3c71abafe28f258ea02413a139dbd7ec9e5962f33e",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:11:22.963Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "7b2aedd6c30e26830a5e47a490175d947b3eeb40686dae87c9cafa7d8cf43db6",
+    "reviewedTranslationHash": "9db571b71062610c58db0f3c71abafe28f258ea02413a139dbd7ec9e5962f33e",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/call-for-applicants-wst-members-july-2019.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照标题及正文；核对软件技术专名、申请要求及申请期、历史 WAC 缩写和申诉流程、新旧任命程序。"
+    ],
+    "inputTranslationHash": "d8b4018a8afc4d362348ddff65f9917aeaf5c966b3a004aaab1c7c196061ae96"
+  }
 }

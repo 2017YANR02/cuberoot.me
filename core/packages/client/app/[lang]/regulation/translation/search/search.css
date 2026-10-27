@@ -1,0 +1,29 @@
+.translation-search { margin: 24px 0 40px; min-width: 0; }
+.translation-search-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 12px 24px; margin-bottom: 28px; }
+.translation-search-heading h1 { font-size: clamp(26px, 4vw, 36px); line-height: 1.25; margin: 0; }
+.translation-search-heading a { font-size: 14px; }
+.translation-search-input { width: 100%; }
+.translation-search-status { min-height: 1.5em; margin: 16px 0; color: var(--muted-foreground); font-size: 13px; }
+.translation-search-examples { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; font-size: 14px; color: var(--muted-foreground); }
+.translation-search-examples button { appearance: none; border: 0; background: none; color: var(--accent); cursor: pointer; padding: 12px 0; font: inherit; }
+.translation-search-examples button:hover { text-decoration: underline; }
+.translation-search-columns, .translation-search-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
+.translation-search-columns { padding: 8px 0 12px; color: var(--muted-foreground); font-size: 13px; border-bottom: 1px solid var(--border-default); }
+.translation-search-result { padding: 16px 0; border-bottom: 1px solid var(--border-default); }
+.translation-search-pair p { margin: 0 0 10px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+.translation-search-label { display: none; }
+.translation-search-target { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.translation-search-target > p { flex: 1; min-width: 0; margin: 0; }
+.translation-search-target > .info-tooltip { flex: none; }
+.translation-search-target > .translation-search-label { flex-basis: 100%; }
+.translation-search-info { display: grid; gap: 8px; }
+.translation-search a { color: var(--accent); text-underline-offset: 3px; }
+.translation-search a:hover { text-decoration: underline; }
+.translation-search-note { color: var(--signal-warning); }
+.translation-search-fallback { display: inline-block; margin-top: 20px; font-size: 14px; }
+@media (max-width: 600px) {
+  .translation-search-heading { margin-bottom: 20px; }
+  .translation-search-columns { display: none; }
+  .translation-search-pair { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .translation-search-label { display: block; margin-bottom: 4px; font-size: 11px; color: var(--muted-foreground); }
+}

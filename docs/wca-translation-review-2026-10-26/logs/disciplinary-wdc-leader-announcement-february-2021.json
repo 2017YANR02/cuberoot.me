@@ -1,0 +1,19 @@
+{
+  "key": "disciplinary:/posts/wdc-leader-announcement-february-2021",
+  "path": "docs/wca-log-translations/entries/disciplinary-wdc-leader-announcement-february-2021.json",
+  "sourceHash": "8c636510d099a1c5019169830e8b238b35019a158503a183383bf70c21fb99ca",
+  "inputTranslationHash": "297fd860b1f19ca09a4e9fc94b06da14d6c955f1053d95fa7f5c1bcc181a35a7",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "复用已通过的旧版全文独立审校；人工阅读旧版与现版全部文字差异及对应英文段落，确认本轮之前的差异限于官方机构名称或 Guidelines 的“指南”译法；另复核本轮项目名命中语境。",
+  "verdict": "pass",
+  "notes": [],
+  "changes": [],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/report-1.json",
+    "reviewedTranslationHash": "b2bd01b43b7f68a9841de98439681c41d62f458ba67abe33780694652e543bc0",
+    "verdict": "pass",
+    "archivedVersion": "docs/wca-log-translations/versions/disciplinary-wdc-leader-announcement-february-2021/b2bd01b43b7f68a9841de98439681c41d62f458ba67abe33780694652e543bc0-v1.json"
+  },
+  "sourceUncertainty": false
+}

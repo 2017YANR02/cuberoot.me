@@ -12,14 +12,33 @@
     "sourceId": 8331
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "4da4cc87f3b050fa8949b287391d84828d5d2977aa7cdb442fe87b30551532ec",
     "language": "zh-Hans",
     "title": "三位新高级代表任命公告（2017 年 11 月）",
     "content": "各位 WCA 社区成员：\n\n我们很高兴地宣布，世界魔方协会任命了三位新的高级代表！\n\n**东亚**岗位收到了 Baiqiang Dong（董百强）的申请。经过讨论，董事会认为他符合任职条件，并选定他担任此职。**Baiqiang Dong（董百强）**已接受任命。\n\n**美国东部及加拿大**岗位收到了 Dave Campbell 和 Tim Reynolds 的申请。经过讨论，董事会认为两人都符合任职条件。投票后，**Tim Reynolds** 当选，并已接受任命。\n\n**美国西部**岗位收到了 Kit Clement、Shelley Chang 和 Shonathon Collins 的申请。经过讨论，董事会认为三人均符合任职条件。投票后，**Kit Clement** 当选，并已接受任命。\n\n三位新高级代表的任命即刻生效。愿意公开申请材料的候选人，其材料可在[此处](https://drive.google.com/open?id=18ulIDVXqjBmAwQsRE2Mp_i8JzBFQ20dY)查看。\n\n感谢六位申请人愿意在已有工作之外，为 WCA 和速拧社区承担更多责任。祝各位新高级代表履新顺利！\n\n（Lauren Clement 代表世界魔方协会发布）",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.926Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "8a1b76f56f65ca831e8ba0c45aa04e132137d030caa27486c85cacf2d58e6f79"
+  "translationHash": "ca620ae8ab348a14cf833a5a03e311061234825883ae5ceb047286bc9079ab20",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:06:14.456Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "4da4cc87f3b050fa8949b287391d84828d5d2977aa7cdb442fe87b30551532ec",
+    "reviewedTranslationHash": "ca620ae8ab348a14cf833a5a03e311061234825883ae5ceb047286bc9079ab20",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/appointment-of-three-new-senior-delegates-november-2017.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照正文与标题；核对全部申请/任命主体、时间、权限、附录条目及材料要求。"
+    ],
+    "inputTranslationHash": "8a1b76f56f65ca831e8ba0c45aa04e132137d030caa27486c85cacf2d58e6f79"
+  }
 }

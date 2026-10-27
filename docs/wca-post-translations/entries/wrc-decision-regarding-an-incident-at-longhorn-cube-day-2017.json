@@ -12,14 +12,33 @@
     "sourceId": 8340
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "91cc143c35ca22873b497f54e3ac7d5f9727ae75629fdddd787316589415d633",
     "language": "zh-Hans",
-    "title": "WRC 对 Longhorn Cube Day 2017 意外事件的裁定",
+    "title": "WCA 规则委员会对 Longhorn Cube Day 2017 意外事件的裁定",
     "content": "亲爱的 WCA 社区成员：\n\n在 Longhorn Cube Day 2017 的三阶盲拧第三轮中，一名未满 18 岁的选手使用了带有叠加贴纸、不符合规定的魔方。这一事件受到特别关注，因为它涉及一次 17.35 秒的单次成绩；该成绩原本将成为新的三阶盲拧世界纪录。\n\nWCA 规则要求魔方必须经过 WCA 代表批准。遗憾的是，本轮比赛前未进行这项检查，因此赛事代表决定给予该选手本轮的暂定额外还原机会。WRC 现已决定，用这些暂定额外还原替代原来的还原。成绩将由 DNF、DNF、17.35 改为 29.40、21.78、DNF。\n\n我们为这名选手感到非常遗憾。不过，我们也提醒大家，WCA 规则要求每位选手熟悉规则，并且只提供符合全部规定的魔方。原来的还原违反了规则，而现有有效的替代还原，因此我们认为这是正确的决定。这也与其他比赛中的多个先例一致；仅因为涉及一项可能破纪录的成绩，就对本次事件采取不同处理，并不公平。\n\n此致\n\nLaura Ohrndorf，代表 WCA 规则委员会（WRC）",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.152Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "ab2df6330405d6c759be04453e8173170e2e831857b9029a6ef168c18362bbee"
+  "translationHash": "19165aff8ed72623b940524a1cd1b7e1a818adb42367e029020f752084e37934",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:18:46.446Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "91cc143c35ca22873b497f54e3ac7d5f9727ae75629fdddd787316589415d633",
+    "reviewedTranslationHash": "19165aff8ed72623b940524a1cd1b7e1a818adb42367e029020f752084e37934",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wrc-decision-regarding-an-incident-at-longhorn-cube-day-2017.json",
+    "sourceConcern": false,
+    "notes": [
+      "未成年人匿名、17.35及29.40/21.78/DNF替代成绩、暂定补赛与裁定理由完整核对。"
+    ],
+    "inputTranslationHash": "ab2df6330405d6c759be04453e8173170e2e831857b9029a6ef168c18362bbee"
+  }
 }

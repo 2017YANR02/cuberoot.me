@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/changes-in-the-wca-board-of-directors-june-2024",
+  "path": "docs/wca-post-translations/entries/changes-in-the-wca-board-of-directors-june-2024.json",
+  "sourceHash": "4c8ae2a9821fe4a63ae43476a5125f8394fd82a6588b7ec75e9f747343ac90ea",
+  "inputTranslationHash": "3d9ada7d22088c5baaedacd6f7626906f2521a4c3e603e715519bdfef655ae39",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:12:23.465Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题和正文；各届赛事城市及取消/退款范围、董事候选名单、当选与连任区别、任期及生效日期、保留职务和干事分工均与原文一致。"
+  ],
+  "changes": []
+}

@@ -1,0 +1,27 @@
+{
+  "key": "posts:/posts/call-for-applicants-weat-members-april-2022",
+  "source": {
+    "key": "posts:/posts/call-for-applicants-weat-members-april-2022",
+    "kind": "posts",
+    "title": "Call For Applicants - WEAT Members (April 2022)",
+    "date": "2022-04-21T03:06:30.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/call-for-applicants-weat-members-april-2022",
+    "content": "The **WCA Executive Assistants Team** is seeking new members!\n\nThe WCA Executive Assistants Team (WEAT) is a team that assists the WCA Board with administrative tasks. The rights and duties of the WEAT can be found [here](https://www.worldcubeassociation.org/documents/motions/10.2021.5%20-%20Executive%20Assistants%20Team.pdf).\n<!-- break -->\nThe following are the expected requirements for applicant:\n\n* Commitment of approximately 2-4 hours per week\n* Strong organizational skills\n* Good communication skills\n* Trustworthiness\n\nThe candidacy documents must be in **PDF format**, and must include:\n\n* Brief personal introduction.\n* Summary of activities done for the WCA Community.\n* Reasons you are fit for the role.\n\nApplications should be sent to [board@worldcubeassociation.org](mailto:board@worldcubeassociation.org) from now until **May 16th, 2022, 23:59 UTC** to be considered.",
+    "hash": "a865e979a03ea2723626126f5025d5719d7043b16ab3626fd8a06030e72ef8dc",
+    "format": "markdown",
+    "sourceId": 14054
+  },
+  "translation": {
+    "version": 2,
+    "sourceHash": "a865e979a03ea2723626126f5025d5719d7043b16ab3626fd8a06030e72ef8dc",
+    "language": "zh-Hans",
+    "title": "招募 WCA 董事会助理团队成员（2022 年 4 月）",
+    "content": "**WCA 董事会助理团队**正在招募新成员！\n\nWCA 董事会助理团队（WEAT）协助 WCA 董事会处理行政事务。WEAT 的权利与职责可在[这里](https://www.worldcubeassociation.org/documents/motions/10.2021.5%20-%20Executive%20Assistants%20Team.pdf)查看。\n\n我们希望申请者具备以下条件：\n\n* 每周可投入约 2–4 小时。\n* 较强的组织能力。\n* 良好的沟通能力。\n* 值得信赖。\n\n申请材料须为 **PDF 格式**，并包含：\n\n* 简短的个人介绍。\n* 曾为 WCA 社区开展的工作概述。\n* 你适合这一职位的理由。\n\n请于即日起至 **2022 年 5 月 16 日 23:59 UTC**，将申请发送至 [board@worldcubeassociation.org](mailto:board@worldcubeassociation.org)。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:45:43.532Z",
+    "reviewStatus": "pending_independent_review",
+    "revisedAt": "2026-10-25T07:28:01.629Z",
+    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+  },
+  "translationHash": "2ecb4aa89558803b649b97b14e8a26d11d712d6a3030ed192a3d75fd1b2c6b9b"
+}

@@ -12,14 +12,33 @@
     "sourceId": 13978
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "c6421751cc55eaa06f91a17880eb9198c7b9e1869fb8e1155829d45d63c276fd",
     "language": "zh-Hans",
-    "title": "2021 年世界锦标赛及 2022 年洲际锦标赛申办情况",
-    "content": "2021 年世界锦标赛及 2022 年洲际锦标赛的申办现已截止。感谢所有提交方案的团队！以下城市已提交申请，董事会将从中选定举办地。\n\n**2021 年世界锦标赛：**\n\n- 荷兰阿尔梅勒\n- 俄罗斯符拉迪沃斯托克\n\n**2022 年亚洲锦标赛：**\n\n- 哈萨克斯坦塞梅伊\n\n**2022 年欧洲锦标赛：**\n\n- 丹麦哥本哈根\n\n**2022 年北美锦标赛：**\n\n- 加拿大多伦多\n\n决定确定后，将公布申办材料。",
+    "title": "2021 年世界锦标赛及 2022 年大洲锦标赛申办情况",
+    "content": "2021 年世界锦标赛及 2022 年大洲锦标赛的申办现已截止。感谢所有提交方案的团队！以下城市已提交申请，董事会将从中选定举办地。\n\n**2021 年世界锦标赛：**\n\n- 荷兰阿尔梅勒\n- 俄罗斯符拉迪沃斯托克\n\n**2022 年亚洲锦标赛：**\n\n- 哈萨克斯坦塞梅伊\n\n**2022 年欧洲锦标赛：**\n\n- 丹麦哥本哈根\n\n**2022 年北美锦标赛：**\n\n- 加拿大多伦多\n\n决定确定后，将公布申办材料。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:54.058Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "a14964715d745a5a87b4d032fdd76f147c54a4a82d6ebfa61c5ce95dcd18a244"
+  "translationHash": "57c79f48ed37eacb8e4c5c17757eb39f48d556f9844646ffe8882de00c4a6458",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:17:10.159Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "c6421751cc55eaa06f91a17880eb9198c7b9e1869fb8e1155829d45d63c276fd",
+    "reviewedTranslationHash": "57c79f48ed37eacb8e4c5c17757eb39f48d556f9844646ffe8882de00c4a6458",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/applications-for-worlds-championship-2021-and-continental-championships-2022.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照正文与标题；核对全部申请/任命主体、时间、权限、附录条目及材料要求。"
+    ],
+    "inputTranslationHash": "a14964715d745a5a87b4d032fdd76f147c54a4a82d6ebfa61c5ce95dcd18a244"
+  }
 }

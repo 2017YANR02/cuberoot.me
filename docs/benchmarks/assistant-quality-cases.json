@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "S11", "category": "site", "split": "development", "lang": "zh",
+      "question": "按本站多盲规则说明，如果尝试4个、成功2个、失败2个，其他规则都满足，0分一定是DNF吗？",
+      "expected": "不是。至少成功2个且成功数等于失败数，净分0不因此判DNF；净分负数或只成功1个才触发9f12c的DNF条件。",
+      "toolPolicy": "pages", "expectedRoutes": ["/regulation/multi-blind"], "requiredTerms": ["0"], "sourceRoutes": ["/regulation/multi-blind"]
+    },
+    {
+      "id": "S12", "category": "site", "split": "development", "lang": "zh",
+      "question": "按本站最少步规则，开始信号前能写哪些东西？使用带打乱的纸时身份信息写哪里？是否有代表例外？",
+      "expected": "开始前只能写身份信息；带打乱的纸须写在另一面；其他内容通常DNF，代表认为没有获利时可例外。不能错误说开始前可以写打乱。",
+      "toolPolicy": "pages", "expectedRoutes": ["/regulation/fewest-moves"], "sourceRoutes": ["/regulation/fewest-moves"]
+    },
+    {
+      "id": "S13", "category": "site", "split": "development", "lang": "zh",
+      "question": "本站速拧规则里的魔方放垫子上，是启动计时前还是整个还原过程？能放在计时器上启动吗？",
+      "expected": "观察后启动前整体在垫上，不能压在计时器上，启动时不能接触魔方；启动后可拿起还原。",
+      "toolPolicy": "pages", "expectedRoutes": ["/regulation/speed-solving"], "sourceRoutes": ["/regulation/speed-solving"]
+    },
+    {
+      "id": "S14", "category": "site", "split": "development", "lang": "zh",
+      "question": "请根据本站的群论共轭页面，解释 setup move 怎么把一个已有操作作用到别的位置，并给出页面链接。",
+      "expected": "读取真实共轭页面，解释准备操作、已有操作、撤销准备操作，给出正确页面链接。不得因索引导航占位没有正文就声称页面没有内容。",
+      "toolPolicy": "pages", "expectedRoutes": ["/math/group/conjugation"], "sourceRoutes": ["/math/group/conjugation"]
+    },
+    {
+      "id": "S15", "category": "site", "split": "development", "lang": "en",
+      "question": "According to this site's multi-blind rules, is solving 2 out of 4 cubes automatically a DNF because the score is zero, assuming all other requirements are met?",
+      "expected": "No. Two solved and two unsolved give zero points without satisfying the 9f12c DNF condition; distinguish fewer than zero points or only one solved cube.",
+      "toolPolicy": "pages", "expectedRoutes": ["/regulation/multi-blind"], "sourceRoutes": ["/regulation/multi-blind"]
+    }
+  ]
+}

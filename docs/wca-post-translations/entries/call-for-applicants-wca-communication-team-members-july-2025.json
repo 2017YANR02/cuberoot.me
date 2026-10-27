@@ -12,7 +12,7 @@
     "sourceId": 14209
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "97948e39909bd4426a1dc392f9406a226d4fc5bcab81d8318208722b9ef8bf60",
     "language": "zh-Hans",
     "title": "WCA 通讯组成员招募（2025 年 7 月）",
@@ -21,7 +21,26 @@
       "原文动议链接文字为 10.2024.1，实际链接指向 10.2025.1，均按原文保留。"
     ],
     "translatedAt": "2026-10-25T09:29:00.725Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "3f11080888b64059205a9280002145b02ef4cb30b56975651a936b948f518644"
+  "translationHash": "bd92d9b2b19f86da44c6f60f56de9d60f93e2be3dcfb4ba566463cf945ef8242",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:07:01.627Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "97948e39909bd4426a1dc392f9406a226d4fc5bcab81d8318208722b9ef8bf60",
+    "reviewedTranslationHash": "bd92d9b2b19f86da44c6f60f56de9d60f93e2be3dcfb4ba566463cf945ef8242",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/call-for-applicants-wca-communication-team-members-july-2025.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照招募正文、职责条目、必需/可选资格、年龄、时限和程序；未扩展外链材料。"
+    ],
+    "inputTranslationHash": "3f11080888b64059205a9280002145b02ef4cb30b56975651a936b948f518644"
+  }
 }

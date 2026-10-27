@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applications-wca-quality-assurance-committee-leader-october-2025",
+  "path": "docs/wca-post-translations/entries/call-for-applications-wca-quality-assurance-committee-leader-october-2025.json",
+  "sourceHash": "308d37f4039f271938dd163926f30bc888fdf6aeeebe1e63d5743bd1a79fedf2",
+  "inputTranslationHash": "5938ed8ba48863afa1b181c7826ddcb4421c4f0664fe948d2578fe4c346409bf",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:12:00.207Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照正文及标题；申请条件、薪酬福利和地域、岗位职责、2024/2025 任命程序及 2019 草案条目逐项核对。"
+  ],
+  "changes": []
+}

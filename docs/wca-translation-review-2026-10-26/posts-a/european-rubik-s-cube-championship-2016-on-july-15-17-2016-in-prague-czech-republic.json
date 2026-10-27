@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/european-rubik-s-cube-championship-2016-on-july-15-17-2016-in-prague-czech-republic",
+  "path": "docs/wca-post-translations/entries/european-rubik-s-cube-championship-2016-on-july-15-17-2016-in-prague-czech-republic.json",
+  "sourceHash": "02bc9862100b5492ab5a0481eb4fd7be98288dc083714a7fc4c2ceaaf294bc3b",
+  "inputTranslationHash": "dcaa74d9376b23f328caf6c02e40847b7a3821ff0dc96b60968bf13a80f9a66b",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:13:29.852Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题与正文；疫情取消区间/新赛条件、COO履历与金额人数、赛事日期地点、意向征集要求及各条历史纪录的选手/项目/单次平均/数值逐项核对一致。"
+  ],
+  "changes": []
+}

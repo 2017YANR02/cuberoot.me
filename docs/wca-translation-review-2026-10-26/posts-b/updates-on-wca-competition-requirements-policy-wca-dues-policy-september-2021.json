@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/updates-on-wca-competition-requirements-policy-wca-dues-policy-september-2021",
+  "path": "docs/wca-post-translations/entries/updates-on-wca-competition-requirements-policy-wca-dues-policy-september-2021.json",
+  "sourceHash": "a060cf7724e705c050a1d08a16df6f22b515e3d75d271b29b4e7f62ff3514e4f",
+  "inputTranslationHash": "1fb48912b1d9220a2137bd2b7913e1877c8ea5bb3fb159fadf270bec293ba2e4",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:59.336Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

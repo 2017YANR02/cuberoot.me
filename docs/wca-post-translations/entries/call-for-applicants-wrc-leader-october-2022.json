@@ -12,7 +12,7 @@
     "sourceId": 14076
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "c7a64776656a96cebec876ad23331688ce481fbc1c791f60c5ebc633022e442c",
     "language": "zh-Hans",
     "title": "WCA 规则委员会招募负责人（2022 年 10 月）",
@@ -21,7 +21,26 @@
       "原文两条 PDF 链接含未编码空格；译文以 Markdown 尖括号包围完整目标，未改变 URL。"
     ],
     "translatedAt": "2026-10-22T08:55:56.314Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "7f9650a062cfa5ed91375f5cd5517a123fb5aa57e060997918a17f1500b2734f"
+  "translationHash": "e1311ee702fdbb8388c00dfd9a18b16b8f9b3eedfbe5b005acc8641806865815",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:11:12.893Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "c7a64776656a96cebec876ad23331688ce481fbc1c791f60c5ebc633022e442c",
+    "reviewedTranslationHash": "e1311ee702fdbb8388c00dfd9a18b16b8f9b3eedfbe5b005acc8641806865815",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/call-for-applicants-wrc-leader-october-2022.json",
+    "sourceConcern": false,
+    "notes": [
+      "已完整对照标题与正文；核对规则/成绩/质量保证团队职责、必需与可选资格、招募人数、任期工时及各篇申请日期、联系人与投票程序。历史 Guidelines 按参考保留指南。"
+    ],
+    "inputTranslationHash": "7f9650a062cfa5ed91375f5cd5517a123fb5aa57e060997918a17f1500b2734f"
+  }
 }

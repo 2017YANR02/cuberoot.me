@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/wca-regulations-february-2023-now-in-effect",
+  "path": "docs/wca-post-translations/entries/wca-regulations-february-2023-now-in-effect.json",
+  "sourceHash": "9ed716e1662c2a2a758e8539457fa8295424db5809ef3920e059a53b18c9f27d",
+  "inputTranslationHash": "f0a74b9d8bc17eda670beb505dcda4690256c220e6ebc50fd7b19759058e7157",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:09:31.431Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [
+    "已核对完整正文、规则编号、日期、条件及项目术语。"
+  ],
+  "changes": []
+}

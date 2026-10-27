@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/wca-world-championship-2021-cancellation",
+  "path": "docs/wca-post-translations/entries/wca-world-championship-2021-cancellation.json",
+  "sourceHash": "c68eb4cfde1b8f9dbaa0db3ad3a07a9f04b22cc9dfa33b19f8c65f46c4ac4947",
+  "inputTranslationHash": "8346ae1910cc8f46f284c087d6d4e1799a359520992a00740b81e117b5530349",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:10:42.567Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [
+    "全文核对；历史公告的当时判断、参赛人数、日期及任命程序均保留。"
+  ],
+  "changes": []
+}

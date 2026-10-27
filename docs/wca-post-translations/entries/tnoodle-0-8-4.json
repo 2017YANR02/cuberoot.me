@@ -12,14 +12,31 @@
     "sourceId": 3171
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "a951ea82e2fd3c316d3f99518e7c88c64c8b3ac400be489c1ad25e0d7d06a754",
     "language": "zh-Hans",
     "title": "TNoodle 0.8.4",
     "content": "TNoodle 0.8.4 现已可从[https://www.worldcubeassociation.org/regulations/scrambles](https://www.worldcubeassociation.org/regulations/scrambles)下载。\n\n与 TNoodle 0.8.2 相比，本版修复了以下问题：\n\n- 修复六阶打乱可能包含多余转动的问题。\n\n请记住，正式比赛必须始终使用官方打乱程序当前的版本，可随时从[https://www.worldcubeassociation.org/regulations/scrambles/](https://www.worldcubeassociation.org/regulations/scrambles/)下载。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.992Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "df29f5f057469ebfa83bdd85d1511aa5ab6f61dae5ec03f3da74ec14e0dcc7bb"
+  "translationHash": "233346759b41297bd48f85185574cefebb73c41f706f4cb95b288604a1338973",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:48.603Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "a951ea82e2fd3c316d3f99518e7c88c64c8b3ac400be489c1ad25e0d7d06a754",
+    "reviewedTranslationHash": "233346759b41297bd48f85185574cefebb73c41f706f4cb95b288604a1338973",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/tnoodle-0-8-4.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "df29f5f057469ebfa83bdd85d1511aa5ab6f61dae5ec03f3da74ec14e0dcc7bb"
+  }
 }

@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/wca-server-move",
+  "source": {
+    "key": "posts:/posts/wca-server-move",
+    "kind": "posts",
+    "title": "WCA Server Move",
+    "date": "2013-08-08T21:02:56.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/wca-server-move",
+    "content": "The WCA website team has just completed a move of www.worldcubeassociation.org to a new server. All parts of the site should be up and running again.\n \n If you are encountering new issues, please [contact the wca-website team](https://www.worldcubeassociation.org/contact/website).",
+    "hash": "e42dbe717af4904fcc76add01b5b25c29383f68cbe4e50c99b2bc1bc66e83191",
+    "format": "markdown",
+    "sourceId": 2753
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "e42dbe717af4904fcc76add01b5b25c29383f68cbe4e50c99b2bc1bc66e83191",
+    "language": "zh-Hans",
+    "title": "WCA 服务器迁移完成",
+    "content": "WCA 网站团队刚刚完成 www.worldcubeassociation.org 向新服务器的迁移。网站各部分应已恢复正常运行。\n\n如果遇到新的问题，请[联系 WCA 网站团队](https://www.worldcubeassociation.org/contact/website)。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:55:00.934Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "81757c7d405405a8192cfe2cd0fbeb877083fd4abb91867dd7e5d3d4ec317d83"
+}

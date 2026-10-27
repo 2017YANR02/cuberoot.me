@@ -12,14 +12,31 @@
     "sourceId": 3095
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "c17e881c5b9a987cb23afccba4c87b57ddb1388524a615fb54fd52140de9cbe7",
     "language": "zh-Hans",
     "title": "打乱程序更新：TNoodle 0.8.0",
     "content": "TNoodle 0.8.0 正式版现已发布，可在 https://www.worldcubeassociation.org/regulations/scrambles 获取。\n\n本次更新包括：\n\n- 支持斜转。\n- 按照[规则 4b3a](https://www.worldcubeassociation.org/regulations/#4b3a)，为盲拧项目随机设置魔方朝向。\n- TNoodle 联网后如检测到新版本，会显示新版下载链接。\n- .zip 压缩包现包含一个 HTML 文件，其中的链接可按相同轮次赛制重新生成一套打乱。\n\n请注意，正式比赛必须始终使用当前版本的官方打乱程序。最新版始终可在 https://www.worldcubeassociation.org/regulations/scrambles/ 获取。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.157Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "ada3790df77e0db653b0fad5422b63903c3f8253261f8ce48ad2cc3836c55a83"
+  "translationHash": "bd0f9e4b50bc84e27325c99dfa6e8b581cdc211676f872022093ce2c18a37071",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:15.858Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "c17e881c5b9a987cb23afccba4c87b57ddb1388524a615fb54fd52140de9cbe7",
+    "reviewedTranslationHash": "bd0f9e4b50bc84e27325c99dfa6e8b581cdc211676f872022093ce2c18a37071",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/scrambling-program-update-tnoodle-0-8-0.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "ada3790df77e0db653b0fad5422b63903c3f8253261f8ce48ad2cc3836c55a83"
+  }
 }

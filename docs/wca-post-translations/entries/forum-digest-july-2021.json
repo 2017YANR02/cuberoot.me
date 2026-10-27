@@ -12,7 +12,7 @@
     "sourceId": 14028
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "c31b83a7b2c9a6e4e932c7900ff4e1db820b663c600cd23161b96040d697886c",
     "language": "zh-Hans",
     "title": "WCA 论坛精选（2021 年 7 月）",
@@ -21,7 +21,24 @@
       "原文“WCA Github here”未附超链接，译文不猜补。世锦赛报名与举办地信息按本公告发布时内容保留。"
     ],
     "translatedAt": "2026-10-22T08:49:54.034Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "4a016f4be288e1f6bd0744507855f521d280c72b98d82a4c810da096eb5a204e"
+  "translationHash": "00b248c6430cebbc4215acabe454e6d67e3fab28d75ca63059b5d4f9ba85b0a1",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:36.319Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "c31b83a7b2c9a6e4e932c7900ff4e1db820b663c600cd23161b96040d697886c",
+    "reviewedTranslationHash": "00b248c6430cebbc4215acabe454e6d67e3fab28d75ca63059b5d4f9ba85b0a1",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/forum-digest-july-2021.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "4a016f4be288e1f6bd0744507855f521d280c72b98d82a4c810da096eb5a204e"
+  }
 }

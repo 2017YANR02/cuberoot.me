@@ -23,7 +23,7 @@
     "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
   },
   "review": {
-    "status": "pending_independent_recheck",
+    "status": "independently_verified",
     "checks": [
       "译文对照所提供的完整正文；保留匿名、处置及不确定性措辞。"
     ],
@@ -48,6 +48,24 @@
       "at": "2026-10-25T07:28:01.629Z",
       "previousTranslationHash": "c84888b221a40b6e69364ddfe5ede276f96f85a7751d75efa64c8ee16cabc479",
       "scope": "机构名称专项校订；此前独立审校证据仍绑定旧译文，不视为新版本独立审校。"
+    },
+    "recheck": {
+      "reviewer": "/root/review_logs",
+      "reviewedAt": "2026-10-26T11:10:07.703Z",
+      "report": "../wca-translation-review-2026-10-26/final-report.json",
+      "sourceHash": "e247c3d40e5748a0a67ec53e028529f85498dc507a21f5504f48c9019d8444ed",
+      "reviewedTranslationHash": "bc31a622a5c089f5946af54a6c84730fcc235149a64209e5a2e59de342627b5b",
+      "verdict": "pass",
+      "scope": "复用已通过的旧版全文独立审校；人工阅读旧版与现版全部文字差异及对应英文段落，确认本轮之前的差异限于官方机构名称或 Guidelines 的“指南”译法；另复核本轮项目名命中语境。"
+    },
+    "currentReview": {
+      "round": "2026-10-26",
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/disciplinary-wdc-digest-september-2022.json",
+      "sourceConcern": false,
+      "notes": [
+        "原文Carlos Miguel Pérez后仅标(2014)，译文照录。此项未补全也未事实核验，不应误标为已核实的完整WCA ID。"
+      ],
+      "inputTranslationHash": "bc31a622a5c089f5946af54a6c84730fcc235149a64209e5a2e59de342627b5b"
     }
   },
   "publication": {

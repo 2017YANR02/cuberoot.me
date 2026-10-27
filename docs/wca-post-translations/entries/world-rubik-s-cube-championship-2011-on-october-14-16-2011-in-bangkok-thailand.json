@@ -12,14 +12,31 @@
     "sourceId": 1142
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "f7112fef0f3253e30f8c3be110a429d199d3a199e7aff805cda3a5bc8bf0a7a8",
     "language": "zh-Hans",
     "title": "2011 年世界魔方锦标赛将于 10 月 14–16 日在泰国曼谷举行",
     "content": "[2011 年世界魔方锦标赛](https://www.worldcubeassociation.org/results/c.php?i=WC2011)将于 2011 年 10 月 14–16 日在泰国曼谷举行。更多信息及报名请见[赛事网站](http://www.thailandcube.com/wc2011)。\n\n周五至周日提供[视频直播](http://worldrubik2011.voicetv.co.th/)。\n\n[准实时成绩](http://live.cubing.net/WC2011/#0)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.935Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "4a2b2db5dc8c8d3c331ba0c415fa1e009dbf2dc7d0123bea898ebfe6acc5ec0b"
+  "translationHash": "c8789d418d494d5ba4eee72fcfee65ec47fac6a7463da2baf5142032c53ede0f",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:11:14.400Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "f7112fef0f3253e30f8c3be110a429d199d3a199e7aff805cda3a5bc8bf0a7a8",
+    "reviewedTranslationHash": "c8789d418d494d5ba4eee72fcfee65ec47fac6a7463da2baf5142032c53ede0f",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/world-rubik-s-cube-championship-2011-on-october-14-16-2011-in-bangkok-thailand.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "4a2b2db5dc8c8d3c331ba0c415fa1e009dbf2dc7d0123bea898ebfe6acc5ec0b"
+  }
 }

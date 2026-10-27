@@ -12,14 +12,33 @@
     "sourceId": 13984
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "28ce8acaa294ee3f8044d10c8807cb6e18275a243cb643943f3a093889670865",
     "language": "zh-Hans",
     "title": "关于场馆合同的说明",
     "content": "各位 WCA 社区成员：\n\nWCA 道德委员会近期完成了对以 WCA 名义签订合同情况的调查。我们发现，一些场馆合同的表述并不符合 WCA 的性质和职责。对于组织比赛、与代表一同租用比赛场地的成员，我们想借此提醒大家注意[道德准则](https://www.worldcubeassociation.org/documents/Code%20of%20Ethics.pdf)第 5.4 条：\n\n“未经 WCA 董事会事先批准，WCA 工作人员不得代表 WCA 签订合同。”\n\n我们将对这一条作小幅修改，明确规定：未经 WCA 董事会书面许可，不得在合同中提及 WCA。这是因为 WCA 并不组织比赛，合同不应让人误以为 WCA 是主办方。\n\n感谢大家理解。\n\nWCA 道德委员会",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:00.949Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "a1ad095e20c2064aa6570448c77407e96bfa5afadd36330145e01a5703c3dc63"
+  "translationHash": "6ae355cf825d7996bb29fcfbaac8830c61a541cf8ca2f4cb70268e3b6a9238d7",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:12:38.683Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "28ce8acaa294ee3f8044d10c8807cb6e18275a243cb643943f3a093889670865",
+    "reviewedTranslationHash": "6ae355cf825d7996bb29fcfbaac8830c61a541cf8ca2f4cb70268e3b6a9238d7",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/clarification-regarding-venue-contracts.json",
+    "sourceConcern": false,
+    "notes": [
+      "全文对照标题、名单变更/历史范围、项目实施日期、条件和例外、合同授权条件、准则对象及纪录合作流程。"
+    ],
+    "inputTranslationHash": "a1ad095e20c2064aa6570448c77407e96bfa5afadd36330145e01a5703c3dc63"
+  }
 }

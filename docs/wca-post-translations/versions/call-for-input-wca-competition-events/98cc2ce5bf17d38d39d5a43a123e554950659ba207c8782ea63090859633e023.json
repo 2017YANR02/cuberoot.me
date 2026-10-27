@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/call-for-input-wca-competition-events",
+  "source": {
+    "key": "posts:/posts/call-for-input-wca-competition-events",
+    "kind": "posts",
+    "title": "Call for Input - WCA Competition Events",
+    "date": "2024-11-24T21:25:40.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/call-for-input-wca-competition-events",
+    "content": "The Competition Events Working Group (CEWG) has been formed to explore the viability of implementing new events at WCA Competitions. We are preparing to assemble a framework for events based on WCA Staff and community feedback.\n\n<!-- break -->\n\nEarlier this year, we solicited input directly from WCA Staff on the topic. We are now expanding the call for input to the wider WCA Community (WCA Staff may provide answers to this call for input too). The public call for input will be open until December 15th, 2024 at 23:59 UTC. This feedback will be carefully reviewed by the CEWG in advance of any actual proposal.\n\nPlease note that:\n\n* The CEWG is not working with any prior assumptions of any specific events being added or removed.\n* Before putting together a full framework, we will continue to discuss the topic with key stakeholders and take into account their feedback on ideas and important considerations.\n\nPlease provide any feedback on [this form](https://docs.google.com/forms/d/e/1FAIpQLSdoMMPPUena0LMUhCDiJvuPoz7mp3TqUc2AhTFGfiXl-q341Q/viewform), and discussions are welcome on [this forum post](https://forum.worldcubeassociation.org/t/call-for-input-wca-competition-events/58121)",
+    "hash": "32c0f1383ed8e8a2210beff7ef5aeb3a91017ff1f353ecb5ef86df705c32f76c",
+    "format": "markdown",
+    "sourceId": 14178
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "32c0f1383ed8e8a2210beff7ef5aeb3a91017ff1f353ecb5ef86df705c32f76c",
+    "language": "zh-Hans",
+    "title": "征求意见：WCA 比赛项目",
+    "content": "比赛项目工作组（CEWG）已成立，负责研究在 WCA 比赛中增设项目的可行性。我们准备结合 WCA 工作人员与社区的意见，制定一套比赛项目框架。\n\n<!-- break -->\n\n今年早些时候，我们已直接向 WCA 工作人员征求过意见。现在，我们向整个 WCA 社区征集意见（WCA 工作人员也可以参与此次征集）。公开征集截止时间为 2024 年 12 月 15 日 23:59 UTC。在提出任何具体方案之前，CEWG 将认真审阅这些反馈。\n\n请注意：\n\n* CEWG 并未预先设定要增加或移除任何特定项目。\n* 在形成完整框架前，我们会继续与主要相关方讨论，考虑他们对各种想法和重要事项的意见。\n\n请通过[此表单](https://docs.google.com/forms/d/e/1FAIpQLSdoMMPPUena0LMUhCDiJvuPoz7mp3TqUc2AhTFGfiXl-q341Q/viewform)提交意见，也欢迎在[这篇论坛帖子](https://forum.worldcubeassociation.org/t/call-for-input-wca-competition-events/58121)下讨论。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:40:49.158Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "98cc2ce5bf17d38d39d5a43a123e554950659ba207c8782ea63090859633e023"
+}

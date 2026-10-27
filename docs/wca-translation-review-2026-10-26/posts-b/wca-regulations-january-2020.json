@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/wca-regulations-january-2020",
+  "path": "docs/wca-post-translations/entries/wca-regulations-january-2020.json",
+  "sourceHash": "35c7c3749aa7f9a4e0b4f8921387ee31495622bdfde2a8fd12b76bc727d72ed0",
+  "inputTranslationHash": "24d9e77f10f5404e733d84d56a2bdf3edc23f5dbc384dc7f74c50e28401fdd1f",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:09:46.861Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [
+    "全文核对规则变更条件、数字、项目中文、权限强度及链接。"
+  ],
+  "changes": []
+}

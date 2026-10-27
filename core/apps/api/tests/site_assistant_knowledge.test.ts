@@ -8,6 +8,12 @@ const index = {updated:'2026-10-10T00:00:00.000Z',pages:[
   {lang:'zh' as const,href:'/empty',title:'只有导航',text:''},
 ]};
 afterEach(()=>vi.unstubAllEnvs());
+it('keeps implementation documents out of user retrieval while allowing explicit developer searches',async()=>{
+  const corpus={...index,pages:[...index.pages,{lang:'zh' as const,href:'/dev/components',title:'计时器训练',text:'计时器训练：TimerLocalBattlePage 组件。'}]};
+  expect((await lexicalKnowledge(corpus,'计时器训练','zh',[],false)).some(p=>p.href.startsWith('/dev'))).toBe(false);
+  expect((await lexicalKnowledge(corpus,'组件','zh',['/dev/components'],true))[0]?.href).toBe('/dev/components');
+  expect(await lexicalKnowledge(corpus,'组件','zh',['/dev/components'],false)).toEqual([]);
+});
 it('retries an offline timeout but not access denial or caller cancellation',async()=>{
   vi.stubEnv('SITE_ASSISTANT_EMBEDDING_API_KEY','fixture');
   vi.stubEnv('SITE_ASSISTANT_EMBEDDING_BASE_URL','https://dashscope.aliyuncs.com/compatible-mode/v1');

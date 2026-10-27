@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-weat-members-april-2022",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-weat-members-april-2022.json",
+  "sourceHash": "a865e979a03ea2723626126f5025d5719d7043b16ab3626fd8a06030e72ef8dc",
+  "inputTranslationHash": "2ecb4aa89558803b649b97b14e8a26d11d712d6a3030ed192a3d75fd1b2c6b9b",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:10:04.271Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇核对全文及标题，职位、历史机构、任期、工时、申请资料、截止日期和投票程序一致。"
+  ],
+  "changes": []
+}

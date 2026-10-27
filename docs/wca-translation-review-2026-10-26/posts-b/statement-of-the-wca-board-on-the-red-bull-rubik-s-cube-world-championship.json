@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/statement-of-the-wca-board-on-the-red-bull-rubik-s-cube-world-championship",
+  "path": "docs/wca-post-translations/entries/statement-of-the-wca-board-on-the-red-bull-rubik-s-cube-world-championship.json",
+  "sourceHash": "7ec0b99504431274f051fa9cfcd6fe9ef3bfcf87f69a29ba40bc15abe59e2654",
+  "inputTranslationHash": "61c4dd54e2c990f2b1697cd5f619e815a854147abc8674e368ed013108c7517d",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:25.169Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

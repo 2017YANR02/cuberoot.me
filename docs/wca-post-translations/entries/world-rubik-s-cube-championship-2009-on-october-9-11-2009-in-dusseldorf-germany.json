@@ -12,14 +12,31 @@
     "sourceId": 479
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "3648cc08178be7c9a764f7773c2a20774bfb6720ac8cc3bdcbc9ff23898f7bfb",
     "language": "zh-Hans",
     "title": "2009 年世界魔方锦标赛将于 10 月 9–11 日在德国杜塞尔多夫举行",
     "content": "[2009 年世界魔方锦标赛](https://www.worldcubeassociation.org/results/c.php?i=WC2009)将于 2009 年 10 月 9–11 日在德国杜塞尔多夫举行。更多信息及报名请见[赛事网站](http://www.speedcubing.com/events/wc2009)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.935Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "9e1b033343a9fe852c44676530c643b93eef5c5eb616b9bf30715a189acded8a"
+  "translationHash": "93e2ec21508e8507ce1a8a35d981ee10b4f46c73ccf451444c22e5b8be77816f",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:11:14.400Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "3648cc08178be7c9a764f7773c2a20774bfb6720ac8cc3bdcbc9ff23898f7bfb",
+    "reviewedTranslationHash": "93e2ec21508e8507ce1a8a35d981ee10b4f46c73ccf451444c22e5b8be77816f",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/world-rubik-s-cube-championship-2009-on-october-9-11-2009-in-dusseldorf-germany.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "9e1b033343a9fe852c44676530c643b93eef5c5eb616b9bf30715a189acded8a"
+  }
 }

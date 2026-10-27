@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wca-software-team-leader-may-2025",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wca-software-team-leader-may-2025.json",
+  "sourceHash": "ef868f445c3b2b3b6a2e701c4ab192fa7e45d73ff032c648c71dfb8d6c9f0ef1",
+  "inputTranslationHash": "80f3305fcc0f21924397f0a24a6667f6c63f9cdd46f9d0817ed7c3158b928eb4",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:07:01.629Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照招募正文、职责条目、必需/可选资格、年龄、时限和程序；未扩展外链材料。"
+  ],
+  "changes": []
+}

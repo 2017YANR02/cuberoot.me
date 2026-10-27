@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/changes-in-wca-officers-may-2026",
+  "path": "docs/wca-post-translations/entries/changes-in-wca-officers-may-2026.json",
+  "sourceHash": "28331fcc354412ecd5ee8e8b00871f8f5bc430ca23408a26eb9eb3f357d38675",
+  "inputTranslationHash": "7c0c39e70cd76688e25c7bd3062674ae3bd239cbce3fbb6b1fd6a83f5b8d7e24",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:12:23.465Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题和正文；各届赛事城市及取消/退款范围、董事候选名单、当选与连任区别、任期及生效日期、保留职务和干事分工均与原文一致。"
+  ],
+  "changes": []
+}

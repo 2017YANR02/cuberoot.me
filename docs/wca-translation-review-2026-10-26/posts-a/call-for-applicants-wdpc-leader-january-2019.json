@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wdpc-leader-january-2019",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wdpc-leader-january-2019.json",
+  "sourceHash": "a15ae5f856af9be0d4aef1fd246a63a272329bd7f102ad3753f0f9154613fcdd",
+  "inputTranslationHash": "707ab7c5818a9839ed7a82d787b541082109293f4b648f77f88efcedf15471e5",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:10:04.271Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇核对全文及标题，职位、历史机构、任期、工时、申请资料、截止日期和投票程序一致。"
+  ],
+  "changes": []
+}

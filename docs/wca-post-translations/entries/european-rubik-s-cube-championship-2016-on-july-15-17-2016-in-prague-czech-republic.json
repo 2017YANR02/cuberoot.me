@@ -12,14 +12,33 @@
     "sourceId": 5177
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "02bc9862100b5492ab5a0481eb4fd7be98288dc083714a7fc4c2ceaaf294bc3b",
     "language": "zh-Hans",
     "title": "2016 年欧洲魔方锦标赛将于 7 月 15–17 日在捷克布拉格举行",
     "content": "[2016 年欧洲魔方锦标赛](https://www.worldcubeassociation.org/results/c.php?i=Euro2016)将于 2016 年 7 月 15–17 日在捷克布拉格举行。更多信息及报名请访问[赛事网站](https://euro2016.cubing.net/)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.167Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "dcaa74d9376b23f328caf6c02e40847b7a3821ff0dc96b60968bf13a80f9a66b"
+  "translationHash": "9e04dccefb61c746eaa46640d22412ba8daa7507b113fbb0b157d17167423fcc",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:13:29.852Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "02bc9862100b5492ab5a0481eb4fd7be98288dc083714a7fc4c2ceaaf294bc3b",
+    "reviewedTranslationHash": "9e04dccefb61c746eaa46640d22412ba8daa7507b113fbb0b157d17167423fcc",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/european-rubik-s-cube-championship-2016-on-july-15-17-2016-in-prague-czech-republic.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照标题与正文；疫情取消区间/新赛条件、COO履历与金额人数、赛事日期地点、意向征集要求及各条历史纪录的选手/项目/单次平均/数值逐项核对一致。"
+    ],
+    "inputTranslationHash": "dcaa74d9376b23f328caf6c02e40847b7a3821ff0dc96b60968bf13a80f9a66b"
+  }
 }

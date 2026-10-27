@@ -12,14 +12,33 @@
     "sourceId": 14048
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "fc3f3a5f804c2dfb5ed64194262059a656297181b1de4f2a0d2fb564c73061ba",
     "language": "zh-Hans",
     "title": "WCA 通讯组负责人任命公告（2022 年 1 月）",
     "content": "我们很高兴地宣布，Rui Reis 将担任 WCA 通讯组（WCT）的新任负责人。Rui 此前已在 WCT 担任高级成员。\n\nWCA 董事会依照委员会与团队[动议](https://www.worldcubeassociation.org/documents/motions/10.2021.0%20-%20Committees%20and%20Teams.pdf)第 4 节选定 Rui。\n\n感谢 Lauren Clement 在担任负责人期间为 WCT 所做的工作，也祝 Rui 在新的岗位上工作顺利。\n\n董事会还收到了以下申请人的材料：\n\n* Chandler Scheurkogel\n\n感谢 Chandler 提交申请。两人的申请材料均可在[此处](https://drive.google.com/drive/u/1/folders/1Ep0-pai7bgb2BCTmTUfh_-OAtcIgcaI1)查看。",
     "notes": [],
     "translatedAt": "2026-10-25T09:29:00.730Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "6ba1110e562e5479877d2c9363f1e8c5ebfda9dbf9608c6e8f1c8e7bbd2fcc32"
+  "translationHash": "3d0c66ef0fbe93fb4dfdd34eeed5aec1200387194196ef9ea294f45d70fbb762",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:10:42.568Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "fc3f3a5f804c2dfb5ed64194262059a656297181b1de4f2a0d2fb564c73061ba",
+    "reviewedTranslationHash": "3d0c66ef0fbe93fb4dfdd34eeed5aec1200387194196ef9ea294f45d70fbb762",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wct-leader-announcement-january-2022.json",
+    "sourceConcern": false,
+    "notes": [
+      "全文核对；历史公告的当时判断、参赛人数、日期及任命程序均保留。"
+    ],
+    "inputTranslationHash": "6ba1110e562e5479877d2c9363f1e8c5ebfda9dbf9608c6e8f1c8e7bbd2fcc32"
+  }
 }

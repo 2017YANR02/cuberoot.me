@@ -12,16 +12,31 @@
     "sourceId": 10107
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "3a350915813974ad5c6974a27225b3e6294d0066d05893b26d23e19854a7a37c",
     "language": "zh-Hans",
     "title": "WCA 市场营销组负责人招募结果",
     "content": "很遗憾，本次未能任命 WCA 市场营销组（WMT）负责人。\n\nWCA 董事会、各负责人及高级代表未能就合适人选达成一致，因此该职位暂时空缺。\n\n<!-- break -->\n\n本次只有一位申请人：Justin Parera。\n\nJustin 的申请材料可在[此处](https://drive.google.com/drive/folders/1sdQ-ifmAT34gbWkmsz2qLxkdo51W0j16?usp=sharing)查看。\n\n由于 WMT 暂无负责人，WCA 董事会将在新负责人获任命前，尽力承担该岗位的职责。之后会重新启动遴选，具体时间尚未确定。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.150Z",
-    "reviewStatus": "pending_independent_review",
-    "revisedAt": "2026-10-25T07:28:01.629Z",
-    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "92cbdbdb058c80946201ba7b7b66f5128bd4e7d6836a36d75b2ca11046c54207"
+  "translationHash": "c395a4e62de5f8d6513fce5f058770db77c24d80ab8f3960dfde7ff1ac9cd578",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:15.857Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "3a350915813974ad5c6974a27225b3e6294d0066d05893b26d23e19854a7a37c",
+    "reviewedTranslationHash": "c395a4e62de5f8d6513fce5f058770db77c24d80ab8f3960dfde7ff1ac9cd578",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/result-of-the-wmt-leader-application-period.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "92cbdbdb058c80946201ba7b7b66f5128bd4e7d6836a36d75b2ca11046c54207"
+  }
 }

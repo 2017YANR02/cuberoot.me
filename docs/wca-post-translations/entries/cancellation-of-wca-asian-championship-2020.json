@@ -12,14 +12,33 @@
     "sourceId": 13975
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "903ed4866498c52b2759cde96c0f40bfeb2c6d6df61d948481faafbef2c6bf2e",
     "language": "zh-Hans",
     "title": "2020 WCA 亚洲锦标赛取消",
     "content": "很遗憾，由于新冠疫情，我们不得不宣布取消 2020 WCA 亚洲锦标赛。虽然此前已宣布延期，但现在不再计划另择日期举办本届比赛。\n\n感谢社区在这段困难时期的理解。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:54.098Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "2f7d4635fccfb2fc7cba2caabc28f7b57c5fa7420d0e2a7761e85ce1dec9c391"
+  "translationHash": "8d292fd1d04a6396d91a792054883d3ea17e0b47c31e9d20ee362311509aa484",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:12:23.463Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "903ed4866498c52b2759cde96c0f40bfeb2c6d6df61d948481faafbef2c6bf2e",
+    "reviewedTranslationHash": "8d292fd1d04a6396d91a792054883d3ea17e0b47c31e9d20ee362311509aa484",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/cancellation-of-wca-asian-championship-2020.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照标题和正文；各届赛事城市及取消/退款范围、董事候选名单、当选与连任区别、任期及生效日期、保留职务和干事分工均与原文一致。"
+    ],
+    "inputTranslationHash": "2f7d4635fccfb2fc7cba2caabc28f7b57c5fa7420d0e2a7761e85ce1dec9c391"
+  }
 }

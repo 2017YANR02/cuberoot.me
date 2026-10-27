@@ -12,16 +12,33 @@
     "sourceId": 14206
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "cfe84556b363fd1193db9bcafa1886cabe372f149d9dd59f661faf87f4fa6b26",
     "language": "zh-Hans",
     "title": "2027 年 WCA 世锦赛举办城市公告（2025 年 7 月）",
     "content": "各位 WCA 社区成员：\n\nWCA 董事会和大型锦标赛组（WMCT）很高兴地正式宣布，**瑞典乌普萨拉**已获选为 2027 年 WCA 世锦赛的举办城市。\n\n在西雅图成功举办 2025 年 Rubik’s WCA 世锦赛之后，乌普萨拉获选。这也意味着 WCA 的最高级别赛事将自 2017 年巴黎世锦赛以来，首次回到欧洲。\n\n瑞典地区组织 SveKub 将与 WMCT 合作，让 2027 年 WCA 世锦赛展现魔方速拧社区的精神和实力。WCA 世锦赛是一场凝聚全球魔友的盛会，大家可以在这里见证世界顶尖选手同场竞技，并决出 WCA 全部 17 个正式项目的世界冠军。\n\n未来 24 个月的世锦赛筹备工作将十分紧张，董事会和 WMCT 期待与 SveKub 一起完成这些工作。\n\n申办材料可在[这里](https://drive.google.com/file/d/1O4pnhDBxCHoYhPZIoPC0CgnP7HrE5NbD/view?usp=sharing)查看。瑞典是本届世锦赛的唯一申办方。\n\nWMCT 还很高兴地告知大家，2026 年其余各洲锦标赛也将很快开放申办。",
     "notes": [],
     "translatedAt": "2026-10-22T08:40:49.154Z",
-    "reviewStatus": "pending_independent_review",
-    "revisedAt": "2026-10-25T07:28:01.629Z",
-    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "4ef3f1611996eb7f9afa8c3ed8eda0c1acdae7c47e17761d312f096ca15a392c"
+  "translationHash": "1cacea2af25b5e99aa5d79e7705b4e5145c06dd9d3b86ebbd68a1ca0cee4e964",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:10:42.567Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "cfe84556b363fd1193db9bcafa1886cabe372f149d9dd59f661faf87f4fa6b26",
+    "reviewedTranslationHash": "1cacea2af25b5e99aa5d79e7705b4e5145c06dd9d3b86ebbd68a1ca0cee4e964",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wca-world-championship-2027-host-city-announcement-july-2025.json",
+    "sourceConcern": false,
+    "notes": [
+      "全文核对；历史公告的当时判断、参赛人数、日期及任命程序均保留。"
+    ],
+    "inputTranslationHash": "4ef3f1611996eb7f9afa8c3ed8eda0c1acdae7c47e17761d312f096ca15a392c"
+  }
 }

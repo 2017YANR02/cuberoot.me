@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/india-southeast-asia-merchandise-collaboration-announcement",
+  "path": "docs/wca-post-translations/entries/india-southeast-asia-merchandise-collaboration-announcement.json",
+  "sourceHash": "baf30329bd63bfb16c68481b869d3e6b6ab16d311a1396d1efe45c2588d4d176",
+  "inputTranslationHash": "3b3946952d48477d273f55d38b6342697c52d994d2dc276f95b4e87d8ecda0fb",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:36.320Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

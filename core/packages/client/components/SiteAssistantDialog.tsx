@@ -5,7 +5,7 @@ const Markdown = lazy(() => import('react-markdown').catch(() => ({ default: ({ 
 const WrHistoryChart = lazy(() => import('@/components/wca-stats/WrHistoryChart').catch(() => ({ default: () => null })));
 import { useCopy } from '@/hooks/useCopy';
 import { createPortal } from 'react-dom';
-import { ArrowUp, ArrowDown, Check, Copy, Pencil, RotateCcw, Maximize2, Minimize2, Search, LoaderCircle, MessageSquarePlus, ImagePlus, Plus, Mic, Square, X, ThumbsUp, ThumbsDown } from '@app-foundation/icons/lucide';
+import { ArrowUp, ArrowDown, ArrowRight, Check, Copy, Pencil, Maximize2, Minimize2, Search, LoaderCircle, MessageSquarePlus, ImagePlus, Plus, Mic, Square, X } from '@app-foundation/icons/lucide';
 import { SITE_ASSISTANT_MAX_IMAGES, SITE_ASSISTANT_QUESTION_MAX_LENGTH, isAssistantSourceHref, type AssistantImage, type AssistantAnswer, type AssistantChart, type AssistantStatus, type AssistantErrorCode, type AssistantThinkingMode } from '@cuberoot/shared/site-assistant';
 import { ASSISTANT_ERROR_TEXT } from '@/lib/site-assistant-errors';
 import { useAuthStore } from '@/lib/auth-store';
@@ -24,11 +24,13 @@ import { loadFlagData } from '@/lib/country-flags';
 import { countryName } from '@/lib/country-name';
 import { tr } from '@/i18n/tr';
 import './site_assistant.css';
+import AssistantAnswerActions from './AssistantAnswerActions';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { assistantAnswerLinks, remarkAssistantLinks } from '@/lib/assistant-answer-links';
 
-export interface AssistantTurn { requestId?: string; feedback?: AssistantFeedback|null; question:string; images?:AssistantImage[]; imagesExpired?:boolean; result?:AssistantAnswer; partial?:boolean }
+export interface AssistantTurn { createdAt?: number; requestId?: string; feedback?: AssistantFeedback|null; question:string; images?:AssistantImage[]; imagesExpired?:boolean; result?:AssistantAnswer; partial?:boolean }
 interface Props {
-  embedded?:boolean; active?:boolean;
+  embedded?:boolean; active?:boolean; searchResults?:ReactNode; onBranch?:(index:number)=>void;
   turns:AssistantTurn[]; status?:AssistantStatus; busy:boolean; error:AssistantErrorCode|null; lang:'zh'|'en';
   images:AssistantImage[]; onImagesChange:(images:AssistantImage[])=>void;
   draft:string; onDraftChange:(draft:string)=>void;
@@ -140,32 +142,23 @@ function answerPresentation(result:AssistantAnswer,partial?:boolean) {
   const withFallback=!partial && !text.includes('[[') && sources.length===1 && !linkedInTable ? text+`[[${sources[0].id}]]` : text;
   return {sources,text,withFallback};
 }
-export function SiteAssistantAnswerText({result,partial,requestId}:{result:AssistantAnswer;partial?:boolean;requestId?:string}) {
+export function SiteAssistantAnswerText({result,partial,requestId,shared=false}:{result:AssistantAnswer;partial?:boolean;requestId?:string;shared?:boolean}) {
   const {sources,text,withFallback}=answerPresentation(result,partial);
+  const resolveLink=assistantAnswerLinks(result);
   const markdown=withFallback.replace(/\[\[([^\]\n]+)\]\]/g,(_marker,id:string)=>{
     const index=sources.findIndex(source=>source.id===id);
     return index<0 ? '' : `[${index+1}](#assistant-source-${index})`;
   });
-  return <div className="site-assistant-prose"><Suspense fallback={<p>{text.replace(/\[\[[^\]\n]+\]\]/g, '')}</p>}><Markdown skipHtml
+  return <div className="site-assistant-prose"><Suspense fallback={<p>{text.replace(/\[\[[^\]\n]+\]\]/g, '')}</p>}><Markdown skipHtml remarkPlugins={[remarkAssistantLinks(resolveLink)]}
     allowedElements={['p','strong','em','code','pre','ul','ol','li','blockquote','h1','h2','h3','h4','hr','br','a']}
     components={{a:({href,children})=>{
       const match=/^#assistant-source-(\d+)$/.exec(href ?? '');
       const source=match ? sources[Number(match[1])] : undefined;
-      return source ? <Link className="site-assistant-citation" href={source.href} {...sourceLinkProps(source.href)} onClick={event=>{if(requestId)void sendAssistantEvent(requestId,{type:'click',kind:'source',id:source.id}).catch(()=>{});openSolverDocument(event);}} prefetch={false} title={source.title} aria-label={tr({zh:`来源：${source.title}`,en:`Source: ${source.title}`})}>{source.title}</Link> : <>{children}</>;
+      const destination=href ? resolveLink(href) : undefined;
+      if (!source && destination) return <Link className="site-assistant-inline-link" href={destination.href} {...sourceLinkProps(destination.href)} prefetch={false} onClick={event=>{if(requestId)void sendAssistantEvent(requestId,{type:'click',kind:'source',id:destination.id}).catch(()=>{});openSolverDocument(event);}}>{children}</Link>;
+      return source ? <Link className="site-assistant-citation" href={source.href} {...sourceLinkProps(source.href)} onClick={event=>{if(requestId)void sendAssistantEvent(requestId,{type:'click',kind:'source',id:source.id}).catch(()=>{});openSolverDocument(event);}} prefetch={false} title={source.title} aria-label={tr({zh:`来源：${source.title}`,en:`Source: ${source.title}`})}>{source.title}</Link> : shared && href && isAssistantSourceHref(href) ? <Link href={href} {...sourceLinkProps(href)} prefetch={false}>{children}</Link> : <>{children}</>;
     }}}>{markdown}</Markdown></Suspense></div>;
 
-}
-function AnswerFeedback({id,initial,onSaved}:{id:string;initial?:AssistantFeedback|null;onSaved:(id:string,value:AssistantFeedback|null)=>void}) {
-  const [value,setValue]=useState<AssistantFeedback|null>(initial??null),[pending,setPending]=useState(false),[failed,setFailed]=useState(false);
-  const save=async(next:AssistantFeedback|null)=>{setPending(true);setFailed(false);try{await sendAssistantEvent(id,{type:'feedback',value:next});setValue(next);onSaved(id,next);}catch{setFailed(true);}finally{setPending(false);}};
-  return <>
-    <Tooltip content={tr({zh:'有帮助',en:'Helpful'})}>{tip=><button {...tip} type="button" className="site-assistant-action" disabled={pending} aria-label={tr({zh:'有帮助',en:'Helpful'})} aria-pressed={value==='helpful'} onClick={()=>void save(value==='helpful'?null:'helpful')}><ThumbsUp size={16}/></button>}</Tooltip>
-    <Tooltip content={tr({zh:'没帮助',en:'Not helpful'})}>{tip=><button {...tip} type="button" className="site-assistant-action" disabled={pending} aria-label={tr({zh:'没帮助',en:'Not helpful'})} aria-pressed={value!==null&&value!=='helpful'} onClick={()=>void save(value!==null&&value!=='helpful'?null:'other')}><ThumbsDown size={16}/></button>}</Tooltip>
-    {value && value!=='helpful' && <label>{tr({zh:'原因',en:'Reason'})} <select value={value} disabled={pending} onChange={e=>void save(e.target.value as AssistantFeedback)}>{[
-      ['incorrect',{zh:'回答有误',en:'Incorrect answer'}],['irrelevant',{zh:'没有解决问题',en:'Did not resolve my question'}],['bad_source',{zh:'资料不合适',en:'Poor sources'}],['bad_link',{zh:'页面入口不对',en:'Wrong destination'}],['other',{zh:'其他',en:'Other'}],
-    ].map(([key,label])=><option key={key as string} value={key as string}>{tr(label as {zh:string;en:string})}</option>)}</select></label>}
-    <span role="status">{failed?tr({zh:'反馈未保存，请重试。',en:'Feedback was not saved. Please retry.'}):value?tr({zh:'感谢反馈',en:'Thanks for your feedback'}):''}</span>
-  </>;
 }
 function Progress({chart}:{chart:AssistantChart}) {
   // Raw WCA values drive geometry; formatted labels are only for display.
@@ -180,7 +173,7 @@ function AssistantModal({ children, onClose }: { children: ReactNode; onClose: (
   return createPortal(<div className="site-assistant-backdrop" {...backdrop}>{children}</div>, document.body);
 }
 
-export default function SiteAssistantDialog({turns,draft,images,onImagesChange:setImages,onDraftChange:setDraft,thinking,onThinkingChange,status={phase:'planning'},busy,error,lang,onAsk,onStop,onClose,onNew,onFeedback,embedded=false,active=true}:Props) {
+export default function SiteAssistantDialog({turns,draft,images,onImagesChange:setImages,onDraftChange:setDraft,thinking,onThinkingChange,status={phase:'planning'},busy,error,lang,onAsk,onStop,onClose,onNew,onFeedback,embedded=false,active=true,searchResults,onBranch}:Props) {
   const titleId=useId();
   const thinkingItems=[
     {value:'auto' as const,label:tr({zh:'自动思考',en:'Auto thinking'})},
@@ -236,7 +229,7 @@ export default function SiteAssistantDialog({turns,draft,images,onImagesChange:s
   const editInput=useRef<HTMLTextAreaElement>(null);
   const {listening,error:micError,start,stop}=useSpeechToText({lang:lang==='zh'?'zh-CN':'en-US',onResult:setDraft});
   useEffect(()=>{if(!active)stop();},[active,stop]);
-  useEffect(()=>{if(!active)return;const previous=document.activeElement as HTMLElement;input.current?.focus();return()=>{if(!embedded)previous?.focus();};},[active,embedded]);
+  useEffect(()=>{if(!active)return;const previous=document.activeElement as HTMLElement;if(!window.matchMedia?.('(pointer: coarse)').matches)input.current?.focus();return()=>{if(!embedded)previous?.focus();};},[active,embedded]);
   useEffect(()=>{
     if(turns.length!==turnCount.current) { follow.current=true; turnCount.current=turns.length; }
     const node=messages.current;
@@ -247,17 +240,8 @@ export default function SiteAssistantDialog({turns,draft,images,onImagesChange:s
     if(node) { node.style.height='auto'; node.style.height=`${Math.min(node.scrollHeight,180)}px`; }
   },[draft,expanded]);
   const isEditing=editing!==null;
-  useEffect(()=>{if(!active)return;if(isEditing)editInput.current?.focus();else input.current?.focus();},[isEditing,active]);
+  useEffect(()=>{if(!active)return;if(isEditing)editInput.current?.focus();else if(!window.matchMedia?.('(pointer: coarse)').matches)input.current?.focus();},[isEditing,active]);
   const scrollLatest=()=>{follow.current=true;setShowLatest(false);const node=messages.current;if(node)node.scrollTop=node.scrollHeight;};
-  const copyAnswer=(result:AssistantAnswer,key:string)=>{
-    if(!navigator.clipboard)return;
-    const text=result.answer.replace(/\[\[([^\]\n]+)\]\]/g,(_marker,id:string)=>{
-      const source=result.sources.find(s=>s.id===id && isAssistantSourceHref(s.href));
-      return source ? `[${source.title}](${new URL(source.href,window.location.origin).href})` : '';
-    });
-    const tables=(result.artifacts ?? []).map(a=>a.kind==='table' ? [a.title,a.columns.join('\t'),...a.rows.map(row=>row.join('\t'))].join('\n') : [a.title,...a.points.map(p=>`${p.date}\t${formatWcaResult(p.value,a.event,a.metric)}`)].join('\n'));
-    copy([text,...tables].join('\n\n'),key);
-  };
   const submit=()=>{if(!busy && !processing.current && editing===null && (draft.trim() || images.length) && draft.trim().length<=SITE_ASSISTANT_QUESTION_MAX_LENGTH){stop();onAsk(draft.trim(),false,images);setDraft('');setImages([]);setImageError(null);}};
   const content=<div ref={dialog} className={`site-assistant-dialog${expanded ? ' is-expanded' : ''}${embedded ? ' site-assistant-embedded' : ''}`} role={embedded ? "region" : "dialog"} aria-modal={embedded ? undefined : true} aria-label={embedded ? tr({zh:'聊天内容',en:'Conversation'}) : undefined} aria-labelledby={embedded ? undefined : titleId} data-site-surface="panel" onKeyDown={event=>{
       if(embedded || event.key!=='Tab')return;
@@ -273,7 +257,7 @@ export default function SiteAssistantDialog({turns,draft,images,onImagesChange:s
         <button className="site-assistant-action" type="button" onClick={onClose} title={tr({zh:'关闭',en:'Close'})}><X size={22}/></button>
       </header>}
       <div className="site-assistant-body"><div ref={messages} onScroll={()=>{const node=messages.current;if(node && turns.length){follow.current=node.scrollHeight-node.scrollTop-node.clientHeight<80;setShowLatest(!follow.current);}}} className="site-assistant-messages" role="log" aria-live="polite">
-        {!turns.length && <div className="site-assistant-examples">
+        {!turns.length && !searchResults && <div className="site-assistant-examples">
           <h3>{tr({zh:'你想了解什么？',en:'What would you like to know?'})}</h3>
           <div className="site-assistant-example-groups">{QUESTION_EXAMPLES.map(group=><section className="site-assistant-example-group" key={group.id} aria-labelledby={`${titleId}-examples-${group.id}`}>
             <h4 id={`${titleId}-examples-${group.id}`}>{tr(group.title)}</h4>
@@ -306,12 +290,20 @@ export default function SiteAssistantDialog({turns,draft,images,onImagesChange:s
             return <td key={c} className={kind==='date' ? 'site-assistant-date' : kind==='country' ? 'site-assistant-country' : undefined}>{href && isAssistantSourceHref(href) ? <Link prefetch={false} href={href} {...sourceLinkProps(href)}>{content}</Link> : content}</td>;
           })}</tr>)}</tbody></table></div></section>)}
         </div>}
-          {turn.result && !(busy && i===turns.length-1) && <div className="site-assistant-response-actions"><button className="site-assistant-action" type="button" onClick={()=>copyAnswer(turn.result!,`answer-${i}`)} title={tr(copiedKey===`answer-${i}`?{zh:'已复制',en:'Copied'}:{zh:'复制回答',en:'Copy answer'})}>{copiedKey===`answer-${i}`?<Check size={16}/>:<Copy size={16}/>}</button>{i===turns.length-1 && !error && <button className="site-assistant-action" type="button" disabled={busy||editing!==null} onClick={()=>onAsk(turn.question,true,turn.images)} title={tr({zh:'重新生成',en:'Regenerate'})}><RotateCcw size={16}/></button>}<span role="status">{copiedKey===`answer-${i}` && tr({zh:'已复制',en:'Copied'})}</span>{turn.requestId && !turn.partial && <AnswerFeedback key={turn.requestId} id={turn.requestId} initial={turn.feedback} onSaved={onFeedback}/>}</div>}
+          {turn.result && !(busy && i===turns.length-1) && <AssistantAnswerActions key={turn.requestId ?? i} turn={turn} lang={lang} active={active} onFeedback={onFeedback} onRetry={i===turns.length-1 && !error && !busy && editing===null ? ()=>onAsk(turn.question,true,turn.images) : undefined} onBranch={onBranch && !turn.partial && !busy ? ()=>onBranch(i) : undefined} preview={<SiteAssistantAnswerText result={turn.result}/>}/>}
           {turn.partial && !(busy && i===turns.length-1) && <p className="site-assistant-incomplete">{tr({zh:'回答未完成',en:'Answer incomplete'})}</p>}
         </section>;})}
-        {error && <div role="alert"><p>{tr(ASSISTANT_ERROR_TEXT[error])}</p>{error==='login_required'||error==='wca_link_required' ? <button className="site-assistant-action" type="button" onClick={()=>useAuthStore.getState().login()}>{tr({zh:'前往账号页',en:'Go to account'})}</button> : error==='verification_required' ? <Link href={`/competition-verify?returnTo=${encodeURIComponent(lang==='zh'?'/zh':'/')}`} prefetch={false}>{tr({zh:'完成访问验证',en:'Verify access'})}</Link> : error!=='daily_limit' && error!=='account_forbidden' && turns.length>0 && <button className="site-assistant-action" type="button" disabled={busy||editing!==null} onClick={()=>onAsk(turns[turns.length-1].question,true,turns[turns.length-1].images)}>{tr({zh:'重试',en:'Retry'})}</button>}</div>}
+        {error && (error==='login_required'||error==='wca_link_required' ?
+          <div className="site-assistant-auth" role="alert">
+            <button className="site-assistant-auth-link" type="button" onClick={()=>useAuthStore.getState().login()}>
+              <span>{tr(error==='login_required' ? {zh:'登录后继续聊天',en:'Sign in to continue chatting'} : {zh:'绑定 WCA 账号以继续',en:'Link your WCA account to continue'})}</span>
+              <ArrowRight size={16} aria-hidden="true"/>
+            </button>
+          </div> :
+          <div role="alert"><p>{tr(ASSISTANT_ERROR_TEXT[error])}</p>{error==='verification_required' ? <Link href={`/competition-verify?returnTo=${encodeURIComponent(lang==='zh'?'/zh':'/')}`} prefetch={false}>{tr({zh:'完成访问验证',en:'Verify access'})}</Link> : error!=='daily_limit' && error!=='account_forbidden' && turns.length>0 && <button className="site-assistant-action" type="button" disabled={busy||editing!==null} onClick={()=>onAsk(turns[turns.length-1].question,true,turns[turns.length-1].images)}>{tr({zh:'重试',en:'Retry'})}</button>}</div>)}
       </div>
       {showLatest && turns.length>0 && <button className="site-assistant-action site-assistant-latest" type="button" onClick={scrollLatest} title={tr({zh:'回到最新消息',en:'Jump to latest'})}><ArrowDown size={18}/></button>}</div>
+      {editing===null && searchResults}
       <form className="site-assistant-compose" onDragOver={event=>{if(event.dataTransfer.types.includes('Files'))event.preventDefault();}} onDrop={event=>{event.preventDefault();void addImages(Array.from(event.dataTransfer.files));}} onSubmit={e=>{e.preventDefault();submit();}}><div className="site-assistant-input">
         <input ref={imageInput} type="file" accept="image/png,image/jpeg,image/webp" multiple hidden onChange={event=>{const files=Array.from(event.target.files ?? []);event.target.value='';void addImages(files);}}/>
         {!!images.length && renderImages(images,true)}
@@ -329,7 +321,7 @@ export default function SiteAssistantDialog({turns,draft,images,onImagesChange:s
       </div>{processingImages && <p role="status">{tr({zh:'正在处理图片…',en:'Preparing images…'})}</p>}
       {imageError && <p role="alert">{imageError}</p>}
       {!!images.length && <p className="site-assistant-note">{tr({zh:'发送后，图片将交给 AI 识别。追问可参考最近 3 张图片。',en:'Sent images are processed by AI. Follow-ups can reference the latest 3 images.'})}</p>}
-      {micError && <p role="status">{tr({zh:'语音未能识别，请检查麦克风权限，或使用键盘听写。',en:'Voice recognition failed. Check microphone permissions or use keyboard dictation.'})}</p>}
+      {micError && <p className="site-assistant-voice-error" role="status">{tr({zh:'语音未能识别，请检查麦克风权限，或使用键盘听写。',en:'Voice recognition failed. Check microphone permissions or use keyboard dictation.'})}</p>}
       <p className="site-assistant-note">{tr({zh:'AI 回答可能有误，请核对来源。WCA 数据以最近导入为准。',en:'AI can make mistakes. Check sources. WCA data reflects the latest import.'})}</p></form>
     </div>;
   return embedded ? content : <AssistantModal onClose={onClose}>{content}</AssistantModal>;

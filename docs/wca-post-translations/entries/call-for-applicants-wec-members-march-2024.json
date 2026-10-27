@@ -12,14 +12,33 @@
     "sourceId": 14151
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "86df8f276d4dfbefaa3a8240f8fc60ee7d020f34a32188b1690a95e266dceb12",
     "language": "zh-Hans",
     "title": "WCA 道德委员会招募成员（2024 年 3 月）",
-    "content": "WCA 道德委员会（WEC）正在招募新成员！所有人都可以申请，不要求目前在 WCA 任职。\n\n**WEC 负责什么？**\n\nWEC 负责确保所有 WCA 工作人员遵守《道德准则》、维护该准则，并在工作人员的行为可能不符合准则时开展调查。已注册的速拧选手可以向 WEC 反映问题、申请调查，WEC 会作为可信赖的联系方处理这些事项。如果有关人员不服 WCA 纪律委员会的决定，WEC 也负责受理申诉。\n\n**申请者应符合以下要求：**\n\n* 每周能够投入至少 4 小时。\n* 英语熟练。\n* 能够妥善保管敏感信息，值得信任。\n* 持续通过邮件和 Slack 参与工作。\n* 无不良记录。\n* 年满 16 岁。\n\n**以下条件并非必需，但会为申请加分：**\n\n* 了解 GitHub。\n* 具备专业写作能力。\n* 具备项目管理能力。\n* 非常熟悉 WCA 比赛和相关流程。\n\n**申请材料须为 PDF 格式，并包含：**\n\n* 简短的自我介绍。\n* 在魔方社区参与过的活动。\n* 申请加入 WEC 的原因。\n* 其他相关技能或经验。\n\n请于即日起至 **2024 年 4 月 20 日（星期六）23:59 UTC**，将申请发送至 samsbaugh@worldcubeassociation.org。\n\n申请者会收到确认收件的回复，之后可能收到面试邀请。如对申请流程有疑问，欢迎先与我们联系。\n\n感谢你关注 WEC 和 WCA！",
+    "content": "WCA 道德委员会（WEC）正在招募新成员！所有人都可以申请，不要求目前在 WCA 任职。\n\n**WEC 负责什么？**\n\nWEC 负责确保所有 WCA 工作人员遵守《道德准则》、维护该准则，并在工作人员的行为可能不符合准则时开展调查。已注册的速拧选手可以向 WEC 反映问题、申请调查，WEC 会作为可信赖的联系方处理这些事项。如果有关人员不服 WCA 纪律委员会的决定，WEC 也负责受理申诉。\n\n**申请者应符合以下要求：**\n\n* 每周能够投入至少 4 小时。\n* 英语熟练。\n* 能够妥善保管敏感信息，值得信任。\n* 持续通过邮件和 Slack 参与工作。\n* 无不良记录。\n* 年满 16 岁。\n\n**以下条件并非必需，但会为申请加分：**\n\n* 了解 GitHub。\n* 具备专业写作能力。\n* 具备项目管理能力。\n* 非常熟悉 WCA 比赛和相关流程。\n\n**申请材料应为 PDF 格式，且须包含：**\n\n* 简短的自我介绍。\n* 在魔方社区参与过的活动。\n* 申请加入 WEC 的原因。\n* 其他相关技能或经验。\n\n请于即日起至 **2024 年 4 月 20 日（星期六）23:59 UTC**，将申请发送至 samsbaugh@worldcubeassociation.org。\n\n申请者会收到确认收件的回复，之后可能收到面试邀请。如对申请流程有疑问，欢迎先与我们联系。\n\n感谢你关注 WEC 和 WCA！",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.561Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "6c51abc28aeed2e8a3510919d849d8c45ba5b9baa6857d5a30e1926493bda04c"
+  "translationHash": "433958459b457b0b7b8116b6ec7601665c26a1075e8c51600b8ec4cf438f7d1c",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:18:19.272Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "86df8f276d4dfbefaa3a8240f8fc60ee7d020f34a32188b1690a95e266dceb12",
+    "reviewedTranslationHash": "433958459b457b0b7b8116b6ec7601665c26a1075e8c51600b8ec4cf438f7d1c",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/call-for-applicants-wec-members-march-2024.json",
+    "sourceConcern": false,
+    "notes": [
+      "已完整核对剩余正文，年龄、工时、附加条件及日期一致。"
+    ],
+    "inputTranslationHash": "6c51abc28aeed2e8a3510919d849d8c45ba5b9baa6857d5a30e1926493bda04c"
+  }
 }

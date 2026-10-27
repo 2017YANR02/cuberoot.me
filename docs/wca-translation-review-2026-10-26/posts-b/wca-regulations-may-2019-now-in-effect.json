@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/wca-regulations-may-2019-now-in-effect",
+  "path": "docs/wca-post-translations/entries/wca-regulations-may-2019-now-in-effect.json",
+  "sourceHash": "8278f782cb04346939b72416a61660b627bdde6291b74a97ca01ec24ed25e1b7",
+  "inputTranslationHash": "55b290a44d0339efa105ef8ddb9387d592314b235cce5eab47c43e93ea12e2bc",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:10:32.386Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

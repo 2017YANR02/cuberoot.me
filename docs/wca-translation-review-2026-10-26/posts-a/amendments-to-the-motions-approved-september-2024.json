@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/amendments-to-the-motions-approved-september-2024",
+  "path": "docs/wca-post-translations/entries/amendments-to-the-motions-approved-september-2024.json",
+  "sourceHash": "7e08ad64d24e77421b36c94a84c699a9420fbc39e37b6e64df87a53140123dd8",
+  "inputTranslationHash": "89b8bb4e5f90f40a6e9d6589f4864ef0e15c13a8d6d620c89ef9b2f5db428d2b",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:05:11.621Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+  ],
+  "changes": []
+}

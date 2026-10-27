@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/changes-in-the-board-of-directors-november-2021",
+  "source": {
+    "key": "posts:/posts/changes-in-the-board-of-directors-november-2021",
+    "kind": "posts",
+    "title": "Changes in the Board of Directors (November 2021)",
+    "date": "2021-11-09T09:02:59.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/changes-in-the-board-of-directors-november-2021",
+    "content": "With the terms of Board Members Bob Burton and Henrik Buus Aagaard coming to an end, applications were opened for the Board of Directors. Unfortunately, no applications were received for the position(s) which has stopped the Board election process.\n\nThe terms of Bob and Henrik ended at 23:59 UTC on November 8, 2021. From this point the Board has been reduced to the remaining three members.\n\nWe want to thank both Bob and Henrik for all the accomplishments they have had in their positions and for their dedication to the WCA. We wish them all the best for whatever is up next!",
+    "hash": "52df641fe8aaccd142005140298e21b9914e9579d02ccd8ece96efa1c01bc4aa",
+    "format": "markdown",
+    "sourceId": 14041
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "52df641fe8aaccd142005140298e21b9914e9579d02ccd8ece96efa1c01bc4aa",
+    "language": "zh-Hans",
+    "title": "WCA 董事会成员变动（2021 年 11 月）",
+    "content": "随着董事 Bob Burton 和 Henrik Buus Aagaard 的任期即将结束，WCA 开放了董事职位申请。遗憾的是，我们没有收到任何申请，董事会选举程序因此停止。\n\nBob 和 Henrik 的任期已于 2021 年 11 月 8 日 23:59 UTC 结束。自此，董事会由其余三位成员组成。\n\n感谢 Bob 和 Henrik 在任期间取得的各项成果，以及他们对 WCA 的投入。祝愿他们今后一切顺利！",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:45:43.569Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "2a10bc530aca2293dff8194eb853a49c99ece26b3959bfee578b0edb92a51272"
+}

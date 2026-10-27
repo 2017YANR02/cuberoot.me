@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/appointment-of-a-new-senior-delegate-latin-america-april-2019",
+  "path": "docs/wca-post-translations/entries/appointment-of-a-new-senior-delegate-latin-america-april-2019.json",
+  "sourceHash": "d044a62e980ba2c4f61b918dc563e571c857cbdf869ba65d9b2286aeaa3168de",
+  "inputTranslationHash": "ff19dec975fa1b23d2ad562c42af6a60ddcfdf5e712bc60a9ba9b666b54a9835",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:06:14.455Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照正文与标题；核对全部申请/任命主体、时间、权限、附录条目及材料要求。"
+  ],
+  "changes": []
+}

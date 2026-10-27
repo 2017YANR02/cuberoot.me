@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/wca-regulations-requests-for-proposals",
+  "path": "docs/wca-post-translations/entries/wca-regulations-requests-for-proposals.json",
+  "sourceHash": "a6c9ec5be7c0876c53e4a8e434a6888a0c3508eb74858b8d3ec3f4129bb90d21",
+  "inputTranslationHash": "e7a0a2eda1dc3244052e90311a8f29a90fadac1021d46650da0a4a34b3037772",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:10:32.386Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

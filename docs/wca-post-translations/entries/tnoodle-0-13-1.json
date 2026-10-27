@@ -12,14 +12,31 @@
     "sourceId": 8744
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "3bc88c1d6fee2291ed799b8e04d9f7da0c1c4cc951c184c5c9f5a0702f995858",
     "language": "zh-Hans",
     "title": "TNoodle 0.13.1 发布",
     "content": "TNoodle-WCA-0.13.1 现已发布，可在 https://www.worldcubeassociation.org/regulations/scrambles/ 获取。\n\n相较于 TNoodle 0.12.0，本次改动如下：\n\n- TNoodle 现可连接 WCA 网站，获取比赛的项目和轮次信息。\n- 最少步纸张现提供 22 种语言。完整列表见：https://github.com/thewca/tnoodle/tree/v0.13.1/webscrambles/src/i18n.\n\n请注意，正式比赛必须使用当前版本的官方打乱程序。最新版始终可在 https://www.worldcubeassociation.org/regulations/scrambles/ 获取。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.158Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "4fbfa1effe40fb1d565959ffd3574490937aaddeffa22e3f9bc3a0a0e0c2072b"
+  "translationHash": "3db9d92ad5202b208aafd3336734599aae28a62e2d561e83ec8e3a9dbdcf97b0",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:48.602Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "3bc88c1d6fee2291ed799b8e04d9f7da0c1c4cc951c184c5c9f5a0702f995858",
+    "reviewedTranslationHash": "3db9d92ad5202b208aafd3336734599aae28a62e2d561e83ec8e3a9dbdcf97b0",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/tnoodle-0-13-1.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "4fbfa1effe40fb1d565959ffd3574490937aaddeffa22e3f9bc3a0a0e0c2072b"
+  }
 }

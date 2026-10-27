@@ -12,14 +12,31 @@
     "sourceId": 14131
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "77036610fb6dfa2259d598b884fcd7bfdd346ce1b4ca9e657fcc9851988d842c",
     "language": "zh-Hans",
     "title": "WCA 道德委员会负责人任命公告（2023 年 11 月）",
-    "content": "我们很高兴地宣布，WCA 道德委员会（WEC）资深成员 Stone Amsbaugh 将出任委员会新负责人。\n\n根据[《WCA 委员会与团队动议》第 4 节](https://www.worldcubeassociation.org/documents/motions/10.2022.0%20-%20Committees%20and%20Teams.pdf)，WCA 董事会选定了 Stone，并经现任委员会负责人和高级代表投票批准。\n\n感谢 Enzo Mattos 为 WEC 所做的工作。我们将支持 Stone 履行新职责，祝他工作顺利。\n\n我们共收到五份申请，Stone 是其中一位申请者。他和另外两位申请者的材料可在[这里](https://drive.google.com/drive/folders/1KTJ6k0LsJ38pA_z6YD-v0J7jLGDFB6aC)查看。",
+    "content": "我们很高兴地宣布，WCA 道德委员会（WEC）高级成员 Stone Amsbaugh 将出任委员会新负责人。\n\n根据[《WCA 委员会与团队动议》第 4 节](https://www.worldcubeassociation.org/documents/motions/10.2022.0%20-%20Committees%20and%20Teams.pdf)，WCA 董事会选定了 Stone，并经现任委员会负责人和高级代表投票批准。\n\n感谢 Enzo Mattos 为 WEC 所做的工作。我们将支持 Stone 履行新职责，祝他工作顺利。\n\n我们共收到五份申请，Stone 是其中一位申请者。他和另外两位申请者的材料可在[这里](https://drive.google.com/drive/folders/1KTJ6k0LsJ38pA_z6YD-v0J7jLGDFB6aC)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.564Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "4578e93fcbb78bbbde93a2f0912205498573600c884d8f5ea92de650c0be4ed9"
+  "translationHash": "991b3e1bedc995f353fba5ea9c0e2c4546d2c9da4ff6c358e243c6a4c139bc41",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:16:44.877Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "77036610fb6dfa2259d598b884fcd7bfdd346ce1b4ca9e657fcc9851988d842c",
+    "reviewedTranslationHash": "991b3e1bedc995f353fba5ea9c0e2c4546d2c9da4ff6c358e243c6a4c139bc41",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wec-leader-announcement-november-2023.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "4578e93fcbb78bbbde93a2f0912205498573600c884d8f5ea92de650c0be4ed9"
+  }
 }

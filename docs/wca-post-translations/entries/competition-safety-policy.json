@@ -12,14 +12,33 @@
     "sourceId": 13976
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "af8c1a871dea824d8f796d33f70289af69acf7b893f751d4673bf7a9b7d0068f",
     "language": "zh-Hans",
     "title": "《比赛安全政策》",
     "content": "董事会一直在讨论当前的新冠疫情情况，并听取各负责人和高级代表的意见。感谢大家耐心等待。\n\nWCA 现公布新的[《比赛安全政策》](https://www.worldcubeassociation.org/documents/policies/external/Competition%20Safety.pdf)。随着各地逐步恢复比赛，我们请所有工作人员和选手熟悉这份政策。在 WCA 董事会撤销该政策之前，所有比赛都必须遵守。\n\n选手和工作人员的安全至关重要，也是今后比赛能顺利开展的前提。虽然比赛的形式可能与以往有所不同，但我们仍希望尽可能与大家一起享受魔方的乐趣。如对安全政策有任何疑问，请联系我们。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:54.033Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "9f76b1cf7e1afe4b0cf4059deefc34e273d3b4df82295fa5406666760b959cea"
+  "translationHash": "dcdbc5476cbfdf1df40f257bd73697b2fa98d57dafc710107ea20e75044e34c4",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:13:03.043Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "af8c1a871dea824d8f796d33f70289af69acf7b893f751d4673bf7a9b7d0068f",
+    "reviewedTranslationHash": "dcdbc5476cbfdf1df40f257bd73697b2fa98d57dafc710107ea20e75044e34c4",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/competition-safety-policy.json",
+    "sourceConcern": false,
+    "notes": [
+      "已全文核对，保留历史政策语境；逐项核对疫情阈值、面积人数、疫苗天数/检测小时、例外以及锦标赛申办表所有日期和暂定限定。"
+    ],
+    "inputTranslationHash": "9f76b1cf7e1afe4b0cf4059deefc34e273d3b4df82295fa5406666760b959cea"
+  }
 }

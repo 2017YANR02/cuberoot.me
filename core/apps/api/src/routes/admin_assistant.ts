@@ -64,13 +64,15 @@ export function createAdminAssistantRoutes(options: { authorize?: (c: Context) =
           m->>'cached' AS cached, m->>'reasoning' AS reasoning, m->>'thinking' AS thinking, 'chat' AS kind
         FROM site_assistant_requests, jsonb_array_elements(COALESCE(metrics->'models','[]')) m WHERE ${windowSql}
         UNION ALL SELECT m->>'model',m->>'tokens',NULL,NULL,NULL,NULL,CASE WHEN scope='index' THEN 'embedding_index' ELSE 'embedding' END
-        FROM site_assistant_requests, jsonb_array_elements(COALESCE(metrics->'embeddings','[]')) m WHERE ${windowSql})
+        FROM site_assistant_requests, jsonb_array_elements(COALESCE(metrics->'embeddings','[]')) m WHERE ${windowSql}
+        UNION ALL SELECT m->>'model',m->>'tokens',NULL,NULL,NULL,NULL,'rerank'
+        FROM site_assistant_requests, jsonb_array_elements(COALESCE(metrics->'reranks','[]')) m WHERE ${windowSql})
         SELECT model,kind,COUNT(*)::int AS calls,
           COUNT(*) FILTER (WHERE input IS NULL OR (kind='chat' AND output IS NULL))::int AS missing_usage,
           COUNT(*) FILTER (WHERE thinking='true')::int AS thinking_calls,
           SUM(input::bigint)::float8 AS input_tokens,SUM(output::bigint)::float8 AS output_tokens,
           SUM(cached::bigint)::float8 AS cached_tokens,SUM(reasoning::bigint)::float8 AS reasoning_tokens
-        FROM calls GROUP BY model,kind ORDER BY calls DESC`, [days, days]),
+        FROM calls GROUP BY model,kind ORDER BY calls DESC`, [days, days, days]),
       run(`SELECT t.key AS tool,SUM(t.value::int)::int AS calls FROM site_assistant_requests,
         jsonb_each_text(COALESCE(metrics->'tools','{}')) t WHERE ${windowSql} GROUP BY t.key ORDER BY calls DESC`, [days]),
       run(`SELECT error_code,COUNT(*)::int AS requests FROM site_assistant_requests

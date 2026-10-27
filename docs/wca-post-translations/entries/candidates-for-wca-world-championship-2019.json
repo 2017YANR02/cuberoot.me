@@ -12,14 +12,33 @@
     "sourceId": 9894
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "b15d9b5d51362d170470a5a1bbec56a454212191212bd81aeee74c9d3408e903",
     "language": "zh-Hans",
     "title": "2019 年 WCA 世锦赛申办城市",
     "content": "2019 年 WCA 世锦赛申办期已结束。感谢所有提交申请材料的团队！以下城市提出了申请：\n\n- 中国北京或广州\n- 白俄罗斯布列斯特\n- 澳大利亚墨尔本\n\n遴选小组由三位董事组成：Olivér Perge（流程负责人）、Alberto Pérez de Rada Fiol 和 Bob Burton。\n\n遴选流程包括分别评估申请材料、与申请方进行面谈，最后由小组投票。我们希望就最终获选者达成共识，确信比赛能够顺利举办，并为所有参与者带来良好体验。\n\n遴选结束后，我们将在 8 月底前另行发布公告。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.914Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "0e4c812aed714391bc74ed43b8ab21b94557e03c7f7f622c3dae434ef055c344"
+  "translationHash": "44ecbca9903e7a9950d4caf2367b6d68b25bce5cc20f6677654900e6ae80c529",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:12:23.463Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "b15d9b5d51362d170470a5a1bbec56a454212191212bd81aeee74c9d3408e903",
+    "reviewedTranslationHash": "44ecbca9903e7a9950d4caf2367b6d68b25bce5cc20f6677654900e6ae80c529",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/candidates-for-wca-world-championship-2019.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照标题和正文；各届赛事城市及取消/退款范围、董事候选名单、当选与连任区别、任期及生效日期、保留职务和干事分工均与原文一致。"
+    ],
+    "inputTranslationHash": "0e4c812aed714391bc74ed43b8ab21b94557e03c7f7f622c3dae434ef055c344"
+  }
 }

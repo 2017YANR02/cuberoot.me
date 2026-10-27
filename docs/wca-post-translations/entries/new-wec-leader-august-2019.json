@@ -12,14 +12,31 @@
     "sourceId": 12751
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "2527c8addbe628c5aa2885a610a81bc3422182fe29bd07481b504887fdcc0457",
     "language": "zh-Hans",
     "title": "WCA 道德委员会新负责人（2019 年 8 月）",
     "content": "我们很高兴地宣布，Callum Goodyear 将出任 WCA 道德委员会（WEC）的新任负责人。Callum 此前已是 WEC 成员。\n\nWCA 董事会依照[《议案 10.2019.0：委员会与团队》](https://www.worldcubeassociation.org/documents/motions/10.2019.0%20-%20Committees%20and%20Teams.pdf)第 4 节选出 Callum，并经现任委员会负责人及高级代表投票确认。\n\n感谢 Walker Welch 为 WEC 所做的工作，祝 Callum Goodyear 在新的岗位上一切顺利。\n\n新负责人将立即就任。我们共收到两份申请，Callum 是其中一位申请人。如有兴趣，两份申请材料均可在[这里](https://drive.google.com/open?id=1FxbJGkTB6k9abr7jJva4hUwtqMRYTd3g)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.128Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "b733df12df060bc8a515b4f19b90c53e35a39f44c974df9fd966a4b513a3ac3d"
+  "translationHash": "4074dc4d3575001e34e18b33d22fa615a5603a165ad8f8014f5745ad75bf5119",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:44.904Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "2527c8addbe628c5aa2885a610a81bc3422182fe29bd07481b504887fdcc0457",
+    "reviewedTranslationHash": "4074dc4d3575001e34e18b33d22fa615a5603a165ad8f8014f5745ad75bf5119",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/new-wec-leader-august-2019.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "b733df12df060bc8a515b4f19b90c53e35a39f44c974df9fd966a4b513a3ac3d"
+  }
 }

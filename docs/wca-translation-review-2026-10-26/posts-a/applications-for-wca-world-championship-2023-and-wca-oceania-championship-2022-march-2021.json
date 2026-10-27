@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/applications-for-wca-world-championship-2023-and-wca-oceania-championship-2022-march-2021",
+  "path": "docs/wca-post-translations/entries/applications-for-wca-world-championship-2023-and-wca-oceania-championship-2022-march-2021.json",
+  "sourceHash": "d1131ff9e0065d6826c88811044bb33ecff97368a838a78b09b6c8c677df9e1d",
+  "inputTranslationHash": "5c393a00c0ec8583b968d056f8d132b68b6337ae22d0fd372d3b172f5b56da18",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:06:14.454Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照正文与标题；核对全部申请/任命主体、时间、权限、附录条目及材料要求。"
+  ],
+  "changes": []
+}

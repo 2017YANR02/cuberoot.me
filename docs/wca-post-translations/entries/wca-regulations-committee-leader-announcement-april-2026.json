@@ -12,14 +12,31 @@
     "sourceId": 14246
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "ea0c9d6abdeb182c83d0b3234dfb540dc351788936ad4150f338aff1d20173b7",
     "language": "zh-Hans",
     "title": "WCA 规则委员会负责人任命公告（2026 年 4 月）",
-    "content": "亲爱的 WCA 社区成员：\n\n我们很高兴宣布，Kaidyn De Luca-Mazza 已被任命为 WCA 规则委员会（WRC）的新任负责人。Kaidyn 此前已是 WRC 的成员。\n\nWCA 董事会依据《WCA 委员会与团队[议案](https://documents.worldcubeassociation.org/documents/motions/10.2025.0%20-%20Committees%20and%20Teams.pdf)》第 5 节，选出 Kaidyn，并通过投票批准了这一任命。任命自 2026 年 3 月 14 日生效。\n\n我们感谢 Carter Kucala 担任负责人期间所做的工作。Carter 将继续留任 WRC 资深成员。我们也祝 Kaidyn 在新的岗位上一切顺利。\n\nKaidyn 是该岗位的唯一申请人，其申请材料可在[此处](https://drive.google.com/drive/folders/1-X5yw6E3vPx4DLIUQIqlXLQnFyyyDxWH)查看。",
+    "content": "亲爱的 WCA 社区成员：\n\n我们很高兴宣布，Kaidyn De Luca-Mazza 已被任命为 WCA 规则委员会（WRC）的新任负责人。Kaidyn 此前已是 WRC 的成员。\n\nWCA 董事会依据《WCA 委员会与团队[议案](https://documents.worldcubeassociation.org/documents/motions/10.2025.0%20-%20Committees%20and%20Teams.pdf)》第 5 节，选出 Kaidyn，并通过投票批准了这一任命。任命自 2026 年 3 月 14 日生效。\n\n我们感谢 Carter Kucala 担任负责人期间所做的工作。Carter 将继续留任 WRC 高级成员。我们也祝 Kaidyn 在新的岗位上一切顺利。\n\nKaidyn 是该岗位的唯一申请人，其申请材料可在[此处](https://drive.google.com/drive/folders/1-X5yw6E3vPx4DLIUQIqlXLQnFyyyDxWH)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:40:49.172Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "7be03a0297968315dce6cc7a788b576b35346604a29bb27fb4a54df81e51c68e"
+  "translationHash": "b555cf0cab673b3eab2723c5c61333bc3fdf19b2408117c42a967c1100f587ff",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:16:44.876Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "ea0c9d6abdeb182c83d0b3234dfb540dc351788936ad4150f338aff1d20173b7",
+    "reviewedTranslationHash": "b555cf0cab673b3eab2723c5c61333bc3fdf19b2408117c42a967c1100f587ff",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wca-regulations-committee-leader-announcement-april-2026.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "7be03a0297968315dce6cc7a788b576b35346604a29bb27fb4a54df81e51c68e"
+  }
 }

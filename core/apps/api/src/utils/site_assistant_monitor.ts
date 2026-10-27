@@ -21,9 +21,10 @@ const write: QueryRunner = async <T>(statement: string, params: unknown[] = []) 
 };
 export interface AssistantMetrics {
   stages: Record<string, { calls: number; ms: number; errors: number }>;
-  models: Array<{ model: string; thinking: boolean; input: number | null; output: number | null; cached: number | null; reasoning: number | null; grossCny?: number | null; tariff?: unknown }>;
+  models: Array<{ model: string; thinking: boolean; input: number | null; output: number | null; cached: number | null; reasoning: number | null; grossCny?: number | null; cacheAdjustedCny?: {min:number;max:number}|null; tariff?: unknown }>;
   embeddings: Array<{ model: string; tokens: number | null; grossCny?: number | null; tariff?: unknown }>;
   searches: Array<{ provider: string; requests: number | null; grossCny: number | null; tariff: unknown }>;
+  reranks: Array<{ model: string; candidates: number; tokens: number | null; ms: number; status: string; grossCny: number | null; tariff?: unknown }>;
   policy: { version: string; thinking: AssistantThinkingMode };
   tools: Record<string, number>;
   retrievals: Array<{ mode: string; reason?: string; generation?: string; hits: Array<{ id: string; href: string; score?: number }> }>;
@@ -44,7 +45,7 @@ export function recordAssistantModel(model: string, thinking: boolean, origin = 
   return (usage: LanguageModelUsage) => {
     entry.input = token(usage.inputTokens); entry.output = token(usage.outputTokens);
     entry.cached = token(usage.inputTokenDetails?.cacheReadTokens); entry.reasoning = token(usage.outputTokenDetails?.reasoningTokens);
-    Object.assign(entry, assistantPrice(model, origin, entry.input, entry.output));
+    Object.assign(entry, assistantPrice(model, origin, entry.input, entry.output, entry.cached));
   };
 }
 export function recordAssistantEmbedding(model: string, origin = '') {
@@ -68,6 +69,16 @@ export function recordAssistantSearch(origin: string) {
 export function recordAssistantRetrieval(value: AssistantMetrics['retrievals'][number]) {
   const metrics = scope.getStore();
   if (metrics && metrics.retrievals.length < 30) metrics.retrievals.push({ ...value, hits: value.hits.slice(0, 6).map(hit => ({ id: hit.id, href: hit.href, ...(hit.score == null ? {} : { score: Number(hit.score) }) })) });
+}
+
+export function recordAssistantRerank(model: string, candidates: number, origin = '') {
+  const entry: AssistantMetrics['reranks'][number] = { model, candidates, tokens: null, ms: 0, status: 'pending', grossCny: null };
+  scope.getStore()?.reranks.push(entry);
+  return (status: string, ms: number, tokens?: number) => {
+    entry.status = status; entry.ms = ms; entry.tokens = token(tokens);
+    recordAssistantStage('rerank', ms, status !== 'success');
+    Object.assign(entry, assistantPrice(model, origin, entry.tokens));
+  };
 }
 
 /** Best-effort credential redaction, not a claim that arbitrary prose is anonymous. */
@@ -113,7 +124,7 @@ export interface AssistantMonitorInput { uid: number | null; question: string; l
 export async function startAssistantMonitor(input: AssistantMonitorInput, run: QueryRunner = write) {
   const id = randomUUID(), started = input.startedAt ?? performance.now();
   const startedAt = new Date(Date.now() - (performance.now() - started)).toISOString();
-  const metrics: AssistantMetrics = { stages: {}, models: [], embeddings: [], searches: [], tools: {}, retrievals: [], policy: { version: '2026-10-23', thinking: input.thinking ?? 'auto' } };
+  const metrics: AssistantMetrics = { stages: {}, models: [], embeddings: [], searches: [], reranks: [], tools: {}, retrievals: [], policy: { version: '2026-10-26', thinking: input.thinking ?? 'auto' } };
   let firstAnswer: number | null = null, partial = '', finished = false;
   // Admission is durable before consuming quota or calling a paid model.
   try {
@@ -128,7 +139,7 @@ export async function startAssistantMonitor(input: AssistantMonitorInput, run: Q
       if (finished) return;
       finished = true;
       const duration = Math.round(performance.now() - started);
-      const calls = [...metrics.models, ...metrics.embeddings, ...metrics.searches];
+      const calls = [...metrics.models, ...metrics.embeddings, ...metrics.searches, ...metrics.reranks];
       metrics.cost = { grossCny: calls.reduce((n, call) => n + (call.grossCny ?? 0), 0), unpricedCalls: calls.filter(call => call.grossCny == null).length };
       const snapshot = JSON.parse(JSON.stringify(metrics));
       if (Buffer.byteLength(JSON.stringify(snapshot), 'utf8') > 64_000) {

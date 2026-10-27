@@ -12,14 +12,31 @@
     "sourceId": 13990
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "5599cc895d72b6839d2271accf571bb0a9dcfc99c252ddf23ba9751c15898a80",
     "language": "zh-Hans",
     "title": "WCA 顾问理事会负责人申请情况（2020 年 10 月）",
     "content": "各位 WCA 社区成员：\n\n由于没有收到 WAC 负责人职位的申请，WCA 董事会自 2020 年 9 月 29 日起代行 WAC 负责人的职责，并将继续承担这一职责，直至找到新负责人。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.921Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "7f99dd0aca88b88fee3069f8a08accb78004dbad8bf4f3c6699668a0909fab0a"
+  "translationHash": "a76512239ab91eaa3b6f04b319dc1dd4901635ce79dafbb788b8481a3a9d8c95",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:59.337Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "5599cc895d72b6839d2271accf571bb0a9dcfc99c252ddf23ba9751c15898a80",
+    "reviewedTranslationHash": "a76512239ab91eaa3b6f04b319dc1dd4901635ce79dafbb788b8481a3a9d8c95",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wac-leader-application-october-2020.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "7f99dd0aca88b88fee3069f8a08accb78004dbad8bf4f3c6699668a0909fab0a"
+  }
 }

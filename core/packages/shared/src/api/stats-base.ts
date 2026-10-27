@@ -1,29 +1,23 @@
-// Origin resolver for pre-generated stats JSON (repo-root /stats/*).
-//
-// On the self-hosted line nginx serves /stats/ directly; on Vercel they aren't
-// bundled, so a relative /stats/* hits the Next route handler which
-// 307-redirects to static.cuberoot.me — an extra edge request per fetch. Point
-// prod fetches straight at static.cuberoot.me (CORS: *) to skip the hop. Dev
-// stays relative (the /stats route handler serves the local repo files).
-//
-// Dev detection mirrors loadAlg() in ../alg.ts: Next/Webpack/Turbopack replace
-// `process.env.NODE_ENV` as a string literal at build time; guarded for the
-// browser bundles where `process` is undefined. `shared/` can't import the
-// client `lib/` helpers, so this is the shared-local equivalent of
-// client's lib/stats-base.ts.
-declare const process: { env: { NODE_ENV?: string } };
-function nodeProcessEnv(): string | undefined {
-  return process.env.NODE_ENV;
+// One policy for Web and shared loaders. Public snapshots come from the
+// published server unless a developer explicitly opts into local statistics.
+export const PUBLISHED_STATS_ORIGIN = 'https://static.cuberoot.me';
+
+declare const process: { env: { NODE_ENV?: string; NEXT_PUBLIC_STATS_SOURCE?: string; PORT?: string } };
+
+export function usesLocalStats(): boolean {
+  try {
+    // Keep literal accesses so Next can inline the public configuration.
+    return process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_STATS_SOURCE === 'local';
+  } catch {
+    return false; // Other hosts without Node/Next use published data.
+  }
 }
 
-function isDev(): boolean {
-  let nodeEnv: string | undefined;
-  try { nodeEnv = nodeProcessEnv(); } catch { /* not in Node/bundler context */ }
-  return nodeEnv === 'development';
-}
-
-/** Origin-qualify a '/stats/...' path. Prod → static.cuberoot.me; dev → relative. */
 export function statsUrl(path: string): string {
   const p = path.startsWith('/') ? path : `/${path}`;
-  return isDev() ? p : `https://static.cuberoot.me${p}`;
+  if (!usesLocalStats()) return PUBLISHED_STATS_ORIGIN + p;
+  if (typeof window !== 'undefined') return p;
+  // Server-rendered development pages use the same local snapshot as browsers.
+  // Production builds never depend on a running local server.
+  return `http://127.0.0.1:${process.env.PORT || '3000'}${p}`;
 }

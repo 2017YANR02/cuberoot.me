@@ -12,14 +12,31 @@
     "sourceId": 14077
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "3c9ca9e925fd1eb765eeea8c81b0d3adc61ecb467cfe38fdf0b0358043b089a5",
     "language": "zh-Hans",
     "title": "《WCA 会费制度政策》更新（2022 年 10 月）",
     "content": "WCA 财务委员会（WFC）已更新《WCA 会费制度政策》，适用于 2022 年 10 月 25 日及之后公布的全部比赛。本次调整提高了各场 WCA 比赛按每位选手报名费计算的会费比例，也提高了第 4、5 档国家每位选手的会费基准金额。\n\n这一调整将为 WCA 的发展提供更多资金，并支持启动目前尚在筹备中的项目。短期内，资金将用于改善 WCA 软件。\n\n<!-- break -->\n\n完整改动列表见 GitHub 上的[这份拉取请求](https://github.com/thewca/wca-documents/pull/313/files)和[这份拉取请求](https://github.com/thewca/worldcubeassociation.org/pull/7234)。\n\n更新后的会费政策全文见[此处](https://www.worldcubeassociation.org/documents/policies/external/Dues%20System.pdf)。\n\n如有疑问，请联系 WFC（[finance@worldcubeassociation.org](mailto:finance@worldcubeassociation.org)）。",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.550Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "99b30f1e725743ee28d89845dd78e613b428f082a12ec725fca4085b1fe42782"
+  "translationHash": "27c6277323c202ca0d57ab8a56b889fb5ece8fead3d05ac35bc88484b558a9ca",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:59.336Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "3c9ca9e925fd1eb765eeea8c81b0d3adc61ecb467cfe38fdf0b0358043b089a5",
+    "reviewedTranslationHash": "27c6277323c202ca0d57ab8a56b889fb5ece8fead3d05ac35bc88484b558a9ca",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/updates-to-the-wca-dues-system-policy-october-2022.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "99b30f1e725743ee28d89845dd78e613b428f082a12ec725fca4085b1fe42782"
+  }
 }

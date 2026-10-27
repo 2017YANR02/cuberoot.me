@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/changes-to-wca-head-to-head-format-april-2026",
+  "path": "docs/wca-post-translations/entries/changes-to-wca-head-to-head-format-april-2026.json",
+  "sourceHash": "f480f137a345e0c7498ddf576ac808e19b57ed6cb9234e1a319b2585c4df5aaf",
+  "inputTranslationHash": "d7c79215de11042882902970a43bfe45a3ad68b7210db406af5a6ec9b63a3d7d",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:12:38.683Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "全文对照标题、名单变更/历史范围、项目实施日期、条件和例外、合同授权条件、准则对象及纪录合作流程。"
+  ],
+  "changes": []
+}

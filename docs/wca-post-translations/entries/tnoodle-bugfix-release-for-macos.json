@@ -12,14 +12,31 @@
     "sourceId": 14026
   },
   "translation": {
-    "version": 3,
+    "version": 4,
     "sourceHash": "5cfa70b10b61cdaac99503069be6a3be586ed5bdf15de9673a6fab88d2212624",
     "language": "zh-Hans",
     "title": "TNoodle 发布 macOS 问题修复版本",
     "content": "TNoodle 刚刚发布了一个问题修复版本。随着比赛逐步恢复，多位代表反馈：TNoodle 1.1.0 在 macOS Big Sur 及更高版本中会在启动后立即崩溃。\n\n我们在 TNoodle 1.1.1 中修复了这一问题，同时修正了最少步裁切纸张的一处细小不一致。新版本还加入了世界语翻译。完整更新说明请见 [GitHub](https://github.com/thewca/tnoodle/releases/tag/v1.1.1)。\n\n为了让受影响的代表能够为比赛生成打乱，**TNoodle 1.1.1 已立即获准使用**。不过，打乱算法并未改变，因此**已用 TNoodle 1.1.0 生成的打乱仍然有效**。\n\n旧版将有约两周的过渡期。**截至 7 月 25 日星期日（含当日）**，仍可使用 TNoodle 1.1.0。所有在此日期之后结束的比赛，均须使用 TNoodle 1.1.1 生成打乱。\n\n请记得，最新版打乱程序的下载地址始终为 https://worldcubeassociation.org/regulations/scrambles/.\n\n请大家注意安全。\n\nGregor，代表 WST",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.964Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "a005c9319a91970b84b15f3d0edbe30b2bfd6098b1e27d67078361aef78477b8"
+  "translationHash": "37e87b0da530a31181b35c4bd25d785c84f3aba767eff52f9e4b3b13324053f7",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:48.604Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "5cfa70b10b61cdaac99503069be6a3be586ed5bdf15de9673a6fab88d2212624",
+    "reviewedTranslationHash": "37e87b0da530a31181b35c4bd25d785c84f3aba767eff52f9e4b3b13324053f7",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/tnoodle-bugfix-release-for-macos.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "a005c9319a91970b84b15f3d0edbe30b2bfd6098b1e27d67078361aef78477b8"
+  }
 }

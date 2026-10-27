@@ -12,14 +12,31 @@
     "sourceId": 14159
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "98f632f27fbd4cce19a99435cadbd2fc72c8d09abe3f4c7ea3243729e0ceb1c1",
     "language": "zh-Hans",
     "title": "WCA 规则委员会负责人任命公告（2024 年 6 月）",
-    "content": "我们很高兴宣布，Carter Kucala 出任 WCA 规则委员会（WRC）负责人。Carter 此前已是 WRC 资深成员。\n\n根据关于 WCA 委员会与团队的[决议](https://documents.worldcubeassociation.org/documents/motions/10.2022.0%20-%20Committees%20and%20Teams.pdf)第 4 节，WCA 董事会选定 Carter，并经现任委员会负责人及高级代表投票通过。\n\n感谢 Antonio Kam 在过去两年带领 WRC 所做的工作。祝 Carter 在新岗位上一切顺利。\n\n本次共收到三份申请，Carter 是其中一位申请人。全部申请材料可在[此处](https://drive.google.com/drive/folders/1296uv-Xm6QQJALXsoKrvAamh53UCVaJv)查看。\n\n另外两位申请人是：\n- Hao Chang\n- Ekaterina Kaneva",
+    "content": "我们很高兴宣布，Carter Kucala 出任 WCA 规则委员会（WRC）负责人。Carter 此前已是 WRC 高级成员。\n\n根据关于 WCA 委员会与团队的[决议](https://documents.worldcubeassociation.org/documents/motions/10.2022.0%20-%20Committees%20and%20Teams.pdf)第 4 节，WCA 董事会选定 Carter，并经现任委员会负责人及高级代表投票通过。\n\n感谢 Antonio Kam 在过去两年带领 WRC 所做的工作。祝 Carter 在新岗位上一切顺利。\n\n本次共收到三份申请，Carter 是其中一位申请人。全部申请材料可在[此处](https://drive.google.com/drive/folders/1296uv-Xm6QQJALXsoKrvAamh53UCVaJv)查看。\n\n另外两位申请人是：\n- Hao Chang\n- Ekaterina Kaneva",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.553Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "e41de5d3c1b831b907d41eda0545568a4bee4ccf43f67f159b987b2f0aadc089"
+  "translationHash": "13d386afad5cbc1e3a26220d4f218aad14f9250eaa47be388094c28de7b8ad19",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:19:17.424Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "98f632f27fbd4cce19a99435cadbd2fc72c8d09abe3f4c7ea3243729e0ceb1c1",
+    "reviewedTranslationHash": "13d386afad5cbc1e3a26220d4f218aad14f9250eaa47be388094c28de7b8ad19",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wrc-leader-announcement-june-2024.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "e41de5d3c1b831b907d41eda0545568a4bee4ccf43f67f159b987b2f0aadc089"
+  }
 }

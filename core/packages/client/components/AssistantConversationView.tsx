@@ -6,10 +6,10 @@ import { assistantConversations, type AssistantConversation, type AssistantConve
 export default function AssistantConversationView({ owner, conversation, active, lang, cards }: {
   owner: string; conversation: AssistantConversation; active: boolean; lang: 'zh' | 'en'; cards: LandingSearchCard[];
 }) {
-  const onChange = useCallback((snapshot: AssistantConversationSnapshot) => {
-    assistantConversations.update(owner, conversation.id, snapshot);
+  const onChange = useCallback((snapshot: Partial<AssistantConversationSnapshot>) => {
+    assistantConversations.patch(owner, conversation.id, snapshot);
   }, [owner, conversation.id]);
   return <div className="deskpet-conversation" hidden={!active}>
-    <LandingSearch cards={cards} lang={lang} conversation={{ initial: conversation.snapshot, active, onChange }} />
+    <LandingSearch cards={cards} lang={lang} conversation={{ initial: conversation.snapshot, active, onChange, owner, id: conversation.id, pending: conversation.pending }} />
   </div>;
 }

@@ -12,14 +12,31 @@
     "sourceId": 1
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "caa572ab80158e7396054113410ae435d4a08e6cb8f11263c25f152639882d83",
     "language": "zh-Hans",
     "title": "Masayuki Akimoto 成为 WCA 新任董事",
     "content": "我们很高兴地宣布，来自日本的 Masayuki Akimoto 先生加入 WCA 董事会。\n\nMasayuki 是现任二阶世界冠军，也是 2003 年四阶和五阶世界冠军。他曾负责京都、东京和大阪三场亚洲比赛，并计划今后举办更多比赛。他的网站提供了丰富的信息，也一直通过自己的想法和行动，让这项爱好变得更有趣。\n\n目前 WCA 董事会由四名成员组成：\n\n- Tyson Mao（联合创始人），美洲\n- Ron van Bruchem（联合创始人），欧洲\n- Gilles Roux，欧洲\n- Masayuki Akimoto，亚洲\n\n我们期待 2006 年在更多地方举办更多比赛，迎来更多选手。2006 年的另一项目标是完成 WCA 的正式设立。之后，我们就可以准备选举新一届董事会。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.156Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "458cc789203506704e6734741c423e1576255bfc8e63909426d41271641cc2aa"
+  "translationHash": "310750a3b889fba0338ae752994e6000a10f404be0e3bcc73846ebb1021b9137",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:36.321Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "caa572ab80158e7396054113410ae435d4a08e6cb8f11263c25f152639882d83",
+    "reviewedTranslationHash": "310750a3b889fba0338ae752994e6000a10f404be0e3bcc73846ebb1021b9137",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/masayuki-akimoto-new-wca-board-member.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "458cc789203506704e6734741c423e1576255bfc8e63909426d41271641cc2aa"
+  }
 }

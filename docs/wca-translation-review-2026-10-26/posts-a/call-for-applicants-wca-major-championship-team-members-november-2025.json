@@ -1,0 +1,18 @@
+{
+  "key": "posts:/posts/call-for-applicants-wca-major-championship-team-members-november-2025",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wca-major-championship-team-members-november-2025.json",
+  "sourceHash": "2e54d17a5be78ab95481844137dd0533302714b7ca8392133b987b72c1b74b36",
+  "inputTranslationHash": "de565491aaa803024ac83d2ba3addee4e65ef3009529eaa403a438c2e6fb0f4c",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:07:01.628Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "correction_required",
+  "notes": [
+    "完整对照招募正文、职责条目、必需/可选资格、年龄、时限和程序；未扩展外链材料。"
+  ],
+  "changes": [
+    "统一 Continental 为大洲赛事/纪录；官方规则11f1c为大洲锦标赛，避免跨洲歧义。"
+  ],
+  "title": "WCA 大型锦标赛组招募成员（2025 年 11 月）",
+  "content": "各位社区成员：\n\nWCA 大型锦标赛组正在招募新成员！所有人均可申请，无需已在 WCA 担任职务。有全国锦标赛或大型锦标赛组织经验者将获得优先考虑。\n\n*如果你目前是计划于 2026 年或 2027 年举办的任何大型锦标赛的组委会成员，请暂勿申请。这些比赛结束后，我们很可能会再次开放申请。*\n<!-- break -->\n\n### WMCT 负责什么？\n\n团队职责见 [WCA 议案 10.2024.14](https://documents.worldcubeassociation.org/documents/motions/10.2024.14%20-%20Major%20Championship%20Team.pdf)，近期职责已有扩充。\n\n根据议案，WMCT 会在申办前、申办期间及申办结束后主动支持组委会，就预算、赛程、设计、软件及与其他 WCA 团队的协调提供指导。我们也会编写覆盖大型锦标赛筹办各方面的文档和指南，帮助历届组委会传承经验。\n\n此外，WMCT 负责大洲锦标赛和世界锦标赛的申办流程，并协助董事会制定大型锦标赛的整体规划。\n\n团队还负责协调 WCA 新的一对一赛制的实施，并将在 2026 年全年主导测试工作。\n\n### 申请条件\n\n我们希望申请人具备：\n\n* 每周约 2–5 小时的时间；部分阶段工作较忙、会议较多，需要能够承受压力并按时完成任务。\n* 良好的英语口头和书面沟通能力。\n* 全国锦标赛或大型锦标赛的组织经验，或多舞台、有赞助、较大预算和直播等配置的大型比赛组织经验。\n* 参加大型锦标赛并担任工作人员的经验。\n* 以下至少一个领域的实际经验：统筹大规模比赛或大型锦标赛、相关软件、直播、志愿者管理、赛场布局设计、文档编写。\n\n### 如何申请\n\n申请材料须包含：\n\n* 简短的个人介绍。\n* 为 WCA、地区组织或魔方社区所做工作的概述。\n* 详细介绍你在上述全国锦标赛、大规模比赛或大型锦标赛组织工作中的职责，以及这些经验能为 WMCT 带来什么帮助。\n* 你在上述领域中擅长的方面，如软件、场地布局等。\n* 加入 WMCT 的动机。\n* （选填）你建议在未来大型锦标赛中采用的想法。\n\n申请材料须为 PDF 格式。申请从即日起开放，截止时间为 2025 年 12 月 7 日 23:59 UTC，请私下发送给 Rubén López de Juan（[rjuan@worldcubeassociation.org](mailto:rjuan@worldcubeassociation.org)）。\n\n收到申请后，我们会发送确认邮件；你也可能被邀请参加一次或多次面试，面试人员为 WMCT 负责人及最多两名其他成员。\n\n如对 WMCT 的工作或本次招募有疑问，可联系 Rubén López de Juan（[rjuan@worldcubeassociation.org](mailto:rjuan@worldcubeassociation.org)）。\n\n感谢你愿意加入 WMCT，为 WCA 出力！"
+}

@@ -1,0 +1,27 @@
+{
+  "key": "posts:/posts/notification-of-data-breach-to-data-subjects",
+  "source": {
+    "key": "posts:/posts/notification-of-data-breach-to-data-subjects",
+    "kind": "posts",
+    "title": "Notification of Data Breach to Data Subjects",
+    "date": "2023-06-11T04:17:02.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/notification-of-data-breach-to-data-subjects",
+    "content": "The WCA recently had an incident resulting in a data breach of the [worldcubeassociation.org](https://worldcubeassociation.org) website. In compliance with data protection laws (namely GDPR), we are informing all users of worldcubeassociation.org of this data breach, a summary of what caused it, likely consequences, our next steps, and a point of contact.\n\n## Summary of the data breach\n* At 14:43 UTC on Wednesday 7th June 2023, for approximately 70 minutes, users may have found themselves logged in as another user (from the same geographic area) on the worldcubeassociation.org website\n* This was caused by incorrect settings during a rollout of Content Delivery Network (CDN) via our AWS servers\n* An exact number of affected data subjects is still not yet determined. \n* Users who would have experienced this behaviour are those who were logged into the worldcubeassociation.org site:\n    - From the same geographic location\n    - After their traffic had started being routed through the CDN\n    - Browsing the website within 1 second of each other\n* Personal data records held on worldcubeassociation.org include Date of Birth and Email address.\n\n## Likely consequences\n* With a set of rare conditions being met, it was technically possible for a data subject’s personal identifying information to be compromised.\n* There is a high level of certainty that the breach was contained and that if there was any unauthorised access, it was minimal.\n* The systems of worldcubeassociation.org contain only limited personal identifying information and there is no way for a non-admin user to download all identifying data.\n* The system administrators have been able to confirm that no user, who may have found themselves with administrative privileges, gained access to the database control panel. \n* At this point in time, it is NOT possible to rule out that an unauthorised user has gained access to an account with elevated (staff or competition organiser) privileges and hence gained access to personal data.\n* A malicious actor MAY have found themselves in control of an account and may have accessed personal information, however it is believed that the likelihood is extremely low due to the short time frame and the random nature of the granted access.\n\n## Measures taken\n* The WCA Software Team (WST) has done extensive investigations to understand the cause, the timeline and impact of the breach.\n* At this point the system administrators are still investigating the details and working to understand the affected users.\n\n## Recommended actions\n* It is with an abundance of caution, WST is recommending ALL users who were logged into the worldcubeassociation.org site on Wednesday 7th June to:\n    - Confirm there are no unexpected changes to their profile\n    - Reset their password\n\n\n## Communication\nIf you have any further queries or concerns related to protection of your private data, the WCA’s Data Protection Officer is Jacob Ambrose, who can be contacted through the results team ([Results@worldcubeassociation.org](mailto:results@worldcubeassociation.org)).",
+    "hash": "4b6f4797915f22ea3a881d3db7fe2d5c42b53183915a13ecf96d575152f2d939",
+    "format": "markdown",
+    "sourceId": 14107
+  },
+  "translation": {
+    "version": 2,
+    "sourceHash": "4b6f4797915f22ea3a881d3db7fe2d5c42b53183915a13ecf96d575152f2d939",
+    "language": "zh-Hans",
+    "title": "致数据主体的数据泄露通知",
+    "content": "WCA 近日发生了一起涉及 [worldcubeassociation.org](https://worldcubeassociation.org) 网站的数据泄露事件。根据数据保护法律，尤其是《通用数据保护条例》（GDPR），我们向所有网站用户通报本次泄露、原因概况、可能后果、后续措施及联系方式。\n\n## 数据泄露概况\n\n* 2023 年 6 月 7 日星期三 14:43 UTC 起，约 70 分钟内，用户可能发现自己在 worldcubeassociation.org 上登录成了同一地理区域的另一位用户。\n* 原因是在通过 AWS 服务器部署内容分发网络（CDN）时，配置出现错误。\n* 受影响数据主体的确切人数尚未确定。\n* 可能遇到该情况的用户须同时满足：\n  - 从相同地理位置登录 worldcubeassociation.org。\n  - 其访问流量已开始经由 CDN 路由。\n  - 浏览网站的时间相差不超过 1 秒。\n* worldcubeassociation.org 保存的个人数据包括出生日期和邮箱地址。\n\n## 可能后果\n\n* 当一组罕见条件同时满足时，数据主体的个人身份信息在技术上可能泄露。\n* 我们高度确信，泄露范围已得到控制；即使存在未经授权的访问，规模也很小。\n* worldcubeassociation.org 系统只保存有限的个人身份信息，非管理员用户无法下载全部身份数据。\n* 系统管理员已确认，即使有用户意外获得管理员权限，也没有人进入数据库控制面板。\n* 目前**无法排除**未经授权的用户曾进入权限较高的工作人员或比赛组织者账号，从而接触个人数据的可能。\n* 恶意人员**可能**曾控制某个账号并查看个人信息。不过，由于持续时间短、获得访问权限的对象具有随机性，我们认为这种可能性极低。\n\n## 已采取的措施\n\n* WCA 软件组（WST）已进行全面调查，以了解泄露原因、时间线和影响。\n* 系统管理员仍在调查细节，确认受影响的用户。\n\n## 建议采取的措施\n\n* 出于充分谨慎，WST 建议所有曾在 6 月 7 日星期三登录 worldcubeassociation.org 的用户：\n  - 检查个人资料，确认没有意外改动。\n  - 重置密码。\n\n## 联系方式\n\n如果你对个人数据保护有其他疑问或顾虑，可通过成绩组联系 WCA 数据保护官 Jacob Ambrose：[Results@worldcubeassociation.org](mailto:results@worldcubeassociation.org)。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:49:00.927Z",
+    "reviewStatus": "pending_independent_review",
+    "revisedAt": "2026-10-25T07:28:01.629Z",
+    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+  },
+  "translationHash": "47f204934f1426f76494973deeedfc562afbd17196d4447b146e1cf01f1ead70"
+}

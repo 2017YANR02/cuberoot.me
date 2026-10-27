@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/world-rubik-s-cube-championship-2007-on-october-5-6-7-2007-in-budapest",
+  "path": "docs/wca-post-translations/entries/world-rubik-s-cube-championship-2007-on-october-5-6-7-2007-in-budapest.json",
+  "sourceHash": "c5e6da24742a2805bcac73241d632622dbaae8acd5a11b62e28aa3776d9d2412",
+  "inputTranslationHash": "d84189bf845d44ebe43324a9d1a999d85bc36e2e674c39f762822f109066f17d",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:11:14.399Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

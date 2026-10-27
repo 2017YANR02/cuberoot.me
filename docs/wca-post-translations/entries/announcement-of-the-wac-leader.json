@@ -12,14 +12,33 @@
     "sourceId": 11291
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "ed4af2a2e1661b9dfc8dddba5f037bdb4ba5ac2668e05cbd6e7bb034fdb88a8a",
     "language": "zh-Hans",
     "title": "WCA 顾问理事会负责人任命公告",
     "content": "我们很高兴地宣布，Daniel Sheppard 已获任命，担任 WCA 顾问理事会（WAC）负责人。\n\nWCA 董事会根据关于 WCA 理事会的 [20.2019.0 号议案](https://www.worldcubeassociation.org/documents/motions/20.2019.0%20-%20Councils.pdf)第 4.1 节，选定 Daniel。\n\n祝 Daniel 履新顺利！\n\n本次共有三位申请人，Daniel Sheppard 是其中之一。如有兴趣，可在[此处](https://drive.google.com/drive/folders/1VLIht0B_vtYiUTRwJJ3sRTU3ozljSekG)查看他及其他申请人的材料。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.135Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "4bf4c01f414418e645d99c4b618cac4af07e6bb62f1dafc3425441a4e989e777"
+  "translationHash": "943ba465fbbb9adcc95ddb127738339c80b37f0bfedc188034c648eba28e0e2f",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:05:11.622Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "ed4af2a2e1661b9dfc8dddba5f037bdb4ba5ac2668e05cbd6e7bb034fdb88a8a",
+    "reviewedTranslationHash": "943ba465fbbb9adcc95ddb127738339c80b37f0bfedc188034c648eba28e0e2f",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/announcement-of-the-wac-leader.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+    ],
+    "inputTranslationHash": "4bf4c01f414418e645d99c4b618cac4af07e6bb62f1dafc3425441a4e989e777"
+  }
 }

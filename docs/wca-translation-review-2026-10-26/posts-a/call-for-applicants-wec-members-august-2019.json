@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wec-members-august-2019",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wec-members-august-2019.json",
+  "sourceHash": "fe2860154930e45a7b65e0d6980e821319d01a52a76e3722eb6175fd41c839de",
+  "inputTranslationHash": "fc3d2e6686219bf66a5f4c4639c4c610303a3a06861ca80ac2cd4727585c88cb",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:10:20.415Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "全文对照；历史 WEC/纪律委员会职责、申请资格、任期工时、截止日期及任命流程保持原意。"
+  ],
+  "changes": []
+}

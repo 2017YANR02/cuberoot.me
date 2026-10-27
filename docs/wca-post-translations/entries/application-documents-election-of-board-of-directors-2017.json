@@ -12,14 +12,33 @@
     "sourceId": 7709
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "fe4b0e7a5b63c8455941d735f14207332c2056199c3fc81dfd0090c86c4eb3ac",
     "language": "zh-Hans",
     "title": "2017 年董事会选举申请材料公开",
     "content": "各位 WCA 社区成员：\n\n一些社区成员希望阅读最近一次 WCA 董事会选举的申请材料。经所有候选人同意，WCA 董事会决定公开这些材料。感谢社区成员提出这一问题；我们相信，公开材料有助于提高整个协会的透明度。\n\n请通过以下链接查看申请材料：\n\n<https://drive.google.com/drive/folders/0B4YmiWSbLbGWMjctbkxuNHF0R28>",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.153Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "829a663c70db84048d344c5f238cd45b2973196e4c962dd496aef5c8807c859d"
+  "translationHash": "6ad363169b92afd1412e4aeaebbdd6cad0bbf7eeed1effbdada05b492bf2dd03",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:05:11.623Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "fe4b0e7a5b63c8455941d735f14207332c2056199c3fc81dfd0090c86c4eb3ac",
+    "reviewedTranslationHash": "6ad363169b92afd1412e4aeaebbdd6cad0bbf7eeed1effbdada05b492bf2dd03",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/application-documents-election-of-board-of-directors-2017.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+    ],
+    "inputTranslationHash": "829a663c70db84048d344c5f238cd45b2973196e4c962dd496aef5c8807c859d"
+  }
 }

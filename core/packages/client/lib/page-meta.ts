@@ -41,6 +41,8 @@ const SEP = ' — ';
 const SHARE_IMAGE = '/icons/CubeRoot.png';
 
 export const PAGE_META: Record<string, PageMetaEntry> = {
+  'chat': { title: { zh: '聊天', en: 'Chat' }, description: { zh: '与 CubeRoot 对话，查询成绩、寻找工具、学习魔方。', en: 'Chat with CubeRoot to explore results, find tools and learn cubing.' } },
+  'chat/share': { title: { zh: '分享的回答', en: 'Shared response' } },
   'dev/continuous-corners': {
     title: { zh: '连续圆角：几何与实现', en: 'Continuous Corners: Geometry and Implementation' },
     description: {
@@ -704,6 +706,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'WCA terminology, regulatory phrasing, translation pitfalls and aligned English–Chinese clauses, with Markdown downloads.',
     },
   },
+  'regulation/translation/search': {
+    title: { zh: 'WCA 官方译文查询', en: 'WCA Official Translation Search' },
+    description: {
+      zh: '按中文、英文或缩写查询 WCA 官方译文，查看中英对照、语境和官方出处。',
+      en: 'Search WCA translations by Chinese, English or abbreviation, with paired text, context and official sources.',
+    },
+  },
   'regulation/post': { title: { zh: '公告', en: 'Posts' } },
   'regulation/logs': {
     title: { zh: 'WCA 意外事件与纪律处分日志', en: 'WCA Incidents and Disciplinary Logs' },
@@ -829,8 +838,8 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'timer': {
     title: { zh: '计时器', en: 'Timer' },
     description: {
-      zh: '速拧计时器:WCA 标准打乱、智能魔方支持、分步分析与云端备份。',
-      en: 'Speedcubing timer with WCA-standard scrambles, smart-cube support, step-by-step analysis and cloud backup.',
+      zh: '速拧计时器：记录日常练习的还原成绩，查看平均成绩；支持 WCA 标准打乱、智能魔方、分步分析与云端备份。',
+      en: 'Record daily practice solve times and view averages. Includes WCA-standard scrambles, smart-cube support, step-by-step analysis and cloud backup.',
     },
   },
   'timer/marks': { title: { zh: '打乱足迹', en: 'Scramble Marks' } },

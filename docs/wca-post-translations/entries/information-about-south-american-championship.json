@@ -12,14 +12,31 @@
     "sourceId": 8957
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "f8c98f9303d1f0820a070313304fd457af0fd800c2b536ad54d095fca6f105dc",
     "language": "zh-Hans",
     "title": "南美锦标赛举办信息",
     "content": "我们很高兴地宣布，南美锦标赛将于 12 月 15–16 日在巴西圣保罗州波阿举行！\n\n我们收到了波阿的申办方案，以及一份在南美多个城市共同举办锦标赛的方案。两份方案都各有特色，详细介绍了办赛安排，也都经过了充分思考。最终，圣保罗州波阿获选为举办城市。\n\n两份申办材料可在[这里](https://drive.google.com/drive/folders/19jgWuE4_fOU1MMAePp2clrOucyKl0ylf?usp=sharing)查看。\n\n感谢两个团队为申办和筹备这场比赛投入的时间与精力！看到大家愿意花时间申办大型比赛、认真规划，我们很高兴，也十分感谢这份热情。\n\n期待 12 月又一届南美锦标赛，也希望你能一起参加！",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.915Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "b5d3546b145c6f2ad0fa21fc7fd69324ec9e408ddccc4af450312b93efce8438"
+  "translationHash": "d3a3449882259124520a3f277a4230b768b5e4a80a49389d34562694aa7564e7",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:36.320Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "f8c98f9303d1f0820a070313304fd457af0fd800c2b536ad54d095fca6f105dc",
+    "reviewedTranslationHash": "d3a3449882259124520a3f277a4230b768b5e4a80a49389d34562694aa7564e7",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/information-about-south-american-championship.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "b5d3546b145c6f2ad0fa21fc7fd69324ec9e408ddccc4af450312b93efce8438"
+  }
 }

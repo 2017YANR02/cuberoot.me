@@ -12,14 +12,33 @@
     "sourceId": 14120
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "3292e45a9c3ac08ab765e9270221980556f36cc64b61db00234af59278716b66",
     "language": "zh-Hans",
     "title": "招募 WCA 财务委员会负责人（2023 年 8 月）",
     "content": "WCA 将任命新一届**财务委员会（WFC）负责人**。\n\n候选人应完成 24 个月的任期，平均每周至少投入 7 小时处理委员会工作。我们希望候选人具备以下条件：\n\n* 基本了解 WCA 的组织架构和内部工作流程。\n* 有财务工作经验，尤其是记账和报税。\n* 英语熟练。\n* 每天能安排适当时间履行职责。\n* 具备团队管理能力。\n\n申请期从即日起至 2023 年 9 月 18 日 23:59 UTC。有意申请者可将材料私下发送至 WCA 董事会（board@worldcubeassociation.org）。\n\n申请材料须为 PDF 格式，并包含：\n\n* 简短的个人介绍。\n* 曾为 WCA 开展的工作概述。\n* 担任 WCA 财务委员会负责人后的工作设想。\n\n此外，请提交一份可在申请期结束后公开的申请材料副本。\n\nWFC 的权利与职责见 [WCA 议案 10.2021.6](https://www.worldcubeassociation.org/documents/motions/10.2021.6%20-%20Financial%20Committee.pdf)。\n\n申请期结束后，WCA 董事会将投票选出人选，再由高级代表及现任委员会、团队负责人投票确认，随后公布新负责人。流程详见 [WCA 议案 10.2022.0](https://www.worldcubeassociation.org/documents/motions/10.2022.0%20-%20Committees%20and%20Teams.pdf)第 4 节。\n\n感谢大家的申请与支持。",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.533Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "89abd5ed67dd1f1169c26831c1258e746da0248277663250359c1db4548c1714"
+  "translationHash": "57c54cb291266a2c4d051b4575f72ef32cefb87b9d2713ac3829c36bd23f00ff",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:10:20.415Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "3292e45a9c3ac08ab765e9270221980556f36cc64b61db00234af59278716b66",
+    "reviewedTranslationHash": "57c54cb291266a2c4d051b4575f72ef32cefb87b9d2713ac3829c36bd23f00ff",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/call-for-applicants-wfc-leader-august-2023.json",
+    "sourceConcern": false,
+    "notes": [
+      "全文对照；历史 WEC/纪律委员会职责、申请资格、任期工时、截止日期及任命流程保持原意。"
+    ],
+    "inputTranslationHash": "89abd5ed67dd1f1169c26831c1258e746da0248277663250359c1db4548c1714"
+  }
 }

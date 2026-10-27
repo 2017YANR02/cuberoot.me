@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/postponement-of-the-wca-asian-championship-2020",
+  "source": {
+    "key": "posts:/posts/postponement-of-the-wca-asian-championship-2020",
+    "kind": "posts",
+    "title": "Postponement of the WCA Asian Championship 2020",
+    "date": "2020-02-21T12:30:16.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/postponement-of-the-wca-asian-championship-2020",
+    "content": "Unfortunately, we are here to announce that the date for the WCA Asian Championship 2020 has been postponed due to the current COVID-19 outbreak within the region. The organization team and the WCA Board are currently working together on finding a suitable date for this championship later in the year.\n\nPlease stay tuned for future updates, thank you for your kind understanding.",
+    "hash": "0df65b7af76b168d64ed2043c0e064e97aafa5eb57e4edd191c5f1d64e74de73",
+    "format": "markdown",
+    "sourceId": 13961
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "0df65b7af76b168d64ed2043c0e064e97aafa5eb57e4edd191c5f1d64e74de73",
+    "language": "zh-Hans",
+    "title": "2020 年 WCA 亚洲锦标赛延期",
+    "content": "很遗憾，由于当地目前的新冠疫情，2020 年 WCA 亚洲锦标赛将延期举行。组委会与 WCA 董事会正在共同寻找今年晚些时候的合适日期。\n\n请留意后续消息，感谢大家理解。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:49:00.927Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "1ee25cbfea302403f76def72132afc7c12d36a9ced7c54d016193fc3ec4d0fb8"
+}

@@ -1,0 +1,16 @@
+{
+  "key": "posts:/posts/special-exceptions-to-wcrp-for-march-2024",
+  "path": "docs/wca-post-translations/entries/special-exceptions-to-wcrp-for-march-2024.json",
+  "sourceHash": "fd589d81afe87cdc9e10d13b8e60e12f17775ed045a72f90fe1c3d3c9508e985",
+  "inputTranslationHash": "41ff28a5f9641e47d17dd4b0d153d45fdce3bee04023f751e7793cac1a680d19",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:25.170Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "correction_required",
+  "notes": [],
+  "changes": [
+    "Newcomer Month 统一新人月，与2025年同一活动名称一致。"
+  ],
+  "title": "2024 年 3 月《WCA 比赛要求政策》特别例外规定",
+  "content": "各位 WCA 社区成员：\n\n为配合即将开展的新人月活动，WCA 董事会近日批准，对 **2024 年 3 月**举行的比赛实施一组[《WCA 比赛要求政策》](https://www.worldcubeassociation.org/documents/policies/external/Competition%20Requirements.pdf)特别例外规定。\n\n作为活动的一部分，2024 年 3 月的比赛可以选择将最多 50% 的参赛名额预留给 WCA 新人或持有 2024 年 WCA ID 的选手。具体规定如下：\n\n* **第 5.1 条的例外：** 最多可将参赛人数上限的 50% 预留给尚无 WCA ID 或持有 2024 年 WCA ID 的选手。预留部分名额的比赛，不得在报名时设置资格成绩要求。如果报名且符合预留名额条件的选手人数超过预留名额，只要比赛总人数尚未达到上限，仍可接受这些选手的报名。\n* **第 6.2 条的补充：** 预留部分名额的比赛，报名必须最迟在比赛开始前 2 周截止。届时，可以从候补名单中接收不符合预留条件的选手，直至总参赛人数达到上限。如果报名截止时人数仍未满，可增开报名时段。增开的报名时段不得设置预留名额，必须遵循“先到先得”的原则。\n* **第 6.5.1.1 条的例外：** 候补报名应根据选手是否符合空缺名额的条件来接收。尚无 WCA ID 或持有 2024 年 WCA ID 的选手，可递补任何因退赛产生的空缺；持有 2023 年或更早 WCA ID 的选手，只有在退出者未占用预留名额时，才可递补该空缺。\n\n我们希望这能让更多地区的新魔友更容易参加身边的 WCA 比赛。未来几个月，我们将继续介绍 WCA 新人月活动，请关注我们的社交媒体，留意后续消息！"
+}

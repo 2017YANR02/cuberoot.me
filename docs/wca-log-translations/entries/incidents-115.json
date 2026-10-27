@@ -40,7 +40,26 @@
     },
     "unresolvedNotes": [
       "原文写 their cumulative time limit was greater than 10 minutes but less than 12 minutes，而上下文讨论的似乎是选手累计用时。译文采用累计时间属语境解释，尚不能声称已确认源文措辞；需来源澄清，unresolved。"
-    ]
+    ],
+    "recheck": {
+      "reviewer": "/root/review_logs",
+      "reviewedAt": "2026-10-26T11:10:07.703Z",
+      "report": "../wca-translation-review-2026-10-26/final-report.json",
+      "sourceHash": "7fb23ca92061d3efe05ca1bbeae6f7dc8db9a01c39dda7b7e1bb902f38a95392",
+      "reviewedTranslationHash": "8d79b8acf061a71f49380174482cfc919c76030ba23e97b325248aaf7d116ba7",
+      "verdict": "pass",
+      "scope": "本轮完整阅读英中正文及既有审校疑点，保留原文矛盾或含混，不擅自纠正历史事实。官方现行来源已重新读取，相关正文与保存版本一致。"
+    },
+    "currentReview": {
+      "round": "2026-10-26",
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/incidents-115.json",
+      "sourceConcern": true,
+      "notes": [
+        "原文写 their cumulative time limit was greater than 10 minutes but less than 12 minutes，而上下文讨论的似乎是选手累计用时。译文采用累计时间属语境解释，尚不能声称已确认源文措辞；需来源澄清，unresolved。",
+        "2026-10-26 重新读取官方来源，疑点仍存在；这是源文事实/措辞的保留结论，不是遗漏翻译或已确认的译文错误。"
+      ],
+      "inputTranslationHash": "8d79b8acf061a71f49380174482cfc919c76030ba23e97b325248aaf7d116ba7"
+    }
   },
   "publication": {
     "status": "not_authorized"

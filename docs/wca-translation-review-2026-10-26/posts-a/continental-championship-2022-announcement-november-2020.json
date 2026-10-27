@@ -1,0 +1,18 @@
+{
+  "key": "posts:/posts/continental-championship-2022-announcement-november-2020",
+  "path": "docs/wca-post-translations/entries/continental-championship-2022-announcement-november-2020.json",
+  "sourceHash": "0148b00fa082d230003bd579360be5eb6b76c788919d7fd258eeee8494eafdba",
+  "inputTranslationHash": "d53b3f250f324df48659d41b13f48d22e4cb18a550bc640752438e6d0e9f7b38",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:13:03.044Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "correction_required",
+  "notes": [
+    "全文已对照，赛事地点、申办日期及表格、未决定/未收到申请的限定保持一致。"
+  ],
+  "changes": [
+    "Continental Championship 指一个大洲的锦标赛；按官方规则11f1c用大洲锦标赛，避免洲际跨洲歧义。"
+  ],
+  "title": "2022 年大洲锦标赛举办地公告（2020 年 11 月）",
+  "content": "我们很高兴宣布，开普敦将举办 2022 年 WCA 非洲锦标赛。\n\n同时感谢埃及开罗的团队提交 2022 年非洲锦标赛申办方案。大洲锦标赛的申办材料可在[此处](https://drive.google.com/drive/folders/1vxgEF_hNNIq9ukDLdL1OLyS3pKpL_-eg)查看。\n\n2022 年 WCA 南美锦标赛举办地的决定已推迟。\n\n最后提醒大家，2022 年 WCA 大洋洲锦标赛的申办期为 2021 年 3 月 1 日至 5 月 31 日，与 2023 年世界锦标赛申办期一致。"
+}

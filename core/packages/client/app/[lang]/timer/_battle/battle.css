@@ -4,7 +4,7 @@
 }
 
 .battle-container {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: var(--font-sans);
     background-color: var(--background);
     color: var(--foreground);
     min-height: 100dvh;
@@ -121,7 +121,7 @@
 }
 
 .plus-suffix {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: var(--font-sans);
     font-size: 0.6em;
     vertical-align: 0.3em;
     margin-left: 2px;
@@ -498,7 +498,7 @@ body.solo .player-area {
     font-size: 0.75rem;
     color: var(--muted-foreground);
     text-align: right;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-sans);
 }
 
 :where(.battle-container) .history-list {

@@ -12,14 +12,33 @@
     "sourceId": 13966
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "46698a2bb3379c3c4fb14a13b7688914077c7eb66202e3a7e6ebc259129221af",
     "language": "zh-Hans",
     "title": "新冠疫情情况更新（2020 年 3 月 19 日）",
     "content": "亲爱的 WCA 社区成员：\n\n针对全球不断变化的新冠疫情，董事会现作出以下通知。\n\n鉴于疫情变化迅速，各地政府也正采取防控措施，董事会决定**取消即日起至 4 月 19 日之间的所有比赛**。此外，考虑到后续比赛极有可能面临取消，我们决定**不接受开始日期在即日起至 5 月 15 日之间的比赛申请**。\n\n董事会认为，上述截止日期很可能还会延长，并需要取消更多比赛。\n\n我们鼓励大家保持社交距离，尽力保护自己和所在社区的安全。\n\n感谢理解。\n\nWCA 董事会",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:54.099Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "48f03194dd5711ce578b05c0dafb935e921e31104fa5e34af21cc8b801aad2be"
+  "translationHash": "a5da2cb8fef0e2e2b1a5bff2fad0b05d2ba339106e373c67360d02ea02beb003",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:13:29.850Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "46698a2bb3379c3c4fb14a13b7688914077c7eb66202e3a7e6ebc259129221af",
+    "reviewedTranslationHash": "a5da2cb8fef0e2e2b1a5bff2fad0b05d2ba339106e373c67360d02ea02beb003",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/covid-19-situation-update-2020-03-19.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照标题与正文；疫情取消区间/新赛条件、COO履历与金额人数、赛事日期地点、意向征集要求及各条历史纪录的选手/项目/单次平均/数值逐项核对一致。"
+    ],
+    "inputTranslationHash": "48f03194dd5711ce578b05c0dafb935e921e31104fa5e34af21cc8b801aad2be"
+  }
 }

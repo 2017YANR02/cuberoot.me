@@ -1,0 +1,27 @@
+{
+  "key": "posts:/posts/result-of-the-wmt-leader-application-period",
+  "source": {
+    "key": "posts:/posts/result-of-the-wmt-leader-application-period",
+    "kind": "posts",
+    "title": "Result of the WMT Leader Application Period",
+    "date": "2018-08-19T23:15:08.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/result-of-the-wmt-leader-application-period",
+    "content": "We regret to announce that we could not appoint a Team Leader for the WCA Marketing Team (WMT).\n\nThe WCA Board, Leaders, and Senior Delegates could not agree on a suitable applicant for the position so it will not be filled for now.\n<!-- break -->\nThere was only one applicant for the position:\nJustin Parera\n\nJustin’s candidacy document can be found [here](https://drive.google.com/drive/folders/1sdQ-ifmAT34gbWkmsz2qLxkdo51W0j16?usp=sharing) for those interested in viewing it.\n\nSince the WMT has no Leader, the WCA Board will attempt to assume the responsibilities of the WMT Leader until a leader is appointed. We will start a new selection process at an undetermined time in the future.",
+    "hash": "3a350915813974ad5c6974a27225b3e6294d0066d05893b26d23e19854a7a37c",
+    "format": "markdown",
+    "sourceId": 10107
+  },
+  "translation": {
+    "version": 2,
+    "sourceHash": "3a350915813974ad5c6974a27225b3e6294d0066d05893b26d23e19854a7a37c",
+    "language": "zh-Hans",
+    "title": "WCA 市场营销组负责人招募结果",
+    "content": "很遗憾，本次未能任命 WCA 市场营销组（WMT）负责人。\n\nWCA 董事会、各负责人及高级代表未能就合适人选达成一致，因此该职位暂时空缺。\n\n<!-- break -->\n\n本次只有一位申请人：Justin Parera。\n\nJustin 的申请材料可在[此处](https://drive.google.com/drive/folders/1sdQ-ifmAT34gbWkmsz2qLxkdo51W0j16?usp=sharing)查看。\n\n由于 WMT 暂无负责人，WCA 董事会将在新负责人获任命前，尽力承担该岗位的职责。之后会重新启动遴选，具体时间尚未确定。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.150Z",
+    "reviewStatus": "pending_independent_review",
+    "revisedAt": "2026-10-25T07:28:01.629Z",
+    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+  },
+  "translationHash": "92cbdbdb058c80946201ba7b7b66f5128bd4e7d6836a36d75b2ca11046c54207"
+}

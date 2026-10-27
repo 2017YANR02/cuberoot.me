@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/applications-for-world-championship-2019",
+  "path": "docs/wca-post-translations/entries/applications-for-world-championship-2019.json",
+  "sourceHash": "baf788ec9e515b59144b81262d221e96db6794b8a3bb71ffebfaf6bbaefe61ff",
+  "inputTranslationHash": "45f8bb09bd0e8bc54cc1dc4211aa539a5ab0052b5ffe1e76cff4ba155966b8d0",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:06:14.455Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照正文与标题；核对全部申请/任命主体、时间、权限、附录条目及材料要求。"
+  ],
+  "changes": []
+}

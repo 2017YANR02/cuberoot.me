@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/scrambling-program-update-0-8-2",
+  "source": {
+    "key": "posts:/posts/scrambling-program-update-0-8-2",
+    "kind": "posts",
+    "title": "Scrambling Program Update 0.8.2",
+    "date": "2014-01-28T12:15:10.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/scrambling-program-update-0-8-2",
+    "content": "TNoodle 0.8.2 is now available from [https://www.worldcubeassociation.org/regulations/scrambles](https://www.worldcubeassociation.org/regulations/scrambles)\n\nThis addresses the following compared to TNoodle 0.8.0:\n\n- 2x2x2 scrambles only use `<R, U, F>` moves again.\n- Regenerating scrambles preserves the order of rounds.\n- A bug for merging consecutive moves has been fixed. (This does not affect randomness, but redundant turns may look confusing to scramblers at a competition.)\n<!--break-->\n\nPlease remember that official competitions must always use the current version of the official scramble program. This is always available from: [https://www.worldcubeassociation.org/regulations/scrambles/](https://www.worldcubeassociation.org/regulations/scrambles/)",
+    "hash": "deef231676ac8ec7e0f80b25b50e4a30e5db489cc575f8c0e972e06a8e6417b7",
+    "format": "markdown",
+    "sourceId": 3133
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "deef231676ac8ec7e0f80b25b50e4a30e5db489cc575f8c0e972e06a8e6417b7",
+    "language": "zh-Hans",
+    "title": "打乱程序更新：TNoodle 0.8.2",
+    "content": "TNoodle 0.8.2 现已可从 [https://www.worldcubeassociation.org/regulations/scrambles](https://www.worldcubeassociation.org/regulations/scrambles) 下载。\n\n与 TNoodle 0.8.0 相比，本次修复包括：\n\n* 二阶打乱恢复为只使用 R、U、F 转动。\n* 重新生成打乱时保持轮次顺序不变。\n* 修复了合并连续转动时的错误。该问题不影响随机性，但多余的转动可能让比赛中的打乱员感到困惑。\n\n请记住，官方比赛必须始终使用当前版本的官方打乱程序。最新版本可从以下页面获取：[https://www.worldcubeassociation.org/regulations/scrambles/](https://www.worldcubeassociation.org/regulations/scrambles/)",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:55:00.979Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "da6116ab34375335e18db703ea122f6e78932dc0fdae390274cfa97872d00778"
+}

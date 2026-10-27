@@ -12,7 +12,7 @@
     "sourceId": 14162
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "e914dea36ecd9c53e64f4ad5986f0153df56ff2df09f38699088873742b9cb88",
     "language": "zh-Hans",
     "title": "WCA 规则委员会工作简报：2024 年第二季度",
@@ -21,7 +21,26 @@
       "第3项原文开头称已纠正疑似转角，后文又概括为 twist-twist-fix-fix，叙述存在歧义；译文保留两处表述，不自行重构过程。"
     ],
     "translatedAt": "2026-10-22T08:45:43.544Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "pending_source_verification",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "ff0caf56e100b9b585226a73f4aa282d47e70057b42ff841e2fb2c1ff7c891ee"
+  "translationHash": "7cc0a032866f97b359290b72977c088af7e29209b6ff01fe26a094589b3f3758",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:12:01.756Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "e914dea36ecd9c53e64f4ad5986f0153df56ff2df09f38699088873742b9cb88",
+    "reviewedTranslationHash": "7cc0a032866f97b359290b72977c088af7e29209b6ff01fe26a094589b3f3758",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "pending_source_verification",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wrc-digest-2024-q2.json",
+    "sourceConcern": true,
+    "notes": [
+      "全文11案均已核对，70%、17秒、10秒、2周及裁量条件保留。第3案源文先说已corrected，后又说最后fix both，与twist-twist-fix-fix时序存在矛盾；中文忠实保留而不改写成自行推断的事实。"
+    ],
+    "inputTranslationHash": "ff0caf56e100b9b585226a73f4aa282d47e70057b42ff841e2fb2c1ff7c891ee"
+  }
 }

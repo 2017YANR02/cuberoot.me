@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/annual-members-meeting-july-2023",
+  "source": {
+    "key": "posts:/posts/annual-members-meeting-july-2023",
+    "kind": "posts",
+    "title": "Annual Members Meeting (July 2023)",
+    "date": "2023-07-26T08:13:34.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/annual-members-meeting-july-2023",
+    "content": "The Board is providing notice as required by [Bylaw 2.12](https://www.worldcubeassociation.org/documents/WCA%20Bylaws.pdf) of the Annual Meeting of WCA members which will be held on **August 12th at 18:30 KST (09:30 UTC)**. Members will be able to attend this meeting in person at the Songdo ConvensiA, but there will be no live stream this time. In [this folder](https://drive.google.com/drive/u/1/folders/1ungHPRpeOQLE9NkI1ieTwNzU1fvZ0kbs) you will find the information packet related to the annual meeting which contains all relevant documentation which will be discussed at the meeting.\n\nWe look forward to your participation in the upcoming annual meeting.",
+    "hash": "95574c3ad9c4e9e55f031b83e45a36fc84f0921d4d826e73bc0f2dc82fef8aa4",
+    "format": "markdown",
+    "sourceId": 14115
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "95574c3ad9c4e9e55f031b83e45a36fc84f0921d4d826e73bc0f2dc82fef8aa4",
+    "language": "zh-Hans",
+    "title": "年度会员大会（2023 年 7 月）",
+    "content": "董事会依照[章程第 2.12 条](https://www.worldcubeassociation.org/documents/WCA%20Bylaws.pdf)发出通知：WCA 年度会员大会将于 **8 月 12 日 18:30 KST（09:30 UTC）**举行。会员可到松岛 ConvensiA 会展中心现场参会，本次会议不设直播。有关年度大会的资料包已放入[此文件夹](https://drive.google.com/drive/u/1/folders/1ungHPRpeOQLE9NkI1ieTwNzU1fvZ0kbs)，其中包含本次会议将讨论的全部相关文件。\n\n期待大家参加即将举行的年度大会。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:42:40.584Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "d71fe43c64c629d90f2e557f9e2c5551ba240df6bb6f0eafe9571265496842a4"
+}

@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/asia-west-south-senior-delegate-announcement-october-2026",
+  "path": "docs/wca-post-translations/entries/asia-west-south-senior-delegate-announcement-october-2026.json",
+  "sourceHash": "09e618acbf69bba5310e117b70eba17d1dd2a1c12c422aec1a643937ab7b6076",
+  "inputTranslationHash": "da317c9027d609229bc2792724450b17b4a50b391f24d997b7ee86b728ac474c",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:06:14.457Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照正文与标题；核对全部申请/任命主体、时间、权限、附录条目及材料要求。"
+  ],
+  "changes": []
+}

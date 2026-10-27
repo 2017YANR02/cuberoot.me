@@ -9558,3 +9558,14 @@ CREATE TABLE wca_translation_units (
   PRIMARY KEY (component, unit_id)
 );
 CREATE INDEX wca_translation_key ON wca_translation_units (lower(key));
+
+-- 0294: explicit public single-message snapshots
+CREATE TABLE site_assistant_shares (
+  id TEXT PRIMARY KEY,
+  user_id BIGINT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+  request_id UUID NOT NULL,
+  question TEXT NOT NULL,
+  answer TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (user_id, request_id)
+);

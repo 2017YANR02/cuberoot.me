@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/forum-digest-july-2021",
+  "path": "docs/wca-post-translations/entries/forum-digest-july-2021.json",
+  "sourceHash": "c31b83a7b2c9a6e4e932c7900ff4e1db820b663c600cd23161b96040d697886c",
+  "inputTranslationHash": "4a016f4be288e1f6bd0744507855f521d280c72b98d82a4c810da096eb5a204e",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:36.319Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

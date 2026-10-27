@@ -1,6 +1,6 @@
 /* Shared scroll panel + custom scrollbar — single source for landing「feed」
-   sections (近期打乱 / 今日复盘 / 比赛中心). Fixed max-height; the right-side
-   bar is the only way to reach overflow (replaces per-section「更多」expanders).
+   sections (近期打乱 / 今日复盘 / 比赛中心). Fixed max-height; scroll overflow
+   in place, then let scrolling continue on the page at either boundary.
    不设 scrollbar-width/-color,否则 Chromium 121+ 会禁用下面的 ::-webkit-scrollbar
    自定义、退回原生细条。双主题走 :root token。 */
 
@@ -10,7 +10,7 @@
   /* 仅纵向滚动:overflow-y:auto 会把 overflow-x:visible 算成 auto,内容稍宽即可
      横向拖动(触屏=左右滑)。显式锁死 overflow-x,面板只上下滚。 */
   overflow-x: hidden;
-  overscroll-behavior: contain;
+  overscroll-behavior: auto;
   padding-right: 0.4rem;
 }
 

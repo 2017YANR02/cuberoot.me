@@ -1,0 +1,17 @@
+{
+  "key": "posts:/posts/applications-for-wca-continental-championships-2026-july-2025",
+  "path": "docs/wca-post-translations/entries/applications-for-wca-continental-championships-2026-july-2025.json",
+  "sourceHash": "4201b01a8bfbf3ba8ab71c3294becc7b99e1becaee07d6cf745b8eff8be58cdc",
+  "inputTranslationHash": "c6dfe78ffcaa9cfb90c0624d31882e655542a5ae1a31793ee858cfb7fbcdee46",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:05:49.186Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "correction_required",
+  "notes": [],
+  "changes": [
+    "保留20%的分母与选手参与工作人员/志愿者的含义，避免扩大为单纯工作人员人数比例；支持需求不限人数；should not 不升级为禁止。",
+    "统一 Continental 为大洲赛事/纪录；官方规则11f1c为大洲锦标赛，避免跨洲歧义。"
+  ],
+  "title": "2026 年 WCA 大洲锦标赛申办（2025 年 7 月）",
+  "content": "亲爱的 WCA 社区成员：\n\nWCA 董事会与大型锦标赛组很高兴宣布，2026 年大洲锦标赛申办现已开放。举办地将按[决议 22.2024.1](https://documents.worldcubeassociation.org/documents/motions/22.2024.1%20-%20Major%20Championship%20Selection.pdf)规定的流程选定。我们现征集以下地区的 2026 年大洲锦标赛申办方案：\n\n* 非洲\n* 亚洲\n* 北美洲\n* 大洋洲\n* 南美洲\n\n如有意申办，请先与所在国家的代表及地区组织商议。举办大洲锦标赛需要投入大量时间，请充分考虑。申请须获得 [WCA 认可地区组织](https://www.worldcubeassociation.org/organizations)的支持。（注：WCA 董事会已提议修改决议 22.2024.1，允许尚无地区组织覆盖的地区由注册实体提交申请。）\n\n有意者请于 2025 年 8 月 31 日 23:59 UTC 前，将申请材料发送至 [assistants@worldcubeassociation.org](mailto:assistants@worldcubeassociation.org)、[board@worldcubeassociation.org](mailto:board@worldcubeassociation.org) 和 [championships@worldcubeassociation.org](maito:championships@worldcubeassociation.org)。邮件主题须为“< Location/Team > bid for < Continent > Championship 2026”（即“<地点/团队>申办 2026 年<洲名>锦标赛”）。申请材料须为 PDF 格式，提供两个版本：包含全部申办细节的完整版，以及删去敏感信息（如有）、可供公开的版本。\n\n<!-- break -->\n\n申请至少应说明以下内容：\n\n1. **计划何时举办 2026 年大洲锦标赛？**\n   - a. 可选日期。\n   - b. 比赛天数。\n   - c. 是否与当地学校假期重合。\n\n2. **计划在贵国的什么地点举办大洲锦标赛？**\n   - a. 城市应具有旅游吸引力，并有充足的观光选择。\n   - b. 国际、国内及市内交通的便利程度。\n   - c. 不同价位酒店或公寓的供应情况。\n   - d. 场馆、面积及布置（舞台、观众区、练习桌、附属房间）。\n   - e. 可用技术设施，包括网络、视频直播、灯光和音响设备。\n   - f. 可容纳的选手与观众人数。\n\n3. **组织团队与比赛志愿者如何安排？**\n   - a. 核心团队成员。\n   - b. 核心团队的经验。\n   - c. 其他参与方。\n   - d. 当地志愿者的数量与能力（建议有 20% 的选手担任志愿者）。\n   - e. 需要国外代表提供哪些支持。\n\n4. **比赛预算如何安排？**\n   - a. 支出：场地、场馆服务、舞台、设备、装饰、网站、证件/挂绳/礼包及奖品。\n   - b. 收入：报名费、当地政府支持。\n     - 注意：拟定预算时，*不应预设*会获得 WCA 的资金赞助。\n\n历届大洲锦标赛和世界锦标赛申办材料的公开版本见[此文件夹](https://drive.google.com/drive/folders/1QJvZQ7mzQh2qA65d0d9ay3mWWFBXN9MR?usp=sharing)。[这份表格](https://docs.google.com/spreadsheets/d/1FqlvtRb1EWz8ZuXwMOB0zOv307LDpJpDt3WsoY9m7VQ/edit?usp=sharing)较全面地列出了大型比赛需要安排和纳入预算的事项。\n\n欢迎各组织团队联系 WMCT。我们很乐意回答问题、提供建议或其他资料，协助你们准备申办。\n\n申请截止后，WCA 董事会将任命遴选委员会，对入围申请方进行面谈，并通过投票决定 2026 年各大洲锦标赛的举办地。\n\n期待收到你们的申办方案！"
+}

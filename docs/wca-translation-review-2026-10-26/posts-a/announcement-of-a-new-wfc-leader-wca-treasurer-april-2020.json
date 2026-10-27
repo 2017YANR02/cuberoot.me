@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/announcement-of-a-new-wfc-leader-wca-treasurer-april-2020",
+  "path": "docs/wca-post-translations/entries/announcement-of-a-new-wfc-leader-wca-treasurer-april-2020.json",
+  "sourceHash": "17ce2022b194ee0230e4e38ec17a2c70ec277489150d36dd11d2f8d23bbcac6c",
+  "inputTranslationHash": "20d97cadfc78326650b4bb598fe419f43bacd04fc24395128463ec51bef702b1",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:05:11.622Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+  ],
+  "changes": []
+}

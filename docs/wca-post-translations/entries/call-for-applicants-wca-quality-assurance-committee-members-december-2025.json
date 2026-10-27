@@ -12,14 +12,33 @@
     "sourceId": 14230
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "641f7a6fc50c1da0f185f52a85f47908cebab08a0c62248652ae92ab8ee36a96",
     "language": "zh-Hans",
     "title": "WCA 质量保证委员会招募成员（2025 年 12 月）",
     "content": "亲爱的 WCA 社区成员：\n\nWCA 质量保证委员会（WQAC）正在招募新成员！无论你想开始担任 WCA 志愿者，还是已经在 WCA 任职、希望以其他方式为社区出力，都欢迎加入 WQAC。申请者不必已有 WCA 职务。我们重视不同的视角和经历，期待你的加入！申请信息如下。\n\n### WQAC 负责什么？\n\nWQAC 负责开发供 WCA 社区使用的教学资源，并在 WCA 志愿者未能保持岗位所需能力时提供建议。WQAC 的正式权利与职责见 [WCA 动议 10.2025.8](https://documents.worldcubeassociation.org/documents/motions/10.2025.8%20-%20Quality%20Assurance%20Committee.pdf)。\n\n### 我符合申请条件吗？\n\n申请 WQAC 的基本条件为年满 18 岁，并具备熟练的英语写作能力。我们尤其看重细心、解决问题的能力和团队协作能力。申请时须选择以下至少一个小组。\n\n### 教学文档组（EduDocs）\n\n教学文档组负责编写和维护 WCA 社区的教学资源，包括选手教程、主办方指南和代表手册。\n\n我们希望申请者：\n\n* 有组织比赛或担任 WCA 代表的经验。\n* 深入了解比赛的组织和运行，包括各地做法的差异。\n* 熟悉 WCA 规则、政策和动议。\n\n### 调查组\n\n调查组处理与 WCA 比赛质量、代表行为、遵守《WCA 打乱问责政策》（WSAP）有关的问题，以及其他委员会或团队未直接负责的事项。\n\n我们希望申请者：\n\n* 熟悉 WCA 代表的角色和职责。\n* 有较强的分析和批判性思考能力，包括对认知偏差的认识。\n* 能通过邮件清楚、专业地沟通。\n\n### 项目组\n\n项目组负责改进 WCA 志愿者培训。目前最大的项目是学习管理系统（LMS），其中包含一系列面向 WCA 志愿者的培训课程。\n\n我们希望申请者：\n\n* 熟悉 WCA 代表的角色和职责。\n* 有教育平台或培训系统的使用经验。\n* 具备技术写作和文档编写能力。\n\n### 申请期限\n\n申请者可于 2026 年 1 月 17 日 23:59 UTC 前，将申请材料发送给 WQAC 负责人 Sarah Strong（sstrong@worldcubeassociation.org）。\n\n申请材料须为 PDF 文件，并包含以下全部内容：\n\n* 简短的自我介绍。\n* 你在速拧社区参与过的活动。\n* 申请加入 WQAC 的原因。\n* 希望加入的小组。\n* 你的技能和经验如何符合这些小组的需求。\n\n申请者会在 48 小时内收到确认收件的回复。选拔将随申请陆续进行。\n\n如对 WQAC 有任何疑问，欢迎通过 sstrong@worldcubeassociation.org 联系 WQAC 负责人。",
     "notes": [],
     "translatedAt": "2026-10-22T08:40:49.162Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "fefaaf8043fd42063479c90fc7e8663c396fb9b90e399dd5e19193c88b7a41e1"
+  "translationHash": "b6a17d1ed5a6a7c118f654ff142a28a463697ea23d23989b2a8e044557254af6",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:07:01.628Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "641f7a6fc50c1da0f185f52a85f47908cebab08a0c62248652ae92ab8ee36a96",
+    "reviewedTranslationHash": "b6a17d1ed5a6a7c118f654ff142a28a463697ea23d23989b2a8e044557254af6",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/call-for-applicants-wca-quality-assurance-committee-members-december-2025.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照招募正文、职责条目、必需/可选资格、年龄、时限和程序；未扩展外链材料。"
+    ],
+    "inputTranslationHash": "fefaaf8043fd42063479c90fc7e8663c396fb9b90e399dd5e19193c88b7a41e1"
+  }
 }

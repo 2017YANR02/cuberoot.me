@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/annual-members-meeting-september-2021",
+  "path": "docs/wca-post-translations/entries/annual-members-meeting-september-2021.json",
+  "sourceHash": "4aeafd024d23d018c6358e72dafb949c6b0312818edd1ccf3e6f2d4e9aa40cbe",
+  "inputTranslationHash": "81cba174d2d5cadbcbe269e773a103dacee83c8e91f0728814a1d1902567cf67",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:05:11.623Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+  ],
+  "changes": []
+}

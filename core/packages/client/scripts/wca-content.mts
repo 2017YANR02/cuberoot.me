@@ -10,7 +10,7 @@ const {default:Markdown}=await import(require.resolve('react-markdown'));
 const {default:gfm}=await import(require.resolve('remark-gfm'));
 const {parseHTML}=require('linkedom');
 const escape=(s:string)=>s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
-const safeUrl=(url:string)=>/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(url)?'mailto:'+url:/^(https?:\/\/|mailto:)/i.test(url)?url:(/^\/(?!\/)/.test(url)?'https://www.worldcubeassociation.org'+url:null);
+const safeUrl=(url:string)=>/^(https?:\/\/|mailto:)/i.test(url)?url:/^[^\s@:/?#]+@[^\s@:/?#]+\.[a-z]{2,}$/i.test(url)?'mailto:'+url:(/^\/(?!\/)/.test(url)?'https://www.worldcubeassociation.org'+url:null);
 const allowed=new Set(['p','div','br','strong','em','b','i','u','s','ul','ol','li','blockquote','h2','h3','h4','table','thead','tbody','tr','th','td','code','pre','hr','sup','sub']);
 export function sanitize(html:string){
  const {document}=parseHTML('<html><body>'+html+'</body></html>');

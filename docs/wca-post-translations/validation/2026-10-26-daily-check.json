@@ -1,0 +1,74 @@
+{
+  "checkedAt": "2026-10-26T06:50:08.568Z",
+  "fetchedAt": "2026-10-26T06:44:22.458Z",
+  "sourceCount": 639,
+  "previousSourceCount": 638,
+  "changes": {
+    "new": 1,
+    "revised": 0,
+    "missing": 0
+  },
+  "changedKeys": [
+    "posts:/posts/asia-west-south-senior-delegate-announcement-october-2026"
+  ],
+  "issues": {
+    "labelQueryAllStates": 0,
+    "textQueryAllStates": 0
+  },
+  "latestMonitorRun": {
+    "id": 40196741056,
+    "url": "https://github.com/2017YANR02/cuberoot.me/actions/runs/40196741056",
+    "fetchedAt": "2026-10-25T13:15:15.224Z",
+    "conclusion": "success",
+    "sourceCount": 638
+  },
+  "snapshot": "snapshots/2026-10-26T06-44-22-473Z.json",
+  "fullSourceSnapshot": "snapshots/2026-10-26T06-44-22-473Z-all-sources.json",
+  "checkpoint": "checkpoints/2026-10-26T06-48-33-821Z-451.json",
+  "validationReports": [
+    "validation/2026-10-26-post.json",
+    "validation/2026-10-26-log.json"
+  ],
+  "verification": {
+    "allCurrentSourceHashesMatch": true,
+    "unchangedGeneratedArticlesPreserved": 494,
+    "newGeneratedArticles": 1,
+    "translation": "self_checked_pending_independent_review",
+    "preservedDates": {
+      "published": "2026-10-25",
+      "termStarts": "2026-10-15"
+    },
+    "applicants": 2,
+    "sourceLinksPreserved": 2
+  },
+  "terminology": {
+    "source": "https://api.cuberoot.me/v1/wca/translations",
+    "syncedAt": "2026-10-25T09:32:32.666261+00:00",
+    "ready": true,
+    "stale": false,
+    "terms": {
+      "Senior Delegate": "高级代表",
+      "WCA Board": "WCA 董事会"
+    },
+    "approved": false,
+    "hasFailingChecks": false,
+    "geography": "Asia West query had no match; Weblate fallback unavailable. 西亚与南亚 used as geographic translation, not claimed as verified official region label."
+  },
+  "concurrency": {
+    "ledgerHashRecheckedBeforeWrite": true,
+    "unrelatedDirtyFilePreserved": "core/packages/client/app/landing.css",
+    "processInspection": "ps blocked by local sandbox; not retried"
+  },
+  "publication": {
+    "committed": false,
+    "pushed": false,
+    "published": false,
+    "issuesChanged": false
+  },
+  "currentReviewCounts": {
+    "logsVerified": 138,
+    "logsPendingRecheck": 37,
+    "logsSourceVerification": 13,
+    "postsPendingIndependentReview": 451
+  }
+}

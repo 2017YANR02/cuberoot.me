@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/new-wrt-leader-october-2021",
+  "path": "docs/wca-post-translations/entries/new-wrt-leader-october-2021.json",
+  "sourceHash": "6fc4a9da182cf23b6519e968ccc9bc9ff337576bcb6050f35ad808069642bc4a",
+  "inputTranslationHash": "a338e5acf2be19212a55a85bc4e24b0e23efdfe1c3498a2551f50172da21eda5",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:44.905Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

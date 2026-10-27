@@ -12,14 +12,33 @@
     "sourceId": 11091
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "079db7c7f3a15f803e116fba75f0d47ea427b9e21ff64548b4d324450b31790c",
     "language": "zh-Hans",
     "title": "2019 年 WCA 世锦赛将于 7 月 11–14 日在澳大利亚墨尔本举行",
     "content": "[2019 年 WCA 世锦赛](https://www.worldcubeassociation.org/competitions/WC2019)将于 2019 年 7 月 11–14 日在澳大利亚维多利亚州墨尔本举行。更多信息及报名方式请见 [2019 年 WCA 世锦赛官网](https://wc2019.speedcubing.org.au)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.159Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "e50a4854890fe091bb222f29fba98dea9abfc3a1fb26141e7182d9baa415d5b6"
+  "translationHash": "9d50c82eaf55c8ddbe9457c0149a0920a8011418eb8c5e8e70c0d4ef09cfc8e8",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:10:42.567Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "079db7c7f3a15f803e116fba75f0d47ea427b9e21ff64548b4d324450b31790c",
+    "reviewedTranslationHash": "9d50c82eaf55c8ddbe9457c0149a0920a8011418eb8c5e8e70c0d4ef09cfc8e8",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wca-world-championship-2019-on-july-11-14-2019-in-melbourne-victoria-australia.json",
+    "sourceConcern": false,
+    "notes": [
+      "全文核对；历史公告的当时判断、参赛人数、日期及任命程序均保留。"
+    ],
+    "inputTranslationHash": "e50a4854890fe091bb222f29fba98dea9abfc3a1fb26141e7182d9baa415d5b6"
+  }
 }

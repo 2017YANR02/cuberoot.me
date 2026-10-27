@@ -172,6 +172,7 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   user_blocks: '黑名单关系的双向账号外键都随 app_users 级联删',
   user_wca_friend_contacts: '未注册 WCA 好友条目只属于账号本人,随 app_users 级联删',
   site_assistant_requests: '私有 AI 问答与监控指标通过 user_id 外键随 app_users 级联删除，不转为匿名正文',
+  site_assistant_shares: '用户主动公开的单条聊天快照通过 user_id 外键随账号级联删除，公开链接随即失效',
   recon_favorites: '私有复盘收藏通过 user_id 外键随 app_users 级联删',
   user_pets: '私人宠物领养与养成数据通过 user_id 外键随 app_users 级联删',
   drive_members: '网盘访问权限随 app_users 级联删',

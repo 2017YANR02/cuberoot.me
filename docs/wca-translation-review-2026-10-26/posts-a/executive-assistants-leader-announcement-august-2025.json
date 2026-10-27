@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/executive-assistants-leader-announcement-august-2025",
+  "path": "docs/wca-post-translations/entries/executive-assistants-leader-announcement-august-2025.json",
+  "sourceHash": "94e63feeb82c2314546af605de8dd1248b52a5f3eb04c83255ccf08512d59407",
+  "inputTranslationHash": "966947c8f8a23c903c0e75b51e9d3e223c494179af08b7b8c1d426a473638942",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:13:29.852Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题与正文；疫情取消区间/新赛条件、COO履历与金额人数、赛事日期地点、意向征集要求及各条历史纪录的选手/项目/单次平均/数值逐项核对一致。"
+  ],
+  "changes": []
+}

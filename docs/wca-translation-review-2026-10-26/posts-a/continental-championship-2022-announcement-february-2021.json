@@ -1,0 +1,18 @@
+{
+  "key": "posts:/posts/continental-championship-2022-announcement-february-2021",
+  "path": "docs/wca-post-translations/entries/continental-championship-2022-announcement-february-2021.json",
+  "sourceHash": "28d4727250779cf57c53952457e2bab448fcb9302d5fc06dcf359d23e89a4143",
+  "inputTranslationHash": "8f4d844676b3d4e8c25d750568b4be87ced42b9a84eb5bd6a0ecf061ecb49295",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:13:03.044Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "correction_required",
+  "notes": [
+    "全文已对照，赛事地点、申办日期及表格、未决定/未收到申请的限定保持一致。"
+  ],
+  "changes": [
+    "Continental Championship 指一个大洲的锦标赛；按官方规则11f1c用大洲锦标赛，避免洲际跨洲歧义。"
+  ],
+  "title": "2022 年大洲锦标赛举办地公告（2021 年 2 月）",
+  "content": "我们很高兴宣布，**巴西巴西利亚**将举办 **2022 年 WCA 南美锦标赛**。\n\n申办材料可在[此处](https://drive.google.com/file/d/19yrkx6hQogL_kvRdlCSscPBoTFkqri6b/view)查看。\n\n最后提醒大家，**2022 年 WCA 大洋洲锦标赛**的申办期为 **2021 年 3 月 1 日至 5 月 31 日**，与 2023 年世界锦标赛申办期一致。"
+}

@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wqac-leader-october-2023",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wqac-leader-october-2023.json",
+  "sourceHash": "b9b5b7c8b1d5556e53d9e38b1d4ef013e878e56966a0f549c49ca47c3f46f95b",
+  "inputTranslationHash": "8320def310f0c8263f055ea15dad1519d87de15a90e242d736abb4d0bf6f1f9b",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:11:12.892Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "已完整对照标题与正文；核对规则/成绩/质量保证团队职责、必需与可选资格、招募人数、任期工时及各篇申请日期、联系人与投票程序。历史 Guidelines 按参考保留指南。"
+  ],
+  "changes": []
+}

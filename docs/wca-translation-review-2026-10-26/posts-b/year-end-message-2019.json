@@ -1,0 +1,19 @@
+{
+  "key": "posts:/posts/year-end-message-2019",
+  "path": "docs/wca-post-translations/entries/year-end-message-2019.json",
+  "sourceHash": "cbfb0331bb9808ae7544de0cf962e91eea245e61dafe5e542fb15d0f5ca82347",
+  "inputTranslationHash": "dedaf590b1cc51da1bd37d4e85ec035fa1f5015ecb6e97a16306bbb431cf394c",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:12:35.416Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "correction_required",
+  "notes": [
+    "全年纪录、比赛、社媒、代表人数与时长逐项核对；保留2019年底对次年赛事的展望。"
+  ],
+  "changes": [
+    "Continental Record统一规则官方译名大洲纪录。",
+    "Regional Delegate按官方职衔统一为区域代表。"
+  ],
+  "title": "2019 年年终寄语",
+  "content": "亲爱的 WCA 社区成员：\n\n2019 年，无论是魔方比赛还是 WCA 的组织发展，都又取得了一年的好成绩！我们想借此机会，与大家分享在你们帮助下取得的一些成果。\n\nWCA 比赛首次进入了八个国家，超过 27,750 人首次参加官方比赛。今年，选手们不断突破，创造了 61 项世界纪录、205 项大洲纪录和 3,760 项国家纪录。\n\n在组织层面，WCA 持续改进，为工作人员和选手提供更好的支持。我们成立了 WCA 数据保护委员会，处理《通用数据保护条例》（GDPR）带来的相关事务；也成立了 WCA 董事会助理团队，协助董事会处理行政工作。我们设置了区域代表职位，帮助高级代表更好地管理幅员较大的地区。[《WCA 比赛要求政策》](https://www.worldcubeassociation.org/documents/policies/external/Competition%20Requirements.pdf)开始实施，以统一比赛标准；[《WCA 器材资助政策》](https://www.worldcubeassociation.org/documents/policies/external/Equipment%20Funding.pdf)也已推出，为因经济或其他困难而无法自行购置器材的社区代表和地区组织提供器材。\n\n各委员会和团队同样完成了大量工作：WCA 道德委员会开展了 21 次调查；WCA 比赛公示组公布了超过 1,300 场比赛，从确认到公布平均用时 21 小时；WCA 成绩组发布了这些比赛的成绩，从提交到上传平均仅需 10 小时；WCA 通讯组在 Facebook 发布了 153 条内容，在 Instagram 发布了 115 条内容。今年我们还任命了 43 名新代表！\n\n今年是 WCA 首次与 Red Bull Mind Gamers 合作，在西班牙、中国和墨西哥联合办赛，并让多位 WCA 选手参加了在俄罗斯举行的 2019 红牛魔方世界杯。WCA 也开始与吉尼斯世界纪录合作，让 WCA 世界纪录在吉尼斯官网和书籍中得到正式认可。Rubik’s 的支持让 2019 WCA 世锦赛得以举行，我们感谢他们持续以来的帮助。期待 2020 年继续深化与这些组织及其他伙伴的合作！\n\n2019 WCA 世锦赛在墨尔本成功举办后，我们期待在马来西亚吉隆坡、荷兰阿尔梅勒和加拿大多伦多，分别与大家相聚于亚洲、欧洲和北美锦标赛。无论是在 WCA 任职，还是在自己的社区组织和参加比赛，每一位持续投入时间的人都支持着我们的目标与发展。感谢大家共同成就了这一年，祝你新年愉快！"
+}

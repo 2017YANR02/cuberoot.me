@@ -1,0 +1,27 @@
+{
+  "key": "posts:/posts/changes-of-countries-recognized-by-the-wca",
+  "source": {
+    "key": "posts:/posts/changes-of-countries-recognized-by-the-wca",
+    "kind": "posts",
+    "title": "Changes of countries recognized by the WCA",
+    "date": "2017-06-19T19:27:19.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/changes-of-countries-recognized-by-the-wca",
+    "content": "Dear WCA Community,\n \nWith this message, we inform you on a change regarding the countries that the WCA recognizes. This change may affect some of you who are currently registered for these countries.\n \nIn the current situation, the WCA uses a list that is maintained on a public Wikipedia page, extended with some sovereign areas. There are many inconsistencies on this list: some countries are just states or provinces of another country, some areas are countries but were never accepted as countries because of local geopolitical reasons.\nIn the new situation, the WCA uses a list called the “[WCA List of Recognized Countries](https://www.worldcubeassociation.org/regulations/countries/)”. This new list is based on the UN charter and defines all countries that are eligible to be represented by a competitor in WCA competitions. This change also involves an update of the relevant regulations, so that inconsistencies between the Regulations and the recognized countries will be resolved.\n \nA significant number of countries on the previous list were not officially recognized countries and some territories were equivalent but treated differently. This leads to changes for some of our community members. These changes affect competitors from **Aruba** (now part of the Netherlands) and **Puerto Rico** (now part of the United States). Unfortunately, all former National Records of Aruba and Puerto Rico will not be recognized anymore.\n \nSome countries were renamed: \n\n* \"Korea\" was changed to \"Republic of Korea\",\n* \"North Korea\" was changed to \"Democratic People’s Republic of Korea\",\n* \"Macao\" was changed to \"Macau\" and\n* \"Palestinian Territories\" was changed to \"Palestine\".\n \nIf you are affected by this and would like to get more information, please contact the WCA Communication Team via <communication@worldcubeassociation.org> and we will give you a bit more detail behind the changes.",
+    "hash": "5e5f45d378fad4e9e9f5d37cd0d1becc8602c5a4e7b085a25a91c5afb4c21dbf",
+    "format": "markdown",
+    "sourceId": 7502
+  },
+  "translation": {
+    "version": 2,
+    "sourceHash": "5e5f45d378fad4e9e9f5d37cd0d1becc8602c5a4e7b085a25a91c5afb4c21dbf",
+    "language": "zh-Hans",
+    "title": "WCA 认可国家名单调整",
+    "content": "亲爱的 WCA 社区成员：\n\n我们在此通知大家，WCA 认可的国家名单将作调整。部分目前登记为代表相关国家的选手可能受到影响。\n\n此前，WCA 使用的是一个由维基百科公开页面维护、另加入部分主权地区的名单。该名单存在不少不一致之处：一些列出的“国家”实际是另一国家的州或省，而一些地区虽是国家，却因当地地缘政治原因一直未被作为国家接纳。\n\n调整后，WCA 将使用《[WCA 认可国家名单](https://www.worldcubeassociation.org/regulations/countries/)》。新名单依据《联合国宪章》制定，列明选手在 WCA 比赛中可以代表的全部国家。相关规则也将一并更新，以消除规则与认可国家名单之间的不一致。\n\n旧名单中有相当多项目并非正式获认可的国家，一些地位相同的地区也受到不同对待。因此，部分社区成员的登记将有变化。此次调整涉及**阿鲁巴**（现归入荷兰）和**波多黎各**（现归入美国）的选手。遗憾的是，此前阿鲁巴和波多黎各的所有国家纪录都将不再获认可。\n\n部分名称也作了调整：\n\n* “Korea”改为“Republic of Korea”（大韩民国）。\n* “North Korea”改为“Democratic People’s Republic of Korea”（朝鲜民主主义人民共和国）。\n* “Macao”改为“Macau”（澳门）。\n* “Palestinian Territories”改为“Palestine”（巴勒斯坦）。\n\n如果你受到影响，想了解更多情况，请通过 <communication@worldcubeassociation.org> 联系 WCA 通讯组，我们会进一步说明这些调整的背景。",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.148Z",
+    "reviewStatus": "pending_independent_review",
+    "revisedAt": "2026-10-25T07:28:01.629Z",
+    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+  },
+  "translationHash": "5c6914125977ace1c0cfb117185abc8a603bd38dbb56317f5d1081079a7f824f"
+}

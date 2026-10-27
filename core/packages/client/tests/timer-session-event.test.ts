@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+// Storage regressions run without a browser DOM.
+vi.mock('@/lib/douyin-content', () => ({ isDouyinToolSurface: () => false }));
+
 function makeLocalStorage() {
   const map = new Map<string, string>();
   return {
@@ -97,6 +100,53 @@ describe('timer session event associations', () => {
     expect(db.listSessions().find((session) => session.id === id)).toMatchObject({
       name: 'Pocket', event: '222',
     });
+  });
+
+  it('does not replace unreadable current results with an empty store or stale legacy results on read', async () => {
+    const original = '{"version":3,"sessions":';
+    storage.setItem(DB_KEY, original);
+    storage.setItem('cuberoot-timer.v2', JSON.stringify({ version: 2, byEvent: {
+      '333': [{ id: 'stale', event: '333', timeMs: 1000, penalty: 'ok', scramble: 'R', ts: 1 }],
+    } }));
+    const db = await loadDb();
+    const write = vi.spyOn(storage, 'setItem');
+    const first = db.getSessionSnapshot();
+    expect(db.getSessionSnapshot()).toEqual(first);
+    expect(db.loadAll()).toEqual({});
+    expect(storage.getItem(DB_KEY)).toBe(original);
+    expect(write).not.toHaveBeenCalled();
+  });
+
+  it('preserves exact unreadable data before recording new results, including same-time recovery collisions', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(1000);
+    storage.setItem(`${DB_KEY}.recovery.1000`, 'older damaged data');
+    const original = '{"version":3,"sessions":';
+    storage.setItem(DB_KEY, original);
+    let db = await loadDb();
+    db.saveAll({ '333': [{ id: 'new', event: '333', timeMs: 1000, penalty: 'ok', scramble: 'R', ts: 1 }] });
+    expect(storage.getItem(`${DB_KEY}.recovery.1000`)).toBe('older damaged data');
+    expect(storage.getItem(`${DB_KEY}.recovery.1000.1`)).toBe(original);
+    db = await loadDb();
+    expect(db.loadAll()['333'].map(s => s.id)).toEqual(['new']);
+  });
+
+  it('refuses replacement when recovery storage or the original read is unavailable', async () => {
+    const original = '{"version":3,"sessions":';
+    storage.setItem(DB_KEY, original);
+    const db = await loadDb();
+    const replacement = db.exportJson();
+    const set = storage.setItem.bind(storage);
+    vi.spyOn(storage, 'setItem').mockImplementation((key, value) => {
+      if (key.startsWith(`${DB_KEY}.recovery.`)) throw new Error('quota');
+      set(key, value);
+    });
+    expect(db.importJson(replacement)).toBe(false);
+    expect(storage.getItem(DB_KEY)).toBe(original);
+    vi.restoreAllMocks();
+    const write = vi.spyOn(storage, 'setItem');
+    vi.spyOn(storage, 'getItem').mockImplementation(() => { throw new Error('unavailable'); });
+    expect(db.importJson(replacement)).toBe(false);
+    expect(write).not.toHaveBeenCalled();
   });
 
   it('activates a matching session and safely infers legacy single-event data', async () => {

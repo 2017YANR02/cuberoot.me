@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/announcement-of-the-wdpc-leader",
+  "path": "docs/wca-post-translations/entries/announcement-of-the-wdpc-leader.json",
+  "sourceHash": "2c2dd381ac7818335337128be05f7088af55c828fc70936b24b57185ac2c9b9a",
+  "inputTranslationHash": "93aacfe467767622c496434ca3dceb552df5d37c2cc1ecda157298cc20b94451",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:05:11.622Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+  ],
+  "changes": []
+}

@@ -12,16 +12,35 @@
     "sourceId": 14200
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "1d96a9ca517794d3232afa59089e78907424898fe1820c3b6138734c8ffc47c0",
     "language": "zh-Hans",
     "title": "质量保证委员会工作简报：2025 年第一季度",
-    "content": "各位 WCA 社区成员：\n\n2025 年第一季度，WCA 质量保证委员会（WQAC）开展了多项工作，以改善世界魔方协会的整体工作质量。以下是委员会近几个月的主要进展。\n\nWQAC 目前的工作分为三个方向：项目、调查和学习管理系统（LMS）。\n\n**项目方面**，委员会根据 2025 年版《竞赛规则与指南》更新了《WCA 打乱问责政策》（WSAP）。\n\n**调查方面**，WQAC 对比赛中的质量问题进行了调查，包括：\n\n* 代表不公正地给予额外还原机会；\n* 代表影响主办方，将自己喜欢的项目加入比赛；\n* WCA 团队内部沟通不足；\n* 打乱组的处理方式异常；\n* 未遵守 WSAP 和 WCA 竞赛规则。\n\n**LMS 方面**，WQAC 的 LMS 小组已开始制作从实习代表到初级代表的培训课程。我们向地区代表和高级代表开展调查，评估培训需求，以了解实习代表晋升初级代表时应当掌握哪些知识、哪些知识不在要求之内。我们也在制定培训课程安排，并已开始编写晋升培训的考核题目。新成员发挥了各自的专长，也通过共同协作推进项目；没有他们，这些工作便无法完成。\n\n**2024 年 12 月**，委员会迎来了十名新成员。他们工作积极，为委员会作出了重要贡献。欢迎以下成员：\n\n* Amitai Ziv\n* Juan M. Gerardo\n* Keaton Ellis\n* Roxana Johnson\n* Sarah Strong\n* Sherry Tao（陶心仪）\n* Tenley Baumann\n* Timothy Zhang（张学义）\n* Ziang Yan（晏子昂）\n\n**遗憾的是，过去几个月也有几位原成员离开了委员会。**我们对他们的离开感到不舍，感谢他们的帮助，并祝愿他们今后一切顺利：\n\n* Albert Garriga Gea\n* Daniel Vaedele Egdal（WQAC 前负责人）\n* Jode Brewster\n* Nevins Chan Pak Hoong（陈百鸿）\n\nWQAC 也在此提醒：如有社区成员想反映质量问题、咨询或提出建议，随时可以通过 [quality@worldcubeassociation.org](quality@worldcubeassociation.org) 联系委员会！",
+    "content": "各位 WCA 社区成员：\n\n2025 年第一季度，WCA 质量保证委员会（WQAC）开展了多项工作，以改善世界魔方协会的整体工作质量。以下是委员会近几个月的主要进展。\n\nWQAC 目前的工作分为三个方向：项目、调查和学习管理系统（LMS）。\n\n**项目方面**，委员会根据 2025 年版《竞赛规则与指南》更新了《WCA 打乱问责政策》（WSAP）。\n\n**调查方面**，WQAC 对比赛中的质量问题进行了调查，包括：\n\n* 代表不公正地给予额外还原机会；\n* 代表影响主办方，将自己喜欢的项目加入比赛；\n* WCA 团队内部沟通不足；\n* 打乱组的处理方式异常；\n* 未遵守 WSAP 和 WCA 竞赛规则。\n\n**LMS 方面**，WQAC 的 LMS 小组已开始制作从见习代表到初级代表的培训课程。我们向地区代表和高级代表开展调查，评估培训需求，以了解见习代表晋升初级代表时应当掌握哪些知识、哪些知识不在要求之内。我们也在制定培训课程安排，并已开始编写晋升培训的考核题目。新成员发挥了各自的专长，也通过共同协作推进项目；没有他们，这些工作便无法完成。\n\n**2024 年 12 月**，委员会迎来了十名新成员。他们工作积极，为委员会作出了重要贡献。欢迎以下成员：\n\n* Amitai Ziv\n* Juan M. Gerardo\n* Keaton Ellis\n* Roxana Johnson\n* Sarah Strong\n* Sherry Tao（陶心仪）\n* Tenley Baumann\n* Timothy Zhang（张学义）\n* Ziang Yan（晏子昂）\n\n**遗憾的是，过去几个月也有几位原成员离开了委员会。**我们对他们的离开感到不舍，感谢他们的帮助，并祝愿他们今后一切顺利：\n\n* Albert Garriga Gea\n* Daniel Vaedele Egdal（WQAC 前负责人）\n* Jode Brewster\n* Nevins Chan Pak Hoong（陈百鸿）\n\nWQAC 也在此提醒：如有社区成员想反映质量问题、咨询或提出建议，随时可以通过 [quality@worldcubeassociation.org](quality@worldcubeassociation.org) 联系委员会！",
     "notes": [
       "原文称新增十名成员，但名单仅列九人；人数和名单按原文保留。"
     ],
     "translatedAt": "2026-10-22T08:40:49.161Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "pending_source_verification",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "df409e684c02bcc7dccb30c4e546d34a1e41bb93f2e0c6cf70918b88f26c34b4"
+  "translationHash": "dcdf8f146330bdabadddd824bd44d09aeb2803cc7c5fa0522c7649e2103bd2e0",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:16:44.876Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "1d96a9ca517794d3232afa59089e78907424898fe1820c3b6138734c8ffc47c0",
+    "reviewedTranslationHash": "dcdf8f146330bdabadddd824bd44d09aeb2803cc7c5fa0522c7649e2103bd2e0",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "pending_source_verification",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/quality-assurance-committee-digest-2025-q1.json",
+    "sourceConcern": true,
+    "notes": [
+      "原文称 ten new members，但仅列出9人；译文忠实保留，不能补造第10位成员。"
+    ],
+    "inputTranslationHash": "df409e684c02bcc7dccb30c4e546d34a1e41bb93f2e0c6cf70918b88f26c34b4"
+  }
 }

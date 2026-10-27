@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/update-regarding-the-wca-executive-director-role-january-2026",
+  "path": "docs/wca-post-translations/entries/update-regarding-the-wca-executive-director-role-january-2026.json",
+  "sourceHash": "433643aaabaab579e23e623d2d9dd1cec94320c9aecbec59d2dd9c1a76aea574",
+  "inputTranslationHash": "e54487310118a2b6a3e4bfab5f4f81c64ff720ce64b544f2db3d4fe8f22eed2c",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:59.336Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

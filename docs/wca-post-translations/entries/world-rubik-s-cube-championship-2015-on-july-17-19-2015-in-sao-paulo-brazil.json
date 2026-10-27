@@ -12,14 +12,31 @@
     "sourceId": 3617
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "a0a27565a285694a907efae58e4333f2ce4b4a99e93ef3993af5cc7d6f1080f9",
     "language": "zh-Hans",
     "title": "2015 年世界魔方锦标赛将于 7 月 17 至 19 日在巴西圣保罗举行",
     "content": "[2015 年世界魔方锦标赛](https://www.worldcubeassociation.org/results/c.php?i=WC2015)将于 2015 年 7 月 17 至 19 日在巴西圣保罗举行。更多信息及报名，请查看[2015 年世界魔方锦标赛网站](http://www.cuber.com.br/worlds/)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.995Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "2924b9fdd61bf35abb2a2ada9c43387718fe7a028247780ea176869670cbc36a"
+  "translationHash": "9c5a2f02ef3efc97602e5faa32a5dd237be22b0a1c79af5e4d64623d45a4a18b",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:11:14.400Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "a0a27565a285694a907efae58e4333f2ce4b4a99e93ef3993af5cc7d6f1080f9",
+    "reviewedTranslationHash": "9c5a2f02ef3efc97602e5faa32a5dd237be22b0a1c79af5e4d64623d45a4a18b",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/world-rubik-s-cube-championship-2015-on-july-17-19-2015-in-sao-paulo-brazil.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "2924b9fdd61bf35abb2a2ada9c43387718fe7a028247780ea176869670cbc36a"
+  }
 }

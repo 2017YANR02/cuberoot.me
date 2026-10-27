@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/merge-of-the-wca-regulations-and-wca-guidelines-july-2025",
+  "path": "docs/wca-post-translations/entries/merge-of-the-wca-regulations-and-wca-guidelines-july-2025.json",
+  "sourceHash": "c2a0916ec53f80ac62b48c3e066adafeb92ff3557c33a50d22122a7b83bf885b",
+  "inputTranslationHash": "e309f219dd6cdf5056f2135d64390056c56143460c91cebc9332243ba731f36e",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:36.321Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

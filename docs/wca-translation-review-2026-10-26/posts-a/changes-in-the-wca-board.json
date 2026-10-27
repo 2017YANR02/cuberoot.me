@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/changes-in-the-wca-board",
+  "path": "docs/wca-post-translations/entries/changes-in-the-wca-board.json",
+  "sourceHash": "123d38e61879e47f2d0c644b2bc5555d600a116c940320c731947166591ec870",
+  "inputTranslationHash": "e82c75050ab0bd1a5d22be34af8bb48915b1131dcc549eb0c82f336f39c3d5ea",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:12:23.465Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题和正文；各届赛事城市及取消/退款范围、董事候选名单、当选与连任区别、任期及生效日期、保留职务和干事分工均与原文一致。"
+  ],
+  "changes": []
+}

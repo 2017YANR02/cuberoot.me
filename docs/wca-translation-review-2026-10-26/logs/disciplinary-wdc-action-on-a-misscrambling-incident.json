@@ -1,0 +1,18 @@
+{
+  "key": "disciplinary:/posts/wdc-action-on-a-misscrambling-incident",
+  "path": "docs/wca-log-translations/entries/disciplinary-wdc-action-on-a-misscrambling-incident.json",
+  "sourceHash": "08ed8985609dba2149bc753251144fa6961609cf5ef73ba5159e8f5d00596eb5",
+  "inputTranslationHash": "00dba0c74c0c7a52911c1631c001c6164eefedc629fa8af45178c1fb1c9a0df7",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "复用当前译文哈希绑定的既有全文独立审校；本轮全量检索项目名和机构残留，并核对命中语境。",
+  "verdict": "pass",
+  "notes": [],
+  "changes": [],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/report-1.json",
+    "reviewedTranslationHash": "00dba0c74c0c7a52911c1631c001c6164eefedc629fa8af45178c1fb1c9a0df7",
+    "verdict": "pass"
+  },
+  "sourceUncertainty": false
+}

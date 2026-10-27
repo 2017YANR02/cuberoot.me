@@ -12,14 +12,31 @@
     "sourceId": 14018
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "4e79bf5e6544c2e6952ae4f3acc54ce29d83cccf22c3d2d91900eb135c7e3e4e",
     "language": "zh-Hans",
     "title": "2021 年 5 月版 WCA 竞赛规则现已生效",
     "content": "新版 WCA [竞赛规则](https://www.worldcubeassociation.org/regulations/)与[指南](https://www.worldcubeassociation.org/regulations/guidelines.html)已于 2021 年 5 月 1 日生效。详情请见[原公告](https://www.worldcubeassociation.org/posts/wca-regulations-may-2021)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:54.088Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "4b260e5fed8044e550f2c80802835598ec13083e5390bc0c108cb7a70cfb8f1b"
+  "translationHash": "995c75883a5709356873d870b7bd52fc2f5d6b65b37061e38c0cb170fd46e3c4",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:10:32.386Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "4e79bf5e6544c2e6952ae4f3acc54ce29d83cccf22c3d2d91900eb135c7e3e4e",
+    "reviewedTranslationHash": "995c75883a5709356873d870b7bd52fc2f5d6b65b37061e38c0cb170fd46e3c4",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wca-regulations-may-2021-now-in-effect.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "4b260e5fed8044e550f2c80802835598ec13083e5390bc0c108cb7a70cfb8f1b"
+  }
 }

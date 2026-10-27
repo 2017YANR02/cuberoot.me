@@ -12,14 +12,31 @@
     "sourceId": 9441
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "52639a54686329389b1e4595dba4838e445652d2c2b383095a39cadc3f9110ab",
     "language": "zh-Hans",
     "title": "2018 年 WCA 南美锦标赛将于 12 月 15–16 日在巴西圣保罗州波阿举行",
     "content": "[2018 年 WCA 南美锦标赛](https://www.worldcubeassociation.org/competitions/SouthAmericanChampionship2018)将于 2018 年 12 月 15–16 日在巴西圣保罗州波阿举行。更多信息及报名请见[2018 年 WCA 南美锦标赛网站](https://www.worldcubeassociation.org/competitions/SouthAmericanChampionship2018)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.922Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "4dc0df02f9d3aa55ff239d918f033eaefaef583f09b4c6c2fa3f581d6b699a6d"
+  "translationHash": "4ff8350c1006fb71eb72bbc76b605173a8b1403a676bba369cb738100e8e316a",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:10:32.387Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "52639a54686329389b1e4595dba4838e445652d2c2b383095a39cadc3f9110ab",
+    "reviewedTranslationHash": "4ff8350c1006fb71eb72bbc76b605173a8b1403a676bba369cb738100e8e316a",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wca-south-american-championship-2018-on-december-15-16-2018-in-poa-sp-brazil.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "4dc0df02f9d3aa55ff239d918f033eaefaef583f09b4c6c2fa3f581d6b699a6d"
+  }
 }

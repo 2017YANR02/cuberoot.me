@@ -1,0 +1,24 @@
+{
+  "reviewer": "root",
+  "reviewedAt": "2026-10-26T11:09:10.736Z",
+  "path": "core/packages/client/app/[lang]/regulation/post/_components/NewsArticle.tsx",
+  "beforeHash": "b90aaba401a5a807cf8c4c264ebcd17d63faedfe42af1452266e4c7573a97579",
+  "afterHash": "c9011531cd123a6999ec703c8141bc0613274e680bfd7d586d7264cfd86f1f73",
+  "articles": [
+    "wic-investigation-2026",
+    "4-pad-2027",
+    "official-events-2026",
+    "requirements-policy-5-5"
+  ],
+  "scope": "完整核对组件内现有英中对照；历史公告与本站说明按其叙述时间解读，不宣称重新核验外链附件或最新政策",
+  "changes": [
+    "四触点/双触点模式中文显示，解释处保留设备英文标签",
+    "项目标题FTO显示转面八面体；Skewb中文名已有斜转",
+    "移除魔表卡片重复英文项目标签",
+    "Executive Director按官方职务译名统一执行董事"
+  ],
+  "notes": [
+    "WIC声明保留未认定故意的限定、未成年匿名及申诉权；处罚范围未改变",
+    "安静锦标赛表格资格与项目分配同英文一致"
+  ]
+}

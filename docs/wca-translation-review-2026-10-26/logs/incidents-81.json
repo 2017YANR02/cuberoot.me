@@ -1,0 +1,18 @@
+{
+  "key": "incidents:81",
+  "path": "docs/wca-log-translations/entries/incidents-81.json",
+  "sourceHash": "54ad50ad9392d9278d284c81b3de00954ebf9a13ea3dcbb929b8041ee1a1fdd4",
+  "inputTranslationHash": "261c687ad0651202f0bbabe175f1c56894754490edd70e9bf5085db882376335",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "复用当前译文哈希绑定的既有全文独立审校；本轮全量检索项目名和机构残留，并核对命中语境。",
+  "verdict": "pass",
+  "notes": [],
+  "changes": [],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/recheck-6.json",
+    "reviewedTranslationHash": "261c687ad0651202f0bbabe175f1c56894754490edd70e9bf5085db882376335",
+    "verdict": "pass"
+  },
+  "sourceUncertainty": false
+}

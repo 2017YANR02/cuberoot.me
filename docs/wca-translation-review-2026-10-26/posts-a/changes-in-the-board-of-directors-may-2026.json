@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/changes-in-the-board-of-directors-may-2026",
+  "path": "docs/wca-post-translations/entries/changes-in-the-board-of-directors-may-2026.json",
+  "sourceHash": "dc0a8be4c753e3c06cb9527fbc60fc4e54111c8e9ac0e8633ed82aa21a603c10",
+  "inputTranslationHash": "e31774ddf342bcd70afd555c837cdc504f00e0313a9819eb82f2a6107edfe52b",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:12:23.464Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题和正文；各届赛事城市及取消/退款范围、董事候选名单、当选与连任区别、任期及生效日期、保留职务和干事分工均与原文一致。"
+  ],
+  "changes": []
+}

@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wec-leader-september-2020",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wec-leader-september-2020.json",
+  "sourceHash": "14342379947e3526c5c99557685d4e00c541fee3791daa175f5e3be5575012ee",
+  "inputTranslationHash": "24bcb719de503b0459438f2327b19385da6218c9a9271384e9240163580165b6",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:10:20.415Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "全文对照；历史 WEC/纪律委员会职责、申请资格、任期工时、截止日期及任命流程保持原意。"
+  ],
+  "changes": []
+}

@@ -19,7 +19,7 @@
   background: color-mix(in srgb, var(--foreground) 5%, transparent);
   color: var(--foreground);
   font-size: 0.88rem;
-  font-family: 'Inter', Arial, sans-serif;
+  font-family: var(--font-sans);
   outline: none;
   box-sizing: border-box;
   transition: border-color 0.15s, box-shadow 0.15s;

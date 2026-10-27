@@ -12,14 +12,31 @@
     "sourceId": 13565
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "031145e9b817aea332d8b6f104ff04f8fd369d09ee3647001eb7259578df4405",
     "language": "zh-Hans",
     "title": "WCA 质量保证委员会新任负责人（2019 年 12 月）",
     "content": "我们很高兴地宣布，Daniel Vædele Egdal 将担任 WCA 质量保证委员会（WQAC）的新任负责人。Daniel 此前已是 WQAC 成员。\n\n依照 WCA 委员会与团队[动议 10.2019.0](https://www.worldcubeassociation.org/documents/motions/10.2019.0%20-%20Committees%20and%20Teams.pdf)第 4 节，WCA 董事会选定 Daniel，并经现任委员会负责人和高级代表投票批准。\n\n新负责人将立即上任。他的申请材料可在[此处](https://drive.google.com/drive/folders/1MuvxQaSV2s9MKPfSW_m0p3q3nTDQNDqb?usp=sharing)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:00.951Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "baa012d2a0f7dd2bc95ddc762d0b354e58562a994d2f510a3991499863350046"
+  "translationHash": "41b194412f2ac2234be117a1b02b8827c16d7dd8600d40ea1c06d47f7b0b53f1",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:44.905Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "031145e9b817aea332d8b6f104ff04f8fd369d09ee3647001eb7259578df4405",
+    "reviewedTranslationHash": "41b194412f2ac2234be117a1b02b8827c16d7dd8600d40ea1c06d47f7b0b53f1",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/new-wqac-leader-december-2019.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "baa012d2a0f7dd2bc95ddc762d0b354e58562a994d2f510a3991499863350046"
+  }
 }

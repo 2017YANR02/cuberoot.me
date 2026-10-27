@@ -1,0 +1,18 @@
+{
+  "key": "disciplinary:/posts/wdc-report-on-a-case-of-cheating",
+  "path": "docs/wca-log-translations/entries/disciplinary-wdc-report-on-a-case-of-cheating.json",
+  "sourceHash": "bc3837e954ce65dba9788e6706d51f9322fb7da3091d9a687acdb086fc2427be",
+  "inputTranslationHash": "eda82b7dfb3f1b185e86f33067aaff1ac96329c2d82468fb916c1f649b0d0703",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "复用当前译文哈希绑定的既有全文独立审校；本轮全量检索项目名和机构残留，并核对命中语境。",
+  "verdict": "pass",
+  "notes": [],
+  "changes": [],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/recheck-2.json",
+    "reviewedTranslationHash": "eda82b7dfb3f1b185e86f33067aaff1ac96329c2d82468fb916c1f649b0d0703",
+    "verdict": "pass"
+  },
+  "sourceUncertainty": false
+}

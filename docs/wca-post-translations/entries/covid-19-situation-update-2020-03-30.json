@@ -12,14 +12,33 @@
     "sourceId": 13969
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "1eaac9a46fa1081d1a309dc82b5364114d5668b4e0c236f7a58e9df1a82bd7f2",
     "language": "zh-Hans",
     "title": "新冠疫情情况更新（2020 年 3 月 30 日）",
     "content": "鉴于过去几周新冠疫情进一步加剧，为支持全球减缓病毒传播的努力，董事会一致同意延长比赛限制。\n\n**所有已公布且首个比赛日在 2020 年 5 月 31 日或之前的比赛，即刻取消。**此外，新比赛只有在首个比赛日为 2020 年 6 月 1 日或之后时，才会获批。\n\n社区开展的线上比赛、远程聚会和直播等活动让我们备受鼓舞。我们全力支持这些尝试，也呼吁更多 WCA 工作人员参与，支持社区。请继续关注官网，了解这些活动的后续公告。\n\n希望所有社区成员都遵循当地政府和世界卫生组织的指引，保护自身安全。感谢大家在这段前所未有的时期给予理解。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:00.950Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "d914f91b1774660f85d22401e53c5e70b786406e7da96e7dd3c36fe980b6e452"
+  "translationHash": "a0be6f910bdb015345f8b83cb566e538edb3e276cdb6f5bbfae772f7713b52eb",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:13:29.851Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "1eaac9a46fa1081d1a309dc82b5364114d5668b4e0c236f7a58e9df1a82bd7f2",
+    "reviewedTranslationHash": "a0be6f910bdb015345f8b83cb566e538edb3e276cdb6f5bbfae772f7713b52eb",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/covid-19-situation-update-2020-03-30.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照标题与正文；疫情取消区间/新赛条件、COO履历与金额人数、赛事日期地点、意向征集要求及各条历史纪录的选手/项目/单次平均/数值逐项核对一致。"
+    ],
+    "inputTranslationHash": "d914f91b1774660f85d22401e53c5e70b786406e7da96e7dd3c36fe980b6e452"
+  }
 }

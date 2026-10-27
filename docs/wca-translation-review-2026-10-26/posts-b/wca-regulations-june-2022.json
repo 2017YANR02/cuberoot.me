@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/wca-regulations-june-2022",
+  "path": "docs/wca-post-translations/entries/wca-regulations-june-2022.json",
+  "sourceHash": "1eb9bf3767d11a717c199a59547d7eb406b0ba3c03e68ee58f55de3ea1e253db",
+  "inputTranslationHash": "8cecd2a7116d7be09f9c8172aada8b043491359e639120ce30c0c8428ec63eb6",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:10:32.386Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

@@ -1,0 +1,19 @@
+{
+  "key": "disciplinary:/posts/integrity-committee-digest-2026-q1",
+  "path": "docs/wca-log-translations/entries/disciplinary-integrity-committee-digest-2026-q1.json",
+  "sourceHash": "67795c0bee5d1b515002e49f9f8b3a1477d248ee22f241c9a9c6b2cd690539b9",
+  "inputTranslationHash": "d1fcac35f70d63b0438b3e2de6b3a616a71942ce2f0f44ea8614118f0daec178",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "复用已通过的旧版全文独立审校；人工阅读旧版与现版全部文字差异及对应英文段落，确认本轮之前的差异限于官方机构名称或 Guidelines 的“指南”译法；另复核本轮项目名命中语境。",
+  "verdict": "pass",
+  "notes": [],
+  "changes": [],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/report-1.json",
+    "reviewedTranslationHash": "3d518237642c66c9c88da01d7cc1b95f4b3223ed34cdf2799b6ccbd507b60f56",
+    "verdict": "pass",
+    "archivedVersion": "docs/wca-log-translations/versions/disciplinary-integrity-committee-digest-2026-q1/3d518237642c66c9c88da01d7cc1b95f4b3223ed34cdf2799b6ccbd507b60f56-v1.json"
+  },
+  "sourceUncertainty": false
+}

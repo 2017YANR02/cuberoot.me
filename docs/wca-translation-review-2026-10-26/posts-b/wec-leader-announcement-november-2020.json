@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/wec-leader-announcement-november-2020",
+  "path": "docs/wca-post-translations/entries/wec-leader-announcement-november-2020.json",
+  "sourceHash": "bfd23d3ad195a7b4a8eaa138837fd8fdc5fe2696360e35a3ce3e5e5d6b679094",
+  "inputTranslationHash": "dc7b166dfb0044199e043d1d595fb50d47eb7f4198605be271d9571786c12739",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:10:59.922Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [
+    "完整核对案件归因、处分条件、匿名处理、数量及任命程序。"
+  ],
+  "changes": []
+}

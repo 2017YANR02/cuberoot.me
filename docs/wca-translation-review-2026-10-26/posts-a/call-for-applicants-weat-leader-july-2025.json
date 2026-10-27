@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-weat-leader-july-2025",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-weat-leader-july-2025.json",
+  "sourceHash": "e7dd4b2399a4dfddd491cf343b802843293da421c193c1ce5d5354da5f9abe77",
+  "inputTranslationHash": "d5622d06038429fda83b713b31595be77a01eb528aa5a8b67c6593319f6fa46b",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:10:04.271Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇核对全文及标题，职位、历史机构、任期、工时、申请资料、截止日期和投票程序一致。"
+  ],
+  "changes": []
+}

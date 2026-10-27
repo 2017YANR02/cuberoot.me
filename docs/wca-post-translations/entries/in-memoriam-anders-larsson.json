@@ -12,14 +12,31 @@
     "sourceId": 4734
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "a0491d5faebf778093580f305db0cc5baf15661ead0a8ac954c8b8fce813d28c",
     "language": "zh-Hans",
     "title": "悼念 Anders Larsson",
     "content": "我们亲爱的朋友 Anders Larsson 于 2015 年 8 月 6 日在韩国意外坠落身亡，年仅 51 岁。\n\n在[《悼念 Anders Larsson》](https://www.worldcubeassociation.org/forum/viewtopic.php?f=9&t=1982)中，我们回顾了 Anders 在 WCA 发展过程中发挥的重要作用。\n\n我们中的许多人都会怀念 Anders。与他共度的美好时光，永远不会被遗忘。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.989Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "dc4e05ecec59a73aee7aefea5dbdbfedfaeb074f1bac729fad979f2a32c9500b"
+  "translationHash": "a87727865a6329eefad3807b7756a9fb1ff1326d7aff58b81fda82e7fa0fd6a9",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:36.319Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "a0491d5faebf778093580f305db0cc5baf15661ead0a8ac954c8b8fce813d28c",
+    "reviewedTranslationHash": "a87727865a6329eefad3807b7756a9fb1ff1326d7aff58b81fda82e7fa0fd6a9",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/in-memoriam-anders-larsson.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "dc4e05ecec59a73aee7aefea5dbdbfedfaeb074f1bac729fad979f2a32c9500b"
+  }
 }

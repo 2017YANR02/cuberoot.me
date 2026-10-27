@@ -1,0 +1,16 @@
+{
+  "key": "posts:/posts/wrt-leader-announcement-january-2024",
+  "path": "docs/wca-post-translations/entries/wrt-leader-announcement-january-2024.json",
+  "sourceHash": "1d58e6984e5dbd067d80104187335a1b27e8b2d4f30c0ce63c37a64a605cb072",
+  "inputTranslationHash": "cbc4657d6a79f16adb9f4f3f68db274cda7175c153331d51842ffd3b4b49b515",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:12:24.811Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "correction_required",
+  "notes": [],
+  "changes": [
+    "Senior Member统一为高级成员。"
+  ],
+  "title": "WCA 成绩组负责人任命公告（2024 年 1 月）",
+  "content": "我们很高兴地宣布，Callum Goodyear 将担任 WCA 成绩组（WRT）的新负责人。Callum 此前已是 WRT 的高级成员。\n\n按照 WCA 委员会和团队相关议案第 4 节，WCA 董事会选定 Callum，并经现任委员会负责人和高级代表投票批准。\n\n感谢 Sébastien Auroux 在过去 9 年中带领 WRT 所做的大量工作，祝 Callum 履新顺利。\n\nCallum 是本次岗位的唯一申请人，他的申请材料可在[此处](https://drive.google.com/drive/folders/1TvKJvF2usHgqXCCo13SGR9GNrd2RnZHn)查看。"
+}

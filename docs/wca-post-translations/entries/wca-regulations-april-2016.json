@@ -12,14 +12,33 @@
     "sourceId": 5620
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "daa4d468cf2963c50b7937cee3c65d09bc37736d00fd1fdadfb3f572ecfdf335",
     "language": "zh-Hans",
     "title": "WCA 规则更新：2016 年 4 月",
     "content": "新版规则与指南将于 2016 年 4 月 18 日生效。\n\n现行规则始终可从 [https://www.worldcubeassociation.org/regulations/](https://www.worldcubeassociation.org/regulations/) 获取。\n\n2015 年版至 2016 年版的完整改动，请[在 GitHub 上查看差异](https://github.com/cubing/wca-regulations/compare/official-2015-07-01...draft#files_bucket)。\n\n主要改动如下：\n\n* 明确观察结束后、启动计时器前将魔方放在垫子之外的处罚为加 2 秒。（[#343](https://github.com/cubing/wca-documents/issues/343) | [347](https://github.com/cubing/wca-regulations/pull/347)）\n* 同一打乱序列应在最长 2 小时的时间范围内使用。（[#295](https://github.com/cubing/wca-documents/issues/295) | [342](https://github.com/cubing/wca-regulations/pull/342/files)）\n* 明确可以为多个项目合并设置累计时限。（[#296](https://github.com/cubing/wca-documents/issues/296) | [334](https://github.com/cubing/wca-regulations/pull/334)）\n* 允许使用第四代 Pro 计时器计时。（无对应 issue | [333](https://github.com/cubing/wca-regulations/pull/333)）\n* 魔表同一侧的各按针必须不可区分；还原后按针帽缺失不影响魔表是否已还原的判定。（[#189](https://github.com/cubing/wca-documents/issues/189) | [329](https://github.com/cubing/wca-regulations/pull/329/files)）\n* 明确最少步项目的裁判也可以参赛。（[#165](https://github.com/cubing/wca-documents/issues/165) | [329](https://github.com/cubing/wca-regulations/pull/329/files)）\n* 明确还原时可以使用身体的任何部位，脚拧和单手项目除外。（[#300](https://github.com/cubing/wca-documents/issues/300) | [324](https://github.com/cubing/wca-regulations/pull/324/files)）\n* 垫子的最小尺寸规定为左右 30 厘米、前后 25 厘米。（[#304](https://github.com/cubing/wca-documents/issues/304) | [335](https://github.com/cubing/wca-regulations/pull/335/files)）\n* 建议额外还原紧接在被替换的那次还原之后进行。（无对应 issue | [341](https://github.com/cubing/wca-regulations/pull/341/files)）\n* 一个项目可安排的最大轮数，现在根据每一轮的选手人数确定，而不再根据整个项目的选手人数确定。（[#314](https://github.com/cubing/wca-documents/issues/314) | [346](https://github.com/cubing/wca-regulations/pull/346/files)）\n* 最少步项目允许所有类型的贴纸，删除了“有色”这一限制。（[#68](https://github.com/cubing/wca-documents/issues/68) | [329](https://github.com/cubing/wca-regulations/pull/329/files)）\n* 如果选手观察时忘记取下 Square-1 用于对齐层的卡片，可以在还原过程中将其取下。（[#315](https://github.com/cubing/wca-documents/issues/315) | [323](https://github.com/cubing/wca-regulations/pull/323/files)）\n* 明确可以为整场比赛设置人数上限，而不只是为单个项目设置。（[#311](https://github.com/cubing/wca-regulations/pull/311) 和 [#325](https://github.com/cubing/wca-documents/issues/325) | [#327](https://github.com/cubing/wca-regulations/pull/327/files)）\n* 补充说明如何处理与打乱逆序相似的最少步解法。（[#344](https://github.com/cubing/wca-documents/issues/344) | [348](https://github.com/cubing/wca-regulations/pull/348/files)）\n* 采用累计时限时，选手一旦达到时限，该轮剩余各次还原均记为 DNS。（[#303](https://github.com/cubing/wca-documents/issues/303) | [353](https://github.com/cubing/wca-regulations/pull/353/files)）",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.170Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "09a7ddf05ec422d12dedb2a88446e75c55876e2910772c96bae8b991070a2a06"
+  "translationHash": "ba0151b61ec09bf9f1d5272b78b569f03a5a7216d2351e45b423a9f4b857043e",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:09:31.430Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "daa4d468cf2963c50b7937cee3c65d09bc37736d00fd1fdadfb3f572ecfdf335",
+    "reviewedTranslationHash": "ba0151b61ec09bf9f1d5272b78b569f03a5a7216d2351e45b423a9f4b857043e",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wca-regulations-april-2016.json",
+    "sourceConcern": false,
+    "notes": [
+      "已核对完整正文、规则编号、日期、条件及项目术语。"
+    ],
+    "inputTranslationHash": "09a7ddf05ec422d12dedb2a88446e75c55876e2910772c96bae8b991070a2a06"
+  }
 }

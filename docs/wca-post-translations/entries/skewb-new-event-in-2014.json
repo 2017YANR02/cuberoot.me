@@ -12,14 +12,31 @@
     "sourceId": 3012
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "45de171ec41eca96e5e5bd1bf71c35e59b6822c4ddc38a8527bda0ac8cf135f0",
     "language": "zh-Hans",
     "title": "斜转将于 2014 年成为 WCA 正式项目",
     "content": "WCA 董事会已批准将斜转列为 WCA 正式项目，自 2014 年 1 月 1 日起随新版规则一同生效。\n\n详情请见 [WCA 论坛公告](https://www.worldcubeassociation.org/forum/viewtopic.php?f=4&t=1163)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.157Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "92580bdacc9f20482f8d63067ccf621ef8016cda701cbca3de73bc5249cf9ae7"
+  "translationHash": "ef27e2889f07d8c354cd5d559bf9fff09e47f55aa0ba8110bb10b907c56f56d1",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:33.089Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "45de171ec41eca96e5e5bd1bf71c35e59b6822c4ddc38a8527bda0ac8cf135f0",
+    "reviewedTranslationHash": "ef27e2889f07d8c354cd5d559bf9fff09e47f55aa0ba8110bb10b907c56f56d1",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/skewb-new-event-in-2014.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "92580bdacc9f20482f8d63067ccf621ef8016cda701cbca3de73bc5249cf9ae7"
+  }
 }

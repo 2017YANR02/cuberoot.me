@@ -109,7 +109,7 @@
     background: #3a3a3c;
     color: #ededed;
     font-size: 1.05rem;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif;
+    font-family: var(--font-sans);
     font-weight: 500;
     cursor: pointer;
     display: flex;

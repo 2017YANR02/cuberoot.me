@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/senior-delegate-announcement-asia-southeast-and-oceania-november-2023",
+  "path": "docs/wca-post-translations/entries/senior-delegate-announcement-asia-southeast-and-oceania-november-2023.json",
+  "sourceHash": "4a93f1a94381778be677969f006d96c49de958e8c79613049e97d713af66c535",
+  "inputTranslationHash": "52954afd80c518e82ed16363f728b28b3543ce3457d95eb4da8aa10005e76c37",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:25.168Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

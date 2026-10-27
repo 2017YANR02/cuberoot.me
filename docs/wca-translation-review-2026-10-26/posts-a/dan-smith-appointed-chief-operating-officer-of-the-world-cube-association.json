@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/dan-smith-appointed-chief-operating-officer-of-the-world-cube-association",
+  "path": "docs/wca-post-translations/entries/dan-smith-appointed-chief-operating-officer-of-the-world-cube-association.json",
+  "sourceHash": "7bdb3d75081862dde1121012b170e6756e70437dd7ad7b7124526bb9ce7bda2a",
+  "inputTranslationHash": "442bf84c1dfa77a8926805c98d9932cde7214c093d28c5b69715a33bfecd22fa",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:13:29.851Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题与正文；疫情取消区间/新赛条件、COO履历与金额人数、赛事日期地点、意向征集要求及各条历史纪录的选手/项目/单次平均/数值逐项核对一致。"
+  ],
+  "changes": []
+}

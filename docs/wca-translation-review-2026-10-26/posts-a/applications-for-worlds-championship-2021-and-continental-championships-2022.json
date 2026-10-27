@@ -1,0 +1,18 @@
+{
+  "key": "posts:/posts/applications-for-worlds-championship-2021-and-continental-championships-2022",
+  "path": "docs/wca-post-translations/entries/applications-for-worlds-championship-2021-and-continental-championships-2022.json",
+  "sourceHash": "c6421751cc55eaa06f91a17880eb9198c7b9e1869fb8e1155829d45d63c276fd",
+  "inputTranslationHash": "a14964715d745a5a87b4d032fdd76f147c54a4a82d6ebfa61c5ce95dcd18a244",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:06:14.455Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "correction_required",
+  "notes": [
+    "完整对照正文与标题；核对全部申请/任命主体、时间、权限、附录条目及材料要求。"
+  ],
+  "changes": [
+    "统一 Continental 为大洲赛事/纪录；官方规则11f1c为大洲锦标赛，避免跨洲歧义。"
+  ],
+  "title": "2021 年世界锦标赛及 2022 年大洲锦标赛申办情况",
+  "content": "2021 年世界锦标赛及 2022 年大洲锦标赛的申办现已截止。感谢所有提交方案的团队！以下城市已提交申请，董事会将从中选定举办地。\n\n**2021 年世界锦标赛：**\n\n- 荷兰阿尔梅勒\n- 俄罗斯符拉迪沃斯托克\n\n**2022 年亚洲锦标赛：**\n\n- 哈萨克斯坦塞梅伊\n\n**2022 年欧洲锦标赛：**\n\n- 丹麦哥本哈根\n\n**2022 年北美锦标赛：**\n\n- 加拿大多伦多\n\n决定确定后，将公布申办材料。"
+}

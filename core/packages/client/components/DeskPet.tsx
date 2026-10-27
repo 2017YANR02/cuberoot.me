@@ -10,9 +10,11 @@ import { installedPetAvailable } from '@/lib/installed-content';
 // Drive from anywhere: window.dispatchEvent(new CustomEvent('clawd:state', { detail: 'happy' }))
 //                  or window.clawdPet?.set('thinking') / window.clawdPet?.idle()
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useAssistantWorkspace } from '@/hooks/useAssistantWorkspace';
+import { assistantConversations, assistantOwner } from '@/lib/assistant-conversations';
 import dynamic from 'next/dynamic';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import i18n from '@/i18n/i18n-client';
 import { canTestRoles, getRolePreview, hasAdminAccess, useAuthStore } from '@/lib/auth-store';
 import { useFeedbackUnread, refreshFeedbackUnread } from '@/lib/feedback-unread';
@@ -101,18 +103,18 @@ const vpH = () => window.matchMedia('(max-width: 767px)').matches
 const PEEK = 0.08;
 const clampAnchor = (right: number, bottom: number, w: number, h: number, fx: number, fy: number) => {
   const cw = vpW(), ch = vpH();
-  const mX = -w * PEEK, mY = -h * PEEK;
-  // Native navigation bars and mobile browser chrome cannot receive page pointer
-  // events. Keep the entire pet inside the visible height, including restored pets.
-  // WeChat is included when iOS has not supplied the mini-program marker yet.
+  const mX = -w * PEEK;
+  // Keep the visual center reachable inside the visible viewport, while allowing
+  // the rest of the pet to extend beyond its top and bottom edges.
   const viewport = window.visualViewport;
   const safe = mayUseMiniProgramBridge() || window.matchMedia('(max-width: 767px)').matches;
   const style = safe ? getComputedStyle(document.documentElement) : null;
   const top = (viewport?.offsetTop ?? 0) + (parseFloat(style?.getPropertyValue('--sat') ?? '') || 0) + 8;
   const bottomEdge = Math.min(ch, (viewport?.offsetTop ?? 0) + (viewport?.height ?? ch))
     - (parseFloat(style?.getPropertyValue('--sab') ?? '') || 0) - 8;
-  const minBottom = safe ? ch - bottomEdge : mY - h * (1 - fy);
-  const maxBottom = safe ? Math.max(minBottom, ch - top - h) : ch - mY - h * (1 - fy);
+  const visibleInset = Math.min(16, Math.max(0, (bottomEdge - top) / 2));
+  const minBottom = ch - bottomEdge + visibleInset - h * (1 - fy);
+  const maxBottom = Math.max(minBottom, ch - top - visibleInset - h * (1 - fy));
   const left = safe ? (viewport?.offsetLeft ?? 0) : 0;
   const rightEdge = safe ? left + (viewport?.width ?? cw) : cw;
   return {
@@ -246,10 +248,26 @@ export default function DeskPet() {
   const [temporarilyHidden, setHidden] = useState(false);
   const hidden = !visible || temporarilyHidden;
   const [resting, setResting] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const user = useAuthStore((s) => s.user);
+  const owner = assistantOwner(user);
+  const workspace = useAssistantWorkspace(owner);
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchOpen = /^\/(?:zh\/|en\/)?chat\/?$/.test(pathname || '');
+  const setSearchOpen = useCallback((open: boolean) => {
+    const prefix = pathname?.startsWith('/zh') ? '/zh' : '';
+    if (open) {
+      assistantConversations.setOpen(owner, true);
+      if (!searchOpen) router.push(`${prefix}/chat`);
+    } else if (searchOpen) router.push(prefix || '/');
+  }, [owner, pathname, router, searchOpen]);
+  // Pet gesture listeners live across navigation; always use the current route
+  // and account without restarting the animation/gesture lifecycle.
+  const searchNavigationRef = useRef(setSearchOpen);
+  useLayoutEffect(() => { searchNavigationRef.current = setSearchOpen; }, [setSearchOpen]);
+  useEffect(() => { assistantConversations.setOpen(owner, searchOpen); }, [owner, searchOpen]);
   useEffect(() => {
     setHidden(false);
-    if (!visible) setSearchOpen(false);
   }, [visible]);
   const [touchActionsVisible, setTouchActionsVisible] = useState(false);
   const [lang, setLang] = useState<'zh' | 'en'>('en');
@@ -257,8 +275,6 @@ export default function DeskPet() {
   // Floating metronome panel — opened from the toolbar, lives here (root layout)
   // so it survives client-side navigation and keeps ticking across pages.
   const [metronomeOpen, setMetronomeOpen] = useState(false);
-  const pathname = usePathname();
-  const user = useAuthStore((s) => s.user);
   const fbUnread = useFeedbackUnread();
   const isAdmin = hasAdminAccess(user);
   const [catalog, setCatalog] = useState<DeskPetCatalog | null>(null);
@@ -373,22 +389,6 @@ export default function DeskPet() {
     return () => { i18n.off('languageChanged', deferred); };
   }, []);
 
-  // Close the search overlay on language switch — its content stays untranslated
-  // otherwise, which is confusing.
-  useEffect(() => {
-    // The destination I18nProvider can emit during render. Close after that
-    // render, just like the deferred language label update above.
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const close = () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => setSearchOpen(false), 0);
-    };
-    i18n.on('languageChanged', close);
-    return () => {
-      i18n.off('languageChanged', close);
-      clearTimeout(timer);
-    };
-  }, []);
 
   // Keep the pet and its attached tools above the mobile search input.
   // Move the actual anchor so dragging and the touch dismiss button still work.
@@ -469,15 +469,6 @@ export default function DeskPet() {
     prevUnreadRef.current = total;
   }, [fbUnread, ntfUnread]);
 
-  // Close the search overlay after a result navigates to a new page (the pet
-  // lives in the persistent root layout, so client navigation won't unmount it).
-  // Ignore locale-only changes so the toolbar's language toggle doesn't close it.
-  const prevPathRef = useRef<string | null>(null);
-  useEffect(() => {
-    const page = (pathname || '').replace(/^\/(zh|en)(?=\/|$)/, '');
-    if (prevPathRef.current !== null && prevPathRef.current !== page) setSearchOpen(false);
-    prevPathRef.current = page;
-  }, [pathname]);
 
   // After a size or character change, re-anchor so the pet's visual center lands
   // on the captured point (grows/shrinks about itself; characters share one
@@ -921,7 +912,7 @@ export default function DeskPet() {
       const r = root.getBoundingClientRect();
       const [fx, fy] = VC[character];
       searchOriginRef.current = { x: r.left + r.width * fx, y: r.top + r.height * fy };
-      setSearchOpen(true);
+      searchNavigationRef.current(true);
     };
 
     let clicks = 0;
@@ -951,8 +942,8 @@ export default function DeskPet() {
       if (clicks === 1) openSearch();
       clearTimeout(clickTimer);
       clickTimer = setTimeout(() => {
-        if (clicks >= 4) { setSearchOpen(false); setState('reactAnnoyed', true); }
-        else if (clicks === 2) { setSearchOpen(false); setState('reactDouble', true); }
+        if (clicks >= 4) { searchNavigationRef.current(false); setState('reactAnnoyed', true); }
+        else if (clicks === 2) { searchNavigationRef.current(false); setState('reactDouble', true); }
         clicks = 0;
       }, 280);
     };
@@ -1022,7 +1013,7 @@ export default function DeskPet() {
       if (!visibleIds.includes(scene.character)) return;
       // A gallery selection wakes the selected character and leaves edge-cling
       // so the entire scene is visible.
-      setSearchOpen(false);
+      searchNavigationRef.current(false);
       if (mini) {
         const pr = preMiniRight, pb = preMiniBottom;
         liftFromMini();
@@ -1185,7 +1176,7 @@ export default function DeskPet() {
     };
   }, [mounted, hidden, character, randomMode, user, petAvailable, visibleKey]);
 
-  if (douyin || !mounted || hidden || !petAvailable) return null;
+  if (douyin || !mounted) return null;
 
   const zh = lang === 'zh';
   const t = (z: string, e: string) => (zh ? z : e);
@@ -1237,7 +1228,7 @@ export default function DeskPet() {
         inputMode="search"
         style={{ position: 'fixed', bottom: 0, left: 0, width: 1, height: 1, opacity: 0, padding: 0, margin: 0, border: 0, fontSize: 16, background: 'transparent', pointerEvents: 'none', zIndex: -1 }}
       />
-      <div className={`clawd-deskpet${searchOpen ? ' pet-front' : ''}${touchActionsVisible ? ' touch-actions' : ''}`} data-size={size} data-char={character} data-original={ORIGINAL_CHARACTERS.some(pet => pet.id === character)} data-pixel={THEMES[character].pixel} ref={rootRef}>
+      <div style={hidden || !petAvailable || searchOpen ? { display: 'none' } : undefined} className={`clawd-deskpet${touchActionsVisible ? ' touch-actions' : ''}`} data-size={size} data-char={character} data-original={ORIGINAL_CHARACTERS.some(pet => pet.id === character)} data-pixel={THEMES[character].pixel} ref={rootRef}>
         <style>{CSS}</style>
         <AdminTools centerX={VC[character][0]} />
         <svg ref={svgRef} xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" aria-hidden>
@@ -1309,8 +1300,10 @@ export default function DeskPet() {
         />
       </div>
 
-      {searchOpen && (
+      {(workspace.opened || searchOpen) && (
         <DeskPetSearch
+          key={owner}
+          open={searchOpen}
           lang={curLang}
           origin={searchOriginRef.current}
           onClose={() => setSearchOpen(false)}

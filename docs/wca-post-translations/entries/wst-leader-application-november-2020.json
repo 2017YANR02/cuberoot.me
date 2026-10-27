@@ -12,16 +12,33 @@
     "sourceId": 13999
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "4a210ef9ce0848a0a70c43f3cbfe0232639b7a23d39ead4c0b64f5579406809e",
     "language": "zh-Hans",
     "title": "WCA 软件组负责人招募结果（2020 年 11 月）",
     "content": "由于未收到 WCA 软件组（WST）负责人职位的申请，WCA 董事会即日起代行 WST 负责人的职责。董事会将继续承担这一职务，直至找到新的负责人。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:54.105Z",
-    "reviewStatus": "pending_independent_review",
-    "revisedAt": "2026-10-25T07:28:01.629Z",
-    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "de9e42c5881f043ee01665c4d272b29525f0979080d3dae20d5288ee184577de"
+  "translationHash": "b23bb06a4c10b17454a6a669b25b62b36de997db4c3867f5b17c6a7851d03b4a",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:12:24.812Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "4a210ef9ce0848a0a70c43f3cbfe0232639b7a23d39ead4c0b64f5579406809e",
+    "reviewedTranslationHash": "b23bb06a4c10b17454a6a669b25b62b36de997db4c3867f5b17c6a7851d03b4a",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wst-leader-application-november-2020.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇核对新任、前任、成员职衔、遴选批准程序、申请人数和日期。"
+    ],
+    "inputTranslationHash": "de9e42c5881f043ee01665c4d272b29525f0979080d3dae20d5288ee184577de"
+  }
 }

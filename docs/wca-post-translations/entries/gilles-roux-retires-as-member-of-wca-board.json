@@ -12,14 +12,31 @@
     "sourceId": 271
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "dc5740c0084c996b6c04a588e39e7821b5abe5cb68cfa2fe3de1f65774a198ee",
     "language": "zh-Hans",
     "title": "Gilles Roux 卸任 WCA 董事",
     "content": "来自法国的 Gilles Roux 决定自 2008 年 11 月 1 日起卸任 WCA 董事。\n\n感谢 Gilles 为 WCA 和社区所做的贡献。他于 2004 年 10 月加入董事会，参与组织了多场 WCA 比赛并担任代表。他也为 WCA 竞赛规则作出了重要贡献，帮助 WCA 在世界各地发展。Gilles 将继续以技术顾问身份协助 WCA。\n\nWCA 董事会正在制定未来几年的计划，主要涉及：\n\n- 完成 WCA 的组织设立工作，包括章程。\n- 调整和扩充 WCA 董事会。\n- 明确长期目标。\n- 组建专门团队，扩充组织以实现目标。\n- 明确 WCA 会员资格，并讨论可能收取的年费。\n\n计划提案准备就绪后，我们会通过 WCA 网站通知大家。在此之前，董事会将由余下三位成员继续开展工作，并得到网站团队 Clément Gallet、Stefan Pochmann 和 Bob Burton 的支持。\n\n祝大家玩魔方愉快！\n\nWCA 董事会\n\nTyson Mao、Masayuki Akimoto、Ron van Bruchem",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.930Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "c259a4842097c25f7ff4d4fedffdda91a56f9e7ec3a65ee66ad921e580c01794"
+  "translationHash": "324669aa437063b794a5c9f73c30ed7bcae16d28e90aadec37c39641cff8a873",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:36.319Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "dc5740c0084c996b6c04a588e39e7821b5abe5cb68cfa2fe3de1f65774a198ee",
+    "reviewedTranslationHash": "324669aa437063b794a5c9f73c30ed7bcae16d28e90aadec37c39641cff8a873",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/gilles-roux-retires-as-member-of-wca-board.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "c259a4842097c25f7ff4d4fedffdda91a56f9e7ec3a65ee66ad921e580c01794"
+  }
 }

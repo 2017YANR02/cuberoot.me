@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/announcement-of-new-senior-delegate-europe-and-africa-october-2022",
+  "path": "docs/wca-post-translations/entries/announcement-of-new-senior-delegate-europe-and-africa-october-2022.json",
+  "sourceHash": "8114e262f35f03bbc852af168e16056211162158d44b0f6d33c021b2986aa6a9",
+  "inputTranslationHash": "bbde432df0f614a1b1b8022211154b073108b4d6217536b31f5c8879fb4a7604",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:05:11.622Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+  ],
+  "changes": []
+}

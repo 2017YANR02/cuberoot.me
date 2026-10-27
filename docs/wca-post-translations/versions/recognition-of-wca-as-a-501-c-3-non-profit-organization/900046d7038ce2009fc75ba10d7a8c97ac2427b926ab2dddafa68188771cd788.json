@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/recognition-of-wca-as-a-501-c-3-non-profit-organization",
+  "source": {
+    "key": "posts:/posts/recognition-of-wca-as-a-501-c-3-non-profit-organization",
+    "kind": "posts",
+    "title": "Recognition of WCA as a 501(c)(3) Non-Profit Organization",
+    "date": "2018-10-25T19:10:04.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/recognition-of-wca-as-a-501-c-3-non-profit-organization",
+    "content": "It is with great pleasure that we can finally announce that the World Cube Association has been recognized as a Non-Profit Organization! We have just received the Determination Letter from the Internal Revenue Service of the United States that confirms we are exempt from federal income tax under Internal Revenue Code Section 501(c)(3).\n\nWe would like to seize this moment to thank every one of you for your dedication towards our organization and our Mission through the years. It has been a long way since this journey began, but the best is yet to come!",
+    "hash": "e15f5e65fafe660d6637d220ab17ebabfe53531625c0feacbcb574fbbab36bc8",
+    "format": "markdown",
+    "sourceId": 10538
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "e15f5e65fafe660d6637d220ab17ebabfe53531625c0feacbcb574fbbab36bc8",
+    "language": "zh-Hans",
+    "title": "WCA 获得 501(c)(3) 非营利组织资格",
+    "content": "我们终于可以高兴地宣布，世界魔方协会已获认定为非营利组织！我们刚刚收到美国国税局的认定函，确认 WCA 根据《国内税收法》第 501(c)(3) 条享有联邦所得税豁免资格。\n\n借此机会，感谢大家多年来对协会及其使命的投入。一路走来并不容易，而更好的未来还在前方！",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.128Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "900046d7038ce2009fc75ba10d7a8c97ac2427b926ab2dddafa68188771cd788"
+}

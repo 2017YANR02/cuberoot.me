@@ -12,14 +12,31 @@
     "sourceId": 14042
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "56950f42e4ba83bc327216b12746e222168cc29ae76ca313e57951c64c8d2189",
     "language": "zh-Hans",
     "title": "美国及加拿大高级代表任命公告（2021 年 11 月）",
     "content": "我们很高兴地宣布，Matthew Dickman 将担任美国及加拿大地区的新任高级代表。感谢 Kit Clement 此前担任该地区高级代表期间的付出。\n\nWCA 董事会依照高级代表[动议](https://www.worldcubeassociation.org/documents/motions/09.2021.1%20-%20Senior%20Delegates.pdf)第 4 节的规定，通过内部投票选定了 Matthew。\n\n祝 Matthew 顺利履行新的职责。他的高级代表任期自 2021 年 11 月 18 日开始。\n\nJames Hildreth 也申请了这一职位。感谢两位申请者愿意在现有工作之外，进一步帮助 WCA 和速拧社区。两人的申请材料可在[此处](https://drive.google.com/drive/folders/1LepBUuo0rw2ol6k-AS3tKYj1boY604VJ?usp=sharing)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.570Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "4b3cf71ccff5dc70d5969a1b0f7263ff085774a4d6f4a405cea3366fba1d770d"
+  "translationHash": "2b120e7b2e147056a1e0d15b5316e48dc4ca866b5ab41dcb6789fc05a6602bcb",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:25.168Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "56950f42e4ba83bc327216b12746e222168cc29ae76ca313e57951c64c8d2189",
+    "reviewedTranslationHash": "2b120e7b2e147056a1e0d15b5316e48dc4ca866b5ab41dcb6789fc05a6602bcb",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/senior-delegate-announcement-usa-canada-november-2021.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "4b3cf71ccff5dc70d5969a1b0f7263ff085774a4d6f4a405cea3366fba1d770d"
+  }
 }

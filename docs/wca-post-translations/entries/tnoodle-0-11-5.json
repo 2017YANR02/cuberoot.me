@@ -12,14 +12,31 @@
     "sourceId": 6569
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "9e581e1de89057abb7521067fce808b3ac282e42931333b1adc3f2969a9478e1",
     "language": "zh-Hans",
     "title": "TNoodle 0.11.5",
     "content": "TNoodle-WCA-0.11.5 现已可从[https://www.worldcubeassociation.org/regulations/scrambles](https://www.worldcubeassociation.org/regulations/scrambles)下载。\n\n与 TNoodle 0.11.3 相比，作出了以下调整：\n\n* 新增为每一轮输出多份打乱纸的功能。\n* 修复删除一轮后再添加一轮，可能导致两个不同轮次生成相同打乱的问题。\n\n请记住，正式比赛必须使用官方打乱程序当前的版本，可随时从[https://www.worldcubeassociation.org/regulations/scrambles](https://www.worldcubeassociation.org/regulations/scrambles)下载。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.991Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "0b727d15675e510a22115f3ec44c848b308d70e33ac58007faf671f3fb0cd6fa"
+  "translationHash": "9a7dc6919c0303607a21d4f78d8dc25558364ab4640b43f8fb7b9187c3c835e3",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:48.601Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "9e581e1de89057abb7521067fce808b3ac282e42931333b1adc3f2969a9478e1",
+    "reviewedTranslationHash": "9a7dc6919c0303607a21d4f78d8dc25558364ab4640b43f8fb7b9187c3c835e3",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/tnoodle-0-11-5.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "0b727d15675e510a22115f3ec44c848b308d70e33ac58007faf671f3fb0cd6fa"
+  }
 }

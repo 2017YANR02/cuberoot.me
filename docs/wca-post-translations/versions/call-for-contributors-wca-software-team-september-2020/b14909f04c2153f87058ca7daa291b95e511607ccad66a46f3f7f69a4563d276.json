@@ -1,0 +1,27 @@
+{
+  "key": "posts:/posts/call-for-contributors-wca-software-team-september-2020",
+  "source": {
+    "key": "posts:/posts/call-for-contributors-wca-software-team-september-2020",
+    "kind": "posts",
+    "title": "Call for Contributors - WCA Software Team (September 2020)",
+    "date": "2020-09-08T04:34:33.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/call-for-contributors-wca-software-team-september-2020",
+    "content": "The WCA Software Team (WST) is looking for new contributors!\n\nThe WST plays a central role in the WCA by developing, scaling, and maintaining the software solutions that help the organization handle the continuous community growth.\nSome examples of such software solutions are:\n\n* The WCA website, that you are probably browsing on a regular basis.\n* TNoodle, the scrambles library and its frontend, used by all Delegates during competitions.\n* WCA Live, which is the main platform for score taking and getting live results during competitions.\n\nAll WST projects are open source and hosted on the organization's GitHub: https://github.com/thewca/.\nAs such, anyone willing to help can do so: it is not a requirement to hold a current position in the WCA to be contributing.\n<!-- break -->\nMost of the WST projects are web-oriented, which is reflected by the technologies used:\n\n* The website is written on top of the Ruby on Rails framework (using an SQL database), with some front-end components written in React. **We're looking to move forward with its redesign process by migrating more heavily used parts to React.**\n * This is by far the most understaffed project, as we constantly receive new feature requests by the various growing WCA teams and committees.\n * You can have a relatively high level idea of website-related projects by taking a look [here](https://github.com/thewca/worldcubeassociation.org/projects).\n* WCA Live is written in React for the front-end (checkout its [high level documentation](https://github.com/thewca/wca-live/blob/master/README.md)). Currently the project undergoes significant changes, but it will happily accept contributors once that's finished.\n* TNoodle is split into a scrambling library written in java (tnoodle-lib), and a server (tnoodle) that contains a Kotlin back-end+React front-end.\n\nAll our projects labelled with \"[good first issue](https://github.com/thewca/worldcubeassociation.org/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22)\" are those that you could take a look at to get an idea of what we expect from first time contributors. These are good even for inexperienced developers: the programming involved with these issues should be almost trivial, as they are meant to be a way to learn our tools and infrastructure. Do not be afraid to ask for help when figuring out the project layout!\n\nThe WST membership is slightly different from the other WCA teams and committees: we expect contributors to first do some work and prove that they are not going to disappear from completing WST projects. Once trust in your reliability has been established, you should expect an invitation to join the team!\n\nThank you for your contributions and support!",
+    "hash": "5792d664bc9983b8a4cf5d20284ff5812db8c013aeef8193fb13228c826755ff",
+    "format": "markdown",
+    "sourceId": 13986
+  },
+  "translation": {
+    "version": 2,
+    "sourceHash": "5792d664bc9983b8a4cf5d20284ff5812db8c013aeef8193fb13228c826755ff",
+    "language": "zh-Hans",
+    "title": "WCA 软件组招募贡献者（2020 年 9 月）",
+    "content": "WCA 软件组（WST）正在招募新的贡献者！\n\nWST 通过开发、扩展和维护软件，帮助协会应对社区的持续增长，在 WCA 中承担着重要职责。\n这些软件包括：\n\n* 你可能经常访问的 WCA 网站。\n* TNoodle：所有代表在比赛中使用的打乱库及其前端。\n* WCA Live：比赛中录入成绩及查看实时成绩的主要平台。\n\nWST 的所有项目均为开源项目，托管于 WCA 的 GitHub：https://github.com/thewca/。\n因此，任何有意帮忙的人都可以参与，不需要先在 WCA 担任职务。\n\nWST 的大多数项目面向 Web，所用技术也以此为主：\n\n* 网站基于 Ruby on Rails 框架构建，使用 SQL 数据库，部分前端组件使用 React。**我们希望把使用频率较高的部分进一步迁移到 React，推进网站改版。**\n  * 这是人手最紧缺的项目，因为随着 WCA 各团队和委员会发展，我们不断收到新的功能需求。\n  * 你可以在[此处](https://github.com/thewca/worldcubeassociation.org/projects)了解网站相关项目的大致情况。\n* WCA Live 的前端使用 React，概况可参阅[项目文档](https://github.com/thewca/wca-live/blob/master/README.md)。该项目目前正在进行较大调整，完成后将欢迎新的贡献者。\n* TNoodle 分为使用 Java 编写的打乱库（tnoodle-lib），以及包含 Kotlin 后端和 React 前端的服务端程序（tnoodle）。\n\n可以先看看标有“[good first issue](https://github.com/thewca/worldcubeassociation.org/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22)”的问题，了解我们对首次贡献的预期。这些问题也适合经验不多的开发者：所需编程工作通常很简单，目的是帮助你熟悉我们的工具和基础设施。了解项目结构时，有不懂的地方请放心提问！\n\nWST 的入组方式与 WCA 其他团队和委员会略有不同：我们希望贡献者先做一些实际工作，证明自己会持续参与完成 WST 项目。等大家确认你可靠后，就会邀请你正式加入团队！\n\n感谢大家的贡献与支持！",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:49:54.112Z",
+    "reviewStatus": "pending_independent_review",
+    "revisedAt": "2026-10-25T07:28:01.629Z",
+    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+  },
+  "translationHash": "b14909f04c2153f87058ca7daa291b95e511607ccad66a46f3f7f69a4563d276"
+}

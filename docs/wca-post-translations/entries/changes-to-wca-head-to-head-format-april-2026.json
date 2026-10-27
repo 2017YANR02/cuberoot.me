@@ -12,14 +12,33 @@
     "sourceId": 14244
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "f480f137a345e0c7498ddf576ac808e19b57ed6cb9234e1a319b2585c4df5aaf",
     "language": "zh-Hans",
     "title": "WCA 一对一赛制调整（2026 年 4 月）",
     "content": "各位 WCA 社区成员：\n\n过去几个月，我们在多场比赛中试行了新的一对一赛制，涉及三阶、三阶单手、三阶盲拧和四阶项目。结合现场观众以及 [WCA YouTube 频道](https://www.youtube.com/@WorldCubeAssociationOfficial)直播观众的大量反馈，我们作出以下调整：\n\n* 将三阶最少步和三阶多盲加入可采用一对一赛制的项目。\n* 对于设有一对一赛制的比赛，取消“连续赛程不得超过 16 小时，之后须至少休息 9 小时”的限制。\n* 对一对一比赛的组织方式作出小幅调整。\n\n加入三阶最少步和三阶多盲，是希望借此机会让它们与其他三阶类项目一同参与。我们在作出决定前征询了这两个项目的世界顶尖选手。他们认同公众的反馈，认为此前没有纳入这两个项目令人费解，也希望自己主攻的项目能有机会在国际舞台上受到更多关注。\n\n我们相信，这些调整能显著改善 WCA 一对一比赛的参赛和观赛体验。\n\n有关调整的更多信息，请参阅[公开说明文件](https://drive.google.com/file/d/11deVZ2BePo-zepsLxe3o0LOUKKVN6rJw/view?usp=sharing)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:40:49.167Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "d7c79215de11042882902970a43bfe45a3ad68b7210db406af5a6ec9b63a3d7d"
+  "translationHash": "8a091d039c944934d4c505ea73804b9b434eac992f2bea56deeca667ca2d5176",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:12:38.683Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "f480f137a345e0c7498ddf576ac808e19b57ed6cb9234e1a319b2585c4df5aaf",
+    "reviewedTranslationHash": "8a091d039c944934d4c505ea73804b9b434eac992f2bea56deeca667ca2d5176",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/changes-to-wca-head-to-head-format-april-2026.json",
+    "sourceConcern": false,
+    "notes": [
+      "全文对照标题、名单变更/历史范围、项目实施日期、条件和例外、合同授权条件、准则对象及纪录合作流程。"
+    ],
+    "inputTranslationHash": "d7c79215de11042882902970a43bfe45a3ad68b7210db406af5a6ec9b63a3d7d"
+  }
 }

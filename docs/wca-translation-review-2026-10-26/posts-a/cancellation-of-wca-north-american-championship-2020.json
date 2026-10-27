@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/cancellation-of-wca-north-american-championship-2020",
+  "path": "docs/wca-post-translations/entries/cancellation-of-wca-north-american-championship-2020.json",
+  "sourceHash": "688e2f9e1eb3b40137066bf76429f218a7a5e587b6ba57886912f41303ec269d",
+  "inputTranslationHash": "dfa73fa3b2ec19bfbff3b2fea496df3cd33aaa0de96fb6295b57be6ec6f19d95",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:12:23.463Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题和正文；各届赛事城市及取消/退款范围、董事候选名单、当选与连任区别、任期及生效日期、保留职务和干事分工均与原文一致。"
+  ],
+  "changes": []
+}

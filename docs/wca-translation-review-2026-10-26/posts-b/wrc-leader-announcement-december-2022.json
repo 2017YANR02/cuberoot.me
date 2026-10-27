@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/wrc-leader-announcement-december-2022",
+  "path": "docs/wca-post-translations/entries/wrc-leader-announcement-december-2022.json",
+  "sourceHash": "c3eb03f10dafcff8b9fa0e7fb0fa4136979b7b787b41b89c817ed38eb95e0215",
+  "inputTranslationHash": "6ca7eed5fede7de7f01d57259742fec9222dc53321a878a7ace6e4cd4c432769",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:12:24.811Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [
+    "逐篇核对新任、前任、成员职衔、遴选批准程序、申请人数和日期。"
+  ],
+  "changes": []
+}

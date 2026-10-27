@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/new-wec-leader",
+  "path": "docs/wca-post-translations/entries/new-wec-leader.json",
+  "sourceHash": "112b0ac3ad189d9c2da4334be52e5ddd551f024e67085c072551dfa5a34173b9",
+  "inputTranslationHash": "af48d2c0dd894cbc86372831869f328cb8905eddf69def316295bbdf30104370",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:44.905Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

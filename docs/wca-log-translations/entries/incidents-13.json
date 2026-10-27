@@ -36,7 +36,25 @@
       "verdict": "pass",
       "scope": "完整官方日志正文的原译文语义对照；不代表外部事实核验、外链全文覆盖或公开译载许可。"
     },
-    "unresolvedNotes": []
+    "unresolvedNotes": [],
+    "recheck": {
+      "reviewer": "/root/review_logs",
+      "reviewedAt": "2026-10-26T11:10:07.703Z",
+      "report": "../wca-translation-review-2026-10-26/final-report.json",
+      "sourceHash": "75183a465c49426475e902e232688aa167d10ee21c03ab64076bbd7c67fd0503",
+      "reviewedTranslationHash": "ec358ba2613795639f9559aab1e632009ec69e7432b7b384bb5ca48c04134008",
+      "verdict": "pass",
+      "scope": "复用当前译文哈希绑定的既有全文独立审校；本轮全量检索项目名和机构残留，并核对命中语境。"
+    },
+    "currentReview": {
+      "round": "2026-10-26",
+      "proposal": "docs/wca-translation-review-2026-10-26/logs/incidents-13.json",
+      "sourceConcern": false,
+      "notes": [
+        "Square-1 为官方 events->sq1 的简体中文原样译名；本站短名 SQ1，不编造“平方一”。"
+      ],
+      "inputTranslationHash": "ec358ba2613795639f9559aab1e632009ec69e7432b7b384bb5ca48c04134008"
+    }
   },
   "publication": {
     "status": "not_authorized"

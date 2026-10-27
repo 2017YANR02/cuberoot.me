@@ -1,0 +1,19 @@
+{
+  "key": "posts:/posts/year-end-message-2021",
+  "path": "docs/wca-post-translations/entries/year-end-message-2021.json",
+  "sourceHash": "9923030f14be1d5e042e55f684a26a034e81ef5be04eb632e6f7a8219d426d65",
+  "inputTranslationHash": "8ced14b837437bb36bfea56a19f038349451ef2cd015f3a148721fff51e34fd8",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:12:35.417Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "correction_required",
+  "notes": [
+    "完整核对各类584/69/21纪录、242/49比赛及国家、63.9/12.8小时、代表任命、软件版本及商品数据。"
+  ],
+  "changes": [
+    "Continental Championship统一规则官方译名大洲锦标赛。",
+    "Continental Record统一规则官方译名大洲纪录。"
+  ],
+  "title": "2021 年年终寄语",
+  "content": "各位 WCA 社区成员：\n\n2021 年即将结束，我们又一次回望了对各地魔友而言充满挑战的一年。尽管环境艰难，WCA 仍取得了许多值得庆祝的成果，也让我们对来年充满期待。\n\n更多地区得以恢复举办比赛：起初依据[比赛公示规定](https://www.worldcubeassociation.org/posts/competition-announcement-rules-august-2021)，随后遵循[比赛安全政策](https://www.worldcubeassociation.org/documents/policies/external/Competition%20Safety.pdf)中新的安全措施。这些比赛的名额以创纪录的速度报满，最快的一场仅用了 44 秒，足见各地对比赛回归的热切期待。全年共有 49 个国家举办了 242 场比赛，每月的比赛数量也显著增加。在家练习的时间多了，各级纪录也不断被刷新。恭喜各位出色的魔友在 2021 年打破了 584 项国家纪录、69 项大洲纪录和 21 项世界纪录！\n\n各委员会与团队虽然大多在幕后工作，但他们的成绩同样不容忽视。即使比赛不如以往活跃，他们仍在努力改进 WCA。为持续改善参赛体验，董事会、WCA 质量保证委员会和 WCA 规则委员会制定或修订了[比赛要求政策](https://www.worldcubeassociation.org/documents/policies/external/Competition%20Requirements.pdf)、[打乱问责政策](https://www.worldcubeassociation.org/documents/policies/external/Scramble%20Accountability.pdf)、[竞赛规则](https://www.worldcubeassociation.org/posts/wca-regulations-may-2021-now-in-effect)以及[获准使用的计时器名单](https://www.worldcubeassociation.org/posts/updating-the-official-list-of-approved-timers-october-2021)。这些政策为比赛确立了重要标准，目前已顺利应用于比赛。WCA 比赛公示组平均用时 63.9 小时批准新的比赛公示。考虑到新安全政策要求高级代表审核并批准所有比赛，这一成绩十分可贵。比赛结束后，WCA 成绩组平均约用 12.8 小时发布成绩，同样付出了不少努力。我们也要感谢 WCA 纪律委员会、WCA 道德委员会和 WCA 财务委员会。他们的许多工作不直接面向公众，却对 WCA 负责任地正常运作至关重要。\n\n希望你已经在社交媒体上看到了 WCA 通讯组的工作成果：他们共发布了 70 条帖文，其中不少机构公告最初由 WCA 董事会助理团队起草。董事会助理团队还每月发送内部简报，让 WCA 工作人员了解协会动态。今年新任命了 4 位高级代表、5 位委员会／团队负责人、25 位见习代表和 6 位初级代表，另有 11 位代表晋升，需要跟进的事务着实不少！在论坛方面，WCA 顾问理事会管理了超过 2,700 条帖子（包含超过 300 个新话题），并定期发布热门讨论摘要。WCA 软件组努力推出了新版 [TNoodle 1.1.0](https://www.worldcubeassociation.org/posts/tnoodle-1-1-0-release)，并进一步更新至当前的 1.1.2 版本，为打乱程序带来了许多重要修复和功能。今年最令人兴奋的成果之一，是 WCA 市场营销组扩充并推出了面向世界各地魔友的 [WCA 周边商品](https://shop.worldcubeassociation.org/)。上线以来，已售出超过 240 件商品，网站浏览量超过 4,000 次！\n\n我们一如既往地认真筹备新一年的工作。2022 年的大洲锦标赛将在安全条件允许的地方举行。我们期待这些比赛取得成功，特别是所有赛事均获得了 [Rubik’s 的赞助](https://www.worldcubeassociation.org/posts/rubik-s-cube-to-sponsor-the-2022-world-cube-association-continental-championships)。2021 年世界锦标赛的取消让我们遗憾，但我们也期待在 2022 年推进于[韩国首尔](https://www.worldcubeassociation.org/posts/wca-championship-2022-and-2023-hosts-announcement-june-2021)举办的 2023 年世界锦标赛的筹备。请放心，这些赛事的规划会把社区的安全放在心上。等到时机对大家都合适时，魔友们一定能够再次相聚。\n\n志愿者每天为社区投入时间与资源，没有他们的付出，就没有我们这一年的成绩。希望新的一年能给大家带来值得庆祝的时刻，也期待在 2022 年再次相聚。祝大家新年平安快乐！"
+}

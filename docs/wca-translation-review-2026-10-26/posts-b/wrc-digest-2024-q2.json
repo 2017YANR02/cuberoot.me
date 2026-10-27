@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/wrc-digest-2024-q2",
+  "path": "docs/wca-post-translations/entries/wrc-digest-2024-q2.json",
+  "sourceHash": "e914dea36ecd9c53e64f4ad5986f0153df56ff2df09f38699088873742b9cb88",
+  "inputTranslationHash": "ff0caf56e100b9b585226a73f4aa282d47e70057b42ff841e2fb2c1ff7c891ee",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:12:01.756Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "source_uncertain",
+  "notes": [
+    "全文11案均已核对，70%、17秒、10秒、2周及裁量条件保留。第3案源文先说已corrected，后又说最后fix both，与twist-twist-fix-fix时序存在矛盾；中文忠实保留而不改写成自行推断的事实。"
+  ],
+  "changes": []
+}

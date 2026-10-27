@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/wca-community-survey-2022",
+  "path": "docs/wca-post-translations/entries/wca-community-survey-2022.json",
+  "sourceHash": "499a23b2cd084fa55760e067984450eb0070da363486741cf9eff8ee8bc1b108",
+  "inputTranslationHash": "e2eb1a5f0f4e43494155c6d3409c6cbf8cbd668329f656c9b7c1aa1bb8d8943a",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:07:08.714Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

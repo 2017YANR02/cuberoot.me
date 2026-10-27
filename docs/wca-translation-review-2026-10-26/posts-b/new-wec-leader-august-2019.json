@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/new-wec-leader-august-2019",
+  "path": "docs/wca-post-translations/entries/new-wec-leader-august-2019.json",
+  "sourceHash": "2527c8addbe628c5aa2885a610a81bc3422182fe29bd07481b504887fdcc0457",
+  "inputTranslationHash": "b733df12df060bc8a515b4f19b90c53e35a39f44c974df9fd966a4b513a3ac3d",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:44.904Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applications-wmct-leader-october-2024",
+  "path": "docs/wca-post-translations/entries/call-for-applications-wmct-leader-october-2024.json",
+  "sourceHash": "35d69b05cba891e72f50b96f0056ad763a5783d9cfba77bf563f35699de1147e",
+  "inputTranslationHash": "6d09bd24c516f2a682f5a65f0432f0ba829162576643e68858bfc29469f24ed5",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:12:00.207Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照正文及标题；申请条件、薪酬福利和地域、岗位职责、2024/2025 任命程序及 2019 草案条目逐项核对。"
+  ],
+  "changes": []
+}

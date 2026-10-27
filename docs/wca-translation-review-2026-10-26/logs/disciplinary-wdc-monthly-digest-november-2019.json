@@ -1,0 +1,18 @@
+{
+  "key": "disciplinary:/posts/wdc-monthly-digest-november-2019",
+  "path": "docs/wca-log-translations/entries/disciplinary-wdc-monthly-digest-november-2019.json",
+  "sourceHash": "823e8fee84f6325e65f5da8d600445fe77a481f4131ab4c6addfc9689e3ead87",
+  "inputTranslationHash": "8ceb8b02aa888e1b02a305a23ebaa3564d8474106141418fee9cea8660e39412",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "复用当前译文哈希绑定的既有全文独立审校；本轮全量检索项目名和机构残留，并核对命中语境。",
+  "verdict": "pass",
+  "notes": [],
+  "changes": [],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/report-2.json",
+    "reviewedTranslationHash": "8ceb8b02aa888e1b02a305a23ebaa3564d8474106141418fee9cea8660e39412",
+    "verdict": "pass"
+  },
+  "sourceUncertainty": false
+}

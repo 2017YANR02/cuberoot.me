@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/wca-statement-regarding-james-molloy",
+  "path": "docs/wca-post-translations/entries/wca-statement-regarding-james-molloy.json",
+  "sourceHash": "c3dec7357ac9241fad79fd3c307117ff014a1a28c8d6539a504be1036932c909",
+  "inputTranslationHash": "12ded00eb0a4f3a6e818e91e0b94c5f980a07fe83f9393ef842b3d97e6f1c839",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:10:42.566Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [
+    "全文核对；历史公告的当时判断、参赛人数、日期及任命程序均保留。"
+  ],
+  "changes": []
+}

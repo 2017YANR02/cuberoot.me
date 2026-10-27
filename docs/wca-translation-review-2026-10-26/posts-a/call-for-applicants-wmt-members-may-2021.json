@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wmt-members-may-2021",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wmt-members-may-2021.json",
+  "sourceHash": "42f6ce07261c9407cf6f380c341237cc47f3489845e9f13f8f0ffcee77270113",
+  "inputTranslationHash": "c5e826a4d1c204a3de34388623ec9ef005bd616aa1ccbd60e01d4fff0b21a774",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:10:56.904Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "source_uncertain",
+  "notes": [
+    "源标题为 2021 年 5 月，正文申请截止日却为 June 26th, 2020；译文忠实保留原日期，未擅自推测改为 2021，需原作者确认。其余全文对照一致。"
+  ],
+  "changes": []
+}

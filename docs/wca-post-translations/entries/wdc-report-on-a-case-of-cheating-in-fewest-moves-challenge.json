@@ -12,14 +12,33 @@
     "sourceId": 14158
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "ebe4fc414e275f7496b69b6542191b27b7926da86a6e0647f10e436e8177dfa0",
     "language": "zh-Hans",
     "title": "WCA 纪律委员会关于一起最少步作弊事件的报告",
     "content": "各位 WCA 社区成员：\n\n如[此前公告](https://forum.worldcubeassociation.org/t/wdc-statement-on-the-recent-fmc-wr/50913?u=shain)所述，WCA 纪律委员会调查了 Kalindu Sachintha Wijesundara（2022WIJE02）在 Sri Lankan Nationals FMC 2024 的最少步成绩。他在第一轮和第二轮分别取得了 20.33 步和 19.67 步的平均成绩。\n\n调查现已全部结束。WDC 发现了该选手使用在线工具、滥用代表身份以取得更好成绩的证据。WDC 还认为，在向其出示这些证据时，该选手就上述事实故意误导了 WDC。\n\n鉴于此案前所未有的性质，以及其中严重违背信任的行为，WDC 花了较长时间分析案件、讨论处分。考虑因素包括但不限于：\n\n* 身为 WCA 代表，却违背了这一职务所承载的信任。\n* 在比赛前分析打乱，包括使用第三方软件，损害比赛成绩的可信性。\n* 即使面对明确证据，仍拒绝承认。\n* 可能对 WCA 声誉造成的损害。\n\n对 Kalindu 的完整处分如下：\n\n* 禁止参加所有 WCA 官方比赛，期限为 8 年。\n* 由 WCA 董事会立即撤销其代表职务。\n* 将 Kalindu 在其被列为代表的比赛中取得的所有成绩取消资格，改为 DNF。\n  * 例外：Kalindu 未经手 Sri Lankan Nationals 2024 的打乱，因此该场比赛的成绩可以保留。\n\nWDC 没有理由怀疑受影响比赛中其他选手的成绩有效性，因此本决定不会影响其他人的成绩。\n\nWCA 代表在保障比赛公平方面承担着重大责任，也受到高度信任。任何违背这种信任的行为，都会对当地乃至全球社区造成重大影响。WDC、WCA 董事会以及全体 WCA 工作人员和社区成员都会认真处理违规行为。任何损害上述价值的行为都不会被容忍，并将继续得到适当处理。\n\n我们也强调，WCA 各项工作都应保持透明并落实问责。向公众发布本报告，正是我们坚持这些原则的体现。完整报告及本结论可在[此处](https://drive.google.com/file/d/1AQwXEMCr89lX_FLvkliYNevebHVHzH5Q/view?usp=drive_link)查看。\n\n此致\n\n**Shain Longbehn（WDC 负责人）**\n\n代表 WCA 纪律委员会",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.544Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "3be27c2607c72804678cf47e09c2e40c155378a4d027dfc0dd3aca5d8dfe6f09"
+  "translationHash": "bbf1ae9157ef4b1b1c7f5468ea12e70d51944fce7aec11c1343ef49f3bda34ea",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:10:59.922Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "ebe4fc414e275f7496b69b6542191b27b7926da86a6e0647f10e436e8177dfa0",
+    "reviewedTranslationHash": "bbf1ae9157ef4b1b1c7f5468ea12e70d51944fce7aec11c1343ef49f3bda34ea",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wdc-report-on-a-case-of-cheating-in-fewest-moves-challenge.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整核对案件归因、处分条件、匿名处理、数量及任命程序。"
+    ],
+    "inputTranslationHash": "3be27c2607c72804678cf47e09c2e40c155378a4d027dfc0dd3aca5d8dfe6f09"
+  }
 }

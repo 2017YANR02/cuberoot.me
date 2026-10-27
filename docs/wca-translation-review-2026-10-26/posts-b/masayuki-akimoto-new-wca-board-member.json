@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/masayuki-akimoto-new-wca-board-member",
+  "path": "docs/wca-post-translations/entries/masayuki-akimoto-new-wca-board-member.json",
+  "sourceHash": "caa572ab80158e7396054113410ae435d4a08e6cb8f11263c25f152639882d83",
+  "inputTranslationHash": "458cc789203506704e6734741c423e1576255bfc8e63909426d41271641cc2aa",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:36.321Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

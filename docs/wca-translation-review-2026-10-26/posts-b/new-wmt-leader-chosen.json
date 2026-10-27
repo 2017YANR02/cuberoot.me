@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/new-wmt-leader-chosen",
+  "path": "docs/wca-post-translations/entries/new-wmt-leader-chosen.json",
+  "sourceHash": "cdc9d4db221ecf1907f58a2f957cd235822ef06f74987ff69dd7dc7f37ebdf18",
+  "inputTranslationHash": "ff9fbccd971fd3cf7181a173e088818bcf9e6e80763caf84ab35fd1b4a9e68da",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:44.905Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

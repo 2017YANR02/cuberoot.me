@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wct-members-march-2019",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wct-members-march-2019.json",
+  "sourceHash": "6ae31a6cf33fe9c2b7cb115c5b207649018da458961910343b0ce896884b89a8",
+  "inputTranslationHash": "43047c476bbf2ce2b076f495750febb52ddd3ffda5b5bffa578fc2789a15ad60",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:10:04.271Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇核对全文及标题，职位、历史机构、任期、工时、申请资料、截止日期和投票程序一致。"
+  ],
+  "changes": []
+}

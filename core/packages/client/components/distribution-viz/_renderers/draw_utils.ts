@@ -102,14 +102,14 @@ export function drawGrid(
   ctx.translate(16, mt + ph / 2);
   ctx.rotate(-Math.PI / 2);
   ctx.fillStyle = ink(0.2);
-  ctx.font = '11px Inter, sans-serif';
+  ctx.font = '11px "SF Pro Text", "SF Pro SC", sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('Density', 0, 0);
   ctx.restore();
 
   // "Solve time" 标签（X 轴）
   ctx.fillStyle = ink(0.2);
-  ctx.font = '11px Inter, sans-serif';
+  ctx.font = '11px "SF Pro Text", "SF Pro SC", sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(
     isFMC(eventId) ? 'Moves' : isMBLD(eventId) ? 'Score (pts)' : 'Solve time (s)',
@@ -197,13 +197,13 @@ export function drawLineGrid(
   ctx.translate(16, mt + ph / 2);
   ctx.rotate(-Math.PI / 2);
   ctx.fillStyle = ink(0.2);
-  ctx.font = '11px Inter, sans-serif';
+  ctx.font = '11px "SF Pro Text", "SF Pro SC", sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(isFMC(eventId) ? 'Moves' : isMBLD(eventId) ? 'Score (pts)' : 'Solve time (s)', 0, 0);
   ctx.restore();
 
   ctx.fillStyle = ink(0.2);
-  ctx.font = '11px Inter, sans-serif';
+  ctx.font = '11px "SF Pro Text", "SF Pro SC", sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('Solve #', ml + pw / 2, mt + ph + 35);
 
@@ -328,7 +328,7 @@ export function drawHistogramBars(
     if (w > 16 && b.count >= 2) {
       ctx.save();
       ctx.fillStyle = getShiftedHSL(pi, 0.8, (b.xStart + b.xEnd) / 2, players, eventId);
-      ctx.font = '10px Inter, sans-serif';
+      ctx.font = '10px "SF Pro Text", "SF Pro SC", sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(String(b.count), (x1 + x2) / 2, top - 3);
       ctx.restore();

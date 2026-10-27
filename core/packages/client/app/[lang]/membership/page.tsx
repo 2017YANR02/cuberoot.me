@@ -90,6 +90,7 @@ export default function MembershipPage() {
   const [buyPlan, setBuyPlan] = useState<MembershipPlan | null>(null);
   const [loadErr, setLoadErr] = useState<string | null>(null);
   const [membership, setMembership] = useState<Membership | null>(null);
+  const [enterpriseBuyer, setEnterpriseBuyer] = useState<{ owner: typeof user; eligible: boolean } | null>(null);
   const [justPaid, setJustPaid] = useState(false);
   const [paid, setPaid] = useQueryState('paid');
   const [renew, setRenew] = useQueryState('renew');
@@ -101,8 +102,11 @@ export default function MembershipPage() {
       setMembership(null);
       return;
     }
-    getMyMembership().then((r) => setMembership(r.membership)).catch(() => {});
-  }, []);
+    getMyMembership().then((r) => {
+      setMembership(r.membership);
+      setEnterpriseBuyer({ owner: user, eligible: r.canPurchaseEnterprise === true });
+    }).catch(() => setEnterpriseBuyer(null));
+  }, [user]);
 
   useEffect(() => {
     if (commerceRestricted !== false) return;
@@ -240,14 +244,17 @@ export default function MembershipPage() {
     const priceReady = priceCents === plan.priceCents;
     const saving = annual ? monthly * 12 - yearly : (enterprise ? 10000 : 1000);
     // Account-specific signing availability is checked in AutoRenewModal after login.
-    const available = renewal ? isAutoRenewPlanSlug(plan.slug) && priceReady : payEnabled && priceReady;
+    const enterpriseEligible = !enterprise || (loggedIn && enterpriseBuyer?.owner === user && enterpriseBuyer.eligible);
+    const available = enterpriseEligible && (renewal ? isAutoRenewPlanSlug(plan.slug) && priceReady : payEnabled && priceReady);
     const extraPerks = plan.perks.filter(perk => !universalPerkSet.has(perk) && (!enterprise || !enterpriseSharedPerkSet.has(perk)));
     const unavailable = tr({ zh: '暂不可购买', en: 'Currently unavailable' });
     return (
       <div key={plan.slug} className={'mem-plan' + (renewal ? ' is-autorenew' : '')}>
         {renderPaymentChoice()}
         <div className="mem-plan-heading">
-        <div className="mem-plan-name">{plan.period === 'year' ? tr(MEMBERSHIP_COPY.annual) : tr(MEMBERSHIP_COPY.monthly)}</div>
+        <div className="mem-plan-name">{tr(annual
+          ? (enterprise ? MEMBERSHIP_COPY.enterpriseAnnual : MEMBERSHIP_COPY.annual)
+          : (enterprise ? MEMBERSHIP_COPY.enterpriseMonthly : MEMBERSHIP_COPY.monthly))}</div>
         <p className="mem-plan-saving">{annual || renewal
           ? tr({ zh: '怒省 {amount}', en: 'Save {amount}' }).replace('{amount}', fmtPrice(saving, plan.currency))
             : tr({ zh: '灵活购买，无后续扣款', en: 'Flexible purchase. No recurring charges.' })}</p>
@@ -264,7 +271,7 @@ export default function MembershipPage() {
           if (renewal) setSelectedAutoRenewPlan(plan);
           else if (priceReady) setBuyPlan(plan);
         }}>
-          {!available ? unavailable : tr(MEMBERSHIP_COPY.subscribe)}
+          {!enterpriseEligible ? tr({ zh: '仅限已认证企业', en: 'Verified enterprises only' }) : !available ? unavailable : tr(MEMBERSHIP_COPY.subscribe)}
         </button>
       </div>
     );
@@ -346,7 +353,7 @@ export default function MembershipPage() {
       ) : (
         <div className="mem-plan-sections">
           <section className="mem-plan-section" aria-labelledby="universal-perks-title">
-            {renderPerks(universalPerks, 'common', { id: 'universal-perks-title', text: tr({ zh: '个人用户', en: 'Individual' }) })}
+            {renderPerks(universalPerks, 'common', { id: 'universal-perks-title', text: tr({ zh: '个人', en: 'Individual' }) })}
           </section>
           <section id="personal-plans-title" className="mem-plan-section" aria-labelledby="universal-perks-title">
             <div className="mem-plans">
@@ -355,7 +362,7 @@ export default function MembershipPage() {
             </div>
           </section>
           <section className="mem-plan-section" aria-labelledby="enterprise-perks-title">
-            {renderPerks(enterpriseSharedPerks, 'enterprise', { id: 'enterprise-perks-title', text: tr({ zh: '企业用户', en: 'Enterprise' }) })}
+            {renderPerks(enterpriseSharedPerks, 'enterprise', { id: 'enterprise-perks-title', text: tr({ zh: '企业', en: 'Enterprise' }) })}
           </section>
           <section id="enterprise-plans-title" className="mem-plan-section" aria-labelledby="enterprise-perks-title">
             <div className="mem-plans">{(paymentMode === 'renewal' && enterpriseRenewalPlans.length === 1 ? enterpriseRenewalPlans : enterprisePlans).map(plan => renderPlan(plan, true))}</div>

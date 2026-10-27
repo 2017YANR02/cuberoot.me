@@ -15,7 +15,7 @@
     overflow: hidden;
     background: var(--bg);
     color: var(--text);
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: var(--font-sans);
     display: flex;
     flex-direction: column;
 }
@@ -1397,7 +1397,7 @@
     color: #FFF;
     padding: 0.55rem 0.75rem;
     border-radius: 8px;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: var(--font-sans);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 /* MapLibre popup tip：每个 anchor 只染对应方向那条 border，其他保持 transparent */

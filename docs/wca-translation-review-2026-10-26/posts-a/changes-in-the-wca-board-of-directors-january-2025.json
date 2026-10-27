@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/changes-in-the-wca-board-of-directors-january-2025",
+  "path": "docs/wca-post-translations/entries/changes-in-the-wca-board-of-directors-january-2025.json",
+  "sourceHash": "b61f43788281608f3b38c0024e16f15427cda8fa249d10211a1ef854cc8670e2",
+  "inputTranslationHash": "6571321985d1a9510bfa4c9a2b76d7a174abb4db73a244498745b4c09fa73c12",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:12:23.465Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题和正文；各届赛事城市及取消/退款范围、董事候选名单、当选与连任区别、任期及生效日期、保留职务和干事分工均与原文一致。"
+  ],
+  "changes": []
+}

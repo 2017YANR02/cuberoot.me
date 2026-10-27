@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/retiring-tnoodle-0-13-5",
+  "path": "docs/wca-post-translations/entries/retiring-tnoodle-0-13-5.json",
+  "sourceHash": "b6ad50c18887778622f1b5b983b1f3535701a174f2f6910ea5c4b14779a15b14",
+  "inputTranslationHash": "eb301e350ec729f30521b38710c36747de3567de45d8fbe802c9993478344c15",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:15.857Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

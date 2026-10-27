@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wec-leader-august-2023",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wec-leader-august-2023.json",
+  "sourceHash": "51c0068325bf02c5837a818c79f01dd93571fdf19c9e4fafad205e47f5eb6304",
+  "inputTranslationHash": "d1962fa1e70807123ece9b92d50ad2cdebb29e78b6a3f96170c70219df1b9ec0",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:10:04.271Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇核对全文及标题，职位、历史机构、任期、工时、申请资料、截止日期和投票程序一致。"
+  ],
+  "changes": []
+}

@@ -12,14 +12,31 @@
     "sourceId": 14039
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "ac54877673ee0e30eda4038a0517da9d382d2d198aa7df256cc9329d6090eb26",
     "language": "zh-Hans",
     "title": "高级代表任命公告：西亚和南亚（2021 年 10 月）",
     "content": "我们很高兴地宣布，西亚和南亚地区的高级代表为 Akash Rupela。\n\nAkash 的任期此前已获延长，但根据 [WCA 动议 09.2021.1](https://www.worldcubeassociation.org/documents/motions/09.2021.1%20-%20Senior%20Delegates.pdf)中关于 WCA 高级代表权利与职责的规定，此时须重新进行任命。本次没有其他人申请该职位。\n\n祝 Akash Rupela 继续顺利履行该地区的职责。\n\n他的申请材料可在[此处](https://drive.google.com/drive/folders/1sQvPoVemtQ_J0iPS8NP7dWaUHQB3I7vM?usp=sharing)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:00.952Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "1f7567fc54dc59e32f83e6e0b78dc30e462f3a084d0f99bbbdafcb8ac8999399"
+  "translationHash": "9311aca67affdaa8828ce8b8daf0c5eecdab7a0e9abe31dc8ce51eed94984b69",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:25.168Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "ac54877673ee0e30eda4038a0517da9d382d2d198aa7df256cc9329d6090eb26",
+    "reviewedTranslationHash": "9311aca67affdaa8828ce8b8daf0c5eecdab7a0e9abe31dc8ce51eed94984b69",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/senior-delegate-announcement-asia-west-and-south-october-2021.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "1f7567fc54dc59e32f83e6e0b78dc30e462f3a084d0f99bbbdafcb8ac8999399"
+  }
 }

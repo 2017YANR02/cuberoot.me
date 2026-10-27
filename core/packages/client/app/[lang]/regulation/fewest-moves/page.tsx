@@ -96,10 +96,10 @@ export default function FewestMovesChapter() {
         <Callout tone="info" label={t('计时与提交', 'Timing and submission')} icon={<Clock size={17} />}>
           {<T zh={<>
                                                                         裁判在第 <b>55 分钟</b>提醒“还剩 5 分钟”,在 <b>60 分钟</b>喊“停”(E2b1)。<br />
-                                                                        想清楚了可以提前交卷结束(E2b+)。开赛前不得在答题纸上写打乱以外的内容,也不得提前看/泄露打乱(E2a1 / E2a2)。
+                                                                        可以提前交卷结束(E2b+)。开赛前,尝试用纸上只能预填识别本次尝试的信息;若使用印有打乱的纸,只能写在没有打乱的一面(E2a1)。其他书写原则上判 DNF;若未获优势,WCA 代表可决定保留成绩。开赛前不得揭示打乱(E2a2)。
                                                                       </>} en={<>
                                                                                       The judge calls "5 minutes remaining" at <b>55 minutes</b> and "STOP" at <b>60</b> (E2b1).<br />
-                                                                                      You may hand in early to end the attempt (E2b+). Before "GO" you must not write on the paper (beyond ID info) and must not see or reveal the scramble (E2a1 / E2a2).
+                                                                                      You may hand in early (E2b+). Before the attempt, only information identifying the attempt may be written on its paper. On a sheet containing the scramble, write only on the side without it (E2a1). Other writing incurs a DNF, unless the WCA Delegate allows the result to stand because no advantage was gained. Do not reveal the scramble before the attempt (E2a2).
                                                                                     </>} />}
         </Callout>
 

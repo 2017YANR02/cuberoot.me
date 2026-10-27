@@ -12,14 +12,31 @@
     "sourceId": 10425
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "f1e71e3c3b0118b7c5ce2e7aab244ecd4b5ce91859d03c173c574c40a3355fd5",
     "language": "zh-Hans",
     "title": "TNoodle 0.13.5 发布",
-    "content": "TNoodle-WCA-0.13.5 现已可从 https://www.worldcubeassociation.org/regulations/scrambles/ 下载。\n\n与 TNoodle-WCA-0.13.4 相比，本次作出了以下修改：\n\n* 修复了 Skewb 打乱可能短于预期 11 步的问题。\n\n根据 WCA 规则，官方 Skewb 打乱必须从至少需要 7 步才能还原的状态中（[4b3c](https://www.worldcubeassociation.org/regulations/#4b3c)），生成随机状态（[4b3](https://www.worldcubeassociation.org/regulations/#4b3)）。\n\n为避免从打乱纸上轻易辨认出解法较短的打乱，TNoodle 的设计确保生成的所有 Skewb 打乱序列至少有 11 步，即使该状态存在更短的解法。然而，0.13.5 之前版本的 TNoodle 存在线程安全问题，可能导致打乱序列被截断，具体表现为：\n\n* 如果截断后的打乱仍需要至少 7 步才能还原，该序列就会被采用，仍满足规则 4b3c；但\n* 截断操作破坏了打乱的随机分布，违反规则 4b3。\n\n更多细节可在 [GitHub 上的 TNoodle 项目](https://github.com/thewca/tnoodle/pull/368)中查看。\n\n对历史打乱解法长度的分析表明，过去绝大多数比赛的状态分布并未受影响。然而，至少有一场大型比赛（[CubingUSA Nationals 2018](https://www.worldcubeassociation.org/competitions/CubingUSANationals2018)）的状态明显偏向最优解较短的情况，这也促成了问题的发现。感谢 Sébastien Auroux 向我们反映此事，也感谢 Tim Reynolds 在刚过去的周末与 Jeremy Fleischman 一起定位问题，并为 TNoodle 准备了修复。\n\n我们不认为有人故意利用这一问题获取优势。不过，分析工作仍未完成；完成后，我们会在 WRC [意外事件日志](https://www.worldcubeassociation.org/incidents)中记录此事。\n\n请记住，官方比赛必须使用当前有效版本的官方打乱程序。最新版本始终可从以下页面获取：\nhttps://www.worldcubeassociation.org/regulations/scrambles/",
+    "content": "TNoodle-WCA-0.13.5 现已可从 https://www.worldcubeassociation.org/regulations/scrambles/ 下载。\n\n与 TNoodle-WCA-0.13.4 相比，本次作出了以下修改：\n\n* 修复了斜转打乱可能短于预期 11 步的问题。\n\n根据 WCA 规则，官方斜转打乱必须从至少需要 7 步才能还原的状态中（[4b3c](https://www.worldcubeassociation.org/regulations/#4b3c)），生成随机状态（[4b3](https://www.worldcubeassociation.org/regulations/#4b3)）。\n\n为避免从打乱纸上轻易辨认出解法较短的打乱，TNoodle 的设计确保生成的所有斜转打乱序列至少有 11 步，即使该状态存在更短的解法。然而，0.13.5 之前版本的 TNoodle 存在线程安全问题，可能导致打乱序列被截断，具体表现为：\n\n* 如果截断后的打乱仍需要至少 7 步才能还原，该序列就会被采用，仍满足规则 4b3c；但\n* 截断操作破坏了打乱的随机分布，违反规则 4b3。\n\n更多细节可在 [GitHub 上的 TNoodle 项目](https://github.com/thewca/tnoodle/pull/368)中查看。\n\n对历史打乱解法长度的分析显示，过去绝大多数比赛的状态分布似乎未受影响。然而，至少有一场大型比赛（[CubingUSA Nationals 2018](https://www.worldcubeassociation.org/competitions/CubingUSANationals2018)）的状态明显偏向最优解较短的情况，这也促成了问题的发现。感谢 Sébastien Auroux 向我们反映此事，也感谢 Tim Reynolds 在刚过去的周末与 Jeremy Fleischman 一起定位问题，并为 TNoodle 准备了修复。\n\n我们不认为有人故意利用这一问题获取优势。不过，分析工作仍未完成；完成后，我们会在 WRC [意外事件日志](https://www.worldcubeassociation.org/incidents)中记录此事。\n\n请记住，官方比赛必须使用当前有效版本的官方打乱程序。最新版本始终可从以下页面获取：\nhttps://www.worldcubeassociation.org/regulations/scrambles/",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.170Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "13ee74cb80a8d735c667bacdc5308ff4ae0ed9739fe9d066c52100f2579577e9"
+  "translationHash": "d47cf026b9f791e2fbb0c5c587f6fb6566c4182457717363da7a913b36032d10",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:17:42.970Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "f1e71e3c3b0118b7c5ce2e7aab244ecd4b5ce91859d03c173c574c40a3355fd5",
+    "reviewedTranslationHash": "d47cf026b9f791e2fbb0c5c587f6fb6566c4182457717363da7a913b36032d10",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/tnoodle-0-13-5.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "13ee74cb80a8d735c667bacdc5308ff4ae0ed9739fe9d066c52100f2579577e9"
+  }
 }

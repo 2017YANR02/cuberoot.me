@@ -25,7 +25,7 @@ const OPTIONS: ReadonlyArray<{
   { id: 'lcd', label: { zh: 'LCD 七段', en: 'LCD' }, fontFamily: "'Segment7Standard', monospace", fontWeight: 700 },
   { id: 'mono', label: { en: 'Roboto Mono', zh: 'Roboto Mono' }, fontFamily: 'var(--font-mono)', fontWeight: 600 },
   { id: 'liberation', label: { en: 'Liberation Mono', zh: 'Liberation Mono' }, fontFamily: "'LiberationMono', var(--font-mono)", fontWeight: 600 },
-  { id: 'sans', label: { en: 'Inter', zh: 'Inter' }, fontFamily: 'var(--font-sans)', fontWeight: 700 },
+  { id: 'sans', label: { en: 'SF Pro', zh: 'SF Pro' }, fontFamily: 'var(--font-sans)', fontWeight: 700 },
 ];
 
 /** Use the same face and weight for picker samples and external previews. */

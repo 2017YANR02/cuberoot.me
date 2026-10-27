@@ -12,14 +12,33 @@
     "sourceId": 14166
   },
   "translation": {
-    "version": 3,
+    "version": 4,
     "sourceHash": "7e08ad64d24e77421b36c94a84c699a9420fbc39e37b6e64df87a53140123dd8",
     "language": "zh-Hans",
     "title": "WCA 决议修订获通过（2024 年 9 月）",
     "content": "世界魔方协会的运作遵循一套完整的治理文件，包括章程、决议及政策。WCA 决议规定了组织内部运作的各项职能。\n\n**2024 年 8 月 1 日**，有投票权的 WCA 工作人员通过了[一系列范围广泛的决议修订](https://github.com/thewca/wca-documents/pull/396)。以下列出与广大 WCA 社区成员关系最密切的主要变化：\n\n<!-- break -->\n\n1. **成立 WCA 廉政委员会**：WCA 纪律委员会与 WCA 道德委员会合并为 WCA 廉政委员会（WIC），负责监督《WCA 道德准则》和《WCA 行为准则》的执行。除 WCA 工作人员和注册速拧选手外，委员会的调查范围还扩展到 WCA 社区成员及地区组织。若要举报涉嫌违规行为，或讨论这两份文件，请联系 integrity@worldcubeassociation.org。\n2. **成立 WCA 申诉委员会**：WCA 申诉委员会的成立大幅完善了 WCA 的申诉制度。委员会由经验丰富的 WCA 工作人员组成，审理收到的所有争议申诉。同时，申诉流程的一些环节得到明确，包括正式列明申诉依据，以及更新申诉案件结案的定义。\n3. **撤销 WCA 顾问理事会**：WCA 顾问理事会原本负责促进 WCA 工作人员与广大社区之间的双向沟通。但最终我们认为，这项职责更适合由 WCA 工作人员承担，而不是由理事会中的非工作人员承担。因此，WCA 顾问理事会已解散，其职责与部分成员并入 WCA 通讯组。\n4. **设立 WCA 大型锦标赛组（WMCT）**：本次修订设立了新的 WCA 大型锦标赛组，协助协调赛事工作，提高 WCA 大型锦标赛的办赛质量。锦标赛遴选委员会将纳入 WMCT 代表，以减轻 WCA 董事会、高级代表以及各委员会/团队负责人的工作负担。\n5. **调整财务治理结构**：WCA 财务主管与 WCA 财务委员会（WFC）负责人拆分为两个岗位，以完善财务治理。财务主管对 WCA 整体财务负责；WFC 负责人则监督委员会的活动和项目，包括器材资助、地区组织资助、差旅资助及 WCA 会费系统。\n\n我们相信，这些调整将改善 WCA 的运作与治理。如对 WCA 决议有疑问，请联系 WCA 通讯组（contact@worldcubeassociation.org）。",
     "notes": [],
     "translatedAt": "2026-10-25T09:29:00.720Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "89b8bb4e5f90f40a6e9d6589f4864ef0e15c13a8d6d620c89ef9b2f5db428d2b"
+  "translationHash": "9f16366ff467d0281e52160b6dca016b9fff7733fc5bd524faad7955bd9dab21",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:05:11.621Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "7e08ad64d24e77421b36c94a84c699a9420fbc39e37b6e64df87a53140123dd8",
+    "reviewedTranslationHash": "9f16366ff467d0281e52160b6dca016b9fff7733fc5bd524faad7955bd9dab21",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/amendments-to-the-motions-approved-september-2024.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+    ],
+    "inputTranslationHash": "89b8bb4e5f90f40a6e9d6589f4864ef0e15c13a8d6d620c89ef9b2f5db428d2b"
+  }
 }

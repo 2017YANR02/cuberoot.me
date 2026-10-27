@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/covid-19-situation-update-2020-03-30",
+  "path": "docs/wca-post-translations/entries/covid-19-situation-update-2020-03-30.json",
+  "sourceHash": "1eaac9a46fa1081d1a309dc82b5364114d5668b4e0c236f7a58e9df1a82bd7f2",
+  "inputTranslationHash": "d914f91b1774660f85d22401e53c5e70b786406e7da96e7dd3c36fe980b6e452",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:13:29.851Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题与正文；疫情取消区间/新赛条件、COO履历与金额人数、赛事日期地点、意向征集要求及各条历史纪录的选手/项目/单次平均/数值逐项核对一致。"
+  ],
+  "changes": []
+}

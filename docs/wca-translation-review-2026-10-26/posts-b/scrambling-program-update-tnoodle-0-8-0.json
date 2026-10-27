@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/scrambling-program-update-tnoodle-0-8-0",
+  "path": "docs/wca-post-translations/entries/scrambling-program-update-tnoodle-0-8-0.json",
+  "sourceHash": "c17e881c5b9a987cb23afccba4c87b57ddb1388524a615fb54fd52140de9cbe7",
+  "inputTranslationHash": "ada3790df77e0db653b0fad5422b63903c3f8253261f8ce48ad2cc3836c55a83",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:15.858Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

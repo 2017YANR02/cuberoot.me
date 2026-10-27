@@ -1,0 +1,16 @@
+{
+  "key": "posts:/posts/wmt-leader-announcement-september-2026",
+  "path": "docs/wca-post-translations/entries/wmt-leader-announcement-september-2026.json",
+  "sourceHash": "05193b7c8c0336f5f915f84155469b2bde45e57e1f16bf023cb0e8aa5a1c736c",
+  "inputTranslationHash": "708f79942aa00220b048ea7481ec33f0a997a49edebd0f3a368b92ed76f2d518",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:11:14.400Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "correction_required",
+  "notes": [],
+  "changes": [
+    "标题展开官方中文组织名称。"
+  ],
+  "title": "WCA 市场营销组负责人任命公告（2026 年 9 月）",
+  "content": "亲爱的 WCA 社区成员：\n\n我们很高兴宣布，Chenxi Shan 将担任 WCA 市场营销组（WMT）的新任负责人。Chenxi 此前已是 WCT 和 WMCT 的成员。\n\nWCA 董事会依据《WCA 委员会与团队[议案](https://documents.worldcubeassociation.org/documents/motions/10.2025.0%2520-%2520Committees%2520and%2520Teams.pdf)》第 5 节，选出 Chenxi，并通过投票批准了这一任命。任命自 2026 年 9 月 27 日生效。\n\n我们祝 Chenxi 在新的岗位上一切顺利。\n\n我们共收到两份申请，Chenxi 是其中一位申请人。所有申请材料均可在[此处](https://drive.google.com/drive/folders/15F6KJHuctq4vk3zOaFbVBAVqthx4fHu9?usp=drive_link)查看。"
+}

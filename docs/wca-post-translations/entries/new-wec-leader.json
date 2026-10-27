@@ -12,14 +12,31 @@
     "sourceId": 10081
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "112b0ac3ad189d9c2da4334be52e5ddd551f024e67085c072551dfa5a34173b9",
     "language": "zh-Hans",
     "title": "WCA 道德委员会新负责人",
     "content": "我们很高兴地宣布，Walker Welch 将出任 WCA 道德委员会（WEC）的新任负责人。Walker 此前已是 WEC 成员。\n\nWCA 董事会依照[《议案 10.2017.0：委员会与团队》](https://drive.google.com/file/d/1NDLzup8rbfw8En0S6vtChNti9IKopDBq/edit)第 4 节选出 Walker，并经现任委员会、团队负责人及高级代表投票确认。\n\n祝 Walker 在新的岗位上一切顺利！\n\n新负责人将立即就任。Walker Welch 是五位申请人之一，所有申请材料均可在[这里](https://drive.google.com/open?id=1jTi6utpP6qK2AOKfeSdQ-lVzB2MbM3ir)查看。\n\n其他申请人名单：\n\n- Joseph Blas\n- Abhijeet Ghodgaonkar\n- Callum Goodyear\n- Chris Krueger",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.128Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "af48d2c0dd894cbc86372831869f328cb8905eddf69def316295bbdf30104370"
+  "translationHash": "62454acd2f8885657b3dc8202f19b37aec2a58545dd9fa7d65b01b4a889fe102",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:44.905Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "112b0ac3ad189d9c2da4334be52e5ddd551f024e67085c072551dfa5a34173b9",
+    "reviewedTranslationHash": "62454acd2f8885657b3dc8202f19b37aec2a58545dd9fa7d65b01b4a889fe102",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/new-wec-leader.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "af48d2c0dd894cbc86372831869f328cb8905eddf69def316295bbdf30104370"
+  }
 }

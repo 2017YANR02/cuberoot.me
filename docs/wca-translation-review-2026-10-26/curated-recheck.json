@@ -1,0 +1,51 @@
+{
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:17:43.027Z",
+  "verdict": "pass",
+  "scope": "完整阅读四篇专题组件的中英文及共享标题，复核本轮中文改动及执行董事术语补正；未重新核验外链说明文档的事实时效性。",
+  "files": [
+    {
+      "path": "core/packages/client/app/[lang]/regulation/post/_components/NewsArticle.tsx",
+      "sha256": "c9011531cd123a6999ec703c8141bc0613274e680bfd7d586d7264cfd86f1f73"
+    },
+    {
+      "path": "core/packages/client/lib/regulation-posts.ts",
+      "sha256": "a6158d5e4aa8250bfec1dc1474295fdea14f6fe9ac0bc2641bcea3196524940b"
+    }
+  ],
+  "articles": [
+    {
+      "slug": "wic-investigation-2026",
+      "verdict": "pass",
+      "notes": [
+        "完整核对匿名未成年选手、视频规则、加罚2/4秒或DNF、短期禁赛、申诉权及未认定故意等限定，中英一致；本轮无正文变动。"
+      ]
+    },
+    {
+      "slug": "4-pad-2027",
+      "verdict": "pass",
+      "notes": [
+        "双触点/四触点正确对应2-pad/4-pad；定义段保留英文模式名；全部中英段落、触发方式、日期、成本物流、排名及A7g裁量条件已阅读。",
+        "Executive Director 已由执行主任改为执行董事，符合官方API角色词条。"
+      ]
+    },
+    {
+      "slug": "official-events-2026",
+      "verdict": "pass",
+      "notes": [
+        "转面八面体标题/FTO缩写与斜转、魔表中文名称对应准确；新增/退役日期、Ao5及原因与页面英文和已审公告源文一致。"
+      ]
+    },
+    {
+      "slug": "requirements-policy-5-5",
+      "verdict": "pass",
+      "notes": [
+        "完整阅读三类锦标赛说明、资格成绩日期例子及项目分配表；项目名称已为中文，允许项目和重复举办限制与英文一致；本轮无正文变动。"
+      ]
+    }
+  ],
+  "limitations": [
+    "这是当前双语组件及本轮术语改动的独立审校，不将专题摘编冒充官方公告逐字全文。",
+    "2026年9月草案等时间敏感文案仍处于原专题历史叙述，未在本次独立复核中更新新闻事实。"
+  ]
+}

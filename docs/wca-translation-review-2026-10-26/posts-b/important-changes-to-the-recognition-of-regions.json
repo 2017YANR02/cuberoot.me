@@ -1,0 +1,18 @@
+{
+  "key": "posts:/posts/important-changes-to-the-recognition-of-regions",
+  "path": "docs/wca-post-translations/entries/important-changes-to-the-recognition-of-regions.json",
+  "sourceHash": "ee4e8894b63ef58a127904ad5fd2eb8af70fbf541df536b1a0be3e42b39e9a09",
+  "inputTranslationHash": "38a5d9807eaccb1bbd05cce9c1c098a0256b48ce200c0019bdb967a765129729",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:05:36.321Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "correction_required",
+  "notes": [
+    "源文邮件显示文本漏 i，但 mailto 地址正确；显示文本已据该目标校正。"
+  ],
+  "changes": [
+    "邮件显示文本拼写与原文实际 mailto 目标一致；保留正确目标。"
+  ],
+  "title": "WCA 认可地区名称的重要调整",
+  "content": "亲爱的 WCA 社区成员：\n\n为使协会采用的标准与国际体育界保持一致，我们现公布几项重要调整。经认真考虑 WCA 体育组织团队（WSOT）专项工作组的建议，我们对以下地区名称作出变更，即日起生效：\n\n* 中国香港（原为香港）\n* 中国澳门（原为澳门）\n* 中华台北（原为台湾）\n\n此外，中华台北将使用 WCA 中华台北旗帜。相关变更将在未来一个月内逐步应用于 WCA 各项服务。\n\n我们希望强调，这并非草率作出的决定，其目的仅在于与国际奥委会（IOC）的标准保持一致。专项工作组为此投入了数月时间，征询了当地社区主要相关方，以及曾参与制定 WCA 认可地区名单的成员的意见。考虑这些反馈后，WCA 董事会一致同意采纳工作组提出的调整。\n\n如有任何疑问或顾虑，请联系 [board@worldcubeassociation.org](mailto:board@worldcubeassociation.org)。\n\n*补充说明（2023 年 6 月 24 日）：WCA 董事会对本公告目前造成的困惑表示歉意。董事会与 WSOT 正在整理这项决定的背景和依据，预计将在未来几天内发布报告。*\n\n*补充说明（2023 年 6 月 29 日）：感谢大家的耐心等待。欢迎前往 [WCA 论坛](https://forum.worldcubeassociation.org/t/further-details-on-changes-to-the-recognition-of-regions/37478)，相关主题中有对此项决定更详细的说明。*\n\n此致\n\nWCA 董事会"
+}

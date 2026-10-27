@@ -12,14 +12,31 @@
     "sourceId": 14083
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "9a4736ab1f4aebb14a656803fc97e9faad8b115b8df7e7a73748d52371ff03c4",
     "language": "zh-Hans",
     "title": "WCA 体育组织团队招募成员（2022 年 11 月）",
-    "content": "新成立的 WCA 体育组织团队（WSOT）正在招募成员！\n\nWSOT 的目标是推动 WCA 在各国及全球范围内获得更多体育组织认可。在国家层面，团队将与地区组织紧密合作；在全球层面，则与 WCA 董事会及相关团队、委员会共同推进。加入 WSOT，你将有机会参与 WCA 运作方式的改变！\n\n<!-- break -->\n\nWSOT 的正式权利与职责见 WCA [10.2022.13 号议案](https://www.worldcubeassociation.org/documents/motions/10.2022.13%20-%20Sports%20Organization%20Team.pdf)。\n\n我们希望申请人具备：\n\n* 积极主动、注重细节，善于解决问题。\n* 能细致审阅和撰写篇幅较长、内容复杂的文档。\n* 热爱速拧，希望看到它在世界体育舞台上取得成绩。\n* 较熟悉 WCA 的政策、章程和竞赛规则。\n* （加分项）以运动员或工作人员身份参与高水平体育赛事的经历。\n\n申请材料须为 PDF 格式，包含：\n\n* 简短的个人介绍。\n* 为 WCA 所做工作的概述。\n* 具体说明自己如何满足申请条件及上述要求。\n* （选填）其他你认为与岗位有关的素质和资历。\n\n申请从即日起开放，请于 **2022 年 12 月 20 日 23:59 UTC** 前将材料发送给 Ethan Pride（epride@worldcubeassociation.org）。如有疑问，欢迎在申请截止前联系！",
+    "content": "新成立的 WCA 体育组织团队（WSOT）正在招募成员！\n\nWSOT 的目标是推动 WCA 在各国及全球范围内获得更多作为体育组织的认可。在国家层面，团队将与地区组织紧密合作；在全球层面，则与 WCA 董事会及相关团队、委员会共同推进。加入 WSOT，你将有机会参与 WCA 运作方式的改变！\n\n<!-- break -->\n\nWSOT 的正式权利与职责见 WCA [10.2022.13 号议案](https://www.worldcubeassociation.org/documents/motions/10.2022.13%20-%20Sports%20Organization%20Team.pdf)。\n\n我们希望申请人具备：\n\n* 积极主动、注重细节，善于解决问题。\n* 能细致审阅和撰写篇幅较长、内容复杂的文档。\n* 热爱速拧，希望看到它在世界体育舞台上取得成绩。\n* 较熟悉 WCA 的政策、章程和竞赛规则。\n* （加分项）以运动员或工作人员身份参与高水平体育赛事的经历。\n\n申请材料须为 PDF 格式，包含：\n\n* 简短的个人介绍。\n* 为 WCA 所做工作的概述。\n* 具体说明自己如何满足申请条件及上述要求。\n* （选填）其他你认为与岗位有关的素质和资历。\n\n申请从即日起开放，请于 **2022 年 12 月 20 日 23:59 UTC** 前将材料发送给 Ethan Pride（epride@worldcubeassociation.org）。如有疑问，欢迎在申请截止前联系！",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:00.920Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "ef3a5569b9ba764b96296495a58c1bb45102df7635a0b4bd7325b2eae1672c92"
+  "translationHash": "c39af40f2d692498a76b276eb2aaafeb0f09413fff1b29a82b825ef23ebe5c66",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:16:44.876Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "9a4736ab1f4aebb14a656803fc97e9faad8b115b8df7e7a73748d52371ff03c4",
+    "reviewedTranslationHash": "c39af40f2d692498a76b276eb2aaafeb0f09413fff1b29a82b825ef23ebe5c66",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/call-for-applicants-wca-sports-organization-team-wsot-members-november-2022.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "ef3a5569b9ba764b96296495a58c1bb45102df7635a0b4bd7325b2eae1672c92"
+  }
 }

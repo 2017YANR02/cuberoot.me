@@ -12,14 +12,31 @@
     "sourceId": 10755
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "657b5834606f110133eccc56ad01bdeea4bba069467f40463df9ac5a7e49a83a",
     "language": "zh-Hans",
     "title": "New Hope Open Winter 2019 将于 1 月 20 日在美国宾夕法尼亚州纽霍普举行",
     "content": "[New Hope Open Winter 2019](https://www.worldcubeassociation.org/competitions/NewHopeOpenWinter2019) 将于 2019 年 1 月 20 日在美国宾夕法尼亚州纽霍普举行。更多信息及报名方式请见 [New Hope Open Winter 2019 比赛页面](https://www.worldcubeassociation.org/competitions/NewHopeOpenWinter2019)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.156Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "5b8988f02f3d434a659fab1d120a9ec6740ecfb3539d5e05a4ce4f64bf8be85d"
+  "translationHash": "d654cf191bfdc976a117b6f75380c10581d311b20ba88cfa79ca49975859486c",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:05:44.904Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "657b5834606f110133eccc56ad01bdeea4bba069467f40463df9ac5a7e49a83a",
+    "reviewedTranslationHash": "d654cf191bfdc976a117b6f75380c10581d311b20ba88cfa79ca49975859486c",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/new-hope-open-winter-2019-on-january-20-2019-in-new-hope-pennsylvania-united-states.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "5b8988f02f3d434a659fab1d120a9ec6740ecfb3539d5e05a4ce4f64bf8be85d"
+  }
 }

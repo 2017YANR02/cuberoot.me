@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/wdc-report-on-a-case-of-cheating-in-fewest-moves-challenge",
+  "path": "docs/wca-post-translations/entries/wdc-report-on-a-case-of-cheating-in-fewest-moves-challenge.json",
+  "sourceHash": "ebe4fc414e275f7496b69b6542191b27b7926da86a6e0647f10e436e8177dfa0",
+  "inputTranslationHash": "3be27c2607c72804678cf47e09c2e40c155378a4d027dfc0dd3aca5d8dfe6f09",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:10:59.922Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [
+    "完整核对案件归因、处分条件、匿名处理、数量及任命程序。"
+  ],
+  "changes": []
+}

@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/senior-delegate-announcement-africa-europe-north-and-baltic-states",
+  "path": "docs/wca-post-translations/entries/senior-delegate-announcement-africa-europe-north-and-baltic-states.json",
+  "sourceHash": "b0f350eae70ddaa1abaebb4c7370b235294108642c7fa1716f6a477bedf4b6e8",
+  "inputTranslationHash": "ca22f385e227bc5a4cccc743737a6b2bf9852966eb60296ff6501c5341cca046",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:25.166Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

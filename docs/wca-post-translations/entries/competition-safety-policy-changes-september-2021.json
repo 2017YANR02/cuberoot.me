@@ -12,14 +12,31 @@
     "sourceId": 14033
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "f29b70fca7c57b63003ed2229507a5bfaf6d808c8be768769c16e2764a2acf65",
     "language": "zh-Hans",
     "title": "《比赛安全政策》调整（2021 年 9 月）",
-    "content": "过去几个月，WCA 董事会与高级代表进行了长时间讨论，并听取了更多工作人员的意见。董事会现决定对[《比赛安全政策》](https://www.worldcubeassociation.org/documents/policies/external/Competition%20Safety.pdf)（WCSP）作出以下调整：\n\n1. 比赛能否公告，将依据当地要求和法律规定判断，不再以病例数为依据。WCA 认可比赛的主办方、代表和选手必须遵守相关的当地要求和法律。\n2. 无需施加限制的门槛仍为每百万人口 1 例（7 日滚动平均）。\n3. 比赛仍应遵守 WCSP。任何偏离 WCSP 的做法或豁免，都必须由比赛代表通过安全报审程序提交，并获得高级代表或地区代表批准。\n\n部分地区的情况正逐步改善，已足以举办比赛。请大家耐心等待，让当地代表和主办方弄清安全办赛需要遵循哪些新流程。即使条件允许，比赛也未必会立即恢复；恢复后，安排方式也可能与新冠疫情前不同。过渡期间，需要社区成员共同适应。\n\n感谢大家一直以来的理解，希望未来能在比赛中再次见到你们！",
+    "content": "过去几个月，WCA 董事会与高级代表进行了长时间讨论，并听取了更多工作人员的意见。董事会现决定对[《比赛安全政策》](https://www.worldcubeassociation.org/documents/policies/external/Competition%20Safety.pdf)（WCSP）作出以下调整：\n\n1. 比赛能否公告，将依据当地要求和法律规定判断，不再以病例数为依据。WCA 认可比赛的主办方、代表和选手必须遵守相关的当地要求和法律。\n2. 无需施加限制的门槛仍为每百万人口 1 例（7 日滚动平均）。\n3. 比赛仍应遵守 WCSP。任何偏离 WCSP 的做法或豁免，都必须由比赛代表通过安全报审程序提交，并获得高级代表或区域代表批准。\n\n部分地区的情况正逐步改善，已足以举办比赛。请大家耐心等待，让当地代表和主办方弄清安全办赛需要遵循哪些新流程。即使条件允许，比赛也未必会立即恢复；恢复后，安排方式也可能与新冠疫情前不同。过渡期间，需要社区成员共同适应。\n\n感谢大家一直以来的理解，希望未来能在比赛中再次见到你们！",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:54.033Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "全文审校及术语校正；具体差异见审校记录。"
   },
-  "translationHash": "f47e8a279e0a10c9dc209c26f7c286c936758cba2ed57c781f3419167c5ec40d"
+  "translationHash": "af86f6c65160d26ebcb111ebd16fd94e79d896d0340de5851f49bc5ad43186fe",
+  "review": {
+    "reviewer": "review_logs",
+    "reviewedAt": "2026-10-26T11:18:31.684Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "f29b70fca7c57b63003ed2229507a5bfaf6d808c8be768769c16e2764a2acf65",
+    "reviewedTranslationHash": "af86f6c65160d26ebcb111ebd16fd94e79d896d0340de5851f49bc5ad43186fe",
+    "verdict": "pass",
+    "scope": "复核独立审校提出的全部修正及其原文上下文；其余内容沿用本轮逐篇审校证据。",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/competition-safety-policy-changes-september-2021.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "f47e8a279e0a10c9dc209c26f7c286c936758cba2ed57c781f3419167c5ec40d"
+  }
 }

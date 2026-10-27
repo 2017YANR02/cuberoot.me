@@ -12,7 +12,7 @@
     "sourceId": 12368
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "c677dab0c832bf38851c83fe0d8e7bb68d04ff8b0501c103e5f14917c5e14b84",
     "language": "zh-Hans",
     "title": "WCA 道德委员会新负责人招募（2019 年 7 月）",
@@ -21,7 +21,26 @@
       "原文提到“下方附录”，但本篇正文未附相关内容；仅保留原句与议案链接。"
     ],
     "translatedAt": "2026-10-22T08:52:41.136Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "c7f8acedfb56a713431301d4e64820b037e90b067ebf9c94ccc2fc67d47547bb"
+  "translationHash": "23d96ca41d9661916fa78dde27bfd7715797982698a71f32b417f452ab1d19b6",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:06:14.457Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "c677dab0c832bf38851c83fe0d8e7bb68d04ff8b0501c103e5f14917c5e14b84",
+    "reviewedTranslationHash": "23d96ca41d9661916fa78dde27bfd7715797982698a71f32b417f452ab1d19b6",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/appointment-of-a-new-wca-ethics-committee-leader-july-2019.json",
+    "sourceConcern": false,
+    "notes": [
+      "原文称有下方附录但保存的官方正文未包含附录；译文忠实保留其指向，不补造附录。"
+    ],
+    "inputTranslationHash": "c7f8acedfb56a713431301d4e64820b037e90b067ebf9c94ccc2fc67d47547bb"
+  }
 }

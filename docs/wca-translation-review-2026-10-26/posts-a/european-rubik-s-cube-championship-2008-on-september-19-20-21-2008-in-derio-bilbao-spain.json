@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/european-rubik-s-cube-championship-2008-on-september-19-20-21-2008-in-derio-bilbao-spain",
+  "path": "docs/wca-post-translations/entries/european-rubik-s-cube-championship-2008-on-september-19-20-21-2008-in-derio-bilbao-spain.json",
+  "sourceHash": "dc14cc4620383116a64de28e74c82cad0000e7b529faf167e7a64f3b4b70f395",
+  "inputTranslationHash": "7fd0ecbff38ab60dc6c75eb256ef328cd1e8c87b87f0bb1cdcecda8c7d534922",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:13:29.851Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题与正文；疫情取消区间/新赛条件、COO履历与金额人数、赛事日期地点、意向征集要求及各条历史纪录的选手/项目/单次平均/数值逐项核对一致。"
+  ],
+  "changes": []
+}

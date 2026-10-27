@@ -12,7 +12,7 @@
     "sourceId": 14153
   },
   "translation": {
-    "version": 2,
+    "version": 3,
     "sourceHash": "f572d0afdfa061dc2f0415d123e74891affdcef4d3e2e6e4b3ee0d998f32ee7c",
     "language": "zh-Hans",
     "title": "WCA 规则委员会工作简报：2024 年第一季度",
@@ -21,9 +21,26 @@
       "原文列表从 6 跳至 8，保留原编号。原文第 2 项关于停表引用 A4b，按原文保留，未擅改规则编号。原文第 11 项对双底选手比例的判断按历史公告译出。"
     ],
     "translatedAt": "2026-10-22T08:45:43.564Z",
-    "reviewStatus": "pending_independent_review",
-    "revisedAt": "2026-10-25T07:28:01.629Z",
-    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+    "reviewStatus": "pending_source_verification",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "e6dcb44fc6b73574512308a57c534a101c6a45897adeb0576455a197c2085483"
+  "translationHash": "f208ba30149dd66c43559c366bd3614e49c5303d2e170eb91c6f1686bbffb5ad",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:12:01.755Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "f572d0afdfa061dc2f0415d123e74891affdcef4d3e2e6e4b3ee0d998f32ee7c",
+    "reviewedTranslationHash": "f208ba30149dd66c43559c366bd3614e49c5303d2e170eb91c6f1686bbffb5ad",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "pending_source_verification",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wrc-digest-2024-q1.json",
+    "sourceConcern": true,
+    "notes": [
+      "全文已审：10项案例编号原文跳过7，中文保留；第2项原文为停表却引用A4b（启动计时器规则），属于源文规则引用疑点，不擅自替换。数字、处罚、不确定性及其余情节译义一致。"
+    ],
+    "inputTranslationHash": "e6dcb44fc6b73574512308a57c534a101c6a45897adeb0576455a197c2085483"
+  }
 }

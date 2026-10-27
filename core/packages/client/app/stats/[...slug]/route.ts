@@ -1,5 +1,5 @@
 // /stats/* handler:
-// - Local dev (next dev): serves from repo's stats/ directory.
+// - Dev: published snapshots by default; explicit local mode reads repo stats/.
 // - Self-hosted prod (nginx): never hit here, nginx ^~ /stats/ location returns first.
 // - Vercel prod: stats/ NOT bundled (only core/packages/client is deployed)
 //   → fall back to fetching from static.cuberoot.me which serves stats from
@@ -10,8 +10,7 @@ import { createReadStream, promises as fs } from 'node:fs';
 import { Readable } from 'node:stream';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-
-const VERCEL_STATS_FALLBACK = 'https://static.cuberoot.me/stats/';
+import { usesLocalStats, PUBLISHED_STATS_ORIGIN } from '@cuberoot/shared/stats-base';
 
 // app/stats/[...slug]/route.ts → 6 levels up = repo root, then 'stats'
 // (cuberoot.me/core/packages/client/app/stats/[...slug] → cuberoot.me/stats)
@@ -40,6 +39,8 @@ export async function GET(
     return new Response('forbidden', { status: 403 });
   }
   const filePath = path.join(STATS_DIR, rel);
+  const localStats = usesLocalStats();
+  const publishedDev = process.env.NODE_ENV === 'development' && !localStats;
   const ext = path.extname(rel).toLowerCase();
   const contentType = CONTENT_TYPE[ext] ?? 'application/octet-stream';
   const headers: Record<string, string> = {
@@ -59,19 +60,34 @@ export async function GET(
     headers['content-disposition'] = `attachment; filename="${base}"`;
   }
 
+  // Also cover direct /stats links. Existing local files must not silently
+  // override the published source selected by the developer.
+  if (publishedDev) return publishedResponse();
+
   try {
     if (isExactCorpus) {
       const info = await fs.stat(filePath);
       if (!info.isFile()) return new Response('not found', { status: 404 });
       headers['content-length'] = String(info.size);
-      headers['cache-control'] = 'public, max-age=31536000, immutable';
+      if (!localStats) headers['cache-control'] = 'public, max-age=31536000, immutable';
       const stream = Readable.toWeb(createReadStream(filePath, { highWaterMark: 65536 }));
       return new Response(stream as ReadableStream<Uint8Array>, { headers });
     }
     const data = await fs.readFile(filePath);
     return new Response(new Uint8Array(data), { headers });
-  } catch {
-    const upstreamUrl = VERCEL_STATS_FALLBACK + rel;
+  } catch (error) {
+    if (localStats) {
+      const missing = (error as NodeJS.ErrnoException).code === 'ENOENT';
+      console.error(`[stats] local ${missing ? 'file missing' : 'read failed'}: stats/${rel}`);
+      return Response.json({ error: missing ? 'LOCAL_STATS_NOT_FOUND' : 'LOCAL_STATS_READ_FAILED', path: `/stats/${rel}`, source: 'local' }, {
+        status: missing ? 404 : 500, headers: { 'cache-control': 'no-store' },
+      });
+    }
+    return publishedResponse();
+  }
+
+  async function publishedResponse(): Promise<Response> {
+    const upstreamUrl = `${PUBLISHED_STATS_ORIGIN}/stats/${rel}${new URL(_req.url).search}`;
     // Per-bin sample txt (downloads/*): small — proxy from static on miss in BOTH dev
     // (no local copy) and Vercel (stats/ not bundled), preserving content-disposition
     // (static nginx doesn't set it). Both live ONLY on static (not committed).
@@ -95,12 +111,11 @@ export async function GET(
     // Full bundles (~30MB gz) + all other stats on miss: redirect to static so the
     // bytes never traverse Compute (the dominant Fast Origin Transfer cost / 502
     // timeouts). A .gz downloads regardless of content-disposition. Bundles redirect
-    // even in dev (no local copy unless the stages build ran). Other non-download
-    // stats only fall back on Vercel; dev 404s for genuinely-missing data.
-    if (process.env.VERCEL === '1' || rel.startsWith('scramble/bundles/') || (isExactCorpus && process.env.NODE_ENV !== 'development')) {
+    // in published development mode too. Explicit local mode never falls back.
+    if (publishedDev || process.env.VERCEL === '1' || rel.startsWith('scramble/bundles/') || isExactCorpus) {
       return new Response(null, {
         status: 307,
-        headers: { location: upstreamUrl, 'cache-control': 'public, s-maxage=86400' },
+        headers: { location: upstreamUrl, 'cache-control': publishedDev ? 'no-store' : 'public, s-maxage=86400' },
       });
     }
     return new Response('not found', { status: 404 });

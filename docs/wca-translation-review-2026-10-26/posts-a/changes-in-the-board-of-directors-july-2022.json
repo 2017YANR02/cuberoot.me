@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/changes-in-the-board-of-directors-july-2022",
+  "path": "docs/wca-post-translations/entries/changes-in-the-board-of-directors-july-2022.json",
+  "sourceHash": "d23c20a26d1679ee19982f3412b45f0c97c3116ff51f1a5f02f837ad69a52406",
+  "inputTranslationHash": "fd31fc86d18f62e85086a8a125e8be8b1c91f5738396dcaecacba86b824edc89",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:12:23.463Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照标题和正文；各届赛事城市及取消/退款范围、董事候选名单、当选与连任区别、任期及生效日期、保留职务和干事分工均与原文一致。"
+  ],
+  "changes": []
+}

@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/world-rubik-s-cube-championship-2015-on-july-17-19-2015-in-sao-paulo-brazil",
+  "path": "docs/wca-post-translations/entries/world-rubik-s-cube-championship-2015-on-july-17-19-2015-in-sao-paulo-brazil.json",
+  "sourceHash": "a0a27565a285694a907efae58e4333f2ce4b4a99e93ef3993af5cc7d6f1080f9",
+  "inputTranslationHash": "2924b9fdd61bf35abb2a2ada9c43387718fe7a028247780ea176869670cbc36a",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:11:14.400Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

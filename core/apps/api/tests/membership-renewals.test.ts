@@ -48,7 +48,13 @@ describe.skipIf(!databaseUrl)('renewal lifecycle in isolated PostgreSQL, synthet
     state.db = db;
     await db.unsafe(`CREATE FUNCTION trg_set_updated_at() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at=NOW(); RETURN NEW; END $$;
       CREATE TABLE app_users(id int PRIMARY KEY, wca_id text, display_name text, merged_into_user_id int);
-      INSERT INTO app_users VALUES (1, '2017TEST01', 'Fixture', NULL);`);
+      INSERT INTO app_users VALUES (1, '2017TEST01', 'Fixture', NULL);
+      CREATE TABLE organizations(id int PRIMARY KEY, status text);
+      CREATE TABLE organization_members(organization_id int, user_id int, status text, role text);
+      CREATE TABLE enterprise_verification_applications(organization_id int, status text);
+      INSERT INTO organizations VALUES (1, 'active');
+      INSERT INTO organization_members VALUES (1, 1, 'active', 'owner');
+      INSERT INTO enterprise_verification_applications VALUES (1, 'verified');`);
     for (const file of ['0046_membership.sql', '0181_enterprise_membership_plans.sql', '0222_membership_contracts.sql', '0276_membership_renewal_pipeline.sql', '0283_enterprise_membership_renewal.sql']) {
       await db.unsafe(readFileSync(new URL(`../migrations/${file}`, import.meta.url), 'utf8'));
     }
@@ -76,6 +82,10 @@ describe.skipIf(!databaseUrl)('renewal lifecycle in isolated PostgreSQL, synthet
     await expect(enrollMembership('2017TEST01', { ...consent, planSlug, priceCents }, '127.0.0.1')).rejects.toThrow();
     vi.stubEnv(`WECHAT_PAPAY_ENTERPRISE_${cadence}_PLAN_ID`, id);
     vi.stubEnv(`WECHAT_PAPAY_ENTERPRISE_${cadence}_APPROVED`, id);
+    await db.unsafe("UPDATE enterprise_verification_applications SET status='pending_review'");
+    await expect(enrollMembership('2017TEST01', { ...consent, planSlug, priceCents }, '127.0.0.1')).rejects.toThrow('verified enterprise');
+    expect(state.enroll).not.toHaveBeenCalled();
+    await db.unsafe("UPDATE enterprise_verification_applications SET status='verified'");
     await enrollMembership('2017TEST01', { ...consent, planSlug, priceCents }, '127.0.0.1');
     await db.unsafe("UPDATE membership_contracts SET state='active', contract_id='enterprise-contract', verified_at=now()");
     await runMembershipRenewalsOnce();

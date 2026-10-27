@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/wca-documents-updated-january-1-2013",
+  "path": "docs/wca-post-translations/entries/wca-documents-updated-january-1-2013.json",
+  "sourceHash": "22de0d66230d916536e4efa004f881af38019e7ffe0a013113508bbe953f9941",
+  "inputTranslationHash": "2affcf50a10535b435053ffda76b147672ba50337257d90d054cbcd2f2ae1ef9",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:07:08.715Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

@@ -25,7 +25,7 @@ export interface ChatDetail extends ChatRecord {
   review_note: string | null; reviewed_by: string | null; reviewed_at: string | null; clicked_actions: Record<string,boolean>;
   content_expired: boolean; answer: string | null; response: Omit<AssistantAnswer, 'answer'> | null;
   metrics: { stages?: Record<string, { calls: number; ms: number; errors: number }>; tools?: Record<string, number>;
-    models?: Array<{ model: string; thinking: boolean; input: number | null; output: number | null; cached: number | null; reasoning: number | null }> };
+    models?: Array<{ model: string; thinking: boolean; input: number | null; output: number | null; cached: number | null; reasoning: number | null; cacheAdjustedCny?: {min:number;max:number}|null }> };
 }
 export interface ChatRecords { rows: ChatRecord[]; total: number; page: number; pageSize: number }
 export async function fetchChatMonitoring<T>(path: string, params: Record<string, string>, signal?: AbortSignal): Promise<T> {

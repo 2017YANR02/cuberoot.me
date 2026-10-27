@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wmt-members-april-2020",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wmt-members-april-2020.json",
+  "sourceHash": "919c77fb2fb907dfb48f48fd331b51116a55ed3db9d7eedee71b1adfa039f767",
+  "inputTranslationHash": "2e33bdbd812d5fe9cdac05995f9719c3096d1f0f96a0a2596a370bce79ec9171",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:10:56.903Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "逐篇全文核对招募领域、地域限制、工时、材料和截止日期。"
+  ],
+  "changes": []
+}

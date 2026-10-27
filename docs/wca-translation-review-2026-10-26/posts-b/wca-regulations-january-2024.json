@@ -1,0 +1,16 @@
+{
+  "key": "posts:/posts/wca-regulations-january-2024",
+  "path": "docs/wca-post-translations/entries/wca-regulations-january-2024.json",
+  "sourceHash": "01de6fb264ab4ad5a598a100490571de9dba83bb16886d146b28a2bb7db791dd",
+  "inputTranslationHash": "6520b11932504636ba12ef69634590ed00ae27f649c67f84efdf8f2c9dcf2594",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:10:32.384Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "correction_required",
+  "notes": [],
+  "changes": [
+    "Clock pins统一为按针。"
+  ],
+  "title": "WCA 规则更新：2024 年 1 月",
+  "content": "亲爱的 WCA 社区成员：\n\nWCA 规则委员会在此介绍新版《WCA 规则与指南》，新版将于 **2024 年 1 月 1 日**生效。\n\n全部改动可通过 [GitHub 上的对比](https://github.com/thewca/wca-regulations/compare/official-2023-08-01...official-2024-01-01)查看。点击“Files changed”即可查看《规则》和《指南》的完整文件；修改和新增内容标为绿色，删除内容标为红色。\n\n**更详细的公告见[这篇 WCA 论坛帖子](https://forum.worldcubeassociation.org/t/wca-regulations-january-2024/44048)。**以下是新版《规则》和《指南》的改动*摘要*。\n\n**主要改动：**\n\n- 允许选手在观察阶段按动魔表的按针（[改动](https://github.com/thewca/wca-regulations/pull/1173/files)）。\n- 对五阶错打乱的处理，赋予 WCA 代表更大的裁量空间，允许在一定情况下保留该次还原（[改动](https://github.com/thewca/wca-regulations/pull/1176/files)）。\n- 为规则 3j 增加官方图解指南（[改动](https://github.com/thewca/wca-regulations/pull/1174/files)）。\n- 在特定情况下，允许选手随时变更所代表的地区（[改动](https://github.com/thewca/wca-regulations/pull/1177/files)）。\n\n**次要改动：**\n\n- 明确 2i 中“使用”的含义（[改动](https://github.com/thewca/wca-regulations/pull/1180/files)），并删除 2i3（[改动](https://github.com/thewca/wca-regulations/pull/1160/files)）。\n- 明确最少步比赛中魔方的初始状态（[改动](https://github.com/thewca/wca-regulations/pull/1164/files)）。\n- 明确允许速拧项目所用魔方在同一块上放置多个标志（[改动](https://github.com/thewca/wca-regulations/pull/1153/files)）。\n- 明确观察时长的界限：恰好达到临界时刻时，适用较重的处罚（[改动](https://github.com/thewca/wca-regulations/pull/1166/files)）。\n- 修改还原前处罚的记录方式（[改动](https://github.com/thewca/wca-regulations/pull/1169/files)）。\n- 明确 2s 的适用情形（[改动](https://github.com/thewca/wca-regulations/pull/1168/files)）。\n- 放宽有关摄像设备的规定（[改动](https://github.com/thewca/wca-regulations/pull/1182/files)）。\n- 明确观众接触飞出零件时的处理（[改动](https://github.com/thewca/wca-regulations/pull/1152/files)）。\n- 更新 2h（[改动](https://github.com/thewca/wca-regulations/pull/1154/files)）。\n- 增加检查三阶多盲打乱是否重复的要求（[改动](https://github.com/thewca/wca-regulations/pull/1155/files)）。\n- 将“国家”改为“地区”（[改动](https://github.com/thewca/wca-regulations/pull/1156/files)）。\n- 在 2c2 中，允许选手通过代表联系 WRT（[改动](https://github.com/thewca/wca-regulations/pull/1161/files)）。\n- 删除 3j+（[改动](https://github.com/thewca/wca-regulations/pull/1165/files)）。\n\n配合上述调整，WCA 官方打乱程序 TNoodle 也将发布新版本。官方打乱将不再包含魔表按针状态。新版 TNoodle 将与新版《规则与指南》同时于 **2024 年 1 月 1 日**生效。"
+}

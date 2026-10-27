@@ -1,0 +1,18 @@
+{
+  "key": "disciplinary:/posts/wdc-report-on-a-case-of-cheating-in-3x3x3-multi-blind",
+  "path": "docs/wca-log-translations/entries/disciplinary-wdc-report-on-a-case-of-cheating-in-3x3x3-multi-blind.json",
+  "sourceHash": "786f4bb4a4d949db046c2307e43aabb351655d865c7e62e1c159b1e0ee974bb7",
+  "inputTranslationHash": "52cf4feb1129524932846dbfd298675df8edb2126449d0db96d976f512c06020",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "复用当前译文哈希绑定的既有全文独立审校；本轮全量检索项目名和机构残留，并核对命中语境。",
+  "verdict": "pass",
+  "notes": [],
+  "changes": [],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/report-2.json",
+    "reviewedTranslationHash": "52cf4feb1129524932846dbfd298675df8edb2126449d0db96d976f512c06020",
+    "verdict": "pass"
+  },
+  "sourceUncertainty": false
+}

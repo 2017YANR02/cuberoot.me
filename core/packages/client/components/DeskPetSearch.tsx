@@ -8,14 +8,15 @@ import './settings-typography.css';
 import { cloneElement, isValidElement, useEffect, useLayoutEffect, useRef, useState, useCallback, useSyncExternalStore, type ComponentProps } from 'react';
 import { NavigationShell, SidebarToggle, type NavigationItem, type NavigationLinkProps } from '@app-foundation/navigation-ui';
 import '@app-foundation/navigation-ui/navigation.css';
-import { Check, Lock, LockOpen, ArrowLeft, ArrowRight, Pencil, Trash2, RotateCcw, Maximize2, Coffee, Sun, Heart, Home, Sparkles, Shuffle, MessageSquarePlus, Music, MessageSquare, SquarePen } from '@app-foundation/icons/lucide';
+import { Check, Lock, LockOpen, ArrowLeft, ArrowRight, Pencil, Trash2, RotateCcw, Maximize2, Coffee, Sun, Heart, Home, Sparkles, Shuffle, MessageSquarePlus, Music, MessageSquare, SquarePen, Pin, Search } from '@app-foundation/icons/lucide';
 import type { DeskPetEntry } from '@cuberoot/shared/deskpet';
 import { CompactSelect } from '@/components/CompactSelect';
 import BoolToggle from '@/components/BoolToggle';
 import { useDeskPetVisible } from '@/hooks/useDeskPetVisible';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import HomeLink from '@/components/HomeLink';
 import AssistantConversationView from '@/components/AssistantConversationView';
-import { assistantConversations } from '@/lib/assistant-conversations';
+import { assistantConversations, assistantOwner } from '@/lib/assistant-conversations';
 import HeaderToggles from '@/components/HeaderToggles';
 import WcaAuth from '@/components/WcaAuth';
 import DonateModal from '@/components/DonateModal';
@@ -30,8 +31,9 @@ import { ResizeDivider } from '@app-foundation/navigation-ui/resize-divider';
 import '@app-foundation/navigation-ui/resize-divider.css';
 
 const CSS = `
-.deskpet-search-workspace{position:fixed;left:0;right:0;top:0;height:100dvh;z-index:100010;
+.deskpet-search-workspace{position:fixed;left:0;right:0;top:0;height:100dvh;z-index:100010;overflow:hidden;
   background:var(--background);}
+.deskpet-mobile-control{display:none;}
 .deskpet-search-workspace:has(.landing-search-panel,.appearance-menu,.deskpet-detail-column,.site-assistant-embedded){z-index:100025;}
 /* Accent options are portaled to body, outside the sidebar's stacking context. */
 body:has(.deskpet-navigation .appearance-menu) .accent-color-menu{z-index:100030;}
@@ -80,6 +82,14 @@ body:has(.deskpet-navigation .appearance-menu) .accent-color-menu{z-index:100030
 .deskpet-conversation-title span,.deskpet-chat-list .af-nav-link span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .deskpet-navigation .deskpet-chat-list .af-nav-link{font-weight:400;gap:8px;}
 .deskpet-chat-list .af-nav-link[aria-current='page']{font-weight:400;}
+.deskpet-chat-heading{display:flex;align-items:center;gap:8px;margin:0 4px 16px;font-size:1.05rem;font-weight:600;color:var(--foreground);}
+.deskpet-chat-heading strong{flex:1;}
+.deskpet-chat-action{display:inline-flex;align-items:center;justify-content:center;flex:none;width:36px;height:36px;border:0;border-radius:8px;background:transparent;color:var(--muted-foreground);cursor:pointer;}
+.deskpet-chat-action:hover,.deskpet-chat-action:focus-visible{background:var(--accent-soft);color:var(--foreground);}
+.deskpet-chat-section{margin:24px 10px 8px;font-size:.8rem;color:var(--muted-foreground);}
+.deskpet-chat-row{display:flex;align-items:center;min-width:0;}
+.deskpet-chat-row .af-nav-link{flex:1;min-width:0;}
+.deskpet-chat-search{width:100%;box-sizing:border-box;margin:0 0 8px;padding:8px;border:1px solid var(--border-default);border-radius:8px;background:var(--background);color:var(--foreground);font:inherit;}
 .deskpet-search-box:has(.landing-search-plus-menu){z-index:1;}
 .deskpet-search-box .landing-search{margin:0;}
 /* Results open above the bottom-anchored search. */
@@ -125,8 +135,25 @@ body:has(.deskpet-navigation .appearance-menu) .accent-color-menu{z-index:100030
   }
 }
 @media (max-width:767px){
+  .deskpet-search-workspace{contain:layout;}
+  .deskpet-navigation.af-navigation{--af-nav-header-height:calc(56px + env(safe-area-inset-top,0px));--af-nav-width:58px;--af-nav-panel-width:calc(100% - 58px);}
+  .deskpet-navigation .af-nav-body{display:block;}
+  .deskpet-navigation .af-nav-sidebar{display:none;position:absolute;inset:0 auto 0 0;width:58px;height:100%;z-index:2;padding:8px 6px;}
+  .deskpet-search-workspace[data-mobile-panel='true'] .af-nav-sidebar{display:block;}
+  .deskpet-navigation .af-nav-corner,.deskpet-navigation .deskpet-divider,.deskpet-navigation-header>.af-nav-toggle,
+  .deskpet-navigation-header .deskpet-workspace-close{display:none;}
+  .deskpet-navigation-header{padding:env(safe-area-inset-top,0px) max(8px,env(safe-area-inset-right,0px)) 0 max(8px,env(safe-area-inset-left,0px));gap:2px;}
+  .deskpet-navigation-header::after,.deskpet-conversation-title::before{display:none;}
+  .deskpet-mobile-control{display:inline-flex;align-items:center;justify-content:center;flex:none;width:44px;height:44px;border:0;border-radius:10px;background:transparent;color:var(--foreground);cursor:pointer;}
+  .deskpet-mobile-control .af-nav-toggle{width:44px;height:44px;margin:0;}
+  .deskpet-mobile-control:focus-visible{outline:2px solid var(--ring);outline-offset:-2px;}
+  .deskpet-conversation-title{position:static;flex:1;right:auto;left:auto;padding:0 6px;height:44px;}
+  .deskpet-conversation-title>svg{display:none;}
+  .deskpet-navigation .af-nav-link{min-height:44px;height:auto;margin-block:2px;padding-block:8px;}
+  .deskpet-navigation[data-navigation] .af-nav-panel{position:fixed;top:var(--af-nav-header-height);bottom:0;left:58px;width:min(400px,calc(82vw - 58px));height:auto;z-index:2;box-shadow:0 0 0 100vmax color-mix(in srgb,var(--background) 65%,transparent);}
+  .deskpet-navigation[data-panel-collapsed='true'] .af-nav-panel{clip-path:none;opacity:1;visibility:visible;pointer-events:auto;}
   .deskpet-navigation .deskpet-search-main{height:100%;box-sizing:border-box;padding:0;}
-  .deskpet-navigation[data-panel-visible='true'][data-panel-collapsed='false'] .deskpet-search-box{visibility:hidden;pointer-events:none;}
+  .deskpet-search-workspace[data-mobile-panel='true'] .deskpet-search-box{pointer-events:none;}
   .deskpet-navigation .appearance-menu[data-backgrounds],.deskpet-navigation .deskpet-detail-column{padding:24px 12px max(16px,var(--sab,0px));}
 }
 @media (pointer:coarse){
@@ -164,6 +191,7 @@ body:has(.deskpet-navigation .appearance-menu) .accent-color-menu{z-index:100030
 `;
 
 export default function DeskPetSearch({
+  open,
   lang,
   origin,
   onClose,
@@ -179,6 +207,7 @@ export default function DeskPetSearch({
   onToggleRandom,
   onOpenPetHome,
 }: {
+  open: boolean;
   lang: 'zh' | 'en';
   origin?: { x: number; y: number } | null;
   onClose: () => void;
@@ -199,10 +228,12 @@ export default function DeskPetSearch({
 }) {
   const [petVisible, setPetVisible] = useDeskPetVisible();
   const user = useAuthUser();
-  const owner = user ? JSON.stringify([user.uid, user.wcaId]) : 'guest';
+  const mobile = useIsMobile(767);
+  const owner = assistantOwner(user);
   const readConversations = useCallback(() => assistantConversations.read(owner), [owner]);
   const chats = useSyncExternalStore(assistantConversations.subscribe, readConversations, assistantConversations.serverSnapshot);
   useEffect(() => {
+    assistantConversations.restorePinned(owner);
     if (!assistantConversations.read(owner).conversations.length) assistantConversations.create(owner, crypto.randomUUID());
   }, [owner]);
   const newChat = () => {
@@ -216,7 +247,10 @@ export default function DeskPetSearch({
   const searchCards = SEARCH_CARDS.filter((card) => isLandingSearchCardVisible(card, isAdmin()));
   const workspaceRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
-  const [activePanel, setActivePanel] = useState<'chats' | 'settings' | 'pet' | 'music' | 'feedback' | 'donate' | null>('chats');
+  const [activePanel, setActivePanel] = useState<'chats' | 'settings' | 'pet' | 'music' | 'feedback' | 'donate' | null>(null);
+  const [chatSearchOpen, setChatSearchOpen] = useState(false);
+  const [chatSearch, setChatSearch] = useState('');
+  useEffect(() => { if (mobile) setActivePanel(null); }, [mobile]);
   const [petPanelContainer, setPetPanelContainer] = useState<HTMLElement | null>(null);
   useEffect(() => {
     if (activePanel) boxRef.current?.querySelector<HTMLInputElement | HTMLTextAreaElement>('input, textarea')?.blur();
@@ -255,29 +289,32 @@ export default function DeskPetSearch({
 
   // Entrance: the box grows from the pet's position out to its centered spot.
   useLayoutEffect(() => {
+    if (!open) return;
     const box = boxRef.current, backdrop = workspaceRef.current;
     if (!box) return;
     // Focus synchronously in the commit phase: on touch this still runs inside
     // the tap gesture, so mobile browsers raise the keyboard (a deferred
     // useEffect would land after the gesture and silently fail on iOS).
-    box.querySelector<HTMLInputElement>('input[type="text"]')?.focus();
+    if (!window.matchMedia('(pointer:coarse)').matches) box.querySelector<HTMLInputElement>('input[type="text"]')?.focus();
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     if (reduce) return;
 
-    backdrop?.animate([{ opacity: 0 }, { opacity: 1 }],
+    const backdropAnimation = backdrop?.animate([{ opacity: 0 }, { opacity: 1 }],
       { duration: 200, easing: 'ease-out', fill: 'both' });
 
     const r = box.getBoundingClientRect();
     const from = origin ?? { x: r.left + r.width / 2, y: r.top + r.height / 2 };
     const dx = from.x - (r.left + r.width / 2);
     const dy = from.y - (r.top + r.height / 2);
-    box.animate([
+    const boxAnimation = box.animate([
       { transform: `translate(${dx}px, ${dy}px) scale(.35)`, opacity: 0 },
       { transform: 'translate(0, 0) scale(1)', opacity: 1 },
     ], { duration: 260, easing: 'cubic-bezier(.2,.8,.25,1)', fill: 'both' });
-  }, [origin]);
+    return () => { backdropAnimation?.cancel(); boxAnimation.cancel(); };
+  }, [origin, open]);
 
   useEffect(() => {
+    if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       // Check before the shared menu's document handler dismisses it.
       if (e.key === 'Escape' && activePanel && !donateOpen && !feedbackOpen) {
@@ -289,7 +326,7 @@ export default function DeskPetSearch({
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [onClose, donateOpen, feedbackOpen, activePanel]);
+  }, [onClose, donateOpen, feedbackOpen, activePanel, open]);
 
   // Prefetch the donate QRs on hover, not on open: fetching them at mount put two
   // WebPs on the wire during the entrance animation for every user who opens
@@ -310,6 +347,7 @@ export default function DeskPetSearch({
   // up hidden behind it. Pin the backdrop to the visual viewport instead, so
   // align-items:flex-end keeps the search box just above the keyboard.
   useEffect(() => {
+    if (!open) return;
     const vv = window.visualViewport;
     if (!vv) return;
     const apply = () => {
@@ -329,7 +367,7 @@ export default function DeskPetSearch({
       vv.removeEventListener('resize', apply);
       vv.removeEventListener('scroll', apply);
     };
-  }, []);
+  }, [open]);
 
   const resizeColumn = (handle: HTMLElement, requested: number, column: 'rail' | 'panel') => {
     const navigation = handle.closest<HTMLElement>('.deskpet-navigation');
@@ -355,9 +393,9 @@ export default function DeskPetSearch({
     { id: 'donate', href: '#donate', label: t('赞助', 'Donate'), icon: <Heart className="heart-icon" /> },
   ].map(item => ({ ...item, active: item.id === activePanel }));
   const renderNavigationItem = ({ href, ...props }: NavigationLinkProps) => {
-    if (href === '/') return <HomeLink {...props} prefetch={false} onClick={() => { props.onClick?.(); onClose(); }} />;
+    if (href === '/') return <HomeLink {...props} prefetch={false} />;
     if (href === '#settings') return <HeaderToggles appearanceOpen={activePanel === 'settings'} onAppearanceOpenChange={open => { if (open) props.onClick?.(); setActivePanel(current => open ? 'settings' : current === 'settings' ? null : current); }} appearanceColumn triggerClassName={props.className} triggerLabel={t('外观', 'Appearance')} labelClassName="af-nav-label" showLabels />;
-    if (href === '/account') return <WcaAuth linkClassName={props.className} labelClassName="af-nav-label" onNavigate={() => { props.onClick?.(); onClose(); }} showLabel />;
+    if (href === '/account') return <WcaAuth linkClassName={props.className} labelClassName="af-nav-label" onNavigate={() => props.onClick?.()} showLabel />;
     if (href === '#pet') return <CompactSelect
           open={activePanel === 'pet' && !!petPanelContainer}
           onOpenChange={open => { if (open) props.onClick?.(); setActivePanel(current => open ? 'pet' : current === 'pet' ? null : current); }}
@@ -485,12 +523,14 @@ export default function DeskPetSearch({
 
   return (
     // This workspace closes explicitly; blank space is not a dismiss target.
-    <div className="deskpet-search-workspace" ref={workspaceRef}>
+    <div className="deskpet-search-workspace" data-mobile-panel={mobile && !!activePanel} ref={workspaceRef} style={open ? undefined : { display: 'none' }} inert={!open}>
       <style>{CSS}</style>
       <NavigationShell className="deskpet-navigation" iconOnly mobileLayout="rail" togglePlacement="header" collapseTarget="panel" onPanelOpen={() => setActivePanel('chats')} panelVisible={!!activePanel} mainClassName="deskpet-search-main" contentAs="div"
         items={navigation} renderLink={renderNavigationItem}
         labels={{ navigation: t('桌宠工具栏', 'Pet toolbar'), show: t('展开设置面板', 'Expand settings panel'), hide: t('收起设置面板', 'Collapse settings panel'), openMobile: t('设置', 'Settings'), closeMobile: t('关闭设置', 'Close settings') }}
         header={(_mobileToggle, toggle) => <div className="deskpet-navigation-header">
+          <button className="deskpet-mobile-control" type="button" aria-label={t('返回首页', 'Go to home')} onClick={onClose}><ArrowLeft size={21}/></button>
+          <span className="deskpet-mobile-control" data-navigation-panel-toggle><SidebarToggle collapsed={!activePanel} showLabel={t('打开聊天和设置', 'Open chats and settings')} hideLabel={t('关闭侧栏', 'Close sidebar')} onToggle={() => setActivePanel(current => current ? null : 'chats')} /></span>
           <ClearButton variant="standalone" className="deskpet-workspace-close"
             ariaLabel={t('关闭窗口', 'Close window')} onClick={onClose} />
           {isValidElement<ComponentProps<typeof SidebarToggle>>(toggle) ? cloneElement(toggle, {
@@ -503,19 +543,25 @@ export default function DeskPetSearch({
             setActivePanel('chats');
             if (isValidElement<ComponentProps<typeof SidebarToggle>>(toggle) && toggle.props.collapsed) toggle.props.onToggle();
           }} aria-label={t('查看聊天列表', 'Show conversations')}><SquarePen size={18} /><span>{chatTitle(chats.activeId)}</span></button>
+          <button className="deskpet-mobile-control" type="button" aria-label={t('新聊天', 'New chat')} onClick={newChat}><SquarePen size={21}/></button>
         </div>}>
         {activePanel && activePanel !== 'settings' && <section
           className="deskpet-detail-column af-nav-panel" data-site-surface="panel"
           aria-label={navigation.find(item => item.id === activePanel)?.label}
           ref={activePanel === 'pet' ? setPetPanelContainer : undefined}>
           {activePanel === 'chats' && <nav className="deskpet-chat-list settings-typography" aria-label={t('聊天列表', 'Conversations')}>
+            <div className="deskpet-chat-heading"><strong>CubeRoot</strong><button type="button" className="deskpet-chat-action" aria-label={t('搜索聊天', 'Search conversations')} aria-expanded={chatSearchOpen} onClick={() => { setChatSearchOpen(value => !value); setChatSearch(''); }}><Search size={18}/></button><ClearButton variant="standalone" ariaLabel={t('关闭侧栏', 'Close sidebar')} onClick={() => setActivePanel(null)} /></div>
+            {chatSearchOpen && <input className="deskpet-chat-search" value={chatSearch} onChange={event => setChatSearch(event.target.value)} placeholder={t('搜索聊天', 'Search conversations')} aria-label={t('搜索聊天', 'Search conversations')} />}
             <button type="button" className="af-nav-link" onClick={newChat}>
               <span className="af-nav-icon" aria-hidden="true"><SquarePen size={18}/></span><span>{t('新聊天', 'New chat')}</span>
             </button>
-            {chats.conversations.filter(chat => chat.snapshot.turns.length > 0 || chat.snapshot.draft.trim() || chat.snapshot.images.length > 0).map(chat => <button type="button" key={chat.id} className="af-nav-link" aria-current={chat.id === chats.activeId ? 'page' : undefined} onClick={() => selectChat(chat.id)}>
-              <span className="af-nav-icon" aria-hidden="true"><MessageSquare size={18} /></span>
-              <span>{chatTitle(chat.id)}</span>
-            </button>)}
+            {[true, false].map(pinned => {
+              const items = chats.conversations.filter(chat => !!chat.pinned === pinned && (chat.snapshot.turns.length > 0 || chat.snapshot.draft.trim() || chat.snapshot.images.length > 0) && chatTitle(chat.id).toLocaleLowerCase().includes(chatSearch.trim().toLocaleLowerCase())).slice().reverse();
+              return items.length ? <div key={String(pinned)}><div className="deskpet-chat-section">{pinned ? t('置顶', 'Pinned') : t('最近', 'Recent')}</div>{items.map(chat => <div className="deskpet-chat-row" key={chat.id}>
+                <button type="button" className="af-nav-link" aria-current={chat.id === chats.activeId ? 'page' : undefined} onClick={() => selectChat(chat.id)}><span className="af-nav-icon" aria-hidden="true"><MessageSquare size={18} /></span><span>{chatTitle(chat.id)}</span></button>
+                <button type="button" className="deskpet-chat-action" aria-label={chat.pinned ? t('取消置顶', 'Unpin conversation') : t('置顶聊天', 'Pin conversation')} title={chat.pinned ? t('取消置顶', 'Unpin conversation') : t('置顶聊天', 'Pin conversation')} aria-pressed={!!chat.pinned} onClick={() => assistantConversations.setPinned(owner, chat.id, !chat.pinned)}><Pin size={16} fill={chat.pinned ? 'currentColor' : 'none'}/></button>
+              </div>)}</div> : null;
+            })}
           </nav>}
           {activePanel === 'music' && <FloatingMetronome embedded lang={lang} onClose={() => setActivePanel(null)} />}
           {donateOpen && <DonateModal embedded lang={lang} onClose={() => setDonateOpen(false)} />}
@@ -527,8 +573,8 @@ export default function DeskPetSearch({
         {activePanel && <ResizeDivider className="deskpet-divider deskpet-divider--panel" label={t('调整侧栏宽度', 'Resize side panel')}
           getSize={handle => handle.closest('.deskpet-navigation')?.querySelector('.af-nav-panel')?.getBoundingClientRect().width ?? 400}
           onResize={(handle, requested) => resizeColumn(handle, requested, 'panel')} />}
-        <div className="deskpet-search-box" ref={boxRef}>
-          {chats.conversations.map(chat => <AssistantConversationView key={`${owner}:${chat.id}`} owner={owner} conversation={chat} active={chat.id === chats.activeId} cards={searchCards} lang={lang} />)}
+        <div className="deskpet-search-box" ref={boxRef} inert={mobile && !!activePanel}>
+          {chats.conversations.map(chat => <AssistantConversationView key={`${owner}:${chat.id}`} owner={owner} conversation={chat} active={open && chat.id === chats.activeId} cards={searchCards} lang={lang} />)}
         </div>
       </NavigationShell>
     </div>

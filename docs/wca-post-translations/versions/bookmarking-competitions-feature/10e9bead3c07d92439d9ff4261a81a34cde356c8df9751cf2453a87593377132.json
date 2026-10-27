@@ -1,0 +1,25 @@
+{
+  "key": "posts:/posts/bookmarking-competitions-feature",
+  "source": {
+    "key": "posts:/posts/bookmarking-competitions-feature",
+    "kind": "posts",
+    "title": "Bookmarking Competitions Feature",
+    "date": "2019-08-30T04:03:29.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/bookmarking-competitions-feature",
+    "content": "We're pleased to announce a new feature on the WCA website: bookmarking competitions.\n<!-- break -->\nOnce a competition is announced, you can click the \"bookmark\" icon next to its name:\n\n![](https://www.worldcubeassociation.org/rails/active_storage/blobs/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBBbmtCIiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--fcf4a3bfe0a23fa4c37720846dcddfc0fdd35860/bookmark_button.png)\n\nWhen you bookmark a competition, it'll show up in the \"My Competitions\" page.  In addition, 24 hours before registration opens, we'll send an email reminder to anyone who's bookmarked the competition as well as the organizer(s) and delegate(s).\n\nWe hope you find this useful!",
+    "hash": "620a634d6e3e436c0498387da21fd347992e38fab1b174eead0e618f96559e25",
+    "format": "markdown",
+    "sourceId": 12775
+  },
+  "translation": {
+    "version": 1,
+    "sourceHash": "620a634d6e3e436c0498387da21fd347992e38fab1b174eead0e618f96559e25",
+    "language": "zh-Hans",
+    "title": "新增比赛收藏功能",
+    "content": "WCA 网站新增了比赛收藏功能！\n\n比赛公告后，你可以点击比赛名称旁的“收藏”图标：\n\n![比赛收藏按钮](https://www.worldcubeassociation.org/rails/active_storage/blobs/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBBbmtCIiwiZXhwIjpudWxsLCJwdXIiOiJibG9iX2lkIn19--fcf4a3bfe0a23fa4c37720846dcddfc0fdd35860/bookmark_button.png)\n\n收藏后，比赛会出现在“我的比赛”页面中。此外，在报名开始前 24 小时，我们会向所有收藏了该比赛的人，以及主办方和代表发送邮件提醒。\n\n希望这个功能能帮到大家！",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.123Z",
+    "reviewStatus": "pending_independent_review"
+  },
+  "translationHash": "10e9bead3c07d92439d9ff4261a81a34cde356c8df9751cf2453a87593377132"
+}

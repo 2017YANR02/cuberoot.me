@@ -1,0 +1,46 @@
+{
+  "reviewer": "review_posts_b",
+  "total": 225,
+  "coverage": "原entries文件名排序slice(226)，225篇英文及中文标题/正文全部读取并逐篇语义核对。",
+  "counts": {
+    "pass": 167,
+    "correction_required": 54,
+    "source_uncertain": 4
+  },
+  "unresolved": [
+    {
+      "key": "posts:/posts/forum-digest-december-2021",
+      "notes": [
+        "原文标题称三次纪录、正文称 twice，同时列1.13/1.06/1.05三个成绩；译文忠实保留矛盾，不能以译者推断改成三次。"
+      ],
+      "hasCorrection": false
+    },
+    {
+      "key": "posts:/posts/quality-assurance-committee-digest-2025-q1",
+      "notes": [
+        "原文称 ten new members，但仅列出9人；译文忠实保留，不能补造第10位成员。"
+      ],
+      "hasCorrection": true
+    },
+    {
+      "key": "posts:/posts/wrc-digest-2024-q1",
+      "notes": [
+        "全文已审：10项案例编号原文跳过7，中文保留；第2项原文为停表却引用A4b（启动计时器规则），属于源文规则引用疑点，不擅自替换。数字、处罚、不确定性及其余情节译义一致。"
+      ],
+      "hasCorrection": false
+    },
+    {
+      "key": "posts:/posts/wrc-digest-2024-q2",
+      "notes": [
+        "全文11案均已核对，70%、17秒、10秒、2周及裁量条件保留。第3案源文先说已corrected，后又说最后fix both，与twist-twist-fix-fix时序存在矛盾；中文忠实保留而不改写成自行推断的事实。"
+      ],
+      "hasCorrection": false
+    }
+  ],
+  "notes": [
+    "从未改动entries、progress或生成文件；仅提案与证据。",
+    "原文历史时态、机构名称与专名保留；Square-1官方也为英文，未编造中文名称。",
+    "需要父代理集成并由review_logs独立复核后再更新账本状态。",
+    "独立复核后全量统一五魔方、四触点模式、大洲锦标赛/大洲纪录及ETM官方英文全称；官方continental服务器查询核对。"
+  ]
+}

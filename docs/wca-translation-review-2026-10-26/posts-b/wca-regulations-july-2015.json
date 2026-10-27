@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/wca-regulations-july-2015",
+  "path": "docs/wca-post-translations/entries/wca-regulations-july-2015.json",
+  "sourceHash": "1c1756b0f76e04661774adcd4f2bdb3603af84c9ec2a1fcc1cb5b9aee781051c",
+  "inputTranslationHash": "65b9192c77b020e9e42a2284ed5671c7a6fba924aadcd0a465fce4a6a6fec1bf",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:10:32.386Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [
+    "全部20项规则更新及其数字、例外、日期、项目名称已核对。"
+  ],
+  "changes": []
+}

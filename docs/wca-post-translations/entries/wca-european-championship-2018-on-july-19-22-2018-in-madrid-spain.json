@@ -12,14 +12,31 @@
     "sourceId": 8486
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "af01317d8a70934c43c30c1d861ea99d7150ae031961ca002690f7d165d44938",
     "language": "zh-Hans",
     "title": "2018 年 WCA 欧洲锦标赛将于 7 月 19–22 日在西班牙马德里举行",
     "content": "[2018 年 WCA 欧洲锦标赛](https://www.worldcubeassociation.org/competitions/Euro2018)将于 2018 年 7 月 19–22 日在西班牙马德里举行。更多信息及报名请见[赛事网站](https://euro2018.cubecomps.com)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.932Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "7e20e267fe727a494f1f7128bd09ebe0546f4e96e6712aeae0d354c0c370b976"
+  "translationHash": "268cdd0fffd38303a679746f1911a1f4b67ba3fd0da2a729c4b7f14a31217f51",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:07:08.715Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "af01317d8a70934c43c30c1d861ea99d7150ae031961ca002690f7d165d44938",
+    "reviewedTranslationHash": "268cdd0fffd38303a679746f1911a1f4b67ba3fd0da2a729c4b7f14a31217f51",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/wca-european-championship-2018-on-july-19-22-2018-in-madrid-spain.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "7e20e267fe727a494f1f7128bd09ebe0546f4e96e6712aeae0d354c0c370b976"
+  }
 }

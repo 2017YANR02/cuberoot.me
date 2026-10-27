@@ -375,12 +375,8 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 10px;
-}
-.reconstruct-playback-cap {
-  font-size: 11px; letter-spacing: 0.08em;
-  color: var(--faint-foreground);
 }
 .reconstruct-playback-speed-cap {
   font-size: 11px; color: var(--muted-foreground); margin-right: 2px;
@@ -718,10 +714,10 @@
 .reconstruct-bld-memo-val { font-family: var(--font-mono); letter-spacing: 0.05em; }
 
 .rc-summary {
-  display: flex; margin: 10px 0 14px; padding: 0;
+  display: flex; flex-wrap: wrap; margin: 10px 0 14px; padding: 0;
 }
 .rc-summary-cell {
-  flex: 1 1 0; min-width: 0; padding: 8px 12px;
+  flex: 0 0 auto; min-width: 0; padding: 8px 12px;
 }
 .rc-summary dt {
   font-size: 11px; color: var(--muted-foreground); margin: 0 0 2px;

@@ -1,0 +1,27 @@
+{
+  "key": "posts:/posts/start-up-of-the-wca-communication-team",
+  "source": {
+    "key": "posts:/posts/start-up-of-the-wca-communication-team",
+    "kind": "posts",
+    "title": "Start up of the WCA Communication Team",
+    "date": "2017-05-01T16:08:14.000Z",
+    "url": "https://www.worldcubeassociation.org/posts/start-up-of-the-wca-communication-team",
+    "content": "Dear WCA Community,\n\nWe are excited to announce a brand new committee: the **WCA Communication Team** (WCT).\nThe WCT consists of the following members:\n* Linus Fresz (Germany, Team Leader)\n* Lauren Klemz (US)\n* Matthew McMillan (US)\n* Thaynara Santana de Oliveira (Brazil)\n\nSome internal changes have been made by the WCA Software Team in order to accommodate our new necessities in communications. Important to mention is that anyone can reach us via the email address <communication@worldcubeassociation.org>. This is the default, public, and official email address of our new team.\n\nOur goal is to work with all WCA Committees to improve the WCA website and increase the communication of the WCA in the near future. Another important step is to gain better connections to the community, which we want to accomplish via social media accounts. We are aware that different countries use different social media networks, so we will try to add more social media accounts to reach communities in all countries in the near future. These channels will be used to create knowledge and content about the WCA for our community and the general public.\nPlease take a look at our official Facebook page: <https://www.facebook.com/WorldCubeAssociation/>\n\nBest regards,\nLinus Fresz, on behalf of the WCA Communication Team",
+    "hash": "7e66dafd38f8baeb0f1a221922dfaea0248b6ab9f7204aa6577b09816770faed",
+    "format": "markdown",
+    "sourceId": 7251
+  },
+  "translation": {
+    "version": 2,
+    "sourceHash": "7e66dafd38f8baeb0f1a221922dfaea0248b6ab9f7204aa6577b09816770faed",
+    "language": "zh-Hans",
+    "title": "WCA 通讯组正式成立",
+    "content": "亲爱的 WCA 社区成员：\n\n我们很高兴宣布，一个全新的团队——**WCA 通讯组**（WCT）现已成立。\n\nWCT 成员如下：\n\n* Linus Fresz（德国，团队负责人）\n* Lauren Klemz（美国）\n* Matthew McMillan（美国）\n* Thaynara Santana de Oliveira（巴西）\n\n为满足新的沟通需求，WCA 软件组已作出一些内部调整。特别说明，任何人都可以通过 <communication@worldcubeassociation.org> 联系我们。这是新团队默认、公开的官方邮箱。\n\n我们的目标是与 WCA 各委员会合作，在近期改善 WCA 网站，加强 WCA 的对外沟通。另一个重要目标是更好地联系社区，我们希望通过社交媒体账号来实现。我们知道，不同国家常用的社交平台不同，因此会在近期尽量开设更多平台账号，联系各国社区。这些渠道将向社区和公众提供有关 WCA 的知识和内容。\n\n欢迎关注我们的官方 Facebook 页面：<https://www.facebook.com/WorldCubeAssociation/>\n\n此致\n\nLinus Fresz，代表 WCA 通讯组",
+    "notes": [],
+    "translatedAt": "2026-10-22T08:52:41.150Z",
+    "reviewStatus": "pending_independent_review",
+    "revisedAt": "2026-10-25T07:28:01.629Z",
+    "revisionReason": "按 WCA 官方中文机构名称统一术语；仅修正机构译名，保留历史原文及缩写。"
+  },
+  "translationHash": "3e74eda0f6a8e18bc1707cd7eee63e1af757bc3ee4ec8259759bad7424d43855"
+}

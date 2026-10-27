@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/tomasz-zolnowski-wins-european-championship-2008",
+  "path": "docs/wca-post-translations/entries/tomasz-zolnowski-wins-european-championship-2008.json",
+  "sourceHash": "731b02f7df192c96398e4d2cce20e5176f7bd26b9313255f211b6be02c2df950",
+  "inputTranslationHash": "f84cff507afa13ca63bb12ea2b323a437281cc25e316c98f89d28dde6be80d4c",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:59.335Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

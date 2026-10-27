@@ -12,14 +12,31 @@
     "sourceId": 6873
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "0f75db8db4528daac5f975202d2339540f7c76faa149209780c0688b9fe74c63",
     "language": "zh-Hans",
     "title": "2017 年魔方世锦赛将于 7 月 13–16 日在法国巴黎举行",
     "content": "[2017 年魔方世锦赛](https://www.worldcubeassociation.org/competitions/WC2017)将于 2017 年 7 月 13–16 日在法国巴黎举行。更多信息及报名方式请见 [2017 年魔方世锦赛官网](http://www.rubiksworldparis2017.com)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.160Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "d4e4a5a64d9186e4897f042273e91f4d4e3bea6342c34a62377902ca0f733ba9"
+  "translationHash": "cb78f5dbe527fa36a4c16f0c33b717d6b0efce199cbd18a6c201c563181d5da1",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:11:14.400Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "0f75db8db4528daac5f975202d2339540f7c76faa149209780c0688b9fe74c63",
+    "reviewedTranslationHash": "cb78f5dbe527fa36a4c16f0c33b717d6b0efce199cbd18a6c201c563181d5da1",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/world-rubik-s-cube-championship-2017-on-july-13-16-2017-in-paris-france.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "d4e4a5a64d9186e4897f042273e91f4d4e3bea6342c34a62377902ca0f733ba9"
+  }
 }

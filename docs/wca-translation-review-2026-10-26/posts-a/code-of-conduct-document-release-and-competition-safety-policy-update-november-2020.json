@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/code-of-conduct-document-release-and-competition-safety-policy-update-november-2020",
+  "path": "docs/wca-post-translations/entries/code-of-conduct-document-release-and-competition-safety-policy-update-november-2020.json",
+  "sourceHash": "dfa567c070f6c422b580794c13fb85a1ec23d88daf218f3dfab4d76683a033b0",
+  "inputTranslationHash": "802957c0bf1fa954a6c411fa24a82034ea3e650b9214eb02344a2c3b8c089a18",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:12:38.683Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "全文对照标题、名单变更/历史范围、项目实施日期、条件和例外、合同授权条件、准则对象及纪录合作流程。"
+  ],
+  "changes": []
+}

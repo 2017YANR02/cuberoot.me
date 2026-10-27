@@ -1,0 +1,16 @@
+{
+  "key": "posts:/posts/tnoodle-1-0-1-official-release",
+  "path": "docs/wca-post-translations/entries/tnoodle-1-0-1-official-release.json",
+  "sourceHash": "034fcf2139f533dea186e5052fc5811c8f6db47281a81d47fbda35cbe4e71ddd",
+  "inputTranslationHash": "6ff039434fcb7e5f586152ee3c1cd45e663de476f446412057c5615848e3439c",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:48.605Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "correction_required",
+  "notes": [],
+  "changes": [
+    "until that date 与过渡期终点一致，不提前排除截止日。"
+  ],
+  "title": "TNoodle 1.0.1 正式发布",
+  "content": "TNoodle-WCA-1.0.1 现已在打乱页面提供下载。与上一版本相比，本次更新包括：\n\n* **新界面：**“旧版界面”和“使用 WCA 登录”两项功能已合并为一个单页应用。\n* **WCIF：**TNoodle 增加了更多便捷功能，并改善了与工作流程中其他软件的集成。\n* **Square-1 现在采用专用求解器，**感谢 Chen Shuang 的贡献。如果比赛包含 Square-1 项目，生成打乱的总耗时应会大幅减少。\n\n即将举行的比赛应尽可能使用 TNoodle-WCA-1.0.1 生成新打乱。考虑到目前的比赛限制，过渡期有所延长，**TNoodle-WCA-0.15.1 将继续作为官方版本保留三周，直至 2020 年 9 月 7 日**。此前已用 TNoodle-WCA-0.15.1 生成的打乱，截至该日期仍可使用。\n\n请记住，官方比赛必须使用当前有效版本的官方打乱程序。最新版本始终可从以下页面获取：\n[https://www.worldcubeassociation.org/regulations/scrambles/](https://www.worldcubeassociation.org/regulations/scrambles/)"
+}

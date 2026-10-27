@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/competition-announcement-rules-august-2021",
+  "path": "docs/wca-post-translations/entries/competition-announcement-rules-august-2021.json",
+  "sourceHash": "756928c0a105de9d0727ee094310b9a512f70b9ea48be9831b949608ed4b625f",
+  "inputTranslationHash": "10853eb4a61c06f38f708b76c3c46a64bc76d05dd832531eb67e158edf83dd51",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:13:03.043Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "已全文核对，保留历史政策语境；逐项核对疫情阈值、面积人数、疫苗天数/检测小时、例外以及锦标赛申办表所有日期和暂定限定。"
+  ],
+  "changes": []
+}

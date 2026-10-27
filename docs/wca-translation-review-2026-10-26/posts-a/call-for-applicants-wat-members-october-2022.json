@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/call-for-applicants-wat-members-october-2022",
+  "path": "docs/wca-post-translations/entries/call-for-applicants-wat-members-october-2022.json",
+  "sourceHash": "55315c1995f29e32ccee68b40d17d464e466512751a210d7da26e3efffe52e12",
+  "inputTranslationHash": "cb4c62b3832b7e65274a551090d647d9fc54cd9991643c7f22695b36794bcf0e",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:07:01.627Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "pass",
+  "notes": [
+    "完整对照招募正文、职责条目、必需/可选资格、年龄、时限和程序；未扩展外链材料。"
+  ],
+  "changes": []
+}

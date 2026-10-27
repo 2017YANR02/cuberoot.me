@@ -131,7 +131,7 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
       if (e.target instanceof Element && e.target.closest('.accent-color-menu')) return;
       // Navigation chooses the next panel on click. Do not clear the current
       // panel on mousedown first, which briefly collapses the shared column.
-      if (column && e.target instanceof Element && e.target.closest('.af-nav-sidebar, .af-nav-toggle')
+      if (column && e.target instanceof Element && e.target.closest('.af-nav-sidebar, .af-nav-toggle, [data-navigation-panel-toggle]')
         && ref.current?.closest('.af-navigation')?.contains(e.target)) return;
       if (ref.current && !ref.current.contains(e.target as Node)) closeMenu();
     };

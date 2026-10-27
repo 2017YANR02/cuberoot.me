@@ -12,14 +12,33 @@
     "sourceId": 14056
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "76d82ceb68aab6eac7acada451fec64a74b6dc403d65f5a1930f2fb959b1b03d",
     "language": "zh-Hans",
     "title": "WCA 体育组织团队招募负责人（2022 年 5 月）",
     "content": "WCA 将任命一位新的体育组织团队（WSOT）负责人。\n\n申请人应能完成 24 个月任期，并平均每周至少投入 4–6 小时处理团队事务。我们希望申请人具备：\n\n* 扎实的专业技术能力。\n* 良好的沟通能力。\n* 能够理解篇幅长、英文表达复杂的文档。\n* 注重细节。\n* 项目管理经验。\n\n申请截止时间为 **2022 年 5 月 19 日 23:59 UTC**。有意者请私下将材料发送至 WCA 董事会（[board@worldcubeassociation.org](mailto:board@worldcubeassociation.org)）。\n<!-- break -->\n**申请材料须为 PDF 格式，包含：**\n\n1. 简短的个人介绍。\n2. 为 WCA 所做工作的概述。\n3. 担任 WCA 体育组织团队负责人的工作设想。\n\n另请提供一份可在申请截止后公开的申请材料副本。\n\nWSOT 的权利与职责见 [WCA 议案 10.2022.13](https://www.worldcubeassociation.org/documents/motions/10.2022.13%20-%20Sports%20Organization%20Team.pdf)。\n\n申请截止后，WCA 董事会将通过投票选出新负责人，并按照 [WCA 议案 10.2022.0](https://www.worldcubeassociation.org/documents/motions/10.2022.0%20-%20Committees%20and%20Teams.pdf) 第 4 节，经高级代表及现任委员会、团队负责人投票确认后公布。\n\n感谢大家的申请与支持。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:00.922Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "4ccf72b91542303d64306f2c21b6cc9f34dda70f139411b07a606e0b440c4852"
+  "translationHash": "171565e0a56cf4ae5d3a6d2c686509f8a6b961316e2b4027e31142dfde21e4fa",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:11:12.894Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "76d82ceb68aab6eac7acada451fec64a74b6dc403d65f5a1930f2fb959b1b03d",
+    "reviewedTranslationHash": "171565e0a56cf4ae5d3a6d2c686509f8a6b961316e2b4027e31142dfde21e4fa",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/call-for-applicants-wsot-leader-may-2022.json",
+    "sourceConcern": false,
+    "notes": [
+      "已完整对照标题与正文；核对规则/成绩/质量保证团队职责、必需与可选资格、招募人数、任期工时及各篇申请日期、联系人与投票程序。历史 Guidelines 按参考保留指南。"
+    ],
+    "inputTranslationHash": "4ccf72b91542303d64306f2c21b6cc9f34dda70f139411b07a606e0b440c4852"
+  }
 }

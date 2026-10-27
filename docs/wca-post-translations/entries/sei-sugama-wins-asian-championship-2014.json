@@ -12,14 +12,31 @@
     "sourceId": 3871
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "fc5d6a53df03b0487ddf62e7e08b04266c4ab9657ad2e8ae125a74a28e0b274d",
     "language": "zh-Hans",
     "title": "Sei Sugama（洲镰星）夺得 2014 年亚洲锦标赛冠军",
     "content": "[Sei Sugama（洲镰星）](https://www.worldcubeassociation.org/results/p.php?i=2010SUGA01) 以 9.47 秒的平均成绩夺得 [2014 年亚洲锦标赛](https://www.worldcubeassociation.org/results/c.php?i=AsianChampionship2014)冠军。[Seung Hyuk Nahm（남승혁）](https://www.worldcubeassociation.org/results/p.php?i=2013NAHM01) 以 9.57 秒获得亚军，[Mitsuki Gunji（郡司光贵）](https://www.worldcubeassociation.org/results/p.php?i=2006GUNJ01) 以 9.64 秒获得季军。\n\n世界纪录：Kabyanil Talukdar，三阶盲拧平均 27.63 秒；Yu Da-Hyun，五魔方单次 37.83 秒、平均 44.63 秒、平均 42.89 秒；Yunho Nam（남윤호），魔表平均 6.00 秒、平均 6.25 秒。\n\n亚洲纪录：Seung Hyuk Nahm（남승혁），四阶单次 26.80 秒、平均 31.57 秒；Yohei Oka（冈要平），金字塔平均 3.00 秒。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.990Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "44e78467784e29b67bf34be865cbf5d0fca48320b92a337c8e2bd0bb58447dd5"
+  "translationHash": "2a4982793ef387fe05cf3b9e1c700be3aad9bd007c8dfb3c650c7cc46e9d2236",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:15.858Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "fc5d6a53df03b0487ddf62e7e08b04266c4ab9657ad2e8ae125a74a28e0b274d",
+    "reviewedTranslationHash": "2a4982793ef387fe05cf3b9e1c700be3aad9bd007c8dfb3c650c7cc46e9d2236",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/sei-sugama-wins-asian-championship-2014.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "44e78467784e29b67bf34be865cbf5d0fca48320b92a337c8e2bd0bb58447dd5"
+  }
 }

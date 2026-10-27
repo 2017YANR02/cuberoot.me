@@ -21,7 +21,8 @@ description: "Use when adding or debugging public/static assets such as images, 
 仓库根的 `tools/`(forks: Solver / AlgTrainer / csTimer)和 `stats/`(WCA stats JSON)由 **static.cuberoot.me** 服(服务器 `/www/wwwroot/toolkit/{tools,stats}/`);Vercel/Next 上 `app/{tools,stats}/[...slug]/route.ts` fallback 反代过去。
 
 - 加到这两个目录要确保上线到 static.cuberoot.me(见 memory `reference_static_toolkit_deploy`)。
-- 本地 dev 由 `app/{tools,stats}/[...slug]/route.ts` catch-all 从仓库根 serve。
+- 本地 dev 的统计默认通过 `@cuberoot/shared/stats-base` 读取已发布服务器数据；直接 `/stats/*` 请求也遵循同一规则。仅设置 `NEXT_PUBLIC_STATS_SOURCE=local` 后从仓库根 serve，缺失时报错、不回退线上。切换方式见 `docs/development.md`。
+- `/tools/*` 与模型、音乐等非统计静态资源保留现有本地预览规则，勿用 `NEXT_PUBLIC_STATIC_ORIGIN` 切换统计来源。
 - `stats/**` 走 CI 日更管道(stats.yml),一般不手动加。
 
 ## 验证

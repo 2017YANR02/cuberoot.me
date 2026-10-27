@@ -1,0 +1,21 @@
+{
+  "key": "disciplinary:/posts/integrity-committee-digest-2025-q2",
+  "path": "docs/wca-log-translations/entries/disciplinary-integrity-committee-digest-2025-q2.json",
+  "sourceHash": "543edad848e97c3441c90a991a700e5cc5c3b3b4d9b11a95601b334047b48dfc",
+  "inputTranslationHash": "65f2e48869f67566c2736fc52f4749f86395e7d1fe60a916f20c9add39fddb9b",
+  "reviewer": "/root/review_logs",
+  "reviewedAt": "2026-10-26T11:10:07.703Z",
+  "scope": "本轮完整阅读英中正文及既有审校疑点，保留原文矛盾或含混，不擅自纠正历史事实。官方现行来源已重新读取，相关正文与保存版本一致。",
+  "verdict": "source_uncertain",
+  "notes": [
+    "原文称结案9件，但4项禁赛加6件无措施为10；译文忠实保留，未调整统计，待来源核验。",
+    "2026-10-26 重新读取官方来源，疑点仍存在；这是源文事实/措辞的保留结论，不是遗漏翻译或已确认的译文错误。"
+  ],
+  "changes": [],
+  "previousEvidence": {
+    "report": "docs/wca-log-translations/reviews/round-1/report-1.json",
+    "reviewedTranslationHash": "9c95e3634e0ed7e18e83395947592919ba27293818582585cf0b4b6cf171c73d",
+    "verdict": "pending_source_verification"
+  },
+  "sourceUncertainty": true
+}

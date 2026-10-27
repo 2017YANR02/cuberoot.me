@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/wca-championship-2024-and-2025-hosts-announcement-august-2023",
+  "path": "docs/wca-post-translations/entries/wca-championship-2024-and-2025-hosts-announcement-august-2023.json",
+  "sourceHash": "b673b4b75d6b987f4880f0773de1af72a689d82d3ff17afe9cbc58036860c2d3",
+  "inputTranslationHash": "6862820c6741b847eabcbdb3ea14ecc7d576ea7acc693116c267e59b8ce209ef",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:07:08.714Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

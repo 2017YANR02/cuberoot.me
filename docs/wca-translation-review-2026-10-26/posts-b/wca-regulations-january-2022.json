@@ -1,0 +1,14 @@
+{
+  "key": "posts:/posts/wca-regulations-january-2022",
+  "path": "docs/wca-post-translations/entries/wca-regulations-january-2022.json",
+  "sourceHash": "b3913e70003b3f48c8f91282f3b96ec688446702de45217f474a06f87e3221ce",
+  "inputTranslationHash": "70e8ae7e8f8a41bdf1046e23ef21ac3603922420a0471a6a69e4e6a510749a14",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:09:46.861Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [
+    "全文核对规则变更条件、数字、项目中文、权限强度及链接。"
+  ],
+  "changes": []
+}

@@ -1,0 +1,12 @@
+{
+  "key": "posts:/posts/senior-delegate-announcement-europe-february-2026",
+  "path": "docs/wca-post-translations/entries/senior-delegate-announcement-europe-february-2026.json",
+  "sourceHash": "e0070d1daa715d4b6bbe013e60dc63e4411ca99ba5dcc3ca53481de79ba71ec2",
+  "inputTranslationHash": "47cb280ee65bae6afdd00b7ccbdea567fdbde4b5c688002e9d5d70e6a4d9bb58",
+  "reviewer": "review_posts_b",
+  "reviewedAt": "2026-10-26T11:06:25.168Z",
+  "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+  "verdict": "pass",
+  "notes": [],
+  "changes": []
+}

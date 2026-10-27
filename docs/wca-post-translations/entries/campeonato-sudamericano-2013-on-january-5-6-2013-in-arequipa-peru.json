@@ -12,14 +12,33 @@
     "sourceId": 2158
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "99b7a5000605cff25ede2b413db2435ca50799b971bf5969ffa9e31d404bcd52",
     "language": "zh-Hans",
     "title": "2013 年南美洲锦标赛将于 1 月 5–6 日在秘鲁阿雷基帕举行",
     "content": "[2013 年南美洲锦标赛（Campeonato Sudamericano 2013）](https://www.worldcubeassociation.org/results/c.php?i=CampeonatoSudamericano2013)将于 2013 年 1 月 5–6 日在秘鲁阿雷基帕举行。更多信息及报名请见[赛事网站](http://www.cubingsouthamerica.com/Sudamericano/index.php)。",
     "notes": [],
     "translatedAt": "2026-10-22T08:55:00.929Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "14864035be77ff4bea082ccef7b06e93f73b54197359fb8d49a4c2f1d03a5802"
+  "translationHash": "4fc77fea27d0cfabc4b8100b6af4b70cdd32bca550e84e1a607b1501de9b3758",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:12:23.462Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "99b7a5000605cff25ede2b413db2435ca50799b971bf5969ffa9e31d404bcd52",
+    "reviewedTranslationHash": "4fc77fea27d0cfabc4b8100b6af4b70cdd32bca550e84e1a607b1501de9b3758",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/campeonato-sudamericano-2013-on-january-5-6-2013-in-arequipa-peru.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照标题和正文；各届赛事城市及取消/退款范围、董事候选名单、当选与连任区别、任期及生效日期、保留职务和干事分工均与原文一致。"
+    ],
+    "inputTranslationHash": "14864035be77ff4bea082ccef7b06e93f73b54197359fb8d49a4c2f1d03a5802"
+  }
 }

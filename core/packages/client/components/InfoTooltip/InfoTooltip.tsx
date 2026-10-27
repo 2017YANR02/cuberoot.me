@@ -3,15 +3,16 @@
  * 小 popover:Info 图标点击展开多行说明,点外面 / Esc 关.
  * native title= 只在 hover 出, 这个是 click-toggle 兼桌面 + 移动.
  */
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { Info, X, type LucideIcon } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
+import { Tooltip } from '@/components/Tooltip';
 import './info_tooltip.css';
 
 interface Props {
   /** 多行内容,字面 \n 分隔会逐行渲染(段落间用 \n\n 空行分段) */
-  content: string;
+  content: ReactNode;
   /** Info 图标尺寸 (px),默认 11 配合 th 字号 */
   iconSize?: number;
   className?: string;
@@ -23,11 +24,28 @@ interface Props {
   ariaLabel?: string;
 }
 
-export function InfoTooltip({ content, iconSize = 11, className, icon: Icon = Info, variant = 'popover', ariaLabel }: Props) {
+export function InfoTooltip(props: Props) {
+  const { content, iconSize = 11, className, icon: Icon = Info, variant = 'popover', ariaLabel } = props;
+  // Plain help text must escape table-header backdrop roots to blur the rows beneath it.
+  if (variant === 'popover' && typeof content === 'string') {
+    return <span className={`info-tooltip ${className ?? ''}`}>
+      <Tooltip content={content} openOnClick>{tip => <button
+        {...tip} type="button" className="info-tooltip-trigger"
+        aria-label={ariaLabel ?? tr({ zh: '更多信息', en: 'More info' })}
+      ><Icon size={iconSize} /></button>}</Tooltip>
+    </span>;
+  }
+  return <ExpandedInfoTooltip {...props} />;
+}
+
+function ExpandedInfoTooltip({ content, iconSize = 11, className, icon: Icon = Info, variant = 'popover', ariaLabel }: Props) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLSpanElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   usePanelClamp(open && variant === 'popover', panelRef);
+  const body = typeof content === 'string'
+    ? content.split('\n').map((line, i) => <div key={i}>{line || ' '}</div>)
+    : content;
 
   useEffect(() => {
     if (!open) return;
@@ -63,18 +81,14 @@ export function InfoTooltip({ content, iconSize = 11, className, icon: Icon = In
               <X size={16} />
             </button>
             <div className="info-modal-body">
-              {content.split('\n').map((line, i) => (
-                <div key={i}>{line || ' '}</div>
-              ))}
+              {body}
             </div>
           </div>
         </div>
       )}
       {open && variant === 'popover' && (
-        <div ref={panelRef} className="info-tooltip-pop" role="tooltip">
-          {content.split('\n').map((line, i) => (
-            <div key={i}>{line || ' '}</div>
-          ))}
+        <div ref={panelRef} className="info-tooltip-pop" role={typeof content === 'string' ? 'tooltip' : 'dialog'} aria-label={ariaLabel}>
+          {body}
         </div>
       )}
     </span>

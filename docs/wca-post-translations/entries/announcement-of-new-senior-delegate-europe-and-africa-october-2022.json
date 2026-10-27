@@ -12,14 +12,33 @@
     "sourceId": 14075
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "8114e262f35f03bbc852af168e16056211162158d44b0f6d33c021b2986aa6a9",
     "language": "zh-Hans",
     "title": "欧洲及非洲高级代表任命公告（2022 年 10 月）",
     "content": "我们很高兴地宣布，Simone Cantarelli 将出任欧洲地区的新任高级代表。董事会没有收到非洲高级代表职位的申请，因此现阶段将由董事会承担这一职责。\n\n感谢 Laura Ohrndorf 担任欧洲高级代表期间的工作，也感谢 Brent Boswell 担任非洲高级代表期间的工作。\n\nWCA 董事会依照[《关于高级代表的议案》](http://www.worldcubeassociation.org/documents/motions/09.2022.1%20-%20Senior%20Delegates.pdf)第 4 节，经董事投票选出 Simone。\n\n祝 Simone Cantarelli 在新的岗位上一切顺利。他的高级代表任期自 2022 年 10 月 1 日开始。\n\n我们共收到两份申请，Simone 是其中一位申请人。如有兴趣，两份申请材料均可在[这里](https://drive.google.com/drive/folders/1vLs7M1aEajSHsNlIpkKOv0cgBoKSX2FZ)查看。\n\n除 Simone 外，欧洲职位的另一位申请人是：\n\n* Sam Spendla",
     "notes": [],
     "translatedAt": "2026-10-22T08:45:43.530Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "bbde432df0f614a1b1b8022211154b073108b4d6217536b31f5c8879fb4a7604"
+  "translationHash": "149c40868a94d936c933efc6ee4c370a2b0a6ef1645ec9ab79514b09cbfe8a41",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:05:11.622Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "8114e262f35f03bbc852af168e16056211162158d44b0f6d33c021b2986aa6a9",
+    "reviewedTranslationHash": "149c40868a94d936c933efc6ee4c370a2b0a6ef1645ec9ab79514b09cbfe8a41",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/announcement-of-new-senior-delegate-europe-and-africa-october-2022.json",
+    "sourceConcern": false,
+    "notes": [
+      "逐篇完整对照：日期、人物、数量、资格/权限与链接语义保留。"
+    ],
+    "inputTranslationHash": "bbde432df0f614a1b1b8022211154b073108b4d6217536b31f5c8879fb4a7604"
+  }
 }

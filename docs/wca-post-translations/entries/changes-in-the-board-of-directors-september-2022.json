@@ -12,14 +12,33 @@
     "sourceId": 14069
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "3ecf68b4108de8286f14840b3a45d1fe2ed666a44e76e74e1049777ad2689fd5",
     "language": "zh-Hans",
     "title": "WCA 董事会成员变动（2022 年 9 月）",
     "content": "Callum Goodyear 和 Saransh Grover 的董事任期即将结束，WCA 于 2022 年 8 月 31 日举行了不记名选举，选出新一届成员。此次选举依据[动议 5.2021.1——董事选举](https://www.worldcubeassociation.org/documents/motions/05.2021.1%2520-%2520Election%2520of%2520Directors.pdf)进行。\n\n董事会收到以下两人的申请：\n\n* Callum Goodyear\n* Calvin Nielson\n\n我们很高兴地宣布，选举顺利完成，Callum 成功连任 WCA 董事！祝他履职顺利。感谢 Calvin 提交申请，以及他对 WCA 的持续投入。也感谢 Saransh 在董事任期内所做的工作。\n\n两位申请者的材料可在[这里](https://drive.google.com/drive/folders/1kOgXnr1hVjptxJf6giBoG24H5QPdogwE?usp=sharing)查看。",
     "notes": [],
     "translatedAt": "2026-10-22T08:49:54.098Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "1214c17eb7d3623c6f93fedd8dfc179a09efc4fad001c8790f4d8b9cbb31193f"
+  "translationHash": "f29bb3bb0f9c7aede2ac2d9be4b196c3b70fd3c74df9ce24c492cfc0ac28139f",
+  "review": {
+    "reviewer": "review_posts_a",
+    "reviewedAt": "2026-10-26T11:12:23.464Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "3ecf68b4108de8286f14840b3a45d1fe2ed666a44e76e74e1049777ad2689fd5",
+    "reviewedTranslationHash": "f29bb3bb0f9c7aede2ac2d9be4b196c3b70fd3c74df9ce24c492cfc0ac28139f",
+    "verdict": "pass",
+    "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-a/changes-in-the-board-of-directors-september-2022.json",
+    "sourceConcern": false,
+    "notes": [
+      "完整对照标题和正文；各届赛事城市及取消/退款范围、董事候选名单、当选与连任区别、任期及生效日期、保留职务和干事分工均与原文一致。"
+    ],
+    "inputTranslationHash": "1214c17eb7d3623c6f93fedd8dfc179a09efc4fad001c8790f4d8b9cbb31193f"
+  }
 }

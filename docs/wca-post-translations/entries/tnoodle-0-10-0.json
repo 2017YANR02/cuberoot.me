@@ -12,14 +12,31 @@
     "sourceId": 4601
   },
   "translation": {
-    "version": 1,
+    "version": 2,
     "sourceHash": "21bfa8f7c853ced4a596227ba4e10dc485016aba7135b4c5b2e001f05449d76b",
     "language": "zh-Hans",
     "title": "TNoodle 0.10.0 发布",
     "content": "为配合明天生效的 WCA 规则更新，TNoodle-WCA-0.10.0 现已可从 [https://www.worldcubeassociation.org/regulations/scrambles](https://www.worldcubeassociation.org/regulations/scrambles) 下载。\n\n与 TNoodle 0.9.0 相比，本次作出了以下修改：\n\n* 金字塔打乱所要求的最短还原步数由 7 步降为 6 步。\n\n请记住，官方比赛必须始终使用当前版本的官方打乱程序。最新版本可从以下页面获取：[https://www.worldcubeassociation.org/regulations/scrambles/](https://www.worldcubeassociation.org/regulations/scrambles/)",
     "notes": [],
     "translatedAt": "2026-10-22T08:52:41.169Z",
-    "reviewStatus": "pending_independent_review"
+    "reviewStatus": "independently_verified",
+    "revisedAt": "2026-10-26T11:23:03.326Z",
+    "revisionReason": "完成当前版本独立审校；正文未改。"
   },
-  "translationHash": "b5176567af0d074b5b5062d2f7f702131654d9b4b24f69de6bc3253dfe744fba"
+  "translationHash": "d3012e9438ea5ff4c4cc775e45948966a3bcc2f2bb66cc2b2cff43fcfa5eb757",
+  "review": {
+    "reviewer": "review_posts_b",
+    "reviewedAt": "2026-10-26T11:06:48.600Z",
+    "report": "../wca-translation-review-2026-10-26/final-report.json",
+    "sourceHash": "21bfa8f7c853ced4a596227ba4e10dc485016aba7135b4c5b2e001f05449d76b",
+    "reviewedTranslationHash": "d3012e9438ea5ff4c4cc775e45948966a3bcc2f2bb66cc2b2cff43fcfa5eb757",
+    "verdict": "pass",
+    "scope": "完整英文标题及正文与当前中文逐篇语义对照；不包含外链正文或独立事实核验",
+    "status": "independently_verified",
+    "round": "2026-10-26",
+    "proposal": "docs/wca-translation-review-2026-10-26/posts-b/tnoodle-0-10-0.json",
+    "sourceConcern": false,
+    "notes": [],
+    "inputTranslationHash": "b5176567af0d074b5b5062d2f7f702131654d9b4b24f69de6bc3253dfe744fba"
+  }
 }

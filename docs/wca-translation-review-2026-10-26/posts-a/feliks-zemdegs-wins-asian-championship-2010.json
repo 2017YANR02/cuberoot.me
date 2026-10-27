@@ -1,0 +1,18 @@
+{
+  "key": "posts:/posts/feliks-zemdegs-wins-asian-championship-2010",
+  "path": "docs/wca-post-translations/entries/feliks-zemdegs-wins-asian-championship-2010.json",
+  "sourceHash": "33835dc7f7cf46f7074560bc1e54f71d030d7b8eb048ed6a666ac5bfcfd5292a",
+  "inputTranslationHash": "6fc51f5e3ddbb322fa658b8b5a3f8b8c463c4d827d3f0a26f8bc080e6907bc0c",
+  "reviewer": "review_posts_a",
+  "reviewedAt": "2026-10-26T11:13:29.853Z",
+  "scope": "Full source and translated title/body semantic comparison; external linked documents excluded",
+  "verdict": "correction_required",
+  "notes": [
+    "逐项检查所有纪录数值、单次/平均及选手归属，均保持不变。"
+  ],
+  "changes": [
+    "历史成绩报道中的项目短名补齐为五魔方、三阶最少步或完整阶数盲拧名称；Square-1 按官方保留。"
+  ],
+  "content": "[Feliks Zemdegs](https://www.worldcubeassociation.org/results/p.php?i=2009ZEMD01)以 9.43 秒的平均成绩夺得 [2010 年亚洲锦标赛](https://www.worldcubeassociation.org/results/c.php?i=AsianChampionship2010)冠军。[Yumu Tabuchi](https://www.worldcubeassociation.org/results/p.php?i=2006TABU02)以 10.98 秒获得亚军，[Arifumi Fushimi](https://www.worldcubeassociation.org/results/p.php?i=2009FUSH01)以 11.19 秒获得季军。\n\n**世界纪录：**Feliks Zemdegs：四阶单次 34.41、二阶平均 2.35。\n\n**亚洲纪录：**Yumu Tabuchi：三阶平均 9.82；Arifumi Fushimi：三阶脚拧平均 49.33。\n\n**大洋洲纪录：**Feliks Zemdegs：四阶平均 41.71、二阶单次 1.13、三阶单手单次 12.46、三阶最少步单次 32，五魔方单次 56.90、平均 1:13.74，魔表单次 10.02，七阶单次 3:57.53、平均 4:05.35。",
+  "title": "Feliks Zemdegs 夺得 2010 年亚洲锦标赛冠军"
+}
