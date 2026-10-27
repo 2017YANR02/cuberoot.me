@@ -1,5 +1,5 @@
 /** @module Shared workspace checklist and schedule contracts and calendar arithmetic. */
-export type ChecklistItem = { id: string; text: string; done: boolean };
+export type ChecklistItem = { id: string; text: string; done: boolean; archived?: boolean };
 export type WorkspaceBoard = {
   id: string; projectId: string | null; name: string; version: number;
   active: boolean; projectName: string | null; projectActive: boolean | null;

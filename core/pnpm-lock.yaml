@@ -8,7 +8,7 @@ packageExtensionsChecksum: sha256-1U/6Y3WntbPpDziXsm+/Fb56O387oglad0xk5s/pn/k=
 
 patchedDependencies:
   '@2017yanr02/continuous-corners@0.3.2': 8a98d9b5168e06bcff9c16a56bc7bb1ed910858ef1946f842304a785906c0340
-  '@app-foundation/workspace-ui@0.1.0': 5d50c99c864e076c2e4d00f646c57dbb14507a126d8a47d7fb1472af336e24ee
+  '@app-foundation/workspace-ui@0.1.0': f884be29fee3ca5c17f0ad25cd9ca976c749c66b1284f9390f50dc506ec35230
   cubing@0.63.3: 026724bd89e53a602c720d772bbd4c11ebe3c4040d840ba0c7df469b5244c9f6
 
 importers:
@@ -597,7 +597,7 @@ importers:
         version: https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz
       '@app-foundation/workspace-ui':
         specifier: https://github.com/2017YANR02/app-foundation/releases/download/v0.7.0/app-foundation-workspace-ui-0.1.0.tgz
-        version: https://github.com/2017YANR02/app-foundation/releases/download/v0.7.0/app-foundation-workspace-ui-0.1.0.tgz(patch_hash=5d50c99c864e076c2e4d00f646c57dbb14507a126d8a47d7fb1472af336e24ee)(@app-foundation/workspace-policy@https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz)(react@19.2.4)
+        version: https://github.com/2017YANR02/app-foundation/releases/download/v0.7.0/app-foundation-workspace-ui-0.1.0.tgz(patch_hash=f884be29fee3ca5c17f0ad25cd9ca976c749c66b1284f9390f50dc506ec35230)(@app-foundation/workspace-policy@https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz)(react@19.2.4)
       '@codemirror/lang-markdown':
         specifier: ^6.5.0
         version: 6.5.0
@@ -6679,7 +6679,7 @@ snapshots:
 
   '@app-foundation/workspace-policy@https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz': {}
 
-  '@app-foundation/workspace-ui@https://github.com/2017YANR02/app-foundation/releases/download/v0.7.0/app-foundation-workspace-ui-0.1.0.tgz(patch_hash=5d50c99c864e076c2e4d00f646c57dbb14507a126d8a47d7fb1472af336e24ee)(@app-foundation/workspace-policy@https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz)(react@19.2.4)':
+  '@app-foundation/workspace-ui@https://github.com/2017YANR02/app-foundation/releases/download/v0.7.0/app-foundation-workspace-ui-0.1.0.tgz(patch_hash=f884be29fee3ca5c17f0ad25cd9ca976c749c66b1284f9390f50dc506ec35230)(@app-foundation/workspace-policy@https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz)(react@19.2.4)':
     dependencies:
       '@app-foundation/workspace-policy': https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz
       react: 19.2.4

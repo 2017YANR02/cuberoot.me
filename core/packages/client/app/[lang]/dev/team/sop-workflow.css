@@ -6,7 +6,6 @@
 
 .sop-guide :is(h2, h3, p, figure) { margin: 0; }
 .sop-guide-intro { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding: 2px 0 4px; }
-.sop-guide-eyebrow { display: block; margin-bottom: 10px; color: var(--muted-foreground); font-size: .72rem; font-weight: 550; letter-spacing: .07em; }
 .sop-guide-intro h2 { font-size: clamp(1.5rem, 3.2vw, 2.5rem); font-weight: 620; line-height: 1.25; letter-spacing: -.04em; text-wrap: balance; }
 .sop-guide-intro p { margin-top: 12px; max-width: 48em; font-size: .88rem; color: var(--muted-foreground); line-height: 1.75; }
 .sop-guide-copy { display: inline-flex; align-items: center; justify-content: center; gap: 7px; flex: none; min-height: 38px; padding: 8px 14px; border: 0; border-radius: 999px; background: var(--foreground); color: var(--background); font: inherit; font-size: .78rem; font-weight: 550; cursor: pointer; transition: opacity .16s; }

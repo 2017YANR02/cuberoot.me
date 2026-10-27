@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, type ReactNode } from 'react';
+import { Suspense, type ReactNode, type MouseEvent } from 'react';
 import { usePathname } from 'next/navigation';
 import { parseAsString, useQueryState } from 'nuqs';
 import { NavigationShell } from '@app-foundation/navigation-ui';
@@ -28,7 +28,7 @@ function Navigation({ children }: { children: ReactNode }) {
     { id: 'updates', label: t('团队动态', 'Team updates'), Icon: Users },
     { id: 'projects', label: t('项目', 'Projects'), Icon: FolderKanban },
     { id: 'checklists', label: t('清单', 'Checklists'), Icon: ClipboardList },
-    { id: 'schedule', label: t('总排期', 'Schedule'), Icon: FolderKanban },
+    { id: 'schedule', label: t('排期', 'Schedule'), Icon: FolderKanban },
     ...(admin ? [{ id: 'members', label: t('成员与权限', 'Members and access'), Icon: ShieldCheck }] : []),
     { id: 'onboarding', label: t('入职', 'Onboarding'), Icon: UserRoundPlus },
     { id: 'sop', label: 'SOP', Icon: Workflow },
@@ -52,7 +52,17 @@ function Navigation({ children }: { children: ReactNode }) {
       : section ?? 'overview';
     return { id, label, href, icon: <Icon size={18} aria-hidden />, active: inAdmin && selected === id };
   });
-  return <NavigationShell className="staff-workspace cuberoot-workspace-navigation" mainClassName={`staff-main${inAdmin ? ' admin-navigation__content' : ''}`} contentAs="div"
+  const onGroupClick = (event: MouseEvent<HTMLDivElement>) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const summary = target.closest('summary');
+    const group = summary?.parentElement;
+    if (!(group instanceof HTMLDetailsElement) || group.open || !group.matches('.af-nav-sidebar > div > .af-nav-group')) return;
+    group.parentElement?.querySelectorAll<HTMLDetailsElement>(':scope > .af-nav-group[open]').forEach(other => {
+      if (other !== group) other.open = false;
+    });
+  };
+  return <div onClickCapture={onGroupClick}><NavigationShell className="staff-workspace cuberoot-workspace-navigation" mainClassName={`staff-main${inAdmin ? ' admin-navigation__content' : ''}`} contentAs="div"
     items={[]} groups={[
       { id: 'team', label: t('团队协作', 'Team collaboration'), icon: <Users size={18} aria-hidden />, items: teamItems, defaultOpen: !inAdmin },
       ...(admin ? [{ id: 'admin', label: t('网站管理', 'Site management'), icon: <ShieldCheck size={18} aria-hidden />, items: adminItems, defaultOpen: inAdmin }] : []),
@@ -61,7 +71,7 @@ function Navigation({ children }: { children: ReactNode }) {
     renderLink={props => <AppLink {...props} prefetch={false} />}
     header={toggle => <header className="staff-header">{toggle}<AppLink href="/" className="staff-brand" prefetch={false}>CubeRoot</AppLink><div className="staff-header-actions"><AppLink href="/account" prefetch={false}>{user.name || t('我的账号', 'My account')}</AppLink></div></header>}>
     {children}
-  </NavigationShell>;
+  </NavigationShell></div>;
 }
 
 export default function WorkspaceNavigation({ children }: { children: ReactNode }) {

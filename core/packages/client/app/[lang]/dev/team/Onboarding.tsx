@@ -34,7 +34,6 @@ export default function GetStartedPage() {
 
   return <section className="team-lifecycle">
     <header className="team-lifecycle-intro">
-      <span className="team-lifecycle-kicker">{t('入职', 'Onboarding')}</span>
       <h2>{t('先接入，再完成第一个任务', 'Get set up. Complete your first task.')}</h2>
       <p>{t('AI 帮你准备工具，你负责理解任务、确认权限和验收结果。', 'Let AI prepare the tools. You own the brief, access decisions and acceptance.')}</p>
     </header>

@@ -10,7 +10,7 @@ const boardInput = z.object({
   name: z.string().trim().min(1).max(80), active: z.boolean(),
 });
 export const checklistInput = boardInput.extend({
-  items: z.array(z.object({ id: uuid, text: z.string().trim().min(1).max(160), done: z.boolean() })).max(200),
+  items: z.array(z.object({ id: uuid, text: z.string().trim().min(1).max(160), done: z.boolean(), archived: z.boolean().optional() })).max(200),
 }).refine(value => new Set(value.items.map(item => item.id)).size === value.items.length, 'Duplicate item ID');
 
 const date = z.string().refine(isPlanningDate);
@@ -83,7 +83,7 @@ export function planningService(q: QueryRunner, access: PlanningAccess) {
     async checklists(search = new URLSearchParams()) {
       const { page, active, offset } = pageOptions(search);
       const rows = await q<Checklist>(`SELECT ${columns},b.items FROM workspace_checklists b LEFT JOIN workspace_projects p ON p.id=b.project_id WHERE ${readable}${active} ORDER BY b.created_at,b.id LIMIT 21 OFFSET ?`, [...params,offset]);
-      return { checklists: rows.slice(0,20).map(row => ({ ...row, canEdit: row.projectActive !== false })), hasMore: rows.length > 20, page };
+      return { checklists: rows.slice(0,20).map(row => ({ ...row, canEdit: row.projectActive !== false })), hasMore: rows.length > 20, page, itemArchiveSupported: true };
     },
     async saveChecklist(input: unknown) {
       const data = checklistInput.parse(input);

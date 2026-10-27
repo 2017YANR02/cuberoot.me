@@ -1126,7 +1126,7 @@ function ao5Mean(vals: number[]): number {
 }
 
 function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows: (v: boolean) => void }) {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const [official, setOfficial] = useState<WcaResultsRow[] | null>(null);
   const [officialComps, setOfficialComps] = useState<WcaCompetition[] | null>(null);
@@ -1274,7 +1274,6 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
 
   return (
     <div className="detail-section">
-      <div className="detail-section-label">{t('recon.sameCompEvent')}</div>
       <div className="same-comp-event-table-wrap">
         <div className="wp-table-scroll">
           <table className="wp-bycomp-table same-comp-event-table" style={{ '--att-cols': nAtt } as React.CSSProperties}>
@@ -1493,11 +1492,6 @@ function SameSessionTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows: 
 
   return (
     <div className="detail-section">
-      <div className="detail-section-label">
-        {solve.official === 'practice'
-          ? tr({ zh: '同场练习还原', en: 'Same Session' })
-          : tr({ zh: '同场比赛还原', en: 'Same Competition' })}
-      </div>
       <div className="same-comp-event-table-wrap">
         <div className="wp-table-scroll">
           <table className="wp-bycomp-table same-comp-event-table" style={{ '--att-cols': nAtt } as React.CSSProperties}>

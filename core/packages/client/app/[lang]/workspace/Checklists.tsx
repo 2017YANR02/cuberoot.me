@@ -5,7 +5,8 @@ import { parseAsInteger, parseAsStringEnum, useQueryState } from 'nuqs';
 import { ErrorNotice, Field, Form, EditorDialog, useResource, useWorkspace, value, type ProjectList } from '@app-foundation/workspace-ui';
 import { orderChecklistItems, type Checklist, type ChecklistItem } from '@cuberoot/shared/workspace-planning';
 import { useT } from '@/hooks/useT';
-import { ChevronRight, Folder, FolderOpen } from '@app-foundation/icons/lucide';
+import { Tooltip } from '@/components/Tooltip';
+import { Archive, ArchiveRestore, ChevronsDownUp, ChevronsUpDown, ChevronRight, Folder, FolderOpen } from '@app-foundation/icons/lucide';
 
 function groupChecklistItems(items: ChecklistItem[]) {
   const groups = new Map<string, ChecklistItem[]>();
@@ -23,10 +24,13 @@ export default function Checklists() {
   const { api, Button } = useWorkspace();
   const [page, setPage] = useQueryState('checkPage', parseAsInteger.withDefault(1));
   const [status, setStatus] = useQueryState('checkStatus', parseAsStringEnum(['active', 'all']).withDefault('active'));
+  const [itemStatus, setItemStatus] = useState<'active' | 'archived' | 'all'>('active');
   const path = `checklists?${new URLSearchParams({ page: String(page), archived: String(status === 'all') })}`;
-  const resource = useResource<{ checklists: Checklist[]; hasMore: boolean }>(path);
+  const resource = useResource<{ checklists: Checklist[]; hasMore: boolean; itemArchiveSupported?: boolean }>(path);
   const projects = useResource<ProjectList>('projects');
   const [checklists, setChecklists] = useState<Checklist[]>([]);
+  const listsRef = useRef<HTMLDivElement>(null);
+  const [allExpanded, setAllExpanded] = useState(false);
   const deletedIds = useRef(new Set<string>());
   const [loadedPath, setLoadedPath] = useState('');
   useEffect(() => {
@@ -42,10 +46,22 @@ export default function Checklists() {
   const newId = useRef('');
   const current = editing && editing !== 'new' ? editing : undefined;
   const lists = resource.error || loadedPath !== path ? [] : checklists;
+  useEffect(() => {
+    const container = listsRef.current;
+    if (!container) return;
+    const sync = () => {
+      const folders = container.querySelectorAll<HTMLDetailsElement>('.workspace-check-folder');
+      setAllExpanded(folders.length > 0 && Array.from(folders).every(folder => folder.open));
+    };
+    sync();
+    container.addEventListener('toggle', sync, true);
+    return () => container.removeEventListener('toggle', sync, true);
+  }, [lists, itemStatus]);
   return <>
     <div className="staff-actions workspace-toolbar">
-      <Field label={t('状态', 'Status')}><select className="workspace-toolbar-select" value={status} onChange={event => { void setStatus(event.target.value as typeof status); void setPage(1); setEditing(null); }}><option value="active">{t('进行中', 'Active')}</option><option value="all">{t('含已归档', 'Include archived')}</option></select></Field>
-      <div className="staff-toolbar-actions"><Button action="add" onClick={() => { newId.current = crypto.randomUUID(); setEditing('new'); }}>{t('新建清单', 'New checklist')}</Button></div>
+      <Field label={t('清单状态', 'Checklist status')}><select className="workspace-toolbar-select" value={status} onChange={event => { void setStatus(event.target.value as typeof status); void setPage(1); setEditing(null); }}><option value="active">{t('进行中', 'Active')}</option><option value="all">{t('含已归档', 'Include archived')}</option></select></Field>
+      <Field label={t('事项状态', 'Task status')}><select className="workspace-toolbar-select" value={itemStatus} onChange={event => setItemStatus(event.target.value as typeof itemStatus)}><option value="active">{t('未归档', 'Not archived')}</option><option value="archived">{t('已归档', 'Archived')}</option><option value="all">{t('全部', 'All')}</option></select></Field>
+      <div className="staff-toolbar-actions"><Tooltip content={allExpanded ? t('收起所有文件夹', 'Collapse all folders') : t('展开所有文件夹', 'Expand all folders')}>{tip => <button {...tip} type="button" className="btn workspace-icon-action workspace-action" data-emphasis="quiet" disabled={lists.length === 0} aria-label={allExpanded ? t('收起所有文件夹', 'Collapse all folders') : t('展开所有文件夹', 'Expand all folders')} onClick={() => { const folders = listsRef.current?.querySelectorAll<HTMLDetailsElement>('.workspace-check-folder'); if (!folders?.length) return; const open = !Array.from(folders).every(folder => folder.open); folders.forEach(folder => { folder.open = open; }); setAllExpanded(open); }}>{allExpanded ? <ChevronsDownUp size={20} aria-hidden="true" /> : <ChevronsUpDown size={20} aria-hidden="true" />}</button>}</Tooltip><Button action="add" onClick={() => { newId.current = crypto.randomUUID(); setEditing('new'); }}>{t('新建清单', 'New checklist')}</Button></div>
     </div>
     <ErrorNotice error={resource.error} retry={resource.reload} />
     <ErrorNotice error={projects.error} retry={projects.reload} />
@@ -65,16 +81,16 @@ export default function Checklists() {
       </Form>
     </EditorDialog>}
     {!resource.loading && resource.data && lists.length === 0 && <p className="staff-empty">{t('暂无清单', 'No checklists')}</p>}
-    {lists.map(list => <ChecklistPanel key={list.id} list={list} reload={resource.reload} edit={() => setEditing(list)} onSaved={saved => setChecklists(rows => rows.map(row => row.id === saved.id ? saved : row))} onDeleted={() => {
+    <div ref={listsRef}>{lists.map(list => <ChecklistPanel key={list.id} itemStatus={itemStatus} archiveSupported={resource.data?.itemArchiveSupported === true} list={list} reload={resource.reload} edit={() => setEditing(list)} onSaved={saved => setChecklists(rows => rows.map(row => row.id === saved.id ? saved : row))} onDeleted={() => {
       deletedIds.current.add(list.id);
       setChecklists(rows => rows.filter(row => row.id !== list.id));
       if (lists.length === 1 && page > 1) void setPage(page - 1); else resource.reload();
-    }} />)}
+    }} />)}</div>
     {resource.data && (page > 1 || resource.data.hasMore) && <div className="staff-pagination"><Button action="previous" variant="secondary" disabled={page <= 1} onClick={() => { setEditing(null); void setPage(page - 1); }}>{t('上一页', 'Previous')}</Button><span>{page}</span><Button action="next" variant="secondary" disabled={!resource.data.hasMore} onClick={() => { setEditing(null); void setPage(page + 1); }}>{t('下一页', 'Next')}</Button></div>}
   </>;
 }
 
-function ChecklistPanel({ list, reload, edit, onSaved, onDeleted }: { list: Checklist; reload: () => void; edit: () => void; onSaved: (list: Checklist) => void; onDeleted: () => void }) {
+function ChecklistPanel({ list, itemStatus, archiveSupported, reload, edit, onSaved, onDeleted }: { itemStatus: 'active' | 'archived' | 'all'; archiveSupported: boolean; list: Checklist; reload: () => void; edit: () => void; onSaved: (list: Checklist) => void; onDeleted: () => void }) {
   const t = useT();
   const { api, Button } = useWorkspace();
   const [busy, setBusy] = useState(false);
@@ -99,9 +115,9 @@ function ChecklistPanel({ list, reload, edit, onSaved, onDeleted }: { list: Chec
     finally { lock.current = false; setBusy(false); }
   }
   return <section className="staff-panel workspace-checklist" aria-busy={busy}>
-    <div className="workspace-list-heading"><h2>{list.name}</h2><span className="staff-muted">{list.projectName ?? t('公司全员', 'All employees')}{!list.active && ` · ${t('已归档', 'Archived')}`}</span>{list.canEdit && <div className="staff-toolbar-actions"><Button action="edit" variant="secondary" disabled={busy} onClick={edit}>{t('编辑', 'Edit')}</Button><Button action="delete" variant="secondary" disabled={busy} aria-label={`${t('删除清单', 'Delete checklist')}: ${list.name}`} onClick={() => setDeleting(true)}>{t('删除清单', 'Delete checklist')}</Button></div>}</div>
+    <div className="workspace-list-heading"><h2>{list.name}</h2>{(list.projectName || !list.active) && <span className="staff-muted">{list.projectName}{!list.active && `${list.projectName ? ' · ' : ''}${t('已归档', 'Archived')}`}</span>}{list.canEdit && <div className="staff-toolbar-actions"><Button action="edit" variant="secondary" disabled={busy} onClick={edit}>{t('编辑', 'Edit')}</Button><Button action="delete" variant="secondary" disabled={busy} aria-label={`${t('删除清单', 'Delete checklist')}: ${list.name}`} onClick={() => setDeleting(true)}>{t('删除清单', 'Delete checklist')}</Button></div>}</div>
     <ErrorNotice error={error} retry={reload} />
-    <div className="workspace-check-tree">{groupChecklistItems(list.items).map(group => <details key={group.path} className="workspace-check-folder">
+    <div className="workspace-check-tree">{groupChecklistItems(list.items.filter(item => itemStatus === 'all' || (itemStatus === 'archived' ? item.archived : !item.archived))).map(group => <details key={group.path} className="workspace-check-folder">
       <summary>
         <ChevronRight className="workspace-check-chevron" size={16} aria-hidden="true" />
         <Folder className="workspace-check-folder-closed" size={20} aria-hidden="true" />
@@ -111,8 +127,9 @@ function ChecklistPanel({ list, reload, edit, onSaved, onDeleted }: { list: Chec
       </summary>
       <ul className="workspace-check-items">{group.items.map(item => <li key={item.id} className={item.done ? 'workspace-check-item is-done' : 'workspace-check-item'}>
       {/* allow-checkbox: Checklist completion is a task checkbox, not a settings switch. */}
-      <input type="checkbox" checked={item.done} disabled={!editable || busy} aria-label={`${t('完成', 'Complete')}: ${item.text}`} onChange={() => { void save(list.items.map(row => row.id === item.id ? { ...row, done: !row.done } : row)).catch(() => {}); }} />
-      <span className="workspace-check-text">{item.text.trim().slice(group.path.length).trim() || item.text}</span>{editable && <Button action="edit" variant="secondary" disabled={busy} onClick={() => setEditing(item.id)}>{t('编辑', 'Edit')}</Button>}
+      <input type="checkbox" checked={item.done} disabled={!editable || busy || !!item.archived} aria-label={`${t('完成', 'Complete')}: ${item.text}`} onChange={() => { void save(list.items.map(row => row.id === item.id ? { ...row, done: !row.done } : row)).catch(() => {}); }} />
+      <span className="workspace-check-text">{item.text.trim().slice(group.path.length).trim() || item.text}</span>{editable && !item.archived && <Button action="edit" variant="secondary" disabled={busy} onClick={() => setEditing(item.id)}>{t('编辑', 'Edit')}</Button>}
+      {editable && archiveSupported && (item.done || item.archived) && <Tooltip content={item.archived ? t('恢复事项', 'Restore task') : t('归档事项', 'Archive task')}>{tip => <button {...tip} type="button" className="btn workspace-icon-action workspace-action" data-emphasis="quiet" disabled={busy} aria-label={`${item.archived ? t('恢复事项', 'Restore task') : t('归档事项', 'Archive task')}: ${item.text}`} onClick={() => { void save(list.items.map(row => row.id === item.id ? { ...row, archived: !item.archived } : row)).catch(() => {}); }}>{item.archived ? <ArchiveRestore size={20} aria-hidden="true" /> : <Archive size={20} aria-hidden="true" />}</button>}</Tooltip>}
       </li>)}</ul>
     </details>)}</div>
     {editable && <Form submit={async () => { if (!text.trim()) return; await save([...list.items, { id: crypto.randomUUID(), text: text.trim(), done: false }]); setText(''); }}><div className="workspace-add-item"><input className="workspace-add-input" aria-label={t('新增事项', 'New task')} placeholder={t('新增事项…', 'Add a task…')} value={text} onChange={event => setText(event.target.value)} required maxLength={160} /><Button action="add" type="submit" disabled={!text.trim() || busy || list.items.length >= 200}>{t('添加', 'Add')}</Button></div></Form>}

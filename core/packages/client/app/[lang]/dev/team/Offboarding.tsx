@@ -40,7 +40,6 @@ export default function OffboardingPage() {
   if (!user) return null;
   return <section className="team-lifecycle">
     <header className="team-lifecycle-intro">
-      <span className="team-lifecycle-kicker">{t('离职', 'Offboarding')}</span>
       <h2>{t('工作有人接，权限有记录', 'Hand over the work. Account for every access grant.')}</h2>
       <p>{t('先确认交接，再撤销权限，最后清理设备。每一步都留下可核查的结果。', 'Confirm the handoff, revoke access, then clean up the device. Keep evidence for each step.')}</p>
     </header>

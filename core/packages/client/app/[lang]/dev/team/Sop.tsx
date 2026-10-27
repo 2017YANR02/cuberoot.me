@@ -83,7 +83,6 @@ export default function StaffSopPage() {
   return <section className="staff-sop sop-guide">
     <header className="sop-guide-intro">
       <div>
-        <span className="sop-guide-eyebrow">{t('AI 协作', 'Working with AI')}</span>
         <h2>{t('先定义结果，再让 AI 开工', 'Define the result. Then put AI to work.')}</h2>
         <p>{t('员工负责目标、判断与验收；AI 帮助执行、检查和记录。', 'People own the goal, judgment and acceptance. AI helps execute, check and document the work.')}</p>
       </div>

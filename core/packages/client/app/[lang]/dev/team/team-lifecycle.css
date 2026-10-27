@@ -1,6 +1,6 @@
 .team-lifecycle { display: grid; gap: 32px; min-width: 0; }
 .team-lifecycle-intro { max-width: 780px; }
-.team-lifecycle-kicker, .team-lifecycle-role { display: block; color: var(--muted-foreground); font-size: .76rem; font-weight: 550; letter-spacing: .04em; }
+.team-lifecycle-role { display: block; color: var(--muted-foreground); font-size: .76rem; font-weight: 550; letter-spacing: .04em; }
 .staff-start .team-lifecycle-intro h2 { margin: 8px 0 0; font-size: clamp(1.75rem, 3.2vw, 2.5rem); font-weight: 650; line-height: 1.22; letter-spacing: -.04em; text-wrap: balance; }
 .staff-start .team-lifecycle-intro p { max-width: 680px; margin: 14px 0 0; color: var(--muted-foreground); font-size: .94rem; line-height: 1.7; }
 .team-lifecycle-path { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); list-style: none; gap: 24px; margin: 0; padding: 8px 0; }
