@@ -11,7 +11,9 @@ export const dynamic = 'force-static';
 export const dynamicParams = false;
 
 export function generateStaticParams() {
-  const out: { puzzle: string; set: string }[] = [];
+  // The nested case route rewrites to _/_/_. Its parent parameters must also
+  // be admitted by this bounded segment's dynamicParams=false contract.
+  const out: { puzzle: string; set: string }[] = [{ puzzle: '_', set: '_' }];
   for (const puzzle of Object.keys(ALG_CATALOG)) {
     for (const s of (ALG_CATALOG as Record<string, { slug: string }[]>)[puzzle]) {
       out.push({ puzzle, set: s.slug });
