@@ -17,7 +17,7 @@ import { alignAlgFile, caseAlgIssue, loadAlg } from '@/lib/alg_case_alignment';
  */
 import { Fragment, useEffect, useMemo, useState, useRef } from 'react';
 import Link from '@/components/AppLink';
-import { ArrowLeft, ExternalLink, Copy, Check, Shuffle, FlipHorizontal2, HelpCircle, AlertTriangle } from '@app-foundation/icons/lucide';
+import { ArrowLeft, ChevronLeft, ChevronRight, ExternalLink, Copy, Check, Shuffle, FlipHorizontal2, HelpCircle, AlertTriangle } from '@app-foundation/icons/lucide';
 import type { AlgCase, AlgEntry, AlgFile, AlgPuzzle, AlgSubmission } from '@cuberoot/shared';
 import { displayedAlgorithmStm } from '@/lib/alg-metrics';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
@@ -47,6 +47,7 @@ import AlgMirrorPanel, { hasMirror } from '@/components/AlgMirrorPanel';
 import { algCaseHref, algCaseDetailHref, buildCaseSlugMap } from '@/lib/alg_case_link';
 import { primaryCaseName, displayAlgCaseName } from '@/lib/alg_case_display';
 import { compareAlgGroupLabel } from '@/lib/alg_group_order';
+import { adjacentAlgCases } from '@/lib/alg_case_navigation';
 import {
   CASE_VIEW_ANGLES,
   caseViewAlg,
@@ -342,6 +343,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
     const href = algCaseDetailHref(puzzle, set, (c.id != null && slugMap.byId.get(c.id)) || '');
     return keepOrientation(keepViewAngle(keepScrambleKind(keepSq1Notation(keepSq1Top(href)))));
   };
+  const adjacent = useMemo(() => adjacentAlgCases(puzzle, set, data.cases, caseObj), [puzzle, set, data.cases, caseObj]);
 
   // 社区公式:只这张 case 的。
   const [submissions, setSubmissions] = useState<AlgSubmission[]>([]);
@@ -542,6 +544,17 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
         />
         {editor?.actions && <div className="alg-case-inline-actions">{editor.actions}</div>}
       </div>
+
+      {!embedded && <nav className="alg-case-navigation" aria-label={tr({ zh: '切换 case', en: 'Navigate cases' })}>
+        {([['previous', adjacent.previous], ['next', adjacent.next]] as const).map(([direction, target]) => {
+          const label = direction === 'previous' ? tr({ zh: '上一条', en: 'Previous' }) : tr({ zh: '下一条', en: 'Next' });
+          const content = <>{direction === 'previous' && <ChevronLeft size={16} />}{label}{direction === 'next' && <ChevronRight size={16} />}</>;
+          return target ? <Link key={direction} href={hrefFor(target)} prefetch={false} className="alg-case-navigation-link"
+            onClick={event => { if (editor && !editor.confirmDiscard()) event.preventDefault(); }}
+            aria-label={`${label}: ${primaryCaseName(puzzle, set, target)}`}>{content}</Link>
+            : <span key={direction} className="alg-case-navigation-link" aria-disabled="true">{content}</span>;
+        })}
+      </nav>}
 
       {editor?.error && <div className="alg-case-inline-status">{editor.error}</div>}
       {editor && effectiveViewAngle !== 'default' && <p>{tr({ zh: '切回默认角度可编辑公式，未保存的修改会保留。', en: 'Return to the default angle to edit algorithms. Your unsaved changes are kept.' })}</p>}

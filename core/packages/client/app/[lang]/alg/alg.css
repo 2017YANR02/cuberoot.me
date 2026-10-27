@@ -1978,6 +1978,23 @@ a.alg-community-author:hover {
   font-size: 14px;
 }
 .alg-case-detail-back:hover { color: var(--accent); }
+.alg-case-navigation {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.alg-case-navigation-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 40px;
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+a.alg-case-navigation-link:hover { color: var(--accent); }
+a.alg-case-navigation-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+a.alg-case-navigation-link:active { transform: scale(.97); }
+.alg-case-navigation-link[aria-disabled="true"] { opacity: .4; }
 .alg-case-detail-title {
   margin: 0;
   font-size: 1.1rem;
