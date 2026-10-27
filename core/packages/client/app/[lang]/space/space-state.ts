@@ -6,7 +6,7 @@ export const SPACE_LIMIT = 32;
 export const SCALE_MIN = 0.04;
 export const SCALE_MAX = 2.5;
 export const ROOMS = {
-  minimal: { zh: '镜面简约', en: 'Mirror minimal' },
+  minimal: { zh: '方序馆', en: 'Rubik Atrium' },
   cyberpunk: { zh: '赛博朋克', en: 'Cyberpunk' },
   modern: { zh: '现代住宅', en: 'Modern residence' },
   vintage: { zh: '复古宅邸', en: 'Vintage residence' },
@@ -64,6 +64,24 @@ export const DESTINATIONS = {
 export type Destination = keyof typeof DESTINATIONS;
 export type Level = 0 | 1;
 export const UPPER_FLOOR = 5;
+
+// Architectural envelope only: saved puzzle positions and walkable levels stay unchanged.
+export const RUBIK_ATRIUM = {
+  width: 20.4, depth: 18.4, levels: [0, 7.2, 12.4], heights: [7.2, 5.2, 5],
+  height: 17.4, twist: Math.PI / 12, courtWidth: 12, courtDepth: 11.2,
+} as const;
+export function rubikAtriumRoofHeight(x: number, z: number) {
+  const { width, depth, height, twist, levels, courtWidth, courtDepth } = RUBIK_ATRIUM;
+  // Three top cassettes form an L: the front-left corner and eastern third stay open.
+  const top = x >= -width / 2 - .35 && x <= width / 6 + .35 && z >= -depth / 2 - .35 && z <= -depth / 6 + .35
+    || Math.abs(x) <= width / 6 + .35 && Math.abs(z) <= depth / 6 + .35;
+  if (top) return height;
+  const rx = Math.cos(twist) * x - Math.sin(twist) * z;
+  const rz = Math.sin(twist) * x + Math.cos(twist) * z;
+  const terrace = Math.abs(rx) <= width / 2 + .35 && Math.abs(rz) <= depth / 2 + .35
+    && (Math.abs(rx) >= courtWidth / 2 - .35 || Math.abs(rz) >= courtDepth / 2 - .35);
+  return terrace ? levels[2] : -120;
+}
 // One physical plan drives floor geometry, placement and camera limits in every style.
 export const VILLA_ROOMS = {
   interior: { x: 0, z: 0, width: 20, depth: 18, level: 0, ceiling: 7.8 },

@@ -6,7 +6,7 @@ import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUnifo
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { loadSpaceBlender, SPACE_ASSET_SOURCE } from './space-blender';
-import { VILLA_ROOMS, type RoomStyle, type WalkObstacle, type Environment } from './space-state';
+import { RUBIK_ATRIUM, VILLA_ROOMS, type RoomStyle, type WalkObstacle, type Environment } from './space-state';
 
 import { applyIslandMaterial, createIsland } from './space-island';
 
@@ -23,6 +23,9 @@ const EXTRA = {
  company: { ...PALETTES.minimal, wood: 0xc5ad86, wall: 0xe5e4dc, frame: 0x3a3d3e, fabric: 0x797d7c }
 };
 
+
+// Deliberately separate from PALETTES.minimal: company and penthouse inherit that palette.
+const ATRIUM_PALETTE = { ...PALETTES.minimal, stone: 0xded8c9, wall: 0xf0ede4, frame: 0x35403f, wood: 0xa87d55, fabric: 0xc5bdae, mirror: 0xa5b8b4, glow: 0xffe1ae };
 
 type V = [number, number, number];
 const opaqueShadow: THREE.Mesh['onBeforeShadow'] = (_renderer, _object, _camera, _shadowCamera, _geometry, material) => {
@@ -57,7 +60,7 @@ export class SpaceRoom {
   private ceramic = new THREE.MeshPhysicalMaterial({ color: 0xf0efdf, roughness: 0.12, clearcoat: 1 });
   private led!: THREE.MeshBasicMaterial;
   constructor(readonly style: RoomStyle, private helpers: THREE.Object3D[], private invalidate = () => {}, readonly environment: Environment = 'original', source: 'blender' | 'bootstrap' = SPACE_ASSET_SOURCE) {
-    this.palette = style in PALETTES ? PALETTES[style as keyof typeof PALETTES] : EXTRA[style as keyof typeof EXTRA];
+    this.palette = style === 'minimal' && source === 'bootstrap' ? ATRIUM_PALETTE : style in PALETTES ? PALETTES[style as keyof typeof PALETTES] : EXTRA[style as keyof typeof EXTRA];
     const p = this.palette;
     if (!('LTC_FLOAT_1' in THREE.UniformsLib)) RectAreaLightUniformsLib.init();
     if (source === 'blender') {
@@ -85,6 +88,15 @@ export class SpaceRoom {
     for (const solid of this.solids) {
       const b = new THREE.Box3().setFromObject(solid);
       this.obstacles.push({ minX: b.min.x, maxX: b.max.x, minY: b.min.y, maxY: b.max.y, minZ: b.min.z, maxZ: b.max.z });
+    }
+    if (this.root.userData.spaceArchitecture === 'rubik-atrium') {
+      // Capture each unmerged collision box first. Atrium facades are deeper
+      // than the legacy batching pass, so merge their marked leaves bottom-up.
+      const facadeGroups: THREE.Group[] = [];
+      this.root.traverse(object => {
+        if (object instanceof THREE.Group && object.userData.atriumBatch) facadeGroups.push(object);
+      });
+      for (const group of facadeGroups.reverse()) this.batch(group);
     }
     for (const light of this.lights) {
       light.getWorldPosition(light.position); light.getWorldQuaternion(light.quaternion); light.removeFromParent();
@@ -314,26 +326,29 @@ export class SpaceRoom {
     this.cylinder(0.045, 0.045, 0.01, x, y + h * 0.18, z, this.metal);
   }
 
-  private villa() {
-    const { stone, wall, wood, fabric, metal, led } = this;
+  private villaFloorPlan() {
+    const { stone, wall, wood, metal, led } = this;
     this.box(43, 0.5, 31, -9, -0.26, -2.5, stone);
     for (const r of Object.values(VILLA_ROOMS)) {
       this.platform(r.width, r.depth, r.x, r.level * 5, r.z, r === VILLA_ROOMS.bathroom || r === VILLA_ROOMS.interior ? stone : wood);
-      this.box(r.width + 0.3, 0.23, r.depth + 0.3, r.x, r.ceiling + 0.1, r.z, wall, this.roof);
-      for (const side of [-1, 1]) {
-        this.box(r.width + 0.6, 0.18, 0.14, r.x, r.ceiling + 0.27, r.z + side * (r.depth / 2 + 0.18), stone, this.roof);
-        this.box(0.14, 0.18, r.depth + 0.6, r.x + side * (r.width / 2 + 0.18), r.ceiling + 0.27, r.z, stone, this.roof);
-        this.box(r.width + 0.4, 0.07, 0.12, r.x, r.ceiling - 0.1, r.z + side * (r.depth / 2 + 0.12), metal, this.roof);
-      }
-      this.box(r.width - 0.8, 0.026, 0.045, r.x, r.ceiling - 0.055, r.z + r.depth / 2 - 0.32, led, this.roof);
-      for (const side of [-1, 1]) {
-        this.box(r.width - 0.6, 0.14, 0.3, r.x, r.ceiling - 0.15, r.z + side * (r.depth / 2 - 0.18), wall, this.roof);
-        this.box(0.3, 0.14, r.depth - 0.6, r.x + side * (r.width / 2 - 0.18), r.ceiling - 0.15, r.z, wall, this.roof);
-        this.box(0.025, 0.025, r.depth - 1, r.x + side * (r.width / 2 - 0.36), r.ceiling - 0.07, r.z, led, this.roof);
-      }
-      for (const dx of [-1, 1]) for (const dz of [-1, 0, 1]) {
-        this.cylinder(0.105, 0.105, 0.04, r.x + dx * r.width * 0.32, r.ceiling - 0.04, r.z + dz * r.depth * 0.31, this.dark, this.roof);
-        this.cylinder(0.068, 0.068, 0.008, r.x + dx * r.width * 0.32, r.ceiling - 0.064, r.z + dz * r.depth * 0.31, led, this.roof);
+      // The Atrium owns its tall central roof; the existing side rooms keep theirs.
+      if (this.style !== 'minimal' || r !== VILLA_ROOMS.interior) {
+        this.box(r.width + 0.3, 0.23, r.depth + 0.3, r.x, r.ceiling + 0.1, r.z, wall, this.roof);
+        for (const side of [-1, 1]) {
+          this.box(r.width + 0.6, 0.18, 0.14, r.x, r.ceiling + 0.27, r.z + side * (r.depth / 2 + 0.18), stone, this.roof);
+          this.box(0.14, 0.18, r.depth + 0.6, r.x + side * (r.width / 2 + 0.18), r.ceiling + 0.27, r.z, stone, this.roof);
+          this.box(r.width + 0.4, 0.07, 0.12, r.x, r.ceiling - 0.1, r.z + side * (r.depth / 2 + 0.12), metal, this.roof);
+        }
+        this.box(r.width - 0.8, 0.026, 0.045, r.x, r.ceiling - 0.055, r.z + r.depth / 2 - 0.32, led, this.roof);
+        for (const side of [-1, 1]) {
+          this.box(r.width - 0.6, 0.14, 0.3, r.x, r.ceiling - 0.15, r.z + side * (r.depth / 2 - 0.18), wall, this.roof);
+          this.box(0.3, 0.14, r.depth - 0.6, r.x + side * (r.width / 2 - 0.18), r.ceiling - 0.15, r.z, wall, this.roof);
+          this.box(0.025, 0.025, r.depth - 1, r.x + side * (r.width / 2 - 0.36), r.ceiling - 0.07, r.z, led, this.roof);
+        }
+        for (const dx of [-1, 1]) for (const dz of [-1, 0, 1]) {
+          this.cylinder(0.105, 0.105, 0.04, r.x + dx * r.width * 0.32, r.ceiling - 0.04, r.z + dz * r.depth * 0.31, this.dark, this.roof);
+          this.cylinder(0.068, 0.068, 0.008, r.x + dx * r.width * 0.32, r.ceiling - 0.064, r.z + dz * r.depth * 0.31, led, this.roof);
+        }
       }
       this.area([r.x, r.ceiling - 0.1, r.z], [r.x, r.level * 5, r.z], r.width * 0.7, r.depth * 0.55, 3);
     }
@@ -341,25 +356,20 @@ export class SpaceRoom {
     const polish = stone.clone(); polish.onBeforeCompile = stone.onBeforeCompile; polish.customProgramCacheKey = stone.customProgramCacheKey; polish.transparent = true; polish.opacity = this.style === 'minimal' ? 0.16 : 0.55; polish.depthWrite = false;
     const film = new THREE.Mesh(new THREE.PlaneGeometry(20, 18), polish); film.rotation.x = -Math.PI / 2; film.position.y = 0.022; film.receiveShadow = true; this.root.add(film);
     const shadow = new THREE.Mesh(new THREE.PlaneGeometry(20, 18), new THREE.ShadowMaterial({ opacity: 0.3, depthWrite: false })); shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.026; shadow.receiveShadow = true; this.root.add(shadow);
-    // Continuous rear gallery joins the living room to the study and upper suites.
+  }
+
+  private villaSideWingShell() {
+    const { wall, wood, metal, stone } = this;
     this.box(39, 9.5, 0.3, -9.5, 4.75, -16.1, wall);
-    // A real opening connects the main hall with the leisure wing.
-    this.box(0.3, 7.8, 13.5, 10.15, 3.9, -2.25, wall);
-    this.box(0.3, 7.8, 2.5, 10.15, 3.9, 7.75, wall);
-    this.box(0.3, 5, 2, 10.15, 5.3, 5.5, wall);
-    for (const z of [4.45, 6.55]) this.box(0.35, 2.85, 0.06, 10.15, 1.425, z, metal);
     this.box(12, 4.7, 0.25, -23, 2.35, -6.1, wood);
     this.box(8.8, 4.4, 0.22, -24.6, 7.2, -4.1, wood);
     this.box(0.25, 4.5, 22, -29.15, 7.25, -5, wall);
-    for (const [x, y, z, w, h] of [[0, 3.9, 9, 20, 7.8], [-23, 2.4, 10, 12, 4.8], [-23, 7.2, 10, 12, 4.4]]) {
-      if (x === 0) {
-        for (const dx of [-5.6, 5.6]) this.box(8.8, h, 0.03, dx, y, z, this.glass);
-        this.box(2.4, h - 2.8, 0.03, 0, y + 1.4, z, this.glass);
-      } else this.box(w, h, 0.03, x, y, z, this.glass);
-      for (let i = 0; i <= w; i += 3) if (x !== 0 || Math.abs(x - w / 2 + i) > 1.2) this.box(0.045, h, 0.075, x - w / 2 + i, y, z, metal);
-      for (const edge of [-1, 1]) this.box(w, 0.07, 0.1, x, y + edge * h / 2, z, metal);
+    for (const [y, h] of [[2.4, 4.8], [7.2, 4.4]]) {
+      this.box(12, h, 0.03, -23, y, 10, this.glass);
+      for (let i = 0; i <= 12; i += 3) this.box(0.045, h, 0.075, -29 + i, y, 10, metal);
+      for (const edge of [-1, 1]) this.box(12, 0.07, 0.1, -23, y + edge * h / 2, 10, metal);
     }
-    for (const x of [-29, -17, -10, 10]) this.box(0.26, x < -10 ? 9.4 : 7.8, 0.26, x, x < -10 ? 4.7 : 3.9, 9, stone);
+    for (const x of [-29, -17]) this.box(0.26, 9.4, 0.26, x, 4.7, 9, stone);
     this.box(0.035, 4.5, 16, -29, 2.4, 2, this.glass);
     this.box(0.035, 4.4, 2.3, -17, 7.2, -14.85, this.glass);
     this.box(0.035, 4.4, 21.3, -17, 7.2, -0.65, this.glass);
@@ -372,6 +382,24 @@ export class SpaceRoom {
     }
     this.box(15, 1.1, 0.025, -9.5, 5.65, -9, this.glass);
     this.box(15, 0.04, 0.05, -9.5, 6.2, -9, metal);
+  }
+
+  private villaShell() {
+    const { wall, metal, stone } = this;
+    this.villaSideWingShell();
+    this.box(0.3, 7.8, 13.5, 10.15, 3.9, -2.25, wall);
+    this.box(0.3, 7.8, 2.5, 10.15, 3.9, 7.75, wall);
+    this.box(0.3, 5, 2, 10.15, 5.3, 5.5, wall);
+    for (const z of [4.45, 6.55]) this.box(0.35, 2.85, 0.06, 10.15, 1.425, z, metal);
+    for (const dx of [-5.6, 5.6]) this.box(8.8, 7.8, 0.03, dx, 3.9, 9, this.glass);
+    this.box(2.4, 5, 0.03, 0, 5.3, 9, this.glass);
+    for (let i = 0; i <= 20; i += 3) if (Math.abs(-10 + i) > 1.2) this.box(0.045, 7.8, 0.075, -10 + i, 3.9, 9, metal);
+    for (const edge of [-1, 1]) this.box(20, 0.07, 0.1, 0, 3.9 + edge * 3.9, 9, metal);
+    for (const x of [-10, 10]) this.box(0.26, 7.8, 0.26, x, 3.9, 9, stone);
+  }
+
+  private villaLivingRoom() {
+    const { stone, wood, fabric, metal, led } = this;
     this.box(13, 7.8, 0.22, -3.5, 3.9, -9.1, wood);
     this.box(12, 3.6, 0.08, -3.4, 3.4, -8.96, metal);
     this.mirror(11.8, 3.4, [-3.4, 3.4, -8.9]);
@@ -399,7 +427,10 @@ export class SpaceRoom {
       ring.rotation.x = Math.PI / 2 + i * 0.16; ring.position.set(-3, 6.1 + i * 0.3, -3.4); this.root.add(ring);
       this.line([[-3, 7.8, -3.4], [-3, 6.2, -3.4]], 0.008, metal);
     }
-    // Study: full-height joinery, book spines, reading chair and a working desk.
+  }
+
+  private villaStudy() {
+    const { wood, fabric, metal, led } = this;
     this.box(0.1, 4.5, 13.6, -28.93, 2.25, 2, wood);
     const bookCovers = [0x35454b, 0x766343, 0xbeb29a, 0x76574a, 0x878a79].map(color => new THREE.MeshStandardMaterial({ color, roughness: 0.9 }));
     for (let z = -4.4; z < 8; z += 2.25) {
@@ -443,11 +474,158 @@ export class SpaceRoom {
     this.model('modern_arm_chair_01', -23.5, 0, 1.1, 0.94, Math.PI);
     this.sofa(-23.5, 0, 7, 3.6);
     this.plant(-18.5, 0, -3.5, 0.65);
+  }
+
+  /** Rubik Atrium: an architectural replacement, with the original floor plan below. */
+  private rubikAtrium() {
+    const { width, depth, levels, heights, height, twist, courtWidth, courtDepth } = RUBIK_ATRIUM;
+    this.root.name = '方序馆 · Rubik Atrium';
+    this.root.userData.spaceArchitecture = 'rubik-atrium';
+    this.villaSideWingShell();
+    this.glass.color.setHex(0x9eafa9);
+    this.glass.roughness = 0.12;
+    const graphite = new THREE.MeshStandardMaterial({ color: 0x303a39, roughness: 0.78, metalness: 0.18 });
+    const colors = [0xc95448, 0xd48a42, 0xd2b957, 0x4d846e, 0x477ba0, 0xeee9dc]
+      .map(color => new THREE.MeshStandardMaterial({ color, roughness: 0.58, metalness: 0.06 }));
+    // The six colors belong to recessed reveals; warm stone and graphite carry the mass.
+    const faces = [
+      { name: 'south', angle: 0, span: width, plane: depth / 2, portal: 1 },
+      { name: 'east', angle: Math.PI / 2, span: depth, plane: width / 2, portal: 0 },
+      { name: 'north', angle: Math.PI, span: width, plane: depth / 2, portal: 0 },
+      { name: 'west', angle: -Math.PI / 2, span: depth, plane: width / 2, portal: 2 },
+    ];
+    for (let tier = 0; tier < 3; tier++) {
+      const storey = heights[tier];
+      const layer = new THREE.Group();
+      layer.name = `Atrium storey ${tier + 1}`;
+      layer.position.y = levels[tier];
+      layer.rotation.y = tier === 1 ? twist : 0;
+      (tier === 0 ? this.root : this.roof).add(layer);
+      // Upper architecture is cut away and never becomes a false obstacle on the old bridge.
+      const piece = (w: number, h: number, d: number, x: number, y: number, z: number, mat: THREE.Material, parent: THREE.Group, round = 0.025) => {
+        const mesh = this.box(w, h, d, x, y, z, mat, tier === 0 ? parent : this.roof, round);
+        if (tier > 0) parent.add(mesh);
+        return mesh;
+      };
+      // Only the south elevation states the full three-bay rhythm; side galleries stay open.
+      if (tier < 2) faces.forEach((face, faceIndex) => {
+        const elevation = new THREE.Group();
+        elevation.name = `Atrium ${face.name} facade`;
+        elevation.userData.atriumBatch = true;
+        elevation.rotation.y = face.angle;
+        layer.add(elevation);
+        const bay = face.span / 3;
+        for (let col = 0; col < 3; col++) {
+          const x = -face.span / 2 + bay * (col + 0.5), z = face.plane;
+          const portal = tier === 0 && col === face.portal;
+          const accent = colors[(faceIndex * 3 + col + tier * 2) % colors.length];
+          // Real deep joints and separate structural members preserve open doorways.
+          piece(bay - 0.16, 0.3, 0.78, x, storey - 0.17, z, this.wall, elevation);
+          if (!portal) piece(bay - 0.16, 0.3, 0.78, x, 0.17, z, this.wall, elevation);
+          for (const side of [-1, 1]) {
+            piece(0.28, storey - 0.32, 0.88, x + side * (bay / 2 - 0.15), storey / 2, z, this.wall, elevation);
+            piece(0.055, storey - 0.4, 0.08, x + side * (bay / 2 - 0.34), storey / 2, z + 0.42, graphite, elevation);
+          }
+          if (portal) {
+            // All four old connections stay open at ground level.
+            if (faceIndex === 0) {
+              for (const side of [-1, 1]) for (let fin = 0; fin < 5; fin++) {
+                piece(0.075, 6.55, 0.38, x + side * (bay / 2 - 0.55 - fin * 0.13), 3.275, z - 0.22, this.wood, elevation);
+              }
+              piece(bay - 0.85, 0.2, 2.1, x, 6.7, z + 0.42, this.wood, elevation);
+              piece(bay - 1.1, 0.035, 0.06, x, 6.57, z + 1.3, this.led, elevation);
+            }
+            continue;
+          }
+          if (tier === 1 && faceIndex !== 0) {
+            // The 15-degree gesture is an open suspended frame, not a rotating sealed cube.
+            piece(bay - 0.75, 0.13, 1.5, x, 0.38, z - 0.55, this.wall, elevation);
+            piece(bay - 0.9, 0.12, 0.55, x, storey - 0.62, z - 0.35, accent, elevation);
+            continue;
+          }
+          const mode = (tier + col + faceIndex) % 3;
+          if (mode === 0) {
+            // A thick stone cell with an actual recessed window, not a colored sticker.
+            const opening = bay * 0.64, pier = (bay - 0.46 - opening) / 2;
+            for (const side of [-1, 1]) piece(pier, storey - 0.62, 0.7, x + side * (opening / 2 + pier / 2), storey / 2, z - 0.12, this.wall, elevation);
+            piece(opening, 1.15, 0.7, x, 0.88, z - 0.12, this.wall, elevation);
+            piece(opening, 0.72, 0.7, x, storey - 0.69, z - 0.12, this.wall, elevation);
+            piece(opening - 0.08, storey - 2.05, 0.035, x, storey / 2 + 0.09, z - 0.65, this.glass, elevation);
+            piece(0.24, storey - 1.8, 0.62, x - opening / 2 + 0.12, storey / 2, z - 0.46, accent, elevation);
+          } else if (mode === 1) {
+            piece(bay - 0.65, storey - 0.7, 0.035, x, storey / 2, z - 0.72, this.glass, elevation);
+            piece(bay - 0.64, 0.68, 0.22, x, 0.68, z - 0.85, graphite, elevation);
+            piece(bay - 1.05, 0.16, 0.62, x, storey - 0.68, z - 0.45, accent, elevation);
+            for (const side of [-1, 1]) piece(0.05, storey - 0.85, 0.08, x + side * bay / 6, storey / 2, z - 0.64, this.metal, elevation);
+          } else {
+            // Loggia: a usable-looking depth of shadow, with color inside the void.
+            piece(bay - 0.65, 0.18, 1.8, x, 0.43, z - 0.7, this.wall, elevation);
+            piece(bay - 0.7, storey - 0.9, 0.12, x, storey / 2, z - 1.55, accent, elevation);
+            piece(bay - 0.9, 1.05, 0.035, x, 1.02, z - 0.12, this.glass, elevation);
+            piece(bay - 0.9, 0.045, 0.08, x, 1.56, z - 0.12, graphite, elevation);
+          }
+        }
+      });
+      if (tier === 1) {
+        // The rotating layer has a real projecting terrace around the atrium void.
+        for (const side of [-1, 1]) {
+          piece(width, 0.24, (depth - courtDepth) / 2, 0, storey - 0.12, side * (depth + courtDepth) / 4, this.wall, layer);
+          piece((width - courtWidth) / 2, 0.24, courtDepth, side * (width + courtWidth) / 4, storey - 0.12, 0, this.wall, layer);
+        }
+      }
+      if (tier === 2) {
+        // An L-shaped retreat replaces the complete third row of the cube vocabulary.
+        // Empty front/east roof bays become terraces and let the central void read from outside.
+        const cells = [{ col: 0, row: 0 }, { col: 1, row: 0 }, { col: 1, row: 1 }];
+        const bayW = width / 3, bayD = depth / 3;
+        for (const cell of cells) {
+          const x = -width / 2 + bayW * (cell.col + .5), z = -depth / 2 + bayD * (cell.row + .5);
+          piece(bayW - .18, .25, bayD - .18, x, storey - .12, z, cell.row === 1 ? this.glass : this.wall, layer);
+          const edges = [
+            { dc: 0, dr: 1, angle: 0, span: bayW, offset: bayD / 2 },
+            { dc: 1, dr: 0, angle: Math.PI / 2, span: bayD, offset: bayW / 2 },
+            { dc: 0, dr: -1, angle: Math.PI, span: bayW, offset: bayD / 2 },
+            { dc: -1, dr: 0, angle: -Math.PI / 2, span: bayD, offset: bayW / 2 },
+          ];
+          edges.forEach((edge, edgeIndex) => {
+            if (cells.some(other => other.col === cell.col + edge.dc && other.row === cell.row + edge.dr)) return;
+            const reveal = new THREE.Group();
+            reveal.userData.atriumBatch = true;
+            reveal.position.set(x, 0, z); reveal.rotation.y = edge.angle; layer.add(reveal);
+            piece(edge.span - .16, .4, .8, 0, storey - .22, edge.offset, this.wall, reveal);
+            piece(edge.span - .16, .45, .75, 0, .23, edge.offset, this.wall, reveal);
+            for (const side of [-1, 1]) piece(.42, storey - .65, .8, side * (edge.span / 2 - .24), storey / 2, edge.offset, this.wall, reveal);
+            piece(edge.span - 1.0, storey - .95, .035, 0, storey / 2, edge.offset - .5, this.glass, reveal);
+            piece(.16, storey - 1.0, .6, -edge.span / 2 + .6, storey / 2, edge.offset - .3, colors[(cell.col + cell.row + edgeIndex) % colors.length], reveal);
+          });
+        }
+        // Low roof-garden edges emphasize the missing upper mass, without creating walkable levels.
+        for (const x of [4.6, 8.1]) {
+          piece(2.4, .58, 1.05, x, .38, 6.6, this.wall, layer);
+          piece(2.05, .32, .76, x, .77, 6.6, colors[3], layer, .12);
+        }
+      }
+    }
+    // Timber threshold is flush with the existing terrace and remains a placement surface.
+    this.platform(5.2, 3.2, 0, 0, 10.5, this.wood);
+    this.area([0, 6.45, 9.3], [0, 1, 6.4], 4.6, 0.45, 8);
+    this.area([0, height - 0.65, 0], [0, 0, 0], 5.8, 5.3, 5);
+
+  }
+
+  private villa() {
+    this.villaFloorPlan();
+    if (this.style === 'minimal') this.rubikAtrium();
+    else this.villaShell();
+    this.villaLivingRoom();
+    this.villaStudy();
     this.bedroom();
     this.bathroom();
-    // Water court, central tree island and a walk across the pool.
+    // Retain the water-court exclusion and its original walkable crossing.
+    const { stone } = this;
     this.box(6, 0.4, 18, -13.5, -0.22, 0, this.dark);
     const water = this.mirror(5.7, 17.7, [-13.5, -0.015, 0]); water.rotation.x = -Math.PI / 2;
+    if (this.style === 'minimal') (water.material as THREE.ShaderMaterial).uniforms.color.value.setHex(0xaac3bd);
     this.box(2.2, 0.3, 2.2, -13.5, 0.08, -3.5, stone); this.plant(-13.5, 0.22, -3.5, 1.4);
     for (let i = 0; i < 5; i++) this.platform(1.1, 1.6, -15.8 + i * 1.15, 0.07, 5, stone);
     this.details();
@@ -677,10 +855,6 @@ export class SpaceRoom {
       for (const y of [0.15, 5, 7.8]) this.box(20, 0.035, 0.08, 0, y, 9.15, this.led);
       this.area([-9, 4, -8], [0, 1, 0], 6, 3, 8, this.palette.secondary);
       for (let i = 0; i < 12; i++) this.box(0.025, 1 + i % 4, 0.03, -9 + i * 0.35, 3, -8.85, pink);
-    }
-    if (this.style === 'minimal') {
-      for (const x of [-8, 8]) this.cylinder(0.2, 0.2, 7.8, x, 3.9, 8.8, this.metal);
-      this.sphere(6.6, 1.25, -5, [0.8, 1.2, 0.8], new THREE.MeshStandardMaterial({ color: 0xbac5c8, metalness: 1, roughness: 0.1 }));
     }
   }
   private company() {
@@ -1078,7 +1252,7 @@ export class SpaceRoom {
       const distance = camera.position.distanceTo(world);
       mirror.visible = this.style === 'company' ? mirror !== this.floor && distance < 14 : (mirror === this.floor ? distance < 85 : world.y > 5 ? distance < 23 : distance < 85);
     }
-    this.glass.opacity = cutaway ? 0.035 : 0.075;
+    this.glass.opacity = this.root.userData.spaceArchitecture === 'rubik-atrium' ? (cutaway ? 0.07 : 0.23) : cutaway ? 0.035 : 0.075;
   }
 
   dispose() {

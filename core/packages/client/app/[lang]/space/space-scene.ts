@@ -18,7 +18,7 @@ import Sq1Cube from '@cuberoot/puzzle-render-core/engine/sq1/Sq1Cube';
 import PyraCube from '@cuberoot/puzzle-render-core/engine/pyra/PyraCube';
 import MegaminxCube from '@cuberoot/puzzle-render-core/engine/mega/MegaminxCube';
 import SkewbCube from '@cuberoot/puzzle-render-core/engine/skewb/SkewbCube';
-import { movePosition, PEDESTALS, VILLA_ROOMS, floorHeight, walkFloor, walkStep, type Destination, type Level, type Layout, type RiverColor, type SpaceObject, type Vec3 } from './space-state';
+import { INITIAL_LAYOUT, RUBIK_ATRIUM, movePosition, PEDESTALS, VILLA_ROOMS, floorHeight, walkFloor, walkStep, type Destination, type Level, type Layout, type RiverColor, type SpaceObject, type Vec3 } from './space-state';
 import { SpaceRoom } from './space-room';
 import roomCameras from './space-room-cameras.json';
 import { pickTurn, turnBusy, turnPuzzle } from './space-turn';
@@ -597,6 +597,8 @@ export class SpaceScene {
     if (!this.turnDrag || mode !== this.mode || selected !== this.selected || layout.objects.find(o => o.id === selected)?.moves?.join(' ') !== this.turnDrag.entry.appliedMoves) this.cancel();
     const style = layout.room ?? 'minimal';
     const environment = layout.environment ?? 'original';
+    // Only the untouched first-run layout selects the architectural introduction.
+    const openingAtrium = !this.room && layout === INITIAL_LAYOUT && style === 'minimal' && environment === 'original';
     this.currentWeather = layout.weather ?? 'sunny';
     this.riverColor = layout.riverColor ?? 'huangpu';
     this.orbit.maxTargetRadius = environment === 'shanghai' ? 20000 : environment === 'island' ? 500 : 70;
@@ -654,7 +656,7 @@ export class SpaceScene {
       this.pedestalMaterial.roughness = 0.22;
       // The room owns terrain and paving; the legacy plane would cover them.
       this.surfaces.forEach((surface, i) => { surface.visible = style !== 'company' && i > 0; });
-      this.view(environmentChanged ? environment === 'shanghai' ? 'northBund' : environment === 'island' ? 'island' : 'exterior' : style === 'company' ? 'interior' : this.currentView);
+      this.view(openingAtrium ? 'exterior' : environmentChanged ? environment === 'shanghai' ? 'northBund' : environment === 'island' ? 'island' : 'exterior' : style === 'company' ? 'interior' : this.currentView);
     }
     this.weatherMotion = layout.weatherMotion ?? true;
     const weather = layout.weather ?? 'sunny', weatherKey = `${style}:${environment}:${weather}`;
@@ -745,9 +747,10 @@ export class SpaceScene {
   private cameraRoomBounds() {
     if (this.freeCamera) return null;
     const r = VILLA_ROOMS[this.currentView as keyof typeof VILLA_ROOMS];
-    return r && this.room?.style !== 'company' ? new THREE.Box3(
+    const ceiling = this.currentView === 'interior' && this.room?.root.userData.spaceArchitecture === 'rubik-atrium' ? RUBIK_ATRIUM.height : r?.ceiling;
+    return r && ceiling !== undefined && this.room?.style !== 'company' ? new THREE.Box3(
       new THREE.Vector3(r.x - r.width / 2 + .3, r.level * 5 + .4, r.z - r.depth / 2 + .3),
-      new THREE.Vector3(r.x + r.width / 2 - .3, r.ceiling - .3, r.z + r.depth / 2 - .3)) : null;
+      new THREE.Vector3(r.x + r.width / 2 - .3, ceiling - .3, r.z + r.depth / 2 - .3)) : null;
   }
 
   private zoomLimits() {
@@ -839,6 +842,10 @@ export class SpaceScene {
     this.positionSun();
     const cameras = roomCameras[this.room?.style === 'company' ? 'company' : 'villa'] as Partial<Record<View, [Vec3, Vec3]>>;
     if (cameras[view]) { position.set(...cameras[view][0]); target.set(...cameras[view][1]); }
+    if (view === 'exterior' && this.room?.root.userData.spaceArchitecture === 'rubik-atrium') {
+      position.set(mobile ? 72 : 43, mobile ? 44 : 29, mobile ? 88 : 57);
+      target.set(-1.5, 7.5, 2);
+    }
     const lighting: Partial<Record<View, [Vec3, Vec3]>> = this.room?.style === 'company' ? {
       interior: [[-23, 2.65, 2], [-23, 0, 1.5]], study: [[-13, 3.15, 2], [-13, 0, -1]], courtyard: [[-17, 3.2, 11], [-17, 0, 9]],
     } : {
