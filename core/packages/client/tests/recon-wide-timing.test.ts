@@ -1,11 +1,28 @@
 import { describe, expect, it } from 'vitest';
-import { buildReconText } from '@cuberoot/shared/timer/reconstruct/recon-text';
+import { buildReconText, preferF2lBoundaryRegrips } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { computeStageSegments } from '@cuberoot/shared/timer/reconstruct/stage-segments';
 import { buildCoreTrack, type CoreTrack } from '@cuberoot/shared/timer/reconstruct/core-track';
 import { notationQuaternion } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
 import type { GyroSample } from '@cuberoot/shared/smart-cube/gyro-track';
 import { applyScramble } from '@/app/[lang]/timer/_lib/cube/state';
 import { applyOneToken } from '@/app/[lang]/timer/_lib/cube/apply_token';
+
+it('prefers a separate regrip after a completed pair when the wide interpretation is ambiguous', () => {
+  const moves = [{ m: 'D', ts: 1000 }, { m: "R'", ts: 1180 }, { m: 'U', ts: 2000 }];
+  const core: CoreTrack = { frame: 'scramble', events: [{ token: 'y', tMs: 800,
+    startMs: 800, notationMs: 1030, angleRad: Math.PI / 2 }] };
+  const original = JSON.stringify(core);
+  const preferred = preferF2lBoundaryRegrips(core, moves, [1])!;
+  expect(preferred.events[0].notationMs).toBeGreaterThan(moves[1].ts);
+  expect(preferred.events[0].notationMs).toBeLessThan(moves[2].ts);
+  expect(preferred.events[0].tMs).toBe(800);
+  expect(JSON.stringify(core)).toBe(original);
+  expect(preferF2lBoundaryRegrips(core, moves, [])!.events[0]).toEqual(core.events[0]);
+  expect(preferF2lBoundaryRegrips(core, [{ ...moves[0] }, moves[1], { ...moves[2], ts: 1400 }], [1])!
+    .events[0]).toEqual(core.events[0]);
+  expect(preferF2lBoundaryRegrips({ ...core, events: [{ ...core.events[0], token: "y'" }] }, moves, [1])!
+    .events[0].notationMs).toBe(1030);
+});
 
 describe.each(['cfop', 'roux', 'zz'] as const)('%s gesture reconstruction', method => {
 it.each([1, 5, 10, 19, 20, 30, 40, 60, 80])('recognizes a wide-turn excursion held for %ims', async holdMs => {

@@ -146,6 +146,10 @@ export interface RangeMoveItem {
   endIdx: number;
   /** Display replacements can share a verified interval without duplicating coverage. */
   seekEndIdx?: number;
+  /** A measured core rotation, as opposed to an invented reading-frame change. */
+  rotationMs?: number;
+  /** Ambiguous core motion assigned to the following F2L pair by the boundary policy. */
+  boundaryRegrip?: true;
 }
 
 export function moveItemsForRange(

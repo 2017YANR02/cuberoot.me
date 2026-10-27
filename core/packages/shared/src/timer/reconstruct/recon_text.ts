@@ -485,11 +485,11 @@ function restoreCrossAtBoundaries(recon: ReconTextResult, lines: ReconTextLine[]
     return { ...line, moves,
       moveRanges: line.moveRanges ? [
         ...entries.map(({ token, source }) => source < 0
-          ? { ...line.moveRanges![0], token, endTs: line.moveRanges![0].ts, endIdx: line.moveRanges![0].startIdx - 1 }
+          ? { ...line.moveRanges![0], token, endTs: line.moveRanges![0].ts, endIdx: line.moveRanges![0].startIdx - 1, rotationMs: undefined, boundaryRegrip: undefined }
           : token === line.moveRanges![source].token
           ? line.moveRanges![source] : { ...line.moveRanges![source], token }),
         ...(correction ? [{ ...last!, token: correction, ts: last!.endTs,
-          startIdx: last!.endIdx + 1, endIdx: last!.endIdx }] : []),
+          startIdx: last!.endIdx + 1, endIdx: last!.endIdx, rotationMs: undefined, boundaryRegrip: undefined }] : []),
       ] : undefined,
       wasteGroups: line.wasteGroups ? [...entries.map(entry => entry.source < 0 ? null : line.wasteGroups![entry.source]),
         ...(correction ? [null] : [])] : undefined,
@@ -555,6 +555,14 @@ function orientInspectionForCross(recon: ReconTextResult): ReconTextResult {
 /** Choose reading frames across whole stages; never rewrite a matched library body. */
 function preferF2lSideTurns(recon: ReconTextResult): ReconTextResult {
   const yaws = ['', 'y', 'y2', "y'"];
+  // A matched outer-turn pair followed by a measured regrip still keeps its
+  // physical moves when the whole pair is renamed into a side-turn frame.
+  // Do not apply this to library wide/slice fingertricks.
+  const flexible = new Set(recon.lines.filter((line, i) => line.kind === 'f2l'
+    && line.libraryCorrection && line.moves.every(token => /^[UDFBLR](?:2'?|')?$/.test(token))
+    && recon.lines[i + 1]?.kind === 'f2l'
+    && recon.lines[i + 1].moveRanges?.[0]?.boundaryRegrip));
+  const locked = (line: ReconTextLine) => !!line.libraryCorrection && !flexible.has(line);
   const mapped = (line: ReconTextLine, yaw: number) => line.moves.map(token => {
     if (!yaw) return token;
     const move = conjugateReconToken(token, facePermFor(yaws[yaw]));
@@ -562,7 +570,7 @@ function preferF2lSideTurns(recon: ReconTextResult): ReconTextResult {
     return /^[rludfb]/.test(token) ? move.replace(/^([RLUDFB])w/, (_, face: string) => face.toLowerCase()) : move;
   });
   const cost = (line: ReconTextLine, moves: string[]) => {
-    if (line.kind !== 'f2l' || line.libraryCorrection) return 0;
+    if (line.kind !== 'f2l' || locked(line)) return 0;
     let score = 0;
     for (const face of ['F', 'B']) {
       let side = 0, up = 0;
@@ -618,8 +626,9 @@ function preferF2lSideTurns(recon: ReconTextResult): ReconTextResult {
   for (const { line } of parts) {
     // An unmatched last layer has no library frame to return to. Keep the
     // chosen reading frame across its boundary instead of inventing a regrip.
-    const choices = line.kind === 'cross' || !line.libraryCorrection ? [0, 1, 2, 3] : [0];
-    const keepFrame = !line.libraryCorrection && (line.kind === 'oll' || line.kind === 'pll');
+    const choices = line.kind === 'cross' || !locked(line) ? [0, 1, 2, 3] : [0];
+    const keepFrame = (!line.libraryCorrection && (line.kind === 'oll' || line.kind === 'pll'))
+      || (line.kind === 'f2l' && line.moveRanges?.[0]?.boundaryRegrip === true);
     paths = choices.flatMap(yaw => {
       const eligible = paths.filter(path => !keepFrame || !path.yaws.length || path.yaws.at(-1) === yaw);
       if (!eligible.length) return [];
@@ -643,7 +652,7 @@ function preferF2lSideTurns(recon: ReconTextResult): ReconTextResult {
     const first = line.moveRanges?.[0];
     return { ...line, moves,
       moveRanges: line.moveRanges ? [
-        ...(delta && first ? [{ ...first, token: yaws[delta], endTs: first.ts, endIdx: first.startIdx - 1 }] : []),
+        ...(delta && first ? [{ ...first, token: yaws[delta], endTs: first.ts, endIdx: first.startIdx - 1, rotationMs: undefined, boundaryRegrip: undefined }] : []),
         ...line.moveRanges.map((range, j) => ({ ...range, token: moves[j + (delta ? 1 : 0)] })),
       ] : undefined,
       wasteGroups: line.wasteGroups ? [...(delta ? [null] : []), ...line.wasteGroups] : undefined,
@@ -1065,6 +1074,33 @@ function inverseRotationToken(token: string): string | null {
  */
 const WIDE_TURN_SLACK_MS = 120;
 
+/** Prefer a regrip at the next F2L boundary when an overlapping wide-turn
+ * candidate is followed immediately by the pair's closing turn and a pause.
+ * The two interpretations can be physically indistinguishable in the recording;
+ * this is a notation preference, not evidence that a wide turn did not happen.
+ * Keep the measured pose and playback time intact. */
+export function preferF2lBoundaryRegrips(
+  core: CoreTrack | null, moves: readonly SolveMove[], pairEnds: readonly number[],
+): CoreTrack | null {
+  if (!core || core.frame !== 'scramble') return core;
+  const events = core.events.map((event, eventIdx) => {
+    if (event.notationMs === undefined || !/^[xyz]'?$/.test(event.token)) return event;
+    for (const end of pairEnds) {
+      const before = moves[end - 1], last = moves[end], next = moves[end + 1];
+      if (!before || !last || !next || last.ts - before.ts > 250 || next.ts - last.ts < 500
+        || event.notationMs < before.ts || event.notationMs >= last.ts
+        || event.notationMs - before.ts > WIDE_TURN_SLACK_MS
+        || !WIDE_PAIRS.has(`${before.m} ${event.token}`)
+        || core.events.some((other, i) => i !== eventIdx && other.tMs > before.ts && other.tMs <= last.ts)) continue;
+      // Use a display-only instant in the gap. No encoder move, gyro sample,
+      // physical playback pose or solve timing is changed.
+      return { ...event, notationMs: (last.ts + next.ts) / 2 };
+    }
+    return event;
+  });
+  return { ...core, events };
+}
+
 /** Do not collapse separate same-face gestures before matching their gyro events. */
 function wideGestureMoves(moves: SolveMove[]): ReturnType<typeof htmMoves> {
   const out: ReturnType<typeof htmMoves> = [];
@@ -1270,6 +1306,7 @@ function weaveRotations(
   lineMoves: RangeMoveItem[],
   rots: readonly HumanRotation[],
   absorbedRotations: Set<number>,
+  boundaryRegrips?: ReadonlySet<number>,
 ): WovenItem[] {
   const out: WovenItem[] = [];
   let cursor = 0;
@@ -1287,6 +1324,7 @@ function weaveRotations(
       startIdx: -1,
       endIdx: -1,
       rotationMs: p.tMs,
+      ...(boundaryRegrips?.has(p.tMs) ? { boundaryRegrip: true as const } : {}),
       ...(p.wide ? { wideRotation: true as const } : {}),
     });
   }
@@ -1325,7 +1363,13 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   const measuredCore = input.core
     ? conjugateCoreTrack(input.core, facePermFor(input.viewRotation ?? ''))
     : null;
-  const core = markWideCoreEvents(measuredCore, measuredCore?.frame === 'scramble' ? wideGestureMoves(moves) : counted);
+  const pairEnds = isCfop ? sourceSpans.flatMap((span, i) =>
+    span.kind === 'f2l' && sourceSpans[i + 1]?.kind === 'f2l' ? [span.endIdx] : []) : [];
+  const preferredCore = preferF2lBoundaryRegrips(measuredCore, moves, pairEnds);
+  const boundaryRegrips = new Set(preferredCore?.events.flatMap((event, i) =>
+    event.notationMs !== undefined && event.notationMs !== measuredCore?.events[i]?.notationMs
+      ? [event.notationMs] : []) ?? []);
+  const core = markWideCoreEvents(preferredCore, preferredCore?.frame === 'scramble' ? wideGestureMoves(moves) : counted);
   // 中层还原 + 转体。魔方按「相对中心核」报手法,所以一个 `S` 到这里是一对相对面 +
   // 后面每一手都被换了名 —— 那行谱子于是不像任何公式。转体同理,而且它和中层改的是
   // 同一个 ρ,所以一趟走完。只重写**写出来的记号**:计步、识别、参考解仍然吃
@@ -1449,7 +1493,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
     const turnTokens = tokensForRange(moves, counted, from, span.endIdx);
     const endMs = spanEndMs[spanIdx];
     const mine = rotations.filter(r => r.tMs > prevEndMs && r.tMs <= endMs);
-    const lineMoves = weaveRotations(shownFor(from, span.endIdx), mine, absorbedRotations);
+    const lineMoves = weaveRotations(shownFor(from, span.endIdx), mine, absorbedRotations, boundaryRegrips);
     prevEndMs = endMs;
     const currPattern = await patternFromAlg(alg(phys.scramble, rawUpTo(span.endIdx), viewRot));
 

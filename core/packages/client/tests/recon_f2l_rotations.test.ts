@@ -56,6 +56,23 @@ it('keeps library bodies intact and maps synthetic y turns to empty encoder rang
   expect(JSON.stringify(recon)).toBe(before);
 });
 
+it('keeps a measured regrip at the next pair after choosing a side-turn frame', async () => {
+  const recon = fixture("F U F' U F U' F'".split(' '));
+  const first = recon.lines[0];
+  first.libraryCorrection = { algorithm: first.moves.join(' '), originalMoves: [...first.moves],
+    originalRanges: first.moveRanges! };
+  const second = { ...fixture("y F U F'".split(' ')).lines[0], key: 'next' };
+  second.moveRanges![0] = { ...second.moveRanges![0], rotationMs: 800, boundaryRegrip: true };
+  recon.lines.push(second);
+  const shown = simplifyF2lRotations(recon);
+  expect(shown.lines[0].moves.some(move => /^[FB]/.test(move))).toBe(false);
+  expect(shown.lines[1].moves[0]).toBe('y');
+  expect(shown.lines[1].moves[1]).not.toMatch(/^[xyz]/);
+  const cube = await getCube3();
+  expect(cube.algToTransformation(`${shown.inspection} ${shown.lines.flatMap(line => line.moves).join(' ')}`)
+    .isIdentical(cube.algToTransformation(`${recon.inspection} ${recon.lines.flatMap(line => line.moves).join(' ')}`))).toBe(true);
+});
+
 it('restores a matched last-layer library yaw after cross-down changes the face names', async () => {
   const algorithm = "(R U R' F') (R U R' U') (R' F R2 U' R') U'";
   const canonical = "R U R' F' R U R' U' R' F R2 U' R'";
