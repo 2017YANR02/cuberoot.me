@@ -857,7 +857,7 @@ button.stl-track:focus-visible { outline: 2px solid var(--ring); outline-offset:
 
 /* ── 分步动作列表 ─────────────────────────────────────────────────────
    动作 + 标注 + 徽章。没有卡片框,层级全靠留白和字重。 */
-.sml { position: relative; }
+.sml { position: relative; --sml-move-size: 13px; }
 .sml, .timer-live-stage {
   -webkit-user-select: text;
   user-select: text;
@@ -885,6 +885,14 @@ button.stl-track:focus-visible { outline: 2px solid var(--ring); outline-offset:
 }
 
 .sml-line { display: block; }
+.sml-line .recon-case-line {
+  align-items: flex-start;
+  font-size: var(--sml-move-size);
+  line-height: 1.7;
+}
+/* Center the thumbnail against the first text line, even when text wraps. */
+.sml-line .sml-diagram { position: relative; top: calc((1.7em - 28px) / 2); }
+.sml-scramble .sml-diagram { top: calc((1.7em - 21px) / 2); }
 .sml-line + .sml-line { margin-top: 6px; }
 .sml-line[data-state='future'] { opacity: 0.42; }
 .sml-line[data-state='now'] .sml-moves { color: var(--accent); }
@@ -894,7 +902,7 @@ button.stl-track:focus-visible { outline: 2px solid var(--ring); outline-offset:
 /* Inline text keeps the trailing stage comment on the same clipboard line. */
 .sml-body { display: block; }
 .sml-moves {
-  font-family: var(--font-mono); font-size: 13px; line-height: 1.7;
+  font-family: var(--font-mono); font-size: var(--sml-move-size, 13px); line-height: 1.7;
   color: var(--foreground); word-break: break-word;
   text-align: left;
 }
@@ -912,6 +920,7 @@ button.stl-track:focus-visible { outline: 2px solid var(--ring); outline-offset:
 }
 
 @media (max-width: 480px) {
+  .sml { --sml-move-size: 12px; }
   .sml-moves { font-size: 12px; }
   .sml-label { font-size: 11px; }
 }
