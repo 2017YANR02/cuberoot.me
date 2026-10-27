@@ -2696,6 +2696,13 @@ export function App({ host }: { host: InstalledAppHost }) {
   connectedSmartCubeRef.current = smartCube.phase === 'connected' && smartCube.deviceName
     ? { model: smartCube.model ?? 'gan-v4', name: smartCube.deviceName }
     : undefined;
+  useEffect(() => {
+    if (smartCube.phase !== 'connected') return;
+    void import('@cuberoot/timer-ui/reconstruct/library-cache')
+      .then(({ reconstructionLibraries }) => reconstructionLibraries.warm())
+      .then(() => import('@cuberoot/timer-ui/reconstruct-analysis'))
+      .then(({ reconstructionAnalyzer }) => reconstructionAnalyzer.warmup()).catch(() => {});
+  }, [smartCube.phase]);
   if (smartCube.facelets) smartCubeLastFaceletsRef.current = smartCube.facelets;
   useAutoReady({
     enabled: view !== 'settings' && timerVisible && timerMode === 1 && smartCube.phase === 'connected' && timingEnabled

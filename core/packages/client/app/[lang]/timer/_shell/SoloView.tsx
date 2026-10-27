@@ -1814,7 +1814,11 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   useEffect(() => () => liveAnchor.setConnection(null), [liveAnchor]);
   const cubeConnected = supportsSmartCube && bluetoothCube.status.connected;
   useEffect(() => {
-    if (cubeConnected) reconstructionAnalyzer.warmup();
+    if (cubeConnected) {
+      void import('@cuberoot/timer-ui/reconstruct/library-cache')
+        .then(({ reconstructionLibraries }) => reconstructionLibraries.warm())
+        .then(() => reconstructionAnalyzer.warmup()).catch(() => {});
+    }
   }, [cubeConnected]);
   const trainingTimingActive = cubeConnected && !competition.enabled && timerSupportsTrainingTiming(event);
   useEffect(() => {
