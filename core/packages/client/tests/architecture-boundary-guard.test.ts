@@ -53,7 +53,7 @@ describe('architecture boundary guard', () => {
     // and the bounded recon intake CLI ESM loader and CubeOpt CLI symlink checks.
     // Five additional identities: two isolated nginx purge probes, the fixed FMC
     // quotient binary and two bounded small-puzzle measurement subprocess calls.
-    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 35);
+    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 36);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(144);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'cross-package-alias-import')).toHaveLength(0);
   });

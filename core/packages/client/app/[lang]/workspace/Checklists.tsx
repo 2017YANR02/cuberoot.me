@@ -6,7 +6,7 @@ import { ErrorNotice, Field, Form, EditorDialog, useResource, useWorkspace, valu
 import { orderChecklistItems, type Checklist, type ChecklistItem } from '@cuberoot/shared/workspace-planning';
 import { useT } from '@/hooks/useT';
 import { Tooltip } from '@/components/Tooltip';
-import { Archive, ArchiveRestore, ChevronsDownUp, ChevronsUpDown, ChevronRight, Folder, FolderOpen } from '@app-foundation/icons/lucide';
+import { Archive, ArchiveRestore, ChevronsDown, ChevronsUp, ChevronRight, Folder, FolderOpen } from '@app-foundation/icons/lucide';
 
 function groupChecklistItems(items: ChecklistItem[]) {
   const groups = new Map<string, ChecklistItem[]>();
@@ -61,7 +61,7 @@ export default function Checklists() {
     <div className="staff-actions workspace-toolbar">
       <Field label={t('清单状态', 'Checklist status')}><select className="workspace-toolbar-select" value={status} onChange={event => { void setStatus(event.target.value as typeof status); void setPage(1); setEditing(null); }}><option value="active">{t('进行中', 'Active')}</option><option value="all">{t('含已归档', 'Include archived')}</option></select></Field>
       <Field label={t('事项状态', 'Task status')}><select className="workspace-toolbar-select" value={itemStatus} onChange={event => setItemStatus(event.target.value as typeof itemStatus)}><option value="active">{t('未归档', 'Not archived')}</option><option value="archived">{t('已归档', 'Archived')}</option><option value="all">{t('全部', 'All')}</option></select></Field>
-      <div className="staff-toolbar-actions"><Tooltip content={allExpanded ? t('收起所有文件夹', 'Collapse all folders') : t('展开所有文件夹', 'Expand all folders')}>{tip => <button {...tip} type="button" className="btn workspace-icon-action workspace-action" data-emphasis="quiet" disabled={lists.length === 0} aria-label={allExpanded ? t('收起所有文件夹', 'Collapse all folders') : t('展开所有文件夹', 'Expand all folders')} onClick={() => { const folders = listsRef.current?.querySelectorAll<HTMLDetailsElement>('.workspace-check-folder'); if (!folders?.length) return; const open = !Array.from(folders).every(folder => folder.open); folders.forEach(folder => { folder.open = open; }); setAllExpanded(open); }}>{allExpanded ? <ChevronsDownUp size={20} aria-hidden="true" /> : <ChevronsUpDown size={20} aria-hidden="true" />}</button>}</Tooltip><Button action="add" onClick={() => { newId.current = crypto.randomUUID(); setEditing('new'); }}>{t('新建清单', 'New checklist')}</Button></div>
+      <div className="staff-toolbar-actions"><Tooltip content={allExpanded ? t('收起所有文件夹', 'Collapse all folders') : t('展开所有文件夹', 'Expand all folders')}>{tip => <button {...tip} type="button" className="btn workspace-icon-action workspace-action" data-emphasis="quiet" disabled={lists.length === 0} aria-label={allExpanded ? t('收起所有文件夹', 'Collapse all folders') : t('展开所有文件夹', 'Expand all folders')} onClick={() => { const folders = listsRef.current?.querySelectorAll<HTMLDetailsElement>('.workspace-check-folder'); if (!folders?.length) return; const open = !Array.from(folders).every(folder => folder.open); folders.forEach(folder => { folder.open = open; }); setAllExpanded(open); }}>{allExpanded ? <ChevronsUp size={20} aria-hidden="true" /> : <ChevronsDown size={20} aria-hidden="true" />}</button>}</Tooltip><Button action="add" onClick={() => { newId.current = crypto.randomUUID(); setEditing('new'); }}>{t('新建清单', 'New checklist')}</Button></div>
     </div>
     <ErrorNotice error={resource.error} retry={resource.reload} />
     <ErrorNotice error={projects.error} retry={projects.reload} />
