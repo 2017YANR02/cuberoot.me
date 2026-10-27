@@ -1241,3 +1241,7 @@ iPhone 交接修正回测有进展：手机日志实际出现 `adapter-retained`
 - [抖音 web-view](https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/component/open-capacity/web-view)
 - [抖音隐私授权](https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/tutorial/security-requirements/privacy-authorize)
 - [抖音发布流程](https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/introduction/develop-process/publish)
+
+### 2026-10-27：佣金微信提现开发包上传
+
+负责人授权三仓库全量提交推送、配套生产配置/迁移/部署和两个微信小程序上传。CubeRoot0.1.0官方CLI已成功上传678548字节，新增「我的 → 佣金提现」，支持本人微信绑定、申请和官方收款确认；网站/API及0296迁移已部署，详见`docs/wechat-automatic-payout-tracker.md`。本次只上传开发版，没有提审、公开发布或真实转账。完整发布检查的人工/真机确认和包预算缺口保留，不以CLI成功代替正式发布验收。商户IP/资金待负责人确认。
