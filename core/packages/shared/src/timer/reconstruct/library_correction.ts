@@ -195,8 +195,25 @@ async function matchBody(kp: KPuzzle, moves: string[], candidates: AlgEntry[], p
     let from = 0, to = parsed.moves.length;
     while (from < to && /^U(?:\d+)?'?$/.test(parsed.moves[from])) from++;
     while (to > from && /^U(?:\d+)?'?$/.test(parsed.moves[to - 1])) to--;
-    const body = parsed.moves.slice(from, to);
+    let body = parsed.moves.slice(from, to);
     if (!body.length) continue;
+    // Closed wide triggers can have exactly the recorded outer-turn path:
+    // f' L f = B' U B, for example. Recognize that library spelling without
+    // replacing encoder turns or introducing its optional boundary AUF.
+    // Keep measured regrips/wide turns strict, and preserve group indices by
+    // requiring one outer turn per library token and no residual rotation.
+    if (preserveMoves && moves.every(token => /^[URFDLB](?:\d+)?'?$/.test(token))) {
+      let end = body.length;
+      while (end && /^[xyz]/.test(body[end - 1])) end--;
+      const trigger = body.slice(0, end);
+      if (trigger.every(token => /^(?:[URFDLB]w?|[urfdlb])(?:\d+)?'?$/.test(token))) {
+        const outer = outerTurnSequence(trigger);
+        if (outer.moves.length === trigger.length && !compactCubeRotations(outer.rotation.join(' '))) {
+          // The existing matcher handles library-only final regrips separately.
+          body = [...outer.moves, ...body.slice(end)];
+        }
+      }
+    }
     // The recorded stage can still have its last layer on B/F/L/R/D;
     // cross-down presentation is applied later. Match in that actual frame.
     for (const { rotation, wrapper, inverse, tilted, perm } of matchingFrames) {

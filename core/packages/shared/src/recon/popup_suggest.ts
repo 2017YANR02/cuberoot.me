@@ -275,7 +275,7 @@ interface CancelCand { slotId: F2lSlotId; pair: string; ordinal: number; }
  * 某个新 pair(且 cross 还原、prev 已完成的 pair 不被破坏)。这正是解法里「留一两步 cancel into
  * 下一步」的写法。pair 用 piece-id 比对(免受 canonical 帧旋转影响)。优先更短(差 1 步>差 2 步)。
  */
-async function cancelIntoCandidates(prev: StageInfo, currPattern: KPattern): Promise<CancelCand[]> {
+async function cancelIntoCandidates(prev: StageInfo, currPattern: KPattern, crossFaceHome?: number): Promise<CancelCand[]> {
   // 仅 cross 已完成、F2L 未完成时前瞻(prev 处于 cross/xcross/xxcross/xxxcross)。
   if (!['cross', 'xcross', 'xxcross', 'xxxcross'].includes(prev.stage)) return [];
   const prevKeys = new Set(prev.solvedPairs.map(([c, e]) => `${c}.${e}`));
@@ -285,7 +285,7 @@ async function cancelIntoCandidates(prev: StageInfo, currPattern: KPattern): Pro
     const out: CancelCand[] = [];
     const seen = new Set<string>();
     const consider = async (p: KPattern) => {
-      const info = await detectStage(p);
+      const info = await detectStage(p, crossFaceHome);
       if (info.stage === 'none' || info.stage === 'pscross') return;          // cross 没还原 → 跳
       for (const [c, e] of prev.solvedPairs) {                                 // prev 的 pair 必须仍在
         if (!info.solvedPairs.some(([c2, e2]) => c2 === c && e2 === e)) return;
@@ -340,14 +340,14 @@ const CROSS_FAMILY_STAGE_NAME: Partial<Record<Stage, CrossCancelCand['stage']>> 
  * 个 F2L,俗称 xxxxcross)。跟上面 F2L pair 版本的 cancelIntoCandidates 同一套前瞻机制,只是
  * 接受条件换成「cross 家族阶段首次成立」而非「cross 已在、新解一把 pair」。
  */
-export async function crossFamilyCancelInto(prev: StageInfo, currPattern: KPattern): Promise<CrossCancelCand[]> {
+export async function crossFamilyCancelInto(prev: StageInfo, currPattern: KPattern, crossFaceHome?: number): Promise<CrossCancelCand[]> {
   if (prev.stage !== 'none' && prev.stage !== 'pscross') return [];
 
   const collect = async (depth: number): Promise<CrossCancelCand[]> => {
     const out: CrossCancelCand[] = [];
     const seen = new Set<string>();
     const consider = async (p: KPattern) => {
-      const info = await detectStage(p);
+      const info = await detectStage(p, crossFaceHome);
       const stage = info.stage === 'pscross' && info.solvedSlots.length === 1
         ? 'psxcross' : CROSS_FAMILY_STAGE_NAME[info.stage];
       if (!stage) return;
@@ -384,6 +384,8 @@ export async function crossFamilyCancelInto(prev: StageInfo, currPattern: KPatte
  * Only stage and colour-pair labels are offered; counts and ordinal aliases are omitted.
  */
 export interface SuggestArgs {
+  /** Physical cross selected by the complete solve, in URFLBD centre order. */
+  crossFaceHome?: number;
   /** The preceding line explicitly labels a cancelled cross-family stage. */
   continuesCancelledCross?: boolean;
   /** Cube pattern at end of previous labeled line (or default if first line). */
@@ -406,21 +408,21 @@ export interface SuggestArgs {
 
 export async function buildCommentSuggestions(args: SuggestArgs): Promise<string[]> {
   const { prevPattern, currPattern, lineMovesText, prevMovesText, explicit } = args;
-  const prev = await detectStage(prevPattern);
-  const curr = await detectStage(currPattern);
+  const prev = await detectStage(prevPattern, args.crossFaceHome);
+  const curr = await detectStage(currPattern, args.crossFaceHome);
   const hasMovesBefore = (prevMovesText ?? '').trim().length > 0;
   const t = classifyTransition(prev, curr, lineMovesText, hasMovesBefore);
   if (!t) {
     // 没真正解出东西。仅在用户主动按 Tab 时,试「cancel into」前瞻:某 pair 差 ≤2 步补完。
     if (!explicit) return [];
-    const cands = await cancelIntoCandidates(prev, currPattern);
+    const cands = await cancelIntoCandidates(prev, currPattern, args.crossFaceHome);
     if (cands.length > 0) {
       const out: string[] = [];
       for (const c of cands) out.push(`// ${c.pair} cancel into`);
       return out;
     }
     // cross 家族自身(cross/xcross/xxcross/xxxcross/xxxxcross)差 ≤2 步补完的 cancel-into。
-    const crossCands = await crossFamilyCancelInto(prev, currPattern);
+    const crossCands = await crossFamilyCancelInto(prev, currPattern, args.crossFaceHome);
     if (crossCands.length === 0) return [];
     const out: string[] = [];
     for (const c of crossCands) {

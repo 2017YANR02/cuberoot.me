@@ -1463,12 +1463,19 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   const phys = input.physical ?? { scramble, moves };
   const physCounted = phys.moves === moves ? counted : htmMoves(phys.moves);
   const viewRot = input.viewRotation ?? '';
+  const crossFace = /^([URFLBD])-cross$/.exec(segs.crossSide ?? '')?.[1];
   const alg = (...parts: string[]) => parts.filter(t => t.trim() !== '').join(' ');
 
   // 每个切点一个局面,顺带复用:第 i 行的「上一行末局面」就是第 i-1 行的末局面。
   // 打乱本身算一次(第 0 个),所以 spans.length + 1 个 pattern。
   const rawUpTo = (end: number) =>
     phys.moves.slice(0, end + 1).map(m => m.m).filter(Boolean).join(' ');
+  // crossSide is a spatial face, not a colour when the source includes a
+  // rotation. Resolve its physical centre at the established cross boundary.
+  const crossFaceHome = crossFace && segs.crossEndIdx != null
+    ? (await patternFromAlg(alg(phys.scramble, rawUpTo(segs.crossEndIdx))))
+      .patternData.CENTERS.pieces['URFLBD'.indexOf(crossFace)]
+    : undefined;
 
   const lines: ReconTextLine[] = [];
   let prevEnd = -1;
@@ -1505,13 +1512,16 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
       } else if (!isCfop) {
         label = span.label ?? null;
       } else {
+        // Pair rows continue the established cross. Initial cross discovery
+        // and last-layer transitions retain their existing suggestion rules.
+        const labelCrossFace = span.kind === 'f2l' ? crossFaceHome : undefined;
         let effectivePrev = prevPattern;
-        const prevInfo = await detectStage(prevPattern);
+        const prevInfo = await detectStage(prevPattern, labelCrossFace);
         if (!crossIsDone(prevInfo.stage)) {
           const beforePrevPattern = patternHistory.at(-2) ?? patternHistory[0];
-          const beforePrevInfo = await detectStage(beforePrevPattern);
+          const beforePrevInfo = await detectStage(beforePrevPattern, labelCrossFace);
           const isCancelInto = crossIsDone(beforePrevInfo.stage)
-            || (await crossFamilyCancelInto(beforePrevInfo, prevPattern)).length > 0;
+            || (await crossFamilyCancelInto(beforePrevInfo, prevPattern, labelCrossFace)).length > 0;
           if (isCancelInto) {
             const prefix = phys.moves.slice(from, span.endIdx + 1);
             for (let k = 1; k <= prefix.length; k += 1) {
@@ -1523,7 +1533,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
                 through,
                 viewRot,
               ));
-              if (crossIsDone((await detectStage(candidate)).stage)) {
+              if (crossIsDone((await detectStage(candidate, labelCrossFace)).stage)) {
                 effectivePrev = candidate;
                 break;
               }
@@ -1531,6 +1541,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
           }
         }
         label = firstLabel(await buildCommentSuggestions({
+          crossFaceHome: labelCrossFace,
           prevPattern: effectivePrev,
           currPattern,
           // 局面是真颜色的,喂给它的动作也必须是同一系的原始记号。
@@ -1588,7 +1599,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   return {
     // 原始打乱 + 观察转体。共轭过的那条只在这个模块内部用(识别、切分),不出门。
     scramble: phys.scramble,
-    crossColor: /^([UDFBLR])-cross$/.exec(segs.crossSide ?? '')?.[1],
+    crossColor: crossFaceHome === undefined ? undefined : 'URFLBD'[crossFaceHome],
     methodStages,
     currentStage,
     inspection: viewRot,

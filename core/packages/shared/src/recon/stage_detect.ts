@@ -109,8 +109,8 @@ export interface StageInfo {
   stage: Stage;
   /**
    * Home-frame face index (0..5) of the working cross — equivalently the cross
-   * COLOUR code (colour c's centre homes to face c). Frame-invariant. `5`
-   * (yellow/D) for `solved`; the pscross/cross face otherwise.
+   * COLOUR code (colour c's centre homes to face c). Frame-invariant. Defaults
+   * to `5` (yellow/D) for `solved` unless the caller pins a working cross.
    */
   crossFaceHome: number;
   /**
@@ -351,6 +351,7 @@ async function facePermAfter(rotAlg: string): Promise<number[]> {
 /**
  * Detect the highest-completion stage of the given pattern (the alg-applied
  * state). Returns stage + slot details + cross color name.
+ * An optional crossFaceHome pins detection to that physical cross colour.
  *
  * Stages are computed in order: solved > oll > f2l > xxxcross > xxcross
  *  > xcross > cross > pscross > none. (PLL is classified downstream from the
@@ -362,23 +363,24 @@ async function facePermAfter(rotAlg: string): Promise<number[]> {
  * readers are frame-invariant it is accurate for every cross colour too
  * (including the L/R-colour cross a z/z' inspection produces).
  */
-export async function detectStage(pattern: KPattern): Promise<StageInfo> {
+export async function detectStage(pattern: KPattern, crossFaceHome?: number): Promise<StageInfo> {
   const r0 = await defaultCentersRotation(pattern);
   const home = r0 ? pattern.applyAlg(r0) : pattern;
 
   const allEdges = CROSS_EDGES_BY_FACE.length > 0
     && [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].every(i => edgeHome(home, i));
   const allCorners = [0, 1, 2, 3, 4, 5, 6, 7].every(i => cornerHome(home, i));
-  if (allEdges && allCorners) {
+  if (allEdges && allCorners && crossFaceHome === undefined) {
     const allPairs = F2L_SLOT_DEFS.map(s => [s.cornerSlot, s.edgeSlot] as [number, number]);
     return { stage: 'solved', crossFaceHome: 5, solvedSlots: ['FR', 'FL', 'BL', 'BR'], solvedPairs: allPairs, crossColor: colorInfo(5), canonicalPattern: home };
   }
 
-  // Pick the face whose cross is solved (preferring the one with the most F2L
-  // pairs). For any partial solve exactly one face carries the working cross.
+  // A whole-solve caller can pin its physical cross. Incidental side crosses
+  // must not replace it when they temporarily have more completed pairs.
+  const faces = crossFaceHome === undefined ? [0, 1, 2, 3, 4, 5] : [crossFaceHome];
   let bestF = -1;
   let bestSlots: SlotGeom[] = [];
-  for (let f = 0; f < 6; f++) {
+  for (const f of faces) {
     if (!crossEdgesSolved(home, f)) continue;
     const slots = F2L_SLOTS_BY_FACE[f].filter(sl => cornerHome(home, sl.corner) && edgeHome(home, sl.edge));
     if (bestF < 0 || slots.length > bestSlots.length) { bestF = f; bestSlots = slots; }
@@ -389,12 +391,12 @@ export async function detectStage(pattern: KPattern): Promise<StageInfo> {
     // This is the trainer's pseudo-xcross goal: the whole cross+pair tuple
     // becomes solved under the same face turn, not an unrelated free pair.
     let pseudo: StageInfo | undefined;
-    for (let f = 0; f < 6; f++) {
+    for (const f of faces) {
       const m = FACE_MOVE[f];
       for (const mv of [m, `${m}2`, `${m}'`]) {
         const aligned = home.applyAlg(mv);
         if (!crossEdgesSolved(aligned, f)) continue;
-        const info = await detectStage(aligned);
+        const info = await detectStage(aligned, crossFaceHome);
         if (info.crossFaceHome !== f) continue;
         if (!pseudo || info.solvedSlots.length > pseudo.solvedSlots.length) {
           pseudo = { ...info, stage: 'pscross' };
@@ -402,7 +404,8 @@ export async function detectStage(pattern: KPattern): Promise<StageInfo> {
       }
     }
     if (pseudo) return pseudo;
-    return { stage: 'none', crossFaceHome: 5, solvedSlots: [], solvedPairs: [], crossColor: colorInfo(5), canonicalPattern: home };
+    const face = crossFaceHome ?? 5;
+    return { stage: 'none', crossFaceHome: face, solvedSlots: [], solvedPairs: [], crossColor: colorInfo(face), canonicalPattern: home };
   }
 
   const rotToD = FACE_TO_D_ROT[bestF];
@@ -418,6 +421,9 @@ export async function detectStage(pattern: KPattern): Promise<StageInfo> {
   }
 
   if (bestSlots.length === 4) {
+    if (allEdges && allCorners) {
+      return { stage: 'solved', crossFaceHome: bestF, solvedSlots, solvedPairs, crossColor, canonicalPattern: canonical };
+    }
     if (ollSolved(canonical)) {
       return { stage: 'oll', crossFaceHome: bestF, solvedSlots, solvedPairs, crossColor, canonicalPattern: canonical };
     }

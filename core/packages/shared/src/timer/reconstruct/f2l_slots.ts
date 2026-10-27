@@ -63,7 +63,7 @@ import type { HtmMove } from './htm';
 import { applyOneToken, computeStageSegments } from './stage_segments';
 import type { SolveMove, StageSegments } from './stage_segments';
 import { normalizeSolve } from './gyro_orient';
-import { metricForRange } from './step_metrics';
+import { endsRecognition, metricForRange } from './step_metrics';
 import { isCross } from './cfop-detect';
 
 /** The four F2L slots, named by the two side faces that bound them. */
@@ -359,15 +359,19 @@ export function computeF2lSlots(
     // L' B U B' L. Keep that final restoration with the pair. Still observe
     // slot dips below so the existing pass-through recovery remains intact.
     const crossRestored = isCross(states[i + 1]);
-    const nextTs = moves[i + 1]?.ts ?? totalMs;
-    const paused = nextTs - moves[i].ts >= SETTLED_GAP_MS;
+    // Recognition includes leading AUF, just as metricForRange does. Those U
+    // turns leave the completed pair standing and must not hide its pause.
+    let nextExecution = i + 1;
+    while (nextExecution < moves.length && !endsRecognition(moves[nextExecution].m)) nextExecution++;
+    const paused = (moves[i + 1]?.ts ?? totalMs) - moves[i].ts >= SETTLED_GAP_MS;
+    const observed = (moves[nextExecution]?.ts ?? totalMs) - moves[i].ts >= SETTLED_GAP_MS;
     if (cur.length > peak && crossRestored) {
       for (const id of currentLevel) frozen.add(id);
       peak = cur.length;
       currentLevel = cur.filter(id => !frozen.has(id));
       for (const id of currentLevel) closedAt.set(id, i);
       dipped = false;
-      levelSettled = paused;
+      levelSettled = observed;
       continue;
     }
     if (cur.length < peak) {
@@ -386,7 +390,7 @@ export function computeF2lSlots(
     // Once this completed pair has its own observation pause, later temporary
     // disruption belongs to the next pair. A second pause cannot move an
     // already-established boundary to the end of that later sequence.
-    if (crossRestored && paused && currentLevel.every(id => cur.includes(id))) levelSettled = true;
+    if (crossRestored && observed && currentLevel.every(id => cur.includes(id))) levelSettled = true;
   }
 
   interface Found { id: F2lSlotId; endIdx: number | null; free: boolean }
