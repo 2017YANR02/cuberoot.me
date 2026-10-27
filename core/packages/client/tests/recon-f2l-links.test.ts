@@ -6,9 +6,13 @@ import { CUBE_ORIENTATIONS } from '@cuberoot/shared/timer';
 import { applyScramble } from '@cuberoot/shared/timer/reconstruct/state';
 import { FACE_COLOR_KEY } from '@cuberoot/shared/timer/reconstruct/orient';
 
+const advancedCases = [
+  { id: 3557, name: 'AF2L 24', setup: "L' R U2' R' L", algs: [] },
+  { id: 3559, name: 'AF2L 26', setup: "R L U2' L' R'", algs: [] },
+];
 vi.mock('@cuberoot/shared/alg', async importOriginal => ({
   ...await importOriginal<typeof import('@cuberoot/shared/alg')>(),
-  loadAlg: vi.fn(async (_puzzle: string, set: string) => ({ cases: set === 'f2l' ? cases : [] })),
+  loadAlg: vi.fn(async (_puzzle: string, set: string) => ({ cases: set === 'f2l' ? cases : set === 'adv-f2l' ? advancedCases : [] })),
 }));
 
 describe('F2L comment state recognition', () => {
@@ -48,6 +52,31 @@ describe('F2L comment state recognition', () => {
   it('resolves a generic F2L label from the pair completed on that line', async () => {
     const links = await reconF2lLinks("R U R' U'", "U R U' R' // F2L");
     expect(links.get(0)?.get('F2L')).toBe('/alg/3x3/f2l/a+');
+  });
+
+  it('finds an advanced case by its setup when no standard case matches', async () => {
+    const links = await reconF2lLinks(advancedCases[0].setup, '// Y cross\n// GR');
+    expect(links.get(1)?.get('GR')).toBe('/alg/3x3/adv-f2l/af2l-24');
+  });
+
+  it('does not guess when multiple advanced cases share the same pair state', async () => {
+    const { loadAlg } = await import('@cuberoot/shared/alg');
+    vi.mocked(loadAlg).mockImplementationOnce(async () => ({ cases } as never))
+      .mockImplementationOnce(async () => ({ cases: [advancedCases[0], { ...advancedCases[0], id: 9999, name: 'AF2L 99' }] } as never));
+    const links = await reconF2lLinks(advancedCases[0].setup, '// Y cross\n// GR');
+    expect(links.get(1)?.get('GR')).toBeUndefined();
+  });
+
+  it('keeps standard matches when the advanced library is unavailable', async () => {
+    const { loadAlg } = await import('@cuberoot/shared/alg');
+    vi.mocked(loadAlg).mockImplementationOnce(async () => ({ cases } as never))
+      .mockRejectedValueOnce(new Error('unavailable'));
+    const links = await reconF2lLinks("D' F U B2 L R' D U2 F' D2 U F D U' R2 B' L2 R2", [
+      'x2 y // insp', "R' B' R2 U D R2' F2 // W cross", "U' L' U' L R U' R' // GR",
+      "(U U') B U y R2' U' R // OB", "(U' U) R U R' // GO",
+    ].join('\n'));
+    expect(links.get(2)?.get('GR')).toBeUndefined();
+    expect(links.get(4)?.get('GO')).toBe('/alg/3x3/f2l/b+');
   });
 
   it.each(CUBE_ORIENTATIONS)('keeps A+ correct in orientation $label and its cross colour', async ({ value }) => {

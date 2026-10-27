@@ -106,25 +106,32 @@ export async function reconF2lAnnotations(scramble: string, text: string, onDiag
   // Drawing uses only the recorded state. Publish it before any library I/O;
   // the library is needed solely to turn fingerprints into case links.
   onDiagrams?.(diagrams);
-  const file = await loadAlg('3x3', 'f2l');
-  const slugs = buildCaseSlugMap(file.cases, 'f2l');
-  const hrefByState = new Map<string, Set<string>>();
-  for (const c of file.cases) {
-    const slug = c.id == null ? undefined : slugs.byId.get(c.id);
-    if (!slug || !c.setup) continue;
-    // Match the library's case setup, not algorithms that can solve multiple cases.
-    const reference = applyScramble(3, c.setup);
-    for (const auf of ['', 'U', 'U2', "U'"]) {
-      const key = f2lSlotFingerprint(rotate(reference, auf), 'FR');
-      if (!key) continue;
-      const hrefs = hrefByState.get(key) ?? new Set<string>();
-      hrefs.add(algCaseDetailHref('3x3', 'f2l', slug));
-      hrefByState.set(key, hrefs);
+  const indexCases = async (set: 'f2l' | 'adv-f2l') => {
+    const file = await loadAlg('3x3', set);
+    const slugs = buildCaseSlugMap(file.cases, set);
+    const hrefByState = new Map<string, Set<string>>();
+    for (const c of file.cases) {
+      const slug = c.id == null ? undefined : slugs.byId.get(c.id);
+      if (!slug || !c.setup) continue;
+      // Case setup, not an algorithm that may solve several different cases.
+      const reference = applyScramble(3, c.setup);
+      for (const auf of ['', 'U', 'U2', "U'"]) {
+        const key = f2lSlotFingerprint(rotate(reference, auf), 'FR');
+        if (!key) continue;
+        const hrefs = hrefByState.get(key) ?? new Set<string>();
+        hrefs.add(algCaseDetailHref('3x3', set, slug));
+        hrefByState.set(key, hrefs);
+      }
     }
-  }
+    return hrefByState;
+  };
+  const standard = await indexCases('f2l');
+  const needsAdvanced = [...links.values()].some(pairs => [...pairs.values()].some(key => !standard.has(key)));
+  // Advanced lookup must not make already identified standard cases disappear.
+  const advanced = needsAdvanced ? await indexCases('adv-f2l').catch(() => new Map<string, Set<string>>()) : new Map<string, Set<string>>();
   for (const [line, pairs] of links) {
     for (const [pair, key] of pairs) {
-      const hrefs = hrefByState.get(key);
+      const hrefs = standard.get(key) ?? advanced.get(key);
       if (hrefs?.size === 1) pairs.set(pair, [...hrefs][0]);
       else pairs.delete(pair);
     }
