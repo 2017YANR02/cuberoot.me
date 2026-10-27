@@ -11,7 +11,7 @@ export const SYSTEM_VIEW_LABELS: Record<SystemView, [string, string]> = {
 };
 export const SYSTEM_DESTINATION_VIEWS: Record<string, SystemView> = {
   '/admin/disk': 'tools', '/admin/releases': 'tools', '/dev/ops': 'tools',
-  '/admin/interview': 'workspace', '/docs': 'workspace', '/sheets': 'workspace',
+  '/admin/careers': 'workspace', '/admin/interview': 'workspace', '/docs': 'workspace', '/sheets': 'workspace',
 };
 
 export const ADMIN_SECTION_LABELS: Record<AdminSection, [string, string]> = {
@@ -23,7 +23,7 @@ export const ADMIN_SECTION_LABELS: Record<AdminSection, [string, string]> = {
 };
 
 export const DESTINATION_SECTIONS: Record<string, Exclude<AdminSection, 'overview'>> = {
-  '/admin/interview': 'system', '/admin/disk': 'system', '/admin/users': 'users',
+  '/admin/careers': 'system', '/admin/interview': 'system', '/admin/disk': 'system', '/admin/users': 'users',
   '/admin/releases': 'system', '/platform/admin': 'commerce', '/platform/admin/invites': 'commerce',
   '/support': 'users', '/feedback/admin': 'content', '/forum/review': 'content',
   '/account?view=submissions': 'content', '/dev/ops': 'system', '/quiz/manage': 'content',

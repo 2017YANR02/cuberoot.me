@@ -210,7 +210,7 @@ function ManualGroundTruthPage() {
     return (
       <main className="gt-page">
         <header className="gt-header">
-          <div className="gt-kicker">Recon Ground Truth</div>
+
           <h1>{tr({ zh: '复盘测试样本', en: 'Reconstruction test corpus' })}</h1>
         </header>
         <div className="gt-access">
@@ -225,7 +225,7 @@ function ManualGroundTruthPage() {
   return (
     <main className="gt-page">
       <header className="gt-header">
-        <div className="gt-kicker">Recon Ground Truth</div>
+
         <div className="gt-title-row">
           <div>
             <h1>{tr({ zh: '复盘测试样本', en: 'Reconstruction test corpus' })}</h1>

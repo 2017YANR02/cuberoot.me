@@ -658,6 +658,9 @@ export default function LandingPage() {
         <Link href={ABOUT_FOOTER_ENTRY.href} className="footer-about" prefetch={false}>
           {t(ABOUT_FOOTER_ENTRY.nameKey)}
         </Link>
+        <Link href="/careers" prefetch={false}>
+          {tr({ zh: '加入我们', en: 'Careers' })}
+        </Link>
         <Link href={SUPPORT_FOOTER_ENTRY.href} className="footer-credits" prefetch={false}>
           <Heart size={12} aria-hidden="true" />
           <span>{t(SUPPORT_FOOTER_ENTRY.nameKey)}</span>

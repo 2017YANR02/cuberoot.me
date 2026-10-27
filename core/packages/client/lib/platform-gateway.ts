@@ -550,6 +550,7 @@ export async function executePlatformAction(
       : write(`/v1/platform/admin/instructor-applications/${requiredId(input)}/decision`, 'POST', payload);
     case 'admin-payout': return write(`/v1/platform/admin/instructor-payouts/${requiredId(input)}/paid`, 'POST', payload);
     case 'admin-payout-generate': return write('/v1/platform/admin/instructor-payouts/generate', 'POST', payload);
+    case 'admin-payout-refresh': return write(`/v1/platform/admin/instructor-payouts/${requiredId(input)}/refresh-wechat`, 'POST', payload);
     case 'admin-payout-approve': return write(`/v1/platform/admin/instructor-payouts/${requiredId(input)}/approve`, 'POST', payload);
     case 'redeem-invite': return write('/v1/platform/invites/redeem', 'POST', payload);
     case 'admin-invite-batch': return write('/v1/platform/admin/invites/batch', 'POST', payload);
@@ -609,6 +610,7 @@ export const PLATFORM_ACTION_LABELS: Record<PlatformActionId, { zh: string; en: 
   'admin-payout': { zh: '标记已结算', en: 'Mark paid' },
   'admin-payout-generate': { zh: '生成结算单', en: 'Generate payout' },
   'admin-payout-approve': { zh: '批准结算单', en: 'Approve payout' },
+  'admin-payout-refresh': { zh: '核对微信结果', en: 'Refresh WeChat transfer' },
   'redeem-invite': { zh: '兑换课程码', en: 'Redeem course code' },
   'admin-invite-batch': { zh: '批量生成兑换码', en: 'Generate code batch' },
   'admin-invite-order': { zh: '绑定订单号', en: 'Bind order reference' },

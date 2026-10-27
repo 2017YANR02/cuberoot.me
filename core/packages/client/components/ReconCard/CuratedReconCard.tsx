@@ -30,7 +30,7 @@ export function CuratedReconCard({ pin, featured, favorite, ...card }: Component
           aria-pressed={favorite.active} disabled={favorite.disabled} onClick={favorite.onToggle}>
           <Bookmark size={16} fill={favorite.active ? 'currentColor' : 'none'} aria-hidden="true" />
         </button>}
-        {pin && <button type="button" className="recon-curation-button" title={pinLabel} aria-label={pinLabel}
+        {pin && <button type="button" className="recon-curation-button recon-curation-pin" title={pinLabel} aria-label={pinLabel}
           aria-pressed={pin.active} disabled={pin.disabled} onClick={pin.onToggle}>
           {pin.active ? <PinOff size={16} aria-hidden="true" /> : <Pin size={16} aria-hidden="true" />}
         </button>}

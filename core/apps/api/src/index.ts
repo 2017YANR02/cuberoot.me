@@ -1,3 +1,4 @@
+import { startWechatPayoutRecovery } from './platform/wechat_payout.js';
 import { workspaceRoutes } from "./routes/workspace.js";
 import { Hono } from 'hono';
 import { contestsRoutes } from './routes/contests.js';
@@ -91,6 +92,7 @@ import { algSweepRoutes } from './routes/alg_sweep.js';
 import { wcaProxyRoutes } from './routes/wca_proxy.js';
 import { wcaResultWatchRoutes } from './routes/wca_result_watch.js';
 import { feedbackRoutes } from './routes/feedback.js';
+import { careerApplicationRoutes } from './routes/career_applications.js';
 import { cubeoptSolveRoutes } from './routes/cubeopt_solve.js';
 import { paintRoutes } from './routes/paint.js';
 import { pbRoutes } from './routes/pb.js';
@@ -261,6 +263,7 @@ app.route('/v1', algSweepRoutes);
 app.route('/v1', wcaProxyRoutes);
 app.route('/v1', wcaResultWatchRoutes);
 app.route('/v1', feedbackRoutes);
+app.route('/v1', careerApplicationRoutes);
 app.route('/v1', cubeoptSolveRoutes);
 app.route('/v1', paintRoutes);
 app.route('/v1', pbRoutes);
@@ -439,6 +442,7 @@ startDouyinOrderSync();
 startMembershipContractSync();
 startMembershipRenewals();
 startPlatformRefundReconciliation();
+startWechatPayoutRecovery();
 
 const PORT = Number(process.env.PORT) || 3001;
 

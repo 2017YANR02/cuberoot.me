@@ -19,7 +19,7 @@ import { reconCommentLinks } from '@/lib/recon-comment-links';
 import { tr } from '@/i18n/tr';
 import { crossColorFromReconText } from '@/components/CubeColorChip/CubeColorChip';
 import NotationLine, { useNotationCases } from '@cuberoot/timer-ui/recon/NotationLine';
-import { findTokenPositions, syncReconPlayerCursorFromText, reconInspectionOrientations, reconWasteBrackets } from '@/lib/recon-alg-utils';
+import { findTokenPositions, syncReconPlayerCursorFromText, reconInspectionOrientations, reconWasteBrackets, showReconInspectionColors } from '@/lib/recon-alg-utils';
 import { getTextOffsetInElement, snapCaretToLine } from '@cuberoot/timer-ui/recon/text-cursor';
 import './solution_view.css';
 
@@ -68,7 +68,7 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
   const [cursorOffset, setCursorOffset] = useState<number | null>(null);
   const [hlRange, setHlRange] = useState<[number, number] | null>(null);
   const plainText = useMemo(() => text.replace(/\r\n?/g, '\n'), [text]);
-  const inspectionColors = useMemo(() => new Map(reconInspectionOrientations(plainText).map(item => [item.line, item.colors])), [plainText]);
+  const inspectionColors = useMemo(() => new Map((showReconInspectionColors(event) ? reconInspectionOrientations(plainText) : []).map(item => [item.line, item.colors])), [plainText, event]);
   const crossColor = useMemo(() => crossColorFromReconText(plainText), [plainText]);
   const linkComments = event === '3x3' || event === '333' || event === 'oh' || event === '333oh';
   const { diagramAt, f2lLinks, f2lLoading, libraryLinks } = useReconLineDiagrams(scramble, sourceText, linkComments);

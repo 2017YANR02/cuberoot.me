@@ -48,7 +48,7 @@ export const COOPERATION_EQUITY_POSITION = {
 
 export default function CooperationOpportunity() {
   return <section id="bp-cooperation" className="overview-section overview-wrap" aria-labelledby="bp-cooperation-title">
-    <p className="overview-kicker">{tr({ zh: '一起往前走', en: 'BUILDING TOGETHER' })}</p>
+
     <h2 id="bp-cooperation-title">{tr({ zh: '您支持长远发展，\n我们专注把业务做好。', en: 'Your support for the long term.\nOur focus on building the business.' })}</h2>
     <p className="overview-intro">{tr(COOPERATION_INTRO)}</p>
     <div className="bp-streams">{OPTIONS.map(({ Icon, status, title, body, value, next, href, link }) => <article key={title.en} data-site-surface="panel">

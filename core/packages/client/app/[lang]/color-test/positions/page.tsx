@@ -58,7 +58,7 @@ function Result({ score, topFace, showColorNames, onPrevious, onRestart }: {
 
   return (
     <section className="color-quiz-result" aria-live="polite">
-      <p className="color-quiz-result-kicker">{tr({ zh: '本轮成绩', en: 'ROUND COMPLETE' })}</p>
+
       <div className="color-quiz-result-score">
         <strong>{score}</strong>
         <span>/ {ALL_POSITION_QUESTIONS.length}</span>

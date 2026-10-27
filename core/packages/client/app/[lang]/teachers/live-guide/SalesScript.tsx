@@ -34,7 +34,7 @@ export default function SalesScript() {
   }
 
   return <section id="sales-script" ref={root} lang="zh-Hans" tabIndex={-1}>
-    <p className="sales-script-eyebrow">实战讲稿</p>
+
     <h2>{script.title}</h2>
     <p className="live-guide-intro">先用两个白面魔方制造认知反差，再让观众跟练、看见纠错方法，最后介绍课程并帮助家长判断是否适合。</p>
     <p className="sales-script-offer">30 分钟一轮 <span>17 节系统课</span> <span>原稿直播价 199 元</span></p>

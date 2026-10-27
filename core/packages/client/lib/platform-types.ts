@@ -134,6 +134,7 @@ export type PlatformActionId =
   | 'admin-payout'
   | 'admin-payout-generate'
   | 'admin-payout-approve'
+  | 'admin-payout-refresh'
   | 'redeem-invite'
   | 'admin-invite-batch'
   | 'admin-invite-order'

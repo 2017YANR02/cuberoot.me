@@ -96,7 +96,7 @@ function TeachingPage({ isAdmin, lang }: { isAdmin: boolean; lang: string }) {
     <main className="teaching-page">
       <header className="teaching-hero">
         <BackHome />
-        <p className="teaching-eyebrow"><T zh="三阶魔方录播课" en="Recorded 3×3 lessons" /></p>
+
         <h1><T zh="课程" en="Courses" /></h1>
         <p className="teaching-lead">
           <T
@@ -131,7 +131,7 @@ function TeachingPage({ isAdmin, lang }: { isAdmin: boolean; lang: string }) {
 
       <section className="teaching-principles" aria-labelledby="recording-rules">
         <div className="teaching-section-heading">
-          <p className="teaching-kicker"><T zh="课程规则" en="Lesson rules" /></p>
+
           <h2 id="recording-rules"><T zh="一节一件事，看完马上练" en="One goal per lesson, then practise immediately" /></h2>
         </div>
         <div className="teaching-principle-grid">
@@ -273,7 +273,7 @@ function TeachingPage({ isAdmin, lang }: { isAdmin: boolean; lang: string }) {
 
       <section className="teaching-production" aria-labelledby="production-title">
         <div className="teaching-section-heading">
-          <p className="teaching-kicker"><T zh="录制顺序" en="Recording order" /></p>
+
           <h2 id="production-title"><T zh="按模块批量录，不按整门课硬撑" en="Record in module batches, not one huge course" /></h2>
         </div>
         <ol>

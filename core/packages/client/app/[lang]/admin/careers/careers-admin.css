@@ -1,0 +1,10 @@
+.careers-admin-item { margin: 18px 0; padding: 22px; border-radius: 12px; }
+.careers-admin-item h2 { margin: 0; font-size: 20px; }
+.careers-admin-item p { color: var(--muted-foreground); }
+.careers-admin-item dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 20px; }
+.careers-admin-item dt { color: var(--muted-foreground); }
+.careers-admin-item dd { margin: 0; overflow-wrap: anywhere; }
+.careers-admin-files, .careers-admin-pages { display: flex; flex-wrap: wrap; gap: 16px; }
+.careers-admin-action, .careers-admin-page-button { color: var(--accent); text-align: left; overflow-wrap: anywhere; }
+.careers-admin-page-button:disabled { color: var(--faint-foreground); }
+.careers-admin-files .careers-admin-delete { color: var(--destructive); }

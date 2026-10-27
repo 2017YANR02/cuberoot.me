@@ -42,6 +42,7 @@ import { PlatformReferenceField } from './PlatformReferenceField';
 import { PlatformStructuredField } from './PlatformStructuredField';
 import { renderArticleMarkdown } from '@/lib/article-markdown';
 import { platformLocalDateTime, platformMajorToMinor, platformMinorToMajor } from '@/lib/platform-commerce-fields';
+import { InstructorPayoutSettings } from './InstructorPayoutSettings';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type FieldKind = 'text' | 'textarea' | 'number' | 'rating' | 'date' | 'datetime-local' | 'tel' | 'url' | 'select' | 'boolean' | 'lines' | 'json' | 'structured' | 'markdown' | 'money';
@@ -1089,9 +1090,9 @@ function PlatformPayoutManager({ definition, entities = [], busy, runAction }: C
       {entities.map((entity) => entity.status === 'draft' ? (
         <section key={entity.id} className="platform-domain-actions">
           <h2>{entity.title}</h2>
-          <ActionButton action="admin-payout-approve" resourceId={entity.id} confirm={text('批准这张结算单吗？', 'Approve this payout?')} busy={busy} runAction={runAction} />
+          <ActionButton action="admin-payout-approve" label={entity.data?.payoutMode === 'wechat' ? text('审核并转账', 'Approve and transfer') : undefined} resourceId={entity.id} confirm={entity.data?.payoutMode === 'wechat' ? undefined : text('批准这张结算单吗？', 'Approve this payout?')} busy={busy} runAction={runAction} />
         </section>
-      ) : entity.status === 'approved' || entity.status === 'processing' ? (
+      ) : entity.data?.payoutMode === 'wechat' && ['approved', 'processing', 'failed'].includes(entity.status || '') ? (<section key={entity.id} className="platform-domain-actions"><h2>{entity.title}</h2><ActionButton action="admin-payout-refresh" resourceId={entity.id} busy={busy} runAction={runAction} /></section>) : entity.status === 'approved' || entity.status === 'processing' ? (
         <DomainForm key={entity.id} definition={definition} entity={entity} resourceId={entity.id} busy={busy} runAction={runAction} spec={{
           title: text(`登记付款：${entity.title}`, `Record payment: ${entity.title}`),
           action: 'admin-payout',
@@ -1568,6 +1569,7 @@ export function PlatformEventActions(props: CommonProps) {
 
 export function PlatformInstructorActions(props: CommonProps) {
   const { definition, params, entity, busy, runAction } = props;
+  if (definition.id === 'instructor-earnings') return <InstructorPayoutSettings />;
   if (definition.id === 'teacher-apply') {
     return <DomainForm definition={definition} entity={entity} busy={busy} runAction={runAction} spec={{ title: text('申请资料', 'Application'), action: 'apply-instructor', fields: INSTRUCTOR_APPLICATION_FIELDS }} />;
   }

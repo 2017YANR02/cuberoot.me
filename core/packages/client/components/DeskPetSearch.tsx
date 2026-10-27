@@ -47,6 +47,7 @@ body:has(.deskpet-navigation .appearance-menu) .accent-color-menu{z-index:100030
 .deskpet-navigation[data-panel-visible='true'][data-panel-collapsed='false']{--af-nav-outline:var(--border-default);}
 .deskpet-navigation .af-nav-body{height:calc(100% - var(--af-nav-header-height));}
 .deskpet-navigation .af-nav-sidebar{pointer-events:auto;}
+.deskpet-navigation .af-nav-sidebar .af-nav-row[data-active='true'] .af-nav-link{color:var(--foreground);background:var(--muted);}
 .deskpet-navigation .af-nav-backdrop,.deskpet-navigation .af-nav-mobile-toggle{pointer-events:auto;}
 .deskpet-navigation-header{display:flex;align-items:center;height:var(--af-nav-header-height);
   box-sizing:border-box;padding:0 10px;position:relative;z-index:2;pointer-events:auto;
@@ -81,12 +82,12 @@ body:has(.deskpet-navigation .appearance-menu) .accent-color-menu{z-index:100030
 .deskpet-conversation-title svg{flex:none;}
 .deskpet-conversation-title span,.deskpet-chat-list .af-nav-link span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .deskpet-navigation .deskpet-chat-list .af-nav-link{font-weight:400;gap:8px;}
-.deskpet-chat-list .af-nav-link[aria-current='page']{font-weight:400;}
-.deskpet-chat-heading{display:flex;align-items:center;gap:8px;margin:0 4px 16px;font-size:1.05rem;font-weight:600;color:var(--foreground);}
+.deskpet-chat-list .af-nav-link[aria-current='page']{font-weight:400;color:var(--foreground);background:var(--muted);}
+.deskpet-chat-heading{display:flex;align-items:center;gap:8px;margin:0 4px 4px;font-size:1.05rem;font-weight:600;color:var(--foreground);}
 .deskpet-chat-heading strong{flex:1;}
 .deskpet-chat-action{display:inline-flex;align-items:center;justify-content:center;flex:none;width:36px;height:36px;border:0;border-radius:8px;background:transparent;color:var(--muted-foreground);cursor:pointer;}
 .deskpet-chat-action:hover,.deskpet-chat-action:focus-visible{background:var(--accent-soft);color:var(--foreground);}
-.deskpet-chat-section{margin:24px 10px 8px;font-size:.8rem;color:var(--muted-foreground);}
+.deskpet-chat-section{margin:10px 10px 4px;font-size:.8rem;color:var(--muted-foreground);}
 .deskpet-chat-row{display:flex;align-items:center;min-width:0;}
 .deskpet-chat-row .af-nav-link{flex:1;min-width:0;}
 .deskpet-chat-search{width:100%;box-sizing:border-box;margin:0 0 8px;padding:8px;border:1px solid var(--border-default);border-radius:8px;background:var(--background);color:var(--foreground);font:inherit;}
@@ -550,7 +551,7 @@ export default function DeskPetSearch({
           aria-label={navigation.find(item => item.id === activePanel)?.label}
           ref={activePanel === 'pet' ? setPetPanelContainer : undefined}>
           {activePanel === 'chats' && <nav className="deskpet-chat-list settings-typography" aria-label={t('聊天列表', 'Conversations')}>
-            <div className="deskpet-chat-heading"><strong>CubeRoot</strong><button type="button" className="deskpet-chat-action" aria-label={t('搜索聊天', 'Search conversations')} aria-expanded={chatSearchOpen} onClick={() => { setChatSearchOpen(value => !value); setChatSearch(''); }}><Search size={18}/></button><ClearButton variant="standalone" ariaLabel={t('关闭侧栏', 'Close sidebar')} onClick={() => setActivePanel(null)} /></div>
+            <div className="deskpet-chat-heading"><strong>CubeRoot</strong><button type="button" className="deskpet-chat-action" aria-label={t('搜索聊天', 'Search conversations')} aria-expanded={chatSearchOpen} onClick={() => { setChatSearchOpen(value => !value); setChatSearch(''); }}><Search size={18}/></button></div>
             {chatSearchOpen && <input className="deskpet-chat-search" value={chatSearch} onChange={event => setChatSearch(event.target.value)} placeholder={t('搜索聊天', 'Search conversations')} aria-label={t('搜索聊天', 'Search conversations')} />}
             <button type="button" className="af-nav-link" onClick={newChat}>
               <span className="af-nav-icon" aria-hidden="true"><SquarePen size={18}/></span><span>{t('新聊天', 'New chat')}</span>

@@ -34,7 +34,7 @@
 
 数据库迁移为 `core/apps/api/migrations/0286_recon_intake.sql`，
 须应用到本地 PostgreSQL；发布时由既有迁移流程应用，不手动改生产数据库。
-来源关联还需应用 `0295_recon_intake_source.sql`。本地来源选择需要在隔离的
+来源关联还需应用 `0297_recon_intake_source.sql`。本地来源选择需要在隔离的
 `recon_intake_local` 数据库中准备 `recons` 和 `recon_ground_truth_cases` 的测试数据；
 该数据库不会自动同步线上来源，缺少这些表时来源选择不可用，原收录队列仍可使用。
 

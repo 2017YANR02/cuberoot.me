@@ -97,7 +97,7 @@ const ADVANTAGES = [
 export default function InvestorStory() {
   return <>
     <section id="bp-competition" className="overview-section overview-wrap" aria-labelledby="overview-competition-title">
-      <p className="overview-kicker">{tr({ zh: '竞争与定位', en: 'Competition & positioning' })}</p>
+
       <h2 id="overview-competition-title">{tr({ zh: '智能硬件记录每一步。\n专业服务帮助下一步。', en: 'Smart hardware captures every move.\nExpert service helps with the next.' })}</h2>
       <div className="overview-review" data-site-surface="panel"><Bluetooth size={26} aria-hidden /><div>
         <h3>{tr({ zh: '智能魔方，让练习过程变成可分析的数据。', en: 'Smart cubes turn practice into data you can analyse.' })}</h3>
@@ -123,7 +123,7 @@ export default function InvestorStory() {
     </section>
 
     <section id="bp-advantages" className="overview-section overview-wrap" aria-labelledby="overview-advantage-title">
-      <p className="overview-kicker">{tr({ zh: '优势与壁垒', en: 'Advantages & defensibility' })}</p>
+
       <h2 id="overview-advantage-title">{tr({ zh: '从内容触达，\n走到长期关系。', en: 'From content discovery\nto lasting relationships.' })}</h2>
       <div className="bp-moat-grid">{ADVANTAGES.map(({ Icon, title, tagline, body, href, linkLabel }, index) => <article data-site-surface="panel" key={title.en}><span className="bp-moat-index">0{index+1}</span><span className="bp-icon"><Icon size={30} strokeWidth={1.4} aria-hidden /></span><h3>{tr(title)}</h3><p>{tr(tagline)}</p><AppLink href={href} prefetch={false} target="_blank" rel="noopener noreferrer" className="overview-text-link">{tr(linkLabel)}<ArrowUpRight size={16} aria-hidden /></AppLink><details><summary>{tr({ zh: '优势依据', en: 'Supporting work' })}<ChevronDown size={15} aria-hidden /></summary><p>{tr(body)}</p></details></article>)}</div>
       <AppLink href="/achievements" prefetch={false} className="overview-text-link">{tr({ zh: '查看已做出的原创工作', en: 'Inspect the original work' })}<ArrowUpRight size={16} aria-hidden /></AppLink>

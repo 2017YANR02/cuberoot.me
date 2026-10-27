@@ -1,0 +1,17 @@
+<view class="page" style="{{appearanceStyle}}">
+  <view class="card">
+    <view class="title">{{copy.heading}}</view>
+    <text wx:if="{{configured}}">{{copy.configured}}</text>
+    <label for="payout-name">{{copy.name}}</label>
+    <input id="payout-name" value="{{name}}" bindinput="nameInput" maxlength="60" placeholder="{{copy.name}}" disabled="{{busy}}" />
+    <checkbox-group bindchange="agree"><label><checkbox value="yes" checked="{{agreed}}" disabled="{{busy}}" />{{copy.consent}}</label></checkbox-group>
+    <button bindtap="bindWechat" disabled="{{busy}}">{{configured ? copy.update : copy.bind}}</button>
+  </view>
+  <view wx:if="{{configured}}" class="card"><text>{{copy.available}} ¥{{available}}</text><button bindtap="requestPayout" disabled="{{busy}}">{{copy.request}}</button></view>
+  <text wx:if="{{error}}" role="alert">{{error}}</text>
+  <view wx:for="{{payouts}}" wx:key="id" class="card">
+    <text>{{item.currency}} {{item.amount}} · {{item.label}}</text>
+    <button wx:if="{{item.transferState === 'WAIT_USER_CONFIRM'}}" data-id="{{item.id}}" bindtap="confirmReceipt" disabled="{{busy}}">{{copy.receipt}}</button>
+  </view>
+  <text wx:if="{{loaded && !payouts.length}}">{{copy.empty}}</text>
+</view>

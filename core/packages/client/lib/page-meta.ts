@@ -41,6 +41,8 @@ const SEP = ' — ';
 const SHARE_IMAGE = '/icons/CubeRoot.png';
 
 export const PAGE_META: Record<string, PageMetaEntry> = {
+  'admin/careers': { title: { zh: '招聘申请', en: 'Career applications' } },
+  'careers': { title: { zh: '加入我们', en: 'Careers' }, description: { zh: '查看 CubeRoot 发布的职位。', en: 'Explore open positions at CubeRoot.' } },
   'chat': { title: { zh: '聊天', en: 'Chat' }, description: { zh: '与 CubeRoot 对话，查询成绩、寻找工具、学习魔方。', en: 'Chat with CubeRoot to explore results, find tools and learn cubing.' } },
   'chat/share': { title: { zh: '分享的回答', en: 'Shared response' } },
   'dev/continuous-corners': {

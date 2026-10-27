@@ -188,7 +188,7 @@ export default function TwoToolsPage() {
   return (
     <main className="tt-page">
       <header className="tt-hero">
-        <p className="tt-kicker">Two-Tools × CubeRoot</p>
+
         <h1>{t('二阶实战解法查找器', '2×2 practical solution finder')}</h1>
         <p>{t(
           '输入任意二阶打乱，比较不同底色、建面路径和 CLL / EG / TCLL / LS 收尾，并按预期手速排序。',

@@ -197,7 +197,7 @@ export default function AbilityAtlas() {
         </div>
 
         <div className="wc-atlas-overview-copy">
-          <span className="wc-atlas-kicker">{t('30 项成长地图', 'A map of 30 growth areas')}</span>
+
           <h3>{t('魔方的价值，远不止“会还原”', 'Cubing offers far more than a completed solve')}</h3>
           <p>
             {t(

@@ -231,6 +231,16 @@ it('links verified addresses in the answer body and preserves Markdown labels',a
   ]);
 });
 
+it('links the verified 2x2 solver address in a reply with multiple sources',async()=>{
+  await render({answer:'二阶魔方求解器在这里：二阶 — 求解器（/scramble/solver?event=222）。你也可以先打开魔方求解器总入口。',sources:[
+    {id:'solver-222',title:'二阶 — 求解器',href:'/scramble/solver?event=222',read:false},
+    {id:'solver',title:'魔方求解器',href:'/scramble/solver',read:false},
+  ]});
+  const link=document.querySelector<HTMLAnchorElement>('.site-assistant-inline-link');
+  expect(link?.textContent).toBe('/scramble/solver?event=222');
+  expect(link?.getAttribute('href')).toBe('/zh/scramble/solver?event=222');
+});
+
 it('does not link code, unverified paths, or partial matches of a verified path',async()=>{
   await render({answer:'`/recognize/pll` /recognize/pll/unknown /recognize/pll?unknown=1 https://evil.example/recognize/pll [未知](/unknown)\n\n```text\n/recognize/pll\n```',sources:[
     {id:'pll',title:'观察',href:'/recognize/pll',read:true},

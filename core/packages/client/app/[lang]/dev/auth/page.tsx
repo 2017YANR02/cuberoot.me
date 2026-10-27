@@ -1,6 +1,6 @@
 'use client';
 
-/* auth-doc-review {"fingerprint":"b0f324fd7d7745dd4b10ebcbc7e2a7a78c0db38fa67e509685a4f86ee865ddac","reason":"Reviewed the administrator navigation logo link: it now opens the site homepage. Team collaboration remains at /admin/team and website management at /admin; workspace API access, staff and administrator checks, sign-in, identity linking, sessions, merging and deletion are unchanged. This is a local source review, not deployed or live-account acceptance."} */
+/* auth-doc-review {"fingerprint":"b92cc56c4fa36e0586caa5ae5c59199ce53df51b3fbe2fd363426a96f6fdc4de","reason":"Merged the remote careers entry with the grouped administration navigation. Recruitment reads, downloads and deletion still require an administrator session at the API and use sessionFetch on the page. Team collaboration remains at /admin/team, release management at /admin/releases, and the navigation logo opens the homepage. Both branches retain their documented account-scoped assistant shares, verified enterprise membership, consent, linking, session, merge and deletion boundaries. The conflict resolution changes navigation and review metadata only; this is a source review, not deployment or live-account acceptance."} */
 
 import type { ReactNode } from 'react';
 import AppLink from '@/components/AppLink';
@@ -335,6 +335,7 @@ export default function AuthFlowPage() {
         t('当前登录账号确认方案、价格与条款 → 服务端锁定账号归属并记录同意 → 前往微信 HTTPS 签约页', 'The signed-in account confirms the plan, price and terms → the server reserves account ownership and records consent → continue to the WeChat HTTPS enrollment page'),
         t('浏览器返回不证明签约或付款 → 服务端核验合约，再通过验签查单核对商户、订单、金额和账号归属 → 幂等发放权益', 'Returning in the browser proves neither enrollment nor payment → the server verifies the contract, then checks signed payment results against the merchant, order, amount and account ownership → grant benefits idempotently'),
         t('开放签约须满足商户模板批准、H5 批准及上线开关；周期扣款另需扣款开关。源码已实现，部署成功不等于真实商户闭环验收通过。', 'Enrollment requires approved merchant templates, H5 approval and the release switch; recurring debits additionally require the debit switch. Implemented in source; successful deployment does not prove real-merchant end-to-end acceptance.'),
+        t('企业续费方案仅向已认证企业的有效负责人或管理员开放，服务端在展示可用方案及生成小程序签约链接时核验。', 'Enterprise renewal plans require an active owner or administrator of a verified enterprise; the server checks eligibility when listing plans and issuing mini-program enrollment links.'),
       ]} />
     </section>
 
@@ -418,6 +419,7 @@ export default function AuthFlowPage() {
       ]} /></section>
       <aside className="auth-map-boundaries"><h3>{t('注销前一定要知道', 'Before deleting')}</h3><ul>
         <li>{t('好友聊天：任一参与账号注销时，整段会话和双方相关提醒一起删除。解除好友或拉黑只停止新消息，保留已有历史；聊天记录、表情包上传和收藏仍按现有 linked_data 规则阻止不受支持的账号合并。', 'Friend chat: deleting either participant removes the entire conversation and both inbox reminders. Unfriending or blocking stops new messages but retains history. Chat history, sticker uploads and favorites follow the existing linked_data rule for unsupported account merges.')}</li>
+        <li>{t('AI 回答公开分享由账号关联；注销账号会删除分享快照，使公开链接失效。浏览器本地保存的置顶聊天需在本设备另行清理。', 'Public AI answer shares belong to the account; deleting it removes their snapshots and invalidates the links. Pinned chats saved locally in a browser must be cleared on that device separately.')}</li>
         <li>{t('企业对公认证独立于个人登录和企业成员身份。账号注销后企业认证材料、到账、退款与审核记录保留，申请人和操作人的账号引用置空；不自动退款、撤销认证或把企业归属转交他人。该流程仅本地实现，未部署或完成实款验收。', 'Corporate bank verification is separate from personal sign-in and organization membership. Account deletion retains enterprise documents, bank receipts, refunds and review records while clearing applicant and operator account references; it does not refund money, revoke certification or transfer ownership. This is implemented locally, without deployment or real-bank acceptance.')}</li>
         <li>{t('有待生效或生效中的自动续费合约：先取消并确认终止。是机构最后一位负责人：先转移归属。不是点注销就自动解约或退钱。', 'Pending or active renewal contract: cancel and confirm termination first. Last organization owner: transfer ownership first. Deletion is not automatic contract cancellation or a refund.')}</li>
         <li>{t('私有数据按清单删除，包括私人宠物领养、养成记录、复盘收藏及 AI 问答监控记录；公开讨论和公开复盘匿名保留，交易及必要业务审计记录保留。WCA 官方公开成绩不因 CubeRoot 注销消失。', 'Covered private data, including private pet adoptions, care records, reconstruction favorites and AI chat monitoring records, is deleted; public discussions and public reconstructions are anonymized. Transactions and required business audit records remain. Official public WCA results do not disappear when a CubeRoot account is deleted.')}</li>

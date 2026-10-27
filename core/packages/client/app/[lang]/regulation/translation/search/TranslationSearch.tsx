@@ -24,7 +24,7 @@ export default function TranslationSearch() {
         placeholder={t('输入中文、英文或缩写', 'Chinese, English or abbreviation')} />
       {!term && <div className="translation-search-examples">
         <span>{t('试试', 'Try')}</span>
-        {['WIC', '魔方', 'Delegate'].map(example => <button key={example} type="button" onClick={() => setQuery(example)}>{example}</button>)}
+        {['WIC', '魔方', 'Delegate'].map(example => <button className="translation-search-example" key={example} type="button" onClick={() => setQuery(example)}>{example}</button>)}
       </div>}
       <div className="translation-search-status" role="status">
         {loading && t('查询中…', 'Searching…')}

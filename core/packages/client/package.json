@@ -46,6 +46,7 @@
   "dependencies": {
     "@2017yanr02/continuous-corners": "file:../../vendor/continuous-corners-0.3.2.tgz",
     "@airwallex/components-sdk": "^1.35.1",
+    "@app-foundation/careers-ui": "file:../../vendor/app-foundation/app-foundation-careers-ui-0.1.0.tgz",
     "@app-foundation/icons": "file:../../vendor/app-foundation/app-foundation-icons-0.1.0.tgz",
     "@app-foundation/navigation-ui": "file:../../vendor/app-foundation/app-foundation-navigation-ui-0.2.9.tgz",
     "@app-foundation/registration-ui": "file:../../vendor/app-foundation/app-foundation-registration-ui-0.1.0.tgz",

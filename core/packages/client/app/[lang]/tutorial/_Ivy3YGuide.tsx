@@ -104,7 +104,7 @@ export default function Ivy3YGuide() {
       citation: Object.keys(IVY_3Y_SOURCES).map(source => ivyVideoUrl(source as Ivy3YSource)),
     }} />
     <header className="ivy-3y-intro">
-      <p className="ivy-3y-eyebrow"><T zh="枫叶 · 进阶速拧" en="Ivy Cube · speedsolving" /></p>
+
       <h2><T zh="3Y 法：从会复原，到全程预判" en="3Y: from solving to planning the whole solve" /></h2>
       <p className="tutorial-lead"><T zh="先掌握 1Y、2Y 的成面与收尾，再把整条解法连起来看：如何选底，哪些连色可以顺手做好，以及前段怎样接上更短的后段。3Y 的重点是规划整次复原，而不是固定做三个阶段。" en="Learn the setups and finishes of 1Y and 2Y, then connect the whole solve: choose a first face, build useful matching blocks along the way, and find a shorter finish. 3Y is about planning the complete solution, not following three fixed stages." /></p>
       <p className="ivy-3y-credit"><T zh="视频讲解：" en="Video series by " /><a href="https://space.bilibili.com/1664460564" target="_blank" rel="noreferrer">蛋小泽</a><T zh="；本文由 CubeRoot 整理。" en="; guide compiled by CubeRoot." /></p>

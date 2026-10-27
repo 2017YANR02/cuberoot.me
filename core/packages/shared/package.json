@@ -147,6 +147,7 @@
       "./wca-records": "runtime-neutral",
       "./wb": "runtime-neutral",
       "./page-share": "runtime-neutral",
+      "./careers": "runtime-neutral",
       "./contact": "runtime-neutral",
       "./cube-unfolded-svg": "runtime-neutral",
       "./nnn-sim": "runtime-neutral",
@@ -738,6 +739,10 @@
       "default": "./src/wca_records.ts"
     },
     "./page-share": "./src/page_share.ts",
+    "./careers": {
+      "node": "./dist/careers.js",
+      "default": "./src/careers.ts"
+    },
     "./contact": {
       "node": "./dist/contact.js",
       "default": "./src/contact.ts"

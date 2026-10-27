@@ -682,7 +682,7 @@ const EventRoundsList = memo(function EventRoundsList({
   // 分组视图:同一比赛只在首行展示比赛名 + 日期;排序视图:逐行都展示(已打散).
   // 列头排序按钮的方向箭头(全站统一 components/SortArrow)。
   const sortArrow = (key: string) =>
-    <SortArrow active={sort.key === key} dir={sort.dir} size={11} />;
+    <SortArrow active={sort.key === key} dir={sort.dir} size={14} showInactive />;
   const metricItemsByKey = new Map(WCA_RESULT_METRIC_OPTIONS.map(option => [option.key, {
     value: option.key,
     label: t(option.zh, option.en),
@@ -763,7 +763,7 @@ const EventRoundsList = memo(function EventRoundsList({
                     title={t(`按${selectedSingleMetric.label}排序`, `Sort by ${selectedSingleMetric.label}`)}
                     aria-label={t(`按${selectedSingleMetric.label}排序`, `Sort by ${selectedSingleMetric.label}`)}
                   >
-                    {sort.key !== 'single' && t('排序', 'Sort')}{sortArrow('single')}
+                    {sortArrow('single')}
                   </button>
                 </span>
               )}
@@ -791,7 +791,7 @@ const EventRoundsList = memo(function EventRoundsList({
                     title={t(`按${selectedAverageMetric.label}排序`, `Sort by ${selectedAverageMetric.label}`)}
                     aria-label={t(`按${selectedAverageMetric.label}排序`, `Sort by ${selectedAverageMetric.label}`)}
                   >
-                    {sort.key !== 'average' && t('排序', 'Sort')}{sortArrow('average')}
+                    {sortArrow('average')}
                   </button>
                 </span>
               )}
@@ -805,7 +805,7 @@ const EventRoundsList = memo(function EventRoundsList({
                         className={`wp-att-sort-i ${sort.key === `att${i}` ? 'is-active' : ''}`}
                         onClick={() => toggleSort(`att${i}`)}
                         title={t(`按第 ${i + 1} 把排序`, `Sort by attempt ${i + 1}`)}>
-                        {i + 1}<SortArrow active={sort.key === `att${i}`} dir={sort.dir} size={9} />
+                        {i + 1}{sortArrow(`att${i}`)}
                       </button>
                     ))}
                   </span>

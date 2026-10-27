@@ -109,7 +109,6 @@ export default function DeskPetHome({ character, label, locked = false }: {
       })}</div>}
     </div>
     <div className="pet-home-details">
-      <span className="pet-home-eyebrow">{selected ? tr({zh:'我的伙伴',en:'MY COMPANION'}) : tr({zh:'领养一份小小的陪伴',en:'A LITTLE COMPANY'})}</span>
       <h2>{tr(label)}</h2>
       <p className="pet-home-intro">{selected ? tr({zh:'把平凡的一天，变成我们的回忆。',en:'Making ordinary days a little more ours.'}) : tr({zh:'喂一口点心，摸摸小脑袋。从今天起，一起长大。',en:'A little snack. A gentle head scratch. A friendship that grows with you.'})}</p>
       {care ? <>

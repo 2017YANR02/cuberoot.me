@@ -96,7 +96,7 @@ WCA 自学来源增量 `0185_wca_self_taught.sql` 允许老师关系的老师 ID
 
 ## 没有 down migration
 
-`0295_recon_intake_source.sql` 为复盘收录追加可空来源 ID 和来源快照，
+`0297_recon_intake_source.sql` 为复盘收录追加可空来源 ID 和来源快照，
 并通过部分唯一索引阻止同一来源重复收录；旧记录不回填，也不按相同打乱推断来源。
 来源删除后仍保留 ID 与收录时快照，回滚需要新的反向 migration。
 

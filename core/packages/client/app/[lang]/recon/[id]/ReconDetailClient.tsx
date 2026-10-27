@@ -730,9 +730,11 @@ function StatsGrid({ solve }: { solve: ReconSolve }) {
   ];
 
   const validItems = items.filter(([, v]) => v != null && v !== '' && v !== 0);
-  validItems.push(
-    [tr({ zh: '起表耗时', en: 'Pickup' }), <span title={tr({ zh: '起表到第一步', en: 'Timer start to first move' })}>{solve.pickupTime == null ? '—' : `${solve.pickupTime.toFixed(3)}s`}</span>],
-    [tr({ zh: '拍表耗时', en: 'Putdown' }), <span title={tr({ zh: '最后一步到拍表', en: 'Last move to timer stop' })}>{solve.putdownTime == null ? '—' : `${solve.putdownTime.toFixed(3)}s`}</span>],
+  if (solve.pickupTime != null) validItems.push(
+    [tr({ zh: '起表耗时', en: 'Pickup' }), <span title={tr({ zh: '起表到第一步', en: 'Timer start to first move' })}>{solve.pickupTime.toFixed(3)}s</span>],
+  );
+  if (solve.putdownTime != null) validItems.push(
+    [tr({ zh: '拍表耗时', en: 'Putdown' }), <span title={tr({ zh: '最后一步到拍表', en: 'Last move to timer stop' })}>{solve.putdownTime.toFixed(3)}s</span>],
   );
   if (validItems.length === 0) return null;
 

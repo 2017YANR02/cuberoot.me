@@ -225,4 +225,5 @@
   cursor: pointer;
 }
 .recon-curation-button:hover, .recon-curation-button[aria-pressed="true"] { color: var(--accent); }
+.recon-curation-pin { background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
 .recon-curation-button:disabled { opacity: 0.5; cursor: wait; }
