@@ -1,3 +1,27 @@
 .alg-admin-modal-backdrop.recon-case-backdrop { z-index: 1100; }
 .alg-admin-modal.recon-case-dialog { width: min(1000px, 95vw); }
 .recon-case-dialog .alg-case-detail-back { display: none; }
+
+/* The page's viewport breakpoints do not describe the narrower dialog. */
+.recon-case-dialog > .alg-admin-modal-body {
+  min-width: 0;
+  min-height: 0;
+  container: recon-case / inline-size;
+}
+.recon-case-dialog .is-f2l-orientation-grid .alg-player-list-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.recon-case-dialog .is-f2l-orientation-grid .alg-player-list-player,
+.recon-case-dialog .is-f2l-orientation-grid .alg-player-list-options {
+  width: 100%;
+}
+@container recon-case (max-width: 720px) {
+  .recon-case-dialog .alg-case-detail-lean-algs.is-paired-player.is-f2l-orientation-grid:not(.is-editing),
+  .recon-case-dialog .alg-case-detail-lean-algs.is-paired-player.is-f2l-orientation-grid.is-editing .alg-editor {
+    display: flex;
+    flex-direction: column;
+  }
+  .recon-case-dialog .alg-case-detail-lean-algs.is-paired-player.is-f2l-orientation-grid.is-editing .alg-editor > .alg-editor-ori { order: initial; }
+}
