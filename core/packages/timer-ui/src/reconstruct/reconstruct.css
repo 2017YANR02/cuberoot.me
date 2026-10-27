@@ -878,8 +878,6 @@ button.stl-track:focus-visible { outline: 2px solid var(--ring); outline-offset:
 .sml-copy:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
 
 .sml-group + .sml-group { margin-top: 12px; }
-/* 打乱是**起点**,不是这把的一步:动作压一档色,和下面真正拧的那些分开。 */
-.sml-scramble .sml-moves { color: var(--muted-foreground); }
 .sml-group-head {
   display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap;
   margin: 0 0 4px; font-size: 11px; font-weight: 600;

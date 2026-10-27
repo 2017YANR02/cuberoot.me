@@ -15,6 +15,7 @@ export interface ReconstructHost {
   renderIntakeAction?: (solve: Solve, snapshot: ReconSnapshot | null) => ReactNode;
   renderAnnotationAction?: (line: ReconTextLine, seek: () => void) => ReactNode;
   renderCaseLink?: (href: string, label: ReactNode, className: string) => ReactNode;
+  renderScrambleDiagram?: (scramble: string) => ReactNode;
   LineDiagramProvider?: ComponentType<{
     scramble: string; text: string; enabled: boolean;
     children: (diagramAt: (line: number) => ReactNode, caseHrefAt: (line: number, colors: string) => string | undefined) => ReactNode;

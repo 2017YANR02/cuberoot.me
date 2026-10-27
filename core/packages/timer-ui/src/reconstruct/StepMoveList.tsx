@@ -77,7 +77,8 @@ export default function StepMoveList({method='cfop',recon,currentIdx,onSeek,noti
   return <LineDiagramProvider scramble={recon.scramble} text={projection.displayText} enabled={method==='cfop'}>{(diagramAt,caseHrefAt)=>{
     const content=reportNotation(recon,method,ui,host.localize,{prepared,currentIdx,canSeek:Boolean(onSeek),cases:commentCases,caseHref:caseHrefAt,inspectionColors:host.inspectionColors,wasteBrackets:host.wasteBrackets,
       notice:notice?{id:'notice',kind:'slot'}:null,feedback:feedback?{id:'feedback',kind:'slot'}:null});
-    const slots:Record<string,React.ReactNode>={notice,feedback};
+    const slots:Record<string,React.ReactNode>={notice,feedback,
+      'diagram:scramble':host.renderScrambleDiagram?.(recon.scramble)};
     projection.lines.forEach(({ line },i)=>{
       slots['diagram:'+(i+projection.inspectionOffset)]=diagramAt(i+projection.inspectionOffset);
       slots['annotation:'+line.key]=host.renderAnnotationAction?.(line,()=>onSeek?.(line.fromIdx));

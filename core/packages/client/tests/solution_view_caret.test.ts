@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cubeThumbParams } from '@/lib/alg_thumb_plan';
 import { visualCubeSchemeForOrientation } from '@/lib/cube-orientation';
 import SolutionView from '@/components/SolutionView';
+import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import StepMoveList from '@cuberoot/timer-ui/reconstruct/StepMoveList';
 import { ReconstructHostContext } from '@cuberoot/timer-ui/reconstruct/ReconstructHost';
 import { formatReconLine, type ReconTextResult } from '@cuberoot/shared/timer/reconstruct/recon-text';
@@ -89,6 +90,28 @@ describe('SolutionView caret mapping', () => {
     expect(copy).toHaveBeenLastCalledWith('R2 U2');
     await act(async () => rows[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })));
     expect(copy).toHaveBeenLastCalledWith('x2 // insp');
+  });
+
+  it('shows the shared scramble preview in the timer without changing copy behavior', async () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));
+    const scramble = 'R2 U2';
+    const line: ReconTextResult['lines'][number] = { kind: 'pll', key: 'pll', moves: ['R'],
+      label: 'PLL-T', fromIdx: 0, toIdx: 0, recognitionMs: null, executionMs: null, stepMs: null };
+    const recon: ReconTextResult = { scramble, inspection: '', lines: [line], text: 'R // PLL-T',
+      turns: 1, stm: 1, seconds: 1, tps: 1, rotations: [], blindPairs: 0 };
+    const copy = vi.fn(async () => {});
+    await act(async () => root.render(createElement(ReconstructHostContext.Provider, { value: {
+      localize: text => text.en, writeClipboardText: copy, replayUrl: () => '', recordGyro: false,
+      renderScrambleDiagram: value => createElement(ScramblePreview2D, { event: '333', scramble: value, size: 14, enlargeable: true }),
+    } }, createElement(StepMoveList, { recon, reference: null, slotReference: null }))));
+    const row = host.querySelector('.sml-scramble')!;
+    expect(row.querySelector('.recon-case-diagram button svg')).not.toBeNull();
+    await act(async () => (row.querySelector('.sml-moves') as HTMLElement).click());
+    expect(copy).toHaveBeenCalledWith(scramble);
+    await act(async () => (row.querySelector('.recon-case-diagram button') as HTMLButtonElement).click());
+    expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+    expect(copy).toHaveBeenCalledTimes(1);
+    vi.unstubAllGlobals();
   });
 
   it('renders the same chips, links, masks and line text in timer and recon', async () => {

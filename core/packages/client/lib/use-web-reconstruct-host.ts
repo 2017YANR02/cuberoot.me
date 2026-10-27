@@ -2,6 +2,7 @@ import type { ReconstructHost } from '@cuberoot/timer-ui/reconstruct-report';
 import BoolToggle from '@/components/BoolToggle';
 import ReconCaseLink from '@/components/ReconCaseLink';
 import { ReconLineDiagramProvider } from '@/components/ReconLineDiagrams';
+import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { reconInspectionOrientations, reconWasteBrackets } from '@/lib/recon-alg-utils';
 import { createElement } from 'react';
 import dynamic from 'next/dynamic';
@@ -20,6 +21,7 @@ export function useWebReconstructHost(): ReconstructHost {
   const host: ReconstructHost = {
     localize: tr,
     LineDiagramProvider: ReconLineDiagramProvider,
+    renderScrambleDiagram: scramble => createElement(ScramblePreview2D, { event: '333', scramble, size: 14, enlargeable: true }),
     inspectionColors: moves => reconInspectionOrientations(`${moves} // insp`)[0]?.colors,
     wasteBrackets: reconWasteBrackets,
     // Keep the timer mounted so visiting a case does not dispose its Bluetooth session.
