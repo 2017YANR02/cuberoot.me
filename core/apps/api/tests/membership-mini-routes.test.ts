@@ -6,6 +6,7 @@ vi.mock('../src/payment/membership-contracts.js', () => ({ listMembershipContrac
 vi.mock('../src/payment/membership-renewals.js', () => ({ reconcileRenewalDebit: vi.fn() }));
 vi.mock('../src/payment/membership-enrollment.js', () => ({ enrollMembership: mocks.enroll }));
 vi.mock('../src/utils/account.js', () => ({ findUserByIdentity: mocks.account }));
+vi.mock('../src/utils/enterprise_membership.js', () => ({ canPurchaseEnterpriseMembership: vi.fn().mockResolvedValue(false) }));
 vi.mock('../src/utils/wechat_miniprogram.js', () => ({ exchangeWechatMiniProgramCode: mocks.identity, generateWechatMiniProgramUrlLink: vi.fn() }));
 import { membershipSubscriptionRoutes } from '../src/routes/membership_subscriptions.js';
 import { issueMembershipHandoff } from '../src/payment/membership-handoff.js';

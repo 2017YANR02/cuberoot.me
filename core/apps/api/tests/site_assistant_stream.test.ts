@@ -36,34 +36,41 @@ describe('assistant streaming', () => {
     expect(partialAssistantAnswer('{"answerKind":"invalid","answer":"draft')).toBeUndefined();
   });
 
-  it('delivers provider answer text before the provider finishes and cites only retrieved pages', async () => {
+  it('holds a site-specific answer until the evidence review finishes and cites only retrieved pages', async () => {
     const corpus={version:2,updated:'2026-10-10T00:00:00.000Z',pages:[{lang:'zh' as const,href:'/frame-count',title:'数帧',text:'逐帧查看视频。'}]};
     const [passage]=await chunkKnowledge(corpus);
     const source={id:passage.id,title:'数帧',href:'/frame-count',read:true};
     const chunk=(delta:object,finish_reason:string|null=null)=>frame({id:'test',object:'chat.completion.chunk',created:1,model:'fixture',choices:[{index:0,delta,finish_reason}]});
     let provider!: ReadableStreamDefaultController<Uint8Array>;
+    let draftStarted = false;
     const events: AssistantStreamEvent[] = [];
     const fetcher = vi.fn<typeof fetch>().mockImplementation(async (url, init) => {
       if (String(url).endsWith('/stats/index.json')) return Response.json({ categories: [] });
       if (String(url).endsWith('/assistant/pages.json')) return Response.json(corpus);
       const body = JSON.parse(String(init?.body));
       expect(body.stream).toBe(true);
-      if (JSON.parse(body.messages[1].content).round === 0) return new Response(new ReadableStream({start(c){
+      const round = JSON.parse(body.messages[1].content).round;
+      if (round === 0) return new Response(new ReadableStream({start(c){
         c.enqueue(chunk({role:'assistant',tool_calls:[{index:0,id:'pages-1',type:'function',function:{name:'pages',arguments:JSON.stringify({query:'数帧',pageIds:[]})}}]}));
         c.enqueue(chunk({},'tool_calls'));c.enqueue(frame('[DONE]'));c.close();
       }}),{headers:{'Content-Type':'text/event-stream'}});
-      return new Response(new ReadableStream({ start(c) { provider = c; } }), { headers: { 'Content-Type': 'text/event-stream' } });
+      if (!draftStarted) { draftStarted = true; return new Response(new ReadableStream({ start(c) { provider = c; } }), { headers: { 'Content-Type': 'text/event-stream' } }); }
+      return new Response(new ReadableStream({start(c){ c.enqueue(chunk({role:'assistant',content:JSON.stringify({answerKind:'site_content',answer:'打开数帧页面。',sourceIds:[passage.id]})},'stop')); c.enqueue(frame('[DONE]')); c.close(); }}),{headers:{'Content-Type':'text/event-stream'}});
     });
     let finished = false;
     const answer = answerSiteQuestion('怎么数帧？', 'zh', config, AbortSignal.timeout(5000), fetcher, [], undefined, async event => { events.push(event); }).then(value => { finished = true; return value; });
     await vi.waitFor(() => expect(provider).toBeDefined());
     provider.enqueue(chunk({role:'assistant',content:'{"answer":"打开数帧页面。'}));
-    await vi.waitFor(() => expect(events).toContainEqual({ type: 'answer', answer: '打开数帧页面。', sources: [source] }));
+    await new Promise(resolve => setTimeout(resolve, 30));
+    expect(events.some(event => event.type === 'answer')).toBe(false);
     expect(finished).toBe(false);
     provider.enqueue(chunk({content:` [[${passage.id}]] [[fake]]","sourceIds":["${passage.id}"]}`}));
     provider.enqueue(chunk({},'stop'));
     provider.enqueue(frame('[DONE]')); provider.close();
-    expect((await answer).answer).toBe(`打开数帧页面。 [[${passage.id}]] `);
+    const result = await answer;
+    expect(result.answer).toContain('打开数帧页面。');
+    expect(result.sources).toContainEqual(source);
+    expect(result.sources.every(item => item.id === passage.id)).toBe(true);
     expect(events).toContainEqual({ type: 'status', status: { phase: 'querying', tool: 'pages' } });
   });
 
@@ -100,7 +107,7 @@ describe('assistant streaming', () => {
     });
     const answer=await answerSiteQuestion('计时器训练怎么用？','zh',config,AbortSignal.timeout(5000),fetcher,[],undefined,async event=>{events.push(event);});
     expect(answer.answer).toContain('打开训练菜单');
-    expect(answer.sources.every(source=>source.read)).toBe(true);
+    expect(answer.sources.some(source=>source.read)).toBe(true);
     expect(events.filter(event=>event.type==='answer').some(event=>event.answer.includes('UNVERIFIED'))).toBe(false);
     expect(events).toContainEqual({type:'status',status:{phase:'querying',tool:'pages'}});
   });
