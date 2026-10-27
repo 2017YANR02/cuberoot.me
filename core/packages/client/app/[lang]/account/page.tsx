@@ -11,7 +11,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { installedPetAvailable } from '@/lib/installed-content';
 import { useRouter } from 'next/navigation';
 import { useQueryState, parseAsInteger, parseAsStringEnum } from 'nuqs';
-import { Bell, BookOpen, Building2, ChevronLeft, ChevronRight, Crown, LockKeyhole, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox, Lightbulb, Loader2, Pencil, Upload, X, UserRound, Users, UserCog } from '@app-foundation/icons/lucide';
+import { Bell, BookOpen, Building2, ChevronLeft, ChevronRight, Crown, LockKeyhole, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox, Lightbulb, Loader2, Pencil, Upload, X, UserRound, Users } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import { ClearButton } from '@/components/ClearButton';
@@ -916,13 +916,6 @@ export default function AccountPage() {
       {
         key: 'mcp', href: '/account/mcp', icon: <LockKeyhole size={22} className="account-card-icon" />,
         title: tr({ zh: 'ChatGPT 只读连接', en: 'ChatGPT read-only connection' }),
-      },
-      {
-        key: 'users-admin',
-        href: '/admin',
-        icon: <UserCog size={22} className="account-card-icon" />,
-        title: tr({ zh: '管理后台', en: 'Administration' }),
-        desc: tr({ zh: '用户增长、会员、赞助与审核', en: 'User growth, memberships, sponsorships, and moderation' }),
       },
       {
         key: 'submissions',

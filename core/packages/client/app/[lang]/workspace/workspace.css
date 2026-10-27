@@ -130,7 +130,7 @@
 
 /* The selected navigation item already names the page; retain its h1 for readers. */
 .staff-workspace .staff-layout:has(.staff-nav [aria-current="page"]) > .staff-main > .staff-page-heading,
-.cuberoot-workspace-navigation .af-nav-body:has(.af-nav-link[aria-current="page"]) > .staff-main > .staff-page-heading {
+.cuberoot-workspace-navigation .af-nav-body:has(.af-nav-link[aria-current="page"]) > .staff-main > main > .staff-page-heading {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -156,7 +156,7 @@
   line-height: 1.75;
 }
 
-.cuberoot-workspace-navigation .staff-main.staff-handbook-main {
+.cuberoot-workspace-navigation .staff-main:has(> .staff-handbook-main) {
   box-sizing: border-box;
   max-width: 1232px;
   padding: 40px clamp(24px, 3.3vw, 48px) 80px;
@@ -172,7 +172,7 @@
 }
 
 @media (max-width: 767px) {
-  .cuberoot-workspace-navigation .staff-main.staff-handbook-main {
+  .cuberoot-workspace-navigation .staff-main:has(> .staff-handbook-main) {
     padding: 24px 18px 56px;
   }
 
@@ -185,6 +185,19 @@
 /* Use content width for metadata; reserve the full editor width for prose. */
 .staff-workspace { font-size: 16px; line-height: 1.65; }
 .cuberoot-workspace-navigation { --af-nav-font-size: 16px; }
+.cuberoot-workspace-navigation .af-nav-group > summary::after { content: '›'; margin-left: auto; font-size: 1.1rem; transform: rotate(90deg); transition: transform 180ms ease; }
+.cuberoot-workspace-navigation .af-nav-group[open] > summary::after { transform: rotate(-90deg); }
+.cuberoot-workspace-navigation .af-nav-group .af-nav-link { padding-left: 24px; font-size: .9em; }
+@supports selector(details::details-content) {
+  .cuberoot-workspace-navigation .af-nav-group { interpolate-size: allow-keywords; }
+  .cuberoot-workspace-navigation .af-nav-group::details-content { block-size: 0; overflow: clip; opacity: 0; transition: block-size 200ms ease, opacity 160ms ease, content-visibility 200ms allow-discrete; }
+  .cuberoot-workspace-navigation .af-nav-group[open]::details-content { block-size: auto; opacity: 1; }
+}
+@media (min-width: 768px) {
+  .cuberoot-workspace-navigation[data-collapsed="true"] .af-nav-group > summary::after { display: none; }
+  .cuberoot-workspace-navigation[data-collapsed="true"] .af-nav-group .af-nav-link { padding-left: 10px; }
+}
+@media (prefers-reduced-motion: reduce) { .cuberoot-workspace-navigation .af-nav-group > summary::after, .cuberoot-workspace-navigation .af-nav-group::details-content { transition: none; } }
 .staff-workspace .staff-header-actions, .staff-workspace .staff-muted, .staff-workspace .staff-report-meta, .staff-workspace .staff-field > span:first-child { font-size: 14px; }
 .staff-workspace .staff-field > .date-input { font-size: 16px; }
 .staff-workspace .staff-input:is(input, select:not([multiple])), .staff-workspace .date-input__display { box-sizing: border-box; height: var(--workspace-control-height); min-height: var(--workspace-control-height); line-height: 1.25; }

@@ -341,7 +341,7 @@ export default function AdminUsersPage() {
   if (!isAdmin) {
     return (
       <main className="admin-users-page">
-        <AppLink href="/admin" className="admin-users-back" prefetch={false}><ChevronLeft size={16} />{t('管理后台', 'Administration')}</AppLink>
+        <AppLink href="/workspace/admin" className="admin-users-back" prefetch={false}><ChevronLeft size={16} />{t('网站管理', 'Site management')}</AppLink>
         <h1>{t('用户与增长', 'Users and growth')}</h1>
         <p className="admin-users-status">{t('只有管理员可以查看注册用户资料。', 'Only administrators can view registered user data.')}</p>
       </main>
@@ -350,7 +350,7 @@ export default function AdminUsersPage() {
 
   return (
     <main className="admin-users-page">
-      <AppLink href="/admin" className="admin-users-back" prefetch={false}><ChevronLeft size={16} />{t('管理后台', 'Administration')}</AppLink>
+      <AppLink href="/workspace/admin" className="admin-users-back" prefetch={false}><ChevronLeft size={16} />{t('网站管理', 'Site management')}</AppLink>
       <header className="admin-users-heading">
         <div>
           <h1>{t('用户、增长与权限', 'Users, growth, and access')}</h1>

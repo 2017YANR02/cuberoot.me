@@ -20,10 +20,10 @@ interface AdminDestination {
 }
 
 const DESTINATIONS: AdminDestination[] = [
-  { href: '/admin/interview', Icon: MessageSquare, title: ['采访准备', 'Interview preparation'] },
-  { href: '/admin/disk', Icon: HardDrive, title: ['磁盘空间', 'Disk space'] },
-  { href: '/admin/users', Icon: Users, title: ['用户、增长与权限', 'Users, growth, and access'] },
-  { href: '/admin/releases', Icon: Wrench, title: ['应用版本管理', 'App releases'] },
+  { href: '/workspace/admin/interview', Icon: MessageSquare, title: ['采访准备', 'Interview preparation'] },
+  { href: '/workspace/admin/disk', Icon: HardDrive, title: ['磁盘空间', 'Disk space'] },
+  { href: '/workspace/admin/users', Icon: Users, title: ['用户、增长与权限', 'Users, growth, and access'] },
+  { href: '/workspace/admin/releases', Icon: Wrench, title: ['应用版本管理', 'App releases'] },
   { href: '/platform/admin', Icon: Wrench, title: ['课程与商城后台', 'Courses and commerce'] },
   { href: '/platform/admin/invites', Icon: Gift, title: ['课程兑换码', 'Course redemption codes'] },
   { href: '/support', Icon: HeartHandshake, title: ['赞助管理', 'Sponsorships'] },

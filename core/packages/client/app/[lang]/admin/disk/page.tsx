@@ -81,7 +81,7 @@ export default function AdminDiskPage() {
   const running = loading || (!error && (!!report?.scanning || !!report?.busy));
   const progress = report?.progress;
   const crumbs = path.split('/').filter(Boolean);
-  const href = (directory: string) => `/admin/disk?path=${encodeURIComponent(directory)}`;
+  const href = (directory: string) => `/workspace/admin/disk?path=${encodeURIComponent(directory)}`;
   const usage = capacity ? percent(capacity.usedBytes, capacity.totalBytes) : '';
 
   return <main className="admin-hub disk-page">

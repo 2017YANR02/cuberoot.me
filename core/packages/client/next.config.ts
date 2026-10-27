@@ -324,6 +324,10 @@ const nextConfig: NextConfig = {
   // permanent: true = 308 (cached forever); these URL renames are stable.
   async redirects() {
     return [
+      { source: '/admin', destination: '/workspace/admin', permanent: false },
+      { source: '/admin/:path+', destination: '/workspace/admin/:path+', permanent: false },
+      { source: '/:lang(en|zh)/admin', destination: '/:lang/workspace/admin', permanent: false },
+      { source: '/:lang(en|zh)/admin/:path+', destination: '/:lang/workspace/admin/:path+', permanent: false },
       // Back-compat for the earlier Next route shape /tutorial/p/<slug>.
       { source: "/tutorial/p/:slug", destination: "/tutorial-legacy/:slug", permanent: true },
       { source: "/analyze", destination: "/scramble/analyzer", permanent: true },

@@ -3,9 +3,6 @@ import { Suspense, useMemo, useState, type AnchorHTMLAttributes } from 'react';
 import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import { useRouter } from 'next/navigation';
 import { WorkspaceProvider, WorkspaceLoginFrame, ReportEditor, Reports, ReportDetailPanel, Projects, ErrorNotice, Form, Field, useResource, value, RequestError, workspaceText, type StaffActor, type MemberDirectory } from '@app-foundation/workspace-ui';
-import { NavigationShell } from '@app-foundation/navigation-ui';
-import { ClipboardList, Users, FolderKanban, ShieldCheck, Workflow, ScanEye, UserRoundPlus, LogOut } from '@app-foundation/icons/lucide';
-import '@app-foundation/navigation-ui/navigation.css';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
@@ -55,16 +52,9 @@ function SignedInWorkspace() {
   const [id]=useQueryState('id',parseAsString.withDefault(''));
   const session=useResource<{actor:StaffActor;employee:StaffActor;directory:MemberDirectory}>('session');const actor=session.data?.actor;const employee=session.data?.employee;
   const items=[{key:'mine',label:t('我的工作','My work')},{key:'updates',label:t('团队动态','Team updates')},{key:'projects',label:t('项目','Projects')},{key:'checklists',label:t('清单','Checklists')},{key:'schedule',label:t('总排期','Schedule')},...(actor?.kind==='admin'?[{key:'members',label:t('成员与权限','Members and access')}]:[])];
-  const icons = { mine: ClipboardList, updates: Users, projects: FolderKanban, checklists: ClipboardList, schedule: FolderKanban, members: ShieldCheck };
-  const navigation = items.map(item => { const Icon = icons[item.key as keyof typeof icons]; return { id: item.key, href: `/workspace?section=${item.key}`, label: item.label, icon: <Icon size={18} />, active: section === item.key }; });
-  const handbookItems = [{ key: 'onboarding', label: t('入职','Onboarding'), icon: UserRoundPlus }, { key: 'sop', label: 'SOP', icon: Workflow }, { key: 'quality', label: t('质量标准','Quality standards'), icon: ScanEye }, { key: 'offboarding', label: t('离职','Offboarding'), icon: LogOut }];
+  const handbookItems = [{ key: 'onboarding', label: t('入职','Onboarding') }, { key: 'sop', label: 'SOP' }, { key: 'quality', label: t('质量标准','Quality standards') }, { key: 'offboarding', label: t('离职','Offboarding') }];
   const handbook = handbookItems.some(item => item.key === section);
-  navigation.push(...handbookItems.map(({ icon: Icon, ...item }) => ({ id: item.key, href: `/workspace?section=${item.key}`, label: item.label, icon: <Icon size={18} />, active: section === item.key })));
-  return <NavigationShell className="staff-workspace cuberoot-workspace-navigation" mainClassName={`staff-main${handbook ? ' staff-handbook-main' : ''}`}
-    items={navigation} labels={{ navigation: t('工作台导航','Workspace navigation'), show: t('显示侧边栏','Show sidebar'), hide: t('隐藏侧边栏','Hide sidebar'), openMobile: t('打开导航','Open navigation'), closeMobile: t('关闭导航','Close navigation') }}
-    renderLink={props => <AppLink {...props} prefetch={false} />}
-    header={toggle => <header className="staff-header">{toggle}<AppLink href="/" className="staff-brand">CubeRoot</AppLink><div className="staff-header-actions"><AppLink href="/account" prefetch={false}>{actor?.name??t('我的账号','My account')}</AppLink></div></header>}
-  >
+  return <main className={handbook ? 'staff-handbook-main' : undefined}>
     <div className="staff-page-heading"><h1>{[...items,...handbookItems].find(i=>i.key===section)?.label??t('工作记录','Work report')}</h1></div>
     {!handbook&&<ErrorNotice error={session.error} retry={session.reload} />}
     {session.error?.status===401&&<Button onClick={()=>useAuthStore.getState().login()}>{t('重新登录','Sign in again')}</Button>}
@@ -79,7 +69,7 @@ function SignedInWorkspace() {
       {section==='detail'&&id&&employee&&<ReportDetailPanel actor={employee} id={id} />}
       {section==='members'&&actor.kind==='admin'&&<Members onSaved={session.reload} />}
     </>}
-  </NavigationShell>;
+  </main>;
 }
 function MyWork({ actor, directory }: { actor: StaffActor; directory: MemberDirectory }) {
   const t = useT();
