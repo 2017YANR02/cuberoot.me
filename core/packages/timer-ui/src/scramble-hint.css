@@ -1,19 +1,20 @@
 /* Shared by the timer strip and algorithm trainer via TimerScrambleHintText. */
 .scramble-move {
   display: inline-block;
+  --scramble-done-fg: color-mix(in srgb, var(--faint-foreground) 72%, transparent);
   transition: color 180ms ease-out, transform 180ms ease-out;
 }
-.scramble-move[data-hint='done'] { color: var(--faint-foreground); }
+.scramble-move[data-hint='done'] { color: var(--scramble-done-fg); }
 .scramble-move[data-hint='pending'] { color: var(--scramble-fg, var(--foreground)); }
-.scramble-move[data-hint='current'] { color: var(--accent); transform: scale(1.12); }
+.scramble-move[data-hint='current'] { color: var(--scramble-fg, var(--foreground)); transform: scale(1.12); }
 .scramble-move[data-hint='done'][data-completing] {
   transition: transform 220ms ease-out 180ms;
   animation: scramble-move-complete 480ms ease-out both;
 }
 @keyframes scramble-move-complete {
-  0% { color: var(--accent); }
+  0% { color: var(--scramble-fg, var(--foreground)); }
   30%, 48% { color: var(--signal-success, #5aac7e); }
-  100% { color: var(--faint-foreground); }
+  100% { color: var(--scramble-done-fg); }
 }
 @media (prefers-reduced-motion: reduce) {
   .scramble-move { transition: none; }
