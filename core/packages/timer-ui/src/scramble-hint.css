@@ -8,11 +8,11 @@
 .scramble-move[data-hint='pending'] { color: var(--scramble-fg, var(--foreground)); }
 .scramble-move[data-hint='current'] { color: var(--signal-success, #5aac7e); transform: scale(1.12); }
 .scramble-move[data-hint='done'][data-completing] {
-  transition: transform 220ms ease-out 180ms;
-  animation: scramble-move-complete 480ms ease-out both;
+  transition: transform 160ms ease-out;
+  animation: scramble-move-complete 140ms ease-out both;
 }
 @keyframes scramble-move-complete {
-  0%, 48% { color: var(--signal-success, #5aac7e); }
+  0% { color: var(--signal-success, #5aac7e); }
   100% { color: var(--scramble-done-fg); }
 }
 @media (prefers-reduced-motion: reduce) {
