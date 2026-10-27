@@ -301,8 +301,8 @@ describe('installed App GAN lifecycle integration', () => {
     const category = dialog.querySelector<HTMLSelectElement>('.settings-category-select')!;
     await act(async () => { category.value = 'appearance'; category.dispatchEvent(new Event('change', { bubbles: true })); });
     await act(async () => dialog.querySelector<HTMLButtonElement>('.tfp-trigger')!.click());
-    const inter = [...document.querySelectorAll<HTMLButtonElement>('.tfp-item')].find(node => node.textContent?.includes('Inter'))!;
-    await act(async () => inter.click());
+    const sans = [...document.querySelectorAll<HTMLButtonElement>('.tfp-item')].find(node => node.textContent?.includes('SF Pro'))!;
+    await act(async () => sans.click());
     await settle();
     expect((memory.data as TimerStoreData).settings.timerFont).toBe('sans');
     await act(async () => dialog.querySelector<HTMLButtonElement>('.settings-modal-close')!.click());
