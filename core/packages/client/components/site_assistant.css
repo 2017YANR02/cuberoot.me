@@ -10,7 +10,7 @@
 .site-assistant-header p { margin:4px 0 0; color:var(--muted-foreground); font-size:13px; }
 .site-assistant-messages { min-width:0; flex:1; scroll-behavior:auto; overflow:auto; min-height:0; padding:24px 28px 36px; overscroll-behavior:contain; }
 .site-assistant-turn { width:min(100%,720px); margin:0 auto 36px; min-width:0; }
-.site-assistant-question h3 { margin:0; font-weight:400; white-space:pre-wrap; padding:12px 18px; background:var(--muted); border-radius:22px; width:fit-content; max-width:85%; font-size:16px; line-height:1.6; overflow-wrap:anywhere; }
+.site-assistant-question h3 { margin:0; font-weight:400; white-space:pre-wrap; padding:12px 18px; background:var(--accent); color:var(--accent-foreground); border-radius:22px; width:fit-content; max-width:85%; font-size:16px; line-height:1.6; overflow-wrap:anywhere; }
 .site-assistant-prose { overflow-wrap:anywhere; line-height:1.85; font-size:16px; }
 .site-assistant-prose p { margin:0 0 1em; }
 .site-assistant-prose > :last-child { margin-bottom:0; }
@@ -85,9 +85,11 @@
 .assistant-answer-toolbar .site-assistant-action { width:36px; height:36px; padding:8px; border-radius:10px; flex-shrink:0; }
 .assistant-answer-toolbar .site-assistant-action[aria-expanded=true],.assistant-answer-toolbar .site-assistant-action[aria-pressed=true] { background:var(--muted); color:var(--foreground); }
 .assistant-toolbar-menu { display:inline-flex; flex:none; }
+.assistant-answer-toolbar .assistant-toolbar-menu .site-assistant-action { padding:0; }
+.assistant-toolbar-menu .compact-select-current { overflow:visible; flex:none; }
 .assistant-toolbar-divider { height:18px; border-left:1px solid var(--border-default); margin:0 8px; }
 .assistant-answer-toolbar .assistant-pdf-action { width:auto; gap:7px; font-size:12px; white-space:nowrap; }
-.assistant-feedback-symbol { position:relative; width:22px; height:22px; display:block; }
+.assistant-feedback-symbol { position:relative; width:26px; height:22px; display:block; }
 .assistant-feedback-symbol svg:first-child { position:absolute; top:0; left:0; }
 .assistant-feedback-symbol svg:last-child { position:absolute; bottom:0; right:0; }
 .compact-select-popup.assistant-action-menu { min-width:190px; border-radius:18px; padding:8px; z-index:100040; }

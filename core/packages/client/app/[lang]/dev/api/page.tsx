@@ -66,7 +66,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   equals the set mounted via app.route('/v1', …) in apps/api/src/index.ts.
 //   CI red here = a newly-mounted route is undocumented: add its endpoints below,
 //   then add the file stem to this list.
-//   account_auth account_face admin_assistant admin_dashboard admin_disk alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps app_boot_diagnostics article auth battle_rooms calendar cn_comp_names colpi
+//   career_applications account_auth account_face admin_assistant admin_dashboard admin_disk alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps app_boot_diagnostics article auth battle_rooms calendar cn_comp_names colpi
 //   chat comp_follows creator_gallery cube cubeopt_solve cubing_live documents downloads drive feedback forum friends geo health historical_ranks pb private_vault
 //   membership membership_benefits membership_apple membership_google membership_subscriptions music nav_sites pets nemesizer notifications ops remote_access dev_preview page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth recon_intake scramble_555 teacher_directory teaching teaching_saas
 //   smart_cube_macs scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
@@ -76,6 +76,11 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   mcp mcp_oauth onboarding timer_replay_shares site_assistant site_assistant_shares cube_agents
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
+  { d: 'content', m: 'GET', p: '/v1/career-applications/status', g: 'public', c: 'no-store', zh: '招聘投递服务可用状态', en: 'Career application availability' },
+  { d: 'content', m: 'POST', p: '/v1/career-applications', g: 'public', c: 'no-store', zh: '提交招聘申请及附件', en: 'Submit a career application and attachments' },
+  { d: 'content', m: 'GET', p: '/v1/career-applications', g: 'admin', c: 'no-store', zh: '管理员读取招聘申请', en: 'Administrator reads career applications' },
+  { d: 'content', m: 'DELETE', p: '/v1/career-applications/:id', g: 'admin', c: 'no-store', zh: '管理员删除招聘申请及附件', en: 'Administrator deletes an application and its attachments' },
+  { d: 'content', m: 'GET', p: '/v1/career-applications/:id/:file', g: 'admin', c: 'no-store', zh: '管理员下载申请附件', en: 'Administrator downloads application attachments' },
   { d: 'content', m: 'POST', p: '/v1/site-assistant/shares', g: 'login', c: 'no-store', zh: '本人问答显式创建单条文字快照，不含图片及其他对话', en: 'Explicit owner-only single-message text snapshot without images or other turns' },
   { d: 'content', m: 'GET', p: '/v1/site-assistant/shares/:id', g: 'public', c: 'no-store', zh: '读取公开消息，不返回用户或请求身份；不缓存、不索引', en: 'Read shared text without owner/request identity; no caching or indexing' },
   { d: 'content', m: 'DELETE', p: '/v1/site-assistant/shares/:id', g: 'login', c: 'no-store', zh: '仅分享创建者可撤销链接', en: 'Only the owner may revoke a link' },

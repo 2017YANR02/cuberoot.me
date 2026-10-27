@@ -579,6 +579,9 @@ importers:
       '@airwallex/components-sdk':
         specifier: ^1.35.1
         version: 1.35.1
+      '@app-foundation/careers-ui':
+        specifier: file:../../vendor/app-foundation/app-foundation-careers-ui-0.1.0.tgz
+        version: file:vendor/app-foundation/app-foundation-careers-ui-0.1.0.tgz(react@19.2.4)
       '@app-foundation/icons':
         specifier: file:../../vendor/app-foundation/app-foundation-icons-0.1.0.tgz
         version: file:vendor/app-foundation/app-foundation-icons-0.1.0.tgz(lucide-react@1.8.0(react@19.2.4))(react@19.2.4)
@@ -1208,6 +1211,13 @@ packages:
     resolution: {integrity: sha512-+g2x4KTZRARWEg+HaBl54k+h2SKx0HAi0QIKYqlChHy1G49HLtqB3IgwoO3N4LqEcugU1oZo2gHJRuf4A5iHnA==, tarball: https://github.com/2017YANR02/app-foundation/releases/download/v0.4.0/app-foundation-account-policy-0.1.0.tgz}
     version: 0.1.0
     engines: {node: '>=22'}
+
+  '@app-foundation/careers-ui@file:vendor/app-foundation/app-foundation-careers-ui-0.1.0.tgz':
+    resolution: {integrity: sha512-TWII2qRaZjURLDghfwx2u2IrSHQ5ktCZOWqg4fjBhksIlXsR3n0MYQ6RH1JgR1rwEOXNilRJrFPRo6TsaWDs4g==, tarball: file:vendor/app-foundation/app-foundation-careers-ui-0.1.0.tgz}
+    version: 0.1.0
+    engines: {node: '>=22'}
+    peerDependencies:
+      react: '>=19'
 
   '@app-foundation/face-verification@https://github.com/2017YANR02/app-foundation/releases/download/v0.5.0/app-foundation-face-verification-0.1.0.tgz':
     resolution: {integrity: sha512-MsUStGryPOtLKw5ecvd4L4Ndd9p1CZuRMxe8AzGHftdgmHd890eo56r22eZDn3SLBTayF04B4n41S23oXrpCXg==, tarball: https://github.com/2017YANR02/app-foundation/releases/download/v0.5.0/app-foundation-face-verification-0.1.0.tgz}
@@ -6636,6 +6646,10 @@ snapshots:
       '@capacitor/keyboard': 8.0.5(@capacitor/core@8.5.3)
 
   '@app-foundation/account-policy@https://github.com/2017YANR02/app-foundation/releases/download/v0.4.0/app-foundation-account-policy-0.1.0.tgz': {}
+
+  '@app-foundation/careers-ui@file:vendor/app-foundation/app-foundation-careers-ui-0.1.0.tgz(react@19.2.4)':
+    dependencies:
+      react: 19.2.4
 
   '@app-foundation/face-verification@https://github.com/2017YANR02/app-foundation/releases/download/v0.5.0/app-foundation-face-verification-0.1.0.tgz': {}
 

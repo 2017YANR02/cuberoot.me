@@ -69,23 +69,16 @@ const QUESTION_EXAMPLES = [
   ]},
   {id:'learn-algorithms',title:{zh:'学习公式',en:'Learn algorithms'},questions:[
     {zh:'我想学 CFOP 公式，帮我找到对应页面。',en:'I want to learn CFOP algorithms. Show me the relevant pages.'},
-    {zh:'我想学 F2L，打开三阶 F2L 公式库。',en:'I want to learn F2L. Show me the 3x3 F2L library.'},
-    {zh:'我想学习完整的 OLL 公式。',en:'I want to learn the full OLL algorithm set.'},
-    {zh:'我想学习完整的 PLL 公式。',en:'I want to learn the full PLL algorithm set.'},
     {zh:'先学简单一点的，帮我找到 2 步 OLL 和 2 步 PLL。',en:'Start with something simpler. Show me 2-look OLL and 2-look PLL.'},
     {zh:'我想学桥式的 CMLL 公式。',en:'I want to learn CMLL algorithms for Roux.'},
   ]},
   {id:'practice',title:{zh:'专项训练',en:'Targeted practice'},questions:[
-    {zh:'我想练习 PLL 公式，带我去选择训练情况。',en:'I want to practise PLL algorithms. Take me to case selection.'},
-    {zh:'我想练习 OLL 公式，打开对应训练页面。',en:'I want to practise OLL algorithms. Show me the trainer.'},
     {zh:'我想练习 PLL 识别，打开识别训练。',en:'I want to practise PLL recognition. Show me the recognition trainer.'},
     {zh:'我想练习 ZBLL，打开训练页面。',en:'I want to practise ZBLL. Show me the trainer.'},
     {zh:'我想练习十字最优解，去哪里训练？',en:'I want to practise optimal cross solutions. Where is the trainer?'},
-    {zh:'我想练习桥式，帮我打开对应训练器。',en:'I want to practise Roux. Show me the trainer.'},
   ]},
   {id:'tools',title:{zh:'用好网站',en:'Using CubeRoot'},questions:[
     {zh:'计时器的普通计时和公式训练有什么区别？',en:'What is the difference between normal timing and algorithm training?'},
-    {zh:'怎样只练习我选中的 PLL 情况？',en:'How can I practise only the PLL cases I select?'},
     {zh:'在哪里可以给复盘视频数帧？',en:'Where can I count frames in a solve video?'},
     {zh:'帮我找到二阶魔方求解器。',en:'Help me find the 2x2 cube solver.'},
   ]},
@@ -93,7 +86,6 @@ const QUESTION_EXAMPLES = [
     {zh:'OLL 和 PLL 分别解决什么问题？',en:'What do OLL and PLL each solve?'},
     {zh:'换位子和共轭子有什么区别？',en:'What is the difference between a commutator and a conjugate?'},
     {zh:'群论能怎么解释魔方的转动？',en:'How does group theory explain cube moves?'},
-    {zh:'网站有哪些三阶魔方公式集？',en:'Which 3x3 algorithm sets are available on CubeRoot?'},
   ]},
   {id:'rules',title:{zh:'了解比赛规则',en:'Competition rules'},questions:[
     {zh:'WCA 比赛观察时间超过 15 秒会怎样？',en:'What happens if inspection exceeds 15 seconds in a WCA competition?'},
@@ -229,7 +221,7 @@ export default function SiteAssistantDialog({turns,draft,images,onImagesChange:s
   const editInput=useRef<HTMLTextAreaElement>(null);
   const {listening,error:micError,start,stop}=useSpeechToText({lang:lang==='zh'?'zh-CN':'en-US',onResult:setDraft});
   useEffect(()=>{if(!active)stop();},[active,stop]);
-  useEffect(()=>{if(!active)return;const previous=document.activeElement as HTMLElement;if(!window.matchMedia?.('(pointer: coarse)').matches)input.current?.focus();return()=>{if(!embedded)previous?.focus();};},[active,embedded]);
+  useEffect(()=>{if(!active)return;const previous=document.activeElement as HTMLElement;input.current?.focus({preventScroll:true});return()=>{if(!embedded)previous?.focus();};},[active,embedded]);
   useEffect(()=>{
     if(turns.length!==turnCount.current) { follow.current=true; turnCount.current=turns.length; }
     const node=messages.current;
@@ -316,7 +308,7 @@ export default function SiteAssistantDialog({turns,draft,images,onImagesChange:s
             onChange={()=>imageInput.current?.click()} disabled={busy||editing!==null||processingImages||images.length>=SITE_ASSISTANT_MAX_IMAGES}/>
           <CompactSelect className="site-assistant-thinking" popupClassName="site-assistant-menu" items={thinkingItems} value={thinking} onChange={onThinkingChange} label={thinkingItems.find(item=>item.value===thinking)!.label} ariaLabel={tr({zh:'思考模式',en:'Thinking mode'})} disabled={busy} variant="plain" showArrow/>
           <button className="site-assistant-action site-assistant-mic" type="button" disabled={busy||editing!==null} onClick={()=>listening?stop():void start()} title={tr({zh:'语音输入',en:'Voice input'})} aria-pressed={listening}><Mic size={19}/></button>
-          {busy?<button className="site-assistant-action site-assistant-send" type="button" onClick={onStop} title={tr({zh:'停止',en:'Stop'})}><Square size={16}/></button>:<button className="site-assistant-action site-assistant-send" type="submit" disabled={(!draft.trim()&&!images.length)||draft.trim().length>SITE_ASSISTANT_QUESTION_MAX_LENGTH||editing!==null||processingImages} title={tr({zh:'发送',en:'Send'})}><ArrowUp size={20}/></button>}
+          {busy?<button className="site-assistant-action site-assistant-send" type="button" onClick={onStop} title={tr({zh:'停止',en:'Stop'})}><Square size={16} fill="currentColor"/></button>:<button className="site-assistant-action site-assistant-send" type="submit" disabled={(!draft.trim()&&!images.length)||draft.trim().length>SITE_ASSISTANT_QUESTION_MAX_LENGTH||editing!==null||processingImages} title={tr({zh:'发送',en:'Send'})}><ArrowUp size={20}/></button>}
         </div>
       </div>{processingImages && <p role="status">{tr({zh:'正在处理图片…',en:'Preparing images…'})}</p>}
       {imageError && <p role="alert">{imageError}</p>}

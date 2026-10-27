@@ -9,3 +9,5 @@ Icons 0.1.0: local candidate for contact brand icons and full Lucide exports. Sa
 Navigation UI 0.1.0: local shared sidebar candidate from App Foundation; both sites pin the same artifact. Mira workbenches and CubeRoot internal workspace consume it. Not published; use an immutable release before deployment.
 
 Navigation UI 0.1.2 is the current local candidate: adds grouped menus, count badges and embedded content without nested main landmarks. Mira admin/notifications and CubeRoot contact also consume it; both sites pin identical bytes. Unpublished.
+
+Careers UI 0.1.0 is a shared local candidate for the careers browser and detail sections. Both sites pin the same artifact; positions, labels, routes and styling remain host-owned. Publish an immutable artifact before deployment.

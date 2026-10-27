@@ -6,6 +6,9 @@
 @source "../components/**/*.{tsx,ts,jsx,js}";
 @import "@cuberoot/timer-ui/country-flag.css";
 
+/* Keep pin and unpin icons consistent across the website. */
+svg.lucide-pin, svg.lucide-pin-off { rotate: 45deg; }
+
 /* Ported from packages/client-vite/src/index.css (tokens + base only — page-specific
    styles will land beside their pages during migration). */
 /* palette-scheme-aware locks (2026-06-16) */

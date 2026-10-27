@@ -18,6 +18,7 @@ interface AdminDestination {
 }
 
 const DESTINATIONS: AdminDestination[] = [
+  { href: '/admin/careers', Icon: Users, title: ['招聘申请', 'Career applications'] },
   { href: '/admin/interview', Icon: MessageSquare, title: ['采访准备', 'Interview preparation'] },
   { href: '/admin/disk', Icon: HardDrive, title: ['磁盘空间', 'Disk space'] },
   { href: '/admin/users', Icon: Users, title: ['用户、增长与权限', 'Users, growth, and access'] },
