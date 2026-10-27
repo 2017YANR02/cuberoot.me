@@ -11,6 +11,7 @@ import {
 } from '../src/platform/quiz_answers.js';
 
 const commerceSource = readFileSync(new URL('../src/routes/platform_commerce.ts', import.meta.url), 'utf8');
+const instructorPayoutSource = readFileSync(new URL('../src/platform/instructor_payout.ts', import.meta.url), 'utf8');
 const catalogSource = readFileSync(new URL('../src/routes/platform_catalog.ts', import.meta.url), 'utf8');
 const learningSource = readFileSync(new URL('../src/routes/platform_learning.ts', import.meta.url), 'utf8');
 const physicalBundleSource = readFileSync(new URL('../src/platform/physical_bundle.ts', import.meta.url), 'utf8');
@@ -274,9 +275,10 @@ describe('Platform route and security contract', () => {
     expect(refund).not.toContain('JSON.stringify({ evidenceReference })');
     expect(refund).not.toContain('JSON.stringify({ refundId, evidenceReference,');
     const generate = routeBlock(commerceSource, 'platformCommerceRoutes', 'post', '/admin/instructor-payouts/generate');
-    expect(generate).toContain('item.released_at IS NULL');
-    expect(generate).not.toContain('Math.abs');
-    expect(generate).toContain("sum + safeSignedMoney(entry.delta_amount_minor");
+    expect(generate).toContain('createInstructorPayout(db, actor, instructorId, currency)');
+    expect(instructorPayoutSource).toContain('item.released_at IS NULL');
+    expect(instructorPayoutSource).not.toContain('Math.abs');
+    expect(instructorPayoutSource).toContain("sum + safeSignedMoney(entry.delta_amount_minor");
     const reconcile = routeBlock(commerceSource, 'platformCommerceRoutes', 'post', '/admin/instructor-payouts/:id/reconcile-processing-refund');
     expect(reconcile).toContain("SET status = 'paid'");
     expect(reconcile).toContain('SET released_at = NOW()');
