@@ -109,6 +109,23 @@ describe('shared smart-cube device modal', () => {
     expect(document.querySelector('.timer-smart-cube-device__name')?.textContent).toBe(deviceName);
   });
 
+  it('transitions from a busy connection indicator to a visible connected status', async () => {
+    const props = { language: 'en' as const, onClose: vi.fn() };
+    await act(async () => root.render(createElement(TimerSmartCubeDeviceModal, {
+      ...props, snapshot: { ...connectedSnapshot, phase: 'connecting' },
+    })));
+    const pending = document.querySelector('.timer-smart-cube-device__state')!;
+    expect(pending.textContent).toBe('Connecting…');
+    expect(pending.classList.contains('is-connecting')).toBe(true);
+    expect(pending.querySelector('svg')).not.toBeNull();
+    await act(async () => root.render(createElement(TimerSmartCubeDeviceModal, { ...props, snapshot: connectedSnapshot })));
+    const connected = document.querySelector('.timer-smart-cube-device__state')!;
+    expect(connected).not.toBe(pending);
+    expect(connected.textContent).toBe('Connected');
+    expect(connected.classList.contains('is-ok')).toBe(true);
+    expect(connected.getAttribute('role')).toBe('status');
+  });
+
   it('renders a selectable scan list without exposing device addresses', async () => {
     const onConnect = vi.fn(async (_deviceId?: string) => {});
     const onScan = vi.fn(async () => {});

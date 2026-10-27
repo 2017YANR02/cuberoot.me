@@ -1,4 +1,4 @@
-import { Bluetooth, RefreshCw, X } from 'lucide-react';
+import { Bluetooth, Check, LoaderCircle, RefreshCw, X } from 'lucide-react';
 import {
   useEffect,
   useId,
@@ -69,6 +69,7 @@ const COPY = {
     cancel: 'Cancel',
     close: 'Close',
     connect: 'Connect',
+    connected: 'Connected',
     connecting: 'Connecting…',
     connectionFailed: 'Connection failed',
     deviceFallback: 'Smart cube',
@@ -99,6 +100,7 @@ const COPY = {
     cancel: '取消',
     close: '关闭',
     connect: '连接',
+    connected: '已连接',
     connecting: '连接中…',
     connectionFailed: '连接失败',
     deviceFallback: '智能魔方',
@@ -326,8 +328,9 @@ export function TimerSmartCubeDeviceModal({
     }
   };
 
-  const stateText = connecting
-    ? copy.connecting
+  const stateText = connected
+    ? copy.connected
+    : connecting ? copy.connecting
     : snapshot.phase === 'error' || connectionFailure
         ? copy.connectionFailed
         : copy.notConnected;
@@ -392,13 +395,15 @@ export function TimerSmartCubeDeviceModal({
                 <strong className="timer-smart-cube-device__name bt-connected-device">
                   {snapshot.deviceName?.trim() || copy.deviceFallback}
                 </strong>
-                {!connected && <span
+                <span
+                  key={connected ? 'connected' : connecting ? 'connecting' : snapshot.phase}
                   aria-live="polite"
-                  className="timer-smart-cube-device__state bt-connected-state bt-value"
+                  className={`timer-smart-cube-device__state bt-connected-state bt-value${connected ? ' is-ok' : connecting ? ' is-connecting' : snapshot.phase === 'error' ? ' is-error' : ''}`}
                   role="status"
                 >
+                  {connected ? <Check size={16} aria-hidden="true" /> : connecting ? <LoaderCircle size={16} aria-hidden="true" /> : null}
                   {stateText}
-                </span>}
+                </span>
               </div>
               <div className="timer-smart-cube-device__facts bt-connected-meta">
                 <DeviceFact label={copy.battery} value={snapshot.battery === null || snapshot.battery === undefined ? '—' : `${snapshot.battery}%`} />
@@ -440,6 +445,7 @@ export function TimerSmartCubeDeviceModal({
                             <span>{signalText(device.rssi, copy)}</span>
                           </span>
                           <span className="timer-smart-cube-device__device-action">
+                            {action === 'connect' && connectingDeviceId === device.id && <LoaderCircle className="is-connecting" size={16} aria-hidden="true" />}
                             {action === 'connect' && connectingDeviceId === device.id
                               ? copy.connecting
                               : copy.connect}

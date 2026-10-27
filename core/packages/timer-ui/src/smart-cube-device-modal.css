@@ -136,6 +136,14 @@
 .timer-smart-cube-device__state { white-space: nowrap; }
 .timer-smart-cube-device__state.is-ok { color: var(--signal-success); }
 .timer-smart-cube-device__state.is-error { color: var(--destructive); }
+.timer-smart-cube-device__state.is-connecting { color: var(--accent); }
+.timer-smart-cube-device__state.is-connecting svg,
+.timer-smart-cube-device__device-action .is-connecting { animation: timer-smart-cube-device-spin 900ms linear infinite; }
+.timer-smart-cube-device__state.is-ok { animation: timer-smart-cube-device-connected 420ms ease-out both; }
+@keyframes timer-smart-cube-device-connected {
+  from { opacity: 0; transform: translateY(4px) scale(.92); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
 
 .timer-smart-cube-device__label {
   color: var(--muted-foreground);
@@ -332,7 +340,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .timer-smart-cube-device__scan .is-scanning { animation: none; }
+  .timer-smart-cube-device__scan .is-scanning,
+  .timer-smart-cube-device__state.is-connecting svg,
+  .timer-smart-cube-device__device-action .is-connecting,
+  .timer-smart-cube-device__state.is-ok { animation: none; }
 }
 
 @media (max-width: 480px) {
