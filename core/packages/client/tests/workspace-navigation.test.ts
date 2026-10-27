@@ -18,6 +18,7 @@ it('separates team and administrator navigation and follows localized management
   state.admin = false; state.pathname = '/admin/team'; state.section = 'mine';
   await act(async () => root.render(createElement(WorkspaceNavigation, null, 'Content')));
   expect(node.textContent).toContain('Team collaboration');
+  expect(node.querySelector<HTMLAnchorElement>('.staff-brand')?.getAttribute('href')).toBe('/');
   expect(node.textContent).not.toContain('Site management');
   expect(node.querySelector('[aria-current="page"]')?.textContent).toContain('My work');
   state.admin = true; state.pathname = '/zh/admin/releases';

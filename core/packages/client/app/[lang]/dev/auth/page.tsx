@@ -1,6 +1,6 @@
 'use client';
 
-/* auth-doc-review {"fingerprint":"c978130201ec10e7422d7fe7138e7d3d87160b3d1086fb731410d49461a0e2cc","reason":"Reviewed the account, team handbook and administrator navigation route changes: team collaboration now lives at /admin/team and website management at /admin; old workspace pages are removed without redirects. The workspace API, staff and project checks, and administrator checks on pages and release APIs are unchanged. Sign-in, identity linking, sessions, merging and deletion remain unchanged. This is a local source review, not deployed or live-account acceptance."} */
+/* auth-doc-review {"fingerprint":"b0f324fd7d7745dd4b10ebcbc7e2a7a78c0db38fa67e509685a4f86ee865ddac","reason":"Reviewed the administrator navigation logo link: it now opens the site homepage. Team collaboration remains at /admin/team and website management at /admin; workspace API access, staff and administrator checks, sign-in, identity linking, sessions, merging and deletion are unchanged. This is a local source review, not deployed or live-account acceptance."} */
 
 import type { ReactNode } from 'react';
 import AppLink from '@/components/AppLink';
