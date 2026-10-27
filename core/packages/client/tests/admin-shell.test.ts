@@ -6,7 +6,7 @@ import { expect, it, vi } from 'vitest';
 const state = vi.hoisted(() => ({ admin: false, pathname: '/admin', section: 'content', view: 'tools' }));
 vi.mock('next/navigation', () => ({ usePathname: () => state.pathname }));
 vi.mock('nuqs', () => ({ parseAsString: {}, useQueryState: (key: string) => [key === 'view' ? state.view : state.section] }));
-vi.mock('@/lib/auth-store', () => ({ useIsAdmin: () => state.admin }));
+vi.mock('@/lib/auth-store', () => ({ useIsAdmin: () => state.admin, useAuthUser: () => ({ name: 'CubeRoot Admin' }) }));
 vi.mock('@/hooks/useT', () => ({ useT: () => (_zh: string, en: string) => en }));
 vi.mock('@/components/AppLink', () => ({ default: ({ children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => createElement('a', props, children) }));
 import AdminShell from '../app/[lang]/admin/AdminShell';
@@ -20,6 +20,9 @@ it('shows navigation only for administrators and follows the active page', async
   expect(node.textContent).toBe('Page content');
   state.admin = true;
   await act(async () => root.render(createElement(AdminShell, null, 'Page content')));
+  const accountLink = node.querySelector<HTMLAnchorElement>('.admin-navigation__account');
+  expect(accountLink?.textContent).toBe('CubeRoot Admin');
+  expect(accountLink?.getAttribute('href')).toBe('/account');
   expect(node.querySelector('[aria-current="page"]')?.textContent).toContain('Content and community');
   const group = node.querySelector('details')!;
   expect(group.open).toBe(false);
