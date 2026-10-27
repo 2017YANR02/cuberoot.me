@@ -16,7 +16,7 @@
 
 ### 管理员官网发布（Android / Windows）
 
-新的正式入口为下载页「版本管理」及手动 `app_release.yml`。普通 push 继续由 `test.yml` 检查和构建，不发布下载包。旧 `android_release.yml` / Mac 命令保留为独立 Play 和历史制品恢复入口；官网日常发布使用新入口，不交替操作两个发布协调器。
+正式入口为 `/admin/releases`（中文 `/zh/admin/releases`）及手动 `app_release.yml`；下载页的管理员链接也指向该后台页面。普通 push 继续由 `test.yml` 检查和构建，不发布下载包。旧 `android_release.yml` / Mac 命令保留为独立 Play 和历史制品恢复入口；官网日常发布使用新入口，不交替操作两个发布协调器。
 
 `app_release.yml` 固定已审核 main 提交，使用环境 `app-release`。该环境必须仅允许 main 部署；如配置每次人工审批，网页任务会等待审批，不能宣称无人值守一键发布。授权的管理员发布无需额外审批时不设置 required reviewers。工作流的 `run_number=N` 是正式发布序号，版本为 `1.floor(N/1000).(N%1000)`，Android versionCode 为 `1000000+N`；首次为 `1.0.1 / 1000001`。失败允许跳号，重试同一 run 保持版本；不要删除并重建该工作流以重置序号。发布端拒绝降级及同版本内容替换。Windows 两份 EXE 共用同一版本，全部公网哈希校验通过后才原子替换清单。
 

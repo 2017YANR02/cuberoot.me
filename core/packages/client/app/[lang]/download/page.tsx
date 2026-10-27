@@ -2,28 +2,21 @@
 
 /** @module Official app downloads and platform availability. */
 import { ArrowLeft, Download } from '@app-foundation/icons/lucide';
-import { useCallback, useEffect, useState } from 'react';
-import { parseAsBoolean, useQueryState } from 'nuqs';
+import { useEffect, useState } from 'react';
 import { fetchAndroidRelease, fetchWindowsRelease, type AndroidRelease, type WindowsRelease } from '@cuberoot/shared/android-release';
 import HomeLink from '@/components/HomeLink';
+import AppLink from '@/components/AppLink';
 import HeaderToggles from '@/components/HeaderToggles';
 import { tr, useLang } from '@/i18n/tr';
 import { ANDROID_APK_URL, GOOGLE_PLAY_URL, trackDownload } from '@/lib/app-downloads';
 import { useIsAdmin } from '@/lib/auth-store';
-import ReleaseManager from './ReleaseManager';
 import './download.css';
 
 export default function DownloadPage() {
   const language = useLang();
   const isAdmin = useIsAdmin();
-  const [manage, setManage] = useQueryState('manageRelease', parseAsBoolean.withDefault(false));
   const [release, setRelease] = useState<AndroidRelease | null>(null);
   const [windows, setWindows] = useState<WindowsRelease | null>(null);
-  const refresh = useCallback(() => {
-    const signal = AbortSignal.timeout(10_000);
-    void fetchAndroidRelease(signal).then(setRelease).catch(() => {});
-    void fetchWindowsRelease(signal).then(setWindows).catch(() => {});
-  }, []);
   useEffect(() => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10_000);
@@ -88,10 +81,7 @@ export default function DownloadPage() {
           ? tr({ zh: 'Windows x64。推荐安装版；免安装版需已安装 WebView2。', en: 'Windows x64. The installer is recommended; the standalone EXE requires WebView2.' })
           : tr({ zh: 'Windows 下载准备中。', en: 'Windows downloads are being prepared.' })}</p>
       </section>
-      {isAdmin && <>
-        <button type="button" className="download-button" aria-expanded={manage} onClick={() => void setManage(value => !value)}>{tr({ zh: '版本管理', en: 'Release management' })}</button>
-        {manage && <ReleaseManager onPublished={refresh} />}
-      </>}
+      {isAdmin && <AppLink className="download-button" href="/admin/releases" prefetch={false}>{tr({ zh: '版本管理', en: 'Release management' })}</AppLink>}
       <section className="download-upcoming" aria-label={tr({ zh: '其他平台', en: 'Other platforms' })}>
         {['iOS', 'macOS', 'HarmonyOS NEXT'].map((platform) => (
           <div className="download-platform" key={platform}>

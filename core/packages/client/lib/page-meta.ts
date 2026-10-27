@@ -161,6 +161,10 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     title: { zh: '磁盘空间', en: 'Disk space' },
     description: { zh: '管理员查看服务器磁盘容量与目录占用。', en: 'Administrator view of server disk capacity and directory usage.' },
   },
+  'admin/releases': {
+    title: { zh: '应用版本管理', en: 'App releases' },
+    description: { zh: '管理员发布应用版本并查看状态。', en: 'Publish app releases and check their status.' },
+  },
   'vault': {
     title: { zh: '私密资料库', en: 'Private Vault' },
     description: {
