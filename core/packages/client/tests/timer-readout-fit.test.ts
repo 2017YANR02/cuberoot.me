@@ -38,7 +38,7 @@ describe('shared timer complete-readout fitting', () => {
     await render(penalty);
     const readout = host.querySelector('.timer-display-value')!;
     expect(readout.textContent).toBe(penalty);
-    expect(readout.querySelector('.timer-capital-d-segments')?.getAttribute('aria-hidden')).toBe('true');
+    expect(readout.querySelector('.timer-capital-d-text')?.textContent).toBe('D');
     await render('12.34');
     expect(readout.textContent).toBe('12.34');
     expect(readout.querySelector('svg')).toBeNull();
