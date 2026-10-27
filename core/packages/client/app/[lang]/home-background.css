@@ -51,6 +51,10 @@
   :root .landing-page :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip):not(.is-disabled):hover {
     transform: translateY(-2px) scale(1.006);
   }
+  /* Pinned cards fill a scroll container; scaling would expand its scroll width. */
+  :root .landing-page .landing-pinned-recons .recon-card:not(.is-disabled):hover {
+    transform: translateY(-2px);
+  }
 }
 
 :root .landing-page :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip):not(.is-disabled):active {
