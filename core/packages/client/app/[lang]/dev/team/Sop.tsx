@@ -22,7 +22,7 @@ export default function StaffSopPage() {
   const steps = [
     {
       title: t('定义', 'Define'), icon: Target,
-      human: t('说清要解决的问题、改动范围和验收标准。', 'Define the problem, scope and acceptance criteria.'),
+      human: t('开工前整理至少五点需求或提示词，说明目标、范围、约束、依赖和验收标准。', 'Before starting, prepare at least five requirements or prompt points covering the goal, scope, constraints, dependencies and acceptance criteria.'),
       ai: t('整理已知条件，一次列清影响执行的缺失信息。', 'Organize the inputs and group the questions that block progress.'),
       output: t('一份有范围、有验收标准的任务说明', 'A brief with a clear scope and acceptance criteria'),
       avoid: t('“优化一下”，没有说明要解决什么问题。', '“Make it better,” without saying what needs to improve.'),
@@ -39,7 +39,7 @@ export default function StaffSopPage() {
     {
       title: t('实现', 'Build'), icon: Boxes,
       human: t('确认影响范围；多人并行时分清负责人和文件归属。', 'Confirm the impact; give parallel tasks clear owners and file scopes.'),
-      ai: t('先复用，再按需抽取共享组件；小步修改，不覆盖他人工作。', 'Reuse first, extract shared components when needed, and make small changes without overwriting others.'),
+      ai: t('开工时优先并行处理可独立开展的任务，明确分工与依赖；复用现有实现，不覆盖他人工作。', 'Start independent tasks in parallel where possible, with clear ownership and dependencies; reuse existing work and avoid overwriting others.'),
       output: t('范围明确、可审阅、可撤回的改动', 'A scoped change that can be reviewed and reversed'),
       avoid: t('复制一套相同组件，顺手改动任务以外的页面。', 'Duplicating a component and changing unrelated pages along the way.'),
       prefer: t('原入口和新入口共用同一实现，只补必要差异。', 'Use one implementation for both entry points, with only the necessary differences.'),
@@ -77,7 +77,7 @@ export default function StaffSopPage() {
   ];
   const handoff = handoffFields.map(([title, description]) => `${title}\n${description}\n`).join('\n');
   const authorization = t('按本次授权执行。已确认的权限不重复申请；未获授权的发布、外发消息和不可逆操作，先确认。', 'Follow the current authorization. Do not ask again for permissions already granted. Confirm any release, external message or irreversible action that has not been authorized.');
-  const prompt = [t('请按以下 AI 协作 SOP 完成本次任务。', 'Follow this AI collaboration SOP for this task.'), ...steps.map((step, index) => `${index + 1}. ${step.title}\n${step.ai}\n${t('交付', 'Output')}：${step.output}`), authorization, t('并行任务分清负责人、文件范围和依赖；由一人整合并检查结果。', 'Give parallel tasks clear owners, file scopes and dependencies; assign one person to integrate and verify the result.'), handoff, t('聊天命名：状态 员工 任务', 'Chat title: Status Employee Task'), ...statuses.map(([status, label]) => `${status}: ${label}`)].join('\n\n');
+  const prompt = [t('请按以下 AI 协作 SOP 完成本次任务。', 'Follow this AI collaboration SOP for this task.'), t('开工前整理至少五点需求或提示词，涵盖目标、范围、约束、依赖和验收标准；开始时优先并行处理独立任务。', 'Before starting, prepare at least five requirements or prompt points covering the goal, scope, constraints, dependencies and acceptance criteria; start independent tasks in parallel where possible.'), ...steps.map((step, index) => `${index + 1}. ${step.title}\n${step.ai}\n${t('交付', 'Output')}：${step.output}`), authorization, t('并行任务分清负责人、文件范围和依赖；由一人整合并检查结果。', 'Give parallel tasks clear owners, file scopes and dependencies; assign one person to integrate and verify the result.'), handoff, t('聊天命名：状态 员工 任务', 'Chat title: Status Employee Task'), ...statuses.map(([status, label]) => `${status}: ${label}`)].join('\n\n');
 
   if (!user) return null;
   return <section className="staff-sop sop-guide">
@@ -132,7 +132,7 @@ export default function StaffSopPage() {
     <div className="sop-guide-two-up">
       <article className="sop-guide-card" data-site-surface="panel" aria-labelledby="sop-collaboration">
         <div className="sop-guide-card-heading"><GitBranch size={20} aria-hidden="true" /><h2 id="sop-collaboration">{t('并行分工，统一整合', 'Split the work. Integrate once.')}</h2></div>
-        <p className="sop-guide-description">{t('一个聊天，一个目标。每个任务写清负责人、文件范围和依赖。', 'One chat, one goal. Give each task an owner, a file scope and clear dependencies.')}</p>
+        <p className="sop-guide-description">{t('开工前准备至少五点需求或提示词；开始时优先并行处理独立任务。每个任务写清负责人、文件范围和依赖。', 'Prepare at least five requirements or prompt points before starting, then run independent tasks in parallel where possible. Give each task an owner, a file scope and clear dependencies.')}</p>
         <figure className="sop-guide-branch" aria-label={t('一人拆分任务，两个独立任务并行完成，再由同一负责人整合验收。', 'One owner splits the work into independent tasks, then integrates and reviews the result.')}>
           <div className="sop-guide-branch-owner"><UserRound size={15} aria-hidden="true" />{t('负责人拆分', 'Owner scopes')}</div>
           <div className="sop-guide-branch-lanes"><div><span>{t('任务 A', 'Task A')}</span><strong>{t('独立文件范围', 'Own file scope')}</strong></div><div><span>{t('任务 B', 'Task B')}</span><strong>{t('独立文件范围', 'Own file scope')}</strong></div></div>
