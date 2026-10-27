@@ -84,7 +84,7 @@ function solveSimplification(target: number[]): string[] {
   return [];
 }
 
-interface RecordedMove { originalFace: number; amount: number; slice?: boolean }
+interface RecordedMove { originalFace: number; amount: number; slice?: boolean; halfTurnPrime?: boolean }
 
 /**
  * 一个中层的身份完全由它的**参照面**决定,方向也跟着那个面:`M` 跟 `L`、`E` 跟 `D`、`S` 跟 `F`。
@@ -115,6 +115,7 @@ function processToken(
   state: number[],
   history: RecordedMove[],
   expandSlices = false,
+  preserveHalfTurnPrime = false,
 ) {
   if (!token) return;
   const base = token[0];
@@ -157,7 +158,8 @@ function processToken(
   if (!isWideUpper && base >= 'A' && base <= 'Z') {
     const slot = charToFace(base);
     if (slot < 0) return;   // 不是招式(UFRBLD / MES / xyz / 宽块已全部在上面认掉)
-    history.push({ originalFace: state[slot], amount });
+    history.push({ originalFace: state[slot], amount,
+      halfTurnPrime: preserveHalfTurnPrime && amount === 2 && token.includes("'") });
     return;
   }
 
@@ -197,7 +199,7 @@ function amountOf(token: string): number {
 /** 把一条记录还原成当前朝向下的写法。面转查 slot 名,中层查参照面落到哪个 slot。 */
 function emit(m: RecordedMove, orig2slot: number[]): string {
   const slot = orig2slot[m.originalFace];
-  if (!m.slice) return FACE_NAMES[slot] + suffix(m.amount);
+  if (!m.slice) return FACE_NAMES[slot] + (m.halfTurnPrime ? "2'" : suffix(m.amount));
   const [family, flipped] = SLOT_TO_SLICE[slot];
   return family + suffix(flipped ? (4 - m.amount) % 4 : m.amount);
 }
@@ -205,6 +207,8 @@ function emit(m: RecordedMove, orig2slot: number[]): string {
 export interface NormalizeOptions {
   /** 把 `M/E/S` 也拆成一对相对面 + 一次转体(`M' → R' L x`)。默认原样保留。 */
   expandSlices?: boolean;
+  /** 保留原有单层半转的方向标记。 */
+  preserveHalfTurnPrime?: boolean;
 }
 
 /** Lossless outer-face expansion in the initial frame, with residual rotation. */
@@ -223,7 +227,7 @@ export function outerTurnSequence(tokens: string[]): { moves: string[]; rotation
 export function normalize(tokens: string[], opts: NormalizeOptions = {}): string[] {
   const state = [0, 1, 2, 3, 4, 5];
   const history: RecordedMove[] = [];
-  for (const tok of tokens) processToken(tok, state, history, opts.expandSlices);
+  for (const tok of tokens) processToken(tok, state, history, opts.expandSlices, opts.preserveHalfTurnPrime);
 
   const prefix = solveSimplification(state);
 
@@ -247,7 +251,7 @@ export function normalizeLines(linesOfTokens: string[][], opts: NormalizeOptions
   const perLineHistory: RecordedMove[][] = [];
   for (const toks of linesOfTokens) {
     const hist: RecordedMove[] = [];
-    for (const tok of toks) processToken(tok, state, hist, opts.expandSlices);
+    for (const tok of toks) processToken(tok, state, hist, opts.expandSlices, opts.preserveHalfTurnPrime);
     perLineHistory.push(hist);
   }
 
@@ -342,7 +346,7 @@ export function buildNormalizedSolution(solution: string): string | null {
 
   let result: ReturnType<typeof normalizeLines>;
   try {
-    result = normalizeLines(lineTokens, { expandSlices: true });
+    result = normalizeLines(lineTokens, { expandSlices: true, preserveHalfTurnPrime: true });
   } catch {
     return null;
   }

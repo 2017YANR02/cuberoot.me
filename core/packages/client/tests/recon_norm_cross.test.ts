@@ -67,6 +67,26 @@ describe('什么时候挂 ⇄ 按钮', () => {
 });
 
 describe('中层展开', () => {
+  it('保留 2795 十字中单层半转的方向标记', () => {
+    const text = "x' z' // insp\nU' r' R2 U' R2' D' R2 // W psxcross (OB) cancel into\nU R' U'D' // xxcross (RG)";
+    const result = buildNormalizedSolution(text)!;
+    const crossMoves = algOf(result.split('\n')[1]);
+    expect(crossMoves.filter(move => /^[URFDLB]2'?$/.test(move)).map(move => move.slice(1)))
+      .toEqual(['2', "2'", '2']);
+    expect(result.split('\n')[2]).toBe(text.split('\n')[2]);
+    expect(facesEqual(apply(algOf(text)), apply(algOf(result)))).toBe(true);
+  });
+
+  it('保留换面后的半转撇号，宽转和中层仍正常展开', () => {
+    const text = "R2' r U2 M' F2 // cross\nR2' // PLL";
+    const result = buildNormalizedSolution(text)!;
+    const moves = algOf(result.split('\n')[0]);
+    expect(moves.filter(move => /^[URFDLB]2'?$/.test(move)).map(move => move.slice(1)))
+      .toEqual(["2'", '2', '2']);
+    expect(result.split('\n')[1]).toBe("R2' // PLL");
+    expect(facesEqual(apply(algOf(text)), apply(algOf(result)))).toBe(true);
+  });
+
   it("`M'` 就是用户说的 `R' L x`(转体收进前缀写在最前)", () => {
     expect(buildNormalizedSolution("M' // cross")).toBe("x R' L // cross");
   });
