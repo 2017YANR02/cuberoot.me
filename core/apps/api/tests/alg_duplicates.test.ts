@@ -8,7 +8,7 @@ vi.mock('../src/db/connection.js', () => ({
 }));
 vi.mock('../src/utils/analytics_helpers.js', () => ({ getIp: () => '127.0.0.1' }));
 vi.mock('../src/utils/recon_helpers.js', () => ({
-  requireAuth: async () => mocks.user, requireAdmin: vi.fn(), requireAdminOrApiKey: vi.fn(), checkRateLimit: vi.fn(),
+  requireAuth: async () => mocks.user, requireAdmin: vi.fn(), requireAdminOrApiKey: vi.fn(async () => mocks.user), checkRateLimit: vi.fn(),
 }));
 vi.mock('../src/utils/account.js', () => ({ publicUserIdsForOwnerKeys: async () => new Map() }));
 vi.mock('../src/utils/alg_mirror.js', () => ({ syncMirrorAndLog: vi.fn(), syncMirrorForCase: vi.fn() }));

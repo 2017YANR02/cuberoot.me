@@ -8,6 +8,8 @@
 - 稳定 DTO、schema 和纯规则放在 `@cuberoot/shared` 显式 subpath，Node-only 实现留在本 package。
 - PostgreSQL schema 变更新增顺序 migration，先在本地 PG 13 验证，push 后由部署 workflow 自动应用。
 
+标准公式库的管理员维护请求使用独立限流：鉴权前每 IP 每分钟最多 600 次尝试，鉴权后每个管理员（或管理 API key 身份）每分钟最多 120 次写请求。旋转、编辑和排序等维护动作共用这一额度，不占用公开复盘等通用写入桶；权限校验和写入验证保持不变。
+
 ## 下载入口统计
 
 `POST /v1/downloads/events` 接收匿名入口点击，复用结构化运行日志；按日期、渠道和语言汇总方式见 [下载页与安装包分发](../../../docs/app-downloads.md)。不新增数据库表，不将点击数解释为完成下载或安装数。

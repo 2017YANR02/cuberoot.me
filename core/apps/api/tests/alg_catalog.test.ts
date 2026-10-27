@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({ query: vi.fn(), invalidate: vi.fn() }));
 vi.mock('../src/db/connection.js', () => ({
   query: mocks.query, withTransaction: (run: (q: typeof mocks.query) => unknown) => run(mocks.query),
 }));
-vi.mock('../src/utils/recon_helpers.js', () => ({ requireAdminOrApiKey: vi.fn(), checkRateLimit: vi.fn() }));
+vi.mock('../src/utils/recon_helpers.js', () => ({ requireAdminOrApiKey: vi.fn(async () => ({ wcaId: 'catalog-admin' })), checkRateLimit: vi.fn() }));
 vi.mock('../src/utils/alg_mirror.js', () => ({ syncMirrorAndLog: vi.fn(), syncMirrorForCase: vi.fn() }));
 vi.mock('../src/utils/recon_revalidate.js', () => ({ revalidateContentPages: mocks.invalidate }));
 import { algSetsRoutes } from '../src/routes/alg_sets';

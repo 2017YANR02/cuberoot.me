@@ -8,7 +8,7 @@
  *
  * 路径前缀 /v1/alg/sets/... 跟现有 /v1/alg/:puzzle/:set/submissions 不冲突。
  */
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { withAlgWrite, assertNoExistingAlg, assertUniqueCaseAlgs } from '../utils/alg_duplicates.js';
 import { getIp } from '../utils/analytics_helpers.js';
@@ -25,6 +25,14 @@ import { validateRequiredAlgCaseSetup } from '../utils/alg_case_setup.js';
 import { revalidateContentPages } from '../utils/recon_revalidate.js';
 
 export const algSetsRoutes = new Hono();
+
+async function requireAlgWrite(c: Context): Promise<void> {
+  // Bound unauthenticated attempts without charging routine editing to the
+  // public recon/write bucket. Authenticated editors have separate quotas.
+  checkRateLimit(getIp(c), { bucket: 'alg-admin-attempt', max: 600 });
+  const admin = await requireAdminOrApiKey(c);
+  checkRateLimit(admin.wcaId, { bucket: 'alg-admin-write', max: 120 });
+}
 algSetsRoutes.use('/alg/sets/*', async (c, next) => {
   await next();
   if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(c.req.method) && c.res.ok) {
@@ -224,8 +232,7 @@ algSetsRoutes.get('/alg/sets/:puzzle/order', async (c) => {
 // PUT /v1/alg/sets/:puzzle/order — admin 重排公式库首页卡片。
 algSetsRoutes.put('/alg/sets/:puzzle/order', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
-  checkRateLimit(getIp(c));
-  await requireAdminOrApiKey(c);
+  await requireAlgWrite(c);
 
   const puzzle = c.req.param('puzzle');
   const body = await c.req.json<{ slugs?: unknown }>();
@@ -319,8 +326,7 @@ algSetsRoutes.get('/alg/sets/:puzzle/:set', async (c) => {
 // POST /v1/alg/sets/:puzzle/:set/cases — admin 新增 case (append 到末尾)
 algSetsRoutes.post('/alg/sets/:puzzle/:set/cases', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
-  checkRateLimit(getIp(c));
-  await requireAdminOrApiKey(c);
+  await requireAlgWrite(c);
 
   const puzzle = c.req.param('puzzle');
   const set = c.req.param('set');
@@ -370,8 +376,7 @@ algSetsRoutes.post('/alg/sets/:puzzle/:set/cases', async (c) => {
 // PUT /v1/alg/sets/:puzzle/:set/cases/:id — admin 编辑 case
 algSetsRoutes.put('/alg/sets/:puzzle/:set/cases/:id', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
-  checkRateLimit(getIp(c));
-  await requireAdminOrApiKey(c);
+  await requireAlgWrite(c);
 
   const puzzle = c.req.param('puzzle');
   const set = c.req.param('set');
@@ -414,8 +419,7 @@ algSetsRoutes.put('/alg/sets/:puzzle/:set/cases/:id', async (c) => {
 // NOTE: 故意放 /reorder 而非 /cases/order,避免被 PUT /cases/:id 路由捕获(id="order"→NaN→invalid id 400)。
 algSetsRoutes.put('/alg/sets/:puzzle/:set/reorder', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
-  checkRateLimit(getIp(c));
-  await requireAdminOrApiKey(c);
+  await requireAlgWrite(c);
 
   const puzzle = c.req.param('puzzle');
   const set = c.req.param('set');
@@ -470,8 +474,7 @@ algSetsRoutes.put('/alg/sets/:puzzle/:set/reorder', async (c) => {
 // NOTE: 与 /reorder 同理放在 /cases/:id 之前,免得 id="mirror-links" 被那条路由吃掉。
 algSetsRoutes.put('/alg/sets/:puzzle/:set/mirror-links', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
-  checkRateLimit(getIp(c));
-  await requireAdminOrApiKey(c);
+  await requireAlgWrite(c);
 
   const puzzle = c.req.param('puzzle');
   const set = c.req.param('set');
@@ -557,8 +560,7 @@ algSetsRoutes.put('/alg/sets/:puzzle/:set/mirror-links', async (c) => {
 // DELETE /v1/alg/sets/:puzzle/:set/cases/:id — admin 删 case
 algSetsRoutes.delete('/alg/sets/:puzzle/:set/cases/:id', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
-  checkRateLimit(getIp(c));
-  await requireAdminOrApiKey(c);
+  await requireAlgWrite(c);
 
   const puzzle = c.req.param('puzzle');
   const set = c.req.param('set');
