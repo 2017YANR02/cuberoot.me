@@ -73,6 +73,14 @@ export const UCATS: { id: UtilCat; zh: string; en: string }[] = [
 
 export const CATALOG: UtilEntry[] = [
   {
+    name: 'useAssistantWorkspace',
+    sig: 'useAssistantWorkspace(owner: string)',
+    imp: "import { useAssistantWorkspace } from '@/hooks/useAssistantWorkspace';",
+    category: 'hook',
+    zh: '订阅当前账号的助手聊天工作区。',
+    en: 'Subscribe to the current account’s assistant conversation workspace.',
+  },
+  {
     name: 'useAssistantThinkingMode',
     sig: 'useAssistantThinkingMode(): readonly [AssistantThinkingMode, (value: AssistantThinkingMode) => void]',
     imp: "import { useAssistantThinkingMode } from '@/hooks/useAssistantThinkingMode';",

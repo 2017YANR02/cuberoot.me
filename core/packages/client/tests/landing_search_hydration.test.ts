@@ -133,6 +133,7 @@ describe('LandingSearch placeholder hydration', () => {
     try {
       await act(async () => root.render(createElement(StrictMode, null, createElement(SharedSurface))));
       await inputText(host.querySelector('input[aria-label="全站搜索"]')!, 'WIC');
+      await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="添加"]')!.click());
       await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="图片提问"]')!.click());
       const chatId = assistantConversations.read(owner).activeId;
       expect(host.querySelector<HTMLTextAreaElement>('textarea[aria-label="继续提问"]')!.value).toBe('WIC');

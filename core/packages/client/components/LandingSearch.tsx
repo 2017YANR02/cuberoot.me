@@ -1124,7 +1124,7 @@ export default function LandingSearch({
         </div>}
         {plusMenuOpen && (
           <div ref={plusMenuRef} className="landing-search-plus-menu" data-site-surface="popover" role="menu">
-            <button type="button" className="landing-search-plus-menu-btn" role="menuitem" onClick={() => {
+            <button type="button" className="landing-search-plus-menu-btn" role="menuitem" aria-label={tr({zh:'图片提问',en:'Ask with images'})} onClick={() => {
               if (workspaceEntry) { ensureAssistantConversation(owner); assistantConversations.setOpen(owner, true); router.push(`${langPrefix}/chat`); }
               else { setAssistantDraft(query); setAssistantDialog(true); }
               setPlusMenuOpen(false);

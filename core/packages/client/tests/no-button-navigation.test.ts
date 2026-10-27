@@ -33,6 +33,8 @@ const ALLOWLIST = new Set([
   // deskpet 工具栏 Home 图标:与 theme/lang/donate 等动作图标同排,靠 .deskpet-toolbar button
   // 元素选择器取样式 + 带 onClose() 副作用,作动作图标保留
   'components/DeskPetSearch.tsx',
+  // Image question creates or opens the current assistant workspace before navigation.
+  'components/LandingSearch.tsx',
 ]);
 
 // 另一团队的 roux 实验 WIP,不在本约定范围内

@@ -1,5 +1,6 @@
 import type { AssistantImage } from '@cuberoot/shared/site-assistant';
 import type { AssistantTurn } from '@/components/SiteAssistantDialog';
+import { persistItem } from '@/lib/safe-storage';
 
 export interface AssistantConversationSnapshot {
   draft: string;
@@ -30,7 +31,7 @@ export function createAssistantConversations() {
       const pinned = next.conversations.filter(item => item.pinned).map(item => ({ ...item, pending: undefined, snapshot: {
         ...item.snapshot, images: [], turns: item.snapshot.turns.map(turn => ({ ...turn, images: undefined, imagesExpired: !!turn.images?.length || turn.imagesExpired })),
       } }));
-      if (typeof window !== 'undefined' && restored.has(owner)) localStorage.setItem(`cuberoot-assistant-pinned:${owner}`, JSON.stringify(pinned));
+      if (restored.has(owner)) persistItem(`cuberoot-assistant-pinned:${owner}`, JSON.stringify(pinned));
     } catch { /* The current page session remains usable when storage is unavailable. */ }
     listeners.forEach(listener => listener());
   };
