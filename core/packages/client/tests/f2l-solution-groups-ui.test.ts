@@ -30,6 +30,11 @@ it('keeps uncontrolled editor drafts mounted through regrouping and library refr
     const input = host.querySelector('input')!;
     input.value = 'unsaved draft';
     await act(async () => complete(result));
+    const summary = host.querySelector<HTMLElement>('.f2l-solution-group > summary')!;
+    expect(summary.querySelector('.f2l-solution-chevron')?.getAttribute('aria-hidden')).toBe('true');
+    await act(async () => summary.click());
+    expect(summary.parentElement?.hasAttribute('open')).toBe(true);
+    expect(host.querySelector('.f2l-solution-originals > summary .f2l-solution-chevron')).not.toBeNull();
     expect(host.querySelector('input')).toBe(input);
     expect(input.value).toBe('unsaved draft');
     await act(async () => render());

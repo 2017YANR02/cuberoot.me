@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Check, Copy, Play } from '@app-foundation/icons/lucide';
+import { Check, ChevronRight, Copy, Play } from '@app-foundation/icons/lucide';
 import type { AlgCase, AlgEntry } from '@cuberoot/shared/alg';
 import Link from '@/components/AppLink';
 import { Tooltip } from '@/components/Tooltip';
@@ -52,7 +52,7 @@ export default function F2lSolutionGroups({ cases, entries, setup, orientation, 
       const option = group.options.find(o => o.fullAlg === selection[group.key]) ?? group.options[0];
       return <details key={group.key} className="f2l-solution-group"
         onToggle={event => { if (event.currentTarget.open) setActive(group.key); }}>
-        <summary><span className="f2l-solution-prefix">{group.prefix}</span>
+        <summary><ChevronRight className="f2l-solution-chevron" size={14} aria-hidden="true" /><span className="f2l-solution-prefix">{group.prefix}</span>
           <span className="f2l-solution-target">→ {tr({ zh: '标态', en: 'Standard' })} {group.standardName}</span>
         </summary>
         <div className="f2l-solution-choices">
@@ -98,7 +98,7 @@ export default function F2lSolutionGroups({ cases, entries, setup, orientation, 
     </div>)}
     <details className="f2l-solution-originals" open={!hasGroups || originalsOpen}
       onToggle={event => { if (hasGroups) setOriginalsOpen(event.currentTarget.open); }}>
-      <summary hidden={!hasGroups}>{editing ? tr({ zh: '编辑原始公式', en: 'Edit original algorithms' })
+      <summary hidden={!hasGroups}><ChevronRight className="f2l-solution-chevron" size={14} aria-hidden="true" />{editing ? tr({ zh: '编辑原始公式', en: 'Edit original algorithms' })
         : tr({ zh: '原始公式与出处', en: 'Original algorithms and sources' })}</summary>
       {children}
     </details>

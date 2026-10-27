@@ -1039,6 +1039,12 @@ html[data-theme=dark] .alg-root {
 }
 .f2l-solution-groups { min-width: 0; display: grid; gap: 10px; }
 .f2l-solution-group { min-width: 0; }
+.f2l-solution-group > summary, .f2l-solution-originals > summary { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; list-style: none; }
+.f2l-solution-group > summary::-webkit-details-marker, .f2l-solution-originals > summary::-webkit-details-marker { display: none; }
+.f2l-solution-originals > summary[hidden] { display: none; }
+.f2l-solution-chevron { flex: none; transition: transform 150ms ease; }
+.f2l-solution-group[open] > summary > .f2l-solution-chevron, .f2l-solution-originals[open] > summary > .f2l-solution-chevron { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .f2l-solution-chevron { transition: none; } }
 .f2l-solution-group > summary { cursor: pointer; padding: 10px 0; line-height: 1.6; overflow-wrap: anywhere; }
 .f2l-solution-prefix { font-size: 0.9rem; }
 .f2l-solution-target { margin-left: 12px; color: var(--muted-foreground); font-size: 0.78rem; white-space: nowrap; }
