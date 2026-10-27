@@ -199,6 +199,8 @@ import {
 } from '@cuberoot/shared/timer';
 import { AutoRecapDismissGesture, shouldAutoRecap } from '../_lib/reconstruct/recap';
 import { reconstructionAnalyzer } from '@cuberoot/timer-ui/reconstruct-analysis';
+import { reconTestScrambleSource, showReconTestEntry } from '@/lib/recon-test-source';
+import type { ReconTestSource } from '../_components/ReconTestPicker';
 import {
   nextCube222SpecialScramble,
   prefetchCube222SpecialScramble,
@@ -321,6 +323,7 @@ const SolveRecap = dynamic(() => import('../_components/SolveRecap'), {
 const LiveReconstructReport = dynamic(() => import('../_components/ReconstructReport'), { ssr: false });
 /** Administrator-only fake-cube panel, loaded on demand. */
 const DevFakeCubePanel = dynamic(() => import('../_components/DevFakeCubePanel'), { ssr: false });
+const ReconTestPicker = dynamic(() => import('../_components/ReconTestPicker'), { ssr: false });
 import './shell.css';
 import { tr } from '@/i18n/tr';
 
@@ -1342,6 +1345,14 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     const t = (text ?? '').trim();
     if (!t) return;
     applyScrambleHist(histPush(scrambleHistRef.current, timerScrambleHistoryEntry(t)));
+  }, [applyScrambleHist]);
+
+  const useReconTestScramble = useCallback((source: ReconTestSource) => {
+    if (!bluetoothCubeRef.current?.status.connected || competitionRef.current.enabled
+      || (phaseRef.current !== 'idle' && phaseRef.current !== 'stopped')) return false;
+    applyScrambleHist(histPush(scrambleHistRef.current,
+      timerScrambleHistoryEntry(source.scramble.trim(), null, null, reconTestScrambleSource(source.id, source.sourceHash))));
+    return true;
   }, [applyScrambleHist]);
 
   const prevScramble = useCallback(() => {
@@ -3097,6 +3108,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           controls: (
           <>
           {trainingOrg && trainingAssignment && <AppLink className="tb-btn" data-no-timer prefetch={false} href={`/training/${encodeURIComponent(trainingOrg)}?assignment=${encodeURIComponent(trainingAssignment)}`}>{tr({ zh: '训练打卡进度', en: 'Training check-in progress' })}</AppLink>}
+          {showReconTestEntry(isAdmin, cubeConnected, event, competition.enabled) && <ReconTestPicker
+            canSelect={cubeConnected && (timer.phase === 'idle' || timer.phase === 'stopped')}
+            onSelect={useReconTestScramble} />}
           <TimerDeviceCenter
             triggerRef={bluetoothButtonRef}
             className="shell-topbar-device-center"

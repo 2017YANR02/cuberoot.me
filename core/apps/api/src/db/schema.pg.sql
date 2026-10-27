@@ -9467,6 +9467,8 @@ CREATE TABLE IF NOT EXISTS smart_cube_macs (
 -- Smart cube intake queue (0286).
 CREATE TABLE recon_intake (
   id UUID PRIMARY KEY,
+  source_recon_id INTEGER,
+  source_snapshot JSONB,
   submission_hash TEXT NOT NULL UNIQUE,
   recording_hash TEXT NOT NULL,
   content_hash TEXT NOT NULL,
@@ -9484,6 +9486,7 @@ CREATE TABLE recon_intake (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX idx_recon_intake_queue ON recon_intake (status, created_at);
+CREATE UNIQUE INDEX idx_recon_intake_source_recon ON recon_intake (source_recon_id) WHERE source_recon_id IS NOT NULL;
 CREATE TABLE recon_intake_runs (
   id UUID PRIMARY KEY,
   case_id UUID NOT NULL REFERENCES recon_intake(id),

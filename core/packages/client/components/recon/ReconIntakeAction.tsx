@@ -17,6 +17,7 @@ import { apiUrl } from '@/lib/api-base';
 import { sessionFetch } from '@/lib/session-fetch';
 import { submitReconIntake, intakeRequest } from '@/lib/recon-intake-api';
 import { tr } from '@/i18n/tr';
+import { reconTestSource } from '@/lib/recon-test-source';
 import './recon-intake.css';
 
 const ReconstructReport = dynamic(() => import('@cuberoot/timer-ui/reconstruct-report'), { ssr: false });
@@ -50,10 +51,13 @@ export default function ReconIntakeAction({ solve, snapshot, host }: {
     if (!snapshot) return;
     setBusy(true);
     try {
+      const linkedSource = reconTestSource(solve);
       await submitReconIntake(crypto.randomUUID(), {
-        source: '', recording: reconRecording(solve), observed: snapshot, annotations: [], verdict,
+        source: linkedSource ? `https://cuberoot.me/recon/${linkedSource.sourceReconId}` : '',
+        ...linkedSource, recording: reconRecording(solve), observed: snapshot, annotations: [], verdict,
         language: tr({ en: 'en' as const, zh: 'zh' as const }), hadOverride: !!solve.reconstruction?.length,
       });
+      window.dispatchEvent(new Event('recon-intake:changed'));
       setSaved(true); setOpen(false);
     } catch (e) { setError(String(e)); } finally { setBusy(false); }
   };
@@ -79,7 +83,7 @@ export default function ReconIntakeAction({ solve, snapshot, host }: {
         {tr({ zh: '批注问题并收录', en: 'Annotate and collect' })}</button>
       {error && <p role="alert">{error}</p>}
     </div>}
-    {mode && createPortal(<ReconIntakeEditor solve={resolved} host={host} mode={mode} source={target?.source ?? ''}
+    {mode && createPortal(<ReconIntakeEditor solve={resolved} host={host} mode={mode} source={target?.source ?? (reconTestSource(resolved) ? `https://cuberoot.me/recon/${reconTestSource(resolved)!.sourceReconId}` : '')}
       onClose={() => setMode(null)} onSaved={() => { setMode(null); setSaved(true); }} />, document.body)}
   </div>;
 }
@@ -121,11 +125,13 @@ export function ReconIntakeEditor({ solve, host, mode, source, existing, onClose
         problem: problem.trim(), expectedAlgorithm: algorithm.trim(), expectedEffect: effect.trim() }] : annotations;
       const input: ReconIntakeInput = {
         source, recording: reconRecording(solve), observed: snapshot, annotations: notes, verdict: mode,
+        ...(existing ? (existing.input.sourceReconId ? { sourceReconId: existing.input.sourceReconId, sourceReconHash: existing.input.sourceReconHash } : {}) : reconTestSource(solve)),
         language: tr({ en: 'en' as const, zh: 'zh' as const }), hadOverride: !!solve.reconstruction?.length,
       };
       requestId.current ||= crypto.randomUUID();
       if (existing) await intakeRequest(`/${existing.id}/review`, { revision: existing.revision, action: 'revise', input });
       else await submitReconIntake(requestId.current, input);
+      window.dispatchEvent(new Event('recon-intake:changed'));
       onSaved();
     } catch (e) { setError(String(e)); } finally { setSaving(false); }
   };

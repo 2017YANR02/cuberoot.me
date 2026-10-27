@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('../src/utils/recon_helpers.js', () => ({
   requireAdminOrApiKey: async (c: { req: { header: (key: string) => string | undefined } }) => {
     if (c.req.header('Authorization') === 'Bearer admin') return { wcaId: 'reviewer' };
@@ -34,10 +34,23 @@ it('rejects malformed recording ranges before database access', async () => {
 afterAll(() => sql.end({ timeout: 1 }));
 
 describe.skipIf(process.env.RECON_INTAKE_PG_TEST !== '1')('intake transactions on isolated PostgreSQL', () => {
+  beforeAll(async () => {
+    if (process.env.DB_NAME !== 'recon_intake_test' || process.env.DB_HOST !== '127.0.0.1')
+      throw new Error('Use the isolated local recon_intake_test database');
+    await query(`CREATE TABLE IF NOT EXISTS recons (id INTEGER PRIMARY KEY, event TEXT NOT NULL, person_id TEXT,
+      scramble TEXT, wca_scramble TEXT, optimal_scramble TEXT, solution TEXT, comp TEXT, date DATE, value TEXT, added_by_id TEXT)`);
+    await query(`CREATE TABLE IF NOT EXISTS recon_ground_truth_cases (recon_id INTEGER PRIMARY KEY, status TEXT NOT NULL,
+      source_event TEXT, source_added_by_id TEXT, source_scramble TEXT NOT NULL, source_solution TEXT NOT NULL)`);
+    await query('ALTER TABLE recons ADD COLUMN IF NOT EXISTS added_by_id TEXT');
+    await query('ALTER TABLE recon_ground_truth_cases ADD COLUMN IF NOT EXISTS source_event TEXT');
+    await query('ALTER TABLE recon_ground_truth_cases ADD COLUMN IF NOT EXISTS source_added_by_id TEXT');
+  });
   beforeEach(async () => {
     if (process.env.DB_NAME !== 'recon_intake_test' || process.env.DB_HOST !== '127.0.0.1')
       throw new Error('Use the isolated local recon_intake_test database');
     await query('TRUNCATE recon_intake_runs, recon_intake_revisions, recon_intake');
+    await query('DELETE FROM recon_ground_truth_cases WHERE recon_id IN (2000000001, 2000000002)');
+    await query('DELETE FROM recons WHERE id IN (2000000001, 2000000002)');
   });
   async function create(needsFix = false) {
     const response = await request('', { id: randomUUID(), input: needsFix ? { ...input,
@@ -65,6 +78,25 @@ describe.skipIf(process.env.RECON_INTAKE_PG_TEST !== '1')('intake transactions o
     expect(two.id).toBe(one.id);
     const claims = await Promise.all([request('/' + one.id + '/claim', {}, true), request('/' + one.id + '/claim', {}, true)]);
     expect(claims.map(r => r.status).sort()).toEqual([200, 409]);
+  });
+  it('lists fixed-scope sources and atomically prevents duplicate source collection', async () => {
+    await query(`INSERT INTO recons (id, event, person_id, scramble, solution, comp, value)
+      VALUES (2000000001, '3x3', '2023GENG02', 'R', ?, 'Test', '4.00'),
+             (2000000002, '3x3', '2023GENG02', 'U', ?, 'Test', '5.00')`, ["R'", "U'"]);
+    const listing = await (await request('/sources?status=pending')).json();
+    expect(listing.items.map((row: { id: number }) => row.id)).toContain(2000000001);
+    const source = listing.items.find((row: { id: number }) => row.id === 2000000001);
+    const linked = { ...input, sourceReconId: source.id, sourceReconHash: source.sourceHash };
+    const attempts = await Promise.all([request('', { id: randomUUID(), input: linked }),
+      request('', { id: randomUUID(), input: { ...linked, recording: { ...linked.recording, timeMs: 1001 } } })]);
+    expect(attempts.map(response => response.status).sort()).toEqual([200, 409]);
+    const stored = await attempts.find(response => response.status === 200)!.json();
+    expect(stored.sourceSnapshot).toEqual({ id: source.id, scramble: 'R', solution: "R'" });
+    const collected = await (await request('/sources?status=collected')).json();
+    expect(collected.items.find((row: { id: number }) => row.id === source.id)?.intakeStatus).toBe('pending-test');
+    await query("UPDATE recons SET solution = 'R R2' WHERE id = 2000000001");
+    expect((await (await request('/sources?status=collected')).json()).items.find((row: { id: number }) => row.id === source.id)?.sourceChanged).toBe(true);
+    expect((await (await request('/' + stored.id)).json()).item.sourceSnapshot.solution).toBe("R'");
   });
   it('activates approved expectations across JSONB key ordering and retries immutable reports', async () => {
     const one = await create(), claimed = await claim(one.id), body = result(claimed);

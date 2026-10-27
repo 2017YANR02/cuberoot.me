@@ -20,6 +20,8 @@ export const intakeSnapshotSchema = z.object({
 }).strict();
 const inputSchema = z.object({
   source: z.string().max(10000),
+  sourceReconId: z.number().int().positive().max(2147483647).optional(),
+  sourceReconHash: z.string().regex(/^[a-f0-9]{32}$/).optional(),
   recording: z.object({
     scramble: short.min(1),
     moves: z.array(z.object({ m: z.string().regex(/^[URFDLBurfdlbMESxyz]w?(?:2'?|')?$/),
@@ -34,6 +36,8 @@ const inputSchema = z.object({
   }).strict()).max(100),
   verdict: z.enum(['correct', 'needs-fix']), language: z.enum(['en', 'zh']), hadOverride: z.boolean(),
 }).strict().superRefine((input, ctx) => {
+  if (Boolean(input.sourceReconId) !== Boolean(input.sourceReconHash))
+    ctx.addIssue({ code: 'custom', message: 'Source identity and fingerprint must be provided together' });
   const moves = input.recording.moves;
   const ranges = [...input.observed.lines, ...input.annotations.flatMap(a => a.range ? [a.range] : [])];
   if (ranges.some(r => r.fromIdx > r.toIdx || r.toIdx >= moves.length)
@@ -53,13 +57,15 @@ type Row = {
   created_by: string; approved_by: string | null; created_at: Date; updated_at: Date;
   latest_run: ReconIntakeCase['latestRun']; claimed_by: string | null; lease_until: Date | null;
   lease_token: string | null;
+  source_snapshot: ReconIntakeCase['sourceSnapshot'];
 };
 function item(row: Row): ReconIntakeCase {
   return { id: row.id, revision: row.revision, recordingHash: row.recording_hash, contentHash: row.content_hash,
     input: row.input, expected: row.expected, status: row.status, createdBy: row.created_by,
     approvedBy: row.approved_by, createdAt: new Date(row.created_at).toISOString(),
     updatedAt: new Date(row.updated_at).toISOString(), latestRun: row.latest_run,
-    claimedBy: row.claimed_by, leaseUntil: row.lease_until ? new Date(row.lease_until).toISOString() : null };
+    claimedBy: row.claimed_by, leaseUntil: row.lease_until ? new Date(row.lease_until).toISOString() : null,
+    sourceSnapshot: row.source_snapshot ?? null };
 }
 function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   const result = schema.safeParse(value);
@@ -80,6 +86,44 @@ reconIntakeRoutes.use('/recon-intake/*', async (c, next) => {
   await authorize(c);
   await next();
 });
+// This list is an administrator workflow over source reconstructions, not a
+// public search. Only a successful collection changes its intake status.
+reconIntakeRoutes.get('/recon-intake/sources', async c => {
+  const status = c.req.query('status') ?? 'pending';
+  if (!['pending', 'collected', 'all'].includes(status)) throw new HTTPException(400);
+  const offset = Math.max(0, Math.min(100000, Math.trunc(Number(c.req.query('offset')) || 0)));
+  const rows = await query<{ id: number; scramble: string; solution: string; comp: string | null; date: string | null;
+    value: string | null; intake_status: string | null; intake_id: string | null; truth_status: string | null; source_changed: boolean; source_hash: string }>(
+    `SELECT r.id, COALESCE(NULLIF(BTRIM(r.optimal_scramble), ''), NULLIF(BTRIM(r.wca_scramble), ''), BTRIM(r.scramble), '') AS scramble,
+      COALESCE(r.solution, '') AS solution, r.comp, r.date::text, r.value,
+      i.status AS intake_status, i.id::text AS intake_id, g.status AS truth_status,
+      md5(jsonb_build_array(COALESCE(NULLIF(BTRIM(r.optimal_scramble), ''), NULLIF(BTRIM(r.wca_scramble), ''), BTRIM(r.scramble), ''), COALESCE(r.solution, ''))::text) AS source_hash,
+      ((i.id IS NOT NULL AND i.input->>'sourceReconHash' IS DISTINCT FROM
+        md5(jsonb_build_array(COALESCE(NULLIF(BTRIM(r.optimal_scramble), ''), NULLIF(BTRIM(r.wca_scramble), ''), BTRIM(r.scramble), ''), COALESCE(r.solution, ''))::text))
+       OR (g.recon_id IS NOT NULL AND (g.source_event IS DISTINCT FROM r.event
+        OR g.source_added_by_id IS DISTINCT FROM r.added_by_id OR g.source_scramble IS DISTINCT FROM
+        COALESCE(NULLIF(BTRIM(r.optimal_scramble), ''), NULLIF(BTRIM(r.wca_scramble), ''), BTRIM(r.scramble), '')
+        OR g.source_solution IS DISTINCT FROM COALESCE(r.solution, '')))) AS source_changed
+     FROM recons r LEFT JOIN recon_intake i ON i.source_recon_id = r.id
+     LEFT JOIN recon_ground_truth_cases g ON g.recon_id = r.id
+     WHERE r.event = '3x3' AND r.person_id = '2023GENG02'
+       AND COALESCE(NULLIF(BTRIM(r.optimal_scramble), ''), NULLIF(BTRIM(r.wca_scramble), ''), BTRIM(r.scramble), '') <> ''
+       AND COALESCE(BTRIM(r.solution), '') <> ''
+       AND (? = 'all' OR (? = 'pending' AND i.id IS NULL AND
+         (g.status IS DISTINCT FROM 'confirmed' OR g.source_event IS DISTINCT FROM r.event
+          OR g.source_added_by_id IS DISTINCT FROM r.added_by_id OR g.source_scramble IS DISTINCT FROM
+          COALESCE(NULLIF(BTRIM(r.optimal_scramble), ''), NULLIF(BTRIM(r.wca_scramble), ''), BTRIM(r.scramble), '')
+          OR g.source_solution IS DISTINCT FROM COALESCE(r.solution, '')))
+         OR (? = 'collected' AND (i.id IS NOT NULL OR (g.status = 'confirmed' AND g.source_event = r.event
+          AND g.source_added_by_id IS NOT DISTINCT FROM r.added_by_id AND g.source_scramble =
+          COALESCE(NULLIF(BTRIM(r.optimal_scramble), ''), NULLIF(BTRIM(r.wca_scramble), ''), BTRIM(r.scramble), '')
+          AND g.source_solution = COALESCE(r.solution, '')))))
+     ORDER BY r.id DESC LIMIT 51 OFFSET ?`, [status, status, status, offset]);
+  return c.json({ items: rows.slice(0, 50).map(row => ({ id: row.id, scramble: row.scramble,
+    solution: row.solution, competition: row.comp, date: row.date, value: row.value,
+    intakeId: row.intake_id, intakeStatus: row.intake_status, truthStatus: row.truth_status,
+    sourceChanged: row.source_changed, sourceHash: row.source_hash })), hasMore: rows.length > 50 });
+});
 reconIntakeRoutes.get('/recon-intake', async c => {
   const status = c.req.query('status') ?? 'todo';
   if (!['todo', 'all', 'active', 'needs-fix', 'needs-review', 'pending-test'].includes(status))
@@ -98,12 +142,27 @@ reconIntakeRoutes.post('/recon-intake', async c => {
   const expected = input.verdict === 'correct' ? input.observed : null;
   const submissionHash = hash({ ...input, source: '' });
   const saved = await withTransaction(async q => {
-    await q(`INSERT INTO recon_intake (id, submission_hash, recording_hash, content_hash, input, expected, status, created_by, approved_by)
-      VALUES (?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?, ?) ON CONFLICT DO NOTHING`,
-    [id, submissionHash, hash(input.recording), caseHash(input, expected), input, expected,
+    let sourceSnapshot: ReconIntakeCase['sourceSnapshot'] = null;
+    if (input.sourceReconId) {
+      const [source] = await q<{ scramble: string; solution: string; source_hash: string; added_by_id: string | null }>(`SELECT
+        COALESCE(NULLIF(BTRIM(optimal_scramble), ''), NULLIF(BTRIM(wca_scramble), ''), BTRIM(scramble), '') AS scramble,
+        COALESCE(solution, '') AS solution, added_by_id,
+        md5(jsonb_build_array(COALESCE(NULLIF(BTRIM(optimal_scramble), ''), NULLIF(BTRIM(wca_scramble), ''), BTRIM(scramble), ''), COALESCE(solution, ''))::text) AS source_hash FROM recons
+        WHERE id = ? AND event = '3x3' AND person_id = '2023GENG02' FOR SHARE`, [input.sourceReconId]);
+      const normalize = (value: string) => value.trim().replace(/\s+/g, ' ');
+      if (!source || !source.solution.trim() || !source.scramble || source.source_hash !== input.sourceReconHash
+        || normalize(source.scramble) !== normalize(input.recording.scramble))
+        throw new HTTPException(400, { message: 'Source reconstruction or scramble does not match' });
+      const [confirmed] = await q<{ recon_id: number }>("SELECT recon_id FROM recon_ground_truth_cases WHERE recon_id = ? AND status = 'confirmed' AND source_event = '3x3' AND source_added_by_id IS NOT DISTINCT FROM ? AND source_scramble = ? AND source_solution = ?", [input.sourceReconId, source.added_by_id, source.scramble, source.solution]);
+      if (confirmed) throw new HTTPException(409, { message: 'Source reconstruction already collected' });
+      sourceSnapshot = { id: input.sourceReconId, scramble: source.scramble, solution: source.solution };
+    }
+    await q(`INSERT INTO recon_intake (id, source_recon_id, source_snapshot, submission_hash, recording_hash, content_hash, input, expected, status, created_by, approved_by)
+      VALUES (?, ?, ?::jsonb, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?, ?) ON CONFLICT DO NOTHING`,
+    [id, input.sourceReconId ?? null, sourceSnapshot, submissionHash, hash(input.recording), caseHash(input, expected), input, expected,
       expected ? 'pending-test' : 'needs-fix', actor.wcaId, expected ? actor.wcaId : null]);
     const [row] = await q<Row>('SELECT * FROM recon_intake WHERE submission_hash = ?', [submissionHash]);
-    if (!row) throw new HTTPException(409, { message: 'Submission ID already used' });
+    if (!row) throw new HTTPException(409, { message: input.sourceReconId ? 'Source reconstruction already collected' : 'Submission ID already used' });
     await q(`INSERT INTO recon_intake_revisions (case_id, revision, content_hash, input, expected, actor)
       VALUES (?, ?, ?, ?::jsonb, ?::jsonb, ?) ON CONFLICT DO NOTHING`,
     [row.id, row.revision, row.content_hash, row.input, row.expected, actor.wcaId]);
@@ -189,7 +248,8 @@ reconIntakeRoutes.post('/recon-intake/:id/review', async c => {
     if (!row || row.revision !== body.revision) throw new HTTPException(409, { message: 'Sample changed; refresh first' });
     if (body.action === 'approve' && (!row.latest_run?.actual || row.latest_run.status !== 'passed'
       || row.latest_run.revision !== row.revision)) throw new HTTPException(400, { message: 'No current passing proposal to approve' });
-    if (body.action === 'revise' && (!body.input || hash(body.input.recording) !== row.recording_hash))
+    if (body.action === 'revise' && (!body.input || hash(body.input.recording) !== row.recording_hash
+      || body.input.sourceReconId !== row.input.sourceReconId || body.input.sourceReconHash !== row.input.sourceReconHash))
       throw new HTTPException(400, { message: 'Keep the original recording' });
     const input = body.action === 'revise' ? body.input! : row.input;
     const expected = body.action === 'approve' ? row.latest_run!.actual : input.verdict === 'correct' ? input.observed : null;

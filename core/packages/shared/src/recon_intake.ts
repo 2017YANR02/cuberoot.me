@@ -27,6 +27,10 @@ export interface ReconAnnotation {
 }
 export interface ReconIntakeInput {
   source: string;
+  /** Explicit source reconstruction identity, absent for legacy/manual samples. */
+  sourceReconId?: number;
+  /** Source scramble and solution fingerprint captured when the test was selected. */
+  sourceReconHash?: string;
   recording: ReconRecording;
   observed: ReconSnapshot;
   annotations: ReconAnnotation[];
@@ -44,6 +48,7 @@ export interface ReconIntakeRun {
 }
 export interface ReconIntakeCase {
   id: string; revision: number; contentHash: string; recordingHash: string;
+  sourceSnapshot?: { id: number; scramble: string; solution: string } | null;
   input: ReconIntakeInput; expected: ReconSnapshot | null;
   status: ReconIntakeStatus; createdBy: string; createdAt: string; updatedAt: string;
   approvedBy: string | null;

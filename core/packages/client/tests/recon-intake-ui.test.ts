@@ -44,6 +44,13 @@ it('collects the confirmed snapshot without overwriting the original recording',
   expect(mocks.submit.mock.calls[0][1]).toMatchObject({ verdict: 'correct', observed: snapshot,
     recording: { scramble: 'R', moves: solve.moves }, annotations: [] });
 });
+it('keeps the selected source identity on the recorded solve when collecting', async () => {
+  const linkedSolve = { ...solve, scrambleSource: { kind: 'manual' as const, identity: `recon-test:123:${'a'.repeat(32)}` } };
+  await act(async () => root.render(createElement(ReconIntakeAction, { solve: linkedSolve, snapshot, host })));
+  await click('Collect sample'); await click('Confirm correct · Queue tests');
+  expect(mocks.submit.mock.calls[0][1]).toMatchObject({ sourceReconId: 123,
+    sourceReconHash: 'a'.repeat(32), source: 'https://cuberoot.me/recon/123', recording: { scramble: 'R' } });
+});
 it('collects from the post-solve recap toolbar using that report’s snapshot', async () => {
   const recapHost: ReconstructHost = { ...host, renderIntakeAction: (current, observed) =>
     createElement(ReconIntakeAction, { solve: current, snapshot: observed, host: recapHost }) };

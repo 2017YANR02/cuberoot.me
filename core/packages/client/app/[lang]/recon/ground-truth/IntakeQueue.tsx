@@ -98,6 +98,8 @@ export default function IntakeQueue() {
     </nav>{item && <section>
       <h2>{tr(statuses[item.status])} · v{item.revision}</h2>
       <p><small>{item.id} · {item.createdBy}</small></p>
+      {item.sourceSnapshot && <details><summary>{tr({ zh: '收录时的来源复盘', en: 'Source reconstruction at collection' })} · #{item.sourceSnapshot.id}</summary>
+        <pre>{item.sourceSnapshot.scramble}{'\n'}{item.sourceSnapshot.solution}</pre></details>}
       {item.claimedBy && <p>{tr({ zh: 'AI 领取记录（到期可重新领取）', en: 'AI claim (available again after expiry)' })}：{item.claimedBy} · {item.leaseUntil}</p>}
       <ReconstructReport solve={recordingSolve(item.input.recording, item.id)} host={{ ...host, renderIntakeAction: undefined }} isZh={tr({ zh: true, en: false })} hideActions hideDate />
       <p>{tr({ zh: '上方按当前代码重建；下面保留收录时的快照与测试输出。', en: 'The player uses the current code. Saved intake snapshots and test outputs are retained below.' })}</p>
