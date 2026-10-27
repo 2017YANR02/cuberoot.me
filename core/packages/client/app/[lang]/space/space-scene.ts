@@ -843,8 +843,8 @@ export class SpaceScene {
     const cameras = roomCameras[this.room?.style === 'company' ? 'company' : 'villa'] as Partial<Record<View, [Vec3, Vec3]>>;
     if (cameras[view]) { position.set(...cameras[view][0]); target.set(...cameras[view][1]); }
     if (view === 'exterior' && this.room?.root.userData.spaceArchitecture === 'rubik-atrium') {
-      position.set(mobile ? 72 : 43, mobile ? 44 : 29, mobile ? 88 : 57);
-      target.set(-1.5, 7.5, 2);
+      position.set(mobile ? -48 : -28, mobile ? 31 : 20, mobile ? 80 : 52);
+      target.set(0, 7, 0);
     }
     const lighting: Partial<Record<View, [Vec3, Vec3]>> = this.room?.style === 'company' ? {
       interior: [[-23, 2.65, 2], [-23, 0, 1.5]], study: [[-13, 3.15, 2], [-13, 0, -1]], courtyard: [[-17, 3.2, 11], [-17, 0, 9]],
