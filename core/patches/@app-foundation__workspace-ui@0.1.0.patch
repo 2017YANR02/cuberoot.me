@@ -201,7 +201,7 @@ index 26a3c352bb56da7799ab3a17921352aa8e81a618..4d4d64a7c06f24c9967ae6a153f4b52d
  export declare function ReportDetailPanel({ actor, id }: {
      actor: StaffActor;
 diff --git a/dist/panels.js b/dist/panels.js
-index 2a118e5869ae24647192c6c3c63f065c1147c7f8..1d627a07d4f82a958424df404cdee79a15b18716 100644
+index 2a118e5869ae24647192c6c3c63f065c1147c7f8..7c88659a46d58a602edc9c8f038b4fc2b48a7e43 100644
 --- a/dist/panels.js
 +++ b/dist/panels.js
 @@ -18,26 +18,32 @@ function ReportEditor({ report, onSaved }) {
@@ -231,13 +231,13 @@ index 2a118e5869ae24647192c6c3c63f065c1147c7f8..1d627a07d4f82a958424df404cdee79a
 +                    throw new Error(t("请选择工作时段"));
 +                newId.current ??= crypto.randomUUID();
 +                const saved = await api("report", { id: report?.id ?? newId.current, version: report?.version ?? 0,
-+                    projectId: projectId || null, workDate, startHour: startHour === "" ? null : Number(startHour), endHour: endHour === "" ? null : Number(endHour), progress: (0, client_1.value)(data, "progress"), resultUrl: (0, client_1.value)(data, "resultUrl"), help: (0, client_1.value)(data, "help"), next: (0, client_1.value)(data, "next"),
++                    projectId: projectId || null, workDate, startHour: startHour === "" ? null : Number(startHour), endHour: endHour === "" ? null : Number(endHour), progress: (0, client_1.value)(data, "progress"), resultUrl: report?.resultUrl ?? "", help: report?.help ?? "", next: report?.next ?? "",
 +                    visibility: report?.status === "submitted" ? report.visibility : (0, client_1.value)(data, "visibility"), status: report?.status === "submitted" ? "submitted" : button });
 +                if (onSaved)
 +                    onSaved();
 +                else
 +                    navigate(`/workspace/updates/${saved.id}`);
-+            }, children: [(0, jsx_runtime_1.jsx)(client_1.ErrorNotice, { error: projects.error, retry: projects.reload }), (0, jsx_runtime_1.jsxs)("div", { className: "staff-form-row", children: [(0, jsx_runtime_1.jsx)(client_1.Field, { width: "medium", label: t("项目"), children: (0, jsx_runtime_1.jsxs)("select", { name: "projectId", value: projectId, disabled: Boolean(report) || !projects.data, onChange: e => setProjectId(e.target.value), children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: t("公司公共") }), projects.data?.projects.filter(project => project.active || project.id === report?.projectId).map(project => (0, jsx_runtime_1.jsxs)("option", { value: project.id, children: [project.name, project.active ? "" : t("（已归档）")] }, project.id))] }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("提交后谁可以看"), children: (0, jsx_runtime_1.jsxs)("select", { name: "visibility", defaultValue: report?.visibility ?? "company", disabled: report?.status === "submitted", children: [(0, jsx_runtime_1.jsx)("option", { value: "company", children: projectId ? t("项目成员") : t("公司全员") }), (0, jsx_runtime_1.jsx)("option", { value: "managers", children: projectId ? t("本人、项目内负责人及管理员") : t("本人、负责人及管理员") })] }) })] }), (0, jsx_runtime_1.jsxs)("div", { className: "staff-form-row staff-work-hours", children: [(0, jsx_runtime_1.jsx)(client_1.Field, { width: "date", label: t("工作日期"), children: (0, jsx_runtime_1.jsx)(client_1.DateControl, { name: "workDate", value: workDate, onChange: setWorkDate, readOnly: Boolean(report), required: true }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { width: "short", label: t("开始时间"), children: (0, jsx_runtime_1.jsxs)("select", { name: "startHour", value: startHour, onChange: e => setStartHour(e.target.value), children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: t("选择小时") }), Array.from({ length: 24 }, (_, hour) => (0, jsx_runtime_1.jsxs)("option", { value: hour, children: [hour, ":00"] }, hour))] }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { width: "short", label: t("结束时间"), children: (0, jsx_runtime_1.jsxs)("select", { name: "endHour", value: endHour, onChange: e => setEndHour(e.target.value), children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: t("选择小时") }), Array.from({ length: 24 }, (_, i) => i + 1).map(hour => (0, jsx_runtime_1.jsxs)("option", { value: hour, children: [hour, ":00"] }, hour))] }) })] }), (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("今日进展"), children: (0, jsx_runtime_1.jsx)("textarea", { name: "progress", rows: 5, maxLength: 5000, defaultValue: report?.progress, placeholder: t("完成了什么，取得了什么结果？") }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("成果链接（选填）"), children: (0, jsx_runtime_1.jsx)("input", { name: "resultUrl", type: "url", maxLength: 2000, defaultValue: report?.resultUrl, placeholder: "https://\u2026" }) }), (0, jsx_runtime_1.jsx)("p", { className: "staff-muted", children: t("请确认链接中的资料也已设置合适的访问权限。") }), (0, jsx_runtime_1.jsxs)("div", { className: "staff-form-row", children: [(0, jsx_runtime_1.jsx)(client_1.Field, { label: t("需要协助（选填）"), children: (0, jsx_runtime_1.jsx)("textarea", { name: "help", rows: 3, maxLength: 2000, defaultValue: report?.help, placeholder: t("卡在哪里，需要什么帮助？") }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("下一步（选填）"), children: (0, jsx_runtime_1.jsx)("textarea", { name: "next", rows: 3, maxLength: 2000, defaultValue: report?.next, placeholder: t("准备推进什么？") }) })] }), (0, jsx_runtime_1.jsxs)("div", { className: "staff-actions staff-form-actions", children: [report?.status !== "submitted" && (0, jsx_runtime_1.jsx)(Button, { action: "save", iconOnly: false, variant: "secondary", type: "submit", value: "draft", children: t("保存草稿") }), (0, jsx_runtime_1.jsx)(Button, { action: report?.status === "submitted" ? "save" : "send", iconOnly: false, type: "submit", value: "submitted", children: report?.status === "submitted" ? t("保存修改") : t("提交工作") })] }), report?.status === "submitted" && (0, jsx_runtime_1.jsx)("p", { className: "staff-muted", children: t("已提交记录保留原可见范围，修改会留下历史版本。") })] }) });
++            }, children: [(0, jsx_runtime_1.jsx)(client_1.ErrorNotice, { error: projects.error, retry: projects.reload }), (0, jsx_runtime_1.jsxs)("div", { className: "staff-form-row", children: [(0, jsx_runtime_1.jsx)(client_1.Field, { width: "medium", label: t("项目"), children: (0, jsx_runtime_1.jsxs)("select", { name: "projectId", value: projectId, disabled: Boolean(report) || !projects.data, onChange: e => setProjectId(e.target.value), children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: t("公司公共") }), projects.data?.projects.filter(project => project.active || project.id === report?.projectId).map(project => (0, jsx_runtime_1.jsxs)("option", { value: project.id, children: [project.name, project.active ? "" : t("（已归档）")] }, project.id))] }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("提交后谁可以看"), children: (0, jsx_runtime_1.jsxs)("select", { name: "visibility", defaultValue: report?.visibility ?? "company", disabled: report?.status === "submitted", children: [(0, jsx_runtime_1.jsx)("option", { value: "company", children: projectId ? t("项目成员") : t("公司全员") }), (0, jsx_runtime_1.jsx)("option", { value: "managers", children: projectId ? t("本人、项目内负责人及管理员") : t("本人、负责人及管理员") })] }) })] }), (0, jsx_runtime_1.jsxs)("div", { className: "staff-form-row staff-work-hours", children: [(0, jsx_runtime_1.jsx)(client_1.Field, { width: "date", label: t("工作日期"), children: (0, jsx_runtime_1.jsx)(client_1.DateControl, { name: "workDate", value: workDate, onChange: setWorkDate, readOnly: Boolean(report), required: true }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { width: "short", label: t("开始时间"), children: (0, jsx_runtime_1.jsxs)("select", { name: "startHour", value: startHour, onChange: e => setStartHour(e.target.value), children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: t("选择小时") }), Array.from({ length: 24 }, (_, hour) => (0, jsx_runtime_1.jsxs)("option", { value: hour, children: [hour, ":00"] }, hour))] }) }), (0, jsx_runtime_1.jsx)(client_1.Field, { width: "short", label: t("结束时间"), children: (0, jsx_runtime_1.jsxs)("select", { name: "endHour", value: endHour, onChange: e => setEndHour(e.target.value), children: [(0, jsx_runtime_1.jsx)("option", { value: "", children: t("选择小时") }), Array.from({ length: 24 }, (_, i) => i + 1).map(hour => (0, jsx_runtime_1.jsxs)("option", { value: hour, children: [hour, ":00"] }, hour))] }) })] }), (0, jsx_runtime_1.jsx)(client_1.Field, { label: t("今日进展"), children: (0, jsx_runtime_1.jsx)("textarea", { name: "progress", rows: 5, maxLength: 5000, defaultValue: report?.progress, placeholder: t("完成了什么，取得了什么结果？") }) }), (0, jsx_runtime_1.jsxs)("div", { className: "staff-actions staff-form-actions", children: [report?.status !== "submitted" && (0, jsx_runtime_1.jsx)(Button, { action: "save", iconOnly: false, variant: "secondary", type: "submit", value: "draft", children: t("保存草稿") }), (0, jsx_runtime_1.jsx)(Button, { action: report?.status === "submitted" ? "save" : "send", iconOnly: false, type: "submit", value: "submitted", children: report?.status === "submitted" ? t("保存修改") : t("提交工作") })] }), report?.status === "submitted" && (0, jsx_runtime_1.jsx)("p", { className: "staff-muted", children: t("已提交记录保留原可见范围，修改会留下历史版本。") })] }) });
  }
 -function Reports({ directory, mine = false }) {
 +function Reports({ directory, mine = false, actions }) {
@@ -397,7 +397,7 @@ index 5fc4e9791e41cca4db0fcbd3f4c9dc41135d229a..68205f6e8d848ab8a9c32a3881207439
    "记录今日进展": "Record today's progress",
    "写清结果与需要的协助；草稿仅自己可见。每个项目每天一条，可以继续补充。": "Record results and requests for help. Drafts are private. One report per project per day.",
 diff --git a/src/panels.tsx b/src/panels.tsx
-index 377c241ead98ceccf1d09a8b5a5979887a7060dc..e1a0cf25ae0df8923d838220980282d209bb9806 100644
+index 377c241ead98ceccf1d09a8b5a5979887a7060dc..3fe0b767604e98a0142aff484d189a1a930e54c3 100644
 --- a/src/panels.tsx
 +++ b/src/panels.tsx
 @@ -1,7 +1,7 @@
@@ -410,7 +410,7 @@ index 377c241ead98ceccf1d09a8b5a5979887a7060dc..e1a0cf25ae0df8923d838220980282d2
  import type { ReportDetail, StaffActor, WorkReport, MemberDirectory, ProjectList, StaffProject } from "./contract";
  export function ReportEditor({ report, onSaved }: { report?: WorkReport; onSaved?: () => void }) {
    const { api, Link, Button, t } = useWorkspace();
-@@ -11,28 +11,36 @@ export function ReportEditor({ report, onSaved }: { report?: WorkReport; onSaved
+@@ -11,28 +11,33 @@ export function ReportEditor({ report, onSaved }: { report?: WorkReport; onSaved
    const newId = useRef<string | undefined>(undefined);
    useEffect(() => { if (!report) setWorkDate(today()); }, [report]);
    const [workDate, setWorkDate] = useState(report?.workDate ?? "");
@@ -425,7 +425,7 @@ index 377c241ead98ceccf1d09a8b5a5979887a7060dc..e1a0cf25ae0df8923d838220980282d2
        newId.current ??= crypto.randomUUID();
        const saved = await api<{ id: string }>("report", { id: report?.id ?? newId.current, version: report?.version ?? 0,
 -        projectId: projectId || null, workDate, progress: value(data, "progress"), resultUrl: value(data, "resultUrl"), help: value(data, "help"), next: value(data, "next"),
-+        projectId: projectId || null, workDate, startHour: startHour === "" ? null : Number(startHour), endHour: endHour === "" ? null : Number(endHour), progress: value(data, "progress"), resultUrl: value(data, "resultUrl"), help: value(data, "help"), next: value(data, "next"),
++        projectId: projectId || null, workDate, startHour: startHour === "" ? null : Number(startHour), endHour: endHour === "" ? null : Number(endHour), progress: value(data, "progress"), resultUrl: report?.resultUrl ?? "", help: report?.help ?? "", next: report?.next ?? "",
          visibility: report?.status === "submitted" ? report.visibility : value(data, "visibility"), status: report?.status === "submitted" ? "submitted" : button });
        if (onSaved) onSaved(); else navigate(`/workspace/updates/${saved.id}`);
      }}>
@@ -440,9 +440,9 @@ index 377c241ead98ceccf1d09a8b5a5979887a7060dc..e1a0cf25ae0df8923d838220980282d2
 +        <Field width="short" label={t("结束时间")}><select name="endHour" value={endHour} onChange={e => setEndHour(e.target.value)}><option value="">{t("选择小时")}</option>{Array.from({ length: 24 }, (_, i) => i + 1).map(hour => <option key={hour} value={hour}>{hour}:00</option>)}</select></Field>
 +      </div>
        <Field label={t("今日进展")}><textarea name="progress" rows={5} maxLength={5000} defaultValue={report?.progress} placeholder={t("完成了什么，取得了什么结果？")} /></Field>
-       <Field label={t("成果链接（选填）")}><input name="resultUrl" type="url" maxLength={2000} defaultValue={report?.resultUrl} placeholder="https://…" /></Field>
-       <p className="staff-muted">{t("请确认链接中的资料也已设置合适的访问权限。")}</p>
-       <div className="staff-form-row"><Field label={t("需要协助（选填）")}><textarea name="help" rows={3} maxLength={2000} defaultValue={report?.help} placeholder={t("卡在哪里，需要什么帮助？")} /></Field><Field label={t("下一步（选填）")}><textarea name="next" rows={3} maxLength={2000} defaultValue={report?.next} placeholder={t("准备推进什么？")} /></Field></div>
+-      <Field label={t("成果链接（选填）")}><input name="resultUrl" type="url" maxLength={2000} defaultValue={report?.resultUrl} placeholder="https://…" /></Field>
+-      <p className="staff-muted">{t("请确认链接中的资料也已设置合适的访问权限。")}</p>
+-      <div className="staff-form-row"><Field label={t("需要协助（选填）")}><textarea name="help" rows={3} maxLength={2000} defaultValue={report?.help} placeholder={t("卡在哪里，需要什么帮助？")} /></Field><Field label={t("下一步（选填）")}><textarea name="next" rows={3} maxLength={2000} defaultValue={report?.next} placeholder={t("准备推进什么？")} /></Field></div>
 -      <div className="staff-actions">{report?.status !== "submitted" && <Button variant="secondary" type="submit" value="draft">{t("保存草稿")}</Button>}<Button type="submit" value="submitted">{report?.status === "submitted" ? t("保存修改") : t("提交工作")}</Button></div>
 +      <div className="staff-actions staff-form-actions">{report?.status !== "submitted" && <Button action="save" iconOnly={false} variant="secondary" type="submit" value="draft">{t("保存草稿")}</Button>}<Button action={report?.status === "submitted" ? "save" : "send"} iconOnly={false} type="submit" value="submitted">{report?.status === "submitted" ? t("保存修改") : t("提交工作")}</Button></div>
        {report?.status === "submitted" && <p className="staff-muted">{t("已提交记录保留原可见范围，修改会留下历史版本。")}</p>}
@@ -453,7 +453,7 @@ index 377c241ead98ceccf1d09a8b5a5979887a7060dc..e1a0cf25ae0df8923d838220980282d2
    const { api, Link, Button, t } = useWorkspace();
    const projects = useResource<ProjectList>("projects");
    const [filters, setFilters] = useState({ projectId: "", memberId: "", date: "", search: "", page: 1 });
-@@ -41,18 +49,18 @@ export function Reports({ directory, mine = false }: { actor: StaffActor; direct
+@@ -41,18 +46,18 @@ export function Reports({ directory, mine = false }: { actor: StaffActor; direct
    return <><form className="staff-filters" onSubmit={e => { e.preventDefault(); const data = new FormData(e.currentTarget); setFilters({ projectId: value(data, "projectId"), memberId: value(data, "memberId"), date: value(data, "date"), search: value(data, "search"), page: 1 }); }}>
      <Field label={t("项目")}><select name="projectId"><option value="">{t("全部项目")}</option><option value="unassigned">{t("公司公共")}</option>{projects.data?.projects.map(project => <option key={project.id} value={project.id}>{project.name}{project.active ? "" : t("（已归档）")}</option>)}</select></Field>
      {!mine && <Field label={t("成员")}><select name="memberId"><option value="">{t("所有成员")}</option>{directory.map(member => <option key={member.id} value={member.id}>{member.name}{member.active ? "" : t("（已停用）")}</option>)}</select></Field>}
@@ -476,7 +476,7 @@ index 377c241ead98ceccf1d09a8b5a5979887a7060dc..e1a0cf25ae0df8923d838220980282d2
    </>;
  }
  export function ReportDetailPanel({ actor, id }: { actor: StaffActor; id: string }) {
-@@ -65,34 +73,33 @@ export function ReportDetailPanel({ actor, id }: { actor: StaffActor; id: string
+@@ -65,34 +70,33 @@ export function ReportDetailPanel({ actor, id }: { actor: StaffActor; id: string
    const owner = actor.kind === "staff" && report?.memberId === actor.id;
    const archived = report?.projectActive === false;
    return <><Link href="/workspace/updates">{t("← 团队动态")}</Link><ErrorNotice error={detail.error} retry={detail.reload} />{detail.loading && <p role="status">{t("正在加载记录…")}</p>}
@@ -522,7 +522,7 @@ index 377c241ead98ceccf1d09a8b5a5979887a7060dc..e1a0cf25ae0df8923d838220980282d2
        <Form key={project?.id ?? "new"} submit={async data => {
          await api("project", { id: project?.id ?? newId.current, version: project?.version ?? 0,
            name: value(data, "name"), url: value(data, "url"), active: value(data, "active") === "true",
-@@ -102,20 +109,18 @@ export function Projects({ actor, directory }: { actor: StaffActor; directory: M
+@@ -102,20 +106,18 @@ export function Projects({ actor, directory }: { actor: StaffActor; directory: M
          <Field label={t("项目名称")}><input name="name" required maxLength={80} defaultValue={project?.name} /></Field>
          <Field label={t("项目网址（选填）")}><input name="url" type="url" maxLength={2000} defaultValue={project?.url} /></Field>
          <Field label={t("状态")}><select name="active" defaultValue={String(project?.active ?? true)}><option value="true">{t("进行中")}</option><option value="false">{t("已归档")}</option></select></Field>

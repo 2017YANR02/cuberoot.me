@@ -67,6 +67,8 @@ JSONB 写入直接传数组，由 `postgres.js` 编码；提前 `JSON.stringify`
 
 ## 界面与交互
 
+今日记录表单只填写项目、可见范围、工作日期、起止时间与今日进展，不再提供成果链接、需要协助、下一步输入项。历史记录中已有的这三项内容仍在详情中展示，编辑进展时原值保留，不变更持久化结构。
+
 设计参考：[Refactoring UI skill](https://github.com/jaywilburn/refactoring-ui-skill/blob/main/skills/refactoring-ui/SKILL.md)。工作台采用内容优先、适中密度的工具界面，沿用全站主题、字体、圆角与导航组件。
 
 - 层级：正文与输入 16px、辅助信息 14px、分组标题 20px；手册阅读区同步字号，示意图中的缩略示例保留自身比例。

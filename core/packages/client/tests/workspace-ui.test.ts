@@ -4,7 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { parseAsString, useQueryState } from 'nuqs';
-import { WorkspaceProvider, ReportEditor, Projects, useResource, workspaceText, type WorkspaceHost, type StaffProject } from '@app-foundation/workspace-ui';
+import { WorkspaceProvider, ReportEditor, Projects, useResource, workspaceText, type WorkspaceHost, type StaffProject, type WorkReport } from '@app-foundation/workspace-ui';
 import type { Checklist, Schedule } from '@cuberoot/shared/workspace-planning';
 import Checklists from '@/app/[lang]/workspace/Checklists';
 import Schedules from '@/app/[lang]/workspace/Schedules';
@@ -187,6 +187,7 @@ it('aligns week ticks to Mondays and month ticks to real calendar boundaries acr
 
 it('uses the installed patched report editor to submit integer hours and reject reversed ranges', async () => {
   await mount(h(ReportEditor));
+  expect(container.querySelector('[name="resultUrl"], [name="help"], [name="next"]')).toBeNull();
   const start = container.querySelector<HTMLSelectElement>('[name="startHour"]')!;
   const end = container.querySelector<HTMLSelectElement>('[name="endHour"]')!;
   expect(start.options.length).toBe(25);
@@ -197,7 +198,22 @@ it('uses the installed patched report editor to submit integer hours and reject 
   expect(container.textContent).toContain('End time must be after start time');
   await setInput(start, '9'); await setInput(end, '24');
   await click('Submit report');
-  expect(calls.at(-1)).toMatchObject({ action: 'report', body: { startHour: 9, endHour: 24, status: 'submitted' } });
+  expect(calls.at(-1)).toMatchObject({ action: 'report', body: { startHour: 9, endHour: 24, status: 'submitted', resultUrl: '', help: '', next: '' } });
+});
+
+it('preserves historical optional report data when editing progress in the simplified form', async () => {
+  const report: WorkReport = {
+    id: 'report', memberId: 1, name: 'Alex', projectId: null, projectName: null, projectActive: null,
+    workDate: '2026-10-27', startHour: 9, endHour: 18, progress: 'Shipped',
+    resultUrl: 'https://example.com/result', help: 'Review', next: 'Follow up',
+    visibility: 'company', status: 'submitted', version: 2, createdAt: 1, updatedAt: 1,
+  };
+  await mount(h(ReportEditor, { report }));
+  expect(container.querySelector('[name="resultUrl"], [name="help"], [name="next"]')).toBeNull();
+  await click('Save changes');
+  expect(calls.at(-1)).toMatchObject({ action: 'report', body: {
+    id: report.id, version: 2, resultUrl: report.resultUrl, help: report.help, next: report.next,
+  } });
 });
 
 it('keeps the timeline mounted while editing and restores focus on a clean close', async () => {
