@@ -1,5 +1,7 @@
 # Shared workspace navigation
 
+当前 CubeRoot 后台入口为 `/admin`，团队协作位于 `/admin/team`；两个区域共用 `WorkspaceNavigation.tsx` 和导航包。下列 2026-10-20 路由及部署描述是当时的历史记录，不代表当前入口。
+
 2026-10-20: internal `/workspace` adopts App Foundation `navigation-ui` 0.1.0, the same local artifact as Mira. Global navigation is unchanged. Routes, translated labels, admin-only member entry, workspace API and account state remain in `core/packages/client/app/[lang]/workspace/page.tsx`; theme and expanded width are in its `workspace.css`. Shared geometry, animations and inverse corner live in the versioned package.
 
 Client typecheck and packaged rendering/host adapter/labels/geometry checks passed; CSS parsed. No browser or business acceptance. Uncommitted local integration, no publication or deployment. Replace the local artifact pin with an immutable release before deployment.

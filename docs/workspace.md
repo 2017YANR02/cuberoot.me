@@ -1,6 +1,6 @@
 # CubeRoot 工作台
 
-入口 `/workspace`，中文 `/zh/workspace`。直接由 CubeRoot 承载，原跳转到 Mira 的规则已移除。
+团队协作入口 `/admin/team`，中文 `/zh/admin/team`；与 `/admin` 网站管理共用导航。旧 `/workspace` 页面不提供兼容跳转。直接由 CubeRoot 承载，原跳转到 Mira 的规则已移除。
 
 - 登录：既有 CubeRoot 账号与会话。管理员自动获得员工身份，直接记录本人工作并保留管理能力；其他员工由管理员按 CubeRoot ID 开通。管理员只可查看本人草稿及历史修订。
 - 数据：CubeRoot PostgreSQL 的 `workspace_*` 表，迁移 `0281_workspace.sql`。Mira 使用自己的身份、会话和 SQLite；没有跨应用成员同步、令牌传递或数据库连接。
