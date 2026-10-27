@@ -86,7 +86,6 @@ export default function AdminDiskPage() {
 
   return <main className="admin-hub disk-page">
     <header className="admin-hub__heading">
-      <p className="admin-hub__eyebrow">{t('管理', 'Administration')}</p>
       <h1>{t('磁盘空间', 'Disk space')}</h1>
       <p>{t('查看服务器总容量和目录占用，点击目录逐层查看。', 'Explore server capacity and disk usage by directory.')}</p>
     </header>

@@ -22,7 +22,6 @@ export default function AdminReleasesPage() {
 
   return <main className="admin-hub">
     <header className="admin-hub__heading">
-      <p className="admin-hub__eyebrow">{t('管理', 'Administration')}</p>
       <h1>{t('应用版本管理', 'App releases')}</h1>
       <p>{t('发布 Android 和 Windows 版本，查看发布状态。', 'Publish Android and Windows releases and check their status.')}</p>
     </header>

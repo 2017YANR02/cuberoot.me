@@ -69,7 +69,6 @@ export default function AdminPage() {
   if (!isAdmin) {
     return (
       <main className="admin-hub">
-        <p className="admin-hub__eyebrow">{t('管理', 'Administration')}</p>
         <h1>{t('管理后台', 'Administration')}</h1>
         <p className="admin-hub__status">{t('只有管理员可以进入此页面。', 'Only administrators can access this page.')}</p>
         <AppLink className="admin-hub__account-link" href="/account" prefetch={false}>{t('前往账号页', 'Go to account')}</AppLink>
@@ -80,9 +79,10 @@ export default function AdminPage() {
   return (
     <main className="admin-hub admin-hub--dashboard">
       <header className="admin-hub__heading">
-        <p className="admin-hub__eyebrow">{t('管理', 'Administration')}</p>
         <h1>{section === 'system' ? t(...SYSTEM_VIEW_LABELS[view]) : t(...ADMIN_SECTION_LABELS[section])}</h1>
-        <p>{section === 'overview' ? t('查看用户增长、访问量、收入和待处理事项。', 'Review user growth, traffic, revenue and pending work.') : section === 'system' && view === 'monitoring' ? t('查看助手状态和应用启动诊断。', 'Review assistant status and app startup diagnostics.') : section === 'system' && view === 'tax' ? t('访问官方办税服务。', 'Open official tax services.') : t('选择要使用的管理工具。', 'Choose a management tool.')}</p>
+        {section === 'overview' && <p>{t('查看用户增长、访问量、收入和待处理事项。', 'Review user growth, traffic, revenue and pending work.')}</p>}
+        {section === 'system' && view === 'monitoring' && <p>{t('查看助手状态和应用启动诊断。', 'Review assistant status and app startup diagnostics.')}</p>}
+        {section === 'system' && view === 'tax' && <p>{t('访问官方办税服务。', 'Open official tax services.')}</p>}
       </header>
       {section === 'overview' && <Dashboard />}
       {section !== 'overview' && (section !== 'system' || view === 'tools' || view === 'workspace') && <nav className="admin-hub__nav" aria-label={t('管理工具', 'Administration tools')}>
