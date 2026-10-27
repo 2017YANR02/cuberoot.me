@@ -21,6 +21,19 @@
 .workspace-check-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .workspace-check-item.is-done .workspace-check-text { color: var(--muted-foreground); text-decoration: line-through; }
 .workspace-check-item > form { flex: 1; min-width: 0; }
+.workspace-check-tree { margin: 16px 0; }
+.workspace-check-folder > summary { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px; list-style: none; cursor: pointer; border-radius: 8px; }
+.workspace-check-folder > summary::-webkit-details-marker { display: none; }
+.workspace-check-folder > summary:is(:hover, :active) { background: var(--muted); }
+.workspace-check-folder > summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.workspace-check-folder > summary > svg { flex-shrink: 0; color: var(--muted-foreground); }
+.workspace-check-folder-name { flex: 1; min-width: 0; overflow-wrap: anywhere; font-weight: 600; }
+.workspace-check-count { flex-shrink: 0; color: var(--muted-foreground); font-size: 14px; font-variant-numeric: tabular-nums; }
+.workspace-check-folder-open { display: none; }
+.workspace-check-folder[open] > summary .workspace-check-folder-open { display: block; }
+.workspace-check-folder[open] > summary .workspace-check-folder-closed { display: none; }
+.workspace-check-folder[open] > summary .workspace-check-chevron { transform: rotate(90deg); }
+.workspace-check-folder > .workspace-check-items { margin: 0 0 8px 14px; padding-inline-start: 18px; border-inline-start: 1px solid var(--border-default); }
 .workspace-add-item { display: flex; align-items: center; gap: 4px; padding: 0 2px 0 12px; border: 1px solid var(--input); border-radius: 8px; background: var(--background); }
 .workspace-add-input { flex: 1; min-width: 0; height: 44px; padding: 0; border: 0; background: transparent; color: var(--foreground); font: inherit; }
 .workspace-add-item:focus-within { outline: 2px solid var(--ring); outline-offset: 2px; }

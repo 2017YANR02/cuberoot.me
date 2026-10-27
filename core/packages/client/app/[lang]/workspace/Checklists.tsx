@@ -5,6 +5,18 @@ import { parseAsInteger, parseAsStringEnum, useQueryState } from 'nuqs';
 import { ErrorNotice, Field, Form, EditorDialog, useResource, useWorkspace, value, type ProjectList } from '@app-foundation/workspace-ui';
 import { orderChecklistItems, type Checklist, type ChecklistItem } from '@cuberoot/shared/workspace-planning';
 import { useT } from '@/hooks/useT';
+import { ChevronRight, Folder, FolderOpen } from '@app-foundation/icons/lucide';
+
+function groupChecklistItems(items: ChecklistItem[]) {
+  const groups = new Map<string, ChecklistItem[]>();
+  for (const item of items) {
+    const path = item.text.trim().match(/^\/[a-z0-9][a-z0-9_-]*(?=\/|\s|$)/i)?.[0] ?? '';
+    const group = groups.get(path);
+    if (group) group.push(item);
+    else groups.set(path, [item]);
+  }
+  return [...groups].map(([path, rows]) => ({ path, items: orderChecklistItems(rows), completed: rows.filter(item => item.done).length }));
+}
 
 export default function Checklists() {
   const t = useT();
@@ -89,11 +101,20 @@ function ChecklistPanel({ list, reload, edit, onSaved, onDeleted }: { list: Chec
   return <section className="staff-panel workspace-checklist" aria-busy={busy}>
     <div className="workspace-list-heading"><h2>{list.name}</h2><span className="staff-muted">{list.projectName ?? t('公司全员', 'All employees')}{!list.active && ` · ${t('已归档', 'Archived')}`}</span>{list.canEdit && <div className="staff-toolbar-actions"><Button action="edit" variant="secondary" disabled={busy} onClick={edit}>{t('编辑', 'Edit')}</Button><Button action="delete" variant="secondary" disabled={busy} aria-label={`${t('删除清单', 'Delete checklist')}: ${list.name}`} onClick={() => setDeleting(true)}>{t('删除清单', 'Delete checklist')}</Button></div>}</div>
     <ErrorNotice error={error} retry={reload} />
-    <ul className="workspace-check-items">{orderChecklistItems(list.items).map(item => <li key={item.id} className={item.done ? 'workspace-check-item is-done' : 'workspace-check-item'}>
+    <div className="workspace-check-tree">{groupChecklistItems(list.items).map(group => <details key={group.path} className="workspace-check-folder">
+      <summary>
+        <ChevronRight className="workspace-check-chevron" size={16} aria-hidden="true" />
+        <Folder className="workspace-check-folder-closed" size={20} aria-hidden="true" />
+        <FolderOpen className="workspace-check-folder-open" size={20} aria-hidden="true" />
+        <span className="workspace-check-folder-name">{group.path || t('其他', 'Other')}</span>
+        <span className="workspace-check-count" aria-label={`${t('已完成', 'Completed')}: ${group.completed} / ${group.items.length}`}>{group.completed}/{group.items.length}</span>
+      </summary>
+      <ul className="workspace-check-items">{group.items.map(item => <li key={item.id} className={item.done ? 'workspace-check-item is-done' : 'workspace-check-item'}>
       {/* allow-checkbox: Checklist completion is a task checkbox, not a settings switch. */}
       <input type="checkbox" checked={item.done} disabled={!editable || busy} aria-label={`${t('完成', 'Complete')}: ${item.text}`} onChange={() => { void save(list.items.map(row => row.id === item.id ? { ...row, done: !row.done } : row)).catch(() => {}); }} />
-      <span className="workspace-check-text">{item.text}</span>{editable && <Button action="edit" variant="secondary" disabled={busy} onClick={() => setEditing(item.id)}>{t('编辑', 'Edit')}</Button>}
-    </li>)}</ul>
+      <span className="workspace-check-text">{item.text.trim().slice(group.path.length).trim() || item.text}</span>{editable && <Button action="edit" variant="secondary" disabled={busy} onClick={() => setEditing(item.id)}>{t('编辑', 'Edit')}</Button>}
+      </li>)}</ul>
+    </details>)}</div>
     {editable && <Form submit={async () => { if (!text.trim()) return; await save([...list.items, { id: crypto.randomUUID(), text: text.trim(), done: false }]); setText(''); }}><div className="workspace-add-item"><input className="workspace-add-input" aria-label={t('新增事项', 'New task')} placeholder={t('新增事项…', 'Add a task…')} value={text} onChange={event => setText(event.target.value)} required maxLength={160} /><Button action="add" type="submit" disabled={!text.trim() || busy || list.items.length >= 200}>{t('添加', 'Add')}</Button></div></Form>}
     {editing && editable && <EditorDialog title={t('编辑事项', 'Edit task')} onClose={() => setEditing(null)}><Form submit={async data => { await save(list.items.map(row => row.id === editing ? { ...row, text: value(data, 'text') } : row)); setEditing(null); }}><Field label={t('事项', 'Task')}><input name="text" required maxLength={160} defaultValue={list.items.find(item => item.id === editing)?.text} /></Field><div className="staff-actions staff-form-actions"><Button action="save" type="submit" disabled={busy}>{t('保存', 'Save')}</Button></div></Form></EditorDialog>}
     {deleting && list.canEdit && <EditorDialog title={t('删除清单', 'Delete checklist')} onClose={() => setDeleting(false)}><Form submit={remove}>

@@ -305,6 +305,38 @@ it('preserves rows during same-path reloads but clears them when the query scope
   await act(async () => resolveRead());
 });
 
+it('groups route-prefixed tasks without changing their saved text or folder expansion', async () => {
+  lists[0].items = [
+    { id: 'a', text: '/timer Connection', done: false },
+    { id: 'b', text: '/recon Thumbnails', done: false },
+    { id: 'c', text: '/timer/practice Timing', done: true },
+    { id: 'd', text: 'General task', done: false },
+    { id: 'e', text: 'https://example.com/timer Reference', done: false },
+  ];
+  const original = lists[0].items.map(item => ({ ...item }));
+  await mount(h(Checklists));
+  expect([...container.querySelectorAll('.workspace-check-folder-name')].map(node => node.textContent)).toEqual(['/timer', '/recon', 'Other']);
+  const folder = container.querySelector<HTMLDetailsElement>('.workspace-check-folder')!;
+  expect(folder.open).toBe(false);
+  await act(async () => folder.querySelector('summary')!.click());
+  expect(folder.open).toBe(true);
+  expect(folder.querySelector('.workspace-check-count')?.textContent).toBe('1/2');
+  expect([...folder.querySelectorAll('.workspace-check-text')].map(node => node.textContent)).toEqual(['Connection', '/practice Timing']);
+  await act(async () => folder.querySelector<HTMLInputElement>('input')!.click());
+  expect(calls.at(-1)).toMatchObject({ action: 'checklist', body: { items: original.map(item => item.id === 'a' ? { ...item, done: true } : item) } });
+  expect(folder.open).toBe(true);
+  expect(folder.querySelector('.workspace-check-count')?.textContent).toBe('2/2');
+  await act(async () => folder.querySelector<HTMLButtonElement>('button')!.click());
+  const input = container.querySelector<HTMLInputElement>('dialog [name="text"]')!;
+  expect(input.value).toBe('/timer Connection');
+  await setInput(input, '/recon Connection');
+  await click('Save');
+  expect(folder.querySelector('.workspace-check-count')?.textContent).toBe('1/1');
+  expect([...container.querySelectorAll('.workspace-check-folder-name')].map(node => node.textContent)).toEqual(['/recon', '/timer', 'Other']);
+  expect([...container.querySelector('.workspace-check-folder')!.querySelectorAll('.workspace-check-text')].map(node => node.textContent)).toEqual(['Thumbnails', 'Connection']);
+  expect(calls.at(-1)).toMatchObject({ body: { items: original.map(item => item.id === 'a' ? { ...item, text: '/recon Connection', done: true } : item) } });
+});
+
 it('persists checkbox completion and restores original order when unchecked', async () => {
   await mount(h(Checklists));
   await act(async () => container.querySelector<HTMLInputElement>('input[type="checkbox"]')!.click());
