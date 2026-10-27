@@ -1,16 +1,20 @@
 # 抖音原生化审核核查
 
+## 主体迁移进度更新（2026-10-27）
+
+维护者确认旧小程序名称已释放；新公司企业入驻及对公验证已通过，截图通过时间为 2026-10-27 12:15:45（北京时间）。同日确认新小程序名称“魔方根”审核通过，AppID 为 `tt550923b4cb7781f301`；图标和简介已提交、审核中。服务类目及小程序备案结果仍待核对，本次基础信息提审不等于备案或版本提审，也未切换工程或生产配置。当前按新公司应用推进，以下 2026-10-20 的个人主体记录属于旧应用背景；保留既有全原生实现，不因企业认证通过而恢复 WebView 或将旧应用备案视为新应用备案。后续命名、备案依赖与配置切换步骤以 [小程序跟踪文档](../core/docs/MINIPROGRAM.md#新公司备案迁移2026-10-27) 为准。
+
 核查日期：2026-10-20。范围为本地源码和构建产物，未上传、提审、发布或完成开发者工具及真机验收。
 
 ## 官方依据与结论边界
 
-[运营规范重点解读](https://partner.open-douyin.com/docs/resource/zh-CN/mini-app/operation/management/specification/mini-app-operation-interpretation)要求全部或核心页面原生，并要求提交功能可完整使用。[WebView 开发说明](https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/tutorial/basic-ability/web-view-component)仍支持配置业务域名的网页容器。该能力不适用于个人主体；本项目抖音端按个人主体全部原生化。原生页面覆盖不能证明所有审核条件合格。
+[运营规范重点解读](https://partner.open-douyin.com/docs/resource/zh-CN/mini-app/operation/management/specification/mini-app-operation-interpretation)要求全部或核心页面原生，并要求提交功能可完整使用。[WebView 开发说明](https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/tutorial/basic-ability/web-view-component)仍支持配置业务域名的网页容器。该能力不适用于个人主体；本项目抖音端此前按个人主体要求完成全部原生化。原生页面覆盖不能证明所有审核条件合格。
 
 本次没有通过审核状态判断或账号白名单改变审核人员看到的功能。维护者已确认将抖音端联系功能永久改为平台反馈，网站和微信保留社群目录。当前登记页面均已使用原生视图，但不能据此保证过审或宣称已与网站功能完全对齐。
 
 ## 本机提审阻塞复核（2026-10-20）
 
-维护者已明确按个人主体推进：最终目标是所有可达功能页均无 WebView，而非仅核心页面原生。旧网页入口已替换为原生路由分发，未知页面或参数明确报错。
+当时维护者明确按个人主体推进：最终目标是所有可达功能页均无 WebView，而非仅核心页面原生。旧网页入口已替换为原生路由分发，未知页面或参数明确报错。当前主体迁移状态见上方更新。
 
 - 维护者提供正式 AppID，本机被忽略的 `project.douyin.config.json` 已更新；AppID 不是密钥，不涉及 AppSecret。旧文档中其他机器的配置记录不能证明本机已配置。
 - **按个人主体执行**：[WebView 官方说明](https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/tutorial/basic-ability/web-view-component)明确个人类型暂不支持；企业仍须满足全部或核心页面原生的要求。当前构建对全部登记页递归检查，账号辅助页也不使用 WebView。
