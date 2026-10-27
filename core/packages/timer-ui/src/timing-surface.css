@@ -153,15 +153,19 @@
   font-weight: 700;
 }
 
-/* Seven-segment capital D uses the same six segments as zero. Keep the real
-   D in the text while using the font's own glyph for the LCD display. */
+/* The LCD penalty D keeps the six illuminated segments and clipped right
+   corners of the reference display; the underlying text remains D. */
 .timer-capital-d { position: relative; display: inline-block; }
+.timer-capital-d-segments { display: none; }
 .timer-display:not(.tf-mono):not(.tf-liberation):not(.tf-sans) .timer-capital-d-text { opacity: 0; }
-.timer-display:not(.tf-mono):not(.tf-liberation):not(.tf-sans) .timer-capital-d::after {
-  content: '0';
+.timer-display:not(.tf-mono):not(.tf-liberation):not(.tf-sans) .timer-capital-d-segments {
+  display: block;
   position: absolute;
   left: 0;
-  top: 0;
+  bottom: .24em;
+  width: 100%;
+  height: .74em;
+  overflow: visible;
 }
 
 .timing-surface-sub {
