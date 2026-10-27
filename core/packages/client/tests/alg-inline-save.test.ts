@@ -43,13 +43,8 @@ describe('inline case save pipeline', () => {
   const render = async () => act(async () => root.render(createElement(AdminCaseEditor, {
     puzzle: '3x3', setSlug: 'pll', state: { mode: 'edit', existing: original }, onClose, onSaved,
     children: (parts: InlineCaseEditorParts) => createElement(Fragment, null,
-      parts.name, parts.subgroup, parts.setup, parts.algorithms, parts.advanced, parts.error, parts.actions),
+      parts.name, parts.subgroup, parts.setup, parts.algorithms(), parts.advanced, parts.error, parts.actions),
   })));
-  const click = async (text: string) => act(async () => {
-    const button = [...host.querySelectorAll('button')].find(el => el.textContent?.trim() === text);
-    expect(button, text).toBeTruthy();
-    button!.click();
-  });
   const fill = async (label: string, value: string) => act(async () => {
     const owner = [...host.querySelectorAll('label')].find(el =>
       el.textContent?.startsWith(label) || el.querySelector(`[aria-label="${label}"]`));
@@ -101,15 +96,15 @@ describe('inline case save pipeline', () => {
     expect(mocks.update.mock.calls[0][3].setup).toBe("F R U R' F'");
     expect(mocks.validate.mock.calls[0][0]).toBe("F R U R' F'");
   });
-  it('honors advanced algorithm JSON even after collapsing the section', async () => {
-    await render(); await click('Advanced');
+  it('honors advanced algorithm JSON supplied to the inline detail tab', async () => {
+    await render();
     await fill('Algs 2D JSON', JSON.stringify([[{ alg: 'B', tags: ['oh'] }], [{ alg: 'D' }]]));
     await fill('oriNames', '["Right","Left"]');
-    await click('Advanced'); await autoSave();
+    await autoSave();
     expect(mocks.update.mock.calls[0][3]).toMatchObject({ algs: [[{ alg: 'B', tags: ['oh'] }], [{ alg: 'D' }]], oriNames: ['Right', 'Left'] });
   });
   it('rejects malformed nested JSON before calling validation or the API', async () => {
-    await render(); await click('Advanced'); await fill('Algs 2D JSON', '[42]'); await autoSave();
+    await render(); await fill('Algs 2D JSON', '[42]'); await autoSave();
     expect(host.querySelector('[role="alert"]')?.textContent).toBe('Advanced algs JSON invalid');
     expect(mocks.validate).not.toHaveBeenCalled(); expect(mocks.update).not.toHaveBeenCalled();
   });

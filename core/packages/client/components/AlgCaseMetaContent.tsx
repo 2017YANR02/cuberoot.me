@@ -164,7 +164,8 @@ interface Props {
   /** 详情页的社区公式紧跟主公式列表；训练弹窗不传。 */
   algsAfter?: React.ReactNode;
   onRotate?: () => Promise<void>;
-  editorAlgorithms?: React.ReactNode;
+  editorAlgorithms?: (afterPlayer?: React.ReactNode) => React.ReactNode;
+  renderMetadata?: (metadata: React.ReactNode) => React.ReactNode;
   subgroupEditor?: React.ReactNode;
   setupEditor?: React.ReactNode;
   editing?: boolean;
@@ -182,6 +183,7 @@ export default function AlgCaseMetaContent({
   preserveAlgOrder = false,
   algsAfter,
   onRotate, editorAlgorithms, subgroupEditor, setupEditor, editing = false,
+  renderMetadata = metadata => metadata,
 }: Props) {
   /**
    * 没有 meta 的集(虚拟集 LSLL、库里还没补元数据的集)一样要能看:空对象兜底后
@@ -412,18 +414,13 @@ export default function AlgCaseMetaContent({
 
   return (
     <>
-      {/* 顶部一排缩略图:这一族(镜像 / 逆 / 镜像逆 连起来的那几张)并排对比。
-          点其中一张:弹窗里切成那个 case,详情页里跳到那个 case 的详情页。
-
-          排头恒定是全族基准(标「原始」),其余按 `meta.no` 排 —— 全族共用同一份排布,
-          所以点来点去图一张不动。加框的那张是「你正在看的」,它的标签未必是「原始」。 */}
-      <AlgCaseRelationCards
+      {!playable && <AlgCaseRelationCards
         items={relationCards}
         puzzle={puzzle}
         set={set}
         viewAngle={viewAngle}
         orientation={orientation}
-      />
+      />}
 
       {/* 打乱紧跟着图 —— 图画的就是打乱之后的样子,两者一起看才对得上;公式是「怎么解开它」,
           排在后面。取值的三档(逆 case 的公式 / 现推 / setup 保底)见 {@link caseScramble}。 */}
@@ -470,12 +467,14 @@ export default function AlgCaseMetaContent({
       )}
 
       <div className="alg-meta-case">
-        {editorAlgorithms && <div className="alg-meta-case-player-layout" hidden={!editing}>{editorAlgorithms}</div>}
+        {editorAlgorithms && <div className="alg-meta-case-player-layout" hidden={!editing}>{editorAlgorithms(
+          <AlgCaseRelationCards items={relationCards} puzzle={puzzle} set={set} viewAngle={viewAngle} orientation={orientation} />,
+        )}</div>}
         {!editing && (
         <div className={playable ? 'alg-meta-case-player-layout alg-case-detail-ori-main alg-player-list-layout' : undefined}>
-          {playable && selectedAlg && (
+          {playable && (
             <div className="alg-case-detail-ori-player alg-player-list-player">
-              <AlgPlayer
+              {selectedAlg && <AlgPlayer
                 alg={selectedAlg.playbackAlg}
                 puzzle={puzzle}
                 set={set}
@@ -484,7 +483,8 @@ export default function AlgCaseMetaContent({
                 size={260}
                 autoPlay={playRequest > 0}
                 playRequest={playRequest}
-              />
+              />}
+              <AlgCaseRelationCards items={relationCards} puzzle={puzzle} set={set} viewAngle={viewAngle} orientation={orientation} />
             </div>
           )}
           <div className={playable ? 'alg-meta-case-algs alg-case-detail-ori-algs alg-player-list-options' : 'alg-meta-case-algs'}>
@@ -543,6 +543,7 @@ export default function AlgCaseMetaContent({
         </div>)}
       </div>
 
+      {renderMetadata(<>
       {/* 紧凑规格表:桌面三列,平板两列,手机一列。每条都是「有才出」。 */}
       <div className="alg-meta-facts">
         {m.no != null && (
@@ -672,6 +673,7 @@ export default function AlgCaseMetaContent({
           <Row label="speedcubedb">{m.sdbNo}</Row>
         </div>
       )}
+      </>)}
     </>
   );
 }

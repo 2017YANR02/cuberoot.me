@@ -14,7 +14,7 @@ import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
  */
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { useTrainingPathname as usePathname, useTrainingHost } from '@/lib/training-host';
-import { type AlgFile, type AlgPuzzle } from '@cuberoot/shared/alg';
+import { getAlgSetMeta, type AlgFile, type AlgPuzzle } from '@cuberoot/shared/alg';
 import { algLibraryKey, algLibraryGeneration, loadLibrarySource, subscribeAlgLibrary, peekAlgNavigationFile, rememberAlgNavigationVersion } from '@/lib/alg-library-cache';
 import { warmAlgValidation } from '@/lib/alg_validation';
 import { alignAlgSelection } from '@/lib/alg_case_alignment';
@@ -74,10 +74,13 @@ export default function AlgSubOrCaseClient() {
       void warmAlgValidation(puzzle).catch(() => {});
       loadLibrarySource(puzzle as AlgPuzzle, set).then(file => {
         const subSlug = canonicalZbllSubgroupSlug(set, slug.toLowerCase());
-        const selected = file.cases.filter(c => {
+        const groupCase = file.cases.find(c => {
           const parts = (c.subgroup || '').toLowerCase().split('/');
           return parts[0] === subSlug || parts[1] === subSlug;
         });
+        const top = getAlgSetMeta(puzzle as AlgPuzzle, set)?.umbrella
+          ? groupCase?.subgroup?.split('/')[0].toLowerCase() : undefined;
+        const selected = groupCase ? file.cases.filter(c => !top || c.subgroup?.split('/')[0].toLowerCase() === top) : [];
         const caseObj = selected.length ? null : resolveCaseSlug(file.cases, slug, puzzle, set);
         return alignAlgSelection(file, selected.length ? selected : caseObj ? [caseObj] : []);
       }).then(d => { if (live && request === revision) { setLoaded({ path: routePath, file: rememberAlgNavigationVersion(d, generation) }); setError(false); } })
@@ -102,7 +105,10 @@ export default function AlgSubOrCaseClient() {
     return parts[0] === subSlug || parts[1] === subSlug;
   });
   if (isSubgroup) {
-    return <AlgCategoryView puzzleParam={puzzle} set={set} subgroupParam={slug} initialData={data} />;
+    const top = getAlgSetMeta(puzzle as AlgPuzzle, set)?.umbrella
+      ? data.cases.find(c => (c.subgroup || '').toLowerCase().split('/').includes(subSlug ?? ''))?.subgroup?.split('/')[0]
+      : undefined;
+    return <AlgCategoryView puzzleParam={puzzle} set={set} subgroupParam={top} initialData={data} />;
   }
 
   // 否则当 case 解析(slug 唯一表 + 手打名兜底)。

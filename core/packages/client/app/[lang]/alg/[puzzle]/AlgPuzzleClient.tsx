@@ -14,7 +14,8 @@ import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from '
 import Link from '@/components/AppLink';
 import { useTrainingParams as useParams, useTrainingRouter as useRouter, useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import { useTranslation } from 'react-i18next';
-import { X } from '@app-foundation/icons/lucide';
+import { X, Pencil, Check } from '@app-foundation/icons/lucide';
+import { Tooltip } from '@/components/Tooltip';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 import { ALG_CATALOG, ALG_CATALOG_SECTIONS, ALG_PUZZLES, CFOP_SET_SLUGS, type AlgCase, type AlgPuzzle } from '@cuberoot/shared/alg';
@@ -204,6 +205,7 @@ export default function AlgPuzzleClient({ initialCatalog = null }: { initialCata
   const narrow = useIsMobile(480);
   const thumbSize = narrow ? 60 : 96;
   const isAdmin = useIsAdmin();
+  const [editingOrder, setEditingOrder] = useState(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const [catalog, setCatalog] = useState(initialCatalog);
   const activeCatalog = catalog?.puzzle === puzzle ? catalog : null;
@@ -218,6 +220,7 @@ export default function AlgPuzzleClient({ initialCatalog = null }: { initialCata
 
   // 合练:开着的时候卡片从「点了进去」变成「点了勾选」,选够两套底部出条开始
   const [picking, setPicking] = useState(false);
+  const canReorder = isAdmin && editingOrder && !picking;
   const refreshKey = useContentRefreshKey(!picking);
   const [picked, setPicked] = useState<string[]>([]);
   const [mixName, setMixName] = useState('');
@@ -306,7 +309,7 @@ export default function AlgPuzzleClient({ initialCatalog = null }: { initialCata
 
   const handleSetDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (!isAdmin || !over || active.id === over.id) return;
+    if (!canReorder || !over || active.id === over.id) return;
     const current = effectiveOrder;
     const oldIndex = current.indexOf(String(active.id));
     const newIndex = current.indexOf(String(over.id));
@@ -325,7 +328,7 @@ export default function AlgPuzzleClient({ initialCatalog = null }: { initialCata
     const firstAlg = first?.algs.flat()[0]?.alg ?? first?.standard ?? '';
     const title = s.short ?? tr(s);
     return (
-      <SortableCard key={s.slug} id={s.slug} draggable={isAdmin}>
+      <SortableCard key={s.slug} id={s.slug} draggable={canReorder}>
         <AlgCard
           href={picking ? undefined : `/alg/${puzzle}/${s.slug}${puzzle === 'sq1' && !sq1BlackTop ? '?black=false' : ''}`}
           onClick={picking ? () => togglePick(s.slug) : undefined}
@@ -352,7 +355,7 @@ export default function AlgPuzzleClient({ initialCatalog = null }: { initialCata
       ...groupSets.map(set => ({ id: set.slug, card: renderSetCard(set) })),
       ...extraCards.map(item => ({
         id: item.id,
-        card: <SortableCard key={item.id} id={item.id} draggable={isAdmin}>{item.card}</SortableCard>,
+        card: <SortableCard key={item.id} id={item.id} draggable={canReorder}>{item.card}</SortableCard>,
       })),
     ].sort((a, b) => (rank.get(a.id) ?? effectiveOrder.length) - (rank.get(b.id) ?? effectiveOrder.length));
     return (
@@ -379,6 +382,13 @@ export default function AlgPuzzleClient({ initialCatalog = null }: { initialCata
           <BackHome />
         </div>
         <h1 className="alg-cat-title">{tr({ zh: '公式库', en: 'Algorithm DB' })}</h1>
+        {isAdmin && <Tooltip content={editingOrder ? tr({ zh: '完成排序', en: 'Finish reordering' }) : tr({ zh: '编辑排序', en: 'Edit order' })}>
+          {tip => <button {...tip} type="button" className="alg-order-toggle" aria-pressed={editingOrder}
+            aria-label={editingOrder ? tr({ zh: '完成排序', en: 'Finish reordering' }) : tr({ zh: '编辑排序', en: 'Edit order' })}
+            disabled={picking} onClick={() => setEditingOrder(value => !value)}>
+            {editingOrder ? <Check size={17} /> : <Pencil size={17} />}
+          </button>}
+        </Tooltip>}
         {/* 项目切换:原落地页那一排卡片压成一个下拉,每项仍是真链接 */}
         <AlgPuzzlePicker
           current={puzzle}

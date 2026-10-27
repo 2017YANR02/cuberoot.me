@@ -45,7 +45,7 @@ export interface InlineCaseEditorParts {
   name: React.ReactNode;
   subgroup: React.ReactNode;
   setup: React.ReactNode;
-  algorithms: React.ReactNode;
+  algorithms: (afterPlayer?: React.ReactNode) => React.ReactNode;
   advanced: React.ReactNode;
   actions: React.ReactNode;
   error: React.ReactNode;
@@ -518,7 +518,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
               <CubeKeyboardSection target={setupElRef} toggleContainer={setupKeyboardToggle} />
             )}
           </label>);
-  const algorithms = (<div className="alg-admin-algs-block">
+  const algorithms = (afterPlayer?: React.ReactNode) => (<div className="alg-admin-algs-block">
             {!children && <span className="alg-admin-algs-label" title={tr({ zh: 'Enter 加新行，记号键可添加下划线、波浪线和删除线', en: 'Enter adds a row; use the marks key for underline, wave and strikethrough' })}>
               {tr({ zh: '公式', en: 'Algorithms' })}
             </span>}
@@ -547,6 +547,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
                       puzzle={puzzle} set={setSlug} orientation={orientation} size={260}
                       playRequest={groupPlayRequests[oi] ?? 0} autoPlay={(groupPlayRequests[oi] ?? 0) > 0}
                     />
+                    {oi === 0 && afterPlayer}
                   </div>
                   <div className="alg-case-detail-ori-algs alg-player-list-options">
                     {renderOrientationSetup && (derivesOrientationSetup
@@ -573,7 +574,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
             />
           </div>);
   const advanced = (<div className="alg-admin-advanced">
-            <button
+            {!children && <button
               type="button"
               className="alg-admin-advanced-toggle"
               onClick={() => setAdvancedOpen(o => !o)}
@@ -581,8 +582,8 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
               {advancedOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
               {tr({ zh: '高级', en: 'Advanced' })}
               {!advancedOpen && advancedDirty && <span className="alg-admin-advanced-dot" title="modified" />}
-            </button>
-            {advancedOpen && (
+            </button>}
+            {(children || advancedOpen) && (
               <div className="alg-admin-advanced-body">
                 <label>
                   <span>{tr({ zh: 'Standard 公式 (可选,展示给 trainer)', en: 'Standard alg (optional)' })}</span>
@@ -680,7 +681,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
           {nameField}
           {subgroupField}
           {setupField}
-          {algorithms}
+          {algorithms()}
           {/* Advanced 区:sticker / 多 orientation algs / oriNames / standard / trainerKey */}
           {advanced}
           {error && <div className="alg-admin-modal-error">{error}</div>}

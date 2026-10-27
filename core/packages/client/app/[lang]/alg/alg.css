@@ -1987,6 +1987,45 @@ a.alg-community-author:hover {
   gap: 16px;
   flex-wrap: wrap;
 }
+.alg-order-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.alg-order-toggle[aria-pressed="true"], .alg-order-toggle:hover { color: var(--accent); }
+.alg-order-toggle:disabled { opacity: .4; cursor: default; }
+.alg-order-toggle:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.alg-cat-title .timer-practice-control { font: inherit; }
+.alg-case-details-tabs { min-width: 0; margin-top: 24px; }
+.alg-case-details-tabs > [role="tablist"] { display: flex; gap: 20px; margin-bottom: 16px; }
+.alg-case-details-tabs [role="tab"] {
+  padding: 6px 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--muted-foreground);
+  font: inherit;
+  cursor: pointer;
+}
+.alg-case-details-tabs [role="tab"][aria-selected="true"] { border-bottom-color: var(--accent); color: var(--foreground); }
+.alg-case-details-tabs [role="tab"]:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.alg-case-details-viewport { overflow: hidden; }
+.alg-case-details-track { display: flex; align-items: flex-start; width: 200%; transition: transform 220ms ease; }
+.alg-case-details-track > [role="tabpanel"] { box-sizing: border-box; flex: 0 0 50%; min-width: 0; height: 0; overflow: hidden; visibility: hidden; }
+.alg-case-details-track > .is-active[role="tabpanel"] { height: auto; visibility: visible; }
+.alg-case-details-tabs .alg-case-inline-fields.alg-admin-modal-body { margin: 0; }
+.alg-player-list-player .alg-meta-related-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 4px; margin-top: 10px; }
+.alg-player-list-player .alg-meta-related-card { min-width: 0; padding: 4px 2px; }
+.alg-player-list-player .alg-meta-related-card svg { max-width: 100%; height: auto; }
+@media (prefers-reduced-motion: reduce) {
+  .alg-case-details-track { transition: none; }
+}
 .alg-case-detail-back {
   display: inline-flex;
   align-items: center;

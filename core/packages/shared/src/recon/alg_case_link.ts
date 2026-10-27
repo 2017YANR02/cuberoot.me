@@ -8,13 +8,13 @@
  * **就是编辑弹窗里「Case 名」那个字段** —— 所以改完名字 URL 跟着变,不会指向一个已经不
  * 存在的名字。老的 `#case-<id>` 还认(书签、之前发出去的链接),只是不再生成。
  *
- * ## 子组段只在 case 真有子组时才加
+ * ## 子组段只用于拥有独立列表的一级分类
  *
- * umbrella set(zbll / 1lll / ollcp …)不带子组会落到子组选择页,卡片根本不渲染;而没有
- * 子组的 case 硬塞一个 `_` 占位段(`|| '_'` 的锅),会让 `slugLevel` 判成 null 把所有 case
- * 过滤光 —— 页面全空。
+ * ZBLL / 1LLL / OLLCP 等先选一级分类，再在同一列表中显示所有细分组。
+ * PLL 的 Adj Swap 等仅为文案分区；umbrella 的概览卡不替代可定位 case 的一级列表。
  */
 import { type AlgCase } from '../alg';
+import { getAlgSetMeta, ALG_PUZZLES, type AlgPuzzle } from '../alg_catalog';
 import { ollCommentName, primaryCaseName } from './alg_case_display';
 
 type CaseRef = { id?: number | null; name?: string; subgroup?: string };
@@ -180,10 +180,11 @@ function anchorKey(s: string): string {
 }
 
 export function algCaseHref(puzzle: string, set: string, c: CaseRef): string {
-  // **最深**的那段子组(`U/UR` → `ur`),不是顶层(`u`)。ZBLL/1LLL 的顶层组页面渲染的是
-  // 二级**子组选择器**,那张 case 卡根本不在,`#anchor` 高亮会落空;深链到子组页才看得见它。
+  // 只有 umbrella 的一级分类拥有页面；更细分组仅是该页内的文案分区。
   const parts = (c.subgroup || '').split('/').filter(Boolean);
-  const seg = parts[parts.length - 1] || '';
+  const umbrella = (ALG_PUZZLES as readonly string[]).includes(puzzle)
+    && getAlgSetMeta(puzzle as AlgPuzzle, set)?.umbrella;
+  const seg = umbrella ? parts[0] || '' : '';
   const base = `/alg/${puzzle}/${set}`;
   const path = seg ? `${base}/${encodeURIComponent(seg.toLowerCase())}` : base;
   if (c.name?.trim()) return `${path}#${caseAnchor(c.name)}`;

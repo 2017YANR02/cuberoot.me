@@ -13,9 +13,10 @@ describe('algorithm player placement', () => {
     const category = read('components/AlgCategoryView.tsx');
     expect(detail).toContain('>{renderDetail}</AdminCaseEditor>');
     expect(detail).toContain('editorAlgorithms={editor?.algorithms}');
-    expect(detail).toContain('{editor ? editor.name : primary}');
+    expect(detail).toContain('{editor ? editor.name : <span data-alg-shared-title={primary}>{primary}</span>}');
     expect(detail).not.toContain('<Pencil');
-    expect(category).not.toContain('<Pencil');
+    expect(category).toContain('draggable={canReorder && c.id != null}');
+    expect(category).toContain('const canReorder = isAdmin && editingOrder;');
     expect(category).toMatch(/<Link\s+href=\{caseDetailHref\(c\)\}\s+className="alg-case-cardlink"/);
     expect(category).not.toContain("setEditorState({ mode: 'edit'");
     expect(detail).toContain('isAdmin && caseObj.id != null');
@@ -81,7 +82,7 @@ describe('algorithm player placement', () => {
     expect(detail).toContain("import { AlgCaseRelationCards, type AlgCaseRelationCardItem } from '@/components/AlgCaseRelationCards'");
     expect(detail).toContain("import { compareAlgGroupLabel } from '@/lib/alg_group_order'");
     expect(detail).toMatch(/const leanRelationCards = \(editor\?: InlineCaseEditorParts\): AlgCaseRelationCardItem\[\] => \(\[[\s\S]*?\]\)\.sort\(\(a, b\) => \([\s\S]*?compareAlgGroupLabel\(a\.name, b\.name\)/);
-    expect(detail).toMatch(/\.map\(\(member, index\): AlgCaseRelationCardItem => \(\{[\s\S]*?current: member\.current,[\s\S]*?href: member\.current \? undefined : hrefFor\(member\.caseObj\)/);
+    expect(detail).toMatch(/\.map\(\(member, index\): AlgCaseRelationCardItem => \(\{[\s\S]*?current: member\.current,[\s\S]*?href: member\.current \|\| onEmbeddedCaseChange \? undefined : hrefFor\(member\.caseObj\)/);
     expect(detail).toContain('items={leanRelationCards(editor)}');
     expect(relations).toContain('className="alg-meta-related-grid alg-meta-top-grid"');
     expect(relations).toMatch(/<CaseThumb[\s\S]*?size=\{76\}/);
@@ -101,7 +102,7 @@ describe('algorithm player placement', () => {
     expect(sharedStyles).toMatch(/@media \(max-width: 900px\)[\s\S]*?\.alg-player-list-layout\s*\{[\s\S]*?flex-direction:\s*column;/);
   });
 
-  it('keeps rich metadata above a fixed shared player and alg list', () => {
+  it('places detail relation cards below the player and keeps compact modal relations static', () => {
     const meta = read('components/AlgCaseMetaContent.tsx');
     const relations = read('components/AlgCaseRelationCards.tsx');
     const modal = read('components/AlgCaseMetaModal.tsx');
@@ -110,6 +111,8 @@ describe('algorithm player placement', () => {
     const mappedAlgs = meta.slice(meta.indexOf('algsWrap(algs.map'));
 
     expect(meta).toContain('const relationCards: AlgCaseRelationCardItem[]');
+    expect(meta).toContain('{!playable && <AlgCaseRelationCards');
+    expect(meta).toMatch(/<AlgPlayer[\s\S]*?<AlgCaseRelationCards[\s\S]*?alg-meta-case-algs/);
     expect(beforePlayer).toContain('<AlgCaseRelationCards');
     expect(relations).toContain('<CaseThumb');
     expect(relations).toContain('alg-meta-related-label');
