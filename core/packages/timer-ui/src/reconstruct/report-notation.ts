@@ -35,7 +35,7 @@ export function reportNotation(recon:ReconTextResult|null,method:ReconstructionT
       {id:'moves',kind:'moves',text:tokens.join(' '),tokens:ranges,action:rowAction,className:`sml-moves${options.canSeek?' is-seek':''}`,title:options.canSeek?tr({zh:'复制本行并定位回放',en:'Copy this line and seek playback'}):tr({zh:'复制本行',en:'Copy this line'})},
       comments.length?groupNode('comment',comments,'sml-label','flow'):null,
     ],'sml-body','flow');
-    const row:ReportNode={...groupNode(line.key,[line.kind!=='cross'&&line.kind!=='inspection'?{id:`diagram:${sourceLine}`,kind:'slot' as const}:null,body],'sml-line sml-line-with-diagram','flow'),state:reconNotationState(line,options.currentIdx)??undefined};
+    const row:ReportNode={...groupNode(line.key,[line.kind!=='inspection'?{id:`diagram:${sourceLine}`,kind:'slot' as const}:null,body],'sml-line sml-line-with-diagram','flow'),state:reconNotationState(line,options.currentIdx)??undefined};
     const lineText=tokens.join(' ')+(line.label?' // '+line.label:'');
     row.notation=method==='training'?undefined:{line:lineText,crossColor:crossColorFromLabels(labels),
       links:method==='cfop'?reconCommentLinks(lineText,options.cases,set=>options.caseHref?.(sourceLine,set)).flatMap(link=>{
@@ -44,23 +44,24 @@ export function reportNotation(recon:ReconTextResult|null,method:ReconstructionT
       }):[],
       colorHrefs:Object.fromEntries(cubeColorGroups(line.label??'').flatMap(group=>{
         const href=options.caseHref?.(sourceLine,group.colors);return href?[[group.colors,href]]:[];
-      })),diagramId:line.kind!=='cross'&&line.kind!=='inspection'?`diagram:${sourceLine}`:undefined};
+      })),diagramId:line.kind!=='inspection'?`diagram:${sourceLine}`:undefined};
     if(groupKey!==item.groupKey){groupKey=item.groupKey;groups.push({...groupNode('group:'+groupKey,[],'sml-group'),stage:line.kind});}
     groups.at(-1)!.children!.push(row);
   }
   const inspection=projection.inspection;
   const colors=options.inspectionColors?.(inspection);
   return {clipboard,projection,node:groupNode('notation',[
-    groupNode('head',[
-      projection.canToggle&&buttonNode('simplified',state.simplified?tr({zh:'显示原始记录',en:'Show original record'}):tr({zh:'显示化简记录',en:'Show simplified record'}),{type:'simplified'},`recon-cross-toggle${state.simplified?' active':''}`,{selected:state.simplified,icon:'swap'}),
-      buttonNode('copy',options.copyMode==='system'?tr({zh:'分享还原步骤',en:'Share solution steps'}):tr({zh:'复制成 /recon 的格式',en:'Copy in /recon format'}),{type:'copy-notation'},'sml-copy',{icon:state.copied==='notation'?'check':'copy'}),
-    ],'sml-head','row'),
     Boolean(recon.scramble.trim())&&groupNode('scramble',[{...groupNode('line',[groupNode('body',[{id:'moves',kind:'moves',text:recon.scramble,className:'sml-moves is-seek',action:{type:'copy-line',copyText:recon.scramble},title:tr({zh:'复制本行',en:'Copy this line'})}],'sml-body','flow')],'sml-line'),notation:{line:recon.scramble,crossColor:null,links:[],colorHrefs:{},diagramId:'diagram:scramble'}}],'sml-group sml-scramble'),
     method!=='training'&&Boolean(inspection.trim())&&groupNode('inspection',[{...groupNode('line',[groupNode('body',[
       {id:'moves',kind:'moves',text:options.wasteBrackets&&method==='cfop'?decorated.split('\n')[0].split('//')[0].trim():inspection,className:'sml-moves is-seek',action:{type:'copy-line',copyText:decorated.split('\n')[0].trim()},title:tr({zh:'复制本行',en:'Copy this line'})},
       groupNode('label',[textNode('text','// '+tr({zh:'观察',en:'inspection'})),colors?{id:'colors',kind:'color',colors,fills:reconCommentFills(colors,[]),className:'sml-label-chip cube-orientation-chip'}:null],'sml-label','flow')
     ],'sml-body','flow')],'sml-line sml-line-with-diagram'),notation:{line:inspection+' // '+tr({zh:'观察',en:'inspection'}),crossColor:null,links:[],colorHrefs:{},inspectionColors:colors}}],'sml-group'),
-    ...groups,options.notice,options.feedback,
+    ...groups,options.notice,
+    groupNode('head',[
+      options.feedback,
+      projection.canToggle&&buttonNode('simplified',state.simplified?tr({zh:'显示原始记录',en:'Show original record'}):tr({zh:'显示化简记录',en:'Show simplified record'}),{type:'simplified'},`recon-cross-toggle${state.simplified?' active':''}`,{selected:state.simplified,icon:'swap'}),
+      buttonNode('copy',options.copyMode==='system'?tr({zh:'分享还原步骤',en:'Share solution steps'}):tr({zh:'复制成 /recon 的格式',en:'Copy in /recon format'}),{type:'copy-notation'},'sml-copy',{icon:state.copied==='notation'?'check':'copy'}),
+    ],'sml-head','row'),
   ],'sml recon-notation-list')};
 }
 /** Both adapters resolve token boundaries here; only hit testing is host-specific. */

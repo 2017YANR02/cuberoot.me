@@ -227,6 +227,22 @@
 
 .timer-solve-detail-actions--start { justify-content: flex-start; }
 
+.timer-solve-detail-manage {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+.timer-solve-detail-manage > .timer-solve-detail-section {
+  flex: 0 1 320px;
+  min-width: 0;
+  margin: 0;
+}
+.timer-solve-detail-manage > .timer-solve-detail-danger {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
 .timer-solve-detail-action,
 .timer-solve-detail-close {
   display: inline-flex;
@@ -299,6 +315,18 @@
   max-width: 1000px;
   min-width: 0;
   margin: 0 auto;
+}
+
+@media (min-width: 1024px) {
+  .timer-solve-detail-full-body .reconstruct-playback.has-side {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  }
+  .timer-solve-detail-full-body .reconstruct-playback-main { grid-column: 1; grid-row: 1; }
+  .timer-solve-detail-full-body .reconstruct-playback-side { grid-column: 2; grid-row: 1; }
+}
+@media (max-width: 1023px) {
+  .timer-solve-detail-full-body .reconstruct-playback.has-side { grid-template-columns: minmax(0, 1fr); }
+  .timer-solve-detail-full-body .reconstruct-playback-side { max-height: none; }
 }
 
 .timer-solve-detail-full-head {

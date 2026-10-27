@@ -478,8 +478,10 @@ export function TimerSolveDetailModal({
                 {report}
                 {splitSections}
                 {comment}
-                {move}
-                <div className="timer-solve-detail-actions timer-solve-detail-actions--start">{remove}</div>
+                <div className="timer-solve-detail-manage">
+                  {move}
+                  {remove}
+                </div>
               </div>
             </div>
           </>

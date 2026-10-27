@@ -14,9 +14,9 @@ vi.mock('@cuberoot/shared/timer/reconstruct/library-correction', () => ({
   identifyLibraryCase: async () => ({ sticker: { kind: 'raw', tag: 'recognized', attrs: {} } }),
 }));
 vi.mock('@/lib/alg_thumb_plan', () => ({ cubeThumbParams: (_puzzle: string, _set: string, sticker: { tag: string }) => ({ mask: sticker.tag || 'fallback', view: 'oll' }) }));
-vi.mock('@/components/VisualCube', () => ({ VisualCube: (props: { faceletColors?: string; mask?: string }) => {
+vi.mock('@/components/VisualCube', () => ({ VisualCube: (props: { faceletColors?: string; mask?: string; setup?: string; local?: boolean }) => {
   useEffect(() => () => mocks.unmount(), []);
-  return createElement('span', { 'data-diagram': props.faceletColors ?? props.mask });
+  return createElement('span', { 'data-diagram': props.faceletColors ?? props.mask ?? 'cube', 'data-setup': props.setup, 'data-local': props.local });
 } }));
 let root: Root, host: HTMLDivElement;
 let requests: Array<{ publish: (diagrams: ReconF2lAnnotations['diagrams']) => void; finish: (value: ReconF2lAnnotations) => void }>;
@@ -35,6 +35,15 @@ beforeEach(() => {
   host = document.createElement('div'); document.body.append(host); root = createRoot(host);
 });
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); });
+
+it.each(['W cross', 'Y Cross', 'R pscross', 'B xcross', 'G xxcross', 'O xxxcross', '十字'])('renders %s from the exact pre-line state without a library request', async label => {
+  await render(`x2 y' // inspection\nR U // ${label}`, 'F R', 1);
+  const image = host.querySelector('[data-diagram]');
+  expect(image).not.toBeNull();
+  expect(image?.getAttribute('data-setup')).toBe("F R x2 y'");
+  expect(image?.getAttribute('data-local')).toBe('true');
+  expect(mocks.load).not.toHaveBeenCalled();
+});
 
 it('keeps the same F2L image mounted while later turns and asynchronous annotations update', async () => {
   await render('R // RG');

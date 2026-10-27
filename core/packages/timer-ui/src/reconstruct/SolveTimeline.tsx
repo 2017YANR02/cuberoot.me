@@ -145,6 +145,7 @@ export default function SolveTimeline({
         </div>
       )}
 
+      <div className="stl-track-wrap">
       <Track
         className="stl-track"
         onPointerLeave={() => setHoverKey(null)}
@@ -214,6 +215,7 @@ export default function SolveTimeline({
         <span>{hovered.label}</span>
         <span className="stl-tooltip-moves">{hovered.moves || '—'}</span>
       </div>}
+      </div>
 
       {showLabels && (
         <div className="stl-row stl-names">

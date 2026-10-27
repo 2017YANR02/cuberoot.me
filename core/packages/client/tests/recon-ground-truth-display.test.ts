@@ -55,6 +55,12 @@ describe('ground truth: real timer records through the final display', () => {
   for (const file of samples) {
     const fixture = JSON.parse(readFileSync(join(dir, file), 'utf8'));
     it.skipIf(!isApprovedFixture(fixture))(file, async () => {
+    // The approved recording and notation stay untouched. The 2026-10-27 UI
+    // contract adds an isometric preview to Cross rows previously left blank.
+    // This is the only display field allowed to differ from that snapshot.
+    const expectedRows = fixture.displayRows.map((row: { label: string; diagrams: string[] }) =>
+      /\b(?:ps)?x*cross\b/i.test(row.label) && row.diagrams.length === 0
+        ? { ...row, diagrams: ['iso'] } : row);
     const { scramble, moves, timeMs: totalMs, model: brand, gyro } = fixture.recording;
     const before = JSON.stringify(fixture.recording);
     const samples = decodeGyroTrack(gyro);
@@ -99,7 +105,7 @@ describe('ground truth: real timer records through the final display', () => {
       try {
         await vi.waitFor(async () => {
           await act(async () => { await Promise.all(jobs); });
-          expect(readRows()).toEqual(fixture.displayRows);
+          expect(readRows()).toEqual(expectedRows);
         }, { timeout: 5000 });
       } finally {
         if (process.env.RECON_GROUND_TRUTH_CAPTURE_DIR) {
@@ -108,7 +114,7 @@ describe('ground truth: real timer records through the final display', () => {
       }
       const elements = [...host.querySelectorAll('.sml-line')];
       const rows = readRows();
-      expect(rows).toEqual(fixture.displayRows);
+      expect(rows).toEqual(expectedRows);
       let state = applyScramble(3, scramble);
       const stageRows = rows.slice(2);
       state = applyOneToken(state, tokens(rows[1].moves));
@@ -117,6 +123,12 @@ describe('ground truth: real timer records through the final display', () => {
         // after this line, or ignores an inspection/display-frame rotation.
         for (const diagram of elements[index + 2].querySelectorAll('[data-setup]')) {
           const rebased = applyScramble(3, diagram.getAttribute('data-setup')!);
+          if (/\b(?:ps)?x*cross\b/i.test(row.label)) {
+            // Cross uses the physical pre-line setup directly. Library images
+            // below rebase sticker identities before applying their masks.
+            expect(rebased, file + ' cross diagram before line ' + index).toEqual(state);
+            continue;
+          }
           const restored = Object.fromEntries((['U', 'R', 'F', 'D', 'L', 'B'] as const).map(face =>
             [face, rebased[face].map(color => state[color][4])],
           ));
@@ -139,12 +151,13 @@ describe('ground truth: real timer records through the final display', () => {
         [shown.inspection, ...playback!.map(move => move.m)].join(' '))), file + ' simplified playback must solve').toBe(true);
       const last = tokens(stageRows.at(-1)!.moves).split(' ').at(-1)!;
       expect(/^[xyz]/.test(last), 'no synthetic rotation after solved').toBe(false);
-      expect(rows.slice(0, 3).flatMap(row => row.diagrams)).toEqual([]);
+      expect(rows.slice(0, 2).flatMap(row => row.diagrams)).toEqual([]);
       for (const row of stageRows) {
         expect(row.label).not.toMatch(/\([WYGBOR]{2}(?:\+[WYGBOR]{2})*\)/);
         expect(row.label).not.toMatch(/\(\d+\)/);
         expect(row.label).not.toContain('最优');
-        if (/ZBLS|VLS|\bWV\b|\bSV\b/.test(row.label)) expect(row.diagrams).toEqual(['iso']);
+        if (/\b(?:ps)?x*cross\b/i.test(row.label)) expect(row.diagrams).toEqual(['iso']);
+        else if (/ZBLS|VLS|\bWV\b|\bSV\b/.test(row.label)) expect(row.diagrams).toEqual(['iso']);
         else if (/OLL|PLL|COLL|ZBLL|ELL|1LLL/.test(row.label)) {
           expect(row.diagrams).toEqual(['plan']);
           expect(row.hrefs.some(href => /^\/alg\/3x3\/[^/]+\/[^/]+$/.test(href ?? ''))).toBe(true);

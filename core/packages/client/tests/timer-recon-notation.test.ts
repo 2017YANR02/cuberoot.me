@@ -37,12 +37,17 @@ it('reuses cross normalization for display and copy without rewriting playback d
   try {
     await act(async () => root.render(createElement(ReconstructHostContext.Provider, { value: {
       localize: text => text.zh, writeClipboardText: copy, replayUrl: () => '', recordGyro: false,
-    } }, createElement(StepMoveList, { recon, reference: null, slotReference: null, onSeek: seek }))));
+      LineDiagramProvider: ({ children }) => children(index => createElement('span', { 'data-line-diagram': index }), () => undefined),
+    } }, createElement(StepMoveList, { recon, reference: null, slotReference: null, onSeek: seek,
+      feedback: createElement('div', { className: 'rc-feedback' }, 'feedback'),
+    }))));
     const toggle = host.querySelector<HTMLButtonElement>('.recon-cross-toggle')!;
     expect(toggle).not.toBeNull();
     expect(toggle.getAttribute('aria-pressed')).toBe('true');
     expect(toggle.parentElement?.className).toBe('sml-head');
+    expect(toggle.previousElementSibling?.className).toBe('rc-feedback');
     expect(toggle.nextElementSibling?.className).toBe('sml-copy');
+    expect(host.querySelector('[data-stage="cross"] [data-line-diagram]')?.getAttribute('data-line-diagram')).toBe('1');
     const normalizedLines = normalized.split('\n');
     const moves = [...host.querySelectorAll('.sml-moves')].map(element => element.textContent);
     expect(moves[1]).toBe(normalizedLines[0].split('//')[0].trim());

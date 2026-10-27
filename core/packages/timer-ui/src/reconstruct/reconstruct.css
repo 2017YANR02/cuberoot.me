@@ -105,6 +105,10 @@
 .reconstruct-move-row:last-child {
   border-bottom: none;
 }
+.reconstruct-move-header {
+  font-family: var(--font-sans);
+  font-weight: 500;
+}
 .reconstruct-move-row.slow {
   background: var(--muted);  background: color-mix(in srgb, var(--destructive) 10%, transparent);
   color: var(--signal-warning);
@@ -714,20 +718,20 @@
 .reconstruct-bld-memo-val { font-family: var(--font-mono); letter-spacing: 0.05em; }
 
 .rc-summary {
-  display: flex; flex-wrap: wrap; margin: 10px 0 14px; padding: 0;
+  display: flex; flex-wrap: wrap; gap: 12px; margin: 10px 0 18px; padding: 0;
 }
 .rc-summary-cell {
-  flex: 0 0 auto; min-width: 0; padding: 8px 12px;
+  flex: 1 1 0; min-width: 0; padding: 12px;
 }
 .rc-summary dt {
-  font-size: 11px; color: var(--muted-foreground); margin: 0 0 2px;
+  font-size: 12px; color: var(--muted-foreground); margin: 0 0 6px;
   letter-spacing: 0.02em;
 }
 .rc-summary dd {
   margin: 0; font-size: 13px; color: var(--foreground);
   font-variant-numeric: tabular-nums;
 }
-.rc-summary-big { font-size: 19px; font-weight: 600; line-height: 1.2; }
+.rc-summary .rc-summary-big { font-size: 24px; font-weight: 600; line-height: 1.2; }
 .rc-summary-pen {
   margin-left: 5px; font-size: 11px; font-weight: 600;
   color: var(--destructive);
@@ -738,8 +742,9 @@
 }
 
 @media (max-width: 480px) {
+  .rc-summary { gap: 4px; }
   .rc-summary-cell { padding: 8px 6px; }
-  .rc-summary-big { font-size: 16px; }
+  .rc-summary .rc-summary-big { font-size: 20px; }
 }
 
 /* ── 「复盘对不对?」 ──────────────────────────────────────────────────
@@ -792,6 +797,7 @@
    段的位置就是它在时间上的位置,所以不能用 flex 均分 —— 一律绝对定位。
    全页只有一根:回放那根(阶段名 + 阶段用时 + 游标,可点着跳)。 */
 .stl { position: relative; width: 100%; }
+.stl-track-wrap { position: relative; }
 .stl-tooltip {
   position: absolute; z-index: 2; bottom: 100%; transform: translateX(-50%);
   display: flex; flex-direction: column; gap: 3px;
@@ -863,7 +869,8 @@ button.stl-track:focus-visible { outline: 2px solid var(--ring); outline-offset:
   user-select: text;
   -webkit-touch-callout: default;
 }
-.sml-head { display: flex; justify-content: flex-end; }
+.sml-head { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.sml-head > .rc-feedback { margin: 0; }
 .sml-copy {
   appearance: none; cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
