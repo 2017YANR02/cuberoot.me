@@ -123,6 +123,34 @@ describe('shared TimerScrambleStrip', () => {
     ]);
   });
 
+  it('keeps move nodes stable and animates only a current move that completes', () => {
+    const strip = render({ scramble: 'R U F', match: false,
+      hint: { done: [], current: 'R', pending: ['U', 'F'], complete: false } });
+    const first = strip.querySelectorAll<HTMLElement>('.scramble-move')[0];
+    render({ scramble: 'R U F', match: false,
+      hint: { done: ['R'], current: 'U', pending: ['F'], complete: false } });
+    expect(strip.querySelectorAll('.scramble-move')[0]).toBe(first);
+    expect(first.dataset.hint).toBe('done');
+    expect(first.dataset.completing).toBe('true');
+    expect(strip.querySelectorAll<HTMLElement>('.scramble-move')[1].dataset.hint).toBe('current');
+    render({ scramble: 'R U F', match: false,
+      hint: { done: ['R', 'U'], current: 'F', pending: [], complete: false } });
+    render({ scramble: 'R U F', match: true, hint: null });
+    expect([...strip.querySelectorAll<HTMLElement>('.scramble-move')].map(move => move.dataset.hint))
+      .toEqual(['done', 'done', 'done']);
+    expect(strip.querySelectorAll<HTMLElement>('.scramble-move')[2].dataset.completing).toBe('true');
+    render({ scramble: 'L D', match: null, hint: null });
+    expect(strip.querySelector('.scramble-move')).toBeNull();
+  });
+
+  it('does not replace a completed scramble with an unrelated correction path', () => {
+    const strip = render({ scramble: 'R U', match: false, correctionActive: true,
+      hint: { done: [], current: 'F', pending: ['L'], complete: false } });
+    render({ scramble: 'R U', match: true, hint: null });
+    expect(strip.querySelector('.scramble-move')).toBeNull();
+    expect(strip.querySelector('.scramble-moves')?.textContent).toBe('R U');
+  });
+
   it('retains mismatch state without displaying mismatch wording', () => {
     const strip = render({ match: false });
     expect(strip.getAttribute('data-scramble-match')).toBe('off');

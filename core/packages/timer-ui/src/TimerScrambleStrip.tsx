@@ -8,6 +8,8 @@ import type { TimerScrambleStatusKind } from '@cuberoot/shared/timer';
 import {
   Fragment,
   useEffect,
+  useLayoutEffect,
+  useRef,
   useState,
   type CSSProperties,
   type KeyboardEvent,
@@ -76,6 +78,16 @@ export interface TimerScrambleHintTextProps {
   tailExtra?: ReactNode;
 }
 
+function ScrambleMove({ move, state }: { move: string; state: 'done' | 'current' | 'pending' }) {
+  const previous = useRef(state);
+  const completing = useRef(false);
+  if (previous.current !== state) {
+    completing.current = previous.current === 'current' && state === 'done';
+  }
+  useLayoutEffect(() => { previous.current = state; }, [state]);
+  return <span className="scramble-move" data-hint={state} data-completing={completing.current || undefined}>{move}</span>;
+}
+
 /**
  * The canonical move-by-move scramble text. Keeping the final move and copied
  * check in one relative wrapper means feedback never creates a new wrap point.
@@ -91,7 +103,7 @@ export function TimerScrambleHintText({ hint, tailExtra }: TimerScrambleHintText
     <>
       {moves.map(({ move, state }, index) => {
         const isLast = index === moves.length - 1;
-        const node = <span className="scramble-move" data-hint={state}>{move}</span>;
+        const node = <ScrambleMove move={move} state={state} />;
         return (
           <Fragment key={`${index}:${move}`}>
             {index > 0 ? ' ' : null}
@@ -132,7 +144,18 @@ export function TimerScrambleStrip({
   title,
   verificationLabels,
 }: TimerScrambleStripProps) {
-  const liveHint = hint && !hint.complete ? hint : null;
+  // Keep the final completed move mounted when guidance reports a match, so
+  // its feedback can finish before the timer starts or the scramble changes.
+  const previousHint = useRef<{ scramble: string; hint: TimerScrambleHint } | null>(null);
+  if (previousHint.current?.scramble !== scramble) previousHint.current = null;
+  if (hint && !hint.complete) previousHint.current = { scramble, hint };
+  else if (match !== true) previousHint.current = null;
+  const previous = previousHint.current?.hint;
+  const completedMoves = previous && [...previous.done, ...(previous.current === null ? [] : [previous.current]), ...previous.pending];
+  const completedHint = match === true && completedMoves && completedMoves.join(' ') === scramble.trim().replace(/\s+/g, ' ')
+    ? { done: completedMoves, current: null, pending: [], complete: true }
+    : null;
+  const liveHint = hint && !hint.complete ? hint : completedHint;
   const copiedCheck = copied && !correctionActive
     ? <Check className="scramble-copied-check" aria-label={copiedLabel} />
     : null;
