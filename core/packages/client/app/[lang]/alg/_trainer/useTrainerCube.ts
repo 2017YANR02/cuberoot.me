@@ -343,6 +343,13 @@ export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
    * would move the finish line out from under a rep in progress.
    */
   const connected = cube.status.connected;
+  const previousConnection = useRef(connected);
+  // Cancel the previous input owner's clock before preparing this cube's target.
+  useEffect(() => {
+    if (previousConnection.current === connected) return;
+    previousConnection.current = connected;
+    setTimerState(TimerState.NOT_RUNNING);
+  }, [connected, setTimerState]);
   useEffect(() => {
     physicalAnchor.setConnection(connected && enabled && practiceMode === 'manual'
       ? cube.status.deviceId || cube.status.deviceName || 'cube' : null);

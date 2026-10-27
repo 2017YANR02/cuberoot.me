@@ -24,6 +24,7 @@ import {
 } from '@/lib/trainer-store';
 import TimerFontPicker from '@/components/TimerFontPicker';
 import { useTrainerSplitScreen } from '@/hooks/useTrainerSplitScreen';
+import { useSpaceHoldTimer } from '@/hooks/useSpaceHoldTimer';
 import { GestureWheel, useGestureWheel } from '@cuberoot/timer-ui';
 import { useCopy } from '@/hooks/useCopy';
 import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
@@ -392,6 +393,8 @@ export default function TrainerRunClient() {
   const resetOriSel = useTrainerStore(s => s.resetOriSel);
   const timing = useTrainerStore(s => s.timing);
   const setTiming = useTrainerStore(s => s.setTiming);
+  const [manualTiming, setManualTiming] = useState(false);
+  const cubeConnectedRef = useRef(false);
   const mode = useTrainerStore(s => s.mode);
   const setMode = useTrainerStore(s => s.setMode);
   const lastTrainingMode = useRef<Exclude<TrainerMode, 'memo'>>(mode === 'train' ? 'train' : 'recap');
@@ -909,7 +912,7 @@ export default function TrainerRunClient() {
 
   const { wheelRef } = useGestureWheel({
     surfaceRef: stageRef,
-    active: stageMounted,
+    active: stageMounted && !recapRoundDone && !overlayOpen,
     // 计时面板内也有按钮(标记条等)— 按它们不应触发按压计时(否则点了直接开始计时)。
     // 设置面板开着时整个 stage 也一并跳过:面板外那一下只该关面板,不该切打乱 / 起表。
     ignoreTarget: (t) => optsOpenRef.current || shouldIgnoreTimerTarget(t),
@@ -962,17 +965,34 @@ export default function TrainerRunClient() {
         }
       }
     },
-    onPressDown: () => {},
-    onPressCancel: () => {},
-    onArmCancel: () => {},
+    onPressDown: () => {
+      if (cubeConnectedRef.current) return;
+      const st = useTrainerStore.getState();
+      if (!st.timing) return;
+      if (st.timerState === TimerState.RUNNING) st.stopTimer();
+      else if (st.timerState === TimerState.NOT_RUNNING) st.getTimerReady(0);
+    },
+    onPressCancel: () => {
+      if (cubeConnectedRef.current) return;
+      const st = useTrainerStore.getState();
+      if (st.timerState !== TimerState.RUNNING) st.setTimerState(TimerState.NOT_RUNNING);
+    },
+    onArmCancel: () => {
+      if (cubeConnectedRef.current) return;
+      const st = useTrainerStore.getState();
+      if (st.timerState === TimerState.READY || st.timerState === TimerState.AWAITING_READY) st.setTimerState(TimerState.NOT_RUNNING);
+    },
     onPressUp: () => {
-      // Untimed practice may advance by tapping; a connected cube owns its clock.
-      if (!useTrainerStore.getState().timing) advanceScramble();
+      if (cubeConnectedRef.current) return;
+      const st = useTrainerStore.getState();
+      if (!st.timing) { advanceScramble(); return; }
+      if (st.timerState === TimerState.READY) st.startTimer();
+      else if (st.timerState === TimerState.AWAITING_READY || st.timerState === TimerState.STOPPING) st.setTimerState(TimerState.NOT_RUNNING);
     },
   });
 
   // stage 之外的页面空白(顶栏边缘、栏间留白、内容下方的 body)也当按压面:
-  // 未连接魔方时单击直接下一个；连接后起停只由魔方触发。sidebar(看成绩要点来点去)、
+  // 手动计时按下准备、松开开始；未计时单击下一题；连接后起停只由魔方触发。sidebar、
   // 弹窗、轮盘与一切交互控件除外;不 preventDefault,移动端滚动不受影响(轮盘手势仍只在 stage 内)。
   useEffect(() => {
     const isBlank = (t: EventTarget | null): boolean => {
@@ -980,8 +1000,16 @@ export default function TrainerRunClient() {
       if (!(t instanceof Element)) return false;
       return t.closest('.trainer-stage, .trainer-sidebar, .alg-admin-modal-backdrop, .gesture-wheel, .room-qr-backdrop, .trainer-round-modal-backdrop') === null;
     };
-    let pressed = false;
+    let pressed: number | null = null;
+    const cancel = () => {
+      if (pressed === null) return;
+      pressed = null;
+      if (cubeConnectedRef.current) return;
+      const st = useTrainerStore.getState();
+      if (st.timerState === TimerState.READY || st.timerState === TimerState.AWAITING_READY || st.timerState === TimerState.STOPPING) st.setTimerState(TimerState.NOT_RUNNING);
+    };
     const down = (e: PointerEvent) => {
+      if (pressed !== null) return;
       if (!sessionReadyRef.current) return;
       if (isMemoRef.current) return;   // 记忆模式没有「点空白 = 下一题」这回事
       if (splitActiveRef.current) return; // 分屏空白不推进任一方,避免归属不明
@@ -989,18 +1017,34 @@ export default function TrainerRunClient() {
       // 设置面板开着时,面板外的按压只该关面板 —— 不该顺带切打乱/触发计时。
       if (optsOpenRef.current) return;
       if (!isBlank(e.target)) return;
-      pressed = !useTrainerStore.getState().timing;
+      if (cubeConnectedRef.current || overlayOpenRef.current) return;
+      if (useTrainerStore.getState().recapRoundDone) return;
+      pressed = e.pointerId;
+      const st = useTrainerStore.getState();
+      if (!st.timing) return;
+      if (st.timerState === TimerState.RUNNING) st.stopTimer();
+      else if (st.timerState === TimerState.NOT_RUNNING) st.getTimerReady(0);
     };
-    const up = () => {
-      if (!pressed) return;
-      pressed = false;
-      if (!useTrainerStore.getState().timing) advanceScramble();
+    const up = (e: PointerEvent) => {
+      if (pressed === null || e.pointerId !== pressed) return;
+      if (cubeConnectedRef.current || overlayOpenRef.current) { cancel(); return; }
+      pressed = null;
+      const st = useTrainerStore.getState();
+      if (!st.timing) { advanceScramble(); return; }
+      if (st.timerState === TimerState.READY) st.startTimer();
+      else if (st.timerState === TimerState.AWAITING_READY || st.timerState === TimerState.STOPPING) st.setTimerState(TimerState.NOT_RUNNING);
     };
     document.addEventListener('pointerdown', down);
     document.addEventListener('pointerup', up);
+    const pointerCancel = (e: PointerEvent) => { if (e.pointerId === pressed) cancel(); };
+    document.addEventListener('pointercancel', pointerCancel);
+    window.addEventListener('blur', cancel);
     return () => {
+      cancel();
       document.removeEventListener('pointerdown', down);
       document.removeEventListener('pointerup', up);
+      document.removeEventListener('pointercancel', pointerCancel);
+      window.removeEventListener('blur', cancel);
     };
   }, [advanceScramble]);
 
@@ -1143,14 +1187,24 @@ export default function TrainerRunClient() {
     currentKey,
     currentAttempt: hist.list[hist.idx],
   });
-  // Timing follows the actual connection, never a persisted preference or URL.
+  cubeConnectedRef.current = trainerCube.cube.status.connected;
+  // A connected cube owns timing; manual practice is opt-in for this session.
   useEffect(() => {
-    const enabled = trainerCube.cube.status.connected && !isMemo && !splitActive;
+    const enabled = (trainerCube.cube.status.connected || manualTiming) && !isMemo && !splitActive;
     if (timing !== enabled) {
       if (!enabled) useTrainerStore.getState().setTimerState(TimerState.NOT_RUNNING);
       setTiming(enabled);
     }
-  }, [trainerCube.cube.status.connected, isMemo, splitActive, timing, setTiming]);
+  }, [trainerCube.cube.status.connected, manualTiming, isMemo, splitActive, timing, setTiming]);
+  useSpaceHoldTimer({
+    state: timerState,
+    delayMs: 0,
+    enabled: sessionReady && timing && !trainerCube.cube.status.connected && (!recapRoundDone || timerState === TimerState.STOPPING) && !isMemo && !splitActive && !overlayOpen,
+    getTimerReady: delay => useTrainerStore.getState().getTimerReady(delay),
+    startTimer: () => useTrainerStore.getState().startTimer(),
+    stopTimer: () => useTrainerStore.getState().stopTimer(),
+    setNotRunning: () => useTrainerStore.getState().setTimerState(TimerState.NOT_RUNNING),
+  });
 
   const showLiveTrainerCube = trainerCube.armed
     || (smartCube && trainerCube.practiceMode === 'manual' && trainerCube.cube.status.connected);
@@ -1935,6 +1989,9 @@ export default function TrainerRunClient() {
               {/* 极简:侧栏两块各自可隐藏(issue #30)。统计=成绩用时列表,不计时根本
                   没有用时可统计 —— 不计时时连开关一起隐掉,而不是留一个永远关着的死开关。 */}
               <div className="trainer-opts-row trainer-opts-toggles">
+                {!isMemo && <BoolToggle value={timing} onChange={setManualTiming}
+                  disabled={trainerCube.cube.status.connected || splitActive || timerState !== TimerState.NOT_RUNNING}
+                  label={tr({ zh: '计时', en: 'Timing' })} />}
                 {aufSupported && (
                   <>
                     <BoolToggle value={preAuf} onChange={setPreAuf} label="pre-AUF" />
@@ -2052,7 +2109,9 @@ export default function TrainerRunClient() {
               {/* 不计时那句「单击 / 空格 / → 切下一个」不出:那是点哪都能试出来的事。 */}
               {timing && (
                 <div className="trainer-opts-help">
-                  {tr({ zh: '转动开始，完成自动停表', en: 'Turn to start; completion stops the clock' })}
+                  {trainerCube.cube.status.connected
+                    ? tr({ zh: '转动开始，完成自动停表', en: 'Turn to start; completion stops the clock' })
+                    : tr({ zh: '空格或按压开始、停止', en: 'Space or press to start and stop' })}
                 </div>
               )}
               <div className="trainer-opts-help">

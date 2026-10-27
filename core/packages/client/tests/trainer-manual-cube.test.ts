@@ -47,6 +47,23 @@ beforeEach(() => {
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 
 describe('manual smart-cube training', () => {
+  it.each(['manual', 'virtual'] as const)('cancels the previous timer before preparing a newly connected cube (%s)', async practice => {
+    localStorage.setItem('trainer:smart-cube-practice', practice);
+    rig.cube.status.connected = false;
+    await draw();
+    rig.store.timerState = 1;
+    rig.cube.facelets = facelets('R U');
+    rig.cube.status.connected = true;
+    await draw();
+    expect(rig.store.timerState).toBe(0);
+    expect(state.armed).toBe(true);
+    if (practice === 'virtual') expect(rig.cube.hijackTo).toHaveBeenCalledWith(facelets('R U'), 'solved');
+    rig.store.timerState = 1;
+    rig.cube.status.connected = false;
+    await draw();
+    expect(rig.store.timerState).toBe(0);
+    expect(state.armed).toBe(false);
+  });
   it.each(['manual', 'virtual'] as const)('uses the diagram grip for the physical target, raw moves and partial OLL finish (%s)', async practice => {
     const algorithm = "R U R' U R U2 R'";
     const pll = "R U R' U' R' F R2 U' R' U' R U R' F'";

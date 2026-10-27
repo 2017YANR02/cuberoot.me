@@ -151,13 +151,13 @@ it('changes hosted practice method in place without replacing the session or its
   expect(useTrainerStore.getState().solves).toBe(solves);
 });
 
-it('uses only a smart-cube connection for timing and keeps three-at-once available while disconnected', async () => {
+it('defaults to untimed practice and automatically times a smart-cube connection', async () => {
   useTrainerStore.getState().setMultiScramble(true);
   await renderTrainer(true);
   expect(useTrainerStore.getState().timing).toBe(false);
   await act(async () => { await changePractice('train', '1'); });
   expect(useTrainerStore.getState().timing).toBe(false);
-  expect(container.querySelector('[role="switch"][aria-label="Timing"], [role="switch"][aria-label="计时"]')).toBeNull();
+  expect(container.querySelector('[role="switch"][aria-label="Timing"], [role="switch"][aria-label="计时"]')).not.toBeNull();
   const three = container.querySelector<HTMLButtonElement>('[role="switch"][aria-label="Three at once"], [role="switch"][aria-label="三条"]')!;
   await act(async () => three.click());
   expect(useTrainerStore.getState().multiScramble).toBe(false);
@@ -168,6 +168,34 @@ it('uses only a smart-cube connection for timing and keeps three-at-once availab
   await act(async () => { await changePractice('train', '1'); });
   expect(useTrainerStore.getState().timing).toBe(false);
   expect(useTrainerStore.getState().timerState).toBe(TimerState.NOT_RUNNING);
+});
+
+it.each(['keyboard', 'pointer'] as const)('opts into manual %s timing and restores that choice after a cube disconnects', async input => {
+  await renderTrainer(true);
+  const toggle = () => container.querySelector<HTMLButtonElement>('[role="switch"][aria-label="Timing"], [role="switch"][aria-label="计时"]')!;
+  await act(async () => toggle().click());
+  expect(useTrainerStore.getState().timing).toBe(true);
+  const press = (down: boolean) => input === 'keyboard'
+    ? window.dispatchEvent(new KeyboardEvent(down ? 'keydown' : 'keyup', { code: 'Space', bubbles: true }))
+    : document.body.dispatchEvent(new MouseEvent(down ? 'pointerdown' : 'pointerup', { bubbles: true, button: 0 }));
+  await act(async () => press(true));
+  await vi.waitFor(() => expect(useTrainerStore.getState().timerState).toBe(TimerState.READY));
+  await act(async () => press(false));
+  expect(useTrainerStore.getState().timerState).toBe(TimerState.RUNNING);
+  await act(async () => press(true));
+  await act(async () => press(false));
+  expect(useTrainerStore.getState().timerState).toBe(TimerState.NOT_RUNNING);
+  cubeConnection.connected = true;
+  await act(async () => { await changePractice('train', '0'); });
+  expect(toggle().disabled).toBe(true);
+  expect(useTrainerStore.getState().timerState).toBe(TimerState.NOT_RUNNING);
+  cubeConnection.connected = false;
+  await act(async () => { await changePractice('recap', '0'); });
+  expect(useTrainerStore.getState().timing).toBe(true);
+  expect(useTrainerStore.getState().timerState).toBe(TimerState.NOT_RUNNING);
+  expect(toggle().disabled).toBe(false);
+  await act(async () => toggle().click());
+  expect(useTrainerStore.getState().timing).toBe(false);
 });
 
 it('leaves completion to split view without forcing timing on when leaving it', async () => {
@@ -181,6 +209,26 @@ it('leaves completion to split view without forcing timing on when leaving it', 
   expect(useTrainerStore.getState().timing).toBe(false);
   await act(async () => { await changeSplit(null); });
   expect(useTrainerStore.getState().timing).toBe(false);
+});
+
+it.each(['pointercancel', 'blur'])('cancels a blank-area timer press on %s and ignores other pointers', async cancelEvent => {
+  await renderTrainer(true);
+  const toggle = container.querySelector<HTMLButtonElement>('[role="switch"][aria-label="Timing"], [role="switch"][aria-label="计时"]')!;
+  await act(async () => toggle.click());
+  const pointer = (type: string, id: number) => {
+    const event = new MouseEvent(type, { bubbles: true, button: 0 });
+    Object.defineProperty(event, 'pointerId', { value: id });
+    document.body.dispatchEvent(event);
+  };
+  await act(async () => pointer('pointerdown', 1));
+  expect(useTrainerStore.getState().timerState).toBe(TimerState.READY);
+  await act(async () => pointer('pointerup', 2));
+  expect(useTrainerStore.getState().timerState).toBe(TimerState.READY);
+  await act(async () => cancelEvent === 'blur' ? window.dispatchEvent(new Event('blur')) : pointer(cancelEvent, 1));
+  expect(useTrainerStore.getState().timerState).toBe(TimerState.NOT_RUNNING);
+  await act(async () => pointer('pointerup', 1));
+  expect(useTrainerStore.getState().timerState).toBe(TimerState.NOT_RUNNING);
+  expect(toggle.disabled).toBe(false);
 });
 
 it('keeps keyboard timing disabled and pauses next-case shortcuts and recall while settings are open', async () => {
