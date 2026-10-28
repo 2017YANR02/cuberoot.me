@@ -85,7 +85,8 @@
 .vault-notes:focus,
 .vault-unlock-input:focus { border-color: var(--accent); }
 .vault-input { width: 100%; padding: 9px 34px 9px 10px; }
-.vault-list { margin-top: 12px; }
+.vault-sidebar { position: sticky; top: 20px; align-self: start; }
+.vault-list { margin-top: 12px; max-height: min(60vh, 600px); overflow-y: auto; }
 .vault-list-item {
   display: flex;
   flex-direction: column;
@@ -166,7 +167,8 @@
 @media (max-width: 700px) {
   .vault-header { align-items: flex-start; flex-direction: column; }
   .vault-workspace { grid-template-columns: 1fr; gap: 28px; }
-  .vault-list { display: flex; overflow-x: auto; }
+  .vault-sidebar { position: static; }
+  .vault-list { display: flex; max-height: none; overflow-x: auto; }
   .vault-list-item { flex: 0 0 160px; border-right: 1px solid var(--border-default); }
 }
 
