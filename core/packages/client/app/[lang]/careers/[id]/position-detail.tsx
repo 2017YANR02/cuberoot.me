@@ -53,8 +53,9 @@ export default function PositionDetail({ position }: { position: CareerPosition 
         </div>
         <AppLink className="careers-apply" href={`/careers/${position.id}/apply`} prefetch={false}>{tr({ zh: '申请职位', en: 'Apply' })}</AppLink>
       </div>
-      <CareerDetail title={tr(position.title)} meta={<p className="careers-category">{tr(position.category)} · {tr({ zh: '上海', en: 'Shanghai' })} · CubeRoot</p>} introduction={<><p>{tr(position.summary)}</p><p>{tr({ zh: '仅限上海，办公地点在上海阿里巴巴徐汇滨江园区。', en: 'Shanghai only. Our office is at Alibaba Xuhui Riverside Campus, Shanghai.' })}</p></>} sections={sections} />
+      <CareerDetail title={tr(position.title)} meta={<p className="careers-category">{tr(position.category)} | {tr({ zh: '上海', en: 'Shanghai' })} | CubeRoot</p>} introduction={<><h2 className="careers-section-title">{tr({ zh: '职位描述', en: 'Position description' })}</h2><p>{tr(position.summary)}</p><p>{tr({ zh: '仅限上海，办公地点在上海阿里巴巴徐汇滨江园区。', en: 'Shanghai only. Our office is at Alibaba Xuhui Riverside Campus, Shanghai.' })}</p></>} sections={sections} />
       <section><h2>{tr({ zh: '如何联系', en: 'Contact' })}</h2><p>{tr({ zh: '请私信微信', en: 'Message us on WeChat' })} <strong>{CONTACT_WECHAT_ID}</strong>{tr({ zh: '，简单介绍自己，附上作品或相关经历。', en: ' with a short introduction and examples of your work or relevant experience.' })}</p></section>
+      <section className="careers-position-info"><h2 className="careers-section-title">{tr({ zh: '职位信息', en: 'Position information' })}</h2><dl><div><dt>{tr({ zh: '职位名称', en: 'Position' })}</dt><dd>{tr(position.title)}</dd></div><div><dt>{tr({ zh: '职能类型', en: 'Category' })}</dt><dd>{tr(position.category)}</dd></div><div><dt>{tr({ zh: '工作地点', en: 'Location' })}</dt><dd>{tr({ zh: '上海', en: 'Shanghai' })}</dd></div></dl></section>
     </article>
   </main>;
 }
