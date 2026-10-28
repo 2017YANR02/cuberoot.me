@@ -32,6 +32,7 @@ on:
       - 'ops/systemd/cuberoot-drive-compression.service'
       - 'ops/bin/provision-assistant-reader.sql'
       - 'ops/nginx/purge-api-cache.ts'
+      - 'ops/maintenance/prune-api-releases.ts'
       - 'ops/systemd/cuberoot-assistant-knowledge.service'
       - 'ops/systemd/cuberoot-assistant-knowledge.timer'
       - '.github/workflows/deploy_core.yml'
@@ -59,6 +60,7 @@ jobs:
             ops/nginx
             ops/systemd
             ops/bin
+            ops/maintenance
           filter: blob:none
 
       - uses: pnpm/action-setup@v4
@@ -97,6 +99,10 @@ jobs:
       - name: Test server
         working-directory: core
         run: pnpm --filter @cuberoot/server test
+
+      - name: Verify release retention before deployment
+        working-directory: core
+        run: pnpm --filter @cuberoot/client exec vitest run tests/server-maintenance.test.ts
 
       # esbuild --bundle 把 server src + 全部 deps (含写得烂的 sr-puzzlegen,
       # 无扩展名 ESM)打成单个 dist/server.bundle.js,Node 严格模式直接跑。
@@ -228,6 +234,7 @@ jobs:
           rsync -ltz --chmod=F644 \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
             ops/systemd/cuberoot-drive-compression.service \
+            ops/maintenance/prune-api-releases.ts \
             "root@${{ secrets.DEPLOY_HOST }}:${STAGING_RELEASE}/"
 
           # CubeOpt 子进程和生产管理器冒烟入口与主 bundle 同版本部署；大表由
@@ -308,6 +315,9 @@ jobs:
             -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             "root@${{ secrets.DEPLOY_HOST }}" bash -s -- "$RELEASE_ID" "${{ steps.scope.outputs.disk_only }}" <<'REMOTE'
           set -Eeuo pipefail
+          # Shared with manual maintenance: serialize activation and deletion.
+          exec 9>/run/lock/cuberoot-api-releases.lock
+          flock -n 9 || { echo "ERROR: API release maintenance is already active"; exit 1; }
           release_id="$1"
           disk_only="$2"
           case "$release_id" in
@@ -472,6 +482,9 @@ jobs:
           pm2 save
           trap - ERR
           echo "activated release $release_id"
+          # Run only after all health/smoke/service checks passed. A cleanup
+          # failure reports a failed deployment without rolling back a healthy API.
+          node "$final/prune-api-releases.ts" --apply --previous "$previous_dist"
           REMOTE
 
           # Ordinary deployments retain valid cache entries; shape changes use response versioning.

@@ -28,6 +28,7 @@ on:
       - '.sync/**'
       - 'scripts/upstream/**'
       - 'ops/nginx/**'
+      - 'ops/maintenance/**'
       - 'ops/vercel-ban-relay/competition-rule.json'
       - 'ops/systemd/cuberoot-drive-compression.service'
       - 'ops/bin/pg-dump-recon.sh'
@@ -147,6 +148,7 @@ jobs:
               - '.sync/**'
               - 'scripts/upstream/**'
               - 'ops/nginx/**'
+              - 'ops/maintenance/**'
               - 'ops/vercel-ban-relay/competition-rule.json'
               - 'ops/systemd/cuberoot-drive-compression.service'
               - 'ops/bin/pg-dump-recon.sh'
@@ -395,6 +397,7 @@ jobs:
             /ops/nginx/platform.cuberoot.me.conf
             /ops/nginx/www.cuberoot.me.conf
             /ops/nginx/purge-api-cache.ts
+            /ops/maintenance/
             /ops/vercel-ban-relay/competition-rule.json
             /ops/systemd/cuberoot-drive-compression.service
             /ops/bin/pg-dump-recon.sh
@@ -659,6 +662,7 @@ jobs:
             /ops/nginx/platform.cuberoot.me.conf
             /ops/nginx/www.cuberoot.me.conf
             /ops/nginx/purge-api-cache.ts
+            /ops/maintenance/
             /ops/vercel-ban-relay/competition-rule.json
             /ops/systemd/cuberoot-drive-compression.service
             /ops/bin/pg-dump-recon.sh

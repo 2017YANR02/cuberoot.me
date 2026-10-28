@@ -7,6 +7,8 @@ on:
       - 'core/packages/stats-build/src/**/*.ts'
       - 'core/jobs/stats-build/src/**/*.ts'
       - 'core/scripts/resolve-workspace-path.mjs'
+      - 'ops/maintenance/stats-capacity.ts'
+      - '.github/workflows/stats.yml'
   schedule:
     # UTC 每天 20:00 — WCA dump 上游天更
     - cron: '0 20 * * *'
@@ -87,6 +89,32 @@ jobs:
           df -h /
 
       - uses: actions/checkout@v4
+
+      # Fail on server capacity before installing dependencies or downloading WCA.
+      - name: Setup SSH for stats deploy
+        id: stats_ssh
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/hr_id
+          chmod 600 ~/.ssh/hr_id
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Check server capacity before computation
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          stage="/tmp/cuberoot-stats-capacity-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" "umask 077; mkdir '$stage'"
+          cleanup_capacity_script() {
+            ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" "rm -f -- '$stage/stats-capacity.ts'; rmdir -- '$stage'"
+          }
+          trap cleanup_capacity_script EXIT
+          scp -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id ops/maintenance/stats-capacity.ts "$DEPLOY_USER@$DEPLOY_HOST:$stage/"
+          ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" "node '$stage/stats-capacity.ts'"
 
       - name: Activate MySQL
         run: sudo systemctl start mysql.service
@@ -264,17 +292,6 @@ jobs:
         env:
           NODE_OPTIONS: '--max-old-space-size=8192'
         run: npx tsx src/bin/sor_over_time_daily_build.ts
-
-      - name: Setup SSH for stats deploy
-        id: stats_ssh
-        env:
-          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-        run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_KEY" > ~/.ssh/hr_id
-          chmod 600 ~/.ssh/hr_id
-          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
       - name: Upload historical ranks TSVs to server
         id: historical_ranks_upload

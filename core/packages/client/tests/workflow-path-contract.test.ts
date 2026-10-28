@@ -223,6 +223,7 @@ const CORE_PATHS = [
   repoPath('ops', 'systemd', 'cuberoot-drive-compression.service'),
   repoPath('ops', 'bin', 'provision-assistant-reader.sql'),
   repoPath('ops', 'nginx', 'purge-api-cache.ts'),
+  repoPath('ops', 'maintenance', 'prune-api-releases.ts'),
   repoPath('ops', 'systemd', 'cuberoot-assistant-knowledge.service'),
   repoPath('ops', 'systemd', 'cuberoot-assistant-knowledge.timer'),
   repoPath('.github', 'workflows', 'deploy_core.yml'),
@@ -252,6 +253,8 @@ const STATS_PATHS = [
   packagePath('stats-build', 'src', '**', '*.ts'),
   jobPath('stats-build', 'src', '**', '*.ts'),
   corePath('scripts', 'resolve-workspace-path.mjs'),
+  repoPath('ops', 'maintenance', 'stats-capacity.ts'),
+  repoPath('.github', 'workflows', 'stats.yml'),
 ] as const;
 
 const TEST_PATHS = [
@@ -269,6 +272,7 @@ const TEST_PATHS = [
   repoPath('.sync', '**'),
   repoPath('scripts', 'upstream', '**'),
   repoPath('ops', 'nginx', '**'),
+  repoPath('ops', 'maintenance', '**'),
   repoPath('ops', 'vercel-ban-relay', 'competition-rule.json'),
   repoPath('ops', 'systemd', 'cuberoot-drive-compression.service'),
   repoPath('ops', 'bin', 'pg-dump-recon.sh'),
@@ -979,6 +983,26 @@ describe('deployment workflow path contracts', () => {
     );
     expect(sq2Run).toContain('before=$(sha256sum ../stats/scramble/dist_sq2.json)');
     expect(sq2Run).toContain('test "$before" = "$(sha256sum ../stats/scramble/dist_sq2.json)"');
+  });
+
+  it('checks server capacity before computation and prunes releases only after healthy activation', () => {
+    const stats = readWorkflow('stats.yml');
+    const preflight = stats.indexOf('- name: Check server capacity before computation');
+    expect(preflight).toBeGreaterThan(-1);
+    for (const name of ['Activate MySQL', 'Download and import WCA database', 'Compute all statistics']) {
+      expect(preflight).toBeLessThan(stats.indexOf(`- name: ${name}`));
+    }
+    expect(stats.match(/id: stats_ssh/g)).toHaveLength(1);
+    expect(readStepRun('stats.yml', 'Check server capacity before computation')).toContain("node '$stage/stats-capacity.ts'");
+    const run = readStepRun('deploy_core.yml', 'Deploy server');
+    expect(run.indexOf('node "$final/prune-api-releases.ts" --apply --previous "$previous_dist"')).toBeGreaterThan(run.indexOf('pm2 save\ntrap - ERR'));
+    expect(run.indexOf('flock -n 9')).toBeGreaterThan(-1);
+    expect(run.indexOf('flock -n 9')).toBeLessThan(run.indexOf('mv -Tf "$pending_link" dist'));
+    const coreWorkflow = readWorkflow('deploy_core.yml');
+    expect(coreWorkflow.indexOf('- name: Verify release retention before deployment')).toBeGreaterThan(-1);
+    expect(coreWorkflow.indexOf('- name: Verify release retention before deployment')).toBeLessThan(coreWorkflow.indexOf('- name: Deploy server'));
+    expect(readStepFilterPaths('test.yml', 'Detect affected inputs', 'client')).toContain('ops/maintenance/**');
+    expect(readWorkflow('test.yml')).toContain('/ops/maintenance/');
   });
 
   it('atomically deploys CubeOpt with the same dotenv gate and rollback contract', () => {
