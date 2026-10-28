@@ -306,6 +306,7 @@ export function ivySolvedDisplayState(): IvyDisplayState {
 
 /** Shared physical state for SVG and animation; legacy solver coordinates stay unchanged. */
 export function applyIvyDisplayMove(state: IvyDisplayState, move: IvyStandardMove): void {
+  if (!Number.isInteger(move.axis) || move.axis < 0 || move.axis > 4) throw new Error('Invalid Ivy axis');
   const faces = move.axis === 4 ? IVY_U_CENTERS : MOVE_CENTERS[move.axis];
   for (let turn = 0; turn < move.times; turn++) {
     const before = [...state.centers];

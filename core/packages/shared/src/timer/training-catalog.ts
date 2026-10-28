@@ -1,4 +1,5 @@
 import { ALG_CATALOG, ALG_PUZZLES } from '../alg_catalog';
+import { trimTrailingCharacter } from '../string-utils';
 import { EVENT_DISPLAY_EN, EVENT_DISPLAY_ZH } from '../wca_events';
 import { stageLabel, variantLabel } from './scramble-variants';
 import { timerEventIdFromSelector, timerPuzzleSelection } from './event-catalog';
@@ -207,7 +208,7 @@ export function trainingDirectoryForEvent(event: string): readonly TrainingDirec
 /** Only syntactically safe, same-site paths enter the closed component route table. */
 function pathParts(input: string): { path: string; parts: string[] } | null {
   if (!input.startsWith('/') || input.startsWith('//') || /[\\\u0000-\u001f\u007f]/.test(input)) return null;
-  const pathname = input.split(/[?#]/, 1)[0].replace(/\/+$/, '');
+  const pathname = trimTrailingCharacter(input.split(/[?#]/, 1)[0], '/');
   let parts: string[];
   try { parts = pathname.split('/').slice(1).map(decodeURIComponent); } catch { return null; }
   if (parts[0] === 'zh' || parts[0] === 'en') parts = parts.slice(1);

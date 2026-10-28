@@ -76,7 +76,7 @@ export default function BasicsGuide({ section }: { section: typeof BASIC_GUIDE_T
           <div className="lbl-guide-player">
             <AlgPlayer key={move} puzzle="3x3" engine="sim" set="" alg={move} startSolved orientation="z2" sceneRot={face.base === 'L' ? leftScene : rightScene} controlMode="none" hideResetView autoPlay playRequest={playRequest} fillPane moveDurationMs={1350} />
           </div>
-          <p className="lbl-guide-current-move" aria-live="polite"><code>{move.replace("'", '′')}</code>{tr(operation)}</p>
+          <p className="lbl-guide-current-move" aria-live="polite"><code>{move.replaceAll("'", '′')}</code>{tr(operation)}</p>
         </div>
         <div className="lbl-guide-move-copy">
           <div className="lbl-guide-face-grid" role="group" aria-label={tr({ zh: '选择要观察的面', en: 'Choose a face to watch' })}>
@@ -88,7 +88,7 @@ export default function BasicsGuide({ section }: { section: typeof BASIC_GUIDE_T
           <p className="lbl-guide-direction"><T zh="顺时针 / 逆时针：正对正在转的面判断。" en="Judge clockwise or counterclockwise by looking straight at the face you are turning." /></p>
           <div className="lbl-guide-variants" role="group" aria-label={tr({ zh: '选择转动方式', en: 'Choose a turn' })}>
             {variants.map(variant => <button className="lbl-button" type="button" key={variant.suffix} aria-pressed={move === face.base + variant.suffix} onClick={() => selectMove(face.base + variant.suffix)}>
-              <span><code>{face.base}{variant.suffix.replace("'", '′')}</code></span>
+              <span><code>{face.base}{variant.suffix.replaceAll("'", '′')}</code></span>
               <strong>{tr(variant.title)}</strong><small>{tr(variant.detail)}</small>
             </button>)}
           </div>

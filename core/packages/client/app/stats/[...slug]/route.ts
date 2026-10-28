@@ -101,7 +101,7 @@ export async function GET(
       } catch (err) {
         // 同 /tools:回源挂了改 307 直连 static(浏览器那条路是通的),别 502。
         // 代价是丢 content-disposition(static 不发),文件名退化 —— 但能下到东西。
-        console.error(`[stats] upstream fetch failed: ${upstreamUrl}`, err);
+        console.error('[stats] upstream fetch failed:', upstreamUrl, err);
         return new Response(null, {
           status: 307,
           headers: { location: upstreamUrl, 'cache-control': 'no-store' },

@@ -16,6 +16,7 @@
 import { type AlgCase } from '../alg';
 import { getAlgSetMeta, ALG_PUZZLES, type AlgPuzzle } from '../alg_catalog';
 import { ollCommentName, primaryCaseName } from './alg_case_display';
+import { trimTrailingCharacter } from '../string-utils';
 
 type CaseRef = { id?: number | null; name?: string; subgroup?: string };
 
@@ -35,16 +36,16 @@ export function slugifyCasePart(s: string): string {
   const src = s.trim().toLowerCase();
   let out = src.replace(/\s+/g, '-').replace(/[^a-z0-9+-]+/g, '-');
   if (!src.startsWith('-')) out = out.replace(/^-+/, '');
-  if (!src.endsWith('-')) out = out.replace(/-+$/, '');
+  if (!src.endsWith('-')) out = trimTrailingCharacter(out, '-');
   return out;
 }
 
 /** 削掉首尾 `-` 的老规则。只用来给改名前发出去的链接留别名。 */
 function legacySlugifyCasePart(s: string): string {
-  return s.trim().toLowerCase()
+  return trimTrailingCharacter(s.trim().toLowerCase()
     .replace(/\s+/g, '-')
     .replace(/[^a-z0-9+-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/^-+/, ''), '-');
 }
 
 /** SQ1 CS 在本次 Squanmate 对齐前公开过的同义名称，仅用于旧链接落地。 */

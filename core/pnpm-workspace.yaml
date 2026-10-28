@@ -29,3 +29,16 @@ minimumReleaseAgeExclude:
   - '@capacitor/cli@8.5.3'
   - '@capacitor/core@8.5.3'
   - '@capacitor/ios@8.5.3'
+
+# Security floors for transitive dependencies; retain each undici major.
+overrides:
+  # navigation-ui's peer must resolve to the same bundled, patched package.
+  '@2017yanr02/continuous-corners': 'file:vendor/continuous-corners-0.3.2.tgz'
+  'body-parser@>=2.0.0 <2.4.0': '2.4.0'
+  'fast-uri@>=3.0.0 <3.1.9': '3.1.9'
+  'happy-dom@>=17.0.0 <21.0.4': '21.0.4'
+  'ip-address@<10.7.4': '10.7.4'
+  'qs@>=6.7.0 <6.16.1': '6.16.1'
+  'undici@>=7.0.0 <7.30.1': '7.30.1'
+  'undici@>=8.0.0 <8.12.2': '8.12.2'
+  'zod@>=4.0.0 <4.6.6': '4.6.7'

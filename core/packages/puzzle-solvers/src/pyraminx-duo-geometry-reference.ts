@@ -43,6 +43,7 @@ export function referenceSolved(): StickerState {
 }
 
 export function referenceMove(state: StickerState, move: GeometricMove): StickerState {
+  if (!Number.isInteger(move.corner) || move.corner < 0 || move.corner >= 4) throw new Error('Invalid corner index');
   const next = { centers: state.centers.slice(), cornerColors: state.cornerColors.map(colors => colors.slice()) };
   for (let face = 0; face < 4; face++) {
     const destination = rotatedFace(face, move);

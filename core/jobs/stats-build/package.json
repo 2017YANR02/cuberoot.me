@@ -28,6 +28,6 @@
     "@typescript/native-preview": "7.0.0-dev.20260517.1",
     "tsx": "^4.23.15",
     "typescript": "^5.8.0",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.12"
   }
 }

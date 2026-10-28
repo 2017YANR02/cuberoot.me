@@ -1,3 +1,5 @@
+import { trimTrailingCharacter } from './string-utils';
+
 /** Public Douyin product scope, applied to every user and every release channel. */
 export const DOUYIN_BASIC_TIMER_EVENTS: readonly string[] = [
   '222', '333', '444', '555', '666', '777', '333oh', '333bld', '444bld', '555bld',
@@ -14,7 +16,7 @@ export function douyinContentAvailable(href: string): boolean {
     const [rawPath, query = ''] = beforeHash.split('?');
     const decoded = decodeURIComponent(rawPath);
     if (/[\\%?#]/.test(decoded) || decoded.includes('//') || decoded.split('/').some(part => part === '.' || part === '..')) return false;
-    const path = decoded.replace(/^\/(zh|en)(?=\/|$)/, '').replace(/\/+$/, '') || '/';
+    const path = trimTrailingCharacter(decoded.replace(/^\/(zh|en)(?=\/|$)/, ''), '/') || '/';
     const parameters = query.split('&').filter(Boolean).map(part => {
       const [key, value = ''] = part.split('=');
       return [decodeURIComponent(key.replace(/\+/g, ' ')), decodeURIComponent(value.replace(/\+/g, ' '))];

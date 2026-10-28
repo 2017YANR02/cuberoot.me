@@ -125,7 +125,7 @@ export async function GET(
       // 挂的只有服务端这一跳。代价是该资源变跨域(必须同源的 worker 脚本仍会失败),
       // 但那种情况原本也是 502,不算回退。
       // no-store:这是瞬时故障兜底,绝不能让边缘把降级态缓存住。
-      console.error(`[tools] upstream fetch failed: ${upstreamUrl}`, err);
+      console.error('[tools] upstream fetch failed:', upstreamUrl, err);
       // 例外 cstimer:它把全部成绩存在 localStorage,换 origin = 用户看到"记录空了",
       // 且故障期间新记的成绩留在 static 那个 origin 上再也找不回来。宁可白屏也不能
       // 让数据分叉 —— 这条保持原来的 502。

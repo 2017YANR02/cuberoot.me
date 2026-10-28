@@ -12,7 +12,7 @@ test('preserves link destinations, list starting number and safe email autolinks
  const result=markdown('9. Ninth case\n\n<team@example.org>\n\n[Source](/posts/example)');
  assert.ok(result.includes('<ol start="9">'));
  assert.ok(result.includes('href="mailto:team@example.org"'));
- assert.ok(result.includes('https://www.worldcubeassociation.org/posts/example'));
+ assert.equal(result.match(/href="([^"]+)"[^>]*>Source<\/a>/)?.[1], 'https://www.worldcubeassociation.org/posts/example');
 });
 test('removes active content from raw HTML and prevents unsafe link protocols',()=>{
  const result=sanitize('<p onclick="x()">Text<script>secret()</script><a href="javascript:x()">bad</a><img src="x" onerror="x()"><iframe src="https://example.org"></iframe></p>');

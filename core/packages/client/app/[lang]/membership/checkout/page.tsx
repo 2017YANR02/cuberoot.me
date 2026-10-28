@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { isWebMembershipCheckout } from '@cuberoot/shared/mobile-embed';
+import { resolveWebMembershipCheckout } from '@cuberoot/shared/mobile-embed';
 import { tr } from '@/i18n/tr';
 import CubeRootLogo from '@/components/CubeRootLogo';
 import '../membership.css';
@@ -20,8 +20,9 @@ export default function AppCheckoutPage() {
     // navigation; nuqs only handles query state and must not retain this secret.
     // eslint-disable-next-line no-restricted-syntax, no-restricted-globals
     window.history.replaceState(null, '', window.location.pathname + '?returned=1');
-    if (!isWebMembershipCheckout(checkout)) { setInvalid(true); return; }
-    window.location.replace(checkout);
+    const destination = resolveWebMembershipCheckout(checkout);
+    if (!destination) { setInvalid(true); return; }
+    window.location.replace(destination);
   }, []);
 
   return <main className="mem-page">

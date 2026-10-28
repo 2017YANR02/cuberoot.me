@@ -9,7 +9,7 @@ export async function validateNativePages(root, pages) {
     if (relativePath.startsWith('..') || isAbsolute(relativePath)) throw new Error(`Template escapes bundle: ${path}`);
     if (visited.has(path)) return;
     visited.add(path);
-    const source = (await readFile(path, 'utf8')).replace(/<!--[\s\S]*?-->/g, '');
+    const source = (await readFile(path, 'utf8')).replace(/<!--[\s\S]*?-->/g, ' ');
     if (/<web-view\b/i.test(source)) throw new Error(`Native page contains web-view: ${relativePath}`);
     for (const match of source.matchAll(/<(?:include|import)\b[^>]*\bsrc=["']([^"']+)["']/g)) {
       if (match[1].includes('{{')) throw new Error(`Dynamic template source: ${relativePath}`);

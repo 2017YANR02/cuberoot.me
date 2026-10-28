@@ -16,15 +16,25 @@ export interface WebMembershipResult {
   status: 'returned' | 'opened' | 'error';
 }
 
-/** Only the official website-payment cashiers; never arbitrary URLs or intent schemes. */
-export function isWebMembershipCheckout(href: unknown): href is string {
-  if (typeof href !== 'string' || href.length > 16_384) return false;
+/** Rebuild the destination from a fixed cashier endpoint, preserving its signed query. */
+export function resolveWebMembershipCheckout(href: unknown): string | null {
+  if (typeof href !== 'string' || href.length > 16_384) return null;
   try {
     const url = new URL(href);
-    if (url.protocol !== 'https:' || url.username || url.password || url.port) return false;
-    return (url.hostname === 'openapi.alipay.com' && url.pathname === '/gateway.do')
-      || (url.hostname === 'wx.tenpay.com' && url.pathname === '/cgi-bin/mmpayweb-bin/checkmweb');
-  } catch { return false; }
+    if (url.protocol !== 'https:' || url.username || url.password || url.port) return null;
+    if (url.hostname === 'openapi.alipay.com' && url.pathname === '/gateway.do') {
+      return 'https://openapi.alipay.com/gateway.do' + url.search;
+    }
+    if (url.hostname === 'wx.tenpay.com' && url.pathname === '/cgi-bin/mmpayweb-bin/checkmweb') {
+      return 'https://wx.tenpay.com/cgi-bin/mmpayweb-bin/checkmweb' + url.search;
+    }
+    return null;
+  } catch { return null; }
+}
+
+/** Only the official website-payment cashiers; never arbitrary URLs or intent schemes. */
+export function isWebMembershipCheckout(href: unknown): href is string {
+  return resolveWebMembershipCheckout(href) !== null;
 }
 
 export function decodeWebMembershipRequest(value: unknown): WebMembershipRequest | null {

@@ -7,3 +7,6 @@ dependencies = [
     "mediapipe>=0.10.14",
     "scikit-learn>=1.4",
 ]
+
+[tool.uv]
+constraint-dependencies = ["pillow>=13.0.0", "certifi>=2026.10.18"]

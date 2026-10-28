@@ -420,7 +420,7 @@
   "devDependencies": {
     "esbuild": "^0.28.2",
     "typescript": "^5",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.12"
   },
   "dependencies": {
     "cstimer_module": "^0.1.5",

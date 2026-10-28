@@ -46,4 +46,4 @@ function sourceListNumbers(){
   };walk(tree);
  };
 }
-export const markdown=(s:string)=>sanitize(renderToStaticMarkup(React.createElement(Markdown,{remarkPlugins:[gfm,sourceListNumbers],children:s.replace(/<!--[\s\S]*?-->/g,'').replace(/\]\((https?:\/\/[^)\n]+)\)/g,(full,url)=>/[\"']/.test(url)?full:']('+url.replace(/ /g,'%20')+')')})));
+export const markdown=(s:string)=>sanitize(renderToStaticMarkup(React.createElement(Markdown,{remarkPlugins:[gfm,sourceListNumbers],children:s.replace(/<!--[\s\S]*?-->/g,' ').replace(/\]\((https?:\/\/[^)\n]+)\)/g,(full,url)=>/[\"']/.test(url)?full:']('+url.replace(/ /g,'%20')+')')})));
