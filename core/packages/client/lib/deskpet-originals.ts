@@ -43,10 +43,11 @@ export const ORIGINAL_THEMES = Object.fromEntries(ORIGINAL_CHARACTERS.map(charac
     thumb: scene('idle').src, label: { zh: character.zh, en: character.en },
     files: Object.fromEntries(Object.entries(stateScenes).map(([state, id]) => [state, scene(id).file])),
     auto: Object.fromEntries(['happy', 'notification', 'error', 'sweeping', 'carrying', 'waking', 'reactDouble', 'reactAnnoyed', 'reading', 'bubble'].map(state => [state, scene(stateScenes[state]).durationMs])),
-    mini: { offsetRatio: .16, files: Object.fromEntries(Object.entries(miniScenes).map(([state, id]) => [state, scene(id).file])) as Record<keyof typeof miniScenes, string> },
+    // The edge enter reuses one complete walk loop instead of cutting it mid-stride.
+    mini: { offsetRatio: .16, enterMs: scene(miniScenes.enter).durationMs, files: Object.fromEntries(Object.entries(miniScenes).map(([state, id]) => [state, scene(id).file])) as Record<keyof typeof miniScenes, string> },
   }];
 })) as Record<OriginalCharacterId, {
   base: string; version: string; inlineIdle: boolean; pixel: boolean; thumb: string;
   label: { zh: string; en: string }; files: Record<string, string>; auto: Record<string, number>;
-  mini: { offsetRatio: number; files: Record<keyof typeof miniScenes, string> };
+  mini: { offsetRatio: number; enterMs: number; files: Record<keyof typeof miniScenes, string> };
 }>;

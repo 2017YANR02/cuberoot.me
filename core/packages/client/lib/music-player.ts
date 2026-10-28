@@ -78,6 +78,9 @@ function subscribe(listener: () => void): () => void {
   return () => { listeners.delete(listener); };
 }
 
+// Shared transport subscription for non-React renderers (independent of sources).
+export { subscribe as subscribeMusicPlayer };
+
 export function getMusicPlayerState(): MusicPlayerState {
   return state;
 }

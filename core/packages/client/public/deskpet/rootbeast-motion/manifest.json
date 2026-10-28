@@ -1,0 +1,76 @@
+[
+  {
+    "id": "edge-enter",
+    "file": "edge-enter.svg",
+    "zh": "贴边落稳",
+    "en": "Cling to the edge",
+    "duration": 0.9,
+    "first": "air",
+    "last": "rest"
+  },
+  {
+    "id": "edge-leave",
+    "file": "edge-leave.svg",
+    "zh": "蹬墙回正",
+    "en": "Push off the edge",
+    "duration": 0.9,
+    "first": "rest",
+    "last": "rest"
+  },
+  {
+    "id": "exit-hop",
+    "file": "exit-hop.svg",
+    "zh": "轻跳离开",
+    "en": "Hop away",
+    "duration": 0.8,
+    "first": "rest",
+    "last": "air"
+  },
+  {
+    "id": "exit-sleep",
+    "file": "exit-sleep.svg",
+    "zh": "盖被睡觉",
+    "en": "Tuck in",
+    "duration": 2,
+    "first": "rest",
+    "last": "curl"
+  },
+  {
+    "id": "enter",
+    "file": "enter.svg",
+    "zh": "蹦出来",
+    "en": "Pop in",
+    "duration": 1,
+    "first": "air",
+    "last": "rest"
+  },
+  {
+    "id": "dizzy-loop",
+    "file": "rootbeast-dizzy-loop.svg",
+    "zh": "甩动晕眩",
+    "en": "Dizzy loop",
+    "duration": 2.4,
+    "first": "dizzy",
+    "last": "dizzy"
+  },
+  {
+    "id": "dizzy-recover",
+    "file": "rootbeast-dizzy-recover.svg",
+    "zh": "恢复清醒",
+    "en": "Recover from dizziness",
+    "duration": 3,
+    "first": "dizzy",
+    "last": "rest"
+  },
+  { "id": "hang-rig", "file": "rootbeast-hang-play-rig.svg", "zh": "尾巴悬挂骨架", "en": "Tail hanging rig", "duration": 2.4, "first": "rest", "last": "hang" },
+  { "id": "hang-enter", "file": "rootbeast-hang-enter.svg", "zh": "挂上顶部", "en": "Hook onto top", "duration": 2.4, "first": "rest", "last": "hang" },
+  { "id": "hang-loop", "file": "rootbeast-hang-loop.svg", "zh": "持续悬挂", "en": "Keep hanging", "duration": 4.8, "first": "hang", "last": "hang" },
+  { "id": "hang-release", "file": "rootbeast-hang-release.svg", "zh": "尾巴松开", "en": "Release tail", "duration": 0.34, "first": "hang", "last": "rest" },
+  { "id": "music-rig-v3", "file": "rootbeast-music-rig-v3.svg", "zh": "听歌耳机骨架", "en": "Music headphones rig", "duration": 1.8, "first": "rest", "last": "listening" },
+  { "id": "music-on-v3", "file": "rootbeast-music-on-v3.svg", "zh": "拿出戴上耳机", "en": "Put on headphones", "duration": 1.8, "first": "rest", "last": "listening" },
+  { "id": "music-loop-v3", "file": "rootbeast-music-loop-v3.svg", "zh": "戴耳机听歌", "en": "Listen with headphones", "duration": 2.4, "first": "listening", "last": "listening" },
+  { "id": "music-off-v3", "file": "rootbeast-music-off-v3.svg", "zh": "摘下收好耳机", "en": "Take off headphones", "duration": 1.4, "first": "listening", "last": "rest" },
+  { "id": "bottom-peek", "file": "rootbeast-bottom-peek-rig.svg", "zh": "底沿探头", "en": "Bottom edge peek", "duration": 1.12, "first": "rest", "last": "peek" },
+  { "id": "mouse-hunt", "file": "rootbeast-hunt-rig.svg", "zh": "鼠标追逐骨架", "en": "Mouse hunt rig", "duration": 0, "first": "rest", "last": "rest" },
+  { "id": "sleep-in-place", "file": "rootbeast-sleep-rig.svg", "zh": "原地自然睡着", "en": "Fall asleep in place", "duration": 7, "first": "rest", "last": "sleep" }
+]
