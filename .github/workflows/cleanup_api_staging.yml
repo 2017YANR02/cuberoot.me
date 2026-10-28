@@ -1,0 +1,66 @@
+name: Cleanup API staging
+
+on:
+  workflow_run:
+    workflows: ['Deploy Core']
+    types: [completed]
+  schedule:
+    - cron: '23 */6 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'ops/maintenance/prune-api-releases.ts'
+      - 'ops/maintenance/sweep-api-staging.ts'
+      - '.github/workflows/cleanup_api_staging.yml'
+
+permissions:
+  contents: read
+  actions: read
+
+# Keep the entire inventory → GitHub status → deletion sequence exclusive with
+# deployments, including the upload phase that precedes the remote flock.
+concurrency:
+  group: deploy-core-production
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  cleanup:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          sparse-checkout: |
+            ops/maintenance
+            core
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: core/package.json
+      - name: Install test dependencies
+        working-directory: core
+        run: pnpm install --frozen-lockfile
+      - name: Verify cleanup safety before deletion
+        working-directory: core
+        run: pnpm --filter @cuberoot/client exec vitest run tests/server-maintenance.test.ts
+      - name: Setup SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/staging_cleanup
+          chmod 600 ~/.ssh/staging_cleanup
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+      - name: Remove verified completed deployment staging
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: SSH_KEY_FILE="$HOME/.ssh/staging_cleanup" node ops/maintenance/sweep-api-staging.ts

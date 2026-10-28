@@ -5,7 +5,8 @@ health, solver smoke, compression service checks and `pm2 save` succeed, it
 removes old managed releases. It retains the active release, two newest
 alternatives, the deployment's explicit rollback release, and releases referenced
 by running process commands, mappings, working directories or open files.
-Staging directories, unknown layouts and release symlinks are never removed.
+This successful-release pruning leaves staging to the separate cleanup below.
+Unknown layouts and release symlinks are never removed.
 Inspection failures stop cleanup. A cleanup error fails the job but does not
 roll back an already healthy application.
 
@@ -14,6 +15,19 @@ For manual maintenance, use the active release's script under `flock -n`;
 omit `--apply` to preview, then inspect the retained/deletion lists before applying.
 An explicit older rollback can be protected with `--previous /absolute/release/dist`.
 Do not run cleanup concurrently with an older deployment workflow lacking this lock.
+
+`cleanup_api_staging.yml` runs after each completed Deploy Core attempt (including
+failure/cancellation), every six hours as a retry, and on manual dispatch. Its
+whole inventory/status/deletion sequence shares the deployment concurrency group.
+`sweep-api-staging.ts` obtains the exact run **attempt**, commit, repository,
+workflow path and main-branch identity from GitHub before allowing deletion of
+`.RUN-ATTEMPT-SHA.staging`. Only completed attempts qualify; API errors fail
+closed before deletion. Process references and root symlinks (active/rollback
+entries) still protect directories. No age-only deletion is allowed. Retained
+directories produce a visible failure and are reconsidered on the next sweep.
+The script is streamed to Node under the same remote flock; the cleanup process
+does not create another server-side temporary script directory. GitHub credentials
+remain on the runner. Each sweep runs the deletion regression tests first.
 
 `stats.yml` copies and runs `stats-capacity.ts` before MySQL startup, dependency
 installation, WCA download or computation. It requires the greater of 8 GiB and

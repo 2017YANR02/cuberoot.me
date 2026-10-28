@@ -3,6 +3,64 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const releaseName = /^(?:\d+-\d+-[a-f0-9]{40}|legacy-\d{8}T\d{6}Z-\d+)$/;
+const stagingName = /^\.(\d+)-(\d+)-([a-f0-9]{40})\.staging$/;
+
+function releaseRoot(root: string): string {
+  const releases = join(root, 'releases');
+  if (realpathSync(root) !== root || realpathSync(releases) !== releases) throw new Error('Unsafe release root');
+  return releases;
+}
+
+function removeManagedDirectory(releases: string, path: string, apply: boolean) {
+  if (resolve(path, '..') !== releases || lstatSync(path).isSymbolicLink() || realpathSync(path) !== path) throw new Error('Release changed during cleanup');
+  const device = statSync(releases).dev;
+  const validate = (dir: string) => {
+    if (lstatSync(dir).dev !== device) throw new Error('Refusing to cross a filesystem boundary');
+    for (const name of readdirSync(dir)) {
+      const child = join(dir, name), stat = lstatSync(child);
+      if (stat.dev !== device) throw new Error('Refusing to cross a filesystem boundary');
+      if (stat.isDirectory() && !stat.isSymbolicLink()) validate(child);
+    }
+  };
+  validate(path);
+  if (apply) rmSync(path, { recursive: true });
+}
+
+export function listStaging(root: string): string[] {
+  const releases = releaseRoot(root);
+  return readdirSync(releases).filter((name) => {
+    const stat = lstatSync(join(releases, name));
+    return stagingName.test(name) && stat.isDirectory() && !stat.isSymbolicLink() && stat.dev === statSync(releases).dev;
+  }).sort();
+}
+
+export interface DeploymentAttempt {
+  id: number; run_attempt: number; head_sha: string; status: string;
+  path: string; head_branch: string; repository: { full_name: string };
+}
+
+// Caller serializes with Deploy Core and supplies GitHub's exact attempt status.
+// Never infer inactivity from timestamps, absence of an open fd, or run age.
+export function pruneStaging(root: string, references: string[], attempts: DeploymentAttempt[], apply = false) {
+  const releases = releaseRoot(root);
+  const links = () => readdirSync(root, { withFileTypes: true }).filter((entry) => entry.isSymbolicLink()).flatMap((entry) => {
+    try { return [realpathSync(join(root, entry.name))]; }
+    catch (error) { if (disappeared(error)) return []; throw error; }
+  });
+  const removed: string[] = [], kept: string[] = [];
+  for (const name of listStaging(root)) {
+    const [, run, attempt, sha] = stagingName.exec(name)!;
+    const path = join(releases, name);
+    const evidence = attempts.find((record) => String(record.id) === run && String(record.run_attempt) === attempt
+      && record.head_sha === sha && record.status === 'completed' && record.head_branch === 'main'
+      && record.path === '.github/workflows/deploy_core.yml' && record.repository.full_name === '2017YANR02/cuberoot.me');
+    const used = [...references, ...links()].some((value) => value === path || value.includes(`${path}/`));
+    if (!evidence || used) { kept.push(path); continue; }
+    removeManagedDirectory(releases, path, apply);
+    removed.push(path);
+  }
+  return { apply, kept, removed };
+}
 
 function disappeared(error: unknown): boolean {
   return ['ENOENT', 'ESRCH'].includes((error as NodeJS.ErrnoException).code ?? '');
@@ -26,8 +84,7 @@ export function processReferences(procRoot = '/proc'): string[] {
 }
 
 export function pruneReleases(root: string, references: string[], apply = false, previous?: string) {
-  const releases = join(root, 'releases');
-  if (realpathSync(root) !== root || realpathSync(releases) !== releases) throw new Error('Unsafe release root');
+  const releases = releaseRoot(root);
   const active = realpathSync(join(root, 'dist'));
   const owner = (dist: string) => {
     const path = resolve(dist, '..');
@@ -56,18 +113,7 @@ export function pruneReleases(root: string, references: string[], apply = false,
   for (const { path } of entries) {
     if (protectedPaths.has(path)) continue;
     if (realpathSync(join(root, 'dist')) !== active) throw new Error('Active release changed; aborting cleanup');
-    // Do not cross nested mounts. Symlinks are safe to unlink, never traverse them.
-    const device = statSync(releases).dev;
-    const validate = (dir: string) => {
-      for (const name of readdirSync(dir)) {
-        const child = join(dir, name), stat = lstatSync(child);
-        if (stat.dev !== device) throw new Error('Refusing to cross a filesystem boundary');
-        if (stat.isDirectory() && !stat.isSymbolicLink()) validate(child);
-      }
-    };
-    if (lstatSync(path).isSymbolicLink() || realpathSync(path) !== path) throw new Error('Release changed during cleanup');
-    validate(path);
-    if (apply) rmSync(path, { recursive: true });
+    removeManagedDirectory(releases, path, apply);
     removed.push(path);
   }
   return { apply, kept: [...protectedPaths], removed };

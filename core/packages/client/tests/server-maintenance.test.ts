@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync,
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { processReferences, pruneReleases } from '../../../../ops/maintenance/prune-api-releases';
+import { processReferences, pruneReleases, pruneStaging, type DeploymentAttempt } from '../../../../ops/maintenance/prune-api-releases';
 import { capacityReport } from '../../../../ops/maintenance/stats-capacity';
 
 const temporary: string[] = [];
@@ -22,6 +22,47 @@ function fixture() {
 }
 
 describe('server capacity and release retention', () => {
+  it('deletes only staging backed by the exact completed deployment attempt, including partial uploads', () => {
+    const { root } = fixture();
+    const sha = 'b'.repeat(40);
+    const evidence: DeploymentAttempt = { id: 10, run_attempt: 1, head_sha: sha, status: 'completed', head_branch: 'main',
+      path: '.github/workflows/deploy_core.yml', repository: { full_name: '2017YANR02/cuberoot.me' } };
+    const staging = join(root, 'releases', `.10-1-${sha}.staging`);
+    mkdirSync(staging);
+    writeFileSync(join(staging, 'partial-upload'), 'incomplete bundle');
+    for (const record of [undefined, { ...evidence, status: 'in_progress' }, { ...evidence, status: 'queued' },
+      { ...evidence, run_attempt: 2 }, { ...evidence, head_sha: 'a'.repeat(40) }, { ...evidence, head_branch: 'feature' },
+      { ...evidence, path: '.github/workflows/other.yml' }, { ...evidence, repository: { full_name: 'other/repo' } }]) {
+      expect(pruneStaging(root, [], record ? [record] : [], true).removed).toEqual([]);
+      expect(existsSync(staging)).toBe(true);
+    }
+    expect(pruneStaging(root, [], [evidence], false).removed).toEqual([staging]);
+    expect(existsSync(staging)).toBe(true);
+    expect(pruneStaging(root, [], [evidence], true).removed).toEqual([staging]);
+    expect(existsSync(staging)).toBe(false);
+    expect(pruneStaging(root, [], [evidence], true).removed).toEqual([]);
+  });
+
+  it('preserves process references, rollback links and symlinked staging targets', () => {
+    const { root } = fixture();
+    const sha = 'c'.repeat(40);
+    const evidence: DeploymentAttempt = { id: 11, run_attempt: 1, head_sha: sha, status: 'completed', head_branch: 'main',
+      path: '.github/workflows/deploy_core.yml', repository: { full_name: '2017YANR02/cuberoot.me' } };
+    const staging = join(root, 'releases', `.11-1-${sha}.staging`);
+    mkdirSync(join(staging, 'dist'), { recursive: true });
+    expect(pruneStaging(root, [`rsync\n${staging}/dist`], [evidence], true).removed).toEqual([]);
+    const rollback = join(root, '.dist.rollback.fixture');
+    symlinkSync(join(staging, 'dist'), rollback);
+    expect(pruneStaging(root, [], [evidence], true).removed).toEqual([]);
+    rmSync(rollback);
+    const outside = join(root, 'external');
+    mkdirSync(outside);
+    rmSync(staging, { recursive: true });
+    symlinkSync(outside, staging);
+    expect(pruneStaging(root, [], [evidence], true).removed).toEqual([]);
+    expect(existsSync(outside)).toBe(true);
+  });
+
   it('previews without mutation, then preserves current, two recent versions, explicit rollback and process references', () => {
     const { root, releases } = fixture();
     const refs = [`node\n${releases[1]}/dist/server.bundle.js`, `${releases[2]}/dist`];

@@ -281,6 +281,7 @@ const TEST_PATHS = [
   repoPath('.github', 'workflows', 'backup_recon.yml'),
   repoPath('.github', 'workflows', 'best2x2_drift.yml'),
   repoPath('.github', 'workflows', 'deploy_core.yml'),
+  repoPath('.github', 'workflows', 'cleanup_api_staging.yml'),
   repoPath('.github', 'workflows', 'deploy_next.yml'),
   repoPath('.github', 'workflows', 'elev_backfill.yml'),
   repoPath('.github', 'workflows', 'icons_drift.yml'),
@@ -425,7 +426,7 @@ describe('deployment workflow path contracts', () => {
 
   it('queues every core-api writer without evicting unrelated pending releases', () => {
     const members = workflowNames().filter(name => readWorkflow(name).includes('group: deploy-core-production'));
-    expect(members.sort()).toEqual(['cube555_native.yml', 'deploy_core.yml', 'deploy_cubeopt_native.yml', 'wca_data_release.yml']);
+    expect(members.sort()).toEqual(['cleanup_api_staging.yml', 'cube555_native.yml', 'deploy_core.yml', 'deploy_cubeopt_native.yml', 'wca_data_release.yml']);
     for (const name of members) {
       const block = readWorkflow(name).match(/group: deploy-core-production\n(?:\s+(?:#.*|cancel-in-progress: false|queue: max)\n)+/)?.[0] ?? '';
       expect(block).toContain('cancel-in-progress: false');
@@ -986,6 +987,13 @@ describe('deployment workflow path contracts', () => {
   });
 
   it('checks server capacity before computation and prunes releases only after healthy activation', () => {
+    const cleanup = readWorkflow('cleanup_api_staging.yml');
+    expect(cleanup).toContain("workflows: ['Deploy Core']");
+    expect(cleanup).toContain('types: [completed]');
+    expect(cleanup).toContain("cron: '23 */6 * * *'");
+    expect(cleanup).toContain('ref: main');
+    expect(cleanup.indexOf('- name: Verify cleanup safety before deletion')).toBeLessThan(cleanup.indexOf('- name: Remove verified completed deployment staging'));
+    expect(readStepFilterPaths('test.yml', 'Detect affected inputs', 'client')).toContain('.github/workflows/cleanup_api_staging.yml');
     const stats = readWorkflow('stats.yml');
     const preflight = stats.indexOf('- name: Check server capacity before computation');
     expect(preflight).toBeGreaterThan(-1);
