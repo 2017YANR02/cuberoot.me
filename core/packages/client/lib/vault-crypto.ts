@@ -29,6 +29,7 @@ export interface VaultEntry {
   fields: VaultField[];
   notes: string;
   images?: VaultImage[];
+  category?: 'personal' | 'accounts' | 'business' | 'other';
 }
 
 export interface EncryptedPrivateKey {
@@ -258,13 +259,14 @@ export async function recoverVaultPrivateKey(
   };
 }
 
-function isVaultEntry(value: unknown): value is VaultEntry {
+export function isVaultEntry(value: unknown): value is VaultEntry {
   if (!value || typeof value !== 'object') return false;
   const entry = value as Record<string, unknown>;
   if (typeof entry.id !== 'string' || entry.id.length > 100
     || typeof entry.title !== 'string' || entry.title.length > 200
     || typeof entry.notes !== 'string' || entry.notes.length > 500_000
     || (entry.images !== undefined && !validateVaultImages(entry.images))
+    || (entry.category !== undefined && !['personal', 'accounts', 'business', 'other'].includes(entry.category as string))
     || !Array.isArray(entry.fields) || entry.fields.length > 50) return false;
   return entry.fields.every((field) => {
     if (!field || typeof field !== 'object') return false;

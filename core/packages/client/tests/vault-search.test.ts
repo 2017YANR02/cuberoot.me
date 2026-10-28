@@ -11,15 +11,18 @@ vi.mock('@/hooks/useCopy', () => ({ useCopy: () => ({ copy: vi.fn(), copiedKey: 
 vi.mock('@/i18n/tr', () => ({ tr: ({ zh }: { zh: string }) => zh }));
 vi.mock('@/lib/api-base', () => ({ apiUrl: (path: string) => path }));
 vi.mock('@/lib/admin-api', () => ({ authHeaders: () => ({}), handleApi: (response: Response) => response.json() }));
-vi.mock('@/lib/vault-crypto', () => ({
+vi.mock('@/lib/vault-crypto', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/lib/vault-crypto')>(),
   isValidVaultPassphrase: () => true,
   unlockVaultPrivateKey: async () => ({}),
-  decryptVaultEntry: async () => ({ id: 'entry', title: 'Test entry', fields: [], notes: '' }),
+  decryptVaultEntry: async (ciphertext?: string) => ciphertext ? JSON.parse(ciphertext) : ({ id: 'entry', title: 'Test entry', fields: [], notes: '' }),
+  encryptVaultEntry: async (entry: unknown, recipients: unknown[]) => ({ ciphertext: JSON.stringify(entry), iv: 'test', accesses: recipients }),
 }));
 
 let host: HTMLDivElement;
 let root: Root;
 const requests: { query: string; signal: AbortSignal; resolve: (value: Response) => void }[] = [];
+const writes: { ciphertext: string; accesses: { userId: number }[] }[] = [];
 const response = (data: unknown) => new Response(JSON.stringify(data));
 const type = async (value: string) => {
   const input = host.querySelector<HTMLInputElement>('[placeholder="搜索好友"]')!;
@@ -31,12 +34,16 @@ const type = async (value: string) => {
 const advance = async (ms = 300) => { await act(async () => { await vi.advanceTimersByTimeAsync(ms); }); };
 beforeEach(async () => {
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-  vi.useFakeTimers(); requests.length = 0;
+  vi.useFakeTimers(); requests.length = 0; writes.length = 0;
   vi.stubGlobal('fetch', vi.fn((path: string, options?: RequestInit) => {
     if (path === '/v1/vault') return Promise.resolve(response({
       userId: 1, canManage: true, keyProfile: { publicKey: {}, encryptedPrivateKey: {} },
-      items: [{ id: 'entry', ownerUserId: 1, ownerName: 'Test owner', version: 1, shares: [] }],
+      items: [{ id: 'entry', ownerUserId: 1, ownerName: 'Test owner', version: 1, shares: [] }, ...writes.map((write, i) => ({ id: `saved-${i}`, ownerUserId: 1, ownerName: 'Test owner', version: 1, shares: [], ciphertext: write.ciphertext }))],
     }));
+    if (path === '/v1/vault/items') {
+      writes.push(JSON.parse(options!.body as string));
+      return Promise.resolve(response({ id: `saved-${writes.length - 1}`, version: 1, updatedAt: '2026-01-01' }));
+    }
     if (path.startsWith('/v1/vault/users?')) return new Promise<Response>((resolve) => {
       requests.push({ query: new URL(path, 'http://localhost').searchParams.get('q')!, signal: options!.signal as AbortSignal, resolve });
     });
@@ -65,4 +72,23 @@ it('automatically searches valid input, cancels old requests, and ignores late r
   await act(async () => requests[2].resolve(response({ users: [{ userId: 4, name: 'Late result', publicKey: {} }] })));
   expect(host.querySelector('.vault-user-results')).toBeNull();
   expect(vi.mocked(fetch).mock.calls.every(([, options]) => !options?.method || options.method === 'GET')).toBe(true);
+});
+
+it('imports only validated entries for the owner, preserves secrets and skips repeated imports', async () => {
+  const entry = { id: 'import-one', title: 'Account one', category: 'accounts', fields: [{ id: 'pw', label: 'Password', value: 'test\nbackup', secret: true }], notes: '' };
+  const choose = async (items: unknown[]) => {
+    const input = host.querySelector<HTMLInputElement>('[aria-label="选择资料库文件"]')!;
+    Object.defineProperty(input, 'files', { configurable: true, value: [{ size: 100, text: async () => JSON.stringify({ version: 1, items }) }] });
+    await act(async () => input.dispatchEvent(new Event('change', { bubbles: true })));
+  };
+  await choose([{ entry: { ...entry, images: [{ id: 'image', name: 'bad', dataUrl: 'https://example.com/private' }] } }]);
+  expect(writes).toHaveLength(0);
+  await choose([{ ownerUserId: 99, shares: [{ userId: 99 }], entry }, { entry }]);
+  expect(writes).toHaveLength(1);
+  expect(writes[0].accesses.map((access) => access.userId)).toEqual([1]);
+  expect(JSON.parse(writes[0].ciphertext)).toEqual(entry);
+  expect(host.textContent).toContain('新增 1 条，跳过 1 条');
+  await choose([{ entry }, { entry: { ...entry, id: 'import-two', title: 'Account two' } }]);
+  expect(writes).toHaveLength(2);
+  expect(host.textContent).toContain('新增 1 条，跳过 1 条');
 });

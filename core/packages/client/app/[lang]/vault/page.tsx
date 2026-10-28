@@ -7,6 +7,7 @@ import BackHome from '@/components/BackHome';
 import BoolToggle from '@/components/BoolToggle';
 import { PasswordInput } from '@/components/PasswordInput';
 import { SearchInput } from '@/components/SearchInput';
+import { CompactSelect } from '@/components/CompactSelect';
 import { useCopy } from '@/hooks/useCopy';
 import { tr } from '@/i18n/tr';
 import { apiUrl } from '@/lib/api-base';
@@ -17,6 +18,7 @@ import {
   decryptVaultEntry,
   encryptVaultEntry,
   isValidVaultPassphrase,
+  isVaultEntry,
   readVaultImages,
   recoverVaultPrivateKey,
   unlockVaultPrivateKey,
@@ -43,7 +45,27 @@ interface OpenItem {
 interface UserResult { userId: number; name: string; wcaId: string | null; publicKey: JsonWebKey | null; }
 
 const cloneItem = (item: OpenItem): OpenItem => structuredClone(item);
-const emptyEntry = (): VaultEntry => ({ id: crypto.randomUUID(), title: '', fields: [], notes: '' });
+const decryptOpenItem = async (item: VaultItemPayload, key: CryptoKey): Promise<OpenItem> => ({
+  localId: item.id, serverId: item.id, ownerUserId: item.ownerUserId, ownerName: item.ownerName,
+  version: item.version, updatedAt: item.updatedAt, shares: item.shares,
+  entry: await decryptVaultEntry(item.ciphertext, item.iv, item.wrappedKey, key),
+});
+type VaultCategory = NonNullable<VaultEntry['category']>;
+const categoryLabels = {
+  personal: { zh: '个人资料', en: 'Personal' },
+  accounts: { zh: '账号密码', en: 'Accounts' },
+  business: { zh: '企业资料', en: 'Business' },
+  other: { zh: '其他', en: 'Other' },
+};
+const emptyEntry = (category: VaultCategory): VaultEntry => ({
+  id: crypto.randomUUID(), title: '', category, notes: '',
+  fields: (category === 'accounts' ? [
+    { label: tr({ zh: '网址', en: 'Website' }), secret: false },
+    { label: tr({ zh: '账号', en: 'Username' }), secret: false },
+    { label: tr({ zh: '密码', en: 'Password' }), secret: true },
+    { label: tr({ zh: '邮箱', en: 'Email' }), secret: false },
+  ] : []).map((field) => ({ ...field, id: crypto.randomUUID(), value: '' })),
+});
 
 export default function VaultPage() {
   const user = useAuthUser();
@@ -71,6 +93,10 @@ export default function VaultPage() {
   const [error, setError] = useState<string | null>(null);
   const imageInput = useRef<HTMLInputElement>(null);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
+  const importInput = useRef<HTMLInputElement>(null);
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [newCategory, setNewCategory] = useState<VaultCategory>('other');
+  const [importStatus, setImportStatus] = useState<string | null>(null);
 
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => {
@@ -84,27 +110,20 @@ export default function VaultPage() {
     return () => { cancelled = true; };
   }, [user]);
   useEffect(() => {
-    const warn = (event: BeforeUnloadEvent) => { if (dirty) event.preventDefault(); };
+    const warn = (event: BeforeUnloadEvent) => { if (dirty || busy) event.preventDefault(); };
     window.addEventListener('beforeunload', warn);
     return () => window.removeEventListener('beforeunload', warn);
-  }, [dirty]);
+  }, [dirty, busy]);
 
   const visibleItems = useMemo(() => {
     const q = filter.trim().toLocaleLowerCase();
-    return q ? items.filter((item) => item.entry.title.toLocaleLowerCase().includes(q)) : items;
-  }, [filter, items]);
+    return items.filter(({ entry }) => (!categoryFilter || (entry.category ?? 'other') === categoryFilter)
+      && (!q || [entry.title, entry.notes, ...entry.fields.flatMap((field) => [field.label, ...(field.secret ? [] : [field.value])])]
+        .some((value) => value.toLocaleLowerCase().includes(q))));
+  }, [filter, categoryFilter, items]);
 
   const openVault = async (key: CryptoKey, data: VaultPayload) => {
-    const results = await Promise.allSettled(data.items.map(async (item): Promise<OpenItem> => ({
-      localId: item.id,
-      serverId: item.id,
-      ownerUserId: item.ownerUserId,
-      ownerName: item.ownerName,
-      version: item.version,
-      updatedAt: item.updatedAt,
-      shares: item.shares,
-      entry: await decryptVaultEntry(item.ciphertext, item.iv, item.wrappedKey, key),
-    })));
+    const results = await Promise.allSettled(data.items.map((item) => decryptOpenItem(item, key)));
     const opened = results.flatMap((result) => result.status === 'fulfilled' ? [result.value] : []);
     setPrivateKey(key);
     setItems(opened);
@@ -225,12 +244,14 @@ export default function VaultPage() {
     discardUnsavedNew();
     const item: OpenItem = {
       localId: `new:${crypto.randomUUID()}`, serverId: null, ownerUserId: payload.userId,
-      ownerName: user?.name ?? '', version: 0, updatedAt: new Date().toISOString(), shares: [], entry: emptyEntry(),
+      ownerName: user?.name ?? '', version: 0, updatedAt: new Date().toISOString(), shares: [], entry: emptyEntry(newCategory),
     };
     setItems((current) => [item, ...current]);
     setDraft(item);
     setDirty(true);
     setExpandedImage(null);
+    setCategoryFilter('');
+    setFilter('');
   };
   const updateDraft = (update: (item: OpenItem) => void) => {
     setDraft((current) => {
@@ -299,6 +320,55 @@ export default function VaultPage() {
       setError((imageError as Error).message === 'vault_image_limit'
         ? tr({ zh: '每条内容最多 10 张图片，原图合计不超过 1 MiB。可分成多条保存。', en: 'Each item supports up to 10 images totaling 1 MiB. Split larger collections into separate items.' })
         : tr({ zh: '无法读取图片，请选择有效的 JPG、PNG 或 WebP 文件。', en: 'Could not read the image. Choose a valid JPG, PNG, or WebP file.' }));
+    } finally { setBusy(false); }
+  };
+
+  const importEntries = async (file: File) => {
+    if (busy || !payload?.canManage || !payload.keyProfile || !privateKey || !confirmDiscard()) return;
+    setBusy(true);
+    setError(null);
+    setImportStatus(null);
+    let savedCount = 0;
+    try {
+      if (file.size > 20 * 1024 * 1024) throw new Error('invalid_import');
+      const data: unknown = JSON.parse(await file.text());
+      const backup = data as { version?: unknown; items?: { entry?: unknown }[] } | null;
+      if (backup?.version !== 1 || !Array.isArray(backup.items) || backup.items.length > 500
+        || !backup.items.every((item) => item && isVaultEntry(item.entry) && item.entry.title.trim())) throw new Error('invalid_import');
+      // Reload before retrying: a previous write may have succeeded even if its response was lost.
+      const latest = await handleApi<VaultPayload>(await sessionFetch(apiUrl('/v1/vault'), { headers: authHeaders(false), cache: 'no-store' }));
+      const currentItems = await Promise.all(latest.items.map((item) => decryptOpenItem(item, privateKey)));
+      const knownIds = new Set(currentItems.filter((item) => item.ownerUserId === payload.userId).map((item) => item.entry.id));
+      const entries = backup.items.map((item) => item.entry as VaultEntry).filter((entry) => {
+        if (knownIds.has(entry.id)) return false;
+        knownIds.add(entry.id);
+        return true;
+      });
+      setItems(currentItems);
+      setDraft(null);
+      setDirty(false);
+      setCategoryFilter('');
+      setFilter('');
+      for (const entry of entries) {
+        // The API permits 30 writes/minute. Save incrementally so retrying skips completed entries.
+        if (savedCount) await new Promise((resolve) => setTimeout(resolve, 2200));
+        const encrypted = await encryptVaultEntry(entry, [{ userId: payload.userId, publicKey: payload.keyProfile.publicKey }]);
+        const result = await handleApi<{ id: string; version: number; updatedAt: string }>(await sessionFetch(apiUrl('/v1/vault/items'), {
+          method: 'POST', headers: authHeaders(), body: JSON.stringify({ ...encrypted, expectedVersion: null }),
+        }));
+        const saved: OpenItem = {
+          localId: result.id, serverId: result.id, ownerUserId: payload.userId, ownerName: user?.name ?? '',
+          version: result.version, updatedAt: result.updatedAt, shares: [], entry,
+        };
+        setItems((current) => [saved, ...current]);
+        savedCount += 1;
+        setImportStatus(tr({ zh: `已导入 ${savedCount} / ${entries.length} 条`, en: `Imported ${savedCount} / ${entries.length} items` }));
+      }
+      setImportStatus(tr({ zh: `导入完成：新增 ${savedCount} 条，跳过 ${backup.items.length - entries.length} 条已有或重复内容。`, en: `Import complete: ${savedCount} added, ${backup.items.length - entries.length} existing or duplicate items skipped.` }));
+    } catch (importError) {
+      setError((importError as Error).message === 'invalid_import' || importError instanceof SyntaxError
+        ? tr({ zh: '请选择有效的资料库 JSON 文件，最多 500 条、20 MiB。', en: 'Choose a valid vault JSON file, up to 500 items and 20 MiB.' })
+        : tr({ zh: `导入中断，已保存 ${savedCount} 条。稍后重试同一文件会跳过已导入内容。`, en: `Import interrupted after saving ${savedCount} items. Retry the same file later to skip completed items.` }));
     } finally { setBusy(false); }
   };
 
@@ -395,6 +465,7 @@ export default function VaultPage() {
   }
 
   const editable = Boolean(draft && payload.canManage && draft.ownerUserId === payload.userId);
+  const categoryOptions = Object.entries(categoryLabels).map(([value, label]) => ({ value, label: tr(label) }));
   return (
     <main className="vault-page">
       <div className="vault-topbar"><BackHome /><button type="button" className="vault-button" disabled={busy} onClick={() => {
@@ -402,16 +473,31 @@ export default function VaultPage() {
       }}><Lock />{tr({ zh: '锁定', en: 'Lock' })}</button></div>
       <header className="vault-header">
         <div><h1>{tr({ zh: '私密资料库', en: 'Private vault' })}</h1><p>{tr({ zh: '内容只在浏览器中解密；只有好友可以接收分享。', en: 'Content is decrypted only in your browser. Only friends can receive shares.' })}</p></div>
-        {items.length > 0 && <button type="button" className="vault-button" onClick={downloadPlaintextBackup}><Download />{tr({ zh: '导出明文备份', en: 'Export plaintext backup' })}</button>}
-        {payload.canManage && <button type="button" className="vault-button is-primary" disabled={busy} onClick={addItem}><Plus />{tr({ zh: '新建', en: 'New item' })}</button>}
       </header>
+      <div className="vault-toolbar">
+        {payload.canManage && <div className="vault-actions">
+          <CompactSelect items={categoryOptions} value={newCategory} onChange={(value) => setNewCategory(value as VaultCategory)} label={tr(categoryLabels[newCategory])} ariaLabel={tr({ zh: '新建类型', en: 'New item type' })} disabled={busy} showArrow />
+          <button type="button" className="vault-button is-primary" disabled={busy} onClick={addItem}><Plus />{tr({ zh: '新建', en: 'New item' })}</button>
+        </div>}
+        <div className="vault-actions">
+          {payload.canManage && <>
+            <input ref={importInput} type="file" hidden accept="application/json,.json" aria-label={tr({ zh: '选择资料库文件', en: 'Choose vault file' })} onChange={(event) => {
+              const file = event.target.files?.[0]; event.target.value = ''; if (file) void importEntries(file);
+            }} />
+            <button type="button" className="vault-button" disabled={busy} onClick={() => importInput.current?.click()}>{tr({ zh: '导入资料', en: 'Import items' })}</button>
+          </>}
+          {items.length > 0 && <button type="button" className="vault-button" disabled={busy} onClick={downloadPlaintextBackup}><Download />{tr({ zh: '导出明文备份', en: 'Export plaintext backup' })}</button>}
+        </div>
+      </div>
+      {importStatus && <p className="vault-muted" role="status">{importStatus}</p>}
       {!payload.canManage && <p className="vault-muted">{tr({ zh: '你可以查看和导出现有内容；成为会员后才能新建、编辑、删除或分享。', en: 'You can view and export existing items. Membership is required to create, edit, delete, or share.' })}</p>}
       {failedCount > 0 && <p className="vault-error" role="alert">{tr({ zh: `${failedCount} 条内容无法解密。`, en: `${failedCount} item(s) could not be decrypted.` })}</p>}
       {error && <p className="vault-error" role="alert">{error}</p>}
 
       <div className="vault-workspace">
         <aside className="vault-sidebar">
-          <SearchInput value={filter} onChange={setFilter} placeholder={tr({ zh: '搜索标题', en: 'Search titles' })} className="vault-filter" inputClassName="vault-input" />
+          <SearchInput value={filter} onChange={setFilter} placeholder={tr({ zh: '搜索资料', en: 'Search items' })} className="vault-filter" inputClassName="vault-input" />
+          <CompactSelect items={[{ value: '', label: tr({ zh: '全部分类', en: 'All categories' }) }, ...categoryOptions]} value={categoryFilter} onChange={setCategoryFilter} label={categoryFilter ? tr(categoryLabels[categoryFilter as VaultCategory]) : tr({ zh: '全部分类', en: 'All categories' })} ariaLabel={tr({ zh: '筛选分类', en: 'Filter category' })} className="vault-category-filter" showArrow />
           <div className="vault-list">{visibleItems.map((item) => (
             <button key={item.localId} type="button" disabled={busy} className={`vault-list-item${draft?.localId === item.localId ? ' is-active' : ''}`} onClick={() => selectItem(item)}>
               <strong>{item.entry.title || tr({ zh: '未命名', en: 'Untitled' })}</strong>
@@ -425,6 +511,7 @@ export default function VaultPage() {
             <input className="vault-title-input" value={draft.entry.title} readOnly={!editable} maxLength={200} placeholder={tr({ zh: '标题', en: 'Title' })} onChange={(event) => updateDraft((item) => { item.entry.title = event.target.value; })} />
             {editable && <div className="vault-actions"><button type="button" className="vault-button is-primary" disabled={busy || !dirty} onClick={() => void save()}><Save />{tr({ zh: '保存', en: 'Save' })}</button><button type="button" className="vault-button is-danger" disabled={busy} onClick={() => void remove()}><Trash2 />{tr({ zh: '删除', en: 'Delete' })}</button></div>}
           </div>
+          {editable && <CompactSelect items={categoryOptions} value={draft.entry.category ?? 'other'} onChange={(value) => updateDraft((item) => { item.entry.category = value as VaultCategory; })} label={tr(categoryLabels[draft.entry.category ?? 'other'])} ariaLabel={tr({ zh: '资料分类', en: 'Item category' })} disabled={busy} className="vault-entry-category" showArrow />}
 
           <div className="vault-fields">{draft.entry.fields.map((field, index) => {
             const changeValue = (value: string) => updateDraft((item) => { item.entry.fields[index].value = value; });
