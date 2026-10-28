@@ -1,6 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "ignoreCommand": "node ../../scripts/vercel-ignore-build.ts",
+  "installCommand": "cd ../.. && corepack pnpm --version && corepack pnpm install --frozen-lockfile",
   "functions": {
     "app/api/page-access/route.ts": {
       "regions": [
