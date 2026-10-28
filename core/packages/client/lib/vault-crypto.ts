@@ -3,6 +3,16 @@ const PRIVATE_KEY_AAD = new TextEncoder().encode('CubeRoot vault private key v1'
 const RECOVERY_KEY_AAD = new TextEncoder().encode('CubeRoot vault recovery key v1');
 const ENTRY_AAD = new TextEncoder().encode('CubeRoot vault entry v1');
 const RECOVERY_CODE_PREFIX = 'CRV1-';
+// Keep the complete encrypted envelope within the existing API/DB 2 MiB limit.
+const MAX_CIPHERTEXT_BYTES = 2 * 1024 * 1024;
+export const MAX_VAULT_IMAGE_BYTES = 1024 * 1024;
+export const MAX_VAULT_IMAGES = 10;
+
+export interface VaultImage {
+  id: string;
+  name: string;
+  dataUrl: string;
+}
 
 export const isValidVaultPassphrase = (value: string): boolean => /^[0-9]{6}$/.test(value);
 
@@ -18,6 +28,7 @@ export interface VaultEntry {
   title: string;
   fields: VaultField[];
   notes: string;
+  images?: VaultImage[];
 }
 
 export interface EncryptedPrivateKey {
@@ -57,6 +68,57 @@ function base64ToBytes(value: string): Uint8Array<ArrayBuffer> {
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
   return bytes;
+}
+
+function vaultImageBytes(value: unknown): number | null {
+  if (typeof value !== 'string' || value.length > 4 * Math.ceil(MAX_VAULT_IMAGE_BYTES / 3) + 32) return null;
+  const prefix = /^data:image\/(jpeg|png|webp);base64,/.exec(value);
+  if (!prefix) return null;
+  const encoded = value.slice(prefix[0].length);
+  if (!encoded.length || encoded.length % 4 || /[^A-Za-z0-9+/=]/.test(encoded)
+    || !/^[A-Za-z0-9+/]*={0,2}$/.test(encoded)) return null;
+  const bytes = base64ToBytes(encoded);
+  const signature = prefix[1] === 'jpeg'
+    ? bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff
+    : prefix[1] === 'png'
+      ? [137, 80, 78, 71, 13, 10, 26, 10].every((byte, i) => bytes[i] === byte)
+      : new TextDecoder().decode(bytes.slice(0, 4)) === 'RIFF' && new TextDecoder().decode(bytes.slice(8, 12)) === 'WEBP';
+  return signature ? bytes.length : null;
+}
+
+export function validateVaultImages(images: unknown): images is VaultImage[] {
+  if (!Array.isArray(images) || images.length > MAX_VAULT_IMAGES) return false;
+  const ids = new Set<string>();
+  let total = 0;
+  for (const image of images) {
+    if (!image || typeof image.id !== 'string' || !image.id || image.id.length > 100 || ids.has(image.id)
+      || typeof image.name !== 'string' || !image.name.trim() || image.name.length > 200) return false;
+    ids.add(image.id);
+    const size = vaultImageBytes(image.dataUrl);
+    if (size === null) return false;
+    total += size;
+    if (total > MAX_VAULT_IMAGE_BYTES) return false;
+  }
+  return true;
+}
+
+/** Original bytes stay in the encrypted entry; never use the public image uploader. */
+export async function readVaultImages(files: File[], existing: VaultImage[] = []): Promise<VaultImage[]> {
+  if (existing.length + files.length > MAX_VAULT_IMAGES
+    || files.reduce((sum, file) => sum + file.size, 0) > MAX_VAULT_IMAGE_BYTES) throw new Error('vault_image_limit');
+  const added: VaultImage[] = [];
+  for (const file of files) {
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('vault_image_type');
+    const image = {
+      id: crypto.randomUUID(), name: file.name.slice(0, 200),
+      dataUrl: `data:${file.type};base64,${bytesToBase64(new Uint8Array(await file.arrayBuffer()))}`,
+    };
+    if (vaultImageBytes(image.dataUrl) === null) throw new Error('vault_image_type');
+    added.push(image);
+  }
+  const images = [...existing, ...added];
+  if (!validateVaultImages(images)) throw new Error('vault_image_limit');
+  return images;
 }
 
 function bytesToBase64Url(bytes: Uint8Array): string {
@@ -202,6 +264,7 @@ function isVaultEntry(value: unknown): value is VaultEntry {
   if (typeof entry.id !== 'string' || entry.id.length > 100
     || typeof entry.title !== 'string' || entry.title.length > 200
     || typeof entry.notes !== 'string' || entry.notes.length > 500_000
+    || (entry.images !== undefined && !validateVaultImages(entry.images))
     || !Array.isArray(entry.fields) || entry.fields.length > 50) return false;
   return entry.fields.every((field) => {
     if (!field || typeof field !== 'object') return false;
@@ -218,13 +281,15 @@ export async function encryptVaultEntry(
   recipients: VaultRecipientKey[],
 ): Promise<EncryptedVaultEntry> {
   if (!isVaultEntry(entry) || recipients.length === 0) throw new Error('invalid vault entry');
+  const plaintext = new TextEncoder().encode(JSON.stringify(entry));
+  if (4 * Math.ceil((plaintext.byteLength + 16) / 3) > MAX_CIPHERTEXT_BYTES) throw new Error('vault_entry_limit');
   const contentKey = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
   const rawKey = await crypto.subtle.exportKey('raw', contentKey);
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const ciphertext = await crypto.subtle.encrypt(
     { name: 'AES-GCM', iv, additionalData: ENTRY_AAD },
     contentKey,
-    new TextEncoder().encode(JSON.stringify(entry)),
+    plaintext,
   );
   const accesses = await Promise.all(recipients.map(async ({ userId, publicKey }) => {
     const key = await crypto.subtle.importKey(

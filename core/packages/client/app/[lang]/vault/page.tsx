@@ -1,7 +1,7 @@
 'use client';
 
 import { sessionFetch } from '@/lib/session-fetch';
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Check, Copy, Download, KeyRound, Loader2, Lock, Plus, Save, Trash2, UserPlus, X } from '@app-foundation/icons/lucide';
 import BackHome from '@/components/BackHome';
 import BoolToggle from '@/components/BoolToggle';
@@ -17,6 +17,7 @@ import {
   decryptVaultEntry,
   encryptVaultEntry,
   isValidVaultPassphrase,
+  readVaultImages,
   recoverVaultPrivateKey,
   unlockVaultPrivateKey,
   type EncryptedPrivateKey,
@@ -68,6 +69,8 @@ export default function VaultPage() {
   const [failedCount, setFailedCount] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const imageInput = useRef<HTMLInputElement>(null);
+  const [expandedImage, setExpandedImage] = useState<string | null>(null);
 
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => {
@@ -215,6 +218,7 @@ export default function VaultPage() {
     setDraft(cloneItem(item));
     setDirty(false);
     setShareResults([]);
+    setExpandedImage(null);
   };
   const addItem = () => {
     if (!payload?.canManage || !confirmDiscard()) return;
@@ -226,6 +230,7 @@ export default function VaultPage() {
     setItems((current) => [item, ...current]);
     setDraft(item);
     setDirty(true);
+    setExpandedImage(null);
   };
   const updateDraft = (update: (item: OpenItem) => void) => {
     setDraft((current) => {
@@ -241,6 +246,10 @@ export default function VaultPage() {
     if (!draft || !payload?.keyProfile || !privateKey || draft.ownerUserId !== payload.userId || !payload.canManage) return;
     if (!draft.entry.title.trim()) {
       setError(tr({ zh: '请填写标题。', en: 'Enter a title.' }));
+      return;
+    }
+    if (draft.entry.images?.some((image) => !image.name.trim())) {
+      setError(tr({ zh: '请填写图片名称。', en: 'Enter a name for each image.' }));
       return;
     }
     setBusy(true);
@@ -271,7 +280,25 @@ export default function VaultPage() {
     } catch (saveError) {
       setError((saveError as Error).message === 'item changed in another tab'
         ? tr({ zh: '这条内容已在其他页面修改，请刷新后重试。', en: 'This item changed in another tab. Refresh and try again.' })
-        : tr({ zh: '保存失败，请稍后重试。', en: 'Could not save. Try again later.' }));
+        : (saveError as Error).message === 'vault_entry_limit'
+          ? tr({ zh: '这条内容过大，请将部分图片或文字分到另一条内容。', en: 'This item is too large. Move some images or text to another item.' })
+          : tr({ zh: '保存失败，请稍后重试。', en: 'Could not save. Try again later.' }));
+    } finally { setBusy(false); }
+  };
+
+  const addImages = async (files: File[]) => {
+    if (!draft || busy || !files.length) return;
+    const localId = draft.localId;
+    setBusy(true);
+    setError(null);
+    try {
+      const images = await readVaultImages(files, draft.entry.images);
+      setDraft((current) => current?.localId === localId ? { ...current, entry: { ...current.entry, images } } : current);
+      setDirty(true);
+    } catch (imageError) {
+      setError((imageError as Error).message === 'vault_image_limit'
+        ? tr({ zh: '每条内容最多 10 张图片，原图合计不超过 1 MiB。可分成多条保存。', en: 'Each item supports up to 10 images totaling 1 MiB. Split larger collections into separate items.' })
+        : tr({ zh: '无法读取图片，请选择有效的 JPG、PNG 或 WebP 文件。', en: 'Could not read the image. Choose a valid JPG, PNG, or WebP file.' }));
     } finally { setBusy(false); }
   };
 
@@ -370,13 +397,13 @@ export default function VaultPage() {
   const editable = Boolean(draft && payload.canManage && draft.ownerUserId === payload.userId);
   return (
     <main className="vault-page">
-      <div className="vault-topbar"><BackHome /><button type="button" className="vault-button" onClick={() => {
+      <div className="vault-topbar"><BackHome /><button type="button" className="vault-button" disabled={busy} onClick={() => {
         if (confirmDiscard()) window.location.reload();
       }}><Lock />{tr({ zh: '锁定', en: 'Lock' })}</button></div>
       <header className="vault-header">
         <div><h1>{tr({ zh: '私密资料库', en: 'Private vault' })}</h1><p>{tr({ zh: '内容只在浏览器中解密；只有好友可以接收分享。', en: 'Content is decrypted only in your browser. Only friends can receive shares.' })}</p></div>
         {items.length > 0 && <button type="button" className="vault-button" onClick={downloadPlaintextBackup}><Download />{tr({ zh: '导出明文备份', en: 'Export plaintext backup' })}</button>}
-        {payload.canManage && <button type="button" className="vault-button is-primary" onClick={addItem}><Plus />{tr({ zh: '新建', en: 'New item' })}</button>}
+        {payload.canManage && <button type="button" className="vault-button is-primary" disabled={busy} onClick={addItem}><Plus />{tr({ zh: '新建', en: 'New item' })}</button>}
       </header>
       {!payload.canManage && <p className="vault-muted">{tr({ zh: '你可以查看和导出现有内容；成为会员后才能新建、编辑、删除或分享。', en: 'You can view and export existing items. Membership is required to create, edit, delete, or share.' })}</p>}
       {failedCount > 0 && <p className="vault-error" role="alert">{tr({ zh: `${failedCount} 条内容无法解密。`, en: `${failedCount} item(s) could not be decrypted.` })}</p>}
@@ -386,14 +413,14 @@ export default function VaultPage() {
         <aside className="vault-sidebar">
           <SearchInput value={filter} onChange={setFilter} placeholder={tr({ zh: '搜索标题', en: 'Search titles' })} className="vault-filter" inputClassName="vault-input" />
           <div className="vault-list">{visibleItems.map((item) => (
-            <button key={item.localId} type="button" className={`vault-list-item${draft?.localId === item.localId ? ' is-active' : ''}`} onClick={() => selectItem(item)}>
+            <button key={item.localId} type="button" disabled={busy} className={`vault-list-item${draft?.localId === item.localId ? ' is-active' : ''}`} onClick={() => selectItem(item)}>
               <strong>{item.entry.title || tr({ zh: '未命名', en: 'Untitled' })}</strong>
               <span>{item.ownerUserId === payload.userId ? tr({ zh: '我的内容', en: 'Mine' }) : item.ownerName}</span>
             </button>
           ))}{!visibleItems.length && <p className="vault-muted">{tr({ zh: '没有内容。', en: 'No items.' })}</p>}</div>
         </aside>
 
-        <section className="vault-editor">{!draft ? <p className="vault-muted">{tr({ zh: '选择一条内容，或新建一条。', en: 'Select an item or create one.' })}</p> : <>
+        <section className="vault-editor">{!draft ? <p className="vault-muted">{tr({ zh: '选择一条内容，或新建一条。', en: 'Select an item or create one.' })}</p> : <fieldset className="vault-editor-fields" disabled={busy}>
           <div className="vault-editor-head">
             <input className="vault-title-input" value={draft.entry.title} readOnly={!editable} maxLength={200} placeholder={tr({ zh: '标题', en: 'Title' })} onChange={(event) => updateDraft((item) => { item.entry.title = event.target.value; })} />
             {editable && <div className="vault-actions"><button type="button" className="vault-button is-primary" disabled={busy || !dirty} onClick={() => void save()}><Save />{tr({ zh: '保存', en: 'Save' })}</button><button type="button" className="vault-button is-danger" disabled={busy} onClick={() => void remove()}><Trash2 />{tr({ zh: '删除', en: 'Delete' })}</button></div>}
@@ -417,6 +444,32 @@ export default function VaultPage() {
           <label className="vault-notes-label" htmlFor="vault-notes">{tr({ zh: '文本与备注', en: 'Text and notes' })}</label>
           <textarea id="vault-notes" className="vault-notes" value={draft.entry.notes} readOnly={!editable} maxLength={500_000} rows={10} onChange={(event) => updateDraft((item) => { item.entry.notes = event.target.value; })} />
 
+          {(editable || Boolean(draft.entry.images?.length)) && <section className="vault-images">
+            <div className="vault-image-heading">
+              <h2>{tr({ zh: '图片附件', en: 'Image attachments' })}</h2>
+              {editable && <>
+                <input ref={imageInput} type="file" hidden multiple accept="image/jpeg,image/png,image/webp" aria-label={tr({ zh: '选择图片', en: 'Choose images' })} onChange={(event) => {
+                  const files = Array.from(event.target.files ?? []);
+                  event.target.value = '';
+                  void addImages(files);
+                }} />
+                <button type="button" className="vault-button" onClick={() => imageInput.current?.click()}><Plus />{tr({ zh: '添加图片', en: 'Add images' })}</button>
+              </>}
+            </div>
+            <div className="vault-image-grid">{draft.entry.images?.map((image, index) => <div key={image.id} className={`vault-image${expandedImage === image.id ? ' is-expanded' : ''}`}>
+              <button type="button" className="vault-image-preview" aria-expanded={expandedImage === image.id} aria-label={tr({ zh: `查看图片：${image.name}`, en: `View image: ${image.name}` })} onClick={() => setExpandedImage((current) => current === image.id ? null : image.id)}>
+                {/* Original image is decrypted locally; never send it through an image optimizer. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={image.dataUrl} alt={image.name} />
+              </button>
+              <input className="vault-input" aria-label={tr({ zh: `图片名称 ${index + 1}`, en: `Image name ${index + 1}` })} value={image.name} readOnly={!editable} maxLength={200} onChange={(event) => updateDraft((item) => { item.entry.images![index].name = event.target.value; })} />
+              <div className="vault-actions">
+                <a className="vault-button" href={image.dataUrl} download={image.name}><Download />{tr({ zh: '下载原图', en: 'Download original' })}</a>
+                {editable && <button type="button" className="vault-button is-danger" aria-label={tr({ zh: `移除图片：${image.name}`, en: `Remove image: ${image.name}` })} onClick={() => updateDraft((item) => { item.entry.images!.splice(index, 1); })}><X />{tr({ zh: '移除', en: 'Remove' })}</button>}
+              </div>
+            </div>)}</div>
+          </section>}
+
           <section className="vault-sharing">
             <h2>{tr({ zh: '分享给好友', en: 'Share with friends' })}</h2>
             <p>{tr({ zh: '移除并保存，或解除好友后，对方下次打开资料库时将无法再访问；但无法抹除已经看过、复制或截图的内容。', en: 'After removing and saving, or ending the friendship, they cannot reopen the item from the vault. Content already viewed, copied, or captured cannot be erased.' })}</p>
@@ -428,7 +481,7 @@ export default function VaultPage() {
               return <div key={result.userId}><span><strong>{result.name}</strong><small>#{result.userId}{result.wcaId ? `  ${result.wcaId}` : ''}</small></span><button type="button" className="vault-button" disabled={!result.publicKey || added} onClick={() => { if (result.publicKey) updateDraft((item) => { item.shares.push({ userId: result.userId, name: result.name, publicKey: result.publicKey as JsonWebKey }); }); }}><UserPlus />{added ? tr({ zh: '已添加', en: 'Added' }) : result.publicKey ? tr({ zh: '添加', en: 'Add' }) : tr({ zh: '对方尚未启用接收', en: 'Receiving not enabled' })}</button></div>;
             })}</div>}
           </section>
-        </>}</section>
+        </fieldset>}</section>
       </div>
     </main>
   );
