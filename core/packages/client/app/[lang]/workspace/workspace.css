@@ -79,7 +79,7 @@
 .workspace-gantt-phase:active { transform: translateY(-50%) scaleY(.92); }
 .workspace-gantt-key-label { position: absolute; top: 50%; transform: translate(12px, -50%); max-width: min(280px, 45%); overflow: hidden; white-space: nowrap; font-size: 14px; font-weight: 600; color: var(--gantt-color); pointer-events: none; }
 .workspace-gantt-key-label.is-end { transform: translate(calc(-100% - 12px), -50%); }
-.workspace-gantt-task .workspace-gantt-label { background: var(--background); }
+.workspace-gantt-task .workspace-gantt-label { padding-inline-start: 48px; background: var(--background); }
 .workspace-gantt-task .workspace-gantt-track { background-color: var(--background); }
 .workspace-task-label { display: flex; align-items: center; width: 100%; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--foreground); text-align: start; font: inherit; font-size: 14px; line-height: 1.4; cursor: pointer; }
 .workspace-task-label > span { overflow: hidden; white-space: nowrap; }

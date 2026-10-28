@@ -36,11 +36,20 @@
 .careers-detail-card li + li { margin-top: 10px; }
 .careers-detail-actions { position: absolute; right: 48px; top: 44px; display: flex; flex-direction: column; align-items: flex-end; gap: 18px; }
 .careers-share { display: flex; align-items: center; gap: 6px; color: var(--muted-foreground); }
+.careers-share-wrap { position: relative; }
+.careers-share-panel { /* anchored-panel: clamped (usePanelClamp in PositionDetail) */ position: absolute; z-index: 5; top: calc(100% + 12px); right: 0; width: min(320px, calc(100vw - 64px)); padding: 20px; border: 1px solid var(--border-default); border-radius: 14px; background: var(--popover); box-shadow: 0 8px 28px color-mix(in srgb, black 18%, transparent); text-align: center; }
+.careers-share-panel h2 { margin: 0 0 12px; font-size: 17px; }
+.careers-share-qr { display: block; width: min(100%, 240px); height: auto; margin: 0 auto 16px; }
+.careers-share-link { display: flex; align-items: center; gap: 10px; }
+.careers-share-link input { min-width: 0; flex: 1; padding: 10px; border: 1px solid var(--input); border-radius: 8px; background: var(--background); color: var(--foreground); font: inherit; }
+.careers-share-link button { color: var(--accent); white-space: nowrap; }
+.careers-share-panel p { color: var(--destructive); font-size: 14px; }
 .careers-apply { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; padding: 0 24px; border-radius: 999px; background: var(--primary); color: var(--primary-foreground); font-weight: 600; text-decoration: none; }
 .careers-apply:hover { opacity: .88; }
 .careers-apply:disabled { opacity: .5; cursor: not-allowed; }
 .careers-apply:focus-visible, .careers-share:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
 @media (max-width: 700px) { .careers-detail-card { padding: 28px 24px; } .careers-detail-card h1 { padding-right: 0; font-size: 25px; } .careers-detail-actions { position: static; flex-direction: row; justify-content: space-between; margin-bottom: 24px; } .careers-intro-grid { grid-template-columns: 1fr; gap: 0; } .careers-browser { grid-template-columns: 1fr; gap: 36px; margin-top: 36px; } .careers-filters fieldset { margin-top: 24px; } }
+@media (max-width: 700px) { .careers-share-panel { right: auto; left: 0; } }
 .careers-application { max-width: 1100px; }
 .careers-application-card { margin-top: 24px; border-radius: 18px; }
 .careers-application-header { padding: 36px 44px; }

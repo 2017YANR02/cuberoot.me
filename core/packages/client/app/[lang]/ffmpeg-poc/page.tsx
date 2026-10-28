@@ -40,8 +40,8 @@ export default function FfmpegPocPage() {
 
     setStatus('Calling ff.load()…');
     // classWorkerURL: bypass Turbopack module-worker bundling. See public/ffmpeg/ffmpeg-classworker.js.
-    // Use absolute URL — `new URL(rel, import.meta.url)` inside @ffmpeg/ffmpeg classes.js
-    // resolves against the Turbopack chunk URL which is file:// in dev.
+    // The pinned @ffmpeg/ffmpeg patch passes this absolute URL to Worker directly;
+    // Turbopack must not try resolving a dynamic URL as a bundled module.
     const classWorkerURL = new URL('/ffmpeg/ffmpeg-classworker.js', window.location.origin).href;
     await ff.load({ classWorkerURL, coreURL, wasmURL, workerURL });
 

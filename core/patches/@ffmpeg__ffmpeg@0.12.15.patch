@@ -1,0 +1,15 @@
+diff --git a/dist/esm/classes.js b/dist/esm/classes.js
+index fae47533aa26ba897030686e25b08527f2688a6b..724254bff6d354363861bfb3beaa17ceb33f0581 100644
+--- a/dist/esm/classes.js
++++ b/dist/esm/classes.js
+@@ -102,7 +102,9 @@ export class FFmpeg {
+     load = ({ classWorkerURL, ...config } = {}, { signal } = {}) => {
+         if (!this.#worker) {
+             this.#worker = classWorkerURL ?
+-                new Worker(new URL(classWorkerURL, import.meta.url), {
++                // Explicit worker URLs are supplied as absolute URLs by CubeRoot.
++                // Keep this runtime URL out of Turbopack module resolution.
++                new Worker(classWorkerURL, {
+                     type: "module",
+                 }) :
+                 // We need to duplicated the code here to enable webpack
