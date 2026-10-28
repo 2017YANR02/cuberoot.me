@@ -32,6 +32,13 @@
 .careers-detail-card > p:not(.careers-category) { margin-top: 24px; }
 .careers-detail-card section { margin-top: 36px; }
 .careers-detail-card h2 { font-size: 20px; font-weight: 600; }
+.careers-detail-card > section:not(.careers-position-info) > h2::before { content: '【'; }
+.careers-detail-card > section:not(.careers-position-info) > h2::after { content: '】'; }
+.careers-detail-card .careers-section-title { display: flex; align-items: center; gap: 12px; margin: 40px 0 24px; }
+.careers-section-title::before { content: ''; width: 5px; height: 1em; flex: none; border-radius: 3px; background: var(--signal-info); }
+.careers-position-info dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; margin: 0; }
+.careers-position-info dt { color: var(--muted-foreground); }
+.careers-position-info dd { margin: 8px 0 0; }
 .careers-detail-card ul { padding-left: 22px; line-height: 1.8; }
 .careers-detail-card li + li { margin-top: 10px; }
 .careers-detail-actions { position: absolute; right: 48px; top: 44px; display: flex; flex-direction: column; align-items: flex-end; gap: 18px; }
