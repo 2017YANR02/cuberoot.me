@@ -175,7 +175,7 @@ describe('the complete shared reconstruction report', () => {
     expect(container.querySelector('.stl-track')).not.toBeNull();
     expect(container.querySelector('.sa-scroll')).not.toBeNull();
     expect(container.querySelector('.sml-scramble')?.textContent).toContain('R U');
-    expect(container.textContent).toContain('Step analysis');
+    expect(container.textContent).toContain('Recognition');
     expect(container.querySelector('[data-timer-reconstruct-metrics]')).toBeNull();
     expect(container.textContent).not.toContain('Longest pause');
     expect(container.textContent).not.toContain('Wasted');

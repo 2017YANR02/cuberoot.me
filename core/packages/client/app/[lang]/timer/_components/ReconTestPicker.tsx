@@ -92,26 +92,26 @@ export default function ReconTestPicker({ canSelect, onSelect }: {
     </Tooltip>
     {open && <section className="recon-test-panel" aria-label={tr({ zh: '复盘测试', en: 'Recon testing' })} data-site-surface="panel">
       <div className="recon-test-heading"><strong>{tr({ zh: '三阶复盘', en: '3×3 reconstructions' })}</strong>
-        <button type="button" onClick={() => setOpen(false)}>{tr({ zh: '收起', en: 'Close' })}</button></div>
+        <button type="button" className="recon-test-control" onClick={() => setOpen(false)}>{tr({ zh: '收起', en: 'Close' })}</button></div>
       <div className="recon-test-people">
-        <label>{tr({ zh: '选手', en: 'Solver' })}<select value={personId} disabled={loading} onChange={event => {
+        <label>{tr({ zh: '选手', en: 'Solver' })}<select className="recon-test-select" value={personId} disabled={loading} onChange={event => {
           setPersonId(event.target.value); setOffset(0); setSelected(null);
         }}><option value="">{tr({ zh: '全部', en: 'All' })}</option>
           {!choices.persons.some(choice => choice.id === '2023GENG02') && <option value="2023GENG02">{tr({ zh: '耿暄一', en: 'Xuanyi Geng' })}</option>}
           {choices.persons.map(choice => <option key={choice.id} value={choice.id}>{choice.name}</option>)}
         </select></label>
-        <label>{tr({ zh: '收录者', en: 'Collector' })}<select value={collectorId} disabled={loading} onChange={event => {
+        <label>{tr({ zh: '收录者', en: 'Collector' })}<select className="recon-test-select" value={collectorId} disabled={loading} onChange={event => {
           setCollectorId(event.target.value); setOffset(0); setSelected(null);
         }}><option value="">{tr({ zh: '全部', en: 'All' })}</option>
           {!choices.collectors.some(choice => choice.id === '2017YANR02') && <option value="2017YANR02">{tr({ zh: '颜瑞民', en: 'Ruimin Yan' })}</option>}
           {choices.collectors.map(choice => <option key={choice.id} value={choice.id}>{choice.name}</option>)}
         </select></label>
       </div>
-      <div className="recon-test-filters">{(['pending', 'collected'] as const).map(value => <button key={value} type="button"
+      <div className="recon-test-filters">{(['pending', 'collected'] as const).map(value => <button key={value} className="recon-test-control" type="button"
         aria-pressed={filter === value} onClick={() => { setFilter(value); setOffset(0); }}>
         {value === 'pending' ? tr({ zh: '未收录', en: 'Not collected' }) : tr({ zh: '已收录', en: 'Collected' })}</button>)}</div>
       {loading && <p role="status">{tr({ zh: '加载中…', en: 'Loading…' })}</p>}
-      {error && <p role="alert">{error} <button type="button" onClick={reload}>{tr({ zh: '重试', en: 'Retry' })}</button></p>}
+      {error && <p role="alert">{error} <button type="button" className="recon-test-control" onClick={reload}>{tr({ zh: '重试', en: 'Retry' })}</button></p>}
       {!loading && !error && items.length === 0 && <p>{tr({ zh: '没有符合条件的复盘。', en: 'No reconstructions found.' })}</p>}
       {!loading && <div className="recon-test-list">{items.map(item => <button key={item.id} type="button"
         className="recon-test-item" aria-pressed={selected?.id === item.id} onClick={() => setSelected(item)}>
@@ -119,8 +119,8 @@ export default function ReconTestPicker({ canSelect, onSelect }: {
         <small>{item.intakeStatus ? tr(statusLabel[item.intakeStatus]) : item.truthStatus === 'confirmed' && !item.sourceChanged
           ? tr({ zh: '已纳入', en: 'Included' }) : tr({ zh: '未收录', en: 'Not collected' })}{item.sourceChanged ? ` · ${tr({ zh: '来源已变化', en: 'Source changed' })}` : ''}</small>
       </button>)}</div>}
-      <div className="recon-test-pages"><button type="button" disabled={offset === 0 || loading} onClick={() => setOffset(value => Math.max(0, value - 50))}>{tr({ zh: '上一页', en: 'Previous' })}</button>
-        <button type="button" disabled={!hasMore || loading} onClick={() => setOffset(value => value + 50)}>{tr({ zh: '下一页', en: 'Next' })}</button></div>
+      <div className="recon-test-pages"><button className="recon-test-control" type="button" disabled={offset === 0 || loading} onClick={() => setOffset(value => Math.max(0, value - 50))}>{tr({ zh: '上一页', en: 'Previous' })}</button>
+        <button className="recon-test-control" type="button" disabled={!hasMore || loading} onClick={() => setOffset(value => value + 50)}>{tr({ zh: '下一页', en: 'Next' })}</button></div>
       {selected && <div className="recon-test-selected"><div className="recon-test-heading"><strong>#{selected.id}</strong>
         <AppLink href={`/recon/${selected.id}`} target="_blank" rel="noopener noreferrer" prefetch={false}>{tr({ zh: '打开复盘', en: 'Open reconstruction' })}</AppLink></div>
         <p>{selected.scramble}</p><pre>{selected.solution}</pre>

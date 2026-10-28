@@ -96,6 +96,7 @@ const actionContracts: ActionContract[] = [
   { action: 'admin-review', route: 'admin-application', input: { resourceId: 'application id', payload: { decision: 'approved' } }, method: 'POST', path: '/v1/platform/admin/instructor-applications/application%20id/decision' },
   { action: 'admin-payout', route: 'admin-payouts', input: { resourceId: 'payout id', payload: { providerReference: 'provider-1' } }, method: 'POST', path: '/v1/platform/admin/instructor-payouts/payout%20id/paid' },
   { action: 'admin-payout-generate', route: 'admin-payouts', input: { payload: { instructorId: 'instructor-1', currency: 'CNY' } }, method: 'POST', path: '/v1/platform/admin/instructor-payouts/generate' },
+  { action: 'admin-payout-refresh', route: 'admin-payouts', input: { resourceId: 'payout id' }, method: 'POST', path: '/v1/platform/admin/instructor-payouts/payout%20id/refresh-wechat' },
   { action: 'admin-payout-approve', route: 'admin-payouts', input: { resourceId: 'payout id' }, method: 'POST', path: '/v1/platform/admin/instructor-payouts/payout%20id/approve' },
   { action: 'redeem-invite', input: { payload: { code: 'INVITE' } }, method: 'POST', path: '/v1/platform/invites/redeem' },
   { action: 'admin-invite-batch', route: 'admin-invites', input: { payload: { courseId: 'course-1', count: 20, batchReference: 'DY-A' } }, method: 'POST', path: '/v1/platform/admin/invites/batch' },

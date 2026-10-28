@@ -5,24 +5,24 @@
   box-sizing: border-box; padding: 14px; border: 1px solid var(--border-default); border-radius: 8px;
   color: var(--foreground); background: var(--card); font-size: 14px;
 }
-.recon-test-panel button { font: inherit; color: inherit; cursor: pointer; }
+.recon-test-panel :is(.recon-test-control, .recon-test-item, .recon-test-use) { font: inherit; color: inherit; cursor: pointer; }
 .recon-test-heading, .recon-test-filters, .recon-test-pages { display: flex; align-items: center; gap: 8px; }
 .recon-test-heading { justify-content: space-between; }
 .recon-test-people { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
 .recon-test-people label { display: flex; flex-direction: column; gap: 4px; max-width: 100%; }
-.recon-test-people select { width: fit-content; max-width: 100%; font: inherit; }
-.recon-test-heading button, .recon-test-filters button, .recon-test-pages button, .recon-test-use {
+.recon-test-select { width: fit-content; max-width: 100%; font: inherit; }
+.recon-test-control, .recon-test-use {
   padding: 4px 8px; border: 1px solid var(--border-default); border-radius: 4px; background: transparent;
 }
 .recon-test-filters { margin-block: 12px 8px; }
-.recon-test-filters button[aria-pressed='true'], .recon-test-item[aria-pressed='true'] { border-color: var(--accent); }
+.recon-test-filters .recon-test-control[aria-pressed='true'], .recon-test-item[aria-pressed='true'] { border-color: var(--accent); }
 .recon-test-list { display: grid; gap: 4px; max-height: 180px; overflow-y: auto; }
 .recon-test-item { display: flex; justify-content: space-between; gap: 8px; text-align: left; background: transparent; border: 1px solid transparent; border-radius: 4px; padding: 6px; }
 .recon-test-item small, .recon-test-selected small { color: var(--muted-foreground); }
 .recon-test-item small { flex: none; }
 .recon-test-pages { justify-content: space-between; margin-block: 8px; }
-.recon-test-panel button:disabled { opacity: .45; cursor: default; }
-.recon-test-panel button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.recon-test-panel :is(.recon-test-control, .recon-test-item, .recon-test-use):disabled { opacity: .45; cursor: default; }
+.recon-test-panel :is(.recon-test-control, .recon-test-item, .recon-test-use):focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .recon-test-selected { border-top: 1px solid var(--border-default); padding-top: 10px; }
 .recon-test-selected p, .recon-test-selected pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; line-height: 1.5; }
 .recon-test-selected pre { max-height: 200px; overflow-y: auto; }

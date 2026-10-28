@@ -636,6 +636,11 @@ const ENDPOINTS: Ep[] = [
   { d: 'platform', m: 'GET', p: '/v1/platform/instructor/earnings', g: 'login', c: 'no-store', zh: '按订单账本计算讲师收入', en: 'Instructor earnings derived from order ledgers' },
   { d: 'platform', m: 'GET', p: '/v1/platform/instructor/payout-profile', g: 'login', c: 'no-store', zh: '读取自己的加密结算资料状态', en: 'Read owned encrypted payout-profile status' },
   { d: 'platform', m: 'PUT', p: '/v1/platform/instructor/payout-profile', g: 'login', c: 'no-store', zh: '保存自己的加密结算资料，需要幂等键', en: 'Save an owned encrypted payout profile with an idempotency key' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/instructor/payout-profile/wechat', g: 'login', c: 'no-store', zh: '绑定微信收款身份', en: 'Bind a WeChat payout identity' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/instructor/payouts', g: 'login', c: 'no-store', zh: '查看自己的提现及可用余额', en: 'Read owned payouts and available balance' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/instructor/payouts', g: 'login', c: 'no-store', zh: '申请佣金提现', en: 'Request a commission payout' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/instructor/payouts/:id/receipt', g: 'login', c: 'no-store', zh: '查询提现收款确认信息', en: 'Read payout receipt confirmation' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/payouts/wechat/notify', g: 'webhook', c: 'no-store', zh: '接收微信转账通知', en: 'Receive WeChat transfer notifications' },
   { d: 'platform', m: 'POST', p: '/v1/platform/instructor/certificates', g: 'login', c: 'no-store', zh: '为自有课程学员签发证书', en: 'Issue a certificate for an owned-course learner' },
 
   // ---- platform: administrator ----
@@ -708,6 +713,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'platform', m: 'GET', p: '/v1/platform/admin/instructor-payouts', g: 'admin', c: 'no-store', zh: '讲师结算批次', en: 'Instructor payout batches' },
   { d: 'platform', m: 'POST', p: '/v1/platform/admin/instructor-payouts/generate', g: 'admin', c: 'no-store', zh: '从未结算收入账本生成结算批次', en: 'Generate a payout batch from unsettled earnings ledgers' },
   { d: 'platform', m: 'POST', p: '/v1/platform/admin/instructor-payouts/:id/approve', g: 'admin', c: 'no-store', zh: '批准待处理结算并审计', en: 'Approve a pending payout with audit evidence' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/admin/instructor-payouts/:id/refresh-wechat', g: 'admin', c: 'no-store', zh: '发起或核对微信提现转账', en: 'Dispatch or reconcile a WeChat payout transfer' },
   { d: 'platform', m: 'POST', p: '/v1/platform/admin/instructor-payouts/:id/paid', g: 'admin', c: 'no-store', zh: '标记结算已支付并审计', en: 'Mark a payout paid with audit evidence' },
   { d: 'platform', m: 'POST', p: '/v1/platform/admin/instructor-payouts/:id/reconcile-processing-refund', g: 'admin', c: 'no-store', zh: '人工核对处理中退款后完成结算', en: 'Finalize a payout after reconciling a processing refund' },
   { d: 'platform', m: 'POST', p: '/v1/platform/admin/reconciliation/runs', g: 'admin', c: 'no-store', zh: '创建支付对账批次', en: 'Create a payment reconciliation run' },

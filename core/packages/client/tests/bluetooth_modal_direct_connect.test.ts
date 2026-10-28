@@ -250,7 +250,7 @@ describe('BluetoothModal direct connection attempt', () => {
     });
 
     const content = modal().textContent ?? '';
-    expect(content).not.toContain('Connected');
+    expect(content).toContain('Connected');
     expect(content).toContain('GAN16ui_ (C2:AF)');
     expect(content).not.toContain('gan-v4');
     expect(content).toContain('72%');

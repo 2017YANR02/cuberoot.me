@@ -583,6 +583,8 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 297, slug: 'recon_intake_source', desc: { zh: '记录复盘收录来源及快照，防止重复收录', en: 'Record reconstruction intake source and snapshot to prevent duplicates' } },
+  { n: 296, slug: 'wechat_instructor_payouts', desc: { zh: '微信讲师提现转账状态与账号注销保护', en: 'WeChat instructor payout transfer state and account deletion protection' } },
   { n: 295, slug: 'career_applications', desc: { zh: '招聘申请与私人附件', en: 'Private career applications and attachments' } },
   { n: 294, slug: 'assistant_message_shares', desc: { zh: '可撤销的聊天单条消息公开分享', en: 'Revocable public single-message shares' } },
   { n: 293, slug: 'workspace_remove_checklist_categories', desc: { zh: '移除清单分类字段，保留清单名称、事项与共享权限', en: 'Remove checklist categories while retaining names, items and sharing permissions' } },
