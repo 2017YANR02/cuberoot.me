@@ -349,6 +349,7 @@ export default function VaultPage() {
       setDirty(false);
       setCategoryFilter('');
       setFilter('');
+      const savedEntries = new Map<string, VaultEntry>();
       for (const entry of entries) {
         // The API permits 30 writes/minute. Save incrementally so retrying skips completed entries.
         if (savedCount) await new Promise((resolve) => setTimeout(resolve, 2200));
@@ -361,10 +362,22 @@ export default function VaultPage() {
           version: result.version, updatedAt: result.updatedAt, shares: [], entry,
         };
         setItems((current) => [saved, ...current]);
+        savedEntries.set(result.id, entry);
         savedCount += 1;
         setImportStatus(tr({ zh: `已导入 ${savedCount} / ${entries.length} 条`, en: `Imported ${savedCount} / ${entries.length} items` }));
       }
-      setImportStatus(tr({ zh: `导入完成：新增 ${savedCount} 条，跳过 ${backup.items.length - entries.length} 条已有或重复内容。`, en: `Import complete: ${savedCount} added, ${backup.items.length - entries.length} existing or duplicate items skipped.` }));
+      if (savedEntries.size) {
+        const stored = await handleApi<VaultPayload>(await sessionFetch(apiUrl('/v1/vault'), { headers: authHeaders(false), cache: 'no-store' }));
+        for (const item of stored.items) {
+          const expected = savedEntries.get(item.id);
+          if (!expected) continue;
+          const opened = await decryptOpenItem(item, privateKey);
+          if (JSON.stringify(opened.entry) !== JSON.stringify(expected)) throw new Error('import_verification_failed');
+          savedEntries.delete(item.id);
+        }
+        if (savedEntries.size) throw new Error('import_verification_failed');
+      }
+      setImportStatus(tr({ zh: `导入并核验完成：新增 ${savedCount} 条，跳过 ${backup.items.length - entries.length} 条已有或重复内容。`, en: `Import verified: ${savedCount} added, ${backup.items.length - entries.length} existing or duplicate items skipped.` }));
     } catch (importError) {
       setError((importError as Error).message === 'invalid_import' || importError instanceof SyntaxError
         ? tr({ zh: '请选择有效的资料库 JSON 文件，最多 500 条、20 MiB。', en: 'Choose a valid vault JSON file, up to 500 items and 20 MiB.' })
