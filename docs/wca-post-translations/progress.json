@@ -1,14 +1,15 @@
 {
   "version": 1,
-  "updatedAt": "2026-10-26T11:23:03.326Z",
-  "snapshot": "snapshots/2026-10-26T06-44-22-473Z.json",
+  "updatedAt": "2026-10-29T06:25:15.941Z",
+  "snapshot": "snapshots/2026-10-29.json",
   "counts": {
-    "total": 495,
+    "total": 497,
     "linkedDisciplinary": 44,
-    "translated": 451,
+    "translated": 453,
     "pending": 0,
     "independentlyReviewed": 446,
-    "pendingSourceVerification": 5
+    "pendingSourceVerification": 5,
+    "pendingIndependentReview": 2
   },
   "entries": [
     {
@@ -2973,6 +2974,19 @@
       "reviewStatus": "independently_verified"
     },
     {
+      "key": "posts:/posts/expression-of-interest-for-2028-wca-continental-championships-2029-wca-world-championship",
+      "sourceId": 14270,
+      "url": "https://www.worldcubeassociation.org/posts/expression-of-interest-for-2028-wca-continental-championships-2029-wca-world-championship",
+      "sourceHash": "a7b6567f5100a4bbbda1e77bb9673606382ed8e1b219f62f64ae18ea3c5ad3b8",
+      "title": "Expression of Interest for 2028 WCA Continental Championships & 2029 WCA World Championship",
+      "date": "2026-10-28T22:19:44.000Z",
+      "status": "translated",
+      "path": "entries/expression-of-interest-for-2028-wca-continental-championships-2029-wca-world-championship.json",
+      "translationVersion": 1,
+      "translationHash": "994a2ca9b2bab8879ff0366e001dd90998e117dd86baad5f87ca96f1f6e75cbc",
+      "reviewStatus": "pending_independent_review"
+    },
+    {
       "key": "posts:/posts/feliks-zemdegs-wins-asian-championship-2010",
       "sourceId": 910,
       "url": "https://www.worldcubeassociation.org/posts/feliks-zemdegs-wins-asian-championship-2010",
@@ -4732,6 +4746,19 @@
       "translationVersion": 2,
       "translationHash": "cffbd499cd3609d1dece88bb2550d4872ae59ade5364332e8b1186df9ed81bff",
       "reviewStatus": "independently_verified"
+    },
+    {
+      "key": "posts:/posts/wca-asian-championship-2026-cancellation-october-2026",
+      "sourceId": 14269,
+      "url": "https://www.worldcubeassociation.org/posts/wca-asian-championship-2026-cancellation-october-2026",
+      "sourceHash": "7d8c8d5e4bb90be41f6b2bc98e430f32dfccda6f4c6bb623869ba6e0afcf5d53",
+      "title": "WCA Asian Championship 2026 Cancellation (October 2026)",
+      "date": "2026-10-28T22:11:14.000Z",
+      "status": "translated",
+      "path": "entries/wca-asian-championship-2026-cancellation-october-2026.json",
+      "translationVersion": 1,
+      "translationHash": "de2c861e68b3658b253bfc570d868b8f5e578651bd97eed5cf8a6a33e47ab316",
+      "reviewStatus": "pending_independent_review"
     },
     {
       "key": "posts:/posts/wca-asian-championship-2026-update-march-2026",

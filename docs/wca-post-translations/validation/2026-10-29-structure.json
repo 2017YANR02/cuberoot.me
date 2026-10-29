@@ -1,0 +1,20 @@
+{
+  "checkedAt": "2026-10-29T06:25:31.429Z",
+  "ok": true,
+  "counts": {
+    "total": 497,
+    "linkedDisciplinary": 44,
+    "translated": 453,
+    "pending": 0,
+    "independentlyReviewed": 446,
+    "pendingSourceVerification": 5,
+    "pendingIndependentReview": 2,
+    "entryFiles": 453,
+    "sourceLinks": 1500,
+    "checkpoints": 22
+  },
+  "checkpointBindingsVerified": 6530,
+  "snapshotSha256": "1d0c4dec1de432059728de879ac44847302f6d29fe78dd4152fd20a98a8c9e98",
+  "errors": [],
+  "scope": "覆盖、来源版本、链接、译文哈希及检查点可恢复性校验；不代替逐条独立语义审校。"
+}
