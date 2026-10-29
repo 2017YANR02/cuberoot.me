@@ -331,7 +331,7 @@ describe('installed App GAN lifecycle integration', () => {
     expect(dialog).not.toBeNull();
     expect(disconnect).not.toHaveBeenCalled();
     const reset = [...dialog.querySelectorAll<HTMLButtonElement>('button')]
-      .find((button) => button.textContent?.includes('Reset cube'))!;
+      .find((button) => button.textContent === 'Reset')!;
     await act(async () => reset.click());
     expect(resetState).toHaveBeenCalledOnce();
     await act(async () => backListener?.());
@@ -388,13 +388,13 @@ describe('installed App GAN lifecycle integration', () => {
     const dialog = document.querySelector<HTMLElement>('.timer-smart-cube-device__modal')!;
     expect(dialog.textContent).toContain('GAN16ui');
     expect(dialog.textContent).not.toContain('Connected, unsolved');
-    expect(dialog.textContent).toContain('72%');
+    expect(dialog.querySelector('.timer-smart-cube-device__battery')?.getAttribute('aria-label')).toBe('Battery 72%');
     expect(dialog.textContent).not.toContain('gan-v4');
     expect(dialog.textContent).not.toContain('Last move');
     const button = (label: string) => [...dialog.querySelectorAll<HTMLButtonElement>('button')]
       .find((candidate) => candidate.textContent?.includes(label))!;
 
-    await act(async () => button('Reset cube').click());
+    await act(async () => button('Reset').click());
     expect(resetDeviceState).toHaveBeenCalledOnce();
     expect(resetState).not.toHaveBeenCalled();
     expect(requestState).not.toHaveBeenCalled();

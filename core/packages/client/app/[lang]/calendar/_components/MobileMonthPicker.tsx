@@ -88,7 +88,7 @@ export default function MobileMonthPicker(props: Props) {
           const date = monthDate.plus({ months: i - 12 });
           return <Fragment key={date.toISODate()}>
             {date.month === 1 && <span className="cal-mobile-year">{date.year}</span>}
-            <button type="button" className={i === 12 ? 'is-current' : ''} aria-label={date.setLocale(lang).toFormat('yyyy LLLL')} aria-pressed={i === 12} onClick={() => props.onMonth(date.toISODate()!)}>
+            <button type="button" className={`cal-mobile-month-option${i === 12 ? ' is-current' : ''}`} aria-label={date.setLocale(lang).toFormat('yyyy LLLL')} aria-pressed={i === 12} onClick={() => props.onMonth(date.toISODate()!)}>
               {date.setLocale(lang).toFormat('LLL')}
             </button>
           </Fragment>;

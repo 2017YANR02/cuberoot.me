@@ -75,7 +75,9 @@ describe('URL state convention — no raw history.* / popstate (use nuqs)', () =
     for (const forbidden of FORBIDDEN) {
       expect(src.replace(cleanup, ''), forbidden.name).not.toMatch(forbidden.re);
     }
-    expect(src.indexOf(cleanup)).toBeLessThan(src.indexOf('window.location.replace(checkout)'));
+    const navigation = src.indexOf('window.location.replace(destination)');
+    expect(navigation).toBeGreaterThan(-1);
+    expect(src.indexOf(cleanup)).toBeLessThan(navigation);
     expect(src).toContain('allow-raw-history:');
     expect(src).toContain('eslint-disable-next-line no-restricted-syntax, no-restricted-globals');
   });

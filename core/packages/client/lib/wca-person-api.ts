@@ -470,7 +470,7 @@ export interface PersonLiveResultsResponse {
 }
 
 export async function fetchWcaPersonLiveResults(wcaId: string): Promise<PersonLiveResultsResponse> {
-  const res = await fetch(apiUrl(`/v1/wca/person-live-results?wcaId=${encodeURIComponent(wcaId)}&v=1`));
+  const res = await fetch(apiUrl(`/v1/wca/person-live-results?wcaId=${encodeURIComponent(wcaId)}&v=2`));
   if (!res.ok) throw new Error(`person-live-results ${res.status}`);
   const json = (await res.json()) as { wcaId?: string; comps?: WcaCompetition[]; results?: (WcaResultRow & { source?: string })[] };
   const results: WcaResultRow[] = (json.results ?? []).map((r) => ({

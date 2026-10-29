@@ -304,7 +304,7 @@ export default function EventDialog(props: Props) {
             <Palette size={16} className="cal-field-icon" aria-hidden />
             <div className="cal-field-main cal-field-inline">
               {isMobile ? <div className="cal-event-calendar-chips" aria-label={tr({ zh: '日历', en: 'Calendar' })}>
-                {calendars.map((calendar) => <button key={calendar.id} type="button" disabled={readOnly} aria-pressed={calendar.id === d.calendarId} onClick={() => patch({ calendarId: calendar.id })}>
+                {calendars.map((calendar) => <button key={calendar.id} className="cal-event-calendar-chip" type="button" disabled={readOnly} aria-pressed={calendar.id === d.calendarId} onClick={() => patch({ calendarId: calendar.id })}>
                   <span className="cal-dot" style={{ background: colorHex(calendar.color, theme) }} aria-hidden />
                   {calendar.name || tr({ zh: '我的日历', en: 'My calendar' })}
                 </button>)}

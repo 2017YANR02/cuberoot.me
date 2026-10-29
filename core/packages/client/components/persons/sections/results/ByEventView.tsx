@@ -505,11 +505,6 @@ const EventRoundsList = memo(function EventRoundsList({
               >
                 {roundLabel(r.round_type_id)}
               </Link>
-              {r.live && (
-                <span className="wp-live-chip" title={tr({ zh: '直播成绩', en: 'Live result' })}>
-                  {tr({ zh: '直播', en: 'LIVE' })}
-                </span>
-              )}
               <PendingProposals pending={pending} eventId={eventId} isAdmin={admin} onModerated={refreshChanges} />
             </span>
             {hasReconStats && (

@@ -572,18 +572,18 @@ export default function CalendarClient() {
       <div className="cal-mobile-topbar" inert={isMobile && sidebarOpen}>
         {mobileSearch ? <>
           {/* allow-manual-search: 仅关闭搜索页面，结果已由输入实时更新。 */}
-          <button type="button" className="cal-mobile-glass cal-mobile-back" aria-label={tr({ zh: '关闭搜索', en: 'Close search' })} onClick={() => { setMobileSearch(false); setQuery(''); }}><ChevronLeft size={26} aria-hidden /></button>
+          <button type="button" className="cal-mobile-action cal-mobile-glass cal-mobile-back" aria-label={tr({ zh: '关闭搜索', en: 'Close search' })} onClick={() => { setMobileSearch(false); setQuery(''); }}><ChevronLeft size={26} aria-hidden /></button>
           <input ref={mobileSearchRef} className="cal-mobile-search-input" type="search" value={query} placeholder={tr({ zh: '搜索', en: 'Search' })} aria-label={tr({ zh: '搜索日程', en: 'Search events' })} onChange={(e) => setQuery(e.target.value)} />
           {query && <ClearButton onClick={() => setQuery('')} />}
         </> : <>
-          <button type="button" className="cal-mobile-glass cal-mobile-menu" aria-label={tr({ zh: '侧栏', en: 'Sidebar' })} aria-expanded={sidebarOpen} onClick={() => setSidebarOpen(true)}><Menu size={25} aria-hidden /></button>
-          <button type="button" className="cal-mobile-month-toggle" aria-expanded={monthExpanded} aria-controls="cal-mobile-month" onClick={() => setPickerMonth(monthExpanded ? null : `${focusKey.slice(0, 7)}-01`)}>
+          <button type="button" className="cal-mobile-action cal-mobile-glass cal-mobile-menu" aria-label={tr({ zh: '侧栏', en: 'Sidebar' })} aria-expanded={sidebarOpen} onClick={() => setSidebarOpen(true)}><Menu size={25} aria-hidden /></button>
+          <button type="button" className="cal-mobile-action cal-mobile-month-toggle" aria-expanded={monthExpanded} aria-controls="cal-mobile-month" onClick={() => setPickerMonth(monthExpanded ? null : `${focusKey.slice(0, 7)}-01`)}>
             <span>{mounted ? mobileMonthLabel : ''}</span><ChevronDown size={17} aria-hidden />
           </button>
           <div className="cal-mobile-glass cal-mobile-tools">
             {/* allow-manual-search: 仅打开搜索页面，输入 onChange 实时筛选日程。 */}
-            <button type="button" aria-label={tr({ zh: '搜索日程', en: 'Search events' })} onClick={() => { setMobileSearch(true); setPickerMonth(null); }}><Search size={25} aria-hidden /></button>
-            <button type="button" className="cal-mobile-today" aria-label={tr({ zh: '今天', en: 'Today' })} onClick={() => { if (now) gotoDate(now); setPickerMonth(null); }}><span>{todayKey ? Number(todayKey.slice(-2)) : ''}</span></button>
+            <button type="button" className="cal-mobile-action cal-mobile-tool" aria-label={tr({ zh: '搜索日程', en: 'Search events' })} onClick={() => { setMobileSearch(true); setPickerMonth(null); }}><Search size={25} aria-hidden /></button>
+            <button type="button" className="cal-mobile-action cal-mobile-tool cal-mobile-today" aria-label={tr({ zh: '今天', en: 'Today' })} onClick={() => { if (now) gotoDate(now); setPickerMonth(null); }}><span>{todayKey ? Number(todayKey.slice(-2)) : ''}</span></button>
           </div>
           <AppLink href="/account" className="cal-mobile-avatar" prefetch={false} aria-label={tr({ zh: '账号', en: 'Account' })}>
             {user?.avatar ? <img src={user.avatar} alt="" /> : <span>{user?.name?.slice(0, 1) || 'C'}</span>}
@@ -776,7 +776,7 @@ export default function CalendarClient() {
           mobileHeader={<div className="cal-mobile-sidebar-head">
             <h2>CubeRoot {tr({ zh: '日历', en: 'Calendar' })}</h2>
             <nav className="cal-mobile-views" aria-label={tr({ zh: '日历视图', en: 'Calendar view' })}>
-              {mobileViews.map(({ key, icon: Icon }) => <button key={key} type="button" className={view === key ? 'is-active' : ''} aria-pressed={view === key}
+              {mobileViews.map(({ key, icon: Icon }) => <button key={key} type="button" className={`cal-mobile-view${view === key ? ' is-active' : ''}`} aria-pressed={view === key}
                 onClick={() => { void setViewParam(key); store.setPrefs({ view: key }); setSidebarOpen(false); }}>
                 <Icon size={21} aria-hidden />{tr(VIEW_LABELS[key])}
               </button>)}
@@ -787,8 +787,8 @@ export default function CalendarClient() {
             </AppLink>
           </div>}
           mobileFooter={<div className="cal-mobile-sidebar-foot">
-            <button type="button" onClick={() => { setSidebarOpen(false); setPickerMonth(null); void setSettingsSection('general'); }}><Settings size={22} aria-hidden />{tr({ zh: '设置', en: 'Settings' })}</button>
-            <button type="button" onClick={() => { setSidebarOpen(false); setShareOpen(true); }}><Share2 size={22} aria-hidden />{tr({ zh: '对外展示', en: 'Share' })}</button>
+            <button type="button" className="cal-mobile-footer-action" onClick={() => { setSidebarOpen(false); setPickerMonth(null); void setSettingsSection('general'); }}><Settings size={22} aria-hidden />{tr({ zh: '设置', en: 'Settings' })}</button>
+            <button type="button" className="cal-mobile-footer-action" onClick={() => { setSidebarOpen(false); setShareOpen(true); }}><Share2 size={22} aria-hidden />{tr({ zh: '对外展示', en: 'Share' })}</button>
           </div>}
           calendars={calendars}
           hidden={hidden}

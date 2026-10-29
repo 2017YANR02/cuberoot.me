@@ -51,17 +51,17 @@ describe('shared smart-cube device modal', () => {
     const dialog = document.body.querySelector<HTMLElement>('[role="dialog"]')!;
     expect(dialog.textContent).toContain('GAN16ui');
     expect(dialog.textContent).not.toContain('Connected, unsolved');
-    expect(dialog.textContent).toContain('72%');
+    expect(dialog.querySelector('.timer-smart-cube-device__battery')?.getAttribute('aria-label')).toBe('Battery 72%');
     expect(dialog.textContent).not.toContain('Last move');
     expect(dialog.textContent).not.toContain("R'");
     expect(dialog.textContent).not.toContain('gan-v4');
 
     const button = (label: string) => [...dialog.querySelectorAll<HTMLButtonElement>('button')]
       .find((candidate) => candidate.textContent?.includes(label))!;
-    await act(async () => button('Reset cube').click());
+    await act(async () => button('Reset').click());
     expect(onResetState).toHaveBeenCalledOnce();
     expect(dialog.textContent).toContain('State reset');
-    expect(button('Reset cube').querySelector('svg')).toBeNull();
+    expect(button('Reset').querySelector('svg')).toBeNull();
     expect(dialog.textContent).not.toContain('Reset gyroscope');
     expect(onResetGyro).toHaveBeenCalledOnce();
 
@@ -121,7 +121,7 @@ describe('shared smart-cube device modal', () => {
     await act(async () => root.render(createElement(TimerSmartCubeDeviceModal, { ...props, snapshot: connectedSnapshot })));
     const connected = document.querySelector('.timer-smart-cube-device__state')!;
     expect(connected).not.toBe(pending);
-    expect(connected.textContent).toBe('Connected');
+    expect(connected.getAttribute('aria-label')).toBe('Connected');
     expect(connected.classList.contains('is-ok')).toBe(true);
     expect(connected.getAttribute('role')).toBe('status');
   });
@@ -174,7 +174,7 @@ describe('shared smart-cube device modal', () => {
 
     const dialog = document.body.querySelector<HTMLElement>('[role="dialog"]')!;
     expect(dialog.textContent).toContain('Disconnect');
-    expect(dialog.textContent).not.toContain('Reset cube');
+    expect(dialog.textContent).not.toContain('Reset');
     expect(dialog.textContent).not.toContain('Reset gyroscope');
   });
 
@@ -197,7 +197,7 @@ describe('shared smart-cube device modal', () => {
     const button = (label: string) => [...dialog.querySelectorAll<HTMLButtonElement>('button')]
       .find((candidate) => candidate.textContent?.includes(label))!;
 
-    await act(async () => button('Reset cube').click());
+    await act(async () => button('Reset').click());
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     expect(onClose).not.toHaveBeenCalled();
 

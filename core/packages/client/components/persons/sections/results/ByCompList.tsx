@@ -251,11 +251,6 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                       >
                         {roundLabel(r.round_type_id)}
                       </Link>
-                      {r.live && (
-                        <span className="wp-live-chip" title={tr({ zh: '直播成绩', en: 'Live result' })}>
-                          {tr({ zh: '直播', en: 'LIVE' })}
-                        </span>
-                      )}
                       <PendingProposals pending={pending} eventId={r.event_id} isAdmin={admin} onModerated={refreshChanges} />
                     </span>
                     {hasReconStats && (

@@ -46,7 +46,7 @@ export default function PositionDetail({ position }: { position: CareerPosition 
               {qr.data.map((row, y) => row.map((cell, x) => cell ? <rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" fill="black" /> : null))}
             </svg>
             <h2>{tr({ zh: '或使用链接分享', en: 'Or share the link' })}</h2>
-            <div className="careers-share-link"><input readOnly value={shareUrl} onFocus={event => event.currentTarget.select()} aria-label={tr({ zh: '职位链接', en: 'Position link' })} /><button type="button" onClick={() => { void copyPageLink(shareUrl).then(ok => setCopyState(ok ? 'success' : 'error')); }}>{copyState === 'success' ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: '复制', en: 'Copy' })}</button></div>
+            <div className="careers-share-link"><input className="careers-share-input" readOnly value={shareUrl} onFocus={event => event.currentTarget.select()} aria-label={tr({ zh: '职位链接', en: 'Position link' })} /><button className="careers-share-copy" type="button" onClick={() => { void copyPageLink(shareUrl).then(ok => setCopyState(ok ? 'success' : 'error')); }}>{copyState === 'success' ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: '复制', en: 'Copy' })}</button></div>
             {copyState === 'error' && <p role="alert">{tr({ zh: '复制失败，请手动选择链接复制。', en: 'Copy failed. Select the link to copy it.' })}</p>}
             {copyState === 'success' && <span className="sr-only" role="status">{tr({ zh: '链接已复制', en: 'Link copied' })}</span>}
           </div>}
