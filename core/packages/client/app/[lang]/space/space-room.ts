@@ -6,7 +6,7 @@ import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUnifo
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { loadSpaceBlender, SPACE_ASSET_SOURCE } from './space-blender';
-import { RUBIK_ATRIUM, VILLA_ROOMS, type RoomStyle, type WalkObstacle, type Environment } from './space-state';
+import { RUBIK_ATRIUM, RUBIK_RESIDENCE_ROOFS, rubikAtriumRoofHeight, VILLA_ROOMS, type RoomStyle, type WalkObstacle, type Environment } from './space-state';
 
 import { applyIslandMaterial, createIsland } from './space-island';
 
@@ -30,6 +30,7 @@ const ATRIUM_PALETTE = { ...PALETTES.minimal, stone: 0xe1dbce, wall: 0xf1eee5, f
 type V = [number, number, number];
 type ResidenceFinishes = {
   graphite: THREE.MeshStandardMaterial; red: THREE.MeshStandardMaterial; yellow: THREE.MeshStandardMaterial; blue: THREE.MeshStandardMaterial;
+  green: THREE.MeshStandardMaterial; orange: THREE.MeshStandardMaterial;
   foliage: THREE.MeshStandardMaterial; soil: THREE.MeshStandardMaterial;
   privacy: THREE.MeshPhysicalMaterial; rail: THREE.MeshPhysicalMaterial;
 };
@@ -339,8 +340,8 @@ export class SpaceRoom {
     this.box(43, 0.5, 31, -9, -0.26, -2.5, stone);
     for (const r of Object.values(VILLA_ROOMS)) {
       this.platform(r.width, r.depth, r.x, r.level * 5, r.z, r === VILLA_ROOMS.bathroom || r === VILLA_ROOMS.interior ? stone : wood);
-      // The Atrium owns its tall central roof; the existing side rooms keep theirs.
-      const ownsRoof = this.style === 'minimal' && (r === VILLA_ROOMS.interior || r === VILLA_ROOMS.garage || r === VILLA_ROOMS.cinema || r === VILLA_ROOMS.gym);
+      // The residence generates its actual roofs from RUBIK_RESIDENCE_ROOFS.
+      const ownsRoof = this.style === 'minimal';
       if (!ownsRoof) {
         this.box(r.width + 0.3, 0.23, r.depth + 0.3, r.x, r.ceiling + 0.1, r.z, wall, this.roof);
         for (const side of [-1, 1]) {
@@ -359,7 +360,8 @@ export class SpaceRoom {
           this.cylinder(0.068, 0.068, 0.008, r.x + dx * r.width * 0.32, r.ceiling - 0.064, r.z + dz * r.depth * 0.31, led, this.roof);
         }
       }
-      this.area([r.x, r.ceiling - 0.1, r.z], [r.x, r.level * 5, r.z], r.width * 0.7, r.depth * 0.55, 3);
+      const lightHeight = this.style === 'minimal' ? rubikAtriumRoofHeight(r.x, r.z) - .4 : r.ceiling - .1;
+      this.area([r.x, lightHeight, r.z], [r.x, r.level * 5, r.z], r.width * .7, r.depth * .55, 3);
     }
     this.floor.position.y = 0.018;
     const polish = stone.clone(); polish.onBeforeCompile = stone.onBeforeCompile; polish.customProgramCacheKey = stone.customProgramCacheKey; polish.transparent = true; polish.opacity = this.style === 'minimal' ? 0.16 : 0.55; polish.depthWrite = false;
@@ -371,7 +373,8 @@ export class SpaceRoom {
     const { wall, wood, metal, stone } = this;
     this.box(39, 9.5, 0.3, -9.5, 4.75, -16.1, wall);
     this.box(12, 4.7, 0.25, -23, 2.35, -6.1, wood);
-    this.box(8.8, 4.4, 0.22, -24.6, 7.2, -4.1, wood);
+    // The old bath partition stops before the suite's angled rear wall.
+    this.box(this.style === 'minimal' ? 5.35 : 8.8, 4.4, .22, this.style === 'minimal' ? -26.475 : -24.6, 7.2, -4.1, wood);
     if (this.root.userData.spaceArchitecture === 'rubik-atrium') this.rubikLeftWing();
     else {
       this.box(0.25, 4.5, 22, -29.15, 7.25, -5, wall);
@@ -412,7 +415,8 @@ export class SpaceRoom {
 
   private villaLivingRoom() {
     const { stone, wood, fabric, metal, led } = this;
-    this.box(13, 7.8, 0.22, -3.5, 3.9, -9.1, wood);
+    const ceiling = this.style === 'minimal' ? 5.55 : 7.8;
+    this.box(13, ceiling, .22, -3.5, ceiling / 2, -9.1, wood);
     this.box(12, 3.6, 0.08, -3.4, 3.4, -8.96, metal);
     this.mirror(11.8, 3.4, [-3.4, 3.4, -8.9]);
     this.box(12, 0.025, 0.03, -3.4, 5.18, -8.88, led);
@@ -427,8 +431,8 @@ export class SpaceRoom {
     this.cylinder(0.15, 0.21, 0.42, -5.3, 0.75, -4.3, this.ceramic);
     this.plant(8.2, 0, -6.3);
     // Recessed timber fins, a stone hearth and a lit niche give the tall room depth.
-    for (let x = -9.8; x < 3; x += 0.16) this.box(0.075, 2.3, 0.1, x, 6.62, -8.91, wood);
-    this.box(2.8, 7.8, 0.45, 8.35, 3.9, -8.85, stone);
+    for (let x = -9.8; x < 3; x += 0.16) this.box(.075, this.style === 'minimal' ? .3 : 2.3, .1, x, ceiling - 1.18, -8.91, wood);
+    this.box(2.8, ceiling, .45, 8.35, ceiling / 2, -8.85, stone);
     this.box(2.4, 0.8, 0.08, 8.35, 0.8, -8.59, this.dark);
     this.box(2.15, 0.015, 0.07, 8.35, 0.48, -8.52, led);
     this.box(3.2, 0.17, 0.85, 8.35, 0.16, -8.52, stone);
@@ -436,8 +440,8 @@ export class SpaceRoom {
     this.area([-9.7, 3.8, -2], [-3, 1.3, -5], 7, 4, 8, 0xcad8e5);
     for (let i = 0; i < 3; i++) {
       const ring = new THREE.Mesh(new THREE.TorusGeometry(1.15 + i * 0.22, 0.025, 8, 80), led);
-      ring.rotation.x = Math.PI / 2 + i * 0.16; ring.position.set(-3, 6.1 + i * 0.3, -3.4); this.root.add(ring);
-      this.line([[-3, 7.8, -3.4], [-3, 6.2, -3.4]], 0.008, metal);
+      ring.rotation.x = Math.PI / 2 + i * 0.16; ring.position.set(-3, ceiling - 1.7 + i * .3, -3.4); this.root.add(ring);
+      this.line([[-3, ceiling - .08, -3.4], [-3, ceiling - 1.6, -3.4]], .008, metal);
     }
   }
 
@@ -488,154 +492,68 @@ export class SpaceRoom {
     this.plant(-18.5, 0, -3.5, 0.65);
   }
 
-  /** Rubik Atrium: an architectural replacement, with the original floor plan below. */
+  /** The residence is two occupied levels; no stacked clerestory tower remains. */
   private rubikAtrium() {
-    const { width, depth, levels, heights, height, twist, courtWidth, courtDepth } = RUBIK_ATRIUM;
-    this.root.name = '方序馆 · Rubik Atrium';
+    this.root.name = '方序馆 · Rubik Residence';
     this.root.userData.spaceArchitecture = 'rubik-atrium';
     this.villaSideWingShell();
-    this.glass.color.setHex(0x9fbfce);
-    this.glass.roughness = 0.055;
-    this.glass.metalness = 0.05;
-    this.glass.ior = 1.45;
-    this.metal.metalness = 0.45; this.metal.roughness = 0.35;
-    const finishes = this.residenceFinishes(), graphite = finishes.graphite;
-    const colors = [finishes.red, finishes.yellow, finishes.blue];
-    // Shared warm-white frames and functional red/yellow/blue reveals unify all three wings.
+    this.glass.color.setHex(0xc0d9df);
+    this.glass.roughness = .055; this.glass.metalness = .05; this.glass.ior = 1.45;
+    this.metal.metalness = .45; this.metal.roughness = .35;
+    const finish = this.residenceFinishes();
+    const hall = this.residenceGroup('Low living pavilion');
+    // Four actual portals retain the water crossing, stair and leisure connections.
     const faces = [
-      { name: 'south', angle: 0, span: width, plane: depth / 2, portal: 1 },
-      { name: 'east', angle: Math.PI / 2, span: depth, plane: width / 2, portal: 0 },
-      { name: 'north', angle: Math.PI, span: width, plane: depth / 2, portal: 0 },
-      { name: 'west', angle: -Math.PI / 2, span: depth, plane: width / 2, portal: 2 },
+      { angle: 0, span: 20.4, plane: 9.2, portal: 1, height: 5.55 },
+      { angle: Math.PI / 2, span: 18.4, plane: 10.2, portal: 0, height: 6.05 },
+      { angle: Math.PI, span: 20.4, plane: 9.2, portal: 0, height: 5.55 },
+      { angle: -Math.PI / 2, span: 18.4, plane: 10.2, portal: 2, height: 5.55 },
     ];
-    for (let tier = 0; tier < 3; tier++) {
-      const storey = heights[tier];
-      const layer = new THREE.Group();
-      layer.name = tier === 0 ? 'Living room envelope' : `Atrium clerestory ${tier}`;
-      layer.position.y = levels[tier];
-      layer.rotation.y = tier === 1 ? twist : 0;
-      (tier === 0 ? this.root : this.roof).add(layer);
-      // Upper architecture is cut away and never becomes a false obstacle on the old bridge.
-      const piece = (w: number, h: number, d: number, x: number, y: number, z: number, mat: THREE.Material, parent: THREE.Group, round = 0.025) => {
-        const mesh = this.box(w, h, d, x, y, z, mat, tier === 0 ? parent : this.roof, round);
-        if (tier > 0) parent.add(mesh);
-        return mesh;
-      };
-      // Only the south elevation states the full three-bay rhythm; side galleries stay open.
-      if (tier < 2) faces.forEach((face, faceIndex) => {
-        const elevation = new THREE.Group();
-        elevation.name = `Atrium ${face.name} facade`;
-        elevation.userData.atriumBatch = true;
-        elevation.rotation.y = face.angle;
-        layer.add(elevation);
-        const bay = face.span / 3;
-        for (let col = 0; col < 3; col++) {
-          const x = -face.span / 2 + bay * (col + 0.5), z = face.plane;
-          const portal = tier === 0 && col === face.portal;
-          const accent = colors[(faceIndex * 3 + col + tier * 2) % colors.length];
-          // Real deep joints and separate structural members preserve open doorways.
-          piece(bay - 0.16, 0.42, 1.02, x, storey - 0.23, z, this.wall, elevation);
-          if (!portal) piece(bay - 0.16, 0.3, 0.78, x, 0.17, z, this.wall, elevation);
-          for (const side of [-1, 1]) {
-            piece(0.42, storey - 0.38, 1.0, x + side * (bay / 2 - 0.22), storey / 2, z, this.wall, elevation);
-            piece(0.045, storey - 0.55, 0.07, x + side * (bay / 2 - 0.47), storey / 2, z - 0.54, graphite, elevation);
-          }
-          if (portal) {
-            // All four old connections stay open at ground level.
-            if (faceIndex === 0) {
-              for (const side of [-1, 1]) for (let fin = 0; fin < 5; fin++) {
-                piece(0.075, 6.55, 0.38, x + side * (bay / 2 - 0.55 - fin * 0.13), 3.275, z - 0.22, this.wood, elevation);
-              }
-              piece(bay - 0.85, 0.2, 2.1, x, 6.7, z + 0.42, this.wood, elevation);
-              piece(bay - 1.1, 0.035, 0.06, x, 6.57, z + 1.3, this.led, elevation);
-            }
-            continue;
-          }
-          if (tier === 1) {
-            // This encloses a tall light court: no extra room floor, door or walk level.
-            piece(bay - 0.92, storey - 0.68, 0.035, x, storey / 2, z - 0.66, this.glass, elevation);
-            piece(0.045, storey - 0.72, 0.06, x, storey / 2, z - 0.6, graphite, elevation);
-            piece(0.18, storey - 0.82, 0.8, x - bay / 2 + 0.6, storey / 2, z - 0.35, accent, elevation);
-            piece(bay - 0.88, 0.12, 1.6, x, storey - 0.49, z - 0.48, this.wood, elevation);
-            continue;
-          }
-          const mode = (tier + col + faceIndex) % 3;
-          if (mode === 0) {
-            // A thick stone cell with an actual recessed window, not a colored sticker.
-            const opening = bay * 0.64, pier = (bay - 0.46 - opening) / 2;
-            for (const side of [-1, 1]) piece(pier, storey - 0.62, 0.7, x + side * (opening / 2 + pier / 2), storey / 2, z - 0.12, this.wall, elevation);
-            piece(opening, 1.15, 0.7, x, 0.88, z - 0.12, this.wall, elevation);
-            piece(opening, 0.72, 0.7, x, storey - 0.69, z - 0.12, this.wall, elevation);
-            piece(opening - 0.08, storey - 2.05, 0.035, x, storey / 2 + 0.09, z - 0.65, this.glass, elevation);
-            piece(0.24, storey - 1.8, 0.62, x - opening / 2 + 0.12, storey / 2, z - 0.46, accent, elevation);
-          } else if (mode === 1) {
-            piece(bay - 0.65, storey - 0.7, 0.035, x, storey / 2, z - 0.72, this.glass, elevation);
-            piece(bay - 0.64, 0.68, 0.22, x, 0.68, z - 0.85, graphite, elevation);
-            piece(bay - 1.05, 0.16, 0.62, x, storey - 0.68, z - 0.45, accent, elevation);
-            for (const side of [-1, 1]) piece(0.05, storey - 0.85, 0.08, x + side * bay / 6, storey / 2, z - 0.64, this.metal, elevation);
-          } else {
-            // Deep living-room glazing, with a colored jamb rather than a colored wall.
-            piece(bay - 0.9, storey - 0.72, 0.035, x, storey / 2, z - 0.86, this.glass, elevation);
-            piece(0.2, storey - 0.9, 0.95, x - bay / 2 + 0.56, storey / 2, z - 0.38, accent, elevation);
-            piece(bay - 0.85, 0.12, 1.6, x, storey - 0.52, z - 0.5, this.wood, elevation);
-            for (const side of [-1, 1]) piece(0.045, storey - 0.8, 0.06, x + side * bay / 6, storey / 2, z - 0.8, graphite, elevation);
-          }
+    faces.forEach((face, faceIndex) => {
+      const elevation = this.residenceGroup('Living pavilion elevation', hall);
+      elevation.rotation.y = face.angle;
+      const bay = face.span / 3, h = face.height;
+      for (let col = 0; col < 3; col++) {
+        const x = -face.span / 2 + bay * (col + .5), portal = col === face.portal;
+        // A single continuous dark frame replaces the previous repetitive white boxes.
+        this.residencePart(bay - .04, .28, .44, x, h - .14, face.plane, finish.graphite, elevation);
+        for (const side of [-1, 1]) this.residencePart(.12, h - .28, .24, x + side * (bay / 2 - .08), (h - .28) / 2, face.plane, finish.graphite, elevation, true);
+        if (portal) {
+          // Door lintels are above the 1.8m walking envelope; the full lower opening is clear.
+          this.residencePart(bay - .28, h - 3.05, .035, x, (h + 2.77) / 2, face.plane - .18, this.glass, elevation, true);
+        } else {
+          this.residencePart(bay - .28, h - .37, .035, x, (h - .37) / 2, face.plane - .18, this.glass, elevation, true);
         }
-      });
-      if (tier === 1) {
-        // The rotating layer has a real projecting terrace around the atrium void.
-        for (const side of [-1, 1]) {
-          piece(width, 0.24, (depth - courtDepth) / 2, 0, storey - 0.12, side * (depth + courtDepth) / 4, this.wall, layer);
-          piece((width - courtWidth) / 2, 0.24, courtDepth, side * (width + courtWidth) / 4, storey - 0.12, 0, this.wall, layer);
-        }
+        this.residencePart(bay - .24, .07, 1.25, x, h - .34, face.plane - .38, this.wood, elevation);
+        // Color is concentrated in a few deep end returns, not each window jamb.
+        if (col === 0 && faceIndex !== 3) this.residencePart(.3, h - .4, .72, x - bay / 2 + .31, (h - .4) / 2, face.plane, faceIndex === 0 ? finish.red : finish.blue, elevation, true);
       }
-      if (tier === 2) {
-        // An L-shaped retreat replaces the complete third row of the cube vocabulary.
-        // Empty front/east roof bays become terraces and let the central void read from outside.
-        const cells = [{ col: 0, row: 0 }, { col: 1, row: 0 }, { col: 1, row: 1 }];
-        const bayW = width / 3, bayD = depth / 3;
-        for (const cell of cells) {
-          const x = -width / 2 + bayW * (cell.col + .5), z = -depth / 2 + bayD * (cell.row + .5);
-          piece(bayW - .18, .25, bayD - .18, x, storey - .12, z, cell.row === 1 ? this.glass : this.wall, layer);
-          const edges = [
-            { dc: 0, dr: 1, angle: 0, span: bayW, offset: bayD / 2 },
-            { dc: 1, dr: 0, angle: Math.PI / 2, span: bayD, offset: bayW / 2 },
-            { dc: 0, dr: -1, angle: Math.PI, span: bayW, offset: bayD / 2 },
-            { dc: -1, dr: 0, angle: -Math.PI / 2, span: bayD, offset: bayW / 2 },
-          ];
-          edges.forEach((edge, edgeIndex) => {
-            if (cells.some(other => other.col === cell.col + edge.dc && other.row === cell.row + edge.dr)) return;
-            const reveal = new THREE.Group();
-            reveal.userData.atriumBatch = true;
-            reveal.position.set(x, 0, z); reveal.rotation.y = edge.angle; layer.add(reveal);
-            piece(edge.span - .16, .48, 1.0, 0, storey - .26, edge.offset, this.wall, reveal);
-            piece(edge.span - .75, .12, 1.2, 0, storey - .55, edge.offset - .28, cell.row === 1 ? finishes.blue : this.wood, reveal);
-            piece(edge.span - .16, .45, .75, 0, .23, edge.offset, this.wall, reveal);
-            for (const side of [-1, 1]) piece(.48, storey - .7, 1.0, side * (edge.span / 2 - .27), storey / 2, edge.offset, this.wall, reveal);
-            piece(edge.span - 1.05, storey - 1.02, .035, 0, storey / 2, edge.offset - .66, this.glass, reveal);
-            piece(.045, storey - 1.0, .06, 0, storey / 2, edge.offset - .6, graphite, reveal);
-            piece(.16, storey - 1.0, .6, -edge.span / 2 + .6, storey / 2, edge.offset - .3, colors[(cell.col + cell.row + edgeIndex) % colors.length], reveal);
-          });
-        }
-        // Low roof-garden edges emphasize the missing upper mass, without creating walkable levels.
-        for (const x of [4.6, 8.1]) {
-          this.residencePlanting(2.4, 1.05, x, levels[2], 6.6);
-        }
-      }
+    });
+    // Each physical roof is also the corresponding precipitation mask.
+    for (const r of RUBIK_RESIDENCE_ROOFS) {
+      const roof = this.residenceGroup(r.name + ' roof cassette', this.roof);
+      roof.position.set(r.x, r.height, r.z); roof.rotation.y = r.angle;
+      this.residencePart(r.width, .24, r.depth, 0, -.12, 0, this.wall, roof);
+      this.residencePart(r.width - .3, .08, r.depth - .3, 0, -.28, 0, this.wood, roof);
+      this.residencePart(r.width + .04, .10, .14, 0, -.08, r.depth / 2, finish.graphite, roof);
+      if (r.name.startsWith('Living')) this.residencePart(r.width - .5, .025, .035, 0, -.22, r.depth / 2 - .38, this.led, roof);
     }
-    // Timber threshold is flush with the existing terrace and remains a placement surface.
+    // A narrow vertical slice articulates the unequal living roof heights.
+    const slot = this.residenceGroup('Living roof shift and light slot', this.roof);
+    this.residencePart(.08, .5, 17.1, .03, 5.78, 0, finish.graphite, slot);
+    this.residencePart(.035, .42, 16.8, .08, 5.78, 0, this.glass, slot);
     this.platform(5.2, 3.2, 0, 0, 10.5, this.wood);
-    this.area([0, 6.45, 9.3], [0, 1, 6.4], 4.6, 0.45, 8);
-    this.area([0, height - 0.65, 0], [0, 0, 0], 5.8, 5.3, 5);
-
+    this.area([0, 5.05, 8.8], [0, 1, 5.5], 4.6, .4, 8);
   }
 
   private residenceFinishes(): ResidenceFinishes {
     return this.residenceFinishesCache ??= {
       graphite: new THREE.MeshStandardMaterial({ color: 0x29343b, roughness: .55, metalness: .18 }),
-      red: new THREE.MeshStandardMaterial({ color: 0xc74635, roughness: .65 }),
-      yellow: new THREE.MeshStandardMaterial({ color: 0xd8ae35, roughness: .65 }),
-      blue: new THREE.MeshStandardMaterial({ color: 0x246694, roughness: .6 }),
+      red: new THREE.MeshStandardMaterial({ color: 0xc73b30, roughness: .3, metalness: .08 }),
+      yellow: new THREE.MeshStandardMaterial({ color: 0xe3b527, roughness: .3, metalness: .08 }),
+      blue: new THREE.MeshStandardMaterial({ color: 0x1659a2, roughness: .3, metalness: .08 }),
+      green: new THREE.MeshStandardMaterial({ color: 0x277d50, roughness: .3, metalness: .08 }),
+      orange: new THREE.MeshStandardMaterial({ color: 0xd87824, roughness: .3, metalness: .08 }),
       foliage: new THREE.MeshStandardMaterial({ color: 0x607957, roughness: 1 }),
       soil: new THREE.MeshStandardMaterial({ color: 0x4a493e, roughness: 1 }),
       privacy: new THREE.MeshPhysicalMaterial({ color: 0xc2d7dd, roughness: .8, transparent: true, opacity: .84, depthWrite: false, side: THREE.DoubleSide }),
@@ -703,89 +621,125 @@ export class SpaceRoom {
 
   private rubikLeftWing() {
     const finish = this.residenceFinishes();
-    // Study and bedroom still occupy their original ground / y=5 rectangles.
-    this.box(.25, 4.5, 22, -29.15, 7.25, -5, this.wall);
+    // The bath remains full-size and private; its bridge doorway stays at z=-12.5.
+    this.box(.25, 4.5, 13.55, -29.15, 7.25, -9.225, this.wall);
     this.box(.24, 4.65, 16, -29.12, 2.325, 2, this.wall);
-    for (let bay = 0; bay < 3; bay++) {
-      const x = -27 + bay * 4;
-      this.residenceBay('Study south glazing', x, 0, 10.12, 4, 4.75, 0, [finish.yellow, finish.red, finish.blue][bay]);
-      this.residenceBay('Bedroom recessed balcony door', x, 5, 10.12, 4, 4.4, 0, [finish.yellow, finish.red, finish.blue][bay],
-        { inset: 1.47, ...(bay === 1 ? { opening: 2.4 } : {}) });
-    }
-    // The study's original water-court entrance at z=5 remains a real open passage.
-    this.residenceBay('Study court window south of entry', -16.85, 0, 8, 4, 4.75, Math.PI / 2, finish.red, { inset: .08, shallow: true });
-    this.residenceBay('Study court window north of entry', -16.85, 0, -1, 10, 4.75, Math.PI / 2, finish.blue, { inset: .08, shallow: true });
-    const lintel = this.residenceGroup('Study court entrance lintel');
-    this.residencePart(.95, .34, 2.0, -16.85, 4.57, 5, this.wall, lintel);
-    this.residencePart(.76, .08, 1.85, -16.85, 4.34, 5, this.wood, lintel);
-    // Bath privacy is attached to the real bath. The bridge door gap is unchanged.
     for (const [centre, width] of [[-14.85, 2.3], [-7.65, 7.3]]) {
       this.residenceBay('Bathroom frosted high window', -16.85, 5, centre, width, 4.4, Math.PI / 2, finish.yellow,
         { inset: .08, sill: 2.45, privacy: true, shallow: true });
     }
     this.box(.18, 1.6, 2.4, -16.94, 8.6, -12.5, this.wall);
-    const bathFins = this.residenceGroup('Bathroom privacy fins');
-    for (let z = -15.6; z < -4.4; z += .38) if (z < -13.7 || z > -11.3) {
-      this.residencePart(.48, 1.55, .065, -16.49, 8.13, z, this.wall, bathFins);
+    // Study's side entrance is still the original clear water-court crossing at z=5.
+    this.residenceBay('Study court window south of entry', -16.85, 0, 8, 4, 4.75, Math.PI / 2, finish.red, { inset: .08, shallow: true });
+    this.residenceBay('Study court window north of entry', -16.85, 0, -1, 10, 4.75, Math.PI / 2, finish.blue, { inset: .08, shallow: true });
+    const base = this.residenceGroup('Graphite study base and splayed support');
+    for (let bay = 0; bay < 3; bay++) {
+      const x = -27 + bay * 4;
+      this.residencePart(3.88, 4.5, .035, x, 2.25, 9.92, this.glass, base, true);
+      this.residencePart(.065, 4.65, .13, x - 1.95, 2.325, 10, finish.graphite, base, true);
     }
-    this.residenceBay('Bedroom court glazing', -16.85, 5, 2.35, 12.7, 4.4, Math.PI / 2, finish.blue, { inset: .08, shallow: true });
-    // Balcony floor is the existing bedroom floor: no projection beyond its z=10 limit.
-    const balcony = this.residenceGroup('Bedroom accessible balcony');
-    this.residencePart(11.45, .02, 1.3, -23, 5.012, 9.25, this.wood, balcony);
-    this.residencePart(11.5, 1.05, .03, -23, 5.57, 9.92, finish.rail, balcony, true);
-    this.residencePart(11.5, .045, .07, -23, 6.11, 9.92, finish.graphite, balcony);
-    for (const x of [-28.7, -25.8, -22.9, -20, -17.3]) this.residencePart(.045, 1.12, .07, x, 5.56, 9.92, finish.graphite, balcony, true);
-    for (const x of [-28.85, -17.15]) this.residencePart(.03, 1.05, 1.3, x, 5.57, 9.25, finish.rail, balcony, true);
-    this.residencePlanting(1.5, .45, -27.5, 5.02, 9.48, balcony);
-    this.residencePlanting(1.5, .45, -18.5, 5.02, 9.48, balcony);
-    const cap = this.residenceGroup('Residential wing roof and timber soffit', this.roof);
-    this.residencePart(12.6, .28, 14.55, -23, 9.55, 3, this.wall, cap);
-    this.residencePart(11.9, .09, 1.5, -23, 9.32, 9.6, this.wood, cap);
-    this.residencePart(12.5, .32, .9, -23, 4.85, 10.15, this.wall, cap);
-    this.residencePart(11.9, .08, 1.1, -23, 4.63, 9.97, this.wood, cap);
-    this.residencePlanting(9.2, .8, -23.2, 9.69, 8.55);
-    this.residencePlanting(1.0, 8.0, -28.2, 9.69, 2.5);
-    this.residencePlanting(9.0, .8, -23.1, 9.62, -14.7);
+    this.residencePart(12.3, .33, 1.1, -23, 4.67, 10.05, finish.graphite, base);
+    this.residencePart(2.0, 4.85, 1.0, -28.0, 2.425, 8.8, finish.graphite, base, true);
+    const support = this.residencePart(.78, 4.8, 1.1, -18.7, 2.43, 8.6, this.wall, base, true);
+    support.rotation.z = -.14;
+    this.residencePart(.035, 3.7, .045, -27.0, 2.05, 9.34, this.led, base);
+
+    // The nine-facelet upper body is 80% of the old bedroom width and depth.
+    // It turns around the existing floor, whose remaining area becomes a terrace.
+    const { suiteWidth: width, suiteDepth: depth, suiteX, suiteZ, twist } = RUBIK_ATRIUM;
+    const cube = this.residenceGroup('Reduced turning nine-facelet suite');
+    cube.position.set(suiteX, 5, suiteZ); cube.rotation.y = twist;
+    const faces = [
+      { span: width, plane: depth / 2, angle: 0 },
+      { span: depth, plane: width / 2, angle: Math.PI / 2 },
+      { span: width, plane: depth / 2, angle: Math.PI },
+      { span: depth, plane: width / 2, angle: -Math.PI / 2 },
+    ];
+    const faceColors = [
+      [this.wall, null, finish.yellow, this.wall, null, this.wall, this.wall, finish.blue, finish.red],
+      [this.wall, null, finish.red, this.wall, null, this.wall, this.wall, finish.green, this.wall],
+      [null, this.wall, this.wall, null, this.wall, this.wall, this.wall, this.wall, this.wall],
+      [this.wall, finish.orange, this.wall, this.wall, null, this.wall, finish.blue, this.wall, this.wall],
+    ];
+    faces.forEach((face, faceIndex) => {
+      const elevation = this.residenceGroup('Suite facelet elevation', cube);
+      elevation.rotation.y = face.angle;
+      const bay = face.span / 3, rowHeight = 4.4 / 3;
+      for (let row = 0; row < 3; row++) for (let col = 0; col < 3; col++) {
+        const x = -face.span / 2 + bay * (col + .5), y = rowHeight * (row + .5);
+        const material = faceColors[faceIndex][row * 3 + col];
+        const portal = (faceIndex < 2 && col === 1 || faceIndex === 2 && col === 0) && row < 2;
+        if (portal) {
+          // Two stacked missing facelets form a real, human-height door to the terrace/bath.
+          const sideWidth = (bay - 2.4) / 2;
+          for (const side of [-1, 1]) this.residencePart(sideWidth, rowHeight - .06, .14, x + side * (1.2 + sideWidth / 2), y, face.plane, finish.graphite, elevation, true);
+          continue;
+        }
+        if (material) {
+          this.residencePart(bay - .025, rowHeight - .025, .20, x, y, face.plane, finish.graphite, elevation, true, .055);
+          this.residencePart(bay - .105, rowHeight - .105, .22, x, y, face.plane + .04, material, elevation, true, .07);
+        } else {
+          this.residencePart(bay - .12, rowHeight - .12, .035, x, y, face.plane - .24, this.glass, elevation, true);
+          for (const side of [-1, 1]) this.residencePart(.06, rowHeight, .14, x + side * (bay / 2 - .035), y, face.plane, finish.graphite, elevation, true);
+          for (const side of [-1, 1]) this.residencePart(bay, .06, .14, x, y + side * (rowHeight / 2 - .035), face.plane, finish.graphite, elevation);
+        }
+      }
+    });
+    const soffit = this.residenceGroup('Turned suite timber soffit', this.roof);
+    soffit.position.set(suiteX, 5, suiteZ); soffit.rotation.y = twist;
+    this.residencePart(width, .18, depth, 0, -.13, 0, finish.graphite, soffit);
+    this.residencePart(width - .18, .065, depth - .18, 0, -.25, 0, this.wood, soffit);
+    this.residencePart(width - .5, .025, .04, 0, -.29, depth / 2 - .25, this.led, soffit);
+
+    // Guard all newly exposed edges of the unchanged y=5 floor plate.
+    const balcony = this.residenceGroup('Accessible suite terrace and guards');
+    this.residencePart(11.5, .025, 1.5, -23, 5.012, 9.15, this.wood, balcony);
+    for (const x of [-28.94, -17.06]) {
+      this.residencePart(.035, 1.05, 13.8, x, 5.57, 3.0, finish.rail, balcony, true);
+      this.residencePart(.06, .045, 13.8, x, 6.11, 3.0, finish.graphite, balcony);
+    }
+    this.residencePart(11.86, 1.05, .035, -23, 5.57, 9.94, finish.rail, balcony, true);
+    this.residencePart(11.86, .045, .07, -23, 6.11, 9.94, finish.graphite, balcony);
+    this.residencePlanting(2.0, .5, -26.7, 5.02, 9.35, balcony);
+    this.residencePlanting(2.0, .5, -19.6, 5.02, 9.35, balcony);
+    this.residencePlanting(8.8, .7, -23.0, 9.68, -14.9);
   }
 
   private rubikLeisureShell() {
     const finish = this.residenceFinishes();
-    const shell = this.residenceGroup('Garage cinema gym enclosure');
+    const shell = this.residenceGroup('Stepped leisure pavilions');
     this.residencePart(20.3, 4.2, .25, 20, 2.1, -16.1, this.wall, shell, true);
-    // One wide glazed sectional garage door, without a middle structural column.
     this.residenceBay('Garage wide sectional door', 30.14, 0, -10, 12, 4.2, Math.PI / 2, finish.blue, { glazing: finish.rail });
-    const door = this.residenceGroup('Garage door joints');
-    for (const y of [.9, 1.7, 2.5, 3.3]) this.residencePart(.06, .045, 10.95, 29.7, y, -10, finish.graphite, door);
-    // The cinema retains its opaque screen wall; only a narrow high slot admits light.
+    for (const y of [.9, 1.7, 2.5, 3.3]) this.residencePart(.06, .045, 10.95, 29.7, y, -10, finish.graphite, shell);
+    // The screen is behind this solid wall; the cinema is never a glass display bay.
     this.residenceBay('Cinema opaque acoustic frontage', 30.14, 0, 3, 14, 4.2, Math.PI / 2, finish.red, { inset: .08, sill: 3.35, privacy: true });
-    const screening = this.residenceGroup('Cinema exterior timber screen');
-    for (let z = -3.2; z < 9.4; z += .3) this.residencePart(.12, 2.75, .06, 30.31, 1.72, z, this.wood, screening);
-    // Gym glazing follows the original z=10..24 room, not the cinema or garage.
-    for (const z of [13.5, 20.5]) this.residenceBay('Gym east daylight window', 30.14, 0, z, 7, 4.2, Math.PI / 2, finish.blue);
-    for (let bay = 0; bay < 3; bay++) this.residenceBay('Gym south daylight window', 15 + bay * 6, 0, 24.12, 6, 4.2, 0, [finish.yellow, finish.blue, finish.red][bay]);
-    // Separate roof cassettes keep every functional room sheltered at its old ceiling.
-    const roof = this.residenceGroup('Leisure wing planted roof', this.roof);
-    for (const key of ['garage', 'cinema', 'gym'] as const) {
-      const r = VILLA_ROOMS[key], width = r.width + .55, depth = r.depth + .45;
-      if (key !== 'gym') this.residencePart(width, .25, depth, r.x, 4.32, r.z, this.wall, roof);
-      else {
-        const strip = 2.4;
-        for (const side of [-1, 1]) this.residencePart((width - strip) / 2, .25, depth, r.x + side * (width + strip) / 4, 4.32, r.z, this.wall, roof);
-        this.residencePart(strip, .1, depth - .45, r.x, 4.36, r.z, this.glass, roof);
-      }
-      for (const side of [-1, 1]) {
-        this.residencePart(.28, .46, depth, r.x + side * width / 2, 4.34, r.z, this.wall, roof);
-        this.residencePart(width, .46, .28, r.x, 4.34, r.z + side * depth / 2, this.wall, roof);
-      }
-      this.residencePart(.1, .1, depth - .3, 29.65, 4.02, r.z, this.wood, roof);
-      this.residencePlanting(1.05, r.depth - 2.2, 28.75, 4.45, r.z);
+    for (const z of [-.55, 6.55]) {
+      this.residencePart(.3, .72, 6.9, 30.2, 4.56, z, finish.red, shell);
+      this.residencePart(.34, .06, 6.98, 30.2, 4.95, z, finish.graphite, shell);
     }
-    // A partial light timber trellis and planted strips articulate the long roof.
-    for (let z = -2.8; z < 8.8; z += .48) this.residencePart(5.1, .11, .1, 17.4, 4.66, z, this.wood, roof);
-    this.residencePlanting(10.2, .85, 21.0, 4.45, -14.9);
-    this.residencePlanting(10.2, .85, 20.4, 4.45, 9.05);
-    this.residencePlanting(9.8, .85, 20.4, 4.45, 22.9);
-    this.residencePart(18.4, .13, 1.1, 21, 4.01, 23.95, this.wood, roof);
+    // A low glass pavilion faces the court. Its upper volume is roof only, not another room.
+    for (const z of [13.5, 20.5]) {
+      this.residencePart(.035, 4.05, 6.85, 30.02, 2.025, z, this.glass, shell, true);
+      for (const end of [-1, 1]) this.residencePart(.14, 4.2, .08, 30.08, 2.1, z + end * 3.48, finish.graphite, shell, true);
+    }
+    for (let bay = 0; bay < 3; bay++) {
+      const x = 15 + bay * 6;
+      this.residencePart(5.88, 4.05, .035, x, 2.025, 24, this.glass, shell, true);
+      this.residencePart(.08, 4.2, .14, x - 2.96, 2.1, 24.08, finish.graphite, shell, true);
+    }
+    this.residencePart(18.2, .34, .54, 21, 4.4, 24.12, this.wall, shell);
+    this.residencePart(.35, 4.2, 1.35, 30.16, 2.1, 23.48, finish.green, shell, true, .06);
+    this.residencePart(1.25, 4.2, .32, 28.9, 2.1, 24.14, finish.orange, shell, true, .06);
+    // Large offset roof bands give the three real rooms different silhouettes.
+    for (const r of RUBIK_RESIDENCE_ROOFS.filter(r => ['Garage', 'Cinema', 'Gym'].includes(r.name))) {
+      const fascia = this.residenceGroup(r.name + ' recessed roof band', this.roof);
+      this.residencePart(.22, .34, r.depth, r.x + r.width / 2, r.height - .17, r.z, r.name === 'Cinema' ? finish.red : this.wall, fascia);
+      this.residencePart(r.width, .34, .22, r.x, r.height - .17, r.z + r.depth / 2, this.wall, fascia);
+      this.residencePart(r.width - .5, .025, .04, r.x, r.height - .36, r.z + r.depth / 2 - .33, this.led, fascia);
+      this.residencePlanting(.9, r.depth - 2.2, 28.85, r.height, r.z);
+    }
+    this.residencePlanting(9.8, .7, 20.4, 5, 8.85);
+    this.residencePlanting(9.8, .7, 20.4, 4.6, 22.85);
   }
 
   private rubikCourtyard() {
@@ -943,14 +897,25 @@ export class SpaceRoom {
     for (let x = -27.5; x < -20.8; x += 0.24) this.box(0.09, 2.9, 0.06, x, 6.6, -3.88, this.wood);
     this.box(6.8, 0.022, 0.03, -24.3, 7.92, -3.84, this.led);
     this.area([-24.3, 7.6, -3.7], [-24.3, 5.7, 0], 5, 1, 7);
-    for (let z = 0; z < 8; z += 1.2) { this.box(0.72, 3.7, 1.15, -28.45, 7.05, z, this.wood); this.box(0.05, 0.8, 0.035, -28.05, 6.95, z + 0.38, this.metal); }
-    this.sofa(-19.4, 5, 7.7, 2);
-    this.area([-23, 8.4, 9.2], [-24, 5.8, 0], 10, 2, 4.5, 0xd6e4ff);
+    for (let z = 0; z < (this.style === 'minimal' ? 6.1 : 8); z += 1.2) {
+      const x = this.style === 'minimal' ? -27.35 : -28.45;
+      this.box(.72, 3.7, 1.15, x, 7.05, z, this.wood); this.box(.05, .8, .035, x + .4, 6.95, z + .38, this.metal);
+    }
+    this.sofa(-19.4, 5, this.style === 'minimal' ? 5.3 : 7.7, 2);
+    this.area([-23, 8.4, this.style === 'minimal' ? 6.55 : 9.2], [-24, 5.8, 0], this.style === 'minimal' ? 8 : 10, 2, 4.5, 0xd6e4ff);
     // Pleated sheers keep the view open, with fabric depth at the sides of the glazing.
-    for (const x of [-28.1, -17.9]) {
+    for (const x of this.style === 'minimal' ? [-27.0, -19.0] : [-28.1, -17.9]) {
       const geo = new THREE.PlaneGeometry(1.25, 4.1, 48, 1), p = geo.attributes.position;
       for (let i = 0; i < p.count; i++) p.setZ(i, Math.sin(p.getX(i) * 27) * 0.065);
-      geo.computeVertexNormals(); const curtain = new THREE.Mesh(geo, this.material(0xe2ddcf, 'fabric', 1)); curtain.material.side = THREE.DoubleSide; curtain.position.set(x, 7.1, this.style === 'minimal' ? 8.5 : 9.76); curtain.castShadow = true; this.root.add(curtain);
+      geo.computeVertexNormals(); const curtain = new THREE.Mesh(geo, this.material(0xe2ddcf, 'fabric', 1)); curtain.material.side = THREE.DoubleSide; curtain.position.set(x, 7.1, this.style === 'minimal' ? 6.65 : 9.76); curtain.castShadow = true; this.root.add(curtain);
+    }
+    if (this.style === 'minimal') {
+      // Furniture and curtains follow the suite rotation, retaining their human scale.
+      const suiteContents = this.residenceGroup('Turning suite furnishings');
+      suiteContents.position.set(RUBIK_ATRIUM.suiteX, 5, RUBIK_ATRIUM.suiteZ);
+      suiteContents.updateWorldMatrix(true, false);
+      for (const item of this.root.children.slice(furnitureStart, -1)) suiteContents.attach(item);
+      suiteContents.rotation.y = RUBIK_ATRIUM.twist;
     }
   }
 

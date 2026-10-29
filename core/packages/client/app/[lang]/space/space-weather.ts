@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { WEATHER_NOISE_GLSL as noiseShader, precipitationGeometry, debrisFlowSample } from '@/lib/three-weather';
 import { WeatherSystem } from './abyssal/WeatherSystem.js';
-import { RUBIK_ATRIUM, rubikAtriumRoofHeight, VILLA_ROOMS, validSceneTime, type RoomStyle, type Weather } from './space-state';
+import { RUBIK_RESIDENCE_ROOFS, rubikAtriumRoofHeight, VILLA_ROOMS, validSceneTime, type RoomStyle, type Weather } from './space-state';
 
 export function sceneDaylight(timeOfDay: string) {
   if (!validSceneTime(timeOfDay)) throw new Error('timeOfDay');
@@ -36,9 +36,9 @@ const presets = {
 
 export function weatherRoof(x: number, z: number, style: RoomStyle, atrium = false) {
   if (style === 'company') return x >= -26.2 && x <= 0.9 && z >= -5.9 && z <= 13.1 ? 3.8 : -120;
-  return Object.values(VILLA_ROOMS).reduce((height, r) => atrium && r === VILLA_ROOMS.interior ? height
-    : Math.abs(x - r.x) <= r.width / 2 + .35 && Math.abs(z - r.z) <= r.depth / 2 + .35 ? Math.max(height, r.ceiling) : height,
-    atrium ? rubikAtriumRoofHeight(x, z) : -120);
+  if (atrium) return rubikAtriumRoofHeight(x, z);
+  return Object.values(VILLA_ROOMS).reduce((height, r) => Math.abs(x - r.x) <= r.width / 2 + .35 && Math.abs(z - r.z) <= r.depth / 2 + .35
+    ? Math.max(height, r.ceiling) : height, -120);
 }
 const roofShader = `
 uniform float uCompany, uAtrium;
@@ -46,14 +46,14 @@ float roofAt(vec2 p) {
   if(uCompany > 0.5) return p.x >= -26.2 && p.x <= 0.9 && p.y >= -5.9 && p.y <= 13.1 ? 3.8 : -120.;
   float h = -120.;
   if(uAtrium > 0.5) {
-    bool topBack = p.x >= ${(-RUBIK_ATRIUM.width / 2 - .35).toFixed(2)} && p.x <= ${(RUBIK_ATRIUM.width / 6 + .35).toFixed(2)} && p.y >= ${(-RUBIK_ATRIUM.depth / 2 - .35).toFixed(2)} && p.y <= ${(-RUBIK_ATRIUM.depth / 6 + .35).toFixed(2)};
-    bool topLantern = abs(p.x) <= ${(RUBIK_ATRIUM.width / 6 + .35).toFixed(2)} && abs(p.y) <= ${(RUBIK_ATRIUM.depth / 6 + .35).toFixed(2)};
-    if(topBack || topLantern) h = ${RUBIK_ATRIUM.height.toFixed(2)};
-    vec2 rotated = vec2(${Math.cos(RUBIK_ATRIUM.twist).toFixed(8)} * p.x - ${Math.sin(RUBIK_ATRIUM.twist).toFixed(8)} * p.y, ${Math.sin(RUBIK_ATRIUM.twist).toFixed(8)} * p.x + ${Math.cos(RUBIK_ATRIUM.twist).toFixed(8)} * p.y);
-    if(abs(rotated.x) <= ${(RUBIK_ATRIUM.width / 2 + .35).toFixed(2)} && abs(rotated.y) <= ${(RUBIK_ATRIUM.depth / 2 + .35).toFixed(2)}
-      && (abs(rotated.x) >= ${(RUBIK_ATRIUM.courtWidth / 2 - .35).toFixed(2)} || abs(rotated.y) >= ${(RUBIK_ATRIUM.courtDepth / 2 - .35).toFixed(2)})) h = max(h, ${RUBIK_ATRIUM.levels[2].toFixed(2)});
+    ${RUBIK_RESIDENCE_ROOFS.map(r => `{
+      vec2 d = p - vec2(${r.x.toFixed(2)}, ${r.z.toFixed(2)});
+      vec2 q = vec2(${Math.cos(r.angle).toFixed(12)} * d.x - ${Math.sin(r.angle).toFixed(12)} * d.y, ${Math.sin(r.angle).toFixed(12)} * d.x + ${Math.cos(r.angle).toFixed(12)} * d.y);
+      if(abs(q.x) <= ${(r.width / 2).toFixed(3)} && abs(q.y) <= ${(r.depth / 2).toFixed(3)}) h = max(h, ${r.height.toFixed(2)});
+    }`).join('\n')}
+    return h;
   }
-  ${Object.values(VILLA_ROOMS).map(r => `if(${r === VILLA_ROOMS.interior ? 'uAtrium < .5 && ' : ''}abs(p.x - ${r.x.toFixed(2)}) <= ${(r.width / 2 + .35).toFixed(2)} && abs(p.y - ${r.z.toFixed(2)}) <= ${(r.depth / 2 + .35).toFixed(2)}) h = max(h, ${r.ceiling.toFixed(2)});`).join('\n')}
+  ${Object.values(VILLA_ROOMS).map(r => `if(abs(p.x - ${r.x.toFixed(2)}) <= ${(r.width / 2 + .35).toFixed(2)} && abs(p.y - ${r.z.toFixed(2)}) <= ${(r.depth / 2 + .35).toFixed(2)}) h = max(h, ${r.ceiling.toFixed(2)});`).join('\n')}
   return h;
 }`;
 

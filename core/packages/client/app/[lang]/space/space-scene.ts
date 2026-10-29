@@ -18,7 +18,7 @@ import Sq1Cube from '@cuberoot/puzzle-render-core/engine/sq1/Sq1Cube';
 import PyraCube from '@cuberoot/puzzle-render-core/engine/pyra/PyraCube';
 import MegaminxCube from '@cuberoot/puzzle-render-core/engine/mega/MegaminxCube';
 import SkewbCube from '@cuberoot/puzzle-render-core/engine/skewb/SkewbCube';
-import { INITIAL_LAYOUT, RUBIK_ATRIUM, movePosition, PEDESTALS, VILLA_ROOMS, floorHeight, walkFloor, walkStep, type Destination, type Level, type Layout, type RiverColor, type SpaceObject, type Vec3 } from './space-state';
+import { INITIAL_LAYOUT, RUBIK_RESIDENCE_ROOFS, movePosition, PEDESTALS, VILLA_ROOMS, floorHeight, walkFloor, walkStep, type Destination, type Level, type Layout, type RiverColor, type SpaceObject, type Vec3 } from './space-state';
 import { SpaceRoom } from './space-room';
 import roomCameras from './space-room-cameras.json';
 import { pickTurn, turnBusy, turnPuzzle } from './space-turn';
@@ -747,7 +747,9 @@ export class SpaceScene {
   private cameraRoomBounds() {
     if (this.freeCamera) return null;
     const r = VILLA_ROOMS[this.currentView as keyof typeof VILLA_ROOMS];
-    const ceiling = this.currentView === 'interior' && this.room?.root.userData.spaceArchitecture === 'rubik-atrium' ? RUBIK_ATRIUM.height : r?.ceiling;
+    // The lower living roof governs orbit height on both sides of the stepped roof.
+    const ceiling = this.currentView === 'interior' && this.room?.root.userData.spaceArchitecture === 'rubik-atrium'
+      ? Math.min(...RUBIK_RESIDENCE_ROOFS.filter(roof => roof.name.startsWith('Living')).map(roof => roof.height)) - .32 : r?.ceiling;
     return r && ceiling !== undefined && this.room?.style !== 'company' ? new THREE.Box3(
       new THREE.Vector3(r.x - r.width / 2 + .3, r.level * 5 + .4, r.z - r.depth / 2 + .3),
       new THREE.Vector3(r.x + r.width / 2 - .3, ceiling - .3, r.z + r.depth / 2 - .3)) : null;
@@ -843,8 +845,8 @@ export class SpaceScene {
     const cameras = roomCameras[this.room?.style === 'company' ? 'company' : 'villa'] as Partial<Record<View, [Vec3, Vec3]>>;
     if (cameras[view]) { position.set(...cameras[view][0]); target.set(...cameras[view][1]); }
     if (view === 'exterior' && this.room?.root.userData.spaceArchitecture === 'rubik-atrium') {
-      position.set(mobile ? -48 : -28, mobile ? 31 : 20, mobile ? 80 : 52);
-      target.set(0, 7, 0);
+      position.set(mobile ? -48 : -28, mobile ? 27 : 16.5, mobile ? 80 : 52);
+      target.set(0, 4.4, 2);
     }
     const lighting: Partial<Record<View, [Vec3, Vec3]>> = this.room?.style === 'company' ? {
       interior: [[-23, 2.65, 2], [-23, 0, 1.5]], study: [[-13, 3.15, 2], [-13, 0, -1]], courtyard: [[-17, 3.2, 11], [-17, 0, 9]],
@@ -852,6 +854,7 @@ export class SpaceScene {
       interior: [[-7, 6.8, -3], [-4, 0, -6]], study: [[-24, 4.4, 2], [-25, 0, 0]], bedroom: [[-23, 8.8, 2], [-24, 5, 0]], bathroom: [[-24, 9, -10], [-24, 5, -11]],
       garage: [[21, 3.8, -10], [21, 0, -10]], gym: [[21, 3.8, 18], [21, 0, 20]],
     };
+    if (this.room?.root.userData.spaceArchitecture === 'rubik-atrium') lighting.interior = [[-7, 4.8, -3], [-4, 0, -6]];
     this.interiorLight.intensity = lighting[view] ? (this.room?.style === 'company' ? 22 : this.room?.style === 'cyberpunk' ? 35 : 100) : 0;
     this.interiorLight.penumbra = view === 'garage' ? 0.25 : 1;
     this.interiorLight.color.setHex(this.room?.style === 'company' ? 0xf1f4ef : this.room?.style === 'cyberpunk' ? 0x5bb9ff : 0xffe2bb);
