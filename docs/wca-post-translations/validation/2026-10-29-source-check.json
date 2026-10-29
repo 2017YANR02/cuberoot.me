@@ -1,0 +1,24 @@
+{
+  "fetchedAt": "2026-10-29T06:23:17.794Z",
+  "totalSources": 641,
+  "newSources": [
+    {
+      "key": "posts:/posts/expression-of-interest-for-2028-wca-continental-championships-2029-wca-world-championship",
+      "hash": "a7b6567f5100a4bbbda1e77bb9673606382ed8e1b219f62f64ae18ea3c5ad3b8"
+    },
+    {
+      "key": "posts:/posts/wca-asian-championship-2026-cancellation-october-2026",
+      "hash": "7d8c8d5e4bb90be41f6b2bc98e430f32dfccda6f4c6bb623869ba6e0afcf5d53"
+    }
+  ],
+  "revised": 0,
+  "previousSourcesPreserved": 639,
+  "translationReviewPerformed": false,
+  "terminology": {
+    "reference": "core/packages/client/public/regulation/wca-translation-reference.md",
+    "mirrorStale": true,
+    "mirrorSyncedAt": "2026-10-26T09:52:10.208934+00:00",
+    "weblateDirectStatus": 401,
+    "action": "Used documented repository terminology and existing mirrored terms; no access retry."
+  }
+}
