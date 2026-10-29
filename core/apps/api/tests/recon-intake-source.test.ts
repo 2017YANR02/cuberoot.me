@@ -24,11 +24,13 @@ beforeEach(() => { db.query.mockReset(); db.transaction.mockReset(); });
 
 it('requires administrator access and defaults to the requested solver and collector', async () => {
   expect((await app.request('/v1/recon-intake/sources')).status).toBe(403);
-  db.query.mockResolvedValue([{ id: 123, scramble: 'R', solution: "R'", comp: null, date: null, value: '4.00',
+  db.query.mockResolvedValue([{ id: 123, scramble: 'R', solution: "R'", comp: 'Deqing Small & Special 2026',
+    comp_wca_id: 'DeqingSmallSpecial2026', country: 'CN', date: null, value: '4.00',
     intake_status: null, intake_id: null, truth_status: null, source_changed: false, source_hash: sourceHash }]);
   const response = await app.request('/v1/recon-intake/sources?status=pending', { headers: { Authorization: 'Bearer admin' } });
   expect(response.status).toBe(200);
-  expect((await response.json()).items[0]).toMatchObject({ id: 123, scramble: 'R', sourceHash });
+  expect((await response.json()).items[0]).toMatchObject({ id: 123, scramble: 'R', sourceHash,
+    competition: 'Deqing Small & Special 2026', competitionId: 'DeqingSmallSpecial2026', country: 'CN' });
   expect(db.query.mock.calls[0][0]).toContain('r.person_id = ?');
   expect(db.query.mock.calls[0][0]).toContain('r.added_by_id = ?');
   expect(db.query.mock.calls[0][1]).toEqual(['2023GENG02', '2023GENG02', '2017YANR02', '2017YANR02', 'pending', 'pending', 'pending', 0]);

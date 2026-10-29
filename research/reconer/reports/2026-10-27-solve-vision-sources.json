@@ -1,0 +1,256 @@
+{
+  "schemaVersion": 1,
+  "investigationDate": "2026-10-27",
+  "timezone": "America/Los_Angeles",
+  "repositoryCommit": "8f3eb49dc492da1f8bb651d2fa14d10d5ad4fd64",
+  "scope": "Public pages, client source files and precomputed demonstration JSON; no user-video upload or model execution.",
+  "digestRepresentation": "SHA-256 and byte length of response text encoded as UTF-8. HTML may include request-specific markup; digests identify the observed response, not a deployment version.",
+  "sources": [
+    {
+      "url": "https://solve.vision/",
+      "httpStatus": 200,
+      "bytes": 22403,
+      "sha256": "48ab22b16c623539b185691dd8b96097bb42dc1119a9ef06bea482bd407c2474",
+      "retrievedAt": "2026-10-28T04:40:10.703Z",
+      "observedHeaders": {
+        "server": "nginx",
+        "blazor-enhanced-nav": "allow"
+      }
+    },
+    {
+      "url": "https://solve.vision/dist/compress-video-software.js",
+      "httpStatus": 200,
+      "bytes": 2675,
+      "sha256": "e0055b4bc823dc8d69a1d342a7f5d916c5434077fd116a4e24748f4f83fe77e2",
+      "retrievedAt": "2026-10-28T04:34:29.217Z"
+    },
+    {
+      "url": "https://solve.vision/dist/compress-video.js",
+      "httpStatus": 200,
+      "bytes": 2256,
+      "sha256": "630a8545085336d5d7b63531be7f3b6332ee6309619ded33fcb4bf21be20673a",
+      "retrievedAt": "2026-10-28T04:34:29.198Z"
+    },
+    {
+      "url": "https://solve.vision/dist/fast-upload.js",
+      "httpStatus": 200,
+      "bytes": 4053,
+      "sha256": "e648e2614277d9e59e507998834188c5c17b7d994a1788db29d3de26f176c776",
+      "retrievedAt": "2026-10-28T04:34:29.216Z"
+    },
+    {
+      "url": "https://solve.vision/dist/video-shared-63NRHLYR.js",
+      "httpStatus": 200,
+      "bytes": 572551,
+      "sha256": "efb59beb3131947d861b302575be1451cd2ff57b0590d2aeb16d8483b97c6124",
+      "retrievedAt": "2026-10-28T04:34:31.139Z"
+    },
+    {
+      "url": "https://solve.vision/js/cube3d.js",
+      "httpStatus": 200,
+      "bytes": 41726,
+      "sha256": "e315c94441fea22d6b774303744c0d7bb6f13e2734dfbb807e078b094f18a1a9",
+      "retrievedAt": "2026-10-28T04:34:29.952Z"
+    },
+    {
+      "url": "https://solve.vision/media/solve-1.analysis.json",
+      "httpStatus": 200,
+      "bytes": 11377,
+      "sha256": "6d96446d4a5bb365a120eb19a064c71c17ca524d6672b326fd4984092e329f26",
+      "retrievedAt": "2026-10-28T04:34:29.715Z"
+    },
+    {
+      "url": "https://solve.vision/media/solve-1.json",
+      "httpStatus": 200,
+      "bytes": 43009,
+      "sha256": "8fbefff31f328726a60fcd606be4e8e876e5037f3f98327bd28f35c2ae72a028",
+      "retrievedAt": "2026-10-28T04:34:30.023Z"
+    },
+    {
+      "url": "https://solve.vision/media/solve-2.json",
+      "httpStatus": 200,
+      "bytes": 25869,
+      "sha256": "ca1d9bc3939ef4098922748411dfba9570a7a6c937f8311cec20b1e2b950c6cc",
+      "retrievedAt": "2026-10-28T04:34:31.792Z"
+    },
+    {
+      "url": "https://solve.vision/media/solve-3.json",
+      "httpStatus": 200,
+      "bytes": 26670,
+      "sha256": "22c857488ec005c94615a034b03c222e033a8b8a20f4c0fd7dc90ac0b117bf2b",
+      "retrievedAt": "2026-10-28T04:34:32.762Z"
+    },
+    {
+      "url": "https://solve.vision/media/solve-4.json",
+      "httpStatus": 200,
+      "bytes": 25790,
+      "sha256": "04e9d888c2078d22fd927bcc3f92f27883a749e3d942c23b97ddae915db3c6af",
+      "retrievedAt": "2026-10-28T04:34:31.790Z"
+    },
+    {
+      "url": "https://solve.vision/media/solve-5.json",
+      "httpStatus": 200,
+      "bytes": 22863,
+      "sha256": "f81ddaf79485e090b7539e023113bb61524a6685a8c4f030694468b7c31f3caa",
+      "retrievedAt": "2026-10-28T04:34:31.791Z"
+    },
+    {
+      "url": "https://solve.vision/privacy",
+      "httpStatus": 200,
+      "bytes": 10259,
+      "sha256": "95dfb9a333532657cee41aee2fd4e5920a0ab123f59ac32f894a7ce6255452bb",
+      "retrievedAt": "2026-10-28T04:40:10.586Z"
+    },
+    {
+      "url": "https://solve.vision/src/app.js",
+      "httpStatus": 200,
+      "bytes": 10213,
+      "sha256": "a53e8613a709411bfebd43ab838a601f3f19d54a9e591890c55254a3695ce8fe",
+      "retrievedAt": "2026-10-28T04:34:26.544Z"
+    },
+    {
+      "url": "https://solve.vision/src/cube.js",
+      "httpStatus": 200,
+      "bytes": 13646,
+      "sha256": "442f838d5087386e46f7f00bce100c7724fd594ea3f3935188e0a2224b6e6ba5",
+      "retrievedAt": "2026-10-28T04:34:27.251Z"
+    },
+    {
+      "url": "https://solve.vision/src/event-report.js",
+      "httpStatus": 200,
+      "bytes": 8459,
+      "sha256": "f5304e020ce97382c0aad13518c63fb6f7f57e691407571a69a6ac41930e30dc",
+      "retrievedAt": "2026-10-28T04:34:26.539Z"
+    },
+    {
+      "url": "https://solve.vision/src/notation.js",
+      "httpStatus": 200,
+      "bytes": 5022,
+      "sha256": "44bef1ca981238b00ccacaaf78dda60721ae2ec94a40853351f3c72bb5525371",
+      "retrievedAt": "2026-10-28T04:34:27.071Z"
+    },
+    {
+      "url": "https://solve.vision/src/puzzles.js",
+      "httpStatus": 200,
+      "bytes": 1853,
+      "sha256": "2be269d2d27d8f54119c0481b835a3c9339a2ae7112ea2555b224ac576514397",
+      "retrievedAt": "2026-10-28T04:34:28.698Z"
+    },
+    {
+      "url": "https://solve.vision/src/report-analysis.js",
+      "httpStatus": 200,
+      "bytes": 13243,
+      "sha256": "47b10e902e17d53e0dcdec0b7221f193c44a45cd76ff1bb0d84b3200c802272c",
+      "retrievedAt": "2026-10-28T04:34:29.284Z"
+    },
+    {
+      "url": "https://solve.vision/src/report.js",
+      "httpStatus": 200,
+      "bytes": 13006,
+      "sha256": "bf26cd0585cc7930858c371286e36bbece8e1b3bcff7198b4291defb165bf907",
+      "retrievedAt": "2026-10-28T04:34:26.637Z"
+    },
+    {
+      "url": "https://solve.vision/src/shared-replay.js",
+      "httpStatus": 200,
+      "bytes": 3487,
+      "sha256": "7efab97695304ed1e38d9b96d371b938021b8e625cc592c1ef67ab5a624c55ea",
+      "retrievedAt": "2026-10-28T04:34:28.341Z"
+    },
+    {
+      "url": "https://solve.vision/src/stored-analysis.js",
+      "httpStatus": 200,
+      "bytes": 5284,
+      "sha256": "caf66b9e606ca073cb86c93928a54603128ec33d6d09bdaf2e1ebd420f7ea569",
+      "retrievedAt": "2026-10-28T04:34:28.710Z"
+    },
+    {
+      "url": "https://solve.vision/src/upload-chunks.js",
+      "httpStatus": 200,
+      "bytes": 2613,
+      "sha256": "c382b998006fd94e44abf76dcb6f643764eb1c9b7a5f782c6824ef50b4c00e67",
+      "retrievedAt": "2026-10-28T04:34:28.709Z"
+    },
+    {
+      "url": "https://solve.vision/src/upload.js",
+      "httpStatus": 200,
+      "bytes": 19199,
+      "sha256": "a470387ca6bcd6cad33d995b022b8852b402106b09e0a040c8323bafaa73097a",
+      "retrievedAt": "2026-10-28T04:34:26.673Z"
+    },
+    {
+      "url": "https://solve.vision/src/video-quality.js",
+      "httpStatus": 200,
+      "bytes": 2558,
+      "sha256": "4b1778db0a0b873a6a0152ce21d483a285b9f2e4e81ad26f113ab0aa19ca466f",
+      "retrievedAt": "2026-10-28T04:34:28.740Z"
+    },
+    {
+      "url": "https://solve.vision/src/workspace.js",
+      "httpStatus": 200,
+      "bytes": 11638,
+      "sha256": "ed519db24def41fef5f2a30090b6c2244c8d365b00489616172bd30318db7f9b",
+      "retrievedAt": "2026-10-28T04:34:27.099Z"
+    },
+    {
+      "url": "https://solve.vision/upload",
+      "httpStatus": 200,
+      "bytes": 22893,
+      "sha256": "547f86920865a06c3dd0d348471c8973232ce2dcba4cbd41835e9e6011da4cdf",
+      "retrievedAt": "2026-10-28T04:40:10.994Z"
+    }
+  ],
+  "publicDemoSummary": [
+    {
+      "url": "https://solve.vision/media/solve-1.json",
+      "number": 1,
+      "displayedTimeSeconds": "5.09",
+      "moveArrayItems": 53,
+      "canonicalMoveArrayItems": 49,
+      "orientationSamples": 303,
+      "initialFacelets": 54
+    },
+    {
+      "url": "https://solve.vision/media/solve-2.json",
+      "number": 2,
+      "displayedTimeSeconds": "3.96",
+      "moveArrayItems": 54,
+      "canonicalMoveArrayItems": 53,
+      "orientationSamples": 150,
+      "initialFacelets": 54
+    },
+    {
+      "url": "https://solve.vision/media/solve-3.json",
+      "number": 3,
+      "displayedTimeSeconds": "3.71",
+      "moveArrayItems": 50,
+      "canonicalMoveArrayItems": 50,
+      "orientationSamples": 162,
+      "initialFacelets": 54
+    },
+    {
+      "url": "https://solve.vision/media/solve-4.json",
+      "number": 4,
+      "displayedTimeSeconds": "3.84",
+      "moveArrayItems": 47,
+      "canonicalMoveArrayItems": 47,
+      "orientationSamples": 162,
+      "initialFacelets": 54
+    },
+    {
+      "url": "https://solve.vision/media/solve-5.json",
+      "number": 5,
+      "displayedTimeSeconds": "3.37",
+      "moveArrayItems": 43,
+      "canonicalMoveArrayItems": 43,
+      "orientationSamples": 138,
+      "initialFacelets": 54
+    }
+  ],
+  "interpretationLimits": [
+    "Array sizes describe public artifacts, not independent accuracy measurements.",
+    "Public state arrays do not prove that state constraints participate in private decoding.",
+    "Continuous orientations expose rotation matrices, not a full 6DoF pose.",
+    "Project notes about two centers relay the user's account of an author reply; the original reply was not independently retrieved."
+  ]
+}

@@ -4,7 +4,7 @@
 import { wallPartsIn, wallToUtc } from '@cuberoot/shared/tz';
 import type { CalEvent, EventOccurrence } from '@cuberoot/shared/calendar';
 
-export const VIEW_KEYS = ['timeGridDay', 'fourDay', 'timeGridWeek', 'dayGridMonth', 'multiMonthYear', 'listMonth'] as const;
+export const VIEW_KEYS = ['timeGridDay', 'threeDay', 'fourDay', 'timeGridWeek', 'dayGridMonth', 'multiMonthYear', 'listMonth'] as const;
 export type ViewKey = (typeof VIEW_KEYS)[number];
 
 export function isViewKey(v: string): v is ViewKey {
@@ -13,6 +13,7 @@ export function isViewKey(v: string): v is ViewKey {
 
 export const VIEW_LABELS: Record<ViewKey, { zh: string; en: string; hint: string }> = {
   timeGridDay: { zh: '日', en: 'Day', hint: 'D' },
+  threeDay: { zh: '3 天', en: '3 days', hint: '' },
   fourDay: { zh: '4 天', en: '4 days', hint: 'X' },
   timeGridWeek: { zh: '周', en: 'Week', hint: 'W' },
   dayGridMonth: { zh: '月', en: 'Month', hint: 'M' },

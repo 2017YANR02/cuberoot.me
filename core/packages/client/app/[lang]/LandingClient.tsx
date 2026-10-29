@@ -350,14 +350,15 @@ export default function LandingPage() {
     if (isDisabled) {
       cardElement = (
         <div className={className} id={`card-${card.id}`}
-          title={developmentLabel}
+          title={developmentLabel} aria-label={card.id === 'calendar' ? t(card.nameKey) : undefined}
           aria-disabled="true" role="link">
           {content}
         </div>
       );
     } else if (card.internal) {
       cardElement = (
-        <Link href={card.href} className={className} id={`card-${card.id}`} prefetch={false}>
+        <Link href={card.href} className={className} id={`card-${card.id}`} prefetch={false}
+          aria-label={card.id === 'calendar' ? t(card.nameKey) : undefined}>
           {content}
         </Link>
       );
@@ -505,6 +506,7 @@ export default function LandingPage() {
         >
           <Heart size={14} aria-hidden="true" />
         </Link>
+        {renderCardGrid('calendar', SECTIONS.flatMap((section) => section.cards).filter((card) => card.id === 'calendar'), 'landing-calendar-link')}
         <HeaderToggles />
         {!user ? (
           <Link href={`/account${nextQuery(pathname)}`} className="landing-auth-btn is-login" prefetch={false}
@@ -624,7 +626,7 @@ export default function LandingPage() {
 
       <div className="cards-sections">
         {SECTIONS.map((sec) => {
-          const grid = renderCardGrid(sec.id, sec.cards, 'cards-container');
+          const grid = renderCardGrid(sec.id, sec.cards.filter((card) => card.id !== 'calendar'), 'cards-container');
           return grid && (
             <section key={sec.id} id={`section-${sec.id}`} className="cards-section">
               <div className="section-header">

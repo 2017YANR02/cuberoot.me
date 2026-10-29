@@ -347,7 +347,7 @@
   margin-left: 5px;
 }
 
-/* 左分步 右魔方。两栏是同一件事的两种读法,分开折叠就得来回开关,而「对着看」
+/* 左魔方 右分步。两栏是同一件事的两种读法,分开折叠就得来回开关,而「对着看」
    正是回放的全部意义。窄屏落成上下两段(grid 单列),顺序不变。 */
 .reconstruct-playback {
   margin-top: 10px;
@@ -356,7 +356,7 @@
   gap: 12px;
 }
 .reconstruct-playback.has-side {
-  grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
   align-items: start;
 }
 

@@ -469,13 +469,6 @@ img.recon-inline-flag {
   .recon-grid-filters > * { flex: 1 1 auto; }
 }
 
-/* --- 副标题 --- */
-.recon-subtitle {
-  color: var(--faint-foreground);
-  font-size: 0.9rem;
-  margin-bottom: 0.8rem;
-}
-
 /* --- 链接样式 --- */
 .recon-table a {
   color: inherit;
@@ -623,7 +616,6 @@ img.recon-inline-flag {
 }
 
 .recon-featured { margin-bottom: 2rem; }
-.recon-featured h2 { font-size: 1.1rem; margin: 0 0 0.75rem; }
 
 /* Grouped reconstruction filters share CompactSelect surfaces and option states. */
 .recon-filter-groups {

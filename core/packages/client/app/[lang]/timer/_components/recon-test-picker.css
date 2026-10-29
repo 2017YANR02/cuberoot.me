@@ -28,6 +28,31 @@
 .recon-test-selected pre { max-height: 200px; overflow-y: auto; }
 .recon-test-selected small { display: block; margin-top: 6px; }
 .recon-test-use + .recon-test-use { margin-left: 8px; }
+.recon-test-reference {
+  position: fixed; z-index: 70; left: 16px; top: 150px;
+  width: min(44vw, 640px); max-height: calc(100dvh - 180px); overflow: hidden;
+  display: flex; flex-direction: column;
+  box-sizing: border-box; border: 1px solid var(--border-default); border-radius: 8px;
+  background: var(--card); color: var(--foreground); font-size: 15px; text-align: left;
+}
+.recon-test-reference-content { min-height: 0; overflow: auto; padding: 14px; }
+.recon-test-reference .recon-test-reference-resize { z-index: 2; }
+.recon-test-reference-resize--left { left: 0; width: 8px; }
+.recon-test-reference-resize--right { right: 0; width: 8px; }
+.recon-test-reference .recon-test-reference-resize--top,
+.recon-test-reference .recon-test-reference-resize--bottom { left: 0; right: 0; width: 100%; height: 8px; bottom: auto; cursor: row-resize; }
+.recon-test-reference .recon-test-reference-resize--bottom { top: auto; bottom: 0; }
+.recon-test-reference-resize:hover, .recon-test-reference-resize.is-dragging { background: var(--accent-soft); }
+.recon-test-reference-drag { cursor: grab; touch-action: none; user-select: none; padding-bottom: 10px; }
+.recon-test-reference-drag:active { cursor: grabbing; }
+.recon-test-reference-close {
+  display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px;
+  border: 0; background: transparent; color: inherit; cursor: pointer;
+}
+.recon-test-reference-close:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+@media (max-width: 900px) {
+  .recon-test-reference { top: auto; bottom: 12px; left: 12px; width: min(380px, calc(100vw - 24px)); max-height: 30dvh; }
+}
 @media (max-width: 600px) {
   .recon-test-panel { position: fixed; left: 12px; right: 12px; top: 64px; width: auto; }
 }

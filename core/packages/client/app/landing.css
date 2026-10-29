@@ -266,6 +266,14 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     letter-spacing: normal;
     white-space: nowrap;
 }
+.landing-page .landing-calendar-link .landing-card {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 5px;
+    border: 0;
+    background: none;
+}
+.landing-page .landing-calendar-link .landing-card-name { display: none; }
 .landing-pinned-recons .recon-card,
 .landing-pinned-recons .recon-curated-card {
     height: 100%;

@@ -39,25 +39,32 @@ interface DriveChunkResponse {
   error?: string;
 }
 
-async function write<T>(path: string, method: 'POST' | 'PATCH' | 'DELETE', body?: unknown): Promise<T> {
-  const response = await sessionFetch(apiUrl(path), {
+/** A scoped caller may route both metadata and chunks together without changing Drive defaults. */
+export interface DriveApiTransport {
+  apiUrl(path: string): string;
+  directApiUrl(path: string): string;
+}
+
+async function write<T>(path: string, method: 'POST' | 'PATCH' | 'DELETE', body?: unknown, signal?: AbortSignal, transport?: DriveApiTransport): Promise<T> {
+  const response = await sessionFetch((transport?.apiUrl ?? apiUrl)(path), {
     method,
     headers: authHeaders(body !== undefined),
     body: body === undefined ? undefined : JSON.stringify(body),
+    signal,
   });
   return handleApi<T>(response);
 }
 
-export async function fetchDrive(parentId: string | null, trash = false, members = false, all = false): Promise<DriveSnapshot> {
+export async function fetchDrive(parentId: string | null, trash = false, members = false, all = false, signal?: AbortSignal, transport?: DriveApiTransport): Promise<DriveSnapshot> {
   const params = new URLSearchParams();
   if (parentId) params.set('parent', parentId);
   if (trash) params.set('trash', '1');
   if (members) params.set('members', '1');
   if (all) params.set('all', '1');
   const query = params.size ? `?${params}` : '';
-  const response = await sessionFetch(apiUrl(`/v1/drive${query}`), {
+  const response = await sessionFetch((transport?.apiUrl ?? apiUrl)(`/v1/drive${query}`), {
     headers: authHeaders(false),
-    cache: 'no-store',
+    cache: 'no-store', signal,
   });
   return handleApi<DriveSnapshot>(response);
 }
@@ -67,14 +74,14 @@ export async function createDriveFolder(parentId: string | null, name: string): 
   return result.node;
 }
 
-export async function createDriveUpload(file: File, parentId: string | null): Promise<DriveUpload> {
+export async function createDriveUpload(file: File, parentId: string | null, signal?: AbortSignal, transport?: DriveApiTransport): Promise<DriveUpload> {
   const result = await write<{ upload: DriveUpload }>('/v1/drive/uploads', 'POST', {
     parentId,
     name: file.name,
     sizeBytes: file.size,
     mimeType: file.type || 'application/octet-stream',
     lastModified: file.lastModified,
-  });
+  }, signal, transport);
   return result.upload;
 }
 
@@ -90,6 +97,7 @@ export async function uploadDriveChunk(
   chunk: Blob,
   signal?: AbortSignal,
   onProgress?: (uploadedBytes: number) => void,
+  transport?: DriveApiTransport,
 ): Promise<DriveChunkResponse> {
   const bytes = await chunk.arrayBuffer();
   const checksum = bytesToBase64(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)));
@@ -109,7 +117,7 @@ export async function uploadDriveChunk(
     const request = new XMLHttpRequest();
     const abort = () => request.abort();
     const cleanup = () => signal?.removeEventListener('abort', abort);
-    request.open('PATCH', directApiUrl(`/v1/drive/uploads/${encodeURIComponent(uploadId)}`));
+    request.open('PATCH', (transport?.directApiUrl ?? directApiUrl)(`/v1/drive/uploads/${encodeURIComponent(uploadId)}`));
     Object.entries(headers).forEach(([name, value]) => request.setRequestHeader(name, value));
     request.upload.addEventListener('progress', (event) => {
       onProgress?.(Math.min(event.loaded, chunk.size));

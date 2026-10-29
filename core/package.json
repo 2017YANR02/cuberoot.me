@@ -3,6 +3,8 @@
   "private": true,
   "packageManager": "pnpm@12.6.0",
   "scripts": {
+    "recon:capture": "tsx scripts/recon-capture.mts",
+    "recon:capture:dev": "tsx scripts/recon-capture-dev.mts",
     "recon:intake": "tsx scripts/recon-intake.mts",
     "recon:intake:dev": "tsx apps/api/scripts/dev-recon-intake.ts",
     "prepare": "node scripts/recon-ground-truth-gate.mjs install",

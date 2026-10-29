@@ -16,9 +16,10 @@ interface Props {
   /** 自己的归属键,搜索结果里剔掉 */
   meKey: string;
   disabled?: boolean;
+  placeholder?: string;
 }
 
-export default function GuestPicker({ guests, onChange, meKey, disabled }: Props) {
+export default function GuestPicker({ guests, onChange, meKey, disabled, placeholder }: Props) {
   const [q, setQ] = useState('');
   const [hits, setHits] = useState<PersonHit[]>([]);
   const [busy, setBusy] = useState(false);
@@ -58,7 +59,8 @@ export default function GuestPicker({ guests, onChange, meKey, disabled }: Props
           className="cal-guest-field"
           value={q}
           disabled={disabled}
-          placeholder={tr({ zh: '搜昵称或 WCA ID 添加参与者', en: 'Add guests by name or WCA ID' })}
+          aria-label={tr({ zh: '搜昵称或 WCA ID 添加参与者', en: 'Add guests by name or WCA ID' })}
+          placeholder={placeholder ?? tr({ zh: '搜昵称或 WCA ID 添加参与者', en: 'Add guests by name or WCA ID' })}
           onChange={(e) => setQ(e.target.value)}
         />
         {q && <ClearButton onClick={() => { setQ(''); setHits([]); }} />}

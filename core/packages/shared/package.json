@@ -115,6 +115,7 @@
       "./mobile-embed": "runtime-neutral",
       "./result-penalty": "runtime-neutral",
       "./recon-ground-truth": "runtime-neutral",
+      "./recon-capture": "runtime-neutral",
       "./recon-completion": "runtime-neutral",
       "./fto-notation": "runtime-neutral",
       "./recon-slice": "runtime-neutral",
@@ -649,6 +650,10 @@
     "./recon-ground-truth": {
       "node": "./dist/recon_ground_truth.js",
       "default": "./src/recon_ground_truth.ts"
+    },
+    "./recon-capture": {
+      "node": "./dist/recon_capture.js",
+      "default": "./src/recon_capture.ts"
     },
     "./recon-completion": {
       "node": "./dist/recon_completion.js",

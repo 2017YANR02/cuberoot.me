@@ -69,3 +69,33 @@
 }
 
 /* Cross 行就地切换图标(标准化/原始) */
+
+/* ── 打乱 + 解法 合并框 ─────────────────────────────────────── */
+.detail-scramble-solution {
+  --recon-diagram-indent: 32px;
+  background: transparent;
+}
+.detail-scramble-solution .detail-scramble-line {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--foreground);
+  padding: 0;
+  word-break: break-all;
+}
+.detail-scramble-solution .detail-solution-text {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+}
+.detail-scramble-solution:has(.recon-case-diagram) > .detail-caption-header,
+.detail-scramble-solution:has(.recon-case-diagram) > .detail-scramble-line:not(:has(.recon-case-diagram)) {
+  padding-inline-start: var(--recon-diagram-indent);
+}
+.detail-caption-header {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--foreground);
+  margin: 0 0 6px;
+}

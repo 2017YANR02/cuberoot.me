@@ -1,6 +1,19 @@
 // @vitest-environment jsdom
 import { afterEach, expect, it, vi } from 'vitest';
-import { readDeskPetAnchor } from '@/lib/deskpet-position';
+import { clampDeskPetAxis, readDeskPetAnchor } from '@/lib/deskpet-position';
+
+it.each([0.5, 0.64, 0.775])('allows the visual center %s to overflow both edges by the same distance', (center) => {
+  const size = 200, viewport = 800;
+  const visualCenter = (anchor: number) => Number((viewport - anchor - size * (1 - center)).toFixed(6));
+  expect(visualCenter(clampDeskPetAxis(2000, size, center, viewport, 0, viewport))).toBe(-16);
+  expect(visualCenter(clampDeskPetAxis(-2000, size, center, viewport, 0, viewport))).toBe(816);
+  expect(clampDeskPetAxis(300, size, center, viewport, 0, viewport)).toBe(300);
+});
+
+it('applies the same overflow to the visible mobile viewport with safe areas', () => {
+  expect(clampDeskPetAxis(2000, 200, 0.5, 800, 60, 500)).toBe(656);
+  expect(clampDeskPetAxis(-2000, 200, 0.5, 800, 60, 500)).toBe(184);
+});
 
 afterEach(() => { document.body.innerHTML = ''; vi.restoreAllMocks(); });
 
