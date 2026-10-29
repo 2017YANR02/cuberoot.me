@@ -739,7 +739,6 @@ function VideoSourceGroup({ urls }: { urls: string[] }) {
   const sourceKey = urls.join('\n');
   useEffect(() => {
     const links = sourceKey.split('\n');
-    if (links.length < 2) return;
     let alive = true;
     for (const url of links) {
       void loadVideoTitle(url).then(title => {
@@ -768,11 +767,13 @@ function VideoSourceGroup({ urls }: { urls: string[] }) {
   // choice takes precedence and is never replaced by a late region response.
   const active = sources.find(source => source.url === selectedUrl)
     ?? (!hasChoice || country !== null ? preferred : undefined);
+  const activeTitle = active ? titles[active.url]?.trim() : undefined;
   if (!sources.length) return null;
 
   return (
     <div className="detail-video-player">
       {active ? <VideoEmbed key={active.url} url={active.url} /> : <div className="detail-video-wrap" aria-busy="true" />}
+      {activeTitle && <p className="detail-video-title">{activeTitle}</p>}
       {hasChoice && <div className="detail-video-switches">
         {sources.filter(source => source !== active).map(source => {
           const title = titles[source.url] || source.url;

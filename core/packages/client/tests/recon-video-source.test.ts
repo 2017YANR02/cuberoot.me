@@ -77,6 +77,39 @@ it('preserves selected Bilibili part and time when opening its cover', async () 
   expect(host.querySelector('.detail-video-facade')?.getAttribute('href')).toBe(url);
 });
 
+it('shows the source title below a single video cover without changing its link', async () => {
+  const title = '[100FPS] 2.51三阶单次世界纪录WR';
+  vi.mocked(loadVideoTitle).mockResolvedValue(title);
+  await act(async () => root.render(createElement(VideoSection, { videoUrl: bilibili })));
+  const cover = host.querySelector('.detail-video-facade');
+  expect(cover?.nextElementSibling?.textContent).toBe(title);
+  expect(cover?.getAttribute('href')).toBe(bilibili);
+  expect(cover?.getAttribute('target')).toBe('_blank');
+});
+
+it('keeps the caption with the selected source when another title arrives later', async () => {
+  let finish!: (title: string) => void;
+  vi.mocked(loadIpCountry).mockResolvedValue('us');
+  vi.mocked(loadVideoTitle).mockImplementation(url => url === youtube
+    ? Promise.resolve('YouTube source title')
+    : new Promise(resolve => { finish = resolve; }));
+  await act(async () => root.render(createElement(VideoSection, { videoUrl: `${youtube}\n${bilibili}` })));
+  expect(host.querySelector('.detail-video-title')?.textContent).toBe('YouTube source title');
+  await act(async () => (host.querySelector('.detail-video-switch') as HTMLButtonElement).click());
+  expect(host.querySelector('.detail-video-title')).toBeNull();
+  await act(async () => finish('比赛现场完整视频'));
+  expect(host.querySelector('.detail-video-title')?.textContent).toBe('比赛现场完整视频');
+  await act(async () => (host.querySelector('.detail-video-switch') as HTMLButtonElement).click());
+  expect(host.querySelector('.detail-video-title')?.textContent).toBe('YouTube source title');
+});
+
+it.each([null, '', '   '])('omits an unavailable or blank title (%s)', async title => {
+  vi.mocked(loadVideoTitle).mockResolvedValue(title);
+  await act(async () => root.render(createElement(VideoSection, { videoUrl: bilibili })));
+  expect(host.querySelector('.detail-video-title')).toBeNull();
+  expect(host.querySelector('.detail-video-facade')?.getAttribute('href')).toBe(bilibili);
+});
+
 it('shows uploaded files and unknown providers as separate video entries', async () => {
   await act(async () => root.render(createElement(VideoSection, { videoUrl: 'https://api.cuberoot.me/v1/recon/video/42\n\nhttps://example.com/watch' })));
   expect(host.querySelectorAll('.detail-video-player')).toHaveLength(2);
