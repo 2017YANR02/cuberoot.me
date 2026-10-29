@@ -24,13 +24,29 @@ import AppLink from '@/components/AppLink';
 import { AdminTools } from '@/components/AuthTokenRefresher';
 import { ClearButton } from '@/components/ClearButton';
 import { persistItem } from '@/lib/safe-storage';
+import { createDeskPetShakeController } from '@/lib/deskpet-shake';
+import { createDeskPetIdlePlayback } from '@/lib/deskpet-idle-playback';
+import { createDizzyRenderer, restartIdleDocument } from '@/lib/deskpet-dizzy';
+import { createHangRenderer, HANG_HOOK_Y, nearTopHang } from '@/lib/deskpet-hang';
+import { createMusicRenderer } from '@/lib/deskpet-music';
+import { createDeskPetHunt } from '@/lib/deskpet-hunt';
+import { createDeskPetHangInteraction } from '@/lib/deskpet-hang-interaction';
+import { createDeskPetNaturalSleep } from '@/lib/deskpet-natural-sleep';
+import { createDeskPetRoutineSession, deskPetLocalPeriod } from '@/lib/deskpet-routine';
+import { peekSettled, readPeekLoop, restartPeekLoop } from '@/lib/deskpet-bottom-emerge';
+import { bottomDragReach, bottomPeekLine, bottomPeekViewport, createBottomPeekRenderer } from '@/lib/deskpet-bottom-peek';
+import { getMusicPlayerState, subscribeMusicPlayer } from '@/lib/music-player';
 import { mayUseMiniProgramBridge } from '@/lib/miniprogram-bridge';
-import { useDeskPetVisible } from '@/hooks/useDeskPetVisible';
+import { registerDeskPetExit, useDeskPetVisible } from '@/hooks/useDeskPetVisible';
+import {
+  DESKPET_EXIT_KEY, GENERIC_ENTER_MS, GENERIC_HOP_MS, GENERIC_SLEEP_MS, SLEEP_FADE_MS, enterKeyframes,
+  exitFadeKeyframes, exitHopKeyframes, loadMotionBlob, parseExitStyle, runDeskPetExit, type DeskPetExitStyle,
+} from '@/lib/deskpet-motion';
 import { clampDeskPetAxis, readDeskPetAnchor } from '@/lib/deskpet-position';
 import { subscribeBeat, getMetronomeState } from '@/lib/metronome';
 import { getDeskPetScene, PLAYTIME_SCENES } from '@/lib/deskpet-playtime';
 import { ORIGINAL_CHARACTERS, ORIGINAL_SCENES, type OriginalCharacterId } from '@/lib/deskpet-originals';
-import { ROOTBEAST_BASE, ROOTBEAST_FILES, ROOTBEAST_RANDOM_SCENES, ROOTBEAST_VERSION } from '@/lib/deskpet-rootbeast';
+import { ROOTBEAST_BASE, ROOTBEAST_DIZZY, ROOTBEAST_HANG, ROOTBEAST_MUSIC, ROOTBEAST_BOTTOM_PEEK, ROOTBEAST_HUNT, ROOTBEAST_SLEEP, ROOTBEAST_FILES, ROOTBEAST_RANDOM_SCENES, ROOTBEAST_VERSION } from '@/lib/deskpet-rootbeast';
 import { resolveDeskPets, type DeskPetCatalog, type DeskPetEntry } from '@cuberoot/shared/deskpet';
 import { getDeskPetCatalog, saveDeskPetCatalog } from '@/lib/deskpet-api';
 import { THEMES, THEME_IDS, type MiniTheme, type ThemeId } from '@/lib/deskpet-themes';
@@ -64,7 +80,9 @@ const AUTO: Record<string, number> = {
 // Mini (edge-cling) mode — ported from clawd-on-desk src/mini.js + state.js.
 // One-shot mini states auto-return to the mini rest pose after N ms.
 const MINI_AUTO: Record<string, number> = { 'mini-alert': 4000, 'mini-happy': 4000, 'mini-peek': 1500 };
-const MINI_ENTER_MS = 1200;       // play the mini-enter pose this long, then settle to mini-idle
+const MINI_ENTER_MS = 1200;       // enter art without a measured length (calico PNG); themes set mini.enterMs
+const MINI_SLIDE_MS = 300;        // a drop near the edge slides onto it (eased, not a jump)
+const TURN_MS = 360;              // rotating pets turn onto / off the edge (matches the CSS transition)
 const CRABWALK_SPEED = 0.12;      // px/ms — sideways walk speed when entering via the toolbar
 const MINI_PEEK_FRAC = 0.1;       // hover peek nudges the pet this fraction of its width back on-screen
 const MINI_SNAP_FRAC = 0.32;      // on drop, if the visual center is within this fraction of W from an edge → cling
@@ -106,7 +124,8 @@ const vpH = () => window.matchMedia('(max-width: 767px)').matches
 // is how far past the edge the visual center may go, as a fraction of box size:
 // at the limit ~half the centered art is clipped, so the pet clings to the edge.
 // (A positive value here would instead keep the art that far inside the edge.)
-const clampAnchor = (right: number, bottom: number, w: number, h: number, fx: number, fy: number) => {
+const PEEK = 0.08;
+const clampAnchor = (right: number, bottom: number, w: number, h: number, fx: number, fy: number, allowBottomPeek = false) => {
   const cw = vpW(), ch = vpH();
   const viewport = window.visualViewport;
   const safe = mayUseMiniProgramBridge() || window.matchMedia('(max-width: 767px)').matches;
@@ -116,9 +135,17 @@ const clampAnchor = (right: number, bottom: number, w: number, h: number, fx: nu
     - (parseFloat(style?.getPropertyValue('--sab') ?? '') || 0);
   const left = safe ? (viewport?.offsetLeft ?? 0) : 0;
   const rightEdge = safe ? left + (viewport?.width ?? cw) : cw;
+  let clampedBottom = clampDeskPetAxis(bottom, h, fy, ch, top, bottomEdge);
+  if (allowBottomPeek && !mayUseMiniProgramBridge()) {
+    const petBottomEdge = bottomEdge - 8;
+    const inset = Math.min(16, Math.max(0, (petBottomEdge - top) / 2));
+    const min = Math.min(ch - petBottomEdge + inset - h * (1 - fy), ch - bottomPeekViewport(cw, ch, viewport).bottom - h * (1 - fy + PEEK));
+    const max = Math.max(min, ch - top - inset - h * (1 - fy));
+    clampedBottom = Math.min(Math.max(min, bottom), max);
+  }
   return {
     right: clampDeskPetAxis(right, w, fx, cw, left, rightEdge),
-    bottom: clampDeskPetAxis(bottom, h, fy, ch, top, bottomEdge),
+    bottom: clampedBottom,
   };
 };
 
@@ -166,6 +193,7 @@ const CSS = `
 .clawd-deskpet[data-char=calico] .clawd-deskpet-hit{left:20%;top:30%;width:60%;height:60%;}
 .clawd-deskpet[data-char=cloudling] .clawd-deskpet-hit{left:27%;top:28%;width:46%;height:54%;}
 .clawd-deskpet[data-char=rootbeast] .clawd-deskpet-hit{left:19%;top:36%;width:64%;height:54%;}
+.clawd-deskpet[data-bottom-peek-phase] .clawd-deskpet-hit{left:8.5%;top:8.5%;width:74%;height:71.5%;}
 .clawd-deskpet[data-original=true] .clawd-deskpet-hit{left:17%;top:29%;width:66%;height:58%;}
 .clawd-deskpet.dragging .clawd-deskpet-hit{cursor:grabbing;}
 /* The hide action belongs to the pet itself. Reuse the shared ClearButton and
@@ -228,7 +256,16 @@ const CSS = `
 .clawd-deskpet[data-char=rootbeast].mini-mode.mini-left>img{transform:rotate(90deg);}
 .clawd-deskpet[data-original=true].mini-mode>img{transform:rotate(-90deg);}
 .clawd-deskpet[data-original=true].mini-mode.mini-left>img{transform:rotate(90deg);}
+/* Rotating pets turn onto and off the edge instead of snapping by 90°. */
+.clawd-deskpet[data-char=rootbeast].mini-turn>img,.clawd-deskpet[data-original=true].mini-turn>img{
+  transition:transform .36s cubic-bezier(.3,0,.2,1);}
 .clawd-deskpet.mini-mode .clawd-deskpet-hit{left:0;top:0;width:100%;height:100%;}
+/* An exit owns the pet until it is hidden: no drags, taps or badges. */
+.clawd-deskpet.leaving :is(.clawd-deskpet-hit,.clawd-deskpet-dismiss,.clawd-deskpet-badge,.admin-tools-surface){pointer-events:none;}
+.clawd-deskpet.leaving .clawd-deskpet-dismiss{opacity:0;}
+@media (prefers-reduced-motion:reduce){
+  .clawd-deskpet[data-char=rootbeast].mini-turn>img,.clawd-deskpet[data-original=true].mini-turn>img{transition:none;}
+}
 @media (max-width:768px){
   .clawd-deskpet{right:max(12px,var(--sar,0px));bottom:max(12px,var(--sab,0px));}
   .clawd-deskpet[data-size=s]{--pet-base:144px;}
@@ -314,6 +351,7 @@ export default function DeskPet() {
   const [touchActionsVisible, setTouchActionsVisible] = useState(false);
   const [lang, setLang] = useState<'zh' | 'en'>('en');
   const [randomMode, setRandomMode] = useState(false);
+  const [exitStyle, setExitStyle] = useState<DeskPetExitStyle>('hop');
   // Floating metronome panel — opened from the toolbar, lives here (root layout)
   // so it survives client-side navigation and keeps ticking across pages.
   const [metronomeOpen, setMetronomeOpen] = useState(false);
@@ -384,12 +422,25 @@ export default function DeskPet() {
   const svgRef = useRef<SVGSVGElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const rootIdleRef = useRef<HTMLObjectElement>(null);
+  const rootDizzyRef = useRef<HTMLObjectElement>(null);
+  const rootHangRef = useRef<HTMLObjectElement>(null);
+  const rootMusicRef = useRef<HTMLObjectElement>(null);
+  const rootBottomPeekRef = useRef<HTMLObjectElement>(null);
+  const rootHuntRef = useRef<HTMLObjectElement>(null);
+  const rootSleepRef = useRef<HTMLObjectElement>(null);
+  const routineSessionRef = useRef<ReturnType<typeof createDeskPetRoutineSession> | null>(null);
+  const [routineBootReady, setRoutineBootReady] = useState(false);
+  const searchOpenRef = useRef(searchOpen);
+  searchOpenRef.current = searchOpen;
+  const huntControlRef = useRef<{ defer: (action: () => void) => boolean; hard: () => void } | null>(null);
+  const bottomPeekingRef = useRef(false);
+  const hangingRef = useRef(false);
   const hitRef = useRef<HTMLDivElement>(null);
   // Off-screen primer input: on touch we focus it synchronously inside the tap
   // gesture so the mobile keyboard opens; the search overlay's real input then
   // takes over once it mounts (which is async, hence out of the gesture).
   const kbdRef = useRef<HTMLInputElement>(null);
-  const ctrlRef = useRef<{ rest: () => void; wake: () => void; cling: () => void; inMini: () => boolean; resetPos: () => void; reposition: () => void } | null>(null);
+  const ctrlRef = useRef<{ rest: () => void; wake: () => void; naturalSleep: (mode: 'drowsy' | 'sleep') => boolean; cling: () => void; inMini: () => boolean; resetPos: () => void; reposition: () => void; hide: () => void } | null>(null);
   // Visual-center screen point captured right before a size/character change,
   // so the pet's visual center stays put (scales about itself; characters land
   // on the same point) instead of drifting from the bottom-right anchor.
@@ -403,6 +454,21 @@ export default function DeskPet() {
   // size/character recenter effect can keep the pet pinned to its edge.
   const miniRef = useRef<{ active: boolean; edge: 'left' | 'right' }>({ active: false, edge: 'right' });
   const pendingPlaytimeRef = useRef<string | null>(null);
+  // Read by the running engine, so changing the exit never restarts it.
+  const exitStyleRef = useRef<DeskPetExitStyle>('hop');
+  // Set while hidden; the next engine start plays the entrance once.
+  const reshowRef = useRef(false);
+  useEffect(() => { if (hidden) reshowRef.current = true; }, [hidden]);
+  useEffect(() => {
+    const updateExit = (event: StorageEvent) => {
+      if (event.key !== DESKPET_EXIT_KEY && event.key !== null) return;
+      const next = parseExitStyle(event.newValue);
+      exitStyleRef.current = next;
+      setExitStyle(next);
+    };
+    window.addEventListener('storage', updateExit);
+    return () => window.removeEventListener('storage', updateExit);
+  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -412,13 +478,24 @@ export default function DeskPet() {
       if (sz === 's' || sz === 'l') setSize(sz);
       // 动画(随机播放)默认关闭:仅显式存为 'random' 才开,空/未设(新用户)→ 关。
       if (localStorage.getItem('clawd-deskpet-mode') === 'random') setRandomMode(true);
+      const exit = parseExitStyle(localStorage.getItem(DESKPET_EXIT_KEY));
+      exitStyleRef.current = exit;
+      setExitStyle(exit);
     } catch {}
     // Warm the search overlay chunk so the first tap mounts it without an async
     // gap — on touch that gap drops focus out of the gesture and the mobile
     // keyboard won't open.
-    const warm = () => { loadDeskPetSearch().catch(() => {}); };
-    if (typeof requestIdleCallback === 'function') requestIdleCallback(warm);
-    else setTimeout(warm, 1500);
+    let active = true;
+    const warm = () => { if (active) loadDeskPetSearch().catch(() => {}); };
+    let idle: number | undefined;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    if (typeof requestIdleCallback === 'function') idle = requestIdleCallback(warm);
+    else timer = setTimeout(warm, 1500);
+    return () => {
+      active = false;
+      if (idle !== undefined && typeof cancelIdleCallback === 'function') cancelIdleCallback(idle);
+      clearTimeout(timer);
+    };
   }, []);
 
   // Re-render menu text live when language changes (DeskPet is outside I18nProvider).
@@ -427,9 +504,10 @@ export default function DeskPet() {
     update();
     // defer via setTimeout — languageChanged fires synchronously inside I18nProvider's render,
     // calling setState during another component's render throws in React strict mode.
-    const deferred = () => setTimeout(update, 0);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const deferred = () => { clearTimeout(timer); timer = setTimeout(update, 0); };
     i18n.on('languageChanged', deferred);
-    return () => { i18n.off('languageChanged', deferred); };
+    return () => { i18n.off('languageChanged', deferred); clearTimeout(timer); };
   }, []);
 
 
@@ -473,6 +551,7 @@ export default function DeskPet() {
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
     let live: Animation[] = [];
     return subscribeBeat(({ accent }) => {
+      if (rootRef.current?.classList.contains('leaving') || rootRef.current?.dataset.hangPhase || rootRef.current?.dataset.bottomPeekPhase || rootMusicRef.current?.style.visibility === '') return;
       for (const a of live) a.cancel();
       live = [];
       const peak = accent ? 1.1 : 1.05;
@@ -480,6 +559,7 @@ export default function DeskPet() {
       // the beat interval — at the top of the tempo range a fixed 130ms would be
       // cancelled mid-swell every time and leave the pet stuck enlarged.
       const duration = Math.max(24, Math.min(130, (60000 / getMetronomeState().bpm) * 0.8));
+      if (rootRef.current?.dataset.shakePhase) return;
       for (const el of [svgRef.current, imgRef.current, rootIdleRef.current]) {
         if (!el || el.style.visibility === 'hidden') continue;
         live.push(el.animate(
@@ -528,21 +608,30 @@ export default function DeskPet() {
       if (svgRef.current) svgRef.current.style.visibility = 'hidden';
       if (imgRef.current) imgRef.current.style.visibility = 'hidden';
       if (rootIdleRef.current) rootIdleRef.current.style.visibility = 'hidden';
+      if (rootHangRef.current) rootHangRef.current.style.visibility = 'hidden';
+      if (rootMusicRef.current) rootMusicRef.current.style.visibility = 'hidden';
+      if (rootBottomPeekRef.current) rootBottomPeekRef.current.style.visibility = 'hidden';
+      if (rootHuntRef.current) rootHuntRef.current.style.visibility = 'hidden';
     }
     const r = root.getBoundingClientRect();
     // While clinging, a size change must re-pin to the edge, not recenter.
+    if (hangingRef.current && character === 'rootbeast') {
+      root.style.bottom = vpH() - (window.visualViewport?.offsetTop ?? 0) - r.height + r.height * HANG_HOOK_Y + 'px';
+      return;
+    }
     if (miniRef.current.active) {
       root.style.right = miniRightPx(THEMES[character].mini.offsetRatio, miniRef.current.edge, r.width) + 'px';
-      root.style.bottom = clampAnchor(0, vpH() - r.bottom, r.width, r.height, ...VC[character]).bottom + 'px';
+      root.style.bottom = clampAnchor(0, vpH() - r.bottom, r.width, r.height, ...VC[character], character === 'rootbeast').bottom + 'px';
       return;
     }
     const [fx, fy] = VC[character];
     const c = clampAnchor(
       vpW() - pt.x - r.width * (1 - fx), vpH() - pt.y - r.height * (1 - fy),
-      r.width, r.height, fx, fy);
+      r.width, r.height, fx, fy, character === 'rootbeast');
     root.style.right = c.right + 'px';
     root.style.bottom = c.bottom + 'px';
     persistItem(POS_KEY, JSON.stringify({ right: c.right, bottom: c.bottom }));
+    if (bottomPeekingRef.current) ctrlRef.current?.reposition();
   }, [size, character]);
 
   useEffect(() => {
@@ -554,6 +643,15 @@ export default function DeskPet() {
     const shadow = svg.querySelector<SVGGElement>('#clawddp-shadow');
     const theme = THEMES[character];
     const rootIdle = rootIdleRef.current;
+    const idlePlayback = rootIdle ? createDeskPetIdlePlayback(rootIdle) : undefined;
+    const rootDizzy = character === 'rootbeast' ? rootDizzyRef.current : null;
+    const rootHang = character === 'rootbeast' ? rootHangRef.current : null;
+    const rootMusic = character === 'rootbeast' ? rootMusicRef.current : null;
+    const rootBottomPeek = character === 'rootbeast' ? rootBottomPeekRef.current : null;
+    const rootHunt = character === 'rootbeast' ? rootHuntRef.current : null;
+    const rootSleep = character === 'rootbeast' ? rootSleepRef.current : null;
+    const routine = character === 'rootbeast' ? (routineSessionRef.current ??= createDeskPetRoutineSession()) : null;
+    routine?.initialize(new Date());
     let rootPupils: SVGGElement[] = [];
     const assetUrl = (file: string) => theme.base + file + (theme.version ? `?v=${theme.version}` : '');
     const characterScene = (state: unknown) => {
@@ -566,7 +664,7 @@ export default function DeskPet() {
       const p = JSON.parse(localStorage.getItem(POS_KEY) || 'null');
       if (p && typeof p.right === 'number' && typeof p.bottom === 'number') {
         const rb = root.getBoundingClientRect();
-        const c = clampAnchor(p.right, p.bottom, rb.width, rb.height, VC[character][0], VC[character][1]);
+        const c = clampAnchor(p.right, p.bottom, rb.width, rb.height, VC[character][0], VC[character][1], character === 'rootbeast');
         root.style.right = c.right + 'px';
         root.style.bottom = c.bottom + 'px';
       }
@@ -575,10 +673,83 @@ export default function DeskPet() {
     let state = 'idle';
     let asleep = false;
     let dragging = false;
-    let dnd = false;
+    let dnd = resting;
     let autoTimer: ReturnType<typeof setTimeout> | undefined;
     let idleTimer: ReturnType<typeof setTimeout> | undefined;
     let randomTimer: ReturnType<typeof setTimeout> | undefined;
+    let leaving = false;
+    let disposed = false;
+    let capturedPointer: number | undefined;
+    let cancelSequence: (() => void) | undefined;
+    const motionAnimations: Animation[] = [];
+    const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const animate = (frames: Keyframe[], duration: number) => {
+      if (typeof root.animate === 'function') motionAnimations.push(root.animate(frames, { duration, fill: 'forwards', easing: 'ease-in-out' }));
+    };
+    const clearMotion = () => { motionAnimations.splice(0).forEach(animation => animation.cancel()); };
+    let dizzyRenderer: ReturnType<typeof createDizzyRenderer> | undefined;
+    let hangRenderer: ReturnType<typeof createHangRenderer> | undefined;
+    let musicRenderer: ReturnType<typeof createMusicRenderer> | undefined;
+    let bottomRenderer: ReturnType<typeof createBottomPeekRenderer> | undefined;
+    let hunt: ReturnType<typeof createDeskPetHunt> | undefined;
+    let hangPlay: ReturnType<typeof createDeskPetHangInteraction> | undefined;
+    let natural: ReturnType<typeof createDeskPetNaturalSleep> | undefined;
+    let automaticNatural = false;
+    let lastDragEnded = performance.now();
+    let idleGaze = { gx: 0, gy: 0 };
+    const deferHunt = (action: () => void) => {
+      hangPlay?.stop('soft');
+      if (!hunt?.active) return false;
+      hunt.stop('soft', action); return true;
+    };
+    huntControlRef.current = { defer: deferHunt, hard: () => { natural?.stop(); hangPlay?.stop('hard'); hunt?.stop('hard'); } };
+    const dismissBottom = () => {
+      if (!bottomRenderer?.visible && !bottomRenderer?.active) return;
+      const visible = bottomRenderer?.visible;
+      bottomRenderer?.hide();
+      if (visible && img.dataset.character === character && img.getAttribute('src')) {
+        img.style.display = 'block'; img.style.visibility = '';
+      }
+    };
+    let musicReadyToShow = false;
+    const suspendMusic = () => {
+      const wasVisible = musicRenderer?.visible;
+      musicRenderer?.suspend();
+      if (wasVisible && img.dataset.character === character && img.getAttribute('src')) {
+        img.style.display = 'block'; img.style.visibility = '';
+      }
+    };
+    let restartIdle = false;
+    let restartDrag = false;
+    const shake = createDeskPetShakeController({
+      reducedMotion: reducedMotion(),
+      onChange: snapshot => {
+        if (snapshot.phase !== 'idle') hangPlay?.stop('hard');
+        if (snapshot.phase !== 'idle' && hunt?.emerging) hunt.stop('hard');
+        if (snapshot.phase !== 'idle') { dismissBottom(); suspendMusic(); }
+        if (snapshot.phase !== 'idle' && hangRenderer?.visible) {
+          hangRenderer.interrupt();
+          if (!dizzyRenderer?.ready) setState(dragging ? 'reactDrag' : 'idle', true);
+        }
+        if (snapshot.phase === 'idle') delete root.dataset.shakePhase;
+        else root.dataset.shakePhase = snapshot.phase;
+        dizzyRenderer?.sync();
+      },
+    });
+    const dizzyOwnsArt = () => !!dizzyRenderer?.ready && shake.snapshot().phase !== 'idle';
+    const physicalInteractionOwnsArt = () => !!natural?.active || dizzyOwnsArt() || !!hangRenderer?.active || (!!bottomRenderer?.active && !hunt?.emerging);
+    const interactionOwnsArt = () => physicalInteractionOwnsArt() || !!musicRenderer?.active || !!hunt?.active;
+    const sleepTimers = new Set<ReturnType<typeof setTimeout>>();
+    const clearSleepTimers = () => { sleepTimers.forEach(clearTimeout); sleepTimers.clear(); };
+    const afterSleep = (callback: () => void, delay: number) => {
+      const timer = setTimeout(() => { sleepTimers.delete(timer); if (!disposed && !leaving) callback(); }, delay);
+      sleepTimers.add(timer);
+    };
+    const releasePointer = () => {
+      if (capturedPointer === undefined) return;
+      try { hit.releasePointerCapture(capturedPointer); } catch {}
+      capturedPointer = undefined;
+    };
 
     // ── Mini (edge-cling) mode ── ported from clawd-on-desk mini.js + state.js
     let mini = false;
@@ -590,6 +761,7 @@ export default function DeskPet() {
     const syncMiniRef = () => { miniRef.current = { active: mini, edge: miniEdge }; };
 
     const applyEye = (ox: number, oy: number) => {
+      idleGaze = { gx: ox / MAX * 9, gy: oy / MAX * 7 };
       if (character === 'rootbeast') {
         for (const pupil of rootPupils) {
           // Match the generated rig's safe gaze bounds inside the eye whites.
@@ -607,8 +779,8 @@ export default function DeskPet() {
     };
 
     const showRootIdle = () => {
-      if (!rootIdle || rootPupils.length < 2 || state !== 'idle' || mini || dragging || randomMode) return;
-      rootIdle.style.visibility = '';
+      if (!rootIdle || rootPupils.length < 2 || state !== 'idle' || mini || dragging || randomMode || dizzyRenderer?.visible || hangRenderer?.visible || musicRenderer?.visible || bottomRenderer?.visible || hunt?.visible || natural?.visible) return;
+      rootIdle.style.visibility = ''; idlePlayback?.sync();
       img.style.display = 'none';
       svg.style.display = 'none';
     };
@@ -640,17 +812,22 @@ export default function DeskPet() {
     // `replay` restarts a one-shot animation from the memory
     // cache instead of re-downloading it.
     let frameSeq = 0;
-    let storyUrl: string | undefined;
-    let storyRequest: AbortController | undefined;
+    let activeFrameUrl: string | undefined;
+    const motionUrls = new Set<string>();
+    const releaseMotionUrls = () => {
+      for (const url of motionUrls) if (url !== activeFrameUrl) { URL.revokeObjectURL(url); motionUrls.delete(url); }
+    };
     const paintFrame = (url: string, replay: boolean, onPaint: () => void, story = false) => {
       const seq = ++frameSeq;
       let painted = false;
       const show = (src: string) => {
-        if (seq !== frameSeq) return;
+        if (disposed || seq !== frameSeq) return;
         if (painted) return;
         painted = true;
         if (replay && img.getAttribute('src') === src) img.removeAttribute('src');
         img.src = src;
+        activeFrameUrl = motionUrls.has(src) ? src : undefined;
+        releaseMotionUrls();
         img.dataset.character = character;
         img.style.display = 'block';
         img.style.visibility = '';
@@ -659,7 +836,8 @@ export default function DeskPet() {
         showRootIdle();
       };
       const fail = () => {
-        if (seq !== frameSeq) return;
+        if (disposed || seq !== frameSeq) return;
+        releaseMotionUrls();
         if (img.getAttribute('src') && img.dataset.character === character) {
           img.style.visibility = ''; // only keep a frame belonging to this pet
           onPaint();
@@ -692,13 +870,12 @@ export default function DeskPet() {
       if (!story) { decode(url); return; }
       // Give each story its own timeline, even while the gallery is showing the
       // same SVG. The versioned fetch still uses the browser's immutable cache.
-      storyRequest = new AbortController();
-      fetch(url, { signal: storyRequest.signal })
-        .then((response) => { if (!response.ok) throw new Error('Playtime asset unavailable'); return response.blob(); })
+      loadMotionBlob(url)
         .then((blob) => {
-          if (seq !== frameSeq) return;
-          storyUrl = URL.createObjectURL(blob);
-          decode(storyUrl);
+          if (disposed || seq !== frameSeq) return;
+          const url = URL.createObjectURL(blob);
+          motionUrls.add(url);
+          decode(url);
         })
         .catch(fail);
     };
@@ -706,55 +883,382 @@ export default function DeskPet() {
     // Prewarm the poses the pet reaches on its own (idle → yawn → doze → sleep,
     // plus the two most common reactions) so the first swap paints from cache.
     const prewarm = () => {
+      if (disposed) return;
       for (const k of ['working', 'happy', 'yawning', 'dozing', 'sleeping', 'idle']) {
         const f = theme.files[k];
         if (f) new Image().src = assetUrl(f);
       }
     };
-    if (typeof requestIdleCallback === 'function') requestIdleCallback(prewarm);
-    else setTimeout(prewarm, 2000);
+    let prewarmIdle: number | undefined;
+    let prewarmTimer: ReturnType<typeof setTimeout> | undefined;
+    if (typeof requestIdleCallback === 'function') prewarmIdle = requestIdleCallback(prewarm);
+    else prewarmTimer = setTimeout(prewarm, 2000);
 
-    const setState = (s: string, force = false) => {
-      if (s === state && !force) return;
+    const setState = (s: string, force = false, ready?: () => void) => {
+      if (disposed || (leaving && !s.startsWith('exit-'))) return;
+      if (interactionOwnsArt() && !s.startsWith('exit-')) return;
+      if (s === state && !force) { ready?.(); return; }
       clearTimeout(autoTimer);
       ++frameSeq; // invalidate pending loads, including transitions to inline idle
-      storyRequest?.abort();
-      if (storyUrl) { URL.revokeObjectURL(storyUrl); storyUrl = undefined; }
+      releaseMotionUrls(); // Keep the decoded current frame until its replacement paints.
       state = s;
       if (rootIdle) {
-        rootIdle.style.visibility = 'hidden';
+        rootIdle.style.visibility = 'hidden'; idlePlayback?.sync();
         img.style.display = 'block';
       }
       root.dataset.state = s;
       const isMini = s.startsWith('mini-');
       const story = characterScene(s);
-      const back = story?.durationMs ?? (isMini ? MINI_AUTO[s] : theme.auto?.[s] ?? AUTO[s]);
+      const motion = theme.motion?.[s];
+      const replayIdle = s === 'idle' && restartIdle;
+      const replayDrag = s === 'reactDrag' && restartDrag;
+      restartIdle = false;
+      restartDrag = false;
+      const back = ready ? undefined : story?.durationMs ?? (isMini ? MINI_AUTO[s] : theme.auto?.[s] ?? AUTO[s]);
       const onPaint = () => {
+        if (replayIdle) { restartIdleDocument(rootIdle); applyEye(0, 0); }
+        // New pose is decoded before retiring the final vector frame.
+        if (!dizzyOwnsArt() || leaving) dizzyRenderer?.hide();
+        if (!hangRenderer?.active || leaving) hangRenderer?.hide();
+        if (!musicRenderer?.active || leaving) musicRenderer?.suspend();
+        if (!bottomRenderer?.active || leaving) bottomRenderer?.hide();
+        if (!hunt?.active || leaving) hunt?.retire();
+        if (!natural?.active || leaving) { natural?.retire(); delete root.dataset.naturalSleep; }
+        ready?.();
         if (back) autoTimer = setTimeout(() => {
           if (isMini) onMiniAutoReturn(s);
           else setState('idle');
         }, back);
+        musicRenderer?.sync();
       };
       asleep = s === 'sleeping' || s === 'dozing' || s === 'mini-sleep';
       if (!isMini && s === 'idle' && theme.inlineIdle) {
+        activeFrameUrl = undefined;
+        releaseMotionUrls();
         img.style.display = 'none';
         svg.style.display = 'block';
         svg.style.visibility = ''; // clear any hide from a character switch
         applyEye(0, 0);
+        ready?.();
       } else {
         let file: string;
         if (isMini) {
           // calico lacks mini-working / mini-enter-sleep → fall back to idle / sleep.
           file = theme.mini.files[MINI_KEYS[s]] || theme.mini.files.idle;
         } else {
-          file = theme.files[s] || theme.files.working;
+          file = theme.files[s] || theme.files[s === 'exit-sleep' ? 'sleeping' : s === 'exit-hop' ? 'reactDrag' : 'idle'] || theme.files.working;
         }
         // A stable asset version preserves caching; stories get independent
         // timelines so selecting a gallery thumbnail starts a complete loop.
-        paintFrame(story?.src ?? assetUrl(file), force, onPaint, !!story);
+        paintFrame(motion?.src ?? story?.src ?? assetUrl(file), force, onPaint, !!(motion || story || replayIdle || replayDrag));
         showRootIdle();
       }
     };
+
+    if (rootDizzy) dizzyRenderer = createDizzyRenderer({
+      object: rootDizzy,
+      snapshot: shake.snapshot,
+      reducedMotion,
+      interrupted: () => disposed || leaving || dnd || mini || miniTransitioning,
+      onShow: () => {
+        ++frameSeq;
+        releaseMotionUrls();
+        clearTimeout(autoTimer); clearTimeout(idleTimer); clearSleepTimers();
+        applyEye(0, 0);
+      },
+      onHandoff: () => {
+        hangRenderer?.hide();
+        img.style.visibility = 'hidden'; svg.style.visibility = 'hidden';
+        if (rootIdle) { rootIdle.style.visibility = 'hidden'; idlePlayback?.sync(); }
+      },
+      onRest: () => {
+        if (disposed || leaving || dnd || mini || miniTransitioning) return;
+        restartIdle = true;
+        setState('idle', true);
+        if (!randomMode) resetIdle();
+      },
+      onUnavailable: () => {
+        if (disposed || leaving) return;
+        // Keep a known same-character frame if the embedded document fails.
+        if (img.dataset.character === character && img.getAttribute('src')) {
+          img.style.display = 'block'; img.style.visibility = '';
+        }
+        setState(dnd ? 'sleeping' : 'idle', true);
+      },
+    });
+
+    const topLine = () => window.visualViewport?.offsetTop ?? 0;
+    const pinHang = () => {
+      const r = root.getBoundingClientRect();
+      // Only the vertical anchor changes; the release's horizontal coordinate stays exact.
+      root.style.transition = '';
+      root.style.bottom = vpH() - topLine() - r.height + r.height * HANG_HOOK_Y + 'px';
+    };
+    if (rootHang) hangRenderer = createHangRenderer({
+      object: rootHang, reducedMotion,
+      onPhase: phase => {
+        hangingRef.current = phase === 'hanging';
+        if (phase) root.dataset.hangPhase = phase; else delete root.dataset.hangPhase;
+      },
+      onShow: () => {
+        suspendMusic();
+        dismissBottom();
+        ++frameSeq; releaseMotionUrls();
+        clearTimeout(autoTimer); clearTimeout(idleTimer); clearTimeout(randomTimer); clearSleepTimers();
+        dizzyRenderer?.hide(); applyEye(0, 0);
+        img.style.visibility = 'hidden'; svg.style.visibility = 'hidden';
+        if (rootIdle) { rootIdle.style.visibility = 'hidden'; idlePlayback?.sync(); }
+      },
+      onRest: () => {
+        if (disposed || leaving || dnd || mini || miniTransitioning || dizzyOwnsArt()) return;
+        restartIdle = !dragging;
+        setState(dragging ? 'reactDrag' : 'idle', true);
+        if (randomMode) scheduleRandom(); else resetIdle();
+      },
+      onUnavailable: () => {
+        if (disposed || leaving) return;
+        setState(dnd ? 'sleeping' : dragging ? 'reactDrag' : 'idle', true);
+      },
+    });
+
+    if (rootHang) hangPlay = createDeskPetHangInteraction({
+      object: rootHang,
+      box: () => { const r = root.getBoundingClientRect(); return { left: r.left, top: r.top, width: r.width }; },
+      enabled: () => !!hangRenderer?.hanging && !disposed && !leaving && !dragging && !dnd && !asleep
+        && !mini && !miniTransitioning && !randomMode && !document.hidden && !reducedMotion()
+        && !searchOpenRef.current && shake.snapshot().phase === 'idle' && !dizzyRenderer?.visible
+        && !mayUseMiniProgramBridge() && performance.now() - lastDragEnded >= 1200,
+      interruption: () => disposed || leaving || document.hidden || shake.snapshot().phase !== 'idle'
+        || dizzyRenderer?.visible || !hangRenderer?.visible ? 'hard'
+        : dragging ? 'drag' : !hangRenderer.hanging || dnd || asleep || mini || miniTransitioning || randomMode
+          || searchOpenRef.current || reducedMotion() || mayUseMiniProgramBridge() ? 'soft' : null,
+    });
+
+    if (rootMusic) musicRenderer = createMusicRenderer({
+      object: rootMusic, read: getMusicPlayerState,
+      subscribe: listener => subscribeMusicPlayer(() => {
+        if (getMusicPlayerState().playing && natural?.mode === 'drowsy') { natural.stop(); setState('idle', true); }
+        if (getMusicPlayerState().playing && !hunt?.emerging) dismissBottom();
+        listener();
+      }),
+      reducedMotion,
+      blocked: () => !musicReadyToShow || disposed || leaving || dragging || dnd || mini || miniTransitioning || document.hidden || state === 'waking' || state === 'enter'
+        || shake.snapshot().phase !== 'idle' || !!dizzyRenderer?.visible || !!hangRenderer?.visible || !!bottomRenderer?.visible || !!hunt?.active || !!hunt?.visible || !!natural?.active || !!natural?.visible,
+      onShow: () => {
+        ++frameSeq; releaseMotionUrls();
+        clearTimeout(autoTimer); clearTimeout(idleTimer); clearTimeout(randomTimer); clearSleepTimers();
+        asleep = false;
+        applyEye(0, 0);
+        img.style.visibility = 'hidden'; svg.style.visibility = 'hidden';
+        if (rootIdle) { rootIdle.style.visibility = 'hidden'; idlePlayback?.sync(); }
+      },
+      onRest: () => {
+        if (disposed || leaving || dnd || mini || miniTransitioning || physicalInteractionOwnsArt()) return;
+        restartIdle = !dragging;
+        setState(dragging ? 'reactDrag' : 'idle', true);
+        if (randomMode) scheduleRandom(); else resetIdle();
+      },
+      onUnavailable: () => {
+        if (disposed || leaving || physicalInteractionOwnsArt()) return;
+        if (img.dataset.character === character && img.getAttribute('src')) {
+          img.style.display = 'block'; img.style.visibility = '';
+        }
+        setState(dnd ? 'sleeping' : dragging ? 'reactDrag' : 'idle', true);
+      },
+    });
+
+    const bottomViewportNow = () => bottomPeekViewport(vpW(), vpH(), window.visualViewport);
+    const bottomAnchorHeight = (box = root.getBoundingClientRect()) => {
+      if (character !== 'rootbeast' || mayUseMiniProgramBridge()) return vpH();
+      // Fixed-position CSS anchors can have a fractional containing height even
+      // though documentElement.clientHeight has already rounded it to an integer.
+      const bottom = parseFloat(getComputedStyle(root).bottom);
+      return Number.isFinite(bottom) ? box.bottom + bottom : vpH();
+    };
+    const peekLineNow = (box = root.getBoundingClientRect()) => {
+      const pixel = 1 / ((window.devicePixelRatio || 1) * (window.visualViewport?.scale || 1));
+      const geometry = bottomRenderer?.geometry(pixel);
+      return geometry ? bottomPeekLine(box, bottomViewportNow(), geometry) : undefined;
+    };
+    let lastBottomDrop: { reason: string; line: number | null; rawLine: number;
+      box: { top: number; left: number; width: number; height: number }; viewportBottom: number } | undefined;
+    let lastBottomCancel: string | undefined;
+    let lastBottomPresentation: object | undefined;
+    const inspectBottom = () => {
+      const rect = root.getBoundingClientRect();
+      let rig: object | undefined;
+      try {
+        const element = rootBottomPeek?.contentDocument?.documentElement as unknown as SVGSVGElement | undefined;
+        if (element) {
+          const style = element.ownerDocument.defaultView?.getComputedStyle(element);
+          const bounds = element.getBoundingClientRect();
+          const matrix = element.getScreenCTM?.();
+          const riseNode = element.querySelector<SVGElement>('.pk-rise');
+          rig = { width: element.getAttribute('width'), height: element.getAttribute('height'),
+            tag: element.localName, marker: element.getAttribute('data-rootbeast-peek'), viewBox: element.getAttribute('viewBox'),
+            bounds: { top: bounds.top, left: bounds.left, width: bounds.width, height: bounds.height },
+            matrix: matrix ? { a: matrix.a, d: matrix.d, e: matrix.e, f: matrix.f } : null,
+            peek: element.getAttribute('data-peek'), line: element.style.getPropertyValue('--peek-y'),
+            pk: style?.getPropertyValue('--pk'), pu: style?.getPropertyValue('--pu'), rise: style?.getPropertyValue('--rise'),
+            riseTransform: riseNode ? element.ownerDocument.defaultView?.getComputedStyle(riseNode).transform : undefined };
+        }
+      } catch { rig = { unavailable: true }; }
+      return { revision: 'bottom-peek-geometry-20261025', lastDrop: lastBottomDrop, lastCancel: lastBottomCancel,
+        beforeInterruption: lastBottomPresentation, state, bottomPhase: root.dataset.bottomPeekPhase ?? null,
+        drag: { pointerX: lastPointerX, pointerY: lastPointerY, gripY: dragGripY, baseAssist: baseBottomAssist,
+          layoutHeight: vpH(), visualHeight: window.visualViewport?.height, visualOffset: window.visualViewport?.offsetTop,
+          fullscreenElement: !!document.fullscreenElement },
+        ready: !!bottomRenderer?.ready, visible: !!bottomRenderer?.visible,
+        gates: { leaving, dragging, dnd, mini, miniTransitioning, shake: shake.snapshot().phase,
+          hang: !!hangRenderer?.active, playing: getMusicPlayerState().playing, musicArt: !!musicRenderer?.active,
+          nativeBoundary: mayUseMiniProgramBridge() },
+        box: { top: rect.top, left: rect.left, width: rect.width, height: rect.height }, rig };
+    };
+    if (rootBottomPeek) bottomRenderer = createBottomPeekRenderer({
+      object: rootBottomPeek, reducedMotion,
+      onPhase: phase => {
+        bottomPeekingRef.current = phase === 'peeking';
+        if (phase) root.dataset.bottomPeekPhase = phase; else delete root.dataset.bottomPeekPhase;
+      },
+      onShow: () => {
+        ++frameSeq; releaseMotionUrls();
+        clearTimeout(autoTimer); clearTimeout(idleTimer); clearTimeout(randomTimer); clearSleepTimers();
+        asleep = false; applyEye(0, 0);
+        img.style.visibility = 'hidden'; svg.style.visibility = 'hidden';
+        if (rootIdle) { rootIdle.style.visibility = 'hidden'; idlePlayback?.sync(); }
+      },
+      onRest: () => {
+        if (disposed || leaving || dnd || mini || miniTransitioning || dizzyOwnsArt() || hangRenderer?.active) return;
+        restartIdle = !dragging; restartDrag = dragging;
+        setState(dragging ? 'reactDrag' : 'idle', true);
+        if (randomMode) scheduleRandom(); else resetIdle();
+      },
+      onUnavailable: () => {
+        if (disposed || leaving) return;
+        if (img.dataset.character === character) img.style.visibility = '';
+        setState(dnd ? 'sleeping' : dragging ? 'reactDrag' : 'idle', true);
+      },
+    });
+
+    const bottomHuntAllowed = () => !(disposed || leaving || dragging || dnd || asleep || mini || miniTransitioning
+      || (state !== 'idle' && !bottomRenderer?.peeking) || randomMode || searchOpenRef.current || document.hidden || reducedMotion() || mayUseMiniProgramBridge()
+      || natural?.active || natural?.visible || dizzyOwnsArt() || shake.snapshot().phase !== 'idle' || hangRenderer?.active
+      || musicRenderer?.active || musicRenderer?.visible || getMusicPlayerState().playing
+      || performance.now() - lastDragEnded < 1200);
+    if (rootHunt) hunt = createDeskPetHunt({
+      object: rootHunt,
+      box: () => { const r = root.getBoundingClientRect(); return { left: r.left, top: r.top, width: r.width }; },
+      travel: box => {
+        const margin = box.width * MINI_SNAP_FRAC + 12, center = box.left + box.width * VC[character][0];
+        return { min: margin - center, max: vpW() - margin - center };
+      },
+      canStart: () => {
+        if (disposed || leaving || dragging || dnd || asleep || mini || miniTransitioning || state !== 'idle'
+          || randomMode || searchOpenRef.current || document.hidden || reducedMotion() || mayUseMiniProgramBridge()
+          || physicalInteractionOwnsArt() || musicRenderer?.active || musicRenderer?.visible || getMusicPlayerState().playing
+          || hunt?.visible || natural?.visible || performance.now() - lastDragEnded < 1200) return false;
+        const r = root.getBoundingClientRect(), viewport = bottomViewportNow();
+        return r.top >= (window.visualViewport?.offsetTop ?? 0) && r.bottom <= viewport.bottom;
+      },
+      interruption: () => disposed || leaving || dragging || document.hidden || dizzyOwnsArt() || hangRenderer?.active
+        || (bottomRenderer?.active && !bottomRenderer.peeking) || reducedMotion() ? 'hard'
+        : dnd || asleep || mini || miniTransitioning || randomMode || searchOpenRef.current || (state !== 'idle' && !bottomRenderer?.peeking)
+          || getMusicPlayerState().playing || musicRenderer?.active ? 'soft' : null,
+      idle: () => {
+        try {
+          const element = rootIdle?.contentDocument?.documentElement as unknown as SVGSVGElement | undefined;
+          const animation = element?.getAnimations?.({ subtree: true })?.[0];
+          const time = animation?.currentTime;
+          return { time: typeof time === 'number' ? time / 1000 : element?.getCurrentTime?.() ?? 0, ...idleGaze };
+        } catch { return { time: 0, ...idleGaze }; }
+      },
+      onStart: () => {
+        // Peek owns the picture independently of the previous drag state.
+        // Adopt its neutral logical state without painting over the shared rig.
+        if (bottomRenderer?.peeking) { state = 'idle'; root.dataset.state = 'idle'; }
+        ++frameSeq; releaseMotionUrls(); clearTimeout(autoTimer); clearTimeout(idleTimer); clearTimeout(randomTimer); clearSleepTimers();
+        img.style.visibility = 'hidden'; svg.style.visibility = 'hidden'; if (rootIdle) { rootIdle.style.visibility = 'hidden'; idlePlayback?.sync(); }
+        root.dataset.huntPhase = 'active';
+      },
+      onTravel: (pixels, bodyOffset) => {
+        root.style.translate = `${pixels}px 0`;
+        // Keep the existing body hit area with the airborne body, without
+        // adding a large transparent layer that intercepts nearby page clicks.
+        hit.style.translate = `0 ${bodyOffset}px`;
+      },
+      onCommit: pixels => {
+        const right = parseFloat(getComputedStyle(root).right);
+        root.style.right = (Number.isFinite(right) ? right - pixels : vpW() - root.getBoundingClientRect().right) + 'px';
+        root.style.translate = ''; hit.style.translate = ''; delete root.dataset.huntPhase;
+        persistItem(POS_KEY, JSON.stringify({ right: parseFloat(root.style.right), bottom: parseFloat(getComputedStyle(root).bottom) || 0 }));
+        if (!disposed && !physicalInteractionOwnsArt() && img.dataset.character === character && img.getAttribute('src')) {
+          img.style.display = 'block'; img.style.visibility = '';
+        }
+      },
+      onRest: () => {
+        if (disposed || leaving || dragging || dnd || mini || miniTransitioning || state !== 'idle' || physicalInteractionOwnsArt()) return;
+        restartIdle = true; setState('idle', true); resetIdle();
+      },
+      bottom: {
+        peek: () => {
+          const element = bottomRenderer?.document, line = bottomRenderer?.contactLine;
+          if (!bottomRenderer?.peeking || !element || line === undefined || !peekSettled(element)) return;
+          return { line, loop: () => readPeekLoop(element) };
+        },
+        canStart: bottomHuntAllowed,
+        suspend: line => bottomRenderer?.suspend(line),
+        restore: line => {
+          if (!bottomHuntAllowed()) return false;
+          const element = bottomRenderer?.document;
+          if (element) restartPeekLoop(element);
+          return bottomRenderer?.resume(line) ?? false;
+        },
+        clear: () => bottomRenderer?.hide(),
+        onLift: pixels => { root.style.translate = `0 ${-pixels}px`; },
+        onCommitLift: pixels => {
+          const bottom = parseFloat(getComputedStyle(root).bottom) || 0;
+          root.style.bottom = `${bottom + pixels}px`; root.style.translate = '';
+          persistItem(POS_KEY, JSON.stringify({ right: parseFloat(getComputedStyle(root).right) || 0, bottom: bottom + pixels }));
+        },
+        onDragRest: () => {
+          if (disposed || leaving) return;
+          restartDrag = dragging; restartIdle = !dragging;
+          setState(dragging ? 'reactDrag' : 'idle', true);
+        },
+      },
+    });
+
+    if (rootSleep) natural = createDeskPetNaturalSleep({
+      object: rootSleep, reducedMotion,
+      canStart: () => !(disposed || leaving || dragging || dnd || asleep || mini || miniTransitioning || randomMode
+        || document.hidden || mayUseMiniProgramBridge() || physicalInteractionOwnsArt() || hunt?.active
+        || natural?.visible || musicRenderer?.active || musicRenderer?.visible || getMusicPlayerState().playing || state !== 'idle'),
+      idle: () => {
+        let idleTime = 0;
+        try { const element = rootIdle?.contentDocument?.documentElement as unknown as SVGSVGElement | undefined;
+          const time = element?.getAnimations?.({ subtree: true })?.[0]?.currentTime;
+          idleTime = typeof time === 'number' ? time / 1000 : element?.getCurrentTime?.() ?? 0;
+        } catch { /* Idle frame zero is the existing fallback. */ }
+        return { idleTime, ...idleGaze };
+      },
+      onShow: () => {
+        ++frameSeq; releaseMotionUrls(); clearTimeout(autoTimer); clearTimeout(idleTimer); clearTimeout(randomTimer);
+        clearSleepTimers(); clearTimeout(clickTimer); clicks = 0;
+        setSearchOpen(false); setTouchActionsVisible(false); root.dataset.naturalSleep = 'on';
+        setRoutineBootReady(true);
+        img.style.visibility = 'hidden'; svg.style.visibility = 'hidden'; if (rootIdle) { rootIdle.style.visibility = 'hidden'; idlePlayback?.sync(); }
+      },
+      onAwake: () => {
+        if (disposed || leaving) return;
+        routine?.awake(new Date()); automaticNatural = false;
+        restartIdle = true; setState('idle', true); resetIdle();
+      },
+      onUnavailable: () => {
+        if (disposed || leaving) return;
+        routine?.cancelInitial(); setRoutineBootReady(true); automaticNatural = false;
+        delete root.dataset.naturalSleep; restartIdle = true; setState('idle', true); resetIdle();
+      },
+    });
 
     // After a one-shot mini pose (peek/alert/happy) finishes, settle back to the
     // mini rest pose — staying nudged-in if the cursor is still over the pet.
@@ -765,7 +1269,7 @@ export default function DeskPet() {
     };
 
     const trackCursor = (cx: number, cy: number) => {
-      if ((!theme.inlineIdle && rootPupils.length < 2) || state !== 'idle' || dragging || randomMode) return;
+      if ((!theme.inlineIdle && rootPupils.length < 2) || state !== 'idle' || dragging || randomMode || hunt?.active) return;
       const r = root.getBoundingClientRect();
       const dx = cx - (r.left + r.width * (character === 'rootbeast' ? .42 : .489));
       const dy = cy - (r.top + r.height * (character === 'rootbeast' ? .59 : .756));
@@ -776,27 +1280,41 @@ export default function DeskPet() {
     };
 
     const goSleep = () => {
+      if (character === 'rootbeast' || disposed || leaving || dnd || randomMode || hunt?.active || natural?.active) return;
+      clearSleepTimers();
       setState('yawning');
-      setTimeout(() => { if (state === 'yawning') setState('dozing'); }, 2500);
-      setTimeout(() => { if (state === 'dozing') setState('sleeping'); }, 5000);
+      afterSleep(() => { if (state === 'yawning') setState('dozing'); }, 2500);
+      afterSleep(() => { if (state === 'dozing') setState('sleeping'); }, 5000);
     };
     const wakeUp = () => {
+      clearSleepTimers();
       setState('waking', true);
-      setTimeout(() => { if (state === 'waking') setState('idle'); }, 1400);
+      afterSleep(() => { if (state === 'waking') setState('idle'); }, 1400);
     };
     const resetIdle = () => {
       clearTimeout(idleTimer);
+      if (character === 'rootbeast' || disposed || leaving || dnd || randomMode || natural?.active) return;
       idleTimer = setTimeout(goSleep, SLEEP_AFTER);
     };
 
     const enterRest = () => {
+      if (natural?.active) return;
+      if (leaving) return;
+      if (deferHunt(enterRest)) return;
       dnd = true;
+      dismissBottom();
+      suspendMusic();
+      hangRenderer?.interrupt();
+      shake.cancel();
+      clearSleepTimers();
       clearTimeout(idleTimer);
       clearTimeout(autoTimer);
       setState(mini ? 'mini-sleep' : 'sleeping', true);
       setResting(true);
     };
     const exitRest = () => {
+      if (leaving) return;
+      if (natural?.active) { natural.wake(); return; }
       dnd = false;
       setResting(false);
       if (mini) { setState('mini-idle', true); }
@@ -815,13 +1333,17 @@ export default function DeskPet() {
     // Enter cling. viaMenu → crabwalk sideways to the edge first; drag-drop →
     // slide straight into place. Both then play mini-enter, then settle to rest.
     const enterMini = (edge: 'left' | 'right', viaMenu: boolean) => {
-      if (mini && !viaMenu) return;
+      if (leaving || (mini && !viaMenu)) return;
+      if (deferHunt(() => enterMini(edge, viaMenu))) return;
+      dismissBottom();
       const r = root.getBoundingClientRect();
       preMiniRight = vpW() - r.right;
       preMiniBottom = vpH() - r.bottom;
       mini = true; miniEdge = edge; miniTransitioning = true;
       syncMiniRef();
       clearTimeout(idleTimer); clearTimeout(autoTimer); clearTimeout(miniTimer);
+      root.classList.add('mini-turn');
+      void img.getBoundingClientRect();
       root.classList.add('mini-mode');
       root.classList.toggle('mini-left', edge === 'left');
       const target = miniRight(false);
@@ -831,20 +1353,24 @@ export default function DeskPet() {
       };
       const playEnter = () => {
         root.style.transition = '';
-        setState(dnd ? 'mini-enter-sleep' : 'mini-enter', true);
-        miniTimer = setTimeout(settle, MINI_ENTER_MS);
+        const duration = reducedMotion() ? 0 : theme.mini.enterMs ?? MINI_ENTER_MS;
+        let begun = false;
+        let painted = false;
+        const begin = () => { if (begun || disposed || leaving || !mini) return; begun = true; if (!painted) ++frameSeq; clearTimeout(miniTimer); miniTimer = setTimeout(settle, duration); };
+        miniTimer = setTimeout(begin, 600);
+        setState(dnd ? 'mini-enter-sleep' : 'mini-enter', true, () => { painted = true; begin(); });
       };
       if (viaMenu) {
         setState('mini-crabwalk', true);
         const dist = Math.abs((vpW() - r.right) - target);
-        const dur = Math.max(250, Math.round(dist / CRABWALK_SPEED));
+        const dur = reducedMotion() ? 0 : Math.max(250, Math.round(dist / CRABWALK_SPEED));
         root.style.transition = `right ${dur}ms linear`;
         root.style.right = target + 'px';
         miniTimer = setTimeout(playEnter, dur + 30);
       } else {
-        root.style.transition = 'right .14s ease-out';
+        root.style.transition = reducedMotion() ? '' : `right ${MINI_SLIDE_MS}ms ease-out`;
         root.style.right = target + 'px';
-        playEnter();
+        miniTimer = setTimeout(playEnter, reducedMotion() ? 0 : Math.max(MINI_SLIDE_MS, TURN_MS));
       }
       persistMini();
     };
@@ -857,7 +1383,24 @@ export default function DeskPet() {
       root.classList.remove('mini-mode', 'mini-left');
       root.style.transition = '';
       try { localStorage.removeItem(MINI_KEY); } catch {}
-      if (pose) setState(pose, true);
+      const motion = theme.motion?.['mini-leave'];
+      if (pose && motion && !reducedMotion()) {
+        miniTransitioning = true;
+        let begun = false;
+        let painted = false;
+        const begin = () => {
+          if (begun || disposed || leaving || mini) return;
+          begun = true;
+          if (!painted) ++frameSeq;
+          clearTimeout(miniTimer);
+          miniTimer = setTimeout(() => {
+            miniTransitioning = false;
+            setState(dnd ? 'sleeping' : dragging ? pose : 'idle', true);
+          }, motion.durationMs);
+        };
+        miniTimer = setTimeout(begin, 600);
+        setState('mini-leave', true, () => { painted = true; begin(); });
+      } else if (pose) setState(pose, true);
     };
 
     // Cursor over the clinging pet → nudge it on-screen and peek (mouse only).
@@ -878,12 +1421,14 @@ export default function DeskPet() {
     // Toolbar toggle: cling to the nearest edge (crabwalking over) or un-cling
     // back to the pre-cling spot.
     const clingViaMenu = () => {
-      if (grouped) return;
+      if (leaving || dizzyOwnsArt() || hangRenderer?.active || grouped) return;
+      dismissBottom();
+      suspendMusic();
       if (mini) {
         const pr = preMiniRight, pb = preMiniBottom;
         liftFromMini(dnd ? 'sleeping' : 'idle');
         const rb = root.getBoundingClientRect();
-        const c = clampAnchor(pr, pb, rb.width, rb.height, VC[character][0], VC[character][1]);
+        const c = clampAnchor(pr, pb, rb.width, rb.height, VC[character][0], VC[character][1], character === 'rootbeast');
         root.style.transition = 'right .2s ease-out, bottom .2s ease-out';
         root.style.right = c.right + 'px'; root.style.bottom = c.bottom + 'px';
         if (!dnd) resetIdle();
@@ -896,7 +1441,8 @@ export default function DeskPet() {
 
     // Map an external/driver state to the right pose, honoring mini mode.
     const drive = (s: string) => {
-      if (dnd) return;
+      if (!leaving && deferHunt(() => drive(s))) return;
+      if (leaving || interactionOwnsArt() || miniTransitioning || dnd) return;
       if (mini) {
         if (miniTransitioning) return;
         if (s === 'notification' || s === 'error') return setState('mini-alert', true);
@@ -940,13 +1486,16 @@ export default function DeskPet() {
     };
 
     const onMove = (e: PointerEvent) => {
-      if (dnd || mini) return; // mini uses hover enter/leave; no eye-track / sleep timer
+      if (natural?.active) { if (!dragging && e.pointerType === 'mouse') natural.notice(e.clientX, e.clientY); return; }
+      if (e.pointerType === 'mouse') { hunt?.pointer(e.clientX, e.clientY); hangPlay?.pointer(e.clientX, e.clientY); }
+      if (leaving || dnd || mini) return; // mini uses hover enter/leave; no eye-track / sleep timer
       const now = performance.now();
       if (now - lastMove > 16) { trackCursor(e.clientX, e.clientY); lastMove = now; }
-      if (asleep) exitRest(); else if (!randomMode) resetIdle();
+      if (asleep) exitRest(); else if (!randomMode && !hunt?.active) resetIdle();
     };
 
     const openSearch = () => {
+      hangPlay?.stop('soft');
       // Touch: raise the keyboard now, inside the tap gesture, via the primer
       // input. The overlay mounts async, so focusing its real input later loses
       // the gesture and mobile browsers refuse to open the keyboard. The real
@@ -967,9 +1516,11 @@ export default function DeskPet() {
       setTouchActionsVisible(true);
       touchActionsTimer = setTimeout(() => setTouchActionsVisible(false), 3000);
     };
-    const onClick = () => {
+    const onClick = (event: MouseEvent) => {
+      if (leaving) return;
       if (suppressClick) { suppressClick = false; return; }
       if (dragging) return;
+      if (natural?.active) { if (natural.contains(event.clientX, event.clientY)) natural.tap(event.clientX, event.clientY); return; }
       if (dnd || asleep) { exitRest(); return; }
       // In cling mode a tap just opens search (no multi-click react poses).
       if (mini) { openSearch(); return; }
@@ -991,22 +1542,55 @@ export default function DeskPet() {
       }, 280);
     };
 
-    let sx = 0, sy = 0, baseR = 0, baseB = 0, baseW = 0, baseH = 0, moved = false;
+    let sx = 0, sy = 0, baseR = 0, baseB = 0, baseW = 0, baseH = 0, baseAnchorHeight = vpH(), moved = false;
+    let lastPointerX = 0, lastPointerY = 0, dragGripY = 0, baseBottomAssist = 0, assistBottomDrag = false;
+    let lastDragBox = { left: 0, top: 0, width: 0, height: 0 };
+    const dragBottomEdge = () => bottomViewportNow().bottom;
+    const reach = (y: number) => assistBottomDrag
+      ? bottomDragReach(y, dragGripY, baseH, dragBottomEdge(), VC[character][1] - PEEK) : 0;
+    const rebaseDrag = () => {
+      if (!dragging) return;
+      const r = root.getBoundingClientRect();
+      sx = lastPointerX; sy = lastPointerY;
+      baseAnchorHeight = bottomAnchorHeight(r);
+      baseR = vpW() - r.right; baseB = baseAnchorHeight - r.bottom;
+      baseW = r.width; baseH = r.height; dragGripY = sy - r.top;
+      lastDragBox = { left: r.left, top: r.top, width: r.width, height: r.height };
+      baseBottomAssist = reach(sy);
+    };
     let suppressClick = false;
     let lastTouch = false;
     const onDown = (e: PointerEvent) => {
+      if (leaving) return;
       if (e.button === 2) return; // ignore right mouse button (no context menu)
+      hangPlay?.stop('drag');
+      hunt?.grab();
+      lastBottomDrop = undefined; lastBottomCancel = undefined; lastBottomPresentation = undefined;
+      bottomRenderer?.release();
+      suspendMusic();
+      hangRenderer?.release();
       lastTouch = e.pointerType !== 'mouse';
       suppressClick = false;
       dragging = true; moved = false;
       root.classList.add('dragging');
       root.style.transition = ''; // a leftover mini slide would fight the 1:1 drag
       hit.setPointerCapture(e.pointerId);
+      capturedPointer = e.pointerId;
       sx = e.clientX; sy = e.clientY;
+      lastPointerX = sx; lastPointerY = sy;
       const r = root.getBoundingClientRect();
       baseR = vpW() - r.right;
-      baseB = vpH() - r.bottom;
+      baseAnchorHeight = bottomAnchorHeight(r);
+      baseB = baseAnchorHeight - r.bottom;
       baseW = r.width; baseH = r.height;
+      lastDragBox = { left: r.left, top: r.top, width: r.width, height: r.height };
+      dragGripY = sy - r.top;
+      assistBottomDrag = character === 'rootbeast' && !dnd && !getMusicPlayerState().playing
+        && shake.snapshot().phase === 'idle' && !mayUseMiniProgramBridge();
+      baseBottomAssist = reach(sy);
+      if (e.pointerType === 'mouse' && e.button === 0 && !dnd && !natural?.active) {
+        shake.begin(e.pointerId, { x: e.clientX, y: e.clientY, t: performance.now() }, r.width);
+      }
       clearTimeout(longPressTimer);
       if (lastTouch) longPressTimer = setTimeout(() => {
         if (!dragging || moved) return;
@@ -1020,37 +1604,112 @@ export default function DeskPet() {
     };
     const onDragMove = (e: PointerEvent) => {
       if (!dragging) return;
+      if (capturedPointer !== undefined && e.pointerId !== capturedPointer) return;
+      lastPointerX = e.clientX; lastPointerY = e.clientY;
+      if (e.pointerType === 'mouse' && capturedPointer === e.pointerId && !dnd && !mini && !miniTransitioning) {
+        shake.move(e.pointerId, { x: e.clientX, y: e.clientY, t: performance.now() });
+      }
       const dist = Math.abs(e.clientX - sx) + Math.abs(e.clientY - sy);
       if (dist > 4 && !moved) {
+        if (natural?.mode === 'drowsy') natural.stop();
         clearTimeout(longPressTimer);
         moved = true;
         if (mini) liftFromMini(dnd ? 'sleeping' : 'reactDrag'); // pull out of cling
         else if (!dnd) setState('reactDrag', true); // first real move (covers touch)
       }
-      const c = clampAnchor(baseR - (e.clientX - sx), baseB - (e.clientY - sy),
-        baseW, baseH, VC[character][0], VC[character][1]);
+      const c = clampAnchor(baseR - (e.clientX - sx), baseB - (e.clientY - sy) - (reach(e.clientY) - baseBottomAssist),
+        baseW, baseH, VC[character][0], VC[character][1], character === 'rootbeast');
+      if (character === 'rootbeast' && !mayUseMiniProgramBridge()) {
+        // The visible viewport may be shorter than clientHeight (zoom/overlays).
+        // Use the same bottom edge for the reachable drag limit and contact line.
+        const visibleBottom = dragBottomEdge();
+        c.bottom = Math.max(c.bottom, baseAnchorHeight - visibleBottom - baseH * (1 - VC[character][1] + PEEK));
+      }
       root.style.right = c.right + 'px';
       root.style.bottom = c.bottom + 'px';
+      lastDragBox = { left: vpW() - c.right - baseW, top: baseAnchorHeight - c.bottom - baseH, width: baseW, height: baseH };
     };
-    const onUp = (e: PointerEvent) => {
+    const onUp = (event?: PointerEvent) => {
       clearTimeout(longPressTimer);
       if (!dragging) return;
+      if (event && event.pointerId !== capturedPointer) return;
+      // Fullscreen/low-rate input can coalesce the last move; consume the real release sample.
+      if (event) onDragMove(event);
+      if (capturedPointer !== undefined) shake.end(capturedPointer);
       dragging = false;
+      lastDragEnded = performance.now();
       root.classList.remove('dragging');
-      try { hit.releasePointerCapture(e.pointerId); } catch {}
+      releasePointer();
+      if (natural?.active) {
+        suppressClick = moved;
+        persistItem(POS_KEY, JSON.stringify({ right: parseFloat(root.style.right) || 0, bottom: parseFloat(root.style.bottom) || 0 }));
+        return;
+      }
+      // A very short grab may release before the 280ms joint handoff ends.
+      // Commit that handoff before evaluating this same real release sample.
+      if (hunt?.emerging) hunt.stop('hard');
       if (moved) {
         suppressClick = true; // a real drag fires a trailing click — don't open search
+        const released = root.getBoundingClientRect();
+        const line = peekLineNow(released);
+        const viewportBottom = dragBottomEdge();
+        lastBottomDrop = { reason: 'not-entered', line: line ?? null,
+          rawLine: (viewportBottom - released.top) * 640 / released.height, viewportBottom,
+          box: { top: released.top, left: released.left, width: released.width, height: released.height } };
+        // Release only: merely crossing the top during a drag never attaches.
+        // Top wins over a side at a corner; dizziness keeps its existing timeline.
+        if (character === 'rootbeast' && !dnd && !mini && !miniTransitioning
+          && shake.snapshot().phase === 'idle' && hangRenderer?.ready
+          && nearTopHang(released.top, released.height, topLine())) {
+          persistItem(POS_KEY, JSON.stringify({ right: vpW() - released.right, bottom: vpH() - released.bottom }));
+          lastBottomDrop.reason = 'top-hang'; pinHang(); hangRenderer.enter(); return;
+        }
         const edge = snapEdge();
-        if (edge) { enterMini(edge, false); return; } // cling instead of free-floating
+        // A triggered gesture must not move the pet to an edge on release.
+        if (edge && !hangRenderer?.active && shake.snapshot().phase === 'idle') {
+          lastBottomDrop.reason = 'side-cling'; enterMini(edge, false); return;
+        }
         persistItem(POS_KEY, JSON.stringify({
           right: parseInt(root.style.right || '20', 10),
           bottom: parseInt(root.style.bottom || '20', 10),
         }));
+        if (character === 'rootbeast' && line !== undefined && bottomRenderer?.ready
+          && !dnd && !mini && !miniTransitioning && shake.snapshot().phase === 'idle'
+          && !hangRenderer?.active && !getMusicPlayerState().playing && !musicRenderer?.active) {
+          if (bottomRenderer.enter(line)) { lastBottomDrop.reason = 'entered'; return; }
+        }
+        lastBottomDrop.reason = character !== 'rootbeast' ? 'other-character' : line === undefined ? 'contact-or-side-crop'
+          : !bottomRenderer?.ready ? 'rig-not-ready' : dnd ? 'resting' : mini || miniTransitioning ? 'side-transition'
+          : shake.snapshot().phase !== 'idle' ? 'dizzy' : hangRenderer?.active ? 'top-hang'
+          : getMusicPlayerState().playing || musicRenderer?.active ? 'music-priority' : 'renderer-rejected';
       }
-      if (!dnd && !mini) { setState('idle', true); resetIdle(); }
+      if (!dnd && !mini && !miniTransitioning) { setState('idle', true); resetIdle(); }
+    };
+    const onShakeCancel = (event?: Event) => {
+      hangPlay?.stop('hard');
+      const wasHunting = hunt?.visible;
+      hunt?.stop('hard');
+      // Opening DevTools can blur the page and cancel this pose. Preserve one
+      // plain-data snapshot first so inspecting it does not destroy the evidence.
+      if (event?.type === 'blur' && bottomRenderer?.visible) lastBottomPresentation = inspectBottom();
+      if (event?.type === 'blur') lastBottomCancel = 'blur';
+      const wasHanging = hangRenderer?.visible;
+      const wasPeeking = bottomRenderer?.visible;
+      dismissBottom();
+      hangRenderer?.interrupt(); shake.cancel();
+      if ((wasHanging || wasPeeking || wasHunting) && !disposed && !leaving) setState(dnd ? 'sleeping' : 'idle', true);
+      if (dragging) { moved = false; onUp(); }
+    };
+    const onPointerCancel = () => { lastBottomCancel = 'pointercancel'; onShakeCancel(); onUp(); if (natural?.active) suppressClick = true; };
+    const onLostCapture = () => { if (dragging) { lastBottomCancel = 'lostpointercapture'; onShakeCancel(); onUp(); if (natural?.active) suppressClick = true; } };
+    const onShakeVisibility = () => {
+      if (document.hidden) { clearTimeout(routineTimer); natural?.pause(); lastBottomCancel = 'visibilitychange'; suspendMusic(); onShakeCancel(); }
+      else { natural?.resume(); checkRoutine(); musicRenderer?.sync(); }
     };
 
     const requestState = (s: string) => {
+      if (!leaving && deferHunt(() => requestState(s))) return;
+      if (leaving || interactionOwnsArt()) return;
       const scene = getDeskPetScene(s);
       if (!scene) { drive(s); return; }
       if (!visibleIds.includes(scene.character)) return;
@@ -1061,7 +1720,7 @@ export default function DeskPet() {
         const pr = preMiniRight, pb = preMiniBottom;
         liftFromMini();
         const r = root.getBoundingClientRect();
-        const c = clampAnchor(pr, pb, r.width, r.height, VC[character][0], VC[character][1]);
+        const c = clampAnchor(pr, pb, r.width, r.height, VC[character][0], VC[character][1], character === 'rootbeast');
         root.style.right = c.right + 'px'; root.style.bottom = c.bottom + 'px';
         persistItem(POS_KEY, JSON.stringify(c));
       }
@@ -1087,33 +1746,110 @@ export default function DeskPet() {
 
     // Hover the clinging pet (mouse only) → nudge it on-screen + peek pose.
     const onEnter = (e: PointerEvent) => {
+      if (leaving) return;
       if (e.pointerType && e.pointerType !== 'mouse') return;
       mouseOverPet = true;
       if (mini && !dnd && !miniTransitioning) { peekIn(); setState('mini-peek', true); }
     };
     const onLeave = (e: PointerEvent) => {
+      if (leaving) return;
       if (e.pointerType && e.pointerType !== 'mouse') return;
       mouseOverPet = false;
       if (mini && !dnd && !miniTransitioning && !dragging) { peekOut(); setState('mini-idle', true); }
     };
 
-    window.addEventListener('pointermove', onMove);
+    const onHuntLeave = (event: PointerEvent) => { if (event.relatedTarget === null) { hunt?.leave(); hangPlay?.leave(); } };
+    const onPageBusy = () => { hangPlay?.busy(); hunt?.busy(); if (hunt?.active && !dragging) hunt.stop('soft'); };
+    document.addEventListener('pointerout', onHuntLeave, { passive: true });
+    document.addEventListener('pointerdown', onPageBusy, { passive: true });
+    document.addEventListener('keydown', onPageBusy, { passive: true });
+    window.addEventListener('pointermove', onMove, { passive: true });
     window.addEventListener('clawd:state', onExternal as EventListener);
     hit.addEventListener('click', onClick);
     hit.addEventListener('pointerdown', onDown);
     hit.addEventListener('pointermove', onDragMove);
     hit.addEventListener('pointerup', onUp);
-    hit.addEventListener('pointercancel', onUp);
+    hit.addEventListener('pointercancel', onPointerCancel);
+    hit.addEventListener('lostpointercapture', onLostCapture);
+    window.addEventListener('blur', onShakeCancel);
+    document.addEventListener('visibilitychange', onShakeVisibility);
     hit.addEventListener('pointerenter', onEnter);
     hit.addEventListener('pointerleave', onLeave);
 
+    let exitDone: (() => void) | undefined;
+    const cancelLeaving = () => {
+      cancelSequence?.();
+      cancelSequence = undefined;
+      exitDone = undefined;
+      leaving = false;
+      root.classList.remove('leaving');
+      clearMotion();
+      if (!disposed) {
+        setState(mini ? (dnd ? 'mini-sleep' : 'mini-idle') : (dnd ? 'sleeping' : 'idle'), true);
+        if (!randomMode && !mini && !dnd) resetIdle();
+        if (randomMode) scheduleRandom();
+      }
+    };
+    const startExit = (done: () => void) => {
+      natural?.stop();
+      hangPlay?.stop('hard');
+      hunt?.stop('hard');
+      // A persistent hide can join a temporary exit without restarting it.
+      exitDone = done;
+      if (leaving) return cancelLeaving;
+      if (reducedMotion()) { releasePointer(); exitDone = undefined; done(); return; }
+      leaving = true;
+      dismissBottom();
+      suspendMusic();
+      hangRenderer?.interrupt();
+      shake.cancel();
+      clearSleepTimers();
+      releasePointer();
+      dragging = false;
+      miniTransitioning = false;
+      root.classList.remove('dragging');
+      root.classList.add('leaving');
+      const rect = root.getBoundingClientRect();
+      root.style.transition = '';
+      root.style.right = vpW() - rect.right + 'px';
+      root.style.bottom = vpH() - rect.bottom + 'px';
+      clearTimeout(autoTimer); clearTimeout(idleTimer); clearTimeout(randomTimer);
+      clearTimeout(miniTimer); clearTimeout(clickTimer); clearTimeout(longPressTimer);
+      clearMotion();
+      setSearchOpen(false);
+      const sleep = exitStyleRef.current === 'sleep';
+      const pose = sleep ? 'exit-sleep' : 'exit-hop';
+      const clip = theme.motion?.[pose];
+      const duration = clip?.durationMs ?? (sleep ? GENERIC_SLEEP_MS : GENERIC_HOP_MS);
+      const dx = rect.left + rect.width / 2 < vpW() / 2 ? -rect.right - 20 : vpW() - rect.left + 20;
+      let painted = false;
+      cancelSequence = runDeskPetExit({
+        play: ready => setState(pose, true, () => { painted = true; ready(); }),
+        move: () => {
+          if (!painted) ++frameSeq; // A stalled load must not replace the retained frame halfway through exit.
+          if (!sleep) animate(exitHopKeyframes(dx, !clip), duration);
+        },
+        holdMs: duration,
+        fade: () => animate(exitFadeKeyframes(), SLEEP_FADE_MS),
+        fadeMs: sleep ? SLEEP_FADE_MS : 0,
+        finish: () => { const complete = exitDone; exitDone = undefined; complete?.(); },
+      });
+      return cancelLeaving;
+    };
+    const unregisterExit = registerDeskPetExit(startExit);
+
     ctrlRef.current = {
+      hide: () => { if (!leaving) startExit(() => { setSearchOpen(false); setHidden(true); }); },
       rest: enterRest,
       wake: exitRest,
+      naturalSleep: mode => { const started = natural?.start(mode) ?? false; if (started) automaticNatural = false; return started; },
       cling: clingViaMenu,
       inMini: () => mini,
       reposition: () => keepInViewport(),
       resetPos: () => {
+        if (leaving || dizzyOwnsArt() || hangRenderer?.active) return;
+        if (deferHunt(() => ctrlRef.current?.resetPos())) return;
+        dismissBottom();
         if (mini) liftFromMini(dnd ? 'sleeping' : 'idle');
         root.style.right = '';
         root.style.bottom = '';
@@ -1128,13 +1864,14 @@ export default function DeskPet() {
       set: (s: string) => requestState(s),
       idle: () => drive('idle'),
       cling: () => clingViaMenu(),
+      inspectBottom,
     };
 
     // Restore a saved cling (persists across reloads + character switches).
     let restoredMini = false;
     try {
       const m = JSON.parse(localStorage.getItem(MINI_KEY) || 'null');
-      if (!grouped && m && (m.edge === 'left' || m.edge === 'right')) {
+      if (!routine?.pendingInitial && !grouped && m && (m.edge === 'left' || m.edge === 'right')) {
         mini = true; miniEdge = m.edge;
         preMiniRight = typeof m.preRight === 'number' ? m.preRight : 0;
         preMiniBottom = typeof m.preBottom === 'number' ? m.preBottom : 0;
@@ -1147,7 +1884,28 @@ export default function DeskPet() {
     } catch {}
 
     const keepInViewport = () => {
-      if (dragging) return;
+      if (leaving) return;
+      if (deferHunt(keepInViewport)) return;
+      if (dragging && lastDragBox.width > 0 && lastDragBox.height > 0) {
+        const r = root.getBoundingClientRect();
+        const gx = (lastPointerX - lastDragBox.left) / lastDragBox.width;
+        const gy = (lastPointerY - lastDragBox.top) / lastDragBox.height;
+        const anchorHeight = bottomAnchorHeight(r);
+        const c = clampAnchor(vpW() - lastPointerX - r.width * (1 - gx),
+          anchorHeight - lastPointerY - r.height * (1 - gy), r.width, r.height, ...VC[character], character === 'rootbeast');
+        if (character === 'rootbeast' && !mayUseMiniProgramBridge()) {
+          c.bottom = Math.max(c.bottom, anchorHeight - dragBottomEdge() - r.height * (1 - VC[character][1] + PEEK));
+        }
+        root.style.right = c.right + 'px'; root.style.bottom = c.bottom + 'px';
+        rebaseDrag(); return;
+      }
+      if (hangRenderer?.hanging) { pinHang(); return; }
+      if (bottomRenderer?.peeking && !dragging) {
+        const line = peekLineNow();
+        if (line !== undefined) bottomRenderer.updateLine(line);
+        else { dismissBottom(); setState('idle', true); }
+        return;
+      }
       const r = root.getBoundingClientRect();
       const anchor = readDeskPetAnchor(root, vpW(), vpH());
       let bottom = anchor.bottom;
@@ -1167,34 +1925,102 @@ export default function DeskPet() {
           bottom += Math.min(controlBottom - input.top + 12, Math.max(0, r.top - 12));
         }
       }
-      const c = clampAnchor(anchor.right, bottom, r.width, r.height, ...VC[character]);
+      const c = clampAnchor(anchor.right, bottom, r.width, r.height, ...VC[character], character === 'rootbeast');
       const rightStyle = (mini ? miniRight(false) : c.right) + 'px';
       const bottomStyle = c.bottom + 'px';
       if (root.style.right !== rightStyle) root.style.right = rightStyle;
       if (root.style.bottom !== bottomStyle) root.style.bottom = bottomStyle;
+      rebaseDrag();
     };
     keepInViewport();
     window.addEventListener('resize', keepInViewport);
+    document.addEventListener('fullscreenchange', keepInViewport);
     window.visualViewport?.addEventListener('resize', keepInViewport);
     window.visualViewport?.addEventListener('scroll', keepInViewport);
 
     // force: on character switch state is already 'idle', must repaint
-    setState(restoredMini ? (dnd ? 'mini-sleep' : 'mini-idle') : 'idle', true);
-    if (randomMode) { playRandom(); scheduleRandom(); }
+    setState(restoredMini ? (dnd ? 'mini-sleep' : 'mini-idle') : (dnd ? 'sleeping' : 'idle'), true);
+    if (reshowRef.current && !routine?.pendingInitial && !reducedMotion()) {
+      reshowRef.current = false;
+      const clip = theme.motion?.[restoredMini ? 'mini-enter' : 'enter'];
+      const duration = clip?.durationMs ?? GENERIC_ENTER_MS;
+      let begun = false;
+      let painted = false;
+      const begin = () => {
+        if (begun || disposed || leaving) return;
+        begun = true;
+        if (!painted) ++frameSeq;
+        clearTimeout(autoTimer);
+        animate(enterKeyframes(!!clip), duration);
+        autoTimer = setTimeout(() => { clearMotion(); setState(restoredMini ? (dnd ? 'mini-sleep' : 'mini-idle') : (dnd ? 'sleeping' : 'idle'), true); }, duration);
+      };
+      autoTimer = setTimeout(begin, 600);
+      setState(restoredMini ? 'mini-enter' : 'enter', true, () => { painted = true; begin(); });
+    }
+    reshowRef.current = false;
+    if (randomMode) { if (state === 'idle') playRandom(); scheduleRandom(); }
     else if (!mini) resetIdle();
     if (pendingPlaytimeRef.current) {
       const pending = pendingPlaytimeRef.current;
       pendingPlaytimeRef.current = null;
       requestState(pending);
     }
+    musicReadyToShow = true;
+    musicRenderer?.sync();
+
+    let routineTimer: ReturnType<typeof setTimeout> | undefined;
+    const bootDeadline = performance.now() + 10000;
+    function checkRoutine() {
+      clearTimeout(routineTimer); routineTimer = undefined;
+      if (disposed || document.hidden || !routine) return;
+      const now = new Date();
+      const idle = state === 'idle' && !leaving && !dragging && !dnd && !asleep && !mini && !miniTransitioning
+        && !randomMode && !searchOpenRef.current && !physicalInteractionOwnsArt() && !hunt?.active
+        && !natural?.visible && !musicRenderer?.active && !musicRenderer?.visible && !getMusicPlayerState().playing
+        && !mayUseMiniProgramBridge();
+      // User actions and missing resources may cancel the initial mask; they
+      // never cause a delayed forced sleep after the user has taken control.
+      if (routine.pendingInitial && (!idle || (!natural?.ready && performance.now() >= bootDeadline))) {
+        routine.cancelInitial(); setRoutineBootReady(true);
+      }
+      const action = routine.decide(now, natural?.active ? natural.mode : 'off', automaticNatural, idle);
+      if (action === 'wake') natural?.wake();
+      else if (action && natural?.ready && natural.start(action)) {
+        automaticNatural = true; routine.started(now);
+      }
+      const wait = routine.pendingInitial ? 500 : Math.max(1, 60000 - now.getSeconds() * 1000 - now.getMilliseconds());
+      routineTimer = setTimeout(checkRoutine, wait);
+    }
+    checkRoutine();
+    window.addEventListener('focus', checkRoutine);
 
     return () => {
+      disposed = true;
+      clearTimeout(routineTimer); window.removeEventListener('focus', checkRoutine);
+      natural?.dispose();
+      hangPlay?.dispose();
+      hunt?.dispose(); huntControlRef.current = null;
+      shake.dispose();
+      dizzyRenderer?.dispose();
+      hangRenderer?.dispose();
+      musicRenderer?.dispose();
+      bottomRenderer?.dispose();
+      delete root.dataset.shakePhase;
+      clearSleepTimers();
+      releasePointer();
+      if (prewarmIdle !== undefined && typeof cancelIdleCallback === 'function') cancelIdleCallback(prewarmIdle);
+      clearTimeout(prewarmTimer);
+      cancelSequence?.();
+      unregisterExit();
+      clearMotion();
+      root.classList.remove('leaving', 'mini-turn', 'mini-mode', 'mini-left');
       rootIdle?.removeEventListener('load', loadRootIdle);
-      if (rootIdle) rootIdle.style.visibility = 'hidden';
+      idlePlayback?.dispose();
+      if (rootIdle) { rootIdle.style.visibility = 'hidden'; idlePlayback?.sync(); }
       rootPupils = [];
       ++frameSeq;
-      storyRequest?.abort();
-      if (storyUrl) URL.revokeObjectURL(storyUrl);
+      activeFrameUrl = undefined;
+      releaseMotionUrls();
       clearTimeout(autoTimer);
       clearTimeout(idleTimer);
       clearTimeout(clickTimer);
@@ -1203,15 +2029,22 @@ export default function DeskPet() {
       clearTimeout(miniTimer);
       clearTimeout(randomTimer);
       window.removeEventListener('resize', keepInViewport);
+      document.removeEventListener('fullscreenchange', keepInViewport);
       window.visualViewport?.removeEventListener('resize', keepInViewport);
       window.visualViewport?.removeEventListener('scroll', keepInViewport);
       window.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerout', onHuntLeave);
+      document.removeEventListener('pointerdown', onPageBusy);
+      document.removeEventListener('keydown', onPageBusy);
       window.removeEventListener('clawd:state', onExternal as EventListener);
       hit.removeEventListener('click', onClick);
       hit.removeEventListener('pointerdown', onDown);
       hit.removeEventListener('pointermove', onDragMove);
       hit.removeEventListener('pointerup', onUp);
-      hit.removeEventListener('pointercancel', onUp);
+      hit.removeEventListener('pointercancel', onPointerCancel);
+      hit.removeEventListener('lostpointercapture', onLostCapture);
+      window.removeEventListener('blur', onShakeCancel);
+      document.removeEventListener('visibilitychange', onShakeVisibility);
       hit.removeEventListener('pointerenter', onEnter);
       hit.removeEventListener('pointerleave', onLeave);
       ctrlRef.current = null;
@@ -1235,6 +2068,7 @@ export default function DeskPet() {
 
   const selectSize = (next: Size) => {
     if (next === size) return;
+    if (huntControlRef.current?.defer(() => selectSize(next))) return;
     captureCenter();
     setSize(next);
     persistItem(SIZE_KEY, next);
@@ -1248,6 +2082,7 @@ export default function DeskPet() {
     }
     const next = THEME_IDS.find(id => id === value && visibleIds.includes(id));
     if (!next || (!compact && next === character)) return;
+    huntControlRef.current?.hard();
     if (!compact) captureCenter(); // preserve the old pet's visual center
     setCompact(false);
     persistItem(COMPACT_KEY, 'false');
@@ -1264,6 +2099,11 @@ export default function DeskPet() {
   };
 
   const curLang: 'zh' | 'en' = zh ? 'zh' : 'en';
+  // SSR and the first hydration render return null above. Read local time only
+  // once the client is mounted, and conceal every initial pose until asleep is drawn.
+  const maskInitialNight = character === 'rootbeast' && !routineBootReady
+    && (routineSessionRef.current?.pendingInitial
+      || (!routineSessionRef.current?.initialized && deskPetLocalPeriod(new Date()).instant));
 
 
   return (
@@ -1285,7 +2125,7 @@ export default function DeskPet() {
           if (draft) assistantConversations.patch(owner, id, { draft });
           setSearchOpen(true);
         }} />}
-      <div style={hidden || compact || !petAvailable || searchOpen ? { display: 'none' } : undefined} className={`clawd-deskpet${touchActionsVisible ? ' touch-actions' : ''}`} data-size={size} data-char={character} data-original={ORIGINAL_CHARACTERS.some(pet => pet.id === character)} data-pixel={THEMES[character].pixel} ref={rootRef}>
+      <div style={hidden || compact || !petAvailable || searchOpen ? { display: 'none' } : maskInitialNight ? { visibility: 'hidden' } : undefined} className={`clawd-deskpet${touchActionsVisible ? ' touch-actions' : ''}`} data-size={size} data-char={character} data-original={ORIGINAL_CHARACTERS.some(pet => pet.id === character)} data-pixel={THEMES[character].pixel} ref={rootRef}>
         <style>{CSS}</style>
         <AdminTools centerX={VC[character][0]} />
         <svg ref={svgRef} xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" aria-hidden>
@@ -1317,6 +2157,30 @@ export default function DeskPet() {
         {character === 'rootbeast' && !randomMode && (
           <object ref={rootIdleRef} data={`${ROOTBEAST_BASE}${ROOTBEAST_FILES.idle}?v=${ROOTBEAST_VERSION}`} type="image/svg+xml" aria-hidden tabIndex={-1} style={{ visibility: 'hidden', imageRendering: 'auto', colorScheme: 'normal' }} />
         )}
+        {character === 'rootbeast' && (
+          <object ref={rootDizzyRef} data={ROOTBEAST_DIZZY.loop.src} type="image/svg+xml" aria-hidden tabIndex={-1}
+            style={{ visibility: 'hidden', imageRendering: 'auto', colorScheme: 'normal' }} />
+        )}
+        {character === 'rootbeast' && (
+          <object ref={rootHangRef} data={ROOTBEAST_HANG.rig.src} type="image/svg+xml" aria-hidden tabIndex={-1}
+            style={{ visibility: 'hidden', imageRendering: 'auto', colorScheme: 'normal' }} />
+        )}
+        {character === 'rootbeast' && (
+          <object ref={rootMusicRef} data={ROOTBEAST_MUSIC.rig.src} type="image/svg+xml" aria-hidden tabIndex={-1}
+            style={{ visibility: 'hidden', imageRendering: 'auto', colorScheme: 'normal' }} />
+        )}
+        {character === 'rootbeast' && (
+          <object ref={rootBottomPeekRef} data={ROOTBEAST_BOTTOM_PEEK.src} type="image/svg+xml" aria-hidden tabIndex={-1}
+            style={{ visibility: 'hidden', imageRendering: 'auto', colorScheme: 'normal' }} />
+        )}
+          {character === 'rootbeast' && (
+            <object ref={rootHuntRef} data={ROOTBEAST_HUNT.src} type="image/svg+xml" aria-hidden tabIndex={-1}
+              style={{ visibility: 'hidden', imageRendering: 'auto', colorScheme: 'normal' }} />
+          )}
+        {character === 'rootbeast' && (
+          <object ref={rootSleepRef} data={ROOTBEAST_SLEEP.src} type="image/svg+xml" aria-hidden tabIndex={-1}
+            style={{ visibility: 'hidden', imageRendering: 'auto', colorScheme: 'normal' }} />
+        )}
         {fbUnread > 0 && (
           <span className="clawd-deskpet-badge" aria-hidden>{fbUnread > 9 ? '9+' : fbUnread}</span>
         )}
@@ -1346,7 +2210,7 @@ export default function DeskPet() {
           variant="standalone"
           className="clawd-deskpet-dismiss"
           ariaLabel={t('隐藏,刷新后恢复', 'Hide, restored on reload')}
-          onClick={() => setHidden(true)}
+          onClick={() => ctrlRef.current?.hide()}
         />
         <div
           className="clawd-deskpet-hit"
@@ -1376,8 +2240,16 @@ export default function DeskPet() {
           onSelectChar={selectChar}
           onSelectSize={selectSize}
           onToggleRest={() => { if (resting) ctrlRef.current?.wake(); else ctrlRef.current?.rest(); }}
+          onNaturalSleep={character === 'rootbeast' ? mode => { ctrlRef.current?.naturalSleep(mode); } : undefined}
           randomMode={randomMode}
           onToggleRandom={toggleRandom}
+          exitStyle={exitStyle}
+          onSelectExitStyle={value => {
+            const next = parseExitStyle(value);
+            exitStyleRef.current = next;
+            setExitStyle(next);
+            persistItem(DESKPET_EXIT_KEY, next);
+          }}
         />
       )}
 

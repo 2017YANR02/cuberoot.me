@@ -1,4 +1,5 @@
 import manifest from '../public/deskpet/rootbeast/manifest.json';
+import motionManifest from '../public/deskpet/rootbeast-motion/manifest.json';
 
 // One generated manifest supplies the theme, gallery, and story durations.
 export const ROOTBEAST_BASE = '/deskpet/rootbeast/';
@@ -67,3 +68,43 @@ export const ROOTBEAST_AUTO = Object.fromEntries(
 
 const interactionOnly = new Set(['idle', 'drag', 'annoyed', 'sleeping', 'dozing', 'waking']);
 export const ROOTBEAST_RANDOM_SCENES = ROOTBEAST_SCENES.filter(scene => !interactionOnly.has(scene.id));
+
+// One-shot transitions (edge cling, exits, entrance). They are not gallery
+// scenes; each plays once and holds its last frame until the pet moves on.
+export const ROOTBEAST_MOTION_BASE = '/deskpet/rootbeast-motion/';
+export const ROOTBEAST_MOTION_VERSION = '9';
+export const ROOTBEAST_MOTION = motionManifest.map(clip => ({
+  ...clip,
+  src: `${ROOTBEAST_MOTION_BASE}${clip.file}?v=${ROOTBEAST_MOTION_VERSION}`,
+  durationMs: Math.round(clip.duration * 1000),
+}));
+const motion = (id: string) => {
+  const clip = ROOTBEAST_MOTION.find(item => item.id === id);
+  if (!clip) throw new Error(`Unknown Root Beast transition: ${id}`);
+  return { src: clip.src, durationMs: clip.durationMs };
+};
+
+// Pet state → transition clip.
+export const ROOTBEAST_MOTION_STATES = {
+  enter: motion('enter'), 'exit-hop': motion('exit-hop'), 'exit-sleep': motion('exit-sleep'),
+  'mini-enter': motion('edge-enter'), 'mini-leave': motion('edge-leave'),
+};
+
+// Keep one loop document alive for both shaking and controller-driven recovery.
+// The standalone recovery file is delivered for preview; do not swap to it mid-loop.
+export const ROOTBEAST_DIZZY = {
+  loop: motion('dizzy-loop'), recover: motion('dizzy-recover'),
+};
+
+export const ROOTBEAST_HANG = {
+  rig: motion('hang-rig'), enter: motion('hang-enter'), loop: motion('hang-loop'), release: motion('hang-release'),
+};
+
+export const ROOTBEAST_MUSIC = {
+  rig: motion('music-rig-v3'), on: motion('music-on-v3'), loop: motion('music-loop-v3'), off: motion('music-off-v3'),
+};
+
+export const ROOTBEAST_BOTTOM_PEEK = motion('bottom-peek');
+export const ROOTBEAST_HUNT = motion('mouse-hunt');
+
+export const ROOTBEAST_SLEEP = motion('sleep-in-place');

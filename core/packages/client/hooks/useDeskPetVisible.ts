@@ -21,6 +21,12 @@ export function deskPetQuietPage(pathname: string): string | null {
   return null;
 }
 
+/** Plays the mounted pet's exit; returns a cancel function, or nothing to hide at once. */
+export type DeskPetExitRequest = (done: () => void) => (() => void) | undefined;
+let exitRequest: DeskPetExitRequest | undefined;
+let cancelExit: (() => void) | undefined;
+let finishExit: (() => void) | undefined;
+
 function readVisible() {
   if (visitChoice !== undefined) return visitChoice;
   try { return localStorage.getItem(STORAGE_KEY) !== 'false'; }
@@ -30,6 +36,12 @@ function readVisible() {
 function subscribe(notify: () => void) {
   const sync = (event: StorageEvent) => {
     if (event.key !== STORAGE_KEY && event.key !== null) return;
+    if (event.newValue !== 'false') {
+      const cancel = cancelExit;
+      cancelExit = undefined;
+      finishExit = undefined;
+      cancel?.();
+    }
     visitChoice = undefined;
     notify();
   };
@@ -41,9 +53,55 @@ function subscribe(notify: () => void) {
   };
 }
 
-function setVisible(visible: boolean) {
+function commit(visible: boolean) {
   visitChoice = persistItem(STORAGE_KEY, String(visible)) ? undefined : visible;
   window.dispatchEvent(new Event(CHANGE_EVENT));
+}
+
+/**
+ * Hiding waits for the mounted pet to finish its exit; the preference changes
+ * only then. Repeated hide requests join the running exit, and showing again
+ * cancels it.
+ */
+export function setDeskPetVisible(visible: boolean) {
+  setVisibility(visible, readVisible, commit);
+}
+
+function setVisibility(visible: boolean, read: () => boolean, write: (value: boolean) => void) {
+  if (visible) {
+    const cancel = cancelExit;
+    cancelExit = undefined;
+    finishExit = undefined;
+    cancel?.();
+    write(true);
+    return;
+  }
+  if (cancelExit) return;
+  if (!exitRequest || !read()) { write(false); return; }
+  let pending = true;
+  const done = () => {
+    if (!pending) return;
+    pending = false;
+    cancelExit = undefined;
+    finishExit = undefined;
+    write(false);
+  };
+  finishExit = done;
+  const cancel = exitRequest(done);
+  if (!pending) return;
+  if (!cancel) { done(); return; }
+  cancelExit = () => { pending = false; cancel(); };
+}
+
+/** The mounted pet registers its exit animation; returns the unregister function. */
+export function registerDeskPetExit(request: DeskPetExitRequest) {
+  exitRequest = request;
+  return () => {
+    if (exitRequest !== request) return;
+    exitRequest = undefined;
+    // An engine replacement must not leave a cancelled exit locking future hides.
+    finishExit?.();
+  };
 }
 
 /** Browser-local preference shared by the pet and appearance controls. */
@@ -54,10 +112,12 @@ export function useDeskPetVisible() {
     () => quietPage ? pageChoices.get(quietPage) ?? false : readVisible(),
     () => !quietPage);
   const setPageVisible = (value: boolean) => {
-    if (!quietPage) { setVisible(value); return; }
+    if (!quietPage) { setDeskPetVisible(value); return; }
     // Explicitly showing a pet here must not change the preference on other pages.
-    pageChoices.set(quietPage, value);
-    window.dispatchEvent(new Event(CHANGE_EVENT));
+    setVisibility(value, () => pageChoices.get(quietPage) ?? false, next => {
+      pageChoices.set(quietPage, next);
+      window.dispatchEvent(new Event(CHANGE_EVENT));
+    });
   };
   return [visible, setPageVisible] as const;
 }

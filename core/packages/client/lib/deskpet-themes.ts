@@ -1,12 +1,13 @@
 import { DEFAULT_OPEN_PETS } from '@cuberoot/shared/deskpet';
 import { ORIGINAL_THEMES, type OriginalCharacterId, getOriginalScene, ORIGINAL_SCENES } from './deskpet-originals';
-import { ROOTBEAST_BASE, ROOTBEAST_VERSION, ROOTBEAST_FILES, ROOTBEAST_AUTO, ROOTBEAST_MINI_FILES, getRootBeastScene, ROOTBEAST_SCENES } from './deskpet-rootbeast';
+import { ROOTBEAST_BASE, ROOTBEAST_VERSION, ROOTBEAST_FILES, ROOTBEAST_AUTO, ROOTBEAST_MINI_FILES, ROOTBEAST_MOTION_STATES, getRootBeastScene, ROOTBEAST_SCENES } from './deskpet-rootbeast';
 import type { CareAction } from './deskpet-care';
 
 export type ThemeId = 'clawd' | 'calico' | 'cloudling' | 'rootbeast' | OriginalCharacterId;
 
 export interface MiniTheme {
   offsetRatio: number; // box overhangs the edge by offsetRatio*W; (1-ratio)*W stays on screen
+  enterMs?: number; // measured length of the enter art; settle to rest only after it ends
   // Edge-cling poses (the art is already drawn lying sideways). working/enterSleep
   // optional: calico has no mini-working, falls back to staying put / sleep.
   files: {
@@ -28,7 +29,12 @@ interface PetTheme {
  };
   files: Record<string, string>;
   mini: MiniTheme;
+  // One-shot transition clips keyed by pet state (enter, exit-hop, exit-sleep,
+  // mini-enter, mini-leave). Pets without them use generic container motion.
+  motion?: Partial<Record<string, PetMotion>>;
 }
+
+export interface PetMotion { src: string; durationMs: number }
 
 // State→asset maps mirror each clawd-on-desk theme.json `states`/`reactions`.
 export const THEMES: Record<ThemeId, PetTheme> = {
@@ -37,7 +43,8 @@ export const THEMES: Record<ThemeId, PetTheme> = {
     base: ROOTBEAST_BASE, version: ROOTBEAST_VERSION, inlineIdle: false,
     thumb: `${ROOTBEAST_BASE}${ROOTBEAST_FILES.idle}?v=${ROOTBEAST_VERSION}`, thumbScale: 1.5,
     label: { zh: '根号兽', en: 'Root Beast' }, files: ROOTBEAST_FILES, auto: ROOTBEAST_AUTO,
-    mini: { offsetRatio: .14, files: ROOTBEAST_MINI_FILES },
+    mini: { offsetRatio: .14, enterMs: ROOTBEAST_MOTION_STATES['mini-enter'].durationMs, files: ROOTBEAST_MINI_FILES },
+    motion: ROOTBEAST_MOTION_STATES,
   },
   clawd: {
     base: '/deskpet/', inlineIdle: true,
@@ -60,6 +67,7 @@ export const THEMES: Record<ThemeId, PetTheme> = {
     },
     mini: {
       offsetRatio: 0.486,
+      enterMs: 3200, // clawd-mini-enter.svg: slide in, wave, then rest (3.2s, plays once)
       files: {
         idle: 'clawd-mini-idle.svg', peek: 'clawd-mini-peek.svg',
         enter: 'clawd-mini-enter.svg', crabwalk: 'clawd-mini-crabwalk.svg',
@@ -117,6 +125,7 @@ export const THEMES: Record<ThemeId, PetTheme> = {
     },
     mini: {
       offsetRatio: 0.486,
+      enterMs: 1250, // cloudling-mini-enter-roll-in.svg declares its 1.25s length
       files: {
         idle: 'cloudling-mini-idle.svg', peek: 'cloudling-mini-peek.svg',
         enter: 'cloudling-mini-enter-roll-in.svg', crabwalk: 'cloudling-mini-crabwalk.svg',
