@@ -8,12 +8,15 @@
 // 所以「北京时间 21:00 的会」在洛杉矶的人改起来也不会漂。
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Bell, Clock, MapPin, Palette, Repeat, Text, Trash2, Users, X, Globe } from '@app-foundation/icons/lucide';
+import { Bell, ChevronDown, Clock, MapPin, Palette, Repeat, Text, Trash2, Users, X, Globe } from '@app-foundation/icons/lucide';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { DateInput } from '@/components/DateInput';
 import { ListSelect } from '@/components/ListSelect';
 import CalendarColorSelect from '@/components/CalendarColorSelect';
 import BoolToggle from '@/components/BoolToggle';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import { useEffectiveTheme } from '@/lib/theme';
+import { colorHex } from '@/lib/calendar-colors';
 import { tr, useLang } from '@/i18n/tr';
 import { wallPartsIn, wallToUtc, localZone, formatOffset, zoneOffsetMinutes } from '@cuberoot/shared/tz';
 import { REMINDER_CHOICES, type CalendarMeta, type EventGuest } from '@cuberoot/shared/calendar';
@@ -84,6 +87,8 @@ function reminderLabel(min: number): string {
 export default function EventDialog(props: Props) {
   const { calendars, meKey } = props;
   const isZh = useLang() === 'zh';
+  const isMobile = useIsMobile(900);
+  const theme = useEffectiveTheme();
   const [d, setD] = useState<DialogDraft>(props.draft);
   const titleRef = useRef<HTMLInputElement>(null);
   const [showTz, setShowTz] = useState(false);
@@ -140,11 +145,11 @@ export default function EventDialog(props: Props) {
 
   return (
     <div
-      className="cal-modal-backdrop"
+      className="cal-modal-backdrop cal-event-backdrop"
       {...backdropProps}
     >
       <div
-        className="cal-modal"
+        className="cal-modal cal-event-dialog"
         role="dialog"
         aria-modal="true"
         aria-label={d.id
@@ -154,10 +159,14 @@ export default function EventDialog(props: Props) {
         {/* Google 这个弹窗没有标题栏 —— 标题栏那行字重复了下面的输入框(「新建日程」上面
             压着「添加标题」),只留关闭。名字给读屏器,走 aria-label。 */}
         <div className="cal-modal-head">
+          <button type="button" className="cal-event-sheet-handle" disabled={props.saving} onClick={props.onClose} aria-label={tr({ zh: '关闭日程', en: 'Close event' })}><ChevronDown size={28} aria-hidden /></button>
           <span className="cal-foot-gap" />
-          <button type="button" className="cal-icon-btn" onClick={props.onClose} aria-label={tr({ zh: '关闭', en: 'Close' })}>
+          <button type="button" className="cal-icon-btn cal-event-close" disabled={props.saving} onClick={props.onClose} aria-label={tr({ zh: '关闭', en: 'Close' })}>
             <X size={18} aria-hidden />
           </button>
+          {!readOnly && <button type="button" className="cal-event-done" disabled={!canSave || props.saving} onClick={() => props.onSave(d)}>
+            {props.saving ? tr({ zh: '保存中…', en: 'Saving…' }) : tr({ zh: '完成', en: 'Done' })}
+          </button>}
         </div>
 
         <div className="cal-modal-body">
@@ -172,9 +181,28 @@ export default function EventDialog(props: Props) {
             onChange={(e) => patch({ title: e.target.value })}
           />
 
-          <div className="cal-field">
+          <div className="cal-field cal-event-dates">
             <Clock size={16} className="cal-field-icon" aria-hidden />
             <div className="cal-field-main">
+              <div className="cal-event-all-day">
+                <BoolToggle
+                  value={d.allDay}
+                  disabled={readOnly}
+                  label={tr({ zh: '全天', en: 'All day' })}
+                  onChange={(v) => {
+                    if (v) {
+                      // 转全天:起点归到当天 0 点,终点是次日 0 点(半开区间)。
+                      const w = wallPartsIn(d.tz, new Date(d.start));
+                      const s = wallToUtc(d.tz, { ...w, h: 0, mi: 0, s: 0 }).getTime();
+                      patch({ allDay: true, start: s, end: s + 86_400_000 });
+                    } else {
+                      const w = wallPartsIn(d.tz, new Date(d.start));
+                      const s = wallToUtc(d.tz, { ...w, h: 9, mi: 0, s: 0 }).getTime();
+                      patch({ allDay: false, start: s, end: s + 3_600_000 });
+                    }
+                  }}
+                />
+              </div>
               <div className="cal-event-time-row">
                 <DateInput
                   className="cal-event-date"
@@ -226,25 +254,8 @@ export default function EventDialog(props: Props) {
                   </label>
                 )}
               </div>
-              <div className="cal-time-opts">
-                <BoolToggle
-                  value={d.allDay}
-                  disabled={readOnly}
-                  label={tr({ zh: '全天', en: 'All day' })}
-                  onChange={(v) => {
-                    if (v) {
-                      // 转全天:起点归到当天 0 点,终点是次日 0 点(半开区间)。
-                      const w = wallPartsIn(d.tz, new Date(d.start));
-                      const s = wallToUtc(d.tz, { ...w, h: 0, mi: 0, s: 0 }).getTime();
-                      patch({ allDay: true, start: s, end: s + 86_400_000 });
-                    } else {
-                      const w = wallPartsIn(d.tz, new Date(d.start));
-                      const s = wallToUtc(d.tz, { ...w, h: 9, mi: 0, s: 0 }).getTime();
-                      patch({ allDay: false, start: s, end: s + 3_600_000 });
-                    }
-                  }}
-                />
-                <button type="button" className="cal-link-btn" onClick={() => setShowTz((v) => !v)}>
+              <div className="cal-time-opts cal-event-time-options">
+                <button type="button" className="cal-link-btn cal-event-zone" disabled={readOnly} onClick={() => setShowTz((v) => !v)}>
                   <Globe size={13} aria-hidden />
                   {zoneLabel(d.tz, isZh)}
                 </button>
@@ -281,7 +292,7 @@ export default function EventDialog(props: Props) {
           </div>
 
           {!readOnly && (
-            <div className="cal-field">
+            <div className="cal-field cal-event-repeat">
               <Repeat size={16} className="cal-field-icon" aria-hidden />
               <div className="cal-field-main">
                 <RepeatEditor value={d.rrule} start={d.start} tz={d.tz} onChange={(rrule) => patch({ rrule })} />
@@ -289,10 +300,15 @@ export default function EventDialog(props: Props) {
             </div>
           )}
 
-          <div className="cal-field">
+          <div className="cal-field cal-event-calendars">
             <Palette size={16} className="cal-field-icon" aria-hidden />
             <div className="cal-field-main cal-field-inline">
-              <ListSelect
+              {isMobile ? <div className="cal-event-calendar-chips" aria-label={tr({ zh: '日历', en: 'Calendar' })}>
+                {calendars.map((calendar) => <button key={calendar.id} className="cal-event-calendar-chip" type="button" disabled={readOnly} aria-pressed={calendar.id === d.calendarId} onClick={() => patch({ calendarId: calendar.id })}>
+                  <span className="cal-dot" style={{ background: colorHex(calendar.color, theme) }} aria-hidden />
+                  {calendar.name || tr({ zh: '我的日历', en: 'My calendar' })}
+                </button>)}
+              </div> : <><ListSelect
                 items={calItems}
                 value={String(d.calendarId)}
                 allLabel={tr({ zh: '日历', en: 'Calendar' })}
@@ -304,10 +320,11 @@ export default function EventDialog(props: Props) {
                 defaultColor={calendars.find((c) => c.id === d.calendarId)?.color ?? 'peacock'}
                 onChange={(color) => patch({ color })}
               />
+              </>}
             </div>
           </div>
 
-          <div className="cal-field">
+          <div className="cal-field cal-event-location">
             <MapPin size={16} className="cal-field-icon" aria-hidden />
             <input
               className="cal-text-input"
@@ -320,7 +337,7 @@ export default function EventDialog(props: Props) {
             />
           </div>
 
-          <div className="cal-field">
+          <div className="cal-field cal-event-reminders">
             <Bell size={16} className="cal-field-icon" aria-hidden />
             <div className="cal-field-main">
               {d.reminders.length === 0 && (
@@ -358,34 +375,36 @@ export default function EventDialog(props: Props) {
                   {i === d.reminders.length - 1 && d.reminders.length < 5 && (
                     <button
                       type="button"
-                      className="cal-link-btn"
+                      className="cal-link-btn cal-event-add-reminder"
                       disabled={readOnly}
                       onClick={() => patch({ reminders: [...d.reminders, 1440].filter((x, j, a) => a.indexOf(x) === j) })}
                     >
-                      {tr({ zh: '再加一条', en: 'Add another' })}
+                      {tr({ zh: '添加其他通知', en: 'Add another notification' })}
                     </button>
                   )}
                 </div>
               ))}
-              <p className="cal-hint">
-                {tr({ zh: '提醒发到站内消息(以及你设置的通知邮箱)', en: 'Reminders arrive as site notifications (and email, if enabled)' })}
-              </p>
             </div>
           </div>
 
-          <div className="cal-field">
+          <div className="cal-field cal-event-guests">
             <Users size={16} className="cal-field-icon" aria-hidden />
             <div className="cal-field-main">
               <GuestPicker
                 guests={d.guests}
                 meKey={meKey}
                 disabled={readOnly}
+                placeholder={isMobile ? tr({ zh: '添加邀请对象', en: 'Add guests' }) : undefined}
                 onChange={(guests) => patch({ guests })}
               />
             </div>
           </div>
 
-          <div className="cal-field">
+          {isMobile && <div className="cal-field cal-event-colour" inert={readOnly}>
+            <CalendarColorSelect value={d.color} defaultColor={calendars.find((c) => c.id === d.calendarId)?.color ?? 'peacock'} onChange={(color) => patch({ color })} />
+          </div>}
+
+          <div className="cal-field cal-event-description">
             <Text size={16} className="cal-field-icon" aria-hidden />
             <textarea
               className="cal-textarea"
@@ -431,13 +450,13 @@ export default function EventDialog(props: Props) {
             </div>
           )}
           <span className="cal-foot-gap" />
-          <button type="button" className="cal-btn" onClick={props.onClose} disabled={props.saving}>
+          <button type="button" className="cal-btn cal-event-footer-cancel" onClick={props.onClose} disabled={props.saving}>
             {tr({ zh: '取消', en: 'Cancel' })}
           </button>
           {!readOnly && (
             <button
               type="button"
-              className="cal-btn is-primary"
+              className="cal-btn is-primary cal-event-footer-save"
               disabled={!canSave || props.saving}
               onClick={() => props.onSave(d)}
             >

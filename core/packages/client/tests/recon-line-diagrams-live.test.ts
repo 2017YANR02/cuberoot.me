@@ -4,6 +4,8 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { ReconLineDiagramProvider } from '@/components/ReconLineDiagrams';
 import type { ReconF2lAnnotations } from '@/lib/recon-f2l-links';
+import { applyScramble } from '@cuberoot/shared/timer/reconstruct/state';
+import { FACE_COLOR_KEY } from '@cuberoot/shared/timer/reconstruct/orient';
 
 const mocks = vi.hoisted(() => ({ annotations: vi.fn(), load: vi.fn(), unmount: vi.fn() }));
 vi.mock('@/lib/recon-f2l-links', () => ({ reconF2lAnnotations: mocks.annotations }));
@@ -40,7 +42,16 @@ it.each(['W cross', 'Y Cross', 'R pscross', 'B xcross', 'G xxcross', 'O xxxcross
   await render(`x2 y' // inspection\nR U // ${label}`, 'F R', 1);
   const image = host.querySelector('[data-diagram]');
   expect(image).not.toBeNull();
-  expect(image?.getAttribute('data-setup')).toBe("F R x2 y'");
+  const facelets = image!.getAttribute('data-diagram')!;
+  const actual = applyScramble(3, "F R x2 y'");
+  const actualColors = (['U', 'R', 'F', 'D', 'L', 'B'] as const)
+    .flatMap(face => actual[face].map(color => FACE_COLOR_KEY[color][0]));
+  expect(facelets).toHaveLength(54);
+  expect([...facelets].filter(color => color === 'd')).toHaveLength(41);
+  expect([...facelets].filter(color => color === (label === '十字' ? 'w' : label[0].toLowerCase()))).toHaveLength(5);
+  [...facelets].forEach((color, index) => {
+    if (color !== 'd') expect(color).toBe(actualColors[index]);
+  });
   expect(image?.getAttribute('data-local')).toBe('true');
   expect(mocks.load).not.toHaveBeenCalled();
 });

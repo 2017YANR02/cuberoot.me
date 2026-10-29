@@ -9,9 +9,25 @@ import { tr } from '@/i18n/tr';
 import { cubeThumbParams } from '@/lib/alg_thumb_plan';
 import { CUBE_ORIENTATIONS, orientedFaceColors } from '@cuberoot/shared/timer';
 import { applyScramble } from '@cuberoot/shared/timer/reconstruct/state';
+import { FACE_COLOR_KEY } from '@cuberoot/shared/timer/reconstruct/orient';
+import { Masking } from '@cuberoot/visualcube';
+import { maskedReconFacelets } from '@/lib/recon-diagram-mask';
 import { loadAlg, type AlgSticker } from '@cuberoot/shared/alg';
 import { reconCommentCaseIndex, reconCommentLinks } from '@/lib/recon-comment-links';
 import { algCaseDetailHref, buildCaseSlugMap } from '@/lib/alg_case_link';
+
+function CrossLineDiagram({ setup, cross }: { setup: string; cross: string | null }) {
+  const facelets = useMemo(() => {
+    const orientation = cross ? CUBE_ORIENTATIONS.find(option =>
+      FACE_COLOR_KEY[orientedFaceColors(option.value).D][0].toUpperCase() === cross,
+    ) : undefined;
+    const canonical = applyScramble(3, orientation?.value ?? setup);
+    return maskedReconFacelets(setup, canonical, Masking.CROSS);
+  }, [setup, cross]);
+  if (!facelets) return null;
+  return <VisualCube faceletColors={facelets} view="iso" size={28} local loading="lazy" interactive enlargeable
+    alt={tr({ zh: '执行十字前的魔方状态', en: 'Cube state before cross' })} />;
+}
 
 // Rebase sticker identities to the current grip before applying the library mask.
 // The displayed state stays unchanged, including non-white crosses.
@@ -156,11 +172,9 @@ export function useReconLineDiagrams(scramble: string, text: string, enabled = t
     if (f2l && f2lDiagrams.has(rowKeys[index])) return <>{f2lDiagrams.get(rowKeys[index])!.map(({ colors, facelets }) =>
       <VisualCube key={colors} faceletColors={facelets} view="iso" size={28} local interactive enlargeable
         alt={tr({ zh: `执行此行前的 ${colors} F2L 状态`, en: `${colors} F2L state before this line` })} />)}</>;
-    // Cross has no library case or F2L pair to look up. Its thumbnail still
-    // comes from the same exact pre-line state, including inspection rotations.
-    if (/\b(?:ps)?x*cross\b|十字/i.test(label)) return <VisualCube setup={lineSetups[index]}
-      view="iso" size={28} local loading="lazy" interactive enlargeable
-      alt={tr({ zh: '执行十字前的魔方状态', en: 'Cube state before cross' })} />;
+    // Cross uses the same cubie masking as F2L, without a library lookup.
+    if (/\b(?:ps)?x*cross\b|十字/i.test(label)) return <CrossLineDiagram setup={lineSetups[index]}
+      cross={crossColorFromReconText(text)} />;
     return null;
   };
   return { diagramAt, f2lLinks, f2lLoading, libraryLinks };

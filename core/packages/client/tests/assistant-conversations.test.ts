@@ -2,6 +2,34 @@ import { describe, expect, it, vi } from 'vitest';
 import { createAssistantConversations } from '@/lib/assistant-conversations';
 
 describe('assistant workspace conversations', () => {
+  it('tracks completed replies independently across chats and accounts without treating snapshots as completion', () => {
+    const store = createAssistantConversations();
+    store.create('alice', 'a');
+    store.create('alice', 'b');
+    store.create('bob', 'a');
+    store.patch('alice', 'a', { turns: [{ question: 'first', partial: true, result: { answer: 'streaming', sources: [] } }] });
+    expect(store.read('alice').conversations[0].unreadReply).toBeUndefined();
+    store.replyCompleted('alice', 'a');
+    store.replyCompleted('alice', 'b');
+    expect(store.read('alice').conversations.map(chat => chat.unreadReply)).toEqual([true, true]);
+    expect(store.read('alice').activeId).toBe('b');
+    expect(store.read('bob').conversations[0].unreadReply).toBeUndefined();
+    store.select('alice', 'a');
+    // Selection alone is insufficient: the page could be hidden or covered on mobile.
+    expect(store.read('alice').conversations[0].unreadReply).toBe(true);
+    store.markReplyRead('alice', 'a');
+    expect(store.read('alice').conversations.map(chat => chat.unreadReply)).toEqual([false, true]);
+    let changes = 0;
+    store.subscribe(() => { changes++; });
+    store.markReplyRead('alice', 'a');
+    store.replyCompleted('alice', 'b');
+    store.replyCompleted('alice', 'missing');
+    expect(changes).toBe(0);
+    store.replyCompleted('alice', 'a');
+    expect(changes).toBe(1);
+    expect(store.read('alice').conversations[0].unreadReply).toBe(true);
+  });
+
   it('restores pinned chats for the same account without persisting image bytes', () => {
     const data = new Map<string, string>();
     vi.stubGlobal('window', {});
@@ -11,13 +39,14 @@ describe('assistant workspace conversations', () => {
       store.restorePinned('alice');
       store.create('alice', 'a');
       store.patch('alice', 'a', { turns: [{ question: 'picture', images: [{ data: 'secret-image', mediaType: 'image/png' }] }] });
+      store.rename('alice', 'a', '  Photo notes  ');
       store.setPinned('alice', 'a', true);
       expect([...data.values()].join('')).not.toContain('secret-image');
       const reopened = createAssistantConversations();
       reopened.restorePinned('bob');
       reopened.restorePinned('alice');
       expect(reopened.read('bob').conversations).toEqual([]);
-      expect(reopened.read('alice').conversations[0]).toMatchObject({ id: 'a', pinned: true, snapshot: { turns: [{ question: 'picture', imagesExpired: true }] } });
+      expect(reopened.read('alice').conversations[0]).toMatchObject({ id: 'a', title: 'Photo notes', pinned: true, snapshot: { turns: [{ question: 'picture', imagesExpired: true }] } });
       reopened.setPinned('alice', 'a', false);
       const again = createAssistantConversations();
       again.restorePinned('alice');

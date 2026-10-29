@@ -19,6 +19,7 @@ packageExtensionsChecksum: sha256-1U/6Y3WntbPpDziXsm+/Fb56O387oglad0xk5s/pn/k=
 
 patchedDependencies:
   '@2017yanr02/continuous-corners@0.3.2': 8a98d9b5168e06bcff9c16a56bc7bb1ed910858ef1946f842304a785906c0340
+  '@app-foundation/navigation-ui@0.2.9': 9d937274f78575bc85c53e427aa2df2b28f0a06d1d2e812a186d63b01fe7d8ee
   '@app-foundation/workspace-ui@0.1.0': f884be29fee3ca5c17f0ad25cd9ca976c749c66b1284f9390f50dc506ec35230
   '@ffmpeg/ffmpeg@0.12.15': d090b58375aee305ddf5682a64c6ff2ea4397b71a6469fc4f7156fa2863b8d1d
   cubing@0.63.3: 026724bd89e53a602c720d772bbd4c11ebe3c4040d840ba0c7df469b5244c9f6
@@ -600,7 +601,7 @@ importers:
         version: file:vendor/app-foundation/app-foundation-icons-0.1.0.tgz(lucide-react@1.8.0(react@19.2.4))(react@19.2.4)
       '@app-foundation/navigation-ui':
         specifier: file:../../vendor/app-foundation/app-foundation-navigation-ui-0.2.9.tgz
-        version: file:vendor/app-foundation/app-foundation-navigation-ui-0.2.9.tgz(@2017yanr02/continuous-corners@file:vendor/continuous-corners-0.3.2.tgz(patch_hash=8a98d9b5168e06bcff9c16a56bc7bb1ed910858ef1946f842304a785906c0340)(react@19.2.4))(react@19.2.4)
+        version: file:vendor/app-foundation/app-foundation-navigation-ui-0.2.9.tgz(patch_hash=9d937274f78575bc85c53e427aa2df2b28f0a06d1d2e812a186d63b01fe7d8ee)(@2017yanr02/continuous-corners@file:vendor/continuous-corners-0.3.2.tgz(patch_hash=8a98d9b5168e06bcff9c16a56bc7bb1ed910858ef1946f842304a785906c0340)(react@19.2.4))(react@19.2.4)
       '@app-foundation/registration-ui':
         specifier: file:../../vendor/app-foundation/app-foundation-registration-ui-0.1.0.tgz
         version: file:vendor/app-foundation/app-foundation-registration-ui-0.1.0.tgz(react@19.2.4)
@@ -1096,7 +1097,7 @@ importers:
     dependencies:
       '@app-foundation/navigation-ui':
         specifier: file:../../vendor/app-foundation/app-foundation-navigation-ui-0.2.9.tgz
-        version: file:vendor/app-foundation/app-foundation-navigation-ui-0.2.9.tgz(@2017yanr02/continuous-corners@file:vendor/continuous-corners-0.3.2.tgz(patch_hash=8a98d9b5168e06bcff9c16a56bc7bb1ed910858ef1946f842304a785906c0340)(react@19.2.4))(react@19.2.4)
+        version: file:vendor/app-foundation/app-foundation-navigation-ui-0.2.9.tgz(patch_hash=9d937274f78575bc85c53e427aa2df2b28f0a06d1d2e812a186d63b01fe7d8ee)(@2017yanr02/continuous-corners@file:vendor/continuous-corners-0.3.2.tgz(patch_hash=8a98d9b5168e06bcff9c16a56bc7bb1ed910858ef1946f842304a785906c0340)(react@19.2.4))(react@19.2.4)
       '@cuberoot/event-icon':
         specifier: workspace:*
         version: link:../event-icon
@@ -6648,7 +6649,7 @@ snapshots:
 
   '@app-foundation/messaging@https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-messaging-0.1.0.tgz': {}
 
-  '@app-foundation/navigation-ui@file:vendor/app-foundation/app-foundation-navigation-ui-0.2.9.tgz(@2017yanr02/continuous-corners@file:vendor/continuous-corners-0.3.2.tgz(patch_hash=8a98d9b5168e06bcff9c16a56bc7bb1ed910858ef1946f842304a785906c0340)(react@19.2.4))(react@19.2.4)':
+  '@app-foundation/navigation-ui@file:vendor/app-foundation/app-foundation-navigation-ui-0.2.9.tgz(patch_hash=9d937274f78575bc85c53e427aa2df2b28f0a06d1d2e812a186d63b01fe7d8ee)(@2017yanr02/continuous-corners@file:vendor/continuous-corners-0.3.2.tgz(patch_hash=8a98d9b5168e06bcff9c16a56bc7bb1ed910858ef1946f842304a785906c0340)(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@2017yanr02/continuous-corners': file:vendor/continuous-corners-0.3.2.tgz(patch_hash=8a98d9b5168e06bcff9c16a56bc7bb1ed910858ef1946f842304a785906c0340)(react@19.2.4)
       react: 19.2.4

@@ -1,0 +1,116 @@
+diff --git a/dist/ResizeDivider.d.ts b/dist/ResizeDivider.d.ts
+index ec5ed0db9fd2545ae88c6035d732f093f5018077..427f7a7b0e3153e0c731007f449f54a8b5fa85e3 100644
+--- a/dist/ResizeDivider.d.ts
++++ b/dist/ResizeDivider.d.ts
+@@ -3,9 +3,10 @@ export interface ResizeDividerProps extends Omit<ButtonHTMLAttributes<HTMLButton
+     label: string;
+     /** Positive movement grows a panel on the left; negative grows one on the right. */
+     direction?: 1 | -1;
++    orientation?: "vertical" | "horizontal";
+     getSize: (handle: HTMLElement) => number;
+     /** The host owns layout constraints and returns the applied width. */
+     onResize: (handle: HTMLElement, requested: number) => number | undefined;
+ }
+ /** Shared pointer capture, cancellation and keyboard contract for dock dividers. */
+-export declare function ResizeDivider({ label, direction, getSize, onResize, className, ...props }: ResizeDividerProps): import("react/jsx-runtime").JSX.Element;
++export declare function ResizeDivider({ label, direction, orientation, getSize, onResize, className, ...props }: ResizeDividerProps): import("react/jsx-runtime").JSX.Element;
+diff --git a/dist/ResizeDivider.js b/dist/ResizeDivider.js
+index 7a6810dd4114cd9f586c1653a527f8a5ef00fd67..22a8db1b131850e2c37853c0d678774dd02d7dc0 100644
+--- a/dist/ResizeDivider.js
++++ b/dist/ResizeDivider.js
+@@ -2,7 +2,7 @@
+ import { jsx as _jsx } from "react/jsx-runtime";
+ import { useRef, useState } from "react";
+ /** Shared pointer capture, cancellation and keyboard contract for dock dividers. */
+-export function ResizeDivider({ label, direction = 1, getSize, onResize, className = "", ...props }) {
++export function ResizeDivider({ label, direction = 1, orientation = "vertical", getSize, onResize, className = "", ...props }) {
+     const drag = useRef(null);
+     const [dragging, setDragging] = useState(false);
+     const [width, setWidth] = useState();
+@@ -12,26 +12,26 @@ export function ResizeDivider({ label, direction = 1, getSize, onResize, classNa
+             setWidth(next);
+     };
+     const finish = () => { drag.current = null; setDragging(false); };
+-    return _jsx("button", { ...props, type: "button", role: "separator", "aria-orientation": "vertical", "aria-label": label, "aria-valuenow": width, "aria-valuetext": width === undefined ? undefined : `${width}px`, title: label, className: `resize-divider ${className}${dragging ? " is-dragging" : ""}`, onPointerDown: event => {
++    return _jsx("button", { ...props, type: "button", role: "separator", "aria-orientation": orientation, "aria-label": label, "aria-valuenow": width, "aria-valuetext": width === undefined ? undefined : `${width}px`, title: label, className: `resize-divider ${className}${dragging ? " is-dragging" : ""}`, onPointerDown: event => {
+             if (event.button !== 0)
+                 return;
+             event.preventDefault();
+             event.stopPropagation();
+-            drag.current = { x: event.clientX, width: getSize(event.currentTarget) };
++            drag.current = { x: (orientation === "vertical" ? event.clientX : event.clientY), width: getSize(event.currentTarget) };
+             event.currentTarget.setPointerCapture(event.pointerId);
+             setDragging(true);
+         }, onPointerMove: event => {
+             if (drag.current)
+-                resize(event.currentTarget, drag.current.width + (event.clientX - drag.current.x) * direction);
++                resize(event.currentTarget, drag.current.width + ((orientation === "vertical" ? event.clientX : event.clientY) - drag.current.x) * direction);
+         }, onPointerUp: event => {
+             finish();
+             if (event.currentTarget.hasPointerCapture(event.pointerId))
+                 event.currentTarget.releasePointerCapture(event.pointerId);
+         }, onLostPointerCapture: finish, onPointerCancel: finish, onKeyDown: event => {
+-            if (event.key !== "ArrowLeft" && event.key !== "ArrowRight")
++            if (orientation === "vertical" ? event.key !== "ArrowLeft" && event.key !== "ArrowRight" : event.key !== "ArrowUp" && event.key !== "ArrowDown")
+                 return;
+             event.preventDefault();
+             event.stopPropagation();
+-            resize(event.currentTarget, getSize(event.currentTarget) + (event.key === "ArrowRight" ? 16 : -16) * direction);
++            resize(event.currentTarget, getSize(event.currentTarget) + (event.key === "ArrowRight" || event.key === "ArrowDown" ? 16 : -16) * direction);
+         } });
+ }
+diff --git a/src/ResizeDivider.tsx b/src/ResizeDivider.tsx
+index ebf7d2c89435944c7f42785839b4730f27d4a462..cf51a6533defbb67ad599308565580a7847ed488 100644
+--- a/src/ResizeDivider.tsx
++++ b/src/ResizeDivider.tsx
+@@ -5,13 +5,14 @@ export interface ResizeDividerProps extends Omit<ButtonHTMLAttributes<HTMLButton
+   label: string;
+   /** Positive movement grows a panel on the left; negative grows one on the right. */
+   direction?: 1 | -1;
++    orientation?: "vertical" | "horizontal";
+   getSize: (handle: HTMLElement) => number;
+   /** The host owns layout constraints and returns the applied width. */
+   onResize: (handle: HTMLElement, requested: number) => number | undefined;
+ }
+ 
+ /** Shared pointer capture, cancellation and keyboard contract for dock dividers. */
+-export function ResizeDivider({ label, direction = 1, getSize, onResize, className = "", ...props }: ResizeDividerProps) {
++export function ResizeDivider({ label, direction = 1, orientation = "vertical", getSize, onResize, className = "", ...props }: ResizeDividerProps) {
+   const drag = useRef<{ x: number; width: number } | null>(null);
+   const [dragging, setDragging] = useState(false);
+   const [width, setWidth] = useState<number>();
+@@ -20,19 +21,19 @@ export function ResizeDivider({ label, direction = 1, getSize, onResize, classNa
+     if (next !== undefined) setWidth(next);
+   };
+   const finish = () => { drag.current = null; setDragging(false); };
+-  return <button {...props} type="button" role="separator" aria-orientation="vertical" aria-label={label}
++  return <button {...props} type="button" role="separator" aria-orientation={orientation} aria-label={label}
+     aria-valuenow={width} aria-valuetext={width === undefined ? undefined : `${width}px`} title={label}
+     className={`resize-divider ${className}${dragging ? " is-dragging" : ""}`}
+     onPointerDown={event => {
+       if (event.button !== 0) return;
+       event.preventDefault();
+       event.stopPropagation();
+-      drag.current = { x: event.clientX, width: getSize(event.currentTarget) };
++      drag.current = { x: (orientation === "vertical" ? event.clientX : event.clientY), width: getSize(event.currentTarget) };
+       event.currentTarget.setPointerCapture(event.pointerId);
+       setDragging(true);
+     }}
+     onPointerMove={event => {
+-      if (drag.current) resize(event.currentTarget, drag.current.width + (event.clientX - drag.current.x) * direction);
++      if (drag.current) resize(event.currentTarget, drag.current.width + ((orientation === "vertical" ? event.clientX : event.clientY) - drag.current.x) * direction);
+     }}
+     onPointerUp={event => {
+       finish();
+@@ -40,9 +41,9 @@ export function ResizeDivider({ label, direction = 1, getSize, onResize, classNa
+     }}
+     onLostPointerCapture={finish} onPointerCancel={finish}
+     onKeyDown={event => {
+-      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
++      if (orientation === "vertical" ? event.key !== "ArrowLeft" && event.key !== "ArrowRight" : event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
+       event.preventDefault();
+       event.stopPropagation();
+-      resize(event.currentTarget, getSize(event.currentTarget) + (event.key === "ArrowRight" ? 16 : -16) * direction);
++      resize(event.currentTarget, getSize(event.currentTarget) + (event.key === "ArrowRight" || event.key === "ArrowDown" ? 16 : -16) * direction);
+     }} />;
+ }

@@ -13,6 +13,7 @@ allowBuilds:
   sharp: false # next/image native build,POC 不用图片优化跳过
 patchedDependencies:
   '@2017yanr02/continuous-corners@0.3.2': patches/@2017yanr02__continuous-corners@0.3.2.patch
+  '@app-foundation/navigation-ui@0.2.9': patches/@app-foundation__navigation-ui@0.2.9.patch
   '@app-foundation/workspace-ui@0.1.0': patches/@app-foundation__workspace-ui@0.1.0.patch
   '@ffmpeg/ffmpeg@0.12.15': patches/@ffmpeg__ffmpeg@0.12.15.patch
   cubing@0.63.3: patches/cubing@0.63.3.patch

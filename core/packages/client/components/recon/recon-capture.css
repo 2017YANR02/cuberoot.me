@@ -1,0 +1,11 @@
+.rc-dialog { width: min(48rem, 100%); }
+.rc-dialog h2 { margin: 0; font-size: 1.15rem; }
+.rc-summary, .rc-status { color: var(--muted-foreground); font-size: .9rem; line-height: 1.5; }
+.rc-scramble, .rc-filename { overflow-wrap: anywhere; }
+.rc-controls { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.rc-video { display: block; width: 100%; max-height: 48dvh; margin-block: .75rem; }
+.rc-alignment { display: grid; gap: .65rem; margin-top: 1rem; }
+.rc-alignment p { margin: 0; }
+.rc-anchors { display: grid; gap: .4rem; padding: 0; margin: 0; list-style: none; }
+.rc-anchors li { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.rc-error { color: var(--destructive); overflow-wrap: anywhere; }

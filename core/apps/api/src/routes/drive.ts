@@ -15,7 +15,10 @@ import {
   type DriveUpload,
 } from '@cuberoot/shared/drive';
 import { ADMIN_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
+import { RECON_CAPTURE_MAX_VIDEO_BYTES } from '@cuberoot/shared/recon-capture';
 import { Hono, type Context } from 'hono';
+import { HTTPException } from 'hono/http-exception';
+import { bodyLimit } from 'hono/body-limit';
 import jwt, { type JwtPayload } from 'jsonwebtoken';
 import type postgres from 'postgres';
 import { sql } from '../db/connection.js';
@@ -38,12 +41,15 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3
 const MIME_PATTERN = /^[a-z0-9][a-z0-9!#$&^_.+-]*\/[a-z0-9][a-z0-9!#$&^_.+-]*$/i;
 const QUOTA_LOCK_ID = 2026082901;
 
-interface DriveIdentity {
+export interface DriveIdentity {
   userId: number;
   isAdmin: boolean;
   isSuperAdmin: boolean;
   allowed: boolean;
 }
+
+// Request-scoped injection for the isolated capture helper; production uses normal account auth.
+const scopedIdentities = new WeakMap<Context, Promise<DriveIdentity>>();
 
 interface NodeRow {
   id: string;
@@ -155,6 +161,8 @@ function uploadJson(row: UploadRow): DriveUpload {
 }
 
 async function identity(c: Context): Promise<DriveIdentity> {
+  const scoped = scopedIdentities.get(c);
+  if (scoped) return scoped;
   const userId = await requireAppUserId(c);
   const user = await requireAuth(c);
   const isAdmin = user.isAdmin;
@@ -1138,3 +1146,47 @@ driveRoutes.delete('/drive/members/:userId', async (c) => {
   if (!removed) return c.json({ error: 'Drive member not found' }, 404);
   return c.json({ ok: true });
 });
+
+/** Reuse the same upload handlers without exposing sharing, compression or account administration. */
+export function createCaptureDriveRoutes(resolveIdentity: (c: Context) => Promise<DriveIdentity>) {
+  const scoped = new Hono();
+  const gate = async (c: Context, next: () => Promise<void>) => {
+    c.header('Cache-Control', 'private, no-store');
+    c.header('Vary', 'Authorization, X-Admin-Key');
+    const routePath = c.req.path.replace(/^\/v1(?=\/)/, '');
+    const method = c.req.method;
+    const upload = /^\/drive\/uploads\/[0-9a-f-]+$/i.test(routePath);
+    const allowed = (method === 'GET' && routePath === '/drive')
+      || (method === 'POST' && routePath === '/drive/uploads')
+      || (upload && ['HEAD', 'PATCH', 'DELETE'].includes(method));
+    if (!allowed) throw new HTTPException(404, { message: 'Drive operation is not available in local capture' });
+    if (routePath === '/drive' && ['members', 'all', 'trash', 'parent'].some(key => c.req.query(key)))
+      throw new HTTPException(400, { message: 'Local capture lists only your private upload files' });
+    if (c.req.header('X-Admin-Key')) throw new HTTPException(403, { message: 'Human administrator session required for Drive uploads' });
+    const pending = scopedIdentities.get(c) ?? resolveIdentity(c);
+    scopedIdentities.set(c, pending);
+    try {
+      const current = await pending;
+      if (!Number.isSafeInteger(current.userId) || current.userId <= 0 || !current.isAdmin || !current.allowed)
+        throw new HTTPException(403, { message: 'Local capture administrator required' });
+      await next();
+      c.header('Cache-Control', 'private, no-store');
+    } finally { scopedIdentities.delete(c); }
+  };
+  scoped.use('/drive', gate);
+  scoped.use('/drive/*', gate);
+  scoped.use('/drive/uploads', bodyLimit({ maxSize: 16_384 }));
+  scoped.use('/drive/uploads', async (c, next) => {
+    const body: unknown = await c.req.json().catch(() => null);
+    if (!body || typeof body !== 'object' || Array.isArray(body))
+      throw new HTTPException(400, { message: 'Upload metadata is required' });
+    const input = body as Record<string, unknown>;
+    if (input.parentId != null) throw new HTTPException(400, { message: 'Local capture uploads use private root files' });
+    if (typeof input.sizeBytes !== 'number' || !Number.isSafeInteger(input.sizeBytes)
+      || input.sizeBytes <= 0 || input.sizeBytes > RECON_CAPTURE_MAX_VIDEO_BYTES)
+      throw new HTTPException(413, { message: 'Capture videos must be between 1 byte and 1 GiB' });
+    await next();
+  });
+  scoped.route('/', driveRoutes);
+  return scoped;
+}

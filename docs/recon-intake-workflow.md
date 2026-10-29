@@ -38,9 +38,11 @@
 `recon_intake_local` 数据库中准备 `recons` 和 `recon_ground_truth_cases` 的测试数据；
 该数据库不会自动同步线上来源，缺少这些表时来源选择不可用，原收录队列仍可使用。
 
-从 `core/` 运行 `pnpm recon:intake:dev` 启动仅含收录域的本地 API（默认 3011）。
+从 `core/` 运行 `pnpm recon:capture:dev` 可一键准备并启动隔离的本地 PostgreSQL 与
+收录、视频采集 API（默认 3011），详见 [视频采集的本地运行说明](recon-capture-workflow.md)。
+已准备数据库和本地配置时，也可用 `pnpm recon:intake:dev` 仅启动 API，并自动补齐专用本地表。
 它只读验证已有线上管理员登录态，全部样本写入本地 `recon_intake_local` 数据库，
-不启动生产后台任务。前端使用现有 `LOCAL_DOMAINS=recon-intake LOCAL_API_PORT=3011`
+不启动生产后台任务。既有收录页面仍使用 `LOCAL_DOMAINS=recon-intake LOCAL_API_PORT=3011`
 只把此域指向本地，其他 API 保持现有线路。
 不要给整个前端设置本地 API origin，也不要把本地调试写到生产。
 

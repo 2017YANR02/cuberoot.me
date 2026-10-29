@@ -354,7 +354,10 @@ export default function LandingSearch({
         if (typeof data.answer !== 'string' || !Array.isArray(data.sources)) throw new Error('invalid response');
         if (assistantRequest.current !== controller) return;
         const result: AssistantAnswer = { answer: data.answer, actions: data.actions?.filter(action => typeof action.href === 'string' && isAssistantSourceHref(action.href)), artifacts: Array.isArray(data.artifacts) ? data.artifacts : [], sources: data.sources.filter(source => typeof source.href === 'string' && isAssistantSourceHref(source.href)) };
-        if (!partial) setAssistantAnswer(result);
+        if (!partial) {
+          setAssistantAnswer(result);
+          if (conversation) assistantConversations.replyCompleted(conversation.owner, conversation.id);
+        }
         setAssistantTurns([...previous, { question, images, result, partial, requestId, createdAt }]);
       };
       if (response.headers?.get('content-type')?.includes('text/event-stream')) {

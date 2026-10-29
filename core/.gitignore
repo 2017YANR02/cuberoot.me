@@ -29,3 +29,4 @@ pnpm-debug.log*
 
 # AI-generated screenshots, debug images (per global rule)
 .tmp/
+.local-data/

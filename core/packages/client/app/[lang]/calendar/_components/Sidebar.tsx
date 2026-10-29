@@ -16,6 +16,10 @@ import { dayKeyIn, dayStart } from '../_lib/format';
 
 interface Props {
   children?: ReactNode;
+  mobileHeader?: ReactNode;
+  mobileFooter?: ReactNode;
+  mobile?: boolean;
+  open?: boolean;
   calendars: CalendarMeta[];
   hidden: number[];
   /** 迷你月历当前锚点(绝对时刻) */
@@ -68,7 +72,8 @@ export default function Sidebar(props: Props) {
   const cellKey = (date: Date): string => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
   return (
-    <aside className="cal-sidebar">
+    <aside className="cal-sidebar" inert={props.mobile && !props.open} aria-label={tr({ zh: '日历菜单', en: 'Calendar menu' })}>
+      {props.mobileHeader}
       {/* Google 把「创建」放在左栏最上面,不是右下角的悬浮钮 —— 那个只在窄屏留着。 */}
       <button type="button" className="cal-create-btn" onClick={props.onCreate}>
         <Plus size={20} aria-hidden />
@@ -224,6 +229,7 @@ export default function Sidebar(props: Props) {
           </ul>
         </div>
       )}
+      {props.mobileFooter}
     </aside>
   );
 }

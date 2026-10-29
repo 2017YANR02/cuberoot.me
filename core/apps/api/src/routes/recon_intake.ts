@@ -110,10 +110,10 @@ reconIntakeRoutes.get('/recon-intake/sources', async c => {
   const personId = parse(z.string().max(100), c.req.query('personId') ?? '2023GENG02');
   const collectorId = parse(z.string().max(100), c.req.query('collectorId') ?? '2017YANR02');
   const offset = Math.max(0, Math.min(100000, Math.trunc(Number(c.req.query('offset')) || 0)));
-  const rows = await query<{ id: number; scramble: string; solution: string; comp: string | null; date: string | null;
+  const rows = await query<{ id: number; scramble: string; solution: string; comp: string | null; comp_wca_id: string | null; country: string | null; date: string | null;
     value: string | null; intake_status: string | null; intake_id: string | null; truth_status: string | null; source_changed: boolean; source_hash: string }>(
     `SELECT r.id, COALESCE(NULLIF(BTRIM(r.optimal_scramble), ''), NULLIF(BTRIM(r.wca_scramble), ''), BTRIM(r.scramble), '') AS scramble,
-      COALESCE(r.solution, '') AS solution, r.comp, r.date::text, r.value,
+      COALESCE(r.solution, '') AS solution, r.comp, r.comp_wca_id, r.country, r.date::text, r.value,
       i.status AS intake_status, i.id::text AS intake_id, g.status AS truth_status,
       md5(jsonb_build_array(COALESCE(NULLIF(BTRIM(r.optimal_scramble), ''), NULLIF(BTRIM(r.wca_scramble), ''), BTRIM(r.scramble), ''), COALESCE(r.solution, ''))::text) AS source_hash,
       ((i.id IS NOT NULL AND i.input->>'sourceReconHash' IS DISTINCT FROM
@@ -138,7 +138,7 @@ reconIntakeRoutes.get('/recon-intake/sources', async c => {
           AND g.source_solution = COALESCE(r.solution, '')))))
      ORDER BY r.id DESC LIMIT 51 OFFSET ?`, [personId, personId, collectorId, collectorId, status, status, status, offset]);
   return c.json({ items: rows.slice(0, 50).map(row => ({ id: row.id, scramble: row.scramble,
-    solution: row.solution, competition: row.comp, date: row.date, value: row.value,
+    solution: row.solution, competition: row.comp, competitionId: row.comp_wca_id, country: row.country, date: row.date, value: row.value,
     intakeId: row.intake_id, intakeStatus: row.intake_status, truthStatus: row.truth_status,
     sourceChanged: row.source_changed, sourceHash: row.source_hash })), hasMore: rows.length > 50 });
 });

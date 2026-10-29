@@ -26,6 +26,7 @@
  */
 import { Hono } from 'hono';
 import { query } from '../db/connection.js';
+import { hasPersonLiveResult } from '../utils/person_live_result.js';
 import { getOverlayEntries, overlayDeltaPure, type OverlayEntry } from '../utils/wca_live_overlay.js';
 import { inferredOverlayEntries } from './cubing_live.js';
 import {
@@ -2189,7 +2190,8 @@ wcaStatsExtraRoutes.get('/wca/person-live-results', async (c) => {
     );
 
     const compsMap = new Map<string, { id: string; name: string; city: string; country_iso2: string; start_date: string; end_date: string }>();
-    const results = rows.map((r, i) => {
+    // Existing cached roster rows must disappear even before the next prewarm.
+    const results = rows.filter(r => hasPersonLiveResult(r.best, r.average, r.attempts)).map((r, i) => {
       if (!compsMap.has(r.comp_id)) {
         compsMap.set(r.comp_id, {
           id: r.comp_id, name: r.comp_name, city: '', country_iso2: '',

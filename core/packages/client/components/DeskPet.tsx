@@ -26,7 +26,7 @@ import { ClearButton } from '@/components/ClearButton';
 import { persistItem } from '@/lib/safe-storage';
 import { mayUseMiniProgramBridge } from '@/lib/miniprogram-bridge';
 import { useDeskPetVisible } from '@/hooks/useDeskPetVisible';
-import { readDeskPetAnchor } from '@/lib/deskpet-position';
+import { clampDeskPetAxis, readDeskPetAnchor } from '@/lib/deskpet-position';
 import { subscribeBeat, getMetronomeState } from '@/lib/metronome';
 import { getDeskPetScene, PLAYTIME_SCENES } from '@/lib/deskpet-playtime';
 import { ORIGINAL_CHARACTERS, ORIGINAL_SCENES, type OriginalCharacterId } from '@/lib/deskpet-originals';
@@ -34,6 +34,11 @@ import { ROOTBEAST_BASE, ROOTBEAST_FILES, ROOTBEAST_RANDOM_SCENES, ROOTBEAST_VER
 import { resolveDeskPets, type DeskPetCatalog, type DeskPetEntry } from '@cuberoot/shared/deskpet';
 import { getDeskPetCatalog, saveDeskPetCatalog } from '@/lib/deskpet-api';
 import { THEMES, THEME_IDS, type MiniTheme, type ThemeId } from '@/lib/deskpet-themes';
+import { AudioLines, SquarePen } from '@app-foundation/icons/lucide';
+import HeaderToggles from '@/components/HeaderToggles';
+import { Tooltip } from '@/components/Tooltip';
+import { useSpeechToText } from '@/hooks/useSpeechToText';
+import { tr } from '@/i18n/tr';
 // SSR-safe layout effect (DeskPet is rendered in the root layout).
 const useIsoLayout = typeof document !== 'undefined' ? useLayoutEffect : useEffect;
 
@@ -71,6 +76,7 @@ const SLEEP_AFTER = 60000;
 const POS_KEY = 'clawd-deskpet-pos';
 const SIZE_KEY = 'clawd-deskpet-size';
 const CHAR_KEY = 'clawd-deskpet-char';
+const COMPACT_KEY = 'clawd-deskpet-compact';
 const MINI_KEY = 'clawd-deskpet-mini'; // { edge, preRight, preBottom } — restore cling across reloads
 
 type Size = 's' | 'm' | 'l';
@@ -100,26 +106,19 @@ const vpH = () => window.matchMedia('(max-width: 767px)').matches
 // is how far past the edge the visual center may go, as a fraction of box size:
 // at the limit ~half the centered art is clipped, so the pet clings to the edge.
 // (A positive value here would instead keep the art that far inside the edge.)
-const PEEK = 0.08;
 const clampAnchor = (right: number, bottom: number, w: number, h: number, fx: number, fy: number) => {
   const cw = vpW(), ch = vpH();
-  const mX = -w * PEEK;
-  // Keep the visual center reachable inside the visible viewport, while allowing
-  // the rest of the pet to extend beyond its top and bottom edges.
   const viewport = window.visualViewport;
   const safe = mayUseMiniProgramBridge() || window.matchMedia('(max-width: 767px)').matches;
   const style = safe ? getComputedStyle(document.documentElement) : null;
-  const top = (viewport?.offsetTop ?? 0) + (parseFloat(style?.getPropertyValue('--sat') ?? '') || 0) + 8;
+  const top = (viewport?.offsetTop ?? 0) + (parseFloat(style?.getPropertyValue('--sat') ?? '') || 0);
   const bottomEdge = Math.min(ch, (viewport?.offsetTop ?? 0) + (viewport?.height ?? ch))
-    - (parseFloat(style?.getPropertyValue('--sab') ?? '') || 0) - 8;
-  const visibleInset = Math.min(16, Math.max(0, (bottomEdge - top) / 2));
-  const minBottom = ch - bottomEdge + visibleInset - h * (1 - fy);
-  const maxBottom = Math.max(minBottom, ch - top - visibleInset - h * (1 - fy));
+    - (parseFloat(style?.getPropertyValue('--sab') ?? '') || 0);
   const left = safe ? (viewport?.offsetLeft ?? 0) : 0;
   const rightEdge = safe ? left + (viewport?.width ?? cw) : cw;
   return {
-    right: Math.min(Math.max(cw - rightEdge + mX - w * (1 - fx), right), cw - left - mX - w * (1 - fx)),
-    bottom: Math.min(Math.max(minBottom, bottom), maxBottom),
+    right: clampDeskPetAxis(right, w, fx, cw, left, rightEdge),
+    bottom: clampDeskPetAxis(bottom, h, fy, ch, top, bottomEdge),
   };
 };
 
@@ -236,14 +235,57 @@ const CSS = `
   .clawd-deskpet[data-size=m]{--pet-base:186px;}
   .clawd-deskpet[data-size=l]{--pet-base:240px;}
 }
-@media print{.clawd-deskpet{display:none;}}
+.deskpet-compact{position:fixed;right:max(16px,var(--sar,0px),calc((100vw - 1200px)/2));bottom:max(20px,var(--sab,0px));z-index:100000;}
+.deskpet-compact-bar{position:relative;isolation:isolate;display:flex;align-items:center;padding:5px;border:1px solid var(--border-strong);border-radius:999px;
+  box-shadow:inset 0 1px 2px color-mix(in srgb,var(--foreground) 12%,transparent),0 6px 18px color-mix(in srgb,var(--foreground) 12%,transparent);}
+.deskpet-compact-surface{position:absolute;inset:0;z-index:-1;pointer-events:none;border-radius:inherit;background:var(--popover);}
+.deskpet-compact-bar>button,.deskpet-compact-settings{display:flex;align-items:center;justify-content:center;width:46px;height:42px;padding:0;border:0;border-radius:999px;background:transparent;color:var(--foreground);cursor:pointer;}
+.deskpet-compact-settings>svg{width:21px;height:21px;}
+.deskpet-compact-bar>button:hover,.deskpet-compact-settings:hover{background:var(--muted);}
+.deskpet-compact-bar button:focus-visible{outline:2px solid var(--ring);outline-offset:2px;}
+.deskpet-compact-bar>button[aria-pressed=true]{color:var(--accent);background:var(--accent-soft);}
+.deskpet-compact-divider{height:24px;width:1px;background:var(--border-default);}
+.deskpet-compact .appearance-menu{top:auto;right:0;bottom:calc(100% + 10px);left:auto;}
+.deskpet-compact-status{position:absolute;right:0;bottom:calc(100% + 10px);width:min(280px,calc(100vw - 40px));padding:12px;border-radius:12px;background:var(--popover);font-size:13px;color:var(--foreground);}
+/* The homepage's fixed search occupies the bottom 2.5rem + 54px on narrow screens. */
+@media (max-width:1024px){body:has(.landing-page) .deskpet-compact{bottom:calc(7rem + var(--sab,0px));}}
+@media print{.clawd-deskpet,.deskpet-compact{display:none;}}
 `;
+
+function CompactPet({ lang, onCompose }: {
+  lang: 'zh' | 'en';
+  onCompose: (draft?: string) => void;
+}) {
+  const speech = useSpeechToText({
+    lang: lang === 'zh' ? 'zh-CN' : 'en-US',
+    onResult: (text, final) => { if (final && text.trim()) onCompose(text.trim()); },
+  });
+  const voiceLabel = speech.listening ? tr({ zh: '停止听写', en: 'Stop dictation' }) : tr({ zh: '语音输入', en: 'Voice input' });
+  return <div className="deskpet-compact" role="group" aria-label={tr({ zh: '轻量助手', en: 'Compact assistant' })}>
+    <div className="deskpet-compact-bar">
+      <span className="deskpet-compact-surface" data-site-surface="popover" aria-hidden />
+      <Tooltip content={tr({ zh: '新聊天', en: 'New chat' })}>{tip =>
+        <button {...tip} type="button" aria-label={tr({ zh: '新聊天', en: 'New chat' })} onClick={() => onCompose()}><SquarePen size={21} aria-hidden /></button>
+      }</Tooltip>
+      <span className="deskpet-compact-divider" aria-hidden />
+      <Tooltip content={voiceLabel}>{tip =>
+        <button {...tip} type="button" aria-label={voiceLabel} aria-pressed={speech.listening} onClick={() => speech.listening ? speech.stop() : speech.start()}><AudioLines size={21} aria-hidden /></button>
+      }</Tooltip>
+      <span className="deskpet-compact-divider" aria-hidden />
+      <HeaderToggles triggerClassName="deskpet-compact-settings" />
+    </div>
+    {(speech.listening || speech.error) && <div className="deskpet-compact-status" data-site-surface="popover" role="status">
+      {speech.error ? tr({ zh: '语音输入不可用，请检查浏览器支持和麦克风权限，或打字输入。', en: 'Voice input is unavailable. Check browser support and microphone permissions, or type instead.' }) : tr({ zh: '正在听写…', en: 'Listening…' })}
+    </div>}
+  </div>;
+}
 
 export default function DeskPet() {
   const douyin = useDouyinToolSurface();
   const [mounted, setMounted] = useState(false);
   const [size, setSize] = useState<Size>('m');
   const [character, setCharacter] = useState<ThemeId>('rootbeast');
+  const [compact, setCompact] = useState(false);
   const [visible] = useDeskPetVisible();
   const [temporarilyHidden, setHidden] = useState(false);
   const hidden = !visible || temporarilyHidden;
@@ -366,6 +408,7 @@ export default function DeskPet() {
     setMounted(true);
     try {
       const sz = localStorage.getItem(SIZE_KEY);
+      setCompact(localStorage.getItem(COMPACT_KEY) === 'true');
       if (sz === 's' || sz === 'l') setSize(sz);
       // 动画(随机播放)默认关闭:仅显式存为 'random' 才开,空/未设(新用户)→ 关。
       if (localStorage.getItem('clawd-deskpet-mode') === 'random') setRandomMode(true);
@@ -503,7 +546,7 @@ export default function DeskPet() {
   }, [size, character]);
 
   useEffect(() => {
-    if (!mounted || hidden || !petAvailable) return;
+    if (!mounted || hidden || !petAvailable || compact) return;
     const root = rootRef.current, svg = svgRef.current, img = imgRef.current, hit = hitRef.current;
     if (!root || !svg || !img || !hit) return;
     const eyes = svg.querySelector<SVGGElement>('#clawddp-eyes');
@@ -1174,7 +1217,7 @@ export default function DeskPet() {
       ctrlRef.current = null;
       delete (window as unknown as { clawdPet?: object }).clawdPet;
     };
-  }, [mounted, hidden, character, randomMode, user, petAvailable, visibleKey]);
+  }, [mounted, hidden, character, randomMode, user, petAvailable, visibleKey, compact]);
 
   if (douyin || !mounted) return null;
 
@@ -1198,9 +1241,16 @@ export default function DeskPet() {
   };
 
   const selectChar = (value: string) => {
+    if (value === 'none') {
+      setCompact(true);
+      persistItem(COMPACT_KEY, 'true');
+      return;
+    }
     const next = THEME_IDS.find(id => id === value && visibleIds.includes(id));
-    if (!next || next === character) return;
-    captureCenter(); // capture with the OLD character's fractions before switching
+    if (!next || (!compact && next === character)) return;
+    if (!compact) captureCenter(); // preserve the old pet's visual center
+    setCompact(false);
+    persistItem(COMPACT_KEY, 'false');
     setCharacter(next);
     persistItem(CHAR_KEY, next);
   };
@@ -1228,7 +1278,14 @@ export default function DeskPet() {
         inputMode="search"
         style={{ position: 'fixed', bottom: 0, left: 0, width: 1, height: 1, opacity: 0, padding: 0, margin: 0, border: 0, fontSize: 16, background: 'transparent', pointerEvents: 'none', zIndex: -1 }}
       />
-      <div style={hidden || !petAvailable || searchOpen ? { display: 'none' } : undefined} className={`clawd-deskpet${touchActionsVisible ? ' touch-actions' : ''}`} data-size={size} data-char={character} data-original={ORIGINAL_CHARACTERS.some(pet => pet.id === character)} data-pixel={THEMES[character].pixel} ref={rootRef}>
+      {compact && !hidden && !searchOpen && <CompactPet key={`compact:${owner}`} lang={curLang}
+        onCompose={draft => {
+          const id = crypto.randomUUID();
+          assistantConversations.create(owner, id);
+          if (draft) assistantConversations.patch(owner, id, { draft });
+          setSearchOpen(true);
+        }} />}
+      <div style={hidden || compact || !petAvailable || searchOpen ? { display: 'none' } : undefined} className={`clawd-deskpet${touchActionsVisible ? ' touch-actions' : ''}`} data-size={size} data-char={character} data-original={ORIGINAL_CHARACTERS.some(pet => pet.id === character)} data-pixel={THEMES[character].pixel} ref={rootRef}>
         <style>{CSS}</style>
         <AdminTools centerX={VC[character][0]} />
         <svg ref={svgRef} xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" aria-hidden>
@@ -1302,13 +1359,13 @@ export default function DeskPet() {
 
       {(workspace.opened || searchOpen) && (
         <DeskPetSearch
-          key={owner}
+          key={`chat:${owner}`}
           open={searchOpen}
           lang={curLang}
           origin={searchOriginRef.current}
           onClose={() => setSearchOpen(false)}
           onOpenPetHome={() => { setSearchOpen(false); setTouchActionsVisible(false); window.location.assign(`${curLang === 'zh' ? '/zh' : ''}/pets?pet=${character}`); }}
-          character={character}
+          character={compact ? 'none' : character}
           characters={petChoices}
           catalogAdmin={isAdmin}
           catalogDisabled={!catalog || catalogSaving}

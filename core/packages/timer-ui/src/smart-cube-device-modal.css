@@ -64,15 +64,12 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-  border: 1px solid var(--border-default);
-  border-radius: 6px;
-  background: var(--shell-chip, var(--popover));
+  border: 0;
+  background: transparent;
   color: var(--muted-foreground);
   cursor: pointer;
 }
 
-.timer-smart-cube-device__close:hover:not(:disabled),
-.timer-smart-cube-device__close:active:not(:disabled),
 .timer-smart-cube-device__action:hover:not(:disabled),
 .timer-smart-cube-device__action:active:not(:disabled),
 .timer-smart-cube-device__scan:hover:not(:disabled),
@@ -113,6 +110,19 @@
 }
 
 .timer-smart-cube-device__primary { gap: 6px 12px; }
+.timer-smart-cube-device__battery {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+}
+.timer-smart-cube-device__battery[data-low="true"] { color: var(--destructive); }
+.timer-smart-cube-device__battery:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
 .timer-smart-cube-device__facts {
   gap: 6px 18px;
   margin-top: 8px;

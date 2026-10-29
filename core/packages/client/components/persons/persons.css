@@ -961,7 +961,7 @@ html[data-theme=dark] .wp-page {
 
 .wp-round-tag {
     display: inline-block;
-    /* 统一两字符轮次标签(Fi/R1/R2/R3)宽度 → 后随的「直播」chip 各行左缘对齐 */
+    /* 统一两字符轮次标签(Fi/R1/R2/R3)宽度 */
     min-width: 1.4em;
     font-size: 0.78rem; font-weight: 600;
     color: var(--wp-text-sub);
@@ -1119,8 +1119,7 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-ao
 .wp-aoxr-label { font-size: 0.6rem; font-weight: 600; color: var(--wp-text-mute); }
 .wp-aoxr-value { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--wp-text); }
 .wp-aoxr-empty { color: var(--wp-text-mute); }
-/* 含直播(非官方)轮次:只做与 .wp-row-live 同款的轻微弱化,不加额外标记 —— 同行已有橙色
-   「直播」标,格内再标一次是重复;PR 角标照出(名次走「官方 + 直播」序列,同单次/平均列)。 */
+/* 含非官方轮次时与 .wp-row-live 一样轻微弱化;PR 角标口径与单次/平均列一致。 */
 .wp-aoxr--unofficial .wp-aoxr-value { color: var(--wp-text-sub); font-weight: 500; }
 
 /* 详细成绩下方补的 stm/tps 值行:小一号 + 更淡,右对齐(继承 .wp-att)与上方成绩逐列对齐 */
@@ -1407,21 +1406,6 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-ao
 }
 
 /* ── 直播·非官方成绩(成绩 tab 内联;官方收录后自动消失)──────────────────── */
-.wp-live-chip {
-    display: inline-block;
-    margin-left: 6px;
-    padding: 0 5px;
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.03em;
-    line-height: 1.55;
-    border-radius: 4px;
-    color: var(--wp-orange);
-    background: var(--wp-orange-soft);
-    border: 1px solid color-mix(in srgb, var(--wp-orange) 35%, transparent);
-    vertical-align: middle;
-    white-space: nowrap;
-}
 /* 整行轻微弱化,传达「暂态、非权威」 */
 .wp-row-live .wp-cell-result,
 .wp-row-live .wp-cell-pos,

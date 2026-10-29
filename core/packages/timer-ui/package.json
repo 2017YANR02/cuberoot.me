@@ -153,7 +153,8 @@
       "./reconstruct/history-model": "runtime-neutral",
       "./reconstruct/report-content": "mixed",
       "./reconstruct/report-notation": "mixed",
-      "./reconstruct/report-player": "mixed"
+      "./reconstruct/report-player": "mixed",
+      "./tooltip": "react-dom"
     }
   },
   "exports": {
@@ -293,7 +294,8 @@
     "./reconstruct/history-model": "./src/reconstruct/history-model.ts",
     "./reconstruct/report-content": "./src/reconstruct/report-content.ts",
     "./reconstruct/report-notation": "./src/reconstruct/report-notation.ts",
-    "./reconstruct/report-player": "./src/reconstruct/report-player.ts"
+    "./reconstruct/report-player": "./src/reconstruct/report-player.ts",
+    "./tooltip": "./src/Tooltip.tsx"
   },
   "sideEffects": [
     "./src/index.ts",

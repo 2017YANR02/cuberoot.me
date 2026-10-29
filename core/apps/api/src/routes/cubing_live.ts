@@ -20,6 +20,7 @@ import { enrichComp, resolvePersonIso2, emptyDayBest, foldCompIntoDayBest, judge
 import type { OverlayEntry } from '../utils/wca_live_overlay.js';
 import { getCnCompZh } from '../utils/cn_comp_zh_cache.js';
 import { hasCompResults, trimToRounds, resolveOnlyKeys } from '../utils/comp_trim.js';
+import { hasPersonLiveResult } from '../utils/person_live_result.js';
 import { getUpcomingComps } from '../utils/upcoming_comps_cache.js';
 import { wcaIdToCubingSlug, nameToCubingSlug } from '@cuberoot/shared/cubing-slug';
 
@@ -372,6 +373,7 @@ async function syncPersonLiveResults(data: CompData): Promise<void> {
     for (const arr of Object.values(data.resultsByRound)) {
       if (!arr.length) continue;
       for (const r of arr) {
+        if (!hasPersonLiveResult(r.b, r.a, r.v)) continue;
         const wcaid = data.users[String(r.n)]?.wcaid;
         if (!wcaid) continue; // newcomer 无 wcaid → 没有选手页,跳过
         let pos = 1;

@@ -1,6 +1,6 @@
 .recon-case-line {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 4px;
   max-width: 100%;
   vertical-align: middle;

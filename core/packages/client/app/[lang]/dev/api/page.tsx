@@ -68,7 +68,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   then add the file stem to this list.
 //   career_applications account_auth account_face admin_assistant admin_dashboard admin_disk alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps app_boot_diagnostics article auth battle_rooms calendar cn_comp_names colpi
 //   chat comp_follows creator_gallery cube cubeopt_solve cubing_live documents downloads drive feedback forum friends geo health historical_ranks pb private_vault
-//   membership membership_benefits membership_apple membership_google membership_subscriptions music nav_sites pets nemesizer notifications ops remote_access dev_preview page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth recon_intake scramble_555 teacher_directory teaching teaching_saas
+//   membership membership_benefits membership_apple membership_google membership_subscriptions music nav_sites pets nemesizer notifications ops remote_access dev_preview page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth recon_intake recon_capture scramble_555 teacher_directory teaching teaching_saas
 //   smart_cube_macs scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wca_teams wca_training_institutions wca_translations wechat_jssdk wechat_pc_opensdk wiki
 //   platform_competitions platform_competition_attempts platform_competition_evidence platform_competition_settlements platform_competition_device_reports platform_organizer_applications platform_refunds
@@ -76,6 +76,14 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   mcp mcp_oauth onboarding timer_replay_shares site_assistant site_assistant_shares cube_agents
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
+  { d: 'recon', m: 'GET', p: '/v1/recon-captures/status', g: 'admin', c: 'no-store', zh: '上传前核对采集服务、同库 Drive 及当前身份', en: 'Check capture service, same-database Drive and identity before upload' },
+  { d: 'recon', m: 'POST', p: '/v1/recon-captures', g: 'admin', c: 'no-store', zh: '管理员将原始动作绑定私有 Drive 视频，幂等创建采集样本', en: 'Human administrator binds original moves to a private Drive video idempotently' },
+  { d: 'recon', m: 'GET', p: '/v1/recon-captures', g: 'admin', c: 'no-store', zh: '读取采集样本队列，支持 AI 只读密钥', en: 'Read video capture queue, including read-only AI key access' },
+  { d: 'recon', m: 'GET', p: '/v1/recon-captures/:id', g: 'admin', c: 'no-store', zh: '读取原始记录、上传进度、完整性及对齐状态', en: 'Read original recording, upload progress, integrity and alignment' },
+  { d: 'recon', m: 'POST', p: '/v1/recon-captures/:id/complete', g: 'admin', c: 'no-store', zh: '原上传者核对完整原片分块指纹并进入待确认', en: 'Original uploader verifies full video chunk fingerprints and queues review' },
+  { d: 'recon', m: 'POST', p: '/v1/recon-captures/:id/sync', g: 'admin', c: 'no-store', zh: '原上传者按版本保存人工视频对齐锚点，不确认训练真值', en: 'Original uploader saves versioned video alignment anchors without approving training truth' },
+  { d: 'recon', m: 'GET', p: '/v1/recon-captures/:id/video', g: 'admin', c: 'no-store', zh: '鉴权读取已校验的私有原片，支持 Range', en: 'Authenticated byte-range access to verified private original video' },
+  { d: 'recon', m: 'HEAD', p: '/v1/recon-captures/:id/video', g: 'admin', c: 'no-store', zh: '鉴权读取私有原片元数据', en: 'Authenticated private original video metadata' },
   { d: 'content', m: 'GET', p: '/v1/career-applications/status', g: 'public', c: 'no-store', zh: '招聘投递服务可用状态', en: 'Career application availability' },
   { d: 'content', m: 'POST', p: '/v1/career-applications', g: 'public', c: 'no-store', zh: '提交招聘申请及附件', en: 'Submit a career application and attachments' },
   { d: 'content', m: 'GET', p: '/v1/career-applications', g: 'admin', c: 'no-store', zh: '管理员读取招聘申请', en: 'Administrator reads career applications' },

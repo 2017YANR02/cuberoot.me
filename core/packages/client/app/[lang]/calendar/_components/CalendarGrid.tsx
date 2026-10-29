@@ -20,6 +20,7 @@ import luxonPlugin from '@fullcalendar/luxon3';
 // noEventsText 静默退回英文(「all-day」「+2 more」混在中文表头里)。
 import zhCn from '@fullcalendar/core/locales/zh-cn';
 import type { FcEvent, ViewKey } from '../_lib/format';
+import { useCalendarSwipe } from '../_lib/useCalendarSwipe';
 
 export interface GridRange {
   start: number;
@@ -48,6 +49,8 @@ interface Props {
   weekStart: 0 | 1;
   weekends: boolean;
   weekNumbers?: boolean;
+  mobile?: boolean;
+  headerExpanded?: boolean;
   editable: boolean;
   /** 拖出一段空白 → 新建 */
   onSelect?: (start: number, end: number, allDay: boolean) => void;
@@ -64,74 +67,9 @@ interface Props {
 const CalendarGrid = forwardRef<GridHandle, Props>(function CalendarGrid(props, ref) {
   const api = useRef<FullCalendar | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
-  const swipeRef = useRef<{ id: number; x: number; y: number; startedAt: number; horizontal: boolean } | null>(null);
-  const ignoreTapUntil = useRef(0);
-
-  useEffect(() => {
-    const grid = gridRef.current;
-    if (!grid) return;
-
-    const start = (event: TouchEvent) => {
-      swipeRef.current = null;
-      ignoreTapUntil.current = 0;
-      if (event.touches.length !== 1) return;
-      // 日程本身允许横滑;表单、更多日程弹层与缩放手柄保留各自的操作。
-      if ((event.target as Element).closest('input, textarea, select, button, [contenteditable], .fc-popover, .fc-event-resizer')) return;
-      const touch = event.touches[0];
-      swipeRef.current = { id: touch.identifier, x: touch.clientX, y: touch.clientY, startedAt: performance.now(), horizontal: false };
-    };
-    const move = (event: TouchEvent) => {
-      const swipe = swipeRef.current;
-      if (!swipe) return;
-      // 多指交给缩放,长按交给 FullCalendar 的选择 / 拖动。
-      if (event.touches.length !== 1 || performance.now() - swipe.startedAt >= 500) {
-        swipeRef.current = null;
-        return;
-      }
-      const touch = event.touches[0];
-      const dx = Math.abs(touch.clientX - swipe.x);
-      const dy = Math.abs(touch.clientY - swipe.y);
-      if (!swipe.horizontal) {
-        if (Math.max(dx, dy) < 10) return;
-        // 起手是上下或斜向滚动,这一整次操作都不再当作横滑。
-        if (dx < dy * 1.5) { swipeRef.current = null; return; }
-        swipe.horizontal = true;
-      }
-      if (!event.cancelable) { swipeRef.current = null; return; }
-      event.preventDefault();
-      ignoreTapUntil.current = performance.now() + 700;
-    };
-    const end = (event: TouchEvent) => {
-      const swipe = swipeRef.current;
-      swipeRef.current = null;
-      if (!swipe?.horizontal || event.touches.length || performance.now() - swipe.startedAt >= 500) return;
-      const touch = Array.from(event.changedTouches).find((item) => item.identifier === swipe.id);
-      if (!touch) return;
-      const dx = touch.clientX - swipe.x;
-      const dy = touch.clientY - swipe.y;
-      if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-      ignoreTapUntil.current = performance.now() + 700;
-      // 先让 FullCalendar 收尾当前 touch,再按当前视图翻页;datesSet 同步上层 URL。
-      queueMicrotask(() => {
-        const calendar = api.current?.getApi();
-        if (dx < 0) calendar?.next();
-        else calendar?.prev();
-      });
-    };
-    const cancel = () => { swipeRef.current = null; };
-    grid.addEventListener('touchstart', start, { capture: true, passive: true });
-    // React 的 touchmove 默认 passive,不能阻止横滑后的滚动与合成点击。
-    grid.addEventListener('touchmove', move, { capture: true, passive: false });
-    grid.addEventListener('touchend', end, { capture: true });
-    grid.addEventListener('touchcancel', cancel, { capture: true });
-    return () => {
-      grid.removeEventListener('touchstart', start, true);
-      grid.removeEventListener('touchmove', move, true);
-      grid.removeEventListener('touchend', end, true);
-      grid.removeEventListener('touchcancel', cancel, true);
-      swipeRef.current = null;
-    };
-  }, []);
+  const { ignoreTapUntil, cancelSwipe, onClickCapture, onPageReady } = useCalendarSwipe(
+    gridRef, () => api.current?.getApi().prev(), () => api.current?.getApi().next(),
+  );
 
   useImperativeHandle(ref, () => ({
     today: () => api.current?.getApi().today(),
@@ -154,8 +92,15 @@ const CalendarGrid = forwardRef<GridHandle, Props>(function CalendarGrid(props, 
     queueMicrotask(() => api.current?.getApi().changeView(view));
   }, [props.view]);
 
-  // 「4 天」是 Google 有而 FullCalendar 没有预设的视图,自己拼一个 duration 出来。
+  // 展开月历改变容器高度，但不触发 window resize；只在开合时重新量一次。
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => api.current?.getApi().updateSize());
+    return () => cancelAnimationFrame(frame);
+  }, [props.headerExpanded]);
+
+  // 多天视图复用同一个时间网格，只改变 duration。
   const views = useMemo<CalendarOptions['views']>(() => ({
+    threeDay: { type: 'timeGrid', duration: { days: 3 } },
     fourDay: { type: 'timeGrid', duration: { days: 4 } },
     listMonth: { listDayFormat: { weekday: 'long', month: 'long', day: 'numeric' } },
   }), []);
@@ -164,133 +109,132 @@ const CalendarGrid = forwardRef<GridHandle, Props>(function CalendarGrid(props, 
     <div
       ref={gridRef}
       className="cal-grid"
-      onClickCapture={(event) => {
-        if (performance.now() < ignoreTapUntil.current && event.detail !== 0) {
-          event.preventDefault();
-          event.stopPropagation();
-        }
-      }}
+      onClickCapture={onClickCapture}
     >
-      <FullCalendar
-        ref={api}
-        plugins={[timeGridPlugin, dayGridPlugin, listPlugin, multiMonthPlugin, interactionPlugin, luxonPlugin]}
-        initialView={props.view}
-        initialDate={new Date(props.initialDate)}
-        views={views}
-        timeZone={props.tz}
-        locale={props.isZh ? zhCn : 'en'}
-        headerToolbar={false}
-        height="100%"
-        expandRows
-        nowIndicator
-        firstDay={props.weekStart}
-        weekends={props.weekends}
-        weekNumbers={props.weekNumbers ?? false}
-        weekNumberCalculation="ISO"
-        dayMaxEvents
-        editable={props.editable}
-        eventStartEditable={props.editable}
-        eventDurationEditable={props.editable}
-        selectable={props.editable}
-        selectMirror
-        // 拖出一格就能新建;不加这个的话月视图里的单击会被当成 0 长度选区吞掉。
-        selectMinDistance={1}
-        scrollTime="07:00:00"
-        slotDuration="00:30:00"
-        snapDuration="00:15:00"
-        allDaySlot
-        // Google 在全天那行的左槽写的是网格所在时区的偏移(GMT+08),不是「全天」——
-        // 一屏之内唯一说明「这些时间按哪儿算」的地方,而我们还带时区选择器,更该有。
-        allDayContent={() => props.tzLabel}
-        slotLabelFormat={{ hour: props.hour24 ? '2-digit' : 'numeric', minute: '2-digit', hour12: !props.hour24, omitZeroMinute: !props.hour24 }}
-        // 24 小时制不能省整点的分钟:中文 locale 会把 12:00 缩成「12时」,Google 那里写的是 12:00。
-        // 12 小时制照 Google 省掉(12 PM)。
-        eventTimeFormat={{ hour: props.hour24 ? '2-digit' : 'numeric', minute: '2-digit', hour12: !props.hour24, omitZeroMinute: !props.hour24 }}
-        // 表头日期数字 / 月视图格子里的数字可点 → 只看那一天。视图切换交给上层(URL 是
-        // 单一真相),所以这里不用 FullCalendar 自己的跳转,只把日期报上去。
-        navLinks
-        navLinkDayClick={(date: Date) => { props.onDayLink?.(date.getTime()); }}
-        dayHeaderFormat={{ weekday: 'short' }}
-        dayHeaderContent={(arg) => {
-          // Google 的周 / 日表头是两行:星期在上,日号在下(今天的日号套一个实心圆)。
-          // 单行交给 Intl 拼会得到「27日周一」这种别扭顺序,所以自己排。
-          const weekday = arg.text;
-          if (props.view === 'dayGridMonth' || props.view === 'multiMonthYear') return weekday;
-          // 日号走 calendar.formatDate:它认 timeZone 设置。裸 getDate() 读的是浏览器本地时区,
-          // 显示时区与本地不同时(时区选择器就是干这个的)整行表头会错开一天。
-          // 只取数字:中文 locale 会给「27日」,Google 那个圆圈里只有数字。
-          const num = (api.current?.getApi().formatDate(arg.date, { day: 'numeric' }) ?? '')
-            .replace(/\D+/g, '') || String(arg.date.getUTCDate());
-          return (
-            <span className="cal-dayhead">
-              <span className="cal-dayhead-wd">{weekday}</span>
-              <span className={`cal-dayhead-num${arg.isToday ? ' is-today' : ''}`}>{num}</span>
-            </span>
-          );
-        }}
-        // 月 / 年格子里只要数字。中文 locale 会给「27日」,一格 42 个「日」是噪音,Google 也只写数字。
-        dayCellContent={(arg) => arg.dayNumberText.replace(/\D+/g, '')}
-        events={props.events}
-        select={(arg: DateSelectArg) => {
-          if (performance.now() >= ignoreTapUntil.current) props.onSelect?.(arg.start.getTime(), arg.end.getTime(), arg.allDay);
-          api.current?.getApi().unselect();
-        }}
-        // 单击空白也要有反应(Google 的行为)。select 只在指针真的拖开之后才触发
-        // (上面的 selectMinDistance),纯点击落不到那里,得单独接 dateClick。
-        dateClick={(arg: DateClickArg) => {
-          if (performance.now() >= ignoreTapUntil.current) props.onDateClick?.(arg.date.getTime(), arg.allDay);
-        }}
-        eventClick={(arg: EventClickArg) => {
-          arg.jsEvent.preventDefault();
-          if (performance.now() >= ignoreTapUntil.current) props.onEventClick(arg.event.id, arg.el);
-        }}
-        eventDragStart={() => { swipeRef.current = null; }}
-        eventResizeStart={() => { swipeRef.current = null; }}
-        eventDrop={(arg: EventDropArg) => {
-          const start = arg.event.start?.getTime() ?? 0;
-          const end = arg.event.end?.getTime() ?? start;
-          props.onEventMove?.(arg.event.id, start, end, arg.event.allDay, arg.revert);
-        }}
-        eventResize={(arg: EventResizeDoneArg) => {
-          const start = arg.event.start?.getTime() ?? 0;
-          const end = arg.event.end?.getTime() ?? start;
-          props.onEventMove?.(arg.event.id, start, end, arg.event.allDay, arg.revert);
-        }}
-        datesSet={(arg: DatesSetArg) => {
-          props.onRangeChange({
-            start: arg.start.getTime(),
-            end: arg.end.getTime(),
-            anchor: arg.view.currentStart.getTime(),
-          });
-        }}
-        eventContent={(arg) => {
-          // 受邀未回应的块画成描边款,和自己的实心块区分开(Google 同样处理)。
-          const p = arg.event.extendedProps as FcEvent['extendedProps'];
-          const cls = `cal-chip${p.invited ? ' is-invited' : ''}${p.rsvp === 'pending' ? ' is-pending' : ''}`;
-          // 月 / 年 / 日程视图里,定时事件是「一个色点 + 一行字」(FullCalendar 的 dot-event),
-          // 块本身不上色 —— 自定义 eventContent 会把它自带的点吃掉,得自己补,否则整月一片
-          // 黑字,看不出事件属于哪个日历。全天事件仍是实心色条,不需要点。
-          const dotted = !arg.event.allDay
-            && (arg.view.type === 'dayGridMonth' || arg.view.type === 'multiMonthYear' || arg.view.type.startsWith('list'));
-          return (
-            <div className={cls} title={`${arg.timeText} ${arg.event.title}`}>
-              {dotted && (
-                <span
-                  className="cal-chip-dot"
-                  style={{ background: arg.borderColor || arg.backgroundColor }}
-                  aria-hidden
-                />
-              )}
-              {/* 时间格里 Google 是「标题在上、时间在下」—— 一眼先看是什么事,格子的位置
-                  本身已经说了几点。月 / 年 / 日程视图是一行「● 时间 标题」,那里时间在前,
-                  靠 CSS order 换,不为此再分一套 DOM。 */}
-              <span className="cal-chip-title">{arg.event.title}</span>
-              {arg.timeText && <span className="cal-chip-time">{arg.timeText}</span>}
-              {p.location && <span className="cal-chip-loc">{p.location}</span>}
-            </div>
+      <div className="cal-swipe-content">
+        <FullCalendar
+          ref={api}
+          plugins={[timeGridPlugin, dayGridPlugin, listPlugin, multiMonthPlugin, interactionPlugin, luxonPlugin]}
+          initialView={props.view}
+          initialDate={new Date(props.initialDate)}
+          views={views}
+          timeZone={props.tz}
+          locale={props.isZh ? zhCn : 'en'}
+          headerToolbar={false}
+          height="100%"
+          expandRows
+          nowIndicator
+          firstDay={props.weekStart}
+          weekends={props.weekends}
+          weekNumbers={props.weekNumbers ?? false}
+          weekNumberCalculation="ISO"
+          weekNumberContent={(arg) => arg.num}
+          dayMaxEvents
+          editable={props.editable}
+          eventStartEditable={props.editable}
+          eventDurationEditable={props.editable}
+          selectable={props.editable}
+          selectMirror
+          // 拖出一格就能新建;不加这个的话月视图里的单击会被当成 0 长度选区吞掉。
+          selectMinDistance={1}
+          scrollTime="07:00:00"
+          slotDuration="00:30:00"
+          snapDuration="00:15:00"
+          allDaySlot
+          // Google 在全天那行的左槽写的是网格所在时区的偏移(GMT+08),不是「全天」——
+          // 一屏之内唯一说明「这些时间按哪儿算」的地方,而我们还带时区选择器,更该有。
+          allDayContent={() => props.tzLabel}
+          slotLabelFormat={{ hour: props.hour24 ? '2-digit' : 'numeric', minute: '2-digit', hour12: !props.hour24, omitZeroMinute: !props.hour24 }}
+          // 24 小时制不能省整点的分钟:中文 locale 会把 12:00 缩成「12时」,Google 那里写的是 12:00。
+          // 12 小时制照 Google 省掉(12 PM)。
+          eventTimeFormat={{ hour: props.hour24 ? '2-digit' : 'numeric', minute: '2-digit', hour12: !props.hour24, omitZeroMinute: !props.hour24 }}
+          // 表头日期数字 / 月视图格子里的数字可点 → 只看那一天。视图切换交给上层(URL 是
+          // 单一真相),所以这里不用 FullCalendar 自己的跳转,只把日期报上去。
+          navLinks
+          navLinkDayClick={(date: Date) => { props.onDayLink?.(date.getTime()); }}
+          dayHeaderFormat={{ weekday: 'short' }}
+          dayHeaderContent={(arg) => {
+            // Google 的周 / 日表头是两行:星期在上,日号在下(今天的日号套一个实心圆)。
+            // 单行交给 Intl 拼会得到「27日周一」这种别扭顺序,所以自己排。
+            const weekday = props.mobile ? arg.text.replace(/^(星期|周)/, '') : arg.text;
+            if (props.view === 'dayGridMonth' || props.view === 'multiMonthYear') return weekday;
+            // 日号走 calendar.formatDate:它认 timeZone 设置。裸 getDate() 读的是浏览器本地时区,
+            // 显示时区与本地不同时(时区选择器就是干这个的)整行表头会错开一天。
+            // 只取数字:中文 locale 会给「27日」,Google 那个圆圈里只有数字。
+            const num = (api.current?.getApi().formatDate(arg.date, { day: 'numeric' }) ?? '')
+              .replace(/\D+/g, '') || String(arg.date.getUTCDate());
+            return (
+              <span className="cal-dayhead">
+                <span className="cal-dayhead-wd">{weekday}</span>
+                <span className={`cal-dayhead-num${arg.isToday ? ' is-today' : ''}`}>{num}</span>
+              </span>
+            );
+          }}
+          // 月 / 年格子里只要数字。中文 locale 会给「27日」,一格 42 个「日」是噪音,Google 也只写数字。
+          dayCellContent={(arg) => arg.dayNumberText.replace(/\D+/g, '')}
+          events={props.events}
+          select={(arg: DateSelectArg) => {
+            if (performance.now() >= ignoreTapUntil.current) props.onSelect?.(arg.start.getTime(), arg.end.getTime(), arg.allDay);
+            api.current?.getApi().unselect();
+          }}
+          // 单击空白也要有反应(Google 的行为)。select 只在指针真的拖开之后才触发
+          // (上面的 selectMinDistance),纯点击落不到那里,得单独接 dateClick。
+          dateClick={(arg: DateClickArg) => {
+            if (performance.now() >= ignoreTapUntil.current) props.onDateClick?.(arg.date.getTime(), arg.allDay);
+          }}
+          eventClick={(arg: EventClickArg) => {
+            arg.jsEvent.preventDefault();
+            if (performance.now() >= ignoreTapUntil.current) props.onEventClick(arg.event.id, arg.el);
+          }}
+          eventDragStart={cancelSwipe}
+          eventResizeStart={cancelSwipe}
+          eventDrop={(arg: EventDropArg) => {
+            const start = arg.event.start?.getTime() ?? 0;
+            const end = arg.event.end?.getTime() ?? start;
+            props.onEventMove?.(arg.event.id, start, end, arg.event.allDay, arg.revert);
+          }}
+          eventResize={(arg: EventResizeDoneArg) => {
+            const start = arg.event.start?.getTime() ?? 0;
+            const end = arg.event.end?.getTime() ?? start;
+            props.onEventMove?.(arg.event.id, start, end, arg.event.allDay, arg.revert);
+          }}
+          datesSet={(arg: DatesSetArg) => {
+            props.onRangeChange({
+              start: arg.start.getTime(),
+              end: arg.end.getTime(),
+              anchor: arg.view.currentStart.getTime(),
+            });
+            onPageReady();
+          }}
+          eventContent={(arg) => {
+            // 受邀未回应的块画成描边款,和自己的实心块区分开(Google 同样处理)。
+            const p = arg.event.extendedProps as FcEvent['extendedProps'];
+            const cls = `cal-chip${p.invited ? ' is-invited' : ''}${p.rsvp === 'pending' ? ' is-pending' : ''}`;
+            // 月 / 年 / 日程视图里,定时事件是「一个色点 + 一行字」(FullCalendar 的 dot-event),
+            // 块本身不上色 —— 自定义 eventContent 会把它自带的点吃掉,得自己补,否则整月一片
+            // 黑字,看不出事件属于哪个日历。全天事件仍是实心色条,不需要点。
+            const dotted = !arg.event.allDay
+              && (arg.view.type === 'dayGridMonth' || arg.view.type === 'multiMonthYear' || arg.view.type.startsWith('list'));
+            return (
+              <div className={cls} title={`${arg.timeText} ${arg.event.title}`}>
+                {dotted && (
+                  <span
+                    className="cal-chip-dot"
+                    style={{ background: arg.borderColor || arg.backgroundColor }}
+                    aria-hidden
+                  />
+                )}
+                {/* 时间格里 Google 是「标题在上、时间在下」—— 一眼先看是什么事,格子的位置
+                    本身已经说了几点。月 / 年 / 日程视图是一行「● 时间 标题」,那里时间在前,
+                    靠 CSS order 换,不为此再分一套 DOM。 */}
+                <span className="cal-chip-title">{arg.event.title}</span>
+                {arg.timeText && <span className="cal-chip-time">{arg.timeText}</span>}
+                {p.location && <span className="cal-chip-loc">{p.location}</span>}
+              </div>
           );
         }}
       />
+      </div>
     </div>
   );
 });

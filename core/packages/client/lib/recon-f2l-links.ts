@@ -1,6 +1,6 @@
 import { loadAlg } from '@cuberoot/shared/alg';
-import { CUBE_ORIENTATIONS, orientedFaceColors } from '@cuberoot/shared/timer';
-import { AllFaces, CubeData, Face, makeMasking, Masking, parseAlgorithm } from '@cuberoot/visualcube';
+import { CUBE_ORIENTATIONS } from '@cuberoot/shared/timer';
+import { Masking } from '@cuberoot/visualcube';
 import { cubeColorGroups, crossColorFromReconText } from '@cuberoot/timer-ui/CubeColorChip';
 import { applyMoves, applyScramble, type CubeFaces } from '@cuberoot/shared/timer/reconstruct/state';
 import { parseScramble } from '@cuberoot/puzzle-solvers/cube-moves';
@@ -9,28 +9,11 @@ import { isCross } from '@cuberoot/shared/timer/reconstruct/cfop-detect';
 import { FACE_COLOR_KEY } from '@cuberoot/shared/timer/reconstruct/orient';
 import { cleanForPlayer } from './recon-alg-utils';
 import { algCaseDetailHref, buildCaseSlugMap } from './alg_case_link';
+import { maskedReconFacelets } from './recon-diagram-mask';
 
 const color = (face: keyof CubeFaces) => FACE_COLOR_KEY[face][0].toUpperCase();
 const rotate = (state: CubeFaces, alg: string) => applyMoves(state, 3, parseScramble(alg));
 const slots = ['FR', 'FL', 'BR', 'BL'] as const;
-
-/** Reuse the single-pair mask (cross + FR pair), mapped to this pair's actual cubies. */
-function maskedF2lFacelets(setup: string, canonical: CubeFaces): string | undefined {
-  const maskRotation = CUBE_ORIENTATIONS.find(option => {
-    const shown = orientedFaceColors(option.value);
-    return shown[canonical.D[4]] === 'D' && shown[canonical.F[4]] === 'F' && shown[canonical.R[4]] === 'R';
-  });
-  if (!maskRotation) return;
-  const mask = new CubeData(3, makeMasking(Masking.PAIR, 3));
-  for (const turn of parseAlgorithm(maskRotation.value)) mask.turn(turn);
-  const cube = new CubeData(3, Object.fromEntries(AllFaces.map(face => [face,
-    mask.faces[face].map(visible => visible ? color(Face[face] as keyof CubeFaces).toLowerCase() : 'd'),
-  ])));
-  // Canonical orientation identifies the masked cubies only. Display the actual
-  // pre-line grip, so the adjacent moves still refer to the pictured faces.
-  for (const turn of parseAlgorithm(setup)) cube.turn(turn);
-  return AllFaces.map(face => cube.faces[face].join('')).join('');
-}
 
 export interface ReconF2lAnnotations {
   links: Map<number, Map<string, string>>;
@@ -81,7 +64,7 @@ export async function reconF2lAnnotations(scramble: string, text: string, onDiag
         pair.includes(color(faces.F[4])) && pair.includes(color(faces.R[4])));
       const canonical = orientation?.faces;
       if (orientation) {
-        const facelets = maskedF2lFacelets(beforeSetup, orientation.faces);
+        const facelets = maskedReconFacelets(beforeSetup, orientation.faces, Masking.PAIR);
         if (facelets) diagrams.set(lineIndex, [...(diagrams.get(lineIndex) ?? []), { colors: pair, facelets }]);
       }
       if (crossLine) continue;

@@ -1,4 +1,4 @@
-import { Bluetooth, Check, LoaderCircle, RefreshCw, X } from 'lucide-react';
+import { Bluetooth, CircleCheck, LoaderCircle, RefreshCw, X } from 'lucide-react';
 import {
   useEffect,
   useId,
@@ -13,6 +13,7 @@ import { createPortal } from 'react-dom';
 import { normalizeMac } from '@cuberoot/shared/timer/external/mac';
 import { useModalBackdrop } from './useModalDismiss';
 import { ClearButton } from './ClearButton';
+import { Tooltip } from './Tooltip';
 import { usePanelClamp } from './usePanelClamp';
 import { usePopoverDismiss } from './usePopoverDismiss';
 
@@ -72,14 +73,13 @@ const COPY = {
     connected: 'Connected',
     connecting: 'Connecting…',
     connectionFailed: 'Connection failed',
-    deviceFallback: 'Smart cube',
     disconnect: 'Disconnect',
     lastMove: 'Last move',
     notConnected: 'Not connected',
     noDevices: 'No supported smart cubes found',
     resetFailed: 'Software state was reset, but writing to the device failed. Check the connection and retry.',
     resetGyroHint: 'Solve the cube and hold white on top and green in front, then reset the cube',
-    resetState: 'Reset cube',
+    resetState: 'Reset',
     retry: 'Retry connection',
     scanAgain: 'Scan again',
     scanning: 'Scanning…',
@@ -103,14 +103,13 @@ const COPY = {
     connected: '已连接',
     connecting: '连接中…',
     connectionFailed: '连接失败',
-    deviceFallback: '智能魔方',
     disconnect: '断开',
     lastMove: '最近一步',
     notConnected: '未连接',
     noDevices: '未发现支持的智能魔方',
     resetFailed: '软件状态已重置，但设备回写失败，请检查连接后重试',
     resetGyroHint: '还原魔方并按白顶绿前握好，再重置魔方',
-    resetState: '重置魔方',
+    resetState: '重置',
     retry: '重新连接',
     scanAgain: '重新扫描',
     scanning: '正在扫描…',
@@ -160,6 +159,7 @@ export function TimerSmartCubeDeviceModal({
   onCloseRef.current = onClose;
 
   const connected = snapshot.phase === 'connected';
+  const deviceName = snapshot.deviceName?.trim();
   const anchored = Boolean(anchorRef?.current);
   const canConnect = capabilities ? capabilities.connect === true : onConnect !== undefined;
   const canDisconnect = capabilities ? capabilities.disconnect === true : onDisconnect !== undefined;
@@ -363,6 +363,7 @@ export function TimerSmartCubeDeviceModal({
         <h2 id={titleId}>
           <Bluetooth aria-hidden="true" size={20} />
           <span>{title ?? copy.title}</span>
+          {!macPrompt && !overrideBody && (connected || !listMode) && <DeviceBattery label={copy.battery} level={snapshot.battery} />}
         </h2>
 
         {macPrompt ? (
@@ -392,21 +393,19 @@ export function TimerSmartCubeDeviceModal({
             {!connected && intro}
             {(connected || !listMode) && <section className="timer-smart-cube-device__summary bt-connected-summary modal-section">
               <div className="timer-smart-cube-device__primary bt-connected-primary">
-                <strong className="timer-smart-cube-device__name bt-connected-device">
-                  {snapshot.deviceName?.trim() || copy.deviceFallback}
-                </strong>
+                {deviceName && <strong className="timer-smart-cube-device__name bt-connected-device">
+                  {deviceName}
+                </strong>}
                 <span
                   key={connected ? 'connected' : connecting ? 'connecting' : snapshot.phase}
                   aria-live="polite"
+                  aria-label={connected ? stateText : undefined}
                   className={`timer-smart-cube-device__state bt-connected-state bt-value${connected ? ' is-ok' : connecting ? ' is-connecting' : snapshot.phase === 'error' ? ' is-error' : ''}`}
                   role="status"
                 >
-                  {connected ? <Check size={16} aria-hidden="true" /> : connecting ? <LoaderCircle size={16} aria-hidden="true" /> : null}
-                  {stateText}
+                  {connected ? <CircleCheck size={16} aria-hidden="true" /> : connecting ? <LoaderCircle size={16} aria-hidden="true" /> : null}
+                  {!connected && stateText}
                 </span>
-              </div>
-              <div className="timer-smart-cube-device__facts bt-connected-meta">
-                <DeviceFact label={copy.battery} value={snapshot.battery === null || snapshot.battery === undefined ? '—' : `${snapshot.battery}%`} />
               </div>
             </section>}
 
@@ -506,12 +505,23 @@ export function TimerSmartCubeDeviceModal({
   );
 }
 
-function DeviceFact({ label, value }: { label: string; value: string }) {
+function DeviceBattery({ label, level }: { label: string; level?: number | null }) {
+  const clipId = useId();
+  const percent = typeof level === 'number' && Number.isFinite(level) ? Math.round(Math.max(0, Math.min(100, level))) : null;
+  const description = `${label} ${percent === null ? '—' : `${percent}%`}`;
   return (
-    <span className="timer-smart-cube-device__fact bt-connected-fact">
-      <span className="timer-smart-cube-device__label bt-label">{label}</span>{' '}
-      <span className="timer-smart-cube-device__value bt-value">{value}</span>
-    </span>
+    <Tooltip content={description} openOnClick>
+      {tip => <button {...tip} type="button" className="timer-smart-cube-device__battery" aria-label={description}
+        data-low={percent !== null && percent <= 20 ? 'true' : undefined}>
+        <svg width="30" height="16" viewBox="0 0 30 16" fill="currentColor" aria-hidden="true">
+          <defs><clipPath id={clipId}><rect x="3" y="3" width="21" height="10" rx="2" /></clipPath></defs>
+          <rect x="1" y="1" width="25" height="14" rx="4" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.45" />
+          <path d="M28 5v6c2-0.5 2-5.5 0-6Z" opacity="0.45" />
+          {percent === null ? <path d="M10 7h7v2h-7Z" opacity="0.45" /> :
+            <rect x="3" y="3" width={21 * percent / 100} height="10" clipPath={`url(#${clipId})`} />}
+        </svg>
+      </button>}
+    </Tooltip>
   );
 }
 

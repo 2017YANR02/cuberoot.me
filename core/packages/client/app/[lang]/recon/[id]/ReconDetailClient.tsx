@@ -4,7 +4,6 @@ import { reconVideoGroups } from '@/lib/recon-video-url';
 import { loadBiliVideo, loadVideoTitle } from '@/lib/recon-video-cover';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
-import { useCopy } from '@/hooks/useCopy';
 
 /**
  * /recon/[id] — full detail page, ported from packages/client-vite/src/pages/recon/ReconDetailPage.tsx.
@@ -71,9 +70,8 @@ import { useAuthStore, useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import { RecordBadge } from '@/components/RecordBadge';
 import ReconPlayerCanvas from '@/components/recon/ReconPlayerCanvas';
-import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { getPuzzleId } from '@/lib/recon-utils';
-import SolutionView from '@/components/SolutionView';
+import { ReconNotationBlock } from '@/components/ReconNotationBlock';
 import { canonicalSq1Alg, formatScrambleForEvent, compactSq1Solution } from '@cuberoot/shared/sq1-notation';
 import {
   buildNormalizedSolution, findCrossLineIndex, hasNormalizableCrossMove,
@@ -328,7 +326,6 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
 }) {
   const [sameCompHasRows, setSameCompHasRows] = useState(false);
   const [sameSessionHasRows, setSameSessionHasRows] = useState(false);
-  const { copied: scrambleCopied, copy: copyScramble } = useCopy();
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -429,47 +426,11 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
 
         {solve.recordType !== 'timing' && (scramble || solutionText) && (
           <div className="detail-section detail-scramble-solution" ref={imageRef}>
-            {captionHeader && (
-              <div className="detail-caption-header">{captionHeader}
-            {wasteFreeText !== null && <button type="button" className={`recon-cross-toggle${wasteRemoved ? ' active' : ''}`}
-              aria-pressed={wasteRemoved} onClick={() => setWasteRemoved(value => !value)}>
-              {wasteRemoved ? tr({ zh: '恢复废步', en: 'Restore wasted moves' }) : tr({ zh: '消步', en: 'Remove wasted moves' })}
-            </button>}
-              </div>
-            )}
-            <div className="detail-scramble-line">
-              <span className="recon-case-line">
-              {scramble && scrambleCubeOrder && <span className="recon-case-diagram">
-                <ScramblePreview2D event={String(scrambleCubeOrder).repeat(3)} scramble={scramble}
-                  size={14} enlargeable />
-              </span>}
-              <span className="recon-case-line-text">
-              {scramble ? <>{displayScramble}{optimalScrambleTag}</> : tr({ zh: '暂无打乱', en: 'No scramble available' })}
-              {scramble && <> <button
-                type="button"
-                className="normalized-cross-copy"
-                aria-label={scrambleCopied ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: '复制打乱', en: 'Copy scramble' })}
-                title={scrambleCopied ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: '复制打乱', en: 'Copy scramble' })}
-                onClick={() => copyScramble(scramble)}
-              >
-                {scrambleCopied ? <Check size={14} /> : <Copy size={14} />}
-              </button></>}
-              </span>
-              </span>
-            </div>
-            {solutionText && (
-              <SolutionView
-                autoWaste
-                text={displayText}
-                event={solve.event}
-                scramble={scramble}
-                sourceText={rawDisplayText}
-                playerRef={playerRef}
-                crossLineIdx={canToggle ? crossLineIdx : -1}
-                crossNormalized={crossNormalized}
-                onToggleCross={() => setCrossNormalized(v => !v)}
-              />
-            )}
+            <ReconNotationBlock captionHeader={captionHeader} scramble={scramble} scrambleCubeOrder={scrambleCubeOrder}
+              displayScramble={displayScramble} optimalScrambleTag={optimalScrambleTag} solutionText={solutionText}
+              displayText={displayText} rawDisplayText={rawDisplayText} solve={solve} playerRef={playerRef}
+              canToggle={canToggle} crossLineIdx={crossLineIdx} crossNormalized={crossNormalized} setCrossNormalized={setCrossNormalized}
+              canRemoveWaste={wasteFreeText !== null} wasteRemoved={wasteRemoved} setWasteRemoved={setWasteRemoved} />
           </div>
         )}
 

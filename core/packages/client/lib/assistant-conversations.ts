@@ -10,8 +10,10 @@ export interface AssistantConversationSnapshot {
 }
 export interface AssistantConversation {
   id: string;
+  title?: string;
   snapshot: AssistantConversationSnapshot;
   pinned?: boolean;
+  unreadReply?: boolean;
   pending?: { question: string; images: AssistantImage[] };
 }
 interface Workspace { activeId: string; conversations: AssistantConversation[]; open: boolean; opened: boolean }
@@ -56,6 +58,13 @@ export function createAssistantConversations() {
       if (!current.conversations.some(item => item.id === id)) return;
       write(owner, { ...current, conversations: current.conversations.map(item => item.id === id ? { ...item, pinned } : item) });
     },
+    rename(owner: string, id: string, title: string) {
+      const current = read(owner);
+      const nextTitle = title.trim().slice(0, 120);
+      const found = current.conversations.find(item => item.id === id);
+      if (!found || !nextTitle || found.title === nextTitle) return;
+      write(owner, { ...current, conversations: current.conversations.map(item => item.id === id ? { ...item, title: nextTitle } : item) });
+    },
     create(owner: string, id: string) {
       const current = read(owner);
       if (current.conversations.some(item => item.id === id)) return;
@@ -96,6 +105,17 @@ export function createAssistantConversations() {
     select(owner: string, id: string) {
       const current = read(owner);
       if (current.activeId !== id && current.conversations.some(item => item.id === id)) write(owner, { ...current, activeId: id });
+    },
+    replyCompleted(owner: string, id: string) {
+      const current = read(owner);
+      const found = current.conversations.find(item => item.id === id);
+      if (!found || found.unreadReply) return;
+      write(owner, { ...current, conversations: current.conversations.map(item => item.id === id ? { ...item, unreadReply: true } : item) });
+    },
+    markReplyRead(owner: string, id: string) {
+      const current = read(owner);
+      if (!current.conversations.some(item => item.id === id && item.unreadReply)) return;
+      write(owner, { ...current, conversations: current.conversations.map(item => item.id === id ? { ...item, unreadReply: false } : item) });
     },
     update(owner: string, id: string, snapshot: AssistantConversationSnapshot) {
       const current = read(owner);

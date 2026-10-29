@@ -1,6 +1,7 @@
 import { cubeRotations } from './../constants.js'
 import { TurnType } from '../simulation.js'
 import { TurnAbbreviation, AlgorithmUnit, possibleMoves } from '../constants.js'
+import { expandGroups } from '@cuberoot/shared/alg-notation'
 
 export interface Turn {
   move: AlgorithmUnit
@@ -28,10 +29,7 @@ const Opposite: Record<TurnType, TurnType> = {
  *
  * Passes (in order):
  *   1. Backtick `` ` `` → prime `'` (alt prime alias used by some loggers).
- *   2. Repeat groups `(R U R' U')3` → `R U R' U' R U R' U' R U R' U'`.
- *      Trailing count optional; without it the parens are dropped (count = 1).
- *      Nested groups not supported (matches PHP).
- *   2.5. Uppercase-wide range `m-NUw[mods]` (cubing.js notation) →
+ *   2. Uppercase-wide range `m-NUw[mods]` (cubing.js notation) →
  *      lowercase form `m-Nu[mods]` so Pass 3 handles it. Special-cases:
  *        `1-NUw` → `NUw` (1-N is just N-layer wide).
  *        `1-2Uw` → `Uw` (default 2-layer wide).
@@ -46,14 +44,13 @@ const Opposite: Record<TurnType, TurnType> = {
  * the inner-layer / range expansions are degenerate but accepted.
  *
  * Deliberate divergences from PHP `fcs_format_alg`:
- *   - Pass order: PHP runs repeat groups AFTER range/inner-layer; we do it
- *     before. Functionally equivalent in practice because Pass 3/4 also re-scan
- *     the expanded text.
+ *   - After range/inner-layer rewriting, shared `expandGroups` handles nested
+ *     repeats and group inversion, including `(R U)'` and `(R U)2'`.
  *   - PHP rewrites lowercase slice `m e s` → `x R' L` style; we skip that pass
  *     since the existing tokenizer below handles uppercase `M E S` directly.
  *     If a caller ever feeds lowercase slice notation it'll throw.
- *   - The `2'` / `'2` normalization at Pass 1b is greedy: `R 2 ' U` (typo with
- *     stray space) collapses unexpectedly. PHP has the same behaviour.
+ *   - Half-turn normalization matches moves only until groups are expanded:
+ *     stripping the prime from `(R U)2'` would lose the whole group's inverse.
  */
 function preprocessAlgorithm(algorithm: string): string {
   let r = algorithm
@@ -61,22 +58,11 @@ function preprocessAlgorithm(algorithm: string): string {
   // Pass 1: backtick → prime.
   r = r.replace(/`/g, "'")
 
-  // Pass 1b: PHP also normalizes `2'` and `'2` to `2` (double turn is
-  // self-inverse on a single face). Doing this here lets later passes match
-  // the simpler PHP pattern.
-  r = r.replace(/2'|'2/g, '2')
+  // Preserve group exponents while normalizing the move aliases consumed by
+  // the layer rewrites below (including `2-4r'2` and `3Rw2'`).
+  r = r.replace(/([UuFfRrDdLlBbMESxyzw])(?:2'|'2)/g, (_m, face: string) => `${face}2`)
 
-  // Pass 2: repeat groups `(...)N`. Run repeatedly in case multiple groups
-  // are present. No nesting support.
-  r = r.replace(/(\([^()]+?\))([2-9])?/g, (_m, group: string, count?: string) => {
-    const inner = group.slice(1, -1)
-    const n = count ? parseInt(count, 10) : 1
-    const pieces: string[] = []
-    for (let i = 0; i < n; i++) pieces.push(inner)
-    return ' ' + pieces.join(' ') + ' '
-  })
-
-  // Pass 2.5: Normalize uppercase-wide range notation `m-NUw[mods]` (cubing.js
+  // Pass 2: Normalize uppercase-wide range notation `m-NUw[mods]` (cubing.js
   // style) into lowercase `m-Nu[mods]` so Pass 3 can handle it. `1-N` is a
   // special case (lower bound is the outer layer) — it's just N-layer wide.
   r = r.replace(/(^|[\s()'])(\d+)-(\d+)([UDLRFB])w([23]?'?)/g, (_m, boundary: string, lo: string, hi: string, face: string, mod: string) => {
@@ -130,7 +116,10 @@ function preprocessAlgorithm(algorithm: string): string {
     return `${boundary} ${layers}${lowerFace}${power}' ${inner}${lowerFace}${power}`
   })
 
-  return r
+  // Expand only after the visualcube-specific layer syntax is rewritten into
+  // ordinary moves accepted by the shared inverse/group parser.
+  r = expandGroups(r)
+  return r.replace(/2'|'2/g, '2')
 }
 
 /**

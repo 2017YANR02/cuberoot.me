@@ -951,14 +951,12 @@ export default function ReconListPage() {
               <HelpCircle size={18} strokeWidth={1.75} />
             </Link>
           </h1>
-          <p className="recon-subtitle">{t('recon.subtitle')}</p>
         </div>
       </div>
 
       {curationError && <p role="alert">{curationError}</p>}
       {!favoritesOnly && (isAdmin || !!featuredRecons?.length) && (
-        <section className="recon-featured" aria-labelledby="recon-featured-title">
-          <h2 id="recon-featured-title">{tr({ zh: '复盘', en: 'Reconstructions' })}</h2>
+        <section className="recon-featured" aria-label={tr({ zh: '复盘', en: 'Reconstructions' })}>
           <div className="recon-grid">
             {featuredRecons?.map(solve => <CuratedReconCard key={solve.id} solve={solve} isZh={isZh}
               href={getDetailUrl(solve)} {...curationActions(solve)} />)}

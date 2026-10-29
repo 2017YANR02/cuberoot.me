@@ -8,6 +8,9 @@ import { applyScramble } from '@cuberoot/shared/timer/reconstruct/state';
 import { applyOneToken } from '@cuberoot/shared/timer/reconstruct/apply-token';
 import { isSolved, isCross, isF2l } from '@cuberoot/shared/timer/reconstruct/cfop-detect';
 import { reconstructedTrack } from '@cuberoot/timer-ui/reconstruct/playback-track';
+import { patternFromAlg } from '@cuberoot/shared/recon/cube3';
+import { detectStage } from '@cuberoot/shared/recon/stage-detect';
+import { crossFamilyCancelInto } from '@cuberoot/shared/recon/popup-suggest';
 
 /** ESM for direct Node/tsx execution with cubing's import-only exports.
  * Sequential runner, with the same preparation, library correction and default
@@ -47,8 +50,20 @@ export async function checkReconIntake(item: Pick<ReconIntakeCase, 'id' | 'input
       const cancelsIntoLastLayer = line.kind === 'f2l' && /\bcancel into$/.test(line.label ?? '')
         && ['oll', 'pll'].includes(shown.lines[index + 1]?.kind ?? '') && line.moves.length > 1
         && isF2l(applyOneToken(beforeLine, line.moves.slice(0, -1).join(' ')));
+      // A pseudo-cross boundary deliberately precedes an exact cross. Verify
+      // its claimed pair with the bounded state search; never trust the label.
+      let cancelsIntoCross = false;
+      if (line.kind === 'cross' && shown.crossColor && /\bpsxcross .* cancel into$/.test(line.label ?? '')) {
+        const prefix = [solve.scramble, shown.inspection];
+        const face = 'URFLBD'.indexOf(shown.crossColor ?? '');
+        const initial = await detectStage(await patternFromAlg(prefix.join(' ')), face);
+        const current = await patternFromAlg([...prefix, ...shown.lines.slice(0, index + 1).flatMap(row => row.moves)].join(' '));
+        const candidates = await crossFamilyCancelInto(initial, current, face);
+        cancelsIntoCross = candidates.some(candidate => candidate.stage === 'psxcross'
+          && line.label === `${candidate.colorLetter} psxcross (${candidate.pairs.join('+')}) cancel into`);
+      }
       if ((line.kind === 'cross' || line.kind === 'f2l')
-        && ((!isCross(state) && !cancelsIntoLastLayer) || state.D[4] !== shown.crossColor))
+        && ((!isCross(state) && !cancelsIntoLastLayer && !cancelsIntoCross) || state.D[4] !== shown.crossColor))
         errors.push('Cross is not down after ' + line.key);
     }
     if (!isSolved(state)) errors.push('Displayed reconstruction does not solve the cube');
