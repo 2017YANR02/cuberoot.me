@@ -629,6 +629,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'mosaic-about': { title: { zh: '魔方马赛克说明', en: 'Mosaic Guide' } },
+  'lettering': {
+    title: { zh: '魔方拼字', en: 'Cube Lettering' },
+    description: {
+      zh: '用五阶和七阶魔方生成简单汉字的像素效果图。',
+      en: 'Create pixel-style Chinese character previews on 5×5 and 7×7 cubes.',
+    },
+  },
   'nemesizer': { title: { zh: '宿敌', en: 'Nemesizer' } },
   'nemesizer-about': { title: { zh: 'Nemesizer 说明', en: 'Nemesizer Guide' } },
   'notifications': { title: { zh: '消息', en: 'Notifications' } },

@@ -7,7 +7,7 @@ import {
   Brain, Sigma, Scale, Sprout, Brush, MessageCircle, MessagesSquare, Shapes, Eye, Palette,
   CircleQuestionMark, Globe2, CalendarDays, Video, GraduationCap, School, Building2,
   FileText, Table2, Award, Radio, PanelsTopLeft, UserRound, UsersRound, HardDrive, ListOrdered,
-  Images, Music2, Gamepad2, History,
+  Images, Music2, Gamepad2, History, Type as TypeIcon,
   type LucideIcon,
 } from '@app-foundation/icons/lucide';
 import {
@@ -89,6 +89,7 @@ const CARD_VISUALS: Partial<Record<SiteDirectoryEntry['id'], CardVisual>> = {
   'frame-count': { Icon: Film },
   solver: { iconImg: '/icons/upstream/solver.png' },
   mosaic: { Icon: Grid2x2 },
+  lettering: { Icon: TypeIcon },
   paint: { Icon: Brush },
   icon: { Icon: Shapes },
   timezone: { Icon: Globe2 },
