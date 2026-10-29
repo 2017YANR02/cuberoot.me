@@ -50,7 +50,8 @@ export default function F2lTutorial() {
     <JsonLd data={{ '@context': 'https://schema.org', '@type': 'Article', headline: tr({ zh: 'F2L 教程', en: 'F2L tutorial' }), description: tr({ zh: '从认识三步标态到顶面调整，逐步学习右前槽的棱角还原。', en: 'Recognize three-move cases, align the top layer and learn front-right pair insertions.' }) }} />
     <TutorialToolbar stepId={stepId} orientation={orientation} pauseBetween={pauseBetween}
       onChapterChange={navigate} onOrientationChange={setOrientation} onPauseBetweenChange={setPauseBetween} />
-    <article className="f2l-chapter" key={stepId}>
+    <article className="f2l-chapter">
+      <div className="f2l-chapter-body">
       <ChapterDialogue stepId={stepId} />
       {(stepId === 'lesson-1' || stepId === 'lesson-2') && <IntroLessons stepId={stepId} orientation={orientation} onNextChapter={nextChapter} />}
       {(stepId === 'lesson-3' || stepId === 'lesson-4') && <BasicCaseLesson stepId={stepId} orientation={orientation} pauseBetween={pauseBetween} caseId={caseId} onCaseChange={id => { void setCaseId(id); }} onNextChapter={nextChapter} />}
@@ -59,7 +60,8 @@ export default function F2lTutorial() {
       {stepId === 'lesson-7' && <ExtractionLesson orientation={orientation} pauseBetween={pauseBetween} onNextChapter={nextChapter} />}
       {(stepId === 'lesson-8' || stepId === 'lesson-9') && <AlgorithmLessons stepId={stepId} orientation={orientation} pauseBetween={pauseBetween} onNextChapter={nextChapter} />}
       {stepId === 'lesson-10' && <FreePracticeLesson orientation={orientation} pauseBetween={pauseBetween} />}
-      <TeachingTips stepId={stepId} />
+      </div>
+      <TeachingTips key={stepId} stepId={stepId} />
     </article>
   </main>;
 }
