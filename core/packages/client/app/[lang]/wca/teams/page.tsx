@@ -70,10 +70,10 @@ function TeamsDirectory() {
       {[...groups].map(([brand, teams]) => <section key={brand} className="wca-team-group">
         <button type="button" className="wca-team-choice wca-team-brand-button" aria-pressed={team === (brand === '魔域' ? 'moyu' : String(teams[0].id))}
           onClick={() => chooseTeam(brand === '魔域' ? 'moyu' : String(teams[0].id))}>
-          <CubingBrandLabel name={brand} /><span>{teams.reduce((sum, item) => sum + item.count, 0)}</span>
+          <CubingBrandLabel name={brand} logoOnly fallbackToName /><span>{teams.reduce((sum, item) => sum + item.count, 0)}</span>
         </button>
         {teams.length > 1 && <div className="wca-team-children">{teams.map(item => <button type="button" className="wca-team-choice" key={item.id} aria-pressed={team === String(item.id)} onClick={() => chooseTeam(String(item.id))}>
-          <CubingBrandLabel name={item.name} /><span>{item.count}</span>
+          <CubingBrandLabel name={item.name} logoOnly fallbackToName /><span>{item.count}</span>
         </button>)}</div>}
       </section>)}
     </div>

@@ -14,7 +14,7 @@ const brands = [
 export function CubingBrandLabel({ name, logoOnly = false, fallbackToName = false }: { name: string; logoOnly?: boolean; fallbackToName?: boolean }) {
   const brand = brands.find(item => item.aliases.includes(name.trim().toLowerCase()))
     ?? brands.find(item => item.aliases.includes(wcaTeamBrand(name).trim().toLowerCase()));
-  return <span className="cubing-brand-label">
+  return <span className="cubing-brand-label" title={logoOnly && brand ? name : undefined}>
     {brand && (brand.monochrome
       ? <span className="cubing-brand-logo cubing-brand-logo--monochrome" role={logoOnly ? 'img' : undefined} aria-label={logoOnly ? name : undefined} aria-hidden={logoOnly ? undefined : true}
         style={{ maskImage: `url("${brand.src}")`, WebkitMaskImage: `url("${brand.src}")`, width: brand.width }} />
