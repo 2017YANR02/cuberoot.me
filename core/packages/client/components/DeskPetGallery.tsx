@@ -291,7 +291,8 @@ export default function DeskPetGallery({ character, characters, selected, setSel
             {groups.length > 1 && <h3>{tr(g)}</h3>}
             <div className="deskpet-gallery-grid">
               {(g.id === 'rootbeast' ? rootBeastScenes : isOriginal ? originalScenes : g.anims).map((a) => {
-                const zoom = g.scale
+                // Story view boxes include their props; only the smaller base sprites need zoom.
+                const zoom = g.scale && !a.state?.startsWith('playtime:')
                   ? { transform: `scale(${g.scale})`, transformOrigin: g.scaleOrigin || 'center' }
                   : undefined;
                 const src = a.src ?? g.base + a.file + (g.v ? `?v=${g.v}` : '');
