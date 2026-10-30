@@ -148,7 +148,11 @@ const nextConfig: NextConfig = {
         source: "/assets/space/blender-v1/:asset.json",
         headers: [{ key: "Cache-Control", value: "no-store" }],
       },
-      // Project-brief illustrations use versioned filenames.
+      // Illustrated 404 assets and project briefs use versioned filenames.
+      {
+        source: "/illustrations/not-found/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+      },
       {
         source: "/images/overview/:path*",
         headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
@@ -366,3 +370,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
