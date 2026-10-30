@@ -99,7 +99,7 @@ it('defers every gallery group and scene until its media enters the viewport', a
   }
 });
 
-it('pauses a scene at its poster, plays on focus, respects reduced motion, and opens the player', async () => {
+it('autoplays visible scenes, keeps playing without hover or focus, respects reduced motion, and opens the player', async () => {
   const setSelected = vi.fn();
   await act(async () => root.render(createElement(DeskPetGallery, {
     character: 'rootbeast', characters: [{ id: 'rootbeast', label: { en: 'Root Beast', zh: '根号兽' }, thumb: '' }],
@@ -112,18 +112,37 @@ it('pauses a scene at its poster, plays on focus, respects reduced motion, and o
   const button = art.closest('button')!;
   const scene = getDeskPetScene('rootbeast:idle')!;
   await act(async () => art.dispatchEvent(new Event('load')));
-  expect(animation.currentTime).toBe(scene.poster * scene.durationMs);
-  expect(animation.play).not.toHaveBeenCalled();
-  expect(animation.pause).toHaveBeenCalled();
-  await act(async () => button.focus());
+  expect(animation.currentTime).toBe(0);
   expect(animation.play).toHaveBeenCalledOnce();
-  animation.pause.mockClear();
-  await act(async () => button.blur());
-  expect(animation.pause).toHaveBeenCalledOnce();
+  expect(animation.pause).not.toHaveBeenCalled();
+  await act(async () => {
+    button.dispatchEvent(new MouseEvent('mouseover', { bubbles: true, relatedTarget: document.body }));
+    button.dispatchEvent(new MouseEvent('mouseout', { bubbles: true, relatedTarget: document.body }));
+    button.focus();
+    button.blur();
+  });
+  expect(animation.play).toHaveBeenCalledOnce();
+  expect(animation.pause).not.toHaveBeenCalled();
+  await act(async () => button.click());
+  expect(setSelected).toHaveBeenCalledWith(scene.state);
+
+  await act(async () => observers[0].notify(false));
+  expect(host.querySelector('object')).toBeNull();
   reduced = true;
-  animation.play.mockClear();
-  await act(async () => button.focus());
-  expect(animation.play).not.toHaveBeenCalled();
+  await act(async () => observers[0].notify(true));
+  const reducedArt = host.querySelector('object')!;
+  const reducedAnimation = { currentTime: 0, effect: { updateTiming: vi.fn() }, play: vi.fn(), pause: vi.fn() };
+  Object.defineProperty(reducedArt, 'contentDocument', { value: { getAnimations: () => [reducedAnimation] } });
+  await act(async () => reducedArt.dispatchEvent(new Event('load')));
+  expect(reducedAnimation.currentTime).toBe(scene.poster * scene.durationMs);
+  expect(reducedAnimation.pause).toHaveBeenCalledOnce();
+  expect(reducedAnimation.play).not.toHaveBeenCalled();
+  await act(async () => {
+    button.focus();
+    button.blur();
+  });
+  expect(reducedAnimation.play).not.toHaveBeenCalled();
+  setSelected.mockClear();
   await act(async () => button.click());
   expect(setSelected).toHaveBeenCalledWith(scene.state);
 });

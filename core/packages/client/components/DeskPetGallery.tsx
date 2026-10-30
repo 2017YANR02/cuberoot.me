@@ -52,12 +52,11 @@ const CSS = `
 .deskpet-gallery-close{position:absolute;top:10px;right:12px;background:transparent;border:0;cursor:pointer;
   color:var(--muted-foreground);padding:6px;border-radius:8px;display:flex;}
 .deskpet-gallery-close:hover{background:var(--accent-soft);color:var(--foreground);}
-.deskpet-gallery-tile{display:flex;flex-direction:column;width:100%;padding:0;border:1px solid var(--border-default);border-radius:20px;overflow:hidden;background:var(--card);cursor:pointer;color:inherit;font:inherit;transition:transform .2s,border-color .2s;}
+.deskpet-gallery-tile{display:flex;flex-direction:column;width:100%;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;cursor:pointer;color:inherit;font:inherit;}
 .deskpet-gallery-tile figure{width:100%;}
 .deskpet-gallery-tile figcaption{width:100%;padding:0 12px;text-align:left;line-height:1.5;}
 .deskpet-gallery-scene-name{display:block;font-weight:600;color:var(--foreground);}
 .deskpet-gallery-scene-description{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;overflow-wrap:anywhere;margin-top:5px;font-size:.72rem;color:var(--muted-foreground);}
-.deskpet-gallery-tile:hover{transform:translateY(-4px);border-color:var(--accent);}
 .deskpet-gallery-tile:hover .deskpet-gallery-scene-name{color:var(--accent);}
 .deskpet-gallery button:focus-visible{outline:2px solid var(--ring);outline-offset:3px;}
 .deskpet-story{max-width:600px;margin:0 auto;}
@@ -92,28 +91,18 @@ function SceneTile({ src, label, description, posterMs, zoom, onSelect }: {
   src: string; label: string; description?: string; posterMs: number; zoom?: CSSProperties; onSelect: () => void;
 }) {
   const descriptionId = useId();
-  const art = useRef<HTMLObjectElement>(null);
-  const button = useRef<HTMLButtonElement>(null);
-  const playback = () => {
-    const playing = button.current?.matches(':hover, :focus-visible')
-      && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    for (const animation of art.current?.contentDocument?.getAnimations() ?? []) {
-      if (playing) animation.play(); else animation.pause();
-    }
-  };
-  return <button ref={button} type="button" className="deskpet-gallery-tile" onClick={onSelect} aria-label={label}
-    aria-describedby={description ? descriptionId : undefined}
-    onMouseEnter={playback} onMouseLeave={playback} onFocus={playback} onBlur={playback}>
+  return <button type="button" className="deskpet-gallery-tile" onClick={onSelect} aria-label={label}
+    aria-describedby={description ? descriptionId : undefined}>
     <figure>
       <LazyVisible className="deskpet-gallery-media" minHeight={0} rootMargin="0px" unmountWhenHidden>
-        <object ref={art} type="image/svg+xml" data={src} aria-hidden="true" tabIndex={-1} style={zoom}
-          onLoad={() => {
-            for (const animation of art.current?.contentDocument?.getAnimations() ?? []) {
+        <object type="image/svg+xml" data={src} aria-hidden="true" tabIndex={-1} style={zoom}
+          onLoad={(event) => {
+            const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            for (const animation of event.currentTarget.contentDocument?.getAnimations() ?? []) {
               animation.effect?.updateTiming({ delay: 0 });
-              animation.currentTime = posterMs;
-              animation.pause();
+              animation.currentTime = reduced ? posterMs : 0;
+              if (reduced) animation.pause(); else animation.play();
             }
-            playback();
           }} />
         <img className="deskpet-save-image" src={src} alt="" aria-hidden="true" draggable={false} style={zoom} />
       </LazyVisible>
