@@ -5785,6 +5785,166 @@ const presets: readonly { id: string; petId: string; src: string; sourceSrc: str
     "en": "Shadow has plans"
   },
   {
+    "id": "pet-9c1c0385fb3c0719c7a8997f",
+    "petId": "clawd",
+    "src": "/deskpet/playtime/31-star-chart.svg?v=2",
+    "sourceSrc": "/deskpet/playtime/31-star-chart.svg?v=2",
+    "zh": "星图观测员",
+    "en": "Star chart keeper"
+  },
+  {
+    "id": "pet-f0c20d0085fee4ad191590ba",
+    "petId": "clawd",
+    "src": "/deskpet/playtime/32-firefly-garden.svg?v=2",
+    "sourceSrc": "/deskpet/playtime/32-firefly-garden.svg?v=2",
+    "zh": "萤火花园",
+    "en": "Firefly garden"
+  },
+  {
+    "id": "pet-298e3d21732f0afef427e64f",
+    "petId": "clawd",
+    "src": "/deskpet/playtime/33-tea-time.svg?v=2",
+    "sourceSrc": "/deskpet/playtime/33-tea-time.svg?v=2",
+    "zh": "暖茶时刻",
+    "en": "A little tea"
+  },
+  {
+    "id": "pet-8e99a1f4380a87ef632d1f46",
+    "petId": "clawd",
+    "src": "/deskpet/playtime/34-crystal-resonance.svg?v=2",
+    "sourceSrc": "/deskpet/playtime/34-crystal-resonance.svg?v=2",
+    "zh": "水晶共鸣",
+    "en": "Crystal resonance"
+  },
+  {
+    "id": "pet-afbad773b58fde7aff030cba",
+    "petId": "clawd",
+    "src": "/deskpet/playtime/35-lantern-koi.svg?v=2",
+    "sourceSrc": "/deskpet/playtime/35-lantern-koi.svg?v=2",
+    "zh": "锦鲤灯",
+    "en": "Lantern koi"
+  },
+  {
+    "id": "pet-f172ecffa0f737dbab184d29",
+    "petId": "clawd",
+    "src": "/deskpet/playtime/36-moonlight-courier.svg?v=2",
+    "sourceSrc": "/deskpet/playtime/36-moonlight-courier.svg?v=2",
+    "zh": "月亮邮差",
+    "en": "Moonlight courier"
+  },
+  {
+    "id": "pet-026b871c738e505349b827f1",
+    "petId": "clawd",
+    "src": "/deskpet/playtime/37-puddle-ballet.svg?v=2",
+    "sourceSrc": "/deskpet/playtime/37-puddle-ballet.svg?v=2",
+    "zh": "雨后水洼",
+    "en": "Puddle ballet"
+  },
+  {
+    "id": "pet-da6d859ed908cb3a8a5d20fb",
+    "petId": "clawd",
+    "src": "/deskpet/playtime/38-nebula-bakery.svg?v=2",
+    "sourceSrc": "/deskpet/playtime/38-nebula-bakery.svg?v=2",
+    "zh": "星云烘焙",
+    "en": "Nebula bakery"
+  },
+  {
+    "id": "pet-0c8a104d8a7ddb856742770f",
+    "petId": "clawd",
+    "src": "/deskpet/playtime/39-aurora-kite.svg?v=2",
+    "sourceSrc": "/deskpet/playtime/39-aurora-kite.svg?v=2",
+    "zh": "极光风筝",
+    "en": "Aurora kite"
+  },
+  {
+    "id": "pet-a0262294cf59ac4d6f473469",
+    "petId": "clawd",
+    "src": "/deskpet/playtime/40-snow-onsen.svg?v=2",
+    "sourceSrc": "/deskpet/playtime/40-snow-onsen.svg?v=2",
+    "zh": "雪中温泉",
+    "en": "Snowfall onsen"
+  },
+  {
+    "id": "pet-4b37f29194b5d338b2348cf1",
+    "petId": "clawd",
+    "src": "/deskpet/playtime/41-coral-diver.svg?v=2",
+    "sourceSrc": "/deskpet/playtime/41-coral-diver.svg?v=2",
+    "zh": "珊瑚潜水员",
+    "en": "Coral diver"
+  },
+  {
+    "id": "pet-7a8d1316f3b870538a14cc18",
+    "petId": "clawd",
+    "src": "/deskpet/playtime/42-clockwork-keeper.svg?v=2",
+    "sourceSrc": "/deskpet/playtime/42-clockwork-keeper.svg?v=2",
+    "zh": "发条时钟匠",
+    "en": "Clockwork keeper"
+  },
+  {
+    "id": "pet-7f83f6982f2a52a14dc6c69a",
+    "petId": "clawd",
+    "src": "/deskpet/playtime/43-dandelion-wishes.svg?v=2",
+    "sourceSrc": "/deskpet/playtime/43-dandelion-wishes.svg?v=2",
+    "zh": "蒲公英心愿",
+    "en": "Dandelion wishes"
+  },
+  {
+    "id": "pet-668e4a90a4424b9d6c307e2d",
+    "petId": "clawd",
+    "src": "/deskpet/playtime/44-vinyl-afternoon.svg?v=2",
+    "sourceSrc": "/deskpet/playtime/44-vinyl-afternoon.svg?v=2",
+    "zh": "唱片时光",
+    "en": "Vinyl afternoon"
+  },
+  {
+    "id": "pet-e45a9b7c45ba64f10d179786",
+    "petId": "clawd",
+    "src": "/deskpet/playtime/45-campfire-treat.svg?v=2",
+    "sourceSrc": "/deskpet/playtime/45-campfire-treat.svg?v=2",
+    "zh": "篝火棉花糖",
+    "en": "Campfire treat"
+  },
+  {
+    "id": "pet-996fac0a2afeccce59edf2b9",
+    "petId": "clawd",
+    "src": "/deskpet/playtime/46-springtime-fan.svg?v=2",
+    "sourceSrc": "/deskpet/playtime/46-springtime-fan.svg?v=2",
+    "zh": "春风折扇",
+    "en": "Springtime fan"
+  },
+  {
+    "id": "pet-ba380980aac2f63e20252d93",
+    "petId": "clawd",
+    "src": "/deskpet/playtime/47-pottery-studio.svg?v=2",
+    "sourceSrc": "/deskpet/playtime/47-pottery-studio.svg?v=2",
+    "zh": "陶艺小工坊",
+    "en": "Pottery studio"
+  },
+  {
+    "id": "pet-d6e702c352a98b322eb95cca",
+    "petId": "clawd",
+    "src": "/deskpet/playtime/48-honey-counter.svg?v=2",
+    "sourceSrc": "/deskpet/playtime/48-honey-counter.svg?v=2",
+    "zh": "蜂蜜小铺",
+    "en": "Honey counter"
+  },
+  {
+    "id": "pet-5274b7146070b8864cf9485b",
+    "petId": "clawd",
+    "src": "/deskpet/playtime/49-ship-in-a-bottle.svg?v=2",
+    "sourceSrc": "/deskpet/playtime/49-ship-in-a-bottle.svg?v=2",
+    "zh": "瓶中帆船",
+    "en": "Ship in a bottle"
+  },
+  {
+    "id": "pet-d27764b6984732876c8c8388",
+    "petId": "clawd",
+    "src": "/deskpet/playtime/50-cube-recital.svg?v=2",
+    "sourceSrc": "/deskpet/playtime/50-cube-recital.svg?v=2",
+    "zh": "魔方小剧场",
+    "en": "Cube recital"
+  },
+  {
     "id": "pet-84c822e4cd8c456d3e6f19a0",
     "petId": "calico",
     "src": "/deskpet/calico/calico-idle.png",
@@ -6735,6 +6895,26 @@ export const galleryPresetIds: readonly string[] = [
   "pet-a063355427b91d6904f02e97",
   "pet-9f58c14ff1f4abbb74ae0a78",
   "pet-19fd7f0fd97b5d641b0ffa50",
+  "pet-9c1c0385fb3c0719c7a8997f",
+  "pet-f0c20d0085fee4ad191590ba",
+  "pet-298e3d21732f0afef427e64f",
+  "pet-8e99a1f4380a87ef632d1f46",
+  "pet-afbad773b58fde7aff030cba",
+  "pet-f172ecffa0f737dbab184d29",
+  "pet-026b871c738e505349b827f1",
+  "pet-da6d859ed908cb3a8a5d20fb",
+  "pet-0c8a104d8a7ddb856742770f",
+  "pet-a0262294cf59ac4d6f473469",
+  "pet-4b37f29194b5d338b2348cf1",
+  "pet-7a8d1316f3b870538a14cc18",
+  "pet-7f83f6982f2a52a14dc6c69a",
+  "pet-668e4a90a4424b9d6c307e2d",
+  "pet-e45a9b7c45ba64f10d179786",
+  "pet-996fac0a2afeccce59edf2b9",
+  "pet-ba380980aac2f63e20252d93",
+  "pet-d6e702c352a98b322eb95cca",
+  "pet-5274b7146070b8864cf9485b",
+  "pet-d27764b6984732876c8c8388",
   "pet-84c822e4cd8c456d3e6f19a0",
   "pet-0c6f519e04d5d892c983abf8",
   "pet-d662a0facc12faa7142e4043",

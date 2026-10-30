@@ -1212,7 +1212,7 @@
       ],
       "verification": [
         "node scripts/deskpet-playtime/build-playtime.mjs --check",
-        "preview all 30 complete loops in a browser"
+        "preview complete loops for every added or changed story in a browser, including the loop seam, small size, light/dark backgrounds and reduced-motion poster"
       ],
       "driftPolicy": "Edit choreography sources and regenerate. The manifest drives the gallery and pet runtime. Bump PLAYTIME_VERSION in client/lib/deskpet-playtime.ts when regenerating published assets."
     },

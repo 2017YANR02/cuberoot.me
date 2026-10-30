@@ -2,7 +2,7 @@
 
 // Gallery and story player, opened from the existing search toolbar.
 
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 import { ArrowLeft, ArrowRight, Download, Play, Pause, RotateCcw } from '@app-foundation/icons/lucide';
 import { PET_GALLERY } from '@/lib/deskpet-gallery';
 import { getDeskPetScene, PLAYTIME_SCENES } from '@/lib/deskpet-playtime';
@@ -52,9 +52,13 @@ const CSS = `
 .deskpet-gallery-close{position:absolute;top:10px;right:12px;background:transparent;border:0;cursor:pointer;
   color:var(--muted-foreground);padding:6px;border-radius:8px;display:flex;}
 .deskpet-gallery-close:hover{background:var(--accent-soft);color:var(--foreground);}
-.deskpet-gallery-tile{display:block;width:100%;padding:0;border:1px solid var(--border-default);border-radius:20px;overflow:hidden;background:var(--card);cursor:pointer;color:inherit;font:inherit;transition:transform .2s,border-color .2s;}
+.deskpet-gallery-tile{display:flex;flex-direction:column;width:100%;padding:0;border:1px solid var(--border-default);border-radius:20px;overflow:hidden;background:var(--card);cursor:pointer;color:inherit;font:inherit;transition:transform .2s,border-color .2s;}
+.deskpet-gallery-tile figure{width:100%;}
+.deskpet-gallery-tile figcaption{width:100%;padding:0 12px;text-align:left;line-height:1.5;}
+.deskpet-gallery-scene-name{display:block;font-weight:600;color:var(--foreground);}
+.deskpet-gallery-scene-description{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;overflow-wrap:anywhere;margin-top:5px;font-size:.72rem;color:var(--muted-foreground);}
 .deskpet-gallery-tile:hover{transform:translateY(-4px);border-color:var(--accent);}
-.deskpet-gallery-tile:hover figcaption{color:var(--accent);}
+.deskpet-gallery-tile:hover .deskpet-gallery-scene-name{color:var(--accent);}
 .deskpet-gallery button:focus-visible{outline:2px solid var(--ring);outline-offset:3px;}
 .deskpet-story{max-width:600px;margin:0 auto;}
 .deskpet-story-art{position:relative;display:block;width:100%;height:min(42svh,350px);color-scheme:normal;}
@@ -63,6 +67,10 @@ const CSS = `
 .deskpet-gallery .deskpet-save-image{position:absolute;inset:0;width:100%;height:100%;opacity:0;object-fit:contain;}
 .deskpet-gallery .deskpet-story h3{font-size:1.2rem;color:var(--foreground);margin:12px 0 8px;}
 .deskpet-story p{font-size:.88rem;line-height:1.6;color:var(--muted-foreground);margin:0 0 12px;}
+.deskpet-story-details{margin:22px 0 0;}
+.deskpet-story-details h4{margin:0 0 8px;font-size:.84rem;font-weight:600;color:var(--foreground);}
+.deskpet-story-details ul{margin:0;padding-left:1.2em;display:grid;gap:7px;font-size:.84rem;line-height:1.6;color:var(--muted-foreground);}
+.deskpet-story-details li::marker{color:var(--accent);}
 .deskpet-story input{width:100%;accent-color:var(--accent);cursor:pointer;}
 .deskpet-story-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin:14px 0;}
 .deskpet-story-controls button,.deskpet-story-controls a{display:inline-flex;align-items:center;gap:6px;padding:8px 0;border:0;background:transparent;
@@ -80,9 +88,10 @@ const CSS = `
 }
 `;
 
-function SceneTile({ src, label, posterMs, zoom, onSelect }: {
-  src: string; label: string; posterMs: number; zoom?: CSSProperties; onSelect: () => void;
+function SceneTile({ src, label, description, posterMs, zoom, onSelect }: {
+  src: string; label: string; description?: string; posterMs: number; zoom?: CSSProperties; onSelect: () => void;
 }) {
+  const descriptionId = useId();
   const art = useRef<HTMLObjectElement>(null);
   const button = useRef<HTMLButtonElement>(null);
   const playback = () => {
@@ -93,6 +102,7 @@ function SceneTile({ src, label, posterMs, zoom, onSelect }: {
     }
   };
   return <button ref={button} type="button" className="deskpet-gallery-tile" onClick={onSelect} aria-label={label}
+    aria-describedby={description ? descriptionId : undefined}
     onMouseEnter={playback} onMouseLeave={playback} onFocus={playback} onBlur={playback}>
     <figure>
       <LazyVisible className="deskpet-gallery-media" minHeight={0} rootMargin="0px" unmountWhenHidden>
@@ -107,7 +117,10 @@ function SceneTile({ src, label, posterMs, zoom, onSelect }: {
           }} />
         <img className="deskpet-save-image" src={src} alt="" aria-hidden="true" draggable={false} style={zoom} />
       </LazyVisible>
-      <figcaption>{label}</figcaption>
+      <figcaption>
+        <span className="deskpet-gallery-scene-name">{label}</span>
+        {description && <span className="deskpet-gallery-scene-description" id={descriptionId}>{description}</span>}
+      </figcaption>
     </figure>
   </button>;
 }
@@ -123,6 +136,7 @@ function PlaytimePreview({ scene, onStep }: {
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const [time, setTime] = useState(0);
+  const details = 'details' in scene ? scene.details : undefined;
   const download = async (format: 'png' | 'svg') => {
     if (downloading) return;
     setDownloading(true);
@@ -218,6 +232,10 @@ function PlaytimePreview({ scene, onStep }: {
         </AppLink>
       </div>
       {downloadFailed && <p role="status">{tr({ zh: '下载失败，请重试。', en: 'Download failed. Please try again.' })}</p>}
+      {details && details.length > 0 && <section className="deskpet-story-details" aria-label={tr({ zh: '动作细节', en: 'Animation details' })}>
+        <h4>{tr({ zh: '动作细节', en: 'Animation details' })}</h4>
+        <ul>{details.map(detail => <li key={detail.en}>{tr(detail)}</li>)}</ul>
+      </section>}
     </div>
   );
 }
@@ -280,6 +298,7 @@ export default function DeskPetGallery({ character, characters, selected, setSel
                 if (a.state) {
                   const preview = getDeskPetScene(a.state);
                   return <SceneTile key={a.file} src={src} label={tr(a)} zoom={zoom}
+                    description={preview ? tr({ zh: preview.description, en: preview.descriptionEn }) : undefined}
                     posterMs={preview ? preview.poster * preview.durationMs : 0}
                     onSelect={() => setSelected(a.state!)} />;
                 }
