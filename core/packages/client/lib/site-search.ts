@@ -99,6 +99,7 @@ export const TOOL_ITEMS: ToolItem[] = [
 ];
 
 export const LOOKUP_ITEMS: LookupItem[] = [
+  { path: '/wca/teams', zh: '厂商与战队', en: 'Brands & Teams' },
   { path: '/wca/achievements', zh: '荣誉徽章', en: 'Achievement badges' },
   { path: '/wca/grand-slam',       zh: '大满贯',       en: 'Grand Slam'
 },

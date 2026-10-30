@@ -1,0 +1,16 @@
+.wca-relation-filter .compact-select-trigger {
+  border: 0;
+  background: none;
+  padding: 0;
+  justify-content: center;
+  font: inherit;
+  color: inherit;
+}
+.wca-relation-filter .list-select-label { font: inherit; }
+.wca-relation-filter-popup {
+  min-width: 200px;
+  width: max-content;
+  max-width: min(320px, calc(100vw - 24px));
+  text-align: start;
+  font-weight: normal;
+}

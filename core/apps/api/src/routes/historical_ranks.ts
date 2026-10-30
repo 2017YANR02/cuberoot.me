@@ -13,6 +13,7 @@
  */
 import { Hono } from 'hono';
 import { query } from '../db/connection.js';
+import { wcaRelationFilter } from '../utils/wca_relation_filters.js';
 
 export const historicalRanksRoutes = new Hono();
 
@@ -96,6 +97,7 @@ historicalRanksRoutes.get('/wca/historical-ranks', async (c) => {
 
   // ── 主查询(分页)
   const offset = (page - 1) * size;
+  const relation = wcaRelationFilter(key => c.req.query(key), 's.wca_id', [event]);
   const orderRank = countryId ? crCol : wrCol;
 
   let rows: {
@@ -119,7 +121,7 @@ historicalRanksRoutes.get('/wca/historical-ranks', async (c) => {
     const genderClause = gender !== 'all' ? 'AND p.gender = ?' : '';
     const params: unknown[] = [event, year, continentId];
     if (gender !== 'all') params.push(gender);
-    params.push(size, offset);
+    params.push(...relation.params, size, offset);
 
     rows = await query(
       `
@@ -141,7 +143,7 @@ historicalRanksRoutes.get('/wca/historical-ranks', async (c) => {
       LEFT JOIN wca_competitions c ON c.id = ${compIdCol}
       WHERE s.event_id = ? AND s.year = ? AND ${wrCol} > 0
         AND s.country_id IN (SELECT id FROM wca_countries WHERE continent_id = ?)
-        ${genderClause}
+        ${genderClause}${relation.sql}
       ORDER BY ${wrCol} ASC, s.wca_id ASC
       LIMIT ? OFFSET ?
       `,
@@ -149,6 +151,7 @@ historicalRanksRoutes.get('/wca/historical-ranks', async (c) => {
     );
     const countParams: unknown[] = [event, year, continentId];
     if (gender !== 'all') countParams.push(gender);
+    countParams.push(...relation.params);
     const totalRow = await query<{ n: string }>(
       `
       SELECT COUNT(*) AS n
@@ -156,19 +159,19 @@ historicalRanksRoutes.get('/wca/historical-ranks', async (c) => {
       ${gender !== 'all' ? 'JOIN wca_persons p ON p.wca_id = s.wca_id' : ''}
       WHERE s.event_id = ? AND s.year = ? AND ${wrCol} > 0
         AND s.country_id IN (SELECT id FROM wca_countries WHERE continent_id = ?)
-        ${genderClause}
+        ${genderClause}${relation.sql}
       `,
       countParams,
     );
     total = totalRow[0] ? parseInt(totalRow[0].n, 10) : 0;
-  } else if (gender === 'all') {
+  } else if (gender === 'all' && !relation.active) {
     // 默认快路径:用快照里预算好的全球/国家名次,走索引排序。
     const whereExtra = countryId
       ? `AND ${crCol} > 0 AND s.country_id = ?`
       : `AND ${wrCol} > 0`;
     const params: unknown[] = [event, year];
     if (countryId) params.push(countryId);
-    params.push(size, offset);
+    params.push(...relation.params, size, offset);
 
     rows = await query(
       `
@@ -189,7 +192,7 @@ historicalRanksRoutes.get('/wca/historical-ranks', async (c) => {
       LEFT JOIN wca_countries co ON co.id = s.country_id
       LEFT JOIN wca_competitions c ON c.id = ${compIdCol}
       WHERE s.event_id = ? AND s.year = ?
-        ${whereExtra}
+        ${whereExtra}${relation.sql}
       ORDER BY ${orderRank} ASC, s.wca_id ASC
       LIMIT ? OFFSET ?
       `,
@@ -197,6 +200,7 @@ historicalRanksRoutes.get('/wca/historical-ranks', async (c) => {
     );
     const countParams: unknown[] = [event, year];
     if (countryId) countParams.push(countryId);
+    countParams.push(...relation.params);
     const totalRow = await query<{ n: string }>(
       `
       SELECT COUNT(*) AS n
@@ -210,9 +214,11 @@ historicalRanksRoutes.get('/wca/historical-ranks', async (c) => {
   } else {
     // 性别过滤:快照里的名次是全球/全国口径,不能直接用 → JOIN wca_persons 过滤 gender 后
     // 用 RANK() OVER (ORDER BY 值) 在「该性别(可叠加国家)」子集内重排;按值有成绩 = valCol IS NOT NULL。
-    const where = `s.event_id = ? AND s.year = ? AND p.gender = ? AND ${valCol} IS NOT NULL${countryId ? ' AND s.country_id = ?' : ''}`;
-    const params: unknown[] = [event, year, gender];
+    const where = `s.event_id = ? AND s.year = ? ${gender !== 'all' ? 'AND p.gender = ?' : ''} AND ${valCol} IS NOT NULL${countryId ? ' AND s.country_id = ?' : ''}${relation.sql}`;
+    const params: unknown[] = [event, year];
+    if (gender !== 'all') params.push(gender);
     if (countryId) params.push(countryId);
+    params.push(...relation.params);
     const dataParams = [...params, size, offset];
 
     rows = await query(
@@ -258,7 +264,7 @@ historicalRanksRoutes.get('/wca/historical-ranks', async (c) => {
     total = totalRow[0] ? parseInt(totalRow[0].n, 10) : 0;
   }
 
-  c.header('Cache-Control', 'public, max-age=300, s-maxage=86400');
+  c.header('Cache-Control', relation.active ? 'no-store' : 'public, max-age=300, s-maxage=86400');
   return c.json({
     event,
     year,

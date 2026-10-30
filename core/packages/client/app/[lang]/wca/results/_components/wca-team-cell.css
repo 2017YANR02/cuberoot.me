@@ -1,3 +1,7 @@
+.wca-teacher-cell.wca-team-cell {
+  margin-inline: auto;
+}
+
 /* The shared menu clamps to the viewport; this short menu fits its contents. */
 .list-select.wca-team-select .list-select-popup {
   min-width: 0;

@@ -25,6 +25,15 @@ const app = new Hono().route('/v1', wcaTeacherRoutes);
 
 describe('GET /v1/wca/teachers', () => {
   beforeEach(() => mocks.query.mockReset());
+  it('lists teacher options for the selected events without a student-page restriction', async () => {
+    const options = [{ teacherWcaId: '2017YANR02', teacherName: 'Ruimin Yan (颜瑞民)' }];
+    mocks.query.mockResolvedValueOnce(options);
+    const response = await app.request('/v1/wca/teachers?options=1&events=333,222');
+    expect(await response.json()).toEqual({ options });
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+    expect(mocks.query.mock.calls[0][0]).toContain('SELECT DISTINCT');
+    expect(mocks.query.mock.calls[0][1]).toEqual(['333', '222']);
+  });
 
   it('looks up every student relation for one teacher without requiring events', async () => {
     mocks.query.mockResolvedValueOnce([{

@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { useTeacherTableFilter } from '@/components/WcaRelationColumnHeader';
 import AppLink from '@/components/AppLink';
 import { CompCell } from '@/components/CompCell/CompCell';
 import { EventIcon } from '@/components/EventIcon';
@@ -28,6 +29,7 @@ interface WcaRecordRowsTableProps {
   isZh: boolean;
   showEvent: boolean;
   showRank?: boolean;
+  initialLimit?: number;
   teacherDirectory: WcaTeacherDirectory;
 }
 
@@ -36,8 +38,13 @@ export function WcaRecordRowsTable({
   isZh,
   showEvent,
   showRank = true,
+  initialLimit,
   teacherDirectory,
 }: WcaRecordRowsTableProps) {
+  const teacherFilter = useTeacherTableFilter(teacherDirectory, isZh);
+  const [extra, setExtra] = useState(0);
+  const filteredRows = rows.map((row, index) => ({ row, index })).filter(({ row }) => teacherFilter.matches(row.p, [row.e]));
+  const limit = initialLimit ? initialLimit + extra : filteredRows.length;
   const ranks = useMemo(() => {
     const totals = new Map<string, number>();
     for (const row of rows) {
@@ -58,6 +65,7 @@ export function WcaRecordRowsTable({
   );
 
   return (
+    <>
     <table className={`wse-table wca-record-rows-table sticky-thead${showEvent ? ' wse-multi-event' : ''}`}>
       <thead>
         <tr>
@@ -66,14 +74,14 @@ export function WcaRecordRowsTable({
           <th className="wse-value-col">{tr({ zh: '单次', en: 'Single' })}</th>
           <th className="wse-value-col">{tr({ zh: '平均', en: 'Average' })}</th>
           <th className="wse-name-col">{tr({ zh: '选手', en: 'Person' })}</th>
-          <WcaTeacherColumnHeader />
+          <WcaTeacherColumnHeader filter={{ ...teacherFilter.filter, onChange: value => { teacherFilter.filter.onChange(value); setExtra(0); } }} />
           <th className="wse-name-col">{tr({ zh: '比赛', en: 'Competition' })}</th>
           <th>{tr({ zh: '日期', en: 'Date' })}</th>
           <AttemptHeaderCells count={attemptCols} />
         </tr>
       </thead>
       <tbody>
-        {rows.map((row, index) => {
+        {filteredRows.slice(0, limit).map(({ row, index }) => {
           const personIso2 = row.pc || personFlagIso2(row.p);
           return (
             <tr key={`${row.p}-${row.c}-${row.e}-${row.t}-${index}`}>
@@ -119,5 +127,7 @@ export function WcaRecordRowsTable({
         })}
       </tbody>
     </table>
+    {limit < filteredRows.length && <button type="button" className="cs-record-detail-more" onClick={() => setExtra(value => value + (initialLimit ?? 100))}>{tr({ zh: '显示更多', en: 'Show more' })}</button>}
+    </>
   );
 }

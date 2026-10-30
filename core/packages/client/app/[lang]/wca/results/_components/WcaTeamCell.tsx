@@ -8,6 +8,7 @@ import { fetchWcaTeamDirectory, saveWcaPersonTeam } from '@/lib/wca-team-directo
 import { WcaTeacherCell, type WcaTeacherDirectory } from '@/components/WcaTeacherCell';
 import { ListSelect } from '@/components/ListSelect';
 import { CubingBrandLabel } from '@/components/CubingBrandLabel';
+import { wcaTeamSelectItems } from '@/components/wca-team-select-items';
 import { SearchInput } from '@/components/SearchInput';
 import { tr } from '@/i18n/tr';
 import '@/components/wca-teacher-cell.css';
@@ -24,13 +25,9 @@ export function useWcaTeams(wcaIds: string[]) {
     let cancelled = false;
     setFailed(false);
     setResolvedKey(null);
-    if (!key) {
-      setData({ teams: [], assignments: [] });
-      setResolvedKey(key);
-      return;
-    }
-    const ids = key.split(',');
-    const requests = [];
+
+    const ids = key ? key.split(',') : [];
+    const requests = key ? [] : [fetchWcaTeamDirectory([])];
     for (let i = 0; i < ids.length; i += 100) requests.push(fetchWcaTeamDirectory(ids.slice(i, i + 100)));
     Promise.all(requests).then(groups => {
       if (cancelled) return;
@@ -73,6 +70,7 @@ export function WcaPersonRelationCells({ wcaId, eventIds, teacherDirectory, team
   const team = teamDirectory.teams.find(item => item.id === teamId);
   const selectedValue = teamChanged ? selected : team ? String(team.id) : '';
   const name = selectedValue === 'custom' ? custom.trim() : teamDirectory.teams.find(item => String(item.id) === selectedValue)?.name ?? '';
+  const teamItems = wcaTeamSelectItems(teamDirectory.teams, "edit", selectedValue);
   return <>
     <td><WcaTeacherCell studentWcaId={wcaId} eventIds={eventIds} directory={teacherDirectory} isZh={isZh} visibleTeacherWcaId={visibleTeacherWcaId}
       additionalEditor={teamDirectory.isAdmin ? {
@@ -93,7 +91,7 @@ export function WcaPersonRelationCells({ wcaId, eventIds, teacherDirectory, team
               onChange={value => { setSelected(value); setTeamChanged(true); }}
               items={[
                 { value: '', label: tr({ zh: '未设置', en: 'Not set' }) },
-                ...teamDirectory.teams.map(item => ({ value: String(item.id), label: item.name, icon: <CubingBrandLabel name={item.name} logoOnly /> })),
+                ...teamItems,
                 { value: 'custom', label: tr({ zh: '添加战队…', en: 'Add team…' }) },
               ]}
             />
@@ -103,7 +101,7 @@ export function WcaPersonRelationCells({ wcaId, eventIds, teacherDirectory, team
         </div>,
       } : undefined}
     /></td>
-    <td><div className="wca-teacher-cell"><span className="wca-teacher-value" title={teamDirectory.ready ? team?.name : undefined}>
+    <td><div className="wca-teacher-cell wca-team-cell"><span className="wca-teacher-value" title={teamDirectory.ready ? team?.name : undefined}>
       {teamDirectory.failed ? <button type="button" className="wca-teacher-action" onClick={teamDirectory.retry}>{tr({ zh: '加载失败，重试', en: 'Load failed, retry' })}</button> : teamDirectory.ready ? team ? <CubingBrandLabel name={team.name} logoOnly fallbackToName /> : '—' : '…'}
     </span></div></td>
   </>;

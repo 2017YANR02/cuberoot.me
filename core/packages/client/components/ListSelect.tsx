@@ -7,6 +7,8 @@
  */
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ChevronDown, X } from '@app-foundation/icons/lucide';
+import { CompactSelect } from '@/components/CompactSelect';
+import { ClearButton } from '@/components/ClearButton';
 import { Flag } from '@/components/Flag';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { tr } from '@/i18n/tr';
@@ -32,9 +34,13 @@ export interface ListSelectItem {
   separatorBefore?: boolean;
   /** 置灰 + 不可选 (如该项暂无条目) */
   disabled?: boolean;
+  /** Optional expandable group; items in each group should be contiguous. */
+  group?: { value: string; label: string; icon?: ReactNode };
 }
 
 interface ListSelectProps {
+  /** Escape scrolling tables using the shared viewport-positioned menu. */
+  portal?: boolean;
   disabled?: boolean;
   ariaLabel?: string;
   pinCountries?: boolean;
@@ -53,21 +59,22 @@ interface ListSelectProps {
   searchPlaceholder?: string;
 }
 
-export function ListSelect({ items, value, onChange, allLabel, className, searchable, clearable = true, maxVisible, searchPlaceholder, pinCountries = false, disabled = false, ariaLabel }: ListSelectProps) {
+export function ListSelect({ portal = false, items, value, onChange, allLabel, className, searchable, clearable = true, maxVisible, searchPlaceholder, pinCountries = false, disabled = false, ariaLabel }: ListSelectProps) {
   const [pins, togglePin] = usePinnedCountries();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const ref = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  usePanelClamp(open, panelRef);
+  usePanelClamp(open && !portal, panelRef);
 
   // The horizontal clamp cannot keep a menu above a phone keyboard or the bottom edge.
   // Flip toward the larger space and scroll within that space, rather than off the page.
   useLayoutEffect(() => {
     const panel = panelRef.current;
     const anchor = ref.current;
-    if (!open || !panel || !anchor) return;
+    if (portal || !open || !panel || !anchor) return;
     const place = () => {
       const rect = anchor.getBoundingClientRect();
       const viewport = window.visualViewport;
@@ -89,16 +96,16 @@ export function ListSelect({ items, value, onChange, allLabel, className, search
       window.removeEventListener('scroll', place, true);
       window.visualViewport?.removeEventListener('resize', place);
     };
-  }, [open]);
+  }, [open, expandedGroups, query, portal]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || portal) return;
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
+  }, [open, portal]);
 
   useEffect(() => {
     if (open && searchable) {
@@ -113,7 +120,8 @@ export function ListSelect({ items, value, onChange, allLabel, className, search
     return items.filter(i =>
       i.label.toLowerCase().includes(q) ||
       i.value.toLowerCase().includes(q) ||
-      (i.searchTerms ?? '').toLowerCase().includes(q),
+      (i.searchTerms ?? '').toLowerCase().includes(q) ||
+      (i.group?.label ?? '').toLowerCase().includes(q),
     );
   }, [items, query, searchable]);
 
@@ -130,6 +138,72 @@ export function ListSelect({ items, value, onChange, allLabel, className, search
 
   const current = items.find(i => i.value === value);
 
+  const menuContent = <>
+          {searchable && (
+            <div className="list-select-search-row">
+            <input
+              ref={inputRef}
+              type="text"
+              className="list-select-search"
+              value={query}
+              placeholder={searchPlaceholder}
+              onChange={e => setQuery(e.target.value)}
+              autoFocus
+            />
+            {query && <ClearButton onClick={() => { setQuery(''); inputRef.current?.focus(); }} />}
+            </div>
+          )}
+          <div className="list-select-list">
+            {shown.map((i, index) => {
+              const group = i.group;
+              const firstInGroup = group && !shown.slice(0, index).some(item => item.group?.value === group.value);
+              const expanded = !group || !!expandedGroups[group.value] || !!(searchable && query.trim());
+              const item = (
+                <button
+                  type="button"
+                  disabled={i.disabled}
+                  className={`list-select-item${group ? ' list-select-item--child' : ''}${value === i.value ? ' list-select-item--active' : ''}${i.disabled ? ' list-select-item--disabled' : ''}`}
+                  onClick={() => { if (!i.disabled) select(i.value); }}
+                >
+                  {i.country && <Flag iso2={i.country} className="list-select-flag" />}
+                  {i.icon && <span className="list-select-icon" aria-hidden>{i.icon}</span>}
+                  <span className="list-select-label">{i.label}</span>
+                  {i.hint && <span className="list-select-hint">{i.hint}</span>}
+                </button>
+              );
+              return (
+                <Fragment key={i.value}>
+                  {i.separatorBefore && <div className="list-select-separator" aria-hidden />}
+                  {firstInGroup && <button type="button" className="list-select-item" aria-expanded={expanded}
+                    onClick={() => setExpandedGroups(current => ({ ...current, [group.value]: !expanded }))}>
+                    {group.icon && <span className="list-select-icon" aria-hidden>{group.icon}</span>}
+                    <span className="list-select-label">{group.label}</span>
+                    <ChevronDown size={14} className={`list-select-group-chevron${expanded ? ' list-select-group-chevron--open' : ''}`} />
+                  </button>}
+                  {expanded && (pinCountries && i.country && !i.disabled ? (
+                    <div className="country-pin-row">
+                      {item}
+                      <CountryPinButton name={i.label} pinned={pins.includes(i.country.toLowerCase())} onToggle={() => togglePin(i.country!)} />
+                    </div>
+                  ) : item)}
+                </Fragment>
+              );
+            })}
+            {hidden > 0 && (
+              <div className="list-select-more">
+                {tr({ zh: `还有 ${hidden} 项,继续输入以缩小范围`, en: `${hidden} more — keep typing to narrow` })}
+              </div>
+            )}
+          </div>
+  </>;
+  if (portal) return <CompactSelect className={className} popupClassName="wca-relation-filter-popup" unstyledTrigger showArrow
+    ariaLabel={ariaLabel ?? allLabel} label={current ? <>{current.icon}{current.label}</> : allLabel}
+    items={shown.filter(item => !item.group || expandedGroups[item.group.value] || (searchable && query.trim()))} value={value} onChange={select} disabled={disabled} open={open}
+    onOpenChange={next => {
+      if (next) { const group = current?.group; setExpandedGroups(group ? { [group.value]: true } : {}); }
+      setOpen(next);
+    }} panelContent={menuContent} />;
+
   return (
     <div ref={ref} className={`list-select ${className ?? ''}`.trim()}>
       <button
@@ -137,7 +211,14 @@ export function ListSelect({ items, value, onChange, allLabel, className, search
         className="list-select-trigger"
         disabled={disabled}
         aria-label={ariaLabel}
-        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        onClick={() => {
+          if (!open) {
+            const group = items.find(item => item.value === value)?.group;
+            setExpandedGroups(group ? { [group.value]: true } : {});
+          }
+          setOpen(o => !o);
+        }}
       >
         <span className="list-select-current">
           {current ? (
@@ -165,50 +246,7 @@ export function ListSelect({ items, value, onChange, allLabel, className, search
       </button>
       {open && !disabled && (
         <div ref={panelRef} className="list-select-popup" data-site-surface="popover">
-          {searchable && (
-            <input
-              ref={inputRef}
-              type="text"
-              className="list-select-search"
-              value={query}
-              placeholder={searchPlaceholder}
-              onChange={e => setQuery(e.target.value)}
-              autoFocus
-            />
-          )}
-          <div className="list-select-list">
-            {shown.map(i => {
-              const item = (
-                <button
-                  type="button"
-                  disabled={i.disabled}
-                  className={`list-select-item${value === i.value ? ' list-select-item--active' : ''}${i.disabled ? ' list-select-item--disabled' : ''}`}
-                  onClick={() => { if (!i.disabled) select(i.value); }}
-                >
-                  {i.country && <Flag iso2={i.country} className="list-select-flag" />}
-                  {i.icon && <span className="list-select-icon" aria-hidden>{i.icon}</span>}
-                  <span className="list-select-label">{i.label}</span>
-                  {i.hint && <span className="list-select-hint">{i.hint}</span>}
-                </button>
-              );
-              return (
-                <Fragment key={i.value}>
-                  {i.separatorBefore && <div className="list-select-separator" aria-hidden />}
-                  {pinCountries && i.country && !i.disabled ? (
-                    <div className="country-pin-row">
-                      {item}
-                      <CountryPinButton name={i.label} pinned={pins.includes(i.country.toLowerCase())} onToggle={() => togglePin(i.country!)} />
-                    </div>
-                  ) : item}
-                </Fragment>
-              );
-            })}
-            {hidden > 0 && (
-              <div className="list-select-more">
-                {tr({ zh: `还有 ${hidden} 项,继续输入以缩小范围`, en: `${hidden} more — keep typing to narrow` })}
-              </div>
-            )}
-          </div>
+          {menuContent}
         </div>
       )}
     </div>

@@ -63,7 +63,6 @@ interface RecordDetailModalProps {
 function RecordDetailModal({ iso2, city, metric, eventIds, isZh, placeName, onClose }: RecordDetailModalProps) {
   const [shard, setShard] = useState<Awaited<ReturnType<typeof loadRecordPlaceDetails>> | null>(null);
   const [failed, setFailed] = useState(false);
-  const [limit, setLimit] = useState(DETAIL_BATCH_SIZE);
   const titleId = useId();
   const modalRef = useRef<HTMLDivElement | null>(null);
 
@@ -82,7 +81,6 @@ function RecordDetailModal({ iso2, city, metric, eventIds, isZh, placeName, onCl
   }, [iso2]);
 
   useEffect(() => {
-    setLimit(DETAIL_BATCH_SIZE);
   }, [city, metric, eventIds]);
 
   useEffect(() => {
@@ -94,7 +92,7 @@ function RecordDetailModal({ iso2, city, metric, eventIds, isZh, placeName, onCl
     [shard, metric, city, eventIds],
   );
   const tableRows = useMemo<WcaRecordRowsTableRow[]>(
-    () => rows.slice(0, limit).map(({ compId, comp, entry }) => ({
+    () => rows.map(({ compId, comp, entry }) => ({
       e: entry.e,
       t: entry.k,
       v: entry.v,
@@ -107,7 +105,7 @@ function RecordDetailModal({ iso2, city, metric, eventIds, isZh, placeName, onCl
       de: comp.d,
       a: entry.a,
     })),
-    [rows, limit],
+    [rows],
   );
   const teacherStudentIds = useMemo(() => tableRows.map((row) => row.p), [tableRows]);
   const teacherEventIds = useMemo(() => tableRows.map((row) => row.e), [tableRows]);
@@ -155,21 +153,14 @@ function RecordDetailModal({ iso2, city, metric, eventIds, isZh, placeName, onCl
               <div className="wse-table-wrapper cs-record-detail-table-wrap">
                 <WcaRecordRowsTable
                   rows={tableRows}
+                  initialLimit={DETAIL_BATCH_SIZE}
                   isZh={isZh}
                   showEvent
                   showRank={false}
                   teacherDirectory={teacherDirectory}
                 />
               </div>
-              {limit < rows.length && (
-                <button
-                  type="button"
-                  className="cs-record-detail-more"
-                  onClick={() => setLimit((value) => value + DETAIL_BATCH_SIZE)}
-                >
-                  {tr({ zh: '显示更多', en: 'Show more' })}
-                </button>
-              )}
+
             </>
           )}
         </div>

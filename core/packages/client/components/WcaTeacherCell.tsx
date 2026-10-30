@@ -34,6 +34,7 @@ import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { fetchWcaPersonResults } from '@/lib/wca-person-api';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import './wca-teacher-cell.css';
+import { WcaRelationColumnHeader, type WcaColumnFilter } from '@/components/WcaRelationColumnHeader';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const LOOKUP_CHUNK_SIZE = 100;
@@ -267,16 +268,10 @@ export function useWcaTeachers(studentWcaIds: string[], eventIds: string[], name
   };
 }
 
-export function WcaTeacherColumnHeader({ className }: { className?: string } = {}) {
-  return (
-    <th className={className} title={tr({
-      zh: '每个项目分别登记；有效会员老师可登记自己，有效会员学生可填写本人老师或自学，管理员可代填',
-      en: 'Active member teachers can register themselves per event; active member students can set a teacher or self-taught status; admins can edit any entry',
-    })}>
-      {tr({ zh: '老师 / 培训机构', en: 'Teacher / Institution' })}
-    </th>
-  );
+export function WcaTeacherColumnHeader({ className, filter }: { className?: string; filter: WcaColumnFilter }) {
+  return <WcaRelationColumnHeader className={className} label={tr({ zh: '老师', en: 'Teacher' })} filter={filter} />;
 }
+
 
 export function WcaStudentAdder({
   teacherWcaId,

@@ -121,6 +121,8 @@ img.list-select-flag { object-fit: cover; }
   font-family: inherit;
   outline: none;
 }
+.list-select-search-row { display: flex; align-items: center; gap: 4px; }
+.list-select-search-row .list-select-search { min-width: 0; }
 .list-select-search:focus { border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
 
 .list-select-list {
@@ -166,3 +168,7 @@ img.list-select-flag { object-fit: cover; }
   cursor: not-allowed;
 }
 .list-select-item--disabled:hover { background: none; }
+
+.list-select-item--child { padding-inline-start: 28px; }
+.list-select-group-chevron { margin-inline-start: auto; transform: rotate(-90deg); }
+.list-select-group-chevron--open { transform: none; }

@@ -54,6 +54,7 @@ const WCA_TOOLS: { path: string; zh: string; en: string; Icon: LucideIcon
 
 const LOOKUP_ITEMS: { path: string; zh: string; en: string; Icon: LucideIcon; extraQuery?: string; adminOnly?: boolean
  }[] = [
+  { path: '/wca/teams', zh: '厂商与战队', en: 'Brands & Teams', Icon: Users },
   // 首页直达卡(比赛 / 纪录 / 排名)同时并入查询区,方便从 /wca 直接进
   { path: '/wca/comp',            zh: '比赛',         en: 'Competitions',    Icon: Radio
 },

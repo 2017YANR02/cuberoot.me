@@ -14,6 +14,7 @@ import { countPodiumByEvent } from '../logic/podium';
 import { isMbldEvent, computeMbfMo3 } from '@/lib/mbf-average';
 import { UnofficialMark } from '@/components/UnofficialMark';
 import { WcaTeacherCell, WcaTeacherColumnHeader, useWcaTeachers } from '@/components/WcaTeacherCell';
+import { useTeacherTableFilter } from '@/components/WcaRelationColumnHeader';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 // WCA 大洲 id(continentId,带前缀 _)→ 本地化短名,供 SoCR 的 scope 标签用.
@@ -119,6 +120,7 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, m
   }, [profile, hist, mode]);
   const teacherStudentIds = useMemo(() => [profile.person.wca_id], [profile.person.wca_id]);
   const teacherDirectory = useWcaTeachers(teacherStudentIds, eventIds);
+  const teacherFilter = useTeacherTableFilter(teacherDirectory, isZh);
 
   if (eventIds.length === 0) {
     return (
@@ -142,7 +144,7 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, m
           <thead>
             {/* WCA 风格单行表头:老师 | 项目 | NR CR WR | 单次 | 平均 | WR CR NR(围绕中线镜像对称) */}
             <tr>
-              <WcaTeacherColumnHeader className="wp-th-teacher" />
+              <WcaTeacherColumnHeader className="wp-th-teacher" filter={teacherFilter.filter} />
               <th className="wp-th-event">{t('项目', 'Event')}</th>
               <th title={t('地区排名', 'National rank')}>NR</th>
               <th title={t('洲际排名', 'Continental rank')}>CR</th>
@@ -158,7 +160,7 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, m
             </tr>
           </thead>
           <tbody>
-            {eventIds.map((eid) => {
+            {eventIds.filter(eid => teacherFilter.matches(profile.person.wca_id, [eid])).map((eid) => {
               const cur = profile.personal_records[eid];
               const histEv = hist?.events[eid];
               const showHist = mode === 'historical';

@@ -15,6 +15,17 @@
   object-fit: contain;
 }
 
+/* Monochrome artwork follows the theme; multicolor brand assets retain their colors. */
+.cubing-brand-logo--monochrome {
+  background-color: var(--foreground);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
 /* The supplied QiYi artwork has a centered yellow disc on a white canvas.
    Show the disc without the surrounding canvas; preserve the source colors. */
 .cubing-brand-logo.cubing-brand-logo--circle {

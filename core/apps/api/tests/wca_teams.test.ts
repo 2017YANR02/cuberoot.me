@@ -8,6 +8,19 @@ const put = (body: unknown) => wcaTeamRoutes.request('/wca/teams/2017YANR02', {
   method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
 });
 beforeEach(() => { vi.resetAllMocks(); });
+it('returns directory counts and paginated member results without modifying assignments', async () => {
+  mocks.query.mockResolvedValueOnce([{ id: 2, name: '魔域', count: 2 }])
+    .mockResolvedValueOnce([{ wcaId: '2017YANR02', teamName: '魔域', bestAverage: 1000 }])
+    .mockResolvedValueOnce([{ count: 2 }]);
+  const response = await wcaTeamRoutes.request('/wca/teams?directory=1&team=moyu&page=2&size=1');
+  expect(response.status).toBe(200);
+  const data = await response.json();
+  expect(data.total).toBe(2);
+  expect(data.members).toHaveLength(1);
+  expect(mocks.query.mock.calls[1][0]).toContain('average > 0');
+  expect(mocks.query.mock.calls[1][1]).toEqual(['魔域', '魔域战队', '魔域梦之队', 1, 1]);
+  expect(mocks.query.mock.calls[2][1]).toEqual(['魔域', '魔域战队', '魔域梦之队']);
+});
 it('rejects non-admin writes before touching the database', async () => {
   mocks.requireAdminOrApiKey.mockRejectedValue(new HTTPException(403));
   expect((await put({ name: 'GAN' })).status).toBe(403);

@@ -51,6 +51,8 @@ import {
   WcaTeacherColumnHeader,
   useWcaTeachers,
 } from '@/components/WcaTeacherCell';
+import { WcaRelationColumnHeader, teacherFilterItems } from '@/components/WcaRelationColumnHeader';
+import { wcaTeamSelectItems } from '@/components/wca-team-select-items';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 // Persons / Results display mode for the WCA ranking view — was exported by the
@@ -139,6 +141,8 @@ function AllResultsPageInner() {
       q: parseAsString,
       qmode: parseAsString,   // 名字匹配:any(选手/比赛) | first | last | exact
       basis: parseAsString,
+      team: parseAsString,
+      teacherFilter: parseAsString,
       teacher: parseAsString, // 分享视图:只展示该 WCA ID 的老师姓名
       hidePodium: parseAsString, // 名次和:未登领奖台
       ssort: parseAsString,      // 名次和表头排序:'total'(默认) | 'best'(历史最佳名次) | 项目 id(单项名次列)
@@ -197,6 +201,8 @@ function AllResultsPageInner() {
   const month = parseInt(query.month ?? '0', 10);
   const qFromUrl = query.q ?? '';
   const qMode = ['first', 'last', 'exact'].includes(query.qmode ?? '') ? query.qmode! : 'any';
+  const teamFilter = query.team ?? '';
+  const teacherFilter = query.teacherFilter ?? '';
   const requestedTeacherWcaId = (query.teacher ?? '').trim().toUpperCase();
   const visibleTeacherWcaId = /^\d{4}[A-Z0-9]{4}\d{2}$/.test(requestedTeacherWcaId)
     ? requestedTeacherWcaId
@@ -328,9 +334,13 @@ function AllResultsPageInner() {
   // 单项数据
   useEffect(() => {
     if (view !== 'rank' || mode !== 'single') return;
+    const controller = new AbortController();
     setLoading(true); setError(null);
     const qs = new URLSearchParams();
     qs.set('event', singleEvent);
+    if (teamFilter) qs.set('team', teamFilter);
+    if (teacherFilter) qs.set('teacherFilter', teacherFilter);
+    qs.set('v', '4');
     qs.set('type', effType);
     qs.set('page', String(page));
     qs.set('size', String(size));
@@ -338,29 +348,30 @@ function AllResultsPageInner() {
     if (gender !== 'all') qs.set('gender', gender);
     if (show === 'persons' && basis === 'cumulative' && !qFromUrl) {
       qs.set('year', String(year));
-      fetch(apiUrl(`/v1/wca/historical-ranks?${qs.toString()}`))
+      fetch(apiUrl(`/v1/wca/historical-ranks?${qs.toString()}`), { signal: controller.signal })
         .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-        .then((j: { rows: PersonRow[]; total: number }) => setData({ mode: 'persons', rows: j.rows, total: j.total }))
-        .catch(e => setError(e.message)).finally(() => setLoading(false));
+        .then((j: { rows: PersonRow[]; total: number }) => { if (!controller.signal.aborted) setData({ mode: 'persons', rows: j.rows, total: j.total }); })
+        .catch(e => { if (!controller.signal.aborted) setError(e.message); }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     } else if (show === 'persons') {
       qs.set('group', 'person'); qs.set('basis', basis); qs.set('year', String(year));
       if (month > 0) qs.set('month', String(month));
       if (qFromUrl) { qs.set('q', qFromUrl); qs.set('nameMode', qMode); }
-      fetch(apiUrl(`/v1/wca/all-results?${qs.toString()}`))
+      fetch(apiUrl(`/v1/wca/all-results?${qs.toString()}`), { signal: controller.signal })
         .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-        .then((j: { rows: PersonRow[]; total: number }) => setData({ mode: 'persons', rows: j.rows, total: j.total }))
-        .catch(e => setError(e.message)).finally(() => setLoading(false));
+        .then((j: { rows: PersonRow[]; total: number }) => { if (!controller.signal.aborted) setData({ mode: 'persons', rows: j.rows, total: j.total }); })
+        .catch(e => { if (!controller.signal.aborted) setError(e.message); }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     } else {
       qs.set('basis', basis);
       if (year > 0) qs.set('year', String(year));
       if (basis === 'period' && month > 0) qs.set('month', String(month));
       if (qFromUrl) { qs.set('q', qFromUrl); qs.set('nameMode', qMode); }
-      fetch(apiUrl(`/v1/wca/all-results?${qs.toString()}`))
+      fetch(apiUrl(`/v1/wca/all-results?${qs.toString()}`), { signal: controller.signal })
         .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-        .then((j: { rows: ResultRow[]; total: number }) => setData({ mode: 'results', rows: j.rows, total: j.total }))
-        .catch(e => setError(e.message)).finally(() => setLoading(false));
+        .then((j: { rows: ResultRow[]; total: number }) => { if (!controller.signal.aborted) setData({ mode: 'results', rows: j.rows, total: j.total }); })
+        .catch(e => { if (!controller.signal.aborted) setError(e.message); }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     }
-  }, [view, mode, show, basis, singleEvent, effType, country, gender, year, month, qFromUrl, qMode, page, size]);
+    return () => controller.abort();
+  }, [view, mode, show, basis, singleEvent, effType, country, gender, year, month, qFromUrl, qMode, page, size, teamFilter, teacherFilter]);
 
   // 空态「分布」:姓名统计(静态 JSON,缓存一次)
   useEffect(() => {
@@ -393,9 +404,12 @@ function AllResultsPageInner() {
   // 名次和数据
   useEffect(() => {
     if (view !== 'rank' || mode !== 'sor') return;
+    const controller = new AbortController();
     setLoading(true); setError(null);
     const qs = new URLSearchParams();
     qs.set('type', type);
+    if (teamFilter) qs.set('team', teamFilter);
+    if (teacherFilter) qs.set('teacherFilter', teacherFilter);
     qs.set('page', String(page));
     qs.set('size', String(size));
     if (country) qs.set('country', country);
@@ -403,11 +417,12 @@ function AllResultsPageInner() {
     if (hidePodium) qs.set('hidePodium', '1');
     if (ssort !== 'total') qs.set('sort', ssort);
     if (sdir !== 'asc') qs.set('dir', sdir);
-    qs.set('v', '3');
-    fetch(apiUrl(`/v1/wca/sum-of-ranks?${qs.toString()}`))
+    qs.set('v', '4');
+    fetch(apiUrl(`/v1/wca/sum-of-ranks?${qs.toString()}`), { signal: controller.signal })
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-      .then(setSorData).catch(e => setError(e.message)).finally(() => setLoading(false));
-  }, [view, mode, type, country, sorEventsParam, hidePodium, ssort, sdir, page, size]);
+      .then(j => { if (!controller.signal.aborted) setSorData(j); }).catch(e => { if (!controller.signal.aborted) setError(e.message); }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [view, mode, type, country, sorEventsParam, hidePodium, ssort, sdir, page, size, teamFilter, teacherFilter]);
 
   const teacherStudentIds = useMemo(() => {
     if (view !== 'rank') return [];
@@ -422,6 +437,30 @@ function AllResultsPageInner() {
   }, [view, mode, singleEvent, selectedSet]);
   const teamDirectory = useWcaTeams(teacherStudentIds);
   const teacherDirectory = useWcaTeachers(teacherStudentIds, teacherEventIds);
+  const [teacherOptions, setTeacherOptions] = useState<Array<{ teacherWcaId: string; teacherName: string }>>([]);
+  const [teacherOptionsReady, setTeacherOptionsReady] = useState(false);
+  const teacherEventsKey = teacherEventIds.join(',');
+  useEffect(() => {
+    const controller = new AbortController();
+    setTeacherOptionsReady(false);
+    const qs = new URLSearchParams({ options: '1', events: teacherEventsKey, v: '7' });
+    fetch(apiUrl('/v1/wca/teachers?' + qs), { signal: controller.signal }).then(async response => {
+      if (!response.ok) throw new Error('Failed to load teachers');
+      const data = await response.json();
+      if (!Array.isArray(data.options)) throw new Error('Teacher filters unavailable');
+      if (!controller.signal.aborted) { setTeacherOptions(data.options); setTeacherOptionsReady(true); }
+    }).catch(() => { /* Keep the header disabled until its directory is available. */ });
+    return () => controller.abort();
+  }, [teacherEventsKey]);
+  const teacherColumnFilter = {
+    value: teacherFilter, onChange: (value: string) => { void setQuery({ teacherFilter: value || null, page: null }); },
+    items: teacherFilterItems(teacherOptions, isZh), disabled: !teacherOptionsReady,
+  };
+  const teamColumnFilter = {
+    value: teamFilter, onChange: (value: string) => { void setQuery({ team: value || null, page: null }); },
+    items: [{ value: 'none', label: tr({ zh: '未设置', en: 'Not set' }) }, ...wcaTeamSelectItems(teamDirectory.teams, 'filter')],
+    disabled: !teamDirectory.ready,
+  };
   const visibleTeacherName = useMemo(() => {
     if (!visibleTeacherWcaId) return '';
     for (const relation of teacherDirectory.teachers.values()) {
@@ -851,8 +890,8 @@ function AllResultsPageInner() {
                     <tr>
                       <th className="wse-rank-col">#</th>
                       <th>{tr({ zh: '选手', en: 'Person' })}</th>
-                      <WcaTeacherColumnHeader />
-                      <th>{tr({ zh: '战队', en: 'Team' })}</th>
+                      <WcaTeacherColumnHeader filter={teacherColumnFilter} />
+                      <WcaRelationColumnHeader label={tr({ zh: '战队', en: 'Team' })} filter={teamColumnFilter} />
                       <th className="wse-value-col">{isZh ? (effType === 'single' ? '单次' : '平均') : (effType === 'single' ? 'Single' : 'Average')}{isMbldAvg && effType === 'average' && <UnofficialMark />}</th>
                       <th>{tr({ zh: '日期', en: 'Date' })}</th>
                       <th>{tr({ zh: '比赛', en: 'Competition' })}</th>
@@ -896,8 +935,8 @@ function AllResultsPageInner() {
                     <tr>
                       <th className="wse-rank-col">#</th>
                       <th>{tr({ zh: '选手', en: 'Person' })}</th>
-                      <WcaTeacherColumnHeader />
-                      <th>{tr({ zh: '战队', en: 'Team' })}</th>
+                      <WcaTeacherColumnHeader filter={teacherColumnFilter} />
+                      <WcaRelationColumnHeader label={tr({ zh: '战队', en: 'Team' })} filter={teamColumnFilter} />
                       <th className="wse-value-col">{isZh ? (effType === 'single' ? '单次' : '平均') : (effType === 'single' ? 'Single' : 'Average')}{isMbldAvg && effType === 'average' && <UnofficialMark />}</th>
                       <th>{tr({ zh: '日期', en: 'Date' })}</th>
                       <th>{tr({ zh: '比赛', en: 'Competition' })}</th>
@@ -999,8 +1038,8 @@ function AllResultsPageInner() {
                     <tr>
                       <th className="wse-rank-col">#</th>
                       <th>{tr({ zh: '选手', en: 'Person' })}</th>
-                      <WcaTeacherColumnHeader />
-                      <th>{tr({ zh: '战队', en: 'Team' })}</th>
+                      <WcaTeacherColumnHeader filter={teacherColumnFilter} />
+                      <WcaRelationColumnHeader label={tr({ zh: '战队', en: 'Team' })} filter={teamColumnFilter} />
                       <th className="wse-value-col">
                         <button type="button" className="wse-th-sort" onClick={() => setSorSort('total')}>
                           {tr({ zh: '名次总和', en: 'Total' })}

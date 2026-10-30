@@ -104,6 +104,16 @@ wcaTeacherRoutes.get('/wca/teachers', async (c) => {
   if (studentIds == null) return c.json({ error: 'invalid students' }, 400);
   if (teacherIds == null) return c.json({ error: 'invalid teachers' }, 400);
   if (events == null) return c.json({ error: 'invalid events' }, 400);
+  if (c.req.query('options') === '1') {
+    const eventClause = events.length ? ` AND wt.event_id IN (${events.map(() => '?').join(',')})` : '';
+    const options = await query<{ teacherWcaId: string; teacherName: string }>(
+      `SELECT DISTINCT wt.teacher_wca_id AS "teacherWcaId", p.name AS "teacherName"
+       FROM wca_teachers wt JOIN wca_persons p ON p.wca_id = wt.teacher_wca_id
+       WHERE wt.teacher_wca_id IS NOT NULL${eventClause} ORDER BY p.name, wt.teacher_wca_id`, events,
+    );
+    c.header('Cache-Control', 'no-store');
+    return c.json({ options });
+  }
   if (studentIds.length > 0 && teacherIds.length > 0) {
     return c.json({ error: 'use either students or teachers' }, 400);
   }
