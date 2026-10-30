@@ -116,3 +116,8 @@
   max-width: 100%;
 }
 
+
+/* Stage totals stay above the moving playback index so the labels never collide. */
+.playback-bar-scrub.has-segment-counts { padding-top: 44px; }
+.has-segment-counts > .playback-bar-bubble { top: 18px; }
+.has-segment-counts > .playback-bar-segment-count { top: 0; }

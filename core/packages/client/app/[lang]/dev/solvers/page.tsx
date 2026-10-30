@@ -190,6 +190,8 @@ const TABLES: Record<string, SolverTbls> = {
     builtEn: 'combo heuristic = max(per-pair C4E, corner2/3 group, edge2/3 group) + leaf EO gating on free edges; plus pscross prune (~272KB) built in-RAM for the cross stage'
 },
   '333': {
+    // Opt11 is source-only (2026-10-29); no generated/loaded table or measured
+    // analyzer exists, so it does not belong in this actual-table snapshot.
     move: [{ n: 'opt9-generated/small-memory.bin', b: 818008 }],
     prune: [{ n: 'opt9-generated/h48prun31h9.dat', b: 15565455360 }],
     benchmarkTables: [{ n: 'nxopt22-20261015/nxopth22b.dat', b: 7809269764 }],

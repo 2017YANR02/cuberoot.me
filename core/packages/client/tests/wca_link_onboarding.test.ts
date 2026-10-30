@@ -27,7 +27,7 @@ const verifiedNameMigration = readFileSync(
   'utf8',
 );
 const panel = readFileSync(join(CLIENT, 'components/AuthPanel.tsx'), 'utf8');
-const page = readFileSync(join(CLIENT, 'app/[lang]/account/page.tsx'), 'utf8');
+const page = readFileSync(join(CLIENT, 'components/account/AccountSettings.tsx'), 'utf8');
 const socialCb = readFileSync(join(CLIENT, 'app/auth/social/callback/page.tsx'), 'utf8');
 
 describe('server:谁是新注册,只有服务端知道', () => {

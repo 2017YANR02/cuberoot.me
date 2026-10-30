@@ -623,3 +623,76 @@ img.tz-card-flag { object-fit: cover; }
   .tz-card-clock { font-size: 1.7rem; }
   .tz-strip-zone { max-width: 5rem; }
 }
+
+/* Availability uses the same FullCalendar engine as /calendar. */
+.tz-planner { margin-top: 1.6rem; }
+.tz-planner-heading, .tz-planner-controls, .tz-week-nav, .tz-planner-caption,
+.tz-planner-tools, .tz-manual-range { display: flex; align-items: center; gap: 0.65rem; }
+.tz-planner-heading { justify-content: space-between; flex-wrap: wrap; margin-bottom: 1.2rem; }
+.tz-planner-heading h2 { margin: 0; font-size: 1.15rem; }
+.tz-planner-step { color: var(--muted-foreground); font-size: 0.8rem; }
+.tz-planner-controls { align-items: flex-end; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.2rem; }
+.tz-planner-controls > .tz-field:first-child { width: 16rem; max-width: 100%; }
+.tz-week-nav { gap: 0.25rem; }
+.tz-week-nav .tz-now-btn { padding: 9px 6px; border: 0; }
+.tz-convert-btn { display: inline-flex; align-items: center; gap: 0.5rem; margin-left: auto; padding: 11px 15px; border: 0; border-radius: 10px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 0.87rem; cursor: pointer; }
+.tz-planner :is(.tz-now-btn, .tz-convert-btn, .tz-window-pick, .tz-copy-btn):disabled { opacity: 0.45; cursor: default; }
+.tz-planner :is(.tz-now-btn, .tz-convert-btn, .tz-window-pick, .tz-copy-btn, .tz-availability-body, .tz-availability-delete):focus-visible, .tz-planner summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.tz-planner-caption { padding-bottom: 0.65rem; flex-wrap: wrap; font-size: 0.82rem; }
+.tz-planner-caption > span { color: var(--muted-foreground); }
+.tz-planner-caption > .tz-window-pick { margin-left: auto; }
+.tz-planner-scroll { overflow-x: auto; border-radius: 10px; }
+.tz-planner-calendar {
+  min-width: 620px;
+  --fc-border-color: var(--border-default);
+  --fc-page-bg-color: var(--background);
+  --fc-neutral-bg-color: var(--muted);
+  --fc-today-bg-color: transparent;
+  --fc-highlight-color: var(--accent-soft);
+  --fc-event-bg-color: var(--accent-soft);
+  --fc-event-border-color: var(--accent);
+  --fc-event-text-color: var(--foreground);
+}
+.tz-planner .fc { font-size: 0.78rem; }
+.tz-planner .fc .fc-col-header-cell-cushion { padding: 10px 4px; font-weight: 500; text-decoration: none; }
+.tz-planner .fc .fc-timegrid-slot { height: 22px; }
+.tz-planner .fc .fc-timegrid-slot-label { color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+.tz-planner .fc .fc-timegrid-event { border-radius: 5px; border-width: 0 0 0 3px; box-shadow: none; }
+.tz-planner .fc .fc-event-time { white-space: normal; font-size: 0.76rem; padding: 3px; }
+.tz-planner .fc .fc-timegrid-col-events { margin: 0 3px; }
+.tz-planner .is-converted .tz-planner-calendar { --fc-event-bg-color: color-mix(in srgb, var(--signal-success) 18%, var(--background)); --fc-event-border-color: var(--signal-success); }
+.tz-planner-tools { align-items: flex-start; justify-content: space-between; flex-wrap: wrap; margin: 0.85rem 0; }
+.tz-planner-tools > details { flex: 1; min-width: 0; }
+.tz-planner-tools summary { width: fit-content; color: var(--muted-foreground); font-size: 0.8rem; cursor: pointer; padding: 0.55rem 0; }
+.tz-planner-tools .tz-note { margin: 0.5rem 0; max-width: 36rem; }
+.tz-manual-range { align-items: flex-end; flex-wrap: wrap; }
+.tz-planner-results { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; gap: 0.65rem; }
+.tz-planner-results li { display: grid; grid-template-columns: 1fr auto 1fr auto; gap: 1rem; align-items: center; padding: 0.8rem 1rem; border-radius: 10px; background: var(--muted); }
+.tz-planner-results li > div { display: grid; gap: 0.3rem; }
+.tz-planner-results span { font-size: 0.75rem; color: var(--muted-foreground); }
+.tz-planner-results strong { font-size: 0.9rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+.tz-planner-result-cn strong { color: var(--accent); }
+.tz-planner-error { color: var(--destructive); font-size: 0.85rem; }
+.tz-instant-details { margin-top: 2rem; }
+.tz-instant-details > summary { cursor: pointer; font-size: 0.9rem; color: var(--muted-foreground); margin-bottom: 1rem; }
+@media (max-width: 640px) {
+  .tz-planner-controls > .tz-field:first-child { width: 100%; }
+  .tz-convert-btn { margin-left: 0; width: 100%; justify-content: center; }
+  .tz-planner-heading { gap: 0.35rem; }
+  .tz-planner-results li { grid-template-columns: 1fr auto; gap: 0.6rem; }
+  .tz-planner-results li > svg { display: none; }
+  .tz-planner-result-cn { grid-column: 1; }
+  .tz-planner-results li > .tz-now-btn { grid-column: 2; grid-row: 1 / 3; }
+}
+
+.tz-availability-block { position: relative; height: 100%; min-height: 20px; }
+.tz-availability-body { display: block; width: 100%; height: 100%; padding: 4px; border: 0; background: none; color: inherit; font: inherit; font-size: 0.76rem; font-weight: 600; text-align: left; align-content: start; cursor: grab; user-select: none; -webkit-touch-callout: none; }
+.tz-planner .fc .fc-timegrid-event .fc-event-main-frame { height: 100%; }
+.tz-planner .is-deleting .fc-timegrid-event { overflow: visible; animation: tz-availability-wiggle 160ms ease-in-out infinite alternate; transform-origin: 50% 20%; }
+.tz-planner .is-deleting .tz-availability-body { cursor: default; }
+.tz-availability-delete { position: absolute; top: -8px; right: -8px; z-index: 5; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 1px solid var(--border-strong); border-radius: 50%; background: var(--popover); color: var(--foreground); cursor: pointer; box-shadow: 0 2px 5px color-mix(in srgb, var(--foreground) 15%, transparent); }
+.tz-availability-delete:hover { background: var(--destructive); color: var(--destructive-foreground); }
+.tz-planner-caption .tz-delete-done { margin-left: auto; color: var(--accent); }
+.tz-planner-caption .tz-delete-done + .tz-window-pick { margin-left: 0; }
+@keyframes tz-availability-wiggle { from { transform: rotate(-0.4deg); } to { transform: rotate(0.4deg); } }
+@media (prefers-reduced-motion: reduce) { .tz-planner .is-deleting .fc-timegrid-event { animation: none; outline: 1px solid var(--accent); } }

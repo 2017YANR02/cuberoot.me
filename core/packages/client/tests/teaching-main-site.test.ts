@@ -49,7 +49,7 @@ describe('main-site teaching architecture', () => {
   });
 
   it('exposes the workspace from the existing account page and supports narrow screens', () => {
-    expect(readClient('app/[lang]/account/page.tsx')).toContain("href: '/org'");
+    expect(readClient('components/account/AccountSettings.tsx')).toContain("href: '/org'");
     const orgCss = readClient('app/[lang]/org/org.css');
     expect(orgCss).toContain("@import '../../../components/teaching/teaching.css';");
     const css = readClient('components/teaching/teaching.css');
@@ -246,7 +246,7 @@ describe('main-site teaching architecture', () => {
   });
 
   it('keeps student account binding explicit and token-safe in the main site', () => {
-    const account = readClient('app/[lang]/account/page.tsx');
+    const account = readClient('components/account/AccountSettings.tsx');
     const manager = readClient('app/[lang]/org/_components/StudentAccountBindingManager.tsx');
     const consume = readClient('app/[lang]/account/student-binding/page.tsx');
     const bindingPage = readClient('components/teaching/TeachingAccountBindingPage.tsx');
@@ -265,7 +265,7 @@ describe('main-site teaching architecture', () => {
   });
 
   it('keeps learner and guardian reading inside the main-site learning center', () => {
-    const account = readClient('app/[lang]/account/page.tsx');
+    const account = readClient('components/account/AccountSettings.tsx');
     const learn = readClient('app/[lang]/learn/page.tsx');
     const workspace = readClient('components/teaching/LearnerWorkspace.tsx');
     const overview = readClient('app/[lang]/learn/[orgSlug]/students/[studentId]/page.tsx');

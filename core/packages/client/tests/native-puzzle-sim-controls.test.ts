@@ -11,7 +11,7 @@ vi.mock('react-i18next', async (importOriginal) => ({
     t: (key: string, fallback?: string) => fallback ?? key,
   }),
 }));
-vi.mock('next/navigation', () => ({ useParams: () => ({ lang: 'en' }), usePathname: () => '/sim' }));
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }), useParams: () => ({ lang: 'en' }), usePathname: () => '/sim' }));
 vi.mock('@/lib/cubing-scramble', () => ({ tnoodleRandomScramble: vi.fn() }));
 vi.mock('@/lib/pg-scramble', () => ({ pgRandomScramble: vi.fn() }));
 

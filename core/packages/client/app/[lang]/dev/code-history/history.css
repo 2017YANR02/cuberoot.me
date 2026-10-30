@@ -1,0 +1,33 @@
+.code-history {
+  /* GitHub's Other swatch is a categorical data color, not a UI surface. */
+  --code-history-other: #ededed;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 48px 24px;
+  color: var(--foreground);
+}
+.code-history h1 { margin: 0 0 8px; font-size: clamp(1.5rem, 4vw, 2rem); font-weight: 600; }
+.code-history-note { color: var(--muted-foreground); font-size: .875rem; margin: 0; }
+.code-history-chart { margin-top: 32px; width: 100%; }
+.code-history-chart svg { display: block; overflow: visible; }
+.code-history-axis text, .code-history-tick { fill: var(--muted-foreground); font-size: 12px; }
+.code-history-axis line { stroke: var(--border-default); }
+.code-history-cursor { stroke: var(--foreground); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.code-history-controls { display: flex; align-items: center; gap: 16px; margin: 20px 0; }
+.code-history-play { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; padding: 0; color: var(--foreground); background: transparent; border: 1px solid var(--border-default); border-radius: 8px; cursor: pointer; }
+.code-history-play:hover { background: var(--muted); }
+.code-history-slider { flex: 1; min-width: 0; accent-color: var(--accent); cursor: pointer; }
+.code-history-controls output { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.code-history-bar { display: flex; height: 18px; border-radius: 9px; overflow: hidden; }
+.code-history-bar span { height: 100%; flex-shrink: 0; }
+.code-history-legend { display: flex; flex-wrap: wrap; gap: 14px 26px; margin: 20px 0 0; padding: 0; list-style: none; }
+.code-history-legend li { display: flex; align-items: center; gap: 8px; }
+.code-history-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.code-history-percentage { color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+.code-history-source { margin-top: 32px; }
+.code-history-source a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 500px) {
+  .code-history { padding: 32px 16px; }
+  .code-history-controls { gap: 10px; }
+  .code-history-play { width: 44px; height: 44px; }
+}

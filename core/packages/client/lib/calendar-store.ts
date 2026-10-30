@@ -234,6 +234,8 @@ export interface ExpandContext {
   meKey?: string;
   /** 已拒绝的邀请是否照样显示 */
   showDeclined?: boolean;
+  /** Search spans longer windows than the grid. */
+  occurrenceLimit?: number;
 }
 
 /**
@@ -252,7 +254,7 @@ export function expandRange(ctx: ExpandContext): EventOccurrence[] {
     const dur = Math.max(0, e.end - e.start);
     const starts = expandOccurrences({
       rrule: e.rrule, start: e.start, tz: e.tz, exdates: e.exdates,
-      from: ctx.from, to: ctx.to, durationMs: dur, limit: 400,
+      from: ctx.from, to: ctx.to, durationMs: dur, limit: ctx.occurrenceLimit ?? 400,
     });
     for (const s of starts) {
       out.push({ key: `${e.id}:${s}`, event: e, start: s, end: s + dur, recurring: e.rrule !== '' });

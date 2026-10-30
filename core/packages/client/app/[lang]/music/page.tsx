@@ -12,6 +12,7 @@ import BackHome from '@/components/BackHome';
 import { ClearButton } from '@/components/ClearButton';
 import SearchInput from '@/components/SearchInput';
 import { useMembership } from '@/hooks/useMembership';
+import { useRequireMembership } from '@/hooks/useRequireMembership';
 import { tr, useLang } from '@/i18n/tr';
 import { useIsAdmin } from '@/lib/auth-store';
 import {
@@ -240,6 +241,7 @@ export default function MusicPage() {
   useLang();
   const player = useMusicPlayer();
   const { isMember, loading: membershipLoading } = useMembership();
+  const requireMembership = useRequireMembership(isMember);
   const isAdmin = useIsAdmin();
   const [sharedTrack] = useQueryState('track', parseAsString.withDefault(''));
   useEffect(() => { if (sharedTrack) void selectMusic(sharedTrack); }, [sharedTrack]);
@@ -277,7 +279,7 @@ export default function MusicPage() {
       : tr({ zh: '单曲循环', en: 'Repeat one' });
 
   const downloadCurrent = async () => {
-    if (!current || !isMember || downloading) return;
+    if (!current || downloading || !requireMembership()) return;
     setDownloading(true);
     setActionMessage(null);
     setActionError(null);
@@ -340,17 +342,14 @@ export default function MusicPage() {
             <details className="music-library-more">
               <summary aria-label={tr({ zh: '曲库选项', en: 'Library options' })}><MoreHorizontal size={22} /></summary>
               <div className="music-library-actions">
-                {isMember && !membershipLoading && <>
-                  <button type="button" className="music-text-button" onClick={() => setDialog('upload')}>
+                {!membershipLoading && <>
+                  <button type="button" className="music-text-button" onClick={() => { if (requireMembership()) setDialog('upload'); }}>
                     <Upload aria-hidden="true" />{tr({ zh: '上传音乐', en: 'Upload music' })}
                   </button>
-                  <AppLink href="/music/manage" prefetch={false} className="music-text-button">
+                  <AppLink href="/music/manage" prefetch={false} className="music-text-button" onClick={event => { if (!requireMembership()) event.preventDefault(); }}>
                     <ListMusic aria-hidden="true" />{isAdmin ? tr({ zh: '审核与管理', en: 'Review & manage' }) : tr({ zh: '我的上传', en: 'My uploads' })}
                   </AppLink>
                 </>}
-                {!isMember && !membershipLoading && <AppLink href="/membership" prefetch={false} className="music-text-button">
-                  {tr({ zh: '会员上传与下载', en: 'Member uploads & downloads' })}
-                </AppLink>}
                 <AppLink href="/about" prefetch={false} className="music-text-button">{tr({ zh: '开源项目与致谢', en: 'Open-source credits' })}</AppLink>
                 <div className="music-back-row"><BackHome prefetch={false} /></div>
               </div>
@@ -445,16 +444,11 @@ export default function MusicPage() {
           {current && (
             <details className="music-current-more"><summary aria-label={tr({ zh: '歌曲选项', en: 'Track options' })}><MoreHorizontal size={22} /></summary>
             <div className="music-current-actions">
-              {isMember && (
+              {!membershipLoading && (
                 <button type="button" className="music-text-button" onClick={() => { void downloadCurrent(); }} disabled={downloading}>
                   <Download aria-hidden="true" />
                   {downloading ? tr({ zh: '正在下载…', en: 'Downloading…' }) : tr({ zh: '下载', en: 'Download' })}
                 </button>
-              )}
-              {!membershipLoading && !isMember && (
-                <AppLink href="/membership" prefetch={false} className="music-membership-link">
-                  {tr({ zh: '开通会员后下载', en: 'Join to download' })}<span aria-hidden="true">→</span>
-                </AppLink>
               )}
               {isAdmin && current.databaseId && (
                 <>

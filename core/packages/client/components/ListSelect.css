@@ -169,6 +169,9 @@ img.list-select-flag { object-fit: cover; }
 }
 .list-select-item--disabled:hover { background: none; }
 
-.list-select-item--child { padding-inline-start: 28px; }
+.list-select-columns { display: flex; align-items: stretch; min-height: 0; }
+.list-select-columns > .list-select-list { flex: 1; min-width: 0; }
+.list-select-submenu { margin-inline-start: 8px; }
+.list-select-popup:has(.list-select-submenu), .wca-relation-filter-popup:has(.list-select-submenu) { min-width: min(320px, calc(100vw - 24px)); }
+.list-select-item .list-select-icon { width: auto; min-width: 16px; height: auto; }
 .list-select-group-chevron { margin-inline-start: auto; transform: rotate(-90deg); }
-.list-select-group-chevron--open { transform: none; }

@@ -718,7 +718,6 @@
 .globe-page .globe-search-person-flag {
     width: 18px;
     height: 13.5px;
-    border-radius: 2px;
     flex-shrink: 0;
 }
 .globe-page .globe-search-item {
@@ -1007,7 +1006,6 @@
 .globe-page .cuber-flag {
     width: 18px;
     height: 13.5px;
-    border-radius: 2px;
     flex-shrink: 0;
 }
 
@@ -1194,7 +1192,6 @@
     height: 13px;
     flex-shrink: 0;
     object-fit: cover;
-    border-radius: 2px;
     box-shadow: 0 0 0 1px rgba(0,0,0,0.12);
 }
 .globe-page span.cuber-step-flag {
@@ -1434,7 +1431,6 @@
     display: inline-block;
     width: 14px;
     height: 10.5px;
-    border-radius: 2px;
     vertical-align: -1px;
     flex-shrink: 0;
 }
@@ -1443,7 +1439,6 @@
     width: 14px;
     height: 10.5px;
     object-fit: cover;
-    border-radius: 2px;
     vertical-align: -1px;
 }
 
@@ -1522,7 +1517,6 @@
     display: inline-block;
     width: 16px;
     height: 12px;
-    border-radius: 2px;
     object-fit: cover;
     vertical-align: -1px;
     margin-right: 6px;

@@ -34,7 +34,8 @@ export const multithreadPaths = {
 export const multithreadSources = [
   'Cargo.toml', 'Cargo.lock', 'src/main.rs', 'src/lib.rs', 'src/native_parallel.rs', 'src/batch.rs',
   'src/search.rs', 'src/cube.rs', 'src/coord.rs', 'src/table.rs', 'src/opt10.rs',
-  'src/opt10_table.rs', 'src/opt10_generate.rs', 'src/h10_coord.rs', 'src/h10_table.rs',
+  'src/opt10_table.rs', 'src/eo_table.rs', 'src/opt11.rs', 'src/opt11_generate.rs', 'src/opt10_generate.rs', 'src/h10_coord.rs', 'src/h10_table.rs',
+  'src/opt11_search.rs', 'src/opt11_lookup.rs', 'src/opt11_generate_candidate.rs',
   'src/h48_coord.rs', 'src/h48_table.rs', 'src/h48_variant.rs',
   'guard.mts', 'multithread-policy.mts', 'wasm-benchmark.mjs', 'variants.mjs',
   'wasm-adapter/shared/Cargo.toml', 'wasm-adapter/shared/Cargo.lock',
@@ -369,7 +370,16 @@ function collectOpt10BaselineReference(candidate:'baseline'|'hotpath'|'coset'='b
   assert.equal(binaryHash(config.executable),r.build.binary.sha256);
   assert.equal(binaryHash(resolve(archive,`${candidate}-native`)),r.build.binary.sha256);
   assert.equal(hash(bounded(resolve(archive,`${candidate}-build.json`))),r.build.sha256);
-  for(const name of opt9ExperimentBuildSources)assert.equal(hash(bounded(resolve(archive,name))),r.build.sourceSha256[name],`Preserved Opt10 ${candidate} source changed: ${name}`);
+  // A frozen reference is bound to its own recorded build, not today's source
+  // inventory. New Opt11 modules must not make a preserved Opt10 snapshot look
+  // incomplete. Current candidates are still checked against the current list.
+  const frozenSources = Object.entries(r.build.sourceSha256);
+  assert(frozenSources.length > 0, 'Preserved Opt10 build has no source inventory');
+  for(const [name, sha256] of frozenSources) {
+    assert(!isAbsolute(name) && !name.includes('..'));
+    assert(typeof sha256 === 'string' && /^[a-f0-9]{64}$/.test(sha256));
+    assert.equal(hash(bounded(resolve(archive,name))),sha256,`Preserved Opt10 ${candidate} source changed: ${name}`);
+  }
   return {report:{path:report.path,sha256:report.sha256},resources:{path:resources.path,sha256:resources.sha256},exit:{path:exit.path,sha256:exit.sha256},
     launch:{path:launch.path,sha256:launch.sha256},results,build:r.build,totalSeconds:r.totalSeconds,boot:s.boot,swapouts:s.swapouts,
     ...(manifest?{manifest}: {})};

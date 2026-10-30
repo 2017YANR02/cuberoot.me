@@ -448,7 +448,7 @@ describe('跨包契约', () => {
   });
 
   it('注销入口链到独立一屏,不是弹层', () => {
-    const page = readFileSync(join(CLIENT, 'app/[lang]/account/page.tsx'), 'utf8');
+    const page = readFileSync(join(CLIENT, 'components/account/AccountSettings.tsx'), 'utf8');
     expect(page).toContain("if (nextView) params.set('view', nextView)");
     expect(page).toContain("<AppLink href={accountHref('delete')}");
     expect(page).toContain('DeleteAccountPanel');

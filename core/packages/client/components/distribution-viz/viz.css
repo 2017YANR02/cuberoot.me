@@ -555,8 +555,7 @@ body[data-site-scenery] .viz-page :is(
   height: 12px;
   vertical-align: middle;
   margin-right: 4px;
-  border-radius: 2px;
-}
+  }
 
 .viz-page .player-chip .chip-remove {
   margin-left: 2px;

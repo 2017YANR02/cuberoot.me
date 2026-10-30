@@ -11,6 +11,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Bell, ChevronDown, Clock, MapPin, Palette, Repeat, Text, Trash2, Users, X, Globe } from '@app-foundation/icons/lucide';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { DateInput } from '@/components/DateInput';
+import AppLink from '@/components/AppLink';
 import { ListSelect } from '@/components/ListSelect';
 import CalendarColorSelect from '@/components/CalendarColorSelect';
 import BoolToggle from '@/components/BoolToggle';
@@ -19,7 +20,7 @@ import { useEffectiveTheme } from '@/lib/theme';
 import { colorHex } from '@/lib/calendar-colors';
 import { tr, useLang } from '@/i18n/tr';
 import { wallPartsIn, wallToUtc, localZone, formatOffset, zoneOffsetMinutes } from '@cuberoot/shared/tz';
-import { REMINDER_CHOICES, type CalendarMeta, type EventGuest } from '@cuberoot/shared/calendar';
+import { calendarCompetitionId, competitionCalendarUrl, REMINDER_CHOICES, type CalendarMeta, type EventGuest } from '@cuberoot/shared/calendar';
 import { zoneLabel, zoneOptions, zoneSearchTerms } from '@/lib/tz-zones';
 import RepeatEditor from './RepeatEditor';
 import GuestPicker from './GuestPicker';
@@ -90,6 +91,11 @@ export default function EventDialog(props: Props) {
   const isMobile = useIsMobile(900);
   const theme = useEffectiveTheme();
   const [d, setD] = useState<DialogDraft>(props.draft);
+  const competitionId = calendarCompetitionId(d.description);
+  const competitionUrl = competitionId ? competitionCalendarUrl(competitionId) : '';
+  const notes = competitionId
+    ? d.description.split(/\r?\n/).filter(line => calendarCompetitionId(line) !== competitionId).join('\n')
+    : d.description;
   const titleRef = useRef<HTMLInputElement>(null);
   const [showTz, setShowTz] = useState(false);
   const backdropProps = useModalDismiss(props.onClose, props.saving);
@@ -406,15 +412,20 @@ export default function EventDialog(props: Props) {
 
           <div className="cal-field cal-event-description">
             <Text size={16} className="cal-field-icon" aria-hidden />
-            <textarea
-              className="cal-textarea"
-              value={d.description}
-              readOnly={readOnly}
-              maxLength={5000}
-              rows={3}
-              placeholder={tr({ zh: '添加说明', en: 'Add description' })}
-              onChange={(e) => patch({ description: e.target.value })}
-            />
+            <div className="cal-field-main">
+              {competitionUrl && <AppLink href={competitionUrl} prefetch={false} target="_blank" rel="noopener noreferrer" className="cal-competition-link">
+                {competitionUrl}
+              </AppLink>}
+              <textarea
+                className="cal-textarea"
+                value={notes}
+                readOnly={readOnly}
+                maxLength={5000 - (competitionUrl ? competitionUrl.length + 1 : 0)}
+                rows={competitionId ? 1 : 3}
+                placeholder={tr({ zh: '添加说明', en: 'Add description' })}
+                onChange={(e) => patch({ description: competitionUrl ? `${competitionUrl}\n${e.target.value}` : e.target.value })}
+              />
+            </div>
           </div>
         </div>
 

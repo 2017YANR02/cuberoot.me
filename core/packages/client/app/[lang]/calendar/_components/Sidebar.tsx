@@ -72,7 +72,7 @@ export default function Sidebar(props: Props) {
   const cellKey = (date: Date): string => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
   return (
-    <aside className="cal-sidebar" inert={props.mobile && !props.open} aria-label={tr({ zh: '日历菜单', en: 'Calendar menu' })}>
+    <aside id="calendar-sidebar" className="cal-sidebar" inert={props.mobile && !props.open} aria-label={tr({ zh: '日历菜单', en: 'Calendar menu' })}>
       {props.mobileHeader}
       {/* Google 把「创建」放在左栏最上面,不是右下角的悬浮钮 —— 那个只在窄屏留着。 */}
       <button type="button" className="cal-create-btn" onClick={props.onCreate}>

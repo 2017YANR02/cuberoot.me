@@ -10,7 +10,7 @@ import { installedPetAvailable } from '@/lib/installed-content';
 // Drive from anywhere: window.dispatchEvent(new CustomEvent('clawd:state', { detail: 'happy' }))
 //                  or window.clawdPet?.set('thinking') / window.clawdPet?.idle()
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useAssistantWorkspace } from '@/hooks/useAssistantWorkspace';
 import { assistantConversations, assistantOwner } from '@/lib/assistant-conversations';
 import dynamic from 'next/dynamic';
@@ -50,6 +50,7 @@ import { ROOTBEAST_BASE, ROOTBEAST_DIZZY, ROOTBEAST_HANG, ROOTBEAST_MUSIC, ROOTB
 import { resolveDeskPets, type DeskPetCatalog, type DeskPetEntry } from '@cuberoot/shared/deskpet';
 import { getDeskPetCatalog, saveDeskPetCatalog } from '@/lib/deskpet-api';
 import { THEMES, THEME_IDS, type MiniTheme, type ThemeId } from '@/lib/deskpet-themes';
+import { getDeskPetSelection, getServerDeskPetSelection, setDeskPetSelection, subscribeDeskPetSelection } from '@/lib/deskpet-selection';
 import { AudioLines, SquarePen } from '@app-foundation/icons/lucide';
 import HeaderToggles from '@/components/HeaderToggles';
 import { Tooltip } from '@/components/Tooltip';
@@ -93,7 +94,6 @@ const REACH = MAX * 40;
 const SLEEP_AFTER = 60000;
 const POS_KEY = 'clawd-deskpet-pos';
 const SIZE_KEY = 'clawd-deskpet-size';
-const CHAR_KEY = 'clawd-deskpet-char';
 const COMPACT_KEY = 'clawd-deskpet-compact';
 const MINI_KEY = 'clawd-deskpet-mini'; // { edge, preRight, preBottom } — restore cling across reloads
 
@@ -322,6 +322,7 @@ export default function DeskPet() {
   const [mounted, setMounted] = useState(false);
   const [size, setSize] = useState<Size>('m');
   const [character, setCharacter] = useState<ThemeId>('rootbeast');
+  const selectedCharacter = useSyncExternalStore(subscribeDeskPetSelection, getDeskPetSelection, getServerDeskPetSelection);
   const [compact, setCompact] = useState(false);
   const [visible] = useDeskPetVisible();
   const [temporarilyHidden, setHidden] = useState(false);
@@ -391,11 +392,9 @@ export default function DeskPet() {
     if (!catalog && !isAdmin) return;
     const allowed = resolveDeskPets(THEME_IDS, catalog?.entries ?? [])
       .filter(entry => isAdmin || (!entry.locked && !entry.removed));
-    let saved: string | null = null;
-    try { saved = localStorage.getItem(CHAR_KEY); } catch {}
-    const next = allowed.find(entry => entry.id === saved)?.id ?? allowed[0]?.id;
+    const next = allowed.find(entry => entry.id === selectedCharacter)?.id ?? allowed[0]?.id;
     if (next) setCharacter(next as ThemeId);
-  }, [catalog, isAdmin]);
+  }, [catalog, isAdmin, selectedCharacter]);
 
   const updateCatalog = async (nextEntries: DeskPetEntry[]) => {
     if (!isAdmin || !catalog || catalogBusy.current) return false;
@@ -1728,7 +1727,7 @@ export default function DeskPet() {
         const r = root.getBoundingClientRect();
         recenterRef.current = { x: r.left + r.width * VC[character][0], y: r.top + r.height * VC[character][1] };
         pendingPlaytimeRef.current = s;
-        persistItem(CHAR_KEY, scene.character);
+        setDeskPetSelection(scene.character);
         setCharacter(scene.character);
         return;
       }
@@ -2087,7 +2086,7 @@ export default function DeskPet() {
     setCompact(false);
     persistItem(COMPACT_KEY, 'false');
     setCharacter(next);
-    persistItem(CHAR_KEY, next);
+    setDeskPetSelection(next);
   };
 
   const toggleRandom = () => {

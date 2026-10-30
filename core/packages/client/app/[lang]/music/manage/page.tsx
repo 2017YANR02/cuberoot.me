@@ -6,6 +6,7 @@ import { parseAsString, useQueryState } from 'nuqs';
 import AppLink from '@/components/AppLink';
 import HeaderToggles from '@/components/HeaderToggles';
 import { useMembership } from '@/hooks/useMembership';
+import { useRequireMembership } from '@/hooks/useRequireMembership';
 import { tr, useLang } from '@/i18n/tr';
 import { useIsAdmin } from '@/lib/auth-store';
 import {
@@ -44,6 +45,7 @@ function cleanDraft(draft: MusicMetadataDraft): MusicMetadataDraft {
 export default function MusicManagePage() {
   useLang();
   const { isMember, loading: membershipLoading } = useMembership();
+  const requireMembership = useRequireMembership(isMember);
   const isAdmin = useIsAdmin();
   const [selectedId, setSelectedId] = useQueryState('track', parseAsString);
   const [tracks, setTracks] = useState<ManagedTrack[]>([]);
@@ -185,7 +187,7 @@ export default function MusicManagePage() {
     </header>
 
     {membershipLoading ? <p className="music-state">{tr({ zh: '正在确认会员状态…', en: 'Checking membership…' })}</p>
-      : !isMember ? <p className="music-state">{tr({ zh: '会员可以上传和管理音乐。', en: 'Members can upload and manage music.' })}{' '}<AppLink href="/membership">{tr({ zh: '查看会员', en: 'View membership' })}</AppLink></p>
+      : !isMember ? <p className="music-state">{tr({ zh: '会员可以上传和管理音乐。', en: 'Members can upload and manage music.' })}{' '}<button type="button" className="music-text-button" onClick={() => requireMembership()}>{tr({ zh: '上传与管理音乐', en: 'Upload & manage music' })}</button></p>
         : loading ? <p className="music-state"><LoadingIndicator>{tr({ zh: '正在载入曲库…', en: 'Loading library…' })}</LoadingIndicator></p>
           : <div className="music-manager-layout">
             <div className="music-manager-list" aria-label={tr({ zh: '曲库内容', en: 'Library content' })}>

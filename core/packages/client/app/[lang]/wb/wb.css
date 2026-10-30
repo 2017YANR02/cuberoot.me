@@ -361,7 +361,6 @@
 .wb-flag {
     width: 16px;
     height: 12px;
-    border-radius: 2px;
     box-shadow: 0 0 0 0.5px color-mix(in srgb, var(--foreground) 10%, transparent);
     flex-shrink: 0;
     object-fit: cover;

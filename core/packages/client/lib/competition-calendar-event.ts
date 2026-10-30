@@ -1,7 +1,7 @@
 import { localZone } from '@cuberoot/shared/tz';
 import { fetchBootstrap, fetchEvents, syncCalendarCompetitions } from './calendar-api';
 
-import { competitionCalendarRange, type CompetitionCalendarInput } from '@cuberoot/shared/calendar';
+import { calendarCompetitionId, competitionCalendarRange, competitionCalendarUrl, type CompetitionCalendarInput } from '@cuberoot/shared/calendar';
 export { competitionCalendarRange, type CompetitionCalendarInput } from '@cuberoot/shared/calendar';
 
 async function competitionCalendarContext(input: CompetitionCalendarInput) {
@@ -9,11 +9,11 @@ async function competitionCalendarContext(input: CompetitionCalendarInput) {
   const calendar = bootstrap.calendars.find(item => item.isDefault);
   if (!calendar) throw new Error('Default calendar unavailable');
   const range = competitionCalendarRange(input.startDate, input.endDate, calendar.tz);
-  const link = `https://www.worldcubeassociation.org/competitions/${encodeURIComponent(input.id)}`;
+  const link = competitionCalendarUrl(input.id);
   const { events, invitedIds } = await fetchEvents(range.start, range.end);
   const ownCalendars = new Set(bootstrap.calendars.map(item => item.id));
   const exists = events.some(event => ownCalendars.has(event.calendarId) && !invitedIds.includes(event.id)
-    && event.description.split(/\r?\n/).includes(link));
+    && calendarCompetitionId(event.description) === input.id);
   return { calendar, range, link, exists };
 }
 

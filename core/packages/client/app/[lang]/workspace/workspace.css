@@ -200,7 +200,7 @@
 .cuberoot-workspace-navigation { --af-nav-font-size: 16px; }
 .cuberoot-workspace-navigation .af-nav-group > summary::after { content: '›'; margin-left: auto; font-size: 1.1rem; transform: rotate(90deg); transition: transform 180ms ease; }
 .cuberoot-workspace-navigation .af-nav-group[open] > summary::after { transform: rotate(-90deg); }
-.cuberoot-workspace-navigation .af-nav-group .af-nav-link { font-size: .9em; }
+.cuberoot-workspace-navigation .af-nav-group .af-nav-link { font-size: var(--af-nav-font-size); }
 @supports selector(details::details-content) {
   .cuberoot-workspace-navigation .af-nav-group { interpolate-size: allow-keywords; }
   .cuberoot-workspace-navigation .af-nav-group::details-content { block-size: 0; overflow: clip; opacity: 0; transition: block-size 200ms ease, opacity 160ms ease, content-visibility 200ms allow-discrete; }

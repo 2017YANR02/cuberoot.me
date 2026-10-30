@@ -9,6 +9,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Check, RefreshCw, AlertTriangle } from '@app-foundation/icons/lucide';
 import { useQueryState } from 'nuqs';
+import { useRouter } from 'next/navigation';
+import { clearMembershipReturn, membershipReturnPath, readMembershipReturn, rememberMembershipReturn } from '@/lib/membership-return';
 import { tr, useLang } from '@/i18n/tr';
 import { useAuthStore, isAdmin, getSessionToken, getWcaToken } from '@/lib/auth-store';
 import { isMiniProgramCommerceRestricted } from '@/lib/miniprogram-bridge';
@@ -59,6 +61,7 @@ function planUnit(plan: MembershipPlan, isZh: boolean): string {
 export default function MembershipPage() {
   const { content: benefits, setContent: setBenefits } = useMembershipBenefits();
   const benefitMap = new Map(benefits.items.map(item => [item.id, item]));
+  const router = useRouter();
   const lang = useLang();
   const isZh = lang !== 'en';
 
@@ -102,11 +105,21 @@ export default function MembershipPage() {
       setMembership(null);
       return;
     }
+    const uid = user?.uid;
+    const queryNext = membershipReturnPath(new URLSearchParams(window.location.search).get('next'));
+    if (uid && queryNext) rememberMembershipReturn(queryNext, uid);
     getMyMembership().then((r) => {
+      if (useAuthStore.getState().user?.uid !== uid) return;
+      const destination = queryNext ?? (uid ? readMembershipReturn(uid) : null);
+      if ((r.isMember ?? r.membership?.active) && destination) {
+        clearMembershipReturn();
+        router.replace(destination);
+        return;
+      }
       setMembership(r.membership);
       setEnterpriseBuyer({ owner: user, eligible: r.canPurchaseEnterprise === true });
     }).catch(() => setEnterpriseBuyer(null));
-  }, [user]);
+  }, [user, router]);
 
   useEffect(() => {
     if (commerceRestricted !== false) return;
@@ -120,6 +133,18 @@ export default function MembershipPage() {
   useEffect(() => {
     if (mounted && commerceRestricted === false) refreshMembership();
   }, [mounted, commerceRestricted, user?.wcaId, refreshMembership]);
+
+  // Also reconcile after returning from an external signing app or another payment tab.
+  useEffect(() => {
+    if (!mounted || !loggedIn || commerceRestricted !== false) return;
+    const refreshOnReturn = () => { if (document.visibilityState === 'visible') refreshMembership(); };
+    window.addEventListener('focus', refreshOnReturn);
+    document.addEventListener('visibilitychange', refreshOnReturn);
+    return () => {
+      window.removeEventListener('focus', refreshOnReturn);
+      document.removeEventListener('visibilitychange', refreshOnReturn);
+    };
+  }, [mounted, loggedIn, commerceRestricted, refreshMembership]);
 
   // 支付返回(return_url 带 ?paid=<单号>):轮询查单几次,确认入账后刷新状态。
   useEffect(() => {

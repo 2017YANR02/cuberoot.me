@@ -60,7 +60,7 @@ pub trait PruningOracle {
     /// Optional batched reads of the same immutable oracle. None slots must
     /// not issue a lookup; their result is unused. Returned bounds must equal
     /// lookup(query), independent of lookup/prepare call interleaving.
-    #[cfg(any(feature = "wasm-batch-probes", all(feature = "opt10-native-batch", not(target_family = "wasm"))))]
+    #[cfg(any(feature = "wasm-batch-probes", all(any(feature = "opt10-native-batch", feature = "opt11-native-batch"), not(target_family = "wasm"))))]
     #[inline(always)]
     fn lookup_batch(&self, queries: &[Option<Self::Query>; MAX_CONTEXTS]) -> [u8; MAX_CONTEXTS] {
         std::array::from_fn(|i| queries[i].map_or(0, |query| self.lookup(query)))
@@ -238,9 +238,9 @@ pub struct SearchStats {
     pub dual_parent_cuts: u64,
     /// Local parent masks strengthened by a child coset proof, and the actual
     /// inverse half-turn bits removed. These are not global subtree counts.
-    #[cfg(any(all(feature = "wasm-coset-prune", any(target_family = "wasm", test)), all(feature = "opt10-native-coset", not(target_family = "wasm"))))]
+    #[cfg(any(all(feature = "wasm-coset-prune", any(target_family = "wasm", test)), all(any(feature = "opt10-native-coset", feature = "opt11-native-coset"), not(target_family = "wasm"))))]
     pub coset_parent_proofs: u64,
-    #[cfg(any(all(feature = "wasm-coset-prune", any(target_family = "wasm", test)), all(feature = "opt10-native-coset", not(target_family = "wasm"))))]
+    #[cfg(any(all(feature = "wasm-coset-prune", any(target_family = "wasm", test)), all(any(feature = "opt10-native-coset", feature = "opt11-native-coset"), not(target_family = "wasm"))))]
     pub coset_half_prunes: u64,
     #[cfg(all(feature = "opt10-native-coset-chain", not(target_family = "wasm")))]
     pub coset_chain_proofs: u64,
@@ -720,7 +720,7 @@ impl Context {
     /// swap preserves the certificate's identity via the saved side bits.
     /// Only our own pending branch mask is changed; no Frame bound, cache,
     /// other split context, prefix ownership, or ranking is modified.
-    #[cfg(any(all(feature = "wasm-coset-prune", any(target_family = "wasm", test)), all(feature = "opt10-native-coset", not(target_family = "wasm"))))]
+    #[cfg(any(all(feature = "wasm-coset-prune", any(target_family = "wasm", test)), all(any(feature = "opt10-native-coset", feature = "opt11-native-coset"), not(target_family = "wasm"))))]
     fn reject_backward_coset(&mut self, inverse_rejected: bool, excess: u8, stats: &mut SearchStats) {
         if excess != 2 { return; }
         let Some(parent_index) = self.stack.len().checked_sub(2) else { return; };
@@ -1317,7 +1317,7 @@ fn search_depth_contexts<O: PruningOracle, const N: usize>(
     let profiling = oracle.profile_search();
     #[cfg(all(feature = "opt10-native-dual", not(target_family = "wasm")))]
     let dual_rejection = parent_propagation && oracle.allow_dual_rejection();
-    #[cfg(any(all(feature = "wasm-coset-prune", any(target_family = "wasm", test)), all(feature = "opt10-native-coset", not(target_family = "wasm"))))]
+    #[cfg(any(all(feature = "wasm-coset-prune", any(target_family = "wasm", test)), all(any(feature = "opt10-native-coset", feature = "opt11-native-coset"), not(target_family = "wasm"))))]
     let backward_coset = oracle.allow_backward_coset();
     #[cfg(all(feature = "opt10-native-coset-chain", not(target_family = "wasm")))]
     let coset_chain = oracle.allow_coset_chain();
@@ -1423,7 +1423,7 @@ fn search_depth_contexts<O: PruningOracle, const N: usize>(
 
         // The opt-in batch path issues all inverse reads before any
         // survivor's normal coordinate work. Processing/statistics stay ordered.
-        #[cfg(any(feature = "wasm-batch-probes", all(feature = "opt10-native-batch", not(target_family = "wasm"))))]
+        #[cfg(any(feature = "wasm-batch-probes", all(any(feature = "opt10-native-batch", feature = "opt11-native-batch"), not(target_family = "wasm"))))]
         let inverse_bounds = oracle.lookup_batch(&inverse_coordinate);
         // stage 1b: inverse PDB reads; survivors prepare the normal-side query.
         for (i, context) in contexts.iter_mut().enumerate() {
@@ -1433,9 +1433,9 @@ fn search_depth_contexts<O: PruningOracle, const N: usize>(
             let remaining = context.remaining(depth);
             let frame = context.stack.last_mut().unwrap();
             if let Some(_index) = inverse_coordinate[i] {
-                #[cfg(not(any(feature = "wasm-batch-probes", all(feature = "opt10-native-batch", not(target_family = "wasm")))))]
+                #[cfg(not(any(feature = "wasm-batch-probes", all(any(feature = "opt10-native-batch", feature = "opt11-native-batch"), not(target_family = "wasm")))))]
                 { frame.inverse_bound = oracle.lookup(_index); }
-                #[cfg(any(feature = "wasm-batch-probes", all(feature = "opt10-native-batch", not(target_family = "wasm"))))]
+                #[cfg(any(feature = "wasm-batch-probes", all(any(feature = "opt10-native-batch", feature = "opt11-native-batch"), not(target_family = "wasm"))))]
                 { frame.inverse_bound = inverse_bounds[i]; }
                 stats.probes += 1;
                 stats.inverse_probes += 1;
@@ -1471,7 +1471,7 @@ fn search_depth_contexts<O: PruningOracle, const N: usize>(
             }
         }
 
-        #[cfg(any(feature = "wasm-batch-probes", all(feature = "opt10-native-batch", not(target_family = "wasm"))))]
+        #[cfg(any(feature = "wasm-batch-probes", all(any(feature = "opt10-native-batch", feature = "opt11-native-batch"), not(target_family = "wasm"))))]
         let normal_bounds = oracle.lookup_batch(&normal_coordinate);
         // stage 1c: normal PDB reads, kept separate from coordinate computation.
         for (i, context) in contexts.iter_mut().enumerate() {
@@ -1480,9 +1480,9 @@ fn search_depth_contexts<O: PruningOracle, const N: usize>(
             };
             let remaining = context.remaining(depth);
             let frame = context.stack.last_mut().unwrap();
-            #[cfg(not(any(feature = "wasm-batch-probes", all(feature = "opt10-native-batch", not(target_family = "wasm")))))]
+            #[cfg(not(any(feature = "wasm-batch-probes", all(any(feature = "opt10-native-batch", feature = "opt11-native-batch"), not(target_family = "wasm")))))]
             { frame.normal_bound = oracle.lookup(_index); }
-            #[cfg(any(feature = "wasm-batch-probes", all(feature = "opt10-native-batch", not(target_family = "wasm"))))]
+            #[cfg(any(feature = "wasm-batch-probes", all(any(feature = "opt10-native-batch", feature = "opt11-native-batch"), not(target_family = "wasm"))))]
             { frame.normal_bound = normal_bounds[i]; }
             stats.probes += 1;
             #[cfg(all(feature = "opt10-native-profile", not(target_family = "wasm")))]
@@ -1637,7 +1637,7 @@ fn search_depth_contexts<O: PruningOracle, const N: usize>(
             if excess[i] != 0 {
                 #[cfg(all(feature = "opt10-native-coset-chain", not(target_family = "wasm")))]
                 let chain_proof = if coset_chain { context.coset_chain_proof(inverse_rejected[i], excess[i], stats) } else { None };
-                #[cfg(any(all(feature = "wasm-coset-prune", any(target_family = "wasm", test)), all(feature = "opt10-native-coset", not(target_family = "wasm"))))]
+                #[cfg(any(all(feature = "wasm-coset-prune", any(target_family = "wasm", test)), all(any(feature = "opt10-native-coset", feature = "opt11-native-coset"), not(target_family = "wasm"))))]
                 if backward_coset {
                     context.reject_backward_coset(inverse_rejected[i], excess[i], stats);
                 }
@@ -2192,7 +2192,7 @@ mod tests {
                         .replace(", dual_raised: 0", "")
                         .replace(", dual_parent_cuts: 0", "")
                 };
-                #[cfg(any(all(feature = "wasm-coset-prune", any(target_family = "wasm", test)), all(feature = "opt10-native-coset", not(target_family = "wasm"))))]
+                #[cfg(any(all(feature = "wasm-coset-prune", any(target_family = "wasm", test)), all(any(feature = "opt10-native-coset", feature = "opt11-native-coset"), not(target_family = "wasm"))))]
                 let trace = {
                     assert_eq!((result.stats.coset_parent_proofs, result.stats.coset_half_prunes), (0, 0));
                     trace.replace(", coset_parent_proofs: 0", "").replace(", coset_half_prunes: 0", "")
@@ -2222,7 +2222,7 @@ mod tests {
             digest.get(), aggregate.probes, aggregate.cache_reuses, aggregate.splits);
     }
 
-    #[cfg(any(feature = "wasm-batch-probes", all(feature = "opt10-native-batch", not(target_family = "wasm"))))]
+    #[cfg(any(feature = "wasm-batch-probes", all(any(feature = "opt10-native-batch", feature = "opt11-native-batch"), not(target_family = "wasm"))))]
     #[test]
     fn probe_pipeline_none_slots_issue_no_lookup() {
         struct Recording(std::cell::RefCell<Vec<u8>>);

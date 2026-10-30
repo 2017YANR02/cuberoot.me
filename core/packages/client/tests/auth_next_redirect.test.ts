@@ -2,11 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { nextQuery } from '@/lib/auth-store';
 
 /**
- * 「登录」入口是导航到 /account(全站没有登录弹层),?next= 负责登录后回到来处。
+ * 「登录」入口统一导航到 /account；聊天设置复用同一认证界面。?next= 负责登录后回到来处。
  * 这里锁两件容易出事的:回跳目标的规范形式,以及开放重定向。
  */
 describe('nextQuery — 登录链接的 ?next=', () => {
-  const decode = (q: string) => decodeURIComponent(q.replace(/^\?next=/, ''));
+  const decode = (q: string) => new URLSearchParams(q).get('next');
 
   it('记住当前页,供登录后回跳', () => {
     expect(decode(nextQuery('/zh/forum'))).toBe('/zh/forum');
@@ -23,8 +23,13 @@ describe('nextQuery — 登录链接的 ?next=', () => {
 
   it('已经在登录页时不塞 next —— 否则登录完又跳回登录页', () => {
     expect(nextQuery('/account')).toBe('');
+    expect(nextQuery('/zh/account?next=%2Fsim#signin')).toBe('');
     expect(nextQuery('/zh/account')).toBe('');
     expect(nextQuery('/en/account')).toBe('');
+    expect(nextQuery('/zh/chat?settings=account&next=%2Fsim')).toBe('');
+    expect(nextQuery('/en/chat?settings=account')).toBe('');
+    expect(decode(nextQuery('/chat'))).toBe('/chat');
+    expect(decode(nextQuery('/chat?settings=general'))).toBe('/chat?settings=general');
   });
 
   it('对 query 做转义,不生成畸形 href', () => {

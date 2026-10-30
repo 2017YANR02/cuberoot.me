@@ -39,8 +39,10 @@ const opt10Metadata = resolve(root, '.tmp/cubeopt-reverse/opt10-generated-v2/gen
 const opt10Input = resolve(root, '.tmp/cubeopt-reverse/wca100-single.tsv');
 const opt10PayloadBytes = 31_130_910_720;
 const opt10FileBytes = opt10PayloadBytes + 1024;
-const opt10ProofSources = ['src/opt10_generate.rs', 'src/opt10.rs', 'src/opt10_table.rs', 'src/coord.rs', 'src/cube.rs'];
-export const opt10ReviewSources = [...opt10ProofSources, 'src/main.rs', 'src/lib.rs', 'src/search.rs', 'src/table.rs', 'src/batch.rs',
+const opt10ProofSources = ['src/opt10_generate.rs', 'src/opt10.rs', 'src/opt10_table.rs', 'src/eo_table.rs', 'src/coord.rs', 'src/cube.rs'];
+export const opt10ReviewSources = [...opt10ProofSources, 'src/opt11.rs', 'src/opt11_generate.rs',
+  'src/opt11_search.rs', 'src/opt11_lookup.rs', 'src/opt11_generate_candidate.rs',
+  'src/main.rs', 'src/lib.rs', 'src/search.rs', 'src/table.rs', 'src/batch.rs',
   'examples/verify_opt10_generation.rs', 'Cargo.toml', 'Cargo.lock'];
 export const opt10ReviewScope = 'opt10-rebuild-v2-single100';
 export const opt10ReviewStages = ['verify-opt1', 'generate-opt10', 'solve-opt10'] as const;
@@ -287,6 +289,8 @@ export function resourceProtectionReasons(before: MemoryObservation, now: Memory
 
 /** Pure protocol validation. Tests never need to observe memory or open a PDB. */
 export function researchPolicy(label: string, executable: string, args: string[], env: NodeJS.ProcessEnv = process.env) {
+if (env.CUBEOPT_BACKEND === 'opt11' || args.some(arg => /^(?:generate|solve|query)-opt11$/.test(arg)))
+  throw Error('Opt11 is source-only; generation, table loading and solving are not authorized');
 if (env.CUBEOPT_BACKEND === 'corner' || executable === cornerExecutable)
   return cornerResearchPolicy(label, executable, args, env);
 if (env.CUBEOPT_OPT10_CURRENT_REVIEW !== undefined)

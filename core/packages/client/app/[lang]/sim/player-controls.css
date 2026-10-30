@@ -538,12 +538,27 @@
   gap: 2px;
 }
 
+.sim-logo-action {
+  appearance: none;
+  border: 0;
+  padding: 2px 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.sim-logo-action:disabled { cursor: wait; opacity: 0.5; }
+
 .sim-logo-member-prompt {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 4px;
   font-size: 12px;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 /* 背景档色块外观(各档 1:1 对齐 sim.css 的 .sim-canvas-wrap 固定背景)。选择器本体

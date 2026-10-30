@@ -7,6 +7,7 @@ import { sessionFetch } from '@/lib/session-fetch';
 
 import { apiUrl, publicApiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
+import { competitionCalendarColor, competitionCalendarDescription } from '@cuberoot/shared/calendar';
 import type {
   CalEvent, CalendarImport, CalendarMeta, EditScope, ShareDetail, ShareSettings, CompetitionCalendarInput,
 } from '@cuberoot/shared/calendar';
@@ -51,11 +52,19 @@ export async function fetchBootstrap(tz: string): Promise<BootstrapPayload> {
   return handleApi<BootstrapPayload>(r);
 }
 
-export async function fetchEvents(from: number, to: number): Promise<EventsPayload> {
+export async function fetchEvents(from: number, to: number, signal?: AbortSignal): Promise<EventsPayload> {
   const r = await sessionFetch(apiUrl(`/v1/calendar/events?from=${from}&to=${to}`), {
-    headers: authHeaders(false), cache: 'no-store',
+    headers: authHeaders(false), cache: 'no-store', signal,
   });
-  return handleApi<EventsPayload>(r);
+  const data = await handleApi<EventsPayload>(r);
+  return { ...data, events: data.events.map(normalizeCompetitionEvent) };
+}
+
+// Apply the same rule to existing events while the API deployment may lag the client.
+function normalizeCompetitionEvent<T extends { description?: string; color?: string }>(event: T): T {
+  const color = competitionCalendarColor(event.description ?? '', event.color);
+  if (color !== 'banana' || event.description == null) return event;
+  return { ...event, color, description: competitionCalendarDescription(event.description) };
 }
 
 export async function createCalendar(
@@ -85,16 +94,16 @@ export async function deleteCalendar(id: number): Promise<void> {
 
 export async function createEvent(draft: EventDraft): Promise<CalEvent> {
   const r = await sessionFetch(apiUrl('/v1/calendar/events'), {
-    method: 'POST', headers: authHeaders(), body: JSON.stringify(draft),
+    method: 'POST', headers: authHeaders(), body: JSON.stringify(normalizeCompetitionEvent(draft)),
   });
-  return (await handleApi<{ event: CalEvent }>(r)).event;
+  return normalizeCompetitionEvent((await handleApi<{ event: CalEvent }>(r)).event);
 }
 
 export async function updateEvent(id: number, draft: EventDraft, scope: EditScope): Promise<CalEvent> {
   const r = await sessionFetch(apiUrl(`/v1/calendar/events/${id}?scope=${scope}`), {
-    method: 'PATCH', headers: authHeaders(), body: JSON.stringify(draft),
+    method: 'PATCH', headers: authHeaders(), body: JSON.stringify(normalizeCompetitionEvent(draft)),
   });
-  return (await handleApi<{ event: CalEvent }>(r)).event;
+  return normalizeCompetitionEvent((await handleApi<{ event: CalEvent }>(r)).event);
 }
 
 export async function deleteEvent(id: number, scope: EditScope, occurrenceMs?: number): Promise<void> {
@@ -197,7 +206,8 @@ export async function fetchPublicCalendar(token: string, from: number, to: numbe
   const r = await sessionFetch(apiUrl(`/v1/calendar/public/${encodeURIComponent(token)}?from=${from}&to=${to}`), {
     cache: 'no-store',
   });
-  return handleApi<PublicCalendar>(r);
+  const data = await handleApi<PublicCalendar>(r);
+  return { ...data, events: data.events.map(normalizeCompetitionEvent) };
 }
 
 /** 订阅地址(Google / Apple 日历「通过网址添加」用的那个)。 */

@@ -356,6 +356,7 @@ body[data-site-scenery] .landing-search-input:not(.is-drag-over)::before {
 /* Composite controls paint their visual surface on a sibling or parent layer. */
 body[data-site-scenery] :is(
   .landing-search-input .landing-search-field,
+  .cal-search-bar .cal-search-field,
   .region-picker-search .region-picker-search-input,
   .sim-player-hlwrap .sim-player-input--hl,
   .auth-otp-native

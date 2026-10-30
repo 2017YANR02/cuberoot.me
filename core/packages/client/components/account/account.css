@@ -1,4 +1,4 @@
-/* /account — 「我的」页(未登录时是登录页)。登录方式面板的样式在 components/auth-panel.css,
+/* 账户设置(未登录时是登录页)。登录方式面板的样式在 components/auth-panel.css,
    其余(页面骨架 + 入口卡片)都在这儿。双主题,走全局 :root token。 */
 
 .account-page {
@@ -393,4 +393,23 @@
   .account-name { font-size: 1.4rem; }
   .account-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .account-card { padding: 14px 14px; gap: 12px; }
+}
+
+/* Compact resource entries share the same ordering and permission rules. */
+.account-page .account-cards { grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 12px; }
+.account-page .account-cards .account-card { min-height:64px;height:100%;padding:12px;border:0;border-radius:10px;gap:12px; }
+.account-page .account-cards .account-card:hover { background:var(--muted); }
+.account-page .account-cards .account-card-icon { color:var(--muted-foreground);width:22px;height:22px; }
+.account-page .account-cards .account-card-title { font-size:.9rem;font-weight:500; }
+.account-page .account-cards .account-card-desc { font-size:.78rem;line-height:1.45; }
+.account-page .account-cards .account-pet-card > img { width:40px;height:40px;object-fit:contain; }
+.account-entry-chevron { flex-shrink:0;color:var(--muted-foreground); }
+.account-page .account-cards .sortable-card:has(.sortable-card-drag-handle) .account-card { padding-right:36px; }
+.account-page .account-cards .sortable-card-drag-handle { inset:50% 4px auto auto;transform:translateY(-50%);opacity:.45; }
+.account-page .account-cards .sortable-card:hover .sortable-card-drag-handle,
+.account-page .account-cards .sortable-card-drag-handle:focus-visible { opacity:1; }
+.account-page .account-card:focus-visible,.account-back:focus-visible { outline:2px solid var(--ring);outline-offset:2px; }
+@media(max-width:640px) {
+  .account-page .account-cards { grid-template-columns:minmax(0,1fr); }
+  .account-page .account-cards .account-card { flex-wrap:nowrap; }
 }

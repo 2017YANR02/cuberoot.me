@@ -18,6 +18,8 @@ import {
   CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Columns3, Download, List, Menu, Plus, Search, Settings,
   Share2, Square, Undo2, Upload, X,
 } from '@app-foundation/icons/lucide';
+import { ContinuousInsetCorner, SidebarToggle } from '@app-foundation/navigation-ui';
+import '@app-foundation/navigation-ui/navigation.css';
 import AppLink from '@/components/AppLink';
 import { ListSelect } from '@/components/ListSelect';
 import { ClearButton } from '@/components/ClearButton';
@@ -27,12 +29,12 @@ import { useModalBackdrop } from '@/hooks/useModalDismiss';
 import { DateTime } from 'luxon';
 import { tr, useLang } from '@/i18n/tr';
 import { localZone, isValidZone, formatOffset, zoneOffsetMinutes } from '@cuberoot/shared/tz';
-import { eventsToIcs, type CalEvent, type CalendarImport, type EditScope } from '@cuberoot/shared/calendar';
+import { calendarCompetitionId, eventsToIcs, type CalEvent, type CalendarImport, type EditScope } from '@cuberoot/shared/calendar';
 import { colorHex, readableInk } from '@/lib/calendar-colors';
 import { useEffectiveTheme } from '@/lib/theme';
 import { zoneLabel, zoneOptions, zoneSearchTerms } from '@/lib/tz-zones';
 import { expandRange, parseOccurrenceKey, useCalendarStore } from '@/lib/calendar-store';
-import { exportIcs, listImports, undoImport } from '@/lib/calendar-api';
+import { exportIcs, fetchEvents, listImports, undoImport } from '@/lib/calendar-api';
 import { importCalendarFile, type ImportProgress } from './_lib/import';
 import CalendarGrid, { type GridHandle, type GridRange } from './_components/CalendarGrid';
 import EventDialog, { type DialogDraft } from './_components/EventDialog';
@@ -40,6 +42,8 @@ import ShareDialog from './_components/ShareDialog';
 import ScopePrompt from './_components/ScopePrompt';
 import Sidebar from './_components/Sidebar';
 import MobileMonthPicker from './_components/MobileMonthPicker';
+import CalendarSearch from './_components/CalendarSearch';
+import { EMPTY_SEARCH_FILTERS, searchOccurrences, searchWindow, type SearchFilters } from './_lib/search';
 import CalendarSettings, { SETTINGS_SECTIONS } from './_components/CalendarSettings';
 import GoogleBackupPanel from './_components/GoogleBackupPanel';
 import { readGoogleBackup, reviewGoogleBackup, type GoogleImportReview } from '@/lib/google-calendar-backup';
@@ -73,7 +77,6 @@ export default function CalendarClient() {
   const isMobile = useIsMobile(900);
   const gridRef = useRef<GridHandle>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const searchRef = useRef<HTMLInputElement>(null);
 
   const store = useCalendarStore();
   const { calendars, events, hidden, prefs, share, me } = store;
@@ -140,6 +143,14 @@ export default function CalendarClient() {
   }, [settingsSection]);
 
   const [query, setQuery] = useState('');
+  const [desktopSearch, setDesktopSearch] = useState(false);
+  const [searchFilters, setSearchFilters] = useState<SearchFilters>(EMPTY_SEARCH_FILTERS);
+  const [filtersApplied, setFiltersApplied] = useState(false);
+  const [searchData, setSearchData] = useState<{ key: string; events: CalEvent[]; error: string }>({ key: '', events: [], error: '' });
+  const closeSearch = useCallback(() => {
+    setDesktopSearch(false); setMobileSearch(false); setQuery('');
+    setSearchFilters(EMPTY_SEARCH_FILTERS); setFiltersApplied(false);
+  }, []);
   useEffect(() => {
     if (mobileSearch && isMobile) mobileSearchRef.current?.focus();
   }, [mobileSearch, isMobile]);
@@ -190,14 +201,14 @@ export default function CalendarClient() {
 
   const fcEvents = useMemo(() => {
     const names = new Map(wca.competitions.map((c) => [
-      `https://www.worldcubeassociation.org/competitions/${c.id}`,
+      c.id,
       { raw: c.name, display: localizeCompName(c.id, c.name, isZh, { date: c.start_date }) },
     ]));
     return toFcEvents({
       occurrences, calendarColor: calColor, colorHex: eventColor, readableInk, meKey: me?.key ?? '',
       eventTitle: (e) => {
-        const match = e.description.split(/\r?\n/).map((line) => names.get(line)).find((name) => name?.raw === e.title);
-        return match?.display ?? e.title;
+        const match = names.get(calendarCompetitionId(e.description) ?? '');
+        return match?.raw === e.title ? match.display : e.title;
       },
     });
   }, [occurrences, calColor, eventColor, me?.key, wca.competitions, isZh]);
@@ -215,16 +226,24 @@ export default function CalendarClient() {
   );
 
   // ── 搜索 ────────────────────────────────────────────────────────────────
+  const searchActive = !!query.trim() || filtersApplied;
+  const searchDates = searchWindow(searchFilters, todayKey || '2000-01-01', displayTz);
+  const searchKey = `${owner}:${searchDates.from}:${searchDates.to}`;
+  const searchLoading = searchActive && searchDates.valid && searchData.key !== searchKey;
+  useEffect(() => {
+    if (!searchActive || !store.ready || !owner || !searchDates.valid) return;
+    const controller = new AbortController();
+    void fetchEvents(searchDates.from, searchDates.to, controller.signal).then(data => {
+      if (!controller.signal.aborted) setSearchData({ key: searchKey, events: data.events, error: '' });
+    }).catch(error => {
+      if (!controller.signal.aborted) setSearchData({ key: searchKey, events: [], error: String(error instanceof Error ? error.message : error) });
+    });
+    return () => controller.abort();
+  }, [searchActive, store.ready, owner, searchDates.valid, searchDates.from, searchDates.to, searchKey]);
   const results = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (q.length < 1) return [];
-    const now = Date.now();
-    return expandRange({
-      events, hidden, from: now - 365 * DAY, to: now + 365 * DAY, meKey: me?.key, showDeclined: true,
-    })
-      .filter((o) => `${o.event.title} ${o.event.location} ${o.event.description}`.toLowerCase().includes(q))
-      .slice(0, 40);
-  }, [query, events, hidden, me?.key]);
+    if (!searchActive || !searchDates.valid || searchData.key !== searchKey || searchData.error) return [];
+    return searchOccurrences(searchData.events, query, searchFilters, hidden, searchDates.from, searchDates.to);
+  }, [searchActive, searchDates.valid, searchDates.from, searchDates.to, searchData, searchKey, query, searchFilters, hidden]);
 
   // ── 打开弹窗 ────────────────────────────────────────────────────────────
   const defaultCalendarId = calendars[0]?.id ?? 0;
@@ -243,7 +262,7 @@ export default function CalendarClient() {
   const openEventByKey = useCallback((key: string) => {
     const parsed = parseOccurrenceKey(key);
     if (!parsed) return;
-    const e = events.find((x) => x.id === parsed.id);
+    const e = events.find((x) => x.id === parsed.id) ?? searchData.events.find((x) => x.id === parsed.id);
     if (!e) return;
     const dur = e.end - e.start;
     const mine = e.guests.find((g) => g.key === me?.key);
@@ -266,7 +285,7 @@ export default function CalendarClient() {
       readOnly: !!e.ownerKey && !!me?.key && e.ownerKey !== me.key,
       myRsvp: mine?.status,
     });
-  }, [events, me?.key]);
+  }, [events, searchData.events, me?.key]);
 
   const openInvite = useCallback((e: CalEvent) => {
     openEventByKey(`${e.id}:${e.start}`);
@@ -499,7 +518,8 @@ export default function CalendarClient() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       const el = e.target as HTMLElement | null;
-      if (e.key === 'Escape' && mobileSearch) { setMobileSearch(false); setQuery(''); return; }
+      if (e.defaultPrevented) return;
+      if (e.key === 'Escape' && (mobileSearch || desktopSearch)) { closeSearch(); return; }
       if (e.defaultPrevented || e.isComposing || el?.isContentEditable || (el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (dialog || shareOpen || scopeAsk || settingsOpen) return;
@@ -510,7 +530,7 @@ export default function CalendarClient() {
       if (sidebarOpen || mobileSearch) return;
       if (!prefs.keyboardShortcuts) return;
       if (e.key === '?') { e.preventDefault(); void setSettingsSection('shortcuts'); return; }
-      if (e.key === '/') { e.preventDefault(); if (isMobile) setMobileSearch(true); else searchRef.current?.focus(); return; }
+      if (e.key === '/') { e.preventDefault(); if (isMobile) setMobileSearch(true); else setDesktopSearch(true); return; }
       const map: Record<string, ViewKey> = {
         d: 'timeGridDay', x: 'fourDay', w: 'timeGridWeek',
         m: 'dayGridMonth', y: 'multiMonthYear', a: 'listMonth',
@@ -527,7 +547,7 @@ export default function CalendarClient() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [dialog, shareOpen, scopeAsk, sidebarOpen, settingsOpen, prefs.keyboardShortcuts, setSettingsSection, setViewParam, openCreateNow, mobileSearch, monthExpanded, isMobile]);
+  }, [dialog, shareOpen, scopeAsk, sidebarOpen, settingsOpen, prefs.keyboardShortcuts, setSettingsSection, setViewParam, openCreateNow, mobileSearch, desktopSearch, closeSearch, monthExpanded, isMobile]);
 
   const zoneItems = useMemo(() => zoneOptions().map((z) => ({
     value: z.tz,
@@ -570,7 +590,7 @@ export default function CalendarClient() {
       <div className="cal-mobile-topbar" inert={isMobile && sidebarOpen}>
         {mobileSearch ? <>
           {/* allow-manual-search: 仅关闭搜索页面，结果已由输入实时更新。 */}
-          <button type="button" className="cal-mobile-action cal-mobile-glass cal-mobile-back" aria-label={tr({ zh: '关闭搜索', en: 'Close search' })} onClick={() => { setMobileSearch(false); setQuery(''); }}><ChevronLeft size={26} aria-hidden /></button>
+          <button type="button" className="cal-mobile-action cal-mobile-glass cal-mobile-back" aria-label={tr({ zh: '关闭搜索', en: 'Close search' })} onClick={closeSearch}><ChevronLeft size={26} aria-hidden /></button>
           <input ref={mobileSearchRef} className="cal-mobile-search-input" type="search" value={query} placeholder={tr({ zh: '搜索', en: 'Search' })} aria-label={tr({ zh: '搜索日程', en: 'Search events' })} onChange={(e) => setQuery(e.target.value)} />
           {query && <ClearButton onClick={() => setQuery('')} />}
         </> : <>
@@ -590,16 +610,11 @@ export default function CalendarClient() {
       </div>
       {monthExpanded && <MobileMonthPicker inert={sidebarOpen} monthKey={pickerMonth} selectedKey={focusKey} todayKey={todayKey} tz={displayTz} weekStart={prefs.weekStart} events={fcEvents} onMonth={setPickerMonth}
         onPick={(key) => { gotoDate(dayStart(displayTz, key)); setPickerMonth(null); }} />}
-      <div className="cal-topbar cal-desktop-topbar">
-        <button
-          type="button"
-          className="cal-icon-btn cal-menu-btn"
-          aria-label={tr({ zh: '侧栏', en: 'Sidebar' })}
-          aria-expanded={isMobile ? sidebarOpen : !prefs.sidebarCollapsed}
-          onClick={() => { if (isMobile) setSidebarOpen((v) => !v); else store.setPrefs({ sidebarCollapsed: !prefs.sidebarCollapsed }); }}
-        >
-          <Menu size={18} aria-hidden />
-        </button>
+      <div className={`cal-topbar cal-desktop-topbar${desktopSearch ? ' is-searching' : ''}`}>
+        <SidebarToggle collapsed={prefs.sidebarCollapsed}
+          onToggle={() => store.setPrefs({ sidebarCollapsed: !prefs.sidebarCollapsed })}
+          showLabel={tr({ zh: '显示侧栏', en: 'Show sidebar' })}
+          hideLabel={tr({ zh: '隐藏侧栏', en: 'Hide sidebar' })} controls="calendar-sidebar" />
         <h1 className="cal-brand">
           <CalendarDays size={20} aria-hidden />
           {tr({ zh: '日历', en: 'Calendar' })}
@@ -618,19 +633,11 @@ export default function CalendarClient() {
           {mounted ? rangeTitle(view, range.anchor, displayTz, isZh, range.start, range.end) : ''}
         </span>
 
-        <div className="cal-search">
-          <Search size={15} aria-hidden />
-          <input
-            ref={searchRef}
-            type="search"
-            aria-label={tr({ zh: '搜索日程', en: 'Search events' })}
-            className="cal-search-field"
-            value={query}
-            placeholder={tr({ zh: '搜索日程', en: 'Search events' })}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          {query && <ClearButton onClick={() => setQuery('')} />}
-        </div>
+        <CalendarSearch open={desktopSearch} onOpen={() => setDesktopSearch(true)} onClose={closeSearch}
+          query={query} onQuery={setQuery} filters={searchFilters} calendars={calendars}
+          defaultFrom={searchWindow(EMPTY_SEARCH_FILTERS, todayKey || '2000-01-01', displayTz).fromKey}
+          defaultTo={searchWindow(EMPTY_SEARCH_FILTERS, todayKey || '2000-01-01', displayTz).toKey}
+          onApply={(value, filters) => { setQuery(value); setSearchFilters(filters); setFiltersApplied(true); }} />
 
         <ListSelect
           className="cal-view-select"
@@ -818,6 +825,7 @@ export default function CalendarClient() {
         )}
 
         <main className="cal-main" inert={isMobile && sidebarOpen}>
+          <ContinuousInsetCorner className="cal-sidebar-corner" />
           {mounted && (
             <CalendarGrid
               ref={gridRef}
@@ -846,21 +854,21 @@ export default function CalendarClient() {
             />
           )}
 
-          {query.trim() && (
+          {searchActive && (
             <div className="cal-results" data-site-surface="popover">
               <div className="cal-results-head">
-                <span>{tr({ zh: `搜索结果 ${results.length}`, en: `${results.length} results` })}</span>
-                <button type="button" className="cal-icon-btn" onClick={() => setQuery('')} aria-label={tr({ zh: '关闭', en: 'Close' })}>
+                <span>{searchLoading ? tr({ zh: '正在搜索…', en: 'Searching…' }) : tr({ zh: `搜索结果 ${results.length}`, en: `${results.length} results` })} · {searchDates.fromKey} – {searchDates.toKey}</span>
+                <button type="button" className="cal-icon-btn" onClick={closeSearch} aria-label={tr({ zh: '关闭', en: 'Close' })}>
                   <X size={16} aria-hidden />
                 </button>
               </div>
               <ul>
-                {results.map((o) => (
+                {results.slice(0, 200).map((o) => (
                   <li key={o.key}>
                     <button
                       type="button"
                       className="cal-result-row"
-                      onClick={() => { gotoDate(o.start); openEventByKey(o.key); setQuery(''); setMobileSearch(false); }}
+                      onClick={() => { gotoDate(o.start); openEventByKey(o.key); closeSearch(); }}
                     >
                       <span
                         className="cal-dot"
@@ -875,8 +883,11 @@ export default function CalendarClient() {
                     </button>
                   </li>
                 ))}
-                {results.length === 0 && (
-                  <li className="cal-hint">{tr({ zh: '前后一年内没有匹配的日程', en: 'No matching events within a year' })}</li>
+                {!searchDates.valid && <li className="cal-hint" role="alert">{tr({ zh: '请选择有效的日期范围，一次最多搜索 750 天。', en: 'Choose a valid date range of up to 750 days.' })}</li>}
+                {searchData.key === searchKey && searchData.error && <li className="cal-hint" role="alert">{searchData.error}</li>}
+                {results.length > 200 && <li className="cal-hint">{tr({ zh: '显示前 200 条结果，可缩小日期范围或增加筛选条件。', en: 'Showing the first 200 results. Narrow the date range or add filters.' })}</li>}
+                {searchDates.valid && !searchLoading && !searchData.error && results.length === 0 && (
+                  <li className="cal-hint">{tr({ zh: '所选日期范围内没有匹配的日程', en: 'No matching events in this date range' })}</li>
                 )}
               </ul>
             </div>

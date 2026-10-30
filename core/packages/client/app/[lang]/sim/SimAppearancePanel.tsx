@@ -10,7 +10,8 @@ import type World from './engine/world';
 import { GHOST_DEFAULT_FACE_COLORS } from '@cuberoot/puzzle-render-core/engine/ghost/ghostGeometry';
 import { Slider, ValueField, OrbitPad, Toggle, resetWorldView, DEFAULT_FACE_COLORS, MIRROR_DEFAULT_COLOR, persistPictureFaces, saveSettings, cuberLightingActive, type SimSettings, type SimBoardBg, type SliderUnit } from './SettingDrawer';
 import { CUBER_APPEARANCE } from './engine/define';
-import AppLink from '@/components/AppLink';
+import { useRequireMembership } from '@/hooks/useRequireMembership';
+import { useAuthStore } from '@/lib/auth-store';
 import { defaultPlatonicColorSchemes } from '@/lib/puzzle-geometry/colors';
 import { fileToLogoDataUrl } from './engine/nxn/logo';
 import { countPictureFaces, fileToPictureFaceDataUrl, type PictureFaces } from './engine/nxn/pictureCube';
@@ -360,19 +361,46 @@ export default function SimAppearancePanel({
     }
   };
 
+  const authUser = useAuthStore(state => state.user);
+  const requireMembership = useRequireMembership(canUseCustomLogo);
   const logoFileRef = useRef<HTMLInputElement>(null);
-  const [showCustomLogoUpsell, setShowCustomLogoUpsell] = useState(false);
+  const [logoBusy, setLogoBusy] = useState(false);
+  const [logoError, setLogoError] = useState('');
+  const logoVersion = useRef(0);
+  const logoAccess = useRef(canUseCustomLogo);
+  logoAccess.current = canUseCustomLogo;
   useEffect(() => {
-    if (canUseCustomLogo) setShowCustomLogoUpsell(false);
-  }, [canUseCustomLogo]);
+    logoVersion.current++;
+    setLogoBusy(false);
+    setLogoError('');
+    return () => { logoVersion.current++; };
+  }, [canUseCustomLogo, authUser?.uid]);
   const handleLogoFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = ''; // 允许再次选同一文件
     if (!file || !canUseCustomLogo) return;
+    const version = ++logoVersion.current;
+    setLogoError('');
+    if (!file.type.startsWith('image/') || file.size > 10 * 1024 * 1024) {
+      setLogoError(t('请选择不超过 10 MB 的图片', 'Choose an image up to 10 MB'));
+      return;
+    }
+    setLogoBusy(true);
     try {
       const url = await fileToLogoDataUrl(file);
-      onSettingsChange({ ...settings, customLogo: url, logo: 'custom' });
-    } catch { /* 坏图忽略 */ }
+      if (version !== logoVersion.current || !logoAccess.current) return;
+      const current = latestSettings.current;
+      const next = { ...current.settings, customLogo: url, logo: 'custom' as const };
+      if (!saveSettings(next)) {
+        setLogoError(t('浏览器存储空间不足，logo 未保存', 'Browser storage is full. The logo was not saved.'));
+        return;
+      }
+      current.onSettingsChange(next);
+    } catch {
+      if (version === logoVersion.current) setLogoError(t('无法读取图片，请重新选择', 'Could not read the image. Please choose another.'));
+    } finally {
+      if (version === logoVersion.current) setLogoBusy(false);
+    }
   };
 
   // 背景(BG)选择器:复用内核色那套弹出色块选择器(SwatchPopup),trigger 显当前
@@ -506,19 +534,16 @@ export default function SimAppearancePanel({
                 <span>logo</span>
                 <select
                   value={settings.logo === 'custom' && !canUseCustomLogo ? 'none' : settings.logo}
-                  disabled={!caps.supports.logo}
+                  disabled={!caps.supports.logo || logoBusy}
                   onChange={(e) => {
                     const v = e.target.value as SimSettings['logo'];
+                    setLogoError('');
                     if (v === 'custom') {
-                      if (!canUseCustomLogo) {
-                        setShowCustomLogoUpsell(true);
-                        return;
-                      }
-                      setShowCustomLogoUpsell(false);
-                      logoFileRef.current?.click();
+                      if (!requireMembership()) return;
+                      if (settings.customLogo) set('logo', 'custom');
+                      else logoFileRef.current?.click();
                       return;
                     }
-                    setShowCustomLogoUpsell(false);
                     set('logo', v);
                   }}
                 >
@@ -537,12 +562,13 @@ export default function SimAppearancePanel({
                   onChange={handleLogoFile}
                 />
               </label>
-              {showCustomLogoUpsell && !canUseCustomLogo && (
-                <span className="sim-logo-member-prompt" role="status">
-                  {t('会员权益：', 'Member benefit:')}
-                  <AppLink href="/membership" prefetch={false}>{t('开通会员', 'Join')}</AppLink>
-                </span>
+              {canUseCustomLogo && settings.logo === 'custom' && (
+                <button type="button" className="sim-logo-action" disabled={logoBusy} onClick={() => { setLogoError(''); logoFileRef.current?.click(); }}>
+                  {t('更换图片', 'Change image')}
+                </button>
               )}
+              {logoBusy && <span className="sim-logo-member-prompt" role="status">{t('正在处理图片…', 'Processing image…')}</span>}
+              {logoError && <span className="sim-logo-member-prompt" role="alert">{logoError}</span>}
             </div>)}
             {/* 锁定大小位置 锁的是引擎滚轮/捏合缩放,cubing.js 拼图自管缩放 → 引擎未驱动时灰掉。 */}
             {caps.supports.lockView && (<Toggle label={t('锁定大小位置', 'Lock size & position')} value={settings.lockView} onChange={(v) => set('lockView', v)} disabled={!caps.supports.lockView} title={hint(caps.supports.lockView)} />)}

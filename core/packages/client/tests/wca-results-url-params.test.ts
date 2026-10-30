@@ -23,10 +23,8 @@ import { join, dirname } from 'node:path';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'); // packages/client
 const PAGE = join(ROOT, 'app', '[lang]', 'wca', 'results', 'page.tsx');
 const TEACHER_CELL = join(ROOT, 'components', 'WcaTeacherCell.tsx');
-const TEACHER_API = join(ROOT, 'lib', 'wca-teachers-api.ts');
 const src = readFileSync(PAGE, 'utf8');
 const teacherCellSrc = readFileSync(TEACHER_CELL, 'utf8');
-const teacherApiSrc = readFileSync(TEACHER_API, 'utf8');
 
 /** backfill effect 托管的键 —— 从源码里现推,页面加参数时守卫自动跟着扩。 */
 function backfilledKeys(source: string): string[] {
@@ -133,17 +131,6 @@ describe('/wca/results — 老师分享视图', () => {
     expect(teacherCellSrc).toContain('teacher.teacherWcaId === visibleTeacherWcaId');
   });
 
-  it('按项目明确区分有老师、自学和尚未填写', () => {
-    expect(teacherCellSrc).toContain("value={isSelfTaught ? 'self' : noTeacher ? 'none' : 'teacher'}");
-    expect(teacherCellSrc).toContain("<option value=\"none\">{tr({ zh: '未登记老师', en: 'No teacher recorded' })}</option>");
-    expect(teacherCellSrc).toContain("<option value=\"teacher\">{tr({ zh: '有老师', en: 'Teacher' })}</option>");
-    expect(teacherCellSrc).toContain("<option value=\"self\">{tr({ zh: '自学', en: 'Self-taught' })}</option>");
-    expect(teacherCellSrc).toContain('relation.isSelfTaught');
-    expect(teacherCellSrc).toContain('directory.save(studentWcaId, eventId, undefined, true)');
-    expect(teacherCellSrc).toContain('directory.save(studentWcaId, eventId, selected.id)');
-    expect(teacherCellSrc).toContain('directory.remove(studentWcaId, eventId)');
-    expect(teacherApiSrc).toContain('selfTaught ? { selfTaught: true }');
-  });
 });
 
 describe('/wca/results — 批量学生名单', () => {

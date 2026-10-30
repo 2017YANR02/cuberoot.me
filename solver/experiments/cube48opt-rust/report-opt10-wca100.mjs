@@ -18,7 +18,7 @@ const METADATA = resolve(BASE, 'opt10-generated-v2/generation-metadata.json');
 const BINARY = resolve(HERE, 'target/opt10/release/cube48opt-research');
 const TABLE_BYTES = 31_130_911_744;
 const RSS_LIMIT = 31_130_910_720 + 2 ** 30;
-const CORE_SOURCES = ['src/opt10_generate.rs', 'src/opt10.rs', 'src/opt10_table.rs', 'src/coord.rs', 'src/cube.rs'];
+const CORE_SOURCES = ['src/opt10_generate.rs', 'src/opt10.rs', 'src/opt10_table.rs', 'src/eo_table.rs', 'src/coord.rs', 'src/cube.rs'];
 const SHA = /^[a-f0-9]{64}$/;
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const json = file => JSON.parse(readFileSync(file, 'utf8'));

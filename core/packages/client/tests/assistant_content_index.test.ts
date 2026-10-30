@@ -14,8 +14,9 @@ describe('assistant build-time public content index',()=>{
     expect(destinations.some(p=>p.href.includes(':'))).toBe(false);
   });
   it('makes static page metadata navigable without indexing private page contents',()=>{
-    const destinations=metadataDestinations(['timer','account','admin','missing-page','alg/[puzzle]']);
+    const destinations=metadataDestinations(['timer','account','account/verify','admin','missing-page','alg/[puzzle]']);
     expect(destinations.some(p=>p.href==='/timer' && p.lang==='zh')).toBe(true);
+    expect(destinations.find(p=>p.href==='/account/verify' && p.lang==='en')).toMatchObject({title:'Identity Verification',access:'account',description:''});
     expect(destinations.find(p=>p.href==='/account' && p.lang==='en')).toMatchObject({title:'Account',access:'account',description:''});
     expect(destinations.find(p=>p.href==='/admin')).toMatchObject({access:'admin'});
     expect(destinations.some(p=>p.href.includes('missing') || p.href.includes('['))).toBe(false);

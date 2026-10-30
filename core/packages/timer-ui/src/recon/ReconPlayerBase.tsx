@@ -71,11 +71,12 @@ export interface ReconPlayerAdapter<M> {
 }
 
 export default function ReconPlayerBase<M>({
-  scramble, alg, adapter, fillPane = false, hideControls = false, playerRef, fullscreenButton, ariaLabel, leadingControls, trailingControls, controlLabels, segmentEnds,
+  scramble, alg, adapter, fillPane = false, hideControls = false, playerRef, fullscreenButton, ariaLabel, leadingControls, trailingControls, controlLabels, segmentEnds, segmentCounts,
 }: {
   scramble: string;
   alg: string;
   segmentEnds?: readonly number[];
+  segmentCounts?: readonly number[];
   adapter: ReconPlayerAdapter<M>;
   fillPane?: boolean;
   /** 隐藏底部完整控制条,改用画面内居中播放/暂停浮层(嵌成绩弹窗预览时用)。 */
@@ -331,6 +332,7 @@ export default function ReconPlayerBase<M>({
         <PlaybackBar layout={fillPane ? 'wide' : 'compact'}
           step={step}
           segmentEnds={segmentEnds}
+          segmentCounts={segmentCounts}
           total={total}
           playing={playing}
           onScrub={jumpToStep}

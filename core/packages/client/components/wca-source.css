@@ -99,7 +99,7 @@
 .wca-src-comppick .comp-picker-input:focus { outline: none; border-color: var(--ring); }
 /* 已选中一场:国旗 + 名(省略号截断)+ 清除,横向贴合不溢出。 */
 .wca-src-comp-selected { display: flex; align-items: center; gap: 7px; width: 100%; min-width: 0; }
-.wca-src-comp-flag { width: 20px; height: 14px; flex: none; object-fit: cover; border-radius: 2px; }
+.wca-src-comp-flag { width: 20px; height: 14px; flex: none; object-fit: cover; }
 .wca-src-comp-name {
   flex: 1;
   min-width: 0;

@@ -59,11 +59,13 @@ export function PlaybackBackViewButton({ visible, toggle = true, onClick, showLa
 export default function PlaybackBar({
   step, total, playing, disabled = false,
   onScrub, onSkipStart, onStepBack, onTogglePlay, onStepForward, onSkipEnd,
-  leading, trailing, labels, stepMarkers, layout = 'compact', segmentEnds,
+  leading, trailing, labels, stepMarkers, layout = 'compact', segmentEnds, segmentCounts,
 }: {
   step: number;
   total: number;
   segmentEnds?: readonly number[];
+  /** Display counts can differ from playback indices (e.g. rotations cost zero). */
+  segmentCounts?: readonly number[];
   playing: boolean;
   disabled?: boolean;
   onScrub: (n: number) => void;
@@ -89,7 +91,16 @@ export default function PlaybackBar({
   const frac = step / Math.max(total, 1);
   return (
     <div className={`playback-bar${layout === 'wide' ? ' playback-bar--wide' : ''}`}>
-      <div className="playback-bar-scrub">
+      <div className={`playback-bar-scrub${segmentCounts?.length && !empty ? ' has-segment-counts' : ''}`}>
+        {!empty && segmentEnds?.map((end, index) => {
+          const start = segmentEnds[index - 1] ?? 0;
+          const count = segmentCounts?.[index];
+          if (count === undefined || end <= start) return null;
+          return <span key={end} className="playback-bar-bubble playback-bar-segment-count"
+            style={{ left: `calc(${(start + end) / (2 * total)} * (100% - var(--pb-thumb)) + var(--pb-thumb) / 2)` }}>
+            {count}
+          </span>;
+        })}
         <span
           className="playback-bar-bubble"
           style={{ left: `calc(${frac} * (100% - var(--pb-thumb)) + var(--pb-thumb) / 2)` }}

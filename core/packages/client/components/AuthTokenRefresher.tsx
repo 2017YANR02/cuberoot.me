@@ -82,48 +82,9 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
     document.addEventListener('pointermove', onMove);
     return () => { document.removeEventListener('pointermove', onMove); cancelCollapse(); };
   }, [expanded, cancelCollapse]);
-  // The pet owns horizontal positioning; only keep the toolbar in vertical reach.
-  const moveTo = useCallback((top: number) => {
-    const toolbar = toolbarRef.current;
-    const root = toolbar?.parentElement;
-    if (!toolbar || !root) return;
-    const rect = toolbar.getBoundingClientRect();
-    const anchor = getComputedStyle(root);
-    const bottom = parseFloat(anchor.bottom);
-    root.style.bottom = `${bottom - (top - rect.top)}px`;
-  }, []);
+  // DeskPet owns both position axes, including intentional edge overflow.
+  // Attached tools must not move its anchor when their bounds leave the viewport.
   useEffect(() => { setReady(true); }, []);
-  useEffect(() => {
-    const toolbar = toolbarRef.current;
-    const root = toolbar?.parentElement;
-    const hit = root?.querySelector('.clawd-deskpet-hit');
-    if (!toolbar || !root || !hit) return;
-    // Let the expanded toolbar overflow horizontally instead of pushing the
-    // pet away from the edge, including while the toolbar is collapsed.
-    const clamp = () => {
-      // A hidden App iframe has no layout boxes. Moving its anchor cannot
-      // change those zero rectangles and would retrigger our own observer
-      // indefinitely. ResizeObserver runs again when the frame is shown.
-      const visibleRect = toolbar.getBoundingClientRect();
-      if (visibleRect.width <= 0 || visibleRect.height <= 0) return;
-      const viewportWidth = document.documentElement.getBoundingClientRect().width;
-      if (viewportWidth <= 0) return;
-      toolbar.style.maxWidth = `${viewportWidth - 32}px`;
-      const rect = toolbar.getBoundingClientRect();
-      const pet = hit.getBoundingClientRect();
-      const top = Math.min(rect.top, pet.top), bottom = Math.max(rect.bottom, pet.bottom);
-      const dy = Math.max(16 - top, Math.min(0, window.innerHeight - 16 - bottom));
-      if (Math.abs(dy) > 0.5) moveTo(rect.top + dy);
-    };
-    const resize = new ResizeObserver(clamp);
-    resize.observe(toolbar); resize.observe(root);
-    if (actionsRef.current) resize.observe(actionsRef.current);
-    const mutation = new MutationObserver(clamp);
-    mutation.observe(root, { attributes: true, attributeFilter: ['style', 'class'] });
-    window.addEventListener('resize', clamp);
-    clamp();
-    return () => { resize.disconnect(); mutation.disconnect(); window.removeEventListener('resize', clamp); };
-  }, [ready, user, moveTo, centerX, toggleLeft, actionsWidth]);
   const preview = ready ? getRolePreview() : null;
   const admin = ready && !!user && isAdmin();
   const roleTesting = ready && (!!preview || (!!user && canTestRoles()));

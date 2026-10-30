@@ -4,6 +4,8 @@
 //! visited test. The small exact BFS retains full EO11 keys. Every shortest
 //! path longer than that BFS has a shortest prefix on its final layer, so
 //! enumerating bounded suffixes from all final-layer states is exhaustive.
+use crate::eo_table::AtomicEoTable;
+#[cfg(test)]
 use crate::opt10_table::AtomicOpt10Table;
 use std::{
     sync::{
@@ -58,16 +60,16 @@ pub trait GenerationSink: Sync {
     fn record_min(&self, index: u64, depth: u8) -> Result<bool, String>;
 }
 
-impl GenerationSink for AtomicOpt10Table {
+impl<const EO: u8> GenerationSink for AtomicEoTable<EO> {
     fn cells(&self) -> u64 {
-        AtomicOpt10Table::cells(self)
+        AtomicEoTable::cells(self)
     }
     fn record_min(&self, index: u64, depth: u8) -> Result<bool, String> {
-        AtomicOpt10Table::record_min(self, index, depth)
+        AtomicEoTable::record_min(self, index, depth)
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct GenerationConfig {
     pub threads: usize,
     pub short_depth: u8,
@@ -77,6 +79,19 @@ pub struct GenerationConfig {
     pub short_capacity: usize,
     pub max_short_states: usize,
 }
+
+/// Quiescent generator state. The checkpoint owner must atomically bind this
+/// to the matching sink bytes, coordinate snapshot and generator format.
+#[derive(Clone)]
+pub struct GenerationResume {
+    pub config: GenerationConfig,
+    pub completed_bfs_depth: u8,
+    pub next_suffix_slot: usize,
+    pub expanded: u64,
+    pub short_slots: Vec<u64>,
+}
+
+pub type CheckpointWriter<'a> = dyn Fn(&GenerationResume) -> Result<(), String> + Sync + 'a;
 
 impl Default for GenerationConfig {
     fn default() -> Self {
@@ -303,6 +318,19 @@ pub fn generate<S: CoordinateSpace, T: GenerationSink>(
     config: GenerationConfig,
     progress: impl Fn(GenerationProgress) + Sync,
 ) -> Result<GenerationSummary, String> {
+    generate_resumable(space, table, config, None, None, progress)
+}
+
+/// Same enumeration as `generate`; checkpoint barriers never reload the sink
+/// or restart the process. A failure returns to the caller, never auto-retries.
+pub fn generate_resumable<S: CoordinateSpace, T: GenerationSink>(
+    space: &S,
+    table: &T,
+    config: GenerationConfig,
+    resume: Option<GenerationResume>,
+    checkpoint: Option<&CheckpointWriter<'_>>,
+    progress: impl Fn(GenerationProgress) + Sync,
+) -> Result<GenerationSummary, String> {
     let maximum_threads = thread::available_parallelism()
         .map_err(|e| e.to_string())?
         .get()
@@ -323,22 +351,61 @@ pub fn generate<S: CoordinateSpace, T: GenerationSink>(
     }
     let short = ShortStates::new(config.short_capacity, config.max_short_states)?;
     let failure = Failure::new();
-    let expanded = AtomicU64::new(0);
+    let mut bfs_depth = 0;
+    let mut next_suffix_slot = 0;
+    let mut previous_expanded = 0;
+    if let Some(saved) = resume {
+        if saved.config != config || saved.short_slots.len() != short.slots.len()
+            || saved.completed_bfs_depth > config.short_depth
+            || saved.next_suffix_slot > short.slots.len()
+            || saved.completed_bfs_depth < config.short_depth && saved.next_suffix_slot != 0 {
+            return Err("generation checkpoint configuration or progress differs".into());
+        }
+        let mut count = 0;
+        for (slot, value) in short.slots.iter().zip(saved.short_slots) {
+            if value != 0 {
+                if value >> 4 == 0 || (value & 15) > u64::from(saved.completed_bfs_depth) {
+                    return Err("generation checkpoint contains an invalid short state".into());
+                }
+                count += 1;
+            }
+            slot.store(value, Ordering::Relaxed);
+        }
+        if count == 0 || count > config.max_short_states {
+            return Err("generation checkpoint short-state count is invalid".into());
+        }
+        short.count.store(count, Ordering::Relaxed);
+        bfs_depth = saved.completed_bfs_depth;
+        next_suffix_slot = saved.next_suffix_slot;
+        previous_expanded = saved.expanded;
+    } else {
+        let solved = space.solved();
+        short.insert(space.full_key(&solved), 0)?;
+        mark(space, table, &solved, 0)?;
+    }
+    let expanded = AtomicU64::new(previous_expanded);
     let start = Instant::now();
-    let solved = space.solved();
-    short.insert(space.full_key(&solved), 0)?;
-    mark(space, table, &solved, 0)?;
+    let save = |completed_bfs_depth, next_suffix_slot| -> Result<(), String> {
+        if let Some(write) = checkpoint {
+            write(&GenerationResume {
+                config, completed_bfs_depth, next_suffix_slot,
+                expanded: expanded.load(Ordering::Relaxed),
+                short_slots: short.slots.iter().map(|s| s.load(Ordering::Relaxed)).collect(),
+            })?;
+        }
+        Ok(())
+    };
     progress(GenerationProgress {
         stage: GenerationStage::ShortBfs,
-        depth: 0,
-        short_states: 1,
+        depth: bfs_depth,
+        short_states: short.count(),
         seeds_done: 0,
         seeds_total: 0,
-        expanded: 0,
+        expanded: previous_expanded,
         seconds: 0.0,
     });
 
-    for depth in 0..config.short_depth {
+    for depth in bfs_depth..config.short_depth {
         thread::scope(|scope| {
             let mut workers = Vec::new();
             for worker in 0..config.threads {
@@ -399,6 +466,7 @@ pub fn generate<S: CoordinateSpace, T: GenerationSink>(
             }
         });
         failure.check()?;
+        save(depth + 1, 0)?;
         progress(GenerationProgress {
             stage: GenerationStage::ShortBfs,
             depth: depth + 1,
@@ -418,107 +486,120 @@ pub fn generate<S: CoordinateSpace, T: GenerationSink>(
             value != 0 && (value & 15) == u64::from(config.short_depth)
         })
         .count() as u64;
-    let cursor = AtomicUsize::new(0);
-    let completed = AtomicU64::new(0);
+    let cursor = AtomicUsize::new(next_suffix_slot);
+    let completed = AtomicU64::new(short.slots[..next_suffix_slot].iter().filter(|slot| {
+        let value = slot.load(Ordering::Relaxed);
+        value != 0 && (value & 15) == u64::from(config.short_depth)
+    }).count() as u64);
     let last_progress = Mutex::new(Instant::now());
     progress(GenerationProgress {
         stage: GenerationStage::SuffixSearch,
         depth: config.max_depth,
         short_states: short.count(),
-        seeds_done: 0,
+        seeds_done: completed.load(Ordering::Relaxed),
         seeds_total: seed_count,
         expanded: expanded.load(Ordering::Relaxed),
         seconds: start.elapsed().as_secs_f64(),
     });
-    thread::scope(|scope| {
-        let mut workers = Vec::new();
-        for worker in 0..config.threads {
-            let short = &short;
-            let failure = &failure;
-            let cursor = &cursor;
-            let completed = &completed;
-            let expanded = &expanded;
-            let progress = &progress;
-            let last_progress = &last_progress;
-            match thread::Builder::new()
-                .name(format!("opt10-suffix-{worker}"))
-                .stack_size(1024 * 1024)
-                .spawn_scoped(scope, move || {
-                    let _panic_guard = WorkerFailureGuard(failure);
-                    while !failure.stopped.load(Ordering::Relaxed) {
-                        let from = cursor.fetch_add(128, Ordering::Relaxed);
-                        if from >= short.slots.len() {
-                            break;
-                        }
-                        let to = (from + 128).min(short.slots.len());
-                        for slot in &short.slots[from..to] {
-                            if failure.stopped.load(Ordering::Relaxed) {
+    while next_suffix_slot < short.slots.len() {
+        // Only the checkpointed caller adds barriers. The existing Opt10 caller
+        // retains its original single suffix dispatch and allocation behavior.
+        let end_slot = if checkpoint.is_some() {
+            (next_suffix_slot + (1 << 20)).min(short.slots.len())
+        } else { short.slots.len() };
+        cursor.store(next_suffix_slot, Ordering::Relaxed);
+        thread::scope(|scope| {
+            let mut workers = Vec::new();
+            for worker in 0..config.threads {
+                let short = &short;
+                let failure = &failure;
+                let cursor = &cursor;
+                let completed = &completed;
+                let expanded = &expanded;
+                let progress = &progress;
+                let last_progress = &last_progress;
+                match thread::Builder::new()
+                    .name(format!("opt10-suffix-{worker}"))
+                    .stack_size(1024 * 1024)
+                    .spawn_scoped(scope, move || {
+                        let _panic_guard = WorkerFailureGuard(failure);
+                        while !failure.stopped.load(Ordering::Relaxed) {
+                            let from = cursor.fetch_add(128, Ordering::Relaxed);
+                            if from >= end_slot {
                                 break;
                             }
-                            let packed = slot.load(Ordering::Relaxed);
-                            if packed == 0 || (packed & 15) != u64::from(config.short_depth) {
-                                continue;
-                            }
-                            let key = (packed >> 4) - 1;
-                            let mut local_expanded = 0;
-                            let result = (|| {
-                                let state = space.representative(key)?;
-                                if space.full_key(&state) != key {
-                                    return Err(
-                                        "full-coordinate representative does not round-trip".into(),
-                                    );
+                            let to = (from + 128).min(end_slot);
+                            for slot in &short.slots[from..to] {
+                                if failure.stopped.load(Ordering::Relaxed) {
+                                    break;
                                 }
-                                suffix(
-                                    space,
-                                    table,
-                                    short,
-                                    failure,
-                                    &state,
-                                    None,
-                                    config.short_depth,
-                                    config.max_depth,
-                                    &mut local_expanded,
-                                )
-                            })();
-                            expanded.fetch_add(local_expanded, Ordering::Relaxed);
-                            if let Err(error) = result {
-                                failure.stop(error);
-                                break;
-                            }
-                            let done = completed.fetch_add(1, Ordering::Relaxed) + 1;
-                            if done % 1024 == 0 || done == seed_count {
-                                let mut last =
-                                    last_progress.lock().unwrap_or_else(|p| p.into_inner());
-                                if done == seed_count || last.elapsed().as_secs() >= 1 {
-                                    progress(GenerationProgress {
-                                        stage: GenerationStage::SuffixSearch,
-                                        depth: config.max_depth,
-                                        short_states: short.count(),
-                                        seeds_done: done,
-                                        seeds_total: seed_count,
-                                        expanded: expanded.load(Ordering::Relaxed),
-                                        seconds: start.elapsed().as_secs_f64(),
-                                    });
-                                    *last = Instant::now();
+                                let packed = slot.load(Ordering::Relaxed);
+                                if packed == 0 || (packed & 15) != u64::from(config.short_depth) {
+                                    continue;
+                                }
+                                let key = (packed >> 4) - 1;
+                                let mut local_expanded = 0;
+                                let result = (|| {
+                                    let state = space.representative(key)?;
+                                    if space.full_key(&state) != key {
+                                        return Err(
+                                            "full-coordinate representative does not round-trip".into(),
+                                        );
+                                    }
+                                    suffix(
+                                        space,
+                                        table,
+                                        short,
+                                        failure,
+                                        &state,
+                                        None,
+                                        config.short_depth,
+                                        config.max_depth,
+                                        &mut local_expanded,
+                                    )
+                                })();
+                                expanded.fetch_add(local_expanded, Ordering::Relaxed);
+                                if let Err(error) = result {
+                                    failure.stop(error);
+                                    break;
+                                }
+                                let done = completed.fetch_add(1, Ordering::Relaxed) + 1;
+                                if done % 1024 == 0 || done == seed_count {
+                                    let mut last =
+                                        last_progress.lock().unwrap_or_else(|p| p.into_inner());
+                                    if done == seed_count || last.elapsed().as_secs() >= 1 {
+                                        progress(GenerationProgress {
+                                            stage: GenerationStage::SuffixSearch,
+                                            depth: config.max_depth,
+                                            short_states: short.count(),
+                                            seeds_done: done,
+                                            seeds_total: seed_count,
+                                            expanded: expanded.load(Ordering::Relaxed),
+                                            seconds: start.elapsed().as_secs_f64(),
+                                        });
+                                        *last = Instant::now();
+                                    }
                                 }
                             }
                         }
+                    }) {
+                    Ok(worker) => workers.push(worker),
+                    Err(error) => {
+                        failure.stop(format!("cannot start generation worker: {error}"));
+                        break;
                     }
-                }) {
-                Ok(worker) => workers.push(worker),
-                Err(error) => {
-                    failure.stop(format!("cannot start generation worker: {error}"));
-                    break;
                 }
             }
-        }
-        for worker in workers {
-            if worker.join().is_err() {
-                failure.stop("generation worker panicked".into());
+            for worker in workers {
+                if worker.join().is_err() {
+                    failure.stop("generation worker panicked".into());
+                }
             }
-        }
-    });
-    failure.check()?;
+        });
+        failure.check()?;
+        next_suffix_slot = end_slot;
+        save(config.short_depth, next_suffix_slot)?;
+    }
     if completed.load(Ordering::Relaxed) != seed_count {
         return Err("not all final-layer states were processed".into());
     }
@@ -596,6 +677,40 @@ fn suffix<S: CoordinateSpace, T: GenerationSink>(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn checkpoint_resume_keeps_completed_bfs_and_suffix_work() {
+        let config = GenerationConfig { threads: 1, short_depth: 3, max_depth: 12,
+            short_capacity: 32, max_short_states: 16 };
+        let table = crate::opt11::AtomicOpt11Table::new_for_cells(8192, 10).unwrap();
+        let saved = Mutex::new(None);
+        let checkpoint = |state: &GenerationResume| -> Result<(), String> {
+            *saved.lock().unwrap() = Some(state.clone());
+            if state.completed_bfs_depth == 2 { return Err("simulated stop".into()); }
+            Ok(())
+        };
+        let failed = generate_resumable(&ProjectedCycle, &table, config, None, Some(&checkpoint), |_| {});
+        assert_eq!(failed.unwrap_err(), "simulated stop");
+        let resume = saved.lock().unwrap().take().unwrap();
+        let initial_expanded = resume.expanded;
+        let keep = |state: &GenerationResume| -> Result<(), String> {
+            *saved.lock().unwrap() = Some(state.clone());
+            Ok(())
+        };
+        let result = generate_resumable(&ProjectedCycle, &table, config, Some(resume), Some(&keep), |p| {
+            if p.stage == GenerationStage::ShortBfs { assert!(p.depth >= 2); }
+        }).unwrap();
+        assert!(result.expanded > initial_expanded);
+        for state in 0_u64..100 {
+            if state != 10 { assert_eq!(table.get(state * 64 + 2), state.min(100 - state).min(13) as u8); }
+        }
+        // A completed checkpoint needs no enumeration, even if final-file
+        // publication was interrupted after this checkpoint was committed.
+        let finished = saved.lock().unwrap().take().unwrap();
+        assert_eq!(finished.next_suffix_slot, config.short_capacity);
+        let resumed = generate_resumable(&ProjectedCycle, &table, config, Some(finished), None, |_| {}).unwrap();
+        assert_eq!(resumed.expanded, result.expanded);
+    }
 
     // A non-congruent projection: state 10 shares state 0's output cell, but
     // their successors differ. A visited cutoff on output cells loses 11/12.

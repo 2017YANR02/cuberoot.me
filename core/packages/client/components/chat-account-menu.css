@@ -1,0 +1,10 @@
+.chat-account-trigger { display:flex;align-items:center;justify-content:center;width:44px;height:44px;padding:6px;border:0;border-radius:50%;background:transparent;color:var(--foreground);cursor:pointer; }
+.chat-account-trigger:hover,.chat-account-trigger[aria-expanded=true] { background:var(--muted); }
+.chat-account-trigger .compact-select-current { display:flex;align-items:center;justify-content:center; }
+.chat-account-trigger img,.chat-account-identity img { width:30px;height:30px;border-radius:50%;object-fit:cover; }
+.chat-account-trigger:focus-visible { outline:2px solid var(--ring);outline-offset:2px; }
+.compact-select-popup.chat-account-menu { z-index:100040;width:min(280px,calc(100vw - 24px));padding:8px;border-radius:16px; }
+.chat-account-identity { display:flex;align-items:center;gap:10px;padding:10px 8px 16px;min-width:0; }
+.chat-account-identity strong { overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.9rem;font-weight:500; }
+.chat-account-menu-item { display:flex;align-items:center;gap:10px;box-sizing:border-box;width:100%;padding:12px 10px;border:0;border-radius:8px;background:transparent;color:var(--foreground);text-decoration:none;text-align:left;font:inherit;cursor:pointer; }
+.chat-account-menu-item:hover { background:var(--muted); }

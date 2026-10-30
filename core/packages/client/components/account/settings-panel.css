@@ -1,0 +1,156 @@
+.settings-panel {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  color: var(--foreground);
+  background: var(--background);
+}
+.settings-panel-page { height: 100dvh; }
+.settings-panel-header {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  min-height: 88px;
+  padding: max(20px, env(safe-area-inset-top)) 24px 20px;
+  box-sizing: border-box;
+  background: color-mix(in srgb, var(--foreground) 3%, var(--background));
+}
+.settings-panel-heading { display: flex; align-items: center; gap: 12px; }
+.settings-panel-header h1 { margin: 0; font-size: 1.25rem; font-weight: 650; }
+.settings-panel-close {
+  position: absolute;
+  top: max(20px, env(safe-area-inset-top));
+  right: max(24px, env(safe-area-inset-right));
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.settings-panel-close:hover { color: var(--foreground); background: var(--muted); }
+.settings-panel-nav {
+  grid-column: 1;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  padding: 8px 12px max(24px, env(safe-area-inset-bottom));
+  background: color-mix(in srgb, var(--foreground) 3%, var(--background));
+}
+.settings-panel-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  flex-shrink: 0;
+  padding: 11px 14px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: .9rem;
+  text-align: left;
+  cursor: pointer;
+}
+.settings-panel-nav-item svg { flex-shrink: 0; }
+.settings-panel-nav-item:hover { background: var(--muted); color: var(--foreground); }
+.settings-panel-nav-item[aria-current="page"] {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: var(--foreground);
+  font-weight: 600;
+}
+.settings-panel-nav-item:focus-visible,
+.settings-panel-close:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.settings-panel-content {
+  grid-column: 2;
+  grid-row: 1 / -1;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding: 48px clamp(24px, 5vw, 80px);
+}
+.settings-panel-content > * { width: 100%; max-width: 800px; margin-inline: auto; }
+.settings-panel-content > [hidden] { display: none; }
+.settings-general h2 { margin: 0 0 28px; font-size: 1.65rem; font-weight: 600; letter-spacing: -.02em; }
+.settings-general > .lang-toggle-wrap { display: block; width: 100%; }
+.settings-panel-content .appearance-menu-embedded {
+  position: static;
+  inset: auto;
+  transform: none;
+  translate: none;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  max-width: none;
+  max-height: none;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 4px 20px;
+  border: 0;
+  border-radius: 18px;
+  box-shadow: none;
+  background: var(--card);
+}
+.settings-panel-content .appearance-settings { padding: 0; }
+.settings-panel-content .appearance-setting-rows { gap: 0; padding: 0; overflow: visible; }
+.settings-panel-content .appearance-setting-rows > * {
+  min-height: 64px;
+  box-sizing: border-box;
+  margin: 0;
+  padding-block: 16px;
+  border-bottom: 1px solid var(--border-default);
+  box-shadow: none;
+}
+.settings-panel-content .appearance-setting-rows > :last-child { border-bottom: 0; }
+.settings-panel-content .appearance-menu-embedded .palette-menu-more { margin: 16px 0 0; padding-inline: 0; border: 0; box-shadow: none; }
+.settings-panel-content .account-page { width: 100%; max-width: none; margin: 0; padding: 0; box-sizing: border-box; }
+.settings-panel-content .account-header { margin-bottom: 16px; }
+.settings-panel-content .account-name { font-family: var(--font-sans); font-size: 1.5rem; font-weight: 600; }
+.settings-panel-content .account-identity-heading { gap: 16px; margin-bottom: 28px; }
+.settings-panel-content .account-settings-layout { grid-template-columns: minmax(0, 1fr); max-width: 680px; }
+.chat-settings-dialog {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--background);
+  color: var(--foreground);
+  overflow: hidden;
+}
+.chat-settings-dialog::backdrop { background: color-mix(in srgb, var(--background) 65%, transparent); }
+@media (max-width: 767px) {
+  .settings-panel { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); }
+  .settings-panel-header { min-height: 64px; padding: max(12px, env(safe-area-inset-top)) 20px 12px; }
+  .settings-panel-close { top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); }
+  .settings-panel-nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0 12px 12px; overflow: visible; }
+  .settings-panel-nav-item { gap: 8px; padding: 10px 12px; font-size: .875rem; }
+  .settings-panel-nav-item svg { width: 18px; height: 18px; }
+  .settings-panel-content { grid-column: 1; grid-row: 3; padding: 24px max(20px, env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); }
+  .settings-general h2 { font-size: 1.4rem; margin-bottom: 16px; }
+  .settings-panel-content .appearance-menu-embedded { padding: 4px 16px; border-radius: 16px; }
+  .settings-panel-content .account-name { font-size: 1.25rem; }
+}

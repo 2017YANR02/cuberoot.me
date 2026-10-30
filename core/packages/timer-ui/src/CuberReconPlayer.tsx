@@ -21,6 +21,7 @@ import { mergeStickeringMaskFns, stickeringMaskFn, type StickeringMaskFn } from 
 import { resolveStageMaskFn } from '@cuberoot/puzzle-render-core/engine/nxn/vcStageMask';
 import ReconPlayerBase, { type ReconPlayerAdapter } from './recon/ReconPlayerBase';
 import type { PlaybackBarLabels } from './PlaybackBar';
+import { htm } from '@cuberoot/shared/alg-notation';
 import { invertAlg } from '@cuberoot/shared/recon/cube3';
 import { mirrorFaces } from '@cuberoot/puzzle-render-core/engine/mirror/mirrorGeometry';
 
@@ -121,6 +122,8 @@ export default function CuberReconPlayer({
       scramble={scramble}
       alg={alg}
       segmentEnds={segmentEnds}
+      segmentCounts={segmentEnds?.map((end, index) =>
+        htm(tokenize(alg).slice(segmentEnds[index - 1] ?? 0, end).join(' ')))}
       adapter={adapter}
       fillPane={fillPane}
       hideControls={hideControls}

@@ -63,29 +63,27 @@ export function formatLongDate(ms: number, tz: string, isZh: boolean): string {
   }).format(new Date(ms));
 }
 
-/** 顶部标题:随视图变(月视图给「2026年8月」,周视图给起止范围)。 */
+/** 顶部标题：日显示完整日期，年只显示年份，其余视图显示月份或跨月范围。 */
 export function rangeTitle(view: ViewKey, anchor: number, tz: string, isZh: boolean, rangeStart: number, rangeEnd: number): string {
   const fmt = (opts: Intl.DateTimeFormatOptions, at: number): string =>
     new Intl.DateTimeFormat(isZh ? 'zh-CN' : 'en-US', { timeZone: tz, ...opts }).format(new Date(at));
 
-  if (view === 'multiMonthYear') return fmt({ year: 'numeric' }, anchor);
-  if (view === 'dayGridMonth' || view === 'listMonth') return fmt({ year: 'numeric', month: 'long' }, anchor);
+  if (view === 'multiMonthYear') return String(wallPartsIn(tz, new Date(anchor)).y);
+  if (view === 'dayGridMonth') return fmt({ year: 'numeric', month: 'long' }, anchor);
   if (view === 'timeGridDay') return fmt({ year: 'numeric', month: 'long', day: 'numeric' }, anchor);
 
-  // 周 / 4 天:同月只写一次月份,跨月 / 跨年才两头都写。
+  // 周 / 多天 / 日程按实际范围取月份；结束时刻是排他的，月初零点不算下个月。
   const a = wallPartsIn(tz, new Date(rangeStart));
   const b = wallPartsIn(tz, new Date(rangeEnd - 1));
   if (a.y === b.y && a.mo === b.mo) {
-    return isZh
-      ? `${a.y}年${a.mo}月${a.d}–${b.d}日`
-      : `${fmt({ month: 'long', day: 'numeric' }, rangeStart)} – ${b.d}, ${a.y}`;
+    return fmt({ year: 'numeric', month: 'long' }, rangeStart);
   }
   if (a.y === b.y) {
     return isZh
-      ? `${a.y}年${a.mo}月${a.d}日 – ${b.mo}月${b.d}日`
-      : `${fmt({ month: 'short', day: 'numeric' }, rangeStart)} – ${fmt({ month: 'short', day: 'numeric' }, rangeEnd - 1)}, ${a.y}`;
+      ? `${a.y}年${a.mo}月 – ${b.mo}月`
+      : `${fmt({ month: 'long' }, rangeStart)} – ${fmt({ month: 'long' }, rangeEnd - 1)} ${a.y}`;
   }
-  return `${fmt({ year: 'numeric', month: 'short', day: 'numeric' }, rangeStart)} – ${fmt({ year: 'numeric', month: 'short', day: 'numeric' }, rangeEnd - 1)}`;
+  return `${fmt({ year: 'numeric', month: 'long' }, rangeStart)} – ${fmt({ year: 'numeric', month: 'long' }, rangeEnd - 1)}`;
 }
 
 export interface FcEvent {

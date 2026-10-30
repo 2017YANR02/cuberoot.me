@@ -32,8 +32,7 @@
   height: 14px;
   flex-shrink: 0;
   object-fit: cover;
-  border-radius: 2px;
-}
+  }
 
 .cuber-search-chip-name {
   flex: 0 1 auto;

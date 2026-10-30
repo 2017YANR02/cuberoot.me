@@ -12,7 +12,7 @@ export function WcaInstitutionSelect({ directory, value, onChange, disabled }: {
     <span>{tr({ zh: '培训机构', en: 'Training institution' })}</span>
     <select className="native-select" aria-label={tr({ zh: '培训机构', en: 'Training institution' })}
       value={value} onChange={event => onChange(event.currentTarget.value)} disabled={disabled || !directory.ready}>
-      <option value="">{tr({ zh: '未设置', en: 'Not set' })}</option>
+      <option value="">{tr({ zh: '无', en: 'None' })}</option>
       {directory.institutions.map(institution => <option key={institution.id} value={institution.id}>{institution.name}</option>)}
     </select>
     {directory.failed && <button type="button" disabled={disabled} onClick={directory.retry}>{tr({ zh: '重新加载机构', en: 'Reload institutions' })}</button>}

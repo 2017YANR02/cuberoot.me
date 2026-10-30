@@ -262,6 +262,12 @@ impl Opt10Coordinates {
         self.tables.eo10_index(cube, true)
     }
 
+    /// A single canonical frame for EO11 lookup. Generation writes every
+    /// stabilizer alias, so lookup need not enumerate them or take a minimum.
+    pub(crate) fn full_index(&self, cube: &Cube, scalar: bool) -> u64 {
+        self.tables.eo11_index(cube, scalar)
+    }
+
     pub fn conjugate(&self, cube: &Cube, symmetry: u8) -> Cube {
         self.tables.conjugate(cube, symmetry)
     }
@@ -273,7 +279,7 @@ impl Opt10Coordinates {
         key
     }
 
-    fn full_aliases(&self, cube: &Cube, visit: &mut dyn FnMut(u64)) {
+    pub(crate) fn full_aliases(&self, cube: &Cube, visit: &mut dyn FnMut(u64)) {
         let entry = self.tables.corner_entry(cube);
         let class = entry >> 6;
         let canonical = self.tables.conjugate(cube, (entry & 63) as u8);
@@ -296,6 +302,15 @@ impl Opt10Coordinates {
         include: impl FnOnce(u64) -> bool,
         visit: &mut dyn FnMut(u64),
     ) -> bool {
+        self.full_if_key(cube, include, &mut |full| visit(((full >> 10) << 9) | (full & 511)))
+    }
+
+    pub(crate) fn full_if_key(
+        &self,
+        cube: &Cube,
+        include: impl FnOnce(u64) -> bool,
+        visit: &mut dyn FnMut(u64),
+    ) -> bool {
         let mut aliases = [0u64; 48];
         let mut count = 0;
         let mut key = u64::MAX;
@@ -308,7 +323,7 @@ impl Opt10Coordinates {
             return false;
         }
         for &full in &aliases[..count] {
-            visit(((full >> 10) << 9) | (full & 511));
+            visit(full);
         }
         true
     }

@@ -14,6 +14,17 @@ import { parsePrintedSolution, parseWasmBenchmarkArguments, readWca100 } from '.
 
 const here = dirname(fileURLToPath(import.meta.url));
 const native = resolve(here, 'target/release/cube48opt-research');
+test('Opt11 remains source-only, including guard and borrowed Opt10 reviews', () => {
+  for (const command of ['generate-opt11', 'solve-opt11', 'query-opt11']) {
+    const args = [command, 'small', 'table'];
+    assert.throws(() => researchPolicy('opt11', native, args, {}), /Opt11 is source-only/);
+    assert.throws(() => researchPolicy('opt11', native, args, { CUBEOPT_BACKEND:'opt10', CUBEOPT_OPT10_CURRENT_REVIEW:'borrowed' }), /Opt11 is source-only/);
+    assert.ok(blockedCompute(`${native} ${args.join(' ')}`));
+    assert.ok(blockedCompute(`node ${resolve(here, 'guard.mts')} opt11 ${native} ${args.join(' ')}`));
+  }
+  assert.throws(() => researchPolicy('opt11', native, ['solve'], { CUBEOPT_BACKEND:'opt11' }), /Opt11 is source-only/);
+  assert.ok(blockedCompute(`CUBEOPT_BACKEND=opt11 node ${resolve(here, 'guard.mts')} opt11 ${native} solve small table`));
+});
 test('plain artifact upload and metadata probes do not authorize computation', () => {
   assert.equal(blockedCompute(`scp ${native} cuberoot:/tmp/cube48opt-native`), undefined);
   assert.equal(blockedCompute(`${native} --server-info`), undefined);
@@ -260,7 +271,7 @@ test('Opt10 generation and solving have fixed canonical paths, options and full 
 });
 
 test('Opt10 generation proof rejects stale sources, incomplete coverage and stopped resources', () => {
-  const names=['src/opt10_generate.rs','src/opt10.rs','src/opt10_table.rs','src/coord.rs','src/cube.rs'];
+  const names=['src/opt10_generate.rs','src/opt10.rs','src/opt10_table.rs','src/eo_table.rs','src/coord.rs','src/cube.rs'];
   const hashes=Object.fromEntries(names.map(name=>[name,'a'.repeat(64)]));
   const proof={schema:'cuberoot.opt10.generation-proof.v1',exitCode:0,sourceSha256:hashes,
     result:{schema:'cuberoot.opt10.opt1-generation-validation.v1',sharedGenerator:true,projectionEoBits:0,base:7,completedDepth:9,threads:16,

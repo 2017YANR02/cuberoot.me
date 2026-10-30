@@ -76,6 +76,9 @@ function interpreterScript(words: string[]): { index: number; checkOnly: boolean
 function blockedCubeopt(words: string[], cwd: string): boolean {
   const invocation = interpreterScript(words);
   if (invocation?.checkOnly) return false;
+  // Opt11 is source-only, including through an old Opt10 guard/review.
+  if (words.includes('CUBEOPT_BACKEND=opt11')
+      || words.some(word => /^(?:generate|solve|query)-opt11$/.test(word))) return true;
   // Even the real guard is not an H11 authorization. Runtime policy and the
   // native CLI also reject it before file IO; no path/alias bypass is provided.
   const h48Mode = words.findIndex(word => ['solve-h48', 'query-h48'].includes(word));
@@ -306,7 +309,7 @@ async function main() {
     permissionDecisionReason: blocked === '双底对称去重长期计算'
       ? `双底任务已授权，但受保护入口登记未匹配：工作目录=${String(cwd)}；请核对 core 工作目录、完整命令和登记源码 hash。保留断点，不得绕过运行时资源保护。`
       : blocked === cubeoptLabel
-      ? `禁止直接启动 ${blocked}：本轮授权仅适用于 solver/experiments/cube48opt-rust/guard.mts。请经 node --experimental-strip-types solver/experiments/cube48opt-rust/guard.mts LABEL EXECUTABLE [ARGS] 启动，由入口按 CUBEOPT_VARIANT=1..9、显式 CUBEOPT_BACKEND=h10，或 CUBEOPT_BACKEND=h48 加 CUBEOPT_H=0..10 核对预算。H48 档位必须匹配 CLI、实际表大小和表头；H11 仅实现代码，不允许运行，即使通过 guard 也拒绝。持续监控进程树 RSS、内存压力、同次系统启动的 Swapouts 与至少 2 GiB 余量，H10 基准仅允许顺序单表驻留。保护触发后不得重设基线自动重启。inspect、small、verify-small 和小表坐标校验可直接运行；此授权不是操作系统禁用 swap。`
+      ? `禁止直接启动 ${blocked}：本轮授权仅适用于 solver/experiments/cube48opt-rust/guard.mts。请经 node --experimental-strip-types solver/experiments/cube48opt-rust/guard.mts LABEL EXECUTABLE [ARGS] 启动，由入口按 CUBEOPT_VARIANT=1..9、显式 CUBEOPT_BACKEND=h10，或 CUBEOPT_BACKEND=h48 加 CUBEOPT_H=0..10 核对预算。H48 档位必须匹配 CLI、实际表大小和表头；CubeRoot Opt11 与 H48 H11 均仅实现代码，不允许运行，即使通过 guard 也拒绝。持续监控进程树 RSS、内存压力、同次系统启动的 Swapouts 与至少 2 GiB 余量，H10 基准仅允许顺序单表驻留。保护触发后不得重设基线自动重启。inspect、small、verify-small 和小表坐标校验可直接运行；此授权不是操作系统禁用 swap。`
       : `禁止启动 ${blocked}：尚无经核验、覆盖进程及其子进程的系统级防交换保护。现有轮询监控、NO_SWAP 环境变量及缩小批次不能保证零换出。保留结果和断点，先配置并核验系统级保护，再登记受保护入口；不要重设基线或绕过 hook。只读查看统计计划可用 pnpm stats:scramble:local --plan。见 AGENTS.md「本地计算内存与交换保护」；H10 独立求解已按新规则放行，此限制仍适用于上述其他计算。`,
   } }));
 }

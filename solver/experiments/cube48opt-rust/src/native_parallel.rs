@@ -33,7 +33,7 @@ impl<O: PruningOracle> PruningOracle for Cancellable<'_, O> {
         self.oracle.prepare(cube, remaining)
     }
     #[inline(always)] fn lookup(&self, query: Self::Query) -> u8 { self.oracle.lookup(query) }
-    #[cfg(any(feature = "wasm-batch-probes", all(feature = "opt10-native-batch", not(target_family = "wasm"))))]
+    #[cfg(any(feature = "wasm-batch-probes", all(any(feature = "opt10-native-batch", feature = "opt11-native-batch"), not(target_family = "wasm"))))]
     #[inline(always)] fn lookup_batch(&self, queries: &[Option<Self::Query>; 8]) -> [u8; 8] {
         self.oracle.lookup_batch(queries)
     }
@@ -107,7 +107,7 @@ fn add_stats(total: &mut SearchStats, part: SearchStats) {
         total.coset_chain_ancestor_cuts += part.coset_chain_ancestor_cuts;
         total.coset_chain_half_prunes += part.coset_chain_half_prunes;
     }
-    #[cfg(all(feature = "opt10-native-coset", not(target_family = "wasm")))]
+    #[cfg(all(any(feature = "opt10-native-coset", feature = "opt11-native-coset"), not(target_family = "wasm")))]
     {
         total.coset_parent_proofs += part.coset_parent_proofs;
         total.coset_half_prunes += part.coset_half_prunes;
@@ -429,7 +429,7 @@ mod tests {
         assert!(combined.profile.matches_totals(&combined));
     }
 
-    #[cfg(all(any(feature = "opt8-native-batch", feature = "opt10-native-batch"), not(target_family = "wasm")))]
+    #[cfg(all(any(feature = "opt8-native-batch", feature = "opt10-native-batch", feature = "opt11-native-batch"), not(target_family = "wasm")))]
     #[test]
     fn cancellation_wrapper_forwards_the_batch_override() {
         struct BatchOnly;

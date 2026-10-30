@@ -47,6 +47,19 @@ opt10-native-profile = ["opt10-native-coset"]
 # Strengthen surviving states with one selected right-half-turn coset bound.
 opt10-native-lookahead = ["opt10-native-coset"]
 opt10-native-projection = ["opt10-native-coset"]
+# Opt11 candidates are source-only. These select library implementations, not
+# runtime authorization: CLI/guard/hook still reject every Opt11 execution.
+# Never inherit opt10-native-* here: that would also enable opt10-runtime.
+opt11-native-search = [
+    "opt9-native-dynamic",
+    "opt9-native-quarter",
+    "opt9-native-root-bound",
+    "opt9-native-fixed-contexts",
+]
+opt11-native-coset = ["opt11-native-search"]
+opt11-lookup = []
+opt11-native-batch = ["opt11-lookup"]
+opt11-generation-candidates = []
 # Bounded no-PDB search-control and independent distance validation.
 bpmx-check = []
 # Isolated native Opt9 candidates. Neither is enabled by default or changes

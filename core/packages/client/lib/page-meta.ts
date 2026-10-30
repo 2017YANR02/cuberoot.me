@@ -415,6 +415,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'dev/dead-code': { title: { zh: '死代码守卫', en: 'Dead Code Guard' } },
+  'dev/code-history': { title: { zh: '代码语言历史', en: 'Code language history' }, description: { zh: 'CubeRoot 代码语言占比的每日历史，以 GitHub Linguist 统计并展示堆积面积图。', en: 'Daily language shares in CubeRoot, measured with GitHub Linguist and displayed as a stacked area chart.' } },
   'dev/fonts': { title: { zh: '字体', en: 'Fonts' } },
   'dev/guards': { title: { zh: '约束守卫', en: 'Guards' } },
   'dev/language': { title: { zh: '编程', en: 'Code' } },

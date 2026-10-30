@@ -1,6 +1,6 @@
 [
   {
-    "path": "app/[lang]/account/page.tsx",
+    "path": "components/account/AccountSettings.tsx",
     "call": "useQueryState('view') history='push'",
     "reason": "账户主页、登录和管理子页面导航"
   },

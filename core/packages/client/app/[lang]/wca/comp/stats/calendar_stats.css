@@ -664,8 +664,7 @@
   height: 14px;
   flex-shrink: 0;
   object-fit: cover;
-  border-radius: 2px;
-}
+  }
 
 .cs-bar-name {
   white-space: nowrap;
@@ -729,8 +728,7 @@
   height: 14px;
   flex-shrink: 0;
   object-fit: cover;
-  border-radius: 2px;
-}
+  }
 
 .cs-geo-name {
   color: var(--text);

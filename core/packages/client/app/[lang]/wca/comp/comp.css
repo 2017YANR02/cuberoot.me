@@ -809,7 +809,6 @@ td.is-pr {
   display: inline-block;
   width: 20px;
   height: 14px;
-  border-radius: 2px;
   vertical-align: middle;
   flex-shrink: 0;
 }

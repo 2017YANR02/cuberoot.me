@@ -18,7 +18,7 @@ vi.mock('@dnd-kit/core', async importOriginal => ({
 vi.mock('@/components/SortableCard', () => ({ default: ({ id, draggable, disabled, children }: {
   id: string; draggable: boolean; disabled: boolean; children: ReactNode;
 }) => createElement('div', { 'data-id': id }, draggable && createElement('button', { disabled }), children) }));
-import AccountCardGrid from '@/app/[lang]/account/AccountCardGrid';
+import AccountCardGrid from '@/components/account/AccountCardGrid';
 
 describe('account shared sorting', () => {
   let host: HTMLDivElement;

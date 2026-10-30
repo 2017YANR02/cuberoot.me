@@ -1,10 +1,10 @@
 'use client';
 import '@cuberoot/timer-ui/compact-select.css';
 
-// 全站认证 UI。**没有任何弹层形态** —— 两块面板都只长在页面里,认证只有 /account 一个地址:
+// 全站认证 UI。两块面板统一由共享 AccountSettings 承载（/account 与聊天设置）:
 //  1. LoginForm —— 只服务未登录:行业标准布局,邮箱为主凭据(验证码优先,可切密码),下方分隔线
-//     + 「用 X 登录」第三方按钮竖排(WCA / Google / 支付宝 / 微信 / QQ)。渲染于 /account。
-//  2. AccountPanel —— 已绑定身份 + 绑定新方式 + 设/改密码 + 解绑。同样只渲染于 /account。
+//     + 「用 X 登录」第三方按钮竖排(WCA / Google / 支付宝 / 微信 / QQ)。渲染于账户设置。
+//  2. AccountPanel —— 已绑定身份 + 绑定新方式 + 设/改密码 + 解绑。同样只渲染于账户设置。
 // 两者共用同一套表单原语(CodeFlow / 密码表单 / 错误文案),故同处一文件。
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -767,7 +767,7 @@ function RemovePasswordForm({ needCurrent, onDone, onCancel }: {
 }
 
 /**
- * 登录 / 注册表单。`onDone(info)` 在拿到会话后触发 —— /account 用它决定去哪:新注册且没绑 WCA
+ * 登录 / 注册表单。`onDone(info)` 在拿到会话后触发 —— 账户设置用它决定去哪:新注册且没绑 WCA
  * 的先做一步引导,否则回跳 ?next=。
  */
 export function LoginForm(props: { firstPartyOnly?: boolean; onDone: OnSignedIn }) {
@@ -1081,7 +1081,7 @@ function MiniProgramLinkCodePanel({ emphasized = false }: { emphasized?: boolean
 }
 
 /**
- * 账号面板:已绑定身份 + 绑定新方式 + 解绑 + 设/改密码。只渲染于 /account。
+ * 账号面板:已绑定身份 + 绑定新方式 + 解绑 + 设/改密码。只渲染于账户设置。
  * 姓名与登出归宿主页头部管(那是页面级信息),这里只管凭据本身。
  */
 export function AccountPanel({ expectedAppleUid, miniProgramLogin = false }: { expectedAppleUid?: number | null; miniProgramLogin?: boolean }) {

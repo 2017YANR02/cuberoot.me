@@ -35,7 +35,11 @@ fn run() -> Result<(), String> {
         if !cfg!(feature = "opt10-runtime") {
             return Err("Opt10 large-table execution is disabled in this build; code and bounded validation only".into());
         }
-        return opt10_command(&args);
+        return eo_command::<10>(&args);
+    }
+    if matches!(args.get(1).map(String::as_str), Some("generate-opt11" | "solve-opt11")) {
+        cube48opt_research::opt11::ensure_local_cli_allowed()?;
+        return eo_command::<11>(&args);
     }
     if args.len() < 3
         || !matches!(
@@ -140,17 +144,18 @@ fn run() -> Result<(), String> {
     run_solver(&oracle, options, parallelism)
 }
 
-fn opt10_command(args: &[String]) -> Result<(), String> {
+fn eo_command<const EO: u8>(args: &[String]) -> Result<(), String> {
     use cube48opt_research::{opt10::{Opt10Coordinates, Opt10Solver},
         opt10_generate::{generate, GenerationConfig}, opt10_table::{AtomicOpt10Table, DEFAULT_BASE}};
     // The dedicated Opt10 guard has its own budget and validates the completed
     // small-table generator proof. Do not silently use an Opt1/H10 budget.
-    if env::var("CUBEOPT_BACKEND").as_deref() != Ok("opt10") {
-        return Err("Opt10 requires its own guarded backend; existing Opt1–9/H10 budgets do not apply".into());
+    let backend = format!("opt{EO}");
+    if env::var("CUBEOPT_BACKEND").as_deref() != Ok(backend.as_str()) {
+        return Err(format!("Opt{EO} requires its own guarded backend; other variants' budgets do not apply"));
     }
-    let generation = args[1] == "generate-opt10";
+    let generation = args[1] == format!("generate-opt{EO}");
     if generation && !(args.len() == 4 || args.len() == 5) || !generation && !(4..=7).contains(&args.len()) {
-        return Err("generate-opt10 OPT9_SMALL NEW_TABLE [THREADS] | solve-opt10 OPT9_SMALL TABLE [CONTEXTS MAX_DEPTH MAX_NODES]".into());
+        return Err(format!("generate-opt{EO} OPT9_SMALL NEW_TABLE [THREADS] | solve-opt{EO} OPT9_SMALL TABLE [CONTEXTS MAX_DEPTH MAX_NODES]"));
     }
     let threads = if generation {
         let threads: usize = args.get(4).map(|s| s.parse()).transpose().map_err(|_| "invalid generation threads")?.unwrap_or(16);
@@ -162,12 +167,20 @@ fn opt10_command(args: &[String]) -> Result<(), String> {
     let parallelism = search_options.map(Parallelism::from_env).transpose()?;
     let path = Path::new(&args[3]);
     if generation && (path.exists() || std::path::PathBuf::from(format!("{}.partial", path.display())).exists()) {
-        return Err("Opt10 output or partial already exists; refusing to overwrite".into());
+        return Err(format!("Opt{EO} output or partial already exists; refusing to overwrite"));
     }
     if fs::metadata(&args[2]).map_err(|e| e.to_string())?.len() != 818_008 {
-        return Err("Opt10 expects an 818008-byte Opt9 small snapshot".into());
+        return Err(format!("Opt{EO} expects an 818008-byte Opt9 small snapshot"));
     }
     let snapshot = fs::read(&args[2]).map_err(|e| e.to_string())?;
+    if EO == 11 {
+        if !generation {
+            return run_solver(&cube48opt_research::opt11::Opt11Solver::open(&snapshot, path)?, search_options.unwrap(), parallelism.unwrap());
+        }
+        let header = cube48opt_research::opt11_generate::generate_to(&snapshot, path, threads)?;
+        eprintln!("Opt11 complete: depth={}, payload={} bytes", header.completed_depth, cube48opt_research::opt11::TABLE_BYTES);
+        return Ok(());
+    }
     if !generation { return run_solver(&Opt10Solver::open(&snapshot, path)?, search_options.unwrap(), parallelism.unwrap()); }
     let coordinates = Opt10Coordinates::from_opt9_snapshot(&snapshot)?;
     let table = AtomicOpt10Table::new(DEFAULT_BASE)?;
@@ -367,9 +380,9 @@ fn run_solver<O: PruningOracle + Sync>(oracle: &O, options: SearchOptions, paral
             s.dual_attempts, s.dual_raised, s.dual_parent_cuts);
         #[cfg(not(all(feature = "opt10-native-dual", not(target_family = "wasm"))))]
         let dual_stats = "";
-        #[cfg(all(feature = "opt10-native-coset", not(target_family = "wasm")))]
+        #[cfg(all(any(feature = "opt10-native-coset", feature = "opt11-native-coset"), not(target_family = "wasm")))]
         let coset_stats = format!(",\"coset_parent_proofs\":{},\"coset_half_prunes\":{}", s.coset_parent_proofs, s.coset_half_prunes);
-        #[cfg(not(all(feature = "opt10-native-coset", not(target_family = "wasm"))))]
+        #[cfg(not(all(any(feature = "opt10-native-coset", feature = "opt11-native-coset"), not(target_family = "wasm"))))]
         let coset_stats = "";
         #[cfg(all(feature = "opt10-native-coset-chain", not(target_family = "wasm")))]
         let coset_chain_stats = format!(",\"coset_chain_proofs\":{},\"coset_chain_attempts\":{},\"coset_chain_edges\":{},\"coset_chain_ancestor_cuts\":{},\"coset_chain_half_prunes\":{}",

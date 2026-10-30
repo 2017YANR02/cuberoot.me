@@ -12,7 +12,7 @@ vi.mock('react-i18next', async (importOriginal) => ({
   }),
 }));
 
-vi.mock('next/navigation', () => ({
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }),
   useParams: () => ({ lang: 'en' }),
   usePathname: () => '/sim',
 }));

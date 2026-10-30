@@ -259,6 +259,7 @@ export const CATALOG: UtilEntry[] = [
     zh: '从统一清单读取原创桌宠的动作、时长和素材。',
     en: 'Reads original pet scenes, durations and assets from the shared manifest.',
   },
+  { name: 'useRequireMembership', sig: 'useRequireMembership(hasAccess: boolean): () => boolean', imp: "import { useRequireMembership } from '@/hooks/useRequireMembership';", category: 'hook', zh: '会员功能的统一入口检查，保留登录与订阅后的原始回跳。', en: 'Shared membership entry check retaining the original return path through sign-in and subscription.' },
   // ── hooks ─────────────────────────────────
   {
     name: 'usePinnedCountries',

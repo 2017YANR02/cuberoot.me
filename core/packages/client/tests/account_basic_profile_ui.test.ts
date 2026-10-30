@@ -4,20 +4,19 @@ import { describe, expect, it } from 'vitest';
 import { localizeCity } from '@/lib/city-localize';
 
 const clientRoot = join(__dirname, '..');
-const accountPage = readFileSync(join(clientRoot, 'app/[lang]/account/page.tsx'), 'utf8');
+const accountPage = readFileSync(join(clientRoot, 'components/account/AccountSettings.tsx'), 'utf8');
 const countryInput = readFileSync(join(clientRoot, 'components/CountryInput/CountryInput.tsx'), 'utf8');
 const sharedCountryInput = readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/country-input')), 'utf8');
 
 describe('账号基本资料 UI 契约', () => {
-  it('keeps the settings entry accessible with a visible icon and a 44px touch target', () => {
-    const gear = accountPage.match(/<AppLink\s+href=\{accountHref\('signin'\)\}\s+className="account-gear"[\s\S]*?<\/AppLink>/)?.[0];
-    expect(gear).toContain('aria-label=');
-    expect(gear).toContain('<Settings size={28} />');
-    const css = readFileSync(join(clientRoot, 'app/[lang]/account/account.css'), 'utf8');
-    const rule = css.match(/\.account-gear\s*\{([^}]+)\}/)?.[1];
-    expect(rule).toMatch(/width:\s*44px/);
-    expect(rule).toMatch(/height:\s*44px/);
-    expect(rule).toMatch(/flex-shrink:\s*0/);
+  it('keeps the avatar settings menu accessible with a 44px touch target', () => {
+    const menu = readFileSync(join(clientRoot, 'components/ChatAccountMenu.tsx'), 'utf8');
+    const css = readFileSync(join(clientRoot, 'components/chat-account-menu.css'), 'utf8');
+    expect(menu).toContain("ariaLabel={t('账号菜单', 'Account menu')}");
+    expect(menu).toContain('href="/chat?settings=account"');
+    expect(menu).toContain('<Settings size={18}');
+    expect(css).toMatch(/width:\s*44px/);
+    expect(css).toMatch(/height:\s*44px/);
   });
   it('生日和国家复用全站规范组件，省份与城市按层级出现', () => {
     expect(accountPage).toContain('id="account-full-name"');

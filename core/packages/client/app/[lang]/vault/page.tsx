@@ -9,6 +9,7 @@ import { PasswordInput } from '@/components/PasswordInput';
 import { SearchInput } from '@/components/SearchInput';
 import { CompactSelect } from '@/components/CompactSelect';
 import { useCopy } from '@/hooks/useCopy';
+import { useRequireMembership } from '@/hooks/useRequireMembership';
 import { tr } from '@/i18n/tr';
 import { apiUrl } from '@/lib/api-base';
 import { authHeaders, handleApi } from '@/lib/admin-api';
@@ -73,6 +74,7 @@ export default function VaultPage() {
   const { copiedKey, copy } = useCopy();
   const [mounted, setMounted] = useState(false);
   const [payload, setPayload] = useState<VaultPayload | null>(null);
+  const requireMembership = useRequireMembership(payload?.canManage === true);
   const [privateKey, setPrivateKey] = useState<CryptoKey | null>(null);
   const [items, setItems] = useState<OpenItem[]>([]);
   const [draft, setDraft] = useState<OpenItem | null>(null);
@@ -504,6 +506,7 @@ export default function VaultPage() {
       </div>
       {importStatus && <p className="vault-muted" role="status">{importStatus}</p>}
       {!payload.canManage && <p className="vault-muted">{tr({ zh: '你可以查看和导出现有内容；成为会员后才能新建、编辑、删除或分享。', en: 'You can view and export existing items. Membership is required to create, edit, delete, or share.' })}</p>}
+      {!payload.canManage && <button type="button" className="vault-button is-primary" onClick={() => { if (confirmDiscard()) requireMembership(); }}>{tr({ zh: '新建与管理资料', en: 'Create & manage items' })}</button>}
       {failedCount > 0 && <p className="vault-error" role="alert">{tr({ zh: `${failedCount} 条内容无法解密。`, en: `${failedCount} item(s) could not be decrypted.` })}</p>}
       {error && <p className="vault-error" role="alert">{error}</p>}
 

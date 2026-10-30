@@ -119,6 +119,13 @@ const CARDS: Card[] = [
     },
   },
   {
+    href: '/dev/code-history',
+    glyph: '◴',
+    accent: 'var(--signal-info)',
+    zh: { title: '代码语言历史', sub: '', tagline: '按天查看代码语言占比的变化', meta: 'GitHub Linguist · 堆积面积图' },
+    en: { title: 'Code language history', sub: '', tagline: 'Explore daily changes in the repository’s language mix', meta: 'GitHub Linguist · stacked area chart' },
+  },
+  {
     href: '/dev/language',
     glyph: '{ }',
     accent: '#5BA8FF',

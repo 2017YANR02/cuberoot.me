@@ -18,8 +18,7 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import CubeRootLogo from '@/components/CubeRootLogo';
 import AssistantConversationView from '@/components/AssistantConversationView';
 import { assistantConversations, assistantOwner } from '@/lib/assistant-conversations';
-import HeaderToggles from '@/components/HeaderToggles';
-import WcaAuth from '@/components/WcaAuth';
+import ChatAccountMenu from '@/components/ChatAccountMenu';
 import DonateModal from '@/components/DonateModal';
 import FeedbackModal from '@/components/FeedbackModal';
 import FloatingMetronome from '@/components/FloatingMetronome';
@@ -138,6 +137,9 @@ body:has(.deskpet-navigation .appearance-menu) .accent-color-menu{z-index:100030
 .deskpet-navigation .wca-auth-fallback,.deskpet-toolbar-thumb{width:18px;height:18px;flex:0 0 18px;object-fit:contain;}
 .deskpet-navigation .heart-icon{fill:var(--destructive);color:var(--destructive);}
 .deskpet-navigation .af-nav-sidebar{position:static;top:auto;height:100%;}
+.deskpet-navigation .af-nav-sidebar > div:last-child{height:100%;}
+.deskpet-navigation .af-nav-sidebar .af-nav-menu{display:flex;flex-direction:column;height:100%;}
+.deskpet-navigation .af-nav-sidebar .af-nav-row:has(.chat-account-trigger){margin-top:auto;padding-top:16px;}
 .deskpet-navigation .appearance-menu[data-backgrounds],
 .deskpet-navigation .deskpet-detail-column{pointer-events:auto;
   max-width:none;max-height:none;margin:0;padding:24px 16px;align-content:start;
@@ -289,7 +291,7 @@ export default function DeskPetSearch({
   const searchCards = SEARCH_CARDS.filter((card) => isLandingSearchCardVisible(card, isAdmin()));
   const workspaceRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
-  const [activePanel, setActivePanel] = useState<'chats' | 'settings' | 'pet' | 'music' | 'feedback' | 'donate' | null>(null);
+  const [activePanel, setActivePanel] = useState<'chats' | 'pet' | 'music' | 'feedback' | 'donate' | null>(null);
   const [chatSearchOpen, setChatSearchOpen] = useState(false);
   const [chatSearch, setChatSearch] = useState('');
   const [editingChat, setEditingChat] = useState<{ id: string; title: string } | null>(null);
@@ -359,6 +361,7 @@ export default function DeskPetSearch({
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
+      if (document.querySelector('dialog[open], .chat-account-menu')) return;
       if (e.key === 'Escape' && editingChat) {
         e.preventDefault();
         e.stopPropagation();
@@ -434,16 +437,14 @@ export default function DeskPetSearch({
 
   const navigation: NavigationItem[] = [
     { id: 'chats', href: '#chats', label: t('聊天', 'Chats'), icon: <span className="deskpet-chat-home"><FaHouse aria-hidden />{unreadReplies.length > 0 && <span className="deskpet-chat-unread" aria-hidden />}</span> },
-    { id: 'settings', href: '#settings', label: t('外观', 'Appearance'), icon: null },
     { id: 'pet', href: '#pet', label: t('桌宠', 'Pet'), icon: currentCharacter ? <img src={currentCharacter.thumb} alt="" className="deskpet-toolbar-thumb" style={{ transform: `scale(${currentCharacter.thumbScale ?? 1})` }} /> : <PawPrint aria-hidden /> },
     { id: 'music', href: '#music', label: t('音乐', 'Music'), icon: <Music /> },
-    { id: 'account', href: '/account', label: t('我的', 'Account'), icon: null },
     { id: 'feedback', href: '#feedback', label: t('反馈', 'Feedback'), icon: <MessageSquarePlus />, badge: fbUnread || undefined },
     { id: 'donate', href: '#donate', label: t('赞助', 'Donate'), icon: <Heart className="heart-icon" /> },
+    { id: 'account', href: '#account', label: t('账号菜单', 'Account menu'), icon: null },
   ].map(item => ({ ...item, active: item.id === activePanel }));
   const renderNavigationItem = ({ href, ...props }: NavigationLinkProps) => {
-    if (href === '#settings') return <HeaderToggles appearanceOpen={activePanel === 'settings'} onAppearanceOpenChange={open => { if (open) props.onClick?.(); setActivePanel(current => open ? 'settings' : current === 'settings' ? null : current); }} appearanceColumn triggerClassName={props.className} triggerLabel={t('外观', 'Appearance')} labelClassName="af-nav-label" showLabels />;
-    if (href === '/account') return <WcaAuth linkClassName={props.className} labelClassName="af-nav-label" onNavigate={() => props.onClick?.()} showLabel />;
+    if (href === '#account') return <ChatAccountMenu />;
     if (href === '#pet') return <CompactSelect
           open={activePanel === 'pet' && !!petPanelContainer}
           onOpenChange={open => { if (open) props.onClick?.(); setActivePanel(current => open ? 'pet' : current === 'pet' ? null : current); }}
@@ -613,7 +614,7 @@ export default function DeskPetSearch({
           <button className="deskpet-mobile-control" type="button" aria-label={t('新聊天', 'New chat')} onClick={newChat}><SquarePen size={21}/></button>
           <CubeRootLogo className="deskpet-home-logo" height={24} variant="mark" />
         </div>}>
-        {activePanel && activePanel !== 'settings' && <section
+        {activePanel && <section
           className="deskpet-detail-column af-nav-panel" data-site-surface="panel"
           aria-label={navigation.find(item => item.id === activePanel)?.label}
           ref={activePanel === 'pet' ? setPetPanelContainer : undefined}>

@@ -39,6 +39,7 @@ import {
 } from '@cuberoot/shared/tz';
 import { isPopularZone, zoneIso2, zoneLabel, zoneOptions, zoneSearchTerms } from '@/lib/tz-zones';
 import DiscordStamps from './_components/DiscordStamps';
+import AvailabilityPlanner from './_components/AvailabilityPlanner';
 import './timezone.css';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
@@ -245,12 +246,12 @@ function TimezonePage() {
 
       <header className="tz-header">
         <h1>{title}</h1>
-        <p>{tr({
-          zh: '选好自己的时区和时间,下面就是朋友那边的时间;再往下是一整天的对照条和双方都方便的通话时段。',
-          en: 'Pick your zone and a time — see what it is where your friends are, then scan the whole day for hours that work for everyone.',
-        })}</p>
       </header>
 
+      <AvailabilityPlanner today={dateKey(homeWall)} zoneItems={zoneItems} />
+
+      <details className="tz-instant-details">
+      <summary>{tr({ zh: '单个时刻与世界时钟', en: 'Single time & world clocks' })}</summary>
       {/* ── 基准:我的时区 + 时刻 ── */}
       <section className="tz-base">
         <div className="tz-field">
@@ -475,6 +476,7 @@ function TimezonePage() {
         zh: '换算走浏览器自带的 IANA 时区库,夏令时规则随系统更新,页面不缓存任何偏移表。',
         en: 'Conversions use the browser’s built-in IANA time zone data, so daylight-saving rules stay current with your system.',
       })}</p>
+      </details>
     </div>
   );
 }

@@ -43,3 +43,35 @@ export function iconFor(n: { icon?: string; level: NoticeLevel }): typeof Info {
 export function colorFor(n: { color?: string; level: NoticeLevel }): string {
   return isColorKey(n.color) ? colorVar(n.color) : LEVEL_COLOR[n.level];
 }
+
+/** 首页使用简称；文章标题与保存的通知正文仍保留完整内容。 */
+export function homepageNoticeTitle(n: { bodyZh: string; bodyEn: string }): { zh: string; en: string } {
+  const title = { zh: n.bodyZh || n.bodyEn, en: n.bodyEn || n.bodyZh };
+  const cancellation = /^(\d{4})\s*(?:年\s*)?(?:WCA\s*)?亚洲锦标赛取消(?:公告)?(?:\s*[（(].*[）)])?$/.exec(title.zh);
+  if (cancellation) return { ...title, zh: `${cancellation[1]}亚锦赛取消` };
+
+  const digest = /^(?:WCA\s+)?(Integrity Committee|Regulations Committee|Quality Assurance Committee|Disciplinary Committee|W[A-Z]+)\s+(?:Monthly\s+)?(?:Digest|Report)\b/i.exec(title.en);
+  if (!digest) return title;
+  const committees: Record<string, string> = {
+    'integrity committee': 'WIC',
+    'regulations committee': 'WRC',
+    'quality assurance committee': 'WQAC',
+    'disciplinary committee': 'WDC',
+  };
+  const committee = committees[digest[1].toLowerCase()] ?? digest[1].toUpperCase();
+  const period = title.en.slice(digest[0].length);
+  const year = /\b\d{4}\b/.exec(period)?.[0];
+  const quarters = period.match(/\bQ[1-4]\b/gi);
+  if (year && quarters) {
+    const short = `${committee} ${year}${quarters.join('/').toUpperCase()}`;
+    return { zh: short, en: short };
+  }
+  // Older monthly and annual digests keep their period, too.
+  if (/digest/i.test(digest[0]) && year) {
+    const months = [...title.zh.matchAll(/(\d{1,2})\s*月/g)].map(match => match[1].padStart(2, '0'));
+    const short = months.length ? `${committee} ${year}-${months.join('/')}`
+      : /summary of/i.test(period) ? `${committee} ${year}` : undefined;
+    if (short) return { zh: short, en: short };
+  }
+  return title;
+}

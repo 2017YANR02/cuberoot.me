@@ -1,5 +1,9 @@
 # AGENTS.md
 
+2026-10-29 Opt11 优化：维护者允许多 agent 准备多个源码候选，并再次明确“不跑任何计算”。先建立 [Opt11 优化跟踪](experiments/cube48opt-rust/opt11-optimization.md)，B0 完整源码已保留到 `.tmp/cubeopt-reverse/opt11-source-baseline-20261029-WsCutS/`。本轮不编译、不执行任何测试或计算；独立候选不改变默认策略、正式构件或运行拒绝边界。后续 AI 从跟踪文档核对版本及未验证项，不得把源码准备状态当作性能或正确性验收。
+
+2026-10-29 Opt11：维护者仅授权编写 CubeRoot Opt11 建表与求解代码，明确“不跑任何计算”。`experiments/cube48opt-rust/src/opt11.rs`、`opt11_generate.rs` 和共享 `eo_table.rs` 已准备；未编译、未运行新增测试、未生成或加载大表、未求解。`generate-opt11` / `solve-opt11` 由 CLI 在文件访问前拒绝，guard/hook 同样不放行，不新增运行基线、不借用 Opt10 凭据。完整实现范围及待验收项见该目录 README 的 Opt11 代码准备章节。此项是 CubeRoot EO11，不是 Nissy H48 h11；原 H11 禁止运行规则不变。正式 Opt10 冻结构件、默认统计入口及历史成绩未替换。
+
 nxopt22 WCA100/4线程最新测试已完成：296.600813958秒，100条全部独立验解和最优长度核对通过，无新增换出，guard正常退出。`nxopt22-wca100-4-20261015` receipt已消费，不得重复运行。页面已转入Opt8组，旧1000条结果保留为历史。
 
 2026-10-15 nxopt22 对齐8G档：维护者明确要求重新测固定WCA前100条、4线程、单轮不预热。复用现有表，不建表；独立scope `nxopt22-wca100-4-20261015`，同boot/Swapouts48，保留旧1000条成绩与保护记录。仍由guard独占运行，RSS预算和2GiB运行余量保持，触发停止不自动重试。输出持久化在同名.tmp目录，完成后独立验解再回填Opt8组。

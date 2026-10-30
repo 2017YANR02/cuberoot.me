@@ -38,8 +38,7 @@ describe('simulator custom logo membership access', () => {
     const benefitsHook = readFileSync(new URL('../hooks/useMembershipBenefits.ts', import.meta.url), 'utf8');
 
     expect(simPage).toContain('withCustomLogoAccess({ ...settings, backView: animationMode && settings.backView }, isMember)');
-    expect(controls).toContain('setShowCustomLogoUpsell(true)');
-    expect(controls).toContain('href="/membership"');
+    expect(controls).toContain('if (!requireMembership()) return;');
     expect(controls).not.toContain('<option value="custom" disabled={!canUseCustomLogo}>');
     expect(DEFAULT_MEMBERSHIP_BENEFITS.find(item => item.id === 'custom_sim_logo'))
       .toMatchObject({ group: 'common', enabled: true });

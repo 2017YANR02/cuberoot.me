@@ -1,13 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
 import AppLink from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import dynamic from 'next/dynamic';
 import { useMembership } from '@/hooks/useMembership';
+import { useRequireMembership } from '@/hooks/useRequireMembership';
 import { tr, useLang } from '@/i18n/tr';
-import { nextQuery, useAuthStore } from '@/lib/auth-store';
+import { useAuthStore } from '@/lib/auth-store';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { uploadedImageUrl } from '@/lib/image-upload';
@@ -26,9 +26,9 @@ interface GalleryPhoto {
 
 export default function GalleryPage() {
   const lang = useLang();
-  const pathname = usePathname();
   const user = useAuthStore((state) => state.user);
   const { profile, isMember, loading: membershipLoading, refresh } = useMembership();
+  const requireMembership = useRequireMembership(isMember);
   const [photos, setPhotos] = useState<GalleryPhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -59,7 +59,6 @@ export default function GalleryPage() {
   useEffect(() => { void loadPhotos(); }, [loadPhotos]);
 
   const isZh = lang === 'zh';
-  const loginHref = `/account${nextQuery(pathname)}`;
 
   return (
     <main className="gallery-page">
@@ -82,9 +81,9 @@ export default function GalleryPage() {
           <p>{user
             ? tr({ zh: '会员可上传最多 8 张照片，并随时管理展示内容。', en: 'Members can upload up to 8 photos and manage what is shown.' })
             : tr({ zh: '登录并开通会员后，可上传照片到图库。', en: 'Sign in and become a member to upload photos to the gallery.' })}</p>
-          <AppLink href={user ? '/membership' : loginHref} prefetch={false} className="gallery-member-link">
-            {user ? tr({ zh: '查看会员', en: 'View membership' }) : tr({ zh: '去登录', en: 'Sign in' })}
-          </AppLink>
+          <button type="button" onClick={() => requireMembership()} className="gallery-member-link">
+            {tr({ zh: '上传照片', en: 'Upload photos' })}
+          </button>
         </div>
       )}
 

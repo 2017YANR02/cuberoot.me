@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { addCompetitionToCalendar, competitionCalendarRange, isCompetitionInCalendar } from '@/lib/competition-calendar-event';
 import { syncCalendarCompetitions, fetchBootstrap, fetchEvents } from '@/lib/calendar-api';
+import { calendarCompetitionId, competitionCalendarColor, competitionCalendarDescription } from '@cuberoot/shared/calendar';
 vi.mock('@/lib/calendar-api', () => ({ syncCalendarCompetitions: vi.fn(), fetchBootstrap: vi.fn(), fetchEvents: vi.fn() }));
 
 const input = { id: 'LishuiOpen2026', title: '丽水公开赛2026', startDate: '2026-12-06', endDate: '2026-12-06', location: '丽水' };
@@ -21,10 +22,23 @@ describe('competition calendar', () => {
     expect(syncCalendarCompetitions).toHaveBeenCalledTimes(1);
     expect(syncCalendarCompetitions).toHaveBeenCalledWith([input], true, 'test');
   });
-  it('does not recreate a persisted competition, independent of translated title', async () => {
-    vi.mocked(fetchEvents).mockResolvedValue({ events: [{ id: 9, calendarId: 7, description: 'https://www.worldcubeassociation.org/competitions/LishuiOpen2026' }], invitedIds: [] } as unknown as Awaited<ReturnType<typeof fetchEvents>>);
+  it.each([
+    'https://www.worldcubeassociation.org/competitions/LishuiOpen2026',
+    'https://cuberoot.me/zh/wca/comp/LishuiOpen2026',
+    'https://cuberoot.me/wca/comp/LishuiOpen2026',
+  ])('recognizes a saved competition by either link: %s', async (description) => {
+    vi.mocked(fetchEvents).mockResolvedValue({ events: [{ id: 9, calendarId: 7, description }], invitedIds: [] } as unknown as Awaited<ReturnType<typeof fetchEvents>>);
     expect(await isCompetitionInCalendar(input)).toBe(true);
     expect(syncCalendarCompetitions).not.toHaveBeenCalled();
+  });
+  it('replaces legacy links without changing notes, competition identity or banana color', () => {
+    const description = 'Travel notes\r\nhttps://www.worldcubeassociation.org/competitions/NingboOpen2026\r\nBring timer';
+    const normalized = competitionCalendarDescription(description);
+    expect(normalized).toBe('Travel notes\r\nhttps://cuberoot.me/zh/wca/comp/NingboOpen2026\r\nBring timer');
+    expect(competitionCalendarDescription(normalized)).toBe(normalized);
+    expect(calendarCompetitionId(normalized)).toBe('NingboOpen2026');
+    expect(competitionCalendarColor(normalized, 'peacock')).toBe('banana');
+    expect(calendarCompetitionId('https://example.com/zh/wca/comp/NingboOpen2026')).toBeUndefined();
   });
   it('allows retry after the atomic import fails', async () => {
     vi.mocked(syncCalendarCompetitions).mockRejectedValueOnce(new Error('offline'));

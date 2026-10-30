@@ -60,8 +60,7 @@
   height: 14px;
   flex-shrink: 0;
   object-fit: cover;
-  border-radius: 2px;
-}
+  }
 
 .comp-picker-main {
   flex: 1;

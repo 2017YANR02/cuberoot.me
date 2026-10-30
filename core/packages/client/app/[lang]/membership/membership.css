@@ -412,7 +412,7 @@
   justify-content: center;
   gap: 5px;
   margin: 8px 0 0;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--faint-foreground);
 }
 
@@ -476,7 +476,7 @@
 .mem-autorenew-caption {
   margin: 10px 0 0;
   color: var(--muted-foreground);
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.5;
 }
 

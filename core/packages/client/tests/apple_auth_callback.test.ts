@@ -129,11 +129,15 @@ describe('Apple uses the canonical callback and session', () => {
     expect(mocks.applySession).not.toHaveBeenCalled();
   });
 
-  it('offers a fresh retry at the initiating account screen without replaying a code', async () => {
-    sessionStorage.setItem('social_oauth_return', '/zh/account?view=signin&link_provider=apple&expected_uid=42');
+  it.each([
+    '/zh/account?view=signin&link_provider=apple&expected_uid=42',
+    '/chat?settings=account&view=signin&link_provider=apple&expected_uid=42',
+    '/zh/chat?settings=account&auth=mobile&provider=apple&next=%2Fauth%2Fmobile',
+  ])('offers a fresh retry at %s without replaying a code', async target => {
+    sessionStorage.setItem('social_oauth_return', target);
     await callback(linkState, linkState, '&error=access_denied');
     expect(host.querySelector<HTMLAnchorElement>('a')?.getAttribute('href'))
-      .toBe('/zh/account?view=signin&link_provider=apple&expected_uid=42');
+      .toBe(target);
     expect(mocks.replace).not.toHaveBeenCalled();
     expect(mocks.linkSocial).not.toHaveBeenCalled();
   });

@@ -383,8 +383,8 @@ html[data-theme=dark] .wp-page {
     .wp-member-gallery { grid-template-columns: 1fr; }
 }
 
-.wp-flag { width: 24px; height: 18px; border-radius: 2px; box-shadow: 0 0 0 0.5px rgba(0,0,0,0.1); display: inline-block; flex-shrink: 0; }
-.wp-flag-sm { width: 18px; height: 13px; border-radius: 2px; box-shadow: 0 0 0 0.5px rgba(0,0,0,0.1); display: inline-block; flex-shrink: 0; }
+.wp-flag { width: 24px; height: 18px; box-shadow: 0 0 0 0.5px rgba(0,0,0,0.1); display: inline-block; flex-shrink: 0; }
+.wp-flag-sm { width: 18px; height: 13px; box-shadow: 0 0 0 0.5px rgba(0,0,0,0.1); display: inline-block; flex-shrink: 0; }
 
 /* count value — plain colored number, no box */
 .wp-pill {

@@ -7,7 +7,8 @@ import { notify } from '../utils/notify.js';
 import { isValidZone } from '@cuberoot/shared/tz';
 import { expandOccurrences, parseRRule, formatRRule } from '@cuberoot/shared/recur';
 import {
-  eventsToIcs, isCalendarColor, parseNumList, redactBusy, ICS_IMPORT_BATCH, competitionCalendarRange,
+  eventsToIcs, isCalendarColor, parseNumList, redactBusy, ICS_IMPORT_BATCH, competitionCalendarRange, competitionCalendarColor,
+  competitionCalendarDescription, competitionCalendarUrl,
   type CalEvent, type CalendarImport, type CalendarMeta, type EventGuest, type ShareDetail,
 } from '@cuberoot/shared/calendar';
 
@@ -115,7 +116,7 @@ function toEvent(r: EventRow, guests: EventGuest[] = []): CalEvent {
     id: Number(r.id),
     calendarId: Number(r.calendar_id),
     title: r.title,
-    description: r.description,
+    description: competitionCalendarDescription(r.description),
     location: r.location,
     allDay: !!r.all_day,
     start: Number(r.start_ms),
@@ -125,7 +126,7 @@ function toEvent(r: EventRow, guests: EventGuest[] = []): CalEvent {
     exdates: numList(r.exdates),
     seriesId: r.series_id == null ? null : Number(r.series_id),
     occurrenceMs: r.occurrence_ms == null ? null : Number(r.occurrence_ms),
-    color: r.color,
+    color: competitionCalendarColor(r.description, r.color),
     reminders: numList(r.reminders),
     guests,
     ownerKey: r.owner_key,
@@ -460,7 +461,7 @@ async function readEventInput(
   return {
     calendarId,
     title: str(body.title ?? fallback?.title, 300),
-    description: str(body.description ?? fallback?.description, 5000),
+    description: competitionCalendarDescription(str(body.description ?? fallback?.description, 5000)),
     location: str(body.location ?? fallback?.location, 300),
     allDay: body.allDay == null ? !!fallback?.all_day : !!body.allDay,
     start,
@@ -468,7 +469,8 @@ async function readEventInput(
     tz: zone(body.tz ?? fallback?.tz, cal.tz),
     rrule: body.rrule == null ? (fallback?.rrule ?? '') : normalizeRrule(body.rrule),
     exdates: body.exdates == null ? (fallback?.exdates ?? '') : normalizeExdates(body.exdates),
-    color: body.color == null ? (fallback?.color ?? '') : color(body.color),
+    color: competitionCalendarColor(str(body.description ?? fallback?.description, 5000),
+      body.color == null ? (fallback?.color ?? '') : color(body.color)),
     reminders: body.reminders == null ? (fallback?.reminders ?? '') : normalizeReminders(body.reminders),
   };
 }
@@ -584,9 +586,9 @@ calendarRoutes.post('/calendar/competitions', async (c) => {
       throw new Error('Validation: invalid competition dates');
     }
     return { id: v.id, input: {
-      calendarId: cal.id, title: str(v.title, 300), description: `https://www.worldcubeassociation.org/competitions/${v.id}`,
+      calendarId: cal.id, title: str(v.title, 300), description: competitionCalendarUrl(v.id),
       location: str(v.location, 300), allDay: true, ...range, tz: cal.tz,
-      rrule: '', exdates: '', color: '', reminders: '',
+      rrule: '', exdates: '', color: 'banana', reminders: '',
     } satisfies EventInput };
   });
   await withTransaction(async (run) => {
@@ -601,8 +603,9 @@ calendarRoutes.post('/calendar/competitions', async (c) => {
       // never overwrite their title, notes, reminders, guests or calendar choice.
       const previous = await run<{ id: string }>(
         `SELECT id FROM calendar_events WHERE owner_key = ? AND rrule = '' AND series_id IS NULL
-          AND ? = ANY(string_to_array(replace(description, chr(13), ''), chr(10))) ORDER BY id LIMIT 1 FOR UPDATE`,
-        [me.wcaId, input.description]);
+          AND ARRAY[?, ?, ?]::text[] && string_to_array(replace(description, chr(13), ''), chr(10))
+          ORDER BY id LIMIT 1 FOR UPDATE`,
+        [me.wcaId, input.description, `https://www.worldcubeassociation.org/competitions/${id}`, `https://cuberoot.me/wca/comp/${id}`]);
       let eventId = previous[0]?.id;
       if (!eventId) {
         if (count >= MAX_EVENTS_PER_USER) throw new Error('Validation: too many events');

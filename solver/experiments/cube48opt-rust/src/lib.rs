@@ -23,12 +23,22 @@ pub mod table;
 #[cfg(target_arch = "x86_64")]
 pub mod x86_simd;
 pub mod opt10;
+pub mod opt11;
+pub mod opt11_generate;
+#[cfg(all(feature = "opt11-native-search", not(target_family = "wasm")))]
+pub mod opt11_search;
+#[cfg(all(feature = "opt11-lookup", not(target_family = "wasm")))]
+pub mod opt11_lookup;
+#[cfg(feature = "opt11-generation-candidates")]
+pub mod opt11_generate_candidate;
+pub mod eo_table;
 pub mod opt10_table;
 pub mod opt10_generate;
 #[cfg(all(target_arch = "x86_64", any(
     feature = "opt1-7-native-prefetch",
     feature = "opt9-native-prefetch",
     feature = "opt10-native-prefetch-x86",
+    feature = "opt11-lookup",
 )))]
 mod prefetch;
 

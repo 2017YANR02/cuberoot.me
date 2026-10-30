@@ -36,12 +36,12 @@ export function DashboardChart({ labels, series, label, integer = true }: { labe
           animation: !matchMedia('(prefers-reduced-motion: reduce)').matches,
           aria: { enabled: true, label: { description: label } },
           color: [color('--accent'), color('--signal-info'), color('--signal-success')],
-          textStyle: { color: color('--muted-foreground'), fontFamily: style.fontFamily },
+          textStyle: { color: color('--muted-foreground'), fontFamily: style.fontFamily, fontSize: 14 },
           grid: { left: 12, right: 16, top: 44, bottom: 12, containLabel: true },
-          legend: { top: 0, textStyle: { color: color('--muted-foreground') } },
+          legend: { top: 0, textStyle: { color: color('--muted-foreground'), fontSize: 14 } },
           tooltip: { trigger: 'axis', renderMode: 'richText', backgroundColor: color('--popover'), borderColor: color('--border-default'), textStyle: { color: color('--foreground') } },
-          xAxis: { type: 'category', data: labels, axisLine: { lineStyle: { color: color('--border-default') } }, axisLabel: { hideOverlap: true, color: color('--muted-foreground') } },
-          yAxis: { type: 'value', min: 0, minInterval: integer ? 1 : 0, axisLabel: { color: color('--muted-foreground') }, splitLine: { lineStyle: { color: color('--border-default') } } },
+          xAxis: { type: 'category', data: labels, axisLine: { lineStyle: { color: color('--border-default') } }, axisLabel: { hideOverlap: true, color: color('--muted-foreground'), fontSize: 14 } },
+          yAxis: { type: 'value', min: 0, minInterval: integer ? 1 : 0, axisLabel: { color: color('--muted-foreground'), fontSize: 14 }, splitLine: { lineStyle: { color: color('--border-default') } } },
           series: series.map(s => ({ ...s, showSymbol: false, barMaxWidth: 28, connectNulls: false })),
         };
         chart.setOption(option, true);

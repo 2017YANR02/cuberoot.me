@@ -208,7 +208,7 @@
 .cg-input:focus { outline: none; border-color: var(--ring); }
 .cg-num { width: 84px; }
 .cg-flag-row { font-size: 0; }
-.cg-flag { font-size: 26px; border-radius: 2px; }
+.cg-flag { font-size: 26px; }
 img.cg-flag { width: 34px; height: 25px; object-fit: cover; }
 .cg-icon-row { font-size: 30px; color: var(--foreground); }
 .cg-icon-row .continent-icon img { width: 30px; height: 30px; }

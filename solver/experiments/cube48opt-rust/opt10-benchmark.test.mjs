@@ -17,7 +17,7 @@ const digest = 'a'.repeat(64);
 function fixture() {
   const plan = opt10BenchmarkPlan(resolve(paths.base, 'fixture-opt10-review.json'));
   const sourceSha256 = Object.fromEntries(['src/opt10_generate.rs', 'src/opt10.rs',
-    'src/opt10_table.rs', 'src/coord.rs', 'src/cube.rs'].map(path => [path, digest]));
+    'src/opt10_table.rs', 'src/eo_table.rs', 'src/coord.rs', 'src/cube.rs'].map(path => [path, digest]));
   const launch = { schema: 'cuberoot.rust-opt10.wca100-launch.v1', preparedAt: '2026-10-13T00:00:00.000Z',
     corpusSha256: corpus.corpusSha256, cases: 100, measuredPasses: 1, warmupCases: 0, threads: 1, contexts: 8,
     binary: { path: paths.binary, sha256: digest }, input: { path: paths.input, sha256: hash(input), bytes: Buffer.byteLength(input) },

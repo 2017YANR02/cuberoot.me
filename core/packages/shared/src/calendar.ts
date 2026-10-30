@@ -114,6 +114,30 @@ export const CALENDAR_COLORS = [
 ] as const;
 export type CalendarColor = (typeof CALENDAR_COLORS)[number];
 
+/** Accept old WCA links and current CubeRoot links as the same competition identity. */
+export function calendarCompetitionId(description: string): string | undefined {
+  for (const line of description.split(/\r?\n/)) {
+    const match = /^https:\/\/(?:www\.worldcubeassociation\.org\/competitions|(?:www\.)?cuberoot\.me\/(?:zh\/)?wca\/comp)\/([A-Za-z0-9_-]+)\/?$/.exec(line.trim());
+    if (match) return match[1];
+  }
+}
+
+export function competitionCalendarUrl(id: string): string {
+  return `https://cuberoot.me/zh/wca/comp/${encodeURIComponent(id)}`;
+}
+
+/** Preserve notes and line endings while replacing legacy competition URLs. */
+export function competitionCalendarDescription(description: string): string {
+  return description.split(/(\r?\n)/).map(line => {
+    const id = calendarCompetitionId(line);
+    return id ? competitionCalendarUrl(id) : line;
+  }).join('');
+}
+
+export function competitionCalendarColor(description: string, fallback = ''): string {
+  return calendarCompetitionId(description) ? 'banana' : fallback;
+}
+
 export function isCalendarHexColor(v: string): v is `#${string}` {
   return /^#[\da-f]{6}$/i.test(v);
 }

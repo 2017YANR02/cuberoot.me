@@ -37,6 +37,8 @@ export interface CompactSelectProps<T extends string | number> {
   triggerClassName?: string;
   /** Keep menu behavior while the host supplies the trigger's complete appearance. */
   unstyledTrigger?: boolean;
+  /** Pointer activation keeps the current text editor focused (and its keyboard open). */
+  preserveFocus?: boolean;
   popupClassName?: string;
   /** Align option content with an external row containing the trigger. */
   contentAnchorRef?: RefObject<HTMLElement | null>;
@@ -83,6 +85,7 @@ export function CompactSelect<T extends string | number>({
   className,
   triggerClassName,
   unstyledTrigger = false,
+  preserveFocus = false,
   popupClassName,
   contentAnchorRef,
   align = 'start',
@@ -111,6 +114,13 @@ export function CompactSelect<T extends string | number>({
   const previousOpenRef = useRef(open);
   const close = () => setOpen(false);
   const hasPanelContent = panelContent != null;
+  const keepEditorFocus = (event: { preventDefault: () => void }) => {
+    const focused = document.activeElement;
+    if (preserveFocus && (focused instanceof HTMLTextAreaElement
+      || focused instanceof HTMLInputElement || (focused instanceof HTMLElement && focused.isContentEditable))) {
+      event.preventDefault();
+    }
+  };
   usePopoverDismiss(open && !panelContainer, close, panelRef, triggerRef);
 
   useEffect(() => {
@@ -190,6 +200,8 @@ export function CompactSelect<T extends string | number>({
         type="button"
         className={['compact-select-trigger', unstyledTrigger && 'compact-select-trigger--unstyled', triggerClassName].filter(Boolean).join(' ')}
         onClick={() => { if (!disabled) setOpen(current => !current); }}
+        onPointerDown={keepEditorFocus}
+        onMouseDown={keepEditorFocus}
         onPointerEnter={event => {
           if (!disabled && openOnHover && event.pointerType === 'mouse') setOpen(true);
         }}
@@ -233,6 +245,8 @@ export function CompactSelect<T extends string | number>({
                   key={item.value}
                   className={`compact-select-option${active ? ' active' : ''}`}
                   disabled={item.disabled}
+                  onPointerDown={keepEditorFocus}
+                  onMouseDown={keepEditorFocus}
                   onPointerEnter={event => {
                     if (!item.disabled && event.pointerType === 'mouse') onPreview?.(item.value);
                   }}

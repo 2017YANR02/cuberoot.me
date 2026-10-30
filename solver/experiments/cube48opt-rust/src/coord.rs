@@ -179,6 +179,15 @@ impl CoordTables {
     /// Research-only EO10 coordinates, using the validated Opt9 small LUTs.
     /// This does not invent an upstream variant, checksum or PDB decoder.
     pub(crate) fn eo10_index(&self, cube: &Cube, scalar: bool) -> u64 {
+        self.extended_eo_index::<10>(cube, scalar)
+    }
+
+    pub(crate) fn eo11_index(&self, cube: &Cube, scalar: bool) -> u64 {
+        self.extended_eo_index::<11>(cube, scalar)
+    }
+
+    #[inline(always)]
+    fn extended_eo_index<const BITS: u8>(&self, cube: &Cube, scalar: bool) -> u64 {
         assert_eq!(self.variant, 9);
         let (orbit, eo) = if scalar {
             self.coordinate_parts_slow::<true>(cube)
@@ -190,8 +199,8 @@ impl CoordTables {
             #[cfg(not(any(target_arch = "aarch64", target_arch = "x86_64")))]
             { self.coordinate_parts_slow::<true>(cube) }
         };
-        ((u64::from(orbit) & !511) << 10)
-            | (u64::from(eo >> 1) << 9)
+        ((u64::from(orbit) & !511) << BITS)
+            | (u64::from(eo >> (11 - BITS)) << 9)
             | u64::from(orbit & 511)
     }
 

@@ -30,17 +30,20 @@ export interface ListSelectItem {
   country?: string;
   /** label 前的自定义图标 */
   icon?: ReactNode;
+  /** Keep the label for search and accessibility, showing only the icon. */
+  hideLabel?: boolean;
   /** 此项前显示分隔线 */
   separatorBefore?: boolean;
   /** 置灰 + 不可选 (如该项暂无条目) */
   disabled?: boolean;
   /** Optional expandable group; items in each group should be contiguous. */
-  group?: { value: string; label: string; icon?: ReactNode };
+  group?: { value: string; label: string; icon?: ReactNode; hideLabel?: boolean };
 }
 
 interface ListSelectProps {
   /** Escape scrolling tables using the shared viewport-positioned menu. */
   portal?: boolean;
+  showArrow?: boolean;
   disabled?: boolean;
   ariaLabel?: string;
   pinCountries?: boolean;
@@ -59,7 +62,7 @@ interface ListSelectProps {
   searchPlaceholder?: string;
 }
 
-export function ListSelect({ portal = false, items, value, onChange, allLabel, className, searchable, clearable = true, maxVisible, searchPlaceholder, pinCountries = false, disabled = false, ariaLabel }: ListSelectProps) {
+export function ListSelect({ portal = false, showArrow = true, items, value, onChange, allLabel, className, searchable, clearable = true, maxVisible, searchPlaceholder, pinCountries = false, disabled = false, ariaLabel }: ListSelectProps) {
   const [pins, togglePin] = usePinnedCountries();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -138,66 +141,58 @@ export function ListSelect({ portal = false, items, value, onChange, allLabel, c
 
   const current = items.find(i => i.value === value);
 
+  const searching = !!(searchable && query.trim());
+  const activeGroup = shown.find(item => item.group && expandedGroups[item.group.value])?.group;
+  const renderItem = (item: ListSelectItem) => {
+    const button = <button type="button" disabled={item.disabled} title={item.hideLabel ? item.label : undefined}
+      className={`list-select-item${item.group ? ' list-select-item--child' : ''}${value === item.value ? ' list-select-item--active' : ''}${item.disabled ? ' list-select-item--disabled' : ''}`}
+      onClick={() => { if (!item.disabled) select(item.value); }}>
+      {item.country && <Flag iso2={item.country} className="list-select-flag" />}
+      {item.icon && <span className="list-select-icon" aria-hidden>{item.icon}</span>}
+      <span className={item.hideLabel ? 'sr-only' : 'list-select-label'}>{item.label}</span>
+      {item.hint && <span className="list-select-hint">{item.hint}</span>}
+    </button>;
+    return <Fragment key={`item:${item.value}`}>
+      {item.separatorBefore && <div className="list-select-separator" aria-hidden />}
+      {pinCountries && item.country && !item.disabled ? <div className="country-pin-row">{button}
+        <CountryPinButton name={item.label} pinned={pins.includes(item.country.toLowerCase())} onToggle={() => togglePin(item.country!)} />
+      </div> : button}
+    </Fragment>;
+  };
   const menuContent = <>
-          {searchable && (
-            <div className="list-select-search-row">
-            <input
-              ref={inputRef}
-              type="text"
-              className="list-select-search"
-              value={query}
-              placeholder={searchPlaceholder}
-              onChange={e => setQuery(e.target.value)}
-              autoFocus
-            />
-            {query && <ClearButton onClick={() => { setQuery(''); inputRef.current?.focus(); }} />}
-            </div>
-          )}
-          <div className="list-select-list">
-            {shown.map((i, index) => {
-              const group = i.group;
-              const firstInGroup = group && !shown.slice(0, index).some(item => item.group?.value === group.value);
-              const expanded = !group || !!expandedGroups[group.value] || !!(searchable && query.trim());
-              const item = (
-                <button
-                  type="button"
-                  disabled={i.disabled}
-                  className={`list-select-item${group ? ' list-select-item--child' : ''}${value === i.value ? ' list-select-item--active' : ''}${i.disabled ? ' list-select-item--disabled' : ''}`}
-                  onClick={() => { if (!i.disabled) select(i.value); }}
-                >
-                  {i.country && <Flag iso2={i.country} className="list-select-flag" />}
-                  {i.icon && <span className="list-select-icon" aria-hidden>{i.icon}</span>}
-                  <span className="list-select-label">{i.label}</span>
-                  {i.hint && <span className="list-select-hint">{i.hint}</span>}
-                </button>
-              );
-              return (
-                <Fragment key={i.value}>
-                  {i.separatorBefore && <div className="list-select-separator" aria-hidden />}
-                  {firstInGroup && <button type="button" className="list-select-item" aria-expanded={expanded}
-                    onClick={() => setExpandedGroups(current => ({ ...current, [group.value]: !expanded }))}>
-                    {group.icon && <span className="list-select-icon" aria-hidden>{group.icon}</span>}
-                    <span className="list-select-label">{group.label}</span>
-                    <ChevronDown size={14} className={`list-select-group-chevron${expanded ? ' list-select-group-chevron--open' : ''}`} />
-                  </button>}
-                  {expanded && (pinCountries && i.country && !i.disabled ? (
-                    <div className="country-pin-row">
-                      {item}
-                      <CountryPinButton name={i.label} pinned={pins.includes(i.country.toLowerCase())} onToggle={() => togglePin(i.country!)} />
-                    </div>
-                  ) : item)}
-                </Fragment>
-              );
-            })}
-            {hidden > 0 && (
-              <div className="list-select-more">
-                {tr({ zh: `还有 ${hidden} 项,继续输入以缩小范围`, en: `${hidden} more — keep typing to narrow` })}
-              </div>
-            )}
-          </div>
+    {searchable && <div className="list-select-search-row">
+      <input ref={inputRef} type="text" className="list-select-search" value={query} placeholder={searchPlaceholder}
+        onChange={e => setQuery(e.target.value)} autoFocus />
+      {query && <ClearButton onClick={() => { setQuery(''); inputRef.current?.focus(); }} />}
+    </div>}
+    <div className="list-select-columns">
+      <div className="list-select-list">
+        {shown.map((item, index) => {
+          const group = item.group;
+          if (!group || searching) return renderItem(item);
+          if (shown.slice(0, index).some(other => other.group?.value === group.value)) return null;
+          const expanded = activeGroup?.value === group.value;
+          return <button key={`group:${group.value}`} type="button" className="list-select-item" aria-expanded={expanded}
+            title={group.hideLabel ? group.label : undefined}
+            onClick={() => setExpandedGroups(expanded ? {} : { [group.value]: true })}
+            onKeyDown={event => { if (event.key === 'ArrowRight') { event.preventDefault(); setExpandedGroups({ [group.value]: true }); } }}>
+            {group.icon && <span className="list-select-icon" aria-hidden>{group.icon}</span>}
+            <span className={group.hideLabel ? 'sr-only' : 'list-select-label'}>{group.label}</span>
+            <ChevronDown size={14} className="list-select-group-chevron" />
+          </button>;
+        })}
+        {hidden > 0 && <div className="list-select-more">
+          {tr({ zh: `还有 ${hidden} 项,继续输入以缩小范围`, en: `${hidden} more — keep typing to narrow` })}
+        </div>}
+      </div>
+      {!searching && activeGroup && <div className="list-select-list list-select-submenu" role="group" aria-label={activeGroup.label}
+        onKeyDown={event => { if (event.key === 'ArrowLeft') { event.preventDefault(); setExpandedGroups({}); } }}>
+        {shown.filter(item => item.group?.value === activeGroup.value).map(renderItem)}
+      </div>}
+    </div>
   </>;
-  if (portal) return <CompactSelect className={className} popupClassName="wca-relation-filter-popup" unstyledTrigger showArrow
-    ariaLabel={ariaLabel ?? allLabel} label={current ? <>{current.icon}{current.label}</> : allLabel}
+  if (portal) return <CompactSelect className={className} popupClassName="wca-relation-filter-popup" unstyledTrigger showArrow={showArrow}
+    ariaLabel={ariaLabel ?? allLabel} label={current ? <span title={current.hideLabel ? current.label : undefined}>{current.icon}<span className={current.hideLabel ? 'sr-only' : undefined}>{current.label}</span></span> : allLabel}
     items={shown.filter(item => !item.group || expandedGroups[item.group.value] || (searchable && query.trim()))} value={value} onChange={select} disabled={disabled} open={open}
     onOpenChange={next => {
       if (next) { const group = current?.group; setExpandedGroups(group ? { [group.value]: true } : {}); }
@@ -210,7 +205,8 @@ export function ListSelect({ portal = false, items, value, onChange, allLabel, c
         type="button"
         className="list-select-trigger"
         disabled={disabled}
-        aria-label={ariaLabel}
+        aria-label={ariaLabel ?? (current?.hideLabel ? current.label : undefined)}
+        title={current?.hideLabel ? current.label : undefined}
         aria-expanded={open}
         onClick={() => {
           if (!open) {
@@ -225,7 +221,7 @@ export function ListSelect({ portal = false, items, value, onChange, allLabel, c
             <>
               {current.country && <Flag iso2={current.country} className="list-select-flag" />}
               {current.icon && <span className="list-select-icon" aria-hidden>{current.icon}</span>}
-              <span className="list-select-label">{current.label}</span>
+              <span className={current.hideLabel ? 'sr-only' : 'list-select-label'}>{current.label}</span>
               {current.hint && <span className="list-select-hint">{current.hint}</span>}
             </>
           ) : (
@@ -242,7 +238,7 @@ export function ListSelect({ portal = false, items, value, onChange, allLabel, c
             <X size={14} />
           </span>
         )}
-        <ChevronDown size={14} className="list-select-chevron" />
+        {showArrow && <ChevronDown size={14} className="list-select-chevron" />}
       </button>
       {open && !disabled && (
         <div ref={panelRef} className="list-select-popup" data-site-surface="popover">

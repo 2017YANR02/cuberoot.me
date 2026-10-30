@@ -66,7 +66,7 @@ import '../landing.css';
 import { tr } from '@/i18n/tr';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { fetchPageNotices, type PageNotice } from '@/lib/page-notices-api';
-import { colorFor, iconFor } from '@/lib/page-notice-visuals';
+import { colorFor, homepageNoticeTitle, iconFor } from '@/lib/page-notice-visuals';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { listPublicMembers, type PublicMember } from '@/lib/membership-api';
@@ -554,10 +554,7 @@ export default function LandingPage() {
         const FeaturedIcon = iconFor(featuredNotice);
         const isHistoryFeature = featuredNotice === HISTORY_HOME_FEATURE;
         const featureClass = `landing-featured-news${isHistoryFeature ? ' landing-history-feature' : ''}`;
-        const body = tr({
-          zh: featuredNotice.bodyZh || featuredNotice.bodyEn,
-          en: featuredNotice.bodyEn || featuredNotice.bodyZh,
-        });
+        const body = tr(homepageNoticeTitle(featuredNotice));
         const inner = (
           <>
             {isHistoryFeature

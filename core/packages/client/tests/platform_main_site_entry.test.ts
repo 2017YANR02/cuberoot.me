@@ -105,7 +105,7 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
 
   it('keeps homepage account links real and avoids a duplicate search trigger', () => {
     const landing = read('app/[lang]/LandingClient.tsx');
-    const account = read('app/[lang]/account/page.tsx');
+    const account = read('components/account/AccountSettings.tsx');
     const learnEntries = SITE_DIRECTORY_GROUPS.find((group) => group.id === 'learn')?.entries ?? [];
     const platformEntry = learnEntries.find((entry) => entry.id === 'platform');
     const teachingEntry = learnEntries.find((entry) => entry.id === 'teaching');

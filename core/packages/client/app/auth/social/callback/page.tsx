@@ -52,7 +52,9 @@ export default function SocialCallbackPage() {
     const targetUrl = new URL(target, window.location.href);
     // Return to the initiating account screen so a retry creates new state/PKCE.
     // Preserve native handoff and expected_uid; never replay the consumed code.
-    setReturnPath(/^\/(zh\/)?account$/.test(targetUrl.pathname) ? target : '/account?view=signin');
+    const accountSettings = /^\/(zh\/)?account\/?$/.test(targetUrl.pathname)
+      || (/^\/(zh\/)?chat\/?$/.test(targetUrl.pathname) && targetUrl.searchParams.get('settings') === 'account');
+    setReturnPath(accountSettings ? target : '/account?view=signin');
     const codeVerifier = provider === 'apple' ? consumeAppleState(state) : undefined;
 
     if (!provider || !(REDIRECT_AUTH_PROVIDERS as readonly string[]).includes(provider) || parts.length !== 5

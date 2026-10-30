@@ -1019,7 +1019,7 @@ fn dual_search_matches_every_radius_three_independent_distance() {
     println!("dual: bfsStates=3502 searches=28016 attempts={attempts} raised={raised} parentCuts={parent_cuts} pdbBytes=0");
 }
 
-#[cfg(all(test, any(feature = "opt10-native-coset", feature = "wasm-coset-prune"), not(target_family = "wasm")))]
+#[cfg(all(test, any(feature = "opt10-native-coset", feature = "opt11-native-coset", feature = "wasm-coset-prune"), not(target_family = "wasm")))]
 #[test]
 fn backward_coset_changes_only_owned_inverse_masks() {
     assert_eq!(std::mem::size_of::<Frame>(), 56);
@@ -1065,7 +1065,7 @@ fn backward_coset_changes_only_owned_inverse_masks() {
     assert_eq!(stats, SearchStats::default());
 }
 
-#[cfg(all(test, any(feature = "opt10-native-coset", feature = "wasm-coset-prune"), not(target_family = "wasm")))]
+#[cfg(all(test, any(feature = "opt10-native-coset", feature = "opt11-native-coset", feature = "wasm-coset-prune"), not(target_family = "wasm")))]
 #[test]
 fn backward_coset_matches_every_radius_three_distance() {
     fn orientation(cube: &Cube) -> usize {

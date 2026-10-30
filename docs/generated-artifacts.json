@@ -1846,6 +1846,30 @@
         "node scripts/recon-ground-truth-gate.mjs run --offline"
       ],
       "driftPolicy": "Explicit authenticated export only. Preserve approved expectations; ordinary offline CI does not fetch new samples. An empty export is not proof of reconstruction correctness."
+    },
+    {
+      "id": "client.code-language-history",
+      "kind": "checked-in-generated",
+      "source": {
+        "locator": "Retained main first-parent Git history, analyzed by github-linguist 9.7.0",
+        "paths": [
+          "core/packages/client/scripts/build-code-history.rb"
+        ]
+      },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "Aggregated byte counts derived from repository snapshots using MIT-licensed GitHub Linguist"
+      },
+      "owner": "core/packages/client/scripts/build-code-history.rb",
+      "workingDirectory": "core",
+      "command": "ruby packages/client/scripts/build-code-history.rb",
+      "outputs": [
+        "core/packages/client/app/[lang]/dev/code-history/history.json"
+      ],
+      "verification": [
+        "pnpm --filter @cuberoot/client typecheck"
+      ],
+      "driftPolicy": "Manual snapshot refresh only; keep raw Linguist byte counts and source commits. CI and page rendering do not rerun history analysis."
     }
   ]
 }

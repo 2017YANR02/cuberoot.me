@@ -14,6 +14,12 @@
   vertical-align: middle;
 }
 
+/* Country flags retain their original square corners at every display size. */
+.fi:not(.flag-multi),
+.cr-flag-img {
+  border-radius: 0;
+}
+
 /* WCA multi-region identifiers have no true flag. */
 .fi.flag-multi {
   box-sizing: border-box;

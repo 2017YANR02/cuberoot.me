@@ -11,10 +11,10 @@ import { ChevronLeft } from '@app-foundation/icons/lucide';
 import HomeLink from './HomeLink';
 import { tr } from '@/i18n/tr';
 
-export default function BackHome({ className, prefetch }: { className?: string; prefetch?: false }) {
+export default function BackHome({ className, prefetch, miniProgramTarget }: { className?: string; prefetch?: false; miniProgramTarget?: 'tools' | 'account' }) {
   const cls = ['back-home', className].filter(Boolean).join(' ');
   return (
-    <HomeLink className={cls} prefetch={prefetch} aria-label={tr({ zh: '返回首页', en: 'Back to home' })}>
+    <HomeLink className={cls} prefetch={prefetch} miniProgramTarget={miniProgramTarget} aria-label={tr({ zh: '返回首页', en: 'Back to home' })}>
       <ChevronLeft size={16} aria-hidden="true" /> <span className="sr-only">{tr({ zh: '首页', en: 'Home' })}</span>
     </HomeLink>
   );

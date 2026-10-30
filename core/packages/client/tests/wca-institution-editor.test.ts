@@ -2,8 +2,9 @@
 import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 vi.mock('@/i18n/tr', () => ({ tr: (text: { zh: string }) => text.zh }));
-vi.mock('@/components/WcaPersonPicker', () => ({ WcaPersonPicker: () => null }));
+vi.mock('@/components/WcaPersonPicker', () => ({ WcaPersonPicker: ({ onChange, additionalResults }: { onChange: (value: null) => void; additionalResults?: import('react').ReactNode }) => createElement('div', null, additionalResults, createElement('button', { onClick: () => onChange(null) }, '清除老师')) }));
 vi.mock('@/components/WcaEventSelector', () => ({ default: () => null }));
 vi.mock('@/components/EventIcon', () => ({ EventIcon: () => null }));
 vi.mock('@/components/Flag', () => ({ Flag: () => null }));
@@ -53,12 +54,21 @@ it('saves an institution alone without creating or removing teacher relations', 
 });
 it('clears a teacher only on save and retains the independent institution', async () => {
   const data = directory(true, true); await render(data); await click('编辑');
-  await select('选择学习方式', 'none'); expect(data.remove).not.toHaveBeenCalled();
+  await click('清除老师'); expect(data.remove).not.toHaveBeenCalled();
   await click('保存'); expect(data.remove).toHaveBeenCalledWith('2023GENG02', '333');
   expect(data.institutions.save).not.toHaveBeenCalled();
 });
 it('cancels both edits without writing either relation', async () => {
   const data = directory(true, true); await render(data); await click('编辑');
-  await select('选择学习方式', 'none'); await select('培训机构', ''); await click('取消');
+  await click('清除老师'); await select('培训机构', ''); await click('取消');
   expect(data.remove).not.toHaveBeenCalled(); expect(data.save).not.toHaveBeenCalled(); expect(data.institutions.save).not.toHaveBeenCalled();
+});
+
+it('saves self-taught from the first dropdown option only on confirmation', async () => {
+  const data = directory(true, true); await render(data); await click('编辑');
+  await click('自学');
+  expect(data.save).not.toHaveBeenCalled();
+  await click('保存');
+  expect(data.save).toHaveBeenCalledWith('2023GENG02', '333', undefined, true);
+  expect(data.institutions.save).not.toHaveBeenCalled();
 });

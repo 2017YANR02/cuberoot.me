@@ -42,7 +42,7 @@ interface AuthState {
 }
 
 interface AuthActions {
-  /** 去登录页 /account —— 全站 20 余处「需要登录」入口都走这里。没有弹层形态。 */
+  /** 进入 /account 的账户设置 —— 全站 20 余处「需要登录」入口都走这里。复用唯一认证面板。 */
   login: () => void;
   /** 直接跳 WCA OAuth(登录页「用 WCA 登录」按钮用)。
    *  returnTo:授权完成后要落到的站内地址,省略则回当前页。新人引导里绑完 WCA 要直接把人
@@ -185,7 +185,7 @@ export function setAuthNavigate(fn: ((href: string) => void) | null): void {
 }
 
 /**
- * 登录页 href 的 ?next= 部分:记住来处供登录后回跳。已经在登录页时为空 —— 否则登录完
+ * 登录页 href 的 ?next= 部分:记住来处供登录后回跳。已经在账户设置时为空 —— 否则登录完
  * 又跳回登录页。给 <AppLink href={`/account${nextQuery(pathname)}`}> 和 loginHref 共用。
  *
  * 先把内部路径归一成对外形式:Pattern B 下英文是裸 URL,但 usePathname() 在英文路由上
@@ -193,7 +193,10 @@ export function setAuthNavigate(fn: ((href: string) => void) | null): void {
  */
 export function nextQuery(path: string): string {
   const p = path === '/en' ? '/' : path.startsWith('/en/') ? path.slice(3) : path;
-  return /^(\/zh)?\/account$/.test(p) ? '' : `?next=${encodeURIComponent(p)}`;
+  const target = new URL(p, 'https://cuberoot.me');
+  const accountSettings = /^(\/zh)?\/account\/?$/.test(target.pathname)
+    || (/^(\/zh)?\/chat\/?$/.test(target.pathname) && target.searchParams.get('settings') === 'account');
+  return accountSettings ? '' : `?next=${encodeURIComponent(p)}`;
 }
 
 /** 登录页完整地址(带 lang 前缀,Pattern B:英文裸路径,中文 /zh)。imperative 跳转用。 */
@@ -201,7 +204,7 @@ export function loginHref(): string {
   if (typeof window === 'undefined') return '/account';
   const path = window.location.pathname;
   const prefix = path === '/zh' || path.startsWith('/zh/') ? '/zh' : '';
-  return `${prefix}/account` + nextQuery(path);
+  return `${prefix}/account` + nextQuery(path + window.location.search + window.location.hash);
 }
 
 /**
@@ -285,7 +288,7 @@ export async function applySession(token: string, _user: WebSessionUser, isCurre
 }
 
 // ── 新人「绑定 WCA」引导的待办标记 ──
-// 注册成功那一刻打标,进 /account 时消费掉(只引导一次)。存在的理由是三方登录那条路:
+// 注册成功那一刻打标,打开账户设置时消费掉(只引导一次)。存在的理由是三方登录那条路:
 // 微信/QQ/支付宝的授权是整页跳走再回来的,回来时人已不在登录表单里,只能靠这个标记把引导接上。
 // sessionStorage:关标签页即失效;手机唤起支付宝 App 时可能跨浏览器上下文而丢 —— 丢了就不
 // 引导,账号页的「绑定 WCA」入口一直在,这一步从来不是必经环节。

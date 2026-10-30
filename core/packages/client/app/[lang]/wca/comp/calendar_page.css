@@ -674,14 +674,12 @@
     display: inline-block;
     width: 14px;
     height: 10.5px;
-    border-radius: 2px;
     flex-shrink: 0;
 }
 .calendar-page .flag-img {
     width: 14px;
     height: 10.5px;
     object-fit: cover;
-    border-radius: 2px;
     flex-shrink: 0;
 }
 
@@ -1578,7 +1576,6 @@
     border: none;
     background: transparent;
     cursor: pointer;
-    border-radius: 2px;
     transition: transform 0.1s, box-shadow 0.1s;
     /* tile 自身不裁剪;flag 由 utils/flag.tsx 渲染为 22×16 */
 }
@@ -1586,7 +1583,6 @@
 .compact-flag-tile .flag-img {
     width: 100%;
     height: 100%;
-    border-radius: 2px;
     display: block;
 }
 .compact-flag-tile:hover {

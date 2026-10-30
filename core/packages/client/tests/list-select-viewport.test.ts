@@ -72,3 +72,15 @@ it('renders header choices outside a clipped table and selects through the share
   expect(onChange).toHaveBeenCalledWith('gan');
   expect(document.querySelector('.wca-relation-filter-popup')).toBeNull();
 });
+
+it('keeps group keys separate from a retained selection with the same value', async () => {
+  (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+  host = document.createElement('div'); document.body.append(host); root = createRoot(host);
+  await act(async () => root!.render(createElement(ListSelect, { value: 'moyu', allLabel: 'Team', onChange: vi.fn(),
+    items: [{ value: 'moyu', label: 'Old selection', disabled: true },
+      { value: '29', label: 'Team MoYu', group: { value: 'moyu', label: 'MoYu' } }] })));
+  await act(async () => host.querySelector<HTMLButtonElement>('.list-select-trigger')!.click());
+  expect(host.querySelectorAll('.list-select-list > .list-select-item')).toHaveLength(2);
+  expect(errors.mock.calls.some(call => call.some(value => String(value).includes('same key')))).toBe(false);
+});

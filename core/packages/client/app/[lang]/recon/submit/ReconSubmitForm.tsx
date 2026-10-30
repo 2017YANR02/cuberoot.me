@@ -46,6 +46,7 @@ import GroupScramblePicker from './GroupScramblePicker';
 import { useAuthStore } from '@/lib/auth-store';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useMembership } from '@/hooks/useMembership';
+import { useRequireMembership } from '@/hooks/useRequireMembership';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { loadFlagData, flagDataVersion, personFlagIso2 } from '@/lib/country-flags';
 import { fetchCompRounds, type RoundFormat } from '@/lib/comp-wcif';
@@ -178,6 +179,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const authUser = useAuthStore(s => s.user);
   const login = useAuthStore(s => s.login);
   const { isMember } = useMembership();
+  const requireMembership = useRequireMembership(isMember);
 
   const [saving, setSaving] = useState(false);
   const [submitError, setSubmitError] = useState<{ field: string; message: string } | null>(null);
@@ -320,6 +322,21 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       return changed ? next : prev;
     });
   }, []);
+
+  const requestVideoUpload = () => {
+    if (!isMember) {
+      try {
+        sessionStorage.setItem('recon.membership-draft', JSON.stringify({
+          path: window.location.pathname + window.location.search,
+          uid: authUser?.uid, at: Date.now(), form, timeInput, avgInput,
+        }));
+      } catch {
+        setVideoUploadError(tr({ zh: '无法暂存表单，请保存内容后再开通会员。', en: 'Could not save this draft. Save your work before joining.' }));
+        return;
+      }
+    }
+    if (requireMembership()) videoUploadInputRef.current?.click();
+  };
 
   const timingOnly = !(form.solution || '').trim() && (form.pickupTime != null || form.putdownTime != null);
 
@@ -1647,6 +1664,23 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
   // Pre-mount: render a neutral loading shell on both SSR and the first client
   // render so they match (auth state isn't known until localStorage is read).
+  const checkoutDraftRestored = useRef(false);
+  useEffect(() => {
+    if (!mounted || loadingEdit || checkoutDraftRestored.current) return;
+    checkoutDraftRestored.current = true;
+    try {
+      const key = 'recon.membership-draft';
+      const draft = JSON.parse(sessionStorage.getItem(key) || 'null');
+      if (!draft || draft.path !== window.location.pathname + window.location.search) return;
+      sessionStorage.removeItem(key);
+      if (draft.uid !== authUser?.uid || Date.now() - draft.at > 7200000) return;
+      setForm(draft.form);
+      setTimeInput(draft.timeInput);
+      setAvgInput(draft.avgInput);
+      solutionFieldRef.current?.setText(draft.form.solution || '');
+    } catch { /* No valid pending checkout draft. */ }
+  }, [mounted, loadingEdit, authUser?.uid]);
+
   if (!mounted) {
     return <div className="recon-page"><div className="recon-loading"><LoadingIndicator>{t('common.loading')}</LoadingIndicator></div></div>;
   }
@@ -2415,8 +2449,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   <label className="submit-label" htmlFor="recon-video-urls">
                     {tr({ zh: '视频', en: 'Videos' })}
                   </label>
-                  {isMember && (
                     <div className="submit-video-upload">
+                      {isMember && (
                       <input
                         ref={videoUploadInputRef}
                         id="recon-video-upload"
@@ -2426,10 +2460,11 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                         onChange={event => void handleVideoUpload(event.target.files?.[0])}
                         disabled={videoUploading}
                       />
+                      )}
                       <button
                         type="button"
                         className="submit-reuse-btn"
-                        onClick={() => videoUploadInputRef.current?.click()}
+                        onClick={requestVideoUpload}
                         disabled={videoUploading}
                       >
                         {videoUploading ? <Spinner size={14} /> : <Upload size={14} />}
@@ -2441,7 +2476,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                         {tr({ zh: '会员专享，MP4 / WebM / MOV，最大 200MB', en: 'Members only, MP4 / WebM / MOV, up to 200MB' })}
                       </span>
                     </div>
-                  )}
                   <span className="submit-hint">
                     {tr({ zh: '同一视频的不同平台链接放在一起，每行一个；不同视频请点击“添加视频”。', en: 'Keep links to the same video together, one per line. Use “Add video” for a different video.' })}
                   </span>

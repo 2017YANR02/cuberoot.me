@@ -12,7 +12,7 @@ const ROOTS = [
   'apps/harmony/src', 'apps/harmony/entry/src/main/ets',
   'packages/app-ui/src', 'packages/shared/src', 'packages/client/lib',
   'packages/client/components', 'packages/client/hooks', 'packages/client/app/auth',
-  'packages/client/app/[lang]/account', 'packages/client/app/api/google-verify',
+  'packages/client/app/[lang]/account', 'packages/client/app/[lang]/chat', 'packages/client/app/api/google-verify',
   'packages/client/app/api/page-access', 'packages/client/app/api/web-session',
   'packages/client/app/api/identity-choice', 'packages/client/app/[lang]/dev/team',
 ];
@@ -90,6 +90,8 @@ export function isAuthDocSource(path) {
   if (EXACT.has(normalized)) return true;
   if (normalized.startsWith('packages/client/app/auth/')
     || normalized.startsWith('packages/client/app/[lang]/account/')
+    || normalized.startsWith('packages/client/components/account/')
+    || normalized.startsWith('packages/client/app/[lang]/chat/')
     || normalized.startsWith('packages/client/app/[lang]/dev/team/')
     || normalized.startsWith('packages/client/app/api/google-verify/')
     || normalized.startsWith('packages/client/app/api/page-access/')

@@ -5,7 +5,7 @@ import { applyCardOrder } from '@/lib/card-order';
 
 describe('shared card order', () => {
   it('keeps the complete account ordering contract aligned with conditional page entries', () => {
-    const source = readFileSync(new URL('../app/[lang]/account/page.tsx', import.meta.url), 'utf8');
+    const source = readFileSync(new URL('../components/account/AccountSettings.tsx', import.meta.url), 'utf8');
     const keys = [...source.matchAll(/key: '([^']+)'/g)].map(match => match[1]);
     expect([...ACCOUNT_CARD_IDS]).toEqual(['pet', ...keys]);
   });

@@ -196,7 +196,6 @@
 }
 .rw-flag, .rw-flag-ct {
   width: 1.3em;
-  border-radius: 2px;
   flex: none;
 }
 .rw-flag-ct { height: auto; }

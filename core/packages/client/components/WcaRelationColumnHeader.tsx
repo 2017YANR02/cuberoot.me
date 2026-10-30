@@ -18,7 +18,7 @@ export function WcaRelationColumnHeader({ label, filter, className }: { label: s
   const items = filter.items.map(item => ({ ...item, disabled: filter.disabled || item.disabled }));
   if (filter.value && !items.some(item => item.value === filter.value)) items.push({ value: filter.value, label: filter.value, disabled: true });
   return <th className={className}>
-    <ListSelect portal className="wca-relation-filter" ariaLabel={label} allLabel={label} searchable clearable={false}
+    <ListSelect portal showArrow={false} className="wca-relation-filter" ariaLabel={label} allLabel={label} searchable clearable={false}
       searchPlaceholder={tr({ zh: '搜索', en: 'Search' })}
       value={filter.value} onChange={filter.onChange}
       items={[{ value: '', label }, ...items]} />

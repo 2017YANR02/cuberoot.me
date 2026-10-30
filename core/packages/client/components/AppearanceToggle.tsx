@@ -44,7 +44,7 @@ import { tr } from '@/i18n/tr';
 
 const HOVER_CLOSE_DELAY_MS = 120;
 
-export default function AppearanceToggle({ className, triggerClassName, triggerLabel, labelClassName = 'toolbar-label', showLabel = false, menuContent, column = false, open: controlledOpen, onOpenChange }: { className?: string; triggerClassName?: string; triggerLabel?: string; labelClassName?: string; showLabel?: boolean; menuContent?: ReactNode; column?: boolean; open?: boolean; onOpenChange?: (open: boolean) => void }) {
+export default function AppearanceToggle({ className, triggerClassName, triggerLabel, labelClassName = 'toolbar-label', showLabel = false, menuContent, column = false, embedded = false, section = 'all', open: controlledOpen, onOpenChange }: { className?: string; triggerClassName?: string; triggerLabel?: string; labelClassName?: string; showLabel?: boolean; menuContent?: ReactNode; column?: boolean; embedded?: boolean; section?: 'all' | 'general' | 'appearance'; open?: boolean; onOpenChange?: (open: boolean) => void }) {
   const t = useT();
   const L = {
     title: triggerLabel ?? t('设置', 'Settings'),
@@ -58,11 +58,11 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
   const [palette, setPalette] = useState<PaletteId | null>(null);
   const [contrast, setContrast] = useState<ContrastLevel>('normal');
   const [internalOpen, setInternalOpen] = useState(false);
-  const open = controlledOpen ?? internalOpen;
+  const open = embedded || (controlledOpen ?? internalOpen);
   const setOpen = (next: boolean) => { setInternalOpen(next); onOpenChange?.(next); };
   const ref = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  usePanelClamp(open && !column, panelRef);
+  usePanelClamp(open && !column && !embedded, panelRef);
   const previewingRef = useRef(false);
   const hoverCloseTimerRef = useRef<number | null>(null);
   const pointerTypeRef = useRef('mouse');
@@ -90,7 +90,7 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
   };
 
   const scheduleHoverClose = (pointerType: string) => {
-    if (column || pointerType === 'touch') return;
+    if (embedded || column || pointerType === 'touch') return;
     cancelHoverClose();
     hoverCloseTimerRef.current = window.setTimeout(() => {
       hoverCloseTimerRef.current = null;
@@ -125,7 +125,7 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
   }, []);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || embedded) return;
     const onDown = (e: MouseEvent) => {
       // CompactSelect renders the nested color menu in a body portal.
       if (e.target instanceof Element && e.target.closest('.accent-color-menu')) return;
@@ -144,7 +144,7 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
       document.removeEventListener('mousedown', onDown);
       document.removeEventListener('keydown', onKey);
     };
-  }, [open]);
+  }, [open, embedded]);
 
   useEffect(() => () => {
     cancelHoverClose();
@@ -180,6 +180,7 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
   const cls = triggerClassName ?? ['theme-toggle-inline', className].filter(Boolean).join(' ');
 
   if (!mounted) {
+    if (embedded) return null;
     return (
       <button type="button" className={cls} aria-label={L.title} suppressHydrationWarning>
         <span style={{ display: 'inline-block', width: 14, height: 14 }} />
@@ -199,7 +200,7 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
 
   return (
     <div className="lang-toggle-wrap" ref={ref}>
-      <button
+      {!embedded && <button
         type="button"
         className={cls}
         onPointerEnter={(event) => {
@@ -226,13 +227,14 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
       >
         <Settings size={14} />
         {showLabel && <span className={labelClassName}>{L.title}</span>}
-      </button>
+      </button>}
       {open && (
         <div
-          className={`lang-menu palette-menu appearance-menu settings-typography${column ? ' af-nav-panel' : ''}`}
+          className={`lang-menu palette-menu appearance-menu settings-typography${column ? ' af-nav-panel' : ''}${embedded ? ' appearance-menu-embedded' : ''}`}
           ref={panelRef}
+          data-site-surface={embedded ? 'panel' : 'popover'}
           data-backgrounds={showBackgrounds}
-          role="menu"
+          role={embedded ? undefined : "menu"}
           onPointerEnter={cancelHoverClose}
           onPointerLeave={(event) => {
             endPreview();
@@ -244,8 +246,8 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
           >
           <div className="appearance-settings">
             <div className="appearance-sec-label appearance-setting-rows">
-              <LangToggle variant="menu" showLabel />
-              <div className="accent-color-select">
+              {section !== 'appearance' && <LangToggle variant={embedded ? 'row' : 'menu'} showLabel />}
+              {section !== 'general' && <><div className="accent-color-select">
                 <span>{t('外观', 'Appearance')}</span>
                 <CompactSelect className="accent-color-select-value" popupClassName="settings-typography accent-color-menu"
                   ariaLabel={t('外观', 'Appearance')} value={appearanceValue} label={appearanceLabel}
@@ -263,13 +265,13 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
                     else pickPalette(value as PaletteId);
                   }} />
               </div>
-              <AccentColorSelect />
-              <BoolToggle
+              <AccentColorSelect /></>}
+              {section !== 'appearance' && <BoolToggle
                 value={petVisible}
                 onChange={setPetVisible}
                 label={t('桌宠', 'Desk pet')}
-              />
-              <label className="appearance-background-row">
+              />}
+              {section !== 'general' && <><label className="appearance-background-row">
                 <span>{t('底图', 'Backdrop')}</span>
                 <select
                   className="appearance-background-select"
@@ -284,19 +286,19 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
                 value={contrast === 'soft'}
                 onChange={(enabled) => pickContrast(enabled ? 'soft' : 'normal')}
                 label={L.lowContrast}
-              />
-              <button type="button" role="menuitem" className="lang-menu-item"
+              /></>}
+              {section !== 'appearance' && <button type="button" role={embedded ? undefined : "menuitem"} className="lang-menu-item"
                 onClick={() => {
                   closeMenu();
                   void import('@/components/ScrollDiagnostics').then(({ openScrollDiagnostics }) => openScrollDiagnostics())
                     .catch(() => alert(t('诊断工具加载失败，请重试。', 'Could not load diagnostics. Please try again.')));
                 }}>
                 {t('滚动诊断', 'Scroll diagnostics')}
-              </button>
+              </button>}
             </div>
           </div>
 
-          <AppLink
+          {section !== 'general' && <AppLink
             href="/appearance"
             className="palette-menu-more"
             onPointerEnter={endPreview}
@@ -304,13 +306,13 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
             onClick={closeMenu}
           >
             {L.more} →
-          </AppLink>
+          </AppLink>}
 
           {<div
             className="appearance-extra"
             onPointerEnter={endPreview}
             onFocus={endPreview}
-          >{showBackgrounds && <SiteBackgroundControl />}{menuContent}</div>}
+          >{section !== 'general' && showBackgrounds && <SiteBackgroundControl />}{menuContent}</div>}
         </div>
       )}
     </div>
