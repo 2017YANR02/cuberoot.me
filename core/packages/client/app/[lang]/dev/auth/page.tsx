@@ -1,6 +1,6 @@
 'use client';
 
-/* auth-doc-review {"fingerprint": "27b8d1ec7f30df9a29177d30a586807ce5d01d2b421cb05f897b96d7c07cba92", "reason": "Reviewed personal competition imports: requireAuth remains the only source of event ownership; the optional owner field only rejects stale-account requests. Per-owner competition identities reuse existing owned events, and account deletion now removes these identities including deleted-event markers. Session issuance, sign-in, WCA linking and credential flows are unchanged, so the authentication flow diagram remains accurate. No access to another user calendar or invited event is added."} */
+/* auth-doc-review {"fingerprint": "27b8d1ec7f30df9a29177d30a586807ce5d01d2b421cb05f897b96d7c07cba92", "reason": "Reviewed personal competition imports: requireAuth remains the only source of event ownership; the optional owner field only rejects stale-account requests. Per-owner competition identities reuse existing owned events, and account deletion now removes these identities including deleted-event markers. Session issuance, sign-in, WCA linking and credential flows are unchanged, so the authentication flow diagram remains accurate. No access to another user calendar or invited event is added. The final schema snapshot now also includes the pre-existing calendar tables and import foreign keys; production migrations and authentication behavior are unchanged."} */
 
 import type { ReactNode } from 'react';
 import AppLink from '@/components/AppLink';
