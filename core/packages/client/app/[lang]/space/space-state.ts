@@ -6,7 +6,7 @@ export const SPACE_LIMIT = 32;
 export const SCALE_MIN = 0.04;
 export const SCALE_MAX = 2.5;
 export const ROOMS = {
-  minimal: { zh: '镜面简约', en: 'Mirror minimal' },
+  minimal: { zh: '方序馆', en: 'Rubik Atrium' },
   cyberpunk: { zh: '赛博朋克', en: 'Cyberpunk' },
   modern: { zh: '现代住宅', en: 'Modern residence' },
   vintage: { zh: '复古宅邸', en: 'Vintage residence' },
@@ -64,6 +64,36 @@ export const DESTINATIONS = {
 export type Destination = keyof typeof DESTINATIONS;
 export type Level = 0 | 1;
 export const UPPER_FLOOR = 5;
+
+// Architectural envelope only: saved puzzle positions and walkable levels stay unchanged.
+export const RUBIK_ATRIUM = {
+  width: 20.4, depth: 18.4, height: 6.05, twist: Math.PI / 12,
+  suiteScale: .8, suiteWidth: 9.6, suiteDepth: 11.2, suiteX: -23, suiteZ: 1.6,
+} as const;
+// These same roof rectangles generate the meshes and the CPU/GPU weather masks.
+// The reduced suite leaves a usable terrace on its original y=5 floor plate.
+export const RUBIK_RESIDENCE_ROOFS = [
+  { name: 'Living west', x: -5.1, z: -.4, width: 10.2, depth: 19.6, height: 5.55, angle: 0 },
+  { name: 'Living east', x: 5.1, z: .4, width: 10.2, depth: 19.6, height: RUBIK_ATRIUM.height, angle: 0 },
+  { name: 'Study', x: -23, z: 2, width: 12.3, depth: 16.3, height: 4.85, angle: 0 },
+  { name: 'Bedroom', x: RUBIK_ATRIUM.suiteX, z: RUBIK_ATRIUM.suiteZ, width: RUBIK_ATRIUM.suiteWidth, depth: RUBIK_ATRIUM.suiteDepth, height: 9.55, angle: RUBIK_ATRIUM.twist },
+  // The bath roof also closes the short wedge behind the turning suite.
+  { name: 'Bathroom', x: -23, z: -9.3, width: 12.3, depth: 13.8, height: 9.55, angle: 0 },
+  { name: 'Gallery', x: -9.5, z: -12.5, width: 39.3, depth: 7.3, height: 4.9, angle: 0 },
+  { name: 'Bridge', x: -9.5, z: -12.5, width: 15.3, depth: 7.3, height: 9.55, angle: 0 },
+  { name: 'Passage', x: 11, z: 4, width: 2.3, depth: 40.3, height: 4.35, angle: 0 },
+  { name: 'Garage', x: 21, z: -10, width: 18.55, depth: 12.45, height: 4.35, angle: 0 },
+  { name: 'Cinema', x: 21, z: 3, width: 18.55, depth: 14.45, height: 5.0, angle: 0 },
+  { name: 'Gym', x: 21, z: 17, width: 18.55, depth: 14.45, height: 4.6, angle: 0 },
+] as const;
+export function rubikAtriumRoofHeight(x: number, z: number) {
+  return RUBIK_RESIDENCE_ROOFS.reduce((height, roof) => {
+    const dx = x - roof.x, dz = z - roof.z;
+    const rx = Math.cos(roof.angle) * dx - Math.sin(roof.angle) * dz;
+    const rz = Math.sin(roof.angle) * dx + Math.cos(roof.angle) * dz;
+    return Math.abs(rx) <= roof.width / 2 && Math.abs(rz) <= roof.depth / 2 ? Math.max(height, roof.height) : height;
+  }, -120);
+}
 // One physical plan drives floor geometry, placement and camera limits in every style.
 export const VILLA_ROOMS = {
   interior: { x: 0, z: 0, width: 20, depth: 18, level: 0, ceiling: 7.8 },

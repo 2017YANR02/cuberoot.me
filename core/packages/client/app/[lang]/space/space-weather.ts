@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { WEATHER_NOISE_GLSL as noiseShader, precipitationGeometry, debrisFlowSample } from '@/lib/three-weather';
 import { WeatherSystem } from './abyssal/WeatherSystem.js';
-import { VILLA_ROOMS, validSceneTime, type RoomStyle, type Weather } from './space-state';
+import { RUBIK_RESIDENCE_ROOFS, rubikAtriumRoofHeight, VILLA_ROOMS, validSceneTime, type RoomStyle, type Weather } from './space-state';
 
 export function sceneDaylight(timeOfDay: string) {
   if (!validSceneTime(timeOfDay)) throw new Error('timeOfDay');
@@ -34,16 +34,26 @@ const presets = {
   rainbow: [0.25, 0, 0, 0, 0.001],
 } satisfies Record<Weather, number[]>;
 
-export function weatherRoof(x: number, z: number, style: RoomStyle) {
+export function weatherRoof(x: number, z: number, style: RoomStyle, atrium = false) {
   if (style === 'company') return x >= -26.2 && x <= 0.9 && z >= -5.9 && z <= 13.1 ? 3.8 : -120;
-  return Object.values(VILLA_ROOMS).reduce((height, r) => Math.abs(x - r.x) <= r.width / 2 + 0.35 && Math.abs(z - r.z) <= r.depth / 2 + 0.35 ? Math.max(height, r.ceiling) : height, -120);
+  if (atrium) return rubikAtriumRoofHeight(x, z);
+  return Object.values(VILLA_ROOMS).reduce((height, r) => Math.abs(x - r.x) <= r.width / 2 + .35 && Math.abs(z - r.z) <= r.depth / 2 + .35
+    ? Math.max(height, r.ceiling) : height, -120);
 }
 const roofShader = `
-uniform float uCompany;
+uniform float uCompany, uAtrium;
 float roofAt(vec2 p) {
   if(uCompany > 0.5) return p.x >= -26.2 && p.x <= 0.9 && p.y >= -5.9 && p.y <= 13.1 ? 3.8 : -120.;
   float h = -120.;
-  ${Object.values(VILLA_ROOMS).map(r => `if(abs(p.x - ${r.x.toFixed(2)}) <= ${(r.width / 2 + 0.35).toFixed(2)} && abs(p.y - ${r.z.toFixed(2)}) <= ${(r.depth / 2 + 0.35).toFixed(2)}) h = max(h, ${r.ceiling.toFixed(2)});`).join('\n')}
+  if(uAtrium > 0.5) {
+    ${RUBIK_RESIDENCE_ROOFS.map(r => `{
+      vec2 d = p - vec2(${r.x.toFixed(2)}, ${r.z.toFixed(2)});
+      vec2 q = vec2(${Math.cos(r.angle).toFixed(12)} * d.x - ${Math.sin(r.angle).toFixed(12)} * d.y, ${Math.sin(r.angle).toFixed(12)} * d.x + ${Math.cos(r.angle).toFixed(12)} * d.y);
+      if(abs(q.x) <= ${(r.width / 2).toFixed(3)} && abs(q.y) <= ${(r.depth / 2).toFixed(3)}) h = max(h, ${r.height.toFixed(2)});
+    }`).join('\n')}
+    return h;
+  }
+  ${Object.values(VILLA_ROOMS).map(r => `if(abs(p.x - ${r.x.toFixed(2)}) <= ${(r.width / 2 + .35).toFixed(2)} && abs(p.y - ${r.z.toFixed(2)}) <= ${(r.depth / 2 + .35).toFixed(2)}) h = max(h, ${r.ceiling.toFixed(2)});`).join('\n')}
   return h;
 }`;
 
@@ -56,7 +66,7 @@ export class SpaceWeather {
   private rocks: THREE.InstancedMesh | null = null;
   private rainbowSky: THREE.Mesh<THREE.SphereGeometry, THREE.ShaderMaterial> | null = null;
   private uniforms = {
-    uTime: { value: 0 }, uCompany: { value: 0 }, uUrban: { value: 0 }, uCity: { value: 0 }, uWind: { value: 0 },
+    uTime: { value: 0 }, uCompany: { value: 0 }, uAtrium: { value: 0 }, uUrban: { value: 0 }, uCity: { value: 0 }, uWind: { value: 0 },
     uKind: { value: 0 }, uDensity: { value: 0 }, uSnow: { value: 0 }, uWet: { value: 0 },
     uAnchor: { value: new THREE.Vector3() }, uTint: { value: new THREE.Color() },
   };
@@ -73,7 +83,7 @@ export class SpaceWeather {
   constructor(narrow: boolean, renderer: THREE.WebGLRenderer, invalidate: () => void, onError: () => void) {
     this.budget = narrow ? 2400 : 6500;
     this.root.name = 'space-weather'; this.root.userData.spaceBackdrop = true;
-    this.engine = new WeatherSystem(renderer, narrow, roofShader, { uCompany: this.uniforms.uCompany }, invalidate, onError);
+    this.engine = new WeatherSystem(renderer, narrow, roofShader, { uCompany: this.uniforms.uCompany, uAtrium: this.uniforms.uAtrium }, invalidate, onError);
     this.root.add(this.engine.root);
   }
 
@@ -87,6 +97,7 @@ export class SpaceWeather {
     this.uniforms.uTime.value = 0;
     this.uniforms.uKind.value = particle; this.uniforms.uDensity.value = density; this.uniforms.uWind.value = wind;
     this.uniforms.uCompany.value = Number(style === 'company');
+    this.uniforms.uAtrium.value = Number(room.userData.spaceArchitecture === 'rubik-atrium');
     this.uniforms.uCity.value = Number(city);
     this.uniforms.uUrban.value = Number(!island && !city && (style === 'penthouse' || style === 'cyberpunk'));
     this.uniforms.uSnow.value = kind === 'snow' || kind === 'blizzard' ? 0.88 : kind === 'sleet' ? 0.3 : 0;
@@ -212,7 +223,7 @@ export class SpaceWeather {
         const compile = material.onBeforeCompile, key = material.customProgramCacheKey();
         material.onBeforeCompile = (shader, renderer) => {
           compile.call(material, shader, renderer);
-          shader.uniforms.uCompany = this.uniforms.uCompany; shader.uniforms.uSnow = this.uniforms.uSnow; shader.uniforms.uWet = this.uniforms.uWet; shader.uniforms.uCity = this.uniforms.uCity;
+          shader.uniforms.uCompany = this.uniforms.uCompany; shader.uniforms.uAtrium = this.uniforms.uAtrium; shader.uniforms.uSnow = this.uniforms.uSnow; shader.uniforms.uWet = this.uniforms.uWet; shader.uniforms.uCity = this.uniforms.uCity;
           shader.vertexShader = 'varying vec3 vWeatherPosition; varying vec3 vWeatherNormal;\n' + shader.vertexShader;
           shader.vertexShader = shader.vertexShader.replace('#include <project_vertex>', `#include <project_vertex>
             vec4 weatherPosition=vec4(transformed,1.); vec3 weatherNormal=objectNormal;
