@@ -39,10 +39,10 @@ const CSS = `
 .deskpet-gallery-media img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated;}
 .deskpet-gallery section[data-pet=rootbeast] img{image-rendering:auto;}
 .deskpet-gallery section[data-pixel=false] img{image-rendering:auto;}
-/* Keep dark paws and the radical tail readable in gallery thumbnails. */
-.deskpet-gallery section[data-pet=rootbeast] .deskpet-gallery-media,
-.deskpet-gallery section[data-light=true] .deskpet-gallery-media{
-  background:color-mix(in srgb, var(--popover) 18%, white);border-radius:12px;}
+/* A faint silhouette edge keeps dark paws and tails readable without a backdrop. */
+.deskpet-gallery section[data-pet=rootbeast] .deskpet-gallery-media object,
+.deskpet-gallery section[data-light=true] .deskpet-gallery-media object{
+  filter:drop-shadow(0 0 .5px var(--foreground));}
 /* color-scheme:normal stops the object inheriting the page color-scheme (light dark);
    otherwise Chrome paints the embedded SVG doc an opaque white canvas on OS-light
    machines (visible as white tiles behind the clouds in dark mode). */
