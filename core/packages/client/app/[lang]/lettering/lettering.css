@@ -96,7 +96,7 @@
 }
 
 .lettering-character,
-.lettering-segmented button {
+.lettering-order-button {
   appearance: none;
   border: 1px solid var(--border-default);
   color: var(--foreground);
@@ -111,7 +111,7 @@
 }
 
 .lettering-character[aria-pressed='true'],
-.lettering-segmented button[aria-pressed='true'] {
+.lettering-order-button[aria-pressed='true'] {
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 13%, var(--background));
   box-shadow: inset 0 0 0 1px var(--accent);
@@ -123,7 +123,7 @@
   gap: 8px;
 }
 
-.lettering-segmented button {
+.lettering-order-button {
   min-height: 42px;
   border-radius: 6px;
   font-weight: 700;
@@ -224,7 +224,7 @@
 
 @media (hover: hover) {
   .lettering-character:hover,
-  .lettering-segmented button:hover {
+  .lettering-order-button:hover {
     border-color: var(--accent);
   }
 

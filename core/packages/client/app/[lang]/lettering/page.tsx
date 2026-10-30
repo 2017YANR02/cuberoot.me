@@ -95,6 +95,7 @@ export default function LetteringPage() {
                 {GLYPH_OPTIONS.map(option => (
                   <button
                     key={option}
+                    className="lettering-order-button"
                     type="button"
                     className="lettering-character"
                     aria-pressed={glyph === option}
@@ -112,6 +113,7 @@ export default function LetteringPage() {
                 {ORDER_OPTIONS.map(option => (
                   <button
                     key={option}
+                    className="lettering-order-button"
                     type="button"
                     aria-pressed={order === option}
                     onClick={() => setOrder(option)}
