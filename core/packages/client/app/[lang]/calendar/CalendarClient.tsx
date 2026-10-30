@@ -41,12 +41,10 @@ import ScopePrompt from './_components/ScopePrompt';
 import Sidebar from './_components/Sidebar';
 import MobileMonthPicker from './_components/MobileMonthPicker';
 import CalendarSettings, { SETTINGS_SECTIONS } from './_components/CalendarSettings';
-import CompetitionCalendars from './_components/CompetitionCalendars';
-import CompetitionDialog from './_components/CompetitionDialog';
 import GoogleBackupPanel from './_components/GoogleBackupPanel';
 import { readGoogleBackup, reviewGoogleBackup, type GoogleImportReview } from '@/lib/google-calendar-backup';
+import { localizeCompName } from '@/lib/comp-localize';
 import { useWcaCalendar } from './_lib/useWcaCalendar';
-import { competitionCalendarEvent, type CalendarCompetition } from './_lib/competitions';
 import {
   dayKeyIn, dayStart, defaultEventEnd, formatClock, formatLongDate, rangeTitle, toFcEvents,
   VIEW_KEYS, VIEW_LABELS, isViewKey, type ViewKey,
@@ -146,12 +144,9 @@ export default function CalendarClient() {
     if (mobileSearch && isMobile) mobileSearchRef.current?.focus();
   }, [mobileSearch, isMobile]);
   const [dialog, setDialog] = useState<DialogDraft | null>(null);
-  const [competition, setCompetition] = useState<CalendarCompetition | null>(null);
   const todayKey = now ? dayKeyIn(displayTz, now) : '';
-  const wca = useWcaCalendar(mounted ? user?.wcaId ?? '' : '', todayKey);
-  const visibleCompetitions = useMemo(() => wca.competitions.filter((c) =>
-    c.source === 'attended' || c.source === 'registered' ? prefs.showWca : c.source === 'followed' ? prefs.showFollowed : prefs.showUpcoming,
-  ), [wca.competitions, prefs.showWca, prefs.showFollowed, prefs.showUpcoming]);
+  const owner = user?.wcaId || (user?.uid ? `u${user.uid}` : '');
+  const wca = useWcaCalendar(mounted && store.ready && store.loadedTo > 0 && me?.key === owner ? owner : '', todayKey, store.reload);
   const [shareOpen, setShareOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [scopeAsk, setScopeAsk] = useState<{ mode: 'edit' | 'delete'; run: (s: EditScope) => void } | null>(null);
@@ -193,11 +188,19 @@ export default function CalendarClient() {
     return eventColor(c?.color ?? 'peacock');
   }, [calendars, eventColor]);
 
-  const fcEvents = useMemo(() => [
-    ...toFcEvents({ occurrences, calendarColor: calColor, colorHex: eventColor, readableInk, meKey: me?.key ?? '' }),
-    ...visibleCompetitions.filter((c) => c.start_date < dayKeyIn(displayTz, dataTo) && c.end_date >= dayKeyIn(displayTz, dataFrom))
-      .map((c) => competitionCalendarEvent(c, isZh, theme)),
-  ], [occurrences, calColor, eventColor, me?.key, visibleCompetitions, displayTz, dataFrom, dataTo, isZh, theme]);
+  const fcEvents = useMemo(() => {
+    const names = new Map(wca.competitions.map((c) => [
+      `https://www.worldcubeassociation.org/competitions/${c.id}`,
+      { raw: c.name, display: localizeCompName(c.id, c.name, isZh, { date: c.start_date }) },
+    ]));
+    return toFcEvents({
+      occurrences, calendarColor: calColor, colorHex: eventColor, readableInk, meKey: me?.key ?? '',
+      eventTitle: (e) => {
+        const match = e.description.split(/\r?\n/).map((line) => names.get(line)).find((name) => name?.raw === e.title);
+        return match?.display ?? e.title;
+      },
+    });
+  }, [occurrences, calColor, eventColor, me?.key, wca.competitions, isZh]);
 
   // 迷你月历上的「这天有事」小点:按显示时区归日。
   const busyDays = useMemo(() => {
@@ -238,11 +241,6 @@ export default function CalendarClient() {
   }, [defaultCalendarId, displayTz]);
 
   const openEventByKey = useCallback((key: string) => {
-    if (key.startsWith('wca:')) {
-      const found = wca.competitions.find((c) => c.id === key.slice(4));
-      if (found) setCompetition(found);
-      return;
-    }
     const parsed = parseOccurrenceKey(key);
     if (!parsed) return;
     const e = events.find((x) => x.id === parsed.id);
@@ -268,7 +266,7 @@ export default function CalendarClient() {
       readOnly: !!e.ownerKey && !!me?.key && e.ownerKey !== me.key,
       myRsvp: mine?.status,
     });
-  }, [events, me?.key, wca.competitions]);
+  }, [events, me?.key]);
 
   const openInvite = useCallback((e: CalEvent) => {
     openEventByKey(`${e.id}:${e.start}`);
@@ -504,7 +502,7 @@ export default function CalendarClient() {
       if (e.key === 'Escape' && mobileSearch) { setMobileSearch(false); setQuery(''); return; }
       if (e.defaultPrevented || e.isComposing || el?.isContentEditable || (el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
-      if (dialog || competition || shareOpen || scopeAsk || settingsOpen) return;
+      if (dialog || shareOpen || scopeAsk || settingsOpen) return;
       if (el?.closest('[role=dialog], .list-select')) return;
       // 窄屏的侧栏是覆盖式抽屉,开着时汉堡钮被它盖住 —— Esc 得能退出来(遮罩也能点关)。
       if (e.key === 'Escape' && sidebarOpen) { setSidebarOpen(false); return; }
@@ -529,7 +527,7 @@ export default function CalendarClient() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [dialog, competition, shareOpen, scopeAsk, sidebarOpen, settingsOpen, prefs.keyboardShortcuts, setSettingsSection, setViewParam, openCreateNow, mobileSearch, monthExpanded, isMobile]);
+  }, [dialog, shareOpen, scopeAsk, sidebarOpen, settingsOpen, prefs.keyboardShortcuts, setSettingsSection, setViewParam, openCreateNow, mobileSearch, monthExpanded, isMobile]);
 
   const zoneItems = useMemo(() => zoneOptions().map((z) => ({
     value: z.tz,
@@ -808,10 +806,7 @@ export default function CalendarClient() {
           onRecolor={(id, color) => void store.patchCalendar(id, { color }).catch((e: Error) => setToast(e.message))}
           onRemove={(id) => void store.removeCalendar(id).catch((e: Error) => setToast(e.message))}
           onOpenInvite={openInvite}
-        >
-          <CompetitionCalendars wcaId={user?.wcaId ?? ''} competitions={wca.competitions} loading={wca.loading} incomplete={wca.incomplete} prefs={prefs} onPrefs={store.setPrefs} onRefresh={wca.refresh}
-            onPick={(c) => { gotoDate(dayStart(displayTz, c.start_date)); setCompetition(c); if (isMobile) setSidebarOpen(false); }} />
-        </Sidebar>
+        />
 
         {/* 统一遮罩手势：从侧栏内部拖到遮罩不会误关闭。 */}
         {sidebarOpen && (
@@ -899,8 +894,6 @@ export default function CalendarClient() {
         <Plus size={22} aria-hidden />
       </button>
 
-      {competition && <CompetitionDialog key={competition.id} competition={competition} onClose={() => setCompetition(null)} />}
-
       {dialog && (
         <EventDialog
           draft={dialog}
@@ -941,6 +934,10 @@ export default function CalendarClient() {
       )}
 
       {toast && <div className="cal-toast" role="status">{toast}</div>}
+      {wca.incomplete && !wca.loading && !store.error && !toast && <div className="cal-toast is-error" role="status">
+        {tr({ zh: '部分比赛未能加入日程', en: 'Some competitions could not be added' })}
+        <button type="button" className="cal-link-btn" onClick={wca.refresh}>{tr({ zh: '重试', en: 'Retry' })}</button>
+      </div>}
       {store.error && !toast && <div className="cal-toast is-error" role="status">{store.error}</div>}
     </div>
   );

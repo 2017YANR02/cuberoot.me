@@ -1,13 +1,13 @@
 import { Hono } from 'hono';
 import crypto from 'node:crypto';
 import { getIp } from '../utils/analytics_helpers.js';
-import { query } from '../db/connection.js';
+import { query, withTransaction, type QueryRunner } from '../db/connection.js';
 import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
 import { notify } from '../utils/notify.js';
 import { isValidZone } from '@cuberoot/shared/tz';
 import { expandOccurrences, parseRRule, formatRRule } from '@cuberoot/shared/recur';
 import {
-  eventsToIcs, isCalendarColor, parseNumList, redactBusy, ICS_IMPORT_BATCH,
+  eventsToIcs, isCalendarColor, parseNumList, redactBusy, ICS_IMPORT_BATCH, competitionCalendarRange,
   type CalEvent, type CalendarImport, type CalendarMeta, type EventGuest, type ShareDetail,
 } from '@cuberoot/shared/calendar';
 
@@ -185,7 +185,7 @@ function color(v: unknown): string {
 /** 拿(必要时创建)某人的主日历。首次进 /calendar 的人在这里落地。 */
 async function ensureDefaultCalendar(ownerKey: string, tz: string): Promise<CalendarMeta> {
   const existing = await query<CalendarRow>(
-    'SELECT id, name, color, tz, is_default, sort_order FROM calendars WHERE owner_key = ? ORDER BY sort_order, id LIMIT 1',
+    'SELECT id, name, color, tz, is_default, sort_order FROM calendars WHERE owner_key = ? ORDER BY is_default DESC, sort_order, id LIMIT 1',
     [ownerKey],
   );
   if (existing.length) return toCalendar(existing[0]);
@@ -200,7 +200,7 @@ async function ensureDefaultCalendar(ownerKey: string, tz: string): Promise<Cale
   if (rows.length) return toCalendar(rows[0]);
   // 并发下两个标签页同时首访:唯一索引挡住第二条,回读即可。
   const again = await query<CalendarRow>(
-    'SELECT id, name, color, tz, is_default, sort_order FROM calendars WHERE owner_key = ? ORDER BY sort_order, id LIMIT 1',
+    'SELECT id, name, color, tz, is_default, sort_order FROM calendars WHERE owner_key = ? ORDER BY is_default DESC, sort_order, id LIMIT 1',
     [ownerKey],
   );
   return toCalendar(again[0]);
@@ -478,9 +478,10 @@ async function insertEvent(
   input: EventInput,
   series?: { seriesId: number; occurrenceMs: number },
   importId?: number | null,
+  run: QueryRunner = query,
 ): Promise<EventRow> {
   const now = Date.now();
-  const rows = await query<EventRow>(
+  const rows = await run<EventRow>(
     `INSERT INTO calendar_events
        (calendar_id, owner_key, title, description, location, all_day, start_ms, end_ms, tz,
         rrule, exdates, series_id, occurrence_ms, color, reminders, import_id, created_at, updated_at)
@@ -555,6 +556,65 @@ async function syncGuests(
     });
   }
 }
+
+/** Persist competition sources as ordinary personal events. The transaction lock and
+ * identity cover tabs/devices; a deleted event leaves a NULL identity, so automatic
+ * imports cannot undo a user's deletion. Only the explicit Add button restores it. */
+calendarRoutes.post('/calendar/competitions', async (c) => {
+  c.header('Cache-Control', NO_STORE);
+  checkRateLimit(getIp(c), { bucket: 'calendar-competitions', max: 60 });
+  const me = await requireAuth(c);
+  const body = await c.req.json<Record<string, unknown>>();
+  if (body.owner != null && body.owner !== me.wcaId) return c.json({ error: 'account changed' }, 409);
+  if (!Array.isArray(body.competitions) || !body.competitions.length || body.competitions.length > 100) {
+    return c.json({ error: 'expected 1–100 competitions' }, 400);
+  }
+  const restore = body.restore === true;
+  if (restore && body.competitions.length !== 1) return c.json({ error: 'restore one competition at a time' }, 400);
+  const cal = await ensureDefaultCalendar(me.wcaId, zone(body.tz, 'UTC'));
+  const inputs = body.competitions.map((value: unknown) => {
+    if (!value || typeof value !== 'object') throw new Error('Validation: invalid competition');
+    const v = value as Record<string, unknown>;
+    if (typeof v.id !== 'string' || !/^[A-Za-z0-9_-]{1,64}$/.test(v.id)
+      || typeof v.startDate !== 'string' || typeof v.endDate !== 'string') {
+      throw new Error('Validation: invalid competition');
+    }
+    const range = competitionCalendarRange(v.startDate, v.endDate, cal.tz);
+    if (range.start < 0 || range.end > 7_258_118_400_000 || range.end - range.start > 366 * 86_400_000) {
+      throw new Error('Validation: invalid competition dates');
+    }
+    return { id: v.id, input: {
+      calendarId: cal.id, title: str(v.title, 300), description: `https://www.worldcubeassociation.org/competitions/${v.id}`,
+      location: str(v.location, 300), allDay: true, ...range, tz: cal.tz,
+      rrule: '', exdates: '', color: '', reminders: '',
+    } satisfies EventInput };
+  });
+  await withTransaction(async (run) => {
+    await run('SELECT pg_advisory_xact_lock(hashtextextended(?, 0))', [`calendar-competitions:${me.wcaId}`]);
+    const counts = await run<{ n: number }>('SELECT COUNT(*)::int AS n FROM calendar_events WHERE owner_key = ?', [me.wcaId]);
+    let count = counts[0]?.n ?? 0;
+    for (const { id, input } of inputs) {
+      const linked = await run<{ event_id: string | null }>(
+        'SELECT event_id FROM calendar_competitions WHERE owner_key = ? AND competition_id = ?', [me.wcaId, id]);
+      if (linked.length && (linked[0].event_id != null || !restore)) continue;
+      // Adopt previously saved/imported events across every owned calendar and date;
+      // never overwrite their title, notes, reminders, guests or calendar choice.
+      const previous = await run<{ id: string }>(
+        `SELECT id FROM calendar_events WHERE owner_key = ? AND rrule = '' AND series_id IS NULL
+          AND ? = ANY(string_to_array(replace(description, chr(13), ''), chr(10))) ORDER BY id LIMIT 1 FOR UPDATE`,
+        [me.wcaId, input.description]);
+      let eventId = previous[0]?.id;
+      if (!eventId) {
+        if (count >= MAX_EVENTS_PER_USER) throw new Error('Validation: too many events');
+        eventId = String((await insertEvent(me.wcaId, input, undefined, null, run)).id);
+        count++;
+      }
+      await run(`INSERT INTO calendar_competitions (owner_key, competition_id, event_id) VALUES (?, ?, ?)
+        ON CONFLICT (owner_key, competition_id) DO UPDATE SET event_id = EXCLUDED.event_id`, [me.wcaId, id, eventId]);
+    }
+  });
+  return c.json({ ok: true });
+});
 
 calendarRoutes.post('/calendar/events', async (c) => {
   c.header('Cache-Control', NO_STORE);

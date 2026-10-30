@@ -14,7 +14,7 @@ const INTENT_KEY = 'competition-calendar-intent';
 export function CompetitionCalendarButton({ competition }: { competition: CompetitionCalendarInput }) {
   const user = useAuthUser();
   const router = useRouter();
-  const owner = user ? String(user.uid ?? user.wcaId) : '';
+  const owner = user?.wcaId || (user?.uid ? `u${user.uid}` : '');
   const [status, setStatus] = useState<'idle' | 'checking' | 'busy' | 'done' | 'error'>('idle');
   const running = useRef(false);
   const revision = useRef(0);

@@ -1,6 +1,6 @@
 'use client';
 
-/* auth-doc-review {"fingerprint":"b095e2b73102a7be5cbb488954412c081acd2098eabe06c73bca0ad629369fc3","reason":"Reviewed Clawd story avatars 31–50 generated from PET_GALLERY: twenty same-origin Clawd presets and their compact allowlist IDs are added while all prior presets and legacy IDs are retained. The existing authenticated profile endpoint still validates the preset and current public/non-removed pet catalog before updating the requesting uid; the chooser still previews before explicit confirmation. Web session decoding accepts the expanded allowlist without changing session issuance, identity linking, merging, sign-out or deletion. Updated the bilingual avatar paragraph; this source review does not assert real-account avatar-save acceptance."} */
+/* auth-doc-review {"fingerprint": "27b8d1ec7f30df9a29177d30a586807ce5d01d2b421cb05f897b96d7c07cba92", "reason": "Reviewed personal competition imports: requireAuth remains the only source of event ownership; the optional owner field only rejects stale-account requests. Per-owner competition identities reuse existing owned events, and account deletion now removes these identities including deleted-event markers. Session issuance, sign-in, WCA linking and credential flows are unchanged, so the authentication flow diagram remains accurate. No access to another user calendar or invited event is added."} */
 
 import type { ReactNode } from 'react';
 import AppLink from '@/components/AppLink';

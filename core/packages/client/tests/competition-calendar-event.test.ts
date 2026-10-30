@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { addCompetitionToCalendar, competitionCalendarRange } from '@/lib/competition-calendar-event';
-import { createEvent, fetchBootstrap, fetchEvents } from '@/lib/calendar-api';
-vi.mock('@/lib/calendar-api', () => ({ createEvent: vi.fn(), fetchBootstrap: vi.fn(), fetchEvents: vi.fn() }));
+import { addCompetitionToCalendar, competitionCalendarRange, isCompetitionInCalendar } from '@/lib/competition-calendar-event';
+import { syncCalendarCompetitions, fetchBootstrap, fetchEvents } from '@/lib/calendar-api';
+vi.mock('@/lib/calendar-api', () => ({ syncCalendarCompetitions: vi.fn(), fetchBootstrap: vi.fn(), fetchEvents: vi.fn() }));
 
 const input = { id: 'LishuiOpen2026', title: '丽水公开赛2026', startDate: '2026-12-06', endDate: '2026-12-06', location: '丽水' };
 beforeEach(() => {
@@ -18,19 +18,18 @@ describe('competition calendar', () => {
   });
   it('serializes concurrent clicks and preserves event details', async () => {
     await Promise.all([addCompetitionToCalendar('test', input), addCompetitionToCalendar('test', input)]);
-    expect(createEvent).toHaveBeenCalledTimes(1);
-    expect(createEvent).toHaveBeenCalledWith({ calendarId: 7, title: input.title, description: 'https://www.worldcubeassociation.org/competitions/LishuiOpen2026', location: '丽水', allDay: true, tz: 'Asia/Shanghai', start: Date.parse('2026-12-05T16:00:00Z'), end: Date.parse('2026-12-06T16:00:00Z') });
+    expect(syncCalendarCompetitions).toHaveBeenCalledTimes(1);
+    expect(syncCalendarCompetitions).toHaveBeenCalledWith([input], true, 'test');
   });
   it('does not recreate a persisted competition, independent of translated title', async () => {
     vi.mocked(fetchEvents).mockResolvedValue({ events: [{ id: 9, calendarId: 7, description: 'https://www.worldcubeassociation.org/competitions/LishuiOpen2026' }], invitedIds: [] } as unknown as Awaited<ReturnType<typeof fetchEvents>>);
-    await addCompetitionToCalendar('test', input);
-    expect(createEvent).not.toHaveBeenCalled();
+    expect(await isCompetitionInCalendar(input)).toBe(true);
+    expect(syncCalendarCompetitions).not.toHaveBeenCalled();
   });
-  it('allows retry after a failed request and never creates when reading existing events fails', async () => {
-    vi.mocked(fetchEvents).mockRejectedValueOnce(new Error('offline'));
+  it('allows retry after the atomic import fails', async () => {
+    vi.mocked(syncCalendarCompetitions).mockRejectedValueOnce(new Error('offline'));
     await expect(addCompetitionToCalendar('test', input)).rejects.toThrow('offline');
-    expect(createEvent).not.toHaveBeenCalled();
     await addCompetitionToCalendar('test', input);
-    expect(createEvent).toHaveBeenCalledTimes(1);
+    expect(syncCalendarCompetitions).toHaveBeenCalledTimes(2);
   });
 });

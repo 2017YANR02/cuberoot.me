@@ -21,6 +21,7 @@ export async function addFollow(compId: string): Promise<void> {
     headers: authHeaders(false),
   });
   await handleApi<{ ok: boolean }>(r);
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('competition-follows-changed'));
 }
 
 /** 取消关注。 */
@@ -30,4 +31,5 @@ export async function removeFollow(compId: string): Promise<void> {
     headers: authHeaders(false),
   });
   await handleApi<{ ok: boolean }>(r);
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('competition-follows-changed'));
 }

@@ -124,6 +124,7 @@ export interface ToFcOptions {
   readOnly?: boolean;
   /** busy 档:标题被服务端抹掉了,这里给一个占位文案 */
   busyLabel?: string;
+  eventTitle?: (event: CalEvent) => string;
 }
 
 /** 展开块 → FullCalendar 事件对象。全天事件用日期串,定时事件用带偏移的 ISO。 */
@@ -136,7 +137,7 @@ export function toFcEvents(opts: ToFcOptions): FcEvent[] {
     const busy = !e.title && !!opts.busyLabel;
     return {
       id: o.key,
-      title: e.title || opts.busyLabel || '',
+      title: (opts.eventTitle?.(e) ?? e.title) || opts.busyLabel || '',
       // 全天块要交日期串:交时刻的话 FullCalendar 会按显示时区再折一次,东八区的
       // 「8 月 5 日全天」在 UTC 视图下会滑到 4 号。
       start: e.allDay ? dayKeyIn(e.tz, o.start) : new Date(o.start).toISOString(),

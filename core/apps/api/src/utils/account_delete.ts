@@ -49,6 +49,7 @@ export const PURGE_TABLES: readonly (readonly [string, string])[] = [
   // 先删跨事件的两张(我在别人事件里的受邀行、提醒去重记录),再删事件与日历本体。
   ['calendar_guests', 'guest_key'],      // 我被别人邀请的那些行
   ['calendar_reminder_log', 'user_key'], // 提醒去重记录
+  ['calendar_competitions', 'owner_key'], // Competition identities and deleted-event markers
   ['calendar_events', 'owner_key'],      // 我的日程(删日历也会级联,这里显式兜一遍)
   ['calendars', 'owner_key'],            // 日历本体
   ['calendar_shares', 'owner_key'],      // 对外展示设置 + 分享 token

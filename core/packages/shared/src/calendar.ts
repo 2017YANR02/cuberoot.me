@@ -627,3 +627,32 @@ export function icsCalendarColor(text: string): string {
   }
   return '';
 }
+
+// Competition imports share the same identity and all-day date conversion.
+export interface CompetitionCalendarInput {
+  id: string;
+  title: string;
+  startDate: string;
+  endDate: string;
+  location: string;
+}
+
+/** Competition dates are calendar days, not UTC timestamps. Use the personal
+ * calendar's timezone so an all-day competition stays on its named dates. */
+export function competitionCalendarRange(startDate: string, endDate: string, tz: string) {
+  const parse = (value: string) => {
+    const key = value.slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) throw new Error('Invalid competition date');
+    const date = new Date(`${key}T00:00:00Z`);
+    if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== key) throw new Error('Invalid competition date');
+    return date;
+  };
+  const startDay = parse(startDate);
+  const lastDay = parse(endDate || startDate);
+  if (lastDay < startDay) throw new Error('Invalid competition date range');
+  lastDay.setUTCDate(lastDay.getUTCDate() + 1);
+  const midnight = (date: Date) => wallToUtc(tz, {
+    y: date.getUTCFullYear(), mo: date.getUTCMonth() + 1, d: date.getUTCDate(), h: 0, mi: 0, s: 0,
+  }).getTime();
+  return { start: midnight(startDay), end: midnight(lastDay) };
+}

@@ -45,15 +45,11 @@ export interface CalendarPrefs {
   weekNumbers: boolean;
   keyboardShortcuts: boolean;
   sidebarCollapsed: boolean;
-  showWca: boolean;
-  showFollowed: boolean;
-  showUpcoming: boolean;
 }
 
 export const DEFAULT_PREFS: CalendarPrefs = {
   view: 'timeGridWeek', tz: '', weekStart: 1, hour24: true, weekends: true, showDeclined: false,
   defaultDuration: 60, weekNumbers: false, keyboardShortcuts: true, sidebarCollapsed: false,
-  showWca: true, showFollowed: true, showUpcoming: false,
 };
 
 function readPrefs(): CalendarPrefs {

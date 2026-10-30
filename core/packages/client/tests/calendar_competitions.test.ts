@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mergeCalendarCompetitions, competitionCalendarEvent, type CalendarCompetition } from '@/app/[lang]/calendar/_lib/competitions';
+import { mergeCalendarCompetitions } from '@/app/[lang]/calendar/_lib/competitions';
 import { dayStart, defaultEventEnd } from '@/app/[lang]/calendar/_lib/format';
 import type { Comp } from '@/lib/comp-search';
 
@@ -15,20 +15,7 @@ describe('WCA calendar sources', () => {
     const rows = mergeCalendarCompetitions([comp('Old', '2020-01-01'), comp('Followed')], [], [], ['Followed'], '2026-09-28');
     expect(rows.map((c) => [c.id, c.source])).toEqual([['Followed', 'followed']]);
   });
-  it.each([
-    ['2026-09-28', '2026-09-28', '2026-09-29'],
-    ['2026-09-28', '2026-09-30', '2026-10-01'],
-    ['2026-12-30', '2027-01-02', '2027-01-03'],
-  ])('renders the complete inclusive competition range %s to %s as a readonly event', (start, end, exclusiveEnd) => {
-    const c: CalendarCompetition = { ...comp('Fixture', start, end), source: 'attended' };
-    const event = competitionCalendarEvent(c, false);
-    expect(event.start).toBe(start);
-    expect(event.end).toBe(exclusiveEnd);
-    expect(event.editable).toBe(false);
-    expect(event.allDay).toBe(true);
-    expect(event.id).toBe('wca:Fixture');
-    expect(event.extendedProps.competitionId).toBe('Fixture');
-  });
+
 });
 
 describe('new event duration', () => {

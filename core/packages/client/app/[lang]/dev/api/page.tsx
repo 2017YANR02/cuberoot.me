@@ -1102,6 +1102,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'calendar', m: 'PATCH', p: '/v1/calendar/calendars/:id', g: 'login', zh: '改日历名字 / 颜色 / 时区', en: 'Rename / recolour / re-zone a calendar' },
   { d: 'calendar', m: 'DELETE', p: '/v1/calendar/calendars/:id', g: 'login', zh: '删日历(主日历不可删)', en: 'Delete a calendar (not the default one)' },
   { d: 'calendar', m: 'GET', p: '/v1/calendar/events', g: 'login', c: 'no-store', zh: '窗口内事件(含受邀的);重复事件整取,由前端展开', en: 'Events in a window (invitations included); recurring masters are returned whole and expanded client-side' },
+  { d: 'calendar', m: 'POST', p: '/v1/calendar/competitions', g: 'login', zh: '将比赛去重加入个人日程，保留已有内容', en: 'Add competitions to personal events without duplicates or overwriting existing content' },
   { d: 'calendar', m: 'POST', p: '/v1/calendar/events', g: 'login', zh: '新建日程', en: 'Create an event' },
   { d: 'calendar', m: 'PATCH', p: '/v1/calendar/events/:id', g: 'login', zh: '改日程,?scope=this|following|all 决定动这一次 / 此后 / 整条序列', en: 'Edit an event; ?scope=this|following|all picks this occurrence, the tail, or the whole series' },
   { d: 'calendar', m: 'DELETE', p: '/v1/calendar/events/:id', g: 'login', zh: '删日程(同样分 scope)', en: 'Delete an event (same scopes)' },

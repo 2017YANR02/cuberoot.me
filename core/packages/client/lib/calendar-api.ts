@@ -8,7 +8,7 @@ import { sessionFetch } from '@/lib/session-fetch';
 import { apiUrl, publicApiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 import type {
-  CalEvent, CalendarImport, CalendarMeta, EditScope, ShareDetail, ShareSettings,
+  CalEvent, CalendarImport, CalendarMeta, EditScope, ShareDetail, ShareSettings, CompetitionCalendarInput,
 } from '@cuberoot/shared/calendar';
 
 export interface BootstrapPayload {
@@ -205,4 +205,13 @@ export function icsFeedUrl(token: string): string {
   // 这条地址是给用户**复制出去**粘进 Google / Apple 日历的,必须是绝对的公网地址 ——
   // apiUrl() 在 dev 下返回相对路径('' + /v1/…),粘到别处就是一条打不开的链接。
   return publicApiUrl(`/v1/calendar/public/${encodeURIComponent(token)}/ics`);
+}
+
+/** All competition sources create ordinary personal events through one idempotent endpoint. */
+export async function syncCalendarCompetitions(competitions: CompetitionCalendarInput[], restore = false, owner?: string): Promise<void> {
+  const r = await sessionFetch(apiUrl('/v1/calendar/competitions'), {
+    method: 'POST', headers: authHeaders(),
+    body: JSON.stringify({ competitions, restore, owner, tz: Intl.DateTimeFormat().resolvedOptions().timeZone }),
+  });
+  await handleApi<{ ok: boolean }>(r);
 }

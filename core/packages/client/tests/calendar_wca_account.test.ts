@@ -2,10 +2,12 @@
 import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, expect, it, vi } from 'vitest';
+import { syncCalendarCompetitions } from '@/lib/calendar-api';
 import { useWcaCalendar } from '@/app/[lang]/calendar/_lib/useWcaCalendar';
 import { fetchWcaPersonCompetitions } from '@/lib/wca-person-api';
 import type { WcaCompetition } from '@/lib/wca-person-api';
 
+vi.mock('@/lib/calendar-api', () => ({ syncCalendarCompetitions: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('@/lib/wca-person-api', () => ({ fetchWcaPersonCompetitions: vi.fn() }));
 vi.mock('@/lib/person-upcoming', () => ({ fetchPersonUpcomingCompetitions: async () => ({ ids: [], incomplete: false }) }));
 vi.mock('@/lib/comp-follows', () => ({ fetchFollows: async () => [] }));
@@ -31,6 +33,8 @@ it('clears one account’s competitions immediately and ignores its late respons
     expect(host.textContent).toBe('NewAccountComp');
     await act(async () => finishOld([{ id: 'OldAccountComp', name: 'Old', city: 'City', country_iso2: 'CN', start_date: '2017-09-01', end_date: '2017-09-01' }]));
     expect(host.textContent).toBe('NewAccountComp');
+    expect(syncCalendarCompetitions).toHaveBeenCalledTimes(1);
+    expect(syncCalendarCompetitions).toHaveBeenCalledWith([expect.objectContaining({ id: 'NewAccountComp' })], false, '2018ROOT01');
     await act(async () => root.render(createElement(Harness, { id: '' })));
     expect(host.textContent).toBe('');
   } finally {
