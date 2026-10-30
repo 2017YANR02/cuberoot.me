@@ -18,6 +18,12 @@
 :global(html[lang^='zh']) .en { display: none; }
 :global(html[lang^='zh']) .zh { display: block; }
 
+/* The 404 illustration already includes both mascots. Restore the user's
+   floating companion automatically when this page leaves the document. */
+:global(body):has(.page) :global(.clawd-deskpet) {
+  display: none;
+}
+
 .visual {
   display: flex;
   justify-content: center;
