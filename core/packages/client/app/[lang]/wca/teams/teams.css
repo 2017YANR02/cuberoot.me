@@ -2,8 +2,8 @@
 .wca-teams-header, .wca-teams-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
 .wca-teams-header h1 { margin: 0; }
 .wca-team-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; margin-bottom: 32px; }
-.wca-team-group button { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; border: 0; border-radius: 6px; padding: 8px; background: none; color: var(--foreground); font: inherit; cursor: pointer; }
-.wca-team-group button:hover, .wca-team-group button[aria-pressed=true] { background: var(--accent-soft); }
+.wca-team-choice { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; border: 0; border-radius: 6px; padding: 8px; background: none; color: var(--foreground); font: inherit; cursor: pointer; }
+.wca-team-choice:hover, .wca-team-choice[aria-pressed=true] { background: var(--accent-soft); }
 .wca-team-brand-button { font-weight: 600; }
 .wca-team-children { padding-inline-start: 16px; }
 .wca-teams-page .wse-table th, .wca-teams-page .wse-table td { text-align: center; }
