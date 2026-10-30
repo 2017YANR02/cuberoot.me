@@ -34,7 +34,6 @@ body[data-site-scenery] :is(
   .rc-card,
   .vcs-card,
   .pets-roster-option,
-  .deskpet-gallery-tile,
   .pet-home,
   .comp-recent-item,
   .vc-arrow-builder,
@@ -65,12 +64,11 @@ body[data-site-scenery] .pets-roster-option[aria-pressed='true'] {
   background: var(--accent-soft);
 }
 
-body[data-site-scenery] .pets-roster-option:is([aria-pressed='true'], :hover),
-body[data-site-scenery] .deskpet-gallery-tile:hover {
+body[data-site-scenery] .pets-roster-option:is([aria-pressed='true'], :hover) {
   border-color: var(--accent);
 }
 
-/* Transparent artwork shares the tile's material without an opaque media mat. */
+/* Transparent gallery artwork stays frameless over site scenery. */
 body[data-site-scenery] .deskpet-gallery section .deskpet-gallery-media {
   background: transparent;
 }
