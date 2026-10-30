@@ -95,7 +95,6 @@ export default function LetteringPage() {
                 {GLYPH_OPTIONS.map(option => (
                   <button
                     key={option}
-                    className="lettering-order-button"
                     type="button"
                     className="lettering-character"
                     aria-pressed={glyph === option}
