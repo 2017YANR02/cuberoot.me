@@ -318,6 +318,7 @@ body[data-site-scenery] :is(option, optgroup) {
 body[data-site-scenery] :is(
   .compact-select:not(.compact-select--plain) > .compact-select-trigger:not(.compact-select-trigger--unstyled),
   .event-select-trigger,
+  .recon-grid-filters .list-select-trigger,
   .region-picker-trigger,
   .date-input__display,
   .pill-toggle:not(.is-on),
