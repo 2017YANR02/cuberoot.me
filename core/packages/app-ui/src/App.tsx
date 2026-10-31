@@ -6,8 +6,6 @@ import { useTimerWcaCompetitionFilters, TimerPracticeContentPicker, TimerPractic
 import { timerPracticeContents, selectedTimerPracticeContent, type TimerPracticeContent } from '@cuberoot/shared/timer';
 import { SiteCorners } from "@2017yanr02/continuous-corners/react";
 import { shareOrDownloadBackup } from './file-export';
-import { InstalledUpdateNotice } from './AndroidUpdateNotice';
-import { UURemotePanel } from './UURemotePanel';
 import { TimerSoloPage, timerSoloModalState, useTimerSoloCompactLayout } from '@cuberoot/timer-ui/TimerSoloPage';
 import { InstalledBleHost, installedBleRequestPort } from './installed-ble-host';
 import { pickInstalledBleDevice, type InstalledBlePicker } from './installed-ble-picker';
@@ -4576,8 +4574,6 @@ children: <>
               hidden={view !== surface}
               key={surface}
             >
-              {surface === 'account' && <InstalledUpdateNotice host={host} language={language} />}
-              {surface === 'account' && <UURemotePanel host={host} language={language} />}
               {showState && (
                 <div className="web-surface-state" role={status === 'error' ? 'alert' : 'status'}>
                   <p>{stateLabel}</p>
