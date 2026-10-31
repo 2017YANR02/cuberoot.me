@@ -5,6 +5,7 @@ import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from '
 import { useQueryState, useQueryStates, parseAsString, parseAsStringEnum, parseAsArrayOf, parseAsBoolean } from 'nuqs';
 import { ArrowUpRight, BookOpen, Check, ChevronDown, Columns3, Crown, Download, History, ImageOff, Link2, Plus, Search, SlidersHorizontal, X } from '@app-foundation/icons/lucide';
 import HomeLink from '@/components/HomeLink';
+import BackHome from '@/components/BackHome';
 import AppLink from '@/components/AppLink';
 import { ClearButton } from '@/components/ClearButton';
 import SearchInput from '@/components/SearchInput';
@@ -82,6 +83,7 @@ function Hero() {
   const withImages = CUBES.filter(cube => cube.image).length;
   return <>
     <header className="ch-header">
+      <div className="page-back-row"><BackHome /></div>
       <HomeLink className="ch-wordmark">CubeRoot<span>{tr({ zh: '硬件档案', en: 'Hardware archive' })}</span></HomeLink>
     </header>
     <div className="ch-intro"><section className="ch-hero" aria-labelledby="ch-title">
