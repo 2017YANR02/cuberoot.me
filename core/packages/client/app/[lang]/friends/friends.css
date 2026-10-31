@@ -1,25 +1,59 @@
 .friends-page {
-  max-width: 720px;
+  max-width: 1040px;
   margin: 0 auto;
   padding: 24px 16px 64px;
   color: var(--foreground);
 }
 
+.friends-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
 .friends-title {
-  margin: 0 0 18px;
+  margin: 0;
   font-size: 22px;
   font-weight: 600;
 }
 
-.friends-page.is-chat { max-width: 1040px; }
 .friends-actions a.friends-action { text-decoration: none; }
 
 .friends-tabs {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 26px;
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: min(100%, 480px);
+  margin-bottom: 24px;
 }
+.friends-tabs::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 25%;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  transform: translateX(0);
+  transition: transform 180ms ease;
+  pointer-events: none;
+}
+.friends-tabs[data-view='friends']::before { transform: translateX(100%); }
+.friends-tabs[data-view='requests']::before { transform: translateX(200%); }
+.friends-tabs[data-view='blocked']::before { transform: translateX(300%); }
+.friends-view {
+  min-width: 0;
+  min-height: max(560px, calc(100vh - 220px));
+  animation: friends-view-enter 160ms ease-out;
+}
+.friends-view.is-list { max-width: 720px; }
+.friends-view .friend-chat-thread { height: max(560px, calc(100vh - 220px)); }
+@supports (height: 100dvh) {
+  .friends-view { min-height: max(560px, calc(100dvh - 220px)); }
+  .friends-view .friend-chat-thread { height: max(560px, calc(100dvh - 220px)); }
+}
+@keyframes friends-view-enter { from { opacity: 0; } to { opacity: 1; } }
 
 .friends-tab,
 .friends-action {
@@ -37,10 +71,10 @@
   cursor: pointer;
 }
 
-.friends-tab { padding: 7px 10px; }
+.friends-tab { position: relative; min-width: 0; min-height: 44px; padding: 7px 8px; white-space: nowrap; }
+.friends-tab:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .friends-tab:hover { color: var(--foreground); }
 .friends-tab[aria-selected='true'] {
-  background: var(--accent-soft);
   color: var(--foreground);
   font-weight: 600;
 }
@@ -211,10 +245,27 @@ a.friends-identity:hover strong { color: var(--accent); }
 @keyframes friends-spin { to { transform: rotate(360deg); } }
 
 @media (max-width: 480px) {
-  .friends-tabs { overflow-x: auto; }
-  .friends-tab { white-space: nowrap; }
+  .friends-tabs { width: 100%; margin-bottom: 20px; }
+  .friends-tab { font-size: 12px; padding-inline: 4px; gap: 4px; }
+  .friends-tab svg { width: 14px; height: 14px; flex-shrink: 0; }
   .friends-user-row { align-items: flex-start; flex-wrap: wrap; }
   .friends-identity { width: 100%; }
   .friends-actions { margin-left: 48px; }
   .friends-user-row.is-outgoing .friends-actions { margin-left: 0; }
+}
+
+@media (max-width: 600px) {
+  .friends-page { padding: 16px 12px 32px; }
+  .friends-view { min-height: max(420px, calc(100vh - 200px)); }
+  .friends-view .friend-chat-thread { height: max(420px, calc(100vh - 200px)); }
+  .friends-search-section { grid-template-columns: max-content minmax(0, 1fr); }
+  .friends-search-group, .friends-wca-picker { width: 100%; min-width: 0; }
+  @supports (height: 100dvh) {
+    .friends-view { min-height: max(420px, calc(100dvh - 200px)); }
+    .friends-view .friend-chat-thread { height: max(420px, calc(100dvh - 200px)); }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .friends-tabs::before { transition: none; }
+  .friends-view { animation: none; }
 }

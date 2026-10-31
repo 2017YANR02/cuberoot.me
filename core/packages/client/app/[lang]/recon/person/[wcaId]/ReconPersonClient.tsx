@@ -1,4 +1,5 @@
 'use client';
+import PageBackLink from '@/components/PageBackLink';
 
 /**
  * /recon/person/[wcaId] — 个人复盘主页。
@@ -191,7 +192,7 @@ export default function ReconPersonClient() {
 
   return (
     <div className="recon-page">
-      <div className="recon-person-header">
+      <div className="recon-person-header"><PageBackLink contextOnly />
         <div className="recon-person-avatar">
           {avatarUrl
             ? <img src={avatarUrl} alt="" />

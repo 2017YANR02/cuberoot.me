@@ -7,11 +7,11 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ChevronLeft, MessageSquare, Reply, GitBranch, LogIn, Check, MessagesSquare, Flag,
+  MessageSquare, Reply, GitBranch, LogIn, Check, MessagesSquare, Flag,
   Hourglass, CircleCheck, CircleX, Plane, BellRing, CalendarPlus, CalendarCheck,
   FilePenLine, UserPlus, UserCheck,
 } from '@app-foundation/icons/lucide';
-import HomeLink from '@/components/HomeLink';
+import PageBackLink from '@/components/PageBackLink';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import { useT } from '@/hooks/useT';
@@ -129,10 +129,10 @@ export default function NotificationsPage() {
 
   return (
     <div className="ntf-page">
-      <header className="ntf-header">
-        <HomeLink className="ntf-back"><ChevronLeft size={16} /><span className="sr-only">{t('首页', 'Home')}</span></HomeLink>
+      <header className="ntf-header page-back-heading">
+        <PageBackLink className="ntf-back" />
+        <h1 className="ntf-title">{t('消息', 'Notifications')}</h1>
       </header>
-      <h1 className="ntf-title">{t('消息', 'Notifications')}</h1>
 
       {!user ? (
         <div className="ntf-login">

@@ -1,4 +1,5 @@
 'use client';
+import PageBackLink from '@/components/PageBackLink';
 
 import { useEffect, useState } from 'react';
 import type { TeachingLearningContext } from '@cuberoot/shared/teaching';
@@ -47,8 +48,7 @@ export default function LearningCenterPage() {
   return (
     <main className="teaching-page">
       <header className="teaching-header">
-        <AppLink className="teaching-eyebrow" href="/account" prefetch={false}>{t('我的账号', 'My account')}</AppLink>
-        <h1>{t('学习中心', 'Learning center')}</h1>
+        <div className="page-back-heading"><PageBackLink fallback="/account" /><h1>{t('学习中心', 'Learning center')}</h1></div>
         <p className="teaching-lead">{t('查看与当前账号关联的学员档案。监护人只能看到明确向监护人发布的内容。', 'View learner profiles linked to this account. Guardians only see content explicitly published to guardians.')}</p>
       </header>
       {contexts.some(context => context.relationships.some(relationship => relationship.kind === 'student')) && <section className="teaching-list">

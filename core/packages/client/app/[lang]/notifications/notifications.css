@@ -4,7 +4,7 @@
   padding: 24px 16px 64px;
 }
 
-.ntf-header { margin-bottom: 12px; }
+.ntf-header { margin-bottom: 20px; }
 
 .ntf-back {
   display: inline-flex;
@@ -17,7 +17,7 @@
 .ntf-back:hover { color: var(--foreground); }
 
 .ntf-title {
-  margin: 0 0 20px;
+  margin: 0;
   font-size: 22px;
   font-weight: 600;
   color: var(--foreground);

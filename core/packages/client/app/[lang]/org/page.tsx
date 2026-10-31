@@ -1,4 +1,5 @@
 'use client';
+import PageBackLink from '@/components/PageBackLink';
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Building2, ArrowRight, Plus } from '@app-foundation/icons/lucide';
@@ -79,7 +80,7 @@ export default function OrganizationsPage() {
 
   return (
     <main className="org-page org-directory">
-      <header className="org-directory-header"><span className="org-feature-icon"><Building2 size={28} aria-hidden="true" /></span><div><p className="org-eyebrow">{t('企业工作台', 'Enterprise workspace')}</p><h1>{t('我的企业', 'My enterprises')}</h1></div></header>
+      <header className="org-directory-header"><PageBackLink contextOnly /><span className="org-feature-icon"><Building2 size={28} aria-hidden="true" /></span><div><p className="org-eyebrow">{t('企业工作台', 'Enterprise workspace')}</p><h1>{t('我的企业', 'My enterprises')}</h1></div></header>
       <p className="org-lead">{t('选择已有企业，继续认证或管理。只有添加另一家企业时，才需要新增企业。', 'Select an existing enterprise to continue verification or management. Add an enterprise only for a different business.')}</p>
 
       <section className="org-section">

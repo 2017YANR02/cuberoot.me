@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { CircleCheck } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
-import HomeLink from '@/components/HomeLink';
+import PageBackLink from '@/components/PageBackLink';
 import { ClearButton } from '@/components/ClearButton';
 import { useT } from '@/hooks/useT';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -137,7 +137,7 @@ export default function FaceVerificationPage() {
   }, [status?.expiresAt, request]);
   const pending = status?.status === 'pending' || status?.status === 'initializing';
   return <main className="face-verify">
-    <header><HomeLink>{t('首页', 'Home')}</HomeLink><h1>{t('实名认证', 'Identity Verification')}</h1></header>
+    <header className="page-back-heading"><PageBackLink /><h1>{t('实名认证', 'Identity Verification')}</h1></header>
     {!user ? <AppLink href="/account?view=signin&next=%2Faccount%2Fverify">{t('登录后认证', 'Sign in to verify')}</AppLink> : <section data-site-surface="panel" className="face-verify-panel">
       {status?.status === 'passed' ? <div className="face-verify-success" role="status">
         <CircleCheck size={28} aria-hidden="true" />

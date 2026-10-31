@@ -1,9 +1,11 @@
 'use client';
+import PageBackLink from '@/components/PageBackLink';
 import { Suspense, useMemo, useState, type AnchorHTMLAttributes } from 'react';
 import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import { useRouter } from 'next/navigation';
 import { WorkspaceProvider, WorkspaceLoginFrame, ReportEditor, Reports, ReportDetailPanel, Projects, ErrorNotice, Form, Field, useResource, value, RequestError, workspaceText, type StaffActor, type MemberDirectory } from '@app-foundation/workspace-ui';
 import AppLink from '@/components/AppLink';
+import { accountNavigationHref } from '@/lib/account-navigation';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
 import { useAuthStore, useAuthUser } from '@/lib/auth-store';
@@ -40,7 +42,7 @@ function Link({href,...props}:AnchorHTMLAttributes<HTMLAnchorElement>&{href:stri
 const sections=['mine','updates','projects','checklists','schedule','members','detail','onboarding','offboarding','sop','quality'] as const;
 function Workspace() {
   const lang=useLang();const router=useRouter();
-  const host=useMemo(()=>({api,Link,Button,Dialog:WorkspaceDialog,DateInput,MemberPicker:WorkspaceMemberPicker,t:(text:string)=>workspaceText(lang,text),navigate:(href:string)=>router.push(`${lang==='zh'?'/zh':''}${workspaceHref(href)}`)}),[lang,router]);
+  const host=useMemo(()=>({api,Link,Button,Dialog:WorkspaceDialog,DateInput,MemberPicker:WorkspaceMemberPicker,t:(text:string)=>workspaceText(lang,text),navigate:(href:string)=>router.push(accountNavigationHref(`${lang==='zh'?'/zh':''}${workspaceHref(href)}`, window.location.pathname + window.location.search))}),[lang,router]);
   return <WorkspaceProvider host={host}><WorkspaceContent /></WorkspaceProvider>;
 }
 function WorkspaceContent() {
@@ -55,7 +57,7 @@ function SignedInWorkspace() {
   const handbookItems = [{ key: 'onboarding', label: t('入职','Onboarding') }, { key: 'sop', label: 'SOP' }, { key: 'quality', label: t('质量标准','Quality standards') }, { key: 'offboarding', label: t('离职','Offboarding') }];
   const handbook = handbookItems.some(item => item.key === section);
   return <main className={handbook ? 'staff-handbook-main' : undefined}>
-    <div className="staff-page-heading"><h1>{[...items,...handbookItems].find(i=>i.key===section)?.label??t('工作记录','Work report')}</h1></div>
+    <div className="staff-page-heading page-back-heading"><PageBackLink contextOnly /><h1>{[...items,...handbookItems].find(i=>i.key===section)?.label??t('工作记录','Work report')}</h1></div>
     {!handbook&&<ErrorNotice error={session.error} retry={session.reload} />}
     {session.error?.status===401&&<Button onClick={()=>useAuthStore.getState().login()}>{t('重新登录','Sign in again')}</Button>}
     {!handbook&&session.loading&&<p role="status"><LoadingIndicator>{t('正在加载…','Loading…')}</LoadingIndicator></p>}

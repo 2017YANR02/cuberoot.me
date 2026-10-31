@@ -1,4 +1,5 @@
 'use client';
+import PageBackLink from '@/components/PageBackLink';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
@@ -45,6 +46,7 @@ import './friends.css';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type View = 'friends' | 'requests' | 'blocked' | 'chats';
+const VIEW_ORDER: View[] = ['chats', 'friends', 'requests', 'blocked'];
 type WcaCandidate = {
   person: WcaPersonLite;
   registered: FriendSearchUser | null | undefined;
@@ -413,8 +415,11 @@ export default function FriendsPage() {
   const hasMainItems = Boolean(list?.length || (view === 'friends' && overview?.wcaContacts.length));
 
   return (
-    <div className={`friends-page${view === 'chats' ? ' is-chat' : ''}`}>
-      <h1 className="friends-title">{t('好友', 'Friends')}</h1>
+    <div className="friends-page">
+      <header className="friends-header">
+        <PageBackLink fallback="/account" />
+        <h1 className="friends-title">{t('好友', 'Friends')}</h1>
+      </header>
 
       {!user ? (
         <div className="friends-login">
@@ -425,21 +430,32 @@ export default function FriendsPage() {
         </div>
       ) : (
         <>
-          <div className="friends-tabs" role="tablist" aria-label={t('好友视图', 'Friends view')}>
-            <button className="friends-tab" type="button" role="tab" aria-selected={view === 'chats'} onClick={() => void setView('chats')}>
+          <div className="friends-tabs" data-view={view} role="tablist" aria-label={t('好友视图', 'Friends view')}
+            onKeyDown={event => {
+              const index = VIEW_ORDER.indexOf(view);
+              const next = event.key === 'ArrowRight' ? (index + 1) % VIEW_ORDER.length
+                : event.key === 'ArrowLeft' ? (index + VIEW_ORDER.length - 1) % VIEW_ORDER.length
+                : event.key === 'Home' ? 0 : event.key === 'End' ? VIEW_ORDER.length - 1 : null;
+              if (next === null) return;
+              event.preventDefault();
+              event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]?.focus();
+              void setView(VIEW_ORDER[next]);
+            }}>
+            <button className="friends-tab" type="button" role="tab" id="friends-tab-chats" aria-controls="friends-view" tabIndex={view === 'chats' ? 0 : -1} aria-selected={view === 'chats'} onClick={() => void setView('chats')}>
               <MessageSquare size={15} />{t('聊天', 'Chats')}
             </button>
-            <button className="friends-tab" type="button" role="tab" aria-selected={view === 'friends'} onClick={() => void setView('friends')}>
+            <button className="friends-tab" type="button" role="tab" id="friends-tab-friends" aria-controls="friends-view" tabIndex={view === 'friends' ? 0 : -1} aria-selected={view === 'friends'} onClick={() => void setView('friends')}>
               <Users size={15} />{t('好友', 'Friends')}
             </button>
-            <button className="friends-tab" type="button" role="tab" aria-selected={view === 'requests'} onClick={() => void setView('requests')}>
+            <button className="friends-tab" type="button" role="tab" id="friends-tab-requests" aria-controls="friends-view" tabIndex={view === 'requests' ? 0 : -1} aria-selected={view === 'requests'} onClick={() => void setView('requests')}>
               <UserPlus size={15} />{t('申请', 'Requests')}
             </button>
-            <button className="friends-tab" type="button" role="tab" aria-selected={view === 'blocked'} onClick={() => void setView('blocked')}>
+            <button className="friends-tab" type="button" role="tab" id="friends-tab-blocked" aria-controls="friends-view" tabIndex={view === 'blocked' ? 0 : -1} aria-selected={view === 'blocked'} onClick={() => void setView('blocked')}>
               <Ban size={15} />{t('黑名单', 'Blocked')}
             </button>
           </div>
 
+          <div key={view} id="friends-view" role="tabpanel" aria-labelledby={`friends-tab-${view}`} className={`friends-view${view === 'chats' ? ' is-chat' : ' is-list'}`}>
           {view === 'chats' && <FriendChat user={user} peerId={peerId} onSelectPeer={selectChatPeer} />}
 
           {view === 'friends' && (
@@ -570,6 +586,7 @@ export default function FriendsPage() {
               )}
             </section>
           )}
+          </div>
         </>
       )}
     </div>

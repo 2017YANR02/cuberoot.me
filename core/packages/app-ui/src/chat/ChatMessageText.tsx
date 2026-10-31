@@ -9,8 +9,26 @@ function ExpressionImage({ item }: { item: ChatExpression }) {
 }
 
 /** Only host-catalogued tokens become images; all other input remains React text. */
-export function ChatMessageText({ body, packs }: { body: string; packs: ChatExpressionPack[] }) {
-  const parts = useMemo(() => splitChatExpressions(body, packs), [body, packs]);
+export function ChatMessageText({ body, packs, maxLength }: { body: string; packs: ChatExpressionPack[]; maxLength?: number }) {
+  const parts = useMemo(() => {
+    const parsed = splitChatExpressions(body, packs);
+    if (maxLength === undefined) return parsed;
+    const preview: Array<string | ChatExpression> = [];
+    let remaining = maxLength;
+    for (const part of parsed) {
+      if (remaining <= 0) break;
+      if (typeof part === 'string') {
+        const characters = Array.from(part).slice(0, remaining);
+        preview.push(characters.join(''));
+        remaining -= characters.length;
+      } else {
+        // An expression is one visible item; never truncate its wire token.
+        preview.push(part);
+        remaining--;
+      }
+    }
+    return preview;
+  }, [body, packs, maxLength]);
   return <>{parts.map((part, index) => <Fragment key={index}>{typeof part === 'string' ? part : <ExpressionImage key={part.src} item={part} />}</Fragment>)}</>;
 }
 

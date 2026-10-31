@@ -5,6 +5,7 @@ import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Mars, Venus } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
+import PageBackLink from '@/components/PageBackLink';
 import { contestsHref } from '@/lib/contests-api';
 import BoolToggle from '@/components/BoolToggle';
 import { CompactSelect } from '@/components/CompactSelect';
@@ -192,7 +193,7 @@ export default function PersonHero({
           <span className="wp-hero-name-flag" title={p.country_iso2 ? countryName(p.country_iso2, isZh) : undefined}>
             <Flag iso2={p.country_iso2} className="wp-flag" />
           </span>
-          <div className="wp-hero-name-line">
+          <div className="wp-hero-name-line page-back-heading"><PageBackLink contextOnly />
             <h1 className="wp-hero-name">
               <a href={wcaUrl} target="_blank" rel="noopener noreferrer" className="wp-hero-name-link" title="WCA">{displayName}</a><WcaPersonTeamBadge wcaId={p.wca_id} />
             </h1>

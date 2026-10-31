@@ -23,3 +23,18 @@ it('renders catalogued tokens, preserves text, fails back to text, and follows u
     expect(host.textContent).toBe(body);
   } finally { await act(async () => root.unmount()); }
 });
+
+it('limits conversation previews after parsing, without splitting long expression tokens', async () => {
+  (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  const host = document.createElement('div'), root = createRoot(host);
+  const token = '[pet:rootbeast:04-double-jump.svg]';
+  const packs: ChatExpressionPack[] = [{ id: 'pet', zh: '宠物', en: 'Pets', items: [{ token, zh: '跳跃', en: 'Jump', src: '/jump.svg', large: true }] }];
+  try {
+    await act(async () => root.render(createElement(ChatMessageText, { body: token.repeat(4), packs, maxLength: 60 })));
+    expect(host.querySelectorAll('img')).toHaveLength(4);
+    expect(host.textContent).toBe('');
+    await act(async () => root.render(createElement(ChatMessageText, { body: '😀'.repeat(59) + token + 'tail', packs, maxLength: 60 })));
+    expect(host.querySelectorAll('img')).toHaveLength(1);
+    expect(host.textContent).toBe('😀'.repeat(59));
+  } finally { await act(async () => root.unmount()); }
+});

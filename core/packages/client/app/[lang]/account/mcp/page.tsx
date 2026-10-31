@@ -1,4 +1,5 @@
 'use client';
+import PageBackLink from '@/components/PageBackLink';
 
 import { sessionFetch } from '@/lib/session-fetch';
 
@@ -59,7 +60,7 @@ export default function McpAccountPage() {
     finally { setBusy(false); }
   }
   return <main className="mcp-account">
-    <h1>{t('ChatGPT 只读连接', 'ChatGPT read-only connection')}</h1>
+    <div className="page-back-heading"><PageBackLink fallback="/account" /><h1>{t('ChatGPT 只读连接', 'ChatGPT read-only connection')}</h1></div>
     <p>{t('允许 ChatGPT 读取账号增长、会员数量、数据库状态和数值诊断记录，用于分析 CubeRoot。仅管理员可以授权。', 'Allow ChatGPT to read registration trends, membership counts, database activity and numeric diagnostics to analyze CubeRoot. Only administrators may authorize access.')}</p>
     <p>{t('不开放个人资料、密码、支付明细或写入操作。每次调用检查管理员权限；连接最多保留 30 天，可随时撤销。', 'No personal profiles, passwords, payment records or write operations are exposed. Administrator access is checked on every call. Connections last up to 30 days and can be revoked at any time.')}</p>
     {!ready ? <p><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></p> : !user ?

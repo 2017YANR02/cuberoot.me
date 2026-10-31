@@ -185,7 +185,7 @@ export function ChatPanel({ expressionPacks = EMPTY_EXPRESSION_PACKS, onReloadEx
         <button type="button" className="friend-chat-open" onClick={() => onSelectPeer(c.peer.userId)} aria-current={peerId === c.peer.userId ? 'true' : undefined}
           aria-label={`${t('打开聊天', 'Open conversation')}: ${c.peer.name}`} />
         {c.unreadCount > 0 && <span className="friend-chat-unread">{c.unreadCount}</span>}
-        <p className="friend-chat-preview">{c.lastMessage.stickerId ? t('[表情包]', '[Sticker]') : <ChatMessageText body={Array.from(c.lastMessage.body).slice(0, 60).join('')} packs={expressionPacks} />}</p>
+        <p className="friend-chat-preview">{c.lastMessage.stickerId ? t('[表情包]', '[Sticker]') : <ChatMessageText body={c.lastMessage.body} packs={expressionPacks} maxLength={60} />}</p>
       </div>)}
       {state?.nextCursor && <button type="button" className="friend-chat-action" disabled={state.listLoading} onClick={() => void controller?.loadMoreConversations()}>{t('更多会话', 'More conversations')}</button>}
     </aside>
