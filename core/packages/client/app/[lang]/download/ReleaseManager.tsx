@@ -92,8 +92,8 @@ export default function ReleaseManager({ onPublished }: { onPublished: () => voi
       {data.pending && <p role="status">{tr({ zh: '请求已保存，等待构建服务确认。', en: 'Request saved; waiting for the build service.' })} <code>{data.pending.requestId}</code></p>}
       <ul>{data.runs.map(run => <li key={run.id}>
         <a href={run.url} target="_blank" rel="noopener noreferrer">{run.versionName}</a>{' · '}
-        {run.status !== 'completed' ? tr({ zh: '等待或发布中', en: 'Queued or publishing' })
-          : run.conclusion === 'success' ? tr({ zh: '发布完成', en: 'Published' })
+        {run.status !== 'completed' ? tr({ zh: '排队或执行中', en: 'Queued or running' })
+          : run.conclusion === 'success' ? tr({ zh: '任务完成', en: 'Completed' })
           : tr({ zh: '未全部完成，查看详情', en: 'Incomplete — view details' })}
       </li>)}</ul>
     </>}
