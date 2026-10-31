@@ -311,7 +311,6 @@ button {
   margin: 0;
   padding: 8px max(16px, env(safe-area-inset-right)) 9px max(16px, env(safe-area-inset-left));
   border: 0;
-  border-bottom: 1px solid var(--shell-divider);
 }
 
 .mobile-scramble-source-config .scramble-src-manual {
@@ -867,7 +866,6 @@ button {
   grid-row: 1;
   grid-template-columns: repeat(3, max-content);
   border-top: 0;
-  border-bottom: 1px solid var(--border-default);
   padding: 5px 16px;
 }
 .app-shell[data-wide='true'] > .primary-nav button {

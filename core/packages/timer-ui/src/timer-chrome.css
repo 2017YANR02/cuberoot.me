@@ -5,7 +5,6 @@
   align-items: center;
   gap: 10px;
   padding: 8px max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left));
-  border-bottom: 1px solid var(--shell-divider, var(--border-default));
 }
 
 .shell-topbar-left {
