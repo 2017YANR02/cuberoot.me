@@ -39,6 +39,7 @@ export interface TimerSmartCubeDeviceModalProps {
   className?: string;
   connectionFailure?: ReactNode;
   intro?: ReactNode;
+  footer?: ReactNode;
   language: TimerUiLanguage;
   macPrompt?: {
     deviceName: string;
@@ -131,6 +132,7 @@ export function TimerSmartCubeDeviceModal({
   className,
   connectionFailure,
   intro,
+  footer,
   language,
   macPrompt,
   onClose,
@@ -499,6 +501,7 @@ export function TimerSmartCubeDeviceModal({
             )}
           </>
         )}
+        {!macPrompt && footer}
       </div>
     </div>,
     document.body,

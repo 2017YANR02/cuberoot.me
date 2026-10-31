@@ -329,6 +329,22 @@ describe('BluetoothModal direct connection attempt', () => {
     expect(onConnect).toHaveBeenCalledOnce();
   });
 
+  it('adds the next-cube action inside the connected panel and keeps the first cube on failure', async () => {
+    const disconnect = vi.fn();
+    const onConnectNext = vi.fn(async () => { throw new Error('The second cube could not connect'); });
+    await act(async () => root.render(createElement(BluetoothModal, {
+      isZh: false,
+      cube: { ...disconnectedCube, status: { ...disconnectedCube.status, connected: true, deviceName: 'GAN16ui' }, disconnect },
+      onClose: vi.fn(), onConnect: vi.fn(async () => {}), onConnectNext,
+    })));
+    const add = [...modal().querySelectorAll('button')].find(button => button.textContent === 'Connect another smart cube')!;
+    await act(async () => add.click());
+    expect(onConnectNext).toHaveBeenCalledOnce();
+    expect(modal().querySelector('[role="alert"]')?.textContent).toBe('Error: The second cube could not connect');
+    expect(modal().textContent).toContain('GAN16ui');
+    expect(disconnect).not.toHaveBeenCalled();
+  });
+
   it('switches to the MAC instructions and focuses the input when MY32 requests its address', async () => {
     const props = { isZh: false, cube: disconnectedCube, onClose: vi.fn(), onConnect: vi.fn(async () => {}) };
     await act(async () => root.render(createElement(BluetoothModal, props)));

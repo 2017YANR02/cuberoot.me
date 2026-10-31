@@ -15,7 +15,7 @@ import {
   createTimerDeviceRegistry,
   SMART_CUBE_TIMER_DEVICE_REGISTRATIONS,
 } from '@cuberoot/shared/timer/device-contract';
-import { useEffect, useState, useSyncExternalStore, type CSSProperties, type RefObject } from 'react';
+import { useEffect, useState, useSyncExternalStore, type CSSProperties, type RefObject, type ReactNode } from 'react';
 import { installedBleAvailable, subscribeInstalledBleBridge } from '@/lib/installed-ble-bridge';
 import {
   BluetoothConnectError,
@@ -54,6 +54,9 @@ interface Props {
   onCancelMac?: () => void;
   onResetGyro?: () => void;
   allowDeviceCalibration?: boolean;
+  connectionList?: ReactNode;
+  onConnectNext?: () => Promise<void>;
+  connectingNext?: boolean;
 }
 
 /** Device groups shown only after a failed connection. */
@@ -118,10 +121,11 @@ function ConnectFailure({ detail }: { detail: string }) {
   );
 }
 
-export default function BluetoothModal({ anchorRef, isZh, cube, onClose, onConnect, connectAttempt, macPrompt, onSubmitMac, onCancelMac, onResetGyro }: Props) {
+export default function BluetoothModal({ anchorRef, isZh, cube, onClose, onConnect, connectAttempt, macPrompt, onSubmitMac, onCancelMac, onResetGyro, allowDeviceCalibration = true, connectionList, onConnectNext, connectingNext }: Props) {
   useSyncExternalStore(subscribeInstalledBleBridge, installedBleAvailable, () => false);
   const [connecting, setConnecting] = useState(Boolean(connectAttempt) && !cube.status.connected);
   const [connectError, setConnectError] = useState<{ stage: ConnectStage | null; detail: string } | null>(null);
+  const [nextError, setNextError] = useState<string | null>(null);
 
   const runConnect = async (pick?: ConnectPickOptions): Promise<void> => {
     setConnectError(null);
@@ -239,11 +243,21 @@ export default function BluetoothModal({ anchorRef, isZh, cube, onClose, onConne
       anchorRef={anchorRef}
       capabilities={{
         ...WEB_TIMER_DEVICE_REGISTRY.get('smart-cube')?.capabilities,
-        gyro: Boolean(onResetGyro),
+        gyro: allowDeviceCalibration && Boolean(onResetGyro),
+        reset: allowDeviceCalibration,
       }}
       className={`timer-modal bluetooth-modal${!macPrompt && !connectError ? ' bt-connected-modal' : ''}`}
       connectionFailure={connectError ? <ConnectFailure detail={connectError.detail} /> : undefined}
       intro={intro}
+      footer={connectionList || onConnectNext ? <div className="modal-section" data-no-timer>
+        {connectionList}
+        {onConnectNext && <button type="button" className="bt-connect-btn" disabled={connectingNext}
+          onClick={() => { setNextError(null); void onConnectNext().catch(error => setNextError(describeError(error))); }}>
+          {connectingNext ? tr({ zh: '连接中…', en: 'Connecting…' })
+            : tr({ zh: '连接下一个智能魔方', en: 'Connect another smart cube' })}
+        </button>}
+        {nextError && <p role="alert">{nextError}</p>}
+      </div> : undefined}
       language={isZh ? 'zh' : 'en'}
       onClose={onClose}
       onConnect={!macPrompt && canConnect ? () => runConnect() : undefined}
