@@ -10,6 +10,10 @@ const PROJECT_ICONS = [
   { id: 'skewb-ultimate-exact', iconClass: 'puzzle-skewb-ultimate', en: 'Skewb Ultimate', zh: '终极斜转' },
   { id: 'rubiks-ufo-ftm-exact', iconClass: 'puzzle-rubiks-ufo', en: "Rubik's UFO", zh: '鲁比克飞碟' },
   { id: 'rubiks-ufo-stm-exact', iconClass: 'puzzle-rubiks-ufo', en: "Rubik's UFO", zh: '鲁比克飞碟' },
+  // Keep the original FTO geometry artwork searchable alongside the flat icon.
+  ...TIMER_EVENT_PICKER_ITEMS.filter(({ id }) => id === 'fto').map(({ id, nameEn, nameZh }) => ({
+    id, iconClass: 'puzzle-fto', en: nameEn, zh: nameZh,
+  })),
   ...CSTIMER_EVENTS,
   ...SHAPE_MOD_EVENTS,
   ...NATIVE_SCRAMBLE_EVENTS,

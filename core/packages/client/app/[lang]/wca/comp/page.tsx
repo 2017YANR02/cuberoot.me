@@ -59,7 +59,7 @@ import { expandCountrySelection } from '@/lib/continent';
 import { fetchCompRounds, fetchCompWcif, fetchCubingZh } from '@/lib/comp-wcif';
 import { statsUrl } from '@/lib/stats-base';
 import { ClearButton } from '@/components/ClearButton';
-import { CubingIcon } from '@/components/EventIcon';
+import { CubingIcon, EventIcon } from '@/components/EventIcon';
 import type { WcaPersonLite } from '@/lib/wca-api';
 import { fetchPersonUpcomingCompetitionIds } from '@/lib/person-upcoming';
 import dynamic from 'next/dynamic';
@@ -173,7 +173,7 @@ const WCA_EVENT_ID_TO_SHORT: Record<string, string> = Object.fromEntries(
   Object.entries(SHORT_TO_EVENT_ID).map(([s, w]) => [w, s])
 );
 
-const EVENT_ORDER = WCA_EVENT_ORDER;
+const EVENT_ORDER = [...WCA_EVENT_ORDER, 'fto'];
 
 const WEEKDAY_EN = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const WEEKDAY_ZH = ['一','二','三','四','五','六','日'];
@@ -2041,6 +2041,7 @@ function CalendarPageInner() {
   return (
     <div
       ref={pageRef}
+      style={{ '--cl-event-count': EVENT_ORDER.length } as CSSProperties}
       className={`calendar-page${viewMode === 'list' ? ' calendar-page--list' : ''}${viewMode === 'calendar' && calLayout === 'country' ? ' calendar-page--compact' : ''}${viewMode === 'globe' ? ' calendar-page--globe' : ''}`}
       data-wide-metric={viewMode === 'list' && WIDE_METRICS.has(eventMetric) ? '' : undefined}
       data-comp-2col={viewMode === 'list' && (compMetric === 'latlng' || compMetric === 'peopleLimit') ? '' : undefined}
@@ -2373,14 +2374,14 @@ function CalendarPageInner() {
                 aria-pressed={active}
                 title={cycleHint}
               >
-                <CubingIcon icon={`event-${eid}`} />
+                <EventIcon event={eid} />
                 <span className={`event-chip-rounds${badge === '' ? ' is-empty' : ''}`}>
                   {badge}
                 </span>
               </button>
             );
           });
-          // 列表模式：用 grid 把表头对齐到下方各列（年份 cell + flag/name 两个 spacer + 天数列头 + 21 chip）。
+          // 列表模式：用 grid 把表头对齐到下方各列（年份 cell + flag/name 两个 spacer + 天数列头 + 项目 chip）。
           if (viewMode !== 'list' || displayedComps.length === 0) return <>{daysChip}{chips}</>;
           return (
             <div className="event-chips-grid">

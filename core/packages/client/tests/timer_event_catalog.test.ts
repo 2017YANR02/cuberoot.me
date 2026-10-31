@@ -142,7 +142,7 @@ describe('shared timer event picker catalog', () => {
   it('uses the same structural artwork for physical puzzles and keeps training badges', () => {
     expect(cstimerEvent('gear')?.iconClass).toBe('puzzle-gear');
     expect(timerEventPickerItem('gear').iconClass).toBe('puzzle-gear');
-    expect(timerEventPickerItem('fto').iconClass).toBe('puzzle-fto');
+    expect(timerEventPickerItem('fto').iconClass).toBe('unofficial-fto');
     expect(timerEventPickerItem('mpyram').iconClass).toBe('puzzle-masterpyraminx');
     expect(timerEventPickerItem('333mr').iconClass).toBe('unofficial-333_mirror_blocks');
     expect(timerEventPickerItem('333mr').textLabel).toBeUndefined();
