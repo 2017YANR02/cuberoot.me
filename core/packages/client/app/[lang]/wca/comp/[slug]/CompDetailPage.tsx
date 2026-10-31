@@ -2782,18 +2782,21 @@ const ResultsTableRow = memo(function ResultsTableRow({
           </Link>
         )}
       </td>
-      <td className="td-person">
-        <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
-        <Link
-          href={compResultHref(compId ?? '', { eventId: r.e, roundId: r.r, number: r.n })}
-          prefetch={false}
-          onClick={e => e.stopPropagation()}
-          onNavigate={e => { e.preventDefault(); onClickCuber(r.n); }}
-          className="cuber-name cuber-link"
-          title={`${fullCuberName}\n${regionDisplay(u.region, isZh)}`}
-        >
-          {cuberName}<WcaPersonTeamBadge wcaId={u.wcaid} />
-        </Link>
+      <td className="td-person comp-result-person-cell">
+        <div className="comp-result-person">
+          <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
+          <Link
+            href={compResultHref(compId ?? '', { eventId: r.e, roundId: r.r, number: r.n })}
+            prefetch={false}
+            onClick={e => e.stopPropagation()}
+            onNavigate={e => { e.preventDefault(); onClickCuber(r.n); }}
+            className="cuber-name cuber-link comp-result-person-link"
+            title={`${fullCuberName}\n${regionDisplay(u.region, isZh)}`}
+          >
+            <span className="comp-result-person-name">{cuberName}</span>
+            <span className="comp-result-team"><WcaPersonTeamBadge wcaId={u.wcaid} /></span>
+          </Link>
+        </div>
         {/* 行级编辑铅笔已移除:管理员经点成绩弹窗里的「编辑变更记录…」打开整条变更编辑器。 */}
       </td>
       {(() => {
