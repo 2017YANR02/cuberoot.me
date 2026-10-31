@@ -65,8 +65,10 @@ function CohortRanksPageInner() {
   const allowAvg = event !== '333mbf';
 
   useEffect(() => {
-    setLoading(true); setError(null);
+    let active = true;
+    setLoading(true); setError(null); setData(null);
     const qs = new URLSearchParams();
+    qs.set('v', '2');
     qs.set('cohort', String(cohort));
     qs.set('event', event);
     qs.set('type', type);
@@ -75,7 +77,10 @@ function CohortRanksPageInner() {
     if (country) qs.set('country', country);
     fetch(apiUrl(`/v1/wca/cohort-ranks?${qs.toString()}`))
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-      .then(setData).catch(e => setError(e.message)).finally(() => setLoading(false));
+      .then(result => { if (active) setData(result); })
+      .catch(e => { if (active) setError(e.message); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, [cohort, event, type, country, page, size]);
 
   const years = useMemo(() => {
@@ -133,7 +138,7 @@ function CohortRanksPageInner() {
                   <th>{tr({ zh: '选手', en: 'Person'
                 })}</th>
                   <th className="wse-value-col">{(isZh ? (type === 'single' ? '单次' : '平均') : (type === 'single' ? 'Single' : 'Average'))}</th>
-                  {!country && <th>{tr({ zh: '国家', en: 'Country'
+                  {(!country || country.startsWith('_')) && <th>{tr({ zh: '国家', en: 'Country'
                 })}</th>}
                 </tr>
               </thead>
@@ -145,7 +150,7 @@ function CohortRanksPageInner() {
                       <PersonLink wcaId={r.wcaId} name={r.name} isZh={isZh} />
                     </td>
                     <td className="wse-value-col">{formatWcaResult(r.value, event, type)}</td>
-                    {!country && (
+                    {(!country || country.startsWith('_')) && (
                       <td>
                         {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
                         <span>{r.countryId}</span>
