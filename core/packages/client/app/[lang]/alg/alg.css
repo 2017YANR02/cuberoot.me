@@ -162,6 +162,10 @@ html[data-theme=dark] .alg-root {
   gap: 12px;
   flex-wrap: wrap;
 }
+.alg-set-section-heading .alg-index-progress-link {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .alg-set-section-heading h2 {
   margin: 0;
   font-size: 18px;

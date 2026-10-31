@@ -33,7 +33,8 @@ import { ClearButton } from '@/components/ClearButton';
 import { MIX_MIN_SETS, mixHref, mixTitle } from '@/lib/alg-mix';
 import { useSavedMixes } from '@/lib/alg-mix-saved';
 import dynamic from 'next/dynamic';
-const AlgAdminValidate = dynamic(() => import('@/components/AlgAdminValidate'));
+// Admin controls are client-only; do not preload their dialog chunks during SSR.
+const AlgAdminValidate = dynamic(() => import('@/components/AlgAdminValidate'), { ssr: false });
 import { readAlgLibrary, subscribeAlgLibrary } from '@/lib/alg-library-cache';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { FaceletsCube } from '@/components/FaceletsCube';
@@ -70,9 +71,6 @@ const HIDDEN_CATALOG_SET_SLUGS = new Set(['oh-cmll']);
  */
 const TRAINER_MODULES: Record<string, { href: string; zh: string; en: string }[]> = {
   // 三盲不在这排 —— 它在 /alg 落地页自成一个项目(整套编码体系,不是 3x3 的一套公式)。
-  '3x3': [
-    { href: '/alg/roux', zh: '桥式训练', en: 'Roux Trainer' },
-  ],
   'skewb': [
     { href: '/alg/skewb-trainer', zh: 'Skewb 技巧训练', en: 'Skewb Skills' },
   ],
@@ -454,6 +452,11 @@ export default function AlgPuzzleClient({ initialCatalog = null }: { initialCata
         <section key={section.id} className="alg-set-section" aria-labelledby={`alg-${section.id}-index-title`}>
           <div className="alg-set-section-heading">
             <h2 id={`alg-${section.id}-index-title`}>{tr({ zh: section.zh, en: section.en })}</h2>
+            {section.id === 'roux' && !picking && (
+              <Link href="/alg/roux" className="alg-index-progress-link" prefetch={false}>
+                {tr({ zh: '桥式训练', en: 'Roux Trainer' })}
+              </Link>
+            )}
           </div>
           {renderSetGrid(section.sets, [
             ...(section.id === 'cfop' && !picking ? [{
