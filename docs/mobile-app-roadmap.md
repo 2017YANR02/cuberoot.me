@@ -1,5 +1,12 @@
 # CubeRoot 五端 App 完整路线图
 
+### 2026-10-31：移动计时页布局对齐（本地，真机待验）
+
+- 顶栏窄屏布局和排名 footer 使用显式状态属性，消除对 WebView 103 不支持的 `:has()` 的依赖；Web 私有的难度按钮透明样式移入共享 TimerChrome。排名 footer 修正窄屏两列覆盖三列的优先级。
+- App 真题配置空容器取消垂直 padding，实际页面空行高度从 17px 降到 0；排名容器按可见阶段及启用范围挂载，与 Web 保持一致。
+- timer-ui/app-ui/client 类型检查、App `mobile-viewport.test.ts`（7 项）、Mobile build 与 Capacitor Android sync 通过。隔离 Chrome 页面在 320/360/390/412/768px、单条成绩下检查无横向溢出，统计区底边距 App 导航上沿为 10px；删除 `:has()` 规则后的兼容性模拟同样通过，不等同于 WebView 103 实测。排名 fixture 验证 ≤480px 两列、宽屏三列及 fullscreen 隐藏。
+- Android Debug 本机构建通过；ADB 无连接设备，OPPO 真机布局及 iOS/HarmonyOS/桌面完整验收仍待完成。按功能分批本地提交，未推送、未发布，不改变总体 NOT COMPLETE 状态。
+
 ### 2026-10-16：Watch 多型号智能魔方接入（本地，新增型号实物待验）
 
 - Watch 已接 GAN v1/v2/v3/v4、MoYu32、QiYi；服务识别、MAC 输入缓存、按服务/特征路由通知及真实协议成绩标签已落地，直接连接魔方，无需 iPhone 中转。

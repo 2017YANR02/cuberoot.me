@@ -4092,7 +4092,9 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
               )}}
         stage={{
           className: "mobile-timer-stage timer-view",
-          rankings: solves.length > 0 && <TimerRankBadge eventId={activeEvent} centis={rankCentis} type="single" country={rankCountry} isZh={language === 'zh'} scopes={store!.settings.rankScopes} wcaId={rankWcaId} host={timerRankHost} />,
+          rankings: store!.settings.rankScopes.length > 0 && rankVisible && solves.length > 0
+            ? <TimerRankBadge eventId={activeEvent} centis={rankCentis} type="single" country={rankCountry} isZh={language === 'zh'} scopes={store!.settings.rankScopes} wcaId={rankWcaId} host={timerRankHost} />
+            : undefined,
           fullscreen: fullscreen,
           source: <>
                 {scrambleSource === 'wca' && timerSupportsRealWcaScrambles(activeEvent) && (

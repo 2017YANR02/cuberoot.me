@@ -22,7 +22,7 @@ export function TimerStageLayout({
       {source && <div className="timer-stage-source surface-chrome" data-no-timer hidden={fullscreen}>{source}</div>}
       {children}
       {(statistics || devices || rankings) && (
-        <div className="timer-stage-footer surface-chrome" hidden={fullscreen}>
+        <div className="timer-stage-footer surface-chrome" data-has-rankings={rankings ? 'true' : undefined} hidden={fullscreen}>
           <div className="timer-stage-statistics" data-no-timer>{statistics}</div>
           {rankings && <div className="timer-stage-rankings" data-no-timer>{rankings}</div>}
           <div className="timer-stage-devices" data-no-timer>{devices}</div>
