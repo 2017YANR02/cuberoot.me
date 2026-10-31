@@ -450,7 +450,7 @@ export default function LandingPage() {
                 {member.avatarUrl
                   ? <img src={member.avatarUrl} alt="" className="landing-member-avatar" />
                   : <User size={24} aria-hidden="true" />}
-                <span>{displayCuberName(member.name, lang === 'zh')}<WcaPersonTeamBadge wcaId={member.wcaId} />{member.vipId ? ` ${fmtVipId(member.vipId)}` : ''}</span>
+                <span>{displayCuberName(member.name, lang === 'zh')}<WcaPersonTeamBadge wcaId={member.wcaId} linked={false} />{member.vipId ? ` ${fmtVipId(member.vipId)}` : ''}</span>
               </Link>
             ))}
           </div>

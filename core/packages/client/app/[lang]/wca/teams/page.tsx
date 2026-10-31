@@ -5,7 +5,9 @@ import { Suspense, useEffect, useState } from 'react';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { CubingBrandLabel } from '@/components/CubingBrandLabel';
+import { WcaTeamLink } from '@/components/WcaTeamLink';
 import PersonLink from '@/components/PersonLink';
+import { Flag } from '@/components/Flag';
 import { SearchInput } from '@/components/SearchInput';
 import { Tooltip } from '@/components/Tooltip';
 import { WcaRelationColumnHeader } from '@/components/WcaRelationColumnHeader';
@@ -23,7 +25,11 @@ import './teams.css';
 interface Team { id: number; name: string; count: number }
 interface Directory {
   teams: Team[];
-  members: Array<{ wcaId: string; name: string; teamId: number; teamName: string; bestAverage: number | null }>;
+  members: Array<{
+    wcaId: string; name: string; iso2: string | null; teamId: number; teamName: string;
+    bestAverage: number | null; bestSingle?: number | null; competitionCount?: number; championshipCount?: number;
+    singleWorldRank?: number | null; averageWorldRank?: number | null;
+  }>;
   total: number;
 }
 
@@ -51,7 +57,7 @@ function TeamsDirectory() {
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true); setFailed(false);
-    const qs = new URLSearchParams({ directory: '1', team, q: search, page: String(page), size: '50', v: '2' });
+    const qs = new URLSearchParams({ directory: '1', team, q: search, page: String(page), size: '50', v: '4' });
     fetch(apiUrl('/v1/wca/teams?' + qs), { signal: controller.signal }).then(async response => {
       if (!response.ok) throw new Error(String(response.status));
       const result = await response.json();
@@ -92,16 +98,34 @@ function TeamsDirectory() {
       {data && <span className="wca-teams-total">{tr({ zh: `${data.total} 人`, en: `${data.total} members` })}</span>}
     </div>
     {loading ? <LoadingIndicator /> : failed ? <button type="button" onClick={() => retry(value => value + 1)}>{tr({ zh: '加载失败，重试', en: 'Failed to load. Retry' })}</button> : null}
-    <div className="wse-table-wrapper"><table className="wse-table sticky-thead">
+    <div className="wse-table-wrapper"><table className="wse-table wca-teams-table sticky-thead" aria-busy={loading}>
       <thead><tr><th>{tr({ zh: '选手', en: 'Person' })}</th>
         <WcaRelationColumnHeader label={tr({ zh: '战队', en: 'Team' })} filter={{ value: team, onChange: chooseTeam, items: wcaTeamSelectItems(data?.teams ?? []) }} />
-        <th>{tr({ zh: '三阶平均', en: '3×3 average' })}</th></tr></thead>
+        <th>{tr({ zh: '三阶单次', en: '3×3 single' })}</th>
+        <th>{tr({ zh: '三阶平均', en: '3×3 average' })}</th>
+        <th>{tr({ zh: '参赛次数', en: 'Competitions' })}</th>
+        <th><Tooltip content={tr({ zh: '全部项目累计决赛冠军次数（含加入战队前）', en: 'Career event wins in finals, including before joining the team' })}>
+          {tip => <span {...tip} tabIndex={0}>{tr({ zh: '夺冠次数', en: 'Titles' })}</span>}
+        </Tooltip></th></tr></thead>
       <tbody>{!loading && !failed && data?.members.map(member => <tr key={member.wcaId}>
-        <td><PersonLink wcaId={member.wcaId} name={member.name} isZh={isZh} showTeam={false} /></td>
-        <td><CubingBrandLabel name={member.teamName} logoOnly fallbackToName /></td>
-        <td>{member.bestAverage === null ? '—' : formatWcaResult(member.bestAverage, '333', 'average')}</td>
+        <td><div className="wca-team-person">
+          {member.iso2 && <Flag iso2={member.iso2} />}
+          <div><PersonLink wcaId={member.wcaId} name={member.name} isZh={isZh} showTeam={false} />
+            <span className="wca-team-person-id">{member.wcaId}</span></div>
+        </div></td>
+        <td><WcaTeamLink team={{ id: member.teamId, name: member.teamName }} /></td>
+        <td>{member.bestSingle == null ? '—' : formatWcaResult(member.bestSingle, '333', 'single')}
+          {member.bestSingle != null && member.singleWorldRank != null && member.singleWorldRank > 0 &&
+            <span className="wca-team-world-rank">{tr({ zh: `世界 #${member.singleWorldRank}`, en: `World #${member.singleWorldRank}` })}</span>}
+        </td>
+        <td className="wca-team-average">{member.bestAverage === null ? '—' : formatWcaResult(member.bestAverage, '333', 'average')}
+          {member.bestAverage != null && member.averageWorldRank != null && member.averageWorldRank > 0 &&
+            <span className="wca-team-world-rank">{tr({ zh: `世界 #${member.averageWorldRank}`, en: `World #${member.averageWorldRank}` })}</span>}
+        </td>
+        <td>{member.competitionCount ?? '—'}</td>
+        <td>{member.championshipCount ?? '—'}</td>
       </tr>)}
-      {!loading && !failed && data?.total === 0 && <tr><td colSpan={3}>{tr({ zh: '没有匹配的选手', en: 'No matching members' })}</td></tr>}
+      {!loading && !failed && data?.total === 0 && <tr><td colSpan={6}>{tr({ zh: '没有匹配的选手', en: 'No matching members' })}</td></tr>}
       </tbody></table></div>
     {data && data.total > 50 && <Paginator page={page} totalPages={Math.ceil(data.total / 50)} size={50} pageSizeOptions={[50]} isZh={isZh}
       onPageChange={page => { void setQuery({ page: String(page) }); }} onSizeChange={() => {}} />}

@@ -541,10 +541,10 @@ function CompModal({ comp, isZh, onClose, t, cancelled, loggedIn, followed, onTo
                     <CubingIcon icon={`event-${r.e}`} />
                     <span className="record-kind">{r.k === 's' ? t('upcoming.single') : t('upcoming.average')}</span>
                     <span className="record-value mono">{formatWcaResult(r.v, r.e, r.k === 's' ? 'single' : 'average')}</span>
-                    <Link prefetch={false} href={`/wca/persons/${r.p}`} className="record-person">
+                    <><Link prefetch={false} href={`/wca/persons/${r.p}`} className="record-person">
                       <SharedFlag iso2={personFlagIso2(r.p)} />
-                      <span>{displayCuberName(r.n, isZh)}<WcaPersonTeamBadge wcaId={r.p} /></span>
-                    </Link>
+                      <span>{displayCuberName(r.n, isZh)}</span>
+                    </Link><WcaPersonTeamBadge wcaId={r.p} /></>
                   </li>
                 ))}
               </ul>

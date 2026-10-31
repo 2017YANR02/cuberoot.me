@@ -32,10 +32,10 @@ function PersonLink({ p, mode }: { p: PersonItem; mode: NameMode }) {
   const iso2 = personFlagIso2(p.id);
   return (
     <span className="ns-person-wrap">
-      <Link className="ns-person" href={`/wca/persons/${p.id}`} prefetch={false}>
+      <><Link className="ns-person" href={`/wca/persons/${p.id}`} prefetch={false}>
         {iso2 && <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-        {nameByMode(p.n, mode)}<WcaPersonTeamBadge wcaId={p.id} />
-      </Link>
+        {nameByMode(p.n, mode)}
+      </Link><WcaPersonTeamBadge wcaId={p.id} /></>
       {/* 含曾用名:现名后跟弱化的曾用名标签,拆开避免一串连读 */}
       {mode === 'aka' && <FormerNames former={p.former} />}
     </span>

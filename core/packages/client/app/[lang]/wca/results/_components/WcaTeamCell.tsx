@@ -7,7 +7,7 @@ import type { WcaTeamsResponse } from '@/lib/wca-teams-api';
 import { fetchWcaTeamDirectory, saveWcaPersonTeam } from '@/lib/wca-team-directory';
 import { WcaTeacherCell, type WcaTeacherDirectory } from '@/components/WcaTeacherCell';
 import { ListSelect } from '@/components/ListSelect';
-import { CubingBrandLabel } from '@/components/CubingBrandLabel';
+import { WcaTeamLink } from '@/components/WcaTeamLink';
 import { wcaTeamSelectItems } from '@/components/wca-team-select-items';
 import { SearchInput } from '@/components/SearchInput';
 import { tr } from '@/i18n/tr';
@@ -102,7 +102,7 @@ export function WcaPersonRelationCells({ wcaId, eventIds, teacherDirectory, team
       } : undefined}
     /></td>
     <td><div className="wca-teacher-cell wca-team-cell"><span className="wca-teacher-value" title={teamDirectory.ready ? team?.name : undefined}>
-      {teamDirectory.failed ? <button type="button" className="wca-teacher-action" onClick={teamDirectory.retry}>{tr({ zh: '加载失败，重试', en: 'Load failed, retry' })}</button> : teamDirectory.ready ? team ? <CubingBrandLabel name={team.name} logoOnly fallbackToName /> : '—' : '…'}
+      {teamDirectory.failed ? <button type="button" className="wca-teacher-action" onClick={teamDirectory.retry}>{tr({ zh: '加载失败，重试', en: 'Load failed, retry' })}</button> : teamDirectory.ready ? team ? <WcaTeamLink team={team} /> : '—' : '…'}
     </span></div></td>
   </>;
 }

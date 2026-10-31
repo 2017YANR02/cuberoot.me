@@ -233,12 +233,12 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
                   {i > 0 && <span className="detail-cuber-sep">&amp;{' '}</span>}
                   {c.country && <Flag iso2={c.country} className="recon-inline-flag" />}
                   {c.id ? (
-                    <Link
+                    <><Link
                       href={i === 0 ? personLinkForSolve(solve, isZh) : personHref(c.id, isZh)}
                       className="detail-person-link"
                     >
-                      {displayCuberName(c.name, isZh)}<WcaPersonTeamBadge wcaId={c.id} />
-                    </Link>
+                      {displayCuberName(c.name, isZh)}
+                    </Link><WcaPersonTeamBadge wcaId={c.id} /></>
                   ) : displayCuberName(c.name, isZh)}
                 </span>
               </Fragment>
@@ -1056,7 +1056,7 @@ function SameScrambleNav({ solve, initial }: { solve: ReconSolve; initial?: Reco
               {s.event && <EventIcon event={s.event} title={eventDisplayName(s.event, isZh)} />}
               <span className="ss-name">
                 {s.personId && <Flag iso2={personFlagIso2(s.personId)} className="yt-comment-flag" />}
-                {displayCuberName(s.person ?? '', isZh)}<WcaPersonTeamBadge wcaId={s.personId} />
+                {displayCuberName(s.person ?? '', isZh)}<WcaPersonTeamBadge wcaId={s.personId} linked={false} />
               </span>
               {s.method && <span className="ss-method">{s.method}</span>}
             </Link>

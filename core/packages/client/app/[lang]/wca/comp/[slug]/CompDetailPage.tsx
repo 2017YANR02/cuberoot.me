@@ -2770,8 +2770,8 @@ const ResultsTableRow = memo(function ResultsTableRow({
             title={`${fullCuberName}\n${regionDisplay(u.region, isZh)}`}
           >
             <span className="comp-result-person-name">{cuberName}</span>
-            <span className="comp-result-team"><WcaPersonTeamBadge wcaId={u.wcaid} /></span>
           </Link>
+          <span className="comp-result-team"><WcaPersonTeamBadge wcaId={u.wcaid} /></span>
         </div>
         {/* 行级编辑铅笔已移除:管理员经点成绩弹窗里的「编辑变更记录…」打开整条变更编辑器。 */}
       </td>
@@ -3186,15 +3186,15 @@ function CuberNameLink({ u, isZh }: { u: User; isZh: boolean }) {
   const title = regionDisplay(u.region, isZh);
   if (u.wcaid) {
     return (
-      <Link
+      <><Link
         prefetch={false}
         href={`/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${u.wcaid}`}
         className="cuber-name cuber-link"
         title={title}
         onClick={e => e.stopPropagation()}
       >
-        {name}<WcaPersonTeamBadge wcaId={u.wcaid} />
-      </Link>
+        {name}
+      </Link><WcaPersonTeamBadge wcaId={u.wcaid} /></>
     );
   }
   return <span className="cuber-name" title={title}>{name}</span>;
@@ -3673,13 +3673,13 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, personal = false, lo
           <div className="comp-modal-title">
             {u && <Flag iso2={regionToIso2(u.region)} className="comp-flag" />}
             {u?.wcaid ? (
-              <Link
+              <><Link
                 prefetch={false}
                 href={`/wca/persons/${u.wcaid}`}
                 className="cuber-link-modal"
               >
-                {displayCuberName(u.name, isZh)}<WcaPersonTeamBadge wcaId={u.wcaid} />
-              </Link>
+                {displayCuberName(u.name, isZh)}
+              </Link><WcaPersonTeamBadge wcaId={u.wcaid} /></>
             ) : (
               <span className="cuber-link-static">{u ? displayCuberName(u.name, isZh) : ''}</span>
             )}
@@ -4077,13 +4077,13 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
           <div className="comp-modal-title">
             <Flag iso2={iso2} className="comp-flag" />
             {u.wcaid ? (
-              <Link
+              <><Link
                 prefetch={false}
                 href={`/wca/persons/${u.wcaid}`}
                 className="cuber-link-modal"
               >
-                {displayCuberName(u.name, isZh)}<WcaPersonTeamBadge wcaId={u.wcaid} />
-              </Link>
+                {displayCuberName(u.name, isZh)}
+              </Link><WcaPersonTeamBadge wcaId={u.wcaid} /></>
             ) : (
               <span>{displayCuberName(u.name, isZh)}</span>
             )}

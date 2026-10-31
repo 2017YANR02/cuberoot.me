@@ -120,7 +120,7 @@ export default function GalleryPage() {
                       loading="lazy"
                       decoding="async"
                     />
-                    <figcaption>{name}<WcaPersonTeamBadge wcaId={photo.wcaId} /></figcaption>
+                    <figcaption>{name}<WcaPersonTeamBadge wcaId={photo.wcaId} linked={false} /></figcaption>
                   </AppLink>
                 </figure>
               );

@@ -147,7 +147,7 @@ function renderLinkedSegment(segment: string, segIdx: number, isZh: boolean | un
       compId && internalHref
         ? <Link key={`${segIdx}-${match.index}`} href={internalHref} onMouseEnter={prefetch} onFocus={prefetch} onTouchStart={prefetch}>{displayText}</Link>
         : internalHref
-          ? <Link key={`${segIdx}-${match.index}`} href={internalHref} prefetch={false}>{displayText}<WcaPersonTeamBadge wcaId={wcaId} /></Link>
+          ? <React.Fragment key={`${segIdx}-${match.index}`}><Link  href={internalHref} prefetch={false}>{displayText}</Link><WcaPersonTeamBadge wcaId={wcaId} /></React.Fragment>
           : <a key={`${segIdx}-${match.index}`} href={url} target="_blank" rel="noopener noreferrer">{displayText}</a>
     );
     lastIndex = match.index + match[0].length;

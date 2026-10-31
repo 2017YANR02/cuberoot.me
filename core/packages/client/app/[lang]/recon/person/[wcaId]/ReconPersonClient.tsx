@@ -299,7 +299,7 @@ export default function ReconPersonClient() {
                               {i > 0 ? <span className="recon-cuber-sep"> &amp; </span> : null}
                               {c.country ? <><Flag iso2={c.country} className="recon-inline-flag" />{' '}</> : null}
                               {c.id
-                                ? <Link href={`/recon/person/${c.id}`}>{displayCuberName(c.name, isZh)}<WcaPersonTeamBadge wcaId={c.id} /></Link>
+                                ? <><Link href={`/recon/person/${c.id}`}>{displayCuberName(c.name, isZh)}</Link><WcaPersonTeamBadge wcaId={c.id} /></>
                                 : displayCuberName(c.name, isZh)}
                             </span>
                           ))}

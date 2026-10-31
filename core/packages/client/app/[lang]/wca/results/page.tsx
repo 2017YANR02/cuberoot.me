@@ -840,7 +840,7 @@ function AllResultsPageInner() {
                         <td>
                           {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
                           <span className="ns-person-wrap">
-                            <Link prefetch={false} href={personHref(r.wcaId)}>{nameByMode(r.name, pname)}<WcaPersonTeamBadge wcaId={r.wcaId} /></Link>
+                            <><Link prefetch={false} href={personHref(r.wcaId)}>{nameByMode(r.name, pname)}</Link><WcaPersonTeamBadge wcaId={r.wcaId} /></>
                             {pname === 'aka' && <FormerNames former={r.former} />}
                           </span>
                         </td>
