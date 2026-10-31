@@ -205,7 +205,6 @@ export default function WcaStatsIndex() {
     <div className="wca-stats-index">
       <header className="wca-stats-index-hero">
         <div>
-          <div className="wca-stats-index-eyebrow">WCA Statistics</div>
           <PageHeading titleClassName="wca-stats-index-title">
             {tr({ zh: 'WCA 统计', en: 'WCA Statistics'
             })}
