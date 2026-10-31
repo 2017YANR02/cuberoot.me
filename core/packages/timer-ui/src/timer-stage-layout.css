@@ -29,9 +29,13 @@
 }
 .timer-stage-footer[data-has-rankings="true"] .timer-stage-devices { justify-self: end; }
 @media (max-width: 480px) {
-  .timer-stage-footer[data-has-rankings="true"]:not([hidden]) { grid-template-columns: minmax(0, 1fr) auto; }
-  .timer-stage-rankings { grid-column: 1 / -1; grid-row: 2; }
-  .timer-stage-footer[data-has-rankings="true"] .timer-stage-devices { grid-column: 2; grid-row: 1; }
+  /* Keep the statistics on the bottom edge when rankings appear. The rank
+     component fits its text into the remaining width instead of adding a row. */
+  .timer-stage-footer[data-has-rankings="true"]:not([hidden]) { display: flex; }
+  .timer-stage-statistics { flex: 0 0 auto; }
+  .timer-stage-rankings { flex: 1 1 0; margin-inline: 0; text-align: right; }
+  .timer-stage-rankings .rank-badge-row { align-items: flex-end; }
+  .timer-stage-devices:empty { display: none; }
 }
 
 .timer-stage-footer .shell-stat-rail,
