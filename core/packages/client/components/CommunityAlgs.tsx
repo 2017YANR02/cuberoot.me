@@ -42,9 +42,10 @@ function CommunityTagSelect({ tags, onChange }: { tags: readonly AlgTag[]; onCha
     <CompactSelect
       variant="plain"
       className="alg-tag-select alg-community-tag-select"
+      openOnHover
       showArrow={false}
       label={tags.length
-        ? <span className="alg-tag-symbol">{tags.map(tag => <AlgTagLabel key={tag} tag={tag} label={communityTagLabel(tag)} hand={null} />)}</span>
+        ? <span className="alg-tag-list">{tags.map(tag => <AlgTagLabel key={tag} tag={tag} label={communityTagLabel(tag)} hand={null} />)}</span>
         : <Tags size={13} />}
       ariaLabel={tr({ zh: '公式标签', en: 'Algorithm tags' })}
       title={title}
@@ -53,7 +54,7 @@ function CommunityTagSelect({ tags, onChange }: { tags: readonly AlgTag[]; onCha
         value: tag,
         label: <span className="alg-tag-label">
           <AlgTagLabel tag={tag} label={communityTagLabel(tag)} hand={null} />
-          <span>{communityTagLabel(tag)}</span>
+          {tag !== 'mainstream' && tag !== 's-style' && <span>{communityTagLabel(tag)}</span>}
         </span>,
       }))}
       onChange={tag => onChange(tags.includes(tag)

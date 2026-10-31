@@ -371,8 +371,9 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '
                 <CompactSelect
                   variant="plain"
                   className="alg-tag-select"
+                  openOnHover
                   showArrow={false}
-                  label={row.tags?.length ? <span className="alg-tag-symbol">{row.tags.map(tag => <AlgTagLabel key={tag} tag={tag} label={algTagLabel(tag)} />)}</span> : <Tags size={13} />}
+                  label={row.tags?.length ? <span className="alg-tag-list">{row.tags.map(tag => <AlgTagLabel key={tag} tag={tag} label={algTagLabel(tag)} />)}</span> : <Tags size={13} />}
                   ariaLabel={tr({ zh: '公式标签', en: 'Algorithm tags' })}
                   title={row.tags?.length ? row.tags.map(algTagLabel).join(', ') : tr({ zh: '公式标签', en: 'Algorithm tags' })}
                   selectedValues={row.tags ?? []}

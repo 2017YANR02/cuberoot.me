@@ -2691,8 +2691,8 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
 .alg-editor-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-width: 0; }
 .alg-editor-tools-group { display: contents; }
 
-/* Inline detail rows reuse the admin toolbar's compact capsule behavior: the
-   action group stays behind a small hover target, then opens toward the input. */
+/* Keep the collapsed ellipsis independent of the controls' intrinsic size.
+   Hover reveals the action group toward the input without squeezing its items. */
 @media (hover: hover) and (pointer: fine) {
   .alg-case-inline-editor .alg-editor-tools {
     position: relative;
@@ -2714,10 +2714,11 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
     box-sizing: border-box;
     width: max-content;
     max-width: 40px;
+    height: 40px;
     min-height: 40px;
     padding: 3px;
     overflow: hidden;
-    border: 1px solid var(--border-default);
+    border: 0;
     border-radius: 22px;
     transition: max-width 420ms cubic-bezier(.22, 1, .36, 1);
   }
@@ -2733,6 +2734,7 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
     transition: opacity 140ms ease;
   }
   .alg-case-inline-editor .alg-editor-tools-group > * {
+    flex-shrink: 0;
     opacity: 0;
     pointer-events: none;
     transform: translateX(8px);
@@ -2740,6 +2742,13 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
   }
   .alg-case-inline-editor .alg-editor-tools:is(:hover, :focus-within, :has([aria-expanded='true'])) .alg-editor-tools-group {
     max-width: min(320px, calc(100vw - 32px));
+    height: auto;
+  }
+  .alg-case-inline-editor .alg-editor-tools:not(:hover, :focus-within, :has([aria-expanded='true'])) .alg-editor-tools-group {
+    background: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
   .alg-case-inline-editor .alg-editor-tools:is(:hover, :focus-within, :has([aria-expanded='true'])) .alg-editor-tools-group::before {
     opacity: 0;

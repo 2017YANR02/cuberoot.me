@@ -8,7 +8,7 @@ const TAG_EVENTS: Record<string, string> = { oh: '333oh', ft: '333ft', fmc: '333
 /** Tags share the event-menu artwork; unknown IDs remain readable. */
 export default function AlgTagLabel({ tag, label, hand = 'left' }: { tag: string; label: string; hand?: OhHand | null }) {
   const event = TAG_EVENTS[tag];
-  if (!event && tag !== 'key' && tag !== 'beginner') return <>{label}</>;
+  if (!event && tag !== 'key' && tag !== 'beginner') return <span className="alg-tag-label">{label}</span>;
   return <span className="alg-tag-label" title={label}>
     <span className="sr-only">{label}</span>
     <span className="alg-tag-symbol" aria-hidden="true">
