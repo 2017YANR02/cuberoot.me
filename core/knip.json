@@ -36,7 +36,7 @@
       "ignoreDependencies": ["@ohos/hvigor-ohos-plugin"]
     },
     "apps/mobile": {
-      "entry": ["scripts/build-watch-runtime.ts", "scripts/watch-lookup-build.ts", "src/watch-cube-runtime.ts", "src/watch-scene-runtime.ts", "src/watch-replay-runtime.ts", "src/watch-scramble-runtime.ts"],
+      "entry": ["src/startup.css", "scripts/build-watch-runtime.ts", "scripts/watch-lookup-build.ts", "src/watch-cube-runtime.ts", "src/watch-scene-runtime.ts", "src/watch-replay-runtime.ts", "src/watch-scramble-runtime.ts"],
       "ignoreDependencies": ["watch-cubing-333"],
       "ignore": [
         "android/app/build/**",

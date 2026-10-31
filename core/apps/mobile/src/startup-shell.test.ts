@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const main = readFileSync(new URL('./main.tsx', import.meta.url), 'utf8');
+const startupCss = readFileSync(new URL('./startup.css', import.meta.url), 'utf8');
 const androidActivity = readFileSync(new URL(
   '../android/app/src/main/java/me/cuberoot/app/MainActivity.java',
   import.meta.url,
@@ -10,8 +11,12 @@ const androidActivity = readFileSync(new URL(
 
 describe('Mobile startup shell', () => {
   it('shows the brand before and while the lazy application bundle loads', () => {
-    expect(html).toContain('<main class="loading-screen"><strong>CubeRoot</strong></main>');
-    expect(main).toContain('Suspense fallback={<main className="loading-screen"><strong>CubeRoot</strong></main>}');
+    expect(html).toContain('<link rel="stylesheet" href="/src/startup.css" />');
+    expect(startupCss).toContain("@import '@cuberoot/app-ui/loading-brand.css'");
+    expect(html).toMatch(/<main class="loading-screen"><span class="loading-brand-mark"[^>]*><img src="\/startup-mark\.svg"/);
+    expect(html).toContain('<img class="loading-brand-colours" src="/startup-mark.svg"');
+    expect(main).toContain("import { LoadingBrandMark } from '@cuberoot/app-ui/loading-brand'");
+    expect(main).toContain('Suspense fallback={<main className="loading-screen"><LoadingBrandMark src="/startup-mark.svg" /></main>}');
   });
 
   it('fails closed instead of exposing the legacy all-frame Android bridge', () => {
