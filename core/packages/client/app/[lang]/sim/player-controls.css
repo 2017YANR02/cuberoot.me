@@ -1520,7 +1520,35 @@
   .sim-keyboard-switcher .reset-defaults-btn,
   .sim-alg-tools .sim-player-tools > button,
   .sim-alg-tools .sim-toggle,
-  .sim-alg-tools .sim-transform-select { font-size: 16px; }
+  .sim-alg-tools .sim-transform-select { font-size: 14px; }
+  .sim-keyboard-switcher {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .sim-keyboard-switcher:has(.vkb-toggle) {
+    grid-template-columns: 44px 44px minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .sim-keyboard-switcher .sim-kb-sep { display: none; }
+  .sim-keyboard-switcher > button { height: 44px; padding-inline: 4px; }
+  .sim-alg-tools > .sim-player-tools { row-gap: 16px; }
+  .sim-edit-tools,
+  .sim-edit-actions { display: grid; width: 100%; gap: 8px; }
+  .sim-edit-tools { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .sim-edit-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sim-edit-tools > *,
+  .sim-edit-actions > * { min-width: 0; width: 100%; }
+  .sim-alg-tools .sim-player-tools > button,
+  .sim-alg-tools .sim-toggle,
+  .sim-alg-tools .sim-transform-select {
+    height: 44px;
+    padding-inline: 6px;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+  /* Native selects share the tool typography; text inputs retain the iOS zoom guard. */
+  .sim-alg-tools select.sim-transform-select { font-size: 14px !important; text-align: center; }
+  .sim-edit-tools > .sim-transform-scope { grid-column: 1 / -1; margin-top: 8px; }
   .sim-view-tools { flex-wrap: nowrap; }
   .sim-view-tools > * { flex-shrink: 0; }
   .sim-stage-controls .playback-bar-btn,
