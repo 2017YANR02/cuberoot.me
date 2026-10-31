@@ -166,6 +166,8 @@ pnpm --filter @cuberoot/mobile ios:release upload --dir "$RELEASE_DIR" --profile
 
 ## Android release build
 
+Official website publication uses `pnpm android:release` from `core/` (or `/admin/releases`), with `--platform both` for Android and Windows. This command only dispatches and watches the protected GitHub workflow; it needs GitHub CLI authentication, not a local Android SDK, keystore or macOS Keychain. CI builds unsigned artifacts without secrets, then a separate protected job signs and verifies the existing production certificate. See [distribution operations](../../../docs/app-downloads.md) for Play options, environment secrets and recovery. The manual Gradle instructions below are for development/recovery, not the official publication path.
+
 `package.json` is the single `versionName` source. Gradle derives `versionCode` as `major * 1,000,000 + minor * 1,000 + patch`; set `MOBILE_VERSION_CODE` only when Play requires a higher monotonic code without changing the public version.
 
 Keep the real upload keystore and passwords outside the repository. From `core/apps/mobile/android/`, set all four variables together and require signing:

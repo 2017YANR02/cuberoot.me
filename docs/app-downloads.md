@@ -16,7 +16,7 @@
 
 ### 管理员官网发布（Android / Windows）
 
-正式入口为 `/admin/releases`（中文 `/zh/admin/releases`）及手动 `app_release.yml`；下载页的管理员链接指向该后台页面。普通 push 继续由 `test.yml` 检查和构建，不发布下载包。`pnpm android:release` 现为同一个 `app_release.yml` 的跨平台命令行入口，不再读取 Mac 签名材料，也不再存在第二个官网发布协调器。
+正式入口为 `/admin/releases`（中文 `/zh/admin/releases`）及手动 `app_release.yml`；下载页顶部的管理员版本管理图标指向该后台页面，并替换该页设置图标。普通 push 继续由 `test.yml` 检查和构建，不发布下载包。`pnpm android:release` 现为同一个 `app_release.yml` 的跨平台命令行入口，不再读取 Mac 签名材料，也不再存在第二个官网发布协调器。
 
 旧 `android_release.yml` 已退役删除；历史 Actions 记录仅供追溯，不再作为发布入口。保留现有 `app_release.yml` 的身份与运行序号，不通过删除重建工作流重置版本计数。
 
@@ -34,7 +34,7 @@ API 配置 `APP_RELEASE_GITHUB_TOKEN`：限定 `2017YANR02/cuberoot.me`、Conten
 
 请求回执默认保存在 API 主机持久目录 `/root/core-api/data/app-release-requests.json`，可用 `APP_RELEASE_STATE_PATH` 指定同一共享持久卷；PG advisory transaction lock 协调同机多进程。没有数据库 schema 变更。部署不可清除此文件；如果未来多机运行 API，必须共用该文件或迁入事务存储。网络超时保留 unknown 状态，先根据请求 UUID 在 Actions 核对是否启动，不自动重发。若人工确认 GitHub 从未接收，维护者在持有同一 advisory lock 的维护窗口将该条回执标记 rejected 后才可新建发布，不能以超时为理由直接删除回执。completed 回执永久保留以支持幂等，历史任务从 GitHub 列表淘汰后不会再次阻塞。
 
-这是对原「私钥仅留 Mac」流程的明确变更：维护者已授权将正式签名凭据配置到受保护 CI 环境。代码落地不代表这些 secrets 已配置。构建任务不挂载受保护环境、不获得生产凭据，仅生成 unsigned staging。独立签名任务不安装依赖、不运行 Gradle，临时解码密钥后用 apksigner/jarsigner 签名并核对既有正式证书；退出删除临时密钥。官网发布任务只获取专用无 sudo 部署用户的 SSH 凭据，Play 提交任务只获取服务账号。Windows 当前不做 Authenticode 签名，首次下载可能显示 SmartScreen 提示；Tauri updater 尚未启用，应用内更新入口下载新版供用户安装。
+这是对原「私钥仅留 Mac」流程的明确变更：维护者已授权将正式签名凭据配置到受保护 CI 环境。2026-10-30 已创建两个仅允许 main 的受保护环境，并配置正式 Android 签名、专用上传账号与 Play 服务账号 secrets。API 已配置仅限本仓库的 Actions 读写 / Contents 只读 token，有效期至 2027-01-28；轮换只需更新服务器 `APP_RELEASE_GITHUB_TOKEN` 并 reload API，不依赖原 Mac。构建任务不挂载受保护环境、不获得生产凭据，仅生成 unsigned staging。独立签名任务不安装依赖、不运行 Gradle，临时解码密钥后用 apksigner/jarsigner 签名并核对既有正式证书；退出删除临时密钥。官网发布任务只获取专用无 sudo 部署用户的 SSH 凭据，Play 提交任务只获取服务账号。Windows 当前不做 Authenticode 签名，首次下载可能显示 SmartScreen 提示；Tauri updater 尚未启用，应用内更新入口下载新版供用户安装。
 
 发布任务分别保留 Android/Windows 制品 30 天。官网不可变文件保留在静态服务器；Windows 使用 `/downloads/windows/latest.json`，包含安装版、免安装 EXE 的 URL、大小和 SHA-256。免安装 EXE 需要现有 WebView2，数据仍使用应用数据目录，不承诺移动 EXE 即携带数据。发布前需验证干净 Windows 上安装/启动、登录回跳、覆盖更新与成绩保留；构建通过不替代这些验收。
 

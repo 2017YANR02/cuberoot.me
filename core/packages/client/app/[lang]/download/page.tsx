@@ -1,12 +1,11 @@
 'use client';
 
 /** @module Official app downloads and platform availability. */
-import { ArrowLeft, Download } from '@app-foundation/icons/lucide';
+import { ArrowLeft, Download, PackageCheck } from '@app-foundation/icons/lucide';
 import { useEffect, useState } from 'react';
 import { fetchAndroidRelease, fetchWindowsRelease, type AndroidRelease, type WindowsRelease } from '@cuberoot/shared/android-release';
 import HomeLink from '@/components/HomeLink';
 import AppLink from '@/components/AppLink';
-import HeaderToggles from '@/components/HeaderToggles';
 import { tr, useLang } from '@/i18n/tr';
 import { ANDROID_APK_URL, GOOGLE_PLAY_URL, trackDownload } from '@/lib/app-downloads';
 import { useIsAdmin } from '@/lib/auth-store';
@@ -31,7 +30,10 @@ export default function DownloadPage() {
     <main className="download-page">
       <div className="download-nav">
         <HomeLink className="download-home"><ArrowLeft size={16} aria-hidden="true" />CubeRoot</HomeLink>
-        <HeaderToggles triggerClassName="theme-toggle-inline download-settings" />
+        {isAdmin && <AppLink className="theme-toggle-inline download-settings" href="/admin/releases" prefetch={false}
+          aria-label={tr({ zh: '版本管理', en: 'Release management' })} title={tr({ zh: '版本管理', en: 'Release management' })}>
+          <PackageCheck size={22} aria-hidden="true" />
+        </AppLink>}
       </div>
       <h1>{tr({ zh: '下载', en: 'Download' })}</h1>
       <div className="download-app">
@@ -81,7 +83,6 @@ export default function DownloadPage() {
           ? tr({ zh: 'Windows x64。推荐安装版；免安装版需已安装 WebView2。', en: 'Windows x64. The installer is recommended; the standalone EXE requires WebView2.' })
           : tr({ zh: 'Windows 下载准备中。', en: 'Windows downloads are being prepared.' })}</p>
       </section>
-      {isAdmin && <AppLink className="download-button" href="/admin/releases" prefetch={false}>{tr({ zh: '版本管理', en: 'Release management' })}</AppLink>}
       <section className="download-upcoming" aria-label={tr({ zh: '其他平台', en: 'Other platforms' })}>
         {['iOS', 'macOS', 'HarmonyOS NEXT'].map((platform) => (
           <div className="download-platform" key={platform}>
