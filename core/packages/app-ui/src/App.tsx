@@ -1,3 +1,4 @@
+import { AutoRecapDismissGesture } from '@cuberoot/shared/timer/reconstruct/recap';
 import { timerTrainingSummaries } from '@cuberoot/timer-ui';
 import { createPortal } from 'react-dom';
 import { useTimerWcaCompetitionFilters, TimerPracticeContentPicker, TimerPracticeMethodPicker, TimerResultsTabs, TimerSoloLayoutEditor } from '@cuberoot/timer-ui';
@@ -517,9 +518,11 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const [historyDetail, setHistoryDetail] = useState<{
     autoFocusComment: boolean;
     autoRecap: boolean;
+    closeRequested?: boolean;
     context: string;
     solveId: string;
   } | null>(null);
+  const autoRecapDismissGestureRef = useRef(new AutoRecapDismissGesture());
   const historyDetailRef = useRef(historyDetail);
   historyDetailRef.current = historyDetail;
   const closeDeviceOverlayRef = useRef<() => void>(() => {});
@@ -1719,6 +1722,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
 
   const closeHistorySolveDetail = useCallback((expected?: typeof historyDetail) => {
     if (expected && historyDetailRef.current !== expected) return;
+    autoRecapDismissGestureRef.current.reset();
     const active = document.activeElement;
     if (active instanceof HTMLTextAreaElement
       && active.dataset.historyActionId === 'solve.detail.comment') active.blur();
@@ -1733,6 +1737,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   }, []);
 
   const openHistorySolveDetail = useCallback((solve: Solve, autoFocusComment = false, autoRecap = false) => {
+    autoRecapDismissGestureRef.current.reset();
     const detail = { autoFocusComment, autoRecap, context: historyContext, solveId: solve.id };
     historyDetailRef.current = detail;
     setHistoryDetail(detail);
@@ -2348,6 +2353,30 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const attemptRef = useRef<MobileScrambleAttemptSnapshot | null>(null);
   const smartCubeAttemptProducerRef = useRef(new SmartCubeAttemptProducer());
   const smartCubeMoveSubscribersRef = useRef(new Set<(move: string, timestamp: number) => void>());
+  useEffect(() => {
+    const gesture = autoRecapDismissGestureRef.current;
+    if (!historyDetail?.autoRecap || historyDetail.context !== historyContext
+      || openOverlay !== TIMER_OVERLAY_IDS.solveDetail) {
+      gesture.reset();
+      return;
+    }
+    // Resizing does not remount the detail or fire onEntered again.
+    if (wideLayout) return;
+    const subscribers = smartCubeMoveSubscribersRef.current;
+    const onMove = (move: string) => {
+      const current = historyDetailRef.current;
+      if (!current?.autoRecap || current.context !== historyContext
+        || current.solveId !== historyDetail.solveId || current.closeRequested
+        || openOverlayRef.current !== TIMER_OVERLAY_IDS.solveDetail) return;
+      if (!gesture.observe(move)) return;
+      const next = { ...current, closeRequested: true };
+      historyDetailRef.current = next;
+      setHistoryDetail(next);
+    };
+    subscribers.add(onMove);
+    return () => { subscribers.delete(onMove); };
+  }, [wideLayout, historyDetail?.autoRecap, historyDetail?.context, historyDetail?.solveId, historyContext, openOverlay]);
+
   const smartCubeQuatRef = useRef<Quat | null>(null);
   const smartCubeLastFaceletsRef = useRef<string | null>(null);
   const smartCubeReferenceRef = useRef<Quat | null>(null);
@@ -4680,6 +4709,8 @@ children: <>
               && historyDetailIndex >= 0 && (
               <TimerSolveDetailModal
                 autoFocusComment={historyDetail?.autoFocusComment}
+                closeRequested={historyDetail?.closeRequested}
+                onEntered={historyDetail?.autoRecap ? () => autoRecapDismissGestureRef.current.markDisplayed() : undefined}
                 index={historyDetailIndex}
                 key={historyDetailSolve.id}
                 localize={(text) => text[language]}
