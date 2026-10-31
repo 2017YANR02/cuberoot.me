@@ -4,12 +4,11 @@
 
 import type { EventId } from '@cuberoot/shared/timer';
 import {
-  TimerSessionSwitcher as SharedTimerSessionSwitcher,
+  TimerResultsSessionBar as SharedTimerSessionSwitcher,
   timerSessionSwitcherLabels,
   type TimerSessionSwitcherHost,
 } from '@cuberoot/timer-ui';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
 
 import {
   clearSession,
@@ -40,9 +39,6 @@ export default function SessionSwitcher({
   open,
 }: Props) {
   const [state, setState] = useState(getSessionSnapshot);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const searchInput = useRef<HTMLInputElement>(null);
-  useEffect(() => { if (searchOpen) searchInput.current?.focus(); }, [searchOpen]);
   const labels = useMemo(
     () => ({ ...timerSessionSwitcherLabels((['en', 'zh'] as const)[Number(isZh)]),
       newSession: isZh ? '新建' : 'New' }),
@@ -81,22 +77,7 @@ export default function SessionSwitcher({
 
   return (
     <SharedTimerSessionSwitcher
-      inlineActions
-      hideActions={searchOpen}
-      trailing={onQueryChange && <div className={`tsession-search${searchOpen ? ' is-open' : ''}`}>
-        <div className="tsession-search-field" inert={!searchOpen}>
-        <input ref={searchInput} type="search" value={query} tabIndex={searchOpen ? 0 : -1}
-          onChange={event => onQueryChange(event.target.value)}
-          placeholder={isZh ? '时间、打乱、注释' : 'Time, scramble, comment'}
-          aria-label={isZh ? '搜索成绩' : 'Search solves'} />
-        </div>
-        {/* allow-manual-search: Only opens or closes the input; onChange updates results while typing. */}
-        <button type="button" className="tsession-icon-btn" aria-expanded={searchOpen}
-          aria-label={isZh ? '搜索成绩' : 'Search solves'}
-          onClick={() => { setSearchOpen(!searchOpen); if (searchOpen) onQueryChange(''); }}>
-          <Search size={16} aria-hidden="true" />
-        </button>
-      </div>}
+      language={isZh ? 'zh' : 'en'} query={query} onQueryChange={onQueryChange ?? (() => {})}
       activeSessionId={state.activeSessionId}
       event={event}
       host={host}

@@ -360,7 +360,6 @@
   flex: 1;
   min-height: 0;
   overflow: visible;
-  padding: 12px 14px 18px;
 }
 .shell-panel--sheet .shell-panel-tabs,
 .shell-panel--sheet .shell-panel-body { flex: 0 0 auto; }

@@ -1,3 +1,4 @@
+import { TimerResultsSessionBar } from '@cuberoot/timer-ui';
 import { AutoRecapDismissGesture } from '@cuberoot/shared/timer/reconstruct/recap';
 import { timerTrainingSummaries } from '@cuberoot/timer-ui';
 import { createPortal } from 'react-dom';
@@ -229,7 +230,6 @@ import {
   TimerWcaScrambleProgress,
   TimerByStepsConfig,
   TimerScrambleSourceSelect,
-  TimerSessionSwitcher,
   timerSessionSwitcherLabels,
   TimerStatRail,
   TimerBooleanSettingRow,
@@ -531,6 +531,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const [fullscreen, setFullscreen] = useState(false);
   const fullscreenRef = useRef(fullscreen);
   const [manualEntryOpen, setManualEntryOpen] = useState(false);
+  const [historyQuery, setHistoryQuery] = useState('');
   const historyWorkspaceRef = useRef<TimerHistoryWorkspaceHandle>(null);
   const [historyTab, setHistoryTab] = useState<'history' | 'stats'>('history');
   const [statsOpen, setStatsOpen] = useState(false);
@@ -3928,26 +3929,6 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     />
   );
   const shellViewport = mobileShellViewportLayout(viewportHeight);
-  const viewHeader = (
-    <header className="app-titlebar">
-      <strong>{view === 'history' ? copy.history : copy.settings}</strong>
-      <button
-        aria-label={copy.close}
-        className="app-titlebar-close"
-        onClick={() => {
-          if (view === 'history') historyWorkspaceRef.current?.dismiss();
-          setView('timer');
-        }}
-        type="button"
-      ><X aria-hidden="true" size={20} /></button>
-      <span
-        aria-label={connection === 'checking' ? copy.checking : connection === 'online' ? copy.online : copy.offline}
-        className={`network network--${connection}`}
-        role="status"
-      />
-    </header>
-  );
-
   const solverHintPanel = activeEvent === '333' ? <Suspense fallback={null}>
     <StageSolverDialog scramble={scramble} language={language}
       sheetOpen={openOverlay === TIMER_OVERLAY_IDS.stageSolver} onSheetOpenChange={changeSolverSheet}
@@ -3999,9 +3980,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
         solves={solves}
         transport={host.print}
       />
-      {!dockHistory && view === 'history' && (
-        viewHeader
-      )}
+
 
 
 
@@ -4657,18 +4636,14 @@ children: <>
         })}
 
         {view === 'history' && !liveSolutionPanel && (
-          <section className="history-view timer-workspace-panel" aria-labelledby="history-title" data-no-timer>
+          <section className="history-view timer-workspace-panel" aria-label={copy.history} data-no-timer>
             <TimerResultsTabs value={historyTab === 'history' ? 'times' : 'stats'} language={language}
               onChange={tab => { historyWorkspaceRef.current?.dismiss(); setHistoryTab(tab === 'times' ? 'history' : 'stats'); }}
               onClose={() => { historyWorkspaceRef.current?.dismiss(); setView('timer'); }} />
-            <div className="timer-workspace-panel-body">
-            <header className="section-heading">
-              <h1 id="history-title">{copy.history}</h1>
-              <span>{solves.length}</span>
-            </header>
-            <TimerSessionSwitcher
+            <div className="timer-workspace-panel-body timer-results-panel-body">
+            {historyTab === 'history' && <TimerResultsSessionBar
+              language={language} query={historyQuery} onQueryChange={setHistoryQuery}
               activeSessionId={store!.database.activeSessionId}
-              className="mobile-session-switcher"
               event={activeEvent}
               host={sessionHost}
               labels={sessionLabels}
@@ -4677,14 +4652,14 @@ children: <>
               open={openOverlay === TIMER_OVERLAY_IDS.sessionSwitcher}
               sessions={store!.database.sessions}
               viewportBottomInset={primaryNavBottomInset}
-            />
+            />}
             {historyTab !== 'history' && <TimerStatisticsWorkspace compact view={historyTab} language={language} event={activeEvent} solves={solves}
               labels={timerStatsPanelLabels(language)} rollingColumns={store!.settings.statsRollingColumns}
               onRollingColumnsChange={statsRollingColumns => updateSettings({statsRollingColumns})}
               sessionData={store!.database.sessions.map(session => ({session,byEvent:store!.database.dataBySession[session.id] ?? {}}))}
               activeSessionId={store!.database.activeSessionId} onOpenFull={() => setStatsOpen(true)} viewportBottomInset={primaryNavBottomInset} />}
             <div hidden={historyTab !== 'history'}>
-            <TimerHistoryWorkspace onBlockingChange={setHistoryModalOpen} quickMenuOpen={openOverlay === TIMER_OVERLAY_IDS.historyQuickMenu} onQuickMenuOpenChange={handleTimerOverlayOpenChange} ref={historyWorkspaceRef} historyContextKey={historyContext} solves={solves} isZh={language === 'zh'}
+            <TimerHistoryWorkspace minimal searchQuery={historyQuery} onSearchQueryChange={setHistoryQuery} onBlockingChange={setHistoryModalOpen} quickMenuOpen={openOverlay === TIMER_OVERLAY_IDS.historyQuickMenu} onQuickMenuOpenChange={handleTimerOverlayOpenChange} ref={historyWorkspaceRef} historyContextKey={historyContext} solves={solves} isZh={language === 'zh'}
               dateRangeLabels={dateRangeLabels} rollingPickerLabels={rollingPickerLabels}
               rollingStatColumns={store!.settings.statsRollingColumns}
               onRollingColumnsChange={statsRollingColumns => updateSettings({statsRollingColumns})}

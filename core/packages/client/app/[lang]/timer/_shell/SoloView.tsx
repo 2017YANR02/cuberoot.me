@@ -3439,7 +3439,7 @@ children: <>
         <aside className={`timer-workspace-panel shell-panel${isDesktop ? ' shell-panel--rail' : ' shell-panel--sheet'}`}>
           <TimerResultsTabs value={panelTab === 'stats' ? 'stats' : 'times'} onChange={setPanelTab}
             onClose={() => setPanelTab(null)} language={isZh ? 'zh' : 'en'} />
-          <div className="shell-panel-body timer-workspace-panel-body">{renderPanelBody()}</div>
+          <div className="shell-panel-body timer-workspace-panel-body timer-results-panel-body">{renderPanelBody()}</div>
         </aside>
       )}
       />

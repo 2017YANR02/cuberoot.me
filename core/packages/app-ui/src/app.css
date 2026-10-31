@@ -137,7 +137,6 @@ button {
   padding-top: env(safe-area-inset-top);
 }
 
-.app-shell--history,
 .app-shell--settings {
   grid-template-rows: auto minmax(0, 1fr) auto;
 }
@@ -422,7 +421,6 @@ button {
 
 .surface-chrome { transition: opacity 120ms ease; }
 
-.history-view,
 .recovery-screen {
   width: min(100%, 620px);
   margin: 0 auto;
@@ -863,8 +861,7 @@ button {
 
 /* Host navigation offsets; shared TimerWorkspace owns the dock geometry. */
 .app-shell[data-wide='true']:not(.app-shell--timer-fullscreen) { grid-template-rows: auto minmax(0, 1fr); }
-.app-shell[data-wide='true'].app-shell--settings,
-.app-shell[data-wide='true'].app-shell--history { grid-template-rows: auto auto minmax(0, 1fr); }
+.app-shell[data-wide='true'].app-shell--settings { grid-template-rows: auto auto minmax(0, 1fr); }
 .app-shell[data-wide='true'] > .primary-nav {
   grid-row: 1;
   grid-template-columns: repeat(3, max-content);
@@ -889,7 +886,6 @@ button {
 .app-shell[data-wide='true'] .battle-mode { width: 100%; }
 .app-shell[data-wide='true'] .history-view.timer-workspace-panel { width: 100%; margin: 0; padding: 0; }
 .app-shell[data-wide='true'] .timer-workspace-panel > .app-titlebar { flex-shrink: 0; }
-.app-shell[data-wide='true'] .timer-workspace-panel-body { padding: 18px 20px 38px; }
 
 @media (prefers-reduced-motion: reduce) {
   .surface-chrome,
@@ -897,3 +893,6 @@ button {
     transition: none;
   }
 }
+
+/* Match the shared results panel geometry; host navigation owns safe areas. */
+.history-view { width: 100%; min-width: 0; padding: 0; }
