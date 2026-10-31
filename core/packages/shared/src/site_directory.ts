@@ -165,7 +165,7 @@ export const SITE_DIRECTORY_GROUPS = [
     title: { en: 'Recall, look ahead, algorithms', zh: '记忆、预判、公式' },
     sub: { en: '', zh: '' },
     entries: [
-      { id: 'memo', href: '/memo', internal: true, tier: 'standard', nameKey: 'memo' },
+      { id: 'memo', href: '/memo/colpi', internal: true, tier: 'standard', nameKey: 'memo' },
       { id: 'predict', href: '/predict', internal: true, tier: 'standard', nameKey: 'predict' },
       { id: 'color-test', href: '/color-test', internal: true, tier: 'standard', nameKey: 'colorTest' },
       { id: 'blddb', href: '/blddb', internal: true, tier: 'standard', nameKey: 'blddb' },

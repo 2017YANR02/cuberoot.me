@@ -20,6 +20,7 @@ import {
   Pencil, Trash2,
 } from '@app-foundation/icons/lucide';
 import WcaAuth from '@/components/WcaAuth';
+import BackHome from '@/components/BackHome';
 import { SearchInput } from '@/components/SearchInput';
 import { Flag } from '@/components/Flag';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -441,6 +442,7 @@ export default function ColpiClient() {
       {/* === Top bar === */}
       <header className="colpi-topbar">
         <div className="colpi-brand">
+          <div className="page-back-row"><BackHome /></div>
           <div className="colpi-logo" aria-hidden>
             <span className="colpi-logo-dot" />
             <span className="colpi-logo-dot" />

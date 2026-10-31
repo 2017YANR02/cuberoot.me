@@ -27,7 +27,6 @@ const BACK_HOME_ROOT_ALLOWLIST = new Set([
   'app/[lang]/forum/page.tsx',
   'app/[lang]/frame-count/FrameCountPage.tsx',
   'app/[lang]/icon/page.tsx',
-  'app/[lang]/memo/page.tsx',
   'app/[lang]/mosaic/page.tsx',
   'app/[lang]/recon/page.tsx',
   'app/[lang]/scramble/page.tsx',
