@@ -1087,14 +1087,6 @@ function SitesPageInner() {
                 />
               )}
             </div>
-            <div className="sites-view-toggle" role="group" aria-label={t('视图', 'View')}>
-              <button type="button" className={`sites-view-btn${viewMode === 'list' ? ' is-active' : ''}`} onPointerEnter={() => prepareView('list')} onPointerDown={() => prepareView('list')} onFocus={() => prepareView('list')} onClick={(event) => changeViewMode('list', event.detail > 0)} aria-label={t('列表视图', 'List view')} aria-pressed={viewMode === 'list'} title={t('列表视图', 'List view')}>
-                <List size={16} />
-              </button>
-              <button type="button" className={`sites-view-btn${viewMode === 'grid' ? ' is-active' : ''}`} onPointerEnter={() => prepareView('grid')} onPointerDown={() => prepareView('grid')} onFocus={() => prepareView('grid')} onClick={(event) => changeViewMode('grid', event.detail > 0)} aria-label={t('卡片视图', 'Card view')} aria-pressed={viewMode === 'grid'} title={t('卡片视图', 'Card view')}>
-                <LayoutGrid size={16} />
-              </button>
-            </div>
           </div>
         </header>
 
@@ -1191,6 +1183,14 @@ function SitesPageInner() {
                 )}
               </div>
             )}
+            <div className="sites-view-toggle" role="group" aria-label={t('视图', 'View')}>
+              <button type="button" className={`sites-view-btn${viewMode === 'list' ? ' is-active' : ''}`} onPointerEnter={() => prepareView('list')} onPointerDown={() => prepareView('list')} onFocus={() => prepareView('list')} onClick={(event) => changeViewMode('list', event.detail > 0)} aria-label={t('列表视图', 'List view')} aria-pressed={viewMode === 'list'} title={t('列表视图', 'List view')}>
+                <List size={16} />
+              </button>
+              <button type="button" className={`sites-view-btn${viewMode === 'grid' ? ' is-active' : ''}`} onPointerEnter={() => prepareView('grid')} onPointerDown={() => prepareView('grid')} onFocus={() => prepareView('grid')} onClick={(event) => changeViewMode('grid', event.detail > 0)} aria-label={t('卡片视图', 'Card view')} aria-pressed={viewMode === 'grid'} title={t('卡片视图', 'Card view')}>
+                <LayoutGrid size={16} />
+              </button>
+            </div>
           </div>
         )}
 
