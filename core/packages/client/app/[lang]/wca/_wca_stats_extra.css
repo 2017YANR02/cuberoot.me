@@ -318,6 +318,7 @@
 /* 布尔开关(BoolToggle:左文字 + 右滑钮)。作 .wse-filter 直接子(无 label)时纵向居中,
    跟相邻「label+控件」filter 对齐。 */
 .wse-filter:has(> .bool-toggle) { justify-content: center; }
+.wse-filter-share > .bool-toggle { min-height: 34px; }
 
 /* 数据细节列 */
 .wse-detail-cell {
