@@ -917,6 +917,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'documents', m: 'POST', p: '/v1/documents/import', g: 'admin', c: 'no-store', zh: '把 DOCX 导入协作文档', en: 'Import a DOCX as a collaborative document' },
   { d: 'documents', m: 'GET', p: '/v1/documents/people', g: 'login', c: 'no-store', zh: '搜索可邀请的站内用户', en: 'Search registered users to invite' },
   { d: 'documents', m: 'GET', p: '/v1/documents/:id', g: 'login', c: 'no-store', zh: '文档元数据、本人权限与成员', en: 'Document metadata, my role, and members' },
+  { d: 'documents', m: 'DELETE', p: '/v1/documents/:id', g: 'login', c: 'no-store', zh: '仅所有者永久删除文档或表格，并清理成员、订阅及在线连接', en: 'Owner-only permanent deletion of a document or spreadsheet, including members, subscriptions, and live connections' },
   { d: 'documents', m: 'PATCH', p: '/v1/documents/:id', g: 'login', c: 'no-store', zh: '所有者或管理员修改文档标题', en: 'Owner or admin updates the document title' },
   { d: 'documents', m: 'PUT', p: '/v1/documents/:id/subscription', g: 'login', c: 'no-store', zh: '订阅或取消订阅协作资源修改', en: 'Subscribe or unsubscribe from collaborative-resource changes' },
   { d: 'documents', m: 'POST', p: '/v1/documents/:id/seen', g: 'login', c: 'no-store', zh: '记录本人最后查看时间', en: 'Record the current user’s last-seen timestamp' },

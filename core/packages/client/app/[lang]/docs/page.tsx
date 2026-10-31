@@ -1,14 +1,14 @@
 'use client';
 
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
-import { FilePlus2, FileText, Sheet, Upload } from '@app-foundation/icons/lucide';
+import { FilePlus2, FileText, Sheet, Trash2, Upload } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import WcaAuth from '@/components/WcaAuth';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { T, tr, useLang } from '@/i18n/tr';
 import { useAuthUser, useIsAdmin } from '@/lib/auth-store';
-import { createDocument, fetchDocuments, importDocument, type CollaborativeDocument, type DocumentKind } from '@/lib/document-api';
+import { createDocument, deleteDocument, fetchDocuments, importDocument, type CollaborativeDocument, type DocumentKind } from '@/lib/document-api';
 import './docs.css';
 
 const loadSpreadsheetImport = () => import('@/lib/spreadsheet-export');
@@ -23,6 +23,7 @@ export default function DocumentsPage() {
   const [result, setResult] = useState<{ user: typeof user; documents: CollaborativeDocument[] } | null>(null);
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -67,6 +68,20 @@ export default function DocumentsPage() {
       }
     } catch (cause) { setError((cause as Error).message); setWorking(false); }
   };
+  const removeDocument = async (doc: CollaborativeDocument) => {
+    if (doc.role !== 'owner' || deletingId) return;
+    if (!window.confirm(tr({
+      zh: `确定删除“${doc.title}”吗？删除后无法恢复，所有共享成员也将无法访问。`,
+      en: `Delete “${doc.title}”? This cannot be undone and all shared members will lose access.`,
+    }))) return;
+    setDeletingId(doc.id);
+    setError('');
+    try {
+      await deleteDocument(doc.id);
+      setResult((current) => current?.user === user ? { ...current, documents: current.documents.filter((item) => item.id !== doc.id) } : current);
+    } catch (cause) { setError((cause as Error).message); }
+    finally { setDeletingId(null); }
+  };
   const documents = result?.user === user ? result?.documents ?? [] : [];
   const visibleDocuments = documents.filter((doc) => filter === 'all' || doc.kind === filter);
   const dateFormat = new Intl.DateTimeFormat(lang === 'zh' ? 'zh-CN' : 'en', {
@@ -107,14 +122,18 @@ export default function DocumentsPage() {
       <FileText size={28} aria-hidden="true" />
       <p><T zh="暂无文件。" en="No files yet." /></p>
     </div>}
-    {user && !loading && !error && visibleDocuments.length > 0 && <div className="docs-list">
-      {visibleDocuments.map((doc) => <AppLink key={doc.id} href={`/${doc.kind === 'spreadsheet' ? 'sheets' : 'docs'}/edit?id=${encodeURIComponent(doc.id)}`} prefetch={false} className="docs-row">
+    {user && !loading && visibleDocuments.length > 0 && <div className="docs-list">
+      {visibleDocuments.map((doc) => <div key={doc.id} className="docs-list-item"><AppLink href={`/${doc.kind === 'spreadsheet' ? 'sheets' : 'docs'}/edit?id=${encodeURIComponent(doc.id)}`} prefetch={false} className="docs-row">
         <span role="img" aria-label={doc.kind === 'spreadsheet' ? tr({ zh: '表格', en: 'Spreadsheet' }) : tr({ zh: '文档', en: 'Document' })}>
           {doc.kind === 'spreadsheet' ? <Sheet size={21} aria-hidden="true" /> : <FileText size={21} aria-hidden="true" />}
         </span>
         <span className="docs-row-main"><strong>{doc.title}</strong><span>{dateFormat.format(new Date(doc.updatedAt))}</span></span>
         <span className="docs-role">{tr({ zh: doc.role === 'owner' ? '所有者' : doc.role === 'editor' ? '可编辑' : '只读', en: doc.role === 'owner' ? 'Owner' : doc.role === 'editor' ? 'Editor' : 'Viewer' })}</span>
-      </AppLink>)}
+      </AppLink>
+        {doc.role === 'owner' && <button type="button" className="docs-button" disabled={deletingId !== null} onClick={() => void removeDocument(doc)} aria-label={tr({ zh: `删除“${doc.title}”`, en: `Delete “${doc.title}”` })}>
+          <Trash2 size={16} aria-hidden="true" /><T zh="删除" en="Delete" />
+        </button>}
+      </div>)}
     </div>}
   </main>;
 }

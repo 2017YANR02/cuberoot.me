@@ -14,6 +14,7 @@ import {
   requireAuth,
   type WcaUser,
 } from '../utils/recon_helpers.js';
+import { collaborativeDocuments } from '../documents/realtime.js';
 import { getIp } from '../utils/analytics_helpers.js';
 
 export const documentRoutes = new Hono();
@@ -311,6 +312,23 @@ documentRoutes.post('/documents/:id/seen', async (c) => {
      ON CONFLICT (document_id, user_key) DO UPDATE SET last_seen_at = NOW()`,
     [id, me.wcaId],
   );
+  return c.json({ ok: true });
+});
+
+documentRoutes.delete('/documents/:id', async (c) => {
+  c.header('Cache-Control', NO_STORE);
+  checkRateLimit(getIp(c), { bucket: 'document-write', max: 60 });
+  const me = await requireAuth(c);
+  const id = c.req.param('id');
+  // Ownership is checked in the delete itself; administrators have no bypass.
+  // Foreign keys cascade to members and subscriptions. Delayed Yjs stores only
+  // UPDATE existing rows, so they cannot recreate a deleted resource.
+  const rows = await query<{ id: string }>(
+    'DELETE FROM collaborative_documents WHERE id = ? AND owner_key = ? RETURNING id',
+    [id, me.wcaId],
+  );
+  if (!rows.length) return c.json({ error: 'Document not found or not owned by you' }, 404);
+  collaborativeDocuments.closeConnections(`document.${id}`);
   return c.json({ ok: true });
 });
 

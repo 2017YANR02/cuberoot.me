@@ -131,3 +131,9 @@ export async function markDocumentSeen(id: string): Promise<void> {
     headers: authHeaders(false),
   }));
 }
+
+export async function deleteDocument(id: string): Promise<void> {
+  await handleApi(await sessionFetch(apiUrl(`/v1/documents/${encodeURIComponent(id)}`), {
+    method: 'DELETE', headers: authHeaders(false),
+  }));
+}
