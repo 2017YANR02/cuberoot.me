@@ -2,23 +2,7 @@
 
 import MoreToggle from '@/components/MoreToggle';
 import { useMemo, useRef, useState } from 'react';
-import {
-  Square,
-  Circle,
-  Slash,
-  Hexagon,
-  Star,
-  Spline,
-  PenTool,
-  Type,
-  Group as GroupIcon,
-  Eye,
-  EyeOff,
-  Lock,
-  Unlock,
-  Layers as LayersIcon,
-  type LucideIcon,
-} from '@app-foundation/icons/lucide';
+import { Square, Circle, Slash, Hexagon, Star, Spline, PenTool, Type, Group as GroupIcon, Eye, EyeOff, Lock, Unlock, Layers as LayersIcon, type LucideIcon } from '@app-foundation/icons/lucide';
 import { useT } from '@/hooks/useT';
 import type { Shape, ShapeType } from '../_lib/types';
 import { usePaint } from '../_lib/store';

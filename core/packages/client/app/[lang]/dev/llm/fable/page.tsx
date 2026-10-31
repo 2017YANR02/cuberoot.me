@@ -7,11 +7,7 @@
 
 import MoreToggle from '@/components/MoreToggle';
 import { useTranslation } from 'react-i18next';
-import {
-  ArrowLeft, ArrowUpRight, Code2, Eye, FlaskConical, Brain, BarChart3, Bot,
-  ShieldCheck, Dna, Lock, Check, Minus, Gamepad2, Rocket, Microscope, GitBranch,
-  Factory, Orbit, Sparkles,
-} from '@app-foundation/icons/lucide';
+import { ArrowLeft, ArrowUpRight, Code2, Eye, FlaskConical, Brain, BarChart3, Bot, ShieldCheck, Dna, Lock, Check, Minus, Gamepad2, Rocket, Microscope, GitBranch, Factory, Orbit, Sparkles } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 import './fable.css';

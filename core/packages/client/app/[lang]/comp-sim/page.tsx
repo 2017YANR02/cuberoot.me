@@ -2,16 +2,7 @@
 
 import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  ArrowRight,
-  BookOpen,
-  Check,
-  CircleAlert,
-  Flag as FinishFlag,
-  History,
-  Play,
-  Target,
-} from '@app-foundation/icons/lucide';
+import { ArrowRight, BookOpen, Check, CircleAlert, Flag as FinishFlag, History, Play, Target } from '@app-foundation/icons/lucide';
 import {
   fromWcaSpelling,
   parseTimerEntry,
