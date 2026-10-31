@@ -1,6 +1,7 @@
 'use client';
 /** @module Calendar-aligned timeline shared by all workspace schedules. */
 import MoreToggle from '@/components/MoreToggle';
+import { Flag } from 'lucide-react';
 import { Fragment, useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 
 import { planningDay, planningDate, scheduleRange, type ScheduleTask } from '@cuberoot/shared/workspace-planning';
@@ -118,12 +119,13 @@ export default function ScheduleTimeline({ tasks, scale: requestedScale, editabl
           const milestone = task.kind === 'milestone';
           const label = `${task.name}${task.owner ? ` · ${task.owner}` : ''} · ${task.start}${milestone ? '' : ` – ${task.end}`} · ${task.progress}%`;
           return <div key={task.id} className={`workspace-gantt-row workspace-gantt-task${task.progress === 100 ? ' is-done' : ''}`} style={{ '--gantt-color': colors[groupIndex % colors.length] } as CSSProperties}>
-            <div className="workspace-gantt-label"><Tooltip content={label}>{tip => <button {...tip} type="button" className="workspace-task-label" aria-disabled={!editable} aria-label={label} onClick={() => { if (editable) onEdit(task); }}><span>{milestone ? t('里程碑', 'Milestone') : scheduleTaskLabel(task.name)}</span></button>}</Tooltip></div>
+            <div className="workspace-gantt-label" />
             <div className="workspace-gantt-track">
               {todayLine}
-              <button type="button" disabled={!editable} onClick={() => onEdit(task)} aria-label={label} className={milestone ? 'workspace-gantt-milestone' : 'workspace-gantt-bar'} style={{ left: milestone ? percent(offset + 0.5) : percent(offset), ...(milestone ? {} : { width: `max(2px, ${percent(duration)})` }) }}>
-                {!milestone && <><span className="workspace-gantt-progress" style={{ width: `${task.progress}%` }} />{duration * dayWidth >= 130 && <span className="workspace-gantt-bar-name">{task.start.slice(5)} – {task.end.slice(5)}</span>}{task.progress > 0 && duration * dayWidth >= 52 && <span className="workspace-gantt-percent">{task.progress}%</span>}</>}
-              </button>
+              <Tooltip content={label}>{tip => <button {...tip} type="button" aria-disabled={!editable} onClick={() => { if (editable) onEdit(task); }} aria-label={label} className={milestone ? 'workspace-gantt-milestone' : 'workspace-gantt-bar'} style={{ left: milestone ? percent(offset + 0.5) : percent(offset), ...(milestone ? {} : { width: `max(2px, ${percent(duration)})` }) }}>
+                {milestone && <Flag size={20} strokeWidth={1.8} aria-hidden="true" />}
+                {!milestone && <><span className="workspace-gantt-progress" style={{ width: `${task.progress}%` }} /><span className="workspace-gantt-bar-name">{scheduleTaskLabel(task.name)}</span></>}
+              </button>}</Tooltip>
               {milestone && <span className={`workspace-gantt-key-label${offset > visibleDays / 2 ? ' is-end' : ''}`} style={{ left: percent(offset + 0.5) }}>{task.start.slice(5)} · {scheduleTaskLabel(task.name)}</span>}
             </div>
           </div>;
