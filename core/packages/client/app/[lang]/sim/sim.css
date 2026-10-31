@@ -71,6 +71,8 @@
   border-color: var(--accent);
 }
 .sim-open-recon-arrow { display: none; }
+.sim-header-recon { display: contents; }
+.sim-stage-recon { display: none; }
 
 .sim-counter {
   font-variant-numeric: tabular-nums;
@@ -775,12 +777,15 @@
 
 @media (max-width: 767px) {
   .sim-header { gap: 6px; padding: 8px; }
-  .sim-header:has(.sim-open-recon) > .page-heading { margin-right: auto; }
-  .sim-header:has(.sim-open-recon) > .sim-spacer { display: none; }
-  .sim-header:has(.sim-open-recon)::after { content: ''; flex-basis: 100%; }
-  .sim-header:has(.sim-open-recon) > .sim-project-controls,
-  .sim-header:has(.sim-open-recon) > .sim-tool-select,
-  .sim-header:has(.sim-open-recon) > .sim-panel-toggle { order: 1; }
+  .sim-header-recon { display: none; }
+  .sim-stage { position: relative; }
+  .sim-stage-recon {
+    display: block;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 12;
+  }
   .sim-open-recon,
   .sim-open-recon:hover {
     margin-left: auto;

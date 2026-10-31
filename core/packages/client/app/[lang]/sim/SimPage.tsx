@@ -2242,6 +2242,18 @@ export default function SimPage() {
     });
   };
 
+  const reconLink = animationMode && reconHref && (
+    <AppLink
+      href={reconHref}
+      prefetch={false}
+      className="sim-open-recon"
+      title={t('把当前打乱 / 解法带去发布复盘', 'Take this scramble / solution to a reconstruction')}
+    >
+      {t('去复盘', 'Open in Recon')}
+      <ArrowRight className="sim-open-recon-arrow" size={16} aria-hidden="true" />
+    </AppLink>
+  );
+
   return (
     <div ref={pageRef} className={`sim-page${fullscreen && animationMode ? ' sim-page--fullscreen' : ''}${panelExpanded ? ' sim-page--panel-expanded' : ''}`} data-board-bg={settings.boardBg} data-workspace={query.tool}>
       <header className="sim-header">
@@ -2288,21 +2300,12 @@ export default function SimPage() {
           </MoreToggle>
         )}
         <div className="sim-spacer" />
-        {animationMode && reconHref && (
-          <AppLink
-            href={reconHref}
-            prefetch={false}
-            className="sim-open-recon"
-            title={t('把当前打乱 / 解法带去发布复盘', 'Take this scramble / solution to a reconstruction')}
-          >
-            {t('去复盘', 'Open in Recon')}
-            <ArrowRight className="sim-open-recon-arrow" size={16} aria-hidden="true" />
-          </AppLink>
-        )}
+        <div className="sim-header-recon">{reconLink}</div>
       </header>
 
       <div className="sim-body" style={{ display: drawMode || imageMode ? 'none' : undefined }} aria-hidden={drawMode || imageMode}>
         <div className="sim-stage">
+        <div className="sim-stage-recon">{reconLink}</div>
         {roomsActive && <div className="sim-room-toolbar">
           <select
             className="sim-tool-select"
