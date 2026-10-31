@@ -1,0 +1,102 @@
+.comp-common {
+  display: grid;
+  min-width: 0;
+  gap: 16px;
+  padding-block: 16px;
+}
+
+.comp-common-picker {
+  display: grid;
+  gap: 8px;
+  width: min(100%, 480px);
+}
+
+.comp-common-search {
+  position: relative;
+}
+
+.comp-common-search > svg {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  color: var(--muted-foreground);
+  pointer-events: none;
+}
+
+.comp-common-search .search-control {
+  min-height: 44px;
+  padding-left: 38px;
+}
+
+.comp-common-search .search-control::placeholder {
+  color: var(--muted-foreground);
+}
+
+.comp-common-selection,
+.comp-common-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+}
+
+.comp-common-selection .comp-view-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.comp-common-selection .comp-common-selected {
+  width: auto;
+  max-width: 100%;
+  padding: 8px 0;
+}
+
+.comp-common-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.comp-common-toolbar {
+  margin-bottom: 16px;
+}
+
+.comp-common-table small {
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+}
+
+.comp-common-table small {
+  display: block;
+}
+
+.comp-common > div {
+  min-width: 0;
+}
+
+.comp-common .comp-table-wrap {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+  border: 0;
+}
+
+.comp-common-table thead th {
+  max-width: 240px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.comp-common-table td {
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .comp-common-toolbar > .search-input {
+    width: 100%;
+  }
+}

@@ -87,6 +87,7 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 // 「打乱」tab:把 /scramble/gen 的比赛模式整套内嵌进来。重(WASM 求解器 + 打乱引擎),
 // 懒加载 —— 只有用户点开「打乱」才拉这部分 JS,不拖累比赛页首屏。
 const CompScramblesTab = dynamic(() => import('./CompScramblesTab'), { ssr: false });
+const CommonCompetitors = dynamic(() => import('./CommonCompetitors'), { ssr: false });
 // 同理:赛程 tab (ScheduleView + 它的工具条)、海报布局、以及管理员改成绩的编辑器,
 // 都只在特定 tab / 权限下才渲染,不该进首屏 chunk。
 const ScheduleView = dynamic(() => import('./ScheduleView'), { ssr: false });
@@ -795,7 +796,7 @@ export default function CompDetailPage() {
   );
   const [viewQuery, setExplicitView] = useQueryState(
     'view',
-    parseAsStringEnum<'result' | 'psych' | 'schedule' | 'podium' | 'scramble' | 'similar'>(['result', 'psych', 'schedule', 'podium', 'scramble', 'similar']).withOptions({ history: 'push', scroll: false }),
+    parseAsStringEnum<'result' | 'psych' | 'schedule' | 'podium' | 'scramble' | 'similar' | 'common'>(['result', 'psych', 'schedule', 'podium', 'scramble', 'similar', 'common']).withOptions({ history: 'push', scroll: false }),
   );
   const [psychEventParam, setPsychEventParam] = useQueryState(
     'psychEvent',
@@ -1034,8 +1035,9 @@ export default function CompDetailPage() {
     const t = compInfo?.registration_open ? Date.parse(compInfo.registration_open) : NaN;
     return Number.isFinite(t) && Date.now() < t;
   }, [compInfo]);
-  const viewParam: 'result' | 'psych' | 'schedule' | 'podium' | 'scramble' | 'similar' =
-    explicitView === 'psych' ? 'psych'
+  const viewParam: 'result' | 'psych' | 'schedule' | 'podium' | 'scramble' | 'similar' | 'common' =
+    explicitView === 'common' ? 'common'
+      : explicitView === 'psych' ? 'psych'
       : explicitView === 'schedule' ? 'schedule'
         : explicitView === 'scramble' ? 'scramble'
           : (explicitView === 'similar' && showSimilarTab) ? 'similar'
@@ -1049,6 +1051,7 @@ export default function CompDetailPage() {
   const isPodium = viewParam === 'podium';
   const isScramble = viewParam === 'scramble';
   const isSimilar = viewParam === 'similar';
+  const isCommon = viewParam === 'common';
   // 把当前生效的视图固化进 URL(强制带上 ?view=…),分享/收藏直接命中 active tab。
   // 仅在用户未显式选 tab 且默认视图依赖的数据已就位时写一次:有成绩=纯 data 驱动,无成绩需
   // 等 compInfo settle 才能定 schedule/psych。history:replace 不污染后退栈,避免回退到裸 URL。
@@ -1613,7 +1616,7 @@ export default function CompDetailPage() {
     setFilterParam(value || null);
   };
 
-  const onChangeView = (value: 'result' | 'psych' | 'schedule' | 'podium' | 'scramble' | 'similar') => {
+  const onChangeView = (value: 'result' | 'psych' | 'schedule' | 'podium' | 'scramble' | 'similar' | 'common') => {
     setExplicitView(value); // 显式记录:空成绩比赛点「成绩」不会被默认弹回预排名
   };
 
@@ -1914,7 +1917,7 @@ export default function CompDetailPage() {
           )}
           <button
             type="button"
-            className={`comp-view-tab${(!isPsych && !isSchedule && !isPodium && !isSimilar && !isScramble) ? ' is-active' : ''}`}
+            className={`comp-view-tab${(viewParam === 'result') ? ' is-active' : ''}`}
             onClick={() => onChangeView('result')}
           >
             {(isZh ? '成绩' : (isWca ? 'Results' : 'Live'))}
@@ -1934,6 +1937,13 @@ export default function CompDetailPage() {
           >
             {tr({ zh: '赛程', en: 'Schedule'
             })}
+          </button>
+          <button
+            type="button"
+            className={`comp-view-tab${isCommon ? ' is-active' : ''}`}
+            onClick={() => onChangeView('common')}
+          >
+            {tr({ zh: '共同选手', en: 'Common competitors' })}
           </button>
           {/* 相似比赛:名字只差版本号(I/II/III…)或年份的同系列比赛。有 ≥1 场才显示入口。 */}
           {showSimilarTab && (
@@ -1971,7 +1981,7 @@ export default function CompDetailPage() {
         </div>
 
         {/* 分享图布局不吃项目筛选,项目条一并隐藏 */}
-        {!isPodium && !isScramble && !isSimilar && !(isSchedule && schedView === 'poster') && (
+        {!isPodium && !isScramble && !isSimilar && !isCommon && !(isSchedule && schedView === 'poster') && (
           <div className="comp-event-bar">
             <WcaEventSelector
               presentation="inline"
@@ -2001,7 +2011,9 @@ export default function CompDetailPage() {
           </div>
         )}
 
-        {isScramble ? (
+        {isCommon ? (
+          <CommonCompetitors key={slug} data={data} isZh={isZh} onRefresh={refresh} />
+        ) : isScramble ? (
           <CompScramblesTab slug={slug} />
         ) : isSimilar ? (
           <SimilarCompsView series={similarComps} sameCity={sameCityComps} isZh={isZh} lang={isZh ? 'zh' : 'en'} />

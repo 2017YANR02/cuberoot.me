@@ -27,6 +27,8 @@ export function extractCompIdFromUrl(input: string): string | null {
 }
 
 interface Props {
+  inputId?: string;
+  inputClassName?: string;
   value: string;
   onChange: (val: string) => void;
   onPick: (comp: Comp) => void;
@@ -53,7 +55,22 @@ interface Props {
   restrictComps?: Comp[];
 }
 
-export function CompPicker({ value, onChange, onPick, placeholder, isZh, className, disableSuggestions, presets, onUrlPaste, hideFuture, hideNotEnded, hideCancelled, restrictComps }: Props) {
+/** Shared contents for a search result and the selected competition. */
+export function CompPickerSummary({ comp, isZh }: { comp: Comp; isZh: boolean }) {
+  return <>
+    <Flag iso2={comp.country} />
+    <span className="comp-picker-main">
+      <span className="comp-picker-name">{localizeCompName(comp.id, comp.name, isZh)}</span>
+      <span className="comp-picker-meta">
+        <span className="comp-picker-id">{comp.id}</span>
+        {comp.city ? <> · {localizeCity(comp.city, isZh, comp.country)}</> : null}
+        {' · '}{formatDateRangeIso(comp.start_date, comp.end_date)}
+      </span>
+    </span>
+  </>;
+}
+
+export function CompPicker({ inputId, inputClassName, value, onChange, onPick, placeholder, isZh, className, disableSuggestions, presets, onUrlPaste, hideFuture, hideNotEnded, hideCancelled, restrictComps }: Props) {
   const [comps, setComps] = useState<Comp[] | null>(null);
   const [open, setOpen] = useState(false);
   const [results, setResults] = useState<Comp[]>([]);
@@ -138,8 +155,9 @@ export function CompPicker({ value, onChange, onPick, placeholder, isZh, classNa
   return (
     <div ref={wrapRef} className={`comp-picker ${className ?? ''}`.trim()}>
       <input
+        id={inputId}
         type="text"
-        className={`comp-picker-input${value ? ' comp-picker-input--with-clear' : ''}`}
+        className={['comp-picker-input', value ? 'comp-picker-input--with-clear' : '', inputClassName].filter(Boolean).join(' ')}
         value={displayValue}
         onChange={e => {
           const v = e.target.value;
@@ -178,7 +196,6 @@ export function CompPicker({ value, onChange, onPick, placeholder, isZh, classNa
             </button>
           ))}
           {!disableSuggestions && results.map(c => {
-            const displayName = localizeCompName(c.id, c.name, !!isZh);
             const cancelled = isCancelledComp(c);
             return (
               <button
@@ -187,15 +204,7 @@ export function CompPicker({ value, onChange, onPick, placeholder, isZh, classNa
                 className={`comp-picker-item${cancelled ? ' is-cancelled' : ''}`}
                 onClick={() => handlePick(c)}
               >
-                <Flag iso2={c.country} />
-                <span className="comp-picker-main">
-                  <span className="comp-picker-name">{displayName}</span>
-                  <span className="comp-picker-meta">
-                    <span className="comp-picker-id">{c.id}</span>
-                    {c.city ? <> · {localizeCity(c.city, !!isZh, c.country)}</> : null}
-                    {' · '}{formatDateRangeIso(c.start_date, c.end_date)}
-                  </span>
-                </span>
+                <CompPickerSummary comp={c} isZh={!!isZh} />
               </button>
             );
           })}
