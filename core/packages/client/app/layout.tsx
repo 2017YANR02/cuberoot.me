@@ -22,6 +22,7 @@ import { BROWSER_API_ORIGIN } from "@/lib/api-base";
 import { BROWSER_STATIC_ORIGIN } from "@/lib/stats-base";
 import { APP_BOOT_EARLY_SCRIPT } from "@/lib/app_boot_early";
 import "./fonts.css";
+import "./fonts-wenkai.css";
 import "./globals.css";
 import "@/components/startup-status.css";
 // 统计表「列头吸顶」共用工具(.sticky-scroll + .sticky-thead),全站可用,免各页重复 import。
