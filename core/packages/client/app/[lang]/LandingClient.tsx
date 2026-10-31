@@ -6,6 +6,7 @@ import { douyinContentAvailable } from '@cuberoot/shared/douyin-content';
 
 import { useRetainedState } from '@/hooks/useRetainedState';
 import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
+import { useHomeScrollRestoration } from '@/hooks/useHomeScrollRestoration';
 
 /** Site entrypoint — Landing page. */
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
@@ -143,6 +144,7 @@ export default function LandingPage() {
   const [personalReadyKey, setPersonalReadyKey] = useRetainedState<string | null>('home:personalReadyKey', null);
   const onPersonalReady = useCallback(() => setPersonalReadyKey(personalKey), [personalKey, setPersonalReadyKey]);
   const personalLoading = Boolean(user && (!compFollows.loaded || personalReadyKey !== personalKey));
+  useHomeScrollRestoration(!personalLoading);
   const [guideOpen, setGuideOpen] = useState(false);
   const [replayGuide, setReplayGuide] = useQueryState('guide', parseAsBoolean.withDefault(false));
   useEffect(() => {
