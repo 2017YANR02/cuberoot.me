@@ -100,3 +100,12 @@ pnpm --filter @cuberoot/server typecheck
 ```
 
 修改需要分别发布 Web 和 API；仅本地修改不会使线上收集接口生效。常规 Web 开发代理默认指向线上 API，新接口部署前可能返回 404，页面下载行为仍独立可用。上线前核对中英页面、窄屏导航、深浅主题与 APK 实际状态。浏览器自动化仅在所有者要求时进行。
+
+## 2026-10-30 官网发布链路 CI 验收
+
+- 官网正式发布 [41161533876](https://github.com/2017YANR02/cuberoot.me/actions/runs/41161533876) 成功：固定源码 `891a4c4424e669c5d2982966e656cecc74dcd9a8`，Android APK 与 Windows x64 安装版/免安装版均为 `1.0.1 / 1000001`。编译、Android 正式签名、分发全部在 GitHub runner/静态服务器执行，Mac 只完成首次凭据迁移和触发。
+- 两平台编译成功后，首次上传被专用部署账号缺少 Node 阻断，旧清单保持不变。已为该账号配置独立 Node 24.14.0（`~/bin/node`，非交互 SSH 的 PATH 可见），第二次 attempt 只重跑失败发布 job，复用原签名制品后成功。新部署服务器也必须为专用账号配置 Node 24+、flock、下载目录写权限及已核验 SSH host key；不能依赖 root 的 nvm PATH。
+- 三个公网不可变文件均完整 GET 200，大小及 SHA-256 与清单一致；Range bytes=1024-2047 均返回 206/1024 字节，附件头和 MIME 正确。Android 15,989,094 字节，Windows installer 11,443,113 字节，portable 22,521,344 字节。
+- Play 独立 [build-only run 41162189074](https://github.com/2017YANR02/cuberoot.me/actions/runs/41162189074) 成功：`1.0.2 / 1000002` AAB 在云端生成，以既有上传证书签名，验证包名、版本、完整签名和固定证书指纹；未上传 Play、未送审，不消耗官网最新指针。Play 服务账号的正式提交权限和商店审核仍不得从本次 build-only 推断已通过。
+- 官网管理员版本管理页已读到真实 Actions 状态；下载页顶部版本管理图标替换设置图标，移除原文字按钮。Web 自有服务器与 Vercel 均部署成功，线上确认版本信息、三项下载链接及图标跳转。
+- 发布契约 16 项、下载页定向 4 项、client typecheck 与 Knip 检查通过；首次常规 CI 的 gh 外部命令登记问题已修复。Windows 按维护者选择保持未签名，本轮未验证 Android/Windows 实机安装、覆盖升级或业务功能，不把云端发布成功记作设备验收。

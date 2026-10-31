@@ -1777,3 +1777,10 @@ Series 8 的 11.524 秒/66 动作记录真机分析完成，无错误，七段�
 - 本轮只提交本地代码。自动化/构建证据与 MoYu 实物连接、连续转动和自动计时验收分开记录；尚未覆盖安装、推送或发布，也不宣称各端 MoYu32 真机已通过。
 
 验证：shared 构建、Client/app-ui/Mobile 类型检查、MoYu 地址探测与 Watch/安装端协议回归、Web 蓝牙回归、Mobile 广播 adapter 回归、小程序检查及微信/抖音构建通过；Watch watchOS 未签名构建通过。Watch 模拟 MY33 握手无需 iPhone 或手输即可发布已验证缓存与 connected，尚未替代实体魔方验收。
+
+### 2026-10-30 Android/Windows 官网发布转入受保护 CI
+
+- 官网统一入口为 `app_release.yml`、`pnpm android:release` 和管理员版本页。旧本机签名 workflow 已删除；CLI 不再读取 SDK、Keychain、keystore 或本机发布配置。编译无生产秘密，Android 独立签名环境与官网/Play 上传环境分离，均仅允许 main。正式密钥沿用原证书，保留离线备份不构成运行时依赖。
+- [正式 run 41161533876](https://github.com/2017YANR02/cuberoot.me/actions/runs/41161533876) 已发布 Android APK、Windows x64 安装版及免安装版 `1.0.1 / 1000001`，公网完整下载/哈希/Range 验证通过。首次上传因专用账号 PATH 无 Node 失败；修复服务器运行环境后只重跑发布 job 成功，无本机重编译或签名。
+- [Play build-only run 41162189074](https://github.com/2017YANR02/cuberoot.me/actions/runs/41162189074) 验证 `1.0.2 / 1000002` AAB 云端构建和正式上传证书签名；没有提交商店或证明 Play API 发布权限。
+- 下载页版本管理图标与线上管理员状态页已验证；Windows 按本次授权发布未签名包。实机安装、覆盖升级、成绩保留、Windows Authenticode 与完整五端产品验收仍分别保留原门槛，不因本次分发成功标记五端完成。具体证据与凭据轮换见 `docs/app-downloads.md`。
