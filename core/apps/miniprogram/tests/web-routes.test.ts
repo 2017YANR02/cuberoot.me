@@ -122,14 +122,16 @@ describe('mini program web routes', () => {
     }
   });
 
-  it('derives all 62 homepage destinations from the shared ordered catalog', () => {
-    expect(SITE_DIRECTORY_GROUPS.map((group) => group.entries.length)).toEqual([5, 4, 6, 13, 19, 12, 3]);
-    expect(listWebToolGroups().map((group) => group.tools.length)).toEqual([5, 4, 6, 13, 19, 12, 3]);
-    expect(listWebTools()).toHaveLength(62);
+  it('derives all 61 homepage destinations from the shared ordered catalog', () => {
+    expect(SITE_DIRECTORY_GROUPS.map((group) => group.entries.length)).toEqual([5, 4, 6, 13, 18, 12, 3]);
+    expect(listWebToolGroups().map((group) => group.tools.length)).toEqual([5, 4, 6, 13, 18, 12, 3]);
+    expect(listWebTools()).toHaveLength(61);
     expect(listWebTools()).toContainEqual(expect.objectContaining({ id: 'gallery', href: '/gallery' }));
     expect(resolveWebTool('lettering')).toMatchObject({ id: 'lettering', key: 'lettering', href: '/lettering', action: 'web' });
-    expect(new Set(listWebTools().map((tool) => tool.id))).toHaveProperty('size', 62);
-    expect(Object.values(WEB_ROUTES).filter((route) => route.publicEntry)).toHaveLength(59);
+    expect(new Set(listWebTools().map((tool) => tool.id))).toHaveProperty('size', 61);
+    expect(Object.values(WEB_ROUTES).filter((route) => route.publicEntry)).toHaveLength(58);
+    expect(resolveWebTool('documents')).toMatchObject({ id: 'documents', href: '/docs', title: '协作文档' });
+    expect(resolveWebTool('spreadsheets')).toBeNull();
     expect(resolveWebRoute('paper-odyssey')).toMatchObject({
       path: '/zh/dev/architecture/history?mode=play',
       url: 'https://cuberoot.me/zh/dev/architecture/history?mode=play#wechat_redirect',
@@ -148,7 +150,7 @@ describe('mini program web routes', () => {
       expect(trackingSource, tool.id).toContain(`| \`${tool.id}\` |`);
     }
     expect(trackingSource).toContain(
-      '共 62 项：网站首页直接渲染它们，工具 tab 通过一个固定白名单路由复用整个首页',
+      '共 61 项：网站首页直接渲染它们，工具 tab 通过一个固定白名单路由复用整个首页',
     );
   });
 
@@ -190,7 +192,7 @@ describe('mini program web routes', () => {
       path: '/pages/web/index?key=alg',
     });
     const routeBackedTools = listWebTools().filter((tool) => tool.key !== null);
-    expect(routeBackedTools).toHaveLength(59);
+    expect(routeBackedTools).toHaveLength(58);
     expect(routeBackedTools.every((tool) => resolveWebRouteShare(tool.key) !== null)).toBe(true);
     expect(resolveWebRouteShare('account')?.path).toBe('/pages/web/index?key=home&path=%2Fzh%2Faccount');
     expect(resolveWebRouteShare('privacy')?.path).toBe('/pages/web/index?key=home&path=%2Fzh%2Fprivacy');
