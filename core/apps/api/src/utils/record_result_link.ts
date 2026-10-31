@@ -28,11 +28,16 @@ export function recordResultHref(data: CompData, target: RecordResultTarget): st
   return compResultHref(data.slug, { eventId: target.eventId, roundId, number: matches[0].n });
 }
 
-/** Only earlier rounds establish order; never infer a tie from the current snapshot itself. */
-export function tiedInEarlierRound(data: CompData, target: RecordResultTarget, tag: string, iso2: string): boolean {
+/** Compare pre-competition PRs and earlier rounds, never the current result itself. */
+export function tiedBeforeResult(data: CompData, target: RecordResultTarget, tag: string, iso2: string): boolean {
   const rounds = data.events.find(e => e.i === target.eventId)?.rs ?? [];
   const index = target.roundNumber != null ? target.roundNumber - 1 : rounds.findIndex(r => r.i === target.roundId);
   const values: number[] = [];
+  if (tag === 'PR' && target.personWcaId) {
+    const prior = data.personalRecords?.[target.personWcaId]?.[target.eventId];
+    const value = target.type === 'average' ? prior?.average : prior?.single;
+    if (value != null && value > 0) values.push(value);
+  }
   for (const round of rounds.slice(0, Math.max(0, index))) {
     for (const row of data.resultsByRound[`${target.eventId}:${round.i}`] ?? []) {
       const person = data.users[String(row.n)];
