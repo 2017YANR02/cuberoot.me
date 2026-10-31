@@ -406,6 +406,8 @@ interface Props {
   /** gen 行内:更紧凑的间距 + 略小播放器。 */
   compact?: boolean;
   expandedSolutions?: boolean;
+  /** Timer cross practice: reveal solution moves only on request. */
+  progressiveCrossReveal?: boolean;
   /** Opt-in experimental ranking; ordinary callers retain length order. */
   practicalSolutions?: boolean;
   settingsSlot?: HTMLElement | null; navigationSlot?: HTMLElement | null;
@@ -414,7 +416,7 @@ interface Props {
   onNextScramble?: () => void;
 }
 
-export default function StageSolver({ scramble, lang, initialMethod = 'std', initialStage = 0, initialFace, onSelectionChange, initialSlot = '', onSlotChange, initialBase = '', onBaseChange, compact = false, expandedSolutions = false, practicalSolutions = false, settingsSlot, navigationSlot, scrambleEditAction, onPrevScramble, onNextScramble, onDismissChange, onBlockingChange }: Props) {
+export default function StageSolver({ scramble, lang, initialMethod = 'std', initialStage = 0, initialFace, onSelectionChange, initialSlot = '', onSlotChange, initialBase = '', onBaseChange, compact = false, expandedSolutions = false, progressiveCrossReveal = false, practicalSolutions = false, settingsSlot, navigationSlot, scrambleEditAction, onPrevScramble, onNextScramble, onDismissChange, onBlockingChange }: Props) {
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
   // 视角格 / 解法头的目标描述(块类方法按 method+stage 给语义,其余 = 该面十字)。
@@ -455,6 +457,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   const [selFace, setSelFace] = useState<number | null>(null);
   const [moves, setMoves] = useState<MovesTimed | null>(null);
   const [movesLoading, setMovesLoading] = useState(false);
+  const [revealed, setRevealed] = useState<{ source: MovesTimed | null; context: string; counts: Record<number, number> } | null>(null);
   const [selSol, setSelSol] = useState(0); // 选中解法行(驱动共享播放器)
   const [selSlot, setSelSlot] = useState(initialSlot); // 用户指定固定已解槽组合(逗号分隔索引,''=自动)
   const selSlotRef = useRef(selSlot);
@@ -1043,6 +1046,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
 
   // 循环某行的 y 预转体(0→y→y2→y'→0),并把它设为选中行 + 把动画重置到开头。
   const cycleRot = useCallback((i: number) => {
+    setRevealed(prev => prev ? { ...prev, counts: { ...prev.counts, [i]: 0 } } : null);
     setRowRot((prev) => ({ ...prev, [i]: (((prev[i] ?? 0) + 1) % 4) }));
     setSelSol(i);
     requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -1138,6 +1142,28 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       aria-label={t('切换 y 预转体', 'Toggle y pre-rotation')}
       onClick={() => cycleRot(i)}>{renderOrientation(alg)}</button>
   );
+  const progressiveReveal = progressiveCrossReveal && isCrossStage;
+  const revealContext = JSON.stringify([normScramble, method, stage, selFace]);
+  const revealedCount = (i: number) => revealed?.source === moves && revealed.context === revealContext
+    ? revealed.counts[i] ?? 0 : 0;
+  const solutionTokens = (alg: string) => splitLeadRot(alg).body.split(/\s+/).filter(Boolean);
+  const solutionVisible = (i: number, alg: string) => !progressiveReveal || revealedCount(i) >= solutionTokens(alg).length;
+  const solutionText = (i: number, alg: string) => solutionVisible(i, alg) ? splitLeadRot(alg).body
+    : [...solutionTokens(alg).slice(0, revealedCount(i)), '…'].join(' ');
+  const revealSolution = (i: number, count: number) => {
+    setSelSol(i);
+    setRevealed(prev => ({ source: moves, context: revealContext, counts: {
+      ...(prev?.source === moves && prev.context === revealContext ? prev.counts : {}), [i]: count,
+    } }));
+  };
+  const revealControls = (i: number, alg: string) => progressiveReveal && !solutionVisible(i, alg) && <>
+    <button type="button" className="stsv-sol-orientation" disabled={movesLoading}
+      aria-label={t('显示下一步', 'Reveal next move')}
+      onClick={() => revealSolution(i, revealedCount(i) + 1)}>+1</button>
+    <button type="button" className="stsv-sol-orientation" disabled={movesLoading}
+      aria-label={t('显示完整解法', 'Reveal full solution')}
+      onClick={() => revealSolution(i, solutionTokens(alg).length)}>{moveLen(alg)}{t('步', 'f')}</button>
+  </>;
   const solutionItems = moves?.sols.map((sol, i) => {
     const alg = rotateSolutionY(sol.m, rowRot[i] ?? 0);
     return {
@@ -1147,9 +1173,9 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
         {sol.c && slotCombos.length >= 2 && renderSolSlots(sol.c)}
         <code>
           {splitLeadRot(alg).lead && <span className="stsv-sol-rotation">{splitLeadRot(alg).lead} </span>}
-          {splitLeadRot(alg).body}
+          {solutionText(i, alg)}
         </code>
-        <span className="stsv-sol-len">{moveLen(alg)}</span>
+        {(!progressiveReveal || !expandedSolutions || solutionVisible(i, alg)) && <span className="stsv-sol-len">{moveLen(alg)}</span>}
       </span>,
     };
   }) ?? [];
@@ -1579,9 +1605,11 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                           <div className={`stsv-solution-row${i === selectedSolIndex ? ' is-selected' : ''}`} key={item.value}>
                             <button type="button" className="stsv-solution-choice" aria-pressed={i === selectedSolIndex}
                               onClick={() => {
-                                selectSol(i, true);
-                                copySol(rotateSolutionY(moves.sols[i].m, rowRot[i] ?? 0));
+                                const alg = rotateSolutionY(moves.sols[i].m, rowRot[i] ?? 0);
+                                selectSol(i, solutionVisible(i, alg));
+                                if (solutionVisible(i, alg)) copySol(alg);
                               }}>{item.label}</button>
+                            {revealControls(i, rotateSolutionY(moves.sols[i].m, rowRot[i] ?? 0))}
                             {orientationButton(i, rotateSolutionY(moves.sols[i].m, rowRot[i] ?? 0))}
                           </div>
                         ))}
@@ -1603,14 +1631,16 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                         dataNoTimer
                         ariaLabel={t('解法', 'Solution')}
                         value={selectedSolIndex}
-                        valueText={selSolAlg ?? ''}
-                        label={<span className="stsv-sol-option"><code>{selSolParts?.body}</code></span>}
+                        valueText={progressiveReveal && selSolAlg ? solutionText(selectedSolIndex, selSolAlg) : selSolAlg ?? ''}
+                        label={<span className="stsv-sol-option"><code>{selSolAlg ? solutionText(selectedSolIndex, selSolAlg) : ''}</code></span>}
                         items={solutionItems}
                         onChange={(i) => {
-                          selectSol(i, true);
-                          copySol(rotateSolutionY(moves.sols[i].m, rowRot[i] ?? 0));
+                          const alg = rotateSolutionY(moves.sols[i].m, rowRot[i] ?? 0);
+                          selectSol(i, solutionVisible(i, alg));
+                          if (solutionVisible(i, alg)) copySol(alg);
                         }}
                       />
+                      {selSolAlg && revealControls(selectedSolIndex, selSolAlg)}
                     </div>}
                   </>
                 )}
@@ -1619,7 +1649,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
               {/* 单个共享 3D 播放器:跟随上方菜单选中的解法。就是 /recon 详情页那一个
                   (CuberReconPlayer,跑站内 /sim 引擎)—— 「打乱 + 一串解法」正是它
                   本来的输入形状:scramble 收前导整体转体,alg 只留要动画的面转。 */}
-              {selSolAlg && playerAlg != null && (
+              {selSolAlg && playerAlg != null && solutionVisible(selectedSolIndex, selSolAlg) && (
                 <div className="stsv-player">
                   <CuberReconPlayer
                     order={3}
