@@ -34,7 +34,7 @@ const EXPECTED_WCA: EventId[] = [
 
 const EXPECTED_OTHER: EventId[] = [
   '333ni', '333mr', 'sphere', '666bld', '777bld', 'r3', 'r4', 'r5',
-  'cross', 'f2l', 'll', 'oll', 'pll', 'coll', 'cmll', 'zbll', 'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls', 'lse', 'l10p', 'eg1', 'eg2',
+  'cross', 'f2l', 'll', 'oll', 'pll', 'coll', 'cmll', 'zbll', 'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls', 'cfzb', 'lse', 'l10p', 'eg1', 'eg2',
   'custom', 'fto', 'kilominx', 'gear', 'ivy', 'redi', 'mpyram', 'pyraminx_duo',
   'superz', 'dogic', 'octahedron4', 'dinoskewb', 'cube3dino',
   'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
@@ -68,7 +68,7 @@ const EXPECTED_REAL_WCA_EVENTS = {
 describe('shared timer event picker catalog', () => {
   it('separates 3x3 scramble types without changing legacy generator and solve ids', () => {
     expect(TIMER_333_SCRAMBLE_TYPES.map(type => type.id)).toEqual([
-      'wca', 'cross', 'f2l', 'll', 'oll', 'pll', 'coll', 'cmll', 'zbll', 'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls', 'lse', 'l10p',
+      'wca', 'cross', 'f2l', 'll', 'oll', 'pll', 'coll', 'cmll', 'zbll', 'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls', 'cfzb', 'lse', 'l10p',
     ]);
     for (const type of TIMER_333_SCRAMBLE_TYPES) {
       expect(timerPuzzleSelection(type.event)).toEqual({ puzzle: '333', scrambleType: type.id });
@@ -78,14 +78,14 @@ describe('shared timer event picker catalog', () => {
       expect(timerPuzzleSelection(id)).toEqual({ puzzle: id, scrambleType: null });
     }
   });
-  it('is a complete, duplicate-free 82-event partition in the website order', () => {
+  it('is a complete, duplicate-free 83-event partition in the website order', () => {
     expect(TIMER_EVENT_PICKER_GROUPS.map((group) => group.id)).toEqual(['wca', 'other']);
     expect(TIMER_EVENT_PICKER_GROUPS[0].items.map((item) => item.id)).toEqual(EXPECTED_WCA);
     expect(TIMER_EVENT_PICKER_GROUPS[1].items.map((item) => item.id)).toEqual(EXPECTED_OTHER);
 
     const pickerIds = TIMER_EVENT_PICKER_ITEMS.map((item) => item.id);
     const eventIds = EVENTS.map((event) => event.id);
-    expect(pickerIds).toHaveLength(82);
+    expect(pickerIds).toHaveLength(83);
     expect(new Set(pickerIds).size).toBe(pickerIds.length);
     expect(new Set(pickerIds)).toEqual(new Set(eventIds));
   });
@@ -201,6 +201,7 @@ describe('shared timer event picker catalog', () => {
       'ollcp': 3,
       'zzll': 3,
       'zbls': 3,
+      'cfzb': 3,
       'lse': 3,
       'l10p': 3,
       eg1: 2,

@@ -39,7 +39,7 @@ export type EventId =
   | 'cross' | 'f2l' | 'll' | 'oll' | 'pll'
   // LL training subsets
   | 'coll' | 'cmll' | 'zbll' | 'eg1' | 'eg2'
-  | 'cll' | 'ell' | 'eocp' | '2gll' | 'ollcp' | 'zzll' | 'zbls' | 'lse' | 'l10p'
+  | 'cll' | 'ell' | 'eocp' | '2gll' | 'ollcp' | 'zzll' | 'zbls' | 'cfzb' | 'lse' | 'l10p'
   // Free-form (user types own scramble)
   | 'custom';
 
@@ -293,6 +293,7 @@ export const EVENTS: EventInfo[] = [
   { id: 'ollcp', nameEn: 'OLLCP', nameZh: 'OLLCP', group: 'll' },
   { id: 'zzll', nameEn: 'ZZLL', nameZh: 'ZZLL', group: 'll' },
   { id: 'zbls', nameEn: 'ZBLS', nameZh: 'ZBLS', group: 'll' },
+  { id: 'cfzb', nameEn: 'CFZB', nameZh: 'CFZB', group: 'll' },
   { id: 'lse', nameEn: 'LSE', nameZh: 'LSE', group: 'll' },
   { id: 'l10p', nameEn: 'L10P', nameZh: 'L10P', group: 'll' },
 

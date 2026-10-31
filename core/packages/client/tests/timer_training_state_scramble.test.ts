@@ -56,7 +56,7 @@ describe('shared training state generators', () => {
       }
     }
   }, 60_000);
-  it.each([['eocp', 'll'], ['ollcp', 'll'], ['l10p', 'cmll']] as const)('exports %s through a supported csTimer type and restores its original identity', (event, key) => {
+  it.each([['cfzb', 'zbls'], ['eocp', 'll'], ['ollcp', 'll'], ['l10p', 'cmll']] as const)('exports %s through a supported csTimer type and restores its original identity', (event, key) => {
     const exported = exportTimerCstimerJson({ [event]: [{ id: 'test', event, ts: 1000, timeMs: 500, scramble: 'R U', penalty: 'ok' }] });
     const outer = JSON.parse(exported.json);
     const meta = JSON.parse(outer.properties.sessionData);
@@ -79,7 +79,7 @@ describe('shared training state generators', () => {
         if (event === 'lse' || event === 'l10p') {
           expect(stepSolvedInFrame('sb', displayed(scramble)), scramble).toBe(true);
           if (event === 'lse') expect(stepSolvedInFrame('cmll', displayed(scramble)), scramble).toBe(true);
-        } else if (event === 'zbls' || event === 'f2l') {
+        } else if (event === 'zbls' || event === 'cfzb' || event === 'f2l') {
           expect(stepSolvedInFrame('cross', facelets)).toBe(true);
         } else {
           expect(stepSolvedInFrame('f2l', facelets), scramble).toBe(true);
@@ -89,6 +89,17 @@ describe('shared training state generators', () => {
       }
     }, 60_000);
   }
+  it('CFZB uses the same ZBLS candidates and excludes completed ZBLS starts', () => {
+    const candidate = "R U R'";
+    const calls: string[] = [];
+    const result = generateTimerTrainingStateScramble('cfzb', (key, attempt) => {
+      calls.push(key);
+      return attempt === 0 ? 'U' : candidate;
+    });
+    expect(result).toBe(candidate);
+    expect(calls).toEqual(['zbls', 'zbls']);
+    expect(timerSmartCubeTrainingComplete('zbls', smartCubeTargetFacelets(result)!, '')).toBe(false);
+  });
   it('fails boundedly when a generator only returns a finished state', () => {
     expect(() => generateTimerTrainingStateScramble('cll', () => 'U')).toThrow('unfinished case');
   });

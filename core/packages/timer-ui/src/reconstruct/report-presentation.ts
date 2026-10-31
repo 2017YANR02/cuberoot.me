@@ -91,6 +91,12 @@ export function projectReconComment(label: string, method: ReconstructionType, c
   return parts.filter(part => part.text || part.colors);
 }
 
+/** CFZB keeps training timing while using the same library annotations as CFOP. */
+export function reportHasLibraryNotation(recon: ReconTextResult | null, method: ReconstructionType): boolean {
+  return method === 'cfop' || (method === 'training' && Boolean(recon?.lines.some(line =>
+    line.stageKey === 'zbls' || line.stageKey === 'zbll')));
+}
+
 /** The final notation projection used by both React and native reports.
  * It never changes the physical track or its original timing ranges. */
 export function projectReconNotation(recon: ReconTextResult | null, method: ReconstructionType, simplified = true) {

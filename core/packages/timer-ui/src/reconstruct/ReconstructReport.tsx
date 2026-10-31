@@ -409,7 +409,18 @@ function TrainingReportBody({ solve, isZh, history, onUseScramble, onReconFeedba
   const { localize: tr } = host;
   const prepared = useMemo(() => prepareTrainingReconstruction(solve, isZh ? 'zh' : 'en',
     liveGyroSamples?.slice(), live), [solve, isZh, liveGyroSamples, live]);
-  const { recon, view, metrics } = prepared;
+  const { recon: sourceRecon, view, metrics } = prepared;
+  const [libraryResult, setLibraryResult] = useState<{ source: typeof sourceRecon; recon: typeof sourceRecon } | null>(null);
+  useEffect(() => {
+    if (solve.event !== 'cfzb' || live) return;
+    let active = true;
+    void import('@cuberoot/shared/timer/reconstruct/library-correction')
+      .then(({ correctReconFromLibrary }) => correctReconFromLibrary(sourceRecon))
+      .then(recon => { if (active) setLibraryResult({ source: sourceRecon, recon }); })
+      .catch(() => { /* Keep measured notation when the library is unavailable. */ });
+    return () => { active = false; };
+  }, [sourceRecon, solve.event, live]);
+  const recon = libraryResult?.source === sourceRecon ? libraryResult.recon : sourceRecon;
   const statistics = useMemo(() => live ? null : trainingCaseStatistics(trainingCaseHistory(history ?? [], solve)
     .map(item => prepareTrainingReconstruction(item, 'en').metrics)), [history, solve, live]);
   const [ui, setUI] = useState(initialReportUI);
@@ -426,7 +437,7 @@ function TrainingReportBody({ solve, isZh, history, onUseScramble, onReconFeedba
   const composition = reportComposition({ solve, recon, analysis: null, hasAnalysis: false, scoreable: false,
     state: ui, tr, hideActions, hasTable: false, hasMeta: false, autoMemoMs: null, hasBldMemo: false, trainingSummary: true });
   const document = resolveReportSlots(composition, {
-    'training-summary': reportTrainingSummary(solve, metrics, statistics, tr),
+    'training-summary': reportTrainingSummary(solve, metrics, statistics, tr, prepared.stages),
     'raw-list': reportRawMoves(solve, new Set(), tr),
   });
   return <ReportContent node={document} dispatch={action => setUI(state => reduceReportUI(state, action))} slots={{
