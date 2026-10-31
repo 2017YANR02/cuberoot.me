@@ -16,47 +16,47 @@
 
 ### 管理员官网发布（Android / Windows）
 
-正式入口为 `/admin/releases`（中文 `/zh/admin/releases`）及手动 `app_release.yml`；下载页的管理员链接指向该后台页面。普通 push 继续由 `test.yml` 检查和构建，不发布下载包。旧 `android_release.yml` / Mac 命令保留为独立 Play 和历史制品恢复入口；官网日常发布使用新入口，不交替操作两个发布协调器。
+正式入口为 `/admin/releases`（中文 `/zh/admin/releases`）及手动 `app_release.yml`；下载页的管理员链接指向该后台页面。普通 push 继续由 `test.yml` 检查和构建，不发布下载包。`pnpm android:release` 现为同一个 `app_release.yml` 的跨平台命令行入口，不再读取 Mac 签名材料，也不再存在第二个官网发布协调器。
 
-`app_release.yml` 固定已审核 main 提交，使用环境 `app-release`。该环境必须仅允许 main 部署；如配置每次人工审批，网页任务会等待审批，不能宣称无人值守一键发布。授权的管理员发布无需额外审批时不设置 required reviewers。工作流的 `run_number=N` 是正式发布序号，版本为 `1.floor(N/1000).(N%1000)`，Android versionCode 为 `1000000+N`；首次为 `1.0.1 / 1000001`。失败允许跳号，重试同一 run 保持版本；不要删除并重建该工作流以重置序号。发布端拒绝降级及同版本内容替换。Windows 两份 EXE 共用同一版本，全部公网哈希校验通过后才原子替换清单。
+旧 `android_release.yml` 已退役删除；历史 Actions 记录仅供追溯，不再作为发布入口。保留现有 `app_release.yml` 的身份与运行序号，不通过删除重建工作流重置版本计数。
 
-环境 secrets（不写源码、不输出日志）：
+`app_release.yml` 固定已审核 main 提交，签名使用环境 `app-release`，上传使用 `app-release-publish`。两个环境都必须仅允许 main 部署；如配置每次人工审批，网页任务会等待审批，不能宣称无人值守一键发布。授权的管理员发布无需额外审批时不设置 required reviewers。工作流的 `run_number=N` 是正式发布序号，版本为 `1.floor(N/1000).(N%1000)`，Android versionCode 为 `1000000+N`；首次为 `1.0.1 / 1000001`。失败允许跳号，重试同一 run 保持版本；不要删除并重建该工作流以重置序号。发布端拒绝降级及同版本内容替换。Windows 两份 EXE 共用同一版本，全部公网哈希校验通过后才原子替换清单。
 
-- `ANDROID_KEYSTORE_BASE64`：现有正式 JKS 的 Base64；必须对应 `ANDROID_RELEASE_CERTIFICATE`，不得新建替代密钥。
+环境 secrets（不写源码、不输出日志；签名与上传分别存放）：
+
+- `app-release`：`ANDROID_KEYSTORE_BASE64`：现有正式 JKS 的 Base64；必须对应 `ANDROID_RELEASE_CERTIFICATE`，不得新建替代密钥。
 - `ANDROID_STORE_PASSWORD`、`ANDROID_KEY_PASSWORD`、`ANDROID_KEY_ALIAS`：该 JKS 的密码与别名。
-- `APP_RELEASE_SSH_KEY`、`APP_RELEASE_SSH_HOST`（`user@host`）、`APP_RELEASE_KNOWN_HOSTS`：静态站发布 SSH 凭据及预先核验的主机公钥，不在运行时无验证接受新主机密钥。
+- `app-release-publish`：`APP_RELEASE_SSH_KEY`、`APP_RELEASE_SSH_HOST`（`user@host`）、`APP_RELEASE_KNOWN_HOSTS`：静态站发布 SSH 凭据及预先核验的主机公钥，不在运行时无验证接受新主机密钥。
+
+`app-release-publish` 另存 `PLAY_SERVICE_ACCOUNT_JSON`，只在显式选择 Play 轨道的提交步骤使用。
 
 API 配置 `APP_RELEASE_GITHUB_TOKEN`：限定 `2017YANR02/cuberoot.me`、Contents read / Actions write 的 fine-grained token，仅留在 API 服务器环境，不传给网页。`GET/POST /v1/admin/app-releases` 使用现有 Bearer 登录与 `requireAdmin`，不接受通用 X-Admin-Key。GET 返回 main 提交、最近任务与待确认请求；POST 只接受 UUID、main 的精确 SHA、android/windows/both 和更新说明。main 已变化返回 409，需刷新后重新确认。没有 token 时管理页显示未配置，不假装已发包。
 
 请求回执默认保存在 API 主机持久目录 `/root/core-api/data/app-release-requests.json`，可用 `APP_RELEASE_STATE_PATH` 指定同一共享持久卷；PG advisory transaction lock 协调同机多进程。没有数据库 schema 变更。部署不可清除此文件；如果未来多机运行 API，必须共用该文件或迁入事务存储。网络超时保留 unknown 状态，先根据请求 UUID 在 Actions 核对是否启动，不自动重发。若人工确认 GitHub 从未接收，维护者在持有同一 advisory lock 的维护窗口将该条回执标记 rejected 后才可新建发布，不能以超时为理由直接删除回执。completed 回执永久保留以支持幂等，历史任务从 GitHub 列表淘汰后不会再次阻塞。
 
-这是对原「私钥仅留 Mac」流程的明确变更：维护者已授权将正式签名凭据配置到受保护 CI 环境。代码落地不代表这些 secrets 已配置。构建任务只在签名步骤获得 Android 密钥；发布任务仅获得 SSH 凭据。Windows 当前不做 Authenticode 签名，首次下载可能显示 SmartScreen 提示；Tauri updater 尚未启用，应用内更新入口下载新版供用户安装。
+这是对原「私钥仅留 Mac」流程的明确变更：维护者已授权将正式签名凭据配置到受保护 CI 环境。代码落地不代表这些 secrets 已配置。构建任务不挂载受保护环境、不获得生产凭据，仅生成 unsigned staging。独立签名任务不安装依赖、不运行 Gradle，临时解码密钥后用 apksigner/jarsigner 签名并核对既有正式证书；退出删除临时密钥。官网发布任务只获取专用无 sudo 部署用户的 SSH 凭据，Play 提交任务只获取服务账号。Windows 当前不做 Authenticode 签名，首次下载可能显示 SmartScreen 提示；Tauri updater 尚未启用，应用内更新入口下载新版供用户安装。
 
 发布任务分别保留 Android/Windows 制品 30 天。官网不可变文件保留在静态服务器；Windows 使用 `/downloads/windows/latest.json`，包含安装版、免安装 EXE 的 URL、大小和 SHA-256。免安装 EXE 需要现有 WebView2，数据仍使用应用数据目录，不承诺移动 EXE 即携带数据。发布前需验证干净 Windows 上安装/启动、登录回跳、覆盖更新与成绩保留；构建通过不替代这些验收。
 
 每个平台独立切换清单，另一平台失败不回退已成功的平台。失败可重跑失败 job，完整重跑已发布 run 会因不可变制品保护而拒绝不同内容。撤回官网入口只能阻止后续下载；已安装用户需要以更高版本发布修正版，不能强制降级。
 
-### 本机 Mac 点击入口
+### 命令行入口（macOS / Windows / Linux）
 
-2026-10-14 已在维护者 Mac 的 Apple「快捷指令」App 创建「发布 Android」，按维护者选择仅放在 App 内，不加入 Dock 或菜单栏。点击播放后自动打开终端进度窗口，运行下面的官网 APK + Play 正式版命令，无需输入命令。仍须先把目标代码推送到 main，运行期间保持 Mac 联网；官网发布和 Google 审核状态分别看结果。
+在安装并登录 GitHub CLI（`gh`）的电脑上，从仓库 `core/` 运行：
 
-快捷指令只有一个运行 Shell 脚本操作：`open -a Terminal "$HOME/.local/bin/发布 Android.command"`。本机启动文件进入 `${CUBEROOT_REPO:-$HOME/Developer/cuberoot.me}/core`，复用 `pnpm android:release --play production`，保留现有发布锁和错误退出状态；日志在 `~/.local/state/cuberoot/android-release/`。凭据仍由正式发布脚本读取，快捷指令不保存凭据。换 Mac 须重新配置，不能假定该个人启动文件存在。
+- `pnpm android:release`：发布官网 Android APK。
+- `pnpm android:release --platform windows`：发布 Windows 安装版和免安装 EXE。
+- `pnpm android:release --platform both --notes "更新说明"`：同一提交发布两个平台；省略 `--notes` 时采用 main 最新提交标题。
+- `pnpm android:release --play production`（或 `internal`）：显式增加 Play AAB 构建和所选轨道提交。
+- 加 `--only-play`：仅 Play，不切换官网；要求 Android 平台与明确的 `--play`。
+- 加 `--build-only`：只在 CI 构建并保留签名制品，不发布官网或提交 Play。
+- `pnpm android:release --help`：只显示帮助，不访问 GitHub、构建或发布。
 
-验证：启动文件 `--check` 仅调用发布入口的 `--help`，通过；快捷指令实际点击后已确认启动目标 `.command` 进程，验证时使用临时发布锁阻止构建发布，随后已清理该锁及本次探针进程。本轮未发布新包。
+命令读取 GitHub main 的精确 SHA，手动触发并跟踪同一个受保护的 `app_release.yml`，不打包本地未提交内容。签名、验证和上传全部在 CI 执行；本机只需要 Node/pnpm 与有仓库 workflow dispatch 权限的 gh 登录，不再需要 Android SDK、JDK、keystore、macOS 钥匙串或服务器 SSH 配置。关闭终端不会终止已触发的 CI。分发失败会以非零状态退出；请求结果不确定时显示 UUID 和 Actions 地址，不自动重发。
 
-### 命令行入口
+`--play`、`--only-play`、`--build-only` 映射到同一个 workflow 的 `play_track`、`only_play`、`build_only` 输入；默认不提交 Play。`--resume` 在联系 GitHub 前明确拒绝，不再发布本机历史制品；失败后打开原 Actions run 重跑失败 job。Play 的审核和正式公开状态必须单独确认。
 
-在维护者 Mac 的 `core/` 运行：
-
-- `pnpm android:release`：构建并发布官网 direct APK。
-- `pnpm android:release --play production`：同一提交构建官网 APK 和 Play AAB，分别发布官网、提交 Google Play 正式轨道。
-- `pnpm android:release --play internal`：官网 APK + Play 内部测试轨道。
-- 加 `--only-play --play production`：仅提交 Play，不切换官网下载包；仍复用同一构建/签名实现。
-- 加 `--build-only`：只构建、正式签名并保存，暂不发布；验收后用输出的 `--resume <目录>` 发布同一批文件，无需重建。
-
-只有手动 workflow_dispatch 触发 Android Release Build；普通 push 不会发包。仅发官网包时，若相对上次版本没有 Android/共享库/构建输入变化则跳过（仅网站/API/文档变化不会重打）；显式 build-only 和 Play 发布不跳过。入口固定最新 origin/main 提交，不打包当前目录未提交内容；云端依赖/Gradle缓存减少重复工作，Mac 仅签名发布。私钥、密码、Play 服务账号文件始终留在维护者电脑；配置路径见 `core/scripts/android-release/release.ts --help`，配置仅存文件位置，不存密码。云端产物是 unsigned staging，不能直接给用户安装。
-
-版本号从官网清单和（选择 Play 时）API 已用版本的最大值递增。官网发布有本机锁、服务端锁、校验和、证书/包名检查、禁止同名覆盖与降级；上传校验完成后原子替换 latest.apk，随后原子替换 latest.json。每次构建的提交、版本、校验值和发布回执保存在本机 builds 目录。失败保留产物；官网成功而 Play 失败时分别报告，不宣称同时上线。
+维护者 Mac 2026-10-14 创建的「发布 Android」快捷指令是个人历史配置，启动文件传入 `--play production` 时继续表示官网 + Play 正式轨道，但实际工作已全部迁到 CI。仓库改动不会自动更新该本机快捷指令；任何已保存的脚本副本都不能绕过统一的版本号与官网发布流程。
 
 App「我的」页由宿主提供原生版本和渠道：direct 检查官网清单、提示新版并打开下载，给出允许浏览器安装/覆盖升级说明；play 只打开 Google Play。iOS/桌面/鸿蒙不提供 Android 更新入口。不会静默安装；1004 没有检查更新功能，必须先手动下载安装新包。Google Play API提交成功仍须另查审核与公开可用状态。
 

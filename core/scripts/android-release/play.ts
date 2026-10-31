@@ -1,7 +1,7 @@
 import { createSign, createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
-/** Credentials are read only on the maintainer host and never copied into CI artifacts. */
+/** Credentials are read from a protected CI temporary file, never included in artifacts. */
 export async function playClient(credentialPath: string) {
   const key = JSON.parse(readFileSync(credentialPath, 'utf8'));
   if (key.type !== 'service_account') throw new Error('Google Play service-account credentials required');
@@ -34,7 +34,8 @@ export async function playClient(credentialPath: string) {
         return { maxVersionCode: Math.max(1004, ...codes), tracks: tracks.tracks ?? [] };
       } finally { await request(`edits/${edit.id}`, 'DELETE'); }
     },
-    async publish(aab: string, versionCode: number, track: 'internal' | 'production', versionName: string) {
+    async publish(aab: string, versionCode: number, track: 'internal' | 'production', versionName: string, notes: string) {
+      if (!notes.trim() || [...notes].length > 500) throw new Error('Play release notes must contain 1–500 characters');
       const edit = await request('edits', 'POST', {});
       let committed = false;
       try {
@@ -42,8 +43,8 @@ export async function playClient(credentialPath: string) {
         const uploaded = await request(`edits/${edit.id}/bundles?uploadType=media`, 'POST', undefined, bytes);
         if (Number(uploaded.versionCode) !== versionCode || uploaded.sha256 !== createHash('sha256').update(bytes).digest('hex')) throw new Error('Play upload identity mismatch');
         await request(`edits/${edit.id}/tracks/${track}`, 'PUT', { track, releases: [{ name: `${versionName} (${versionCode})`, versionCodes: [String(versionCode)], status: 'completed', releaseNotes: [
-          { language: 'zh-CN', text: '更新计时和训练功能，改进应用稳定性，增加应用更新入口。' },
-          { language: 'en-US', text: 'Updated timing and training features, stability improvements, and an app update entry.' },
+          { language: 'zh-CN', text: notes.trim() },
+          { language: 'en-US', text: notes.trim() },
         ] }] });
         await request(`edits/${edit.id}:validate`, 'POST');
         const result = await request(`edits/${edit.id}:commit`, 'POST');

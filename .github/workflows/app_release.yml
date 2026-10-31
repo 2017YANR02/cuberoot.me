@@ -18,6 +18,19 @@ on:
         required: true
         type: choice
         options: [android, windows, both]
+      play_track:
+        description: Optional Google Play submission
+        type: choice
+        default: none
+        options: [none, internal, production]
+      only_play:
+        description: Submit only Google Play, without website publication
+        type: boolean
+        default: false
+      build_only:
+        description: Keep signed artifacts without publication
+        type: boolean
+        default: false
       notes:
         description: Release notes
         required: true
@@ -36,7 +49,6 @@ env:
 jobs:
   build:
     if: github.ref == 'refs/heads/main'
-    environment: app-release
     strategy:
       fail-fast: false
       matrix:
@@ -56,6 +68,7 @@ jobs:
           filter: blob:none
           sparse-checkout: |
             core
+            .github/workflows
             tools/cstimer-scramble
             tools/solver/rust-cross
       - name: Validate source
@@ -63,8 +76,13 @@ jobs:
         shell: bash
         env:
           REQUEST_ID: ${{ inputs.request_id }}
+          PLATFORM: ${{ inputs.platform }}
+          ONLY_PLAY: ${{ inputs.only_play }}
+          PLAY_TRACK: ${{ inputs.play_track }}
         run: |
           set -euo pipefail
+          if [[ "$ONLY_PLAY" == true ]]; then [[ "$PLATFORM" == android && "$PLAY_TRACK" != none ]]; fi
+          if [[ "$PLAY_TRACK" != none && -n "$PLAY_TRACK" ]]; then [[ "$PLATFORM" != windows ]]; fi
           [[ "$RELEASE_COMMIT" =~ ^[a-f0-9]{40}$ ]]
           [[ "$REQUEST_ID" =~ ^[a-f0-9-]{36}$ ]]
           git merge-base --is-ancestor "$RELEASE_COMMIT" origin/main
@@ -105,25 +123,32 @@ jobs:
           pnpm --filter @cuberoot/mobile typecheck
           pnpm --filter @cuberoot/mobile test
           pnpm --filter @cuberoot/mobile cap:sync:android
-      - name: Sign Android with the existing production key
+      - name: Build unsigned Android artifacts
         if: matrix.platform == 'android' && inputs.platform != 'windows'
         working-directory: core
         shell: bash
         env:
-          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          MOBILE_UPLOAD_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
-          MOBILE_UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          MOBILE_UPLOAD_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          PLAY_TRACK: ${{ inputs.play_track }}
+          ONLY_PLAY: ${{ inputs.only_play }}
         run: |
           set -euo pipefail
-          test -n "$ANDROID_KEYSTORE_BASE64"
-          export MOBILE_UPLOAD_KEYSTORE_FILE="$RUNNER_TEMP/cuberoot-upload.jks"
-          trap 'rm -f "$MOBILE_UPLOAD_KEYSTORE_FILE"' EXIT
-          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$MOBILE_UPLOAD_KEYSTORE_FILE"
-          chmod 600 "$MOBILE_UPLOAD_KEYSTORE_FILE"
           chmod +x apps/mobile/android/gradlew
-          node apps/mobile/scripts/build-android.ts direct
-          node scripts/android-release/distribute.ts android
+          mkdir -p ../unsigned-staging
+          if [[ "$ONLY_PLAY" != true ]]; then
+            node apps/mobile/scripts/build-android.ts direct --unsigned-ci
+            cp apps/mobile/android/app/build/direct/outputs/apk/release/app-release-unsigned.apk ../unsigned-staging/direct.apk
+          fi
+          if [[ -n "$PLAY_TRACK" && "$PLAY_TRACK" != none ]]; then
+            node apps/mobile/scripts/build-android.ts play --unsigned-ci --bundle
+            cp apps/mobile/android/app/build/outputs/bundle/release/app-release.aab ../unsigned-staging/play.aab
+          fi
+      - uses: actions/upload-artifact@v4
+        if: matrix.platform == 'android' && inputs.platform != 'windows'
+        with:
+          name: unsigned-android-${{ github.run_id }}
+          path: unsigned-staging/
+          if-no-files-found: error
+          retention-days: 3
       - name: Build Windows installer and standalone executable
         if: matrix.platform == 'windows' && inputs.platform != 'android'
         working-directory: core
@@ -134,17 +159,88 @@ jobs:
           pnpm --filter @cuberoot/desktop exec tauri build --bundles nsis
           node scripts/android-release/distribute.ts windows
       - uses: actions/upload-artifact@v4
-        if: inputs.platform == matrix.platform || inputs.platform == 'both'
+        if: matrix.platform == 'windows' && inputs.platform != 'android'
         with:
           name: app-release-${{ matrix.platform }}-${{ github.run_id }}
           path: release-staging/
           if-no-files-found: error
           retention-days: 30
 
-  publish:
+  sign-android:
     needs: build
-    if: always() && github.ref == 'refs/heads/main' && !cancelled()
+    if: always() && github.ref == 'refs/heads/main' && !cancelled() && inputs.platform != 'windows'
     environment: app-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_commit }}
+          sparse-checkout: |
+            core/scripts/android-release
+            core/packages/shared/src
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/download-artifact@v4
+        with:
+          name: unsigned-android-${{ github.run_id }}
+          path: unsigned-staging
+      - name: Prepare pinned bundle verifier
+        if: inputs.play_track != '' && inputs.play_track != 'none'
+        run: |
+          curl -fsSL https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar -o "$RUNNER_TEMP/bundletool.jar"
+          echo "a099cfa1543f55593bc2ed16a70a7c67fe54b1747bb7301f37fdfd6d91028e29  $RUNNER_TEMP/bundletool.jar" | sha256sum --check
+      - name: Sign and verify with the existing production certificate
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ONLY_PLAY: ${{ inputs.only_play }}
+          PLAY_TRACK: ${{ inputs.play_track }}
+        run: |
+          set -euo pipefail
+          umask 077
+          key="$RUNNER_TEMP/cuberoot-upload.jks"
+          trap 'rm -f "$key"' EXIT
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$key"
+          build_tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          if [[ "$ONLY_PLAY" != true ]]; then
+            apk=core/apps/mobile/android/app/build/direct/outputs/apk/release/app-release.apk
+            mkdir -p "$(dirname "$apk")"
+            "$build_tools/zipalign" -P 16 -f 4 unsigned-staging/direct.apk "$RUNNER_TEMP/aligned.apk"
+            "$build_tools/apksigner" sign --ks "$key" --ks-key-alias "$ANDROID_KEY_ALIAS" --ks-pass env:ANDROID_STORE_PASSWORD --key-pass env:ANDROID_KEY_PASSWORD --out "$apk" "$RUNNER_TEMP/aligned.apk"
+            node core/scripts/android-release/distribute.ts android
+          fi
+          if [[ -n "$PLAY_TRACK" && "$PLAY_TRACK" != none ]]; then
+            jarsigner -keystore "$key" -storepass:env ANDROID_STORE_PASSWORD -keypass:env ANDROID_KEY_PASSWORD unsigned-staging/play.aab "$ANDROID_KEY_ALIAS"
+            BUNDLETOOL_JAR="$RUNNER_TEMP/bundletool.jar" node core/scripts/android-release/play-ci.ts prepare unsigned-staging/play.aab play-staging
+          fi
+      - uses: actions/upload-artifact@v4
+        if: inputs.only_play != true
+        with:
+          name: app-release-android-${{ github.run_id }}
+          path: release-staging/
+          if-no-files-found: error
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        if: inputs.play_track != '' && inputs.play_track != 'none'
+        with:
+          name: app-release-play-${{ github.run_id }}
+          path: play-staging/
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    needs: [build, sign-android]
+    if: always() && github.ref == 'refs/heads/main' && !cancelled() && inputs.build_only != true && inputs.only_play != true
+    environment: app-release-publish
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
@@ -185,3 +281,40 @@ jobs:
           ssh -i ~/.ssh/app_release -o BatchMode=yes -o StrictHostKeyChecking=yes "$DEPLOY_HOST" "mkdir -p /www/wwwroot/toolkit/downloads/$PLATFORM && flock /www/wwwroot/toolkit/downloads/$PLATFORM/.publish.lock node '$stage/publish-server.mjs' '$stage' '$PLATFORM'"
           curl --fail --silent --show-error "https://static.cuberoot.me/downloads/$PLATFORM/latest.json" > published.json
           node -e 'const fs=require("fs");const a=JSON.parse(fs.readFileSync("release-staging/latest.json"));const b=JSON.parse(fs.readFileSync("published.json"));if(a.versionCode!==b.versionCode||a.commit!==b.commit)process.exit(1)'
+
+  publish-play:
+    needs: sign-android
+    if: github.ref == 'refs/heads/main' && inputs.build_only != true && inputs.play_track != '' && inputs.play_track != 'none'
+    environment: app-release-publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_commit }}
+          sparse-checkout: |
+            core/scripts/android-release
+            core/packages/shared/src
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/download-artifact@v4
+        with:
+          name: app-release-play-${{ github.run_id }}
+          path: play-staging
+      - name: Submit the verified AAB to Google Play
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          PLAY_TRACK: ${{ inputs.play_track }}
+        run: |
+          set -euo pipefail
+          umask 077
+          export PLAY_SERVICE_ACCOUNT_FILE="$RUNNER_TEMP/play-account.json"
+          trap 'rm -f "$PLAY_SERVICE_ACCOUNT_FILE"' EXIT
+          test -n "$PLAY_SERVICE_ACCOUNT_JSON"
+          printf '%s' "$PLAY_SERVICE_ACCOUNT_JSON" > "$PLAY_SERVICE_ACCOUNT_FILE"
+          node core/scripts/android-release/play-ci.ts submit play-staging "$PLAY_TRACK"
