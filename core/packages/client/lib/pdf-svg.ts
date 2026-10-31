@@ -39,6 +39,8 @@ export async function embedSvg(
   const host = getSvgRenderHost();
   el.setAttribute('width', String(w));
   el.setAttribute('height', String(h));
+  // svg2pdf honors inherited visibility; the off-screen host must not hide the artwork.
+  el.style.visibility = 'visible';
   host.appendChild(el);
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -66,7 +66,7 @@ export default function AssistantAnswerActions({ turn, lang, active, onRetry, on
   };
   const pdf = async () => {
     setPdfBusy(true); setFailure('');
-    try { await downloadAssistantPdf(turn.question, exportText()); }
+    try { await downloadAssistantPdf(turn.question, turn.result!, lang, turn.createdAt); }
     catch { setFailure(tr({ zh: 'PDF 导出失败，请重试。', en: 'PDF export failed. Please retry.' })); }
     finally { setPdfBusy(false); }
   };
