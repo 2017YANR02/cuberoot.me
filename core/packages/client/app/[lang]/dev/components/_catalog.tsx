@@ -35,6 +35,7 @@ import { MethodStagePicker } from '@cuberoot/timer-ui/puzzle-picker';
 import { VariantSelect } from '@/components/VariantSelect';
 import { RangeSlider } from '@/components/RangeSlider/RangeSlider';
 import { ParamSliders, type ParamSliderSpec } from '@/components/ParamSliders';
+import { NavigationLoadOverlay, LoadingBrandMark } from '@/components/StartupStatus';
 import { Spinner } from '@/components/Spinner/Spinner';
 import ResetDefaultsButton from '@/components/ResetDefaultsButton';
 import PlaybackBar from '@cuberoot/timer-ui/PlaybackBar';
@@ -276,6 +277,22 @@ function ParamSlidersDemo() {
       onChange={setVals}
     />
   );
+}
+
+function NavigationLoadingDemo() {
+  const [pending, setPending] = useState(false);
+  useEffect(() => {
+    if (!pending) return;
+    const timer = window.setTimeout(() => setPending(false), 2500);
+    return () => window.clearTimeout(timer);
+  }, [pending]);
+  return <div style={{ display: 'grid', justifyItems: 'center', gap: 20 }}>
+    <LoadingBrandMark />
+    <button className="app-startup-button" onClick={() => setPending(true)} disabled={pending}>
+      {tr({ zh: '预览页面过渡', en: 'Preview page transition' })}
+    </button>
+    <NavigationLoadOverlay pending={pending} />
+  </div>;
 }
 
 function SpinnerDemo() {
@@ -960,10 +977,11 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'ClientLoadStatus',
+    Demo: NavigationLoadingDemo,
     import: "import { AppFailure, ClientLoadStatus, LinkPendingIndicator } from '@/components/StartupStatus';",
     category: 'more',
-    zh: '路由与客户端 chunk 共用轻量加载动画、超时和失败提示；AppLink 内的 LinkPendingIndicator 跟随 Next 导航状态显示浮动提示，不占页面高度。',
-    en: 'Shared animated route and chunk loading with timeout/retry; AppLink uses LinkPendingIndicator for floating feedback driven by Next navigation state without changing page geometry.',
+    zh: '原品牌 SVG 色块流光；导航等待 250ms 后显示主题遮罩，完成后淡出。支持减少动态效果和客户端加载超时重试。',
+    en: 'Original SVG animation with delayed navigation feedback, fade-out, reduced-motion support and chunk timeout/retry.',
   },
   {
     name: 'LessonVideoPlayer',

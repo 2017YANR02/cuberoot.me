@@ -4,7 +4,7 @@ import I18nProvider from '@/i18n/I18nProvider';
 import PageNoticeBar from '@/components/PageNoticeBar';
 import SiteChrome from '@/components/SiteChrome';
 import WeChatShareSync from '@/components/WeChatShareSync';
-import { ClientLoadStatus } from '@/components/StartupStatus';
+import { ClientLoadStatus, NavigationLoadingHost } from '@/components/StartupStatus';
 
 const SUPPORTED = ['en', 'zh'] as const;
 type Locale = typeof SUPPORTED[number];
@@ -33,6 +33,7 @@ export default async function LangLayout({
         {children}
       </Suspense>
       <WeChatShareSync />
+      <NavigationLoadingHost />
     </I18nProvider>
   );
 }

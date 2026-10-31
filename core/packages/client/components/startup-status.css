@@ -37,33 +37,48 @@
   text-align: center;
 }
 
-/* A portal keeps feedback out of the link's flow and transformed ancestors.
-   Delay only the visual reveal, never navigation or the finished page. */
+/* Keep navigation interruptible, without trapping clicks or keyboard focus. */
 .app-navigation-loading {
   position: fixed;
-  top: calc(0.75rem + env(safe-area-inset-top, 0px));
-  left: 50%;
-  transform: translateX(-50%);
+  inset: 0;
   z-index: 10000;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  max-width: calc(100vw - 2rem);
-  padding: 0.7rem 1rem;
-  border: 1px solid var(--border-default);
-  border-radius: 999px;
-  color: var(--muted-foreground);
-  font-size: 0.875rem;
+  display: grid;
+  place-content: center;
+  background: color-mix(in srgb, var(--background) 86%, transparent);
+  backdrop-filter: blur(3px);
   pointer-events: none;
-  animation: navigation-loading-reveal 140ms ease-out 120ms both;
+  animation: navigation-loading-reveal 180ms ease-out both;
 }
-@keyframes navigation-loading-reveal {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.app-navigation-loading.is-leaving { animation: navigation-loading-hide 180ms ease-out both; }
+.loading-brand-mark { position: relative; display: inline-block; width: 144px; height: 83px; }
+.loading-brand-mark img { display: block; width: 100%; height: 100%; }
+.loading-brand-mark .loading-brand-colours {
+  position: absolute;
+  inset: 0;
+  /* Light only the nine tiles, keeping the cube-root sign still. */
+  clip-path: inset(19% 7% 3% 48%);
+  filter: brightness(1.65);
+  mask-image: linear-gradient(110deg, transparent 35%, black 50%, transparent 65%);
+  mask-size: 300% 100%;
+  animation: loading-brand-wave 1.8s ease-in-out infinite;
 }
+@keyframes loading-brand-wave {
+  0% { mask-position: 100% 0; opacity: 0; }
+  20% { opacity: .85; }
+  75% { opacity: .85; }
+  100% { mask-position: 0% 0; opacity: 0; }
+}
+@keyframes navigation-loading-reveal { from { opacity: 0; } to { opacity: 1; } }
+@keyframes navigation-loading-hide { from { opacity: 1; } to { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
   .app-navigation-loading { animation: none; }
+  .app-navigation-loading.is-leaving { opacity: 0; }
+  .loading-brand-colours { display: none !important; }
 }
+@media (prefers-reduced-transparency: reduce) {
+  .app-navigation-loading { background: var(--background); backdrop-filter: none; }
+}
+@media print { .app-navigation-loading { display: none; } }
 
 .app-startup p,
 .app-startup-title {

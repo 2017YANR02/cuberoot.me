@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { useLinkStatus } from 'next/link';
-import { Spinner } from '@/components/Spinner/Spinner';
+import { useEffectiveTheme } from '@/lib/theme';
 import { tr, type Msg } from '@/i18n/tr';
 
 const DEFAULT_SLOW_LOAD_MS = 20_000;
@@ -87,21 +87,68 @@ export function ClientLoadStatus({
 
   return (
     <div className="app-startup app-startup-loading app-startup-page" role="status" aria-live="polite">
-      <Spinner size={28} />
+      <LoadingBrandMark />
       <p>{tr(label)}</p>
     </div>
   );
 }
 
-/** Lives under NextLink so cancellation, errors and completion follow Next's transition. */
-export function LinkPendingIndicator() {
-  const { pending } = useLinkStatus();
-  if (!pending) return null;
+/** Reuse the original SVG without duplicating or modifying its brand geometry. */
+export function LoadingBrandMark() {
+  const theme = useEffectiveTheme();
+  const src = theme === 'dark' ? '/icons/CubeRoot-mark-dark.svg' : '/icons/CubeRoot-mark.svg';
+  return <span className="loading-brand-mark" aria-hidden="true">
+    <img src={src} alt="" width={144} height={82} />
+    <img className="loading-brand-colours" src={src} alt="" width={144} height={82} />
+  </span>;
+}
+
+/** Shared by actual navigation and the component gallery preview. */
+export function NavigationLoadOverlay({ pending }: { pending: boolean }) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    if (!pending && !visible) return;
+    const timer = window.setTimeout(() => setVisible(pending), pending ? 250 : 180);
+    return () => window.clearTimeout(timer);
+  }, [pending, visible]);
+  if (!visible) return null;
   return createPortal(
-    <div className="app-navigation-loading" data-site-surface="popover" role="status" aria-live="polite">
-      <Spinner size={18} />
-      <span>{tr(COPY.loading)}</span>
+    <div className={`app-navigation-loading${pending ? '' : ' is-leaving'}`} role="status" aria-live="polite">
+      <LoadingBrandMark />
+      <span className="sr-only">{tr(COPY.loading)}</span>
     </div>,
     document.body,
   );
+}
+
+const pendingLinks = new Set<symbol>();
+const navigationListeners = new Set<() => void>();
+const notifyNavigation = () => navigationListeners.forEach(listener => listener());
+const subscribeNavigation = (listener: () => void) => {
+  navigationListeners.add(listener);
+  return () => { navigationListeners.delete(listener); };
+};
+const navigationSnapshot = () => pendingLinks.size > 0;
+const serverNavigationSnapshot = () => false;
+
+/** A single layout-owned portal survives the outgoing link unmounting so it can fade out. */
+export function NavigationLoadingHost() {
+  const pending = useSyncExternalStore(subscribeNavigation, navigationSnapshot, serverNavigationSnapshot);
+  return <NavigationLoadOverlay pending={pending} />;
+}
+
+/** Lives under NextLink so cancellation, errors and completion follow Next's transition. */
+export function LinkPendingIndicator() {
+  const { pending } = useLinkStatus();
+  useEffect(() => {
+    if (!pending) return;
+    const token = Symbol();
+    pendingLinks.add(token);
+    notifyNavigation();
+    return () => {
+      pendingLinks.delete(token);
+      notifyNavigation();
+    };
+  }, [pending]);
+  return null;
 }
