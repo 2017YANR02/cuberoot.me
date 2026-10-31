@@ -294,6 +294,29 @@ export default function LandingSearch({
     return () => { assistantRequest.current?.abort(); assistantRequest.current = null; };
   }, [conversation ? '' : query, lang]);
 
+  const [pendingReveal, setPendingReveal] = useState<{id:string; text:string; complete:boolean} | null>(null);
+  const [revealedAnswers, setRevealedAnswers] = useState<Record<string,string>>({});
+  const completedReply = useRef<string | null>(null);
+  const onAnswerRevealed = useCallback((id:string, text:string) => {
+    setRevealedAnswers(previous => previous[id] === text ? previous : {...previous, [id]:text});
+  }, []);
+  const assistantRevealing = !!pendingReveal && pendingReveal.text !== revealedAnswers[pendingReveal.id];
+  const conversationOwner = conversation?.owner;
+  const conversationKey = conversation?.id;
+  useEffect(() => {
+    if (conversationOwner === undefined || !conversationKey) return;
+    assistantConversations.setResponding(conversationOwner, conversationKey,
+      assistantRevealing ? 'writing' : assistantBusy ? (assistantStatus.phase === 'writing' ? 'writing' : 'thinking') : undefined);
+  }, [conversationOwner, conversationKey, assistantBusy, assistantRevealing, assistantStatus.phase]);
+  useEffect(() => {
+    if (conversationOwner === undefined || !conversationKey || assistantBusy || assistantRevealing || !pendingReveal?.complete || completedReply.current === pendingReveal.id) return;
+    completedReply.current = pendingReveal.id;
+    assistantConversations.replyCompleted(conversationOwner, conversationKey);
+  }, [conversationOwner, conversationKey, assistantBusy, assistantRevealing, pendingReveal]);
+  useEffect(() => () => {
+    if (conversationOwner !== undefined && conversationKey) assistantConversations.setResponding(conversationOwner, conversationKey, undefined);
+  }, [conversationOwner, conversationKey]);
+
   const onConversationChange = conversation?.onChange;
   useEffect(() => {
     onConversationChange?.({ turns: assistantTurns, conversationId: assistantConversation.current });
@@ -331,6 +354,7 @@ export default function LandingSearch({
     const controller = new AbortController();
     assistantRequest.current = controller;
     setOpen(true);
+    setPendingReveal(null);
     setAssistantBusy(true);
     setAssistantStatus({ phase: 'planning' });
     setAssistantError(null);
@@ -356,8 +380,9 @@ export default function LandingSearch({
         const result: AssistantAnswer = { answer: data.answer, actions: data.actions?.filter(action => typeof action.href === 'string' && isAssistantSourceHref(action.href)), artifacts: Array.isArray(data.artifacts) ? data.artifacts : [], sources: data.sources.filter(source => typeof source.href === 'string' && isAssistantSourceHref(source.href)) };
         if (!partial) {
           setAssistantAnswer(result);
-          if (conversation) assistantConversations.replyCompleted(conversation.owner, conversation.id);
         }
+        if (requestId) setPendingReveal({id: requestId, text: result.answer, complete: !partial});
+        else if (!partial && conversation) assistantConversations.replyCompleted(conversation.owner, conversation.id);
         setAssistantTurns([...previous, { question, images, result, partial, requestId, createdAt }]);
       };
       if (response.headers?.get('content-type')?.includes('text/event-stream')) {
@@ -1014,7 +1039,7 @@ export default function LandingSearch({
         </div>
   );
 
-  const assistantView = <SiteAssistantDialog onBranch={index => { assistantConversations.branch(owner, crypto.randomUUID(), assistantTurns.slice(0, index + 1)); router.push(`${langPrefix}/chat`); }} searchResults={conversation?.active && query.trim() && !assistantBusy ? searchResults : undefined} embedded={!!conversation} active={conversation?.active ?? true} key={`${assistantUser?.uid ?? "guest"}:${assistantUser?.wcaId ?? ""}`} images={assistantImages} onImagesChange={setAssistantImages} thinking={assistantThinking} onThinkingChange={setAssistantThinking} lang={lang} draft={assistantDraft} onDraftChange={setAssistantDraft} turns={assistantTurns} onFeedback={(id,value)=>setAssistantTurns(turns=>turns.map(turn=>turn.requestId===id?{...turn,feedback:value}:turn))} status={assistantStatus} busy={assistantBusy} error={assistantError} onAsk={(question, replaceLast, images) => void askAssistant(question, replaceLast, images)} onStop={stopAssistant} onClose={closeAssistant} onNew={() => { assistantConversation.current = null; stopAssistant(); setAssistantDraft(''); setAssistantImages([]); setAssistantTurns([]); setAssistantAnswer(null); setAssistantError(null); }} />;
+  const assistantView = <SiteAssistantDialog onAnswerRevealed={onAnswerRevealed} onBranch={index => { assistantConversations.branch(owner, crypto.randomUUID(), assistantTurns.slice(0, index + 1)); router.push(`${langPrefix}/chat`); }} searchResults={conversation?.active && query.trim() && !assistantBusy ? searchResults : undefined} embedded={!!conversation} active={conversation?.active ?? true} key={`${assistantUser?.uid ?? "guest"}:${assistantUser?.wcaId ?? ""}`} images={assistantImages} onImagesChange={setAssistantImages} thinking={assistantThinking} onThinkingChange={setAssistantThinking} lang={lang} draft={assistantDraft} onDraftChange={setAssistantDraft} turns={assistantTurns} onFeedback={(id,value)=>setAssistantTurns(turns=>turns.map(turn=>turn.requestId===id?{...turn,feedback:value}:turn))} status={assistantStatus} busy={assistantBusy} error={assistantError} onAsk={(question, replaceLast, images) => void askAssistant(question, replaceLast, images)} onStop={stopAssistant} onClose={closeAssistant} onNew={() => { assistantConversation.current = null; stopAssistant(); setAssistantDraft(''); setAssistantImages([]); setAssistantTurns([]); setAssistantAnswer(null); setAssistantError(null); }} />;
   if (conversation) return assistantView;
 
   return (

@@ -34,15 +34,29 @@
 .site-assistant-citation { display:inline; margin:0 3px; padding:2px 7px; border-radius:7px; background:var(--muted); color:var(--muted-foreground); font-size:11px; font-weight:500; text-decoration:none; vertical-align:baseline; box-decoration-break:clone; -webkit-box-decoration-break:clone; }
 .site-assistant-citation:hover { background:var(--accent-soft); color:var(--accent); }
 .site-assistant-status { display:flex; align-items:center; gap:8px; min-height:28px; margin:12px 0; }
-.site-assistant-status-icon { display:inline-flex; animation:site-assistant-pulse 1.6s ease-in-out infinite; }
-.site-assistant-status-dots { letter-spacing:2px; animation:site-assistant-pulse 1.6s ease-in-out infinite; }
+.site-assistant-status-text { color:var(--muted-foreground); font-size:14px; }
+@supports (background-clip:text) or (-webkit-background-clip:text) {
+  .site-assistant-status-text {
+    background:linear-gradient(110deg,color-mix(in srgb,var(--muted-foreground) 55%,transparent) 30%,var(--foreground) 46%,var(--foreground) 54%,color-mix(in srgb,var(--muted-foreground) 55%,transparent) 70%);
+    background-size:250% 100%;
+    background-clip:text;
+    -webkit-background-clip:text;
+    color:transparent;
+    animation:site-assistant-text-sweep 2.4s ease-in-out infinite;
+  }
+}
 .site-assistant-incomplete { color:var(--muted-foreground); font-size:12px; }
 .site-assistant-auth { width:min(100%,720px); margin:0 auto; }
 .site-assistant-auth-link { display:inline-flex; align-items:center; gap:8px; max-width:100%; min-height:44px; padding:8px 0; border:0; border-radius:4px; background:transparent; color:var(--muted-foreground); font:500 14px/1.6 var(--font-sans); text-align:left; cursor:pointer; }
 .site-assistant-auth-link svg { flex:none; }
 .site-assistant-auth-link:hover,.site-assistant-auth-link:active { color:var(--foreground); }
-@keyframes site-assistant-pulse { 50% { opacity:.35; } }
-@media(prefers-reduced-motion:reduce) { .site-assistant-status-icon,.site-assistant-status-dots { animation:none; } }
+@keyframes site-assistant-text-sweep {
+  0% { background-position:100% 0; }
+  65%,100% { background-position:0% 0; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .site-assistant-status-text { animation:none; background:none; color:var(--muted-foreground); }
+}
 .site-assistant-compose { width:min(100%,768px); box-sizing:border-box; margin:0 auto; padding:14px 24px 18px; }
 .site-assistant-input { display:flex; flex-direction:column; gap:10px; border:1px solid var(--border-default); border-radius:26px; padding:16px 12px 10px; background:var(--muted); }
 .site-assistant-draft { resize:none; min-height:28px; max-height:180px; overflow-y:auto; width:100%; min-width:0; box-sizing:border-box; border:0; background:transparent; color:inherit; font:inherit; line-height:1.5; padding:0 4px; }
@@ -68,7 +82,8 @@
 .site-assistant-examples>.site-assistant-examples-intro { margin-bottom:28px; text-align:center; }
 .site-assistant-example-groups { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:28px; align-items:start; }
 .site-assistant-example-group { min-width:0; display:flex; flex-direction:column; gap:8px; }
-.site-assistant-example-group>h4 { margin:0 0 4px; font-size:15px; font-weight:600; }
+.site-assistant-example-heading { display:flex; align-items:baseline; flex-wrap:wrap; column-gap:10px; row-gap:2px; margin-bottom:4px; }
+.site-assistant-example-heading>h4 { margin:0; font-size:15px; font-weight:600; }
 .site-assistant-examples .site-assistant-action { justify-content:flex-start; text-align:left; padding:10px 12px; border-radius:12px; font-size:14px; line-height:1.5; overflow-wrap:anywhere; }
 .site-assistant-chart { padding:4px 0 12px; }
 .site-assistant-chart canvas { max-width:100%; }
@@ -170,4 +185,15 @@ body:has(.deskpet-search-workspace:not([inert])) .chat-route-placeholder { displ
   .site-assistant-embedded .site-assistant-images { flex-wrap:nowrap; overflow-x:auto; }
   .site-assistant-embedded .site-assistant-image { flex:none; }
   .site-assistant-embedded .site-assistant-image img { width:72px; height:72px; }
+}
+
+@keyframes site-assistant-letter-reveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.site-assistant-letter {
+  animation: site-assistant-letter-reveal 280ms ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-assistant-letter { animation: none; }
 }
