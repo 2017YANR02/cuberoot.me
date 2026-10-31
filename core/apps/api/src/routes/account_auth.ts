@@ -1125,21 +1125,34 @@ accountAuthRoutes.get('/auth/profile', async (c) => {
   const uid = await requireAppUserId(c);
   const profile = await getAccountBasicProfile(uid);
   if (!profile) return c.json({ error: 'account not found' }, 404);
-  return c.json({ profile });
+  const [selection] = await query<{ deskpet_selection: string | null }>('SELECT deskpet_selection FROM app_users WHERE id = ?', [uid]);
+  return c.json({ profile, deskPetSelection: selection?.deskpet_selection ?? null });
 });
 
 accountAuthRoutes.post('/auth/profile', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
   const uid = await requireAppUserId(c);
-  const body: { name?: unknown; avatar?: unknown; basic?: unknown } = await c.req
-    .json<{ name?: unknown; avatar?: unknown; basic?: unknown }>()
+  const body: { name?: unknown; avatar?: unknown; basic?: unknown; deskPetSelection?: unknown; expectedUid?: unknown } = await c.req
+    .json<{ name?: unknown; avatar?: unknown; basic?: unknown; deskPetSelection?: unknown; expectedUid?: unknown }>()
     .catch(() => ({}));
   const hasName = body.name !== undefined;
   const hasAvatar = body.avatar !== undefined;
   const hasBasic = body.basic !== undefined;
-  if ([hasName, hasAvatar, hasBasic].filter(Boolean).length !== 1) {
+  const hasPet = body.deskPetSelection !== undefined;
+  if ([hasName, hasAvatar, hasBasic, hasPet].filter(Boolean).length !== 1) {
     return c.json({ error: 'provide exactly one profile field' }, 400);
+  }
+
+  if (hasPet) {
+    if (body.expectedUid !== uid) return c.json({ error: 'Account changed' }, 409);
+    const id = body.deskPetSelection;
+    if (typeof id !== 'string' || !/^[a-z][a-z0-9-]{0,79}$/.test(id)) return c.json({ error: 'Invalid pet' }, 400);
+    // Store stable asset IDs, including admin preview assets not yet in the catalog.
+    // This preference never grants access to locked or removed pets.
+    const rows = await query('UPDATE app_users SET deskpet_selection = ? WHERE id = ? AND merged_into_user_id IS NULL RETURNING id', [id, uid]);
+    if (!rows.length) return c.json({ error: 'Account changed' }, 409);
+    return c.json({ ok: true });
   }
 
   if (hasBasic) {

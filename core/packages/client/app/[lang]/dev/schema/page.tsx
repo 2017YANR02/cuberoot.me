@@ -586,6 +586,7 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 300, slug: 'account_deskpet_selection', desc: { zh: '账号桌宠选择跨设备同步', en: 'Account companion selection across devices' } },
   { n: 299, slug: 'calendar_competitions', desc: { zh: '个人比赛日程唯一关联与删除记录', en: 'Personal competition event identity and deletion records' } },
   { n: 298, slug: 'recon_capture', desc: { zh: '私有视频采集样本、原始动作绑定和人工时间对齐版本', en: 'Private video captures, original move bindings and human alignment revisions' } },
   { n: 297, slug: 'recon_intake_source', desc: { zh: '记录复盘收录来源及快照，防止重复收录', en: 'Record reconstruction intake source and snapshot to prevent duplicates' } },

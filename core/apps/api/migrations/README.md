@@ -117,3 +117,5 @@ psql "$DATABASE_URL" -c 'SELECT filename, applied_at FROM _schema_migrations ORD
 课时视频封面增量 `0244_platform_lesson_covers.sql` 让每个课时修订关联独立封面媒体；上传图片与视频截帧共用同一受保护媒体链路。
 
 `0249_friend_chat.sql` adds private friend conversations and immutable messages, per-user read cursors and idempotent sends. Removing a friendship retains history; deleting either account cascades the entire conversation. Apply only through an authorized deployment; local fixtures use isolated databases.
+
+`0300_account_deskpet_selection.sql` 为账号增加桌宠选择。复用账号资料接口，合并保留目标账号的非空选择，注销随账号删除。需先迁移数据库再发布服务端，最后发布客户端。

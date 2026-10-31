@@ -9,7 +9,8 @@ import { THEMES } from '@/lib/deskpet-themes';
 const { getMyPets, getDeskPetCatalog } = vi.hoisted(() => ({ getMyPets: vi.fn(), getDeskPetCatalog: vi.fn() }));
 vi.mock('@/lib/deskpet-api', () => ({ getMyPets, getDeskPetCatalog }));
 const auth = vi.hoisted(() => ({ admin: false }));
-vi.mock('@/lib/auth-store', () => ({ hasAdminAccess: () => auth.admin, useAuthStore: (select: (state: unknown) => unknown) => select({ user: { uid: 66 } }) }));
+vi.mock('@/lib/auth-store', () => ({ hasAdminAccess: () => auth.admin, getSessionToken: () => null, useAuthStore: Object.assign((select: (state: unknown) => unknown) => select({ user: { uid: 66 } }), { getState: () => ({ user: { uid: 66 } }), subscribe: () => () => {} }) }));
+vi.mock('@/lib/account-api', () => ({ fetchAccountDeskPetSelection: vi.fn(), updateAccountDeskPetSelection: vi.fn() }));
 vi.mock('@/i18n/tr', () => ({ tr: (text: { en: string }) => text.en }));
 vi.mock('@/components/AppLink', () => ({ default: ({ children, prefetch: _, ...props }: { children: ReactNode; prefetch?: boolean }) => createElement('a', props, children) }));
 vi.mock('@/components/PetLevelBadge', () => ({ default: ({ bond }: { bond: number }) => createElement('span', { 'data-bond': bond }) }));
@@ -41,7 +42,7 @@ function expectPet(id: 'rootbeast' | 'clawd', bond: string | null) {
 }
 
 it('uses the selected pet instead of the first adoption on initial load', async () => {
-  localStorage.setItem('clawd-deskpet-char', 'clawd');
+  localStorage.setItem('clawd-deskpet-char:account:66', JSON.stringify({choice: 'clawd', pending: false}));
   await render();
   expectPet('clawd', '2');
 });
@@ -52,8 +53,8 @@ it('updates mounted cards on same-tab and cross-tab selection without refetching
   await act(async () => setDeskPetSelection('clawd'));
   expectPet('clawd', '2');
   await act(async () => {
-    localStorage.setItem('clawd-deskpet-char', 'rootbeast');
-    window.dispatchEvent(new StorageEvent('storage', { key: 'clawd-deskpet-char', newValue: 'rootbeast' }));
+    localStorage.setItem('clawd-deskpet-char:account:66', JSON.stringify({choice: 'rootbeast', pending: false}));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'clawd-deskpet-char:account:66', newValue: 'rootbeast' }));
   });
   expectPet('rootbeast', '8');
   expect(getMyPets).toHaveBeenCalledOnce();
@@ -61,20 +62,20 @@ it('updates mounted cards on same-tab and cross-tab selection without refetching
 
 it('shows the selected unadopted pet without another pet’s level', async () => {
   getMyPets.mockResolvedValue([{ id: 'rootbeast', care: { bond: 8 } }]);
-  localStorage.setItem('clawd-deskpet-char', 'clawd');
+  localStorage.setItem('clawd-deskpet-char:account:66', JSON.stringify({choice: 'clawd', pending: false}));
   await render();
   expectPet('clawd', null);
 });
 
 it('keeps the selected companion when its care data is unavailable', async () => {
   getMyPets.mockRejectedValue(new Error('offline'));
-  localStorage.setItem('clawd-deskpet-char', 'clawd');
+  localStorage.setItem('clawd-deskpet-char:account:66', JSON.stringify({choice: 'clawd', pending: false}));
   await render();
   expectPet('clawd', null);
 });
 
 it('falls back to an available pet when the saved selection is removed', async () => {
-  localStorage.setItem('clawd-deskpet-char', 'clawd');
+  localStorage.setItem('clawd-deskpet-char:account:66', JSON.stringify({choice: 'clawd', pending: false}));
   getDeskPetCatalog.mockResolvedValue({ revision: 2, entries: [{ id: 'clawd', locked: false, removed: true }] });
   await render();
   expectPet('rootbeast', '8');
@@ -82,7 +83,7 @@ it('falls back to an available pet when the saved selection is removed', async (
 
 it('retains an administrator’s selected hidden companion', async () => {
   auth.admin=true;
-  localStorage.setItem('clawd-deskpet-char', 'clawd');
+  localStorage.setItem('clawd-deskpet-char:account:66', JSON.stringify({choice: 'clawd', pending: false}));
   getDeskPetCatalog.mockResolvedValue({ revision: 2, entries: [{ id: 'clawd', locked: true, removed: true }] });
   await render();
   expectPet('clawd', '2');
