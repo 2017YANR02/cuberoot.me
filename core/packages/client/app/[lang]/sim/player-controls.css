@@ -1295,6 +1295,7 @@
 .sim-keyboard-switcher .vkb-toggle {
   margin-top: 0;
 }
+.sim-keyboard-toggles { display: contents; }
 .sim-keyboard-switcher .sim-keymap-open-btn,
 .sim-keyboard-switcher .reset-defaults-btn {
   padding: 4px 10px;
@@ -1527,8 +1528,11 @@
     gap: 8px;
   }
   .sim-keyboard-switcher:has(.vkb-toggle) {
-    grid-template-columns: 44px 44px minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+  .sim-keyboard-toggles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sim-keyboard-toggles .vkb-toggle { width: 100%; height: 44px; padding: 0; justify-content: center; }
+  .sim-keyboard-toggles .vkb-toggle svg { width: 18px; height: 18px; }
   .sim-keyboard-switcher .sim-kb-sep { display: none; }
   .sim-keyboard-switcher > button { height: 44px; padding-inline: 4px; }
   .sim-alg-tools > .sim-player-tools { row-gap: 16px; }

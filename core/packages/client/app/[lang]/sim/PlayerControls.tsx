@@ -2502,15 +2502,6 @@ export default function PlayerControls({
   const hasTransformPanel = typeof puzzleKind === 'number' || puzzleKind === 'mirror' || puzzleKind === 'mirror2' || puzzleKind === 'sphere';
   const basicTools = <>
     <button disabled={corner?.endAnchor === false || hasHandNotation(algDraft)} onClick={tool(invertForPuzzle)} title={t('取逆', 'Invert')}>{t('取逆', 'Invert')}</button>
-    {/* 消步:实时消步开关(默认开)。开 = 手势 / 键盘转动追加时自动合并 / 抵消重复转动,
-        并对当前解法消一次步;关 = 原样保留。取代原一次性「消步」按钮。 */}
-    {!isIvy && (
-      <Toggle
-        label={t('消步', 'Reduce')}
-        value={settings.liveReduce !== false}
-        onChange={setLiveReduce}
-      />
-    )}
     {!isSquarePuzzle && !isIvy && !corner && !isTwistyMode && (
       <button
         disabled={hasHandNotation(algDraft)}
@@ -2519,6 +2510,15 @@ export default function PlayerControls({
       >
         {t('去括号', 'Expand')}
       </button>
+    )}
+    {/* 消步:实时消步开关(默认开)。开 = 手势 / 键盘转动追加时自动合并 / 抵消重复转动,
+        并对当前解法消一次步;关 = 原样保留。取代原一次性「消步」按钮。 */}
+    {!isIvy && (
+      <Toggle
+        label={t('消步', 'Reduce')}
+        value={settings.liveReduce !== false}
+        onChange={setLiveReduce}
+      />
     )}
   </>;
   const undoTool = (
@@ -2783,7 +2783,7 @@ export default function PlayerControls({
       <div className="sim-keyboard-section">
         <div className="sim-keyboard-switcher">
           {!isTwistyMode && (
-            <>
+            <div className="sim-keyboard-toggles">
               <button
                 type="button"
                 className={'vkb-toggle' + (kbVariant === 'alg' ? ' active' : '')}
@@ -2804,9 +2804,9 @@ export default function PlayerControls({
               >
                 <Grid3x3 size={14} />
               </button>
-              <span className="sim-kb-sep" aria-hidden />
-            </>
+            </div>
           )}
+          {!isTwistyMode && <span className="sim-kb-sep" aria-hidden />}
           <button
             type="button"
             className="sim-keymap-open-btn"
