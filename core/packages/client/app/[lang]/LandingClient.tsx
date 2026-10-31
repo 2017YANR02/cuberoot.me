@@ -140,7 +140,7 @@ export default function LandingPage() {
   const user = useAuthUser();
   const compFollows = useCompFollows();
   const personalKey = user ? `${user.uid ?? ''}:${user.wcaId}` : null;
-  const [personalReadyKey, setPersonalReadyKey] = useState<string | null>(null);
+  const [personalReadyKey, setPersonalReadyKey] = useRetainedState<string | null>('home:personalReadyKey', null);
   const onPersonalReady = useCallback(() => setPersonalReadyKey(personalKey), [personalKey, setPersonalReadyKey]);
   const personalLoading = Boolean(user && (!compFollows.loaded || personalReadyKey !== personalKey));
   const [guideOpen, setGuideOpen] = useState(false);
