@@ -1,12 +1,12 @@
 'use client';
 
-import BackHome from '@/components/BackHome';
+import PageBackLink from '@/components/PageBackLink';
 import { usePathname } from 'next/navigation';
 import { BookOpen, Building2, Compass, GraduationCap, UsersRound } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import { useAuthUser, useIsAdmin } from '@/lib/auth-store';
-import { matchPlatformRoute, PLATFORM_PUBLIC_NAV, PLATFORM_ROUTES } from '@/lib/platform-routes';
+import { matchPlatformRoute, platformParentHref, PLATFORM_PUBLIC_NAV, PLATFORM_ROUTES } from '@/lib/platform-routes';
 import type { PlatformRouteDefinition } from '@/lib/platform-types';
 import './platform.css';
 
@@ -53,7 +53,7 @@ export function PlatformShell({ children }: { children: React.ReactNode }) {
   return (
     <div className={`platform-shell${compactPage ? ' platform-shell--competitions' : ''}`}>
       <header className="platform-masthead">
-        <div className="page-back-heading"><BackHome />
+        <div className="page-back-heading"><PageBackLink fallback={platformParentHref(platformSegments(pathname))} />
         <AppLink href={competitionPage ? '/platform/events/online' : orderPage ? '/platform/orders' : '/platform'} className="platform-wordmark" aria-label={competitionPage ? t('比赛首页', 'Competitions home') : orderPage ? t('我的订单', 'My orders') : t('Platform 首页', 'Platform home')}>
           <span className="platform-wordmark-mark" aria-hidden>CR</span>
           <span>{competitionPage ? t('比赛', 'Competitions') : orderPage ? t('订单', 'Orders') : t('学习空间', 'Learning')}</span>

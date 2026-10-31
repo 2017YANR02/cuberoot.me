@@ -20,6 +20,15 @@ describe('account entry return navigation', () => {
     expect(url(parent).searchParams.get('pet')).toBe('calico');
     expect(back(parent)).toBe('/account?settings=appearance');
   });
+  it('keeps the immediate parent for deeper pages before returning to the account entry', () => {
+    const entry = href('/org', '/account?view=main');
+    const child = href('/org/school/students/student/credits', entry);
+    const parent = back(child, '/org/school/students/student')!;
+    expect(url(parent).pathname).toBe('/org/school/students/student');
+    expect(url(back(parent, '/org/school/students')!).pathname).toBe('/org/school/students');
+    expect(back(entry, '/')).toBe('/account?view=main');
+    expect(url(back(child, 'https://evil.test/org')!).pathname).toBe('/org');
+  });
   it('does not affect other entry points or spread context into unrelated pages', () => {
     expect(href('/pets', '/')).toBe('/pets');
     expect(back('/pets')).toBeNull();

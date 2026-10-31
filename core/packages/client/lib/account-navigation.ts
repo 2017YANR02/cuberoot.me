@@ -53,11 +53,19 @@ export function accountNavigationHref(href: string, current: string): string {
   return target.pathname + target.search + target.hash;
 }
 
-export function accountNavigationBack(current: string): string | null {
+export function accountNavigationBack(current: string, parentHref = '/'): string | null {
   const url = parse(current);
   if (!url) return null;
   const origin = context(url);
   if (!origin || !related(url.pathname, origin.entry)) return null;
   if (bare(url.pathname).replace(/\/$/, '') === bare(parse(origin.entry)!.pathname).replace(/\/$/, '')) return origin.back;
+  const parent = parse(parentHref);
+  const parentPath = parent && bare(parent.pathname).replace(/\/$/, '');
+  // A deeper page must visit its own parent before returning to the account entry.
+  if (parent && parentPath && related(parent.pathname, origin.entry)
+    && parentPath !== bare(parse(origin.entry)!.pathname).replace(/\/$/, '')
+    && bare(url.pathname).startsWith(parentPath + '/')) {
+    return accountNavigationHref(parentHref, current);
+  }
   return accountNavigationHref(origin.entry, current);
 }

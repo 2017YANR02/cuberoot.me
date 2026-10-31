@@ -195,6 +195,16 @@ export function matchPlatformRoute(segments: readonly string[]): PlatformRouteMa
   return null;
 }
 
+/** Return to the nearest registered parent, skipping URL-only grouping segments. */
+export function platformParentHref(segments: readonly string[]): string {
+  if (segments.length === 0) return '/';
+  for (let length = segments.length - 1; length > 0; length--) {
+    const parent = segments.slice(0, length);
+    if (matchPlatformRoute(parent)) return '/platform/' + parent.map(encodeURIComponent).join('/');
+  }
+  return '/platform';
+}
+
 export function fillPlatformParams(template: string, params: Record<string, string>): string {
   return template.replace(/:([A-Za-z][A-Za-z0-9]*)/g, (_, name: string) => encodeURIComponent(params[name] ?? ''));
 }
