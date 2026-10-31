@@ -5,7 +5,7 @@ import { useModalBackdrop, useModalDismiss } from '@/hooks/useModalDismiss';
 import { ClearButton } from '@/components/ClearButton';
 
 // Ported from packages/client-vite/src/pages/trainer/TrainerRunPage.tsx
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode, type CSSProperties } from 'react';
 import Link from '@/components/AppLink';
 import { parseAsString } from 'nuqs';
 import {
@@ -14,7 +14,7 @@ import {
   useTrainingSearchParams, trainingQueryKey,
 } from '@/lib/training-host';
 import { useTranslation } from 'react-i18next';
-import { Copy, Check, HelpCircle, QrCode, RotateCcw, X } from '@app-foundation/icons/lucide';
+import { LayoutTemplate, Copy, Check, HelpCircle, QrCode, RotateCcw, X } from '@app-foundation/icons/lucide';
 import { Tooltip } from '@/components/Tooltip';
 import { ALG_CATALOG, getAlgSetMeta, type AlgCase } from '@cuberoot/shared/alg';
 import { loadTrainingAlg as loadAlg } from '@/lib/alg_case_alignment';
@@ -23,9 +23,10 @@ import {
   completedRecapCount, readSessionSelection, type TrainerMode, type TrainerSolve,
 } from '@/lib/trainer-store';
 import TimerFontPicker from '@/components/TimerFontPicker';
+import { useTrainerLayout } from '@/app/[lang]/alg/_trainer/useTrainerLayout';
 import { useTrainerSplitScreen } from '@/hooks/useTrainerSplitScreen';
 import { useSpaceHoldTimer } from '@/hooks/useSpaceHoldTimer';
-import { GestureWheel, useGestureWheel } from '@cuberoot/timer-ui';
+import { GestureWheel, useGestureWheel, TimerSoloLayoutEditor } from '@cuberoot/timer-ui';
 import { useCopy } from '@/hooks/useCopy';
 import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
 import BoolToggle from '@/components/BoolToggle';
@@ -83,6 +84,8 @@ import { tr } from '@/i18n/tr';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { ClientLoadStatus } from '@/components/StartupStatus';
 import { SettingsPopover } from '@/components/TrainingSettings';
+
+const TRAINER_LAYOUT_REGIONS = { scrambleGap: '.trainer-scramble-line', timerGap: '.trainer-timer', cubeGap: '.trainer-layout-cube:not(:empty)' };
 
 /** 成绩回看复用训练卡片，生命周期与训练游标完全分离。 */
 function TrainerResultDialog({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
@@ -779,7 +782,10 @@ export default function TrainerRunClient() {
    * 有弹层盖着:计时和全局按键一律让位 —— 空格别在背后起表,←/→ 别在背后翻题。
    * 声明在计时 / 键盘之前,它俩要读它。
    */
-  const overlayOpen = qrOpen || metaCase != null || resultSolve != null || optsOpen || historyOpen || (trainingHost != null && statsExpanded);
+  const [layoutEditing, setLayoutEditing] = useState(false);
+  const trainerLayout = useTrainerLayout();
+  const finishLayoutEditing = useCallback(() => setLayoutEditing(false), []);
+  const overlayOpen = layoutEditing || qrOpen || metaCase != null || resultSolve != null || optsOpen || historyOpen || (trainingHost != null && statsExpanded);
   const overlayOpenRef = useRef(false);
   overlayOpenRef.current = overlayOpen;
 
@@ -916,6 +922,12 @@ export default function TrainerRunClient() {
     // 计时面板内也有按钮(标记条等)— 按它们不应触发按压计时(否则点了直接开始计时)。
     // 设置面板开着时整个 stage 也一并跳过:面板外那一下只该关面板,不该切打乱 / 起表。
     ignoreTarget: (t) => optsOpenRef.current || shouldIgnoreTimerTarget(t),
+    preferLongPress: target => target instanceof Element && target.closest('.trainer-scramble-line') !== null,
+    onLongPress: (target) => {
+      const key = target instanceof Element ? target.closest<HTMLElement>('[data-trainer-case]')?.dataset.trainerCase : null;
+      const k = key ?? useTrainerStore.getState().currentKey;
+      if (k) useTrainerMarks.getState().applyMarks([k], { s: 'learning' });
+    },
     canGesture: () => {
       const st = useTrainerStore.getState().timerState;
       return st === TimerState.NOT_RUNNING || st === TimerState.STOPPING;
@@ -1178,7 +1190,7 @@ export default function TrainerRunClient() {
    */
   const cubeCase = currentKey ? findCaseByKey(cases, currentKey) ?? null : null;
   const trainerCube = useTrainerCube({
-    enabled: smartCube && !isMemo && !splitActive && storePuzzle === puzzle && storeSet === sessionId,
+    enabled: smartCube && !layoutEditing && !isMemo && !splitActive && storePuzzle === puzzle && storeSet === sessionId,
     timing,
     puzzle: puzzle ?? null,
     sessionSet: storeSet,
@@ -1554,7 +1566,14 @@ export default function TrainerRunClient() {
   </>;
 
   return (
-    <div className={`trainer-root${trainingHost && !isMemo && !splitActive && !emptySelection ? ' trainer-root--fixed' : ''}${multi ? ' trainer-root--multi' : ''}`}>
+    <div data-layout-editing={layoutEditing ? '' : undefined} style={{
+      '--trainer-cube-scale': trainerLayout.settings.soloLayout.cubeScale,
+      '--trainer-scramble-scale': trainerLayout.settings.scrambleFontScale,
+      '--trainer-timer-scale': trainerLayout.settings.timerFontScale,
+      '--trainer-cube-gap': `${trainerLayout.settings.soloLayout.cubeGap}px`,
+      '--trainer-scramble-gap': `${trainerLayout.settings.soloLayout.scrambleGap}px`,
+      '--trainer-timer-gap': `${trainerLayout.settings.soloLayout.timerGap}px`,
+    } as CSSProperties} className={`trainer-root trainer-root--adjustable${trainingHost && !isMemo && !splitActive && !emptySelection ? ' trainer-root--fixed' : ''}${multi ? ' trainer-root--multi' : ''}`}>
       {!isMemo && <SmartCubeRow
         enabled={smartCube} onEnabledChange={setSmartCube} state={trainerCube}
         supported={!splitActive && puzzleHasSmartCube(puzzle)}
@@ -1583,6 +1602,14 @@ export default function TrainerRunClient() {
           hosted
           triggerPrefix={(
             <div className="trainer-top-actions">
+              {!isMemo && !splitActive && !emptySelection && <Tooltip content={tr({ zh: '调整布局', en: 'Edit layout' })}>{tip => (
+                <button {...tip} type="button" className="trainer-layout-toggle" data-no-timer
+                  aria-label={tr({ zh: '调整布局', en: 'Edit layout' })} aria-pressed={layoutEditing}
+                  disabled={timerState !== TimerState.NOT_RUNNING}
+                  onClick={() => setLayoutEditing(value => !value)}>
+                  <LayoutTemplate size={18} strokeWidth={1.6} />
+                </button>
+              )}</Tooltip>}
               <Link href="/alg/progress" className="trainer-progress-link" prefetch={false}>
                 {tr({ zh: '进度', en: 'Progress' })}
               </Link>
@@ -2202,15 +2229,15 @@ export default function TrainerRunClient() {
               ]
                 .filter(row => !!row.s)
                 .map((row, i) => (
-                  <div className="trainer-scramble-row" key={i}>
+                  <div className="trainer-scramble-row" key={i} data-trainer-case={row.c ? caseKey(row.c) : undefined}>
                     {/* 每条自带标记条(与左边「上三个」那三张卡片一一对应):
                         屏上三题各是各的,一条公共标记条指谁都不对。 */}
                     {showStageThumb && row.c && !row.bottom && (
                       <div className="trainer-stage-marks">
-                        <CaseMarkBar k={caseKey(row.c)} />
+                        <CaseMarkBar k={caseKey(row.c)} onlyActive />
                       </div>
                     )}
-                    {showStageThumb && row.c && row.bottom && row.s ? <DoubleZbllThumb top={row.c} bottom={row.bottom} scramble={row.s} /> : showStageThumb && row.c && (
+                    <div className="trainer-layout-cube">{showStageThumb && row.c && row.bottom && row.s ? <DoubleZbllThumb top={row.c} bottom={row.bottom} scramble={row.s} /> : showStageThumb && row.c && (
                       <CaseThumb
                         puzzle={puzzle}
                         set={setSlug}
@@ -2221,8 +2248,9 @@ export default function TrainerRunClient() {
                         local
                       />
                     )}
+                    </div>
                     <div className="trainer-scramble-line">
-                      {!showStageThumb && row.c && <CaseMarkBar k={caseKey(row.c)} />}
+                      {!showStageThumb && row.c && <CaseMarkBar k={caseKey(row.c)} onlyActive />}
                       <ScrambleHeader
                         scramble={shownScramble(row.s)}
                         hint={i === 0 ? trainerCube.scrambleHint : null}
@@ -2262,14 +2290,14 @@ export default function TrainerRunClient() {
               打乱还没算出来时(虚拟集)不出图 —— 空 setup 会渲染成一个已还原的方块,那是假的。 */}
           {!multi && (scramblePending ? scrambleLoading : (
             <>
-              {showStageThumb && currentCase && currentBottomCase && currentScramble ? (
+              <div className="trainer-layout-cube">{showStageThumb && currentCase && currentBottomCase && currentScramble ? (
                 showLiveTrainerCube
                   ? <TrainerLiveCube state={trainerCube}
                       idle={<DoubleZbllThumb top={currentCase} bottom={currentBottomCase} scramble={currentScramble} />} />
                   : <DoubleZbllThumb top={currentCase} bottom={currentBottomCase} scramble={currentScramble} />
               ) : showStageThumb && currentCase && (
                 <div className="trainer-figure">
-                  <CaseMarkBar k={caseKey(currentCase)} />
+                  <CaseMarkBar k={caseKey(currentCase)} onlyActive />
                   {/* 出题时出识别图,动手之后才换实时那颗 —— 换的时机归 TrainerLiveCube 管,
                       见它的头注。没瞄准(还没把这题喂给魔方)时也是识别图:那会儿魔方上的
                       状态根本不是这题。 */}
@@ -2294,9 +2322,10 @@ export default function TrainerRunClient() {
                   )}
                 </div>
               )}
+              </div>
               {/* 打乱公式紧跟在图下方；关图后星标并到公式左侧，不再占一整行。 */}
               <div className="trainer-scramble-line">
-                {!showStageThumb && currentCase && <CaseMarkBar k={caseKey(currentCase)} />}
+                {!showStageThumb && currentCase && <CaseMarkBar k={caseKey(currentCase)} onlyActive />}
                 <ScrambleHeader
                   scramble={shownScramble(currentScramble)}
                   hint={trainerCube.scrambleHint}
@@ -2331,6 +2360,10 @@ export default function TrainerRunClient() {
           </div>
         </div>
 
+        {layoutEditing && <TimerSoloLayoutEditor surfaceRef={stageRef}
+          contentKey={`${currentKey}-${multi}-${timing}-${showStageThumb}-${scramblePending}`} regionSelectors={TRAINER_LAYOUT_REGIONS}
+          getSettings={trainerLayout.getSettings} updateSettings={trainerLayout.updateSettings}
+          language={isZh ? 'zh' : 'en'} onDone={finishLayoutEditing} />}
         {!trainingHost && reviewContent}
 
       </div>

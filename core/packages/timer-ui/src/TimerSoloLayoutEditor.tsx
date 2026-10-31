@@ -17,14 +17,15 @@ type Region = typeof regions[number];
 /** Editing chrome for this page's existing regions; never reparent live timer DOM. */
 export interface TimerSoloLayoutSettings { soloLayout: SoloLayout; timerFontScale: number; scrambleFontScale: number; }
 interface LayoutHost { getSettings(): TimerSoloLayoutSettings; updateSettings(patch: Partial<TimerSoloLayoutSettings>): void; language: 'en' | 'zh'; }
-export function TimerSoloLayoutEditor({ surfaceRef, contentKey, onDone, getSettings, updateSettings, language }: LayoutHost & {
+export function TimerSoloLayoutEditor({ surfaceRef, contentKey, onDone, getSettings, updateSettings, language, regionSelectors }: LayoutHost & {
   surfaceRef: RefObject<HTMLDivElement | null>; contentKey: string; onDone(): void;
+  regionSelectors?: Partial<Record<Region['gap'], string>>;
 }) {
   const tr = (value: { en: string; zh: string }) => value[language];
-  const [targets, setTargets] = useState<(Element | null)[]>([]);
+  const [targets, setTargets] = useState<Element[][]>([]);
   useEffect(() => {
-    setTargets(regions.map(region => surfaceRef.current?.querySelector(region.selector) ?? null));
-  }, [surfaceRef, contentKey]);
+    setTargets(regions.map(region => Array.from(surfaceRef.current?.querySelectorAll(regionSelectors?.[region.gap] ?? region.selector) ?? [])));
+  }, [surfaceRef, contentKey, regionSelectors]);
   useEffect(() => {
     const escape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') { event.preventDefault(); onDone(); }
@@ -32,9 +33,8 @@ export function TimerSoloLayoutEditor({ surfaceRef, contentKey, onDone, getSetti
     window.addEventListener('keydown', escape);
     return () => window.removeEventListener('keydown', escape);
   }, [onDone]);
-  return <>{regions.map((region, index) => targets[index]
-    ? createPortal(<RegionHandles region={region} getSettings={getSettings} updateSettings={updateSettings} language={language} />, targets[index]!, region.gap)
-    : null)}
+  return <>{regions.flatMap((region, index) => (targets[index] ?? []).map((target, targetIndex) =>
+    createPortal(<RegionHandles region={region} getSettings={getSettings} updateSettings={updateSettings} language={language} />, target, `${region.gap}-${targetIndex}`)))}
     {surfaceRef.current && createPortal(
       <div className="solo-layout-toolbar" role="toolbar" aria-label={tr({ zh: '布局调整', en: 'Layout editing' })} data-no-timer data-site-surface="popover">
         <span className="solo-layout-toolbar-label">{tr({ zh: '拖动调整', en: 'Drag to arrange' })}</span>

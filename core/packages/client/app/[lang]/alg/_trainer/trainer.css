@@ -539,7 +539,8 @@
   max-width: 100%;
 }
 .trainer-scramble-line > .trainer-mark-bar { flex: 0 0 auto; }
-.trainer-scramble-line > :last-child { min-width: 0; }
+.trainer-scramble-line > [data-timer-hide-ui],
+.trainer-scramble-line > div:not(.solo-layout-handles) { min-width: 0; }
 /* 有星标时这一行已自带垂直节奏，去掉公式原本为图片预留的上边距。 */
 .trainer-scramble-line:has(> .trainer-mark-bar) .trainer-scramble-text { margin-top: 0; }
 /* 打乱字体档位(sf-sans = 默认继承站字体) */
@@ -1693,3 +1694,43 @@
 .trainer-double-thumbs figcaption { color: var(--muted-foreground); font-size: .75rem; white-space: nowrap; }
 .trainer-double-thumbs.is-compact { gap: 4px; flex-shrink: 0; max-width: none; }
 .trainer-double-thumbs.is-compact figure { flex: 0 0 auto; }
+
+/* Shared timer handles edit the existing trainer regions in normal document flow. */
+.trainer-root--adjustable .trainer-stage { position: relative; }
+.trainer-root--adjustable .trainer-layout-cube {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+  margin-top: var(--trainer-cube-gap);
+  zoom: var(--trainer-cube-scale);
+}
+.trainer-root--adjustable .trainer-layout-cube:empty { display: none; }
+.trainer-root--adjustable .trainer-scramble-line {
+  position: relative;
+  margin-top: var(--trainer-scramble-gap);
+}
+.trainer-root--adjustable .trainer-timer {
+  position: relative;
+  margin-top: var(--trainer-timer-gap);
+  zoom: var(--trainer-timer-scale);
+}
+.trainer-root--adjustable .trainer-stage .trainer-scramble-text {
+  font-size: calc(1.6rem * var(--trainer-scramble-scale));
+}
+.trainer-root--adjustable[data-layout-editing] .trainer-stage { padding: 24px 16px 76px; }
+.trainer-layout-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.trainer-layout-toggle[aria-pressed='true'], .trainer-layout-toggle:hover { color: var(--foreground); }
+.trainer-layout-toggle:focus-visible { outline: 2px solid var(--ring); }

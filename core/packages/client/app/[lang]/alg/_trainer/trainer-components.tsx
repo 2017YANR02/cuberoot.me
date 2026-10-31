@@ -460,12 +460,13 @@ function TriCheckbox({ checked, indeterminate }: { checked: boolean; indetermina
  *  摆出来等于要用户手点一遍默认值。键盘 2 仍然在,当作把「不熟」直接提成「已掌握」的快捷键。
  *  只出图标、跟卡片标题挤同一行:卡片本体是图 + 打乱,标记是顺手一点的事,不该占两行文字。
  *  文字进 title / aria-label,不靠视觉也读得到。 */
-export function CaseMarkBar({ k }: { k: string }) {
+export function CaseMarkBar({ k, onlyActive = false }: { k: string; onlyActive?: boolean }) {
   const marks = useTrainerMarks(s => s.marks);
   const applyMarks = useTrainerMarks(s => s.applyMarks);
   const st = markStatus(marks, k);
   const active = st === 'learning';
   const label = MARK_STATUS_LABEL.learning();
+  if (onlyActive && !active) return null;
   return (
     <span className="trainer-mark-bar" data-no-timer>
       <button
