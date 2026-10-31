@@ -587,7 +587,7 @@ function AllResultsPageInner() {
     </div>
   );
   const teacherShareToggle = (visibleTeacherWcaId || canCreateTeacherShare) ? (
-    <div className="wse-filter wse-filter-show">
+    <div className="wse-filter wse-filter-show wse-filter-share">
       <BoolToggle
         value={Boolean(visibleTeacherWcaId)}
         onChange={(value) => {
@@ -602,7 +602,7 @@ function AllResultsPageInner() {
   ) : null;
 
   return (
-    <div className="wse-page">
+    <div className="wse-page wse-results-page">
       <header className="wse-header">
         <PageHeading titleClassName="wse-title-row">
           {tr({ zh: '排名', en: 'Rankings' })}
@@ -646,7 +646,7 @@ function AllResultsPageInner() {
 
       {/* 项目选择器在模式切换时保持挂载。 */}
       <div className="wse-filters">
-        <div className="wse-filter" style={{ minWidth: '100%' }}>
+        <div className="wse-filter wse-filter-events" style={{ minWidth: '100%' }}>
           <WcaEventMultiSelector
             presentation="inline"
             availableEvents={RANK_EVENT_SET}
@@ -686,7 +686,7 @@ function AllResultsPageInner() {
               <option value="false">{tr({ zh: '当期', en: 'Period' })}</option>
             </select>
           </div>
-          <div className="wse-filter">
+          <div className="wse-filter wse-filter-show">
             <label>{tr({ zh: '年份', en: 'Year' })}</label>
             <select className="wse-filter-select" value={year} onChange={e => update('year', e.target.value)}>
               {show === 'results' && <option value={0}>{tr({ zh: '全部年份', en: 'All years' })}</option>}
@@ -695,7 +695,7 @@ function AllResultsPageInner() {
           </div>
           {/* 截至口径按年末、不分月 → 直接隐藏月份框(不再灰显占位) */}
           {basis !== 'cumulative' && (
-            <div className="wse-filter">
+            <div className="wse-filter wse-filter-show">
               <label>{tr({ zh: '月份', en: 'Month' })}</label>
               <select
                 className="wse-filter-select"
@@ -722,7 +722,7 @@ function AllResultsPageInner() {
               {qInput && <ClearButton onClick={() => { setQInput(''); update('q', ''); }} isZh={isZh} preserveFocus />}
             </div>
           </div>
-          <div className="wse-filter">
+          <div className="wse-filter wse-filter-name-match">
             <label>{tr({ zh: '名字匹配', en: 'Name match' })}</label>
             <select className="wse-filter-select" value={qMode} onChange={e => update('qmode', e.target.value === 'any' ? '' : e.target.value)}>
               <option value="any">{tr({ zh: '任意部分', en: 'Any part' })}</option>

@@ -407,6 +407,36 @@ th.wse-sor-evcell { padding: 4px 2px !important; }
   .wse-page { padding: 16px 8px; }
   .wse-filters { gap: 10px; }
   .wse-filter { min-width: 0; flex: 1 0 calc(50% - 8px); }
+  .wse-results-page .wse-filters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 10px;
+  }
+  .wse-results-page .wse-filter { min-width: 0; }
+  .wse-results-page .wse-filter-events,
+  .wse-results-page .wse-filter-share { grid-column: 1 / -1; width: 100%; }
+  .wse-results-page .wse-filter.wse-filter-q { width: 100%; }
+  .wse-results-page .wse-filter > select,
+  .wse-results-page .wse-filter .region-picker,
+  .wse-results-page .wse-q-wrap { width: 100%; min-width: 0; max-width: 100%; }
+  .wse-results-page .wse-filter > select,
+  .wse-results-page .region-picker-trigger,
+  .wse-results-page .wse-q-input {
+    height: 44px;
+    min-height: 44px;
+    box-sizing: border-box;
+    font-size: 16px;
+    border-radius: 8px;
+  }
+  .wse-results-page .wse-filter-share > .bool-toggle {
+    width: 100%;
+    min-height: 44px;
+    justify-content: space-between;
+  }
+  .wse-results-page .wse-filter-share .bool-toggle-label {
+    white-space: normal;
+    text-align: start;
+  }
   .wse-table th, .wse-table td { padding: 6px 8px; font-size: 13px; }
   .wca-record-rows-table { font-size: 12px; }
 }
