@@ -3,7 +3,7 @@
 import MoreToggle from '@/components/MoreToggle';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import BackHome from '@/components/BackHome';
+import PageBackLink from '@/components/PageBackLink';
 import JsonLd, { articleJsonLd } from '@/components/JsonLd';
 import { TeXBlock } from '@/components/math/Tex';
 import { useT } from '@/hooks/useT';
@@ -28,7 +28,7 @@ export default function NavierStokesPage() {
     <main style={{ maxWidth: 760, margin: '0 auto', padding: '24px 16px 64px', lineHeight: 1.85, overflowWrap: 'anywhere' }}>
       <JsonLd data={{ ...articleJsonLd({ headline: heading, description, url: t('https://cuberoot.me/zh/math/navier-stokes', 'https://cuberoot.me/math/navier-stokes'), lang: t('zh', 'en') }), author: { '@type': 'Organization', name: 'OpenAI', url: 'https://openai.com' }, isBasedOn: SOURCE }} />
       <header className="navier-header">
-        <div className="page-back-row"><BackHome /></div>
+        <div className="page-back-row"><PageBackLink fallback="/math" /></div>
         <p>{t('数学 / 偏微分方程', 'Mathematics / Partial differential equations')}</p>
         <h1 style={{ fontSize: 'clamp(1.8rem, 5vw, 2.7rem)', lineHeight: 1.3 }}>{heading}</h1>
         <p>{t('原文：OpenAI ｜ 中文翻译：CubeRoot', 'Original: OpenAI | Chinese translation: CubeRoot')}</p>

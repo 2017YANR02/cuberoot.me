@@ -178,7 +178,7 @@ function RecordsPageInner() {
   return (
     <div className="wse-page records-page">
       <header className="wse-header">
-        <PageHeading>{tr({ zh: '纪录', en: 'Records'
+        <PageHeading backHref="/wca">{tr({ zh: '纪录', en: 'Records'
         })}</PageHeading>
         <p className="wse-subtitle">
           {gender !== 'all'

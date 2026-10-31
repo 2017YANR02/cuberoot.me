@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Check, Languages, Trash2 } from '@app-foundation/icons/lucide';
 import type { QuizDraft } from '@cuberoot/shared/quiz';
-import BackHome from '@/components/BackHome';
+import PageBackLink from '@/components/PageBackLink';
 import { UserIdLabel } from '@/components/UserIdLabel';
 import { tr, useLang } from '@/i18n/tr';
 import { useIsAdmin } from '@/lib/auth-store';
@@ -84,7 +84,7 @@ export default function QuizManagePage() {
   if (!isAdmin) {
     return (
       <div className="quiz-page">
-        <div className="quiz-head"><BackHome /></div>
+        <div className="quiz-head"><PageBackLink fallback="/quiz" /></div>
         <div className="quiz-hub">
           <p className="quiz-intro">{tr({ zh: '这个页面只对管理员开放。', en: 'Admins only.' })}</p>
         </div>
@@ -94,7 +94,7 @@ export default function QuizManagePage() {
 
   return (
     <div className="quiz-page">
-      <div className="quiz-head"><BackHome /></div>
+      <div className="quiz-head"><PageBackLink fallback="/quiz" /></div>
 
       <div className="quiz-hub quiz-form-page">
         <h1>{tr({ zh: '社区题管理', en: 'Community questions' })}</h1>

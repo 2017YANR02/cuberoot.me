@@ -5,7 +5,7 @@ import { useTrainingStats } from '@/hooks/useTrainingStats';
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { RotateCcw } from '@app-foundation/icons/lucide';
-import BackHome from '@/components/BackHome';
+import PageBackLink from '@/components/PageBackLink';
 import BoolToggle from '@/components/BoolToggle';
 import {
   SubsetColorPicker,
@@ -279,7 +279,7 @@ export default function ColorPositionsPage() {
   return (
     <main className="color-quiz-page">
       <div className="color-quiz-topbar">
-        <BackHome />
+        <PageBackLink fallback="/color-test" />
       </div>
 
       <header className="color-quiz-header">

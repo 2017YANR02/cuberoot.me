@@ -2,7 +2,7 @@
 
 import { Plus, Search, ShieldCheck } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
-import BackHome from '@/components/BackHome';
+import PageBackLink from '@/components/PageBackLink';
 import WcaAuth from '@/components/WcaAuth';
 import { T, tr } from '@/i18n/tr';
 import { useIsAdmin } from '@/lib/auth-store';
@@ -11,7 +11,7 @@ export function ForumHeader({ activeView }: { activeView: 'feed' | 'boards' }) {
   const isAdmin = useIsAdmin();
   return (
     <>
-      <div className="forum-back-row"><BackHome /></div>
+      <div className="forum-back-row"><PageBackLink fallback={activeView === 'feed' ? '/forum' : '/'} /></div>
       <div className="forum-page-header">
         <div>
           <h1>

@@ -6,7 +6,7 @@ import { parseAsInteger, useQueryState } from 'nuqs';
 import { Alg } from 'cubing/alg';
 import { ArrowRight, Trophy, X } from '@app-foundation/icons/lucide';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
-import BackHome from '@/components/BackHome';
+import PageBackLink from '@/components/PageBackLink';
 import Link from '@/components/AppLink';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import { resolvePlayerSetup } from '@/components/AlgPlayer/player-setup';
@@ -47,7 +47,7 @@ export default function Practice({ step }: { step: typeof LBL_STEPS[number] }) {
   const [question, setQuestion] = useQueryState('case', parseAsInteger.withDefault(1).withOptions({ history: 'replace' }));
   const index = Math.max(0, Math.min(step.examples.length - 1, question - 1));
   return <main className="lbl-page lbl-practice-page">
-    <header className="lbl-header"><BackHome /><Link href={`/tutorial/lbl?step=${step.id}`} prefetch={false}>{tr(step.title)}</Link><h1><T zh="分步练习" en="Guided practice" /></h1></header>
+    <header className="lbl-header"><PageBackLink fallback={`/tutorial/lbl?step=${step.id}`} /><Link href={`/tutorial/lbl?step=${step.id}`} prefetch={false}>{tr(step.title)}</Link><h1><T zh="分步练习" en="Guided practice" /></h1></header>
     <Exercise key={`${step.id}-${index}`} step={step} index={index} textMoves={textMoves} onTextMovesChange={setTextMoves} onNext={() => { void setQuestion(index + 2); }} />
   </main>;
 }

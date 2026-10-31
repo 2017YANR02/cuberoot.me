@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
-import BackHome from '@/components/BackHome';
+import PageBackLink from '@/components/PageBackLink';
 import Link from '@/components/AppLink';
 import JsonLd from '@/components/JsonLd';
 import { tr, T } from '@/i18n/tr';
@@ -41,7 +41,7 @@ export default function F2lTutorial() {
 
   return <main className="f2l-page">
     <header className="f2l-header">
-      <BackHome />
+      <PageBackLink fallback="/tutorial?puzzle=3x3" />
       <Link href="/tutorial?puzzle=3x3" prefetch={false}><T zh="教程" en="Tutorials" /></Link>
       <h1><T zh="F2L 教程" en="F2L tutorial" /></h1>
     </header>

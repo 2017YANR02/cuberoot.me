@@ -604,7 +604,7 @@ function AllResultsPageInner() {
   return (
     <div className="wse-page wse-results-page">
       <header className="wse-header">
-        <PageHeading titleClassName="wse-title-row">
+        <PageHeading backHref="/wca" titleClassName="wse-title-row">
           {tr({ zh: '排名', en: 'Rankings' })}
           {view === 'rank' && (
             <Link

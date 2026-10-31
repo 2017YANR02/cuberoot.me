@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { UserRound } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
-import HomeLink from '@/components/HomeLink';
+import PageBackLink from '@/components/PageBackLink';
 import { useLang } from '@/i18n/tr';
 import { RMB_PER_USD, EXPENSES, ANNUAL_RECURRING_CNY, EQUIPMENT_GROUPS, ONE_TIME_EXPENSES, ONE_TIME_TOTAL, type RecurringAmount, type EquipmentAmount } from '@/lib/infrastructure-costs';
 import '../infrastructure/infrastructure.css';
@@ -50,7 +50,7 @@ export default function ExpensesPage() {
   return (
     <main className="infra-page">
       <div className="infra-shell">
-        <HomeLink />
+        <PageBackLink fallback="/dev" />
         <header className="infra-hero">
           <h1>{localize(lang, { zh: '支出与设备', en: 'Expenses & Equipment' })}</h1>
           <p className="infra-lead">{localize(lang, {

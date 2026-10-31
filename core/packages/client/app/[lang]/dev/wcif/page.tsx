@@ -3,7 +3,7 @@
 // WCIF (WCA Competition Interchange Format) 参考页 — 给开发者 / AI 速查比赛数据结构。
 // 内容据官方 spec v1.1 (github.com/thewca/wcif) + CubeRoot 实战用法整理。
 
-import HomeLink from '@/components/HomeLink';
+import PageBackLink from '@/components/PageBackLink';
 import AppLink from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 import './wcif.css';
@@ -43,8 +43,7 @@ export default function WcifPage() {
   return (
     <div className="wcif-page">
       <div className="wcif-topbar">
-        <HomeLink className="wcif-back">← <span className="sr-only">{tr({ zh: '回首页', en: 'Home'
-        })}</span></HomeLink>
+        <PageBackLink fallback="/dev" className="wcif-back" />
         <AppLink href="/dev" className="wcif-back">/dev</AppLink>
       </div>
 

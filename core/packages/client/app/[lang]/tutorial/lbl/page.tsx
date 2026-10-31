@@ -5,7 +5,7 @@ import { Alg } from 'cubing/alg';
 import { Axis } from '@cuberoot/visualcube';
 import { ArrowRight } from '@app-foundation/icons/lucide';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
-import BackHome from '@/components/BackHome';
+import PageBackLink from '@/components/PageBackLink';
 import Link from '@/components/AppLink';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import { resolvePlayerSetup } from '@/components/AlgPlayer/player-setup';
@@ -127,7 +127,7 @@ export default function LblTutorial() {
 
   return <main className={`lbl-page lbl-tutorial-page${step.id === 'structure' ? ' lbl-basics-page' : ' lbl-lesson-page'}`}>
     <header className="lbl-header">
-      <BackHome />
+      <PageBackLink fallback="/tutorial?puzzle=3x3" />
       <Link href="/tutorial?puzzle=3x3" prefetch={false}><T zh="教程" en="Tutorials" /></Link>
       <h1><T zh="层先法" en="LBL" /></h1>
       <Link href="/tutorial/lbl?view=walkthrough" prefetch={false}><T zh="完整还原" en="Full solve" /></Link>

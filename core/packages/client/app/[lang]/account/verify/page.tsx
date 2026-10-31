@@ -138,7 +138,7 @@ export default function FaceVerificationPage() {
   }, [status?.expiresAt, request]);
   const pending = status?.status === 'pending' || status?.status === 'initializing';
   return <main className="face-verify">
-    <header className="page-back-heading"><PageBackLink /><h1>{t('实名认证', 'Identity Verification')}</h1></header>
+    <header className="page-back-heading"><PageBackLink fallback="/account" /><h1>{t('实名认证', 'Identity Verification')}</h1></header>
     {!user ? <AppLink href="/account?view=signin&next=%2Faccount%2Fverify">{t('登录后认证', 'Sign in to verify')}</AppLink> : <section data-site-surface="panel" className="face-verify-panel">
       {status?.status === 'passed' ? <div className="face-verify-success" role="status">
         <CircleCheck size={28} aria-hidden="true" />

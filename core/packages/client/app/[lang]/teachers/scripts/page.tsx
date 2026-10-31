@@ -4,7 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import { ArrowRight, Clock3, Mic2, Plus } from '@app-foundation/icons/lucide';
 import { parseAsString, useQueryState } from 'nuqs';
 import AppLink from '@/components/AppLink';
-import BackHome from '@/components/BackHome';
+import PageBackLink from '@/components/PageBackLink';
 import SearchInput from '@/components/SearchInput';
 import { useAuthUser } from '@/lib/auth-store';
 import { tr } from '@/i18n/tr';
@@ -29,7 +29,7 @@ function ScriptLibrary() {
     return scripts.filter((script) => !needle || [script.titleZh, script.titleEn, script.summaryZh, script.summaryEn, script.teacher.nameZh, script.teacher.nameEn].join('\n').toLocaleLowerCase().includes(needle));
   }, [query, scripts]);
   return <main className="scripts-page">
-    <div className="scripts-back-row"><BackHome /></div>
+    <div className="scripts-back-row"><PageBackLink fallback="/teachers" /></div>
     <header className="scripts-hero"><h1>{tr({ zh: '直播话术库', en: 'Livestream Scripts' })}</h1><p>{tr({ zh: '把一场直播拆成清楚的章节、可直接说的正文和现场提示。老师与机构可以发布自己的版本，开播时直接当提词稿使用。', en: 'Turn a livestream into clear sections, spoken copy, and presenter cues. Teachers and schools can publish their own versions and use them live as teleprompter notes.' })}</p><div className="scripts-actions">{user && <AppLink href="/teachers/scripts/edit" prefetch={false} className="scripts-action"><Plus size={16} />{tr({ zh: '新建话术', en: 'New script' })}</AppLink>}<AppLink href="/teachers/scripts/manage" prefetch={false} className="script-text-action"><Mic2 size={16} />{tr({ zh: user ? '管理我的话术' : '登录后创建', en: user ? 'Manage my scripts' : 'Sign in to create' })}</AppLink><AppLink href="/teachers" className="script-text-action">{tr({ zh: '查看老师与机构', en: 'Browse teachers & schools' })}</AppLink></div></header>
     <p><AppLink href="/teachers/live-guide" prefetch={false} className="script-text-action">{tr({ zh: '直播卖课指南：准备、留存、转化与复盘', en: 'Livestream guide: preparation, retention, conversion & review' })}</AppLink></p>
     <div className="scripts-toolbar"><SearchInput value={query} onChange={(value) => { void setQuery(value || null); }} className="directory-search" inputClassName="directory-search-input" placeholder={tr({ zh: '搜索标题、内容简介或作者', en: 'Search titles, summaries, or authors' })} /></div>

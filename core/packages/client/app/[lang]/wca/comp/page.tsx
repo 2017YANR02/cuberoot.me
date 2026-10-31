@@ -2047,7 +2047,7 @@ function CalendarPageInner() {
       data-comp-peoplelimit={viewMode === 'list' && compMetric === 'peopleLimit' ? '' : undefined}
     >
       <header className="upcoming-header">
-          <PageHeading titleClassName="upcoming-title">
+          <PageHeading backHref="/wca" titleClassName="upcoming-title">
             {tr({ zh: 'WCA 比赛', en: 'WCA Competitions'
           })}
             <Link

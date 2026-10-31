@@ -1,7 +1,7 @@
 'use client';
 
 import AppLink from '@/components/AppLink';
-import HomeLink from '@/components/HomeLink';
+import PageBackLink from '@/components/PageBackLink';
 import { useLang } from '@/i18n/tr';
 import './infrastructure.css';
 
@@ -141,7 +141,7 @@ export default function InfrastructurePage() {
   return (
     <main className="infra-page">
       <div className="infra-shell">
-        <HomeLink />
+        <PageBackLink fallback="/dev" />
 
         <header className="infra-hero">
           <p className="infra-kicker">CubeRoot / Infrastructure</p>

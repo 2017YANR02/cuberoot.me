@@ -7,7 +7,7 @@ import { useEffect, useCallback, useState, useRef, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next';
 import OnScreenKeyboard from '@/components/OnScreenKeyboard';
 import Link from '@/components/AppLink';
-import BackHome from '@/components/BackHome';
+import PageBackLink from '@/components/PageBackLink';
 import Sq1ToolNav from '@/components/Sq1ToolNav';
 import { sessionStoreFor, useSessionHydrated } from '@/lib/session-store';
 import { isHelpKey } from '@/lib/pll-helpers';
@@ -24,18 +24,20 @@ function TrainerShell({
   title,
   intro,
   showSq1Tools,
+  backHref,
   children,
 }: {
   title?: BilingualText;
   intro?: BilingualText;
   showSq1Tools?: boolean;
+  backHref: string;
   children: ReactNode;
 }) {
   if (!title) return <>{children}</>;
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <div className="page-back-row"><BackHome /></div>
+        <div className="page-back-row"><PageBackLink fallback={backHref} /></div>
         <h1 className={styles.title}>{tr(title)}</h1>
         {intro && <p className={styles.intro}>{tr(intro)}</p>}
       </header>
@@ -55,9 +57,11 @@ export default function RecognizeTrainer({
   pageTitle,
   pageIntro,
   showSq1Tools = false,
+  backHref = '/alg/3x3',
 }: {
   algSetId: string;
   guideHref?: string;
+  backHref?: string;
   pageTitle?: BilingualText;
   pageIntro?: BilingualText;
   showSq1Tools?: boolean;
@@ -222,7 +226,7 @@ export default function RecognizeTrainer({
 
   if (!hydrated || (!dataReady && !dataError)) {
     return (
-      <TrainerShell title={pageTitle} intro={pageIntro} showSq1Tools={showSq1Tools}>
+      <TrainerShell backHref={backHref} title={pageTitle} intro={pageIntro} showSq1Tools={showSq1Tools}>
         <div className={`${styles.trainer} ${styles.status}`} role="status">
           <LoadingIndicator>{tr({ zh: '正在加载训练题库…', en: 'Loading training cases…' })}</LoadingIndicator>
         </div>
@@ -232,7 +236,7 @@ export default function RecognizeTrainer({
 
   if (dataError) {
     return (
-      <TrainerShell title={pageTitle} intro={pageIntro} showSq1Tools={showSq1Tools}>
+      <TrainerShell backHref={backHref} title={pageTitle} intro={pageIntro} showSq1Tools={showSq1Tools}>
         <div className={`${styles.trainer} ${styles.status}`} role="alert">
           <p>{tr({ zh: '训练题库加载失败，请重试。', en: 'Training cases could not be loaded. Try again.' })}</p>
           <button className="btn-secondary" type="button" onClick={() => setReloadKey((key) => key + 1)}>
@@ -247,7 +251,7 @@ export default function RecognizeTrainer({
     const mistakeCount = results.filter((r) => r.mistake !== '').length;
     const correctCount = results.filter((r) => r.mistake === '').length;
     return (
-      <TrainerShell title={pageTitle} intro={pageIntro} showSq1Tools={showSq1Tools}>
+      <TrainerShell backHref={backHref} title={pageTitle} intro={pageIntro} showSq1Tools={showSq1Tools}>
       <div className={`${styles.done} training-page`}>
         <h2>{t('training.complete')}</h2>
         <p className={styles.score}>
@@ -280,7 +284,7 @@ export default function RecognizeTrainer({
   }
 
   return (
-    <TrainerShell title={pageTitle} intro={pageIntro} showSq1Tools={showSq1Tools}>
+    <TrainerShell backHref={backHref} title={pageTitle} intro={pageIntro} showSq1Tools={showSq1Tools}>
     <div className={`${styles.trainer} training-page`}>
       {recognitionGuideHref && (
         <div className={styles.guideRow}>

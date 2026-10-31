@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { EyeOff, Plus } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
-import BackHome from '@/components/BackHome';
+import PageBackLink from '@/components/PageBackLink';
 import { nextQuery, useAuthUser } from '@/lib/auth-store';
 import { tr } from '@/i18n/tr';
 import { fetchMyTeacherDirectory, type TeacherDirectoryEntry } from '@/lib/teacher-directory-api';
@@ -37,7 +37,7 @@ export default function Page() {
     catch { setError(tr({ zh: '删除失败，请稍后重试。', en: 'Delete failed. Please try again.' })); }
   };
   return <main className="scripts-page">
-    <div className="scripts-back-row"><BackHome /></div>
+    <div className="scripts-back-row"><PageBackLink fallback="/teachers/scripts" /></div>
     <header className="scripts-hero"><h1>{tr({ zh: '管理直播话术', en: 'Manage Scripts' })}</h1><p>{tr({ zh: '话术跟随老师或机构主页归档。资料隐藏时，其话术也不会出现在公开库，但仍可在这里继续编辑。', en: 'Scripts are grouped under a teacher or school profile. When a profile is hidden, its scripts stay out of the public library but remain editable here.' })}</p><div className="scripts-actions">{user && entries.length > 0 && <AppLink href="/teachers/scripts/edit" prefetch={false} className="scripts-action"><Plus size={16} />{tr({ zh: '新建话术', en: 'New script' })}</AppLink>}<AppLink href="/teachers/scripts" className="script-text-action">{tr({ zh: '查看公开话术库', en: 'View public library' })}</AppLink></div></header>
     {!user && <section className="scripts-empty"><p>{tr({ zh: '登录后才能创建和管理自己的直播话术。', en: 'Sign in to create and manage your livestream scripts.' })}</p><AppLink href={`/account${nextQuery(pathname)}`} className="script-text-action">{tr({ zh: '登录', en: 'Sign in' })}</AppLink></section>}
     {user && loading && <p className="scripts-empty"><LoadingIndicator>{tr({ zh: '正在加载…', en: 'Loading…' })}</LoadingIndicator></p>}

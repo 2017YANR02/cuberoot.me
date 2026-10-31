@@ -9,7 +9,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CalendarDays, ChevronLeft, ChevronRight, Link2, Check, Copy } from '@app-foundation/icons/lucide';
-import BackHome from '@/components/BackHome';
+import PageBackLink from '@/components/PageBackLink';
 import { ListSelect } from '@/components/ListSelect';
 import { UserContactLink } from '@/components/UserIdLabel';
 import { useCopy } from '@/hooks/useCopy';
@@ -110,7 +110,7 @@ export default function SharedCalendarClient() {
     return (
       <div className="cal-page">
         <div className="cal-topbar">
-          <BackHome />
+          <PageBackLink fallback="/calendar" />
           <h1 className="cal-brand"><CalendarDays size={20} aria-hidden />{tr({ zh: '共享日历', en: 'Shared calendar' })}</h1>
           <span className="cal-foot-gap" />
         </div>
@@ -122,7 +122,7 @@ export default function SharedCalendarClient() {
   return (
     <div className="cal-page">
       <div className="cal-topbar">
-        <BackHome />
+        <PageBackLink fallback="/calendar" />
         <h1 className="cal-brand">
           <CalendarDays size={20} aria-hidden />
           <UserContactLink userId={data?.ownerUserId}>{pageTitle || tr({ zh: '共享日历', en: 'Shared calendar' })}</UserContactLink>

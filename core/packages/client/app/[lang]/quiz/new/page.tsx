@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation';
 import { useQueryState, parseAsInteger } from 'nuqs';
 import { Key } from '@app-foundation/icons/lucide';
 import type { QuizDraft } from '@cuberoot/shared/quiz';
-import BackHome from '@/components/BackHome';
+import PageBackLink from '@/components/PageBackLink';
 import Link from '@/components/AppLink';
 import { tr, useLang } from '@/i18n/tr';
 import { useAuthStore, useAuthUser } from '@/lib/auth-store';
@@ -70,7 +70,7 @@ export default function QuizNewPage() {
   return (
     <div className="quiz-page">
       <div className="quiz-head">
-        <BackHome />
+        <PageBackLink fallback="/quiz" />
       </div>
 
       <div className="quiz-hub quiz-form-page">

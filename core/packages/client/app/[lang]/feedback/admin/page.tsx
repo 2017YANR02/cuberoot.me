@@ -9,8 +9,8 @@
 import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, Trash2, Lightbulb, Bug, MessageSquare, ExternalLink } from '@app-foundation/icons/lucide';
-import HomeLink from '@/components/HomeLink';
+import { Trash2, Lightbulb, Bug, MessageSquare, ExternalLink } from '@app-foundation/icons/lucide';
+import PageBackLink from '@/components/PageBackLink';
 import FeedbackConversation from '@/components/FeedbackConversation';
 import { UserIdLabel } from '@/components/UserIdLabel';
 import { useAuthStore } from '@/lib/auth-store';
@@ -108,7 +108,7 @@ export default function FeedbackAdminPage() {
     return (
       <div className="fba-page fba-denied">
         <p>{t('需要管理员权限', 'Admin access required')}</p>
-        <HomeLink className="fba-back"><ChevronLeft size={16} /><span className="sr-only">{t('首页', 'Home')}</span></HomeLink>
+        <PageBackLink fallback="/feedback" className="fba-back" />
       </div>
     );
   }
@@ -116,7 +116,7 @@ export default function FeedbackAdminPage() {
   return (
     <div className="fba-page">
       <header className="fba-header">
-        <HomeLink className="fba-back"><ChevronLeft size={16} /><span className="sr-only">{t('首页', 'Home')}</span></HomeLink>
+        <PageBackLink fallback="/feedback" className="fba-back" />
       </header>
       <h1 className="fba-title">{t('反馈', 'Feedback')}</h1>
 
