@@ -403,11 +403,13 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
     return () => { live = false; };
   }, [puzzle, set, caseObj.name]);
 
+  const [mobileSlot, setMobileSlot] = useState('FR');
   const oriNames = caseObj.oriNames;
   const multiOri = !!oriNames && oriNames.length > 1;
   const useF2lOrientationGrid = puzzle === '3x3'
     && (set === 'f2l' || set === 'adv-f2l')
     && multiOri;
+  const mobileSlotIndex = Math.max(0, oriNames?.findIndex(name => shortOriName(name) === mobileSlot) ?? 0);
   const displayedOrientations = caseObj.algs
     .map((oriAlgs, oi) => ({ oriAlgs, oi }))
     .sort((a, b) => {
@@ -636,7 +638,14 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
           />
         </div>
       ) : (
-        <div className="alg-case-detail-lean is-paired-player">
+        <div className="alg-case-detail-lean is-paired-player" data-mobile-slot={useF2lOrientationGrid ? mobileSlotIndex : undefined}>
+          {useF2lOrientationGrid && <div className="alg-case-slot-picker" role="group" aria-label={tr({ zh: '槽位', en: 'Slot' })}>
+            {['BL', 'BR', 'FL', 'FR'].map(slot => {
+              const oi = oriNames!.findIndex(name => shortOriName(name) === slot);
+              return <button key={slot} type="button" aria-pressed={oi === mobileSlotIndex}
+                disabled={oi < 0} onClick={() => setMobileSlot(slot)}>{slot}</button>;
+            })}
+          </div>}
           <div className={`alg-case-detail-lean-algs is-paired-player${useF2lOrientationGrid ? ' is-f2l-orientation-grid' : ''}${editor ? ' is-editing' : ''}`}>
             {editor && <div hidden={effectiveViewAngle !== 'default'}>{editor.algorithms(
               <AlgCaseRelationCards items={leanRelationCards(editor)} puzzle={puzzle} set={set}
@@ -673,7 +682,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
                 return <Fragment key={`${oi}:${i}`}>{row}</Fragment>;
               });
               return (
-                <div key={oi} data-alg-motion-ori={oi} className="alg-case-detail-ori">
+                <div key={oi} data-alg-motion-ori={oi} data-mobile-active={oi === mobileSlotIndex} className="alg-case-detail-ori">
                   {multiOri && <div className="alg-case-detail-ori-label">
                     <AlgImageDownloadButton build={() => caseImageBatch({
                       puzzle, set, cases: [caseObj], title: primary,

@@ -2085,6 +2085,45 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
 .alg-case-detail-lean-algs.is-paired-player {
   gap: 24px;
 }
+.alg-case-slot-picker { display: none; }
+@media (max-width: 900px) {
+  .alg-case-slot-picker {
+    display: grid;
+    grid-template-columns: repeat(2, 64px);
+    gap: 4px;
+    align-self: center;
+    margin-bottom: 16px;
+  }
+  .alg-case-slot-picker button {
+    appearance: none;
+    min-height: 44px;
+    padding: 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--foreground);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .alg-case-slot-picker button[aria-pressed="true"] {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .alg-case-slot-picker button:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  .alg-case-slot-picker button:disabled { opacity: .4; cursor: default; }
+  .is-f2l-orientation-grid > .alg-case-detail-ori[data-mobile-active="false"],
+  [data-mobile-slot="0"] .alg-editor > .alg-editor-ori:not(:nth-child(1)),
+  [data-mobile-slot="1"] .alg-editor > .alg-editor-ori:not(:nth-child(2)),
+  [data-mobile-slot="2"] .alg-editor > .alg-editor-ori:not(:nth-child(3)),
+  [data-mobile-slot="3"] .alg-editor > .alg-editor-ori:not(:nth-child(4)) {
+    display: none;
+  }
+}
 @media (min-width: 901px) {
   .alg-case-detail.is-f2l-orientation-grid {
     max-width: min(1440px, 100%);
