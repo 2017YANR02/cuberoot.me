@@ -48,8 +48,7 @@ const DESTINATIONS: AdminDestination[] = [
   { href: '/wiki', Icon: Wrench, title: ['词条管理', 'Wiki entries'] },
   { href: '/about/ruimin', Icon: Wrench, title: ['创作者作品管理', 'Creator gallery'] },
   { href: '/org#enterprise-admin', Icon: Wrench, title: ['企业认证与收款设置', 'Enterprise verification and payments'] },
-  { href: '/docs', Icon: Wrench, title: ['文档管理', 'Documents'] },
-  { href: '/sheets', Icon: Wrench, title: ['表格管理', 'Spreadsheets'] },
+  { href: '/docs', Icon: Wrench, title: ['协作文档', 'Collaborative Docs'] },
   { href: '/courses', Icon: Wrench, title: ['教学课程内容', 'Teaching course content'] },
   { href: '/regulation/post', Icon: Wrench, title: ['公告首页置顶', 'Featured announcements'] },
 ];

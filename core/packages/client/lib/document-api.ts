@@ -37,9 +37,9 @@ export interface DocumentDetails {
   subscription?: { subscribed: boolean; lastSeenAt: string | null };
 }
 
-export async function fetchDocuments(kind: DocumentKind = 'document'): Promise<CollaborativeDocument[]> {
+export async function fetchDocuments(kind: DocumentKind | 'all' = 'document'): Promise<CollaborativeDocument[]> {
   const result = await handleApi<{ documents: CollaborativeDocument[] }>(
-    await sessionFetch(apiUrl(`/v1/documents?kind=${kind}`), { headers: authHeaders(false), cache: 'no-store' }),
+    await sessionFetch(apiUrl(`/v1/documents${kind === 'all' ? '' : `?kind=${kind}`}`), { headers: authHeaders(false), cache: 'no-store' }),
   );
   return result.documents;
 }

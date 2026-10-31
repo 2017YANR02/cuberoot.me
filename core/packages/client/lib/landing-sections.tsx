@@ -6,7 +6,7 @@ import {
   Compass, Grid2x2, Trophy, Code as CodeIcon,
   Brain, Sigma, Scale, Sprout, Brush, MessageCircle, MessagesSquare, Shapes, Eye, Palette,
   CircleQuestionMark, Globe2, CalendarDays, Video, GraduationCap, School, Building2,
-  FileText, Table2, Award, Radio, PanelsTopLeft, UserRound, UsersRound, HardDrive, ListOrdered,
+  FileText, Award, Radio, PanelsTopLeft, UserRound, UsersRound, HardDrive, ListOrdered,
   Images, Music2, Gamepad2, History, Type as TypeIcon,
   type LucideIcon,
 } from '@app-foundation/icons/lucide';
@@ -104,7 +104,6 @@ const CARD_VISUALS: Partial<Record<SiteDirectoryEntry['id'], CardVisual>> = {
   documents: { Icon: FileText },
   interview: { Icon: MessagesSquare },
   partnership: { Icon: Sprout },
-  spreadsheets: { Icon: Table2 },
   alg: { Icon: Library },
   quiz: { Icon: CircleQuestionMark },
   wiki: { Icon: BookA },
