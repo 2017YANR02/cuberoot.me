@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { MessageSquare, CircleAlert, Star, CheckCheck, Circle } from 'lucide-react';
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { CircleAlert, Star } from 'lucide-react';
 import { CHAT_BODY_LIMIT, compareChatSequence, normalizeChatBody, type ChatClient, type ChatErrorCode, type ChatSticker } from '@cuberoot/shared/chat';
 import type { FriendUser } from '@cuberoot/shared/friends';
+import { startsChatTimeGroup } from './chat-time';
 import { useChat } from './use-chat';
 import { ChatExpressions, stickerError } from './ChatExpressions';
 import { ChatMessageText, type ChatExpressionPack } from './ChatMessageText';
+import { ChatDraftInput, type ChatDraftInputHandle } from './ChatDraftInput';
 import { ChatStickerImage } from './ChatStickerImage';
 
 export interface ChatPanelProps {
@@ -35,7 +37,8 @@ function errorText(code: ChatErrorCode, t: ChatPanelProps['t']) {
   if (code === 'IDEMPOTENCY_CONFLICT') return t('这条消息的发送标识已被使用，请重新输入消息。', 'This message identifier was already used. Compose a new message.');
   return t('暂时无法连接。未确认发送的消息可以重试。', 'Could not connect. You can retry messages whose delivery is unconfirmed.');
 }
-export function ChatPanel({ expressionPacks = [], onReloadExpressions, renderMore, renderVoice, renderMessage, client, userId, peerId, onSelectPeer, renderIdentity, t, locale, onRead, onUnauthorized, onSignIn }: ChatPanelProps) {
+const EMPTY_EXPRESSION_PACKS: ChatExpressionPack[] = [];
+export function ChatPanel({ expressionPacks = EMPTY_EXPRESSION_PACKS, onReloadExpressions, renderMore, renderVoice, renderMessage, client, userId, peerId, onSelectPeer, renderIdentity, t, locale, onRead, onUnauthorized, onSignIn }: ChatPanelProps) {
   const options = useMemo(() => ({ client, userId, uuid: () => crypto.randomUUID(), onRead, onUnauthorized }), [client, userId, onRead, onUnauthorized]);
   const { controller, state } = useChat(options);
   const host = useRef<HTMLElement>(null);
@@ -46,7 +49,7 @@ export function ChatPanel({ expressionPacks = [], onReloadExpressions, renderMor
   const bottom = useRef(true);
   const oldScroll = useRef<{ height: number; top: number } | null>(null);
   const composing = useRef(false);
-  const textarea = useRef<HTMLTextAreaElement>(null);
+  const textarea = useRef<ChatDraftInputHandle>(null);
   const [favorites, setFavorites] = useState<{ client: ChatClient; items: ChatSticker[] } | null>(null);
   const [stickerFailure, setStickerFailure] = useState<string | null>(null);
   const [stickerLoading, setStickerLoading] = useState(false);
@@ -170,7 +173,7 @@ export function ChatPanel({ expressionPacks = [], onReloadExpressions, renderMor
     controller?.acknowledgeVisible(visible.current && tailVisible.current && bottom.current);
   };
   const send = () => { if (!composing.current) void controller?.send(); };
-  const formatTime = (value: string) => new Date(value).toLocaleString(locale, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const formatTime = (value: string, exact = false) => new Date(value).toLocaleString(locale, { ...(exact ? { year: 'numeric', second: '2-digit' } as const : {}), month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
   return <section ref={host} className={`friend-chat${peerId ? ' has-peer' : ''}`} aria-label={t('好友聊天', 'Friend chat')}>
     <aside className="friend-chat-sidebar" aria-label={t('会话', 'Conversations')}>
@@ -179,8 +182,9 @@ export function ChatPanel({ expressionPacks = [], onReloadExpressions, renderMor
       {!state?.conversations.length && !state?.listLoading && <p className="friend-chat-muted">{t('从好友列表选择一位好友开始聊天。', 'Choose a friend from your friends list to start a conversation.')}</p>}
       {state?.conversations.map((c) => <div key={c.id} className={`friend-chat-conversation${peerId === c.peer.userId ? ' is-selected' : ''}`}>
         <div className="friend-chat-peer">{renderIdentity(c.peer)}</div>
-        <button type="button" className="friend-chat-action" onClick={() => onSelectPeer(c.peer.userId)} aria-current={peerId === c.peer.userId ? 'true' : undefined}
-          aria-label={`${t('打开聊天', 'Open conversation')}: ${c.peer.name}`}><MessageSquare size={16} />{c.unreadCount > 0 && <span>{c.unreadCount}</span>}</button>
+        <button type="button" className="friend-chat-open" onClick={() => onSelectPeer(c.peer.userId)} aria-current={peerId === c.peer.userId ? 'true' : undefined}
+          aria-label={`${t('打开聊天', 'Open conversation')}: ${c.peer.name}`} />
+        {c.unreadCount > 0 && <span className="friend-chat-unread">{c.unreadCount}</span>}
         <p className="friend-chat-preview">{c.lastMessage.stickerId ? t('[表情包]', '[Sticker]') : <ChatMessageText body={Array.from(c.lastMessage.body).slice(0, 60).join('')} packs={expressionPacks} />}</p>
       </div>)}
       {state?.nextCursor && <button type="button" className="friend-chat-action" disabled={state.listLoading} onClick={() => void controller?.loadMoreConversations()}>{t('更多会话', 'More conversations')}</button>}
@@ -202,16 +206,21 @@ export function ChatPanel({ expressionPacks = [], onReloadExpressions, renderMor
           }}>{t('更早的消息', 'Earlier messages')}</button>}
           {state?.loading && <p className="friend-chat-muted" role="status">{t('加载中…', 'Loading…')}</p>}
           {state?.page && !state.messages.length && <p className="friend-chat-muted">{t('还没有消息。', 'No messages yet.')}</p>}
-          {state?.messages.map((m) => <div key={`${m.conversationId}:${m.sequence}`} className={`friend-chat-message${m.senderUserId === userId ? ' is-mine' : ''}`}>
+          {state?.messages.map((m, index) => <Fragment key={`${m.conversationId}:${m.sequence}`}>
+            {startsChatTimeGroup(m.createdAt, state.messages[index - 1]?.createdAt) && <time className="friend-chat-time-group" dateTime={m.createdAt}>{formatTime(m.createdAt)}</time>}
+            <div className={`friend-chat-message-row${m.senderUserId === userId ? ' is-mine' : ''}`}>
+            <div className={`friend-chat-message${m.senderUserId === userId ? ' is-mine' : ''}`} tabIndex={0}>
             {m.stickerId && client.stickers ? <>
               <ChatStickerImage client={client.stickers} id={m.stickerId} label={t('表情包', 'Sticker')} retryLabel={t('重试', 'Retry')} />
               <button type="button" className="friend-chat-action friend-chat-save-sticker" disabled={savingFavorites.includes(m.stickerId) || stickerItems.some((item) => item.id === m.stickerId)} onClick={() => void saveSticker(m.stickerId!)}><Star size={13} />{stickerItems.some((item) => item.id === m.stickerId) ? t('已收藏', 'Saved') : t('收藏', 'Save sticker')}</button>
-            </> : <div className="friend-chat-message-body">{messageBody(m.body)}</div>}<div className="friend-chat-message-meta"><time dateTime={m.createdAt}>{formatTime(m.createdAt)}</time>
+            </> : <div className="friend-chat-message-body">{messageBody(m.body)}</div>}</div>
+            <div className="friend-chat-message-meta"><div className="friend-chat-message-details">
+              <time className="friend-chat-exact-time" dateTime={m.createdAt}>{formatTime(m.createdAt, true)}</time>
               {m.senderUserId === userId && state?.page?.peerReadSequence !== undefined && <span className="friend-chat-receipt" aria-label={compareChatSequence(m.sequence, state.page.peerReadSequence) <= 0 ? t('对方已读', 'Read by recipient') : t('对方未读', 'Not yet read by recipient')}>
-                {compareChatSequence(m.sequence, state.page.peerReadSequence) <= 0 ? <><CheckCheck size={12} />{t('已读', 'Read')}</> : <><Circle size={11} />{t('未读', 'Unread')}</>}
+                {compareChatSequence(m.sequence, state.page.peerReadSequence) <= 0 ? t('已读', 'Read') : t('未读', 'Unread')}
               </span>}
-            </div>
-          </div>)}
+            </div></div>
+          </div></Fragment>)}
           <div ref={tail} className="friend-chat-tail" aria-hidden="true" />
           {state?.pending.map((m) => <div key={m.clientMessageId} className="friend-chat-message is-mine is-pending">
             {m.stickerId && client.stickers ? <ChatStickerImage client={client.stickers} id={m.stickerId} label={t('表情包', 'Sticker')} retryLabel={t('重试', 'Retry')} /> : <div className="friend-chat-message-body">{messageBody(m.body)}</div>}{m.status === 'sending' && <span role="status">{t('发送中', 'Sending')}</span>}
@@ -227,15 +236,14 @@ export function ChatPanel({ expressionPacks = [], onReloadExpressions, renderMor
               renderMore={renderMore} voiceControl={renderVoice?.(insertEmoji, !canSend)}
               loading={stickerLoading} error={stickerFailure} onReload={loadStickers} onChange={(items) => { stickerRequest.current?.abort(); setStickerLoading(false); setFavorites({ client, items }); }}
               onEmoji={insertEmoji} onSend={(id) => void controller?.send(undefined, id)} t={t}
-              input={<textarea ref={textarea} id="friend-chat-message" value={state?.draft ?? ''} rows={1} disabled={!canSend}
-                aria-label={t('消息', 'Message')} onChange={(event) => { controller?.setDraft(event.target.value); event.target.style.height = 'auto'; event.target.style.height = Math.min(event.target.scrollHeight, 112) + 'px'; }}
+              input={<ChatDraftInput key={userId + ':' + peerId} ref={textarea} value={state?.draft ?? ''} packs={expressionPacks} disabled={!canSend}
+                label={t('消息', 'Message')} onChange={value => controller?.setDraft(value)}
                 onCompositionStart={() => { composing.current = true; }} onCompositionEnd={() => { composing.current = false; }}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing && !composing.current
                     && event.keyCode !== 229 && window.matchMedia('(hover: hover) and (pointer: fine)').matches) { event.preventDefault(); send(); }
                 }} />}
               sendButton={normalizeChatBody(state?.draft) && <button type="submit" className="friend-chat-action is-primary friend-chat-send" disabled={!canSend}>{t('发送', 'Send')}</button>} />
-            {state?.draft.includes('[') && <div className="friend-chat-draft-preview" aria-label={t('消息预览', 'Message preview')}><ChatMessageText body={state.draft} packs={expressionPacks} /></div>}
             {Array.from(state?.draft ?? '').length > CHAT_BODY_LIMIT - 200 && <span className="friend-chat-muted">{Array.from(state?.draft ?? '').length}/{CHAT_BODY_LIMIT}</span>}
           </form>}
       </>}
