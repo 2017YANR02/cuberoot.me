@@ -406,8 +406,8 @@ interface Props {
   /** gen 行内:更紧凑的间距 + 略小播放器。 */
   compact?: boolean;
   expandedSolutions?: boolean;
-  /** Timer cross practice: reveal solution moves only on request. */
-  progressiveCrossReveal?: boolean;
+  /** Timer stage practice: reveal solution moves only on request. */
+  progressiveReveal?: boolean;
   /** Opt-in experimental ranking; ordinary callers retain length order. */
   practicalSolutions?: boolean;
   settingsSlot?: HTMLElement | null; navigationSlot?: HTMLElement | null;
@@ -416,7 +416,7 @@ interface Props {
   onNextScramble?: () => void;
 }
 
-export default function StageSolver({ scramble, lang, initialMethod = 'std', initialStage = 0, initialFace, onSelectionChange, initialSlot = '', onSlotChange, initialBase = '', onBaseChange, compact = false, expandedSolutions = false, progressiveCrossReveal = false, practicalSolutions = false, settingsSlot, navigationSlot, scrambleEditAction, onPrevScramble, onNextScramble, onDismissChange, onBlockingChange }: Props) {
+export default function StageSolver({ scramble, lang, initialMethod = 'std', initialStage = 0, initialFace, onSelectionChange, initialSlot = '', onSlotChange, initialBase = '', onBaseChange, compact = false, expandedSolutions = false, progressiveReveal = false, practicalSolutions = false, settingsSlot, navigationSlot, scrambleEditAction, onPrevScramble, onNextScramble, onDismissChange, onBlockingChange }: Props) {
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
   // 视角格 / 解法头的目标描述(块类方法按 method+stage 给语义,其余 = 该面十字)。
@@ -1142,7 +1142,6 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       aria-label={t('切换 y 预转体', 'Toggle y pre-rotation')}
       onClick={() => cycleRot(i)}>{renderOrientation(alg)}</button>
   );
-  const progressiveReveal = progressiveCrossReveal && isCrossStage;
   const revealContext = JSON.stringify([normScramble, method, stage, selFace]);
   const revealedCount = (i: number) => revealed?.source === moves && revealed.context === revealContext
     ? revealed.counts[i] ?? 0 : 0;
@@ -1157,10 +1156,10 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     } }));
   };
   const revealControls = (i: number, alg: string) => progressiveReveal && !solutionVisible(i, alg) && <>
-    <button type="button" className="stsv-sol-orientation" disabled={movesLoading}
+    <button type="button" className="stsv-sol-orientation stsv-reveal-next" disabled={movesLoading}
       aria-label={t('显示下一步', 'Reveal next move')}
       onClick={() => revealSolution(i, revealedCount(i) + 1)}>+1</button>
-    <button type="button" className="stsv-sol-orientation" disabled={movesLoading}
+    <button type="button" className="stsv-sol-orientation stsv-reveal-all" disabled={movesLoading}
       aria-label={t('显示完整解法', 'Reveal full solution')}
       onClick={() => revealSolution(i, solutionTokens(alg).length)}>{moveLen(alg)}{t('步', 'f')}</button>
   </>;
@@ -1170,7 +1169,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       value: i,
       label: <span className="stsv-sol-option">
         {!expandedSolutions && renderOrientation(alg)}
-        {sol.c && slotCombos.length >= 2 && renderSolSlots(sol.c)}
+        <span className="stsv-sol-slot-column">{sol.c && slotCombos.length >= 2 && renderSolSlots(sol.c)}</span>
         <code>
           {splitLeadRot(alg).lead && <span className="stsv-sol-rotation">{splitLeadRot(alg).lead} </span>}
           {solutionText(i, alg)}

@@ -63,7 +63,7 @@ export default function TimerSolverBody({ view = 'solutions', scramble, onScramb
       </form> : (scramble.trim() || onScrambleChange) && <div className="solver-panel-scramble solver-scramble-row">
         <span>{scramble}</span>
       </div>}
-      <StageSolver progressiveCrossReveal scramble={scramble} lang={language} compact={compact} expandedSolutions={!compact} settingsSlot={settingsSlot} navigationSlot={navigationSlot}
+      <StageSolver progressiveReveal scramble={scramble} lang={language} compact={compact} expandedSolutions={!compact} settingsSlot={settingsSlot} navigationSlot={navigationSlot}
         scrambleEditAction={onScrambleChange && <button type="button" className="stsv-settings-toggle" data-no-swipe
           disabled={editing} aria-label={tr({ zh: '编辑打乱', en: 'Edit scramble' })}
           onClick={() => { setDraft(scramble); setEditing(true); }}><Pencil size={18} /></button>}

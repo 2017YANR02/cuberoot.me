@@ -512,22 +512,20 @@ html[data-theme='dark'] .stsv {
 .compact-select-popup.stsv-solution-menu { overflow-x: auto; }
 .stsv-solution-menu .compact-select-options {
   display: grid;
-  grid-template-columns: max-content;
+  grid-template-columns: max-content max-content minmax(max-content, 1fr) 3ch;
+  column-gap: 8px;
   width: max-content;
   min-width: 100%;
 }
-.stsv-solution-menu .compact-select-option {
-  width: auto;
-  justify-self: stretch;
-}
+.stsv-solution-menu .compact-select-option,
 .stsv-solution-menu .stsv-sol-option {
   display: grid;
-  grid-template-columns: minmax(max-content, 1fr) 3ch max-content;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
 }
-/* 带槽位色块时有三项内容，不能把公式挤进步数列并让步数换行。 */
-.stsv-solution-menu .stsv-sol-option:has(> .stsv-sol-len:nth-child(3)) {
-  grid-template-columns: max-content minmax(max-content, 1fr) 3ch max-content;
-}
+.stsv-solution-menu .compact-select-option { width: auto; justify-self: stretch; }
+.stsv-sol-slot-column { display: inline-flex; align-items: center; }
 .stsv-solution-menu .stsv-sol-option code {
   white-space: nowrap;
   overflow: visible;
@@ -646,7 +644,29 @@ html[data-theme='dark'] .stsv {
 }
 .stsv-result-expanded > .stsv-player { grid-column: 1; grid-row: 1; width: 100%; }
 .stsv-result-expanded > .stsv-sols { grid-column: 2; grid-row: 1; }
-.stsv-solution-list { display: flex; flex-direction: column; gap: 4px; }
+.stsv-solution-list {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) max-content max-content max-content max-content;
+  gap: 4px 8px;
+}
+.stsv-solution-list .stsv-solution-row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+}
+.stsv-solution-list .stsv-solution-choice,
+.stsv-solution-list .stsv-sol-option {
+  display: grid;
+  grid-column: 1 / 4;
+  grid-template-columns: subgrid;
+  align-items: center;
+}
+.stsv-solution-list .stsv-sol-slot-column { grid-column: 1; }
+.stsv-solution-list .stsv-sol-option code { grid-column: 2; }
+.stsv-solution-list .stsv-sol-len { grid-column: 3; }
+.stsv-solution-list .stsv-sol-orientation { grid-column: 6; grid-row: 1; }
+.stsv-solution-list .stsv-reveal-next { grid-column: 4; }
+.stsv-solution-list .stsv-reveal-all { grid-column: 5; }
 .stsv-solution-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; }
 .stsv-solution-row.is-selected { background: var(--accent-soft); }
 .stsv-solution-choice {
