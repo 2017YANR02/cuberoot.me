@@ -1,7 +1,8 @@
 'use client';
 /** @module Calendar-aligned timeline shared by all workspace schedules. */
+import MoreToggle from '@/components/MoreToggle';
 import { Fragment, useEffect, useId, useRef, useState, type CSSProperties } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+
 import { planningDay, planningDate, scheduleRange, type ScheduleTask } from '@cuberoot/shared/workspace-planning';
 import { today } from '@app-foundation/workspace-ui';
 import { useT } from '@/hooks/useT';
@@ -96,7 +97,7 @@ export default function ScheduleTimeline({ tasks, scale: requestedScale, editabl
         const contentId = `${regionId}-${groupIndex}`;
         return <Fragment key={group}>
         <div className={`workspace-gantt-row workspace-gantt-group${collapsed ? ' workspace-gantt-lane' : ''}`} style={{ '--gantt-color': colors[groupIndex % colors.length] } as CSSProperties}>
-          <div className="workspace-gantt-label">{collapsible ? <button type="button" className="workspace-lane-toggle" aria-label={group} aria-expanded={!collapsed} aria-controls={contentId} onClick={() => toggle(group)}>{collapsed ? <ChevronRight size={16} aria-hidden="true" /> : <ChevronDown size={16} aria-hidden="true" />}<span>{scheduleTaskLabel(group)}</span></button> : <strong>{scheduleTaskLabel(group)}</strong>}</div>
+          <div className="workspace-gantt-label">{collapsible ? <MoreToggle type="button" className="workspace-lane-toggle" aria-label={group} expanded={!collapsed} aria-controls={contentId} onClick={() => toggle(group)}><span>{scheduleTaskLabel(group)}</span></MoreToggle> : <strong>{scheduleTaskLabel(group)}</strong>}</div>
           <div className="workspace-gantt-track">
             {todayLine}
             {collapsed && phases.map(phase => {

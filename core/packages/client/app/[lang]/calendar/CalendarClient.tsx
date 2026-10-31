@@ -12,12 +12,10 @@
 //   3. 事件自带时区,设置可以切「显示时区」,两者不是一回事:出差时把显示时区切到当地,
 //      北京时间的会自动落到当地钟点上,事件本身不动。
 
+import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
-import {
-  CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Columns3, Download, List, Menu, Plus, Search, Settings,
-  Share2, Square, Undo2, Upload, X,
-} from '@app-foundation/icons/lucide';
+import { CalendarDays, ChevronLeft, ChevronRight, Columns3, Download, List, Menu, Plus, Search, Settings, Share2, Square, Undo2, Upload, X } from '@app-foundation/icons/lucide';
 import { ContinuousInsetCorner, SidebarToggle } from '@app-foundation/navigation-ui';
 import '@app-foundation/navigation-ui/navigation.css';
 import AppLink from '@/components/AppLink';
@@ -595,9 +593,9 @@ export default function CalendarClient() {
           {query && <ClearButton onClick={() => setQuery('')} />}
         </> : <>
           <button type="button" className="cal-mobile-action cal-mobile-glass cal-mobile-menu" aria-label={tr({ zh: '侧栏', en: 'Sidebar' })} aria-expanded={sidebarOpen} onClick={() => setSidebarOpen(true)}><Menu size={25} aria-hidden /></button>
-          <button type="button" className="cal-mobile-action cal-mobile-month-toggle" aria-expanded={monthExpanded} aria-controls="cal-mobile-month" onClick={() => setPickerMonth(monthExpanded ? null : `${focusKey.slice(0, 7)}-01`)}>
-            <span>{mounted ? mobileMonthLabel : ''}</span><ChevronDown size={17} aria-hidden />
-          </button>
+          <MoreToggle type="button" className="cal-mobile-action cal-mobile-month-toggle" expanded={monthExpanded} aria-controls="cal-mobile-month" onClick={() => setPickerMonth(monthExpanded ? null : `${focusKey.slice(0, 7)}-01`)}>
+            <span>{mounted ? mobileMonthLabel : ''}</span>
+          </MoreToggle>
           <div className="cal-mobile-glass cal-mobile-tools">
             {/* allow-manual-search: 仅打开搜索页面，输入 onChange 实时筛选日程。 */}
             <button type="button" className="cal-mobile-action cal-mobile-tool" aria-label={tr({ zh: '搜索日程', en: 'Search events' })} onClick={() => { setMobileSearch(true); setPickerMonth(null); }}><Search size={25} aria-hidden /></button>

@@ -5,6 +5,7 @@
 // deliberately NOT using site theme tokens. Route: /dev/llm/fable
 // Data source: anthropic.com/news/claude-fable-5-mythos-5 (2026-06-09).
 
+import MoreToggle from '@/components/MoreToggle';
 import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft, ArrowUpRight, Code2, Eye, FlaskConical, Brain, BarChart3, Bot,
@@ -784,32 +785,32 @@ const msg = await client.messages.create({
         })}</h2>
           <div className="fable-faq">
             <details className="fable-faq-item">
-              <summary><Sparkles size={16} strokeWidth={1.9} />{tr({ zh: 'Fable 5 和 Opus 比,值得升吗?', en: 'Is Fable 5 worth upgrading from Opus?'
-            })}</summary>
+              <MoreToggle as="summary"><Sparkles size={16} strokeWidth={1.9} />{tr({ zh: 'Fable 5 和 Opus 比,值得升吗?', en: 'Is Fable 5 worth upgrading from Opus?'
+            })}</MoreToggle>
               <p>{tr({ zh: '需要最高智能、长程自主、或一次跑通复杂多步任务时值得;它的输入/输出价是 Opus 4.8 的两倍,成本敏感且任务清晰的场景,Opus 4.8 仍很划算。', en: 'Yes when you need maximum intelligence, long-horizon autonomy, or to one-shot a complex multi-step task. It costs 2× Opus 4.8 on tokens, so for cost-sensitive, well-scoped work Opus 4.8 remains a great value.'
             })}</p>
             </details>
             <details className="fable-faq-item">
-              <summary><Lock size={16} strokeWidth={1.9} />{tr({ zh: 'Fable 5 和 Mythos 5 到底什么关系?', en: 'How are Fable 5 and Mythos 5 related?'
-            })}</summary>
+              <MoreToggle as="summary"><Lock size={16} strokeWidth={1.9} />{tr({ zh: 'Fable 5 和 Mythos 5 到底什么关系?', en: 'How are Fable 5 and Mythos 5 related?'
+            })}</MoreToggle>
               <p>{tr({ zh: '同一个底层模型。Fable 5 开启全部安全防护、面向所有人;Mythos 5 解除部分防护,仅限受信的网络安全 / 生物医学研究者。能力与架构完全一致。', en: 'Same underlying model. Fable 5 has all safeguards on and is open to everyone; Mythos 5 lifts some of them for vetted cybersecurity / biomedical researchers. Capability and architecture are identical.'
             })}</p>
             </details>
             <details className="fable-faq-item">
-              <summary><ShieldCheck size={16} strokeWidth={1.9} />{tr({ zh: '安全回退会影响我的正常使用吗?', en: 'Will the safety fallback affect normal use?'
-            })}</summary>
+              <MoreToggle as="summary"><ShieldCheck size={16} strokeWidth={1.9} />{tr({ zh: '安全回退会影响我的正常使用吗?', en: 'Will the safety fallback affect normal use?'
+            })}</MoreToggle>
               <p>{tr({ zh: '基本不会。回退只在高风险查询命中分类器时触发,平均不到 5% 的会话;其余 95%+ 直接由 Fable 5 处理。', en: 'Rarely. Fallback only fires when a high-risk query trips the classifiers — under 5% of sessions on average; the other 95%+ run on Fable 5 directly.'
             })}</p>
             </details>
             <details className="fable-faq-item">
-              <summary><Code2 size={16} strokeWidth={1.9} />{tr({ zh: '从 Opus 4.8 迁过来要改代码吗?', en: 'Do I need code changes coming from Opus 4.8?'
-            })}</summary>
+              <MoreToggle as="summary"><Code2 size={16} strokeWidth={1.9} />{tr({ zh: '从 Opus 4.8 迁过来要改代码吗?', en: 'Do I need code changes coming from Opus 4.8?'
+            })}</MoreToggle>
               <p>{tr({ zh: '几乎不用 — 改 model 字符串即可。唯一差异:显式 thinking:{type:"disabled"} 会 400,不需要思考时省略该参数;temperature / top_p / top_k 与 4.7/4.8 一样已移除。', en: 'Almost none — swap the model string. The one delta: an explicit thinking:{type:"disabled"} returns 400, so omit the param when you don’t want thinking; temperature / top_p / top_k are removed just like on 4.7/4.8.'
             })}</p>
             </details>
             <details className="fable-faq-item">
-              <summary><Rocket size={16} strokeWidth={1.9} />{tr({ zh: '6 月 22 日之后还能免费用吗?', en: 'Can I still use it free after June 22?'
-            })}</summary>
+              <MoreToggle as="summary"><Rocket size={16} strokeWidth={1.9} />{tr({ zh: '6 月 22 日之后还能免费用吗?', en: 'Can I still use it free after June 22?'
+            })}</MoreToggle>
               <p>{tr({ zh: '6/9–6/22 在 Pro / Max / Team / 席位制 Enterprise 套餐内免费;6/23 起订阅内继续使用需消耗 usage credits,是否回归套餐取决于算力供给。API 一直按 $10/$50 计费。', en: 'Free within Pro / Max / Team / seat-based Enterprise from Jun 9–22; from Jun 23, continued subscription use draws usage credits, and return to plan inclusion depends on capacity. The API always bills at $10/$50.'
             })}</p>
             </details>

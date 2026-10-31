@@ -6,6 +6,7 @@
  * with total move counts and per-stage breakdowns.
  */
 
+import MoreToggle from './MoreToggle';
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import {
   METHOD_REGISTRY,
@@ -205,11 +206,11 @@ function MethodAccordion({ outcome, isZh, bestTotal, open, onToggle }: Accordion
   const isBest = r != null && !failed && bestTotal != null && r.totalMoves === bestTotal;
   return (
     <div style={isBest ? cardBestStyle : cardStyle}>
-      <button
+      <MoreToggle
         type="button"
         onClick={onToggle}
         style={accordionHeadStyle}
-        aria-expanded={open}
+        expanded={open}
       >
         <span style={isBest ? cardTitleBestStyle : cardTitleStyle}>
           {entry.nameEn}
@@ -222,8 +223,8 @@ function MethodAccordion({ outcome, isZh, bestTotal, open, onToggle }: Accordion
                                       })
               : `${r.totalMoves} ${tr({ zh: '步', en: 'moves' })}`}
         </span>
-        <span style={{ marginLeft: 6, opacity: 0.7 }}>{open ? '▾' : '▸'}</span>
-      </button>
+
+      </MoreToggle>
       {open && (
         <>
           {outcome.err && <div style={errStyle}>{outcome.err}</div>}

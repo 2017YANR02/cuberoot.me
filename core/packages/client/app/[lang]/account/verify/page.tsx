@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useEffect, useState } from 'react';
 import { CircleCheck } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
@@ -155,7 +156,7 @@ export default function FaceVerificationPage() {
         <label>{t('真实姓名', 'Legal name')}<span className="face-verify-input"><input className="face-verify-field" required autoComplete="off" maxLength={60} minLength={2} value={realName} onChange={e => setRealName(e.target.value)} disabled={busy} />{realName && !busy && <ClearButton onClick={() => setRealName('')} />}</span></label>
         <label>{t('身份证号码', 'Identity card number')}<span className="face-verify-input"><input className="face-verify-field" required autoComplete="off" maxLength={18} pattern="[0-9]{17}[0-9xX]" value={idCard} onChange={e => setIdCard(e.target.value)} disabled={busy} />{idCard && !busy && <ClearButton onClick={() => setIdCard('')} />}</span></label>
         <details className="face-verify-details">
-          <summary>{t('身份与人脸信息处理说明', 'Identity and facial data use')}</summary>
+          <MoreToggle as="summary">{t('身份与人脸信息处理说明', 'Identity and facial data use')}</MoreToggle>
           <p>{t('你提供的姓名、身份证号码以及认证设备信息将提交阿里云，阿里云将采集人脸并进行实名比对与活体检测。CubeRoot 不保存原始身份证号码、人脸照片或视频，仅保存证件摘要、尾号、同意记录及认证结果；注销账号时删除站内认证记录。每个账号的认证发起次数按最近 24 小时累计，失败或主动结束也会计次。', 'Your name, identity number and device information are sent to Alibaba Cloud, which collects your face for identity comparison and liveness detection. CubeRoot stores only an identity digest, last four characters, consent and verification results, not your full ID number, face photos or video. Verification records are deleted when you delete your account. Attempts are counted per account over a rolling 24-hour period, including failed or ended attempts.')}</p>
           <p>{t('实名认证独立于 WCA 账号绑定，不会修改你的 WCA 身份或公开展示身份证信息。', 'This is separate from linking a WCA account. It does not change your WCA identity or publish your identity details.')}</p>
         </details>

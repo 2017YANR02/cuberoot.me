@@ -20,6 +20,7 @@
  * 偏移列)全部按「当天」而不是按「此刻」记忆化,否则每秒要重跑几百次 Intl 格式化。
  */
 
+import MoreToggle from '@/components/MoreToggle';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryState, parseAsString, parseAsInteger } from 'nuqs';
 import { Check, Copy, Plus, RotateCcw, X } from '@app-foundation/icons/lucide';
@@ -251,7 +252,7 @@ function TimezonePage() {
       <AvailabilityPlanner today={dateKey(homeWall)} zoneItems={zoneItems} />
 
       <details className="tz-instant-details">
-      <summary>{tr({ zh: '单个时刻与世界时钟', en: 'Single time & world clocks' })}</summary>
+      <MoreToggle as="summary">{tr({ zh: '单个时刻与世界时钟', en: 'Single time & world clocks' })}</MoreToggle>
       {/* ── 基准:我的时区 + 时刻 ── */}
       <section className="tz-base">
         <div className="tz-field">

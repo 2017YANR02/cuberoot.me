@@ -1,4 +1,5 @@
 'use client';
+import MoreToggle from '@/components/MoreToggle';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { competitionFetch, ensureCompetitionAccess } from '@/lib/competition-access';
 
@@ -734,9 +735,9 @@ function SimilarCompsView({ series, sameCity, isZh, lang }: {
           </h3>
           <SimilarCompList comps={cityShown} isZh={isZh} lang={lang} showPlace={false} />
           {cityHidden > 0 && (
-            <button type="button" className="comp-similar-more" onClick={() => setCityExpanded(true)}>
+            <MoreToggle expanded={cityExpanded} type="button" className="comp-similar-more" onClick={() => setCityExpanded(true)}>
               {tr({ zh: `显示全部 ${sameCity.length} 场`, en: `Show all ${sameCity.length}` })}
-            </button>
+            </MoreToggle>
           )}
         </section>
       )}

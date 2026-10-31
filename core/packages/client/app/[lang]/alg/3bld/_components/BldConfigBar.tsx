@@ -3,9 +3,10 @@
 // Compact, collapsible 3BLD config bar driven by useBldConfigStore.
 // `show` gates which control groups render (default: all).
 
+import MoreToggle from '@/components/MoreToggle';
 import { useState, type JSX } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Settings2, ChevronDown, ChevronUp } from '@app-foundation/icons/lucide';
+import { Settings2 } from '@app-foundation/icons/lucide';
 import { ClearButton } from '@/components/ClearButton';
 import BoolToggle from '@/components/BoolToggle';
 import { useBldConfigStore } from '../_store/bld-config-store';
@@ -54,17 +55,17 @@ export function BldConfigBar({ show }: BldConfigBarProps): JSX.Element {
 
   return (
     <div className="bld-config-bar">
-      <button
+      <MoreToggle
         type="button"
         className="bld-config-toggle"
         onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
+        expanded={open}
       >
         <Settings2 size={15} />
         {tr({ zh: '配置', en: 'Config' })}
         <span className="bld-config-summary">{summary}</span>
-        {open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-      </button>
+
+      </MoreToggle>
 
       {open && (
         <div className="bld-config-panel">

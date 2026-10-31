@@ -1,7 +1,8 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { BookOpen, ChevronRight, RotateCcw } from '@app-foundation/icons/lucide';
+import { BookOpen, RotateCcw } from '@app-foundation/icons/lucide';
 import { HexColorPicker } from 'react-colorful';
 import DrawCanvas from './DrawCanvas';
 import { DRAW_NEUTRAL_STICKER, FTO_STICKER_PALETTE } from './palettes';
@@ -218,7 +219,7 @@ export function FtoDrawPanel({
         </section>
         <span className="fto-image-status" role="status">{status}</span>
         <details className="fto-image-notation sim-settings-section">
-          <summary><ChevronRight className="sim-puzzle-caret" size={14} aria-hidden /><BookOpen size={16} aria-hidden />{t('记号', 'Notation')}</summary>
+          <MoreToggle as="summary"><BookOpen size={16} aria-hidden />{t('记号', 'Notation')}</MoreToggle>
           <div className="fto-image-notation-content">
             <p><strong>{t('基础转动', 'Simple')}</strong> F R L U D Bl Br B</p>
             <p><strong>{t('双层转动', 'Wide')}</strong> Fw Rw Lw Uw Dw Blw Brw Bw</p>

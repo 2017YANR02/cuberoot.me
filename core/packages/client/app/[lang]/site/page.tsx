@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 
 /**
@@ -1198,16 +1199,16 @@ function SitesPageInner() {
             <div className="sites-topics-heading">
               <h2 id="sites-topics-title">{TEXTS.topics[lang]}</h2>
               {admin && (
-                <button
+                <MoreToggle
                   type="button"
                   className="sites-heading-action"
-                  aria-expanded={manageTopics}
+                  expanded={manageTopics}
                   aria-label={t('管理话题', 'Manage topics')}
                   title={t('管理话题', 'Manage topics')}
                   onClick={() => setManageTopics((value) => !value)}
                 >
                   <Pencil size={14} />
-                </button>
+                </MoreToggle>
               )}
             </div>
             {admin && manageTopics && <div className="sites-topic-manager">

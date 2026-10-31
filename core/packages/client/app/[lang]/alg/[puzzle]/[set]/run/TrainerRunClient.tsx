@@ -1,4 +1,5 @@
 'use client';
+import MoreToggle from '@/components/MoreToggle';
 import '@cuberoot/timer-ui/compact-select.css';
 
 import { useModalBackdrop, useModalDismiss } from '@/hooks/useModalDismiss';
@@ -2160,18 +2161,18 @@ export default function TrainerRunClient() {
           </button>
         )}
         {trainingHost && timing && !isMemo && !splitActive && !emptySelection && (
-          <button
+          <MoreToggle
             type="button"
             className="trainer-progress-link timer-training-stats-toggle"
             data-no-timer
-            aria-expanded={statsVisible}
+            expanded={statsVisible}
             aria-controls={statsVisible ? 'trainer-results' : undefined}
             aria-label={statsVisible ? tr({ zh: '收起成绩', en: 'Collapse results' }) : tr({ zh: '成绩', en: 'Results' })}
             disabled={timerState !== TimerState.NOT_RUNNING}
             onClick={() => setStatsExpanded(open => !open)}
           >
             {statsVisible ? tr({ zh: '收起', en: 'Collapse' }) : tr({ zh: '成绩', en: 'Results' })}
-          </button>
+          </MoreToggle>
         )}
       </div>
 

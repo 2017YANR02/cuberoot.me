@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useState, type ComponentType } from 'react';
 import { useRouter } from 'next/navigation';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
@@ -116,7 +117,7 @@ export default function AdminPage() {
           </a>
         </nav>
         <details className="admin-dashboard__table">
-          <summary>{t('报税教程（待补充）', 'Tax filing guide (coming soon)')}</summary>
+          <MoreToggle as="summary">{t('报税教程（待补充）', 'Tax filing guide (coming soon)')}</MoreToggle>
           {/* Add the verified filing steps here once the actual workflow is documented. */}
         </details>
       </section>

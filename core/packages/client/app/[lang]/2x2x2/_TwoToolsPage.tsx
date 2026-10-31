@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Copy, ExternalLink, Search, Settings2 } from '@app-foundation/icons/lucide';
 import { parseAsString, useQueryState } from 'nuqs';
@@ -238,7 +239,7 @@ export default function TwoToolsPage() {
 
         <section className="tt-results-pane">
           <details className="tt-settings">
-            <summary><Settings2 size={16} /> {t('方法与搜索范围', 'Methods and search range')}</summary>
+            <MoreToggle as="summary"><Settings2 size={16} /> {t('方法与搜索范围', 'Methods and search range')}</MoreToggle>
             <div className="tt-settings-body">
               {(['EG', 'TCLL', 'LS'] as const).map((group) => (
                 <section className="tt-method-group" key={group}>

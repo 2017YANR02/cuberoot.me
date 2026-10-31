@@ -1,8 +1,9 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useRef } from 'react';
 import { useBpMotion } from './useBpMotion';
-import { ArrowRight, ArrowUpRight, BookOpen, Building2, ChartNoAxesColumnIncreasing, Check, ChevronDown, Clock3, Code2, Globe2, Layers3, Printer, Radio, RotateCcw, ScanSearch, School, ShieldCheck, Sparkles, Timer, Users } from '@app-foundation/icons/lucide';
+import { ArrowRight, ArrowUpRight, BookOpen, Building2, ChartNoAxesColumnIncreasing, Check, Clock3, Code2, Globe2, Layers3, Printer, Radio, RotateCcw, ScanSearch, School, ShieldCheck, Sparkles, Timer, Users } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import PersonLink from '@/components/PersonLink';
 import HeaderToggles from '@/components/HeaderToggles';
@@ -64,7 +65,7 @@ function NarrativeSection({ section }: { section: BpSection }) {
       </div>
       </div>
       <details className="bp-detail">
-        <summary>{tr({ zh: '阅读完整商业说明', en: 'Read the full business rationale' })}<ChevronDown size={18} aria-hidden /></summary>
+        <MoreToggle as="summary">{tr({ zh: '阅读完整商业说明', en: 'Read the full business rationale' })}</MoreToggle>
         <div className="bp-detail-body">
           <p className="overview-intro">{tr(section.intro)}</p>
           <div className="bp-detail-columns">{section.cards.map(card => <article key={card.title.en}><h3>{tr(card.title)}</h3><p>{tr(card.body)}</p></article>)}</div>
@@ -157,7 +158,7 @@ export default function BusinessPlanPage() {
         <div className="overview-product-grid">
           {PRODUCTS.map(({ Icon, href, title, body }) => <AppLink href={href} key={href} prefetch={false} className="overview-product" data-site-surface="panel"><Icon size={27} aria-hidden /><h3>{tr(title)}</h3><p>{tr(body)}</p><span className="overview-text-link">{tr({ zh: '打开体验', en: 'Try it' })}<ArrowUpRight size={16} aria-hidden /></span></AppLink>)}
         </div>
-        <details className="bp-detail"><summary>{tr({ zh: '更多训练工具与技术积累', en: 'More training tools and technical work' })}<ChevronDown size={18} aria-hidden /></summary><div className="bp-detail-body"><ProductAtlas />
+        <details className="bp-detail"><MoreToggle as="summary">{tr({ zh: '更多训练工具与技术积累', en: 'More training tools and technical work' })}</MoreToggle><div className="bp-detail-body"><ProductAtlas />
         <div className="overview-engine">
           <VisualCube view="iso" algorithm="R U R' U'" size={170} local alt={tr({ zh: '用于求解与训练的魔方状态展示', en: 'A cube state for solving and training' })} />
           <div><h3>{tr({ zh: '技术积累支撑专业训练服务', en: 'Technical work supports specialist practice' })}</h3><p>{tr({ zh: '求解器、状态可视化、复盘交互与打乱统计，为专业工具提供基础。原创成果可直接体验，公开数据与开源组件保留来源。工具、内容与服务在一个平台协同，减少用户在不同资料与工具之间切换。', en: 'Solvers, state visualisation, reconstruction and scramble statistics support specialist tools. Original work is inspectable; public data and open-source components are credited. Connecting tools, content and services reduces switching between resources.' })}</p><AppLink href="/achievements" prefetch={false} className="overview-text-link">{tr({ zh: '查看原创工作与在线入口', en: 'Inspect original work and tools' })}<ArrowUpRight size={16} aria-hidden /></AppLink></div>
@@ -167,7 +168,7 @@ export default function BusinessPlanPage() {
 
       <section id="bp-founder" className="overview-section overview-wrap overview-founder" aria-labelledby="bp-founder-title">
         <div><h2 id="bp-founder-title">{tr({ zh: '懂专业，也能把产品做出来。', en: 'Domain expertise with product execution.' })}</h2><AppLink href="/about/ruimin" prefetch={false} className="overview-text-link">{tr({ zh: '颜瑞民 · 公开履历与获奖档案', en: 'Ruimin Yan · profile and awards' })}<ArrowUpRight size={16} aria-hidden /></AppLink><div className="overview-founder-note"><School size={24} aria-hidden /><p>{tr({ zh: '数学与物理 × 参赛与教学 × 内容与开发', en: 'Mathematics & physics × competing & teaching × content & development' })}</p></div></div>
-        <div className="bp-founder-profile"><div className="bp-founder-art" data-site-surface="panel"><span className="bp-founder-monogram" aria-hidden>∑</span><span className="bp-founder-name"><PersonLink wcaId={CREATOR_PROFILE.wcaId} title={tr({ zh: '查看个人成绩主页', en: 'View competition results' })}>{tr({ zh: '颜瑞民', en: 'Ruimin Yan' })}</PersonLink></span><p>{tr({ zh: '创始人 · 数学硕士 · 魔方内容创作者', en: 'Founder · mathematics graduate · cubing creator' })}</p><div className="bp-founder-credentials"><span>{tr({ zh: '南开大学', en: 'Nankai University' })}</span><span>{tr({ zh: '乔治华盛顿大学', en: 'George Washington University' })}</span></div></div><FounderEvidence /><details className="bp-detail"><summary>{tr({ zh: '创始人的专业与教学经历', en: 'Founder’s professional and teaching background' })}<ChevronDown size={18} aria-hidden /></summary><div className="overview-story bp-detail-body">
+        <div className="bp-founder-profile"><div className="bp-founder-art" data-site-surface="panel"><span className="bp-founder-monogram" aria-hidden>∑</span><span className="bp-founder-name"><PersonLink wcaId={CREATOR_PROFILE.wcaId} title={tr({ zh: '查看个人成绩主页', en: 'View competition results' })}>{tr({ zh: '颜瑞民', en: 'Ruimin Yan' })}</PersonLink></span><p>{tr({ zh: '创始人 · 数学硕士 · 魔方内容创作者', en: 'Founder · mathematics graduate · cubing creator' })}</p><div className="bp-founder-credentials"><span>{tr({ zh: '南开大学', en: 'Nankai University' })}</span><span>{tr({ zh: '乔治华盛顿大学', en: 'George Washington University' })}</span></div></div><FounderEvidence /><details className="bp-detail"><MoreToggle as="summary">{tr({ zh: '创始人的专业与教学经历', en: 'Founder’s professional and teaching background' })}</MoreToggle><div className="overview-story bp-detail-body">
           <p>{tr({ zh: '颜瑞民拥有南开大学数学与金融数学、物理学学士学位，以及乔治华盛顿大学数学硕士学位。曾两次获全国高中数学联赛一等奖，并获中国数学奥林匹克铜牌。专业训练为求解算法、数据分析和复杂产品开发提供基础。', en: 'Ruimin Yan holds bachelor’s degrees in Mathematics and Financial Mathematics, and Physics from Nankai University, and a master’s in Mathematics from George Washington University. He won first prize twice in the National High School Mathematics League and a bronze medal at the Chinese Mathematical Olympiad.' })}</p>
           <p>{tr({ zh: '自 2017 年起参加 WCA 比赛，持续开展速拧课程、公式库和自媒体内容工作，著有《超脑思维：魔方游戏技巧从入门到精通》。内容创作、教学与亲身训练使他能够把专业能力转换为用户理解和使用的产品。', en: 'Competing in WCA events since 2017, he works on speedcubing courses, algorithms and media, and wrote Superbrain Thinking: Rubik’s Cube Skills from Beginner to Mastery. Teaching, content and practice help translate expertise into usable products.' })}</p>
         </div></details></div>
@@ -178,7 +179,7 @@ export default function BusinessPlanPage() {
         <h2 id="bp-business-title">{tr({ zh: '订阅服务长期练习，\n课程与赛事推动持续参与。', en: 'Subscriptions support practice.\nCourses and events sustain participation.' })}</h2>
         <p className="overview-intro">{tr({ zh: '个人与机构订阅、课程、线上赛事分别核算。基础计时和训练保持开放，付费服务与交付范围以当前会员权益和课程为准。', en: 'Account separately for individual and institutional subscriptions, courses and online events. Basic timing and training remain open; paid scope follows published memberships and courses.' })}</p>
         <BusinessStreams />
-        <details className="bp-detail"><summary>{tr({ zh: '个人与机构会员：具体权益', en: 'Individual and institutional membership benefits' })}<ChevronDown size={18} aria-hidden /></summary><div className="bp-detail-body"><div className="bp-subscriptions">
+        <details className="bp-detail"><MoreToggle as="summary">{tr({ zh: '个人与机构会员：具体权益', en: 'Individual and institutional membership benefits' })}</MoreToggle><div className="bp-detail-body"><div className="bp-subscriptions">
           {[{ href: '/membership#universal-perks-title', title: { zh: '个人会员', en: 'Individual membership' }, perks: benefits.items.filter(item => item.group === 'common' && item.enabled), explanation: { zh: '续费理由：持续练习中不断遇到新的解法与效率问题，会员获得专业资源和反馈。云端服务与高手内容可复用，个人视频复盘按已发布的数量与项目范围交付。', en: 'Renewal value: ongoing practice brings new solution and efficiency questions. Cloud tools and expert content are reusable; personal video review follows the published allowances and puzzle scope.' } }, { href: '/membership#enterprise-plans-title', title: { zh: '企业会员', en: 'Enterprise membership' }, perks: benefits.items.filter(item => item.group === 'enterprise' && item.enabled), explanation: { zh: '续费理由：企业展示、资料维护、课程安排和教学关系需要持续服务。标准权益覆盖可复用需求；额外定制明确范围与验收，持续完善机构的实际使用流程。', en: 'Renewal value: profiles, resources, courses and teaching relationships require continuing service. Standard benefits meet repeated needs; additional customisation needs explicit scope and acceptance.' } }].map(plan => (
             <article data-site-surface="panel" key={plan.title.en}>
               <div className="bp-subscription-heading"><span className="bp-icon">{plan.title.en === 'Individual membership' ? <Users size={32} aria-hidden /> : <Building2 size={32} aria-hidden />}</span><span className="bp-subscription-tag">{tr({ zh: '持续服务', en: 'ONGOING SERVICE' })}</span></div>
@@ -189,7 +190,7 @@ export default function BusinessPlanPage() {
           ))}
         </div>
         </div></details>
-        <details className="bp-detail"><summary>{tr({ zh: '会员交付与商业化进度', en: 'Member delivery & commercial progress' })}<ChevronDown size={18} aria-hidden /></summary><div className="bp-detail-body"><div className="bp-detail-columns">
+        <details className="bp-detail"><MoreToggle as="summary">{tr({ zh: '会员交付与商业化进度', en: 'Member delivery & commercial progress' })}</MoreToggle><div className="bp-detail-body"><div className="bp-detail-columns">
           <article data-site-surface="panel"><h3>{tr({ zh: '共有权益与会员关系', en: 'Shared benefits & member relationships' })}</h3><p>{tr({ zh: '会员页还列出徽章、抢先体验、致谢、VIP 群与自定义展示等权益，为交流和身份认同提供补充。长期经营以专业服务的使用效果为核心，建立反馈、问题响应和内容更新机制。', en: 'Badges, early access, acknowledgments, community and custom presentation complement specialist services. Long-term membership centres on useful delivery, feedback, support and content updates.' })}</p></article>
           <article data-site-surface="panel"><h3>{tr({ zh: '已有付费，规模化上线仍需条件', en: 'Real paid members; launch conditions remain' })}</h3><p>{tr({ zh: '已有真实付费会员。会员当前尚未正式全面开放，微信支付及部分资质审核仍在推进，自动续费尚未开放。目标是在两个月内推动更大规模订阅，按审核、支付和服务交付的实际完成情况执行。', en: 'Real paid members already exist. Membership has not fully launched; WeChat payment and qualification approvals remain in progress and auto-renewal is unavailable. The two-month expansion target depends on approvals, payment readiness and delivery.' })}</p></article>
           <article data-site-surface="panel"><h3>{tr({ zh: '下一步：完善交付流程', en: 'Next: refine delivery workflows' })}</h3><p>{tr({ zh: '为每项专业服务说明输入要求、提交入口、排期、处理范围和问题反馈方式；把人工复盘与计算服务的交付能力分别管理。机构定制明确需求确认、制作、修改和验收流程，降低购买前的不确定性。', en: 'Define inputs, submission, scheduling, scope and issue handling for specialist services. Manage human review separately from compute delivery. Define requirements, production, revision and acceptance for educator customisation.' })}</p></article>
@@ -219,7 +220,7 @@ export default function BusinessPlanPage() {
 
         <h2 id="bp-appendix-title">{tr({ zh: '关键说明，按需展开。', en: 'The detail, when you need it.' })}</h2>
         {BUSINESS_SECTIONS.filter(section => section.id !== 'bp-roadmap').map(section => <details id={section.id} className="bp-detail" key={section.id}>
-          <summary>{tr(section.label)}<ChevronDown size={18} aria-hidden /></summary>
+          <MoreToggle as="summary">{tr(section.label)}</MoreToggle>
           <div className="bp-detail-body"><p>{tr(section.intro)}</p><div className="bp-detail-columns">{section.cards.map(card => <article key={card.title.en}><h3>{tr(card.title)}</h3><p>{tr(card.body)}</p>{card.reference && <AppLink href={card.reference.href} prefetch={false} target="_blank" rel="noopener noreferrer" className="overview-text-link">{tr(card.reference.label)}<ArrowUpRight size={16} aria-hidden /></AppLink>}</article>)}</div>{section.conclusion && <p>{tr(section.conclusion)}</p>}</div>
         </details>)}
       </section>

@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import BoolToggle from '@/components/BoolToggle';
@@ -199,9 +200,9 @@ export default function AdjustStage() {
           </div>
         )}
 
-        <button className="mosaic-btn" onClick={() => setShowFx(v => !v)}>
-          🎨 {t('mosaic.adjust.effects')} {showFx ? '▴' : '▾'}
-        </button>
+        <MoreToggle expanded={showFx} className="mosaic-btn" onClick={() => setShowFx(v => !v)}>
+          🎨 {t('mosaic.adjust.effects')}
+        </MoreToggle>
         {showFx && (
           <div>
             {(Object.entries(FX_RANGES) as Array<[keyof ImageEffects, typeof FX_RANGES[keyof ImageEffects]]>).map(([k, r]) => (
@@ -229,9 +230,9 @@ export default function AdjustStage() {
           </div>
         )}
 
-        <button className="mosaic-btn" onClick={() => setShowPdfOpts(v => !v)}>
-          ⚙️ {t('mosaic.adjust.pdfOptions')} {showPdfOpts ? '▴' : '▾'}
-        </button>
+        <MoreToggle expanded={showPdfOpts} className="mosaic-btn" onClick={() => setShowPdfOpts(v => !v)}>
+          ⚙️ {t('mosaic.adjust.pdfOptions')}
+        </MoreToggle>
         {showPdfOpts && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={{ fontSize: 12, color: 'var(--muted)' }}>

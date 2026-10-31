@@ -8,6 +8,7 @@
 // independent press coverage (TechCrunch, The Decoder) cross-checked for the
 // benchmark table below.
 
+import MoreToggle from '@/components/MoreToggle';
 import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft, ArrowUpRight, Code2, Terminal, Globe, Bot, ShieldCheck, Lock,
@@ -581,23 +582,23 @@ const msg = await client.messages.create({
           <h2>{tr({ zh: '关于 Sonnet 5, 你大概想问的。', en: 'The questions you’re probably asking.' })}</h2>
           <div className="s5-faq">
             <details className="s5-faq-item">
-              <summary><Sparkles size={16} strokeWidth={1.9} />{tr({ zh: '从 Sonnet 4.6 升过来值得吗?', en: 'Is it worth upgrading from Sonnet 4.6?' })}</summary>
+              <MoreToggle as="summary"><Sparkles size={16} strokeWidth={1.9} />{tr({ zh: '从 Sonnet 4.6 升过来值得吗?', en: 'Is it worth upgrading from Sonnet 4.6?' })}</MoreToggle>
               <p>{tr({ zh: '在代理式编码 / 工具调用 / 终端自主操作这几条线上都有明显提升(SWE-bench Pro +5.1pt, Terminal-Bench 2.1 +13.4pt), 标准价与 Sonnet 4.6 持平, 2026-08-31 前还更便宜, 基本没有不升级的理由。', en: 'Yes on agentic coding, tool use and terminal autonomy (SWE-bench Pro +5.1pt, Terminal-Bench 2.1 +13.4pt); standard pricing matches Sonnet 4.6 and it’s cheaper through 2026-08-31, so there’s little reason not to.' })}</p>
             </details>
             <details className="s5-faq-item">
-              <summary><Rocket size={16} strokeWidth={1.9} />{tr({ zh: '什么时候该用 Opus 4.8 而不是 Sonnet 5?', en: 'When should I use Opus 4.8 instead?' })}</summary>
+              <MoreToggle as="summary"><Rocket size={16} strokeWidth={1.9} />{tr({ zh: '什么时候该用 Opus 4.8 而不是 Sonnet 5?', en: 'When should I use Opus 4.8 instead?' })}</MoreToggle>
               <p>{tr({ zh: 'Opus 4.8 在 SWE-bench Pro 上仍领先约 6 个百分点, 单次任务复杂度逼近上限、或需要更宽松的网络安全防护做合法安全研究时选它; 大批量、成本敏感的 agent 工作流首选 Sonnet 5。', en: 'Opus 4.8 still leads SWE-bench Pro by about 6 points; reach for it when a single task is near the complexity ceiling, or when legitimate security research needs lighter cyber guardrails. For high-volume, cost-sensitive agent workloads, Sonnet 5 is the default pick.' })}</p>
             </details>
             <details className="s5-faq-item">
-              <summary><Code2 size={16} strokeWidth={1.9} />{tr({ zh: '从 Sonnet 4.6 迁移要改代码吗?', en: 'Do I need code changes coming from Sonnet 4.6?' })}</summary>
+              <MoreToggle as="summary"><Code2 size={16} strokeWidth={1.9} />{tr({ zh: '从 Sonnet 4.6 迁移要改代码吗?', en: 'Do I need code changes coming from Sonnet 4.6?' })}</MoreToggle>
               <p>{tr({ zh: '换 model 字符串即可。唯一要注意的是: extended thinking 参数没了(只剩 adaptive thinking), 新分词器会让同样文本的 token 数涨 1.0 - 1.35 倍, 长 prompt 场景值得重新测一下账单。', en: 'Swap the model string. The one catch: the extended-thinking parameter is gone (adaptive thinking only), and the new tokenizer counts 1.0–1.35× more tokens for the same text — worth re-checking your bill on long-prompt workloads.' })}</p>
             </details>
             <details className="s5-faq-item">
-              <summary><Terminal size={16} strokeWidth={1.9} />{tr({ zh: 'Claude Code 里默认就是它吗?', en: 'Is it the Claude Code default?' })}</summary>
+              <MoreToggle as="summary"><Terminal size={16} strokeWidth={1.9} />{tr({ zh: 'Claude Code 里默认就是它吗?', en: 'Is it the Claude Code default?' })}</MoreToggle>
               <p>{tr({ zh: '对 Pro 用户是。Free / Pro 计划站内默认走 Sonnet 5, Max / Team / Enterprise 用户可以在模型选择里手动切到 Opus 4.8 或 Fable 5。', en: 'For Pro users, yes. Free / Pro plans default to Sonnet 5; Max, Team and Enterprise users can switch to Opus 4.8 or Fable 5 in the model picker.' })}</p>
             </details>
             <details className="s5-faq-item">
-              <summary><ShieldCheck size={16} strokeWidth={1.9} />{tr({ zh: '网络安全防护会不会拦住正常的渗透测试工作?', en: 'Will the cyber safeguards block legitimate pentesting work?' })}</summary>
+              <MoreToggle as="summary"><ShieldCheck size={16} strokeWidth={1.9} />{tr({ zh: '网络安全防护会不会拦住正常的渗透测试工作?', en: 'Will the cyber safeguards block legitimate pentesting work?' })}</MoreToggle>
               <p>{tr({ zh: '已加入 Cyber Verification Program 的组织自动获得访问、无需重新申请; Sonnet 5 防护级别与 Opus 4.7/4.8 相同, 比 Fable 5 宽松。如果工作需要进一步放宽防护, 官方建议改用 Opus 4.8。', en: 'Organizations already in the Cyber Verification Program get access automatically, no reapplication needed; Sonnet 5’s safeguard level matches Opus 4.7/4.8 and is lighter than Fable 5’s. If your work needs even fewer guardrails, Anthropic’s recommendation is to use Opus 4.8 instead.' })}</p>
             </details>
           </div>

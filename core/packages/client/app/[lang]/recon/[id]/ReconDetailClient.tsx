@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { reconVideoGroups } from '@/lib/recon-video-url';
 import { loadBiliVideo, loadVideoTitle } from '@/lib/recon-video-cover';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
@@ -16,14 +17,7 @@ import { createPortal } from 'react-dom';
 import { copyPageLink } from '@/lib/page-share';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import {
-  Box, PenLine, Calendar, UserPlus, StickyNote,
-  Video, TriangleAlert,
-  Pencil, Trash2, Pin, PinOff, Plus, Key,
-  ChevronDown, ChevronUp,
-  ArrowLeft, Copy, Check, Maximize2, Minimize2,
-  Lock, Link2, LogIn, ExternalLink, Share2, Download,
-} from '@app-foundation/icons/lucide';
+import { Box, PenLine, Calendar, UserPlus, StickyNote, Video, TriangleAlert, Pencil, Trash2, Pin, PinOff, Plus, Key, ArrowLeft, Copy, Check, Maximize2, Minimize2, Lock, Link2, LogIn, ExternalLink, Share2, Download } from '@app-foundation/icons/lucide';
 import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/shared';
 import { cleanFtoReconAlgForPlayer, getReconScramble } from '@cuberoot/shared/recon-completion';
 import { ReconCompletionBadge } from '@/components/recon/ReconCompletionBadge';
@@ -2077,15 +2071,15 @@ function CommentsView({
               {(replies.length > 0 || replyingToId === comment.id) && (
                 <div className="yt-replies">
                   {replies.length > 0 && (
-                    <button
+                    <MoreToggle expanded={expanded}
                       type="button"
                       className="yt-replies-toggle"
                       onClick={() => toggleExpandReplies(comment.id)}
                     >
                       {expanded
-                        ? <><ChevronUp size={14} /> {t('recon.hideReplies')}</>
-                        : <><ChevronDown size={14} /> {t('recon.viewReplies', { count: replies.length })}</>}
-                    </button>
+                        ? <> {t('recon.hideReplies')}</>
+                        : <> {t('recon.viewReplies', { count: replies.length })}</>}
+                    </MoreToggle>
                   )}
                   {expanded && replies.map(r => (
                     <div key={r.id} className="yt-reply-item">

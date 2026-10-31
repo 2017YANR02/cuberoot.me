@@ -1,4 +1,5 @@
 'use client';
+import MoreToggle from '@/components/MoreToggle';
 import './settings-typography.css';
 import '@cuberoot/timer-ui/compact-select.css';
 
@@ -10,10 +11,7 @@ import '@cuberoot/timer-ui/compact-select.css';
 // thinks in it.
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import {
-  ChevronDown, Disc3, ExternalLink, Minus, Pause, Play, Plus,
-  SkipBack, SkipForward, Volume2, X,
-} from '@app-foundation/icons/lucide';
+import { Disc3, ExternalLink, Minus, Pause, Play, Plus, SkipBack, SkipForward, Volume2, X } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import {
   useMetronome, setMetronome, subscribeBeat, tapTempo, resetTapTempo,
@@ -280,7 +278,7 @@ export default function FloatingMetronome({ lang, onClose, embedded = false }: {
         >
           {(mode === 'music' ? music.playing : s.on) ? <Pause size={14} /> : <Play size={14} style={{ marginLeft: 2 }} />}
         </button>
-        <button
+        <MoreToggle expanded={!collapsed}
           type="button"
           className="cr-metro-icon"
           onPointerDown={(e) => e.stopPropagation()}
@@ -288,8 +286,8 @@ export default function FloatingMetronome({ lang, onClose, embedded = false }: {
           title={collapsed ? t('展开', 'Expand') : t('收起', 'Collapse')}
           aria-label={collapsed ? t('展开', 'Expand') : t('收起', 'Collapse')}
         >
-          <ChevronDown size={15} style={collapsed ? { transform: 'rotate(180deg)' } : undefined} />
-        </button>
+
+        </MoreToggle>
         <button
           type="button"
           className="cr-metro-icon"

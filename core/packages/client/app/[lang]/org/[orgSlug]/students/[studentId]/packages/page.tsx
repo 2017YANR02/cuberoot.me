@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { useParams } from 'next/navigation';
 import { parseAsInteger, useQueryState } from 'nuqs';
@@ -305,18 +306,18 @@ function StudentPackageRow({
           {t(`剩余 ${item.remainingCredits} / ${item.entitledCredits}`, `${item.remainingCredits} / ${item.entitledCredits} remaining`)} / {entityStatusLabel(item.status, t)}
           {item.validUntil ? ` / ${t('有效至', 'Valid until')} ${new Date(item.validUntil).toLocaleDateString()}` : ''}
         </div>
-        <button type="button" className="org-text-button" onClick={() => setOpen((value) => !value)} aria-expanded={open}>
+        <MoreToggle type="button" className="org-text-button" onClick={() => setOpen((value) => !value)} expanded={open}>
           {open ? t('收起流水', 'Hide ledger') : t('查看流水', 'View ledger')}
-        </button>
+        </MoreToggle>
         {canManageFinance && item.remainingCredits > 0 && (
-          <button
+          <MoreToggle
             type="button"
             className="org-text-button"
             onClick={() => { setRefundOpen((value) => !value); setMessage(''); setMutationError(''); refundOperationKey.reset(); }}
-            aria-expanded={refundOpen}
+            expanded={refundOpen}
           >
             {refundOpen ? t('取消课时退款', 'Cancel credit refund') : t('登记课时退款', 'Record credit refund')}
-          </button>
+          </MoreToggle>
         )}
         {canManageFinance && item.remainingCredits > 0 && refundOpen && (
           <form className="org-form" onSubmit={submitRefund} onChange={() => { refundOperationKey.reset(); setMessage(''); }}>
@@ -346,14 +347,14 @@ function StudentPackageRow({
                     {entry.reversedByLedgerId ? (
                       <span className="org-row-meta"> {t('已冲正', 'Reversed')}</span>
                     ) : canManageFinance && entry.entryType !== 'reversal' ? (
-                      <button
+                      <MoreToggle
                         type="button"
                         className="org-text-button"
                         onClick={() => { reverseOperationKey.reset(); setReverseTargetId(entry.id); setMessage(''); setMutationError(''); }}
-                        aria-expanded={reverseTargetId === entry.id}
+                        expanded={reverseTargetId === entry.id}
                       >
                         {t('冲正此笔', 'Reverse entry')}
-                      </button>
+                      </MoreToggle>
                     ) : null}
                   </li>
                 ))}

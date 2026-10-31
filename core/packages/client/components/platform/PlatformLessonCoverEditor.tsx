@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useRef, useState } from 'react';
 import { useT } from '@/hooks/useT';
 import {
@@ -108,7 +109,7 @@ export function PlatformLessonCoverEditor({
       setOpened(nextOpened);
       if (nextOpened && !currentVideo && !media && !loading) void load();
     }}>
-      <summary>{currentVideo ? t('编辑封面', 'Edit cover') : t('视频封面', 'Video cover')}</summary>
+      <MoreToggle as="summary">{currentVideo ? t('编辑封面', 'Edit cover') : t('视频封面', 'Video cover')}</MoreToggle>
       {opened && (
         <div className="platform-video-cover-editor-content">
           {loading ? <p className="platform-domain-note"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : (

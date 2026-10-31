@@ -1,28 +1,11 @@
 'use client';
 
-// 共享「更多 / 收起」展开开关:文字 + 旋转 chevron。落地页「近期打乱」「今日复盘」
-// 等需要折叠次要内容的卡片统一用它,避免每处各写一份 *-more 按钮。
-import { ChevronDown } from '@app-foundation/icons/lucide';
+import SharedMoreToggle, { type ButtonProps, type SummaryProps } from '@cuberoot/timer-ui/MoreToggle';
 import { tr } from '@/i18n/tr';
-import './more_toggle.css';
 
-interface Props {
-  expanded: boolean;
-  onToggle: () => void;
-  /** 额外类名(布局微调,如 margin) */
-  className?: string;
-}
-
-export default function MoreToggle({ expanded, onToggle, className }: Props) {
-  return (
-    <button
-      type="button"
-      className={`more-toggle${expanded ? ' is-open' : ''}${className ? ` ${className}` : ''}`}
-      onClick={onToggle}
-      aria-expanded={expanded}
-    >
-      {expanded ? tr({ zh: '收起', en: 'Show less' }) : tr({ zh: '更多', en: 'More' })}
-      <ChevronDown size={15} className="more-toggle-chevron" aria-hidden="true" />
-    </button>
-  );
+/** Website labels; native semantics and chevrons are shared with timer surfaces. */
+export default function MoreToggle(props: ButtonProps | SummaryProps) {
+  if (props.as === 'summary') return <SharedMoreToggle {...props} />;
+  return <SharedMoreToggle {...props}>{props.children ?? (props['aria-label'] ? null : props.expanded
+    ? tr({ zh: '收起', en: 'Show less' }) : tr({ zh: '更多', en: 'More' }))}</SharedMoreToggle>;
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { installIntroEffects } from '../../_shared/intro-effects';
 import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
@@ -394,7 +395,7 @@ const DEMO_SEMANTIC: DemoBlock = {
       </nav>
       <p>Popover, dialog, view transitions all moved into the platform.</p>
       <details>
-        <summary>One more thing</summary>
+        <MoreToggle as="summary">One more thing</MoreToggle>
         <p>Declarative shadow DOM lets server-rendered Web Components hydrate cleanly.</p>
       </details>
       <footer className="demo-footer">CC-BY</footer>

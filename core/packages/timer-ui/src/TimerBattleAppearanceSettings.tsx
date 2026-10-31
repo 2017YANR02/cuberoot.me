@@ -1,3 +1,4 @@
+import MoreToggle from './MoreToggle';
 import { useState, useRef, useEffect } from 'react';
 import { LOCAL_BATTLE_BG_MAX_BYTES, type LocalBattlePreferences } from '@cuberoot/shared/timer';
 const COPY = {
@@ -14,7 +15,7 @@ export function TimerBattleAppearanceSettings({ language, playerCount, value, on
   const versions = useRef([0, 0, 0, 0]);
   useEffect(() => () => { versions.current = versions.current.map(n => n + 1); }, []);
   return <details className="timer-battle-appearance-disclosure">
-    <summary>{copy.background} · {copy.scale}</summary>
+    <MoreToggle as="summary">{copy.background} · {copy.scale}</MoreToggle>
     <fieldset className="timer-battle-appearance" aria-label={copy.background}>
     <label>{copy.scale}<input type="range" min={.5} max={2} step={.1} value={value.scrambleScale} onChange={e => onChange({ scrambleScale: Number(e.target.value) })} /></label>
     {Array.from({ length: playerCount }, (_, id) => <div key={id} className="timer-battle-background-row">

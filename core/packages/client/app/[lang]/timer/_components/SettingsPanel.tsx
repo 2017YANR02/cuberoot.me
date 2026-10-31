@@ -1,4 +1,5 @@
 'use client';
+import MoreToggle from '@/components/MoreToggle';
 import { timerFontPreviewStyle } from '@cuberoot/timer-ui/font-picker';
 import { useDouyinToolSurface } from '@/lib/douyin-content';
 import { TimerSyncSeedSettings, TimerRankSettings, TimerBackupSettings, TimerImportSettings, TimerDisplaySettings, TimerSoundSettings, TimerMetronomeSettings } from '@cuberoot/timer-ui';
@@ -302,7 +303,7 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
           <TimerPreScrambleSettings only="training" value={s} onChange={updateSettings} localize={tr} />
           {settingState('settings.smart-cube.fake-cube').visible && (
             <details className="settings-disclosure">
-              <summary><ChevronRight size={14} aria-hidden="true" />{tr({ zh: '开发调试', en: 'Developer tools' })}</summary>
+              <MoreToggle as="summary">{tr({ zh: '开发调试', en: 'Developer tools' })}</MoreToggle>
             <BooleanSettingRow
               id="settings.smart-cube.fake-cube"
               value={s.showAdminFakeCube}
@@ -465,7 +466,7 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
           activeCategory={activeCategory}
         >
           <details className="settings-disclosure">
-            <summary><ChevronRight size={14} aria-hidden="true" />{tr({ zh: '同步种子（生成相同打乱）', en: 'Sync seed (matching scrambles)' })}</summary>
+            <MoreToggle as="summary">{tr({ zh: '同步种子（生成相同打乱）', en: 'Sync seed (matching scrambles)' })}</MoreToggle>
           <TimerSyncSeedSettings value={s} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} onReset={seed => updateSettings(resetTimerSyncSeed(getSettings(), seed))} />
           </details>
         </SettingsSection>

@@ -1,4 +1,5 @@
 'use client';
+import MoreToggle from '@/components/MoreToggle';
 import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react';
 import type { MouseEvent, ReactNode } from 'react';
 const Markdown = lazy(() => import('react-markdown').catch(() => ({ default: ({ children }: { children?: string | null }) => <>{children}</> })));
@@ -157,7 +158,7 @@ function Progress({chart}:{chart:AssistantChart}) {
   const points=chart.points.map(p=>({date:p.date,y:chart.event==='333fm' && chart.metric==='single' ? p.value : chart.event==='333mbf' || chart.event==='333mbo' ? p.value : p.value/100,person:p.person,label:p.label}));
   return <section className="site-assistant-chart"><h4>{chart.title}</h4>
     {chart.event!=='333mbf' && chart.event!=='333mbo' && <Suspense fallback={<LoadingIndicator />}><WrHistoryChart rawPoints={points} /></Suspense>}
-    <details><summary>{tr({zh:'查看成绩数据',en:'View result data'})}</summary><div className="site-assistant-table"><table><thead><tr><th>{tr({zh:'日期',en:'Date'})}</th><th>{tr({zh:'成绩',en:'Result'})}</th></tr></thead><tbody>{chart.points.map((p,i)=><tr key={i}><td>{p.date}</td><td>{formatWcaResult(p.value,chart.event,chart.metric)}</td></tr>)}</tbody></table></div></details>
+    <details><MoreToggle as="summary">{tr({zh:'查看成绩数据',en:'View result data'})}</MoreToggle><div className="site-assistant-table"><table><thead><tr><th>{tr({zh:'日期',en:'Date'})}</th><th>{tr({zh:'成绩',en:'Result'})}</th></tr></thead><tbody>{chart.points.map((p,i)=><tr key={i}><td>{p.date}</td><td>{formatWcaResult(p.value,chart.event,chart.metric)}</td></tr>)}</tbody></table></div></details>
   </section>;
 }
 function AssistantModal({ children, onClose }: { children: ReactNode; onClose: () => void }) {

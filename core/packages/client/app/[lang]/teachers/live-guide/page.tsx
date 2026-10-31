@@ -1,7 +1,8 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useRef } from 'react';
-import { BookOpen, Check, ChevronDown, Copy, Mic2 } from '@app-foundation/icons/lucide';
+import { BookOpen, Check, Copy, Mic2 } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import HeaderToggles from '@/components/HeaderToggles';
 import { useCopy } from '@/hooks/useCopy';
@@ -39,7 +40,7 @@ export default function LiveGuidePage() {
           menuRef.current.open = false;
           menuRef.current.querySelector('summary')?.focus();
         }
-      }}><summary>{tr({ zh: '本页目录', en: 'On this page' })}<ChevronDown size={16} aria-hidden /></summary><div className="live-guide-mobile-links">{links}</div></details>
+      }}><MoreToggle as="summary">{tr({ zh: '本页目录', en: 'On this page' })}</MoreToggle><div className="live-guide-mobile-links">{links}</div></details>
     </nav>
 
     <div className="live-guide-layout">
@@ -63,7 +64,7 @@ export default function LiveGuidePage() {
           </li>)}</ol>
           <p className="live-guide-source">{tr({ zh: '分段演示、关键内容回顾与即时互动参考 ', en: 'Segmented demos, recaps, and interaction draw on ' })}<a href="https://seller-fr.tiktok.com/university/essay?knowledge_id=2738703987279638&lang=en-GB" target="_blank" rel="noreferrer">TikTok Shop Academy</a>{tr({ zh: '。这里的魔方教学示例是应用建议；平台功能与课程上架条件需按你使用的平台核对。', en: '. The cubing examples are practical adaptations; check features and course eligibility on your own platform.' })}</p>
           <h3>{tr({ zh: '常见购买顾虑', en: 'Common buying questions' })}</h3>
-          <div className="live-guide-details">{objections.map((item) => <details key={item.title.en}><summary>{tr(item.title)}</summary><p>{tr(item.body)}</p></details>)}</div>
+          <div className="live-guide-details">{objections.map((item) => <details key={item.title.en}><MoreToggle as="summary">{tr(item.title)}</MoreToggle><p>{tr(item.body)}</p></details>)}</div>
         </section>
 
         <SalesScript />
@@ -82,7 +83,7 @@ export default function LiveGuidePage() {
         <section id="techniques" tabIndex={-1}>
           <h2>{tr(chapters[3].title)}</h2>
           <p className="live-guide-intro">{tr({ zh: '遇到具体情况时展开查看。先保证观众看得清、听得懂、跟得上，再增加复杂演示。', en: 'Expand the situation you need. Prioritise a clear view, clear sound, and a pace viewers can follow before adding complex demos.' })}</p>
-          <div className="live-guide-details">{techniques.map((item) => <details key={item.title.en}><summary>{tr(item.title)}</summary><p>{tr(item.body)}</p></details>)}</div>
+          <div className="live-guide-details">{techniques.map((item) => <details key={item.title.en}><MoreToggle as="summary">{tr(item.title)}</MoreToggle><p>{tr(item.body)}</p></details>)}</div>
         </section>
 
         <section id="retention" tabIndex={-1}>
@@ -97,7 +98,7 @@ export default function LiveGuidePage() {
           <dl className="live-guide-metrics">{metrics.map((item) => <div key={item.title.en}><dt>{tr(item.title)}</dt><dd><p className="live-guide-formula">{tr(item.formula)}</p><p>{tr(item.action)}</p></dd></div>)}</dl>
           <p className="live-guide-reminder">{tr({ zh: '先定位卡在哪一步，再改一件事。例如停留短先改开场，点击少先查课程相关性和入口，购买少先查详情与支付。比较时记录时段、流量、人群和价格差异；样本少时只作为线索，不急着判定有效。', en: 'Find the weak step, then change one thing. Short viewing suggests reviewing the opening; few clicks suggest checking relevance and the entry; few purchases suggest reviewing details and checkout. Record differences in timing, traffic, audience, and price. Treat small samples as clues.' })}</p>
           <div className="live-guide-copy-row"><h3>{tr({ zh: '复盘记录模板', en: 'Session review template' })}</h3><button className="live-guide-copy-btn" type="button" onClick={() => copy(tr(reviewTemplate))}>{copied ? <Check size={16} aria-hidden /> : <Copy size={16} aria-hidden />}<span aria-live="polite">{copied ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: '复制模板', en: 'Copy template' })}</span></button></div>
-          <details className="live-guide-template"><summary>{tr({ zh: '展开模板，也可手动选中复制', en: 'Show the template or select it to copy manually' })}</summary><pre>{tr(reviewTemplate)}</pre></details>
+          <details className="live-guide-template"><MoreToggle as="summary">{tr({ zh: '展开模板，也可手动选中复制', en: 'Show the template or select it to copy manually' })}</MoreToggle><pre>{tr(reviewTemplate)}</pre></details>
         </section>
         <footer className="live-guide-footer"><AppLink href="/teachers/scripts" prefetch={false}><Mic2 size={17} aria-hidden />{tr({ zh: '到话术库安排下一场直播', en: 'Plan your next session in the script library' })}</AppLink></footer>
       </article>

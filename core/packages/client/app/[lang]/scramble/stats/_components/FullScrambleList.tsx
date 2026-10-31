@@ -4,6 +4,7 @@
 // 带比赛名搜索 + 日期范围筛选 + 分页加载。复用示例行的视觉(色点 + 2D 打乱图 + 比赛链)。
 // 受控:由 ExamplesPanel 决定挂载(挂载即「已展开」、替换示例预览),折叠走 onClose;
 // total 经 onTotal 回传给面板标题(避免在筛选栏里再立一个计数)。
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useRef, useState } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
 import Link from '@/components/AppLink';
@@ -72,13 +73,13 @@ export function FullScrambleFilterBar({ expanded, onExpandedChange }: {
           void Promise.all([setFrom(nextFrom), setTo(nextTo)]);
         }}
       />
-      <button
+      <MoreToggle expanded={expanded}
         type="button"
         className="scramble-stats-fulllist-close"
         onClick={() => (expanded ? collapse() : onExpandedChange(true))}
       >
         {expanded ? tr({ zh: '收起', en: 'Collapse' }) : tr({ zh: '展开', en: 'Expand' })}
-      </button>
+      </MoreToggle>
     </div>
   );
 }
@@ -231,9 +232,9 @@ export default function FullScrambleList({
               {tr({ zh: '加载更多', en: 'Load more' })}
             </button>
           )}
-          <button type="button" className="scramble-stats-fulllist-close" onClick={collapse}>
+          <MoreToggle expanded={expanded} type="button" className="scramble-stats-fulllist-close" onClick={collapse}>
             {tr({ zh: '收起', en: 'Collapse' })}
-          </button>
+          </MoreToggle>
         </div>
       )}
       </>

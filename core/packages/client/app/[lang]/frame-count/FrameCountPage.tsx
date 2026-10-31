@@ -5,6 +5,7 @@
  * 数帧工具 — ReconViewer 风格，支持多 Solve 和 Split Mark。
  * 加载本地视频，逐帧控制，标记帧，计算精确时间差。
  */
+import { ChevronDown } from '@app-foundation/icons/lucide';
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
@@ -2247,7 +2248,7 @@ export default function FrameCountPage() {
                 >
                   <IconExport />
                   {exporting ? `${exportProgress}%` : ''}
-                  {!exporting && <span className="fc-export-caret">▾</span>}
+                  {!exporting && <ChevronDown size={14} className="fc-export-caret" aria-hidden="true" />}
                 </button>
                 {showExportMenu && !exporting && (
                   <div className="fc-export-menu" data-site-surface="popover">

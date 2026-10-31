@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 
 /**
@@ -357,10 +358,10 @@ export default function SupportPage() {
           )}
 
           {remaining > 0 && (
-            <button className="support-more" onClick={() => setExpanded(true)}>
+            <MoreToggle expanded={expanded} className="support-more" onClick={() => setExpanded(true)}>
               {tr({ zh: '展开剩余 {n} 人', en: 'Show {n} more'
             }).replace('{n}', String(remaining))}
-            </button>
+            </MoreToggle>
           )}
         </>
       )}

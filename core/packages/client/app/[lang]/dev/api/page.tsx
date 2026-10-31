@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
@@ -1321,15 +1322,15 @@ export default function ApiCatalogPage() {
                   const params = pathParams(e.p);
                   return (
                     <li key={id} className={`api-row${isOpen ? ' is-open' : ''}`}>
-                      <button type="button" className="api-row-main" onClick={() => toggle(id)} aria-expanded={isOpen}>
+                      <MoreToggle type="button" className="api-row-main" onClick={() => toggle(id)} expanded={isOpen}>
                         <span className="api-method" data-method={e.m}>{e.m}</span>
                         <code className="api-path">{e.p}</code>
                         <span className="api-row-right">
                           <span className="api-gate" data-gate={e.g}>{GATE_LABEL[e.g][lang]}</span>
                           {e.c && <span className="api-cache" data-cache={e.c}>{CACHE_LABEL[e.c][lang]}</span>}
-                          <span className="api-caret" aria-hidden="true">▸</span>
+
                         </span>
-                      </button>
+                      </MoreToggle>
                       <p className="api-summary">{e[lang]}</p>
                       {isOpen && (
                         <div className="api-detail">

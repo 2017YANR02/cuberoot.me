@@ -11,6 +11,7 @@
  * huazhechen/cuber WebGL engine in cuber/.
  */
 
+import MoreToggle from '@/components/MoreToggle';
 import {
   useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
@@ -2287,14 +2288,14 @@ export default function SimPage() {
           <option value="draw">{t('自由绘图', 'Free drawing')}</option>
         </select>
         {!drawMode && !imageMode && (
-          <button type="button" className="sim-panel-toggle" aria-expanded={panelExpanded} aria-controls="sim-task-panel"
+          <MoreToggle type="button" className="sim-panel-toggle" expanded={panelExpanded} aria-controls="sim-task-panel"
             onClick={() => {
               if (panelExpanded && document.activeElement instanceof HTMLElement
                 && document.activeElement.closest('#sim-task-panel')) document.activeElement.blur();
               setPanelExpanded(expanded => !expanded);
             }}>
             {panelExpanded ? t('收起面板', 'Collapse panel') : t('展开面板', 'Expand panel')}
-          </button>
+          </MoreToggle>
         )}
         <div className="sim-spacer" />
         {animationMode && reconHref && (

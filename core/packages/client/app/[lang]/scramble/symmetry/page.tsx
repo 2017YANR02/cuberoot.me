@@ -1,4 +1,5 @@
 'use client';
+import MoreToggle from '@/components/MoreToggle';
 import '@cuberoot/timer-ui/compact-select.css';
 
 /**
@@ -721,13 +722,13 @@ function AnalyzeView({ t }: { t: (zh: string, en: string) => string }) {
                     )}
                   </div>
                   <div className="sym-result-actions">
-                    <button
+                    <MoreToggle expanded={expanded === i}
                       type="button"
                       className="sym-copy"
                       onClick={() => setExpanded(expanded === i ? null : i)}
                     >
                       {expanded === i ? t('收起元素', 'Hide elements') : t('查看 48 元素', 'Show 48 elements')}
-                    </button>
+                    </MoreToggle>
                     <CopyButton text={r.facelet!} label={t('状态', 'State')} />
                     <Link
                       className="sym-copy"

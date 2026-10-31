@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useState } from 'react';
 import { RECORD_NOTIFICATION_EVENTS, type RecordNotificationPreferences } from '@cuberoot/shared/record-notifications';
 import AppLink from '@/components/AppLink';
@@ -47,7 +48,7 @@ export default function RecordPreferences() {
   }
 
   return <details className="ntf-record-prefs">
-    <summary>{t('纪录订阅', 'Record subscriptions')}</summary>
+    <MoreToggle as="summary">{t('纪录订阅', 'Record subscriptions')}</MoreToggle>
     {error && <p role="alert" className="ntf-error">{error}</p>}
     {!draft || !settings ? <button type="button" onClick={load} disabled={!error}>
       {error ? t('重试', 'Retry') : <LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator>}

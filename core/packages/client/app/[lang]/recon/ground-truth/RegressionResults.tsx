@@ -1,4 +1,5 @@
 'use client';
+import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from '@/components/AppLink';
 import WcaAuth from '@/components/WcaAuth';
@@ -115,7 +116,7 @@ export default function RegressionResults() {
       <span>{tr({ zh: `程序检查：${run.passed} 项通过，${run.failed} 项失败，${run.skipped ?? 0} 项跳过`, en: `Program checks: ${run.passed} passed, ${run.failed} failed, ${run.skipped ?? 0} skipped` })}</span>
       <span>{tr({ zh: '代码版本', en: 'Revision' })}: {run.commit.slice(0, 10) || '—'}{run.dirty && tr({ zh: ' + 本地修改', en: ' + local changes' })} · {run.fingerprint.slice(0, 12)}</span>
       {stale && <p className="gt-warning">{tr({ zh: '这次检查后代码又改过了；此结果不能代表当前代码。', en: 'Code changed after this run; this result does not verify the current code.' })}</p>}
-      {!!run.errors.length && <details><summary>{tr({ zh: '查看本次检查错误', en: 'View run errors' })}</summary><pre className="gt-run-errors">{run.errors.join('\n\n')}</pre></details>}
+      {!!run.errors.length && <details><MoreToggle as="summary">{tr({ zh: '查看本次检查错误', en: 'View run errors' })}</MoreToggle><pre className="gt-run-errors">{run.errors.join('\n\n')}</pre></details>}
     </div>}
     <div className="gt-workbench"><section className="gt-candidates" aria-label={tr({ zh: '智能魔方样例', en: 'Smart cube cases' })}>
       {cases.map(sample => <button type="button" key={sample.id} className={`gt-candidate${selected?.id === sample.id ? ' is-selected' : ''}`} aria-pressed={selected?.id === sample.id} onClick={() => setCaseId(sample.id)}>

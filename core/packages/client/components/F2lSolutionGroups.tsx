@@ -1,7 +1,8 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Check, ChevronRight, Copy, Play } from '@app-foundation/icons/lucide';
+import { Check, Copy, Play } from '@app-foundation/icons/lucide';
 import type { AlgCase, AlgEntry } from '@cuberoot/shared/alg';
 import Link from '@/components/AppLink';
 import { Tooltip } from '@/components/Tooltip';
@@ -52,9 +53,9 @@ export default function F2lSolutionGroups({ cases, entries, setup, orientation, 
       const option = group.options.find(o => o.fullAlg === selection[group.key]) ?? group.options[0];
       return <details key={group.key} className="f2l-solution-group"
         onToggle={event => { if (event.currentTarget.open) setActive(group.key); }}>
-        <summary><ChevronRight className="f2l-solution-chevron" size={14} aria-hidden="true" /><span className="f2l-solution-prefix">{group.prefix}</span>
+        <MoreToggle as="summary"><span className="f2l-solution-prefix">{group.prefix}</span>
           <span className="f2l-solution-target">→ {tr({ zh: '标态', en: 'Standard' })} {group.standardName}</span>
-        </summary>
+        </MoreToggle>
         <div className="f2l-solution-choices">
           <label><span>{tr({ zh: '入槽方法', en: 'Insertion' })}</span>
             <select className="f2l-solution-select" value={option.fullAlg} onChange={event => {
@@ -98,8 +99,8 @@ export default function F2lSolutionGroups({ cases, entries, setup, orientation, 
     </div>)}
     <details className="f2l-solution-originals" open={!hasGroups || originalsOpen}
       onToggle={event => { if (hasGroups) setOriginalsOpen(event.currentTarget.open); }}>
-      <summary hidden={!hasGroups}><ChevronRight className="f2l-solution-chevron" size={14} aria-hidden="true" />{editing ? tr({ zh: '编辑原始公式', en: 'Edit original algorithms' })
-        : tr({ zh: '原始公式与出处', en: 'Original algorithms and sources' })}</summary>
+      <MoreToggle as="summary" hidden={!hasGroups}>{editing ? tr({ zh: '编辑原始公式', en: 'Edit original algorithms' })
+        : tr({ zh: '原始公式与出处', en: 'Original algorithms and sources' })}</MoreToggle>
       {children}
     </details>
   </div>;

@@ -1,4 +1,5 @@
 'use client';
+import MoreToggle from '@/components/MoreToggle';
 import '@cuberoot/timer-ui/compact-select.css';
 
 /**
@@ -18,7 +19,7 @@ import dynamic from 'next/dynamic';
 import { WcaPersonRelationCells, useWcaTeams } from './_components/WcaTeamCell';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, HelpCircle, ChevronDown, ChevronRight } from '@app-foundation/icons/lucide';
+import { ChevronLeft, HelpCircle } from '@app-foundation/icons/lucide';
 import Paginator from '@/components/wca-stats/Paginator';
 import NameStatsView, { type NameStatsData } from '@/components/wca-stats/NameStatsView';
 import { type NameMode, NAME_MODES, nameByMode, FormerNames } from '@/components/wca-stats/nameMode';
@@ -638,10 +639,10 @@ function AllResultsPageInner() {
       {/* 名次和:排名演化 race(世界 / 大洲 / 国家),懒挂 */}
       {mode === 'sor' && (
         <div className="sor-census" style={{ marginBottom: 16 }}>
-          <button type="button" className="sor-census-toggle" onClick={() => setRaceOpen(o => !o)} aria-expanded={raceOpen}>
-            {raceOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          <MoreToggle type="button" className="sor-census-toggle" onClick={() => setRaceOpen(o => !o)} expanded={raceOpen}>
+
             {tr({ zh: 'SOR 排名演化(世界 / 大洲 / 国家)', en: 'SOR over time (World / Continent / Country)' })}
-          </button>
+          </MoreToggle>
           {raceOpen && <SorRace />}
         </div>
       )}
@@ -974,10 +975,10 @@ function AllResultsPageInner() {
         <>
           {/* 名人堂 */}
           <div className="sor-census">
-            <button type="button" className="sor-census-toggle" onClick={() => setCensusOpen(o => !o)} aria-expanded={censusOpen}>
-              {censusOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            <MoreToggle type="button" className="sor-census-toggle" onClick={() => setCensusOpen(o => !o)} expanded={censusOpen}>
+
               {tr({ zh: '谁当过 SoWR?', en: "Who's ever topped the SoWR?" })}
-            </button>
+            </MoreToggle>
             {censusOpen && (
               <div className="sor-census-body">
                 <div className="sor-census-controls">
@@ -1017,9 +1018,9 @@ function AllResultsPageInner() {
                       })}
                     </ol>
                     {census.rows.length > 12 && (
-                      <button type="button" className="sor-census-more" onClick={() => setCensusExpanded(e => !e)}>
+                      <MoreToggle expanded={censusExpanded} type="button" className="sor-census-more" onClick={() => setCensusExpanded(e => !e)}>
                         {censusExpanded ? tr({ zh: '收起', en: 'Show less' }) : (isZh ? `展开全部 ${census.distinct} 人` : `Show all ${census.distinct}`)}
-                      </button>
+                      </MoreToggle>
                     )}
                   </>
                 )}

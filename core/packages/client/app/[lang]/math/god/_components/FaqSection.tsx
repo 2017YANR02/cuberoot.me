@@ -3,8 +3,9 @@
 /**
  * FAQ + Glossary — 折叠面板。
  */
+import MoreToggle from '@/components/MoreToggle';
 import { useState } from 'react';
-import { ChevronDown } from '@app-foundation/icons/lucide';
+
 import { MathText } from './Tex';
 import { tr } from '@/i18n/tr';
 
@@ -156,10 +157,10 @@ export default function FaqSection({ isZh }: Props) {
           const open = openFaq.has(i);
           return (
             <div key={i} className={`god-faq-item ${open ? 'is-open' : ''}`}>
-              <button className="god-faq-q" onClick={() => toggle(i)}>
+              <MoreToggle expanded={open} className="god-faq-q" onClick={() => toggle(i)}>
                 <span>{tr(qa.q)}</span>
-                <ChevronDown size={16} className={`god-faq-chev ${open ? 'is-open' : ''}`} />
-              </button>
+
+              </MoreToggle>
               {open && (
                 <div className="god-faq-a"><MathText>{tr(qa.a)}</MathText></div>
               )}

@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useState, useMemo, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
 import type { Lang } from '../primitives';
@@ -785,9 +786,9 @@ function SylowNilpotencyPanel({ lang }: { lang: Lang }) {
 
       {/* Show why toggle */}
       <div className="gt-panel-input-row">
-        <button className={`gt-chip${showWhy ? ' gt-chip-active' : ''}`} onClick={() => setShowWhy(s => !s)}>
+        <MoreToggle expanded={showWhy} className={`gt-chip${showWhy ? ' gt-chip-active' : ''}`} onClick={() => setShowWhy(s => !s)}>
           <L zh="展开 Sylow 分析" en="Expand Sylow analysis" />
-        </button>
+        </MoreToggle>
       </div>
 
       {/* Prime factorization bar */}

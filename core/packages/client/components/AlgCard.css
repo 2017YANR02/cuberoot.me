@@ -72,7 +72,7 @@
 .alg-card--cover .alg-card-title {
   color: var(--accent);
 }
-.alg-card-chevron {
+.alg-card > .more-toggle-chevron {
   position: absolute;
   top: 8px;
   left: 8px;

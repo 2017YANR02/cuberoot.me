@@ -4,6 +4,7 @@
  * 三轴坏棱联合分布。数字全部由 lib/eo-axes.ts 现场算出来(列联表 × 二项卷积,毫秒级),
  * 本组件只排版。65 个组合默认只露最常见的那些,点一下展开全部。
  */
+import MoreToggle from '@/components/MoreToggle';
 import { useMemo, useState } from 'react';
 import { T, tr } from '@/i18n/tr';
 import { groupDigits } from '@/lib/group-digits';
@@ -119,11 +120,11 @@ export default function EoAxes() {
             </tbody>
           </table>
           {joint.length > TOP_N && (
-            <button type="button" className="prob-more" onClick={() => setAll((v) => !v)}>
+            <MoreToggle expanded={all} type="button" className="prob-more" onClick={() => setAll((v) => !v)}>
               {all
                 ? tr({ zh: '只看最常见的', en: 'Show the common ones only' })
                 : tr({ zh: `展开全部 ${joint.length} 种`, en: `Show all ${joint.length}` })}
-            </button>
+            </MoreToggle>
           )}
         </div>
       </div>

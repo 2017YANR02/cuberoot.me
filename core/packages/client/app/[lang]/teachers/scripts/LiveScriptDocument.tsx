@@ -1,7 +1,8 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useRef } from 'react';
-import { CheckCircle2, ChevronDown, Clock3, List, MessageCircleQuestion, Mic2, MoveRight, Radio } from '@app-foundation/icons/lucide';
+import { CheckCircle2, Clock3, List, MessageCircleQuestion, Mic2, MoveRight, Radio } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 import type { LiveScriptCueKind, TeacherLiveScript } from '@/lib/teacher-live-scripts-api';
@@ -45,7 +46,7 @@ export default function LiveScriptDocument({ script }: { script: TeacherLiveScri
             contentsRef.current.querySelector('summary')?.focus();
           }
         }}>
-          <summary><List size={17} aria-hidden /><span>{tr({ zh: '章节目录', en: 'Contents' })}</span><ChevronDown className="live-script-nav-chevron" size={16} aria-hidden /></summary>
+          <MoreToggle as="summary"><List size={17} aria-hidden /><span>{tr({ zh: '章节目录', en: 'Contents' })}</span></MoreToggle>
           <div className="live-script-nav-links">
             {script.content.sections.map((section, index) => <a key={section.id} href={`#${section.id}`} onClick={(event) => {
               if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && contentsRef.current) {

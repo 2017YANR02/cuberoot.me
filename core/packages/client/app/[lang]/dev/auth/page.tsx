@@ -2,6 +2,7 @@
 
 /* auth-doc-review {"fingerprint": "3185bb4e7c176689c7bac7b695dedbf680bcc146f867032bd9c0f1339ac9881f", "reason": "Reviewed account entry navigation through shared AppLink/PageBackLink and workspace legacy redirects. Only validated same-origin account URLs and whitelisted UI query fields are carried; child paths retain their feature root, unrelated routes retain defaults, and account category is restored. Existing safeNext is reused. Login tickets, auth next, payment return state, session transport and permission checks are unchanged. Added bilingual navigation lifecycle and local verification boundary."} */
 
+import MoreToggle from '@/components/MoreToggle';
 import type { ReactNode } from 'react';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
@@ -73,7 +74,7 @@ export default function AuthFlowPage() {
         <article><h3>{t('微信小程序', 'WeChat Mini Program')}</h3><p>{t('已绑定微信直接登录；未绑定可授权实时验证手机号，确认原账号或明确创建。账号管理仍复用网站；WCA 绑定从小程序跳到系统浏览器完成，返回小程序后刷新账号状态。本地接入不代表已发布。', 'Linked WeChat identities sign in directly. Unlinked users may authorize real-time phone verification, then confirm an existing account or explicitly create one. Account management reuses the website; WCA linking opens the system browser and refreshes the account when you return. Local integration is not a release.')}</p><AppLink href="#mini" prefetch={false}>{t('看手机号与旧号流程 ↓', 'Phone and existing-account flows ↓')}</AppLink></article>
         <article><h3>{t('抖音小程序', 'Douyin Mini Program')}</h3><p>{t('已绑定抖音身份时直接登录；新用户可明确创建账号。已有 CubeRoot 账号时，通过原生邮箱验证或网站账号页获取 6 位登录码，回小程序输入并确认同一个账号。', 'Linked Douyin identities sign in directly; new users may explicitly create an account. If you already have a CubeRoot account, get a six-digit sign-in code through native email verification or the website account page, then enter and confirm it in the Mini Program.')}</p><AppLink href="#douyin-mini-current" prefetch={false}>{t('看抖音登录流程 ↓', 'Douyin sign-in flow ↓')}</AppLink></article>
       </div>
-      <details className="auth-map-current"><summary>{t('其他平台：鸿蒙、Windows、macOS', 'Other platforms: HarmonyOS, Windows, macOS')}</summary>
+      <details className="auth-map-current"><MoreToggle as="summary">{t('其他平台：鸿蒙、Windows、macOS', 'Other platforms: HarmonyOS, Windows, macOS')}</MoreToggle>
         <p>{t('Windows 在打开登录浏览器前注册当前 EXE 的回跳协议，安装版和免安装版共用此步骤；普通启动不更改关联。移动免安装 EXE 后再次发起登录会更新路径。注册失败时不打开登录浏览器。', 'Windows registers the current EXE callback before opening the sign-in browser, for both installed and standalone builds. Normal startup leaves the association unchanged. Signing in after moving the standalone EXE updates its path; registration failure prevents opening the browser.')}</p>
         <p>{t('HarmonyOS NEXT、Windows、macOS 共用 App 产品层和网站账号流程，只替换系统浏览器、深链与安全存储适配；每个平台的真实回跳仍须单独验收。', 'HarmonyOS NEXT, Windows, and macOS share the App product layer and website account flow, with platform browser, deep-link, and secure-storage adapters. Each platform still needs its own real handoff tests.')}</p>
         <Steps items={[
@@ -376,7 +377,7 @@ export default function AuthFlowPage() {
         </div>
         <figcaption>{t('合并码只能在你自己的两个账号之间使用，不要交给他人。绑定一个新方式 ≠ 合并两个账号。合并后旧版 WCA 会话需要重新登录。', 'Use the merge code only between your own accounts; do not share it. Linking a new method is not the same as merging two accounts. Older WCA sessions require sign-in again after a merge.')}</figcaption>
       </figure>
-      <details className="auth-map-current"><summary>{t('哪些情况会被拦住？会员怎么处理？', 'What blocks a merge? What happens to membership?')}</summary>
+      <details className="auth-map-current"><MoreToggle as="summary">{t('哪些情况会被拦住？会员怎么处理？', 'What blocks a merge? What happens to membership?')}</MoreToggle>
         <ul className="auth-map-list">
           <li>{t('宠物随账号迁移；同一种宠物保留亲密度较高的一份养成记录与更早的领养日期，亲密度相同则保留 A 的记录，不把两份经验相加。领养、互动与合并共用账号锁，避免并发遗漏。', 'Adopted pets move with the account. For the same pet, keep the care record with the higher bond and the earlier adoption date; equal bonds keep A’s record. Experience is not added together. Adoption, care, and merging share account locks to prevent concurrent omissions.')}</li>
           <li>{t('两个不同的 WCA ID；双方各有邮箱或手机号；双方密码凭据冲突。', 'Different WCA IDs; both accounts have an email or both have a phone; conflicting password credentials.')}</li>
@@ -434,7 +435,7 @@ export default function AuthFlowPage() {
     </section>
 
     <details className="auth-map-current">
-      <summary>{t('还需要补什么？', 'What remains to be done?')}</summary>
+      <MoreToggle as="summary">{t('还需要补什么？', 'What remains to be done?')}</MoreToggle>
       <p>{t('微信手机号实时授权已本地接入，仍须后端和网站部署、新版小程序上传、后台能力及隐私声明核验，以及授权成功/拒绝/旧号绑定的真机验收。Apple IAP 已有本地接线，商店配置、沙盒及正式环境验收仍未完成；各平台真人登录回跳、绑定、合并、退出和注销矩阵须分别验收。不能把这张说明图当成功能完成清单。', 'WeChat real-time phone authorization is locally integrated. Backend and website deployment, a new Mini Program upload, platform capability and privacy checks, and real-device authorization/decline/existing-account linking acceptance are still required. Apple IAP has local wiring; store configuration, sandbox and production acceptance are incomplete. Real-account handoff, linking, merging, sign-out and deletion need per-platform acceptance. This diagram is not a completion checklist.')}</p>
     </details>
 

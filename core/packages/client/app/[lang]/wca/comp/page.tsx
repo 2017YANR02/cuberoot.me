@@ -1,4 +1,5 @@
 'use client';
+import MoreToggle from '@/components/MoreToggle';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import '@cuberoot/timer-ui/compact-select.css';
 
@@ -2104,17 +2105,17 @@ function CalendarPageInner() {
             + (h2hOnly ? 1 : 0);
           return (
             <div className="comp-filters-wrap" ref={filtersWrapRef}>
-              <button
+              <MoreToggle
                 type="button"
                 className={`comp-filters-btn${activeCount > 0 ? ' is-active' : ''}`}
                 onClick={() => setFiltersOpen((o) => !o)}
-                aria-expanded={filtersOpen}
+                expanded={filtersOpen}
                 aria-haspopup="true"
               >
                 <span>{tr({ zh: '筛选', en: 'Filters' })}</span>
                 {activeCount > 0 && <span className="comp-filters-count">{activeCount}</span>}
-                <span className="comp-filters-caret" aria-hidden>▾</span>
-              </button>
+
+              </MoreToggle>
               {filtersOpen && (
                 /* anchored-panel: clamped (usePanelClamp) */
                 <div className="comp-filters-panel" ref={filtersPanelRef}>

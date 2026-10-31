@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowRight,
@@ -178,7 +179,7 @@ function RoundReview({ record }: { record: PracticeRecord }) {
             {attempt.solve?.comment && <p className="practice-note">{attempt.solve.comment}</p>}
             {attempt.solve && (
               <details>
-                <summary>{tr({ zh: '查看本把打乱', en: 'View scramble' })}</summary>
+                <MoreToggle as="summary">{tr({ zh: '查看本把打乱', en: 'View scramble' })}</MoreToggle>
                 <p className="practice-scramble-small">{attempt.solve.scramble}</p>
               </details>
             )}
@@ -627,7 +628,7 @@ export default function CompSimPage() {
             )}
             {leaderboard.length > 0 && (
               <details className="practice-comparison">
-                <summary>{tr({ zh: '与历史比赛成绩对照', en: 'Compare with historical results' })}</summary>
+                <MoreToggle as="summary">{tr({ zh: '与历史比赛成绩对照', en: 'Compare with historical results' })}</MoreToggle>
                 <p>
                   {tr({
                     zh: '这是训练成绩与已发布成绩的假设对照，不是实时比赛，也不会计入官方纪录。',
@@ -1205,7 +1206,7 @@ export default function CompSimPage() {
         )}
         {legacy.length > 0 && (
           <details>
-            <summary>{tr({ zh: '旧版历史摘要', en: 'Earlier history summaries' })}</summary>
+            <MoreToggle as="summary">{tr({ zh: '旧版历史摘要', en: 'Earlier history summaries' })}</MoreToggle>
             <ul>
               {legacy.map((record) => (
                 <li key={record.key}>

@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ArrowUpRight, Check, Pause, Play, RotateCcw } from '@app-foundation/icons/lucide';
@@ -140,7 +141,7 @@ export default function AgentReplayPage() {
         <p>{t('数值为本轮实测结果，回放只重播转动。模型只看到角块状态与转动规则，不会得到打乱序列或内置求解器的答案。费用按 API 返回的 tokens 和人民币原价估算，包含协调者与四个代理；DeepSeek 按高峰价计算，未扣缓存、空闲时段折扣或免费额度，实际账单以服务商为准。单轮结果不代表整体模型能力。', 'Metrics show this run’s measured results; replay replays moves only. Models receive corner states and move rules, never the scramble or a solver answer. CNY estimates include the coordinator and four agents at list prices, using DeepSeek peak rates before cache, off-peak discounts or free credits; provider billing is authoritative. One run does not establish overall model quality.')}</p>
         <a href={REFERENCE_URL} target="_blank" rel="noopener noreferrer">{t('视觉参考', 'Visual reference')}<ArrowUpRight size={14} /></a>
       </div>
-      {run && <details className="agents-log"><summary>{t('查看本轮记录', 'Inspect this run')}</summary>
+      {run && <details className="agents-log"><MoreToggle as="summary">{t('查看本轮记录', 'Inspect this run')}</MoreToggle>
         <p>{t('打乱', 'Scramble')}: <code>{run.scramble}</code> · {run.startedAt}</p>
         {run.teams.map(team => <div key={team.model}><h3>{team.name}</h3>
           <p>{team.model} · {team.modelCalls} {t('次模型调用', 'model calls')} · {team.inputTokens} {t('输入', 'input')} / {team.outputTokens} {t('输出', 'output')} tokens</p>

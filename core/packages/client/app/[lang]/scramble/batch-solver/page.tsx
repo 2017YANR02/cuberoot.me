@@ -6,8 +6,9 @@
  * 与上游节奏一致)。UI 重设计:示例预设一键填表、内联错误横幅取代 alert、
  * CSV 导出取代 ExcelJS、图像走站内 VisualCube / sr-puzzlegen。
  */
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowDown, ArrowUp, ChevronDown, Minus, Plus } from '@app-foundation/icons/lucide';
+import { ArrowDown, ArrowUp, Minus, Plus } from '@app-foundation/icons/lucide';
 import BoolToggle from '@/components/BoolToggle';
 import { ListSelect } from '@/components/ListSelect';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
@@ -435,15 +436,15 @@ export default function BatchSolverPage() {
               iconClass: item.value === 'Custom' ? 'puzzle-custom' : eventIconClass(item.value.replaceAll('x', '')),
             })),
           }]} />
-          <button
+          <MoreToggle
             type="button"
             className={`bsv-collapse-toggle${showDef ? ' is-open' : ''}`}
             onClick={() => setShowDef((v) => !v)}
-            aria-expanded={showDef}
+            expanded={showDef}
           >
             {t('置换定义', 'Definition')}
-            <ChevronDown size={14} className="bsv-collapse-chevron" aria-hidden="true" />
-          </button>
+
+          </MoreToggle>
         </div>
         {showDef && (
           <textarea
@@ -595,24 +596,24 @@ export default function BatchSolverPage() {
         </div>
 
         <div className="bsv-field-row">
-          <button
+          <MoreToggle
             type="button"
             className={`bsv-collapse-toggle${showAdvanced ? ' is-open' : ''}`}
             onClick={() => setShowAdvanced((v) => !v)}
-            aria-expanded={showAdvanced}
+            expanded={showAdvanced}
           >
             {t('MCC 高级参数', 'Advanced MCC options')}
-            <ChevronDown size={14} className="bsv-collapse-chevron" aria-hidden="true" />
-          </button>
-          <button
+
+          </MoreToggle>
+          <MoreToggle
             type="button"
             className={`bsv-collapse-toggle${showEsqOpts ? ' is-open' : ''}`}
             onClick={() => setShowEsqOpts((v) => !v)}
-            aria-expanded={showEsqOpts}
+            expanded={showEsqOpts}
           >
             {t('ESQ 权重', 'ESQ options')}
-            <ChevronDown size={14} className="bsv-collapse-chevron" aria-hidden="true" />
-          </button>
+
+          </MoreToggle>
         </div>
         {showAdvanced && <ParamSliders className="bsv-advanced" specs={MCC_SLIDERS} values={mccParams} defaults={MCC_DEFAULTS} onChange={setMccParams} />}
         {showEsqOpts && (

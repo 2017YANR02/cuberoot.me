@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import type { EnterpriseBankRecipient, EnterpriseVerificationApplication, EnterpriseVerificationReviewDetails, EnterpriseVerificationReview } from '@cuberoot/shared/teaching';
 import BoolToggle from '@/components/BoolToggle';
@@ -30,7 +31,7 @@ export default function EnterpriseVerificationAdmin() {
     <p className="org-eyebrow">{t('仅平台管理员可见', 'Platform administrators only')}</p>
     <h2>{t('平台收款与认证审核', 'Platform receiving account and verification review')}</h2>
     <p className="org-lead">{t('这里设置所有申请企业向平台打款的收款账户，并审核各企业的申请。为你自己的企业申请认证，请进入上方企业。', 'Set the platform account that receives verification transfers and review enterprise applications here. To apply for your own enterprise, open it above.')}</p>
-    <button type="button" className="org-secondary-button" aria-expanded={opened} aria-controls="enterprise-admin-content" onClick={() => setOpened(!opened)}>{opened ? t('收起平台管理', 'Collapse platform management') : t('打开平台收款设置与审核', 'Open platform receiving settings and reviews')}</button>
+    <MoreToggle type="button" className="org-secondary-button" expanded={opened} aria-controls="enterprise-admin-content" onClick={() => setOpened(!opened)}>{opened ? t('收起平台管理', 'Collapse platform management') : t('打开平台收款设置与审核', 'Open platform receiving settings and reviews')}</MoreToggle>
     {opened && <div id="enterprise-admin-content"><AdminContent /></div>}
   </section>;
 }

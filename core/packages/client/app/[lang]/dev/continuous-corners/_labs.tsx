@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useId, useState, type ReactNode } from 'react';
 import { continuousCorners, concentricCornerRadii, continuousCornerRadii } from '@2017yanr02/continuous-corners';
 import { useT } from '@/hooks/useT';
@@ -67,7 +68,7 @@ export function CornerLab() {
       <button className="cc-button cc-button-secondary" onClick={copy}>{t('复制当前 SVG', 'Copy SVG')}</button>
       <span className="cc-feedback" role="status">{message}</span>
     </div>
-    <details className="cc-code-details"><summary>{t('查看当前 SVG 路径', 'Inspect the current SVG path')}</summary><pre><code>{svg}</code></pre></details>
+    <details className="cc-code-details"><MoreToggle as="summary">{t('查看当前 SVG 路径', 'Inspect the current SVG path')}</MoreToggle><pre><code>{svg}</code></pre></details>
   </div>;
 }
 

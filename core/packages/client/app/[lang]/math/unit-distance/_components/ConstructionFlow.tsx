@@ -8,9 +8,10 @@
  */
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronRight, ChevronDown } from '@app-foundation/icons/lucide';
+
 import { TeX, TeXBlock } from '@/components/math/Tex';
 import { tr } from '@/i18n/tr';
 
@@ -283,19 +284,19 @@ export default function ConstructionFlow() {
           const isOpen = open === s.id;
           return (
             <div key={s.id} className="ud-flow-step">
-              <button
+              <MoreToggle
                 className={`ud-flow-card ${isOpen ? 'is-open' : ''}`}
                 onClick={() => setOpen(isOpen ? null : s.id)}
-                aria-expanded={isOpen}
+                expanded={isOpen}
               >
                 <div className="ud-flow-card-head">
                   <span className="ud-flow-num">{s.num}</span>
                   <span className="ud-flow-title">{tr(s.title)}</span>
-                  {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+
                 </div>
                 <div className="ud-flow-card-schem"><s.Schematic /></div>
                 <div className="ud-flow-card-oneline">{tr(s.oneLine)}</div>
-              </button>
+              </MoreToggle>
               {i < STAGES.length - 1 && <div className="ud-flow-arrow" aria-hidden>→</div>}
             </div>
           );

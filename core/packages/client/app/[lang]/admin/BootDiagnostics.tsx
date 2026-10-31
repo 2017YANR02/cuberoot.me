@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useState } from 'react';
 import { useT } from '@/hooks/useT';
 import { apiUrl } from '@/lib/api-base';
@@ -58,12 +59,12 @@ export default function BootDiagnostics() {
       {!loading && !failed && events.length === 0 && <p>{t('暂无错误记录。', 'No error reports yet.')}</p>}
       {!loading && !failed && events.map(event => (
         <details key={event.eventId} className="admin-boot__event">
-          <summary>
+          <MoreToggle as="summary">
             <strong>{event.path}</strong>
             <span>{browserNames[event.device.browser] ?? event.device.browser} {event.device.browserMajor} · {osNames[event.device.os] ?? event.device.os} {event.device.osMajor}</span>
             <time dateTime={event.receivedAt}>{new Date(event.receivedAt).toLocaleString()}</time>
             <span>{event.errorName}: {event.errorMessage}</span>
-          </summary>
+          </MoreToggle>
           <p>{t('诊断编号', 'Diagnostic code')}: <code>{event.code}</code></p>
           <p>{t('网络状态', 'Network status')}: {event.online === null ? t('未知', 'Unknown') : event.online ? t('在线', 'Online') : t('离线', 'Offline')}</p>
           {event.evidence.map((item, index) => (

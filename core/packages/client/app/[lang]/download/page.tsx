@@ -1,7 +1,8 @@
 'use client';
 
 /** @module Official app downloads and platform availability. */
-import { ChevronDown, Download, Monitor, PackageCheck, Smartphone } from '@app-foundation/icons/lucide';
+import MoreToggle from '@/components/MoreToggle';
+import { Download, Monitor, PackageCheck, Smartphone } from '@app-foundation/icons/lucide';
 import { useEffect, useState } from 'react';
 import { fetchAndroidRelease, fetchWindowsRelease, type AndroidRelease, type WindowsRelease } from '@cuberoot/shared/android-release';
 import BackHome from '@/components/BackHome';
@@ -69,7 +70,7 @@ export default function DownloadPage() {
           </div>
           <p className="download-note">{tr({ zh: 'Google Play 用户请继续通过 Play 更新。', en: 'For Google Play installations, update through Play.' })}</p>
           <details className="download-details">
-            <summary><ChevronDown className="download-details-icon" size={16} aria-hidden="true" />{tr({ zh: '安装与更新说明', en: 'Installation & updates' })}</summary>
+            <MoreToggle as="summary">{tr({ zh: '安装与更新说明', en: 'Installation & updates' })}</MoreToggle>
             <p>{tr({ zh: '官网 APK 与 Google Play 使用不同签名，不能互相覆盖安装。不要为切换渠道卸载应用，以免丢失本地记录。', en: 'The website APK and Google Play use different signing certificates and cannot update each other. Uninstalling to switch channels can erase local records.' })}</p>
             {release && <p>{tr({ zh: 'APK 构建号', en: 'APK build' })}: {release.versionCode}</p>}
           </details>
@@ -98,7 +99,7 @@ export default function DownloadPage() {
           </div>
           <p className="download-note">{tr({ zh: '当前版本未签名，Windows 可能显示安全提示。', en: 'This release is unsigned. Windows may show a security warning.' })}</p>
           <details className="download-details">
-            <summary><ChevronDown className="download-details-icon" size={16} aria-hidden="true" />{tr({ zh: '安装版与免安装版', en: 'Installer or standalone EXE?' })}</summary>
+            <MoreToggle as="summary">{tr({ zh: '安装版与免安装版', en: 'Installer or standalone EXE?' })}</MoreToggle>
             <p>{tr({ zh: '推荐使用安装版。免安装版无需安装应用，但需要电脑已安装 Microsoft Edge WebView2。', en: 'The installer is recommended. The standalone EXE runs without installing the app, but requires Microsoft Edge WebView2 on your PC.' })}</p>
           </details>
         </section>

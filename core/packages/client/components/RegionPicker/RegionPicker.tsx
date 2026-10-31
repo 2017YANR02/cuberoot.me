@@ -1,6 +1,7 @@
 'use client';
 
 // Ported from packages/client-vite/src/components/RegionPicker/RegionPicker.tsx.
+import { ChevronDown } from '@app-foundation/icons/lucide';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Search, X } from '@app-foundation/icons/lucide';
 import { Flag } from '@/components/Flag';
@@ -224,7 +225,7 @@ export function RegionPicker(props: RegionPickerProps) {
       <button type="button" className="region-picker-trigger" aria-expanded={open} onClick={() => setOpen(o => !o)}>
         {triggerIcon}
         <span className="region-picker-label">{triggerLabel}</span>
-        <span className="region-picker-caret">▾</span>
+        <ChevronDown size={14} className="region-picker-caret" aria-hidden="true" />
       </button>
       {open && (
         <div ref={panelRef} className="region-picker-popup" data-site-surface="popover" onKeyDown={e => { if (e.key === 'Escape') closeAndClear(); }}>

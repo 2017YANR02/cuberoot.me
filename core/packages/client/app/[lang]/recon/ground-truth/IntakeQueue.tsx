@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import dynamic from 'next/dynamic';
@@ -98,7 +99,7 @@ export default function IntakeQueue() {
     </nav>{item && <section>
       <h2>{tr(statuses[item.status])} · v{item.revision}</h2>
       <p><small>{item.id} · {item.createdBy}</small></p>
-      {item.sourceSnapshot && <details><summary>{tr({ zh: '收录时的来源复盘', en: 'Source reconstruction at collection' })} · #{item.sourceSnapshot.id}</summary>
+      {item.sourceSnapshot && <details><MoreToggle as="summary">{tr({ zh: '收录时的来源复盘', en: 'Source reconstruction at collection' })} · #{item.sourceSnapshot.id}</MoreToggle>
         <pre>{item.sourceSnapshot.scramble}{'\n'}{item.sourceSnapshot.solution}</pre></details>}
       {item.claimedBy && <p>{tr({ zh: 'AI 领取记录（到期可重新领取）', en: 'AI claim (available again after expiry)' })}：{item.claimedBy} · {item.leaseUntil}</p>}
       <ReconstructReport solve={recordingSolve(item.input.recording, item.id)} host={{ ...host, renderIntakeAction: undefined }} isZh={tr({ zh: true, en: false })} hideActions hideDate />
@@ -117,10 +118,10 @@ export default function IntakeQueue() {
         {item.status === 'needs-review' && item.latestRun?.status === 'passed' && item.latestRun.revision === item.revision &&
           <button className="ri-button" type="button" disabled={busy} onClick={() => void approve()}>{tr({ zh: '确认此测试输出为预期，重新测试', en: 'Approve this output and queue retest' })}</button>}
       </div>
-      <details><summary>{tr({ zh: '测试历史', en: 'Test history' })}</summary>
+      <details><MoreToggle as="summary">{tr({ zh: '测试历史', en: 'Test history' })}</MoreToggle>
         {detail.runs.map((run, i) => <div key={run.payload?.id ?? i}><p>v{run.revision} · {run.payload && tr(runStatuses[run.payload.status])} · {run.created_at}</p>
           <pre>{text(run.payload?.actual)}</pre><pre>{run.payload?.errors.join('\n')}</pre></div>)}</details>
-      <details><summary>{tr({ zh: '批注与预期版本', en: 'Annotation and expectation history' })}</summary>
+      <details><MoreToggle as="summary">{tr({ zh: '批注与预期版本', en: 'Annotation and expectation history' })}</MoreToggle>
         {detail.revisions.map(revision => <div key={revision.revision}>
           <p>v{revision.revision} · {revision.actor} · {revision.created_at}</p>
           {revision.input.annotations.map(note => <div key={note.id}><p>{note.problem}</p><pre>{note.expectedAlgorithm}</pre><p>{note.expectedEffect}</p></div>)}

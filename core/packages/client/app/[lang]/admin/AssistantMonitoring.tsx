@@ -1,4 +1,5 @@
 'use client';
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useState } from 'react';
 import { useT } from '@/hooks/useT';
 import { ClearButton } from '@/components/ClearButton';
@@ -92,7 +93,7 @@ export default function AssistantMonitoring() {
           {summary.tools.map(row => <p key={row.tool}>{row.tool}: {row.calls}</p>)}
         </section>
       </div>
-      <details className="admin-dashboard__table"><summary>{t('每日用户、状态与耗时明细', 'Daily users, outcomes and latency')}</summary><div className="sticky-scroll admin-dashboard__table-scroll"><table className="sticky-thead"><thead><tr>{[t('日期', 'Date'),t('请求', 'Requests'),t('用户', 'Users'),...statuses.map(s => labels[s]),t('平均耗时', 'Average latency'),t('P95 耗时', 'P95 latency')].map(label => <th key={label}>{label}</th>)}</tr></thead><tbody>{summary.daily.map(day => <tr key={day.day}><th>{day.day}</th><td>{day.requests}</td><td>{day.users}</td>{statuses.map(s => <td key={s}>{day[s === 'error' ? 'errors' : s]}</td>)}<td>{seconds(day.avg_ms)}</td><td>{seconds(day.p95_ms)}</td></tr>)}</tbody></table></div></details>
+      <details className="admin-dashboard__table"><MoreToggle as="summary">{t('每日用户、状态与耗时明细', 'Daily users, outcomes and latency')}</MoreToggle><div className="sticky-scroll admin-dashboard__table-scroll"><table className="sticky-thead"><thead><tr>{[t('日期', 'Date'),t('请求', 'Requests'),t('用户', 'Users'),...statuses.map(s => labels[s]),t('平均耗时', 'Average latency'),t('P95 耗时', 'P95 latency')].map(label => <th key={label}>{label}</th>)}</tr></thead><tbody>{summary.daily.map(day => <tr key={day.day}><th>{day.day}</th><td>{day.requests}</td><td>{day.users}</td>{statuses.map(s => <td key={s}>{day[s === 'error' ? 'errors' : s]}</td>)}<td>{seconds(day.avg_ms)}</td><td>{seconds(day.p95_ms)}</td></tr>)}</tbody></table></div></details>
       <h3>{t('模型用量', 'Model usage')}</h3><p>{t('包含同一问题的多轮和修复调用。缺失用量不是零；缓存与思考 tokens 是输入或输出的子集，不重复相加。向量区分在线查询和离线建库；实际费用以服务商账单为准。', 'Includes multiple rounds and repair calls. Missing usage is not zero. Cache/reasoning tokens are subsets, not additional totals. Embeddings distinguish online queries from offline indexing. Provider billing is authoritative.')}</p>
       <div className="admin-dashboard__table"><div className="sticky-scroll admin-dashboard__table-scroll"><table className="sticky-thead"><thead><tr>{[t('模型', 'Model'),t('类型', 'Kind'),t('调用', 'Calls'),t('思考调用', 'Thinking calls'),t('输入', 'Input'),t('输出', 'Output'),t('缓存命中', 'Cache read'),t('思考', 'Reasoning'),t('用量缺失', 'Missing usage')].map(v => <th key={v}>{v}</th>)}</tr></thead><tbody>{summary.models.map(m => <tr key={m.kind + m.model}><th>{m.model}</th><td>{({chat:t('聊天','Chat'),embedding:t('查询向量','Query embeddings'),embedding_index:t('建库向量','Index embeddings'),rerank:t('重排序','Reranking')} as Record<string,string>)[m.kind]??m.kind}</td><td>{m.calls}</td><td>{m.thinking_calls}</td><td>{number(m.input_tokens)}</td><td>{number(m.output_tokens)}</td><td>{number(m.cached_tokens)}</td><td>{number(m.reasoning_tokens)}</td><td>{m.missing_usage}</td></tr>)}</tbody></table></div></div>
       <p>{summary.state && <>{t('开始记录', 'Recording since')} {timestamp(summary.state.enabled_at)} · {t('最近清理', 'Last cleanup')} {summary.state.last_cleanup_at ? timestamp(summary.state.last_cleanup_at) : '—'} · </>}{t('更新时间', 'Updated')} {timestamp(summary.updatedAt)} (UTC+8)</p>
@@ -120,11 +121,11 @@ export default function AssistantMonitoring() {
         <p>{t('混合检索、降级和最终本地检索分步记录；无检索不等于失败，直接查询成绩或打开工具无需 RAG。召回命中不代表资料一定相关。','Hybrid retrieval and fallbacks are recorded separately. Direct data/tool questions may need no RAG. A retrieval hit does not prove relevance.')}</p>
         {insights.entries.map(r=><p key={r.code}>{r.code}: {r.requests}</p>)}
       </section></div>
-      <details><summary>{t('长期日汇总与下载','Long-term daily totals and download')}</summary><p>{t('保留 2 年，不含问题、回答和用户标识。每日用户数不能相加当作跨日独立用户数。','Retained for 2 years without text or user identifiers. Daily distinct users are not additive across days.')}</p>
+      <details><MoreToggle as="summary">{t('长期日汇总与下载','Long-term daily totals and download')}</MoreToggle><p>{t('保留 2 年，不含问题、回答和用户标识。每日用户数不能相加当作跨日独立用户数。','Retained for 2 years without text or user identifiers. Daily distinct users are not additive across days.')}</p>
         <button type="button" className="admin-boot__refresh" onClick={()=>{const rows=[['day','requests','daily_users','success','errors','feedback','helpful','clicked','gross_cny','unpriced_calls'],...insights.daily.map(d=>[d.day,d.metrics.requests,d.metrics.users,d.metrics.success,d.metrics.errors,d.metrics.feedback,d.metrics.helpful,d.metrics.clicked,d.metrics.gross_cny,d.metrics.unpriced_calls])];const url=URL.createObjectURL(new Blob([rows.map(r=>r.join(',')).join('\n')],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='assistant-daily.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}}>{t('下载日汇总 CSV','Download daily CSV')}</button>
         <DashboardChart label={t('长期每日提问','Long-term daily requests')} labels={insights.daily.map(d=>d.day)} series={[{name:t('提问','Requests'),type:'line',data:insights.daily.map(d=>d.metrics.requests)}]}/>
       </details>
-      <details><summary>{t('最近管理员访问与复核审计','Recent admin access and review audit')}</summary>{insights.audit.map((a,i)=><p key={i} style={wrap}>{timestamp(a.at)} · {a.actor} · {a.action} · {a.record_id??'—'}</p>)}</details>
+      <details><MoreToggle as="summary">{t('最近管理员访问与复核审计','Recent admin access and review audit')}</MoreToggle>{insights.audit.map((a,i)=><p key={i} style={wrap}>{timestamp(a.at)} · {a.actor} · {a.action} · {a.record_id??'—'}</p>)}</details>
     </>}
     <h3>{t('逐条问答', 'Questions and answers')}</h3>
     <div className="admin-dashboard__toolbar">
@@ -146,7 +147,7 @@ export default function AssistantMonitoring() {
         {detail.content_expired ? <p>{t('正文已超过 30 天保存期限。', 'Content has passed its 30-day retention period.')}</p> : <>
           <h4>{t('用户问题', 'Question')}</h4><p style={wrap}>{detail.question || t('仅图片', 'Images only')}</p>
           <h4>{t('回答正文（未完成时为已输出片段）', 'Answer (partial if unfinished)')}</h4><p style={wrap}>{detail.answer || '—'}</p>
-          {!!detail.response && <details><summary>{t('来源、页面入口与结果表', 'Sources, destinations and result tables')}</summary><pre style={wrap}>{JSON.stringify(detail.response, null, 2)}</pre></details>}
+          {!!detail.response && <details><MoreToggle as="summary">{t('来源、页面入口与结果表', 'Sources, destinations and result tables')}</MoreToggle><pre style={wrap}>{JSON.stringify(detail.response, null, 2)}</pre></details>}
         </>}
         <p>{t('用户评价','User feedback')}: {detail.feedback?feedbackLabels[detail.feedback]:'—'} · {t('复核状态','Review')}: {reviewLabels[detail.review_status]}</p>
         {!detail.content_expired&&<form style={{display:'grid',gap:12}} onSubmit={e=>{e.preventDefault();setReviewBusy(true);setReviewError(false);void reviewAssistantRequest(detail.id,reviewStatus,reviewNote).then(()=>setRefresh(n=>n+1)).catch(()=>setReviewError(true)).finally(()=>setReviewBusy(false));}}>
@@ -157,7 +158,7 @@ export default function AssistantMonitoring() {
         <h4>{t('各阶段耗时', 'Stage timings')}</h4><p>{t('并行或嵌套阶段可能重叠，阶段耗时不可直接相加。', 'Parallel or nested stages may overlap; durations are not additive.')}</p>
         <div className="admin-dashboard__table"><div className="sticky-scroll admin-dashboard__table-scroll"><table className="sticky-thead"><thead><tr><th>{t('阶段', 'Stage')}</th><th>{t('调用次数', 'Calls')}</th><th>{t('耗时', 'Latency')}</th><th>{t('失败次数', 'Failures')}</th></tr></thead><tbody>{Object.entries(detail.metrics.stages ?? {}).map(([stage, value]) => <tr key={stage}><th>{({ model: t('模型回答', 'Model'), data: t('读取数据', 'Data'), page: t('读取页面', 'Pages'), tool: t('使用工具', 'Tools'), rerank:t('重排序','Reranking'), total: t('整体', 'Overall') } as Record<string, string>)[stage] ?? stage}</th><td>{value.calls}</td><td>{seconds(value.ms)}</td><td>{value.errors}</td></tr>)}</tbody></table></div></div>
         {modelEstimates.length>0&&<p>{t('模型费用估算（含缓存折扣，元）','Model estimate with cache discounts (CNY)')}: {modelEstimateMin.toFixed(4)}–{modelEstimateMax.toFixed(4)} · {modelEstimates.length}/{detail.metrics.models?.length ?? 0} {t('次调用有估价；不含工具费用，非实际账单。','calls priced; excludes tools and is not an invoice.')}</p>}
-        <details><summary>{t('查看详细用量记录', 'Detailed usage records')}</summary><pre style={wrap}>{JSON.stringify(detail.metrics, null, 2)}</pre></details>
+        <details><MoreToggle as="summary">{t('查看详细用量记录', 'Detailed usage records')}</MoreToggle><pre style={wrap}>{JSON.stringify(detail.metrics, null, 2)}</pre></details>
       </>}
     </section>}
   </section>;

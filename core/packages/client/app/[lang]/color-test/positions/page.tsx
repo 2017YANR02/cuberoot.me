@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useTrainingStats } from '@/hooks/useTrainingStats';
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
@@ -137,7 +138,7 @@ function ColorStatsRow({ face }: { face: CubeFace }) {
         <tr className="color-stats-history-row">
           <td colSpan={7}>
             <details className="color-stats-details">
-              <summary>{tr({ zh: '最近记录', en: 'Recent attempts' })}</summary>
+              <MoreToggle as="summary">{tr({ zh: '最近记录', en: 'Recent attempts' })}</MoreToggle>
               <ol className="color-stats-history">{[...stats.recent].reverse().map(attempt => (
                 <li key={attempt.id}>
                   <time dateTime={new Date(attempt.at).toISOString()}>{new Date(attempt.at).toLocaleString()}</time>

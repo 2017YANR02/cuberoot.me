@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useState } from 'react';
 import Link from '@/components/AppLink';
 import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';
@@ -50,7 +51,7 @@ function CenterPractice() {
         size={300} moveDurationMs={650} stepMarkers={selected.id === 'four-center-exchange' ? [4] : undefined} />
     </LazyVisible>
     <details className="ivy-3y-details">
-      <summary><T zh="本站的转动记号与持握" en="The site's move notation and holding orientation" /></summary>
+      <MoreToggle as="summary"><T zh="本站的转动记号与持握" en="The site's move notation and holding orientation" /></MoreToggle>
       <p><T zh="字母表示绕相应角的转轴转动 120°。从该轴外侧看，裸字母为顺时针，撇号为逆时针；这与三阶魔方的 90° 面转不同。" en="Each letter turns 120° about its corner axis. Looking inward along that axis, a bare letter is clockwise and a prime is counterclockwise; these differ from 90° face turns." /></p>
       <dl className="ivy-3y-notation">
         <div><dt>R</dt><dd><T zh="上后右角（UBR）" en="Upper-back-right corner (UBR)" /></dd></div>
@@ -142,7 +143,7 @@ export default function Ivy3YGuide() {
         <VideoMoment source="examples" seconds={94} />
       </div>
       <details className="ivy-3y-details">
-        <summary><T zh="为什么作者用“四个面一起好”预判跳步？" en="Why can four complete faces predict a skip?" /></summary>
+        <MoreToggle as="summary"><T zh="为什么作者用“四个面一起好”预判跳步？" en="Why can four complete faces predict a skip?" /></MoreToggle>
         <p><T zh="对正常可达的枫叶状态，四个完整面已覆盖所有角块的方向；角块对齐后，中心只可能处于偶排列。若其余两个中心仍互换，就会是一个不可能单独出现的奇排列，所以它们也必须正确。这说的是完整面，包含中心与两片角贴片同色；四处连色不能代替四个完整面。" en="In a reachable Ivy state, four complete faces determine every corner's orientation. Once corners are aligned, the centers have even permutation parity. Swapping only the last two centers would be odd and is impossible, so they must also be correct. A complete face includes its center and both corner stickers; four matching blocks do not mean four complete faces." /></p>
         <VideoMoment source="method" seconds={273} />
       </details>
@@ -155,7 +156,7 @@ export default function Ivy3YGuide() {
         <h4>{tr(chapter.title)}</h4><p>{tr(chapter.description)}</p><VideoMoment source="algorithms" seconds={chapter.seconds} />
       </div>)}</div>
       <details className="ivy-3y-details">
-        <summary><T zh="2Y 连色与眼睛：逐例定位" en="2Y blocks and paired stickers: case-by-case index" /></summary>
+        <MoreToggle as="summary"><T zh="2Y 连色与眼睛：逐例定位" en="2Y blocks and paired stickers: case-by-case index" /></MoreToggle>
         <p><T zh="方位以视频当时的持握为准。“眼睛”指作者用来识别的成对角贴片。相同的简短连色标签可能有不同朝向和其他块的区别，需结合原片完整状态判断。" en="Directions refer to the video's current holding orientation. The author's “eyes” are paired corner-sticker recognition patterns. Similar short labels can hide different orientations or other pieces; inspect the full case in the video." /></p>
         <ol className="ivy-3y-case-index">{IVY_2Y_RECOGNITION_INDEX.map(item => <li key={item.seconds}><a href={ivyVideoUrl('algorithms', item.seconds)} target="_blank" rel="noreferrer">{ivyTimestamp(item.seconds)} · {tr(item.label)}</a></li>)}</ol>
       </details>

@@ -5,6 +5,7 @@
  * Ported from packages/client-vite/src/components/ListSelect/ListSelect.tsx.
  * caller 预格式化 label / hint / country / searchTerms,组件不做本地化。
  */
+import MoreToggle from '@/components/MoreToggle';
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ChevronDown, X } from '@app-foundation/icons/lucide';
 import { CompactSelect } from '@/components/CompactSelect';
@@ -172,14 +173,14 @@ export function ListSelect({ portal = false, showArrow = true, items, value, onC
           if (!group || searching) return renderItem(item);
           if (shown.slice(0, index).some(other => other.group?.value === group.value)) return null;
           const expanded = activeGroup?.value === group.value;
-          return <button key={`group:${group.value}`} type="button" className="list-select-item" aria-expanded={expanded}
+          return <MoreToggle key={`group:${group.value}`} type="button" className="list-select-item" expanded={expanded}
             title={group.hideLabel ? group.label : undefined}
             onClick={() => setExpandedGroups(expanded ? {} : { [group.value]: true })}
             onKeyDown={event => { if (event.key === 'ArrowRight') { event.preventDefault(); setExpandedGroups({ [group.value]: true }); } }}>
             {group.icon && <span className="list-select-icon" aria-hidden>{group.icon}</span>}
             <span className={group.hideLabel ? 'sr-only' : 'list-select-label'}>{group.label}</span>
-            <ChevronDown size={14} className="list-select-group-chevron" />
-          </button>;
+
+          </MoreToggle>;
         })}
         {hidden > 0 && <div className="list-select-more">
           {tr({ zh: `还有 ${hidden} 项,继续输入以缩小范围`, en: `${hidden} more — keep typing to narrow` })}

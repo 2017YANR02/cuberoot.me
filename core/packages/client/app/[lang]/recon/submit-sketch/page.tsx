@@ -4,8 +4,9 @@
  * 目的:让用户对照现行 ReconSubmitPage 看新布局
  * 灵感:Twizzle 左输入右预览 + GitHub 设置式 collapsible sections
  */
+import MoreToggle from '@/components/MoreToggle';
 import { useState } from 'react';
-import { ChevronDown, ChevronRight, Keyboard, Eye } from '@app-foundation/icons/lucide';
+import { Keyboard, Eye } from '@app-foundation/icons/lucide';
 
 // ── tiny presentational primitives,inline styled,自洽 ──
 
@@ -57,7 +58,7 @@ function Section({ title, defaultOpen = false, children, badge }: {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-      <button
+      <MoreToggle expanded={open}
         type="button"
         onClick={() => setOpen(o => !o)}
         style={{
@@ -67,12 +68,12 @@ function Section({ title, defaultOpen = false, children, badge }: {
           font: 'inherit', textAlign: 'left', cursor: 'pointer',
         }}
       >
-        {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+
         <span style={{ fontSize: 14, fontWeight: 600 }}>{title}</span>
         {badge && (
           <span style={{ fontSize: 11, color: 'var(--muted, #888)', fontWeight: 400 }}>{badge}</span>
         )}
-      </button>
+      </MoreToggle>
       {open && <div style={{ padding: '8px 0 16px 0' }}>{children}</div>}
     </div>
   );

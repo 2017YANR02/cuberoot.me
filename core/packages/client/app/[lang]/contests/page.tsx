@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseAsInteger, parseAsString, parseAsStringEnum, useQueryStates } from 'nuqs';
@@ -91,7 +92,7 @@ function ResultTable({ rows, events, persons = [], contests = [], isZh, rankings
         <td className="contests-date">{row.date?.slice(0, 10)}</td>
         <td>{contest?.competitionId ? <ContestLink contest={contest} /> : <External href={row.videoLink}>{t('视频', 'Video')}</External>}
           {row.discussionLink && <div><External href={row.discussionLink}>{t('讨论', 'Discussion')}</External></div>}</td>
-        <td><details><summary>{t('展开', 'Show')}</summary><ol className="contests-attempts">{row.attemptsText.map((attempt, i) => <li key={i}>
+        <td><details><MoreToggle as="summary">{t('展开', 'Show')}</MoreToggle><ol className="contests-attempts">{row.attemptsText.map((attempt, i) => <li key={i}>
           {localizeResult(attempt)}{row.memoText?.[i] && <> · {t('记忆', 'Memo')}: {localizeResult(row.memoText[i]!)}</>}
         </li>)}</ol></details></td>
       </tr>;
@@ -127,7 +128,7 @@ function ScheduleView({ schedule, events, isZh }: { schedule: Schedule; events: 
         {a.childActivities?.length ? activities(a.childActivities, zone) : null}</li>;
     })}</ul>;
   }
-  return <details className="contests-section"><summary>{t('赛程（举办地时间）', 'Schedule (venue local time)')}</summary>
+  return <details className="contests-section"><MoreToggle as="summary">{t('赛程（举办地时间）', 'Schedule (venue local time)')}</MoreToggle>
     {schedule.venues?.map(v => <section key={v.id}><h3>{v.name} · {v.timezone}</h3>{v.rooms.map(room => <div key={room.id}>
       <h4>{room.name}</h4>{activities(room.activities, v.timezone)}
     </div>)}</section>)}
@@ -222,7 +223,7 @@ export default function ContestsPage() {
       {['persons', 'competitions'].includes(view) && <SearchInput value={params.q} onChange={q => update({ q })} debounceMs={300} maxLength={100}
         ariaLabel={t('搜索', 'Search')} placeholder={view === 'persons' ? t('姓名或 WCA ID', 'Name or WCA ID') : t('比赛名称或城市', 'Contest name or city')} />}
     </div>}
-    {selectedEvent && ['rankings', 'records'].includes(view) && <details className="contests-section"><summary>{contestEventName(selectedEvent, isZh)} · {t('项目说明与规则', 'Description & rules')}</summary>
+    {selectedEvent && ['rankings', 'records'].includes(view) && <details className="contests-section"><MoreToggle as="summary">{contestEventName(selectedEvent, isZh)} · {t('项目说明与规则', 'Description & rules')}</MoreToggle>
       <p>{t('以下为来源网站的原文。', 'The following is the original source text.')}</p><Markdown>{selectedEvent.description || selectedEvent.rule || t('暂无项目说明。', 'No description available.')}</Markdown>
       {selectedEvent.description && selectedEvent.rule && <Markdown>{selectedEvent.rule}</Markdown>}
     </details>}
@@ -251,7 +252,7 @@ export default function ContestsPage() {
         <p className="contests-date">{formatDateRangeIso(detail.contest.startDate?.slice(0, 10) ?? '', detail.contest.endDate?.slice(0, 10))} · {countryName(detail.contest.regionCode, isZh)} · {detail.contest.city}</p>
         <p>{detail.contest.venue} {detail.contest.address}</p>
         <p>{CONTEST_TYPES[detail.contest.type] ? tr(CONTEST_TYPES[detail.contest.type]) : detail.contest.type} · {detail.contest.participants ?? 0} {t('人', 'competitors')}</p>
-        {detail.contest.description && <details className="contests-section"><summary>{t('比赛说明（来源原文）', 'Contest description (source text)')}</summary><Markdown>{detail.contest.description}</Markdown></details>}
+        {detail.contest.description && <details className="contests-section"><MoreToggle as="summary">{t('比赛说明（来源原文）', 'Contest description (source text)')}</MoreToggle><Markdown>{detail.contest.description}</Markdown></details>}
         {(detail.contest.schedule as Schedule | null)?.venues?.length ? <ScheduleView schedule={detail.contest.schedule as Schedule} events={detail.events} isZh={isZh} /> : null}
         <External href={`https://cubingcontests.com/competitions/${encodeURIComponent(detail.contest.competitionId)}`}>{t('来源比赛页', 'Source contest page')}</External>
         {detail.rounds.map(round => <section key={round.id} className="contests-section"><h3>{round.roundTypeId === 'f' ? t('决赛', 'Final') : `${t('轮次', 'Round')} ${round.roundNumber}`} · {FORMATS[round.format] ?? round.format}</h3>

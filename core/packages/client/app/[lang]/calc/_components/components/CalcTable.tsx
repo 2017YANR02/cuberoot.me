@@ -3,6 +3,7 @@
 // NOTE: 指标对比表格 — 从 calc_table.js 迁移
 // 显示 Best/Worst/Average/BPA/WPA/Mo2~Mo4 等所有计算指标
 
+import MoreToggle from '@/components/MoreToggle';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCalcStore, isMo3ForEvent, isMbfForEvent } from '../stores/calc_store';
@@ -83,10 +84,10 @@ export function CalcTable() {
 
   return (
     <details id="calc-section">
-      <summary className="stats-toggle">
+      <MoreToggle as="summary" className="stats-toggle">
         {tr({ zh: '📊 统计', en: '📊 Statistics'
         })}
-      </summary>
+      </MoreToggle>
       <table id="calc-table">
         <thead>
           <tr>

@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { Fragment, useMemo } from 'react';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
@@ -1059,10 +1060,10 @@ export default function SchemaPage() {
               const isOpen = open === t.name;
               return (
                 <div key={t.name} className="schema-table-row">
-                  <button
+                  <MoreToggle
                     type="button"
                     className="schema-table-btn"
-                    aria-expanded={isOpen}
+                    expanded={isOpen}
                     onClick={() => setOpen(isOpen ? null : t.name)}
                   >
                     <span className="schema-table-name">{t.name}</span>
@@ -1072,8 +1073,8 @@ export default function SchemaPage() {
                       {t.naturalKey && <span className="schema-tag natural">{tr({ zh: '自然键', en: 'nat-key' })}</span>}
                       <span className="schema-tag origin">{t.origin === 'snapshot' ? tr({ zh: '快照', en: 'snapshot' }) : t.origin}</span>
                     </span>
-                    <span className="schema-chevron" aria-hidden>›</span>
-                  </button>
+
+                  </MoreToggle>
                   {isOpen && (
                     <div className="schema-detail">
                       {t.cols && (

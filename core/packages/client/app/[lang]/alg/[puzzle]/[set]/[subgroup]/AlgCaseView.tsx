@@ -1,4 +1,5 @@
 'use client';
+import MoreToggle from '@/components/MoreToggle';
 import { alignAlgFile, caseAlgIssue, loadAlg } from '@/lib/alg_case_alignment';
 
 /**
@@ -165,15 +166,15 @@ function PlayableAlgRow({ entry, puzzle, set, mirror, ori = 0, viewAngle, sq1Not
         ))}
         {len != null && <span className="alg-alg-len" title="STM">{len}</span>}
         {mirror && !issue && (
-          <button
+          <MoreToggle
             type="button"
             className={`alg-mirror-toggle${mirrorOpen ? ' is-on' : ''}`}
-            aria-expanded={mirrorOpen}
+            expanded={mirrorOpen}
             onClick={(e) => { e.stopPropagation(); setMirrorOpen(o => !o); }}
             title={tr({ zh: '镜像公式', en: 'Mirrored algs' })}
           >
             <FlipHorizontal2 size={14} />
-          </button>
+          </MoreToggle>
         )}
         <button type="button" className="alg-alg-copy-btn" disabled={!!issue} onClick={(e) => { e.stopPropagation(); copy(shownText); }} title="copy">
           {copied ? <Check size={14} /> : <Copy size={14} className="alg-alg-copy-icon" />}

@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Star } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
@@ -476,7 +477,7 @@ function DomainForm({ spec, definition, entity, resourceId, busy, runAction, onR
           const label = t(item.label.zh, item.label.en);
           if (item.key === 'instructorId') return <PlatformReferenceField key={item.key} source="instructorId" label={t('讲师','Instructor')} multiple={false} selected={value?[String(value)]:[]} onChange={ids=>setValues(current=>({...current,[item.key]:ids[0]??''}))}/>;
           if (item.kind === 'structured') return <PlatformStructuredField key={item.key} fieldKey={item.key} label={label} routeId={definition.id} value={String(value)} onChange={next => setValues(current=>({...current,[item.key]:next}))} />;
-          if (item.kind === 'markdown') return <label key={item.key} className="platform-form-wide"><span>{label}</span><textarea className="platform-field-control platform-field-textarea" rows={item.rows??8} required={item.required} value={String(value)} onChange={event=>setValues(current=>({...current,[item.key]:event.target.value}))}/><details><summary>{t('预览正文','Preview content')}</summary><div className="platform-prose">{renderArticleMarkdown(String(value))}</div></details></label>;
+          if (item.kind === 'markdown') return <label key={item.key} className="platform-form-wide"><span>{label}</span><textarea className="platform-field-control platform-field-textarea" rows={item.rows??8} required={item.required} value={String(value)} onChange={event=>setValues(current=>({...current,[item.key]:event.target.value}))}/><details><MoreToggle as="summary">{t('预览正文','Preview content')}</MoreToggle><div className="platform-prose">{renderArticleMarkdown(String(value))}</div></details></label>;
           if (item.kind === 'datetime-local' && definition.id === 'admin-invites') {
             return <InviteExpiryField key={item.key} label={label} value={String(value)}
               onChange={next => setValues(current => ({ ...current, [item.key]: next }))} />;
@@ -954,7 +955,7 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
           </div>
           <p className="platform-domain-note">{t('引言免费公开，不需要兑换。默认每个码供 1 人使用，不限兑换日期。', 'Introductions are free. Each code is for one learner, with no expiry by default.')}</p>
           <details className="platform-invite-options">
-            <summary>{t('更多设置', 'More options')}</summary>
+            <MoreToggle as="summary">{t('更多设置', 'More options')}</MoreToggle>
             <div className="platform-form-grid">
               <label><span>{t('备注（选填）', 'Note (optional)')}</span><input name="label" className="platform-field-control" maxLength={160} /></label>
               <label><span>{t('可用人数（留空不限）', 'Learners (blank for unlimited)')}</span><input name="maxRedemptions" className="platform-field-control" type="number" min={1} max={1000000000} step={1} defaultValue={1} /></label>
@@ -977,7 +978,7 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
         </section>
       ) : null}
       {courseOptions.length ? <details className="platform-invite-options">
-        <summary>{t('随实体魔方批量发码', 'Bulk codes for physical cube packages')}</summary>
+        <MoreToggle as="summary">{t('随实体魔方批量发码', 'Bulk codes for physical cube packages')}</MoreToggle>
         <DomainForm
           definition={definition}
           busy={busy}
@@ -1045,7 +1046,7 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
               <span>{validExpiry ? t(`${expiryLabel} 到期`, `Expires ${expiryLabel}`) : t('不限兑换日期', 'No expiry')}</span>
             </div>
             <details className="platform-invite-options">
-            <summary>{t('管理', 'Manage')}</summary>
+            <MoreToggle as="summary">{t('管理', 'Manage')}</MoreToggle>
             <p className="platform-domain-note">{t('旧码无法再次查看，请从生成时保存的记录中复制。', 'Existing codes cannot be shown again. Use your saved copy.')}</p>
             {!physical ? <>
               <DomainForm definition={definition} entity={editEntity} resourceId={entity.id} busy={busy} runAction={async (action, id, payload) => {

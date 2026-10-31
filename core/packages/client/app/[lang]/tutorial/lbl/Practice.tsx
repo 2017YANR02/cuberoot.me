@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { parseAsInteger, useQueryState } from 'nuqs';
 import { Alg } from 'cubing/alg';
@@ -121,9 +122,9 @@ function Exercise({ step, index, onNext, textMoves, onTextMovesChange }: { step:
           <p><T zh="想动哪一层？" en="Which layer?" /><small><T zh="每点一次转四分之一圈" en="Each tap turns a quarter turn" /></small></p>
           {actionRows(practiceMoves.slice(0, 3))}
           {step.id === 'cross' && actionRows(practiceMoves.slice(7))}
-          <details><summary><T zh="更多动作" en="More moves" /></summary><p><T zh="顺、逆时针都要正对所转的面判断；转后面时，想象从背后看它。" en="Judge clockwise while looking directly at the face being turned; for the back face, imagine looking from behind." /></p>{actionRows(practiceMoves.slice(3, step.id === 'cross' ? 7 : 8))}</details>
+          <details><MoreToggle as="summary"><T zh="更多动作" en="More moves" /></MoreToggle><p><T zh="顺、逆时针都要正对所转的面判断；转后面时，想象从背后看它。" en="Judge clockwise while looking directly at the face being turned; for the back face, imagine looking from behind." /></p>{actionRows(practiceMoves.slice(3, step.id === 'cross' ? 7 : 8))}</details>
         </div> : <div className="lbl-move-buttons" role="group" aria-label={tr({ zh: '转动魔方', en: 'Turn the cube' })}>{['R', "R'", 'L', "L'", 'U', "U'", 'F', "F'", 'D', "D'", 'B', "B'", 'f', "f'", 'y', "y'", ...(step.id === 'cross' ? ['d', "d'"] : [])].map(move => <button className="lbl-button" type="button" key={move} onClick={() => turn(move)}>{move}</button>)}</div>}
-        <div className="lbl-exercise-tools">{beginner && <button className="lbl-button" type="button" onClick={undo} disabled={!history}><T zh="撤销一步" en="Undo" /></button>}<button className="lbl-button" type="button" onClick={reset}>{beginner ? <T zh="重新开始" en="Restart" /> : <T zh="重来" en="Restart" />}</button><button className="lbl-button" type="button" aria-expanded={hint} onClick={() => setHint(!hint)}>{hint ? tr({ zh: '收起提示', en: 'Hide hint' }) : tr({ zh: '给我提示', en: 'Show hint' })}</button></div>
+        <div className="lbl-exercise-tools">{beginner && <button className="lbl-button" type="button" onClick={undo} disabled={!history}><T zh="撤销一步" en="Undo" /></button>}<button className="lbl-button" type="button" onClick={reset}>{beginner ? <T zh="重新开始" en="Restart" /> : <T zh="重来" en="Restart" />}</button><MoreToggle className="lbl-button" type="button" expanded={hint} onClick={() => setHint(!hint)}>{hint ? tr({ zh: '收起提示', en: 'Hide hint' }) : tr({ zh: '给我提示', en: 'Show hint' })}</MoreToggle></div>
       </div>
       <div className="lbl-basic-copy"><h3>{step.id === 'cross' ? tr({ zh: '完成四条白棱，侧面颜色对齐中心。', en: 'Complete all four white edges, matching their side colors to the centers.' }) : tr({ zh: '转动魔方，让重点色块与目标图一致。', en: 'Turn the cube to match the highlighted stickers in the target image.' })}</h3>
         <div className="lbl-exercise-target"><VisualCube view="iso" size={112} setup={target} stickerColors={colors} stickerMaskColor={FM_FIXED_COLOR[FM_IGNORED]} alt={tr({ zh: '本题目标状态', en: 'Target state' })} /><p><T zh="黄心朝上，绿心朝前。" en="Yellow center up, green center in front." /></p></div>

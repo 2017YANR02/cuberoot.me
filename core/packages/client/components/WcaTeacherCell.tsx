@@ -1,4 +1,5 @@
 'use client';
+import MoreToggle from '@/components/MoreToggle';
 import '@cuberoot/timer-ui/compact-select.css';
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
@@ -832,16 +833,16 @@ export function WcaStudentAdder({
                   onlyAvailable
                 />
                 {hasOtherEvents && (
-                  <button
+                  <MoreToggle
                     type="button"
                     className="wca-teacher-action"
-                    aria-expanded={showAllEvents}
+                    expanded={showAllEvents}
                     onClick={() => setShowAllEvents((current) => !current)}
                   >
                     {showAllEvents
                       ? tr({ zh: '只看参赛项目', en: 'Show competition events only' })
                       : tr({ zh: '更多项目', en: 'More events' })}
-                  </button>
+                  </MoreToggle>
                 )}
               </>
             )}

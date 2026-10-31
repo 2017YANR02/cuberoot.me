@@ -1,8 +1,9 @@
 'use client';
 
 // Ported from packages/client-vite/src/pages/trainer/components.tsx
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Trash2, ChevronDown, ChevronRight, Check, Star } from '@app-foundation/icons/lucide';
+import { Trash2, Check, Star } from '@app-foundation/icons/lucide';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import Link from '@/components/AppLink';
 import { CaseThumb } from '@/components/CaseThumb';
@@ -250,12 +251,12 @@ export function StatsList({
   return (
     <div ref={cardRef} className="trainer-stats-card trainer-results-card">
       <div className="trainer-results-header">
-        <button type="button" className="trainer-results-toggle" aria-expanded={!collapsed} aria-controls={listId}
+        <MoreToggle type="button" className="trainer-results-toggle" expanded={!collapsed} aria-controls={listId}
           aria-label={collapsed ? tr({ zh: '展开成绩', en: 'Expand results' }) : tr({ zh: '收起成绩', en: 'Collapse results' })}
           onClick={() => setCollapsed(value => !value)}>
-          {collapsed ? <ChevronRight size={16} aria-hidden /> : <ChevronDown size={16} aria-hidden />}
+
           <span>{tr({ zh: '成绩', en: 'Results' })}</span>
-        </button>
+        </MoreToggle>
         {solves.length > 0 && (
           <button type="button" className="trainer-icon-btn trainer-stats-clear" onClick={onClear}
             title={tr({ zh: '清空', en: 'Clear' })} aria-label={tr({ zh: '清空', en: 'Clear' })}>
@@ -624,10 +625,10 @@ export function CaseTreePicker({
                 >
                   <TriCheckbox checked={topAll} indeterminate={!topAll && !topNone} />
                 </button>
-                <button
+                <MoreToggle
                   type="button"
                   className="trainer-group-expand"
-                  aria-expanded={isExpanded}
+                  expanded={isExpanded}
                   aria-controls={panelId}
                   aria-label={`${tr({ zh: '展开或收起', en: 'Toggle' })} ${top.label}`}
                   onClick={(e) => { e.stopPropagation(); toggleTop(top.label); }}
@@ -637,8 +638,8 @@ export function CaseTreePicker({
                   <span style={{ color: 'var(--muted-foreground)', fontWeight: 400, fontSize: '0.85rem' }}>
                     ({topSelectedCount}/{top.allCases.length})
                   </span>
-                  <ChevronRight className="trainer-group-chevron" size={16} aria-hidden />
-                </button>
+
+                </MoreToggle>
               </div>
             )}
 
@@ -670,10 +671,10 @@ export function CaseTreePicker({
                             >
                               <TriCheckbox checked={subAll} indeterminate={!subAll && !subNone} />
                             </button>
-                            <button
+                            <MoreToggle
                               type="button"
                               className="trainer-group-expand"
-                              aria-expanded={subExpanded}
+                              expanded={subExpanded}
                               aria-controls={subPanelId}
                               aria-label={`${tr({ zh: '展开或收起', en: 'Toggle' })} ${subLabel}`}
                               onClick={(e) => { e.stopPropagation(); toggleSub(subKey); }}
@@ -684,8 +685,8 @@ export function CaseTreePicker({
                               <span style={{ color: 'var(--muted-foreground)', fontWeight: 400, fontSize: '0.85rem' }}>
                                 ({subSelectedCount}/{subCases.length})
                               </span>
-                              <ChevronRight className="trainer-group-chevron" size={16} aria-hidden />
-                            </button>
+
+                            </MoreToggle>
                           </div>
                         )}
                         <CasePickerPanel open={subExpanded} id={subPanelId}>

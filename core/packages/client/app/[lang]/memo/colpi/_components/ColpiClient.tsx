@@ -11,6 +11,7 @@
  *
  * Ported from packages/client-vite/src/pages/memo/colpi/ColpiPage.tsx.
  */
+import { ChevronDown } from '@app-foundation/icons/lucide';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter, useParams, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -547,7 +548,7 @@ export default function ColpiClient() {
                 })}
                 >
                   {(LANG_MAP[langFilter]?.code ?? langFilter).toUpperCase()}
-                  <span className="colpi-grid-corner-caret">▾</span>
+                  <ChevronDown size={14} className="colpi-grid-corner-caret" aria-hidden="true" />
                 </th>
                 {ALPHABET.map(c => <th key={c} className="colpi-grid-h">{c}</th>)}
               </tr>

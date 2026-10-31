@@ -1,3 +1,4 @@
+import MoreToggle from './MoreToggle';
 import type {
   TimerPhase,
   TimerSmallHintEvent,
@@ -7,7 +8,7 @@ import {
   solveTimerSmallHints,
   type TimerSmallHintResult,
 } from '@cuberoot/puzzle-solvers/timer-small-hints';
-import { ChevronRight, Star } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { useEffect, useId, useMemo, useState } from 'react';
 
 export interface TimerSmallPuzzleHintsProps {
@@ -70,17 +71,17 @@ export function TimerSmallPuzzleHints({
 
   return (
     <div className="timer-small-hints" data-timing={timing ? 'true' : undefined} data-no-timer>
-      <button
+      <MoreToggle
         aria-controls={bodyId}
-        aria-expanded={open}
+        expanded={open}
         className="timer-small-hints-trigger"
         disabled={timing}
         onClick={() => setOpen((current) => !current)}
         type="button"
       >
         <span>{labels.title}</span>
-        <ChevronRight aria-hidden="true" className="timer-small-hints-chevron" data-open={open ? 'true' : undefined} size={13} />
-      </button>
+
+      </MoreToggle>
 
       {open && (
         <div

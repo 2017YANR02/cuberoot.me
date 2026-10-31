@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useMemo, useRef, useState } from 'react';
 import {
   Square,
@@ -127,16 +128,16 @@ export default function LayersPanel() {
 
   return (
     <div className={`paint-layers${collapsed ? ' is-collapsed' : ''}`}>
-      <button
+      <MoreToggle
         type="button"
         className="paint-layers-head"
         onClick={() => setCollapsed((c) => !c)}
-        aria-expanded={!collapsed}
+        expanded={!collapsed}
       >
         <LayersIcon size={13} />
         <span>{t('图层', 'Layers')}</span>
         <span className="paint-layers-count">{order.length}</span>
-      </button>
+      </MoreToggle>
 
       {!collapsed && (
         <div className="paint-layers-list" role="list">

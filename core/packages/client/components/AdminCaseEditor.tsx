@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { findDuplicateAlgs } from '@cuberoot/shared/alg-notation';
 import { invertAlg } from '@cuberoot/shared/alg-transform';
 import { commonCaseSetup } from '@/lib/alg_case_alignment';
@@ -14,7 +15,7 @@ import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseAsStringEnum } from 'nuqs';
 import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
-import { X, Save, ChevronRight, ChevronDown, Shuffle } from '@app-foundation/icons/lucide';
+import { X, Save, Shuffle } from '@app-foundation/icons/lucide';
 import { loadAlg, MIRROR_ALG_SYNC_SETS, requires3x3AlgCaseSetup, type AlgCase, type AlgEntry, type AlgPuzzle, type AlgSticker } from '@cuberoot/shared';
 import { mirrorCascadeOnDelete, VIEWS } from '@cuberoot/shared/alg-mirror';
 import { canonicalSq1Alg, formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
@@ -574,15 +575,15 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
             />
           </div>);
   const advanced = (<div className="alg-admin-advanced">
-            {!children && <button
+            {!children && <MoreToggle expanded={advancedOpen}
               type="button"
               className="alg-admin-advanced-toggle"
               onClick={() => setAdvancedOpen(o => !o)}
             >
-              {advancedOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+
               {tr({ zh: '高级', en: 'Advanced' })}
               {!advancedOpen && advancedDirty && <span className="alg-admin-advanced-dot" title="modified" />}
-            </button>}
+            </MoreToggle>}
             {(children || advancedOpen) && (
               <div className="alg-admin-advanced-body">
                 <label>

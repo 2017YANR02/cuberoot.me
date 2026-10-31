@@ -1,11 +1,12 @@
 'use client';
+import MoreToggle from '@/components/MoreToggle';
 import '@cuberoot/timer-ui/compact-select.css';
 
 // /alg/3bld/lookup 的「显示选项」面板 —— 对齐上游 /settings 那批开关。
 // 折叠形态与同目录 BldConfigBar 一致(同一套 .bld-config-* 样式),别再造第二种。
 
 import { useState, type JSX } from 'react';
-import { SlidersHorizontal, ChevronDown, ChevronUp } from '@app-foundation/icons/lucide';
+import { SlidersHorizontal } from '@app-foundation/icons/lucide';
 import BoolToggle from '@/components/BoolToggle';
 import { tr } from '@/i18n/tr';
 import { useBlddbPrefsStore, type BlddbPrefs } from '../_store/blddb-prefs-store';
@@ -53,17 +54,17 @@ export function BlddbOptions({
 
   return (
     <div className="bld-config-bar">
-      <button
+      <MoreToggle
         type="button"
         className="bld-config-toggle"
         onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
+        expanded={open}
       >
         <SlidersHorizontal size={15} />
         {tr({ zh: '显示选项', en: 'Display' })}
         {on.length > 0 && <span className="bld-config-summary">{on.join(' / ')}</span>}
-        {open ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-      </button>
+
+      </MoreToggle>
 
       {/* 折叠按钮与 BldConfigBar 共用样式,但面板自己排:那边是「几组下拉」的自适应网格,
           这里是「一行一组开关」的堆叠,套它的 grid 会把每个开关塞进独立格子。 */}

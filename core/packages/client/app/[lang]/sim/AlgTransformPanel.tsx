@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { Fragment, type ReactNode, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
@@ -156,10 +157,10 @@ export default function AlgTransformPanel({ text, setup, order, onApply, editing
     {inlineEditor}
     <div className="sim-player-tools sim-player-tools-row">
       {basicTools}
-      <button type="button" aria-expanded={editing} className={editing ? 'sim-transform-active' : undefined}
+      <MoreToggle type="button" expanded={editing} className={editing ? 'sim-transform-active' : undefined}
         disabled={!enabled && !editing} onClick={() => { onEditingChange(!editing); setSelected(null); setMenuOpen(false); }}>
         <PencilLine size={14} />{editing ? t('完成改写', 'Done editing') : t('改一步', 'Edit move')}
-      </button>
+      </MoreToggle>
       <select className="sim-transform-select" aria-label={t('换朝向', 'Orientation')} value="" disabled={!transformEnabled}
         onChange={event => {
           const rotation = new Move(event.target.value);

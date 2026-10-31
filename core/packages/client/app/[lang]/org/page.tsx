@@ -1,4 +1,5 @@
 'use client';
+import MoreToggle from '@/components/MoreToggle';
 import PageBackLink from '@/components/PageBackLink';
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
@@ -101,7 +102,7 @@ export default function OrganizationsPage() {
       </section>
 
       {!loading && !loadError && <section className="org-section">
-        {organizations.length > 0 && <button type="button" className="org-secondary-button" aria-expanded={creating} aria-controls="create-enterprise" disabled={submitting} onClick={() => { setCreating(!creating); setError(''); }}>{!creating && <Plus size={18} aria-hidden="true" />}{creating ? t('取消新增企业', 'Cancel adding an enterprise') : t('新增另一家企业', 'Add another enterprise')}</button>}
+        {organizations.length > 0 && <MoreToggle type="button" className="org-secondary-button" expanded={creating} aria-controls="create-enterprise" disabled={submitting} onClick={() => { setCreating(!creating); setError(''); }}>{!creating && <Plus size={18} aria-hidden="true" />}{creating ? t('取消新增企业', 'Cancel adding an enterprise') : t('新增另一家企业', 'Add another enterprise')}</MoreToggle>}
         {(organizations.length === 0 || creating) && <div id="create-enterprise" className="org-subsection">
         <h2>{organizations.length === 0 ? t('第 1 步：创建你的企业', 'Step 1: Create your enterprise') : t('新增另一家企业', 'Add another enterprise')}</h2>
         <p className="org-lead">{t('创建后进入企业页面，再按指引申请认证。创建企业不会发起打款，也不代表认证通过。', 'After creation, open the enterprise and follow the verification steps. Creating a profile does not transfer money or verify the enterprise.')}</p>

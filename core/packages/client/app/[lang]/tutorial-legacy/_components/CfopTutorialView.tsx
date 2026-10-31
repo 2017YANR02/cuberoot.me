@@ -4,6 +4,7 @@
  * CfopTutorialView — CFOP 教程「精美版」:hero + 粘性目录(滚动高亮)+ 阅读进度 + 分节正文。
  * 内容来自 restructureCfop(原始 JSON 不动),正文交给 CfopContent 渲染。
  */
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { List, X } from '@app-foundation/icons/lucide';
@@ -138,14 +139,14 @@ export function CfopTutorialView({ post }: { post: ArticlePostContent }) {
           <>
             {/* 移动端粘性目录条 */}
             <div className="cfop-toc-mobilebar">
-              <button
+              <MoreToggle
                 className="cfop-toc-mobilebtn tutorial-btn"
                 onClick={() => setTocOpen(o => !o)}
-                aria-expanded={tocOpen}
+                expanded={tocOpen}
               >
                 {tocOpen ? <X size={16} /> : <List size={16} />}
                 <span className="cfop-toc-current">{activeLabel}</span>
-              </button>
+              </MoreToggle>
             </div>
 
             <aside className={'cfop-toc' + (tocOpen ? ' is-open' : '')}>

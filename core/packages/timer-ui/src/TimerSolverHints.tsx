@@ -12,8 +12,9 @@
  * lengths.
  */
 
+import MoreToggle from './MoreToggle';
 import { useEffect, useMemo, useState } from 'react';
-import { Star, ChevronRight } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { timerSmallPuzzleHintCopy, type TimerSmallHintEvent } from '@cuberoot/shared/timer';
 import { TimerSmallPuzzleHints } from './TimerSmallPuzzleHints';
 import { solveTimerSq1 } from './solver-hints-client';
@@ -98,16 +99,16 @@ function Sq1Hints({ scramble, isZh }: Sq1Props) {
   return (
     <div style={wrapperStyle} data-no-timer>
       <div className="solver-hints" style={hintsStyle}>
-        <button
+        <MoreToggle
           type="button"
           className="solver-hint-btn"
           onClick={() => setOpen(o => !o)}
           style={toggleBtnStyle}
-          aria-expanded={open}
+          expanded={open}
         >
           <span>{title}</span>
-          <ChevronRight size={13} style={{ marginLeft: 'auto', opacity: 0.7, transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 120ms' }} />
-        </button>
+
+        </MoreToggle>
         {open && (
           <div style={bodyStyle}>
             {computing && (
@@ -190,16 +191,16 @@ function MegaHints({ scramble, isZh }: MegaProps) {
   return (
     <div style={wrapperStyle} data-no-timer>
       <div className="solver-hints" style={hintsStyle}>
-        <button
+        <MoreToggle
           type="button"
           className="solver-hint-btn"
           onClick={() => setOpen(o => !o)}
           style={toggleBtnStyle}
-          aria-expanded={open}
+          expanded={open}
         >
           <span>{title}</span>
-          <ChevronRight size={13} style={{ marginLeft: 'auto', opacity: 0.7, transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 120ms' }} />
-        </button>
+
+        </MoreToggle>
         {open && (
           <div style={bodyStyle}>
             {computing && (

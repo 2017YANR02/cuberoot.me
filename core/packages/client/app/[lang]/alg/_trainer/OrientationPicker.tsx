@@ -12,8 +12,9 @@
  * 角块 / 棱块排列也画进去,看着像在选那一条。翻色形状恰恰是全组共有的那部分。
  * 分组判据见 `lib/alg_ll_orientation`。
  */
+import MoreToggle from '@/components/MoreToggle';
 import { useMemo, useState } from 'react';
-import { ChevronDown, ChevronRight } from '@app-foundation/icons/lucide';
+
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import { VisualCube } from '@/components/VisualCube';
 import { caseBaseAlg } from '@/lib/trainer-scramble';
@@ -125,14 +126,14 @@ export default function OrientationPicker({
     <>
       <div className="trainer-opts-row">
         <span className="trainer-opts-label">{tr({ zh: '朝向', en: 'Orientation' })}</span>
-        <button
+        <MoreToggle
           type="button"
           className="trainer-ori-toggle"
           onClick={() => setOpen(!open)}
-          aria-expanded={open}
+          expanded={open}
           aria-label={tr({ zh: '朝向', en: 'Orientation' })}
         >
-          {open ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+
           {/* 没钉朝向、post-AUF 又关着 = 默认状态,不写字:一行里「朝向 ›」后面跟一句
               解释默认行为的话,读起来像是个选中的选项。 */}
           {pinned > 0
@@ -140,7 +141,7 @@ export default function OrientationPicker({
             : postAuf
               ? tr({ zh: '随机', en: 'Random' })
               : null}
-        </button>
+        </MoreToggle>
         {pinned > 0 && (
           <button type="button" className="trainer-opts-btn is-ghost" onClick={onReset}>
             {tr({ zh: '全放开', en: 'Release all' })}

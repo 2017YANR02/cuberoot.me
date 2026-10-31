@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useState } from 'react';
 import { statsUrl } from '@/lib/stats-base';
 import { tr } from '@/i18n/tr';
@@ -36,10 +37,10 @@ export default function NoBarStats({ event, isZh }: { event: string; isZh: boole
   const examples = data ? (family ? Object.entries(data.events).filter(([id]) => id !== '222').flatMap(([, value]) => value.examples) : selected?.examples ?? []) : [];
   return (
     <details className="scramble-stats-examples">
-      <summary>
+      <MoreToggle as="summary">
         {tr({ zh: '无连色', en: 'No Bar' })}
         {counts && ` · ${counts.matches.toLocaleString()} / ${counts.total.toLocaleString()}`}
-      </summary>
+      </MoreToggle>
       <p>{tr({
         zh: '六个面内所有共边相邻色块均不同色，三阶包含中心块；对角相邻不计。',
         en: 'Every pair of edge-adjacent stickers on each of the six faces differs in colour, including centres on 3×3. Diagonals do not count.',

@@ -6,8 +6,9 @@
 // Aox/SectionsView, MetricPanelsView → SourcePanelsView → PanelsView) is internal.
 // Guard-forced adaptation vs the original inline code: the four
 // `isZh ? '<literal>' : '<literal>'` text ternaries use tr({zh,en}).
+import MoreToggle from '@/components/MoreToggle';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { BarChart3, Play, Pause, ChevronRight } from '@app-foundation/icons/lucide';
+import { BarChart3, Play, Pause } from '@app-foundation/icons/lucide';
 import BoolToggle from '@/components/BoolToggle';
 import { ListSelect } from '@/components/ListSelect';
 import WcaEventSelector from '@/components/WcaEventSelector';
@@ -345,14 +346,13 @@ export function SectionsView({ leadingControls, header, sections, searchTerm, is
         return (
           <div key={section.title} className="wca-stats-section">
             {!hideTitle && (
-              <h3
+              <h3><MoreToggle expanded={!isCollapsed}
                 className="wca-stats-section-title"
                 onClick={() => toggleSection(section.title)}
               >
-                <ChevronRight size={14} strokeWidth={2} className={`wca-stats-chevron ${isCollapsed ? '' : 'open'}`} />
                 {sectionTitle}
                 <span className="wca-stats-section-count">{section.rows.length}</span>
-              </h3>
+              </MoreToggle></h3>
             )}
             {(!isCollapsed || hideTitle) && (
               <StatsTable header={header} rows={section.rows} searchTerm={searchTerm} isZh={isZh} />

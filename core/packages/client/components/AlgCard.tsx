@@ -7,7 +7,7 @@
  */
 import Link from '@/components/AppLink';
 import { prefetchAlgLibrary } from '@/lib/alg-library-cache';
-import { ChevronDown, ChevronRight } from '@app-foundation/icons/lucide';
+import MoreToggle from '@/components/MoreToggle';
 import './AlgCard.css';
 
 interface AlgCardProps {
@@ -31,11 +31,6 @@ export default function AlgCard({
   const cls = `alg-card${expand ? ' alg-card--cover' : ''}${className ? ` ${className}` : ''}`;
   const body = (
     <>
-      {expand && (
-        <span className="alg-card-chevron">
-          {expand === 'closed' ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
-        </span>
-      )}
       <div className="alg-card-thumb">{thumb}</div>
       <div className="alg-card-foot">
         <span className="alg-card-title">{title}</span>
@@ -51,13 +46,13 @@ export default function AlgCard({
       </Link>
     );
   }
+  if (expand) return <MoreToggle expanded={expand === 'open'} className={cls} onClick={onClick} aria-label={ariaLabel} title={tooltip}>{body}</MoreToggle>;
   return (
     <button
       type="button"
       className={cls}
       onClick={onClick}
       aria-label={ariaLabel}
-      aria-expanded={expand ? expand === 'open' : undefined}
       title={tooltip}
     >
       {body}

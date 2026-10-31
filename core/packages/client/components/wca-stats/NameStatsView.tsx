@@ -1,4 +1,5 @@
 'use client';
+import MoreToggle from '@/components/MoreToggle';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import '@cuberoot/timer-ui/compact-select.css';
 
@@ -59,7 +60,7 @@ function NamesBlock({ people, mode }: { people: People; mode: NameMode }) {
   const label = tr({ zh: `${total} 位选手`, en: `${total} competitors` });
   return (
     <details className="ns-names-details">
-      <summary>{label}</summary>
+      <MoreToggle as="summary">{label}</MoreToggle>
       {inner}
     </details>
   );

@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowDown, ArrowDownToLine, ArrowLeft, ArrowRight, ArrowUp, ArrowUpFromLine, CloudSun, Copy, Crosshair, Drone, Footprints, Maximize, Move, Plus, Redo2, RotateCcw, RotateCw, Trash2, Undo2 } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
@@ -308,7 +309,7 @@ export default function SpacePage() {
         <span role="status">{storage === 'saved' ? tr({ zh: '布局已保存在此浏览器', en: 'Layout saved in this browser' }) : storage === 'blocked' ? tr({ zh: '原有存档未覆盖；请导出当前布局保存', en: 'Existing save preserved; export to save this layout' }) : tr({ zh: '自动保存失败，请导出布局', en: 'Autosave failed; export your layout' })}</span>
       </footer>
       <details className="space-sources" open>
-        <summary>{tr({ zh: '本页来源与建模说明', en: 'Sources and modeling notes' })}</summary>
+        <MoreToggle as="summary">{tr({ zh: '本页来源与建模说明', en: 'Sources and modeling notes' })}</MoreToggle>
         <ul>
           {SPACE_CREDITS.map(credit => <li key={credit.url}>
             <a href={credit.url} target="_blank" rel="noopener noreferrer">{credit.name}</a>

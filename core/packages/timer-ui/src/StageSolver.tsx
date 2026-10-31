@@ -18,9 +18,10 @@
  *      XCross 及以上才补 pt_cross_C4E0(gz 20MB,见 ensureXCrossTables)。
  */
 
+import MoreToggle from './MoreToggle';
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { Info, X, SlidersHorizontal, ArrowLeft, ArrowRight, ChevronRight, ChevronDown } from 'lucide-react';
+import { Info, X, SlidersHorizontal, ArrowLeft, ArrowRight, ChevronDown } from 'lucide-react';
 import { CompactSelect } from './CompactSelect';
 import { MethodStagePicker } from './TimerPuzzlePicker';
 import { Spinner } from './Spinner';
@@ -1333,16 +1334,16 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
               宽/中层/旋转走 54-move 受限引擎,纯 6 面仍走老快引擎零回归);其余方法保留 6 面 mask 勾选。 */}
           {isGridStage ? (
             <div className={`stsv-moverestrict stsv-mr-18${mrOpen ? ' is-open' : ''}`}>
-              <button
+              <MoreToggle
                 type="button"
                 className="stsv-mr-toggle"
                 onClick={() => setMrOpen((o) => !o)}
-                aria-expanded={mrOpen}
+                expanded={mrOpen}
               >
-                <ChevronRight size={14} className="stsv-mr-chevron" />
+
                 <span className="stsv-mr-label">{t('转动限制', 'Allowed moves')}</span>
                 {crRestricted && <span className="stsv-mr-active">{t('已限制', 'limited')}</span>}
-              </button>
+              </MoreToggle>
               {mrOpen && (
                 <div className="stsv-mr-body">
                   <div className="stsv-mr-rows">
@@ -1385,16 +1386,16 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
             </div>
           ) : maskSupported ? (
             <div className={`stsv-moverestrict${mrOpen ? ' is-open' : ''}`}>
-              <button
+              <MoreToggle
                 type="button"
                 className="stsv-mr-toggle"
                 onClick={() => setMrOpen((o) => !o)}
-                aria-expanded={mrOpen}
+                expanded={mrOpen}
               >
-                <ChevronRight size={14} className="stsv-mr-chevron" />
+
                 <span className="stsv-mr-label">{t('转动限制', 'Allowed moves')}{singleFace ? t('(限单面)', ' (one face)') : ''}</span>
                 {restricted && <span className="stsv-mr-active">{t('已限制', 'limited')}</span>}
-              </button>
+              </MoreToggle>
               {mrOpen && (
                 <div className="stsv-mr-body">
                   <div className="stsv-mr-grid" role="group" aria-label={t('转动限制', 'Allowed moves')}>

@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import BackHome from '@/components/BackHome';
@@ -51,7 +52,7 @@ export default function NavierStokesPage() {
         <p><small>{t('译注：[1] 为原文脚注标记；所提供的文本未包含脚注正文，可前往原文查看。图中英文标注的中文释义见图注。', 'Translation note: [1] is a source footnote marker; its text was not included in the supplied document. See the original article for the footnote. Figure labels are explained in the captions.')}</small></p>
       </article>
       <details style={{ marginTop: 48 }}>
-        <summary>{t('附录：数学背景与交互示意（CubeRoot 补充，非原文）', 'Appendix: mathematical background and interactive illustration (added by CubeRoot)')}</summary>
+        <MoreToggle as="summary">{t('附录：数学背景与交互示意（CubeRoot 补充，非原文）', 'Appendix: mathematical background and interactive illustration (added by CubeRoot)')}</MoreToggle>
       <section style={{ marginTop: 36 }}>
         <h2>{t('先看清问题的条件', 'Read the assumptions first')}</h2>
         <div style={{ overflowX: 'auto' }}><TeXBlock src={String.raw`\partial_t u+(u\cdot\nabla)u=-\nabla p+\nu\Delta u+f,\qquad \nabla\cdot u=0`} /></div>

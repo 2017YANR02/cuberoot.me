@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useId, useState } from 'react';
 import { ClearButton } from '@/components/ClearButton';
 import { persistItem } from '@/lib/safe-storage';
@@ -48,7 +49,7 @@ export default function SimAppearancePresets({ settings, onChange }: {
   const trimmed = name.trim();
 
   return <details className="sim-appearance-presets">
-    <summary>{t('外观预设', 'Appearance presets')}</summary>
+    <MoreToggle as="summary">{t('外观预设', 'Appearance presets')}</MoreToggle>
     <div className="sim-preset-row sim-player-tools">
       <select aria-label={t('已保存预设', 'Saved presets')} id={`${id}-saved`} className="sim-puzzle-select sim-preset-select" value={current?.name ?? ''}
         onChange={event => { setSelected(event.target.value); setMessage(''); }}>

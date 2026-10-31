@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { ClearButton } from '@/components/ClearButton';
@@ -34,7 +35,7 @@ export default function ExactDistributionCoverage() {
 
   return (
     <details className="exact-distribution-coverage" onToggle={event => setOpen(event.currentTarget.open)}>
-      <summary>{tr({ zh: '覆盖情况', en: 'Coverage' })} · {PUZZLE_DISTRIBUTION_COVERAGE.length}</summary>
+      <MoreToggle as="summary">{tr({ zh: '覆盖情况', en: 'Coverage' })} · {PUZZLE_DISTRIBUTION_COVERAGE.length}</MoreToggle>
       {open && (
         <div className="exact-distribution-coverage-content">
           <p>{tr({

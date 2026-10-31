@@ -10,6 +10,7 @@
  * 关键: layout 内部为每行配 stable uid,React key 用 uid 而非数组下标,
  * 否则删中间行后 React 会复用旁边 DOM,AlgInput uncontrolled 内容不刷新 → 视觉错位。
  */
+import MoreToggle from '@/components/MoreToggle';
 import { useState, useRef, useImperativeHandle, useMemo, forwardRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Trash2, Plus, AlertTriangle, Copy, Check, Pin, FlipHorizontal2, Tags } from '@app-foundation/icons/lucide';
@@ -127,7 +128,7 @@ function RowActions({ entry, text, oi, context, mirror }: { entry: AlgEntry; tex
     <button type="button" className="alg-editor-del" aria-pressed={pinned} title={pinned ? tr({ zh: '取消置顶', en: 'Unpin algorithm' }) : tr({ zh: '置顶公式', en: 'Pin algorithm' })}
       onClick={() => setPreferred(puzzle, set, slot, pinned ? null : preferredAlgRef(entry))}><Pin size={12} fill={pinned ? 'currentColor' : 'none'} /></button>
     <button type="button" className="alg-editor-del" title={tr({ zh: '复制', en: 'Copy' })} onClick={() => copy(shownText)}>{copied ? <Check size={12} /> : <Copy size={12} />}</button>
-    {hasMirror(puzzle, set) && <button type="button" className="alg-editor-del" aria-expanded={mirrorOpen} title={tr({ zh: '镜像公式', en: 'Mirrored algs' })} onClick={() => setMirrorOpen(open => !open)}><FlipHorizontal2 size={12} /></button>}
+    {hasMirror(puzzle, set) && <MoreToggle type="button" className="alg-editor-del" expanded={mirrorOpen} title={tr({ zh: '镜像公式', en: 'Mirrored algs' })} onClick={() => setMirrorOpen(open => !open)}><FlipHorizontal2 size={12} /></MoreToggle>}
     {mirrorOpen && <div className="alg-editor-mirror"><AlgMirrorPanel alg={text} puzzle={puzzle} mirrorName={mirror?.partner.name ?? null} selfName={mirror?.selfName ?? caseObj.name} ori={oi} /></div>}
   </>;
 }

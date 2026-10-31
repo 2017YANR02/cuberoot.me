@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Clock3, Mic2, Target, Video } from '@app-foundation/icons/lucide';
 import { usePathname } from 'next/navigation';
@@ -183,22 +184,22 @@ function TeachingPage({ isAdmin, lang }: { isAdmin: boolean; lang: string }) {
                 const lessonsInStage = stageLessons(stage);
                 return (
                   <details key={stage.id} className="teaching-stage" open={courseIndex < 2 || stageIndex === 0}>
-                    <summary>
+                    <MoreToggle as="summary">
                       <span className="teaching-stage-index"><T zh="阶段 " en="Stage " />{stageIndex + 1}</span>
                       <span className="teaching-stage-title">{tr(stage.title)}</span>
                       <span className="teaching-stage-summary">{tr(stage.summary)}</span>
                       <span className="teaching-stage-count">{lessonsInStage.length} <T zh="节" en="lessons" /></span>
-                    </summary>
+                    </MoreToggle>
 
                     <div className="teaching-modules">
                       {stage.modules.map((courseModule, moduleIndex) => (
                         <details key={courseModule.id} id={courseModule.id} className="teaching-module" open={courseIndex === 0 || (courseIndex === 1 && moduleIndex === 0)}>
-                          <summary>
+                          <MoreToggle as="summary">
                             <span className="teaching-module-index">{String(moduleIndex + 1).padStart(2, '0')}</span>
                             <span className="teaching-module-title">{tr(courseModule.title)}</span>
                             <span className="teaching-module-summary">{tr(courseModule.summary)}</span>
                             <span className="teaching-module-count">{courseModule.lessons.length} <T zh="节，" en="lessons, " />{formatDuration(moduleMinutes(courseModule))}</span>
-                          </summary>
+                          </MoreToggle>
 
                           <div className="teaching-module-body">
                             {courseModule.resource && (
@@ -210,13 +211,13 @@ function TeachingPage({ isAdmin, lang }: { isAdmin: boolean; lang: string }) {
                             <div className="teaching-lessons">
                               {courseModule.lessons.map((lesson, lessonIndex) => (
                                 <details key={lesson.id} className="teaching-lesson" open={courseIndex === 0 && moduleIndex === 0 && lessonIndex === 0}>
-                                  <summary>
+                                  <MoreToggle as="summary">
                                     <span className="teaching-lesson-index">{String(lessonIndex + 1).padStart(2, '0')}</span>
                                     <span className="teaching-lesson-kind">{tr(KIND_LABELS[lesson.kind])}</span>
                                     <span className="teaching-lesson-title">{tr(lesson.title)}</span>
                                     <span className="teaching-lesson-outcome">{tr(lesson.outcome)}</span>
                                     <span className="teaching-lesson-time">{lesson.minutes} <T zh="分钟" en="min" /></span>
-                                  </summary>
+                                  </MoreToggle>
 
                                   <div className="teaching-lesson-body">
                                     <aside className="teaching-shot-list">

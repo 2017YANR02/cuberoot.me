@@ -3,6 +3,7 @@
  * 虚拟键盘 + toggle 按钮 — 桌面默认收起、提供按钮展开;移动端强制打开,无按钮。
  * Ported from packages/client-vite/src/components/CubeKeyboardSection/CubeKeyboardSection.tsx.
  */
+import MoreToggle from '@/components/MoreToggle';
 import { useState, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { Keyboard } from '@app-foundation/icons/lucide';
@@ -33,7 +34,7 @@ export default function CubeKeyboardSection({ target, onInput, enableMarks, onAc
 });
 
   const toggleBtn = !isMobile ? (
-    <button
+    <MoreToggle expanded={showKeyboard}
       type="button"
       className={`vkb-toggle${showKeyboard ? ' active' : ''}${showKeyboard && !toggleContainer ? ' vkb-toggle--inline' : ''}`}
       onClick={() => {
@@ -44,7 +45,7 @@ export default function CubeKeyboardSection({ target, onInput, enableMarks, onAc
       title={showKeyboard ? labelOn : labelOff}
     >
       <Keyboard size={14} />
-    </button>
+    </MoreToggle>
   ) : null;
 
   return (

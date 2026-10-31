@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { memo, useRef, useState, useEffect, useCallback, type RefObject } from 'react';
 import { parseAsStringLiteral, useQueryState } from 'nuqs';
 import { ArrowLeft, ArrowRight, ArrowUp, ArrowUpRight, MoveHorizontal, BookOpen, Pause, Play, Sun, Moon, Sparkles, Download, RotateCcw, Gamepad2 } from '@app-foundation/icons/lucide';
@@ -298,7 +299,7 @@ export default function HistoryJourney() {
           {events.map(event => <article className="journey-story" key={`${event.date}-${event.en.title}`}><h3>{tr(event).title}</h3><p>{tr(event).body}</p><p>{tr(event).expand}</p></article>)}
         </>}
       </section>
-      <details className="journey-archive" onToggle={event => setArchiveOpen(event.currentTarget.open)}><summary>{tr({ zh: '翻阅完整记录', en: 'Browse the complete archive' })}<span>{tr({ zh: `${TIMELINE.length} 项关键改动，${DAYS.length} 天更新`, en: `${TIMELINE.length} milestones, ${DAYS.length} days of updates` })}</span></summary>{archiveOpen && <MemoHistoryArchive />}</details>
+      <details className="journey-archive" onToggle={event => setArchiveOpen(event.currentTarget.open)}><MoreToggle as="summary">{tr({ zh: '翻阅完整记录', en: 'Browse the complete archive' })}<span>{tr({ zh: `${TIMELINE.length} 项关键改动，${DAYS.length} 天更新`, en: `${TIMELINE.length} milestones, ${DAYS.length} days of updates` })}</span></MoreToggle>{archiveOpen && <MemoHistoryArchive />}</details>
     </main>
   );
 }

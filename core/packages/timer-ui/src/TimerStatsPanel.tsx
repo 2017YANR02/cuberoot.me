@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from './MoreToggle';
 import {
   bestBestOfN,
   bestMbldSolve,
@@ -203,14 +204,14 @@ export function TimerStatsPanel({
           ))}
         </div>
       )}
-      <button
+      <MoreToggle
         type="button"
         className="stats-expand-toggle"
-        aria-expanded={expanded}
+        expanded={expanded}
         onClick={() => setExpanded(current => !current)}
       >
         {expanded ? labels.hideExtras : labels.showAllStats}
-      </button>
+      </MoreToggle>
 
       {subX.length > 0 && (
         <section className="subx-section">

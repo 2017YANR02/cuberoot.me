@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { SlidersHorizontal } from '@app-foundation/icons/lucide';
 import CollapsibleSection from './CollapsibleSection';
 import SimAppearancePresets from './SimAppearancePresets';
@@ -624,7 +625,7 @@ export default function SimAppearancePanel({
               为 no-op(仅存设置);骨架线条为手部 MediaPipe 风格叠加线,仅 3x3 手指开启时有效;
               挖块为统一三选一占位(见 applySettings)。 */}
           <details className="sim-puzzle-debug">
-            <summary>{t('结构与调试', 'Structure & diagnostics')}</summary>
+            <MoreToggle as="summary">{t('结构与调试', 'Structure & diagnostics')}</MoreToggle>
             <div className="sim-puzzle-debug-toggles">
               {caps.supports.holdPartialTurn && (<Toggle label={t('半转停', 'Hold partial turn')} value={settings.holdPartialTurn} onChange={(v) => set('holdPartialTurn', v)} disabled={!caps.supports.holdPartialTurn} title={hint(caps.supports.holdPartialTurn)} />)}
               {caps.supports.structureColor && (<Toggle label={t('结构着色', 'Structure colors')} value={settings.debugStructureColor} onChange={(v) => set('debugStructureColor', v)} disabled={!caps.supports.structureColor} title={hint(caps.supports.structureColor)} />)}

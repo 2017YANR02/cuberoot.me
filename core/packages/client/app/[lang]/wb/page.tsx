@@ -5,9 +5,10 @@
  *
  * 1:1 port from packages/client-vite/src/pages/wb/WbPage.tsx (Vite SPA).
  */
+import MoreToggle from '@/components/MoreToggle';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, ChevronDown, ChevronRight, ExternalLink, Trophy, Play } from '@app-foundation/icons/lucide';
+import { Search, ExternalLink, Trophy, Play } from '@app-foundation/icons/lucide';
 import { useWbData } from './use_wb_data';
 import type { WbCategory, WbEvent, WbRecord, WbTab } from './types';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -109,15 +110,15 @@ export default function WbPage() {
           const isCollapsed = !!collapsed[key];
           return (
             <section key={cat.id} className="wb-category">
-              <button
+              <MoreToggle
                 className="wb-cat-header"
                 onClick={() => setCollapsed((c) => ({ ...c, [key]: !c[key] }))}
-                aria-expanded={!isCollapsed}
+                expanded={!isCollapsed}
               >
-                {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+
                 <h2>{cat.name[lang]}</h2>
                 <span className="wb-cat-count">{cat.events.length} {t('项', 'events')}</span>
-              </button>
+              </MoreToggle>
               {!isCollapsed && (
                 <div className="wb-event-grid">
                   {cat.events.map((e) => (

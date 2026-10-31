@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { ChevronDown, ChevronUp, Pencil, Plus, Trash2 } from '@app-foundation/icons/lucide';
 import { T, tr } from '@/i18n/tr';
@@ -172,12 +173,12 @@ export default function AdvancedCourseSection({ isAdmin }: { isAdmin: boolean })
         const trackLessons = grouped[track.id];
         return (
           <details key={track.id} className="teaching-stage teaching-advanced-track" open={trackIndex === 0}>
-            <summary>
+            <MoreToggle as="summary">
               <span className="teaching-stage-index"><T zh="路线 " en="Track " />{trackIndex + 1}</span>
               <span className="teaching-stage-title">{tr(track.title)}</span>
               <span className="teaching-stage-summary">{tr(track.summary)}</span>
               <span className="teaching-stage-count">{trackLessons.length} <T zh="节" en="lessons" /></span>
-            </summary>
+            </MoreToggle>
             <div className="teaching-advanced-body">
               {isAdmin && !usingFallback && (
                 <button className="teaching-advanced-add" type="button" onClick={() => openCreate(track.id)}>

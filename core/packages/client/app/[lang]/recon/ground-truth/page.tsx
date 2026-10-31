@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { parseAsInteger, parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import {
@@ -385,7 +386,7 @@ function ManualGroundTruthPage() {
                   <textarea className="gt-editor-textarea" value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
                 </label>
                 <details>
-                  <summary>{tr({ zh: '保存当前错误输出（可选）', en: 'Store current wrong output (optional)' })}</summary>
+                  <MoreToggle as="summary">{tr({ zh: '保存当前错误输出（可选）', en: 'Store current wrong output (optional)' })}</MoreToggle>
                   <textarea className="gt-editor-textarea" value={currentWrong} onChange={(e) => setCurrentWrong(e.target.value)} rows={6} spellCheck={false} />
                 </details>
                 {decisionStatus === 'confirmed' && detail.assessment.warnings.length > 0 ? (

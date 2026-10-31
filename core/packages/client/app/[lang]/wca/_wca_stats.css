@@ -239,15 +239,6 @@
   list-style: none;
 }
 
-.solve-details summary::before {
-  content: '▶ ';
-  font-size: 10px;
-}
-
-.solve-details[open] summary::before {
-  content: '▼ ';
-}
-
 /* 加载 / 错误状态 */
 .wca-stats-loading,
 .wca-stats-error {

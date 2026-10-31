@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import type { ReactNode } from 'react';
 import { continuousCorners } from '@2017yanr02/continuous-corners';
 import Link from '@/components/AppLink';
@@ -117,7 +118,7 @@ export default function ContinuousCornersPage() {
             <p><T zh={<>这是带符号曲率，单位是长度的倒数。直线为 <TeX src="0" />；半径为 <TeX src="r" /> 的圆，其曲率绝对值是 <TeX src="1/r" />。符号由坐标系和行进方向决定。</>} en={<>Signed curvature has units of inverse length. A line has zero curvature; a circle of radius <TeX src="r" /> has magnitude <TeX src="1/r" />. The sign depends on orientation and coordinate conventions.</>} /></p>
           </article>
         </div>
-        <details className="cc-detail"><summary>{t('展开二阶导数与接点检验', 'Second derivatives and the join test')}</summary>
+        <details className="cc-detail"><MoreToggle as="summary">{t('展开二阶导数与接点检验', 'Second derivatives and the join test')}</MoreToggle>
           <Formula>{String.raw`B''(0)=6(P_2-2P_1+P_0),\quad B''(1)=6(P_3-2P_2+P_1)`}</Formula>
           <p><T zh={<>先检验端点相等，再检验两条切线叉积为零且点积为正，最后比较左右带符号曲率。接点若不满足切线连续，就不能称为严格 <TeX src="G^2" />。</>} en={<>Check endpoint equality, then a zero cross product and positive dot product for the tangents, and finally compare one-sided signed curvatures. A join without tangent continuity is not <TeX src="G^2" />.</>} /></p>
         </details>
@@ -134,7 +135,7 @@ export default function ContinuousCornersPage() {
           <li><div><h3>{t('计算每轴能分给角部的空间', 'Allocate space on each axis')}</h3><Formula>{String.raw`e=\min(H/r,\,1.528665),\qquad u=\frac{e-1}{1.528665-1}`}</Formula><p><T zh={<>统一半径时，<TeX src="H" /> 分别是宽度或高度的一半。足够宽松时过渡范围约为 <TeX src="1.528665r" />；空间紧张时 <TeX src="u" /> 从 <TeX src="1" /> 向 <TeX src="0" /> 收缩。这里的 <TeX src="u" /> 是空间插值参数，不是曲线参数 <TeX src="t" />。</>} en={<>For equal radii, <TeX src="H" /> is half the width or height. With enough space, the transition occupies about <TeX src="1.528665r" />; tighter dimensions reduce <TeX src="u" /> from <TeX src="1" /> toward <TeX src="0" />. This <TeX src="u" /> is a space-allocation parameter, not the curve parameter <TeX src="t" />.</>} /></p></div></li>
           <li><div><h3>{t('求过渡控制点，再映射四角', 'Evaluate controls, then map the corners')}</h3><Formula>{String.raw`a=1.08849u+0.96(1-u),\qquad b=0.868407u+0.82(1-u)`}</Formula><p><T zh={<>中间段的归一化常数固定，首尾段使用各轴的 <TeX src="e" />、<TeX src="a" />、<TeX src="b" />。坐标乘以 <TeX src="r" />，再通过水平、垂直反射映射到其余角。SVG 保留原始数值精度，不额外截短小数。</>} en={<>The middle segment uses fixed normalized constants. The outer segments use axis-specific <TeX src="e" />, <TeX src="a" /> and <TeX src="b" />. Multiply by <TeX src="r" /> and reflect horizontally and vertically to obtain the other corners. SVG serialization does not add decimal truncation.</>} /></p></div></li>
         </ol>
-        <details className="cc-detail"><summary>{t('完整左上角控制点表', 'Full top-left control-point table')}</summary>
+        <details className="cc-detail"><MoreToggle as="summary">{t('完整左上角控制点表', 'Full top-left control-point table')}</MoreToggle>
           <p><T zh={<>从左边缘向上边缘行进。下表均为归一化坐标；最后整对坐标乘以 <TeX src="r" />。设 <TeX src="i = 0.0749114" />，<TeX src="d = 0.631494" />，<TeX src="n = 0.16906" />，<TeX src="q = 0.372824" />。</>} en={<>Traveling from the left edge to the top edge. Coordinates below are normalized; multiply each pair by <TeX src="r" />. Let <TeX src="i = 0.0749114" />, <TeX src="d = 0.631494" />, <TeX src="n = 0.16906" />, <TeX src="q = 0.372824" />.</>} /></p>
           <div className="cc-table-scroll" tabIndex={0}><table><caption>{t('三段三次贝塞尔', 'Three cubic Bézier segments')}</caption><thead><tr><th>{t('段', 'Segment')}</th><th><TeX src="P_0" /></th><th><TeX src="P_1" /></th><th><TeX src="P_2" /></th><th><TeX src="P_3" /></th></tr></thead><tbody>
             <tr><th>1</th><td><TeX src="(0, e_y)" /></td><td><TeX src="(0, a_y)" /></td><td><TeX src="(0, b_y)" /></td><td><TeX src="(i, d)" /></td></tr>
@@ -171,7 +172,7 @@ export default function ContinuousCornersPage() {
           <tr><th>A ↔ B</th><td><T zh={<><TeX src={"100\\times100"} />，<TeX src="r = 24" />，<TeX src={"24\\times"} /> 渲染</>} en={<><TeX src={"100\\times100"} />, <TeX src="r = 24" />, rendered at <TeX src={"24\\times"} /></>} /></td><td><strong>≈ 0.154931</strong><small>{t('选定扫描行的半强度边界最大横向差，逻辑单位', 'Maximum sampled horizontal half-intensity boundary difference, logical units')}</small></td></tr>
         </tbody></table></div>
         <p className="cc-source-note"><a href={file('fixtures/verification.json')}>{t('统一半径数据', 'Uniform-radius data')} ↗</a> · <a href={file('fixtures/system-ios-comparison.json')}>{t('跨系统记录', 'Cross-system record')} ↗</a> · <a href={file('fixtures/native-render-comparison-macos-27.0.1.json')}>{t('渲染对照', 'Rendering comparison')} ↗</a></p>
-        <details className="cc-detail"><summary>{t('控制点误差的传播', 'Propagation of control-point error')}</summary>
+        <details className="cc-detail"><MoreToggle as="summary">{t('控制点误差的传播', 'Propagation of control-point error')}</MoreToggle>
           <p><T zh={<>对拓扑相同、对应控制点一致配对的两段三次贝塞尔，若每个控制点的欧氏距离误差不超过 <TeX src={"\\delta"} />，利用 Bernstein 权重的非负性与和为 <TeX src="1" />，可得到同一参数 <TeX src="t" /> 下的界：</>} en={<>For two cubic segments with matching topology and paired controls, suppose every control-point Euclidean error is at most <TeX src={"\\delta"} />. Nonnegative Bernstein weights summing to one give these bounds at the same parameter <TeX src="t" />:</>} /></p>
           <Formula>{String.raw`\|B-\widetilde B\|\leq\delta,\quad \|B'-\widetilde B'\|\leq6\delta,\quad \|B''-\widetilde B''\|\leq24\delta`}</Formula>
           <p><T zh={<>表中的数值是单坐标最大误差 <TeX src={"\\varepsilon"} />，在二维中可取 <TeX src={"\\delta = \\sqrt{2}\\,\\varepsilon"} />。这只约束已配对的 B ↔ C 样本。曲率还要除以速度的三次方，速度接近零时尤其敏感；而“严格连续”要求接点左右精确相等，任意小的扰动仍可能破坏这种等式。更关键的是，B 自己的内部接点并非已经证明连续，C 贴近 B 不会自动变成连续。</>} en={<>The table reports maximum single-coordinate error <TeX src={"\\varepsilon"} />; in two dimensions <TeX src={"\\delta = \\sqrt{2}\\,\\varepsilon"} /> is a valid bound. This applies only to paired B–C samples. Curvature also divides by speed cubed and becomes sensitive near zero speed. Strict continuity requires exact join equalities, which even tiny perturbations can break. Crucially, B’s internal joins are not established as continuous; making C close to B cannot itself make them continuous.</>} /></p>
@@ -181,7 +182,7 @@ export default function ContinuousCornersPage() {
           <p>{t('A 与 B 在同一个 macOS 27.0.1 ImageRenderer 中对照：continuous 在 3×、12×、24× 均有差异，circular 对照组三种倍率的 RGBA 通道都相同。这里的 0.154931 是沿选定扫描行、用 RGB 半强度阈值插值估计的边界差；不是完整轮廓距离，不是所有尺寸的误差上限，也没有分离所有抗锯齿因素。', 'In the same macOS 27.0.1 ImageRenderer, continuous differed at 3×, 12× and 24×; circular controls had identical RGBA channels at all three scales. The 0.154931 value estimates a boundary using interpolated RGB half-intensity crossings on selected rows. It is not a full-contour distance, an all-size bound, or a complete separation of antialiasing effects.')}</p>
           <p>{t('因此，B ↔ C 的误差不能用作本库与原生绘制结果之间的误差上限。', 'The B–C error is therefore not an upper bound on the difference between this library and native rendering.')}</p>
         </div>
-        <details className="cc-detail"><summary>{t('导出路径的接点检查', 'Exported-path join audit')}</summary>
+        <details className="cc-detail"><MoreToggle as="summary">{t('导出路径的接点检查', 'Exported-path join audit')}</MoreToggle>
           <p><T zh={<>在 macOS 27.0.1 导出的 <TeX src={"320\\times200"} />、<TeX src="r = 24" /> 样本中，左上角第一段到第二段的切线方向相差约 <TeX src={"2.453240^\\circ"} />。单侧曲率约为 0.02985295 与 0.04464430。这个接点甚至不满足严格 <TeX src="G^1" />，因此不能称为处处 <TeX src="G^2" />。</>} en={<>For the <TeX src={"320\\times200"} />, <TeX src="r = 24" /> export on macOS 27.0.1, the first-to-second top-left join had a tangent difference of approximately <TeX src={"2.453240^\\circ"} />. One-sided curvatures were about 0.02985295 and 0.04464430. That join is not strictly <TeX src="G^1" />, so the exported path is not everywhere <TeX src="G^2" />.</>} /></p>
           <p>{t('Apple 的文档将 .continuous 描述为连续曲率圆角；上述测量针对 B，不足以断言 A 的内部数学曲线不连续。', 'Apple describes .continuous as continuous-curvature rounded corners. The measurement concerns B and does not establish that A’s internal mathematical curve is discontinuous.')}</p>
           <a href={file('fixtures/continuity-audit-macos-27.0.1.json')}>{t('查看导数与原始控制点', 'Inspect derivatives and original controls')} ↗</a>

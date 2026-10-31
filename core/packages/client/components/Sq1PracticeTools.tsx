@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import TrainingStatsPanel, { TrainingSelfPractice } from '@/components/TrainingStatsPanel';
 import { useTrainingStats } from '@/hooks/useTrainingStats';
 
@@ -504,7 +505,7 @@ export function Sq1ShapeTrainer() {
         const selected = which === 'top' ? selectedTop : selectedBottom;
         const setter = which === 'top' ? setSelectedTop : setSelectedBottom;
         return <details className={styles.shapeFilter} key={which}>
-          <summary>{which === 'top' ? tr({ zh: `上层范围 ${selected.size}/29`, en: `Top layer ${selected.size}/29` }) : tr({ zh: `下层范围 ${selected.size}/29`, en: `Bottom layer ${selected.size}/29` })}</summary>
+          <MoreToggle as="summary">{which === 'top' ? tr({ zh: `上层范围 ${selected.size}/29`, en: `Top layer ${selected.size}/29` }) : tr({ zh: `下层范围 ${selected.size}/29`, en: `Bottom layer ${selected.size}/29` })}</MoreToggle>
           <div className={styles.shapeButtons}>
             <button type="button" className={styles.shapeButton} onClick={() => setter(new Set(allNames))}>{tr({ zh: '全选', en: 'All' })}</button>
             <button type="button" className={styles.shapeButton} onClick={() => setter(new Set())}>{tr({ zh: '清空', en: 'None' })}</button>

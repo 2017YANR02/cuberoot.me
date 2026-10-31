@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import TrainingStatsPanel, { TrainingSelfCheck } from '@/components/TrainingStatsPanel';
 import { useTrainingStats } from '@/hooks/useTrainingStats';
 
@@ -221,7 +222,7 @@ export default function Sq1AlgorithmTrainer() {
         <div className={styles.groups}>
           {SQ1_ALG_TRAINER_GROUPS.map((group) => (
             <details key={group.id} className={styles.group}>
-              <summary>{tr(GROUP_LABELS[group.id])}</summary>
+              <MoreToggle as="summary">{tr(GROUP_LABELS[group.id])}</MoreToggle>
               {(['even', 'odd'] as const).map((parity) => {
                 const cases = group.cases.filter((item) => item.parity === parity);
                 if (cases.length === 0) return null;
