@@ -17,6 +17,7 @@
 .sim-player-row--top {
   align-items: flex-start;
 }
+.sim-random-label-short { display: none; }
 
 .sim-player-input {
   flex: 1;
@@ -1509,6 +1510,17 @@
 
 @media (max-width: 767px) {
   .sim-stage-controls .playback-bar-controls { grid-template-columns: minmax(0, 1fr) repeat(5, 44px) minmax(0, 1fr); gap: 2px; }
+  .sim-player-row--top { flex-wrap: nowrap; }
+  .sim-player-row--top > .sim-player-hlwrap { min-width: 0; }
+  .sim-player-row--top > button { order: 2; flex-shrink: 0; padding-inline: 8px; }
+  .sim-player-row--top > .sim-setup-preview { order: 1; }
+  .sim-random-label-full { display: none; }
+  .sim-random-label-short { display: inline; }
+  .sim-keyboard-switcher .sim-keymap-open-btn,
+  .sim-keyboard-switcher .reset-defaults-btn,
+  .sim-alg-tools .sim-player-tools > button,
+  .sim-alg-tools .sim-toggle,
+  .sim-alg-tools .sim-transform-select { font-size: 16px; }
   .sim-view-tools { flex-wrap: nowrap; }
   .sim-view-tools > * { flex-shrink: 0; }
   .sim-stage-controls .playback-bar-btn,
