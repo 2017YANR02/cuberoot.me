@@ -65,10 +65,7 @@
 
 .shell-topbar .pp-trigger { color: var(--foreground); }
 .shell-topbar .pp-trigger--active .pp-trigger-icon { color: var(--accent); }
-.shell-topbar .shell-topbar-left .timer-difficulty-trigger {
-  background: transparent;
-  border-color: transparent;
-}
+
 
 /* Fade only the controls, so their menus retain full opacity and material. */
 .shell-topbar-left :is(.shell-players-select, .pp-trigger, .compact-select-trigger,
