@@ -200,19 +200,83 @@
 .roux-block-config-group {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
 }
 
-/* makeStyles .configPanel — wrapping flow; color-panel & multi-select full row */
-.roux-block-config-panel {
-  display: flex;
-  flex-wrap: wrap;
-  column-gap: 16px;
-  row-gap: 0;
+/* Match /sim's adjustment grids: equal columns, consistent control heights,
+   and compact label/action rows instead of full-width edit buttons. */
+.roux-block-config-group > .roux-sel-slider {
+  max-width: 560px;
 }
-.roux-block-config-panel .roux-color-panel,
-.roux-block-config-panel .multi-select {
-  flex-basis: 100%;
+
+.roux-block-config-panel {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 20px 24px;
+}
+.roux-block-config-panel > * {
+  min-width: 0;
+}
+.roux-block-config-panel .roux-sel-label,
+.roux-block-config-panel .roux-field-label {
+  display: block;
+  margin: 0 0 8px;
+  line-height: 20px;
+}
+.roux-block-config-panel .roux-sel-row {
+  gap: 4px 12px;
+  min-height: 36px;
+}
+.roux-block-config-panel .roux-sel-radio {
+  min-height: 36px;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+.roux-block-config-panel .roux-sel-radio-input {
+  flex: none;
+  margin: 0;
+}
+/* Scramble descriptions need a full row in either language. */
+.roux-block-config-panel > .roux-sel:has(input[name="roux-fbdrScrambleSelector"]) {
+  grid-column: 1 / -1;
+}
+.roux-block-config-panel > .roux-color-panel,
+.roux-block-config-panel > .multi-select {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 36px;
+}
+.roux-block-config-panel > .roux-color-panel > .roux-field-label,
+.roux-block-config-panel > .multi-select > .roux-field-label {
+  margin: 0;
+}
+.roux-block-config-panel > :is(.roux-color-panel, .multi-select) > .roux-btn {
+  flex: none;
+  min-height: 36px;
+  padding: 6px 10px;
+  font-size: 0.8125rem;
+}
+
+@media (max-width: 900px) {
+  .roux-block-config-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+}
+
+@media (max-width: 599px) {
+  .roux-block-config-panel {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .roux-block-config-panel .roux-sel-radio,
+  .roux-block-config-panel > :is(.roux-color-panel, .multi-select) > .roux-btn {
+    min-height: 44px;
+  }
 }
 
 /* ---- helper text prompt (4c / eopair usage hint) ------------------------ */
