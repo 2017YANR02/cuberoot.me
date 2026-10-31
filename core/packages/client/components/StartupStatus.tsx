@@ -1,5 +1,6 @@
 'use client';
 
+import { LoadingBrandMark as SharedLoadingBrandMark } from '@cuberoot/app-ui/loading-brand';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { useLinkStatus } from 'next/link';
@@ -97,10 +98,7 @@ export function ClientLoadStatus({
 export function LoadingBrandMark() {
   const theme = useEffectiveTheme();
   const src = theme === 'dark' ? '/icons/CubeRoot-mark-dark.svg' : '/icons/CubeRoot-mark.svg';
-  return <span className="loading-brand-mark" aria-hidden="true">
-    <img src={src} alt="" width={144} height={82} />
-    <img className="loading-brand-colours" src={src} alt="" width={144} height={82} />
-  </span>;
+  return <SharedLoadingBrandMark src={src} />;
 }
 
 /** Shared by actual navigation and the component gallery preview. */

@@ -392,7 +392,7 @@ function applyPreferences(settings: TimerStoreSettings): void {
 }
 
 
-export function App({ host }: { host: InstalledAppHost }) {
+export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark?: ReactNode }) {
   const [toolsBlePicker, setToolsBlePicker] = useState<InstalledBlePicker | null>(null);
   const toolsBlePickerRef = useRef(toolsBlePicker);
   toolsBlePickerRef.current = toolsBlePicker;
@@ -3814,7 +3814,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   });
 
   if (!store && !loadError) {
-    return <main className="loading-screen"><strong>{copy.title}</strong></main>;
+    return <main className="loading-screen">{loadingMark ?? <strong>{copy.title}</strong>}</main>;
   }
 
   if (!store && loadError) {

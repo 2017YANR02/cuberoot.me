@@ -2,13 +2,15 @@ import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import '@cuberoot/app-ui/app.css';
+import '@cuberoot/app-ui/loading-brand.css';
+import { LoadingBrandMark } from '@cuberoot/app-ui/loading-brand';
 
 import { capacitorHost } from './capacitor-host';
 import { initializeDistribution } from './distribution';
 import { initializeUURemote } from './uu-remote';
 
 const App = lazy(async () => {
-  const module = await import('@cuberoot/app-ui');
+  const [module] = await Promise.all([import('@cuberoot/app-ui'), initializeDistribution()]);
   return { default: module.App };
 });
 
@@ -21,10 +23,10 @@ if (!root) {
   throw new Error('Missing #root mount point');
 }
 
-void initializeDistribution().then(() => createRoot(root).render(
+createRoot(root).render(
   <StrictMode>
-    <Suspense fallback={<main className="loading-screen"><strong>CubeRoot</strong></main>}>
-      <App host={capacitorHost} />
+    <Suspense fallback={<main className="loading-screen"><LoadingBrandMark src="/startup-mark.svg" /></main>}>
+      <App host={capacitorHost} loadingMark={<LoadingBrandMark src="/startup-mark.svg" />} />
     </Suspense>
   </StrictMode>,
-));
+);
