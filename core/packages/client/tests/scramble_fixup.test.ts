@@ -254,7 +254,7 @@ describe('复制反馈不能骑在修正路径上(2026-08-04)', () => {
   it('Web 打乱条遵循点击设置，纠错引导不再挂复制操作', () => {
     const strip = hostSrc.match(/<TimerScrambleStrip\b[\s\S]*?<\/TimerScrambleStrip>/)?.[0];
     expect(strip).toBeTruthy();
-    expect(strip).toContain("timingEnabled={!layoutEditing && settings.scrambleSource !== 'manual' && scrambleClickEffect === 'start'}");
+    expect(strip).toContain("timingEnabled={!multiEnabled && !layoutEditing && settings.scrambleSource !== 'manual' && scrambleClickEffect === 'start'}");
     expect(hostSrc).toMatch(/timerScrambleClickEffect\(\s*settings.scrambleClickAction/);
     expect(hostSrc).not.toContain("'copy-scramble':");
   });
@@ -267,10 +267,11 @@ describe('Solo smart-cube guidance has one shared lifecycle controller', () => {
   );
 
   it('keeps only the Web facelet/Worker adapter in SoloView', () => {
-    expect(source).toContain('new SmartCubeSoloTimerController<CubeMoveMetadata>');
+    expect(source).toContain('useMemo<SmartCubeSoloTimerControllerOptions<CubeMoveMetadata>>');
+    expect(source).toContain('new SmartCubeSoloTimerController(smartCubeTimerOptions)');
     expect(source).toContain('id: currentScrambleEntry.id');
-    expect(source).toContain('smartCubeSoloController.setConnected(cubeConnected)');
-    expect(source).toContain("smartCubeSoloController.setRunning(timer.phase === 'running')");
+    expect(source).toContain('smartCubeSoloController.setConnected(cubeConnected && !multiEnabled)');
+    expect(source).toContain("smartCubeSoloController.setRunning(timer.phase === 'running' && !multiEnabled)");
     expect(source).toContain('smartCubeSoloController.syncFacelets(bluetoothCube.facelets)');
     expect(source).toMatch(/syncFacelets\(bluetoothCube\.facelets\);[\s\S]*?cubeConnected,[\s\S]*?currentScrambleEntry\.id,[\s\S]*?scrambleTarget,[\s\S]*?timer\.phase,/);
     expect(source).toContain('smartCubeSoloController.move({ facelets, metadata, move, timestamp: ts })');

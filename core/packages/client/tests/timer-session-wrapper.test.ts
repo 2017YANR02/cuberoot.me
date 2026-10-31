@@ -16,7 +16,7 @@ const solo = readFileSync(
 
 describe('Web timer session switcher adapter', () => {
   it('delegates the real UI and copy while keeping only persistence callbacks', () => {
-    expect(wrapper).toContain('TimerSessionSwitcher as SharedTimerSessionSwitcher');
+    expect(wrapper).toContain('TimerResultsSessionBar as SharedTimerSessionSwitcher');
     expect(wrapper).toContain('timerSessionSwitcherLabels');
     expect(wrapper).not.toContain('TIMER_SESSION_UI_COPY');
     expect(wrapper).toContain('createAndActivateSession');

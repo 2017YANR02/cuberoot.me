@@ -340,13 +340,15 @@ describe('component reuse rule registry', () => {
     `).map((hit) => hit.ruleId)).toContain('alg-case-detail-layout');
   });
 
-  it('pins the alg puzzle BackHome above the title inside the shared-width header', () => {
+  it('keeps the shared alg puzzle heading inside the shared-width header', () => {
     const page = readFileSync(join(ROOT, 'app', '[lang]', 'alg', '[puzzle]', 'AlgPuzzleClient.tsx'), 'utf8');
-    const css = readFileSync(join(ROOT, 'app', '[lang]', 'alg', 'alg.css'), 'utf8');
+    const heading = readFileSync(join(ROOT, 'components', 'PageHeading.tsx'), 'utf8');
+    const css = readFileSync(join(ROOT, 'components', 'page-heading.css'), 'utf8');
     expect(page).toMatch(
-      /className="alg-cat-header alg-cat-header--puzzle">\s*<div className="alg-puzzle-back-row">\s*<BackHome \/>\s*<\/div>\s*<h1 className="alg-cat-title">/,
+      /className="alg-cat-header alg-cat-header--puzzle">\s*<PageHeading titleClassName="alg-cat-title">/,
     );
-    expect(css).toMatch(/\.alg-puzzle-back-row\s*\{[^}]*flex-basis:\s*100%;[^}]*\}/);
+    expect(heading).toMatch(/<PageBackLink fallback=\{backHref\} \/>\s*<h1/);
+    expect(css).toMatch(/\.page-heading\s*\{[^}]*display:\s*flex;[^}]*min-width:\s*0;[^}]*\}/);
   });
 
   it('keeps source violations at or below the legacy baseline', () => {

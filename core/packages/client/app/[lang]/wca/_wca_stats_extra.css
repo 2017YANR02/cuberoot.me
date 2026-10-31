@@ -417,10 +417,10 @@ th.wse-sor-evcell { padding: 4px 2px !important; }
   .wse-results-page .wse-filter-events,
   .wse-results-page .wse-filter-share { grid-column: 1 / -1; width: 100%; }
   .wse-results-page .wse-filter.wse-filter-q { width: 100%; }
-  .wse-results-page .wse-filter > select,
+  .wse-results-page .wse-filter-select,
   .wse-results-page .wse-filter .region-picker,
   .wse-results-page .wse-q-wrap { width: 100%; min-width: 0; max-width: 100%; }
-  .wse-results-page .wse-filter > select,
+  .wse-results-page .wse-filter-select,
   .wse-results-page .region-picker-trigger,
   .wse-results-page .wse-q-input {
     height: 44px;

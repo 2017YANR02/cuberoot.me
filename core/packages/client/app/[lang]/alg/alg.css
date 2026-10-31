@@ -2099,7 +2099,7 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
     align-self: center;
     margin-bottom: 16px;
   }
-  .alg-case-slot-picker button {
+  .alg-case-slot-picker .alg-case-slot-button {
     appearance: none;
     min-height: 44px;
     padding: 8px;
@@ -2111,16 +2111,16 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
     font-weight: 600;
     cursor: pointer;
   }
-  .alg-case-slot-picker button[aria-pressed="true"] {
+  .alg-case-slot-picker .alg-case-slot-button[aria-pressed="true"] {
     border-color: var(--accent);
     background: var(--accent-soft);
     color: var(--accent);
   }
-  .alg-case-slot-picker button:focus-visible {
+  .alg-case-slot-picker .alg-case-slot-button:focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
-  .alg-case-slot-picker button:disabled { opacity: .4; cursor: default; }
+  .alg-case-slot-picker .alg-case-slot-button:disabled { opacity: .4; cursor: default; }
   .is-f2l-orientation-grid > .alg-case-detail-ori[data-mobile-active="false"],
   [data-mobile-slot="0"] .alg-editor > .alg-editor-ori:not(:nth-child(1)),
   [data-mobile-slot="1"] .alg-editor > .alg-editor-ori:not(:nth-child(2)),

@@ -164,9 +164,10 @@ it('separates cross-year calendar headings from day ticks and uses proportional 
   const bar = container.querySelector<HTMLButtonElement>('.workspace-gantt-bar')!;
   expect(bar.style.left).toContain('%');
   expect(bar.style.width).toContain('%');
-  expect(bar.textContent).toContain('12-30');
-  expect(bar.textContent).not.toContain('Build');
+  expect(bar.textContent).toBe('Build');
   expect(bar.getAttribute('aria-label')).toContain('Build');
+  expect(bar.getAttribute('aria-label')).toContain('2026-12-30');
+  expect(bar.getAttribute('aria-label')).toContain('2027-01-02');
 });
 
 it('aligns week ticks to Mondays and month ticks to real calendar boundaries across leap February', async () => {

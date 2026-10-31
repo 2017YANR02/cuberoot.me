@@ -281,8 +281,11 @@ describe('installed App GAN lifecycle integration', () => {
     await act(async () => container.querySelector<HTMLButtonElement>('.shell-stat-rail')!.click());
     await act(async () => { wideViewport = false; mediaListeners.forEach(fn => fn()); });
     expect(container.querySelector('.timing-surface')).toBeNull();
-    expect(container.querySelector('.app-shell > .app-titlebar')).not.toBeNull();
-    await act(async () => nav[0].click());
+    expect(container.querySelector('.app-shell--history .history-view .shell-panel-tabs')).not.toBeNull();
+    const closeHistory = container.querySelector<HTMLButtonElement>('.history-view .shell-panel-close');
+    expect(closeHistory).not.toBeNull();
+    await act(async () => closeHistory!.click());
+    expect(container.querySelector('.history-view')).toBeNull();
     expect(container.querySelector('.timing-surface')).not.toBeNull();
   });
 

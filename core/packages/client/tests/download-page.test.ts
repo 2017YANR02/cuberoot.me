@@ -21,17 +21,19 @@ describe('download availability', () => {
     locale.language = language;
     const host = document.createElement('div');
     host.innerHTML = renderToStaticMarkup(createElement(NuqsTestingAdapter, { children: createElement(DownloadPage) }));
-    expect(host.querySelector('h1')?.textContent).toBe({ zh: '下载', en: 'Download' }[language]);
+    expect(host.querySelector('h1')?.textContent).toBe({ zh: '下载 CubeRoot', en: 'Download CubeRoot' }[language]);
     expect(host.querySelector('a[href="https://play.google.com/store/apps/details?id=me.cuberoot.app"]')).not.toBeNull();
-    const apk = host.querySelector<HTMLAnchorElement>('.download-android .download-actions a.download-button');
+    const android = host.querySelector('section[aria-labelledby="download-android-title"]')!;
+    const windows = host.querySelector('section[aria-labelledby="download-windows-title"]')!;
+    const apk = android.querySelector<HTMLAnchorElement>('.download-alternative a.download-text-link');
     expect(apk?.href).toBe(ANDROID_APK_URL);
-    expect(host.querySelector('.download-android .download-actions button')).toBeNull();
+    expect(android.querySelector('.download-primary-action button')).toBeNull();
     expect(host.querySelector('.download-note')?.textContent).not.toContain('1004');
     expect(host.querySelectorAll('.download-upcoming a, .download-upcoming button')).toHaveLength(0);
-    expect([...host.querySelectorAll('.download-platform > :first-child')].map((node) => node.textContent))
-      .toEqual(['iOS', 'macOS', 'HarmonyOS NEXT']);
-    expect(host.querySelector('.download-windows h2')?.textContent).toBe('Windows');
-    expect(host.querySelectorAll('.download-windows button:disabled')).toHaveLength(2);
-    expect(host.querySelectorAll('.download-windows a')).toHaveLength(0);
+    expect(host.querySelector('.download-upcoming p > span:first-child')?.textContent)
+      .toBe('iOS · macOS · HarmonyOS NEXT');
+    expect(windows.querySelector('h2')?.textContent).toBe('Windows');
+    expect(windows.querySelectorAll('.download-primary-action button:disabled')).toHaveLength(1);
+    expect(windows.querySelectorAll('a')).toHaveLength(0);
   });
 });

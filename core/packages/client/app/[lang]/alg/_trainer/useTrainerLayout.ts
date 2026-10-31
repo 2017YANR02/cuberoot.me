@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { DEFAULT_SOLO_LAYOUT, normalizeSoloLayout } from '@cuberoot/shared/timer';
 import type { TimerSoloLayoutSettings } from '@cuberoot/timer-ui';
+import { persistItem } from '@/lib/safe-storage';
 
 const storageKey = 'cuberoot.trainer.layout';
 const defaults: TimerSoloLayoutSettings = {
@@ -31,7 +32,7 @@ export function useTrainerLayout() {
     const next = { ...current.current, ...patch };
     current.current = next;
     setSettings(next);
-    try { localStorage.setItem(storageKey, JSON.stringify(next)); } catch { /* Keep in-memory preferences. */ }
+    persistItem(storageKey, JSON.stringify(next));
   }, []);
   return { settings, getSettings, updateSettings };
 }

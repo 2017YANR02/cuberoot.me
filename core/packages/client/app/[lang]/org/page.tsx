@@ -1,5 +1,6 @@
 'use client';
 import BackHome from '@/components/BackHome';
+import PageHeading from '@/components/PageHeading';
 import MoreToggle from '@/components/MoreToggle';
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
@@ -72,7 +73,7 @@ export default function OrganizationsPage() {
   if (!user || !getSessionToken()) {
     return (
       <main className="org-page org-centered">
-        <div className="page-back-heading"><BackHome /><h1>{t('企业信息', 'Enterprise')}</h1></div>
+        <PageHeading>{t('企业信息', 'Enterprise')}</PageHeading>
         <p className="org-lead">{t('登录后即可创建企业信息，并继续管理机构、学员和教学工作。', 'Sign in to create an enterprise profile and manage its organization, students, and teaching.')}</p>
         <AppLink className="org-primary-link" href={`/account${nextQuery(window.location.pathname)}`} prefetch={false}>{t('登录', 'Sign in')}</AppLink>
       </main>

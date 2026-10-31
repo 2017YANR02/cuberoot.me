@@ -1,4 +1,4 @@
-import { createTimerWorkerRpc, type TimerWorkerPort } from '@cuberoot/shared/timer';
+import { createTimerWorkerRpc, type TimerWorkerPort } from '@cuberoot/shared/timer/worker-rpc';
 import { getIvyMode, ivyScrambleForMode } from './scramble-ivy-mode';
 /*
  * Bridge to vendored cs0x7f/cstimer scramble core.

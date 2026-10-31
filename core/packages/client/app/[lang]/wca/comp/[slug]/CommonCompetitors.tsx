@@ -31,7 +31,7 @@ export default function CommonCompetitors({ data, isZh, onRefresh }: {
   isZh: boolean;
   onRefresh: () => void;
 }) {
-  const [compareId, setCompareId] = useQueryState('compare', parseAsString.withDefault('').withOptions({ history: 'push', scroll: false }));
+  const [compareId, setCompareId] = useQueryState('compare', parseAsString.withDefault('').withOptions({ history: 'replace', scroll: false }));
   const [query, setQuery] = useState('');
   const [search, setSearch] = useState('');
   const [picked, setPicked] = useState<Comp | null>(null);

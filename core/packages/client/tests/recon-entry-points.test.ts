@@ -10,7 +10,7 @@ const submitForm = readFileSync(join(CLIENT, 'app/[lang]/recon/submit/ReconSubmi
 describe('reconstruction entry points', () => {
   it('places the add action beside the page title', () => {
     expect(listPage).toMatch(
-      /<h1>\s*\{t\('recon\.title'\)\}\s*<Link href="\/recon\/submit"[\s\S]*?<Link\s+href="\/recon-about"/,
+      /<PageHeading>\s*\{t\('recon\.title'\)\}\s*<Link href="\/recon\/submit"[\s\S]*?<Link\s+href="\/recon-about"[\s\S]*?<\/PageHeading>/,
     );
     expect(listPage.match(/href="\/recon\/submit"/g)).toHaveLength(1);
   });

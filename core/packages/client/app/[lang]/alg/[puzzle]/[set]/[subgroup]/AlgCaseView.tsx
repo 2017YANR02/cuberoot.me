@@ -661,7 +661,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
           {useF2lOrientationGrid && <div className="alg-case-slot-picker" role="group" aria-label={tr({ zh: '槽位', en: 'Slot' })}>
             {['BL', 'BR', 'FL', 'FR'].map(slot => {
               const oi = oriNames!.findIndex(name => shortOriName(name) === slot);
-              return <button key={slot} type="button" aria-pressed={oi === mobileSlotIndex}
+              return <button key={slot} className="alg-case-slot-button" type="button" aria-pressed={oi === mobileSlotIndex}
                 disabled={oi < 0} onClick={() => setMobileSlot(slot)}>{slot}</button>;
             })}
           </div>}

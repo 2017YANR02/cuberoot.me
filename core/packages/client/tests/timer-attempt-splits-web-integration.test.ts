@@ -10,7 +10,7 @@ describe('Web timer attempt split integration', () => {
     expect(web).toContain('<TimerAttemptSplitStatus');
     expect(web).toContain("case 'mark-stage'");
     expect(web).toContain("case 'mark-bld-memo'");
-    expect(web).toContain('new SmartCubeSoloTimerController<CubeMoveMetadata>');
+    expect(web).toContain('new SmartCubeSoloTimerController(smartCubeTimerOptions)');
     expect(web).toContain('attemptSplitRecorder.observeMoves');
     expect(web).not.toContain('useMultiStage');
     expect(web).not.toContain('useBldMemo');

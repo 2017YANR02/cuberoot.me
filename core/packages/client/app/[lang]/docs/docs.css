@@ -67,4 +67,4 @@
 
 .docs-list-item { display: flex; align-items: center; gap: 12px; }
 .docs-list-item .docs-row { flex: 1; min-width: 0; }
-.docs-list-item > button { flex-shrink: 0; }
+.docs-list-item > .docs-button { flex-shrink: 0; }

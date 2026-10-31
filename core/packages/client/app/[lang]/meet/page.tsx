@@ -1,6 +1,6 @@
 'use client';
 
-import BackHome from '@/components/BackHome';
+import PageHeading from '@/components/PageHeading';
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
@@ -39,7 +39,7 @@ export default function MeetPage() {
   if (cfg && !cfg.enabled) {
     return (
       <main className="meet-page">
-        <div className="page-back-heading"><BackHome /><h1 className="meet-title">{tr({ zh: '会议', en: 'Meeting' })}</h1></div>
+        <PageHeading titleClassName="meet-title">{tr({ zh: '会议', en: 'Meeting' })}</PageHeading>
         <p className="vc-err">{tr({ zh: '本站未启用视频', en: 'Video is not enabled on this site' })}</p>
       </main>
     );
@@ -49,7 +49,7 @@ export default function MeetPage() {
   if (!user) {
     return (
       <main className="meet-page">
-        <div className="page-back-heading"><BackHome /><h1 className="meet-title">{tr({ zh: '会议', en: 'Meeting' })}</h1></div>
+        <PageHeading titleClassName="meet-title">{tr({ zh: '会议', en: 'Meeting' })}</PageHeading>
         <p className="meet-sub">
           {tr({ zh: '多人视频会议,支持屏幕共享和文字聊天。', en: 'Group video meetings with screen sharing and chat.' })}
         </p>
