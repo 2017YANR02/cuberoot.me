@@ -502,15 +502,19 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 }
 @media (max-width: 640px) {
     .landing-page .landing-featured-notices {
-        grid-template-columns: minmax(0, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
     }
     .landing-page .landing-featured-news {
         grid-template-columns: max-content minmax(0, 1fr) auto;
-        gap: 0.55rem;
-        padding: 0.65rem 0.75rem;
+        gap: 0.35rem;
+        padding: 0.65rem 0.5rem;
     }
     .landing-page .landing-featured-news-body {
-        font-size: 0.9375rem;
+        font-size: 0.8125rem;
+    }
+    .landing-page .landing-featured-notices > .landing-history-feature {
+        grid-column: 1 / -1;
     }
     .landing-page .landing-featured-news-arrow {
         align-self: center;
