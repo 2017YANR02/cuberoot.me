@@ -1,5 +1,6 @@
 'use client';
 
+import BackHome from '@/components/BackHome';
 import Link from '@/components/AppLink';
 import { usePathname } from 'next/navigation';
 import { tr } from '@/i18n/tr';
@@ -27,7 +28,7 @@ export default function ArchNav() {
 
   return (
     <nav className="arch-nav" aria-label="Architecture sections">
-      <Link href="/dev" className="arch-nav-back">← /dev</Link>
+      {base === '/dev/architecture/history' ? <BackHome /> : <Link href="/dev" className="arch-nav-back">← /dev</Link>}
       <div className="arch-nav-tabs" role="tablist">
         {TABS.map((tab) => (
           <Link

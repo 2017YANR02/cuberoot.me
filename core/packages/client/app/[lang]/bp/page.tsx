@@ -1,5 +1,6 @@
 'use client';
 
+import BackHome from '@/components/BackHome';
 import MoreToggle from '@/components/MoreToggle';
 import { useRef } from 'react';
 import { useBpMotion } from './useBpMotion';
@@ -92,6 +93,7 @@ export default function BusinessPlanPage() {
     <main ref={pageRef} className="overview-page bp-page bp-editorial">
       <header className="overview-nav overview-wrap">
         <div className="overview-brand">
+          <BackHome />
           <CubeRootLogo height={30} variant="mark" />
           <div>{tr({ zh: '魔方根', en: 'CubeRoot' })}<span>{tr({ zh: '商业计划书', en: 'Business plan' })}</span></div>
         </div>

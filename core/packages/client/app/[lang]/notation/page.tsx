@@ -1,5 +1,6 @@
 'use client';
 
+import BackHome from '@/components/BackHome';
 import { useEffect, type ReactNode } from 'react';
 import { useTrainingParams as useParams, useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import { parseAsBoolean, parseAsInteger, parseAsStringEnum } from 'nuqs';
@@ -211,7 +212,7 @@ export default function NotationPage() {
     <main className="notation-page">
       <div className="alg-notation-shell notation-shell">
         <header className="alg-notation-hero">
-          <h1>{t('转动记号', 'Move notation')}</h1>
+          <div className="page-back-heading"><BackHome /><h1>{t('转动记号', 'Move notation')}</h1></div>
           <Link href="/regulation/full#article-12" className="alg-notation-reference">
             {t('查看 WCA 规则第 12 条', 'Read WCA Regulations Article 12')}
           </Link>

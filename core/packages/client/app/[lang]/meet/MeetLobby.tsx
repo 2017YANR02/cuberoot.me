@@ -1,4 +1,5 @@
 'use client';
+import BackHome from '@/components/BackHome';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
 import { CalendarClock, CalendarDays, CalendarX, Copy, Pencil, Plus, RefreshCw, Video } from '@app-foundation/icons/lucide';
@@ -56,7 +57,7 @@ export default function MeetLobby({ maxParticipants, busy, error, onCreate, onJo
   }
   const clock = (value: number) => new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
   return <main className="meet-page meet-lobby">
-    <header className="meet-lobby-heading"><h1 className="meet-title">{tr({ zh: '会议', en: 'Meetings' })}</h1>
+    <header className="meet-lobby-heading"><div className="page-back-heading"><BackHome /><h1 className="meet-title">{tr({ zh: '会议', en: 'Meetings' })}</h1></div>
       {!!maxParticipants && <p className="meet-sub">{tr({ zh: `最多 ${maxParticipants} 人，最高 1080p。`, en: `Up to ${maxParticipants} people and up to 1080p.` })}</p>}
     </header>
     {view !== 'schedule' && <div className="meet-actions">

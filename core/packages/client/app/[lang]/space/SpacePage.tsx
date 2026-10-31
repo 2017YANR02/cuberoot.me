@@ -1,5 +1,6 @@
 'use client';
 
+import BackHome from '@/components/BackHome';
 import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowDown, ArrowDownToLine, ArrowLeft, ArrowRight, ArrowUp, ArrowUpFromLine, CloudSun, Copy, Crosshair, Drone, Footprints, Maximize, Move, Plus, Redo2, RotateCcw, RotateCw, Trash2, Undo2 } from '@app-foundation/icons/lucide';
@@ -197,7 +198,7 @@ export default function SpacePage() {
   return (
     <main className="cube-space">
       <header className="space-header">
-        <div className="space-heading"><h1>{tr({ zh: '魔方空间', en: 'Cube space' })}</h1><CompactSelect label={tr(ROOMS[room])} ariaLabel={tr({ zh: '选择房间风格', en: 'Choose room style' })} value={room} valueText={tr(ROOMS[room])} items={(Object.keys(ROOMS) as RoomStyle[]).map(value => ({ value, label: tr(ROOMS[value]) }))} onChange={room => { cancel(); setHistory(h => commitLayout(h, { ...h.current, timeOfDay: layoutTime(h.current), room })); }} />
+        <div className="space-heading"><BackHome /><h1>{tr({ zh: '魔方空间', en: 'Cube space' })}</h1><CompactSelect label={tr(ROOMS[room])} ariaLabel={tr({ zh: '选择房间风格', en: 'Choose room style' })} value={room} valueText={tr(ROOMS[room])} items={(Object.keys(ROOMS) as RoomStyle[]).map(value => ({ value, label: tr(ROOMS[value]) }))} onChange={room => { cancel(); setHistory(h => commitLayout(h, { ...h.current, timeOfDay: layoutTime(h.current), room })); }} />
           <CompactSelect label={tr(ENVIRONMENTS[environment])} ariaLabel={tr({ zh: '选择环境', en: 'Choose environment' })} value={environment} valueText={tr(ENVIRONMENTS[environment])} items={(Object.keys(ENVIRONMENTS) as Environment[]).map(value => ({ value, label: tr(ENVIRONMENTS[value]) }))} onChange={environment => { cancel(); setHistory(h => commitLayout(h, { ...h.current, environment })); }} />
           <CompactSelect label={<span className="space-weather-label"><CloudSun size={16} />{tr(WEATHER[weather])}</span>} ariaLabel={tr({ zh: '切换天气', en: 'Change weather' })} value={weather} valueText={tr(WEATHER[weather])} items={(Object.keys(WEATHER) as Weather[]).map(value => ({ value, label: tr(WEATHER[value]) }))} onChange={weather => { cancel(); setHistory(h => commitLayout(h, { ...h.current, weather })); }} />
           <label className="space-time">{tr({ zh: '时间', en: 'Time' })}<input className="space-time-input" type="time" aria-label={tr({ zh: '场景时间', en: 'Scene time' })} min="00:00" max="23:59" step={60} required value={layoutTime(history.current)} onChange={e => { const timeOfDay = e.currentTarget.value; if (validSceneTime(timeOfDay)) setHistory(h => commitLayout(h, { ...h.current, timeOfDay })); }} /></label>

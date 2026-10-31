@@ -12,6 +12,7 @@
 //   3. 事件自带时区,设置可以切「显示时区」,两者不是一回事:出差时把显示时区切到当地,
 //      北京时间的会自动落到当地钟点上,事件本身不动。
 
+import BackHome from '@/components/BackHome';
 import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
@@ -570,6 +571,7 @@ export default function CalendarClient() {
     return (
       <div className="cal-page">
         <div className="cal-topbar">
+          <BackHome />
           <h1 className="cal-brand"><CalendarDays size={20} aria-hidden />{tr({ zh: '日历', en: 'Calendar' })}</h1>
           <span className="cal-foot-gap" />
         </div>
@@ -592,6 +594,7 @@ export default function CalendarClient() {
           <input ref={mobileSearchRef} className="cal-mobile-search-input" type="search" value={query} placeholder={tr({ zh: '搜索', en: 'Search' })} aria-label={tr({ zh: '搜索日程', en: 'Search events' })} onChange={(e) => setQuery(e.target.value)} />
           {query && <ClearButton onClick={() => setQuery('')} />}
         </> : <>
+          <BackHome className="cal-mobile-action" />
           <button type="button" className="cal-mobile-action cal-mobile-glass cal-mobile-menu" aria-label={tr({ zh: '侧栏', en: 'Sidebar' })} aria-expanded={sidebarOpen} onClick={() => setSidebarOpen(true)}><Menu size={25} aria-hidden /></button>
           <MoreToggle type="button" className="cal-mobile-action cal-mobile-month-toggle" expanded={monthExpanded} aria-controls="cal-mobile-month" onClick={() => setPickerMonth(monthExpanded ? null : `${focusKey.slice(0, 7)}-01`)}>
             <span>{mounted ? mobileMonthLabel : ''}</span>
@@ -609,6 +612,7 @@ export default function CalendarClient() {
       {monthExpanded && <MobileMonthPicker inert={sidebarOpen} monthKey={pickerMonth} selectedKey={focusKey} todayKey={todayKey} tz={displayTz} weekStart={prefs.weekStart} events={fcEvents} onMonth={setPickerMonth}
         onPick={(key) => { gotoDate(dayStart(displayTz, key)); setPickerMonth(null); }} />}
       <div className={`cal-topbar cal-desktop-topbar${desktopSearch ? ' is-searching' : ''}`}>
+        <BackHome />
         <SidebarToggle collapsed={prefs.sidebarCollapsed}
           onToggle={() => store.setPrefs({ sidebarCollapsed: !prefs.sidebarCollapsed })}
           showLabel={tr({ zh: '显示侧栏', en: 'Show sidebar' })}
