@@ -49,28 +49,26 @@
   flex: 1;
 }
 
-/* 「去复盘」头部链接 — 与 /recon/submit 头部的「去模拟器」(.submit-open-sim)同款药丸,互为往返。 */
+/* 桌面头部与移动端展示区共用的复盘文字入口。 */
 .sim-open-recon {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
-  padding: 6px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--border-default);
-  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  padding: 0 4px;
+  min-height: 36px;
+  border: 0;
+  background: transparent;
   color: var(--muted-foreground);
   font-size: 0.85rem;
   text-decoration: none;
   white-space: nowrap;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition: color 0.15s;
 }
 .sim-open-recon:hover {
-  background: color-mix(in srgb, var(--foreground) 12%, transparent);
   color: var(--foreground);
-  border-color: var(--accent);
 }
-.sim-open-recon-arrow { display: none; }
+.sim-open-recon-arrow { display: block; }
 .sim-header-recon { display: contents; }
 .sim-stage-recon { display: none; }
 
@@ -786,16 +784,6 @@
     right: 8px;
     z-index: 12;
   }
-  .sim-open-recon,
-  .sim-open-recon:hover {
-    margin-left: auto;
-    padding: 0 4px;
-    min-height: 36px;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-  }
-  .sim-open-recon-arrow { display: block; }
   .sim-header .sim-tool-select { max-width: 100%; }
   .sim-project-controls { flex: 0 1 auto; }
   .sim-panel-toggle { display: inline-flex; }
