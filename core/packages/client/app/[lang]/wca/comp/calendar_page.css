@@ -38,7 +38,7 @@
     display: grid;
     grid-template-columns: 1fr auto;
     column-gap: 1rem;
-    align-items: start;
+    align-items: center;
 }
 .calendar-page .upcoming-title {
     font-family: var(--font-serif);
@@ -1623,12 +1623,27 @@
 }
 /* ── 响应式 ── */
 @media (max-width: 768px) {
-    .calendar-page .toolbar { gap: 0.4rem; }
+    .calendar-page .toolbar { gap: 0.4rem; flex-wrap: nowrap; }
+    .calendar-page .toolbar .search-box-comp .comp-picker-input,
+    .calendar-page .country-filter .region-picker-trigger,
+    .calendar-page .comp-filters-btn,
+    .calendar-page .native-select.cal-layout-toggle {
+        height: 44px;
+        min-height: 44px;
+        box-sizing: border-box;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 400;
+        line-height: 1.25;
+    }
+    .calendar-page .view-toggle { height: 44px; box-sizing: border-box; }
+    .calendar-page .view-btn { min-width: 38px; justify-content: center; padding: 0 8px; }
     .calendar-page .search-box { min-width: 100%; }
     .calendar-page .search-box-wrap { min-width: 100%; max-width: 100%; }
-    /* 项目与搜索紧凑同行,地区筛选空间不足时自然换行。 */
-    .calendar-page .toolbar .search-box-comp { min-width: 0; flex: 1 1 180px; max-width: 320px; }
-    .calendar-page .country-filter { flex: 1 1 auto; min-width: 150px; }
+    /* 搜索让出空间，地区与筛选入口始终保持在同一行。 */
+    .calendar-page .toolbar .search-box-comp { min-width: 0; flex: 1 1 0; max-width: 320px; }
+    .calendar-page .country-filter { flex: 0 1 125px; min-width: 0; }
+    .calendar-page .comp-filters-wrap { flex-shrink: 0; }
     .calendar-page .weekday-cell { font-size: 0.65rem; padding: 0.4rem 0.2rem; }
     .calendar-page .day-cell { padding: 3px 3px 1px; min-width: 0; }
     .calendar-page .week-row { min-height: 90px; }

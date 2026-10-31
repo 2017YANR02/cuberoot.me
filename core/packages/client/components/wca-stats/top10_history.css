@@ -324,6 +324,12 @@
   flex: 1 1 200px;
   min-width: 100px;
 }
+@media (max-width: 768px) {
+  .t10h-controls { flex-wrap: nowrap; }
+  .t10h-scrub { flex: 1 1 0; min-width: 0; }
+  .t10h-controls > .t10h-speed,
+  .t10h-controls > .compact-select { flex-shrink: 0; }
+}
 .t10h-speed {
   display: inline-flex;
   border: 1px solid var(--border-default);

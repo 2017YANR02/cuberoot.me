@@ -1,5 +1,10 @@
 /* Records 页样式 — 使用全站主题 token */
 
+/* 废止项目向右展开，箭头终态与内容方向一致。 */
+.records-page .event-btn-more.is-open > .more-toggle-chevron {
+  transform: rotate(-90deg);
+}
+
 .records-page .records-toolbar {
   display: flex;
   flex-direction: column;
