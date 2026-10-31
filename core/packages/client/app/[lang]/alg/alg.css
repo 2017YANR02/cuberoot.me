@@ -2087,6 +2087,7 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
 }
 .alg-case-slot-picker { display: none; }
 @media (max-width: 900px) {
+  .alg-case-slot-order { display: none; }
   .alg-case-slot-picker {
     display: grid;
     grid-template-columns: repeat(2, 64px);
@@ -2125,6 +2126,22 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
   }
 }
 @media (min-width: 901px) {
+  [data-slot-order="physical"] .alg-case-detail-ori[data-slot="BL"],
+  [data-slot-order="physical"] .alg-editor > .alg-editor-ori:nth-child(3) {
+    grid-area: 1 / 1;
+  }
+  [data-slot-order="physical"] .alg-case-detail-ori[data-slot="BR"],
+  [data-slot-order="physical"] .alg-editor > .alg-editor-ori:nth-child(4) {
+    grid-area: 1 / 2;
+  }
+  [data-slot-order="physical"] .alg-case-detail-ori[data-slot="FL"],
+  [data-slot-order="physical"] .alg-editor > .alg-editor-ori:nth-child(2) {
+    grid-area: 2 / 1;
+  }
+  [data-slot-order="physical"] .alg-case-detail-ori[data-slot="FR"],
+  [data-slot-order="physical"] .alg-editor > .alg-editor-ori:nth-child(1) {
+    grid-area: 2 / 2;
+  }
   .alg-case-detail.is-f2l-orientation-grid {
     max-width: min(1440px, 100%);
   }

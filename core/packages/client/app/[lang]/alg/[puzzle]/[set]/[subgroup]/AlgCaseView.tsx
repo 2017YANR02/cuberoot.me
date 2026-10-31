@@ -301,6 +301,10 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
     parseAsStringEnum<string>(CUBE_ORIENTATIONS.map(option => option.value))
       .withDefault(DEFAULT_ALG_CUBE_ORIENTATION),
   );
+  const [slotOrder, setSlotOrder] = useQueryState(
+    'slot-order',
+    parseAsStringEnum(['default', 'physical']).withDefault('default'),
+  );
   const isAdmin = useIsAdmin();
   const [editorRevision, setEditorRevision] = useState(0);
   const editorArea = useRef<HTMLDivElement>(null);
@@ -373,6 +377,14 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
     return `${path}${path.includes('?') ? '&' : '?'}orientation=${encodeURIComponent(effectiveOrientation)}${hash}`;
   };
 
+  const keepSlotOrder = (href: string) => {
+    if (slotOrder === 'default' || puzzle !== '3x3' || !['f2l', 'adv-f2l'].includes(set)) return href;
+    const hashAt = href.indexOf('#');
+    const path = hashAt < 0 ? href : href.slice(0, hashAt);
+    const hash = hashAt < 0 ? '' : href.slice(hashAt);
+    return `${path}${path.includes('?') ? '&' : '?'}slot-order=physical${hash}`;
+  };
+
   // 返回拥有该 case 的一级列表；更细的分组只在列表内作为分区标题。
   const rawBackHref = algCaseHref(puzzle, set, caseObj);
   const backHref = keepOrientation(keepViewAngle(keepSq1Notation(keepSq1Top(rawBackHref))));
@@ -389,7 +401,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
   const slugMap = useMemo(() => buildCaseSlugMap(data.cases, set), [data, set]);
   const hrefFor = (c: AlgCase) => {
     const href = algCaseDetailHref(puzzle, set, (c.id != null && slugMap.byId.get(c.id)) || '');
-    return keepOrientation(keepViewAngle(keepScrambleKind(keepSq1Notation(keepSq1Top(href)))));
+    return keepSlotOrder(keepOrientation(keepViewAngle(keepScrambleKind(keepSq1Notation(keepSq1Top(href))))));
   };
   const adjacent = useMemo(() => adjacentAlgCases(puzzle, set, data.cases, caseObj), [puzzle, set, data.cases, caseObj]);
 
@@ -502,7 +514,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
   }
 
   const renderDetail = (editor?: InlineCaseEditorParts) => (
-    <div ref={motionRoot} className={`alg-case-detail${editor ? ' alg-case-inline-editor' : ''}${useF2lOrientationGrid ? ' is-f2l-orientation-grid' : ''}`}>
+    <div ref={motionRoot} data-slot-order={useF2lOrientationGrid ? slotOrder : undefined} className={`alg-case-detail${editor ? ' alg-case-inline-editor' : ''}${useF2lOrientationGrid ? ' is-f2l-orientation-grid' : ''}`}>
       <div className="alg-case-detail-head">
         <Link href={backHref} className="alg-case-detail-back" prefetch={false}>
           <ArrowLeft size={16} />
@@ -566,6 +578,14 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
               />
             </label>
           )}
+          {useF2lOrientationGrid && <label className="alg-view-angle alg-case-slot-order">
+            <span>{tr({ zh: '排序', en: 'Order' })}</span>
+            <select className="alg-header-select" value={slotOrder}
+              onChange={event => void setSlotOrder(event.target.value as 'default' | 'physical')}>
+              <option value="default">{tr({ zh: '默认', en: 'Default' })}</option>
+              <option value="physical">{tr({ zh: '真实视角', en: 'Physical view' })}</option>
+            </select>
+          </label>}
           {/* 单张也能印:每个视角各一份(这页本来就把视角都列出来了) */}
           <AlgPdfButton
             build={() => algSheetFromCases({
@@ -682,7 +702,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
                 return <Fragment key={`${oi}:${i}`}>{row}</Fragment>;
               });
               return (
-                <div key={oi} data-alg-motion-ori={oi} data-mobile-active={oi === mobileSlotIndex} className="alg-case-detail-ori">
+                <div key={oi} data-alg-motion-ori={oi} data-mobile-active={oi === mobileSlotIndex} data-slot={shortOriName(oriNames?.[oi] ?? '')} className="alg-case-detail-ori">
                   {multiOri && <div className="alg-case-detail-ori-label">
                     <AlgImageDownloadButton build={() => caseImageBatch({
                       puzzle, set, cases: [caseObj], title: primary,
