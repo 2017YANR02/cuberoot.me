@@ -373,7 +373,17 @@ th.wse-sor-evcell { padding: 4px 2px !important; }
 }
 
 /* Search input (with × clear button) */
-.wse-filter-q { min-width: 200px; flex: 1; }
+.wse-refresh-region { position: relative; }
+.wse-refresh-status {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  padding: 6px 10px;
+  background: var(--background);
+  pointer-events: none;
+}
+.wse-filter.wse-filter-q { min-width: 0; width: 20rem; max-width: 100%; flex: 0 1 20rem; }
 .wse-q-wrap {
   position: relative;
   display: flex;
@@ -397,7 +407,6 @@ th.wse-sor-evcell { padding: 4px 2px !important; }
   .wse-page { padding: 16px 8px; }
   .wse-filters { gap: 10px; }
   .wse-filter { min-width: 0; flex: 1 0 calc(50% - 8px); }
-  .wse-filter-q { flex: 1 0 100%; }
   .wse-table th, .wse-table td { padding: 6px 8px; font-size: 13px; }
   .wca-record-rows-table { font-size: 12px; }
 }

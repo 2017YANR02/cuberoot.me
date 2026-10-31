@@ -14,7 +14,7 @@
 .wca-event-multi-toolbar .wca-event-category-btn {
   height: auto;
   padding: 3px 8px;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .wca-event-multi-toolbar .wca-event-category-btn.is-active {
@@ -29,7 +29,7 @@
 }
 
 .wca-event-multi-toolbar .bool-toggle {
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .pp-footer .wca-event-multi-toolbar .wca-event-category-btn,

@@ -875,10 +875,10 @@ function AllResultsPageInner() {
             />
           </div>
 
-          <div className="wse-table-wrapper sticky-scroll">
-            {loading && <div className="wse-state"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...' })}</LoadingIndicator></div>}
+          <div className="wse-table-wrapper sticky-scroll wse-refresh-region" aria-busy={loading}>
+            {loading && <div className={data ? "wse-refresh-status" : "wse-state"} role="status"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...' })}</LoadingIndicator></div>}
             {error && <div className="wse-state wse-state-error">Error: {error}</div>}
-            {data && !loading && data.mode === 'results' && (
+            {data && data.mode === show && data.mode === 'results' && (
               <>
                 <div className="wse-result-meta">
                   {isZh ? `共 ${data.total.toLocaleString()} 条,显示 ${data.rows.length}` : `${data.total.toLocaleString()} results, showing ${data.rows.length}`}
@@ -923,7 +923,7 @@ function AllResultsPageInner() {
                 )}
               </>
             )}
-            {data && !loading && data.mode === 'persons' && (
+            {data && data.mode === show && data.mode === 'persons' && (
               <>
                 <div className="wse-result-meta">
                   {isZh ? `共 ${data.total.toLocaleString()} 人,${data.rows.length} 条` : `${data.total.toLocaleString()} cubers, showing ${data.rows.length}`}
@@ -1025,10 +1025,10 @@ function AllResultsPageInner() {
             )}
           </div>
 
-          <div className="wse-table-wrapper sticky-scroll">
-            {loading && <div className="wse-state"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...' })}</LoadingIndicator></div>}
+          <div className="wse-table-wrapper sticky-scroll wse-refresh-region" aria-busy={loading}>
+            {loading && <div className={sorData ? "wse-refresh-status" : "wse-state"} role="status"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...' })}</LoadingIndicator></div>}
             {error && <div className="wse-state wse-state-error">{error}</div>}
-            {sorData && !loading && (
+            {sorData && (
               <>
                 <div className="wse-result-meta">{isZh ? `共 ${sorData.total.toLocaleString()} 人` : `${sorData.total.toLocaleString()} cubers`}</div>
                 <table className="wse-table sticky-thead">
