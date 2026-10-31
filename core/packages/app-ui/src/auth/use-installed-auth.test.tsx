@@ -72,4 +72,27 @@ describe('useInstalledAuth', () => {
     await act(async () => callback?.('me.cuberoot.app://auth/callback'));
     expect(container.textContent).toBe('false:true');
   });
+  it('does not replace a successful callback with a late startup restore failure', async () => {
+    let callback: ((url: string) => void) | undefined;
+    let rejectRestore!: (reason: Error) => void;
+    const session = { token: 'synthetic-session', user: { uid: 42 } };
+    const client = {
+      restore: vi.fn(() => new Promise((_resolve, reject) => { rejectRestore = reject; })),
+      finish: vi.fn(async () => session),
+    } as unknown as InstalledAuthClient;
+    const port: InstalledAuthPort = {
+      client, getLaunchUrls: async () => [],
+      listen: async (listener) => { callback = listener; return { remove: async () => undefined }; },
+    };
+    function Harness() {
+      const auth = useInstalledAuth('en', port);
+      return <output>{`${auth.error}:${auth.session?.user.uid}`}</output>;
+    }
+    await act(async () => root.render(<Harness />));
+    await act(async () => callback?.('me.cuberoot.app://auth/callback'));
+    expect(container.textContent).toBe('false:42');
+    await act(async () => rejectRestore(new Error('startup storage unavailable')));
+    expect(container.textContent).toBe('false:42');
+  });
+
 });

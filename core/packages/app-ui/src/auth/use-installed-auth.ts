@@ -52,7 +52,9 @@ export function useInstalledAuth(
       const session = await port.client.restore();
       if (active && !callbackApplied) setState((current) => ({ ...current, loading: false, session }));
     })().catch(() => {
-      if (active) setState((current) => ({ ...current, error: true, loading: false }));
+      // A native callback can finish while startup storage/network work is pending.
+      // Its authenticated session is newer than the failed startup snapshot.
+      if (active && !callbackApplied) setState((current) => ({ ...current, error: true, loading: false }));
     });
 
     return () => {

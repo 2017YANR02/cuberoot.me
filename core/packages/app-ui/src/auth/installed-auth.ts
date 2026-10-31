@@ -99,6 +99,9 @@ async function fetchWithTimeout(
 export class InstalledAuthClient {
   private finishing: Promise<WebSession | null> | null = null;
   private starting: Promise<void> | null = null;
+  // Android may deliver the same intent through appUrlOpen and getLaunchUrl.
+  // Remember only a successfully consumed callback, never a session to replay.
+  private completedCallback: string | null = null;
 
   constructor(private readonly runtime: MobileAuthRuntime) {}
 
@@ -257,7 +260,7 @@ export class InstalledAuthClient {
 
   private async finishOnce(callbackUrl: string): Promise<WebSession | null> {
     const callback = decodeMobileAuthCallback(callbackUrl);
-    if (!callback) return null;
+    if (!callback || this.completedCallback === callbackUrl) return null;
     const pending = decodePending(await this.runtime.storage.getItem(PENDING_KEY));
     if (!pending) throw new Error('mobile auth request unavailable');
     if (callback.state !== pending.state) throw new Error('mobile auth state mismatch');
@@ -286,6 +289,7 @@ export class InstalledAuthClient {
     if (!session) throw new Error('invalid mobile auth session');
     await this.saveSession(session);
     await this.runtime.storage.removeItem(PENDING_KEY);
+    this.completedCallback = callbackUrl;
     try {
       await this.runtime.closeBrowser();
     } catch {

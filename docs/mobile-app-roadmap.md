@@ -1784,3 +1784,9 @@ Series 8 的 11.524 秒/66 动作记录真机分析完成，无错误，七段�
 - [正式 run 41161533876](https://github.com/2017YANR02/cuberoot.me/actions/runs/41161533876) 已发布 Android APK、Windows x64 安装版及免安装版 `1.0.1 / 1000001`，公网完整下载/哈希/Range 验证通过。首次上传因专用账号 PATH 无 Node 失败；修复服务器运行环境后只重跑发布 job 成功，无本机重编译或签名。
 - [Play build-only run 41162189074](https://github.com/2017YANR02/cuberoot.me/actions/runs/41162189074) 验证 `1.0.2 / 1000002` AAB 云端构建和正式上传证书签名；没有提交商店或证明 Play API 发布权限。
 - 下载页版本管理图标与线上管理员状态页已验证；Windows 按本次授权发布未签名包。实机安装、覆盖升级、成绩保留、Windows Authenticode 与完整五端产品验收仍分别保留原门槛，不因本次分发成功标记五端完成。具体证据与凭据轮换见 `docs/app-downloads.md`。
+
+### 2026-10-30：登录回跳重复与启动竞态（本地修复）
+
+- 针对 Android「账号登录暂时不可用」反馈，最小回归确认两条共享认证缺陷：已成功消费的回跳再次到达时被当作缺少 pending 请求；启动 restore 迟到失败覆盖刚成功的登录。现在仅忽略本进程已完成的同一回跳（不重放会话，退出后也不恢复），并保留较新的回跳成功状态。
+- 修复前两个回归均失败，修复后认证 13 项、安全存储 6 项通过；app-ui/Mobile typecheck、Mobile build + Android sync、Android `assembleDebug -PmobileDistribution=direct --no-daemon --max-workers=2` 通过。共享代码同时供其它安装端使用，未运行其它平台原生构建。
+- 本轮仅本地提交，未发布 App；Android 真机未连接，不能确认截图必由上述竞态导致。待验证：冷启动直接进入“我的”；浏览器完成登录后自动回跳；浏览器登录期间切后台再返回；已登录后结束 App 进程再启动。记录错误出现阶段、App 版本和 Android/WebView 版本即可，不收集密码、验证码或回跳 URL。
