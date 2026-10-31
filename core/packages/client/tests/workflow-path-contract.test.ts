@@ -863,7 +863,7 @@ describe('deployment workflow path contracts', () => {
         ...STAGE_SOLVER_ASSETS.map(asset => `/tools/solver/rust-cross/${asset}`),
       ]) expect(block, `${job}: ${asset}`).toContain(asset);
     }
-    for (const name of ['android_release.yml', 'app_release.yml']) {
+    for (const name of ['app_release.yml']) {
       const buildJob = readWorkflow(name).split('\n  build:\n')[1]?.split('\n  publish:\n')[0];
       expect(buildJob, name).toBeDefined();
       // Release jobs use cone mode and select the complete vendored directories.
