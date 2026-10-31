@@ -32,7 +32,6 @@ import { useTrainingQueryState as useQueryState, useTrainingSearchParams } from 
 import { Check, ExternalLink } from '@app-foundation/icons/lucide';
 import AlgInput from '@/components/AlgInput';
 import BackHome from '@/components/BackHome';
-import HeaderToggles from '@/components/HeaderToggles';
 import LiquidGlassChips from '@/components/LiquidGlassChips';
 import PlaybackBar from '@/components/PlaybackBar';
 import BoolToggle from '@/components/BoolToggle';
@@ -129,10 +128,8 @@ const SOURCE_LABELS: Record<ScrambleSource, { zh: string; en: string }> = {
  * 自己输入的公式没通过检查时说人话 —— 光说「无效」等于让人自己猜哪个词写错了。
  * 收哪些记号各拼图不一样,所以由拼图自己报(`puzzle.notation`)。
  */
-function algErrorText(e: MoveInputError, puzzle: PredictPuzzle): { zh: string; en: string } {
+function algErrorText(e: Exclude<MoveInputError, { kind: 'empty' }>, puzzle: PredictPuzzle): { zh: string; en: string } {
   switch (e.kind) {
-    case 'empty':
-      return { zh: '写一条公式,回车出题。', en: 'Type an algorithm, then press Enter.' };
     case 'token':
       return {
         zh: `不认识「${e.token}」:${puzzle.notation.zh}`,
@@ -200,6 +197,7 @@ function PredictPageInner() {
 
   const [challenge, setChallenge] = useState<PredictBoardChallenge | null>(null);
   const [algError, setAlgError] = useState<MoveInputError | null>(null);
+  const [keyboardToggleContainer, setKeyboardToggleContainer] = useState<HTMLDivElement | null>(null);
   const [found, setFound] = useState<boolean[]>([]);
   const [feedback, setFeedback] = useState<{ kind: 'correct' | 'wrong' } | null>(null);
   const [elapsed, setElapsed] = useState(0);
@@ -528,7 +526,6 @@ function PredictPageInner() {
     <div className="predict-page">
       <div className="predict-topbar">
         <BackHome />
-        <HeaderToggles />
       </div>
 
       {/* 桌面端两栏(左题板右其余)靠 .predict-page 的 grid-template-areas 摆位:题板 + 复盘条
@@ -586,44 +583,8 @@ function PredictPageInner() {
           ariaLabel={tr({ zh: '公式来源', en: 'Move source' })}
         />
 
-        {source === 'custom' && (
-          <div className="predict-control predict-control--alg">
-            <span>{tr({ zh: '你的公式', en: 'Your algorithm' })}</span>
-            <AlgInput
-              elementRef={algElRef as React.RefObject<HTMLTextAreaElement | HTMLDivElement | null>}
-              initialText={alg}
-              className="predict-alg-input"
-              rows={1}
-              autoSpace
-              autoResize
-              placeholder={puzzle.placeholder}
-              // 站内那块公式键盘只有立方体记号,金字塔 / 斜转 / 枫叶用不上;
-              // 不放它就得把系统键盘放回来,否则手机上这个框根本打不了字。
-              inputMode={puzzle.cubeLike ? undefined : 'text'}
-              onChange={(text) => void setAlg(text)}
-              onKeyDown={(e) => {
-                // 回车 = 出题(而不是在单行框里换行)。组字中的回车是输入法在选词,别抢。
-                if (e.key !== 'Enter' || (e.nativeEvent as KeyboardEvent).isComposing) return;
-                e.preventDefault();
-                deal((e.currentTarget as HTMLTextAreaElement).value);
-              }}
-            />
-            {puzzle.cubeLike && (
-              <CubeKeyboardSection
-                target={algElRef as React.RefObject<HTMLTextAreaElement | HTMLDivElement | null>}
-                onInput={() => { if (algElRef.current) void setAlg(algElRef.current.value); }}
-              />
-            )}
-            <p className={algError ? 'predict-alg-error' : 'predict-hint'}>
-              {algError
-                ? tr(algErrorText(algError, puzzle))
-                : tr({ zh: '回车出题;下一题 = 同一条公式换个起点。', en: 'Enter deals; Next challenge re-rolls the start position.' })}
-            </p>
-          </div>
-        )}
-
         {source === 'random' && (
-          <label className="predict-control">
+          <label className="predict-control predict-control--inline">
             <span>{tr({ zh: '步数', en: 'Length' })}</span>
             <select
               className="predict-select"
@@ -638,7 +599,7 @@ function PredictPageInner() {
         )}
 
         {puzzle.cubeLike && (
-          <label className="predict-control">
+          <label className="predict-control predict-control--inline">
             <span>{tr({ zh: '朝向', en: 'Holding' })}</span>
             <CubeOrientationSelect
               className="predict-select"
@@ -655,14 +616,54 @@ function PredictPageInner() {
             label={tr({ zh: '透明', en: 'Transparent' })}
           />
           <p className="predict-origin">
-            {tr({ zh: '复刻自 Dan Boharon 的 Cube Lookahead Challenge:', en: 'Ported from Dan Boharon’s Cube Lookahead Challenge:' })}
-            <br />
+            {tr({ zh: '复刻自 Dan Boharon 的 ', en: 'Ported from Dan Boharon’s ' })}
             <a href={ORIGIN_URL} target="_blank" rel="noreferrer">
-              {ORIGIN_URL.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+              Cube Lookahead Challenge{' '}
               <ExternalLink size={12} aria-hidden="true" />
             </a>
           </p>
         </TrainingSettings>
+
+        {source === 'custom' && (
+          <div className="predict-control predict-control--alg">
+            <span>{tr({ zh: '你的公式', en: 'Your algorithm' })}</span>
+            <div className="predict-alg-input-row">
+              <AlgInput
+                elementRef={algElRef as React.RefObject<HTMLTextAreaElement | HTMLDivElement | null>}
+                initialText={alg}
+                className="predict-alg-input"
+                rows={1}
+                autoSpace
+                autoResize
+                placeholder={puzzle.placeholder}
+                // 站内那块公式键盘只有立方体记号,金字塔 / 斜转 / 枫叶用不上;
+                // 不放它就得把系统键盘放回来,否则手机上这个框根本打不了字。
+                inputMode={puzzle.cubeLike ? undefined : 'text'}
+                onChange={(text) => void setAlg(text)}
+                onKeyDown={(e) => {
+                  // 回车 = 出题(而不是在单行框里换行)。组字中的回车是输入法在选词,别抢。
+                  if (e.key !== 'Enter' || (e.nativeEvent as KeyboardEvent).isComposing) return;
+                  e.preventDefault();
+                  deal((e.currentTarget as HTMLTextAreaElement).value);
+                }}
+              />
+              {puzzle.cubeLike && <div ref={setKeyboardToggleContainer} className="predict-keyboard-toggle" />}
+            </div>
+            {puzzle.cubeLike && (
+              <CubeKeyboardSection
+                mobileCollapsible
+                toggleContainer={keyboardToggleContainer}
+                target={algElRef as React.RefObject<HTMLTextAreaElement | HTMLDivElement | null>}
+                onInput={() => { if (algElRef.current) void setAlg(algElRef.current.value); }}
+              />
+            )}
+            {algError?.kind !== 'empty' && <p className={algError ? 'predict-alg-error' : 'predict-hint'}>
+              {algError
+                ? tr(algErrorText(algError, puzzle))
+                : tr({ zh: '回车出题;下一题 = 同一条公式换个起点。', en: 'Enter deals; Next challenge re-rolls the start position.' })}
+            </p>}
+          </div>
+        )}
       </div>
 
       <div className="predict-boardcol">

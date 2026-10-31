@@ -1,6 +1,6 @@
 'use client';
 /**
- * 虚拟键盘 + toggle 按钮 — 桌面默认收起、提供按钮展开;移动端强制打开,无按钮。
+ * 虚拟键盘 + toggle 按钮 — 桌面默认收起；移动端默认展开，可显式启用折叠开关。
  * Ported from packages/client-vite/src/components/CubeKeyboardSection/CubeKeyboardSection.tsx.
  */
 import MoreToggle from '@/components/MoreToggle';
@@ -19,21 +19,23 @@ interface Props {
   onActivate?: () => void;
   /** 移动端是否显示——省略时沿用旧行为(移动端恒显示);传入后按此值决定(如跟随目标框的聚焦态)。 */
   mobileVisible?: boolean;
-  /** 将桌面开关放到输入框工具栏，键盘仍在原位置展开。 */
+  /** 移动端也使用展开/收起开关，初始收起。 */
+  mobileCollapsible?: boolean;
+  /** 将开关放到输入框工具栏，键盘仍在原位置展开。 */
   toggleContainer?: HTMLElement | null;
 }
 
-export default function CubeKeyboardSection({ target, onInput, enableMarks, onActivate, mobileVisible = true, toggleContainer }: Props) {
+export default function CubeKeyboardSection({ target, onInput, enableMarks, onActivate, mobileVisible = true, mobileCollapsible = false, toggleContainer }: Props) {
   const isMobile = useIsMobile();
   const [showKeyboard, setShowKeyboard] = useState(false);
 
-  const visible = isMobile ? mobileVisible : showKeyboard;
+  const visible = isMobile ? mobileVisible && (!mobileCollapsible || showKeyboard) : showKeyboard;
   const labelOn = tr({ zh: '隐藏虚拟键盘', en: 'Hide keyboard'
 });
   const labelOff = tr({ zh: '显示虚拟键盘', en: 'Show keyboard'
 });
 
-  const toggleBtn = !isMobile ? (
+  const toggleBtn = !isMobile || mobileCollapsible ? (
     <MoreToggle expanded={showKeyboard}
       type="button"
       className={`vkb-toggle${showKeyboard ? ' active' : ''}${showKeyboard && !toggleContainer ? ' vkb-toggle--inline' : ''}`}
