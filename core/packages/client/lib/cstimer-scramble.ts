@@ -1,3 +1,4 @@
+import { createTimerWorkerRpc, type TimerWorkerPort } from '@cuberoot/shared/timer';
 import { getIvyMode, ivyScrambleForMode } from './scramble-ivy-mode';
 /*
  * Bridge to vendored cs0x7f/cstimer scramble core.
@@ -10,36 +11,41 @@ import { getIvyMode, ivyScrambleForMode } from './scramble-ivy-mode';
  * default length for random-move scramblers.
  */
 
-let worker: Worker | null = null;
-let nextId = 1;
-const pending = new Map<number, { resolve: (s: string) => void; reject: (e: Error) => void }>();
+type CstimerRequest = { key: string; length?: number; state?: number; op?: 'solve'; scramble?: string };
+const rpc = createTimerWorkerRpc<CstimerRequest, string>({
+  createWorker: () => {
+    const worker = new Worker('/tools/cstimer-scramble/scrambler.worker.js');
+    // Adapt the classic engine protocol to the shared timeout/recovery transport.
+    return {
+      postMessage: (message) => worker.postMessage(message),
+      terminate: () => worker.terminate(),
+      addEventListener(type, listener) {
+        if (type === 'message') worker.addEventListener('message', (event) => {
+          const { id, result, error } = event.data ?? {};
+          const valid = typeof result === 'string';
+          listener({ data: error || !valid
+            ? { id, ok: false, error: error || 'Empty scramble engine response' }
+            : { id, ok: true, value: result } });
+        });
+        else worker.addEventListener('error', (event) => listener({ data: undefined, message: event.message }));
+      },
+    } satisfies TimerWorkerPort;
+  },
+  makeRequest: (id, request) => ({ id, ...request }),
+  label: 'csTimer scramble engine',
+});
 
-function getWorker(): Worker {
-  if (worker) return worker;
-  worker = new Worker('/tools/cstimer-scramble/scrambler.worker.js');
-  worker.onmessage = (e: MessageEvent) => {
-    const { id, result, error } = e.data || {};
-    const slot = pending.get(id);
-    if (!slot) return;
-    pending.delete(id);
-    if (error) slot.reject(new Error(error));
-    else slot.resolve(result);
-  };
-  worker.onerror = (e) => {
-    for (const slot of pending.values()) slot.reject(new Error(e.message || 'worker error'));
-    pending.clear();
-    // Drop the handle so the next call builds a fresh worker. An `onerror` from a
-    // classic worker usually means one of its importScripts didn't load, which
-    // leaves the worker alive but with no `onmessage` installed — keeping the
-    // handle would make every later postMessage vanish and its promise hang
-    // forever (observed on the sq1 solver page after a cache clear: the panel
-    // sat on "求解中…" with no error, because the prewarm call had already
-    // consumed the single onerror).
-    const dead = worker;
-    worker = null;
-    dead?.terminate();
-  };
-  return worker;
+// Only time the active computation, not time spent waiting behind other jobs.
+// A rejected/terminated job must not poison the queue for later projects.
+let tail: Promise<unknown> = Promise.resolve();
+function requestEngine(request: CstimerRequest): Promise<string> {
+  const result = tail.then(async () => {
+    const value = await rpc.request(request, undefined, 60_000);
+    if (request.op !== 'solve' && !value.trim()) throw new Error('Empty scramble engine response');
+    return value;
+  });
+  tail = result.catch(() => {});
+  return result;
 }
 
 /**
@@ -230,12 +236,7 @@ export async function cstimerScramble(id: string): Promise<string> {
     const { generateIvyTimerScramble } = await import('@cuberoot/puzzle-solvers/ivy');
     return ivyScrambleForMode(generateIvyTimerScramble(), mode);
   }
-  const w = getWorker();
-  const reqId = nextId++;
-  return new Promise<string>((resolve, reject) => {
-    pending.set(reqId, { resolve, reject });
-    w.postMessage({ id: reqId, key: e.key, length: e.length });
-  });
+  return requestEngine({ key: e.key, length: e.length });
 }
 
 /**
@@ -248,12 +249,7 @@ export async function cstimerSq1ShapeScramble(caseIndex: number): Promise<string
   if (!Number.isInteger(caseIndex) || caseIndex < 0 || caseIndex >= 90) {
     throw new Error('Square-1 shape case index must be an integer from 0 to 89');
   }
-  const w = getWorker();
-  const reqId = nextId++;
-  return new Promise<string>((resolve, reject) => {
-    pending.set(reqId, { resolve, reject });
-    w.postMessage({ id: reqId, key: 'sqrcsp', length: 0, state: caseIndex });
-  });
+  return requestEngine({ key: 'sqrcsp', length: 0, state: caseIndex });
 }
 
 /**
@@ -275,10 +271,5 @@ export async function cstimerSolve(id: string, scramble: string): Promise<string
  * and CI locks CSTIMER_SOLVABLE_IDS to it).
  */
 export async function cstimerSolveByKey(key: string, scramble: string): Promise<string> {
-  const w = getWorker();
-  const reqId = nextId++;
-  return new Promise<string>((resolve, reject) => {
-    pending.set(reqId, { resolve, reject });
-    w.postMessage({ id: reqId, op: 'solve', key, scramble });
-  });
+  return requestEngine({ op: 'solve', key, scramble });
 }
