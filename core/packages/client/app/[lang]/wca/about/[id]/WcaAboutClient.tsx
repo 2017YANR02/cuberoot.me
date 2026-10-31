@@ -9,11 +9,13 @@
  *
  * 内容来自 entries/<id>.ts 里的 AboutEntry,通过 ABOUT_REGISTRY 索引。
  */
+import PageHeading from '@/components/PageHeading';
+import PageBackLink from '@/components/PageBackLink';
 import { useMemo } from 'react';
 import Link from '@/components/AppLink';
 import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ExternalLink } from '@app-foundation/icons/lucide';
+import { ExternalLink } from '@app-foundation/icons/lucide';
 import { ABOUT_REGISTRY } from './_lib/registry';
 import type { AboutEntry, AboutStep, AboutStat, AboutFormula, AboutCode, AboutRelated, AboutSection } from './_lib/types';
 import './wca_about.css';
@@ -154,14 +156,8 @@ export default function WcaAboutClient() {
   if (!entry) {
     return (
       <div className="wcaa-page">
-        <div className="wcaa-header">
-          <Link href="/wca" className="wcaa-back">
-            <ArrowLeft size={16} />
-            <span className="sr-only">{tr({ zh: '返回 WCA 统计', en: 'Back to WCA Statistics'
-            })}</span>
-          </Link>
-        </div>
-        <main className="wcaa-main">
+
+        <main className="wcaa-main"><PageBackLink fallback="/wca" />
           <div className="wcaa-missing">
             {(isZh
                                   ? `暂未给统计项 "${id}" 撰写算法说明页。可在 /wca 列表里点开它本身看数据。`
@@ -174,17 +170,10 @@ export default function WcaAboutClient() {
 
   return (
     <div className="wcaa-page">
-      <div className="wcaa-header">
-        <Link href="/wca" className="wcaa-back">
-          <ArrowLeft size={16} />
-          <span className="sr-only">{tr({ zh: '返回 WCA 统计', en: 'Back to WCA Statistics'
-        })}</span>
-        </Link>
-      </div>
 
       <main className="wcaa-main">
         <div className="wcaa-title-row">
-          <h1 className="wcaa-title">{(isZh ? entry.titleZh : entry.titleEn)}</h1>
+          <PageHeading backHref="/wca" titleClassName="wcaa-title">{(isZh ? entry.titleZh : entry.titleEn)}</PageHeading>
           {((isZh ? entry.badgeZh : entry.badgeEn)) && (
             <span className="wcaa-badge">{(isZh ? entry.badgeZh : entry.badgeEn)}</span>
           )}

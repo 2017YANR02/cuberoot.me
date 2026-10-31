@@ -8,11 +8,12 @@
  * 最优解来自本地管道 `solver/lsll`,解的是**展示相位**那个代表元(语料生成时就钉死了),
  * 所以贴到页面上的图直接能用,不用再补 AUF。
  */
+import PageHeading from '@/components/PageHeading';
 import { useEffect, useMemo, useState } from 'react';
 import { parseAsString } from 'nuqs';
 import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import Link from '@/components/AppLink';
-import { ArrowLeft } from '@app-foundation/icons/lucide';
+
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr, T } from '@/i18n/tr';
 import { FaceletsCube } from '@/components/FaceletsCube';
@@ -137,10 +138,8 @@ export default function LsllCaseClient() {
   return (
     <div className="alg-root">
       <div className="alg-cat-header">
-        <Link href={`/alg/lsll/${info.category.slug}`} className="alg-back">
-          <ArrowLeft size={14} /> {info.category.letter}
-        </Link>
-        <h1 className="alg-cat-title"><span>{info.category.letter} <span className="alg-cat-count">#{ks}</span></span></h1>
+
+        <PageHeading backHref={`/alg/lsll/${info.category.slug}`} titleClassName="alg-cat-title"><span>{info.category.letter} <span className="alg-cat-count">#{ks}</span></span></PageHeading>
       </div>
 
       <div className="lsll-case-head">

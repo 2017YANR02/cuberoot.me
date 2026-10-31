@@ -1,5 +1,6 @@
 'use client';
 
+import PageHeading from '@/components/PageHeading';
 import { Suspense, useEffect, useState } from 'react';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
@@ -76,7 +77,7 @@ function TeamsDirectory() {
     </button>}
   </Tooltip>;
   return <main className="wca-teams-page">
-    <header className="wca-teams-header"><h1>{tr({ zh: '厂商与战队', en: 'Brands & Teams' })}</h1>
+    <header className="wca-teams-header"><PageHeading backHref="/wca">{tr({ zh: '厂商与战队', en: 'Brands & Teams' })}</PageHeading>
       <AppLink href="/wca/results" prefetch={false}>{tr({ zh: '排名', en: 'Rankings' })}</AppLink>
     </header>
     <div className="wca-team-groups">

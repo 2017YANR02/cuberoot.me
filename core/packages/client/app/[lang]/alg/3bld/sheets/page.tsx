@@ -8,6 +8,7 @@
 // 数据是 sourceToUrl.json + sourceToResult.json(加起来 24KB,随 fork 同步下来的),
 // 不是我们自己维护的名单 —— 要加自己的表得去上游 nbwzx/blddb 提。
 
+import PageHeading from '@/components/PageHeading';
 import { useEffect, useMemo, useState, type JSX } from 'react';
 import { parseAsStringEnum } from 'nuqs';
 import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
@@ -123,9 +124,9 @@ export default function BlddbSheetsPage(): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>
+        <PageHeading backHref="/alg/3bld">
           <EventIcon event="333bf" /> {tr({ zh: '盲拧公式表名录', en: 'BLD Algorithm Sheets' })}
-        </h1>
+        </PageHeading>
         <Link href="/alg/3bld/lookup" className="bld-hub-secondary" prefetch={false}>
           {tr({ zh: '公式查询', en: 'Lookup' })}
         </Link>

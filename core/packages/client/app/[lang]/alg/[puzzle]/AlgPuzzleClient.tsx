@@ -20,7 +20,7 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type D
 import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 import { ALG_CATALOG, ALG_CATALOG_SECTIONS, ALG_PUZZLES, CFOP_SET_SLUGS, type AlgCase, type AlgPuzzle } from '@cuberoot/shared/alg';
 import AlgPuzzlePicker from '@/components/AlgPuzzlePicker';
-import BackHome from '@/components/BackHome';
+import PageHeading from '@/components/PageHeading';
 import { CaseThumb } from '@/components/CaseThumb';
 import { prepareAlgCatalog, type PreparedAlgCatalog } from '@/lib/alg-catalog';
 import type { AlgCatalogSnapshot } from '@cuberoot/shared/alg';
@@ -376,10 +376,7 @@ export default function AlgPuzzleClient({ initialCatalog = null }: { initialCata
   return (
     <div className="alg-root">
       <div className="alg-cat-header alg-cat-header--puzzle">
-        <div className="alg-puzzle-back-row">
-          <BackHome />
-        </div>
-        <h1 className="alg-cat-title">{tr({ zh: '公式库', en: 'Algorithm DB' })}</h1>
+        <PageHeading titleClassName="alg-cat-title">{tr({ zh: '公式库', en: 'Algorithm DB' })}</PageHeading>
         {isAdmin && <Tooltip content={editingOrder ? tr({ zh: '完成排序', en: 'Finish reordering' }) : tr({ zh: '编辑排序', en: 'Edit order' })}>
           {tip => <button {...tip} type="button" className="alg-order-toggle" aria-pressed={editingOrder}
             aria-label={editingOrder ? tr({ zh: '完成排序', en: 'Finish reordering' }) : tr({ zh: '编辑排序', en: 'Edit order' })}

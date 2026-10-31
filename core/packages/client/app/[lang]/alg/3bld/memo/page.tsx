@@ -1,5 +1,6 @@
 'use client';
 
+import PageHeading from '@/components/PageHeading';
 import TrainingStatsPanel from '@/components/TrainingStatsPanel';
 import { useTrainingStats } from '@/hooks/useTrainingStats';
 
@@ -365,8 +366,8 @@ export default function MemoRecallPage(): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{tr({ zh: '盲拧记忆回想训练', en: '3BLD Memo Recall'
-        })}</h1>
+        <PageHeading backHref="/alg/3bld">{tr({ zh: '盲拧记忆回想训练', en: '3BLD Memo Recall'
+        })}</PageHeading>
       </div>
 
       {/* config */}

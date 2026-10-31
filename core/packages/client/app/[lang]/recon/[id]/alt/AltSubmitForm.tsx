@@ -3,11 +3,12 @@
 // ReconSolutionField (AlgInput + ReconAutofill + virtual keyboard) with the
 // main recon submit form (ReconSubmitForm) so both stay UI/UX-identical.
 
+import PageHeading from '@/components/PageHeading';
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from '@/components/AppLink';
+
 import { useTranslation } from 'react-i18next';
-import { TriangleAlert, ArrowLeft, LogIn } from '@app-foundation/icons/lucide';
+import { TriangleAlert, LogIn } from '@app-foundation/icons/lucide';
 import type { ReconSolve } from '@cuberoot/shared';
 import { getReconScramble, normalizeReconSolution } from '@cuberoot/shared/recon-completion';
 import { getRecon, addAlternative, updateAlternative } from '@/lib/recon-api';
@@ -111,14 +112,7 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
   if (!user) {
     return (
       <div className="recon-page">
-        <div className="recon-page-header">
-          <div>
-            <Link href={`/recon/${parentId}`} className="recon-back-link">
-              <ArrowLeft size={14} /> <span className="sr-only">{tr({ zh: '返回详情', en: 'Back'
-            })}</span>
-            </Link>
-          </div>
-        </div>
+        <div className="recon-page-header"><PageHeading backHref={`/recon/${parentId}`}>{t('recon.addAlternative')}</PageHeading></div>
         <div style={{ padding: 24, textAlign: 'center' }}>
           <p style={{ marginBottom: 16 }}>{tr({ zh: '需要登录才能提交另解。', en: 'Login required to submit an alternative.'
         })}</p>
@@ -135,12 +129,8 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
     <div className="recon-page submit-page">
       <div className="submit-header">
         <div className="detail-header">
-          <div className="detail-header-nav">
-            <Link href={`/recon/${parentId}`} className="recon-back-link">
-              <ArrowLeft size={14} /> <span className="sr-only">{tr({ zh: '返回', en: 'Back' })}</span>
-            </Link>
-          </div>
-          <h1>{isEditing ? t('recon.editAlternative') : t('recon.addAlternative')}</h1>
+
+          <PageHeading backHref={`/recon/${parentId}`}>{isEditing ? t('recon.editAlternative') : t('recon.addAlternative')}</PageHeading>
         </div>
       </div>
 

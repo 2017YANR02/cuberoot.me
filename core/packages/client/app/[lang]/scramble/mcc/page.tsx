@@ -1,4 +1,5 @@
 'use client';
+import PageHeading from '@/components/PageHeading';
 import MoreToggle from '@/components/MoreToggle';
 import '@cuberoot/timer-ui/compact-select.css';
 
@@ -153,7 +154,7 @@ export default function MccPage() {
   return (
     <div className="mcc-page">
       <header className="mcc-header">
-        <h1>{t('MCC (步数系数)', 'Movecount Coefficient')}</h1>
+        <PageHeading backHref="/scramble">{t('MCC (步数系数)', 'Movecount Coefficient')}</PageHeading>
         <p className="mcc-lead">
           {isPocket
             ? t(

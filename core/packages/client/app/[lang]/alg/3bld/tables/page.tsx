@@ -12,6 +12,7 @@
 // 与穷举全集(37MB,只在 iframe 版 /blddb)的区别:那个是「任意 case 都能查到一条」,
 // 这里是「每个 case 挑一条背」,加起来 235KB。
 
+import PageHeading from '@/components/PageHeading';
 import { useEffect, useMemo, useState, type JSX } from 'react';
 import { parseAsStringEnum } from 'nuqs';
 import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
@@ -232,9 +233,9 @@ export default function BlddbTablesPage(): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>
+        <PageHeading backHref="/alg/3bld">
           <EventIcon event="333bf" /> {tr({ zh: '盲拧速查表', en: 'BLD Cheat Sheets' })}
-        </h1>
+        </PageHeading>
         <Link href="/alg/3bld/lookup" className="bld-hub-secondary" prefetch={false}>
           {tr({ zh: '公式查询', en: 'Lookup' })}
         </Link>

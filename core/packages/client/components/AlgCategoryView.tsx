@@ -1,5 +1,6 @@
 'use client';
 
+import PageHeading from '@/components/PageHeading';
 import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 import '@cuberoot/timer-ui/compact-select.css';
 
@@ -20,7 +21,7 @@ import { parseAsBoolean, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import { useTrainingQueryState as useQueryState, useTrainingQueryStates as useQueryStates, useTrainingRouter } from '@/lib/training-host';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ChevronRight, Shuffle, Plus, ShieldCheck, AlertTriangle, HelpCircle, Pencil, Check } from '@app-foundation/icons/lucide';
+import { ChevronRight, Shuffle, Plus, ShieldCheck, AlertTriangle, HelpCircle, Pencil, Check } from '@app-foundation/icons/lucide';
 import { Tooltip } from '@/components/Tooltip';
 import { TimerPracticeContentPicker } from '@cuberoot/timer-ui';
 import { segToEvent } from '@cuberoot/shared/timer';
@@ -277,7 +278,6 @@ function AlgRow({ entry, puzzle, set, invalid, notationStyle, viewAngle, ohHand,
           const label = t === 'oh' && ohHand === 'right' ? OH_TAG_LABEL.right() : algTagLabel(t);
           return <span key={t} className={`alg-tag alg-tag-${t}`}><AlgTagLabel tag={t} label={label} hand={ohHand} /></span>;
         })}
-
 
     </div>
   );
@@ -1120,15 +1120,13 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
         captureAlgCaseNavigation(event);
       }}>
       <div className="alg-cat-header alg-cat-header--list">
-        <Link href={backTo} className="alg-back">
-          <ArrowLeft size={14} /> <span className="sr-only">{tr({ zh: '返回', en: 'Back' })}</span>
-        </Link>
-        <h1 className="alg-cat-title">
+
+        <PageHeading backHref={backTo} titleClassName="alg-cat-title">
           <EventIcon event={puzzleParam} className="alg-cat-title-icon" title={puzzleParam} />
           {collection ? setHeading : <TimerPracticeContentPicker entries={setChoices} selectedId={set} label={setHeading}
             language={isZh ? 'zh' : 'en'} onSelect={next => navigation.push(`${isZh ? '/zh' : ''}/alg/${puzzleParam}/${next}`)} />}
           {subgroupDisplay && <span className="alg-cat-subgroup"> {subgroupDisplay}</span>}
-        </h1>
+        </PageHeading>
         {isAdmin && !collection && <Tooltip content={editingOrder ? tr({ zh: '完成排序', en: 'Finish reordering' }) : tr({ zh: '编辑排序', en: 'Edit order' })}>
           {tip => <button {...tip} type="button" className="alg-order-toggle" aria-pressed={editingOrder}
             aria-label={editingOrder ? tr({ zh: '完成排序', en: 'Finish reordering' }) : tr({ zh: '编辑排序', en: 'Edit order' })}

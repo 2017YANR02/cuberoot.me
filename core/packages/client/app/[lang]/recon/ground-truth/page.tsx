@@ -1,12 +1,10 @@
 'use client';
 
+import PageHeading from '@/components/PageHeading';
 import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { parseAsInteger, parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
-import {
-  AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, ExternalLink,
-  RefreshCw, Save, ShieldCheck,
-} from '@app-foundation/icons/lucide';
+import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, ExternalLink, RefreshCw, Save, ShieldCheck } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import { SearchInput } from '@/components/SearchInput';
@@ -212,7 +210,7 @@ function ManualGroundTruthPage() {
       <main className="gt-page">
         <header className="gt-header">
 
-          <h1>{tr({ zh: '复盘测试样本', en: 'Reconstruction test corpus' })}</h1>
+          <PageHeading backHref="/recon">{tr({ zh: '复盘测试样本', en: 'Reconstruction test corpus' })}</PageHeading>
         </header>
         <div className="gt-access">
           <ShieldCheck size={20} />
@@ -229,7 +227,7 @@ function ManualGroundTruthPage() {
 
         <div className="gt-title-row">
           <div>
-            <h1>{tr({ zh: '复盘测试样本', en: 'Reconstruction test corpus' })}</h1>
+            <PageHeading backHref="/recon">{tr({ zh: '复盘测试样本', en: 'Reconstruction test corpus' })}</PageHeading>
             <p>{tr({
               zh: '候选范围固定为标准三阶，且发布者为颜瑞民。候选不会自动进入测试，必须逐条确认。',
               en: 'Candidates are standard 3×3 reconstructions published by Ruimin Yan. Nothing enters the tests without a manual decision.',

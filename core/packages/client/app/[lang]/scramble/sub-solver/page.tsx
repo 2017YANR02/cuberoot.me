@@ -6,6 +6,7 @@
  * AUF 开关没接线);这里复用同作者成熟版 Batch Solver 的引擎(lib/batch-solver.ts,
  * golden 对拍锁定),解集完整,AUF 开关真实生效。
  */
+import PageHeading from '@/components/PageHeading';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import BoolToggle from '@/components/BoolToggle';
 import { ParamSliders, type ParamSliderSpec } from '@/components/ParamSliders';
@@ -148,7 +149,7 @@ export default function SubSolverPage() {
   return (
     <div className="ssv-page">
       <header className="ssv-header">
-        <h1>{t('子群求解器', 'Subsolver')}</h1>
+        <PageHeading backHref="/scramble">{t('子群求解器', 'Subsolver')}</PageHeading>
         <p className="ssv-lead">
           {t(
             '限定一组步,枚举 3x3 某个状态在这组步内的全部解,按 MCC 手速升序排列。整套公式集请用',

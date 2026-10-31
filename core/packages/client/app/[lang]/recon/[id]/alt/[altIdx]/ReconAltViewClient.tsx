@@ -5,6 +5,7 @@
  * 左栏 TwistyPlayer 动画 + 右栏只读打乱 + SolutionView(点解法跟随动画)。
  * Ported from packages/client-vite/src/pages/recon/AltViewPage.tsx.
  */
+import PageHeading from '@/components/PageHeading';
 import { useEffect, useState, useRef, useMemo } from 'react';
 import Link from '@/components/AppLink';
 import { useParams } from 'next/navigation';
@@ -83,9 +84,9 @@ export default function ReconAltViewClient() {
     <div className="recon-page submit-page">
       <div className="submit-header">
         <div className="detail-header">
-          <h1>
+          <PageHeading backHref={`/recon/${parentId}`}>
             <UserContactLink userId={alt.addedByUserId}>{ownerDisplayName(alt.addedById, alt.addedBy, isZh)}</UserContactLink>
-          </h1>
+          </PageHeading>
         </div>
       </div>
 

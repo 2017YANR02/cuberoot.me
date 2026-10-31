@@ -6,6 +6,7 @@
  */
 'use client';
 
+import PageHeading from '@/components/PageHeading';
 import { useEffect, useState, useContext, createContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import Link from '@/components/AppLink';
@@ -51,7 +52,6 @@ import './prediction.css';
 import './prediction333.css';
 import { tr, T } from '@/i18n/tr';
 import { SECTIONS } from '../_data/sections';
-
 
 export default function Prediction333View({ sectionId }: { sectionId?: string }) {
   const { i18n } = useTranslation();
@@ -182,11 +182,7 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
   return (
     <div className="pred-page pred-page-multi pred-333">
       <header className="pred-header">
-        <Link href="/wca/prediction" className="pred-back" aria-label="back">
-          <ArrowLeft size={16} />
-          <span className="sr-only">{tr({ zh: '返回全项目', en: 'Back to All Events'
-        })}</span>
-        </Link>
+
         <button className="pred-toc-btn" onClick={() => setTocOpen(!tocOpen)}>
           {tocOpen ? <XIcon size={16} /> : <Menu size={16} />}
         </button>
@@ -209,10 +205,10 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
         </aside>
 
         <article className="pred-article">
-          <h1 className="pred-title">
+          <PageHeading backHref="/wca/prediction" titleClassName="pred-title">
             {tr({ zh: '三阶魔方: 终极极限预测', en: '3x3 Speedcubing: The Ultimate Limits Forecast'
             })}
-          </h1>
+          </PageHeading>
           <p className="pred-subtitle">
             {tr({ zh: '历史  方法  硬件  数学  生物力学  顶级选手  训练  统计 — 综合预测单次与平均', en: 'History · Methods · Hardware · Math · Biomech · Top Cubers · Training · Statistics — toward a single & average forecast.'
             })}

@@ -19,7 +19,7 @@ import { useQueryState, useQueryStates, parseAsStringEnum, parseAsInteger, parse
 import Link from '@/components/AppLink';
 import { loadCalendarManifest, loadCalendarMonth } from '@/lib/competition-calendar';
 import type { CalendarManifest } from '@cuberoot/shared/competition-calendar';
-import HomeLink from '@/components/HomeLink';
+import PageHeading from '@/components/PageHeading';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Star, Earth as GlobeIcon, List, LayoutGrid, BarChart3, CalendarDays, CalendarRange, HelpCircle, Users, Gauge, Percent, CaseSensitive, MapPin, Mountain, MoveVertical, MoveHorizontal, ArrowDownAZ, ArrowDownZA, X as XIcon } from '@app-foundation/icons/lucide';
 import { SortArrow } from '@/components/SortArrow';
@@ -2047,25 +2047,21 @@ function CalendarPageInner() {
       data-comp-peoplelimit={viewMode === 'list' && compMetric === 'peopleLimit' ? '' : undefined}
     >
       <header className="upcoming-header">
-        <h1 className="upcoming-title">
-          {tr({ zh: 'WCA 比赛', en: 'WCA Competitions'
-        })}
-          <Link
-            href="/wca/comp-about"
-            className="calendar-title-help"
-            title={tr({ zh: '这页是干啥的?', en: 'What is this page?'
-            })}
-            aria-label={tr({ zh: '查看说明', en: 'About this page'
-            })}
-          >
-            <HelpCircle size={18} strokeWidth={1.75} />
-          </Link>
-        </h1>
+          <PageHeading titleClassName="upcoming-title">
+            {tr({ zh: 'WCA 比赛', en: 'WCA Competitions'
+          })}
+            <Link
+              href="/wca/comp-about"
+              className="calendar-title-help"
+              title={tr({ zh: '这页是干啥的?', en: 'What is this page?'
+              })}
+              aria-label={tr({ zh: '查看说明', en: 'About this page'
+              })}
+            >
+              <HelpCircle size={18} strokeWidth={1.75} />
+            </Link>
+          </PageHeading>
         <div className="upcoming-meta">
-          <HomeLink className="globe-link">
-            <ChevronLeft size={12} strokeWidth={1.75} /> <span className="sr-only">{tr({ zh: '首页', en: 'Home'
-            })}</span>
-          </HomeLink>
           <Link href="/wca/comp/stats" className="globe-link">
             <BarChart3 size={12} strokeWidth={1.75} /> {tr({ zh: '统计', en: 'Stats'
             })}

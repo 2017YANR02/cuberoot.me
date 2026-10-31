@@ -1,4 +1,5 @@
 'use client';
+import PageHeading from '@/components/PageHeading';
 import MoreToggle from '@/components/MoreToggle';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { competitionFetch, ensureCompetitionAccess } from '@/lib/competition-access';
@@ -13,7 +14,7 @@ import Link from '@/components/AppLink';
 import { usePathname, useRouter } from 'next/navigation';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, X as XIcon, RefreshCw, Info, Copy, Check, Radio, ArrowUp, ArrowDown, Ban, Download, Calculator } from '@app-foundation/icons/lucide';
+import { X as XIcon, RefreshCw, Info, Copy, Check, Radio, ArrowUp, ArrowDown, Ban, Download, Calculator } from '@app-foundation/icons/lucide';
 import { Flag } from '@/components/Flag';
 import { RecordBadge } from '@/components/RecordBadge';
 import { RecentRecordsList } from '@/components/RecentRecords';
@@ -1682,7 +1683,7 @@ export default function CompDetailPage() {
   if (error || !data) {
     return (
       <div className="comp-detail-page">
-        <Link href="/wca/comp" prefetch={false} className="comp-back-link"><ArrowLeft size={14} /> <span className="sr-only">{tr({ zh: '返回', en: 'Back' })}</span></Link>
+
         <div className="comp-err comp-err-block">
           <div className="comp-err-title">{tr({ zh: '加载失败', en: 'Failed to load'
         })}</div>
@@ -1766,8 +1767,8 @@ export default function CompDetailPage() {
     <div className="comp-detail-page">
       <div className="comp-table-section">
         <header className="comp-detail-header">
-          <Link href="/wca/comp" prefetch={false} className="comp-back-link"><ArrowLeft size={14} /> <span className="sr-only">{tr({ zh: '返回', en: 'Back' })}</span></Link>
-          <h1 className="comp-detail-title">
+
+          <PageHeading backHref="/wca/comp" titleClassName="comp-detail-title">
             {(() => {
               // 国家旗:compInfo(权威,来自比赛详情)优先,回退 slug 推断 —— 当天刚公示的比赛
               // compFlagIso2 还没数据,会丢旗 + 丢 cubing.com 图标,故用 compInfo 兜底。
@@ -1836,7 +1837,7 @@ export default function CompDetailPage() {
                 </>
               );
             })()}
-          </h1>
+          </PageHeading>
           <div className="comp-detail-meta">
             {isAdmin && data.availableSources && data.availableSources.length > 1 && (
               <div className="comp-source-toggle" role="group" aria-label={tr({ zh: '数据源', en: 'Data source'

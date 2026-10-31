@@ -6,6 +6,7 @@
  * 与上游节奏一致)。UI 重设计:示例预设一键填表、内联错误横幅取代 alert、
  * CSV 导出取代 ExcelJS、图像走站内 VisualCube / sr-puzzlegen。
  */
+import PageHeading from '@/components/PageHeading';
 import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, Minus, Plus } from '@app-foundation/icons/lucide';
@@ -408,7 +409,7 @@ export default function BatchSolverPage() {
   return (
     <div className="bsv-page">
       <header className="bsv-header">
-        <h1>{t('批量求解器', 'Batch Solver')}</h1>
+        <PageHeading backHref="/scramble">{t('批量求解器', 'Batch Solver')}</PageHeading>
         <p className="bsv-lead">
           {t(
             '一次生成整套公式集:描述好目标状态与所有 case,自动为每个 case 枚举全部解并按手速(MCC)等指标排序。',

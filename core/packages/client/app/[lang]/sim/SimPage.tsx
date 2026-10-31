@@ -18,7 +18,7 @@ import {
 import dynamic from 'next/dynamic';
 import { useQueryStates, parseAsString, parseAsStringEnum } from 'nuqs';
 import CollapsibleSection from './CollapsibleSection';
-import HomeLink from '@/components/HomeLink';
+import PageHeading from '@/components/PageHeading';
 import NxNOrderInput from '@/components/NxNOrderInput';
 import { useTranslation } from 'react-i18next';
 import { PuzzleTypeSelect } from './PuzzleTypeSelect';
@@ -29,13 +29,7 @@ import { NXN_ORDER_DEFAULT, NXN_ORDER_MAX, NXN_ORDER_MIN } from '@/lib/nxn-order
 // inside the world-init effect so the ~1.2MB three bundle doesn't ship with
 // pyraminx/skewb/megaminx (which use cubing.js TwistyPlayer, not THREE).
 import type * as THREE from 'three';
-import {
-  ChevronLeft,
-  BookOpen,
-  Maximize2, Minimize2,
-  ArrowLeftRight,
-  X,
-} from '@app-foundation/icons/lucide';
+import { BookOpen, Maximize2, Minimize2, ArrowLeftRight, X } from '@app-foundation/icons/lucide';
 import World, { type PuzzleKind } from './engine/world';
 import { attachInteraction } from './worldInteraction';
 import HandsRig from './engine/hands/handsRig';
@@ -1452,7 +1446,6 @@ export default function SimPage() {
     setQuery({ renderer: r === 'group' ? null : r });
   }, [setQuery]);
 
-
   // Controls read the URL puzzle directly. Always sync engine puzzles, even when
   // a newly created World already has the requested default cube: applyPuzzle
   // also restores the logical order after returning from a world-less renderer.
@@ -2252,10 +2245,7 @@ export default function SimPage() {
   return (
     <div ref={pageRef} className={`sim-page${fullscreen && animationMode ? ' sim-page--fullscreen' : ''}${panelExpanded ? ' sim-page--panel-expanded' : ''}`} data-board-bg={settings.boardBg} data-workspace={query.tool}>
       <header className="sim-header">
-        <HomeLink className="sim-back" title={t('返回', 'Back')}>
-          <ChevronLeft size={18} />
-        </HomeLink>
-        <h1 className="sim-title">{t('模拟', 'Sim')}</h1>
+        <PageHeading titleClassName="sim-title">{t('模拟', 'Sim')}</PageHeading>
         <div className="sim-project-controls">
           <PuzzleTypeSelect
             value={typeof selectedPuzzle === 'number' ? 'nxn' : selectedPuzzle}

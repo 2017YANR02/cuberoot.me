@@ -11,6 +11,7 @@
  * 还是上游穷举搜索给的 ground truth —— 搬运不许伪装成证明。
  */
 
+import PageHeading from '@/components/PageHeading';
 import Link from '@/components/AppLink';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { groupDigits } from '@/lib/group-digits';
@@ -65,12 +66,12 @@ export default function HardestPage() {
   return (
     <div className="hardest-page">
       <header>
-        <h1>
+        <PageHeading backHref="/scramble">
           {tr({
             zh: `六色底 XCross 要 10 步的 ${CN_XCROSS_10_TOTAL} 个状态`,
             en: `The ${CN_XCROSS_10_TOTAL} states whose colour-neutral XCross takes 10 moves`,
           })}
-        </h1>
+        </PageHeading>
         <p className="hardest-lede">
           {tr({
             zh: '把六个面轮流当底、四个 F2L 槽轮流先解 —— 24 种开局口径全部要 10 步。'

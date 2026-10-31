@@ -4,6 +4,7 @@
  * /wca/calendar/stats — WCA 比赛随时间分布的可视化。
  * 数据源:loadComps()(all_past + all_upcoming, 按 id 去重)。
  */
+import PageHeading from '@/components/PageHeading';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from '@/components/AppLink';
 import { useRouter } from 'next/navigation';
@@ -191,12 +192,9 @@ export default function CalendarStatsPage() {
     <div className="cs-page">
       <header className="cs-header">
         <div className="cs-header-left">
-          <Link href="/wca/comp" className="cs-back" aria-label={tr({ zh: '返回比赛', en: 'Back to competitions'
-        })}>
-            <ArrowLeft size={18} />
-          </Link>
-          <h1 className="cs-title">{tr({ zh: '比赛统计', en: 'Competition stats'
-        })}</h1>
+
+          <PageHeading backHref="/wca/comp" titleClassName="cs-title">{tr({ zh: '比赛统计', en: 'Competition stats'
+        })}</PageHeading>
         </div>
       </header>
 

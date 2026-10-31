@@ -1,3 +1,4 @@
+import PageHeading from '@/components/PageHeading';
 import { WC_2027_ANNOUNCEMENT as announcement } from '@cuberoot/shared/site-announcements';
 import JsonLd, { articleJsonLd, SITE_URL } from '@/components/JsonLd';
 import './announcement.css';
@@ -9,7 +10,7 @@ export default async function WorldChampionshipAnnouncement({params}:{params:Pro
   return <main className="wc-announcement">
     <JsonLd data={articleJsonLd({headline:announcement.title[locale],description:announcement.summary[locale],url:`${SITE_URL}${locale==='zh'?'/zh':''}${announcement.href}`,lang:locale})}/>
     <article>
-      <header><p>{labels.kind}</p><h1>{announcement.title[locale]}</h1><p>{labels.date}</p></header>
+      <header><p>{labels.kind}</p><PageHeading backHref="/wca">{announcement.title[locale]}</PageHeading><p>{labels.date}</p></header>
       {announcement.paragraphs.map((paragraph,i)=><p key={i}>{paragraph[locale]}</p>)}
       <footer><p><a href={announcement.sourceUrl} target="_blank" rel="noopener noreferrer">{labels.source}</a></p><p><a href={announcement.applicationUrl} target="_blank" rel="noopener noreferrer">{labels.application}</a></p></footer>
     </article>

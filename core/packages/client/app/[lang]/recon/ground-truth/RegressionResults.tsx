@@ -1,4 +1,5 @@
 'use client';
+import PageHeading from '@/components/PageHeading';
 import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from '@/components/AppLink';
@@ -89,10 +90,10 @@ export default function RegressionResults() {
   const selected = cases.find(item => item.id === caseId) ?? cases[0];
   const selectedResult = run?.cases.find(item => item.id === selected?.id);
   const stale = !!run && !!history?.currentFingerprint && run.fingerprint !== history.currentFingerprint;
-  if (!user || !admin) return <main className="gt-page"><h1>{tr({ zh: '复盘测试', en: 'Reconstruction tests' })}</h1><p>{tr({ zh: '请使用管理员账号查看检查记录。', en: 'Sign in as an administrator to view test history.' })}</p><WcaAuth /></main>;
+  if (!user || !admin) return <main className="gt-page"><PageHeading backHref="/recon/ground-truth">{tr({ zh: '复盘测试', en: 'Reconstruction tests' })}</PageHeading><p>{tr({ zh: '请使用管理员账号查看检查记录。', en: 'Sign in as an administrator to view test history.' })}</p><WcaAuth /></main>;
   return <main className="gt-page">
     <header className="gt-header"><div className="gt-title-row"><div>
-      <h1>{tr({ zh: '智能魔方回归测试', en: 'Smart cube regression tests' })}</h1>
+      <PageHeading backHref="/recon/ground-truth">{tr({ zh: '智能魔方回归测试', en: 'Smart cube regression tests' })}</PageHeading>
       <p>{tr({ zh: '已确认启用的样本统一参加每次全量回归；待验收样本保留在收录队列。', en: 'All confirmed active samples participate in every full regression run. Samples awaiting review remain in the intake queue.' })}</p>
     </div><button className="gt-refresh" type="button" disabled={loading} onClick={() => { attempted.current.clear(); void load(); }}>{tr({ zh: '刷新', en: 'Refresh' })}</button></div>
     {history?.scope === 'local' && <p className="gt-run-note">{tr(syncState === 'done' ? { zh: '本机记录已同步，线上也可查看。', en: 'Local records synchronized and available online.' } : syncState === 'failed' ? { zh: '本机记录已保存，尚未同步到线上。服务上线或连接恢复后，刷新会重试。', en: 'Saved locally; cloud sync is pending. Refresh to retry when the service is available.' } : { zh: '正在读取本机检查记录。', en: 'Reading local check records.' })}</p>}

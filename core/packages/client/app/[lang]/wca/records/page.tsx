@@ -4,10 +4,10 @@ import { selectCurrentRecords } from '@cuberoot/shared/wca-records';
 
 // Ported from packages/client-vite/src/pages/wca_stats/RecordsPage.tsx.
 import { Suspense, useEffect, useMemo, useState } from 'react';
-import HomeLink from '@/components/HomeLink';
+import PageHeading from '@/components/PageHeading';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, Mars, Venus } from '@app-foundation/icons/lucide';
+import { Mars, Venus } from '@app-foundation/icons/lucide';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { EventIcon } from '@/components/EventIcon';
 import { loadFlagData } from '@/lib/country-flags';
@@ -178,13 +178,8 @@ function RecordsPageInner() {
   return (
     <div className="wse-page records-page">
       <header className="wse-header">
-        <div className="wse-header-row">
-          <HomeLink className="wse-back">
-            <ChevronLeft size={16} /> <span className="sr-only">{tr({ zh: '首页', en: 'Home' })}</span>
-          </HomeLink>
-        </div>
-        <h1>{tr({ zh: '纪录', en: 'Records'
-        })}</h1>
+        <PageHeading>{tr({ zh: '纪录', en: 'Records'
+        })}</PageHeading>
         <p className="wse-subtitle">
           {gender !== 'all'
             ? (show === 'current'

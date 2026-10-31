@@ -1,4 +1,5 @@
 'use client';
+import PageHeading from '@/components/PageHeading';
 import MoreToggle from '@/components/MoreToggle';
 import { alignAlgFile, caseAlgIssue, loadAlg } from '@/lib/alg_case_alignment';
 
@@ -19,7 +20,7 @@ import { alignAlgFile, caseAlgIssue, loadAlg } from '@/lib/alg_case_alignment';
 import { Fragment, useEffect, useMemo, useState, useRef, useId, type ReactNode } from 'react';
 import { useAlgCaseEntryTransition } from '@/hooks/useAlgViewTransition';
 import Link from '@/components/AppLink';
-import { ArrowLeft, ChevronLeft, ChevronRight, ExternalLink, Copy, Check, Shuffle, FlipHorizontal2, HelpCircle, AlertTriangle } from '@app-foundation/icons/lucide';
+import { ChevronLeft, ChevronRight, ExternalLink, Copy, Check, Shuffle, FlipHorizontal2, HelpCircle, AlertTriangle } from '@app-foundation/icons/lucide';
 import type { AlgCase, AlgEntry, AlgFile, AlgPuzzle, AlgSubmission } from '@cuberoot/shared';
 import { displayedAlgorithmStm } from '@/lib/alg-metrics';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
@@ -517,17 +518,14 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
   const renderDetail = (editor?: InlineCaseEditorParts) => (
     <div ref={motionRoot} data-slot-order={useF2lOrientationGrid ? slotOrder : undefined} className={`alg-case-detail${editor ? ' alg-case-inline-editor' : ''}${useF2lOrientationGrid ? ' is-f2l-orientation-grid' : ''}`}>
       <div className="alg-case-detail-head">
-        <Link href={backHref} className="alg-case-detail-back" prefetch={false}>
-          <ArrowLeft size={16} />
-          <span className="sr-only">{tr({ zh: '返回', en: 'Back' })}</span>
-        </Link>
-        <h1 className="alg-case-detail-title">
+
+        <PageHeading backHref={backHref} titleClassName="alg-case-detail-title">
           {editor ? editor.name : <span data-alg-shared-title={primary}>{primary}</span>}
           {showSub && <span className="alg-meta-head-sub">{sub}</span>}
           <Link href={backHref} className="alg-meta-head-open" prefetch={false} title={tr({ zh: '在列表中打开', en: 'Open in the list' })}>
             <ExternalLink size={14} />
           </Link>
-        </h1>
+        </PageHeading>
         <SettingsPopover label={tr({ zh: '公式设置', en: 'Algorithm settings' })}>
           {puzzle === 'sq1' && (
             <BoolToggle

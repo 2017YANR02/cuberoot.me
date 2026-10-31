@@ -10,6 +10,7 @@
  *
  * Next.js port of packages/client-vite/src/pages/gen/GenPage.tsx (1:1 shell).
  */
+import PageHeading from '@/components/PageHeading';
 import { Suspense, useEffect, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsString } from 'nuqs';
@@ -134,8 +135,8 @@ function GenPageInner() {
     <div className="gen-page" style={GEN_CX_VARS}>
       <header className="gen-header">
         <div className="gen-title">
-          <Shuffle size={20} className="gen-title-icon" />
-          <h1>
+
+          <PageHeading backHref="/scramble"><Shuffle size={20} className="gen-title-icon" />
             {t('打乱生成器', 'Scramble Generator')}
             <Link
               href="/scramble/gen-about"
@@ -145,7 +146,7 @@ function GenPageInner() {
             >
               <HelpCircle size={18} strokeWidth={1.75} />
             </Link>
-          </h1>
+          </PageHeading>
         </div>
         {mode === 'comp' && (
           <div ref={setCompHeaderSlot} className="gen-comp-header-slot" />

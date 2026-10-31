@@ -1,11 +1,12 @@
 // 顶部 hero:头像 + (国旗 + 姓名 + 性别图标) + 名字下方小字 WCA ID + 奖牌 / 纪录 / 统计信息。
 // 头像居中,国旗在名字左侧,WCA ID 左缘与名字左缘对齐.
 
+import PageHeading from '@/components/PageHeading';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Mars, Venus } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
-import PageBackLink from '@/components/PageBackLink';
+
 import { contestsHref } from '@/lib/contests-api';
 import BoolToggle from '@/components/BoolToggle';
 import { CompactSelect } from '@/components/CompactSelect';
@@ -193,10 +194,10 @@ export default function PersonHero({
           <span className="wp-hero-name-flag" title={p.country_iso2 ? countryName(p.country_iso2, isZh) : undefined}>
             <Flag iso2={p.country_iso2} className="wp-flag" />
           </span>
-          <div className="wp-hero-name-line page-back-heading"><PageBackLink contextOnly />
-            <h1 className="wp-hero-name">
+          <div className="wp-hero-name-line page-back-heading">
+            <PageHeading backHref="/wca/results" titleClassName="wp-hero-name">
               <a href={wcaUrl} target="_blank" rel="noopener noreferrer" className="wp-hero-name-link" title="WCA">{displayName}</a><WcaPersonTeamBadge wcaId={p.wca_id} />
-            </h1>
+            </PageHeading>
           </div>
           {former && former.length > 0 && (
             <div className="wp-hero-former">

@@ -8,9 +8,10 @@
  * Source / About) inside one React page. Persistence via localStorage replaces
  * upstream's cookie.js.
  */
+import PageHeading from '@/components/PageHeading';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
-import Link from '@/components/AppLink';
+
 import BoolToggle from '@/components/BoolToggle';
 import { ExternalLink, HelpCircle, Copy, Check } from '@app-foundation/icons/lucide';
 import * as XLSX from 'xlsx';
@@ -112,10 +113,8 @@ export default function CommutatorPage() {
         <div className="cmt-page">
             <header className="cmt-header">
                 <div className="cmt-title">
-                    <Link href="/alg" className="cmt-gh-link cmt-bracket-icon" title={t('返回公式库', 'Back to Algorithm DB')}>
-                        [,]
-                    </Link>
-                    <h1>{t('换位子', 'Commutator')}</h1>
+
+                    <PageHeading backHref="/alg">{t('换位子', 'Commutator')}</PageHeading>
                     <span className="cmt-title-sub">{t('换位子分解', 'Decompose into commutator notation')}</span>
                 </div>
                 <a

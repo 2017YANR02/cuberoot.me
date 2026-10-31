@@ -1,5 +1,6 @@
 'use client';
 
+import PageHeading from '@/components/PageHeading';
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTrainingPathname as usePathname, useTrainingQueryStates as useQueryStates, useTrainingHref } from '@/lib/training-host';
@@ -271,7 +272,7 @@ export default function AlgTimeAttackPage() {
       <header className="alg-time-attack-header">
         <div>
 
-          <h1>{tr({ zh: '连拧', en: 'Time Attack' })}</h1>
+          <PageHeading backHref="/alg">{tr({ zh: '连拧', en: 'Time Attack' })}</PageHeading>
           <p className="alg-time-attack-intro">
             {tr({ zh: '只看图，按当前顺序连续还原。拖动图旁的手柄即可重排。', en: 'Solve continuously from diagrams alone. Drag the handle beside any diagram to reorder it.' })}
           </p>

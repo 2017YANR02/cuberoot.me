@@ -6,6 +6,7 @@
 // Personal contact numbers (QQ 群/作者 QQ) and external mirror domains from the
 // upstream are intentionally omitted — this page is about the tool only.
 
+import PageHeading from '@/components/PageHeading';
 import type { JSX } from 'react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
@@ -279,8 +280,8 @@ export default function BldGuidePage(): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{tr({ zh: '盲拧训练说明', en: '3BLD Guide'
-        })}</h1>
+        <PageHeading backHref="/alg/3bld">{tr({ zh: '盲拧训练说明', en: '3BLD Guide'
+        })}</PageHeading>
       </div>
 
       {/* ── intro / public-beta note ── */}

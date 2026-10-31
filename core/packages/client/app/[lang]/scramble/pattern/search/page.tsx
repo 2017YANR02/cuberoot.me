@@ -11,6 +11,7 @@
  * 全灰图案视为空。搜索结果按魔方 48 对称做 isomorphic 去重,上限 MAX_RESULTS。
  */
 
+import PageHeading from '@/components/PageHeading';
 import { useCallback, useEffect, useMemo, useRef, useState, memo } from 'react';
 import { useQueryState } from 'nuqs';
 import {
@@ -293,7 +294,7 @@ export default function PatternSearchPage() {
   return (
     <div className="psc-page">
       <header className="psc-header">
-        <h1>{t('图案搜索', 'Pattern Search')}</h1>
+        <PageHeading backHref="/scramble/pattern">{t('图案搜索', 'Pattern Search')}</PageHeading>
         <p className="psc-sub">
           {t(
             '在 3×3 上搜索满足抽象图案约束的所有魔方状态。图案里同色 = 实际同色、异色 = 实际异色(灰也是一种颜色);每个图案可分配到任意几个面,每面需至少匹配一个图案。移植自 Herbert Kociemba 的 Cube Explorer。',

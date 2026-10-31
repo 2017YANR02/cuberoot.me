@@ -1,5 +1,6 @@
 'use client';
 
+import PageHeading from '@/components/PageHeading';
 import { appendReconVideo, splitReconVideoGroups, normalizeReconVideoUrls } from '@/lib/recon-video-url';
 /**
  * /recon/submit — submit/edit a reconstruction.
@@ -81,7 +82,7 @@ import {
 } from '@cuberoot/shared/recon-completion';
 import { loadComps, type Comp } from '@/lib/comp-search';
 import type { WcaPersonLite } from '@/lib/wca-api';
-import { ArrowLeft, ArrowRightLeft, History, Home, LogIn, UserPlus, ListPlus, AlertTriangle, Rows3, Upload } from '@app-foundation/icons/lucide';
+import { ArrowRightLeft, History, Home, LogIn, UserPlus, ListPlus, AlertTriangle, Rows3, Upload } from '@app-foundation/icons/lucide';
 import { Spinner } from '@/components/Spinner/Spinner';
 import '../recon.css';
 import './recon_submit.css';
@@ -1691,11 +1692,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       <div className="recon-page">
         <div className="recon-page-header">
           <div>
-            <Link href={`${langPrefix}/recon`} className="recon-back-link">
-              <ArrowLeft size={14} /> <span className="sr-only">{tr({ zh: '返回列表', en: 'Back to list' })}</span>
-            </Link>
-            <h1>{tr({ zh: '提交复盘', en: 'Submit Reconstruction'
-            })}</h1>
+
+            <PageHeading backHref={`${langPrefix}/recon`}>{tr({ zh: '提交复盘', en: 'Submit Reconstruction'
+            })}</PageHeading>
           </div>
           {simHref && (
             <Link
@@ -1741,7 +1740,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       <div className="submit-header">
         <div className="submit-header-top">
           <div className="detail-header submit-title-row">
-            <h1>{isEditing ? t('recon.editRecon') : t('recon.addRecon')}</h1>
+            <PageHeading backHref={`${langPrefix}/recon`}>{isEditing ? t('recon.editRecon') : t('recon.addRecon')}</PageHeading>
             {!isEditing && (searchParams?.get('sourceZh') || searchParams?.get('sourceEn')) && (
               <div className="submit-source-summary">
                 {sourceColors.length > 0 && (
@@ -1959,7 +1958,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   )}
                 </div>
               </div>
-
 
 
               {/* 非 WCA(非WCA比赛 / 练习):补国家(选完显示国旗) + 城市,WCA 比赛由所选比赛自动带出 */}

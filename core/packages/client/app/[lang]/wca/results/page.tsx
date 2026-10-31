@@ -13,13 +13,13 @@ import '@cuberoot/timer-ui/compact-select.css';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import type { EChartsType } from 'echarts';
 import Link from '@/components/AppLink';
-import HomeLink from '@/components/HomeLink';
+import PageHeading from '@/components/PageHeading';
 import { UnofficialMark } from '@/components/UnofficialMark';
 import dynamic from 'next/dynamic';
 import { WcaPersonRelationCells, useWcaTeams } from './_components/WcaTeamCell';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, HelpCircle } from '@app-foundation/icons/lucide';
+import { HelpCircle } from '@app-foundation/icons/lucide';
 import Paginator from '@/components/wca-stats/Paginator';
 import NameStatsView, { type NameStatsData } from '@/components/wca-stats/NameStatsView';
 import { type NameMode, NAME_MODES, nameByMode, FormerNames } from '@/components/wca-stats/nameMode';
@@ -604,10 +604,7 @@ function AllResultsPageInner() {
   return (
     <div className="wse-page">
       <header className="wse-header">
-        <div className="wse-header-row">
-          <HomeLink className="wse-back"><ChevronLeft size={16} /> <span className="sr-only">{tr({ zh: '首页', en: 'Home' })}</span></HomeLink>
-        </div>
-        <h1 className="wse-title-row">
+        <PageHeading titleClassName="wse-title-row">
           {tr({ zh: '排名', en: 'Rankings' })}
           {view === 'rank' && (
             <Link
@@ -619,7 +616,7 @@ function AllResultsPageInner() {
               <HelpCircle size={18} strokeWidth={1.75} />
             </Link>
           )}
-        </h1>
+        </PageHeading>
       </header>
 
       {/* ============ 指标视图:嵌入退役的 wr_metric;指标由「类型」下拉受控(隐藏其内置选择器)。

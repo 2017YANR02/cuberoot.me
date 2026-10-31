@@ -1,5 +1,6 @@
 'use client';
 
+import PageHeading from '@/components/PageHeading';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { parseAsString, useQueryStates } from 'nuqs';
@@ -126,7 +127,7 @@ function KinchPageInner() {
   return (
     <main className="wse-page kinch-page">
       <header className="wse-header">
-        <h1>Kinch</h1>
+        <PageHeading backHref="/wca">Kinch</PageHeading>
         <p className="wse-subtitle">
           {tr({
             zh: '用 17 个现役项目衡量综合速拧水平,分数越高越好。',

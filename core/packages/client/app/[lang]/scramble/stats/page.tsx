@@ -1,4 +1,5 @@
 'use client';
+import PageHeading from '@/components/PageHeading';
 import '@cuberoot/timer-ui/compact-select.css';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -330,7 +331,7 @@ type EssSrc = 'wca' | 'all' | 'ess' | 'skewb-fl' | EssStatSlug;
 // 否则它的 useDocumentTitle 会和求解器的标题互相覆盖(且 cleanup 把标题重置成品牌名)。
 function StatsDocTitle() {
   useDocumentTitle(PAGE_TITLE.zh, PAGE_TITLE.en);
-  return null;
+  return <PageHeading backHref="/scramble">{tr(PAGE_TITLE)}</PageHeading>;
 }
 
 export default function ScrambleStatsPage({ embedded = false }: { embedded?: boolean } = {}) {

@@ -1,5 +1,6 @@
 'use client';
 
+import PageHeading from '@/components/PageHeading';
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import BoolToggle from '@/components/BoolToggle';
@@ -40,7 +41,7 @@ export default function DoubleZbllAbout() {
   return <main className="dz-about">
     <header className="dz-about-hero">
       <div className="dz-about-topline"><HeaderToggles /></div>
-      <h1>{t('ZBLL 打乱方式与统计', 'ZBLL scramble modes and statistics')}</h1>
+      <PageHeading backHref="/alg">{t('ZBLL 打乱方式与统计', 'ZBLL scramble modes and statistics')}</PageHeading>
       <p>{t('从双底 HTM 到逆 case、四种最优度量、COEP 和 csTimer：了解每种打乱如何产生，比较分布与极端情况。', 'Explore double ZBLL HTM, inverse case, four optimal metrics, COEP and csTimer: how each scramble is made, its distribution and its extremes.')}</p>
       <AppLink href="/alg/3x3/zbll/run" prefetch={false} className="dz-about-start">{t('开始 ZBLL 训练', 'Open ZBLL training')} →</AppLink>
     </header>

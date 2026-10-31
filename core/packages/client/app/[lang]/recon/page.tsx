@@ -31,7 +31,7 @@ import { RecordBadge } from '@/components/RecordBadge';
 import { CuratedReconCard } from '@/components/ReconCard/CuratedReconCard';
 import { getPinnedRecons, setReconHomePin, getFeaturedRecons, setReconFeatured, getReconFavorites, setReconFavorite } from '@/lib/recon-api';
 import WcaAuth from '@/components/WcaAuth';
-import BackHome from '@/components/BackHome';
+import PageHeading from '@/components/PageHeading';
 import { EventSelect } from '@/components/EventSelect';
 import { ListSelect, type ListSelectItem } from '@/components/ListSelect';
 import { RecordSelect } from '@/components/RecordSelect';
@@ -932,10 +932,9 @@ export default function ReconListPage() {
 
   return (
     <div className="recon-page">
-      <BackHome />
       <div className="recon-page-header">
         <div>
-          <h1>
+          <PageHeading>
             {t('recon.title')}
             <Link href="/recon/submit" className="recon-add-btn" title={t('recon.add')} aria-label={t('recon.add')}>
               <CirclePlus size={18} />
@@ -950,7 +949,7 @@ export default function ReconListPage() {
             >
               <HelpCircle size={18} strokeWidth={1.75} />
             </Link>
-          </h1>
+          </PageHeading>
         </div>
       </div>
 

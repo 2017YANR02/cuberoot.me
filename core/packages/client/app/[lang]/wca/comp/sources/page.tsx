@@ -3,8 +3,9 @@
  * /wca/comp/sources — data flow diagram.
  * Ported from packages/client-vite/src/pages/comp/CompSourcesPage.tsx.
  */
-import Link from '@/components/AppLink';
-import { ArrowLeft, Database, Globe, Radio, FileText } from '@app-foundation/icons/lucide';
+import PageHeading from '@/components/PageHeading';
+
+import { Database, Globe, Radio, FileText } from '@app-foundation/icons/lucide';
 import '../comp.css';
 import { tr } from '@/i18n/tr';
 
@@ -13,9 +14,9 @@ export default function CompSourcesPage() {
   return (
     <div className="comp-sources-page">
       <div className="comp-sources-wrap">
-        <Link href="/wca/comp" className="comp-back-link"><ArrowLeft size={14} /> <span className="sr-only">{tr({ zh: '返回', en: 'Back' })}</span></Link>
-        <h1 className="comp-page-title">{tr({ zh: '数据流', en: 'Data Flow'
-        })}</h1>
+
+        <PageHeading backHref="/wca/comp" titleClassName="comp-page-title">{tr({ zh: '数据流', en: 'Data Flow'
+        })}</PageHeading>
         <p className="comp-page-subtitle">
           {tr({ zh: '从数据产生 → server 取数 → 渲染。同一份成绩,4 条上游渠道,server 按优先级挑一条。', en: 'From data origin → server fetch → render. Same result data, 4 upstream channels; server picks one by priority.'
         })}

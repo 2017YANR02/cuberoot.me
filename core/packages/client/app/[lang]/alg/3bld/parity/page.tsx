@@ -8,6 +8,7 @@
 // edge buffer with the edge target and the corner buffer with the corner target
 // (exCode x2) to build the parity state, and m2pSolve each (async WASM Kociemba).
 
+import PageHeading from '@/components/PageHeading';
 import { useEffect, useState, useCallback, type JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Play, FileText } from '@app-foundation/icons/lucide';
@@ -247,8 +248,8 @@ export default function ParityTrainerPage(): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{tr({ zh: '奇偶训练', en: 'Parity Trainer'
-        })}</h1>
+        <PageHeading backHref="/alg/3bld">{tr({ zh: '奇偶训练', en: 'Parity Trainer'
+        })}</PageHeading>
       </div>
 
       <div className="bld-section">

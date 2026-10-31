@@ -1,5 +1,5 @@
 'use client';
-import PageBackLink from '@/components/PageBackLink';
+import PageHeading from '@/components/PageHeading';
 
 import { sessionFetch } from '@/lib/session-fetch';
 /**
@@ -605,10 +605,10 @@ export default function AlgProgressPage() {
   return (
     <div className="alg-progress-page">
       <div className="alg-cat-header">
-        <PageBackLink fallback="/alg" />
-        <h1 className={trainingHost ? 'sr-only' : 'alg-cat-title'}>
+
+        <PageHeading backHref="/alg" titleClassName={trainingHost ? 'sr-only' : 'alg-cat-title'}>
           <span>{tr({ zh: '学习进度', en: 'Learning Progress' })}</span>
-        </h1>
+        </PageHeading>
       </div>
 
       <div className="alg-prog-body">

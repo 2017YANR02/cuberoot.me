@@ -1,5 +1,6 @@
 'use client';
 
+import PageHeading from '@/components/PageHeading';
 import Link from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 import { ALG_COMBO_TYPES, algComboTypeAnchor, algComboTypeHref } from '@/lib/alg_combo_types';
@@ -19,7 +20,7 @@ export default function AlgComboTypesPage() {
 
   return (
     <main className="alg-combo-types-page">
-      <h1>{tr({ zh: '公式叠加类型', en: 'Algorithm Combo Types' })}</h1>
+      <PageHeading backHref="/alg">{tr({ zh: '公式叠加类型', en: 'Algorithm Combo Types' })}</PageHeading>
       <p className="alg-combo-types-lead">
         {tr({
           zh: '叠加类型描述一条公式由哪些公式片段或手法组合而成。它描述的是公式写法，不是 case 本身的固定分类；同一个 case 换一条公式后，叠加类型也可能改变。',

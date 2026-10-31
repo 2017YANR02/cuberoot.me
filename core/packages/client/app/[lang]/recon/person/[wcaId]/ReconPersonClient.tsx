@@ -1,5 +1,5 @@
 'use client';
-import PageBackLink from '@/components/PageBackLink';
+import PageHeading from '@/components/PageHeading';
 
 /**
  * /recon/person/[wcaId] — 个人复盘主页。
@@ -192,7 +192,7 @@ export default function ReconPersonClient() {
 
   return (
     <div className="recon-page">
-      <div className="recon-person-header"><PageBackLink contextOnly />
+      <div className="recon-person-header">
         <div className="recon-person-avatar">
           {avatarUrl
             ? <img src={avatarUrl} alt="" />
@@ -201,12 +201,12 @@ export default function ReconPersonClient() {
               : <span className="recon-person-initial">{(displayName || '?').charAt(0).toUpperCase()}</span>}
         </div>
         <div className="recon-person-id">
-          <h1>
+          <PageHeading backHref="/recon">
             <PersonLink wcaId={wcaId} className="recon-person-name-link">{displayName}</PersonLink>
             {avatarUrl && identity.country && (
               <Flag iso2={identity.country} className="recon-inline-flag" />
             )}
-          </h1>
+          </PageHeading>
           <div className="recon-person-stats">
             <span><b>{counts.solver}</b> {tr({ zh: '选手', en: 'solver'
             })}</span>

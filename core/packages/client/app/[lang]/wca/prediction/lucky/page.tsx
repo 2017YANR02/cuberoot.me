@@ -25,11 +25,11 @@
  */
 'use client';
 
+import PageHeading from '@/components/PageHeading';
 import { Suspense, useState, useMemo, useCallback, useEffect } from 'react';
 import { useQueryState, parseAsInteger } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import Link from '@/components/AppLink';
-import { ArrowLeft } from '@app-foundation/icons/lucide';
+
 import { persistItem } from '@/lib/safe-storage';
 import { EVENTS, formatVal } from '../_components/events';
 import {
@@ -228,21 +228,17 @@ function LuckyLimitPageInner() {
   return (
     <div className="pred-page">
       <header className="pred-header">
-        <Link href="/wca/prediction" className="pred-back" aria-label="back">
-          <ArrowLeft size={16} />
-          <span>{tr({ zh: '极限预测', en: 'Prediction Hub'
-        })}</span>
-        </Link>
+
         <button className="pred-lang" onClick={toggleLang}>
           {(i18n.language.startsWith('zh') ? 'EN' : '中文')}
         </button>
       </header>
 
       <article className="pred-article" style={{ maxWidth: 1080, margin: '0 auto', padding: '32px 28px 80px' }}>
-        <h1 className="pred-title">
+        <PageHeading backHref="/wca/prediction" titleClassName="pred-title">
           {tr({ zh: '运气预测: 累积打乱越多, 撞上最幸运打乱的概率越高', en: 'Lucky-Scramble Forecast: Cumulative Probability of Hitting the Luckiest Scramble'
         })}
-        </h1>
+        </PageHeading>
         <p className="pred-subtitle">
           {tr({ zh: '三阶 4.3×10¹⁹ 个状态,其中只有 262 个 (1+18+243) 能 ≤ 2 步解开。单次随机抽到这种打乱的概率 ≈ 6×10⁻¹⁸,几乎为零。但 WCA 每年积累大量打乱 (含备用),累积撞上一次的概率 P = 1−(1−p)^N 随 N 单调上升。拖年份 → 看 N(Y) → 看每个 d 阈值的累积概率 → 看期望最幸运成绩。', en: '3x3 has 4.3×10^19 states; only 262 (= 1+18+243) are solvable in ≤2 moves. A single random scramble has only ~6×10^-18 chance of landing there. But WCA accumulates many scrambles per year (incl. backups); cumulative-hit probability is P = 1 − (1 − p)^N, monotonically rising with N. Drag the year → see N(Y) → see cumulative probability per depth threshold → see the expected luckiest result.'
         })}

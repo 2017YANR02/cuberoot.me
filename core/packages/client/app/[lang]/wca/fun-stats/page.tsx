@@ -1,4 +1,5 @@
 'use client';
+import PageHeading from '@/components/PageHeading';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import '@cuberoot/timer-ui/compact-select.css';
 
@@ -232,8 +233,8 @@ function FunStatsInner() {
 
   return (
     <div className="fun-stats">
-      <h1 className="fun-stats-title">{tr({ zh: '趣味统计', en: 'Fun Statistics'
-    })}</h1>
+      <PageHeading backHref="/wca" titleClassName="fun-stats-title">{tr({ zh: '趣味统计', en: 'Fun Statistics'
+    })}</PageHeading>
       <p className="fun-stats-intro">
         {tr({ zh: '基于 WCA 官方成绩的趣味排行,可选世界 / 洲际 / 国家。', en: 'Fun leaderboards from official WCA results — pick World, a continent, or a country.'
         })}

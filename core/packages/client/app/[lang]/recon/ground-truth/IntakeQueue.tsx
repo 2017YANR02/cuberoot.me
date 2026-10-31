@@ -1,5 +1,6 @@
 'use client';
 
+import PageHeading from '@/components/PageHeading';
 import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -78,7 +79,7 @@ export default function IntakeQueue() {
     } catch (e) { setError(String(e)); }
   };
   return <main className="ri-queue">
-    <h1>{tr({ zh: '复盘收录待办', en: 'Reconstruction intake queue' })}</h1>
+    <PageHeading backHref="/recon/ground-truth">{tr({ zh: '复盘收录待办', en: 'Reconstruction intake queue' })}</PageHeading>
     <p>{tr({ zh: '收录保存原始记录。人工确认、自动测试和正式启用分别记账。', en: 'Collected samples retain their original recordings. Human approval, test results and activation are tracked separately.' })}</p>
     <div className="ri-queue-controls">
       <label>{tr({ zh: '状态', en: 'Status' })} <select className="ri-field" value={filter} onChange={e => { setFilter(e.target.value); setOffset(0); }}>

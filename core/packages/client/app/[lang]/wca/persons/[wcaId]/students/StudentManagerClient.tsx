@@ -1,5 +1,6 @@
 'use client';
 
+import PageHeading from '@/components/PageHeading';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -66,7 +67,7 @@ export default function StudentManagerClient() {
     <div className="wp-page">
       <main className="wp-main">
         <header className="wp-student-manager-head">
-          <h1 className="wp-student-manager-title">{t('学生名单', 'Student roster')}</h1>
+          <PageHeading backHref={`/wca/persons/${profile.person.wca_id}`} titleClassName="wp-student-manager-title">{t('学生名单', 'Student roster')}</PageHeading>
           <AppLink
             href={`/wca/persons/${profile.person.wca_id}`}
             className="wp-student-manager-person"

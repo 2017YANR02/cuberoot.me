@@ -3,8 +3,9 @@
 /**
  * /wca/prediction-about — 速拧极限预测说明页
  */
+import PageHeading from '@/components/PageHeading';
 import Link from '@/components/AppLink';
-import { ArrowLeft } from '@app-foundation/icons/lucide';
+
 import './prediction_about.css';
 import { useT } from "@/hooks/useT";
 
@@ -27,15 +28,9 @@ export default function PredictionAboutPage() {
 
   return (
     <div className="pa-page">
-      <div className="pa-header">
-        <Link href="/wca/prediction" className="pa-back">
-          <ArrowLeft size={16} />
-          <span className="sr-only">{t('返回极限预测', 'Back to Prediction')}</span>
-        </Link>
-      </div>
 
       <main className="pa-main">
-        <h1 className="pa-title">{t('速拧极限预测是怎么工作的', 'How the speedcubing limit forecast works')}</h1>
+        <PageHeading backHref="/wca/prediction" titleClassName="pa-title">{t('速拧极限预测是怎么工作的', 'How the speedcubing limit forecast works')}</PageHeading>
         <p className="pa-intro">
           {t(
             '/wca/prediction 用三轨并行的数学方法预测 16 个 WCA 项目的速拧极限:曲线拟合(exp+floor / Gompertz / 幂律)、物理下界(M/TPS+R 步数法)、以及极值统计理论(GEV)。数据覆盖 1982-2050。',

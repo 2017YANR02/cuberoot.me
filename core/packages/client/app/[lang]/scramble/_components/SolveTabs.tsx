@@ -21,6 +21,7 @@
  * 只用于 3×3 时的子标签行判定(此时 puzzle 传参仍要给,子标签行才知道要不要出)。
  */
 
+import PageHeading from '@/components/PageHeading';
 import AppLink from '@/components/AppLink';
 import { EVENT_ID, PUZZLE_BY_EVENT, type SolvePuzzle } from '@/lib/solver-routes';
 import { useParams } from 'next/navigation';
@@ -106,6 +107,8 @@ export default function SolveTabs({ puzzle, mode, sub }: SolveTabsProps) {
   };
 
   return (
+    <>
+      {mode === 'solve' && <PageHeading backHref="/scramble">{t('求解', 'Solve')}</PageHeading>}
     <nav className="solve-tabs" aria-label={t('求解中心导航', 'Solve center navigation')}>
       {/* 项目行:一个下拉装下全部项目 —— WCA 组(有求解器的跳求解器,其余跳分布页)+ 非 WCA
           家族组(ivy 等,数据驱动)。求解/分布合页后这是页面顶部唯一的项目选择器(分布区不再
@@ -138,5 +141,6 @@ export default function SolveTabs({ puzzle, mode, sub }: SolveTabsProps) {
         </div>
       )}
     </nav>
+    </>
   );
 }

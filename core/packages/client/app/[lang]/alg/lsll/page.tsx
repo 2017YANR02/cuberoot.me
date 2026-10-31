@@ -1,4 +1,5 @@
 'use client';
+import PageHeading from '@/components/PageHeading';
 import '@cuberoot/timer-ui/compact-select.css';
 
 /**
@@ -14,7 +15,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { parseAsStringEnum } from 'nuqs';
 import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import Link from '@/components/AppLink';
-import { ArrowLeft } from '@app-foundation/icons/lucide';
+
 import { tr, T } from '@/i18n/tr';
 import { SearchInput } from '@/components/SearchInput';
 import { FaceletsCube } from '@/components/FaceletsCube';
@@ -90,15 +91,13 @@ export default function LsllHubPage() {
   return (
     <div className="alg-root">
       <div className="alg-cat-header">
-        <Link href="/alg/3x3" className="alg-back">
-          <ArrowLeft size={14} /> <span className="sr-only">{tr({ zh: '返回', en: 'Back' })}</span>
-        </Link>
-        <h1 className="alg-cat-title">
+
+        <PageHeading backHref="/alg/3x3" titleClassName="alg-cat-title">
           <span>LSLL <span className="alg-cat-count">
             {(twoLook ? listedClass3Total() : LISTED_CASES).toLocaleString()}{' '}
             {tr({ zh: twoLook ? '条路线' : '个', en: twoLook ? 'routes' : 'cases' })}
           </span></span>
-        </h1>
+        </PageHeading>
         <select
           value={String(twoLook)}
           onChange={event => { const v = event.currentTarget.value === 'true'; setCls(v ? '3' : '2'); }}

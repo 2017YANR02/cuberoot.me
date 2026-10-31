@@ -1,4 +1,5 @@
 'use client';
+import PageHeading from '@/components/PageHeading';
 import '@cuberoot/timer-ui/compact-select.css';
 
 // 3BLD 公式库 (commutator library) — 角 / 棱换位子字典的字母对矩阵。
@@ -225,7 +226,7 @@ export default function CommLibraryPage(): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{tr({ zh: '3BLD 公式库', en: '3BLD Commutator Library' })}</h1>
+        <PageHeading backHref="/alg/3bld">{tr({ zh: '3BLD 公式库', en: '3BLD Commutator Library' })}</PageHeading>
       </div>
 
       <p className="bld-input-summary">

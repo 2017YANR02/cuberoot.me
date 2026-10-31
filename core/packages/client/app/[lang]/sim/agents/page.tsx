@@ -1,12 +1,13 @@
 'use client';
 
+import PageHeading from '@/components/PageHeading';
 import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ArrowUpRight, Check, Pause, Play, RotateCcw } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import HeaderToggles from '@/components/HeaderToggles';
-import BackHome from '@/components/BackHome';
+
 import { ClientLoadStatus } from '@/components/StartupStatus';
 import { useT } from '@/hooks/useT';
 import type { CubeAgentRun } from '@cuberoot/shared/cube-agents';
@@ -78,9 +79,9 @@ export default function AgentReplayPage() {
 
   return (
     <main className="agents-page">
-      <header className="agents-topbar"><BackHome prefetch={false} /><HeaderToggles /></header>
+      <header className="agents-topbar"><HeaderToggles /></header>
       <div className="agents-heading">
-        <h1>{t('一起，解开魔方。', 'A puzzle. A team. A solution.')}</h1>
+        <PageHeading backHref="/sim">{t('一起，解开魔方。', 'A puzzle. A team. A solution.')}</PageHeading>
         <p>{t('千问与 DeepSeek，同一个二阶魔方。各派四个代理，看看谁先找到答案。', 'Qwen and DeepSeek. The same 2×2 cube. Four agents on each team, searching for a solution.')}</p>
       </div>
       <p className="agents-run-controls">{t('本页回放一次真实实验；播放不会发起模型请求。两组均使用非思考模式，每个代理最多六次尝试。', 'A recorded real experiment. Playback makes no model requests. Both teams use non-thinking mode, with up to six attempts per agent.')}</p>

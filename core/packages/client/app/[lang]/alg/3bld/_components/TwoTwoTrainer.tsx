@@ -6,6 +6,7 @@
 // (corner 3 / edge 2), the fill stride and the twist/flip wording. Parameterized
 // here so 2c2c/page.tsx and 2e2e/page.tsx are thin wrappers.
 
+import PageHeading from '@/components/PageHeading';
 import { useEffect, useMemo, useState, type JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Play, X } from '@app-foundation/icons/lucide';
@@ -226,7 +227,7 @@ export function TwoTwoTrainer({ piece }: TwoTwoTrainerProps): JSX.Element | null
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{(isZh ? spec.titleZh : spec.titleEn)}</h1>
+        <PageHeading backHref="/alg/3bld">{(isZh ? spec.titleZh : spec.titleEn)}</PageHeading>
       </div>
 
       <BldConfigBar
