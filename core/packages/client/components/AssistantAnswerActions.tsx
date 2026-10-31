@@ -86,7 +86,7 @@ export default function AssistantAnswerActions({ turn, lang, active, onRetry, on
         ...(onBranch ? [{ value: 'branch', label: <span className="assistant-menu-label"><GitBranch size={18}/>{tr({ zh: '创建对话分支', en: 'Branch in new chat' })}<ChevronRight size={16}/></span> }] : []),
       ]} onChange={value => { if (value === 'branch') { stop(); onBranch?.(); } }}/>}
       <span className="assistant-toolbar-divider" aria-hidden="true"/>
-      <Tooltip content={tr({ zh: '转换为 PDF', en: 'Export as PDF' })}>{tip => <button {...tip} className="site-assistant-action assistant-pdf-action" aria-label={tr({ zh: '转换为 PDF', en: 'Export as PDF' })} type="button" disabled={pdfBusy} onClick={() => void pdf()}><FileText size={18}/><span>{tr({ zh: '转换为 PDF', en: 'Export as PDF' })}</span></button>}</Tooltip>
+      <Tooltip content={tr({ zh: '转换为 PDF', en: 'Export as PDF' })}>{tip => <button {...tip} className="site-assistant-action assistant-pdf-action" aria-label={tr({ zh: '转换为 PDF', en: 'Export as PDF' })} type="button" disabled={pdfBusy} onClick={() => void pdf()}><FileText size={18}/><span>PDF</span></button>}</Tooltip>
     </div>
     {failure && <p className="site-assistant-voice-error" role="status">{failure}</p>}
     {shareOpen && <AssistantShareDialog turn={turn} lang={lang} preview={preview} text={exportText()} shareId={shareId} onShareId={setShareId} onClose={() => setShareOpen(false)}/>}

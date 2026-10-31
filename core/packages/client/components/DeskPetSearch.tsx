@@ -1,5 +1,6 @@
 'use client';
 import './settings-typography.css';
+import { Spinner } from '@/components/Spinner/Spinner';
 
 // Desk-pet workspace — shared navigation plus independent conversations.
 // The existing LandingSearch assistant owns each request/composer; the workspace
@@ -104,18 +105,19 @@ body:has(.deskpet-navigation .appearance-menu) .accent-color-menu{z-index:100030
 .deskpet-reply-item small,.deskpet-reply-empty{font-size:12px;color:var(--muted-foreground);}
 .deskpet-reply-empty{margin:0;padding:12px;}
 .deskpet-chat-section{margin:10px 10px 4px;font-size:.8rem;color:var(--muted-foreground);}
+.deskpet-chat-complete{display:block;width:8px;height:8px;border-radius:50%;background:var(--accent);}
+.deskpet-chat-status{display:flex;align-items:center;justify-content:center;flex:0 0 18px;margin-left:auto;}
 .deskpet-chat-row{display:flex;align-items:center;min-width:0;}
 .deskpet-chat-row-actions{display:flex;align-items:center;flex:none;}
-@media (hover:hover) and (pointer:fine){
-  .deskpet-chat-row-actions{opacity:0;pointer-events:none;}
-  .deskpet-chat-row:hover .deskpet-chat-row-actions,
-  .deskpet-chat-row:focus-within .deskpet-chat-row-actions,
-  .deskpet-chat-row-actions:has([aria-expanded="true"]){opacity:1;pointer-events:auto;}
-}
 .deskpet-chat-row .af-nav-link{flex:1;min-width:0;}
-.deskpet-chat-row .af-nav-link>span:last-child{flex:1;min-width:0;text-overflow:clip;
-  -webkit-mask-image:linear-gradient(to right,black calc(100% - 24px),transparent);
-  mask-image:linear-gradient(to right,black calc(100% - 24px),transparent);}
+.deskpet-chat-row .af-nav-link>.deskpet-chat-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+@media (hover:hover) and (pointer:fine){
+  .deskpet-chat-row-actions{width:0;overflow:hidden;opacity:0;pointer-events:none;}
+  .deskpet-chat-row:is(:hover,:focus-within,:has([aria-expanded="true"])) .deskpet-chat-row-actions{width:auto;overflow:visible;opacity:1;pointer-events:auto;}
+  .deskpet-chat-row:is(:hover,:focus-within,:has([aria-expanded="true"])) .deskpet-chat-title{text-overflow:clip;
+    -webkit-mask-image:linear-gradient(to right,black calc(100% - 24px),transparent);
+    mask-image:linear-gradient(to right,black calc(100% - 24px),transparent);}
+}
 .deskpet-chat-rename{display:flex;align-items:center;width:100%;min-width:0;}
 .deskpet-chat-name-field{display:flex;align-items:center;flex:1;min-width:0;border:1px solid var(--input);border-radius:8px;background:var(--background);}
 .deskpet-chat-name-field:focus-within{outline:2px solid var(--ring);outline-offset:1px;}
@@ -650,7 +652,10 @@ export default function DeskPetSearch({
                   <Tooltip content={tr({ zh: '保存名称', en: 'Save name' })}>{tip => <button {...tip} type="submit" className="deskpet-chat-action" disabled={!editingChat.title.trim()} aria-label={tr({ zh: '保存名称', en: 'Save name' })}><Check size={18} aria-hidden /></button>}</Tooltip>
                   <Tooltip content={tr({ zh: '取消重命名', en: 'Cancel rename' })}>{tip => <button {...tip} type="button" className="deskpet-chat-action" aria-label={tr({ zh: '取消重命名', en: 'Cancel rename' })} onClick={() => setEditingChat(null)}><X size={18} aria-hidden /></button>}</Tooltip>
                 </form> : <>
-                <button type="button" className="af-nav-link" aria-current={chat.id === chats.activeId ? 'page' : undefined} onClick={() => selectChat(chat.id)}><span className="af-nav-icon" aria-hidden="true"><MessageSquare size={18} /></span><span>{chatTitle(chat.id)}</span></button>
+                <button type="button" className="af-nav-link" aria-current={chat.id === chats.activeId ? 'page' : undefined} onClick={() => selectChat(chat.id)}><span className="af-nav-icon" aria-hidden="true"><MessageSquare size={18} /></span><span className="deskpet-chat-title">{chatTitle(chat.id)}</span>{(chat.responding || chat.pending || chat.unreadReply) && <span className="deskpet-chat-status">{chat.responding || chat.pending
+                  ? <Spinner size={16} label={chat.responding === 'writing' ? t('回答输出中', 'Writing answer') : t('思考中', 'Thinking')} />
+                  : chat.unreadReply ? <span className="deskpet-chat-complete" role="img" aria-label={t('回答已完成，未读', 'Answer complete, unread')} />
+                  : null}</span>}</button>
                 <div className="deskpet-chat-row-actions">
                 <CompactSelect unstyledTrigger triggerClassName="deskpet-chat-action" popupClassName="deskpet-chat-menu"
                   ariaLabel={tr({ zh: '聊天更多操作', en: 'More conversation actions' })} label={<Ellipsis size={18} aria-hidden />}
