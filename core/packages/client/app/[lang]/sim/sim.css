@@ -70,6 +70,7 @@
   color: var(--foreground);
   border-color: var(--accent);
 }
+.sim-open-recon-arrow { display: none; }
 
 .sim-counter {
   font-variant-numeric: tabular-nums;
@@ -774,6 +775,22 @@
 
 @media (max-width: 767px) {
   .sim-header { gap: 6px; padding: 8px; }
+  .sim-header:has(.sim-open-recon) > .page-heading { margin-right: auto; }
+  .sim-header:has(.sim-open-recon) > .sim-spacer { display: none; }
+  .sim-header:has(.sim-open-recon)::after { content: ''; flex-basis: 100%; }
+  .sim-header:has(.sim-open-recon) > .sim-project-controls,
+  .sim-header:has(.sim-open-recon) > .sim-tool-select,
+  .sim-header:has(.sim-open-recon) > .sim-panel-toggle { order: 1; }
+  .sim-open-recon,
+  .sim-open-recon:hover {
+    margin-left: auto;
+    padding: 0 4px;
+    min-height: 36px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+  .sim-open-recon-arrow { display: block; }
   .sim-header .sim-tool-select { max-width: 100%; }
   .sim-project-controls { flex: 0 1 auto; }
   .sim-panel-toggle { display: inline-flex; }

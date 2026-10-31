@@ -29,7 +29,7 @@ import { NXN_ORDER_DEFAULT, NXN_ORDER_MAX, NXN_ORDER_MIN } from '@/lib/nxn-order
 // inside the world-init effect so the ~1.2MB three bundle doesn't ship with
 // pyraminx/skewb/megaminx (which use cubing.js TwistyPlayer, not THREE).
 import type * as THREE from 'three';
-import { BookOpen, Maximize2, Minimize2, ArrowLeftRight, X } from '@app-foundation/icons/lucide';
+import { BookOpen, Maximize2, Minimize2, ArrowLeftRight, ArrowRight, X } from '@app-foundation/icons/lucide';
 import World, { type PuzzleKind } from './engine/world';
 import { attachInteraction } from './worldInteraction';
 import HandsRig from './engine/hands/handsRig';
@@ -2296,6 +2296,7 @@ export default function SimPage() {
             title={t('把当前打乱 / 解法带去发布复盘', 'Take this scramble / solution to a reconstruction')}
           >
             {t('去复盘', 'Open in Recon')}
+            <ArrowRight className="sim-open-recon-arrow" size={16} aria-hidden="true" />
           </AppLink>
         )}
       </header>
