@@ -35,27 +35,13 @@
 .fc-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 0.75rem;
   margin-bottom: 0.75rem;
   padding: 0 0.25rem;
 }
 
-.fc-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--muted-foreground);
-  text-decoration: none;
-  font-size: 0.85rem;
-  padding: 6px 12px;
-  border-radius: 8px;
-  transition: all 0.2s;
-  border: 1px solid transparent;
-}
-.fc-back:hover { color: var(--foreground); background: color-mix(in srgb, var(--foreground) 8%, transparent); border-color: color-mix(in srgb, var(--foreground) 15%, transparent); }
-.fc-back svg { width: 16px; height: 16px; }
-
 .fc-title {
+  margin: 0;
   font-size: 1.2rem;
   font-weight: 700;
   color: var(--foreground);
@@ -74,6 +60,7 @@
 .fc-title-help:hover { opacity: 1; color: var(--foreground); }
 
 .fc-offline-link {
+  margin-left: auto;
   display: inline-flex;
   align-items: center;
   gap: 5px;

@@ -5,11 +5,18 @@
  * 数帧工具 — ReconViewer 风格，支持多 Solve 和 Split Mark。
  * 加载本地视频，逐帧控制，标记帧，计算精确时间差。
  */
-import { ChevronDown } from '@app-foundation/icons/lucide';
+import {
+  ChevronDown, Keyboard as IconKeyboard, Upload as IconUpload,
+  Play as IconPlay, Pause as IconPause, Rewind as IconSkipBack,
+  FastForward as IconSkipForward, ChevronLeft as IconFrameBack,
+  ChevronRight as IconFrameForward, Crop as IconCrop, Download as IconExport,
+  MoveVertical, MoveHorizontal, RotateCcw, CirclePlus, X, HelpCircle, MonitorDown,
+} from '@app-foundation/icons/lucide';
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
-import { HelpCircle, MonitorDown } from '@app-foundation/icons/lucide';
+import HeaderToggles from '@/components/HeaderToggles';
+import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { useTranslation } from 'react-i18next';
 import type mediaInfoFactoryT from 'mediainfo.js';
 
@@ -36,81 +43,6 @@ import { isVideoFileName, matchesVideoFile, parseSplits, serializeSplits, type S
 
 import './frame-count.css';
 import { tr } from '@/i18n/tr';
-
-// ── SVG Icons ────────────────────────────────────────────────────────────────
-
-const IconKeyboard = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="4" width="20" height="16" rx="2" />
-    <line x1="6" y1="8" x2="6" y2="8" /><line x1="10" y1="8" x2="10" y2="8" />
-    <line x1="14" y1="8" x2="14" y2="8" /><line x1="18" y1="8" x2="18" y2="8" />
-    <line x1="6" y1="12" x2="6" y2="12" /><line x1="10" y1="12" x2="10" y2="12" />
-    <line x1="14" y1="12" x2="14" y2="12" /><line x1="18" y1="12" x2="18" y2="12" />
-    <line x1="8" y1="16" x2="16" y2="16" />
-  </svg>
-);
-
-const IconUpload = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-    <polyline points="17 8 12 3 7 8" />
-    <line x1="12" y1="3" x2="12" y2="15" />
-  </svg>
-);
-
-const IconPlay = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor">
-    <polygon points="6,4 20,12 6,20" />
-  </svg>
-);
-
-const IconPause = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor">
-    <rect x="6" y="4" width="4" height="16" rx="1" />
-    <rect x="14" y="4" width="4" height="16" rx="1" />
-  </svg>
-);
-
-const IconSkipBack = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor">
-    <polygon points="11,4 1,12 11,20" />
-    <polygon points="22,4 12,12 22,20" />
-  </svg>
-);
-
-const IconSkipForward = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor">
-    <polygon points="2,4 12,12 2,20" />
-    <polygon points="13,4 23,12 13,20" />
-  </svg>
-);
-
-const IconFrameBack = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor">
-    <polygon points="14,4 6,12 14,20" />
-  </svg>
-);
-
-const IconFrameForward = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor">
-    <polygon points="10,4 18,12 10,20" />
-  </svg>
-);
-
-const IconCrop = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M6.13 1L6 16a2 2 0 002 2h15" />
-    <path d="M1 6.13L16 6a2 2 0 012 2v15" />
-  </svg>
-);
-
-const IconExport = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-    <polyline points="7 10 12 15 17 10" />
-    <line x1="12" y1="15" x2="12" y2="3" />
-  </svg>
-);
 
 // ── 类型定义 ──────────────────────────────────────────────────────────────
 
@@ -298,6 +230,36 @@ function ThumbnailCanvas({ bitmap }: { bitmap: ImageBitmap }) {
 }
 
 // ── 组件 ──────────────────────────────────────────────────────────────────
+
+function ShortcutsDialog({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation();
+  const backdropProps = useModalDismiss(onClose);
+  return (
+    <div className="fc-modal-overlay" {...backdropProps}>
+      <div className="fc-modal" data-site-surface="popover" role="dialog" aria-modal="true" aria-labelledby="fc-shortcuts-title">
+        <button className="fc-modal-close" onClick={onClose} aria-label={tr({ zh: '关闭', en: 'Close' })} autoFocus><X size={18} /></button>
+        <h2 id="fc-shortcuts-title">{t('frameCount.shortcutsModal.title')}</h2>
+        {SHORTCUTS.map((item, i) =>
+          'section' in item ? (
+            <div key={i} className="fc-shortcut-section">{t(`frameCount.shortcutsModal.section.${item.section}`)}</div>
+          ) : (
+            <div key={i} className="fc-shortcut-row">
+              <span className="fc-shortcut-action">{t(`frameCount.shortcutsModal.action.${item.action}`)}</span>
+              <span className="fc-shortcut-keys">
+                {item.keys.map((k, j) => (
+                  <span key={j}>
+                    {j > 0 && <span style={{ color: 'var(--muted-foreground)', margin: '0 2px' }}>+</span>}
+                    <kbd className="fc-kbd">{k}</kbd>
+                  </span>
+                ))}
+              </span>
+            </div>
+          )
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function FrameCountPage() {
   const { t } = useTranslation();
@@ -2121,10 +2083,10 @@ export default function FrameCountPage() {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <BackHome />
       {/* Header */}
       <header className="fc-header">
-        <span className="fc-title">
+        <BackHome />
+        <h1 className="fc-title">
           {t('frameCount.title')}
           <Link
             href="/frame-count-about"
@@ -2136,7 +2098,7 @@ export default function FrameCountPage() {
           >
             <HelpCircle size={18} strokeWidth={1.75} />
           </Link>
-        </span>
+        </h1>
         <a
           href="https://github.com/RuiminYan/lossless-cut-framecount"
           target="_blank"
@@ -2150,6 +2112,7 @@ export default function FrameCountPage() {
           <MonitorDown size={15} strokeWidth={1.75} />
           <span>{tr({ zh: '离线桌面版', en: 'Offline desktop app' })}</span>
         </a>
+        <HeaderToggles />
       </header>
 
       {videoFile && (saveTarget?.file !== videoFile || saveStatus === 'error') && (
@@ -2167,7 +2130,7 @@ export default function FrameCountPage() {
       <div className="fc-main">
         {/* 左侧：视频区域 */}
         <div className="fc-video-col">
-          <div className={`fc-panel fc-video-zone ${dragging ? 'dragging' : ''}`}>
+          <div data-site-surface="panel" className={`fc-panel fc-video-zone ${dragging ? 'dragging' : ''}`}>
             {/* 顶部工具栏：总是显示; 视频相关按钮在无视频时 disabled */}
             <div className="fc-video-toolbar">
               {/* Row 1: filename + info (仅有视频时) */}
@@ -2201,7 +2164,7 @@ export default function FrameCountPage() {
                     disabled={!videoSrc}
                     onClick={() => setFlipV(v => !v)}
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3v18M17 8l-5-5-5 5M17 16l-5 5-5-5"/></svg>
+                    <MoveVertical size={16} />
                   </button>
                   <button
                     className={`fc-toolbar-icon ${flipH ? 'active' : ''}`}
@@ -2209,7 +2172,7 @@ export default function FrameCountPage() {
                     disabled={!videoSrc}
                     onClick={() => setFlipH(v => !v)}
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>
+                    <MoveHorizontal size={16} />
                   </button>
                   <button
                     className="fc-toolbar-icon"
@@ -2217,7 +2180,7 @@ export default function FrameCountPage() {
                     disabled={!videoSrc}
                     onClick={() => setRotation(prev => NEXT_ROTATION[prev])}
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                    <RotateCcw size={16} />
                   </button>
                   <button
                     className={`fc-toolbar-icon ${cropMode ? 'active' : ''}`}
@@ -2228,16 +2191,12 @@ export default function FrameCountPage() {
                       else { setCropMode(true); setCropRect(null); }
                     }}
                   >
-                    <IconCrop />
+                    <IconCrop size={16} />
                   </button>
                 </div>
 
                 <button className="fc-change-video fc-new-btn" onClick={() => fileInputRef.current?.click()} title={t('frameCount.toolbar.newVideo')}>
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1.5"/>
-                    <line x1="9" y1="5" x2="9" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    <line x1="5" y1="9" x2="13" y2="9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
+                  <CirclePlus size={18} />
                 </button>
                 <div className="fc-export-wrap" ref={exportMenuRef}>
                 <button
@@ -2387,7 +2346,7 @@ export default function FrameCountPage() {
           </div>
 
           {/* ── 控制栏 ── 总是渲染; 无视频时交互按钮 disabled */}
-          <div className="fc-panel fc-controls-wrap">
+          <div data-site-surface="panel" className="fc-panel fc-controls-wrap">
               {/* Mark 三角标,贴在时间轴上方,单击跳到对应帧 */}
               {totalFrames > 0 && activeSolve.marks.length > 0 && (
                 <div className="fc-mark-tri-row">
@@ -2554,7 +2513,7 @@ export default function FrameCountPage() {
         {/* 右侧：Solve 面板 — 总是显示 (空视频时也展示指引与布局) */}
         <div className="fc-solve-col">
             {/* Solve 选择器 */}
-            <div className="fc-panel fc-solve-header">
+            <div data-site-surface="panel" className="fc-panel fc-solve-header">
               <button className="fc-solve-btn" title={t('frameCount.solves.add')} onClick={addSolve}>+</button>
               <button className="fc-solve-btn" title={t('frameCount.solves.remove')} onClick={removeSolve}>−</button>
               <select
@@ -2588,7 +2547,7 @@ export default function FrameCountPage() {
             </div>
 
             {/* Marks 列表 */}
-            <div className="fc-panel fc-marks-panel">
+            <div data-site-surface="panel" className="fc-panel fc-marks-panel">
               {/* Mark 操作按钮 */}
               <div className="fc-mark-actions">
                 <button className="fc-action-btn" onClick={addMark} disabled={!videoSrc || activeSolve.marks.some(m => m.frame === currentFrame)}>{t('frameCount.marks.add')}</button>
@@ -2699,33 +2658,11 @@ export default function FrameCountPage() {
       </div>
 
       {/* Toast */}
-      {toast && <div className="fc-toast">{toast}</div>}
+      {toast && <div className="fc-toast" role="status" data-site-surface="popover">{toast}</div>}
 
       {/* 快捷键弹窗 */}
       {showShortcuts && (
-        <div className="fc-modal-overlay" onClick={() => setShowShortcuts(false)}>
-          <div className="fc-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="fc-modal-close" onClick={() => setShowShortcuts(false)}>✕</button>
-            <h2>{t('frameCount.shortcutsModal.title')}</h2>
-            {SHORTCUTS.map((item, i) =>
-              'section' in item ? (
-                <div key={i} className="fc-shortcut-section">{t(`frameCount.shortcutsModal.section.${item.section}`)}</div>
-              ) : (
-                <div key={i} className="fc-shortcut-row">
-                  <span className="fc-shortcut-action">{t(`frameCount.shortcutsModal.action.${item.action}`)}</span>
-                  <span className="fc-shortcut-keys">
-                    {item.keys.map((k, j) => (
-                      <span key={j}>
-                        {j > 0 && <span style={{ color: '#888', margin: '0 2px' }}>+</span>}
-                        <kbd className="fc-kbd">{k}</kbd>
-                      </span>
-                    ))}
-                  </span>
-                </div>
-              )
-            )}
-          </div>
-        </div>
+        <ShortcutsDialog onClose={() => setShowShortcuts(false)} />
       )}
 
       <FrameCountDiag
