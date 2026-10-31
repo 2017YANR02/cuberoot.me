@@ -345,6 +345,9 @@ button {
   flex-direction: column;
   align-items: stretch;
   gap: 6px;
+  /* WCA controls live in the source menu/topbar. An empty host must not
+     reserve a second toolbar row; local fallback controls retain their height. */
+  padding-block: 0;
 }
 
 .mobile-wca-source-config > .timer-wca-difficulty-top-row,
