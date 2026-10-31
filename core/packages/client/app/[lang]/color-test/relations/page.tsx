@@ -6,7 +6,6 @@ import { useTrainingStats } from '@/hooks/useTrainingStats';
 import { useEffect, useRef, useState } from 'react';
 import { RotateCcw } from '@app-foundation/icons/lucide';
 import BackHome from '@/components/BackHome';
-import HeaderToggles from '@/components/HeaderToggles';
 import TrainingNavButton from '@/components/TrainingNavButton';
 import { tr } from '@/i18n/tr';
 import {
@@ -110,7 +109,6 @@ export default function ColorRelationsPage() {
     <main className="color-quiz-page">
       <div className="color-quiz-topbar">
         <BackHome />
-        <HeaderToggles />
       </div>
 
       <header className="color-quiz-header">

@@ -10,7 +10,6 @@ import AppLink from '@/components/AppLink';
 import CorpusStatistics from './CorpusStatistics';
 import StatisticsOverview from './StatisticsOverview';
 import { useStatisticsData, type Mode } from './useStatisticsData';
-import HeaderToggles from '@/components/HeaderToggles';
 import { useT } from '@/hooks/useT';
 import './double-zbll-about.css';
 
@@ -40,7 +39,6 @@ export default function DoubleZbllAbout() {
   const orbits = (unique + 2 * quarterFixed ** 2 + halfFixed ** 2 + 4 * states) / 8;
   return <main className="dz-about">
     <header className="dz-about-hero">
-      <div className="dz-about-topline"><HeaderToggles /></div>
       <PageHeading backHref="/alg">{t('ZBLL 打乱方式与统计', 'ZBLL scramble modes and statistics')}</PageHeading>
       <p>{t('从双底 HTM 到逆 case、四种最优度量、COEP 和 csTimer：了解每种打乱如何产生，比较分布与极端情况。', 'Explore double ZBLL HTM, inverse case, four optimal metrics, COEP and csTimer: how each scramble is made, its distribution and its extremes.')}</p>
       <AppLink href="/alg/3x3/zbll/run" prefetch={false} className="dz-about-start">{t('开始 ZBLL 训练', 'Open ZBLL training')} →</AppLink>

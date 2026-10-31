@@ -4,7 +4,6 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { ImagePlus, RotateCcw, Trash2 } from '@app-foundation/icons/lucide';
 import { parseAsString, useQueryState } from 'nuqs';
 import AppLink from '@/components/AppLink';
-import HeaderToggles from '@/components/HeaderToggles';
 import { useMembership } from '@/hooks/useMembership';
 import { useRequireMembership } from '@/hooks/useRequireMembership';
 import { tr, useLang } from '@/i18n/tr';
@@ -183,7 +182,6 @@ export default function MusicManagePage() {
         <p>{isAdmin ? tr({ zh: '管理静态曲库与会员上传内容。', en: 'Manage the library and member uploads.' }) : tr({ zh: '查看审核状态、修改待审核内容，或删除自己上传的音乐（包括已发布曲目）。', en: 'Check review status, edit pending uploads, or delete your own music, including published tracks.' })}</p>
         <AppLink href="/music" className="music-credits-link">{tr({ zh: '打开音乐播放器', en: 'Open music player' })}<span aria-hidden="true">→</span></AppLink>
       </div>
-      <HeaderToggles />
     </header>
 
     {membershipLoading ? <p className="music-state">{tr({ zh: '正在确认会员状态…', en: 'Checking membership…' })}</p>

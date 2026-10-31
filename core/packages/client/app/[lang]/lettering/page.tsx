@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from 'react';
 import BackHome from '@/components/BackHome';
-import HeaderToggles from '@/components/HeaderToggles';
 import { VisualCube } from '@/components/VisualCube';
 import { CUBE_COLOR_NAMES, CUBE_FILL, type CubeFace } from '@/lib/cube-colors';
 import { tr, useLang } from '@/i18n/tr';
@@ -76,7 +75,6 @@ export default function LetteringPage() {
             <h1>{tr({ zh: '魔方拼字', en: 'Cube Lettering' })}</h1>
           </div>
         </div>
-        <HeaderToggles />
       </header>
 
       <main className="lettering-shell lettering-main">

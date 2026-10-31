@@ -6,7 +6,6 @@ import { apiUrl } from '@/lib/api-base';
 import { safeCompetitionReturn } from '@/lib/competition-return';
 import { useT } from '@/hooks/useT';
 import { ClearButton } from '@/components/ClearButton';
-import HeaderToggles from '@/components/HeaderToggles';
 import './verification.css';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
@@ -88,7 +87,7 @@ export default function CompetitionVerifyPage() {
     } catch (e) { setError(e instanceof Error ? e.message : t('验证失败，请重试。', 'Verification failed. Please retry.')); setBusy(false); }
   }
   return <main className="competition-verification">
-    <header><span>CubeRoot</span><HeaderToggles /></header>
+    <header><span>CubeRoot</span></header>
     <section data-site-surface="panel">
       {!verificationRequired ? <>
         <h1>{t('正在确认访问状态…', 'Checking access…')}</h1>

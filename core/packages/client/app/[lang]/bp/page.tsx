@@ -7,7 +7,6 @@ import { useBpMotion } from './useBpMotion';
 import { ArrowRight, ArrowUpRight, BookOpen, Building2, ChartNoAxesColumnIncreasing, Check, Clock3, Code2, Globe2, Layers3, Printer, Radio, RotateCcw, ScanSearch, School, ShieldCheck, Sparkles, Timer, Users } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import PersonLink from '@/components/PersonLink';
-import HeaderToggles from '@/components/HeaderToggles';
 import CubeRootLogo from '@/components/CubeRootLogo';
 import { VisualCube } from '@/components/VisualCube';
 import { tr } from '@/i18n/tr';
@@ -101,7 +100,6 @@ export default function BusinessPlanPage() {
           <button className="overview-action" type="button" onClick={printBusinessPlan}>
             <Printer size={16} aria-hidden />{tr({ zh: '打印 / PDF', en: 'Print / PDF' })}
           </button>
-          <HeaderToggles />
         </div>
       </header>
 

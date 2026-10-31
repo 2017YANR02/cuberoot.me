@@ -26,7 +26,6 @@ import { useQueryState, parseAsString, parseAsInteger } from 'nuqs';
 import { Check, Copy, Plus, RotateCcw, X } from '@app-foundation/icons/lucide';
 import BackHome from '@/components/BackHome';
 import { DateInput } from '@/components/DateInput';
-import HeaderToggles from '@/components/HeaderToggles';
 import { Flag } from '@/components/Flag';
 import { ListSelect, type ListSelectItem } from '@/components/ListSelect';
 import { useCopy } from '@/hooks/useCopy';
@@ -231,7 +230,7 @@ function TimezonePage() {
   if (!mounted) {
     return (
       <div className="tz-page">
-        <div className="tz-topbar"><BackHome /><HeaderToggles /></div>
+        <div className="tz-topbar"><BackHome /></div>
         <h1>{title}</h1>
         <div className="tz-skeleton"><LoadingIndicator /></div>
       </div>
@@ -242,7 +241,6 @@ function TimezonePage() {
     <div className="tz-page">
       <div className="tz-topbar">
         <BackHome />
-        <HeaderToggles />
       </div>
 
       <header className="tz-header">

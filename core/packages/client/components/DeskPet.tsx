@@ -52,7 +52,6 @@ import { getDeskPetCatalog, saveDeskPetCatalog } from '@/lib/deskpet-api';
 import { THEMES, THEME_IDS, type MiniTheme, type ThemeId } from '@/lib/deskpet-themes';
 import { getDeskPetSelection, getServerDeskPetSelection, setDeskPetSelection, subscribeDeskPetSelection } from '@/lib/deskpet-selection';
 import { AudioLines, SquarePen } from '@app-foundation/icons/lucide';
-import HeaderToggles from '@/components/HeaderToggles';
 import { Tooltip } from '@/components/Tooltip';
 import { useSpeechToText } from '@/hooks/useSpeechToText';
 import { tr } from '@/i18n/tr';
@@ -308,8 +307,6 @@ function CompactPet({ lang, onCompose }: {
       <Tooltip content={voiceLabel}>{tip =>
         <button {...tip} type="button" aria-label={voiceLabel} aria-pressed={speech.listening} onClick={() => speech.listening ? speech.stop() : speech.start()}><AudioLines size={21} aria-hidden /></button>
       }</Tooltip>
-      <span className="deskpet-compact-divider" aria-hidden />
-      <HeaderToggles triggerClassName="deskpet-compact-settings" />
     </div>
     {(speech.listening || speech.error) && <div className="deskpet-compact-status" data-site-surface="popover" role="status">
       {speech.error ? tr({ zh: '语音输入不可用，请检查浏览器支持和麦克风权限，或打字输入。', en: 'Voice input is unavailable. Check browser support and microphone permissions, or type instead.' }) : tr({ zh: '正在听写…', en: 'Listening…' })}

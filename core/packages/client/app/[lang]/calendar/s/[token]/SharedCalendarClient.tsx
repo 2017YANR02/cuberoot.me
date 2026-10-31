@@ -10,7 +10,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CalendarDays, ChevronLeft, ChevronRight, Link2, Check, Copy } from '@app-foundation/icons/lucide';
 import BackHome from '@/components/BackHome';
-import HeaderToggles from '@/components/HeaderToggles';
 import { ListSelect } from '@/components/ListSelect';
 import { UserContactLink } from '@/components/UserIdLabel';
 import { useCopy } from '@/hooks/useCopy';
@@ -114,7 +113,6 @@ export default function SharedCalendarClient() {
           <BackHome />
           <h1 className="cal-brand"><CalendarDays size={20} aria-hidden />{tr({ zh: '共享日历', en: 'Shared calendar' })}</h1>
           <span className="cal-foot-gap" />
-          <HeaderToggles />
         </div>
         <div className="cal-empty">{tr({ zh: '链接不完整。', en: 'That link looks incomplete.' })}</div>
       </div>
@@ -162,7 +160,6 @@ export default function SharedCalendarClient() {
         >
           {copied ? <Check size={16} aria-hidden /> : <Copy size={16} aria-hidden />}
         </button>
-        <HeaderToggles />
       </div>
 
       <div className="cal-body">

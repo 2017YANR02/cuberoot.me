@@ -4,7 +4,6 @@ import { ArrowUpRight, Download } from '@app-foundation/icons/lucide';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
 import BackHome from '@/components/BackHome';
 import AppLink from '@/components/AppLink';
-import HeaderToggles from '@/components/HeaderToggles';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { useT } from '@/hooks/useT';
 import { tr } from '@/i18n/tr';
@@ -70,7 +69,7 @@ export default function SolverComparisonPage() {
   }
 
   return <main className="solver-compare">
-    <div className="compare-topbar"><BackHome prefetch={false} /><HeaderToggles /></div>
+    <div className="compare-topbar"><BackHome prefetch={false} /></div>
     <header className="compare-hero">
       <div className="compare-heading"><h1>{t('三阶最优求解器', 'Optimal 3×3 solvers')}<span>Benchmark<span className="compare-period">.</span></span></h1>
       </div>

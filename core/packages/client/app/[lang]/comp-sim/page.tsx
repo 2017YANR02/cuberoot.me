@@ -16,7 +16,6 @@ import { ClearButton } from '@/components/ClearButton';
 import { CompPicker } from '@/components/CompPicker';
 import { CompCell } from '@/components/CompCell/CompCell';
 import { Flag } from '@/components/Flag';
-import HeaderToggles from '@/components/HeaderToggles';
 import PersonLink from '@/components/PersonLink';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import Paginator from '@/components/wca-stats/Paginator';
@@ -583,7 +582,6 @@ export default function CompSimPage() {
                 : tr({ zh: '一轮练习', en: 'Practice round' })}
             </p>
           </div>
-          <HeaderToggles />
         </header>
         <nav className="practice-progress" aria-label={tr({ zh: '训练进度', en: 'Practice progress' })}>
           {[
@@ -899,7 +897,6 @@ export default function CompSimPage() {
             })}
           </p>
         </div>
-        <HeaderToggles />
       </header>
       {messages}
       {resume && (

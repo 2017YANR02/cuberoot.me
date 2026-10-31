@@ -4,7 +4,6 @@ import MoreToggle from '@/components/MoreToggle';
 import type { ReactNode } from 'react';
 import { continuousCorners } from '@2017yanr02/continuous-corners';
 import Link from '@/components/AppLink';
-import HeaderToggles from '@/components/HeaderToggles';
 import { TeX, TeXBlock } from '@/components/math/Tex';
 import { useT } from '@/hooks/useT';
 import { T } from '@/i18n/tr';
@@ -39,7 +38,7 @@ export default function ContinuousCornersPage() {
   return <div className="cc-page">
     <div className="cc-topbar">
       <Link href="/dev" prefetch={false} className="cc-wordmark">CubeRoot <span>/</span> dev</Link>
-      <div className="cc-top-actions"><a href={REPO}>GitHub ↗</a><HeaderToggles /></div>
+      <div className="cc-top-actions"><a href={REPO}>GitHub ↗</a></div>
     </div>
     <main className="cc-main">
       <header className="cc-hero">

@@ -7,7 +7,6 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from 're
 import { RotateCcw } from '@app-foundation/icons/lucide';
 import BackHome from '@/components/BackHome';
 import BoolToggle from '@/components/BoolToggle';
-import HeaderToggles from '@/components/HeaderToggles';
 import {
   SubsetColorPicker,
   useSubsetSelection,
@@ -281,7 +280,6 @@ export default function ColorPositionsPage() {
     <main className="color-quiz-page">
       <div className="color-quiz-topbar">
         <BackHome />
-        <HeaderToggles />
       </div>
 
       <header className="color-quiz-header">

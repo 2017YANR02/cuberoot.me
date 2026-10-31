@@ -5,7 +5,6 @@ import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowDown, ArrowDownToLine, ArrowLeft, ArrowRight, ArrowUp, ArrowUpFromLine, CloudSun, Copy, Crosshair, Drone, Footprints, Maximize, Move, Plus, Redo2, RotateCcw, RotateCw, Trash2, Undo2 } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
-import HeaderToggles from '@/components/HeaderToggles';
 import BoolToggle from '@/components/BoolToggle';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import { CompactSelect } from '@/components/CompactSelect';
@@ -205,7 +204,7 @@ export default function SpacePage() {
           {environment === 'shanghai' && <CompactSelect label={<>{tr({ zh: '水色', en: 'Water' })}: {tr(RIVER_COLORS[riverColor])}</>} ariaLabel={tr({ zh: '江水颜色', en: 'River color' })} value={riverColor} valueText={tr(RIVER_COLORS[riverColor])} items={(Object.keys(RIVER_COLORS) as RiverColor[]).map(value => ({ value, label: tr(RIVER_COLORS[value]) }))} onChange={riverColor => setHistory(h => commitLayout(h, { ...h.current, riverColor }))} />}
           {(weather !== 'sunny' || environment !== 'original') && <BoolToggle value={history.current.weatherMotion ?? true} onChange={weatherMotion => setHistory(h => commitLayout(h, { ...h.current, weatherMotion }))} label={tr({ zh: '动态天气', en: 'Animate weather' })} />}
         </div>
-        <div className="space-header-actions"><AppLink href="/sim">{tr({ zh: '模拟器', en: 'Simulator' })}</AppLink><HeaderToggles /></div>
+        <div className="space-header-actions"><AppLink href="/sim">{tr({ zh: '模拟器', en: 'Simulator' })}</AppLink></div>
       </header>
       <nav className="space-destinations" aria-label={tr({ zh: '前往房间', en: 'Go to a room' })}>
         {(room === 'company' ? ['interior', 'study', 'courtyard'] as const : Object.keys(DESTINATIONS) as Destination[]).map(destination => <button className="space-destination" key={destination} onClick={() => { cancel(); scene.current?.view(destination); }}>{tr(room === 'company' ? ({ interior: { zh: '办公室 406', en: 'Office 406' }, study: { zh: '公共休息区', en: 'Shared lounge' }, courtyard: { zh: '电话亭', en: 'Phone booths' } }[destination as 'interior' | 'study' | 'courtyard']) : DESTINATIONS[destination])}</button>)}

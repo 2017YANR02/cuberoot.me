@@ -3,7 +3,6 @@
 import Image from 'next/image';
 import { ArrowDown, ArrowRight, ArrowUpRight, Globe2, MapPin, Server } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
-import HeaderToggles from '@/components/HeaderToggles';
 import JsonLd, { articleJsonLd } from '@/components/JsonLd';
 import { useT } from '@/hooks/useT';
 import { tr, useLang } from '@/i18n/tr';
@@ -50,7 +49,6 @@ export default function DnsRoutingPage() {
       <div className="dns-wrap">
         <header className="dns-topbar">
           <AppLink href="/dev" prefetch={false} className="dns-brand">CubeRoot <span>{t('/ dev / 域名', '/ dev / DNS')}</span></AppLink>
-          <HeaderToggles />
         </header>
 
         <article>

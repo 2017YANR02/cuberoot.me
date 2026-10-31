@@ -8,7 +8,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Key, Pencil, Trash2 } from '@app-foundation/icons/lucide';
 import BackHome from '@/components/BackHome';
-import HeaderToggles from '@/components/HeaderToggles';
 import Link from '@/components/AppLink';
 import { tr, useLang } from '@/i18n/tr';
 import { useAuthStore, useAuthUser } from '@/lib/auth-store';
@@ -45,7 +44,6 @@ export default function QuizMinePage() {
     <div className="quiz-page">
       <div className="quiz-head">
         <BackHome />
-        <HeaderToggles />
       </div>
 
       <div className="quiz-hub quiz-form-page">

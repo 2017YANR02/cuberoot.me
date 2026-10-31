@@ -4,7 +4,6 @@ import MoreToggle from '@/components/MoreToggle';
 import { useRef } from 'react';
 import { BookOpen, Check, Copy, Mic2 } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
-import HeaderToggles from '@/components/HeaderToggles';
 import { useCopy } from '@/hooks/useCopy';
 import { tr } from '@/i18n/tr';
 import { chapters, journey, metrics, objections, preparation, retention, reviewTemplate, rundown, skills, techniques } from './guide-data';
@@ -21,7 +20,6 @@ export default function LiveGuidePage() {
   return <main className="live-guide">
     <header className="live-guide-topbar">
       <AppLink href="/teachers/scripts" prefetch={false}><Mic2 size={17} aria-hidden />{tr({ zh: '直播话术库', en: 'Script library' })}</AppLink>
-      <HeaderToggles />
     </header>
     <div className="live-guide-hero">
       <h1>{tr({ zh: '直播卖课指南', en: 'A guide to selling courses live' })}</h1>

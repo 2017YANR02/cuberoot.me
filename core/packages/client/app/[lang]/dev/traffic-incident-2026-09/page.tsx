@@ -4,7 +4,6 @@ import MoreToggle from '@/components/MoreToggle';
 import Image from 'next/image';
 import { ArrowDown, ArrowUpRight, Check, CircleHelp, FileText, ShieldCheck, Activity, Server, Globe2, ScanLine } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
-import HeaderToggles from '@/components/HeaderToggles';
 import JsonLd from '@/components/JsonLd';
 import { useT } from '@/hooks/useT';
 import { tr, useLang } from '@/i18n/tr';
@@ -32,7 +31,6 @@ export default function TrafficIncidentPage() {
       <div className="incident-wrap">
         <header className="incident-topbar">
           <AppLink href="/dev" prefetch={false} className="incident-brand">CubeRoot <span>/ {t('开发日志', 'Engineering journal')}</span></AppLink>
-          <HeaderToggles />
         </header>
 
         <article>

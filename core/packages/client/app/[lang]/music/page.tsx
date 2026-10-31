@@ -6,7 +6,6 @@ import {
   Shuffle, SkipBack, SkipForward, TextQuote, Trash2, Upload, Volume2,
 } from '@app-foundation/icons/lucide';
 import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
-import HeaderToggles from '@/components/HeaderToggles';
 import AppLink from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import { ClearButton } from '@/components/ClearButton';
@@ -332,7 +331,6 @@ export default function MusicPage() {
         <button type="button" className="music-collapse music-transport-button" onClick={() => { void setView(null, { history: 'replace' }); }}
           aria-label={tr({ zh: '收起播放器', en: 'Collapse player' })}><ChevronDown /></button>
         <span className="music-mobile-heading">{tr({ zh: '正在播放', en: 'Now playing' })}</span>
-        <HeaderToggles />
       </header>
 
       <div className="music-workspace">

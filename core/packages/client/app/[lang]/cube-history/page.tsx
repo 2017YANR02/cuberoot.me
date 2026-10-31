@@ -6,7 +6,6 @@ import { useQueryState, useQueryStates, parseAsString, parseAsStringEnum, parseA
 import { ArrowUpRight, BookOpen, Check, ChevronDown, Columns3, Crown, Download, History, ImageOff, Link2, Plus, Search, SlidersHorizontal, X } from '@app-foundation/icons/lucide';
 import HomeLink from '@/components/HomeLink';
 import AppLink from '@/components/AppLink';
-import HeaderToggles from '@/components/HeaderToggles';
 import { ClearButton } from '@/components/ClearButton';
 import SearchInput from '@/components/SearchInput';
 import { CompactSelect } from '@/components/CompactSelect';
@@ -84,7 +83,6 @@ function Hero() {
   return <>
     <header className="ch-header">
       <HomeLink className="ch-wordmark">CubeRoot<span>{tr({ zh: '硬件档案', en: 'Hardware archive' })}</span></HomeLink>
-      <HeaderToggles />
     </header>
     <div className="ch-intro"><section className="ch-hero" aria-labelledby="ch-title">
       <div className="ch-hero-copy">

@@ -5,7 +5,6 @@ import { parseAsStringEnum, useQueryState } from 'nuqs';
 import BackHome from '@/components/BackHome';
 import Link from '@/components/AppLink';
 import JsonLd from '@/components/JsonLd';
-import HeaderToggles from '@/components/HeaderToggles';
 import { tr, T } from '@/i18n/tr';
 import { F2L_CHAPTERS, type ChapterId } from './data/chapters';
 import { F2L_CASES, ORDERED_BASIC_CASES } from './data/basic-cases';
@@ -44,7 +43,6 @@ export default function F2lTutorial() {
     <header className="f2l-header">
       <BackHome />
       <Link href="/tutorial?puzzle=3x3" prefetch={false}><T zh="教程" en="Tutorials" /></Link>
-      <HeaderToggles className="f2l-header-toggles" />
       <h1><T zh="F2L 教程" en="F2L tutorial" /></h1>
     </header>
     <JsonLd data={{ '@context': 'https://schema.org', '@type': 'Article', headline: tr({ zh: 'F2L 教程', en: 'F2L tutorial' }), description: tr({ zh: '从认识三步标态到顶面调整，逐步学习右前槽的棱角还原。', en: 'Recognize three-move cases, align the top layer and learn front-right pair insertions.' }) }} />

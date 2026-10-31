@@ -52,7 +52,6 @@ import {
 import AppLink from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import { ClearButton } from '@/components/ClearButton';
-import HeaderToggles from '@/components/HeaderToggles';
 import { SearchInput } from '@/components/SearchInput';
 import { useCopy } from '@/hooks/useCopy';
 import { useModalBackdrop, useModalDismiss } from '@/hooks/useModalDismiss';
@@ -865,7 +864,7 @@ function DrivePageContent() {
   if (!user) {
     return (
       <main className="drive-page">
-        <div className="drive-topbar"><BackHome /><HeaderToggles /></div>
+        <div className="drive-topbar"><BackHome /></div>
         <section className="drive-gate">
           <HardDrive aria-hidden="true" />
           <h1>{t('CubeRoot 网盘', 'CubeRoot Drive')}</h1>
@@ -879,7 +878,7 @@ function DrivePageContent() {
   if (!loading && snapshot && !snapshot.allowed) {
     return (
       <main className="drive-page">
-        <div className="drive-topbar"><BackHome /><HeaderToggles /></div>
+        <div className="drive-topbar"><BackHome /></div>
         <section className="drive-gate">
           <HardDrive aria-hidden="true" />
           <h1>{t('CubeRoot 网盘', 'CubeRoot Drive')}</h1>
@@ -903,7 +902,7 @@ function DrivePageContent() {
         if (view === 'files' && event.dataTransfer.files.length) enqueueFiles(event.dataTransfer.files);
       }}
     >
-      <div className="drive-topbar"><BackHome /><HeaderToggles /></div>
+      <div className="drive-topbar"><BackHome /></div>
 
       <header className="drive-header">
         <div>

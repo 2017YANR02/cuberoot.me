@@ -7,7 +7,6 @@ import { parseAsInteger, parseAsString, parseAsStringEnum, useQueryStates } from
 import Markdown from 'react-markdown';
 import AppLink from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
-import HeaderToggles from '@/components/HeaderToggles';
 import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
 import { eventIconClass } from '@/components/EventIcon/EventIcon';
 import { RegionPicker } from '@/components/RegionPicker';
@@ -190,7 +189,7 @@ export default function ContestsPage() {
   const loading = catalog.loading || response.loading;
 
   return <main className="contests-page">
-    <header className="contests-header"><BackHome /><HeaderToggles /><h1>{t('非官方比赛与纪录', 'Unofficial contests & records')}</h1>
+    <header className="contests-header"><BackHome /><h1>{t('非官方比赛与纪录', 'Unofficial contests & records')}</h1>
       <p>{t('来自 Cubing Contests 的比赛、排名与纪录，每天同步。这里的成绩与 WCA 官方成绩分开展示。', 'Contests, rankings and records from Cubing Contests, synced daily and displayed separately from official WCA results.')}</p>
     </header>
     <nav className="contests-nav" aria-label={t('Contests 导航', 'Contests navigation')}>{nav.map(([key, label]) =>

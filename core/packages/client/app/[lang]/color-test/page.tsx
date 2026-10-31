@@ -3,7 +3,6 @@
 import { ArrowUpRight } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
-import HeaderToggles from '@/components/HeaderToggles';
 import { tr } from '@/i18n/tr';
 import { CUBE_COLOR_LETTER_FOR_FACE, CUBE_COLOR_NAMES, CUBE_FILL, CUBE_ON_FILL } from '@/lib/cube-colors';
 import './color-test.css';
@@ -73,7 +72,6 @@ export default function ColorTestPage() {
     <main className="color-test-page">
       <div className="color-test-topbar">
         <BackHome />
-        <HeaderToggles />
       </div>
 
       <header className="color-test-header">
