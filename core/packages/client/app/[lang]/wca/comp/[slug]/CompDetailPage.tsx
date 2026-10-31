@@ -10,6 +10,8 @@ import { competitionFetch, ensureCompetitionAccess } from '@/lib/competition-acc
  */
 import { useEffect, useMemo, useState, useCallback, useRef, memo, startTransition, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
+import { flushSync } from 'react-dom';
+import { runViewTransition } from '@/lib/view-transition';
 import Link from '@/components/AppLink';
 import { usePathname, useRouter } from 'next/navigation';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
@@ -1599,8 +1601,12 @@ export default function CompDetailPage() {
   const onChangeRound = (value: string) => {
     const [e, r] = value.split(':');
     if (!e || !r) return;
-    setEventParam(e);
-    setRoundUrlParam(String(roundTypeIdToNum(data, e, r)));
+    runViewTransition(() => {
+      flushSync(() => {
+        setEventParam(e);
+        setRoundUrlParam(String(roundTypeIdToNum(data, e, r)));
+      });
+    }, true);
   };
 
   const onChangeFilter = (value: string) => {
@@ -2491,7 +2497,12 @@ function ResultsTable({ results, search = '', users, round, isZh, pbMap, advance
     setSort(prev => prev.key !== key ? { key, dir: 'asc' } : prev.dir === 'asc' ? { key, dir: 'desc' } : { key: null, dir: 'asc' });
   }, []);
   // 切项目 / 轮次重置排序(把数 / 量纲不同)。
-  useEffect(() => { setSort({ key: null, dir: 'asc' }); }, [round?.e, round?.i]);
+  const roundKey = `${round?.e}:${round?.i}`;
+  const [sortedRound, setSortedRound] = useState(roundKey);
+  if (sortedRound !== roundKey) {
+    setSortedRound(roundKey);
+    setSort({ key: null, dir: 'asc' });
+  }
   // 成绩变更覆盖层感知的有效值(订正后的 best/average),供名次 + 列头排序按订正值排。
   const eff = useMemo(() => makeEffRank(users, changeMap), [users, changeMap]);
   const displayResults = useMemo(() => {
@@ -2514,49 +2525,7 @@ function ResultsTable({ results, search = '', users, round, isZh, pbMap, advance
     });
   }, [results, search, users, sort, eff]);
 
-  const tableRef = useRef<HTMLTableElement>(null);
   const windowed = displayResults.length > 80;
-  // Auto-sized table columns must not shrink when their widest visible row leaves.
-  // Retain measured widths within this round, but allow wider values to grow them.
-  useEffect(() => {
-    const table = tableRef.current;
-    if (!table || !windowed) return;
-    const columns = Array.from(table.querySelectorAll('col'));
-    let widths: number[] = [];
-    let tableWidth = 0;
-    const observer = new ResizeObserver(([entry]) => {
-      // Row windows change table height on every mount. Only remeasure columns
-      // when the width changes, and finish all reads before writing any styles.
-      const nextWidth = entry.borderBoxSize[0]?.inlineSize ?? entry.contentRect.width;
-      if (Math.abs(nextWidth - tableWidth) < 0.5) return;
-      tableWidth = nextWidth;
-      const cells = Array.from(table.tHead?.rows[0]?.cells ?? []);
-      const measured = cells.map(cell => cell.getBoundingClientRect().width);
-      measured.forEach((width, i) => {
-        if (width > (widths[i] ?? 0) + 0.5 && columns[i]) {
-          widths[i] = width;
-          columns[i].style.width = `${width}px`;
-        }
-      });
-    });
-    const reset = () => {
-      widths = [];
-      tableWidth = 0;
-      columns.forEach(col => { col.style.width = ''; });
-    };
-    let viewportWidth = window.innerWidth;
-    const onResize = () => {
-      // iPhone Safari resizes the viewport as its toolbar slides away. A height
-      // change must not discard column widths and reflow the table mid-scroll.
-      if (window.innerWidth === viewportWidth) return;
-      viewportWidth = window.innerWidth;
-      reset();
-    };
-    reset();
-    observer.observe(table);
-    window.addEventListener('resize', onResize);
-    return () => { observer.disconnect(); window.removeEventListener('resize', onResize); reset(); };
-  }, [windowed, round?.e, round?.i]);
   const handlers = useRef({ onClickCuber, onEdit, onRefresh });
   useEffect(() => { handlers.current = { onClickCuber, onEdit, onRefresh }; }, [onClickCuber, onEdit, onRefresh]);
   const handleClickCuber = useCallback((number: number) => handlers.current.onClickCuber(number), []);
@@ -2585,6 +2554,8 @@ function ResultsTable({ results, search = '', users, round, isZh, pbMap, advance
   );
 
   const columnCount = (showAvg ? 4 : 3) + attemptCount;
+  // Stable geometry across rounds, including windows that mount while scrolling.
+  const tableWidth = `calc(var(--result-place) + var(--result-person) + ${showAvg ? 2 : 1} * var(--result-summary) + ${attemptCount} * var(--result-attempt))`;
   const renderRows = (start: number, end: number) => displayResults.slice(start, end).map((r, offset) => {
     const idx = start + offset;
     return (
@@ -2618,8 +2589,13 @@ function ResultsTable({ results, search = '', users, round, isZh, pbMap, advance
 
   return (
     <div className="comp-table-wrap sticky-scroll-mobile">
-      <table ref={tableRef} aria-rowcount={displayResults.length + 1} className={`comp-table${compIso2 === 'cn' && isZh ? ' comp-table-cn' : ''}`}>
-        {windowed && <colgroup>{Array.from({ length: columnCount }, (_, i) => <col key={i} />)}</colgroup>}
+      <table aria-rowcount={displayResults.length + 1} style={{ width: tableWidth }} className={`comp-table comp-results-table${isMbldEvent(round.e) ? ' comp-results-table-mbld' : ''}${compIso2 === 'cn' && isZh ? ' comp-table-cn' : ''}`}>
+        <colgroup>
+          <col style={{ width: 'var(--result-place)' }} />
+          <col style={{ width: 'var(--result-person)' }} />
+          {Array.from({ length: showAvg ? 2 : 1 }, (_, i) => <col key={`summary-${i}`} style={{ width: 'var(--result-summary)' }} />)}
+          {Array.from({ length: attemptCount }, (_, i) => <col key={`attempt-${i}`} style={{ width: 'var(--result-attempt)' }} />)}
+        </colgroup>
         <thead>
           <tr>
             <th className="th-place">{tr({ zh: '名次', en: 'Place' })}</th>

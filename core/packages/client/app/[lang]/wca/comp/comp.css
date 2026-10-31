@@ -799,6 +799,34 @@ td.is-pr {
   display: table-cell;
   width: auto;
 }
+/* Result columns must not resize with names, record badges or virtual windows. */
+.comp-results-table {
+  --result-place: 4.5rem;
+  --result-person: 11rem;
+  --result-summary: 9rem;
+  --result-attempt: 6rem;
+  table-layout: fixed;
+}
+@media (max-width: 640px) {
+  .comp-results-table {
+    --result-place: 3.5rem;
+    --result-person: 9rem;
+    --result-summary: 6.5rem;
+    --result-attempt: 5.5rem;
+  }
+}
+.comp-results-table-mbld {
+  --result-summary: 14rem;
+  --result-attempt: 12rem;
+}
+.comp-results-table .comp-result-person,
+.comp-results-table .comp-result-person-link,
+.comp-results-table .comp-result-person-name { min-width: 0; }
+.comp-results-table .comp-result-person-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .comp-result-person {
   display: flex;
   align-items: center;
