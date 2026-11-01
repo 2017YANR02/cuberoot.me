@@ -9,8 +9,8 @@ const phase = (zh: string, en: string, first: number, last = first): Instruction
 export const INSTRUCTION_PHASES: Record<string, InstructionPhase[][]> = {
   daisy: [
     [phase('转体，把标出的白格放到前面右侧', 'Rotate the cube to put the outlined white sticker on the right side of the front face', 1), phase('右手上', 'lift with the right face', 2)],
-    [phase('转顶层移开挡路的花瓣', 'Turn the top layer to move the blocking petal out of the way', 1), phase('右手上', 'lift with the right face', 2)],
     [phase('转体，把标出的白格放到前面左侧', 'Rotate the cube to put the outlined white sticker on the left side of the front face', 1), phase('左手上', 'lift with the left face', 2)],
+    [phase('转顶层移开挡路的花瓣', 'Turn the top layer to move the blocking petal out of the way', 1), phase('右手上', 'lift with the right face', 2)],
     [phase('压前层送到二楼', 'Lower the front to bring it to the middle', 1), phase('右手上', 'lift with the right face', 2)],
     [phase('压前层送到二楼', 'Lower the front to bring it to the middle', 1), phase('左手上', 'lift with the left face', 2)],
     [phase('把这条白棱放到右层', 'Put this edge in the right layer', 1), phase('做“上上”', 'turn the right face twice', 2)],
@@ -39,8 +39,8 @@ export const INSTRUCTION_PHASES: Record<string, InstructionPhase[][]> = {
     [phase('双压', 'f', 1), phase('右公式', 'the right trigger', 2, 5), phase('双提', 'f′', 6)],
   ],
   'yellow-face': [
-    [phase('转顶层把鱼头放左前', 'turn the top to put the head at front-left', 1), phase('做右鱼公式', 'do right Sune', 2, 8)],
-    [phase('转顶层把鱼头放右前', 'turn the top to put the head at front-right', 1), phase('做左鱼公式', 'do left Sune', 2, 8)],
+    [phase('转顶层把鱼头放左前，F面鱼鳍朝右', 'Turn the top to put the head at front-left, with the fin on the right of the F face', 1), phase('做右鱼公式', 'do right Sune', 2, 8)],
+    [phase('转顶层把鱼头放右前，F面鱼鳍朝左', 'Turn the top to put the head at front-right, with the fin on the left of the F face', 1), phase('做左鱼公式', 'do left Sune', 2, 8)],
     [phase('转顶层让拇指碰黄', 'Turn the top until it touches yellow', 1), phase('做右鱼公式', 'do right Sune', 2, 8)],
     [phase('转顶层让拇指不碰黄', 'Turn the top so it does not touch yellow', 1), phase('做右鱼公式', 'do right Sune', 2, 8)],
   ],

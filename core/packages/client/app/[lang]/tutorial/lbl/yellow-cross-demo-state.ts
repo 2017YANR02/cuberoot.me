@@ -29,19 +29,28 @@ export function yellowCrossRecognitionStickers(alg: string): string[] {
   return [1, 3, 4, 5, 7].map(index => cube.faces[Face.U][index]).filter(id => id.startsWith('U'));
 }
 
-// Use the existing lesson setups, rotated on U, to cover all seven unfinished
-// edge-orientation patterns. These legal states retain the solved first two layers.
-export const YELLOW_CROSS_DEMO_SETUPS = [...new Map(examples.flatMap(example => {
+// Keep two distinct orientations of each two-edge case.
+const allSetups = [...new Map(examples.flatMap(example => {
   const setup = resolvePlayerSetup('3x3', example.alg, example.setup, example.startSolved ?? false);
   return topTurns.map(turn => {
     const alg = expand(`${setup} ${turn}`);
     return [yellowCrossPattern(alg), alg] as const;
   });
 })).values()];
+const isLine = (pattern: string) => pattern === '1001' || pattern === '0110';
+let elbows = 0;
+const selectedSetups = allSetups.filter(setup => {
+  const pattern = yellowCrossPattern(setup);
+  return pattern === '0000' || isLine(pattern) || elbows++ < 2;
+});
+// A second legal dot state takes the line algorithm first instead of the L-shape algorithm.
+const LINE_FIRST_DOT_SETUP = expand(`${allSetups.find(setup => yellowCrossPattern(setup) === '0000')!} U`);
+export const YELLOW_CROSS_DEMO_SETUPS = [...selectedSetups, LINE_FIRST_DOT_SETUP];
 
 export type YellowCrossCase = 'dot' | 'line' | 'elbow';
 export type YellowCrossPhase = {
   kind: YellowCrossCase;
+  actionKind: 'line' | 'elbow';
   alignment: boolean;
   start: number;
   end: number;
@@ -59,14 +68,14 @@ export function buildYellowCrossDemo(setup: string) {
     const yellow = edgeIndices.filter((_, i) => pattern[i] === '1');
     const kind: YellowCrossCase = yellow.length === 0 ? 'dot'
       : yellow.length === 2 && yellow[0] + yellow[1] === 8 ? 'line' : 'elbow';
-    const index = kind === 'dot' ? 2 : kind === 'line' ? 0 : 1;
+    const index = kind === 'dot' ? (expand(setup) === LINE_FIRST_DOT_SETUP ? 0 : 1) : kind === 'line' ? 0 : 1;
     const turn = kind === 'dot' ? '' : topTurns.find(turn =>
       yellowCrossPattern(`${setup} ${moves.join(' ')} ${turn}`) === expected[index]);
     if (turn === undefined) throw new Error('Invalid yellow-cross demonstration state');
     const append = (alg: string, alignment: boolean) => {
       const start = moves.length;
       moves.push(...movesOf(alg));
-      phases.push({ kind, alignment, start, end: moves.length, alg });
+      phases.push({ kind, actionKind: index === 0 ? 'line' : 'elbow', alignment, start, end: moves.length, alg });
     };
     if (turn) append(turn, true);
     append(actions[index], false);

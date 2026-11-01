@@ -24,7 +24,9 @@ import Practice from './Practice';
 import Walkthrough from './Walkthrough';
 import CompleteDemo, { EdgePositionExample, type DemoCaseCue } from './CompleteDemo';
 import MiddleCases, { MiddleCaseDiagram } from './MiddleCases';
-import { COMPLETE_DEMO_STAGES, type CompleteDemoStage } from './complete-demo-state';
+import LastLayerTerms, { LastLayerTermDiagram } from './LastLayerTerms';
+import { COMPLETE_DEMO_STAGES, yellowFaceTouchSticker, yellowFishRecognitionStickers, type CompleteDemoStage } from './complete-demo-state';
+import { useStartInspection } from './use-start-inspection';
 import AlgSteps from './AlgSteps';
 import AlgLesson from './AlgLesson';
 import { ALG_LESSONS, LBL_COURSE_ENTRIES } from './alg-lessons';
@@ -112,6 +114,8 @@ export default function LblTutorial() {
   const [demoCaseCue, setDemoCaseCue] = useState<DemoCaseCue>(null);
   const overview = selection.step !== step.id || selection.index === -1;
   const middleCore = step.id === 'middle' && selection.step === step.id && selection.index === -2;
+  const hasTerms = ['middle', 'corner-position', 'edge-position'].includes(step.id);
+  const lastLayerTerms = hasTerms && step.id !== 'middle' && selection.step === step.id && selection.index === -2;
   const hasCompleteDemo = COMPLETE_DEMO_STAGES.includes(step.id as CompleteDemoStage);
   const completeDemo = hasCompleteDemo && selection.step === step.id && selection.index === step.examples.length;
   const exampleIndex = selection.step === step.id ? Math.max(0, Math.min(selection.index, step.examples.length - 1)) : 0;
@@ -188,15 +192,15 @@ export default function LblTutorial() {
           </p>)}
         </div>}
         <div className="lbl-case-layout">
-        <div className="lbl-cases" data-count={step.examples.length + 1 + (step.id === 'middle' ? 1 : 0) + (hasCompleteDemo ? 1 : 0)} role="group" aria-label={tr({ zh: '演示情况', en: 'Examples' })}>
+        <div className="lbl-cases" data-count={step.examples.length + 1 + (hasTerms ? 1 : 0) + (hasCompleteDemo ? 1 : 0)} role="group" aria-label={tr({ zh: '演示情况', en: 'Examples' })}>
           <button type="button" className="lbl-button lbl-case lbl-case-overview" aria-pressed={overview}
             onClick={() => setSelection({ step: step.id, index: -1 })}>
             {stageDiagram(step.id, 52, '')}
             <span><T zh="概览" en="Overview" /></span>
           </button>
-          {step.id === 'middle' && <button type="button" className="lbl-button lbl-case" aria-pressed={middleCore}
+          {hasTerms && <button type="button" className="lbl-button lbl-case" aria-pressed={middleCore || lastLayerTerms}
             onClick={() => setSelection({ step: step.id, index: -2 })}>
-            <MiddleCaseDiagram size={52} /><span><T zh="认识去右／去左" en="Why right or left?" /></span>
+            {step.id === 'middle' ? <MiddleCaseDiagram size={52} /> : <LastLayerTermDiagram wall={step.id === 'edge-position'} size={52} />}<span><T zh="术语介绍" en="Terminology" /></span>
           </button>}
           {step.examples.map((e, i) => {
             const thumbCue = step.id === 'yellow-face' && (i === 2 || i === 3);
@@ -218,7 +222,7 @@ export default function LblTutorial() {
             return <button type="button" key={i} className={`lbl-button lbl-case${thumbCue ? ' lbl-case-cue' : ''}`}
                 data-demo-cue={completeDemo && demoCaseCue?.index === i ? 'true' : undefined}
                 data-cue-paused={demoCaseCue && !demoCaseCue.playing ? 'true' : undefined}
-                onClick={() => setSelection({ step: step.id, index: i })} aria-pressed={!overview && !middleCore && !completeDemo && i === exampleIndex}>{content}</button>;
+                onClick={() => setSelection({ step: step.id, index: i })} aria-pressed={!overview && !middleCore && !lastLayerTerms && !completeDemo && i === exampleIndex}>{content}</button>;
           })}
           {hasCompleteDemo && <button type="button" className="lbl-button lbl-case"
             aria-pressed={completeDemo} onClick={() => setSelection({ step: step.id, index: step.examples.length })}>
@@ -251,7 +255,7 @@ export default function LblTutorial() {
           </div>
           <p>{tr(stageGoal.summary ?? stageGoal.after)}</p>
           <p className="lbl-overview-focus">{tr(LBL_LEARNING_FOCUS[step.id])}</p>
-        </div> : middleCore ? <MiddleCases /> : completeDemo ? <CompleteDemo key={step.id} stage={step.id as CompleteDemoStage} onCaseCueChange={setDemoCaseCue} />
+        </div> : middleCore ? <MiddleCases /> : lastLayerTerms ? <LastLayerTerms wall={step.id === 'edge-position'} /> : completeDemo ? <CompleteDemo key={step.id} stage={step.id as CompleteDemoStage} onCaseCueChange={setDemoCaseCue} />
           : step.id === 'edge-position' ? <EdgePositionExample key={`${step.id}-${exampleIndex}`} example={demo} index={exampleIndex} /> : <LessonDemo key={`${step.id}-${exampleIndex}`} step={step.id} demo={demo} fourGray={fourGray}
           instruction={tr(lastLayer || ['daisy', 'middle'].includes(step.id) ? demo.hint : step.paragraphs[0] ?? demo.hint)} />}
         <div className="lbl-lesson-actions">
@@ -265,7 +269,7 @@ export default function LblTutorial() {
   </main>;
 }
 
-const DAISY_TARGET_STICKERS = [['D5'], ['D5'], ['D3'], ['D5'], ['D5'], ['D5']] as const;
+const DAISY_TARGET_STICKERS = [['D5'], ['D3'], ['D5'], ['D5'], ['D5'], ['D5']] as const;
 // These cases end with choosing the next case, rather than another cube move.
 const NEXT_CASE_STEPS: Record<string, readonly number[]> = {
   corners: [1], middle: [2, 3], 'yellow-cross': [2], 'yellow-face': [2, 3],
@@ -275,6 +279,30 @@ const NEXT_CASE_STEPS: Record<string, readonly number[]> = {
 function LessonDemo({ step, demo, fourGray, instruction }: { step: string; demo: LblExample; fourGray: boolean; instruction: string }) {
   const [playbackStep, setPlaybackStep] = useState(0);
   const demoPlayer = useRef<AlgPlayerHandle>(null);
+  const yellowFaceCase = step === 'yellow-face';
+  const touchCase = yellowFaceCase && LBL_STEPS.find(item => item.id === step)!.examples.indexOf(demo) >= 2;
+  const inspecting = useStartInspection(yellowFaceCase, demoPlayer, playbackStep);
+  const [alignmentReady, setAlignmentReady] = useState(false);
+  useEffect(() => {
+    setAlignmentReady(false);
+    if (!touchCase || playbackStep !== 1) return;
+    let frame = 0;
+    const settled = () => {
+      if (demoPlayer.current?.isUserMovePending?.()) frame = requestAnimationFrame(settled);
+      else setAlignmentReady(true);
+    };
+    frame = requestAnimationFrame(settled);
+    return () => cancelAnimationFrame(frame);
+  }, [touchCase, playbackStep]);
+  const touchHighlights = useMemo(() => {
+    if (!yellowFaceCase) return undefined;
+    const index = LBL_STEPS.find(item => item.id === step)!.examples.indexOf(demo);
+    const setup = resolvePlayerSetup('3x3', demo.alg, demo.setup, demo.startSolved ?? false);
+    if (index >= 2) return [yellowFaceTouchSticker(`${setup} ${playbackStep === 1 ? new Alg(demo.alg).expand().toString().split(/\s+/)[0] : ''}`)];
+    // Follow the same head and fin before the example's opening U alignment.
+    const alignment = new Alg(demo.alg).expand().toString().split(/\s+/)[0];
+    return yellowFishRecognitionStickers(`${setup} ${alignment}`, index === 1);
+  }, [yellowFaceCase, step, demo, playbackStep]);
   const groups = getLblAlgGroups(step, demo.alg);
   const moveCount = groups.reduce((count, group) => count + group.length, 0);
   const showingWhiteFace = useRef(false);
@@ -355,10 +383,12 @@ function LessonDemo({ step, demo, fourGray, instruction }: { step: string; demo:
         additionalStickering={['yellow-cross', 'yellow-face', 'corner-position', 'edge-position'].includes(step) ? 'F2L' : undefined}
         hiddenStickers={fourGray ? FOUR_GRAY_HIDDEN_STICKERS : undefined}
         outlinedStickers={step === 'daisy' ? DAISY_TARGET_STICKERS[exampleIndex] : undefined}
+        highlightedStickers={(inspecting && playbackStep === 0) || (touchCase && playbackStep === 1 && alignmentReady) ? touchHighlights : undefined}
+        pauseAfterSteps={touchCase ? [1] : undefined} sectionPauseMs={touchCase ? 2000 : undefined}
         sceneRot={step === 'cross' ? CROSS_INITIAL_VIEW : fourGray ? FOUR_GRAY_VIEW : demo.sceneRot ?? (['yellow-cross', 'yellow-face', 'corner-position', 'edge-position'].includes(step) ? ANGLED_LAST_LAYER_VIEW : LBL_INITIAL_VIEW)} onStepChange={setPlaybackStep}
         highlightDaisyAlignment={step === 'cross'}
         stepMarkers={stepMarkers}
-        autoPlay
+        autoPlay={!inspecting}
         alg={demo.alg} setup={demo.setup} startSolved={demo.startSolved} fillPane moveDurationMs={step === 'cross' ? 1500 : 1000} />
     </div>
     <ol className="lbl-demo-stages" aria-label={tr({ zh: '操作步骤', en: 'Teaching steps' })}>

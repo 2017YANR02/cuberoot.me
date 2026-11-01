@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { persistItem } from '@/lib/safe-storage';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import AlgPlaybackControls from '@/components/AlgPlayer/AlgPlaybackControls';
 import { pickStickering } from '@/components/AlgPlayer/stickering';
@@ -9,7 +10,7 @@ import { resolveStageMaskFn } from '@cuberoot/puzzle-render-core/engine/nxn/vcSt
 import { engineHomeSid } from '@cuberoot/puzzle-render-core/engine/nxn/netIndex';
 import { T, tr } from '@/i18n/tr';
 import { LESSON_STICKERING, type LblExample } from './content';
-import { buildEdgePositionExample, completeDemoPool, pickCompleteDemo, type CompleteDemoStage, type DemoContent, type DemoPhase, type DemoView, type CompleteDemo as Demo } from './complete-demo-state';
+import { buildEdgePositionExample, completeDemoPool, yellowFaceTouchSticker, type CompleteDemoStage, type DemoContent, type DemoPhase, type DemoView, type CompleteDemo as Demo } from './complete-demo-state';
 
 const DEMO_VIEW = { x: 25 * Math.PI / 180, y: -25 * Math.PI / 180, z: 0 };
 const CAPTION_FADE_MS = 450;
@@ -23,6 +24,25 @@ type CueProps = { onCaseCueChange: (cue: DemoCaseCue) => void };
 type ThoughtContent = { text: string; detail?: string; alg?: string; caseIndex?: number; outlines?: string[] };
 const NO_OUTLINES: string[] = [];
 const IGNORE_CASE_CUE = () => {};
+const EXAMPLE_CHANGE = 'lbl-demo-example-change';
+const visitExamples = new Map<string, string>();
+function readExample(key: string): string | null {
+  if (visitExamples.has(key)) return visitExamples.get(key)!;
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+function subscribeExamples(notify: () => void) {
+  const sync = (event: StorageEvent) => {
+    if (event.key === null) visitExamples.clear();
+    else visitExamples.delete(event.key);
+    notify();
+  };
+  window.addEventListener(EXAMPLE_CHANGE, notify);
+  window.addEventListener('storage', sync);
+  return () => {
+    window.removeEventListener(EXAMPLE_CHANGE, notify);
+    window.removeEventListener('storage', sync);
+  };
+}
 
 export function EdgePositionExample({ example, index }: { example: LblExample; index: number }) {
   const demo = useMemo(() => buildEdgePositionExample(example, index), [example, index]);
@@ -31,17 +51,20 @@ export function EdgePositionExample({ example, index }: { example: LblExample; i
 
 export default function CompleteDemo({ stage, onCaseCueChange }: CueProps & { stage: CompleteDemoStage }) {
   const pool = useMemo(() => completeDemoPool(stage), [stage]);
-  const [sample, setSample] = useState({ index: 0, generation: 0 });
-  useEffect(() => { setSample({ index: pickCompleteDemo(stage), generation: 1 }); }, [stage]);
-  const randomize = () => {
-    const index = pickCompleteDemo(stage);
-    setSample(current => ({ index, generation: current.generation + 1 }));
+  const storageKey = `lbl-demo-example:${stage}`;
+  const savedSetup = useSyncExternalStore(subscribeExamples, () => readExample(storageKey), () => null);
+  const index = Math.max(0, pool.findIndex(demo => demo.setup === savedSetup));
+  const nextExample = () => {
+    const next = pool[(index + 1) % pool.length].setup;
+    if (persistItem(storageKey, next)) visitExamples.delete(storageKey);
+    else visitExamples.set(storageKey, next);
+    window.dispatchEvent(new Event(EXAMPLE_CHANGE));
   };
   return <div className="lbl-complete-demo">
     <div className="lbl-complete-toolbar">
-      <button type="button" className="lbl-button" onClick={randomize}><T zh="重新随机" en="Randomize again" /></button>
+      <button type="button" className="lbl-button" onClick={nextExample}><T zh="下一个例子" en="Next example" /></button>
     </div>
-    <Demonstration key={sample.generation} stage={stage} demo={pool[sample.index]} onCaseCueChange={onCaseCueChange} />
+    <Demonstration key={`${stage}:${index}`} stage={stage} demo={pool[index]} onCaseCueChange={onCaseCueChange} />
   </div>;
 }
 
@@ -75,6 +98,9 @@ function Demonstration({ stage, demo, onCaseCueChange }: { stage: CompleteDemoSt
       }
       if (phase.recognize) {
         frames.push({ step: phase.start, duration: CAPTION_DURATION_MS, caption: 'recognize', phase });
+      }
+      if (phase.returnView) {
+        frames.push({ step: phase.start, duration: 900, caption: 'recognize', phase, view: phase.returnView });
       }
       if (phase.recognizeOnly) return;
       frames.push({ step: phase.start, duration: CAPTION_DURATION_MS, caption: 'act', phase, view: phase.view });
@@ -201,11 +227,14 @@ function Demonstration({ stage, demo, onCaseCueChange }: { stage: CompleteDemoSt
     : frame.caption === 'observe' ? { text: frame.phase!.observe! }
       : frame.caption === 'recognize' ? frame.phase!.recognize! : frame.phase!.act;
   const message: ThoughtContent = { ...content, text: tr(content.text), detail: content.detail ? tr(content.detail) : undefined };
+  const touchHighlight = useMemo(() => content.touchSticker
+    ? [yellowFaceTouchSticker(`${demo.setup} ${demo.alg.split(' ').slice(0, frame.step).join(' ')}`)]
+    : undefined, [content.touchSticker, demo, frame.step]);
 
   return <div className="lbl-demo lbl-demo-split lbl-complete-player">
     <div className="lbl-cube"><div className="lbl-complete-playback"><AlgPlayer ref={player} puzzle="3x3" engine="sim" controlMode="none" hideResetView
       set={LESSON_STICKERING[stage]} additionalStickering={stage.startsWith('yellow-') || stage.endsWith('-position') ? 'F2L' : undefined} orientation="z2"
-      highlightedStickers={stage === 'yellow-face' ? recognitionOutlines : undefined}
+      highlightedStickers={stage === 'yellow-face' ? touchHighlight ?? recognitionOutlines : undefined}
       sceneRot={DEMO_VIEW} setup={demo.setup} alg={demo.alg} stickeringAtStep={stickeringAtStep} fillPane moveDurationMs={850} />
       <AlgPlaybackControls step={frame.step} count={total} playing={playing} stepMarkers={boundaries}
         onScrub={seek} onStepBack={() => seek(frame.step - 1)} onStepForward={() => seek(frame.step + 1)}

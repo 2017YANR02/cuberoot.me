@@ -96,6 +96,8 @@ body:has(.lbl-page) {
 .lbl-middle-core { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 20px; padding-block: 24px; text-align: center; }
 .lbl-middle-core > p { margin: 0; font-size: 1.3rem; }
 .lbl-middle-core-cases { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.lbl-fish-parts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 600px) { .lbl-fish-parts { grid-template-columns: minmax(0, 1fr); } }
 .lbl-middle-core figure { min-width: 0; margin: 0; }
 .lbl-middle-core .puzzle-art { max-width: 100%; height: auto !important; }
 .lbl-middle-core figcaption { display: grid; gap: 10px; line-height: 1.7; }
@@ -148,6 +150,7 @@ button.lbl-case:active, .lbl-practice:active { transform: scale(.96); }
 .lbl-lesson-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; }
 .lbl-lesson-actions > .lbl-practice { white-space: nowrap; flex-shrink: 0; }
 .lbl-lesson-actions > .lbl-next-lesson { min-width: 0; flex-shrink: 1; }
+.lbl-alg-learning .lbl-lesson-actions > .lbl-next-lesson { margin-inline-start: auto; }
 .lbl-next-lesson span { overflow: hidden; text-overflow: ellipsis; }
 .lbl-next-lesson svg { flex-shrink: 0; }
 .lbl-details { grid-column: 1 / -1; margin-top: 16px; max-width: 720px; font-size: .9rem; line-height: 1.85; color: var(--muted-foreground); }
@@ -476,7 +479,13 @@ button.lbl-case:active, .lbl-practice:active { transform: scale(.96); }
 .lbl-complete-thought { min-width: 0; display: grid; align-items: center; min-height: 7.5em; }
 .lbl-complete-thought p { display: grid; grid-template-rows: auto minmax(1.7em, auto); gap: 10px; margin: 0; font-size: clamp(1.25rem, 1.8vw, 1.65rem); font-weight: 500; line-height: 1.7; transition: opacity 450ms ease; }
 .lbl-complete-detail { font-size: clamp(1rem, 1.3vw, 1.15rem); font-weight: 400; color: var(--muted-foreground); }
+.lbl-alg-learning-intro { margin: clamp(28px, 5vh, 52px) 0 0; display: grid; gap: 10px; justify-items: center; text-align: center; color: var(--foreground); font-size: clamp(1.125rem, 1.5vw, 1.4rem); font-weight: 400; line-height: 1.7; }
+@media (min-width: 1051px) {
+  .lbl-lesson-page .lbl-alg-learning-intro { box-sizing: border-box; flex: 0 0 calc(89px + var(--lbl-room, 0px) * 1.5); height: calc(89px + var(--lbl-room, 0px) * 1.5); align-content: start; margin: 0; padding-top: clamp(40px, 6.5vh, 60px); }
+  .lbl-lesson-page .lbl-demo.lbl-alg-learning-demo { grid-template-rows: 1fr auto; }
+}
 .lbl-alg-learning-cues { min-width: 0; display: flex; align-items: center; }
+.lbl-fish-direction { color: var(--accent); }
 .lbl-alg-learning-cues .lbl-alg-group { padding-inline: 0; border: 0; gap: clamp(6px, 1vw, 14px); }
 .lbl-alg-learning-cues .lbl-alg-move code { font-size: clamp(1.25rem, 2vw, 1.8rem); }
 .lbl-alg-learning-cues .lbl-alg-cue { font-size: 1rem; }

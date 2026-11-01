@@ -1,7 +1,7 @@
 import { Alg } from 'cubing/alg';
 import { AllFaces, CubeData, Face, parseAlgorithm } from '@cuberoot/visualcube';
 import { resolvePlayerSetup } from '@/components/AlgPlayer/player-setup';
-import { CORNER_POSITION, EDGE_POSITION_LEFT, EDGE_POSITION_RIGHT, LEFT, LEFT_SUNE, LBL_STEPS, MIDDLE_LEFT, MIDDLE_RIGHT, RIGHT, RIGHT_SUNE } from './content';
+import { CORNER_POSITION, EDGE_POSITION_LEFT, EDGE_POSITION_RIGHT, LEFT, LEFT_SUNE, LBL_STEPS, MIDDLE_LEFT, MIDDLE_RIGHT, MIDDLE_MISPLACED_SETUP, RIGHT, RIGHT_SUNE } from './content';
 import { LBL_LESSON_RUNS, lessonFrame, type LblLessonStageId } from './lesson-runs';
 import { buildYellowCrossDemo, YELLOW_CROSS_DEMO_SETUPS, yellowCrossRecognitionStickers } from './yellow-cross-demo-state';
 import { getLblAlgGroups } from './alg-cues';
@@ -9,9 +9,9 @@ import type { LblExample } from './content';
 
 type Text = { zh: string; en: string };
 const t = (zh: string, en: string): Text => ({ zh, en });
-export type DemoContent = { text: Text; detail?: Text; alg?: string; caseIndex?: number; outlines?: string[] };
+export type DemoContent = { text: Text; detail?: Text; alg?: string; caseIndex?: number; outlines?: string[]; touchSticker?: boolean };
 export type DemoView = 'home' | 'bottom' | 'left' | 'right' | 'back';
-export type DemoPhase = { start: number; end: number; observe?: Text; recognize?: DemoContent; act: DemoContent; view?: DemoView; moveView?: DemoView; recognizeOnly?: boolean };
+export type DemoPhase = { start: number; end: number; observe?: Text; recognize?: DemoContent; act: DemoContent; view?: DemoView; moveView?: DemoView; returnView?: DemoView; recognizeOnly?: boolean };
 export type CompleteDemo = { setup: string; alg: string; phases: DemoPhase[]; done: Text };
 export const COMPLETE_DEMO_STAGES = ['daisy', 'corners', 'middle', 'yellow-cross', 'yellow-face', 'corner-position', 'edge-position'] as const;
 export type CompleteDemoStage = typeof COMPLETE_DEMO_STAGES[number];
@@ -29,6 +29,8 @@ const join = (...algs: string[]) => algs.filter(Boolean).join(' ');
 // in the bottom layer, but in the wrong slots. This setup is never taught as a move.
 const cornerCycle = "x R' U R' D2 R U' R' D2 R2 x'";
 export const CORNER_DEMO_EXTREME_SETUP = `x2 ${cornerCycle} y ${cornerCycle} y' x2`;
+// Swap each opposite pair of middle slots; all four middle edges are misplaced.
+export const MIDDLE_DEMO_EXTREME_SETUP = `${MIDDLE_MISPLACED_SETUP} y2 ${MIDDLE_MISPLACED_SETUP} y2`;
 
 // Sticker identities survive every move, so outlines follow the same pieces as the lesson.
 function state(alg: string) {
@@ -38,6 +40,12 @@ function state(alg: string) {
   return cube;
 }
 type Cube = ReturnType<typeof state>;
+/** Current home identity at the left-thumb observation position. */
+export const yellowFaceTouchSticker = (alg: string) => state(alg).faces[Face.F][0];
+export function yellowFishRecognitionStickers(alg: string, left: boolean): string[] {
+  const cube = state(alg);
+  return [cube.faces[Face.U][left ? 8 : 6], cube.faces[Face.F][left ? 0 : 2]];
+}
 const color = (cube: Cube, face: Face, i: number) => cube.faces[face][i][0];
 const center = (cube: Cube, face: Face) => color(cube, face, 4);
 const matches = (cube: Cube, face: Face, i: number) => color(cube, face, i) === center(cube, face);
@@ -55,6 +63,8 @@ const bottomCornerCount = (cube: Cube) => sides.filter((face, i) =>
 const middleEdgeCount = (cube: Cube) => sides.filter((face, i) =>
   matches(cube, face, 5) && matches(cube, sides[(i + 1) % 4], 3)).length;
 const grayCount = (cube: Cube) => cornerIndices.filter(i => !matches(cube, Face.U, i)).length;
+const yellowCornerSignature = (cube: Cube) => [Face.U, ...sides].flatMap(face =>
+  (face === Face.U ? cornerIndices : [0, 2]).map(i => color(cube, face, i) === 'U' ? '1' : '0')).join('');
 const eyes = (cube: Cube) => sides.filter(face => color(cube, face, 0) === color(cube, face, 2));
 const walls = (cube: Cube) => sides.filter(face => [0, 1, 2].every(i => matches(cube, face, i)));
 
@@ -140,7 +150,7 @@ function yellowCrossDemo(setup: string): CompleteDemo {
       : phase.kind === 'line' ? t('两条黄棱成直线。', 'Two yellow edges form a line.')
         : t('两条黄棱相邻。', 'Two adjacent yellow edges face up.');
     const next = phase.alignment ? t('需要调整顶面朝向。', 'The top layer needs to be reoriented.')
-      : [t('做横线公式。', 'Do the line algorithm.'), t('做三点半公式。', 'Do the L-shape algorithm.'), t('做点公式。', 'Do the dot algorithm.')][caseIndex];
+      : phase.actionKind === 'line' ? t('做横线公式。', 'Do the line algorithm.') : t('做三点半公式。', 'Do the L-shape algorithm.');
     return {
       start: phase.start, end: phase.end,
       observe: !demo.phases[index - 1]?.alignment ? (index === 0 ? observe['yellow-cross'] : t('还没完成，再观察四条棱。', 'Not finished. Check the four edges again.')) : undefined,
@@ -149,7 +159,7 @@ function yellowCrossDemo(setup: string): CompleteDemo {
       act: phase.alignment ? {
         text: phase.kind === 'line' ? t('转顶层，把线横着放。', 'Turn the top to make the line horizontal.') : t('转顶层，黄棱放前和右。', 'Turn the top: yellow edges at front and right.'),
         detail: phase.kind === 'line' ? t('形成横线。', 'Form a horizontal line.') : t('形成“三点半”。', 'Form the L-shape.'), caseIndex,
-      } : { text: phase.kind === 'line' ? t('做“压、右公式、提”。', 'Do F, the right trigger, then F′.') : t('做“双压、右公式、双提”。', 'Do f, the right trigger, then f′.'), alg: phase.alg, caseIndex },
+      } : { text: phase.actionKind === 'line' ? t('做“压、右公式、提”。', 'Do F, the right trigger, then F′.') : t('做“双压、右公式、双提”。', 'Do f, the right trigger, then f′.'), alg: phase.alg, caseIndex },
     };
   }) };
 }
@@ -163,7 +173,8 @@ export function buildCompleteDemo(stage: CompleteDemoStage, setup: string): Comp
   const add = (alg: string, act: DemoContent, recognize?: DemoContent, view?: DemoView) => {
     const start = moves.length;
     moves.push(...movesOf(alg));
-    phases.push({ start, end: moves.length, act, recognize, observe: recognize ? observe[stage] : undefined, view });
+    const phase: DemoPhase = { start, end: moves.length, act, recognize, observe: recognize && stage !== 'yellow-face' ? observe[stage] : undefined, view };
+    phases.push(phase);
   };
   const action = (alg: string, text: Text, caseIndex: number, recognize?: DemoContent, showAlg = true) =>
     add(alg, { text, alg: showAlg ? alg : undefined, caseIndex }, recognize);
@@ -178,6 +189,8 @@ export function buildCompleteDemo(stage: CompleteDemoStage, setup: string): Comp
     const face = white === undefined ? undefined : AllFaces.find(face => cube.faces[face].includes(white));
     const view: DemoView | undefined = face === Face.D ? 'bottom' : face === Face.L ? 'left' : face === Face.B ? 'back' : undefined;
     if (!view) return recognition;
+    // Daisy side inspection uses the real working rotation below, not a camera detour.
+    if (stage === 'daisy' && view !== 'bottom') return recognition;
     let text: Text;
     if (stage === 'daisy') {
       const sideWhite = sides.some(face => cube.faces[face].some(id => id[0] === 'D' && edgeIndices.includes(Number(id.slice(1)))));
@@ -190,7 +203,8 @@ export function buildCompleteDemo(stage: CompleteDemoStage, setup: string): Comp
         : view === 'left' ? t('换个角度，看看左侧的白角。', 'Change the view to inspect the white corner on the left.') : t('换个角度，看看背面的白角。', 'Change the view to inspect the white corner at the back.');
     }
     add('', { text, caseIndex }, undefined, view);
-    add('', { text: t('转回观察视角，再来操作。', 'Return to the working view before turning any layers.'), caseIndex }, recognition, 'home');
+    phases.push({ start: moves.length, end: moves.length, observe: observe[stage], recognize: recognition, act: recognition, recognizeOnly: true,
+      returnView: 'home' });
     return undefined;
   };
 
@@ -200,7 +214,8 @@ export function buildCompleteDemo(stage: CompleteDemoStage, setup: string): Comp
     if (stage === 'daisy') {
       const existing = petals(cube);
       const candidates: { y: string; u: string; alg: string; id: string; index: number; rank: number }[] = [];
-      const lifts = ['R', "L'", ...turns.flatMap(u => [join('F', u, 'R'), join('F', u, "L'")]), 'R2'];
+      const halfTurns = ['R2', 'L2', 'F2'];
+      const lifts = ['R', "L'", ...turns.flatMap(u => [join('F', u, 'R'), join('F', u, "L'")]), ...halfTurns];
       for (const y of rotations) for (const u of turns) for (const alg of lifts) {
         const after = state(join(base, y, u, alg));
         const next = petals(after);
@@ -213,30 +228,60 @@ export function buildCompleteDemo(stage: CompleteDemoStage, setup: string): Comp
         }
         const floor = Math.floor(sourceIndex / 3);
         if (sourceFace === Face.U) continue;
-        const index = sourceFace === Face.D ? 5 : floor === 1 ? (u ? 1 : alg === "L'" ? 2 : 0) : floor === 0 ? 3 : 4;
-        if ((index === 5 && alg !== 'R2') || (index < 3 && !['R', "L'"].includes(alg))
+        const withoutTopTurn = petals(state(join(base, y, alg)));
+        const blocked = existing.some(id => !withoutTopTurn.includes(id));
+        const index = sourceFace === Face.D ? 5 : floor === 1 ? (u && blocked ? 2 : alg === "L'" ? 1 : 0) : floor === 0 ? 3 : 4;
+        if ((index === 5 && !halfTurns.includes(alg)) || (index < 3 && !['R', "L'"].includes(alg))
           || ((index === 3 || index === 4) && !alg.startsWith('F '))) continue;
         candidates.push({ y, u, alg, id, index, rank: (index < 3 ? 0 : index === 5 ? 20 : 10) + movesOf(join(y, u, alg)).length });
       }
       const choice = candidates.sort((a, b) => a.rank - b.rank)[0];
       if (!choice) throw new Error('No taught daisy move found');
-      const labels = [t('白棱在二楼，可以右手上。', 'A white edge is in the middle: lift right.'), t('白棱在二楼，顶面的花瓣挡住了。', 'A middle white edge has a petal in its way.'), t('白棱在二楼，可以左手上。', 'A white edge is in the middle: lift left.'), t('白棱在三楼，先送到二楼。', 'A white edge is on the top floor: bring it to the middle.'), t('白棱在一楼，先送到二楼。', 'A white edge is on the bottom floor: bring it to the middle.'), t('白格朝下，在“地下室”。', 'The white sticker faces down, in the basement.')];
+      const hiddenFace = [Face.L, Face.B].find(face => cube.faces[face].includes(choice.id));
+      if (hiddenFace !== undefined) {
+        // Inspect with a real rotation, then plan again from the newly visible state.
+        const inspection = rotations.find(y => state(join(base, y)).faces[Face.F].includes(choice.id))!;
+        action(inspection, hiddenFace === Face.L
+          ? t('转过来，看看左面的白棱。', 'Rotate the cube to inspect the white edge on the left.')
+          : t('转过来，看看背面的白棱。', 'Rotate the cube to inspect the white edge at the back.'), choice.index, undefined, false);
+        continue;
+      }
+      const labels = [t('白棱在二楼，可以右手上。', 'A white edge is in the middle: lift right.'), t('白棱在二楼，可以左手上。', 'A white edge is in the middle: lift left.'), t('白棱在二楼，顶面的花瓣挡住了。', 'A middle white edge has a petal in its way.'), t('白棱在三楼，先送到二楼。', 'A white edge is on the top floor: bring it to the middle.'), t('白棱在一楼，先送到二楼。', 'A white edge is on the bottom floor: bring it to the middle.'), t('白格朝下，在“地下室”。', 'The white sticker faces down, in the basement.')];
+      const placement = choice.alg.startsWith('F')
+        ? t('转体，把这条白棱放到前层。', 'Rotate the cube to bring this white edge to the front layer.')
+        : choice.alg.startsWith('L')
+          ? t('转体，把这条白棱放到左层。', 'Rotate the cube to bring this white edge to the left layer.')
+          : t('转体，把这条白棱放到右层。', 'Rotate the cube to bring this white edge to the right layer.');
       let rec: DemoContent | undefined = recognize(labels[choice.index], choice.index, [choice.id, cube.faces[Face.U][4]]);
       rec = inspectPiece([choice.id], choice.index, rec);
-      rec = prepare(choice.y, t('转体，把这条白棱放到前面。', 'Rotate the cube to bring this white edge to the front.'), choice.index, rec);
-      rec = prepare(choice.u, t('转顶层，让开要放花瓣的位置。', 'Turn the top to clear a space for the petal.'), choice.index, rec);
+      rec = prepare(choice.y, placement, choice.index, rec);
+      const clearingText = t('转顶层，移开挡住位置的花瓣。', 'Turn the top to move the petal out of the way.');
+      const positioningText = t('转顶层，把白棱转到操作位置。', 'Turn the top to position the white edge.');
+      const withoutTopTurn = petals(state(join(currentAlg(), choice.alg)));
+      const blocked = petals(current()).some(id => !withoutTopTurn.includes(id));
+      rec = prepare(choice.u, blocked ? clearingText : positioningText, choice.index, rec);
       if (choice.alg.startsWith('F ')) {
         action('F', t('压前层，把白棱送到二楼。', 'Lower the front to bring the edge to the middle.'), choice.index, rec, false);
         const rest = movesOf(choice.alg).slice(1);
-        if (rest.length > 1) action(rest[0], t('转顶层，给白棱让出位置。', 'Turn the top to clear a space for the white edge.'), choice.index, undefined, false);
+        if (rest.length > 1) {
+          const withoutTopTurn = petals(state(join(currentAlg(), rest[rest.length - 1])));
+          const blocked = petals(current()).some(id => !withoutTopTurn.includes(id));
+          action(rest[0], blocked ? clearingText : positioningText, choice.index, undefined, false);
+        }
         action(rest[rest.length - 1], choice.alg.endsWith('R') ? t('右手上，送到黄心旁。', 'Lift right to bring it beside the yellow center.') : t('左手上，送到黄心旁。', 'Lift left to bring it beside the yellow center.'), choice.index, undefined, false);
-      } else action(choice.alg, choice.alg === 'R2' ? t('做“上上”，送到黄心旁。', 'Turn the right face twice to make a petal.') : choice.alg === 'R' ? t('右手上，送到黄心旁。', 'Lift right to make a petal.') : t('左手上，送到黄心旁。', 'Lift left to make a petal.'), choice.index, rec, false);
+      } else {
+        const liftText = choice.alg === 'R2' ? t('右层转半圈，送到黄心旁。', 'Turn the right face halfway to make a petal.')
+          : choice.alg === 'L2' ? t('左层转半圈，送到黄心旁。', 'Turn the left face halfway to make a petal.')
+            : choice.alg === 'F2' ? t('前层转半圈，送到黄心旁。', 'Turn the front face halfway to make a petal.')
+              : choice.alg === 'R' ? t('右手上，送到黄心旁。', 'Lift right to make a petal.') : t('左手上，送到黄心旁。', 'Lift left to make a petal.');
+        action(choice.alg, liftText, choice.index, rec, false);
+      }
     } else if (stage === 'corners' || stage === 'middle') {
       const isCorner = stage === 'corners';
       const count = isCorner ? bottomCornerCount : middleEdgeCount;
       const actions = isCorner ? [RIGHT, LEFT, `${RIGHT} ${RIGHT} ${RIGHT}`]
         : [MIDDLE_RIGHT, MIDDLE_LEFT];
-      let choice: { u: string; d: string; alg: string; index: number; outlines: string[] } | undefined;
+      let choice: { u: string; d: string; alg: string; index: number; outlines: string[]; rank: number } | undefined;
       for (const u of turns) for (const d of lowerTurns) for (let index = 0; index < actions.length; index++) {
         const prepared = state(join(base, u, d));
         const valid = isCorner ? index === 0 ? color(prepared, Face.R, 0) === 'D' && matches(prepared, Face.F, 2)
@@ -246,16 +291,37 @@ export function buildCompleteDemo(stage: CompleteDemoStage, setup: string): Comp
         if (!valid) continue;
         const result = state(join(base, u, d, actions[index]));
         if (count(result) <= count(cube) || (isCorner ? !demoGoalReached('cross', join(base, u, d, actions[index])) : !firstLayer(result))) continue;
-        choice ??= { u, d, alg: actions[index], index: isCorner ? [0, 2, 3][index] : index,
-          outlines: isCorner ? index === 1 ? [prepared.faces[Face.L][2], prepared.faces[Face.F][0], prepared.faces[Face.U][6]] : [prepared.faces[Face.R][0], prepared.faces[Face.F][2], prepared.faces[Face.U][8]] : [prepared.faces[Face.U][7], prepared.faces[Face.F][1]] };
+        const outlines = isCorner ? index === 1 ? [prepared.faces[Face.L][2], prepared.faces[Face.F][0], prepared.faces[Face.U][6]] : [prepared.faces[Face.R][0], prepared.faces[Face.F][2], prepared.faces[Face.U][8]] : [prepared.faces[Face.U][7], prepared.faces[Face.F][1]];
+        const white = outlines.find(id => id[0] === 'D');
+        const hidden = isCorner && white !== undefined && [Face.L, Face.B].some(face => cube.faces[face].includes(white));
+        const rank = isCorner ? (hidden ? 100 : 0) + movesOf(join(u, d)).length : 0;
+        if (!choice || rank < choice.rank) choice = { u, d, alg: actions[index], index: isCorner ? [0, 2, 3][index] : index, outlines, rank };
       }
       if (choice) {
-        const text = isCorner ? choice.index === 3 ? t('白格朝上，用三遍右公式。', 'White faces up: use the right trigger three times.') : t('找到顶层侧面的白格，先对齐白角。', 'Found white on the side of a top corner. Match the corner first.')
-          : choice.index === 0 ? t('这条非黄棱要去右边。', 'This non-yellow edge belongs on the right.') : t('这条非黄棱要去左边。', 'This non-yellow edge belongs on the left.');
+        const white = choice.outlines.find(id => id[0] === 'D');
+        if (isCorner && white !== undefined && [Face.L, Face.B].some(face => cube.faces[face].includes(white))) {
+          const y = rotations.find(y => state(join(base, y)).faces[Face.F].includes(white))!;
+          action(y, t('转体观察，让白角的白格朝前。', 'Rotate the cube to inspect the white corner with its white sticker facing front.'), choice.index, undefined, false);
+          continue;
+        }
+        const text = isCorner ? choice.index === 3 ? t('白格朝上，用三遍右公式。', 'White faces up: use the right trigger three times.') : t('找到顶层侧面的白格。', 'Found a white sticker on the side of a top-layer corner.')
+          : t('找到一条不带黄色的顶层棱。', 'Found a top-layer edge without yellow.');
         let rec: DemoContent | undefined = recognize(text, choice.index, choice.outlines);
         if (isCorner) rec = inspectPiece(choice.outlines, choice.index, rec);
-        rec = prepare(choice.u, isCorner ? t('转顶层，把白角放到操作位置。', 'Turn the top to position the white corner.') : t('转顶层，把这条棱放前。', 'Turn the top to bring the edge to the front.'), choice.index, rec);
-        rec = prepare(choice.d, isCorner ? (choice.index === 3 ? t('转下面两层，让角心交叉对齐。', 'Turn the lower two layers to cross-match the corner and centers.') : t('转下面两层，让角的侧色对齐中心。', 'Turn the lower two layers to match the side sticker with its center.')) : t('转下面两层，侧色对齐中心，形成倒 T。', 'Turn the lower two layers to match the side color and form an upside-down T.'), choice.index, rec);
+        rec = prepare(choice.u, isCorner ? choice.index === 2
+          ? t('转顶层，把白角放到左前上方。', 'Turn the top to put the white corner at top-front-left.')
+          : t('转顶层，把白角放到右前上方。', 'Turn the top to put the white corner at top-front-right.')
+          : t('转顶层，把这条棱放前。', 'Turn the top to bring the edge to the front.'), choice.index, rec);
+        rec = prepare(choice.d, isCorner ? (choice.index === 3 ? t('转下面两层，让角心交叉对齐。', 'Turn the lower two layers to cross-match the corner and centers.') : t('转下面两层，侧色对齐中心色', 'Turn the lower two layers to match the side sticker to the center color.')) : t('转下面两层，侧色对齐中心，形成倒 T。', 'Turn the lower two layers to match the side color and form an upside-down T.'), choice.index, rec);
+        if (!isCorner) {
+          // Decide left/right only after the visible edge and center form an inverted T.
+          if (rec) phases.push({ start: moves.length, end: moves.length, recognize: rec, act: rec, recognizeOnly: true });
+          const direction = recognize(choice.index === 0
+            ? t('顶面颜色与右侧中心同色，去右。', 'The top sticker matches the right center: insert right.')
+            : t('顶面颜色与左侧中心同色，去左。', 'The top sticker matches the left center: insert left.'), choice.index, choice.outlines);
+          phases.push({ start: moves.length, end: moves.length, recognize: direction, act: direction, recognizeOnly: true });
+          rec = undefined;
+        }
         action(choice.alg, isCorner ? choice.index === 3 ? t('做三遍右公式。', 'Do the right trigger three times.') : choice.index === 2 ? t('做左公式。', 'Do the left trigger.') : t('做右公式。', 'Do the right trigger.')
           : choice.index === 0 ? t('右手拨、右公式、左转体、左公式。', 'U, right trigger, rotate left, left trigger.') : t('左手拨、左公式、右转体、右公式。', 'U′, left trigger, rotate right, right trigger.'), choice.index, rec);
       } else {
@@ -280,19 +346,31 @@ export function buildCompleteDemo(stage: CompleteDemoStage, setup: string): Comp
       }
     } else if (stage === 'yellow-face') {
       const gray = grayCount(cube);
-      const signature = (c: Cube) => [Face.U, ...sides].flatMap(face => (face === Face.U ? cornerIndices : [0, 2]).map(i => color(c, face, i) === 'U' ? '1' : '0')).join('');
       let choice: { u: string; alg: string; index: number } | undefined;
       for (const u of turns) for (const [index, alg] of [RIGHT_SUNE, LEFT_SUNE].entries()) {
         const c = state(join(base, u));
-        if (gray === 3 ? signature(c) !== signature(state(new Alg(alg).invert().toString()))
+        if (gray === 3 ? yellowCornerSignature(c) !== yellowCornerSignature(state(new Alg(alg).invert().toString()))
           : index !== 0 || (gray === 2 ? color(c, Face.F, 0) !== 'U' : color(c, Face.F, 0) === 'U') || grayCount(state(join(base, u, alg))) !== 3) continue;
         choice ??= { u, alg, index: gray === 3 ? index : gray === 2 ? 2 : 3 };
       }
       if (!choice) throw new Error('No taught yellow-face action found');
-      let rec: DemoContent | undefined = recognize(gray === 3 ? (choice.index === 0 ? t('3 灰，三个鱼鳍朝右。', 'Three gray corners; three fins point right.') : t('3 灰，三个鱼鳍朝左。', 'Three gray corners; three fins point left.')) : gray === 2 ? t('2 灰，用“二碰”。', 'Two gray corners: touch yellow.') : t('4 灰，用“四不碰”。', 'Four gray corners: avoid yellow.'), choice.index,
+      let rec: DemoContent | undefined = recognize(gray === 3 ? t('3 灰，观察鱼头和侧面鱼鳍。', 'Three gray corners: check the head and side fins.') : gray === 2 ? t('2 灰，左拇指放前面左上角，要碰黄。', 'Two gray corners: place your left thumb at front-top-left, touching yellow.') : t('4 灰，左拇指放前面左上角，不碰黄。', 'Four gray corners: place your left thumb at front-top-left, away from yellow.'), choice.index,
         cornerIndices.filter(i => color(cube, Face.U, i) !== 'U').map(i => cube.faces[Face.U][i]));
       const alignment = choice.index === 0 ? t('转顶层，把鱼头放左前。', 'Turn the top to put the head at front-left.') : choice.index === 1 ? t('转顶层，把鱼头放右前。', 'Turn the top to put the head at front-right.') : choice.index === 2 ? t('转顶层，让左拇指位置碰黄。', 'Turn the top so yellow reaches the left thumb position.') : t('转顶层，让左拇指位置不碰黄。', 'Turn the top so the left thumb position does not touch yellow.');
+      if (gray !== 3) rec.touchSticker = true;
       rec = prepare(choice.u, alignment, choice.index, rec);
+      if (gray !== 3 && choice.u) phases[phases.length - 1].act.touchSticker = true;
+      if (gray === 3) {
+        if (rec) phases.push({ start: moves.length, end: moves.length, recognize: rec, act: rec, recognizeOnly: true });
+        const aligned = current();
+        const left = choice.index === 1;
+        const recognition = recognize(left
+          ? t('鱼头在右前，F 面左上有鱼鳍，是左鱼。', 'Head at front-right, fin at front-top-left: left fish.')
+          : t('鱼头在左前，F 面右上有鱼鳍，是右鱼。', 'Head at front-left, fin at front-top-right: right fish.'), choice.index,
+          [aligned.faces[Face.U][left ? 8 : 6], aligned.faces[Face.F][left ? 0 : 2]]);
+        phases.push({ start: moves.length, end: moves.length, recognize: recognition, act: recognition, recognizeOnly: true });
+        rec = undefined;
+      }
       action(choice.alg, choice.index === 1 ? t('做左鱼公式。', 'Do left Sune.') : t('做右鱼公式。', 'Do right Sune.'), choice.index, rec);
     } else if (stage === 'corner-position') {
       const align = turns.find(u => topCorners(state(join(base, u))));
@@ -300,11 +378,19 @@ export function buildCompleteDemo(stage: CompleteDemoStage, setup: string): Comp
         action(align, t('转顶层，让四个角对齐侧面中心。', 'Turn the top to match all four corners with the side centers.'), 0,
           recognize(t('顶角相对位置已对，只需对齐中心。', 'The corners are in the right relative positions. Match the centers.'), 0), false);
       } else {
-        const eyeFaces = eyes(cube);
+        // F and R are visible; two quarter-turn inspections expose the other sides.
+        let inspected = current();
+        let visibleEyes = eyes(inspected).filter(face => face === Face.F || face === Face.R);
+        for (let scan = 0; !visibleEyes.length && scan < 2; scan++) {
+          action('y', t('转体观察另一侧，找两端同色的眼。', 'Rotate to inspect the next side for matching corner stickers.'), eyes(cube).length ? 0 : 1, undefined, false);
+          inspected = current();
+          visibleEyes = eyes(inspected).filter(face => face === Face.F || face === Face.R);
+        }
+        const eyeFaces = eyes(inspected);
         const index = eyeFaces.length ? 0 : 1;
-        const outlines = eyeFaces.flatMap(face => [cube.faces[face][0], cube.faces[face][2]]);
-        let rec: DemoContent | undefined = recognize(index === 0 ? t('找到一对眼，把眼放左。', 'Found headlights. Hold them on the left.') : t('没有眼，先做一遍公式造眼。', 'No headlights. Use the algorithm once to create a pair.'), index, outlines);
-        const y = index === 0 ? rotations.find(y => eyes(state(join(base, y))).includes(Face.L))! : '';
+        const outlines = visibleEyes.slice(0, 1).flatMap(face => [inspected.faces[face][0], inspected.faces[face][2]]);
+        let rec: DemoContent | undefined = recognize(index === 0 ? t('找到一对眼：两端角格同色。', 'Found headlights: the two corner stickers match.') : t('四面都没有眼，先做一遍公式造眼。', 'No headlights on any side. Use the algorithm once to create a pair.'), index, outlines);
+        const y = index === 0 ? rotations.find(y => eyes(state(join(currentAlg(), y))).includes(Face.L))! : '';
         rec = prepare(y, t('转体，把眼放左。', 'Rotate the cube to hold the headlights on the left.'), index, rec);
         action(CORNER_POSITION, t('做角位置公式。', 'Do the corner-position algorithm.'), index, rec);
       }
@@ -347,19 +433,59 @@ export function completeDemoPool(stage: CompleteDemoStage): CompleteDemo[] {
   const setups = stage === 'yellow-cross' ? YELLOW_CROSS_DEMO_SETUPS
     : stage === 'corners' ? [...LBL_LESSON_RUNS.map(run => lessonFrame(run, 'corners').setup), CORNER_DEMO_EXTREME_SETUP]
       .flatMap(setup => turns.map(turn => join(setup, turn)))
-    : [...chapter.examples.flatMap(example => turns.map(turn => join(resolvePlayerSetup('3x3', example.alg, example.setup, example.startSolved ?? false), turn))),
-      ...LBL_LESSON_RUNS.map(run => stage === 'daisy' ? run.scramble : lessonFrame(run, stage as LblLessonStageId).setup)];
-  const demos = [...new Set(setups)].filter(setup => !demoGoalReached(stage, setup)).map(setup => buildCompleteDemo(stage, setup));
+    : [...(stage === 'middle' ? [] : chapter.examples.flatMap(example => turns.map(turn => join(resolvePlayerSetup('3x3', example.alg, example.setup, example.startSolved ?? false), turn)))),
+      ...LBL_LESSON_RUNS.map(run => stage === 'daisy' ? run.scramble : lessonFrame(run, stage as LblLessonStageId).setup),
+      ...(stage === 'middle' ? [MIDDLE_DEMO_EXTREME_SETUP] : [])];
+  if (stage === 'yellow-face') {
+    setups.push(...turns.flatMap(u => turns.map(v => join(RIGHT_SUNE, u, RIGHT_SUNE, v))));
+  }
+  let demos = [...new Set(setups)]
+    .filter(setup => stage === 'daisy' ? petals(state(setup)).length < 3
+      : stage === 'middle' ? middleEdgeCount(state(setup)) < 3 : !demoGoalReached(stage, setup))
+    .map(setup => buildCompleteDemo(stage, setup));
+  if (stage === 'yellow-face') {
+    const counts = [0, 0, 0, 0];
+    const seen = new Set<string>();
+    demos = demos.filter(demo => {
+      const first = demo.phases.find(phase => phase.recognize)!;
+      const index = first.recognize!.caseIndex!;
+      if (index < 2) {
+        if (counts[index] || !/^U/.test(movesOf(demo.alg)[0])) return false;
+      } else {
+        const shape = turns.map(u => yellowCornerSignature(state(join(demo.setup, u)))).sort()[0];
+        if (counts[index] >= 2 || seen.has(shape)) return false;
+        seen.add(shape);
+      }
+      counts[index]++;
+      return true;
+    });
+    demos.sort((a, b) => a.phases.find(phase => phase.recognize)!.recognize!.caseIndex!
+      - b.phases.find(phase => phase.recognize)!.recognize!.caseIndex!);
+    if (counts.join(',') !== '1,1,2,2') throw new Error('Missing yellow-face demonstration cases');
+  }
+  if (stage === 'corner-position') {
+    const counts = { visible: 0, hidden: 0, none: 0 };
+    demos = demos.filter(demo => {
+      const faces = eyes(state(demo.setup));
+      if (faces.length === 4) return false;
+      const kind = !faces.length ? 'none' : faces.some(face => face === Face.F || face === Face.R) ? 'visible' : 'hidden';
+      if (counts[kind] >= (kind === 'none' ? 2 : 1)) return false;
+      counts[kind]++;
+      return true;
+    });
+    if (counts.visible !== 1 || counts.hidden !== 1 || counts.none !== 2) throw new Error('Missing corner-position demonstration cases');
+  }
+  if (stage === 'edge-position') {
+    const counts = [0, 0, 0];
+    demos = demos.filter(demo => {
+      const index = demo.phases.find(phase => phase.recognize)?.recognize?.caseIndex;
+      if (index === undefined || counts[index] >= (index === 2 ? 2 : 1)) return false;
+      counts[index]++;
+      return true;
+    });
+    if (counts.join(',') !== '1,1,2') throw new Error('Missing edge-position demonstration cases');
+  }
   if (!demos.length) throw new Error(`No unfinished ${stage} examples`);
   pools.set(stage, demos);
   return demos;
-}
-
-/** Equal probability per initial case, then uniform choice within that case. */
-export function pickCompleteDemo(stage: CompleteDemoStage, random: () => number = Math.random): number {
-  const pool = completeDemoPool(stage);
-  const kinds = [...new Set(pool.map(demo => demo.phases.find(phase => phase.recognize)?.recognize?.caseIndex))];
-  const kind = kinds[Math.floor(random() * kinds.length)];
-  const choices = pool.flatMap((demo, index) => demo.phases.find(phase => phase.recognize)?.recognize?.caseIndex === kind ? [index] : []);
-  return choices[Math.floor(random() * choices.length)];
 }
