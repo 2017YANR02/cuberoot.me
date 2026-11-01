@@ -1722,11 +1722,10 @@ export default function TrainerRunClient() {
               )}
               {doubleRestoreError && <span role="alert">{tr({ zh: '双底加载失败，请重试', en: 'Double ZBLL failed to load. Retry.' })}</span>}
               <div className="trainer-opts-row">
-                {!trainingHost && <select
+                {!trainingHost && !room && !splitActive && !doubleZbll && <select
                   className="trainer-scramble-kind trainer-mode-select"
                   value={isMemo ? 'memo' : 'train'}
                   onChange={e => setMode(e.target.value === 'memo' ? 'memo' : lastTrainingMode.current)}
-                  disabled={!!room || splitActive || doubleZbll}
                   aria-label={tr({ zh: '训练模式', en: 'Training mode' })}
                 >
                   {PRIMARY_MODES.map(m => (
