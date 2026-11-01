@@ -77,7 +77,8 @@ export default function StaffSopPage() {
   ];
   const handoff = handoffFields.map(([title, description]) => `${title}\n${description}\n`).join('\n');
   const authorization = t('按本次授权执行。已确认的权限不重复申请；未获授权的发布、外发消息和不可逆操作，先确认。', 'Follow the current authorization. Do not ask again for permissions already granted. Confirm any release, external message or irreversible action that has not been authorized.');
-  const prompt = [t('请按以下 AI 协作 SOP 完成本次任务。', 'Follow this AI collaboration SOP for this task.'), t('开工前整理至少五点需求或提示词，涵盖目标、范围、约束、依赖和验收标准。', 'Before starting, prepare at least five requirements or prompt points covering the goal, scope, constraints, dependencies and acceptance criteria.'), ...steps.map((step, index) => `${index + 1}. ${step.title}\n${step.ai}\n${t('交付', 'Output')}：${step.output}`), authorization, t('并行任务分清负责人、文件范围和依赖；由一人整合并检查结果。', 'Give parallel tasks clear owners, file scopes and dependencies; assign one person to integrate and verify the result.'), handoff, t('聊天命名：状态 员工 任务', 'Chat title: Status Employee Task'), ...statuses.map(([status, label]) => `${status}: ${label}`)].join('\n\n');
+  const urgency = t('收到紧急任务或紧急问题反馈时，尽快回复并处理，及时 push，将修复发布到线上；非紧急任务自行处理好即可，无需逐一回复。', 'Respond to urgent tasks or urgent issue reports as soon as possible, address them promptly, and push and deploy fixes to production. Handle non-urgent tasks independently; there is no need to reply to every item.');
+  const prompt = [t('请按以下 AI 协作 SOP 完成本次任务。', 'Follow this AI collaboration SOP for this task.'), t('开工前整理至少五点需求或提示词，涵盖目标、范围、约束、依赖和验收标准。', 'Before starting, prepare at least five requirements or prompt points covering the goal, scope, constraints, dependencies and acceptance criteria.'), ...steps.map((step, index) => `${index + 1}. ${step.title}\n${step.ai}\n${t('交付', 'Output')}：${step.output}`), authorization, urgency, t('并行任务分清负责人、文件范围和依赖；由一人整合并检查结果。', 'Give parallel tasks clear owners, file scopes and dependencies; assign one person to integrate and verify the result.'), handoff, t('聊天命名：状态 员工 任务', 'Chat title: Status Employee Task'), ...statuses.map(([status, label]) => `${status}: ${label}`)].join('\n\n');
 
   if (!user) return null;
   return <section className="staff-sop sop-guide">
@@ -161,6 +162,7 @@ export default function StaffSopPage() {
         ].map((state) => <li key={state.title}><span className="sop-guide-release-icon"><state.icon size={17} aria-hidden="true" /></span><strong>{state.title}</strong><span>{state.text}</span></li>)}
       </ul>
       <p className="sop-guide-release-note">{t('已提交不等于已推送；推送、CI 和发布结果分别报告。', 'A commit is not a push. Report push, CI and release results separately.')}</p>
+      <p className="sop-guide-release-note">{urgency}</p>
       <p className="sop-guide-authorization"><ShieldCheck size={17} aria-hidden="true" />{authorization}</p>
     </section>
 
