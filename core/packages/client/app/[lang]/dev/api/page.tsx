@@ -75,6 +75,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   platform_competitions platform_competition_attempts platform_competition_evidence platform_competition_settlements platform_competition_device_reports platform_organizer_applications platform_refunds
 //   enterprise_verification contests workspace app_releases
 //   mcp mcp_oauth onboarding timer_replay_shares site_assistant site_assistant_shares cube_agents
+//   membership_gallery
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
   { d: 'recon', m: 'GET', p: '/v1/recon-captures/status', g: 'admin', c: 'no-store', zh: '上传前核对采集服务、同库 Drive 及当前身份', en: 'Check capture service, same-database Drive and identity before upload' },
@@ -770,7 +771,12 @@ const ENDPOINTS: Ep[] = [
   { d: 'membership', m: 'GET', p: '/v1/membership/members', g: 'public', c: 'no-store', zh: '首页公开会员名单', en: 'Public homepage member list' },
   { d: 'membership', m: 'GET', p: '/v1/membership/profile/:wcaId', g: 'public', zh: '有效会员的公开个人资料和图片', en: 'Public profile and images for an active member' },
   { d: 'membership', m: 'GET', p: '/v1/membership/me', g: 'login', zh: '我的会员状态', en: 'My membership' },
-  { d: 'membership', m: 'PUT', p: '/v1/membership/me/profile', g: 'login', c: 'no-store', zh: '修改公开个人资料、图片和首页展示开关', en: 'Update public profile, images, and homepage visibility' },
+  { d: 'membership', m: 'PUT', p: '/v1/membership/me/profile', g: 'login', c: 'no-store', zh: '修改个人介绍、私密照片和首页展示开关', en: 'Update profile text, private photos, and homepage visibility' },
+  { d: 'membership', m: 'GET', p: '/v1/membership/gallery', g: 'public', c: 'no-store', zh: '已审核公开的会员照片', en: 'Approved public member photos' },
+  { d: 'membership', m: 'GET', p: '/v1/membership/gallery/mine', g: 'login', c: 'no-store', zh: '本人照片的公开状态', en: 'Own photo publication status' },
+  { d: 'membership', m: 'PUT', p: '/v1/membership/gallery/:id/visibility', g: 'login', c: 'no-store', zh: '申请公开、撤回或改为私密', en: 'Request publication, withdraw, or make private' },
+  { d: 'membership', m: 'GET', p: '/v1/membership/gallery/review', g: 'admin', c: 'no-store', zh: '照片公开申请队列', en: 'Photo publication review queue' },
+  { d: 'membership', m: 'POST', p: '/v1/membership/gallery/:id/review', g: 'admin', c: 'no-store', zh: '通过或拒绝公开申请', en: 'Approve or decline photo publication' },
   { d: 'membership', m: 'PUT', p: '/v1/membership/me/contact', g: 'login', zh: '改联系方式', en: 'Update contact' },
   { d: 'membership', m: 'POST', p: '/v1/membership/orders', g: 'login', zh: '创建订单', en: 'Create order' },
   { d: 'membership', m: 'GET', p: '/v1/membership/orders/:no', g: 'login', zh: '查订单状态', en: 'Order status' },
@@ -976,9 +982,10 @@ const ENDPOINTS: Ep[] = [
   { d: 'content', m: 'GET', p: '/v1/article', g: 'public', c: 'validate', zh: '文章列表', en: 'Article list' },
   { d: 'content', m: 'GET', p: '/v1/article/:slug', g: 'public', c: 'no-store', zh: '单篇文章', en: 'Single article' },
   { d: 'content', m: 'GET', p: '/v1/article/me', g: 'login', zh: '我的文章', en: 'My articles' },
-  { d: 'content', m: 'GET', p: '/v1/article/img/:id', g: 'public', zh: '文章配图', en: 'Article image' },
-  { d: 'content', m: 'GET', p: '/v1/article/img/:id/thumb/:width', g: 'public', zh: '图库缩略图（512/1024，v=1），暂时失败返回原图', en: 'Gallery thumbnail (512/1024, v=1), with original fallback' },
+  { d: 'content', m: 'GET', p: '/v1/article/img/:id', g: 'public', zh: '文章配图；图库照片按可见性鉴权且不缓存', en: 'Article image; gallery photos require visibility access and are never cached' },
+  { d: 'content', m: 'GET', p: '/v1/article/img/:id/thumb/:width', g: 'public', zh: '缩略图（512/1024，v=1）；图库照片与原图权限一致', en: 'Thumbnail (512/1024, v=1); gallery access matches the original' },
   { d: 'content', m: 'POST', p: '/v1/article/img', g: 'login', zh: '上传配图', en: 'Upload image' },
+  { d: 'content', m: 'POST', p: '/v1/article/img/gallery', g: 'login', c: 'no-store', zh: '上传默认私密的会员图库照片', en: 'Upload a private member gallery photo' },
   { d: 'content', m: 'POST', p: '/v1/article', g: 'login', zh: '发表文章', en: 'Publish article' },
   { d: 'content', m: 'PATCH', p: '/v1/article/:slug', g: 'login', zh: '编辑文章', en: 'Edit article' },
   { d: 'content', m: 'DELETE', p: '/v1/article/:slug', g: 'login', zh: '删除文章', en: 'Delete article' },

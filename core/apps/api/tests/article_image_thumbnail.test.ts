@@ -4,9 +4,25 @@ vi.mock('../src/db/connection.js', () => ({ query: mocks.query }));
 vi.mock('../src/utils/image_thumbnail.js', () => ({ imageThumbnail: mocks.thumbnail, canThumbnailWebp: mocks.eligible, THUMBNAIL_WIDTHS: new Set([512, 1024]) }));
 vi.mock('../src/utils/recon_helpers.js', () => ({ requireAuth: vi.fn(), requireAdmin: vi.fn(), authenticateUser: vi.fn(), checkRateLimit: vi.fn() }));
 import { articleRoutes } from '../src/routes/article.js';
+import { authenticateUser } from '../src/utils/recon_helpers.js';
 const original = Buffer.from('original'), thumb = Buffer.from('thumb');
 beforeEach(() => { vi.clearAllMocks(); mocks.query.mockResolvedValue([{ data: original, mime: 'image/webp' }]); mocks.eligible.mockReturnValue(true); });
 describe('article image delivery remains safe during thumbnail rollout', () => {
+  it('checks gallery access before thumbnail lookup and never caches private or published gallery bytes', async () => {
+    mocks.query.mockResolvedValue([{ data: original, mime: 'image/webp', owner_wca_id: '2000TEST01', gallery_status: 'private', gallery_public: false, gallery_attached: true }]);
+    vi.mocked(authenticateUser).mockResolvedValue(null);
+    const denied = await articleRoutes.request('/article/img/169/thumb/512?v=1');
+    expect(denied.status).toBe(404);
+    expect(denied.headers.get('cache-control')).toBe('no-store');
+    expect(mocks.thumbnail).not.toHaveBeenCalled();
+    vi.mocked(authenticateUser).mockResolvedValue({ wcaId: '2000TEST01', name: 'Owner', isAdmin: false });
+    expect((await articleRoutes.request('/article/img/169')).headers.get('cache-control')).toBe('no-store');
+    mocks.query.mockResolvedValue([{ data: original, mime: 'image/webp', gallery_status: 'public', gallery_public: true }]);
+    mocks.thumbnail.mockResolvedValue(thumb);
+    const published = await articleRoutes.request('/article/img/169/thumb/512?v=1');
+    expect(published.status).toBe(200);
+    expect(published.headers.get('cache-control')).toBe('no-store');
+  });
   it('retains the original endpoint and caches successful fixed variants separately', async () => {
     const raw = await articleRoutes.request('/article/img/169');
     expect(Buffer.from(await raw.arrayBuffer())).toEqual(original);

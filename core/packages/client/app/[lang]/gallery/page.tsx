@@ -7,56 +7,44 @@ import dynamic from 'next/dynamic';
 import { useMembership } from '@/hooks/useMembership';
 import { useRequireMembership } from '@/hooks/useRequireMembership';
 import { tr, useLang } from '@/i18n/tr';
-import { useAuthStore } from '@/lib/auth-store';
+import { hasAdminAccess, useAuthUser } from '@/lib/auth-store';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { uploadedImageUrl } from '@/lib/image-upload';
-import { getPublicMemberProfile, listPublicMembers } from '@/lib/membership-api';
+import { listGalleryPhotos, type GalleryPhoto } from '@/lib/gallery-api';
 import './gallery.css';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const MemberProfileEditor = dynamic(() => import('@/components/MemberProfileEditor'));
-
-interface GalleryPhoto {
-  id: number;
-  index: number;
-  memberName: string;
-  wcaId: string;
-}
+const GalleryReviewPanel = dynamic(() => import('@/components/GalleryReviewPanel'));
 
 export default function GalleryPage() {
   const lang = useLang();
-  const user = useAuthStore((state) => state.user);
+  const user = useAuthUser();
   const { profile, isMember, loading: membershipLoading, refresh } = useMembership();
   const requireMembership = useRequireMembership(isMember);
   const [photos, setPhotos] = useState<GalleryPhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
 
-  const loadPhotos = useCallback(async () => {
+  const loadPhotos = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     setFailed(false);
     try {
-      const members = await listPublicMembers();
-      // ponytail: batch this only if member count makes parallel profile fetches measurable.
-      const profiles = await Promise.all(members.map(async (member) => ({
-        member,
-        profile: await getPublicMemberProfile(member.wcaId).catch(() => null),
-      })));
-      setPhotos(profiles.flatMap(({ member, profile }) => (profile?.imageIds ?? []).map((id, index) => ({
-        id,
-        index,
-        memberName: member.name,
-        wcaId: member.wcaId,
-      }))));
+      const next = await listGalleryPhotos(signal);
+      if (!signal?.aborted) setPhotos(next);
     } catch {
-      setFailed(true);
+      if (!signal?.aborted) setFailed(true);
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   }, []);
 
-  useEffect(() => { void loadPhotos(); }, [loadPhotos]);
+  useEffect(() => {
+    const controller = new AbortController();
+    void loadPhotos(controller.signal);
+    return () => controller.abort();
+  }, [loadPhotos]);
 
   const isZh = lang === 'zh';
 
@@ -73,6 +61,7 @@ export default function GalleryPage() {
 
       {isMember && profile ? (
         <MemberProfileEditor
+          key={`${user?.uid}:${user?.wcaId}`}
           profile={profile}
           onSaved={() => { refresh(); void loadPhotos(); }}
         />
@@ -86,6 +75,8 @@ export default function GalleryPage() {
           </button>
         </div>
       )}
+
+      {hasAdminAccess(user) && <GalleryReviewPanel key={`${user?.uid}:${user?.wcaId}`} onReviewed={() => { refresh(); void loadPhotos(); }} />}
 
       <section className="gallery-collection" aria-labelledby="gallery-collection-title">
         <h2 id="gallery-collection-title">{tr({ zh: '会员照片', en: 'Member photos' })}</h2>
@@ -102,26 +93,27 @@ export default function GalleryPage() {
           <div className="gallery-grid">
             {photos.map((photo) => {
               const name = displayCuberName(photo.memberName, isZh);
+              const content = <>
+                <img
+                  src={`${uploadedImageUrl(photo.id)}?v=2`}
+                  srcSet={`${uploadedImageUrl(photo.id)}/thumb/512?v=1&access=2 512w, ${uploadedImageUrl(photo.id)}/thumb/1024?v=1&access=2 1024w`}
+                  onError={event => {
+                    const image = event.currentTarget;
+                    if (image.srcset) {
+                      image.removeAttribute('srcset');
+                      image.src = `${uploadedImageUrl(photo.id)}?v=2`;
+                    }
+                  }}
+                  sizes="(max-width: 520px) calc((100vw - 40px) / 2), (max-width: 715px) calc((100vw - 44px) / 2), (max-width: 947px) calc((100vw - 56px) / 3), 263px"
+                  alt={name}
+                  loading="lazy"
+                  decoding="async"
+                />
+                <figcaption>{name}{photo.wcaId && <WcaPersonTeamBadge wcaId={photo.wcaId} linked={false} />}</figcaption>
+              </>;
               return (
                 <figure className="gallery-photo" key={photo.id}>
-                  <AppLink href={`/wca/persons/${photo.wcaId}`} prefetch={false}>
-                    <img
-                      src={uploadedImageUrl(photo.id)}
-                      srcSet={`${uploadedImageUrl(photo.id)}/thumb/512?v=1 512w, ${uploadedImageUrl(photo.id)}/thumb/1024?v=1 1024w`}
-                      onError={event => {
-                        const image = event.currentTarget;
-                        if (image.srcset) {
-                          image.removeAttribute('srcset');
-                          image.src = uploadedImageUrl(photo.id);
-                        }
-                      }}
-                      sizes="(max-width: 520px) calc((100vw - 40px) / 2), (max-width: 715px) calc((100vw - 44px) / 2), (max-width: 947px) calc((100vw - 56px) / 3), 263px"
-                      alt={`${name} ${photo.index + 1}`}
-                      loading="lazy"
-                      decoding="async"
-                    />
-                    <figcaption>{name}<WcaPersonTeamBadge wcaId={photo.wcaId} linked={false} /></figcaption>
-                  </AppLink>
+                  {photo.wcaId ? <AppLink href={`/wca/persons/${photo.wcaId}`} prefetch={false}>{content}</AppLink> : content}
                 </figure>
               );
             })}

@@ -3755,9 +3755,14 @@ CREATE TABLE article_image (
   height        INTEGER,
   size_bytes    INTEGER     NOT NULL,
   owner_wca_id  VARCHAR(20) NOT NULL,
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  gallery_status TEXT CHECK (gallery_status IN ('private', 'pending', 'public', 'rejected')),
+  gallery_requested_at TIMESTAMPTZ,
+  gallery_reviewed_at TIMESTAMPTZ,
+  gallery_reviewed_by VARCHAR(20)
 );
 CREATE INDEX idx_article_image_article ON article_image (article_id);
+CREATE INDEX idx_article_image_gallery_pending ON article_image (gallery_requested_at, id) WHERE gallery_status = 'pending';
 
 -- ── 25. article_report (/article 读者举报 → admin 审核入口;untrusted 防滥用) ──
 -- migration 0027_article_report.sql。dedupe 唯一索引防同一人刷计数。

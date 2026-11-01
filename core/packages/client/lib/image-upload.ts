@@ -42,10 +42,10 @@ export async function prepareImageUpload(file: File, maxDimension = 1920): Promi
   }
 }
 
-export async function uploadImageBlob(dataB64: string, mime: string): Promise<UploadedImage> {
-  return handleApi<UploadedImage>(await sessionFetch(apiUrl('/v1/article/img'), {
+export async function uploadImageBlob(dataB64: string, mime: string, purpose?: 'gallery'): Promise<UploadedImage> {
+  return handleApi<UploadedImage>(await sessionFetch(apiUrl(purpose === 'gallery' ? '/v1/article/img/gallery' : '/v1/article/img'), {
     method: 'POST',
     headers: authHeaders(),
-    body: JSON.stringify({ dataB64, mime }),
+    body: JSON.stringify({ dataB64, mime, ...(purpose ? { purpose } : {}) }),
   }));
 }
