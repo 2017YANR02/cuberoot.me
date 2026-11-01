@@ -116,11 +116,11 @@ function TeamsDirectory() {
         <td><WcaTeamLink team={{ id: member.teamId, name: member.teamName }} /></td>
         <td>{member.bestSingle == null ? '—' : formatWcaResult(member.bestSingle, '333', 'single')}
           {member.bestSingle != null && member.singleWorldRank != null && member.singleWorldRank > 0 &&
-            <span className="wca-team-world-rank">{tr({ zh: `世界 #${member.singleWorldRank}`, en: `World #${member.singleWorldRank}` })}</span>}
+            <span className="wca-team-world-rank">WR{member.singleWorldRank}</span>}
         </td>
         <td className="wca-team-average">{member.bestAverage === null ? '—' : formatWcaResult(member.bestAverage, '333', 'average')}
           {member.bestAverage != null && member.averageWorldRank != null && member.averageWorldRank > 0 &&
-            <span className="wca-team-world-rank">{tr({ zh: `世界 #${member.averageWorldRank}`, en: `World #${member.averageWorldRank}` })}</span>}
+            <span className="wca-team-world-rank">WR{member.averageWorldRank}</span>}
         </td>
         <td>{member.competitionCount ?? '—'}</td>
         <td>{member.championshipCount ?? '—'}</td>
