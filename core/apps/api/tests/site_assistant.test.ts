@@ -5,8 +5,9 @@ import { createSiteAssistantRoutes as createRoutes } from '../src/routes/site_as
 import { answerSiteQuestion, assistantConfig, pageText, requestedAssistantLimit } from '../src/utils/site_assistant.js';
 import { cubeAgentConfig } from '../src/utils/cube_agents.js';
 import { runAnalysisQuery } from '../src/utils/site_assistant_analysis_db.js';
+import { findAssistantPeople } from '../src/utils/site_assistant_people.js';
 vi.mock('../src/utils/site_assistant_analysis_db.js',async importOriginal=>({...(await importOriginal<object>()),runAnalysisQuery:vi.fn()}));
-vi.mock('../src/utils/site_assistant_people.js',()=>({findAssistantPeople:vi.fn(async()=>[{wcaId:'2012PARK03',name:'Max Park',country:'USA'}])}));
+vi.mock('../src/utils/site_assistant_people.js',()=>({findAssistantPeople:vi.fn(async(query:string)=>query==='Max Park'?[{wcaId:'2012PARK03',name:'Max Park',country:'USA',match:'exact'}]:[])}));
 
 const createSiteAssistantRoutes = (deps: Omit<Parameters<typeof createRoutes>[0], 'reserve' | 'authenticate'> & { reserve?: () => Promise<{ allowed: boolean; retryAfter: number }> }) => createRoutes({ authenticate: async () => ({ uid: 1, wcaId: '2017YANR02' }), reserve: async () => ({ allowed: true, retryAfter: 60 }), ...deps });
 
@@ -20,6 +21,58 @@ const ask = () => new Request('https://api.example/site-assistant', {
 });
 
 describe('site assistant grounding', () => {
+  it('returns WCA PBs for an isolated homophone instead of asking about a famous namesake',async()=>{
+    vi.mocked(findAssistantPeople).mockResolvedValueOnce([{wcaId:'2012MAZH01',name:'Zhiyuan Ma (马志远)',country:'China',match:'pinyin'}]);
+    const fetcher=vi.fn<typeof fetch>(async input=>{
+      const url=new URL(String(input));
+      expect(url.origin).toBe('https://api.cuberoot.me');
+      if(url.pathname.endsWith('/meta'))return Response.json({lastImportedAt:'2026-10-31'});
+      expect(url.searchParams.get('wcaId')).toBe('2012MAZH01');
+      return Response.json({profile:{person:{name:'Zhiyuan Ma (马志远)'},personal_records:{333:{single:{best:800},average:{best:1000}},222:{single:{best:200},average:{best:300}}}}});
+    });
+    const result=await answerSiteQuestion('马致远','zh',config,AbortSignal.timeout(5000),fetcher);
+    expect(findAssistantPeople).toHaveBeenLastCalledWith('马致远');
+    expect(result.sources).toMatchObject([{id:'person:2012MAZH01',title:'马志远'}]);
+    expect(result.answer).toBe('已列出马志远全部 2 个有成绩项目的官方个人最佳成绩。 [[person:2012MAZH01]]');
+    expect(result.artifacts[0]).toMatchObject({rows:[['三阶','8.00','—','10.00','—'],['二阶','2.00','—','3.00','—']]});
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+  it('lists equally strong candidates without fetching or inventing one person\'s results',async()=>{
+    vi.mocked(findAssistantPeople).mockResolvedValueOnce([
+      {wcaId:'2012MAZH01',name:'Zhiyuan Ma (马志远)',country:'China',match:'pinyin'},
+      {wcaId:'2013MAZH01',name:'Zhiyuan Ma (马智远)',country:'China',match:'pinyin'},
+    ]);
+    const fetcher=vi.fn<typeof fetch>();
+    const result=await answerSiteQuestion('ma zhi yuan','en',config,AbortSignal.timeout(5000),fetcher);
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(result.sources).toHaveLength(2);
+    expect(result.artifacts[0]).toMatchObject({rows:[['Zhiyuan Ma','2012MAZH01','China'],['Zhiyuan Ma','2013MAZH01','China']]});
+    expect(result.answer).toContain('Please choose one');
+  });
+  it('respects an explicit non-cubing subject in recent conversation',async()=>{
+    vi.mocked(findAssistantPeople).mockClear();
+    const fetcher=vi.fn<typeof fetch>().mockResolvedValue(modelResponse({answerKind:'general',answer:'马致远的散曲。'}));
+    const result=await answerSiteQuestion('马致远','zh',config,AbortSignal.timeout(5000),fetcher,[{role:'user',content:'接下来介绍我提到的元代散曲作家的作品。'}]);
+    expect(findAssistantPeople).not.toHaveBeenCalled();
+    expect(result.answer).toBe('马致远的散曲。');
+  });
+  it('keeps ordinary conversation available when a speculative name lookup fails',async()=>{
+    vi.mocked(findAssistantPeople).mockRejectedValueOnce(new Error('public data unavailable'));
+    const fetcher=vi.fn<typeof fetch>().mockResolvedValue(modelResponse({answerKind:'general',answer:'你好！'}));
+    const result=await answerSiteQuestion('你好','zh',config,AbortSignal.timeout(5000),fetcher);
+    expect(result).toMatchObject({answer:'你好！',sources:[],artifacts:[]});
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+  it('bounds a stalled speculative lookup without waiting for the database to recover',async()=>{
+    const lookupDeadline=new AbortController();
+    vi.spyOn(AbortSignal,'timeout').mockReturnValue(lookupDeadline.signal);
+    vi.mocked(findAssistantPeople).mockClear().mockImplementationOnce(()=>new Promise(()=>{}));
+    const fetcher=vi.fn<typeof fetch>().mockResolvedValue(modelResponse({answerKind:'general',answer:'Hello!'}));
+    const pending=answerSiteQuestion('Hello','en',config,new AbortController().signal,fetcher);
+    await vi.waitFor(()=>expect(findAssistantPeople).toHaveBeenCalledTimes(1));
+    lookupDeadline.abort();
+    expect(await pending).toMatchObject({answer:'Hello!',sources:[],artifacts:[]});
+  });
   it('supplies the configured model identity without exposing provider credentials',async()=>{
     const model=vi.fn().mockResolvedValue(modelResponse({answer:'The configured model is fixture.',sourceIds:[]}));
     await answerSiteQuestion('What model are you?','en',config,AbortSignal.timeout(5000),withCatalog(model));

@@ -6,6 +6,7 @@ import { createSiteAssistantRoutes as createRoutes } from '../src/routes/site_as
 import { AssistantFailure } from '../src/utils/site_assistant_diagnostics.js';
 import { modelResponse as model, wireEvidence } from './fixtures/site_assistant_model.js';
 import { chunkKnowledge } from '../src/utils/site_assistant_knowledge.js';
+vi.mock('../src/utils/site_assistant_people.js',()=>({findAssistantPeople:vi.fn(async()=>[])}));
 
 const config={key:'private-model-key',baseUrl:'https://model.example/v1',model:'test'};
 const createSiteAssistantRoutes = (deps: Omit<Parameters<typeof createRoutes>[0], 'authenticate'>) => createRoutes({ authenticate: async () => ({ uid: 1, wcaId: '2017YANR02' }), ...deps });

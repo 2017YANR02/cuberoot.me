@@ -142,6 +142,9 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
     const rows = await findPeople(call.query);
     out.evidence = rows;
     out.sources = rows.map(r => source(`person:${r.wcaId}`, name(r.name), `/wca/persons/${r.wcaId}`));
+    if (rows.length > 1) table(label('匹配的 WCA 选手','Matching WCA competitors'),
+      [label('选手','Person'),'WCA ID',label('国家或地区','Country or region')],
+      rows.map(r => [name(r.name),r.wcaId,r.country]),rows.map(r => `/wca/persons/${r.wcaId}`));
   } else if (call.tool === 'person_competitions') {
     const [data, updated] = await Promise.all([read(url(`${api}/wca/person-page`, {wcaId:call.wcaId})), freshness()]);
     const title = name(data.profile.person.name);

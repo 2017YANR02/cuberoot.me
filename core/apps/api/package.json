@@ -60,6 +60,7 @@
     "mammoth": "^1.12.0",
     "minisearch": "^7.2.0",
     "opentype.js": "^2.0.0",
+    "pinyin-pro": "^3.28.1",
     "postgres": "^3.4.9",
     "qrcode": "^1.5.4",
     "sanitize-html": "^2.18.1",

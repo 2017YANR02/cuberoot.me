@@ -1,7 +1,7 @@
 export const WCA_NAME_MATCH_MODES = ['any', 'first', 'last', 'exact'] as const;
 export type WcaNameMatchMode = typeof WCA_NAME_MATCH_MODES[number];
 
-const MAIN_NAME_SQL = "BTRIM(REGEXP_REPLACE(name, '\\s*\\([^()]*\\)\\s*$', ''))";
+export const MAIN_NAME_SQL = "BTRIM(REGEXP_REPLACE(name, '\\s*\\([^()]*\\)\\s*$', ''))";
 const LOCAL_NAME_SQL = "COALESCE(SUBSTRING(name FROM '\\(([^()]*)\\)\\s*$'), '')";
 
 export function isWcaNameMatchMode(value: string): value is WcaNameMatchMode {
