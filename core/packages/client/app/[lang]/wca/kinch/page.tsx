@@ -128,12 +128,6 @@ function KinchPageInner() {
     <main className="wse-page kinch-page">
       <header className="wse-header">
         <PageHeading backHref="/wca">Kinch</PageHeading>
-        <p className="wse-subtitle">
-          {tr({
-            zh: '用 17 个现役项目衡量综合速拧水平,分数越高越好。',
-            en: 'An all-round measure across all 17 current WCA events. Higher is better.',
-          })}
-        </p>
       </header>
 
       <div className="wse-filters kinch-filters">
