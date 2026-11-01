@@ -89,7 +89,7 @@ export function ClientLoadStatus({
   return (
     <div className="app-startup app-startup-loading app-startup-page" role="status" aria-live="polite">
       <LoadingBrandMark />
-      <p>{tr(label)}</p>
+      <span className="sr-only">{tr(label)}</span>
     </div>
   );
 }
