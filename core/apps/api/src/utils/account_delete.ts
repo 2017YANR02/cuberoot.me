@@ -146,6 +146,7 @@ export const PLATFORM_ACCOUNT_DELETE_TABLES = [
  * 新表要么进清单,要么进这里,不能两边都不在(那就是漏了)。
  */
 export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
+  comp_absences: '管理员维护的公开赛事出席更正，WCA ID 不是站内账号归属；注销保留更正，updated_by 外键置空',
   recon_captures: '私有视频采集引用通过 owner_user_id 外键随 app_users 级联删除；原视频随 Drive 清理',
   recon_capture_revisions: '随 capture_id 级联删除采集修订；其他采集上的 actor_user_id 随账号删除置空',
   workspace_members: '0282 数据库注销守卫清理私人草稿与修订、撤销项目资格、匿名化成员和评论；保留已提交团队记录，账号外键置空',
