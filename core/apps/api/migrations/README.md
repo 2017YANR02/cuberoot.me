@@ -119,3 +119,5 @@ psql "$DATABASE_URL" -c 'SELECT filename, applied_at FROM _schema_migrations ORD
 `0249_friend_chat.sql` adds private friend conversations and immutable messages, per-user read cursors and idempotent sends. Removing a friendship retains history; deleting either account cascades the entire conversation. Apply only through an authorized deployment; local fixtures use isolated databases.
 
 `0300_account_deskpet_selection.sql` 为账号增加桌宠选择。复用账号资料接口，合并保留目标账号的非空选择，注销随账号删除。需先迁移数据库再发布服务端，最后发布客户端。
+
+`0302_comp_absences.sql` 按比赛和 WCA ID 保存管理员确认的不参加记录，支持恢复；官方报名和成绩不变。账号注销仅清空最后编辑者引用，更正记录保留。初始记录为维护者确认的江门公开赛 2026 两位选手：2019JIAN54、2023DONG20。部署时先迁移并发布 API，再发布使用该接口的共同选手页面。

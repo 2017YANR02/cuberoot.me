@@ -43,6 +43,7 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
 ];
 
 const TABLES: Table[] = [
+  { name: 'comp_absences', domain: 'comp', origin: '0302', naturalKey: true, purpose: { zh: '管理员确认的不参加名单及可恢复状态；注销仅清除编辑者引用', en: 'Restorable attendance corrections; account deletion clears only the editor reference' } },
   { name: 'calendar_competitions', domain: 'studio', origin: '0299', naturalKey: true, purpose: { zh: '比赛与个人日程唯一关联，防止重复加入和删除后恢复', en: 'Unique competition-to-event links, including deleted events' } },
   { name: 'recon_captures', domain: 'recon', origin: '0298', purpose: { zh: '私有原片与原始魔方记录绑定、完整性和时间对齐状态', en: 'Private original video and cube recording bindings, integrity and alignment state' } },
   { name: 'recon_capture_revisions', domain: 'recon', origin: '0298', purpose: { zh: '视频采集样本的人工对齐锚点版本', en: 'Human alignment anchor revisions for video captures' } },
@@ -587,8 +588,9 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
-  { n: 300, slug: 'account_deskpet_selection', desc: { zh: '账号桌宠选择跨设备同步', en: 'Account companion selection across devices' } },
+  { n: 302, slug: 'comp_absences', desc: { zh: '管理员确认不参加的比赛选手及恢复操作', en: 'Restorable administrator-confirmed competition absences' } },
   { n: 301, slug: 'gallery_publication', desc: { zh: '图库照片默认私密及公开审核', en: 'Private gallery photos and publication review' } },
+  { n: 300, slug: 'account_deskpet_selection', desc: { zh: '账号桌宠选择跨设备同步', en: 'Account companion selection across devices' } },
   { n: 299, slug: 'calendar_competitions', desc: { zh: '个人比赛日程唯一关联与删除记录', en: 'Personal competition event identity and deletion records' } },
   { n: 298, slug: 'recon_capture', desc: { zh: '私有视频采集样本、原始动作绑定和人工时间对齐版本', en: 'Private video captures, original move bindings and human alignment revisions' } },
   { n: 297, slug: 'recon_intake_source', desc: { zh: '记录复盘收录来源及快照，防止重复收录', en: 'Record reconstruction intake source and snapshot to prevent duplicates' } },

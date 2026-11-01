@@ -61,4 +61,16 @@ describe('common competition entrants', () => {
   it('refuses a partial event shard instead of reporting a false empty overlap', () => {
     expect(() => competitionRoster(competition({ partial: true }))).toThrow('full competition roster');
   });
+
+  it('excludes confirmed absences without changing either official roster, and supports restoration', () => {
+    const left = competitionRoster(competition());
+    const right = competitionRoster(competition());
+    const excluded = new Set(['2020TEST01']);
+    expect(commonCompetitors(left, right, excluded)).toEqual([]);
+    expect(commonCompetitors(right, left, excluded)).toEqual([]);
+    expect(left.people.size).toBe(1);
+    expect(right.people.size).toBe(1);
+    excluded.delete('2020TEST01');
+    expect(commonCompetitors(left, right, excluded).map(person => person.wcaId)).toEqual(['2020TEST01']);
+  });
 });

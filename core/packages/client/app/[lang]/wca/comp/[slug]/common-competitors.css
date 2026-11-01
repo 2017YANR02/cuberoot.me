@@ -95,6 +95,65 @@
   white-space: nowrap;
 }
 
+.comp-common-action,
+.comp-common-restore,
+.comp-common-removed summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.comp-common-action {
+  padding: 8px;
+  color: var(--muted-foreground);
+}
+
+.comp-common-action:hover:not(:disabled) {
+  color: var(--destructive);
+}
+
+.comp-common-action:disabled,
+.comp-common-restore:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.comp-common-removed {
+  margin-top: 16px;
+}
+
+.comp-common-removed summary {
+  list-style: none;
+}
+
+.comp-common-removed summary::-webkit-details-marker {
+  display: none;
+}
+
+.comp-common-removed[open] summary > svg {
+  transform: rotate(90deg);
+}
+
+.comp-common-removed ul {
+  display: grid;
+  gap: 8px;
+  padding: 12px 0;
+  list-style: none;
+}
+
+.comp-common-removed li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+.comp-common-restore {
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+}
+
 @media (max-width: 600px) {
   .comp-common-toolbar > .search-input {
     width: 100%;

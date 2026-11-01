@@ -2,12 +2,13 @@
 
 import { useEffect, useId, useMemo, useState } from 'react';
 import { parseAsString, useQueryState } from 'nuqs';
-import { Check, Copy, Search, CircleHelp } from '@app-foundation/icons/lucide';
+import { Check, Copy, Search, CircleHelp, Trash2, RotateCcw, ChevronRight } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import { CompPicker, CompPickerSummary } from '@/components/CompPicker';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { SearchInput } from '@/components/SearchInput';
+import { Tooltip } from '@/components/Tooltip';
 import { useCopy } from '@/hooks/useCopy';
 import { tr } from '@/i18n/tr';
 import { competitionFetch } from '@/lib/competition-access';
@@ -15,6 +16,8 @@ import { commonCompetitors, competitionRoster, type CompetitionRosterData, type 
 import { localizeCompName } from '@/lib/comp-localize';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { loadComps, type Comp } from '@/lib/comp-search';
+import { useIsAdmin } from '@/lib/auth-store';
+import { fetchCompAbsences, setCompAbsent } from '@/lib/comp-absences';
 import './common-competitors.css';
 
 function presenceLabel(presence: CompetitorPresence) {
@@ -37,11 +40,33 @@ export default function CommonCompetitors({ data, isZh, onRefresh }: {
   const [picked, setPicked] = useState<Comp | null>(null);
   const [response, setResponse] = useState<{ id: string; data?: CompetitionRosterData; error?: boolean } | null>(null);
   const [retry, setRetry] = useState(0);
+  const [absences, setAbsences] = useState<{ key: string; left: string[]; right: string[] } | null>(null);
+  const [absenceError, setAbsenceError] = useState('');
+  const [pending, setPending] = useState(false);
+  const [writeError, setWriteError] = useState<{ key: string; message: string } | null>(null);
+  const isAdmin = useIsAdmin();
+  const pairKey = `${data.slug}:${compareId}`;
   const copy = useCopy();
   const pickerId = useId();
   const sameCompetition = compareId.replaceAll('-', '').toLowerCase() === data.slug.replaceAll('-', '').toLowerCase();
   const validId = /^[A-Za-z0-9_-]{1,128}$/.test(compareId);
   const selectedComp = picked?.id === compareId ? picked : null;
+
+  useEffect(() => {
+    if (!validId || sameCompetition) return;
+    const controller = new AbortController();
+    const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(20_000)]);
+    setAbsences(null);
+    setAbsenceError('');
+    void Promise.all([fetchCompAbsences(data.slug, signal), fetchCompAbsences(compareId, signal)])
+      .then(([left, right]) => {
+        if (!controller.signal.aborted) setAbsences({ key: pairKey, left, right });
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setAbsenceError(pairKey);
+      });
+    return () => controller.abort();
+  }, [data.slug, compareId, pairKey, validId, sameCompetition, retry]);
 
   useEffect(() => {
     if (!validId || selectedComp) return;
@@ -81,8 +106,13 @@ export default function CommonCompetitors({ data, isZh, onRefresh }: {
     ? commonCompetitors(currentRoster, otherRoster).sort((a, b) =>
       displayCuberName(a.name, isZh).localeCompare(displayCuberName(b.name, isZh), isZh ? 'zh-CN' : 'en'))
     : [], [currentRoster, otherRoster, isZh]);
+  const currentAbsences = absences?.key === pairKey ? absences : null;
+  const excluded = useMemo(() => new Set([...(currentAbsences?.left ?? []), ...(currentAbsences?.right ?? [])]), [currentAbsences]);
+  const activeMatches = useMemo(() => currentRoster && otherRoster
+    ? commonCompetitors(currentRoster, otherRoster, excluded) : [], [currentRoster, otherRoster, excluded]);
+  const removed = matches.filter(person => excluded.has(person.wcaId));
   const needle = search.trim().toLocaleLowerCase();
-  const shown = matches.filter(p => !needle || `${p.name} ${p.wcaId}`.toLocaleLowerCase().includes(needle));
+  const shown = matches.filter(p => !excluded.has(p.wcaId) && (!needle || `${p.name} ${p.wcaId}`.toLocaleLowerCase().includes(needle)));
   const currentName = localizeCompName(data.slug, data.name, isZh);
   const otherName = other ? localizeCompName(other.slug, other.name, isZh) : compareId;
   const unidentified = (currentRoster?.unidentified ?? 0) + (otherRoster?.unidentified ?? 0);
@@ -92,6 +122,26 @@ export default function CommonCompetitors({ data, isZh, onRefresh }: {
     setQuery('');
     setSearch('');
     void setCompareId(comp.id);
+  }
+
+  async function updateAbsence(compId: string, wcaId: string, absent: boolean) {
+    if (!isAdmin || pending || !currentAbsences) return;
+    setPending(true);
+    setWriteError(null);
+    try {
+      await setCompAbsent(compId, wcaId, absent);
+      setAbsences(previous => {
+        if (!previous || previous.key !== pairKey) return previous;
+        const side = compId === data.slug ? 'left' : 'right';
+        const ids = new Set(previous[side]);
+        if (absent) ids.add(wcaId); else ids.delete(wcaId);
+        return { ...previous, [side]: [...ids] };
+      });
+    } catch {
+      setWriteError({ key: pairKey, message: tr({ zh: '保存失败，名单未更改，请重试。', en: 'Could not save. The list is unchanged; please retry.' }) });
+    } finally {
+      setPending(false);
+    }
   }
 
   return (
@@ -140,6 +190,12 @@ export default function CommonCompetitors({ data, isZh, onRefresh }: {
           </p>
         ) : compareId && !other ? (
           <LoadingIndicator>{tr({ zh: '加载选手名单…', en: 'Loading competitors…' })}</LoadingIndicator>
+        ) : compareId && absenceError === pairKey ? (
+          <p role="alert">{tr({ zh: '不参加名单加载失败，暂时无法确认共同选手。', en: 'Could not load attendance corrections. The overlap cannot yet be confirmed.' })}
+            <button type="button" className="comp-view-tab" onClick={() => setRetry(value => value + 1)}>{tr({ zh: '重试', en: 'Retry' })}</button>
+          </p>
+        ) : compareId && !currentAbsences ? (
+          <LoadingIndicator>{tr({ zh: '读取不参加名单…', en: 'Loading attendance corrections…' })}</LoadingIndicator>
         ) : other && currentRoster && otherRoster ? (
           currentRoster.total === 0 || otherRoster.total === 0 ? (
             <p>{tr({ zh: '有一场比赛尚无可用的公开选手名单，暂时无法判断交集。', en: 'A public competitor roster is unavailable for one competition, so the overlap cannot yet be determined.' })}</p>
@@ -147,19 +203,21 @@ export default function CommonCompetitors({ data, isZh, onRefresh }: {
             <>
               <div className="comp-common-toolbar">
                 <span className="comp-common-count">
-                  <strong>{tr({ zh: `共同选手 ${matches.length} 人`, en: `${matches.length} common competitors` })}</strong>
+                  <strong>{tr({ zh: `共同选手 ${activeMatches.length} 人`, en: `${activeMatches.length} common competitors` })}</strong>
                   <InfoTooltip
                     icon={CircleHelp}
                     iconSize={16}
                     ariaLabel={tr({ zh: '匹配说明', en: 'About matching' })}
                     content={[
                       tr({ zh: '按 WCA ID 匹配；报名不代表实际到场，DNF 计为参赛，DNS 不计。', en: 'Matched by WCA ID. Registration does not confirm attendance; DNF counts as participation, DNS does not.' }),
+                      tr({ zh: '管理员确认不参加任一场比赛的选手不计入共同名单。', en: 'Competitors marked absent from either competition by an administrator are excluded.' }),
                       unidentified > 0 ? tr({ zh: `两场名单分别有 ${currentRoster.unidentified} / ${otherRoster.unidentified} 人无 WCA ID，未纳入匹配。`, en: `${currentRoster.unidentified} / ${otherRoster.unidentified} entrants respectively have no WCA ID and are excluded.` }) : '',
                     ].filter(Boolean).join('\n')}
                   />
                 </span>
                 <SearchInput value={search} onChange={setSearch} placeholder={tr({ zh: '搜索选手 / WCA ID', en: 'Search person / WCA ID' })} />
               </div>
+              {writeError?.key === pairKey && <p role="alert">{writeError.message}</p>}
               {shown.length > 0 ? (
                 <div className="comp-table-wrap">
                   <table className="comp-table sticky-thead comp-common-table">
@@ -167,12 +225,20 @@ export default function CommonCompetitors({ data, isZh, onRefresh }: {
                       <th scope="col">{tr({ zh: '选手', en: 'Competitor' })}</th>
                       <th scope="col">{currentName}</th>
                       <th scope="col">{otherName}</th>
+                      {isAdmin && <th scope="col"><span className="sr-only">{tr({ zh: '管理', en: 'Manage' })}</span></th>}
                     </tr></thead>
                     <tbody>{shown.map(person => (
                       <tr key={person.wcaId}>
                         <td><Link href={`/wca/persons/${person.wcaId}`} prefetch={false}>{displayCuberName(person.name, isZh)}</Link><small>{person.wcaId}</small></td>
                         <td>{presenceLabel(person.presence)}</td>
                         <td>{presenceLabel(person.otherPresence)}</td>
+                        {isAdmin && <td>
+                          <Tooltip content={tr({ zh: `确认不参加${otherName}`, en: `Mark absent from ${otherName}` })}>{tip => (
+                            <button {...tip} type="button" className="comp-common-action" disabled={pending}
+                              aria-label={tr({ zh: `移除${displayCuberName(person.name, isZh)}：不参加${otherName}`, en: `Remove ${displayCuberName(person.name, isZh)}: absent from ${otherName}` })}
+                              onClick={() => void updateAbsence(compareId, person.wcaId, true)}><Trash2 size={16} /></button>
+                          )}</Tooltip>
+                        </td>}
                       </tr>
                     ))}</tbody>
                   </table>
@@ -180,6 +246,21 @@ export default function CommonCompetitors({ data, isZh, onRefresh }: {
               ) : <p>{search.trim()
                 ? tr({ zh: '没有匹配的选手。', en: 'No competitors match your search.' })
                 : tr({ zh: '当前公开数据中未找到符合条件的共同选手。', en: 'No common competitors meeting these criteria were found in the available public data.' })}</p>}
+              {isAdmin && removed.length > 0 && <details className="comp-common-removed">
+                <summary><ChevronRight size={16} />{tr({ zh: `已移除 ${removed.length} 人`, en: `${removed.length} removed` })}</summary>
+                <ul>{removed.map(person => <li key={person.wcaId}>
+                  <Link href={`/wca/persons/${person.wcaId}`} prefetch={false}>{displayCuberName(person.name, isZh)}</Link>
+                  {([
+                    { id: data.slug, name: currentName, ids: currentAbsences?.left },
+                    { id: compareId, name: otherName, ids: currentAbsences?.right },
+                  ]).filter(comp => comp.ids?.includes(person.wcaId)).map(comp => (
+                    <button key={comp.id} type="button" className="comp-common-restore" disabled={pending}
+                      onClick={() => void updateAbsence(comp.id, person.wcaId, false)}>
+                      <RotateCcw size={14} />{tr({ zh: `恢复至${comp.name}`, en: `Restore to ${comp.name}` })}
+                    </button>
+                  ))}
+                </li>)}</ul>
+              </details>}
             </>
           )
         ) : null}

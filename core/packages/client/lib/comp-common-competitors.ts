@@ -77,8 +77,9 @@ export function competitionRoster(data: CompetitionRosterData): CompetitionRoste
   return { people, unidentified, total: people.size + unidentified };
 }
 
-export function commonCompetitors(left: CompetitionRoster, right: CompetitionRoster) {
+export function commonCompetitors(left: CompetitionRoster, right: CompetitionRoster, excluded: ReadonlySet<string> = new Set()) {
   return [...left.people.values()].flatMap(person => {
+    if (excluded.has(person.wcaId)) return [];
     const other = right.people.get(person.wcaId);
     return other ? [{ ...person, otherPresence: other.presence }] : [];
   });
