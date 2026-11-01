@@ -25,6 +25,9 @@ import { SearchInput } from '@/components/SearchInput';
 import { useModalBackdrop } from '@/hooks/useModalDismiss';
 import { useCopy } from '@/hooks/useCopy';
 import { Tooltip } from '@/components/Tooltip';
+import { usePanelClamp } from '@/hooks/usePanelClamp';
+import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
+import '@cuberoot/timer-ui/compact-select.css';
 import { stripRecordNewsPrefix } from '@/lib/record-news';
 import { countryFlag } from '@cuberoot/shared/record-news';
 import { eventDisplayName, isWcaEvent } from '@/lib/wca-events';
@@ -38,7 +41,8 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { apiUrl } from '@/lib/api-base';
 import { statsUrl } from '@/lib/stats-base';
 import { isAo5Bracketed, trimEmptyAttempts } from '@/lib/wca-ao5-brackets';
-import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
+import { hasAdminAccess, useAuthStore, useAuthUser } from '@/lib/auth-store';
+import { fetchAccountBasicProfile } from '@/lib/account-api';
 import { fetchPb, prefetchPbs, type PbByEvent } from '@/lib/wca-pb';
 import { fetchCompInfo, fetchCubingZh, type CompInfo, type CubingZhMeta } from '@/lib/comp-wcif';
 import { fetchCompSchedule } from '@/lib/comp-schedule';
@@ -2308,27 +2312,59 @@ function renderWcaText(text: string): React.ReactNode {
 }
 
 function CompAddress({ address, isZh, countryIso2 }: { address: string; isZh: boolean; countryIso2: string }) {
+  const user = useAuthUser();
+  const [accountCountry, setAccountCountry] = useState<{ user: typeof user; country: string } | null>(null);
+  const [open, setOpen] = useState(false);
   const { copied, copy } = useCopy();
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const firstOptionRef = useRef<HTMLAnchorElement>(null);
+  usePanelClamp(open, panelRef);
+  usePopoverDismiss(open, () => setOpen(false), panelRef, triggerRef);
+  useEffect(() => {
+    if (open) firstOptionRef.current?.focus({ preventScroll: true });
+  }, [open]);
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    // The basic profile resolves both WCA nationality and self-reported nationality.
+    void fetchAccountBasicProfile().then(profile => {
+      if (!cancelled) setAccountCountry({ user, country: profile.countryIso2?.trim().toUpperCase() ?? '' });
+    }).catch(() => { /* Missing/unavailable nationality falls back to the page language. */ });
+    return () => { cancelled = true; };
+  }, [user]);
+  const nationality = user && accountCountry?.user === user ? accountCountry.country : '';
+  const preferChineseMaps = /^[A-Z]{2}$/.test(nationality) ? nationality === 'CN' : isZh;
   // WCA 地址可能包含 Markdown 链接；复制保留完整地址，地图检索去掉室内指引。
   const text = address.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '$1');
   const encoded = encodeURIComponent(compMapAddress(text, isZh, countryIso2));
-  const providers = isZh ? ['amap', 'baidu'] as const : ['google'] as const;
+  const providers = preferChineseMaps ? ['amap', 'baidu', 'google'] as const : ['google', 'amap', 'baidu'] as const;
   const maps = {
     amap: { label: tr({ zh: '高德地图', en: 'Amap' }), url: 'https://uri.amap.com/search?keyword=' + encoded + '&src=cuberoot&callnative=1' },
     baidu: { label: tr({ zh: '百度地图', en: 'Baidu Maps' }), url: 'https://api.map.baidu.com/geocoder?address=' + encoded + '&output=html&src=webapp.cuberoot.web' },
-    google: { label: 'Google Maps', url: 'https://www.google.com/maps/search/?api=1&query=' + encoded },
+    google: { label: tr({ zh: '谷歌地图', en: 'Google Maps' }), url: 'https://www.google.com/maps/search/?api=1&query=' + encoded },
   };
   return (
-    <span className="comp-address">
+    <div className="comp-address-row">
+      {/* An inline role-button lets the separate copy button follow the final line of a wrapped address. */}
+      <div ref={triggerRef} className="comp-address-trigger" role="button" tabIndex={0}
+        aria-label={tr({ zh: '地址选项', en: 'Address options' }) + ': ' + text}
+        aria-expanded={open} aria-haspopup="dialog" onClick={() => setOpen(value => !value)}
+        onKeyDown={event => {
+          if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setOpen(value => !value); }
+        }}>{text}</div>
       <Tooltip content={copied ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: '复制地址', en: 'Copy address' })}>
-        {(tip) => <button {...tip} type="button" className="comp-address-copy" onClick={() => copy(text)} aria-label={tr({ zh: '复制地址', en: 'Copy address' }) + ': ' + text}>
-          {text}{copied && <Check size={14} aria-hidden />}
+        {tip => <button {...tip} type="button" className="comp-address-copy" onClick={() => copy(text)} aria-label={tr({ zh: '复制地址', en: 'Copy address' })}>
+          {copied ? <Check size={14} aria-hidden /> : <Copy size={14} aria-hidden />}
         </button>}
       </Tooltip>
-      <span className="comp-address-maps">
-        {providers.map(provider => <Tooltip key={provider} content={maps[provider].label}>
-          {(tip) => <a {...tip} className="comp-address-map" href={maps[provider].url} target="_blank" rel="noopener noreferrer" aria-label={maps[provider].label}
+      {open && <div ref={panelRef} className="compact-select-popup comp-address-menu" data-site-surface="popover"
+        role="dialog" aria-label={tr({ zh: '地址选项', en: 'Address options' })}>
+          {providers.map((provider, index) => <a key={provider} ref={index === 0 ? firstOptionRef : undefined}
+            className="compact-select-option comp-address-option" href={maps[provider].url} target="_blank" rel="noopener noreferrer"
             onClick={event => {
+              setOpen(false);
+              triggerRef.current?.focus({ preventScroll: true });
               if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
               const isIos = /iPhone|iPad|iPod/i.test(navigator.userAgent)
                 || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -2343,12 +2379,12 @@ function CompAddress({ address, isZh, countryIso2 }: { address: string; isZh: bo
                 window.location.href = (isIos ? 'iosamap' : 'androidamap') + '://poi?sourceApplication=cuberoot&' + (isIos ? 'name' : 'keywords') + '=' + encoded + '&dev=0';
               }
             }}>
-            <img src={'/icons/maps/' + provider + '.ico'} width={24} height={24} alt="" />
-          </a>}
-        </Tooltip>)}
-      </span>
+            <img src={'/icons/maps/' + provider + '.ico'} width={20} height={20} alt="" />
+            {maps[provider].label}
+          </a>)}
+      </div>}
       <span className="sr-only" role="status">{copied ? tr({ zh: '已复制', en: 'Copied' }) : ''}</span>
-    </span>
+    </div>
   );
 }
 

@@ -351,17 +351,26 @@
   gap: 4px;
 }
 .comp-info-link:hover { text-decoration: underline; }
-.comp-address { display: inline-flex; align-items: flex-start; gap: 8px; max-width: 100%; }
-.comp-address-copy {
-  appearance: none; border: 0; background: none; padding: 0;
+.comp-address-row { position: relative; max-width: 100%; }
+.comp-address-trigger {
+  display: inline;
   color: inherit; font: inherit; text-align: start; cursor: pointer;
-  min-width: 0; white-space: normal; overflow-wrap: anywhere;
+  white-space: normal; overflow-wrap: anywhere;
 }
-.comp-address-copy > svg { display: inline-block; margin-left: 4px; vertical-align: middle; }
-.comp-address-maps { display: inline-flex; flex-shrink: 0; gap: 4px; }
-.comp-address-map { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; }
-.comp-address-map img { display: block; width: 24px; height: 24px; object-fit: contain; }
-.comp-address-copy:focus-visible, .comp-address-map:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.comp-address-trigger:hover { text-decoration: underline; text-underline-offset: 3px; }
+.comp-address-copy {
+  display: inline-flex; align-items: center; justify-content: center; vertical-align: middle;
+  width: 24px; height: 24px; margin-left: 4px; padding: 0; border: 0; background: none;
+  color: var(--muted-foreground); cursor: pointer;
+}
+.comp-address-copy:hover { color: var(--foreground); }
+.comp-address-trigger:focus-visible, .comp-address-copy:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.compact-select-popup.comp-address-menu {
+  /* anchored-panel: clamped (usePanelClamp in CompAddress) */
+  position: absolute; top: calc(100% + 6px); bottom: auto; left: 0; right: auto; visibility: visible;
+}
+.compact-select-option.comp-address-option { display: flex; align-items: center; gap: 8px; text-decoration: none; white-space: nowrap; }
+.comp-address-option img { display: block; width: 20px; height: 20px; object-fit: contain; flex-shrink: 0; }
 .comp-info-past-popover {
   position: relative;
   display: inline-block;
