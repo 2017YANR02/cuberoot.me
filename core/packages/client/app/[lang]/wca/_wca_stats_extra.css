@@ -120,11 +120,8 @@
 .wse-country { position: relative; }
 
 /* 届别排名：筛选项按内容宽度紧邻排列，人数跟在末尾。 */
-.cohort-ranks-page .wse-filters { align-items: center; gap: 8px; }
-.cohort-ranks-page .wse-filter { min-width: 0; flex: 0 0 auto; }
 .cohort-ranks-page .wse-filter label { display: none; }
-.cohort-ranks-page .region-picker { width: max-content; max-width: min(220px, calc(100vw - 32px)); }
-.cohort-ranks-page .wse-result-meta { padding: 0 4px; white-space: nowrap; }
+.cohort-ranks-page .wse-result-meta { align-self: center; padding: 0 4px; white-space: nowrap; }
 
 /* 四列排名留足阅读间距，不再套整块卡片底框。 */
 .cohort-ranks-page { max-width: 1040px; background: transparent; }

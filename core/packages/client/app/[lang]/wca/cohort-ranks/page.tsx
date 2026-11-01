@@ -14,6 +14,7 @@ import { apiUrl } from '@/lib/api-base';
 import RegionCountrySelect from '@/components/wca-stats/RegionCountrySelect';
 import { useCountries } from '@/components/wca-stats/useCountries';
 import '../_wca_stats_extra.css';
+import '@/components/wca-stats/wca-stats-controls.css';
 import { tr } from '@/i18n/tr';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
@@ -98,7 +99,7 @@ function CohortRanksPageInner() {
         subtitle={{ zh: '按选手首次参赛年份分组,组内 PB 排名', en: 'PB ranking among cubers whose first WCA competition was in the chosen year' }}
       />
 
-      <div className="wse-filters">
+      <div className="wse-filters wca-stats-controls">
         <WcaEventSelector
           availableEvents={EVENTS_SET}
           selectedEvent={event}

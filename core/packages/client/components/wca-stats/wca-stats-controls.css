@@ -1,0 +1,31 @@
+/* WCA 筛选框共用尺寸与表面；菜单和搜索行为仍由原组件负责。 */
+.wse-page .wca-stats-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.wse-page .wca-stats-controls :is(.list-select-trigger, .region-picker-trigger, .search-control, .wse-filter-select, .cuber-search-chip) {
+  box-sizing: border-box;
+  height: 40px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--input);
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.wse-page .wca-stats-controls :is(.search-control--with-clear, .cuber-search-chip) { padding-right: 34px; }
+.wse-page .wca-stats-controls .cuber-search-chip { border-color: var(--accent); }
+.wse-page .wca-stats-controls :is(.list-select-trigger, .region-picker-trigger, .search-control, .wse-filter-select):hover { border-color: var(--border-strong); }
+.wse-page .wca-stats-controls :is(.list-select-trigger, .region-picker-trigger, .search-control, .wse-filter-select):focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.wse-page .wca-stats-controls .region-picker { width: max-content; max-width: min(220px, calc(100vw - 32px)); }
+.wse-page .wca-stats-controls .wse-filter { min-width: 0; flex: 0 0 auto; }

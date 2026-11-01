@@ -23,6 +23,7 @@ import {
 } from '@/components/wca-records/WcaRecordRowsTable';
 import '../_wca_stats_extra.css';
 import '../_records.css';
+import '@/components/wca-stats/wca-stats-controls.css';
 import { tr } from '@/i18n/tr';
 import { useWcaTeachers } from '@/components/WcaTeacherCell';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -183,7 +184,7 @@ function RecordsPageInner() {
       </header>
 
       <div className="records-toolbar">
-        <div className="records-toolbar-row">
+        <div className="records-toolbar-row wca-stats-controls">
           <ListSelect
             className="records-toolbar-select"
             items={[

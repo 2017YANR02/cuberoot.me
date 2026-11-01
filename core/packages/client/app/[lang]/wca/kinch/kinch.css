@@ -1,5 +1,4 @@
-.kinch-filters { align-items: flex-start; }
-.kinch-person-filter { min-width: min(360px, 100%); }
+.kinch-person-filter { width: min(320px, 100%); }
 .kinch-person-filter .cuber-search { width: 100%; }
 
 .kinch-summary {

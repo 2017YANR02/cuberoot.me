@@ -19,6 +19,7 @@ import { useCountries } from '@/components/wca-stats/useCountries';
 import { tr, useLang } from '@/i18n/tr';
 import '../_wca_stats_extra.css';
 import './kinch.css';
+import '@/components/wca-stats/wca-stats-controls.css';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const PAGE_SIZE_OPTIONS = [50, 100, 200];
@@ -130,7 +131,7 @@ function KinchPageInner() {
         <PageHeading backHref="/wca">Kinch</PageHeading>
       </header>
 
-      <div className="wse-filters kinch-filters">
+      <div className="wse-filters wca-stats-controls">
         <div className="wse-filter kinch-person-filter">
           <label>{tr({ zh: '选手', en: 'Person' })}</label>
           <WcaPersonPicker
