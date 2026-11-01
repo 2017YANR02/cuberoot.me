@@ -31,7 +31,7 @@ import { eventDisplayName, isWcaEvent } from '@/lib/wca-events';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { countryToIso2, loadFlagData, compFlagIso2 } from '@/lib/country-flags';
 import { countryName } from '@/lib/country-name';
-import { localizeCompName, resolveCompName, resolveCompLocation, stripCompYear } from '@/lib/comp-localize';
+import { compMapAddress, localizeCompName, resolveCompName, resolveCompLocation, stripCompYear } from '@/lib/comp-localize';
 import { nameToCubingSlug, wcaIdToCubingSlug } from '@cuberoot/shared/cubing-slug';
 import { fetchRankForWca, getCachedRankForWca, prefetchRanksForWca, type RankResult } from '@/lib/rank-client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -2270,11 +2270,11 @@ function renderWcaText(text: string): React.ReactNode {
   return out.length ? out : text;
 }
 
-function CompAddress({ address, isZh }: { address: string; isZh: boolean }) {
+function CompAddress({ address, isZh, countryIso2 }: { address: string; isZh: boolean; countryIso2: string }) {
   const { copied, copy } = useCopy();
-  // WCA 地址可能包含 Markdown 链接；复制和地图检索都使用完整地址文本。
+  // WCA 地址可能包含 Markdown 链接；复制保留完整地址，地图检索去掉室内指引。
   const text = address.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '$1');
-  const encoded = encodeURIComponent(text);
+  const encoded = encodeURIComponent(compMapAddress(text, isZh, countryIso2));
   const providers = isZh ? ['amap', 'baidu'] as const : ['google'] as const;
   const maps = {
     amap: { label: tr({ zh: '高德地图', en: 'Amap' }), url: 'https://uri.amap.com/search?keyword=' + encoded + '&src=cuberoot&callnative=1' },
@@ -2369,9 +2369,9 @@ function CompInfoPanel({
     rows.push({ label: tr({ zh: '城市', en: 'City' }), value: cityStr });
   }
   if (location.hasLocalizedAddress) {
-    rows.push({ label: tr({ zh: '地点', en: 'Location' }), hideLabel: true, value: <CompAddress address={location.address} isZh={isZh} /> });
+    rows.push({ label: tr({ zh: '地点', en: 'Location' }), hideLabel: true, value: <CompAddress address={location.address} isZh={isZh} countryIso2={info.country_iso2} /> });
   } else {
-    if (location.address) rows.push({ label: tr({ zh: '地址', en: 'Address' }), value: <CompAddress address={location.address} isZh={isZh} /> });
+    if (location.address) rows.push({ label: tr({ zh: '地址', en: 'Address' }), value: <CompAddress address={location.address} isZh={isZh} countryIso2={info.country_iso2} /> });
     if (info.venue_details) rows.push({ label: tr({ zh: '详情', en: 'Details'
     }), value: renderWcaText(info.venue_details) });
   }

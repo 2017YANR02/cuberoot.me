@@ -17,13 +17,27 @@ export function resolveCompLocation(
   isZh: boolean,
 ) {
   const localizedAddress = isZh ? cubingZh?.location || '' : '';
-  const address = localizedAddress || info?.venue_address || '';
+  const rawAddress = localizedAddress || info?.venue_address || '';
+  // Keep spaces in Latin venue names, but join Chinese address segments.
+  const address = isZh && info?.country_iso2 === 'CN'
+    ? rawAddress.replace(/([\u3400-\u9fff\d])\s+(?=[\u3400-\u9fff\d])/g, '$1')
+    : rawAddress;
   const city = localizeCity(info?.city || '', isZh, info?.country_iso2);
   return {
     address,
     hasLocalizedAddress: !!localizedAddress,
-    text: localizedAddress || [city, address].filter(Boolean).join(' · '),
+    text: localizedAddress ? address : [city, address].filter(Boolean).join(' · '),
   };
+}
+
+/** Indoor directions remain in the displayed/copied address, not the map query. */
+export function compMapAddress(address: string, isZh: boolean, countryIso2?: string) {
+  if (!isZh || countryIso2 !== 'CN') return address;
+  // A named hall after a venue is an indoor detail; retain standalone hall POIs.
+  const venue = address.match(/^(.*?(?:酒店|宾馆|饭店|大厦|大楼|会议中心|会展中心|体育馆))\s*(?:[（(]?[^路街号]*[厅室]|[（(]?(?:地下|负)?[一二三四五六七八九十百零两\d]+[楼层]|[（(]?[BL]?\d+F)/i);
+  if (venue) return venue[1];
+  const floor = address.search(/(?:地下|负)?[一二三四五六七八九十百零两\d]+(?:楼|层)(?![村路街巷号栋座])|\b[BL]?\d+F\b/i);
+  return floor > 0 ? address.slice(0, floor).replace(/[\s,，、（(]+$/, '') : address;
 }
 
 export { stripCompYear, stripWcaPrefix };
