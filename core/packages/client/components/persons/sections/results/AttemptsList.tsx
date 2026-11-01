@@ -4,6 +4,7 @@
 // 不再分「有复盘直接跳 / 编辑模式行内改 / 没复盘跳 submit」三条路 —— 全收进弹窗。
 
 import type { CSSProperties } from 'react';
+import { tr } from '@/i18n/tr';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { isAo5Bracketed, trimEmptyAttempts } from '@/lib/wca-ao5-brackets';
 import { findReconForAttempt, buildReconSubmitHref, type ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
@@ -61,6 +62,7 @@ export function AttemptsList({
   const atts = trimEmptyAttempts(attempts);
   if (atts.length === 0) return <span className="wp-text-mute">—</span>;
   const colCount = cols ?? Math.max(atts.length, 1);
+  const wrapped = atts.length > colCount;
   const validNums = atts.filter((x) => x > 0);
   const minValid = validNums.length > 0 ? Math.min(...validNums) : 0;
   const langQuery = (isZh && '?lang=zh') || '';   // recon 详情页读 ?lang;AppLink 另管 /zh 前缀
@@ -98,7 +100,7 @@ export function AttemptsList({
               // 这把在选手页显示的名次角标(PR119 / 区域纪录)→ 预填「单次纪录」。
               singleRecordTag: rankTag(i, isBest),
             });
-        return (
+        const attempt = (
           <AttemptPopover
             key={i}
             value={a}
@@ -126,11 +128,37 @@ export function AttemptsList({
             onEditRecord={onEditRecord}
           />
         );
+        if (!wrapped) return attempt;
+        const info = recs[i];
+        const stats: { label: string; value: string }[] = [];
+        if (showStats && info?.stm != null && info.stm > 0) {
+          stats.push({ label: 'STM', value: String(info.stm) });
+        }
+        if (showStats && info?.tps != null && info.tps > 0) {
+          stats.push({ label: eventId === 'sq1' ? 'SPS' : 'TPS', value: info.tps.toFixed(2) });
+        }
+        if (showTimingStats && info?.pickupTime != null) {
+          stats.push({ label: tr({ zh: '起表', en: 'Pickup' }), value: info.pickupTime.toFixed(3) });
+        }
+        if (showTimingStats && info?.putdownTime != null) {
+          stats.push({ label: tr({ zh: '拍表', en: 'Putdown' }), value: info.putdownTime.toFixed(3) });
+        }
+        if (showTimingStats && info?.pickupTime != null && info.putdownTime != null) {
+          stats.push({ label: tr({ zh: '起拍', en: 'Total' }), value: (info.pickupTime + info.putdownTime).toFixed(3) });
+        }
+        return (
+          <span key={i} className="wp-att-stack">
+            {attempt}
+            {stats.map(({ label, value }) => (
+              <span key={label} className="wp-att-sub wp-att-inline-stat"><span>{label}</span><span>{value}</span></span>
+            ))}
+          </span>
+        );
       })}
-      {(showStats || showTimingStats) && Array.from({ length: Math.max(0, colCount - atts.length) }, (_, k) => (
+      {!wrapped && (showStats || showTimingStats) && Array.from({ length: Math.max(0, colCount - atts.length) }, (_, k) => (
         <span key={`pad-${k}`} aria-hidden="true" />
       ))}
-      {showStats && (
+      {!wrapped && showStats && (
         <>
           {Array.from({ length: colCount }, (_, i) => {
             const s = recs[i]?.stm;
@@ -142,7 +170,7 @@ export function AttemptsList({
           })}
         </>
       )}
-      {showTimingStats && ['pickup', 'putdown', 'total'].flatMap((kind) =>
+      {!wrapped && showTimingStats && ['pickup', 'putdown', 'total'].flatMap((kind) =>
         Array.from({ length: colCount }, (_, i) => {
           const info = recs[i];
           const value = kind === 'pickup' ? info?.pickupTime : kind === 'putdown' ? info?.putdownTime

@@ -464,6 +464,8 @@ const EventRoundsList = memo(function EventRoundsList({
     const singleKeatoned = r.regional_single_record || singleRecord !== baseSingleRecord ? null : (liveRank?.singleKeatoned ?? null);
     const averageKeatoned = r.regional_average_record || averageRecord !== baseAverageRecord ? null : (liveRank?.averageKeatoned ?? null);
     const effAttempts = effectiveAttempts(chain, r.attempts);
+    // 超过表格列数的轮次逐把展示统计，避免把后续成绩的统计挤进首行或底部空行。
+    const hasWrappedAttempts = trimEmptyAttempts(effAttempts).length > maxAttempts;
     // 「#」开 + 该轮有复盘(带 stm/tps)→ 详细成绩下补 STM/TPS 两行,轮次列同步出两行标签。
     const hasReconStats = showAttemptRanks && rowHasReconStats(reconLookup, r.competition_id, eventId, r.round_type_id, effAttempts.length);
     const hasTimingStats = showAttemptRanks && effAttempts.some((_, i) => {
@@ -472,7 +474,7 @@ const EventRoundsList = memo(function EventRoundsList({
     });
     const speedUnit = eventId === 'sq1' ? 'SPS' : 'TPS';
     // 平均 STM / 平均 TPS(Ao5 去尾均值),5 把全有复盘才给值,展示在平均列下方两行。
-    const roundAvg = hasReconStats ? computeReconRoundAvg(reconLookup, r.competition_id, eventId, r.round_type_id) : null;
+    const roundAvg = hasReconStats && !hasWrappedAttempts ? computeReconRoundAvg(reconLookup, r.competition_id, eventId, r.round_type_id) : null;
     return (
       <tr
         key={rowKey}
@@ -507,13 +509,13 @@ const EventRoundsList = memo(function EventRoundsList({
               </Link>
               <PendingProposals pending={pending} eventId={eventId} isAdmin={admin} onModerated={refreshChanges} />
             </span>
-            {hasReconStats && (
+            {hasReconStats && !hasWrappedAttempts && (
               <>
                 <span className="wp-round-sublabel">STM</span>
                 <span className="wp-round-sublabel">{speedUnit}</span>
               </>
             )}
-            {hasTimingStats && <>
+            {hasTimingStats && !hasWrappedAttempts && <>
               <span className="wp-round-sublabel">{tr({ zh: '起表', en: 'Pickup' })}</span>
               <span className="wp-round-sublabel">{tr({ zh: '拍表', en: 'Putdown' })}</span>
               <span className="wp-round-sublabel">{tr({ zh: '起拍', en: 'Pickup + putdown' })}</span>

@@ -942,17 +942,25 @@ html[data-theme=dark] .wp-page {
     display: table-cell; min-width: 0;
     vertical-align: middle;
     padding-block: 8px;
-    /* 比赛名强制单行(用户要求);超长名整张表在 .sticky-scroll 里横向滚动 */
-    white-space: nowrap;
+    white-space: normal;
 }
 .wp-bycomp-table .wp-cell-comp .comp-cell {
-    display: inline-flex; align-items: baseline; column-gap: 4px;
+    display: inline-flex; align-items: center; column-gap: 4px;
+    /* 限制名称的固有宽度，避免个别长名称撑宽整列。 */
+    width: max-content;
+    max-width: 11rem;
 }
-.wp-bycomp-table .wp-cell-comp .comp-cell > span { white-space: nowrap; }
+.wp-bycomp-table .wp-cell-comp .comp-cell > span:last-child {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+.wp-bycomp-table .wp-cell-comp .comp-cell > :not(:last-child) { flex-shrink: 0; }
 .wp-bycomp-table .wp-cell-comp-date {
     margin-top: 2px;
     font-family: var(--font-mono);
     font-size: 0.74rem; color: var(--wp-text-mute);
+    white-space: nowrap;
 }
 .wp-bycomp-table tbody tr.wp-row-comp-first td {
     border-top: 1px solid var(--wp-border-strong);
@@ -1067,7 +1075,7 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-ao
 /* + 在右下、PR 角标在右上,高度错开不重叠 → PR 紧贴 ) 右侧,不为 + 留横向空位 */
 /* # 开时末列(第 5 把)的 PR 角标绝对定位会溢出单元格右侧;留出右内边距让行背景 / 行高亮
    覆盖到角标,否则末列 PR 被甩在高亮框外、看着右侧变短。# 关无角标则不需要。 */
-.wp-cell-attempts:not(.wp-cell-attempts--center) { padding-right: 2.4em; }
+.wp-cell-attempts:not(.wp-cell-attempts--center) { padding-right: calc(4ch + 12px); }
 /* # 关(无 PR 角标)时成绩很窄,右对齐会落在 10ch 列右侧、与居中的表头序号错开 →
    这种状态改居中,正好落在居中表头(1..5)正下方;# 开时成绩接近 10ch 填满列,保持右对齐(小数点跨行对齐)。 */
 .wp-cell-attempts--center .wp-att { text-align: center; }
@@ -1126,6 +1134,9 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-ao
 .wp-cell-attempts .wp-att-sub {
     font-size: 0.72rem; line-height: 1.2; font-weight: 400; color: var(--wp-text-mute);
 }
+/* 多行尝试将统计附在对应成绩下，只为实际存在的数据占位。 */
+.wp-att-stack { display: flex; flex-direction: column; gap: 2px; }
+.wp-att-inline-stat { display: flex; justify-content: space-between; gap: 4px; }
 /* 平均列:平均成绩(第一行)下方补 平均STM / 平均TPS 两行(Ao5 去尾均值),按小数点对齐平均值。
    网格结构 + 子行样式走共享 components/wca-results/attempts-grid.css(与 /recon 同场比赛表同一份)。 */
 /* 成绩列只预留数值宽度,PR 角标空间放在列间距,避免首列左侧空出角标宽度。 */
