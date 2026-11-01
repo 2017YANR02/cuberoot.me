@@ -180,6 +180,54 @@
 }
 
 /* 斑马纹 */
+.wca-stats-page:has(.wca-city-route) {
+  width: 100%;
+  max-width: 1440px;
+  box-sizing: border-box;
+}
+
+.wca-stats-table-wrapper:has(.wca-city-route) {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.wca-stats-table:has(.wca-city-route) {
+  width: 100%;
+  min-width: 1000px;
+  table-layout: fixed;
+}
+
+.wca-stats-table:has(.wca-city-route) :is(th, td) {
+  padding: 8px 10px;
+  vertical-align: top;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+
+.wca-stats-table:has(.wca-city-route) th:nth-child(1) { width: 5%; }
+.wca-stats-table:has(.wca-city-route) th:nth-child(2) { width: 12%; }
+.wca-stats-table:has(.wca-city-route) th:nth-child(3) { width: 25%; }
+.wca-stats-table:has(.wca-city-route) th:nth-child(4),
+.wca-stats-table:has(.wca-city-route) th:nth-child(5) { width: 9%; }
+.wca-stats-table:has(.wca-city-route) th:nth-child(6) { width: 40%; }
+.wca-stats-table:has(.wca-city-route) :is(th, td):nth-child(7) { display: none; }
+
+.wca-city-route {
+  margin: 0;
+  padding-inline-start: 1.5em;
+  list-style: decimal;
+}
+
+.wca-city-route li {
+  padding-inline-start: 0.15em;
+}
+
+.wca-stats-person-search {
+  width: min(100%, 320px);
+  margin-bottom: 16px;
+}
+
 .wca-stats-table tbody tr:nth-child(even) {
   background: color-mix(in srgb, var(--foreground) 4%, transparent);
 }

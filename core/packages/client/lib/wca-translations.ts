@@ -54,6 +54,8 @@ export const VALUE_ZH: Record<string, string> = {
   "Single": "单次", "Average": "平均", "Mean": "平均",
   "Mo3": "三次平均",
   "Still active": "至今",
+  "Overlapping schedules": "赛期重叠",
+  "Non-overlapping schedules": "无重叠",
 };
 
 export const VALUE_EN: Record<string, string> = {

@@ -179,6 +179,8 @@ export const HEADER_ZH: Record<string, string> = {
   'Distance': '距离',
   'Missed': '错过',
   'Start date': '开始日期',
+  'City route': '城市路线',
+  'Schedule overlap': '赛期重叠',
   'End date': '结束日期',
   'Dates': '日期数',
   'Improvement': '进步',

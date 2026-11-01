@@ -135,19 +135,21 @@ export function RecordSectionsView({ header, sections, query, onChange, isZh }: 
 // 一次性渲染全部 cell（markdown + flag + 本地化）卡死主线程。小分区不受影响。
 const PAGE_SIZE = 300;
 
-export function StatsTable({ header, rows, searchTerm, isZh }: {
+export function StatsTable({ header, rows, searchTerm, isZh, searchColumnKey }: {
   header: StatHeader[];
   rows: unknown[][];
   searchTerm: string;
   isZh: boolean;
+  searchColumnKey?: string;
 }) {
   const filtered = useMemo(() => {
-    if (!searchTerm) return rows;
-    const term = searchTerm.toLowerCase();
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return rows;
+    const columnIndex = searchColumnKey ? header.findIndex(h => h.key === searchColumnKey) : -1;
     return rows.filter(row =>
-      row.some(cell => String(cell).toLowerCase().includes(term))
+      (searchColumnKey ? [row[columnIndex]] : row).some(cell => String(cell ?? '').toLowerCase().includes(term))
     );
-  }, [rows, searchTerm]);
+  }, [rows, searchTerm, searchColumnKey, header]);
 
   const [visible, setVisible] = useState(PAGE_SIZE);
   useEffect(() => { setVisible(PAGE_SIZE); }, [rows, searchTerm]);
@@ -167,6 +169,9 @@ export function StatsTable({ header, rows, searchTerm, isZh }: {
           </tr>
         </thead>
         <tbody>
+          {shown.length === 0 && searchTerm.trim() && <tr><td colSpan={header.length}>
+            {tr({ zh: '未找到匹配结果', en: 'No matching results' })}
+          </td></tr>}
           {shown.map((row, i) => (
             <tr key={i}>
               {row.map((cell, j) => {

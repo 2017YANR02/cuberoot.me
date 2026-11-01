@@ -3,13 +3,16 @@
 // Pure cell / markdown rendering + row helpers for the WCA stat renderer.
 // Extracted verbatim from WcaStatView.tsx — no component state, no hooks.
 import MoreToggle from '@/components/MoreToggle';
+import { CompCell } from '@/components/CompCell/CompCell';
+import { formatDateRangeIso } from '@cuberoot/shared/iso-date';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import React from 'react';
 import Link from '@/components/AppLink';
 import {
-  extractWcaId, extractCompId, personFlagIso2, compFlagIso2,
+  extractWcaId, extractCompId, personFlagIso2, compFlagIso2, countryToIso2,
 } from '@/lib/country-flags';
 import { localizeCompName } from '@/lib/comp-localize';
+import { localizeCity } from '@/lib/city-localize';
 import { Flag } from '@/components/Flag';
 import { translateCellText, translatePersonLink, stripChineseParens } from '@/lib/wca-translations';
 import { rewriteWcaCompUrl, prefetchComp } from '@/lib/comp-link';
@@ -159,6 +162,28 @@ function renderLinkedSegment(segment: string, segIdx: number, isZh: boolean | un
 }
 
 export function renderCell(value: unknown, columnKey?: string, isZh?: boolean): React.ReactNode {
+  if (columnKey === 'city_route' && typeof value === 'string') {
+    return <ol className="wca-city-route">
+      {value.split(' → ').map((city, i) => {
+        const match = /^(.*) \(([^()]*)\)$/.exec(city);
+        const iso2 = match ? countryToIso2(match[2]) : '';
+        const cityName = localizeCity(match ? match[1] : city, !!isZh, iso2);
+        return <li key={i}>{match && iso2
+          ? <>{cityName}{' '}<span title={match[2]}><Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" /></span></>
+          : <>{cityName}{match ? ` (${match[2]})` : ''}</>}</li>;
+      })}
+    </ol>;
+  }
+  if (value && typeof value === 'object' && (value as Record<string, unknown>)._type === 'competition-itinerary') {
+    const cell = value as { competitions: Array<{ id: string; name: string; startDate: string; endDate: string }> };
+    return cell.competitions.map((comp, i) => <React.Fragment key={comp.id}>
+      {i > 0 && <br />}
+      <Link href={`/wca/comp/${comp.id}`} prefetch={false}>
+        <CompCell compId={comp.id} compName={comp.name} date={comp.startDate} isZh={!!isZh} />
+      </Link>{' '}
+      <span style={{ whiteSpace: 'nowrap' }}>{formatDateRangeIso(comp.startDate, comp.endDate)}</span>
+    </React.Fragment>);
+  }
   if (value && typeof value === 'object' && (value as Record<string, unknown>)._type === 'solves') {
     const cell = value as { _type: 'solves'; csv: string };
     const items = cell.csv.split(',');

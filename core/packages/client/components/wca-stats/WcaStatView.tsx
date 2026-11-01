@@ -11,6 +11,9 @@
 // render helpers, and the 8 sub-view components live in the sibling
 // WcaStatView.{types,cells,views} modules (split out 2026-07 — no behavior change).
 import PageHeading from '@/components/PageHeading';
+import { SearchInput } from '@/components/SearchInput';
+import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
+import { HelpCircle } from '@app-foundation/icons/lucide';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
@@ -53,7 +56,8 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
   const [data, setData] = useState<StatData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [searchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const isCrossCityStreak = statId === 'cross_city_competition_streaks';
   const [selectedEvent, setSelectedEvent] = useState<string>('');
   const [activePanel, setActivePanel] = useState(0);
   const [activeMetric, setActiveMetric] = useState(0);
@@ -253,12 +257,23 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
     <div className={wrapperClass}>
       {headerMode === 'full' && (
         <div className="wca-stats-header">
-          <PageHeading backHref="/wca">{tr({ zh: data.titleZh, en: data.title })}</PageHeading>
-          {data.note && (
+          <PageHeading backHref="/wca">
+            {tr({ zh: data.titleZh, en: data.title })}
+            {isCrossCityStreak && data.note && <>{' '}<InfoTooltip
+              icon={HelpCircle} iconSize={20}
+              ariaLabel={tr({ zh: '统计口径', en: 'Counting rules' })}
+              content={tr({ zh: data.noteZh ?? data.note, en: data.note })}
+            /></>}
+          </PageHeading>
+          {data.note && !isCrossCityStreak && (
             <p className="wca-stats-note">{tr({ zh: data.noteZh ?? data.note, en: data.note })}</p>
           )}
         </div>
       )}
+      {isCrossCityStreak && <div className="wca-stats-person-search">
+        <SearchInput value={searchTerm} onChange={setSearchTerm}
+          placeholder={tr({ zh: '搜索选手姓名或 WCA ID', en: 'Search name or WCA ID' })} />
+      </div>}
       {!['sections', 'panels', 'metricPanels'].includes(renderMode) && (showEventSelector || afterEventSelector) && (
         <div className="wca-stats-tab-bar">{filterControls}</div>
       )}
@@ -276,7 +291,8 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
         />
       )}
       {renderMode === 'rows' && data.rows && !(data.years && data.cumulative) && (
-        <StatsTable header={data.header} rows={data.rows} searchTerm={searchTerm} isZh={isZh} />
+        <StatsTable header={data.header} rows={data.rows} searchTerm={searchTerm} isZh={isZh}
+          searchColumnKey={isCrossCityStreak ? 'person' : undefined} />
       )}
 
       {renderMode === 'annual' && data.sections && <AnnualParticipationView
