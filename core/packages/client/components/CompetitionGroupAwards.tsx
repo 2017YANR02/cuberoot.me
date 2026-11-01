@@ -49,7 +49,7 @@ export default function CompetitionGroupAwards({ rows, isZh, personal = false, s
   return <section className={`group-awards${renderTable ? ' comp-podiums' : ''}`} aria-label={t('分组获奖', 'Category awards')}>
     {!personal && <h2>{t('分组获奖', 'Category awards')}</h2>}
     <div className="group-awards-toolbar">
-      {personal && <span>{t('已收录', 'Collected')} · {t('金', 'Gold')} {medals[0]} · {t('银', 'Silver')} {medals[1]} · {t('铜', 'Bronze')} {medals[2]}</span>}
+      {personal && <span><span aria-label={t('金牌', 'Gold')}>🥇</span> {medals[0]} · <span aria-label={t('银牌', 'Silver')}>🥈</span> {medals[1]} · <span aria-label={t('铜牌', 'Bronze')}>🥉</span> {medals[2]}</span>}
       {events.size > 1 && <WcaEventSelector availableEvents={events} selectedEvent={event} onSelect={value => { setEvent(value); setCategory(''); }} allowAll isZh={isZh} />}
       {categories.length > 1 && <label>{t('组别', 'Category')} <select aria-label={t('组别', 'Category')} value={category} onChange={e => setCategory(e.target.value)}>
         <option value="">{t('全部', 'All')}</option>
@@ -66,14 +66,14 @@ export default function CompetitionGroupAwards({ rows, isZh, personal = false, s
         </AppLink><time>{formatDateRangeIso(first.date, first.endDate)}</time></div>}
         <h3 className={renderTable ? 'comp-podium-event' : undefined}>{!personal && <><EventIcon event={first.eventId} className={renderTable ? 'comp-podium-icon' : undefined} /> {eventDisplayName(first.eventId, isZh)} · </>}{label(first)} <small>{roundLabel}{first.provisional ? ' · ' + t('暂定', 'Provisional') : ''}</small>
           <a href={first.sourceUrl} target="_blank" rel="noopener noreferrer">{t('来源', 'Source')}</a></h3>
-        {renderTable ? renderTable(group) : <div className="wp-records sticky-scroll"><table className="wp-bycomp-table wp-podium-table sticky-thead"><thead><tr>
+        {renderTable ? renderTable(group) : <div className="wp-records sticky-scroll"><table className="wp-bycomp-table wp-podium-table wp-podium-table--plain sticky-thead"><thead><tr>
           <th scope="col">{t('项目', 'Event')}</th><th scope="col" className="wp-th-narrow">{t('名次', 'Place')}</th>
           <th scope="col">{t('单次', 'Single')}</th><th scope="col">{t('平均', 'Average')}</th><th scope="col" className="wp-th-attempts">{t('详细成绩', 'Solves')}</th>
         </tr></thead><tbody>{group.map(row => <tr key={row.sourcePersonId}>
           <th scope="row" className="wp-cell-event"><span className="wp-rec-event"><EventIcon event={row.eventId} className="wp-event-icon" title={eventDisplayName(row.eventId, isZh)} /></span></th>
           <td className={`wp-cell-pos wp-podium-place-${row.place}`}>{row.place}</td>
-          <td className="wp-cell-result"><span className="record-num-cell">{formatWcaResult(row.best, row.eventId, 'single')}</span></td>
-          <td className="wp-cell-result"><span className="record-num-cell">{row.average > 0 ? formatWcaResult(row.average, row.eventId, 'average') : '—'}</span></td>
+          <td className="wp-cell-result">{formatWcaResult(row.best, row.eventId, 'single')}</td>
+          <td className="wp-cell-result">{row.average > 0 ? formatWcaResult(row.average, row.eventId, 'average') : '—'}</td>
           <td className="wp-cell-attempts"><AttemptsInline attempts={row.attempts} best={row.best} eventId={row.eventId} /></td>
         </tr>)}</tbody></table></div>}
       </section>;

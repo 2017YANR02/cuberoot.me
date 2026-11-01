@@ -1,5 +1,5 @@
 .group-awards { margin-block: 1.25rem; }
-.group-awards:not(.comp-podiums) { display: grid; gap: 1.25rem; }
+.group-awards:not(.comp-podiums) { display: grid; gap: .75rem; margin-block: 0; }
 .group-awards h2, .group-awards h3:not(.comp-podium-event) { margin: 0; }
 .group-awards h2 { font-size: 1.1rem; }
 .group-awards-toolbar, .group-awards h3:not(.comp-podium-event), .group-awards-competition { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }

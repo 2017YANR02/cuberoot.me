@@ -112,3 +112,8 @@
 .wp-podium-place-1 { color: #d4a106; }
 .wp-podium-place-2 { color: color-mix(in srgb, var(--wp-text) 50%, transparent); }
 .wp-podium-place-3 { color: #b9772e; }
+
+/* 无纪录角标的领奖台:数字不留角标空位,与列头共用中心线。 */
+.wp-podium-table--plain .wp-cell-result,
+.wp-podium-table--plain thead th:first-child { text-align: center; }
+.wp-podium-table--plain thead th.wp-th-attempts { padding-right: 2.4em; }
