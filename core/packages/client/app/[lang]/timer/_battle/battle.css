@@ -4,6 +4,7 @@
 }
 
 .battle-container {
+    position: relative;
     font-family: var(--font-sans);
     background-color: var(--background);
     color: var(--foreground);
@@ -30,6 +31,10 @@
     overflow: visible;
 }
 .battle-container .timer-battle-layout .timer-battle-scramble { flex: 0 0 auto; }
+.battle-container .timer-battle-layout :is(.timer-battle-pair, .timer-battle-row, .timer-battle-cell, .player-area, .timer-battle-player, .timing-surface--local) {
+    min-height: min-content;
+    flex-shrink: 0;
+}
 .battle-container .timer-battle-layout .timing-surface--local {
     container-type: normal;
     --timer-cube-h: min(18vw, 12dvh, 100px);
@@ -49,6 +54,25 @@
     scrollbar-gutter: auto;
 }
 .battle-container .timer-battle-layout .timer-display { touch-action: none; }
+
+/* Reuse the solo editor's regions while keeping multiplayer preferences separate.
+   Spacing participates in flow, so long scrambles and enlarged previews stay visible. */
+.battle-container .timer-battle-layout .scramble-text { margin-top: var(--battle-scramble-gap, 16px); }
+.battle-container .timer-battle-layout .scramble-strip .scramble-src-row {
+    margin-top: calc(var(--battle-source-gap, 16px) - 8px);
+    --timer-scramble-src-fs: calc(12px * var(--battle-source-scale, 1));
+}
+.battle-container .timer-battle-layout .timer-display-wrap { margin-top: var(--battle-timer-gap, 20px); }
+.battle-container .timer-battle-layout .timer-display .time-display { font-size: inherit; }
+.battle-container .timer-battle-layout .timing-surface-cube-frame {
+    --cube-h: calc(var(--timer-cube-h) * var(--battle-cube-scale, 1));
+    margin-top: var(--battle-cube-gap, 8px);
+}
+.battle-container[data-layout-editing] :is(.scramble-text, .scramble-src-row, .timer-display-wrap, .timing-surface-cube-frame) {
+    position: relative;
+}
+.battle-container[data-layout-editing] .player-area { cursor: default; }
+.battle-container > .solo-layout-toolbar { position: fixed; }
 
 .player-area {
     flex: 1;

@@ -18,7 +18,7 @@ type Region = typeof regions[number];
 export interface TimerSoloLayoutSettings { soloLayout: SoloLayout; timerFontScale: number; scrambleFontScale: number; }
 interface LayoutHost { getSettings(): TimerSoloLayoutSettings; updateSettings(patch: Partial<TimerSoloLayoutSettings>): void; language: 'en' | 'zh'; }
 export function TimerSoloLayoutEditor({ surfaceRef, contentKey, onDone, getSettings, updateSettings, language, regionSelectors }: LayoutHost & {
-  surfaceRef: RefObject<HTMLDivElement | null>; contentKey: string; onDone(): void;
+  surfaceRef: RefObject<HTMLElement | null>; contentKey: string; onDone(): void;
   regionSelectors?: Partial<Record<Region['gap'], string>>;
 }) {
   const tr = (value: { en: string; zh: string }) => value[language];
@@ -52,7 +52,7 @@ export function TimerSoloLayoutEditor({ surfaceRef, contentKey, onDone, getSetti
 
 function RegionHandles({ region, getSettings, updateSettings, language }: LayoutHost & { region: Region }) {
   const tr = (value: { en: string; zh: string }) => value[language];
-  const drag = useRef<{ y: number; value: number; size: number; mode: 'move' | 'size' } | null>(null);
+  const drag = useRef<{ y: number; value: number; size: number; direction: number; mode: 'move' | 'size' } | null>(null);
   const current = (mode: 'move' | 'size') => {
     const settings = getSettings();
     return mode === 'move' ? settings.soloLayout[region.gap]
@@ -75,7 +75,9 @@ function RegionHandles({ region, getSettings, updateSettings, language }: Layout
     event.preventDefault();
     event.stopPropagation();
     const regionElement = event.currentTarget.parentElement?.parentElement;
-    drag.current = { y: event.clientY, value: current(mode), mode, size: Math.max(40, regionElement?.getBoundingClientRect().height ?? 100) };
+    drag.current = { y: event.clientY, value: current(mode), mode,
+      direction: regionElement?.closest('[data-flipped="true"]') ? -1 : 1,
+      size: Math.max(40, regionElement?.getBoundingClientRect().height ?? 100) };
     event.currentTarget.setPointerCapture(event.pointerId);
   };
   return <div className="solo-layout-handles" data-no-timer onClick={event => event.stopPropagation()} onTouchStart={event => event.stopPropagation()}>
@@ -88,7 +90,7 @@ function RegionHandles({ region, getSettings, updateSettings, language }: Layout
         if (!active) return;
         event.preventDefault();
         event.stopPropagation();
-        const delta = event.clientY - active.y;
+        const delta = (event.clientY - active.y) * active.direction;
         apply(active.mode, active.value + (active.mode === 'move' ? delta : delta / active.size * active.value));
       }}
       onPointerUp={event => {

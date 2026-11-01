@@ -1,4 +1,4 @@
-import { resolveTimerWcaSourceCore, timerSupportsRealWcaScrambles, readLocalBattlePreferences, requestLocalBattleScramble, type LocalBattleScramble, summarizeLocalBattleRounds } from '@cuberoot/shared/timer';
+import { normalizeSoloLayout, type SoloLayout, resolveTimerWcaSourceCore, timerSupportsRealWcaScrambles, readLocalBattlePreferences, requestLocalBattleScramble, type LocalBattleScramble, summarizeLocalBattleRounds } from '@cuberoot/shared/timer';
 /**
  * Battle 模块 Zustand Store
  * 1:1 翻译自 battle.js state 对象 + 全部 action 函数
@@ -416,6 +416,8 @@ export interface BattleState {
   phases: number;
   // 当前打乱图字号缩放比例
   scrambleScale: number;
+  contentLayout: SoloLayout;
+  timerFontScale: number;
   // NOTE: 背景不透明度（0.1~1.0），双方共用
   bgOpacity: number;
   // NOTE: 每位玩家自定义背景色（hex；空串 = 默认黑底）
@@ -529,6 +531,8 @@ export interface BattleState {
   setFlipTopRow: (flip: boolean) => void;
   setSyncStart: (sync: boolean) => void;
   setScrambleScale: (scale: number) => void;
+  setContentLayout: (layout: SoloLayout) => void;
+  setTimerFontScale: (scale: number) => void;
   setBgOpacity: (opacity: number) => void;
   // NOTE: 单侧背景色;传空串清除
   setBgColor: (playerId: number, color: string) => void;
@@ -637,6 +641,16 @@ function applyLocalAction(get: () => BattleState, set: (patch: Partial<BattleSta
 }
 
 const initialBattlePreferences = readLocalBattlePreferences(localStorage);
+function readContentLayout(): SoloLayout {
+  try { return normalizeSoloLayout(JSON.parse(localStorage.getItem(LS_PREFIX + 'contentLayout') || 'null')); }
+  catch { return normalizeSoloLayout(null); }
+}
+function readTimerFontScale(): number {
+  try {
+    const value = Number(localStorage.getItem(LS_PREFIX + 'timerFontScale') ?? 1);
+    return Number.isFinite(value) ? Math.max(0.5, Math.min(2, value)) : 1;
+  } catch { return 1; }
+}
 
 export const useBattleStore = create<BattleState>((set, get) => ({
   // NOTE: 初始值 — 1:1 翻译自 battle.js state 对象（行 99~141）
@@ -657,6 +671,8 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   voice: localStorage.getItem(LS_PREFIX + 'voice') !== 'false',
   phases: parseInt(localStorage.getItem(LS_PREFIX + 'phases') || '1') || 1,
   scrambleScale: initialBattlePreferences.scrambleScale,
+  contentLayout: readContentLayout(),
+  timerFontScale: readTimerFontScale(),
   bgOpacity: initialBattlePreferences.bgOpacity,
   bgColors: Array.from({ length: MAX_PLAYERS }, (_, i) =>
     localStorage.getItem(LS_PREFIX + `bg_color_${i}`) || ''),
@@ -1590,6 +1606,16 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     document.documentElement.style.setProperty('--scramble-scale', String(scale));
   },
 
+  setContentLayout: (layout) => {
+    const contentLayout = normalizeSoloLayout(layout);
+    persistItem(LS_PREFIX + 'contentLayout', JSON.stringify(contentLayout));
+    set({ contentLayout });
+  },
+  setTimerFontScale: (scale) => {
+    const timerFontScale = Number.isFinite(scale) ? Math.max(0.5, Math.min(2, scale)) : 1;
+    persistItem(LS_PREFIX + 'timerFontScale', String(timerFontScale));
+    set({ timerFontScale });
+  },
   setBgOpacity: (opacity: number) => {
     persistItem(LS_PREFIX + 'bgOpacity', String(opacity));
     set({ bgOpacity: opacity });

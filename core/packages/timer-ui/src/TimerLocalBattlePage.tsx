@@ -1,4 +1,4 @@
-import type { ComponentProps, ReactNode } from 'react';
+import type { ComponentProps, CSSProperties, ReactNode, RefObject } from 'react';
 import { TimerBattleHistory } from './TimerBattleHistory';
 import { TimerBattleLayout } from './TimerBattleLayout';
 import { TimerBattlePlayer, battlePlayerLabel } from './TimerBattlePlayer';
@@ -10,6 +10,9 @@ import TimingSurface from './TimingSurface';
 export interface TimerLocalBattlePageProps {
   className?: string;
   ariaLabel?: string;
+  surfaceRef?: RefObject<HTMLElement | null>;
+  style?: CSSProperties;
+  layoutEditing?: boolean;
   devices?: ReactNode;
   layout: Omit<ComponentProps<typeof TimerBattleLayout>, 'middle'>;
   toolbar: ComponentProps<typeof TimerBattleToolbar>;
@@ -19,8 +22,9 @@ export interface TimerLocalBattlePageProps {
   error?: string | null;
 }
 /** One page tree for local multiplayer; stores and native event subscriptions stay in adapters. */
-export function TimerLocalBattlePage({ className, ariaLabel, devices, layout, toolbar, settings, history, feedback, error }: TimerLocalBattlePageProps) {
-  return <section className={`timer-no-selection${className ? ` ${className}` : ''}`} aria-label={ariaLabel}>
+export function TimerLocalBattlePage({ className, ariaLabel, surfaceRef, style, layoutEditing, devices, layout, toolbar, settings, history, feedback, error }: TimerLocalBattlePageProps) {
+  return <section ref={surfaceRef} style={style} data-layout-editing={layoutEditing || undefined}
+    className={`timer-no-selection${className ? ` ${className}` : ''}`} aria-label={ariaLabel}>
     <TimerStageLayout devices={devices}>
       <TimerBattleLayout {...layout} middle={<TimerBattleToolbar {...toolbar} />} />
     </TimerStageLayout>
