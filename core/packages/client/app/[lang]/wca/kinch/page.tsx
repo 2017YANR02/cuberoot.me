@@ -134,7 +134,6 @@ function KinchPageInner() {
 
       <div className="wse-filters wca-stats-controls">
         <div className="wse-filter kinch-person-filter">
-          <label>{tr({ zh: '选手', en: 'Person' })}</label>
           <WcaPersonPicker
             value={pickerValue}
             onChange={person => {
@@ -145,12 +144,14 @@ function KinchPageInner() {
             isZh={isZh}
           />
         </div>
-        <RegionCountrySelect
-          countries={countries}
-          value={country}
-          isZh={isZh}
-          onChange={value => update({ country: value || null })}
-        />
+        <div role="group" aria-label={tr({ zh: '国家', en: 'Country' })}>
+          <RegionCountrySelect
+            countries={countries}
+            value={country}
+            isZh={isZh}
+            onChange={value => update({ country: value || null })}
+          />
+        </div>
       </div>
 
       {loading && <div className="wse-state"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...' })}</LoadingIndicator></div>}
