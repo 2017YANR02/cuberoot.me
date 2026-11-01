@@ -29,6 +29,10 @@ const join = (...algs: string[]) => algs.filter(Boolean).join(' ');
 // in the bottom layer, but in the wrong slots. This setup is never taught as a move.
 const cornerCycle = "x R' U R' D2 R U' R' D2 R2 x'";
 export const CORNER_DEMO_EXTREME_SETUP = `x2 ${cornerCycle} y ${cornerCycle} y' x2`;
+// Twist two bottom corners without changing their slots or the solved cross.
+const cornerTwist = "R' D' R D";
+const cornerExtremeSetups = ['U', "U'"].map(u =>
+  `${CORNER_DEMO_EXTREME_SETUP} x2 (${cornerTwist})2 ${u} (${cornerTwist})4 ${new Alg(u).invert()} x2`);
 // Swap each opposite pair of middle slots; all four middle edges are misplaced.
 export const MIDDLE_DEMO_EXTREME_SETUP = `${MIDDLE_MISPLACED_SETUP} y2 ${MIDDLE_MISPLACED_SETUP} y2`;
 
@@ -431,8 +435,8 @@ export function completeDemoPool(stage: CompleteDemoStage): CompleteDemo[] {
   if (cached) return cached;
   const chapter = LBL_STEPS.find(step => step.id === stage)!;
   const setups = stage === 'yellow-cross' ? YELLOW_CROSS_DEMO_SETUPS
-    : stage === 'corners' ? [...LBL_LESSON_RUNS.map(run => lessonFrame(run, 'corners').setup), CORNER_DEMO_EXTREME_SETUP]
-      .flatMap(setup => turns.map(turn => join(setup, turn)))
+    : stage === 'corners' ? [...LBL_LESSON_RUNS.flatMap((run, index) =>
+      turns.slice(0, [2, 1, 2][index]).map(turn => join(lessonFrame(run, 'corners').setup, turn))), ...cornerExtremeSetups]
     : [...(stage === 'middle' ? [] : chapter.examples.flatMap(example => turns.map(turn => join(resolvePlayerSetup('3x3', example.alg, example.setup, example.startSolved ?? false), turn)))),
       ...LBL_LESSON_RUNS.map(run => stage === 'daisy' ? run.scramble : lessonFrame(run, stage as LblLessonStageId).setup),
       ...(stage === 'middle' ? [MIDDLE_DEMO_EXTREME_SETUP] : [])];
