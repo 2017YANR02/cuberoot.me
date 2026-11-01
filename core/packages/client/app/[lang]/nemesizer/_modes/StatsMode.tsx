@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import PersonCell from '../_components/PersonCell';
 import { fetchStats, type StatsResponse } from '../_data/nemesizerApi';
+import { ListSelect } from '@/components/ListSelect';
 import { tr } from '@/i18n/tr';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
@@ -33,49 +34,45 @@ export default function StatsMode({ isZh }: Props) {
     parseAsStringEnum<Tab>(TAB_KEYS).withDefault('most').withOptions({ history: 'replace', scroll: false }),
   );
 
-  const [data, setData] = useState<StatsResponse | null>(null);
+  // Keep each response paired with its dimension while the next one loads.
+  const [snapshot, setSnapshot] = useState<{ tab: Tab; data: StatsResponse } | null>(null);
+  const data = snapshot?.data;
+  const displayedTab = snapshot?.tab;
+  const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
   useEffect(() => {
     const ctl = new AbortController();
     setLoading(true);
+    setError(false);
     fetchStats(tab, ctl.signal)
-      .then(r => { if (!ctl.signal.aborted) { setData(r); setLoading(false); } })
-      .catch(e => { if (!ctl.signal.aborted) { console.error('stats fetch:', e); setLoading(false); } });
+      .then(r => { if (!ctl.signal.aborted) { setSnapshot({ tab, data: r }); setLoading(false); } })
+      .catch(e => { if (!ctl.signal.aborted) { console.error('stats fetch:', e); setError(true); setLoading(false); } });
     return () => ctl.abort();
   }, [tab]);
 
   return (
     <div>
-      <div className="nemesizer-stats-tabs">
-        {TABS.map(t => (
-          <button
-            key={t.id}
-            className={`nemesizer-stats-tab-btn ${tab === t.id ? 'active' : ''}`}
-            onClick={() => setTab(t.id)}
-          >
-            {tr(t)}
-          </button>
-        ))}
+      <div className="nemesizer-filters">
+        <ListSelect items={TABS.map(t => ({ value: t.id, label: tr(t) }))} value={tab}
+          onChange={v => setTab(v as Tab)} clearable={false}
+          allLabel={tr({ zh: '统计', en: 'Statistics' })} ariaLabel={tr({ zh: '统计', en: 'Statistics' })} />
       </div>
-      <p className="nemesizer-small-muted" style={{ textAlign: 'center', marginTop: 0 }}>
-        {tr({ zh: '（世界范围）', en: '(world scope)'
-        })}
-      </p>
+      {error && <p role="alert" className="nemesizer-small-muted">{tr({ zh: '加载失败，请切换维度重试。', en: 'Could not load this view. Select a dimension to retry.' })}</p>}
+      <div className="nemesizer-stats-stage" aria-busy={loading}>
+      <div key={displayedTab ?? 'loading'} className="nemesizer-stats-content">
       {loading && !data && <div className="nemesizer-loading"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…'
     })}</LoadingIndicator></div>}
-      {data && tab === 'most' && <PersonsCountTable persons={data.persons ?? []} valueLabel={tr({ zh: '宿敌数', en: 'Nemeses'
+      {data && displayedTab === 'most' && <PersonsCountTable persons={data.persons ?? []} valueLabel={tr({ zh: '宿敌数', en: 'Nemeses'
     })} valueKey="nemesisCount" isZh={isZh} />}
-      {data && tab === 'few' && <PersonsCountTable persons={data.persons ?? []} valueLabel={tr({ zh: '宿敌数', en: 'Nemeses'
+      {data && displayedTab === 'few' && <PersonsCountTable persons={data.persons ?? []} valueLabel={tr({ zh: '宿敌数', en: 'Nemeses'
     })} valueKey="nemesisCount" isZh={isZh} />}
-      {data && tab === 'biggest' && (
+      {data && displayedTab === 'biggest' && (
         <>
-          <p className="nemesizer-results-summary">{tr({ zh: '克最多人的选手是？', en: 'Who nemesizes the most people?'
-        })}</p>
           <PersonsCountTable persons={data.persons ?? []} valueLabel={tr({ zh: '被视为宿敌数', en: 'Nemesized'
         })} valueKey="nemesizedCount" isZh={isZh} />
         </>
       )}
-      {data && tab === 'people' && (
+      {data && displayedTab === 'people' && (
         <>
           <PeopleTable persons={data.persons ?? []} isZh={isZh} />
           {data.truncated && (
@@ -85,7 +82,9 @@ export default function StatsMode({ isZh }: Props) {
           )}
         </>
       )}
-      {data && tab === 'countries' && <CountriesTable rows={data.rows ?? []} isZh={isZh} />}
+      {data && displayedTab === 'countries' && <CountriesTable rows={data.rows ?? []} isZh={isZh} />}
+      </div>
+      </div>
     </div>
   );
 }
@@ -97,8 +96,8 @@ function PersonsCountTable({ persons, valueLabel, valueKey, isZh }: {
   isZh: boolean;
 }) {
   return (
-    <div className="nemesizer-table-wrap">
-      <table className="nemesizer-table">
+    <div className="wse-table-wrapper sticky-scroll nemesizer-table-wrap">
+      <table className="wse-table sticky-thead">
         <thead>
           <tr><th>WCA ID</th><th>{tr({ zh: '姓名', en: 'Name' })}</th><th>{valueLabel}</th></tr>
         </thead>
@@ -121,8 +120,8 @@ function PeopleTable({ persons, isZh }: {
   isZh: boolean;
 }) {
   return (
-    <div className="nemesizer-table-wrap">
-      <table className="nemesizer-table">
+    <div className="wse-table-wrapper sticky-scroll nemesizer-table-wrap">
+      <table className="wse-table sticky-thead">
         <thead><tr>
           <th>WCA ID</th><th>{tr({ zh: '姓名', en: 'Name' })}</th>
           <th>{tr({ zh: '宿敌数', en: 'Nemeses'
@@ -149,8 +148,8 @@ function CountriesTable({ rows }: {
   isZh: boolean;
 }) {
   return (
-    <div className="nemesizer-table-wrap">
-      <table className="nemesizer-table">
+    <div className="wse-table-wrapper sticky-scroll nemesizer-table-wrap">
+      <table className="wse-table sticky-thead">
         <thead><tr>
           <th>{tr({ zh: '国家', en: 'Country'
         })}</th>

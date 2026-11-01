@@ -1,12 +1,12 @@
 /* /nemesizer-about */
 .nema-page {
-  --nema-bg: #fafafa;
-  --nema-surface: #FFFFFF;
-  --nema-text: #171717;
-  --nema-text-sub: #737373;
-  --nema-text-mute: #95938E;
-  --nema-border: #e5e5e5;
-  --nema-accent: #B45309;
+  --nema-bg: var(--background);
+  --nema-surface: var(--card);
+  --nema-text: var(--foreground);
+  --nema-text-sub: var(--muted-foreground);
+  --nema-text-mute: var(--faint-foreground);
+  --nema-border: var(--border-default);
+  --nema-accent: var(--accent);
 
   font-family: var(--font-sans);
   background: var(--nema-bg);
@@ -15,15 +15,6 @@
   min-height: 100dvh;
 }
 
-[data-theme="dark"] .nema-page {
-  --nema-bg: #1A1918;
-  --nema-surface: #232220;
-  --nema-text: #ECEAE4;
-  --nema-text-sub: #B0AEA8;
-  --nema-text-mute: #7E7C77;
-  --nema-border: #36342F;
-  --nema-accent: #FCD34D;
-}
 
 .nema-header {
   display: flex;
@@ -92,7 +83,7 @@
   height: 26px;
   border-radius: 50%;
   background: var(--nema-accent);
-  color: #fff;
+  color: var(--accent-foreground);
   display: flex;
   align-items: center;
   justify-content: center;

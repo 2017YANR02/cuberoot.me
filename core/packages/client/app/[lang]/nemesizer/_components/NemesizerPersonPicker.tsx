@@ -1,13 +1,8 @@
 'use client';
 
-// Thin wrapper around shared WcaPersonPicker.
-import { useCallback } from 'react';
-import {
-  WcaPersonPicker,
-  loadPersonsIndex,
-  searchLocalPersons,
-  type WcaPerson,
-} from '@cuberoot/shared';
+import { useEffect, useState } from 'react';
+import { getPerson, type WcaPersonLite } from '@/lib/wca-api';
+import { WcaPersonPicker } from '@/components/WcaPersonPicker';
 import { tr } from '@/i18n/tr';
 
 interface Props {
@@ -15,32 +10,21 @@ interface Props {
   initialQuery?: string;
   onPick: (wcaId: string) => void;
   placeholder?: string;
-  autoConfirmExact?: boolean;
+  showSelectedPerson?: boolean;
 }
 
-export default function NemesizerPersonPicker({
-  initialQuery, onPick, placeholder, autoConfirmExact = true,
-}: Props) {
-  const searchFn = useCallback(async (query: string): Promise<WcaPerson[]> => {
-    await loadPersonsIndex();
-    return searchLocalPersons(query, 20) ?? [];
-  }, []);
-
-  const handleSelect = useCallback((person: WcaPerson) => {
-    onPick(person.wcaId);
-  }, [onPick]);
-
-  return (
-    <div className="nemesizer-picker-wrap">
-      <WcaPersonPicker
-        mode="inline"
-        onSelect={handleSelect}
-        placeholder={placeholder ?? tr({ zh: '搜索 WCA ID、姓名、国家或年份', en: 'Search WCA ID, name, country or year'
-                })}
-        searchFn={searchFn}
-        initialQuery={initialQuery}
-        autoConfirmExact={autoConfirmExact}
-      />
-    </div>
-  );
+export default function NemesizerPersonPicker({ isZh, initialQuery, onPick, placeholder, showSelectedPerson = false }: Props) {
+  const [selected, setSelected] = useState<WcaPersonLite | null>(null);
+  useEffect(() => {
+    if (!showSelectedPerson || !initialQuery) return;
+    let active = true;
+    getPerson(initialQuery).then(person => { if (active) setSelected(person); }).catch(() => {});
+    return () => { active = false; };
+  }, [initialQuery, showSelectedPerson]);
+  const value = showSelectedPerson && selected?.id === initialQuery ? selected : null;
+  return <div className="nemesizer-picker-wrap">
+    <WcaPersonPicker key={initialQuery ?? ''} value={value} defaultQuery={initialQuery}
+      isZh={isZh} onChange={person => { setSelected(person); onPick(person?.id ?? ''); }}
+      placeholder={placeholder ?? tr({ zh: '搜索姓名或 WCA ID', en: 'Search name or WCA ID' })} />
+  </div>;
 }

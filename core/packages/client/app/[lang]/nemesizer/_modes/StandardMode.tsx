@@ -11,25 +11,14 @@ import {
   type Scope,
   type NemPersonRow,
 } from '../_data/nemesizerApi';
+import RelationPicker from '../_components/RelationPicker';
+import { ListSelect } from '@/components/ListSelect';
+import LiquidGlassChips from '@/components/LiquidGlassChips';
+import { Download } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 
 interface Props { isZh: boolean; }
 
-const VIEWS: { id: RelationView; en: string; zh: string
- }[] = [
-  { id: 'myNem',      en: 'Show my nemeses',              zh: '显示我的宿敌'
-},
-  { id: 'iNem',       en: 'Show who I nemesize',          zh: '显示谁把我视为宿敌'
-},
-  { id: 'nearlyMe',   en: 'Show who nearly nemesizes me', zh: '显示差一步就成我宿敌的人'
-},
-  { id: 'iNearly',    en: 'Show who I nearly nemesize',   zh: '显示差一步就把我视为宿敌的人'
-},
-  { id: 'onlyJustMe', en: 'Show who only just nemesizes me', zh: '显示刚好成为我宿敌的人'
-},
-  { id: 'iOnlyJust',  en: 'Show who I only just nemesize',   zh: '显示刚好把我视为宿敌的人'
-},
-];
 
 type ShowMode = 'people' | 'countries';
 type Order = 'id' | 'name' | 'nemeses' | 'nemesized';
@@ -85,7 +74,7 @@ export default function StandardMode({ isZh }: Props) {
 
   if (!person) {
     return (
-      <NemesizerPersonPicker
+      <NemesizerPersonPicker showSelectedPerson
         isZh={isZh}
         onPick={pick}
         placeholder={tr({ zh: '输入 WCA ID、姓名、国家或年份开始', en: 'Enter WCA ID, name, country or year'
@@ -97,7 +86,7 @@ export default function StandardMode({ isZh }: Props) {
   if (err) {
     if (err.startsWith('404')) {
       return (
-        <NemesizerPersonPicker
+        <NemesizerPersonPicker showSelectedPerson
           isZh={isZh}
           initialQuery={person}
           onPick={pick}
@@ -106,13 +95,13 @@ export default function StandardMode({ isZh }: Props) {
         />
       );
     }
-    return <div className="nemesizer-loading" style={{ color: 'var(--signal-danger)' }}>{err}</div>;
+    return <div className="nemesizer-loading" style={{ color: 'var(--destructive)' }}>{err}</div>;
   }
 
   return (
     <>
-      <NemesizerPersonPicker isZh={isZh} onPick={pick} />
-      <ViewPicker view={view} onChange={v => setParam('view', v)} isZh={isZh} />
+      <NemesizerPersonPicker showSelectedPerson isZh={isZh} initialQuery={person} onPick={pick} />
+      <div className="nemesizer-filters"><RelationPicker view={view} onChange={v => setParam('view', v)} />
       <ScopePicker scope={scope} onChange={s => setParam('scope', s)} isZh={isZh} />
       <ShowPicker mode={showMode} onChange={m => setParam('show', m)} isZh={isZh} />
       {showMode === 'people' && (
@@ -124,15 +113,16 @@ export default function StandardMode({ isZh }: Props) {
           isZh={isZh}
         />
       )}
+      </div>
       {loading && !data && <div className="nemesizer-loading">{tr({ zh: '计算中…', en: 'Computing…'
     })}</div>}
       {data && (
         <>
-          <SummaryLine data={data} isZh={isZh} />
+          <div className="nemesizer-results-summary">{tr({ zh: `共 ${data.totalCount} 位选手`, en: `${data.totalCount} people` })}</div>
           {data.persons.length > 0 && (
-            <div style={{ textAlign: 'center', margin: '12px 0' }}>
-              <button className="nemesizer-btn-blue" onClick={() => exportCsv(data, showMode)}>
-                {tr({ zh: '⬇ 导出 CSV', en: '⬇ Export CSV'
+            <div className="nemesizer-actions">
+              <button className="btn-secondary nemesizer-export" onClick={() => exportCsv(data, showMode)}>
+                <Download size={16} aria-hidden="true" />{tr({ zh: '导出 CSV', en: 'Export CSV'
                 })}
               </button>
             </div>
@@ -147,95 +137,33 @@ export default function StandardMode({ isZh }: Props) {
   );
 }
 
-function ViewPicker({ view, onChange }: { view: RelationView; onChange: (v: RelationView) => void; isZh: boolean }) {
-  return (
-    <div className="nemesizer-view-group">
-      {VIEWS.map(v => (
-        <label key={v.id}>
-          <input type="radio" checked={view === v.id} onChange={() => onChange(v.id)} />
-          {tr(v)}
-        </label>
-      ))}
-    </div>
-  );
-}
-
-function ScopePicker({ scope, onChange, isZh }: { scope: Scope; onChange: (s: Scope) => void; isZh: boolean }) {
-  return (
-    <div className="nemesizer-scope">
-      {(['world', 'continent', 'country'] as const).map(s => (
-        <label key={s}>
-          <input type="radio" checked={scope === s} onChange={() => onChange(s)} />
-          {(isZh ? ({ world: '世界', continent: '大洲', country: '国家' })[s] : s[0].toUpperCase() + s.slice(1))}
-        </label>
-      ))}
-    </div>
-  );
+function ScopePicker({ scope, onChange }: { scope: Scope; onChange: (s: Scope) => void; isZh: boolean }) {
+  return <LiquidGlassChips items={['world', 'continent', 'country'] as const} value={scope} onChange={onChange}
+    ariaLabel={tr({ zh: '范围', en: 'Scope' })}
+    getLabel={s => tr({ world: { zh: '世界', en: 'World' }, continent: { zh: '大洲', en: 'Continent' }, country: { zh: '国家', en: 'Country' } }[s])} />;
 }
 
 function SortPicker({ order, direction, onOrder, onDirection }: {
-  order: Order; direction: Direction;
-  onOrder: (o: Order) => void; onDirection: (d: Direction) => void; isZh: boolean;
+  order: Order; direction: Direction; onOrder: (o: Order) => void; onDirection: (d: Direction) => void; isZh: boolean;
 }) {
-  return (
-    <div className="nemesizer-sort">
-      <strong>{tr({ zh: '排序：', en: 'Sort by:' })}</strong>
-      <select className="nemesizer-sort-select" value={order} onChange={e => onOrder(e.target.value as Order)}>
-        <option value="id">WCA ID</option>
-        <option value="name">{tr({ zh: '姓名', en: 'Name' })}</option>
-        <option value="nemeses">{tr({ zh: '宿敌数', en: 'Nemeses'
-        })}</option>
-        <option value="nemesized">{tr({ zh: '被视为宿敌数', en: 'Nemesized'
-        })}</option>
-      </select>
-      <label><input type="radio" checked={direction === 'up'} onChange={() => onDirection('up')} />{tr({ zh: '升序', en: 'Up' })}</label>
-      <label><input type="radio" checked={direction === 'down'} onChange={() => onDirection('down')} />{tr({ zh: '降序', en: 'Down' })}</label>
-    </div>
-  );
+  return <div className="nemesizer-sort">
+    <ListSelect value={order} onChange={v => onOrder(v as Order)} clearable={false}
+      allLabel={tr({ zh: '排序', en: 'Sort by' })} ariaLabel={tr({ zh: '排序', en: 'Sort by' })}
+      items={[
+        { value: 'id', label: 'WCA ID' }, { value: 'name', label: tr({ zh: '姓名', en: 'Name' }) },
+        { value: 'nemeses', label: tr({ zh: '宿敌数', en: 'Nemeses' }) },
+        { value: 'nemesized', label: tr({ zh: '被视为宿敌数', en: 'Nemesized' }) },
+      ]} />
+    <LiquidGlassChips items={['up', 'down'] as const} value={direction} onChange={onDirection}
+      ariaLabel={tr({ zh: '排序方向', en: 'Sort direction' })}
+      getLabel={v => v === 'up' ? tr({ zh: '升序', en: 'Ascending' }) : tr({ zh: '降序', en: 'Descending' })} />
+  </div>;
 }
 
 function ShowPicker({ mode, onChange }: { mode: ShowMode; onChange: (m: ShowMode) => void; isZh: boolean }) {
-  return (
-    <div className="nemesizer-show-section">
-      <strong>{tr({ zh: '显示：', en: 'Show:'
-    })}</strong>
-      <label><input type="radio" checked={mode === 'people'} onChange={() => onChange('people')} />{tr({ zh: '选手', en: 'People'
-    })}</label>
-      <label><input type="radio" checked={mode === 'countries'} onChange={() => onChange('countries')} />{tr({ zh: '国家', en: 'Countries'
-    })}</label>
-    </div>
-  );
-}
-
-function SummaryLine({ data, isZh }: { data: NemesesResponse; isZh: boolean }) {
-  const scopeText = (() => {
-    if (data.scope === 'world') return tr({ zh: '世界', en: 'the world' });
-    if (data.scope === 'country') return data.ref.iso2.toUpperCase();
-    return data.ref.continent;
-  })();
-  const verbZh: Record<RelationView, string> = {
-    myNem: '的宿敌共', iNem: '被视为宿敌共', nearlyMe: '差一步宿敌共', iNearly: '差一步被视为宿敌共',
-    onlyJustMe: '刚好宿敌共', iOnlyJust: '刚好被视为宿敌共',
-  };
-  const verbEn: Record<RelationView, string> = {
-    myNem: 'has', iNem: 'nemesizes', nearlyMe: 'is nearly nemesized by',
-    iNearly: 'nearly nemesizes', onlyJustMe: 'is only-just nemesized by', iOnlyJust: 'only-just nemesizes',
-  };
-  const personLike = { wcaId: data.ref.wcaId, name: data.ref.name, countryIso2: data.ref.iso2, continentIdx: 0 };
-  if (isZh) {
-    return (
-      <div className="nemesizer-results-summary">
-        <PersonCell person={personLike} isZh={isZh} />
-        （{scopeText}）{verbZh[data.view]}{data.totalCount} 个人
-      </div>
-    );
-  }
-  return (
-    <div className="nemesizer-results-summary">
-      <PersonCell person={personLike} isZh={isZh} />
-      {' '}{verbEn[data.view]} {data.totalCount} people in {scopeText}
-    </div>
-  );
+  return <LiquidGlassChips items={['people', 'countries'] as const} value={mode} onChange={onChange}
+    ariaLabel={tr({ zh: '显示', en: 'Show' })}
+    getLabel={v => v === 'people' ? tr({ zh: '选手', en: 'People' }) : tr({ zh: '国家', en: 'Countries' })} />;
 }
 
 function PeopleTable({ data, isZh, order, direction }: {
@@ -252,15 +180,15 @@ function PeopleTable({ data, isZh, order, direction }: {
   };
   const sorted = [...data.persons].sort(cmp);
   return (
-    <div className="nemesizer-table-wrap">
-      <table className="nemesizer-table">
+    <div className="wse-table-wrapper sticky-scroll nemesizer-table-wrap">
+      <table className="wse-table sticky-thead">
         <thead>
           <tr>
             <th>WCA ID</th>
             <th>{tr({ zh: '姓名', en: 'Name' })}</th>
             <th>{tr({ zh: '共同项目', en: 'Shared events'
             })}</th>
-            <th>{tr({ zh: '我的宿敌数', en: 'Nemeses'
+            <th>{tr({ zh: '宿敌数', en: 'Nemeses'
             })}</th>
             <th>{tr({ zh: '被视为宿敌数', en: 'Nemesized'
             })}</th>
@@ -290,8 +218,8 @@ function PeopleTable({ data, isZh, order, direction }: {
 function CountriesTable({ data }: { data: NemesesResponse; isZh: boolean }) {
   const sorted = Object.entries(data.countryTally).sort((a, b) => b[1] - a[1]);
   return (
-    <div className="nemesizer-table-wrap">
-      <table className="nemesizer-table">
+    <div className="wse-table-wrapper sticky-scroll nemesizer-table-wrap">
+      <table className="wse-table sticky-thead">
         <thead><tr><th>{tr({ zh: '国家', en: 'Country'
         })}</th><th>{tr({ zh: '数量', en: 'Count'
         })}</th></tr></thead>

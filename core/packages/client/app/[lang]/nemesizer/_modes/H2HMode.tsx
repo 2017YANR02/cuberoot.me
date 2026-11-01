@@ -7,6 +7,7 @@ import PersonCell from '../_components/PersonCell';
 import { formatWcaResultK } from '@/lib/wca-format-result';
 import { eventDisplayName } from '@/lib/wca-events';
 import { fetchH2H, type H2HResponse } from '../_data/nemesizerApi';
+import LiquidGlassChips from '@/components/LiquidGlassChips';
 import { tr } from '@/i18n/tr';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
@@ -35,7 +36,7 @@ export default function H2HMode({ isZh }: Props) {
   const inflight = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    if (!p1 || !p2) { setData(null); setErr(null); return; }
+    if (!p1 || !p2) { setData(null); setErr(null); setLoading(false); return; }
     inflight.current?.abort();
     const ctl = new AbortController();
     inflight.current = ctl;
@@ -51,76 +52,44 @@ export default function H2HMode({ isZh }: Props) {
     return () => ctl.abort();
   }, [p1, p2]);
 
-  if (!p1) {
-    return (
-      <div>
-        <h2 style={{ textAlign: 'center' }}>{tr({ zh: '正面对决', en: 'Head to head!'
-        })}</h2>
-        <NemesizerPersonPicker
-          isZh={isZh}
-          onPick={id => setParam('p1', id)}
-          placeholder={tr({ zh: '选手 1：WCA ID 或姓名', en: 'Person 1: WCA ID or name'
-        })}
-        />
-      </div>
-    );
-  }
-
-  if (err && err.startsWith('404')) {
-    return (
-      <div>
-        <h2 style={{ textAlign: 'center' }}>{tr({ zh: '正面对决', en: 'Head to head!'
-        })}</h2>
-        <NemesizerPersonPicker
-          isZh={isZh}
-          initialQuery={p1}
-          onPick={id => setParam('p1', id)}
-          placeholder={tr({ zh: '没找到该选手', en: 'Person not found'
-        })}
-        />
-      </div>
-    );
-  }
-
+  const currentData = data?.p1.wcaId === p1 && data?.p2.wcaId === p2 ? data : null;
   return (
-    <div>
-      <h2 style={{ textAlign: 'center' }}>{tr({ zh: '正面对决', en: 'Head to head!'
-    })}</h2>
-      <div style={{ textAlign: 'center', margin: '10px' }}>
-        <label style={{ marginRight: 18 }}>
-          <input type="radio" checked={show === 'ranks'} onChange={() => setParam('show', 'ranks')} /> {tr({ zh: '排名', en: 'Ranks' })}
-        </label>
-        <label>
-          <input type="radio" checked={show === 'results'} onChange={() => setParam('show', 'results')} /> {tr({ zh: '成绩', en: 'Results'
-        })}
-        </label>
+    <div className="nemesizer-h2h">
+      <div className="nemesizer-filters">
+        <LiquidGlassChips items={['ranks', 'results'] as const} value={show}
+          onChange={v => setParam('show', v)} ariaLabel={tr({ zh: '显示', en: 'Show' })}
+          getLabel={v => v === 'ranks' ? tr({ zh: '排名', en: 'Ranks' }) : tr({ zh: '成绩', en: 'Results' })} />
       </div>
-      {data && (
-        <div className="nemesizer-results-summary">
-          {tr({ zh: '选手 1', en: 'Compare'
-        })}:{' '}
-          <PersonCell person={{ wcaId: data.p1.wcaId, name: data.p1.name, countryIso2: data.p1.iso2, continentIdx: 0 }} isZh={isZh} />
-          {' '}({data.p1.wcaId})
-        </div>
-      )}
-      <NemesizerPersonPicker
-        isZh={isZh}
-        initialQuery={p2}
-        onPick={id => setParam('p2', id)}
-        placeholder={tr({ zh: '对手：WCA ID 或姓名', en: 'With: WCA ID or name'
-        })}
-      />
-      {loading && !data && <div className="nemesizer-loading"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…'
-    })}</LoadingIndicator></div>}
-      {data && p2 && <Comparison data={data} isZh={isZh} show={show} />}
+      <div className="nemesizer-h2h-pickers">
+        <NemesizerPersonPicker isZh={isZh} initialQuery={p1} showSelectedPerson
+          onPick={id => setParam('p1', id)}
+          placeholder={tr({ zh: '选手 1：WCA ID 或姓名', en: 'Person 1: WCA ID or name' })} />
+        <div className="nemesizer-h2h-vs" aria-hidden="true">VS</div>
+        <NemesizerPersonPicker isZh={isZh} initialQuery={p2} showSelectedPerson
+          onPick={id => setParam('p2', id)}
+          placeholder={tr({ zh: '选手 2：WCA ID 或姓名', en: 'Person 2: WCA ID or name' })} />
+      </div>
+      {err && <p role="alert" className="nemesizer-h2h-error">{tr({ zh: '无法加载对决，请检查所选选手后重试。', en: 'Could not load the comparison. Check the selected people and try again.' })}</p>}
+      {loading && p1 && p2 && !currentData && <div className="nemesizer-loading"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator></div>}
+      {currentData && <Comparison data={currentData} isZh={isZh} show={show} />}
     </div>
   );
 }
 
 function Comparison({ data, isZh, show }: { data: H2HResponse; isZh: boolean; show: Show }) {
+  const wins = [0, 0];
+  let compared = 0;
+  for (const row of data.rows) {
+    const a = show === 'ranks' ? row.r1 : row.b1;
+    const b = show === 'ranks' ? row.r2 : row.b2;
+    if (a === undefined && b === undefined) continue;
+    compared++;
+    if (a !== undefined && (b === undefined || a < b)) wins[0]++;
+    if (b !== undefined && (a === undefined || b < a)) wins[1]++;
+  }
   return (
-    <div className="nemesizer-table-wrap">
-      <table className="nemesizer-table">
+    <div className="wse-table-wrapper sticky-scroll nemesizer-table-wrap">
+      <table className="wse-table sticky-thead nemesizer-h2h-table">
         <thead>
           <tr>
             <th>{tr({ zh: '项目', en: 'Event'
@@ -138,13 +107,29 @@ function Comparison({ data, isZh, show }: { data: H2HResponse; isZh: boolean; sh
             const fmt = (v: number) => show === 'ranks' ? String(v) : formatWcaResultK(v, r.event, r.kind as 0 | 1);
             return (
               <tr key={i}>
-                <td>{labelEk(r.event, r.kind, isZh)}</td>
+                <td aria-label={labelEk(r.event, r.kind, isZh)}>
+                  {data.rows[i - 1]?.event !== r.event && <span aria-hidden="true">{eventDisplayName(r.event, isZh)}</span>}
+                </td>
                 <td className={class1}>{v1 !== undefined ? fmt(v1) : ''}</td>
                 <td className={class2}>{v2 !== undefined ? fmt(v2) : ''}</td>
               </tr>
             );
           })}
         </tbody>
+        <tfoot>
+          <tr className="nemesizer-h2h-score">
+            <th scope="row">{tr({ zh: '比分', en: 'Score' })}</th>
+            {wins.map((score, index) => {
+              const outcome = score === wins[1 - index] ? 'draw' : score > wins[1 - index] ? 'win' : 'loss';
+              return <td key={index}>
+                <strong>{compared ? score : '—'}</strong>
+                {compared > 0 && <span className={`nemesizer-h2h-outcome is-${outcome}`}>
+                  {tr({ win: { zh: '胜', en: 'Win' }, loss: { zh: '负', en: 'Loss' }, draw: { zh: '平', en: 'Draw' } }[outcome])}
+                </span>}
+              </td>;
+            })}
+          </tr>
+        </tfoot>
       </table>
     </div>
   );

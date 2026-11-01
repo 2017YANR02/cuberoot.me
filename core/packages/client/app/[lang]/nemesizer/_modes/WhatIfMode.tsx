@@ -12,6 +12,8 @@ import {
   type RelationView,
   type WhatIfResponse,
 } from '../_data/nemesizerApi';
+import RelationPicker from '../_components/RelationPicker';
+import { eventDisplayName } from '@/lib/wca-events';
 import { tr } from '@/i18n/tr';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
@@ -80,13 +82,11 @@ export default function WhatIfMode({ isZh }: Props) {
   if (!person) {
     return (
       <div>
-        <h2 style={{ textAlign: 'center' }}>{tr({ zh: '假设…？', en: 'What if…?'
-        })}</h2>
         <p className="nemesizer-results-summary">
           {tr({ zh: '假设你在某些项目上的排名不同，看看新的宿敌关系。', en: 'Enter alternate ranks for one or more events to see the new you.'
         })}
         </p>
-        <NemesizerPersonPicker isZh={isZh} onPick={id => setParam('person', id)} />
+        <NemesizerPersonPicker showSelectedPerson isZh={isZh} onPick={id => setParam('person', id)} />
       </div>
     );
   }
@@ -94,9 +94,7 @@ export default function WhatIfMode({ isZh }: Props) {
   if (personErr && personErr.startsWith('404')) {
     return (
       <div>
-        <h2 style={{ textAlign: 'center' }}>{tr({ zh: '假设…？', en: 'What if…?'
-        })}</h2>
-        <NemesizerPersonPicker isZh={isZh} initialQuery={person} onPick={id => setParam('person', id)} />
+        <NemesizerPersonPicker showSelectedPerson isZh={isZh} initialQuery={person} onPick={id => setParam('person', id)} />
       </div>
     );
   }
@@ -115,30 +113,17 @@ export default function WhatIfMode({ isZh }: Props) {
 
   return (
     <div>
-      <h2 style={{ textAlign: 'center' }}>{tr({ zh: '假设…？', en: 'What if…?'
-    })}</h2>
-      <div className="nemesizer-results-summary">
-        <PersonCell person={{ wcaId: personData.wcaId, name: personData.name, countryIso2: personData.iso2, continentIdx: 0 }} isZh={isZh} />
-        {' '}({personData.wcaId})
-      </div>
-      <NemesizerPersonPicker isZh={isZh} initialQuery={person} onPick={id => setParam('person', id)} autoConfirmExact={false} />
-      <div className="nemesizer-view-group">
-        {([
-          ['myNem',      '显示我的宿敌',              'Show my nemeses'],
-          ['iNem',       '显示谁把我视为宿敌',         'Show who I nemesize'],
-          ['nearlyMe',   '显示差一步就成我宿敌的人',   'Show who nearly nemesizes me'],
-          ['iNearly',    '显示差一步就把我视为宿敌的人', 'Show who I nearly nemesize'],
-          ['onlyJustMe', '显示刚好成为我宿敌的人',     'Show who only just nemesizes me'],
-          ['iOnlyJust',  '显示刚好把我视为宿敌的人',   'Show who I only just nemesize'],
-        ] as const).map(([id, zh, en]) => (
-          <label key={id}>
-            <input type="radio" checked={view === id} onChange={() => setParam('view', id)} />
-            {isZh ? zh : en}
-          </label>
-        ))}
-      </div>
+      <NemesizerPersonPicker showSelectedPerson isZh={isZh} initialQuery={person} onPick={id => setParam('person', id)} />
+      <div className="nemesizer-whatif-layout">
+      <div className="nemesizer-filters nemesizer-whatif-filter"><RelationPicker view={view} onChange={v => setParam('view', v)} /></div>
+      {result && (<div className="nemesizer-results-summary nemesizer-whatif-summary">
+            {(isZh
+                                    ? `原 ${result.origCount}  →  假设后 ${result.newCount}`
+                                    : `Original ${result.origCount}  →  After what-if ${result.newCount}`)}
+            {resultLoading && <span className="nemesizer-small-muted" style={{ marginLeft: 8 }}>{tr({ zh: '更新中…', en: 'updating…' })}</span>}
+          </div>)}
       <div className="nemesizer-whatif-grid">
-        <div className="nemesizer-whatif-row is-header" style={{ fontWeight: 600 }}>
+        <div data-site-surface="heading" className="nemesizer-whatif-row is-header" style={{ fontWeight: 600 }}>
           <div>{tr({ zh: '项目', en: 'Event'
         })}</div>
           <div>{tr({ zh: '真实排名', en: 'Real rank'
@@ -153,7 +138,7 @@ export default function WhatIfMode({ isZh }: Props) {
             const real = rankByEk.get(ek);
             return (
               <div className="nemesizer-whatif-row" key={`${ev}-${kind}`}>
-                <div>{ev} {kind === 0 ? tr({ zh: '单次', en: 'single'
+                <div>{eventDisplayName(ev, isZh)} {kind === 0 ? tr({ zh: '单次', en: 'single'
                                     }) : tr({ zh: '平均', en: 'average' })}</div>
                 <div>{real ?? '—'}</div>
                 <div>
@@ -161,6 +146,7 @@ export default function WhatIfMode({ isZh }: Props) {
                     className="nemesizer-whatif-input"
                     type="number"
                     min="1"
+                    aria-label={`${eventDisplayName(ev, isZh)} ${kind === 0 ? tr({ zh: '单次', en: 'single' }) : tr({ zh: '平均', en: 'average' })} — ${tr({ zh: '假设排名', en: 'What if rank' })}`}
                     value={overrides.get(ek) ?? ''}
                     onChange={e => {
                       const next = new Map(overrides);
@@ -174,16 +160,11 @@ export default function WhatIfMode({ isZh }: Props) {
           });
         })}
       </div>
+      <div className="nemesizer-whatif-results" aria-busy={resultLoading}>
       {result && (
         <>
-          <div className="nemesizer-results-summary">
-            {(isZh
-                                    ? `原 ${result.origCount}  →  假设后 ${result.newCount}`
-                                    : `Original ${result.origCount}  →  After what-if ${result.newCount}`)}
-            {resultLoading && <span className="nemesizer-small-muted" style={{ marginLeft: 8 }}>{tr({ zh: '更新中…', en: 'updating…' })}</span>}
-          </div>
-          <div className="nemesizer-table-wrap">
-            <table className="nemesizer-table">
+          <div className="wse-table-wrapper sticky-scroll nemesizer-table-wrap">
+            <table className="wse-table sticky-thead">
               <thead><tr><th>WCA ID</th><th>{tr({ zh: '姓名', en: 'Name' })}</th></tr></thead>
               <tbody>
                 {[...result.persons]
@@ -201,6 +182,8 @@ export default function WhatIfMode({ isZh }: Props) {
       )}
       {!result && resultLoading && <div className="nemesizer-loading">{tr({ zh: '计算中…', en: 'Computing…'
     })}</div>}
+      </div>
+      </div>
     </div>
   );
 }

@@ -5,7 +5,9 @@ import Link from '@/components/AppLink';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { HelpCircle } from '@app-foundation/icons/lucide';
-import NemesizerBrand from './_components/NemesizerBrand';
+import PageHeading from '@/components/PageHeading';
+import LiquidGlassChips from '@/components/LiquidGlassChips';
+import '../wca/_wca_stats_extra.css';
 import StandardMode from './_modes/StandardMode';
 import H2HMode from './_modes/H2HMode';
 import WhatIfMode from './_modes/WhatIfMode';
@@ -28,12 +30,13 @@ function NemesizerInner() {
   );
 
   return (
-    <div className="nemesizer-page">
-      <div className="nemesizer-brand-row">
-        <NemesizerBrand isZh={isZh} />
+    <div className="wse-page nemesizer-page">
+      <header className="wse-header">
+        <PageHeading backHref="/wca"><svg className="nemesizer-brand-logo" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="6" fill="var(--accent)" /><path d="M5 23V16H11V12H17V8H23V23Z" fill="var(--accent-foreground)" /></svg>Nemesizer
         <Link
           href="/nemesizer-about"
-          className="nemesizer-title-help"
+          className="wse-title-help"
+          prefetch={false}
           title={tr({ zh: '这页是干啥的?', en: 'What is this page?'
         })}
           aria-label={tr({ zh: '查看说明', en: 'About this page'
@@ -41,17 +44,13 @@ function NemesizerInner() {
         >
           <HelpCircle size={18} strokeWidth={1.75} />
         </Link>
-      </div>
+        </PageHeading>
+      </header>
 
       <div className="nemesizer-tabs">
-        <TabBtn active={mode === 'standard'} onClick={() => setMode('standard')}>{tr({ zh: '宿敌', en: 'Nemeses'
-        })}</TabBtn>
-        <TabBtn active={mode === 'h2h'} onClick={() => setMode('h2h')}>{tr({ zh: '对决', en: 'Head to head'
-        })}</TabBtn>
-        <TabBtn active={mode === 'whatif'} onClick={() => setMode('whatif')}>{tr({ zh: '假设', en: 'What if'
-        })}</TabBtn>
-        <TabBtn active={mode === 'stats'} onClick={() => setMode('stats')}>{tr({ zh: '统计', en: 'Statistics'
-        })}</TabBtn>
+        <LiquidGlassChips items={MODES} value={mode} onChange={setMode}
+          ariaLabel={tr({ zh: '模式', en: 'Mode' })}
+          getLabel={item => tr({ standard: { zh: '宿敌', en: 'Nemeses' }, h2h: { zh: '对决', en: 'Head to head' }, whatif: { zh: '假设', en: 'What if' }, stats: { zh: '统计', en: 'Statistics' } }[item])} />
       </div>
 
       {mode === 'standard' && <StandardMode isZh={isZh} />}
@@ -60,10 +59,6 @@ function NemesizerInner() {
       {mode === 'stats' && <StatsMode isZh={isZh} />}
     </div>
   );
-}
-
-function TabBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return <button className={`nemesizer-tab${active ? ' active' : ''}`} onClick={onClick}>{children}</button>;
 }
 
 export default function NemesizerPage() {

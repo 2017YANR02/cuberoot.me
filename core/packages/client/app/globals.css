@@ -156,7 +156,6 @@ body {
 
 /* Remaining immersive pages keep classic dark tokens unless a dark palette is
    selected. WCA statistics inherit the global system/user appearance tokens. */
-html:root:not([data-palette-scheme=dark]):has(.nemesizer-page),
 html:root:not([data-palette-scheme=dark]):has(.tr-page),
 html:root:not([data-palette-scheme=dark]):has(.comp-sim-page),
 html:root:not([data-palette-scheme=dark]):has(.comp-sim-live) {
