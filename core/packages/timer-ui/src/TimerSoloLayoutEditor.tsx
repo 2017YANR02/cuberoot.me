@@ -17,6 +17,64 @@ type Region = typeof regions[number];
 /** Editing chrome for this page's existing regions; never reparent live timer DOM. */
 export interface TimerSoloLayoutSettings { soloLayout: SoloLayout; timerFontScale: number; scrambleFontScale: number; }
 interface LayoutHost { getSettings(): TimerSoloLayoutSettings; updateSettings(patch: Partial<TimerSoloLayoutSettings>): void; language: 'en' | 'zh'; }
+
+/** Use the visible viewport, including zoom/keyboard offsets on touch devices. */
+function viewportOverflow(elements: Element[]) {
+  const viewport = window.visualViewport;
+  const left = viewport?.offsetLeft ?? 0;
+  const top = viewport?.offsetTop ?? 0;
+  const right = left + Math.min(viewport?.width ?? window.innerWidth, document.documentElement.clientWidth || window.innerWidth);
+  const bottom = top + (viewport?.height ?? window.innerHeight);
+  return elements.map(element => {
+    const rect = element.getBoundingClientRect();
+    return [Math.max(0, left - rect.left), Math.max(0, top - rect.top),
+      Math.max(0, rect.right - right), Math.max(0, rect.bottom - bottom)];
+  });
+}
+
+function interpolateLayout(from: TimerSoloLayoutSettings, to: TimerSoloLayoutSettings, fraction: number): TimerSoloLayoutSettings {
+  const mix = (a: number, b: number, precision: number) => Math.round((a + (b - a) * fraction) * precision) / precision;
+  const soloLayout = { ...from.soloLayout };
+  for (const key of Object.keys(soloLayout) as (keyof SoloLayout)[]) {
+    soloLayout[key] = mix(from.soloLayout[key], to.soloLayout[key], key.endsWith('Scale') ? 100 : 1);
+  }
+  return { soloLayout, timerFontScale: mix(from.timerFontScale, to.timerFontScale, 100),
+    scrambleFontScale: mix(from.scrambleFontScale, to.scrambleFontScale, 100) };
+}
+
+/** Preview in the live flow without saving rejected candidates or waiting for
+ * an installed host's asynchronous settings repository. Restored before paint. */
+function layoutPreview(surface: HTMLElement, before: TimerSoloLayoutSettings) {
+  const overrides: { element: HTMLElement; property: string; value(settings: TimerSoloLayoutSettings): string }[] = [];
+  const variables = { scrambleGap: 'scramble-gap', sourceGap: 'source-gap', timerGap: 'timer-gap',
+    cubeGap: 'cube-gap', sourceScale: 'source-scale', cubeScale: 'cube-scale' } as const;
+  for (const key of Object.keys(variables) as (keyof SoloLayout)[]) {
+    for (const mode of ['solo', 'battle']) overrides.push({ element: surface, property: `--${mode}-${variables[key]}`,
+      value: settings => `${settings.soloLayout[key]}${key.endsWith('Gap') ? 'px' : ''}` });
+  }
+  for (const element of surface.querySelectorAll<HTMLElement>('.scramble-strip')) {
+    overrides.push({ element, property: '--scramble-scale', value: settings => String(settings.scrambleFontScale) });
+  }
+  for (const element of surface.querySelectorAll<HTMLElement>('.timer-display')) {
+    const size = parseFloat(getComputedStyle(element).fontSize);
+    if (Number.isFinite(size)) overrides.push({ element, property: 'font-size',
+      value: settings => `${size * settings.timerFontScale / before.timerFontScale}px` });
+  }
+  const originals = overrides.map(({ element, property }) => ({ value: element.style.getPropertyValue(property), priority: element.style.getPropertyPriority(property) }));
+  return {
+    apply(settings: TimerSoloLayoutSettings) {
+      for (const override of overrides) override.element.style.setProperty(override.property, override.value(settings));
+    },
+    restore() {
+      overrides.forEach(({ element, property }, index) => {
+        const original = originals[index];
+        if (original.value) element.style.setProperty(property, original.value, original.priority);
+        else element.style.removeProperty(property);
+      });
+    },
+  };
+}
+
 export function TimerSoloLayoutEditor({ surfaceRef, contentKey, onDone, getSettings, updateSettings, language, regionSelectors }: LayoutHost & {
   surfaceRef: RefObject<HTMLElement | null>; contentKey: string; onDone(): void;
   regionSelectors?: Partial<Record<Region['gap'], string>>;
@@ -33,14 +91,50 @@ export function TimerSoloLayoutEditor({ surfaceRef, contentKey, onDone, getSetti
     window.addEventListener('keydown', escape);
     return () => window.removeEventListener('keydown', escape);
   }, [onDone]);
+  const updateWithinViewport = (patch: Partial<TimerSoloLayoutSettings>) => {
+    const surface = surfaceRef.current;
+    if (!surface) return;
+    const settings = getSettings();
+    const before: TimerSoloLayoutSettings = { soloLayout: { ...settings.soloLayout },
+      timerFontScale: settings.timerFontScale, scrambleFontScale: settings.scrambleFontScale };
+    const requested = { ...before, ...patch };
+    const elements = targets.flat().flatMap(element => [element, ...element.querySelectorAll('.timer-display-value, .solo-layout-handle')])
+      .filter(element => element.isConnected);
+    const baseline = viewportOverflow(elements);
+    const preview = layoutPreview(surface, before);
+    const fits = () => viewportOverflow(elements).every((edges, index) => edges.every((overflow, edge) =>
+      // Existing long content can be brought back in, but never pushed farther out.
+      overflow <= Math.max(baseline[index][edge], 0.5)));
+    let accepted = before;
+    try {
+      preview.apply(requested);
+      if (fits()) accepted = requested;
+      else {
+        let lower = 0;
+        let upper = 1;
+        // Whole-pixel gaps and two-decimal scales need at most ten probes.
+        // No observers, recursive updates or intermediate settings writes.
+        for (let attempt = 0; attempt < 10; attempt++) {
+          const fraction = (lower + upper) / 2;
+          const candidate = interpolateLayout(before, requested, fraction);
+          preview.apply(candidate);
+          if (fits()) { accepted = candidate; lower = fraction; }
+          else upper = fraction;
+        }
+      }
+    } finally {
+      preview.restore();
+    }
+    if (JSON.stringify(accepted) !== JSON.stringify(before)) updateSettings(accepted);
+  };
   return <>{regions.flatMap((region, index) => (targets[index] ?? []).map((target, targetIndex) =>
-    createPortal(<RegionHandles region={region} getSettings={getSettings} updateSettings={updateSettings} language={language} />, target, `${region.gap}-${targetIndex}`)))}
+    createPortal(<RegionHandles region={region} getSettings={getSettings} updateSettings={updateWithinViewport} language={language} />, target, `${region.gap}-${targetIndex}`)))}
     {surfaceRef.current && createPortal(
       <div className="solo-layout-toolbar" role="toolbar" aria-label={tr({ zh: '布局调整', en: 'Layout editing' })} data-no-timer data-site-surface="popover">
         <span className="solo-layout-toolbar-label">{tr({ zh: '拖动调整', en: 'Drag to arrange' })}</span>
         <button title={tr({ zh: '恢复默认布局', en: 'Reset layout' })} type="button"
           className="solo-layout-reset" aria-label={tr({ zh: '恢复默认布局', en: 'Reset layout' })}
-          onClick={() => updateSettings({ soloLayout: { ...DEFAULT_SOLO_LAYOUT }, timerFontScale: 1, scrambleFontScale: 1 })}>
+          onClick={() => updateWithinViewport({ soloLayout: { ...DEFAULT_SOLO_LAYOUT }, timerFontScale: 1, scrambleFontScale: 1 })}>
           <RotateCcw size={16} strokeWidth={1.7} />
         </button>
         <button type="button" className="solo-layout-done" onClick={onDone}>

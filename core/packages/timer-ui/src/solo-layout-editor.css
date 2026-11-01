@@ -1,3 +1,5 @@
+[data-layout-editing] { overflow-anchor: none; }
+
 [data-layout-editing] .timing-surface--solo :is(.scramble-text, .scramble-src-row, .timer-display-wrap, .timing-surface-cube-frame) {
   position: relative;
 }
