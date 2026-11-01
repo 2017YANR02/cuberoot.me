@@ -47,6 +47,11 @@
   transition: transform 320ms cubic-bezier(.2, .8, .2, 1.15), box-shadow 220ms ease;
 }
 
+/* Keep the animation inside the pinned-recon scroll container. */
+:root .landing-page .landing-pinned-recons .recon-card {
+  transition-timing-function: cubic-bezier(.2, .8, .2, 1), ease;
+}
+
 @media (hover: hover) and (pointer: fine) {
   :root .landing-page :is(.landing-card, .card, .rs-scard, .recon-card, .rc-card, .ongoing-comps-chip):not(.is-disabled):hover {
     transform: translateY(-2px) scale(1.006);
