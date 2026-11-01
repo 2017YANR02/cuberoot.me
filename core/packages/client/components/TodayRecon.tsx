@@ -14,7 +14,6 @@ import type { ReconSolve } from '@cuberoot/shared';
 import { getTodayRecons } from '@/lib/recon-api';
 import { CuratedReconCard } from '@/components/ReconCard/CuratedReconCard';
 import { reconPathSeg } from '@/lib/recon-seo';
-import { reconCoverCandidates } from '@/lib/recon-video-cover';
 import './today_recon.css';
 import './scroll_panel.css';
 import { tr } from '@/i18n/tr';
@@ -71,13 +70,6 @@ export default function TodayRecon({ lang, pinnedRecons, pinnedOnly = false, isA
   };
   if (pinnedOnly) return <>{visibleRecons.map(renderCard)}{isAdmin && pinError && <p role="alert">{pinError}</p>}</>;
 
-  // Match ReconCard's media-slot rule, including covers that load asynchronously.
-  const withCover: ReconSolve[] = [];
-  const withoutCover: ReconSolve[] = [];
-  for (const solve of visibleRecons) {
-    (reconCoverCandidates(solve.videoUrl, isZh).length ? withCover : withoutCover).push(solve);
-  }
-
   return (
     <div className="today-recon" data-tour="today-replay">
       <div className="tr-head">
@@ -87,11 +79,7 @@ export default function TodayRecon({ lang, pinnedRecons, pinnedOnly = false, isA
 
       {isAdmin && pinError && <p role="alert">{pinError}</p>}
       <div className="tr-cards scroll-panel scroll-panel--hover-lift">
-        {[withCover, withoutCover].map((group, index) => group.length > 0 && (
-          <div className="tr-card-group" key={index}>
-            {group.map(renderCard)}
-          </div>
-        ))}
+        {visibleRecons.map(renderCard)}
       </div>
     </div>
   );
