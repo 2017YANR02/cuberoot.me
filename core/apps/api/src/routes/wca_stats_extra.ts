@@ -11,7 +11,7 @@
  *   GET /v1/wca/all-results?event=&type=&country=&year=&month=&q=&nameMode=&page=&size=
  *   GET /v1/wca/cohort-ranks?cohort=&event=&type=&country=&page=&size=
  *   GET /v1/wca/success-rate?event=&country=&minAttempted=&page=&size=
- *   GET /v1/wca/all-events-done?country=&hidePodiumless=&page=&size=
+ *   GET /v1/wca/all-events-done?country=&onlyDone=&order=&page=&size=
  *   GET /v1/wca/sum-of-ranks?type=&country=&events=&hidePodium=&page=&size=
  *   GET /v1/wca/sum-of-ranks/census?type=&cancelled=&no_podium=&year=&timeline=  (历史名人堂:历年名次和第一)
  *   GET /v1/wca/sum-of-ranks/player-best?wcaId=           (指定选手最优项目组合 + 支柱/毒药/自由项剖析)
@@ -1344,6 +1344,7 @@ wcaStatsExtraRoutes.get('/wca/success-rate', async (c) => {
 wcaStatsExtraRoutes.get('/wca/all-events-done', async (c) => {
   const country = c.req.query('country') ?? '';
   const onlyDone = c.req.query('onlyDone') !== '0' && c.req.query('onlyDone') !== 'false';
+  const order = c.req.query('order') === 'desc' ? 'desc' : 'asc';
   const page = Math.max(1, intParam(c.req.query('page'), 1));
   const size = Math.min(MAX_SIZE, Math.max(1, intParam(c.req.query('size'), DEFAULT_SIZE)));
 
@@ -1356,10 +1357,11 @@ wcaStatsExtraRoutes.get('/wca/all-events-done', async (c) => {
   if (onlyDone) where.push(`aed.is_done = TRUE`);
   if (cn.id) { where.push(`aed.country_id = ?`); params.push(cn.id); }
   const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
-  // Order:done 的按 days 升,未 done 的按 done_count 降 + days 升
+  // Sort the entire filtered set before pagination; unfinished rows stay last.
+  const daysOrder = `aed.days_to_complete ${order === 'desc' ? 'DESC' : 'ASC'} NULLS LAST, aed.wca_id ASC`;
   const orderBy = onlyDone
-    ? 'aed.days_to_complete ASC, aed.wca_id ASC'
-    : 'aed.done_count DESC, aed.days_to_complete ASC NULLS LAST, aed.wca_id ASC';
+    ? daysOrder
+    : `aed.done_count DESC, ${daysOrder}`;
   const totalParams = [...params];
   params.push(size, offset);
 
@@ -1401,7 +1403,7 @@ wcaStatsExtraRoutes.get('/wca/all-events-done', async (c) => {
 
   c.header('Cache-Control', CACHE_HEADER);
   return c.json({
-    country: cn.id, onlyDone, page, size, total,
+    country: cn.id, onlyDone, order, page, size, total,
     rows: rows.map(r => ({
       wcaId: r.wca_id, name: r.person_name,
       countryId: r.country_id, iso2: r.iso2,

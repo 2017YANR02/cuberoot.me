@@ -2,6 +2,7 @@
 
 // Ported from packages/client-vite/src/pages/wca_stats/AllEventsDonePage.tsx.
 import { Suspense, useEffect, useState } from 'react';
+import { ArrowDown, ArrowUp } from '@app-foundation/icons/lucide';
 import PersonLink from '@/components/PersonLink';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
@@ -37,6 +38,7 @@ function AllEventsDonePageInner() {
     {
       country: parseAsString,
       onlyDone: parseAsString,
+      order: parseAsString,
       page: parseAsString,
       size: parseAsString,
     },
@@ -44,6 +46,7 @@ function AllEventsDonePageInner() {
   );
   const country = q.country ?? '';
   const onlyDone = q.onlyDone !== '0';
+  const order = q.order === 'desc' ? 'desc' : 'asc';
   const page = parseInt(q.page ?? '1', 10);
   const size = parseInt(q.size ?? '100', 10);
 
@@ -60,16 +63,22 @@ function AllEventsDonePageInner() {
   useEffect(() => { loadFlagData().then(v => setFlagBust(v)); }, []);
 
   useEffect(() => {
+    let active = true;
     setLoading(true); setError(null);
     const qs = new URLSearchParams();
+    qs.set('v', '2');
     qs.set('onlyDone', onlyDone ? '1' : '0');
+    qs.set('order', order);
     qs.set('page', String(page));
     qs.set('size', String(size));
     if (country) qs.set('country', country);
     fetch(apiUrl(`/v1/wca/all-events-done?${qs.toString()}`))
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-      .then(setData).catch(e => setError(e.message)).finally(() => setLoading(false));
-  }, [country, onlyDone, page, size]);
+      .then(result => { if (active) setData(result); })
+      .catch(e => { if (active) setError(e.message); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [country, onlyDone, order, page, size]);
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / size)) : 1;
 
@@ -107,8 +116,19 @@ function AllEventsDonePageInner() {
                   <th className="wse-rank-col">#</th>
                   <th>{tr({ zh: '选手', en: 'Person'
                 })}</th>
-                  <th className="wse-value-col">{tr({ zh: '达成天数', en: 'Days'
-                })}</th>
+                  <th className="wse-value-col" aria-sort={order === 'asc' ? 'ascending' : 'descending'}>
+                    <button
+                      type="button"
+                      className="wse-th-sort"
+                      aria-label={order === 'asc'
+                        ? tr({ zh: '按达成天数从多到少排序', en: 'Sort completion days from most to fewest' })
+                        : tr({ zh: '按达成天数从少到多排序', en: 'Sort completion days from fewest to most' })}
+                      onClick={() => update('order', order === 'asc' ? 'desc' : 'asc')}
+                    >
+                      {tr({ zh: '达成天数', en: 'Days' })}
+                      {order === 'asc' ? <ArrowUp size={14} aria-hidden="true" /> : <ArrowDown size={14} aria-hidden="true" />}
+                    </button>
+                  </th>
                   <th>{tr({ zh: '达成比赛', en: 'At competition'
                 })}</th>
                   <th className="wse-value-col">{tr({ zh: '比赛场次', en: 'Comps'

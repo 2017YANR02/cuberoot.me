@@ -412,11 +412,11 @@ const all_events_done: AboutEntry = {
   badgeEn: 'Person',
   introZh: [
     '在**当前 17 个官方项目**中，每项至少取得一次有效成绩(`best > 0`)即算全项目达成。间隔天数使用达成比赛与首场比赛的**开始日期之差**，不精确到具体轮次的比赛日。首场比赛内集齐 17 项时，日期差为 0，表格显示“首赛达成”。',
-    '“已完成 17 项”只列全项目达成者，按间隔天数升序排列。“全部选手”还包含至少完成一项的未达成者，先按完成项目数降序、再按间隔天数升序排列，因此两种视图的榜首相同。',
+    '“已完成 17 项”只列全项目达成者，默认按间隔天数升序排列，点击“达成天数”表头可切换升序或降序。“全部选手”还包含至少完成一项的未达成者，先按完成项目数降序、再按所选的天数方向排列，因此同一排序方向下两种视图的榜首相同。',
   ],
   introEn: [
     'Completion requires at least one valid result (`best > 0`) in **each of the 17 currently active events**. Elapsed days use the difference between the **start dates** of the achievement competition and the first competition, not the dates of individual rounds. Completing all 17 at the first competition gives a difference of zero and is displayed as “At debut”.',
-    '“Completed all 17” lists only those who have completed every event, ordered by elapsed days. “All competitors” also includes people with at least one completed event, ordered by completed-event count descending and then elapsed days ascending. Both views therefore start with the same leaders.',
+    '“Completed all 17” lists only those who have completed every event, initially ordered by elapsed days ascending. Click the Days header to toggle ascending or descending order. “All competitors” also includes people with at least one completed event, ordered by completed-event count descending and then the chosen days direction. Both views therefore start with the same leaders when using the same direction.',
   ],
   stats: [
     { value: '17', labelZh: '目标项目', labelEn: 'Target events', hintZh: 'ACTIVE_EVENTS 当下口径,废止项目不计', hintEn: 'Current ACTIVE_EVENTS set — discontinued events not counted'
