@@ -72,7 +72,7 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
   const roomLocked = isRun && (!!(ownsSession && room) || !!(params.get('train.room') && !(ownsSession && roomError)));
   const navigationDisabled = disabled || running || !!(ownsSession && isRun && roomBusy);
   const methodLocked = navigationDisabled || splitActive;
-  const restrictMethod = roomLocked || !!(ownsSession && doubleZbll);
+  const doublePractice = ownsSession && doubleZbll;
   // Split/double practice can return to selection just like the trainer's own back link.
   const sourceLocked = navigationDisabled || roomLocked;
   const actualMode = ownsSession && target?.kind === 'alg-run' ? storeMode : params.get('train.mode');
@@ -228,8 +228,8 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
     </span>}
     <TimerPracticeContentPicker entries={contents} selectedId={content?.id} label={contentLabel}
       disabled={navigationDisabled} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} onSelect={chooseContent} />
-    {hasPractice && (content?.runPath || content?.recognizePath) && <TimerPracticeMethodPicker
-      value={method} recall={!!content.runPath} recognize={!!content.recognizePath} disabled={methodLocked || restrictMethod}
+    {hasPractice && !doublePractice && (content?.runPath || content?.recognizePath) && <TimerPracticeMethodPicker
+      value={method} recall={!!content.runPath} recognize={!!content.recognizePath} disabled={methodLocked || roomLocked}
       language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} onChange={chooseMethod} />}
     {practiceSource}
     {beforeSettings}
