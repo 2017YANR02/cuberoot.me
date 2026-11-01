@@ -42,6 +42,11 @@
    分段按钮（Tab / Metric 切换）
    ========================================================================== */
 
+.wca-stats-tab-bar .wca-record-region {
+  width: auto;
+  max-width: 220px;
+}
+
 /* NOTE: Tab 按钮容器 — inline-flex 让多个 tab-bar 可在同一行流动 */
 .wca-stats-tab-bar {
   align-items: center;

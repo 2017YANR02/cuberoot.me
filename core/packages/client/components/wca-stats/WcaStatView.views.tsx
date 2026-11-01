@@ -12,7 +12,9 @@ import { BarChart3, Play, Pause } from '@app-foundation/icons/lucide';
 import BoolToggle from '@/components/BoolToggle';
 import { ListSelect } from '@/components/ListSelect';
 import WcaEventSelector from '@/components/WcaEventSelector';
-import { CONTINENT_NAMES } from '@/lib/continent';
+import { CONTINENT_NAMES, CONTINENT_RECORD_ABBR } from '@/lib/continent';
+import { RECORD_BADGE_CONTINENT } from '@/components/ContinentIcon';
+import { RegionPicker } from '@/components/RegionPicker/RegionPicker';
 import { CompactSelect } from '@/components/CompactSelect';
 import { DailyActivityChart } from '@/components/DailyActivityChart';
 import { countryToIso2 } from '@/lib/country-flags';
@@ -71,6 +73,14 @@ export function RecordSectionsView({ header, sections, query, onChange, isZh }: 
   const { section, options } = selectRecordSection(sections, query);
   const scope = section?.recordScope;
   if (!scope) return <p className="wca-stats-empty-title">{tr({ zh: '暂无数据', en: 'No data yet' })}</p>;
+  // Existing world/continent URLs remain stable; national scopes use lowercase ISO2.
+  const regionValues = new Map([
+    ['World', 'world'],
+    ...Object.entries(CONTINENT_NAMES).map(([code, name]) => [
+      name.en, RECORD_BADGE_CONTINENT[CONTINENT_RECORD_ABBR[code as keyof typeof CONTINENT_NAMES]],
+    ] as [string, string]),
+  ]);
+  const countries = options.region.filter(region => /^[a-z]{2}$/.test(region));
   const change = (key: keyof RecordScope, value: string) => {
     const next = selectRecordSection(sections, { ...scope, [key]: value }).section?.recordScope;
     if (next) onChange(next);
@@ -99,7 +109,16 @@ export function RecordSectionsView({ header, sections, query, onChange, isZh }: 
         isZh={isZh}
         allowAll
       />}
-      {(['region', 'level', 'type'] as const).filter(key => options[key].length > 1).map(key => <ListSelect
+      {countries.length > 0 && <RegionPicker
+        className="wca-record-region"
+        isZh={isZh}
+        value={regionValues.get(scope.region) ?? scope.region}
+        onChange={value => change('region', [...regionValues].find(([, slug]) => slug === value)?.[0] ?? value)}
+        restrictTo={countries}
+        allLabel={tr({ zh: '全球', en: 'Worldwide' })}
+        searchPlaceholder={tr({ zh: '搜索国家...', en: 'Search country...' })}
+      />}
+      {(['region', 'level', 'type'] as const).filter(key => options[key].length > 1 && (key !== 'region' || countries.length === 0)).map(key => <ListSelect
         key={key}
         items={options[key].map(value => ({ value, label: label(key, value) }))}
         value={scope[key]}
