@@ -39,7 +39,7 @@ export default function StaffSopPage() {
     {
       title: t('实现', 'Build'), icon: Boxes,
       human: t('确认影响范围；多人并行时分清负责人和文件归属。', 'Confirm the impact; give parallel tasks clear owners and file scopes.'),
-      ai: t('开发时，多个简单任务尽量不要开 sub-agent；不同板块的任务应分别开聊天。复用现有实现，不覆盖他人工作。', 'During development, avoid spawning sub-agents for multiple simple tasks; use separate chats for tasks in different areas. Reuse existing work and avoid overwriting others.'),
+      ai: t('开发时，多个简单任务尽量不要开 sub-agent；不同板块的任务应分别开聊天。复用现有实现，不覆盖他人工作。对不容易发现或展示的功能，提供引导式访问，或把入口和操作做得足够直观，让用户清楚下一步点哪里。', 'During development, avoid spawning sub-agents for multiple simple tasks; use separate chats for tasks in different areas. Reuse existing work and avoid overwriting others. For features that are hard to discover or demonstrate, provide a guided path or make the entry point and controls clear enough that users know where to click next.'),
       output: t('范围明确、可审阅、可撤回的改动', 'A scoped change that can be reviewed and reversed'),
       avoid: t('复制一套相同组件，顺手改动任务以外的页面。', 'Duplicating a component and changing unrelated pages along the way.'),
       prefer: t('原入口和新入口共用同一实现，只补必要差异。', 'Use one implementation for both entry points, with only the necessary differences.'),
@@ -55,8 +55,8 @@ export default function StaffSopPage() {
     {
       title: t('交付', 'Deliver'), icon: PackageCheck,
       human: t('按本次授权安排发布，并完成最终验收。', 'Authorize release as needed and complete final acceptance.'),
-      ai: t('给出成果位置、当前状态、遗留问题和下一步；已获授权的操作直接执行。', 'Provide the result location, current state, remaining issues and next step; carry out actions already authorized.'),
-      output: t('成果位置、完成状态和交接记录', 'The result location, delivery state and handoff notes'),
+      ai: t('给出成果位置、当前状态、遗留问题和下一步；已获授权的操作直接执行。修改功能或页面 UI/UX 后，必须附实际效果截图汇报，直观展示改动；截图难以呈现的功能点，补充可访问的入口、点击路径和预期效果。', 'Provide the result location, current state, remaining issues and next step; carry out actions already authorized. After changing functionality or page UI/UX, include screenshots of the actual result to show the changes. For behavior that screenshots cannot convey, include an accessible entry point, the click path and the expected result.'),
+      output: t('成果位置、实际效果截图、必要的访问引导、完成状态和交接记录', 'The result location, screenshots of the actual result, access guidance where needed, delivery state and handoff notes'),
       avoid: t('只说“已完成”，却没有链接、证据或发布状态。', 'Saying “done” without a result link, evidence or release status.'),
       prefer: t('分别说明本地、提交、发布和验收状态。', 'Report local completion, commit, release and acceptance separately.'),
     },
