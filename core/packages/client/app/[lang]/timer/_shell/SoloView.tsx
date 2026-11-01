@@ -1690,7 +1690,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     },
     autoReadyOnScramble: () => !competitionRef.current.enabled
       && (trainingTimingModeRef.current() ? trainingTimingModeRef.current() !== 'manual'
-        : getSettings().bluetoothAutoReady === 'scrambled'),
+        : multiEnabledRef.current || getSettings().bluetoothAutoReady === 'scrambled'),
     canStartAttempt: () => !layoutEditingRef.current && (multiEnabledRef.current
       ? !multiResetPendingRef.current && scrambleSourceCurrentRef.current
         && Boolean(multiTrainingRef.current?.active()?.context?.scramble) : attemptCanStartRef.current)
@@ -1923,7 +1923,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   );
   liveAnchorRef.current = liveAnchor;
   const cubeConnected = supportsSmartCube && bluetoothCube.status.connected;
-  const multiEligible = !competition.enabled && timerSupportsTrainingTiming(event) && !mayUseMiniProgramBridge();
+  const multiEligible = !competition.enabled && (event === '333' || timerSupportsTrainingTiming(event)) && !mayUseMiniProgramBridge();
   useLayoutEffect(() => {
     if (!multiEligible && timer.phase !== 'running') {
       trainingCubes.disconnectExtras();
@@ -2732,14 +2732,15 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   useAutoReady({
     // A subscription belongs to one armable attempt. Leaving that phase or
     // covering the timer cancels gestures; returning starts a fresh lifetime.
-    // 'scrambled' is state matching, not a move-stream gesture.
-    enabled: !trainingTimingActive && !competition.enabled && settings.timingEnabled && attemptCanStart && !anyModalOpen
+    // Multi-cube handoff is driven by each ticket's scramble verification;
+    // single-cube gestures must not arm a different cube's waiting attempt.
+    enabled: !multiEnabled && !trainingTimingActive && !competition.enabled && settings.timingEnabled && attemptCanStart && !anyModalOpen
       && (timer.phase === 'idle' || timer.phase === 'inspecting' || timer.phase === 'stopped')
       && (settings.bluetoothAutoReady === 'still' || settings.bluetoothAutoReady === 'double-flick')
       && cubeConnected,
     mode: settings.bluetoothAutoReady === 'double-flick' ? 'double-flick' : 'still',
     onReady: () => {
-      if (!getSettings().timingEnabled || anyModalOpenRef.current) return;
+      if (multiEnabledRef.current || !getSettings().timingEnabled || anyModalOpenRef.current) return;
       const ph = phaseSnapshotRef.current;
       if (ph === 'idle' || ph === 'stopped') {
         warmupSound();

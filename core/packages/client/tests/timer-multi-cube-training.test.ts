@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
-import type { TimerPhase } from '@cuberoot/shared/timer';
+import { initialTimerMachineState, transitionTimer, type SolveResult, type TimerPhase } from '@cuberoot/shared/timer';
 import { MultiCubeTrainingController } from '@/app/[lang]/timer/_lib/multi-cube-training';
 
 const faces = (alg: string) => smartCubeTargetFacelets(alg)!;
@@ -60,6 +60,78 @@ function harness(ids = ['A', 'B']) {
 }
 
 describe('one athlete training with multiple smart cubes', () => {
+  it.each([0, 15].flatMap(inspectionSec => ['before', 'after'].map(order => ({ inspectionSec, order }))))(
+    'hands off full 3x3 solves with $inspectionSec-second inspection when B is prepared $order A stops', ({ inspectionSec, order }) => {
+      let now = 0;
+      let state = initialTimerMachineState();
+      const completed: Array<SolveResult & { cube: string; scramble: string }> = [];
+      const records: string[] = [];
+      const fullTicket = (id: number, scramble: string) => ({ id, event: '333' as const, scramble, targetFacelets: faces(scramble) });
+      const apply = (type: 'arm-from-cube' | 'start-from-cube' | 'stop-from-cube', atMs?: number) => {
+        const result = transitionTimer(state, { type, nowMs: now, atMs }, { inspectionSec });
+        state = result.state;
+        if (result.solve) completed.push({ ...result.solve, cube: controller.active()!.id, scramble: controller.active()!.context!.scramble });
+        return result.accepted === true;
+      };
+      const controller = new MultiCubeTrainingController<ReturnType<typeof fullTicket>>({
+        timer: {
+          getPhase: () => state.phase, canStartAttempt: () => true, isTimingEnabled: () => true,
+          autoReadyOnScramble: () => true,
+          armFromCube: at => apply('arm-from-cube', at),
+          startFromCube: at => apply('start-from-cube', at),
+          stopFromCube: at => apply('stop-from-cube', at),
+          recordMove: ({ move }) => records.push(`${controller.active()!.id}:${move}`),
+          solve: async () => null,
+        },
+        onChange() {}, onActive() {}, onNeedScramble() {}, onDisplay() {},
+        onCancelArm: () => { state = transitionTimer(state, { type: 'cancel-arm' }, { inspectionSec }).state; },
+      });
+      const move = (id: string, alg: string, move: string, at: number) => {
+        now = at;
+        controller.move(id, { move, timestamp: at, facelets: faces(alg) });
+      };
+      controller.connect('A', true); controller.connect('B', true);
+      controller.setContext(fullTicket(1, 'R U'));
+      move('A', 'R U', 'U', 100);
+      expect(state.phase).toBe(inspectionSec ? 'inspecting' : 'ready');
+      controller.setContext(fullTicket(2, 'F U'));
+      move('A', 'R', "U'", 1000);
+      move('B', 'F', 'F', 1100);
+      controller.solved('B', now); // A companion's solved notification cannot stop the athlete.
+      expect(state.phase).toBe('running');
+      if (order === 'before') {
+        move('B', 'F U', 'U', 1200);
+        expect(controller.snapshot().cubes.find(cube => cube.id === 'B')!.stage).toBe('queued');
+      }
+      move('A', '', "R'", 5000);
+      expect(state.phase).toBe('running'); // Full solves stop on the transport's solved edge.
+      controller.solved('A', now);
+      if (order === 'after') {
+        expect(state.phase).toBe('stopped');
+        expect(controller.snapshot().cubes.find(cube => cube.id === 'B')!.context?.scramble).toBe('F U');
+        move('B', 'F U', 'U', 5500);
+      }
+      const handoffAt = now;
+      expect(controller.snapshot().activeId).toBe('B');
+      expect(state.phase).toBe(inspectionSec ? 'inspecting' : 'ready');
+      expect(state.inspectionStartedAtMs).toBe(inspectionSec ? handoffAt : null);
+      controller.setContext(fullTicket(3, 'L U'));
+      move('A', 'L', 'L', handoffAt + 100);
+      controller.solved('A', now); // A late notification cannot finish B's new attempt.
+      move('B', 'F', "U'", handoffAt + 16000);
+      move('A', 'L U', 'U', handoffAt + 16500);
+      expect(controller.snapshot().activeId).toBe('B');
+      move('B', '', "F'", handoffAt + 17000);
+      controller.solved('B', now);
+      expect(completed).toEqual([
+        { cube: 'A', scramble: 'R U', timeMs: 4000, inspectionMs: inspectionSec ? 900 : 0, autoPenalty: 'ok' },
+        { cube: 'B', scramble: 'F U', timeMs: 1000, inspectionMs: inspectionSec ? 16000 : 0, autoPenalty: inspectionSec ? '+2' : 'ok' },
+      ]);
+      expect(records).toEqual(["A:U'", "A:R'", "B:U'", "B:F'"]);
+      expect(controller.snapshot().activeId).toBe('A');
+    },
+  );
+
   it('keeps B scrambling through A ready, running, and stop without replacing B’s ticket', () => {
     const h = harness();
     h.move('A', 'R U', 'U', 100);
