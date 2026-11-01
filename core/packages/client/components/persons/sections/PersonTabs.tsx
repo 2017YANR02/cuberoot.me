@@ -10,6 +10,9 @@ import type { ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
 
 // 默认成绩视图随页面加载，避免等 profile 返回后才开始请求代码。
 import ResultsTab from './results/ResultsTab';
+import CompetitionGroupAwards from '@/components/CompetitionGroupAwards';
+import { useGroupAwards } from '@/lib/competition-group-awards';
+import { useT } from '@/hooks/useT';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const RecordsTab = lazy(() => import('./RecordsTab'));
@@ -19,8 +22,8 @@ const MilestonesTab = lazy(() => import('./MilestonesTab'));
 const LitCitiesTab = lazy(() => import('./LitCitiesTab'));
 const MiscTab = lazy(() => import('./MiscTab'));
 
-type TabKey = 'results' | 'records' | 'podiums' | 'events' | 'milestones' | 'cities' | 'misc';
-const TAB_KEYS: TabKey[] = ['results', 'records', 'podiums', 'events', 'milestones', 'cities', 'misc'];
+type TabKey = 'group-awards' | 'results' | 'records' | 'podiums' | 'events' | 'milestones' | 'cities' | 'misc';
+const TAB_KEYS: TabKey[] = ['results', 'records', 'podiums', 'group-awards', 'events', 'milestones', 'cities', 'misc'];
 
 interface Props {
   profile: WcaPersonProfile;
@@ -35,7 +38,9 @@ interface Props {
 }
 
 export default function PersonTabs({ profile, results, comps, liveResults, liveComps, reconLookup, isZh, femaleRecordLookup }: Props) {
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+  const t = useT();
+  const awards = useGroupAwards('persons', profile.person.wca_id);
+  const hasAwards = !!awards.data?.rows.length;
   // tab 切换 push 进历史 → 后退能在选手页 tab 间返回(nuqs 自动同步,无需手写 popstate)
   const [active, setActive] = useQueryState(
     'tab',
@@ -69,14 +74,15 @@ export default function PersonTabs({ profile, results, comps, liveResults, liveC
 
   // 领奖台未加载完(null)前先不显示按钮;加载完无数据则永久隐藏。其余 tab 恒显。
   const visibleTabs = useMemo<TabKey[]>(
-    () => TAB_KEYS.filter((k) => k !== 'podiums' || hasPodiums),
-    [hasPodiums],
+    () => TAB_KEYS.filter((k) => (k !== 'podiums' || hasPodiums) && (k !== 'group-awards' || hasAwards || active === 'group-awards')),
+    [hasPodiums, hasAwards, active],
   );
   // URL 指向已隐藏的 tab(深链 ?tab=podiums 但无数据,或加载中)→ 回退到成绩。
   const effectiveActive: TabKey = visibleTabs.includes(active) ? active : 'results';
   const tabEmpty = (k: TabKey): boolean => k === 'records' && recordsEmpty;
 
   const labels: Record<TabKey, string> = {
+    'group-awards': t('分组获奖', 'Category awards'),
     results: t('成绩', 'Results'),
     records: t('纪录', 'Records'),
     podiums: t('锦标赛领奖台', 'Championship Podiums'),
@@ -113,6 +119,10 @@ export default function PersonTabs({ profile, results, comps, liveResults, liveC
           {effectiveActive === 'results' && <ResultsTab profile={profile} results={results} comps={comps} liveResults={liveResults} liveComps={liveComps} reconLookup={reconLookup} isZh={isZh} femaleRecordLookup={femaleRecordLookup} />}
           {effectiveActive === 'records' && <RecordsTab profile={profile} results={results} comps={comps} isZh={isZh} />}
           {effectiveActive === 'podiums' && hasPodiums && <ChampionshipPodiumsTab rows={podiumRows!} isZh={isZh} />}
+          {effectiveActive === 'group-awards' && (awards.data || awards.error ? <>
+            <CompetitionGroupAwards key={profile.person.wca_id} rows={awards.data?.rows ?? []} personal isZh={isZh} error={awards.error} stale={awards.data?.stale} />
+            {!awards.error && awards.data?.rows.length === 0 && <p>{t('暂无已收录的分组获奖记录', 'No category awards collected yet')}</p>}
+          </> : <LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator>)}
           {effectiveActive === 'events' && <EventStatsTab results={results} comps={comps} isZh={isZh} />}
           {effectiveActive === 'milestones' && <MilestonesTab profile={profile} results={results} comps={comps} isZh={isZh} />}
           {effectiveActive === 'cities' && <LitCitiesTab profile={profile} comps={comps} isZh={isZh} />}

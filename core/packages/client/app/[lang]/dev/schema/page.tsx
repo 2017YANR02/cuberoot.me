@@ -43,6 +43,7 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
 ];
 
 const TABLES: Table[] = [
+  { name: 'competition_group_awards', domain: 'comp', origin: '0303', naturalKey: true, purpose: { zh: '赛事分组获奖快照，独立于 WCA 奖牌统计', en: 'Organizer category award snapshots, separate from WCA medals' } },
   { name: 'comp_absences', domain: 'comp', origin: '0302', naturalKey: true, purpose: { zh: '管理员确认的不参加名单及可恢复状态；注销仅清除编辑者引用', en: 'Restorable attendance corrections; account deletion clears only the editor reference' } },
   { name: 'calendar_competitions', domain: 'studio', origin: '0299', naturalKey: true, purpose: { zh: '比赛与个人日程唯一关联，防止重复加入和删除后恢复', en: 'Unique competition-to-event links, including deleted events' } },
   { name: 'recon_captures', domain: 'recon', origin: '0298', purpose: { zh: '私有原片与原始魔方记录绑定、完整性和时间对齐状态', en: 'Private original video and cube recording bindings, integrity and alignment state' } },
@@ -588,6 +589,7 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 303, slug: 'competition_group_awards', desc: { zh: '独立保存赛事分组获奖快照和选手索引', en: 'Persist organizer category awards separately with a person index' } },
   { n: 302, slug: 'comp_absences', desc: { zh: '管理员确认不参加的比赛选手及恢复操作', en: 'Restorable administrator-confirmed competition absences' } },
   { n: 301, slug: 'gallery_publication', desc: { zh: '图库照片默认私密及公开审核', en: 'Private gallery photos and publication review' } },
   { n: 300, slug: 'account_deskpet_selection', desc: { zh: '账号桌宠选择跨设备同步', en: 'Account companion selection across devices' } },

@@ -1,0 +1,11 @@
+.group-awards { margin-block: 1.25rem; }
+.group-awards:not(.comp-podiums) { display: grid; gap: 1.25rem; }
+.group-awards h2, .group-awards h3:not(.comp-podium-event) { margin: 0; }
+.group-awards h2 { font-size: 1.1rem; }
+.group-awards-toolbar, .group-awards h3:not(.comp-podium-event), .group-awards-competition { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.group-awards h3:not(.comp-podium-event) { font-size: 1rem; margin-bottom: .5rem; }
+.group-awards h3 small, .group-awards time { color: var(--muted-foreground); font-weight: normal; }
+.group-awards h3 a { margin-inline-start: auto; font-size: .8rem; font-weight: normal; }
+.group-awards-group { scroll-margin-top: 6rem; min-width: 0; }
+.group-awards-competition { margin-bottom: .5rem; }
+.group-awards select { background: var(--card); color: var(--foreground); border: 1px solid var(--border-default); border-radius: .375rem; padding: .25rem .5rem; }

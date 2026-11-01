@@ -161,3 +161,35 @@ export async function fetchCubingLiveRound(slug: string, eventId: string, roundN
   if (payload.round?.eventId !== eventId || payload.round?.roundNumber !== roundNumber) throw new Error('Mismatched cubing.com round');
   return normalizeCubingRound(payload, roundTypeId);
 }
+
+/** Organizer category awards; separate from WCA overall medals. */
+export interface CompetitionGroupAward {
+  competitionId: string;
+  competitionName: string;
+  competitionNameZh: string;
+  date: string;
+  endDate: string | null;
+  cubingSlug: string;
+  eventId: string;
+  roundNumber: number;
+  roundFormat: string;
+  groupKey: string;
+  group: { type: string; age?: number; under?: boolean };
+  groupRules: unknown;
+  place: number;
+  competitorNumber: number;
+  sourcePersonId: number;
+  wcaId: string | null;
+  name: string;
+  best: number;
+  average: number;
+  attempts: number[];
+  provisional: boolean;
+  sourceUrl: string;
+  fetchedAt: string;
+}
+export interface CompetitionGroupAwardsResponse {
+  rows: CompetitionGroupAward[];
+  coverage: 'collected';
+  stale: boolean;
+}

@@ -76,8 +76,11 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   enterprise_verification contests workspace app_releases
 //   mcp mcp_oauth onboarding timer_replay_shares site_assistant site_assistant_shares cube_agents
 //   membership_gallery
+// competition_group_awards
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
+  { d: 'comp', m: 'GET', p: '/v1/group-awards/competitions/:id', g: 'public', c: 'short', zh: '比赛分组领奖台；独立缓存粗饼来源', en: 'Competition category podiums persisted from Cubing China' },
+  { d: 'comp', m: 'GET', p: '/v1/group-awards/persons/:id', g: 'public', c: 'short', zh: '选手已收录分组获奖记录', en: 'Collected category awards for a WCA person' },
   { d: 'recon', m: 'GET', p: '/v1/recon-captures/status', g: 'admin', c: 'no-store', zh: '上传前核对采集服务、同库 Drive 及当前身份', en: 'Check capture service, same-database Drive and identity before upload' },
   { d: 'recon', m: 'POST', p: '/v1/recon-captures', g: 'admin', c: 'no-store', zh: '管理员将原始动作绑定私有 Drive 视频，幂等创建采集样本', en: 'Human administrator binds original moves to a private Drive video idempotently' },
   { d: 'recon', m: 'GET', p: '/v1/recon-captures', g: 'admin', c: 'no-store', zh: '读取采集样本队列，支持 AI 只读密钥', en: 'Read video capture queue, including read-only AI key access' },

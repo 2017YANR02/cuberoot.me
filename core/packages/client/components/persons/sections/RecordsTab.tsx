@@ -14,7 +14,7 @@ import { formatWcaResult } from '@/lib/wca-format-result';
 import { formatDateRangeIso } from '@/lib/wca-date';
 import { eventDisplayName } from '@/lib/wca-events';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
-import { isAo5Bracketed } from '@/lib/wca-ao5-brackets';
+import { AttemptsInline } from '@/components/AttemptsInline';
 import { ROUND_ORDER, roundLabel, roundClass } from '@/lib/wca-round-meta';
 import { useT } from '@/hooks/useT';
 import { wcaResultRowKey, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from '@/lib/wca-person-api';
@@ -190,26 +190,5 @@ function TierRows({
         );
       })}
     </>
-  );
-}
-
-// 极简只读的 5 把成绩展示(无复盘 / 编辑入口),纪录 / 领奖台表的详情列共用。
-export function AttemptsInline({ attempts, best, eventId }: { attempts: number[]; best: number; eventId: string }) {
-  if (!attempts || attempts.length === 0) return <span className="wp-text-mute">—</span>;
-  const valid = attempts.filter((x) => x > 0);
-  const minValid = valid.length > 0 ? Math.min(...valid) : 0;
-  return (
-    <span className="wp-attempts-flow">
-      {attempts.map((a, i) => {
-        if (a === undefined) return null;
-        const isBest = a > 0 && a === minValid && a === best;
-        const trimmed = isAo5Bracketed(attempts, i);
-        return (
-          <span key={i} className={`wp-att ${isBest ? 'wp-att-best' : ''} ${trimmed ? 'wp-att-trimmed' : ''}`}>
-            {formatWcaResult(a, eventId, 'single')}
-          </span>
-        );
-      })}
-    </span>
   );
 }

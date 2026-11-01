@@ -1,0 +1,1439 @@
+{
+  "competition": {
+    "id": 1608,
+    "alias": "Jiangmen-Open-2026",
+    "wcaCompetitionId": "JiangmenOpen2026",
+    "name": "Jiangmen Open 2026",
+    "nameZh": "2026WCA江门魔方公开赛",
+    "startDate": "2026-11-01",
+    "endDate": null,
+    "podiums": [
+      {
+        "number": 3,
+        "events": [
+          "333"
+        ],
+        "categories": [
+          {
+            "type": "age",
+            "age": 8,
+            "under": true
+          },
+          {
+            "type": "age",
+            "age": 10,
+            "under": true
+          },
+          {
+            "type": "age",
+            "age": 12,
+            "under": true
+          },
+          {
+            "type": "age",
+            "age": 14,
+            "under": true
+          },
+          {
+            "type": "age",
+            "age": 16,
+            "under": true
+          },
+          {
+            "type": "age",
+            "age": 18,
+            "under": true
+          },
+          {
+            "type": "age",
+            "age": 18,
+            "under": false
+          },
+          {
+            "type": "age",
+            "age": 24,
+            "under": false
+          },
+          {
+            "type": "age",
+            "age": 30,
+            "under": false
+          },
+          {
+            "type": "female"
+          },
+          {
+            "type": "newcomer"
+          }
+        ]
+      }
+    ]
+  },
+  "podiums": {
+    "data": [
+      {
+        "eventId": "222",
+        "roundNumber": 2,
+        "results": [
+          {
+            "competitionId": 1608,
+            "eventId": "222",
+            "roundNumber": 2,
+            "position": 1,
+            "best": 133,
+            "average": 205,
+            "attempts": [
+              367,
+              163,
+              219,
+              133,
+              232
+            ],
+            "competitor": {
+              "id": 59914,
+              "number": 52,
+              "name": "Yuqian Lu",
+              "localName": "陆雨芊",
+              "wcaId": "2025LUYU03",
+              "regionIso2": "CN"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "222",
+            "roundNumber": 2,
+            "position": 2,
+            "best": 124,
+            "average": 207,
+            "attempts": [
+              124,
+              136,
+              258,
+              227,
+              584
+            ],
+            "competitor": {
+              "id": 38550,
+              "number": 17,
+              "name": "Jiekai Li",
+              "localName": "李杰凯",
+              "wcaId": "2024LIJI21",
+              "regionIso2": "CN"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "222",
+            "roundNumber": 2,
+            "position": 3,
+            "best": 196,
+            "average": 241,
+            "attempts": [
+              263,
+              249,
+              196,
+              212,
+              433
+            ],
+            "competitor": {
+              "id": 16949,
+              "number": 166,
+              "name": "Rilang Cao",
+              "localName": "曹日朗",
+              "wcaId": "2017CAOR01",
+              "regionIso2": "CN"
+            }
+          }
+        ]
+      },
+      {
+        "eventId": "333",
+        "roundNumber": 3,
+        "results": [
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 3,
+            "position": 1,
+            "best": 353,
+            "average": 441,
+            "attempts": [
+              404,
+              450,
+              521,
+              469,
+              353
+            ],
+            "competitor": {
+              "id": 49529,
+              "number": 109,
+              "name": "Xuanyi Geng",
+              "localName": "耿暄一",
+              "wcaId": "2023GENG02",
+              "regionIso2": "CN"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 3,
+            "position": 2,
+            "best": 368,
+            "average": 460,
+            "attempts": [
+              533,
+              368,
+              438,
+              436,
+              507
+            ],
+            "competitor": {
+              "id": 55706,
+              "number": 26,
+              "name": "Yunzhi Lian",
+              "localName": "连允之",
+              "wcaId": "2025LIAN01",
+              "regionIso2": "CN"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 3,
+            "position": 3,
+            "best": 443,
+            "average": 520,
+            "attempts": [
+              443,
+              544,
+              535,
+              481,
+              708
+            ],
+            "competitor": {
+              "id": 49385,
+              "number": 71,
+              "name": "Xi Chen",
+              "localName": "陈曦",
+              "wcaId": "2023CHEX03",
+              "regionIso2": "CN"
+            }
+          }
+        ]
+      },
+      {
+        "eventId": "333oh",
+        "roundNumber": 2,
+        "results": [
+          {
+            "competitionId": 1608,
+            "eventId": "333oh",
+            "roundNumber": 2,
+            "position": 1,
+            "best": 969,
+            "average": 1056,
+            "attempts": [
+              1070,
+              1050,
+              1049,
+              969,
+              1074
+            ],
+            "competitor": {
+              "id": 11057,
+              "number": 18,
+              "name": "Zijian Cai",
+              "localName": "蔡子健",
+              "wcaId": "2017CAIZ03",
+              "regionIso2": "CN"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "333oh",
+            "roundNumber": 2,
+            "position": 2,
+            "best": 978,
+            "average": 1191,
+            "attempts": [
+              978,
+              1308,
+              1082,
+              1184,
+              1314
+            ],
+            "competitor": {
+              "id": 16912,
+              "number": 175,
+              "name": "Zhiyuan Ma",
+              "localName": "马之元",
+              "wcaId": "2017MAZH04",
+              "regionIso2": "CN"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "333oh",
+            "roundNumber": 2,
+            "position": 3,
+            "best": 952,
+            "average": 1210,
+            "attempts": [
+              989,
+              1175,
+              1682,
+              952,
+              1465
+            ],
+            "competitor": {
+              "id": 49529,
+              "number": 109,
+              "name": "Xuanyi Geng",
+              "localName": "耿暄一",
+              "wcaId": "2023GENG02",
+              "regionIso2": "CN"
+            }
+          }
+        ]
+      },
+      {
+        "eventId": "minx",
+        "roundNumber": 2,
+        "results": [
+          {
+            "competitionId": 1608,
+            "eventId": "minx",
+            "roundNumber": 2,
+            "position": 1,
+            "best": 3365,
+            "average": 4020,
+            "attempts": [
+              4167,
+              4095,
+              3365,
+              4146,
+              3818
+            ],
+            "competitor": {
+              "id": 11057,
+              "number": 18,
+              "name": "Zijian Cai",
+              "localName": "蔡子健",
+              "wcaId": "2017CAIZ03",
+              "regionIso2": "CN"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "minx",
+            "roundNumber": 2,
+            "position": 2,
+            "best": 3564,
+            "average": 4258,
+            "attempts": [
+              3564,
+              4635,
+              4886,
+              3877,
+              4262
+            ],
+            "competitor": {
+              "id": 14135,
+              "number": 14,
+              "name": "Andy Mok Man Cheuk",
+              "localName": "莫文卓",
+              "wcaId": "2016CHEU04",
+              "regionIso2": "HK"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "minx",
+            "roundNumber": 2,
+            "position": 3,
+            "best": 4908,
+            "average": 5068,
+            "attempts": [
+              5228,
+              5340,
+              4908,
+              4979,
+              4997
+            ],
+            "competitor": {
+              "id": 34409,
+              "number": 54,
+              "name": "Ryan Tang Chi Hang",
+              "localName": "鄧智恒",
+              "wcaId": "2019HANG02",
+              "regionIso2": "HK"
+            }
+          }
+        ]
+      },
+      {
+        "eventId": "pyram",
+        "roundNumber": 2,
+        "results": [
+          {
+            "competitionId": 1608,
+            "eventId": "pyram",
+            "roundNumber": 2,
+            "position": 1,
+            "best": 179,
+            "average": 245,
+            "attempts": [
+              192,
+              371,
+              247,
+              179,
+              297
+            ],
+            "competitor": {
+              "id": 14135,
+              "number": 14,
+              "name": "Andy Mok Man Cheuk",
+              "localName": "莫文卓",
+              "wcaId": "2016CHEU04",
+              "regionIso2": "HK"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "pyram",
+            "roundNumber": 2,
+            "position": 2,
+            "best": 219,
+            "average": 286,
+            "attempts": [
+              240,
+              288,
+              395,
+              219,
+              330
+            ],
+            "competitor": {
+              "id": 49523,
+              "number": 11,
+              "name": "Yang Pin Xiu",
+              "localName": "楊品修",
+              "wcaId": "2023XIUY01",
+              "regionIso2": "HK"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "pyram",
+            "roundNumber": 2,
+            "position": 3,
+            "best": 242,
+            "average": 365,
+            "attempts": [
+              242,
+              385,
+              346,
+              669,
+              363
+            ],
+            "competitor": {
+              "id": 10458,
+              "number": 3,
+              "name": "Yiyun Chen",
+              "localName": "陈毅昀",
+              "wcaId": "2017CHEN28",
+              "regionIso2": "CN"
+            }
+          }
+        ]
+      },
+      {
+        "eventId": "333",
+        "roundNumber": 1,
+        "group": {
+          "type": "age",
+          "age": 8,
+          "under": true
+        },
+        "groupIndex": 0,
+        "results": [
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 1,
+            "best": 451,
+            "average": 495,
+            "attempts": [
+              472,
+              451,
+              556,
+              538,
+              475
+            ],
+            "competitor": {
+              "id": 55706,
+              "number": 26,
+              "name": "Yunzhi Lian",
+              "localName": "连允之",
+              "wcaId": "2025LIAN01",
+              "regionIso2": "CN"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 2,
+            "best": 889,
+            "average": 928,
+            "attempts": [
+              889,
+              930,
+              936,
+              1059,
+              919
+            ],
+            "competitor": {
+              "id": 58344,
+              "number": 22,
+              "name": "Lukas Li Yin San",
+              "localName": "李彥辰",
+              "wcaId": "2023SANL03",
+              "regionIso2": "HK"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 3,
+            "best": 955,
+            "average": 1134,
+            "attempts": [
+              955,
+              1114,
+              1159,
+              1177,
+              1129
+            ],
+            "competitor": {
+              "id": 62231,
+              "number": 45,
+              "name": "Anzhi Chen",
+              "localName": "陈安之",
+              "wcaId": "2026CHEN42",
+              "regionIso2": "CN"
+            }
+          }
+        ]
+      },
+      {
+        "eventId": "333",
+        "roundNumber": 1,
+        "group": {
+          "type": "age",
+          "age": 10,
+          "under": true
+        },
+        "groupIndex": 0,
+        "results": [
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 1,
+            "best": 339,
+            "average": 494,
+            "attempts": [
+              339,
+              492,
+              461,
+              560,
+              529
+            ],
+            "competitor": {
+              "id": 49529,
+              "number": 109,
+              "name": "Xuanyi Geng",
+              "localName": "耿暄一",
+              "wcaId": "2023GENG02",
+              "regionIso2": "CN"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 2,
+            "best": 530,
+            "average": 634,
+            "attempts": [
+              614,
+              646,
+              641,
+              530,
+              656
+            ],
+            "competitor": {
+              "id": 48197,
+              "number": 30,
+              "name": "Wanying Deng",
+              "localName": "邓婉莹",
+              "wcaId": "2023DENG11",
+              "regionIso2": "CN"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 3,
+            "best": 1050,
+            "average": 1270,
+            "attempts": [
+              1365,
+              1243,
+              1475,
+              1202,
+              1050
+            ],
+            "competitor": {
+              "id": 48199,
+              "number": 58,
+              "name": "Xiaoyi Lin",
+              "localName": "林小懿",
+              "wcaId": "2023LINX01",
+              "regionIso2": "CN"
+            }
+          }
+        ]
+      },
+      {
+        "eventId": "333",
+        "roundNumber": 1,
+        "group": {
+          "type": "age",
+          "age": 12,
+          "under": true
+        },
+        "groupIndex": 0,
+        "results": [
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 1,
+            "best": 503,
+            "average": 563,
+            "attempts": [
+              555,
+              657,
+              520,
+              503,
+              615
+            ],
+            "competitor": {
+              "id": 49385,
+              "number": 71,
+              "name": "Xi Chen",
+              "localName": "陈曦",
+              "wcaId": "2023CHEX03",
+              "regionIso2": "CN"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 2,
+            "best": 595,
+            "average": 678,
+            "attempts": [
+              705,
+              694,
+              595,
+              797,
+              635
+            ],
+            "competitor": {
+              "id": 59914,
+              "number": 52,
+              "name": "Yuqian Lu",
+              "localName": "陆雨芊",
+              "wcaId": "2025LUYU03",
+              "regionIso2": "CN"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 3,
+            "best": 1228,
+            "average": 1343,
+            "attempts": [
+              1261,
+              1413,
+              1734,
+              1355,
+              1228
+            ],
+            "competitor": {
+              "id": 41680,
+              "number": 76,
+              "name": "Jianyou Huang",
+              "localName": "黄建猷",
+              "wcaId": "2021HUAN29",
+              "regionIso2": "CN"
+            }
+          }
+        ]
+      },
+      {
+        "eventId": "333",
+        "roundNumber": 1,
+        "group": {
+          "type": "age",
+          "age": 14,
+          "under": true
+        },
+        "groupIndex": 0,
+        "results": [
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 1,
+            "best": 812,
+            "average": 870,
+            "attempts": [
+              890,
+              840,
+              881,
+              812,
+              896
+            ],
+            "competitor": {
+              "id": 61547,
+              "number": 126,
+              "name": "Kaien Peng",
+              "localName": "彭楷恩",
+              "wcaId": "2026PENG03",
+              "regionIso2": "CN"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 2,
+            "best": 721,
+            "average": 948,
+            "attempts": [
+              999,
+              976,
+              721,
+              870,
+              1036
+            ],
+            "competitor": {
+              "id": 61006,
+              "number": 140,
+              "name": "Yijia Chen",
+              "localName": "陈一嘉",
+              "wcaId": "2026CHEN30",
+              "regionIso2": "CN"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 3,
+            "best": 803,
+            "average": 1014,
+            "attempts": [
+              1062,
+              1080,
+              803,
+              952,
+              1028
+            ],
+            "competitor": {
+              "id": 62276,
+              "number": 84,
+              "name": "Mai Jing Hang",
+              "localName": "",
+              "wcaId": "2026HANG01",
+              "regionIso2": "SG"
+            }
+          }
+        ]
+      },
+      {
+        "eventId": "333",
+        "roundNumber": 1,
+        "group": {
+          "type": "age",
+          "age": 16,
+          "under": true
+        },
+        "groupIndex": 0,
+        "results": [
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 1,
+            "best": 619,
+            "average": 712,
+            "attempts": [
+              764,
+              748,
+              650,
+              619,
+              739
+            ],
+            "competitor": {
+              "id": 49523,
+              "number": 11,
+              "name": "Yang Pin Xiu",
+              "localName": "楊品修",
+              "wcaId": "2023XIUY01",
+              "regionIso2": "HK"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 2,
+            "best": 599,
+            "average": 744,
+            "attempts": [
+              894,
+              599,
+              741,
+              703,
+              787
+            ],
+            "competitor": {
+              "id": 51706,
+              "number": 123,
+              "name": "Jintai Zheng",
+              "localName": "郑锦泰",
+              "wcaId": "2024ZHEN14",
+              "regionIso2": "CN"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 3,
+            "best": 691,
+            "average": 769,
+            "attempts": [
+              717,
+              691,
+              892,
+              1039,
+              697
+            ],
+            "competitor": {
+              "id": 44260,
+              "number": 47,
+              "name": "Kangze Wang",
+              "localName": "王康泽",
+              "wcaId": "2021WANG25",
+              "regionIso2": "CN"
+            }
+          }
+        ]
+      },
+      {
+        "eventId": "333",
+        "roundNumber": 1,
+        "group": {
+          "type": "age",
+          "age": 18,
+          "under": true
+        },
+        "groupIndex": 0,
+        "results": [
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 1,
+            "best": 801,
+            "average": 927,
+            "attempts": [
+              887,
+              1118,
+              803,
+              1090,
+              801
+            ],
+            "competitor": {
+              "id": 49364,
+              "number": 6,
+              "name": "Xiran Long",
+              "localName": "龙希然",
+              "wcaId": "2024LONG22",
+              "regionIso2": "CN"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 2,
+            "best": 847,
+            "average": 986,
+            "attempts": [
+              1213,
+              1155,
+              909,
+              895,
+              847
+            ],
+            "competitor": {
+              "id": 56922,
+              "number": 41,
+              "name": "Sun Chen Bo",
+              "localName": "孫晨博",
+              "wcaId": "2025SUNP01",
+              "regionIso2": "HK"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 3,
+            "best": 938,
+            "average": 1080,
+            "attempts": [
+              1021,
+              1048,
+              938,
+              1616,
+              1172
+            ],
+            "competitor": {
+              "id": 51133,
+              "number": 77,
+              "name": "Vong Man Hei",
+              "localName": "王文希",
+              "wcaId": "2024HEIV01",
+              "regionIso2": "MO"
+            }
+          }
+        ]
+      },
+      {
+        "eventId": "333",
+        "roundNumber": 1,
+        "group": {
+          "type": "age",
+          "age": 18,
+          "under": false
+        },
+        "groupIndex": 0,
+        "results": [
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 1,
+            "best": 595,
+            "average": 698,
+            "attempts": [
+              740,
+              595,
+              664,
+              689,
+              780
+            ],
+            "competitor": {
+              "id": 11057,
+              "number": 18,
+              "name": "Zijian Cai",
+              "localName": "蔡子健",
+              "wcaId": "2017CAIZ03",
+              "regionIso2": "CN"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 2,
+            "best": 627,
+            "average": 721,
+            "attempts": [
+              841,
+              719,
+              751,
+              692,
+              627
+            ],
+            "competitor": {
+              "id": 14135,
+              "number": 14,
+              "name": "Andy Mok Man Cheuk",
+              "localName": "莫文卓",
+              "wcaId": "2016CHEU04",
+              "regionIso2": "HK"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 3,
+            "best": 804,
+            "average": 883,
+            "attempts": [
+              804,
+              870,
+              971,
+              1129,
+              808
+            ],
+            "competitor": {
+              "id": 29290,
+              "number": 38,
+              "name": "Rinji Chan Pak Hei",
+              "localName": "陳柏熹",
+              "wcaId": "2019HEIR01",
+              "regionIso2": "HK"
+            }
+          }
+        ]
+      },
+      {
+        "eventId": "333",
+        "roundNumber": 1,
+        "group": {
+          "type": "age",
+          "age": 24,
+          "under": false
+        },
+        "groupIndex": 0,
+        "results": [
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 1,
+            "best": 793,
+            "average": 899,
+            "attempts": [
+              982,
+              793,
+              865,
+              900,
+              932
+            ],
+            "competitor": {
+              "id": 15275,
+              "number": 37,
+              "name": "Junxi Jian",
+              "localName": "简隽希",
+              "wcaId": "2017JIAN32",
+              "regionIso2": "CN"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 2,
+            "best": 867,
+            "average": 939,
+            "attempts": [
+              1109,
+              955,
+              867,
+              900,
+              963
+            ],
+            "competitor": {
+              "id": 5028,
+              "number": 93,
+              "name": "Yuxuan Song",
+              "localName": "宋宇轩",
+              "wcaId": "2018SONG20",
+              "regionIso2": "CN"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 3,
+            "best": 936,
+            "average": 1038,
+            "attempts": [
+              1020,
+              1020,
+              1305,
+              936,
+              1073
+            ],
+            "competitor": {
+              "id": 1330,
+              "number": 28,
+              "name": "Lianhao Xu",
+              "localName": "徐廉浩",
+              "wcaId": "2014XULI02",
+              "regionIso2": "CN"
+            }
+          }
+        ]
+      },
+      {
+        "eventId": "333",
+        "roundNumber": 1,
+        "group": {
+          "type": "age",
+          "age": 30,
+          "under": false
+        },
+        "groupIndex": 0,
+        "results": [
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 1,
+            "best": 865,
+            "average": 952,
+            "attempts": [
+              886,
+              1146,
+              931,
+              1039,
+              865
+            ],
+            "competitor": {
+              "id": 771,
+              "number": 155,
+              "name": "Xingyu Chen",
+              "localName": "陈星宇",
+              "wcaId": "2012CHEN54",
+              "regionIso2": "CN"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 2,
+            "best": 874,
+            "average": 1035,
+            "attempts": [
+              874,
+              1094,
+              954,
+              1057,
+              1284
+            ],
+            "competitor": {
+              "id": 3363,
+              "number": 13,
+              "name": "Guocong Li",
+              "localName": "李国聪",
+              "wcaId": "2015LIGU01",
+              "regionIso2": "CN"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 3,
+            "best": 902,
+            "average": 1037,
+            "attempts": [
+              1227,
+              971,
+              1358,
+              912,
+              902
+            ],
+            "competitor": {
+              "id": 15222,
+              "number": 119,
+              "name": "Ruimin Yan",
+              "localName": "颜瑞民",
+              "wcaId": "2017YANR02",
+              "regionIso2": "CN"
+            }
+          }
+        ]
+      },
+      {
+        "eventId": "333",
+        "roundNumber": 1,
+        "group": {
+          "type": "female"
+        },
+        "groupIndex": 0,
+        "results": [
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 1,
+            "best": 451,
+            "average": 495,
+            "attempts": [
+              472,
+              451,
+              556,
+              538,
+              475
+            ],
+            "competitor": {
+              "id": 55706,
+              "number": 26,
+              "name": "Yunzhi Lian",
+              "localName": "连允之",
+              "wcaId": "2025LIAN01",
+              "regionIso2": "CN"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 2,
+            "best": 503,
+            "average": 563,
+            "attempts": [
+              555,
+              657,
+              520,
+              503,
+              615
+            ],
+            "competitor": {
+              "id": 49385,
+              "number": 71,
+              "name": "Xi Chen",
+              "localName": "陈曦",
+              "wcaId": "2023CHEX03",
+              "regionIso2": "CN"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 3,
+            "best": 530,
+            "average": 634,
+            "attempts": [
+              614,
+              646,
+              641,
+              530,
+              656
+            ],
+            "competitor": {
+              "id": 48197,
+              "number": 30,
+              "name": "Wanying Deng",
+              "localName": "邓婉莹",
+              "wcaId": "2023DENG11",
+              "regionIso2": "CN"
+            }
+          }
+        ]
+      },
+      {
+        "eventId": "333",
+        "roundNumber": 1,
+        "group": {
+          "type": "newcomer"
+        },
+        "groupIndex": 0,
+        "results": [
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 1,
+            "best": 834,
+            "average": 989,
+            "attempts": [
+              1054,
+              1139,
+              935,
+              834,
+              978
+            ],
+            "competitor": {
+              "id": 66861,
+              "number": 75,
+              "name": "Kailong Xie",
+              "localName": "谢铠栊",
+              "wcaId": "",
+              "regionIso2": "CN"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 2,
+            "best": 1028,
+            "average": 1074,
+            "attempts": [
+              1070,
+              1028,
+              1121,
+              1030,
+              1540
+            ],
+            "competitor": {
+              "id": 67370,
+              "number": 117,
+              "name": "Zongheng Li",
+              "localName": "李宗恒",
+              "wcaId": "",
+              "regionIso2": "CN"
+            }
+          },
+          {
+            "competitionId": 1608,
+            "eventId": "333",
+            "roundNumber": 1,
+            "position": 3,
+            "best": 1076,
+            "average": 1149,
+            "attempts": [
+              1163,
+              1124,
+              1563,
+              1076,
+              1159
+            ],
+            "competitor": {
+              "id": 66690,
+              "number": 56,
+              "name": "Weijie Zheng",
+              "localName": "郑炜杰",
+              "wcaId": "",
+              "regionIso2": "CN"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "rounds": [
+    {
+      "competitionId": 1608,
+      "eventId": "222",
+      "roundNumber": 1,
+      "status": "finished",
+      "round": {
+        "format": "a"
+      }
+    },
+    {
+      "competitionId": 1608,
+      "eventId": "222",
+      "roundNumber": 2,
+      "status": "finished",
+      "round": {
+        "format": "a"
+      }
+    },
+    {
+      "competitionId": 1608,
+      "eventId": "333",
+      "roundNumber": 1,
+      "status": "finished",
+      "round": {
+        "format": "a"
+      }
+    },
+    {
+      "competitionId": 1608,
+      "eventId": "333",
+      "roundNumber": 2,
+      "status": "finished",
+      "round": {
+        "format": "a"
+      }
+    },
+    {
+      "competitionId": 1608,
+      "eventId": "333",
+      "roundNumber": 3,
+      "status": "finished",
+      "round": {
+        "format": "a"
+      }
+    },
+    {
+      "competitionId": 1608,
+      "eventId": "333oh",
+      "roundNumber": 1,
+      "status": "finished",
+      "round": {
+        "format": "a"
+      }
+    },
+    {
+      "competitionId": 1608,
+      "eventId": "333oh",
+      "roundNumber": 2,
+      "status": "finished",
+      "round": {
+        "format": "a"
+      }
+    },
+    {
+      "competitionId": 1608,
+      "eventId": "minx",
+      "roundNumber": 1,
+      "status": "finished",
+      "round": {
+        "format": "a"
+      }
+    },
+    {
+      "competitionId": 1608,
+      "eventId": "minx",
+      "roundNumber": 2,
+      "status": "finished",
+      "round": {
+        "format": "a"
+      }
+    },
+    {
+      "competitionId": 1608,
+      "eventId": "pyram",
+      "roundNumber": 1,
+      "status": "finished",
+      "round": {
+        "format": "a"
+      }
+    },
+    {
+      "competitionId": 1608,
+      "eventId": "pyram",
+      "roundNumber": 2,
+      "status": "finished",
+      "round": {
+        "format": "a"
+      }
+    }
+  ]
+}

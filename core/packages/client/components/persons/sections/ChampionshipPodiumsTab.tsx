@@ -15,7 +15,7 @@ import { eventDisplayName } from '@/lib/wca-events';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { useT } from '@/hooks/useT';
 import { type ChampionshipPodiumRow } from '@/lib/wca-person-api';
-import { AttemptsInline } from './RecordsTab';
+import { AttemptsInline } from '@/components/AttemptsInline';
 
 interface Props {
   /** 由 PersonTabs 预取并保证非空(无领奖台时整个 tab 不渲染)。 */
