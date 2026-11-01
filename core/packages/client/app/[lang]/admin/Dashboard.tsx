@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useRef, useState } from 'react';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
 import { RefreshCw } from '@app-foundation/icons/lucide';
@@ -62,7 +63,7 @@ export function DashboardChart({ labels, series, label, integer = true }: { labe
   return <>
     <div ref={host} className="admin-dashboard__chart" role="img" aria-label={label} />
     {failed && <p role="status">{t('图表加载失败，仍可查看数据表。', 'Chart unavailable. The data table is still available.')}</p>}
-    <details className="admin-dashboard__table"><summary>{t('查看数据表', 'View data table')}</summary>
+    <details className="admin-dashboard__table"><MoreToggle as="summary">{t('查看数据表', 'View data table')}</MoreToggle>
       <div className="sticky-scroll admin-dashboard__table-scroll"><table className="sticky-thead"><caption>{label}</caption><thead><tr><th>{t('日期 / 来源', 'Date / source')}</th>{series.map(s => <th key={s.name}>{s.name}</th>)}</tr></thead>
         <tbody>{labels.map((date, index) => <tr key={date}><th>{date}</th>{series.map(s => <td key={s.name}>{s.data[index]?.toLocaleString() ?? '—'}</td>)}</tr>)}</tbody></table></div>
     </details>

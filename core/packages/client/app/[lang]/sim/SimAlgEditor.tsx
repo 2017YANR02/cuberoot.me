@@ -97,7 +97,8 @@ export default function SimAlgEditor({
           aria-label={t('随机打乱', 'Random scramble')}
         >
           <Shuffle size={14} />
-          {t('随机打乱', 'Random scramble')}
+          <span className="sim-random-label-full">{t('随机打乱', 'Random scramble')}</span>
+          <span className="sim-random-label-short">{t('随机', 'Random')}</span>
         </button>
         {scramble.onDerive && (
           <button
@@ -113,7 +114,7 @@ export default function SimAlgEditor({
         )}
         <button
           type="button"
-          className="sim-player-scramble"
+          className="sim-player-scramble sim-setup-preview"
           onClick={scramble.onPreview}
           disabled={scramble.previewDisabled}
           title={t('动画展示打乱', 'Animate scramble')}

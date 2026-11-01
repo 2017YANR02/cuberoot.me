@@ -1,7 +1,6 @@
 'use client';
 import { ArrowUpRight } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
-import HeaderToggles from '@/components/HeaderToggles';
 import { tr } from '@/i18n/tr';
 import { EVENT_GROSS_PER_MONTH, MARKET_SOURCE } from '../bp-data';
 import { COOPERATION_INTRO, COOPERATION_EQUITY_POSITION } from '../CooperationOpportunity';
@@ -9,7 +8,7 @@ import '../bp.css';
 
 export default function TalkingPointsPage() {
   return <main className="overview-page bp-page">
-    <header className="overview-nav overview-wrap"><strong>{tr({ zh: '魔方根 · 业务交流提纲', en: 'CubeRoot · business discussion notes' })}</strong><HeaderToggles /></header>
+    <header className="overview-nav overview-wrap"><strong>{tr({ zh: '魔方根 · 业务交流提纲', en: 'CubeRoot · business discussion notes' })}</strong></header>
     <section className="overview-section overview-wrap"><h1>{tr({ zh: '先讲清楚市场，\n再展示如何服务。', en: 'Explain the market.\nShow how to serve it.' })}</h1>
       <AppLink href="/bp" prefetch={false} className="overview-text-link">{tr({ zh: '打开商业计划书', en: 'Open the business plan' })}<ArrowUpRight size={16} /></AppLink>
       <div className="bp-detail-columns">{[

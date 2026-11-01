@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { parseAsBoolean, parseAsString, useQueryState } from 'nuqs';
 import FullCalendar from '@fullcalendar/react';
@@ -198,7 +199,7 @@ function AvailabilityPlanner({ today, zoneItems }: { today: string; zoneItems: L
       {(error || invalid) && <p role="alert" className="tz-planner-error">{error || dstError}</p>}
       <div className="tz-planner-tools">
         <details>
-          <summary>{tr({ zh: '精确添加 / 操作说明', en: 'Exact times / help' })}</summary>
+          <MoreToggle as="summary">{tr({ zh: '精确添加 / 操作说明', en: 'Exact times / help' })}</MoreToggle>
           <p className="tz-note">{tr({ zh: '在空白处拖出时段，可连续添加；拖动色块或边缘可调整。长按色块进入删除模式，点空白处或按 Esc 退出；键盘聚焦色块后按 Enter 也可进入。每格半小时，拖选精确到 15 分钟。换周保留当地时段，按新日期重新换算；结束早于开始表示跨夜。', en: 'Drag empty space to add ranges; drag blocks or edges to adjust. Hold a block, or focus it and press Enter, to show delete buttons. Click outside or press Esc to finish. Half-hour grid with 15-minute snapping. Changing weeks preserves local hours and recalculates the conversion. An earlier end means overnight.' })}</p>
           <form className="tz-manual-range" onSubmit={(event) => {
             event.preventDefault();

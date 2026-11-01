@@ -2,9 +2,8 @@
 
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import HomeLink from '@/components/HomeLink';
+import BackHome from '@/components/BackHome';
 import './code_index.css';
-import { tr } from '@/i18n/tr';
 
 interface Card {
   href: string;
@@ -443,10 +442,7 @@ export default function DevIndexPage() {
 
       <header className="code-index-head">
         <div className="code-index-topbar">
-          <HomeLink className="code-index-back">
-            ← <span className="sr-only">{tr({ zh: '回首页', en: 'Home'
-            })}</span>
-          </HomeLink>
+          <div className="page-back-row"><BackHome /></div>
         </div>
         <h1 className="code-index-title">
           <span className="code-index-prefix">/</span>dev

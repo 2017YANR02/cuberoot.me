@@ -1,5 +1,6 @@
 'use client';
 
+import PageHeading from '@/components/PageHeading';
 import TrainingStatsPanel from '@/components/TrainingStatsPanel';
 import { useTrainingStats } from '@/hooks/useTrainingStats';
 
@@ -179,8 +180,8 @@ export default function BldTimerPage(): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{tr({ zh: '盲拧练习计时', en: 'BLD Practice Timer'
-        })}</h1>
+        <PageHeading backHref="/alg/3bld">{tr({ zh: '盲拧练习计时', en: 'BLD Practice Timer'
+        })}</PageHeading>
         <span className="bld-spacer" />
         <Link href="/alg/3bld/edge-float" className="bld-btn">
           <span aria-hidden="true">←</span> <span className="sr-only">{tr({ zh: '返回浮动训练', en: 'Back to float trainer'

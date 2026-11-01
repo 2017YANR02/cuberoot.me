@@ -6,7 +6,7 @@ import { timerSmartCubeTrainingComplete } from './smart-cube-training';
 export const TIMER_TRAINING_STATE_KEYS = {
   f2l: 'f2l',
   cll: 'll', ell: 'ell', eocp: 'll', '2gll': '2gll',
-  ollcp: 'll', zzll: 'zzll', zbls: 'zbls', lse: 'roux-lse', l10p: 'roux-l10p',
+  ollcp: 'll', zzll: 'zzll', zbls: 'zbls', cfzb: 'zbls', lse: 'roux-lse', l10p: 'roux-l10p',
 } as const;
 export type TimerTrainingStateEvent = keyof typeof TIMER_TRAINING_STATE_KEYS;
 export function isTimerTrainingStateEvent(event: string): event is TimerTrainingStateEvent {
@@ -17,13 +17,15 @@ export function generateTimerTrainingStateScramble(
   event: TimerTrainingStateEvent,
   generate: (key: string, attempt: number) => string,
 ): string {
+  // CFZB shares the ZBLS starting domain, but continues through full restoration.
+  const startEvent = event === 'cfzb' ? 'zbls' : event;
   for (let attempt = 0; attempt < 64; attempt++) {
     const scramble = generate(TIMER_TRAINING_STATE_KEYS[event], attempt);
     // A random state may be solved; redraw instead of surfacing an empty scramble.
     if (!scramble.trim()) continue;
     const facelets = smartCubeTargetFacelets(scramble);
     if (!facelets) throw new Error(`Invalid training scramble: ${event}`);
-    if (stepSolvedInFrame('solved', facelets) || timerSmartCubeTrainingComplete(event, facelets, '')) continue;
+    if (stepSolvedInFrame('solved', facelets) || timerSmartCubeTrainingComplete(startEvent, facelets, '')) continue;
     // Match the reference training domains: CLL/OLLCP start before OLL;
     // EOCP also starts before edge orientation, rather than serving an already-finished subgoal.
     if ((event === 'cll' || event === 'ollcp' || event === 'eocp') && stepSolvedInFrame('oll', facelets)) continue;

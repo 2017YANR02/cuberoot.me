@@ -205,12 +205,6 @@
   display: none;
 }
 
-.ns-names-details > summary::before {
-  content: '▸';
-  font-size: 10px;
-  transition: transform .15s;
-}
-
 .ns-names-details[open] > summary::before {
   transform: rotate(90deg);
 }

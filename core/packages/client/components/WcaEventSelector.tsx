@@ -2,6 +2,7 @@
 
 // Ported from packages/client-vite/src/components/WcaEventSelector.tsx.
 
+import MoreToggle from '@/components/MoreToggle';
 import { Tooltip } from '@/components/Tooltip';
 import { useMemo, useState, type ReactNode } from 'react';
 import { useParams } from 'next/navigation';
@@ -272,7 +273,7 @@ export default function WcaEventSelector({
       )}
       {officialIds.map(renderWcaButton)}
       {showToggle && (
-        <Tooltip content={toggleTip}>{(tip) => <button {...tip}
+        <Tooltip content={toggleTip}>{(tip) => <MoreToggle expanded={expanded} {...tip} onToggle={undefined} aria-label={toggleTip}
           type="button"
           className={`event-btn event-btn-more${expanded ? ' active' : ''}`}
 
@@ -282,8 +283,8 @@ export default function WcaEventSelector({
             onExpandedChange?.(next);
           }}
         >
-          <span className="event-more-arrow">{expanded ? '▴' : '▾'}</span>
-        </button>}</Tooltip>
+
+        </MoreToggle>}</Tooltip>
       )}
       {showHidden && cancelledIds.map(renderWcaButton)}
       {showHidden && hiddenAppend.map(renderAppendButton)}

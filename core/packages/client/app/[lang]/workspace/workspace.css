@@ -92,7 +92,9 @@
 .workspace-gantt-bar:is(:hover, :focus-visible):not(:disabled) { background: color-mix(in srgb, var(--gantt-color) 28%, var(--background)); }
 .workspace-gantt-progress { position: absolute; inset: 0 auto 0 0; background: color-mix(in srgb, var(--gantt-color) 38%, transparent); }
 .workspace-gantt-percent { position: relative; z-index: 1; flex-shrink: 0; padding-inline: 4px; font-size: 14px; }
-.workspace-gantt-milestone { width: 14px; height: 14px; transform: translate(-50%, -50%) rotate(45deg); background: var(--gantt-color); }
+.workspace-gantt-milestone { display: grid; place-items: center; width: 32px; height: 32px; transform: translate(-50%, -50%); border: 0; border-radius: 6px; background: transparent; color: var(--gantt-color); }
+.workspace-gantt-milestone:is(:hover, :focus-visible) { background: color-mix(in srgb, var(--gantt-color) 12%, transparent); }
+.workspace-gantt-milestone[aria-disabled="true"] { cursor: default; }
 .workspace-gantt-bar:disabled, .workspace-gantt-milestone:disabled { opacity: 1; cursor: default; }
 .workspace-gantt-row.is-done .workspace-task-label > span { text-decoration: line-through; color: var(--muted-foreground); }
 .workspace-gantt-today { position: absolute; inset-block: 0; border-left: 1px dashed var(--destructive); pointer-events: none; z-index: 1; }

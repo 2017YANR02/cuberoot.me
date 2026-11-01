@@ -1,4 +1,5 @@
 'use client';
+import PageBackLink from '@/components/PageBackLink';
 
 /**
  * /membership — 会员订阅。
@@ -220,10 +221,10 @@ export default function MembershipPage() {
     return (
       <div className="mem-page">
         <header className="mem-head">
-          <h1 className="mem-title">
+          <div className="page-back-heading"><PageBackLink contextOnly /><h1 className="mem-title">
             <CubeRootLogo className="mem-title-logo" height={22} variant="mark" />
             {tr({ zh: '会员服务', en: 'Membership' })}
-          </h1>
+          </h1></div>
         </header>
         <p className="mem-empty">
           {tr({
@@ -305,11 +306,11 @@ export default function MembershipPage() {
   return (
     <div className="mem-page">
       <header className="mem-head">
-        <h1 className="mem-title">
+        <div className="page-back-heading"><PageBackLink contextOnly /><h1 className="mem-title">
           <CubeRootLogo className="mem-title-logo" height={22} variant="mark" />
           {tr({ zh: 'CubeRoot 会员', en: 'CubeRoot membership'
         })}
-        </h1>
+        </h1></div>
       </header>
 
       {directApp && <p className="mem-sub" role="status">

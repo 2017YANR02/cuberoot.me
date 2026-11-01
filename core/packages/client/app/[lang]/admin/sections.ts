@@ -11,7 +11,7 @@ export const SYSTEM_VIEW_LABELS: Record<SystemView, [string, string]> = {
 };
 export const SYSTEM_DESTINATION_VIEWS: Record<string, SystemView> = {
   '/admin/disk': 'tools', '/admin/releases': 'tools', '/dev/ops': 'tools',
-  '/admin/careers': 'workspace', '/admin/interview': 'workspace', '/docs': 'workspace', '/sheets': 'workspace',
+  '/admin/careers': 'workspace', '/admin/interview': 'workspace', '/docs': 'workspace',
 };
 
 export const ADMIN_SECTION_LABELS: Record<AdminSection, [string, string]> = {
@@ -31,7 +31,7 @@ export const DESTINATION_SECTIONS: Record<string, Exclude<AdminSection, 'overvie
   '/membership': 'users', '/site': 'content', '/scramble/pattern/search': 'content',
   '/sim': 'content', '/alg': 'content', '/account': 'content', '/recon': 'content',
   '/teachers': 'commerce', '/wiki': 'content', '/about/ruimin': 'content',
-  '/org#enterprise-admin': 'commerce', '/docs': 'system', '/sheets': 'system',
+  '/org#enterprise-admin': 'commerce', '/docs': 'system',
   '/courses': 'commerce', '/regulation/post': 'content',
 };
 

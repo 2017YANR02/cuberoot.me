@@ -9,6 +9,7 @@
  * and the clock SVG helper from sibling /scramble/gen.
  */
 
+import PageHeading from '@/components/PageHeading';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Sparkles, X, Copy, Check, Search } from '@app-foundation/icons/lucide';
@@ -140,8 +141,8 @@ export default function PatternsPage() {
     <div className="pat-page">
       <header className="pat-header">
         <div className="pat-title">
-          <Sparkles size={20} className="pat-title-icon" />
-          <h1>{t('图案集', 'Cube Patterns')}</h1>
+
+          <PageHeading backHref="/scramble"><Sparkles size={20} className="pat-title-icon" />{t('图案集', 'Cube Patterns')}</PageHeading>
         </div>
         <AppLink href="/scramble/pattern/search" prefetch={false} className="pat-search-link">
           <Search size={15} />

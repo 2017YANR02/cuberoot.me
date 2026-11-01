@@ -3,8 +3,11 @@ import { query } from '../db/connection.js';
 import { requireAdminOrApiKey } from '../utils/recon_helpers.js';
 import { normalizeWcaId, parseTeacherLookupIds } from '../utils/wca_teachers.js';
 import { wcaRelationFilter } from '../utils/wca_relation_filters.js';
+import { FINAL_ROUND_TYPES, RANK_EVENTS } from '../utils/person_page.js';
 
 export const wcaTeamRoutes = new Hono();
+const cubeRankIndex = RANK_EVENTS.indexOf('333') + 1;
+const finalRoundSql = [...FINAL_ROUND_TYPES].map(type => `'${type}'`).join(',');
 
 wcaTeamRoutes.get('/wca/teams', async (c) => {
   const ids = parseTeacherLookupIds(c.req.query('persons'));
@@ -19,10 +22,22 @@ wcaTeamRoutes.get('/wca/teams', async (c) => {
     const params = [...relation.params, ...(search ? [`%${search}%`, `%${search}%`] : [])];
     const [teams, members, total] = await Promise.all([
       query<{ id: number; name: string; count: number }>(`SELECT t.id, t.name, COUNT(a.wca_id)::int AS count FROM wca_teams t LEFT JOIN wca_person_teams a ON a.team_id = t.id GROUP BY t.id ORDER BY t.id`),
-      query(`SELECT s.wca_id AS "wcaId", s.name, co.iso2, t.id AS "teamId", t.name AS "teamName", best.average AS "bestAverage"
+      query(`SELECT s.wca_id AS "wcaId", s.name, co.iso2, t.id AS "teamId", t.name AS "teamName",
+          best.average AS "bestAverage", best.single AS "bestSingle",
+          best.competitions AS "competitionCount", best.wins AS "championshipCount",
+          NULLIF(sr.ranks_world[${cubeRankIndex}], 0) AS "singleWorldRank",
+          NULLIF(ar.ranks_world[${cubeRankIndex}], 0) AS "averageWorldRank"
         FROM wca_person_teams a JOIN wca_persons s ON s.wca_id = a.wca_id JOIN wca_teams t ON t.id = a.team_id
         LEFT JOIN wca_countries co ON co.id = s.country_id
-        LEFT JOIN LATERAL (SELECT MIN(average) AS average FROM wca_person_results r WHERE r.wca_id = s.wca_id AND r.event_id = '333' AND average > 0) best ON TRUE
+        LEFT JOIN wca_person_ranks sr ON sr.wca_id = s.wca_id AND sr.is_avg = FALSE
+        LEFT JOIN wca_person_ranks ar ON ar.wca_id = s.wca_id AND ar.is_avg = TRUE
+        LEFT JOIN LATERAL (
+          SELECT MIN(average) FILTER (WHERE event_id = '333' AND average > 0) AS average,
+            MIN(best) FILTER (WHERE event_id = '333' AND best > 0) AS single,
+            COUNT(DISTINCT comp_id)::int AS competitions,
+            COUNT(*) FILTER (WHERE round_type_id IN (${finalRoundSql}) AND pos = 1)::int AS wins
+          FROM wca_person_results r WHERE r.wca_id = s.wca_id
+        ) best ON TRUE
         ${where} ORDER BY best.average ASC NULLS LAST, s.wca_id LIMIT ? OFFSET ?`, [...params, size, (page - 1) * size]),
       query<{ count: number }>(`SELECT COUNT(*)::int AS count FROM wca_person_teams a JOIN wca_persons s ON s.wca_id = a.wca_id ${where}`, params),
     ]);

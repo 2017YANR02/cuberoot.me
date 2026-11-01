@@ -22,6 +22,7 @@
  *   - Inline streak badge in the header (consecutive days ending today)
  */
 
+import MoreToggle from '../../MoreToggle';
 import { useEffect, useMemo, useState } from 'react';
 import { Flame } from 'lucide-react';
 import type { Solve } from '@cuberoot/shared/timer';
@@ -359,7 +360,7 @@ export default function PracticeHeatmap({
             <span>{streakText}</span>
           </span>
           {sparse && (
-            <button
+            <MoreToggle expanded={calendarExpanded}
               type="button"
               className="tc-heatmap-expand-btn"
               onClick={() => setCalendarExpanded(v => !v)}
@@ -369,7 +370,7 @@ export default function PracticeHeatmap({
                                               })
                 : tr({ zh: '展开日历', en: 'Show calendar'
                                               })}
-            </button>
+            </MoreToggle>
           )}
         </div>
         {showCalendar && (

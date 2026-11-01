@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import {
   type ChangeEvent,
   type CSSProperties,
@@ -591,7 +592,7 @@ function PromptComposer({
             );
           })}
           <details className={styles.promptPresets}>
-            <summary>{t('整套现成模板', 'Complete presets')}</summary>
+            <MoreToggle as="summary">{t('整套现成模板', 'Complete presets')}</MoreToggle>
             <div className={styles.promptChoices}>
               {library.presets.map((preset) => (
                 <button className={styles.promptChoice} key={preset.id} type="button" title={preset.body} onClick={() => usePreset(preset.body)}>{t(preset.nameZh, preset.nameEn)}</button>
@@ -1250,7 +1251,7 @@ export function PlatformQrCardStudio({
               </div>
               {artError ? <p className={styles.errorText} role="alert">{artError}</p> : null}
 
-              <details><summary>{t('落地页、链接与主标题（与设计一起保存）', 'Landing page, links and main title (save with design)')}</summary>
+              <details><MoreToggle as="summary">{t('落地页、链接与主标题（与设计一起保存）', 'Landing page, links and main title (save with design)')}</MoreToggle>
                 <PlatformQrMetadataEditor entity={activeEntity!} resourceId={activeId!} busy={saveState === 'saving' ? `admin-save:${activeId}` : null} cardDraft={activeCard} saveRef={metadataSave} runAction={async (id, body) => {
                   const row = await qrAdminRequest<QrAdminRow>(`/${encodeURIComponent(id)}`, { method: 'PATCH', body });
                   mergeCatalog([row]);

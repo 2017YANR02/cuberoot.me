@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import BackHome from '@/components/BackHome';
+import PageBackLink from '@/components/PageBackLink';
 import Sq1AlgorithmTrainer from '@/components/Sq1AlgorithmTrainer';
 import { Sq1Importer, Sq1Inspector, Sq1Visualizer } from '@/components/Sq1InputTools';
 import { Sq1CountPositions, Sq1ParityGame, Sq1ShapeTrainer } from '@/components/Sq1PracticeTools';
@@ -55,7 +55,7 @@ export default function Sq1ToolsClient({ tool }: { tool: Sq1Tool }) {
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        {!host && <div className="page-back-row"><BackHome /></div>}
+        {!host && <div className="page-back-row"><PageBackLink fallback="/alg/sq1" /></div>}
         <h1 className={styles.title}>{tr(text.title)}</h1>
         <p className={styles.intro}>{tr(text.intro)}</p>
       </header>

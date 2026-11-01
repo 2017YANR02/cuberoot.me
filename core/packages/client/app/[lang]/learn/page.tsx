@@ -1,5 +1,6 @@
 'use client';
 
+import PageHeading from '@/components/PageHeading';
 import { useEffect, useState } from 'react';
 import type { TeachingLearningContext } from '@cuberoot/shared/teaching';
 import AppLink from '@/components/AppLink';
@@ -37,7 +38,7 @@ export default function LearningCenterPage() {
   if (!user || !getSessionToken()) {
     return (
       <main className="teaching-page teaching-centered">
-        <h1>{t('学习中心', 'Learning center')}</h1>
+        <PageHeading>{t('学习中心', 'Learning center')}</PageHeading>
         <p>{t('登录后查看学员周报、课后反馈和训练任务。', 'Sign in to view weekly reports, lesson feedback, and training assignments.')}</p>
         <AppLink className="teaching-primary-link" href={`/account${nextQuery(window.location.pathname)}`} prefetch={false}>{t('登录', 'Sign in')}</AppLink>
       </main>
@@ -47,8 +48,7 @@ export default function LearningCenterPage() {
   return (
     <main className="teaching-page">
       <header className="teaching-header">
-        <AppLink className="teaching-eyebrow" href="/account" prefetch={false}>{t('我的账号', 'My account')}</AppLink>
-        <h1>{t('学习中心', 'Learning center')}</h1>
+        <PageHeading>{t('学习中心', 'Learning center')}</PageHeading>
         <p className="teaching-lead">{t('查看与当前账号关联的学员档案。监护人只能看到明确向监护人发布的内容。', 'View learner profiles linked to this account. Guardians only see content explicitly published to guardians.')}</p>
       </header>
       {contexts.some(context => context.relationships.some(relationship => relationship.kind === 'student')) && <section className="teaching-list">

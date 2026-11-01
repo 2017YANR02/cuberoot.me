@@ -1,4 +1,5 @@
-import { ArrowUpRight, ChartNoAxesColumnIncreasing, ChevronDown, Handshake, Megaphone } from '@app-foundation/icons/lucide';
+import MoreToggle from '@/components/MoreToggle';
+import { ArrowUpRight, ChartNoAxesColumnIncreasing, Handshake, Megaphone } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 
@@ -55,7 +56,7 @@ export default function CooperationOpportunity() {
       <span className="bp-stream-status">{tr(status)}</span><Icon size={30} aria-hidden />
       <h3>{tr(title)}</h3><p>{tr(body)}</p>
       <AppLink href={href} prefetch={false} className="overview-text-link">{tr(link)}<ArrowUpRight size={16} aria-hidden /></AppLink>
-      <details className="bp-cooperation-detail"><summary>{tr({ zh: '可以怎么合作', en: 'How we could work together' })}<ChevronDown size={16} aria-hidden /></summary><dl className="overview-cost-list"><div><dt><strong>{tr({ zh: '您的回报', en: 'Your potential return' })}</strong><span>{tr(value)}</span></dt></div><div><dt><strong>{tr({ zh: '第一步怎么走', en: 'The first step' })}</strong><span>{tr(next)}</span></dt></div></dl></details>
+      <details className="bp-cooperation-detail"><MoreToggle as="summary">{tr({ zh: '可以怎么合作', en: 'How we could work together' })}</MoreToggle><dl className="overview-cost-list"><div><dt><strong>{tr({ zh: '您的回报', en: 'Your potential return' })}</strong><span>{tr(value)}</span></dt></div><div><dt><strong>{tr({ zh: '第一步怎么走', en: 'The first step' })}</strong><span>{tr(next)}</span></dt></div></dl></details>
     </article>)}</div>
     <div className="overview-review" data-site-surface="panel"><Handshake size={26} aria-hidden /><div>
       <h3>{tr({ zh: '您看方向与结果，具体执行交给我们。', en: 'Stay close to the direction and results. Leave delivery to us.' })}</h3>

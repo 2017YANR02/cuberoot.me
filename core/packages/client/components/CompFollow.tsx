@@ -4,7 +4,8 @@
 // 可复用的星标按钮。首页 OngoingComps 所有比赛标签(当前/公示/报名/未来/往期)共用一份
 // 关注状态:在 OngoingComps 顶层调用一次 useCompFollows(),把 { loggedIn, follows, toggle }
 // 下发给各 tab 的卡片 / chip,避免每个组件各自 fetch、各自乐观态打架。
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
+import { useRetainedState } from '@/hooks/useRetainedState';
 import { Star } from '@app-foundation/icons/lucide';
 import { useAuthStore } from '@/lib/auth-store';
 import { fetchFollows, addFollow, removeFollow } from '@/lib/comp-follows';
@@ -22,19 +23,19 @@ export interface CompFollowState {
 /** 登录用户的关注集合(乐观更新 + server 同步)。未登录返回空集,toggle 无副作用调用方应先门控。 */
 export function useCompFollows(): CompFollowState {
   const user = useAuthStore((s) => s.user);
-  const [follows, setFollows] = useState<Set<string>>(() => new Set());
-  const [loaded, setLoaded] = useState(false);
+  const [follows, setFollows] = useRetainedState<Set<string>>('comp-follows:ids', new Set());
+  const [loaded, setLoaded] = useRetainedState('comp-follows:loaded', false);
 
   useEffect(() => {
     if (!user) { setFollows(new Set()); setLoaded(true); return; }
     let on = true;
-    setLoaded(false);
+    // Keep the last snapshot visible while refreshing after route navigation.
     fetchFollows()
       .then((ids) => { if (on) setFollows(new Set(ids)); })
       .catch(() => { /* best-effort */ })
       .finally(() => { if (on) setLoaded(true); });
     return () => { on = false; };
-  }, [user]);
+  }, [user, setFollows, setLoaded]);
 
   const toggle = useCallback((id: string) => {
     setFollows((prev) => {
@@ -43,7 +44,7 @@ export function useCompFollows(): CompFollowState {
       else { next.add(id); addFollow(id).catch(() => {}); }
       return next;
     });
-  }, []);
+  }, [setFollows]);
 
   return { loggedIn: !!user, follows, toggle, loaded };
 }

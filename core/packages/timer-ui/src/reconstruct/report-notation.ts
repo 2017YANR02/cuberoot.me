@@ -4,7 +4,7 @@ import { reconTextForClipboard } from '@cuberoot/shared/timer/reconstruct/recon-
 import type { ReconstructionType } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { reconCommentLinks, type ReconCommentCases } from '@cuberoot/shared/recon/comment-links';
 import type { ReconstructLocalize } from './ReconstructHost';
-import { projectReconNotation, projectReconComment, reconCommentFills, reconNotationState } from './report-presentation';
+import { reportHasLibraryNotation, projectReconNotation, projectReconComment, reconCommentFills, reconNotationState } from './report-presentation';
 import { groupNode, textNode, buttonNode, type ReportNode, type ReportUIState, type ReportAction } from './report-content';
 
 export function reportNotation(recon:ReconTextResult|null,method:ReconstructionType,state:ReportUIState,tr:ReconstructLocalize,options:{
@@ -16,6 +16,7 @@ export function reportNotation(recon:ReconTextResult|null,method:ReconstructionT
 }={}) {
   const {projection,decorated,clipboard}=options.prepared??prepareReportNotation(recon,method,state.simplified,options.wasteBrackets);
   if(!recon||!projection.shownRecon||!recon.lines.length)return {node:null,clipboard,projection};
+  const libraryNotation = reportHasLibraryNotation(recon, method);
   const groups:ReportNode[]=[];let groupKey='';
   const labels=recon.lines.map(line=>line.label);
   const color=(id:string,colors:string):ReportNode=>({id,kind:'color',colors:f2lDisplayColors(colors,crossColorFromLabels(labels)),fills:reconCommentFills(colors,labels),className:'sml-label-chip'});
@@ -30,15 +31,15 @@ export function reportNotation(recon:ReconTextResult|null,method:ReconstructionT
       const after:ReportAction=range?{type:'play-from',value:(range.seekEndIdx??range.endIdx)+1,timeMs:range.endTs,copyText}:before;
       return {token,before,after};
     });
-    const comments=projectReconComment(line.label??'',method,options.cases??new Map(),colors=>options.caseHref?.(sourceLine,colors)).map((part,j)=>({...part.colors?color(String(j),part.colors):textNode(String(j),part.text),href:part.href}));
+    const comments=projectReconComment(line.label??'',libraryNotation ? 'cfop' : method,options.cases??new Map(),colors=>options.caseHref?.(sourceLine,colors)).map((part,j)=>({...part.colors?color(String(j),part.colors):textNode(String(j),part.text),href:part.href}));
     const body=groupNode('body',[
       {id:'moves',kind:'moves',text:tokens.join(' '),tokens:ranges,action:rowAction,className:`sml-moves${options.canSeek?' is-seek':''}`,title:options.canSeek?tr({zh:'复制本行并定位回放',en:'Copy this line and seek playback'}):tr({zh:'复制本行',en:'Copy this line'})},
       comments.length?groupNode('comment',comments,'sml-label','flow'):null,
     ],'sml-body','flow');
     const row:ReportNode={...groupNode(line.key,[line.kind!=='inspection'?{id:`diagram:${sourceLine}`,kind:'slot' as const}:null,body],'sml-line sml-line-with-diagram','flow'),state:reconNotationState(line,options.currentIdx)??undefined};
     const lineText=tokens.join(' ')+(line.label?' // '+line.label:'');
-    row.notation=method==='training'?undefined:{line:lineText,crossColor:crossColorFromLabels(labels),
-      links:method==='cfop'?reconCommentLinks(lineText,options.cases,set=>options.caseHref?.(sourceLine,set)).flatMap(link=>{
+    row.notation=method==='training'&&!libraryNotation?undefined:{line:lineText,crossColor:crossColorFromLabels(labels),
+      links:libraryNotation?reconCommentLinks(lineText,options.cases,set=>options.caseHref?.(sourceLine,set)).flatMap(link=>{
         const href=link.href==='/alg/3x3/f2l'?options.caseHref?.(sourceLine,'F2L'):link.href;
         return href&&/\/alg\/3x3\/[^/]+\//.test(href)?[{...link,href}]:[];
       }):[],

@@ -1,12 +1,13 @@
 'use client';
 /** @module Named team checklists, using the workspace host and forms. */
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useRef, useState } from 'react';
 import { parseAsInteger, parseAsStringEnum, useQueryState } from 'nuqs';
 import { ErrorNotice, Field, Form, EditorDialog, useResource, useWorkspace, value, type ProjectList } from '@app-foundation/workspace-ui';
 import { orderChecklistItems, type Checklist, type ChecklistItem } from '@cuberoot/shared/workspace-planning';
 import { useT } from '@/hooks/useT';
 import { Tooltip } from '@/components/Tooltip';
-import { Archive, ArchiveRestore, ChevronsDown, ChevronsUp, ChevronRight, Folder, FolderOpen } from '@app-foundation/icons/lucide';
+import { Archive, ArchiveRestore, ChevronsDown, ChevronsUp, Folder, FolderOpen } from '@app-foundation/icons/lucide';
 
 function groupChecklistItems(items: ChecklistItem[]) {
   const groups = new Map<string, ChecklistItem[]>();
@@ -118,13 +119,13 @@ function ChecklistPanel({ list, itemStatus, archiveSupported, reload, edit, onSa
     <div className="workspace-list-heading"><h2>{list.name}</h2>{(list.projectName || !list.active) && <span className="staff-muted">{list.projectName}{!list.active && `${list.projectName ? ' · ' : ''}${t('已归档', 'Archived')}`}</span>}{list.canEdit && <div className="staff-toolbar-actions"><Button action="edit" variant="secondary" disabled={busy} onClick={edit}>{t('编辑', 'Edit')}</Button><Button action="delete" variant="secondary" disabled={busy} aria-label={`${t('删除清单', 'Delete checklist')}: ${list.name}`} onClick={() => setDeleting(true)}>{t('删除清单', 'Delete checklist')}</Button></div>}</div>
     <ErrorNotice error={error} retry={reload} />
     <div className="workspace-check-tree">{groupChecklistItems(list.items.filter(item => itemStatus === 'all' || (itemStatus === 'archived' ? item.archived : !item.archived))).map(group => <details key={group.path} className="workspace-check-folder">
-      <summary>
-        <ChevronRight className="workspace-check-chevron" size={16} aria-hidden="true" />
+      <MoreToggle as="summary">
+
         <Folder className="workspace-check-folder-closed" size={20} aria-hidden="true" />
         <FolderOpen className="workspace-check-folder-open" size={20} aria-hidden="true" />
         <span className="workspace-check-folder-name">{group.path || t('其他', 'Other')}</span>
         <span className="workspace-check-count" aria-label={`${t('已完成', 'Completed')}: ${group.completed} / ${group.items.length}`}>{group.completed}/{group.items.length}</span>
-      </summary>
+      </MoreToggle>
       <ul className="workspace-check-items">{group.items.map(item => <li key={item.id} className={item.done ? 'workspace-check-item is-done' : 'workspace-check-item'}>
       {/* allow-checkbox: Checklist completion is a task checkbox, not a settings switch. */}
       <input type="checkbox" checked={item.done} disabled={!editable || busy || !!item.archived} aria-label={`${t('完成', 'Complete')}: ${item.text}`} onChange={() => { void save(list.items.map(row => row.id === item.id ? { ...row, done: !row.done } : row)).catch(() => {}); }} />

@@ -20,7 +20,7 @@ describe('public feedback UI contract', () => {
     expect(page).toContain('<FeedbackConversation feedbackId={it.id}');
     expect(page).toContain('<UserContactLink userId={it.userId} className="fbm-author">{author}</UserContactLink>');
     expect(page).not.toContain('<UserIdLabel');
-    const expandButton = page.match(/<button\b[^>]*className="fbm-card-head"[\s\S]*?<\/button>/)?.[0];
+    const expandButton = page.match(/<MoreToggle\b[^>]*className="fbm-card-head"[\s\S]*?<\/MoreToggle>/)?.[0];
     expect(expandButton).toBeDefined();
     expect(expandButton).not.toContain('<UserContactLink');
     expect(page).not.toContain('fetchMyFeedback');

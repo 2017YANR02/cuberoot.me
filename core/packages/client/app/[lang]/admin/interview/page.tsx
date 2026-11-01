@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { sessionFetch } from '@/lib/session-fetch';
 import { useEffect, useState } from 'react';
 import AppLink from '@/components/AppLink';
@@ -59,7 +60,7 @@ export default function InterviewPage() {
           <h2>{item.id}. {item.question}</h2>
           <blockquote>{item.answer.split('\n\n').map((paragraph, index) => <p key={index}>{paragraph}</p>)}</blockquote>
           <details className="interview-note">
-            <summary>{t('备稿备注', 'Preparation notes')}</summary>
+            <MoreToggle as="summary">{t('备稿备注', 'Preparation notes')}</MoreToggle>
             <p>{item.confirm}</p>
             <p className="interview-example">{item.example}</p>
             {item.sourceIds && <ul>{draft.research?.sources.filter(source => item.sourceIds?.includes(source.id)).map(source => <li key={source.id}><a href={source.url} target="_blank" rel="noreferrer">{source.title}</a></li>)}</ul>}
@@ -67,13 +68,13 @@ export default function InterviewPage() {
         </section>)}
         <section className="interview-question">
           <details>
-            <summary>{t('尚待确认的个人信息', 'Personal details still to confirm')}</summary>
+            <MoreToggle as="summary">{t('尚待确认的个人信息', 'Personal details still to confirm')}</MoreToggle>
             <ul>{draft.pending.map(item => <li key={item}>{item}</li>)}</ul>
           </details>
         </section>
         {draft.research && <section className="interview-question">
           <details>
-            <summary>{t('调研资料与出处', 'Research and sources')}</summary>
+            <MoreToggle as="summary">{t('调研资料与出处', 'Research and sources')}</MoreToggle>
             <p>{t('查阅日期：', 'Reviewed: ')}{draft.research.checkedAt}</p>
             <p>{draft.research.summary}</p>
             <ol>{draft.research.sources.map(source => <li key={source.id}>

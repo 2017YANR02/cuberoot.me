@@ -12,9 +12,10 @@
  */
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { Fragment, useState } from 'react';
 import Link from '@/components/AppLink';
-import { ArrowLeft, Boxes, Cpu, Eye, ShieldCheck, Sparkles, Wand2, ChevronRight } from '@app-foundation/icons/lucide';
+import { ArrowLeft, Boxes, Cpu, Eye, ShieldCheck, Sparkles, Wand2 } from '@app-foundation/icons/lucide';
 import { useTranslation } from 'react-i18next';
 import { TeX } from '@/components/math/Tex';
 import { useT } from '@/hooks/useT';
@@ -248,11 +249,11 @@ export default function KernelPage() {
                     <Fragment key={rowKey}>
                       <tr className={open ? 'kn-row-open' : ''}>
                         <td>
-                          <button type="button" className="kn-row-btn" onClick={() => setOpenKey(open ? null : rowKey)}>
-                            <ChevronRight size={13} className={open ? 'kn-caret kn-caret-open' : 'kn-caret'} />
+                          <MoreToggle expanded={open} type="button" className="kn-row-btn" onClick={() => setOpenKey(open ? null : rowKey)}>
+
                             {tr(p)}
                             {p.note && <span className="kn-row-note">{tr(p.note)}</span>}
-                          </button>
+                          </MoreToggle>
                         </td>
                         <td><span className={`kn-tag kn-tag-${p.path}`}>{p.path === 'pg' ? 'PuzzleGeometry' : t('置换内核', 'permutation')}</span></td>
                         <td className="kn-r kn-mono">{sci(f.order)}</td>

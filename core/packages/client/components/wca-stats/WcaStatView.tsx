@@ -10,6 +10,7 @@
 // This file is the orchestrator only. The data-shape types, the pure cell/markdown
 // render helpers, and the 8 sub-view components live in the sibling
 // WcaStatView.{types,cells,views} modules (split out 2026-07 — no behavior change).
+import PageHeading from '@/components/PageHeading';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
@@ -252,7 +253,7 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
     <div className={wrapperClass}>
       {headerMode === 'full' && (
         <div className="wca-stats-header">
-          <h1>{tr({ zh: data.titleZh, en: data.title })}</h1>
+          <PageHeading backHref="/wca">{tr({ zh: data.titleZh, en: data.title })}</PageHeading>
           {data.note && (
             <p className="wca-stats-note">{tr({ zh: data.noteZh ?? data.note, en: data.note })}</p>
           )}

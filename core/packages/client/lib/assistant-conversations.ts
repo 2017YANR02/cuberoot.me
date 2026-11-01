@@ -14,6 +14,7 @@ export interface AssistantConversation {
   snapshot: AssistantConversationSnapshot;
   pinned?: boolean;
   unreadReply?: boolean;
+  responding?: 'thinking' | 'writing';
   pending?: { question: string; images: AssistantImage[] };
 }
 interface Workspace { activeId: string; conversations: AssistantConversation[]; open: boolean; opened: boolean }
@@ -30,7 +31,7 @@ export function createAssistantConversations() {
   const write = (owner: string, next: Workspace) => {
     workspaces.set(owner, next);
     try {
-      const pinned = next.conversations.filter(item => item.pinned).map(item => ({ ...item, pending: undefined, snapshot: {
+      const pinned = next.conversations.filter(item => item.pinned).map(item => ({ ...item, pending: undefined, responding: undefined, snapshot: {
         ...item.snapshot, images: [], turns: item.snapshot.turns.map(turn => ({ ...turn, images: undefined, imagesExpired: !!turn.images?.length || turn.imagesExpired })),
       } }));
       if (restored.has(owner)) persistItem(`cuberoot-assistant-pinned:${owner}`, JSON.stringify(pinned));
@@ -47,7 +48,7 @@ export function createAssistantConversations() {
       try {
         const saved = JSON.parse(localStorage.getItem(`cuberoot-assistant-pinned:${owner}`) || '[]');
         if (!Array.isArray(saved)) return;
-        const conversations = saved.filter(item => item && typeof item.id === 'string' && item.snapshot && Array.isArray(item.snapshot.turns)).map(item => ({ ...item, pinned: true, pending: undefined }));
+        const conversations = saved.filter(item => item && typeof item.id === 'string' && item.snapshot && Array.isArray(item.snapshot.turns)).map(item => ({ ...item, pinned: true, pending: undefined, responding: undefined }));
         const current = read(owner);
         const existing = new Set(current.conversations.map(item => item.id));
         if (conversations.length) write(owner, { ...current, activeId: current.activeId || conversations[0].id, conversations: [...current.conversations, ...conversations.filter(item => !existing.has(item.id))] });
@@ -105,6 +106,13 @@ export function createAssistantConversations() {
     select(owner: string, id: string) {
       const current = read(owner);
       if (current.activeId !== id && current.conversations.some(item => item.id === id)) write(owner, { ...current, activeId: id });
+    },
+    setResponding(owner: string, id: string, responding: AssistantConversation['responding']) {
+      const current = read(owner);
+      const found = current.conversations.find(item => item.id === id);
+      if (!found || found.responding === responding) return;
+      write(owner, { ...current, conversations: current.conversations.map(item => item.id === id
+        ? { ...item, responding, unreadReply: responding ? false : item.unreadReply } : item) });
     },
     replyCompleted(owner: string, id: string) {
       const current = read(owner);

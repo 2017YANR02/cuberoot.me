@@ -1,8 +1,9 @@
 'use client';
+import MoreToggle from './MoreToggle';
 import type { TimerOverlayControlProps } from './timer-overlay-control';
 
 import { Fragment, useEffect, useMemo, useRef, useState, useLayoutEffect, useImperativeHandle, type Ref } from 'react';
-import { X, ChevronDown, ChevronUp, CheckSquare, Trash2, MoreVertical } from 'lucide-react';
+import { X, CheckSquare, Trash2, MoreVertical } from 'lucide-react';
 import { eventInfo, type Solve, type Penalty } from '@cuberoot/shared/timer';
 import {
   TIMER_HISTORY_PENALTIES,
@@ -634,10 +635,10 @@ export function TimerHistoryWorkspace({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button
+          <MoreToggle
             type="button"
             onClick={() => setFiltersExpanded(v => !v)}
-            aria-expanded={filtersExpanded}
+            expanded={filtersExpanded}
             style={{
               background: 'transparent',
               border: 'none',
@@ -652,10 +653,10 @@ export function TimerHistoryWorkspace({
               marginLeft: isMobile ? -4 : 0,
             }}
           >
-            {filtersExpanded ? <ChevronUp size={isMobile ? 16 : 12} /> : <ChevronDown size={isMobile ? 16 : 12} />}
+
             {tr({ zh: '筛选', en: 'Filters'
             })}
-          </button>
+          </MoreToggle>
           {activeFilterCount > 0 && (
             <span style={{ fontSize: 11, color: 'var(--accent)' }}>
               {(tr({zh: `${activeFilterCount} 个筛选生效`, en: `${activeFilterCount} filter${activeFilterCount === 1 ? '' : 's'} active`}))}

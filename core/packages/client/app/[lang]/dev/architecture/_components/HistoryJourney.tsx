@@ -1,5 +1,7 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
+import MoreToggle from '@/components/MoreToggle';
 import { memo, useRef, useState, useEffect, useCallback, type RefObject } from 'react';
 import { parseAsStringLiteral, useQueryState } from 'nuqs';
 import { ArrowLeft, ArrowRight, ArrowUp, ArrowUpRight, MoveHorizontal, BookOpen, Pause, Play, Sun, Moon, Sparkles, Download, RotateCcw, Gamepad2 } from '@app-foundation/icons/lucide';
@@ -256,7 +258,7 @@ export default function HistoryJourney() {
           <div className={`journey-trick-feedback is-${playScore.status}`} role="status">{playScore.status === 'boost' ? tr({ zh: '漂亮落地！顺风加速', en: 'Clean landing! A tailwind boost' }) : playScore.status === 'stumble' ? tr({ zh: '稳住，再来一次', en: 'Find your balance. Try again' }) : ''}</div>
           <div className="journey-landing-cue">{tr({ zh: '松手，准备落地', en: 'Release to land' })}</div>
           {isGame && <>
-            <div className="journey-game-bar"><h1>{tr({ zh: '山河滑行', en: 'Paper Odyssey' })}</h1><ClearButton variant="standalone" ariaLabel={tr({ zh: '退出游戏，返回画卷', en: 'Leave game and return to the landscape' })} onClick={() => { pauseWalking(); void setMode(null); }} /></div>
+            <div className="journey-game-bar"><div className="page-back-heading"><PageBackLink fallback="/dev/architecture/history" /><h1>{tr({ zh: '山河滑行', en: 'Paper Odyssey' })}</h1></div><ClearButton variant="standalone" ariaLabel={tr({ zh: '退出游戏，返回画卷', en: 'Leave game and return to the landscape' })} onClick={() => { pauseWalking(); void setMode(null); }} /></div>
             {started && position !== HISTORY_LAST && <p className="journey-game-mission">{playScore.lights < 12 ? tr({ zh: `沿途拾光 ${playScore.lights} / 12`, en: `Gather light ${playScore.lights} / 12` }) : playScore.flips < 3 ? tr({ zh: `乘风空翻 ${playScore.flips} / 3`, en: `Ride the wind ${playScore.flips} / 3 flips` }) : tr({ zh: '拾光成章，继续探索山河', en: 'A chapter of light. Keep exploring' })}</p>}
             {(!started || position === HISTORY_LAST) && status === 'ready' && <div className="journey-game-welcome">
               <p className="journey-eyebrow">CUBEROOT / PAPER ODYSSEY</p>
@@ -298,7 +300,7 @@ export default function HistoryJourney() {
           {events.map(event => <article className="journey-story" key={`${event.date}-${event.en.title}`}><h3>{tr(event).title}</h3><p>{tr(event).body}</p><p>{tr(event).expand}</p></article>)}
         </>}
       </section>
-      <details className="journey-archive" onToggle={event => setArchiveOpen(event.currentTarget.open)}><summary>{tr({ zh: '翻阅完整记录', en: 'Browse the complete archive' })}<span>{tr({ zh: `${TIMELINE.length} 项关键改动，${DAYS.length} 天更新`, en: `${TIMELINE.length} milestones, ${DAYS.length} days of updates` })}</span></summary>{archiveOpen && <MemoHistoryArchive />}</details>
+      <details className="journey-archive" onToggle={event => setArchiveOpen(event.currentTarget.open)}><MoreToggle as="summary">{tr({ zh: '翻阅完整记录', en: 'Browse the complete archive' })}<span>{tr({ zh: `${TIMELINE.length} 项关键改动，${DAYS.length} 天更新`, en: `${TIMELINE.length} milestones, ${DAYS.length} days of updates` })}</span></MoreToggle>{archiveOpen && <MemoHistoryArchive />}</details>
     </main>
   );
 }

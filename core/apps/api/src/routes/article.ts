@@ -20,6 +20,8 @@ import { bodyLimit } from 'hono/body-limit';
 import { query } from '../db/connection.js';
 import { canThumbnailWebp, imageThumbnail, THUMBNAIL_WIDTHS } from '../utils/image_thumbnail.js';
 import { apiOrigin } from '../utils/api_origin.js';
+import { hasActiveMembership } from '../utils/membership.js';
+import { GALLERY_IS_PUBLIC, GALLERY_OWNER_JOIN } from '../utils/gallery.js';
 import {
   requireAuth,
   requireAdmin,
@@ -175,9 +177,10 @@ articleRoutes.get('/article/me', async (c) => {
   });
 });
 
-// GET /v1/article/img/:id — 公开服务 bytea (no auth)。原图/稳定缩略图 immutable；临时转换失败 no-store。
+// Article images are immutable; gallery originals/thumbnails check visibility and never cache.
 // NOTE: 放在 /article/:slug 之前,否则 '/article/img/:id' 会被 :slug 吞掉。
 async function serveArticleImage(c: Context) {
+  c.header('Cache-Control', 'no-store');
   const widthParam = c.req.param('width');
   const width = Number(widthParam);
   if (widthParam !== undefined && (!THUMBNAIL_WIDTHS.has(width) || c.req.query('v') !== '1')) {
@@ -187,23 +190,36 @@ async function serveArticleImage(c: Context) {
   const id = Number(c.req.param('id'));
   if (!Number.isFinite(id)) return c.json({ error: 'invalid id' }, 400);
 
-  const rows = await query<{ data: Buffer | Uint8Array; mime: string }>(
-    'SELECT data, mime FROM article_image WHERE id = ?',
+  const rows = await query<{
+    data: Buffer | Uint8Array; mime: string; owner_wca_id: string;
+    gallery_status: string | null; gallery_public: boolean; gallery_attached: boolean;
+  }>(
+    `SELECT i.data, i.mime, i.owner_wca_id, i.gallery_status,
+      ${GALLERY_IS_PUBLIC} AS gallery_public,
+      EXISTS (SELECT 1 FROM app_users u WHERE ${GALLERY_OWNER_JOIN}) AS gallery_attached
+      FROM article_image i WHERE i.id = ?`,
     [id],
   );
   if (rows.length === 0) return c.json({ error: 'Not found' }, 404);
 
   const r = rows[0];
+  const gallery = r.gallery_status != null;
+  if (gallery && !r.gallery_public) {
+    const user = await authenticateUser(c.req.header('Authorization'));
+    const owner = user && user.wcaId.toUpperCase() === r.owner_wca_id.toUpperCase();
+    const reviewer = user?.isAdmin && r.gallery_status === 'pending' && r.gallery_attached;
+    if (!owner && !reviewer) return c.json({ error: 'Not found' }, 404);
+  }
   const buf = r.data instanceof Uint8Array ? r.data : Uint8Array.from(r.data as unknown as number[]);
   if (THUMBNAIL_WIDTHS.has(width) && c.req.query('v') === '1' && canThumbnailWebp(Buffer.from(buf), r.mime)) {
     const thumbnail = await imageThumbnail(id, Buffer.from(buf), r.mime, width);
     c.header('Content-Type', thumbnail ? 'image/webp' : r.mime);
     // A busy/missing encoder is temporary; never cache that fallback for a year.
-    c.header('Cache-Control', thumbnail ? 'public, max-age=31536000, immutable' : 'no-store');
+    c.header('Cache-Control', thumbnail && !gallery ? 'public, max-age=31536000, immutable' : 'no-store');
     return c.body((thumbnail ?? buf) as unknown as ArrayBuffer);
   }
   c.header('Content-Type', r.mime);
-  c.header('Cache-Control', 'public, max-age=31536000, immutable');
+  c.header('Cache-Control', gallery ? 'no-store' : 'public, max-age=31536000, immutable');
   return c.body(buf as unknown as ArrayBuffer);
 }
 articleRoutes.get('/article/img/:id', serveArticleImage);
@@ -269,16 +285,22 @@ const imgBodyLimit = bodyLimit({
   onError: (c) => c.json({ error: 'Payload too large (max 8MB)' }, 413),
 });
 
-articleRoutes.post('/article/img', imgBodyLimit, async (c) => {
+async function uploadArticleImage(c: Context) {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
   const user = await requireAuth(c);
 
-  let body: { dataB64?: unknown; mime?: unknown };
+  let body: { dataB64?: unknown; mime?: unknown; purpose?: unknown };
   try {
-    body = await c.req.json<{ dataB64?: unknown; mime?: unknown }>();
+    body = await c.req.json<{ dataB64?: unknown; mime?: unknown; purpose?: unknown }>();
   } catch {
     throw new Error('Validation: invalid json');
+  }
+
+  if (body.purpose != null && body.purpose !== 'gallery') return c.json({ error: 'invalid image purpose' }, 400);
+  const gallery = c.req.path.endsWith('/article/img/gallery') || body.purpose === 'gallery';
+  if (gallery && !user.isAdmin && !await hasActiveMembership(user.wcaId)) {
+    return c.json({ error: 'active membership required' }, 403);
   }
 
   const mime = typeof body.mime === 'string' ? body.mime.trim().toLowerCase() : '';
@@ -307,14 +329,17 @@ articleRoutes.post('/article/img', imgBodyLimit, async (c) => {
   const dims = parseImageDimensions(buf, mime);
 
   const inserted = await query<{ id: number | string }>(
-    `INSERT INTO article_image (data, mime, width, height, size_bytes, owner_wca_id)
-     VALUES (?, ?, ?, ?, ?, ?)
+    `INSERT INTO article_image (data, mime, width, height, size_bytes, owner_wca_id, gallery_status)
+     VALUES (?, ?, ?, ?, ?, ?, ?)
      RETURNING id`,
-    [buf, mime, dims.width, dims.height, buf.length, user.wcaId],
+    [buf, mime, dims.width, dims.height, buf.length, user.wcaId, gallery ? 'private' : null],
   );
   const id = Number(inserted[0].id);
   return c.json({ id, url: `${apiOrigin(c)}/v1/article/img/${id}` });
-});
+}
+articleRoutes.post('/article/img', imgBodyLimit, uploadArticleImage);
+// Distinct path fails closed against an older API during rolling deployment.
+articleRoutes.post('/article/img/gallery', imgBodyLimit, uploadArticleImage);
 
 // GET /v1/article/:slug — 单篇。已发布任何人可看;草稿仅 owner/admin。
 articleRoutes.get('/article/:slug', async (c) => {

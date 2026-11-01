@@ -4,6 +4,7 @@
 // Minimal trainer: enumerate non-buffer edge pairs, retry-until-exactly-2-flips
 // state build (randomEdge1 + exCode), m2pSolve each, output scramble list.
 
+import PageHeading from '@/components/PageHeading';
 import { useCallback, useEffect, useState, type JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Play } from '@app-foundation/icons/lucide';
@@ -112,8 +113,8 @@ export default function FlipTrainerPage(): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{tr({ zh: '翻棱公式训练', en: 'Edge Flip Trainer'
-        })}</h1>
+        <PageHeading backHref="/alg/3bld">{tr({ zh: '翻棱公式训练', en: 'Edge Flip Trainer'
+        })}</PageHeading>
       </div>
 
       <div className="bld-section">

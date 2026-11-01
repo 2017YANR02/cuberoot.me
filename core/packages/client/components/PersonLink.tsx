@@ -45,8 +45,8 @@ export default function PersonLink({
     return <span className={className} title={title}>{body}</span>;
   }
   return (
-    <AppLink href={personHref(wcaId)} prefetch={prefetch} className={className} title={title}>
-      {body}{showTeam && <WcaPersonTeamBadge wcaId={wcaId} />}
-    </AppLink>
+    <><AppLink href={personHref(wcaId)} prefetch={prefetch} className={className} title={title}>
+      {body}
+    </AppLink>{showTeam && <WcaPersonTeamBadge wcaId={wcaId} />}</>
   );
 }

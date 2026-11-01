@@ -8,8 +8,8 @@
  * 服务端实现 + 对比表 + 资料链接。窄屏卡片堆叠。无外部图表库依赖,
  * 流程图用 CSS box + Unicode 箭头。
  */
-import Link from '@/components/AppLink';
-import { ArrowLeft } from '@app-foundation/icons/lucide';
+import PageHeading from '@/components/PageHeading';
+
 import './scramble_555_about.css';
 import { useT } from "@/hooks/useT";
 
@@ -78,15 +78,9 @@ export default function Scramble555AboutPage() {
 
   return (
     <div className="s555-page">
-      <div className="s555-header">
-        <Link href="/scramble/gen" className="s555-back">
-          <ArrowLeft size={16} />
-          <span className="sr-only">{t('返回打乱生成器', 'Back to scramble generator')}</span>
-        </Link>
-      </div>
 
       <main className="s555-main">
-        <h1 className="s555-title">{t('5×5 打乱:随机转动 vs 随机状态', '5×5 scramble: random-move vs random-state')}</h1>
+        <PageHeading backHref="/scramble/gen" titleClassName="s555-title">{t('5×5 打乱:随机转动 vs 随机状态', '5×5 scramble: random-move vs random-state')}</PageHeading>
 
         <p className="s555-intro">
           {t(

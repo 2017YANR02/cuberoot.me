@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useState } from 'react';
 import { Check, Copy, Terminal } from '@app-foundation/icons/lucide';
 import { useCopy } from '@/hooks/useCopy';
@@ -56,7 +57,7 @@ ${executable} init --memory ${tiers[variant - 1]}`;
         <p>{t('生成结果位于仓库内：', 'Files are saved inside the repository:')}{' '}<code>solver/tables/cubeopt/opt{variant}/</code></p>
         <p>{t('再次执行同一条建表命令会校验并复用完整表。换电脑时复制整个目录，包括 .dat、small-memory.bin 和两份 JSON 文件。', 'Running the same initialization command again verifies and reuses complete tables. To move to another computer, copy the whole directory, including the .dat, small-memory.bin and both JSON files.')}</p>
         <details>
-          <summary>{t('Linux：建表后的求解示例', 'Linux: solve after initialization')}</summary>
+          <MoreToggle as="summary">{t('Linux：建表后的求解示例', 'Linux: solve after initialization')}</MoreToggle>
           <p>{t('仍在上面的求解器目录执行，随后按“标识、Tab、打乱”输入，每行一条。', 'Run from the same solver directory, then enter an ID, a Tab and a scramble, one per line.')}</p>
           <pre tabIndex={0} aria-label={t('Linux 求解命令', 'Linux solve command')}><code>{solve}</code></pre>
         </details>

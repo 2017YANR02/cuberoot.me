@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { loadAlg } from '@/lib/alg_case_alignment';
 import Link from '@/components/AppLink';
-import BackHome from '@/components/BackHome';
+import PageBackLink from '@/components/PageBackLink';
 import { CaseThumb } from '@/components/CaseThumb';
 import Sq1ToolNav from '@/components/Sq1ToolNav';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -44,7 +44,7 @@ export default function Sq1ShapeGuideClient() {
   return (
     <main className="recognition-guide-page">
       <div className="recognition-guide-top">
-        <div className="page-back-row"><BackHome /></div>
+        <div className="page-back-row"><PageBackLink fallback="/alg/sq1/cs" /></div>
         <Sq1ToolNav contained />
       </div>
       <header className="recognition-guide-hero">

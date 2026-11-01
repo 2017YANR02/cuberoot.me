@@ -39,7 +39,7 @@ export type EventId =
   | 'cross' | 'f2l' | 'll' | 'oll' | 'pll'
   // LL training subsets
   | 'coll' | 'cmll' | 'zbll' | 'eg1' | 'eg2'
-  | 'cll' | 'ell' | 'eocp' | '2gll' | 'ollcp' | 'zzll' | 'zbls' | 'lse' | 'l10p'
+  | 'cll' | 'ell' | 'eocp' | '2gll' | 'ollcp' | 'zzll' | 'zbls' | 'cfzb' | 'lse' | 'l10p'
   // Free-form (user types own scramble)
   | 'custom';
 
@@ -233,7 +233,7 @@ export const EVENTS: EventInfo[] = [
 
   // Non-WCA puzzles. Names follow wiki/glossary.json (the site's term base),
   // trimmed of the generic 「魔方」 suffix the way the WCA entries above are.
-  { id: 'fto',      nameEn: 'FTO',             nameZh: '转面八面体', group: 'nonwca', icon: 'puzzle-fto' },
+  { id: 'fto',      nameEn: 'FTO',             nameZh: '转面八面体', group: 'nonwca', icon: 'unofficial-fto' },
   { id: 'kilominx', nameEn: 'Kilominx',        nameZh: '二阶五魔',   group: 'nonwca', icon: 'unofficial-kilominx' },
   { id: 'gear',     nameEn: 'Gear Cube',       nameZh: '齿轮',       group: 'nonwca', icon: 'puzzle-gear' },
   { id: 'ivy',      nameEn: 'Ivy Cube',        nameZh: '枫叶',       group: 'nonwca', icon: 'unofficial-ivy' },
@@ -293,6 +293,7 @@ export const EVENTS: EventInfo[] = [
   { id: 'ollcp', nameEn: 'OLLCP', nameZh: 'OLLCP', group: 'll' },
   { id: 'zzll', nameEn: 'ZZLL', nameZh: 'ZZLL', group: 'll' },
   { id: 'zbls', nameEn: 'ZBLS', nameZh: 'ZBLS', group: 'll' },
+  { id: 'cfzb', nameEn: 'CFZB', nameZh: 'CFZB', group: 'll' },
   { id: 'lse', nameEn: 'LSE', nameZh: 'LSE', group: 'll' },
   { id: 'l10p', nameEn: 'L10P', nameZh: 'L10P', group: 'll' },
 

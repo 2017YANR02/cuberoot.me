@@ -43,6 +43,9 @@
   margin-top: 12px;
 }
 .member-profile-image { position: relative; min-width: 0; aspect-ratio: 4 / 3; }
+.member-profile-photo { min-width: 0; }
+.member-profile-photo-visibility { display: grid; gap: 4px; margin-top: 6px; font-size: 12px; }
+.member-profile-photo-visibility .member-profile-upload { margin: 0; padding: 6px 8px; justify-content: center; }
 .member-profile-image img { width: 100%; height: 100%; border-radius: 8px; object-fit: cover; }
 .member-profile-image-remove {
   position: absolute;

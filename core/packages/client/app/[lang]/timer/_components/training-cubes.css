@@ -1,0 +1,122 @@
+.timer-smart-cube-device__modal.bluetooth-modal.bt-training-modal {
+  width: min(360px, calc(100vw - 16px));
+}
+
+.bt-cube-list {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bt-cube-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 62px;
+  padding: 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--foreground);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.bt-cube-option:hover:not(:disabled) { background: var(--muted); }
+.bt-cube-option[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.bt-cube-option:focus-visible,
+.training-cube-previews:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.bt-cube-option:disabled { cursor: default; opacity: .55; }
+.bt-cube-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.bt-cube-option[aria-pressed="true"] .bt-cube-number { color: var(--accent); }
+.bt-cube-info { display: grid; flex: 1; min-width: 0; gap: 5px; }
+.bt-cube-name { font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.bt-cube-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.bt-cube-battery { display: inline-flex; align-items: center; gap: 4px; color: var(--muted-foreground); font-size: 11px; }
+.bt-cube-battery[data-low="true"] { color: var(--signal-warning); }
+.bt-cube-selected { flex-shrink: 0; color: var(--accent); visibility: hidden; }
+.bt-cube-option[aria-pressed="true"] .bt-cube-selected { visibility: visible; }
+.training-cube-status { color: var(--muted-foreground); font-size: 12px; line-height: 1.5; }
+.training-cube-status[data-status="preparing"] { color: var(--signal-info); }
+.training-cube-status[data-status="active"],
+.training-cube-status[data-status="queued"] { color: var(--signal-success); }
+.training-cube-status[data-status="running"],
+.training-cube-status[data-status="inspecting"] { color: var(--accent); }
+.training-cube-status[data-status="disconnected"] { color: var(--signal-warning); }
+.bt-training-modal .timer-smart-cube-device__actions { flex-wrap: nowrap; }
+.bt-training-modal .timer-smart-cube-device__actions .timer-smart-cube-device__connect,
+.bt-training-modal .timer-smart-cube-device__actions .timer-smart-cube-device__action {
+  min-height: 40px;
+  padding-inline: 10px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.bt-training-modal .timer-smart-cube-device__connect.bt-cube-add { width: auto; }
+.bt-training-modal .timer-smart-cube-device__action { flex: 0 0 auto; }
+.bt-cube-error { margin: 10px 0 0; color: var(--destructive); font-size: 12px; overflow-wrap: anywhere; }
+.bt-cube-connecting { animation: timer-smart-cube-device-spin 900ms linear infinite; }
+
+.timing-surface--solo .timing-surface-scramble:has(> .training-scramble-status) {
+  flex-direction: column;
+  align-items: stretch;
+}
+.training-scramble-status {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 18px;
+  padding-bottom: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+}
+.training-scramble-status > span { min-width: 0; overflow-wrap: anywhere; }
+
+.timing-surface--solo .timing-surface-sub:has(.training-cube-previews) {
+  width: 100%;
+  max-width: 100%;
+}
+.timing-surface--solo .timing-surface-cube-frame:has(.training-cube-previews) {
+  --cube-h: min(160px, 18dvh, 30vw);
+  width: 100%;
+  height: auto;
+  aspect-ratio: auto;
+}
+.training-cube-previews {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  gap: 16px;
+  padding: 8px 2px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  box-sizing: border-box;
+}
+.training-cube-preview { flex: 0 0 calc(var(--cube-h) * 1.4); min-width: 0; margin: 0; }
+.training-cube-preview:first-child { margin-left: auto; }
+.training-cube-preview:last-child { margin-right: auto; }
+.training-cube-preview .timer-live-cube { height: var(--cube-h); }
+.training-cube-caption { display: grid; justify-items: center; gap: 3px; margin-top: 10px; }
+.training-cube-identity { display: flex; align-items: center; gap: 6px; max-width: 100%; }
+.training-cube-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+@media (prefers-reduced-motion: reduce) {
+  .bt-cube-connecting { animation: none; }
+}

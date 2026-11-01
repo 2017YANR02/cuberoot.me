@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useMemo, useState } from 'react';
 import { countMoves, type Metric } from '@cuberoot/shared/alg-notation';
 import type { StatisticsData } from './useStatisticsData';
@@ -40,7 +41,7 @@ export default function SingleStatistics({ kind, data }: { kind: ScrambleKind; d
         <h3>{t('步数分布', 'Move-count distribution')}</h3>
         <table className="dz-stats-distribution"><thead><tr><th scope="col">{metric.toUpperCase()}</th><th scope="col">{t('数量', 'Count')}</th><th scope="col">{t('占比', 'Share')}</th><th scope="col">{t('分布', 'Distribution')}</th></tr></thead><tbody>{lengths.map(length => <tr key={length}><th scope="row">{length}</th><td>{histogram.get(length)}</td><td>{(100 * histogram.get(length)! / rows.length).toFixed(2)}%</td><td><progress aria-label={`${length} ${metric.toUpperCase()}`} value={histogram.get(length)} max={Math.max(...histogram.values())} /></td></tr>)}</tbody></table>
         <h3>{t('极端情况 · 全部并列 case', 'Extremes · All tied cases')}</h3>
-        {[...new Set([min, max])].map(length => <details key={length}><summary>{length === min ? t('最短', 'Shortest') : t('最长', 'Longest')} · {length} {metric.toUpperCase()} · {histogram.get(length)} {t('个 case', 'cases')}</summary><div className="dz-stats-extremes">{rows.filter(row => row.length === length).map(row => <article className="dz-stats-example" data-site-surface="panel" key={row.name}><strong>{row.name}</strong>{row.fallback && <p>{t('逆 case 回退', 'Inverse-case fallback')}</p>}<p>{metrics.map(m => `${countMoves(row.scramble, m)} ${m.toUpperCase()}`).join(' · ')}</p><code className="dz-stats-scramble">{row.scramble}</code><AppLink className="dz-about-start" prefetch={false} href={`/sim?puzzle=3&alg=${encodeURIComponent(row.scramble)}`}>{t('在模拟器中查看', 'View in simulator')} →</AppLink></article>)}</div></details>)}
+        {[...new Set([min, max])].map(length => <details key={length}><MoreToggle as="summary">{length === min ? t('最短', 'Shortest') : t('最长', 'Longest')} · {length} {metric.toUpperCase()} · {histogram.get(length)} {t('个 case', 'cases')}</MoreToggle><div className="dz-stats-extremes">{rows.filter(row => row.length === length).map(row => <article className="dz-stats-example" data-site-surface="panel" key={row.name}><strong>{row.name}</strong>{row.fallback && <p>{t('逆 case 回退', 'Inverse-case fallback')}</p>}<p>{metrics.map(m => `${countMoves(row.scramble, m)} ${m.toUpperCase()}`).join(' · ')}</p><code className="dz-stats-scramble">{row.scramble}</code><AppLink className="dz-about-start" prefetch={false} href={`/sim?puzzle=3&alg=${encodeURIComponent(row.scramble)}`}>{t('在模拟器中查看', 'View in simulator')} →</AppLink></article>)}</div></details>)}
       </>}
     </>}
   </section>;

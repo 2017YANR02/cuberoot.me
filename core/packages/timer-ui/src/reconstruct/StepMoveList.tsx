@@ -29,6 +29,7 @@
  */
 
 import ReportContent from './ReportContent';
+import { reportHasLibraryNotation } from './report-presentation';
 import { reportNotation, prepareReportNotation } from './report-notation';
 import { initialReportUI, reduceReportUI } from './report-content';
 import { useMemo, useState } from 'react';
@@ -70,11 +71,12 @@ const NoLineDiagrams: NonNullable<ReconstructHost['LineDiagramProvider']> = ({ c
 export default function StepMoveList({method='cfop',recon,currentIdx,onSeek,notice,feedback,clipboardText,toolbar}:StepMoveListProps) {
   const host=useReconstructHost(), {LineDiagramProvider=NoLineDiagrams}=host;
   const [ui,setUI]=useState(initialReportUI);
-  const commentCases=useNotationCases((recon?.lines??[]).map(line=>'// '+(line.label??'')).join('\n'),method==='cfop');
+  const libraryNotation = reportHasLibraryNotation(recon, method);
+  const commentCases=useNotationCases((recon?.lines??[]).map(line=>'// '+(line.label??'')).join('\n'),libraryNotation);
   const prepared=useMemo(()=>prepareReportNotation(recon,method,ui.simplified,host.wasteBrackets),[recon,method,ui.simplified,host.wasteBrackets]);
   const projection=prepared.projection;
   if(!recon)return null;
-  return <LineDiagramProvider scramble={recon.scramble} text={projection.displayText} enabled={method==='cfop'}>{(diagramAt,caseHrefAt)=>{
+  return <LineDiagramProvider scramble={recon.scramble} text={projection.displayText} enabled={libraryNotation}>{(diagramAt,caseHrefAt)=>{
     const content=reportNotation(recon,method,ui,host.localize,{prepared,currentIdx,canSeek:Boolean(onSeek),cases:commentCases,caseHref:caseHrefAt,inspectionColors:host.inspectionColors,wasteBrackets:host.wasteBrackets,
       notice:notice?{id:'notice',kind:'slot'}:null,feedback:feedback?{id:'feedback',kind:'slot'}:null});
     const slots:Record<string,React.ReactNode>={notice,feedback,

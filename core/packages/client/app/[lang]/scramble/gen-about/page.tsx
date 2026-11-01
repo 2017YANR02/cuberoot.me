@@ -4,8 +4,9 @@
  * /scramble/gen-about — 打乱生成器说明页。介绍三种模式 (comp / batch / paste) +
  * 后台预生成 pool 的工作方式。从 GenPage 标题的 HelpCircle 入口进入。
  */
+import PageHeading from '@/components/PageHeading';
 import Link from '@/components/AppLink';
-import { ArrowLeft } from '@app-foundation/icons/lucide';
+
 import './gen_about.css';
 import { useT } from "@/hooks/useT";
 
@@ -35,15 +36,9 @@ export default function GenAboutPage() {
 
   return (
     <div className="ga-page">
-      <div className="ga-header">
-        <Link href="/scramble/gen" className="ga-back">
-          <ArrowLeft size={16} />
-          <span className="sr-only">{t('返回打乱生成器', 'Back to scramble generator')}</span>
-        </Link>
-      </div>
 
       <main className="ga-main">
-        <h1 className="ga-title">{t('打乱生成器是怎么工作的', 'How the scramble generator works')}</h1>
+        <PageHeading backHref="/scramble/gen" titleClassName="ga-title">{t('打乱生成器是怎么工作的', 'How the scramble generator works')}</PageHeading>
         <p className="ga-intro">
           {t(
             '/scramble/gen 是站内的统一打乱生成入口。3 种模式覆盖从「比赛官方打乱表」到「随手出 N 条练习」到「自带打乱粘进来出图」的常见需求。所有 WCA 项目走 Lucas Garron 的 cubing.js 随机状态生成器(3×3 可切到 min2phase-rust 引擎,cs0x7f Kociemba 的 Rust port,~10× 快;4×4 走 cs0x7f Threephase 走 Web Worker 池;5×5 可切到本站 cube555 daemon 真随机态)。除 WCA 21 项外另接入了四套非 WCA puzzle:cubing.js twizzleEvents 的 4 个(FTO / 四阶金字塔 / 二阶五魔 / 二阶 FTO)，Redi 使用 csTimer 的 redim MoYu 模式;从 cs0x7f csTimer 引擎 vendor 进来的 31 个(齿轮/枫叶/恐龙/Sq2/SSq1/五魔金字塔/六阶五魔/直升机/cuboid 5 个/15-puzzle/8-puzzle 等);7 个 shape-mod 借用 WCA scramble(镜面/费舍尔/三阶金字塔/二阶金字塔/轴方/风火轮/幽灵/空心)。共 64 个 puzzle,非 WCA 默认折叠在「其他 ▾」chip 后,点开展示。',

@@ -158,7 +158,7 @@ describe('algorithm player placement', () => {
     const detail = read('app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgCaseView.tsx');
     const header = detail.slice(detail.indexOf('<div className="alg-case-detail-head">'), detail.indexOf('{m ? ('));
 
-    expect(header).toMatch(/alg-case-detail-back[\s\S]*?alg-case-detail-title[\s\S]*?<SettingsPopover[\s\S]*?<BoolToggle[\s\S]*?alg-view-angle[\s\S]*?<CubeOrientationSelect[\s\S]*?<AlgPdfButton[\s\S]*?<\/SettingsPopover>[\s\S]*?<AlgAdminValidate/);
+    expect(header).toMatch(/<PageHeading backHref=\{backHref\} titleClassName="alg-case-detail-title"[\s\S]*?<SettingsPopover[\s\S]*?<BoolToggle[\s\S]*?alg-view-angle[\s\S]*?<CubeOrientationSelect[\s\S]*?<AlgPdfButton[\s\S]*?<\/SettingsPopover>[\s\S]*?<AlgAdminValidate/);
     expect(header).toContain('triggerContainer={validationTriggerContainer}');
     expect(header).not.toContain('alg-case-detail-ori-main');
     expect(header).not.toContain('<AlgPlayer');

@@ -9,6 +9,7 @@
 //   RANDOM (随机生成模式): 10000 random-move scrambles, read codes, rank top-100
 //     by training-set hit count, output with hit-ratio stats.
 
+import PageHeading from '@/components/PageHeading';
 import {
   useCallback,
   useEffect,
@@ -374,7 +375,7 @@ export function CodeTrainer({ pieceType }: CodeTrainerProps): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{tr(title)}</h1>
+        <PageHeading backHref="/alg/3bld">{tr(title)}</PageHeading>
       </div>
 
       <div className="bld-section">

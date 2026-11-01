@@ -111,6 +111,16 @@ export const mergeAccount = (code: string, expectedSourceUid: number) =>
 // 修改站内用户名后同时换发带新名字的 JWT,供本机登录态原子刷新。
 export const updateDisplayName = (name: string) =>
   post<{ ok: true; token: string; user: SessionUser }>('/v1/auth/profile', { name }, true);
+export async function fetchAccountDeskPetSelection(signal?: AbortSignal): Promise<string | null> {
+  const { response, data } = await authJson<{ deskPetSelection?: string | null }>('/v1/auth/profile?v=3', {
+    headers: authHeaders(false), cache: 'no-store', signal,
+  });
+  if (!response.ok || !Object.hasOwn(data, 'deskPetSelection')) throw new Error('Account preference unavailable');
+  return data.deskPetSelection ?? null;
+}
+export const updateAccountDeskPetSelection = (deskPetSelection: string, expectedUid: number, signal?: AbortSignal) =>
+  post<{ ok: true }>('/v1/auth/profile', { deskPetSelection, expectedUid }, true, signal);
+
 export async function fetchAccountBasicProfile(): Promise<AccountBasicProfile> {
   const response = await sessionFetch(apiUrl('/v1/auth/profile?v=2'), {
     headers: { Authorization: `Bearer ${getSessionToken()}` },

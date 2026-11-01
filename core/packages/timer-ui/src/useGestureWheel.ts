@@ -56,6 +56,10 @@ export interface UseGestureWheelOptions {
   onPressDown: () => void;
   onPressUp: () => void;
   onArmCancel: () => void;
+  /** Optional stationary hold action; consumes release without starting timing. */
+  onLongPress?: (target: EventTarget | null) => void;
+  /** Reserve these targets for tap/hold instead of radial swipe actions. */
+  preferLongPress?: (target: EventTarget | null) => boolean;
   /** Skip presses originating from interactive or otherwise exempt children. */
   ignoreTarget?: (target: EventTarget | null) => boolean;
 }
@@ -82,6 +86,10 @@ export function useGestureWheel(options: UseGestureWheelOptions): {
     let downTime = 0;
     let activePointerId: number | null = null;
     let consumeClick = false;
+    let holdOnly = false;
+    let finishLongPress: (() => void) | undefined;
+    let longPressTimer: ReturnType<typeof setTimeout> | undefined;
+    const clearLongPress = () => { clearTimeout(longPressTimer); longPressTimer = undefined; finishLongPress = undefined; };
 
     // A stop press can restore interactive chrome before a WebView sends its
     // compatibility click. preventDefault on pointerdown alone does not cancel
@@ -101,6 +109,7 @@ export function useGestureWheel(options: UseGestureWheelOptions): {
     };
 
     const cancelActivePointer = () => {
+      clearLongPress();
       consumeClick = false;
       const pointerId = activePointerId;
       activePointerId = null;
@@ -133,8 +142,10 @@ export function useGestureWheel(options: UseGestureWheelOptions): {
       // including drift. Extra actions remain on the surrounding canvas.
       const onTimingText = event.target instanceof Element
         && event.target.closest('.timer-display, .scramble-strip') !== null;
-      const canGesture = !onTimingText && current.canGesture();
-      gestureStart = canGesture ? { x: event.clientX, y: event.clientY } : null;
+      const actionsAllowed = current.canGesture();
+      holdOnly = !!current.onLongPress && actionsAllowed && !!current.preferLongPress?.(event.target);
+      const canGesture = !onTimingText && actionsAllowed && !holdOnly;
+      gestureStart = canGesture || holdOnly ? { x: event.clientX, y: event.clientY } : null;
       if (canGesture) {
         gestureEnabled = current.enabledFor();
         wheelRef.current?.show(event.clientX, event.clientY, gestureEnabled);
@@ -142,6 +153,17 @@ export function useGestureWheel(options: UseGestureWheelOptions): {
         gestureEnabled = [];
       }
       current.onPressDown();
+      if ((canGesture || holdOnly) && current.onLongPress) {
+        finishLongPress = () => {
+          clearLongPress();
+          pressActive = false;
+          gestureStart = null;
+          wheelRef.current?.hide();
+          optionsRef.current.onArmCancel();
+          optionsRef.current.onLongPress?.(event.target);
+        };
+        longPressTimer = setTimeout(finishLongPress, 550);
+      }
     };
 
     const handlePointerMove = (event: PointerEvent) => {
@@ -150,6 +172,13 @@ export function useGestureWheel(options: UseGestureWheelOptions): {
       const dx = event.clientX - gestureStart.x;
       const dy = event.clientY - gestureStart.y;
       const distance = Math.hypot(dx, dy);
+      if (distance > (holdOnly ? pointerProfile.tapSlopPx : 8) && finishLongPress) {
+        clearLongPress();
+        // A cancelled hold must never fall back to tap-to-advance on release.
+        pressActive = false;
+        optionsRef.current.onArmCancel();
+      }
+      if (holdOnly) return;
       if (!gestureStarted) {
         const isGesture = timerRadialGestureStarts(
           distance,
@@ -157,9 +186,10 @@ export function useGestureWheel(options: UseGestureWheelOptions): {
           pointerProfile,
         );
         if (!isGesture) return;
+        clearLongPress();
         gestureStarted = true;
+        if (pressActive) optionsRef.current.onArmCancel();
         pressActive = false;
-        optionsRef.current.onArmCancel();
       }
       const hit = timerRadialGestureDirection(dx, dy, pointerProfile.deadZonePx);
       gestureHit = hit;
@@ -171,6 +201,9 @@ export function useGestureWheel(options: UseGestureWheelOptions): {
 
     const handlePointerUp = (event: PointerEvent) => {
       if (event.pointerId !== activePointerId) return;
+      // A busy main thread can deliver pointerup before the hold timeout.
+      if (event.timeStamp - downTime >= 550) finishLongPress?.();
+      clearLongPress();
       activePointerId = null;
       releasePointerCapture(event.pointerId);
       const start = gestureStart;

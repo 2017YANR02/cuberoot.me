@@ -55,7 +55,7 @@ for (const [directoryName, source] of [['drawable', lightMark], ['drawable-night
   const directory = join(RES, directoryName);
   mkdirSync(directory, { recursive: true });
   const art = await sharp(source, { density: 512 })
-    .resize({ width: 192, height: 192, fit: 'contain' })
+    .resize({ width: 192, height: 192, fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .png()
     .toBuffer();
   await sharp({ create: { width: 288, height: 288, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })

@@ -1,5 +1,6 @@
 'use client';
 
+import PageHeading from '@/components/PageHeading';
 import AppLink from '@/components/AppLink';
 import { ACHIEVEMENT_TITLES, RECORD_ACHIEVEMENT_TIERS } from '@/components/persons/sections/AchievementMedal';
 import { AchievementBadge } from '@/components/persons/sections/AchievementBadge';
@@ -96,7 +97,7 @@ export default function AchievementsPage() {
   return (
     <main className="wca-achievements-page">
       <header>
-        <h1>{t('荣誉徽章', 'Achievement badges')}</h1>
+        <PageHeading backHref="/wca">{t('荣誉徽章', 'Achievement badges')}</PageHeading>
         <p>{t('CubeRoot 设计的会员与 WCA 成就徽章。满足条件后自动显示在选手主页，WCA 成就并非官方颁发。', 'Membership and WCA achievement badges designed by CubeRoot appear automatically on qualifying person profiles. WCA achievement badges are not officially issued by the WCA.')}</p>
         <p>{t('纪录徽章按项目和 WR／CR／NR 分别累计，只展示最高等级，角标为实际次数。单次和平均分别计数，包含追平；按成绩的官方纪录标记分类，WR 不重复计入 CR 或 NR。', 'Record badges count each event and WR/CR/NR category separately. Only the highest tier is shown, with the actual count in the corner. Singles and averages count separately, including ties. Official record markers determine the category; WR does not also count as CR or NR.')}</p>
       </header>

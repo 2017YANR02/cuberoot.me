@@ -6,8 +6,12 @@ import LiveCubeState from '@cuberoot/timer-ui/LiveCubeState';
 import { Quaternion, Vector3 } from 'three';
 import { SENSOR_BASES, quatMul, quatConjugate } from '@cuberoot/shared/smart-cube/orientation';
 import { CUBE_ORIENTATIONS } from '@cuberoot/shared/timer';
+import type { BluetoothCubeHandle } from '@/lib/bluetooth';
+import TrainingCubePreview, { type TrainingCubeGyro } from '@/app/[lang]/timer/_components/TrainingCubePreview';
+import { SOLVED_3X3 } from '@cuberoot/puzzle-solvers/timer-333-cube';
 const sim = vi.hoisted(() => ({ mount: vi.fn(), setQuaternion: vi.fn() }));
 vi.mock('@cuberoot/puzzle-render-core/sim/mountSimWorld', () => ({ mountSimWorld: sim.mount }));
+vi.mock('@/i18n/tr', () => ({ tr: ({ en }: { en: string }) => en }));
 
 // Independent renderer convention: written x/y/z turn clockwise about +X/+Y/+Z.
 const axes = { x: new Vector3(1, 0, 0), y: new Vector3(0, 1, 0), z: new Vector3(0, 0, 1) };
@@ -57,5 +61,57 @@ describe('live training gyro agrees with the renderer', () => {
         }
       });
     }
+  }
+});
+
+it('recalibrates only the selected training preview while both cubes remain stationary', async () => {
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+  const host = document.createElement('div');
+  const root = createRoot(host);
+  sim.mount.mockClear();
+  sim.mount.mockImplementation(() => ({ dispose() {}, invalidate() {}, world: {
+    controller: { touch() {} }, scene: { rotation: { set() {} }, updateMatrix() {} },
+    cube: { quaternion: { set: vi.fn() }, updateMatrix() {},
+      twister: { setup() {}, push() {}, backlog: 0, remainingTicks: 0, accelerateRealtime() {} }, instancedRenderer: { setStickering() {} } },
+  } }));
+  const gyros = { current: new Map<string, TrainingCubeGyro>([
+    ['one', { quat: { w: Math.SQRT1_2, x: Math.SQRT1_2, y: 0, z: 0 }, calibration: null }],
+    ['two', { quat: { w: Math.SQRT1_2, x: 0, y: Math.SQRT1_2, z: 0 }, calibration: null }],
+  ]) };
+  const onSource = vi.fn();
+  const render = (firstToken: number, secondToken: number, count = 2) => act(async () => root.render(createElement('div', null,
+    ['one', 'two'].slice(0, count).map((id, index) => createElement(TrainingCubePreview, {
+      key: id, id, number: index + 1, name: id,
+      cube: { status: { deviceId: id, brand: 'gan-v4', connected: true }, facelets: SOLVED_3X3 } as BluetoothCubeHandle,
+      status: index === 0 ? 'running' : 'preparing', orientation: '', mode: '3d', useGyro: true,
+      calibrateToken: index === 0 ? firstToken : secondToken, gyros, onSource,
+    })),
+  )));
+  try {
+    await render(0, 0, 1);
+    await vi.waitFor(async () => { await act(async () => {}); expect(sim.mount).toHaveBeenCalledOnce(); });
+    await render(0, 0);
+    await vi.waitFor(async () => { await act(async () => {}); expect(sim.mount).toHaveBeenCalledTimes(2); });
+    const worlds = sim.mount.mock.results.map(result => result.value.world);
+    const frame = () => worlds.forEach((world, index) => sim.mount.mock.calls[index][0].onFrame(world, 16));
+    frame();
+    const firstPose = worlds[0].cube.quaternion.set.mock.calls.at(-1);
+    expect(worlds[1].cube.quaternion.set.mock.calls.at(-1)[3]).toBeCloseTo(Math.SQRT1_2);
+    gyros.current.get('two')!.calibration = { ...gyros.current.get('two')!.quat! };
+    await render(0, 1);
+    frame();
+    const secondPose = worlds[1].cube.quaternion.set.mock.calls.at(-1);
+    expect(secondPose.slice(0, 3).map(Math.abs)).toEqual([0, 0, 0]);
+    expect(secondPose[3]).toBeCloseTo(1);
+    expect(worlds[0].cube.quaternion.set.mock.calls.at(-1)).toEqual(firstPose);
+    gyros.current.get('one')!.calibration = { ...gyros.current.get('one')!.quat! };
+    await render(1, 1);
+    frame();
+    expect(worlds[0].cube.quaternion.set.mock.calls.at(-1)[3]).toBeCloseTo(1);
+    expect(worlds[1].cube.quaternion.set.mock.calls.at(-1)).toEqual(secondPose);
+    expect(sim.mount).toHaveBeenCalledTimes(2);
+  } finally {
+    await act(async () => root.unmount());
+    vi.unstubAllGlobals();
   }
 });

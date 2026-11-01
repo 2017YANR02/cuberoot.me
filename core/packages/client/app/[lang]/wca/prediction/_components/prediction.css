@@ -358,15 +358,6 @@
   align-items: baseline;
   gap: 10px;
 }
-.pred-event-summary::before {
-  content: '▶';
-  position: absolute;
-  margin-left: -22px;
-  margin-top: 6px;
-  color: var(--faint-foreground);
-  font-size: 11px;
-  transition: transform 0.15s;
-}
 .pred-event-details[open] .pred-event-summary::before { transform: rotate(90deg); }
 .pred-event-summary { position: relative; padding-left: 30px; }
 .pred-event-summary-meta {
@@ -961,13 +952,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-}
-.pred-333-chapter-summary::before {
-  content: '▸';
-  color: var(--accent);
-  font-size: 11px;
-  transition: transform 0.15s;
-  flex-shrink: 0;
 }
 .pred-333-chapter[open] > .pred-333-chapter-summary::before {
   transform: rotate(90deg);

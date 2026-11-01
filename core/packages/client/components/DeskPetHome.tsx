@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useRef, useState } from 'react';
 import { Apple, Hand, Heart, Moon, Sparkles, Star, Check, Zap, Loader2 } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
@@ -116,7 +117,7 @@ export default function DeskPetHome({ character, label, locked = false }: {
         <progress value={rank.progress} max={1} aria-label={tr({zh:'等级进度',en:'Level progress'})}/>
         <div className="pet-home-progress-label"><span>{rank.next===null ? tr({zh:'满级伙伴',en:'Fully grown friendship'}) : tr({zh:`再 ${rank.next-rank.xp} XP 升级`,en:`${rank.next-rank.xp} XP to next level`})}</span><span>{care.rewarded.length}/4 {tr({zh:'今日陪伴',en:'today'})}</span></div>
         <div className="pet-home-needs">{([{key:'food',icon:Apple,label:{zh:'饱腹',en:'Food'}},{key:'mood',icon:Heart,label:{zh:'心情',en:'Mood'}},{key:'energy',icon:Zap,label:{zh:'活力',en:'Energy'}}] as const).map(({key,icon:Icon,label:needLabel})=><div key={key}><span><Icon size={15}/>{tr(needLabel)}<b>{Math.round(care[key])}</b></span><meter min={0} max={100} value={care[key]} aria-label={tr(needLabel)}/></div>)}</div>
-        <details className="pet-home-growth"><summary>{tr({zh:'星星，慢慢变成太阳',en:'Little stars become suns'})}</summary>
+        <details className="pet-home-growth"><MoreToggle as="summary">{tr({zh:'星星，慢慢变成太阳',en:'Little stars become suns'})}</MoreToggle>
           <p>{tr({zh:'每天四种互动各得 1 XP。4 颗星变月亮，4 个月亮变太阳；休息几天也不会掉级。',en:'Each daily interaction earns 1 XP. Four stars make a moon; four moons make a sun. Time away never lowers your level.'})}</p>
           {character==='rootbeast' && <p>{tr({zh:'Lv.4 解锁抱月小睡 · Lv.16 解锁开心舞步',en:'Lv.4: moon-hug nap · Lv.16: happy dance'})}</p>}
         </details>

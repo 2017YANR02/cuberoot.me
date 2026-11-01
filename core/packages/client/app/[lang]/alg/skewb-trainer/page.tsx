@@ -1,5 +1,6 @@
 'use client';
 
+import PageHeading from '@/components/PageHeading';
 import TrainingStatsPanel from '@/components/TrainingStatsPanel';
 
 // SkewbSkills trainer — orchestrator.
@@ -70,8 +71,8 @@ export default function SkewbTrainerPage() {
         />
       </div>}
       <div className="sk-root">
-        <h1 className="sk-title">{tr({ zh: 'Skewb 技巧训练', en: 'Skewb Skills'
-        })}</h1>
+        <PageHeading backHref="/alg" titleClassName="sk-title">{tr({ zh: 'Skewb 技巧训练', en: 'Skewb Skills'
+        })}</PageHeading>
         <p className="sk-subtitle">
           {tr({ zh: '三种训练模式:第一层、L2L 公式、一步看穿。', en: 'Three training modes: First Layer, L2L Algs, and One-Looking.'
         })}

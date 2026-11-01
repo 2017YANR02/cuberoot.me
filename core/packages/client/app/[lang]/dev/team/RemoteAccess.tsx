@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useState } from 'react';
 import { REMOTE_CONNECTION, remoteKeyFilename, type RemoteAccessList, type RemoteAccessStatus } from '@cuberoot/shared/remote-access';
 import { apiUrl } from '@/lib/api-base';
@@ -95,7 +96,7 @@ export default function RemoteAccess() {
       </>}
       <ul className="staff-start-steps">{Object.entries(requestGroups).map(([key, requests]) => requests && <li key={key}>
         <details>
-          <summary><span className="staff-start-device-label"><strong>{requests[0].user_name}</strong><span className="staff-start-device-detail">ID {requests[0].user_id}</span><span>{requests[0].device}</span></span></summary>
+          <MoreToggle as="summary"><span className="staff-start-device-label"><strong>{requests[0].user_name}</strong><span className="staff-start-device-detail">ID {requests[0].user_id}</span><span>{requests[0].device}</span></span></MoreToggle>
           <ul className="staff-start-steps">{requests.map(r => <li key={r.id}>
         <p>{r.status === 'revoked' && !r.removed_at ? t('已申请撤销，等待 Mac 移除密钥', 'Revocation requested; waiting for the Mac') : labels[r.status]}</p>
         {Number(r.user_id) === uid && ['pending', 'approved', 'active'].includes(r.status) && <p><button type="button" className="staff-start-inline-action" onClick={() => copy(setupFor(remoteKeyFilename(r.public_key)), r.id)}>{copiedKey === r.id ? t('已复制', 'Copied') : t('复制给 AI 配置', 'Copy setup for AI')}</button></p>}

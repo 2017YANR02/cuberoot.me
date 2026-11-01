@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 
 // Ported from packages/client-vite/src/pages/code/OpsPage.tsx.
@@ -7,7 +8,7 @@ import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { Check, Copy, Database, Hammer, UploadCloud, Archive, ChevronDown, Terminal, Sparkles, Plus, Pencil, Trash2, X } from '@app-foundation/icons/lucide';
+import { Check, Copy, Database, Hammer, UploadCloud, Archive, Terminal, Sparkles, Plus, Pencil, Trash2, X } from '@app-foundation/icons/lucide';
 import { useIsAdmin } from '@/lib/auth-store';
 import { createCommand, updateCommand, deleteCommand, listCommands, type OpsCommandInput } from '@/lib/ops-api';
 import './ops.css';
@@ -117,10 +118,10 @@ function OpCard({ op, lang, isAdmin, onEdit, onDelete }: { op: OpCommand; lang: 
   return (
     <Container className="ops-card" data-cat={op.category}>
       {isPrompt && (
-        <summary className="ops-prompt-summary">
-          <ChevronDown size={18} aria-hidden="true" />
+        <MoreToggle as="summary" className="ops-prompt-summary">
+
           <h2 className="ops-card-title">{title}</h2>
-        </summary>
+        </MoreToggle>
       )}
       <div className={isPrompt ? 'ops-prompt-content' : undefined}>
         <div className="ops-card-rail" aria-hidden="true" />
@@ -160,17 +161,17 @@ function OpCard({ op, lang, isAdmin, onEdit, onDelete }: { op: OpCommand; lang: 
         <CodeBlock cmd={op.cmd} idx={`${op.id}-main`} mode={op.category === 'prompt' ? 'prompt' : 'shell'} />
         {op.variants && op.variants.length > 0 && (
           <div className="ops-card-variants">
-            <button
+            <MoreToggle
               type="button"
               className="ops-variants-toggle"
               onClick={() => setVariantsOpen((o) => !o)}
-              aria-expanded={variantsOpen}
+              expanded={variantsOpen}
             >
-              <ChevronDown size={14} className={variantsOpen ? 'ops-chev-open' : ''} />
+
               <span>
                 {lang === 'zh' ? `变体 (${op.variants.length})` : `Variants (${op.variants.length})`}
               </span>
-            </button>
+            </MoreToggle>
             {variantsOpen && (
               <div className="ops-variants-body">
                 {op.variants.map((v, i) => (

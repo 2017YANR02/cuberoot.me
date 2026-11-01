@@ -7,6 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import { PALETTE_KEY, isPaletteId, paletteScheme, type PaletteId } from './palettes';
+import { runViewTransition as runTransition } from './view-transition';
 import { persistItem } from './safe-storage';
 import { ACCENT_KEY, findAccentColor, setAccentRoot, type AccentId } from './accent-colors';
 
@@ -26,18 +27,6 @@ export const CONTRAST_LEVELS: { id: ContrastLevel; zh: string; en: string }[] = 
 function isContrastLevel(v: string | null | undefined): v is ContrastLevel {
   return v === 'normal' || v === 'soft';
 }
-
-type ViewTransitionHandle = {
-  ready?: Promise<unknown>;
-  finished?: Promise<unknown>;
-  skipTransition?: () => void;
-};
-
-type DocumentWithViewTransition = Document & {
-  startViewTransition?: (cb: () => void) => ViewTransitionHandle;
-};
-
-let activeThemeTransition: ViewTransitionHandle | null = null;
 
 const APPEARANCE_PREVIEW_DURATION_MS = 280;
 const APPEARANCE_PREVIEW_TOKENS = [
@@ -123,27 +112,6 @@ export function endAppearancePreview(afterTransition = false) {
 
 function prefersReducedMotion(): boolean {
   return typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
-// 外观切换且浏览器支持时,用 View Transitions 让整页旧→新交叉淡出(晕染);
-// 否则(首屏恢复 / 不支持 / reduced-motion)直接瞬切。
-function runTransition(commit: () => void, animate: boolean) {
-  const doc = document as DocumentWithViewTransition;
-  if (animate && typeof doc.startViewTransition === 'function' && !prefersReducedMotion()) {
-    activeThemeTransition?.skipTransition?.();
-    const transition = doc.startViewTransition(commit);
-    activeThemeTransition = transition;
-    // skipTransition() 会按规范拒绝 ready；快速扫过选项时这是预期取消，不应冒泡到错误层。
-    void transition.ready?.catch(() => undefined);
-    const clear = () => {
-      if (activeThemeTransition === transition) activeThemeTransition = null;
-    };
-    void transition.finished?.then(clear, clear);
-  } else {
-    activeThemeTransition?.skipTransition?.();
-    activeThemeTransition = null;
-    commit();
-  }
 }
 
 function readTheme(): Theme {

@@ -1,4 +1,7 @@
 'use client';
+import BackHome from '@/components/BackHome';
+import PageHeading from '@/components/PageHeading';
+import MoreToggle from '@/components/MoreToggle';
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Building2, ArrowRight, Plus } from '@app-foundation/icons/lucide';
@@ -70,7 +73,7 @@ export default function OrganizationsPage() {
   if (!user || !getSessionToken()) {
     return (
       <main className="org-page org-centered">
-        <h1>{t('企业信息', 'Enterprise')}</h1>
+        <PageHeading>{t('企业信息', 'Enterprise')}</PageHeading>
         <p className="org-lead">{t('登录后即可创建企业信息，并继续管理机构、学员和教学工作。', 'Sign in to create an enterprise profile and manage its organization, students, and teaching.')}</p>
         <AppLink className="org-primary-link" href={`/account${nextQuery(window.location.pathname)}`} prefetch={false}>{t('登录', 'Sign in')}</AppLink>
       </main>
@@ -79,7 +82,7 @@ export default function OrganizationsPage() {
 
   return (
     <main className="org-page org-directory">
-      <header className="org-directory-header"><span className="org-feature-icon"><Building2 size={28} aria-hidden="true" /></span><div><p className="org-eyebrow">{t('企业工作台', 'Enterprise workspace')}</p><h1>{t('我的企业', 'My enterprises')}</h1></div></header>
+      <header className="org-directory-header"><BackHome /><span className="org-feature-icon"><Building2 size={28} aria-hidden="true" /></span><div><p className="org-eyebrow">{t('企业工作台', 'Enterprise workspace')}</p><h1>{t('我的企业', 'My enterprises')}</h1></div></header>
       <p className="org-lead">{t('选择已有企业，继续认证或管理。只有添加另一家企业时，才需要新增企业。', 'Select an existing enterprise to continue verification or management. Add an enterprise only for a different business.')}</p>
 
       <section className="org-section">
@@ -100,7 +103,7 @@ export default function OrganizationsPage() {
       </section>
 
       {!loading && !loadError && <section className="org-section">
-        {organizations.length > 0 && <button type="button" className="org-secondary-button" aria-expanded={creating} aria-controls="create-enterprise" disabled={submitting} onClick={() => { setCreating(!creating); setError(''); }}>{!creating && <Plus size={18} aria-hidden="true" />}{creating ? t('取消新增企业', 'Cancel adding an enterprise') : t('新增另一家企业', 'Add another enterprise')}</button>}
+        {organizations.length > 0 && <MoreToggle type="button" className="org-secondary-button" expanded={creating} aria-controls="create-enterprise" disabled={submitting} onClick={() => { setCreating(!creating); setError(''); }}>{!creating && <Plus size={18} aria-hidden="true" />}{creating ? t('取消新增企业', 'Cancel adding an enterprise') : t('新增另一家企业', 'Add another enterprise')}</MoreToggle>}
         {(organizations.length === 0 || creating) && <div id="create-enterprise" className="org-subsection">
         <h2>{organizations.length === 0 ? t('第 1 步：创建你的企业', 'Step 1: Create your enterprise') : t('新增另一家企业', 'Add another enterprise')}</h2>
         <p className="org-lead">{t('创建后进入企业页面，再按指引申请认证。创建企业不会发起打款，也不代表认证通过。', 'After creation, open the enterprise and follow the verification steps. Creating a profile does not transfer money or verify the enterprise.')}</p>

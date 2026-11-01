@@ -1,4 +1,5 @@
 'use client';
+import MoreToggle from '@/components/MoreToggle';
 import '@cuberoot/timer-ui/compact-select.css';
 
 import {
@@ -385,12 +386,12 @@ export default function Sq1PblFinder() {
       ) : null}
 
       <details className={styles.advancedSettings}>
-        <summary>
+        <MoreToggle as="summary">
           <span>{tr({ zh: '高级设置', en: 'Advanced settings' })}</span>
           <span>{mode === 'legacy'
             ? tr({ zh: '旧版兼容', en: 'Legacy' })
             : tr({ zh: '严格', en: 'Strict' })}</span>
-        </summary>
+        </MoreToggle>
         <div className={styles.advancedContent}>
           <label className={styles.modeControl}>
             <span>{tr({ zh: '搜索口径', en: 'Search mode' })}</span>

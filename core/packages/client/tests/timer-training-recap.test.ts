@@ -2,6 +2,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
+import { correctReconFromLibrary } from '@cuberoot/shared/timer/reconstruct/library-correction';
+import { reconCommentCaseIndex } from '@cuberoot/shared/recon/comment-links';
+import * as algLibrary from '@cuberoot/shared/alg';
+import type { AlgFile } from '@cuberoot/shared/alg';
 import type { Solve } from '@cuberoot/shared/timer';
 import { prepareTrainingReconstruction, trainingSolveMetrics } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { notationQuaternion } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
@@ -34,6 +38,52 @@ const repetition: Solve = { ...solve, scramble: invertAlg(algorithm), timeMs: 2_
   moves: algorithm.split(' ').map((m, i) => ({ m, ts: 500 + i * 100 })) };
 
 describe('training observation and execution', () => {
+  it.each(['', 'z2'])('splits CFZB at completed ZBLS in grip %s and shares metrics with notation', async grip => {
+    const alg = "R U R' U R U R' U R U2 R' U";
+    const times = [500, 600, 700, 1000, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200];
+    const record: Solve = { ...solve, event: 'cfzb', caseId: undefined,
+      scramble: normalizeWcaScramble(`${grip} ${invertAlg(alg)}`)!, timeMs: 2200,
+      moves: alg.split(' ').map((m, i) => ({ m: normalizeWcaScramble(`${grip} ${m}`)!, ts: times[i] })) };
+    const prepared = prepareTrainingReconstruction(record, 'en');
+    expect(prepared.recon.lines.map(line => line.label)).toEqual(['ZBLS', 'ZBLL']);
+    expect(prepared.recon.lines.map(line => [line.fromIdx, line.toIdx])).toEqual([[0, 2], [3, 11]]);
+    expect(prepared.stages.map(stage => [stage.observationMs, stage.executionMs, stage.turns])).toEqual([[500, 200, 3], [800, 700, 9]]);
+    expect(prepared.stages[0].tps).toBe(15);
+    expect(prepared.stages[1].tps).toBe(9 / 0.7);
+    expect(prepared.metrics).toEqual({ observationMs: 1300, executionMs: 900, totalMs: 2200 });
+    expect(trainingSolveMetrics(record)).toEqual(prepared.metrics);
+    const files = new Map<string, AlgFile>([
+      ['zbls', { cases: [{ id: 1, name: 'A1', algs: [[{ alg: "R U R'" }]] }] } as AlgFile],
+      ['zbll', { cases: [{ id: 2, name: 'S1', algs: [[{ alg: "R U R' U R U2 R'" }]] }] } as AlgFile],
+    ]);
+    const matched = await correctReconFromLibrary(prepared.recon, async set => files.get(set)!);
+    expect(matched.lines.map(line => line.label)).toEqual(['ZBLS-A1', 'ZBLL-S1']);
+    expect(matched.lines.map(line => line.libraryCorrection?.algorithm)).toEqual(["R U R'", "R U R' U R U2 R'"]);
+    expect(prepared.recon.lines.map(line => line.label)).toEqual(['ZBLS', 'ZBLL']);
+    expect(matched.lines.map(line => [line.fromIdx, line.toIdx, line.recognitionMs, line.executionMs]))
+      .toEqual(prepared.recon.lines.map(line => [line.fromIdx, line.toIdx, line.recognitionMs, line.executionMs]));
+    const cases = new Map([...files].map(([set, file]) => [set, reconCommentCaseIndex(set, file.cases)]));
+    const notation = reportNotation(matched, 'training', initialReportUI(), tr, { cases }).node!;
+    const rows = notation.children!.flatMap(group => group.children ?? []).filter(row => row.notation?.links.length);
+    expect(rows.map(row => row.notation!.links[0].href)).toEqual(['/alg/3x3/zbls/a1', '/alg/3x3/zbll/s1']);
+    expect(rows.every(row => row.notation!.diagramId?.startsWith('diagram:'))).toBe(true);
+    const matchedTrack = reconstructedTrack(matched.lines, record.moves!)!;
+    expect(smartCubeTargetFacelets(record.scramble + ' ' + matched.inspection + ' ' + matchedTrack.map(move => move.m).join(' ')))
+      .toBe(smartCubeTargetFacelets(''));
+    const summary = reportTrainingSummary(record, prepared.metrics, null, tr, prepared.stages);
+    const table = summary.children!.find(node => node.id === 'training-stages')!;
+    expect(table.columns!.map(column => column.text)).toEqual(['Observation', 'Execution', 'Moves', 'TPS']);
+    expect(table.rows!.map(row => row.label)).toEqual(['ZBLS', 'ZBLL']);
+    const track = reconstructedTrack(prepared.recon.lines, record.moves!)!;
+    expect(smartCubeTargetFacelets(record.scramble + ' ' + prepared.recon.inspection + ' ' + track.map(move => move.m).join(' ')))
+      .toBe(smartCubeTargetFacelets(''));
+    const partial = prepareTrainingReconstruction({ ...record, moves: record.moves!.slice(0, 2), timeMs: 900 }, 'en', undefined, true);
+    expect(partial.metrics.observationMs + partial.metrics.executionMs).toBe(900);
+    expect(partial.stages[1].executionMs).toBe(0);
+    expect(partial.stages[1].observationMs).toBe(0);
+    expect(partial.recon.currentStage?.key).toBe('zbls');
+  });
+
   it('shares the AUF boundary, includes waiting and partitions total exactly', () => {
     expect(trainingRepetitionMetrics(solve, solve.moves!)).toEqual({ observationMs: 800, executionMs: 1_300, totalMs: 2_100 });
     const firstTurn = { ...solve, timeMs: 1_600, trainingStartMode: 'first-turn' as const };
@@ -141,19 +191,53 @@ describe('training observation and execution', () => {
       .toBe(smartCubeTargetFacelets(''));
   });
 
-  it('mounts training report and history without invoking automatic method detection', async () => {
+  it('publishes matched CFZB case links and enables the shared diagram provider', async () => {
+    const load = vi.spyOn(algLibrary, 'loadAlg').mockImplementation(async (_puzzle, set) => ({ cases: [
+      { id: set === 'zbls' ? 1 : 2, name: set === 'zbls' ? 'A1' : 'S1',
+        algs: [[{ alg: set === 'zbls' ? "R U R'" : "R U R' U R U2 R'" }]] },
+    ] }) as AlgFile);
+    vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+    const algorithm = "R U R' U R U R' U R U2 R' U";
+    const record: Solve = { ...solve, event: 'cfzb', caseId: undefined, scramble: invertAlg(algorithm),
+      moves: algorithm.split(' ').map((m, i) => ({ m, ts: 100 + i * 100 })) };
+    const container = document.createElement('div'); document.body.append(container);
+    const root = createRoot(container);
+    try {
+      await act(async () => root.render(createElement(ReconstructReport, { solve: record, isZh: false,
+        host: { localize: tr, writeClipboardText: async () => {}, replayUrl: () => '', recordGyro: false,
+          LineDiagramProvider: ({ enabled, text, children }) => createElement('div', { 'data-library-enabled': enabled },
+            children(index => createElement('span', { 'data-stage-diagram': index, 'data-source': text }), () => undefined)),
+        },
+      })));
+      await vi.waitFor(async () => {
+        await act(async () => {});
+        expect(container.querySelector('a[href="/alg/3x3/zbls/a1"]')?.textContent).toBe('ZBLS-A1');
+        expect(container.querySelector('a[href="/alg/3x3/zbll/s1"]')?.textContent).toBe('ZBLL-S1');
+      });
+      expect(container.querySelector('a[href="/alg/3x3/zbll/s1"]')?.textContent).toBe('ZBLL-S1');
+      expect(container.querySelector('[data-library-enabled="true"]')).not.toBeNull();
+      expect(container.querySelectorAll('[data-stage-diagram]')).toHaveLength(2);
+      expect(detectSolveMethod).not.toHaveBeenCalled();
+    } finally {
+      await act(async () => root.unmount()); container.remove(); load.mockRestore(); vi.unstubAllGlobals();
+    }
+  });
+
+  it.each(['pll', 'cfzb'] as const)('mounts %s report and history without invoking automatic method detection', async event => {
     vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
     const container = document.createElement('div'); document.body.append(container);
     const root = createRoot(container);
     try {
-      await act(async () => root.render(createElement(ReconstructReport, { solve: repetition, isZh: false,
-        history: [{ ...repetition, id: 'previous', ts: 50 }],
+      await act(async () => root.render(createElement(ReconstructReport, { solve: { ...repetition, event }, isZh: false,
+        history: [{ ...repetition, event, id: 'previous', ts: 50 }],
         host: { localize: tr, writeClipboardText: async () => {}, replayUrl: () => '', recordGyro: false } })));
       expect(detectSolveMethod).not.toHaveBeenCalled();
       expect(container.querySelectorAll('.sml-group[data-stage]')).toHaveLength(2);
-      expect(container.querySelector('.sa-table')).toBeNull();
+      expect(container.querySelectorAll('.sa-table tbody tr')).toHaveLength(event === 'cfzb' ? 2 : 1);
+      expect([...container.querySelectorAll('.sa-table thead th')].map(cell => cell.textContent))
+        .toEqual(['', 'Observation', 'Execution', 'Moves', 'TPS']);
       expect(container.textContent).toContain('Observation');
-      expect(container.textContent).toContain('PLL');
+      expect(container.textContent).toContain(event === 'cfzb' ? 'ZBLL' : 'PLL');
       expect(container.textContent).not.toContain('CMLL');
       const end = container.querySelector<HTMLButtonElement>('button[aria-label="To end"]')!;
       await act(async () => end.click());

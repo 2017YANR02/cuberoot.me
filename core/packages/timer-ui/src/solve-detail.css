@@ -326,7 +326,7 @@
 }
 @media (max-width: 1023px) {
   .timer-solve-detail-full-body .reconstruct-playback.has-side { grid-template-columns: minmax(0, 1fr); }
-  .timer-solve-detail-full-body .reconstruct-playback-side { max-height: none; }
+  .timer-solve-detail-full-body .reconstruct-playback-side { max-height: none; order: -1; }
 }
 
 .timer-solve-detail-full-head {

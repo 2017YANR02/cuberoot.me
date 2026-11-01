@@ -2,6 +2,7 @@
 
 // Pure cell / markdown rendering + row helpers for the WCA stat renderer.
 // Extracted verbatim from WcaStatView.tsx — no component state, no hooks.
+import MoreToggle from '@/components/MoreToggle';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import React from 'react';
 import Link from '@/components/AppLink';
@@ -146,7 +147,7 @@ function renderLinkedSegment(segment: string, segIdx: number, isZh: boolean | un
       compId && internalHref
         ? <Link key={`${segIdx}-${match.index}`} href={internalHref} onMouseEnter={prefetch} onFocus={prefetch} onTouchStart={prefetch}>{displayText}</Link>
         : internalHref
-          ? <Link key={`${segIdx}-${match.index}`} href={internalHref} prefetch={false}>{displayText}<WcaPersonTeamBadge wcaId={wcaId} /></Link>
+          ? <React.Fragment key={`${segIdx}-${match.index}`}><Link  href={internalHref} prefetch={false}>{displayText}</Link><WcaPersonTeamBadge wcaId={wcaId} /></React.Fragment>
           : <a key={`${segIdx}-${match.index}`} href={url} target="_blank" rel="noopener noreferrer">{displayText}</a>
     );
     lastIndex = match.index + match[0].length;
@@ -166,7 +167,7 @@ export function renderCell(value: unknown, columnKey?: string, isZh?: boolean): 
     }
     return (
       <details className="solve-details">
-        <summary>{items.length} solves</summary>
+        <MoreToggle as="summary">{items.length} solves</MoreToggle>
         {renderSolves(items)}
       </details>
     );
@@ -179,7 +180,7 @@ export function renderCell(value: unknown, columnKey?: string, isZh?: boolean): 
     }
     return (
       <details className="solve-details">
-        <summary>{items.length} solves</summary>
+        <MoreToggle as="summary">{items.length} solves</MoreToggle>
         {renderSolves(items)}
       </details>
     );

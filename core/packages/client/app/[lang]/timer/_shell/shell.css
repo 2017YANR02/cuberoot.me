@@ -65,10 +65,7 @@
 
 .shell-topbar .pp-trigger { color: var(--foreground); }
 .shell-topbar .pp-trigger--active .pp-trigger-icon { color: var(--accent); }
-.shell-topbar .shell-topbar-left .timer-difficulty-trigger {
-  background: transparent;
-  border-color: transparent;
-}
+
 
 /* Fade only the controls, so their menus retain full opacity and material. */
 .shell-topbar-left :is(.shell-players-select, .pp-trigger, .compact-select-trigger,
@@ -363,7 +360,6 @@
   flex: 1;
   min-height: 0;
   overflow: visible;
-  padding: 12px 14px 18px;
 }
 .shell-panel--sheet .shell-panel-tabs,
 .shell-panel--sheet .shell-panel-body { flex: 0 0 auto; }

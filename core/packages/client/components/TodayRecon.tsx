@@ -14,6 +14,7 @@ import type { ReconSolve } from '@cuberoot/shared';
 import { getTodayRecons } from '@/lib/recon-api';
 import { CuratedReconCard } from '@/components/ReconCard/CuratedReconCard';
 import { reconPathSeg } from '@/lib/recon-seo';
+import { reconCoverCandidates } from '@/lib/recon-video-cover';
 import './today_recon.css';
 import './scroll_panel.css';
 import { tr } from '@/i18n/tr';
@@ -61,14 +62,21 @@ export default function TodayRecon({ lang, pinnedRecons, pinnedOnly = false, isA
   if (visibleRecons === null) return <div className="today-recon today-recon--loading" data-tour="today-replay" aria-hidden="true" />;
   if (visibleRecons.length === 0) return <p className="landing-slot-message">{tr({ zh: '暂无复盘', en: 'No recons available' })}</p>;
 
-  const cards = visibleRecons.map((s) => {
+  const renderCard = (s: ReconSolve) => {
     const pinned = pinnedRecons?.some(item => item.id === s.id) ?? false;
     return (
       <CuratedReconCard key={s.id} solve={s} isZh={isZh} href={`/recon/${reconPathSeg(s)}`} showScrambleFallback={false}
         pin={isAdmin ? { active: pinned, disabled: pinnedRecons === null || savingPins.has(s.id), onToggle: () => void onPin(s, !pinned) } : undefined} />
     );
-  });
-  if (pinnedOnly) return <>{cards}{isAdmin && pinError && <p role="alert">{pinError}</p>}</>;
+  };
+  if (pinnedOnly) return <>{visibleRecons.map(renderCard)}{isAdmin && pinError && <p role="alert">{pinError}</p>}</>;
+
+  // Match ReconCard's media-slot rule, including covers that load asynchronously.
+  const withCover: ReconSolve[] = [];
+  const withoutCover: ReconSolve[] = [];
+  for (const solve of visibleRecons) {
+    (reconCoverCandidates(solve.videoUrl, isZh).length ? withCover : withoutCover).push(solve);
+  }
 
   return (
     <div className="today-recon" data-tour="today-replay">
@@ -79,7 +87,11 @@ export default function TodayRecon({ lang, pinnedRecons, pinnedOnly = false, isA
 
       {isAdmin && pinError && <p role="alert">{pinError}</p>}
       <div className="tr-cards scroll-panel scroll-panel--hover-lift">
-        {cards}
+        {[withCover, withoutCover].map((group, index) => group.length > 0 && (
+          <div className="tr-card-group" key={index}>
+            {group.map(renderCard)}
+          </div>
+        ))}
       </div>
     </div>
   );

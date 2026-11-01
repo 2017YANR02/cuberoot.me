@@ -18,6 +18,7 @@
  * automatic state recognition wired through stageSegments yet.
  */
 
+import MoreToggle from '../MoreToggle';
 import { useState } from 'react';
 import type { EventId, Solve } from '@cuberoot/shared/timer';
 import { formatMs } from '@cuberoot/shared/timer';
@@ -124,24 +125,24 @@ function CaseTable({
         </table>
       </div>
       {hidden > 0 && (
-        <button
+        <MoreToggle expanded={showAll}
           type="button"
           className="hint-btn"
           onClick={onToggle}
           style={{ marginTop: 6 }}
         >
           {(tr({zh: `展开剩余 ${hidden} 项`, en: `Show ${hidden} more`}))}
-        </button>
+        </MoreToggle>
       )}
       {showAll && rows.length > cap && (
-        <button
+        <MoreToggle expanded={showAll}
           type="button"
           className="hint-btn"
           onClick={onToggle}
           style={{ marginTop: 6 }}
         >
           {tr({ zh: '收起', en: 'Collapse' })}
-        </button>
+        </MoreToggle>
       )}
       {drillCandidates.length > 0 && (
         <div style={{ marginTop: 6, fontSize: '0.9em', opacity: 0.8 }}>

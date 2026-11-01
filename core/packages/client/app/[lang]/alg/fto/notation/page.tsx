@@ -1,5 +1,6 @@
 'use client';
 
+import PageHeading from '@/components/PageHeading';
 import Link from '@/components/AppLink';
 import MoveNotationDemo, { type MoveNotationOption } from '@/components/MoveNotationDemo/MoveNotationDemo';
 import { useT } from '@/hooks/useT';
@@ -33,7 +34,7 @@ export default function FtoNotationPage() {
     <main className="alg-root alg-notation-page">
       <div className="alg-notation-shell alg-fto-notation-shell">
         <header className="alg-notation-hero">
-          <h1>{t('FTO 转动记号', 'FTO move notation')}</h1>
+          <PageHeading backHref="/alg/fto">{t('FTO 转动记号', 'FTO move notation')}</PageHeading>
           <Link href="/alg/fto" className="alg-notation-reference" prefetch={false}>
             <span aria-hidden="true">←</span> <span className="sr-only">{t('返回 FTO 公式库', 'Back to FTO algorithms')}</span>
           </Link>

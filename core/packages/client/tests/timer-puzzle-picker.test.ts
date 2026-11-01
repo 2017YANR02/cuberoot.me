@@ -323,9 +323,9 @@ describe('shared timer puzzle picker', () => {
 
     act(() => host.querySelector<HTMLButtonElement>('.pp-trigger')?.click());
     const items = [...host.querySelectorAll<HTMLElement>('.pp-item')];
-    expect(items).toHaveLength(82);
+    expect(items).toHaveLength(83);
     expect(items.filter((item) => item.querySelector('.cubing-icon'))).toHaveLength(61);
-    expect(items.filter((item) => item.querySelector('.pp-item-tag'))).toHaveLength(21);
+    expect(items.filter((item) => item.querySelector('.pp-item-tag'))).toHaveLength(22);
     for (const item of items) {
       const icon = item.querySelector<HTMLElement>('.cubing-icon');
       const tag = item.querySelector<HTMLElement>('.pp-item-tag');
@@ -345,7 +345,7 @@ describe('shared timer puzzle picker', () => {
       groups, selectedEvent, onSelect, disabled, dataNoTimer: true,
       puzzleLabel: 'Puzzle', scrambleTypeLabel: 'Scramble type',
     })));
-    const typeIds = ['333', 'cross', 'f2l', 'll', 'oll', 'pll', 'coll', 'cmll', 'zbll', 'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls', 'lse', 'l10p'];
+    const typeIds = ['333', 'cross', 'f2l', 'll', 'oll', 'pll', 'coll', 'cmll', 'zbll', 'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls', 'cfzb', 'lse', 'l10p'];
     for (const selectedEvent of typeIds) {
       render(selectedEvent);
       expect(host.querySelector('.pp-trigger')?.getAttribute('aria-label')).toBe('3×3');

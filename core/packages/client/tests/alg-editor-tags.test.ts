@@ -42,7 +42,11 @@ describe('formula tag editor with the shared menu and fixed tags', () => {
     await render();
     expect(host.querySelectorAll('.alg-editor-row .alg-tag-select')).toHaveLength(3);
     expect(host.querySelector('.alg-tag-select .compact-select-arrow')).toBeNull();
-    await click('Algorithm tags');
+    await act(async () => {
+      const event = new MouseEvent('pointerover', { bubbles: true });
+      Object.defineProperty(event, 'pointerType', { value: 'mouse' });
+      host.querySelector('.alg-tag-select button')!.dispatchEvent(event);
+    });
     expect(document.querySelector('[role="listbox"]')?.getAttribute('aria-multiselectable')).toBe('true');
     expect(document.querySelectorAll('[role="listbox"] button:not([role="option"])')).toHaveLength(0);
     expect(host.querySelector('.alg-tag-manager')).toBeNull();
@@ -57,6 +61,10 @@ describe('formula tag editor with the shared menu and fixed tags', () => {
     expect(ref.current!.getValue()[0][0].tags).toEqual([]);
     await click('Algorithm tags'); await click('Left OH');
     expect(ref.current!.getValue()).toEqual(initial);
+    await click('Algorithm tags'); await click('Mainstream');
+    await click('Algorithm tags'); await click('S style');
+    expect(ref.current!.getValue()[0][0]).toEqual({ ...initial[0][0], tags: ['oh', 'mainstream', 's-style'] });
+    expect(ref.current!.getValue()[1]).toEqual(initial[1]);
     await act(async () => { window.dispatchEvent(new Event('focus')); });
     expect(fetch).not.toHaveBeenCalled();
   });

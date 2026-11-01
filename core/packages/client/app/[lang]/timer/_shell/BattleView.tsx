@@ -6,6 +6,8 @@ import {
   TimerBattleSourceSettings,
   TimerLocalBattlePage,
   TimerLocalBattlePlayer,
+  TimerSoloLayoutEditor,
+  type TimerSoloLayoutSettings,
 } from '@cuberoot/timer-ui';
 
 /**
@@ -27,7 +29,7 @@ import { formatTimeHtml as formatTime } from '@/app/[lang]/timer/_shared/format'
 import { computeAo5 } from '@/app/[lang]/timer/_shared/stats-core';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { parseAsString, useQueryState } from 'nuqs';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { MilestoneToast } from '@/app/[lang]/timer/_battle/AdvancedFeatures';
@@ -35,7 +37,8 @@ import { useBattleHistoryProps } from '@/app/[lang]/timer/_battle/VsHistoryPanel
 import { updateSettings, useSettings } from '@/app/[lang]/timer/_lib/settings';
 import { eventInfo } from '@/app/[lang]/timer/_lib/types';
 import HomeLink from '@/components/HomeLink';
-import { ArrowLeft } from '@app-foundation/icons/lucide';
+import { ArrowLeft, LayoutTemplate } from '@app-foundation/icons/lucide';
+import { Tooltip } from '@/components/Tooltip';
 import WcaSourceConfig from '@/components/WcaSourceConfig';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { localizeCompName } from '@/lib/comp-localize';
@@ -256,6 +259,9 @@ function ScramblePanel({ ids, imgHeight, part = 'all' }: { ids: number[]; imgHei
     country: compFlagIso2(meta.ci), name: localizeCompName(meta.ci, meta.cn, isZh),
   } : null, [meta, isZh, flagVer]);
   if (anyTiming) return null;
+  const preview = part !== 'text' && scramble && !failed && !loading && store.showImage
+    ? <TimerCubePreview event={event} scramble={scramble} height={imgHeight} fill visualization="2D"
+      ariaLabel={tr({ en: 'Scramble preview', zh: '打乱预览' })} /> : null;
   return <>
     {part !== 'preview' && <TimerScrambleStrip scramble={loading || failed ? '' : formatScrambleForEvent(event, scramble || '')}
       copiedLabel={tr({ en: 'Copied', zh: '已复制' })} fontScale={store.scrambleScale}
@@ -269,9 +275,10 @@ function ScramblePanel({ ids, imgHeight, part = 'all' }: { ids: number[]; imgHei
         href={`${isZh ? '/zh' : ''}/scramble/gen?comp=${encodeURIComponent(meta.ci)}`}
         title={tr({ en: 'View competition scrambles', zh: '查看比赛打乱' })} />}
     </TimerScrambleStrip>}
-    {part !== 'text' && scramble && !failed && !loading && store.showImage &&
-      <TimerCubePreview event={event} scramble={scramble} height={imgHeight} fill={part === 'preview'} visualization="2D"
-        ariaLabel={tr({ en: 'Scramble preview', zh: '打乱预览' })} />}
+    {preview && (part === 'preview' ? preview
+      : <div className="timing-surface-cube-frame" style={{ '--timer-cube-aspect': timerCubePreviewAspect(event, scramble) } as CSSProperties}>
+        {preview}
+      </div>)}
   </>;
 }
 // ===== TimerArea 组件 =====
@@ -283,7 +290,7 @@ export function battlePointerReleaseAction(
   return eventType === 'pointerup' ? 'up' : 'cancel';
 }
 
-export function TimerArea({ playerId, rotated, hideScramble, cellClass }: { playerId: number; rotated?: boolean; hideScramble?: boolean; cellClass?: string; controlsCorner?: 'left' | 'right' | 'center' }) {
+export function TimerArea({ playerId, rotated, hideScramble, cellClass, layoutEditing = false }: { playerId: number; rotated?: boolean; hideScramble?: boolean; cellClass?: string; controlsCorner?: 'left' | 'right' | 'center'; layoutEditing?: boolean }) {
   const player = useBattleStore(s => s.players[playerId]);
   const store = useBattleStore();
   const areaRef = useRef<HTMLDivElement>(null);
@@ -298,7 +305,7 @@ export function TimerArea({ playerId, rotated, hideScramble, cellClass }: { play
   // NOTE: 原生 pointer 事件处理 — 每位玩家独立 pointerId(两个拇指可独立 arm)
   useEffect(() => {
     const el = areaRef.current;
-    if (!el) return;
+    if (!el || layoutEditing) return;
 
     const onDown = (e: PointerEvent) => {
       if (shouldIgnoreTimerTarget(e.target)) return;
@@ -353,7 +360,7 @@ export function TimerArea({ playerId, rotated, hideScramble, cellClass }: { play
         curr.playerCancel(playerId);
       }
     };
-  }, [playerId]);
+  }, [playerId, layoutEditing]);
 
   const areaClasses = [
     'player-area',
@@ -412,6 +419,7 @@ export function TimerArea({ playerId, rotated, hideScramble, cellClass }: { play
       }} timing={{
         phase: player.isTiming ? 'running' : player.isInspecting ? 'inspecting' : 'idle',
         colorClass: "",
+        fontSize: `calc(clamp(2.5rem, 12vw, 5rem) * ${store.timerFontScale})`,
         surfaceRef: surfaceRef,
         digits: <div className={timeClasses} ref={timeRef}
           dangerouslySetInnerHTML={{ __html: renderTimeContent() }} />,
@@ -526,7 +534,12 @@ export default function BattleView({ playerCount, playersControl, presenceContro
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [vsHistoryOpen, setVsHistoryOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
-  useKeyboardControls(settingsOpen || vsHistoryOpen);
+  const [layoutEditing, setLayoutEditing] = useState(false);
+  const surfaceRef = useRef<HTMLElement>(null);
+  const finishLayoutEditing = useCallback(() => setLayoutEditing(false), []);
+  useKeyboardControls(settingsOpen || vsHistoryOpen || layoutEditing);
+  const layoutBusy = store.players.slice(0, playerCount).some(player =>
+    player.isTiming || player.isInspecting || player.isReady || player.canStart || player.pointerId !== null);
 
   // NOTE: 人数由 URL 驱动(TimerShell),store 跟随同步
   useEffect(() => {
@@ -648,9 +661,23 @@ export default function BattleView({ playerCount, playersControl, presenceContro
   const flipTop = store.flipTopRow;
   return <>
     <BattlePresenceReporter playerCount={playerCount} onChange={onPresenceChange} />
-    <TimerLocalBattlePage className="battle-container" toolbar={{
+    <TimerLocalBattlePage className="battle-container" surfaceRef={surfaceRef} layoutEditing={layoutEditing}
+      style={{
+        '--battle-scramble-gap': `${store.contentLayout.scrambleGap}px`,
+        '--battle-source-gap': `${store.contentLayout.sourceGap}px`,
+        '--battle-timer-gap': `${store.contentLayout.timerGap}px`,
+        '--battle-cube-gap': `${store.contentLayout.cubeGap}px`,
+        '--battle-source-scale': store.contentLayout.sourceScale,
+        '--battle-cube-scale': store.contentLayout.cubeScale,
+      } as CSSProperties} toolbar={{
       language: i18n.language === 'zh' ? 'zh' : 'en',
-      eventControl: <BattleEventButton playerId={0} />,
+      eventControl: <><BattleEventButton playerId={0} />
+        <Tooltip content={tr({ zh: '调整布局', en: 'Edit layout' })}>{tip => (
+          <button {...tip} type="button" className="tb-btn solo-layout-toggle" data-no-timer
+            aria-label={tr({ zh: '调整布局', en: 'Edit layout' })} aria-pressed={layoutEditing}
+            disabled={!layoutEditing && layoutBusy}
+            onClick={() => setLayoutEditing(value => !value)}><LayoutTemplate size={18} strokeWidth={1.6} /></button>
+        )}</Tooltip></>,
       onSettings: handleSettingsClick,
       onHistory: () => setVsHistoryOpen(true),
       controls: <>{playersControl}{presenceControl}</>,
@@ -662,10 +689,29 @@ export default function BattleView({ playerCount, playersControl, presenceContro
       bottomScramble: bottomSame ? <ScramblePanel ids={[0, 1]} imgHeight="var(--timer-cube-h)" /> : undefined,
       topScramble: topSame ? <ScramblePanel ids={[2, 3]} imgHeight="var(--timer-cube-h)" /> : undefined,
       renderPlayer: (playerId, cell) => <TimerArea playerId={playerId}
-        hideScramble={cell.hideScramble} controlsCorner={cell.controlsCorner} />
+        hideScramble={cell.hideScramble} controlsCorner={cell.controlsCorner} layoutEditing={layoutEditing} />
     }}
       settings={settingsOpen && settingsProps}
       history={vsHistoryOpen && historyProps}
-      feedback={toastMsg && <MilestoneToast message={toastMsg} onDone={() => setToastMsg(null)} />} />
+      feedback={<>
+        {toastMsg && <MilestoneToast message={toastMsg} onDone={() => setToastMsg(null)} />}
+        {layoutEditing && <TimerSoloLayoutEditor surfaceRef={surfaceRef}
+          language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} onDone={finishLayoutEditing}
+          contentKey={JSON.stringify([playerCount, store.layout, store.flipTopRow, store.showImage,
+            store.puzzleIds, store.scrambles, store.scrambleLoadings, store.scrambleErrors, store.scrambleRows])}
+          getSettings={getBattleLayoutSettings} updateSettings={updateBattleLayoutSettings} />}
+      </>} />
   </>;
+}
+
+function getBattleLayoutSettings(): TimerSoloLayoutSettings {
+  const store = useBattleStore.getState();
+  return { soloLayout: store.contentLayout, timerFontScale: store.timerFontScale, scrambleFontScale: store.scrambleScale };
+}
+
+function updateBattleLayoutSettings(patch: Partial<TimerSoloLayoutSettings>) {
+  const store = useBattleStore.getState();
+  if (patch.soloLayout) store.setContentLayout(patch.soloLayout);
+  if (patch.timerFontScale !== undefined) store.setTimerFontScale(patch.timerFontScale);
+  if (patch.scrambleFontScale !== undefined) store.setScrambleScale(patch.scrambleFontScale);
 }

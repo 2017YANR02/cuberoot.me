@@ -7,11 +7,12 @@
  * 和它们在站内公式库里的位置;不合成"整条解法",因为那要先钦定一条 ZBLS 公式,
  * 而那正是三类不能拿 mid-AUF 再商一次的原因(/math/lsll §3)。
  */
+import PageHeading from '@/components/PageHeading';
 import { useMemo } from 'react';
 import { parseAsString } from 'nuqs';
 import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import Link from '@/components/AppLink';
-import { ArrowLeft, ArrowRight } from '@app-foundation/icons/lucide';
+import { ArrowRight } from '@app-foundation/icons/lucide';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr, T } from '@/i18n/tr';
 import { FaceletsCube } from '@/components/FaceletsCube';
@@ -57,12 +58,10 @@ export default function LsllRouteClient() {
   return (
     <div className="alg-root">
       <div className="alg-cat-header">
-        <Link href={`/alg/lsll/${cat.slug}?cls=3&z=${zbls.code}`} className="alg-back">
-          <ArrowLeft size={14} /> {cat.letter}
-        </Link>
-        <h1 className="alg-cat-title">
+
+        <PageHeading backHref={`/alg/lsll/${cat.slug}?cls=3&z=${zbls.code}`} titleClassName="alg-cat-title">
           <span>{tr({ zh: '两步路线', en: 'Two-look route' })}</span>
-        </h1>
+        </PageHeading>
       </div>
 
       <div className="lsll-route-panels">

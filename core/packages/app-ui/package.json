@@ -18,7 +18,9 @@
       "./chat.css": "asset",
       "./watch-cube": "runtime-neutral",
       "./watch-cube-scene": "mixed",
-      "./watch-replay": "mixed"
+      "./watch-replay": "mixed",
+      "./loading-brand": "react-dom",
+      "./loading-brand.css": "asset"
     }
   },
   "exports": {
@@ -28,7 +30,9 @@
     "./chat.css": "./src/chat/chat.css",
     "./watch-cube": "./src/watch-cube.ts",
     "./watch-cube-scene": "./src/watch-cube-scene.ts",
-    "./watch-replay": "./src/watch-replay.ts"
+    "./watch-replay": "./src/watch-replay.ts",
+    "./loading-brand": "./src/LoadingBrandMark.tsx",
+    "./loading-brand.css": "./src/loading-brand.css"
   },
   "sideEffects": true,
   "scripts": {

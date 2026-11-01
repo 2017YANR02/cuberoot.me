@@ -6,6 +6,7 @@
  *  - 会员名单与撤销操作位于 /admin/users。
  *  - 套餐:改价格(元)/ 启用,免动 migration。
  */
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useMemo, useState } from 'react';
 import { Plus, Check } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
@@ -143,7 +144,7 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated, onViewRenewal }
       <h3 className="mem-admin-title">{tr({ zh: '会员管理', en: 'Membership admin'
     })}</h3>
       <details className="mem-details">
-        <summary>{tr({ zh: '未来权益规划', en: 'Planned benefits' })}</summary>
+        <MoreToggle as="summary">{tr({ zh: '未来权益规划', en: 'Planned benefits' })}</MoreToggle>
       <section className="mem-plan-sections" aria-labelledby="planned-benefits-title">
         <div>
           <h2 id="planned-benefits-title" className="mem-plan-section-title">
@@ -209,7 +210,7 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated, onViewRenewal }
           <p className="mem-note">{tr({ zh: '这里只显示服务器配置状态，不代表实际签约、到账与取消流程已验收。', en: 'This reports server configuration, not verification of real authorization, payment, or cancellation.' })}</p>
         </div>}
         <details>
-        <summary>{tr({ zh: '接入步骤与配置地址', en: 'Integration steps and configuration URLs' })}</summary>
+        <MoreToggle as="summary">{tr({ zh: '接入步骤与配置地址', en: 'Integration steps and configuration URLs' })}</MoreToggle>
         <ol>
           <li>{tr({ zh: '商户平台 → 交易中心 → 高级业务 → 委托代扣模板管理：核对连续包月、连续包年模板的审核状态、模板 ID、金额、周期及扣费通知模式。“签约管理”用于查用户授权，不是申请模板的入口。', en: 'In the merchant portal, open Transaction Center → Advanced Business → Entrusted Payment Template Management. Check approval, template IDs, amounts, periods, and notification mode for monthly and annual plans. Contract Management searches customer authorizations; it does not create templates.' })}</li>
           <li>{tr({ zh: '确认网站获批的签约方式及其 AppID。H5 支付权限和 H5 纯签约权限不同；不能拿一次性付款二维码代替续费签约。', en: 'Confirm the approved website authorization method and its AppID. H5 payments and H5 contract authorization require different access; a one-time payment QR code cannot authorize renewals.' })}</li>

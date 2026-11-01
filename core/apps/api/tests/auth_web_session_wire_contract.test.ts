@@ -443,7 +443,7 @@ describe('auth route wire contracts', () => {
     expect(mocks.updateClawdAvatar).not.toHaveBeenCalled();
   });
 
-  it('returns the authenticated account basic profile without adding it to the session', async () => {
+  it.each([null, 'clawd'])('returns the authenticated profile with selection %s without adding it to the session', async (deskPetSelection) => {
     const profile = {
       fullName: '张三',
       birthDate: '2000-02-29',
@@ -455,12 +455,15 @@ describe('auth route wire contracts', () => {
     };
     mocks.requireAppUserId.mockResolvedValue(42);
     mocks.getAccountBasicProfile.mockResolvedValue(profile);
+    mocks.query.mockResolvedValueOnce([{ deskpet_selection: deskPetSelection }]);
 
     const response = await accountAuthRoutes.request('/auth/profile');
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ profile });
+    expect(await response.json()).toEqual({ profile, deskPetSelection });
     expect(mocks.getAccountBasicProfile).toHaveBeenCalledWith(42);
+    expect(mocks.query).toHaveBeenCalledWith('SELECT deskpet_selection FROM app_users WHERE id = ?', [42]);
+    expect(mocks.signSession).not.toHaveBeenCalled();
   });
 
   it('normalizes and saves a complete basic profile action', async () => {

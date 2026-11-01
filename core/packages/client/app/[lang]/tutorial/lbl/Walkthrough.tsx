@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';
 import Link from '@/components/AppLink';
-import BackHome from '@/components/BackHome';
+import PageBackLink from '@/components/PageBackLink';
 import { T, tr } from '@/i18n/tr';
 import { LBL_INITIAL_VIEW, LBL_STEPS } from './content';
 import { LBL_LESSON_RUNS, LBL_LESSON_STAGE_IDS, lessonFrame, type LblLessonStageId } from './lesson-runs';
@@ -16,7 +16,7 @@ export default function Walkthrough() {
   const step = LBL_STEPS.find(item => item.id === stage);
   return <main className="lbl-page lbl-walkthrough">
     <header className="lbl-header">
-      <BackHome />
+      <PageBackLink fallback="/tutorial/lbl" />
       <Link href="/tutorial/lbl" prefetch={false}><T zh="层先法" en="LBL" /></Link>
       <h1><T zh="完整还原" en="Full solve" /></h1>
     </header>

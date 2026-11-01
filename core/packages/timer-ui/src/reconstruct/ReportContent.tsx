@@ -1,6 +1,7 @@
 'use client';
+import MoreToggle from '../MoreToggle';
 import { createElement, type ReactNode } from 'react';
-import { Check, Copy, Forward, ThumbsUp, ThumbsDown, ChevronDown, ChevronRight, SkipBack, SkipForward, ChevronLeft, Play, Pause, ArrowRightLeft } from 'lucide-react';
+import { Check, Copy, Forward, ThumbsUp, ThumbsDown, ChevronRight, SkipBack, SkipForward, ChevronLeft, Play, Pause, ArrowRightLeft } from 'lucide-react';
 import '../recon/recon-cross-toggle.css';
 import BoolToggle from '../BoolToggle';
 import { TimerDifficultyHelp } from '../TimerDifficultyHelp';
@@ -58,7 +59,7 @@ export default function ReportContent({node,dispatch,slots={}}:{node:ReportNode|
     }
     case 'toggle':return <Toggle value={Boolean(node.value)} label={node.text} onChange={value=>node.action&&dispatch({...node.action,value})}/>;
     case 'select':return <label className={node.className}>{node.text}<select value={String(node.value)} onChange={e=>node.action&&dispatch({...node.action,value:Number(e.target.value)})}>{node.options?.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}</select></label>;
-    case 'disclosure':return <div className={node.className}><button type="button" className="reconstruct-section-header" aria-expanded={node.selected} onClick={()=>node.action&&dispatch(node.action)}>{node.selected?<ChevronDown size={14}/>:<ChevronRight size={14}/>}<span className="reconstruct-section-title reconstruct-section-title-inline">{node.text}</span></button>{node.selected&&children}</div>;
+    case 'disclosure':return <div className={node.className}><MoreToggle type="button" className="reconstruct-section-header" expanded={Boolean(node.selected)} onClick={()=>node.action&&dispatch(node.action)}><span className="reconstruct-section-title reconstruct-section-title-inline">{node.text}</span></MoreToggle>{node.selected&&children}</div>;
     case 'table':return <div className="sa-scroll"><table className={node.className}><thead><tr><th scope="col" className="sa-rowhead"/>{node.columns?.map(column=><th key={column.id} scope="col" data-tone={column.tone} data-open={column.selected?'':undefined} className={column.className==='sa-total-col'?'sa-total-col':undefined}>{render(column)}</th>)}</tr></thead><tbody>{node.rows?.map(row=><tr key={row.id} className={row.className}><th scope="row" className="sa-rowhead">{row.label}</th>{row.cells.map((cell,i)=><td key={cell.id} title={cell.title} data-open={node.columns?.[i]?.selected?'':undefined} className={i===row.cells.length-1?'sa-total-col':undefined}>{render(cell)}</td>)}</tr>)}</tbody></table></div>;
     case 'group':return node.tag==='fragment'?<>{children}</>:createElement(node.tag??'div',{className:node.className,title:node.title,'data-state':node.state,'data-stage':node.stage},children);
   }

@@ -89,8 +89,8 @@ body {
   --radius: 12px;
   /* Sans and mono stacks are shared with installed hosts in timer-ui/typography.css. */
   /* 衬线展示标题单源(落地/about/wiki/统计等大标题):拉丁走 Fraunces,中文落自托管
-     LXGW WenKai 楷体(标题静态子集,见 app/fonts.css + scripts/subset-cjk-heading.py),
-     缺字回退系统宋体。任何衬线标题都该用 var(--font-serif),别再散写 'Fraunces' 字面栈。 */
+     LXGW WenKai 楷体(常用标题子集 + 完整中文按需分片,见 app/fonts-wenkai.css),
+     字库由 scripts/subset-cjk-heading.py 生成。任何衬线标题都该用 var(--font-serif),别再散写 'Fraunces' 字面栈。 */
   --font-serif: 'Fraunces', 'LXGW WenKai', 'Times New Roman', serif;
 
   /* timer state colors (Solo + Battle) */

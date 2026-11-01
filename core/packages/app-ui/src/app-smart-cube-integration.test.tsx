@@ -281,8 +281,11 @@ describe('installed App GAN lifecycle integration', () => {
     await act(async () => container.querySelector<HTMLButtonElement>('.shell-stat-rail')!.click());
     await act(async () => { wideViewport = false; mediaListeners.forEach(fn => fn()); });
     expect(container.querySelector('.timing-surface')).toBeNull();
-    expect(container.querySelector('.app-shell > .app-titlebar')).not.toBeNull();
-    await act(async () => nav[0].click());
+    expect(container.querySelector('.app-shell--history .history-view .shell-panel-tabs')).not.toBeNull();
+    const closeHistory = container.querySelector<HTMLButtonElement>('.history-view .shell-panel-close');
+    expect(closeHistory).not.toBeNull();
+    await act(async () => closeHistory!.click());
+    expect(container.querySelector('.history-view')).toBeNull();
     expect(container.querySelector('.timing-surface')).not.toBeNull();
   });
 
@@ -577,7 +580,19 @@ describe('installed App GAN lifecycle integration', () => {
     expect(document.querySelector('[role="dialog"]')).not.toBeNull();
     await vi.waitFor(() => expect(document.body.textContent).toContain('Move stream (3)'), { timeout: 15_000 });
     expect(document.querySelector('[role="dialog"] h2')?.textContent).toBe('#1');
-    await act(async () => document.querySelector<HTMLButtonElement>('[data-history-action-id="solve.detail.close"]')!.click());
+    if (wide) {
+      await act(async () => document.querySelector<HTMLButtonElement>('[data-history-action-id="solve.detail.close"]')!.click());
+    } else {
+      // Wait for the actual full-detail entrance; BLE turns only dismiss after it is visible.
+      await act(async () => { await new Promise(resolve => setTimeout(resolve, 300)); });
+      await act(async () => { wideViewport = true; mediaListeners.forEach(fn => fn()); });
+      await act(async () => { wideViewport = false; mediaListeners.forEach(fn => fn()); });
+      await act(async () => move('U', 3_000));
+      expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+      await act(async () => move("U'", 3_100));
+      expect(phase).toBe('stopped');
+      expect(saved()).toHaveLength(1);
+    }
     await vi.waitFor(() => expect(document.querySelector('[role="dialog"]')).toBeNull());
     if (!wide) expect(container.querySelector('.app-shell--timer')).not.toBeNull();
 
@@ -613,6 +628,10 @@ describe('installed App GAN lifecycle integration', () => {
       .find((row) => row.querySelector('.idx')?.textContent === '1')!;
     await act(async () => firstRow.click());
     await settle();
+    expect(document.querySelector('[role="dialog"] h2')?.textContent).toBe('#1');
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 300)); });
+    await act(async () => move('U', 6_000));
+    await act(async () => move("U'", 6_100));
     expect(document.querySelector('[role="dialog"] h2')?.textContent).toBe('#1');
   }, 30_000);
 

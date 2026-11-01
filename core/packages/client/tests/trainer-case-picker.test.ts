@@ -116,7 +116,7 @@ it('expands from row whitespace and changes selection only through the checkbox'
   const row = top('U').parentElement!;
   const checkbox = row.querySelector<HTMLButtonElement>('.trainer-bulk-toggle')!;
   expect(row.firstElementChild).toBe(checkbox);
-  expect(top('U').lastElementChild?.classList.contains('trainer-group-chevron')).toBe(true);
+  expect(top('U').lastElementChild?.classList.contains('more-toggle-chevron')).toBe(true);
   await act(async () => row.click());
   expect(top('U').getAttribute('aria-expanded')).toBe('true');
   expect(checkbox.getAttribute('aria-pressed')).toBe('true');

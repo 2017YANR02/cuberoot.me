@@ -4,6 +4,7 @@
 // 监控一批选手的全生涯 WCA 成绩,一旦某条往期成绩被取消 / 修正 / 纪录标记变动 / 整条移除,
 // 后台 diff 检出并记录,这里按检出时间倒序展示。可按选手筛选。
 
+import PageHeading from '@/components/PageHeading';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
@@ -92,8 +93,8 @@ export default function ResultWatchClient() {
     <div className="result-watch-page">
       <header className="rw-header">
         <div className="rw-title-row">
-          <BellRing size={22} strokeWidth={1.75} className="rw-title-icon" />
-          <h1 className="rw-title">{t('往期成绩变更监控', 'Result Change Monitor')}</h1>
+
+          <PageHeading backHref="/wca" titleClassName="rw-title"><BellRing size={22} strokeWidth={1.75} className="rw-title-icon" />{t('往期成绩变更监控', 'Result Change Monitor')}</PageHeading>
           <button
             type="button"
             className="rw-refresh"

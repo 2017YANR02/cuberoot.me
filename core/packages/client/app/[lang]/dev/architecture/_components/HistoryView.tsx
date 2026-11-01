@@ -1,7 +1,8 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { ChevronDown, ChevronLeft, ChevronRight } from '@app-foundation/icons/lucide';
+import { ChevronLeft, ChevronRight } from '@app-foundation/icons/lucide';
 import MonthGrid from '@/components/MonthGrid';
 import { useLang } from '../../_lib/Lang';
 import type { Lang } from '../../_lib/Lang';
@@ -58,26 +59,26 @@ function Timeline() {
         const isCollapsed = collapsedMonths.has(month);
         return (
           <li key={month} className={`tl-month${isCollapsed ? ' collapsed' : ''}`}>
-            <button
+            <MoreToggle
               type="button"
               className="tl-month-trigger"
-              aria-expanded={!isCollapsed}
+              expanded={!isCollapsed}
               aria-controls={`timeline-month-${month}`}
               onClick={() => toggleMonth(month)}
             >
-              <ChevronDown className="tl-month-chevron" size={17} strokeWidth={1.8} aria-hidden />
+
               <span>{month}</span>
-            </button>
+            </MoreToggle>
             <ol id={`timeline-month-${month}`} className="tl-month-entries" hidden={isCollapsed}>
               {entries.map(({ entry: e, index: i }) => {
                 const t = tr(e);
                 const isOpen = open === i;
                 return (
                   <li key={i} className={`tl-entry tl-${e.tag}${isOpen ? ' open' : ''}`}>
-                    <button
+                    <MoreToggle
                       type="button"
                       className="tl-trigger"
-                      aria-expanded={isOpen}
+                      expanded={isOpen}
                       onClick={() => setOpen(isOpen ? null : i)}
                     >
                       <div className="tl-date">{e.date.slice(5)}</div>
@@ -85,12 +86,12 @@ function Timeline() {
                         <div className="tl-head-line">
                           <span className={`tl-tag tl-tag-${e.tag}`}>{e.tag}</span>
                           <h4 className="tl-title">{t.title}</h4>
-                          <span className={`tl-chev${isOpen ? ' open' : ''}`} aria-hidden>▸</span>
+
                         </div>
                         <p className="tl-summary">{t.body}</p>
                         {isOpen && <p className="tl-expand">{t.expand}</p>}
                       </div>
-                    </button>
+                    </MoreToggle>
                   </li>
                 );
               })}

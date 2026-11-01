@@ -14,8 +14,9 @@
 // REUSES the framework-agnostic pure libs directly (no trainer page UI):
 //   codereader(scramble, cfg) -> { edges: LetterCell[], corners, flips, twists }
 
+import MoreToggle from './MoreToggle';
 import { useEffect, useMemo, useState, type JSX } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+
 import { ClearButton } from './ClearButton';
 import BoolToggle from './BoolToggle';
 import { codereader } from '@cuberoot/shared/bld/read-engine';
@@ -164,16 +165,16 @@ export default function TimerBldHelperModal({ scramble, event, isZh, onClose }: 
                   {EDGE_BUFFERS.map((b) => <option key={b} value={b}>{b}</option>)}
                 </select>
               </div>
-              <button
+              <MoreToggle
                 type="button"
                 className="bld-helper-adv-toggle"
                 onClick={() => setAdvOpen((o) => !o)}
-                aria-expanded={advOpen}
+                expanded={advOpen}
               >
                 {tr({ zh: '高级', en: 'Advanced'
                 })}
-                {advOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-              </button>
+
+              </MoreToggle>
             </div>
 
             {advOpen && (

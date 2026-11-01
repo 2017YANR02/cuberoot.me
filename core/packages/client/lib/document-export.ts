@@ -1,4 +1,7 @@
+export interface PdfChartPoint { date: string; value: number; label: string }
+
 export interface RichTextNode {
+  pdfChart?: PdfChartPoint[];
   type?: string;
   text?: string;
   attrs?: Record<string, unknown>;
@@ -206,12 +209,63 @@ export async function buildDocumentDocx(title: string, document: RichTextNode): 
 
 type PdfLineSegment = ExportSegment & { width: number };
 
-function segmentTokens(text: string): string[] {
-  return text.match(/\r?\n|[\u3400-\u9fff\uf900-\ufaff]|[^\s\u3400-\u9fff\uf900-\ufaff]+|[ \t]+/gu) || [];
+type PdfBlock = ExportBlock | {kind:'table'; rows:ExportSegment[][][]} | {kind:'chart'; points:PdfChartPoint[]};
+function pdfBlocks(node: RichTextNode): PdfBlock[] {
+  if (node.type === 'doc') return (node.content ?? []).flatMap(pdfBlocks);
+  if (node.type === 'table') return [{kind:'table', rows:(node.content ?? []).map(row => (row.content ?? []).map(cell => segmentsFrom(cell)))}];
+  if (node.type === 'pdfChart') return [{kind:'chart', points:node.pdfChart ?? []}];
+  return documentExportBlocks(node);
 }
 
-export async function buildDocumentPdf(title: string, document: RichTextNode): Promise<Blob> {
+const NO_LINE_START = /^[，。！？、；：％‰）〕〉》」』】〗〙〛’”…,.;:!?%\)\]\}]/u;
+const NO_LINE_END = /[（〔〈《「『【〖〘〚‘“\(\[\{]$/u;
+
+/** Keep punctuation with its neighbour even across Markdown style boundaries. */
+export function wrapDocumentPdfSegments(
+  segments: ExportSegment[], maxWidth: number,
+  measure: (text: string, segment: ExportSegment) => number,
+): PdfLineSegment[][] {
+  const groups: PdfLineSegment[][] = [];
+  const segmenter = new Intl.Segmenter(undefined, {granularity:'grapheme'});
+  for (const segment of segments) {
+    // Separate punctuation from Latin words so an opening quote binds forwards.
+    const tokens = segment.text.match(/\r?\n|[\u3400-\u9fff\uf900-\ufaff]|[\p{P}\p{S}]|[^\s\p{P}\p{S}\u3400-\u9fff\uf900-\ufaff]+|[ \t]+/gu) ?? [];
+    for (const token of tokens) {
+      const parts = measure(token, segment) > maxWidth
+        ? Array.from(segmenter.segment(token), item => item.segment) : [token];
+      for (const part of parts) {
+        const previous = groups.at(-1);
+        const tail = previous?.at(-1)?.text ?? '';
+        const run = {...segment, text:part, width:measure(part, segment)};
+        if (previous && !/\r?\n/.test(tail + part) && (NO_LINE_START.test(part) || NO_LINE_END.test(tail))) previous.push(run);
+        else groups.push([run]);
+      }
+    }
+  }
+  const lines: PdfLineSegment[][] = [[]];
+  let width = 0;
+  for (const group of groups) {
+    const value = group.map(run => run.text).join('');
+    if (/^\r?\n$/.test(value)) { lines.push([]); width = 0; continue; }
+    if (!width && /^[ \t]+$/.test(value)) continue;
+    const groupWidth = group.reduce((sum, run) => sum + run.width, 0);
+    if (width && width + groupWidth > maxWidth) { lines.push([]); width = 0; }
+    for (const run of group) {
+      const line = lines.at(-1)!;
+      const last = line.at(-1);
+      if (last && last.bold === run.bold && last.italic === run.italic && last.strike === run.strike && last.code === run.code) {
+        last.text += run.text; last.width += run.width;
+      } else line.push({...run});
+    }
+    width += groupWidth;
+  }
+  return lines;
+}
+
+export async function buildDocumentPdf(title: string, document: RichTextNode, options?: {brand?: boolean; subtitle?: string}): Promise<Blob> {
   const [{ jsPDF }, fonts] = await Promise.all([import('jspdf'), import('@/lib/pdf-fonts')]);
+  // SVG integration extends jsPDF.API before each instance copies it.
+  const branding = options?.brand ? await import('@/lib/pdf-logo') : null;
   const pdf = new jsPDF({ unit: 'pt', format: 'a4', compress: true });
   await fonts.loadPdfFonts(pdf);
   const plainText = documentExportText(document);
@@ -224,54 +278,98 @@ export async function buildDocumentPdf(title: string, document: RichTextNode): P
   const pageHeight = pdf.internal.pageSize.getHeight();
   const margin = 56;
   const bottom = 54;
-  let y = 58;
+  const top = options?.brand ? 110 : 58;
+  let y = top;
 
-  const setSegmentFont = (segment: Pick<ExportSegment, 'bold'>, size: number) => {
-    pdf.setFont(fontName, segment.bold ? 'bold' : 'normal');
+  const setSegmentFont = (segment: Pick<ExportSegment, 'bold'> & {code?:boolean}, size: number) => {
+    pdf.setFont(segment.code && !useCjk ? fonts.FONT_MONO : fontName, segment.bold && !segment.code ? 'bold' : 'normal');
     pdf.setFontSize(size);
   };
   const measure = (text: string, segment: ExportSegment, size: number) => {
     setSegmentFont(segment, size);
     return pdf.getTextWidth(text);
   };
-  const append = (line: PdfLineSegment[], segment: ExportSegment, text: string, width: number) => {
-    const previous = line.at(-1);
-    if (previous && previous.bold === segment.bold && previous.italic === segment.italic
-      && previous.strike === segment.strike && previous.code === segment.code) {
-      previous.text += text;
-      previous.width += width;
-    } else {
-      line.push({ ...segment, text, width });
-    }
-  };
-  const wrap = (segments: ExportSegment[], size: number, maxWidth: number): PdfLineSegment[][] => {
-    const lines: PdfLineSegment[][] = [[]];
-    let lineWidth = 0;
-    const nextLine = () => { lines.push([]); lineWidth = 0; };
-    for (const segment of segments) {
-      for (const token of segmentTokens(segment.text)) {
-        if (token === '\n' || token === '\r\n') { nextLine(); continue; }
-        if (/^[ \t]+$/.test(token) && lineWidth === 0) continue;
-        let tokenWidth = measure(token, segment, size);
-        if (tokenWidth <= maxWidth) {
-          if (lineWidth > 0 && lineWidth + tokenWidth > maxWidth) nextLine();
-          append(lines.at(-1)!, segment, token, tokenWidth);
-          lineWidth += tokenWidth;
-          continue;
+  const wrap = (segments: ExportSegment[], size: number, maxWidth: number) =>
+    wrapDocumentPdfSegments(segments, maxWidth, (text, segment) => measure(text, segment, size));
+  const newPage = () => { pdf.addPage(); y = top; };
+
+  for (const block of pdfBlocks(document)) {
+    if (block.kind === 'table') {
+      const columns = Math.max(0, ...block.rows.map(row => row.length));
+      if (!columns) continue;
+      const cellWidth = (pageWidth - margin * 2) / columns;
+      const size = 9, lineHeight = 14, padding = 6;
+      const prepared = block.rows.map(row => Array.from({length:columns}, (_, index) => wrap(row[index] ?? [], size, cellWidth - padding * 2)));
+      const header = prepared[0];
+      const rowHeight = (cells:PdfLineSegment[][][]) => Math.max(1, ...cells.map(cell => cell.length)) * lineHeight + padding * 2;
+      const paint = (cells:PdfLineSegment[][][], headerRow:boolean) => {
+        const height = rowHeight(cells);
+        if (headerRow) {
+          pdf.setFillColor(240, 243, 247);
+          pdf.rect(margin, y, pageWidth - margin * 2, height, 'F');
         }
-        for (const character of Array.from(token)) {
-          const characterWidth = measure(character, segment, size);
-          if (lineWidth > 0 && lineWidth + characterWidth > maxWidth) nextLine();
-          append(lines.at(-1)!, segment, character, characterWidth);
-          lineWidth += characterWidth;
+        cells.forEach((lines, column) => {
+          lines.forEach((line, index) => {
+            let x = margin + column * cellWidth + padding;
+            for (const run of line) {
+              setSegmentFont({...run, bold:headerRow || run.bold}, size);
+              pdf.setTextColor(28, 30, 34);
+              pdf.text(run.text, x, y + padding + size + index * lineHeight);
+              x += run.width;
+            }
+          });
+        });
+        pdf.setDrawColor(220, 224, 230); pdf.setLineWidth(0.4);
+        pdf.line(margin, y + height, pageWidth - margin, y + height);
+        y += height;
+      };
+      const headerHeight = rowHeight(header);
+      if (y + headerHeight + (prepared[1] ? Math.min(rowHeight(prepared[1]), 100) : 0) > pageHeight - bottom) newPage();
+      paint(header, true);
+      for (const cells of prepared.slice(1)) {
+        if (y + rowHeight(cells) > pageHeight - bottom) { newPage(); paint(header, true); }
+        // Split unusually tall rows without losing cells; repeat column headings.
+        let offset = 0;
+        const lineCount = Math.max(1, ...cells.map(cell => cell.length));
+        while (offset < lineCount) {
+          const capacity = Math.max(1, Math.floor((pageHeight - bottom - y - padding * 2) / lineHeight));
+          const count = Math.min(capacity, lineCount - offset);
+          paint(cells.map(cell => cell.slice(offset, offset + count)), false);
+          offset += count;
+          if (offset < lineCount) { newPage(); paint(header, true); }
         }
       }
+      y += 14; continue;
     }
-    return lines;
-  };
-  const newPage = () => { pdf.addPage(); y = 58; };
-
-  for (const block of documentExportBlocks(document)) {
+    if (block.kind === 'chart') {
+      const points = block.points.filter(point => Number.isFinite(Date.parse(point.date)) && Number.isFinite(point.value)).slice().sort((a,b) => a.date.localeCompare(b.date));
+      if (!points.length) continue;
+      const height = 180;
+      if (y + height + 30 > pageHeight - bottom) newPage();
+      const left = margin + 50, right = pageWidth - margin - 10;
+      const chartTop = y + 12, chartBottom = y + height - 20;
+      const minX = Date.parse(points[0].date), maxX = Date.parse(points.at(-1)!.date);
+      const byValue = points.slice().sort((a,b) => a.value - b.value);
+      const min = byValue[0], max = byValue.at(-1)!;
+      const range = max.value - min.value || Math.max(1, max.value * 0.1);
+      const low = min.value - range * 0.08, high = max.value + range * 0.08;
+      const x = (point:PdfChartPoint) => left + (maxX === minX ? 0.5 : (Date.parse(point.date) - minX) / (maxX - minX)) * (right - left);
+      const positionY = (value:number) => chartBottom - (value - low) / (high - low) * (chartBottom - chartTop);
+      pdf.setFont(fontName, 'normal'); pdf.setFontSize(8);
+      for (const point of min === max ? [min] : [min,max]) {
+        pdf.setDrawColor(222, 225, 230); pdf.setLineWidth(0.5);
+        pdf.line(left, positionY(point.value), right, positionY(point.value));
+        pdf.setTextColor(90, 95, 104); pdf.text(point.label, left - 8, positionY(point.value) + 3, {align:'right'});
+      }
+      pdf.text(points[0].date, left, chartBottom + 16);
+      if (points[0].date !== points.at(-1)!.date) pdf.text(points.at(-1)!.date, right, chartBottom + 16, {align:'right'});
+      pdf.setDrawColor(35, 105, 180); pdf.setFillColor(35, 105, 180); pdf.setLineWidth(1.2);
+      points.forEach((point,index) => {
+        if (index) pdf.line(x(points[index - 1]), positionY(points[index - 1].value), x(point), positionY(point.value));
+        pdf.circle(x(point), positionY(point.value), 2, 'F');
+      });
+      y += height + 20; continue;
+    }
     if (block.kind === 'rule') {
       if (y + 20 > pageHeight - bottom) newPage();
       pdf.setDrawColor(190, 194, 201);
@@ -295,6 +393,7 @@ export async function buildDocumentPdf(title: string, document: RichTextNode): P
     const styledSegments = segments.length ? segments.map((segment) => ({
       ...segment,
       bold: segment.bold || block.kind === 'heading',
+      code: segment.code || block.kind === 'code',
     })) : [{ text: '', ...EMPTY_SEGMENT }];
     const lines = wrap(styledSegments, size, pageWidth - margin - x);
     if (y + before + lineHeight + (block.kind === 'heading' ? lineHeight : 0) > pageHeight - bottom) newPage();
@@ -309,6 +408,10 @@ export async function buildDocumentPdf(title: string, document: RichTextNode): P
       let cursor = x;
       for (const segment of line) {
         setSegmentFont(segment, size);
+        if (segment.code) {
+          pdf.setFillColor(242, 244, 247);
+          pdf.rect(cursor - 1, y - size, segment.width + 2, lineHeight, 'F');
+        }
         pdf.setTextColor(28, 30, 34);
         pdf.text(segment.text, cursor, y);
         if (segment.strike && segment.text) {
@@ -321,6 +424,30 @@ export async function buildDocumentPdf(title: string, document: RichTextNode): P
       y += lineHeight;
     }
     y += after;
+  }
+  if (options?.brand && branding) {
+    const {loadPdfLogo, drawPdfLogo} = branding;
+    const logo = await loadPdfLogo('mark');
+    const count = pdf.getNumberOfPages();
+    for (let page = 1; page <= count; page++) {
+      pdf.setPage(page);
+      const width = await drawPdfLogo(pdf, logo, margin, 26, 25);
+      pdf.setFont(fontName, 'normal');
+      pdf.setFontSize(10);
+      pdf.setTextColor(90, 95, 104);
+      pdf.setFontSize(15);
+      pdf.setTextColor(28, 30, 34);
+      pdf.text('CubeRoot', margin + (width ? width + 8 : 0), 43);
+      pdf.setFontSize(10);
+      pdf.setTextColor(90, 95, 104);
+      pdf.text('cuberoot.me', pageWidth - margin, 43, {align:'right'});
+      pdf.setFontSize(9);
+      pdf.text(options.subtitle ?? '', margin, 73);
+      pdf.setDrawColor(222, 225, 230);
+      pdf.setLineWidth(0.5);
+      pdf.line(margin, 84, pageWidth - margin, 84);
+      pdf.text(`${page} / ${count}`, pageWidth - margin, pageHeight - 28, {align:'right'});
+    }
   }
   return pdf.output('blob');
 }

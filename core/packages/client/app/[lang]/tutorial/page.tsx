@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import BackHome from '@/components/BackHome';
 import AlgCard from '@/components/AlgCard';
 import SimCubeView from '@/components/sim-embed/SimCubeView';
@@ -102,7 +103,7 @@ function IvyTutorial() {
     <>
       <Ivy3YGuide />
       <details className="tutorial-article tutorial-basics" onToggle={event => setShowBasics(event.currentTarget.open)}>
-        <summary><T zh="入门复原与其他方法" en="Beginner solving and other methods" /></summary>
+        <MoreToggle as="summary"><T zh="入门复原与其他方法" en="Beginner solving and other methods" /></MoreToggle>
         {showBasics && <div className="tutorial-basics-content">
       <p className="tutorial-lead">
         <T

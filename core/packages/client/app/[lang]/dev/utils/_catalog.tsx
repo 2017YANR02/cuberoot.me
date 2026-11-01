@@ -73,6 +73,22 @@ export const UCATS: { id: UtilCat; zh: string; en: string }[] = [
 
 export const CATALOG: UtilEntry[] = [
   {
+    name: 'useAssistantTextReveal',
+    sig: 'useAssistantTextReveal(text: string, animate: boolean, id?: string, onComplete?: (id: string, text: string) => void): string',
+    imp: "import { useAssistantTextReveal } from '@/hooks/useAssistantTextReveal';",
+    category: 'hook',
+    zh: '逐字呈现助手答案的可见前缀；完整答案仍保存在存储中，呈现完成后通知调用方。',
+    en: 'Reveal the visible prefix of an assistant answer while retaining the full answer in storage; notify the caller when rendering finishes.',
+  },
+  {
+    name: 'useHomeScrollRestoration',
+    sig: 'useHomeScrollRestoration(ready: boolean): void',
+    imp: "import { useHomeScrollRestoration } from '@/hooks/useHomeScrollRestoration';",
+    category: 'hook',
+    zh: '在当前标签页保存首页滚动位置，等待内容就绪后恢复；用户滚动时停止自动恢复。',
+    en: 'Remember the home scroll position in the current tab and restore it when content is ready; stop restoring when the user scrolls.',
+  },
+  {
     name: 'useAssistantWorkspace',
     sig: 'useAssistantWorkspace(owner: string)',
     imp: "import { useAssistantWorkspace } from '@/hooks/useAssistantWorkspace';",

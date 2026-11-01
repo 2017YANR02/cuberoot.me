@@ -9,7 +9,7 @@ import { invertMoveString } from '@cuberoot/shared/alg-notation';
 import AlgInput, { type AlgInputHandle } from '@/components/AlgInput';
 import { ClearButton } from '@/components/ClearButton';
 import { TeX } from '@/components/math/Tex';
-import BackHome from '@/components/BackHome';
+import PageBackLink from '@/components/PageBackLink';
 import { CompactSelect } from '@/components/CompactSelect';
 import CubeGraphCube from './CubeGraphCube';
 import CayleyLesson from './CayleyLesson';
@@ -104,7 +104,7 @@ export default function CubeGraphPage() {
     <style>{CSS}</style>
     <JsonLd data={articleJsonLd({ headline: title, description, lang, url: `https://cuberoot.me${lang === 'zh' ? '/zh' : ''}/math/cube-graph` })} />
     <header className="cube-graph-header">
-      <div className="page-back-row"><BackHome /></div>
+      <div className="page-back-row"><PageBackLink fallback="/math" /></div>
       <h1>{title}</h1>
     </header>
     <div className="cube-graph-toolbar">

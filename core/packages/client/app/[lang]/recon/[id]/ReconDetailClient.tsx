@@ -1,5 +1,8 @@
 'use client';
 
+import PageHeading from '@/components/PageHeading';
+import PageBackLink from '@/components/PageBackLink';
+import MoreToggle from '@/components/MoreToggle';
 import { reconVideoGroups } from '@/lib/recon-video-url';
 import { loadBiliVideo, loadVideoTitle } from '@/lib/recon-video-cover';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
@@ -16,14 +19,7 @@ import { createPortal } from 'react-dom';
 import { copyPageLink } from '@/lib/page-share';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import {
-  Box, PenLine, Calendar, UserPlus, StickyNote,
-  Video, TriangleAlert,
-  Pencil, Trash2, Pin, PinOff, Plus, Key,
-  ChevronDown, ChevronUp,
-  ArrowLeft, Copy, Check, Maximize2, Minimize2,
-  Lock, Link2, LogIn, ExternalLink, Share2, Download,
-} from '@app-foundation/icons/lucide';
+import { Box, PenLine, Calendar, UserPlus, StickyNote, Video, TriangleAlert, Pencil, Trash2, Pin, PinOff, Plus, Key, Copy, Check, Maximize2, Minimize2, Lock, Link2, LogIn, ExternalLink, Share2, Download } from '@app-foundation/icons/lucide';
 import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/shared';
 import { cleanFtoReconAlgForPlayer, getReconScramble } from '@cuberoot/shared/recon-completion';
 import { ReconCompletionBadge } from '@/components/recon/ReconCompletionBadge';
@@ -188,13 +184,7 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
     if (isPrivate) {
       return (
         <div className="recon-page detail-page">
-          <div className="detail-header-block">
-            <div className="detail-header-nav">
-              <Link href="/recon" className="recon-back-link">
-                <ArrowLeft size={14} /> <span className="sr-only">{tr({ zh: '返回列表', en: 'Back to list' })}</span>
-              </Link>
-            </div>
-          </div>
+          <div className="detail-header-block"><PageBackLink fallback="/recon" /></div>
           <div className="recon-private-gate">
             <Lock size={32} strokeWidth={1.5} />
             <p className="recon-private-gate-title">{tr({ zh: '这是一条私享复盘', en: 'This reconstruction is private' })}</p>
@@ -224,13 +214,9 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
   return (
     <div className={`recon-page detail-page${fullscreen ? ' detail-page--fullscreen' : ''}`}>
       <div className="detail-header-block">
-        <div className="detail-header-nav">
-          <Link href="/recon" className="recon-back-link">
-            <ArrowLeft size={14} /> <span className="sr-only">{tr({ zh: '返回列表', en: 'Back to list' })}</span>
-          </Link>
-        </div>
+
         <div className="detail-header">
-          <h1 className="detail-title">
+          <PageHeading backHref="/recon" titleClassName="detail-title">
             {/* 成绩 + 纪录标志同处一个 inline 项,标志才能 vertical-align:super 成右上角标
                 (.detail-title 是 flex 容器,直接子项的 vertical-align 会被忽略) */}
             <span className="detail-result">
@@ -247,12 +233,12 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
                   {i > 0 && <span className="detail-cuber-sep">&amp;{' '}</span>}
                   {c.country && <Flag iso2={c.country} className="recon-inline-flag" />}
                   {c.id ? (
-                    <Link
+                    <><Link
                       href={i === 0 ? personLinkForSolve(solve, isZh) : personHref(c.id, isZh)}
                       className="detail-person-link"
                     >
-                      {displayCuberName(c.name, isZh)}<WcaPersonTeamBadge wcaId={c.id} />
-                    </Link>
+                      {displayCuberName(c.name, isZh)}
+                    </Link><WcaPersonTeamBadge wcaId={c.id} /></>
                   ) : displayCuberName(c.name, isZh)}
                 </span>
               </Fragment>
@@ -265,7 +251,7 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
             <Link href={`/recon/submit/${solve.id}`} className="detail-title-edit detail-title-edit--accent" title={t('recon.edit')} aria-label={t('recon.edit')}>
               <Pencil size={14} />
             </Link>
-          </h1>
+          </PageHeading>
         </div>
         <div className="detail-meta-bar">
           {solve.date && <span className="detail-meta-item">{solve.date.slice(0, 10)}</span>}
@@ -1070,7 +1056,7 @@ function SameScrambleNav({ solve, initial }: { solve: ReconSolve; initial?: Reco
               {s.event && <EventIcon event={s.event} title={eventDisplayName(s.event, isZh)} />}
               <span className="ss-name">
                 {s.personId && <Flag iso2={personFlagIso2(s.personId)} className="yt-comment-flag" />}
-                {displayCuberName(s.person ?? '', isZh)}<WcaPersonTeamBadge wcaId={s.personId} />
+                {displayCuberName(s.person ?? '', isZh)}<WcaPersonTeamBadge wcaId={s.personId} linked={false} />
               </span>
               {s.method && <span className="ss-method">{s.method}</span>}
             </Link>
@@ -2077,15 +2063,15 @@ function CommentsView({
               {(replies.length > 0 || replyingToId === comment.id) && (
                 <div className="yt-replies">
                   {replies.length > 0 && (
-                    <button
+                    <MoreToggle expanded={expanded}
                       type="button"
                       className="yt-replies-toggle"
                       onClick={() => toggleExpandReplies(comment.id)}
                     >
                       {expanded
-                        ? <><ChevronUp size={14} /> {t('recon.hideReplies')}</>
-                        : <><ChevronDown size={14} /> {t('recon.viewReplies', { count: replies.length })}</>}
-                    </button>
+                        ? <> {t('recon.hideReplies')}</>
+                        : <> {t('recon.viewReplies', { count: replies.length })}</>}
+                    </MoreToggle>
                   )}
                   {expanded && replies.map(r => (
                     <div key={r.id} className="yt-reply-item">

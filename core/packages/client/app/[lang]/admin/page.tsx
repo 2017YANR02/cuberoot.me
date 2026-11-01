@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useState, type ComponentType } from 'react';
 import { useRouter } from 'next/navigation';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
@@ -47,8 +48,7 @@ const DESTINATIONS: AdminDestination[] = [
   { href: '/wiki', Icon: Wrench, title: ['词条管理', 'Wiki entries'] },
   { href: '/about/ruimin', Icon: Wrench, title: ['创作者作品管理', 'Creator gallery'] },
   { href: '/org#enterprise-admin', Icon: Wrench, title: ['企业认证与收款设置', 'Enterprise verification and payments'] },
-  { href: '/docs', Icon: Wrench, title: ['文档管理', 'Documents'] },
-  { href: '/sheets', Icon: Wrench, title: ['表格管理', 'Spreadsheets'] },
+  { href: '/docs', Icon: Wrench, title: ['协作文档', 'Collaborative Docs'] },
   { href: '/courses', Icon: Wrench, title: ['教学课程内容', 'Teaching course content'] },
   { href: '/regulation/post', Icon: Wrench, title: ['公告首页置顶', 'Featured announcements'] },
 ];
@@ -116,7 +116,7 @@ export default function AdminPage() {
           </a>
         </nav>
         <details className="admin-dashboard__table">
-          <summary>{t('报税教程（待补充）', 'Tax filing guide (coming soon)')}</summary>
+          <MoreToggle as="summary">{t('报税教程（待补充）', 'Tax filing guide (coming soon)')}</MoreToggle>
           {/* Add the verified filing steps here once the actual workflow is documented. */}
         </details>
       </section>

@@ -5,7 +5,7 @@ import { isRecordStatistic, recordStatIds } from '../../../scripts/list-record-s
 import { selectRecordSection } from '@/components/wca-stats/WcaStatView.cells';
 import type { StatSection, RecordScope } from '@/components/wca-stats/WcaStatView.types';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
-import { CONTINENT_NAMES } from '@/lib/continent';
+import { CONTINENT_NAMES, ISO2_TO_CONTINENT } from '@/lib/continent';
 
 function section(scope: Partial<RecordScope>, rows: unknown[][] = [[1]]): StatSection {
   return { title: '', rows, recordScope: { region: 'World', level: 'WR', event: '', type: 'all', ...scope } };
@@ -17,9 +17,18 @@ describe('record filter availability', () => {
     section({ region: 'Asia', level: 'CR' }),
     section({ region: 'Asia', level: 'CR', event: '333mbf', type: 'single' }),
     section({ region: 'Asia', level: 'CR', event: '333mbf', type: 'average' }, []),
+    section({ region: 'cn', level: 'NR', event: '333', type: 'single' }),
+    section({ region: 'cn', level: 'NR', event: '333', type: 'average' }),
   ];
   it('restores a complete deep link', () => {
     expect(selectRecordSection(sections, { region: 'World', event: '333', type: 'average' }).section).toBe(sections[2]);
+  });
+  it('restores national deep links and switches record level when entering a country', () => {
+    expect(selectRecordSection(sections, { region: 'cn', level: 'NR', event: '333', type: 'average' }).section).toBe(sections[7]);
+    const result = selectRecordSection(sections, { region: 'cn', level: 'CR', event: '333mbf', type: 'single' });
+    expect(result.section).toBe(sections[6]);
+    expect(result.options.level).toEqual(['NR']);
+    expect(result.options.region).toEqual(['World', 'Asia', 'cn']);
   });
   it('only exposes supported types for the selected event', () => {
     const result = selectRecordSection(sections, { region: 'Asia', event: '333mbf', type: 'average' });
@@ -56,7 +65,7 @@ describe('all generated record filter combinations', () => {
       for (const section of sections) {
         expect(section.recordScope).toBeDefined();
         const scope = section.recordScope!;
-        expect(['World', ...Object.values(CONTINENT_NAMES).map(name => name.en)]).toContain(scope.region);
+        expect(['World', ...Object.values(CONTINENT_NAMES).map(name => name.en), ...Object.keys(ISO2_TO_CONTINENT).map(iso2 => iso2.toLowerCase())]).toContain(scope.region);
         expect(['WR', 'CR', 'NR']).toContain(scope.level);
         expect(['', ...ALL_EVENT_IDS]).toContain(scope.event);
         expect(['all', 'single', 'average']).toContain(scope.type);
@@ -69,9 +78,9 @@ describe('all generated record filter combinations', () => {
       // A future statistic may legitimately have data for only one continent.
       // The existing three already cover all six: lock that coverage separately.
       if (established.includes(id)) {
-        expect([...new Set(sections.map(section => section.recordScope?.region))].sort()).toEqual([
+        expect([...new Set(sections.map(section => section.recordScope?.region))]).toEqual(expect.arrayContaining([
           'Africa', 'Asia', 'Europe', 'North America', 'Oceania', 'South America', 'World',
-        ]);
+        ]));
       }
     });
   }

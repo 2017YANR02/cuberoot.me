@@ -1,23 +1,8 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useMemo, useRef, useState } from 'react';
-import {
-  Square,
-  Circle,
-  Slash,
-  Hexagon,
-  Star,
-  Spline,
-  PenTool,
-  Type,
-  Group as GroupIcon,
-  Eye,
-  EyeOff,
-  Lock,
-  Unlock,
-  Layers as LayersIcon,
-  type LucideIcon,
-} from '@app-foundation/icons/lucide';
+import { Square, Circle, Slash, Hexagon, Star, Spline, PenTool, Type, Group as GroupIcon, Eye, EyeOff, Lock, Unlock, Layers as LayersIcon, type LucideIcon } from '@app-foundation/icons/lucide';
 import { useT } from '@/hooks/useT';
 import type { Shape, ShapeType } from '../_lib/types';
 import { usePaint } from '../_lib/store';
@@ -127,16 +112,16 @@ export default function LayersPanel() {
 
   return (
     <div className={`paint-layers${collapsed ? ' is-collapsed' : ''}`}>
-      <button
+      <MoreToggle
         type="button"
         className="paint-layers-head"
         onClick={() => setCollapsed((c) => !c)}
-        aria-expanded={!collapsed}
+        expanded={!collapsed}
       >
         <LayersIcon size={13} />
         <span>{t('图层', 'Layers')}</span>
         <span className="paint-layers-count">{order.length}</span>
-      </button>
+      </MoreToggle>
 
       {!collapsed && (
         <div className="paint-layers-list" role="list">

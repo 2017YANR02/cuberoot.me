@@ -1,4 +1,5 @@
 'use client';
+import MoreToggle from './MoreToggle';
 import './timer-data-settings.css';
 import { useEffect, useRef, useState } from 'react';
 import { normalizeTimerAutoBackupEvery, type TimerLocalBackupEntry, type TimerCloudBackupMeta } from '@cuberoot/shared/timer/backup-client';
@@ -53,7 +54,7 @@ export function TimerBackupSettings({ language, every, onEveryChange, local, own
     <section className="settings-section"><h3>{tr({ en: 'Local backup', zh: '本机备份' })}</h3>
       <label className="settings-row" data-setting-id="settings.data.auto-backup-frequency"><span className="settings-row-label">{tr({ en: 'Back up every N solves', zh: '每完成 N 次自动备份' })}</span><span className="settings-row-control"><input className="settings-row-control-input" type="number" min={0} max={30} step={1} value={everyInput} disabled={blocked} onChange={event => setEveryInput(event.target.value)} onBlur={commitEvery} onKeyDown={event => { if (event.key === 'Enter') commitEvery(); }} /></span></label>
       <div className="modal-actions"><button type="button" className="hint-btn" data-setting-id="settings.data.local-backup-create" disabled={blocked} onClick={() => void run(async () => { await local.create(); if (entries) setEntries(await local.list()); return tr({ en: 'Local backup created', zh: '已写入本机备份' }); })}>{tr({ en: 'Back up now', zh: '立即备份' })}</button>
-      <button type="button" className="hint-btn" data-setting-id="settings.data.local-backup-list" disabled={blocked} onClick={() => void run(async () => { setEntries(entries ? null : await local.list()); return ''; })}>{entries ? tr({ en: 'Hide backups', zh: '收起备份' }) : tr({ en: 'View backups', zh: '查看备份' })}</button></div>
+      <MoreToggle expanded={entries !== null} type="button" className="hint-btn" data-setting-id="settings.data.local-backup-list" disabled={blocked} onClick={() => void run(async () => { setEntries(entries ? null : await local.list()); return ''; })}>{entries ? tr({ en: 'Hide backups', zh: '收起备份' }) : tr({ en: 'View backups', zh: '查看备份' })}</MoreToggle></div>
       {entries && <div className="settings-backup-list">{!entries.length && <p>{tr({ en: 'No local backups yet', zh: '还没有本机备份' })}</p>}{entries.map(entry => <div className="settings-backup-row" key={entry.key}><span>{new Date(entry.ts).toLocaleString()} · {(entry.size / 1024).toFixed(1)} KB</span><button type="button" className="hint-btn" data-setting-id="settings.data.local-backup-restore" disabled={blocked} onClick={() => {
         if (!window.confirm(tr({ en: 'Restore this backup and replace all current solves?', zh: '确认用此备份覆盖当前全部成绩？' }))) return;
         void run(async canCommit => { await local.restore(entry.key, canCommit); setEntries(null); return tr({ en: 'Local backup restored', zh: '已恢复本机备份' }); });

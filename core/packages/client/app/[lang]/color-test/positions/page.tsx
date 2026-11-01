@@ -1,12 +1,12 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useTrainingStats } from '@/hooks/useTrainingStats';
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { RotateCcw } from '@app-foundation/icons/lucide';
-import BackHome from '@/components/BackHome';
+import PageBackLink from '@/components/PageBackLink';
 import BoolToggle from '@/components/BoolToggle';
-import HeaderToggles from '@/components/HeaderToggles';
 import {
   SubsetColorPicker,
   useSubsetSelection,
@@ -137,7 +137,7 @@ function ColorStatsRow({ face }: { face: CubeFace }) {
         <tr className="color-stats-history-row">
           <td colSpan={7}>
             <details className="color-stats-details">
-              <summary>{tr({ zh: '最近记录', en: 'Recent attempts' })}</summary>
+              <MoreToggle as="summary">{tr({ zh: '最近记录', en: 'Recent attempts' })}</MoreToggle>
               <ol className="color-stats-history">{[...stats.recent].reverse().map(attempt => (
                 <li key={attempt.id}>
                   <time dateTime={new Date(attempt.at).toISOString()}>{new Date(attempt.at).toLocaleString()}</time>
@@ -279,8 +279,7 @@ export default function ColorPositionsPage() {
   return (
     <main className="color-quiz-page">
       <div className="color-quiz-topbar">
-        <BackHome />
-        <HeaderToggles />
+        <PageBackLink fallback="/color-test" />
       </div>
 
       <header className="color-quiz-header">

@@ -1,5 +1,6 @@
 'use client';
 
+import PageBackLink from '@/components/PageBackLink';
 import Link from '@/components/AppLink';
 import { usePathname } from 'next/navigation';
 import { tr } from '@/i18n/tr';
@@ -27,7 +28,7 @@ export default function ArchNav() {
 
   return (
     <nav className="arch-nav" aria-label="Architecture sections">
-      <Link href="/dev" className="arch-nav-back">← /dev</Link>
+      <PageBackLink fallback={base === "/dev/architecture" ? "/dev" : "/dev/architecture"} className="arch-nav-back" />
       <div className="arch-nav-tabs" role="tablist">
         {TABS.map((tab) => (
           <Link

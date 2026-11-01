@@ -1870,6 +1870,33 @@
         "pnpm --filter @cuberoot/client typecheck"
       ],
       "driftPolicy": "Manual snapshot refresh only; keep raw Linguist byte counts and source commits. CI and page rendering do not rerun history analysis."
+    },
+    {
+      "id": "client.wenkai-heading-fonts",
+      "kind": "checked-in-generated",
+      "source": {
+        "locator": "lxgw/LxgwWenKai v1.522 Regular and Medium; current heading text for the common subset",
+        "paths": [
+          "core/packages/client/scripts/subset-cjk-heading.py",
+          "core/packages/shared/src/site_directory.ts",
+          "core/packages/client/lib/page-meta.ts"
+        ]
+      },
+      "license": {
+        "spdx": "OFL-1.1",
+        "evidence": "core/packages/client/public/fonts/lxgw-wenkai.LICENSE.txt"
+      },
+      "owner": "core/packages/client/scripts/subset-cjk-heading.py",
+      "workingDirectory": "core/packages/client",
+      "command": "uv run --with fonttools --with brotli python scripts/subset-cjk-heading.py",
+      "outputs": [
+        "core/packages/client/app/fonts-wenkai.css",
+        "core/packages/client/public/fonts/lxgw-wenkai-*.woff2"
+      ],
+      "verification": [
+        "Generator reopens every WOFF2, checks exact and non-overlapping character coverage, and verifies the union equals the source CJK repertoire for both weights."
+      ],
+      "driftPolicy": "Regenerate fonts and CSS together when updating the source font or optimizing common headings. New heading text is covered by on-demand CJK shards without regeneration. CSS URLs use content hashes; do not hand-edit generated ranges or cache versions."
     }
   ]
 }

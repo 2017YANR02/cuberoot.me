@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useState, useMemo, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
 import { tr } from '@/i18n/tr';
@@ -407,13 +408,13 @@ function CayleyPanel({}: { lang: 'zh' | 'en' }) {
 
       {/* Toggle buttons */}
       <div className="gt-panel-input-row" style={{ gap: 8, marginBottom: 12 }}>
-        <button
+        <MoreToggle expanded={showFull}
           className={`gt-btn${showFull ? '' : '-ghost'} gt-btn`}
           onClick={() => setShowFull(v => !v)}
           style={{ fontSize: 12 }}
         >
           <L zh={showFull ? '隐藏完整表' : '展开完整表'} en={showFull ? 'Hide full table' : 'Show full table'} />
-        </button>
+        </MoreToggle>
         <button
           className={`gt-btn${highlightCyclic ? '' : '-ghost'} gt-btn`}
           onClick={() => setHighlightCyclic(v => !v)}

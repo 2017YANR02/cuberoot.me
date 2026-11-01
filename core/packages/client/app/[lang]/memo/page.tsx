@@ -1,47 +1,6 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-/**
- * /memo — Memo (记忆) sub-hub.
- *
- * 1:1 port from packages/client-vite/src/pages/memo/MemoLandingPage.tsx (Vite SPA).
- */
-import Link from '@/components/AppLink';
-import BackHome from '@/components/BackHome';
-import { Brain, type LucideIcon } from '@app-foundation/icons/lucide';
-import '../../landing.css';
-import { tr } from '@/i18n/tr';
-
-interface MemoCard {
-  id: string;
-  href: string;
-  Icon: LucideIcon;
-  zh: string;
-  en: string;
-}
-
-const CARDS: MemoCard[] = [
-  { id: 'colpi', href: '/memo/colpi', Icon: Brain, zh: '字母对', en: 'CoLPI'
-},
-];
-
-export default function MemoLandingPage() {
-
-  return (
-    <div className="landing-page">
-      <BackHome />
-      <h1 className="landing-tagline">{tr({ zh: '记忆', en: 'Memo'
-    })}</h1>
-
-      <div className="cards-container">
-        {CARDS.map(c => (
-          <Link key={c.id} href={c.href} className="card tier-standard" id={`card-${c.id}`}>
-            <div className="card-icon">
-              <c.Icon size={24} strokeWidth={1.5} />
-            </div>
-            <div className="card-name">{tr(c)}</div>
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
+export default async function Page({ params }: { params: Promise<{ lang: string }> }) {
+  const { lang } = await params;
+  redirect((lang === 'zh' ? '/zh' : '') + '/memo/colpi');
 }

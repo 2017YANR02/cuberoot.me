@@ -1,7 +1,7 @@
 'use client';
 
 import AppLink from '@/components/AppLink';
-import BackHome from '@/components/BackHome';
+import PageBackLink from '@/components/PageBackLink';
 import PersonLink from '@/components/PersonLink';
 import { tr } from '@/i18n/tr';
 import { CREATOR_PROFILE, CREATOR_AUDIENCE } from '@/lib/creator-profile';
@@ -40,7 +40,7 @@ export default function RuiminProfilePage() {
   return (
     <div className="ruimin-page">
       <div className="ruimin-shell">
-        <div className="ruimin-topbar"><BackHome /></div>
+        <div className="ruimin-topbar"><PageBackLink fallback="/about" /></div>
 
         <main>
           <header className="ruimin-hero">

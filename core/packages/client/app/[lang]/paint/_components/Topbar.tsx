@@ -1,5 +1,6 @@
 'use client';
 
+import BackHome from '@/components/BackHome';
 import { useRef, useState } from 'react';
 import {
   Undo2,
@@ -114,6 +115,7 @@ export default function Topbar({ viewport, onOpenShorthand, onOpenDrawings, onOp
   return (
     <>
     <div className="paint-topbar">
+      <BackHome />
       <span className="paint-topbar-title">{t('绘制', 'Paint')}</span>
 
       <div className="paint-topbar-group">

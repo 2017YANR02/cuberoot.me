@@ -6,7 +6,6 @@ import {
   Shuffle, SkipBack, SkipForward, TextQuote, Trash2, Upload, Volume2,
 } from '@app-foundation/icons/lucide';
 import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
-import HeaderToggles from '@/components/HeaderToggles';
 import AppLink from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import { ClearButton } from '@/components/ClearButton';
@@ -326,13 +325,13 @@ export default function MusicPage() {
   return (
     <main className="music-page" data-view={view}>
       <header className="music-header">
-        <div className="music-heading-copy">
+        <div className="music-heading-copy page-back-heading">
+          <div className="page-back-row"><BackHome /></div>
           <h1>{tr({ zh: '音乐', en: 'Music' })}</h1>
         </div>
         <button type="button" className="music-collapse music-transport-button" onClick={() => { void setView(null, { history: 'replace' }); }}
           aria-label={tr({ zh: '收起播放器', en: 'Collapse player' })}><ChevronDown /></button>
         <span className="music-mobile-heading">{tr({ zh: '正在播放', en: 'Now playing' })}</span>
-        <HeaderToggles />
       </header>
 
       <div className="music-workspace">
@@ -351,7 +350,6 @@ export default function MusicPage() {
                   </AppLink>
                 </>}
                 <AppLink href="/about" prefetch={false} className="music-text-button">{tr({ zh: '开源项目与致谢', en: 'Open-source credits' })}</AppLink>
-                <div className="music-back-row"><BackHome prefetch={false} /></div>
               </div>
             </details>
           </div>

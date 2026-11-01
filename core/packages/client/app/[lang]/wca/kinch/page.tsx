@@ -1,5 +1,6 @@
 'use client';
 
+import PageHeading from '@/components/PageHeading';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { parseAsString, useQueryStates } from 'nuqs';
@@ -126,7 +127,7 @@ function KinchPageInner() {
   return (
     <main className="wse-page kinch-page">
       <header className="wse-header">
-        <h1>Kinch</h1>
+        <PageHeading backHref="/wca">Kinch</PageHeading>
         <p className="wse-subtitle">
           {tr({
             zh: '用 17 个现役项目衡量综合速拧水平,分数越高越好。',
@@ -227,12 +228,12 @@ function KinchPageInner() {
                 <tr key={row.wcaId}>
                   <td className="wse-rank-col">{row.rank}</td>
                   <td>
-                    <AppLink
+                    <><AppLink
                       href={`/wca/kinch?wcaId=${encodeURIComponent(row.wcaId)}${country ? `&country=${encodeURIComponent(country)}` : ''}`}
                       prefetch={false}
                     >
-                      {displayCuberName(row.name, isZh)}<WcaPersonTeamBadge wcaId={row.wcaId} />
-                    </AppLink>
+                      {displayCuberName(row.name, isZh)}
+                    </AppLink><WcaPersonTeamBadge wcaId={row.wcaId} /></>
                     <span className="kinch-person-id">{row.wcaId}</span>
                   </td>
                   <td>

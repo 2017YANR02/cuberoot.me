@@ -5,6 +5,7 @@
 // classify by position (top/bottom/mixed) + orientation parity (2-twist vs
 // 3-twist), retry-until-exactly-2-twists state build, then m2pSolve each.
 
+import PageHeading from '@/components/PageHeading';
 import { useEffect, useState, useCallback, type JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Wand2 } from '@app-foundation/icons/lucide';
@@ -164,8 +165,8 @@ export default function TwistTrainerPage(): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{tr({ zh: '翻角公式训练', en: 'Corner Twist Trainer'
-        })}</h1>
+        <PageHeading backHref="/alg/3bld">{tr({ zh: '翻角公式训练', en: 'Corner Twist Trainer'
+        })}</PageHeading>
       </div>
 
       <BldConfigBar show={{ corner: true, edge: false, scheme: false, orientation: false, hueSkip: false }} />

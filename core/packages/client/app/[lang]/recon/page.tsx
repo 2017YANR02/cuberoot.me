@@ -31,7 +31,7 @@ import { RecordBadge } from '@/components/RecordBadge';
 import { CuratedReconCard } from '@/components/ReconCard/CuratedReconCard';
 import { getPinnedRecons, setReconHomePin, getFeaturedRecons, setReconFeatured, getReconFavorites, setReconFavorite } from '@/lib/recon-api';
 import WcaAuth from '@/components/WcaAuth';
-import BackHome from '@/components/BackHome';
+import PageHeading from '@/components/PageHeading';
 import { EventSelect } from '@/components/EventSelect';
 import { ListSelect, type ListSelectItem } from '@/components/ListSelect';
 import { RecordSelect } from '@/components/RecordSelect';
@@ -834,9 +834,9 @@ export default function ReconListPage() {
                 {i > 0 ? <span className="recon-cuber-sep"> &amp; </span> : null}
                 {c.country ? <><Flag iso2={c.country} className="recon-inline-flag" />{' '}</> : null}
                 {c.id ? (
-                  <Link href={`/recon/person/${c.id}`} onClick={(e) => e.stopPropagation()}>
-                    {displayCuberName(c.name, isZh)}<WcaPersonTeamBadge wcaId={c.id} />
-                  </Link>
+                  <><Link href={`/recon/person/${c.id}`} onClick={(e) => e.stopPropagation()}>
+                    {displayCuberName(c.name, isZh)}
+                  </Link><WcaPersonTeamBadge wcaId={c.id} /></>
                 ) : displayCuberName(c.name, isZh)}
               </span>
             ))}
@@ -932,10 +932,9 @@ export default function ReconListPage() {
 
   return (
     <div className="recon-page">
-      <BackHome />
       <div className="recon-page-header">
         <div>
-          <h1>
+          <PageHeading>
             {t('recon.title')}
             <Link href="/recon/submit" className="recon-add-btn" title={t('recon.add')} aria-label={t('recon.add')}>
               <CirclePlus size={18} />
@@ -950,7 +949,7 @@ export default function ReconListPage() {
             >
               <HelpCircle size={18} strokeWidth={1.75} />
             </Link>
-          </h1>
+          </PageHeading>
         </div>
       </div>
 
@@ -968,6 +967,8 @@ export default function ReconListPage() {
       {/* 工具栏：WCA 筛选 + 计数 + 登录；filter 全在表头 popover */}
       <div className="recon-toolbar">
         <CompactSelect
+          unstyledTrigger
+          triggerClassName="pp-trigger pp-trigger--active"
           label={filterLabel}
           items={[]}
           onChange={() => {}}
@@ -1017,6 +1018,15 @@ export default function ReconListPage() {
             <LayoutGrid size={16} />
           </button>
         </div>
+        {viewMode !== 'list' && (
+          <EventSelect
+            className="recon-toolbar-event"
+            events={events}
+            value={filters.event}
+            onChange={(v) => setFilter('event', v)}
+            allLabel={t('recon.allEvents')}
+          />
+        )}
         <div className="recon-actions">
           <span className="recon-stats-count">
             {t('recon.count', { count: filtered.length })}
@@ -1032,14 +1042,46 @@ export default function ReconListPage() {
             </Link>
           ) : null}
           <WcaAuth href={user?.wcaId ? `/recon/person/${user.wcaId}` : '/account'} />
-          <SearchInput
-            value={filters.search}
-            onChange={(v) => setFilter('search', v)}
-            placeholder={tr({ zh: '搜索', en: 'Search' })}
-            className="recon-search"
-            inputClassName="recon-search-input"
-          />
         </div>
+        {/* 卡片视图：表头没了，提供一条紧凑筛选 + 排序栏（与表头共用同一份 store filter） */}
+        {!loading && !error && viewMode !== 'list' && (
+          <div className="recon-grid-filters">
+            <ListSelect
+              items={solverItems}
+              value={filters.solver}
+              onChange={(v) => setFilter('solver', v)}
+              allLabel={t('recon.allSolvers')}
+              searchable
+            />
+            <ListSelect
+              items={methodItems}
+              value={filters.method}
+              onChange={(v) => setFilter('method', v)}
+              allLabel={t('recon.allMethods')}
+            />
+            <RecordSelect
+              records={records}
+              value={filters.record}
+              onChange={(v) => setFilter('record', v)}
+              placeholder={t('recon.allRecords')}
+            />
+            <ListSelect
+              items={sortItems}
+              value={sortValue}
+              onChange={handleSortChange}
+              allLabel={tr({ zh: '排序', en: 'Sort' })}
+              clearable={false}
+            />
+          </div>
+        )}
+
+        <SearchInput
+          value={filters.search}
+          onChange={(v) => setFilter('search', v)}
+          placeholder={tr({ zh: '搜索', en: 'Search' })}
+          className="recon-search"
+          inputClassName="recon-search-input"
+        />
       </div>
 
       {favoritesOnly && !user && <button type="button" className="btn-secondary" onClick={() => useAuthStore.getState().login()}>{tr({ zh: '登录后查看收藏夹', en: 'Sign in to view favorites' })}</button>}
@@ -1050,44 +1092,6 @@ export default function ReconListPage() {
 
       {!loading && !error && (
         <>
-          {/* 卡片视图：表头没了，提供一条紧凑筛选 + 排序栏（与表头共用同一份 store filter） */}
-          {viewMode !== 'list' && (
-            <div className="recon-grid-filters">
-              <EventSelect
-                events={events}
-                value={filters.event}
-                onChange={(v) => setFilter('event', v)}
-                allLabel={t('recon.allEvents')}
-              />
-              <ListSelect
-                items={solverItems}
-                value={filters.solver}
-                onChange={(v) => setFilter('solver', v)}
-                allLabel={t('recon.allSolvers')}
-                searchable
-              />
-              <ListSelect
-                items={methodItems}
-                value={filters.method}
-                onChange={(v) => setFilter('method', v)}
-                allLabel={t('recon.allMethods')}
-              />
-              <RecordSelect
-                records={records}
-                value={filters.record}
-                onChange={(v) => setFilter('record', v)}
-                placeholder={t('recon.allRecords')}
-              />
-              <ListSelect
-                items={sortItems}
-                value={sortValue}
-                onChange={handleSortChange}
-                allLabel={tr({ zh: '排序', en: 'Sort' })}
-                clearable={false}
-              />
-            </div>
-          )}
-
           {viewMode === 'list' && (
           <div className="recon-table-wrap sticky-scroll-mobile">
             <table className="recon-table sticky-thead">

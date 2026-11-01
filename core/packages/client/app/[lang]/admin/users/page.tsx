@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { parseAsInteger, parseAsString, parseAsStringEnum, useQueryState, useQueryStates } from 'nuqs';
 import { ChevronLeft, ChevronRight, Loader2, Monitor, Search, Smartphone, Tablet } from '@app-foundation/icons/lucide';
@@ -519,7 +520,7 @@ export default function AdminUsersPage() {
                       </td>
                       <td>
                         <details className="admin-users-details">
-                          <summary>{t('查看', 'View')}</summary>
+                          <MoreToggle as="summary">{t('查看', 'View')}</MoreToggle>
                           <dl>
                             <div><dt>{t('原始用户名', 'Stored username')}</dt><dd>{record.displayName || '—'}</dd></div>
                             <div><dt>{t('出生日期', 'Date of birth')}</dt><dd>{record.birthDate || '—'}</dd></div>

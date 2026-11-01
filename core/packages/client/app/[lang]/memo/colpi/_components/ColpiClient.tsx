@@ -11,6 +11,7 @@
  *
  * Ported from packages/client-vite/src/pages/memo/colpi/ColpiPage.tsx.
  */
+import { ChevronDown } from '@app-foundation/icons/lucide';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter, useParams, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +20,7 @@ import {
   Pencil, Trash2,
 } from '@app-foundation/icons/lucide';
 import WcaAuth from '@/components/WcaAuth';
+import BackHome from '@/components/BackHome';
 import { SearchInput } from '@/components/SearchInput';
 import { Flag } from '@/components/Flag';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -440,6 +442,7 @@ export default function ColpiClient() {
       {/* === Top bar === */}
       <header className="colpi-topbar">
         <div className="colpi-brand">
+          <div className="page-back-row"><BackHome /></div>
           <div className="colpi-logo" aria-hidden>
             <span className="colpi-logo-dot" />
             <span className="colpi-logo-dot" />
@@ -547,7 +550,7 @@ export default function ColpiClient() {
                 })}
                 >
                   {(LANG_MAP[langFilter]?.code ?? langFilter).toUpperCase()}
-                  <span className="colpi-grid-corner-caret">▾</span>
+                  <ChevronDown size={14} className="colpi-grid-corner-caret" aria-hidden="true" />
                 </th>
                 {ALPHABET.map(c => <th key={c} className="colpi-grid-h">{c}</th>)}
               </tr>

@@ -12,9 +12,10 @@
  *   ③ case 本体(图 / 公式)—— 每套几百 KB,**只拉当前这档真的会出现的套**
  * 「未学」是补集,必须有整套 key 才算得出来 —— 虚拟集(LSLL 57 万)算不出,单独说明。
  */
+import PageHeading from '@/components/PageHeading';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
-import { ArrowLeft, Loader2, Dumbbell } from '@app-foundation/icons/lucide';
+import { Loader2, Dumbbell } from '@app-foundation/icons/lucide';
 import { parseAsStringEnum } from 'nuqs';
 import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import { useTranslation } from 'react-i18next';
@@ -219,12 +220,10 @@ export default function AlgProgressCasesPage() {
   return (
     <div className="alg-root">
       <div className="alg-cat-header">
-        <Link href="/alg/progress" className="alg-back">
-          <ArrowLeft size={14} /> {tr({ zh: '学习进度', en: 'Progress' })}
-        </Link>
-        <h1 className="alg-cat-title">
+
+        <PageHeading backHref="/alg/progress" titleClassName="alg-cat-title">
           <span>{tr({ zh: '公式清单', en: 'Algorithm list' })}</span>
-        </h1>
+        </PageHeading>
       </div>
 
       <div className="alg-prog-body">

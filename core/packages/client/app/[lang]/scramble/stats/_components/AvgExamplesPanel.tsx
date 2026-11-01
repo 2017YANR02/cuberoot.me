@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
@@ -132,9 +133,9 @@ export default function AvgExamplesPanel({
       )}
 
       {selectedBin !== null && !loading && !errorText && cases && cases.length > CASES_INITIAL && !showAll && (
-        <button type="button" className="scramble-stats-avg-expand" onClick={() => setShowAll(true)}>
+        <MoreToggle expanded={showAll} type="button" className="scramble-stats-avg-expand" onClick={() => setShowAll(true)}>
           {tr({ zh: `展开全部 ${cases.length} 组`, en: `Show all ${cases.length} groups` })}
-        </button>
+        </MoreToggle>
       )}
     </div>
   );
