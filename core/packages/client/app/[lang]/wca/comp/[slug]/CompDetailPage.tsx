@@ -2370,6 +2370,7 @@ function CompAddress({ address, isZh, countryIso2 }: { address: string; isZh: bo
         onKeyDown={event => {
           if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setOpen(value => !value); }
         }}>{text}</div>
+      <div className="comp-address-actions">
       <Tooltip content={copied ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: '复制地址', en: 'Copy address' })}>
         {tip => <button {...tip} type="button" className="comp-address-copy" onClick={() => copy(text)} aria-label={tr({ zh: '复制地址', en: 'Copy address' })}>
           {copied ? <Check size={14} aria-hidden /> : <Copy size={14} aria-hidden />}
@@ -2400,6 +2401,7 @@ function CompAddress({ address, isZh, countryIso2 }: { address: string; isZh: bo
             {maps[provider].label}
           </a>)}
       </div>}
+      </div>
       <span className="sr-only" role="status">{copied ? tr({ zh: '已复制', en: 'Copied' }) : ''}</span>
     </div>
   );

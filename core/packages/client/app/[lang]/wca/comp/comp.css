@@ -352,6 +352,7 @@
 }
 .comp-info-link:hover { text-decoration: underline; }
 .comp-address-row { position: relative; max-width: 100%; }
+.comp-address-actions { position: relative; display: inline-block; }
 .comp-address-trigger {
   display: inline;
   color: inherit; font: inherit; text-align: start; cursor: pointer;
@@ -367,10 +368,16 @@
 .comp-address-trigger:focus-visible, .comp-address-copy:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .compact-select-popup.comp-address-menu {
   /* anchored-panel: clamped (usePanelClamp in CompAddress) */
-  position: absolute; top: calc(100% + 6px); bottom: auto; left: 0; right: auto; visibility: visible;
+  position: absolute; top: calc(100% + 6px); bottom: auto; left: 100%; right: auto;
+  transform: translateX(-100%); visibility: visible;
 }
 .compact-select-option.comp-address-option { display: flex; align-items: center; gap: 8px; text-decoration: none; white-space: nowrap; }
 .comp-address-option img { display: block; width: 20px; height: 20px; object-fit: contain; flex-shrink: 0; }
+@media (max-width: 640px) {
+  .comp-info-row:has(.comp-address-row) { width: 100%; }
+  .comp-info-row:has(.comp-address-row) > .comp-info-value { flex: 1; }
+  .comp-address-row .comp-address-actions { position: static; inset: auto; transform: none; }
+}
 .comp-info-past-popover {
   position: relative;
   display: inline-block;
