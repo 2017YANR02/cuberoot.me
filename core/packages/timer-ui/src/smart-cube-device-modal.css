@@ -13,6 +13,13 @@
 
 .timer-smart-cube-device__anchor { display: contents; }
 
+.timer-smart-cube-device__controls {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
 /* anchored-panel: clamped (usePanelClamp plus visualViewport vertical bounds). */
 .timer-smart-cube-device__modal.timer-smart-cube-device__popover {
   position: fixed;
@@ -309,6 +316,10 @@
   justify-content: flex-end;
   gap: 8px;
   margin-top: 14px;
+}
+
+.timer-smart-cube-device__controls.timer-smart-cube-device__actions-start {
+  margin-inline-end: auto;
 }
 
 .timer-smart-cube-device__action--danger {

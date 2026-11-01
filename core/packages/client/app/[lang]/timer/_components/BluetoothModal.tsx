@@ -15,7 +15,7 @@ import {
   createTimerDeviceRegistry,
   SMART_CUBE_TIMER_DEVICE_REGISTRATIONS,
 } from '@cuberoot/shared/timer/device-contract';
-import { useEffect, useState, useSyncExternalStore, type CSSProperties, type RefObject, type ReactNode } from 'react';
+import { useEffect, useState, useSyncExternalStore, type CSSProperties, type RefObject } from 'react';
 import { installedBleAvailable, subscribeInstalledBleBridge } from '@/lib/installed-ble-bridge';
 import {
   BluetoothConnectError,
@@ -27,8 +27,16 @@ import {
   mayUseMiniProgramBridge,
 } from '../_lib/bluetooth';
 import type { BluetoothCubeHandle, ConnectStage, ConnectPickOptions } from '../_lib/bluetooth';
-import { ExternalLink } from '@app-foundation/icons/lucide';
+import { Battery, Check, ExternalLink, LoaderCircle, Plus } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
+import { trainingCubeStatusLabel, type TrainingCubeStatus } from '../_lib/training-cube-status';
+
+interface CubeConnectionItem {
+  id: string;
+  name: string;
+  battery: number | null;
+  status: TrainingCubeStatus;
+}
 
 interface Props {
   anchorRef?: RefObject<HTMLButtonElement | null>;
@@ -54,7 +62,9 @@ interface Props {
   onCancelMac?: () => void;
   onResetGyro?: () => void;
   allowDeviceCalibration?: boolean;
-  connectionList?: ReactNode;
+  connections?: readonly CubeConnectionItem[];
+  selectedConnectionId?: string;
+  onSelectConnection?: (id: string) => void;
   onConnectNext?: () => Promise<void>;
   connectingNext?: boolean;
 }
@@ -121,7 +131,7 @@ function ConnectFailure({ detail }: { detail: string }) {
   );
 }
 
-export default function BluetoothModal({ anchorRef, isZh, cube, onClose, onConnect, connectAttempt, macPrompt, onSubmitMac, onCancelMac, onResetGyro, allowDeviceCalibration = true, connectionList, onConnectNext, connectingNext }: Props) {
+export default function BluetoothModal({ anchorRef, isZh, cube, onClose, onConnect, connectAttempt, macPrompt, onSubmitMac, onCancelMac, onResetGyro, allowDeviceCalibration = true, connections, selectedConnectionId, onSelectConnection, onConnectNext, connectingNext }: Props) {
   useSyncExternalStore(subscribeInstalledBleBridge, installedBleAvailable, () => false);
   const [connecting, setConnecting] = useState(Boolean(connectAttempt) && !cube.status.connected);
   const [connectError, setConnectError] = useState<{ stage: ConnectStage | null; detail: string } | null>(null);
@@ -240,27 +250,54 @@ export default function BluetoothModal({ anchorRef, isZh, cube, onClose, onConne
 
   return (
     <TimerSmartCubeDeviceModal
+      key={selectedConnectionId}
       anchorRef={anchorRef}
+      closeOnDisconnect={!connections || connections.length < 2}
       capabilities={{
         ...WEB_TIMER_DEVICE_REGISTRY.get('smart-cube')?.capabilities,
         gyro: allowDeviceCalibration && Boolean(onResetGyro),
         reset: allowDeviceCalibration,
       }}
-      className={`timer-modal bluetooth-modal${!macPrompt && !connectError ? ' bt-connected-modal' : ''}`}
+      className={`timer-modal bluetooth-modal${!macPrompt && !connectError ? ' bt-connected-modal' : ''}${connections?.length ? ' bt-training-modal' : ''}`}
+      deviceSelector={connections?.length ? <ol className="bt-cube-list" aria-label={tr({ zh: '智能魔方连接顺序', en: 'Smart cubes in connection order' })}>
+        {connections.map((connection, index) => <li key={connection.id}>
+          <button type="button" className="bt-cube-option" aria-pressed={selectedConnectionId === connection.id}
+            aria-busy={connecting && selectedConnectionId === connection.id}
+            disabled={connecting || connectingNext} onClick={() => {
+              setConnectError(null);
+              setNextError(null);
+              onSelectConnection?.(connection.id);
+            }}>
+            <span className="bt-cube-number">{index + 1}</span>
+            <span className="bt-cube-info">
+              <strong className="bt-cube-name">{connection.name || tr({ zh: '智能魔方', en: 'Smart cube' })}</strong>
+              <span className="bt-cube-meta">
+                <span className="training-cube-status" data-status={connection.status}>
+                  {connecting && selectedConnectionId === connection.id
+                    ? tr({ zh: '连接中…', en: 'Connecting…' }) : tr(trainingCubeStatusLabel(connection.status))}
+                </span>
+                {connection.status !== 'disconnected' && connection.battery !== null && <span className="bt-cube-battery"
+                  data-low={connection.battery <= 20} aria-label={tr({ zh: `电量 ${connection.battery}%`, en: `Battery ${connection.battery}%` })}>
+                  <Battery size={14} aria-hidden="true" />{connection.battery}%
+                </span>}
+              </span>
+            </span>
+            <Check className="bt-cube-selected" size={16} aria-hidden="true" />
+          </button>
+        </li>)}
+      </ol> : undefined}
       connectionFailure={connectError ? <ConnectFailure detail={connectError.detail} /> : undefined}
       intro={intro}
-      footer={connectionList || onConnectNext ? <div className="modal-section" data-no-timer>
-        {connectionList}
-        {onConnectNext && <button type="button" className="bt-connect-btn" disabled={connectingNext}
+      actionsStart={onConnectNext ? <button type="button" className="timer-smart-cube-device__connect bt-connect-btn bt-cube-add" disabled={connectingNext || connecting} aria-busy={connectingNext}
           onClick={() => { setNextError(null); void onConnectNext().catch(error => setNextError(describeError(error))); }}>
+          {connectingNext ? <LoaderCircle className="bt-cube-connecting" size={16} aria-hidden="true" /> : <Plus size={16} aria-hidden="true" />}
           {connectingNext ? tr({ zh: '连接中…', en: 'Connecting…' })
-            : tr({ zh: '连接下一个智能魔方', en: 'Connect another smart cube' })}
-        </button>}
-        {nextError && <p role="alert">{nextError}</p>}
-      </div> : undefined}
+            : tr({ zh: '连接下一个', en: 'Connect next' })}
+        </button> : undefined}
+      footer={nextError ? <p className="bt-cube-error" role="alert">{nextError}</p> : undefined}
       language={isZh ? 'zh' : 'en'}
       onClose={onClose}
-      onConnect={!macPrompt && canConnect ? () => runConnect() : undefined}
+      onConnect={!macPrompt && canConnect && !onConnectNext ? () => runConnect() : undefined}
       onDisconnect={() => cube.disconnect()}
       onResetGyro={onResetGyro}
       onResetState={resetCube}

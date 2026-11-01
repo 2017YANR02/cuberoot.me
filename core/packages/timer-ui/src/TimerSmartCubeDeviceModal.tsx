@@ -38,7 +38,10 @@ export interface TimerSmartCubeDeviceModalProps {
   capabilities?: TimerDeviceCapabilities;
   className?: string;
   connectionFailure?: ReactNode;
+  deviceSelector?: ReactNode;
+  closeOnDisconnect?: boolean;
   intro?: ReactNode;
+  actionsStart?: ReactNode;
   footer?: ReactNode;
   language: TimerUiLanguage;
   macPrompt?: {
@@ -131,7 +134,10 @@ export function TimerSmartCubeDeviceModal({
   capabilities,
   className,
   connectionFailure,
+  deviceSelector,
+  closeOnDisconnect = true,
   intro,
+  actionsStart,
   footer,
   language,
   macPrompt,
@@ -322,7 +328,7 @@ export function TimerSmartCubeDeviceModal({
     setAction('disconnect');
     try {
       await onDisconnect();
-      if (mountedRef.current) onCloseRef.current();
+      if (mountedRef.current && closeOnDisconnect) onCloseRef.current();
     } catch {
       // Keep the status surface open so the host can expose its latest state.
     } finally {
@@ -365,7 +371,7 @@ export function TimerSmartCubeDeviceModal({
         <h2 id={titleId}>
           <Bluetooth aria-hidden="true" size={20} />
           <span>{title ?? copy.title}</span>
-          {!macPrompt && !overrideBody && (connected || !listMode) && <DeviceBattery label={copy.battery} level={snapshot.battery} />}
+          {!macPrompt && !overrideBody && !deviceSelector && (connected || !listMode) && <DeviceBattery label={copy.battery} level={snapshot.battery} />}
         </h2>
 
         {macPrompt ? (
@@ -393,7 +399,10 @@ export function TimerSmartCubeDeviceModal({
         ) : overrideBody ?? (
           <>
             {!connected && intro}
-            {(connected || !listMode) && <section className="timer-smart-cube-device__summary bt-connected-summary modal-section">
+            {deviceSelector && <fieldset className="timer-smart-cube-device__controls" disabled={action !== null || connecting}>
+              {deviceSelector}
+            </fieldset>}
+            {!deviceSelector && (connected || !listMode) && <section className="timer-smart-cube-device__summary bt-connected-summary modal-section">
               <div className="timer-smart-cube-device__primary bt-connected-primary">
                 {deviceName && <strong className="timer-smart-cube-device__name bt-connected-device">
                   {deviceName}
@@ -474,8 +483,10 @@ export function TimerSmartCubeDeviceModal({
             )}
 
             {feedback && <p className="timer-smart-cube-device__feedback" role="status">{feedback}</p>}
-            {(canReset && onResetState || canResetGyro && onResetGyro || canDisconnect && onDisconnect) && (
+            {(actionsStart || canReset && onResetState || canResetGyro && onResetGyro || canDisconnect && onDisconnect) && (
               <div className="timer-smart-cube-device__actions bt-connected-actions modal-actions">
+                {actionsStart && <fieldset className="timer-smart-cube-device__controls timer-smart-cube-device__actions-start"
+                  disabled={action !== null || connecting}>{actionsStart}</fieldset>}
                 {(canReset && onResetState || canResetGyro && onResetGyro && snapshot.hasGyro) && (
                   <button
                     className="timer-smart-cube-device__action modal-action-btn"
@@ -501,7 +512,7 @@ export function TimerSmartCubeDeviceModal({
             )}
           </>
         )}
-        {!macPrompt && footer}
+        {!macPrompt && footer && <fieldset className="timer-smart-cube-device__controls" disabled={action !== null || connecting}>{footer}</fieldset>}
       </div>
     </div>,
     document.body,

@@ -64,7 +64,11 @@ import { syncLangToUrl } from '@/i18n/i18n-client';
 
 import { createRandomScrambleClient } from '@cuberoot/timer-ui/random-scramble';
 import type { TimerScrambleRequest } from '@cuberoot/shared/timer';
-import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
+import type { LiveSmartCubeAnchor } from '@cuberoot/shared/smart-cube/anchor';
+import { useLiveCubeAnchor } from '../_shared/useLiveCubeAnchor';
+import TrainingCubePreview from '../_components/TrainingCubePreview';
+import '../_components/training-cubes.css';
+import type { TrainingCubeStatus } from '../_lib/training-cube-status';
 import {
   peekWcaRow,
   startWcaScrambleRetry,
@@ -1621,13 +1625,25 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const gyroQuatRef = useRef<Quat | null>(null);
   const scrambleGyroRef = useRef<Quat | null>(null);
   const [calibrateNonce, setCalibrateNonce] = useState(0);
+  const [cubeCalibrateTokens, setCubeCalibrateTokens] = useState<Record<string, number>>({});
   const calibrationReferenceRef = useRef<Quat | null>(null);
-  const resetSmartCubeOrientation = () => {
-    calibrationReferenceRef.current = gyroQuatRef.current ? { ...gyroQuatRef.current } : null;
-    if (phaseSnapshotRef.current !== 'running' && gyroQuatRef.current) {
-      scrambleGyroRef.current = { ...gyroQuatRef.current };
+  const resetSmartCubeOrientation = (cubeId = activeCubeIdRef.current) => {
+    const active = cubeId === activeCubeIdRef.current;
+    const gyro = cubeGyrosRef.current.get(cubeId);
+    const sample = gyro?.quat ?? (active ? gyroQuatRef.current : null);
+    const reference = sample ? { ...sample } : null;
+    if (gyro) {
+      gyro.calibration = reference;
+      if (!active || phaseSnapshotRef.current !== 'running') gyro.scramble = reference;
     }
-    setCalibrateNonce(n => n + 1);
+    // Each renderer needs its own calibration signal, including when the
+    // selected cube is stationary or another cube owns the timer.
+    setCubeCalibrateTokens(previous => ({ ...previous, [cubeId]: (previous[cubeId] ?? 0) + 1 }));
+    if (active) {
+      calibrationReferenceRef.current = reference;
+      if (phaseSnapshotRef.current !== 'running' && reference) scrambleGyroRef.current = reference;
+      setCalibrateNonce(n => n + 1);
+    }
   };
   // 姿态流录制。样本时刻用 performance.now() 而不是动作 recorder 的起点 ——
   // 「魔方起表」那条路用的是**设备时钟**,而陀螺仪回调根本不带时间戳,两个
@@ -1636,6 +1652,11 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const timerHandleRef = useRef(timer);
   timerHandleRef.current = timer;
   const liveAnchorRef = useRef<LiveSmartCubeAnchor | null>(null);
+  const previewAnchorsRef = useRef(new Map<string, LiveSmartCubeAnchor>());
+  const registerPreviewAnchor = useCallback((id: string, source: LiveSmartCubeAnchor | null) => {
+    if (source) previewAnchorsRef.current.set(id, source);
+    else previewAnchorsRef.current.delete(id);
+  }, []);
   const trainingOrientation = timerSmartCubeTrainingOrientation(event, settings.preScrT);
   const previousTrainingOrientationRef = useRef(trainingOrientation);
   useLayoutEffect(() => { if (!multiEnabledRef.current) scrambleGyroRef.current = null; }, [scramble, trainingOrientation]);
@@ -1781,14 +1802,14 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       }
       : undefined,
     onMove: (move: string, ts: number, facelets: string, metadata?: CubeMoveMetadata) => {
+      previewAnchorsRef.current.get(cubeId)?.move(move, ts);
       if (multiEnabledRef.current) {
         if (cubeId === activeCubeIdRef.current) liveAnchorRef.current?.move(move, ts);
         const outcome = multiTraining.move(cubeId, { facelets, metadata, move, timestamp: ts });
         const cube = multiTraining.snapshot().cubes.find(candidate => candidate.id === cubeId);
         const gyro = cubeGyrosRef.current.get(cubeId);
         if (outcome?.guidancePenultimate && getSettings().autoCalibrateGyro && gyro?.quat) {
-          gyro.calibration = { ...gyro.quat };
-          if (cubeId === activeCubeIdRef.current) resetSmartCubeOrientation();
+          resetSmartCubeOrientation(cubeId);
         }
         if (gyro && cube?.context?.targetFacelets === facelets && !metadata?.futureHistory) {
           gyro.scramble = gyro.quat ? { ...gyro.quat } : null;
@@ -1887,20 +1908,27 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // opening (see the anchor effect below), so replaying it from a solved cube
   // reproduces the current state exactly. `algAnchored` says whether that
   // anchor exists at all. Re-anchoring keeps the last verified 3D pose visible.
-  const [{ moves: liveMoves, algAnchored }, setLiveAnchor] = useState<LiveSmartCubeAnchorSnapshot>({ moves: [], algAnchored: false });
-  const liveAnchor = useMemo(() => new LiveSmartCubeAnchor({
-    solve: async (state) => {
-      const { solve333 } = await import('../_lib/scramble/kociemba/random_state');
-      return solve333(state);
-    },
-    onChange: setLiveAnchor,
-  }), []);
+  const listedCubes = trainingCubes.connectedHandles;
+  const connectedCubes = listedCubes.map((entry, index) => ({ ...entry, number: index + 1 }));
+  const connectedPanelCubeId = listedCubes.some(({ id }) => id === bluetoothPanelCubeId)
+    ? bluetoothPanelCubeId : listedCubes[0]?.id ?? FIRST_TRAINING_CUBE;
+  useLayoutEffect(() => {
+    if (bluetoothPanelCubeId !== connectedPanelCubeId) setBluetoothPanelCubeId(connectedPanelCubeId);
+  }, [bluetoothPanelCubeId, connectedPanelCubeId]);
+  const showTrainingCubes = multiEnabled || connectedCubes.length > 1;
+  const { anchor: liveAnchor, moves: liveMoves, algAnchored } = useLiveCubeAnchor(
+    !showTrainingCubes && supportsSmartCube && bluetoothCube.status.connected
+      ? bluetoothCube.status.deviceId || bluetoothCube.status.deviceName || 'cube' : null,
+    bluetoothCube.facelets,
+  );
   liveAnchorRef.current = liveAnchor;
-  useEffect(() => () => liveAnchor.setConnection(null), [liveAnchor]);
   const cubeConnected = supportsSmartCube && bluetoothCube.status.connected;
   const multiEligible = !competition.enabled && timerSupportsTrainingTiming(event) && !mayUseMiniProgramBridge();
   useLayoutEffect(() => {
-    if (!multiEligible && timer.phase !== 'running') trainingCubes.disconnectExtras();
+    if (!multiEligible && timer.phase !== 'running') {
+      trainingCubes.disconnectExtras();
+      setBluetoothPanelCubeId(FIRST_TRAINING_CUBE);
+    }
   }, [multiEligible, timer.phase === 'running', trainingCubes.disconnectExtras]);
   const trainingContext = useMemo<TrainingCubeContext>(() => ({
     event, id: currentScrambleEntry.id, scramble, targetFacelets: scrambleTarget,
@@ -1924,7 +1952,11 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       }
       return;
     }
-    const connected = trainingCubes.handles.filter(({ cube }) => cube.status.connected);
+    // Extra connections report in child layout effects. The render-time list
+    // can still contain the previous move here and would revoke a fresh ready
+    // state. Reconcile from the live registry after those reports have run.
+    const connections = [...trainingCubes.handlesRef.current];
+    const connected = connections.filter(([, cube]) => cube.status.connected);
     let restoreFirst = false;
     if (!multiEnabledRef.current && connected.length > 1 && timer.phase !== 'running') {
       restoreFirst = ['ready', 'inspecting', 'holding'].includes(phaseSnapshotRef.current);
@@ -1945,7 +1977,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       multiTraining.reset();
       multiResetPendingRef.current = false;
     }
-    for (const { id, cube } of trainingCubes.handles) multiTraining.connect(id, cube.status.connected);
+    for (const [id, cube] of connections) multiTraining.connect(id, cube.status.connected);
     if (scrambleSourceCurrentRef.current) multiTraining.setContext(trainingContext);
     for (const cube of multiTraining.snapshot().cubes) {
       if (!cube.context) continue;
@@ -1953,7 +1985,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       if (gyro.ticketId !== cube.context.id) { gyro.ticketId = cube.context.id; gyro.scramble = null; }
       cubeGyrosRef.current.set(cube.id, gyro);
     }
-    for (const { id, cube } of trainingCubes.handles) if (cube.facelets) multiTraining.syncFacelets(id, cube.facelets);
+    for (const [id, cube] of connections) if (cube.facelets) multiTraining.syncFacelets(id, cube.facelets);
     if (restoreFirst) multiTraining.restoreReady(FIRST_TRAINING_CUBE);
     multiTraining.resume();
   });
@@ -1976,11 +2008,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       scrambleGyroRef.current = null;
       calibrationReferenceRef.current = null;
     }
-    liveAnchor.setConnection(cubeConnected ? bluetoothCube.status.deviceId || bluetoothCube.status.deviceName || 'cube' : null);
-  }, [liveAnchor, cubeConnected, bluetoothCube.status.deviceId, bluetoothCube.status.deviceName]);
-  useEffect(() => {
-    liveAnchor.observeFacelets(bluetoothCube.facelets);
-  }, [liveAnchor, cubeConnected, bluetoothCube.facelets]);
+  }, [cubeConnected]);
   const latestPresenceSolve = solves.at(-1);
   const cubePresenceKey = trainingCubes.handles.map(({ id, cube }) => `${id}:${cube.status.connected}:${cube.status.deviceName}`).join('|');
   useEffect(() => {
@@ -2027,7 +2055,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     }, { timeout: 1000 });
   }, [cubeConnected]);
 
-  // ── The cube picture under the digits ───────────────────────────
+  // ── Cube previews under the digits ──────────────────────────────
+  // Multi-cube training renders each connection's independent display stream.
+  // The existing single-cube/static preview keeps its own layout contract.
   // One box, two tenants. Without a smart cube it shows the scramble — the
   // state you are trying to REACH. With one connected it shows the cube itself
   // — the state you are actually IN — because that strictly dominates: the app
@@ -2036,7 +2066,25 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // live one is the same fact twice.
   //
   // The shared solo surface owns the fixed preview frame for both states.
-  const centerCubeSlot = (cubeConnected || cubeStartedRef.current) ? (
+  const cubeDisplayStatus = (id: string, connected: boolean): TrainingCubeStatus => {
+    if (!connected) return 'disconnected';
+    const stage = multiEnabled ? multiSnapshot.cubes.find(cube => cube.id === id)?.stage : undefined;
+    const ownsTimer = multiEnabled ? multiSnapshot.activeId === id : activeCubeIdRef.current === id;
+    if (ownsTimer && timer.phase === 'running') return 'running';
+    if (ownsTimer && timer.phase === 'inspecting') return 'inspecting';
+    if (ownsTimer && (timer.phase === 'ready' || timer.phase === 'holding')) return 'active';
+    return stage ?? 'connected';
+  };
+  const centerCubeSlot = showTrainingCubes ? (
+    <div className="training-cube-previews" data-no-timer role="region" tabIndex={0}
+      aria-label={tr({ zh: '已连接智能魔方实时状态，按连接顺序排列', en: 'Connected smart cubes in connection order' })}>
+      {connectedCubes.map(({ id, cube, deviceName, number }) => <TrainingCubePreview key={id}
+        id={id} number={number} cube={cube} name={deviceName} status={cubeDisplayStatus(id, true)}
+        orientation={trainingOrientation} mode={settings.liveCubeView} useGyro={settings.gyroEnabled}
+        calibrateToken={cubeCalibrateTokens[id] ?? 0}
+        gyros={cubeGyrosRef} onSource={registerPreviewAnchor} />)}
+    </div>
+  ) : (cubeConnected || cubeStartedRef.current) ? (
     <div
       className="timer-live-cube"
       data-no-timer
@@ -2983,12 +3031,14 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const [mergeSlot, setMergeSlot] = useState<HTMLDivElement | null>(null);
   const [historyQuery, setHistoryQuery] = useState('');
 
-  const distractionFree = !multiEnabled && timer.phase === 'running' && !prefersReducedMotion;
+  // Keep the scrambler's workspace stable as soon as multiple cubes are
+  // connected, including a second connection added during an ongoing solve.
+  const distractionFree = !showTrainingCubes && timer.phase === 'running' && !prefersReducedMotion;
   // Opt-in, and stronger than `distractionFree`: that one only fades
   // .surface-chrome, this also takes the side panel and the solver rail. It is
   // NOT gated on prefers-reduced-motion — the user asked for things to be
   // hidden, not animated; the reduced-motion block below drops the transition.
-  const hideAllUi = !multiEnabled && timerHidesRunningUi(timer.phase, settings);
+  const hideAllUi = !showTrainingCubes && timerHidesRunningUi(timer.phase, settings);
   const sourceControlsEnabled = timer.phase !== 'running';
 
   // ── Side-panel body ─────────────────────────────────────────────
@@ -3045,7 +3095,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             setManualEditing(false);
           } : undefined}
           isZh={isZh}
-          autoCollapseOnReady={!multiEnabled && timer.phase === 'ready' && bluetoothCube.status.connected}
+          autoCollapseOnReady={!showTrainingCubes && timer.phase === 'ready' && bluetoothCube.status.connected}
           autoOpenOnSolve={solverOpenRequest}
           onBlockingChange={setSolverBlocking}
           resultsPanelOpen={!isDesktop && panelTab !== null}
@@ -3058,7 +3108,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
   // Live and completed reconstruction share the desktop dock. Both expand
   // naturally with the document; narrow screens show live moves below the timer.
-  const liveSolutionPanel = timer.phase === 'running' && liveSolve ? (
+  const liveSolutionPanel = !showTrainingCubes && timer.phase === 'running' && liveSolve ? (
     <TimerLiveSolutionPanel language={isZh ? 'zh' : 'en'}>
       <LiveReconstructReport key={liveSolve.id} solve={liveSolve} liveGyroSamples={liveSolve.liveGyroSamples} isZh={isZh} live liveStageTarget={liveStageTarget} />
     </TimerLiveSolutionPanel>
@@ -3150,7 +3200,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   );
 
   const panelCube = trainingCubes.handlesRef.current.get(bluetoothPanelCubeId) ?? bluetoothCube;
-  const listedCubes = trainingCubes.handles.filter(({ cube, deviceId }) => cube.status.connected || deviceId);
   const trainingCubeLabel = (id: string | null) => {
     const index = listedCubes.findIndex(cube => cube.id === id);
     const name = listedCubes[index]?.deviceName ?? '';
@@ -3159,20 +3208,15 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const preparingCube = multiSnapshot.cubes.find(cube => cube.id === multiSnapshot.scrambleId);
   const activeTrainingCube = multiSnapshot.cubes.find(cube => cube.id === multiSnapshot.activeId);
   const displayedGuidance = multiEnabled ? preparingCube?.guidance : scrambleGuidance;
-  // Multi-cube connection entry is temporarily hidden; keep onConnectNext unset.
   const bluetoothDialog = supportsSmartCube && bluetoothOpen && (
     <BluetoothModal anchorRef={bluetoothButtonRef} isZh={isZh} cube={panelCube} connectAttempt={bluetoothConnectAttempt}
-      connectionList={listedCubes.length > 1 ? <div style={{ display: 'grid', gap: 6, marginBottom: 12 }}>
-        {listedCubes.map(({ id, cube, deviceName }, index) => <button type="button" key={id} className="modal-action-btn"
-          aria-pressed={bluetoothPanelCubeId === id} onClick={() => setBluetoothPanelCubeId(id)}>
-          {index + 1} · {deviceName}{!cube.status.connected && ` · ${tr({ zh: '已断开', en: 'Disconnected' })}`}
-        </button>)}
-      </div> : undefined}
-      onResetGyro={() => {
-        const gyro = cubeGyrosRef.current.get(bluetoothPanelCubeId);
-        if (gyro) { gyro.calibration = gyro.quat ? { ...gyro.quat } : null; gyro.scramble = gyro.calibration; }
-        if (bluetoothPanelCubeId === activeCubeIdRef.current) resetSmartCubeOrientation();
-      }}
+      connections={multiEligible && listedCubes.length ? listedCubes.map(({ id, cube, deviceName }) => ({
+        id, name: deviceName, battery: cube.status.battery, status: cubeDisplayStatus(id, cube.status.connected),
+      })) : undefined}
+      selectedConnectionId={bluetoothPanelCubeId} onSelectConnection={setBluetoothPanelCubeId}
+      onConnectNext={multiEligible && connectedCubes.length > 0 ? trainingCubes.connectNext : undefined}
+      connectingNext={trainingCubes.connecting}
+      onResetGyro={() => resetSmartCubeOrientation(bluetoothPanelCubeId)}
       allowDeviceCalibration={bluetoothPanelCubeId !== activeCubeIdRef.current || timer.phase === 'idle' || timer.phase === 'stopped'}
       macPrompt={macPrompt} onSubmitMac={mac => resolveMac(mac)} onCancelMac={() => resolveMac(null)}
       onClose={() => {
@@ -3422,7 +3466,7 @@ className: targetFeedbackClass,
 onMouseDown: onCenterMouseDown,
 onMouseUp: onCenterMouseUp,
 scrambleSlot: <>
-            {multiEnabled && <div data-no-timer style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '6px 18px', paddingBottom: 8 }}>
+            {multiEnabled && <div className="training-scramble-status" data-no-timer>
               <span>{tr({ zh: '打乱', en: 'Scramble' })}: {multiSnapshot.scrambleId ? trainingCubeLabel(multiSnapshot.scrambleId) : tr({ zh: '全部已就绪', en: 'All prepared' })}</span>
               {multiSnapshot.cubes.filter(cube => cube.stage === 'queued').map(cube => <span key={cube.id}>
                 {tr({ zh: '待练', en: 'Queued' })}: {trainingCubeLabel(cube.id)}
@@ -3541,7 +3585,7 @@ scrambleSlot: <>
             </>,
 cornerSlot: centerCubeSlot,
 cubeFooter: <>
-  {timer.phase === 'running' && liveSolve && <div ref={setLiveStageTarget} className="timer-live-stage" data-no-timer />}
+  {liveSolutionPanel && <div ref={setLiveStageTarget} className="timer-live-stage" data-no-timer />}
 </>,
 cornerAspect: cubeConnected || cubeStartedRef.current ? undefined : timerCubePreviewAspect(event, previewScramble),
 children: <>

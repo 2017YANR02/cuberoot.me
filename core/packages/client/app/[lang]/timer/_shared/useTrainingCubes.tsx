@@ -32,6 +32,8 @@ export function useTrainingCubes(optionsFor: (id: string) => CubeOptions) {
   const [extraIds, setExtraIds] = useState(['cube-2']);
   const nextSlotRef = useRef(3);
   const [extras, setExtras] = useState<Record<string, BluetoothCubeHandle>>({});
+  // Controllers read this registry in layout effects; `handles` below is a
+  // render snapshot and can lag a child connection's latest move by one render.
   const handlesRef = useRef(new Map<string, BluetoothCubeHandle>());
   const knownDevicesRef = useRef(new Map<string, { deviceId: string; deviceName: string }>());
   handlesRef.current.set(FIRST_TRAINING_CUBE, first);
@@ -56,21 +58,27 @@ export function useTrainingCubes(optionsFor: (id: string) => CubeOptions) {
   }, []);
   const connectSlot = useCallback(async (id: string) => {
     if (connectingRef.current) return;
-    const handle = handlesRef.current.get(id);
-    if (!handle) return;
+    if (!handlesRef.current.has(id)) return;
     const generation = ++generationRef.current;
     connectingRef.current = id;
     setConnecting(true);
     try {
       const device = await requestBluetoothDevice(nameOnly => pickerOptions(false, nameOnly));
       if (!device || generation !== generationRef.current) return;
-      if ([...knownDevicesRef.current].some(([otherId, cube]) => otherId !== id && cube.deviceId === device.id)) {
+      const knownId = [...knownDevicesRef.current].find(([, cube]) => cube.deviceId === device.id)?.[0];
+      if (knownId && handlesRef.current.get(knownId)?.status.connected) {
         throw new Error(tr({ zh: '这颗智能魔方已在连接列表中', en: 'This smart cube is already in the connection list' }));
       }
+      // Disconnected devices disappear from the UI. Choosing one again uses
+      // its original transport slot so an interrupted solve can still resume.
+      const targetId = knownId ?? id;
+      const handle = handlesRef.current.get(targetId);
+      if (!handle) return;
+      connectingRef.current = targetId;
       await handle.connectDevice(device);
       if (generation !== generationRef.current) { handle.disconnect(); return; }
       const spareId = `cube-${nextSlotRef.current++}`;
-      setExtraIds(previous => previous.at(-1) === id ? [...previous, spareId] : previous);
+      setExtraIds(previous => previous.at(-1) === targetId ? [...previous, spareId] : previous);
     } finally {
       if (generation === generationRef.current) {
         connectingRef.current = null;
@@ -102,7 +110,8 @@ export function useTrainingCubes(optionsFor: (id: string) => CubeOptions) {
       deviceName: entry.cube.status.deviceName || knownDevicesRef.current.get(entry.id)?.deviceName || '',
     }));
   return {
-    first, handles, handlesRef, connecting, connectNext, connectSlot, cancelConnect, disconnectExtras,
+    first, handles, connectedHandles: handles.filter(({ cube }) => cube.status.connected),
+    handlesRef, connecting, connectNext, connectSlot, cancelConnect, disconnectExtras,
     connections: extraIds.map(id => <CubeConnection key={id} id={id} options={optionsFor(id)} report={report} />),
   };
 }
