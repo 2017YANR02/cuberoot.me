@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMosaicStore } from '../state/store';
@@ -175,7 +176,7 @@ export default function PaletteStage() {
         {advanced ? t('mosaic.palette.advancedNote') : ''}
       </p>
       <details style={{ marginTop: 8, fontSize: 12, color: 'var(--muted)' }}>
-        <summary style={{ cursor: 'pointer' }}>{t('mosaic.palette.defaults')}</summary>
+        <MoreToggle as="summary" style={{ cursor: 'pointer' }}>{t('mosaic.palette.defaults')}</MoreToggle>
         <ul style={{ paddingLeft: 20 }}>
           {DEFAULT_PALETTE.map((c, i) => (
             <li key={i}>

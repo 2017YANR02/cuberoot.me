@@ -16,6 +16,7 @@ import {
 } from '@/lib/platform-gateway';
 import {
   fillPlatformParams,
+  platformParentHref,
   matchPlatformRoute,
   resolvePlatformCanonicalPath,
   PLATFORM_PUBLIC_NAV,
@@ -473,5 +474,18 @@ describe('Platform gateway contracts', () => {
   it('keeps the retired standalone package outside the workspace runtime', () => {
     const workspace = readFileSync(join(REPO, 'core', 'pnpm-workspace.yaml'), 'utf8');
     expect(workspace).toContain('!packages/platform');
+  });
+});
+
+
+describe('platform parent navigation', () => {
+  it.each([
+    [[], '/'],
+    [['events', 'online'], '/platform/events'],
+    [['events', 'online', 'competition'], '/platform/events/online'],
+    [['courses', 'course', 'sections', 'core'], '/platform/courses/course'],
+    [['account', 'courses'], '/platform/account'],
+  ] as const)('resolves %j to %s', (segments, parent) => {
+    expect(platformParentHref(segments)).toBe(parent);
   });
 });

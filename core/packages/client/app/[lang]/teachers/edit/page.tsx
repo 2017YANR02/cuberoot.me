@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { parseAsInteger, useQueryState } from 'nuqs';
 import AppLink from '@/components/AppLink';
-import BackHome from '@/components/BackHome';
+import PageBackLink from '@/components/PageBackLink';
 import { tr } from '@/i18n/tr';
 import { nextQuery, useAuthUser, useIsAdmin, useOwnerKey } from '@/lib/auth-store';
 import { fetchMyTeacherDirectory, fetchTeacherDirectory, type TeacherDirectoryEntry } from '@/lib/teacher-directory-api';
@@ -12,7 +12,7 @@ import TeacherDirectoryEditor from '../TeacherDirectoryEditor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 function PageBackRow() {
-  return <div className="teacher-editor-back-row"><BackHome /></div>;
+  return <div className="teacher-editor-back-row"><PageBackLink fallback="/teachers" /></div>;
 }
 
 function TeacherDirectoryEditClient() {

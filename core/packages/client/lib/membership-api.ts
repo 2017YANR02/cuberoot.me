@@ -225,7 +225,7 @@ export async function getMyMembership(): Promise<{
 
 export async function getPublicMemberProfile(wcaId: string): Promise<PublicMemberProfile | null> {
   const result = await handleApi<{ profile: Partial<PublicMemberProfile> | null }>(
-    await sessionFetch(`${BASE}/profile/${encodeURIComponent(wcaId)}`),
+    await sessionFetch(`${BASE}/profile/${encodeURIComponent(wcaId)}?v=2`, { cache: 'no-store' }),
   );
   return result.profile ? {
     intro: typeof result.profile.intro === 'string' ? result.profile.intro : '',

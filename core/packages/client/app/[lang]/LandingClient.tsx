@@ -6,6 +6,7 @@ import { douyinContentAvailable } from '@cuberoot/shared/douyin-content';
 
 import { useRetainedState } from '@/hooks/useRetainedState';
 import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
+import { useHomeScrollRestoration } from '@/hooks/useHomeScrollRestoration';
 
 /** Site entrypoint — Landing page. */
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
@@ -140,9 +141,10 @@ export default function LandingPage() {
   const user = useAuthUser();
   const compFollows = useCompFollows();
   const personalKey = user ? `${user.uid ?? ''}:${user.wcaId}` : null;
-  const [personalReadyKey, setPersonalReadyKey] = useState<string | null>(null);
+  const [personalReadyKey, setPersonalReadyKey] = useRetainedState<string | null>('home:personalReadyKey', null);
   const onPersonalReady = useCallback(() => setPersonalReadyKey(personalKey), [personalKey, setPersonalReadyKey]);
   const personalLoading = Boolean(user && (!compFollows.loaded || personalReadyKey !== personalKey));
+  useHomeScrollRestoration(!personalLoading);
   const [guideOpen, setGuideOpen] = useState(false);
   const [replayGuide, setReplayGuide] = useQueryState('guide', parseAsBoolean.withDefault(false));
   useEffect(() => {
@@ -448,7 +450,7 @@ export default function LandingPage() {
                 {member.avatarUrl
                   ? <img src={member.avatarUrl} alt="" className="landing-member-avatar" />
                   : <User size={24} aria-hidden="true" />}
-                <span>{displayCuberName(member.name, lang === 'zh')}<WcaPersonTeamBadge wcaId={member.wcaId} />{member.vipId ? ` ${fmtVipId(member.vipId)}` : ''}</span>
+                <span>{displayCuberName(member.name, lang === 'zh')}<WcaPersonTeamBadge wcaId={member.wcaId} linked={false} />{member.vipId ? ` ${fmtVipId(member.vipId)}` : ''}</span>
               </Link>
             ))}
           </div>

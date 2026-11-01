@@ -649,11 +649,13 @@
 }
 
 .sites-page-actions {
+  margin-left: auto;
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .sites-search {
@@ -676,36 +678,45 @@
 }
 
 .sites-view-toggle {
+  margin-left: auto;
+  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   gap: 0;
 }
 
 .sites-view-btn {
+  position: relative;
+  padding: 0;
+  border-radius: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 36px;
   height: 36px;
-  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
-  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  border: 0;
+  background: transparent;
   color: var(--muted-foreground);
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
+  transition: color 0.15s, transform 0.15s;
 }
 
-.sites-view-btn:first-child { border-radius: 8px 0 0 8px; }
-.sites-view-btn:last-child { border-left: 0; border-radius: 0 8px 8px 0; }
-.sites-view-btn:hover { color: var(--foreground); background: color-mix(in srgb, var(--foreground) 8%, transparent); }
-.sites-view-btn:active { transform: scale(0.96); }
-.sites-view-btn.is-active {
-  color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 42%, transparent);
-  background: var(--accent-soft);
+.sites-view-btn + .sites-view-btn::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 1px;
+  background: var(--border-default);
 }
+.sites-view-btn:hover { color: var(--foreground); }
+.sites-view-btn:active { transform: scale(0.96); }
+.sites-view-btn.is-active { color: var(--accent); }
 .sites-view-btn:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 
 .sites-filter-row {
+  align-items: center;
   position: relative;
   z-index: 20;
   gap: 8px;
@@ -1073,8 +1084,8 @@ body[data-site-scenery] .site-card:where(.sites-list.is-grid *) {
 @media (max-width: 720px) {
   .sites-main { padding: 14px 12px 40px; }
   .sites-page-header { flex-direction: column; align-items: stretch; }
-  .sites-page-actions { justify-content: stretch; }
-  .sites-search { flex: 1 1 auto; width: auto; }
+  .sites-page-actions { width: 100%; justify-content: stretch; }
+  .sites-search { flex: 1 1 auto; min-width: 0; width: auto; }
   .sites-view-toggle { flex: 0 0 auto; }
   .sites-filter-row { padding: 8px; }
   .site-row-main:where(.sites-list:not(.is-grid) *) {

@@ -13,7 +13,8 @@ vi.mock('next/navigation', async original => ({
 }));
 vi.mock('@/hooks/useDocumentTitle', () => ({ useDocumentTitle: vi.fn() }));
 vi.mock('@/components/TrainingStatsPanel', () => ({ TrainingManualPractice: () => null }));
-vi.mock('@/i18n/tr', () => ({ T: () => null }));
+vi.mock('@/i18n/tr', () => ({ T: () => null, tr: (text: { en: string }) => text.en }));
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ i18n: { language: 'en' } }) }));
 import IframePage from '@/components/IframePage';
 
 it('keeps legacy trainer links hosted without changing upstream files, and releases navigation on unmount', async () => {

@@ -1,3 +1,5 @@
+@import '@cuberoot/app-ui/loading-brand.css';
+
 .app-startup {
   width: min(calc(100% - 32px), 560px);
   margin-inline: auto;
@@ -37,33 +39,29 @@
   text-align: center;
 }
 
-/* A portal keeps feedback out of the link's flow and transformed ancestors.
-   Delay only the visual reveal, never navigation or the finished page. */
+/* Keep navigation interruptible, without trapping clicks or keyboard focus. */
 .app-navigation-loading {
   position: fixed;
-  top: calc(0.75rem + env(safe-area-inset-top, 0px));
-  left: 50%;
-  transform: translateX(-50%);
+  inset: 0;
   z-index: 10000;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  max-width: calc(100vw - 2rem);
-  padding: 0.7rem 1rem;
-  border: 1px solid var(--border-default);
-  border-radius: 999px;
-  color: var(--muted-foreground);
-  font-size: 0.875rem;
+  display: grid;
+  place-content: center;
+  background: color-mix(in srgb, var(--background) 86%, transparent);
+  backdrop-filter: blur(3px);
   pointer-events: none;
-  animation: navigation-loading-reveal 140ms ease-out 120ms both;
+  animation: navigation-loading-reveal 180ms ease-out both;
 }
-@keyframes navigation-loading-reveal {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+.app-navigation-loading.is-leaving { animation: navigation-loading-hide 180ms ease-out both; }
+@keyframes navigation-loading-reveal { from { opacity: 0; } to { opacity: 1; } }
+@keyframes navigation-loading-hide { from { opacity: 1; } to { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
   .app-navigation-loading { animation: none; }
+  .app-navigation-loading.is-leaving { opacity: 0; }
 }
+@media (prefers-reduced-transparency: reduce) {
+  .app-navigation-loading { background: var(--background); backdrop-filter: none; }
+}
+@media print { .app-navigation-loading { display: none; } }
 
 .app-startup p,
 .app-startup-title {

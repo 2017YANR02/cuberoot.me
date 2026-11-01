@@ -1,0 +1,2 @@
+.page-back-heading { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.page-back-heading > .back-home { flex-shrink: 0; }

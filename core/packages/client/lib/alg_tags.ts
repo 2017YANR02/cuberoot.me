@@ -20,6 +20,8 @@ export const ALG_TAG_LABEL: Record<AlgTag, () => string> = {
   big: () => tr({ zh: '高阶', en: 'Big cube' }),
   key: () => tr({ zh: '键盘', en: 'Keyboard' }),
   beginner: () => tr({ zh: '新手首选', en: 'Beginner pick' }),
+  mainstream: () => tr({ zh: '主流', en: 'Mainstream' }),
+  's-style': () => tr({ zh: 'S 流', en: 'S style' }),
 };
 
 export function algTagLabel(id: string): string {

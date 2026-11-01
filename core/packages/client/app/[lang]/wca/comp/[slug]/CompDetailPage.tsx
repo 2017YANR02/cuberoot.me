@@ -1,4 +1,6 @@
 'use client';
+import PageHeading from '@/components/PageHeading';
+import MoreToggle from '@/components/MoreToggle';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { competitionFetch, ensureCompetitionAccess } from '@/lib/competition-access';
 
@@ -8,11 +10,13 @@ import { competitionFetch, ensureCompetitionAccess } from '@/lib/competition-acc
  */
 import { useEffect, useMemo, useState, useCallback, useRef, memo, startTransition, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
+import { flushSync } from 'react-dom';
+import { runViewTransition } from '@/lib/view-transition';
 import Link from '@/components/AppLink';
 import { usePathname, useRouter } from 'next/navigation';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, X as XIcon, RefreshCw, Info, Copy, Check, Radio, ArrowUp, ArrowDown, Ban, Download, Calculator } from '@app-foundation/icons/lucide';
+import { X as XIcon, RefreshCw, Info, Copy, Check, Radio, ArrowUp, ArrowDown, Ban, Download, Calculator } from '@app-foundation/icons/lucide';
 import { Flag } from '@/components/Flag';
 import { RecordBadge } from '@/components/RecordBadge';
 import { RecentRecordsList } from '@/components/RecentRecords';
@@ -27,7 +31,7 @@ import { eventDisplayName, isWcaEvent } from '@/lib/wca-events';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { countryToIso2, loadFlagData, compFlagIso2 } from '@/lib/country-flags';
 import { countryName } from '@/lib/country-name';
-import { localizeCompName, resolveCompName, resolveCompLocation, stripCompYear } from '@/lib/comp-localize';
+import { compMapAddress, localizeCompName, resolveCompName, resolveCompLocation, stripCompYear } from '@/lib/comp-localize';
 import { nameToCubingSlug, wcaIdToCubingSlug } from '@cuberoot/shared/cubing-slug';
 import { fetchRankForWca, getCachedRankForWca, prefetchRanksForWca, type RankResult } from '@/lib/rank-client';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -83,6 +87,7 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 // 「打乱」tab:把 /scramble/gen 的比赛模式整套内嵌进来。重(WASM 求解器 + 打乱引擎),
 // 懒加载 —— 只有用户点开「打乱」才拉这部分 JS,不拖累比赛页首屏。
 const CompScramblesTab = dynamic(() => import('./CompScramblesTab'), { ssr: false });
+const CommonCompetitors = dynamic(() => import('./CommonCompetitors'), { ssr: false });
 // 同理:赛程 tab (ScheduleView + 它的工具条)、海报布局、以及管理员改成绩的编辑器,
 // 都只在特定 tab / 权限下才渲染,不该进首屏 chunk。
 const ScheduleView = dynamic(() => import('./ScheduleView'), { ssr: false });
@@ -734,9 +739,9 @@ function SimilarCompsView({ series, sameCity, isZh, lang }: {
           </h3>
           <SimilarCompList comps={cityShown} isZh={isZh} lang={lang} showPlace={false} />
           {cityHidden > 0 && (
-            <button type="button" className="comp-similar-more" onClick={() => setCityExpanded(true)}>
+            <MoreToggle expanded={cityExpanded} type="button" className="comp-similar-more" onClick={() => setCityExpanded(true)}>
               {tr({ zh: `显示全部 ${sameCity.length} 场`, en: `Show all ${sameCity.length}` })}
-            </button>
+            </MoreToggle>
           )}
         </section>
       )}
@@ -791,7 +796,7 @@ export default function CompDetailPage() {
   );
   const [viewQuery, setExplicitView] = useQueryState(
     'view',
-    parseAsStringEnum<'result' | 'psych' | 'schedule' | 'podium' | 'scramble' | 'similar'>(['result', 'psych', 'schedule', 'podium', 'scramble', 'similar']).withOptions({ history: 'push', scroll: false }),
+    parseAsStringEnum<'result' | 'psych' | 'schedule' | 'podium' | 'scramble' | 'similar' | 'common'>(['result', 'psych', 'schedule', 'podium', 'scramble', 'similar', 'common']).withOptions({ history: 'push', scroll: false }),
   );
   const [psychEventParam, setPsychEventParam] = useQueryState(
     'psychEvent',
@@ -1030,8 +1035,9 @@ export default function CompDetailPage() {
     const t = compInfo?.registration_open ? Date.parse(compInfo.registration_open) : NaN;
     return Number.isFinite(t) && Date.now() < t;
   }, [compInfo]);
-  const viewParam: 'result' | 'psych' | 'schedule' | 'podium' | 'scramble' | 'similar' =
-    explicitView === 'psych' ? 'psych'
+  const viewParam: 'result' | 'psych' | 'schedule' | 'podium' | 'scramble' | 'similar' | 'common' =
+    explicitView === 'common' ? 'common'
+      : explicitView === 'psych' ? 'psych'
       : explicitView === 'schedule' ? 'schedule'
         : explicitView === 'scramble' ? 'scramble'
           : (explicitView === 'similar' && showSimilarTab) ? 'similar'
@@ -1045,6 +1051,7 @@ export default function CompDetailPage() {
   const isPodium = viewParam === 'podium';
   const isScramble = viewParam === 'scramble';
   const isSimilar = viewParam === 'similar';
+  const isCommon = viewParam === 'common';
   // 把当前生效的视图固化进 URL(强制带上 ?view=…),分享/收藏直接命中 active tab。
   // 仅在用户未显式选 tab 且默认视图依赖的数据已就位时写一次:有成绩=纯 data 驱动,无成绩需
   // 等 compInfo settle 才能定 schedule/psych。history:replace 不污染后退栈,避免回退到裸 URL。
@@ -1597,15 +1604,19 @@ export default function CompDetailPage() {
   const onChangeRound = (value: string) => {
     const [e, r] = value.split(':');
     if (!e || !r) return;
-    setEventParam(e);
-    setRoundUrlParam(String(roundTypeIdToNum(data, e, r)));
+    runViewTransition(() => {
+      flushSync(() => {
+        setEventParam(e);
+        setRoundUrlParam(String(roundTypeIdToNum(data, e, r)));
+      });
+    }, true);
   };
 
   const onChangeFilter = (value: string) => {
     setFilterParam(value || null);
   };
 
-  const onChangeView = (value: 'result' | 'psych' | 'schedule' | 'podium' | 'scramble' | 'similar') => {
+  const onChangeView = (value: 'result' | 'psych' | 'schedule' | 'podium' | 'scramble' | 'similar' | 'common') => {
     setExplicitView(value); // 显式记录:空成绩比赛点「成绩」不会被默认弹回预排名
   };
 
@@ -1681,7 +1692,7 @@ export default function CompDetailPage() {
   if (error || !data) {
     return (
       <div className="comp-detail-page">
-        <Link href="/wca/comp" prefetch={false} className="comp-back-link"><ArrowLeft size={14} /> <span className="sr-only">{tr({ zh: '返回', en: 'Back' })}</span></Link>
+
         <div className="comp-err comp-err-block">
           <div className="comp-err-title">{tr({ zh: '加载失败', en: 'Failed to load'
         })}</div>
@@ -1765,8 +1776,8 @@ export default function CompDetailPage() {
     <div className="comp-detail-page">
       <div className="comp-table-section">
         <header className="comp-detail-header">
-          <Link href="/wca/comp" prefetch={false} className="comp-back-link"><ArrowLeft size={14} /> <span className="sr-only">{tr({ zh: '返回', en: 'Back' })}</span></Link>
-          <h1 className="comp-detail-title">
+
+          <PageHeading backHref="/wca/comp" titleClassName="comp-detail-title">
             {(() => {
               // 国家旗:compInfo(权威,来自比赛详情)优先,回退 slug 推断 —— 当天刚公示的比赛
               // compFlagIso2 还没数据,会丢旗 + 丢 cubing.com 图标,故用 compInfo 兜底。
@@ -1835,7 +1846,7 @@ export default function CompDetailPage() {
                 </>
               );
             })()}
-          </h1>
+          </PageHeading>
           <div className="comp-detail-meta">
             {isAdmin && data.availableSources && data.availableSources.length > 1 && (
               <div className="comp-source-toggle" role="group" aria-label={tr({ zh: '数据源', en: 'Data source'
@@ -1906,7 +1917,7 @@ export default function CompDetailPage() {
           )}
           <button
             type="button"
-            className={`comp-view-tab${(!isPsych && !isSchedule && !isPodium && !isSimilar && !isScramble) ? ' is-active' : ''}`}
+            className={`comp-view-tab${(viewParam === 'result') ? ' is-active' : ''}`}
             onClick={() => onChangeView('result')}
           >
             {(isZh ? '成绩' : (isWca ? 'Results' : 'Live'))}
@@ -1926,6 +1937,13 @@ export default function CompDetailPage() {
           >
             {tr({ zh: '赛程', en: 'Schedule'
             })}
+          </button>
+          <button
+            type="button"
+            className={`comp-view-tab${isCommon ? ' is-active' : ''}`}
+            onClick={() => onChangeView('common')}
+          >
+            {tr({ zh: '共同选手', en: 'Common competitors' })}
           </button>
           {/* 相似比赛:名字只差版本号(I/II/III…)或年份的同系列比赛。有 ≥1 场才显示入口。 */}
           {showSimilarTab && (
@@ -1963,7 +1981,7 @@ export default function CompDetailPage() {
         </div>
 
         {/* 分享图布局不吃项目筛选,项目条一并隐藏 */}
-        {!isPodium && !isScramble && !isSimilar && !(isSchedule && schedView === 'poster') && (
+        {!isPodium && !isScramble && !isSimilar && !isCommon && !(isSchedule && schedView === 'poster') && (
           <div className="comp-event-bar">
             <WcaEventSelector
               presentation="inline"
@@ -1993,7 +2011,9 @@ export default function CompDetailPage() {
           </div>
         )}
 
-        {isScramble ? (
+        {isCommon ? (
+          <CommonCompetitors key={slug} data={data} isZh={isZh} onRefresh={refresh} />
+        ) : isScramble ? (
           <CompScramblesTab slug={slug} />
         ) : isSimilar ? (
           <SimilarCompsView series={similarComps} sameCity={sameCityComps} isZh={isZh} lang={isZh ? 'zh' : 'en'} />
@@ -2250,11 +2270,11 @@ function renderWcaText(text: string): React.ReactNode {
   return out.length ? out : text;
 }
 
-function CompAddress({ address, isZh }: { address: string; isZh: boolean }) {
+function CompAddress({ address, isZh, countryIso2 }: { address: string; isZh: boolean; countryIso2: string }) {
   const { copied, copy } = useCopy();
-  // WCA 地址可能包含 Markdown 链接；复制和地图检索都使用完整地址文本。
+  // WCA 地址可能包含 Markdown 链接；复制保留完整地址，地图检索去掉室内指引。
   const text = address.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '$1');
-  const encoded = encodeURIComponent(text);
+  const encoded = encodeURIComponent(compMapAddress(text, isZh, countryIso2));
   const providers = isZh ? ['amap', 'baidu'] as const : ['google'] as const;
   const maps = {
     amap: { label: tr({ zh: '高德地图', en: 'Amap' }), url: 'https://uri.amap.com/search?keyword=' + encoded + '&src=cuberoot&callnative=1' },
@@ -2349,9 +2369,9 @@ function CompInfoPanel({
     rows.push({ label: tr({ zh: '城市', en: 'City' }), value: cityStr });
   }
   if (location.hasLocalizedAddress) {
-    rows.push({ label: tr({ zh: '地点', en: 'Location' }), hideLabel: true, value: <CompAddress address={location.address} isZh={isZh} /> });
+    rows.push({ label: tr({ zh: '地点', en: 'Location' }), hideLabel: true, value: <CompAddress address={location.address} isZh={isZh} countryIso2={info.country_iso2} /> });
   } else {
-    if (location.address) rows.push({ label: tr({ zh: '地址', en: 'Address' }), value: <CompAddress address={location.address} isZh={isZh} /> });
+    if (location.address) rows.push({ label: tr({ zh: '地址', en: 'Address' }), value: <CompAddress address={location.address} isZh={isZh} countryIso2={info.country_iso2} /> });
     if (info.venue_details) rows.push({ label: tr({ zh: '详情', en: 'Details'
     }), value: renderWcaText(info.venue_details) });
   }
@@ -2489,7 +2509,12 @@ function ResultsTable({ results, search = '', users, round, isZh, pbMap, advance
     setSort(prev => prev.key !== key ? { key, dir: 'asc' } : prev.dir === 'asc' ? { key, dir: 'desc' } : { key: null, dir: 'asc' });
   }, []);
   // 切项目 / 轮次重置排序(把数 / 量纲不同)。
-  useEffect(() => { setSort({ key: null, dir: 'asc' }); }, [round?.e, round?.i]);
+  const roundKey = `${round?.e}:${round?.i}`;
+  const [sortedRound, setSortedRound] = useState(roundKey);
+  if (sortedRound !== roundKey) {
+    setSortedRound(roundKey);
+    setSort({ key: null, dir: 'asc' });
+  }
   // 成绩变更覆盖层感知的有效值(订正后的 best/average),供名次 + 列头排序按订正值排。
   const eff = useMemo(() => makeEffRank(users, changeMap), [users, changeMap]);
   const displayResults = useMemo(() => {
@@ -2512,49 +2537,7 @@ function ResultsTable({ results, search = '', users, round, isZh, pbMap, advance
     });
   }, [results, search, users, sort, eff]);
 
-  const tableRef = useRef<HTMLTableElement>(null);
   const windowed = displayResults.length > 80;
-  // Auto-sized table columns must not shrink when their widest visible row leaves.
-  // Retain measured widths within this round, but allow wider values to grow them.
-  useEffect(() => {
-    const table = tableRef.current;
-    if (!table || !windowed) return;
-    const columns = Array.from(table.querySelectorAll('col'));
-    let widths: number[] = [];
-    let tableWidth = 0;
-    const observer = new ResizeObserver(([entry]) => {
-      // Row windows change table height on every mount. Only remeasure columns
-      // when the width changes, and finish all reads before writing any styles.
-      const nextWidth = entry.borderBoxSize[0]?.inlineSize ?? entry.contentRect.width;
-      if (Math.abs(nextWidth - tableWidth) < 0.5) return;
-      tableWidth = nextWidth;
-      const cells = Array.from(table.tHead?.rows[0]?.cells ?? []);
-      const measured = cells.map(cell => cell.getBoundingClientRect().width);
-      measured.forEach((width, i) => {
-        if (width > (widths[i] ?? 0) + 0.5 && columns[i]) {
-          widths[i] = width;
-          columns[i].style.width = `${width}px`;
-        }
-      });
-    });
-    const reset = () => {
-      widths = [];
-      tableWidth = 0;
-      columns.forEach(col => { col.style.width = ''; });
-    };
-    let viewportWidth = window.innerWidth;
-    const onResize = () => {
-      // iPhone Safari resizes the viewport as its toolbar slides away. A height
-      // change must not discard column widths and reflow the table mid-scroll.
-      if (window.innerWidth === viewportWidth) return;
-      viewportWidth = window.innerWidth;
-      reset();
-    };
-    reset();
-    observer.observe(table);
-    window.addEventListener('resize', onResize);
-    return () => { observer.disconnect(); window.removeEventListener('resize', onResize); reset(); };
-  }, [windowed, round?.e, round?.i]);
   const handlers = useRef({ onClickCuber, onEdit, onRefresh });
   useEffect(() => { handlers.current = { onClickCuber, onEdit, onRefresh }; }, [onClickCuber, onEdit, onRefresh]);
   const handleClickCuber = useCallback((number: number) => handlers.current.onClickCuber(number), []);
@@ -2583,6 +2566,8 @@ function ResultsTable({ results, search = '', users, round, isZh, pbMap, advance
   );
 
   const columnCount = (showAvg ? 4 : 3) + attemptCount;
+  // Stable geometry across rounds, including windows that mount while scrolling.
+  const tableWidth = `calc(var(--result-place) + var(--result-person) + ${showAvg ? 2 : 1} * var(--result-summary) + ${attemptCount} * var(--result-attempt))`;
   const renderRows = (start: number, end: number) => displayResults.slice(start, end).map((r, offset) => {
     const idx = start + offset;
     return (
@@ -2616,8 +2601,13 @@ function ResultsTable({ results, search = '', users, round, isZh, pbMap, advance
 
   return (
     <div className="comp-table-wrap sticky-scroll-mobile">
-      <table ref={tableRef} aria-rowcount={displayResults.length + 1} className={`comp-table${compIso2 === 'cn' && isZh ? ' comp-table-cn' : ''}`}>
-        {windowed && <colgroup>{Array.from({ length: columnCount }, (_, i) => <col key={i} />)}</colgroup>}
+      <table aria-rowcount={displayResults.length + 1} style={{ width: tableWidth }} className={`comp-table comp-results-table${isMbldEvent(round.e) ? ' comp-results-table-mbld' : ''}${compIso2 === 'cn' && isZh ? ' comp-table-cn' : ''}`}>
+        <colgroup>
+          <col style={{ width: 'var(--result-place)' }} />
+          <col style={{ width: 'var(--result-person)' }} />
+          {Array.from({ length: showAvg ? 2 : 1 }, (_, i) => <col key={`summary-${i}`} style={{ width: 'var(--result-summary)' }} />)}
+          {Array.from({ length: attemptCount }, (_, i) => <col key={`attempt-${i}`} style={{ width: 'var(--result-attempt)' }} />)}
+        </colgroup>
         <thead>
           <tr>
             <th className="th-place">{tr({ zh: '名次', en: 'Place' })}</th>
@@ -2780,18 +2770,21 @@ const ResultsTableRow = memo(function ResultsTableRow({
           </Link>
         )}
       </td>
-      <td className="td-person">
-        <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
-        <Link
-          href={compResultHref(compId ?? '', { eventId: r.e, roundId: r.r, number: r.n })}
-          prefetch={false}
-          onClick={e => e.stopPropagation()}
-          onNavigate={e => { e.preventDefault(); onClickCuber(r.n); }}
-          className="cuber-name cuber-link"
-          title={`${fullCuberName}\n${regionDisplay(u.region, isZh)}`}
-        >
-          {cuberName}<WcaPersonTeamBadge wcaId={u.wcaid} />
-        </Link>
+      <td className="td-person comp-result-person-cell">
+        <div className="comp-result-person">
+          <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
+          <Link
+            href={compResultHref(compId ?? '', { eventId: r.e, roundId: r.r, number: r.n })}
+            prefetch={false}
+            onClick={e => e.stopPropagation()}
+            onNavigate={e => { e.preventDefault(); onClickCuber(r.n); }}
+            className="cuber-name cuber-link comp-result-person-link"
+            title={`${fullCuberName}\n${regionDisplay(u.region, isZh)}`}
+          >
+            <span className="comp-result-person-name">{cuberName}</span>
+          </Link>
+          <span className="comp-result-team"><WcaPersonTeamBadge wcaId={u.wcaid} /></span>
+        </div>
         {/* 行级编辑铅笔已移除:管理员经点成绩弹窗里的「编辑变更记录…」打开整条变更编辑器。 */}
       </td>
       {(() => {
@@ -3205,15 +3198,15 @@ function CuberNameLink({ u, isZh }: { u: User; isZh: boolean }) {
   const title = regionDisplay(u.region, isZh);
   if (u.wcaid) {
     return (
-      <Link
+      <><Link
         prefetch={false}
         href={`/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${u.wcaid}`}
         className="cuber-name cuber-link"
         title={title}
         onClick={e => e.stopPropagation()}
       >
-        {name}<WcaPersonTeamBadge wcaId={u.wcaid} />
-      </Link>
+        {name}
+      </Link><WcaPersonTeamBadge wcaId={u.wcaid} /></>
     );
   }
   return <span className="cuber-name" title={title}>{name}</span>;
@@ -3692,13 +3685,13 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, personal = false, lo
           <div className="comp-modal-title">
             {u && <Flag iso2={regionToIso2(u.region)} className="comp-flag" />}
             {u?.wcaid ? (
-              <Link
+              <><Link
                 prefetch={false}
                 href={`/wca/persons/${u.wcaid}`}
                 className="cuber-link-modal"
               >
-                {displayCuberName(u.name, isZh)}<WcaPersonTeamBadge wcaId={u.wcaid} />
-              </Link>
+                {displayCuberName(u.name, isZh)}
+              </Link><WcaPersonTeamBadge wcaId={u.wcaid} /></>
             ) : (
               <span className="cuber-link-static">{u ? displayCuberName(u.name, isZh) : ''}</span>
             )}
@@ -4096,13 +4089,13 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
           <div className="comp-modal-title">
             <Flag iso2={iso2} className="comp-flag" />
             {u.wcaid ? (
-              <Link
+              <><Link
                 prefetch={false}
                 href={`/wca/persons/${u.wcaid}`}
                 className="cuber-link-modal"
               >
-                {displayCuberName(u.name, isZh)}<WcaPersonTeamBadge wcaId={u.wcaid} />
-              </Link>
+                {displayCuberName(u.name, isZh)}
+              </Link><WcaPersonTeamBadge wcaId={u.wcaid} /></>
             ) : (
               <span>{displayCuberName(u.name, isZh)}</span>
             )}

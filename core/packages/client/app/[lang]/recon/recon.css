@@ -65,6 +65,27 @@
   gap: 12px;
   margin-bottom: 1rem;
 }
+.recon-toolbar-event { order: 2; }
+.recon-toolbar .recon-actions { order: 3; }
+.recon-toolbar > .recon-search { order: 4; }
+.recon-toolbar > .recon-grid-filters { order: 5; flex-basis: 100%; margin-bottom: 0; }
+.recon-grid-filters > .record-select { width: 9rem; max-width: 100%; }
+.recon-grid-filters .record-select-input::placeholder { color: var(--foreground); opacity: 1; }
+.recon-grid-filters .record-select-popup { right: auto; width: max-content; min-width: 100%; }
+
+/* 桌面端：操作入口在首行，项目、筛选与搜索在下一行。 */
+@media (min-width: 481px) {
+  .recon-toolbar::before {
+    content: '';
+    order: 2;
+    flex-basis: 100%;
+    height: 0;
+  }
+  .recon-toolbar .recon-actions { order: 1; }
+  .recon-toolbar-event { order: 3; }
+  .recon-toolbar > .recon-grid-filters { order: 4; flex-basis: auto; }
+  .recon-toolbar > .recon-search { order: 5; }
+}
 
 /* NOTE: comp 筛选可宽点(比赛名长);record 紧凑 */
 .recon-comp-filter { flex: 1 1 240px; max-width: 320px; }
@@ -146,11 +167,11 @@
   border-color: color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
-/* 窄屏：toolbar 改 2 列网格,塞满空缺 */
+/* 窄屏：主切换同排，搜索收在筛选区末尾。 */
 @media (max-width: 480px) {
   .recon-toolbar {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: auto auto minmax(0, 1fr);
     gap: 8px 10px;
   }
   /* .recon-filters 透传：3 个 select 直接作为网格项 */
@@ -160,9 +181,20 @@
   .recon-filters .recon-solver-filter,
   .recon-comp-filter,
   .recon-record-filter { width: 100%; min-width: 0; max-width: none; }
-  .recon-actions { justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
-  .recon-search { flex: 1 1 100%; }
-  .recon-search-input { width: 100%; }
+  .recon-toolbar > .compact-select { order: 2; }
+  .recon-toolbar > .recon-view-toggle { order: 3; grid-column: 3; justify-self: end; }
+  .recon-toolbar-event { order: 1; min-width: 0; justify-self: start; }
+  .recon-toolbar-event .pp-trigger { min-height: 44px; }
+  .recon-toolbar .recon-actions {
+    order: 0;
+    grid-column: 1 / -1;
+    min-width: 0;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .recon-stats-count { margin-right: auto; }
+  .recon-toolbar > .recon-search { grid-column: 1 / -1; order: 6; min-width: 0; }
+  .recon-search-input { width: 100%; min-height: 44px; }
 }
 
 /* --- 表格 --- */
@@ -388,59 +420,45 @@ img.recon-inline-flag {
   gap: 0;
 }
 
-.toggle-btn {
-  height: 36px;
-  padding: 0 14px;
-  font-size: 0.82rem;
-  font-family: var(--font-sans);
-  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
-  background: color-mix(in srgb, var(--foreground) 4%, transparent);
-  color: var(--faint-foreground);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  outline: none;
-  box-sizing: border-box;
-}
+.recon-toolbar > .compact-select { align-self: center; }
+.recon-toolbar > .compact-select .pp-trigger,
+.recon-toolbar-event .pp-trigger { min-height: 44px; font-weight: 600; }
 
-.toggle-btn:first-child {
-  border-radius: 6px 0 0 6px;
-}
-
-.toggle-btn:last-child {
-  border-radius: 0 6px 6px 0;
-  border-left: none;
-}
-
-.toggle-btn.active {
-  background: color-mix(in srgb, var(--accent) 20%, transparent);
-  color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
-}
-
-.toggle-btn.active + .toggle-btn.active {
-  border-left: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
-}
-
-.toggle-btn:hover {
-  background: color-mix(in srgb, var(--foreground) 8%, transparent);
-  color: var(--muted-foreground);
-}
-
-.toggle-btn.active:hover {
-  background: color-mix(in srgb, var(--accent) 30%, transparent);
-  color: var(--accent);
-}
-
-/* --- 视图切换（列表 / 卡片）--- */
+/* --- 视图切换（列表 / 卡片）：仅图标与中间分隔线 --- */
 .recon-view-toggle {
   display: flex;
+  align-items: center;
   gap: 0;
 }
 .recon-view-toggle .toggle-btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 12px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.recon-view-toggle .toggle-btn + .toggle-btn::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 14px;
+  bottom: 14px;
+  width: 1px;
+  background: var(--border-default);
+}
+.recon-view-toggle .toggle-btn.active { color: var(--accent); }
+.recon-view-toggle .toggle-btn:hover { color: var(--foreground); }
+.recon-view-toggle .toggle-btn.active:hover { color: var(--accent); }
+.recon-view-toggle .toggle-btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
 }
 
 /* --- 卡片视图：筛选 + 排序栏（共用同一份 store filter）--- */
@@ -466,7 +484,22 @@ img.recon-inline-flag {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 10px;
   }
-  .recon-grid-filters > * { flex: 1 1 auto; }
+  .recon-grid-filters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 8px 10px;
+    grid-column: 1 / -1;
+  }
+  .recon-grid-filters > * { min-width: 0; }
+  .recon-grid-filters > .record-select { width: 100%; }
+  .recon-grid-filters .record-select-popup { right: 0; width: auto; }
+  .recon-grid-filters .list-select-trigger,
+  .recon-grid-filters .record-select-input {
+    width: 100%;
+    min-height: 44px;
+    box-sizing: border-box;
+  }
 }
 
 /* --- 链接样式 --- */

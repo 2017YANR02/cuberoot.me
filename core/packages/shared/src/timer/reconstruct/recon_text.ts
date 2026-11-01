@@ -59,7 +59,8 @@ import { patternFromAlg } from '../../recon/cube3';
 import { buildCommentSuggestions, crossFamilyCancelInto } from '../../recon/popup_suggest';
 import { sliceSplitTable } from '../../recon_slice';
 import { detectStage } from '../../recon/stage_detect';
-import { solved } from './state';
+import { solved, toFaceletString } from './state';
+import { stepSolvedInFrame } from './steps';
 import { applyOneToken } from './apply-token';
 import { isCross, isSolved } from './cfop-detect';
 
@@ -196,7 +197,12 @@ export function prepareReconstruction(record: {
   return { gyroSamples, view, stageSegs, stepMx, slots, core, text };
 }
 
-/** A drill is one algorithm, not a candidate for full-solve method detection. */
+export interface TrainingStageMetrics {
+  key: string; label: string; fromIdx: number; toIdx: number; fromMs: number; toMs: number;
+  observationMs: number; executionMs: number; turns: number; tps: number | null;
+}
+
+/** Training has explicit goals rather than inferred full-solve methods. */
 function prepareTrainingMetrics(record: {
   event: EventId; scramble: string; moves?: SolveMove[]; timeMs: number; gyro?: string; device?: { model?: string };
 }, samples?: GyroSample[], live = false) {
@@ -214,8 +220,43 @@ function prepareTrainingMetrics(record: {
   const range = moves.length ? metricForRange(moves, counted, -1, 0, moves.length - 1) : null;
   const observationMs = Math.max(0, Math.min(record.timeMs,
     live && firstExecution < 0 ? record.timeMs : range?.recognitionMs ?? record.timeMs));
-  const metrics = { observationMs, executionMs: Math.max(0, record.timeMs - observationMs), totalMs: record.timeMs };
-  return { gyroSamples, view, moves, counted, firstExecution, observationMs, metrics };
+  let boundary = -1;
+  let reachedZbll = false;
+  if (record.event === 'cfzb') {
+    let state = applyOneToken(solved(3), view.scramble);
+    const gestures = humanizeStream(quarterMoves(moves)).moves;
+    reachedZbll = stepSolvedInFrame('eoll', toFaceletString(state));
+    if (!reachedZbll) {
+      boundary = moves.length - 1;
+      for (let i = 0; i < moves.length; i++) {
+        state = applyOneToken(state, moves[i].m);
+        // A physical wide/slice/double turn must stay on one side of the cut.
+        if (gestures.some(move => move.startIdx <= i && move.endIdx > i)) continue;
+        if (stepSolvedInFrame('eoll', toFaceletString(state))) { boundary = i; reachedZbll = true; break; }
+      }
+    }
+  }
+  const ranges = record.event === 'cfzb'
+    ? [{ key: 'zbls', label: 'ZBLS', fromIdx: 0, toIdx: boundary },
+      { key: 'zbll', label: 'ZBLL', fromIdx: boundary + 1, toIdx: moves.length - 1 }]
+    : [{ key: 'training', label: record.event.toUpperCase(), fromIdx: 0, toIdx: moves.length - 1 }];
+  const stages = ranges.map((range, index) => {
+    const fromMs = record.event === 'cfzb' && index === 1 && !reachedZbll ? record.timeMs
+      : range.fromIdx === 0 ? 0 : moves[range.fromIdx - 1]?.ts ?? 0;
+    const toMs = index === ranges.length - 1 || (record.event === 'cfzb' && !reachedZbll)
+      ? record.timeMs : moves[range.toIdx]?.ts ?? 0;
+    const timing = range.toIdx >= range.fromIdx
+      ? metricForRange(moves, counted, range.fromIdx - 1, fromMs, range.toIdx) : null;
+    const observation = record.event !== 'cfzb' ? observationMs
+      : live && !moves.slice(range.fromIdx, range.toIdx + 1).some(move => endsRecognition(move.m))
+        ? toMs - fromMs : timing?.recognitionMs ?? toMs - fromMs;
+    const observationTime = Math.max(0, Math.min(toMs - fromMs, observation));
+    return { ...range, fromMs, toMs, observationMs: observationTime,
+      executionMs: Math.max(0, toMs - fromMs - observationTime) };
+  });
+  const metrics = { observationMs: stages.reduce((sum, stage) => sum + stage.observationMs, 0),
+    executionMs: stages.reduce((sum, stage) => sum + stage.executionMs, 0), totalMs: record.timeMs };
+  return { gyroSamples, view, moves, counted, firstExecution, observationMs, metrics, stages, reachedZbll };
 }
 
 /** Immutable completed records keep accumulated statistics linear in new solves. */
@@ -234,12 +275,12 @@ export function prepareTrainingReconstruction(record: {
   event: EventId; scramble: string; moves?: SolveMove[]; timeMs: number; gyro?: string; device?: { model?: string };
 }, language: 'zh' | 'en', samples?: GyroSample[], live = false) {
   const raw = record.moves ?? [];
-  const { gyroSamples, view, moves, counted, firstExecution, observationMs, metrics } = prepareTrainingMetrics(record, samples, live);
+  const { gyroSamples, view, moves, counted, firstExecution, observationMs, metrics, stages, reachedZbll } = prepareTrainingMetrics(record, samples, live);
   const split = firstExecution < 0 ? (live ? moves.length : 0) : firstExecution;
   const rawCore = gyroSamples.length ? buildCoreTrack(gyroSamples, { brand: record.device?.model, moves: raw }) : null;
   const measuredCore = rawCore ? conjugateCoreTrack(rawCore, facePermFor(view.rotation)) : null;
   const core = markWideCoreEvents(measuredCore, measuredCore?.frame === 'scramble' ? wideGestureMoves(moves) : counted);
-  const boundaries = new Set([split - 1]);
+  const boundaries = new Set(record.event === 'cfzb' ? stages.map(stage => stage.toIdx) : [split - 1]);
   const wasteSpans = wastedDisplaySpans(view.scramble, moves, boundaries);
   const preserveMoves = new Set<number>();
   for (const span of wasteSpans) {
@@ -251,34 +292,42 @@ export function prepareTrainingReconstruction(record: {
   const event = EVENTS.find(event => event.id === record.event);
   const stage = { key: 'training', zh: event?.nameZh ?? record.event.toUpperCase(), en: event?.nameEn ?? record.event.toUpperCase() };
   const observation = { key: 'observation', zh: '观察', en: 'Observation' };
-  const lines: ReconTextLine[] = [observation, stage].map((definition, index) => {
-    const fromIdx = index === 0 ? 0 : split;
-    const toIdx = index === 0 ? split - 1 : moves.length - 1;
-    const items = weaveRotations(moveItemsForRange(moves, humanized.moves, fromIdx, toIdx),
-      humanized.rotations.filter(rotation => index === 0 ? rotation.tMs < observationMs : rotation.tMs >= observationMs),
-      absorbedRotations);
-    return {
-      kind: index === 0 ? 'inspection' : 'training', key: definition.key, stageKey: definition.key,
-      label: definition[language], moves: items.map(item => item.token), moveRanges: playbackRanges(items, moves),
+  const stageMetrics: TrainingStageMetrics[] = stages.map(range => {
+    const turns = countedHumanized.moves.filter(move => move.startIdx >= range.fromIdx && move.startIdx <= range.toIdx).length;
+    return { ...range, label: record.event === 'cfzb' ? range.label : stage[language], turns,
+      tps: range.executionMs > 0 ? turns / (range.executionMs / 1000) : null };
+  });
+  const lineRanges = record.event === 'cfzb' ? stageMetrics.map(range => ({
+    ...range, kind: 'training' as const, recognitionMs: range.observationMs,
+  })) : [observation, stage].map((definition, index) => ({
+    key: definition.key, label: definition[language], kind: index === 0 ? 'inspection' as const : 'training' as const,
+    fromIdx: index === 0 ? 0 : split, toIdx: index === 0 ? split - 1 : moves.length - 1,
+    fromMs: index === 0 ? 0 : observationMs, toMs: index === 0 ? observationMs : record.timeMs,
+    recognitionMs: 0, executionMs: index === 0 ? 0 : metrics.executionMs,
+  }));
+  const lines: ReconTextLine[] = lineRanges.map((range, index) => {
+    const items = weaveRotations(moveItemsForRange(moves, humanized.moves, range.fromIdx, range.toIdx),
+      humanized.rotations.filter(rotation => rotation.tMs >= range.fromMs
+        && (index === lineRanges.length - 1 || rotation.tMs < range.toMs)), absorbedRotations);
+    return { kind: range.kind, key: range.key, stageKey: range.key, label: range.label,
+      moves: items.map(item => item.token), moveRanges: playbackRanges(items, moves),
       wasteGroups: items.map(item => {
         const group = wasteSpans.findIndex(span => item.startIdx >= span.fromIdx && item.endIdx <= span.toIdx);
         return group < 0 ? null : group;
-      }),
-      fromIdx, toIdx, fromMs: index === 0 ? 0 : observationMs, toMs: index === 0 ? observationMs : record.timeMs,
-      recognitionMs: 0, executionMs: index === 0 ? 0 : metrics.executionMs,
-      stepMs: index === 0 ? observationMs : metrics.executionMs,
-    };
+      }), fromIdx: range.fromIdx, toIdx: range.toIdx, fromMs: range.fromMs, toMs: range.toMs,
+      recognitionMs: range.recognitionMs, executionMs: range.executionMs, stepMs: range.toMs - range.fromMs };
   });
+  const current = record.event === 'cfzb' ? stages[reachedZbll ? 1 : 0] : null;
   const seconds = record.timeMs / 1000;
   const recon: ReconTextResult = {
     scramble: record.scramble, inspection: view.rotation, lines,
-    currentStage: firstExecution < 0 && live ? observation : stage,
+    currentStage: current ? { key: current.key, en: current.label, zh: current.label } : firstExecution < 0 && live ? observation : stage,
     turns: counted.length, stm: countedHumanized.moves.length, seconds,
     tps: metrics.executionMs > 0 ? countedHumanized.moves.length / (metrics.executionMs / 1000) : null,
     text: [...(view.rotation ? [`${view.rotation} // insp`] : []), ...lines.map(formatReconLine)].join('\n'),
     rotations: humanized.rotations.filter(rotation => !absorbedRotations.has(rotation.tMs)), blindPairs: humanized.blindPairs,
   };
-  return { type: 'training' as const, view, recon, metrics };
+  return { type: 'training' as const, view, recon, metrics, stages: stageMetrics };
 }
 
 /** 一行要切在哪、时间是多少。纯数据,不碰魔方。 */

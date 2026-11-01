@@ -237,6 +237,31 @@ describe('shared smart-cube device modal', () => {
     expect(onCancel).toHaveBeenCalledOnce();
   });
 
+  it('keeps the multi-cube selector stable during recovery and leaves it open after disconnect', async () => {
+    let finishReset!: () => void;
+    const onClose = vi.fn();
+    const onDisconnect = vi.fn(async () => {});
+    await act(async () => root.render(createElement(TimerSmartCubeDeviceModal, {
+      language: 'en', snapshot: connectedSnapshot, onClose, onDisconnect, closeOnDisconnect: false,
+      onResetState: () => new Promise<void>(resolve => { finishReset = resolve; }),
+      deviceSelector: createElement('button', { type: 'button', 'data-select-cube': true }, 'Cube 2'),
+      actionsStart: createElement('button', { type: 'button', 'data-add-cube': true }, 'Connect next'),
+    })));
+    const dialog = document.querySelector('[role="dialog"]')!;
+    const button = (label: string) => [...dialog.querySelectorAll<HTMLButtonElement>('button')]
+      .find(candidate => candidate.textContent === label)!;
+    expect(dialog.querySelector('.timer-smart-cube-device__summary')).toBeNull();
+    expect(dialog.querySelector('.timer-smart-cube-device__battery')).toBeNull();
+    await act(async () => button('Reset').click());
+    expect(button('Cube 2').matches(':disabled')).toBe(true);
+    expect(button('Connect next').matches(':disabled')).toBe(true);
+    await act(async () => finishReset());
+    expect(button('Cube 2').matches(':disabled')).toBe(false);
+    await act(async () => button('Disconnect').click());
+    expect(onDisconnect).toHaveBeenCalledOnce();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it('keeps the Web adapter on the shared status and recovery surface', () => {
     const source = readFileSync('app/[lang]/timer/_components/BluetoothModal.tsx', 'utf8');
     expect(source).toContain("import { TimerSmartCubeDeviceModal } from '@cuberoot/timer-ui';");

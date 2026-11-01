@@ -1,4 +1,5 @@
 'use client';
+import MoreToggle from '../MoreToggle';
 import { TimerRoomDialog } from '../TimerRoomDialog';
 
 import { useId, useMemo, useState, type CSSProperties } from 'react';
@@ -273,10 +274,10 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose, on
           <TimerStatsPanel summaryOnly event={event} solves={solves}
             labels={timerStatsPanelLabels(isZh ? 'zh' : 'en')}
             rollingColumns={[]} onRollingColumnsChange={() => {}} />
-          <button type="button" className="modal-action-btn" aria-expanded={metricsExpanded}
+          <MoreToggle type="button" className="modal-action-btn" expanded={metricsExpanded}
             aria-controls={metricsId} onClick={() => setMetricsExpanded(value => !value)}>
             {metricsExpanded ? tr({zh:'收起指标',en:'Fewer metrics'}) : tr({zh:'更多指标',en:'More metrics'})}
-          </button>
+          </MoreToggle>
           {metricsExpanded && <div id={metricsId} className="stats-modal-grid">
             {lines.map(([k, v]) => (
               <div className="stats-modal-row" key={k}>

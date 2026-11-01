@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useRef } from 'react';
 import { Check, Copy } from '@app-foundation/icons/lucide';
 import { useCopy } from '@/hooks/useCopy';
@@ -55,7 +56,7 @@ export default function SalesScript() {
     </div>
 
     <details id="sales-setup" className="sales-script-section">
-      <summary><h3>开播准备：首屏与道具</h3></summary>
+      <MoreToggle as="summary"><h3>开播准备：首屏与道具</h3></MoreToggle>
       {script.design.map(text => <p key={text}>{text}</p>)}
       <p className="live-guide-source">这是本稿的排练节奏，不是平台流量规则。30 至 60 秒的变化可以是指块、转动、检查结果或一句提问，不必每次都打断教学催评论。</p>
       <h4>标题任选其一</h4><ul>{script.setup.titles.map(text => <li key={text}>{text}</li>)}</ul>
@@ -64,7 +65,7 @@ export default function SalesScript() {
     </details>
 
     <details id="sales-rundown" className="sales-script-section">
-      <summary><h3>三十分钟循环安排</h3></summary>
+      <MoreToggle as="summary"><h3>三十分钟循环安排</h3></MoreToggle>
       <ol className="live-guide-rundown">{script.rundown.map(item => <li key={item.time}>
         <span className="live-guide-time">{item.time}</span><div><h4>{item.task}</h4><p>互动：{item.interaction}</p><p>画面：{item.action}</p></div>
       </li>)}</ol>
@@ -73,7 +74,7 @@ export default function SalesScript() {
 
     <h3 className="sales-script-main-title">完整主播口播稿</h3>
     {script.stages.map(stage => <details id={stage.id} key={stage.id} className="sales-script-section sales-script-stage">
-      <summary><span className="live-guide-time">{stage.time}</span><h4>{stage.title}</h4></summary>
+      <MoreToggle as="summary"><span className="live-guide-time">{stage.time}</span><h4>{stage.title}</h4></MoreToggle>
       <p className="sales-script-goal">本段目标：{stage.goal}</p>
       {'beats' in stage ? stage.beats.map((beat, index) => beat.kind === '小节'
         ? <h4 className="sales-script-subtitle" key={index}>{beat.text}</h4>
@@ -85,20 +86,20 @@ export default function SalesScript() {
     </details>)}
 
     <details id="sales-return" className="sales-script-section">
-      <summary><h3>新人进入后的六十秒回拉</h3></summary>
+      <MoreToggle as="summary"><h3>新人进入后的六十秒回拉</h3></MoreToggle>
       <p className="sales-script-goal">新观众明显增加时使用，只重述反差和当前进度，不重复整段履历。</p>
       {script.returnScript.map(text => <p key={text}>{text}</p>)}
       <p className="sales-script-cue">如果正在跟练，先完成当前动作再回拉；“马上带一组动作”只在确实准备开始演示时说。</p>
     </details>
 
     <details id="sales-rescue" className="sales-script-section">
-      <summary><h3>低互动时的四种救场话术</h3></summary>
+      <MoreToggle as="summary"><h3>低互动时的四种救场话术</h3></MoreToggle>
       {script.rescue.map(item => <div className="sales-script-question" key={item.title}><h4>{item.title}</h4><p>{item.text}</p></div>)}
       <p className="sales-script-cue">找错后立即示范正确动作。找角块前确认实物配色，若没有红白蓝角块，就换成实际存在的三色组合。家长代入题接着说明：催促、责备和代做都可能打断思路，用“现在做到哪一步”替代。没人回复时自己示范一个答案，继续教学。</p>
     </details>
 
     <details id="sales-interaction" className="sales-script-section">
-      <summary><h3>主播互动密度表</h3></summary>
+      <MoreToggle as="summary"><h3>主播互动密度表</h3></MoreToggle>
       <p>甲、乙、丙用来区分选择项，“反”表示方向拿反；本稿已统一提示字，助播与贴片保持一致。</p>
       <ol className="sales-script-records">{script.interaction.map(item => <li key={item.time}>
         <h4>{item.time}</h4><p><strong>提问：</strong>{item.prompt}</p><p><strong>承接：</strong>{item.response}</p>
@@ -106,20 +107,20 @@ export default function SalesScript() {
     </details>
 
     <details id="sales-crew" className="sales-script-section">
-      <summary><h3>助播和场控执行表</h3></summary>
+      <MoreToggle as="summary"><h3>助播和场控执行表</h3></MoreToggle>
       <dl className="sales-script-records">{script.crew.map(item => <div key={item.signal}>
         <dt>{item.signal}</dt><dd><p><strong>助播：</strong>{item.action}</p><p><strong>主播：</strong>{item.next}</p></dd>
       </div>)}</dl>
     </details>
 
     <details id="sales-checklist" className="sales-script-section">
-      <summary><h3>开播前核对清单</h3></summary>
+      <MoreToggle as="summary"><h3>开播前核对清单</h3></MoreToggle>
       <ul className="live-guide-checklist">{script.checklist.map(text => <li key={text}><Check size={17} aria-hidden /><span>{text}</span></li>)}</ul>
       <p className="sales-script-cue">先核对再口播；若本场课程数量、价格或服务发生变化，同步更新固定贴片、口播、助播回复与商品页。四步动作只采用正式课程的统一持握与口令。</p>
     </details>
 
     <details id="sales-review" className="sales-script-section">
-      <summary><h3>每场直播的八项复盘</h3></summary>
+      <MoreToggle as="summary"><h3>每场直播的八项复盘</h3></MoreToggle>
       <dl className="sales-script-records">{script.review.map(item => <div key={item.metric}>
         <dt>{item.metric}</dt><dd><p><strong>检查：</strong>{item.check}</p><p><strong>优先调整：</strong>{item.adjust}</p></dd>
       </div>)}</dl>

@@ -9,6 +9,7 @@
  * 跳转走 `algCaseHref()` 的 `#case-<id>` 深链:AlgCategoryView 接住它,把折叠的组展开、
  * 滚过去、闪一下。真 `<a>`(AppLink),中键能新开。
  */
+import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ShieldCheck, ShieldAlert, RefreshCw, ChevronRight } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
@@ -125,9 +126,9 @@ export default function AlgValidationAlert() {
 
       {!running && items !== null && total > 0 && (
         <>
-          <button type="button" className="ava-toggle" onClick={() => setOpen(o => !o)}>
+          <MoreToggle expanded={open} type="button" className="ava-toggle" onClick={() => setOpen(o => !o)}>
             {open ? tr({ zh: '收起', en: 'Hide' }) : tr({ zh: '查看明细', en: 'Show details' })}
-          </button>
+          </MoreToggle>
           {open && (
             <ul className="ava-list">
               {bySet.map(([key, fails]) => (

@@ -15,7 +15,7 @@ vi.mock('@/app/[lang]/math/cube-graph/CubeGraphCube', () => ({
   default: (props: NonNullable<typeof cube.props>) => { cube.props = props; return null; },
 }));
 vi.mock('@/hooks/useT', () => ({ useT: () => (_zh: string, en: string) => en }));
-vi.mock('@/i18n/tr', () => ({ useLang: () => 'en' }));
+vi.mock('@/i18n/tr', () => ({ useLang: () => 'en', tr: (text: { en: string }) => text.en }));
 vi.mock('@/components/AlgInput', () => ({ default: () => null }));
 vi.mock('@/components/BackHome', () => ({ default: () => null }));
 vi.mock('@/components/CompactSelect', () => ({ CompactSelect: ({ ariaLabel, value, items, onChange }: {

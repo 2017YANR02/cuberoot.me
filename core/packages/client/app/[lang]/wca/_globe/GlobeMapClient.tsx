@@ -3224,7 +3224,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
                   <button key={`u${p.wcaId}`} className="globe-search-item" onClick={() => goToPerson(p)}>
                     <span className="globe-search-item-main globe-search-item-person">
                       <Flag iso2={p.iso2} className="globe-search-person-flag" />
-                      <span>{displayCuberName(p.name, isZh)}<WcaPersonTeamBadge wcaId={p.wcaId} /></span>
+                      <span>{displayCuberName(p.name, isZh)}<WcaPersonTeamBadge wcaId={p.wcaId} linked={false} /></span>
                     </span>
                     <span className="globe-search-item-sub">{p.wcaId}</span>
                   </button>

@@ -9,13 +9,14 @@
  */
 'use client';
 
+import PageHeading from '@/components/PageHeading';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Link from '@/components/AppLink';
-import HomeLink from '@/components/HomeLink';
+
 import { statsUrl } from '@/lib/stats-base';
 import { persistItem } from '@/lib/safe-storage';
-import { ArrowLeft, Menu, X as XIcon, HelpCircle } from '@app-foundation/icons/lucide';
+import { Menu, X as XIcon, HelpCircle } from '@app-foundation/icons/lucide';
 import { LineChart, type Series } from './_components/charts';
 import { fitExpFloor, type DataPoint } from './_components/models';
 import { EVENTS, formatVal, toDisplay, toDisplayAvg } from './_components/events';
@@ -190,10 +191,7 @@ export default function PredictionPage() {
   return (
     <div className="pred-page pred-page-multi">
       <header className="pred-header">
-        <HomeLink className="pred-back" aria-label="back">
-          <ArrowLeft size={16} />
-          <span className="sr-only">{tr({ zh: '返回', en: 'Back' })}</span>
-        </HomeLink>
+
         <button
           className="pred-toc-btn"
           onClick={() => setTocOpen(!tocOpen)}
@@ -302,7 +300,7 @@ export default function PredictionPage() {
 
         {/* Main */}
         <article className="pred-article">
-          <h1 className="pred-title">
+          <PageHeading backHref="/wca" titleClassName="pred-title">
             {tr({ zh: '速拧的尽头: 全 WCA 项目极限预测', en: 'The Limits of Speedcubing: WCA-Wide Forecast'
             })}
             <Link
@@ -315,7 +313,7 @@ export default function PredictionPage() {
             >
               <HelpCircle size={18} strokeWidth={1.75} />
             </Link>
-          </h1>
+          </PageHeading>
           <p className="pred-subtitle">
             {(isZh
                                     ? `数据 ${data.generated_at.slice(0, 10)}  1982-2050  16 项  拟合 / 物理 / 极值理论三轨预测`

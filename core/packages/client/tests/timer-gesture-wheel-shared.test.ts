@@ -55,6 +55,8 @@ interface HookHarnessProps {
   canGesture?: boolean;
   effects: HookEffects;
   ignoreButtons?: boolean;
+  onLongPress?: () => void;
+  preferLongPress?: (target: EventTarget | null) => boolean;
 }
 
 function HookHarness({
@@ -62,6 +64,8 @@ function HookHarness({
   canGesture = true,
   effects,
   ignoreButtons = false,
+  onLongPress,
+  preferLongPress,
 }: HookHarnessProps): ReactElement {
   const surfaceRef = useRef<HTMLDivElement | null>(null);
   const { wheelRef } = useGestureWheel({
@@ -71,6 +75,8 @@ function HookHarness({
     enabledFor: () => [true, true, false, true, false, true, true, true],
     fireAction: effects.fire,
     onArmCancel: effects.cancel,
+    onLongPress,
+    preferLongPress,
     onPressCancel: effects.pressCancel,
     onPressDown: effects.down,
     onPressUp: effects.up,
@@ -218,6 +224,66 @@ describe('shared useGestureWheel pointer lifecycle', () => {
     act(() => { accepted = target.dispatchEvent(pointerEvent(type, fixture)); });
     return accepted;
   }
+
+  it.each(['touch', 'mouse'] as const)('prioritizes %s formula holds over swipes and release-to-advance', pointerType => {
+    vi.useFakeTimers();
+    try {
+      const hold = vi.fn();
+      render({ onLongPress: hold, preferLongPress: target => target instanceof Element && !!target.closest('.scramble-strip') });
+      const text = host.querySelector('.scramble-moves')!;
+      const surface = host.querySelector('.fixture-surface')!;
+      const down = { pointerType, time: 100, x: 100, y: 100 };
+      dispatch(text, 'pointerdown', down);
+      dispatch(surface, 'pointermove', { ...down, time: 300, x: pointerType === 'touch' ? 112 : 108 });
+      act(() => vi.advanceTimersByTime(550));
+      dispatch(surface, 'pointerup', { ...down, time: 700, x: pointerType === 'touch' ? 112 : 108 });
+      expect(hold).toHaveBeenCalledExactlyOnceWith(text);
+      expect(effects.up).not.toHaveBeenCalled();
+      expect(effects.fire).not.toHaveBeenCalled();
+      // A larger drift cancels both hold and tap, including after a long wait.
+      dispatch(text, 'pointerdown', down);
+      dispatch(surface, 'pointermove', { ...down, time: 300, x: 140 });
+      act(() => vi.advanceTimersByTime(600));
+      dispatch(surface, 'pointerup', { ...down, time: 800, x: 140 });
+      expect(hold).toHaveBeenCalledTimes(1);
+      expect(effects.up).not.toHaveBeenCalled();
+      expect(effects.fire).not.toHaveBeenCalled();
+      // Delayed timeout delivery still recognizes the hold on release.
+      dispatch(text, 'pointerdown', down);
+      dispatch(surface, 'pointerup', { ...down, time: 700 });
+      expect(hold).toHaveBeenCalledTimes(2);
+      expect(effects.up).not.toHaveBeenCalled();
+      // Short taps keep their established next-case behavior.
+      dispatch(text, 'pointerdown', down);
+      dispatch(surface, 'pointerup', { ...down, time: 200 });
+      expect(effects.up).toHaveBeenCalledTimes(1);
+    } finally { vi.useRealTimers(); }
+  });
+
+  it('consumes a stationary long press and cancels it on movement or unmount', () => {
+    vi.useFakeTimers();
+    try {
+      const hold = vi.fn();
+      render({ onLongPress: hold });
+      const surface = host.querySelector('.fixture-surface')!;
+      const fixture = { pointerType: 'touch' as const, time: 100, x: 50, y: 60 };
+      dispatch(surface, 'pointerdown', fixture);
+      act(() => vi.advanceTimersByTime(550));
+      expect(hold).toHaveBeenCalledTimes(1);
+      dispatch(surface, 'pointerup', { ...fixture, time: 700 });
+      expect(effects.up).not.toHaveBeenCalled();
+      expect(effects.cancel).toHaveBeenCalledTimes(1);
+      dispatch(surface, 'pointerdown', fixture);
+      dispatch(surface, 'pointermove', { ...fixture, x: 65, time: 120 });
+      act(() => vi.advanceTimersByTime(600));
+      expect(hold).toHaveBeenCalledTimes(1);
+      dispatch(surface, 'pointercancel', fixture);
+      dispatch(surface, 'pointerdown', fixture);
+      render({ active: false, onLongPress: hold });
+      act(() => vi.advanceTimersByTime(600));
+      expect(hold).toHaveBeenCalledTimes(1);
+    } finally { vi.useRealTimers(); }
+  });
 
   it.each(['touch', 'mouse'] as const)('consumes the %s stop press click even when it lands on a restored source link', (pointerType) => {
     render({ canGesture: false, ignoreButtons: true });

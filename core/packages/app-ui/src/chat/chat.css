@@ -1,13 +1,17 @@
 .friend-chat { display: grid; grid-template-columns: minmax(180px, 240px) minmax(0, 1fr); gap: 20px; min-width: 0; color: var(--foreground); }
 .friend-chat h2 { font-size: 15px; font-weight: 600; margin: 0 0 12px; }
 .friend-chat-sidebar, .friend-chat-peer { min-width: 0; }
-.friend-chat-conversation { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 12px 8px; border-bottom: 1px solid var(--border-default); }
+.friend-chat-conversation { position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 12px 8px; border-bottom: 1px solid var(--border-default); }
+.friend-chat-open { appearance: none; position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; padding: 0; border: 0; border-radius: inherit; background: transparent; cursor: pointer; }
+.friend-chat-open:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.friend-chat-conversation > .friend-chat-peer { position: relative; z-index: 2; width: fit-content; max-width: 100%; }
+.friend-chat-unread { align-self: center; font-size: 13px; color: var(--muted-foreground); }
 .friend-chat-conversation.is-selected { background: var(--accent-soft); border-radius: 8px; }
 .friend-chat-preview { grid-column: 1 / -1; margin: 0; font-size: 13px; color: var(--muted-foreground); overflow-wrap: anywhere; }
 .friend-chat-thread { display: flex; flex-direction: column; min-width: 0; height: max(800px, calc(100dvh - 160px)); min-height: 360px; background: var(--card); border: 1px solid var(--border-default); border-radius: 12px; overflow: hidden; }
 .friend-chat-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border-default); flex-shrink: 0; }
 .friend-chat-messages { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 16px; display: flex; flex-direction: column; align-items: flex-start; gap: 14px; overflow-anchor: none; }
-.friend-chat-message { max-width: 88%; min-width: 0; padding: 10px 12px; border-radius: 10px; background: var(--muted); flex-shrink: 0; }
+.friend-chat-message { position: relative; max-width: 88%; min-width: 0; padding: 10px 12px; border-radius: 10px; background: var(--muted); flex-shrink: 0; }
 .friend-chat-message.is-mine { align-self: flex-end; background: var(--accent-soft); }
 .friend-chat-message p { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0 0 6px; font-size: 14px; line-height: 1.65; }
 .friend-chat-message time, .friend-chat-message > span { font-size: 11px; color: var(--muted-foreground); }
@@ -16,12 +20,12 @@
 .friend-chat-action:active:not(:disabled) { transform: scale(.98); }
 .friend-chat-action:disabled { cursor: default; opacity: .5; }
 .friend-chat-action.is-primary { background: var(--primary); color: var(--primary-foreground); }
-.friend-chat-action:focus-visible, .friend-chat-composer textarea:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.friend-chat-action:focus-visible, .friend-chat-composer .friend-chat-input:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .friend-chat-muted, .friend-chat-empty { color: var(--muted-foreground); font-size: 13px; line-height: 1.65; }
 .friend-chat-empty { margin: auto; padding: 24px; }
 .friend-chat-error { color: var(--destructive); font-size: 13px; line-height: 1.6; margin: 8px 16px; }
 .friend-chat-composer { padding: 10px 12px; border-top: 1px solid var(--border-default); flex-shrink: 0; background: var(--muted); }
-.friend-chat-composer textarea { box-sizing: border-box; width: 0; max-height: 112px; resize: none; background: var(--card); color: var(--foreground); border: 0; border-radius: 8px; padding: 10px 12px; font: inherit; font-size: 14px; line-height: 1.5; flex: 1; min-width: 0; min-height: 42px; }
+.friend-chat-composer .friend-chat-input { box-sizing: border-box; width: 0; max-height: 112px; overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--card); color: var(--foreground); border: 0; border-radius: 8px; padding: 10px 12px; font: inherit; font-size: 14px; line-height: 1.5; flex: 1; min-width: 0; min-height: 42px; }
 .friend-chat-older, .friend-chat-new { align-self: center; }
 .friend-chat-readonly { padding: 8px 16px; }
 .friend-chat-show-list { display: none; flex-shrink: 0; white-space: nowrap; }
@@ -29,7 +33,7 @@
   .friend-chat { grid-template-columns: minmax(0, 1fr); }
   .friend-chat:not(.has-peer) .friend-chat-thread, .friend-chat.has-peer .friend-chat-sidebar { display: none; }
   .friend-chat-show-list { display: inline-flex; }
-  .friend-chat-composer textarea { font-size: 16px; }
+  .friend-chat-composer .friend-chat-input { font-size: 16px; }
 }
 @media (prefers-reduced-motion: reduce) { .friend-chat-action:active:not(:disabled) { transform: none; } }
 .friend-chat-tail { width: 1px; height: 1px; flex-shrink: 0; }
@@ -56,9 +60,16 @@
 .friend-chat-inline-expression { display: inline-block; width: 1.5em; height: 1.5em; object-fit: contain; vertical-align: middle; }
 .friend-chat-pet-expression { display: inline-block; width: 128px; height: 128px; max-width: 100%; object-fit: contain; vertical-align: middle; }
 .friend-chat-preview .friend-chat-pet-expression { width: 1.5em; height: 1.5em; }
-.friend-chat-message-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+.friend-chat-message-row { max-width: 88%; min-width: 0; flex-shrink: 0; }
+.friend-chat-message-row.is-mine { align-self: flex-end; }
+.friend-chat-message-row > .friend-chat-message { max-width: 100%; }
+.friend-chat-message-row .friend-chat-message-body { margin-bottom: 0; }
+.friend-chat-message-meta { position: relative; height: 16px; margin-top: 4px; }
+.friend-chat-message-details { position: absolute; top: 0; left: 0; display: flex; flex-direction: row-reverse; align-items: center; gap: 6px; width: max-content; max-width: calc(100vw - 64px); }
+.friend-chat-message-row.is-mine .friend-chat-message-details { left: auto; right: 0; flex-direction: row; }
 .friend-chat-receipt { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: var(--muted-foreground); }
-.friend-chat-draft-preview { max-height: 100px; overflow: auto; overflow-wrap: anywhere; white-space: pre-wrap; }
+.friend-chat-input .friend-chat-pet-expression { width: 48px; height: 48px; }
+.friend-chat-input [data-chat-token] { display: inline-block; vertical-align: middle; }
 .friend-chat-sticker-grid .friend-chat-pet-expression { width: 72px; height: 72px; }
 
 /* Compact input bar and bottom trays, matching the supplied WeChat reference. */
@@ -109,3 +120,9 @@
 .friend-chat-message.is-pending { position: relative; max-width: calc(100% - 56px); }
 .friend-chat-failed-retry { position: absolute; right: calc(100% + 4px); top: 50%; margin-top: -14px; width: 28px; height: 28px; padding: 3px; color: var(--destructive); }
 .friend-chat-failed-retry:hover { color: var(--destructive); }
+
+.friend-chat-time-group { align-self: center; margin: 4px 0; font-size: 12px; color: var(--muted-foreground); }
+.friend-chat-exact-time { color: var(--muted-foreground); font-size: 11px; opacity: 0; pointer-events: none; }
+.friend-chat-message:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.friend-chat-message-row:focus-within .friend-chat-exact-time { opacity: 1; }
+@media (hover: hover) { .friend-chat-message-row:hover .friend-chat-exact-time { opacity: 1; } }

@@ -1,4 +1,5 @@
 // 单个项目的分析章节: 标题 + 概述文字 + WR 历史图 + Top-N 图 + 拟合表 + 预测表 + Sub-X 增长图
+import MoreToggle from '@/components/MoreToggle';
 import { LineChart, type Series } from './charts';
 import { formatVal, milestonePredictions, toDisplay, toDisplayAvg, type EventMeta } from './events';
 import { fitExpFloor, fitExp, fitPower, type DataPoint } from './models';
@@ -160,7 +161,7 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
   return (
     <section className="pred-section pred-event-section" id={`event-${event.id}`}>
       <details className="pred-event-details" open={event.id === '333'}>
-        <summary className="pred-event-summary">
+        <MoreToggle as="summary" className="pred-event-summary">
           <h2>
             {chapterNum && (
               <span className="pred-event-chapter-num">
@@ -178,7 +179,7 @@ export default function EventSection({ event, data, isZh, chapterNum, chapterTot
             <span className="pred-event-summary-hint">{tr({ zh: '展开详情', en: 'click to expand'
             })}</span>
           </div>
-        </summary>
+        </MoreToggle>
 
       {event.id === '333' && (
         <Link href="/wca/prediction/333" className="pred-333-inline-cta">

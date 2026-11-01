@@ -31,3 +31,5 @@
   cursor: pointer;
 }
 .shell-panel-close:hover { background: var(--muted); color: var(--foreground); }
+
+.timer-results-panel-body { padding: 12px 14px 18px; }

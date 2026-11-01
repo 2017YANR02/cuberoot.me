@@ -27,7 +27,7 @@ function callback(find: (node: ts.Node) => ts.Node | undefined, context: Record<
 }
 
 describe('Web solo attempt recording lifecycle', () => {
-  it.each(['smart cube', 'external timer'])('preserves moves and auto recap after %s starts', (mode) => {
+  it.each(['smart cube', 'external timer', 'multi cube'])('preserves recording and replay eligibility after %s starts', (mode) => {
     const producer = new SmartCubeAttemptProducer();
     const ref = <T>(current: T) => ({ current });
     const entry = { scramble: 'R U', wca: null, scrambleSource: null, caseId: 'fixture' };
@@ -35,8 +35,10 @@ describe('Web solo attempt recording lifecycle', () => {
     const context: Record<string, unknown> = {
       performance: { now: () => 1_000 },
       competitionRef: ref({ enabled: false }),
+      multiEnabledRef: ref(mode === 'multi cube'),
+      multiTrainingRef: ref({ active: () => ({ context: { entry } }) }),
       trainingTimingModeRef: ref(() => undefined),
-      scrambleHistRef: ref({ list: [entry], idx: 0 }),
+      scrambleHistRef: ref({ list: [mode === 'multi cube' ? { ...entry, scramble: 'F U', caseId: 'other-cube' } : entry], idx: 0 }),
       scrambleAtStartRef: ref(''),
       wcaAtStartRef: ref(null),
       scrambleSourceAtStartRef: ref(null),
@@ -71,7 +73,7 @@ describe('Web solo attempt recording lifecycle', () => {
       ? node.arguments[0] : undefined, context);
 
     for (const startedAt of [1_000, 2_000]) {
-      if (mode === 'smart cube') expect(startFromCube(startedAt)).toBe(true);
+      if (mode !== 'external timer') expect(startFromCube(startedAt)).toBe(true);
       else onStart(startedAt);
       // A move can arrive before the running-phase effect has flushed.
       expect(producer.recordMove('R', startedAt)).toBe(true);
@@ -80,6 +82,8 @@ describe('Web solo attempt recording lifecycle', () => {
       const recording = producer.finish();
       expect(recording.moves).toEqual([{ m: 'R', ts: 0 }, { m: 'U', ts: 125 }]);
       expect(recording.device).toEqual({ model: 'gan-v4', name: 'GAN16ui' });
+      expect((context.scrambleAtStartRef as { current: string }).current).toBe(timerSmartCubeAttemptScramble('333', entry.scramble, 'z2'));
+      expect((context.caseIdAtStartRef as { current: string }).current).toBe('fixture');
       expect(shouldAutoRecap(recording, { autoRecap: true })).toBe(true);
       expect(shouldAutoRecap(recording, { autoRecap: false })).toBe(false);
     }

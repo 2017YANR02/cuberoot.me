@@ -169,6 +169,22 @@ describe('mobile auth', () => {
     await expect(client.finish('https://cuberoot.me/account')).resolves.toBeNull();
   });
 
+  it('ignores a completed callback redelivered by the native launch URL', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(response({ token: token(), user: USER }));
+    const { client, openBrowser, storage } = setup(fetcher);
+    await client.start('zh');
+    const state = new URL(openBrowser.mock.calls[0][0]).searchParams.get('state');
+    const callback = `me.cuberoot.app://auth/callback?ticket=${TICKET}&state=${state}`;
+    await expect(client.finish(callback)).resolves.toMatchObject({ user: USER });
+    const stored = storage.values.get('session');
+    await expect(client.finish(callback)).resolves.toBeNull();
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(storage.values.get('session')).toBe(stored);
+    await client.logout();
+    await expect(client.finish(callback)).resolves.toBeNull();
+    expect(storage.values.has('session')).toBe(false);
+  });
+
   it('keeps a valid cached session while offline and clears it on an explicit 401', async () => {
     const offline = vi.fn<typeof fetch>().mockRejectedValue(new TypeError('offline'));
     const first = setup(offline);

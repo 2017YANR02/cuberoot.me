@@ -22,6 +22,7 @@ export const TIMER_333_SCRAMBLE_TYPES = [
   { id: 'ollcp', event: 'ollcp' },
   { id: 'zzll', event: 'zzll' },
   { id: 'zbls', event: 'zbls' },
+  { id: 'cfzb', event: 'cfzb' },
   { id: 'lse', event: 'lse' },
   { id: 'l10p', event: 'l10p' },
 ] as const satisfies readonly { id: string; event: EventId }[];
@@ -31,7 +32,7 @@ export type Timer333ScrambleType = (typeof TIMER_333_SCRAMBLE_TYPES)[number]['id
 /** Training navigation only; each entry keeps its existing event/provider identity. */
 export const TIMER_333_TRAINING_GROUPS = [
   { id: 'cfop', label: { en: 'CFOP', zh: 'CFOP' }, events: ['cross', 'f2l', 'll', 'oll', 'pll', 'coll', 'cll', 'ell', 'eocp', '2gll', 'ollcp'] },
-  { id: 'zb', label: { en: 'ZB', zh: 'ZB' }, events: ['zbll', 'zzll', 'zbls'] },
+  { id: 'zb', label: { en: 'ZB', zh: 'ZB' }, events: ['zbll', 'zzll', 'zbls', 'cfzb'] },
   { id: 'roux', label: { en: 'Roux', zh: '桥式' }, events: ['cmll', 'lse', 'l10p'] },
 ] as const satisfies readonly { id: string; label: Record<'en' | 'zh', string>; events: readonly Timer333ScrambleType[] }[];
 
@@ -125,6 +126,7 @@ const TIMER_EVENT_PICKER_LAYOUT = [
   { id: 'ollcp', group: 'other', textLabel: 'OLLCP' },
   { id: 'zzll', group: 'other', textLabel: 'ZZLL' },
   { id: 'zbls', group: 'other', textLabel: 'ZBLS' },
+  { id: 'cfzb', group: 'other', textLabel: 'CFZB' },
   { id: 'lse', group: 'other', textLabel: 'LSE' },
   { id: 'l10p', group: 'other', textLabel: 'L10P' },
   { id: 'eg1', group: 'other', textLabel: 'EG-1' },
@@ -268,7 +270,7 @@ const PICKER_ITEM_BY_EVENT = new Map(
 const THREE_BY_THREE_PREVIEW_EVENTS = new Set<EventId>([
   '333', '333oh', '333bld', '333ni', '333fm', '333mr', 'sphere',
   'cross', 'f2l', 'll', 'oll', 'pll', 'coll', 'cmll', 'zbll',
-  'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls', 'lse', 'l10p',
+  'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls', 'cfzb', 'lse', 'l10p',
 ]);
 
 /** Look up a picker item without making each app rebuild its own event map. */

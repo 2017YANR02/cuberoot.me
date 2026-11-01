@@ -1,4 +1,5 @@
 'use client';
+import MoreToggle from '@/components/MoreToggle';
 import '@cuberoot/timer-ui/compact-select.css';
 
 /**
@@ -17,7 +18,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from 'rea
 import { useQueryState, useQueryStates, parseAsString, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, ChevronRight, Copy, Check, Clapperboard } from '@app-foundation/icons/lucide';
+import { Copy, Check, Clapperboard } from '@app-foundation/icons/lucide';
 import { buildReconSubmitQuery, type ReconScrambleSource } from '@/lib/sim-recon-link';
 import { wcaToReconEvent } from '@/lib/wca-events';
 import { Spinner } from '@/components/Spinner/Spinner';
@@ -757,11 +758,11 @@ function AnalyzePageInner() {
                   data-oll={dataOll}
                   data-pll={dataPll}
                 >
-                  <button
+                  <MoreToggle expanded={open}
                     className="analyze-solution-title"
                     onClick={() => toggleOpen(idx)}
                   >
-                    {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+
                     <span>{sol[0]}HTM</span>
                     <span className="analyze-title-right">
                       {!dataOll && <span className="analyze-skip-tag">{t('跳O', 'OLL skip')}</span>}
@@ -778,7 +779,7 @@ function AnalyzePageInner() {
                         {copiedIdx === idx ? <Check size={13} /> : <Copy size={13} />}
                       </span>
                     </span>
-                  </button>
+                  </MoreToggle>
                   {open && (
                     <div className="analyze-solution-content">
                       <TwistySection puzzle="3x3x3" scramble={analyzedScramble} alg={sol[1]} />

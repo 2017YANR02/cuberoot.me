@@ -1,8 +1,9 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import BackHome from '@/components/BackHome';
+import PageBackLink from '@/components/PageBackLink';
 import JsonLd, { articleJsonLd } from '@/components/JsonLd';
 import { TeXBlock } from '@/components/math/Tex';
 import { useT } from '@/hooks/useT';
@@ -27,7 +28,7 @@ export default function NavierStokesPage() {
     <main style={{ maxWidth: 760, margin: '0 auto', padding: '24px 16px 64px', lineHeight: 1.85, overflowWrap: 'anywhere' }}>
       <JsonLd data={{ ...articleJsonLd({ headline: heading, description, url: t('https://cuberoot.me/zh/math/navier-stokes', 'https://cuberoot.me/math/navier-stokes'), lang: t('zh', 'en') }), author: { '@type': 'Organization', name: 'OpenAI', url: 'https://openai.com' }, isBasedOn: SOURCE }} />
       <header className="navier-header">
-        <div className="page-back-row"><BackHome /></div>
+        <div className="page-back-row"><PageBackLink fallback="/math" /></div>
         <p>{t('数学 / 偏微分方程', 'Mathematics / Partial differential equations')}</p>
         <h1 style={{ fontSize: 'clamp(1.8rem, 5vw, 2.7rem)', lineHeight: 1.3 }}>{heading}</h1>
         <p>{t('原文：OpenAI ｜ 中文翻译：CubeRoot', 'Original: OpenAI | Chinese translation: CubeRoot')}</p>
@@ -51,7 +52,7 @@ export default function NavierStokesPage() {
         <p><small>{t('译注：[1] 为原文脚注标记；所提供的文本未包含脚注正文，可前往原文查看。图中英文标注的中文释义见图注。', 'Translation note: [1] is a source footnote marker; its text was not included in the supplied document. See the original article for the footnote. Figure labels are explained in the captions.')}</small></p>
       </article>
       <details style={{ marginTop: 48 }}>
-        <summary>{t('附录：数学背景与交互示意（CubeRoot 补充，非原文）', 'Appendix: mathematical background and interactive illustration (added by CubeRoot)')}</summary>
+        <MoreToggle as="summary">{t('附录：数学背景与交互示意（CubeRoot 补充，非原文）', 'Appendix: mathematical background and interactive illustration (added by CubeRoot)')}</MoreToggle>
       <section style={{ marginTop: 36 }}>
         <h2>{t('先看清问题的条件', 'Read the assumptions first')}</h2>
         <div style={{ overflowX: 'auto' }}><TeXBlock src={String.raw`\partial_t u+(u\cdot\nabla)u=-\nabla p+\nu\Delta u+f,\qquad \nabla\cdot u=0`} /></div>

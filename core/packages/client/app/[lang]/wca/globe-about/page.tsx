@@ -3,8 +3,9 @@
 /**
  * /wca/globe-about — WCA 地球视图说明页
  */
+import PageHeading from '@/components/PageHeading';
 import Link from '@/components/AppLink';
-import { ArrowLeft } from '@app-foundation/icons/lucide';
+
 import './globe_about.css';
 import { useT } from "@/hooks/useT";
 
@@ -27,15 +28,9 @@ export default function GlobeAboutPage() {
 
   return (
     <div className="gla-page">
-      <div className="gla-header">
-        <Link href="/wca/comp?view=globe" className="gla-back">
-          <ArrowLeft size={16} />
-          <span className="sr-only">{t('返回地球视图', 'Back to Globe')}</span>
-        </Link>
-      </div>
 
       <main className="gla-main">
-        <h1 className="gla-title">{t('WCA 地球视图是怎么工作的', 'How the WCA Globe works')}</h1>
+        <PageHeading backHref="/wca/comp?view=globe" titleClassName="gla-title">{t('WCA 地球视图是怎么工作的', 'How the WCA Globe works')}</PageHeading>
         <p className="gla-intro">
           {t(
             '地球视图是 WCA 比赛的交互式 3D 地球。基于 MapLibre GL JS + 矢量瓦片构建,顶部一个搜索框即可搜比赛 / 选手 / 城市 / 地点;支持近期比赛分布、选手生涯足迹动画、各国世界纪录等视图。',

@@ -597,7 +597,26 @@
   max-width: 100%;
 }
 .comp-filter-select { min-width: 120px; }
+.comp-selectors > .search-input > .search-control,
+.comp-selectors > .comp-filter-select {
+  box-sizing: border-box;
+  height: 40px;
+  min-height: 40px;
+}
 .comp-select:disabled { opacity: 0.5; cursor: not-allowed; }
+
+@media (max-width: 640px) {
+  .comp-selectors:has(> .search-input):has(> .comp-filter-select) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .comp-selectors > .search-input,
+  .comp-selectors > .comp-filter-select {
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
 
 /* ── Table ─────────────────────────────────────────────────────────── */
 
@@ -762,6 +781,78 @@ td.is-pr {
 }
 .comp-table thead th.th-avg,
 .comp-table tbody td.td-avg { padding-left: 6px; }
+
+/* Keep icons in aligned slots instead of following variable-length text. */
+.comp-table tbody td.td-place:has(.comp-calc-link) {
+  position: relative;
+  padding-right: 32px;
+  font-variant-numeric: tabular-nums;
+}
+.comp-table .td-place .comp-calc-link {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 0;
+}
+.comp-table .td-person.comp-result-person-cell {
+  display: table-cell;
+  width: auto;
+}
+/* Result columns must not resize with names, record badges or virtual windows. */
+.comp-results-table {
+  --result-place: 4.5rem;
+  --result-person: 11rem;
+  --result-summary: 9rem;
+  --result-attempt: 6rem;
+  table-layout: fixed;
+}
+@media (max-width: 640px) {
+  .comp-results-table {
+    --result-place: 3.5rem;
+    --result-person: 9rem;
+    --result-summary: 6.5rem;
+    --result-attempt: 5.5rem;
+  }
+}
+.comp-results-table-mbld {
+  --result-summary: 14rem;
+  --result-attempt: 12rem;
+}
+.comp-results-table .comp-result-person,
+.comp-results-table .comp-result-person-link,
+.comp-results-table .comp-result-person-name { min-width: 0; }
+.comp-results-table .comp-result-person-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.comp-result-person {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.comp-table .td-person .comp-result-person-link {
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+  flex: 1;
+  max-width: none;
+}
+.comp-result-person-name { flex: 1; }
+.comp-table-cn .comp-result-person-name {
+  max-width: 8em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.comp-result-team {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 3.3em;
+  margin-inline-start: auto;
+}
+.comp-result-team .wca-person-team-badge { margin-inline-start: 0; }
 
 /* 管理员编辑铅笔:绝对定位 + 仅悬停显示,不挤占固定 110px 选手列(否则名字被压成「耿…」)。
    触屏没有 hover 且本就能直接点详细成绩改 → 隐藏铅笔。 */

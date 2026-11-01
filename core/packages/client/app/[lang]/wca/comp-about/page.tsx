@@ -3,8 +3,9 @@
 /**
  * /wca/comp-about — WCA 比赛直播说明页
  */
+import PageHeading from '@/components/PageHeading';
 import Link from '@/components/AppLink';
-import { ArrowLeft } from '@app-foundation/icons/lucide';
+
 import './comp_about.css';
 import { useT } from "@/hooks/useT";
 
@@ -27,15 +28,9 @@ export default function CompAboutPage() {
 
   return (
     <div className="ca-page">
-      <div className="ca-header">
-        <Link href="/wca/comp" className="ca-back">
-          <ArrowLeft size={16} />
-          <span className="sr-only">{t('返回 WCA 比赛', 'Back to Competitions')}</span>
-        </Link>
-      </div>
 
       <main className="ca-main">
-        <h1 className="ca-title">{t('加载任意比赛', 'Load any competition')}</h1>
+        <PageHeading backHref="/wca/comp" titleClassName="ca-title">{t('加载任意比赛', 'Load any competition')}</PageHeading>
         <p className="ca-intro">
           {t(
             '/wca/comp 是站内的比赛成绩查看入口。输入或搜索一场比赛,就能看到逐轮次、逐选手的成绩,包括 PR 历史排名、选手成绩弹窗、Psych Sheet。已结束的比赛 50-400 毫秒出表,粗饼实时比赛由 SSE 事件触发刷新，轮询补偿断线期间的更新。',

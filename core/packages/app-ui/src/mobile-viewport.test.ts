@@ -134,7 +134,7 @@ describe('mobile visible viewport layout', () => {
     // owner (including both save-failure and undo toasts) to receive the inset.
     expect(insetConsumers.sort()).toEqual([
       'TimerHistoryWorkspace', 'TimerInfoToast', 'TimerInfoToast', 'TimerMoreMenu',
-      'TimerNetOutboxNotice', 'TimerSessionSwitcher', 'TimerStatisticsWorkspace',
+      'TimerNetOutboxNotice', 'TimerResultsSessionBar', 'TimerStatisticsWorkspace',
       'TimerWcaScrambleProgress',
     ].sort());
     expect(app).not.toMatch(/viewportBottomInset=\{(?:64|96)\}/);

@@ -1,4 +1,5 @@
 'use client';
+import MoreToggle from '@/components/MoreToggle';
 import { useState, useCallback } from 'react';
 import { BookOpen, RotateCcw } from '@app-foundation/icons/lucide';
 import { useT } from '@/hooks/useT';
@@ -94,15 +95,15 @@ export default function SkewbNotationGuide({ notation, onDemo, onRestore }: Prop
 
   return (
     <div className="skewb-guide">
-      <button
+      <MoreToggle
         type="button"
         className="skewb-guide-toggle"
-        aria-expanded={open}
+        expanded={open}
         onClick={() => { if (open && active) restore(); setOpen((o) => !o); }}
       >
         <BookOpen size={13} />
         {t('记号指南', 'Notation guide')}
-      </button>
+      </MoreToggle>
       {open && (
         <div className="skewb-guide-body">
           <p className="skewb-guide-caption">

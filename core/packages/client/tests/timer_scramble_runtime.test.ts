@@ -58,6 +58,7 @@ const SHARED_EVENTS: Readonly<Partial<Record<EventId, TimerSharedScrambleProvide
   'ollcp': 'training-state',
   'zzll': 'training-state',
   'zbls': 'training-state',
+  'cfzb': 'training-state',
   'lse': 'training-state',
   'l10p': 'training-state',
   ll: 'trainer-case',

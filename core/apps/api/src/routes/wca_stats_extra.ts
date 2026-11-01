@@ -1224,22 +1224,27 @@ wcaStatsExtraRoutes.get('/wca/cohort-ranks', async (c) => {
   if (!cn.ok) return c.json({ error: cn.err }, 400);
 
   const offset = (page - 1) * size;
-  const orderRank = cn.id ? 'cr.country_rank' : 'cr.world_rank';
-  const whereCountry = cn.id ? 'AND cr.country_id = ?' : '';
+  const orderRank = cn.continentId ? 'scope_rank' : cn.id ? 'cr.country_rank' : 'cr.world_rank';
+  const rankExpression = cn.continentId
+    ? 'RANK() OVER (ORDER BY cr.value ASC)'
+    : cn.id ? 'cr.country_rank' : 'cr.world_rank';
+  const whereCountry = cn.continentId
+    ? 'AND cr.country_id IN (SELECT id FROM wca_countries WHERE continent_id = ?)'
+    : cn.id ? 'AND cr.country_id = ?' : '';
   const params: unknown[] = [cohort, event, type === 'average'];
-  if (cn.id) params.push(cn.id);
+  if (cn.continentId || cn.id) params.push(cn.continentId ?? cn.id);
   const totalParams = [...params];
   params.push(size, offset);
 
   const rows = await query<{
     wca_id: string; value: number; country_id: string;
     iso2: string | null; world_rank: number; country_rank: number;
-    person_name: string;
+    person_name: string; scope_rank: number | string;
   }>(
     `
     SELECT cr.wca_id, cr.value, cr.country_id,
            co.iso2 AS iso2,
-           cr.world_rank, cr.country_rank,
+           cr.world_rank, cr.country_rank, ${rankExpression} AS scope_rank,
            p.name AS person_name
     FROM wca_cohort_ranks cr
     JOIN wca_persons p ON p.wca_id = cr.wca_id
@@ -1253,17 +1258,17 @@ wcaStatsExtraRoutes.get('/wca/cohort-ranks', async (c) => {
   );
 
   const totalRow = await query<{ n: string }>(
-    `SELECT COUNT(*) AS n FROM wca_cohort_ranks
-     WHERE cohort_year = ? AND event_id = ? AND is_avg = ? ${whereCountry}`,
+    `SELECT COUNT(*) AS n FROM wca_cohort_ranks cr
+     WHERE cr.cohort_year = ? AND cr.event_id = ? AND cr.is_avg = ? ${whereCountry}`,
     totalParams,
   );
   const total = totalRow[0] ? parseInt(totalRow[0].n, 10) : 0;
 
   c.header('Cache-Control', CACHE_HEADER);
   return c.json({
-    cohort, event, type, country: cn.id, page, size, total,
+    cohort, event, type, country: cn.continentId ?? cn.id, page, size, total,
     rows: rows.map(r => ({
-      rank: cn.id ? r.country_rank : r.world_rank,
+      rank: Number(r.scope_rank),
       wcaId: r.wca_id, name: r.person_name,
       value: r.value,
       countryId: r.country_id, iso2: r.iso2,

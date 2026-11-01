@@ -24,13 +24,13 @@ it('shows only the selected system subsection', async () => {
   expect(node.textContent).not.toContain('Assistant monitoring content');
   state.view = 'workspace';
   await act(async () => root.render(createElement(AdminPage)));
-  expect(node.textContent).toContain('Documents');
+  expect(node.querySelector('a[href="/docs"]')).not.toBeNull();
   expect(node.textContent).not.toContain('App releases');
   state.view = 'monitoring';
   await act(async () => root.render(createElement(AdminPage)));
   expect(node.textContent).toContain('Assistant monitoring content');
   expect(node.textContent).toContain('Boot diagnostics content');
-  expect(node.textContent).not.toContain('Documents');
+  expect(node.querySelector('a[href="/docs"]')).toBeNull();
   state.view = 'tax';
   await act(async () => root.render(createElement(AdminPage)));
   expect(node.textContent).toContain('Shanghai Electronic Tax Bureau');

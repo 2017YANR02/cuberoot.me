@@ -4,10 +4,11 @@
  * /feedback — 公开反馈流。所有人可读,任意登录用户可发反馈 / 回复。
  * 管理员的诊断字段与审核操作仍只在 /feedback/admin 展示。
  */
+import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseAsInteger, parseAsStringEnum, useQueryState } from 'nuqs';
-import { ChevronDown, ChevronLeft, Lightbulb, Bug, Link2, MessageSquare, Plus } from '@app-foundation/icons/lucide';
+import { ChevronLeft, Lightbulb, Bug, Link2, MessageSquare, Plus } from '@app-foundation/icons/lucide';
 import { CompactSelect } from '@/components/CompactSelect';
 import HomeLink from '@/components/HomeLink';
 import AppLink from '@/components/AppLink';
@@ -181,7 +182,7 @@ export default function FeedbackPage() {
             <article key={it.id} className={`fbm-card fbm-status-${it.status}`}>
               <div className="fbm-card-top">
                 <UserContactLink userId={it.userId} className="fbm-author">{author}</UserContactLink>
-                <button type="button" className="fbm-card-head" onClick={() => toggle(it.id)} aria-expanded={expanded}>
+                <MoreToggle type="button" className="fbm-card-head" onClick={() => toggle(it.id)} expanded={expanded}>
                   <span className="fbm-kind"><Icon size={14} /></span>
                   <span className="fbm-when">{String(it.createdAt).slice(0, 10)}</span>
                   <span className={`fbm-badge fbm-badge-${it.status}`}>
@@ -190,8 +191,8 @@ export default function FeedbackPage() {
                   {it.replyCount > 0 && (
                     <span className="fbm-replies"><MessageSquare size={12} /> {it.replyCount}</span>
                   )}
-                  <ChevronDown size={16} className={`fbm-chev${expanded ? ' is-open' : ''}`} />
-                </button>
+
+                </MoreToggle>
                 <AppLink
                   href={`/feedback?id=${it.id}`}
                   prefetch={false}

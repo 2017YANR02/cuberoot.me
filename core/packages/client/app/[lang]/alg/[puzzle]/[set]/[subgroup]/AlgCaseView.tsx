@@ -1,4 +1,6 @@
 'use client';
+import PageHeading from '@/components/PageHeading';
+import MoreToggle from '@/components/MoreToggle';
 import { alignAlgFile, caseAlgIssue, loadAlg } from '@/lib/alg_case_alignment';
 
 /**
@@ -18,7 +20,7 @@ import { alignAlgFile, caseAlgIssue, loadAlg } from '@/lib/alg_case_alignment';
 import { Fragment, useEffect, useMemo, useState, useRef, useId, type ReactNode } from 'react';
 import { useAlgCaseEntryTransition } from '@/hooks/useAlgViewTransition';
 import Link from '@/components/AppLink';
-import { ArrowLeft, ChevronLeft, ChevronRight, ExternalLink, Copy, Check, Shuffle, FlipHorizontal2, HelpCircle, AlertTriangle } from '@app-foundation/icons/lucide';
+import { ChevronLeft, ChevronRight, ExternalLink, Copy, Check, Shuffle, FlipHorizontal2, HelpCircle, AlertTriangle } from '@app-foundation/icons/lucide';
 import type { AlgCase, AlgEntry, AlgFile, AlgPuzzle, AlgSubmission } from '@cuberoot/shared';
 import { displayedAlgorithmStm } from '@/lib/alg-metrics';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
@@ -165,15 +167,15 @@ function PlayableAlgRow({ entry, puzzle, set, mirror, ori = 0, viewAngle, sq1Not
         ))}
         {len != null && <span className="alg-alg-len" title="STM">{len}</span>}
         {mirror && !issue && (
-          <button
+          <MoreToggle
             type="button"
             className={`alg-mirror-toggle${mirrorOpen ? ' is-on' : ''}`}
-            aria-expanded={mirrorOpen}
+            expanded={mirrorOpen}
             onClick={(e) => { e.stopPropagation(); setMirrorOpen(o => !o); }}
             title={tr({ zh: '镜像公式', en: 'Mirrored algs' })}
           >
             <FlipHorizontal2 size={14} />
-          </button>
+          </MoreToggle>
         )}
         <button type="button" className="alg-alg-copy-btn" disabled={!!issue} onClick={(e) => { e.stopPropagation(); copy(shownText); }} title="copy">
           {copied ? <Check size={14} /> : <Copy size={14} className="alg-alg-copy-icon" />}
@@ -301,6 +303,10 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
     parseAsStringEnum<string>(CUBE_ORIENTATIONS.map(option => option.value))
       .withDefault(DEFAULT_ALG_CUBE_ORIENTATION),
   );
+  const [slotOrder, setSlotOrder] = useQueryState(
+    'slot-order',
+    parseAsStringEnum(['default', 'physical']).withDefault('default'),
+  );
   const isAdmin = useIsAdmin();
   const [editorRevision, setEditorRevision] = useState(0);
   const editorArea = useRef<HTMLDivElement>(null);
@@ -373,6 +379,14 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
     return `${path}${path.includes('?') ? '&' : '?'}orientation=${encodeURIComponent(effectiveOrientation)}${hash}`;
   };
 
+  const keepSlotOrder = (href: string) => {
+    if (slotOrder === 'default' || puzzle !== '3x3' || !['f2l', 'adv-f2l'].includes(set)) return href;
+    const hashAt = href.indexOf('#');
+    const path = hashAt < 0 ? href : href.slice(0, hashAt);
+    const hash = hashAt < 0 ? '' : href.slice(hashAt);
+    return `${path}${path.includes('?') ? '&' : '?'}slot-order=physical${hash}`;
+  };
+
   // 返回拥有该 case 的一级列表；更细的分组只在列表内作为分区标题。
   const rawBackHref = algCaseHref(puzzle, set, caseObj);
   const backHref = keepOrientation(keepViewAngle(keepSq1Notation(keepSq1Top(rawBackHref))));
@@ -389,7 +403,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
   const slugMap = useMemo(() => buildCaseSlugMap(data.cases, set), [data, set]);
   const hrefFor = (c: AlgCase) => {
     const href = algCaseDetailHref(puzzle, set, (c.id != null && slugMap.byId.get(c.id)) || '');
-    return keepOrientation(keepViewAngle(keepScrambleKind(keepSq1Notation(keepSq1Top(href)))));
+    return keepSlotOrder(keepOrientation(keepViewAngle(keepScrambleKind(keepSq1Notation(keepSq1Top(href))))));
   };
   const adjacent = useMemo(() => adjacentAlgCases(puzzle, set, data.cases, caseObj), [puzzle, set, data.cases, caseObj]);
 
@@ -403,11 +417,13 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
     return () => { live = false; };
   }, [puzzle, set, caseObj.name]);
 
+  const [mobileSlot, setMobileSlot] = useState('FR');
   const oriNames = caseObj.oriNames;
   const multiOri = !!oriNames && oriNames.length > 1;
   const useF2lOrientationGrid = puzzle === '3x3'
     && (set === 'f2l' || set === 'adv-f2l')
     && multiOri;
+  const mobileSlotIndex = Math.max(0, oriNames?.findIndex(name => shortOriName(name) === mobileSlot) ?? 0);
   const displayedOrientations = caseObj.algs
     .map((oriAlgs, oi) => ({ oriAlgs, oi }))
     .sort((a, b) => {
@@ -500,19 +516,16 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
   }
 
   const renderDetail = (editor?: InlineCaseEditorParts) => (
-    <div ref={motionRoot} className={`alg-case-detail${editor ? ' alg-case-inline-editor' : ''}${useF2lOrientationGrid ? ' is-f2l-orientation-grid' : ''}`}>
+    <div ref={motionRoot} data-slot-order={useF2lOrientationGrid ? slotOrder : undefined} className={`alg-case-detail${editor ? ' alg-case-inline-editor' : ''}${useF2lOrientationGrid ? ' is-f2l-orientation-grid' : ''}`}>
       <div className="alg-case-detail-head">
-        <Link href={backHref} className="alg-case-detail-back" prefetch={false}>
-          <ArrowLeft size={16} />
-          <span className="sr-only">{tr({ zh: '返回', en: 'Back' })}</span>
-        </Link>
-        <h1 className="alg-case-detail-title">
+
+        <PageHeading backHref={backHref} titleClassName="alg-case-detail-title">
           {editor ? editor.name : <span data-alg-shared-title={primary}>{primary}</span>}
           {showSub && <span className="alg-meta-head-sub">{sub}</span>}
           <Link href={backHref} className="alg-meta-head-open" prefetch={false} title={tr({ zh: '在列表中打开', en: 'Open in the list' })}>
             <ExternalLink size={14} />
           </Link>
-        </h1>
+        </PageHeading>
         <SettingsPopover label={tr({ zh: '公式设置', en: 'Algorithm settings' })}>
           {puzzle === 'sq1' && (
             <BoolToggle
@@ -564,6 +577,14 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
               />
             </label>
           )}
+          {useF2lOrientationGrid && <label className="alg-view-angle alg-case-slot-order">
+            <span>{tr({ zh: '排序', en: 'Order' })}</span>
+            <select className="alg-header-select" value={slotOrder}
+              onChange={event => void setSlotOrder(event.target.value as 'default' | 'physical')}>
+              <option value="default">{tr({ zh: '默认', en: 'Default' })}</option>
+              <option value="physical">{tr({ zh: '真实视角', en: 'Physical view' })}</option>
+            </select>
+          </label>}
           {/* 单张也能印:每个视角各一份(这页本来就把视角都列出来了) */}
           <AlgPdfButton
             build={() => algSheetFromCases({
@@ -636,7 +657,14 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
           />
         </div>
       ) : (
-        <div className="alg-case-detail-lean is-paired-player">
+        <div className="alg-case-detail-lean is-paired-player" data-mobile-slot={useF2lOrientationGrid ? mobileSlotIndex : undefined}>
+          {useF2lOrientationGrid && <div className="alg-case-slot-picker" role="group" aria-label={tr({ zh: '槽位', en: 'Slot' })}>
+            {['BL', 'BR', 'FL', 'FR'].map(slot => {
+              const oi = oriNames!.findIndex(name => shortOriName(name) === slot);
+              return <button key={slot} className="alg-case-slot-button" type="button" aria-pressed={oi === mobileSlotIndex}
+                disabled={oi < 0} onClick={() => setMobileSlot(slot)}>{slot}</button>;
+            })}
+          </div>}
           <div className={`alg-case-detail-lean-algs is-paired-player${useF2lOrientationGrid ? ' is-f2l-orientation-grid' : ''}${editor ? ' is-editing' : ''}`}>
             {editor && <div hidden={effectiveViewAngle !== 'default'}>{editor.algorithms(
               <AlgCaseRelationCards items={leanRelationCards(editor)} puzzle={puzzle} set={set}
@@ -673,7 +701,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
                 return <Fragment key={`${oi}:${i}`}>{row}</Fragment>;
               });
               return (
-                <div key={oi} data-alg-motion-ori={oi} className="alg-case-detail-ori">
+                <div key={oi} data-alg-motion-ori={oi} data-mobile-active={oi === mobileSlotIndex} data-slot={shortOriName(oriNames?.[oi] ?? '')} className="alg-case-detail-ori">
                   {multiOri && <div className="alg-case-detail-ori-label">
                     <AlgImageDownloadButton build={() => caseImageBatch({
                       puzzle, set, cases: [caseObj], title: primary,

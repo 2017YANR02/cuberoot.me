@@ -7,6 +7,7 @@
  *   (管道每次被手动跑时重发布该文件 → 看板自动刷新, 无定时调度). fetch 失败回退到 curated 常量.
  * 吞吐 / 内存 / 浏览器端: curated 常量 (不在 distribution.json 里, 且为稳定特征).
  */
+import { ChevronRight } from '@app-foundation/icons/lucide';
 import { useEffect, useState, type ReactNode } from 'react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
@@ -779,7 +780,7 @@ export default function SolversPage() {
                             <p className="solv-modal-p">{zh ? s.zhMethod : s.enMethod}</p>
                           </>,
                         })}>
-                          <span className="solv-mx-val solv-tone-accent">{zh ? '查看' : 'view'}</span><span className="solv-mx-more">▸</span>
+                          <span className="solv-mx-val solv-tone-accent">{zh ? '查看' : 'view'}</span><ChevronRight size={14} className="solv-mx-more" aria-hidden="true" />
                         </button>
                       </td>
                     </tr>
@@ -831,7 +832,7 @@ export default function SolversPage() {
                           : 'Browser (/timer by-move-count generation): uniform random-state rejection sampling + subgoal/full-solve IDA* (two pruning tables built lazily, zero downloads); accepted states emit a WCA-style optimal-equivalent scramble. Offline (stats pipeline build_puzzle_metrics.mts): create222MetricEvaluator full-space BFS distance tables — perm(5040)×ori(729) coordinates evolve independently → two move tables; multi-source BFS for face/layer, HTM BFS, quarter-turn BFS for QTM; ~2s build then O(1) per scramble; 0 mismatches against 240k IDA*-computed rows. The same precompute feeds the /scramble metric dropdown and instant rare-range real scrambles (e.g. layer=0) on /timer. lib/cube222-metric.ts.'}</p>
                       </>,
                     })}>
-                      <span className="solv-mx-val solv-tone-accent">{zh ? '查看' : 'view'}</span><span className="solv-mx-more">▸</span>
+                      <span className="solv-mx-val solv-tone-accent">{zh ? '查看' : 'view'}</span><ChevronRight size={14} className="solv-mx-more" aria-hidden="true" />
                     </button>
                   </td>
                 </tr>
@@ -855,7 +856,7 @@ export default function SolversPage() {
                           : 'Port of cstimer gsolver pyraCube: 24-char facelet state (F R L D ×6) + R U L B 120° corner moves, exact-optimal IDA* (~1000–3000 scrambles/s, zero downloads). The same solver powers /timer by-steps (V/cube generation + filtering) and the stats pipeline pyraminx_metrics.csv (the /scramble metric dropdown + rare real-scramble buckets). timer/_lib/solver/pyra.ts.'}</p>
                       </>,
                     })}>
-                      <span className="solv-mx-val solv-tone-accent">{zh ? '查看' : 'view'}</span><span className="solv-mx-more">▸</span>
+                      <span className="solv-mx-val solv-tone-accent">{zh ? '查看' : 'view'}</span><ChevronRight size={14} className="solv-mx-more" aria-hidden="true" />
                     </button>
                   </td>
                 </tr>
@@ -894,7 +895,7 @@ export default function SolversPage() {
                           : 'Provably-optimal Slice Turn Metric: Korf-style IDA* + Kociemba/Korf pattern DBs (corner 8!×3⁷ + two 6-edge 12P6×2⁶, h=max — never summed). Pure TS, practical to ~depth 12; superflip-class deep states are correct but slow (heuristic-strength wall, not a bug). 173MB tables built offline, production via a Node daemon (like cube48opt); engine + tests only for now, UI not yet wired. lib/stm-solver.ts + stm-cube.ts.'}</p>
                       </>,
                     })}>
-                      <span className="solv-mx-val solv-tone-accent">{zh ? '查看' : 'view'}</span><span className="solv-mx-more">▸</span>
+                      <span className="solv-mx-val solv-tone-accent">{zh ? '查看' : 'view'}</span><ChevronRight size={14} className="solv-mx-more" aria-hidden="true" />
                     </button>
                   </td>
                 </tr>
@@ -935,7 +936,7 @@ export default function SolversPage() {
                           : 'The clock group is abelian, and front moves never touch the back-only dials (and vice versa) — the two sides couple only through the 4 corner dials. So each side gets a Z₁₂⁴ → fewest-moves table (20,736 entries, built on the fly, nothing downloaded) and the answer is min_α (F[α] + B[α − corner target]); both sides iterative-deepen with a convergence test proving no shorter solution was skipped — provably optimal, not approximate. ~10ms per state, pure TS, no worker, no tables. Rokicki\'s full-space distribution and all 39,248 distance-12 states serve as exact regression oracles. @cuberoot/puzzle-solvers/clock.'}</p>
                       </>,
                     })}>
-                      <span className="solv-mx-val solv-tone-accent">{zh ? '查看' : 'view'}</span><span className="solv-mx-more">▸</span>
+                      <span className="solv-mx-val solv-tone-accent">{zh ? '查看' : 'view'}</span><ChevronRight size={14} className="solv-mx-more" aria-hidden="true" />
                     </button>
                   </td>
                 </tr>

@@ -488,13 +488,14 @@ export async function correctReconFromLibrary(
     const candidates = identified ? [identified] : cases;
     // Named last-slot cases remain F2L. Preserve measured wide-turn gestures
     // just as for ordinary pairs instead of substituting a library fingertrick.
-    const preserveWide = line.kind === 'f2l'
+    const lastSlot = line.kind === 'f2l' || line.stageKey === 'zbls';
+    const preserveWide = lastSlot
       && line.moves.some(move => /^(?:[rludfb]|[RLUDFB]w)(?:2'?|')?$/.test(move));
     let corrected = candidates?.length ? await correctLibraryLine(line, candidates.flatMap(item => item.algs.flat()), preserveWide) : line;
     // A last-slot formula is still F2L: recognizing its library name must not
     // move a recorded regrip across layer turns (for example y' R' -> F' y').
     // Retain the match proof, but use the original path and encoder timing.
-    if (line.kind === 'f2l' && corrected.libraryCorrection
+    if (lastSlot && corrected.libraryCorrection
       && line.moves.some((token, i) => /^[xyz]/.test(token)
         && line.moves.slice(0, i).some(move => !/^[xyz]/.test(move))
         && line.moves.slice(i + 1).some(move => !/^[xyz]/.test(move)))) {

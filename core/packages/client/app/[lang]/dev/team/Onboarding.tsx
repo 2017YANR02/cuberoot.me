@@ -1,7 +1,8 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect } from 'react';
-import { ArrowRight, Check, ChevronDown, ClipboardCheck, FileText, KeyRound, Laptop, ShieldCheck, Sparkles, UserRound, X } from '@app-foundation/icons/lucide';
+import { ArrowRight, Check, ClipboardCheck, FileText, KeyRound, Laptop, ShieldCheck, Sparkles, UserRound, X } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { UserIdLabel } from '@/components/UserIdLabel';
 import { useCopy } from '@/hooks/useCopy';
@@ -56,7 +57,7 @@ export default function GetStartedPage() {
             </button>
           </div>
           <details className="staff-start-instructions">
-            <summary>{t('软件与指令', 'Apps and instructions')}<ChevronDown size={14} aria-hidden="true" /></summary>
+            <MoreToggle as="summary">{t('软件与指令', 'Apps and instructions')}</MoreToggle>
             <ul className="staff-start-apps">
               <li>{t('全部：微信输入法、UU远程', 'Everyone: WeChat Input, UU Remote')}</li>
               <li>{t('Windows：ShareX', 'Windows: ShareX')}</li>
@@ -72,7 +73,7 @@ export default function GetStartedPage() {
             </button>
           </div>
           <details className="staff-start-instructions">
-            <summary>{t('查看指令', 'View instructions')}<ChevronDown size={14} aria-hidden="true" /></summary>
+            <MoreToggle as="summary">{t('查看指令', 'View instructions')}</MoreToggle>
             <p>{t('输入 cuberoot 启动，Ctrl+C 停止。', 'Run cuberoot to start; Ctrl+C to stop.')}</p>
             <pre className="staff-start-prompt">{aiPrompt}</pre>
           </details>
@@ -85,16 +86,16 @@ export default function GetStartedPage() {
             </button>
           </div>
           <details className="staff-start-instructions">
-            <summary>{t('查看指令', 'View instructions')}<ChevronDown size={14} aria-hidden="true" /></summary>
+            <MoreToggle as="summary">{t('查看指令', 'View instructions')}</MoreToggle>
             <pre className="staff-start-prompt">{learningPrompt}</pre>
           </details>
         </section>
         <details className="staff-start-disclosure">
-          <summary>{t('远程连接', 'Remote access')}<ChevronDown size={18} aria-hidden="true" /></summary>
+          <MoreToggle as="summary">{t('远程连接', 'Remote access')}</MoreToggle>
           <RemoteAccess />
         </details>
         <details className="staff-start-disclosure">
-          <summary>{t('开发网址', 'Development URL')}<ChevronDown size={18} aria-hidden="true" /></summary>
+          <MoreToggle as="summary">{t('开发网址', 'Development URL')}</MoreToggle>
           <DevPreview />
         </details>
       </article>
@@ -117,7 +118,7 @@ export default function GetStartedPage() {
           </div> : <p>{t('请到账号页重新登录以获取 ID。', 'Sign in again on the account page to retrieve your ID.')}</p>}
         </section>
         <details className="staff-start-disclosure">
-          <summary>{t('学习 AI 与代码基础', 'Learn AI and coding basics')}<ChevronDown size={18} aria-hidden="true" /></summary>
+          <MoreToggle as="summary">{t('学习 AI 与代码基础', 'Learn AI and coding basics')}</MoreToggle>
           <p className="staff-start-note">{t('自行查资料或问 AI。', 'Research online or ask AI.')}</p>
         <ul className="staff-start-knowledge">
           <li><strong>{t('AI 使用', 'Using AI')}</strong><p>{t('提示词、上下文、工具、Skill、结果核验。', 'Prompts, context, tools, Skills and verification.')}</p></li>

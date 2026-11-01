@@ -7,7 +7,7 @@ import {
   type EventId,
   type TimerSessionMeta,
 } from '@cuberoot/shared/timer';
-import { Check, ChevronDown, Eraser, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Check, ChevronDown, Eraser, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import {
   useCallback,
   useEffect,
@@ -583,4 +583,27 @@ export function TimerSessionSwitcher({
       {panel}
     </div>
   );
+}
+
+/** Compact results toolbar shared by the website and installed clients. */
+export function TimerResultsSessionBar({ language, query, onQueryChange, ...props }: TimerSessionSwitcherProps & {
+  language: 'en' | 'zh'; query: string; onQueryChange(query: string): void;
+}) {
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchInput = useRef<HTMLInputElement>(null);
+  useEffect(() => { if (searchOpen) searchInput.current?.focus(); }, [searchOpen]);
+  const label = { en: 'Search solves', zh: '搜索成绩' }[language];
+  return <TimerSessionSwitcher {...props} inlineActions hideActions={searchOpen}
+    labels={{ ...props.labels, newSession: { en: 'New', zh: '新建' }[language] }}
+    trailing={<div className={`tsession-search${searchOpen ? ' is-open' : ''}`}>
+      <div className="tsession-search-field" inert={!searchOpen}>
+        <input ref={searchInput} type="search" value={query} tabIndex={searchOpen ? 0 : -1}
+          onChange={event => onQueryChange(event.target.value)}
+          placeholder={{ en: 'Time, scramble, comment', zh: '时间、打乱、注释' }[language]} aria-label={label} />
+      </div>
+      <button type="button" className="tsession-icon-btn" aria-expanded={searchOpen} aria-label={label}
+        onClick={() => { setSearchOpen(!searchOpen); if (searchOpen) onQueryChange(''); }}>
+        <Search size={16} aria-hidden="true" />
+      </button>
+    </div>} />;
 }

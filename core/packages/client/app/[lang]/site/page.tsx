@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 
 /**
@@ -1086,14 +1087,6 @@ function SitesPageInner() {
                 />
               )}
             </div>
-            <div className="sites-view-toggle" role="group" aria-label={t('视图', 'View')}>
-              <button type="button" className={`sites-view-btn${viewMode === 'list' ? ' is-active' : ''}`} onPointerEnter={() => prepareView('list')} onPointerDown={() => prepareView('list')} onFocus={() => prepareView('list')} onClick={(event) => changeViewMode('list', event.detail > 0)} aria-label={t('列表视图', 'List view')} aria-pressed={viewMode === 'list'} title={t('列表视图', 'List view')}>
-                <List size={16} />
-              </button>
-              <button type="button" className={`sites-view-btn${viewMode === 'grid' ? ' is-active' : ''}`} onPointerEnter={() => prepareView('grid')} onPointerDown={() => prepareView('grid')} onFocus={() => prepareView('grid')} onClick={(event) => changeViewMode('grid', event.detail > 0)} aria-label={t('卡片视图', 'Card view')} aria-pressed={viewMode === 'grid'} title={t('卡片视图', 'Card view')}>
-                <LayoutGrid size={16} />
-              </button>
-            </div>
           </div>
         </header>
 
@@ -1190,6 +1183,14 @@ function SitesPageInner() {
                 )}
               </div>
             )}
+            <div className="sites-view-toggle" role="group" aria-label={t('视图', 'View')}>
+              <button type="button" className={`sites-view-btn${viewMode === 'list' ? ' is-active' : ''}`} onPointerEnter={() => prepareView('list')} onPointerDown={() => prepareView('list')} onFocus={() => prepareView('list')} onClick={(event) => changeViewMode('list', event.detail > 0)} aria-label={t('列表视图', 'List view')} aria-pressed={viewMode === 'list'} title={t('列表视图', 'List view')}>
+                <List size={16} />
+              </button>
+              <button type="button" className={`sites-view-btn${viewMode === 'grid' ? ' is-active' : ''}`} onPointerEnter={() => prepareView('grid')} onPointerDown={() => prepareView('grid')} onFocus={() => prepareView('grid')} onClick={(event) => changeViewMode('grid', event.detail > 0)} aria-label={t('卡片视图', 'Card view')} aria-pressed={viewMode === 'grid'} title={t('卡片视图', 'Card view')}>
+                <LayoutGrid size={16} />
+              </button>
+            </div>
           </div>
         )}
 
@@ -1198,16 +1199,16 @@ function SitesPageInner() {
             <div className="sites-topics-heading">
               <h2 id="sites-topics-title">{TEXTS.topics[lang]}</h2>
               {admin && (
-                <button
+                <MoreToggle
                   type="button"
                   className="sites-heading-action"
-                  aria-expanded={manageTopics}
+                  expanded={manageTopics}
                   aria-label={t('管理话题', 'Manage topics')}
                   title={t('管理话题', 'Manage topics')}
                   onClick={() => setManageTopics((value) => !value)}
                 >
                   <Pencil size={14} />
-                </button>
+                </MoreToggle>
               )}
             </div>
             {admin && manageTopics && <div className="sites-topic-manager">

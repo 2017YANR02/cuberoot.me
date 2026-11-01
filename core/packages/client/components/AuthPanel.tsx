@@ -1,4 +1,5 @@
 'use client';
+import MoreToggle from '@/components/MoreToggle';
 import '@cuberoot/timer-ui/compact-select.css';
 
 // 全站认证 UI。两块面板统一由共享 AccountSettings 承载（/account 与聊天设置）:
@@ -1488,16 +1489,16 @@ export function AccountPanel({ expectedAppleUid, miniProgramLogin = false }: { e
       )}
 
       <div className="auth-linklist">
-        <button
+        <MoreToggle
           type="button"
           className="auth-idrow auth-merge-trigger"
           disabled={mergeBusy}
-          aria-expanded={Boolean(mergeMode)}
+          expanded={Boolean(mergeMode)}
           onClick={() => { setMergeMode((mode) => mode ? null : 'keep'); setConfirmMerge(false); }}
         >
           <span className="auth-idicon"><Merge size={ICON} /></span>
           <span className="auth-idprov">{t('合并账号', 'Merge accounts')}</span>
-        </button>
+        </MoreToggle>
       </div>
       {mergeMode && (
         <div className="auth-flow">

@@ -69,6 +69,8 @@
 }
 /* 报告在宽屏上不铺满整行 —— 一行几十厘米的表格读起来要来回甩头。 */
 .shell-recap-body .rc-report { max-width: 1000px; margin: 0 auto; }
+/* Stacked recap surfaces read steps first, then the linked cube animation. */
+.shell-recap-body .reconstruct-playback-side { order: -1; }
 /* Recap loading placeholder: reserve the final frame without simulating partial report content. */
 .shell-recap-placeholder { pointer-events: none; }
 .shell-recap-placeholder .shell-recap-head { min-height: 42px; }

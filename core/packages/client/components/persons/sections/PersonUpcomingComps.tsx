@@ -1,7 +1,8 @@
 'use client';
 
 // 报名关系与比赛详情分别复用比赛中心已有的数据入口，确保两页口径一致。
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useRetainedState } from '@/hooks/useRetainedState';
 import { CompCardWithRounds, wcaRoundsSeed } from '@/components/CompCardWithRounds';
 import { useT } from '@/hooks/useT';
 import { loadLandingComps, type Comp } from '@/lib/comp-search';
@@ -25,11 +26,12 @@ interface Props {
 
 export default function PersonUpcomingComps({ wcaId, isZh, title, followedIds, emptyMessage, compactDetails, hideHomeCountryFlag = false, onReady }: Props) {
   const t = useT();
-  const [catalog, setCatalog] = useState<Comp[] | null>(null);
-  const [registeredIds, setRegisteredIds] = useState<string[]>([]);
-  const [eventIdsByCompetition, setEventIdsByCompetition] = useState<Record<string, string[]>>({});
-  const [wcaCountry, setWcaCountry] = useState({ id: '', iso2: '' });
   const normalizedWcaId = wcaId?.trim().toUpperCase() ?? '';
+  const cacheKey = `person-upcoming:${normalizedWcaId}:${Boolean(compactDetails)}`;
+  const [catalog, setCatalog] = useRetainedState<Comp[] | null>(`${cacheKey}:catalog`, null);
+  const [registeredIds, setRegisteredIds] = useRetainedState<string[]>(`${cacheKey}:registered`, []);
+  const [eventIdsByCompetition, setEventIdsByCompetition] = useRetainedState<Record<string, string[]>>(`${cacheKey}:events`, {});
+  const [wcaCountry, setWcaCountry] = useRetainedState(`${cacheKey}:country`, { id: '', iso2: '' });
   const hiddenCountry = hideHomeCountryFlag && normalizedWcaId && wcaCountry.id === normalizedWcaId ? wcaCountry.iso2 : '';
 
   useEffect(() => {
@@ -39,13 +41,11 @@ export default function PersonUpcomingComps({ wcaId, isZh, title, followedIds, e
       if (!cancelled) setWcaCountry({ id: normalizedWcaId, iso2: countryToIso2(personFlagIso2(normalizedWcaId)) });
     });
     return () => { cancelled = true; };
-  }, [hideHomeCountryFlag, normalizedWcaId]);
+  }, [hideHomeCountryFlag, normalizedWcaId, setWcaCountry]);
 
   useEffect(() => {
     let cancelled = false;
-    setCatalog(null);
-    setRegisteredIds([]);
-    setEventIdsByCompetition({});
+    // Returning to a page revalidates in the background without clearing it.
 
     Promise.all([wcaId ? fetchPersonUpcomingCompetitionIds(wcaId) : Promise.resolve([]), loadLandingComps()])
       .then(async ([competitionIds, allCompetitions]) => {
@@ -62,13 +62,13 @@ export default function PersonUpcomingComps({ wcaId, isZh, title, followedIds, e
         if (!cancelled) setEventIdsByCompetition(Object.fromEntries(entries));
       })
       .catch(() => {
-        if (!cancelled) setCatalog([]);
+        if (!cancelled) setCatalog(previous => previous ?? []);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [wcaId, compactDetails]);
+  }, [wcaId, compactDetails, setCatalog, setRegisteredIds, setEventIdsByCompetition]);
 
   const competitions = useMemo(() => catalog && selectPersonUpcomingCompetitions(
     [...registeredIds, ...(followedIds ?? [])], catalog, toIsoDate(new Date()),

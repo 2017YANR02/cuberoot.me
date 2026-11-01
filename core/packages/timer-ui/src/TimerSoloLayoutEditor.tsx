@@ -17,14 +17,15 @@ type Region = typeof regions[number];
 /** Editing chrome for this page's existing regions; never reparent live timer DOM. */
 export interface TimerSoloLayoutSettings { soloLayout: SoloLayout; timerFontScale: number; scrambleFontScale: number; }
 interface LayoutHost { getSettings(): TimerSoloLayoutSettings; updateSettings(patch: Partial<TimerSoloLayoutSettings>): void; language: 'en' | 'zh'; }
-export function TimerSoloLayoutEditor({ surfaceRef, contentKey, onDone, getSettings, updateSettings, language }: LayoutHost & {
-  surfaceRef: RefObject<HTMLDivElement | null>; contentKey: string; onDone(): void;
+export function TimerSoloLayoutEditor({ surfaceRef, contentKey, onDone, getSettings, updateSettings, language, regionSelectors }: LayoutHost & {
+  surfaceRef: RefObject<HTMLElement | null>; contentKey: string; onDone(): void;
+  regionSelectors?: Partial<Record<Region['gap'], string>>;
 }) {
   const tr = (value: { en: string; zh: string }) => value[language];
-  const [targets, setTargets] = useState<(Element | null)[]>([]);
+  const [targets, setTargets] = useState<Element[][]>([]);
   useEffect(() => {
-    setTargets(regions.map(region => surfaceRef.current?.querySelector(region.selector) ?? null));
-  }, [surfaceRef, contentKey]);
+    setTargets(regions.map(region => Array.from(surfaceRef.current?.querySelectorAll(regionSelectors?.[region.gap] ?? region.selector) ?? [])));
+  }, [surfaceRef, contentKey, regionSelectors]);
   useEffect(() => {
     const escape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') { event.preventDefault(); onDone(); }
@@ -32,9 +33,8 @@ export function TimerSoloLayoutEditor({ surfaceRef, contentKey, onDone, getSetti
     window.addEventListener('keydown', escape);
     return () => window.removeEventListener('keydown', escape);
   }, [onDone]);
-  return <>{regions.map((region, index) => targets[index]
-    ? createPortal(<RegionHandles region={region} getSettings={getSettings} updateSettings={updateSettings} language={language} />, targets[index]!, region.gap)
-    : null)}
+  return <>{regions.flatMap((region, index) => (targets[index] ?? []).map((target, targetIndex) =>
+    createPortal(<RegionHandles region={region} getSettings={getSettings} updateSettings={updateSettings} language={language} />, target, `${region.gap}-${targetIndex}`)))}
     {surfaceRef.current && createPortal(
       <div className="solo-layout-toolbar" role="toolbar" aria-label={tr({ zh: '布局调整', en: 'Layout editing' })} data-no-timer data-site-surface="popover">
         <span className="solo-layout-toolbar-label">{tr({ zh: '拖动调整', en: 'Drag to arrange' })}</span>
@@ -52,7 +52,7 @@ export function TimerSoloLayoutEditor({ surfaceRef, contentKey, onDone, getSetti
 
 function RegionHandles({ region, getSettings, updateSettings, language }: LayoutHost & { region: Region }) {
   const tr = (value: { en: string; zh: string }) => value[language];
-  const drag = useRef<{ y: number; value: number; size: number; mode: 'move' | 'size' } | null>(null);
+  const drag = useRef<{ y: number; value: number; size: number; direction: number; mode: 'move' | 'size' } | null>(null);
   const current = (mode: 'move' | 'size') => {
     const settings = getSettings();
     return mode === 'move' ? settings.soloLayout[region.gap]
@@ -75,7 +75,9 @@ function RegionHandles({ region, getSettings, updateSettings, language }: Layout
     event.preventDefault();
     event.stopPropagation();
     const regionElement = event.currentTarget.parentElement?.parentElement;
-    drag.current = { y: event.clientY, value: current(mode), mode, size: Math.max(40, regionElement?.getBoundingClientRect().height ?? 100) };
+    drag.current = { y: event.clientY, value: current(mode), mode,
+      direction: regionElement?.closest('[data-flipped="true"]') ? -1 : 1,
+      size: Math.max(40, regionElement?.getBoundingClientRect().height ?? 100) };
     event.currentTarget.setPointerCapture(event.pointerId);
   };
   return <div className="solo-layout-handles" data-no-timer onClick={event => event.stopPropagation()} onTouchStart={event => event.stopPropagation()}>
@@ -88,7 +90,7 @@ function RegionHandles({ region, getSettings, updateSettings, language }: Layout
         if (!active) return;
         event.preventDefault();
         event.stopPropagation();
-        const delta = event.clientY - active.y;
+        const delta = (event.clientY - active.y) * active.direction;
         apply(active.mode, active.value + (active.mode === 'move' ? delta : delta / active.size * active.value));
       }}
       onPointerUp={event => {

@@ -2,6 +2,7 @@
 
 // 3BLD module grid — the standalone hub page at /alg/3bld.
 
+import PageHeading from '@/components/PageHeading';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { Brain, Library, FileText, Compass, Search, TableProperties, NotebookPen, Timer as TimerIcon } from '@app-foundation/icons/lucide';
@@ -133,8 +134,8 @@ function HubBody({ isZh }: { isZh: boolean }) {
   return (
     <>
       <div className="bld-topbar">
-        <h1><EventIcon event="333bf" /> {tr({ zh: '盲拧训练', en: '3BLD Trainer'
-        })}</h1>
+        <PageHeading backHref="/alg/3x3"><EventIcon event="333bf" /> {tr({ zh: '盲拧训练', en: '3BLD Trainer'
+        })}</PageHeading>
         <span className="bld-spacer" />
         <TimerLink isZh={isZh} />
       </div>

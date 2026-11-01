@@ -1,10 +1,12 @@
 'use client';
 
-import { useRef, useState, type ChangeEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { Check, ImagePlus, Trash2 } from '@app-foundation/icons/lucide';
 import { tr } from '@/i18n/tr';
 import BoolToggle from '@/components/BoolToggle';
-import { prepareImageUpload, uploadedImageUrl, uploadImageBlob } from '@/lib/image-upload';
+import { prepareImageUpload, uploadImageBlob } from '@/lib/image-upload';
+import { listMyGalleryPhotos, setGalleryVisibility, type GalleryStatus } from '@/lib/gallery-api';
+import GalleryImage from '@/components/GalleryImage';
 import { setMyProfileIntro, type EditableMemberProfile } from '@/lib/membership-api';
 import './member-profile-editor.css';
 
@@ -27,6 +29,40 @@ export default function MemberProfileEditor({ profile, onSaved }: {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [visibility, setVisibility] = useState<Record<number, GalleryStatus>>({});
+  const [visibilityReady, setVisibilityReady] = useState(false);
+  const [changingVisibility, setChangingVisibility] = useState<number | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void listMyGalleryPhotos(controller.signal).then(photos => {
+      if (controller.signal.aborted) return;
+      setVisibility(Object.fromEntries(photos.map(photo => [photo.id, photo.status])));
+      setVisibilityReady(true);
+    }).catch(() => {
+      if (!controller.signal.aborted) setError(tr({ zh: '照片可见性加载失败，请刷新重试。', en: 'Could not load photo visibility. Please reload.' }));
+    });
+    return () => controller.abort();
+  }, [profile]);
+
+  async function changeVisibility(id: number, status: 'private' | 'pending') {
+    setChangingVisibility(id);
+    setError(null);
+    try {
+      const photo = await setGalleryVisibility(id, status);
+      setVisibility(current => ({ ...current, [id]: photo.status }));
+      onSaved(savedValues.intro || undefined, savedValues.imageIds);
+    } catch {
+      setError(tr({ zh: '更新失败，请刷新后重试。', en: 'Could not update the photo. Reload and try again.' }));
+    } finally { setChangingVisibility(null); }
+  }
+
+  const visibilityLabel = (status: GalleryStatus) => tr({
+    private: { zh: '仅自己可见', en: 'Only me' },
+    pending: { zh: '待管理员审核', en: 'Awaiting review' },
+    public: { zh: '所有人可见', en: 'Public' },
+    rejected: { zh: '未通过 · 仅自己可见', en: 'Declined · Only me' },
+  }[status]);
 
   const addImages = async (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
@@ -40,7 +76,7 @@ export default function MemberProfileEditor({ profile, onSaved }: {
     try {
       for (const file of files.slice(0, slots)) {
         const prepared = await prepareImageUpload(file, 1920);
-        const image = await uploadImageBlob(prepared.dataB64, prepared.mime);
+        const image = await uploadImageBlob(prepared.dataB64, prepared.mime, 'gallery');
         setImageIds((current) => [...current, image.id].slice(0, MAX_IMAGES));
       }
       if (files.length > slots) setError(tr({ zh: '只上传了剩余可用的图片，最多保存 8 张。', en: 'Only the remaining image slots were uploaded; a profile can keep 8 images.' }));
@@ -78,15 +114,15 @@ export default function MemberProfileEditor({ profile, onSaved }: {
       <h3 className="member-profile-title">{tr({ zh: '个人介绍', en: 'Personal profile' })}</h3>
       <p className="member-profile-hint">
         {tr({
-          zh: '选填文字和图片。图片可进入图库，资料也会显示在你的 WCA 人物页；会员到期后自动隐藏。',
-          en: 'Add optional text and images. Photos can appear in the gallery, and the profile also appears on your WCA person page. It is hidden automatically if your membership expires.',
+          zh: '文字显示在 WCA 人物页。照片默认仅自己可见，申请并经管理员通过后公开；会员到期后隐藏。',
+          en: 'Text appears on your WCA profile. Photos are private until you request publication and an administrator approves. Public content is hidden when membership expires.',
         })}
       </p>
       <BoolToggle
         className="member-profile-visibility"
         value={showInMemberList}
         onChange={(value) => { setShowInMemberList(value); setSaved(false); }}
-        label={tr({ zh: '在首页会员名单和图库中展示我', en: 'Show me in the homepage member list and gallery' })}
+        label={tr({ zh: '在首页会员名单中展示我', en: 'Show me in the homepage member list' })}
       />
       <textarea
         className="member-profile-input"
@@ -117,17 +153,30 @@ export default function MemberProfileEditor({ profile, onSaved }: {
       {imageIds.length > 0 && (
         <div className="member-profile-images">
           {imageIds.map((id) => (
-            <div className="member-profile-image" key={id}>
-              <img src={uploadedImageUrl(id)} alt="" />
-              <button
-                type="button"
-                className="member-profile-image-remove"
-                onClick={() => { setImageIds((current) => current.filter((imageId) => imageId !== id)); setSaved(false); }}
-                disabled={uploading}
-                aria-label={tr({ zh: '移除图片', en: 'Remove image' })}
-              >
-                <Trash2 size={15} aria-hidden="true" />
-              </button>
+            <div className="member-profile-photo" key={id}>
+              <div className="member-profile-image">
+                <GalleryImage id={id} />
+                <button
+                  type="button"
+                  className="member-profile-image-remove"
+                  onClick={() => { setImageIds((current) => current.filter((imageId) => imageId !== id)); setSaved(false); }}
+                  disabled={uploading || saving || changingVisibility !== null}
+                  aria-label={tr({ zh: '移除图片', en: 'Remove image' })}
+                >
+                  <Trash2 size={15} aria-hidden="true" />
+                </button>
+              </div>
+              <div className="member-profile-photo-visibility">
+                <span>{visibilityReady ? visibilityLabel(visibility[id] ?? 'private') : tr({ zh: '正在加载…', en: 'Loading…' })}</span>
+                <button type="button" className="member-profile-upload"
+                  disabled={!visibilityReady || !savedValues.imageIds.includes(id) || saving || uploading || changingVisibility !== null}
+                  onClick={() => void changeVisibility(id, ['pending', 'public'].includes(visibility[id]) ? 'private' : 'pending')}>
+                  {!savedValues.imageIds.includes(id) ? tr({ zh: '保存后申请公开', en: 'Save before requesting' })
+                    : visibility[id] === 'pending' ? tr({ zh: '撤回申请', en: 'Withdraw request' })
+                    : visibility[id] === 'public' ? tr({ zh: '设为私密', en: 'Make private' })
+                    : tr({ zh: '申请公开', en: 'Request publication' })}
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -139,7 +188,7 @@ export default function MemberProfileEditor({ profile, onSaved }: {
           className="member-profile-save"
           onClick={() => void save()}
           aria-label={tr({ zh: '保存个人资料', en: 'Save personal profile' })}
-          disabled={saving || uploading || (
+          disabled={saving || uploading || changingVisibility !== null || (
             intro.trim() === savedValues.intro.trim()
             && imageIds.join(',') === savedValues.imageIds.join(',')
             && showInMemberList === savedValues.showInMemberList

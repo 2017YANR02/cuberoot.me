@@ -500,6 +500,7 @@ describe('Web migration consumes the shared contract', () => {
         const timer = { armFromCube: vi.fn(() => true), onPressDown: vi.fn() };
         const context = {
           competitionRef: { current: { enabled: blocked === 'competition' } },
+          multiEnabledRef: { current: false },
           layoutEditingRef: { current: blocked === 'layout' },
           trainingTimingModeRef: { current: () => mode },
           getSettings: () => ({ timingEnabled: blocked !== 'timing-disabled' }),
@@ -541,8 +542,9 @@ describe('Web migration consumes the shared contract', () => {
       /if \(!await competition\.begin\(scrambleTarget, bluetoothCube\.status\)\) return;[\s\S]*?if \(!latest\?\.status\.connected \|\| latest\.hijacked \|\| !latestFaces \|\| toFaceletString\(latestFaces\) !== scrambleTarget\) \{[\s\S]*?return;\s*\}\s*timer\.onPressDown\(\)/,
     );
     expect(soloSource).toMatch(
-      /new SmartCubeSoloTimerController[\s\S]*?canStartAttempt: \(\) => !layoutEditingRef\.current && attemptCanStartRef\.current[\s\S]*?competitionRef\.current\.canStart\(\)[\s\S]*?startFromCube: \(timestamp\) => \{[\s\S]*?timerHandleRef\.current\.startFromCube\(timestamp\)/,
+      /const smartCubeTimerOptions = useMemo[\s\S]*?canStartAttempt: \(\) => !layoutEditingRef\.current && \(multiEnabledRef\.current[\s\S]*?: attemptCanStartRef\.current\)[\s\S]*?competitionRef\.current\.canStart\(\)[\s\S]*?startFromCube: \(timestamp\) => \{[\s\S]*?timerHandleRef\.current\.startFromCube\(timestamp\)/,
     );
+    expect(soloSource).toContain('new SmartCubeSoloTimerController(smartCubeTimerOptions)');
     expect(soloSource).toMatch(
       /if \(timerEvent\.state === 'RUNNING'\)[\s\S]*?if \(!attemptCanStartRef\.current\)[\s\S]*?timer\.startNow/,
     );

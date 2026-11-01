@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import AlgInput, { type AlgInputHandle } from '@/components/AlgInput';
 import AlgPlayer from '@/components/AlgPlayer';
 import { ClearButton } from '@/components/ClearButton';
-import HeaderToggles from '@/components/HeaderToggles';
 import Link from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
@@ -88,7 +87,7 @@ export default function XCrossRankingExperiment() {
 
   return <main className="xcr-exp">
     <header>
-      <div className="xcr-top"><span className="xcr-badge">{t('实验 v0.1', 'Experiment v0.1')}</span><HeaderToggles /></div>
+      <div className="xcr-top"><span className="xcr-badge">{t('实验 v0.1', 'Experiment v0.1')}</span></div>
       <h1>{t('XC / XXC 结构排序', 'XC / XXC structural ranking')}</h1>
       <p>{t('目标是让容易观察、结构连续的解法排在前面。本页用于比较实验算法；普通计时器仍使用原排序。', 'The aim is to prioritize solutions with visible starting structures and continuous piece relationships. This page compares the experiment; the regular timer retains its original ranking.')}</p>
     </header>

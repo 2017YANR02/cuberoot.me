@@ -35,6 +35,7 @@ import { MethodStagePicker } from '@cuberoot/timer-ui/puzzle-picker';
 import { VariantSelect } from '@/components/VariantSelect';
 import { RangeSlider } from '@/components/RangeSlider/RangeSlider';
 import { ParamSliders, type ParamSliderSpec } from '@/components/ParamSliders';
+import { NavigationLoadOverlay, LoadingBrandMark } from '@/components/StartupStatus';
 import { Spinner } from '@/components/Spinner/Spinner';
 import ResetDefaultsButton from '@/components/ResetDefaultsButton';
 import PlaybackBar from '@cuberoot/timer-ui/PlaybackBar';
@@ -276,6 +277,22 @@ function ParamSlidersDemo() {
       onChange={setVals}
     />
   );
+}
+
+function NavigationLoadingDemo() {
+  const [pending, setPending] = useState(false);
+  useEffect(() => {
+    if (!pending) return;
+    const timer = window.setTimeout(() => setPending(false), 2500);
+    return () => window.clearTimeout(timer);
+  }, [pending]);
+  return <div style={{ display: 'grid', justifyItems: 'center', gap: 20 }}>
+    <LoadingBrandMark />
+    <button className="app-startup-button" onClick={() => setPending(true)} disabled={pending}>
+      {tr({ zh: '预览页面过渡', en: 'Preview page transition' })}
+    </button>
+    <NavigationLoadOverlay pending={pending} />
+  </div>;
 }
 
 function SpinnerDemo() {
@@ -635,6 +652,7 @@ function MoreToggleDemo() {
     <div className="cg-row">
       <MoreToggle expanded={open} onToggle={() => setOpen((v) => !v)} />
       {open && <span className="cg-hint">{tr({ zh: '已展开的次要内容', en: 'expanded content' })}</span>}
+      <details><MoreToggle as="summary">{tr({ zh: '原生折叠', en: 'Native disclosure' })}</MoreToggle><p>{tr({ zh: '支持键盘展开与收起', en: 'Supports keyboard expansion and collapse' })}</p></details>
     </div>
   );
 }
@@ -960,10 +978,11 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'ClientLoadStatus',
+    Demo: NavigationLoadingDemo,
     import: "import { AppFailure, ClientLoadStatus, LinkPendingIndicator } from '@/components/StartupStatus';",
     category: 'more',
-    zh: '路由与客户端 chunk 共用轻量加载动画、超时和失败提示；AppLink 内的 LinkPendingIndicator 跟随 Next 导航状态显示浮动提示，不占页面高度。',
-    en: 'Shared animated route and chunk loading with timeout/retry; AppLink uses LinkPendingIndicator for floating feedback driven by Next navigation state without changing page geometry.',
+    zh: '原品牌 SVG 色块流光；导航等待 250ms 后显示主题遮罩，完成后淡出。支持减少动态效果和客户端加载超时重试。',
+    en: 'Original SVG animation with delayed navigation feedback, fade-out, reduced-motion support and chunk timeout/retry.',
   },
   {
     name: 'LessonVideoPlayer',
@@ -2083,10 +2102,10 @@ export const CATALOG: ComponentEntry[] = [
     name: 'MoreToggle',
     import: "import MoreToggle from '@/components/MoreToggle';",
     category: 'toggle',
-    zh: `通用「更多 / 收起」展开开关(文字 + 旋转 chevron),折叠卡片次要内容统一用它,受控的 expanded / onToggle 由调用方管。`,
-    en: `Generic More / Show-less expand toggle (label + rotating chevron) for collapsing secondary card content; controlled via expanded / onToggle.`,
+    zh: `通用「更多 / 收起」展开开关(文字 + 旋转 chevron),支持自定义 children、expanded / onToggle 或 onClick；as="summary" 保留原生 details 交互。`,
+    en: `Generic More / Show-less expand toggle (label + rotating chevron) with custom children and expanded / onToggle or onClick; as="summary" preserves native details behavior.`,
     Demo: MoreToggleDemo,
-    note: { zh: `折叠展开统一用它,别每处再写一份 *-more 按钮(首页近期打乱 / 今日复盘已共用)。`, en: `Use it for any collapse/expand affordance instead of hand-rolling a *-more button (shared by landing Recent Scrambles / Recon of the Day).` },
+    note: { zh: `折叠展开统一复用；不要使用原生三角形、字符箭头或重复实现。`, en: `Reuse for disclosures; do not use native triangles, character arrows, or separate implementations.` },
   },
   {
     name: 'AppearanceToggle',

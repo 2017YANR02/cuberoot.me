@@ -1,4 +1,5 @@
 'use client';
+import PageHeading from '@/components/PageHeading';
 import '@cuberoot/timer-ui/compact-select.css';
 
 /**
@@ -16,7 +17,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTrainingParams as useParams, useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import { parseAsInteger, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
-import { ArrowLeft } from '@app-foundation/icons/lucide';
+
 import { tr, T } from '@/i18n/tr';
 import { FaceletsCube } from '@/components/FaceletsCube';
 import { useAlgViewMode } from '@/components/AlgViewModeToggle';
@@ -115,8 +116,8 @@ export default function LsllGroupClient() {
     return (
       <div className="alg-root">
         <div className="alg-cat-header">
-          <Link href="/alg/lsll" className="alg-back"><ArrowLeft size={14} /> LSLL</Link>
-          <h1 className="alg-cat-title"><span>{cat.letter}</span></h1>
+
+          <PageHeading backHref="/alg/lsll" titleClassName="alg-cat-title"><span>{cat.letter}</span></PageHeading>
         </div>
         <p className="lsll-intro">
           <T
@@ -138,15 +139,13 @@ export default function LsllGroupClient() {
   return (
     <div className="alg-root">
       <div className="alg-cat-header">
-        <Link href={`/alg/lsll${twoLook ? '?cls=3' : ''}`} className="alg-back">
-          <ArrowLeft size={14} /> LSLL
-        </Link>
-        <h1 className="alg-cat-title">
+
+        <PageHeading backHref={`/alg/lsll${twoLook ? '?cls=3' : ''}`} titleClassName="alg-cat-title">
           <span>{cat.letter} <span className="alg-cat-count">
             {(twoLook ? class3CountForFamily(cat.slug) : cat.count).toLocaleString()}{' '}
             {tr({ zh: twoLook ? '条路线' : '个', en: twoLook ? 'routes' : 'cases' })}
           </span></span>
-        </h1>
+        </PageHeading>
         <select
           value={String(twoLook)}
           onChange={event => { const v = event.currentTarget.value === 'true'; setCls(v ? '3' : '2'); }}

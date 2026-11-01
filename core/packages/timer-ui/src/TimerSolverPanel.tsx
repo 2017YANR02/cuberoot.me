@@ -1,9 +1,10 @@
 'use client';
 
+import MoreToggle from './MoreToggle';
 import { lazy, Suspense, useCallback, useContext, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { SolverTriggerContext } from './solver-trigger-context';
 import { createPortal } from 'react-dom';
-import { ChevronRight, Lightbulb, Maximize2, X } from 'lucide-react';
+import { Lightbulb, Maximize2, X } from 'lucide-react';
 import { Spinner } from './Spinner';
 import { CompactSelect } from './CompactSelect';
 import { useTimerWideLayout } from './TimerWorkspace';
@@ -319,11 +320,11 @@ export default function TimerSolverPanel({
             单独一颗 pill,加这层不改任何现有形态。 */}
         <div className="solver-panel-headrow">
           <div className="solver-toolbar-start">
-          {railBodyOpen ? <SolverViewSelect view={view} onViewChange={setView} language={language} /> : <button
+          {railBodyOpen ? <SolverViewSelect view={view} onViewChange={setView} language={language} /> : <MoreToggle
             type="button"
             className="solver-panel-head"
             onClick={toggle}
-            aria-expanded={open}
+            expanded={open}
             aria-label={view === 'steps' ? tr(STEP_TITLE) : title}
             title={view === 'steps' ? tr(STEP_TITLE) : title}
           >
@@ -331,8 +332,8 @@ export default function TimerSolverPanel({
               ? <span className="solver-panel-title">{view === 'steps' ? tr(STEP_TITLE) : title}</span>
               : <Lightbulb size={18} aria-hidden="true" />}
             {/* 收起时箭头留在入口内；展开时移到全屏按钮右侧。 */}
-            {isDesktopRail && !railOpen && <ChevronRight size={14} className="solver-panel-chevron" />}
-          </button>}
+
+          </MoreToggle>}
           {railBodyOpen && <span className="solver-settings-slot" ref={setSettingsSlot} />}
           </div>
           {railBodyOpen && <span className="solver-toolbar-navigation" ref={setNavigationSlot} />}
@@ -350,16 +351,16 @@ export default function TimerSolverPanel({
             </button>
           )}
           {isDesktopRail && railOpen && (
-            <button
+            <MoreToggle
               type="button"
               className="solver-layout-action"
               onClick={(e) => { toggle(); e.currentTarget.blur(); }}
-              aria-expanded={open}
+              expanded={open}
               aria-label={tr({ zh: '收起解法面板', en: 'Collapse solutions panel' })}
               title={tr({ zh: '收起解法面板', en: 'Collapse solutions panel' })}
             >
-              <ChevronRight size={16} className="solver-panel-chevron" aria-hidden="true" />
-            </button>
+
+            </MoreToggle>
           )}
           </div>
         </div>

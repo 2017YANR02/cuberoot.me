@@ -48,7 +48,7 @@ export const ALG_SET_TRAINING_STEPS: Readonly<Record<string, CubeStep>> = {
 /** Freeze valid goal frames from the starting training state, before any turns. */
 export function timerSmartCubeTrainingFrames(event: EventId, target: string | null, orientation: string, mode: CnMode): readonly string[] {
   if (!target || mode === 'none' || !isCnEligible(event)) return [orientation];
-  const prerequisite = event === 'f2l' || event === 'zbls' ? 'cross'
+  const prerequisite = event === 'f2l' || event === 'zbls' || event === 'cfzb' ? 'cross'
     : event === 'cmll' ? 'sb' : event === 'cross' ? null : 'f2l';
   const candidates = timerColorNeutralOrientations(mode)
     .map(rotation => `${orientation} ${rotation}`.trim());

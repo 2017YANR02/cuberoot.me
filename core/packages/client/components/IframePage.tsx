@@ -7,6 +7,8 @@
  *
  * Ported 1:1 from packages/client-vite/src/pages/IframePage.tsx
  */
+import BackHome from '@/components/BackHome';
+import MoreToggle from '@/components/MoreToggle';
 import { ExternalLink } from '@app-foundation/icons/lucide';
 import { useEffect, useRef } from 'react';
 import { useTrainingHref, useTrainingRouter } from '@/lib/training-host';
@@ -64,6 +66,7 @@ export default function IframePage({
         borderBottom: '1px solid var(--border)',
         flexShrink: 0,
       }}>
+        <BackHome />
         <span style={{ color: 'var(--muted-foreground)', fontSize: 14 }}>{title}</span>
         {fullAppHref ? (
           <a
@@ -142,7 +145,7 @@ export default function IframePage({
         }}
       />
       {trainingGroup && <details className="training-iframe-stats">
-        <summary><T zh="训练统计与记录" en="Training statistics and recording" /></summary>
+        <MoreToggle as="summary"><T zh="训练统计与记录" en="Training statistics and recording" /></MoreToggle>
         <TrainingManualPractice key={trainingGroup} group={trainingGroup} />
       </details>}
     </div>

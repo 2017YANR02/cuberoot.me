@@ -1,5 +1,6 @@
 'use client';
 
+import PageHeading from '@/components/PageHeading';
 import TrainingStatsPanel, { TrainingSelfCheck } from '@/components/TrainingStatsPanel';
 import { useTrainingStats } from '@/hooks/useTrainingStats';
 
@@ -400,7 +401,7 @@ export default function CrossTrainingClient() {
     <main className="cross-training-page">
       <div className="cross-training-main">
         <div className="stage-training-head">
-          <h1>{tr({ zh: '阶段最优训练', en: 'Optimal stage training' })}</h1>
+          <PageHeading backHref="/alg/3x3">{tr({ zh: '阶段最优训练', en: 'Optimal stage training' })}</PageHeading>
         </div>
 
         <div className="stage-training-controls" data-no-timer>
@@ -472,7 +473,6 @@ export default function CrossTrainingClient() {
             })}
           </p>
         )}
-
 
         {loading && <div className="stage-training-loading"><Spinner size={18} />{tr({ zh: '正在计算 HTM 最优题目…', en: 'Computing an HTM-optimal question…' })}</div>}
         {!loading && error && (

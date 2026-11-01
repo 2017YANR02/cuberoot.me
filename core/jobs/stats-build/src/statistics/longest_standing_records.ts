@@ -10,8 +10,8 @@ export class LongestStandingRecords extends GroupedStatistic {
     super();
     this.title = 'Longest standing records';
     this.titleZh = '最长保持纪录';
-    this.note = 'Historical world and continental records, ranked after filtering. Ties do not end a record; retired events stop at their last competition. Region follows the competitor’s country at the time of the result.';
-    this.noteZh = '历史世界及洲际纪录，按筛选条件分别排名。追平不结束保持期；停办项目只计至最后一场比赛。地区按选手取得成绩时的所属国家划分。';
+    this.note = 'Historical world, continental and national records, ranked after filtering. Ties do not end a record; retired events stop at their last competition. Region follows the competitor’s country at the time of the result.';
+    this.noteZh = '历史世界、洲际及国家纪录，按筛选条件分别排名。追平不结束保持期；停办项目只计至最后一场比赛。地区按选手取得成绩时的所属国家划分。';
     this.tableHeader = {
       'Event': 'left',
       'Type': 'left',
@@ -34,6 +34,7 @@ export class LongestStandingRecords extends GroupedStatistic {
         competition.start_date competition_date,
         result.event_id,
         continent.name continent,
+        LOWER(country.iso2) country_iso2,
         retired.last_date last_event_date
       FROM results result
       JOIN persons person ON person.wca_id = person_id AND person.sub_id = 1
@@ -47,8 +48,8 @@ export class LongestStandingRecords extends GroupedStatistic {
         WHERE r.event_id IN ('333ft', 'magic', 'mmagic', '333mbo')
         GROUP BY r.event_id
       ) retired ON retired.event_id = result.event_id
-      WHERE regional_single_record IN ('AfR', 'AsR', 'ER', 'NAR', 'OcR', 'SAR', 'WR')
-         OR regional_average_record IN ('AfR', 'AsR', 'ER', 'NAR', 'OcR', 'SAR', 'WR')
+      WHERE regional_single_record IN ('AfR', 'AsR', 'ER', 'NAR', 'OcR', 'SAR', 'WR', 'NR')
+         OR regional_average_record IN ('AfR', 'AsR', 'ER', 'NAR', 'OcR', 'SAR', 'WR', 'NR')
       ORDER BY competition_date
     `;
   }
@@ -56,9 +57,17 @@ export class LongestStandingRecords extends GroupedStatistic {
   // Calculate each record's duration before taking a top ten for each filter combination.
   transform(rows: RowDataPacket[], today = new Date()): GroupedSection[] {
     const sections: GroupedSection[] = [];
-    for (const region of recordRegions(rows)) {
-      const level = region === 'World' ? 'WR' : 'CR';
-      const regionRows = recordRowsForScope(rows, region, level);
+    const countries = new Map<string, RowDataPacket[]>();
+    for (const row of rows) {
+      const iso2 = String(row.country_iso2 ?? '').toLowerCase();
+      if (!/^[a-z]{2}$/.test(iso2) || row.continent === 'Multiple Continents') continue;
+      const countryRows = countries.get(iso2) ?? [];
+      countryRows.push(row);
+      countries.set(iso2, countryRows);
+    }
+    for (const region of [...recordRegions(rows), ...[...countries.keys()].sort()]) {
+      const level = region === 'World' ? 'WR' : countries.has(region) ? 'NR' : 'CR';
+      const regionRows = countries.get(region) ?? recordRowsForScope(rows, region, level);
       const records: { event: string; type: 'single' | 'average'; days: number; row: unknown[] }[] = [];
       for (const type of ['single', 'average'] as const) {
         const markers: readonly string[] = RECORD_LEVELS[level];

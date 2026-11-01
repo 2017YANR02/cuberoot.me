@@ -18,6 +18,7 @@
 // no #jumpBtn / #gotoTimer). The handoff writes the (optionally percentage-
 // padded + shuffled) scramble list to localStorage and links to the timer page.
 
+import PageHeading from '@/components/PageHeading';
 import {
   useCallback,
   useEffect,
@@ -357,7 +358,7 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{tr(title)}</h1>
+        <PageHeading backHref="/alg/3bld">{tr(title)}</PageHeading>
       </div>
 
       <div className="bld-section">

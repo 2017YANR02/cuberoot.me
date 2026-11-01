@@ -136,7 +136,8 @@ describe('复原后自动复盘', () => {
   it('弹窗首帧显示前不解锁手势，也不允许智能魔方起下一把', () => {
     const detail = read(SOLVE_MODAL);
     const sharedDetail = read(DETAIL_MODAL);
-    expect(src).toMatch(/canStartAttempt:[\s\S]{0,100}!autoRecapInputBlockedRef\.current/);
+    const canStartAttempt = src.match(/canStartAttempt: \(\) =>([\s\S]*?),\n    getPhase:/)?.[1];
+    expect(canStartAttempt).toContain('&& !autoRecapInputBlockedRef.current');
     expect(src).toMatch(/onDisplayed=\{modalSolve\.autoRecap \? markAutoRecapDisplayed : undefined\}/);
     expect(detail).toMatch(/onEntered=\{onDisplayed\}/);
     expect(detail).not.toContain('requestAnimationFrame');

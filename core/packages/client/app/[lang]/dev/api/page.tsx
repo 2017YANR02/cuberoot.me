@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
@@ -67,13 +68,14 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   CI red here = a newly-mounted route is undocumented: add its endpoints below,
 //   then add the file stem to this list.
 //   career_applications account_auth account_face admin_assistant admin_dashboard admin_disk alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps app_boot_diagnostics article auth battle_rooms calendar cn_comp_names colpi
-//   chat comp_follows creator_gallery cube cubeopt_solve cubing_live documents downloads drive feedback forum friends geo health historical_ranks pb private_vault
+//   chat comp_absences comp_follows creator_gallery cube cubeopt_solve cubing_live documents downloads drive feedback forum friends geo health historical_ranks pb private_vault
 //   membership membership_benefits membership_apple membership_google membership_subscriptions music nav_sites pets nemesizer notifications ops remote_access dev_preview page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth recon_intake recon_capture scramble_555 teacher_directory teaching teaching_saas
 //   smart_cube_macs scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wca_teams wca_training_institutions wca_translations wechat_jssdk wechat_pc_opensdk wiki
 //   platform_competitions platform_competition_attempts platform_competition_evidence platform_competition_settlements platform_competition_device_reports platform_organizer_applications platform_refunds
 //   enterprise_verification contests workspace app_releases
 //   mcp mcp_oauth onboarding timer_replay_shares site_assistant site_assistant_shares cube_agents
+//   membership_gallery
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
   { d: 'recon', m: 'GET', p: '/v1/recon-captures/status', g: 'admin', c: 'no-store', zh: '上传前核对采集服务、同库 Drive 及当前身份', en: 'Check capture service, same-database Drive and identity before upload' },
@@ -212,8 +214,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'auth', m: 'POST', p: '/v1/auth/unlink', g: 'login', zh: '解绑一个登录方式(拒绝最后一个)', en: 'Unlink a login method (not the last)' },
   { d: 'auth', m: 'POST', p: '/v1/auth/account/merge/code', g: 'login', c: 'no-store', zh: '核对必填 expectedUid 后为保留账号生成 10 分钟一次性合并码', en: 'Require matching expectedUid, then issue a 10-minute single-use merge code for the account to keep' },
   { d: 'auth', m: 'POST', p: '/v1/auth/account/merge', g: 'login', c: 'no-store', zh: '核对必填 expectedSourceUid 后，把当前账号事务合并进合并码对应的保留账号', en: 'Require matching expectedSourceUid, then transactionally merge into the account named by the merge code' },
-  { d: 'auth', m: 'GET', p: '/v1/auth/profile', g: 'login', c: 'no-store', zh: '读取当前账号的私密姓名、生日、性别和国籍资料', en: 'Read the current account’s private name, birth date, gender, and nationality profile' },
-  { d: 'auth', m: 'POST', p: '/v1/auth/profile', g: 'login', c: 'no-store', zh: '修改当前账号用户名、头像或私密基本资料；用户名和头像改动换发 JWT', en: 'Update the current account username, avatar, or private basic profile; username and avatar changes reissue the JWT' },
+  { d: 'auth', m: 'GET', p: '/v1/auth/profile', g: 'login', c: 'no-store', zh: '读取当前账号的私密基本资料和桌宠选择', en: 'Read the current account’s private basic profile and companion selection' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/profile', g: 'login', c: 'no-store', zh: '修改当前账号用户名、头像、私密基本资料或桌宠选择（需 expectedUid）；用户名和头像改动换发 JWT', en: 'Update the current account username, avatar, private basic profile, or companion selection (requires expectedUid); username and avatar changes reissue the JWT' },
   { d: 'auth', m: 'GET', p: '/v1/auth/admin/users', g: 'admin', c: 'no-store', zh: '用户注册统计、绑定方式与分页明细', en: 'User registration stats, linked methods, and paginated records' },
   { d: 'auth', m: 'GET', p: '/v1/auth/admin/users/:userId', g: 'admin', c: 'no-store', zh: '读取指定 CubeRoot 用户资料', en: 'Read a CubeRoot user profile' },
   { d: 'auth', m: 'POST', p: '/v1/auth/admin/users/:userId/profile', g: 'admin', c: 'no-store', zh: '修改未关联 WCA 的用户名称', en: 'Update the name of a user not linked to WCA' },
@@ -354,6 +356,9 @@ const ENDPOINTS: Ep[] = [
   // ---- comp ----
   { d: 'comp', m: 'GET', p: '/v1/comp/announced', g: 'public', zh: '今日公示比赛', en: "Today's announced comps" },
   { d: 'comp', m: 'GET', p: '/v1/cn-comp-names', g: 'public', c: 'cdn', zh: '中国比赛中文名', en: 'Chinese comp names' },
+  { d: 'comp', m: 'GET', p: '/v1/comp/:compId/absences', g: 'public', c: 'no-store', zh: '管理员确认的不参加名单', en: 'Administrator-confirmed absences' },
+  { d: 'comp', m: 'PUT', p: '/v1/comp/:compId/absences/:wcaId', g: 'admin', c: 'no-store', zh: '标记选手不参加比赛', en: 'Mark a competitor absent' },
+  { d: 'comp', m: 'DELETE', p: '/v1/comp/:compId/absences/:wcaId', g: 'admin', c: 'no-store', zh: '撤销不参加标记', en: 'Restore a competitor' },
   { d: 'comp', m: 'GET', p: '/v1/comp/follows', g: 'login', zh: '我关注的比赛', en: 'My followed comps' },
   { d: 'comp', m: 'PUT', p: '/v1/comp/follows/:compId', g: 'login', zh: '关注比赛', en: 'Follow a comp' },
   { d: 'comp', m: 'DELETE', p: '/v1/comp/follows/:compId', g: 'login', zh: '取消关注', en: 'Unfollow' },
@@ -769,7 +774,12 @@ const ENDPOINTS: Ep[] = [
   { d: 'membership', m: 'GET', p: '/v1/membership/members', g: 'public', c: 'no-store', zh: '首页公开会员名单', en: 'Public homepage member list' },
   { d: 'membership', m: 'GET', p: '/v1/membership/profile/:wcaId', g: 'public', zh: '有效会员的公开个人资料和图片', en: 'Public profile and images for an active member' },
   { d: 'membership', m: 'GET', p: '/v1/membership/me', g: 'login', zh: '我的会员状态', en: 'My membership' },
-  { d: 'membership', m: 'PUT', p: '/v1/membership/me/profile', g: 'login', c: 'no-store', zh: '修改公开个人资料、图片和首页展示开关', en: 'Update public profile, images, and homepage visibility' },
+  { d: 'membership', m: 'PUT', p: '/v1/membership/me/profile', g: 'login', c: 'no-store', zh: '修改个人介绍、私密照片和首页展示开关', en: 'Update profile text, private photos, and homepage visibility' },
+  { d: 'membership', m: 'GET', p: '/v1/membership/gallery', g: 'public', c: 'no-store', zh: '已审核公开的会员照片', en: 'Approved public member photos' },
+  { d: 'membership', m: 'GET', p: '/v1/membership/gallery/mine', g: 'login', c: 'no-store', zh: '本人照片的公开状态', en: 'Own photo publication status' },
+  { d: 'membership', m: 'PUT', p: '/v1/membership/gallery/:id/visibility', g: 'login', c: 'no-store', zh: '申请公开、撤回或改为私密', en: 'Request publication, withdraw, or make private' },
+  { d: 'membership', m: 'GET', p: '/v1/membership/gallery/review', g: 'admin', c: 'no-store', zh: '照片公开申请队列', en: 'Photo publication review queue' },
+  { d: 'membership', m: 'POST', p: '/v1/membership/gallery/:id/review', g: 'admin', c: 'no-store', zh: '通过或拒绝公开申请', en: 'Approve or decline photo publication' },
   { d: 'membership', m: 'PUT', p: '/v1/membership/me/contact', g: 'login', zh: '改联系方式', en: 'Update contact' },
   { d: 'membership', m: 'POST', p: '/v1/membership/orders', g: 'login', zh: '创建订单', en: 'Create order' },
   { d: 'membership', m: 'GET', p: '/v1/membership/orders/:no', g: 'login', zh: '查订单状态', en: 'Order status' },
@@ -916,6 +926,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'documents', m: 'POST', p: '/v1/documents/import', g: 'admin', c: 'no-store', zh: '把 DOCX 导入协作文档', en: 'Import a DOCX as a collaborative document' },
   { d: 'documents', m: 'GET', p: '/v1/documents/people', g: 'login', c: 'no-store', zh: '搜索可邀请的站内用户', en: 'Search registered users to invite' },
   { d: 'documents', m: 'GET', p: '/v1/documents/:id', g: 'login', c: 'no-store', zh: '文档元数据、本人权限与成员', en: 'Document metadata, my role, and members' },
+  { d: 'documents', m: 'DELETE', p: '/v1/documents/:id', g: 'login', c: 'no-store', zh: '仅所有者永久删除文档或表格，并清理成员、订阅及在线连接', en: 'Owner-only permanent deletion of a document or spreadsheet, including members, subscriptions, and live connections' },
   { d: 'documents', m: 'PATCH', p: '/v1/documents/:id', g: 'login', c: 'no-store', zh: '所有者或管理员修改文档标题', en: 'Owner or admin updates the document title' },
   { d: 'documents', m: 'PUT', p: '/v1/documents/:id/subscription', g: 'login', c: 'no-store', zh: '订阅或取消订阅协作资源修改', en: 'Subscribe or unsubscribe from collaborative-resource changes' },
   { d: 'documents', m: 'POST', p: '/v1/documents/:id/seen', g: 'login', c: 'no-store', zh: '记录本人最后查看时间', en: 'Record the current user’s last-seen timestamp' },
@@ -974,9 +985,10 @@ const ENDPOINTS: Ep[] = [
   { d: 'content', m: 'GET', p: '/v1/article', g: 'public', c: 'validate', zh: '文章列表', en: 'Article list' },
   { d: 'content', m: 'GET', p: '/v1/article/:slug', g: 'public', c: 'no-store', zh: '单篇文章', en: 'Single article' },
   { d: 'content', m: 'GET', p: '/v1/article/me', g: 'login', zh: '我的文章', en: 'My articles' },
-  { d: 'content', m: 'GET', p: '/v1/article/img/:id', g: 'public', zh: '文章配图', en: 'Article image' },
-  { d: 'content', m: 'GET', p: '/v1/article/img/:id/thumb/:width', g: 'public', zh: '图库缩略图（512/1024，v=1），暂时失败返回原图', en: 'Gallery thumbnail (512/1024, v=1), with original fallback' },
+  { d: 'content', m: 'GET', p: '/v1/article/img/:id', g: 'public', zh: '文章配图；图库照片按可见性鉴权且不缓存', en: 'Article image; gallery photos require visibility access and are never cached' },
+  { d: 'content', m: 'GET', p: '/v1/article/img/:id/thumb/:width', g: 'public', zh: '缩略图（512/1024，v=1）；图库照片与原图权限一致', en: 'Thumbnail (512/1024, v=1); gallery access matches the original' },
   { d: 'content', m: 'POST', p: '/v1/article/img', g: 'login', zh: '上传配图', en: 'Upload image' },
+  { d: 'content', m: 'POST', p: '/v1/article/img/gallery', g: 'login', c: 'no-store', zh: '上传默认私密的会员图库照片', en: 'Upload a private member gallery photo' },
   { d: 'content', m: 'POST', p: '/v1/article', g: 'login', zh: '发表文章', en: 'Publish article' },
   { d: 'content', m: 'PATCH', p: '/v1/article/:slug', g: 'login', zh: '编辑文章', en: 'Edit article' },
   { d: 'content', m: 'DELETE', p: '/v1/article/:slug', g: 'login', zh: '删除文章', en: 'Delete article' },
@@ -1321,15 +1333,15 @@ export default function ApiCatalogPage() {
                   const params = pathParams(e.p);
                   return (
                     <li key={id} className={`api-row${isOpen ? ' is-open' : ''}`}>
-                      <button type="button" className="api-row-main" onClick={() => toggle(id)} aria-expanded={isOpen}>
+                      <MoreToggle type="button" className="api-row-main" onClick={() => toggle(id)} expanded={isOpen}>
                         <span className="api-method" data-method={e.m}>{e.m}</span>
                         <code className="api-path">{e.p}</code>
                         <span className="api-row-right">
                           <span className="api-gate" data-gate={e.g}>{GATE_LABEL[e.g][lang]}</span>
                           {e.c && <span className="api-cache" data-cache={e.c}>{CACHE_LABEL[e.c][lang]}</span>}
-                          <span className="api-caret" aria-hidden="true">▸</span>
+
                         </span>
-                      </button>
+                      </MoreToggle>
                       <p className="api-summary">{e[lang]}</p>
                       {isOpen && (
                         <div className="api-detail">

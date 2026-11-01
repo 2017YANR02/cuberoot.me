@@ -75,6 +75,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
   const [count, setCount] = useState<number>(5);
   const [generated, setGenerated] = useState<Record<string, string[]>>({});
   const [pasteTexts, setPasteTexts] = useState<Record<string, string>>({});
+  const [failedEvents, setFailedEvents] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [genProgress, setGenProgress] = useState<{ done: number; total: number } | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -183,6 +184,11 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
       ? new Set<string>()
       : new Set(eventsOrdered.filter((ev) => ev in existing && !toGenerate.includes(ev)));
 
+    if (toGenerate.length === 0) {
+      setLoading(false);
+      setGenProgress(null);
+    }
+
     // 移除已经不在 eventsOrdered 里的旧项目(用户点 ×) — 同步更新 generated/timing。
     const removedKeys = Object.keys(existing).filter((ev) => !eventsOrdered.includes(ev));
     if (toGenerate.length === 0 && removedKeys.length > 0) {
@@ -203,6 +209,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
 
     const myId = ++reqIdRef.current;
     setLoading(true);
+    setFailedEvents((prev) => prev.filter((ev) => toKeep.has(ev)));
     setCopiedKey(null);
     if (fullRegen) {
       setGenerated({});
@@ -222,30 +229,44 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
     for (const ev of toGenerate) evDurations[ev] = [];
 
     const batchStart = performance.now();
-    const promises: Promise<void>[] = [];
-    for (const ev of toGenerate) {
-      for (let i = 0; i < count; i++) {
-        const t0 = performance.now();
-        if (!(ev in evWallStart) || t0 < evWallStart[ev]) evWallStart[ev] = t0;
-        promises.push(
-          (isNativeScrambleEvent(ev)
+    const promises = toGenerate.map(async (ev) => {
+      try {
+        for (let i = 0; i < count; i++) {
+          if (reqIdRef.current !== myId) return;
+          const t0 = performance.now();
+          if (!(ev in evWallStart)) evWallStart[ev] = t0;
+          const s = await (isNativeScrambleEvent(ev)
             ? nativeScramble(ev)
             : isCstimerEvent(ev) && ev !== 'redi_cube'
               ? cstimerScramble(ev)
               : isShapeModEvent(ev)
                 ? tnoodleRandomScramble(shapeModSourceEvent(ev)!)
-                : tnoodleRandomScramble(ev)).then((s) => {
-            const t1 = performance.now();
-            evWallEnd[ev] = !(ev in evWallEnd) || t1 > evWallEnd[ev] ? t1 : evWallEnd[ev];
-            evDurations[ev].push(t1 - t0);
-            if (reqIdRef.current !== myId) return;
-            if (s) buckets[ev].push(s); // store raw; sq1 formatting applied at display (scramblesByEvent)
-            done += 1;
-            setGenProgress({ done, total });
-          }),
-        );
+                : tnoodleRandomScramble(ev));
+          if (reqIdRef.current !== myId) return;
+          if (!s?.trim()) throw new Error('Empty scramble');
+          const t1 = performance.now();
+          evWallEnd[ev] = t1;
+          evDurations[ev].push(t1 - t0);
+          buckets[ev].push(s);
+          done += 1;
+          setGenProgress({ done, total });
+        }
+        // Publish complete projects immediately, even while another is slow.
+        setGenerated((prev) => ({ ...prev, [ev]: buckets[ev] }));
+      } catch (error) {
+        if (reqIdRef.current !== myId) return;
+        console.error('[gen/practice] scramble failed', ev, error);
+        done += count - buckets[ev].length;
+        delete buckets[ev]; // Never export a silently incomplete project.
+        setFailedEvents((prev) => [...prev.filter((id) => id !== ev), ev]);
+        setGenerated((prev) => {
+          const next = { ...prev };
+          delete next[ev];
+          return next;
+        });
+        setGenProgress({ done, total });
       }
-    }
+    });
 
     (async () => {
       await Promise.all(promises);
@@ -285,6 +306,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
       setLoading(false);
       setGenProgress(null);
     });
+    return () => { reqIdRef.current++; };
   }, [subMode, eventsKey, count, tick, rediMode, ivyMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const regenerate = () => setTick((n) => n + 1);
@@ -490,6 +512,12 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
       </div>
         </div>
       </div>
+
+      {subMode === 'batch' && failedEvents.some((ev) => events.has(ev)) && (
+        <p role="alert">{t('生成失败，可重新生成：', 'Generation failed; regenerate to retry: ')}
+          {failedEvents.filter((ev) => events.has(ev)).map((ev) => eventDisplayName(ev, isZh)).join(', ')}
+        </p>
+      )}
 
       {/* 多项目时,view-selector 同比赛模式 — 切换当前展示哪个 sheet/paste 块 */}
       {eventsOrdered.length >= 2 && activeView && (

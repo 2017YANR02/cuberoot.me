@@ -25,7 +25,7 @@ export interface MirrorResultRow {
 // 决赛轮(含合并决赛 c / combined-b)的前三名才算奖牌 —— 与前端 podium.ts 同一条规则。
 // 口径实测:2017YANR02 按此得 1 银 3 铜,与官网 profile.medals 一致;而 wca_fs_medals
 // (fun-stats 那张)是另一套口径(2 银 5 铜),不能拿来填这个字段。
-const FINAL_ROUND_TYPES = new Set(['f', 'c', 'b']);
+export const FINAL_ROUND_TYPES = new Set(['f', 'c', 'b']);
 
 export function countMedals(results: MirrorResultRow[]): { gold: number; silver: number; bronze: number } {
   let gold = 0, silver = 0, bronze = 0;

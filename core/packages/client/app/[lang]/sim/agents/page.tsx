@@ -1,11 +1,12 @@
 'use client';
 
+import PageHeading from '@/components/PageHeading';
+import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ArrowUpRight, Check, Pause, Play, RotateCcw } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
-import HeaderToggles from '@/components/HeaderToggles';
-import BackHome from '@/components/BackHome';
+
 import { ClientLoadStatus } from '@/components/StartupStatus';
 import { useT } from '@/hooks/useT';
 import type { CubeAgentRun } from '@cuberoot/shared/cube-agents';
@@ -77,9 +78,8 @@ export default function AgentReplayPage() {
 
   return (
     <main className="agents-page">
-      <header className="agents-topbar"><BackHome prefetch={false} /><HeaderToggles /></header>
       <div className="agents-heading">
-        <h1>{t('一起，解开魔方。', 'A puzzle. A team. A solution.')}</h1>
+        <PageHeading backHref="/sim">{t('一起，解开魔方。', 'A puzzle. A team. A solution.')}</PageHeading>
         <p>{t('千问与 DeepSeek，同一个二阶魔方。各派四个代理，看看谁先找到答案。', 'Qwen and DeepSeek. The same 2×2 cube. Four agents on each team, searching for a solution.')}</p>
       </div>
       <p className="agents-run-controls">{t('本页回放一次真实实验；播放不会发起模型请求。两组均使用非思考模式，每个代理最多六次尝试。', 'A recorded real experiment. Playback makes no model requests. Both teams use non-thinking mode, with up to six attempts per agent.')}</p>
@@ -140,7 +140,7 @@ export default function AgentReplayPage() {
         <p>{t('数值为本轮实测结果，回放只重播转动。模型只看到角块状态与转动规则，不会得到打乱序列或内置求解器的答案。费用按 API 返回的 tokens 和人民币原价估算，包含协调者与四个代理；DeepSeek 按高峰价计算，未扣缓存、空闲时段折扣或免费额度，实际账单以服务商为准。单轮结果不代表整体模型能力。', 'Metrics show this run’s measured results; replay replays moves only. Models receive corner states and move rules, never the scramble or a solver answer. CNY estimates include the coordinator and four agents at list prices, using DeepSeek peak rates before cache, off-peak discounts or free credits; provider billing is authoritative. One run does not establish overall model quality.')}</p>
         <a href={REFERENCE_URL} target="_blank" rel="noopener noreferrer">{t('视觉参考', 'Visual reference')}<ArrowUpRight size={14} /></a>
       </div>
-      {run && <details className="agents-log"><summary>{t('查看本轮记录', 'Inspect this run')}</summary>
+      {run && <details className="agents-log"><MoreToggle as="summary">{t('查看本轮记录', 'Inspect this run')}</MoreToggle>
         <p>{t('打乱', 'Scramble')}: <code>{run.scramble}</code> · {run.startedAt}</p>
         {run.teams.map(team => <div key={team.model}><h3>{team.name}</h3>
           <p>{team.model} · {team.modelCalls} {t('次模型调用', 'model calls')} · {team.inputTokens} {t('输入', 'input')} / {team.outputTokens} {t('输出', 'output')} tokens</p>

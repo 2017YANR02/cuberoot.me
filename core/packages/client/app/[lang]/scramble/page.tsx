@@ -6,7 +6,7 @@
  * 桌面分为两张主卡、两张中卡和四张专业工具卡；窄屏按同一顺序排列为两列。
  */
 import Link from '@/components/AppLink';
-import BackHome from '@/components/BackHome';
+import PageHeading from '@/components/PageHeading';
 import { useT } from "@/hooks/useT";
 import { tr } from '@/i18n/tr';
 import type { CSSProperties } from 'react';
@@ -35,10 +35,9 @@ export default function ScrambleHubPage() {
 
   return (
     <div className="scramble-hub-page">
-      <BackHome />
       <style>{INLINE_CSS}</style>
       <header className="scramble-hub-header">
-        <h1>{t('打乱', 'Scramble')}</h1>
+        <PageHeading>{t('打乱', 'Scramble')}</PageHeading>
       </header>
       <div className="scramble-hub-grid">
         {CARDS.map((c) => (
@@ -87,12 +86,6 @@ const INLINE_CSS = `
 }
 .scramble-hub-page .scramble-hub-header {
   margin-bottom: 1.5rem;
-}
-.scramble-hub-page .scramble-hub-header h1 {
-  margin: 0;
-  font-size: 2rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
 }
 .scramble-hub-page .scramble-hub-grid {
   display: grid;
@@ -229,7 +222,6 @@ const INLINE_CSS = `
 }
 @media (max-width: 480px) {
   .scramble-hub-page { padding: 1rem 0.75rem 2rem; }
-  .scramble-hub-page .scramble-hub-header h1 { font-size: 1.5rem; }
   .scramble-hub-page .scramble-hub-card { padding: 1rem; }
   .scramble-hub-page .scramble-hub-card--primary .scramble-hub-card-title { font-size: 1.375rem; }
   .scramble-hub-page .scramble-hub-card--secondary .scramble-hub-card-title { font-size: 1.125rem; }

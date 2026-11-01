@@ -1,11 +1,11 @@
+import { TimerResultsSessionBar } from '@cuberoot/timer-ui';
+import { AutoRecapDismissGesture } from '@cuberoot/shared/timer/reconstruct/recap';
 import { timerTrainingSummaries } from '@cuberoot/timer-ui';
 import { createPortal } from 'react-dom';
 import { useTimerWcaCompetitionFilters, TimerPracticeContentPicker, TimerPracticeMethodPicker, TimerResultsTabs, TimerSoloLayoutEditor } from '@cuberoot/timer-ui';
 import { timerPracticeContents, selectedTimerPracticeContent, type TimerPracticeContent } from '@cuberoot/shared/timer';
 import { SiteCorners } from "@2017yanr02/continuous-corners/react";
 import { shareOrDownloadBackup } from './file-export';
-import { InstalledUpdateNotice } from './AndroidUpdateNotice';
-import { UURemotePanel } from './UURemotePanel';
 import { TimerSoloPage, timerSoloModalState, useTimerSoloCompactLayout } from '@cuberoot/timer-ui/TimerSoloPage';
 import { InstalledBleHost, installedBleRequestPort } from './installed-ble-host';
 import { pickInstalledBleDevice, type InstalledBlePicker } from './installed-ble-picker';
@@ -228,7 +228,6 @@ import {
   TimerWcaScrambleProgress,
   TimerByStepsConfig,
   TimerScrambleSourceSelect,
-  TimerSessionSwitcher,
   timerSessionSwitcherLabels,
   TimerStatRail,
   TimerBooleanSettingRow,
@@ -392,7 +391,7 @@ function applyPreferences(settings: TimerStoreSettings): void {
 }
 
 
-export function App({ host }: { host: InstalledAppHost }) {
+export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark?: ReactNode }) {
   const [toolsBlePicker, setToolsBlePicker] = useState<InstalledBlePicker | null>(null);
   const toolsBlePickerRef = useRef(toolsBlePicker);
   toolsBlePickerRef.current = toolsBlePicker;
@@ -517,9 +516,11 @@ export function App({ host }: { host: InstalledAppHost }) {
   const [historyDetail, setHistoryDetail] = useState<{
     autoFocusComment: boolean;
     autoRecap: boolean;
+    closeRequested?: boolean;
     context: string;
     solveId: string;
   } | null>(null);
+  const autoRecapDismissGestureRef = useRef(new AutoRecapDismissGesture());
   const historyDetailRef = useRef(historyDetail);
   historyDetailRef.current = historyDetail;
   const closeDeviceOverlayRef = useRef<() => void>(() => {});
@@ -528,6 +529,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   const [fullscreen, setFullscreen] = useState(false);
   const fullscreenRef = useRef(fullscreen);
   const [manualEntryOpen, setManualEntryOpen] = useState(false);
+  const [historyQuery, setHistoryQuery] = useState('');
   const historyWorkspaceRef = useRef<TimerHistoryWorkspaceHandle>(null);
   const [historyTab, setHistoryTab] = useState<'history' | 'stats'>('history');
   const [statsOpen, setStatsOpen] = useState(false);
@@ -1719,6 +1721,7 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   const closeHistorySolveDetail = useCallback((expected?: typeof historyDetail) => {
     if (expected && historyDetailRef.current !== expected) return;
+    autoRecapDismissGestureRef.current.reset();
     const active = document.activeElement;
     if (active instanceof HTMLTextAreaElement
       && active.dataset.historyActionId === 'solve.detail.comment') active.blur();
@@ -1733,6 +1736,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   }, []);
 
   const openHistorySolveDetail = useCallback((solve: Solve, autoFocusComment = false, autoRecap = false) => {
+    autoRecapDismissGestureRef.current.reset();
     const detail = { autoFocusComment, autoRecap, context: historyContext, solveId: solve.id };
     historyDetailRef.current = detail;
     setHistoryDetail(detail);
@@ -2348,6 +2352,30 @@ export function App({ host }: { host: InstalledAppHost }) {
   const attemptRef = useRef<MobileScrambleAttemptSnapshot | null>(null);
   const smartCubeAttemptProducerRef = useRef(new SmartCubeAttemptProducer());
   const smartCubeMoveSubscribersRef = useRef(new Set<(move: string, timestamp: number) => void>());
+  useEffect(() => {
+    const gesture = autoRecapDismissGestureRef.current;
+    if (!historyDetail?.autoRecap || historyDetail.context !== historyContext
+      || openOverlay !== TIMER_OVERLAY_IDS.solveDetail) {
+      gesture.reset();
+      return;
+    }
+    // Resizing does not remount the detail or fire onEntered again.
+    if (wideLayout) return;
+    const subscribers = smartCubeMoveSubscribersRef.current;
+    const onMove = (move: string) => {
+      const current = historyDetailRef.current;
+      if (!current?.autoRecap || current.context !== historyContext
+        || current.solveId !== historyDetail.solveId || current.closeRequested
+        || openOverlayRef.current !== TIMER_OVERLAY_IDS.solveDetail) return;
+      if (!gesture.observe(move)) return;
+      const next = { ...current, closeRequested: true };
+      historyDetailRef.current = next;
+      setHistoryDetail(next);
+    };
+    subscribers.add(onMove);
+    return () => { subscribers.delete(onMove); };
+  }, [wideLayout, historyDetail?.autoRecap, historyDetail?.context, historyDetail?.solveId, historyContext, openOverlay]);
+
   const smartCubeQuatRef = useRef<Quat | null>(null);
   const smartCubeLastFaceletsRef = useRef<string | null>(null);
   const smartCubeReferenceRef = useRef<Quat | null>(null);
@@ -3814,7 +3842,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   });
 
   if (!store && !loadError) {
-    return <main className="loading-screen"><strong>{copy.title}</strong></main>;
+    return <main className="loading-screen">{loadingMark ?? <strong>{copy.title}</strong>}</main>;
   }
 
   if (!store && loadError) {
@@ -3899,26 +3927,6 @@ export function App({ host }: { host: InstalledAppHost }) {
     />
   );
   const shellViewport = mobileShellViewportLayout(viewportHeight);
-  const viewHeader = (
-    <header className="app-titlebar">
-      <strong>{view === 'history' ? copy.history : copy.settings}</strong>
-      <button
-        aria-label={copy.close}
-        className="app-titlebar-close"
-        onClick={() => {
-          if (view === 'history') historyWorkspaceRef.current?.dismiss();
-          setView('timer');
-        }}
-        type="button"
-      ><X aria-hidden="true" size={20} /></button>
-      <span
-        aria-label={connection === 'checking' ? copy.checking : connection === 'online' ? copy.online : copy.offline}
-        className={`network network--${connection}`}
-        role="status"
-      />
-    </header>
-  );
-
   const solverHintPanel = activeEvent === '333' ? <Suspense fallback={null}>
     <StageSolverDialog scramble={scramble} language={language}
       sheetOpen={openOverlay === TIMER_OVERLAY_IDS.stageSolver} onSheetOpenChange={changeSolverSheet}
@@ -3970,9 +3978,7 @@ export function App({ host }: { host: InstalledAppHost }) {
         solves={solves}
         transport={host.print}
       />
-      {!dockHistory && view === 'history' && (
-        viewHeader
-      )}
+
 
 
 
@@ -4092,7 +4098,9 @@ export function App({ host }: { host: InstalledAppHost }) {
               )}}
         stage={{
           className: "mobile-timer-stage timer-view",
-          rankings: solves.length > 0 && <TimerRankBadge eventId={activeEvent} centis={rankCentis} type="single" country={rankCountry} isZh={language === 'zh'} scopes={store!.settings.rankScopes} wcaId={rankWcaId} host={timerRankHost} />,
+          rankings: store!.settings.rankScopes.length > 0 && rankVisible && solves.length > 0
+            ? <TimerRankBadge eventId={activeEvent} centis={rankCentis} type="single" country={rankCountry} isZh={language === 'zh'} scopes={store!.settings.rankScopes} wcaId={rankWcaId} host={timerRankHost} />
+            : undefined,
           fullscreen: fullscreen,
           source: <>
                 {scrambleSource === 'wca' && timerSupportsRealWcaScrambles(activeEvent) && (
@@ -4566,8 +4574,6 @@ children: <>
               hidden={view !== surface}
               key={surface}
             >
-              {surface === 'account' && <InstalledUpdateNotice host={host} language={language} />}
-              {surface === 'account' && <UURemotePanel host={host} language={language} />}
               {showState && (
                 <div className="web-surface-state" role={status === 'error' ? 'alert' : 'status'}>
                   <p>{stateLabel}</p>
@@ -4626,18 +4632,14 @@ children: <>
         })}
 
         {view === 'history' && !liveSolutionPanel && (
-          <section className="history-view timer-workspace-panel" aria-labelledby="history-title" data-no-timer>
+          <section className="history-view timer-workspace-panel" aria-label={copy.history} data-no-timer>
             <TimerResultsTabs value={historyTab === 'history' ? 'times' : 'stats'} language={language}
               onChange={tab => { historyWorkspaceRef.current?.dismiss(); setHistoryTab(tab === 'times' ? 'history' : 'stats'); }}
               onClose={() => { historyWorkspaceRef.current?.dismiss(); setView('timer'); }} />
-            <div className="timer-workspace-panel-body">
-            <header className="section-heading">
-              <h1 id="history-title">{copy.history}</h1>
-              <span>{solves.length}</span>
-            </header>
-            <TimerSessionSwitcher
+            <div className="timer-workspace-panel-body timer-results-panel-body">
+            {historyTab === 'history' && <TimerResultsSessionBar
+              language={language} query={historyQuery} onQueryChange={setHistoryQuery}
               activeSessionId={store!.database.activeSessionId}
-              className="mobile-session-switcher"
               event={activeEvent}
               host={sessionHost}
               labels={sessionLabels}
@@ -4646,14 +4648,14 @@ children: <>
               open={openOverlay === TIMER_OVERLAY_IDS.sessionSwitcher}
               sessions={store!.database.sessions}
               viewportBottomInset={primaryNavBottomInset}
-            />
+            />}
             {historyTab !== 'history' && <TimerStatisticsWorkspace compact view={historyTab} language={language} event={activeEvent} solves={solves}
               labels={timerStatsPanelLabels(language)} rollingColumns={store!.settings.statsRollingColumns}
               onRollingColumnsChange={statsRollingColumns => updateSettings({statsRollingColumns})}
               sessionData={store!.database.sessions.map(session => ({session,byEvent:store!.database.dataBySession[session.id] ?? {}}))}
               activeSessionId={store!.database.activeSessionId} onOpenFull={() => setStatsOpen(true)} viewportBottomInset={primaryNavBottomInset} />}
             <div hidden={historyTab !== 'history'}>
-            <TimerHistoryWorkspace onBlockingChange={setHistoryModalOpen} quickMenuOpen={openOverlay === TIMER_OVERLAY_IDS.historyQuickMenu} onQuickMenuOpenChange={handleTimerOverlayOpenChange} ref={historyWorkspaceRef} historyContextKey={historyContext} solves={solves} isZh={language === 'zh'}
+            <TimerHistoryWorkspace minimal searchQuery={historyQuery} onSearchQueryChange={setHistoryQuery} onBlockingChange={setHistoryModalOpen} quickMenuOpen={openOverlay === TIMER_OVERLAY_IDS.historyQuickMenu} onQuickMenuOpenChange={handleTimerOverlayOpenChange} ref={historyWorkspaceRef} historyContextKey={historyContext} solves={solves} isZh={language === 'zh'}
               dateRangeLabels={dateRangeLabels} rollingPickerLabels={rollingPickerLabels}
               rollingStatColumns={store!.settings.statsRollingColumns}
               onRollingColumnsChange={statsRollingColumns => updateSettings({statsRollingColumns})}
@@ -4678,6 +4680,8 @@ children: <>
               && historyDetailIndex >= 0 && (
               <TimerSolveDetailModal
                 autoFocusComment={historyDetail?.autoFocusComment}
+                closeRequested={historyDetail?.closeRequested}
+                onEntered={historyDetail?.autoRecap ? () => autoRecapDismissGestureRef.current.markDisplayed() : undefined}
                 index={historyDetailIndex}
                 key={historyDetailSolve.id}
                 localize={(text) => text[language]}

@@ -1,4 +1,6 @@
 'use client';
+import PageHeading from '@/components/PageHeading';
+import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from '@/components/AppLink';
 import WcaAuth from '@/components/WcaAuth';
@@ -88,10 +90,10 @@ export default function RegressionResults() {
   const selected = cases.find(item => item.id === caseId) ?? cases[0];
   const selectedResult = run?.cases.find(item => item.id === selected?.id);
   const stale = !!run && !!history?.currentFingerprint && run.fingerprint !== history.currentFingerprint;
-  if (!user || !admin) return <main className="gt-page"><h1>{tr({ zh: '复盘测试', en: 'Reconstruction tests' })}</h1><p>{tr({ zh: '请使用管理员账号查看检查记录。', en: 'Sign in as an administrator to view test history.' })}</p><WcaAuth /></main>;
+  if (!user || !admin) return <main className="gt-page"><PageHeading backHref="/recon/ground-truth">{tr({ zh: '复盘测试', en: 'Reconstruction tests' })}</PageHeading><p>{tr({ zh: '请使用管理员账号查看检查记录。', en: 'Sign in as an administrator to view test history.' })}</p><WcaAuth /></main>;
   return <main className="gt-page">
     <header className="gt-header"><div className="gt-title-row"><div>
-      <h1>{tr({ zh: '智能魔方回归测试', en: 'Smart cube regression tests' })}</h1>
+      <PageHeading backHref="/recon/ground-truth">{tr({ zh: '智能魔方回归测试', en: 'Smart cube regression tests' })}</PageHeading>
       <p>{tr({ zh: '已确认启用的样本统一参加每次全量回归；待验收样本保留在收录队列。', en: 'All confirmed active samples participate in every full regression run. Samples awaiting review remain in the intake queue.' })}</p>
     </div><button className="gt-refresh" type="button" disabled={loading} onClick={() => { attempted.current.clear(); void load(); }}>{tr({ zh: '刷新', en: 'Refresh' })}</button></div>
     {history?.scope === 'local' && <p className="gt-run-note">{tr(syncState === 'done' ? { zh: '本机记录已同步，线上也可查看。', en: 'Local records synchronized and available online.' } : syncState === 'failed' ? { zh: '本机记录已保存，尚未同步到线上。服务上线或连接恢复后，刷新会重试。', en: 'Saved locally; cloud sync is pending. Refresh to retry when the service is available.' } : { zh: '正在读取本机检查记录。', en: 'Reading local check records.' })}</p>}
@@ -115,7 +117,7 @@ export default function RegressionResults() {
       <span>{tr({ zh: `程序检查：${run.passed} 项通过，${run.failed} 项失败，${run.skipped ?? 0} 项跳过`, en: `Program checks: ${run.passed} passed, ${run.failed} failed, ${run.skipped ?? 0} skipped` })}</span>
       <span>{tr({ zh: '代码版本', en: 'Revision' })}: {run.commit.slice(0, 10) || '—'}{run.dirty && tr({ zh: ' + 本地修改', en: ' + local changes' })} · {run.fingerprint.slice(0, 12)}</span>
       {stale && <p className="gt-warning">{tr({ zh: '这次检查后代码又改过了；此结果不能代表当前代码。', en: 'Code changed after this run; this result does not verify the current code.' })}</p>}
-      {!!run.errors.length && <details><summary>{tr({ zh: '查看本次检查错误', en: 'View run errors' })}</summary><pre className="gt-run-errors">{run.errors.join('\n\n')}</pre></details>}
+      {!!run.errors.length && <details><MoreToggle as="summary">{tr({ zh: '查看本次检查错误', en: 'View run errors' })}</MoreToggle><pre className="gt-run-errors">{run.errors.join('\n\n')}</pre></details>}
     </div>}
     <div className="gt-workbench"><section className="gt-candidates" aria-label={tr({ zh: '智能魔方样例', en: 'Smart cube cases' })}>
       {cases.map(sample => <button type="button" key={sample.id} className={`gt-candidate${selected?.id === sample.id ? ' is-selected' : ''}`} aria-pressed={selected?.id === sample.id} onClick={() => setCaseId(sample.id)}>

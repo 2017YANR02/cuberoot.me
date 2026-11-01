@@ -7,7 +7,7 @@ import { formatMs } from '@cuberoot/shared/timer/stats';
 import { timerEventNxnSize } from '@cuberoot/shared/timer/event-catalog';
 import type { ReconstructLocalize } from './ReconstructHost';
 import type { AnalysisSnapshot } from './analysis-protocol';
-import type { ReconTextResult } from '@cuberoot/shared/timer/reconstruct/recon-text';
+import type { TrainingStageMetrics, ReconTextResult } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import type { MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
 import { gradeForDelta } from '@cuberoot/shared/timer/reconstruct/reference';
 import type { ReferenceResult } from '@cuberoot/shared/timer/reconstruct/reference';
@@ -69,7 +69,7 @@ export function reportSummary(solve:Solve,summary:{stm:number;tps:number;fluency
 
 export function reportTrainingSummary(solve: Solve,
   metrics: NonNullable<ReturnType<typeof trainingRepetitionMetrics>>,
-  statistics: ReturnType<typeof trainingCaseStatistics>, tr: ReconstructLocalize): ReportNode {
+  statistics: ReturnType<typeof trainingCaseStatistics>, tr: ReconstructLocalize, stages?: TrainingStageMetrics[]): ReportNode {
   const metric = (id: string, label: string, ms: number) => groupNode(id, [
     { ...textNode(id + '-label', label, 'rc-summary-label'), tag: 'dt' },
     { ...textNode(id + '-value', `${sec(ms)} s`, 'rc-summary-big'), tag: 'dd' },
@@ -80,7 +80,16 @@ export function reportTrainingSummary(solve: Solve,
       Boolean(solve.caseId) && textNode('case', solve.caseId!, 'rc-training-case'),
       solve.penalty !== 'ok' && textNode('penalty', solve.penalty, 'rc-summary-pen'),
     ], 'rc-training-identity', 'row'),
-    { ...groupNode('training-times', [
+    stages ? { id: 'training-stages', kind: 'table', className: 'sa-table',
+      columns: [textNode('observation', tr({ zh: '观察', en: 'Observation' })),
+        textNode('execution', tr({ zh: '执行', en: 'Execution' })),
+        textNode('turns', tr({ zh: '步数', en: 'Moves' })), textNode('tps', 'TPS')],
+      rows: stages.map(stage => ({ id: stage.key, label: stage.label, cells: [
+        textNode('observation', `${sec(stage.observationMs)} s`),
+        textNode('execution', `${sec(stage.executionMs)} s`),
+        textNode('turns', String(stage.turns)), textNode('tps', stage.tps?.toFixed(2) ?? '–'),
+      ] })),
+    } : { ...groupNode('training-times', [
       metric('observation', tr({ zh: '观察', en: 'Observation' }), metrics.observationMs),
       metric('execution', tr({ zh: '执行', en: 'Execution' }), metrics.executionMs),
       metric('total', tr({ zh: '总时间', en: 'Total' }), metrics.totalMs),

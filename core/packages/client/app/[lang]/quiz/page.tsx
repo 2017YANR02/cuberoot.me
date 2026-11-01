@@ -17,7 +17,6 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useQueryState, parseAsStringLiteral } from 'nuqs';
 import { Shuffle, PenLine } from '@app-foundation/icons/lucide';
 import BackHome from '@/components/BackHome';
-import HeaderToggles from '@/components/HeaderToggles';
 import Link from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 import { fetchCommunityQuestions } from '@/lib/quiz-api';
@@ -68,7 +67,6 @@ function QuizPage() {
     <div className="quiz-page">
       <div className="quiz-head">
         <BackHome />
-        <HeaderToggles />
       </div>
 
       {running ? (

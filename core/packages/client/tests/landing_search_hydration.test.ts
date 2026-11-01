@@ -107,6 +107,7 @@ describe('LandingSearch placeholder hydration', () => {
   });
 
   it('shares the home draft and attachments, submits once, and retains a background reply when closed', async () => {
+    vi.stubGlobal('matchMedia', vi.fn(() => ({matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn()})));
     authState.user = { uid: 777, wcaId: '2017YANR02' };
     const owner = assistantOwner(authState.user);
     let finish!: (response: Response) => void;
@@ -150,7 +151,22 @@ describe('LandingSearch placeholder hydration', () => {
       expect(body).toMatchObject({ question: '解释 WIC', images });
       await inputText(host.querySelector('textarea[aria-label="继续提问"]')!, '下一问');
       await act(async () => assistantConversations.setOpen(owner, false));
-      await act(async () => finish(Response.json({ answer: '廉政委员会', sources: [] })));
+      await act(async () => {
+        assistantConversations.create(owner, 'other-chat');
+        assistantConversations.setOpen(owner, true);
+      });
+      await act(async () => finish(Response.json({ answer: '廉政委员会', sources: [] }, {headers: {'X-Assistant-Request-Id': 'background-reveal'}})));
+      const background = () => assistantConversations.read(owner).conversations.find(chat => chat.id === chatId)!;
+      expect(background().responding).toBe('writing');
+      expect(background().unreadReply).not.toBe(true);
+      for (let i = 0; i < 40 && !background().unreadReply; i++) {
+        await act(async () => { await vi.advanceTimersByTimeAsync(25); });
+      }
+      expect(background().responding).toBeUndefined();
+      expect(background().unreadReply).toBe(true);
+      expect(assistantConversations.read(owner).activeId).toBe('other-chat');
+      await act(async () => assistantConversations.select(owner, chatId));
+      expect(background().unreadReply).toBe(false);
       const saved = assistantConversations.read(owner).conversations.find(chat => chat.id === chatId)!;
       expect(saved.snapshot.draft).toBe('下一问');
       expect(saved.snapshot.turns.at(-1)?.result?.answer).toBe('廉政委员会');

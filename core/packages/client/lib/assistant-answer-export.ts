@@ -18,20 +18,12 @@ export function assistantSpokenText(text: string) {
     .replace(/[*_`#>|]/g, '').trim();
 }
 
-export async function downloadAssistantPdf(question: string, answer: string) {
-  const [{ jsPDF }, fonts] = await Promise.all([import('jspdf'), import('@/lib/pdf-fonts')]);
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-  await fonts.loadPdfFonts(doc);
-  const text = `${question}\n\n${answer}`;
-  if (fonts.hasCjk(text)) await fonts.ensureCjkFont(doc);
-  doc.setFont(fonts.hasCjk(text) ? fonts.FONT_CJK : fonts.FONT_SANS);
-  doc.setFontSize(11);
-  doc.setProperties({ title: question || 'CubeRoot', creator: 'CubeRoot' });
-  const lines: string[] = doc.splitTextToSize(text, 174);
-  let y = 20;
-  for (const line of lines) {
-    if (y > 277) { doc.addPage(); y = 20; }
-    doc.text(line, 18, y); y += 6;
-  }
-  doc.save('CubeRoot.pdf');
+export async function downloadAssistantPdf(question: string, result: AssistantAnswer, lang: 'zh' | 'en' = 'zh', createdAt?: number) {
+  const [{assistantPdfDocument}, {buildDocumentPdf, documentExportFilename, saveBlob}] = await Promise.all([
+    import('@/lib/assistant-pdf'), import('@/lib/document-export'),
+  ]);
+  const document = await assistantPdfDocument(question, assistantAnswerText({...result, artifacts:[]}, window.location.origin), lang, result.artifacts);
+  const date = createdAt ? new Intl.DateTimeFormat(lang === 'zh' ? 'zh-CN' : 'en-US', {dateStyle:'medium', timeStyle:'short'}).format(createdAt) : '';
+  const blob = await buildDocumentPdf(question || 'CubeRoot', document, {brand:true, subtitle:[lang === 'zh' ? '对话记录' : 'Conversation', date].filter(Boolean).join(' · ')});
+  saveBlob(blob, documentExportFilename(question || 'CubeRoot', 'pdf'));
 }

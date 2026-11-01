@@ -164,6 +164,7 @@ export const TIMER_SCRAMBLE_CAPABILITIES = Object.freeze({
   'ollcp': { kind: 'shared', provider: 'training-state' },
   'zzll': { kind: 'shared', provider: 'training-state' },
   'zbls': { kind: 'shared', provider: 'training-state' },
+  'cfzb': { kind: 'shared', provider: 'training-state' },
   'lse': { kind: 'shared', provider: 'training-state' },
   'l10p': { kind: 'shared', provider: 'training-state' },
   custom: { kind: 'manual' },

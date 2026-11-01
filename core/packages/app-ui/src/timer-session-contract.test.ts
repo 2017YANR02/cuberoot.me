@@ -6,7 +6,7 @@ const repository = readFileSync(new URL('./data/timer-repository.ts', import.met
 
 describe('Mobile timer session single-source contract', () => {
   it('mounts the real shared switcher in History with a snapshot-gated host', () => {
-    expect(app).toContain('<TimerSessionSwitcher');
+    expect(app).toContain('<TimerResultsSessionBar');
     expect(app).toMatch(
       /view === 'history'[\s\S]*?<TimerSessionSwitcher[\s\S]*?sessions=\{store!?\.database\.sessions\}/,
     );

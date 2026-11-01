@@ -1,5 +1,6 @@
 'use client';
 
+import PageHeading from '@/components/PageHeading';
 import Link from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import {
@@ -51,7 +52,7 @@ export default function Sq1PblNotationPage() {
     <main className="alg-root alg-notation-page">
       <div className="alg-notation-shell alg-mnemonic-shell">
         <header className="alg-notation-hero">
-          <h1>{t('SQ1 卡脑壳记号', 'Square-1 Karnaukh notation')}</h1>
+          <PageHeading backHref="/alg/sq1">{t('SQ1 卡脑壳记号', 'Square-1 Karnaukh notation')}</PageHeading>
           <nav className="alg-notation-links" aria-label={t('PBL 页面', 'PBL pages')}>
             <Link href="/alg/sq1/pbl" className="alg-notation-reference" prefetch={false}>
               {t('PBL 公式集', 'PBL algorithms')}

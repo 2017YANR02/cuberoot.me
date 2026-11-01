@@ -9,6 +9,7 @@
 // - Mounted-gate: getInitialState() reads localStorage, so we render nothing
 //   until mounted (SSG-first repo).
 
+import PageHeading from '@/components/PageHeading';
 import TrainingStatsPanel, { TrainingSelfPractice } from '@/components/TrainingStatsPanel';
 import React, { useEffect, useReducer, useRef, useState } from 'react';
 import { Info, Star } from '@app-foundation/icons/lucide';
@@ -210,7 +211,7 @@ function RouxTrainer() {
   return (
     <div className="roux-root" data-cube-theme={cubeTheme}>
       <div className="roux-topbar">
-        <div className="roux-topbar-title">{tt('桥式训练器', 'Roux Trainer')}</div>
+        <PageHeading backHref="/alg/3x3">{tt('桥式训练器', 'Roux Trainer')}</PageHeading>
 
         <select
           className="roux-mode-select"

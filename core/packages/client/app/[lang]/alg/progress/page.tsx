@@ -1,4 +1,5 @@
 'use client';
+import PageHeading from '@/components/PageHeading';
 
 import { sessionFetch } from '@/lib/session-fetch';
 /**
@@ -13,7 +14,7 @@ import { sessionFetch } from '@/lib/session-fetch';
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from '@/components/AppLink';
-import { ArrowLeft, CircleHelp, Flame, Loader2 } from '@app-foundation/icons/lucide';
+import { CircleHelp, Flame, Loader2 } from '@app-foundation/icons/lucide';
 import { Tooltip } from '@/components/Tooltip';
 import { ALG_CATALOG, ALG_PUZZLES, type AlgPuzzle, type AlgCase } from '@cuberoot/shared/alg';
 import { virtualAlgSet, VIRTUAL_ALG_SET_PARAMS } from '@/lib/alg-virtual-sets';
@@ -604,12 +605,10 @@ export default function AlgProgressPage() {
   return (
     <div className="alg-progress-page">
       <div className="alg-cat-header">
-        <Link href="/alg" className="alg-back">
-          <ArrowLeft size={14} /> {tr({ zh: '公式库', en: 'Algorithms' })}
-        </Link>
-        <h1 className={trainingHost ? 'sr-only' : 'alg-cat-title'}>
+
+        <PageHeading backHref="/alg" titleClassName={trainingHost ? 'sr-only' : 'alg-cat-title'}>
           <span>{tr({ zh: '学习进度', en: 'Learning Progress' })}</span>
-        </h1>
+        </PageHeading>
       </div>
 
       <div className="alg-prog-body">

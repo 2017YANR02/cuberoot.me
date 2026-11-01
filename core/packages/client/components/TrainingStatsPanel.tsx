@@ -1,7 +1,8 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useRef, useState } from 'react';
-import { ChevronRight } from '@app-foundation/icons/lucide';
+
 import { tr } from '@/i18n/tr';
 import { useTrainingStats } from '@/hooks/useTrainingStats';
 import './training-stats.css';
@@ -26,7 +27,7 @@ export default function TrainingStatsPanel({ group, description }: { group: stri
         <div><dt>{tr({ zh: '最快用时', en: 'Best time' })}</dt><dd>{stats.bestMs === null ? '—' : seconds(stats.bestMs)}</dd></div>
       </dl>
       {stats.recent.length > 0 && <details>
-        <summary><ChevronRight className="training-stats-caret" size={14} aria-hidden />{tr({ zh: '最近记录', en: 'Recent attempts' })}</summary>
+        <MoreToggle as="summary">{tr({ zh: '最近记录', en: 'Recent attempts' })}</MoreToggle>
         <ol className="training-stats-history">{[...stats.recent].reverse().map(attempt => (
           <li key={attempt.id}>
             <time dateTime={new Date(attempt.at).toISOString()}>{new Date(attempt.at).toLocaleString()}</time>

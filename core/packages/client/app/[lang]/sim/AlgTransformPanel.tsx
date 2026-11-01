@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { Fragment, type ReactNode, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
@@ -154,12 +155,12 @@ export default function AlgTransformPanel({ text, setup, order, onApply, editing
   </div>, editorSlot);
   return <>
     {inlineEditor}
-    <div className="sim-player-tools sim-player-tools-row">
+    <div className="sim-player-tools sim-player-tools-row sim-edit-tools">
       {basicTools}
-      <button type="button" aria-expanded={editing} className={editing ? 'sim-transform-active' : undefined}
+      <MoreToggle type="button" expanded={editing} className={editing ? 'sim-transform-active' : undefined}
         disabled={!enabled && !editing} onClick={() => { onEditingChange(!editing); setSelected(null); setMenuOpen(false); }}>
         <PencilLine size={14} />{editing ? t('完成改写', 'Done editing') : t('改一步', 'Edit move')}
-      </button>
+      </MoreToggle>
       <select className="sim-transform-select" aria-label={t('换朝向', 'Orientation')} value="" disabled={!transformEnabled}
         onChange={event => {
           const rotation = new Move(event.target.value);
@@ -175,13 +176,13 @@ export default function AlgTransformPanel({ text, setup, order, onApply, editing
         <option value="S">{t('FB 镜像', 'FB mirror')}</option>
         <option value="E">{t('UD 镜像', 'UD mirror')}</option>
       </select>
-      <select className="sim-transform-select" aria-label={t('转换范围', 'Transform scope')} value={scope}
+      <select className="sim-transform-select sim-transform-scope" aria-label={t('转换范围', 'Transform scope')} value={scope}
         onChange={event => setScopeChoice(event.target.value as 'solution' | 'both')}>
         <option value="solution">{t('仅解法', 'Solution only')}</option>
         <option value="both">{t('打乱与解法', 'Scramble and solution')}</option>
       </select>
     </div>
-    <div className="sim-player-tools sim-player-tools-row">
+    <div className="sim-player-tools sim-player-tools-row sim-edit-actions">
       {canUndo ? <button type="button" onClick={() => {
         history[history.length - 1].undo();
         setHistory(previous => previous.slice(0, -1));

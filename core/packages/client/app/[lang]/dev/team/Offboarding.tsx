@@ -1,7 +1,8 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect } from 'react';
-import { ArrowRight, Check, ChevronDown, ClipboardCheck, FileCheck2, FolderOpen, KeyRound, Laptop, ShieldCheck, Sparkles, Unplug, UserRound, X } from '@app-foundation/icons/lucide';
+import { ArrowRight, Check, ClipboardCheck, FileCheck2, FolderOpen, KeyRound, Laptop, ShieldCheck, Sparkles, Unplug, UserRound, X } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { useCopy } from '@/hooks/useCopy';
 import { useT } from '@/hooks/useT';
@@ -67,7 +68,7 @@ export default function OffboardingPage() {
           <div className="staff-start-row"><h3>{task.title}</h3>
             <button type="button" className="staff-start-action" onClick={() => copy(task.prompt, task.id)}>{copiedKey === task.id ? t('已复制', 'Copied') : t('复制指令', 'Copy prompt')}</button>
           </div>
-          <details className="staff-start-instructions"><summary>{t('查看指令', 'View instructions')}<ChevronDown size={14} aria-hidden="true" /></summary><pre className="staff-start-prompt">{task.prompt}</pre></details>
+          <details className="staff-start-instructions"><MoreToggle as="summary">{t('查看指令', 'View instructions')}</MoreToggle><pre className="staff-start-prompt">{task.prompt}</pre></details>
         </section>)}
       </article>
       <article className="staff-start-module" data-site-surface="panel" aria-labelledby="offboarding-self">
@@ -81,7 +82,7 @@ export default function OffboardingPage() {
           <li><strong>{t('退出组织账号', 'Sign out of work accounts')}</strong><p>{t('交接完成后退出，个人账号保留。', 'Sign out after handoff; retain personal accounts.')}</p></li>
         </ul>
         <details className="staff-start-disclosure">
-          <summary>{t('负责人：撤销权限', 'Lead: revoke access')}<ChevronDown size={18} aria-hidden="true" /></summary>
+          <MoreToggle as="summary">{t('负责人：撤销权限', 'Lead: revoke access')}</MoreToggle>
           <p className="staff-start-note">{t('核对全部设备与组织授权，确认旧连接已断开。', 'Check all devices and organizational grants; confirm existing connections have ended.')}</p>
           <button type="button" className="staff-start-action" onClick={() => copy(leadPrompt, 'lead')}>{copiedKey === 'lead' ? t('已复制', 'Copied') : t('复制指令', 'Copy prompt')}</button>
           <pre className="staff-start-prompt">{leadPrompt}</pre>

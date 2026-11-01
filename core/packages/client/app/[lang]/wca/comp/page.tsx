@@ -1,4 +1,5 @@
 'use client';
+import MoreToggle from '@/components/MoreToggle';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import '@cuberoot/timer-ui/compact-select.css';
 
@@ -18,7 +19,7 @@ import { useQueryState, useQueryStates, parseAsStringEnum, parseAsInteger, parse
 import Link from '@/components/AppLink';
 import { loadCalendarManifest, loadCalendarMonth } from '@/lib/competition-calendar';
 import type { CalendarManifest } from '@cuberoot/shared/competition-calendar';
-import HomeLink from '@/components/HomeLink';
+import PageHeading from '@/components/PageHeading';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Star, Earth as GlobeIcon, List, LayoutGrid, BarChart3, CalendarDays, CalendarRange, HelpCircle, Users, Gauge, Percent, CaseSensitive, MapPin, Mountain, MoveVertical, MoveHorizontal, ArrowDownAZ, ArrowDownZA, X as XIcon } from '@app-foundation/icons/lucide';
 import { SortArrow } from '@/components/SortArrow';
@@ -58,7 +59,7 @@ import { expandCountrySelection } from '@/lib/continent';
 import { fetchCompRounds, fetchCompWcif, fetchCubingZh } from '@/lib/comp-wcif';
 import { statsUrl } from '@/lib/stats-base';
 import { ClearButton } from '@/components/ClearButton';
-import { CubingIcon } from '@/components/EventIcon';
+import { CubingIcon, EventIcon } from '@/components/EventIcon';
 import type { WcaPersonLite } from '@/lib/wca-api';
 import { fetchPersonUpcomingCompetitionIds } from '@/lib/person-upcoming';
 import dynamic from 'next/dynamic';
@@ -172,7 +173,7 @@ const WCA_EVENT_ID_TO_SHORT: Record<string, string> = Object.fromEntries(
   Object.entries(SHORT_TO_EVENT_ID).map(([s, w]) => [w, s])
 );
 
-const EVENT_ORDER = WCA_EVENT_ORDER;
+const EVENT_ORDER = [...WCA_EVENT_ORDER, 'fto'];
 
 const WEEKDAY_EN = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const WEEKDAY_ZH = ['一','二','三','四','五','六','日'];
@@ -540,10 +541,10 @@ function CompModal({ comp, isZh, onClose, t, cancelled, loggedIn, followed, onTo
                     <CubingIcon icon={`event-${r.e}`} />
                     <span className="record-kind">{r.k === 's' ? t('upcoming.single') : t('upcoming.average')}</span>
                     <span className="record-value mono">{formatWcaResult(r.v, r.e, r.k === 's' ? 'single' : 'average')}</span>
-                    <Link prefetch={false} href={`/wca/persons/${r.p}`} className="record-person">
+                    <><Link prefetch={false} href={`/wca/persons/${r.p}`} className="record-person">
                       <SharedFlag iso2={personFlagIso2(r.p)} />
-                      <span>{displayCuberName(r.n, isZh)}<WcaPersonTeamBadge wcaId={r.p} /></span>
-                    </Link>
+                      <span>{displayCuberName(r.n, isZh)}</span>
+                    </Link><WcaPersonTeamBadge wcaId={r.p} /></>
                   </li>
                 ))}
               </ul>
@@ -2040,31 +2041,28 @@ function CalendarPageInner() {
   return (
     <div
       ref={pageRef}
+      style={{ '--cl-event-count': EVENT_ORDER.length } as CSSProperties}
       className={`calendar-page${viewMode === 'list' ? ' calendar-page--list' : ''}${viewMode === 'calendar' && calLayout === 'country' ? ' calendar-page--compact' : ''}${viewMode === 'globe' ? ' calendar-page--globe' : ''}`}
       data-wide-metric={viewMode === 'list' && WIDE_METRICS.has(eventMetric) ? '' : undefined}
       data-comp-2col={viewMode === 'list' && (compMetric === 'latlng' || compMetric === 'peopleLimit') ? '' : undefined}
       data-comp-peoplelimit={viewMode === 'list' && compMetric === 'peopleLimit' ? '' : undefined}
     >
       <header className="upcoming-header">
-        <h1 className="upcoming-title">
-          {tr({ zh: 'WCA 比赛', en: 'WCA Competitions'
-        })}
-          <Link
-            href="/wca/comp-about"
-            className="calendar-title-help"
-            title={tr({ zh: '这页是干啥的?', en: 'What is this page?'
-            })}
-            aria-label={tr({ zh: '查看说明', en: 'About this page'
-            })}
-          >
-            <HelpCircle size={18} strokeWidth={1.75} />
-          </Link>
-        </h1>
+          <PageHeading backHref="/wca" titleClassName="upcoming-title">
+            {tr({ zh: 'WCA 比赛', en: 'WCA Competitions'
+          })}
+            <Link
+              href="/wca/comp-about"
+              className="calendar-title-help"
+              title={tr({ zh: '这页是干啥的?', en: 'What is this page?'
+              })}
+              aria-label={tr({ zh: '查看说明', en: 'About this page'
+              })}
+            >
+              <HelpCircle size={18} strokeWidth={1.75} />
+            </Link>
+          </PageHeading>
         <div className="upcoming-meta">
-          <HomeLink className="globe-link">
-            <ChevronLeft size={12} strokeWidth={1.75} /> <span className="sr-only">{tr({ zh: '首页', en: 'Home'
-            })}</span>
-          </HomeLink>
           <Link href="/wca/comp/stats" className="globe-link">
             <BarChart3 size={12} strokeWidth={1.75} /> {tr({ zh: '统计', en: 'Stats'
             })}
@@ -2104,17 +2102,17 @@ function CalendarPageInner() {
             + (h2hOnly ? 1 : 0);
           return (
             <div className="comp-filters-wrap" ref={filtersWrapRef}>
-              <button
+              <MoreToggle
                 type="button"
                 className={`comp-filters-btn${activeCount > 0 ? ' is-active' : ''}`}
                 onClick={() => setFiltersOpen((o) => !o)}
-                aria-expanded={filtersOpen}
+                expanded={filtersOpen}
                 aria-haspopup="true"
               >
                 <span>{tr({ zh: '筛选', en: 'Filters' })}</span>
                 {activeCount > 0 && <span className="comp-filters-count">{activeCount}</span>}
-                <span className="comp-filters-caret" aria-hidden>▾</span>
-              </button>
+
+              </MoreToggle>
               {filtersOpen && (
                 /* anchored-panel: clamped (usePanelClamp) */
                 <div className="comp-filters-panel" ref={filtersPanelRef}>
@@ -2376,14 +2374,14 @@ function CalendarPageInner() {
                 aria-pressed={active}
                 title={cycleHint}
               >
-                <CubingIcon icon={`event-${eid}`} />
+                <EventIcon event={eid} />
                 <span className={`event-chip-rounds${badge === '' ? ' is-empty' : ''}`}>
                   {badge}
                 </span>
               </button>
             );
           });
-          // 列表模式：用 grid 把表头对齐到下方各列（年份 cell + flag/name 两个 spacer + 天数列头 + 21 chip）。
+          // 列表模式：用 grid 把表头对齐到下方各列（年份 cell + flag/name 两个 spacer + 天数列头 + 项目 chip）。
           if (viewMode !== 'list' || displayedComps.length === 0) return <>{daysChip}{chips}</>;
           return (
             <div className="event-chips-grid">

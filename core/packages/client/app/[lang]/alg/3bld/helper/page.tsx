@@ -17,6 +17,7 @@
 // m2pSolve / mover2scr are ASYNC (WASM Kociemba) -> busy state + prewarm() on mount.
 // Upstream emoji ⏰/📝 + spinner replaced with lucide icons + a clean loading state.
 
+import PageHeading from '@/components/PageHeading';
 import {
   useCallback,
   useEffect,
@@ -410,8 +411,8 @@ export default function HelperPage(): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{tr({ zh: '读码还原助手', en: 'Read & Restore Helper'
-        })}</h1>
+        <PageHeading backHref="/alg/3bld">{tr({ zh: '读码还原助手', en: 'Read & Restore Helper'
+        })}</PageHeading>
       </div>
 
       <BldConfigBar

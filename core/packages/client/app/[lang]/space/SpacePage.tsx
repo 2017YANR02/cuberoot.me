@@ -1,9 +1,10 @@
 'use client';
 
+import BackHome from '@/components/BackHome';
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowDown, ArrowDownToLine, ArrowLeft, ArrowRight, ArrowUp, ArrowUpFromLine, CloudSun, Copy, Crosshair, Drone, Footprints, Maximize, Move, Plus, Redo2, RotateCcw, RotateCw, Trash2, Undo2 } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
-import HeaderToggles from '@/components/HeaderToggles';
 import BoolToggle from '@/components/BoolToggle';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import { CompactSelect } from '@/components/CompactSelect';
@@ -196,14 +197,14 @@ export default function SpacePage() {
   return (
     <main className="cube-space">
       <header className="space-header">
-        <div className="space-heading"><h1>{tr({ zh: '魔方空间', en: 'Cube space' })}</h1><CompactSelect label={tr(ROOMS[room])} ariaLabel={tr({ zh: '选择房间风格', en: 'Choose room style' })} value={room} valueText={tr(ROOMS[room])} items={(Object.keys(ROOMS) as RoomStyle[]).map(value => ({ value, label: tr(ROOMS[value]) }))} onChange={room => { cancel(); setHistory(h => commitLayout(h, { ...h.current, timeOfDay: layoutTime(h.current), room })); }} />
+        <div className="space-heading"><BackHome /><h1>{tr({ zh: '魔方空间', en: 'Cube space' })}</h1><CompactSelect label={tr(ROOMS[room])} ariaLabel={tr({ zh: '选择房间风格', en: 'Choose room style' })} value={room} valueText={tr(ROOMS[room])} items={(Object.keys(ROOMS) as RoomStyle[]).map(value => ({ value, label: tr(ROOMS[value]) }))} onChange={room => { cancel(); setHistory(h => commitLayout(h, { ...h.current, timeOfDay: layoutTime(h.current), room })); }} />
           <CompactSelect label={tr(ENVIRONMENTS[environment])} ariaLabel={tr({ zh: '选择环境', en: 'Choose environment' })} value={environment} valueText={tr(ENVIRONMENTS[environment])} items={(Object.keys(ENVIRONMENTS) as Environment[]).map(value => ({ value, label: tr(ENVIRONMENTS[value]) }))} onChange={environment => { cancel(); setHistory(h => commitLayout(h, { ...h.current, environment })); }} />
           <CompactSelect label={<span className="space-weather-label"><CloudSun size={16} />{tr(WEATHER[weather])}</span>} ariaLabel={tr({ zh: '切换天气', en: 'Change weather' })} value={weather} valueText={tr(WEATHER[weather])} items={(Object.keys(WEATHER) as Weather[]).map(value => ({ value, label: tr(WEATHER[value]) }))} onChange={weather => { cancel(); setHistory(h => commitLayout(h, { ...h.current, weather })); }} />
           <label className="space-time">{tr({ zh: '时间', en: 'Time' })}<input className="space-time-input" type="time" aria-label={tr({ zh: '场景时间', en: 'Scene time' })} min="00:00" max="23:59" step={60} required value={layoutTime(history.current)} onChange={e => { const timeOfDay = e.currentTarget.value; if (validSceneTime(timeOfDay)) setHistory(h => commitLayout(h, { ...h.current, timeOfDay })); }} /></label>
           {environment === 'shanghai' && <CompactSelect label={<>{tr({ zh: '水色', en: 'Water' })}: {tr(RIVER_COLORS[riverColor])}</>} ariaLabel={tr({ zh: '江水颜色', en: 'River color' })} value={riverColor} valueText={tr(RIVER_COLORS[riverColor])} items={(Object.keys(RIVER_COLORS) as RiverColor[]).map(value => ({ value, label: tr(RIVER_COLORS[value]) }))} onChange={riverColor => setHistory(h => commitLayout(h, { ...h.current, riverColor }))} />}
           {(weather !== 'sunny' || environment !== 'original') && <BoolToggle value={history.current.weatherMotion ?? true} onChange={weatherMotion => setHistory(h => commitLayout(h, { ...h.current, weatherMotion }))} label={tr({ zh: '动态天气', en: 'Animate weather' })} />}
         </div>
-        <div className="space-header-actions"><AppLink href="/sim">{tr({ zh: '模拟器', en: 'Simulator' })}</AppLink><HeaderToggles /></div>
+        <div className="space-header-actions"><AppLink href="/sim">{tr({ zh: '模拟器', en: 'Simulator' })}</AppLink></div>
       </header>
       <nav className="space-destinations" aria-label={tr({ zh: '前往房间', en: 'Go to a room' })}>
         {(room === 'company' ? ['interior', 'study', 'courtyard'] as const : Object.keys(DESTINATIONS) as Destination[]).map(destination => <button className="space-destination" key={destination} onClick={() => { cancel(); scene.current?.view(destination); }}>{tr(room === 'company' ? ({ interior: { zh: '办公室 406', en: 'Office 406' }, study: { zh: '公共休息区', en: 'Shared lounge' }, courtyard: { zh: '电话亭', en: 'Phone booths' } }[destination as 'interior' | 'study' | 'courtyard']) : DESTINATIONS[destination])}</button>)}
@@ -308,7 +309,7 @@ export default function SpacePage() {
         <span role="status">{storage === 'saved' ? tr({ zh: '布局已保存在此浏览器', en: 'Layout saved in this browser' }) : storage === 'blocked' ? tr({ zh: '原有存档未覆盖；请导出当前布局保存', en: 'Existing save preserved; export to save this layout' }) : tr({ zh: '自动保存失败，请导出布局', en: 'Autosave failed; export your layout' })}</span>
       </footer>
       <details className="space-sources" open>
-        <summary>{tr({ zh: '本页来源与建模说明', en: 'Sources and modeling notes' })}</summary>
+        <MoreToggle as="summary">{tr({ zh: '本页来源与建模说明', en: 'Sources and modeling notes' })}</MoreToggle>
         <ul>
           {SPACE_CREDITS.map(credit => <li key={credit.url}>
             <a href={credit.url} target="_blank" rel="noopener noreferrer">{credit.name}</a>

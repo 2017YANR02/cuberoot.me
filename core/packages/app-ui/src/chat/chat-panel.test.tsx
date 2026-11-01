@@ -3,6 +3,7 @@ import { act, createElement, StrictMode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChatError, type ChatClient, type ChatMessagesPage } from '@cuberoot/shared/chat';
+import { readChatDraft } from './ChatDraftInput';
 import { ChatPanel, type ChatPanelProps } from './ChatPanel';
 
 const peer = { userId: 2, name: 'Two', avatarUrl: null, avatarSource: 'auto' as const, avatarPreset: null, wcaId: null };
@@ -28,9 +29,12 @@ async function intersect(selector: string, visible: boolean) {
 }
 async function activate() { await intersect('.friend-chat', true); }
 async function draft(value: string) {
-  const input = host.querySelector('textarea')!;
+  const input = host.querySelector<HTMLDivElement>('[role="textbox"]')!;
   await act(async () => {
-    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(input, value);
+    input.textContent = value;
+    input.focus();
+    const range = document.createRange(); range.selectNodeContents(input); range.collapse(false);
+    window.getSelection()!.removeAllRanges(); window.getSelection()!.addRange(range);
     input.dispatchEvent(new Event('input', { bubbles: true }));
   });
   return input;
@@ -74,11 +78,13 @@ describe('shared friend chat DOM', () => {
     await render({ expressionPacks: [{ id: 'wechat', zh: '微信表情', en: 'WeChat emoji', items: [{ token: '[捂脸]', zh: '捂脸', en: 'Facepalm', src: '/face.png' }] }] }); await activate();
     await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="Expressions"]')!.click());
     await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="Facepalm"]')!.click());
-    expect(host.querySelector('textarea')?.value).toBe('[捂脸]');
+    expect(readChatDraft(host.querySelector<HTMLDivElement>('[role="textbox"]')!)).toBe('[捂脸]');
+    expect(host.querySelector('[role="textbox"] img')?.getAttribute('src')).toBe('/face.png');
+    expect(host.querySelector('[role="textbox"]')?.textContent).toBe('');
     expect(host.querySelector('[aria-label="Expression picker"]')).not.toBeNull();
     expect(host.textContent).toContain('Recently used');
     await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="Delete previous expression or character"]')!.click());
-    expect(host.querySelector('textarea')?.value).toBe('');
+    expect(readChatDraft(host.querySelector<HTMLDivElement>('[role="textbox"]')!)).toBe('');
     expect(JSON.parse(localStorage.getItem('cuberoot.chat.recent-expressions.1')!)[0]).toBe('[捂脸]');
   });
   it('shows per-message unread/read receipts only for sent messages and keeps the input visually empty', async () => {
@@ -90,9 +96,10 @@ describe('shared friend chat DOM', () => {
     expect(host.querySelector('[aria-label="Read by recipient"]')?.textContent).toBe('Read');
     expect(host.querySelector('[aria-label="Not yet read by recipient"]')?.textContent).toBe('Unread');
     expect(host.querySelectorAll('.friend-chat-receipt')).toHaveLength(2);
-    expect(host.querySelector('textarea')?.hasAttribute('placeholder')).toBe(false);
+    expect(host.querySelector('.friend-chat-receipt svg')).toBeNull();
+    expect(host.querySelector<HTMLDivElement>('[role="textbox"]')?.hasAttribute('placeholder')).toBe(false);
     expect(host.querySelector('label[for="friend-chat-message"]')).toBeNull();
-    expect(host.querySelector('textarea')?.getAttribute('aria-label')).toBe('Message');
+    expect(host.querySelector<HTMLDivElement>('[role="textbox"]')?.getAttribute('aria-label')).toBe('Message');
   });
   it('uploads to favorites and previews before sending, without clearing a text draft', async () => {
     const id = '33333333-3333-4333-8333-333333333333';
@@ -110,7 +117,7 @@ describe('shared friend chat DOM', () => {
     expect(button('Send sticker')).toBeDefined();
     await act(async () => button('Send sticker').click());
     expect(client.send.mock.calls[0][1].stickerId).toBe(id);
-    expect(host.querySelector('textarea')?.value).toBe('text stays');
+    expect(readChatDraft(host.querySelector<HTMLDivElement>('[role="textbox"]')!)).toBe('text stays');
     expect(host.querySelector('button[aria-label="Delivery unconfirmed. Retry sending"]')).not.toBeNull();
   });
   it('ignores upload completion after switching to another peer', async () => {
@@ -146,7 +153,7 @@ describe('shared friend chat DOM', () => {
     finePointer = true;
     await act(async () => input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })));
     expect(client.send).toHaveBeenCalledTimes(1);
-    expect(client.send.mock.calls[0][1].body).toBe('你好');
+    expect(client.send.mock.calls[0][1].body).toBe('你好\n');
     expect(host.querySelector('button[aria-label="Delivery unconfirmed. Retry sending"]')).not.toBeNull();
   });
   it('offers explicit sign-in after session expiry without opening login in the background', async () => {
@@ -168,7 +175,7 @@ describe('shared friend chat DOM', () => {
     await render(); await activate(); await draft('private draft');
     const other = { ...client, messages: vi.fn().mockResolvedValue({ ...page, items: [], lastSequence: '0', nextAfterSequence: '0' }) };
     await render({ userId: 3, client: other }); await activate();
-    expect(host.querySelector('textarea')?.value).toBe('');
+    expect(readChatDraft(host.querySelector<HTMLDivElement>('[role="textbox"]')!)).toBe('');
     expect(host.textContent).not.toContain(body);
   });
 });

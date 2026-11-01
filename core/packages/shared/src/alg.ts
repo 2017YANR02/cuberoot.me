@@ -13,7 +13,7 @@ import type { MirrorGen } from './alg_mirror';
 import { canonicalize3x3WideMoves, duplicateAlgKey } from './alg_notation';
 
 /** 公式标签。前五项转写自站长 1LLL 表；`beginner` 标记新手应优先学习的公式。 */
-export const ALG_TAGS = ['oh', 'ft', 'fmc', 'big', 'key', 'beginner'] as const;
+export const ALG_TAGS = ['oh', 'ft', 'fmc', 'big', 'key', 'beginner', 'mainstream', 's-style'] as const;
 export type AlgTag = (typeof ALG_TAGS)[number];
 
 /** 用户提交的算法——挂在 (puzzle, set, case_name) 上;任何登录用户能投,作者+admin 可改/删 */

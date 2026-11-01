@@ -3,6 +3,7 @@
 // 只渲染内容(名次行 + 组合列表 + 展开/加载更多 + 脚注 / 无成绩提示),不含外框 .sor-pb 与选手头像;
 // 由调用方决定外层包裹.自带「加载更多组合」懒分页状态(player-combos 端点,offset=16).
 
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useState } from 'react';
 import AppLink from '@/components/AppLink';
 import { EventIcon } from '@/components/EventIcon';
@@ -152,9 +153,9 @@ export function BestComboBody({
         const loaded = combos.length + (expanded ? more.length : 0);
         if (!expanded) {
           return (
-            <button type="button" className="sor-pb-expand" onClick={() => { setExpanded(true); loadMore(); }}>
+            <MoreToggle expanded={false} type="button" className="sor-pb-expand" onClick={() => { setExpanded(true); loadMore(); }}>
               {tr({ zh: '展开全部', en: 'Show all' })}
-            </button>
+            </MoreToggle>
           );
         }
         return (
@@ -166,7 +167,7 @@ export function BestComboBody({
             ) : (
               <span className="sor-pb-note">{tr({ zh: '已全部展开', en: 'All shown' })}</span>
             )}
-            <button type="button" className="sor-pb-collapse" onClick={() => { setExpanded(false); setMore([]); }}>{tr({ zh: '收起', en: 'Collapse' })}</button>
+            <MoreToggle expanded={true} type="button" className="sor-pb-collapse" onClick={() => { setExpanded(false); setMore([]); }}>{tr({ zh: '收起', en: 'Collapse' })}</MoreToggle>
           </div>
         );
       })()}

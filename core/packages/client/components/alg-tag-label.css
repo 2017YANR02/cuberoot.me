@@ -1,3 +1,4 @@
+.alg-tag-list { display: inline-flex; align-items: center; gap: 3px; }
 .alg-tag-label { display: inline-flex; align-items: center; vertical-align: middle; }
 .alg-tag-symbol { display: inline-flex; align-items: center; gap: 3px; font-size: 20px; line-height: 1; }
 .alg-tag-oh-icon { position: relative; display: inline-flex; width: 1em; height: 1em; }

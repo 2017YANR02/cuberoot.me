@@ -9,6 +9,7 @@
  * The native `<input type="color">` is good enough for this and avoids
  * pulling in `react-color`.
  */
+import MoreToggle from '@/components/MoreToggle';
 import { useMemo } from 'react';
 import {
   CLOCK_COLOR_KEYS, DEFAULT_CLOCK_COLORS,
@@ -91,7 +92,7 @@ export default function ClockColorPicker({ colors, onChange, t }: Props) {
         </button>
       </div>
       <details className="gen-tn-clock-details">
-        <summary>{t('自定义配色', 'Customize colors')}</summary>
+        <MoreToggle as="summary">{t('自定义配色', 'Customize colors')}</MoreToggle>
         <div className="gen-tn-clock-chips">
           {CLOCK_COLOR_KEYS.map((k) => (
             <label

@@ -1,16 +1,8 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  ArrowRight,
-  BookOpen,
-  Check,
-  CircleAlert,
-  Flag as FinishFlag,
-  History,
-  Play,
-  Target,
-} from '@app-foundation/icons/lucide';
+import { ArrowRight, BookOpen, Check, CircleAlert, Flag as FinishFlag, History, Play, Target } from '@app-foundation/icons/lucide';
 import {
   fromWcaSpelling,
   parseTimerEntry,
@@ -24,7 +16,6 @@ import { ClearButton } from '@/components/ClearButton';
 import { CompPicker } from '@/components/CompPicker';
 import { CompCell } from '@/components/CompCell/CompCell';
 import { Flag } from '@/components/Flag';
-import HeaderToggles from '@/components/HeaderToggles';
 import PersonLink from '@/components/PersonLink';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import Paginator from '@/components/wca-stats/Paginator';
@@ -178,7 +169,7 @@ function RoundReview({ record }: { record: PracticeRecord }) {
             {attempt.solve?.comment && <p className="practice-note">{attempt.solve.comment}</p>}
             {attempt.solve && (
               <details>
-                <summary>{tr({ zh: '查看本把打乱', en: 'View scramble' })}</summary>
+                <MoreToggle as="summary">{tr({ zh: '查看本把打乱', en: 'View scramble' })}</MoreToggle>
                 <p className="practice-scramble-small">{attempt.solve.scramble}</p>
               </details>
             )}
@@ -591,7 +582,6 @@ export default function CompSimPage() {
                 : tr({ zh: '一轮练习', en: 'Practice round' })}
             </p>
           </div>
-          <HeaderToggles />
         </header>
         <nav className="practice-progress" aria-label={tr({ zh: '训练进度', en: 'Practice progress' })}>
           {[
@@ -627,7 +617,7 @@ export default function CompSimPage() {
             )}
             {leaderboard.length > 0 && (
               <details className="practice-comparison">
-                <summary>{tr({ zh: '与历史比赛成绩对照', en: 'Compare with historical results' })}</summary>
+                <MoreToggle as="summary">{tr({ zh: '与历史比赛成绩对照', en: 'Compare with historical results' })}</MoreToggle>
                 <p>
                   {tr({
                     zh: '这是训练成绩与已发布成绩的假设对照，不是实时比赛，也不会计入官方纪录。',
@@ -907,7 +897,6 @@ export default function CompSimPage() {
             })}
           </p>
         </div>
-        <HeaderToggles />
       </header>
       {messages}
       {resume && (
@@ -1205,7 +1194,7 @@ export default function CompSimPage() {
         )}
         {legacy.length > 0 && (
           <details>
-            <summary>{tr({ zh: '旧版历史摘要', en: 'Earlier history summaries' })}</summary>
+            <MoreToggle as="summary">{tr({ zh: '旧版历史摘要', en: 'Earlier history summaries' })}</MoreToggle>
             <ul>
               {legacy.map((record) => (
                 <li key={record.key}>

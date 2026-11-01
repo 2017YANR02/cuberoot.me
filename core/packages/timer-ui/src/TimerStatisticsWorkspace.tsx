@@ -1,3 +1,4 @@
+import MoreToggle from './MoreToggle';
 import { RecordBadge } from './RecordBadge';
 import { FileChartColumn } from 'lucide-react';
 import { useState, type ComponentProps } from 'react';
@@ -36,7 +37,7 @@ export function TimerStatisticsWorkspace({ compact = false, language, view, sess
         {!compact && <CaseStatsPanel event={stats.event} solves={stats.solves} isZh={isZh} />}
         {!compact && <div className="timer-statistics-actions">
           <button type="button" className="timer-statistics-action" onClick={onOpenFull}>{tr({en:'Full stats',zh:'完整统计'})}</button>
-          <button type="button" className="timer-statistics-action" aria-expanded={crossSession} onClick={() => setCrossSession(value => !value)}>{tr({en:'Cross-session',zh:'跨分组统计'})}</button>
+          <MoreToggle type="button" className="timer-statistics-action" expanded={crossSession} onClick={() => setCrossSession(value => !value)}>{tr({en:'Cross-session',zh:'跨分组统计'})}</MoreToggle>
         </div>}
         {!compact && crossSession && <CrossSessionStats event={stats.event} isZh={isZh} data={sessionData} activeId={activeSessionId} />}
       </> : null}

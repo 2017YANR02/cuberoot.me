@@ -53,6 +53,35 @@ describe('regional record counts', () => {
 });
 
 describe('standing records', () => {
+  it('ranks national records independently, including higher record levels and nationality changes', () => {
+    const sections = new LongestStandingRecords().transform([
+      row({ country_iso2: 'cn', regional_single_record: 'NR' }),
+      row({ country_iso2: 'cn', regional_single_record: 'NR', competition_date: '2020-01-03' }),
+      row({ country_iso2: 'jp', competition_date: '2020-01-02', single: 800 }),
+      row({ country_iso2: 'cn', competition_date: '2020-01-11', single: 900 }),
+      row({ country_iso2: 'cn', regional_single_record: 'WR', competition_date: '2020-01-12', single: 700 }),
+    ], new Date('2020-01-13'));
+    const china = bucket(sections, { region: 'cn', level: 'NR', event: '333', type: 'single' });
+    expect(china.map(result => result[2])).toEqual(['**10**', '**8**', '**1**', '**1**']);
+    expect(bucket(sections, { region: 'jp', level: 'NR', event: '333', type: 'single' })[0][2]).toBe('**11**');
+    expect(bucket(sections, { region: 'World', event: '333', type: 'single' })).toHaveLength(1);
+    expect(bucket(sections, { region: 'Asia', event: '333', type: 'single' })).toHaveLength(3);
+  });
+
+  it('supports national averages, retired events and independent national top tens', () => {
+    const sections = new LongestStandingRecords().transform([
+      ...Array.from({ length: 11 }, (_, i) => row({ country_iso2: 'cn', person_link: `Person ${i}`, regional_single_record: 'NR' })),
+      row({ country_iso2: 'jp', regional_single_record: '', regional_average_record: 'NR', average: 1200 }),
+      row({ country_iso2: 'cn', regional_single_record: 'NR', event_id: 'magic', last_event_date: '2020-01-05' }),
+      row({ country_iso2: null, regional_single_record: 'NR' }),
+    ], new Date('2020-01-13'));
+    expect(bucket(sections, { region: 'cn', event: '', type: 'single' })).toHaveLength(10);
+    expect(bucket(sections, { region: 'jp', event: '333', type: 'average' })[0][2]).toBe('**12**');
+    expect(bucket(sections, { region: 'jp', event: '333', type: 'single' })).toEqual([]);
+    expect(bucket(sections, { region: 'cn', event: 'magic', type: 'single' })[0][2]).toBe('**4**');
+    expect([...new Set(sections.map(([, , scope]) => scope?.region))]).toEqual(['cn', 'jp']);
+  });
+
   it('ends on a strictly better result, not a tie or a result from another continent', () => {
     const sections = new LongestStandingRecords().transform([
       row(), row({ competition_date: '2020-01-03' }),

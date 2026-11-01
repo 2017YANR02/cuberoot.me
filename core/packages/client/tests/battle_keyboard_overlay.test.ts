@@ -61,6 +61,33 @@ beforeEach(() => {
 });
 
 describe('battle overlay keyboard suppression', () => {
+  it('blocks pointer timing during layout editing and restores it without replacing the readout', () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    const down = vi.spyOn(useBattleStore.getState(), 'playerDown').mockReturnValue(false);
+    try {
+      act(() => root.render(createElement(TimerArea, { playerId: 0, hideScramble: true, layoutEditing: true })));
+      const area = host.querySelector<HTMLElement>('.player-area')!;
+      area.setPointerCapture = vi.fn();
+      const readout = host.querySelector('.time-display')!;
+      const press = () => readout.dispatchEvent(Object.assign(new MouseEvent('pointerdown', { bubbles: true }), { pointerId: 1 }));
+      act(press);
+      expect(down).not.toHaveBeenCalled();
+      expect(area.setPointerCapture).not.toHaveBeenCalled();
+
+      act(() => root.render(createElement(TimerArea, { playerId: 0, hideScramble: true, layoutEditing: false })));
+      expect(host.querySelector('.time-display')).toBe(readout);
+      act(press);
+      expect(down).toHaveBeenCalledExactlyOnceWith(0);
+      expect(area.setPointerCapture).toHaveBeenCalledExactlyOnceWith(1);
+    } finally {
+      act(() => root.unmount());
+      down.mockRestore();
+      host.remove();
+    }
+  });
+
   it('keeps the legacy readout node inside the shared local surface across result updates', () => {
     useBattleStore.setState({ playerCount: 2, eventPickerOpen: [false, false, false, false] });
     const host = document.createElement('div');

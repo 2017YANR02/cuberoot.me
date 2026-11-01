@@ -67,7 +67,7 @@ export interface TimerTopbarProps {
 
 export function TimerTopbar({ brand, controls, actions, className }: TimerTopbarProps) {
   return (
-    <header className={`shell-topbar surface-chrome${className ? ` ${className}` : ''}`}>
+    <header className={`shell-topbar surface-chrome${className ? ` ${className}` : ''}`} data-topbar-actions={actions ? 'true' : undefined}>
       {brand}
       <div className="shell-topbar-left">{controls}</div>
       <div className="shell-topbar-right">{actions}</div>

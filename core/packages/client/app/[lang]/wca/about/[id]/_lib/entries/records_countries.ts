@@ -492,15 +492,15 @@ const longest_standing_records: AboutEntry = {
   badgeZh: '寿命',
   badgeEn: 'Longevity',
   introZh: [
-    '把所有曾经的 regional record (`AfR` / `AsR` / `ER` / `NAR` / `OcR` / `SAR` / `WR`) 按"在被打破前活了多少天"排序。仍在保持的纪录,用今天减打破日。',
-    '可筛选世界或六大洲、项目及单次／平均；每个有效组合独立取前 10。WR 同时计入选手当时所属洲的洲际纪录，地区与比赛举办地无关。',
+    '把所有曾经的 regional record (`AfR` / `AsR` / `ER` / `NAR` / `OcR` / `SAR` / `WR` / `NR`) 按"在被打破前活了多少天"排序。仍在保持的纪录,用构建日减创下纪录的日期。',
+    '可筛选世界、六大洲或国家、项目及单次／平均；每个有效组合独立取前 10。WR 同时计入选手当时所属洲和国家的纪录，洲际纪录也计入国家纪录，地区与比赛举办地无关。',
   ],
   introEn: [
-    'For every regional record (`AfR` / `AsR` / `ER` / `NAR` / `OcR` / `SAR` / `WR`), measures how many days it stood until being broken. Active records use today as the upper bound.',
-    'Filter by world or continent, event and single/average; each valid combination has its own Top 10. A WR also counts for the competitor’s continent at the time, regardless of the competition venue.',
+    'For every regional record (`AfR` / `AsR` / `ER` / `NAR` / `OcR` / `SAR` / `WR` / `NR`), measures how many days it stood until being broken. Active records use today as the upper bound.',
+    'Filter by world, continent or country, event and single/average; each valid combination has its own Top 10. A WR also counts for the competitor’s continent and country at the time; continental records also count nationally. The competition venue does not affect the region.',
   ],
   stats: [
-    { value: '7', labelZh: '区域分组', labelEn: 'Region blocks', hintZh: 'World + 6 大洲', hintEn: 'World + 6 continents'
+    { value: 'WR / CR / NR', labelZh: '区域分组', labelEn: 'Region blocks', hintZh: '全球、六大洲及国家', hintEn: 'World, 6 continents and countries'
     },
     { value: '10', labelZh: '每组合条数', labelEn: 'Rows per filter combination', hintZh: '先筛选，再取天数前 10', hintEn: 'Filter before taking the Top 10 by days'
     },
@@ -510,11 +510,11 @@ const longest_standing_records: AboutEntry = {
     },
   ],
   sourceZh: [
-    '从 `results` 拉所有 `regional_single_record` 或 `regional_average_record` 是 `WR/AfR/AsR/ER/NAR/OcR/SAR` 之一的行;join `persons` (`sub_id = 1`) + `competitions` + `countries` + `continents` 拿洲信息。SQL 只做拉数据,寿命计算全在 JS 的 `transform()` 里。',
+    '从 `results` 拉所有 `regional_single_record` 或 `regional_average_record` 是 `WR/AfR/AsR/ER/NAR/OcR/SAR/NR` 之一的行;join `persons` (`sub_id = 1`) + `competitions` + `countries` + `continents` 拿成绩当时的国家及洲信息。SQL 只做拉数据,寿命计算全在 JS 的 `transform()` 里。',
     '按区域、类型、项目计算每条纪录的保持期，再为各筛选组合取前 10。没有后续更好成绩时，现役项目计至构建日，停办项目计至最后一场比赛结束日。',
   ],
   sourceEn: [
-    'Pulls all rows from `results` whose `regional_single_record` or `regional_average_record` is `WR/AfR/AsR/ER/NAR/OcR/SAR`; joins `persons` (`sub_id = 1`) + `competitions` + `countries` + `continents` for continent info. SQL only collects data — longevity is computed in JS `transform()`.',
+    'Pulls all rows from `results` whose `regional_single_record` or `regional_average_record` is `WR/AfR/AsR/ER/NAR/OcR/SAR/NR`; joins `persons` (`sub_id = 1`) + `competitions` + `countries` + `continents` for country and continent info at the time of the result. SQL only collects data — longevity is computed in JS `transform()`.',
     'Compute each record’s duration by region, type and event, then take the Top 10 for each filter combination. Unbroken active records stop at build time; retired events stop at the final competition’s end date.',
   ],
   sourceCode: {
@@ -522,27 +522,27 @@ const longest_standing_records: AboutEntry = {
     body: `SELECT regional_single_record, regional_average_record,
        best single, average,
        person.name, competition.start_date,
-       event_id, continent.name continent
+       event_id, continent.name continent, LOWER(countries.iso2) country_iso2
 FROM results
 JOIN persons ON persons.wca_id = person_id AND persons.sub_id = 1
 JOIN competitions ON competitions.id = competition_id
 JOIN countries ON countries.id = results.country_id
 JOIN continents ON continents.id = countries.continent_id
-WHERE regional_single_record IN ('AfR','AsR','ER','NAR','OcR','SAR','WR')
-   OR regional_average_record IN ('AfR','AsR','ER','NAR','OcR','SAR','WR')`,
+WHERE regional_single_record IN ('AfR','AsR','ER','NAR','OcR','SAR','WR','NR')
+   OR regional_average_record IN ('AfR','AsR','ER','NAR','OcR','SAR','WR','NR')`,
   },
   steps: [
     {
       titleZh: '拉历史 record 行',
       titleEn: 'Pull every record-flagged row',
-      bodyZh: 'WHERE 子句包含 7 个 regional record code;一行可能同时 single + average 都标 (拆 2 条处理)。',
-      bodyEn: 'WHERE clause includes all 7 regional record codes; a single row can carry both single + average markers (handled as 2 entries).'
+      bodyZh: 'WHERE 子句包含 8 个 regional record code;一行可能同时 single + average 都标 (拆 2 条处理)。',
+      bodyEn: 'WHERE clause includes all 8 regional record codes; a single row can carry both single + average markers (handled as 2 entries).'
     },
     {
       titleZh: '按 (区域, 项目, 类型) 分桶',
       titleEn: 'Bucket by (region, event, type)',
-      bodyZh: '世界只看 WR；各洲统计该洲选手的洲际纪录及 WR。按成绩当时的国籍划分，不按比赛举办地或选手现在的国籍划分。',
-      bodyEn: 'World uses WR markers; each continent includes its competitors’ CRs and WRs, using nationality at the time of the result, not the venue or current nationality.'
+      bodyZh: '世界只看 WR；各洲统计该洲选手的洲际纪录及 WR；各国统计该国选手的 NR、洲际纪录及 WR。按成绩当时的国籍划分，不按比赛举办地或选手现在的国籍划分。',
+      bodyEn: 'World uses WR markers; continents include their competitors’ CRs and WRs; countries include their competitors’ NRs, CRs and WRs, using nationality at the time of the result, not the venue or current nationality.'
     },
     {
       titleZh: '找"下一条更好"',
@@ -568,13 +568,13 @@ WHERE regional_single_record IN ('AfR','AsR','ER','NAR','OcR','SAR','WR')
     '"被打破"判定基于值严格更小 (`Number(r2[type]) < Number(r[type])`),平了不算打破。',
     '同人多次破自己的纪录,每条都算独立条目,寿命算到下次他自己又破。',
     '`OFFICIAL_EVENTS` 包含停办项目；其未被打破的纪录只计至该项目最后一场比赛结束日。',
-    'WR 持有人通常在自己洲也持有 CR,所以同一条 WR 会在 World + 其洲 2 个区块各出现一次。',
+    '同一条 WR 会分别参与全球、选手当时所属洲及所属国家的排名，各区域独立计算保持期。',
   ],
   edgesEn: [
     'Broken-by is strictly less-than (`Number(r2[type]) < Number(r[type])`); ties don\'t count as broken.',
     'Self-improvements split into multiple entries — each older record\'s span ends when its holder improves it.',
     '`OFFICIAL_EVENTS` includes discontinued events; their unbroken records stop at the final competition’s end date.',
-    'A WR holder also typically owns the matching CR, so the same WR row appears twice — once under World, once under its continent.',
+    'A WR contributes to world, continental and national rankings, with durations calculated independently for each region.',
   ],
   related: [
     { id: 'longest_streak_of_world_records', titleZh: '连续 WR 时长', titleEn: 'WR streak duration', hintZh: '同一人连续持有,不同口径', hintEn: 'Same person consecutive holds, different angle'
@@ -583,7 +583,7 @@ WHERE regional_single_record IN ('AfR','AsR','ER','NAR','OcR','SAR','WR')
     },
     { id: 'world_records_by_person', titleZh: '个人 WR 总数', titleEn: 'WRs by person', hintZh: '广度 vs 深度', hintEn: 'Breadth vs depth'
     },
-    { id: 'longest_standing_records', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '7 区域 Top 10', hintEn: '7 regions Top 10'
+    { id: 'longest_standing_records', toStat: true, titleZh: '打开实时榜单', titleEn: 'Jump to live data', hintZh: '各区域 Top 10', hintEn: 'Top 10 for each region'
     },
   ]
 };

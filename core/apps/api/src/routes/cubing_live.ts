@@ -6,7 +6,7 @@
  *
  * Cache: in-memory 60s。比赛实时刷新但 60s 粒度够看。
  */
-import { recordResultHref, tiedInEarlierRound, type RecordResultTarget } from '../utils/record_result_link.js';
+import { recordResultHref, tiedBeforeResult, type RecordResultTarget } from '../utils/record_result_link.js';
 import { Hono } from 'hono';
 import { fetchCubingLiveRound, fetchCubingCompetitors } from '@cuberoot/shared/cubing-live';
 import { streamSSE } from 'hono/streaming';
@@ -1510,7 +1510,7 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
 /** Read notification destinations without re-entering notification observation. */
 export async function resolveRecordResult(compId: string, target: RecordResultTarget, tag: string, iso2: string) {
   const data = await loadCompInner(compId);
-  return { href: recordResultHref(data, target), tied: tiedInEarlierRound(data, target, tag, iso2) };
+  return { href: recordResultHref(data, target), tied: tiedBeforeResult(data, target, tag, iso2) };
 }
 
 async function loadCompInner(wcaId: string, choice: SourceChoice = 'auto', onProgress?: ProgressFn): Promise<CompData> {
@@ -1981,7 +1981,7 @@ export function collectInferred(data: CompData, startDate: string | null, includ
     });
   }
   for (const record of out) {
-    if (record.tag !== 'NWR') record.tied ||= tiedInEarlierRound(data, {
+    if (record.tag !== 'NWR') record.tied ||= tiedBeforeResult(data, {
       eventId: record.eventId, roundId: record.roundId, personWcaId: record.personWcaId,
       personName: record.personName, type: record.type, value: record.attemptResult,
     }, record.tag, record.personIso2);

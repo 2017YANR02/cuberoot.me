@@ -162,6 +162,10 @@ html[data-theme=dark] .alg-root {
   gap: 12px;
   flex-wrap: wrap;
 }
+.alg-set-section-heading .alg-index-progress-link {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .alg-set-section-heading h2 {
   margin: 0;
   font-size: 18px;
@@ -2085,7 +2089,63 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
 .alg-case-detail-lean-algs.is-paired-player {
   gap: 24px;
 }
+.alg-case-slot-picker { display: none; }
+@media (max-width: 900px) {
+  .alg-case-slot-order { display: none; }
+  .alg-case-slot-picker {
+    display: grid;
+    grid-template-columns: repeat(2, 64px);
+    gap: 4px;
+    align-self: center;
+    margin-bottom: 16px;
+  }
+  .alg-case-slot-picker .alg-case-slot-button {
+    appearance: none;
+    min-height: 44px;
+    padding: 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--foreground);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .alg-case-slot-picker .alg-case-slot-button[aria-pressed="true"] {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .alg-case-slot-picker .alg-case-slot-button:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  .alg-case-slot-picker .alg-case-slot-button:disabled { opacity: .4; cursor: default; }
+  .is-f2l-orientation-grid > .alg-case-detail-ori[data-mobile-active="false"],
+  [data-mobile-slot="0"] .alg-editor > .alg-editor-ori:not(:nth-child(1)),
+  [data-mobile-slot="1"] .alg-editor > .alg-editor-ori:not(:nth-child(2)),
+  [data-mobile-slot="2"] .alg-editor > .alg-editor-ori:not(:nth-child(3)),
+  [data-mobile-slot="3"] .alg-editor > .alg-editor-ori:not(:nth-child(4)) {
+    display: none;
+  }
+}
 @media (min-width: 901px) {
+  [data-slot-order="physical"] .alg-case-detail-ori[data-slot="BL"],
+  [data-slot-order="physical"] .alg-editor > .alg-editor-ori:nth-child(3) {
+    grid-area: 1 / 1;
+  }
+  [data-slot-order="physical"] .alg-case-detail-ori[data-slot="BR"],
+  [data-slot-order="physical"] .alg-editor > .alg-editor-ori:nth-child(4) {
+    grid-area: 1 / 2;
+  }
+  [data-slot-order="physical"] .alg-case-detail-ori[data-slot="FL"],
+  [data-slot-order="physical"] .alg-editor > .alg-editor-ori:nth-child(2) {
+    grid-area: 2 / 1;
+  }
+  [data-slot-order="physical"] .alg-case-detail-ori[data-slot="FR"],
+  [data-slot-order="physical"] .alg-editor > .alg-editor-ori:nth-child(1) {
+    grid-area: 2 / 2;
+  }
   .alg-case-detail.is-f2l-orientation-grid {
     max-width: min(1440px, 100%);
   }
@@ -2652,8 +2712,8 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
 .alg-editor-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-width: 0; }
 .alg-editor-tools-group { display: contents; }
 
-/* Inline detail rows reuse the admin toolbar's compact capsule behavior: the
-   action group stays behind a small hover target, then opens toward the input. */
+/* Keep the collapsed ellipsis independent of the controls' intrinsic size.
+   Hover reveals the action group toward the input without squeezing its items. */
 @media (hover: hover) and (pointer: fine) {
   .alg-case-inline-editor .alg-editor-tools {
     position: relative;
@@ -2675,10 +2735,11 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
     box-sizing: border-box;
     width: max-content;
     max-width: 40px;
+    height: 40px;
     min-height: 40px;
     padding: 3px;
     overflow: hidden;
-    border: 1px solid var(--border-default);
+    border: 0;
     border-radius: 22px;
     transition: max-width 420ms cubic-bezier(.22, 1, .36, 1);
   }
@@ -2694,6 +2755,7 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
     transition: opacity 140ms ease;
   }
   .alg-case-inline-editor .alg-editor-tools-group > * {
+    flex-shrink: 0;
     opacity: 0;
     pointer-events: none;
     transform: translateX(8px);
@@ -2701,6 +2763,13 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
   }
   .alg-case-inline-editor .alg-editor-tools:is(:hover, :focus-within, :has([aria-expanded='true'])) .alg-editor-tools-group {
     max-width: min(320px, calc(100vw - 32px));
+    height: auto;
+  }
+  .alg-case-inline-editor .alg-editor-tools:not(:hover, :focus-within, :has([aria-expanded='true'])) .alg-editor-tools-group {
+    background: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
   .alg-case-inline-editor .alg-editor-tools:is(:hover, :focus-within, :has([aria-expanded='true'])) .alg-editor-tools-group::before {
     opacity: 0;

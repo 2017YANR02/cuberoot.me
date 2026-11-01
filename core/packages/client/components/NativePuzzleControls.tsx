@@ -1,5 +1,6 @@
 'use client';
 
+import MoreToggle from '@/components/MoreToggle';
 import { useMemo, useState } from 'react';
 import { Move } from 'cubing/alg';
 import { NATIVE_PUZZLES, nativePuzzleMoves, type NativePuzzleId, type NativePuzzleMoveDepth } from '@cuberoot/puzzle-solvers/native-puzzles';
@@ -96,7 +97,7 @@ export default function NativePuzzleControls({ id, disabled, showDragDepth, dept
         )}
       </div>
       <details className="twisty-native-notation">
-        <summary>{t('记号说明', 'Notation guide')}</summary>
+        <MoreToggle as="summary">{t('记号说明', 'Notation guide')}</MoreToggle>
         <p className="twisty-fallback-notice">{t(...NOTES[id])}</p>
         {mixedOrders && <p>{t('不同转轴使用不同的基本转角，以“角度”选项为准。转轴名称与手动转动列表一致，后缀 v 表示绕该轴整体转体。', 'Different axes use different base angles, as shown in the Angle options. Axis names match the manual-turn list; the v suffix rotates the whole puzzle around that axis.')}</p>}
         {rangeWide && <p>{t('对列表中使用层号范围的转轴 A：A 转外层，2A 只转第二层，1-2A 同时转最外两层，Av 转动整体。', 'For an axis A that uses layer ranges in the move list: A turns the outer layer, 2A turns only the second layer, 1-2A turns both outer layers, and Av rotates the whole puzzle.')}</p>}

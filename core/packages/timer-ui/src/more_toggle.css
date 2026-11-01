@@ -1,0 +1,31 @@
+/* Shared disclosure trigger — MoreToggle.tsx. */
+:where(.more-toggle) {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.4rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
+  transition: color 0.12s;
+}
+:where(.more-toggle):hover { color: var(--accent); }
+.more-toggle-chevron { transition: transform 0.18s ease; }
+.more-toggle.is-open > .more-toggle-chevron { transform: rotate(180deg); }
+
+/* Keep native keyboard activation; replace browser and page-specific markers. */
+summary.more-toggle-summary { list-style: none; cursor: pointer; }
+summary.more-toggle-summary::-webkit-details-marker { display: none; }
+summary.more-toggle-summary::marker { content: ''; }
+summary.more-toggle-summary::before,
+summary.more-toggle-summary::after { content: none !important; display: none !important; }
+.more-toggle-chevron { flex-shrink: 0; display: inline-block; vertical-align: middle; }
+.more-toggle-summary > .more-toggle-chevron { margin-inline-start: 0.3rem; }
+details[open] > .more-toggle-summary > .more-toggle-chevron { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) {
+  .more-toggle-chevron { transition: none; }
+}

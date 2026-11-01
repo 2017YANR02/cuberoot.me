@@ -96,3 +96,19 @@ it('invalidates an unchanged label when an earlier move changes its pre-line sta
   await render('F\nU // RG', 'R U', 1);
   expect(host.querySelector('[data-diagram]')).toBeNull();
 });
+
+it('CFZB thumbnails use each stage pre-state including the inspection grip and preceding stage', async () => {
+  const scramble = "R U F";
+  const text = "z2 // insp\nR U R' // ZBLS\nR U R' U R U2 R' // ZBLL";
+  await render(text, scramble, 1);
+  const first = host.querySelector('[data-diagram]');
+  expect(first).not.toBeNull();
+  const firstSetup = first!.getAttribute('data-setup')!;
+  await render(text, scramble, 2);
+  const second = host.querySelector('[data-diagram]');
+  expect(second).not.toBeNull();
+  const secondSetup = second!.getAttribute('data-setup')!;
+  // Library diagrams rebase the center frame; both retain the physical pre-state.
+  expect(applyScramble(3, firstSetup)).toEqual(applyScramble(3, 'z2 R U F z2'));
+  expect(applyScramble(3, secondSetup)).toEqual(applyScramble(3, "z2 R U F z2 R U R'"));
+});

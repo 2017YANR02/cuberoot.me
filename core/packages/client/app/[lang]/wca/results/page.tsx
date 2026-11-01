@@ -1,4 +1,5 @@
 'use client';
+import MoreToggle from '@/components/MoreToggle';
 import '@cuberoot/timer-ui/compact-select.css';
 
 /**
@@ -12,13 +13,13 @@ import '@cuberoot/timer-ui/compact-select.css';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import type { EChartsType } from 'echarts';
 import Link from '@/components/AppLink';
-import HomeLink from '@/components/HomeLink';
+import PageHeading from '@/components/PageHeading';
 import { UnofficialMark } from '@/components/UnofficialMark';
 import dynamic from 'next/dynamic';
 import { WcaPersonRelationCells, useWcaTeams } from './_components/WcaTeamCell';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, HelpCircle, ChevronDown, ChevronRight } from '@app-foundation/icons/lucide';
+import { HelpCircle } from '@app-foundation/icons/lucide';
 import Paginator from '@/components/wca-stats/Paginator';
 import NameStatsView, { type NameStatsData } from '@/components/wca-stats/NameStatsView';
 import { type NameMode, NAME_MODES, nameByMode, FormerNames } from '@/components/wca-stats/nameMode';
@@ -586,7 +587,7 @@ function AllResultsPageInner() {
     </div>
   );
   const teacherShareToggle = (visibleTeacherWcaId || canCreateTeacherShare) ? (
-    <div className="wse-filter wse-filter-show">
+    <div className="wse-filter wse-filter-show wse-filter-share">
       <BoolToggle
         value={Boolean(visibleTeacherWcaId)}
         onChange={(value) => {
@@ -601,12 +602,9 @@ function AllResultsPageInner() {
   ) : null;
 
   return (
-    <div className="wse-page">
+    <div className="wse-page wse-results-page">
       <header className="wse-header">
-        <div className="wse-header-row">
-          <HomeLink className="wse-back"><ChevronLeft size={16} /> <span className="sr-only">{tr({ zh: '首页', en: 'Home' })}</span></HomeLink>
-        </div>
-        <h1 className="wse-title-row">
+        <PageHeading backHref="/wca" titleClassName="wse-title-row">
           {tr({ zh: '排名', en: 'Rankings' })}
           {view === 'rank' && (
             <Link
@@ -618,7 +616,7 @@ function AllResultsPageInner() {
               <HelpCircle size={18} strokeWidth={1.75} />
             </Link>
           )}
-        </h1>
+        </PageHeading>
       </header>
 
       {/* ============ 指标视图:嵌入退役的 wr_metric;指标由「类型」下拉受控(隐藏其内置选择器)。
@@ -638,17 +636,17 @@ function AllResultsPageInner() {
       {/* 名次和:排名演化 race(世界 / 大洲 / 国家),懒挂 */}
       {mode === 'sor' && (
         <div className="sor-census" style={{ marginBottom: 16 }}>
-          <button type="button" className="sor-census-toggle" onClick={() => setRaceOpen(o => !o)} aria-expanded={raceOpen}>
-            {raceOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          <MoreToggle type="button" className="sor-census-toggle" onClick={() => setRaceOpen(o => !o)} expanded={raceOpen}>
+
             {tr({ zh: 'SOR 排名演化(世界 / 大洲 / 国家)', en: 'SOR over time (World / Continent / Country)' })}
-          </button>
+          </MoreToggle>
           {raceOpen && <SorRace />}
         </div>
       )}
 
       {/* 项目选择器在模式切换时保持挂载。 */}
       <div className="wse-filters">
-        <div className="wse-filter" style={{ minWidth: '100%' }}>
+        <div className="wse-filter wse-filter-events" style={{ minWidth: '100%' }}>
           <WcaEventMultiSelector
             presentation="inline"
             availableEvents={RANK_EVENT_SET}
@@ -688,7 +686,7 @@ function AllResultsPageInner() {
               <option value="false">{tr({ zh: '当期', en: 'Period' })}</option>
             </select>
           </div>
-          <div className="wse-filter">
+          <div className="wse-filter wse-filter-show">
             <label>{tr({ zh: '年份', en: 'Year' })}</label>
             <select className="wse-filter-select" value={year} onChange={e => update('year', e.target.value)}>
               {show === 'results' && <option value={0}>{tr({ zh: '全部年份', en: 'All years' })}</option>}
@@ -697,7 +695,7 @@ function AllResultsPageInner() {
           </div>
           {/* 截至口径按年末、不分月 → 直接隐藏月份框(不再灰显占位) */}
           {basis !== 'cumulative' && (
-            <div className="wse-filter">
+            <div className="wse-filter wse-filter-show">
               <label>{tr({ zh: '月份', en: 'Month' })}</label>
               <select
                 className="wse-filter-select"
@@ -724,7 +722,7 @@ function AllResultsPageInner() {
               {qInput && <ClearButton onClick={() => { setQInput(''); update('q', ''); }} isZh={isZh} preserveFocus />}
             </div>
           </div>
-          <div className="wse-filter">
+          <div className="wse-filter wse-filter-name-match">
             <label>{tr({ zh: '名字匹配', en: 'Name match' })}</label>
             <select className="wse-filter-select" value={qMode} onChange={e => update('qmode', e.target.value === 'any' ? '' : e.target.value)}>
               <option value="any">{tr({ zh: '任意部分', en: 'Any part' })}</option>
@@ -842,7 +840,7 @@ function AllResultsPageInner() {
                         <td>
                           {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
                           <span className="ns-person-wrap">
-                            <Link prefetch={false} href={personHref(r.wcaId)}>{nameByMode(r.name, pname)}<WcaPersonTeamBadge wcaId={r.wcaId} /></Link>
+                            <><Link prefetch={false} href={personHref(r.wcaId)}>{nameByMode(r.name, pname)}</Link><WcaPersonTeamBadge wcaId={r.wcaId} /></>
                             {pname === 'aka' && <FormerNames former={r.former} />}
                           </span>
                         </td>
@@ -877,10 +875,10 @@ function AllResultsPageInner() {
             />
           </div>
 
-          <div className="wse-table-wrapper sticky-scroll">
-            {loading && <div className="wse-state"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...' })}</LoadingIndicator></div>}
+          <div className="wse-table-wrapper sticky-scroll wse-refresh-region" aria-busy={loading}>
+            {loading && <div className={data ? "wse-refresh-status" : "wse-state"} role="status"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...' })}</LoadingIndicator></div>}
             {error && <div className="wse-state wse-state-error">Error: {error}</div>}
-            {data && !loading && data.mode === 'results' && (
+            {data && data.mode === show && data.mode === 'results' && (
               <>
                 <div className="wse-result-meta">
                   {isZh ? `共 ${data.total.toLocaleString()} 条,显示 ${data.rows.length}` : `${data.total.toLocaleString()} results, showing ${data.rows.length}`}
@@ -925,7 +923,7 @@ function AllResultsPageInner() {
                 )}
               </>
             )}
-            {data && !loading && data.mode === 'persons' && (
+            {data && data.mode === show && data.mode === 'persons' && (
               <>
                 <div className="wse-result-meta">
                   {isZh ? `共 ${data.total.toLocaleString()} 人,${data.rows.length} 条` : `${data.total.toLocaleString()} cubers, showing ${data.rows.length}`}
@@ -974,10 +972,10 @@ function AllResultsPageInner() {
         <>
           {/* 名人堂 */}
           <div className="sor-census">
-            <button type="button" className="sor-census-toggle" onClick={() => setCensusOpen(o => !o)} aria-expanded={censusOpen}>
-              {censusOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            <MoreToggle type="button" className="sor-census-toggle" onClick={() => setCensusOpen(o => !o)} expanded={censusOpen}>
+
               {tr({ zh: '谁当过 SoWR?', en: "Who's ever topped the SoWR?" })}
-            </button>
+            </MoreToggle>
             {censusOpen && (
               <div className="sor-census-body">
                 <div className="sor-census-controls">
@@ -1017,9 +1015,9 @@ function AllResultsPageInner() {
                       })}
                     </ol>
                     {census.rows.length > 12 && (
-                      <button type="button" className="sor-census-more" onClick={() => setCensusExpanded(e => !e)}>
+                      <MoreToggle expanded={censusExpanded} type="button" className="sor-census-more" onClick={() => setCensusExpanded(e => !e)}>
                         {censusExpanded ? tr({ zh: '收起', en: 'Show less' }) : (isZh ? `展开全部 ${census.distinct} 人` : `Show all ${census.distinct}`)}
-                      </button>
+                      </MoreToggle>
                     )}
                   </>
                 )}
@@ -1027,10 +1025,10 @@ function AllResultsPageInner() {
             )}
           </div>
 
-          <div className="wse-table-wrapper sticky-scroll">
-            {loading && <div className="wse-state"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...' })}</LoadingIndicator></div>}
+          <div className="wse-table-wrapper sticky-scroll wse-refresh-region" aria-busy={loading}>
+            {loading && <div className={sorData ? "wse-refresh-status" : "wse-state"} role="status"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...' })}</LoadingIndicator></div>}
             {error && <div className="wse-state wse-state-error">{error}</div>}
-            {sorData && !loading && (
+            {sorData && (
               <>
                 <div className="wse-result-meta">{isZh ? `共 ${sorData.total.toLocaleString()} 人` : `${sorData.total.toLocaleString()} cubers`}</div>
                 <table className="wse-table sticky-thead">

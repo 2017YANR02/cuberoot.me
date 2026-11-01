@@ -16,7 +16,7 @@ import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
 import { SlugContext, useLang, TeX, TeXBlock, type Lang } from './_components/primitives';
 import { TwistyMini } from './_components/TwistyMini';
-import HomeLink from '@/components/HomeLink';
+import PageBackLink from '@/components/PageBackLink';
 import './group_theory.css';
 import { tr } from '@/i18n/tr';
 import { TOC, TOC_THEMES } from './_data/toc';
@@ -331,10 +331,7 @@ export default function GroupTheoryPage() {
     <SlugContext.Provider value={slug}>
     <div className="gt-page">
       <div className="gt-topbar">
-        {isIndex
-          ? <HomeLink className="gt-back">← <span className="sr-only">{tr({ zh: '返回', en: 'home' })}</span></HomeLink>
-          : <Link href="/math/group" className="gt-back">← {tr({ zh: '目录', en: 'contents'
-        })}</Link>}
+        <PageBackLink fallback={isIndex ? "/math" : "/math/group"} className="gt-back" />
       </div>
 
       {isIndex && (

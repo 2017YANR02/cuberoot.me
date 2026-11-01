@@ -10,7 +10,7 @@ import type { EventId, Solve } from './types';
 import { EVENTS, eventInfo } from './types';
 
 /** Upstream has no dedicated generator for these goals; retain our identity separately. */
-export const CSTIMER_TRAINING_FALLBACKS = { eocp: 'll', ollcp: 'll', l10p: 'cmll' } as const;
+export const CSTIMER_TRAINING_FALLBACKS = { cfzb: 'zbls', eocp: 'll', ollcp: 'll', l10p: 'cmll' } as const;
 
 /** Events without their own csTimer type retain their identity in metadata.
  * Native puzzles use manual input; Sphere Cube shares the ordinary 3x3 generator. */
@@ -136,6 +136,7 @@ const EVENT_TO_CSTIMER_SCRTYPE: Record<EventId, string> = {
   'ollcp': CSTIMER_TRAINING_FALLBACKS.ollcp,
   'zzll': 'zzll',
   'zbls': 'zbls',
+  'cfzb': CSTIMER_TRAINING_FALLBACKS.cfzb,
   'lse': 'lse',
   'l10p': CSTIMER_TRAINING_FALLBACKS.l10p,
   coll: 'collt',

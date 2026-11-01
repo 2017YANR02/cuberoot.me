@@ -1,4 +1,6 @@
 'use client';
+import PageHeading from '@/components/PageHeading';
+import MoreToggle from '@/components/MoreToggle';
 import '@cuberoot/timer-ui/compact-select.css';
 
 /**
@@ -721,13 +723,13 @@ function AnalyzeView({ t }: { t: (zh: string, en: string) => string }) {
                     )}
                   </div>
                   <div className="sym-result-actions">
-                    <button
+                    <MoreToggle expanded={expanded === i}
                       type="button"
                       className="sym-copy"
                       onClick={() => setExpanded(expanded === i ? null : i)}
                     >
                       {expanded === i ? t('收起元素', 'Hide elements') : t('查看 48 元素', 'Show 48 elements')}
-                    </button>
+                    </MoreToggle>
                     <CopyButton text={r.facelet!} label={t('状态', 'State')} />
                     <Link
                       className="sym-copy"
@@ -841,7 +843,7 @@ export default function SymmetryPage() {
   return (
     <div className="sym-page">
       <header className="sym-header">
-        <h1>{t('对称型', 'Symmetry')}</h1>
+        <PageHeading backHref="/scramble">{t('对称型', 'Symmetry')}</PageHeading>
         <p className="sym-lead">
           {t(
             '把整个立方体旋转或镜射之后,一个魔方状态如果还长得一模一样,就说它具有那个对称。这些对称合起来构成 O_h 的一个子群,一共只有 33 种可能。这里既能按对称型反向搜索状态,也能算出任意状态的对称型。移植自 Herbert Kociemba 的 Cube Explorer。',

@@ -295,7 +295,13 @@ membershipRoutes.get('/membership/profile/:wcaId', async (c) => {
     is_admin: boolean;
     active_member: boolean;
   }>(
-    `SELECT u.public_intro, u.public_intro_image_ids, u.is_admin,
+    `SELECT u.public_intro,
+            COALESCE((SELECT jsonb_agg(i.id ORDER BY ids.ord)
+              FROM jsonb_array_elements_text(u.public_intro_image_ids) WITH ORDINALITY ids(id, ord)
+              JOIN article_image i ON i.id = ids.id::bigint
+              WHERE i.gallery_status = 'public'
+                AND UPPER(i.owner_wca_id) = UPPER(COALESCE(u.wca_id, 'u' || u.id::text))), '[]'::jsonb) AS public_intro_image_ids,
+            u.is_admin,
             EXISTS (
               SELECT 1 FROM effective_memberships m
                WHERE UPPER(m.wca_id) = UPPER(u.wca_id)
@@ -390,14 +396,32 @@ membershipRoutes.put('/membership/me/profile', async (c) => {
     if (images.length !== imageIds.length) return c.json({ error: 'profile image not owned' }, 400);
   }
 
-  const rows = await query<{ public_intro: string | null; public_intro_image_ids: unknown; show_in_member_list: boolean }>(
-    `UPDATE app_users u
-       SET public_intro = ?, public_intro_image_ids = ?::jsonb,
-            show_in_member_list = COALESCE(?::boolean, u.show_in_member_list)
-       WHERE UPPER(COALESCE(u.wca_id, 'u' || u.id::text)) = ?
-      RETURNING public_intro, public_intro_image_ids, show_in_member_list`,
-    [intro || null, imageIds, body.showInMemberList ?? null, user.wcaId.toUpperCase()],
-  );
+  const rows = await withTransaction(async q => {
+    // Lock the profile before replacing its image list; removed images lose approval.
+    await q(`SELECT id FROM app_users WHERE UPPER(COALESCE(wca_id, 'u' || id::text)) = ? FOR UPDATE`, [user.wcaId.toUpperCase()]);
+    await q(`UPDATE article_image i SET gallery_status = 'private', gallery_requested_at = NULL,
+      gallery_reviewed_at = NULL, gallery_reviewed_by = NULL
+      WHERE UPPER(i.owner_wca_id) = ? AND i.gallery_status IS NOT NULL
+        AND NOT (i.id = ANY(?::bigint[]))
+        AND EXISTS (SELECT 1 FROM app_users u WHERE UPPER(COALESCE(u.wca_id, 'u' || u.id::text)) = ?
+          AND u.public_intro_image_ids @> jsonb_build_array(i.id))`, [user.wcaId.toUpperCase(), imageIds, user.wcaId.toUpperCase()]);
+    // New attachments (including legacy uploads) always start private; reusing an ID
+    // cannot revive a previous approval or a request racing with its removal.
+    await q(`UPDATE article_image i SET gallery_status = 'private', gallery_requested_at = NULL,
+      gallery_reviewed_at = NULL, gallery_reviewed_by = NULL
+      WHERE i.owner_wca_id = ? AND i.id = ANY(?::bigint[])
+        AND (i.gallery_status IS NULL OR NOT EXISTS (SELECT 1 FROM app_users u
+          WHERE UPPER(COALESCE(u.wca_id, 'u' || u.id::text)) = ?
+            AND u.public_intro_image_ids @> jsonb_build_array(i.id)))`, [user.wcaId, imageIds, user.wcaId.toUpperCase()]);
+    return q<{ public_intro: string | null; public_intro_image_ids: unknown; show_in_member_list: boolean }>(
+      `UPDATE app_users u
+         SET public_intro = ?, public_intro_image_ids = ?::jsonb,
+              show_in_member_list = COALESCE(?::boolean, u.show_in_member_list)
+         WHERE UPPER(COALESCE(u.wca_id, 'u' || u.id::text)) = ?
+        RETURNING public_intro, public_intro_image_ids, show_in_member_list`,
+      [intro || null, imageIds, body.showInMemberList ?? null, user.wcaId.toUpperCase()],
+    );
+  });
   if (!rows.length) return c.json({ error: 'active membership required' }, 403);
   return c.json({
     profileIntro: rows[0].public_intro,

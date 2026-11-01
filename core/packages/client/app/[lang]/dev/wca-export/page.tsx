@@ -3,7 +3,7 @@
 // WST Developer Export 参考页 — 给开发者 / AI 速查 WCA 官方完整数据库导出。
 // 复用 /dev/wcif 的文档样式（.wcif-* 类）。事实据本地导入的 developer dump 实测 + 官方导出页。
 
-import HomeLink from '@/components/HomeLink';
+import PageBackLink from '@/components/PageBackLink';
 import AppLink from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 import '../wcif/wcif.css';
@@ -42,8 +42,7 @@ export default function WcaExportPage() {
   return (
     <div className="wcif-page wcif-page-wide">
       <div className="wcif-topbar">
-        <HomeLink className="wcif-back">← <span className="sr-only">{tr({ zh: '回首页', en: 'Home'
-        })}</span></HomeLink>
+        <PageBackLink fallback="/dev" className="wcif-back" />
         <AppLink href="/dev" className="wcif-back">/dev</AppLink>
         <AppLink href="/dev/wcif" className="wcif-back">WCIF</AppLink>
       </div>

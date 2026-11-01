@@ -11,6 +11,7 @@
 //     (blddb.net, the public Google Sheets) when one exists; otherwise omitted.
 //   • every external link opens in a new tab with rel="noopener noreferrer".
 
+import PageHeading from '@/components/PageHeading';
 import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -330,8 +331,8 @@ export default function ResourcesPage(): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>{tr({ zh: '盲拧资源', en: '3BLD Resources'
-        })}</h1>
+        <PageHeading backHref="/alg/3bld">{tr({ zh: '盲拧资源', en: '3BLD Resources'
+        })}</PageHeading>
       </div>
 
       <p className="bld-res-intro">

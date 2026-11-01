@@ -1,5 +1,18 @@
 # CubeRoot 五端 App 完整路线图
 
+### 2026-10-31：自动复盘关闭手势与全屏顺序（本地，真机待验）
+
+- Web 的 `AutoRecapDismissGesture` 移入 shared，原入口转发；App 自动打开的窄屏全屏详情在入场结束后识别同一面的相邻正反四分之一转，请求共享详情退出动画。手动历史详情不订阅手势，退出动画期间保持计时输入阻塞；跨宽屏断点后返回仍可关闭。
+- 共享全屏详情在窄屏按步骤列表→魔方动画排列，桌面复盘侧栏使用相同顺序；桌面全屏详情保留左右两栏。
+- App 真实组件/模拟蓝牙集成覆盖自动关闭、继续第二局、手动详情不误关及宽窄切换；Web 手势与复盘回归、提交钩子的四条真值及相关回归通过。浏览器 CSS 布局验证覆盖 390/768px 全屏、1200px 全屏及侧栏；shared build、类型检查、Mobile build/sync 和 Android Debug 本机构建已执行。无本轮 GAN 16 UI + Android 真机证据，未推送或发布。
+
+### 2026-10-31：移动计时页布局对齐（本地，真机待验）
+
+- 顶栏窄屏布局和排名 footer 使用显式状态属性，消除对 WebView 103 不支持的 `:has()` 的依赖；Web 私有的难度按钮透明样式移入共享 TimerChrome。排名 footer 修正窄屏两列覆盖三列的优先级。
+- App 真题配置空容器取消垂直 padding，实际页面空行高度从 17px 降到 0；排名容器按可见阶段及启用范围挂载，与 Web 保持一致。
+- timer-ui/app-ui/client 类型检查、App `mobile-viewport.test.ts`（7 项）、Mobile build 与 Capacitor Android sync 通过。隔离 Chrome 页面在 320/360/390/412/768px、单条成绩下检查无横向溢出，统计区底边距 App 导航上沿为 10px；删除 `:has()` 规则后的兼容性模拟同样通过，不等同于 WebView 103 实测。排名 fixture 验证 ≤480px 两列、宽屏三列及 fullscreen 隐藏。
+- Android Debug 本机构建通过；ADB 无连接设备，OPPO 真机布局及 iOS/HarmonyOS/桌面完整验收仍待完成。按功能分批本地提交，未推送、未发布，不改变总体 NOT COMPLETE 状态。
+
 ### 2026-10-16：Watch 多型号智能魔方接入（本地，新增型号实物待验）
 
 - Watch 已接 GAN v1/v2/v3/v4、MoYu32、QiYi；服务识别、MAC 输入缓存、按服务/特征路由通知及真实协议成绩标签已落地，直接连接魔方，无需 iPhone 中转。
@@ -1784,3 +1797,9 @@ Series 8 的 11.524 秒/66 动作记录真机分析完成，无错误，七段�
 - [正式 run 41161533876](https://github.com/2017YANR02/cuberoot.me/actions/runs/41161533876) 已发布 Android APK、Windows x64 安装版及免安装版 `1.0.1 / 1000001`，公网完整下载/哈希/Range 验证通过。首次上传因专用账号 PATH 无 Node 失败；修复服务器运行环境后只重跑发布 job 成功，无本机重编译或签名。
 - [Play build-only run 41162189074](https://github.com/2017YANR02/cuberoot.me/actions/runs/41162189074) 验证 `1.0.2 / 1000002` AAB 云端构建和正式上传证书签名；没有提交商店或证明 Play API 发布权限。
 - 下载页版本管理图标与线上管理员状态页已验证；Windows 按本次授权发布未签名包。实机安装、覆盖升级、成绩保留、Windows Authenticode 与完整五端产品验收仍分别保留原门槛，不因本次分发成功标记五端完成。具体证据与凭据轮换见 `docs/app-downloads.md`。
+
+### 2026-10-30：登录回跳重复与启动竞态（本地修复）
+
+- 针对 Android「账号登录暂时不可用」反馈，最小回归确认两条共享认证缺陷：已成功消费的回跳再次到达时被当作缺少 pending 请求；启动 restore 迟到失败覆盖刚成功的登录。现在仅忽略本进程已完成的同一回跳（不重放会话，退出后也不恢复），并保留较新的回跳成功状态。
+- 修复前两个回归均失败，修复后认证 13 项、安全存储 6 项通过；app-ui/Mobile typecheck、Mobile build + Android sync、Android `assembleDebug -PmobileDistribution=direct --no-daemon --max-workers=2` 通过。共享代码同时供其它安装端使用，未运行其它平台原生构建。
+- 本轮仅本地提交，未发布 App；Android 真机未连接，不能确认截图必由上述竞态导致。待验证：冷启动直接进入“我的”；浏览器完成登录后自动回跳；浏览器登录期间切后台再返回；已登录后结束 App 进程再启动。记录错误出现阶段、App 版本和 Android/WebView 版本即可，不收集密码、验证码或回跳 URL。

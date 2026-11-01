@@ -22,7 +22,7 @@ export const SIM_FIXED_PUZZLE_OPTIONS = [
   { value: 'magic', iconClass: 'event-magic', labelZh: '八板', labelEn: 'Rubik’s Magic' },
   { value: 'mmagic', iconClass: 'event-mmagic', labelZh: '十二板', labelEn: 'Master Magic' },
   { value: 'clock',    iconClass: 'event-clock', labelZh: eventDisplayName('clock', true), labelEn: eventDisplayName('clock', false) },
-  { value: 'fto',      iconClass: 'puzzle-fto', labelZh: eventDisplayName('fto', true), labelEn: eventDisplayName('fto', false) },
+  { value: 'fto',      iconClass: 'unofficial-fto', labelZh: eventDisplayName('fto', true), labelEn: eventDisplayName('fto', false) },
   { value: 'dino',     iconClass: 'unofficial-dino', labelZh: '恐龙', labelEn: 'Dino' },
   { value: 'redi',     iconClass: 'unofficial-redi', labelZh: '热帝', labelEn: 'Redi' },
   { value: 'rex',      iconClass: 'unofficial-rex', labelZh: '八轴魔星', labelEn: 'Rex Cube' },

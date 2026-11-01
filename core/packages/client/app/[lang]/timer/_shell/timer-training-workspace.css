@@ -9,8 +9,9 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: 10px;
+  min-height: 48px;
+  padding: 8px max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left));
 }
 
 .timer-training-workspace__navigation {
@@ -19,7 +20,7 @@
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 4px;
   min-width: 0;
 }
 .timer-training-workspace__context {
@@ -35,7 +36,7 @@
 @media (max-width: 767px) {
   .timer-training-workspace__toolbar {
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     justify-content: space-evenly;
     gap: 3px;
     padding-inline: 4px;
@@ -53,7 +54,7 @@
   .timer-training-workspace__toolbar .trainer-progress-link,
   .timer-training-workspace__toolbar .trainer-recap-progress,
   .timer-training-workspace__toolbar .alg-pdf-btn {
-    font-size: 11px;
+    font-size: 14px;
   }
   .timer-training-workspace__toolbar .trainer-top-actions {
     gap: 4px;
@@ -162,14 +163,15 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  justify-content: center;
+  justify-content: safe center;
+  overflow-y: auto;
 }
 .trainer-root--fixed .trainer-run > .trainer-stage {
   display: flex;
   flex-direction: column;
   gap: 8px;
   padding: 4px 0;
-  min-height: 0;
+  flex-shrink: 0;
 }
 .trainer-root--fixed .trainer-stage :is(img, svg):not(.lucide) {
   max-height: var(--trainer-figure-height);
@@ -181,11 +183,11 @@
   max-width: var(--trainer-figure-height);
 }
 .trainer-root--fixed .trainer-stage .trainer-scramble-text {
-  font-size: clamp(16px, 3.4dvh, 28px);
+  font-size: calc(clamp(16px, 3.4dvh, 28px) * var(--trainer-scramble-scale, 1));
   margin-block: 8px;
 }
 .trainer-root--fixed.trainer-root--multi .trainer-stage .trainer-scramble-text {
-  font-size: clamp(14px, 2.5dvh, 22px);
+  font-size: calc(clamp(14px, 2.5dvh, 22px) * var(--trainer-scramble-scale, 1));
   margin-block: 4px;
 }
 .trainer-root--fixed .trainer-scramble-multi {

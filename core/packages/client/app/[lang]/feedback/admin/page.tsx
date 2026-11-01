@@ -6,10 +6,11 @@
  * 媒体(截图/短视频)经公开 GET /v1/feedback/media/:id 直接做 <img>/<video> 的 src
  * (immutable 长缓存)。双主题走 globals.css token。文案本地 t(简,en)。
  */
+import MoreToggle from '@/components/MoreToggle';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, Trash2, Lightbulb, Bug, MessageSquare, ExternalLink, ChevronDown } from '@app-foundation/icons/lucide';
-import HomeLink from '@/components/HomeLink';
+import { Trash2, Lightbulb, Bug, MessageSquare, ExternalLink } from '@app-foundation/icons/lucide';
+import PageBackLink from '@/components/PageBackLink';
 import FeedbackConversation from '@/components/FeedbackConversation';
 import { UserIdLabel } from '@/components/UserIdLabel';
 import { useAuthStore } from '@/lib/auth-store';
@@ -107,7 +108,7 @@ export default function FeedbackAdminPage() {
     return (
       <div className="fba-page fba-denied">
         <p>{t('需要管理员权限', 'Admin access required')}</p>
-        <HomeLink className="fba-back"><ChevronLeft size={16} /><span className="sr-only">{t('首页', 'Home')}</span></HomeLink>
+        <PageBackLink fallback="/feedback" className="fba-back" />
       </div>
     );
   }
@@ -115,7 +116,7 @@ export default function FeedbackAdminPage() {
   return (
     <div className="fba-page">
       <header className="fba-header">
-        <HomeLink className="fba-back"><ChevronLeft size={16} /><span className="sr-only">{t('首页', 'Home')}</span></HomeLink>
+        <PageBackLink fallback="/feedback" className="fba-back" />
       </header>
       <h1 className="fba-title">{t('反馈', 'Feedback')}</h1>
 
@@ -180,12 +181,12 @@ export default function FeedbackAdminPage() {
                     {s === 'new' ? t('新', 'New') : s === 'triaged' ? t('处理中', 'Triaged') : t('完成', 'Done')}
                   </button>
                 ))}
-                <button type="button" className={`fba-act fba-conv${expanded ? ' is-cur' : ''}`}
-                  onClick={() => toggle(it.id)} aria-expanded={expanded}>
+                <MoreToggle type="button" className={`fba-act fba-conv${expanded ? ' is-cur' : ''}`}
+                  onClick={() => toggle(it.id)} expanded={expanded}>
                   <MessageSquare size={13} />
                   {it.replyCount ? `${t('对话', 'Thread')} ${it.replyCount}` : t('回复', 'Reply')}
-                  <ChevronDown size={13} className={`fba-conv-chev${expanded ? ' is-open' : ''}`} />
-                </button>
+
+                </MoreToggle>
                 <button type="button" className="fba-del" disabled={busy === it.id} onClick={() => remove(it.id)}
                   title={t('删除', 'Delete')}><Trash2 size={14} /></button>
               </div>

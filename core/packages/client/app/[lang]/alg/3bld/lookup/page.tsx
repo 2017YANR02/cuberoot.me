@@ -18,6 +18,7 @@
 // 六条对着上游页面实测的 fixture)。显示开关(起手 / 镜像 / 逆 case / 换位子写法 / 排序 /
 // 按成绩筛)在 _store/blddb-prefs-store.ts,对齐上游 /settings。
 
+import PageHeading from '@/components/PageHeading';
 import { useCallback, useEffect, useMemo, useState, type JSX } from 'react';
 import { parseAsStringEnum } from 'nuqs';
 import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
@@ -575,9 +576,9 @@ export default function BlddbLookupPage(): JSX.Element {
   return (
     <div className="bld-trainer-root">
       <div className="bld-topbar">
-        <h1>
+        <PageHeading backHref="/alg/3bld">
           <EventIcon event="333bf" /> {tr({ zh: '盲拧公式查询', en: 'BLD Algorithm Lookup' })}
-        </h1>
+        </PageHeading>
         <Link href="/alg/3bld/tables" className="bld-hub-secondary" prefetch={false}>
           {tr({ zh: '速查表', en: 'Cheat sheets' })}
         </Link>

@@ -494,8 +494,9 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
 
   const drawScramble = async (type: string): Promise<string> => {
     const q = cacheRef.current[type];
-    if (q && q.length > 0) return q.shift() ?? '';
-    return generateOne(type);
+    const scramble = q?.length ? q.shift()! : await generateOne(type);
+    if (!scramble.trim()) throw new Error('Empty scramble');
+    return scramble;
   };
 
   // 后台预生成:用户在 configure 模式下调整时,按当前配置算出每种 scramble type
@@ -531,6 +532,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
         try {
           while ((cacheRef.current[type]?.length ?? 0) < (cacheTargetRef.current[type] ?? 0)) {
             const s = await generateOne(type);
+            if (!s.trim()) throw new Error('Empty scramble');
             if (pregenGenRef.current !== myGen) return; // 口径已切换,丢弃旧口径结果
             if (!cacheRef.current[type]) cacheRef.current[type] = [];
             cacheRef.current[type].push(s ?? '');
@@ -548,6 +550,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   const generate = async () => {
     generateAbortRef.current = false;
     setGenerating(true);
+    setError(null);
     let done = 0;
     const total = totalAttempts;
     setGenProgress({ done: 0, total });
@@ -563,74 +566,85 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     };
     try {
       const out: RoundSheet[] = [];
+      const failed: string[] = [];
       outer: for (const ev of enabledEvents) {
         if (generateAbortRef.current) break outer;
-        const cfg = events[ev];
-        for (let ri = 0; ri < cfg.rounds.length; ri++) {
-          if (generateAbortRef.current) break outer;
-          const round = cfg.rounds[ri];
-          const mainCount = formatAttempts(round.format);
-          for (let g = 0; g < Math.max(1, round.scrambleSets); g++) {
+        const eventStart = out.length;
+        try {
+          const cfg = events[ev];
+          for (let ri = 0; ri < cfg.rounds.length; ri++) {
             if (generateAbortRef.current) break outer;
-            if (ev === '333mbf' || ev === '333mbo') {
-              const cubesPerAttempt = cfg.mbldCubes ?? 8;
-              for (let a = 0; a < mainCount; a++) {
-                const cubeRows: AttemptScramble[] = [];
-                for (let c = 0; c < cubesPerAttempt; c++) {
-                  const s = await drawScramble('333bf');
-                  cubeRows.push({ label: String(c + 1), scramble: s, isExtra: false });
+            const round = cfg.rounds[ri];
+            const mainCount = formatAttempts(round.format);
+            for (let g = 0; g < Math.max(1, round.scrambleSets); g++) {
+              if (generateAbortRef.current) break outer;
+              if (ev === '333mbf' || ev === '333mbo') {
+                const cubesPerAttempt = cfg.mbldCubes ?? 8;
+                for (let a = 0; a < mainCount; a++) {
+                  const cubeRows: AttemptScramble[] = [];
+                  for (let c = 0; c < cubesPerAttempt; c++) {
+                    const s = await drawScramble('333bf');
+                    cubeRows.push({ label: String(c + 1), scramble: s, isExtra: false });
+                    await tick();
+                  }
+                  out.push({
+                    event: ev, roundIdx: ri, groupIdx: g,
+                    format: round.format,
+                    attemptNumber: a,
+                    attempts: cubeRows,
+                    copies: round.copies,
+                    totalGroups: round.scrambleSets,
+                  });
+                }
+              } else if (ev === '333fm') {
+                const type = scrambleTypeFor(ev);
+                for (let a = 0; a < mainCount; a++) {
+                  const s = await drawScramble(type);
+                  await tick();
+                  out.push({
+                    event: ev, roundIdx: ri, groupIdx: g,
+                    format: round.format,
+                    attemptNumber: a,
+                    attempts: [{ label: '1', scramble: s, isExtra: false }],
+                    locales: round.locales,
+                    copies: round.copies,
+                    totalGroups: round.scrambleSets,
+                  });
+                }
+              } else {
+                const type = scrambleTypeFor(ev);
+                const attempts: AttemptScramble[] = [];
+                for (let i = 0; i < mainCount; i++) {
+                  const s = await drawScramble(type);
+                  attempts.push({ label: String(i + 1), scramble: s, isExtra: false });
+                  await tick();
+                }
+                for (let i = 0; i < DEFAULT_EXTRA_COUNT; i++) {
+                  const s = await drawScramble(type);
+                  attempts.push({ label: `E${i + 1}`, scramble: s, isExtra: true });
                   await tick();
                 }
                 out.push({
                   event: ev, roundIdx: ri, groupIdx: g,
                   format: round.format,
-                  attemptNumber: a,
-                  attempts: cubeRows,
+                  attempts,
                   copies: round.copies,
                   totalGroups: round.scrambleSets,
                 });
               }
-            } else if (ev === '333fm') {
-              const type = scrambleTypeFor(ev);
-              for (let a = 0; a < mainCount; a++) {
-                const s = await drawScramble(type);
-                await tick();
-                out.push({
-                  event: ev, roundIdx: ri, groupIdx: g,
-                  format: round.format,
-                  attemptNumber: a,
-                  attempts: [{ label: '1', scramble: s, isExtra: false }],
-                  locales: round.locales,
-                  copies: round.copies,
-                  totalGroups: round.scrambleSets,
-                });
-              }
-            } else {
-              const type = scrambleTypeFor(ev);
-              const attempts: AttemptScramble[] = [];
-              for (let i = 0; i < mainCount; i++) {
-                const s = await drawScramble(type);
-                attempts.push({ label: String(i + 1), scramble: s, isExtra: false });
-                await tick();
-              }
-              for (let i = 0; i < DEFAULT_EXTRA_COUNT; i++) {
-                const s = await drawScramble(type);
-                attempts.push({ label: `E${i + 1}`, scramble: s, isExtra: true });
-                await tick();
-              }
-              out.push({
-                event: ev, roundIdx: ri, groupIdx: g,
-                format: round.format,
-                attempts,
-                copies: round.copies,
-                totalGroups: round.scrambleSets,
-              });
             }
           }
+        } catch (err) {
+          if (err === ABORT_SENTINEL) throw err;
+          console.error('[gen/comp] generate failed', ev, err);
+          out.splice(eventStart); // Discard incomplete rounds of this event only.
+          failed.push(ev);
         }
       }
       if (!generateAbortRef.current) {
-        setSheets(out);
+        setError(failed.length ? t('生成失败，可重新生成：', 'Generation failed; regenerate to retry: ')
+          + failed.map((ev) => eventDisplayName(ev, isZh)).join(', ') : null);
+        setSheets(out.length ? out : null);
         // viewedEvent = null 让 activeEventOf 落到默认 (333 若存在,否则首项)。
         setViewedEvent(null);
         setViewedRoundIdx(null);
