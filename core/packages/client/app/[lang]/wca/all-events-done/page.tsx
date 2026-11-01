@@ -78,7 +78,7 @@ function AllEventsDonePageInner() {
       <WcaStatsPageHeader
         slug="all-events-done"
         title={{ zh: '全项目达成排名', en: 'All Events Achievement' }}
-        subtitle={{ zh: '完成全 17 项 WCA 官方项目所用天数(从首次参赛到最后一项达成),即「全项目大满贯」', en: 'Days from first WCA comp to completing all 17 events — the all-events grand slam' }}
+        subtitle={{ zh: '从首次参赛到集齐 17 项有效成绩的间隔，按比赛开始日期计算', en: 'Days from first competition to valid results in all 17 events, measured by competition start dates' }}
       />
 
       <div className="wse-filters">
@@ -87,9 +87,9 @@ function AllEventsDonePageInner() {
           <label>{tr({ zh: '视图', en: 'View'
         })}</label>
           <select className="wse-filter-select" value={onlyDone ? '1' : '0'} onChange={e => update('onlyDone', e.target.value)}>
-            <option value="1">{tr({ zh: '全达成', en: 'Completed'
+            <option value="1">{tr({ zh: '已完成 17 项', en: 'Completed all 17'
             })}</option>
-            <option value="0">{tr({ zh: '全部', en: 'All' })}</option>
+            <option value="0">{tr({ zh: '全部选手', en: 'All competitors' })}</option>
           </select>
         </div>
       </div>
@@ -126,7 +126,13 @@ function AllEventsDonePageInner() {
                     <td>
                       <PersonLink wcaId={r.wcaId} name={r.name} isZh={isZh} />
                     </td>
-                    <td className="wse-value-col">{r.daysToComplete != null ? `${r.daysToComplete.toLocaleString()} ${tr({ zh: '天', en: 'd' })}` : '—'}</td>
+                    <td className="wse-value-col">{
+                      r.daysToComplete === 0 && r.firstCompId && r.firstCompId === r.achievementCompId
+                        ? tr({ zh: '首赛达成', en: 'At debut' })
+                        : r.daysToComplete != null
+                          ? `${r.daysToComplete.toLocaleString()} ${tr({ zh: '天', en: 'd' })}`
+                          : '—'
+                    }</td>
                     {/* 无日期列,年号是这格唯一的时间信息 —— 保留(date={null}) */}
                     <td>{r.achievementCompId ? <CompCell compId={r.achievementCompId} compName={r.achievementCompName} isZh={isZh} date={null} /> : ''}</td>
                     <td className="wse-value-col">{r.totalCompCount}</td>

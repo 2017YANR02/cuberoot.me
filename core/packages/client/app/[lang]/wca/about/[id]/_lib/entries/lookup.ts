@@ -411,12 +411,12 @@ const all_events_done: AboutEntry = {
   badgeZh: '选手',
   badgeEn: 'Person',
   introZh: [
-    '一个人需要多久 — 从他/她的首场 WCA 比赛起算 — 才能在**当前 17 个官方项目**里每项都至少有一次 valid 成绩(`best > 0`)?这个"首次集齐"的最早日期减去首参赛日期就是 `days_to_complete`。',
-    '页面默认按 `days_to_complete ASC` 排,看"最快全勤"。未集齐的人(`is_done = FALSE`)按 `done_count` 降序排,看离全勤还差几项。',
+    '在**当前 17 个官方项目**中，每项至少取得一次有效成绩(`best > 0`)即算全项目达成。间隔天数使用达成比赛与首场比赛的**开始日期之差**，不精确到具体轮次的比赛日。首场比赛内集齐 17 项时，日期差为 0，表格显示“首赛达成”。',
+    '“已完成 17 项”只列全项目达成者，按间隔天数升序排列。“全部选手”还包含至少完成一项的未达成者，先按完成项目数降序、再按间隔天数升序排列，因此两种视图的榜首相同。',
   ],
   introEn: [
-    'How long does it take, counting from a person\'s first WCA competition, to post at least one valid result (`best > 0`) in **every one of the 17 currently-active events**? `days_to_complete` is the earliest such "all done" date minus their first-comp date.',
-    'Default sort is `days_to_complete ASC` — fastest to full sweep. Incomplete people (`is_done = FALSE`) sort by `done_count` descending — how close to the finish line.',
+    'Completion requires at least one valid result (`best > 0`) in **each of the 17 currently active events**. Elapsed days use the difference between the **start dates** of the achievement competition and the first competition, not the dates of individual rounds. Completing all 17 at the first competition gives a difference of zero and is displayed as “At debut”.',
+    '“Completed all 17” lists only those who have completed every event, ordered by elapsed days. “All competitors” also includes people with at least one completed event, ordered by completed-event count descending and then elapsed days ascending. Both views therefore start with the same leaders.',
   ],
   stats: [
     { value: '17', labelZh: '目标项目', labelEn: 'Target events', hintZh: 'ACTIVE_EVENTS 当下口径,废止项目不计', hintEn: 'Current ACTIVE_EVENTS set — discontinued events not counted'
