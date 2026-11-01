@@ -337,7 +337,8 @@ describe('BluetoothModal direct connection attempt', () => {
       cube: { ...disconnectedCube, status: { ...disconnectedCube.status, connected: true, deviceName: 'GAN16ui' }, disconnect },
       onClose: vi.fn(), onConnect: vi.fn(async () => {}), onConnectNext,
     })));
-    const add = [...modal().querySelectorAll('button')].find(button => button.textContent === 'Connect another smart cube')!;
+    const add = modal().querySelector<HTMLButtonElement>('.bt-cube-add')!;
+    expect(add.textContent).toBe('Connect next');
     await act(async () => add.click());
     expect(onConnectNext).toHaveBeenCalledOnce();
     expect(modal().querySelector('[role="alert"]')?.textContent).toBe('Error: The second cube could not connect');

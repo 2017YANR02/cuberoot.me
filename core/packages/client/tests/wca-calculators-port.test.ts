@@ -112,7 +112,9 @@ describe('wca_kinch stats deploy contract', () => {
   it('writes and loads the same Kinch TSV', () => {
     expect(builder).toContain("createWriteStream(resolve(outDir, 'wca_kinch.copy.tsv'))");
     expect(builder).toMatch(/refreshTable\(\{\s*table: 'wca_kinch',[\s\S]*?keyColumns: \['wca_id'\], file: 'wca_kinch\.copy\.tsv'/);
-    expect(builder).toContain('country: personCountry.get(pid) ?? a.country');
+    const kinchOutput = builder.slice(builder.indexOf('const kinchStream ='), builder.indexOf('await new Promise<void>(resolveEnd => kinchStream.end'));
+    expect(kinchOutput).toContain("const country = personCountry.get(pid) ?? '';");
+    expect(kinchOutput).toContain('${pgEsc(pid)}\\t${pgEsc(country)}');
   });
 
   it('uploads the complete stats-extra output directory', () => {

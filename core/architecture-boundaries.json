@@ -1150,15 +1150,6 @@
       "target": "shared"
     },
     {
-      "file": "packages/client/app/[lang]/nemesizer/_components/NemesizerPersonPicker.tsx",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
       "file": "packages/client/app/[lang]/recognize/[algSetId]/guide/RecognitionGuideClient.tsx",
       "importKind": "runtime",
       "mechanism": "static-import",

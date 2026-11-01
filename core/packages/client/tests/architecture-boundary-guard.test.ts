@@ -45,7 +45,7 @@ function rules(file: string, content: string): string[] {
 
 describe('architecture boundary guard', () => {
   it('pins the complete current dependency baseline by exact finding identity', () => {
-    expect(MANIFEST.legacyFindings).toHaveLength(192);
+    expect(MANIFEST.legacyFindings).toHaveLength(191);
     expect(compareFindings(uncontractedFindings(CURRENT, MANIFEST.manualContracts), MANIFEST.legacyFindings)).toEqual({ additions: [], stale: [] });
     // Reviewed native adapters, the Android release build, isolated fixtures, diagnostics, geometry/solver proofs,
     // deployment-only pgvector provisioning and remote-access host commands, plus
@@ -54,7 +54,7 @@ describe('architecture boundary guard', () => {
     // Five additional identities: two isolated nginx purge probes, the fixed FMC
     // quotient binary and two bounded small-puzzle measurement subprocess calls.
     expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 36);
-    expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(144);
+    expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(143);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'cross-package-alias-import')).toHaveLength(0);
   });
 
@@ -153,6 +153,21 @@ describe('architecture boundary guard', () => {
       expect(collectFindings([undeclared])).toContainEqual(expect.objectContaining({ rule: 'subprocess-call' }));
       expect(violationsFromHookPayload({ tool_input: { file_path: file, content: source } }, [undeclared]))
         .toContainEqual(expect.objectContaining({ rule: 'subprocess-call' }));
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('ignores isolated Next dev output while still checking source imports', () => {
+    const root = mkdtempSync(join(CORE_ROOT, '.tmp-next-output-'));
+    try {
+      const source = "import { EventId } from '@cuberoot/shared';";
+      mkdirSync(join(root, '.next-review'));
+      writeFileSync(join(root, '.next-review', 'worker.ts'), source);
+      const owner = { root, dir: 'probe', workspacePath: 'probe', exports: {}, name: '@cuberoot/probe', cuberoot: { kind: 'app' }, json: {} };
+      expect(collectFindings([owner])).toEqual([]);
+      writeFileSync(join(root, 'entry.ts'), source);
+      expect(collectFindings([owner])).toContainEqual(expect.objectContaining({ rule: 'shared-root-import' }));
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

@@ -350,7 +350,8 @@ function filesUnder(root) {
   const out = [];
   const walk = (directory) => {
     for (const entry of readdirSync(directory, { withFileTypes: true })) {
-      if (entry.isDirectory() && SKIP_DIRS.has(entry.name)) continue;
+      // NEXT_DEV_DIST_DIR also permits isolated dev output such as .next-review.
+      if (entry.isDirectory() && (SKIP_DIRS.has(entry.name) || entry.name.startsWith('.next-'))) continue;
       const absolute = join(directory, entry.name);
       if (entry.isDirectory()) walk(absolute);
       else if (entry.isFile() && SOURCE_EXTENSIONS.has(extname(entry.name))) out.push(absolute);

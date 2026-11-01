@@ -157,7 +157,8 @@ describe('practice menu availability and transitions', () => {
     wide = row.wide;
     useTrainerStore.setState({ selected: ['A', 'B'].slice(0, row.count) });
     await renderMenu(row.path, { 'train.split': '1' });
-    expect(trigger('练习方式', 'Practice method').disabled).toBe(row.locked);
+    if (row.locked) expect(trigger('练习方式', 'Practice method')).toBeNull();
+    else expect(trigger('练习方式', 'Practice method').disabled).toBe(false);
     await openSettings();
     expect(practiceType()).toBeNull();
     expect(trigger('计时', 'Timing')).toBeNull();
@@ -192,7 +193,7 @@ describe('practice menu availability and transitions', () => {
     await openSettings();
     expect(trigger('出题来源', 'Question source').disabled).toBe(true);
     expect(practiceType()).toBeNull();
-    expect(trigger('练习方式', 'Practice method').disabled).toBe(true);
+    expect(trigger('练习方式', 'Practice method')).toBeNull();
     expect(trigger('计时', 'Timing')).toBeNull();
     await act(async () => useTrainerStore.setState({ room: null, timerState: TimerState.RUNNING }));
     await renderMenu('/alg/3x3/oll/run');
@@ -206,7 +207,7 @@ describe('practice menu availability and transitions', () => {
     await renderMenu('/alg/3x3/zbll/run', { event: 'zbll' });
     await openSettings();
     expect(trigger('出题来源', 'Question source').disabled).toBe(false);
-    expect(trigger('练习方式', 'Practice method').disabled).toBe(true);
+    expect(trigger('练习方式', 'Practice method')).toBeNull();
     expect(trigger('计时', 'Timing')).toBeNull();
   });
 

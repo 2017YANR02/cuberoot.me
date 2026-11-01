@@ -14,7 +14,10 @@ vi.mock('@/components/CompactSelect', () => ({ CompactSelect: () => null }));
 vi.mock('@/components/WcaEventSelector', () => ({ default: () => null }));
 vi.mock('@/components/LangToggle', () => ({ default: () => null }));
 vi.mock('@/components/EventIcon/EventIcon', () => ({ EventIcon: () => null }));
-vi.mock('@/lib/top10-export', () => ({ exportTop10Video: vi.fn() }));
+vi.mock('@/lib/top10-export', async importOriginal => ({
+  ...await importOriginal<typeof import('@/lib/top10-export')>(),
+  exportTop10Video: vi.fn(),
+}));
 vi.mock('@/lib/country-flags', () => ({ loadFlagData: async () => {}, compFlagIso2: () => null }));
 vi.mock('@/lib/comp-localize', () => ({ localizeCompName: (_id: string, name: string) => name }));
 
