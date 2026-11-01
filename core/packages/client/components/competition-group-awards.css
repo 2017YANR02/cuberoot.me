@@ -8,4 +8,4 @@
 .group-awards h3 a { margin-inline-start: auto; font-size: .8rem; font-weight: normal; }
 .group-awards-group { scroll-margin-top: 6rem; min-width: 0; }
 .group-awards-competition { margin-bottom: .5rem; }
-.group-awards select { background: var(--card); color: var(--foreground); border: 1px solid var(--border-default); border-radius: .375rem; padding: .25rem .5rem; }
+.group-awards-category { background: var(--card); color: var(--foreground); border: 1px solid var(--border-default); border-radius: .375rem; padding: .25rem .5rem; }

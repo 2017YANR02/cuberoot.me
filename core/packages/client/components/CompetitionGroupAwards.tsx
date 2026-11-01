@@ -51,7 +51,7 @@ export default function CompetitionGroupAwards({ rows, isZh, personal = false, s
     <div className="group-awards-toolbar">
       {personal && <span><span aria-label={t('金牌', 'Gold')}>🥇</span> {medals[0]} · <span aria-label={t('银牌', 'Silver')}>🥈</span> {medals[1]} · <span aria-label={t('铜牌', 'Bronze')}>🥉</span> {medals[2]}</span>}
       {events.size > 1 && <WcaEventSelector availableEvents={events} selectedEvent={event} onSelect={value => { setEvent(value); setCategory(''); }} allowAll isZh={isZh} />}
-      {categories.length > 1 && <label>{t('组别', 'Category')} <select aria-label={t('组别', 'Category')} value={category} onChange={e => setCategory(e.target.value)}>
+      {categories.length > 1 && <label>{t('组别', 'Category')} <select className="group-awards-category" aria-label={t('组别', 'Category')} value={category} onChange={e => setCategory(e.target.value)}>
         <option value="">{t('全部', 'All')}</option>
         {categories.map(([key, row]) => <option key={key} value={key}>{label(row)}</option>)}
       </select></label>}

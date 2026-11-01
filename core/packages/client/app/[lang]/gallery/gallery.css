@@ -56,7 +56,7 @@
 }
 .gallery-photo a:hover figcaption { color: var(--foreground); }
 .gallery-review-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-.gallery-review-actions button:disabled { opacity: 0.5; cursor: default; }
+.gallery-review-actions .gallery-retry:disabled { opacity: 0.5; cursor: default; }
 
 @media (max-width: 520px) {
   .gallery-page { padding-top: 18px; }
