@@ -19,6 +19,7 @@
  */
 
 import MoreToggle from './MoreToggle';
+import BoolToggle from './BoolToggle';
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Info, X, SlidersHorizontal, ArrowLeft, ArrowRight, ChevronDown } from 'lucide-react';
@@ -407,7 +408,7 @@ interface Props {
   compact?: boolean;
   expandedSolutions?: boolean;
   /** Timer stage practice: reveal solution moves only on request. */
-  progressiveReveal?: boolean;
+  allowProgressiveReveal?: boolean;
   /** Opt-in experimental ranking; ordinary callers retain length order. */
   practicalSolutions?: boolean;
   settingsSlot?: HTMLElement | null; navigationSlot?: HTMLElement | null;
@@ -416,8 +417,22 @@ interface Props {
   onNextScramble?: () => void;
 }
 
-export default function StageSolver({ scramble, lang, initialMethod = 'std', initialStage = 0, initialFace, onSelectionChange, initialSlot = '', onSlotChange, initialBase = '', onBaseChange, compact = false, expandedSolutions = false, progressiveReveal = false, practicalSolutions = false, settingsSlot, navigationSlot, scrambleEditAction, onPrevScramble, onNextScramble, onDismissChange, onBlockingChange }: Props) {
+export default function StageSolver({ scramble, lang, initialMethod = 'std', initialStage = 0, initialFace, onSelectionChange, initialSlot = '', onSlotChange, initialBase = '', onBaseChange, compact = false, expandedSolutions = false, allowProgressiveReveal = false, practicalSolutions = false, settingsSlot, navigationSlot, scrambleEditAction, onPrevScramble, onNextScramble, onDismissChange, onBlockingChange }: Props) {
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
+  const [revealEnabled, setRevealEnabled] = useState(false);
+  const [revealPreferenceReady, setRevealPreferenceReady] = useState(false);
+  useEffect(() => {
+    try { setRevealEnabled(localStorage.getItem('timer.solverHints.progressiveReveal') === '1'); }
+    catch { /* Storage is optional. */ }
+    setRevealPreferenceReady(true);
+  }, []);
+  const progressiveReveal = allowProgressiveReveal && revealEnabled;
+  const showExpandedSolutions = expandedSolutions && !progressiveReveal;
+  const changeRevealEnabled = (enabled: boolean) => {
+    setRevealEnabled(enabled);
+    try { localStorage.setItem('timer.solverHints.progressiveReveal', enabled ? '1' : '0'); }
+    catch { /* Keep the preference for this mounted panel. */ }
+  };
 
   // 视角格 / 解法头的目标描述(块类方法按 method+stage 给语义,其余 = 该面十字)。
   const faceDesc = (face: string) =>
@@ -1161,20 +1176,22 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       onClick={() => revealSolution(i, revealedCount(i) + 1)}>+1</button>
     <button type="button" className="stsv-sol-orientation stsv-reveal-all" disabled={movesLoading}
       aria-label={t('显示完整解法', 'Reveal full solution')}
-      onClick={() => revealSolution(i, solutionTokens(alg).length)}>{moveLen(alg)}{t('步', 'f')}</button>
+      onClick={() => revealSolution(i, solutionTokens(alg).length)}>{t('显示全部', 'Show all')}</button>
   </>;
   const solutionItems = moves?.sols.map((sol, i) => {
     const alg = rotateSolutionY(sol.m, rowRot[i] ?? 0);
     return {
       value: i,
       label: <span className="stsv-sol-option">
-        {!expandedSolutions && renderOrientation(alg)}
+        {!showExpandedSolutions && renderOrientation(alg)}
         <span className="stsv-sol-slot-column">{sol.c && slotCombos.length >= 2 && renderSolSlots(sol.c)}</span>
         <code>
-          {splitLeadRot(alg).lead && <span className="stsv-sol-rotation">{splitLeadRot(alg).lead} </span>}
-          {solutionText(i, alg)}
+          {progressiveReveal ? t(`解法 ${i + 1}`, `Solution ${i + 1}`) : <>
+            {splitLeadRot(alg).lead && <span className="stsv-sol-rotation">{splitLeadRot(alg).lead} </span>}
+            {solutionText(i, alg)}
+          </>}
         </code>
-        {(!progressiveReveal || !expandedSolutions || solutionVisible(i, alg)) && <span className="stsv-sol-len">{moveLen(alg)}</span>}
+        <span className="stsv-sol-len">{moveLen(alg)}{progressiveReveal && t('步', ' moves')}</span>
       </span>,
     };
   }) ?? [];
@@ -1327,6 +1344,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
         <TimerRoomDialog title={t('求解设置', 'Solver settings')} language={lang}
           className="stsv stsv-settings-dialog" onClose={() => setSettingsOpen(false)}>
         <div id={settingsId} className="stsv-settings">
+          {allowProgressiveReveal && <BoolToggle value={revealEnabled} onChange={changeRevealEnabled}
+            label={t('逐步揭示', 'Progressive reveal')} />}
           <div className="stsv-settings-limits">
             {/* 最大步数 = 比该面最优多几步(相对最优,跨面一致;cross 阶段也不会因绝对大值爆炸)。 */}
             <label className="stsv-control">
@@ -1570,8 +1589,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
             </div>
           )}
 
-          {selFace !== null && (
-            <div className={`stsv-result${expandedSolutions ? ' stsv-result-expanded' : ''}`}>
+          {selFace !== null && (!allowProgressiveReveal || revealPreferenceReady) && (
+            <div className={`stsv-result${showExpandedSolutions ? ' stsv-result-expanded' : ''}`}>
               <div className="stsv-sols">
                 {movesLoading && (!moves || moves.sols.length === 0) && (
                   <div className="stsv-status"><Spinner size={14} />{t('搜索最优解…', 'Searching…')}</div>
@@ -1598,7 +1617,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                         <Spinner size={12} className="stsv-sols-spin" label={t('搜索中…', 'Searching…')} />
                       </div>
                     )}
-                    {expandedSolutions ? (
+                    {showExpandedSolutions ? (
                       <div className="stsv-solution-list" aria-label={t('解法', 'Solutions')}>
                         {solutionItems.map((item, i) => (
                           <div className={`stsv-solution-row${i === selectedSolIndex ? ' is-selected' : ''}`} key={item.value}>
