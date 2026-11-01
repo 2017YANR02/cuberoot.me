@@ -1,0 +1,20 @@
+/* Comfortable WCA ranking tables; opt in through WcaStatsTable. */
+.wse-table-wrapper.wca-stats-table-section {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.wse-table.wca-stats-data-table { width: 100%; }
+.wse-table.wca-stats-data-table th,
+.wse-table.wca-stats-data-table td { padding: 12px 20px; }
+.wse-table.wca-stats-data-table .wse-rank-col { width: 64px; }
+.wse-table.wca-stats-data-table .wse-value-col { padding-inline: 32px; }
+
+@media (max-width: 600px) {
+  .wse-table.wca-stats-data-table th,
+  .wse-table.wca-stats-data-table td { padding: 10px 12px; }
+  .wse-table.wca-stats-data-table .wse-rank-col { width: 40px; }
+  .wse-table.wca-stats-data-table .wse-value-col { padding-inline: 12px; }
+}

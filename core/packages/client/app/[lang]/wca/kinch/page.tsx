@@ -18,6 +18,7 @@ import RegionCountrySelect from '@/components/wca-stats/RegionCountrySelect';
 import { useCountries } from '@/components/wca-stats/useCountries';
 import { tr, useLang } from '@/i18n/tr';
 import '../_wca_stats_extra.css';
+import { WcaStatsTable, WcaStatsTableSection } from '@/components/wca-stats/WcaStatsTable';
 import './kinch.css';
 import '@/components/wca-stats/wca-stats-controls.css';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -167,8 +168,8 @@ function KinchPageInner() {
               <strong>{personData.rank == null ? '—' : `#${personData.rank}`}</strong>
             </div>
           </div>
-          <div className="wse-table-wrapper sticky-scroll">
-            <table className="wse-table sticky-thead kinch-event-table">
+          <WcaStatsTableSection>
+            <WcaStatsTable>
               <thead>
                 <tr>
                   <th>{tr({ zh: '项目', en: 'Event' })}</th>
@@ -199,17 +200,17 @@ function KinchPageInner() {
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </div>
+            </WcaStatsTable>
+          </WcaStatsTableSection>
         </>
       )}
 
       {leaderboard && !loading && (
-        <div className="wse-table-wrapper sticky-scroll">
+        <WcaStatsTableSection>
           <div className="wse-result-meta">
             {tr({ zh: `共 ${leaderboard.total.toLocaleString()} 人`, en: `${leaderboard.total.toLocaleString()} cubers` })}
           </div>
-          <table className="wse-table sticky-thead">
+          <WcaStatsTable>
             <thead>
               <tr>
                 <th className="wse-rank-col">#</th>
@@ -239,7 +240,7 @@ function KinchPageInner() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </WcaStatsTable>
           {leaderboard.total > size && (
             <Paginator
               page={leaderboard.page}
@@ -251,7 +252,7 @@ function KinchPageInner() {
               onSizeChange={next => update({ size: String(next) })}
             />
           )}
-        </div>
+        </WcaStatsTableSection>
       )}
 
       <section className="kinch-about">

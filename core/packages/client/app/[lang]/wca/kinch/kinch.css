@@ -25,7 +25,5 @@
 @media (max-width: 480px) {
   .kinch-person-filter { width: 100%; min-width: 0; }
   .kinch-summary { gap: 20px; }
-  .kinch-event-table th,
-  .kinch-event-table td { padding-inline: 8px; }
   .kinch-result-type { display: block; margin-left: 0; }
 }

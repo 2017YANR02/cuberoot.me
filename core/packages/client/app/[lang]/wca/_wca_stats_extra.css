@@ -123,25 +123,8 @@
 .cohort-ranks-page .wse-filter label { display: none; }
 .cohort-ranks-page .wse-result-meta { align-self: center; padding: 0 4px; white-space: nowrap; }
 
-/* 四列排名留足阅读间距，不再套整块卡片底框。 */
+/* 届别排名页宽；表格间距由 WcaStatsTable 统一维护。 */
 .cohort-ranks-page { max-width: 1040px; background: transparent; }
-.cohort-ranks-page .wse-table-wrapper {
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-}
-.cohort-ranks-page .wse-table { width: 100%; }
-.cohort-ranks-page .wse-table th,
-.cohort-ranks-page .wse-table td { padding: 12px 20px; }
-.cohort-ranks-page .wse-table .wse-rank-col { width: 64px; }
-.cohort-ranks-page .wse-table .wse-value-col { padding-left: 32px; padding-right: 32px; }
-
-@media (max-width: 600px) {
-  .cohort-ranks-page .wse-table th,
-  .cohort-ranks-page .wse-table td { padding: 10px 12px; }
-  .cohort-ranks-page .wse-table .wse-rank-col { width: 40px; }
-}
 
 /* Table */
 .wse-table-wrapper {

@@ -14,6 +14,7 @@ import { apiUrl } from '@/lib/api-base';
 import RegionCountrySelect from '@/components/wca-stats/RegionCountrySelect';
 import { useCountries } from '@/components/wca-stats/useCountries';
 import '../_wca_stats_extra.css';
+import { WcaStatsTable, WcaStatsTableSection } from '@/components/wca-stats/WcaStatsTable';
 import { tr } from '@/i18n/tr';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
@@ -93,14 +94,14 @@ function AllEventsDonePageInner() {
         </div>
       </div>
 
-      <div className="wse-table-wrapper sticky-scroll">
+      <WcaStatsTableSection>
         {loading && <div className="wse-state"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...'
         })}</LoadingIndicator></div>}
         {error && <div className="wse-state wse-state-error">Error: {error}</div>}
         {data && !loading && (
           <>
             <div className="wse-result-meta">{isZh ? `共 ${data.total.toLocaleString()} 人` : `${data.total.toLocaleString()} cubers`}</div>
-            <table className="wse-table sticky-thead">
+            <WcaStatsTable>
               <thead>
                 <tr>
                   <th className="wse-rank-col">#</th>
@@ -137,7 +138,7 @@ function AllEventsDonePageInner() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </WcaStatsTable>
             {data.total > size && (
               <Paginator
                 page={page}
@@ -151,7 +152,7 @@ function AllEventsDonePageInner() {
             )}
           </>
         )}
-      </div>
+      </WcaStatsTableSection>
     </div>
   );
 }
