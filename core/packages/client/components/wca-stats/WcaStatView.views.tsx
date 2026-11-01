@@ -25,7 +25,7 @@ import WrHistoryChart from '@/components/wca-stats/WrHistoryChart';
 import { tr } from '@/i18n/tr';
 import type { StatHeader, StatSection, StatPanel, SourcePanel, MetricPanel, MetricGroup, RecordScope } from './WcaStatView.types';
 import {
-  renderCell, shouldHideCountryCol, parseTimeValue, extractSolvesCell,
+  renderCell, rowPersonCountry, shouldHideCountryCol, parseTimeValue, extractSolvesCell,
   extractTextFromMdLink, dedupRows,
   selectRecordSection,
 } from './WcaStatView.cells';
@@ -182,7 +182,7 @@ export function StatsTable({ header, rows, searchTerm, isZh, searchColumnKey }: 
                 return (
                   <td key={j} style={{ textAlign: header[j]?.align }}>
                     {flagIso2 && <Flag iso2={flagIso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-                    {renderCell(cell, colKey, isZh)}
+                    {renderCell(cell, colKey, isZh, rowPersonCountry(row, header, colKey))}
                   </td>
                 );
               })}
@@ -479,7 +479,7 @@ export function AoxRankingSection({ header, rows, isZh }: {
                   return (
                     <td key={j} style={{ textAlign: header[j]?.align }}>
                       {flagIso2 && <Flag iso2={flagIso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-                      {renderCell(cell, colKey, isZh)}
+                      {renderCell(cell, colKey, isZh, rowPersonCountry(row, header, colKey))}
                     </td>
                   );
                 })}

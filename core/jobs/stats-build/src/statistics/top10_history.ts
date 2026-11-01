@@ -64,7 +64,7 @@ const ATTEMPT_METRICS: MetricKey[] = [
 ];
 const MO3_ATTEMPT_METRICS: MetricKey[] = ['median', 'worst'];
 
-interface PbEvent { d: string; p: string; v: number; c: string }
+interface PbEvent { d: string; p: string; v: number; c: string; rc: string }
 interface PersonInfo { name: string; country: string; iso2: string | null }
 interface CompInfo { name: string }
 
@@ -323,7 +323,8 @@ export class Top10History extends Statistic {
       const ccids = new Set<string>();
       for (const arr of Object.values(out)) for (const e of arr) { cpids.add(e.p); ccids.add(e.c); }
       const cpersons: Record<string, PersonInfo> = {};
-      for (const p of cpids) { const pi = personMap.get(p); if (pi) cpersons[p] = pi; }
+      const representedCountry = [...iso2Map].find(([, code]) => code.toUpperCase() === iso2)?.[0];
+      for (const p of cpids) { const pi = personMap.get(p); if (pi) cpersons[p] = { ...pi, iso2, country: representedCountry ?? pi.country }; }
       const ccomps: Record<string, CompInfo> = {};
       for (const cid of ccids) { const ci = compMap.get(cid); if (ci) ccomps[cid] = ci; }
       writeFileSync(resolve(cdir, `${iso2}.json`), JSON.stringify({ ...out, persons: cpersons, comps: ccomps }), 'utf-8');
@@ -381,14 +382,14 @@ export class Top10History extends Statistic {
     topK = TOP_K_EVER,
   ): { events: PbEvent[]; everInTop: Set<string> } {
     // 1) 算 metric 值并按 (date, pid) 取 min
-    const byDate = new Map<string, Map<string, { v: number; c: string }>>();
+    const byDate = new Map<string, Map<string, { v: number; c: string; rc: string }>>();
     for (const r of rows) {
       const v = this.metricValue(r, mk, mbfAvg);
       if (v == null || !Number.isFinite(v)) continue;
       let day = byDate.get(r.d);
       if (!day) { day = new Map(); byDate.set(r.d, day); }
       const prev = day.get(r.pid);
-      if (!prev || v < prev.v) day.set(r.pid, { v, c: r.comp });
+      if (!prev || v < prev.v) day.set(r.pid, { v, c: r.comp, rc: r.rc });
     }
 
     // 2) 按日期升序遍历,维护"曾入历史 TOP K"集合 + PB 事件流
@@ -407,7 +408,7 @@ export class Top10History extends Statistic {
         if (v >= prev) continue;
 
         currentBest.set(pid, v);
-        events.push({ d, p: pid, v, c: st.c });
+        events.push({ d, p: pid, v, c: st.c, rc: st.rc });
         dayHadPb = true;
 
         const oldIdx = top.findIndex(x => x.pid === pid);
@@ -460,7 +461,7 @@ export class Top10History extends Statistic {
     for (const r of rows) {
       const v = this.metricValue(r, mk, mbfAvg);
       if (v == null || !Number.isFinite(v)) continue;
-      ents.push({ d: r.d, p: r.pid, v, c: r.comp });
+      ents.push({ d: r.d, p: r.pid, v, c: r.comp, rc: r.rc });
     }
     // 2) 按 (日期升序, 值升序) 排:同日内更优成绩先处理,使阈值正确计入同日更优者
     ents.sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : a.v - b.v));

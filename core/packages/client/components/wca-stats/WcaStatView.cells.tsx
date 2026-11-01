@@ -109,7 +109,7 @@ function renderInline(text: string, keyBase: string): React.ReactNode {
 
 // 渲染一段含 [文本](链接) 的 markdown 为带国旗 / 本地化的链接节点。
 // 从 renderCell 内提取到模块级,供普通单元格与 people 列表复用。
-function renderLinkedSegment(segment: string, segIdx: number, isZh: boolean | undefined, withFlag = true): React.ReactNode {
+function renderLinkedSegment(segment: string, segIdx: number, isZh: boolean | undefined, withFlag = true, personCountry?: string): React.ReactNode {
   const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
@@ -122,7 +122,7 @@ function renderLinkedSegment(segment: string, segIdx: number, isZh: boolean | un
     const url = match[2];
     const wcaId = extractWcaId(url);
     const compId = extractCompId(url);
-    const iso2 = wcaId ? personFlagIso2(wcaId) : compId ? compFlagIso2(compId) : '';
+    const iso2 = wcaId ? (personCountry ?? personFlagIso2(wcaId)) : compId ? compFlagIso2(compId) : '';
     if (iso2 && withFlag) {
       parts.push(<Flag key={`flag-${segIdx}-${match.index}`} iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />);
       parts.push(' ');
@@ -161,7 +161,7 @@ function renderLinkedSegment(segment: string, segIdx: number, isZh: boolean | un
   return parts.length === 1 ? parts[0] : <React.Fragment key={segIdx}>{parts}</React.Fragment>;
 }
 
-export function renderCell(value: unknown, columnKey?: string, isZh?: boolean): React.ReactNode {
+export function renderCell(value: unknown, columnKey?: string, isZh?: boolean, personCountry?: string): React.ReactNode {
   if (columnKey === 'city_route' && typeof value === 'string') {
     return <ol className="wca-city-route">
       {value.split(' → ').map((city, i) => {
@@ -235,14 +235,20 @@ export function renderCell(value: unknown, columnKey?: string, isZh?: boolean): 
   const brParts = str.split(/<br\s*\/?>/i);
   const hasBr = brParts.length > 1;
 
-  if (!hasBr) return renderLinkedSegment(str, 0, isZh);
+  if (!hasBr) return renderLinkedSegment(str, 0, isZh, true, personCountry);
 
   const result: React.ReactNode[] = [];
   brParts.forEach((part, i) => {
     if (i > 0) result.push(<br key={`br-${i}`} />);
-    result.push(renderLinkedSegment(part, i, isZh));
+    result.push(renderLinkedSegment(part, i, isZh, true, personCountry));
   });
   return <>{result}</>;
+}
+
+export function rowPersonCountry(row: unknown[], header: StatHeader[], columnKey: string): string | undefined {
+  if (columnKey !== 'person' && columnKey !== 'name') return undefined;
+  const index = header.findIndex(h => ['country', 'country_id', 'citizen_of'].includes(h.key));
+  return index >= 0 && typeof row[index] === 'string' ? row[index] as string : undefined;
 }
 
 export function shouldHideCountryCol(colKey: string, header: StatHeader[]): boolean {

@@ -188,7 +188,7 @@ function FunStatsInner() {
   useEffect(() => {
     if (!stat.needsYear) return;
     let alive = true;
-    fetch(apiUrl(`/v1/wca/fun/most-solves-person-year/years?scope=${encodeURIComponent(region)}`))
+    fetch(apiUrl(`/v1/wca/fun/most-solves-person-year/years?v=2&scope=${encodeURIComponent(region)}`))
       .then(r => r.json()).then((d: { years?: number[] }) => {
         if (!alive) return;
         const ys = d.years ?? [];
@@ -201,7 +201,7 @@ function FunStatsInner() {
   // 主查询
   useEffect(() => {
     let alive = true;
-    const qs = new URLSearchParams();
+    const qs = new URLSearchParams({ v: '2' });
     if (stat.fixed) for (const [k, v] of Object.entries(stat.fixed)) qs.set(k, v);
     qs.set('scope', region);
     if (stat.eventMode === 'select') qs.set('event', event);

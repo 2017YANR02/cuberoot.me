@@ -111,7 +111,7 @@ export class WrNonPr extends Statistic {
         result.person_id,
         result.best,
         result.average,
-        person.country_id,
+        result.country_id,
         CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link,
         CONCAT('[', competition.cell_name, '](https://www.worldcubeassociation.org/competitions/', competition.id, ')') comp_link,
         competition.start_date

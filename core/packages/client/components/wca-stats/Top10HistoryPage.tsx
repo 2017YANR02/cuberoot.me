@@ -24,12 +24,12 @@ import { EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
 import { type Continent } from '@/lib/country-continents';
 import { CONTINENT_HUE } from '@/lib/bar-race-colors';
 import BarRaceChart from '@/components/wca-stats/BarRaceChart';
-import { exportTop10Video, type ExportProgress } from '@/lib/top10-export';
+import { exportTop10Video, personForResult, type ExportProgress } from '@/lib/top10-export';
 import './top10_history.css';
 import { tr } from '@/i18n/tr';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
-interface PbEvent { d: string; p: string; v: number; c: string }
+interface PbEvent { d: string; p: string; v: number; c: string; rc?: string }
 interface PersonInfo { name: string; country: string; iso2: string | null }
 interface CompInfo { name: string }
 
@@ -81,7 +81,7 @@ function findEventIdxByDate(events: PbEvent[], dateIso: string): number {
   return ans;
 }
 
-interface PersonState { pid: string; v: number; c: string; d: string }
+interface PersonState { pid: string; v: number; c: string; d: string; rc?: string }
 interface ReplayResult {
   // key:选手模式 = pid(去重);成绩模式 = `i${序号}`(唯一,允许同一选手出现多条)
   state: Map<string, PersonState>;
@@ -99,7 +99,7 @@ function replayState(events: PbEvent[], idxInclusive: number, mode: RaceMode): R
     const e = events[i];
     // 选手模式按 pid 去重(同人后出现的更优 PB 覆盖);成绩模式每条独立(按序号),同人可多条
     const key = mode === 'results' ? `i${i}` : e.p;
-    state.set(key, { pid: e.p, v: e.v, c: e.c, d: e.d });
+    state.set(key, { pid: e.p, v: e.v, c: e.c, d: e.d, rc: e.rc });
     // top1 永远按「人」追踪(横幅 = WR 保持者);同人破自己纪录不重置保持天数
     if (e.v < top1V) {
       if (e.p !== top1Pid) top1SinceDate = e.d;
@@ -415,7 +415,7 @@ export default function Top10HistoryPage({
     return out;
   }, [axis]);
 
-  const top1Person = replay?.top1Pid ? (activePersons[replay.top1Pid] ?? null) : null;
+  const top1Person = replay?.top1Pid ? personForResult(activePersons[replay.top1Pid], top10.find(row => row.pid === replay.top1Pid)?.rc) : null;
   const atEnd = Math.floor(dateMs) >= endMs - 1;
   const displayIso = atEnd && todayIso && todayIso > dateIso ? todayIso : dateIso;
   const top1DurationDays = replay?.top1SinceDate
@@ -594,7 +594,7 @@ export default function Top10HistoryPage({
 
         <BarRaceChart
           rows={top10.map((row, idx) => {
-            const person = activePersons[row.pid];
+            const person = personForResult(activePersons[row.pid], row.rc);
             const comp = activeComps[row.c];
             const compNameRaw = comp?.name ?? row.c;
             const compName = localizeCompName(row.c, compNameRaw, isZh);

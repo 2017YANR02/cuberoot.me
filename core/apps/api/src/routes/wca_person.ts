@@ -81,7 +81,7 @@ wcaPersonRoutes.get('/wca/person-page', async (c) => {
     [wcaId],
   );
   const [compCount] = await query<{ comp_count: number }>(
-    `SELECT comp_count FROM wca_fs_person_comps WHERE wca_id = ?`,
+    `SELECT COALESCE(SUM(comp_count), 0)::int AS comp_count FROM wca_fs_person_comps WHERE wca_id = ?`,
     [wcaId],
   );
 

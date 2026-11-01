@@ -24,7 +24,8 @@ export class CompleteCompetitionWinners extends Statistic {
         SELECT
           competition_id,
           GROUP_CONCAT(DISTINCT person_id) person_id,
-          COUNT(DISTINCT event_id) events_count
+          COUNT(DISTINCT event_id) events_count,
+          MIN(country_id) AS country_id
         FROM results
         WHERE round_type_id IN ('c', 'f') AND pos = 1 AND best > 0
         GROUP BY competition_id
@@ -32,7 +33,7 @@ export class CompleteCompetitionWinners extends Statistic {
       ) AS competitions_with_complete_winners
       JOIN persons person ON person.wca_id = person_id AND sub_id = 1
       JOIN competitions competition ON competition.id = competition_id
-      JOIN countries country ON country.id = person.country_id
+      JOIN countries country ON country.id = competitions_with_complete_winners.country_id
       ORDER BY events_count DESC, person.name
     `;
   }

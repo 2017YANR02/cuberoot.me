@@ -29,7 +29,7 @@ function attemptsQuery(eventId: string): string {
         CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link,
         person.name person_name,
         result.person_id,
-        person.country_id,
+        result.country_id,
         CONCAT('[', competition.cell_name, '](https://www.worldcubeassociation.org/competitions/', competition.id, ')') competition_link,
         competition.id AS comp_id,
         competition.cell_name AS comp_cell,

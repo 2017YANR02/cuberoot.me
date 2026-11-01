@@ -34,7 +34,7 @@ export abstract class Rankings extends GroupedStatistic {
         country.name country
       FROM results result
       JOIN persons person ON person.wca_id = person_id AND person.sub_id = 1
-      JOIN countries country ON country.id = person.country_id
+      JOIN countries country ON country.id = result.country_id
       JOIN competitions competition ON competition.id = competition_id
       ${this.condition}
     `;

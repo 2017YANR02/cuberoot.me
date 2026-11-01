@@ -46,7 +46,7 @@ export class WorldChampionshipRecords extends GroupedStatistic {
       FROM results
       JOIN persons person ON person.wca_id = person_id AND person.sub_id = 1
       JOIN competitions competition ON competition.id = competition_id
-      JOIN countries country ON country.id = person.country_id
+      JOIN countries country ON country.id = results.country_id
       JOIN championships ON championships.competition_id = results.competition_id
       WHERE championship_type = 'world'
     `;

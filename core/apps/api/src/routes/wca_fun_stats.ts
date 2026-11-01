@@ -45,6 +45,25 @@ function regionWhere(scope: Scope, countryCol: string, countriesAlias: string): 
   return { where: ` AND ${countryCol} = ?`, params: [scope.countryId] };
 }
 
+// Filter historical country buckets before adding them. Global/continental totals
+// still contain one row per person, including people who changed representation.
+function personTotals(table: string, columns: string[], scope: Scope, condition = 'TRUE', extraGroup = '') {
+  const reg = regionWhere(scope, 't.country_id', 'co');
+  const country = scope.kind === 'world' ? 'p.country_id'
+    : `(array_agg(t.country_id ORDER BY ${columns.map(col => `t.${col} DESC`).join(', ')}, t.country_id))[1]`;
+  return {
+    sql: `WITH totals AS (
+      SELECT t.wca_id, ${country} AS country_id${extraGroup ? `, t.${extraGroup}` : ''},
+        ${columns.map(col => `SUM(t.${col})::int AS ${col}`).join(', ')}
+      FROM ${table} t JOIN wca_persons p ON p.wca_id = t.wca_id
+      LEFT JOIN wca_countries co ON co.id = t.country_id
+      WHERE ${condition}${reg.where}
+      GROUP BY t.wca_id, p.country_id${extraGroup ? `, t.${extraGroup}` : ''}
+    )`,
+    params: reg.params,
+  };
+}
+
 function pageParams(c: { req: { query(k: string): string | undefined } }) {
   const pageRaw = parseInt(c.req.query('page') ?? '', 10);
   const sizeRaw = parseInt(c.req.query('size') ?? '', 10);
@@ -200,18 +219,18 @@ wcaFunStatsRoutes.get('/wca/fun/medals', async (c) => {
   const scope = await resolveScope(scopeInput(c));
   if ('err' in scope) return c.json({ error: scope.err }, 400);
   const { page, size, offset } = pageParams(c);
-  const reg = regionWhere(scope, 'm.country_id', 'co');
+  const totals = personTotals('wca_fs_medals', ['gold', 'silver', 'bronze'], scope, 't.event_id = ?');
   c.header('Cache-Control', CACHE_HEADER);
 
   const rows = await query<{ wca_id: string; country_id: string; iso2: string | null; person_name: string; gold: number; silver: number; bronze: number; total: number }>(
-    `SELECT m.wca_id, m.country_id, co.iso2, p.name AS person_name, m.gold, m.silver, m.bronze, (m.gold + m.silver + m.bronze) AS total
-     FROM wca_fs_medals m JOIN wca_persons p ON p.wca_id = m.wca_id LEFT JOIN wca_countries co ON co.id = m.country_id
-     WHERE m.event_id = ?${reg.where}
+    `${totals.sql}
+     SELECT m.wca_id, m.country_id, co.iso2, p.name AS person_name, m.gold, m.silver, m.bronze, (m.gold + m.silver + m.bronze) AS total
+     FROM totals m JOIN wca_persons p ON p.wca_id = m.wca_id LEFT JOIN wca_countries co ON co.id = m.country_id
      ORDER BY m.gold DESC, m.silver DESC, m.bronze DESC, p.name ASC LIMIT ? OFFSET ?`,
-    [eventId, ...reg.params, size, offset]);
+    [eventId, ...totals.params, size, offset]);
   const totalRow = await query<{ n: string }>(
-    `SELECT COUNT(*) AS n FROM wca_fs_medals m LEFT JOIN wca_countries co ON co.id = m.country_id WHERE m.event_id = ?${reg.where}`,
-    [eventId, ...reg.params]);
+    `${totals.sql} SELECT COUNT(*) AS n FROM totals`,
+    [eventId, ...totals.params]);
   const total = totalRow[0] ? parseInt(totalRow[0].n, 10) : 0;
   return c.json({
     type, event: type === 'event' ? eventId : undefined, scope: scopeInput(c), page, size, total,
@@ -243,11 +262,12 @@ wcaFunStatsRoutes.get('/wca/fun/placements', async (c) => {
   const regParams: unknown[] = scope.kind === 'continent' ? [scope.continentId] : (scope.kind === 'country' ? [scope.countryId] : []);
 
   const rows = await query<{ wca_id: string; person_name: string; count: string; country_id: string; iso2: string | null }>(
-    `SELECT pl.wca_id, p.name AS person_name, SUM(pl.count) AS count, p.country_id, co.iso2
+    `SELECT pl.wca_id, p.name AS person_name, SUM(pl.count) AS count, (array_agg(pl.country_id ORDER BY pl.count DESC, pl.country_id))[1] AS country_id,
+       (array_agg(co.iso2 ORDER BY pl.count DESC, pl.country_id))[1] AS iso2
      FROM wca_fs_placements pl JOIN wca_persons p ON p.wca_id = pl.wca_id
-     LEFT JOIN wca_countries co ON co.id = p.country_id${regJoin}
+     LEFT JOIN wca_countries co ON co.id = pl.country_id${regJoin}
      WHERE pl.pos = ? AND pl.event_id = ?${regWhere}
-     GROUP BY pl.wca_id, p.name, p.country_id, co.iso2
+     GROUP BY pl.wca_id, p.name
      ORDER BY count DESC, p.name ASC LIMIT ? OFFSET ?`,
     [pos, eventId, ...regParams, size, offset]);
   const totalRow = await query<{ n: string }>(
@@ -410,13 +430,14 @@ wcaFunStatsRoutes.get('/wca/fun/records-person', async (c) => {
   if (scope.kind === 'continent') {
     // 同洲多国籍选手按 person 聚合(同 world 路径),否则 (wca_id,country) 拆成多行 + total 虚高
     const rows = await query<{ wca_id: string; person_name: string; country_id: string; iso2: string | null; wr: string; cr: string; nr: string; score: string }>(
-      `SELECT rp.wca_id, p.name AS person_name, p.country_id, pco.iso2,
+      `SELECT rp.wca_id, p.name AS person_name,
+         (array_agg(rp.country_id ORDER BY rp.score DESC, rp.country_id))[1] AS country_id,
+         (array_agg(co.iso2 ORDER BY rp.score DESC, rp.country_id))[1] AS iso2,
          SUM(rp.wr) AS wr, SUM(rp.cr) AS cr, SUM(rp.nr) AS nr, SUM(rp.score) AS score
        FROM wca_fs_records_person rp JOIN wca_persons p ON p.wca_id = rp.wca_id
        JOIN wca_countries co ON co.id = rp.country_id
-       LEFT JOIN wca_countries pco ON pco.id = p.country_id
        WHERE rp.score > 0 AND co.continent_id = ?
-       GROUP BY rp.wca_id, p.name, p.country_id, pco.iso2 HAVING SUM(rp.score) > 0
+       GROUP BY rp.wca_id, p.name HAVING SUM(rp.score) > 0
        ORDER BY score DESC, wr DESC, cr DESC, nr DESC, rp.wca_id ASC LIMIT ? OFFSET ?`,
       [scope.continentId, size, offset]);
     const t = await query<{ n: string }>(
@@ -512,15 +533,15 @@ wcaFunStatsRoutes.get('/wca/fun/most-comps-person', async (c) => {
   const scope = await resolveScope(scopeInput(c));
   if ('err' in scope) return c.json({ error: scope.err }, 400);
   const { page, size, offset } = pageParams(c);
-  const reg = regionWhere(scope, 't.country_id', 'co');
   c.header('Cache-Control', CACHE_HEADER);
+  const totals = personTotals('wca_fs_person_comps', ['comp_count'], scope);
   const rows = await query<{ wca_id: string; country_id: string; comp_count: number; name: string; iso2: string | null }>(
-    `SELECT t.wca_id, t.country_id, t.comp_count, p.name, co.iso2
-     FROM wca_fs_person_comps t JOIN wca_persons p ON p.wca_id = t.wca_id LEFT JOIN wca_countries co ON co.id = t.country_id
-     WHERE 1 = 1${reg.where} ORDER BY t.comp_count DESC, t.wca_id ASC LIMIT ? OFFSET ?`,
-    [...reg.params, size, offset]);
+    `${totals.sql} SELECT t.wca_id, t.country_id, t.comp_count, p.name, co.iso2
+     FROM totals t JOIN wca_persons p ON p.wca_id = t.wca_id LEFT JOIN wca_countries co ON co.id = t.country_id
+     ORDER BY t.comp_count DESC, t.wca_id ASC LIMIT ? OFFSET ?`,
+    [...totals.params, size, offset]);
   const tot = await query<{ n: string }>(
-    `SELECT COUNT(*) AS n FROM wca_fs_person_comps t LEFT JOIN wca_countries co ON co.id = t.country_id WHERE 1 = 1${reg.where}`, reg.params);
+    `${totals.sql} SELECT COUNT(*) AS n FROM totals`, totals.params);
   const total = tot[0] ? parseInt(tot[0].n, 10) : 0;
   return c.json({
     scope: scopeInput(c), page, size, total,
@@ -599,15 +620,15 @@ wcaFunStatsRoutes.get('/wca/fun/most-solves-person', async (c) => {
   const scope = await resolveScope(scopeInput(c));
   if ('err' in scope) return c.json({ error: scope.err }, 400);
   const { page, size, offset } = pageParams(c);
-  const reg = regionWhere(scope, 't.country_id', 'co');
   c.header('Cache-Control', CACHE_HEADER);
+  const totals = personTotals('wca_fs_person_solves', ['solve', 'attempt'], scope);
   const rows = await query<{ wca_id: string; country_id: string; solve: number; attempt: number; name: string; iso2: string | null }>(
-    `SELECT t.wca_id, t.country_id, t.solve, t.attempt, p.name, co.iso2
-     FROM wca_fs_person_solves t JOIN wca_persons p ON p.wca_id = t.wca_id LEFT JOIN wca_countries co ON co.id = t.country_id
-     WHERE 1 = 1${reg.where} ORDER BY t.solve DESC, t.attempt ASC, t.wca_id ASC LIMIT ? OFFSET ?`,
-    [...reg.params, size, offset]);
+    `${totals.sql} SELECT t.wca_id, t.country_id, t.solve, t.attempt, p.name, co.iso2
+     FROM totals t JOIN wca_persons p ON p.wca_id = t.wca_id LEFT JOIN wca_countries co ON co.id = t.country_id
+     ORDER BY t.solve DESC, t.attempt ASC, t.wca_id ASC LIMIT ? OFFSET ?`,
+    [...totals.params, size, offset]);
   const tot = await query<{ n: string }>(
-    `SELECT COUNT(*) AS n FROM wca_fs_person_solves t LEFT JOIN wca_countries co ON co.id = t.country_id WHERE 1 = 1${reg.where}`, reg.params);
+    `${totals.sql} SELECT COUNT(*) AS n FROM totals`, totals.params);
   const total = tot[0] ? parseInt(tot[0].n, 10) : 0;
   return c.json({
     scope: scopeInput(c), page, size, total,
@@ -638,13 +659,14 @@ wcaFunStatsRoutes.get('/wca/fun/most-solves-person-year', async (c) => {
       `SELECT MAX(t.year) AS year FROM wca_fs_person_year_solves t LEFT JOIN wca_countries co ON co.id = t.country_id WHERE 1 = 1${reg.where}`, reg.params);
     year = yr[0]?.year ?? 0;
   }
+  const totals = personTotals('wca_fs_person_year_solves', ['solve', 'attempt'], scope, 't.year = ?', 'year');
   const rows = await query<{ wca_id: string; country_id: string; year: number; solve: number; attempt: number; name: string; iso2: string | null }>(
-    `SELECT t.wca_id, t.country_id, t.year, t.solve, t.attempt, p.name, co.iso2
-     FROM wca_fs_person_year_solves t JOIN wca_persons p ON p.wca_id = t.wca_id LEFT JOIN wca_countries co ON co.id = t.country_id
-     WHERE t.year = ?${reg.where} ORDER BY t.solve DESC, t.attempt ASC, t.wca_id ASC LIMIT ? OFFSET ?`,
-    [year, ...reg.params, size, offset]);
+    `${totals.sql} SELECT t.wca_id, t.country_id, t.year, t.solve, t.attempt, p.name, co.iso2
+     FROM totals t JOIN wca_persons p ON p.wca_id = t.wca_id LEFT JOIN wca_countries co ON co.id = t.country_id
+     ORDER BY t.solve DESC, t.attempt ASC, t.wca_id ASC LIMIT ? OFFSET ?`,
+    [year, ...totals.params, size, offset]);
   const tot = await query<{ n: string }>(
-    `SELECT COUNT(*) AS n FROM wca_fs_person_year_solves t LEFT JOIN wca_countries co ON co.id = t.country_id WHERE t.year = ?${reg.where}`, [year, ...reg.params]);
+    `${totals.sql} SELECT COUNT(*) AS n FROM totals`, [year, ...totals.params]);
   const total = tot[0] ? parseInt(tot[0].n, 10) : 0;
   return c.json({
     scope: scopeInput(c), year, page, size, total,
@@ -671,21 +693,21 @@ wcaFunStatsRoutes.get('/wca/fun/top100-appearances', async (c) => {
   // 内层 top-200(region 过滤在 LIMIT 前)→ RANK()<=100 → 占席计数 → enrich + 分页
   let topCte: string; let topParams: unknown[];
   if (scope.kind === 'world') {
-    topCte = `SELECT wca_id, value FROM wca_results_flat WHERE event_id = ? AND is_avg = ? AND value > 0 ORDER BY value ASC LIMIT 200`;
+    topCte = `SELECT wca_id, value, person_country_id FROM wca_results_flat WHERE event_id = ? AND is_avg = ? AND value > 0 ORDER BY value ASC LIMIT 200`;
     topParams = [event, isAvg];
   } else if (scope.kind === 'country') {
-    topCte = `SELECT wca_id, value FROM wca_results_flat WHERE event_id = ? AND is_avg = ? AND value > 0 AND person_country_id = ? ORDER BY value ASC LIMIT 200`;
+    topCte = `SELECT wca_id, value, person_country_id FROM wca_results_flat WHERE event_id = ? AND is_avg = ? AND value > 0 AND person_country_id = ? ORDER BY value ASC LIMIT 200`;
     topParams = [event, isAvg, scope.countryId];
   } else {
-    topCte = `SELECT t.wca_id, t.value FROM wca_results_flat t WHERE t.event_id = ? AND t.is_avg = ? AND t.value > 0 AND t.person_country_id IN (SELECT id FROM wca_countries WHERE continent_id = ?) ORDER BY t.value ASC LIMIT 200`;
+    topCte = `SELECT t.wca_id, t.value, t.person_country_id FROM wca_results_flat t WHERE t.event_id = ? AND t.is_avg = ? AND t.value > 0 AND t.person_country_id IN (SELECT id FROM wca_countries WHERE continent_id = ?) ORDER BY t.value ASC LIMIT 200`;
     topParams = [event, isAvg, scope.continentId];
   }
   const rows = await query<{ wca_id: string; appearances: number; best_value: number; person_name: string; person_country_id: string; iso2: string | null }>(
     `WITH top AS (${topCte}),
-     ranked AS (SELECT wca_id, value, RANK() OVER (ORDER BY value ASC) AS vr FROM top),
-     g AS (SELECT wca_id, COUNT(*)::int AS appearances, MIN(value)::int AS best_value FROM ranked WHERE vr <= 100 GROUP BY wca_id)
-     SELECT g.wca_id, g.appearances, g.best_value, p.name AS person_name, p.country_id AS person_country_id, co.iso2
-     FROM g JOIN wca_persons p ON p.wca_id = g.wca_id LEFT JOIN wca_countries co ON co.id = p.country_id
+     ranked AS (SELECT wca_id, value, person_country_id, RANK() OVER (ORDER BY value ASC) AS vr FROM top),
+     g AS (SELECT wca_id, COUNT(*)::int AS appearances, (array_agg(person_country_id ORDER BY value, person_country_id))[1] AS person_country_id, MIN(value)::int AS best_value FROM ranked WHERE vr <= 100 GROUP BY wca_id)
+     SELECT g.wca_id, g.appearances, g.best_value, p.name AS person_name, g.person_country_id, co.iso2
+     FROM g JOIN wca_persons p ON p.wca_id = g.wca_id LEFT JOIN wca_countries co ON co.id = g.person_country_id
      ORDER BY g.appearances DESC, g.best_value ASC, g.wca_id ASC LIMIT ? OFFSET ?`,
     [...topParams, size, offset]);
   const tot = await query<{ n: string }>(

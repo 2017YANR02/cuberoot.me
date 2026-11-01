@@ -2,7 +2,7 @@
 //   1080p / 30fps / 12Mbps,avc1.640033 (H.264 High Profile Level 5.1)
 //   渲染逻辑独立于 React,纯 Canvas2D 重画 stage(banner / axis / 10 行 bars)
 import { displayCuberName } from '@/lib/cuber-name-display';
-import { compFlagIso2 } from '@/lib/country-flags';
+import { compFlagIso2, countryToIso2 } from '@/lib/country-flags';
 import { localizeCompName } from '@/lib/comp-localize';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { axisFor, tickLabel, type Metric } from '@/lib/top10-axis';
@@ -14,9 +14,14 @@ import { saveBlob } from '@/lib/document-export';
 export type { Metric };
 export type { ExportProgress } from '@/lib/canvas-video-export';
 
-export interface PbEvent { d: string; p: string; v: number; c: string }
+export interface PbEvent { d: string; p: string; v: number; c: string; rc?: string }
 export interface PersonInfo { name: string; country: string; iso2: string | null }
 export interface CompInfo { name: string }
+
+/** Old artifacts fall back to their person dictionary; new streams carry result-time country. */
+export function personForResult(person: PersonInfo | undefined, country?: string): PersonInfo | null {
+  return person ? (country ? { ...person, country, iso2: countryToIso2(country) || null } : person) : null;
+}
 
 const SHOW_N = 10;
 const DAY_MS = 86400000;
@@ -170,7 +175,7 @@ async function loadFlagImages(isos: string[]): Promise<Map<string, HTMLCanvasEle
 // === Canvas2D 渲染 ===
 type Ctx2D = OffscreenCanvasRenderingContext2D;
 
-interface Top10Row { pid: string; v: number; c: string; d: string }
+interface Top10Row { pid: string; v: number; c: string; d: string; rc?: string }
 interface FrameParams {
   top10: Top10Row[];
   axis: { max: number; step: number; hideAxis: boolean };
@@ -347,7 +352,7 @@ function renderFrame(ctx: Ctx2D, p: FrameParams): void {
     const row = p.top10[i];
     const rank = i;
     const isRank1 = rank === 0;
-    const person = p.persons[row.pid];
+    const person = personForResult(p.persons[row.pid], row.rc);
     const comp = p.comps[row.c];
     const compNameRaw = comp?.name ?? row.c;
     const compName = localizeCompName(row.c, compNameRaw, p.isZh);
@@ -497,7 +502,7 @@ export async function exportTop10Video(opts: ExportOptions): Promise<void> {
   onProgress?.({ phase: (isZh ? '加载国旗...' : 'Loading flags...'), pct: 0, framesDone: 0, framesTotal: totalFrames });
   const isoSet = new Set<string>();
   for (const e of events) {
-    const pi = persons[e.p];
+    const pi = personForResult(persons[e.p], e.rc);
     if (pi?.iso2) isoSet.add(pi.iso2.toLowerCase());
     const ci = compFlagIso2(e.c);
     if (ci) isoSet.add(ci.toLowerCase());
@@ -515,7 +520,7 @@ export async function exportTop10Video(opts: ExportOptions): Promise<void> {
 
   // 增量推进 state(避免每帧 O(events) 重 replay)
   // key:选手模式=pid(去重,同人更优 PB 覆盖);成绩模式=`i${序号}`(唯一,同人可多条)
-  const state = new Map<string, { pid: string; v: number; c: string; d: string }>();
+  const state = new Map<string, { pid: string; v: number; c: string; d: string; rc?: string }>();
   let curIdx = -1;
   let top1Pid: string | null = null;
   let top1V = Infinity;
@@ -526,7 +531,7 @@ export async function exportTop10Video(opts: ExportOptions): Promise<void> {
       curIdx++;
       const e = events[curIdx];
       const key = raceMode === 'results' ? `i${curIdx}` : e.p;
-      state.set(key, { pid: e.p, v: e.v, c: e.c, d: e.d });
+      state.set(key, { pid: e.p, v: e.v, c: e.c, d: e.d, rc: e.rc });
       // top1 永远按「人」追踪(横幅 = WR 保持者)
       if (e.v < top1V) {
         if (e.p !== top1Pid) top1Since = e.d;
@@ -572,7 +577,7 @@ export async function exportTop10Video(opts: ExportOptions): Promise<void> {
         for (let v = 0; v <= axis.max; v += axis.step) ticks.push(v);
       }
 
-      const top1Person = top1Pid ? persons[top1Pid] ?? null : null;
+      const top1Person = top1Pid ? personForResult(persons[top1Pid], top10.find(row => row.pid === top1Pid)?.rc) : null;
       const top1DurationDays = top1Since
         ? Math.max(0, Math.floor((isoToMs(dateIso) - isoToMs(top1Since)) / DAY_MS))
         : 0;

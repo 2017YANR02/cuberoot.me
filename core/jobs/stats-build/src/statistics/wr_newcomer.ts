@@ -148,11 +148,11 @@ export class WrNewcomer extends Statistic {
         (SELECT GROUP_CONCAT(ra.value ORDER BY ra.attempt_number)
          FROM result_attempts ra WHERE ra.result_id = fr.result_id) AS attempts,
         CONCAT('[', p.name, '](https://www.worldcubeassociation.org/persons/', p.wca_id, ')') person_link,
-        p.country_id,
+        fr.country_id,
         CONCAT('[', c.cell_name, '](https://www.worldcubeassociation.org/competitions/', c.id, ')') competition_link,
         c.start_date
       FROM (
-        SELECT r.person_id, r.event_id, ${col} AS first_result, r.competition_id, r.id AS result_id,
+        SELECT r.person_id, r.country_id, r.event_id, ${col} AS first_result, r.competition_id, r.id AS result_id,
                ROW_NUMBER() OVER (PARTITION BY r.person_id, r.event_id ORDER BY
                  CASE WHEN r.round_type_id IN ('1','0','d') THEN 0 ELSE 1 END
                ) AS rn
@@ -189,11 +189,11 @@ export class WrNewcomer extends Statistic {
         (SELECT GROUP_CONCAT(ra.value ORDER BY ra.attempt_number)
          FROM result_attempts ra WHERE ra.result_id = fr.result_id) AS attempts,
         CONCAT('[', p.name, '](https://www.worldcubeassociation.org/persons/', p.wca_id, ')') person_link,
-        p.country_id,
+        fr.country_id,
         CONCAT('[', c.cell_name, '](https://www.worldcubeassociation.org/competitions/', c.id, ')') competition_link,
         c.start_date
       FROM (
-        SELECT r.person_id, r.event_id, r.${col} AS first_result, r.competition_id, r.id AS result_id,
+        SELECT r.person_id, r.country_id, r.event_id, r.${col} AS first_result, r.competition_id, r.id AS result_id,
                ROW_NUMBER() OVER (PARTITION BY r.person_id, r.event_id ORDER BY r.${col}) AS rn
         FROM results r
         JOIN competitions c1 ON c1.id = r.competition_id

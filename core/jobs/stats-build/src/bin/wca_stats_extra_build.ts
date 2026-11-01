@@ -22,6 +22,7 @@ import {
 import { calculateCompetitionStreak } from '@cuberoot/shared/pr-streak';
 import { importTransactionStart, refreshTable } from '../pg-refresh.js';
 import { mutationCapacityGuard, stagedCapacityGuard } from '../pg-import-capacity.js';
+import { addCountryBest, rankCountryBests, type CountryBest } from '../core/result_country.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -237,7 +238,7 @@ async function main() {
   console.log('[fp] computing per-comp content fingerprint...');
   const [resHashRows] = await conn.query<mysql.RowDataPacket[]>(
     `SELECT competition_id AS comp_id,
-            BIT_XOR(CRC32(CONCAT_WS('|', id, person_id, event_id, round_type_id, pos, best, average,
+            BIT_XOR(CRC32(CONCAT_WS('|', id, person_id, country_id, event_id, round_type_id, pos, best, average,
                                     regional_single_record, regional_average_record))) AS h
        FROM results GROUP BY competition_id`,
   );
@@ -449,6 +450,7 @@ async function main() {
   // 累积 PB(per event, per person):
   // accByEvent[event][pid] = Acc — 用于 cohort_ranks(全期累积) 和 grand_slam best/avg fill
   const accByEvent = new Map<string, Map<string, Acc>>();
+  const countryBests = new Map<string, { single: Map<string, CountryBest>; avg: Map<string, CountryBest> }>();
 
   // ════════════ fun-stats 累加器 (port of cubingchina /results/statistics → wca_fs_*) ════════════
   // 全部在主循环里 piggyback,不进 wrtWrite 增量门(任一成绩变这些聚合都会动,全量重灌).
@@ -458,7 +460,7 @@ async function main() {
     for (const v of attempts) { if (v == null) continue; if (v > 0) { s++; a++; } else if (v === -1) a++; }
     return [s, a];
   };
-  // B 奖牌(pid → event → [g,s,b]) + 名次(pid\x1fcountry → event → [pos2,pos4]).跨 event 聚合 → 顶层.
+  // B 奖牌(pid\x1fcountry → event → [g,s,b]) + 名次(pid\x1fcountry → event → [pos2,pos4]).跨 event 聚合 → 顶层.
   const medalByPidEvent = new Map<string, Map<string, [number, number, number]>>();
   const placeAcc = new Map<string, Map<string, [number, number]>>();
   // D 纪录:per (pid\x1fcountry) 与 per comp → [wr,cr,nr].无 event 过滤(废止项也有纪录).
@@ -475,8 +477,8 @@ async function main() {
   };
   // E 参赛 & 复原次数(无 event 过滤,所有 21 项都算).
   // E1/E2(选手比赛次数 / 赛事选手人数)不另存 Set,直接从 personCompSA 的 key 去重派生(省 ~1GB).
-  const personCompSA = new Map<string, [number, number]>();  // pid\x1fcomp → [s,a] (E1/E2/E3/E4/E5 全派生)
-  const personYearSA = new Map<string, [number, number]>();  // pid\x1fyear → [s,a] (E6)
+  const personCompSA = new Map<string, [number, number, string]>();  // pid\x1fcomp → [s,a,参赛时国家]
+  const personYearSA = new Map<string, [number, number]>();  // pid\x1fcountry\x1fyear → [s,a] (E6)
   const prCompsByPerson = new Map<string, Set<string>>();     // 至少取得一项新 PB / 并列 PB 的比赛
   // 循环内逐 event 写出的 stream(misser per-event;best podiums per-event).
   const misserStream = createWriteStream(resolve(outDir, 'wca_fs_misser.copy.tsv'));
@@ -539,6 +541,8 @@ async function main() {
 
     // ── (a) 累积 PB per person ──
     const acc = new Map<string, Acc>();
+    const representedBests = { single: new Map<string, CountryBest>(), avg: new Map<string, CountryBest>() };
+    countryBests.set(eventId, representedBests);
 
     // fun-stats per-event 累加器(每 event 重置;写出后丢弃):
     //   C misser: key=`${pid}\x1f${country}`(比赛时国籍);D2/podium: key=compId.
@@ -553,6 +557,9 @@ async function main() {
 
     // 主迭代
     for (const r of results) {
+      const provenance = { wcaId: r.pid, country: r.countryId, compId: r.compId, date: r.compDate };
+      addCountryBest(representedBests.single, { ...provenance, val: r.best });
+      addCountryBest(representedBests.avg, { ...provenance, val: r.average });
       // accumulate PB
       let a = acc.get(r.pid);
       if (!a) {
@@ -685,8 +692,9 @@ async function main() {
       // ════════════ fun-stats per-row 累加 ════════════
       // B 奖牌(finals + pos1-3 + best>0);单项榜限活跃 17,__all__ 含废止项 (对齐 cubingchina type=all).
       if (r.best > 0 && isFinal && r.pos >= 1 && r.pos <= 3) {
-        let em = medalByPidEvent.get(r.pid);
-        if (!em) { em = new Map(); medalByPidEvent.set(r.pid, em); }
+        const key = r.pid + '\x1f' + r.countryId;
+        let em = medalByPidEvent.get(key);
+        if (!em) { em = new Map(); medalByPidEvent.set(key, em); }
         let t = em.get(eventId); if (!t) { t = [0, 0, 0]; em.set(eventId, t); }
         t[r.pos - 1]!++;
       }
@@ -728,8 +736,8 @@ async function main() {
       // E 参赛 & 复原(无 event 过滤;每行都计).
       {
         const [sR, aR] = solveAttempt(r.attempts);
-        { const k = r.pid + '\x1f' + r.compId; let t = personCompSA.get(k); if (!t) { t = [0, 0]; personCompSA.set(k, t); } t[0] += sR; t[1] += aR; }
-        { const yr = compInfo.get(r.compId)?.year; if (yr) { const k = r.pid + '\x1f' + yr; let t = personYearSA.get(k); if (!t) { t = [0, 0]; personYearSA.set(k, t); } t[0] += sR; t[1] += aR; } }
+        { const k = r.pid + '\x1f' + r.compId; let t = personCompSA.get(k); if (!t) { t = [0, 0, r.countryId]; personCompSA.set(k, t); } t[0] += sR; t[1] += aR; }
+        { const yr = compInfo.get(r.compId)?.year; if (yr) { const k = r.pid + '\x1f' + r.countryId + '\x1f' + yr; let t = personYearSA.get(k); if (!t) { t = [0, 0]; personYearSA.set(k, t); } t[0] += sR; t[1] += aR; } }
       }
     }
 
@@ -945,7 +953,7 @@ async function main() {
   }
 
   // ════════════ A 各地综合排行 (wca_fs_country_ranks + _meta) ════════════
-  // 每 active event 取每国 MIN(world_rank)(current 国籍 bucket);penalty = MAX(world_rank over ALL persons)+1.
+  // 每 active event 取参赛时代表该国的最佳成绩对应的世界名次;缺项罚分为世界参赛人数+1.
   // sum = Σ_event ( 有成绩 ? min_world_rank : penalty ).avg 项 333mbf 不参与(无 average).
   let cscCount = 0;
   console.log('[fs-A] country sum-of-ranks...');
@@ -953,23 +961,20 @@ async function main() {
     const csMinSingle: Map<string, number>[] = []; const csMinAvg: Map<string, number>[] = [];
     const csPenaltySingle: number[] = []; const csPenaltyAvg: number[] = [];
     const csPresentSingle: boolean[] = []; const csPresentAvg: boolean[] = [];
-    for (let i = 0; i < ACTIVE_EVENTS.length; i++) {
-      const sMap = eventRanks[i]!.single; const minS = new Map<string, number>(); let maxWrS = 0;
-      for (const [pid, r] of sMap) {
-        if (r.wr > maxWrS) maxWrS = r.wr;                       // penalty 用全体(无国籍过滤)
-        const ctry = personCountry.get(pid); if (!ctry) continue;
-        const cur = minS.get(ctry); if (cur == null || r.wr < cur) minS.set(ctry, r.wr);
-      }
-      csMinSingle.push(minS); csPenaltySingle.push(maxWrS + 1); csPresentSingle.push(sMap.size > 0);
-      if (ACTIVE_EVENTS[i] === '333mbf') { csMinAvg.push(new Map()); csPenaltyAvg.push(0); csPresentAvg.push(false); }
-      else {
-        const aMap = eventRanks[i]!.avg; const minA = new Map<string, number>(); let maxWrA = 0;
-        for (const [pid, r] of aMap) {
-          if (r.wr > maxWrA) maxWrA = r.wr;
-          const ctry = personCountry.get(pid); if (!ctry) continue;
-          const cur = minA.get(ctry); if (cur == null || r.wr < cur) minA.set(ctry, r.wr);
+    for (const ev of ACTIVE_EVENTS) {
+      for (const isAvg of [false, true]) {
+        const ranked = rankCountryBests(countryBests.get(ev)![isAvg ? 'avg' : 'single'].values(), continentOf);
+        const minima = new Map<string, number>();
+        for (const [country, persons] of ranked.countries) {
+          const record = persons.values().next().value!;
+          minima.set(country, ranked.ranks(record).wr);
         }
-        csMinAvg.push(minA); csPenaltyAvg.push(maxWrA + 1); csPresentAvg.push(aMap.size > 0);
+        // A missing country must rank below every country's best, including a former representative's slower PB.
+        const penalty = ranked.world.size + 1;
+        const present = ranked.world.size > 0 && !(isAvg && ev === '333mbf');
+        (isAvg ? csMinAvg : csMinSingle).push(present ? minima : new Map());
+        (isAvg ? csPenaltyAvg : csPenaltySingle).push(present ? penalty : 0);
+        (isAvg ? csPresentAvg : csPresentSingle).push(present);
       }
     }
     const cscStream = createWriteStream(resolve(outDir, 'wca_fs_country_ranks.copy.tsv'));
@@ -1002,45 +1007,28 @@ async function main() {
   }
 
   // ════════════ D3 纪录现保持时间 (wca_fs_current_records) ════════════
-  // 每 active event × is_avg,从 accByEvent 重建按成绩排序的列表,取 world/各洲/各国 #1,
-  // 各带 (world_rank, continent_rank, country_rank);set_date = 该 PB 的 bestCompId/avgCompId 比赛 start_date.
+  // 每 active event × is_avg 按成绩产生时的代表国独立取 world/各洲/各国 #1。
+  // 国家、比赛和日期必须来自同一条成绩；不能将生涯 PB 套到当前国籍。
   let currCount = 0;
   console.log('[fs-D3] current records standing...');
   {
-    const dlist = (isAvg: boolean, ev: string) => {
-      const acc = accByEvent.get(ev); const out: Array<{ wcaId: string; val: number; country: string }> = [];
-      if (acc) for (const [pid, a] of acc) {
-        const v = isAvg ? a.avg : a.best;
-        if (v > 0) out.push({ wcaId: pid, val: v, country: personCountry.get(pid) ?? a.country });
-      }
-      out.sort((x, y) => x.val - y.val); return out;
-    };
     const currStream = createWriteStream(resolve(outDir, 'wca_fs_current_records.copy.tsv'));
-    for (let i = 0; i < ACTIVE_EVENTS.length; i++) {
-      const ev = ACTIVE_EVENTS[i]!;
+    for (const ev of ACTIVE_EVENTS) {
       for (const isAvg of [false, true]) {
         if (isAvg && ev === '333mbf') continue;
-        const list = dlist(isAvg, ev);
-        if (list.length === 0) continue;
-        const currentRanks = assignRanks(list, continentOf);
-        const accEv = accByEvent.get(ev);
-        const emit = (scopeKind: string, scopeId: string, item: { wcaId: string; val: number; country: string }) => {
-          const rk = currentRanks.get(item.wcaId); const a = accEv?.get(item.wcaId);
-          const setCompId = isAvg ? (a?.avgCompId ?? '') : (a?.bestCompId ?? '');
-          const setDate = compInfo.get(setCompId)?.startDate ?? '';
+        const ranked = rankCountryBests(countryBests.get(ev)![isAvg ? 'avg' : 'single'].values(), continentOf);
+        const emit = (scopeKind: string, scopeId: string, item: CountryBest | undefined) => {
+          if (!item) return;
+          const rk = ranked.ranks(item);
           currStream.write(
             `${ev}\t${bool(isAvg)}\t${scopeKind}\t${pgEsc(scopeId)}\t${pgEsc(item.wcaId)}\t${pgEsc(item.country)}\t${item.val}\t` +
-            `${pgEsc(setCompId)}\t${dateOrNull(setDate)}\t${num(rk?.wr ?? null)}\t${num(rk?.kr ?? null)}\t${num(rk?.cr ?? null)}\n`,
+            `${pgEsc(item.compId)}\t${dateOrNull(item.date)}\t${rk.wr}\t${rk.kr}\t${rk.cr}\n`,
           );
           currCount++;
         };
-        emit('W', '', list[0]!);
-        const seenCont = new Set<string>(); const seenCtry = new Set<string>();
-        for (const item of list) {
-          const cont = continentOf.get(item.country) ?? '';
-          if (cont && !seenCont.has(cont)) { seenCont.add(cont); emit('K', cont, item); }
-          if (!seenCtry.has(item.country)) { seenCtry.add(item.country); emit('N', item.country, item); }
-        }
+        emit('W', '', ranked.world.values().next().value);
+        for (const [id, persons] of ranked.continents) emit('K', id, persons.values().next().value);
+        for (const [id, persons] of ranked.countries) emit('N', id, persons.values().next().value);
       }
     }
     await new Promise<void>(res => currStream.end(() => res()));
@@ -1067,30 +1055,17 @@ async function main() {
     countries: Map<string, number>;
     continents: Map<string, number>;
   };
-  const makeReferences = (
-    ranks: Map<string, { wr: number; cr: number; kr: number; val: number }>,
-  ): KinchReference => {
-    let world = 0;
-    const countries = new Map<string, number>();
-    const continents = new Map<string, number>();
-    for (const [pid, row] of ranks) {
-      if (world === 0 || row.val < world) world = row.val;
-      const country = personCountry.get(pid) ?? '';
-      const continent = continentOf.get(country) ?? '';
-      if (country) {
-        const current = countries.get(country);
-        if (current == null || row.val < current) countries.set(country, row.val);
-      }
-      if (continent) {
-        const current = continents.get(continent);
-        if (current == null || row.val < current) continents.set(continent, row.val);
-      }
-    }
-    return { world, countries, continents };
+  const makeReferences = (bests: Map<string, CountryBest>): KinchReference => {
+    const ranked = rankCountryBests(bests.values(), continentOf);
+    return {
+      world: ranked.world.values().next().value?.val ?? 0,
+      countries: new Map([...ranked.countries].map(([id, persons]) => [id, persons.values().next().value!.val])),
+      continents: new Map([...ranked.continents].map(([id, persons]) => [id, persons.values().next().value!.val])),
+    };
   };
-  const kinchReferences = ACTIVE_EVENTS.map((_, index) => ({
-    single: makeReferences(eventRanks[index]!.single),
-    average: makeReferences(eventRanks[index]!.avg),
+  const kinchReferences = ACTIVE_EVENTS.map(ev => ({
+    single: makeReferences(countryBests.get(ev)!.single),
+    average: makeReferences(countryBests.get(ev)!.avg),
   }));
   const kinchStream = createWriteStream(resolve(outDir, 'wca_kinch.copy.tsv'));
   let kinchCount = 0;
@@ -1234,11 +1209,11 @@ async function main() {
   console.log('[fs-BDE] writing medals/placements/records/solves...');
   const endStream = (s: ReturnType<typeof createWriteStream>) => new Promise<void>(res => s.end(() => res()));
 
-  // B 奖牌(per pid: 每 event 一行 + __all__ 汇总;current 国籍)
+  // B 奖牌(per pid×参赛时国家: 每 event 一行 + __all__ 汇总)
   const medalsStream = createWriteStream(resolve(outDir, 'wca_fs_medals.copy.tsv'));
   let medalsCount = 0;
-  for (const [pid, em] of medalByPidEvent) {
-    const country = personCountry.get(pid) ?? '';
+  for (const [key, em] of medalByPidEvent) {
+    const [pid, country] = key.split('\x1f') as [string, string];
     let ag = 0, asv = 0, ab = 0;
     for (const [ev, [g, s, b]] of em) {
       if (EVENT_INDEX.has(ev)) { medalsStream.write(`${pgEsc(pid)}\t${pgEsc(country)}\t${ev}\t${g}\t${s}\t${b}\n`); medalsCount++; }  // 单项榜仅活跃 17
@@ -1287,16 +1262,17 @@ async function main() {
   const pcsStream = createWriteStream(resolve(outDir, 'wca_fs_person_comp_solves.copy.tsv'));
   let pcsCount = 0;
   const compSA = new Map<string, [number, number]>();         // E4: comp → [s,a]
-  const personSA = new Map<string, [number, number]>();       // E5: pid → [s,a]
-  const personCompCount = new Map<string, number>();          // E1: pid → distinct comp 数
+  const personSA = new Map<string, [number, number]>();       // E5: pid×参赛时国家 → [s,a]
+  const personCompCount = new Map<string, number>();          // E1: pid×参赛时国家 → distinct comp 数
   const compPersonCount = new Map<string, number>();          // E2: comp → distinct person 数
   const compsByPerson = new Map<string, string[]>();          // PR 连续场次:pid → 全部比赛
-  for (const [key, [s, a]] of personCompSA) {
+  for (const [key, [s, a, country]] of personCompSA) {
     const sep = key.indexOf('\x1f'); const pid = key.slice(0, sep), compId = key.slice(sep + 1);
-    pcsStream.write(`${pgEsc(pid)}\t${pgEsc(personCountry.get(pid) ?? '')}\t${pgEsc(compId)}\t${s}\t${a}\n`); pcsCount++;
+    const representedPerson = pid + '\x1f' + country;
+    pcsStream.write(`${pgEsc(pid)}\t${pgEsc(country)}\t${pgEsc(compId)}\t${s}\t${a}\n`); pcsCount++;
     { let t = compSA.get(compId); if (!t) { t = [0, 0]; compSA.set(compId, t); } t[0] += s; t[1] += a; }
-    { let t = personSA.get(pid); if (!t) { t = [0, 0]; personSA.set(pid, t); } t[0] += s; t[1] += a; }
-    personCompCount.set(pid, (personCompCount.get(pid) ?? 0) + 1);
+    { let t = personSA.get(representedPerson); if (!t) { t = [0, 0]; personSA.set(representedPerson, t); } t[0] += s; t[1] += a; }
+    personCompCount.set(representedPerson, (personCompCount.get(representedPerson) ?? 0) + 1);
     compPersonCount.set(compId, (compPersonCount.get(compId) ?? 0) + 1);
     const personComps = compsByPerson.get(pid);
     if (personComps) personComps.push(compId); else compsByPerson.set(pid, [compId]);
@@ -1305,7 +1281,7 @@ async function main() {
   // E1 选手比赛次数
   const pcStream = createWriteStream(resolve(outDir, 'wca_fs_person_comps.copy.tsv'));
   let pcCount = 0;
-  for (const [pid, n] of personCompCount) { pcStream.write(`${pgEsc(pid)}\t${pgEsc(personCountry.get(pid) ?? '')}\t${n}\n`); pcCount++; }
+  for (const [key, n] of personCompCount) { const [pid, country] = key.split('\x1f'); pcStream.write(`${pgEsc(pid)}\t${pgEsc(country)}\t${n}\n`); pcCount++; }
   await endStream(pcStream);
   // E2 赛事选手人数
   const cpStream = createWriteStream(resolve(outDir, 'wca_fs_comp_persons.copy.tsv'));
@@ -1320,15 +1296,15 @@ async function main() {
   // E5 个人累积复原
   const psolvStream = createWriteStream(resolve(outDir, 'wca_fs_person_solves.copy.tsv'));
   let psolvCount = 0;
-  for (const [pid, [s, a]] of personSA) { psolvStream.write(`${pgEsc(pid)}\t${pgEsc(personCountry.get(pid) ?? '')}\t${s}\t${a}\n`); psolvCount++; }
+  for (const [key, [s, a]] of personSA) { const [pid, country] = key.split('\x1f'); psolvStream.write(`${pgEsc(pid)}\t${pgEsc(country)}\t${s}\t${a}\n`); psolvCount++; }
   await endStream(psolvStream);
 
   // E6 个人年度复原
   const pysStream = createWriteStream(resolve(outDir, 'wca_fs_person_year_solves.copy.tsv'));
   let pysCount = 0;
   for (const [key, [s, a]] of personYearSA) {
-    const sep = key.indexOf('\x1f'); const pid = key.slice(0, sep), year = key.slice(sep + 1);
-    pysStream.write(`${pgEsc(pid)}\t${pgEsc(personCountry.get(pid) ?? '')}\t${year}\t${s}\t${a}\n`); pysCount++;
+    const [pid, country, year] = key.split('\x1f');
+    pysStream.write(`${pgEsc(pid)}\t${pgEsc(country)}\t${year}\t${s}\t${a}\n`); pysCount++;
   }
   await endStream(pysStream);
 
@@ -1379,12 +1355,12 @@ CREATE TABLE IF NOT EXISTS wca_fs_misser (event_id VARCHAR(20) NOT NULL, is_avg 
 CREATE TABLE IF NOT EXISTS wca_fs_records_person (wca_id VARCHAR(20) NOT NULL, country_id VARCHAR(50) NOT NULL, wr INTEGER NOT NULL DEFAULT 0, cr INTEGER NOT NULL DEFAULT 0, nr INTEGER NOT NULL DEFAULT 0, score INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (wca_id, country_id));
 CREATE TABLE IF NOT EXISTS wca_fs_records_comp (comp_id VARCHAR(50) NOT NULL, comp_country_id VARCHAR(50) NOT NULL, wr INTEGER NOT NULL DEFAULT 0, cr INTEGER NOT NULL DEFAULT 0, nr INTEGER NOT NULL DEFAULT 0, score INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (comp_id));
 CREATE TABLE IF NOT EXISTS wca_fs_current_records (event_id VARCHAR(20) NOT NULL, is_avg BOOLEAN NOT NULL, scope_kind CHAR(1) NOT NULL, scope_id VARCHAR(50) NOT NULL DEFAULT '', wca_id VARCHAR(20) NOT NULL, country_id VARCHAR(50) NOT NULL, value INTEGER NOT NULL, set_comp_id VARCHAR(50) NOT NULL DEFAULT '', set_date DATE, world_rank INTEGER, continent_rank INTEGER, country_rank INTEGER, PRIMARY KEY (event_id, is_avg, scope_kind, scope_id));
-CREATE TABLE IF NOT EXISTS wca_fs_person_comps (wca_id VARCHAR(20) PRIMARY KEY, country_id VARCHAR(50) NOT NULL, comp_count INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS wca_fs_person_comps (wca_id VARCHAR(20) NOT NULL, country_id VARCHAR(50) NOT NULL, comp_count INTEGER NOT NULL, PRIMARY KEY (wca_id, country_id));
 CREATE TABLE IF NOT EXISTS wca_fs_comp_persons (comp_id VARCHAR(50) PRIMARY KEY, comp_country_id VARCHAR(50) NOT NULL, person_count INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS wca_fs_person_comp_solves (wca_id VARCHAR(20) NOT NULL, country_id VARCHAR(50) NOT NULL, comp_id VARCHAR(50) NOT NULL, solve INTEGER NOT NULL, attempt INTEGER NOT NULL, PRIMARY KEY (wca_id, comp_id));
 CREATE TABLE IF NOT EXISTS wca_fs_comp_solves (comp_id VARCHAR(50) PRIMARY KEY, comp_country_id VARCHAR(50) NOT NULL, solve INTEGER NOT NULL, attempt INTEGER NOT NULL);
-CREATE TABLE IF NOT EXISTS wca_fs_person_solves (wca_id VARCHAR(20) PRIMARY KEY, country_id VARCHAR(50) NOT NULL, solve INTEGER NOT NULL, attempt INTEGER NOT NULL);
-CREATE TABLE IF NOT EXISTS wca_fs_person_year_solves (wca_id VARCHAR(20) NOT NULL, country_id VARCHAR(50) NOT NULL, year SMALLINT NOT NULL, solve INTEGER NOT NULL, attempt INTEGER NOT NULL, PRIMARY KEY (wca_id, year));
+CREATE TABLE IF NOT EXISTS wca_fs_person_solves (wca_id VARCHAR(20) NOT NULL, country_id VARCHAR(50) NOT NULL, solve INTEGER NOT NULL, attempt INTEGER NOT NULL, PRIMARY KEY (wca_id, country_id));
+CREATE TABLE IF NOT EXISTS wca_fs_person_year_solves (wca_id VARCHAR(20) NOT NULL, country_id VARCHAR(50) NOT NULL, year SMALLINT NOT NULL, solve INTEGER NOT NULL, attempt INTEGER NOT NULL, PRIMARY KEY (wca_id, country_id, year));
 CREATE TABLE IF NOT EXISTS wca_championship_podiums (wca_id VARCHAR(20) NOT NULL, comp_id VARCHAR(50) NOT NULL, event_id VARCHAR(20) NOT NULL, level VARCHAR(30) NOT NULL, place SMALLINT NOT NULL, best INTEGER NOT NULL, average INTEGER NOT NULL DEFAULT 0, attempts INTEGER[], single_record VARCHAR(3) NOT NULL DEFAULT '', average_record VARCHAR(3) NOT NULL DEFAULT '', PRIMARY KEY (wca_id, comp_id, event_id, level));
 CREATE INDEX IF NOT EXISTS wcp_wca ON wca_championship_podiums (wca_id);
 -- 选手页专用全量成绩表(migration 0098 建;这里同样内联幂等 DDL,理由同上).
@@ -1509,7 +1485,7 @@ ${refreshTable({
 ${refreshTable({
     table: 'wca_fs_person_comps',
     columns: ['wca_id', 'country_id', 'comp_count'],
-    keyColumns: ['wca_id'], file: 'wca_fs_person_comps.copy.tsv', expectedRows: pcCount,
+    keyColumns: ['wca_id', 'country_id'], file: 'wca_fs_person_comps.copy.tsv', expectedRows: pcCount,
   })}
 \\! rm -f wca_fs_person_comps.copy.tsv
 ${refreshTable({
@@ -1533,13 +1509,13 @@ ${refreshTable({
 ${refreshTable({
     table: 'wca_fs_person_solves',
     columns: ['wca_id', 'country_id', 'solve', 'attempt'],
-    keyColumns: ['wca_id'], file: 'wca_fs_person_solves.copy.tsv', expectedRows: psolvCount,
+    keyColumns: ['wca_id', 'country_id'], file: 'wca_fs_person_solves.copy.tsv', expectedRows: psolvCount,
   })}
 \\! rm -f wca_fs_person_solves.copy.tsv
 ${refreshTable({
     table: 'wca_fs_person_year_solves',
     columns: ['wca_id', 'country_id', 'year', 'solve', 'attempt'],
-    keyColumns: ['wca_id', 'year'], file: 'wca_fs_person_year_solves.copy.tsv', expectedRows: pysCount,
+    keyColumns: ['wca_id', 'country_id', 'year'], file: 'wca_fs_person_year_solves.copy.tsv', expectedRows: pysCount,
   })}
 \\! rm -f wca_fs_person_year_solves.copy.tsv
 ${refreshTable({

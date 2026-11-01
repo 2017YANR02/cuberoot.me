@@ -589,6 +589,7 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 304, slug: 'wca_historical_countries', desc: { zh: '历史参赛和复原次数按参赛时国家地区分桶', en: 'Partition historical participation and solve totals by represented country' } },
   { n: 303, slug: 'competition_group_awards', desc: { zh: '独立保存赛事分组获奖快照和选手索引', en: 'Persist organizer category awards separately with a person index' } },
   { n: 302, slug: 'comp_absences', desc: { zh: '管理员确认不参加的比赛选手及恢复操作', en: 'Restorable administrator-confirmed competition absences' } },
   { n: 301, slug: 'gallery_publication', desc: { zh: '图库照片默认私密及公开审核', en: 'Private gallery photos and publication review' } },

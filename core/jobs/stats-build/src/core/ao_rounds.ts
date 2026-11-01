@@ -98,7 +98,7 @@ export abstract class AoRounds extends GroupedStatistic {
         result.competition_id,
         CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link,
         person.wca_id AS person_id,
-        person.country_id,
+        result.country_id,
         CONCAT('[', competition.cell_name, '](https://www.worldcubeassociation.org/competitions/', competition.id, ')') competition_link,
         competition.start_date
       FROM results result
@@ -136,7 +136,7 @@ export abstract class AoRounds extends GroupedStatistic {
           result.competition_id,
           CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link,
           person.wca_id AS person_id,
-          person.country_id,
+          result.country_id,
           CONCAT('[', competition.cell_name, '](https://www.worldcubeassociation.org/competitions/', competition.id, ')') competition_link,
           competition.start_date
         FROM results result

@@ -182,7 +182,7 @@ export abstract class RoundMetric extends GroupedStatistic {
       const eventRows = await dbQuery<RowDataPacket[]>(
         `SELECT person_id, ${ATTEMPTS_SUBQUERY} AS attempts, average, best,
          CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link,
-         person.country_id,
+         result.country_id,
          CONCAT('[', c.cell_name, '](https://www.worldcubeassociation.org/competitions/', c.id, ')') competition_link,
          c.start_date
          FROM results result
@@ -332,7 +332,7 @@ export abstract class RoundMetric extends GroupedStatistic {
       const eventRows = await dbQuery<RowDataPacket[]>(
         `SELECT person_id, ${ATTEMPTS_SUBQUERY} AS attempts, average, best,
          CONCAT('[', person.name, '](https://www.worldcubeassociation.org/persons/', person.wca_id, ')') person_link,
-         person.country_id,
+         result.country_id,
          CONCAT('[', c.cell_name, '](https://www.worldcubeassociation.org/competitions/', c.id, ')') competition_link,
          c.start_date
          FROM results result
@@ -403,7 +403,7 @@ export abstract class RoundMetric extends GroupedStatistic {
         `SELECT r.person_id, r.${vc},
          (SELECT GROUP_CONCAT(ra.value ORDER BY ra.attempt_number) FROM result_attempts ra WHERE ra.result_id = r.id) AS attempts,
          CONCAT('[', p.name, '](https://www.worldcubeassociation.org/persons/', p.wca_id, ')') person_link,
-         p.country_id,
+         r.country_id,
          CONCAT('[', c.cell_name, '](https://www.worldcubeassociation.org/competitions/', c.id, ')') competition_link,
          c.start_date
          FROM results r

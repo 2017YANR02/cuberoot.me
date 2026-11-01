@@ -25,13 +25,13 @@ export class LongestStreakOfCompetitionsInOwnCountry extends Statistic {
         CONCAT('[', competition.cell_name, '](https://www.worldcubeassociation.org/competitions/', competition.id, ')') competition_link,
         country.name country
       FROM (
-        SELECT DISTINCT person_id, competition_id
+        SELECT DISTINCT person_id, competition_id, country_id
         FROM results
       ) AS people_with_competitions
       JOIN persons person ON person.wca_id = person_id AND person.sub_id = 1
       JOIN competitions competition ON competition.id = competition_id
       JOIN countries country ON country.id = competition.country_id
-      WHERE competition.country_id = person.country_id
+      WHERE competition.country_id = people_with_competitions.country_id
       ORDER BY competition.start_date
     `;
   }

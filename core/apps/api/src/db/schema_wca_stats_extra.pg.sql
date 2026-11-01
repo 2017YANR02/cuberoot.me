@@ -365,9 +365,10 @@ CREATE INDEX IF NOT EXISTS fs_curr_scope ON wca_fs_current_records (scope_kind, 
 
 -- E 参赛 & 复原次数
 CREATE TABLE IF NOT EXISTS wca_fs_person_comps (
-  wca_id      VARCHAR(20) PRIMARY KEY,
+  wca_id      VARCHAR(20) NOT NULL,
   country_id  VARCHAR(50) NOT NULL,
-  comp_count  INTEGER NOT NULL
+  comp_count  INTEGER NOT NULL,
+  PRIMARY KEY (wca_id, country_id)
 );
 CREATE INDEX IF NOT EXISTS fs_pc_rank    ON wca_fs_person_comps (comp_count DESC, wca_id);
 CREATE INDEX IF NOT EXISTS fs_pc_country ON wca_fs_person_comps (country_id, comp_count DESC, wca_id);
@@ -401,10 +402,11 @@ CREATE INDEX IF NOT EXISTS fs_cs_rank    ON wca_fs_comp_solves (solve DESC, atte
 CREATE INDEX IF NOT EXISTS fs_cs_country ON wca_fs_comp_solves (comp_country_id, solve DESC, attempt ASC, comp_id);
 
 CREATE TABLE IF NOT EXISTS wca_fs_person_solves (
-  wca_id      VARCHAR(20) PRIMARY KEY,
+  wca_id      VARCHAR(20) NOT NULL,
   country_id  VARCHAR(50) NOT NULL,
   solve       INTEGER NOT NULL,
-  attempt     INTEGER NOT NULL
+  attempt     INTEGER NOT NULL,
+  PRIMARY KEY (wca_id, country_id)
 );
 CREATE INDEX IF NOT EXISTS fs_ps_rank    ON wca_fs_person_solves (solve DESC, attempt ASC, wca_id);
 CREATE INDEX IF NOT EXISTS fs_ps_country ON wca_fs_person_solves (country_id, solve DESC, attempt ASC, wca_id);
@@ -415,7 +417,7 @@ CREATE TABLE IF NOT EXISTS wca_fs_person_year_solves (
   year        SMALLINT NOT NULL,
   solve       INTEGER NOT NULL,
   attempt     INTEGER NOT NULL,
-  PRIMARY KEY (wca_id, year)
+  PRIMARY KEY (wca_id, country_id, year)
 );
 CREATE INDEX IF NOT EXISTS fs_pys_rank    ON wca_fs_person_year_solves (year, solve DESC, attempt ASC, wca_id);
 CREATE INDEX IF NOT EXISTS fs_pys_country ON wca_fs_person_year_solves (year, country_id, solve DESC, attempt ASC, wca_id);
