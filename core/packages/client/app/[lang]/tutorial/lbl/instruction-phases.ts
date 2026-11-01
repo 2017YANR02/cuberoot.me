@@ -9,8 +9,8 @@ const phase = (zh: string, en: string, first: number, last = first): Instruction
 export const INSTRUCTION_PHASES: Record<string, InstructionPhase[][]> = {
   daisy: [
     [phase('转体，把标出的白格放到前面右侧', 'Rotate the cube to put the outlined white sticker on the right side of the front face', 1), phase('右手上', 'lift with the right face', 2)],
-    [phase('转顶层移开挡路的花瓣', 'Turn the top layer to move the blocking petal out of the way', 1), phase('右手上', 'lift with the right face', 2)],
     [phase('转体，把标出的白格放到前面左侧', 'Rotate the cube to put the outlined white sticker on the left side of the front face', 1), phase('左手上', 'lift with the left face', 2)],
+    [phase('转顶层移开挡路的花瓣', 'Turn the top layer to move the blocking petal out of the way', 1), phase('右手上', 'lift with the right face', 2)],
     [phase('压前层送到二楼', 'Lower the front to bring it to the middle', 1), phase('右手上', 'lift with the right face', 2)],
     [phase('压前层送到二楼', 'Lower the front to bring it to the middle', 1), phase('左手上', 'lift with the left face', 2)],
     [phase('把这条白棱放到右层', 'Put this edge in the right layer', 1), phase('做“上上”', 'turn the right face twice', 2)],
@@ -30,7 +30,8 @@ export const INSTRUCTION_PHASES: Record<string, InstructionPhase[][]> = {
   middle: [
     [], // Arrow-separated insert flows use the existing alg groups directly.
     [],
-    [phase('转体把它放右前方', 'Rotate the cube to put it at front-right', 1), phase('做本次公式取出', 'use this algorithm to eject it', 2, 11)],
+    [phase('做“去右”把它放入，原来的棱就会被取到顶层', 'Do the right insertion to eject the flipped edge', 1, 10)],
+    [phase('先转体把它放右前方', 'Rotate it to front-right', 1), phase('做“去右”把原来的棱取出', 'Use the right insertion to eject it', 2, 11)],
   ],
   'yellow-cross': [
     [phase('转顶层，把两条黄色棱左右横放', 'Turn the top to hold the two yellow edges left to right', 1), phase('压', 'F', 2), phase('右公式', 'the right trigger', 3, 6), phase('提', 'F′', 7)],
@@ -38,8 +39,8 @@ export const INSTRUCTION_PHASES: Record<string, InstructionPhase[][]> = {
     [phase('双压', 'f', 1), phase('右公式', 'the right trigger', 2, 5), phase('双提', 'f′', 6)],
   ],
   'yellow-face': [
-    [phase('转顶层把鱼头放左前', 'turn the top to put the head at front-left', 1), phase('做右鱼公式', 'do right Sune', 2, 8)],
-    [phase('转顶层把鱼头放右前', 'turn the top to put the head at front-right', 1), phase('做左鱼公式', 'do left Sune', 2, 8)],
+    [phase('转顶层把鱼头放左前，F面鱼鳍朝右', 'Turn the top to put the head at front-left, with the fin on the right of the F face', 1), phase('做右鱼公式', 'do right Sune', 2, 8)],
+    [phase('转顶层把鱼头放右前，F面鱼鳍朝左', 'Turn the top to put the head at front-right, with the fin on the left of the F face', 1), phase('做左鱼公式', 'do left Sune', 2, 8)],
     [phase('转顶层让拇指碰黄', 'Turn the top until it touches yellow', 1), phase('做右鱼公式', 'do right Sune', 2, 8)],
     [phase('转顶层让拇指不碰黄', 'Turn the top so it does not touch yellow', 1), phase('做右鱼公式', 'do right Sune', 2, 8)],
   ],
@@ -50,7 +51,7 @@ export const INSTRUCTION_PHASES: Record<string, InstructionPhase[][]> = {
   'edge-position': [
     [phase('转体把墙放后', 'Rotate the cube to put the wall at the back', 1), phase('右鱼', 'Right Sune', 2, 8), phase('顶层 U', 'U', 9), phase('左鱼', 'Left Sune', 10, 16), phase('转顶层对齐', 'Align the top', 17)],
     [phase('转体把墙放后', 'Rotate the cube to put the wall at the back', 1), phase('左鱼', 'Left Sune', 2, 8), phase('顶层 U′', 'U′', 9), phase('右鱼', 'Right Sune', 10, 16), phase('转顶层对齐', 'Align the top', 17)],
-    [phase('右鱼', 'Right Sune', 1, 7), phase('顶层 U', 'U', 8), phase('左鱼', 'Left Sune', 9, 15), phase('转顶层对齐', 'Align the top', 16)],
+    [phase('沿当前朝向起手', 'Keep this orientation', 1), phase('右鱼', 'Right Sune', 2, 8), phase('顶层 U', 'U', 9), phase('左鱼', 'Left Sune', 10, 16), phase('转顶层对齐', 'Align the top', 17)],
   ],
 };
 

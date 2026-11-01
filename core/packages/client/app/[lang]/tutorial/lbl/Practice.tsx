@@ -19,6 +19,7 @@ import { stageStickerColors } from '@/lib/sim-stage-thumbnail';
 import { orientedCubeFaceColors } from '@/lib/cube-orientation';
 import { tr, T } from '@/i18n/tr';
 import { LBL_STEPS, LESSON_STICKERING, LBL_INITIAL_VIEW } from './content';
+import { LBL_COURSE_ENTRIES } from './alg-lessons';
 import { practiceState, practiceTargetStates } from './practice-state';
 import AlgSteps from './AlgSteps';
 
@@ -104,7 +105,7 @@ function Exercise({ step, index, onNext, textMoves, onTextMovesChange }: { step:
     return () => window.clearInterval(timer);
   }, [checking, colors, setup, targetStates, finalExercise]);
   const last = index === step.examples.length - 1;
-  const nextStep = LBL_STEPS[LBL_STEPS.findIndex(item => item.id === step.id) + 1];
+  const nextStep = LBL_COURSE_ENTRIES[LBL_COURSE_ENTRIES.findIndex(item => item.id === step.id) + 1];
   const actionRows = (rows: typeof practiceMoves) => rows.map(row => <div className="lbl-action-row" key={row.en}>
     <span>{tr(row)}</span>{row.moves.map((move, i) => <button className="lbl-button" type="button" key={move} onClick={() => turn(move)}><b aria-hidden="true">{row.arrows[i]}</b>{moveLabel(move)}</button>)}
   </div>);

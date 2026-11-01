@@ -100,6 +100,8 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   hiddenStickers?: readonly string[];
   /** Home sticker IDs whose original colors remain visible inside an outline. */
   outlinedStickers?: readonly string[];
+  /** Outline home stickers without changing their current mask colors. */
+  highlightedStickers?: readonly string[];
   setup?: string;
   orientation?: string;
   sceneRot?: { x: number; y: number; z: number };
@@ -123,7 +125,7 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   /** 撑满父容器。给编辑器那种「右半屏放预览」的布局用。 */
   fillPane?: boolean;
 }>(function AlgSimPlayer({
-  alg, puzzle, puzzleOrder, set, additionalStickering, hiddenStickers, outlinedStickers, setup, orientation = '', sceneRot, startSolved = false, autoPlay = false, playRequest = 0, loop = false, controlMode = 'full', stepMarkers, hideResetView = false, interactionMode = 'view', lockView = false, onUserMove, pauseAfterSteps, sectionPauseMs, onStepChange, stickeringAtStep, highlightDaisyAlignment = false, moveDurationMs, size = 260, fillPane = false,
+  alg, puzzle, puzzleOrder, set, additionalStickering, hiddenStickers, outlinedStickers, highlightedStickers, setup, orientation = '', sceneRot, startSolved = false, autoPlay = false, playRequest = 0, loop = false, controlMode = 'full', stepMarkers, hideResetView = false, interactionMode = 'view', lockView = false, onUserMove, pauseAfterSteps, sectionPauseMs, onStepChange, stickeringAtStep, highlightDaisyAlignment = false, moveDurationMs, size = 260, fillPane = false,
 }, ref) {
   const t = useT();
   const timedSectionPauses = typeof sectionPauseMs === 'number' && Number.isFinite(sectionPauseMs) && sectionPauseMs > 0;
@@ -337,6 +339,22 @@ const AlgSimPlayer = forwardRef<AlgPlayerHandle, {
   }, [puzzleKind, puzzle, set, additionalStickering, hiddenStickers, outlinedStickers, previewTiming.frames, interactionMode, lockView, sceneRot, highlightDaisyAlignment]);
 
   const resetView = useCallback(() => resetViewRef.current?.(), []);
+
+  // Preview outlines are independent of stickering: a gray sticker stays gray.
+  useEffect(() => {
+    const mount = mountRef.current;
+    if (!mount || !ready || typeof puzzleKind !== 'number' || highlightedStickers === undefined) return;
+    const renderer = (mount.world.cube as Cube).instancedRenderer;
+    const highlighted = new Set(highlightedStickers);
+    renderer.setStickerPreview(highlighted.size
+      ? (initial, face) => highlighted.has(engineHomeSid(initial, face, puzzleKind)) : null);
+    mount.invalidate();
+    return () => {
+      if (mountRef.current !== mount) return;
+      renderer.setStickerPreview(null);
+      mount.invalidate();
+    };
+  }, [highlightedStickers, puzzleKind, ready]);
 
   /** 菜单切换只重贴当前预览的颜色，不重建 world，也不改变 case 状态。 */
   useEffect(() => {

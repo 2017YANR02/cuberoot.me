@@ -67,7 +67,7 @@ export function getLblAlgGroups(step: string, alg: string): LblAlgMove[][] {
     const wallPlacement = step === 'edge-position' && start === 0 && /^y(?:2|')?$/.test(moves[start]);
     const finalAlignment = step === 'edge-position' && start === moves.length - 1 && /^U(?:2|')?$/.test(moves[start]);
     groups.push(makeGroup(start, length, sequence?.cues
-      ?? (wallPlacement ? [cue('墙放后', 'Wall to the back')]
+      ?? (wallPlacement ? [cue('转体调整', 'Reorient')]
         : finalAlignment ? [cue('顶层对齐', 'Align the top')]
           : preparation ? [cue('转顶层', 'Turn top')] : undefined)));
     start += length;
