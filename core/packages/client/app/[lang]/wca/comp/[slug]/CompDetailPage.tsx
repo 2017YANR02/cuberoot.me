@@ -1715,6 +1715,13 @@ export default function CompDetailPage() {
   const meCompetitor = meWcaId
     ? Object.values(data.users).find(person => person.wcaid === meWcaId)
     : undefined;
+  // WCA announcements can also use a cubing.com roster before live results exist;
+  // the API sets cubingSlug only after replacing their empty roster with that data.
+  const hasCubingRoster = isCubing || (data.source === 'wca' && !!data.cubingSlug);
+  const myRegistrationNumber = data.slug === slug && hasCubingRoster && meCompetitor
+    && Number.isSafeInteger(meCompetitor.number) && meCompetitor.number > 0
+    ? meCompetitor.number
+    : null;
   const hasMyResults = !!meCompetitor && data.events.some(event =>
     event.rs.some(round =>
       (data.resultsByRound[roundKey(event.i, round.i)] ?? []).some(result => result.n === meCompetitor.number)
@@ -1908,6 +1915,16 @@ export default function CompDetailPage() {
         )}
 
         {compInfo && <CompInfoPanel info={compInfo} isZh={isZh} cubingZh={cubingZh} />}
+        {myRegistrationNumber !== null && (
+          <CompInfoRows
+            activeRows={[{
+              label: tr({ zh: '我的粗饼报名编号', en: 'My Cubing China registration number' }),
+              value: <strong>{myRegistrationNumber}</strong>,
+            }]}
+            pastRows={[]}
+            isZh={isZh}
+          />
+        )}
 
         <div className="comp-view-tabs">
           {hasPodiumTab && (
