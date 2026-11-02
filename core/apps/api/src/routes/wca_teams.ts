@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { query } from '../db/connection.js';
 import { requireAdminOrApiKey } from '../utils/recon_helpers.js';
 import { normalizeWcaId, parseTeacherLookupIds } from '../utils/wca_teachers.js';
-import { wcaRelationFilter } from '../utils/wca_relation_filters.js';
+import { wcaTeamFilter } from '../utils/wca_relation_filters.js';
 import { FINAL_ROUND_TYPES, RANK_EVENTS } from '../utils/person_page.js';
 
 export const wcaTeamRoutes = new Hono();
@@ -17,17 +17,17 @@ wcaTeamRoutes.get('/wca/teams', async (c) => {
     const page = Math.max(1, parseInt(c.req.query('page') ?? '1', 10) || 1);
     const size = Math.min(100, Math.max(1, parseInt(c.req.query('size') ?? '50', 10) || 50));
     const search = (c.req.query('q') ?? '').trim().slice(0, 100);
-    const relation = wcaRelationFilter(key => key === 'team' ? c.req.query(key) : undefined, 's.wca_id', []);
-    const where = `WHERE TRUE${relation.sql}${search ? ' AND (s.name ILIKE ? OR s.wca_id ILIKE ?)' : ''}`;
+    const relation = wcaTeamFilter(c.req.query('team') ?? '', 'a.team_id');
+    const where = `WHERE TRUE${relation.sql}${search ? ' AND (COALESCE(s.name, a.name) ILIKE ? OR a.wca_id ILIKE ?)' : ''}`;
     const params = [...relation.params, ...(search ? [`%${search}%`, `%${search}%`] : [])];
     const [teams, members, total] = await Promise.all([
-      query<{ id: number; name: string; count: number }>(`SELECT t.id, t.name, COUNT(a.wca_id)::int AS count FROM wca_teams t LEFT JOIN wca_person_teams a ON a.team_id = t.id GROUP BY t.id ORDER BY t.id`),
-      query(`SELECT s.wca_id AS "wcaId", s.name, co.iso2, t.id AS "teamId", t.name AS "teamName",
+      query<{ id: number; name: string; count: number }>(`SELECT t.id, t.name, COUNT(a.member_id)::int AS count FROM wca_teams t LEFT JOIN wca_person_teams a ON a.team_id = t.id GROUP BY t.id ORDER BY t.id`),
+      query(`SELECT a.member_id AS "memberId", a.wca_id AS "wcaId", COALESCE(s.name, a.name, a.wca_id) AS name, co.iso2, t.id AS "teamId", t.name AS "teamName",
           best.average AS "bestAverage", best.single AS "bestSingle",
           best.competitions AS "competitionCount", best.wins AS "championshipCount",
           NULLIF(sr.ranks_world[${cubeRankIndex}], 0) AS "singleWorldRank",
           NULLIF(ar.ranks_world[${cubeRankIndex}], 0) AS "averageWorldRank"
-        FROM wca_person_teams a JOIN wca_persons s ON s.wca_id = a.wca_id JOIN wca_teams t ON t.id = a.team_id
+        FROM wca_person_teams a LEFT JOIN wca_persons s ON s.wca_id = a.wca_id JOIN wca_teams t ON t.id = a.team_id
         LEFT JOIN wca_countries co ON co.id = s.country_id
         LEFT JOIN wca_person_ranks sr ON sr.wca_id = s.wca_id AND sr.is_avg = FALSE
         LEFT JOIN wca_person_ranks ar ON ar.wca_id = s.wca_id AND ar.is_avg = TRUE
@@ -38,8 +38,8 @@ wcaTeamRoutes.get('/wca/teams', async (c) => {
             COUNT(*) FILTER (WHERE round_type_id IN (${finalRoundSql}) AND pos = 1)::int AS wins
           FROM wca_person_results r WHERE r.wca_id = s.wca_id
         ) best ON TRUE
-        ${where} ORDER BY best.average ASC NULLS LAST, s.wca_id LIMIT ? OFFSET ?`, [...params, size, (page - 1) * size]),
-      query<{ count: number }>(`SELECT COUNT(*)::int AS count FROM wca_person_teams a JOIN wca_persons s ON s.wca_id = a.wca_id ${where}`, params),
+        ${where} ORDER BY best.average ASC NULLS LAST, a.wca_id ASC NULLS LAST, a.member_id LIMIT ? OFFSET ?`, [...params, size, (page - 1) * size]),
+      query<{ count: number }>(`SELECT COUNT(*)::int AS count FROM wca_person_teams a LEFT JOIN wca_persons s ON s.wca_id = a.wca_id ${where}`, params),
     ]);
     return c.json({ teams, members, total: total[0]?.count ?? 0, page, size });
   }
@@ -48,6 +48,27 @@ wcaTeamRoutes.get('/wca/teams', async (c) => {
     'SELECT wca_id AS "wcaId", team_id AS "teamId" FROM wca_person_teams WHERE wca_id IN (' + ids.map(() => '?').join(',') + ')', ids,
   ) : [];
   return c.json({ teams, assignments });
+});
+
+wcaTeamRoutes.post('/wca/teams/members', async (c) => {
+  await requireAdminOrApiKey(c);
+  c.header('Cache-Control', 'no-store');
+  const body = await c.req.json<{ name?: unknown; teamId?: unknown }>().catch(() => null);
+  if (!body || typeof body.name !== 'string' || typeof body.teamId !== 'number'
+    || !Number.isInteger(body.teamId) || body.teamId < 1 || body.teamId > 2147483647) {
+    return c.json({ error: 'invalid member' }, 400);
+  }
+  const name = body.name.replace(/\s+/g, ' ').trim();
+  if (!name || name.length > 80 || /[\u0000-\u001f\u007f]/.test(name)) return c.json({ error: 'invalid member name' }, 400);
+  // Names are not identifiers: two teammates can share a name. Retain the
+  // returned memberId for later updates instead of merging people by name.
+  const members = await query(
+    `INSERT INTO wca_person_teams (name, team_id)
+     SELECT ?, id FROM wca_teams WHERE id = ?
+     RETURNING member_id AS "memberId", wca_id AS "wcaId", name, team_id AS "teamId"`, [name, body.teamId],
+  );
+  if (!members.length) return c.json({ error: 'team not found' }, 404);
+  return c.json({ member: members[0] }, 201);
 });
 
 wcaTeamRoutes.put('/wca/teams/:wcaId', async (c) => {

@@ -7,6 +7,9 @@ import { wcaTeamRoutes } from '../src/routes/wca_teams.js';
 const put = (body: unknown) => wcaTeamRoutes.request('/wca/teams/2017YANR02', {
   method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
 });
+const createMember = (body: unknown) => wcaTeamRoutes.request('/wca/teams/members', {
+  method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+});
 beforeEach(() => { vi.resetAllMocks(); });
 it('returns directory counts and paginated member results without modifying assignments', async () => {
   mocks.query.mockResolvedValueOnce([{ id: 2, name: '魔域', count: 2 }])
@@ -24,7 +27,27 @@ it('returns directory counts and paginated member results without modifying assi
 it('rejects non-admin writes before touching the database', async () => {
   mocks.requireAdminOrApiKey.mockRejectedValue(new HTTPException(403));
   expect((await put({ name: 'GAN' })).status).toBe(403);
+  expect((await createMember({ name: 'New Member', teamId: 1 })).status).toBe(403);
   expect(mocks.query).not.toHaveBeenCalled();
+});
+it('creates a real named member without inventing a WCA identity', async () => {
+  const member = { memberId: 42, wcaId: null, name: 'New Member', teamId: 1 };
+  mocks.query.mockResolvedValueOnce([member]);
+  const response = await createMember({ name: '  New   Member  ', teamId: 1 });
+  expect(response.status).toBe(201);
+  expect(response.headers.get('Cache-Control')).toBe('no-store');
+  expect(await response.json()).toEqual({ member });
+  expect(mocks.query).toHaveBeenCalledTimes(1);
+  expect(mocks.query.mock.calls[0][1]).toEqual(['New Member', 1]);
+});
+it('rejects missing identities and invalid teams before writing', async () => {
+  for (const body of [{ name: '', teamId: 1 }, { name: ' ', teamId: 1 }, { name: 'x'.repeat(81), teamId: 1 },
+    { name: 'Member', teamId: '1' }, { name: 'Member', teamId: -1 }, { name: 'Member', teamId: 1.5 }]) {
+    expect((await createMember(body)).status).toBe(400);
+  }
+  expect(mocks.query).not.toHaveBeenCalled();
+  mocks.query.mockResolvedValueOnce([]);
+  expect((await createMember({ name: 'Member', teamId: 99 })).status).toBe(404);
 });
 it('rejects malformed and overlong names before database writes', async () => {
   for (const name of [null, {}, 'x'.repeat(81)]) expect((await put({ name })).status).toBe(400);

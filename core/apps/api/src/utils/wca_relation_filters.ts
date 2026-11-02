@@ -1,6 +1,20 @@
 import { HTTPException } from 'hono/http-exception';
 import { normalizeWcaId } from './wca_teachers.js';
 
+/** Shared team predicate for WCA affiliations and members without a WCA ID. */
+export function wcaTeamFilter(team: string, column: 'a.team_id' | 'rt.team_id') {
+  if (team && team !== 'none' && team !== 'moyu' && !/^[1-9]\d{0,8}$/.test(team)) {
+    throw new HTTPException(400, { message: 'Invalid team' });
+  }
+  if (!team) return { sql: '', params: [] };
+  if (team === 'none') return { sql: ` AND ${column} IS NULL`, params: [] };
+  if (team === 'moyu') return {
+    sql: ` AND ${column} IN (SELECT id FROM wca_teams WHERE name IN (?, ?, ?))`,
+    params: ['魔域', '魔域战队', '魔域梦之队'],
+  };
+  return { sql: ` AND ${column} = ?`, params: [Number(team)] };
+}
+
 /** Apply current affiliations before counts and pagination, never to just one page. */
 export function wcaRelationFilter(
   get: (key: string) => string | undefined,
@@ -9,9 +23,7 @@ export function wcaRelationFilter(
 ) {
   const team = get('team') ?? '';
   const teacher = get('teacherFilter') ?? '';
-  if (team && team !== 'none' && team !== 'moyu' && !/^[1-9]\d{0,8}$/.test(team)) {
-    throw new HTTPException(400, { message: 'Invalid team' });
-  }
+  const teamFilter = wcaTeamFilter(team, 'rt.team_id');
   if (teacher && !['none', 'self'].includes(teacher) && !normalizeWcaId(teacher)) {
     throw new HTTPException(400, { message: 'Invalid teacherFilter' });
   }
@@ -20,9 +32,8 @@ export function wcaRelationFilter(
   if (team) {
     if (team === 'none') clauses.push(`NOT EXISTS (SELECT 1 FROM wca_person_teams rt WHERE rt.wca_id = ${personColumn})`);
     else {
-      const condition = team === 'moyu' ? 'rt.team_id IN (SELECT id FROM wca_teams WHERE name IN (?, ?, ?))' : 'rt.team_id = ?';
-      clauses.push(`EXISTS (SELECT 1 FROM wca_person_teams rt WHERE rt.wca_id = ${personColumn} AND ${condition})`);
-      params.push(...(team === 'moyu' ? ['魔域', '魔域战队', '魔域梦之队'] : [Number(team)]));
+      clauses.push(`EXISTS (SELECT 1 FROM wca_person_teams rt WHERE rt.wca_id = ${personColumn}${teamFilter.sql})`);
+      params.push(...teamFilter.params);
     }
   }
   if (teacher) {

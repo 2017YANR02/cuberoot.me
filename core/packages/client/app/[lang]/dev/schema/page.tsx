@@ -589,6 +589,8 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 305, slug: 'wca_team_members_without_wca', desc: { zh: '战队成员使用独立编号，支持尚无 WCA ID 的成员', en: 'Independent team member IDs, including members without a WCA ID' } },
+  { n: 306, slug: 'gan_roster_20261102_non_wca', desc: { zh: '导入维护者确认尚未参赛的 38 位 GAN 战队成员', en: 'Import 38 GAN team members confirmed by the maintainer as not yet competing' } },
   { n: 304, slug: 'wca_historical_countries', desc: { zh: '历史参赛和复原次数按参赛时国家地区分桶', en: 'Partition historical participation and solve totals by represented country' } },
   { n: 303, slug: 'competition_group_awards', desc: { zh: '独立保存赛事分组获奖快照和选手索引', en: 'Persist organizer category awards separately with a person index' } },
   { n: 302, slug: 'comp_absences', desc: { zh: '管理员确认不参加的比赛选手及恢复操作', en: 'Restorable administrator-confirmed competition absences' } },

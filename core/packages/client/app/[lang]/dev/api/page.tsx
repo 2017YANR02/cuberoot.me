@@ -130,6 +130,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'wca-data', m: 'POST', p: '/v1/wca/translations/sync', g: 'admin', c: 'no-store', zh: '从 WCA Weblate 原子同步官方译文', en: 'Atomically synchronize translations from WCA Weblate' },
   { d: 'wca-data', m: 'GET', p: '/v1/wca/teams', g: 'public', c: 'no-store', zh: '战队与选手归属；directory=1 返回人数及按三阶平均排序的分页成员，支持 team/q', en: 'Teams and assignments; directory=1 returns counts and paginated members ordered by 3x3 average, with team/q filters' },
   { d: 'wca-data', m: 'PUT', p: '/v1/wca/teams/:wcaId', g: 'admin', zh: '管理员选择、自定义或清除选手战队', en: 'Admin assigns, creates, or clears a cuber team' },
+  { d: 'wca-data', m: 'POST', p: '/v1/wca/teams/members', g: 'admin', zh: '按 name、teamId 新增无 WCA ID 的战队成员，返回独立 memberId；同名不合并', en: 'Create a team member without a WCA ID using name and teamId; returns memberId without merging namesakes' },
   { m: 'GET', p: '/v1/auth/onboarding', d: 'auth', g: 'login', c: 'no-store', zh: '读取当前账号的首页导览已看标记；不缓存', en: 'Read the signed-in account’s homepage tour status; no cache' },
   { m: 'PUT', p: '/v1/auth/onboarding', d: 'auth', g: 'login', c: 'no-store', zh: '将当前账号标记为已看导览；幂等，不接受其他账号 ID', en: 'Mark the current account’s tour as seen; idempotent, accepts no target account ID' },
   { d: 'membership', m: 'GET', p: '/v1/membership/google/me', g: 'login', c: 'no-store', zh: 'Google Play 混淆账号标识', en: 'Google Play obfuscated account identifier' },

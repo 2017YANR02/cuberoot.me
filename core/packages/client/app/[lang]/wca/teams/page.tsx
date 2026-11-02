@@ -18,6 +18,7 @@ import AppLink from '@/components/AppLink';
 import { apiUrl } from '@/lib/api-base';
 import { wcaTeamBrand } from '@/lib/wca-team-brands';
 import { formatWcaResult } from '@/lib/wca-format-result';
+import { displayCuberName } from '@/lib/cuber-name-display';
 import { tr } from '@/i18n/tr';
 import '../_wca_stats_extra.css';
 import './teams.css';
@@ -26,7 +27,7 @@ interface Team { id: number; name: string; count: number }
 interface Directory {
   teams: Team[];
   members: Array<{
-    wcaId: string; name: string; iso2: string | null; teamId: number; teamName: string;
+    memberId: number; wcaId: string | null; name: string; iso2: string | null; teamId: number; teamName: string;
     bestAverage: number | null; bestSingle?: number | null; competitionCount?: number; championshipCount?: number;
     singleWorldRank?: number | null; averageWorldRank?: number | null;
   }>;
@@ -57,7 +58,7 @@ function TeamsDirectory() {
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true); setFailed(false);
-    const qs = new URLSearchParams({ directory: '1', team, q: search, page: String(page), size: '50', v: '4' });
+    const qs = new URLSearchParams({ directory: '1', team, q: search, page: String(page), size: '50', v: '5' });
     fetch(apiUrl('/v1/wca/teams?' + qs), { signal: controller.signal }).then(async response => {
       if (!response.ok) throw new Error(String(response.status));
       const result = await response.json();
@@ -107,11 +108,13 @@ function TeamsDirectory() {
         <th><Tooltip content={tr({ zh: '全部项目累计决赛冠军次数（含加入战队前）', en: 'Career event wins in finals, including before joining the team' })}>
           {tip => <span {...tip} tabIndex={0}>{tr({ zh: '夺冠次数', en: 'Titles' })}</span>}
         </Tooltip></th></tr></thead>
-      <tbody>{!loading && !failed && data?.members.map(member => <tr key={member.wcaId}>
+      <tbody>{!loading && !failed && data?.members.map(member => <tr key={member.memberId ?? member.wcaId}>
         <td><div className="wca-team-person">
           {member.iso2 && <Flag iso2={member.iso2} />}
-          <div><PersonLink wcaId={member.wcaId} name={member.name} isZh={isZh} showTeam={false} />
-            <span className="wca-team-person-id">{member.wcaId}</span></div>
+          <div>{member.wcaId
+            ? <PersonLink wcaId={member.wcaId} name={member.name} isZh={isZh} showTeam={false} />
+            : <span>{displayCuberName(member.name, isZh)}</span>}
+            {member.wcaId && <span className="wca-team-person-id">{member.wcaId}</span>}</div>
         </div></td>
         <td><WcaTeamLink team={{ id: member.teamId, name: member.teamName }} /></td>
         <td>{member.bestSingle == null ? '—' : formatWcaResult(member.bestSingle, '333', 'single')}
