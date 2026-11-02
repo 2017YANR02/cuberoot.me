@@ -23,7 +23,7 @@ export const MIDDLE_FLIPPED_SETUP = `${MIDDLE_RIGHT} U y' ${MIDDLE_RIGHT} y'`;
 export const MIDDLE_MISPLACED_SETUP = `${MIDDLE_RIGHT} ${MIDDLE_RIGHT} y2 U2 ${MIDDLE_RIGHT} y'`;
 export const RIGHT_SUNE = "R U R' U R U2' R'";
 export const LEFT_SUNE = "L' U' L U' L' U2 L";
-export const CORNER_POSITION = "R U R' F' R U R' U' R' F R2 U' R'";
+export const CORNER_POSITION = "R U R' F' R U R' U' R' F R2 U' R' U'";
 export const EDGE_POSITION_LEFT = `${RIGHT_SUNE} U ${LEFT_SUNE} U'`;
 export const EDGE_POSITION_RIGHT = `${LEFT_SUNE} U' ${RIGHT_SUNE} U`;
 export const LBL_LEARNING_FOCUS: Record<string, Text> = {
@@ -33,7 +33,7 @@ export const LBL_LEARNING_FOCUS: Record<string, Text> = {
   middle: text('2条核心公式去右或去左，以记忆公式为主', 'Learn the two core algorithms: insert right or insert left.'),
   'yellow-cross': text('共2条公式，3种情况', '2 algorithms, 3 cases'),
   'yellow-face': text('数非黄角格，认鱼头和鱼鳍，再选择鱼公式。', 'Count non-yellow corners, identify the head and fins, then choose the Sune algorithm.'),
-  'corner-position': text('一条“三角换”公式，结合状态学习', 'Learn one three-corner cycle algorithm in context.'),
+  'corner-position': text('一条L公式，结合状态学习', 'Learn the L algorithm in context.'),
   'edge-position': text('左右鱼公式叠加可以调整顶棱位置', 'Combine the left and right fish algorithms to reposition the top edges.'),
 };
 export const LBL_STAGE_GOALS: Record<string, { before: Text; after: Text; summary?: Text }> = {
@@ -178,8 +178,8 @@ export const LBL_STEPS: Step[] = [
       text("先找眼", "First look for headlights"),
     ],
     examples: [
-      example('有眼 · 眼放左', 'Headlights · Hold on the left', `y ${CORNER_POSITION} U`, '先转体把眼放左，再做公式。做完转顶层，让四个角与侧面中心对齐。', 'Rotate the whole cube to put the headlights on the left, then do the algorithm. Finish by turning the top to match all four corners with the side centers.'),
-      example('无眼 · 先造眼', 'No headlights · Create a pair', CORNER_POSITION, '先做一遍公式，产生眼后，再选择“有眼 · 眼放左”继续。', 'Do the algorithm once to create headlights, then select “Headlights · Hold on the left” to continue.', `(${CORNER_POSITION} U ${CORNER_POSITION} U)'`),
+      example('有眼 · 眼放左', 'Headlights · Hold on the left', `y ${CORNER_POSITION}`, '先转体把眼放左，再做L公式。', 'Rotate the whole cube to put the headlights on the left, then do the L algorithm.', `(y ${CORNER_POSITION} U)' d`),
+      example('无眼 · 先造眼', 'No headlights · Create a pair', CORNER_POSITION, '先做一遍L公式，产生眼后，再选择“有眼 · 眼放左”继续。', 'Do the L algorithm once to create headlights, then select “Headlights · Hold on the left” to continue.', `(${CORNER_POSITION} U2 ${CORNER_POSITION} U2)'`),
     ],
   },
   {

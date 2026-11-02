@@ -45,8 +45,8 @@ export const INSTRUCTION_PHASES: Record<string, InstructionPhase[][]> = {
     [phase('转顶层让拇指不碰黄', 'Turn the top so it does not touch yellow', 1), phase('做右鱼公式', 'do right Sune', 2, 8)],
   ],
   'corner-position': [
-    [phase('转体把眼放左', 'Rotate the whole cube to put the headlights on the left', 1), phase('做公式', 'do the algorithm', 2, 14), phase('转顶层，让四个角与侧面中心对齐', 'turning the top to match all four corners with the side centers', 15)],
-    [phase('做一遍公式', 'Do the algorithm once', 1, 13)],
+    [phase('转体把眼放左', 'Rotate the whole cube to put the headlights on the left', 1), phase('做L公式', 'do the L algorithm', 2, 15)],
+    [phase('做一遍L公式', 'Do the L algorithm once', 1, 14)],
   ],
   'edge-position': [
     [phase('转体把墙放后', 'Rotate the cube to put the wall at the back', 1), phase('右鱼', 'Right Sune', 2, 8), phase('顶层 U', 'U', 9), phase('左鱼', 'Left Sune', 10, 16), phase('转顶层对齐', 'Align the top', 17)],

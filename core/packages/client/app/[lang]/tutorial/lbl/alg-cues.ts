@@ -38,14 +38,14 @@ export function getLblAlgGroups(step: string, alg: string): LblAlgMove[][] {
       notation, index: start + offset, cue: cues?.[offset] ?? singleMoves[notation] ?? cue(notation, notation),
     }));
 
-  // The document brackets the L algorithm as 4 / 4 / 5 moves. It is not the
+  // Keep the L algorithm in three groups, including its final U′ alignment. It is not the
   // alternate R2 D2 algorithm, so do not borrow that version's mnemonic.
   if (step === 'corner-position') {
     const body = CORNER_POSITION.split(' ');
     const groups: LblAlgMove[][] = [];
     for (let start = 0; start < moves.length;) {
       if (body.every((move, offset) => moves[start + offset] === move)) {
-        groups.push(makeGroup(start, 4), makeGroup(start + 4, 4, trigger), makeGroup(start + 8, 5));
+        groups.push(makeGroup(start, 4), makeGroup(start + 4, 4, trigger), makeGroup(start + 8, body.length - 8));
         start += body.length;
       } else {
         const alignment = start === moves.length - 1;

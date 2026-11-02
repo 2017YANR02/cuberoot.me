@@ -1,4 +1,4 @@
-import { LBL_STEPS, LEFT, RIGHT, LEFT_SUNE, RIGHT_SUNE } from './content';
+import { LBL_STEPS, LEFT, RIGHT, LEFT_SUNE, RIGHT_SUNE, CORNER_POSITION } from './content';
 
 type Text = { zh: string; en: string };
 export type AlgLesson = { id: string; after: string; title: Text; usage: Text; algs: { title: Text; alg: string; left: boolean; naming: Text }[] };
@@ -19,6 +19,12 @@ export const ALG_LESSONS: AlgLesson[] = [
     { title: { zh: '右鱼公式', en: 'Right Sune' }, alg: RIGHT_SUNE, left: false,
       naming: { zh: '右鱼：鱼头放左前，前（F）面右上角有鱼鳍，右手起手', en: 'Right fish: head at front-left, a fin at the top-right corner of the front (F) face; start with the right hand.' } },
   ] },
+  { id: 'l-alg-learning', after: 'yellow-face', title: { zh: '公式学习：L公式', en: 'Learn the L algorithm' },
+    usage: { zh: '', en: '' },
+    algs: [
+      { title: { zh: 'L公式', en: 'L algorithm' }, alg: CORNER_POSITION, left: false,
+        naming: { zh: 'L公式交换了右侧两个角块的位置', en: 'The L algorithm swaps the two corners on the right.' } },
+    ] },
 ];
 
 // Learning interludes are navigation entries; the nine numbered stages stay intact.

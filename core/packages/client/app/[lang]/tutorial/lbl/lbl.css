@@ -485,10 +485,18 @@ button.lbl-case:active, .lbl-practice:active { transform: scale(.96); }
   .lbl-lesson-page .lbl-demo.lbl-alg-learning-demo { grid-template-rows: 1fr auto; }
 }
 .lbl-alg-learning-cues { min-width: 0; display: flex; align-items: center; }
+.lbl-alg-heading { display: contents; }
+.lbl-sune-heading { display: flex; align-items: center; gap: 24px; min-height: 89px; flex: 0 0 calc(89px + var(--lbl-room, 0px) * 1.5); }
+.lbl-sune-comparison { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.lbl-sune-comparison figure { margin: 0; text-align: center; }
+.lbl-sune-comparison figcaption { font-size: .75rem; color: var(--muted-foreground); line-height: 1.7; }
+.lbl-lesson-page .lbl-sune-heading .lbl-alg-learning-intro { flex: 1; height: auto; padding: 0; margin: 0; font-size: clamp(.85rem, 1.1vw, 1rem); text-align: left; justify-items: start; gap: 6px; }
+@media (max-width: 600px) { .lbl-sune-heading { flex-direction: column; align-items: center; gap: 12px; } }
 .lbl-fish-direction { color: var(--accent); }
 .lbl-alg-learning-cues .lbl-alg-group { padding-inline: 0; border: 0; gap: clamp(6px, 1vw, 14px); }
 .lbl-alg-learning-cues .lbl-alg-move code { font-size: clamp(1.25rem, 2vw, 1.8rem); }
 .lbl-alg-learning-cues .lbl-alg-cue { font-size: 1rem; }
+.lbl-alg-learning-demo[data-step='corner-position'] .lbl-alg-steps { flex-direction: column; align-items: flex-start; gap: 16px; }
 .lbl-muscle-memory { margin: 0; color: var(--muted-foreground); font-size: .9rem; line-height: 1.7; }
 .lbl-complete-thought p[data-fading='true'] { opacity: 0; }
 @media (prefers-reduced-motion: reduce) {

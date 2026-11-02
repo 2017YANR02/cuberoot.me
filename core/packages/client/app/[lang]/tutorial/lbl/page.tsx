@@ -169,7 +169,9 @@ export default function LblTutorial() {
       <PageBackLink fallback="/tutorial?puzzle=3x3" />
       <Link href="/tutorial?puzzle=3x3" prefetch={false}><T zh="教程" en="Tutorials" /></Link>
       <h1><T zh="层先法" en="LBL" /></h1>
+      {/* Hide until the full-solve walkthrough follows the algorithms taught here.
       <Link href="/tutorial/lbl?view=walkthrough" prefetch={false}><T zh="完整还原" en="Full solve" /></Link>
+      */}
     </header>
     <JsonLd data={{ '@context': 'https://schema.org', '@type': 'Article', headline: tr({ zh: '三阶魔方层先法', en: '3×3 LBL tutorial' }), description: tr({ zh: '配有交互演示的层先法入门教程。', en: 'A beginner layer-by-layer guide with interactive demonstrations.' }) }} />
     {algLesson ? <AlgLesson key={algLesson.id} lesson={algLesson} heading={stepHeading} next={nextStep} /> : step.id === 'structure' ?
@@ -408,7 +410,7 @@ function LessonDemo({ step, demo, fourGray, instruction }: { step: string; demo:
     {step === 'yellow-cross' && <div className="lbl-trigger-legend">
       <span><T zh="右公式＝右手上勾下回" en="Right trigger = right hand: up, hook, down, back" /></span>
     </div>}
-    {['yellow-face', 'edge-position'].includes(step) && <div className="lbl-trigger-legend">
+    {step === 'edge-position' && <div className="lbl-trigger-legend">
       <span><T zh="右鱼公式＝右手上勾下勾上连拨下" en="Right Sune = right hand: up, hook, down, hook, up, double flick, down" /></span>
       <span><T zh="左鱼公式＝左手上勾下勾上连拨下" en="Left Sune = left hand: up, hook, down, hook, up, double flick, down" /></span>
     </div>}
