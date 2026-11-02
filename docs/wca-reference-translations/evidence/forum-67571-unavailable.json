@@ -1,0 +1,30 @@
+{
+  "sourceUrl": "https://forum.worldcubeassociation.org/t/statement-from-the-wca-integrity-committee-regarding-investigation-in-turkiye/67571",
+  "retrievedAt": "2026-11-02T03:20:38.689Z",
+  "status": "not_retrieved",
+  "attempts": [
+    {
+      "method": "web.open",
+      "result": "not accessible"
+    },
+    {
+      "url": "https://forum.worldcubeassociation.org/t/67571.json",
+      "status": 403,
+      "errorType": "not_logged_in"
+    },
+    {
+      "method": "public search",
+      "result": "no matching primary-source result"
+    },
+    {
+      "method": "CUA browser",
+      "result": "browser access host unavailable"
+    },
+    {
+      "method": "Anonymous official HTML request with redirects",
+      "status": 200,
+      "result": "Redirected to World Cube Association sign-in form; no thread content"
+    }
+  ],
+  "publicationDecision": "No reference entry generated. Do not present the digest summary as this statement or map to forum topic 68143."
+}

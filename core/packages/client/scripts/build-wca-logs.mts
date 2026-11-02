@@ -4,6 +4,7 @@ import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {markdown,sanitize} from './wca-content.mts';
+import {buildRegulationLinkIndex} from './build-regulation-link-index.mts';
 const client=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const root=resolve(client,'../../..');
 const ledgerRoot=resolve(root,'docs/wca-log-translations');
@@ -22,4 +23,5 @@ const entries=p.entries.map((row:any)=>{
 }).sort((a:any,b:any)=>b.date.localeCompare(a.date)||a.id.localeCompare(b.id));
 const output=resolve(client,'app/[lang]/regulation/_data/logs.json');
 writeFileSync(output,JSON.stringify(entries)+'\n');
+buildRegulationLinkIndex();
 console.log(`Saved ${entries.length} log entries to ${output}`);

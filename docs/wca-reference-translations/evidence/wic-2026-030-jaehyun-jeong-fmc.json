@@ -1,0 +1,67 @@
+{
+  "sourceUrl": "https://drive.google.com/file/d/1C-D8XBzppSybpxVd_Z_ikaph6h9eiLPq/view",
+  "retrievedAt": "2026-11-02T03:20:38.689Z",
+  "method": "Public Google Drive page previews; visually reviewed",
+  "source": {
+    "publisher": "World Cube Association Integrity Committee",
+    "caseId": "2026-030",
+    "title": "WCA Integrity Committee Investigation Report - Case 2026-030: Jaehyun Jeong AsR FMC Results at Silent Korea Spring 2026",
+    "pages": 8,
+    "issueDate": "2026-10-01",
+    "readPages": [
+      1,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ]
+  },
+  "previewHashes": [
+    {
+      "page": 1,
+      "previewSha256": "cfa169e2e8fc2647325b7624039e0a0138c0fd2c3b84364c1fee9bb7a54d91e8"
+    },
+    {
+      "page": 3,
+      "previewSha256": "ff85767f7a47f3bfd90b2f8220adfe045a2a77afcc9b843e483830d08486cce1"
+    },
+    {
+      "page": 4,
+      "previewSha256": "b9d808c9a937e01ee92354c6a2d07b2c759b3d2ebedaf15cfd91e297feb18a06"
+    },
+    {
+      "page": 5,
+      "previewSha256": "d2b9c0de27d937ef51242e37cbc3377eb1d2c5622b4e5a25bc6beb48b72f1107"
+    },
+    {
+      "page": 6,
+      "previewSha256": "9503cef2a27efb05b1137174b4e0fc2fce401d7da05011be73cb7292c399cc94"
+    },
+    {
+      "page": 7,
+      "previewSha256": "d644b16a19848b4eaad6b0abcfeb2ab73519645a4d52e330de626d959b80c692"
+    },
+    {
+      "page": 8,
+      "previewSha256": "ac1e1fda007a9165a0d20381325dc475bab71c18f1f080754d272a0b6aad09a3"
+    }
+  ],
+  "connectorAttempt": {
+    "status": 403,
+    "errorCode": "FORBIDDEN"
+  },
+  "rights": {
+    "originalDownloadDisabled": true,
+    "publicPreviewAvailable": true,
+    "fullReproductionLicenseVerified": false
+  },
+  "terminology": {
+    "reference": "core/packages/client/public/regulation/wca-translation-reference.md",
+    "apiReady": true,
+    "apiStale": true,
+    "apiSyncedAt": "2026-10-26T09:52:10.208934+00:00",
+    "fallbackAttempt": "Weblate unit API did not return readable units; established repository terminology retained."
+  }
+}

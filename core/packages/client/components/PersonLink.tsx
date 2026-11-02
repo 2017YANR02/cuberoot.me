@@ -17,12 +17,8 @@ import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import AppLink from '@/components/AppLink';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { isWcaIdFormat } from '@cuberoot/shared/account';
-
-/** Bare profile path (no lang prefix — AppLink adds it). Use for non-AppLink
- *  href builders too (they prepend their own prefix). */
-export function personHref(wcaId: string): string {
-  return `/wca/persons/${encodeURIComponent(wcaId)}`;
-}
+import { personHref } from '@/lib/person-link';
+export { personHref } from '@/lib/person-link';
 
 interface Props {
   wcaId: string;

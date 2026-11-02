@@ -1,0 +1,21 @@
+{
+  "sourceUrl": "https://docs.google.com/document/d/1oYeA8YZQaVIwml0nA5KtZmJJp3WrAb2zcOnoyksIRBg/edit",
+  "retrievedAt": "2026-11-02T03:27:08.120Z",
+  "method": "Anonymous public Google Docs HTML document model, parsed as JSON without executing scripts",
+  "source": {
+    "publisher": "World Cube Association",
+    "title": "Quiet Championship Explainer Document",
+    "mimeType": "application/vnd.google-apps.document"
+  },
+  "readableTextSha256": "ebf0e08b30dfd8f343334900f75794efd27d81fb70fc4d639735528bc0160591",
+  "connectorStatus": "403 FORBIDDEN on text export",
+  "publicPageStatus": 200,
+  "sourceSectionsRead": [
+    "Terminology",
+    "Summary",
+    "Event distribution",
+    "Event eligibility table"
+  ],
+  "fullReproductionLicenseVerified": false,
+  "publicationDateVerified": false
+}

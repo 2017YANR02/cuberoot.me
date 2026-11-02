@@ -1,0 +1,29 @@
+{
+  "id": "four-pad-decision-process",
+  "sourceUrl": "https://drive.google.com/file/d/13fQghYapzMIPQnGeo53r80_cmKcp0NrW/view",
+  "aliases": [],
+  "date": "",
+  "title": {
+    "zh": "四触点计时决策说明",
+    "en": "Four-pad timing decision explainer"
+  },
+  "contentKind": "summary",
+  "html": {
+    "zh": "<p>WCA 选择 G5 四触点模式，旨在减少裁判难以肉眼识别的启停违规。文件比较了打印附件、限定魔方位置和加强监督等替代方案，并说明器材供应与选手适应的考虑。</p><p>文件记载的计划是从 2027 年规则周期实施，由 WCA 承担所需 G5 更换费用；二阶、魔表、金字塔和斜转排名增加四触点筛选，既有纪录继续保留。</p>",
+    "en": "<p>The WCA chose G5 four-pad timing to reduce start-and-stop violations that judges cannot reliably detect. The explainer compares attachments, fixed puzzle placement and increased policing, and discusses equipment supply and adaptation.</p><p>Its stated plan targets the 2027 regulations cycle, with WCA-funded G5 replacements where needed. It proposes four-pad ranking filters for 2×2×2, Clock, Pyraminx and Skewb while retaining existing records.</p>"
+  },
+  "retrievedAt": "2026-11-02T03:27:08.113Z",
+  "source": {
+    "publisher": "World Cube Association",
+    "title": "4-Pad Decision Process Explainer Document.pdf",
+    "mimeType": "application/pdf",
+    "createdTime": "2026-08-22T07:57:08.093Z",
+    "modifiedTime": "2026-08-22T07:57:32.830Z"
+  },
+  "provenance": {
+    "method": "Google Drive connector readable PDF text",
+    "sourceDateBasis": "No explicit publication date in document; Drive timestamps are metadata only.",
+    "summaryBasis": "Concise bilingual editorial summary, not a full translation. Describes the plan in this source, not live implementation status.",
+    "evidenceFile": "evidence/four-pad-decision-process.json"
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "sourceUrl": "https://drive.google.com/file/d/12yeSGOosgr07ZFi3EUdTg4r4jQdrK3qH/view",
+  "retrievedAt": "2026-11-02T03:20:38.689Z",
+  "method": "Public Google Drive page previews; visually reviewed",
+  "source": {
+    "publisher": "World Cube Association Integrity Committee",
+    "caseId": "2025-056",
+    "title": "WCA Integrity Committee Investigation Report - Case 2025-056: Pratik Khanna",
+    "pages": 12,
+    "issueDate": "2026-10-01",
+    "readPages": [
+      1,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ]
+  },
+  "previewHashes": [
+    {
+      "page": 1,
+      "previewSha256": "e518538ee1498d6a323dcca60c07c1ec5c6779b0e4e288ddd73487721feca664"
+    },
+    {
+      "page": 3,
+      "previewSha256": "e7a781748e0e8940e5151f1176536929030aea6c9269160b97c113eeae0d508c"
+    },
+    {
+      "page": 4,
+      "previewSha256": "8f78c9c5d6eb41c4db8f5d23c41e8b70b94e7b1bbff05277bcdf9de89fd7db0c"
+    },
+    {
+      "page": 5,
+      "previewSha256": "46cdf0c638f5fd02fb5e2ad90a7049c53a4f8ef2ef11058ec330b6b137158dc0"
+    },
+    {
+      "page": 6,
+      "previewSha256": "0d6b34f7bb8abd2119ac2f365f9cab4ce842e383078ba062ea7472d1e1f76147"
+    },
+    {
+      "page": 7,
+      "previewSha256": "bc0306a775445fe8ac8982e330983a02ebe08095522229a0818bd267a56ef0b8"
+    },
+    {
+      "page": 8,
+      "previewSha256": "85378c35eec28b850d9a5e6db87381a7efcd91b0f047dd8967ea2be1102adca1"
+    },
+    {
+      "page": 9,
+      "previewSha256": "9be138383e2439ece2eb34296f8021e868decebc923dfc4b72c39948e8e91b1a"
+    },
+    {
+      "page": 10,
+      "previewSha256": "5d59dd922254fe03e6559ee9a176b4b55bba15165aac8aeca4e7152e3bc91bf8"
+    },
+    {
+      "page": 11,
+      "previewSha256": "9a2fcf3fc13b4f78ffb8b12960d782adbd0705a20eb4dcd30072ca15a326e11a"
+    },
+    {
+      "page": 12,
+      "previewSha256": "6a4fa8f00d0d3e8ee23c0601dc94045152cf55d7218a51e4a990ae5fa99c6e31"
+    }
+  ],
+  "connectorAttempt": {
+    "status": 403,
+    "errorCode": "FORBIDDEN"
+  },
+  "rights": {
+    "originalDownloadDisabled": true,
+    "publicPreviewAvailable": true,
+    "fullReproductionLicenseVerified": false
+  },
+  "terminology": {
+    "reference": "core/packages/client/public/regulation/wca-translation-reference.md",
+    "apiReady": true,
+    "apiStale": true,
+    "apiSyncedAt": "2026-10-26T09:52:10.208934+00:00",
+    "fallbackAttempt": "Weblate unit API did not return readable units; established repository terminology retained."
+  }
+}

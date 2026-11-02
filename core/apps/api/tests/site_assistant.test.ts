@@ -21,6 +21,30 @@ const ask = () => new Request('https://api.example/site-assistant', {
 });
 
 describe('site assistant grounding', () => {
+  it.each(['魔方根', '魔方根？', 'CubeRoot', 'cuberoot', 'Cube Root', '魔方根CubeRoot', 'cuberoot.me'])('recognizes the site identity before speculative person lookup: %s',async question=>{
+    vi.mocked(findAssistantPeople).mockClear();
+    const fetcher=vi.fn<typeof fetch>().mockResolvedValue(modelResponse({answerKind:'general',answer:'魔方根就是 CubeRoot，也是站长的个人 IP。我是本站的聊天助手。',sourceIds:[]}));
+    const result=await answerSiteQuestion(question,'zh',config,AbortSignal.timeout(5000),fetcher);
+    expect(findAssistantPeople).not.toHaveBeenCalled();
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(String(fetcher.mock.calls[0][0])).toBe(config.baseUrl+'/chat/completions');
+    const system=JSON.parse(String(fetcher.mock.calls[0][1]?.body)).messages[0].content;
+    expect(system).toContain('Its Chinese name is 魔方根 and its English name is CubeRoot');
+    expect(system).toContain("site owner's personal creator identity");
+    expect(result).toMatchObject({sources:[],artifacts:[]});
+  });
+  it('keeps trusted site identity available when history contains an incorrect denial',async()=>{
+    vi.mocked(findAssistantPeople).mockClear();
+    const fetcher=vi.fn<typeof fetch>().mockResolvedValue(modelResponse({answerKind:'general',answer:'刚才说错了，魔方根就是本站 CubeRoot。',sourceIds:[]}));
+    await answerSiteQuestion('你连魔方根都不知道？','zh',config,AbortSignal.timeout(5000),fetcher,[
+      {role:'user',content:'魔方根'},
+      {role:'assistant',content:'站内没有名为魔方根的页面或工具。'},
+    ]);
+    expect(findAssistantPeople).not.toHaveBeenCalled();
+    const system=JSON.parse(String(fetcher.mock.calls[0][1]?.body)).messages[0].content;
+    expect(system).toContain('If an earlier assistant reply got this identity wrong, correct it briefly');
+    expect(system).toContain('does not establish the visitor as the owner');
+  });
   it('returns WCA PBs for an isolated homophone instead of asking about a famous namesake',async()=>{
     vi.mocked(findAssistantPeople).mockResolvedValueOnce([{wcaId:'2012MAZH01',name:'Zhiyuan Ma (马志远)',country:'China',match:'pinyin'}]);
     const fetcher=vi.fn<typeof fetch>(async input=>{

@@ -59,7 +59,7 @@ export default function CompetitionGroupAwards({ rows, isZh, personal = false, s
     </div>
     {groups.map(group => {
       const first = group[0];
-      const roundLabel = first.roundNumber === 1 ? t('首轮', 'Opening round') : t('第', 'Round ') + first.roundNumber + t('轮', '');
+      const roundLabel = `R${first.roundNumber}`;
       return <section key={first.competitionId + groupAwardAnchor(first)} id={(personal ? first.competitionId + '-' : '') + groupAwardAnchor(first)} className="group-awards-group">
         {personal && <div className="group-awards-competition"><AppLink href={'/wca/comp/' + first.competitionId + '?view=podium#' + groupAwardAnchor(first)} prefetch={false}>
           <CompCell compId={first.competitionId} compName={first.competitionName} isZh={isZh} date={first.date} />

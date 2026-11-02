@@ -4,6 +4,7 @@ import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {markdown} from './wca-content.mts';
+import {buildRegulationLinkIndex} from './build-regulation-link-index.mts';
 const client=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const root=resolve(client,'../../..');
 const ledger=resolve(root,'docs/wca-post-translations');
@@ -28,4 +29,5 @@ const articles=progress.entries.flatMap((row:any)=>{
 const out=resolve(client,'app/[lang]/regulation/_data');
 writeFileSync(resolve(out,'posts.json'),JSON.stringify(articles)+'\n');
 writeFileSync(resolve(out,'posts-index.json'),JSON.stringify(articles.map(({id,date,title}:any)=>({id,date,title})))+'\n');
+buildRegulationLinkIndex();
 console.log(JSON.stringify({websiteArticles:articles.length,linkedDisciplinary:progress.counts.linkedDisciplinary,newTranslations:progress.counts.translated,pending:progress.counts.pending}));

@@ -781,6 +781,39 @@
       "driftPolicy": "The workflow may rebuild only the verbatim snapshot family, including the clause-aligned Markdown export. The authored public/regulation/wca-translation-reference.md requires editorial review and is never overwritten. Review upstream changes and generated diffs before merging."
     },
     {
+      "id": "client.regulation-reference-links",
+      "kind": "checked-in-generated",
+      "source": {
+        "locator": "docs/wca-reference-translations/entries",
+        "paths": [
+          "docs/wca-reference-translations/entries/*.json",
+          "core/packages/client/app/[lang]/regulation/_data/posts.json",
+          "core/packages/client/app/[lang]/regulation/_data/logs.json",
+          "core/packages/client/app/[lang]/regulation/_data/reg-clauses/_full.json"
+        ]
+      },
+      "license": {
+        "spdx": "NOASSERTION",
+        "evidence": "Source and reading evidence recorded in docs/wca-reference-translations; summaries do not claim full reproduction rights."
+      },
+      "owner": [
+        "core/packages/client/scripts/build-wca-references.mts",
+        "core/packages/client/scripts/build-regulation-link-index.mts"
+      ],
+      "workingDirectory": "core",
+      "command": "node --import tsx packages/client/scripts/build-wca-references.mts",
+      "outputs": [
+        "core/packages/client/app/[lang]/regulation/_data/references.json",
+        "core/packages/client/app/[lang]/regulation/_data/references-index.json",
+        "core/packages/client/app/[lang]/regulation/_data/link-index.json"
+      ],
+      "verification": [
+        "node --import tsx packages/client/scripts/audit-regulation-links.mts",
+        "pnpm --filter @cuberoot/client exec vitest run tests/regulation-links.test.ts tests/regulation-content-links.test.ts"
+      ],
+      "driftPolicy": "Rebuild after reviewed reference intake. Post, log and clause generators refresh the link index. Keep unresolved and historical destinations external rather than inventing content or dropping version and fragment semantics."
+    },
+    {
       "id": "client.regulation-illustrated",
       "kind": "human-authored-derivative",
       "source": {

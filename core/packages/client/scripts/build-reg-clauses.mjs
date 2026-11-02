@@ -20,6 +20,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { writeBilingualMarkdown } from './reg-bilingual-markdown.mts';
+import { buildRegulationLinkIndex } from './build-regulation-link-index.mts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.resolve(__dirname, '../app/[lang]/regulation/_data');
@@ -117,6 +118,7 @@ async function main() {
   // Offline export of the existing aligned snapshot, without refreshing sources.
   if (process.argv.includes('--from-json')) {
     writeBilingualMarkdown();
+    buildRegulationLinkIndex();
     return;
   }
   if (!fs.existsSync(EN_SNAPSHOT)) {
@@ -174,6 +176,7 @@ async function main() {
     JSON.stringify({ version: { en: enVer, zh: zhVer }, notes, articles: articlesOut }, null, 2) + '\n',
   );
   writeBilingualMarkdown();
+  buildRegulationLinkIndex();
 
   console.log(`[reg:clauses] EN ${enVer} / ZH ${zhVer}`);
   console.log(`[reg:clauses] _full.json: ${notes.length} notes, ${articlesOut.length} articles`);

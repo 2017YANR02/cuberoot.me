@@ -1,0 +1,29 @@
+{
+  "id": "quiet-championship-explainer",
+  "sourceUrl": "https://docs.google.com/document/d/1oYeA8YZQaVIwml0nA5KtZmJJp3WrAb2zcOnoyksIRBg/edit",
+  "aliases": [
+    "https://docs.google.com/document/d/1oYeA8YZQaVIwml0nA5KtZmJJp3WrAb2zcOnoyksIRBg/"
+  ],
+  "date": "",
+  "title": {
+    "zh": "安静锦标赛说明",
+    "en": "Quiet Championship explainer"
+  },
+  "contentKind": "summary",
+  "html": {
+    "zh": "<p>同一日历年的锦标赛可以分成主锦标赛、安静锦标赛和最少步锦标赛。主锦标赛可承办所有项目；安静锦标赛仅限三阶、四阶、五阶盲拧、三阶多盲及三阶最少步；最少步锦标赛仅限三阶最少步，也可多地点举办。</p><p>项目可以在这些比赛间分配，但同一日历年不得重复举办同一锦标赛项目，也不得超出相应锦标赛类型允许的范围。</p>",
+    "en": "<p>A year’s championship may be divided into Main, Quiet and Fewest Moves competitions. Main may include any event. Quiet is limited to 3×3×3, 4×4×4 and 5×5×5 Blindfolded, Multi-Blind and Fewest Moves. A Fewest Moves championship may include only that event and can use multiple locations.</p><p>Organizers may distribute events between these competitions, but each championship event may occur only once per calendar year and only in an eligible championship type.</p>"
+  },
+  "retrievedAt": "2026-11-02T03:27:08.120Z",
+  "source": {
+    "publisher": "World Cube Association",
+    "title": "Quiet Championship Explainer Document",
+    "mimeType": "application/vnd.google-apps.document"
+  },
+  "provenance": {
+    "method": "Anonymous public Google Docs HTML document model, parsed as JSON without executing scripts",
+    "sourceDateBasis": "No publication date in the readable document.",
+    "summaryBasis": "Concise bilingual editorial summary, not a full translation. Read terminology, summary, event-distribution rules and eligibility table.",
+    "evidenceFile": "evidence/quiet-championship-explainer.json"
+  }
+}

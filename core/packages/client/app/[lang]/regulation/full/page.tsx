@@ -16,6 +16,7 @@ import { tr } from '@/i18n/tr';
 import { useT } from '../../../../hooks/useT';
 import { REG_ARTICLES } from '../_data/articles';
 import doc from '../_data/reg-clauses/_full.json';
+import RegulationLink from '../_components/RegulationLink';
 import '../regulation.css';
 import './reg-full.css';
 
@@ -51,7 +52,7 @@ function renderRich(text: string, selfId?: string): ReactNode[] {
     } else if (target.startsWith(ART)) {
       out.push(<a key={k++} className="reg-doc-xref" href={`#article-${target.slice(ART.length)}`}>{label}</a>);
     } else if (/^(https?:|mailto:)/.test(target)) {
-      out.push(<a key={k++} href={target} target="_blank" rel="noopener noreferrer">{label}</a>);
+      out.push(<RegulationLink key={k++} href={target} target="_blank" rel="noopener noreferrer">{label}</RegulationLink>);
     } else {
       pushText(label);
     }

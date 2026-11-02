@@ -9,7 +9,9 @@ import { Callout, RegList } from '../../_components/primitives';
 import '../../regulation.css';
 import '../news.css';
 import { REG_NEWS } from '@/lib/regulation-posts';
-import { tr } from '@/i18n/tr';
+import { tr, useLang } from '@/i18n/tr';
+import RegulationLink from '../../_components/RegulationLink';
+import { resolveRegulationHref } from '@/lib/regulation-links';
 
 const POST_4_PAD = 'https://www.worldcubeassociation.org/posts/adoption-of-4-pad-timing-august-2026';
 const FOUR_PAD_EXPLAINER = 'https://drive.google.com/file/d/13fQghYapzMIPQnGeo53r80_cmKcp0NrW/view';
@@ -19,12 +21,14 @@ const POST_EVENTS = 'https://www.worldcubeassociation.org/posts/changes-to-the-w
 const POST_POLICY = 'https://www.worldcubeassociation.org/posts/wca-competition-requirements-policy-update-5-5-may-2026';
 const QUIET_DOC = 'https://docs.google.com/document/d/1oYeA8YZQaVIwml0nA5KtZmJJp3WrAb2zcOnoyksIRBg/edit';
 
-function SourceLink({ href, label }: { href: string; label: string }) {
+function SourceLink({ href, label, source = false }: { href: string; label: string; source?: boolean }) {
+  const language = useLang();
+  const external = source || !resolveRegulationHref(href, language);
   return (
-    <a className="news-source" href={href} target="_blank" rel="noopener noreferrer">
-      <ExternalLink size={13} />
+    <RegulationLink className="news-source" href={href} source={source} target="_blank" rel="noopener noreferrer">
+      {external && <ExternalLink size={13} />}
       {label}
-    </a>
+    </RegulationLink>
   );
 }
 
@@ -41,6 +45,7 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
             <div className="news-meta">
               <span className="news-date">{REG_NEWS['wic-investigation-2026'].date}</span>
               <SourceLink
+                source
                 href="https://forum.worldcubeassociation.org/t/statement-from-the-wca-integrity-committee-regarding-a-recent-investigation/68143"
                 label={t('WCA 论坛官方声明', 'Official WCA Forum statement')}
               />
@@ -93,7 +98,7 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
             <PostHeading href="/regulation/post" backLabel={t('公告', 'Posts')}>{tr(REG_NEWS['4-pad-2027'].title)}</PostHeading>
             <div className="news-meta">
               <span className="news-date">{REG_NEWS['4-pad-2027'].date}</span>
-              <SourceLink href={POST_4_PAD} label={t('官方原文', 'Official post')} />
+              <SourceLink source href={POST_4_PAD} label={t('官方原文', 'Official post')} />
               <PostFeatureAction post={REG_NEWS['4-pad-2027']} />
               <SourceLink href={FOUR_PAD_EXPLAINER} label={t('决策说明', 'Decision explainer')} />
               <SourceLink href={SPEED_STACKS_G5} label={t('G5 工作原理', 'How the G5 works')} />
@@ -323,7 +328,7 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
             <PostHeading href="/regulation/post" backLabel={t('公告', 'Posts')}>{tr(REG_NEWS['official-events-2026'].title)}</PostHeading>
             <div className="news-meta">
               <span className="news-date">{REG_NEWS['official-events-2026'].date}</span>
-              <SourceLink href={POST_EVENTS} label={t('官方原文', 'Official post')} />
+              <SourceLink source href={POST_EVENTS} label={t('官方原文', 'Official post')} />
               <PostFeatureAction post={REG_NEWS['official-events-2026']} />
             </div>
             <p className="news-lede">
@@ -410,7 +415,7 @@ export default function NewsArticle({ slug }: { slug: keyof typeof REG_NEWS }) {
             <PostHeading href="/regulation/post" backLabel={t('公告', 'Posts')}>{tr(REG_NEWS['requirements-policy-5-5'].title)}</PostHeading>
             <div className="news-meta">
               <span className="news-date">{REG_NEWS['requirements-policy-5-5'].date}</span>
-              <SourceLink href={POST_POLICY} label={t('官方原文', 'Official post')} />
+              <SourceLink source href={POST_POLICY} label={t('官方原文', 'Official post')} />
               <PostFeatureAction post={REG_NEWS['requirements-policy-5-5']} />
             </div>
             <p className="news-lede">

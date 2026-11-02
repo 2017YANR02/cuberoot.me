@@ -16,7 +16,7 @@
  * inside a React Server Component.
  */
 import type { ReactElement } from 'react';
-import Markdown from 'react-markdown';
+import Markdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkDirective from 'remark-directive';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
@@ -320,14 +320,14 @@ const components = {
  * Safe to call inside a React Server Component (no DOM access). The returned tree contains
  * 'use client' leaf components (ArticleAlgEmbed/ArticleCubeEmbed) only where directives appear.
  */
-export function renderArticleMarkdown(body: string): ReactElement {
+export function renderArticleMarkdown(body: string, options?: { linkComponent?: Components['a'] }): ReactElement {
   return (
     <Markdown
       remarkPlugins={[remarkGfm, remarkDirective, articleDirectives]}
       rehypePlugins={[[rehypeSanitize, schema]]}
       // Keep react-markdown's default urlTransform (strips javascript:/data:). Do NOT enable
       // rehype-raw or allowDangerousHtml — raw HTML from untrusted authors is discarded.
-      components={components as never}
+      components={{ ...components, ...(options?.linkComponent ? { a: options.linkComponent } : {}) } as never}
     >
       {body}
     </Markdown>

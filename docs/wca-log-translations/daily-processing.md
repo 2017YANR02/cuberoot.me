@@ -50,6 +50,7 @@
 
 ## 本地网站接入
 
+- 新增或同步日志、公告及附件时，先读[引用阅读页与站内链接维护说明](../wca-reference-translations/README.md)，复用统一解析器与渲染组件；源记录保留原 URL，不能把摘要、缺失资料或历史版本误映射成当前全文。
 - 入口：`http://localhost:3000/zh/regulation`；阅读页：`/zh/regulation/logs?kind=incidents` 与 `?kind=disciplinary`。支持搜索、逐条链接和中英对照。
 - 数据以本目录 `entries/`、`progress.json`、`supplements/` 为事实源。保存译文后，从仓库根运行 `node core/packages/client/scripts/build-wca-logs.mts`，生成 `core/packages/client/app/[lang]/regulation/_data/logs.json`；脚本核对来源及译文哈希并净化 HTML。不要手工修改生成数据。
 - 页面位于 `core/packages/client/app/[lang]/regulation/logs/`，入口位于上级 `page.tsx`，元数据位于 `core/packages/client/lib/page-meta.ts`。页面按用户要求不显示内部翻译进度、审校数字或预览说明；内部状态继续保存在进度文件。

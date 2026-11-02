@@ -5,8 +5,17 @@ import Link from '@/components/AppLink';
 import JsonLd, { PUBLISHER } from '@/components/JsonLd';
 import { renderArticleMarkdown } from '@/lib/article-markdown';
 import { T } from '@/i18n/tr';
+import type { Components } from 'react-markdown';
+import RegulationLink from '../_components/RegulationLink';
 import '../regulation.css';
 import './translation.css';
+
+const TranslationLink: Components['a'] = ({ node: _node, ...props }) => {
+  // These unanchored source documents establish translation provenance; clause
+  // and other reading references can still resolve to their local counterpart.
+  const source = /^https:\/\/www\.worldcubeassociation\.org\/regulations\/(?:translations\/chinese\/)?$/.test(props.href ?? '');
+  return <RegulationLink {...props} source={source} />;
+};
 
 // The downloadable Markdown is the only authored copy. Server rendering keeps
 // the tables readable to crawlers and avoids shipping the full corpus to JS.
@@ -32,7 +41,7 @@ export default async function RegulationTranslation() {
             <ExternalLink size={16} aria-hidden="true" />WCA 官方翻译 / WCA translations
           </a>
         </nav>
-        <article className="reg-translation-reference">{renderArticleMarkdown(markdown)}</article>
+        <article className="reg-translation-reference">{renderArticleMarkdown(markdown, { linkComponent: TranslationLink })}</article>
         <JsonLd data={{
           '@context': 'https://schema.org',
           '@type': 'Article',

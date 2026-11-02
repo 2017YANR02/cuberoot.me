@@ -10,6 +10,8 @@ import JsonLd, { articleJsonLd, SITE_URL } from '@/components/JsonLd';
 import { useT } from '@/hooks/useT';
 import { tr } from '@/i18n/tr';
 import logs from '../_data/logs.json';
+import RegulationHtml from '../_components/RegulationHtml';
+import { regulationSupplementId } from '@/lib/regulation-links';
 import '../regulation.css';
 import './logs.css';
 
@@ -63,13 +65,13 @@ export default function RegulationLogs() {
         <div className="reg-logs-meta"><time dateTime={selected.date}>{selected.date}</time><a href={selected.sourceUrl} target="_blank" rel="noopener noreferrer">{t('官方原文', 'Official source')}<ExternalLink size={13} /></a></div>
         <h2>{tr(selected.title)}</h2>
         <div className={`reg-logs-columns${compare ? ' reg-logs-columns-compare' : ''}`}>
-          {compare ? <><div className="reg-logs-body" lang="zh-Hans" dangerouslySetInnerHTML={{ __html: selected.html.zh }} /><div className="reg-logs-body" lang="en" dangerouslySetInnerHTML={{ __html: selected.html.en }} /></> : <div className="reg-logs-body" dangerouslySetInnerHTML={{ __html: tr(selected.html) }} />}
+          {compare ? <><RegulationHtml className="reg-logs-body" lang="zh-Hans" html={selected.html.zh} /><RegulationHtml className="reg-logs-body" lang="en" html={selected.html.en} /></> : <RegulationHtml className="reg-logs-body" html={tr(selected.html)} />}
         </div>
-        {selected.supplements.map((s) => <section className="reg-logs-supplement" key={s.id}>
+        {selected.supplements.map((s) => <section className="reg-logs-supplement" key={s.id} id={regulationSupplementId(s.id)}>
           <div className="reg-logs-meta"><time dateTime={s.date}>{s.date}</time><a href={s.sourceUrl} target="_blank" rel="noopener noreferrer">{t('官方归档', 'Official archive')}<ExternalLink size={13} /></a></div>
           <h3>{tr(s.title)}</h3>
           <div className={`reg-logs-columns${compare ? ' reg-logs-columns-compare' : ''}`}>
-            {compare ? <><div className="reg-logs-body" lang="zh-Hans" dangerouslySetInnerHTML={{ __html: s.html.zh }} /><div className="reg-logs-body" lang="en" dangerouslySetInnerHTML={{ __html: s.html.en }} /></> : <div className="reg-logs-body" dangerouslySetInnerHTML={{ __html: tr(s.html) }} />}
+            {compare ? <><RegulationHtml className="reg-logs-body" lang="zh-Hans" html={s.html.zh} /><RegulationHtml className="reg-logs-body" lang="en" html={s.html.en} /></> : <RegulationHtml className="reg-logs-body" html={tr(s.html)} />}
           </div>
         </section>)}
       </article>}

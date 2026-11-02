@@ -1,0 +1,24 @@
+{
+  "sourceUrl": "https://drive.google.com/file/d/13fQghYapzMIPQnGeo53r80_cmKcp0NrW/view",
+  "retrievedAt": "2026-11-02T03:27:08.113Z",
+  "method": "Google Drive connector readable PDF text",
+  "source": {
+    "publisher": "World Cube Association",
+    "title": "4-Pad Decision Process Explainer Document.pdf",
+    "mimeType": "application/pdf",
+    "createdTime": "2026-08-22T07:57:08.093Z",
+    "modifiedTime": "2026-08-22T07:57:32.830Z"
+  },
+  "readableTextSha256": "5b950ecfce583cd7292366c768370f4d9760a672a1845ee5015d7c26bdfb0f2e",
+  "connectorStatus": "success",
+  "sourceSectionsRead": [
+    "Overview",
+    "Solution",
+    "Considered Alternatives",
+    "Main Concerns",
+    "Process Timeline",
+    "Additional Specifics"
+  ],
+  "fullReproductionLicenseVerified": false,
+  "publicationDateVerified": false
+}

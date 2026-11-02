@@ -1,0 +1,41 @@
+{
+  "id": "wic-2026-030-jaehyun-jeong-fmc",
+  "sourceUrl": "https://drive.google.com/file/d/1C-D8XBzppSybpxVd_Z_ikaph6h9eiLPq/view",
+  "aliases": [
+    "https://drive.google.com/file/d/1C-D8XBzppSybpxVd_Z_ikaph6h9eiLPq/view?usp=drive_link"
+  ],
+  "date": "2026-10-01",
+  "title": {
+    "zh": "廉政委员会调查报告：Jaehyun Jeong 三阶最少步成绩",
+    "en": "WIC report: Jaehyun Jeong’s FMC results"
+  },
+  "contentKind": "summary",
+  "html": {
+    "zh": "<p>2026-030 号案件涉及 Silent Korea Spring 2026 的三阶最少步（FMC）亚洲纪录。报告记载，Jaehyun Jeong 承认在第一轮第二、三次尝试中用手机查询解法。</p><p>廉政委员会决定取消相关亚洲纪录成绩，并禁止其参赛一年。委员会也审查了部分早期成绩，但认为证据不足，未进一步取消成绩。</p>",
+    "en": "<p>Case 2026-030 concerns FMC Asian records at Silent Korea Spring 2026. The report records Jaehyun Jeong’s admission that he consulted a phone during the second and third attempts of the first round.</p><p>The WIC imposed a one-year competition ban and disqualified the affected Asian-record results. It also examined selected earlier results, but found insufficient evidence for additional disqualifications.</p>"
+  },
+  "source": {
+    "publisher": "World Cube Association Integrity Committee",
+    "caseId": "2026-030",
+    "title": "WCA Integrity Committee Investigation Report - Case 2026-030: Jaehyun Jeong AsR FMC Results at Silent Korea Spring 2026",
+    "pages": 8,
+    "issueDate": "2026-10-01",
+    "readPages": [
+      1,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ]
+  },
+  "retrievedAt": "2026-11-02T03:20:38.689Z",
+  "provenance": {
+    "method": "Public Google Drive page previews; visually reviewed",
+    "downloadStatus": "Owner disables original-file downloads. Original PDF not downloaded.",
+    "sourceDateBasis": "Issue date printed on report cover",
+    "summaryBasis": "Concise bilingual editorial summary, not a full translation; conclusions checked against final report page.",
+    "evidenceFile": "evidence/wic-2026-030-jaehyun-jeong-fmc.json"
+  }
+}

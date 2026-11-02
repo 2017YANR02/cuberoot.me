@@ -962,6 +962,11 @@ html[data-theme=dark] .wp-page {
     font-size: 0.74rem; color: var(--wp-text-mute);
     white-space: nowrap;
 }
+.wp-bycomp-table .wp-cell-comp-date-with-flag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
 .wp-bycomp-table tbody tr.wp-row-comp-first td {
     border-top: 1px solid var(--wp-border-strong);
 }
