@@ -8,7 +8,8 @@
 //   NODE_OPTIONS='--expose-gc --max-old-space-size=12288' npx tsx src/bin/wca_stats_extra_build.ts
 
 import mysql from 'mysql2/promise';
-import { createWriteStream, mkdirSync, writeFileSync, readFileSync, statSync, existsSync, rmSync } from 'fs';
+import { once } from 'node:events';
+import { createWriteStream, mkdirSync, writeFileSync, readFileSync, statSync, readdirSync, rmSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { parse as parseYaml } from 'yaml';
@@ -21,7 +22,8 @@ import {
 } from '@cuberoot/shared/kinch';
 import { calculateCompetitionStreak } from '@cuberoot/shared/pr-streak';
 import { importTransactionStart, refreshTable } from '../pg-refresh.js';
-import { mutationCapacityGuard, stagedCapacityGuard } from '../pg-import-capacity.js';
+import { mutationCapacityGuard, stagedCapacityGuard, deltaUploadPreflightSql } from '../pg-import-capacity.js';
+import { digestFile, extractDelta, parseFingerprintSnapshot, planIncremental, FLAT_COLUMNS, PERSON_COLUMNS } from '../competition-fingerprints.js';
 import { addCountryBest, rankCountryBests, type CountryBest } from '../core/result_country.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -171,8 +173,7 @@ async function main() {
   });
 
   const outDir = process.env.OUT_DIR || resolve(__dirname, '../../output/wca_stats_extra');
-  // 清旧产物:增量/全量两种模式的文件集不同(delta vs 全量 wca_results_flat.copy.tsv),
-  // 上传步骤 scp 整个目录,残留旧文件会被一起发上去污染 apply.
+  // Remove stale outputs before generating the daily delta.
   rmSync(outDir, { recursive: true, force: true });
   mkdirSync(outDir, { recursive: true });
   console.log(`[out] ${outDir}`);
@@ -229,62 +230,13 @@ async function main() {
   }
   console.log(`  competitions=${comps.length}`);
 
-  // ── 2.5 per-comp 内容指纹 + 增量判定 ──
-  // 指纹 = 成绩值聚合(只有真实成绩变动才让 hash 变,WCA 批量盖 updated_at 不影响).
-  //   results 值 XOR result_attempts 每把 value;两表分别 GROUP BY 再 JS XOR 合并(避免 1:N join fan-out).
-  // 增量:CI build 前 ssh 拉服务器现有 wca_comp_updated_at 落到 PREV_FINGERPRINTS,
-  //   只重灌指纹变了的比赛的 wca_results_flat 行,峰值从 6.8G 全表翻倍降到几 MB.
-  //   缺旧指纹文件(首次/拉取失败)→ incremental=false,退回全量 DROP+CREATE(现行为).
-  console.log('[fp] computing per-comp content fingerprint...');
-  const [resHashRows] = await conn.query<mysql.RowDataPacket[]>(
-    `SELECT competition_id AS comp_id,
-            BIT_XOR(CRC32(CONCAT_WS('|', id, person_id, country_id, event_id, round_type_id, pos, best, average,
-                                    regional_single_record, regional_average_record))) AS h
-       FROM results GROUP BY competition_id`,
-  );
-  const [attHashRows] = await conn.query<mysql.RowDataPacket[]>(
-    `SELECT r.competition_id AS comp_id,
-            BIT_XOR(CRC32(CONCAT_WS('#', ra.result_id, ra.attempt_number, ra.value))) AS h
-       FROM result_attempts ra JOIN results r ON r.id = ra.result_id
-      GROUP BY r.competition_id`,
-  );
-  const compHash = new Map<string, bigint>();
-  for (const r of resHashRows) compHash.set(r['comp_id'] as string, BigInt((r['h'] ?? 0) as string | number));
-  for (const r of attHashRows) {
-    const id = r['comp_id'] as string;
-    compHash.set(id, (compHash.get(id) ?? 0n) ^ BigInt((r['h'] ?? 0) as string | number));
-  }
-  (resHashRows as unknown as { length: number }).length = 0;
-  (attHashRows as unknown as { length: number }).length = 0;
-
-  // 写新指纹 manifest(全量,dump_comps.yml 增量也要它)
-  let compMaxCount = 0;
-  {
-    const f = createWriteStream(resolve(outDir, 'wca_comp_updated_at.copy.tsv'));
-    for (const [comp, h] of compHash) { f.write(`${pgEsc(comp)}\t${h.toString()}\n`); compMaxCount++; }
-    f.end();
-  }
-
-  // 读旧指纹 + 算 changed 集 + 旧指纹守卫值(count/sum,apply 前服务器侧再算一遍比对)
-  const oldCompHash = new Map<string, bigint>();
+  // Compare actual stored rows with generated rows, identically for every competition.
   const prevFpPath = process.env.PREV_FINGERPRINTS;
-  if (prevFpPath && existsSync(prevFpPath)) {
-    for (const line of readFileSync(prevFpPath, 'utf-8').split('\n')) {
-      if (!line) continue;
-      const tab = line.indexOf('\t');
-      if (tab < 0) continue;
-      oldCompHash.set(line.slice(0, tab), BigInt(line.slice(tab + 1).trim()));
-    }
-  }
-  const incremental = oldCompHash.size > 0;
-  const changedComps = new Set<string>();
-  if (incremental) {
-    for (const [c, h] of compHash) if (oldCompHash.get(c) !== h) changedComps.add(c);
-    for (const c of oldCompHash.keys()) if (!compHash.has(c)) changedComps.add(c); // 删除的比赛
-  }
+  if (!prevFpPath) throw new Error('PREV_FINGERPRINTS is required; automatic full imports are disabled');
+  const previous = parseFingerprintSnapshot(readFileSync(prevFpPath, 'utf8'));
+  const oldCompHash = new Map([...previous].filter(([, row]) => row.hash != null).map(([id, row]) => [id, row.hash!]));
   let oldFpSum = 0n;
   for (const h of oldCompHash.values()) oldFpSum += h;
-  console.log(`[fp] mode=${incremental ? 'incremental' : 'full'} old=${oldCompHash.size} new=${compHash.size} changed=${changedComps.size}`);
 
   // ── 3. championships: 用于 grand_slam ──
   console.log('[champ] loading championships...');
@@ -385,19 +337,19 @@ async function main() {
   // 输出 stream
   // 增量模式 delta 文件名故意不带 .copy.tsv 后缀:apply_load.sh 预检拒空 *.copy.tsv,
   // 而「无变动比赛」时 delta 合法为空(如同数据被重触发),不能让它触发预检 abort.
-  const wrfFile = incremental ? 'wca_results_flat_delta.tsv' : 'wca_results_flat.copy.tsv';
-  const allTopStream = createWriteStream(resolve(outDir, wrfFile));
+  const wrfFile = 'wca_results_flat_delta.tsv';
+  const wrfSource = resolve(outDir, 'flat-source.tmp');
+  const allTopStream = createWriteStream(wrfSource);
   const cohortStream = createWriteStream(resolve(outDir, 'wca_cohort_ranks.copy.tsv'));
   const grandSlamStream = createWriteStream(resolve(outDir, 'wca_grand_slam.copy.tsv'));
   let allTopCount = 0, cohortCount = 0, gsCount = 0;
   let fullTopTotal = 0; // 完整表应有行数(增量模式下 != allTopCount=delta 写入数)
 
   // wca_person_results:选手页专用「一条成绩一行」表(见循环内写入处的注释).
-  // 全量文件只在「无旧指纹」或显式 WPR_FULL=1(首次 bootstrap / 改行规则后重灌)时产出;
-  // 平时跟 wca_results_flat 一样只写指纹变动比赛的 delta.
-  const wprFull = !incremental || process.env.WPR_FULL === '1';
-  const wprFile = wprFull ? 'wca_person_results.copy.tsv' : 'wca_person_results_delta.tsv';
-  const personResultsStream = createWriteStream(resolve(outDir, wprFile));
+  // Generate source rows only on CI, then keep actual changed competitions.
+  const wprFile = 'wca_person_results_delta.tsv';
+  const wprSource = resolve(outDir, 'person-source.tmp');
+  const personResultsStream = createWriteStream(wprSource);
   let wprCount = 0;
   let fullWprTotal = 0; // 完整表应有行数(delta 模式下 != wprCount)
 
@@ -453,7 +405,7 @@ async function main() {
   const countryBests = new Map<string, { single: Map<string, CountryBest>; avg: Map<string, CountryBest> }>();
 
   // ════════════ fun-stats 累加器 (port of cubingchina /results/statistics → wca_fs_*) ════════════
-  // 全部在主循环里 piggyback,不进 wrtWrite 增量门(任一成绩变这些聚合都会动,全量重灌).
+  // Derived statistics accumulate across all generated rows, independently of result deltas.
   // solve = value>0;attempt = value>-2 && value!=0(DNF=-1 算 attempt,DNS=-2/0/null 不算).
   const solveAttempt = (attempts: (number | null)[]): [number, number] => {
     let s = 0, a = 0;
@@ -604,51 +556,37 @@ async function main() {
         s.add(r.compId);
       }
 
-      // all_results_top: 增量模式只写「指纹变了的比赛」的行(delta);全量模式写全部.
-      // fullTopTotal 始终累计完整表应有行数,供 apply 后校验 wca_results_flat count(*).
-      // 末尾 3 列(round_type_id, format_id, record_tag)是为 /comp 页面准备的:
-      // 同 (comp_id, event_id, round_type_id, wca_id) 下 is_avg=false/true 两行配对成一条完整成绩.
-      // ⚠️ 增删此处写入 wca_results_flat 的「行规则」(新增/移除一类行,如 333mbf Mo3)= 改变 fullTopTotal 口径,
-      //   但增量只重写变动比赛,历史比赛不会回填 → apply 后行数守卫必红(2026-06-10 多盲 Mo3 上线踩过).
-      //   配套动作:磁盘紧无法全量重建(峰值 2× 表),改完必须一次性 backfill 历史比赛的新行
-      //   (Mo3 行可直接从既有 is_avg=false 行的 attempts 数组就地算出,自包含),否则别 push 等 CI.
+      // All rows participate in the same content comparison. Only actual changed
+      // competitions are retained in the upload; fullTopTotal validates the result.
       const rt = pgEsc(r.roundTypeId);
       const fm = pgEsc(r.formatId);
-      const wrtWrite = !incremental || changedComps.has(r.compId);
       if (r.best > 0) {
         fullTopTotal++;
-        if (wrtWrite) {
-          const tag = pgEsc(r.regSingleRecord ?? '');
-          allTopStream.write(
-            `${eventId}\t${bool(false)}\t${r.best}\t${pgEsc(r.pid)}\t${pgEsc(r.countryId)}\t${pgEsc(r.compId)}\t${r.compDate}\t${intArr(r.attempts)}\t${rt}\t${fm}\t${tag}\n`,
-          );
-          allTopCount++;
-        }
+        const tag = pgEsc(r.regSingleRecord ?? '');
+        allTopStream.write(
+          `${eventId}\t${bool(false)}\t${r.best}\t${pgEsc(r.pid)}\t${pgEsc(r.countryId)}\t${pgEsc(r.compId)}\t${r.compDate}\t${intArr(r.attempts)}\t${rt}\t${fm}\t${tag}\n`,
+        );
+        allTopCount++;
       }
       if (r.average > 0) {
         fullTopTotal++;
-        if (wrtWrite) {
-          const tag = pgEsc(r.regAvgRecord ?? '');
-          allTopStream.write(
-            `${eventId}\t${bool(true)}\t${r.average}\t${pgEsc(r.pid)}\t${pgEsc(r.countryId)}\t${pgEsc(r.compId)}\t${r.compDate}\t${intArr(r.attempts)}\t${rt}\t${fm}\t${tag}\n`,
-          );
-          allTopCount++;
-        }
+        const tag = pgEsc(r.regAvgRecord ?? '');
+        allTopStream.write(
+          `${eventId}\t${bool(true)}\t${r.average}\t${pgEsc(r.pid)}\t${pgEsc(r.countryId)}\t${pgEsc(r.compId)}\t${r.compDate}\t${intArr(r.attempts)}\t${rt}\t${fm}\t${tag}\n`,
+        );
+        allTopCount++;
       }
       // 333mbf / 333mbo 无官方平均:补一行 is_avg=true(value=非官方 Mo3),供 all-results 单项平均排名。
       // 仅 3 次全成功才有效;tag 留空(无官方纪录)。名次和走 sor 表,不取此行。
-      // ⚠️ 新增 333mbo Mo3 行 = 改 fullTopTotal 口径,历史比赛(Euro2006/DutchOpen2006)需先一次性
-      //   backfill 进 wca_results_flat 才能 push,否则增量行数守卫必红;backfill 见 sql/backfill_mbo_mo3.sql。
+      // Generated row changes are detected by the same content comparison for every competition.
       if (eventId === '333mbf' || eventId === '333mbo') {
         const mo3 = computeMbfMo3(r.attempts.map(v => v ?? 0));
         if (mo3 > 0) {
           fullTopTotal++;
-          if (wrtWrite) {
-            allTopStream.write(
-              `${eventId}\t${bool(true)}\t${mo3}\t${pgEsc(r.pid)}\t${pgEsc(r.countryId)}\t${pgEsc(r.compId)}\t${r.compDate}\t${intArr(r.attempts)}\t${rt}\t${fm}\t\n`,
-            );
-            allTopCount++;
-          }
+          allTopStream.write(
+            `${eventId}\t${bool(true)}\t${mo3}\t${pgEsc(r.pid)}\t${pgEsc(r.countryId)}\t${pgEsc(r.compId)}\t${r.compDate}\t${intArr(r.attempts)}\t${rt}\t${fm}\t\n`,
+          );
+          allTopCount++;
         }
       }
 
@@ -658,7 +596,7 @@ async function main() {
       // (里程碑首金/首银、成绩表名次列都要它).负值成绩绝不能混进 flat —— 全站排行榜都是
       // ORDER BY value ASC,-1 会排到世界第一 —— 所以另开一张,flat 一个字节不动.
       fullWprTotal++;
-      if (wprFull || changedComps.has(r.compId)) {
+      {
         personResultsStream.write(
           `${pgEsc(r.pid)}\t${pgEsc(r.compId)}\t${r.compDate}\t${eventId}\t${rt}\t${fm}\t` +
           `${r.pos}\t${r.best}\t${r.average}\t${intArr(r.attempts)}\t` +
@@ -666,6 +604,10 @@ async function main() {
         );
         wprCount++;
       }
+
+      // Source rows are streamed on CI; never buffer a whole event's output.
+      if (allTopStream.writableNeedDrain) await once(allTopStream, 'drain');
+      if (personResultsStream.writableNeedDrain) await once(personResultsStream, 'drain');
 
       // best_final_pos: 跨 event 累积每人 final round 最佳名次.
       // 按那一轮的 format 决定排名值是否有效:
@@ -1325,8 +1267,6 @@ async function main() {
     `personComps=${pcCount} compPersons=${cpCount} personCompSolves=${pcsCount} compSolves=${csolvCount} personSolves=${psolvCount} personYearSolves=${pysCount} ` +
     `misser=${misserCount} bestPodiums=${bestPodiumsCount}`);
 
-  // (per-comp 内容指纹 manifest 已在前面 §2.5 算好并写出 wca_comp_updated_at.copy.tsv)
-
   // ── flush 还在 buffer 的 stream ──
   await Promise.all([
     new Promise<void>(res => allTopStream.end(() => res())),
@@ -1338,9 +1278,18 @@ async function main() {
   ]);
   await conn.end();
 
+  const flatDigests = await digestFile(wrfSource, 5);
+  const personDigests = await digestFile(wprSource, 1);
+  const { changed: changedComps, hashes: compHash } = planIncremental(previous, flatDigests, personDigests);
+  const compMaxCount = compHash.size;
+  writeFileSync(resolve(outDir, 'wca_comp_updated_at.copy.tsv'), [...compHash].map(([id, hash]) => id + '\t' + hash + '\n').join(''));
+  allTopCount = await extractDelta(wrfSource, resolve(outDir, wrfFile), 5, changedComps);
+  wprCount = await extractDelta(wprSource, resolve(outDir, wprFile), 1, changedComps);
+  console.log('[fp] actual-row comparison: old=' + previous.size + ' new=' + compHash.size + ' changed=' + changedComps.size);
+
   // ── 10. del-list (增量) + load.sql ──
-  const wrfCols = 'event_id, is_avg, value, wca_id, person_country_id, comp_id, comp_date, attempts, round_type_id, format_id, record_tag';
-  const wprCols = 'wca_id, comp_id, comp_date, event_id, round_type_id, format_id, pos, best, average, attempts, single_record, average_record';
+  const wrfCols = FLAT_COLUMNS;
+  const wprCols = PERSON_COLUMNS;
 
   // 防呆:15 张 wca_fs_* 表正常由 migration 0028 建,但若 deploy_core(apply_migrations)尚未跑到、
   // 而 stats.yml 先跑,缺表会在 ON_ERROR_STOP 下使整个 wca_stats_extra 刷新回滚.
@@ -1525,26 +1474,8 @@ ${refreshTable({
   })}
 \\! rm -f wca_championship_podiums.copy.tsv`;
 
-  // ── wca_person_results 的 load 片段(两模式共用,插在 smallTables 之后) ──
-  // 全量:DELETE + 灌整表.delta:先把新行 COPY 进 temp,再在 DO 块里删旧行 + 插新行 ——
-  // 之所以绕 temp 表,是因为 \copy 是 psql 客户端命令、没法写在条件分支里,而首次上线时
-  // 本表还是空的(未 bootstrap),此时必须整段跳过:直接灌 delta 会留下一张残缺表,
-  // 而 RAISE 会把当晚整个 stats 事务(flat + 20 张小表)一起回滚,代价更大.
-  const personResultsSql = wprFull
-    ? `-- wca_person_results:全量重灌(无旧指纹 / WPR_FULL=1 bootstrap).
-${mutationCapacityGuard({ table: 'wca_person_results', file: wprFile })}
-DELETE FROM wca_person_results;
-\\copy wca_person_results (${wprCols}) FROM '${wprFile}';
-\\! rm -f ${wprFile}
-DO $$
-DECLARE n bigint;
-BEGIN
-  SELECT count(*) INTO n FROM wca_person_results;
-  IF n <> ${fullWprTotal} THEN
-    RAISE EXCEPTION 'wca_person_results count % != expected ${fullWprTotal} after full load; aborting', n;
-  END IF;
-END $$;`
-    : `-- wca_person_results:增量(与 wca_results_flat 同一份 del-list:_wrf_del).
+  // Both result tables use the same changed-competition set and transaction.
+  const personResultsSql = `-- wca_person_results:增量(与 wca_results_flat 同一份 del-list:_wrf_del).
 ${stagedCapacityGuard('_wpr_delta', wprFile)}
 CREATE TEMP TABLE _wpr_delta (LIKE wca_person_results) ON COMMIT DROP;
 \\copy _wpr_delta (${wprCols}) FROM '${wprFile}';
@@ -1555,14 +1486,13 @@ DECLARE pre bigint; n bigint;
 BEGIN
   SELECT count(*) INTO pre FROM wca_person_results;
   IF pre = 0 THEN
-    RAISE NOTICE 'wca_person_results 为空(尚未 bootstrap):跳过本次 delta;需跑一次 WPR_FULL=1 的全量';
-    RETURN;
+    RAISE EXCEPTION 'wca_person_results is empty; refusing an implicit bootstrap';
   END IF;
   DELETE FROM wca_person_results WHERE comp_id IN (SELECT comp_id FROM _wrf_del);
   INSERT INTO wca_person_results SELECT * FROM _wpr_delta;
   SELECT count(*) INTO n FROM wca_person_results;
   IF n <> ${fullWprTotal} THEN
-    RAISE EXCEPTION 'wca_person_results count % != expected ${fullWprTotal} after incremental apply; aborting (若刚改过写入行规则: 需先跑 WPR_FULL=1 全量)', n;
+    RAISE EXCEPTION 'wca_person_results count % != expected ${fullWprTotal} after incremental apply; aborting', n;
   END IF;
 END $$;`;
 
@@ -1596,57 +1526,21 @@ VACUUM (ANALYZE) wca_fs_person_year_solves;
 VACUUM (ANALYZE) wca_championship_podiums;
 VACUUM (ANALYZE) wca_person_results;`;
 
-  const ensureFullTables = `-- id BIGSERIAL: PG 深分页 late-join(内子查询走 wrf_main INCLUDE,外层 PK 回表 enrich 100 行).
-CREATE TABLE IF NOT EXISTS wca_results_flat (
-  id                 BIGSERIAL PRIMARY KEY,
-  event_id           VARCHAR(20) NOT NULL,
-  is_avg             BOOLEAN NOT NULL,
-  value              INTEGER NOT NULL,
-  wca_id             VARCHAR(20) NOT NULL,
-  person_country_id  VARCHAR(50) NOT NULL,
-  comp_id            VARCHAR(50) NOT NULL,
-  comp_date          DATE NOT NULL,
-  attempts           INTEGER[],
-  round_type_id      VARCHAR(2)  NOT NULL DEFAULT '',
-  format_id          VARCHAR(2)  NOT NULL DEFAULT '',
-  record_tag         VARCHAR(3)  NOT NULL DEFAULT '',
-  comp_year          SMALLINT GENERATED ALWAYS AS (EXTRACT(YEAR FROM comp_date)::SMALLINT) STORED
-);
-CREATE INDEX IF NOT EXISTS wrf_main         ON wca_results_flat (event_id, is_avg, value, wca_id) INCLUDE (id);
-CREATE INDEX IF NOT EXISTS wrf_country      ON wca_results_flat (event_id, is_avg, person_country_id, value);
-CREATE INDEX IF NOT EXISTS wrf_wca_id       ON wca_results_flat (event_id, is_avg, wca_id, value);
-CREATE INDEX IF NOT EXISTS wrf_comp_id      ON wca_results_flat (event_id, is_avg, comp_id, value);
-CREATE INDEX IF NOT EXISTS wrf_year         ON wca_results_flat (event_id, is_avg, comp_year, value, wca_id) INCLUDE (id);
--- wrf_month: 选手模式"当期·月"排名走它(comp_year + 月份表达式),DISTINCT ON 切片秒出.
--- 月份用表达式而非生成列:免整表改写(ALTER ADD STORED 会改写 11M 行+重建全索引,磁盘扛不住).
--- 替代了旧 wrt_country_year(777MB / idx_scan≈16,近死索引;国家+年份退回 wrf_country+过滤 ~230ms 够用).
-CREATE INDEX IF NOT EXISTS wrf_month         ON wca_results_flat (event_id, is_avg, comp_year, ((EXTRACT(MONTH FROM comp_date))::int), value, wca_id);
-CREATE INDEX IF NOT EXISTS wrf_comp_lookup  ON wca_results_flat (comp_id);
-CREATE INDEX IF NOT EXISTS wrf_prior_pr     ON wca_results_flat (wca_id, event_id, is_avg, comp_date) INCLUDE (value);
-
-CREATE TABLE IF NOT EXISTS wca_comp_updated_at (
-  comp_id      VARCHAR(50)  PRIMARY KEY,
-  content_hash BIGINT       NOT NULL
-);`;
-
   const schemaSql = `${importTransactionStart('wca_stats_extra_schema')}
 ${ensureFsTables}
-${incremental ? '' : ensureFullTables}
 COMMIT;`;
   const manifestSql = refreshTable({
     table: 'wca_comp_updated_at', columns: ['comp_id', 'content_hash'],
     keyColumns: ['comp_id'], file: 'wca_comp_updated_at.copy.tsv', expectedRows: compMaxCount,
   });
 
-  let loadSql: string;
-  if (incremental) {
-    // 增量:写变动比赛 del-list(temp 表 COPY 用),只删+重插指纹变动的比赛行.
-    let delTxt = '';
-    for (const c of changedComps) delTxt += pgEsc(c) + '\n';
-    writeFileSync(resolve(outDir, 'wca_results_flat_del.txt'), delTxt);
+  // Keep both result tables on the same changed-competition set.
+  let delTxt = '';
+  for (const c of changedComps) delTxt += pgEsc(c) + '\n';
+  writeFileSync(resolve(outDir, 'wca_results_flat_del.txt'), delTxt);
 
-    loadSql = `-- 由 wca_stats_extra_build.ts 生成(增量:只重灌指纹变动比赛的 wca_results_flat 行).
--- changed=${changedComps.size} 场, delta=${allTopCount} 行 / 全表应有 ${fullTopTotal} 行.峰值仅几 MB.
+  const loadSql = `-- 由 wca_stats_extra_build.ts 生成(增量:只重灌指纹变动比赛的 wca_results_flat 行).
+-- changed=${changedComps.size} 场, delta=${allTopCount} 行 / 全表应有 ${fullTopTotal} 行.容量由实际 delta 大小检查.
 
 ${schemaSql}
 
@@ -1672,7 +1566,7 @@ DELETE FROM wca_results_flat WHERE comp_id IN (SELECT comp_id FROM _wrf_del);
 \\copy wca_results_flat (${wrfCols}) FROM '${wrfFile}';
 \\! rm -f ${wrfFile}
 
--- 指纹 manifest 全量替换为新指纹(下次 build 的 old = 这次的 new);守卫已在上面读过旧值.
+-- Preserve labels for unchanged contents; only actual changes invalidate snapshots.
 ${manifestSql}
 \\! rm -f wca_comp_updated_at.copy.tsv
 
@@ -1681,14 +1575,12 @@ ${smallTables}
 ${personResultsSql}
 
 -- 校验:增量后 wca_results_flat 总行数必须 == 全表应有行数,对不上说明 delta 算漏/算重 → abort.
--- 若刚改过 wca_results_flat 的写入行规则(新增/移除一类行)→ 增量不回填历史比赛,需一次性 backfill
--- 历史比赛的新行后再跑(磁盘紧禁全量重建);见上方 fullTopTotal 累加处的 ⚠️ 注释.
 DO $$
 DECLARE n bigint;
 BEGIN
   SELECT count(*) INTO n FROM wca_results_flat;
   IF n <> ${fullTopTotal} THEN
-    RAISE EXCEPTION 'wca_results_flat count % != expected ${fullTopTotal} after incremental apply; aborting (若刚改过写入行规则: 增量不回填历史, 需先 backfill 历史比赛新行)', n;
+    RAISE EXCEPTION 'wca_results_flat count % != expected ${fullTopTotal} after incremental apply; aborting', n;
   END IF;
 END $$;
 
@@ -1699,57 +1591,26 @@ COMMIT;
 
 ${vacuumAnalyze}
 `;
-  } else {
-    // 全量:缺旧指纹(首次 / FORCE_FULL / CI 拉取失败)→ 同表 DELETE+COPY,保持索引、依赖与读可用性。
-    loadSql = `-- 由 wca_stats_extra_build.ts 生成(全量:MVCC 替换 wca_results_flat).
--- 建表在独立短事务完成;现有正式表、索引与依赖保持不变。
-
-${schemaSql}
-
-${importTransactionStart('wca_stats_extra')}
-
-${mutationCapacityGuard({ table: 'wca_results_flat', file: wrfFile })}
-DELETE FROM wca_results_flat;
-
--- results_flat.copy.tsv(1.1G)删在尾部小表之前,腾出曾致 person_ranks ENOSPC 的那段空间.
-\\copy wca_results_flat (${wrfCols}) FROM '${wrfFile}';
-\\! rm -f ${wrfFile}
-${manifestSql}
-\\! rm -f wca_comp_updated_at.copy.tsv
-
-${smallTables}
-
-${personResultsSql}
-
-DO $$
-DECLARE n bigint;
-BEGIN
-  SELECT count(*) INTO n FROM wca_results_flat;
-  IF n <> ${fullTopTotal} THEN
-    RAISE EXCEPTION 'wca_results_flat count % != expected ${fullTopTotal} after full load; aborting', n;
-  END IF;
-END $$;
-
-INSERT INTO meta_historical (key, value, updated_at) VALUES ('wca_stats_extra_imported_at', NOW()::TEXT, NOW())
-  ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();
-
-COMMIT;
-
-${vacuumAnalyze}
-`;
-  }
   writeFileSync(resolve(outDir, 'load.sql'), loadSql);
+  const uploadBytes = readdirSync(outDir).reduce((total, file) => total + statSync(resolve(outDir, file)).size, 0);
+  const smallStageBytes = Math.max(...readdirSync(outDir).filter(file => file.endsWith('.copy.tsv')).map(file => statSync(resolve(outDir, file)).size), 0);
+  const flatBytes = statSync(resolve(outDir, wrfFile)).size;
+  const personBytes = statSync(resolve(outDir, wprFile)).size;
+  // Reserve upload space, the largest small-table stage, both delta mutations,
+  // the person-results stage and 2 GiB headroom. Import-time checks remain active.
+  writeFileSync(resolve(outDir, 'preflight.sql'), deltaUploadPreflightSql({ uploadBytes, smallStageBytes, flatBytes, personBytes }));
+
 
   // ── summary ──
   const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
   function sizeMb(name: string): string {
     try { return (statSync(resolve(outDir, name)).size / 1024 / 1024).toFixed(1); } catch { return '?'; }
   }
-  console.log(`\n=== Done in ${elapsed}s (mode=${incremental ? `incremental, ${changedComps.size} changed comps` : 'full'}) ===`);
+  console.log(`\n=== Done in ${elapsed}s (mode=incremental, ${changedComps.size} changed comps) ===`);
   console.log(`  competitions      : ${comps.length.toLocaleString()} rows, ${sizeMb('wca_competitions.copy.tsv')} MB`);
   console.log(`  grand_slam        : ${gsCount.toLocaleString()} rows, ${sizeMb('wca_grand_slam.copy.tsv')} MB`);
-  console.log(`  results_top       : ${allTopCount.toLocaleString()}${incremental ? `/${fullTopTotal.toLocaleString()}` : ''} rows, ${sizeMb(wrfFile)} MB`);
-  console.log(`  person_results    : ${wprCount.toLocaleString()}${wprFull ? '' : `/${fullWprTotal.toLocaleString()}`} rows, ${sizeMb(wprFile)} MB (${wprFull ? 'full' : 'delta'})`);
+  console.log(`  results_top       : ${allTopCount.toLocaleString()}/${fullTopTotal.toLocaleString()} rows, ${sizeMb(wrfFile)} MB`);
+  console.log(`  person_results    : ${wprCount.toLocaleString()}/${fullWprTotal.toLocaleString()} rows, ${sizeMb(wprFile)} MB (delta)`);
   console.log(`  cohort_ranks      : ${cohortCount.toLocaleString()} rows, ${sizeMb('wca_cohort_ranks.copy.tsv')} MB`);
   console.log(`  success_rate      : ${srCount.toLocaleString()} rows, ${sizeMb('wca_success_rate.copy.tsv')} MB`);
   console.log(`  all_events_done   : ${aedCount.toLocaleString()} rows, ${sizeMb('wca_all_events_done.copy.tsv')} MB`);

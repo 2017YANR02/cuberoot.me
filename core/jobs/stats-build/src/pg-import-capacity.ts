@@ -143,3 +143,24 @@ BEGIN
 END $capacity$;
 `;
 }
+
+/** Early check before uploading delta files; exact import checks still apply. */
+export function deltaUploadPreflightSql({ uploadBytes, smallStageBytes, flatBytes, personBytes }: { uploadBytes: number; smallStageBytes: number; flatBytes: number; personBytes: number }): string {
+  for (const size of [uploadBytes, smallStageBytes, flatBytes, personBytes]) {
+    if (!Number.isSafeInteger(size) || size < 0) throw new Error('Invalid delta capacity input');
+  }
+  return `\\set available_bytes \`LC_ALL=C df -Pk /tmp | awk 'NR == 2 { printf "%.0f", $4 * 1024 }'\`
+SELECT set_config('cuberoot.preflight_available', :'available_bytes', false);
+DO $capacity$
+DECLARE required numeric;
+BEGIN
+  required := 2147483648 + ${uploadBytes} + ${smallStageBytes} * 3.5
+    + ${flatBytes} * 6 * (1 + pg_indexes_size('wca_results_flat')::numeric / GREATEST(pg_table_size('wca_results_flat'), 1))
+    + ${personBytes} * (3.5 + 6 * (1 + pg_indexes_size('wca_person_results')::numeric / GREATEST(pg_table_size('wca_person_results'), 1)));
+  IF current_setting('cuberoot.preflight_available')::numeric < required THEN
+    RAISE EXCEPTION 'Insufficient disk space before delta upload: available=%, required=%', current_setting('cuberoot.preflight_available'), required;
+  END IF;
+  RAISE NOTICE 'Delta capacity OK: available=%, required=%', current_setting('cuberoot.preflight_available'), required;
+END $capacity$;
+`;
+}

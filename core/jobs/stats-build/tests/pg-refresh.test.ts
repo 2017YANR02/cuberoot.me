@@ -7,6 +7,8 @@ import { gzipSync } from 'node:zlib';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { importTransactionStart, refreshTable } from '../src/pg-refresh.js';
 import { historicalRanksLoadSql } from '../src/historical-ranks-load.js';
+import { addRow, fingerprintSnapshotSql, parseFingerprintSnapshot, planIncremental, signature, type RowDigests } from '../src/competition-fingerprints.js';
+import { deltaUploadPreflightSql } from '../src/pg-import-capacity.js';
 
 const enabled = process.env.STATS_IMPORT_TEST_PG === '1';
 const schema = `stats_import_${randomUUID().replaceAll('-', '')}`;
@@ -106,6 +108,34 @@ describe.skipIf(!enabled)('real PostgreSQL stats imports preserve online reads a
       await run(`DROP SCHEMA IF EXISTS ${schema} CASCADE;`, false);
       await rm(workDir, { recursive: true, force: true });
     }
+  });
+
+  it('compares PostgreSQL rows and generated COPY rows with identical fingerprints', async () => {
+    const flat = '333\tf\t1234\t2000TEST01\tChina\tOld2000\t2000-01-02\t{1234,-1,NULL}\tf\ta\t';
+    const person = '2000TEST01\tOld2000\t2000-01-02\t333\tf\ta\t1\t1234\t0\t{1234,-1,NULL}\t\t';
+    const escaped = '333\tt\t1234\t2000TEST01\tCôte\\tTest\\\\Country\tOld2000\t2000-01-02\t{}\tf\ta\t\\N';
+    const output = await run(`\\pset fieldsep '\t'
+CREATE TABLE wca_comp_updated_at(comp_id text PRIMARY KEY,content_hash bigint);
+CREATE TABLE wca_results_flat(event_id text,is_avg boolean,value integer,wca_id text,person_country_id text,comp_id text,comp_date date,attempts integer[],round_type_id text,format_id text,record_tag text);
+CREATE TABLE wca_person_results(wca_id text,comp_id text,comp_date date,event_id text,round_type_id text,format_id text,pos integer,best integer,average integer,attempts integer[],single_record text,average_record text);
+INSERT INTO wca_comp_updated_at VALUES ('Old2000',123);
+COPY wca_results_flat FROM STDIN;
+${flat}
+${flat}
+${escaped}
+\\.
+COPY wca_person_results FROM STDIN;
+${person}
+\\.
+${fingerprintSnapshotSql()}`);
+    const f: RowDigests = new Map(), p: RowDigests = new Map();
+    addRow(f, 'Old2000', flat); addRow(p, 'Old2000', person);
+    addRow(f, 'Old2000', flat); addRow(f, 'Old2000', escaped);
+    const snapshot = parseFingerprintSnapshot(output);
+    expect(snapshot.get('Old2000')).toEqual({ hash: 123n, flat: signature(f.get('Old2000')), person: signature(p.get('Old2000')) });
+    expect(planIncremental(snapshot, f, p).changed.size).toBe(0);
+    await expect(run(deltaUploadPreflightSql({ uploadBytes: 10 ** 15, smallStageBytes: 0, flatBytes: 0, personBytes: 0 }))).rejects.toThrow('Insufficient disk space before delta upload');
+    await run('DROP TABLE wca_comp_updated_at, wca_results_flat, wca_person_results;');
   });
 
   it('keeps 16 concurrent online reads and permission reads available throughout an uncommitted refresh', async () => {

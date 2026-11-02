@@ -26,11 +26,6 @@ on:
         description: 'Comma-separated stat IDs to compute (empty = all). Example: wr_metric,wr_aoxr'
         required: false
         default: ''
-      person_results_full:
-        description: 'Rebuild wca_person_results in full (bootstrap / after changing its row rules)'
-        required: false
-        type: boolean
-        default: false
 
 jobs:
   # 推送代码时只做语法检查（~30秒），快速发现错误
@@ -165,6 +160,39 @@ jobs:
 
       # NOTE: 前置 EXPLAIN 校验所有 stat SQL —— 任何语法错(MySQL 保留字/列名错等)
       # 在几秒内 fail-fast，避免等 compute_all 跑到中途才发现
+      # ── WCA stats extra:6 个 cubing.pro 风格 stats(grand_slam / all_results 等) ──
+      # Compare actual stored rows, not hashes made by different source algorithms.
+      # Missing/failed snapshots stop the job; never silently switch to full load.
+      - name: Fetch current fingerprints (incremental wca_results_flat)
+        working-directory: core/${{ steps.workspace.outputs.stats }}
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          npx tsx src/competition-fingerprints.ts --snapshot-sql > prev_fp.sql
+          ssh -T -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id \
+            "$DEPLOY_USER@$DEPLOY_HOST" '/usr/local/bin/dump_fingerprints.sh' \
+            < prev_fp.sql > prev_fp.tsv
+          test -s prev_fp.tsv
+          echo "fetched $(wc -l < prev_fp.tsv) fingerprint rows"
+
+      - name: Build WCA stats extra
+        working-directory: core/${{ steps.workspace.outputs.stats }}
+        env:
+          NODE_OPTIONS: '--expose-gc --max-old-space-size=12288'
+          # builder 清空 output/ 目录,故旧指纹放在 package 根而非 output 内.缺失/损坏即停止，不回退全量.
+          PREV_FINGERPRINTS: ${{ github.workspace }}/core/${{ steps.workspace.outputs.stats }}/prev_fp.tsv
+        run: npx tsx src/bin/wca_stats_extra_build.ts
+
+      - name: Check actual delta capacity before upload
+        working-directory: core/${{ steps.workspace.outputs.stats }}/output/wca_stats_extra
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -T -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id \
+            "$DEPLOY_USER@$DEPLOY_HOST" 'cd /tmp && /usr/local/bin/dump_fingerprints.sh' < preflight.sql
+
       - name: Validate stat queries (EXPLAIN preflight)
         if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         working-directory: core/${{ steps.workspace.outputs.stats }}
@@ -333,28 +361,14 @@ jobs:
             fi
           '
 
-      # ── WCA stats extra:6 个 cubing.pro 风格 stats(grand_slam / all_results 等) ──
-      # 增量:先拉服务器现有 per-comp 指纹,builder 只重灌指纹变动比赛的 wca_results_flat 行
-      # (不再每天全量 DROP+重建翻倍撑爆磁盘).拉取失败/脚本未部署 → 空文件 → builder 退回全量(安全兜底).
-      - name: Fetch current fingerprints (incremental wca_results_flat)
+      - name: Recheck delta capacity before upload
+        working-directory: core/${{ steps.workspace.outputs.stats }}/output/wca_stats_extra
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
-          ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id \
-            "$DEPLOY_USER@$DEPLOY_HOST" '/usr/local/bin/dump_fingerprints.sh' \
-            > "$GITHUB_WORKSPACE/core/${{ steps.workspace.outputs.stats }}/prev_fp.tsv" 2>/dev/null || true
-          echo "fetched $(wc -l < "$GITHUB_WORKSPACE/core/${{ steps.workspace.outputs.stats }}/prev_fp.tsv" 2>/dev/null || echo 0) fingerprint rows"
-
-      - name: Build WCA stats extra
-        working-directory: core/${{ steps.workspace.outputs.stats }}
-        env:
-          NODE_OPTIONS: '--expose-gc --max-old-space-size=12288'
-          # builder 清空 output/ 目录,故旧指纹放在 package 根而非 output 内.缺此文件 → 全量模式.
-          PREV_FINGERPRINTS: ${{ github.workspace }}/core/${{ steps.workspace.outputs.stats }}/prev_fp.tsv
-          # 选手页全量成绩表:平时跟 flat 一样只灌 delta;首次上线 / 改行规则后手动跑一次全量.
-          WPR_FULL: ${{ inputs.person_results_full && '1' || '' }}
-        run: npx tsx src/bin/wca_stats_extra_build.ts
+          ssh -T -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id \
+            "$DEPLOY_USER@$DEPLOY_HOST" 'cd /tmp && /usr/local/bin/dump_fingerprints.sh' < preflight.sql
 
       - name: Upload WCA stats extra TSVs to server
         id: wca_stats_extra_upload
@@ -362,8 +376,7 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         working-directory: core/${{ steps.workspace.outputs.stats }}/output/wca_stats_extra
-        # scp 整个 output 目录:增量 / 全量产出的文件集不同；新派生表 TSV（含 wca_kinch）自动随目录上传。
-        # (全量含 wca_results_flat.copy.tsv;增量含 wca_results_flat_delta.tsv + wca_results_flat_del.txt).
+        # Only actual result deltas and derived tables remain in this directory.
         run: |
           ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" 'mkdir -p /tmp/wca_stats_extra && rm -rf /tmp/wca_stats_extra/*'
           scp -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id ./* \
