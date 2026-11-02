@@ -1,8 +1,9 @@
 .wca-teams-page { max-width: 1000px; margin: 0 auto; padding: 24px 16px; }
 .wca-teams-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
 .wca-teams-header h1 { margin: 0; }
-.wca-team-groups { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 20px; }
-.wca-team-group { display: flex; align-items: center; gap: 4px; max-width: 100%; min-width: 0; }
+.wca-team-groups { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+.wca-team-group { display: grid; grid-template-columns: 100px minmax(0, 1fr); align-items: center; gap: 16px; min-width: 0; }
+.wca-team-group > .wca-team-choice:only-child { grid-column: 1 / -1; justify-self: start; }
 .wca-team-choice {
   display: inline-flex; align-items: center; justify-content: center; gap: 10px;
   min-height: 48px; padding: 8px; border: 1px solid transparent; border-radius: 10px;
@@ -15,13 +16,7 @@
 .wca-team-choice .cubing-brand-label { font-size: 18px; }
 .wca-team-count { min-width: 2ch; font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--muted-foreground); }
 .wca-team-choice[aria-pressed=true] .wca-team-count { color: var(--foreground); }
-.wca-team-children { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.wca-team-children > .wca-team-choice + .wca-team-choice { position: relative; margin-inline-start: 8px; }
-.wca-team-children > .wca-team-choice + .wca-team-choice::before {
-  content: ''; position: absolute; inset-inline-start: -10px; top: 12px;
-  height: 22px; border-inline-start: 1px solid var(--border-strong); transform: skewX(-20deg);
-  pointer-events: none;
-}
+.wca-team-children { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; }
 .wca-teams-toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
 .wca-teams-toolbar .search-input { width: 280px; max-width: 100%; min-width: 0; }
 .wca-teams-total { flex-shrink: 0; color: var(--muted-foreground); font-size: 13px; font-variant-numeric: tabular-nums; }
@@ -35,10 +30,13 @@
 .wca-team-average { font-weight: 600; }
 .wca-team-world-rank { display: block; margin-top: 3px; font-size: 11px; font-weight: 400; color: var(--muted-foreground); }
 
-.wca-team-brand-heading { display: flex; align-items: center; justify-content: center; flex: 0 0 32px; min-height: 48px; }
+.wca-team-brand-heading { display: flex; align-items: center; gap: 12px; min-height: 48px; padding-inline-start: 8px; }
+.wca-team-brand-heading .cubing-brand-label { font-size: 20px; }
 @media (max-width: 520px) {
   .wca-teams-page { padding: 20px 12px; }
   .wca-team-groups { gap: 12px; }
+  .wca-team-group { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .wca-team-brand-heading { min-height: 36px; }
   .wca-teams-toolbar .search-input { flex: 1; width: auto; }
   .wca-teams-table th, .wca-teams-table td { padding: 10px; }
   .wca-team-person { gap: 8px; }

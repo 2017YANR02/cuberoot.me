@@ -16,7 +16,7 @@ import Paginator from '@/components/wca-stats/Paginator';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import AppLink from '@/components/AppLink';
 import { apiUrl } from '@/lib/api-base';
-import { wcaTeamBrand } from '@/lib/wca-team-brands';
+import { WCA_TEAM_BRANDS, wcaTeamBrand } from '@/lib/wca-team-brands';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { tr } from '@/i18n/tr';
@@ -69,9 +69,9 @@ function TeamsDirectory() {
     return () => controller.abort();
   }, [team, search, page, revision]);
   const chooseTeam = (value: string) => { void setQuery({ team: value || null, page: null }); };
-  const groups = new Map<string, Team[]>();
+  const groups = new Map<string, Team[]>(WCA_TEAM_BRANDS.map(brand => [brand.name, []]));
   for (const item of data?.teams ?? []) {
-    if (item.name === '魔域') continue;
+    if (item.count === 0 && WCA_TEAM_BRANDS.some(brand => brand.name === item.name)) continue;
     const brand = wcaTeamBrand(item.name);
     groups.set(brand, [...(groups.get(brand) ?? []), item]);
   }
@@ -88,10 +88,15 @@ function TeamsDirectory() {
       <AppLink href="/wca/results" prefetch={false}>{tr({ zh: '排名', en: 'Rankings' })}</AppLink>
     </header>
     <div className="wca-team-groups">
-      {[...groups].map(([brand, teams]) => <section key={brand} className="wca-team-group">
-        {teams.length > 1 ? <>
-          <div className="wca-team-brand-heading"><CubingBrandLabel name={brand} logoOnly fallbackToName /></div>
-          <div className="wca-team-children">{teams.map(renderTeamChoice)}</div>
+      {[...groups].filter(([, teams]) => teams.length > 0).map(([brand, teams]) => <section key={brand} className="wca-team-group" aria-label={brand}>
+        {WCA_TEAM_BRANDS.some(item => item.name === brand) ? <>
+          <div className="wca-team-brand-heading"><CubingBrandLabel name={brand} logoOnly fallbackToName />
+            <span className="wca-team-count">{teams.reduce((sum, item) => sum + item.count, 0)}</span>
+          </div>
+          <div className="wca-team-children">{[...teams].sort((a, b) => {
+            const order: readonly string[] = WCA_TEAM_BRANDS.find(item => item.name === brand)?.teams ?? [];
+            return order.indexOf(a.name) - order.indexOf(b.name);
+          }).map(renderTeamChoice)}</div>
         </> : renderTeamChoice(teams[0])}
       </section>)}
     </div>
