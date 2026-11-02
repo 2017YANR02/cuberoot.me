@@ -4,6 +4,7 @@ import './cubing-brand-label.css';
 
 /** Shared brand assets; unknown/custom teams keep their original text. */
 const brands = [
+  { aliases: ['gan gurus'], src: '/images/brands/gan-gurus.svg', circle: false },
   { aliases: ['魔域战队'], src: '/images/brands/moyu-team.svg', circle: false, monochrome: true, width: '4.1em' },
   { aliases: ['魔域梦之队'], src: '/images/brands/moyu-dream-team.svg', circle: false, monochrome: true, width: '2.3em' },
   { aliases: ['gan', 'gancube'], src: '/images/brands/gan-color.svg', circle: false },
