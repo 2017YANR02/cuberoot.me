@@ -589,6 +589,7 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 307, slug: 'qiyi_team_to_mfg', desc: { zh: '奇艺战队整体更名为 MFG，保留原编号及全部成员', en: 'Rename QiYi team to MFG, retaining its original ID and all members' } },
   { n: 305, slug: 'wca_team_members_without_wca', desc: { zh: '战队成员使用独立编号，支持尚无 WCA ID 的成员', en: 'Independent team member IDs, including members without a WCA ID' } },
   { n: 306, slug: 'gan_roster_20261102_non_wca', desc: { zh: '导入维护者确认尚未参赛的 38 位 GAN 战队成员', en: 'Import 38 GAN team members confirmed by the maintainer as not yet competing' } },
   { n: 304, slug: 'wca_historical_countries', desc: { zh: '历史参赛和复原次数按参赛时国家地区分桶', en: 'Partition historical participation and solve totals by represented country' } },

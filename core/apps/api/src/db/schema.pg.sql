@@ -9176,7 +9176,7 @@ CREATE TABLE IF NOT EXISTS wca_teams (
   name VARCHAR(80) NOT NULL CHECK (length(btrim(name)) > 0)
 );
 CREATE UNIQUE INDEX IF NOT EXISTS wca_teams_name_unique ON wca_teams (lower(name));
-INSERT INTO wca_teams (name) VALUES ('GAN'), ('魔域'), ('奇艺') ON CONFLICT DO NOTHING;
+INSERT INTO wca_teams (name) VALUES ('GAN'), ('魔域'), ('MFG') ON CONFLICT DO NOTHING;
 CREATE TABLE IF NOT EXISTS wca_person_teams (
   member_id SERIAL PRIMARY KEY,
   wca_id VARCHAR(10) CONSTRAINT wca_person_teams_wca_id_unique UNIQUE,
