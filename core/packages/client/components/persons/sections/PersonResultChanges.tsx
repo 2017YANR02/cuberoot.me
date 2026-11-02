@@ -68,12 +68,12 @@ function PersonResultChanges({ wcaId, isZh, results, comps }: { wcaId: string; i
   }
   if (groups.length === 0) return null;
   const chartRows = [
-    ...(summary.penalties.length ? summary.penalties : [[2, 0]]).map(([seconds, count]) => ({
+    ...summary.penalties.map(([seconds, count]) => ({
       key: `penalty-${seconds}`, label: `+${seconds}`, count,
     })),
     { key: 'dnf', label: 'DNF', count: summary.dnf },
     { key: 'cancelled', label: tr({ zh: '未晋级', en: 'Did not advance' }), count: summary.cancelled },
-  ];
+  ].filter(row => row.count > 0);
   const chartMax = Math.max(1, ...chartRows.map(row => row.count));
 
   return (
@@ -82,7 +82,7 @@ function PersonResultChanges({ wcaId, isZh, results, comps }: { wcaId: string; i
         <h2 className="wp-rc-title">{tr({ zh: '成绩变更', en: 'Result changes'
         })}</h2>
       </div>
-      <dl className="wp-rc-chart" aria-label={tr({ zh: '以下成绩变更，按把统计', en: 'Result changes below, counted per attempt' })}>
+      {chartRows.length > 0 && <dl className="wp-rc-chart" aria-label={tr({ zh: '以下成绩变更，按把统计', en: 'Result changes below, counted per attempt' })}>
         {chartRows.map(row => <div className="wp-rc-chart-row" key={row.key}>
           <dt>{row.label}</dt>
           <dd>
@@ -92,7 +92,7 @@ function PersonResultChanges({ wcaId, isZh, results, comps }: { wcaId: string; i
             <span className="wp-rc-chart-count">{tr({ zh: `${row.count} 把`, en: `${row.count}` })}</span>
           </dd>
         </div>)}
-      </dl>
+      </dl>}
       <div className="wp-rc-groups">
         {groups.map(({ rows }) => <CompetitionChanges key={rows[0].change.id} changes={rows} isZh={isZh} comp={compById.get(rows[0].change.competitionId ?? '')} />)}
       </div>
