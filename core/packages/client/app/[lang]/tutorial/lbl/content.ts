@@ -44,7 +44,7 @@ export const LBL_STAGE_GOALS: Record<string, { before: Text; after: Text; summar
   },
   cross: {
     before: text('黄心周围的小花', 'Daisy around the yellow center'), after: text('底面白十字，侧面颜色与同色中心对齐', 'White cross below; side colors match their centers'),
-    summary: text('将小花的四个白棱翻到底面，组成白十字，侧面颜色与同色中心对齐。', 'Move the daisy’s four white edges to the bottom to form a white cross with side colors matching the centers.'),
+    summary: text('将小花侧面颜色与同色中心对齐，白棱翻到底面，组成白十字。', 'Match the daisy’s side colors with their centers, then move the white edges to the bottom to form a white cross.'),
   },
   corners: {
     before: text('白十字已好，白角未归位', 'White cross solved; corners unfinished'), after: text('白色底层及侧面第一行复原', 'White layer and bottom side rows solved'),
@@ -123,7 +123,7 @@ export const LBL_STEPS: Step[] = [
     ],
     // Both demo and practice complete all four petals. d turns the lower two layers while keeping U fixed;
     // y' puts the aligned front edge on the right, then R2 sends it to the bottom.
-    examples: [example('对齐 → 转体 → 上上', 'Match colors → rotate → turn twice', "d y' R2 d y' R2 d2 y' R2 d y' R2", '每条白棱都先对齐，再转体放到右手边，做“上上”。', 'For each white edge, match its side color first, rotate it to the right, then turn the right face twice.', "F2 U R2 U2 B2 U L2 U'")],
+    examples: [example('完整演示', 'Complete demonstration', "d y' R2 d y' R2 d2 y' R2 d y' R2", '每条白棱都先对齐，再转体放到右手边，做“上上”。', 'For each white edge, match its side color first, rotate it to the right, then turn the right face twice.', "F2 U R2 U2 B2 U L2 U'")],
   },
   {
     id: 'corners', title: text('底层（角）', 'First-layer corners'), goal: text('复原白色底层和侧面第一行。', 'Solve the white layer and the bottom row of each side.'),

@@ -5,7 +5,6 @@ import { Alg } from 'cubing/alg';
 import { AllFaces, CubeData, Face, parseAlgorithm } from '@cuberoot/visualcube';
 import { ArrowRight } from '@app-foundation/icons/lucide';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
-import Link from '@/components/AppLink';
 import { pickStickering } from '@/components/AlgPlayer/stickering';
 import { FM_FIXED_COLOR, FM_IGNORED, mergeStickeringMaskFns, stickeringMaskFn } from '@cuberoot/puzzle-render-core/engine/nxn/stickering';
 import { resolveStageMaskFn } from '@cuberoot/puzzle-render-core/engine/nxn/vcStageMask';
@@ -15,8 +14,9 @@ import { VisualCube } from '@/components/VisualCube';
 import { T, tr } from '@/i18n/tr';
 import { LESSON_STICKERING, RIGHT_SUNE, CORNER_POSITION } from './content';
 import AlgSteps from './AlgSteps';
+import ContinueButton from './ContinueButton';
 import { useStartInspection } from './use-start-inspection';
-import type { AlgLesson as Lesson, LBL_COURSE_ENTRIES } from './alg-lessons';
+import type { AlgLesson as Lesson } from './alg-lessons';
 
 const LEFT_VIEW = { x: Math.PI / 6, y: Math.PI / 6, z: 0 };
 const RIGHT_VIEW = { x: Math.PI / 6, y: -Math.PI / 6, z: 0 };
@@ -35,13 +35,14 @@ const L_ALG_COLORS = (['U', 'R', 'F', 'D', 'L', 'B'] as const).flatMap(face =>
   Array.from({ length: 9 }, (_, i) => L_ALG_HIDDEN_STICKERS.includes(`${face}${i}`)
     ? FM_FIXED_COLOR[FM_IGNORED]! : orientedCubeFaceColors('z2')[face]));
 
-export default function AlgLesson({ lesson, heading, next }: { lesson: Lesson; heading: ReactNode; next?: typeof LBL_COURSE_ENTRIES[number] }) {
+export default function AlgLesson({ lesson, heading, progress, onNext }: { lesson: Lesson; heading: ReactNode; progress: ReactNode; onNext?: () => void }) {
   const [selected, setSelected] = useState(lesson.id === 'sune-learning' ? -1 : 0);
   const terminology = lesson.id === 'sune-learning' && selected === -1;
   const choice = lesson.algs[Math.max(0, selected)];
   const comparisonColors = lesson.id === 'l-alg-learning' ? L_ALG_COLORS : SUNE_THUMB_COLORS;
   const hasComparison = lesson.id === 'sune-learning' || lesson.id === 'l-alg-learning';
   return <article className="lbl-lesson lbl-alg-learning">
+    {progress}
     <aside className="lbl-visuals">
       <div className="lbl-intro">{heading}</div>
       <div className="lbl-case-layout"><div className="lbl-cases" role="group" aria-label={tr(lesson.title)}>
@@ -58,7 +59,7 @@ export default function AlgLesson({ lesson, heading, next }: { lesson: Lesson; h
       </div></div>
     </aside>
     <section className="lbl-demonstration" aria-label={tr({ zh: '公式慢放与口诀', en: 'Slow algorithm playback and move cues' })}>
-      {terminology ? <FishParts /> : <><div className={hasComparison ? 'lbl-sune-heading' : 'lbl-alg-heading'}>
+      {terminology ? <FishParts /> : <><section className="lbl-stage-overview lbl-alg-overview" aria-label={tr(lesson.title)}>
       {hasComparison && <div className="lbl-sune-comparison">
         <figure><VisualCube local stickerColors={comparisonColors} stickerMaskColor={FM_FIXED_COLOR[FM_IGNORED]!}
           view="plan" scheme="yogwrb" size={64} setup={new Alg(choice.alg).invert().toString()} alt={tr({ zh: '转动前', en: 'Before' })} />
@@ -73,12 +74,11 @@ export default function AlgLesson({ lesson, heading, next }: { lesson: Lesson; h
           (choice.left ? ['左', 'Left', 'left'] : ['右', 'Right', 'right']).includes(part)
             ? <span className="lbl-fish-direction" key={i}>{part}</span> : part) : tr(choice.naming)}</span>
         {lesson.usage.zh && <span>{tr(lesson.usage)}</span>}
-      </p></div>
+      </p></section>
       <SlowAlg key={choice.alg} alg={choice.alg} left={choice.left} startSolved={lesson.id === 'trigger-learning'} /></>}
       <div className="lbl-lesson-actions">
-        {next && <Link className="lbl-practice lbl-next-lesson" href={`/tutorial/lbl?step=${next.id}`} prefetch={false}>
-          <span><T zh="下一节：" en="Next: " />{tr(next.title)}</span><ArrowRight size={16} />
-        </Link>}
+        {selected < lesson.algs.length - 1 ? <ContinueButton onClick={() => setSelected(selected + 1)} />
+          : onNext && <ContinueButton onClick={onNext} />}
       </div>
     </section>
   </article>;

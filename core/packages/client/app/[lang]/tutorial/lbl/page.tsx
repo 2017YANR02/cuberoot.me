@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, useRef } from 'react';
 import { Alg } from 'cubing/alg';
 import { Axis } from '@cuberoot/visualcube';
 import { ArrowRight, Play } from '@app-foundation/icons/lucide';
-import { parseAsStringEnum, useQueryState } from 'nuqs';
+import { parseAsString, parseAsStringEnum, useQueryState, useQueryStates } from 'nuqs';
 import PageBackLink from '@/components/PageBackLink';
 import Link from '@/components/AppLink';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
@@ -29,6 +29,8 @@ import { COMPLETE_DEMO_STAGES, yellowFaceTouchSticker, yellowFishRecognitionStic
 import { useStartInspection } from './use-start-inspection';
 import AlgSteps from './AlgSteps';
 import AlgLesson from './AlgLesson';
+import ContinueButton from './ContinueButton';
+import ChapterProgress from './ChapterProgress';
 import { ALG_LESSONS, LBL_COURSE_ENTRIES } from './alg-lessons';
 import { getLblAlgGroups } from './alg-cues';
 import { INSTRUCTION_PHASES, splitInstruction } from './instruction-phases';
@@ -52,13 +54,6 @@ const ANGLED_LAST_LAYER_VIEW = { x: 25 * Math.PI / 180, y: -25 * Math.PI / 180, 
 const FOUR_GRAY_VIEW = { x: 25 * Math.PI / 180, y: 30 * Math.PI / 180, z: 0 };
 const CROSS_INITIAL_VIEW = { x: Math.PI / 18, y: -Math.PI / 8, z: 0 };
 const CROSS_FINISH_VIEW = { x: -Math.PI / 4, y: -Math.PI / 6, z: 0 };
-
-// A cropped face row illustrates the definitions using the shared cube renderer.
-const definitionRows = [false, true].map(wall => {
-  const colors = Array<string>(54).fill(FM_FIXED_COLOR[FM_IGNORED]!);
-  for (const index of wall ? [0, 1, 2] : [0, 2]) colors[index] = orientedCubeFaceColors('z2').L;
-  return colors;
-});
 
 // Recognition thumbnails show the target white corner after positioning, before
 // the trigger. Keep the full preparation sequence in the animation unchanged.
@@ -84,7 +79,12 @@ const documentStageImages: Record<string, [string, string]> = {
 };
 
 export default function LblTutorial() {
-  const [stepId, setStepId] = useQueryState('step', parseAsStringEnum(LBL_COURSE_ENTRIES.map(s => s.id)).withDefault('structure').withOptions({ history: 'push' }));
+  const [{ step: stepId }, setChapterQuery] = useQueryStates({
+    step: parseAsStringEnum(LBL_COURSE_ENTRIES.map(s => s.id)).withDefault('structure'),
+    topic: parseAsString,
+    basics: parseAsString,
+  }, { history: 'push' });
+  const setStepId = (id: string) => setChapterQuery({ step: id, ...(id === 'structure' ? { topic: null, basics: null } : {}) });
   const [view] = useQueryState('view', parseAsStringEnum(['lesson', 'practice', 'walkthrough']).withDefault('lesson').withOptions({ history: 'push' }));
   const stepIndex = Math.max(0, LBL_STEPS.findIndex(s => s.id === stepId));
   const step = LBL_STEPS[stepIndex];
@@ -92,10 +92,8 @@ export default function LblTutorial() {
   const entry = LBL_COURSE_ENTRIES[courseIndex];
   const algLesson = ALG_LESSONS.find(lesson => lesson.id === stepId);
   const nextStep = LBL_COURSE_ENTRIES[courseIndex + 1];
-  const showComparison = !['daisy', 'cross', 'corners', 'middle'].includes(step.id);
+  const progress = <ChapterProgress current={algLesson ? LBL_STEPS[LBL_STEPS.findIndex(s => s.id === algLesson.after) + 1].id : step.id} />;
   const lastLayer = stepIndex >= 5;
-  const guidanceUnderTitle = lastLayer || step.id === 'daisy';
-  const sidebarGuidance = guidanceUnderTitle ? step.paragraphs : step.paragraphs.slice(1);
   const planCases = step.id === 'yellow-face' || step.id === 'corner-position';
   const stickerColors = useMemo(() => {
     const name = pickStickering('3x3', LESSON_STICKERING[step.id] ?? '', 'sim');
@@ -111,6 +109,7 @@ export default function LblTutorial() {
   }, [lastLayer, step.id, stickerColors]);
   // Keep example selection tied to its step, including browser back/forward navigation.
   const [selection, setSelection] = useState({ step: '', index: -1 });
+  const continueChapter = nextStep ? () => { setSelection({ step: '', index: -1 }); void setStepId(nextStep.id); } : undefined;
   const [demoCaseCue, setDemoCaseCue] = useState<DemoCaseCue>(null);
   const overview = selection.step !== step.id || selection.index === -1;
   const middleCore = step.id === 'middle' && selection.step === step.id && selection.index === -2;
@@ -118,6 +117,9 @@ export default function LblTutorial() {
   const lastLayerTerms = hasTerms && step.id !== 'middle' && selection.step === step.id && selection.index === -2;
   const hasCompleteDemo = COMPLETE_DEMO_STAGES.includes(step.id as CompleteDemoStage);
   const completeDemo = hasCompleteDemo && selection.step === step.id && selection.index === step.examples.length;
+  const subsectionOrder = [-1, ...(hasTerms ? [-2] : []), ...step.examples.map((_, i) => i), ...(hasCompleteDemo ? [step.examples.length] : [])];
+  const selectedSubsection = selection.step === step.id ? selection.index : -1;
+  const nextSubsection = subsectionOrder[subsectionOrder.indexOf(selectedSubsection) + 1];
   const exampleIndex = selection.step === step.id ? Math.max(0, Math.min(selection.index, step.examples.length - 1)) : 0;
   const demo = step.examples[exampleIndex];
   const fourGray = step.id === 'yellow-face' && exampleIndex === 3;
@@ -151,10 +153,17 @@ export default function LblTutorial() {
       setup={diagramSetup} alt={alt} />;
   };
   const beforeStage = LBL_STEPS[Math.max(0, stepIndex - 1)].id;
+  const caseComparison = !overview && !middleCore && !lastLayerTerms && !completeDemo;
   const stageOverview = stageImages && <div className="lbl-stage-overview" role="group" aria-label={tr({ zh: '本步开始状态与目标', en: 'Stage start and goal' })}>
-    <figure>{stageDiagram(beforeStage, 64, tr(stageGoal.before))}</figure>
+    <figure>{caseComparison ? <VisualCube local {...diagramMask} stickerColors={comparisonBefore} view="iso" scheme="yogwrb" size={64} setup={setup}
+      outlineMaskedTop={step.id === 'yellow-face' && exampleIndex >= 2}
+      alt={tr({ zh: '转动前', en: 'Before' })} /> : stageDiagram(beforeStage, 64, tr(stageGoal.before))}</figure>
     <ArrowRight size={22} aria-hidden="true" />
-    <figure>{stageDiagram(step.id, 64, tr(stageGoal.after))}<figcaption>{tr(stageGoal.summary ?? stageGoal.after)}</figcaption></figure>
+    <figure>{caseComparison ? <VisualCube local {...diagramMask} stickerColors={comparisonAfter} view="iso" scheme="yogwrb" size={64} setup={new Alg(`${setup} ${demo.alg}`).expand().toString()}
+      alt={tr({ zh: '转动后', en: 'After' })} /> : stageDiagram(step.id, 64, tr(stageGoal.after))}
+      <figcaption>{caseComparison ? step.id === 'yellow-face' && exampleIndex >= 2 ? <T zh="转动后：3灰，再判断" en="After: 3 gray; reassess" />
+        : step.id === 'edge-position' && exampleIndex === 2 ? <T zh="转动后：有墙，再判断" en="After: a wall; reassess" />
+        : <T zh="转动前 → 转动后" en="Before → After" /> : tr(stageGoal.summary ?? stageGoal.after)}</figcaption></figure>
   </div>;
   if (view === 'practice' && !algLesson) return <Practice key={step.id} step={step.id === 'structure' ? LBL_STEPS[1] : step} />;
   if (view === 'walkthrough') return <Walkthrough />;
@@ -174,25 +183,14 @@ export default function LblTutorial() {
       */}
     </header>
     <JsonLd data={{ '@context': 'https://schema.org', '@type': 'Article', headline: tr({ zh: '三阶魔方层先法', en: '3×3 LBL tutorial' }), description: tr({ zh: '配有交互演示的层先法入门教程。', en: 'A beginner layer-by-layer guide with interactive demonstrations.' }) }} />
-    {algLesson ? <AlgLesson key={algLesson.id} lesson={algLesson} heading={stepHeading} next={nextStep} /> : step.id === 'structure' ?
-      <BasicsCards heading={stepHeading} onStart={() => { void setStepId('daisy'); }} />
+    {algLesson ? <AlgLesson key={algLesson.id} lesson={algLesson} heading={stepHeading} progress={progress} onNext={continueChapter} /> : step.id === 'structure' ?
+      <BasicsCards heading={stepHeading} progress={progress} onStart={() => { setSelection({ step: '', index: -1 }); void setStepId('daisy'); }} />
     : <article className="lbl-lesson" key={step.id}>
+      {progress}
       <aside className="lbl-visuals" data-step={step.id}>
         <div className="lbl-intro">
           {stepHeading}
         </div>
-        <div className="lbl-stage-mobile" data-hidden={overview} aria-hidden={overview}>{stageOverview}</div>
-        {guidanceUnderTitle && sidebarGuidance.length > 0 && <div className="lbl-guidance lbl-guidance-under-title" data-hidden={overview} aria-hidden={overview}>
-          {sidebarGuidance.map((p, i) => <p key={i}>{tr(p)}
-            {['corner-position', 'edge-position'].includes(step.id) && i === 0 && <span className="lbl-definition-row">
-              <VisualCube local view="plan" size={96} stickerColors={definitionRows[step.id === 'edge-position' ? 1 : 0]}
-                stickerMaskColor={FM_FIXED_COLOR[FM_IGNORED]}
-                alt={step.id === 'edge-position' ? tr({ zh: '墙：三个同色格', en: 'Wall: three matching stickers' }) : tr({ zh: '眼：两侧同色，中间不看', en: 'Headlights: matching ends; ignore the middle' })} />
-            </span>}
-            {step.id === 'corner-position' && i === 0 && <T zh="，再选择下面对应的情况。" en=", then choose the matching case below." />}
-            {step.id === 'edge-position' && i === 0 && <T zh="时，转体把墙放后，再看前棱应与左侧还是右侧对齐。没有墙时，选择“无墙 · 先造墙”。" en=", rotate the whole cube to put it at the back, then check whether the front edge matches the left or right center. If there is no wall, choose “No wall · Create a wall”." />}
-          </p>)}
-        </div>}
         <div className="lbl-case-layout">
         <div className="lbl-cases" data-count={step.examples.length + 1 + (hasTerms ? 1 : 0) + (hasCompleteDemo ? 1 : 0)} role="group" aria-label={tr({ zh: '演示情况', en: 'Examples' })}>
           <button type="button" className="lbl-button lbl-case lbl-case-overview" aria-pressed={overview}
@@ -235,20 +233,10 @@ export default function LblTutorial() {
             <span><T zh="完整演示" en="Complete demonstration" /></span>
           </button>}
         </div>
-        {showComparison && <div className="lbl-comparison" data-hidden={completeDemo || overview} aria-hidden={completeDemo || overview}>
-          <figure><VisualCube local {...diagramMask} stickerColors={comparisonBefore} view="plan" scheme="yogwrb" size={96} setup={setup}
-            outlineMaskedTop={step.id === 'yellow-face' && exampleIndex >= 2}
-            alt={tr({ zh: '转动前', en: 'Before' })} /><figcaption><T zh="转动前" en="Before" /></figcaption></figure>
-          <ArrowRight size={20} aria-hidden="true" />
-          <figure><VisualCube local {...diagramMask} stickerColors={comparisonAfter} view="plan" scheme="yogwrb" size={96} setup={new Alg(`${setup} ${demo.alg}`).expand().toString()} alt={tr({ zh: '转动后', en: 'After' })} /><figcaption>{step.id === 'yellow-face' && exampleIndex >= 2 ? <T zh="转动后：3灰，再判断" en="After: 3 gray; reassess" /> : step.id === 'edge-position' && exampleIndex === 2 ? <T zh="转动后：有墙，再判断" en="After: a wall; reassess" /> : <T zh="转动后" en="After" />}</figcaption></figure>
-        </div>}
         </div>
-        {!guidanceUnderTitle && sidebarGuidance.length > 0 && <div className="lbl-guidance" data-hidden={overview} aria-hidden={overview}>
-          {sidebarGuidance.map((p, i) => <p key={i}>{tr(p)}</p>)}
-        </div>}
       </aside>
       <section className="lbl-demonstration" aria-label={tr({ zh: '转动演示', en: 'Move demonstration' })}>
-        <div className="lbl-stage-desktop" hidden={overview}>{stageOverview}</div>
+        {!overview && stageOverview}
         {overview && stageImages ? <div className="lbl-chapter-overview">
           <div className="lbl-overview-diagrams">
             {stageDiagram(beforeStage, 160, tr(stageGoal.before))}
@@ -262,9 +250,8 @@ export default function LblTutorial() {
           instruction={tr(lastLayer || ['daisy', 'middle'].includes(step.id) ? demo.hint : step.paragraphs[0] ?? demo.hint)} />}
         <div className="lbl-lesson-actions">
           <Link className="lbl-practice lbl-lesson-practice" href={`/tutorial/lbl?step=${step.id}&view=practice&case=${completeDemo ? 1 : exampleIndex + 1}`} prefetch={false}><T zh="练习本节" en="Practice this lesson" /><ArrowRight size={16} /></Link>
-          {nextStep && <Link className="lbl-practice lbl-next-lesson" href={`/tutorial/lbl?step=${nextStep.id}`} prefetch={false}>
-            <span><T zh="下一节：" en="Next: " />{nextStep.id === 'cross' ? tr({ zh: '白色十字', en: 'White cross' }) : tr(nextStep.title)}</span><ArrowRight size={16} />
-          </Link>}
+          {nextSubsection !== undefined ? <ContinueButton onClick={() => setSelection({ step: step.id, index: nextSubsection })} />
+            : continueChapter && <ContinueButton onClick={continueChapter} />}
         </div>
       </section>
     </article>}

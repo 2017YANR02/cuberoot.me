@@ -4,7 +4,6 @@ import { parseAsStringEnum, useQueryStates } from 'nuqs';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { Axis, type ICubeOptions } from '@cuberoot/visualcube';
 import { COLORS } from '@cuberoot/puzzle-render-core/engine/define';
-import { ArrowLeft, ArrowRight } from '@app-foundation/icons/lucide';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer/AlgPlayer';
 import { VisualCube } from '@/components/VisualCube';
 import { stickeringMaskFn, FM_FIXED_COLOR, FM_IGNORED } from '@cuberoot/puzzle-render-core/engine/nxn/stickering';
@@ -13,17 +12,14 @@ import { orientedCubeFaceColors } from '@/lib/cube-orientation';
 import { tr, T } from '@/i18n/tr';
 import { LBL_BASICS, LBL_INITIAL_VIEW } from './content';
 import BasicsGuide, { BASIC_GUIDE_TOPICS } from './BasicsGuide';
+import ContinueButton from './ContinueButton';
 
 const cards = LBL_BASICS.map(card => ({ ...card, colors: stageStickerColors(3, stickeringMaskFn(3, card.mask), orientedCubeFaceColors('z2')) }));
 const faceletColor = orientedCubeFaceColors('z2').F;
 const facelet = { id: 'facelet', title: { zh: '格', en: 'Facelet' }, setup: '', colors: Array.from({ length: 54 }, (_, i) => i === 20 ? faceletColor : FM_FIXED_COLOR[FM_IGNORED]!) };
-const topicGroups = [
-  { title: { zh: '认识结构', en: 'The pieces' }, items: [facelet, ...cards] },
-  { title: { zh: '楼层与转动', en: 'Layers and turns' }, items: BASIC_GUIDE_TOPICS },
-];
 const topics = [facelet, ...cards, ...BASIC_GUIDE_TOPICS];
 
-export default function BasicsCards({ onStart, heading }: { onStart: () => void; heading: ReactNode }) {
+export default function BasicsCards({ onStart, heading, progress }: { onStart: () => void; heading: ReactNode; progress: ReactNode }) {
   const [query, setQuery] = useQueryStates({
     topic: parseAsStringEnum(topics.map(item => item.id)).withDefault('facelet'),
     // Existing guide links may still use ?basics=moves. New selections use topic only.
@@ -37,21 +33,19 @@ export default function BasicsCards({ onStart, heading }: { onStart: () => void;
 
   return <section className="lbl-basics-intro" aria-label={tr({ zh: '魔方基础知识', en: 'Cube basics' })}>
     <div className="lbl-basics-layout lbl-lesson">
+      {progress}
       <aside className="lbl-visuals lbl-basics-sidebar">
     <div className="lbl-basics-heading" id="lbl-guide-title">{heading}</div>
     <select className="lbl-basics-mobile-select" aria-label={tr({ zh: '选择基础知识', en: 'Choose a topic' })} value={topic} onChange={event => selectTopic(event.target.value)}>
-      {topicGroups.map(group => <optgroup key={group.title.en} label={tr(group.title)}>
-        {group.items.map(item => <option key={item.id} value={item.id}>{tr(item.title)}</option>)}
-      </optgroup>)}
+      {topics.map(item => <option key={item.id} value={item.id}>{tr(item.title)}</option>)}
     </select>
       <nav className="lbl-basics-topics" aria-label={tr({ zh: '选择基础知识', en: 'Choose a topic' })}>
-        {topicGroups.map(group => <div className="lbl-basics-nav-group" key={group.title.en}>
-          <p>{tr(group.title)}</p>
-          {group.items.map(item => <button type="button" key={item.id} className="lbl-button lbl-topic" aria-pressed={topic === item.id} aria-controls="lbl-basics-panel" onClick={() => selectTopic(item.id)}>
-            {'colors' in item && <VisualCube view="iso" setup={item.setup} stickerColors={item.colors} stickerMaskColor={FM_FIXED_COLOR[FM_IGNORED]} size={52} alt={tr(item.title)} />}
+        <div className="lbl-basics-nav-group">
+          {topics.map(item => <button type="button" key={item.id} className="lbl-button lbl-topic" aria-pressed={topic === item.id} aria-controls="lbl-basics-panel" onClick={() => selectTopic(item.id)}>
+            <VisualCube local view="iso" setup={item.setup} stickerColors={item.colors} stickerMaskColor={FM_FIXED_COLOR[FM_IGNORED]} size={52} alt={tr(item.title)} />
             <span>{tr(item.title)}</span>
           </button>)}
-        </div>)}
+        </div>
       </nav>
       </aside>
       <div className="lbl-basics-main">
@@ -61,10 +55,7 @@ export default function BasicsCards({ onStart, heading }: { onStart: () => void;
           {guide && <BasicsGuide section={guide.id} />}
         </div>
         <div className="lbl-basic-footer lbl-basics-footer">
-          <button type="button" className="lbl-button lbl-basic-prev" disabled={index === 0} onClick={() => selectTopic(topics[index - 1].id)}><ArrowLeft size={16} /><T zh="上一项" en="Previous" /></button>
-          <button type="button" className="lbl-button lbl-basic-next" onClick={() => { if (index === topics.length - 1) onStart(); else selectTopic(topics[index + 1].id); }}>
-            {index === topics.length - 1 ? <T zh="开始做小花" en="Make the daisy" /> : tr(topics[index + 1].title)}<ArrowRight size={16} />
-          </button>
+          <ContinueButton onClick={() => { if (index === topics.length - 1) onStart(); else selectTopic(topics[index + 1].id); }} />
         </div>
       </div>
     </div>

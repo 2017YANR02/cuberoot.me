@@ -1,4 +1,8 @@
-import { RIGHT, CORNER_POSITION } from './content';
+import { RIGHT, CORNER_POSITION as L_ALG } from './content';
+
+// These fixed traces predate the L lesson's final U'. Preserve their original
+// corner-stage result so the following edge-stage setups remain valid.
+const CORNER_POSITION = `${L_ALG} U`;
 
 const MIDDLE_FRONT_MATCH = "U R U' R' U' F' U F";
 const MIDDLE_RIGHT_MATCH = "R' F' R U R U' R' F";
