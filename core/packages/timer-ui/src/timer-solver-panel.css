@@ -295,8 +295,8 @@
   }
 
   /* 左栏收起时 › 展开，展开时 ‹ 收回左侧。 */
-  .timer-solver-rail .solver-panel[data-open='false'] .solver-panel-chevron { transform: rotate(0deg); }
-  .timer-solver-rail .solver-panel[data-open='true']  .solver-panel-chevron { transform: rotate(180deg); }
+  .timer-solver-rail .solver-panel[data-open='false'] .solver-panel-head > .more-toggle-chevron { transform: rotate(-90deg); }
+  .timer-solver-rail .solver-panel[data-open='true'] .solver-layout-action > .more-toggle-chevron { transform: rotate(90deg); }
 
   /* Keep StageSolver's solution-menu-first order in the narrow desktop rail. */
   .timer-solver-rail .solver-panel-body .stsv-player {
