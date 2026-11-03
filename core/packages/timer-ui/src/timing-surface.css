@@ -343,7 +343,7 @@
     min-height: 0;
     flex: 1 1 0;
     grid-template-rows: auto minmax(0, 1fr);
-    row-gap: min(var(--solo-timer-gap, 20px), 2dvh);
+    /* Inherit the user's timer gap; viewport limits are enforced by the editor. */
     --timer-scramble-fs: min(36px, 6cqw);
   }
   .timing-surface--solo .timing-surface-core {
