@@ -8,8 +8,8 @@ import { classifyPhotoColors, completeLastLayer, recognizePhoto, standardColorFr
 import type { RGB } from '@/lib/cube-photo';
 import { findPhotoAlg, photoAlgGoal, photoAlgSets, photoAufOnly, type PhotoAlgSet } from '@/lib/cube-photo/lookup';
 import type { CubeCorners } from '@/lib/cube-photo/geometry';
-import { cubePhotoFixture } from './fixtures/cube-photo';
-import fixture from './fixtures/cube-photo-algs.json';
+import { cubePhotoFixture } from '@cuberoot/shared/testing/cube-photo';
+import fixture from '@cuberoot/shared/testing/cube-photo-algs';
 import { analyzeCubePhoto } from '@cuberoot/shared/cube-photo/analyze';
 
 const visible = (s: string) => ({ U: s.slice(0, 9), F: s.slice(18, 21), R: s.slice(9, 12) });

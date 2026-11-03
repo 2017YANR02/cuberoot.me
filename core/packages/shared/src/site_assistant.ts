@@ -40,7 +40,7 @@ export interface AssistantChart {
   kind: 'progress'; title: string; event: string; metric: 'single' | 'average';
   points: Array<{ date: string; value: number; label: string; person: string }>;
 }
-export type AssistantArtifact = AssistantTable | AssistantChart;
+export type AssistantArtifact = AssistantTable | AssistantChart | import('./cube-photo/result').CubePhotoArtifact;
 export interface AssistantAnswer {
   answer: string; sources: AssistantSource[]; artifacts?: AssistantArtifact[];
   /** Verified destinations selected from site catalogs or public data adapters. */

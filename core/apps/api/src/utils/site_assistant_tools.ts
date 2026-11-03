@@ -36,6 +36,9 @@ export const toolCallSchema = z.discriminatedUnion('tool', [
   z.object({ tool: z.literal('glossary'), query }).strict(),
   z.object({ tool: z.literal('forum'), query }).strict(),
   z.object({ tool: z.literal('algorithms'), puzzle: id.default('3x3'), set: id.optional() }).strict(),
+  z.object({ tool: z.literal('lookup_cube_photo'), imageRef: z.string().regex(/^(?:current:[0-2]|history:[0-9]:[0-2])$/),
+    sets: z.union([z.literal('auto'), z.array(z.enum(['oll','ollcp','1lll','zbll','coll','pll'])).min(1).max(6)]).default('auto'),
+  }).strict(),
   z.object({ tool: z.literal('statistics'), id: id.optional(), tableKey: z.string().regex(/^[0-9.]{1,40}$/).optional(), offset: z.number().int().min(0).max(50000).optional(), limit: z.number().int().min(1).max(20).default(10) }).strict().refine(value=>!value.tableKey || !!value.id, {path:['id'],message:'A tableKey requires its statistic id. Repeat the id from the previous result; table keys are not global.'}),
   z.object({ tool: z.literal('pages'), query, pageIds: z.array(z.string().max(120)).max(3).default([]), audience: z.enum(['user','developer']).default('user') }).strict(),
   z.object({ tool: z.literal('navigation'), query, kind: z.enum(['all','algorithms','training','solver']).default('all'), pageIds: z.array(z.string().max(200)).max(3).default([]) }).strict(),
@@ -59,7 +62,7 @@ const url = (path: string, params: Record<string, string | number | undefined>) 
 const source = (id: string, title: string, href: string): AssistantSource => ({ id, title, href, read: true });
 
 /** Only fixed public origins/endpoints. Never forwards cookies or credentials. */
-export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'|'navigation'|'analysis_schema'|'analysis_query'|'web_search'|'deliberate'}>, lang: 'zh'|'en', read: JsonReader, findPeople = findAssistantPeople,today=new Date().toISOString().slice(0,10),timeZone='UTC'): Promise<ToolResult> {
+export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'|'navigation'|'analysis_schema'|'analysis_query'|'web_search'|'deliberate'|'lookup_cube_photo'}>, lang: 'zh'|'en', read: JsonReader, findPeople = findAssistantPeople,today=new Date().toISOString().slice(0,10),timeZone='UTC'): Promise<ToolResult> {
   if (call.tool === 'news') return readAssistantNews(call, lang, read, timeZone);
   const label = (zh: string, en: string) => ({ zh, en })[lang];
   const name = (raw: string) => displayCuberName(raw, lang === 'zh');

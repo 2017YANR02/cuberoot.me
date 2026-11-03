@@ -1,6 +1,6 @@
 'use client';
 
-import PhotoAlgorithmCards, { Swatch } from './PhotoAlgorithmCards';
+import PhotoAlgorithmCards, { Swatch, PhotoStateHeading } from './PhotoAlgorithmCards';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, RotateCcw } from 'lucide-react';
@@ -72,11 +72,7 @@ export default function PhotoResults({ pixels, corners, width, height }: { pixel
     <div className="cube-photo-result-status" role="status" aria-live="polite">
       {!recognition && !current?.error && tr({ zh: '正在读取色块与补全状态…', en: 'Reading colors and completing the state…' })}
       {recognition && recognition.status !== 'ok' && <p className="cube-photo-error">{tr(STATUS[recognition.status])}</p>}
-      {recovered && <>
-        <h2>{sets.includes('pll') ? tr({ zh: '顶面完成 · PLL', en: 'Last layer oriented · PLL' }) : sets.includes('zbll') ? tr({ zh: '顶层十字已完成', en: 'Last-layer cross oriented' }) : sets.length ? tr({ zh: '顶层十字未完成', en: 'Last-layer cross not oriented' }) : tr({ zh: '魔方已复原', en: 'Cube solved' })}</h2>
-        <p className="cube-photo-orientation">{(['U', 'F', 'R'] as const).map(face => <span key={face}>{face} <Swatch color={recovered.frame[face]} />{tr(COLOR_NAMES[recovered.frame[face]])}</span>)}</p>
-        <p className="cube-photo-note">{tr({ zh: 'F 对应照片左侧面，R 对应照片右侧面。', en: 'F is the left face in the photo; R is the right face.' })}</p>
-      </>}
+      {recovered && <PhotoStateHeading state={recovered} />}
     </div>
     <PhotoAlgorithmCards sets={sets} results={current?.results ?? {}} error={current?.error} />
     {current?.error && !sets.length && <p className="cube-photo-error" role="alert">{tr({ zh: '识别未完成，请重试。', en: 'Analysis did not finish. Please retry.' })}</p>}

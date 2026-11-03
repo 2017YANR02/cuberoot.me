@@ -257,7 +257,11 @@
       "./cube-photo/detect": "runtime-neutral",
       "./cube-photo/recognize": "runtime-neutral",
       "./cube-photo/lookup": "runtime-neutral",
-      "./cube-photo/analyze": "runtime-neutral"
+      "./cube-photo/analyze": "runtime-neutral",
+      "./cube-photo/pixels": "runtime-neutral",
+      "./cube-photo/result": "runtime-neutral",
+      "./testing/cube-photo": "runtime-neutral",
+      "./testing/cube-photo-algs": "asset"
     }
   },
   "main": "./src/index.ts",
@@ -941,6 +945,16 @@
     "./cube-photo/analyze": {
       "node": "./dist/cube-photo/analyze.js",
       "default": "./src/cube-photo/analyze.ts"
+    },
+    "./cube-photo/pixels": {
+      "node": "./dist/cube-photo/pixels.js",
+      "default": "./src/cube-photo/pixels.ts"
+    },
+    "./testing/cube-photo": "./test-fixtures/cube-photo.ts",
+    "./testing/cube-photo-algs": "./test-fixtures/cube-photo-algs.json",
+    "./cube-photo/result": {
+      "node": "./dist/cube-photo/result.js",
+      "default": "./src/cube-photo/result.ts"
     }
   },
   "scripts": {

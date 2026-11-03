@@ -8,7 +8,7 @@ import { parseScramble } from '@cuberoot/puzzle-solvers/cube-moves';
 import { validateFacelet } from '../cube_facelet';
 
 export type PhotoAlgSet = 'oll' | 'ollcp' | '1lll' | 'zbll' | 'coll' | 'pll';
-export interface PhotoAlgMatch { set: PhotoAlgSet; name: string; caseName: string; href: string; alg: string; preAuf: string; postAuf: string; turns: number }
+export interface PhotoAlgMatch { set: PhotoAlgSet; name: string; caseName: string; caseId?: number; href: string; alg: string; body?: string; preAuf: string; postAuf: string; turns: number }
 export interface PhotoAlgResult { set: PhotoAlgSet; status: 'found' | 'missing' | 'error'; match?: PhotoAlgMatch }
 const AUFS = ['', 'U', 'U2', "U'"];
 const AUF_MOVES = AUFS.map(a => parseScramble(a));
@@ -62,7 +62,7 @@ export function findPhotoAlg(facelet: string, set: PhotoAlgSet, file: AlgFile): 
         if (!slug) continue;
         // Preserve the two numeric parts of legacy OLLCP names ("OLLCP13 6").
         return { set, name: set === 'ollcp' && !c.meta?.ollcp ? c.name : primaryCaseName('3x3', set, c), caseName: c.name,
-          href: algCaseDetailHref('3x3', set, slug), alg, preAuf: AUFS[pre], postAuf: AUFS[post], turns: stm(alg) };
+          caseId: c.id, href: algCaseDetailHref('3x3', set, slug), alg, body, preAuf: AUFS[pre], postAuf: AUFS[post], turns: stm(alg) };
       }
     }
   }

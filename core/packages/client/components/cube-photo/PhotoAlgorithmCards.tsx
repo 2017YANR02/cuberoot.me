@@ -3,8 +3,8 @@ import { Check, Copy } from 'lucide-react';
 import ReconCaseLink from '@/components/ReconCaseLink';
 import { useCopy } from '@/hooks/useCopy';
 import { tr } from '@/i18n/tr';
-import { COLOR_RGB, type CubeColor } from '@cuberoot/shared/cube-photo/recognize';
-import type { PhotoAlgResult, PhotoAlgSet } from '@cuberoot/shared/cube-photo/lookup';
+import { COLOR_NAMES, COLOR_RGB, type CubeColor, type RecoveredState } from '@cuberoot/shared/cube-photo/recognize';
+import { photoAlgSets, type PhotoAlgResult, type PhotoAlgSet } from '@cuberoot/shared/cube-photo/lookup';
 import './cube-photo.css';
 const GOALS: Record<PhotoAlgSet, { zh: string; en: string }> = {
   oll: { zh: '完成顶面', en: 'Orient the last layer' },
@@ -17,6 +17,15 @@ export function Swatch({ color }: { color: CubeColor }) {
   const [r, g, b] = COLOR_RGB[color];
   // Cube sticker colors are media data, independent of page theme.
   return <svg width="17" height="17" viewBox="0 0 17 17" aria-hidden="true"><rect width="17" height="17" rx="3" fill={`rgb(${r},${g},${b})`} /></svg>;
+}
+
+export function PhotoStateHeading({ state }: { state: RecoveredState }) {
+  const sets = photoAlgSets(state.facelet);
+  return <>
+    <h2>{sets.includes('pll') ? tr({ zh: '顶面完成 · PLL', en: 'Last layer oriented · PLL' }) : sets.includes('zbll') ? tr({ zh: '顶层十字已完成', en: 'Last-layer cross oriented' }) : sets.length ? tr({ zh: '顶层十字未完成', en: 'Last-layer cross not oriented' }) : tr({ zh: '魔方已复原', en: 'Cube solved' })}</h2>
+    <p className="cube-photo-orientation">{(['U', 'F', 'R'] as const).map(face => <span key={face}>{face} <Swatch color={state.frame[face]} />{tr(COLOR_NAMES[state.frame[face]])}</span>)}</p>
+    <p className="cube-photo-note">{tr({ zh: 'F 对应照片左侧面，R 对应照片右侧面。', en: 'F is the left face in the photo; R is the right face.' })}</p>
+  </>;
 }
 
 export default function PhotoAlgorithmCards({sets,results,error=false}:{sets:PhotoAlgSet[];results:Partial<Record<PhotoAlgSet,PhotoAlgResult>>;error?:boolean}) {

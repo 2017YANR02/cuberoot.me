@@ -17,6 +17,8 @@ import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { useSpeechToText } from '@/hooks/useSpeechToText';
 import { Tooltip } from '@/components/Tooltip';
 import { sendAssistantEvent, type AssistantFeedback } from '@/lib/site-assistant-request';
+import PhotoChatResult from './cube-photo/PhotoChatResult';
+import ReconCaseLink from './ReconCaseLink';
 import AssistantImagePreview from './AssistantImagePreview';
 import { prepareAssistantImage } from '@/lib/site-assistant-images';
 import { ClearButton } from '@/components/ClearButton';
@@ -46,6 +48,7 @@ interface Props {
 const QUERY_LABELS: Record<string, {zh:string;en:string}> = {
   web_search:{zh:'正在搜索网络资料',en:'Searching the web'},
   news:{zh:'正在查询 WCA 官方新闻',en:'Reading WCA news'},
+  lookup_cube_photo:{zh:'正在识别魔方并验证公式',en:'Identifying the cube and verifying algorithms'},
   navigation:{zh:'正在查找功能入口',en:'Finding site tools'},
   pages:{zh:'正在查询站内页面',en:'Searching site pages'},
   records:{zh:'正在查询纪录',en:'Looking up records'},
@@ -154,6 +157,7 @@ export function SiteAssistantAnswerText({result,partial,requestId,shared=false,a
       const match=/^#assistant-source-(\d+)$/.exec(href ?? '');
       const source=match ? sources[Number(match[1])] : undefined;
       const destination=href ? resolveLink(href) : undefined;
+      if (source?.id.startsWith('photo:') && /^\/alg\/[^/]+\/[^/]+\/[^/?#]+/.test(source.href)) return <ReconCaseLink className="site-assistant-citation" href={source.href} title={source.title}>{source.title}</ReconCaseLink>;
       if (!source && destination) return <Link className="site-assistant-inline-link" href={destination.href} {...sourceLinkProps(destination.href)} prefetch={false} onClick={event=>{if(requestId)void sendAssistantEvent(requestId,{type:'click',kind:'source',id:destination.id}).catch(()=>{});openSolverDocument(event);}}>{children}</Link>;
       return source ? <Link className="site-assistant-citation" href={source.href} {...sourceLinkProps(source.href)} onClick={event=>{if(requestId)void sendAssistantEvent(requestId,{type:'click',kind:'source',id:source.id}).catch(()=>{});openSolverDocument(event);}} prefetch={false} title={source.title} aria-label={tr({zh:`来源：${source.title}`,en:`Source: ${source.title}`})}>{source.title}</Link> : shared && href && isAssistantSourceHref(href) ? <Link href={href} {...sourceLinkProps(href)} prefetch={false}>{children}</Link> : <>{children}</>;
     }}}>{markdown}</Markdown></Suspense></div>;
@@ -209,7 +213,7 @@ export default function SiteAssistantDialog({onAnswerRevealed,turns,draft,images
     } finally {if(job===imageJob.current){processing.current=false;setProcessingImages(false);}}
   };
   const renderImages=(items:AssistantImage[],removable=false)=><div className="site-assistant-images">{items.map((image,index)=><div className="site-assistant-image" key={index}>
-    {/* Data URLs stay in conversation memory; never upload private attachments to public article storage. */}
+    {/* Saved references are fetched with owner authentication, never from public article storage. */}
     {/* eslint-disable-next-line @next/next/no-img-element */}
     <AssistantImagePreview image={image} index={index} />
     {removable && <Tooltip content={tr({zh:'移除图片',en:'Remove image'})}>{tip=><button {...tip} type="button" className="site-assistant-action" disabled={processingImages} aria-label={tr({zh:`移除图片 ${index+1}`,en:`Remove image ${index+1}`})} onClick={()=>{setImages(images.filter((_,i)=>i!==index));setImageError(null);}}><X size={14}/></button>}</Tooltip>}
@@ -290,7 +294,7 @@ export default function SiteAssistantDialog({onAnswerRevealed,turns,draft,images
           {busy && i===turns.length-1 && <div className="site-assistant-status" role="status"><span className="site-assistant-status-text">{statusLabel(status)}</span></div>}
           {turn.result && <div className="site-assistant-response"><SiteAssistantAnswerText result={turn.result} partial={turn.partial} requestId={turn.requestId} animate={animate} onRevealComplete={onRevealComplete}/>
           {revealDone && !turn.partial && !!actions.length && <div className="site-assistant-response-actions site-assistant-navigation">{actions.map(action=><Link key={action.id} className="site-assistant-action" href={action.href} {...sourceLinkProps(action.href)} onClick={event=>{if(turn.requestId)void sendAssistantEvent(turn.requestId,{type:'click',kind:'action',id:action.id}).catch(()=>{});openSolverDocument(event);}} prefetch={false}>{tr({zh:`打开 ${action.title}`,en:`Open ${action.title}`})}</Link>)}</div>}
-          {revealDone && turn.result.artifacts?.map((a,j)=>a.kind==='progress'?<Progress key={j} chart={a}/>:<section key={j}><h4>{a.title}</h4><div className="site-assistant-table"><table><thead><tr>{a.columns.map((c,k)=><th key={k}>{c}</th>)}</tr></thead><tbody>{a.rows.map((row,k)=><tr key={k}>{row.map((cell,c)=>{
+          {revealDone && turn.result.artifacts?.map((a,j)=>a.kind==='cube-photo'?<PhotoChatResult key={j} result={a}/>:a.kind==='progress'?<Progress key={j} chart={a}/>:<section key={j}><h4>{a.title}</h4><div className="site-assistant-table"><table><thead><tr>{a.columns.map((c,k)=><th key={k}>{c}</th>)}</tr></thead><tbody>{a.rows.map((row,k)=><tr key={k}>{row.map((cell,c)=>{
             const kind=a.columnKinds?.[c];
             const href=a.cellLinks?.[k]?.[c] ?? (c===0 ? a.links?.[k] : undefined);
             const compId=href && /^\/wca\/comp\/([A-Za-z0-9_-]+)$/.exec(href)?.[1];

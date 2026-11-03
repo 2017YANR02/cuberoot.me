@@ -7,13 +7,15 @@ import Link from '@/components/AppLink';
 import HeaderToggles from '@/components/HeaderToggles';
 import BoolToggle from '@/components/BoolToggle';
 import { tr } from '@/i18n/tr';
-import { prepareImageUpload } from '@/lib/image-upload';
+import { prepareImageUpload, type PreparedImageUpload } from '@/lib/image-upload';
+import { loadAssistantAttachment } from '@/lib/site-assistant-images';
 import { FACE_NAMES, faceGrid, faceQuad, homography, manualCorners, project, validQuad, type CubeCorners, type FaceName } from '@/lib/cube-photo/geometry';
-import type { CubePhotoDetection } from '@/lib/cube-photo/detect';
+import type { CubePhotoDetection, PhotoPixels } from '@/lib/cube-photo/detect';
+import { resizePhotoPixels } from '@cuberoot/shared/cube-photo/pixels';
 import PhotoResults from './PhotoResults';
 import './cube-photo.css';
 
-interface Photo { src: string; width: number; height: number; name: string; pixels: ImageData }
+interface Photo { src: string; width: number; height: number; name: string; pixels: PhotoPixels }
 interface Result { detection: CubePhotoDetection; elapsedMs: number }
 const LABELS = { top: { zh: '顶面', en: 'Top' }, left: { zh: '左侧面', en: 'Left' }, right: { zh: '右侧面', en: 'Right' } };
 const POINT_LABELS = [
@@ -42,6 +44,19 @@ export default function CubePhotoTool() {
     timer.current = null;
   }
   useEffect(() => () => { generation.current++; stopWorker(); }, []);
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('attachment');
+    if (!id || !/^[0-9a-f-]{36}$/i.test(id)) return;
+    const controller = new AbortController();
+    const version = generation.current;
+    void loadAssistantAttachment(id, controller.signal).then(image => {
+      if (controller.signal.aborted || version !== generation.current) return;
+      void upload(undefined, { dataB64: image.data, mime: image.mediaType, previewUrl: `data:${image.mediaType};base64,${image.data}` });
+    }).catch(() => {
+      if (!controller.signal.aborted && version === generation.current) setError(tr({ zh: '无法读取会话图片，请登录原账号或重新选择照片。', en: 'Could not read the chat image. Sign in to its owner account or choose a photo.' }));
+    });
+    return () => controller.abort();
+  }, []);
 
   function selectCandidate(data: Result, index: number, image: Photo) {
     const found = data.detection.candidates[index];
@@ -71,25 +86,24 @@ export default function CubePhotoTool() {
     } catch { stopWorker(); setBusy(false); setError(tr({ zh: '浏览器无法启动检测，请重试。', en: 'The browser could not start detection. Please retry.' })); }
   }
 
-  async function upload(file?: File) {
-    if (!file) return;
+  async function upload(file?: File, saved?: PreparedImageUpload) {
+    if (!file && !saved) return;
     const version = ++generation.current;
     stopWorker(); setBusy(true); setError(''); setResult(null); setCorners(null); setPhoto(null); setEditing(false);
-    if (file.size > 20 * 1024 * 1024) {
+    if (file && file.size > 20 * 1024 * 1024) {
       setBusy(false); setError(tr({ zh: '请选择不超过 20 MB 的照片。', en: 'Choose a photo smaller than 20 MB.' })); return;
     }
     try {
-      const prepared = await prepareImageUpload(file, 1920);
+      const prepared = saved ?? await prepareImageUpload(file!, 1920);
       const image = new Image(); image.src = prepared.previewUrl; await image.decode();
       if (generation.current !== version) return;
-      const scale = Math.min(1, 640 / Math.max(image.naturalWidth, image.naturalHeight));
       const canvas = document.createElement('canvas');
-      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale)); canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
       const context = canvas.getContext('2d', { willReadFrequently: true });
       if (!context) throw new Error('canvas');
       context.drawImage(image, 0, 0, canvas.width, canvas.height);
-      const next: Photo = { src: prepared.previewUrl, width: image.naturalWidth, height: image.naturalHeight, name: file.name,
-        pixels: context.getImageData(0, 0, canvas.width, canvas.height) };
+      const next: Photo = { src: prepared.previewUrl, width: image.naturalWidth, height: image.naturalHeight, name: file?.name ?? 'chat-photo',
+        pixels: resizePhotoPixels(context.getImageData(0, 0, canvas.width, canvas.height)) };
       setPhoto(next); detect(next, version);
     } catch {
       if (generation.current !== version) return;

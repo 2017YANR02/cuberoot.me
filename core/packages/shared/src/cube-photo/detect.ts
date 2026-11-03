@@ -151,7 +151,9 @@ function lineFamilies(lines: Line[]): Line[][] {
     if (seeds.every(a => angleDistance(a, l.angle) > 20 * PI / 180)) seeds.push(l.angle);
     if (seeds.length === 6) break;
   }
-  return seeds.map(a => lines.filter(l => angleDistance(l.angle, a) < 13 * PI / 180).slice(0, 22));
+  // Opposite edges converge under perspective. Overlap neighboring families so
+  // small raster/resize changes cannot split a valid pair across their boundary.
+  return seeds.map(a => lines.filter(l => angleDistance(l.angle, a) < 20 * PI / 180).slice(0, 22));
 }
 
 function boundaryPairs(lines: Line[], w: number, h: number): [Line, Line][] {

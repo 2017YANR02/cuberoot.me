@@ -13,7 +13,11 @@ export async function saveAssistantImages(images: AssistantImage[], conversation
 export async function readAssistantImage(image: AssistantImage, signal?: AbortSignal): Promise<AssistantImage> {
   if (image.data) return image;
   if (!image.attachmentId) throw new Error('missing_image');
-  return handleApi<AssistantImage>(await sessionFetch(apiUrl(`/v1/site-assistant/attachments/${encodeURIComponent(image.attachmentId)}`), { headers: authHeaders(), signal }));
+  return loadAssistantAttachment(image.attachmentId, signal);
+}
+
+export async function loadAssistantAttachment(id: string, signal?: AbortSignal): Promise<AssistantImage> {
+  return handleApi<AssistantImage>(await sessionFetch(apiUrl(`/v1/site-assistant/attachments/${encodeURIComponent(id)}`), { headers: authHeaders(), signal }));
 }
 
 /** Re-encode to strip metadata and keep the entire request below proxy limits. */
