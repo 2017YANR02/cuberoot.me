@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type ComponentProps } from 'react';
 import SharedCuberReconPlayer from '@cuberoot/timer-ui/CuberReconPlayer';
+import { trackFeatureUse } from '@/lib/analytics-signal';
 import { PlaybackBackViewButton } from './PlaybackBar';
 import StickeringSelect from '@/app/[lang]/sim/StickeringSelect';
 import { useSimMasks } from '@/app/[lang]/sim/useSimMasks';
@@ -17,9 +18,10 @@ type Props = ComponentProps<typeof SharedCuberReconPlayer> & { showPlaybackOptio
 
 /** Only the full reconstruction pane opts into the simulator's extra controls. */
 export default function CuberReconPlayer({ showPlaybackOptions, reconText, showScrambleNet = true, ...props }: Props) {
+  const onPlaybackStart = () => { props.onPlaybackStart?.(); trackFeatureUse('recon_play'); };
   return showPlaybackOptions && !props.hideControls
-    ? <CuberWithOptions {...props} reconText={reconText} showScrambleNet={showScrambleNet} />
-    : <SharedCuberReconPlayer {...props} />;
+    ? <CuberWithOptions {...props} onPlaybackStart={onPlaybackStart} reconText={reconText} showScrambleNet={showScrambleNet} />
+    : <SharedCuberReconPlayer {...props} onPlaybackStart={onPlaybackStart} />;
 }
 
 function CuberWithOptions({ reconText, showScrambleNet, ...props }: ComponentProps<typeof SharedCuberReconPlayer> & { reconText?: string; showScrambleNet: boolean }) {

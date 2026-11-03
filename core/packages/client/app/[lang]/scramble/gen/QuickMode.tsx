@@ -1,4 +1,5 @@
 'use client';
+import { trackFeatureUse } from '@/lib/analytics-signal';
 /**
  * /scramble/gen — "Practice" mode. Pick one OR MORE events, then either
  *   - 生成: auto-generate N scrambles per event via cubing/scramble, or
@@ -169,6 +170,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
   useEffect(() => {
     if (subMode !== 'batch') return;
     const fullRegen = count !== lastCountRef.current || tick !== lastTickRef.current;
+    const requestedByUser = tick !== lastTickRef.current;
     const ivyChanged = ivyMode !== lastIvyModeRef.current;
     lastIvyModeRef.current = ivyMode;
     const rediChanged = rediMode !== lastRediModeRef.current;
@@ -271,6 +273,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
     (async () => {
       await Promise.all(promises);
       if (reqIdRef.current !== myId) return;
+      if (requestedByUser && Object.values(buckets).some(items => items.length > 0)) trackFeatureUse('scramble_generate');
       const nextTimingDelta: Record<string, { wallMs: number; avgMs: number; firstMs: number; count: number }> = {};
       for (const ev of toGenerate) {
         const durs = evDurations[ev];

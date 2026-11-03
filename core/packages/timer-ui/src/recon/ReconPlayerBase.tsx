@@ -71,12 +71,14 @@ export interface ReconPlayerAdapter<M> {
 }
 
 export default function ReconPlayerBase<M>({
-  scramble, alg, adapter, fillPane = false, hideControls = false, playerRef, fullscreenButton, ariaLabel, leadingControls, trailingControls, controlLabels, segmentEnds, segmentCounts,
+  scramble, alg, adapter, fillPane = false, hideControls = false, playerRef, fullscreenButton, ariaLabel, leadingControls, trailingControls, controlLabels, segmentEnds, segmentCounts, onPlaybackStart,
 }: {
   scramble: string;
   alg: string;
   segmentEnds?: readonly number[];
   segmentCounts?: readonly number[];
+  /** User-initiated playback only; hosts own optional product instrumentation. */
+  onPlaybackStart?: () => void;
   adapter: ReconPlayerAdapter<M>;
   fillPane?: boolean;
   /** 隐藏底部完整控制条,改用画面内居中播放/暂停浮层(嵌成绩弹窗预览时用)。 */
@@ -145,8 +147,9 @@ export default function ReconPlayerBase<M>({
       jumpToStep(stepRef.current);
     } else {
       play();
+      if (movesRef.current.length > 0) onPlaybackStart?.();
     }
-  }, [playing, jumpToStep, play]);
+  }, [playing, jumpToStep, play, onPlaybackStart]);
 
   // ── Mount: 共享的 /sim 嵌入生命周期(mountSimWorld:渲染器 / 尺寸 / 只在脏时渲染的
   //    rAF / 卸载)+ 共享的拖拽手势(attachOrbitTap,钳 pitch 的看图档),本文件只留

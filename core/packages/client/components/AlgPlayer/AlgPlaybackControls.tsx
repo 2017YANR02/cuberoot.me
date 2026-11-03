@@ -1,4 +1,5 @@
 'use client';
+import { trackFeatureUse } from '@/lib/analytics-signal';
 
 import { RotateCcw } from '@app-foundation/icons/lucide';
 import PlaybackBar from '@/components/PlaybackBar';
@@ -37,7 +38,7 @@ export default function AlgPlaybackControls(props: (FullControlsProps | ReplayCo
         <button
           type="button"
           className="playback-bar-btn"
-          onClick={props.onReplay}
+          onClick={() => { props.onReplay(); trackFeatureUse('alg_play'); }}
           disabled={props.count === 0}
           title={t('重播', 'Replay')}
           aria-label={t('重播', 'Replay')}
@@ -58,7 +59,7 @@ export default function AlgPlaybackControls(props: (FullControlsProps | ReplayCo
       onScrub={props.onScrub}
       onSkipStart={() => props.onScrub(0)}
       onStepBack={props.onStepBack}
-      onTogglePlay={props.onTogglePlay}
+      onTogglePlay={() => { props.onTogglePlay(); if (!props.playing && props.count > 0) trackFeatureUse('alg_play'); }}
       onStepForward={props.onStepForward}
       onSkipEnd={() => props.onScrub(props.count)}
       trailing={resetView}

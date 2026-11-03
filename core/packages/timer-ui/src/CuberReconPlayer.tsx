@@ -34,11 +34,12 @@ function tokenize(alg: string): string[] {
 export default function CuberReconPlayer({
   scramble, alg, order, fillPane = false, playerRef, hideControls = false, fullscreenButton,
   backView = true, anchorAtEnd = false, mirror = false, stickering = '', stickeringOrientation = '',
-  stickeringMasks, transparent = false, ariaLabel, leadingControls, trailingControls, controlLabels, stickeringOverride, segmentEnds,
+  stickeringMasks, transparent = false, ariaLabel, leadingControls, trailingControls, controlLabels, stickeringOverride, segmentEnds, onPlaybackStart,
 }: {
   scramble: string;
   alg: string;
   segmentEnds?: readonly number[];
+  onPlaybackStart?: () => void;
   /** Start from alg inverse and finish at the setup state. */
   anchorAtEnd?: boolean;
   /** NxN order (2..7). */
@@ -133,6 +134,7 @@ export default function CuberReconPlayer({
       leadingControls={leadingControls}
       trailingControls={trailingControls}
       controlLabels={controlLabels}
+      onPlaybackStart={onPlaybackStart}
     />
   );
 }

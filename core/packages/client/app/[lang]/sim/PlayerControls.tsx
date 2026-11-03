@@ -1,4 +1,5 @@
 'use client';
+import { trackFeatureUse } from '@/lib/analytics-signal';
 
 /**
  * PlayerControls — alg playground for /sim (Next.js port).
@@ -2061,6 +2062,7 @@ export default function PlayerControls({
       next = formatted ? formatted + ' ' : '';
     }
     algEl.value = next;
+    trackFeatureUse('sim_move');
     algEl.selectionStart = algEl.selectionEnd = next.length;
     autosize(algEl);
     skipAutoResetRef.current = true;

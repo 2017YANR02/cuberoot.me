@@ -1,4 +1,5 @@
 'use client';
+import { trackFeatureUse } from '@/lib/analytics-signal';
 import { TimerResultsTabs } from '@cuberoot/timer-ui';
 import { useLiveSmartCubeAttempt, TimerLiveSolutionPanel, TimerTrainingTimingStatus } from '@cuberoot/timer-ui';
 
@@ -1489,6 +1490,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
     const solveIndex = (byEventRef.current[ev] ?? []).length;
     setByEvent(prev => ({ ...prev, [ev]: [...(prev[ev] ?? []), solve] }));
+    trackFeatureUse('timer_solve');
     submitTimerTrainingEvidence(trainingDestinationRef.current, solve);
     // 桌面在右栏展开复盘；窄屏直接进入整屏详情。两者共用 shouldAutoRecap，
     // 没有动作流或关闭开关时都不主动打断下一把流程。

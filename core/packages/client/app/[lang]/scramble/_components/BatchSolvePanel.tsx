@@ -1,4 +1,5 @@
 'use client';
+import { trackFeatureUse } from '@/lib/analytics-signal';
 
 /**
  * 统一求解面板(共享):单条 / 批量按输入行数自动判定,不再有独立 tab。
@@ -122,6 +123,7 @@ export function SolvePanel({
         } else {
           try {
             const r = await spec.solveOne(scr);
+            if (!cancelRef.current) trackFeatureUse('solver_result');
             out[idx] = { i: idx + 1, scramble: scr, len: r.len, solution: r.solution, error: null };
           } catch (e) {
             out[idx] = { i: idx + 1, scramble: scr, len: null, solution: '', error: String((e as Error)?.message ?? e) };
