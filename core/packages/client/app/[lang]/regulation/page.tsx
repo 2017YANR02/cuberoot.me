@@ -3,7 +3,7 @@
 // /regulation — announcements, regulations, incidents and disciplinary entries.
 
 import { useTranslation } from 'react-i18next';
-import { Newspaper, ArrowRight, ScrollText } from '@app-foundation/icons/lucide';
+import { Newspaper, ArrowRight, ScrollText, Languages, TriangleAlert, Gavel } from '@app-foundation/icons/lucide';
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import { useT } from '../../../hooks/useT';
@@ -26,11 +26,9 @@ export default function RegulationHub() {
           </h1>
         </header>
 
-        <Link href={`/regulation/post/${LATEST_REG_NEWS.id}`} prefetch={false} className="reg-hub-news">
-          <span className="reg-hub-news-icon"><Newspaper size={22} /></span>
+        <Link href={`/regulation/post/${LATEST_REG_NEWS.id}`} prefetch={false} className="reg-hub-news reg-hub-latest">
           <span className="reg-hub-news-body">
             <span className="reg-hub-news-eyebrow">
-              <span className="reg-hub-news-dot" />
               {t('最新动态', "What’s New")}
             </span>
             <span className="reg-hub-news-title">
@@ -40,6 +38,7 @@ export default function RegulationHub() {
           <ArrowRight size={20} className="reg-hub-news-arrow" />
         </Link>
 
+        <div className="reg-hub-links">
         <Link href="/regulation/post" prefetch={false} className="reg-hub-news">
           <span className="reg-hub-news-icon"><Newspaper size={22} /></span>
           <span className="reg-hub-news-body">
@@ -59,7 +58,7 @@ export default function RegulationHub() {
         </Link>
 
         <Link href="/regulation/translation" prefetch={false} className="reg-hub-news">
-          <span className="reg-hub-news-icon"><ScrollText size={22} /></span>
+          <span className="reg-hub-news-icon"><Languages size={22} aria-hidden="true" /></span>
           <span className="reg-hub-news-body">
             <span className="reg-hub-news-title">{t('英中翻译参考', 'English–Chinese translation reference')}</span>
           </span>
@@ -67,18 +66,18 @@ export default function RegulationHub() {
         </Link>
 
         {[
-          { kind: 'incidents', title: { zh: '意外事件', en: 'Incidents' } },
-          { kind: 'disciplinary', title: { zh: '纪律处分', en: 'Disciplinary' } },
+          { icon: TriangleAlert, kind: 'incidents', title: { zh: '意外事件', en: 'Incidents' } },
+          { icon: Gavel, kind: 'disciplinary', title: { zh: '纪律处分', en: 'Disciplinary' } },
         ].map((log) => (
           <Link key={log.kind} href={`/regulation/logs?kind=${log.kind}`} prefetch={false} className="reg-hub-news">
-            <span className="reg-hub-news-icon"><ScrollText size={22} /></span>
+            <span className="reg-hub-news-icon"><log.icon size={22} aria-hidden="true" /></span>
             <span className="reg-hub-news-body">
               <span className="reg-hub-news-title">{tr(log.title)}</span>
             </span>
             <ArrowRight size={20} className="reg-hub-news-arrow" />
           </Link>
         ))}
-
+        </div>
 
       </div>
     </div>
