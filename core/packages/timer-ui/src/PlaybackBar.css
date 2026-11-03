@@ -11,8 +11,8 @@
   align-self: center;
 }
 
-/* Scrubber row: the slider fills edge-to-edge; the current-step value floats
-   above the moving thumb (no trailing counter). Top padding reserves room for it. */
+/* Reserve one row above the track for stage totals, or the current step when
+   stage totals are not available. */
 .playback-bar-scrub {
   position: relative;
   display: flex;
@@ -115,9 +115,3 @@
   padding: 2px 4px;
   max-width: 100%;
 }
-
-
-/* Stage totals stay above the moving playback index so the labels never collide. */
-.playback-bar-scrub.has-segment-counts { padding-top: 44px; }
-.has-segment-counts > .playback-bar-bubble { top: 18px; }
-.has-segment-counts > .playback-bar-segment-count { top: 0; }
