@@ -140,6 +140,8 @@
       "./drive": "runtime-neutral",
       "./platform": "runtime-neutral",
       "./site-directory": "runtime-neutral",
+      "./page-catalog": "runtime-neutral",
+      "./product-analytics": "runtime-neutral",
       "./site-assistant": "runtime-neutral",
       "./site-announcements": "runtime-neutral",
       "./cube-agents": "runtime-neutral",
@@ -955,6 +957,16 @@
     "./cube-photo/result": {
       "node": "./dist/cube-photo/result.js",
       "default": "./src/cube-photo/result.ts"
+    },
+    "./product-analytics": {
+      "types": "./src/product_analytics.ts",
+      "node": "./dist/product_analytics.js",
+      "default": "./src/product_analytics.ts"
+    },
+    "./page-catalog": {
+      "types": "./src/page_catalog.ts",
+      "node": "./dist/page_catalog.js",
+      "default": "./src/page_catalog.ts"
     }
   },
   "scripts": {

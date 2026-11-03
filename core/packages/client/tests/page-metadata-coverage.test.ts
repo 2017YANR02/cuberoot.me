@@ -27,6 +27,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
+import { PAGE_META } from '@cuberoot/shared/page-catalog';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'); // packages/client
 const APP = join(ROOT, 'app', '[lang]');
@@ -76,10 +77,9 @@ function scanRoutes(): { route: string; dir: string }[] {
   return out;
 }
 
-/** lib/page-meta.ts 的顶层 key(不解析 TS,只认这一种写法:行首两空格 + 引号 key)。 */
+/** Use the same runtime-neutral catalog as metadata, search and analytics. */
 function pageMetaKeys(): Set<string> {
-  const src = readFileSync(join(ROOT, 'lib', 'page-meta.ts'), 'utf8');
-  return new Set([...src.matchAll(/^ {2}'((?:[^'\\]|\\.)*)':\s*\{/gm)].map((m) => m[1]));
+  return new Set(Object.keys(PAGE_META));
 }
 
 interface Source { kind: 'pageMetadata' | 'generateMetadata'; key?: string }

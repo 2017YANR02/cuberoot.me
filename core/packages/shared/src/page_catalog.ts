@@ -1,0 +1,950 @@
+// Runtime-neutral page catalog. Metadata, search and analytics use the same routes.
+import { WC_2027_ANNOUNCEMENT } from './site_announcements';
+
+export interface Msg { zh: string; en: string; }
+export interface PageMetaEntry {
+  title: Msg;
+  /** Omit to inherit the site-wide description from app/layout.tsx. */
+  description?: Msg;
+}
+
+export const PAGE_META: Record<string, PageMetaEntry> = {
+  'admin/careers': { title: { zh: '招聘申请', en: 'Career applications' } },
+  'careers': { title: { zh: '加入我们', en: 'Careers' }, description: { zh: '查看 CubeRoot 发布的职位。', en: 'Explore open positions at CubeRoot.' } },
+  'chat': { title: { zh: '聊天', en: 'Chat' }, description: { zh: '与 CubeRoot 对话，查询成绩、寻找工具、学习魔方。', en: 'Chat with CubeRoot to explore results, find tools and learn cubing.' } },
+  'chat/share': { title: { zh: '分享的回答', en: 'Shared response' } },
+  'dev/continuous-corners': {
+    title: { zh: '连续圆角：几何与实现', en: 'Continuous Corners: Geometry and Implementation' },
+    description: {
+      zh: 'continuous-corners 实现记录：SwiftUI 路径重建、贝塞尔曲线、曲率、同心圆角、误差测量与 TypeScript 接入。',
+      en: 'Implementation notes for continuous-corners: SwiftUI path reconstruction, Bézier curves, curvature, concentric corners, error measurements and TypeScript integration.',
+    },
+  },
+  'download': {
+    title: { zh: '下载', en: 'Download' },
+    description: {
+      zh: '下载 CubeRoot Android 应用，查看其他平台的发布状态。',
+      en: 'Get CubeRoot for Android and check availability on other platforms.',
+    },
+  },
+  'alg/double-zbll-about': {
+    title: { zh: 'ZBLL 打乱方式与统计', en: 'ZBLL Scramble Modes and Statistics' },
+    description: {
+      zh: '比较双底 HTM、逆 case、最优 HTM / STM / SQTM / QTM、COEP 与 csTimer 的打乱分布、极端情况及计步规则。',
+      en: 'Compare double ZBLL HTM, inverse case, optimal HTM / STM / SQTM / QTM, COEP and csTimer: distributions, extremes and counting rules.',
+    },
+  },
+  'cube-history': {
+    title: { zh: '三阶魔方发展史与型号图鉴', en: '3×3 Cube History and Model Archive' },
+    description: {
+      zh: '以中国品牌为主的三阶魔方图鉴。查阅型号、版本差异、发布日期、首发价与当前参考价、性能参数及评价。',
+      en: 'Browse 3×3 cube models, variants, release dates, launch and current prices, specifications and reviews, with a focus on Chinese brands.',
+    },
+  },
+  'wca/wc-2027': { title: WC_2027_ANNOUNCEMENT.title, description: WC_2027_ANNOUNCEMENT.summary },
+  'bp': {
+    title: { zh: '商业计划书', en: 'Business plan' },
+    description: { zh: '魔方根商业计划书：国内魔方市场规模、个人与机构订阅、课程、线上赛事、专业优势与经营规划。', en: 'CubeRoot business plan: China’s cubing market, individual and institutional subscriptions, courses, online competitions and operating plans.' },
+  },
+  'bp/talking-points': {
+    title: { zh: '业务交流提纲', en: 'Business discussion notes' },
+    description: { zh: '市场、订阅、课程、线上赛事与机构服务的交流提纲。', en: 'Discussion notes on the market, subscriptions, courses, online competitions and educator services.' },
+  },
+  'partnership': {
+    title: { zh: '商业计划书', en: 'Business plan' },
+    description: { zh: '商业计划书已迁至 /bp。', en: 'The business plan has moved to /bp.' },
+  },
+  'partnership/talking-points': {
+    title: { zh: '业务交流提纲', en: 'Business discussion notes' },
+    description: { zh: '业务交流提纲已迁至 /bp/talking-points。', en: 'Discussion notes have moved to /bp/talking-points.' },
+  },
+  // The landing page is the only browser tab that keeps the site name.
+  '': {
+    title: {
+      zh: 'CubeRoot',
+      en: 'CubeRoot',
+    },
+    description: {
+      zh: '魔方工具站:求解器、复盘、公式训练、打乱分析与 WCA 统计,中英双语,全部免费。',
+      en: "A Rubik's Cube toolkit for speedcubing: puzzle solvers, solve reconstructions, algorithm trainers, scramble analysis and WCA statistics.",
+    },
+  },
+  '2x2x2': {
+    title: { zh: '二阶实战解法查找器', en: '2×2 Practical Solution Finder' },
+    description: {
+      zh: '为任意二阶打乱搜索 CLL、EG、TCLL 与 LS 实战解法，比较底色、建面深度并按手感排序。',
+      en: 'Find practical CLL, EG, TCLL, and LS solutions for any 2×2 scramble, with bottom-color and build-depth filters plus ergonomic ranking.',
+    },
+  },
+  'competition-verify': { title: { zh: '输入验证码', en: 'Enter the image code' } },
+  'about': {
+    title: { zh: '关于', en: 'About' },
+    description: {
+      zh: '关于 CubeRoot:这个站是什么、由谁维护、数据从哪来。',
+      en: 'About CubeRoot — what this site is, who maintains it, and where the data comes from.',
+    },
+  },
+  'about/ruimin': {
+    title: { zh: '颜瑞民', en: 'Ruimin Yan' },
+    description: {
+      zh: 'CubeRoot 创始人颜瑞民的个人介绍、教育经历、魔方与数学工作，以及高中与大学阶段的获奖档案。',
+      en: 'A profile of CubeRoot founder Ruimin Yan, including his education, work in cubing and mathematics, and an archive of high-school and university awards.',
+    },
+  },
+  'achievements': {
+    title: { zh: '成就', en: 'Achievements' },
+    description: {
+      zh: 'CubeRoot 从 0 到 1 的代表性原创工作：魔方求解器、LSLL 状态空间、打乱统计、复盘系统、3D 模拟与 WCA 数据产品。',
+      en: 'Selected original work built for CubeRoot from zero: puzzle solvers, the LSLL state space, scramble statistics, reconstructions, 3D simulation and WCA data products.',
+    },
+  },
+  'pets': { title: { zh: '领养宠物', en: 'Adopt a companion' }, description: { zh: '领养根号兽、螃蟹、三花猫或云宝。喂食、互动，点亮星星、月亮与太阳，一起长大。', en: 'Adopt a Root Beast, Clawd, Calico, or Cloud. Feed, play, and grow a friendship from little stars to suns.' } },
+  'pets/gallery': { title: { zh: '宠物图鉴', en: 'Companion gallery' }, description: { zh: '探索 CubeRoot 小伙伴的动作与表情，播放喜欢的片段，分享给朋友。', en: 'Explore CubeRoot companion animations and expressions. Play your favorite moments and share them with friends.' } },
+  'account': { title: { zh: '账号', en: 'Account' } },
+  'team': { title: { zh: '团队手册', en: 'Team Handbook' }, description: { zh: '入职、离职与 AI 协作 SOP。', en: 'Onboarding, offboarding and AI collaboration SOP.' } },
+  'workspace': { title: { zh: 'Workspace', en: 'Workspace' }, description: { zh: 'CubeRoot 员工工作台。', en: 'CubeRoot employee workspace.' } },
+  'dev/team': { title: { zh: '团队手册', en: 'Team Handbook' }, description: { zh: '入职、离职与 AI 协作 SOP。', en: 'Onboarding, offboarding and AI collaboration SOP.' } },
+  'account/sop': { title: { zh: 'AI 协作 SOP', en: 'AI Collaboration SOP' }, description: { zh: '团队 AI 协作的工作流程、质量标准与交接规范。', en: 'Workflow, quality standards and handoff guidelines for team AI collaboration.' } },
+  'account/offboarding': { title: { zh: '离职', en: 'Offboarding' }, description: { zh: '工作交接、设备归还与组织权限撤销。', en: 'Work handoff, equipment return and organizational access revocation.' } },
+  'account/get-started': { title: { zh: '入职', en: 'Onboarding' }, description: { zh: '注册或登录 CubeRoot，复制账号 ID 并联系负责人开通管理员权限。', en: 'Register or sign in to CubeRoot, copy your account ID and contact your team lead for administrator access.' } },
+  'account/verify': { title: { zh: '实名认证', en: 'Identity Verification' } },
+  'account/mcp': { title: { zh: 'ChatGPT 只读连接', en: 'ChatGPT Read-only Connection' } },
+  'admin': {
+    title: { zh: '管理后台', en: 'Administration' },
+    description: {
+      zh: 'CubeRoot 管理员集中查看用户增长、会员、赞助与内容审核工具。',
+      en: 'CubeRoot administration hub for user growth, memberships, sponsorships, and moderation tools.',
+    },
+  },
+  'admin/interview': {
+    title: { zh: '采访准备', en: 'Interview preparation' },
+    description: { zh: '管理员专属采访准备。', en: 'Private interview preparation for administrators.' },
+  },
+  'admin/users': {
+    title: { zh: '用户与增长', en: 'Users and Growth' },
+    description: {
+      zh: 'CubeRoot 管理员查看注册统计、登录绑定和用户账号资料的后台。',
+      en: 'CubeRoot administrator dashboard for registration statistics, sign-in methods, and account records.',
+    },
+  },
+  'admin/disk': {
+    title: { zh: '磁盘空间', en: 'Disk space' },
+    description: { zh: '管理员查看服务器磁盘容量与目录占用。', en: 'Administrator view of server disk capacity and directory usage.' },
+  },
+  'admin/releases': {
+    title: { zh: '应用版本管理', en: 'App releases' },
+    description: { zh: '管理员发布应用版本并查看状态。', en: 'Publish app releases and check their status.' },
+  },
+  'vault': {
+    title: { zh: '私密资料库', en: 'Private Vault' },
+    description: {
+      zh: '在浏览器中加密保存文本、密码与个人信息，并只向管理员指定的已注册账号开放查看。',
+      en: 'Encrypt text, passwords, and personal information in the browser, with read access limited to registered accounts designated by an administrator.',
+    },
+  },
+  'platform': {
+    title: { zh: '课程与学习 Platform', en: 'Courses and learning Platform' },
+    description: {
+      zh: 'CubeRoot 主站内的课程、学习记录、讲师服务、活动、交易和教学机构统一入口。',
+      en: 'The CubeRoot main-site hub for courses, learning records, instructors, events, commerce, and teaching organizations.',
+    },
+  },
+  'org': {
+    title: { zh: '我的企业', en: 'My enterprises' },
+    description: {
+      zh: '登录 CubeRoot 创建企业信息，并管理机构、学员、校区、班级和训练任务。',
+      en: 'Sign in to create an enterprise profile and manage its organization, students, campuses, classes, and training assignments.',
+    },
+  },
+  'org/[orgSlug]': { title: { zh: '机构概览', en: 'Organization Overview' } },
+  'org/[orgSlug]/members': { title: { zh: '机构成员', en: 'Organization Members' } },
+  'org/[orgSlug]/students': { title: { zh: '学员管理', en: 'Student Management' } },
+  'org/[orgSlug]/students/[studentId]': { title: { zh: '学员详情', en: 'Student Details' } },
+  'org/[orgSlug]/students/[studentId]/packages': { title: { zh: '学员课包', en: 'Student Packages' } },
+  'org/[orgSlug]/campuses': { title: { zh: '校区管理', en: 'Campus Management' } },
+  'org/[orgSlug]/classes': { title: { zh: '班级管理', en: 'Class Management' } },
+  'org/[orgSlug]/classes/[groupId]': { title: { zh: '班级详情', en: 'Class Details' } },
+  'org/[orgSlug]/packages': { title: { zh: '课包管理', en: 'Package Management' } },
+  'org/[orgSlug]/sessions': { title: { zh: '课次管理', en: 'Session Management' } },
+  'org/[orgSlug]/sessions/[sessionId]': { title: { zh: '课次详情', en: 'Session Details' } },
+  'org/[orgSlug]/reports': { title: { zh: '每周教学报告', en: 'Weekly Teaching Reports' } },
+  'org/[orgSlug]/reports/[reportId]': { title: { zh: '每周教学报告详情', en: 'Weekly Teaching Report Details' } },
+  'org/[orgSlug]/operations': { title: { zh: '经营概览', en: 'Operations Overview' } },
+  'org/[orgSlug]/audit': { title: { zh: '机构审计记录', en: 'Organization Audit Log' } },
+  'org/[orgSlug]/students/[studentId]/messages': { title: { zh: '家校沟通', en: 'Family Communication' } },
+  'org/[orgSlug]/students/[studentId]/messages/[conversationId]': { title: { zh: '沟通详情', en: 'Communication Thread' } },
+  'org/[orgSlug]/training': { title: { zh: '训练任务', en: 'Training Assignments' } },
+  'org/[orgSlug]/training/templates/[templateId]': { title: { zh: '训练模板', en: 'Training Template' } },
+  'org/[orgSlug]/training/assignments/[assignmentId]': { title: { zh: '训练任务详情', en: 'Training Assignment Details' } },
+  'org/[orgSlug]/training/assignments/[assignmentId]/students/[studentId]': { title: { zh: '训练记录与批改', en: 'Training Evidence and Review' } },
+  'training/[orgSlug]': { title: { zh: '我的训练任务', en: 'My Training Assignments' } },
+  'account/student-binding': { title: { zh: '绑定学员档案', en: 'Link Student Profile' } },
+  'account/guardian-binding': { title: { zh: '绑定监护人关系', en: 'Link Guardian Relationship' } },
+  'learn': {
+    title: { zh: '学习中心', en: 'Learning Center' },
+    description: {
+      zh: '在 CubeRoot 主站查看已发布的教学周报、课后反馈和训练任务。',
+      en: 'View published teaching reports, lesson feedback, and training assignments on CubeRoot.',
+    },
+  },
+  'learn/[orgSlug]/students/[studentId]': { title: { zh: '学习概览', en: 'Learning Overview' } },
+  'learn/[orgSlug]/students/[studentId]/sessions': { title: { zh: '课次与请假', en: 'Sessions and Leave' } },
+  'learn/[orgSlug]/students/[studentId]/reports': { title: { zh: '每周教学报告', en: 'Weekly Teaching Reports' } },
+  'learn/[orgSlug]/students/[studentId]/reports/[reportId]': { title: { zh: '每周教学报告详情', en: 'Weekly Teaching Report Details' } },
+  'learn/[orgSlug]/students/[studentId]/feedback': { title: { zh: '课后反馈', en: 'Lesson Feedback' } },
+  'learn/[orgSlug]/students/[studentId]/messages': { title: { zh: '消息', en: 'Messages' } },
+  'learn/[orgSlug]/students/[studentId]/messages/[conversationId]': { title: { zh: '消息详情', en: 'Message Thread' } },
+  'privacy': {
+    title: { zh: '用户协议与隐私政策', en: 'User Agreement and Privacy Policy' },
+    description: {
+      zh: 'CubeRoot Android、iOS App 与微信小程序的数据处理、账号登录、备份、删除与联系说明。',
+      en: 'How the CubeRoot Android and iOS apps and WeChat Mini Program handle data, account sign-in, backups, deletion, and support requests.',
+    },
+  },
+  // 'alg' 没有条目:/alg 不再是页面(next.config 直接 redirect 到 /alg/3x3),
+  // 每个魔方页的标题由 alg/[puzzle]/layout.tsx 的 generateMetadata 逐个发。
+  'alg-trainers': { title: { zh: '公式训练器', en: 'Alg Trainers' } },
+  'alg/combo-types': {
+    title: { zh: '公式叠加类型', en: 'Algorithm Combo Types' },
+    description: {
+      zh: '查看公式库中 CC、OO、OP 等 18 种公式叠加类型的缩写、全称与含义。',
+      en: 'Reference all 18 algorithm combo types used in the algorithm database, including abbreviations, full names, and meanings.',
+    },
+  },
+  'alg/3bld': { title: { zh: '盲拧训练', en: '3BLD Trainer' } },
+  'alg/3bld/2c2c': { title: { zh: '双角双角训练', en: '2-Corner / 2-Corner Trainer' } },
+  'alg/3bld/2e2e': { title: { zh: '双棱双棱训练', en: '2-Edge / 2-Edge Trainer' } },
+  'alg/3bld/lookup': {
+    title: { zh: '盲拧公式查询', en: 'BLD Algorithm Lookup' },
+    description: {
+      zh: '查盲拧公式:三阶的棱角三循环、奇偶、翻角、翻棱、奇偶带翻,以及高阶的翼棱、角心、边心、中棱。每个 case 列出常用写法、换位子、起手与使用者,可左右镜像。',
+      en: 'Look up BLD algorithms — 3BLD edge/corner 3-cycles, parity, corner twists, edge flips and LTCT, plus big-cube wings, X-centers, T-centers and midges. Every common writing of each case, with its commutator, thumb position and who uses it. Mirrors left/right.',
+    },
+  },
+  'alg/3bld/tables': {
+    title: { zh: '盲拧速查表', en: 'BLD Cheat Sheets' },
+    description: {
+      zh: '整表背用的盲拧速查表:全缓冲角块与棱块每个 case 一条推荐解,外加双棱双棱、多角翻、多棱翻、奇偶带翻、五循环等成组的表。',
+      en: 'BLD cheat sheets for learning whole sets: one recommended algorithm per case for corners and edges from every buffer, plus the grouped 2e2e, multi-twist, multi-flip, LTCT and 5-style tables.',
+    },
+  },
+  'alg/3bld/sheets': {
+    title: { zh: '盲拧公式表名录', en: 'BLD Algorithm Sheets' },
+    description: {
+      zh: '盲拧选手公开的公式表汇总,带 WCA ID 与三盲 / 四盲单次成绩,可按成绩排序。',
+      en: 'A directory of public BLD algorithm sheets by their authors, with WCA IDs and 3BLD / 4BLD singles, sortable by result.',
+    },
+  },
+  'alg/3bld/comm': { title: { zh: '3BLD 公式库', en: '3BLD Commutator Library' } },
+  'alg/3bld/corner': { title: { zh: '角块公式训练', en: 'Corner Algorithm Trainer' } },
+  'alg/3bld/corner-float': { title: { zh: '角块浮动训练', en: 'Corner Float Trainer' } },
+  'alg/3bld/edge': { title: { zh: '棱块公式训练', en: 'Edge Algorithm Trainer' } },
+  'alg/3bld/edge-float': { title: { zh: '棱块浮动训练', en: 'Edge Float Trainer' } },
+  'alg/3bld/flip': { title: { zh: '翻棱公式训练', en: 'Edge Flip Trainer' } },
+  'alg/3bld/helper': { title: { zh: '读码还原助手', en: 'Read & Restore Helper' } },
+  'alg/3bld/ltct': { title: { zh: '奇偶带翻训练', en: 'LTCT Parity-Twist Trainer' } },
+  'alg/3bld/memo': { title: { zh: '盲拧记忆回想训练', en: '3BLD Memo Recall Trainer' } },
+  'alg/3bld/parity': { title: { zh: '奇偶训练', en: 'Parity Trainer' } },
+  'alg/3bld/readme': { title: { zh: '盲拧训练说明', en: '3BLD Guide' } },
+  'alg/3bld/resources': { title: { zh: '盲拧资源', en: '3BLD Resources' } },
+  'alg/3bld/timer': { title: { zh: '盲拧练习计时', en: 'BLD Practice Timer' } },
+  'alg/3bld/twist': { title: { zh: '翻角公式训练', en: 'Corner Twist Trainer' } },
+  'alg/commutator': { title: { zh: '换位子', en: 'Commutator' } },
+  'alg/time-attack': {
+    title: { zh: '公式连拧', en: 'Algorithm Time Attack' },
+    description: {
+      zh: '按自定义顺序连续练习公式库中的各种项目与公式集，只显示魔方图，支持分组练习与登录同步。',
+      en: 'Drill every supported puzzle and algorithm set continuously in a custom order using diagrams only, with subset practice and signed-in sync.',
+    },
+  },
+  'notation': {
+    title: { zh: '转动记号', en: 'Complete Move Notation Guide' },
+    description: {
+      zh: '集中查看 WCA 第 12 条的正式记号、图解说明、常用公式扩展与非 WCA 魔方记号，并直接播放每一种转动。',
+      en: 'An illustrated guide to WCA Article 12 notation, common algorithm extensions, and non-WCA puzzle notation, with animated moves.',
+    },
+  },
+  'alg/fto/notation': {
+    title: { zh: 'FTO 转动记号', en: 'FTO Move Notation' },
+    description: {
+      zh: 'FTO 的 EIF 单面、宽层、中层、转体与组合记号说明，可直接播放每一种转动的分层动画。',
+      en: 'A visual EIF notation guide for FTO face, wide, slice, rotation and macro moves, with real layer animation for every move.',
+    },
+  },
+  'alg/lsll': { title: { zh: 'LSLL 公式集', en: 'LSLL Algorithms' } },
+  'alg/lsll/case': { title: { zh: 'LSLL 情况详情', en: 'LSLL Case Detail' } },
+  'alg/lsll/route': { title: { zh: 'LSLL 路线详情', en: 'LSLL Route Detail' } },
+  'alg/progress': { title: { zh: '学习进度', en: 'Progress' } },
+  'alg/progress/cases': { title: { zh: '公式清单', en: 'Algorithm List' } },
+  'alg/3x3/cross': {
+    title: { zh: '十字最优训练', en: 'Optimal Cross Training' },
+    description: {
+      zh: '三阶十字、XCross、XXCross 与 XXXCross 的最优解、最优步数和智能魔方训练。',
+      en: 'Optimal-solution, move-count and smart-cube training for 3x3 Cross, XCross, XXCross and XXXCross.',
+    },
+  },
+  'alg/3x3/zbll/simple': {
+    title: { zh: '简单 ZBLL', en: 'Simple ZBLL' },
+    description: {
+      zh: '适合开始学习的 ZBLL 情况:收录最优 HTM 不超过 10 步，以及四面合计至少有 4 组相邻同色、容易观察的情况。',
+      en: 'An approachable ZBLL subset: cases with optimal HTM at most 10, plus visually clear cases with at least four adjacent same-colour pairs.',
+    },
+  },
+  'alg/roux': { title: { zh: '桥式训练器', en: 'Roux Trainer' } },
+  'alg/skewb-trainer': { title: { zh: 'Skewb 技巧训练', en: 'Skewb Skills' } },
+  'algTrainer': { title: { zh: '公式训练器', en: 'Alg Trainer' } },
+  'appearance': { title: { zh: '外观', en: 'Appearance' }, description: { zh: '比较主页风景背景与全站配色，选择适合自己的外观。', en: 'Compare homepage landscapes and site-wide color palettes to find your preferred appearance.' } },
+  'blddb': {
+    title: { zh: 'BLDDB 盲拧公式库', en: 'BLDDB' },
+    description: {
+      zh: 'BLDDB 盲拧公式库:三阶角块 / 棱块全缓冲区三循环,翻色扭角,以及高阶盲拧的翼棱与中心块公式。',
+      en: 'BLDDB — blindfolded algorithm database: 3-style corners and edges for every buffer, twists and flips, plus wings and centers for big BLD.',
+    },
+  },
+  'calc': {
+    title: { zh: '成绩计算器', en: 'Score Calculator' },
+    description: {
+      zh: '成绩计算器:模拟比赛轮次,估算平均与晋级概率。',
+      en: 'Score calculator — simulate competition rounds and estimate averages and advancement odds.',
+    },
+  },
+  'calc-about': { title: { zh: '成绩计算器说明', en: 'Score Calculator Guide' } },
+  'calendar': {
+    title: { zh: '日历', en: 'Calendar' },
+    description: {
+      zh: '个人日历:月周日视图、重复日程、提醒与参与者,支持按时区安排,并可生成只显示忙碌时段的公开链接。',
+      en: 'A personal calendar with month, week and day views, recurring events, reminders and guests — time-zone aware, with an optional public link that can show busy times only.',
+    },
+  },
+  'color-test': {
+    title: { zh: '颜色测试', en: 'Colour Tests' },
+    description: {
+      zh: '魔方颜色训练:练习分辨标准三阶魔方的对色、邻色和侧面顺序,或通过 Stroop 色词干扰测试专注力。',
+      en: 'Cube colour training for recognising opposite, adjacent and side-face order relationships, plus a Stroop colour-word interference test.',
+    },
+  },
+  'color-test/relations': {
+    title: { zh: '对色与邻色测试', en: 'Opposite or Adjacent?' },
+    description: {
+      zh: '看两个标准三阶魔方颜色,判断它们是对色还是邻色,完整练习 15 种不重复组合。',
+      en: 'Classify two standard 3×3 cube colours as opposite or adjacent across all 15 unique pairs.',
+    },
+  },
+  'color-test/positions': {
+    title: { zh: '颜色位置关系测试', en: 'Colour Positions' },
+    description: {
+      zh: '选择任意顶面颜色,练习标准三阶魔方四个侧面的左右顺序和对色。',
+      en: 'Choose any top colour and practise each side face\'s left, right and opposite colours on a standard 3×3.',
+    },
+  },
+  'dev': {
+    title: { zh: '开发', en: 'Dev' },
+    description: {
+      zh: '这个站是怎么造的:架构、求解器栈、分析器背后的算法,以及用到的语言与工具。',
+      en: 'How this site is built — architecture, the solver stack, the algorithms behind the analyzers, and the languages and tools used.',
+    },
+  },
+  'dev/algorithms': { title: { zh: '算法导览', en: 'Algorithms' } },
+  'dev/algorithms/cfop-std-solver': { title: { zh: 'CFOP 多阶段求解器', en: 'CFOP multi-stage solver' } },
+  'dev/algorithms/gan-ble': { title: { zh: 'GAN 蓝牙协议与 AES 解密', en: 'GAN BLE protocol & AES' } },
+  'dev/algorithms/ida-star': { title: { zh: 'IDA* + 剪枝表', en: 'IDA* + prune tables' } },
+  'dev/algorithms/kociemba': { title: { zh: 'Kociemba 二阶段', en: 'Kociemba two-phase' } },
+  'dev/algorithms/min2phase': { title: { zh: 'min2phase', en: 'min2phase' } },
+  'dev/algorithms/webcodecs': { title: { zh: 'WebCodecs 帧精确解码', en: 'WebCodecs frame-accurate decoding' } },
+  'dev/api': { title: { zh: 'API 端点目录', en: 'API reference' } },
+  'dev/auth': {
+    title: { zh: '账号全流程', en: 'Account lifecycle' },
+    description: { zh: '直观展示网站、iOS、安卓与小程序的登录、绑定、账号合并、退出和注销流程，区分当前实现与目标方案。', en: 'Visualize sign-in, linking, merging, sign-out, and deletion across website, iOS, Android, and Mini Programs, separating implementation from proposals.' },
+  },
+  'dev/architecture': { title: { zh: '架构地图', en: 'Architecture Atlas' } },
+  'dev/architecture/decisions': { title: { zh: '技术决策', en: 'Technical Decisions' } },
+  'dev/architecture/flow': { title: { zh: '请求流程', en: 'Request Flow' } },
+  'dev/architecture/history': { title: { zh: '历程', en: 'History' } },
+  'dev/infrastructure': {
+    title: { zh: '基础设施与运维', en: 'Infrastructure & Operations' },
+    description: {
+      zh: 'CubeRoot 生产环境的公开档案:容量、请求路径、发布恢复、健康检查、备份和安全披露边界。',
+      en: 'A public profile of CubeRoot production capacity, request routing, release recovery, health checks, backups, and disclosure boundaries.',
+    },
+  },
+  'dev/expenses': {
+    title: { zh: '支出与设备', en: 'Expenses & Equipment' },
+    description: {
+      zh: 'CubeRoot 的投入概览：设备价格、工位租赁、人员与服务订阅，以及订单金额、发售价和可退押金的统计口径。',
+      en: 'An overview of CubeRoot investment: equipment prices, workspace rental, staffing and subscriptions, with the basis for order amounts, launch prices and refundable deposits.',
+    },
+  },
+  'dev/components': { title: { zh: '组件库', en: 'Components' } },
+  'dev/cubingchina': {
+    title: { zh: '粗饼网 CubingChina：新版体验与旧版技术档案', en: 'CubingChina: New Site and Legacy Architecture' },
+    description: {
+      zh: '记录粗饼网 2026 年 9 月新版的搜索、赛事、选手与登录体验，核对 Nuxt 前端和旧站只读迁移，并保留 PHP / Yii 开源架构档案。',
+      en: 'Explore Cubing China’s September 2026 interface, search, competitions, profiles and sign-in, with verified Nuxt frontend evidence and a preserved PHP / Yii legacy profile.',
+    },
+  },
+  'dev/dead-code': { title: { zh: '死代码守卫', en: 'Dead Code Guard' } },
+  'dev/code-history': { title: { zh: '代码语言历史', en: 'Code language history' }, description: { zh: 'CubeRoot 代码语言占比的每日历史，以 GitHub Linguist 统计并展示堆积面积图。', en: 'Daily language shares in CubeRoot, measured with GitHub Linguist and displayed as a stacked area chart.' } },
+  'dev/fonts': { title: { zh: '字体', en: 'Fonts' } },
+  'dev/guards': { title: { zh: '约束守卫', en: 'Guards' } },
+  'dev/language': { title: { zh: '编程', en: 'Code' } },
+  'dev/language/bash': { title: { zh: 'Bash : 1989 Brian Fox · 装在每台机器上 · DevOps 默认胶水', en: 'Bash : 1989 Brian Fox · pre-installed everywhere · the DevOps default' } },
+  'dev/language/c': { title: { zh: 'C : 看不见的母语 — 53 年仍跑在一切之下', en: 'C : The Invisible Mother Tongue — 53 Years and Still Underneath It All' } },
+  'dev/language/compare': { title: { zh: '17 种语言, 一个 Ao5', en: 'One Ao5, Seventeen Languages' } },
+  'dev/language/cpp': { title: { zh: 'C++ : Systems — 46 年仍是性能之王', en: 'C++ : Systems — 46 Years and Still the King of Performance' } },
+  'dev/language/csharp': { title: { zh: 'C# : Hejlsberg 的第三门语言, .NET 的灵魂 — 26 年长青', en: 'C# : Hejlsberg\'s third language, soul of .NET — 26 years and counting' } },
+  'dev/language/css': { title: { zh: 'CSS : 30 年声明式样式语言 — 1994 CERN 提案到 2026 平台追上来', en: 'CSS : 30 years of declarative styling — from CERN 1994 to \'the platform caught up\'' } },
+  'dev/language/go': { title: { zh: 'Go — 简洁与并发', en: 'Go — Simplicity Meets Concurrency' } },
+  'dev/language/haskell': { title: { zh: 'Haskell : 纯函数 · 惰性 · 类型类 — 影响所有人, 自己不必爆款', en: 'Haskell : pure, lazy, type-classed — the language that quietly shaped everyone else' } },
+  'dev/language/html': { title: { zh: 'HTML : 不是编程语言, 但每个 UI 都从这里开始 — 1989→2026', en: 'HTML : not a programming language, but every UI starts here — 1989→2026' } },
+  'dev/language/java': { title: { zh: 'Java : Write Once, Run Anywhere — 30 年仍在 Top 3 的 JVM 故事', en: 'Java : Write Once, Run Anywhere — 30 years on, still top 3 on the JVM' } },
+  'dev/language/javascript': { title: { zh: 'JavaScript : TheLanguageOfTheWeb — 30 年的网页语言', en: 'JavaScript : TheLanguageOfTheWeb — Thirty Years of the Web' } },
+  'dev/language/katex': { title: { zh: 'KaTeX : 浏览器里 100× 速度的 LaTeX 数学渲染 — 2013→2026', en: 'KaTeX : LaTeX math in the browser at 100× MathJax speed — 2013→2026' } },
+  'dev/language/kotlin': { title: { zh: 'Kotlin : Better Java — 从 Android 一等公民到 Multiplatform 时代', en: 'Kotlin : Better Java — from Android first-class to the Multiplatform era' } },
+  'dev/language/latex': { title: { zh: 'LaTeX : 数学排版的事实标准 — 1978→2026', en: 'LaTeX : the de-facto standard for typesetting math — 1978→2026' } },
+  'dev/language/lua': { title: { zh: 'Lua : 200KB 嵌入式脚本 · 30 年活在所有东西里面', en: 'Lua : the 200KB embedded script that lives inside everything' } },
+  'dev/language/mojo': { title: { zh: 'Mojo : Python 语法 · C 速度 · MLIR IR — Lattner 的第三门语言', en: 'Mojo : Python syntax, C-class speed, MLIR IR — Lattner\'s third language' } },
+  'dev/language/php': { title: { zh: 'PHP : 仍跑着 75% 的网络 — Lerdorf 的简历计数器走过 30 年', en: 'PHP : still running 75% of the web — Lerdorf\'s resume counter, 30 years on' } },
+  'dev/language/powershell': { title: { zh: 'PowerShell : 2006 Jeffrey Snover · 对象管道 · Windows 自动化默认', en: 'PowerShell : 2006 Jeffrey Snover · object pipeline · Windows automation default' } },
+  'dev/language/python': { title: { zh: 'Python — AI 时代的胶水语言', en: 'Python — Glue of the AI Era' } },
+  'dev/language/ruby': { title: { zh: 'Ruby : 程序员幸福为本 · Matz / DHH / Shopify 的三十年', en: 'Ruby : Optimised for programmer happiness — three decades of Matz, DHH and Shopify' } },
+  'dev/language/rust': { title: { zh: 'Rust — 系统编程的现代答卷', en: 'Rust — A Modern Answer to Systems Programming' } },
+  'dev/language/scramble': { title: { zh: '17 种语言, 一个打乱解析器', en: 'One scramble parser, seventeen languages' } },
+  'dev/language/sql': { title: { zh: 'SQL : 56 年的声明式查询语言 — 数据层的默认语', en: 'SQL : 56 years of declarative query — the data layer\'s default' } },
+  'dev/language/swift': { title: { zh: 'Swift : 苹果生态的钦定语言', en: 'Swift : Apple Ecosystem’s Native Tongue' } },
+  'dev/language/ts': { title: { zh: 'TypeScript : JavaScript — AI 时代的事实标准', en: 'TypeScript : JavaScript — De Facto Language of the AI Era' } },
+  'dev/language/wasm': { title: { zh: 'WebAssembly — Web 的通用字节码', en: 'WebAssembly — A Universal Bytecode for the Web' } },
+  'dev/language/zig': { title: { zh: 'Zig : C — 给系统编程换个零隐藏的地基', en: 'Zig : C — A No-Hidden-Control-Flow Foundation for Systems' } },
+  'dev/llm': { title: { zh: '大模型', en: 'Large Language Models' } },
+  'dev/llm/fable': { title: { zh: 'Claude Fable 5', en: 'Claude Fable 5' } },
+  'dev/llm/sonnet-5': { title: { zh: 'Claude Sonnet 5', en: 'Claude Sonnet 5' } },
+  'dev/traffic-incident-2026-09': {
+    title: { zh: '2026 年 9 月流量事件记录', en: 'September 2026 traffic incident' },
+    description: { zh: 'CubeRoot 2026 年 9 月流量事件及截至 10 月 5 日的后续处置：停站恢复、全站验证码、七天通行、自动封禁、名单容量和误封修复。', en: 'CubeRoot September 2026 traffic incident and follow-up through October 5: recovery, site-wide CAPTCHA, seven-day access, automatic bans, list capacity and false-positive fixes.' },
+  },
+  'dev/dns-routing': {
+    title: { zh: '同一个网址，为什么会连到不同的服务器？', en: 'Why can one web address reach different servers?' },
+    description: { zh: '从浏览器打开网页讲起，说明同一网址为何会连到不同服务器、服务器为何会让浏览器改网址，以及 Cloudflare 免费版能否让国内走阿里云、国外走 Cloudflare。', en: 'Follow a browser visit to see why one web address can reach different servers, why the address bar changes, and whether Cloudflare Free can serve overseas visitors while China remains on Alibaba.' },
+  },
+  'dev/ops': { title: { zh: '运维', en: 'Ops' } },
+  'dev/schema': { title: { zh: '数据库 Schema', en: 'Database schema' } },
+  'dev/solvers': { title: { zh: '求解器', en: 'Solvers' } },
+  'dev/solvers/xcross-ranking': {
+    title: { zh: 'XC / XXC 结构排序实验', en: 'XC / XXC Structural Ranking Experiment' },
+    description: { zh: '比较原排序与实验排序，逐步查看解法、结构代价和候选搜索方法。包含可输入打乱的现场对照及算法局限。', en: 'Compare baseline and experimental rankings with solution playback, structural costs and bounded candidate search. Includes live scramble comparison and explicit limitations.' },
+  },
+  'dev/solvers/compare': {
+    title: { zh: '三阶最优求解器 Benchmark', en: 'Optimal 3×3 Solver Benchmark' },
+    description: { zh: '三阶 HTM 最优求解器本机实测：Opt8 使用 8 GB 档、100 条打乱；Opt9 使用 16 GB 档、1000 条打乱，按测试组与运行环境分别比较。', en: 'Local optimal 3×3 HTM solver benchmarks: Opt8 at 8 GB with 100 scrambles and Opt9 at 16 GB with 1000 scrambles, compared within each test group and runtime.' },
+  },
+  'dev/stack': { title: { zh: '技术栈', en: 'Stack' } },
+  'dev/tokens': { title: { zh: '设计令牌', en: 'Design Tokens' } },
+  'alg/photo': { title: { zh: '拍照查公式', en: 'Photo Algorithm Lookup' }, description: { zh: '在本机识别手持三阶魔方照片，查询并验证顶层公式。', en: 'Identify a handheld 3×3 cube photo locally and find verified last-layer algorithms.' } },
+  'dev/cube-photo': { title: { zh: '魔方照片识别', en: 'Cube Photo Recognition' } },
+  'dev/utils': { title: { zh: '速查', en: 'Hooks & Utils' } },
+  'dev/wca-export': { title: { zh: 'WST 数据导出', en: 'WST Export' } },
+  'dev/wca-rest-api': { title: { zh: 'WCA REST API', en: 'WCA REST API' } },
+  'dev/wca-site': { title: { zh: 'WorldCubeAssociation.org : WCA 官网源码 — 2008 年起的 Rails 单体, 正迁往 Next.js', en: 'WorldCubeAssociation.org : the WCA\'s codebase — a Rails monolith since 2008, migrating to Next.js' } },
+  'dev/wcif': { title: { zh: 'WCIF', en: 'WCIF' } },
+  'cross_trainer': { title: { zh: '十字训练', en: 'Cross Trainer' } },
+  'cstimer': { title: { zh: 'csTimer', en: 'csTimer' } },
+  'contests': {
+    title: { zh: '非官方比赛与纪录', en: 'Unofficial contests & records' },
+    description: {
+      zh: '查询 Cubing Contests 非官方比赛、项目排名、世界与地区纪录，以及选手成绩和 WCA 档案。',
+      en: 'Explore Cubing Contests unofficial competitions, event rankings, world and regional records, competitor results and linked WCA profiles.',
+    },
+  },
+  'documentation': { title: { zh: '文档', en: 'Documentation' } },
+  'docs': {
+    title: { zh: '协作文档', en: 'Collaborative Docs' },
+    description: { zh: '统一管理文档与表格，支持多人实时编辑、自动保存和成员共享。', en: 'Manage documents and spreadsheets together with real-time editing, autosave, and member sharing.' },
+  },
+  'docs/edit': { title: { zh: '编辑协作文档', en: 'Edit Collaborative Document' } },
+  'sheets': {
+    title: { zh: '协作表格', en: 'Collaborative Spreadsheets' },
+    description: { zh: '实时共同编辑表格,支持公式、多人协作和 Excel 导入导出。', en: 'Edit spreadsheets together with formulas, live collaboration, and Excel import and export.' },
+  },
+  'sheets/edit': { title: { zh: '编辑协作表格', en: 'Edit Collaborative Spreadsheet' } },
+  'eocross_trainer': { title: { zh: 'EO 十字训练', en: 'EOCross Trainer' } },
+  'feedback': {
+    title: { zh: '反馈', en: 'Feedback' },
+    description: {
+      zh: '公开查看 CubeRoot 反馈、进展与回复,登录后可提交反馈或参与讨论。',
+      en: 'Browse public CubeRoot feedback, progress, and replies, then sign in to submit or join the discussion.',
+    },
+  },
+  'feedback/admin': { title: { zh: '反馈审核', en: 'Feedback' } },
+  'contact': {
+    title: { zh: '联系方式', en: 'Contact' },
+    description: {
+      zh: '添加魔方根微信，查看 CubeRoot 相关地区群、项目群、方法阶段群和魔方根群。',
+      en: 'Add CubeRoot on WeChat and browse regional, event, method-stage and community groups.',
+    },
+  },
+  'forum': {
+    title: { zh: '论坛', en: 'Forum' },
+    description: {
+      zh: '速拧论坛:提问、讨论、分享。',
+      en: 'Speedcubing forum — ask, discuss, share.',
+    },
+  },
+  'forum/feed': {
+    title: { zh: '社区动态', en: 'Community Feed' },
+    description: {
+      zh: '浏览 CubeRoot 魔方社区各版块的新主题与近期活跃讨论。',
+      en: 'Browse new threads and recently active discussions across the CubeRoot speedcubing community.',
+    },
+  },
+  'forum/new': { title: { zh: '发帖', en: 'New thread' } },
+  'forum/review': { title: { zh: '论坛审核', en: 'Forum moderation' } },
+  'forum/search': { title: { zh: '论坛搜索', en: 'Forum search' } },
+  'frame-count': {
+    title: { zh: '数帧', en: 'Frame Count' },
+    description: {
+      zh: '逐帧计时:从视频精确数帧,得出比裁判计时更细的用时。',
+      en: 'Frame counting — measure solve times from video frame by frame, finer than a stackmat reading.',
+    },
+  },
+  'frame-count-about': { title: { zh: '数帧工具说明', en: 'Frame Count Guide' } },
+  'icon': { title: { zh: '图标', en: 'Icons' } },
+  'math': {
+    title: { zh: '魔方数学', en: 'Cubing Mathematics' },
+    description: {
+      zh: '魔方背后的数学:群论、上帝之数、概率分布与状态计数。',
+      en: 'The mathematics behind twisty puzzles: group theory, God’s number, probability and state counting.',
+    },
+  },
+  'math/demigod': { title: { zh: '半神之数 (Demigod\'s Number)', en: 'Demigod\'s Number' } },
+  'math/god': {
+    title: { zh: '上帝之数', en: 'God\'s Number' },
+    description: {
+      zh: '上帝之数:魔方群在半转与四分之一转度量下的直径,20 与 26 是怎么证出来的,以及其它 WCA 项目的对应结果。',
+      en: 'God\'s Number — the diameter of the cube group in the half-turn and quarter-turn metrics, how the values 20 and 26 were proved, and the equivalent results for other WCA puzzles.',
+    },
+  },
+  'math/cube-graph': {
+    title: { zh: '魔方与图论', en: 'Rubik’s Cube & Graph Theory' },
+    description: {
+      zh: '支持一至七阶魔方，三维魔方、圆环和圆盘同步演示 6N² 枚贴纸的置换，探索魔方与凯莱图的关系。',
+      en: 'Explore cubes from 1×1 to 7×7 with synchronized 3D, ring and sector maps of 6N² stickers, and learn how cubes relate to Cayley graphs.',
+    },
+  },
+  'math/group': {
+    title: { zh: '群论', en: 'Group Theory' },
+    description: {
+      zh: '用魔方讲群论:从置换、陪集、Lagrange 定理一路到 Sylow 定理、Burnside 计数与特征标表,60 多节,每节配可交互图示。',
+      en: 'Group theory taught through the Rubik\'s Cube — permutations, cosets and Lagrange, on through Sylow, Burnside counting, character tables and Cayley graphs. 60+ sections, each with interactive diagrams.',
+    },
+  },
+  'math/kernel': { title: { zh: '群论内核', en: 'Group-theory kernel' } },
+  'math/lsll': { title: { zh: 'LSLL 情况计数', en: 'Counting LSLL cases' } },
+  'math/probability': {
+    title: { zh: '情况概率与旋转对称', en: 'Case Probability & Symmetry' },
+    description: {
+      zh: '速拧概率:各种 skip 的机率、情况分布,以及这些数字背后的组合计算。',
+      en: 'Speedcubing probability — skip chances, case distributions, and the combinatorics that produce them.',
+    },
+  },
+  'math/unit-distance': { title: { zh: '单位距离问题', en: 'Unit Distance Problem' } },
+  'math/navier-stokes': {
+    title: { zh: '关于纳维–斯托克斯千禧年大奖难题', en: 'On the Navier–Stokes Millennium Prize Problem' },
+    description: {
+      zh: 'OpenAI 文章全文中文翻译，含研究过程、同期研究、原图与图注。',
+      en: 'The OpenAI article with a full Chinese translation, original figures, and captions.',
+    },
+  },
+  'meet': {
+    title: { zh: '会议', en: 'Meeting' },
+    // 不写人数:上限是服务端 MAX_MEET_PARTICIPANTS,静态 metadata 读不到 /video/config,
+    // 抄一份进来就是第三处副本 —— 改了上限,页面正文跟着变而搜索结果和分享卡片还在承诺旧数字。
+    description: {
+      zh: '多人视频会议:建一场会,把链接发出去,1080p 画质,支持屏幕共享和文字聊天。',
+      en: 'Group video meeting — start a room, share the link, 1080p with screen sharing and chat.',
+    },
+  },
+  'membership': { title: { zh: '会员', en: 'Membership' } },
+  'membership/checkout': { title: { zh: '会员支付', en: 'Membership payment' } },
+  'membership/renewal-terms': {
+    title: { zh: '自动续费服务协议', en: 'Auto-renewal Agreement' },
+    description: { zh: 'CubeRoot 会员自动续费的服务、扣款、通知、取消与售后说明。', en: 'CubeRoot membership auto-renewal service, billing, notices, cancellation, and support.' },
+  },
+  'membership/subscription': { title: { zh: '管理自动续费', en: 'Manage auto-renewal' } },
+  'gallery': {
+    title: { zh: '图库', en: 'Gallery' },
+    description: {
+      zh: 'CubeRoot 会员分享的魔方、比赛与生活照片。',
+      en: 'Photos of cubes, competitions, and everyday life shared by CubeRoot members.',
+    },
+  },
+  'memo': { title: { zh: '盲拧记忆训练', en: 'Memory Training' } },
+  'memo/colpi': { title: { zh: 'COLPI 编码', en: 'COLPI Lettering' } },
+  'music': {
+    title: { zh: '音乐播放器', en: 'Music Player' },
+    description: {
+      zh: 'CubeRoot 音乐播放器，支持曲库搜索、播放队列、封面与同步歌词。',
+      en: 'CubeRoot music player with library search, playback queue, cover art, and synced lyrics.',
+    },
+  },
+  'music/manage': {
+    title: { zh: '音乐审核与管理', en: 'Music Review & Management' },
+    description: {
+      zh: '管理音乐上传、元数据、封面、歌词与发布状态。',
+      en: 'Manage music uploads, metadata, cover art, lyrics, and publication status.',
+    },
+  },
+  'mosaic': {
+    title: { zh: '马赛克', en: 'Mosaic' },
+    description: {
+      zh: '魔方马赛克生成器:把图片转成用魔方拼出的图案。',
+      en: 'Mosaic builder — turn any image into a pattern built from cube faces.',
+    },
+  },
+  'mosaic-about': { title: { zh: '魔方马赛克说明', en: 'Mosaic Guide' } },
+  'lettering': {
+    title: { zh: '魔方拼字', en: 'Cube Lettering' },
+    description: {
+      zh: '用五阶和七阶魔方生成简单汉字的像素效果图。',
+      en: 'Create pixel-style Chinese character previews on 5×5 and 7×7 cubes.',
+    },
+  },
+  'nemesizer': { title: { zh: '宿敌', en: 'Nemesizer' } },
+  'nemesizer-about': { title: { zh: 'Nemesizer 说明', en: 'Nemesizer Guide' } },
+  'notifications': { title: { zh: '消息', en: 'Notifications' } },
+  'friends': {
+    title: { zh: '好友', en: 'Friends' },
+    description: {
+      zh: '在 CubeRoot 添加好友、处理好友申请，并管理黑名单。',
+      en: 'Add friends, handle friend requests, and manage blocked users on CubeRoot.',
+    },
+  },
+  'drive': {
+    title: { zh: '网盘', en: 'Drive' },
+    description: {
+      zh: 'CubeRoot 私有网盘，支持照片、视频和文档的断点续传、在线预览与下载。',
+      en: 'CubeRoot private Drive with resumable uploads, previews, and downloads for photos, videos, and documents.',
+    },
+  },
+  'paint': {
+    title: { zh: '魔方图示绘制', en: 'Cube Diagram Editor' },
+    description: {
+      zh: '矢量画板:画魔方图示,可导出 SVG。',
+      en: 'Vector editor for drawing cube diagrams, exportable as SVG.',
+    },
+  },
+  'pairing_trainer': { title: { zh: '配对训练', en: 'Pairing Trainer' } },
+  'predict': {
+    title: { zh: '预判训练', en: 'Lookahead Challenge' },
+    description: {
+      zh: '预判训练:在打乱上练习提前看到下一步。',
+      en: 'Lookahead trainer — practise seeing the next step before you finish the current one.',
+    },
+  },
+  'quiz': {
+    title: { zh: '魔方知识问答', en: 'Cubing Quiz' },
+    description: {
+      zh: '魔方知识问答:历史、WCA 规则、项目赛制、记号术语、解法、数学与装备,八类共百余道选择题和问答题,答完即给解析。',
+      en: 'A cubing quiz — history, WCA regulations, events, notation, methods, maths and gear. Over a hundred multiple-choice and short-answer questions, each with an explanation.',
+    },
+  },
+  'quiz/new': { title: { zh: '出一道题', en: 'Write a Quiz Question' } },
+  'quiz/mine': { title: { zh: '我出的题', en: 'My Quiz Questions' } },
+  'quiz/manage': { title: { zh: '社区题管理', en: 'Community Questions' } },
+  'pseudo_pairing_trainer': { title: { zh: '伪配对训练', en: 'Pseudo Pairing Trainer' } },
+  'pseudo_xcross_trainer': { title: { zh: '伪 XCross 训练', en: 'Pseudo XCross Trainer' } },
+  'recon': {
+    title: { zh: '复盘', en: 'Reconstructions' },
+    description: {
+      zh: '比赛复盘库:逐步还原选手的比赛解法,含打乱、解法、分步用时与方法拆解。',
+      en: 'Solve reconstructions — competition solves rebuilt move by move, with scramble, solution, per-step timing and method breakdown.',
+    },
+  },
+  'recon-about': { title: { zh: '复盘库说明', en: 'Recon Library Guide' } },
+  'recon/submit': { title: { zh: '提交复盘', en: 'Submit Reconstruction' } },
+  'recon/ground-truth': { title: { zh: '复盘测试样本', en: 'Reconstruction Test Corpus' } },
+  'recon/submit-sketch': { title: { zh: '提交草稿', en: 'Submit Sketch' } },
+  'regulation': {
+    title: { zh: 'WCA 竞赛规则图解', en: 'WCA Regulations, Illustrated' },
+    description: {
+      zh: 'WCA 规则图解:官方每一条规则配图示与 3D 示例,一章一页,并附完整官方原文供引用。',
+      en: 'The WCA Regulations, illustrated — every official article rewritten with diagrams and 3D examples, one page per article, plus the full official text for citation.',
+    },
+  },
+  'regulation/rules': {
+    title: { zh: 'WCA 规则', en: 'WCA Regulations' },
+    description: {
+      zh: '按核心条款与项目附则分类浏览 WCA 规则图解，并查阅官方条文。',
+      en: 'Browse illustrated WCA regulations by core articles and event-specific articles, with access to the official text.',
+    },
+  },
+  'regulation/full': {
+    title: { zh: 'WCA 竞赛规则:完整原文', en: 'WCA Regulations: Full Official Text' },
+    description: {
+      zh: 'WCA 官方规则完整原文,可直接引用。',
+      en: 'The complete official WCA Regulations, verbatim, for citation.',
+    },
+  },
+  'regulation/translation': {
+    title: { zh: 'WCA 英中翻译参考', en: 'WCA English–Chinese Translation Reference' },
+    description: {
+      zh: 'WCA 规则术语、规范句式、易混译法及条款双语对照，提供 Markdown 下载供翻译与学习使用。',
+      en: 'WCA terminology, regulatory phrasing, translation pitfalls and aligned English–Chinese clauses, with Markdown downloads.',
+    },
+  },
+  'regulation/translation/search': {
+    title: { zh: 'WCA 官方译文查询', en: 'WCA Official Translation Search' },
+    description: {
+      zh: '按中文、英文或缩写查询 WCA 官方译文，查看中英对照、语境和官方出处。',
+      en: 'Search WCA translations by Chinese, English or abbreviation, with paired text, context and official sources.',
+    },
+  },
+  'regulation/post': { title: { zh: '公告', en: 'Posts' } },
+  'regulation/logs': {
+    title: { zh: 'WCA 意外事件与纪律处分日志', en: 'WCA Incidents and Disciplinary Logs' },
+    description: { zh: 'WCA 意外事件及纪律处分历史日志，提供中文译文与英文原文。', en: 'Historical WCA incidents and disciplinary announcements, in Chinese and English.' },
+  },
+  'scramble': {
+    title: { zh: '打乱分析', en: 'Scramble Analysis' },
+    description: {
+      zh: '打乱分析中心:最优求解器、阶段难度统计、图案搜索,数据来自 WCA 真实打乱语料。',
+      en: 'Scramble analysis — optimal solvers, per-step difficulty statistics and pattern search, computed over the WCA’s real scramble corpus.',
+    },
+  },
+  'scramble/555-about': { title: { zh: '5×5 打乱方法', en: '5×5 Scramble Methods' } },
+  'scramble/analyzer': { title: { zh: '求解', en: 'Solve' } },
+  'scramble/batch-solver': { title: { zh: '批量求解器', en: 'Batch Solver' } },
+  'scramble/gen': { title: { zh: '打乱生成器', en: 'Scramble Generator' } },
+  'scramble/gen-about': { title: { zh: '打乱生成器说明', en: 'Scramble Generator Guide' } },
+  'scramble/hardest': { title: { zh: '最难开局', en: 'Hardest openings' } },
+  'scramble/mcc': { title: { zh: 'MCC (步数系数)', en: 'Movecount Coefficient' } },
+  'scramble/pattern': { title: { zh: '图案', en: 'Patterns' } },
+  'scramble/pattern/search': { title: { zh: '图案搜索', en: 'Pattern Search' } },
+  // One route that dispatches on ?event= across ~28 puzzles, so the title has to
+  // name the route, not a puzzle. (It used to say "Rubik's Clock Solver", picked
+  // up from one of the sibling solver components.) Each solver still refines the
+  // tab title at runtime, since the puzzle lives in a query param the server
+  // metadata cannot see.
+  'scramble/solver': {
+    title: { zh: '魔方求解器', en: 'Puzzle Solver' },
+    description: {
+      zh: '输入打乱或在画板上画出当前状态,求最优解:三阶、二阶、斜转、金字塔、SQ1、魔表、枫叶及各种长方体与异形,共 28 种。',
+      en: 'Enter a scramble or paint the current state and get an optimal solution — 3x3, 2x2, Skewb, Pyraminx, Square-1, Clock, Ivy, cuboids and other shape mods, 28 puzzles in all.',
+    },
+  },
+  'scramble/stats': {
+    title: { zh: '打乱统计', en: 'Scramble Statistics' },
+    description: {
+      zh: '打乱难度与步数分布:十字、F2L、EO、DR 等阶段的统计,以及各项目整解最优步数分布。',
+      en: 'Scramble difficulty and move-count distributions — per-step statistics for cross, F2L, EO and DR, plus optimal solution lengths per event.',
+    },
+  },
+  'scramble/sub-solver': { title: { zh: '子群求解器', en: 'Subsolver' } },
+  'scramble/symmetry': { title: { zh: '对称型', en: 'Symmetry' } },
+  'search': {
+    title: { zh: '全站搜索', en: 'Site Search' },
+    description: {
+      zh: '搜索 CubeRoot 的页面、工具、WCA 比赛与选手、统计、复盘、术语和公式库。',
+      en: 'Search CubeRoot pages, tools, WCA competitions and persons, statistics, reconstructions, glossary entries, and algorithm sets.',
+    },
+  },
+  'alg/sq1/inspect': { title: { zh: 'SQ1 打乱检查', en: 'Square-1 Scramble Inspector' } },
+  'alg/sq1/visualize': { title: { zh: 'SQ1 形状过程', en: 'Square-1 Shape Visualizer' } },
+  'alg/sq1/import': { title: { zh: 'SQ1 复形公式导入', en: 'Square-1 Algorithm Importer' } },
+  'alg/sq1/count': { title: { zh: 'SQ1 奇偶数位', en: 'Square-1 Parity Count Positions' } },
+  'alg/sq1/parity-game': { title: { zh: 'SQ1 奇偶游戏', en: 'Square-1 Parity Game' } },
+  'alg/sq1/train': { title: { zh: 'SQ1 组合练习', en: 'Square-1 Shape Pair Drill' } },
+  'alg/sq1/algorithm-trainer': { title: { zh: 'SQ1 公式训练', en: 'Square-1 Algorithm Trainer' } },
+  'alg/sq1/pbl-finder': {
+    title: { zh: 'SQ1 PBL 高级查找', en: 'Square-1 PBL Advanced Finder' },
+    description: {
+      zh: '按上下层排列查找 Square-1 PBL 公式。',
+      en: 'Find Square-1 PBL algorithms by top and bottom layer permutation.',
+    },
+  },
+  'alg/sq1/karnaukh-notation': {
+    title: { zh: 'SQ1 卡脑壳记号', en: 'Square-1 Karnaukh Notation' },
+    description: {
+      zh: '查阅 Daniel’s Public PBL Doc 使用的卡脑壳记号、紧凑数对与完整组合展开式。',
+      en: 'Reference the Karnaukh mnemonics, packed number pairs, and full combination expansions used in Daniel’s Public PBL Doc.',
+    },
+  },
+  'sq1/cs/name': {
+    title: { zh: 'Square-1 形状名称', en: 'Square-1 Shape Names' },
+    description: {
+      zh: '认识 Square-1 的 29 种单层形状，并通过单层图形练习形状命名。',
+      en: 'Learn the 29 single-layer Square-1 shapes, then practise naming them from their silhouettes.',
+    },
+  },
+  'sq1/cs/name/train': {
+    title: { zh: 'Square-1 形状命名训练', en: 'Square-1 Shape Naming Trainer' },
+    description: {
+      zh: '计时练习 Square-1 的 29 种单层形状名称，并统计每种形状的反应时间。',
+      en: 'A timed drill for naming all 29 single-layer Square-1 shapes, with per-shape reaction times.',
+    },
+  },
+  'space': {
+    title: { zh: '魔方空间', en: 'Cube Space' },
+    description: { zh: '在开放的三维空间中摆放、移动和旋转魔方，自由切换视角并保存布局。', en: 'Arrange, move and rotate puzzles in an open 3D space. Explore every angle and save your layout.' },
+  },
+  'sim/embed': {
+    title: { zh: '魔方嵌入', en: 'Cube Embed' },
+  },
+  'sim': {
+    title: { zh: '魔方模拟器', en: 'Puzzle Simulator' },
+    description: {
+      zh: '魔方模拟器:28 种异形与 NxN 的 3D 模拟,可拖拽转动、播放解法。',
+      en: '3D puzzle simulators for 28 puzzle types — drag to turn, play back solutions.',
+    },
+  },
+  'comp-sim': {
+    title: { zh: '赛前训练', en: 'Competition Practice' },
+    description: {
+      zh: '使用新打乱或历史比赛打乱完成一轮训练，追踪目标、记录失误，并查看逐把成绩与训练复盘。',
+      en: 'Practice with fresh or historical competition scrambles, track a target, note mistakes, and review every attempt.',
+    },
+  },
+  'sim/agents': {
+    title: { zh: 'AI 解魔方对比', en: 'AI Cube Challenge' },
+    description: {
+      zh: '两组国产大模型各派四个代理解二阶魔方，比较真实耗时、探索状态、Token 用量和估算费用，并回放每次尝试。',
+      en: 'Qwen and DeepSeek each send four agents to solve the same 2×2 cube. Compare measured time, explored states, token usage and estimated costs, then replay their attempts.',
+    },
+  },
+  'site': { title: { zh: '网站导航', en: 'Sites Directory' } },
+  'solver': { title: { zh: '求解器', en: 'Solver' } },
+  'stroop': {
+    title: { zh: 'Stroop 色词干扰测试', en: 'Stroop Colour Test' },
+    description: {
+      zh: 'Stroop 测试:报出每个格子的墨色而不是写的字,计时对比色块卡与干扰卡,量出自己的干扰量。',
+      en: 'Stroop test — name the ink colour instead of reading the word, and time the patch card against the conflict card to measure your own interference.',
+    },
+  },
+  'support': { title: { zh: '赞助', en: 'Sponsorship' } },
+  'timer': {
+    title: { zh: '计时器', en: 'Timer' },
+    description: {
+      zh: '速拧计时器：记录日常练习的还原成绩，查看平均成绩；支持 WCA 标准打乱、智能魔方、分步分析与云端备份。',
+      en: 'Record daily practice solve times and view averages. Includes WCA-standard scrambles, smart-cube support, step-by-step analysis and cloud backup.',
+    },
+  },
+  'timer/marks': { title: { zh: '打乱足迹', en: 'Scramble Marks' } },
+  'timezone': {
+    title: { zh: '时区换算', en: 'Time Zone Converter' },
+    description: {
+      zh: '时区换算:填一个时刻,读出世界各地的对应时间,还能一眼找出跨时区都方便的通话时段,夏令时自动处理。',
+      en: 'Convert one moment into local time anywhere in the world, and find the hours that work for everyone across time zones — daylight saving handled automatically.',
+    },
+  },
+  'courses': {
+    title: { zh: '课程', en: 'Courses' },
+    description: {
+      zh: '三阶魔方录播课教学方案:试听课、层先法与 CFOP,含时长、拍摄清单和逐节提词稿。',
+      en: 'A recorded 3×3 cubing course covering trial lessons, the beginner method, and CFOP, with timings, shot lists, and complete scripts.',
+    },
+  },
+  'teachers': {
+    title: { zh: '魔方老师与培训机构', en: 'Cube Teachers & Schools' },
+    description: {
+      zh: '查找魔方老师与培训机构,了解教学方向、授课方式和联系信息;登录用户也可发布并维护自己的介绍。',
+      en: 'Find cube teachers and training schools by specialty, teaching mode and location, or sign in to publish and maintain your own profile.',
+    },
+  },
+  'teachers-edit': {
+    title: { zh: '编辑教学资料', en: 'Edit Teaching Profile' },
+    description: {
+      zh: '创建或修改魔方老师与培训机构资料，包括教学履历、照片、擅长方向和联系方式。',
+      en: 'Create or update a cube teacher or training school profile with experience, photos, specialties, and contact details.',
+    },
+  },
+  'tutorial/lbl': {
+    title: { zh: '三阶魔方层先法', en: '3×3 LBL' },
+    description: { zh: '从小花到六面复原，跟随可交互魔方逐步学习三阶层先法。', en: 'Learn to solve the 3×3 layer by layer with interactive demonstrations, from the daisy to the last edges.' },
+  },
+  'tutorial/f2l': {
+    title: { zh: '三阶魔方 F2L 教程', en: '3×3 F2L Tutorial' },
+    description: { zh: '从层先法走向 F2L：认识四种三步标态，理解顶面调整，逐步学习右前槽角棱对的还原。', en: 'Move from LBL to F2L: recognize four three-move cases, understand top-layer alignment and learn front-right pair insertions step by step.' },
+  },
+  'tutorial': {
+    title: { zh: '魔方教程', en: 'Cubing Tutorials' },
+  },
+  'tutorial-legacy': {
+    title: { zh: '旧版魔方教程', en: 'Legacy Cubing Tutorials' },
+    description: {
+      zh: '魔方教程:从入门还原到 CFOP、Roux 进阶,分类整理,配图与动画。',
+      en: 'Cubing tutorials — from a first solve through CFOP and Roux, organised by topic, with diagrams and animations.',
+    },
+  },
+  'teachers/live-guide': {
+    title: { zh: '直播卖课指南', en: 'Selling Courses Live: A Practical Guide' },
+    description: {
+      zh: '面向魔方老师与培训机构的直播卖课指南：核心技能、观看留存、课程转化、开播流程、现场技巧、学员留存与数据复盘。',
+      en: 'A practical livestream guide for cubing teachers: core skills, viewer retention, course conversion, session planning, live techniques, student retention, and review.',
+    },
+  },
+  'teachers/scripts': {
+    title: { zh: '直播话术库', en: 'Livestream Script Library' },
+    description: {
+      zh: '浏览魔方老师与培训机构公开的结构化直播话术，也可登录创建并维护自己的提词稿。',
+      en: 'Browse structured livestream scripts shared by cube teachers and schools, or sign in to create and maintain your own.',
+    },
+  },
+  'teachers/scripts/manage': { title: { zh: '管理直播话术', en: 'Manage Livestream Scripts' } },
+  'teachers/scripts/edit': { title: { zh: '编辑直播话术', en: 'Edit Livestream Script' } },
+  'wb': { title: { zh: '非官方纪录', en: 'World Bests' } },
+  'wca': {
+    title: { zh: 'WCA 统计', en: 'WCA Statistics' },
+    description: {
+      zh: 'WCA 统计:排名、纪录、名次和、比赛数据与可视化,基于 WCA 官方导出数据。',
+      en: 'WCA statistics — rankings, records, sum of ranks, competition data and visualisations, derived from the official WCA export.',
+    },
+  },
+  'wca/all-events-done': { title: { zh: '全项目达成', en: 'All Events Done' } },
+  'wca/cohort-ranks': { title: { zh: '届别排名', en: 'Cohort Ranks' } },
+  'wca/comp': { title: { zh: '比赛', en: 'Competitions' } },
+  'wca/comp-about': { title: { zh: '加载任意比赛', en: 'Load any competition' } },
+  'wca/comp/sources': { title: { zh: '数据源', en: 'Sources' } },
+  'wca/comp/stats': { title: { zh: '日历统计', en: 'Calendar Stats' } },
+  'wca/fun-stats': { title: { zh: '趣味统计', en: 'Fun Statistics' } },
+  'wca/globe-about': { title: { zh: '地球视图说明', en: 'Globe Guide' } },
+  'wca/grand-slam': { title: { zh: '大满贯', en: 'Grand Slam' } },
+  'wca/achievements': { title: { zh: '荣誉徽章', en: 'Achievement badges' }, description: { zh: '了解 CubeRoot 选手主页荣誉徽章、获得条件，以及世界冠军、当前世界纪录与大满贯选手。', en: 'Explore CubeRoot person-profile badges, their eligibility rules, world champions, current world record holders and Grand Slam achievers.' } },
+  'wca/kinch': {
+    title: { zh: 'Kinch 综合分', en: 'Kinch Ranks' },
+    description: {
+      zh: '按世界、大洲或国家纪录计算 17 个现役 WCA 项目的综合分榜单与选手逐项明细。',
+      en: 'Kinch all-round rankings and per-event scores across all 17 current WCA events, using world, continental or national records.',
+    },
+  },
+  'wca/prediction': { title: { zh: '预测', en: 'Prediction' } },
+  'wca/prediction-about': { title: { zh: '速拧极限预测说明', en: 'Speedcubing Prediction Guide' } },
+  'wca/prediction/333': { title: { zh: '三阶成绩预测', en: '3×3 Prediction' } },
+  'wca/prediction/lucky': { title: { zh: '幸运极限', en: 'Lucky Limit' } },
+  'wca/persons/students': {
+    title: { zh: '学生名单', en: 'Student Roster' },
+    description: {
+      zh: '查看老师的学生名单与教授项目；有权限者可在此管理名单。',
+      en: 'View a teacher roster and taught events, with management tools available to authorized users.',
+    },
+  },
+  'wca/records': { title: { zh: '纪录', en: 'Records' } },
+  'wca/result-watch': { title: { zh: '成绩变更监控', en: 'Result Change Monitor' } },
+  'wca/results': { title: { zh: '排名', en: 'Rankings' } },
+  'wca/teams': { title: { zh: '厂商与战队', en: 'Brands & Teams' }, description: { zh: '查看已登记厂商、旗下战队与选手名单。', en: 'Browse registered brands, teams and their members.' } },
+  'wca/success-rate': { title: { zh: '完成率', en: 'Success Rate' } },
+  'why-cube': {
+    title: { zh: '玩魔方的好处', en: 'Why Learn the Cube' },
+    description: {
+      zh: '给家长和新手:玩魔方到底练了什么 —— 空间想象、记忆、专注与面对失败的能力。',
+      en: 'For parents and newcomers: what solving a cube actually trains — spatial reasoning, memory, focus, and getting comfortable with failure.',
+    },
+  },
+  'wiki': {
+    title: { zh: '速拧术语表', en: 'Cubing Glossary' },
+    description: {
+      zh: '速拧术语表:中英对照,中文术语按社群实际用法而非直译。',
+      en: 'Speedcubing glossary — bilingual, with Chinese terms as the community actually uses them rather than literal translations.',
+    },
+  },
+  'xcross_pairing_trainer': { title: { zh: 'XCross 配对训练', en: 'XCross Pairing Trainer' } },
+  'xcross_trainer': { title: { zh: 'XCross 训练', en: 'XCross Trainer' } },
+  'xxcross_trainer': { title: { zh: 'XXCross 训练', en: 'XXCross Trainer' } },
+};
