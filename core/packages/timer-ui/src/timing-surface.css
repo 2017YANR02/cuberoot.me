@@ -309,6 +309,10 @@
   transform: none;
   padding-top: 0;
   gap: 8px;
+  /* Resolve percentage-sized cube footers against the available column,
+     not the max-content width of an unfinished move sequence. */
+  width: 100%;
+  min-width: 0;
 }
 .timer-stage-source {
   max-height: none;
