@@ -33,7 +33,7 @@ export const LBL_LEARNING_FOCUS: Record<string, Text> = {
   middle: text('2条核心公式去右或去左，以记忆公式为主', 'Learn the two core algorithms: insert right or insert left.'),
   'yellow-cross': text('共2条公式，3种情况', '2 algorithms, 3 cases'),
   'yellow-face': text('数非黄角格，认鱼头和鱼鳍，再选择鱼公式。', 'Count non-yellow corners, identify the head and fins, then choose the Sune algorithm.'),
-  'corner-position': text('一条L公式，结合状态学习', 'Learn the L algorithm in context.'),
+  'corner-position': text('一条J公式，结合状态学习', 'Learn the J algorithm in context.'),
   'edge-position': text('左右鱼公式叠加可以调整顶棱位置', 'Combine the left and right fish algorithms to reposition the top edges.'),
 };
 export const LBL_STAGE_GOALS: Record<string, { before: Text; after: Text; summary?: Text }> = {
@@ -92,7 +92,7 @@ export const LBL_BASICS = [
 ];
 export const LBL_STEPS: Step[] = [
   {
-    id: 'structure', title: text('魔方基础', 'Cube basics'),
+    id: 'structure', title: text('入门', 'Getting started'),
     goal: text('先认识中心、棱块和角块，再开始做小花。', 'Meet the centers, edges and corners before making the daisy.'),
     paragraphs: [
       text("中心的颜色决定这一面复原后的颜色；复原后，每面九格同色。", "Each center determines its face’s solved color. A solved face has nine stickers of the same color."),
@@ -154,9 +154,9 @@ export const LBL_STEPS: Step[] = [
       text("双压、双提是前面两层一起转。", "Both f and f′ turn the front two layers together."),
     ],
     examples: [
-      example('横线', 'Line', `U F ${RIGHT} F'`, '转顶层，把两条黄色棱左右横放，做“压、右公式、提”。', 'Turn the top to hold the two yellow edges left to right, then do F, the right trigger, and F′.'),
-      example('三点半', 'L shape', `U f ${RIGHT} f'`, '转顶层，让两条黄色棱在前和右，做“双压、右公式、双提”。', 'Turn the top so the yellow edges are at front and right, then do f, the right trigger, and f′.'),
-      example('点', 'Dot', `f ${RIGHT} f'`, '先做“双压、右公式、双提”，变成竖线后，再选择“横线”继续。', 'Do f, the right trigger, and f′ to form a vertical line, then select “Line” to continue.', `(f ${RIGHT} f' U F ${RIGHT} F')'`),
+      example('横线', 'Line', `U F ${RIGHT} F'`, '转顶层，把两条黄色棱左右横放。做压，做右公式，做提。', 'Turn the top to hold the two yellow edges left to right. Do F, do the right trigger, then do F′.'),
+      example('三点半', 'L shape', `U f ${RIGHT} f'`, '转顶层，让两条黄色棱在前和右。做双压，做右公式，做双提。', 'Turn the top so the yellow edges are at front and right. Do f, do the right trigger, then do f′.'),
+      example('点', 'Dot', `f ${RIGHT} f'`, '先做双压，做右公式，做双提，变成竖线后，再选择“横线”继续。', 'First do f, do the right trigger, then do f′ to form a vertical line, then select “Line” to continue.', `(f ${RIGHT} f' U F ${RIGHT} F')'`),
     ],
   },
   {
@@ -178,8 +178,8 @@ export const LBL_STEPS: Step[] = [
       text("先找眼", "First look for headlights"),
     ],
     examples: [
-      example('有眼 · 眼放左', 'Headlights · Hold on the left', `y ${CORNER_POSITION}`, '先转体把眼放左，再做L公式。', 'Rotate the whole cube to put the headlights on the left, then do the L algorithm.', `(y ${CORNER_POSITION} U)' d`),
-      example('无眼 · 先造眼', 'No headlights · Create a pair', CORNER_POSITION, '先做一遍L公式，产生眼后，再选择“有眼 · 眼放左”继续。', 'Do the L algorithm once to create headlights, then select “Headlights · Hold on the left” to continue.', `(${CORNER_POSITION} U2 ${CORNER_POSITION} U2)'`),
+      example('有眼 · 眼放左', 'Headlights · Hold on the left', `y ${CORNER_POSITION}`, '先转体把眼放左，再做J公式。', 'Rotate the whole cube to put the headlights on the left, then do the J algorithm.', `(y ${CORNER_POSITION} U)' d`),
+      example('无眼 · 先造眼', 'No headlights · Create a pair', CORNER_POSITION, '先做一遍J公式，产生眼后，再选择“有眼 · 眼放左”继续。', 'Do the J algorithm once to create headlights, then select “Headlights · Hold on the left” to continue.', `(${CORNER_POSITION} U2 ${CORNER_POSITION} U2)'`),
     ],
   },
   {

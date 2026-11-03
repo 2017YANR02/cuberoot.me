@@ -1,6 +1,6 @@
 import { RIGHT, CORNER_POSITION as L_ALG } from './content';
 
-// These fixed traces predate the L lesson's final U'. Preserve their original
+// These fixed traces predate the J lesson's final U'. Preserve their original
 // corner-stage result so the following edge-stage setups remain valid.
 const CORNER_POSITION = `${L_ALG} U`;
 

@@ -19,16 +19,18 @@ export const ALG_LESSONS: AlgLesson[] = [
     { title: { zh: '右鱼公式', en: 'Right Sune' }, alg: RIGHT_SUNE, left: false,
       naming: { zh: '右鱼：鱼头放左前，前（F）面右上角有鱼鳍，右手起手', en: 'Right fish: head at front-left, a fin at the top-right corner of the front (F) face; start with the right hand.' } },
   ] },
-  { id: 'l-alg-learning', after: 'yellow-face', title: { zh: '公式学习：L公式', en: 'Learn the L algorithm' },
+  { id: 'l-alg-learning', after: 'yellow-face', title: { zh: '公式学习：J公式', en: 'Learn the J algorithm' },
     usage: { zh: '', en: '' },
     algs: [
-      { title: { zh: 'L公式', en: 'L algorithm' }, alg: CORNER_POSITION, left: false,
-        naming: { zh: 'L公式交换了右侧两个角块的位置', en: 'The L algorithm swaps the two corners on the right.' } },
+      { title: { zh: 'J公式', en: 'J algorithm' }, alg: CORNER_POSITION, left: false,
+        naming: { zh: 'J公式交换了右侧两个角块的位置', en: 'The J algorithm swaps the two corners on the right.' } },
     ] },
 ];
 
-// Learning interludes are navigation entries; the nine numbered stages stay intact.
-export const LBL_COURSE_ENTRIES = LBL_STEPS.flatMap((step, index) => [
-  { id: step.id, title: step.title, number: index + 1 },
+export const LBL_NUMBERED_CHAPTERS = LBL_STEPS.map((step, index) => ({ id: step.id, title: step.title, number: index + 1 }));
+
+// Formula-learning interludes do not take a chapter number.
+export const LBL_COURSE_ENTRIES = LBL_NUMBERED_CHAPTERS.flatMap(step => [
+  step,
   ...ALG_LESSONS.filter(lesson => lesson.after === step.id).map(lesson => ({ id: lesson.id, title: lesson.title, number: null })),
 ]);

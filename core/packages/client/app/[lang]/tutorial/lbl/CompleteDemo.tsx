@@ -10,6 +10,7 @@ import { resolveStageMaskFn } from '@cuberoot/puzzle-render-core/engine/nxn/vcSt
 import { engineHomeSid } from '@cuberoot/puzzle-render-core/engine/nxn/netIndex';
 import { T, tr } from '@/i18n/tr';
 import { LESSON_STICKERING, type LblExample } from './content';
+import { usePlayerVisible } from './use-player-visible';
 import { buildEdgePositionExample, completeDemoPool, yellowFaceTouchSticker, type CompleteDemoStage, type DemoContent, type DemoPhase, type DemoView, type CompleteDemo as Demo } from './complete-demo-state';
 
 const DEMO_VIEW = { x: 25 * Math.PI / 180, y: -25 * Math.PI / 180, z: 0 };
@@ -112,6 +113,7 @@ function Demonstration({ stage, demo, onCaseCueChange }: { stage: CompleteDemoSt
     return frames;
   }, [demo]);
   const player = useRef<AlgPlayerHandle>(null);
+  const playerVisible = usePlayerVisible(player, demo.setup);
   const [ready, setReady] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [position, setPosition] = useState(0);
@@ -231,8 +233,8 @@ function Demonstration({ stage, demo, onCaseCueChange }: { stage: CompleteDemoSt
     ? [yellowFaceTouchSticker(`${demo.setup} ${demo.alg.split(' ').slice(0, frame.step).join(' ')}`)]
     : undefined, [content.touchSticker, demo, frame.step]);
 
-  return <div className="lbl-demo lbl-demo-split lbl-complete-player">
-    <div className="lbl-cube"><div className="lbl-complete-playback"><AlgPlayer ref={player} puzzle="3x3" engine="sim" controlMode="none" hideResetView
+  return <div className="lbl-demo lbl-demo-split lbl-complete-player" data-player-ready={playerVisible} aria-busy={!playerVisible}>
+    <div className="lbl-cube" data-player-ready={playerVisible} aria-busy={!playerVisible}><div className="lbl-complete-playback"><AlgPlayer ref={player} puzzle="3x3" engine="sim" controlMode="none" hideResetView
       set={LESSON_STICKERING[stage]} additionalStickering={stage.startsWith('yellow-') || stage.endsWith('-position') ? 'F2L' : undefined} orientation="z2"
       highlightedStickers={stage === 'yellow-face' ? touchHighlight ?? recognitionOutlines : undefined}
       sceneRot={DEMO_VIEW} setup={demo.setup} alg={demo.alg} stickeringAtStep={stickeringAtStep} fillPane moveDurationMs={850} />

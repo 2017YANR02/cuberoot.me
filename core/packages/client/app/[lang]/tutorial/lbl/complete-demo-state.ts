@@ -392,10 +392,10 @@ export function buildCompleteDemo(stage: CompleteDemoStage, setup: string): Comp
         const eyeFaces = eyes(inspected);
         const index = eyeFaces.length ? 0 : 1;
         const outlines = visibleEyes.slice(0, 1).flatMap(face => [inspected.faces[face][0], inspected.faces[face][2]]);
-        let rec: DemoContent | undefined = recognize(index === 0 ? t('找到一对眼：两端角格同色。', 'Found headlights: the two corner stickers match.') : t('四面都没有眼，先做一遍L公式造眼。', 'No headlights on any side. Use the L algorithm once to create a pair.'), index, outlines);
+        let rec: DemoContent | undefined = recognize(index === 0 ? t('找到一对眼：两端角格同色。', 'Found headlights: the two corner stickers match.') : t('四面都没有眼，先做一遍J公式造眼。', 'No headlights on any side. Use the J algorithm once to create a pair.'), index, outlines);
         const y = index === 0 ? rotations.find(y => eyes(state(join(currentAlg(), y))).includes(Face.L))! : '';
         rec = prepare(y, t('转体，把眼放左。', 'Rotate the cube to hold the headlights on the left.'), index, rec);
-        action(CORNER_POSITION, t('做L公式。', 'Do the L algorithm.'), index, rec);
+        action(CORNER_POSITION, t('做J公式。', 'Do the J algorithm.'), index, rec);
       }
     } else if (stage === 'edge-position') {
       const align = turns.find(u => topCorners(state(join(base, u))));

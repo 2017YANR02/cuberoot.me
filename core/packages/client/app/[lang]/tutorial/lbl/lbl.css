@@ -6,7 +6,6 @@ body:has(.lbl-page) {
 .lbl-header h1 { width: 100%; margin: 8px 0 20px; font-size: clamp(2rem, 5vw, 3rem); letter-spacing: -.045em; }
 .lbl-basics-page { --lbl-basic-cube-size: 340px; }
 @media (min-width: 1051px) {
-  .lbl-basics-page .lbl-basics-intro { flex: 1; display: flex; flex-direction: column; }
   .lbl-basics-page .lbl-basics-layout { flex: 1; }
   .lbl-basics-page .lbl-basics-main { display: flex; flex-direction: column; }
   .lbl-basics-page .lbl-basics-panel { flex: 1; }
@@ -46,6 +45,9 @@ body:has(.lbl-page) {
 .lbl-step-select .compact-select-current { white-space: normal; text-align: left; }
 .lbl-step-select .compact-select-arrow { width: 20px; height: 20px; }
 .lbl-demonstration { min-width: 0; }
+.compact-select.lbl-subsection-select, .lbl-mobile-alg-intro { display: none; }
+.lbl-mobile-step-count { display: none; }
+.lbl-mobile-alg-counter { display: none; }
 .lbl-chapter-progress { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 6px; flex: 0 0 auto; list-style: none; margin: 0 0 20px; padding: 0; }
 .lbl-lesson > .lbl-chapter-progress { grid-column: 1 / -1; margin-bottom: 0; }
 /* Only the teaching row grows; automatic rows would also stretch the progress
@@ -66,6 +68,7 @@ body:has(.lbl-page) {
 .lbl-instruction-text { white-space: pre-line; }
 .lbl-demo { position: relative; display: flex; flex-direction: column; align-items: center; min-width: 0; gap: 12px; margin-top: 12px; }
 .lbl-cube { position: relative; width: 100%; max-width: 440px; aspect-ratio: 1; }
+.lbl-cube[data-player-ready='false'], .lbl-demo[data-player-ready='false'] { opacity: 0; pointer-events: none; }
 .lbl-demonstration .lbl-cube { max-width: 400px; }
 .lbl-page .playback-bar-controls { border-radius: 24px; padding: 5px; width: fit-content; max-width: 100%; align-self: center; flex-wrap: nowrap; }
 .lbl-page .playback-bar-btn { border-radius: 50%; }
@@ -97,10 +100,42 @@ body:has(.lbl-page) {
 }
 .lbl-chapter-overview { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; min-width: 0; padding-block: 24px; }
 .lbl-overview-diagrams { display: flex; align-items: center; justify-content: center; gap: clamp(12px, 3vw, 36px); width: 100%; }
-.lbl-overview-diagrams > .puzzle-art { width: min(35%, 180px); height: auto; }
+.lbl-overview-diagrams > .lbl-overview-image { display: inline-flex; width: min(35%, 180px); }
+.lbl-overview-image > .puzzle-art { width: 100% !important; height: auto !important; }
+.lbl-overview-image svg { width: 100%; height: 100%; }
+.lbl-stage-image { display: inline-flex; flex-shrink: 0; }
+html.lbl-overview-transition { view-transition-name: none; }
+html.lbl-overview-transition .lbl-stage-overview figcaption { opacity: 0; animation: none; }
+@keyframes lbl-content-enter { from { opacity: 0; } to { opacity: 1; } }
+.lbl-demonstration > :not(.lbl-lesson-actions):not(.lbl-demo),
+.lbl-demo[data-player-ready='true'],
+.lbl-basics-panel > :not(:has(.lbl-cube)),
+.lbl-basics-panel .lbl-cube[data-player-ready='true'],
+.lbl-basics-panel .lbl-basic-copy,
+.lbl-stage-overview figcaption { animation: lbl-content-enter 320ms ease-out backwards; }
+html:has(.lbl-tutorial-page)::view-transition-group(lbl-stage-before),
+html:has(.lbl-tutorial-page)::view-transition-group(lbl-stage-after),
+html:has(.lbl-tutorial-page)::view-transition-group(lbl-stage-arrow) { animation-duration: 600ms; animation-timing-function: cubic-bezier(.22, 1, .36, 1); }
+@media (prefers-reduced-motion: reduce) {
+  html:has(.lbl-tutorial-page)::view-transition-group(*) { animation-duration: 0s; }
+  .lbl-demonstration > :not(.lbl-lesson-actions):not(.lbl-demo),
+  .lbl-demo[data-player-ready='true'],
+  .lbl-basics-panel > :not(:has(.lbl-cube)),
+  .lbl-basics-panel .lbl-cube[data-player-ready='true'],
+  .lbl-basics-panel .lbl-basic-copy,
+  .lbl-stage-overview figcaption { animation: none; }
+}
 .lbl-overview-diagrams > svg { flex-shrink: 0; }
 .lbl-chapter-overview > p { max-width: 32em; margin: 0; font-size: clamp(1.15rem, 1.8vw, 1.5rem); line-height: 1.7; text-align: center; }
 .lbl-chapter-overview > .lbl-overview-focus { font-size: 1rem; color: var(--muted-foreground); }
+.lbl-intro-route { display: grid; grid-template-columns: minmax(0, 1fr) 22px minmax(0, 1fr) 22px minmax(0, 1fr); align-items: center; gap: 16px; width: 100%; max-width: 620px; }
+.lbl-intro-route-step { display: contents; }
+.lbl-intro-route-step > svg { flex-shrink: 0; }
+.lbl-intro-route figure { min-width: 0; margin: 0; text-align: center; }
+.lbl-intro-route .puzzle-art { max-width: 100%; height: auto !important; }
+.lbl-intro-route figcaption { margin-top: 8px; font-size: .9rem; }
+.lbl-intro-substeps { display: flex; flex-direction: column; align-items: center; align-self: start; gap: 12px; }
+.lbl-intro-substeps ol { margin: 0; padding: 0; list-style-position: inside; font-size: .85rem; line-height: 1.9; }
 .lbl-middle-core { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 20px; padding-block: 24px; text-align: center; }
 .lbl-middle-core > p { margin: 0; font-size: 1.3rem; }
 .lbl-middle-core-cases { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
@@ -108,6 +143,7 @@ body:has(.lbl-page) {
 @media (max-width: 600px) { .lbl-fish-parts { grid-template-columns: minmax(0, 1fr); } }
 .lbl-middle-core figure { min-width: 0; margin: 0; }
 .lbl-middle-core .puzzle-art { max-width: 100%; height: auto !important; }
+.lbl-middle-core .puzzle-art svg, .lbl-intro-route .puzzle-art svg { width: 100%; height: auto; }
 .lbl-middle-core figcaption { display: grid; gap: 10px; line-height: 1.7; }
 .lbl-middle-core figcaption strong { font-size: 1.2rem; font-weight: 500; }
 .lbl-middle-core figcaption span { color: var(--muted-foreground); }
@@ -359,8 +395,8 @@ button.lbl-case:active, .lbl-practice:active { transform: scale(.96); }
   body[data-site-scenery]:has(.lbl-page) { background-image: none; }
 }
 
-.lbl-facelet-content { position: relative; min-height: 350px; }
-.lbl-facelet-arrow { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+.lbl-facelet-content { position: relative; }
+.lbl-facelet-cube > .lbl-cube { display: flex; align-items: center; justify-content: center; }
 /* The SVG has less internal whitespace than the simulator; match visible cube size. */
 .lbl-facelet-cube .puzzle-art { width: min(100%, calc(var(--lbl-basic-cube-size) * .78)) !important; height: auto !important; }
 .lbl-facelet-cube svg { width: 100%; height: auto; }
@@ -497,4 +533,54 @@ button.lbl-case:active, .lbl-practice:active { transform: scale(.96); }
 .lbl-walkthrough-options label { display: flex; align-items: center; gap: 8px; }
 .lbl-walkthrough-select { color: var(--foreground); background: var(--background); border: 1px solid var(--border-default); border-radius: 6px; padding: 6px; }
 .lbl-walkthrough-scramble { overflow-wrap: anywhere; color: var(--text-secondary); font-family: var(--font-mono); line-height: 1.7; }
+/* Compact teaching navigation; desktop keeps its illustrated sidebar. */
+@media (max-width: 1050px) {
+  .lbl-tutorial-page .lbl-demonstration > .lbl-stage-overview { display: none; }
+  .lbl-tutorial-page .lbl-visuals > .lbl-case-layout { display: none; }
+  .compact-select.lbl-subsection-select { display: block; width: 100%; margin-top: 8px; }
+  .lbl-subsection-select .compact-select-trigger { width: 100%; min-height: 44px; }
+  .lbl-tutorial-page .lbl-step-heading { margin: 0; font-size: 1.2rem; }
+  .lbl-tutorial-page .lbl-step-select .compact-select-trigger { min-height: 44px; }
+  .lbl-tutorial-page .lbl-basics-heading { padding-bottom: 0; }
+  .lbl-tutorial-page .lbl-lesson { row-gap: 16px; }
+  .lbl-tutorial-page .lbl-demo.lbl-demo-split { margin-top: 0; row-gap: 20px; }
+  .lbl-tutorial-page .lbl-demo-split > .lbl-cube { width: min(100%, 340px); }
+  .lbl-tutorial-page .lbl-lesson-actions { margin-top: 24px; }
+  .lbl-mobile-alg-intro { display: grid; gap: 6px; margin: 16px 0 0; font-size: .9rem; line-height: 1.7; color: var(--muted-foreground); }
+  .lbl-alg-learning-cues .lbl-alg-group { flex-wrap: wrap; }
+  .lbl-intro-route { gap: 8px; }
+  .lbl-tutorial-page .lbl-fish-intro { padding-block: 12px; }
+  .lbl-fish-parts { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .lbl-fish-parts figure { display: grid; grid-template-columns: clamp(84px, 14svh, 112px) minmax(0, 1fr); align-items: center; gap: 16px; }
+  .lbl-fish-parts .puzzle-art { width: 100% !important; }
+  .lbl-fish-parts figcaption { gap: 6px; text-align: left; font-size: .9rem; }
+  .lbl-fish-parts figcaption strong { font-size: 1rem; }
+  .lbl-tutorial-page { --lbl-mobile-content-height: max(560px, calc(100svh - 264px)); --lbl-mobile-player-size: clamp(260px, 40svh, 340px); }
+  .lbl-tutorial-page :is(.lbl-demonstration, .lbl-basics-main) { box-sizing: border-box; display: flex; flex-direction: column; height: var(--lbl-mobile-content-height); min-height: 0; }
+  .lbl-tutorial-page .lbl-demonstration > :is(.lbl-chapter-overview, .lbl-middle-core, .lbl-demo, .lbl-complete-demo),
+  .lbl-tutorial-page .lbl-basics-panel { flex: 1; min-height: 0; overflow: auto; }
+  .lbl-tutorial-page .lbl-basics-panel { justify-content: flex-start; }
+  .lbl-tutorial-page .lbl-basics-panel > * { flex-shrink: 0; }
+  .lbl-tutorial-page .lbl-demonstration > :is(.lbl-chapter-overview, .lbl-middle-core) { justify-content: safe center; }
+  .lbl-tutorial-page .lbl-demo.lbl-demo-split { grid-template-rows: auto minmax(0, 1fr); align-items: start; gap: 16px; }
+  .lbl-tutorial-page .lbl-demo-split > .lbl-cube { width: min(100%, var(--lbl-mobile-player-size)); }
+  .lbl-basics-page { --lbl-basic-cube-size: var(--lbl-mobile-player-size); }
+  .lbl-basics-page .lbl-basic-demo > .lbl-cube { width: min(100%, var(--lbl-mobile-player-size)); }
+  .lbl-basics-page .lbl-guide-player { width: min(100%, var(--lbl-mobile-player-size)); max-width: none; height: auto; aspect-ratio: 1; }
+  .lbl-tutorial-page .lbl-demo-stages { min-height: 150px; max-height: 100%; overflow: auto; }
+  .lbl-tutorial-page .lbl-demo-stage:not([data-mobile-current='true']) { display: none; }
+  .lbl-demo-stage[data-mobile-current='true'] { animation: lbl-content-enter 320ms ease-out backwards; }
+  .lbl-mobile-step-count { display: inline; white-space: nowrap; }
+  .lbl-mobile-alg-counter { display: block; font-size: .8rem; color: var(--muted-foreground); }
+  .lbl-alg-steps[data-mobile-segmented='true'] > .lbl-alg-group:not([data-mobile-current='true']) { display: none; }
+  .lbl-alg-steps[data-mobile-segmented='true'] > .lbl-alg-group[data-mobile-current='true'] { flex-grow: 0 !important; animation: lbl-content-enter 320ms ease-out backwards; }
+  .lbl-tutorial-page .lbl-demo-split > :is(.lbl-trigger-legend, .lbl-alg-note, .lbl-complete-legend-space) { display: none; }
+  .lbl-tutorial-page :is(.lbl-lesson-actions, .lbl-basics-footer) { box-sizing: border-box; flex: 0 0 64px; min-height: 64px; margin: 0; padding-top: 12px; }
+  .lbl-tutorial-page .lbl-mobile-alg-intro { flex: 0 0 auto; margin: 8px 0; }
+  .lbl-tutorial-page .lbl-alg-learning-cues { max-height: 100%; overflow: auto; align-items: flex-start; }
+  .lbl-tutorial-page .lbl-complete-player .lbl-complete-thought { min-height: 150px; max-height: 100%; overflow: auto; align-items: start; }
+  @media (prefers-reduced-motion: reduce) {
+    .lbl-demo-stage[data-mobile-current='true'], .lbl-alg-steps[data-mobile-segmented='true'] > .lbl-alg-group[data-mobile-current='true'] { animation: none; }
+  }
+}
 .lbl-walkthrough-player { height: min(65vh, 520px); min-height: 320px; }

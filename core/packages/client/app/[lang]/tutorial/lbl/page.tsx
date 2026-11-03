@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import { Alg } from 'cubing/alg';
 import { Axis } from '@cuberoot/visualcube';
 import { ArrowRight, Play } from '@app-foundation/icons/lucide';
@@ -27,6 +28,7 @@ import MiddleCases, { MiddleCaseDiagram } from './MiddleCases';
 import LastLayerTerms, { LastLayerTermDiagram } from './LastLayerTerms';
 import { COMPLETE_DEMO_STAGES, yellowFaceTouchSticker, yellowFishRecognitionStickers, type CompleteDemoStage } from './complete-demo-state';
 import { useStartInspection } from './use-start-inspection';
+import { usePlayerVisible } from './use-player-visible';
 import AlgSteps from './AlgSteps';
 import AlgLesson from './AlgLesson';
 import ContinueButton from './ContinueButton';
@@ -112,6 +114,29 @@ export default function LblTutorial() {
   const continueChapter = nextStep ? () => { setSelection({ step: '', index: -1 }); void setStepId(nextStep.id); } : undefined;
   const [demoCaseCue, setDemoCaseCue] = useState<DemoCaseCue>(null);
   const overview = selection.step !== step.id || selection.index === -1;
+  const overviewTransition = useRef<ViewTransition | null>(null);
+  useEffect(() => () => {
+    overviewTransition.current?.skipTransition();
+    document.documentElement.classList.remove('lbl-overview-transition');
+  }, []);
+  const selectSubsection = (index: number) => {
+    overviewTransition.current?.skipTransition();
+    const update = () => setSelection({ step: step.id, index });
+    if (!overview || index === -1 || !document.startViewTransition || window.matchMedia('(prefers-reduced-motion: reduce), (max-width: 1050px)').matches) {
+      document.documentElement.classList.remove('lbl-overview-transition');
+      update();
+      return;
+    }
+    // Snapshot only the named diagrams, never the newly mounted WebGL canvas.
+    document.documentElement.classList.add('lbl-overview-transition');
+    const transition = document.startViewTransition(() => flushSync(update));
+    overviewTransition.current = transition;
+    void transition.finished.catch(() => {}).then(() => {
+      if (overviewTransition.current !== transition) return;
+      overviewTransition.current = null;
+      document.documentElement.classList.remove('lbl-overview-transition');
+    });
+  };
   const middleCore = step.id === 'middle' && selection.step === step.id && selection.index === -2;
   const hasTerms = ['middle', 'corner-position', 'edge-position'].includes(step.id);
   const lastLayerTerms = hasTerms && step.id !== 'middle' && selection.step === step.id && selection.index === -2;
@@ -154,16 +179,14 @@ export default function LblTutorial() {
   };
   const beforeStage = LBL_STEPS[Math.max(0, stepIndex - 1)].id;
   const caseComparison = !overview && !middleCore && !lastLayerTerms && !completeDemo;
-  const stageOverview = stageImages && <div className="lbl-stage-overview" role="group" aria-label={tr({ zh: '本步开始状态与目标', en: 'Stage start and goal' })}>
-    <figure>{caseComparison ? <VisualCube local {...diagramMask} stickerColors={comparisonBefore} view="iso" scheme="yogwrb" size={64} setup={setup}
+  const stageOverview = stageImages && <div key={`${step.id}:${selectedSubsection}`} className="lbl-stage-overview" role="group" aria-label={tr({ zh: '本步开始状态与目标', en: 'Stage start and goal' })}>
+    <figure><span className="lbl-stage-image" style={{ viewTransitionName: 'lbl-stage-before' }}>{caseComparison ? <VisualCube local {...diagramMask} stickerColors={comparisonBefore} view="iso" scheme="yogwrb" size={64} setup={setup}
       outlineMaskedTop={step.id === 'yellow-face' && exampleIndex >= 2}
-      alt={tr({ zh: '转动前', en: 'Before' })} /> : stageDiagram(beforeStage, 64, tr(stageGoal.before))}</figure>
-    <ArrowRight size={22} aria-hidden="true" />
-    <figure>{caseComparison ? <VisualCube local {...diagramMask} stickerColors={comparisonAfter} view="iso" scheme="yogwrb" size={64} setup={new Alg(`${setup} ${demo.alg}`).expand().toString()}
-      alt={tr({ zh: '转动后', en: 'After' })} /> : stageDiagram(step.id, 64, tr(stageGoal.after))}
-      <figcaption>{caseComparison ? step.id === 'yellow-face' && exampleIndex >= 2 ? <T zh="转动后：3灰，再判断" en="After: 3 gray; reassess" />
-        : step.id === 'edge-position' && exampleIndex === 2 ? <T zh="转动后：有墙，再判断" en="After: a wall; reassess" />
-        : <T zh="转动前 → 转动后" en="Before → After" /> : tr(stageGoal.summary ?? stageGoal.after)}</figcaption></figure>
+      alt={tr({ zh: '转动前', en: 'Before' })} /> : stageDiagram(beforeStage, 64, tr(stageGoal.before))}</span></figure>
+    <ArrowRight size={22} aria-hidden="true" style={{ viewTransitionName: 'lbl-stage-arrow' }} />
+    <figure><span className="lbl-stage-image" style={{ viewTransitionName: 'lbl-stage-after' }}>{caseComparison ? <VisualCube local {...diagramMask} stickerColors={comparisonAfter} view="iso" scheme="yogwrb" size={64} setup={new Alg(`${setup} ${demo.alg}`).expand().toString()}
+      alt={tr({ zh: '转动后', en: 'After' })} /> : stageDiagram(step.id, 64, tr(stageGoal.after))}</span>
+      <figcaption>{tr(stageGoal.summary ?? stageGoal.after)}</figcaption></figure>
   </div>;
   if (view === 'practice' && !algLesson) return <Practice key={step.id} step={step.id === 'structure' ? LBL_STEPS[1] : step} />;
   if (view === 'walkthrough') return <Walkthrough />;
@@ -191,15 +214,23 @@ export default function LblTutorial() {
         <div className="lbl-intro">
           {stepHeading}
         </div>
+        <CompactSelect className="lbl-subsection-select" value={String(selectedSubsection)} label={tr(selectedSubsection === -1 ? { zh: '概览', en: 'Overview' }
+          : selectedSubsection === -2 ? { zh: '术语介绍', en: 'Terminology' }
+          : completeDemo ? { zh: '完整演示', en: 'Complete demonstration' } : demo.title)}
+          ariaLabel={tr({ zh: '选择小节', en: 'Choose a section' })}
+          items={subsectionOrder.map(index => ({ value: String(index), label: tr(index === -1 ? { zh: '概览', en: 'Overview' }
+            : index === -2 ? { zh: '术语介绍', en: 'Terminology' }
+            : index === step.examples.length ? { zh: '完整演示', en: 'Complete demonstration' } : step.examples[index].title) }))}
+          onChange={value => selectSubsection(Number(value))} />
         <div className="lbl-case-layout">
         <div className="lbl-cases" data-count={step.examples.length + 1 + (hasTerms ? 1 : 0) + (hasCompleteDemo ? 1 : 0)} role="group" aria-label={tr({ zh: '演示情况', en: 'Examples' })}>
           <button type="button" className="lbl-button lbl-case lbl-case-overview" aria-pressed={overview}
-            onClick={() => setSelection({ step: step.id, index: -1 })}>
+            onClick={() => selectSubsection(-1)}>
             {stageDiagram(step.id, 52, '')}
             <span><T zh="概览" en="Overview" /></span>
           </button>
           {hasTerms && <button type="button" className="lbl-button lbl-case" aria-pressed={middleCore || lastLayerTerms}
-            onClick={() => setSelection({ step: step.id, index: -2 })}>
+            onClick={() => selectSubsection(-2)}>
             {step.id === 'middle' ? <MiddleCaseDiagram size={52} /> : <LastLayerTermDiagram wall={step.id === 'edge-position'} size={52} />}<span><T zh="术语介绍" en="Terminology" /></span>
           </button>}
           {step.examples.map((e, i) => {
@@ -222,10 +253,10 @@ export default function LblTutorial() {
             return <button type="button" key={i} className={`lbl-button lbl-case${thumbCue ? ' lbl-case-cue' : ''}`}
                 data-demo-cue={completeDemo && demoCaseCue?.index === i ? 'true' : undefined}
                 data-cue-paused={demoCaseCue && !demoCaseCue.playing ? 'true' : undefined}
-                onClick={() => setSelection({ step: step.id, index: i })} aria-pressed={!overview && !middleCore && !lastLayerTerms && !completeDemo && i === exampleIndex}>{content}</button>;
+                onClick={() => selectSubsection(i)} aria-pressed={!overview && !middleCore && !lastLayerTerms && !completeDemo && i === exampleIndex}>{content}</button>;
           })}
           {hasCompleteDemo && <button type="button" className="lbl-button lbl-case"
-            aria-pressed={completeDemo} onClick={() => setSelection({ step: step.id, index: step.examples.length })}>
+            aria-pressed={completeDemo} onClick={() => selectSubsection(step.examples.length)}>
             <span className="puzzle-art lbl-case-preview" aria-hidden="true">
               {stageDiagram(step.id, 52, '')}
               <Play className="lbl-case-play" size={26} />
@@ -239,9 +270,9 @@ export default function LblTutorial() {
         {!overview && stageOverview}
         {overview && stageImages ? <div className="lbl-chapter-overview">
           <div className="lbl-overview-diagrams">
-            {stageDiagram(beforeStage, 160, tr(stageGoal.before))}
-            <ArrowRight size={28} aria-hidden="true" />
-            {stageDiagram(step.id, 160, tr(stageGoal.after))}
+            <span className="lbl-overview-image" style={{ viewTransitionName: 'lbl-stage-before' }}>{stageDiagram(beforeStage, 160, tr(stageGoal.before))}</span>
+            <ArrowRight size={28} aria-hidden="true" style={{ viewTransitionName: 'lbl-stage-arrow' }} />
+            <span className="lbl-overview-image" style={{ viewTransitionName: 'lbl-stage-after' }}>{stageDiagram(step.id, 160, tr(stageGoal.after))}</span>
           </div>
           <p>{tr(stageGoal.summary ?? stageGoal.after)}</p>
           <p className="lbl-overview-focus">{tr(LBL_LEARNING_FOCUS[step.id])}</p>
@@ -250,7 +281,7 @@ export default function LblTutorial() {
           instruction={tr(lastLayer || ['daisy', 'middle'].includes(step.id) ? demo.hint : step.paragraphs[0] ?? demo.hint)} />}
         <div className="lbl-lesson-actions">
           <Link className="lbl-practice lbl-lesson-practice" href={`/tutorial/lbl?step=${step.id}&view=practice&case=${completeDemo ? 1 : exampleIndex + 1}`} prefetch={false}><T zh="练习本节" en="Practice this lesson" /><ArrowRight size={16} /></Link>
-          {nextSubsection !== undefined ? <ContinueButton onClick={() => setSelection({ step: step.id, index: nextSubsection })} />
+          {nextSubsection !== undefined ? <ContinueButton onClick={() => selectSubsection(nextSubsection)} />
             : continueChapter && <ContinueButton onClick={continueChapter} />}
         </div>
       </section>
@@ -268,6 +299,7 @@ const NEXT_CASE_STEPS: Record<string, readonly number[]> = {
 function LessonDemo({ step, demo, fourGray, instruction }: { step: string; demo: LblExample; fourGray: boolean; instruction: string }) {
   const [playbackStep, setPlaybackStep] = useState(0);
   const demoPlayer = useRef<AlgPlayerHandle>(null);
+  const playerVisible = usePlayerVisible(demoPlayer, `${step}:${demo.alg}:${demo.setup ?? ''}`);
   const yellowFaceCase = step === 'yellow-face';
   const touchCase = yellowFaceCase && LBL_STEPS.find(item => item.id === step)!.examples.indexOf(demo) >= 2;
   const inspecting = useStartInspection(yellowFaceCase, demoPlayer, playbackStep);
@@ -365,9 +397,11 @@ function LessonDemo({ step, demo, fourGray, instruction }: { step: string; demo:
       rows.push({ text: nextCaseText, moves: [], note: '' });
     }
   }
+  const activeRow = playbackStep >= moveCount && rows.at(-1)?.moves.length === 0
+    ? rows.length - 1 : Math.max(0, rows.findIndex(row => row.moves.includes(Math.max(1, playbackStep))));
   return <>
-    <div className="lbl-demo lbl-demo-split" data-step={step}>
-    <div className="lbl-cube" onPointerDownCapture={() => { viewInterrupted.current = true; }}>
+    <div className="lbl-demo lbl-demo-split" data-step={step} data-player-ready={playerVisible} aria-busy={!playerVisible}>
+    <div className="lbl-cube" data-player-ready={playerVisible} aria-busy={!playerVisible} onPointerDownCapture={() => { viewInterrupted.current = true; }}>
       <AlgPlayer ref={demoPlayer} puzzle="3x3" set={LESSON_STICKERING[step] ?? ''} engine="sim" orientation="z2"
         additionalStickering={['yellow-cross', 'yellow-face', 'corner-position', 'edge-position'].includes(step) ? 'F2L' : undefined}
         hiddenStickers={fourGray ? FOUR_GRAY_HIDDEN_STICKERS : undefined}
@@ -377,12 +411,12 @@ function LessonDemo({ step, demo, fourGray, instruction }: { step: string; demo:
         sceneRot={step === 'cross' ? CROSS_INITIAL_VIEW : fourGray ? FOUR_GRAY_VIEW : demo.sceneRot ?? (['yellow-cross', 'yellow-face', 'corner-position', 'edge-position'].includes(step) ? ANGLED_LAST_LAYER_VIEW : LBL_INITIAL_VIEW)} onStepChange={setPlaybackStep}
         highlightDaisyAlignment={step === 'cross'}
         stepMarkers={stepMarkers}
-        autoPlay={!inspecting}
+        autoPlay={playerVisible && !inspecting}
         alg={demo.alg} setup={demo.setup} startSolved={demo.startSolved} fillPane moveDurationMs={step === 'cross' ? 1500 : 1000} />
     </div>
     <ol className="lbl-demo-stages" aria-label={tr({ zh: '操作步骤', en: 'Teaching steps' })}>
-      {rows.map((row, i) => <li className="lbl-demo-stage" key={i}>
-        <span className="lbl-demo-stage-number" aria-hidden="true">{i + 1}</span>
+      {rows.map((row, i) => <li className="lbl-demo-stage" key={i} data-mobile-current={i === activeRow}>
+        <span className="lbl-demo-stage-number" aria-hidden="true">{i + 1}<span className="lbl-mobile-step-count"> / {rows.length}</span></span>
         <div className="lbl-demo-stage-body">
           <p className="lbl-instruction-phase" aria-current={row.moves.includes(activeMove + 1) ? 'step' : undefined}>{row.text}</p>
           {row.moves.length > 0 && <AlgSteps step={step} alg={demo.alg} activeMove={activeMove} moveIndices={row.moves.map(move => move - 1)} onMoveClick={index => demoPlayer.current?.playMove?.(index)} />}

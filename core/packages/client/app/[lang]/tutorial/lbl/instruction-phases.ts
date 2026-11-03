@@ -34,9 +34,9 @@ export const INSTRUCTION_PHASES: Record<string, InstructionPhase[][]> = {
     [phase('先转体把它放右前方', 'Rotate it to front-right', 1), phase('做“去右”把原来的棱取出', 'Use the right insertion to eject it', 2, 11)],
   ],
   'yellow-cross': [
-    [phase('转顶层，把两条黄色棱左右横放', 'Turn the top to hold the two yellow edges left to right', 1), phase('压', 'F', 2), phase('右公式', 'the right trigger', 3, 6), phase('提', 'F′', 7)],
-    [phase('转顶层，让两条黄色棱在前和右', 'Turn the top so the yellow edges are at front and right', 1), phase('双压', 'f', 2), phase('右公式', 'the right trigger', 3, 6), phase('双提', 'f′', 7)],
-    [phase('双压', 'f', 1), phase('右公式', 'the right trigger', 2, 5), phase('双提', 'f′', 6)],
+    [phase('转顶层，把两条黄色棱左右横放', 'Turn the top to hold the two yellow edges left to right', 1), phase('做压', 'Do F', 2), phase('做右公式', 'do the right trigger', 3, 6), phase('做提', 'then do F′', 7)],
+    [phase('转顶层，让两条黄色棱在前和右', 'Turn the top so the yellow edges are at front and right', 1), phase('做双压', 'Do f', 2), phase('做右公式', 'do the right trigger', 3, 6), phase('做双提', 'then do f′', 7)],
+    [phase('先做双压', 'First do f', 1), phase('做右公式', 'do the right trigger', 2, 5), phase('做双提', 'then do f′', 6)],
   ],
   'yellow-face': [
     [phase('转顶层把鱼头放左前，F面鱼鳍朝右', 'Turn the top to put the head at front-left, with the fin on the right of the F face', 1), phase('做右鱼公式', 'do right Sune', 2, 8)],
@@ -45,8 +45,8 @@ export const INSTRUCTION_PHASES: Record<string, InstructionPhase[][]> = {
     [phase('转顶层让拇指不碰黄', 'Turn the top so it does not touch yellow', 1), phase('做右鱼公式', 'do right Sune', 2, 8)],
   ],
   'corner-position': [
-    [phase('转体把眼放左', 'Rotate the whole cube to put the headlights on the left', 1), phase('做L公式', 'do the L algorithm', 2, 15)],
-    [phase('做一遍L公式', 'Do the L algorithm once', 1, 14)],
+    [phase('转体把眼放左', 'Rotate the whole cube to put the headlights on the left', 1), phase('做J公式', 'do the J algorithm', 2, 15)],
+    [phase('做一遍J公式', 'Do the J algorithm once', 1, 14)],
   ],
   'edge-position': [
     [phase('转体把墙放后', 'Rotate the cube to put the wall at the back', 1), phase('右鱼', 'Right Sune', 2, 8), phase('顶层 U', 'U', 9), phase('左鱼', 'Left Sune', 10, 16), phase('转顶层对齐', 'Align the top', 17)],

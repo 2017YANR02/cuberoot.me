@@ -42,10 +42,6 @@ const variants = [
   { suffix: '2', title: { zh: '转两下', en: 'Two quarter-turns' }, detail: { zh: '2：半圈，180°', en: '2: a half-turn, 180°' } },
 ];
 
-function ColorDot({ color }: { color: string }) {
-  return <span className="lbl-guide-color" style={{ backgroundColor: color }} aria-hidden="true" />;
-}
-
 export default function BasicsGuide({ section }: { section: typeof BASIC_GUIDE_TOPICS[number]['id'] }) {
   const [move, setMove] = useState('R');
   const [playRequest, setPlayRequest] = useState(0);
@@ -69,7 +65,6 @@ export default function BasicsGuide({ section }: { section: typeof BASIC_GUIDE_T
             <figcaption><strong>{tr(layer.title)}</strong><span>{tr(layer.name)}</span></figcaption>
           </figure>)}
         </div>
-        <p className="lbl-guide-basement"><ColorDot color={colors.D} /><T zh="底面叫“地下室”，白色朝下。" en="The bottom face is the “basement”, with white facing down." /></p>
       </div>}
       {section === 'moves' && <div className="lbl-guide-moves">
         <div className="lbl-guide-move-preview">

@@ -38,7 +38,7 @@ export function getLblAlgGroups(step: string, alg: string): LblAlgMove[][] {
       notation, index: start + offset, cue: cues?.[offset] ?? singleMoves[notation] ?? cue(notation, notation),
     }));
 
-  // Keep the L algorithm in three groups, including its final U′ alignment. It is not the
+  // Keep the J algorithm in three groups, including its final U′ alignment. It is not the
   // alternate R2 D2 algorithm, so do not borrow that version's mnemonic.
   if (step === 'corner-position') {
     const body = CORNER_POSITION.split(' ');
