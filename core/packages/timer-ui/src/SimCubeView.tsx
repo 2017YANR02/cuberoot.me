@@ -101,6 +101,8 @@ import { rotationQuaternionForToken } from '@cuberoot/shared/timer/reconstruct/r
 
 /** Below this the pose is "unchanged" and we skip the render entirely. */
 const STILL_EPS_RAD = 1e-4;
+const CALIBRATION_TRANSITION_MS = 360;
+const CALIBRATION_TAU_MS = 90;
 
 /** Live mirrors receive completed BLE turns, not continuous layer angles. Keep
  *  one turn readable without replaying half-second-old history. These values
@@ -318,6 +320,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
   const smoothedRef = useRef<Quat | null>(null);
   const appliedRef = useRef<Quat | null>(null);
   const pendingCalibrationRef = useRef(false);
+  const calibrationTransitionMsRef = useRef(0);
   // M/E/S turns rotate the sensor-bearing core, unlike outer-layer turns. The
   // matching opposite-face BLE pair temporarily accelerates only orientation
   // follow; layer timing and every rendering-quality setting remain unchanged.
@@ -365,9 +368,9 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
     seenTokenRef.current = calibrateToken;
     if (calibrationReference) referenceRef.current = calibrate(calibrationReference);
     pendingCalibrationRef.current = !calibrationReference;
-    // Re-derive from the new reference rather than easing out of a pose that no
-    // longer means anything.
-    smoothedRef.current = null;
+    // Calibration changes the target immediately, but the displayed pose must
+    // travel from its current position. Repeated resets continue from that pose.
+    calibrationTransitionMsRef.current = CALIBRATION_TRANSITION_MS;
     sliceFollowUntilRef.current = 0;
   }, [calibrateToken, calibrationReference]);
 
@@ -439,9 +442,12 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
           // so the cube glides instead of stepping. A slice turn is the one
           // exception that moves the sensor-bearing core itself; keep SLERP but
           // let that large jump finish alongside its layer animation.
-          const orientationTauMs = performance.now() < sliceFollowUntilRef.current
-            ? SLICE_ORIENTATION_TAU_MS
-            : undefined;
+          const orientationTauMs = calibrationTransitionMsRef.current > 0
+            ? CALIBRATION_TAU_MS
+            : performance.now() < sliceFollowUntilRef.current
+              ? SLICE_ORIENTATION_TAU_MS
+              : undefined;
+          calibrationTransitionMsRef.current = Math.max(0, calibrationTransitionMsRef.current - dtMs);
           const next = smoothedRef.current
             ? slerpTowards(smoothedRef.current, target, dtMs, orientationTauMs)
             : target;
