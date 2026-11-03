@@ -293,7 +293,7 @@ export default function DeskPetSearch({
   }, [owner]);
   const newChat = () => {
     assistantConversations.create(owner, crypto.randomUUID());
-    setActivePanel(window.matchMedia('(max-width:767px)').matches ? null : 'chats');
+    if (window.matchMedia('(max-width:767px)').matches) setActivePanel(null);
   };
   const selectChat = (id: string) => {
     assistantConversations.select(owner, id);
@@ -618,10 +618,8 @@ export default function DeskPetSearch({
               toggle.props.onToggle();
             },
           }) : toggle}
-          <button type="button" className="deskpet-conversation-title" onClick={() => {
-            setActivePanel('chats');
-            if (isValidElement<ComponentProps<typeof SidebarToggle>>(toggle) && toggle.props.collapsed) toggle.props.onToggle();
-          }} aria-label={t('查看聊天列表', 'Show conversations')}><SquarePen size={18} /><span>{chatTitle(chats.activeId)}</span></button>
+          <button type="button" className="deskpet-conversation-title" onClick={newChat}
+            aria-label={t('新聊天', 'New chat')}><SquarePen size={18} /><span>{chatTitle(chats.activeId)}</span></button>
           <button className="deskpet-mobile-control" type="button" aria-label={t('新聊天', 'New chat')} onClick={newChat}><SquarePen size={21}/></button>
           <CubeRootLogo className="deskpet-home-logo" height={24} variant="mark" />
         </div>}>

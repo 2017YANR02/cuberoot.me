@@ -109,7 +109,7 @@ describe('LandingSearch placeholder hydration', () => {
   it.each(['zh', 'en'] as const)('submits the visible home suggestion with Enter or the send button (%s)', async lang => {
     routeState.lang = lang;
     const owner = assistantOwner(authState.user);
-    const submit = vi.spyOn(assistantConversations, 'submit').mockImplementation(() => {});
+    const submit = vi.spyOn(assistantConversations, 'submit').mockReturnValue(true);
     const host = document.createElement('div'); document.body.appendChild(host);
     const root = createRoot(host);
     try {
