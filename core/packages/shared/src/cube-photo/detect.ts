@@ -123,7 +123,7 @@ function cellCoherence(image: PhotoPixels, q: Quad, rows = 3): number {
 }
 
 function topScore(image: PhotoPixels, e: Edges, q: Quad): number {
-  if (!validQuad(q, image.width * image.height * 0.008)) return 0;
+  if (!asTop(q) || !validQuad(q, image.width * image.height * 0.008)) return 0;
   if (q.some(p => p.x < 2 || p.y < 2 || p.x > e.width - 3 || p.y > e.height - 3)) return 0;
   const lengths = q.map((p, i) => distance(p, q[(i + 1) % 4]));
   if (Math.min(...lengths) < 30 || Math.max(...lengths) / Math.min(...lengths) > 3.2) return 0;
@@ -162,30 +162,16 @@ function boundaryPairs(lines: Line[], w: number, h: number): [Line, Line][] {
     const sign = Math.cos(l.angle - ref.angle) < 0 ? -1 : 1;
     return sign * (l.rho - center.x * Math.cos(l.angle) - center.y * Math.sin(l.angle));
   };
-  const pairs: { pair: [Line, Line]; score: number }[] = [];
+  const pairs: [Line, Line][] = [];
   for (let i = 0; i < lines.length; i++) for (let j = i + 1; j < lines.length; j++) {
     const a = lines[i], b = lines[j], ao = offset(a, a), bo = offset(b, a), gap = Math.abs(ao - bo);
     if (gap < Math.min(w, h) * 0.09 || gap > Math.max(w, h) * 0.8) continue;
-    let score = 0;
-    for (const t of [1 / 3, 2 / 3]) {
-      const target = ao + (bo - ao) * t;
-      let best = 0;
-      for (const l of lines) {
-        if (l === a || l === b) continue;
-        const delta = Math.abs(offset(l, a) - target);
-        best = Math.max(best, Math.max(0, 1 - delta / (gap * 0.17)) * Math.sqrt(l.votes));
-      }
-      score += best;
-    }
-    // Same-colour sticker seams may be too short/soft to survive global Hough
-    // selection. They still contribute to the local pixel grid score below.
-    // Rank by the Hough evidence, but do not require internal Hough lines.
-    pairs.push({ pair: [a, b], score: score + 0.15 * Math.sqrt(a.votes * b.votes) });
+    pairs.push([a, b]);
   }
-  // Ranking uses approximately parallel offsets. Keep a wider bounded beam:
-  // real perspective makes opposite edges converge, so the right pair can rank
-  // below parallel keyboard/background edges even though its 2D grid fits well.
-  return pairs.sort((a, b) => b.score - a.score).slice(0, 80).map(p => p.pair);
+  // Keep all pairs in the bounded 22-line family. Parallel-offset rankings can
+  // discard the actual boundary under perspective, especially after compression.
+  // The two-dimensional grid score below is the meaningful ranking criterion.
+  return pairs;
 }
 
 function asTop(points: Point[]): Quad | null {
@@ -197,6 +183,11 @@ function asTop(points: Point[]): Quad | null {
   const spanX = Math.max(...q.map(p => p.x)) - Math.min(...q.map(p => p.x));
   const spanY = Math.max(...q.map(p => p.y)) - Math.min(...q.map(p => p.y));
   if (q[2].y < Math.max(q[1].y, q[3].y) - spanY * 0.1 || spanY / spanX > 1.1 || spanY / spanX < 0.16) return null;
+  // With both adjacent sides visible, the front and back vertices sit between
+  // the lateral vertices. A vertical side misread as a top has an almost-zero
+  // horizontal span on one edge, even if its sticker rows score very strongly.
+  const left = Math.min(q[1].x, q[3].x), right = Math.max(q[1].x, q[3].x);
+  if ([q[0], q[2]].some(p => p.x < left + spanX * .08 || p.x > right - spanX * .08)) return null;
   return q;
 }
 
@@ -322,7 +313,10 @@ export function detectCubePhoto(image: PhotoPixels): CubePhotoDetection {
   const candidates: CubePhotoCandidate[] = [];
   for (const p of distinct) {
     const top = refineTop(image, edges, p.q), sides = fitSides(image, edges, top.q);
-    if (!sides || top.score < 0.42 || sides.score < 0.32 || !hasColorEvidence(image, sides.corners)) continue;
+    // A uniform PLL top has softer seams than a multicolor OLL. Accept that
+    // weaker top only when both adjoining side rows corroborate the geometry.
+    if (!sides || top.score < 0.34 || (top.score < 0.42 && sides.score < 0.55)
+      || sides.score < 0.32 || !hasColorEvidence(image, sides.corners)) continue;
     candidates.push({ corners: sides.corners, topSupport: top.score, sideSupport: sides.score });
   }
   candidates.sort((a, b) => (b.topSupport * 0.6 + b.sideSupport * 0.4) - (a.topSupport * 0.6 + a.sideSupport * 0.4));

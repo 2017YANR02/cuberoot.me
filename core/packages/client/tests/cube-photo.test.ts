@@ -5,6 +5,7 @@ import { faceGrid, homography, project, validQuad, type Quad } from '@/lib/cube-
 import { cubePhotoFixture } from '@cuberoot/shared/testing/cube-photo';
 import { resizePhotoPixels } from '@cuberoot/shared/cube-photo/pixels';
 import { SOLVED_FACELET } from '@cuberoot/shared/cube-facelet';
+import algFixture from '@cuberoot/shared/testing/cube-photo-algs';
 
 describe('cube photo geometry', () => {
   it('projects perspective thirds, rather than dividing image-space edges equally', () => {
@@ -36,6 +37,15 @@ describe('cube photo geometry', () => {
     const detection = detectCubePhoto({ width: info.width, height: info.height, data: new Uint8ClampedArray(data) });
     expect(detection.reason).toBe('ok');
     expect(detection.candidates[0].corners.slice(0, 4).every((p, i) => Math.hypot(p.x - fixture.top[i].x, p.y - fixture.top[i].y) < 10)).toBe(true);
+  });
+  it('locates a uniform PLL top with soft seams instead of the more colorful vertical side', async () => {
+    const fixture = cubePhotoFixture(true, .18, algFixture.states.pll);
+    const svg = fixture.svg.replace('fill="#181b20"', 'fill="#b0b020"');
+    const { data, info } = await sharp(Buffer.from(svg)).blur(1.2).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const detection = detectCubePhoto({ width: info.width, height: info.height, data: new Uint8ClampedArray(data) });
+    expect(detection.reason).toBe('ok');
+    const errors = detection.candidates[0].corners.slice(0, 4).map((p, i) => Math.hypot(p.x - fixture.top[i].x, p.y - fixture.top[i].y));
+    expect(errors.every(error => error < 10), JSON.stringify(errors)).toBe(true);
   });
   for (const occluded of [false, true]) it(`locates the top grid with lower layers ${occluded ? 'occluded' : 'visible'}`, async () => {
     const fixture = cubePhotoFixture(occluded);
