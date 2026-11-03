@@ -251,7 +251,13 @@
       "./timer/scramble-history": "runtime-neutral",
       "./timer/http": "runtime-neutral",
       "./timer/rank-presentation": "runtime-neutral",
-      "./timer/wca-competition-catalog": "runtime-neutral"
+      "./timer/wca-competition-catalog": "runtime-neutral",
+      "./cube-photo/scan": "runtime-neutral",
+      "./cube-photo/geometry": "runtime-neutral",
+      "./cube-photo/detect": "runtime-neutral",
+      "./cube-photo/recognize": "runtime-neutral",
+      "./cube-photo/lookup": "runtime-neutral",
+      "./cube-photo/analyze": "runtime-neutral"
     }
   },
   "main": "./src/index.ts",
@@ -911,7 +917,31 @@
     "./timer/scramble-history": "./src/timer/scramble-history.ts",
     "./timer/http": "./src/timer/http.ts",
     "./timer/rank-presentation": "./src/timer/rank-presentation.ts",
-    "./timer/wca-competition-catalog": "./src/timer/wca-competition-catalog.ts"
+    "./timer/wca-competition-catalog": "./src/timer/wca-competition-catalog.ts",
+    "./cube-photo/scan": {
+      "node": "./dist/cube-photo/scan.js",
+      "default": "./src/cube-photo/scan.ts"
+    },
+    "./cube-photo/geometry": {
+      "node": "./dist/cube-photo/geometry.js",
+      "default": "./src/cube-photo/geometry.ts"
+    },
+    "./cube-photo/detect": {
+      "node": "./dist/cube-photo/detect.js",
+      "default": "./src/cube-photo/detect.ts"
+    },
+    "./cube-photo/recognize": {
+      "node": "./dist/cube-photo/recognize.js",
+      "default": "./src/cube-photo/recognize.ts"
+    },
+    "./cube-photo/lookup": {
+      "node": "./dist/cube-photo/lookup.js",
+      "default": "./src/cube-photo/lookup.ts"
+    },
+    "./cube-photo/analyze": {
+      "node": "./dist/cube-photo/analyze.js",
+      "default": "./src/cube-photo/analyze.ts"
+    }
   },
   "scripts": {
     "dev:build": "pnpm run build",

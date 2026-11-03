@@ -470,6 +470,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   },
   'dev/stack': { title: { zh: '技术栈', en: 'Stack' } },
   'dev/tokens': { title: { zh: '设计令牌', en: 'Design Tokens' } },
+  'dev/cube-photo': { title: { zh: '魔方照片识别', en: 'Cube Photo Recognition' } },
   'dev/utils': { title: { zh: '速查', en: 'Hooks & Utils' } },
   'dev/wca-export': { title: { zh: 'WST 数据导出', en: 'WST Export' } },
   'dev/wca-rest-api': { title: { zh: 'WCA REST API', en: 'WCA REST API' } },
