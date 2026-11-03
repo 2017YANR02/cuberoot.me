@@ -24,7 +24,7 @@ try {
     const recognition = recognizePhoto(pixels, corners);
     Object.assign(result, { recognition, status: recognition.status });
     if (recognition.status === 'corners-only') result.assumptions.f2lSolved = 'not-required';
-    if (recognition.status !== 'ok' && recognition.status !== 'corners-only') { port.postMessage({ type: 'result', result }); port.close(); }
+    if (recognition.status !== 'ok' && recognition.status !== 'corners-only' && recognition.status !== 'partial') { port.postMessage({ type: 'result', result }); port.close(); }
     else {
       const sets = photoRecognitionSets(recognition).filter(set => !input.sets || input.sets.includes(set));
       port.once('message', async (libraries: Partial<Record<PhotoAlgSet, AlgFile>>) => {

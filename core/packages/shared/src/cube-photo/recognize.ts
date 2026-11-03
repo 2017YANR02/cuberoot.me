@@ -24,10 +24,16 @@ export interface PhotoRecognition {
   centers: { F: StickerSample; R: StickerSample };
   candidates: RecoveredState[];
   cornerCandidates?: RecoveredCorners[];
-  status: 'ok' | 'corners-only' | 'uncertain-colors' | 'ambiguous' | 'invalid';
+  /** partial contains ALL compatible F2L completions, never a truncated sample. */
+  status: 'ok' | 'partial' | 'corners-only' | 'uncertain-colors' | 'ambiguous' | 'invalid';
 }
 
 const REFERENCES = COLOR_ORDER.map(color => ({ color, lab: srgbToLab(COLOR_RGB[color]) }));
+function hue(rgb: RGB): number {
+  const [r, g, b] = rgb, hi = Math.max(...rgb), span = hi - Math.min(...rgb);
+  if (!span) return NaN;
+  return (60 * (hi === r ? (g - b) / span : hi === g ? 2 + (b - r) / span : 4 + (r - g) / span) + 360) % 360;
+}
 function rankColors(lab: Lab, references = REFERENCES) {
   return references.map(ref => ({ color: ref.color, distance: Math.hypot(
     .4 * (lab[0] - ref.lab[0]), lab[1] - ref.lab[1], lab[2] - ref.lab[2],
@@ -39,8 +45,11 @@ function classify(rgb: RGB, references = REFERENCES, lab = srgbToLab(rgb)): Stic
   // Skin/shadows may be nearest to white without being a white sticker. These
   // are rejection gates, not calibrated probabilities; corrections stay explicit.
   const plausibleWhite = best.color !== 'white' || (Math.max(...rgb) > 80 && Math.hypot(lab[1], lab[2]) < 18);
+  // Shaded orange can be closer to canonical red in Lab. Such a narrow
+  // red/orange margin is evidence of uncertainty, not a hard cube constraint.
+  const warmPair = ranked.slice(0, 2).every(r => r.color === 'red' || r.color === 'orange');
   return { rgb, color: best.color, margin, distance: best.distance,
-    reliable: margin >= 8 && best.distance < 48 && plausibleWhite, corrected: false, calibrated: false };
+    reliable: margin >= (warmPair ? 12 : 8) && best.distance < 48 && plausibleWhite, corrected: false, calibrated: false };
 }
 
 /** Dark blue loses Lab chroma and can be nearer white than a lit blue reference.
@@ -85,7 +94,12 @@ export function classifyPhotoColors(colors: readonly RGB[]): StickerSample[] {
     // minimum absolute gap; an almost tied red/orange reading still fails.
     const separated = adjusted.reliable || (adjusted.color !== 'white' && adjusted.margin >= 4
       && adjusted.distance <= .65 * (adjusted.distance + adjusted.margin));
-    return separated && adjusted.distance <= 24 && photoRefs.has(adjusted.color) && plausible
+    // Lab distances contract under shade/reflection. A red anchor must not
+    // absorb orange merely because the orange reference is brighter.
+    const ref = photoRefs.get(adjusted.color);
+    const gap = ref ? Math.abs(hue(sample.rgb) - hue(ref)) : Infinity;
+    const hueAgrees = !['red', 'orange'].includes(adjusted.color) || Math.min(gap, 360 - gap) <= 8;
+    return separated && adjusted.distance <= 24 && ref && plausible && hueAgrees
       ? { ...adjusted, reliable: true, calibrated: true } : sample;
   });
 }
@@ -175,7 +189,7 @@ export function recognizePhoto(image: PhotoPixels, corners: CubeCorners, correct
   const centers = { F: classified[15], R: classified[16] };
   // A side center can be occluded or reflected. Use the same stronger threshold
   // as calibration anchors before letting it constrain the entire color frame.
-  const anchor = (s: StickerSample) => s.reliable && s.margin >= 12;
+  const anchor = (s: StickerSample) => s.reliable && (s.margin >= 12 || (s.calibrated && s.distance <= 12));
   if (!samples[4].reliable) return { samples, centers, candidates: [], status: 'uncertain-colors' };
   const possibleFrames = standardColorFrames().filter(frame => frame.U === samples[4].color && (front
     ? frame.F === front
@@ -197,15 +211,20 @@ export function recognizePhoto(image: PhotoPixels, corners: CubeCorners, correct
     }).join('');
     return { U: toFace(0, 9), F: toFace(9, 12), R: toFace(12, 15) };
   };
-  const candidates = possibleFrames.flatMap(frame => {
-    return completeLastLayer(observed(frame, measured), 2).map(facelet => ({ facelet, frame }));
-  });
+  // A category such as OLL can be determined even when permutation is not.
+  // Bound the work, but never present a truncated candidate list as exhaustive.
+  const candidateLimit = 128;
+  const completions = possibleFrames.flatMap(frame =>
+    completeLastLayer(observed(frame, measured), candidateLimit + 1).map(facelet => ({ facelet, frame })));
+  const overflow = completions.length > candidateLimit;
+  const candidates = overflow ? [] : completions;
   const infer = (facelet: string, frame: ColorFrame, cells: StickerSample[], cornersOnly = false) => cells.map((s, i) => {
     if (s.reliable || (cornersOnly && !cornerIndices.has(i))) return s;
     const index = i < 9 ? i : i < 12 ? i + 9 : i - 3;
     return { ...s, observedColor: s.color, color: frame[facelet[index] as PhotoFace], inferred: true };
   });
   if (candidates.length === 1) return { samples: infer(candidates[0].facelet, candidates[0].frame, measured), centers, candidates, status: 'ok' };
+  if (candidates.length > 1) return { samples: measured, centers, candidates, status: 'partial' };
 
   // CMLL needs the four corners, not a fabricated F2L edge state. M turns can
   // move U/F centers, so only the R center (or an explicit F choice) anchors it.
@@ -220,5 +239,5 @@ export function recognizePhoto(image: PhotoPixels, corners: CubeCorners, correct
     return { samples: infer(cubieToFacelet(cube), c.frame, c.frame.U === samples[4].color ? measured : samples, true), centers,
       candidates: [], cornerCandidates, status: 'corners-only' };
   }
-  return { samples: measured, centers, candidates, status: measured.some(s => !s.reliable) ? 'uncertain-colors' : candidates.length || cornerCandidates.length ? 'ambiguous' : 'invalid' };
+  return { samples: measured, centers, candidates, status: measured.some(s => !s.reliable) ? 'uncertain-colors' : overflow || cornerCandidates.length ? 'ambiguous' : 'invalid' };
 }

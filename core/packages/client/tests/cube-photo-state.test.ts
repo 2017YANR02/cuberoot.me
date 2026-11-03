@@ -6,7 +6,7 @@ import { parseScramble } from '@cuberoot/puzzle-solvers/cube-moves';
 import { applyMoves, fromFaceletString, toFaceletString } from '@cuberoot/shared/timer/reconstruct/state';
 import { classifyPhotoColors, completeLastLayer, recognizePhoto, standardColorFrames } from '@/lib/cube-photo/recognize';
 import type { RGB } from '@/lib/cube-photo';
-import { findPhotoAlg, findPhotoAlternatives, photoAlgGoal, photoAlgSets, photoRecognitionSets, photoAufOnly, type PhotoAlgSet } from '@/lib/cube-photo/lookup';
+import { findPhotoAlg, findPhotoAlternatives, photoAlgGoal, photoAlgSets, photoRecognitionSets, photoRecognitionInput, photoAufOnly, type PhotoAlgSet } from '@/lib/cube-photo/lookup';
 import type { CubeCorners } from '@/lib/cube-photo/geometry';
 import { cubePhotoFixture } from '@cuberoot/shared/testing/cube-photo';
 import fixture from '@cuberoot/shared/testing/cube-photo-algs';
@@ -48,6 +48,53 @@ async function sampledPhoto(colors: RGB[]) {
 }
 
 describe('photo last-layer state and formulas', () => {
+  it('infers two shaded orange corners without letting red calibration certify them', async () => {
+    const colors: RGB[] = [
+      [3, 203, 54], [0, 197, 50], [31, 204, 68], [252, 252, 0], [251, 251, 0], [245, 246, 1],
+      [0, 117, 225], [0, 121, 223], [22, 122, 222], [187, 171, 0], [164, 160, 0], [155, 155, 0],
+      [173, 85, 57], [137, 9, 23], [159, 48, 2], [91, 127, 59], [168, 81, 54],
+    ];
+    const { pixels, corners } = await sampledPhoto(colors);
+    const result = recognizePhoto(pixels, corners);
+    expect(result.status).toBe('ok');
+    expect(result.candidates[0].facelet).toBe('FFFUUUBBBRLRRRRRRRUUUFFFFFFDDDDDDDDDLRLLLLLLLUUUBBBBBB');
+    for (const i of [12, 14]) expect(result.samples[i]).toMatchObject({ color: 'orange', inferred: true, reliable: false });
+    const explicit = recognizePhoto(pixels, corners, { 12: 'red' });
+    expect(explicit.status).toBe('uncertain-colors'); // the other corner is still uncertain
+    expect(explicit.candidates).toEqual([]);
+    expect(explicit.samples[12]).toMatchObject({ color: 'red', corrected: true, reliable: true });
+    expect(explicit.samples[12].inferred).toBeUndefined();
+  });
+  it('returns only formulas that work for every completion of uncertain reflected stickers', async () => {
+    const colors: RGB[] = [
+      [245, 254, 10], [255, 107, 5], [245, 254, 9], [0, 100, 201], [249, 254, 9], [7, 171, 53],
+      [254, 255, 11], [242, 47, 39], [252, 255, 10], [227, 68, 2], [190, 168, 3], [219, 69, 1],
+      [52, 78, 117], [153, 161, 54], [82, 100, 130], [23, 69, 26], [201, 103, 73],
+    ];
+    const { pixels, corners } = await sampledPhoto(colors);
+    const alg = "S R' U' R U R U R U' R' S'";
+    const file: AlgFile = { ...libraries.oll, cases: [{ ...libraries.oll.cases[0], name: 'X (20)',
+      algs: [[{ alg }, { alg: `${alg} R L R' L'` }]] }] };
+    const result = await analyzeCubePhoto({ pixels, corners, corrections: {} }, async set => set === 'oll' ? file : libraries[set]);
+    expect(result.recognition.status).toBe('partial');
+    expect(result.recognition.candidates.map(c => c.facelet)).toEqual([
+      'URUBUFULUBUBRRRRRRRURFFFFFFDDDDDDDDDFUFLLLLLLLULBBBBBB',
+      'URUBUFULUBUFRRRRRRFURFFFFFFDDDDDDDDDLULLLLLLLRUBBBBBBB',
+      'URUBUFULUBULRRRRRRLURFFFFFFDDDDDDDDDRUBLLLLLLFUFBBBBBB',
+    ]);
+    expect(result.recognition.samples.some(s => s.inferred)).toBe(false);
+    expect(result.results.map(r => [r.set, r.status])).toEqual([['oll', 'found']]);
+    expect(photoRecognitionSets(result.recognition)).toEqual(['oll', 'ollcp']);
+    expect(result.results[0].alternatives).toHaveLength(1);
+    for (const candidate of result.recognition.candidates) for (const match of [result.results[0].match!, ...result.results[0].alternatives!]) {
+      expect(photoAlgGoal('oll', applyMoves(fromFaceletString(candidate.facelet)!, 3, parseScramble(match.alg)))).toBe(true);
+    }
+    const input = photoRecognitionInput(result.recognition)!;
+    expect(findPhotoAlg(input, '1lll', libraries['1lll'])).toBeNull();
+    // Agreeing on one candidate cannot certify a formula for another OLL shape.
+    const conflicting = { candidates: [...result.recognition.candidates, { ...result.recognition.candidates[0], facelet: fixture.states.oll }] };
+    expect(findPhotoAlg(conflicting, 'oll', file)).toBeNull();
+  });
   it('uniquely infers the impossible opposite-color corner while retaining its measured evidence', async () => {
     const { pixels, corners } = await sampledPhoto(grayBluePhoto);
     expect(classifyPhotoColors(grayBluePhoto)[14]).toMatchObject({ color: 'white', reliable: true });

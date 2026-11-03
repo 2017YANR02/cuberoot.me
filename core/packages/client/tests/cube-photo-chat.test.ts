@@ -62,6 +62,25 @@ it('exports exact AUF, orientation and case links without exposing the private i
   expect(pdf).not.toContain(result.attachmentId!);
 });
 
+it('renders partial formulas without an invalid-state error or a fabricated unique frame', async () => {
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+  const oll = findPhotoAlg(fixture.states.oll, 'oll', fixture.libraries.oll as AlgFile)!;
+  const partial: CubePhotoArtifact = { ...result, status: 'partial',
+    recognition: { ...result.recognition!, status: 'partial' }, results: [{ set: 'oll', status: 'found', match: oll }] };
+  const host = document.createElement('div'); document.body.append(host);
+  const root = createRoot(host); roots.push(root);
+  await act(async () => root.render(createElement(PhotoChatResult, { result: partial })));
+  expect(host.querySelector('code')?.textContent).toBe(oll.alg);
+  expect(host.textContent).toContain('完整状态尚不唯一');
+  expect(host.textContent).not.toContain('无法组成合法顶层');
+  const text = assistantAnswerText({ answer: '', sources: [], artifacts: [partial] }, 'https://www.cuberoot.me');
+  expect(text).toContain('complete state is ambiguous');
+  expect(text).not.toContain('U: yellow');
+  const pdf = documentExportText(await assistantPdfDocument('查询公式', '', 'zh', [partial]));
+  expect(pdf).toContain('完整状态尚不唯一');
+  expect(pdf).not.toContain('U: yellow');
+});
+
 it('shows preloaded alternatives immediately, expands only one category and never starts a lookup on click', async () => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   const worker = vi.fn();

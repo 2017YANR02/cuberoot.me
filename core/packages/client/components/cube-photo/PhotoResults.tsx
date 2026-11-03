@@ -33,7 +33,7 @@ export default function PhotoResults({ pixels, corners, width, height }: { pixel
   const current = snapshot?.request === request ? snapshot : null;
   const recognition = current?.recognition;
   const recovered = recognition?.status === 'ok' ? recognition.candidates[0] : recognition?.status === 'corners-only' ? recognition.cornerCandidates?.[0] : null;
-  const sets = recognition ? photoRecognitionSets(recognition) : [];
+  const sets = recognition ? photoRecognitionSets(recognition).filter(set => recognition.status !== 'partial' || current?.results[set]?.status !== 'missing') : [];
   const pending = !current?.done && !current?.error;
 
   useEffect(() => {
@@ -73,9 +73,10 @@ export default function PhotoResults({ pixels, corners, width, height }: { pixel
   return <section className="cube-photo-results" aria-label={tr({ zh: '状态与公式', en: 'State and algorithms' })} aria-busy={pending}>
     {pending ? <PhotoLoading /> : <div className="cube-photo-result-content">
     <div className="cube-photo-result-status" role="status" aria-live="polite">
-      {recognition && recognition.status !== 'ok' && recognition.status !== 'corners-only' && <p className="cube-photo-error">{tr(STATUS[recognition.status])}</p>}
+      {recognition && recognition.status !== 'ok' && recognition.status !== 'corners-only'
+        && (recognition.status !== 'partial' || !sets.length) && <p className="cube-photo-error">{tr(STATUS[recognition.status === 'partial' ? 'uncertain-colors' : recognition.status])}</p>}
     </div>
-    <PhotoAlgorithmCards stateKey={recovered && ('facelet' in recovered ? recovered.facelet : JSON.stringify(recovered)) || undefined} sets={sets} results={current?.results ?? {}} error={current?.error} />
+    <PhotoAlgorithmCards stateKey={recognition?.status === 'partial' ? JSON.stringify(recognition.candidates) : recovered && ('facelet' in recovered ? recovered.facelet : JSON.stringify(recovered)) || undefined} sets={sets} results={current?.results ?? {}} error={current?.error} />
     {current?.error && !sets.length && <p className="cube-photo-error" role="alert">{tr({ zh: '识别未完成，请重试。', en: 'Analysis did not finish. Please retry.' })}</p>}
     {(current?.error || Object.values(current?.results ?? {}).some(r => r?.status === 'error')) && <button className="cube-photo-retry" onClick={() => setRetry(v => v + 1)}><RotateCcw size={15} />{tr({ zh: '重试检索', en: 'Retry lookup' })}</button>}
     {recognition && <details className="cube-photo-details" open={recognition.status !== 'ok' || undefined}>

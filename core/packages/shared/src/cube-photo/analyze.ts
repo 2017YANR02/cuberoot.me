@@ -2,7 +2,7 @@ import type { AlgFile } from '../alg';
 import { detectCubePhoto, type PhotoPixels, type CubePhotoDetection } from './detect';
 import type { CubeCorners } from './geometry';
 import { recognizePhoto, type CubeColor, type PhotoRecognition } from './recognize';
-import { findPhotoAlg, findPhotoAlternatives, photoRecognitionSets, photoAufOnly, type PhotoAlgResult, type PhotoAlgSet } from './lookup';
+import { findPhotoAlg, findPhotoAlternatives, photoRecognitionSets, photoRecognitionInput, photoAufOnly, type PhotoAlgResult, type PhotoAlgSet } from './lookup';
 
 export interface PhotoAnalysisInput {
   pixels: PhotoPixels;
@@ -23,7 +23,7 @@ export async function analyzeCubePhoto(input: PhotoAnalysisInput, load: (set: Ph
   emit: (message: PhotoAnalysisMessage) => void = () => {}): Promise<PhotoAnalysis> {
   const recognition = recognizePhoto(input.pixels, input.corners, input.corrections, input.front);
   emit({ type: 'state', recognition });
-  const target = recognition.status === 'ok' ? recognition.candidates[0].facelet : recognition.cornerCandidates?.[0];
+  const target = photoRecognitionInput(recognition);
   const sets = photoRecognitionSets(recognition).filter(set => !input.sets || input.sets.includes(set));
   const results = await Promise.all(sets.map(async set => {
     let result: PhotoAlgResult;
@@ -37,7 +37,7 @@ export async function analyzeCubePhoto(input: PhotoAnalysisInput, load: (set: Ph
     return result;
   }));
   emit({ type: 'done' });
-  return { recognition, results };
+  return { recognition, results: results.filter(r => recognition.status !== 'partial' || r.status !== 'missing') };
 }
 
 /** Use image geometry first; a legal completion is not proof of the image's colors. */

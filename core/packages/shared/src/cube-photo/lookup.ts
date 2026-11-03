@@ -7,12 +7,13 @@ import { isF2l, isOll, isSolved } from '../timer/reconstruct/cfop-detect';
 import { stepSolvedInFrame } from '../timer/reconstruct/steps';
 import { parseScramble } from '@cuberoot/puzzle-solvers/cube-moves';
 import { cubieToFacelet, validateFacelet } from '../cube_facelet';
-import type { PhotoRecognition, RecoveredCorners } from './recognize';
+import type { PhotoRecognition, RecoveredCorners, RecoveredState } from './recognize';
 
 export const PHOTO_ALG_SETS = ['pll', 'oll', 'cmll', 'coll', 'ell', 'zbll', 'ollcp', '1lll'] as const;
 export type PhotoAlgSet = typeof PHOTO_ALG_SETS[number];
 export interface PhotoAlgMatch { set: PhotoAlgSet; name: string; caseName: string; caseId?: number; href: string; alg: string; body?: string; preAuf: string; postAuf: string; turns: number; thumbnail?: { alg: string; setup?: string; sticker: AlgSticker } }
 export interface PhotoAlgResult { set: PhotoAlgSet; status: 'found' | 'missing' | 'error'; match?: PhotoAlgMatch; alternatives?: PhotoAlgMatch[] }
+export type PhotoAlgInput = string | RecoveredCorners | { candidates: RecoveredState[] };
 const AUFS = ['', 'U', 'U2', "U'"];
 const AUF_MOVES = AUFS.map(a => parseScramble(a));
 
@@ -26,8 +27,21 @@ function cornerSimulation(corners: RecoveredCorners): string {
 
 export function photoRecognitionSets(recognition: PhotoRecognition): PhotoAlgSet[] {
   if (recognition.status === 'ok') return photoAlgSets(recognition.candidates[0].facelet);
+  if (recognition.status === 'partial') {
+    // A full-solve algorithm cannot solve two different starting states. Partial
+    // goals can agree, but matchingPhotoAlgs must prove that for every completion.
+    const eligible = recognition.candidates.map(c => photoAlgSets(c.facelet));
+    return eligible.length ? PHOTO_ALG_SETS.filter(set => ['oll', 'cmll', 'coll', 'ollcp'].includes(set)
+      && eligible.every(sets => sets.includes(set))) : [];
+  }
   const corners = recognition.status === 'corners-only' && recognition.cornerCandidates?.[0];
   return corners && photoAlgSets(cornerSimulation(corners)).includes('cmll') ? ['cmll'] : [];
+}
+
+export function photoRecognitionInput(recognition: PhotoRecognition): PhotoAlgInput | undefined {
+  if (recognition.status === 'ok') return recognition.candidates[0].facelet;
+  if (recognition.status === 'partial') return { candidates: recognition.candidates };
+  if (recognition.status === 'corners-only') return recognition.cornerCandidates?.[0];
 }
 
 export function photoAlgSets(facelet: string): PhotoAlgSet[] {
@@ -68,26 +82,28 @@ export function photoAufOnly(facelet: string): PhotoAlgMatch | null {
 }
 
 /** One verified DB formula, respecting curated order; no generated substitute. Runs in a worker. */
-export function findPhotoAlg(state: string | RecoveredCorners, set: PhotoAlgSet, file: AlgFile): PhotoAlgMatch | null {
+export function findPhotoAlg(state: PhotoAlgInput, set: PhotoAlgSet, file: AlgFile): PhotoAlgMatch | null {
   const first = matchingPhotoAlgs(state, set, file).next();
   return first.done ? null : first.value;
 }
 
 /** Other formulas for the same library case, each independently aligned and verified. */
-export function findPhotoAlternatives(state: string | RecoveredCorners, match: PhotoAlgMatch, file: AlgFile): PhotoAlgMatch[] {
+export function findPhotoAlternatives(state: PhotoAlgInput, match: PhotoAlgMatch, file: AlgFile): PhotoAlgMatch[] {
   return [...matchingPhotoAlgs(state, match.set, file, match)].filter(item => item.alg !== match.alg);
 }
 
-function* matchingPhotoAlgs(input: string | RecoveredCorners, set: PhotoAlgSet, file: AlgFile, selected?: PhotoAlgMatch): Generator<PhotoAlgMatch, void> {
-  if (typeof input !== 'string' && set !== 'cmll') return;
-  const facelet = typeof input === 'string' ? input : cornerSimulation(input);
-  if (!photoAlgSets(facelet).includes(set)) return;
+function* matchingPhotoAlgs(input: PhotoAlgInput, set: PhotoAlgSet, file: AlgFile, selected?: PhotoAlgMatch): Generator<PhotoAlgMatch, void> {
+  if (typeof input !== 'string' && 'cp' in input && set !== 'cmll') return;
+  const facelets = typeof input === 'string' ? [input] : 'cp' in input ? [cornerSimulation(input)] : input.candidates.map(c => c.facelet);
+  if (!facelets.length || !facelets.every(facelet => photoAlgSets(facelet).includes(set))) return;
+  const facelet = facelets[0];
   if (set === 'pll') {
     const alignment = photoAufOnly(facelet);
-    if (alignment) { yield alignment; return; }
+    if (alignment && facelets.every(f => isSolved(applyMoves(fromFaceletString(f)!, 3, parseScramble(alignment.alg))))) { yield alignment; return; }
   }
   const state = fromFaceletString(facelet)!;
   const opened = AUF_MOVES.map(moves => applyMoves(state, 3, moves));
+  const remaining = facelets.slice(1).map(f => fromFaceletString(f)!);
   const slugs = buildCaseSlugMap(file.cases, set);
   const seen = new Set<string>();
   for (const c of file.cases) {
@@ -102,6 +118,7 @@ function* matchingPhotoAlgs(input: string | RecoveredCorners, set: PhotoAlgSet, 
         for (let post = 0; post < (set === 'oll' ? 1 : 4); post++) {
           if (!photoAlgGoal(set, applyMoves(after, 3, AUF_MOVES[post]))) continue;
           const alg = mergeAdjacentMoves([AUFS[pre], body, AUFS[post]].filter(Boolean).join(' '));
+          if (!remaining.every(candidate => photoAlgGoal(set, applyMoves(candidate, 3, parseScramble(alg))))) continue;
           const slug = c.id == null ? [...slugs.bySlug].find(([, value]) => value === c)?.[0] : slugs.byId.get(c.id);
           if (!slug) continue;
           // Preserve the two numeric parts of legacy OLLCP names ("OLLCP13 6").

@@ -5,6 +5,8 @@ import { join } from 'node:path';
 import { Worker } from 'node:worker_threads';
 import sharp from 'sharp';
 import type { AssistantImage } from '@cuberoot/shared/site-assistant';
+import type { CubePhotoResult } from '@cuberoot/shared/cube-photo/result';
+import { standardColorFrames, classifyPhotoColors, COLOR_RGB } from '@cuberoot/shared/cube-photo/recognize';
 import { photoAlgGoal } from '@cuberoot/shared/cube-photo/lookup';
 import { parseScramble } from '@cuberoot/puzzle-solvers/cube-moves';
 import { applyMoves, fromFaceletString, toFaceletString } from '@cuberoot/shared/timer/reconstruct/state';
@@ -18,6 +20,24 @@ import { toolCallSchema } from '../src/utils/site_assistant_tools.js';
 // The server test command builds the real worker; targeted runs require build:cube-photo first.
 const libraries = fixture.libraries;
 const read = async (url: string) => libraries[url.split('/').at(-1) as keyof typeof libraries];
+
+it('keeps a partial result distinct from a uniquely recovered state in model evidence', async () => {
+  const frame = standardColorFrames().find(f => f.U === 'yellow' && f.F === 'blue')!;
+  const centers = classifyPhotoColors([COLOR_RGB.blue, COLOR_RGB.red]);
+  const result: CubePhotoResult = {
+    status: 'partial', width: 640, height: 540, results: [], assumptions: { f2lSolved: true, standardColorScheme: true },
+    recognition: { status: 'partial', samples: [], centers: { F: centers[0], R: centers[1] }, candidates: [
+      { frame, facelet: fixture.states.oll }, { frame, facelet: fixture.extraStates.ell },
+    ] },
+  };
+  const image: AssistantImage = { mediaType: 'image/png', data: 'private-image-bytes' };
+  const output = await runCubePhotoTool({ imageRef: 'current:0', sets: 'auto' }, new Map([['current:0', image]]), 'zh', read,
+    new AbortController().signal, async () => result);
+  expect(output.evidence).toMatchObject({ status: 'partial', stage: 'partial', state: [], candidateCount: 2 });
+  expect(JSON.stringify(output.evidence)).not.toContain(fixture.states.oll);
+  expect(JSON.stringify(output)).not.toContain(image.data);
+  expect(output.artifacts?.[0]).toMatchObject({ status: 'partial', recognition: result.recognition });
+});
 async function photo(state: string): Promise<AssistantImage> {
   const bytes = await sharp(Buffer.from(cubePhotoFixture(true, 0.1, state).svg)).png().toBuffer();
   return { mediaType: 'image/png', data: bytes.toString('base64') };
