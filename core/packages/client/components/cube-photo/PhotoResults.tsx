@@ -92,7 +92,7 @@ export default function PhotoResults({ pixels, corners, width, height }: { pixel
         label={<>{tr({ zh: 'F 中心', en: 'F center' })} · {request.front ? tr(COLOR_NAMES[request.front]) : tr({ zh: '自动', en: 'Auto' })}</>}
         items={[{ value: 'auto', label: tr({ zh: '自动', en: 'Auto' }) }, ...colorOptions]}
         onChange={value => setAdjustments({ corners, colors: request.corrections, front: value === 'auto' ? undefined : value })} />
-      {(request.front || Object.keys(request.corrections).length > 0) && <button onClick={() => setAdjustments(null)}>{tr({ zh: '恢复自动取色', en: 'Restore sampled colors' })}</button>}
+      {(request.front || Object.keys(request.corrections).length > 0) && <button className="cube-photo-action" onClick={() => setAdjustments(null)}>{tr({ zh: '恢复自动取色', en: 'Restore sampled colors' })}</button>}
     </details>}
     </div>}
   </section>;

@@ -75,6 +75,7 @@
         "tests/fixtures/teaching_daily_board_sql.mts",
         "src/tools/**/*.ts",
         "src/monitors/**/*.ts",
+        "src/utils/cube_photo_worker.ts",
         "src/**/*-daemon.{ts,mjs}"
       ]
     },

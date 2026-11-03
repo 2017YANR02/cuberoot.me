@@ -145,15 +145,15 @@ export default function CubePhotoTool() {
     </header>
     <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={event => { void upload(event.target.files?.[0]); event.target.value = ''; }} />
     <div className="cube-photo-toolbar">
-      <button className="cube-photo-primary" onClick={() => input.current?.click()}><ImagePlus size={17} />{tr({ zh: '选择照片', en: 'Choose photo' })}</button>
+      <button className="cube-photo-action cube-photo-primary" onClick={() => input.current?.click()}><ImagePlus size={17} />{tr({ zh: '选择照片', en: 'Choose photo' })}</button>
       {hasPhotoWorkspace && <>
-        <button disabled={busy || !photo} onClick={() => photo && detect(photo, ++generation.current)}><ScanLine size={17} />{tr({ zh: '重新识别', en: 'Detect again' })}</button>
-        <button disabled={busy || !photo} aria-pressed={editing} onClick={() => {
+        <button className="cube-photo-action" disabled={busy || !photo} onClick={() => photo && detect(photo, ++generation.current)}><ScanLine size={17} />{tr({ zh: '重新识别', en: 'Detect again' })}</button>
+        <button className="cube-photo-action" disabled={busy || !photo} aria-pressed={editing} onClick={() => {
           if (!photo) return;
           if (!corners) { setCorners(manualCorners(photo.width, photo.height)); setModified(true); }
           setEditing(!editing);
         }}><SlidersHorizontal size={17} />{corners || busy ? tr({ zh: '调整角点', en: 'Adjust corners' }) : tr({ zh: '手动标定', en: 'Place grid manually' })}</button>
-        {modified && selected && result && photo && <button onClick={() => restoreDetection(result, photo)}><RotateCcw size={17} />{tr({ zh: '恢复自动结果', en: 'Restore automatic result' })}</button>}
+        {modified && selected && result && photo && <button className="cube-photo-action" onClick={() => restoreDetection(result, photo)}><RotateCcw size={17} />{tr({ zh: '恢复自动结果', en: 'Restore automatic result' })}</button>}
       </>}
     </div>
     {!hasPhotoWorkspace && error && <p className="cube-photo-error" role="alert">{error}</p>}

@@ -3,11 +3,11 @@
 .cube-photo-header a { color: var(--muted-foreground); font-size: 13px; }
 .cube-photo-header h1 { display: flex; align-items: center; gap: 10px; margin: 8px 0 0; font-size: clamp(24px, 4vw, 34px); font-weight: 650; letter-spacing: -.03em; }
 .cube-photo-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 24px 0 18px; }
-.cube-photo-toolbar > button, .cube-photo-details button, .cube-photo-empty { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 9px 13px; border: 1px solid var(--border-default); border-radius: 9px; background: var(--background); color: var(--foreground); font: inherit; font-size: 13px; cursor: pointer; }
-.cube-photo-toolbar > button:hover, .cube-photo-details button:hover { background: var(--muted); }
-.cube-photo-page button:focus-visible, .cube-photo-formula button:focus-visible, .cube-photo-details summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
-.cube-photo-toolbar > button:disabled { opacity: .5; cursor: wait; }
-.cube-photo-toolbar > button[aria-pressed="true"], .cube-photo-details button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
+.cube-photo-action, .cube-photo-empty { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 9px 13px; border: 1px solid var(--border-default); border-radius: 9px; background: var(--background); color: var(--foreground); font: inherit; font-size: 13px; cursor: pointer; }
+.cube-photo-action:hover { background: var(--muted); }
+.cube-photo-action:focus-visible, .cube-photo-empty:focus-visible, .cube-photo-copy:focus-visible, .cube-photo-expand:focus-visible, .cube-photo-retry:focus-visible, .cube-photo-details summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.cube-photo-action:disabled { opacity: .5; cursor: wait; }
+.cube-photo-action[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
 .cube-photo-toolbar .cube-photo-primary { background: var(--primary); color: var(--primary-foreground); border-color: transparent; }
 .cube-photo-toolbar .cube-photo-primary:hover { background: color-mix(in srgb, var(--primary) 88%, var(--background)); }
 .cube-photo-error { color: var(--destructive); font-size: 14px; }
@@ -50,13 +50,13 @@
 .cube-photo-formula-title > .puzzle-art { flex-shrink: 0; }
 .cube-photo-formula h3 { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px; margin: 0; font-size: 16px; font-weight: 650; }
 .cube-photo-case-name { color: var(--accent); font-weight: 500; }
-.cube-photo-formula-heading button, .cube-photo-copy { display: inline-flex; padding: 7px; border: 0; background: transparent; color: var(--muted-foreground); cursor: pointer; }
+.cube-photo-copy { display: inline-flex; padding: 7px; border: 0; background: transparent; color: var(--muted-foreground); cursor: pointer; }
 .cube-photo-formula .cube-photo-note { margin: 6px 0 10px; }
 .cube-photo-sequence { font-size: 16px; line-height: 1.8; overflow-wrap: anywhere; }
 .cube-photo-sequence code { display: inline; font-size: inherit; }
 .cube-photo-sequence small { display: inline-block; margin-inline-start: 10px; color: var(--muted-foreground); font-size: 11px; white-space: nowrap; }
 .cube-photo-expand { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; padding: 4px 0; border: 0; background: transparent; color: var(--muted-foreground); font: inherit; font-size: 12px; cursor: pointer; }
-.cube-photo-expand:hover, .cube-photo-copy:hover, .cube-photo-formula-heading button:hover { color: var(--foreground); }
+.cube-photo-expand:hover, .cube-photo-copy:hover { color: var(--foreground); }
 .cube-photo-expand svg { transition: transform .22s ease; }
 .cube-photo-expand[aria-expanded="true"] svg { transform: rotate(180deg); }
 .cube-photo-alternatives { display: grid; grid-template-rows: 0fr; opacity: 0; visibility: hidden; transition: grid-template-rows .22s ease, opacity .18s ease, visibility 0s .22s; }
@@ -74,7 +74,7 @@
 .cube-photo-color-grids { display: flex; gap: 18px; margin: 12px 0; }
 .cube-photo-color-grids h4 { margin: 0 0 6px; font-size: 13px; }
 .cube-photo-color-grid { display: grid; grid-template-columns: repeat(3, 28px); gap: 3px; }
-.cube-photo-color-grid button { padding: 4px; border-radius: 5px; min-width: 0; }
+.cube-photo-color-grid .compact-select-trigger { padding: 4px; border-radius: 5px; min-width: 0; }
 .cube-photo-color.is-uncertain { outline: 2px solid var(--signal-warning); border-radius: 5px; }
 .cube-photo-color.is-corrected { outline: 1px solid var(--accent); border-radius: 5px; }
 .cube-photo-retry { display: inline-flex; align-items: center; gap: 6px; padding: 8px 0; border: 0; background: transparent; color: var(--accent); cursor: pointer; }

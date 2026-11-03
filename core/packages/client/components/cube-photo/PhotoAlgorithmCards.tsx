@@ -39,7 +39,7 @@ export default function PhotoAlgorithmCards({ stateKey, sets, results, error = f
               sticker={match.thumbnail?.sticker ?? { kind: 'raw', tag: '', attrs: {} }} />
             <h3>{!match.name.toLowerCase().startsWith(set) && set.toUpperCase()}<span className="cube-photo-case-name">{match.name}</span></h3>
           </ReconCaseLink> : <h3>{set.toUpperCase()}</h3>}
-            {match && <button aria-label={tr({ zh: `复制 ${set.toUpperCase()} 公式`, en: `Copy ${set.toUpperCase()} algorithm` })} onClick={() => copy(match.alg, set)}>{copiedKey === set ? <Check size={16} /> : <Copy size={16} />}</button>}
+            {match && <button className="cube-photo-copy" aria-label={tr({ zh: `复制 ${set.toUpperCase()} 公式`, en: `Copy ${set.toUpperCase()} algorithm` })} onClick={() => copy(match.alg, set)}>{copiedKey === set ? <Check size={16} /> : <Copy size={16} />}</button>}
           </div>
           {match ? <div className="cube-photo-sequence"><code>{match.alg}</code><small>{match.turns} STM</small></div> : <p className="cube-photo-note">{result?.status === 'error' || error
             ? tr({ zh: '公式库加载失败，请重试。', en: 'Could not load the algorithm library. Retry.' })
