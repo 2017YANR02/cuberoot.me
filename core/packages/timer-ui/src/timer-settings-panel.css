@@ -64,7 +64,6 @@
 .settings-category-rail {
   min-width: 0;
   padding: 16px 12px;
-  border-right: 1px solid var(--border-default);
   overflow-y: auto;
 }
 .settings-category-nav { display: flex; flex-direction: column; gap: 3px; }
@@ -74,10 +73,9 @@
   gap: 10px;
   width: 100%;
   min-height: 40px;
-  padding: 8px 12px 8px 10px;
+  padding: 8px 12px;
   border: 0;
-  border-left: 2px solid transparent;
-  border-radius: 6px;
+  border-radius: 10px;
   background: transparent;
   color: var(--muted-foreground);
   font: inherit;
@@ -87,8 +85,7 @@
 }
 .settings-category-button:hover { background: var(--shell-hover); color: var(--foreground); }
 .settings-category-button[data-active='true'] {
-  border-left-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  background: var(--muted);
   color: var(--foreground);
   font-weight: 600;
 }
@@ -143,18 +140,24 @@
   font-size: calc(12px * var(--settings-scramble-scale));
   line-height: 1.35;
 }
-.settings-modal .settings-section { margin: 0; color: var(--foreground); font-size: 13px; }
+.settings-modal .settings-section {
+  margin: 0 0 16px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--muted);
+  color: var(--foreground);
+  font-size: 13px;
+}
 .settings-modal .settings-section + .settings-section {
   margin-top: 0;
-  padding-top: 10px;
-  border-top: 1px solid var(--border-default);
 }
 .settings-section-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 6px;
+  margin: 4px 0 2px;
 }
 .settings-section-head h4 {
   margin: 0;
@@ -307,11 +310,10 @@
   .settings-modal .pill-toggle:not(.pill-toggle--switch) { min-height: 44px; }
 }
 
-/* Each preference is one aligned row; separators remain within its category. */
-.settings-modal .settings-row + .settings-row { border-top: 1px solid var(--border-default); }
+/* Spacing separates preferences within each group. */
+.settings-modal .settings-row + .settings-row { border-top: 0; }
 .settings-modal .settings-row-control > .hint:last-child:not(:first-child) { text-align: right; }
 
-.settings-modal .settings-section + .settings-section:not(:has(> .settings-section-head)):not(:has(> h3)) { padding-top: 0; }
 .settings-modal .settings-section-head:has(.timer-random-difficulty-help) { justify-content: flex-start; gap: 6px; }
 .settings-metronome-tempo { display: flex; align-items: center; width: 100%; min-width: 0; gap: 8px; }
 .settings-metronome-tempo > input[type="range"] { flex: 1; min-width: 0; width: 0; }

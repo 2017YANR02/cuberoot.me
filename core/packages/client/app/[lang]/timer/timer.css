@@ -513,11 +513,11 @@
 }
 .settings-modal .timer-settings-actions {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
-  gap: 8px;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border-default);
+  margin: 0 0 16px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--muted);
 }
 .settings-modal .timer-settings-action {
   display: flex;
@@ -526,9 +526,9 @@
   gap: 12px;
   min-width: 0;
   min-height: 44px;
-  padding: 10px 12px;
-  border: 1px solid var(--border-default);
-  border-radius: 6px;
+  padding: 10px 0;
+  border: 0;
+  border-radius: 0;
   background: transparent;
   color: var(--foreground);
   font: inherit;
