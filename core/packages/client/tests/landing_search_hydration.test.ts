@@ -10,7 +10,7 @@ const searchState = vi.hoisted(() => ({ recons: [] as ReconHit[] }));
 
 const authState = vi.hoisted(() => ({ user: { uid: 66, wcaId: '2017YANR02' } as { uid: number; wcaId: string } | null, login: vi.fn() }));
 vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => authState.user, useAuthStore: { getState: () => authState } }));
-vi.mock('@/lib/admin-api', () => ({ authHeaders: () => ({ 'Content-Type': 'application/json', Authorization: 'Bearer session-test' }) }));
+vi.mock('@/lib/admin-api', async original => ({ ...await original<object>(), authHeaders: () => ({ 'Content-Type': 'application/json', Authorization: 'Bearer session-test' }) }));
 
 const routeState = vi.hoisted(() => ({ lang: 'zh' as 'zh' | 'en' }));
 const speechState = vi.hoisted(() => ({ supported: false, listening: false, status: 'idle', error: null as string | null, microphone: null as string | null, start: vi.fn(), stop: vi.fn() }));
@@ -136,7 +136,10 @@ describe('LandingSearch placeholder hydration', () => {
     authState.user = { uid: 777, wcaId: '2017YANR02' };
     const owner = assistantOwner(authState.user);
     let finish!: (response: Response) => void;
-    const fetcher = vi.fn(() => new Promise<Response>(resolve => { finish = resolve; }));
+    const images = [{ mediaType: 'image/png' as const, data: 'dGVzdA==' }];
+    const savedImages = [{ ...images[0], attachmentId: '11111111-1111-4111-8111-111111111111' }];
+    const fetcher = vi.fn((input: RequestInfo | URL) => String(input).endsWith('/site-assistant/attachments')
+      ? Promise.resolve(Response.json(savedImages[0])) : new Promise<Response>(resolve => { finish = resolve; }));
     vi.stubGlobal('fetch', fetcher);
     let changes = 0;
     const unsubscribe = assistantConversations.subscribe(() => { if (++changes > 80) throw new Error('workspace notification loop'); });
@@ -164,16 +167,18 @@ describe('LandingSearch placeholder hydration', () => {
       const chatId = assistantConversations.read(owner).activeId;
       expect(host.querySelector<HTMLTextAreaElement>('textarea[aria-label="继续提问"]')!.value).toBe('WIC');
       await inputText(host.querySelector('textarea[aria-label="继续提问"]')!, '解释 WIC');
-      const images = [{ mediaType: 'image/png' as const, data: 'dGVzdA==' }];
       await act(async () => {
         assistantConversations.patch(owner, chatId, { images });
         assistantConversations.setOpen(owner, false);
       });
       expect(host.querySelector<HTMLInputElement>('input[aria-label="全站搜索"]')!.value).toBe('解释 WIC');
       await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="提问"]')!.click());
-      expect(fetcher).toHaveBeenCalledTimes(1);
-      const body = JSON.parse((fetcher.mock.calls as unknown as [string, RequestInit][])[0][1].body as string);
-      expect(body).toMatchObject({ question: '解释 WIC', images });
+      expect(fetcher).toHaveBeenCalledTimes(2);
+      const calls = fetcher.mock.calls as unknown as [string, RequestInit][];
+      expect(String(calls[0][0])).toContain('/site-assistant/attachments');
+      expect(JSON.parse(calls[0][1].body as string)).toMatchObject({ conversationId: chatId, image: images[0] });
+      const body = JSON.parse(calls[1][1].body as string);
+      expect(body).toMatchObject({ question: '解释 WIC', images: savedImages });
       await inputText(host.querySelector('textarea[aria-label="继续提问"]')!, '下一问');
       await act(async () => assistantConversations.setOpen(owner, false));
       await act(async () => {
@@ -195,8 +200,8 @@ describe('LandingSearch placeholder hydration', () => {
       const saved = assistantConversations.read(owner).conversations.find(chat => chat.id === chatId)!;
       expect(saved.snapshot.draft).toBe('下一问');
       expect(saved.snapshot.turns.at(-1)?.result?.answer).toBe('廉政委员会');
-      expect(saved.snapshot.turns.at(-1)?.images).toEqual(images);
-      expect(fetcher).toHaveBeenCalledTimes(1);
+      expect(saved.snapshot.turns.at(-1)?.images).toEqual(savedImages);
+      expect(fetcher).toHaveBeenCalledTimes(2);
       expect(changes).toBeLessThan(80);
     } finally { unsubscribe(); await act(async () => root.unmount()); host.remove(); }
   });
