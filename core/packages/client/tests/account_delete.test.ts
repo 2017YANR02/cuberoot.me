@@ -190,6 +190,14 @@ describe('清单 ↔ schema', () => {
     expect(SCHEMA_SNAPSHOT_SQL).toMatch(/CREATE TABLE user_pets\s*\(\s*user_id\s+BIGINT\s+NOT NULL\s+REFERENCES app_users\(id\)\s+ON DELETE CASCADE/);
   });
 
+  it('私有聊天图片与已软删除图片随账号物理删除', () => {
+    const migration = readFileSync(join(SERVER, 'migrations/0308_assistant_private_attachments.sql'), 'utf8');
+    expect(NOT_USER_OWNED.site_assistant_attachments).toContain('级联删除');
+    const attachmentTable = /CREATE TABLE(?: IF NOT EXISTS)? site_assistant_attachments\s*\([\s\S]*?user_id\s+BIGINT\s+NOT NULL\s+REFERENCES app_users\(id\)\s+ON DELETE CASCADE/;
+    expect(migration).toMatch(attachmentTable);
+    expect(SCHEMA_SNAPSHOT_SQL).toMatch(attachmentTable);
+  });
+
   it('豁免名单里的每张表都存在于受版本控制的 schema 来源', () => {
     for (const table of Object.keys(NOT_USER_OWNED)) {
       expect(SCHEMA.has(table), `豁免表 ${table} 不在 schema snapshot 或 migration 里`).toBe(true);

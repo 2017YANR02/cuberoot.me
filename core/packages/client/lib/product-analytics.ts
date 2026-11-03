@@ -6,6 +6,7 @@ import { getOwnerKey, getRolePreview, getSessionToken } from './auth-store';
 import { sessionFetch } from './session-fetch';
 import { peekWebAccessToken } from './web-session';
 import { setAnalyticsFeatureReceiver } from './analytics-signal';
+import { persistItem } from './safe-storage';
 export { trackFeatureUse } from './analytics-signal';
 
 type Snapshot = { ready: boolean; enabled: boolean };
@@ -37,7 +38,7 @@ function publish(next: Snapshot) {
   listeners.forEach(listener => listener());
 }
 function choice(owner: string): string | null { try { return localStorage.getItem(CHOICE_KEY + owner); } catch { return null; } }
-function saveChoice(owner: string, enabled: boolean) { try { localStorage.setItem(CHOICE_KEY + owner, enabled ? 'on' : 'off'); } catch { /* optional storage */ } }
+function saveChoice(owner: string, enabled: boolean) { persistItem(CHOICE_KEY + owner, enabled ? 'on' : 'off'); }
 function saveSession() { try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch { /* memory-only session */ } }
 
 export function analyticsEnvironmentAllowed(): boolean {
