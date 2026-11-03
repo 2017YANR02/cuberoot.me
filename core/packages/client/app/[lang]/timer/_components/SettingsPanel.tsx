@@ -250,14 +250,9 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
   return (
     <TimerSettingsPanel categories={douyin ? ['timer', 'smart-cube', 'appearance', 'sound', 'data', 'advanced'] : undefined} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'}
       playersControl={playersControl}
+      presenceControl={presenceControl}
       resetControl={<TimerResetSettings onReset={resetSettings} confirmReset={message => confirm(message)} localize={tr} />}
       activeCategory={activeCategory} onCategoryChange={setActiveCategory} onClose={onClose}>
-        {activeCategory === 'timer' && presenceControl && (
-          <div className="settings-row">
-            <span className="settings-row-label">{tr({ zh: '当前在线', en: 'Currently online' })}</span>
-            <span className="settings-row-control">{presenceControl}</span>
-          </div>
-        )}
             {activeCategory === 'appearance' && (
               <div
                 className="settings-appearance-preview"
@@ -295,13 +290,11 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
           </Row>)}
         </SettingsSection>
 
-        <SettingsSection
-          category="smart-cube"
-          activeCategory={activeCategory}
-        >
-          <TimerSmartCubeSettingsFields value={s} localize={tr} onChange={updateSettings} renderBooleanControl={renderTimingBooleanControl} />
-          <TimerPreScrambleSettings only="training" value={s} onChange={updateSettings} localize={tr} />
+        {activeCategory === 'smart-cube' && <>
+          <TimerSmartCubeSettingsFields value={s} localize={tr} onChange={updateSettings} renderBooleanControl={renderTimingBooleanControl}
+            orientationControl={<TimerPreScrambleSettings only="training" value={s} onChange={updateSettings} localize={tr} />} />
           {settingState('settings.smart-cube.fake-cube').visible && (
+            <section className="settings-section">
             <details className="settings-disclosure">
               <MoreToggle as="summary">{tr({ zh: '开发调试', en: 'Developer tools' })}</MoreToggle>
             <BooleanSettingRow
@@ -310,9 +303,9 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
               onChange={(v) => updateSettings({ showAdminFakeCube: v })}
             />
             </details>
+            </section>
           )}
-
-        </SettingsSection>
+        </>}
 
         <SettingsSection
           category="training"
@@ -362,9 +355,6 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
             />
           )}
           <div ref={mergeSlotRef} />
-        </SettingsSection>
-
-        <SettingsSection category="scramble" activeCategory={activeCategory}>
           <TimerPreScrambleSettings only="normal" value={s} onChange={updateSettings} localize={tr} />
           <TimerColorNeutralSetting event={event} value={s.cnMode} onChange={cnMode => updateSettings({ cnMode })} localize={tr} />
         </SettingsSection>
@@ -378,12 +368,9 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
           <TimerSoundSettings value={s} onChange={updateSettings} localize={tr} voiceAvailable={isVoiceAvailable()} onWarmup={warmupSound} onPreview={() => play('start')} />
         </SettingsSection>
 
-        <SettingsSection
-          category="sound"
-          activeCategory={activeCategory}
-        >
+        {activeCategory === 'sound' && (
           <TimerMetronomeSettings value={s} bpm={metro.bpm} onChange={updateSettings} onBpmChange={bpm => setMetronome({ bpm })} onTap={tapTempo} onWarmup={warmupSound} onPreviewBeep={playInspectionBeep} localize={tr} />
-        </SettingsSection>
+        )}
 
         {activeCategory === 'data' && <TimerBackupSettings language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} every={s.autoBackupEvery} onEveryChange={autoBackupEvery => updateSettings({ autoBackupEvery })}
           owner={getSessionToken()} login={login} local={{ create: pushBackup, list: listBackups, restore: async (key, canCommit) => {

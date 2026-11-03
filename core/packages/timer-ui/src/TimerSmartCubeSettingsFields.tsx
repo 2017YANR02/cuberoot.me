@@ -14,6 +14,7 @@ export interface TimerSmartCubeSettingsFieldsProps {
   localize: (copy: TimerSettingCopy) => string;
   onChange: (patch: Partial<TimerSmartCubeSettings>) => void;
   renderBooleanControl: (props: TimerBooleanControlProps) => ReactNode;
+  orientationControl?: ReactNode;
 }
 
 const FIELDS = TIMER_SETTING_FIELD_CONTRACTS.filter((field) => (
@@ -36,7 +37,7 @@ const LIVE_VIEW_COPY = {
 } satisfies Record<TimerSmartCubeSettings['liveCubeView'], TimerSettingCopy>;
 
 /** The shared smart-cube rows; hosts only persist patches. */
-export function TimerSmartCubeSettingsFields({ value, localize, onChange, renderBooleanControl }: TimerSmartCubeSettingsFieldsProps) {
+export function TimerSmartCubeSettingsFields({ value, localize, onChange, renderBooleanControl, orientationControl }: TimerSmartCubeSettingsFieldsProps) {
   const settings = normalizeTimerSmartCubeSettings(value);
   const gyro = field('gyroEnabled');
   const calibration = field('autoCalibrateGyro');
@@ -66,6 +67,7 @@ export function TimerSmartCubeSettingsFields({ value, localize, onChange, render
           {TIMER_SMART_CUBE_LIVE_VIEWS.map((view) => <option key={view} value={view}>{localize(LIVE_VIEW_COPY[view])}</option>)}
         </select>
       </TimerSettingRow>
+      {orientationControl}
       </TimerSettingsSection>
       <TimerSettingsSection title={localize({ zh: '结束后', en: 'After solving' })}>
       <TimerBooleanSettingRow field={recap} label={localize(recap.copy)} value={settings.autoRecap}

@@ -4788,21 +4788,18 @@ children: <>
             />
 
             {settingsCategory === 'smart-cube' && <>
-            <section className="settings-section">
-              <h2>{TIMER_SETTING_CATEGORY_CONTRACTS.find((category) => category.id === 'smart-cube')?.label[language]}</h2>
               <TimerSmartCubeSettingsFields
                 localize={(value) => value[language]}
                 onChange={updateSettings}
+                orientationControl={<TimerPreScrambleSettings only="training" value={store!.settings} onChange={updateSettings} localize={value => value[language]} />}
                 renderBooleanControl={({ disabled, label, onChange, value }) => (
                   <TimerPillToggle ariaLabel={label} disabled={disabled} onChange={onChange} value={value} />
                 )}
                 value={store!.settings}
               />
-              <TimerPreScrambleSettings only="training" value={store!.settings} onChange={updateSettings} localize={value => value[language]} />
-            </section>
 
             </>}
-            {settingsCategory === 'scramble' && (activeEvent !== '222' || scrambleSource === 'wca') && (
+            {settingsCategory === 'scramble' && (
               <section className="settings-section">
                 <h2>{TIMER_SETTING_CATEGORY_CONTRACTS.find((category) => (
                   category.id === 'scramble'
@@ -4850,6 +4847,8 @@ children: <>
                     value={store!.settings.autoMarkWcaScramble}
                   />
                 )}
+                <TimerPreScrambleSettings only="normal" value={store!.settings} onChange={updateSettings} localize={value => value[language]} />
+                <TimerColorNeutralSetting event={activeEvent} value={store!.settings.cnMode} onChange={cnMode => updateSettings({ cnMode })} localize={value => value[language]} />
               </section>
             )}
 
@@ -4876,8 +4875,6 @@ children: <>
               </section>
             )}
 
-            {settingsCategory === 'scramble' && <TimerPreScrambleSettings only="normal" value={store!.settings} onChange={updateSettings} localize={value => value[language]} />}
-            {settingsCategory === 'scramble' && <TimerColorNeutralSetting event={activeEvent} value={store!.settings.cnMode} onChange={cnMode => updateSettings({ cnMode })} localize={value => value[language]} />}
             {settingsCategory === 'training' && <TimerRoundSettings value={store!.settings} onChange={patch => updateSettings(current => ({ round: { ...current.round, ...patch } }))} localize={value => value[language]} />}
 
             {settingsCategory === 'appearance' && <>

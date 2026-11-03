@@ -11,13 +11,14 @@ const icons = { timer: Timer, 'smart-cube': Bluetooth, scramble: Dices, training
   appearance: Palette, sound: Volume2, data: Database, advanced: Keyboard };
 
 /** One responsive settings dialog. Hosts supply supported categories and their fields. */
-export function TimerSettingsPanel({ language, activeCategory, onCategoryChange, onClose, categories, playersControl, resetControl, children }: {
+export function TimerSettingsPanel({ language, activeCategory, onCategoryChange, onClose, categories, playersControl, presenceControl, resetControl, children }: {
   language: 'en' | 'zh';
   activeCategory: TimerSettingCategoryId;
   onCategoryChange(category: TimerSettingCategoryId): void;
   onClose(): void;
   categories?: readonly TimerSettingCategoryId[];
   playersControl?: ReactNode;
+  presenceControl?: ReactNode;
   resetControl?: ReactNode;
   children: ReactNode;
 }) {
@@ -79,11 +80,17 @@ export function TimerSettingsPanel({ language, activeCategory, onCategoryChange,
           </aside>
           <div ref={mainRef} className="settings-main">
 
-            {activeCategory === 'timer' && playersControl && (
-              <div className="settings-row">
+            {activeCategory === 'timer' && (playersControl || presenceControl) && (
+              <section className="settings-section">
+              {playersControl && <div className="settings-row">
                 <span className="settings-row-label">{label('Players', '人数')}</span>
                 <span className="settings-row-control">{playersControl}</span>
-              </div>
+              </div>}
+              {presenceControl && <div className="settings-row">
+                <span className="settings-row-label">{label('Currently online', '当前在线')}</span>
+                <span className="settings-row-control">{presenceControl}</span>
+              </div>}
+              </section>
             )}
             {children}
           </div>
