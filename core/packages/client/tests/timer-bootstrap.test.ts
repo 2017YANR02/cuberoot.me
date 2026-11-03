@@ -14,6 +14,8 @@ import {
   type TimerBootTelemetryReporter,
 } from '@/lib/app_boot_early';
 
+vi.mock('@/lib/theme', () => ({ useEffectiveTheme: () => 'light' }));
+
 const WECHAT_CHROME_83_USER_AGENT = 'Mozilla/5.0 (Linux; Android 10; wv) AppleWebKit/537.36 Chrome/83.0.4103.106 Mobile Safari/537.36 MicroMessenger/8.0.76';
 const ANDROID_CHROME_78_USER_AGENT = 'Mozilla/5.0 (Linux; Android 10; V1921A) AppleWebKit/537.36 Chrome/78.0.3904.96 Mobile Safari/537.36';
 const IOS_15_WECHAT_USER_AGENT = 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_8_8 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 MicroMessenger/8.0.76';
@@ -83,6 +85,7 @@ describe('TimerBootstrap', () => {
       }));
     });
 
+    expect(host.querySelector('[data-timer-bootstrap="loading"] .loading-brand-mark')).not.toBeNull();
     await act(async () => vi.advanceTimersByTime(1_000));
 
     const alert = host.querySelector('[role="alert"]');

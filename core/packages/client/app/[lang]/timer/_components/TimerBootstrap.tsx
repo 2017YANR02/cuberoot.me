@@ -9,6 +9,7 @@ import {
   useState,
 } from 'react';
 import { tr } from '@/i18n/tr';
+import { LoadingBrandMark } from '@/components/StartupStatus';
 import {
   DEFAULT_TIMEOUT_MS,
   EARLY_STORAGE_KEY,
@@ -457,12 +458,13 @@ export default function TimerBootstrap({
 
   return (
     <main
-      className="timer-bootstrap timer-bootstrap-loading"
+      className="app-startup app-startup-loading app-startup-page"
       data-timer-bootstrap="loading"
       role="status"
       aria-live="polite"
     >
-      <p>{tr(TIMER_BOOT_COPY.loading)}</p>
+      <LoadingBrandMark />
+      <span className="sr-only">{tr(TIMER_BOOT_COPY.loading)}</span>
     </main>
   );
 }
