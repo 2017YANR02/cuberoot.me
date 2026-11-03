@@ -68,7 +68,7 @@ export default function CompetitionGroupAwards({ rows, isZh, personal = false, s
           <a href={first.sourceUrl} target="_blank" rel="noopener noreferrer">{t('来源', 'Source')}</a></h3>
         {renderTable ? renderTable(group) : <div className="wp-records sticky-scroll"><table className="wp-bycomp-table wp-podium-table wp-podium-table--plain sticky-thead"><thead><tr>
           <th scope="col">{t('项目', 'Event')}</th><th scope="col" className="wp-th-narrow">{t('名次', 'Place')}</th>
-          <th scope="col">{t('单次', 'Single')}</th><th scope="col">{t('平均', 'Average')}</th><th scope="col" className="wp-th-attempts">{t('详细成绩', 'Solves')}</th>
+          <th scope="col">{t('单次', 'Single')}</th><th scope="col">{t('平均', 'Average')}</th><th scope="col" className="wp-th-attempts" aria-label={t('详细成绩', 'Solves')} />
         </tr></thead><tbody>{group.map(row => <tr key={row.sourcePersonId}>
           <th scope="row" className="wp-cell-event"><span className="wp-rec-event"><EventIcon event={row.eventId} className="wp-event-icon" title={eventDisplayName(row.eventId, isZh)} /></span></th>
           <td className={`wp-cell-pos wp-podium-place-${row.place}`}>{row.place}</td>
