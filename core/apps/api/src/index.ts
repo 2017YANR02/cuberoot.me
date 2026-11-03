@@ -124,6 +124,9 @@ import { platformCompetitionSettlementRoutes } from './routes/platform_competiti
 import { platformCompetitionDeviceReportRoutes } from './routes/platform_competition_device_reports.js';
 import { platformOrganizerApplicationRoutes } from './routes/platform_organizer_applications.js';
 import { platformLearningRoutes } from './routes/platform_learning.js';
+import { productAnalyticsRoutes } from './routes/product_analytics.js';
+import { startProductAnalyticsCleanup } from './platform/product_analytics.js';
+import { platformDb } from './platform/db.js';
 import { platformCommerceRoutes } from './routes/platform_commerce.js';
 import { platformRefundRoutes, startPlatformRefundReconciliation } from './routes/platform_refunds.js';
 import { platformQrRoutes } from './routes/platform_qr.js';
@@ -299,6 +302,7 @@ app.route('/v1', platformCompetitionSettlementRoutes);
 app.route('/v1', platformCompetitionDeviceReportRoutes);
 app.route('/v1', platformOrganizerApplicationRoutes);
 app.route('/v1/platform', platformLearningRoutes);
+app.route('/v1/platform', productAnalyticsRoutes);
 app.route('/v1/platform', platformCommerceRoutes);
 app.route('/v1', platformRefundRoutes);
 app.route('/v1/platform', platformQrRoutes);
@@ -425,6 +429,7 @@ startPrewarmCron();
 // MONITORS_ENABLED!=1 时直接返回(休眠);MONITOR_PUSH_ENABLED!=1 时只 DRY 日志不真推.
 startMonitors();
 startIdentityChoiceCleanup();
+startProductAnalyticsCleanup(platformDb());
 startAssistantMonitorCleanup();
 startTranslationSync();
 

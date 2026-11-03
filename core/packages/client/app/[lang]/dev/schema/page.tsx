@@ -900,6 +900,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 272, slug: 'remote_access', desc: { zh: '员工远程连接申请、负责人审批及主机同步确认。', en: 'Employee remote access requests, host-owner approval and host acknowledgements.' } },
   { n: 289, slug: 'wca_translations', desc: { zh: 'WCA 官方英中翻译与来源状态，原子同步及检索。', en: 'Official WCA English–Chinese translations with provenance, atomic sync and retrieval.' } },
   { n: 308, slug: 'assistant_private_attachments', desc: { zh: 'AI 私有会话图片附件', en: 'Private AI conversation image attachments' } },
+  { n: 309, slug: 'product_analytics', desc: { zh: '复用产品事件与授权表，为全站分析增加聚合和授权查询索引。', en: 'Index existing product events and consents for website analytics.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

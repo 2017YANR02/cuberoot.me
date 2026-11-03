@@ -43,6 +43,7 @@ import {
 } from '../platform/validation.js';
 
 import { awardLearningPoints, learningAchievementMetrics, learningDate, learningStreak } from '../platform/learning_completion.js';
+import { lockAnalyticsSubject } from '../platform/product_analytics.js';
 
 export const platformLearningRoutes = platformRouter();
 
@@ -1143,6 +1144,7 @@ platformLearningRoutes.post('/me/privacy/consents', async (c) => {
   if (expiresAt && Date.parse(expiresAt) <= Date.now()) badRequest('expiresAt must be in the future');
   if (status !== 'granted' && expiresAt != null) badRequest('Only granted consent may have expiresAt');
   const result = await withIdempotency(c, actor, `learning.privacy.consent:${purpose}`, body, async (db) => {
+    if (purpose === 'analytics') await lockAnalyticsSubject(db, { userId: actor.userId, hash: '' });
     const previous = await platformQuery<{ id: string; status: string }>(db, `
       SELECT id::text, status FROM platform_privacy_consents
       WHERE user_id = $1 AND purpose = $2
@@ -1153,8 +1155,8 @@ platformLearningRoutes.post('/me/privacy/consents', async (c) => {
     }
     const rows = await platformQuery(db, `
       INSERT INTO platform_privacy_consents (
-        user_id, purpose, status, policy_version, source, expires_at, supersedes_consent_id
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7::uuid)
+        user_id, purpose, status, policy_version, source, expires_at, supersedes_consent_id, decided_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7::uuid, clock_timestamp())
       RETURNING id::text, purpose, status, policy_version AS "policyVersion",
                 source, decided_at AS "decidedAt", expires_at AS "expiresAt"
     `, [actor.userId, purpose, status, policyVersion, source, status === 'granted' ? expiresAt ?? null : null,
@@ -1190,6 +1192,7 @@ platformLearningRoutes.post('/analytics', async (c) => {
   const dimensions = analyticsDimensions(body.dimensions);
   const request = { eventName, surface, dimensions };
   const result = await withIdempotency(c, actor, `learning.analytics:${eventName}`, request, async (db) => {
+    await lockAnalyticsSubject(db, { userId: actor.userId, hash: '' });
     const consents = await platformQuery<{ id: string; status: string; active: boolean }>(db, `
       SELECT id::text, status, (expires_at IS NULL OR expires_at > NOW()) AS active
       FROM platform_privacy_consents

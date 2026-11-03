@@ -164,6 +164,7 @@ describe('/dev/api endpoint catalog drift', () => {
       ['platform_competition_settlements.ts', '/v1'],
       ['platform_refunds.ts', '/v1'],
       ['platform_learning.ts', '/v1/platform'],
+      ['product_analytics.ts', '/v1/platform'],
       ['platform_commerce.ts', '/v1/platform'],
       ['platform_qr.ts', '/v1/platform'],
     ]);
