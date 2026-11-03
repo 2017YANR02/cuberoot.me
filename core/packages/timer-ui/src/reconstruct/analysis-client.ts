@@ -28,7 +28,9 @@ export function createLiveReconstructionStream(
     busy = true;
     const prefix = confirmed && isAnalysisContinuation(confirmed.input, input) && confirmed.snapshot.text
       ? confirmedReconPrefix(confirmed.input.text, confirmed.snapshot.text) : undefined;
-    const request = prefix?.lines.length ? { ...input, text: { ...input.text, confirmed: prefix } } : input;
+    const request = prefix?.lines.length ? { ...input,
+      confirmedMethod: confirmed?.snapshot.method ?? confirmed?.input.text.method,
+      text: { ...input.text, confirmed: prefix } } : input;
     unsubscribe = analyzer.subscribe(request, snapshot => {
       if (disposed) return;
       // Publish only the corrected result, never the replaceable draft.

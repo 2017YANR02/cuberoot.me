@@ -95,6 +95,29 @@ describe('reconstruction worker lifecycle', () => {
     workers[0].reply({ patch: { reference: { stages: [], refTurns: 1, userTurns: 1, delta: 0 } }, done: true });
     expect(listener).toHaveBeenLastCalledWith(expect.objectContaining({ text: recognizedText, status: 'complete' }));
   });
+  it('isolates inferred live notation from fixed-method text caching', () => {
+    const { analyzer, workers } = setup();
+    const live = { ...input(), scoreable: false, detectLiveMethod: true };
+    analyzer.subscribe(live, () => {});
+    vi.advanceTimersByTime(1);
+    workers[0].reply({ patch: { text: recognizedText, method: 'roux' }, done: true });
+    expect(analyzer.peek(live).method).toBe('roux');
+    const fixed = { ...live, detectLiveMethod: undefined };
+    expect(analyzer.peek(fixed).text).toBeNull();
+    analyzer.subscribe(fixed, () => {});
+    vi.advanceTimersByTime(1);
+    expect(workers[0].requests.at(-1)?.skipText).toBe(false);
+  });
+  it('hands inferred live notation only to the matching completed method and frame', () => {
+    const { analyzer } = setup();
+    const live = { ...input(), scoreable: false, detectLiveMethod: true };
+    analyzer.rememberLive('live', live, { text: { ...recognizedText, inspection: 'x' }, method: 'roux',
+      reference: null, slotReference: null, status: 'complete' });
+    analyzer.handoff('live', 'saved');
+    expect(analyzer.peek(input(), 'saved').text).toBeNull();
+    const matching = { ...input(), text: { ...input().text, method: 'roux' as const, viewRotation: 'x' } };
+    expect(analyzer.peek(matching, 'saved')).toMatchObject({ text: { inspection: 'x' }, provisional: true });
+  });
 
   it('coalesces live turns without cancelling active recognition and cancels on attempt exit', () => {
     const { analyzer, workers } = setup();

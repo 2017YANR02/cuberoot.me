@@ -37,6 +37,9 @@ export function createReconstructionAnalyzer(createWorker: () => AnalysisWorker)
   function initialSnapshot(input: AnalysisInput, attemptId?: string): AnalysisSnapshot {
     const live = attemptId ? liveResults.get(attemptId) : undefined;
     if (!live) {
+      // Live inference can change the supplied method and frame. Its full
+      // snapshot cache carries that metadata; the text-only cache cannot.
+      if (input.detectLiveMethod) return emptyAnalysis();
       const exact = textCache.get(JSON.stringify(input.text));
       return exact ? { ...emptyAnalysis(), text: exact } : emptyAnalysis();
     }
@@ -70,7 +73,7 @@ export function createReconstructionAnalyzer(createWorker: () => AnalysisWorker)
     jobs.delete(job.key);
     active = null;
     if (!job.failed) {
-      if (job.snapshot.text) {
+      if (job.snapshot.text && !job.input.detectLiveMethod) {
         const textKey = JSON.stringify(job.input.text);
         textCache.delete(textKey);
         textCache.set(textKey, job.snapshot.text);
@@ -144,7 +147,10 @@ export function createReconstructionAnalyzer(createWorker: () => AnalysisWorker)
     rememberLive(attemptId: string, input: AnalysisInput, snapshot: AnalysisSnapshot) {
       if (!snapshot.text || snapshot.provisional || snapshot.status !== 'complete') return;
       liveResults.delete(attemptId);
-      liveResults.set(attemptId, { input, text: snapshot.text });
+      const interpreted = snapshot.method ? { ...input, text: { ...input.text,
+        method: snapshot.method, viewRotation: snapshot.text.inspection,
+      } } : input;
+      liveResults.set(attemptId, { input: interpreted, text: snapshot.text });
       if (liveResults.size > 8) liveResults.delete(liveResults.keys().next().value!);
     },
     handoff(fromAttemptId: string, toSolveId: string) {

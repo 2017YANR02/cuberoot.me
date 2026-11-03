@@ -143,4 +143,25 @@ describe('automatic reconstruction method', () => {
     expect(detectSolveMethod('R U', [{m:"U'",ts:100}],200)).toBe('cfop');
     expect(detectSolveMethod('U', [{m:"U'",ts:100}],200)).toBe('cfop');
   });
+  it.each(methodFixtures)('recognizes live $method milestones before the final turn in every orientation', fixture => {
+    const firstLength = fixture.method === 'cfop' ? 1
+      : Math.max(4, walkMethod(fixture.method, fixture.scramble, fixture.moves, 20000)!.stages[1].endIdx! + 1);
+    for (const rotation of ['', 'x', 'y', 'z', 'x2', 'y2', 'z2', 'x y']) {
+      const perm = facePermFor(rotation);
+      const scr = conjugateSequence(fixture.scramble, perm)!;
+      const stream = fixture.moves.map(move => ({ ...move, m: conjugateToken(move.m, perm)! }));
+      for (let length = firstLength; length <= stream.length; length++) {
+        expect(detectSolveMethod(scr, stream.slice(0, length), 20000, undefined, { allowPartial: true }),
+          `${fixture.method} ${rotation} at move ${length}`).toBe(fixture.method);
+      }
+    }
+  });
+  it('keeps ZZ when last-layer moves temporarily break the already completed EOLine', () => {
+    const tokens = "F U F' L U L R U R F F' R U R' U R U2 R'".split(' ');
+    const scramble = tokens.slice().reverse().map(m => m.endsWith('2') ? m : m.endsWith("'") ? m.slice(0, -1) : m + "'").join(' ');
+    const stream = tokens.map((m, i) => ({ m, ts: (i + 1) * 200 }));
+    for (const length of [10, 11, stream.length]) {
+      expect(detectSolveMethod(scramble, stream.slice(0, length), 4000, undefined, { allowPartial: true })).toBe('zz');
+    }
+  });
 });

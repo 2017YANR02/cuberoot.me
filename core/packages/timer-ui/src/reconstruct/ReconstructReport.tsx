@@ -117,8 +117,8 @@ function ReconstructReportBody({
   const methodMoves = moves.map(move => move.m).join(' ');
   // Classification uses move order, never elapsed time. Timer ticks must not
   // repeat the orientation search or invalidate the report's method.
-  const method = useMemo(() => detectSolveMethod(solve.scramble,
-    methodMoves ? methodMoves.split(' ').map((m,ts)=>({m,ts})) : [], 0), [solve.scramble,methodMoves]);
+  const method = useMemo(() => live ? 'cfop' : detectSolveMethod(solve.scramble,
+    methodMoves ? methodMoves.split(' ').map((m,ts)=>({m,ts})) : [], 0), [solve.scramble,methodMoves,live]);
   const slices = useMemo(
     () => sliceReconstruction(moves, solve.timeMs, solve.bld?.memoMs),
     [moves, solve.timeMs, solve.bld?.memoMs],
@@ -145,7 +145,8 @@ function ReconstructReportBody({
   // Reader preference only; changing methods never rewrites the stored solve.
   const analysisInput = useMemo<AnalysisInput | null>(() => prepared.text ? {
     scoreable: scoreable && method === 'cfop', text: prepared.text,
-  } : null, [prepared.text, scoreable, method]);
+    ...(live ? { detectLiveMethod: true } : {}),
+  } : null, [prepared.text, scoreable, method, live]);
   const [analysisState, setAnalysisState] = useState<{
     solveId: string; input: AnalysisInput; snapshot: AnalysisSnapshot;
   } | null>(null);
@@ -178,9 +179,10 @@ function ReconstructReportBody({
     || (live && analysisState.input.text.method === method
       && analysisState.input.text.language === (isZh ? 'zh' : 'en')))
     ? analysisState.snapshot : analysisInput && !live ? reconstructionAnalyzer.peek(analysisInput, solve.id) : null;
+  const displayedMethod = live ? analysis?.method ?? method : method;
   const reconText = useMemo(() => analysis?.text
-    ? method === 'cfop' ? applyReconTextOverride(analysis.text, solve.reconstruction) : analysis.text
-    : null, [analysis?.text, solve.reconstruction, method]);
+    ? displayedMethod === 'cfop' ? applyReconTextOverride(analysis.text, solve.reconstruction) : analysis.text
+    : null, [analysis?.text, solve.reconstruction, displayedMethod]);
   useEffect(() => {
     if (!live && !analysis?.provisional && reconText?.methodStages) rememberMethodStages(solve, method, reconText.methodStages);
   }, [live, analysis?.provisional, reconText?.methodStages, solve, method]);
@@ -266,7 +268,7 @@ function ReconstructReportBody({
     // newer move cannot relabel an older stage while analysis is catching up.
     const currentSegs = analysisState?.solveId === solve.id
       ? analysisState.input.text.segs : stageSegs;
-    const stageName = method !== 'cfop' ? reconText?.currentStage ? tr(reconText.currentStage) : '…' : currentSegs?.ollEndIdx != null ? 'PLL'
+    const stageName = displayedMethod !== 'cfop' ? reconText?.currentStage ? tr(reconText.currentStage) : '…' : currentSegs?.ollEndIdx != null ? 'PLL'
       : currentSegs?.f2lEndIdx != null ? 'OLL'
         : currentSegs?.crossEndIdx != null
           ? `F2L-${Math.min(4, (reconText?.lines.filter(line => line.kind === 'f2l').length ?? 0) + 1)}`
@@ -280,7 +282,7 @@ function ReconstructReportBody({
         <div className="sml-moves">{currentMoves.join(' ') || '…'}</div>
       </>, liveStageTarget)}
       {reconText ? (
-      <StepMoveList method={method} recon={reconText} reference={null} slotReference={null} />
+      <StepMoveList method={displayedMethod} recon={reconText} reference={null} slotReference={null} />
     ) : (
       <div className="sml-moves" aria-busy={analysis?.status !== 'error'}>
         {moves.map(move => move.m).join(' ')}

@@ -1,13 +1,44 @@
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 import recording from './fixtures/pll-slice-half-turn-recording.json';
 import { decodeGyroTrack } from '@cuberoot/shared/smart-cube/gyro-track';
 import { buildCoreTrack } from '@cuberoot/shared/timer/reconstruct/core-track';
-import { buildReconText } from '@cuberoot/shared/timer/reconstruct/recon-text';
+import { buildReconText, prepareReconstruction } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { computeStageSegments } from '@cuberoot/shared/timer/reconstruct/stage-segments';
 import { normalizeSolve, initialPoseRotation } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
 import { applyScramble } from '@cuberoot/shared/timer/reconstruct/state';
 import { applyOneToken } from '@cuberoot/shared/timer/reconstruct/apply-token';
 import { reconstructedTrack } from '@cuberoot/timer-ui/reconstruct/playback-track';
+import { runReconstructionAnalysis } from '@cuberoot/timer-ui/reconstruct/analysis-runner';
+import { reconstructionLibraries } from '@cuberoot/timer-ui/reconstruct/library-cache';
+import { emptyAnalysis } from '@cuberoot/timer-ui/reconstruct/analysis-protocol';
+import { patternFromAlg } from '@/lib/cube3';
+
+it.each([
+  ['roux', "L U L' R U R' R U R' U R U2 R' M' U2 M U2", 'cmll'],
+  ['zz', "F U F' L U L R U R R U R' U R U2 R'", 'zzright'],
+] as const)('runs live %s inference in the worker and replaces a stale CFOP prefix', async (method, solution, stage) => {
+  const tokens = solution.split(' ');
+  const scramble = tokens.slice().reverse().map(m => m.endsWith('2') ? m : m.endsWith("'") ? m.slice(0, -1) : m + "'").join(' ');
+  const moves = tokens.slice(0, 7).map((m, i) => ({ m, ts: (i + 1) * 200 }));
+  const input = prepareReconstruction({ scramble, moves, timeMs: 1400 }, 'cfop', 'en').text!;
+  const stale = await buildReconText(input);
+  const load = vi.spyOn(reconstructionLibraries, 'load').mockRejectedValue(new Error('Offline library'));
+  let snapshot = emptyAnalysis();
+  try {
+    await runReconstructionAnalysis({ id: 1, input: { text: { ...input, confirmed: stale }, scoreable: false,
+      detectLiveMethod: true, confirmedMethod: 'cfop' } }, response => {
+      expect(response.error).toBeUndefined();
+      if (response.patch) snapshot = { ...snapshot, ...response.patch };
+    });
+    expect(snapshot.method).toBe(method);
+    expect(snapshot.text?.currentStage?.key).toBe(stage);
+    expect(snapshot.text?.lines.map(line => line.key)).toEqual(method === 'roux' ? ['fb', 'sb', 'tail'] : ['eoline', 'zzleft', 'tail']);
+    expect(snapshot.text?.lines.at(-1)?.stageKey).toBe(stage);
+    const reconstructed = await patternFromAlg([scramble, snapshot.text!.inspection, ...snapshot.text!.lines.flatMap(line => line.moves)].join(' '));
+    const actual = await patternFromAlg([scramble, ...moves.map(move => move.m), snapshot.text!.inspection].join(' '));
+    expect(reconstructed.isIdentical(actual)).toBe(true);
+  } finally { load.mockRestore(); }
+});
 
 it.each(['roux', 'zz'] as const)('%s keeps stages already solved in the scramble at zero time', async method => {
   const moves = [{ m: "U'", ts: 100 }];

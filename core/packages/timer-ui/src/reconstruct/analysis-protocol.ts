@@ -1,9 +1,13 @@
 import type { ReconTextInput, ReconTextResult, ReconTextLine } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import type { ReferenceResult, SlotReference } from '@cuberoot/shared/timer/reconstruct/reference';
+import type { MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
 
 export interface AnalysisInput {
   text: ReconTextInput;
   scoreable: boolean;
+  /** Infer partial methods in the worker, away from BLE and timer rendering. */
+  detectLiveMethod?: boolean;
+  confirmedMethod?: MethodId;
 }
 
 export interface AnalysisSnapshot {
@@ -11,6 +15,7 @@ export interface AnalysisSnapshot {
   reference: ReferenceResult | null;
   slotReference: SlotReference[] | null;
   status: 'pending' | 'complete' | 'error';
+  method?: MethodId;
   /** Live steps remain visible while the final move stream is reconciled. */
   provisional?: boolean;
 }

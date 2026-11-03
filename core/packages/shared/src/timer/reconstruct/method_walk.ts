@@ -160,32 +160,43 @@ function walkFramed(method: SolveMethod, scramble: string, moves: SolveMove[], t
  * predicates and single-frame selection as its report. Intent is unknowable
  * for equivalent/short sequences; those retain the CFOP report. ZB variants
  * stay within CFOP and are identified by the existing case recognizer. */
-export function detectSolveMethod(scramble: string, moves: SolveMove[], totalMs: number, preferredRotation?: string | null): MethodId {
+export function detectSolveMethod(scramble: string, moves: SolveMove[], totalMs: number, preferredRotation?: string | null,
+  options: { allowPartial?: boolean } = {}): MethodId {
   if (moves.length < 4) return 'cfop';
-  // A partial stream does not yet establish a complete method. This cheap
-  // check also keeps live BLE updates out of the 24-orientation report work.
+  let partial = false;
+  // Completed reports require a solved stream. Live reports can infer a method
+  // once its distinctive milestones are present, without waiting for the last turn.
   try {
     let final = applyScramble(3,scramble);
     for (const move of moves) final = applyOneToken(final,move.m);
-    if (!isSolved(final)) return 'cfop';
+    partial = !isSolved(final);
+    if (partial && !options.allowPartial) return 'cfop';
   } catch { return 'cfop'; }
   const cfopFrame = methodFrame('cfop',scramble,moves,preferredRotation);
   const cfop = walkMethod('cfop',cfopFrame.scramble,cfopFrame.moves,totalMs);
   const cross = cfop?.stages[0].endIdx ?? Infinity;
   const f2l = cfop?.stages[1].endIdx ?? Infinity;
-  const roux = walkMethod('roux',scramble,moves,totalMs,preferredRotation);
+  const rouxFrame = methodFrame('roux',scramble,moves,preferredRotation);
+  const roux = walkFramed(methodById('roux'),rouxFrame.scramble,rouxFrame.moves,totalMs);
   const end = (walk: MethodWalkResult | null, index: number) => walk?.stages[index].endIdx ?? Infinity;
+  // Before F2L is complete, an incidental cross on a side face can win the
+  // CFOP frame search. Compare the live blocks with the cross on their own D
+  // face; a completed CFOP F2L still takes precedence over later blocks.
+  const rouxCross = partial
+    ? end(walkFramed(methodById('cfop'),rouxFrame.scramble,rouxFrame.moves,totalMs),0) : cross;
   // Two blocks and corner completion while the CFOP cross/F2L are still open
   // are the distinctive Roux milestones; merely visiting solved blocks is not.
-  if (end(roux,0) < cross && end(roux,1) < f2l && end(roux,1) <= end(roux,2)
+  if (end(roux,0) < rouxCross && end(roux,1) < f2l && end(roux,1) <= end(roux,2)
     && end(roux,2) <= end(roux,3) && end(roux,1) < end(roux,3)
-    && Number.isFinite(end(roux,3))) return 'roux';
+    && (Number.isFinite(end(roux,3)) || partial && Number.isFinite(end(roux,1)))) return 'roux';
   const frame = methodFrame('zz',scramble,moves,preferredRotation);
   const zz = walkFramed(methodById('zz'),frame.scramble,frame.moves,totalMs);
   const eo = end(zz,0), blocks = end(zz,2);
-  if (eo < cross && eo < end(zz,1) && end(zz,1) < blocks && blocks < end(zz,3)) {
+  if (eo < cross && eo < end(zz,1) && end(zz,1) < blocks
+    && (blocks < end(zz,3) || partial && Number.isFinite(end(zz,1)))) {
     let state = applyScramble(3,frame.scramble);
-    for (let i = 0; i <= blocks; i++) {
+    const through = Math.min(blocks, frame.moves.length - 1);
+    for (let i = 0; i <= through; i++) {
       state = applyOneToken(state,frame.moves[i].m);
       // Accidental early EOLine which is immediately broken is not ZZ.
       if (i >= eo && !methodById('zz').stages[0].done(state,facesToFacelets(state))) return 'cfop';
