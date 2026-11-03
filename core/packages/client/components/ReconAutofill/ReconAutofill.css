@@ -7,7 +7,7 @@
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
   z-index: 9999;
   overflow-y: auto;
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: var(--font-sans);
   font-size: 13px;
   user-select: none;
 }

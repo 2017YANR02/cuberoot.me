@@ -8,7 +8,7 @@
   justify-items: start;
   gap: 14px;
   color: var(--foreground);
-  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .app-startup-page {

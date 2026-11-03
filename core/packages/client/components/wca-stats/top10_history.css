@@ -3,7 +3,7 @@
   max-width: 1280px;
   margin: 0 auto;
   padding: 16px 12px 32px;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-sans);
 }
 /* NOTE: 嵌入 wr_metric 时跟随父级 .wca-stats-page 的内容宽度,避免边框错位 */
 .t10h-page.t10h-embedded {

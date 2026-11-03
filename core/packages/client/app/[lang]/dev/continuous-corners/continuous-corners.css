@@ -4,7 +4,7 @@
   --cc-warm: var(--accent);
   color: var(--foreground);
   background: var(--background);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+  font-family: var(--font-sans);
   line-height: 1.75;
   -webkit-font-smoothing: antialiased;
 }

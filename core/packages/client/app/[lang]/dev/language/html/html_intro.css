@@ -1120,7 +1120,7 @@ main { position: relative; z-index: 1; }
   padding: 22px 24px;
   background: #fafafa;
   color: #111;
-  font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.6;
   overflow: auto;

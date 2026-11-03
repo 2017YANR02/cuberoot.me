@@ -10,7 +10,7 @@
 .calc-page {
     color: var(--foreground);
     background: var(--background);
-    font-family: Helvetica, Arial, sans-serif;
+    font-family: var(--font-sans);
     overflow-x: hidden;
     overscroll-behavior-x: none;
     max-width: 1600px;
@@ -579,7 +579,7 @@
 .calc-page #numpad-display {
     color: var(--foreground);
     font-size: 28px;
-    font-family: 'Helvetica Neue', Helvetica, sans-serif;
+    font-family: var(--font-sans);
     text-align: right;
     padding: 8px 16px;
     margin-bottom: 10px;
@@ -620,7 +620,7 @@
     width: 100%;
     padding: 14px 0;
     font-size: 30px;
-    font-family: 'Helvetica Neue', Helvetica, sans-serif;
+    font-family: var(--font-sans);
     font-weight: 700;
     cursor: pointer;
     outline: none;

@@ -62,7 +62,7 @@ export default function FfmpegPocPage() {
   }, []);
 
   return (
-    <main style={{ padding: 24, fontFamily: 'ui-sans-serif, system-ui' }}>
+    <main style={{ padding: 24, fontFamily: 'var(--font-sans)' }}>
       <h1>FFmpeg WASM POC (Next.js 16)</h1>
       <p style={{ color: '#666' }}>
         Verifies @ffmpeg/ffmpeg + multi-threaded core load via toBlobURL inside a Next.js App Router

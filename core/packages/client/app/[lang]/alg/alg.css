@@ -8,7 +8,7 @@
   --accent: var(--user-accent, #0066cc);
   --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
 
-  font-family: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-family: var(--font-sans);
   color: var(--foreground);
   background: var(--background);
   min-height: 100vh;
