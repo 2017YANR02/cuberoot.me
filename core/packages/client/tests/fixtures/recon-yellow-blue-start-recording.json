@@ -1,0 +1,258 @@
+{
+  "scramble": "F' D' F' R' D' L D2 L2 U L' B D B' R F2 L' B'",
+  "timeMs": 10651,
+  "moves": [
+    {
+      "m": "B'",
+      "ts": 0
+    },
+    {
+      "m": "R'",
+      "ts": 69
+    },
+    {
+      "m": "L",
+      "ts": 259
+    },
+    {
+      "m": "U",
+      "ts": 546
+    },
+    {
+      "m": "R",
+      "ts": 708
+    },
+    {
+      "m": "D",
+      "ts": 1735
+    },
+    {
+      "m": "D",
+      "ts": 1801
+    },
+    {
+      "m": "R'",
+      "ts": 1971
+    },
+    {
+      "m": "B",
+      "ts": 2030
+    },
+    {
+      "m": "D'",
+      "ts": 2142
+    },
+    {
+      "m": "B'",
+      "ts": 2312
+    },
+    {
+      "m": "R",
+      "ts": 2469
+    },
+    {
+      "m": "D'",
+      "ts": 3492
+    },
+    {
+      "m": "R",
+      "ts": 3723
+    },
+    {
+      "m": "D'",
+      "ts": 3790
+    },
+    {
+      "m": "R'",
+      "ts": 3853
+    },
+    {
+      "m": "D",
+      "ts": 3904
+    },
+    {
+      "m": "D",
+      "ts": 3981
+    },
+    {
+      "m": "L'",
+      "ts": 4153
+    },
+    {
+      "m": "D'",
+      "ts": 4278
+    },
+    {
+      "m": "L",
+      "ts": 4371
+    },
+    {
+      "m": "D'",
+      "ts": 5067
+    },
+    {
+      "m": "L",
+      "ts": 5239
+    },
+    {
+      "m": "D'",
+      "ts": 5313
+    },
+    {
+      "m": "L'",
+      "ts": 5457
+    },
+    {
+      "m": "D",
+      "ts": 5531
+    },
+    {
+      "m": "F'",
+      "ts": 5675
+    },
+    {
+      "m": "D",
+      "ts": 5784
+    },
+    {
+      "m": "F",
+      "ts": 5883
+    },
+    {
+      "m": "D'",
+      "ts": 6321
+    },
+    {
+      "m": "D'",
+      "ts": 6366
+    },
+    {
+      "m": "R",
+      "ts": 6517
+    },
+    {
+      "m": "D",
+      "ts": 6592
+    },
+    {
+      "m": "R'",
+      "ts": 6636
+    },
+    {
+      "m": "D'",
+      "ts": 6704
+    },
+    {
+      "m": "R",
+      "ts": 6772
+    },
+    {
+      "m": "R'",
+      "ts": 6876
+    },
+    {
+      "m": "R",
+      "ts": 6985
+    },
+    {
+      "m": "D",
+      "ts": 7092
+    },
+    {
+      "m": "R'",
+      "ts": 7133
+    },
+    {
+      "m": "B'",
+      "ts": 8205
+    },
+    {
+      "m": "L",
+      "ts": 8284
+    },
+    {
+      "m": "B",
+      "ts": 8366
+    },
+    {
+      "m": "L'",
+      "ts": 8425
+    },
+    {
+      "m": "D'",
+      "ts": 8480
+    },
+    {
+      "m": "L'",
+      "ts": 8571
+    },
+    {
+      "m": "D",
+      "ts": 8613
+    },
+    {
+      "m": "L",
+      "ts": 8696
+    },
+    {
+      "m": "D",
+      "ts": 9466
+    },
+    {
+      "m": "R'",
+      "ts": 9673
+    },
+    {
+      "m": "R'",
+      "ts": 9730
+    },
+    {
+      "m": "F",
+      "ts": 9850
+    },
+    {
+      "m": "F",
+      "ts": 9899
+    },
+    {
+      "m": "R",
+      "ts": 10055
+    },
+    {
+      "m": "B",
+      "ts": 10115
+    },
+    {
+      "m": "R'",
+      "ts": 10185
+    },
+    {
+      "m": "F",
+      "ts": 10274
+    },
+    {
+      "m": "F",
+      "ts": 10328
+    },
+    {
+      "m": "R",
+      "ts": 10494
+    },
+    {
+      "m": "B'",
+      "ts": 10527
+    },
+    {
+      "m": "R",
+      "ts": 10584
+    },
+    {
+      "m": "D",
+      "ts": 10722
+    }
+  ],
+  "gyro": "RwIAWQAALXTvDwAeMXLtEAAGV1z4CwBVT2L/DwBZUWAFEQA8S2UCDgC0QmsCEwDSUWEFDwAAUmACEgDSTWT7DABaRGnrCAGGQ2jpDgExRGflDAA3SmTsDQBaUl7uEgC0Y0wCGAAeYU0BHABaXlIBFgBaXU/1IwBaXk74IADSYE/7GQA8YVD5FAAeX1P1EAB4WFntCwBaVVroBwBaUl3kCABaTGHjDAB4MnHnDwBaJnbrDgB9N27lEQA3QGniCwDwPWvlDQBHJnbmDQAxNnHsCgB4Om/sBQA8PG/zCQB9OXADEABzL3EeEAA8Om0TFwBaUWD0EQEOTWDlEwBaSWTnDwAASmLjCwGGSGThCQB9TWHlCQAZX03h8ABaWVTeAwA8Q2TcEAB4TGLlCwB8SWAb4gB0P1opzwBaUloC2wAeWFfkCQCVT2DnCgC6T2HuDQDNTWDoGAAeTV/iEQAHJnHVCACTSWPhBwBWTmLqBwA8HHPVDwDSQWrpDQAFFHTUEQBVKXXmBwB4QmvyCwBaO27xEAMqPW7vCwEsSWTkAwAeWk/d6AAeSGj1BgBaO3D8CwAeJ3cJFQCWTWHmDgBaSWPkDAA8SmTuEACWTWL0EwEUTmHvDgCQTGLpEQDSWFflCAB9cDnuBgBVeR/zEQDwew/zGgABew75HQAefBP5EQA7exn5DwBBfQsBEwCRfv7zBQCWcTDf/ABaXU3a/w==",
+  "device": {
+    "model": "gan-v4"
+  }
+}

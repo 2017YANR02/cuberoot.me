@@ -8,15 +8,18 @@ import {
 
 import {
   applyOrientation,
+  CUBE_ORIENTATIONS,
   mirrorForBrand,
   nearestCubeOrientation,
   quatConjugate,
+  quatAngleTo,
   quatMul,
   quatNormalize,
   sensorBasisForBrand,
   type Quat,
 } from '../../smart_cube/orientation';
 import type { GyroSample } from '../../smart_cube/gyro_track';
+import { DEADBAND_RAD } from '../../smart_cube/gyro_track';
 import { rotationQuaternionForToken } from './rotation_detect';
 
 export * from './orient';
@@ -97,6 +100,17 @@ export function initialPoseRotation(
     mirror: mirrorForBrand(brand),
   });
   const nearest = nearestCubeOrientation(posed);
-  if (nearest.angleRad > INITIAL_POSE_MAX_ERROR_RAD) return null;
+  // Calibrated v2 poses already identify the scramble frame. Quantize across
+  // all 24 grips: 45° balls do not cover SO(3), so a compound hand tilt can be
+  // farther than 45° from every grip while still having a unique nearest one.
+  // Rejecting all of them loses the measured heading to the cross-down fallback.
+  if (nearest.angleRad > INITIAL_POSE_MAX_ERROR_RAD) {
+    // Legacy raw poses lack that reference; keep their conservative gate.
+    if (first.frame !== 'scramble') return null;
+    const angles = CUBE_ORIENTATIONS.map(q => quatAngleTo(posed, q)).sort((a, b) => a - b);
+    // Near a boundary, do not promote a marginal winner: require the runner-up
+    // to be farther away by more than the recorder's existing angular deadband.
+    if (angles[1] - angles[0] <= DEADBAND_RAD) return null;
+  }
   return ROTATION_BY_PERM.get(permKey(facePermFromQuat(nearest.quat))) ?? null;
 }

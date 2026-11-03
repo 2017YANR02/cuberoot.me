@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import type { AlgFile } from '@cuberoot/shared/alg';
+import yellowBlueStart from './fixtures/recon-yellow-blue-start-recording.json';
 import { Quaternion, Vector3 } from 'three';
 import { SmartCubeAttemptProducer } from '@cuberoot/shared/timer/smart-cube-attempt';
 import { decodeGyroTrack } from '@cuberoot/shared/smart-cube/gyro-track';
@@ -6,7 +9,9 @@ import { initialPoseRotation, facePermFor, normalizeSolve } from '@cuberoot/shar
 import { buildCoreTrack, conjugateCoreTrack, coreTrackPoseAt } from '@cuberoot/shared/timer/reconstruct/core-track';
 import { humanizeStream } from '@cuberoot/shared/timer/reconstruct/humanize';
 import { quarterMoves } from '@cuberoot/shared/timer/reconstruct/htm';
-import { buildReconText } from '@cuberoot/shared/timer/reconstruct/recon-text';
+import { buildReconText, prepareReconstruction, simplifyF2lRotations } from '@cuberoot/shared/timer/reconstruct/recon-text';
+import { correctReconFromLibrary } from '@cuberoot/shared/timer/reconstruct/library-correction';
+import { isSolved } from '@cuberoot/shared/timer/reconstruct/cfop-detect';
 import { computeStageSegments } from '@cuberoot/shared/timer/reconstruct/stage-segments';
 import { applyScramble } from '@/app/[lang]/timer/_lib/cube/state';
 import { applyOneToken } from '@/app/[lang]/timer/_lib/cube/apply_token';
@@ -27,6 +32,43 @@ const faceAt = (face: keyof typeof directions, q: Quaternion) => Object.entries(
   .sort(([, a], [, b]) => b.dot(directions[face].clone().applyQuaternion(q)) - a.dot(directions[face].clone().applyQuaternion(q)))[0][0];
 
 describe('scramble-relative reconstruction', () => {
+  it('recovers the confirmed yellow-top blue-front start through the complete report', async () => {
+    // S1-REIx24f8: the measured first pose is 46.96° from x2, and 51.64°
+    // from the next closest grip. A 45° cutoff used to discard it and pick z2.
+    const before = JSON.stringify(yellowBlueStart);
+    const prepared = prepareReconstruction(yellowBlueStart, 'cfop', 'zh');
+    expect(initialPoseRotation(prepared.gyroSamples, 'gan-v4')).toBe('x2');
+    expect(prepared.view.rotation).toBe('x2');
+    const rawReport = await buildReconText(prepared.text!);
+    const libraries = JSON.parse(readFileSync(new URL('./fixtures/recon-workbook/libraries.json', import.meta.url), 'utf8')) as Record<string, AlgFile>;
+    const corrected = await correctReconFromLibrary(rawReport, async set => libraries[set]);
+    for (const report of [rawReport, corrected, simplifyF2lRotations(corrected)]) {
+      expect(report.inspection).toBe('x2');
+      const start = applyOneToken(applyScramble(3, report.scramble), report.inspection);
+      expect(start.U[4]).toBe('D'); // yellow
+      expect(start.F[4]).toBe('B'); // blue
+      expect(isSolved(applyOneToken(start, report.lines.flatMap(line => line.moves).join(' ')))).toBe(true);
+    }
+    expect(JSON.stringify(yellowBlueStart)).toBe(before);
+  });
+
+  it.each(grips)('keeps a calibrated diagonal tilt beyond 45° in grip %s', grip => {
+    const tilted = notationPose(grip).multiply(new Quaternion().setFromAxisAngle(
+      new Vector3(1, 1, 1).normalize(), 50 * Math.PI / 180,
+    ));
+    const sample = { tMs: 0, q: raw(tilted) };
+    expect(facePermFor(initialPoseRotation([{ ...sample, frame: 'scramble' }], 'qiyi')!)).toEqual(facePermFor(grip));
+    // Uncalibrated legacy samples retain their conservative fallback.
+    expect(initialPoseRotation([sample], 'qiyi')).toBeNull();
+  });
+
+  it('keeps the fallback for an ambiguous calibrated pose outside the 45° gate', () => {
+    // A small lean toward x from the midpoint of identity/x leaves both
+    // candidates outside the old gate, with no clear separation between them.
+    const tilted = pose('y', 20 * Math.PI / 180).multiply(pose('x', 46 * Math.PI / 180));
+    expect(initialPoseRotation([{ tMs: 0, q: raw(tilted), frame: 'scramble' }], 'qiyi')).toBeNull();
+  });
+
   it('pins the replay reference at start even if a later calibration mutates the host snapshot', () => {
     const reference = raw(new Quaternion());
     const initial = raw(notationPose('y'));
