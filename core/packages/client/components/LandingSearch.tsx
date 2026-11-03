@@ -324,7 +324,10 @@ export default function LandingSearch({
 
   const stopAssistant = () => { assistantRequest.current?.abort(); assistantRequest.current = null; setAssistantBusy(false); };
   const closeAssistant = useCallback(() => { assistantRequest.current?.abort(); assistantRequest.current = null; setAssistantBusy(false); setAssistantDialog(false); }, []);
-  const askAssistant = async (question = query, replaceLast = false, images: AssistantImage[] = []) => {
+  const suggestedQuestion = workspaceEntry && !query.trim() && !currentChat?.snapshot.images.length
+    && !listening && micStatus !== 'starting' && micStatus !== 'stopping'
+    ? rotatingPlaceholder(isZh, placeholderDay) : '';
+  const askAssistant = async (question = query.trim() || suggestedQuestion, replaceLast = false, images: AssistantImage[] = []) => {
     question = question.trim();
     if (workspaceEntry) {
       const chat = ensureAssistantConversation(owner);
@@ -1144,7 +1147,7 @@ export default function LandingSearch({
           >
             <Mic size={16} strokeWidth={1.75} />
           </button>}</Tooltip>
-            <button type="button" className="landing-search-mic landing-search-send" disabled={assistantBusy || !!currentChat?.pending || (!query.trim() && !(workspaceEntry && currentChat?.snapshot.images.length)) || query.trim().length > SITE_ASSISTANT_QUESTION_MAX_LENGTH}
+            <button type="button" className="landing-search-mic landing-search-send" disabled={assistantBusy || !!currentChat?.pending || (!query.trim() && !suggestedQuestion && !(workspaceEntry && currentChat?.snapshot.images.length)) || query.trim().length > SITE_ASSISTANT_QUESTION_MAX_LENGTH}
               onClick={() => void askAssistant()}
               aria-label={tr({ zh: '提问', en: 'Ask' })} title={tr({ zh: '提问（回车）', en: 'Ask (Enter)' })}>
               <ArrowUp size={20} strokeWidth={1.75} />
