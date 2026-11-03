@@ -1858,6 +1858,14 @@ export default function CompDetailPage() {
                     endDate: compInfo?.end_date ?? '',
                     location: resolveCompLocation(compInfo, cubingZh, isZh).text,
                   }} />
+                  {myRegistrationNumber !== null && (
+                    <Tooltip content={tr({ zh: '我的粗饼报名编号', en: 'My Cubing China registration number' })} openOnClick>
+                      {tip => <button {...tip} type="button" className="comp-registration-number"
+                        aria-label={tr({ zh: `我的粗饼报名编号：${myRegistrationNumber}`, en: `My Cubing China registration number: ${myRegistrationNumber}` })}>
+                        {myRegistrationNumber}
+                      </button>}
+                    </Tooltip>
+                  )}
                 </>
               );
             })()}
@@ -1915,16 +1923,6 @@ export default function CompDetailPage() {
         )}
 
         {compInfo && <CompInfoPanel info={compInfo} isZh={isZh} cubingZh={cubingZh} />}
-        {myRegistrationNumber !== null && (
-          <CompInfoRows
-            activeRows={[{
-              label: tr({ zh: '我的粗饼报名编号', en: 'My Cubing China registration number' }),
-              value: <strong>{myRegistrationNumber}</strong>,
-            }]}
-            pastRows={[]}
-            isZh={isZh}
-          />
-        )}
 
         <div className="comp-view-tabs">
           {hasPodiumTab && (
