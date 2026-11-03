@@ -106,6 +106,31 @@ describe('LandingSearch placeholder hydration', () => {
     expect(hit.comp).toBe(comp);
   });
 
+  it.each(['zh', 'en'] as const)('submits the visible home suggestion with Enter or the send button (%s)', async lang => {
+    routeState.lang = lang;
+    const owner = assistantOwner(authState.user);
+    const submit = vi.spyOn(assistantConversations, 'submit').mockReturnValue(true);
+    const host = document.createElement('div'); document.body.appendChild(host);
+    const root = createRoot(host);
+    try {
+      await act(async () => root.render(createElement(LandingSearch, { cards: [], lang, workspaceEntry: true })));
+      const input = host.querySelector<HTMLInputElement>('input.landing-search-field')!;
+      expect(input.value).toBe('');
+      expect(input.placeholder).not.toBe('');
+      await act(async () => input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, isComposing: true })));
+      expect(submit).not.toHaveBeenCalled();
+      await act(async () => input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })));
+      expect(submit).toHaveBeenLastCalledWith(owner, expect.any(String), input.placeholder, []);
+      const button = host.querySelector<HTMLButtonElement>('.landing-search-send')!;
+      expect(button.disabled).toBe(false);
+      await act(async () => button.click());
+      expect(submit).toHaveBeenCalledTimes(2);
+      expect(submit).toHaveBeenLastCalledWith(owner, expect.any(String), input.placeholder, []);
+    } finally {
+      await act(async () => root.unmount()); host.remove();
+    }
+  });
+
   it('shares the home draft and attachments, submits once, and retains a background reply when closed', async () => {
     vi.stubGlobal('matchMedia', vi.fn(() => ({matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn()})));
     authState.user = { uid: 777, wcaId: '2017YANR02' };
