@@ -32,8 +32,9 @@ export interface TimerTimingSettingsSectionsProps {
 }
 
 const TIMER_TIMING_SECTION_COPY = {
+  timing: { en: 'Timing', zh: '计时' },
   eventsAndSessions: { en: 'Events and sessions', zh: '项目与分组' },
-  timingDisplay: { en: 'Timing display', zh: '计时显示' },
+  timingDisplay: { en: 'Display', zh: '显示' },
 } as const satisfies Record<string, TimerSettingCopy>;
 
 type TimingStoragePath = keyof TimerTimingSettings;
@@ -205,7 +206,7 @@ export function TimerTimingSettingsSections({
 
   return (
     <>
-      <TimerSettingsSection>
+      <TimerSettingsSection title={localize(TIMER_TIMING_SECTION_COPY.timing)}>
         {!timingRequired && <TimerBooleanSettingRow
           field={TIMING_FIELDS.timingEnabled}
           label={label(TIMING_FIELDS.timingEnabled)}
