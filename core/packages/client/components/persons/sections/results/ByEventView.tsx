@@ -5,8 +5,7 @@
 //   3. 分布 动态分布可视化 (DistributionViz)
 
 import { memo, useState, useEffect, useMemo, useCallback } from 'react';
-import { flushSync } from 'react-dom';
-import { runViewTransition } from '@/lib/view-transition';
+import { useResultMetricTransition } from './useResultMetricTransition';
 import Link from '@/components/AppLink';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
@@ -226,6 +225,7 @@ const EventRoundsList = memo(function EventRoundsList({
   // 多盲非官方平均的区域纪录(WR/大洲/NR)查表;仅本项目是多盲时拉取。
   const mbldAvgRecords = useMbldAvgRecords(isMbldEvent(eventId));
   const [editTarget, setEditTarget] = useState<ResultChangeTarget | null>(null);
+  const { bodyRef, changeMetric } = useResultMetricTransition();
   const [singleMetricMode, setSingleMetricMode] = useState<WcaResultMetricMode>('singles');
   const [averageMetricMode, setAverageMetricMode] = useState<WcaResultMetricMode>('avg');
   // 排序:点列头(单次/平均/第 N 把)切 升序→降序→取消;无效成绩(DNF/DNS/空位)永远垫底。
@@ -756,7 +756,7 @@ const EventRoundsList = memo(function EventRoundsList({
                     value={singleMetricMode}
                     onChange={(mode) => {
                       if (mode === singleMetricMode) return;
-                      runViewTransition(() => flushSync(() => setSingleMetricMode(mode)), true);
+                      changeMetric(() => setSingleMetricMode(mode));
                     }}
                     ariaLabel={t('选择单次统计', 'Select single metric')}
                     variant="plain"
@@ -787,7 +787,7 @@ const EventRoundsList = memo(function EventRoundsList({
                     value={averageMetricMode}
                     onChange={(mode) => {
                       if (mode === averageMetricMode) return;
-                      runViewTransition(() => flushSync(() => setAverageMetricMode(mode)), true);
+                      changeMetric(() => setAverageMetricMode(mode));
                     }}
                     ariaLabel={t('选择平均统计', 'Select average metric')}
                     variant="plain"
@@ -831,7 +831,7 @@ const EventRoundsList = memo(function EventRoundsList({
             </th>
           </tr>
         </thead>
-        <tbody>
+        <tbody ref={bodyRef}>
           {displayRows.slice(0, count).map((row, index) => (
             <EventResultRow
               key={wcaResultRowKey(row)}
