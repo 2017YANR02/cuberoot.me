@@ -111,6 +111,12 @@ export async function establishWebSession(token: string, isCurrent: () => boolea
   } finally { if (pending?.promise === promise) pending = null; }
 }
 
+/** Best-effort background work may use an existing token without refreshing auth. */
+export function peekWebAccessToken(marker: string): string | null {
+  if (!isWebSessionMarker(marker)) return marker || null;
+  return cached?.marker === marker && cached.expiresAt > Date.now() + 60_000 ? cached.token : null;
+}
+
 /** Resolve markers just before a request; temporary role-preview tokens pass through. */
 export async function getWebAccessToken(token: string): Promise<string> {
   if (!isWebSessionMarker(token)) return token;

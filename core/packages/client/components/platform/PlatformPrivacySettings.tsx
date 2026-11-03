@@ -15,6 +15,9 @@ import type {
   PlatformRouteDefinition,
 } from '@/lib/platform-types';
 import { PlatformState } from './PlatformState';
+import ProductAnalyticsSettings from '@/components/ProductAnalyticsSettings';
+import AppLink from '@/components/AppLink';
+import { PRODUCT_ANALYTICS_POLICY } from '@cuberoot/shared/product-analytics';
 
 function isActive(consent: PlatformPrivacyConsent | undefined): boolean {
   if (consent?.status !== 'granted') return false;
@@ -52,6 +55,9 @@ export function PlatformPrivacySettings({ definition }: { definition: PlatformRo
   if (!consents) return <PlatformState kind="loading" />;
 
   const analyticsConsent = consents.find((item) => item.purpose === 'analytics');
+  // The broader website choice owns this purpose after explicit migration.
+  // Do not replace it with the old, narrower policy through this legacy form.
+  if (analyticsConsent?.policyVersion === PRODUCT_ANALYTICS_POLICY) return <ProductAnalyticsSettings />;
   const currentlyEnabled = isActive(analyticsConsent);
   const changed = analyticsEnabled !== currentlyEnabled;
   const status = analyticsConsent?.status === 'granted' && !currentlyEnabled
@@ -90,6 +96,7 @@ export function PlatformPrivacySettings({ definition }: { definition: PlatformRo
   return (
     <section className="platform-domain-form platform-domain-content" aria-labelledby="platform-analytics-consent-title">
       <h2 id="platform-analytics-consent-title">{t('可选的产品分析', 'Optional product analytics')}</h2>
+      <AppLink href="/account?settings=general" prefetch={false}>{t('管理全站产品分析', 'Manage website product analytics')}</AppLink>
       <p className="platform-domain-note">
         {t(
           'Platform 分析接口只接受事件名、页面范围和少量白名单维度，原始事件保留 30 天。打开本页、切换开关或完成授权都不会自动发送分析事件。',

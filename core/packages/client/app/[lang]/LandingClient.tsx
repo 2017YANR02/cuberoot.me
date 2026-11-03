@@ -360,6 +360,7 @@ export default function LandingPage() {
     } else if (card.internal) {
       cardElement = (
         <Link href={card.href} className={className} id={`card-${card.id}`} prefetch={false}
+          data-analytics-entry={card.id}
           aria-label={card.id === 'calendar' ? t(card.nameKey) : undefined}>
           {content}
         </Link>
@@ -367,6 +368,7 @@ export default function LandingPage() {
     } else {
       cardElement = (
         <a href={card.href} className={className} id={`card-${card.id}`}
+          data-analytics-entry={card.id}
           target="_blank" rel="noopener noreferrer">
           {content}
         </a>
@@ -409,7 +411,8 @@ export default function LandingPage() {
     return (
       <DndContext key={groupId} sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={visibleCards.map((card) => card.id)} strategy={rectSortingStrategy}>
-          <div className={className}>{visibleCards.map(renderCard)}</div>
+          <div className={className} data-analytics-placement={groupId === 'calendar' ? 'header' : groupId}
+            data-analytics-disabled={adminArea || canEditCards ? 'true' : undefined}>{visibleCards.map(renderCard)}</div>
         </SortableContext>
       </DndContext>
     );

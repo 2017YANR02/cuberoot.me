@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { parseAsStringEnum, useQueryStates } from 'nuqs';
 import { Settings, Sun, ShieldCheck, UserRound, X } from '@app-foundation/icons/lucide';
 import AppearanceToggle from '@/components/AppearanceToggle';
+import ProductAnalyticsSettings from '@/components/ProductAnalyticsSettings';
 import BackHome from '@/components/BackHome';
 import { ClientLoadStatus } from '@/components/StartupStatus';
 import { useT } from '@/hooks/useT';
@@ -56,6 +57,7 @@ export default function SettingsPanel({ embedded = false, onClose }: { embedded?
     </nav>
     <div className="settings-panel-content" ref={contentRef}>
       {general && <section aria-label={appearance ? t('外观', 'Appearance') : t('通用', 'General')} className="settings-general"><h2>{appearance ? t('外观', 'Appearance') : t('通用', 'General')}</h2><AppearanceToggle embedded section={appearance ? 'appearance' : 'general'} /></section>}
+      {general && !appearance && <ProductAnalyticsSettings />}
       {(accountVisited || !general) && <div hidden={general}><AccountSettings embedded={embedded} /></div>}
     </div>
   </section>;

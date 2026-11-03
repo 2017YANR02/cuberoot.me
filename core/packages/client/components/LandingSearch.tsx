@@ -770,6 +770,8 @@ export default function LandingSearch({
                 {cardMatches.map(c => (
                   <Link
                     key={c.id}
+                    data-analytics-entry={c.id}
+                    data-analytics-placement="search"
                     href={c.href}
                     prefetch={false}
                     className="landing-search-item"

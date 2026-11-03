@@ -3,6 +3,7 @@
 import { createElement } from 'react';
 import { PRIVACY_DOCUMENT, type PrivacyNode } from '@cuberoot/shared/privacy';
 import { useT } from '@/hooks/useT';
+import ProductAnalyticsSettings from '@/components/ProductAnalyticsSettings';
 import './privacy.css';
 
 export default function PrivacyPage() {
@@ -12,5 +13,5 @@ export default function PrivacyPage() {
     return createElement(node.tag, { key, id: node.id, className: node.className, href: node.href, target: node.target, rel: node.rel },
       node.children.map(render));
   }
-  return <main className="privacy-page">{PRIVACY_DOCUMENT.map(render)}</main>;
+  return <main className="privacy-page">{PRIVACY_DOCUMENT.map(render)}<ProductAnalyticsSettings /></main>;
 }

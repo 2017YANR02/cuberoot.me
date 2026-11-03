@@ -3,6 +3,8 @@ import { DOUYIN_CONTENT_BOOTSTRAP } from '@/lib/douyin-content-bootstrap';
 import InstalledContentBoundary from "@/components/InstalledContentBoundary";
 import { MOBILE_EMBED_FRAME_NAMES } from '@cuberoot/shared/mobile-embed';
 import type { Metadata } from "next";
+import { Suspense } from 'react';
+import ProductAnalytics from '@/components/ProductAnalytics';
 import { THEME_BOOTSTRAP, LANG_BOOTSTRAP } from "@/lib/theme-bootstrap";
 import DeskPet from "@/components/DeskPet";
 import AuthRouteBridge from "@/components/AuthRouteBridge";
@@ -125,6 +127,7 @@ export default function RootLayout({
             <DeskPet />
           </SiteChrome>
           <AuthRouteBridge />
+          <Suspense fallback={null}><ProductAnalytics /></Suspense>
           <ThemeColorSync />
           <AuthTokenRefresher />
           <StickyScrollGuard />
