@@ -998,9 +998,16 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 }
 
 .landing-contact-details .contact-app-platform-label .contact-qr-trigger,
+.landing-contact-details .contact-app-unavailable,
 .landing-contact-details .contact-social-logo,
 .landing-contact-details .contact-direct-details dt > :is(a, button) {
     height: var(--footer-row-height);
+}
+
+.landing-contact-details .contact-app-platform-label .contact-qr-trigger,
+.landing-contact-details .contact-app-unavailable {
+    min-height: var(--footer-row-height);
+    padding-left: 13px;
 }
 
 .landing-contact-details .contact-column-heading > svg,
@@ -1009,6 +1016,13 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     height: 14px;
 }
 
+.landing-contact-details .contact-column-heading > svg {
+    box-sizing: content-box;
+    padding: 1px;
+    flex-shrink: 0;
+}
+
+.landing-contact-details .contact-app-unavailable > svg,
 .landing-contact-details .contact-app-platform-label .contact-qr-trigger > svg,
 .landing-contact-details .contact-social-logo > svg,
 .landing-contact-details .contact-direct-details .contact-details-icon > svg,
@@ -1236,4 +1250,9 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 }
 @media (max-width: 1080px) {
     .landing-page .landing-widget--recons { --home-widget-placeholder-height: 240px; }
+}
+
+.landing-contact-details .contact-details-columns > section:first-child .contact-column-heading {
+    align-self: start;
+    min-height: var(--footer-row-height);
 }

@@ -19,7 +19,6 @@ import { useCopy } from '@/hooks/useCopy';
 import { tr, useLang } from '@/i18n/tr';
 import AppLink from '@/components/AppLink';
 import { ClearButton } from '@/components/ClearButton';
-import { Tooltip } from '@/components/Tooltip';
 import { useModalBackdrop } from '@/hooks/useModalDismiss';
 import './ContactDetails.css';
 
@@ -60,10 +59,10 @@ const APP_PLATFORMS = [
   { icon: <Globe size={24} />, label: { zh: '网站', en: 'Website' }, value: { zh: CONTACT_WEBSITE, en: CONTACT_WEBSITE }, href: '/', qr: '/contact/website-qr.png' },
   { icon: <RiMiniProgramLine size={24} />, label: { zh: '微信小程序', en: 'WeChat Mini Program' }, value: { zh: '魔方根', en: 'CubeRoot' }, href: null, qr: '/contact/wechat-miniprogram-qr.jpg' },
   { icon: <span className="contact-mini-icon"><RiMiniProgramLine size={24} /><SiTiktok size={10} /></span>, label: { zh: '抖音小程序', en: 'Douyin Mini Program' }, value: COMING_SOON, href: null },
-  { icon: <PhonePlatformIcon><SiApple size={10} /></PhonePlatformIcon>, label: { zh: 'iOS App', en: 'iOS app' }, value: COMING_SOON, href: null },
+  { icon: <PhonePlatformIcon><SiApple size={10} /></PhonePlatformIcon>, label: { zh: 'iOS', en: 'iOS' }, value: COMING_SOON, href: null },
   { icon: <Watch size={24} />, label: { zh: 'Apple Watch', en: 'Apple Watch' }, value: COMING_SOON, href: null },
-  { icon: <PhonePlatformIcon><SiAndroid size={10} /></PhonePlatformIcon>, label: { zh: '安卓 App', en: 'Android app' }, value: COMING_SOON, href: null },
-  { icon: <PhonePlatformIcon><SiHarmonyos size={10} /></PhonePlatformIcon>, label: { zh: '鸿蒙 App', en: 'HarmonyOS app' }, value: COMING_SOON, href: null },
+  { icon: <PhonePlatformIcon><SiAndroid size={10} /></PhonePlatformIcon>, label: { zh: '安卓', en: 'Android' }, value: COMING_SOON, href: null },
+  { icon: <PhonePlatformIcon><SiHarmonyos size={10} /></PhonePlatformIcon>, label: { zh: '鸿蒙', en: 'HarmonyOS' }, value: COMING_SOON, href: null },
   { icon: <Monitor size={24} />, label: { zh: 'Windows 客户端', en: 'Windows client' }, value: COMING_SOON, href: null },
 ] as const;
 
@@ -161,9 +160,9 @@ export default function ContactDetails() {
               <span className="contact-app-platform-row" key={platform.label.en}>
                 <span className="contact-app-platform-label">
                   {platform.href ? (
-                    <button type="button" className="contact-qr-trigger contact-social-logo" aria-haspopup="dialog"
+                    <button type="button" className="contact-qr-trigger" aria-haspopup="dialog"
                       aria-label={tr(platform.label)} onClick={() => setWebsiteOpen(true)}>
-                      {platform.icon}
+                      {platform.icon}<span>{tr(platform.label)}</span>
                     </button>
                   ) : 'qr' in platform ? (
                     <ContactQr
@@ -171,13 +170,15 @@ export default function ContactDetails() {
                       src={platform.qr}
                       label={tr(platform.label) + tr({ zh: '二维码', en: ' QR code' })}
                       alt={tr(platform.label) + tr({ zh: '二维码', en: ' QR code' })}
-                    >{platform.icon}</ContactQr>
+                    >{platform.icon}<span>{tr(platform.label)}</span></ContactQr>
                   ) : (
-                    <Tooltip content={`${tr(platform.label)} · ${tr(COMING_SOON)}`} openOnClick>
-                      {(tip) => <button {...tip} type="button" className="contact-qr-trigger contact-coming-soon" aria-disabled="true" aria-label={`${tr(platform.label)} · ${tr(COMING_SOON)}`}>
-                        {platform.icon}
-                      </button>}
-                    </Tooltip>
+                    <span className="contact-app-unavailable">
+                      {platform.icon}
+                      <span className="contact-app-caption">
+                        <span>{tr(platform.label)}</span>
+                        <span className="contact-platform-count">{tr(COMING_SOON)}</span>
+                      </span>
+                    </span>
                   )}
 
                 </span>

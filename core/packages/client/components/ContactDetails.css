@@ -77,8 +77,9 @@
 }
 
 .contact-app-platform-list {
-  display: flex;
-  gap: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem 1rem;
   align-items: center;
   font-size: 0.84rem;
   text-align: left;
@@ -107,15 +108,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 1 1 44px;
-  min-width: 44px;
-  max-width: 44px;
+  min-width: 0;
 }
 
 .contact-app-platform-label .contact-qr-trigger {
-  justify-content: center;
+  justify-content: flex-start;
   width: 100%;
-  height: 44px;
+  min-height: 44px;
+  white-space: normal;
 }
 
 .contact-device-icon,
@@ -410,4 +410,23 @@
 .contact-social-panel .contact-qr-link {
   display: inline-block;
   margin-top: 0.5rem;
+}
+
+.contact-app-unavailable {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  min-height: 44px;
+}
+
+.contact-app-caption {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.4;
+}
+
+.contact-app-platform-label > :is(button, .contact-app-unavailable) > svg,
+.contact-app-platform-label .contact-mini-icon {
+  flex-shrink: 0;
 }
