@@ -567,7 +567,7 @@ button.lbl-case:active, .lbl-practice:active { transform: scale(.96); }
   .lbl-basics-page { --lbl-basic-cube-size: var(--lbl-mobile-player-size); }
   .lbl-basics-page .lbl-basic-demo > .lbl-cube { width: min(100%, var(--lbl-mobile-player-size)); }
   .lbl-basics-page .lbl-guide-player { width: min(100%, var(--lbl-mobile-player-size)); max-width: none; height: auto; aspect-ratio: 1; }
-  .lbl-tutorial-page .lbl-demo-stages { min-height: 150px; max-height: 100%; overflow: auto; }
+  .lbl-tutorial-page .lbl-demo-stages { min-height: 150px; max-height: 100%; overflow: auto; align-self: stretch; justify-content: safe center; }
   .lbl-tutorial-page .lbl-demo-stage:not([data-mobile-current='true']) { display: none; }
   .lbl-demo-stage[data-mobile-current='true'] { animation: lbl-content-enter 320ms ease-out backwards; }
   .lbl-mobile-step-count { display: inline; white-space: nowrap; }
@@ -577,8 +577,8 @@ button.lbl-case:active, .lbl-practice:active { transform: scale(.96); }
   .lbl-tutorial-page .lbl-demo-split > :is(.lbl-trigger-legend, .lbl-alg-note, .lbl-complete-legend-space) { display: none; }
   .lbl-tutorial-page :is(.lbl-lesson-actions, .lbl-basics-footer) { box-sizing: border-box; flex: 0 0 64px; min-height: 64px; margin: 0; padding-top: 12px; }
   .lbl-tutorial-page .lbl-mobile-alg-intro { flex: 0 0 auto; margin: 8px 0; }
-  .lbl-tutorial-page .lbl-alg-learning-cues { max-height: 100%; overflow: auto; align-items: flex-start; }
-  .lbl-tutorial-page .lbl-complete-player .lbl-complete-thought { min-height: 150px; max-height: 100%; overflow: auto; align-items: start; }
+  .lbl-tutorial-page .lbl-alg-learning-cues { max-height: 100%; overflow: auto; align-self: stretch; align-items: safe center; }
+  .lbl-tutorial-page .lbl-complete-player .lbl-complete-thought { min-height: 150px; max-height: 100%; overflow: auto; align-self: stretch; align-items: safe center; }
   @media (prefers-reduced-motion: reduce) {
     .lbl-demo-stage[data-mobile-current='true'], .lbl-alg-steps[data-mobile-segmented='true'] > .lbl-alg-group[data-mobile-current='true'] { animation: none; }
   }

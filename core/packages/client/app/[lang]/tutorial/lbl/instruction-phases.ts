@@ -51,7 +51,7 @@ export const INSTRUCTION_PHASES: Record<string, InstructionPhase[][]> = {
   'edge-position': [
     [phase('转体把墙放后', 'Rotate the cube to put the wall at the back', 1), phase('右鱼', 'Right Sune', 2, 8), phase('顶层 U', 'U', 9), phase('左鱼', 'Left Sune', 10, 16), phase('转顶层对齐', 'Align the top', 17)],
     [phase('转体把墙放后', 'Rotate the cube to put the wall at the back', 1), phase('左鱼', 'Left Sune', 2, 8), phase('顶层 U′', 'U′', 9), phase('右鱼', 'Right Sune', 10, 16), phase('转顶层对齐', 'Align the top', 17)],
-    [phase('沿当前朝向起手', 'Keep this orientation', 1), phase('右鱼', 'Right Sune', 2, 8), phase('顶层 U', 'U', 9), phase('左鱼', 'Left Sune', 10, 16), phase('转顶层对齐', 'Align the top', 17)],
+    [phase('右鱼', 'Right Sune', 1, 7), phase('顶层 U', 'U', 8), phase('左鱼', 'Left Sune', 9, 15), phase('转顶层对齐', 'Align the top', 16)],
   ],
 };
 

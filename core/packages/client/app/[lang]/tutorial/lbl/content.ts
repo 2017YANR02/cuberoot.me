@@ -81,6 +81,7 @@ export const LBL_BASICS = [
   {
     id: 'corners', mask: 'corners-only', setup: '', alg: "R R' U U'", title: text('角块', 'Corners'),
     headline: text('8 个角块，每个有 3 格。', '8 corners, each with 3 facelets.'),
+    hint: text('同一个角块上的三个格，总是一起移动。', 'The three facelets on a corner always move together.'),
     next: text('认识棱块', 'Meet the edges'),
   },
   {
@@ -190,7 +191,7 @@ export const LBL_STEPS: Step[] = [
     examples: [
       { ...example('对色在左', 'Matching color on the left', `y' ${EDGE_POSITION_LEFT}`, '转体把墙放后 → 右鱼 → 顶层 U → 左鱼 → 转顶层对齐', 'Rotate the cube to put the wall at the back → Right Sune → U → Left Sune → Align the top'), caption: text('右鱼 → U → 左鱼', 'Right Sune → U → left Sune') },
       { ...example('对色在右', 'Matching color on the right', `y' ${EDGE_POSITION_RIGHT}`, '转体把墙放后 → 左鱼 → 顶层 U′ → 右鱼 → 转顶层对齐', 'Rotate the cube to put the wall at the back → Left Sune → U′ → Right Sune → Align the top'), caption: text('左鱼 → U′ → 右鱼', 'Left Sune → U′ → right Sune') },
-      example('无墙 · 先造墙', 'No wall · Create a wall', `y' ${EDGE_POSITION_LEFT}`, '沿当前朝向起手 → 右鱼 → 顶层 U → 左鱼 → 转顶层对齐\n出现墙后，选择对应情况继续。', 'Keep this orientation → Right Sune → U → Left Sune → Align the top\nOnce a wall appears, choose the matching case to continue.', `(${EDGE_POSITION_LEFT} y' ${EDGE_POSITION_LEFT} y)'`),
+      example('无墙 · 先造墙', 'No wall · Create a wall', EDGE_POSITION_LEFT, '右鱼 → 顶层 U → 左鱼 → 转顶层对齐\n出现墙后，选择对应情况继续。', 'Right Sune → U → Left Sune → Align the top\nOnce a wall appears, choose the matching case to continue.', `(${EDGE_POSITION_LEFT} y' ${EDGE_POSITION_LEFT} y)'`),
     ],
   },
 ];

@@ -23,7 +23,7 @@ import { LBL_STEPS, LESSON_STICKERING, LBL_STAGE_GOALS, LBL_INITIAL_VIEW, LBL_LE
 import BasicsCards from './BasicsCards';
 import Practice from './Practice';
 import Walkthrough from './Walkthrough';
-import CompleteDemo, { EdgePositionExample, type DemoCaseCue } from './CompleteDemo';
+import CompleteDemo, { type DemoCaseCue } from './CompleteDemo';
 import MiddleCases, { MiddleCaseDiagram } from './MiddleCases';
 import LastLayerTerms, { LastLayerTermDiagram } from './LastLayerTerms';
 import { COMPLETE_DEMO_STAGES, yellowFaceTouchSticker, yellowFishRecognitionStickers, type CompleteDemoStage } from './complete-demo-state';
@@ -277,7 +277,7 @@ export default function LblTutorial() {
           <p>{tr(stageGoal.summary ?? stageGoal.after)}</p>
           <p className="lbl-overview-focus">{tr(LBL_LEARNING_FOCUS[step.id])}</p>
         </div> : middleCore ? <MiddleCases /> : lastLayerTerms ? <LastLayerTerms wall={step.id === 'edge-position'} /> : completeDemo ? <CompleteDemo key={step.id} stage={step.id as CompleteDemoStage} onCaseCueChange={setDemoCaseCue} />
-          : step.id === 'edge-position' ? <EdgePositionExample key={`${step.id}-${exampleIndex}`} example={demo} index={exampleIndex} /> : <LessonDemo key={`${step.id}-${exampleIndex}`} step={step.id} demo={demo} fourGray={fourGray}
+          : <LessonDemo key={`${step.id}-${exampleIndex}`} step={step.id} demo={demo} fourGray={fourGray}
           instruction={tr(lastLayer || ['daisy', 'middle'].includes(step.id) ? demo.hint : step.paragraphs[0] ?? demo.hint)} />}
         <div className="lbl-lesson-actions">
           <Link className="lbl-practice lbl-lesson-practice" href={`/tutorial/lbl?step=${step.id}&view=practice&case=${completeDemo ? 1 : exampleIndex + 1}`} prefetch={false}><T zh="练习本节" en="Practice this lesson" /><ArrowRight size={16} /></Link>
@@ -430,10 +430,6 @@ function LessonDemo({ step, demo, fourGray, instruction }: { step: string; demo:
     </div>}
     {step === 'yellow-cross' && <div className="lbl-trigger-legend">
       <span><T zh="右公式＝右手上勾下回" en="Right trigger = right hand: up, hook, down, back" /></span>
-    </div>}
-    {step === 'edge-position' && <div className="lbl-trigger-legend">
-      <span><T zh="右鱼公式＝右手上勾下勾上连拨下" en="Right Sune = right hand: up, hook, down, hook, up, double flick, down" /></span>
-      <span><T zh="左鱼公式＝左手上勾下勾上连拨下" en="Left Sune = left hand: up, hook, down, hook, up, double flick, down" /></span>
     </div>}
     {step === 'cross' && <p className="lbl-alg-note"><T zh="对齐要看自己的魔方，不必照抄演示的转动次数。" en="Match colors on your own cube; the number of alignment turns can differ from this demonstration." /></p>}
     </div>

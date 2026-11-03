@@ -80,7 +80,6 @@ export default function BasicsGuide({ section }: { section: typeof BASIC_GUIDE_T
               <span>{tr(item.title)}</span>
             </button>)}
           </div>
-          <p className="lbl-guide-direction"><T zh="顺时针 / 逆时针：正对正在转的面判断。" en="Judge clockwise or counterclockwise by looking straight at the face you are turning." /></p>
           <div className="lbl-guide-variants" role="group" aria-label={tr({ zh: '选择转动方式', en: 'Choose a turn' })}>
             {variants.map(variant => <button className="lbl-button" type="button" key={variant.suffix} aria-pressed={move === face.base + variant.suffix} onClick={() => selectMove(face.base + variant.suffix)}>
               <span><code>{face.base}{variant.suffix.replaceAll("'", '′')}</code></span>
