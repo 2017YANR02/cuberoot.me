@@ -745,9 +745,9 @@ html[data-theme=dark] .wp-page {
 .wp-sor-tbody tr:first-child th, .wp-sor-tbody tr:first-child td { border-top: 2px solid var(--wp-border); }
 /* 指标行标签(SoWR/SoCR/SoNR)落「项目」列,全名 + scope 地名走 title tooltip */
 .wp-sor-rowlabel { cursor: default; }
-.wp-sor-abbr { display: block; font-weight: 700; font-size: 0.82rem; color: var(--wp-text); letter-spacing: 0.01em; }
+.wp-sor-abbr { display: block; font-weight: 700; font-size: inherit; color: var(--wp-text); letter-spacing: 0.01em; }
 /* 名次格 / 和值格不覆盖对齐与 padding —— 继承 tbody 默认(右对齐 + 10px 12px)才能与上方逐项格严格同列 */
-.wp-sor-sum { font-weight: 700; font-size: 0.95rem; font-variant-numeric: tabular-nums; color: var(--wp-text); }
+.wp-sor-sum { font-weight: 700; font-size: inherit; font-variant-numeric: tabular-nums; color: var(--wp-text); }
 .wp-sor-smute { color: var(--wp-text-mute); }
 .wp-sor-best-sum {
     display: block; margin-top: 2px;

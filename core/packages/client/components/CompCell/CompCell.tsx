@@ -20,7 +20,7 @@ interface Props {
   date: string | null;
 }
 
-export function CompCell({ compId, compName, isZh, noFlag, date, country }: Props) {
+function useCompetitionCountry(compId: string, country?: string | null) {
   const [, setLoaded] = useState(false);
   useEffect(() => {
     let active = true;
@@ -28,7 +28,16 @@ export function CompCell({ compId, compName, isZh, noFlag, date, country }: Prop
     return () => { active = false; };
   }, []);
   // Imported recon rows may omit country even though their competition ID is valid.
-  const iso2 = country || compFlagIso2(compId);
+  return country || compFlagIso2(compId);
+}
+
+export function CompetitionFlag({ compId, country }: Pick<Props, 'compId' | 'country'>) {
+  const iso2 = useCompetitionCountry(compId, country);
+  return iso2 ? <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" /> : null;
+}
+
+export function CompCell({ compId, compName, isZh, noFlag, date, country }: Props) {
+  const iso2 = useCompetitionCountry(compId, country);
   const display = localizeCompName(compId, compName ?? compId, isZh, { date });
   return (
     <span className="comp-cell">

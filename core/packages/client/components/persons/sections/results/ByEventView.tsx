@@ -16,8 +16,7 @@ import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { localizeCompName } from '@/lib/comp-localize';
 import { formatDateRangeIso } from '@/lib/wca-date';
-import { CompCell } from '@/components/CompCell/CompCell';
-import { Flag } from '@/components/Flag';
+import { CompCell, CompetitionFlag } from '@/components/CompCell/CompCell';
 import { compLinkProps } from '@/lib/comp-link';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import { personResultRecord } from '@/lib/person-achievements';
@@ -491,7 +490,7 @@ const EventRoundsList = memo(function EventRoundsList({
                 className="wp-bycomp-name"
               ><CompCell compId={cmp.id} compName={cmp.name} isZh={isZh} date={cmp.start_date} noFlag /></Link>
               <div className="wp-cell-comp-date wp-cell-comp-date-with-flag">
-                {cmp.country_iso2 && <Flag iso2={cmp.country_iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
+                <CompetitionFlag compId={cmp.id} country={cmp.country_iso2} />
                 <span>{formatDateRangeIso(cmp.start_date, cmp.end_date)}</span>
               </div>
             </>
