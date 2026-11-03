@@ -183,7 +183,7 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
     if (embedded) return null;
     return (
       <button type="button" className={cls} aria-label={L.title} suppressHydrationWarning>
-        <span style={{ display: 'inline-block', width: 14, height: 14 }} />
+        <Settings size={20} aria-hidden="true" />
       </button>
     );
   }
@@ -225,7 +225,7 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        <Settings size={14} />
+        <Settings size={20} aria-hidden="true" />
         {showLabel && <span className={labelClassName}>{L.title}</span>}
       </button>}
       {open && (

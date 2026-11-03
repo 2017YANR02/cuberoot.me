@@ -775,6 +775,8 @@ html[data-appearance-preview] body {
 }
 
 .theme-toggle-inline {
+  min-width: 40px;
+  min-height: 40px;
   padding: 0;
   border: none;
   background: transparent;
@@ -783,6 +785,8 @@ html[data-appearance-preview] body {
   transition: color 0.15s;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  gap: 6px;
   flex-shrink: 0;
 }
 
