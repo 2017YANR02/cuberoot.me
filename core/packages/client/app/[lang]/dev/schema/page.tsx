@@ -43,6 +43,7 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
 ];
 
 const TABLES: Table[] = [
+  { name: 'site_assistant_attachments', domain: 'storage', origin: '0308', purpose: { zh: 'AI 私有会话图片，账号隔离、内容去重、软删除', en: 'Private owner-scoped chat images with deduplication and soft deletion' } },
   { name: 'competition_group_awards', domain: 'comp', origin: '0303', naturalKey: true, purpose: { zh: '赛事分组获奖快照，独立于 WCA 奖牌统计', en: 'Organizer category award snapshots, separate from WCA medals' } },
   { name: 'comp_absences', domain: 'comp', origin: '0302', naturalKey: true, purpose: { zh: '管理员确认的不参加名单及可恢复状态；注销仅清除编辑者引用', en: 'Restorable attendance corrections; account deletion clears only the editor reference' } },
   { name: 'calendar_competitions', domain: 'studio', origin: '0299', naturalKey: true, purpose: { zh: '比赛与个人日程唯一关联，防止重复加入和删除后恢复', en: 'Unique competition-to-event links, including deleted events' } },
@@ -898,6 +899,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 274, slug: 'dev_preview_health', desc: { zh: '独立记录开发网址的连通验收与检查时间，过期不显示可用。', en: 'Track independent preview connectivity checks; stale evidence does not imply availability.' } },
   { n: 272, slug: 'remote_access', desc: { zh: '员工远程连接申请、负责人审批及主机同步确认。', en: 'Employee remote access requests, host-owner approval and host acknowledgements.' } },
   { n: 289, slug: 'wca_translations', desc: { zh: 'WCA 官方英中翻译与来源状态，原子同步及检索。', en: 'Official WCA English–Chinese translations with provenance, atomic sync and retrieval.' } },
+  { n: 308, slug: 'assistant_private_attachments', desc: { zh: 'AI 私有会话图片附件', en: 'Private AI conversation image attachments' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

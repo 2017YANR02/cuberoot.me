@@ -10,7 +10,7 @@ import { AssistantFailure, assistantDeadline, assistantFailureCode, assistantSta
 import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
 import { getUserById } from '../utils/account.js';
 import { BANNED_WCA_IDS } from '@cuberoot/shared/admin';
-import { rasterImageMime } from '../utils/raster_image.js';
+import { assistantImageSchema, inlineAssistantImageSchema, readAssistantAttachment, saveAssistantAttachment, resolveAssistantImages } from '../utils/site_assistant_attachments.js';
 import { verifySession } from '../utils/session.js';
 import { query, type QueryRunner } from '../db/connection.js';
 import { startAssistantMonitor, recordAssistantEntry } from '../utils/site_assistant_monitor.js';
@@ -38,16 +38,7 @@ export async function requireAssistantUser(c: Context): Promise<{ uid: number; w
   return { uid: account.id, wcaId: account.wca_id };
 }
 
-const imageSchema = z.object({
-  mediaType: z.enum(['image/png', 'image/jpeg', 'image/webp']),
-  data: z.string().min(4).max(4 * Math.ceil(SITE_ASSISTANT_IMAGE_BYTES / 3)),
-}).strict().refine(image => {
-  // Reject URLs, noncanonical base64, forged MIME and excessive pixel dimensions.
-  const bytes = Buffer.from(image.data, 'base64');
-  return bytes.length <= SITE_ASSISTANT_IMAGE_BYTES && bytes.toString('base64') === image.data
-    && rasterImageMime(bytes) === image.mediaType;
-});
-const imagesSchema = z.array(imageSchema).max(SITE_ASSISTANT_MAX_IMAGES);
+const imagesSchema = z.array(assistantImageSchema).max(SITE_ASSISTANT_MAX_IMAGES);
 const inputSchema = z.object({
   conversationId: z.string().uuid().optional(), parentId: z.string().uuid().optional(), retryOf: z.string().uuid().optional(),
   question: z.string().trim().max(SITE_ASSISTANT_QUESTION_MAX_LENGTH), lang: z.enum(['zh', 'en']),
@@ -61,7 +52,7 @@ const inputSchema = z.object({
   .refine(input => (input.images?.length ?? 0) + input.history.reduce((count, message) => count + (message.images?.length ?? 0), 0) <= SITE_ASSISTANT_MAX_IMAGES, { path: ['images'] });
 
 // Burst limits are per process; the daily shared limit is atomic and durable.
-export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuestion; config: typeof assistantConfig; now: () => number; reserve: typeof reserveAssistantQuestion; authenticate: typeof requireAssistantUser; monitor?: typeof startAssistantMonitor; eventsQuery?: QueryRunner; entry?: typeof recordAssistantEntry } = { answer: answerSiteQuestion, config: assistantConfig, now: Date.now, reserve: reserveAssistantQuestion, authenticate: requireAssistantUser, monitor: startAssistantMonitor, entry: recordAssistantEntry }) {
+export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuestion; config: typeof assistantConfig; now: () => number; reserve: typeof reserveAssistantQuestion; authenticate: typeof requireAssistantUser; monitor?: typeof startAssistantMonitor; eventsQuery?: QueryRunner; entry?: typeof recordAssistantEntry; readAttachment?: typeof readAssistantAttachment; saveAttachment?: typeof saveAssistantAttachment } = { answer: answerSiteQuestion, config: assistantConfig, now: Date.now, reserve: reserveAssistantQuestion, authenticate: requireAssistantUser, monitor: startAssistantMonitor, entry: recordAssistantEntry, readAttachment: readAssistantAttachment, saveAttachment: saveAssistantAttachment }) {
   const routes = new Hono();
   let active = 0;
   let minute = 0;
@@ -76,7 +67,8 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
       throw error;
     }));
     if (!parsed.success) { const error = parsed.error.issues.some(issue => issue.path.includes('images')) ? 'invalid_image' : 'invalid_question'; await deps.entry?.(error); return c.json({ error }, 400); }
-    const history = boundAssistantHistory(parsed.data.history);
+    let history = boundAssistantHistory(parsed.data.history);
+    let images = parsed.data.images;
     const hasImages = !!parsed.data.images?.length || history.some(message => !!message.images?.length);
     const config = deps.config(hasImages);
     if (!config) { const error = hasImages ? 'vision_unavailable' : 'unavailable'; await deps.entry?.(error); return c.json({ error }, 503); }
@@ -86,12 +78,18 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
     let admitted = false, recordingFailed = false;
     let monitor: Awaited<ReturnType<typeof startAssistantMonitor>> | undefined;
     const answer = (user: { wcaId: string }, emit?: (event: AssistantStreamEvent) => Promise<void>) => {
-      const run = () => deps.answer(parsed.data.question, parsed.data.lang, config, signal, undefined, history, user.wcaId, emit, parsed.data.timeZone, parsed.data.images, parsed.data.thinking);
+      const run = () => deps.answer(parsed.data.question, parsed.data.lang, config, signal, undefined, history, user.wcaId, emit, parsed.data.timeZone, images, parsed.data.thinking);
       return monitor ? monitor.run(run) : run();
     };
     const failure = (error: unknown) => monitor?.finish(disconnect.signal.aborted || c.req.raw.signal.aborted ? 'cancelled' : 'error', assistantFailureCode(error));
     try { return await assistantStage('total',()=>assistantDeadline(async()=>{
       const user = await assistantStage('auth',()=>deps.authenticate(c));
+      signal.throwIfAborted();
+      const readAttachment = deps.readAttachment ?? readAssistantAttachment;
+      images = images ? await resolveAssistantImages(user.uid, images, readAttachment) : undefined;
+      history = await Promise.all(history.map(async message => ({ ...message,
+        ...(message.images ? { images: await resolveAssistantImages(user.uid, message.images, readAttachment) } : {}),
+      })));
       signal.throwIfAborted();
       try { monitor = await deps.monitor?.({ uid: user.uid, startedAt: requestStarted, question: parsed.data.question, lang: parsed.data.lang, model: config.model, streaming: !!c.req.header('Accept')?.includes('text/event-stream'), imageCount: (parsed.data.images?.length ?? 0) + history.reduce((n, m) => n + (m.images?.length ?? 0), 0), historyCount: history.length, conversationId: parsed.data.conversationId, parentId: parsed.data.parentId, retryOf: parsed.data.retryOf, thinking: parsed.data.thinking }); } catch(error) { recordingFailed=true;throw error; }
       if (monitor?.id) c.header('X-Assistant-Request-Id', monitor.id);
@@ -158,6 +156,35 @@ export function createSiteAssistantRoutes(deps: { answer: typeof answerSiteQuest
       const code=assistantFailureCode(error);
       return c.json({ error: code }, code==='login_required'?401:code==='wca_link_required'||code==='account_forbidden'?403:code==='timeout'?504:503);
     } finally { if (admitted) active--; }
+  });
+  routes.use('/site-assistant/attachments*', async (c, next) => {
+    c.header('Cache-Control', 'private, no-store'); c.header('X-Robots-Tag', 'noindex, nofollow');
+    await next();
+  });
+  routes.post('/site-assistant/attachments', bodyLimit({ maxSize: 1_100_000 }), async c => {
+    let user;
+    try { user = await deps.authenticate(c); } catch { return c.json({ error: 'login_required' }, 401); }
+    checkRateLimit(String(user.uid), { bucket: 'assistant-attachments', max: 20 });
+    const input = z.object({ conversationId: z.string().uuid(), image: inlineAssistantImageSchema }).strict().safeParse(await c.req.json().catch(() => null));
+    if (!input.success) return c.json({ error: 'invalid_image' }, 400);
+    try { return c.json(await (deps.saveAttachment ?? saveAssistantAttachment)(user.uid, input.data.conversationId, input.data.image)); }
+    catch (error) { return c.json({ error: assistantFailureCode(error) }, error instanceof AssistantFailure && error.code === 'request_too_large' ? 413 : 503); }
+  });
+  routes.get('/site-assistant/attachments/:id', async c => {
+    let user;
+    try { user = await deps.authenticate(c); } catch { return c.json({ error: 'login_required' }, 401); }
+    const id = z.string().uuid().safeParse(c.req.param('id'));
+    if (!id.success) return c.json({ error: 'not_found' }, 404);
+    const image = await (deps.readAttachment ?? readAssistantAttachment)(user.uid, id.data);
+    return image ? c.json(image) : c.json({ error: 'not_found' }, 404);
+  });
+  routes.delete('/site-assistant/attachments/:id', async c => {
+    let user;
+    try { user = await deps.authenticate(c); } catch { return c.json({ error: 'login_required' }, 401); }
+    const id = z.string().uuid().safeParse(c.req.param('id'));
+    if (!id.success) return c.json({ error: 'not_found' }, 404);
+    await (deps.eventsQuery ?? query)('UPDATE site_assistant_attachments SET deleted_at=COALESCE(deleted_at,NOW()) WHERE id=? AND user_id=?', [id.data, user.uid]);
+    return c.json({ ok: true });
   });
   const eventSchema = z.discriminatedUnion('type', [
     z.object({ type: z.literal('feedback'), value: z.enum(['helpful','incorrect','irrelevant','bad_source','bad_link','other']).nullable() }).strict(),

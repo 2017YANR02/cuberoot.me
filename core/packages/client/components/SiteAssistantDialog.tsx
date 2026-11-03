@@ -17,6 +17,7 @@ import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { useSpeechToText } from '@/hooks/useSpeechToText';
 import { Tooltip } from '@/components/Tooltip';
 import { sendAssistantEvent, type AssistantFeedback } from '@/lib/site-assistant-request';
+import AssistantImagePreview from './AssistantImagePreview';
 import { prepareAssistantImage } from '@/lib/site-assistant-images';
 import { ClearButton } from '@/components/ClearButton';
 import { CompactSelect } from '@/components/CompactSelect';
@@ -210,7 +211,7 @@ export default function SiteAssistantDialog({onAnswerRevealed,turns,draft,images
   const renderImages=(items:AssistantImage[],removable=false)=><div className="site-assistant-images">{items.map((image,index)=><div className="site-assistant-image" key={index}>
     {/* Data URLs stay in conversation memory; never upload private attachments to public article storage. */}
     {/* eslint-disable-next-line @next/next/no-img-element */}
-    <img src={`data:${image.mediaType};base64,${image.data}`} alt={tr({zh:`附图 ${index+1}`,en:`Attachment ${index+1}`})}/>
+    <AssistantImagePreview image={image} index={index} />
     {removable && <Tooltip content={tr({zh:'移除图片',en:'Remove image'})}>{tip=><button {...tip} type="button" className="site-assistant-action" disabled={processingImages} aria-label={tr({zh:`移除图片 ${index+1}`,en:`Remove image ${index+1}`})} onClick={()=>{setImages(images.filter((_,i)=>i!==index));setImageError(null);}}><X size={14}/></button>}</Tooltip>}
   </div>)}</div>;
   const [expanded,setExpanded]=useState(false);
@@ -328,7 +329,7 @@ export default function SiteAssistantDialog({onAnswerRevealed,turns,draft,images
         </div>
       </div>{processingImages && <p role="status">{tr({zh:'正在处理图片…',en:'Preparing images…'})}</p>}
       {imageError && <p role="alert">{imageError}</p>}
-      {!!images.length && <p className="site-assistant-note">{tr({zh:'发送后，图片将交给 AI 识别。追问可参考最近 3 张图片。',en:'Sent images are processed by AI. Follow-ups can reference the latest 3 images.'})}</p>}
+      {!!images.length && <p className="site-assistant-note">{tr({zh:'发送后，图片会保存为私有会话附件并交给 AI 识别。追问可参考最近 3 张图片。',en:'Sent images are saved as private chat attachments and processed by AI. Follow-ups can reference the latest 3 images.'})}</p>}
       {micError && <p className="site-assistant-voice-error" role="status">{tr({zh:'语音未能识别，请检查麦克风权限，或使用键盘听写。',en:'Voice recognition failed. Check microphone permissions or use keyboard dictation.'})}</p>}
       <p className="site-assistant-note">{tr({zh:'AI 回答可能有误，请核对来源。WCA 数据以最近导入为准。',en:'AI can make mistakes. Check sources. WCA data reflects the latest import.'})}</p></form>
     </div>;

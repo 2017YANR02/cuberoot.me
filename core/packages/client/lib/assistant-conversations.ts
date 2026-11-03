@@ -32,7 +32,10 @@ export function createAssistantConversations() {
     workspaces.set(owner, next);
     try {
       const pinned = next.conversations.filter(item => item.pinned).map(item => ({ ...item, pending: undefined, responding: undefined, snapshot: {
-        ...item.snapshot, images: [], turns: item.snapshot.turns.map(turn => ({ ...turn, images: undefined, imagesExpired: !!turn.images?.length || turn.imagesExpired })),
+        ...item.snapshot, images: [], turns: item.snapshot.turns.map(turn => ({ ...turn,
+          images: turn.images?.filter(image => image.attachmentId).map(image => ({ ...image, data: '' })),
+          imagesExpired: turn.images?.some(image => !image.attachmentId) || turn.imagesExpired,
+        })),
       } }));
       if (restored.has(owner)) persistItem(`cuberoot-assistant-pinned:${owner}`, JSON.stringify(pinned));
     } catch { /* The current page session remains usable when storage is unavailable. */ }

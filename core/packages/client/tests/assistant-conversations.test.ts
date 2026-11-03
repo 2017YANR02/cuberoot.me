@@ -38,7 +38,7 @@ describe('assistant workspace conversations', () => {
       const store = createAssistantConversations();
       store.restorePinned('alice');
       store.create('alice', 'a');
-      store.patch('alice', 'a', { turns: [{ question: 'picture', images: [{ data: 'secret-image', mediaType: 'image/png' }] }] });
+      store.patch('alice', 'a', { turns: [{ question: 'picture', images: [{ data: 'secret-image', mediaType: 'image/png' }, { data: '', mediaType: 'image/png', attachmentId: 'saved-image-id' }] }] });
       store.rename('alice', 'a', '  Photo notes  ');
       store.setPinned('alice', 'a', true);
       expect([...data.values()].join('')).not.toContain('secret-image');
@@ -47,6 +47,7 @@ describe('assistant workspace conversations', () => {
       reopened.restorePinned('alice');
       expect(reopened.read('bob').conversations).toEqual([]);
       expect(reopened.read('alice').conversations[0]).toMatchObject({ id: 'a', title: 'Photo notes', pinned: true, snapshot: { turns: [{ question: 'picture', imagesExpired: true }] } });
+      expect(reopened.read('alice').conversations[0].snapshot.turns[0].images).toEqual([{ data: '', mediaType: 'image/png', attachmentId: 'saved-image-id' }]);
       reopened.setPinned('alice', 'a', false);
       const again = createAssistantConversations();
       again.restorePinned('alice');

@@ -12,7 +12,8 @@ export function assistantTimeoutMs(mode: AssistantThinkingMode = 'auto'): number
 export const SITE_ASSISTANT_MAX_IMAGES = 3;
 export const SITE_ASSISTANT_IMAGE_BYTES = 768 * 1024;
 export const SITE_ASSISTANT_BODY_BYTES = 3_300_000;
-export interface AssistantImage { mediaType: 'image/png' | 'image/jpeg' | 'image/webp'; data: string }
+/** Saved attachments use an opaque ID and empty data; bytes are resolved only after owner authentication. */
+export interface AssistantImage { mediaType: 'image/png' | 'image/jpeg' | 'image/webp'; data: string; attachmentId?: string }
 export type AssistantErrorCode = 'request_too_large' | 'invalid_image' | 'vision_unavailable' | 'login_required' | 'wca_link_required' | 'account_forbidden' | 'daily_limit' | 'busy' | 'verification_required' | 'source_verification_required' | 'timeout' | 'network' | 'model_unavailable' | 'source_unavailable' | 'unavailable';
 export interface AssistantSource { id: string; title: string; href: string; read: boolean }
 /** Render only adapter-verified source metadata. Never apply this to model-authored links. */

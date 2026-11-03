@@ -1,4 +1,5 @@
 'use client';
+import { saveAssistantImages } from '@/lib/site-assistant-images';
 
 /**
  * Landing-page site search — full port of packages/client-vite/src/components/LandingSearch.tsx.
@@ -339,8 +340,8 @@ export default function LandingSearch({
     }
     if ((!question && !images.length) || question.length > SITE_ASSISTANT_QUESTION_MAX_LENGTH || assistantRequest.current) return;
     const completed = (replaceLast ? assistantTurns.slice(0, -1) : assistantTurns).filter(turn => turn.result);
-    // Release older attachment bytes without erasing the visible conversation.
-    const previous = completed.map((turn, index) => index < completed.length - 9 && turn.images?.length ? { ...turn, images: undefined, imagesExpired: true } : turn);
+    // Saved references remain available; release only old, unsaved inline bytes.
+    const previous = completed.map((turn, index) => index < completed.length - 9 && turn.images?.some(image => !image.attachmentId) ? { ...turn, images: turn.images.filter(image => image.attachmentId), imagesExpired: true } : turn);
     const createdAt = Date.now();
     const nextTurns = [...previous, { question, images, createdAt }];
     setAssistantTurns(nextTurns);
@@ -362,6 +363,9 @@ export default function LandingSearch({
     const timeout = setTimeout(() => controller.abort(), assistantTimeoutMs(assistantThinking));
     try {
       assistantConversation.current ??= crypto.randomUUID();
+      images = await saveAssistantImages(images, assistantConversation.current, controller.signal);
+      if (assistantRequest.current !== controller) return;
+      setAssistantTurns([...previous, { question, images, createdAt }]);
       const response = await requestSiteAssistant(apiUrl('/v1/site-assistant'), {
         conversationId: assistantConversation.current, parentId: previous.at(-1)?.requestId, retryOf: replaceLast ? assistantTurns.at(-1)?.requestId : undefined,
         question, lang, thinking: assistantThinking, ...(images.length ? {images} : {}), timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,
