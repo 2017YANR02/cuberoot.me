@@ -2,6 +2,7 @@
 
 import { TimerSolveDetailModal } from '@cuberoot/timer-ui';
 import ReconstructActions from '@cuberoot/timer-ui/reconstruct-actions';
+import { SolveRecapBodyPlaceholder } from '@cuberoot/timer-ui/solve-recap-placeholder';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useState } from 'react';
 import type { ReconSnapshot } from '@cuberoot/shared/recon-ground-truth';
@@ -14,7 +15,10 @@ import { useWebReconstructHost } from './useWebReconstructHost';
 import type { Penalty, Solve } from '../_lib/types';
 
 /** Keep the 200 KB reconstruction chain in its own Web-only chunk. */
-const ReconstructReport = dynamic(() => import('./ReconstructReport'), { ssr: false });
+const ReconstructReport = dynamic(() => import('./ReconstructReport'), {
+  ssr: false,
+  loading: SolveRecapBodyPlaceholder,
+});
 
 interface Props {
   closeRequested?: boolean;
@@ -97,6 +101,7 @@ export default function SolveModal({
           history={history}
           hideActions
           hideDate
+          pendingFallback={<SolveRecapBodyPlaceholder />}
           isZh={isZh}
           onReconFeedback={onReconFeedback}
           onReviewSnapshot={receiveReview}

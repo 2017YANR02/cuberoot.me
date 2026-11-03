@@ -71,11 +71,31 @@
 .shell-recap-body .rc-report { max-width: 1000px; margin: 0 auto; }
 /* Stacked recap surfaces read steps first, then the linked cube animation. */
 .shell-recap-body .reconstruct-playback-side { order: -1; }
-/* Recap loading placeholder: reserve the final frame without simulating partial report content. */
+/* Chunk loading and notation analysis share the same stable frame. */
 .shell-recap-placeholder { pointer-events: none; }
 .shell-recap-placeholder .shell-recap-head { min-height: 42px; }
 .shell-recap-placeholder-body {
   width: 100%;
-  height: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
   min-height: 0;
+  padding-top: 8px;
+  overflow: hidden;
+}
+.shell-recap-skeleton-block {
+  display: block;
+  height: 12px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  animation: recap-skeleton-pulse 1.4s ease-in-out infinite alternate;
+}
+.shell-recap-skeleton-button { width: 30px; height: 30px; }
+.shell-recap-skeleton-summary { display: flex; gap: 24px; margin-bottom: 24px; }
+.shell-recap-skeleton-summary > span { width: 64px; height: 30px; }
+.shell-recap-skeleton-steps { display: grid; gap: 20px; }
+.shell-recap-skeleton-row { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 16px; }
+.shell-recap-skeleton-row:nth-child(even) > :last-child { width: 78%; }
+@keyframes recap-skeleton-pulse { to { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) {
+  .shell-recap-skeleton-block { animation: none; }
 }

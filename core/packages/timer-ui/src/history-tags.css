@@ -1,8 +1,8 @@
 .timer-history-tag-badges {
   display: inline-flex;
   min-width: 0;
-  flex-wrap: wrap;
-  gap: 3px;
+  flex-wrap: nowrap;
+  gap: 4px;
   margin-left: 6px;
   vertical-align: middle;
 }
@@ -10,41 +10,46 @@
 .timer-history-tag {
   display: inline-block;
   max-width: 100%;
-  padding: 0 5px;
+  padding: 0;
   overflow: hidden;
-  border: 1px solid var(--border-default);
-  border-radius: 3px;
   color: var(--muted-foreground);
   font-family: var(--font-sans);
   font-size: 0.6rem;
-  font-weight: 600;
-  line-height: 1.4;
+  font-weight: 400;
+  line-height: 1;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .timer-history-tag[data-tone="gold"] {
-  border-color: color-mix(in srgb, var(--signal-warning) 55%, transparent);
-  background: color-mix(in srgb, var(--signal-warning) 16%, transparent);
   color: var(--signal-warning);
 }
 
 .timer-history-tag[data-tone="green"] {
-  border-color: color-mix(in srgb, var(--signal-success) 55%, transparent);
-  background: color-mix(in srgb, var(--signal-success) 14%, transparent);
   color: var(--signal-success);
 }
 
 .timer-history-tag[data-tone="red"] {
-  border-color: color-mix(in srgb, var(--destructive) 55%, transparent);
-  background: color-mix(in srgb, var(--destructive) 14%, transparent);
   color: var(--destructive);
 }
 
 .timer-history-tag[data-tag-id="pb-single"] {
-  border-color: var(--signal-info, var(--accent));
-  background: var(--signal-info, var(--accent));
-  color: var(--accent-foreground);
+  color: var(--signal-info, var(--accent));
+}
+
+/* Annotations must not participate in result alignment or grow a tagged row. */
+.timer-history-row .time { position: relative; }
+.timer-history-row .time .timer-history-tag-badges {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  max-width: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+.timer-history-workspace--minimal .time .timer-history-tag-badges {
+  right: 0;
+  left: auto;
 }
 
 .timer-history-tag-overflow {

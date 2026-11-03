@@ -94,6 +94,7 @@ export default function SolveRecap({
           history={history}
           hideDate
           hideActions
+          pendingFallback={<SolveRecapBodyPlaceholder />}
           onReconFeedback={onReconFeedback}
           onReviewSnapshot={receiveReview}
         /></Suspense>

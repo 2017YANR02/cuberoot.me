@@ -32,7 +32,7 @@
 
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import type { Solve, EventId } from '@cuberoot/shared/timer';
 import type { ReconSnapshot } from '@cuberoot/shared/recon-ground-truth';
@@ -92,6 +92,8 @@ export interface ReconstructReportProps {
   hideDate?: boolean;
   /** The inline recap renders these actions beside its full-screen control. */
   hideActions?: boolean;
+  /** Keep the recap stable until final notation is ready; references may finish later. */
+  pendingFallback?: ReactNode;
   /** In-progress move score, using the same segmentation and notation as the report. */
   live?: boolean;
   /** In-progress samples retain their coordinate frame and avoid Base64 encoding. */
@@ -109,7 +111,7 @@ const BLD_MEMO_EVENTS = new Set<EventId>(['333bld', '333ni']);
 
 
 function ReconstructReportBody({
-  solve, isZh, history, onMemoApply, onUseScramble, onReconFeedback, hideDate, hideActions, live = false, liveStageTarget, liveGyroSamples, onReviewSnapshot,
+  solve, isZh, history, onMemoApply, onUseScramble, onReconFeedback, hideDate, hideActions, pendingFallback, live = false, liveStageTarget, liveGyroSamples, onReviewSnapshot,
 }: ReconstructReportProps) {
   const host = useReconstructHost();
   const { localize: tr } = host;
@@ -299,6 +301,11 @@ function ReconstructReportBody({
    * 什么。真实顺序是反的 —— 先认出这把是怎么拧的(回放 + 还原步骤),那些数字才有东西
    * 可归因;先给一张 5×7 的表,读者第一件事仍然是往下翻去找还原步骤。
    */
+  if (pendingFallback !== undefined && analysisInput && analysis?.status !== 'error'
+    && analysis?.status !== 'complete' && (!reconText || analysis?.provisional)) {
+    return pendingFallback;
+  }
+
   const analysisBlock = (
     <>
       {/* 这里以前还有一根 SolveTimeline(带阶段名的那条)。删了:回放那根进度条
