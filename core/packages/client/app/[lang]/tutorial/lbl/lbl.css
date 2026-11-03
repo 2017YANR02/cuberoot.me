@@ -541,6 +541,9 @@ button.lbl-case:active, .lbl-practice:active { transform: scale(.96); }
   .lbl-subsection-select .compact-select-trigger { width: 100%; min-height: 44px; }
   .lbl-tutorial-page .lbl-step-heading { margin: 0; font-size: 1.2rem; }
   .lbl-tutorial-page .lbl-step-select .compact-select-trigger { min-height: 44px; }
+  .lbl-guide-face-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .lbl-guide-face-grid .lbl-guide-face-icon { display: none; }
+  .lbl-guide-face-grid .lbl-button { min-height: 44px; justify-content: center; padding: 8px 4px; }
   .lbl-tutorial-page .lbl-basics-heading { padding-bottom: 0; }
   .lbl-tutorial-page .lbl-lesson { row-gap: 16px; }
   .lbl-tutorial-page .lbl-demo.lbl-demo-split { margin-top: 0; row-gap: 20px; }
@@ -560,6 +563,7 @@ button.lbl-case:active, .lbl-practice:active { transform: scale(.96); }
   .lbl-tutorial-page .lbl-demonstration > :is(.lbl-chapter-overview, .lbl-middle-core, .lbl-demo, .lbl-complete-demo),
   .lbl-tutorial-page .lbl-basics-panel { flex: 1; min-height: 0; overflow: auto; }
   .lbl-tutorial-page .lbl-basics-panel { justify-content: flex-start; }
+  .lbl-tutorial-page .lbl-basics-panel:has(.lbl-guide-layers) { justify-content: safe center; }
   .lbl-tutorial-page .lbl-basics-panel > * { flex-shrink: 0; }
   .lbl-tutorial-page .lbl-demonstration > :is(.lbl-chapter-overview, .lbl-middle-core) { justify-content: safe center; }
   .lbl-tutorial-page .lbl-demo.lbl-demo-split { grid-template-rows: auto minmax(0, 1fr); align-items: start; gap: 16px; }

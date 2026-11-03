@@ -76,7 +76,7 @@ export default function BasicsGuide({ section }: { section: typeof BASIC_GUIDE_T
         <div className="lbl-guide-move-copy">
           <div className="lbl-guide-face-grid" role="group" aria-label={tr({ zh: '选择要观察的面', en: 'Choose a face to watch' })}>
             {faces.map(item => <button className="lbl-button" type="button" key={item.base} aria-label={tr(item.title)} aria-pressed={face.base === item.base} onClick={() => selectMove(face.base === item.base ? move : item.move)}>
-              <VisualCube local view="iso" stickerColors={item.colors} viewportRotations={item.base === 'L' ? leftView : undefined} size={76} alt={tr(item.title)} />
+              <span className="lbl-guide-face-icon"><VisualCube local view="iso" stickerColors={item.colors} viewportRotations={item.base === 'L' ? leftView : undefined} size={76} alt={tr(item.title)} /></span>
               <span>{tr(item.title)}</span>
             </button>)}
           </div>
