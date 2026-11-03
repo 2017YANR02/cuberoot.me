@@ -6,7 +6,8 @@ import {
 import type { TimerPhase } from '@cuberoot/shared/timer';
 import { applyColorNeutral } from '@cuberoot/shared/timer';
 import { invertAlg } from '@cuberoot/shared/alg-transform';
-import { describe, expect, it } from 'vitest';
+import { AutoRecapDismissGesture } from '@cuberoot/shared/timer/reconstruct/recap';
+import { describe, expect, it, vi } from 'vitest';
 
 function target(scramble: string): string {
   const facelets = smartCubeTargetFacelets(scramble);
@@ -23,9 +24,12 @@ function harness(initialContext: SmartCubeSoloTimerContext = {
   let phase: TimerPhase = 'idle';
   let timingEnabled = true;
   let canStart = true;
+  let inputBlocked = false;
   let autoReady = true;
+  let onMove: ((move: string) => void) | null = null;
   let beforeStart: ((timestamp: number) => void) | null = null;
   const order: string[] = [];
+  const solve = vi.fn(async () => null);
   let controller!: SmartCubeSoloTimerController;
   controller = new SmartCubeSoloTimerController({
     armFromCube: () => {
@@ -35,11 +39,12 @@ function harness(initialContext: SmartCubeSoloTimerContext = {
     },
     autoReadyOnScramble: () => autoReady,
     canStartAttempt: () => canStart,
+    isInputBlocked: () => inputBlocked,
     getPhase: () => phase,
     isTimingEnabled: () => timingEnabled,
-    onMove: ({ move }) => { order.push(`deliver:${move}`); },
+    onMove: ({ move }) => { order.push(`deliver:${move}`); onMove?.(move); },
     recordMove: ({ move }) => { order.push(`record:${move}`); },
-    solve: async () => null,
+    solve,
     startFromCube: (timestamp) => {
       beforeStart?.(timestamp);
       order.push(`start:${timestamp}`);
@@ -59,16 +64,85 @@ function harness(initialContext: SmartCubeSoloTimerContext = {
   return {
     controller,
     order,
+    solve,
     phase: () => phase,
     setAutoReady: (value: boolean) => { autoReady = value; },
     setBeforeStart: (callback: ((timestamp: number) => void) | null) => { beforeStart = callback; },
     setCanStart: (value: boolean) => { canStart = value; },
+    setInputBlocked: (value: boolean) => { inputBlocked = value; },
+    setOnMove: (callback: (move: string) => void) => { onMove = callback; },
     setPhase: (value: TimerPhase) => { phase = value; },
     setTimingEnabled: (value: boolean) => { timingEnabled = value; },
   };
 }
 
 describe('SmartCubeSoloTimerController', () => {
+  it.each(['R', "R'", 'U', "U'"])('keeps recap dismissal %s and its inverse out of scramble history', (move) => {
+    const state = harness({ event: '333', id: 2, scramble: 'R U F', targetFacelets: target('R U F') });
+    state.setPhase('stopped');
+    const initial = state.controller.syncFacelets(target(''));
+    state.setInputBlocked(true);
+    const gesture = new AutoRecapDismissGesture();
+    gesture.markDisplayed();
+    let closeRequested = false;
+    state.setOnMove(turn => { if (gesture.observe(turn)) closeRequested = true; });
+
+    const turns = [move, invertAlg(move), 'F', "F'"];
+    for (let i = 0; i < turns.length; i++) {
+      const facelets = target(turns.slice(0, i + 1).join(' '));
+      expect(state.controller.move({ facelets, move: turns[i], timestamp: i })).toMatchObject({
+        delivered: true, recorded: false, started: false, guidanceCompleted: false, guidancePenultimate: false,
+      });
+      // Authoritative frames also arrive while the closing animation is playing.
+      expect(state.controller.syncFacelets(facelets)).toEqual(initial);
+      expect(closeRequested).toBe(i > 0);
+    }
+    expect(state.phase()).toBe('stopped');
+    expect(state.order).toEqual(turns.map(turn => `deliver:${turn}`));
+    expect(state.solve).not.toHaveBeenCalled();
+
+    state.setInputBlocked(false);
+    expect(state.controller.syncFacelets(target(''))).toEqual(initial);
+    state.controller.move({ facelets: target('R'), move: 'R', timestamp: 5 });
+    expect(state.controller.getGuidanceSnapshot().hint).toEqual({
+      done: ['R'], current: 'U', pending: ['F'], complete: false,
+    });
+    state.controller.move({ facelets: target('R U'), move: 'U', timestamp: 6 });
+    expect(state.controller.move({ facelets: target('R U F'), move: 'F', timestamp: 7 }).guidanceCompleted).toBe(true);
+    expect(state.phase()).toBe('ready');
+  });
+
+  it('seeds the next scramble only after recap closes, then corrects its first real mistake', () => {
+    const state = harness({ event: '333', id: 2, scramble: 'R U', targetFacelets: target('R U') });
+    state.setInputBlocked(true);
+    const initial = state.controller.getGuidanceSnapshot();
+    expect(state.controller.syncFacelets(target(''))).toEqual(initial);
+    state.controller.move({ facelets: target('F'), move: 'F', timestamp: 1 });
+    state.controller.move({ facelets: target(''), move: "F'", timestamp: 2 });
+    expect(state.controller.getGuidanceSnapshot()).toEqual(initial);
+    state.setInputBlocked(false);
+    state.controller.syncFacelets(target(''));
+    state.controller.move({ facelets: target('U'), move: 'U', timestamp: 3 });
+    expect(state.controller.getGuidanceSnapshot().hint).toMatchObject({
+      done: [], corrections: ["U'"], current: 'R', pending: ['U'], complete: false,
+    });
+    expect(state.solve).not.toHaveBeenCalled();
+  });
+
+  it('blocks scramble completion and armed starts during recap without dropping a running solve', () => {
+    const state = harness();
+    state.setPhase('stopped');
+    state.setInputBlocked(true);
+    expect(state.controller.move({ facelets: target('R'), move: 'R', timestamp: 1 }).guidanceCompleted).toBe(false);
+    expect(state.phase()).toBe('stopped');
+    state.setPhase('ready');
+    expect(state.controller.move({ facelets: target('R U'), move: 'U', timestamp: 2 }).started).toBe(false);
+    expect(state.phase()).toBe('ready');
+    state.setPhase('running');
+    expect(state.controller.move({ facelets: target('R'), move: "U'", timestamp: 3 }).recorded).toBe(true);
+    expect(state.order).toEqual(['deliver:R', 'deliver:U', "record:U'", "deliver:U'"]);
+  });
+
   it('signals the penultimate completed move once per scramble, including split half turns', () => {
     const context = { event: '333' as const, id: 1, scramble: 'R U2 F', targetFacelets: target('R U2 F') };
     const { controller, setPhase } = harness(context);

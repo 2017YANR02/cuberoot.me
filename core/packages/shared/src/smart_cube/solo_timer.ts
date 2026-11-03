@@ -47,6 +47,8 @@ export interface SmartCubeSoloTimerControllerOptions<
   autoReadyOnScramble(): boolean;
   correctionLimit?(): number | undefined;
   canStartAttempt(): boolean;
+  /** Pause preparation while a recap owns cube input; keep delivering its gestures. */
+  isInputBlocked?(): boolean;
   getPhase(): TimerPhase;
   isTimingEnabled(): boolean;
   onGuidanceChange?(state: SmartCubeGuidanceState): void;
@@ -145,6 +147,7 @@ export class SmartCubeSoloTimerController<
   syncFacelets(facelets: string): SmartCubeGuidanceState {
     this.lastFacelets = facelets;
     if (this.running) this.trainingComplete = this.isTrainingComplete(facelets);
+    if (this.options.isInputBlocked?.()) return this.guidance.snapshot();
     return this.guidance.syncFacelets(facelets);
   }
 
@@ -164,6 +167,9 @@ export class SmartCubeSoloTimerController<
         return outcome;
       }
       if (outcome.futureHistory) return outcome;
+      // The recap's exit gesture is delivered in finally, but must never
+      // advance the next scramble or leave completed correction tokens in it.
+      if (this.options.isInputBlocked?.()) return outcome;
 
       const phase = this.options.getPhase();
       if (context
