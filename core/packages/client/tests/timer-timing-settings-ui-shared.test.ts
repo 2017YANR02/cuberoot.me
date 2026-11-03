@@ -115,7 +115,8 @@ describe('shared Timer Timing settings UI', () => {
     expect(host.querySelectorAll('.settings-section')).toHaveLength(3);
     expect([...host.querySelectorAll<HTMLElement>('.settings-section-head h4')]
       .map((heading) => heading.textContent)).toEqual([
-        'Timing display',
+        'Timing',
+        'Display',
         'Events and sessions',
       ]);
 
@@ -171,7 +172,7 @@ describe('shared Timer Timing settings UI', () => {
   it('localizes every shared field and section without a host-owned copy list', async () => {
     await render({ localize: localizeZh });
     expect([...host.querySelectorAll<HTMLElement>('.settings-section-head h4')]
-      .map((heading) => heading.textContent)).toEqual(['计时显示', '项目与分组']);
+      .map((heading) => heading.textContent)).toEqual(['计时', '显示', '项目与分组']);
     for (const field of TIMER_SETTING_FIELD_CONTRACTS.filter((entry) => TIMER_TIMING_SETTING_FIELD_IDS.includes(entry.id))) {
       expect(host.querySelector(`[data-setting-id="${field.id}"]`)?.textContent)
         .toContain(field.copy.zh);

@@ -100,14 +100,19 @@ it('recalibrates only the selected training preview while both cubes remain stat
     gyros.current.get('two')!.calibration = { ...gyros.current.get('two')!.quat! };
     await render(0, 1);
     frame();
+    // Calibration eases toward the new reference instead of snapping in one frame.
+    expect(Math.abs(worlds[1].cube.quaternion.set.mock.calls.at(-1)[2])).toBeCloseTo(0.6111234402475233, 8);
+    expect(worlds[0].cube.quaternion.set.mock.calls.at(-1)).toEqual(firstPose);
+    for (let i = 0; i < 90; i++) frame();
     const secondPose = worlds[1].cube.quaternion.set.mock.calls.at(-1);
-    expect(secondPose.slice(0, 3).map(Math.abs)).toEqual([0, 0, 0]);
-    expect(secondPose[3]).toBeCloseTo(1);
+    expect(secondPose[3]).toBeCloseTo(1, 6);
     expect(worlds[0].cube.quaternion.set.mock.calls.at(-1)).toEqual(firstPose);
     gyros.current.get('one')!.calibration = { ...gyros.current.get('one')!.quat! };
     await render(1, 1);
     frame();
-    expect(worlds[0].cube.quaternion.set.mock.calls.at(-1)[3]).toBeCloseTo(1);
+    expect(Math.abs(worlds[0].cube.quaternion.set.mock.calls.at(-1)[0])).toBeCloseTo(0.6111234402475233, 8);
+    for (let i = 0; i < 90; i++) frame();
+    expect(worlds[0].cube.quaternion.set.mock.calls.at(-1)[3]).toBeCloseTo(1, 6);
     expect(worlds[1].cube.quaternion.set.mock.calls.at(-1)).toEqual(secondPose);
     expect(sim.mount).toHaveBeenCalledTimes(2);
   } finally {

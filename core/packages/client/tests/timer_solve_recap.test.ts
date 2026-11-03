@@ -234,12 +234,13 @@ describe('复盘异步加载时先稳定容器', () => {
     expect(recap).not.toMatch(/<Suspense fallback=\{null\}>/);
   });
 
-  it('占位没有额外动画，内容到达时只做原位替换', () => {
+  it('占位只淡入淡出，不动画改变布局，并遵循减少动态效果偏好', () => {
     const css = read(RECAP_CSS);
-    const placeholderRules = css.match(/\/\* Recap loading placeholder[\s\S]*$/)?.[0] ?? '';
-    expect(placeholderRules).toContain('.shell-recap-placeholder');
-    expect(placeholderRules).not.toMatch(/placeholder-(?:line|metrics)/);
-    expect(placeholderRules).not.toMatch(/animation\s*:/);
+    expect(css).toMatch(/\.shell-recap-placeholder\s*\{\s*pointer-events:\s*none;/);
+    expect(css).toMatch(/\.shell-recap-skeleton-block\s*\{[^}]*animation:\s*recap-skeleton-pulse/);
+    const pulse = css.match(/@keyframes recap-skeleton-pulse\s*\{\s*to\s*\{([^}]*)\}/)?.[1].trim();
+    expect(pulse).toBe('opacity: 0.45;');
+    expect(css).toMatch(/@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{\s*\.shell-recap-skeleton-block\s*\{\s*animation:\s*none;/);
   });
 });
 
