@@ -10,6 +10,7 @@ import PageHeading from '@/components/PageHeading';
 import { useT } from "@/hooks/useT";
 import { tr } from '@/i18n/tr';
 import type { CSSProperties } from 'react';
+import { ArrowUpRight } from 'lucide-react';
 
 interface Card {
   to: string;
@@ -52,6 +53,10 @@ export default function ScrambleHubPage() {
               '--scramble-card-art': `url("/scramble-card-art/${c.area}.webp")`,
             } as CSSProperties}
           >
+            <span className="scramble-hub-card-heading">
+              <span className="scramble-hub-card-title">{tr(c).title}</span>
+              <ArrowUpRight className="scramble-hub-card-arrow" size={17} aria-hidden="true" />
+            </span>
             <span className="scramble-hub-art" aria-hidden="true">
               <span className="scramble-hub-art-image" />
               {c.area === 'generate' && (
@@ -69,7 +74,6 @@ export default function ScrambleHubPage() {
                 </span>
               )}
             </span>
-            <div className="scramble-hub-card-title">{tr(c).title}</div>
           </Link>
         ))}
       </div>
@@ -98,16 +102,43 @@ const INLINE_CSS = `
 }
 .scramble-hub-page .scramble-hub-card {
   display: flex;
-  flex-direction: column;
+  position: relative;
+  align-items: center;
   gap: 1rem;
   min-width: 0;
+  min-height: 10rem;
   padding: 1.25rem;
   border: 1px solid var(--border-default);
   border-radius: 12px;
   color: var(--foreground);
   text-decoration: none;
 }
-/* Illustration and title occupy separate rows; artwork never fades across text. */
+.scramble-hub-page .scramble-hub-card-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.scramble-hub-page .scramble-hub-card-arrow {
+  flex: none;
+  color: var(--muted-foreground);
+  transition: transform 160ms ease, color 160ms ease;
+}
+.scramble-hub-page .scramble-hub-card:hover .scramble-hub-card-arrow,
+.scramble-hub-page .scramble-hub-card:focus-visible .scramble-hub-card-arrow {
+  color: var(--accent);
+  transform: translate(2px, -2px);
+}
+.scramble-hub-page .scramble-hub-card--compact {
+  flex-direction: column-reverse;
+  align-items: stretch;
+  justify-content: space-between;
+  min-height: 10rem;
+}
+.scramble-hub-page .scramble-hub-card--compact .scramble-hub-card-heading {
+  justify-content: space-between;
+}
+/* Keep artwork in a consistent region without overlapping the label. */
 .scramble-hub-page .scramble-hub-art {
   display: flex;
   flex-direction: column;
@@ -116,6 +147,7 @@ const INLINE_CSS = `
   gap: 0.5rem;
   height: 5.75rem;
   min-width: 0;
+  flex: 1;
   pointer-events: none;
   user-select: none;
 }
@@ -130,10 +162,10 @@ const INLINE_CSS = `
   opacity: 0.9;
 }
 .scramble-hub-page .scramble-hub-card--primary .scramble-hub-art {
-  height: 11rem;
+  height: 8rem;
 }
 .scramble-hub-page .scramble-hub-card--secondary .scramble-hub-art {
-  height: 8rem;
+  height: 6.5rem;
 }
 .scramble-hub-page .scramble-hub-card--generate .scramble-hub-art-image {
   max-height: 7rem;
@@ -197,17 +229,16 @@ const INLINE_CSS = `
   transform: translateY(1px);
 }
 .scramble-hub-page .scramble-hub-card-title {
-  margin-top: auto;
-  font-size: 1.125rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 500;
   line-height: 1.3;
   overflow-wrap: anywhere;
 }
 .scramble-hub-page .scramble-hub-card--primary .scramble-hub-card-title {
-  font-size: 1.75rem;
+  font-size: 1.25rem;
 }
 .scramble-hub-page .scramble-hub-card--secondary .scramble-hub-card-title {
-  font-size: 1.375rem;
+  font-size: 1.125rem;
 }
 @media (max-width: 720px) {
   .scramble-hub-page .scramble-hub-grid {
@@ -216,14 +247,16 @@ const INLINE_CSS = `
     grid-template-areas: none;
   }
   .scramble-hub-page .scramble-hub-card { grid-area: auto !important; }
-  .scramble-hub-page .scramble-hub-card--primary .scramble-hub-art { height: 8rem; }
+  .scramble-hub-page .scramble-hub-card { flex-direction: column-reverse; align-items: stretch; justify-content: space-between; min-height: 10rem; }
+  .scramble-hub-page .scramble-hub-card-heading { justify-content: space-between; }
+  .scramble-hub-page .scramble-hub-card--primary .scramble-hub-art,
   .scramble-hub-page .scramble-hub-card--secondary .scramble-hub-art { height: 6rem; }
   .scramble-hub-page .scramble-hub-art-formula { display: none; }
 }
 @media (max-width: 480px) {
   .scramble-hub-page { padding: 1rem 0.75rem 2rem; }
   .scramble-hub-page .scramble-hub-card { padding: 1rem; }
-  .scramble-hub-page .scramble-hub-card--primary .scramble-hub-card-title { font-size: 1.375rem; }
-  .scramble-hub-page .scramble-hub-card--secondary .scramble-hub-card-title { font-size: 1.125rem; }
+  .scramble-hub-page .scramble-hub-card--primary .scramble-hub-card-title { font-size: 1.125rem; }
+  .scramble-hub-page .scramble-hub-card--secondary .scramble-hub-card-title { font-size: 1rem; }
 }
 `;
