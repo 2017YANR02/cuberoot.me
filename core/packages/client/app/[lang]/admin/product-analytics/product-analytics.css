@@ -1,0 +1,7 @@
+.product-analytics .admin-dashboard__toolbar > div { flex: initial; }
+.product-analytics__scroll { max-height: 600px; overflow: auto; }
+.product-analytics__scroll table { min-width: 780px; }
+.product-analytics__scroll small { display: block; color: var(--muted-foreground); font-weight: 400; font-size: .75rem; }
+.product-analytics__scroll th:first-child { min-width: 160px; max-width: 300px; white-space: normal; overflow-wrap: anywhere; }
+.product-analytics__pagination { display: flex; align-items: center; gap: 16px; margin-top: 16px; }
+.product-analytics__definitions { margin-top: 28px; }

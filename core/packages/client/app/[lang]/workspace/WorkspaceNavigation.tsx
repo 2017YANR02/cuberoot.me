@@ -37,6 +37,7 @@ function Navigation({ children }: { children: ReactNode }) {
   ].map(({ id, label, Icon }) => ({ id, label, href: `/admin/team?section=${id}`, icon: <Icon size={18} aria-hidden />, active: !inAdmin && (section ?? 'mine') === id }));
   const adminItems = [
     { id: 'overview', label: t('运营总览', 'Overview'), Icon: LayoutDashboard, href: '/admin' },
+    { id: 'analytics', label: t('产品使用分析', 'Product usage analytics'), Icon: Activity, href: '/admin/product-analytics' },
     { id: 'users', label: t('用户与会员', 'Users and memberships'), Icon: Users, href: '/admin?section=users' },
     { id: 'content', label: t('内容与社区', 'Content and community'), Icon: BookOpen, href: '/admin?section=content' },
     { id: 'commerce', label: t('课程与商业', 'Courses and commerce'), Icon: Activity, href: '/admin?section=commerce' },
@@ -45,7 +46,8 @@ function Navigation({ children }: { children: ReactNode }) {
     { id: 'monitoring', label: t('助手与诊断', 'Assistant and diagnostics'), Icon: Activity, href: '/admin?section=system&view=monitoring' },
     { id: 'tax', label: t('税务办理', 'Tax filing'), Icon: ShieldCheck, href: '/admin?section=system&view=tax' },
   ].map(({ id, label, Icon, href }) => {
-    const selected = pathname === '/admin/users' ? 'users'
+    const selected = pathname === '/admin/product-analytics' ? 'analytics'
+      : pathname === '/admin/users' ? 'users'
       : pathname === '/admin/interview' ? 'work'
       : pathname === '/admin/disk' || pathname === '/admin/releases' ? 'system'
       : section === 'system' ? ({ workspace: 'work', monitoring: 'monitoring', tax: 'tax' }[view ?? ''] ?? 'system')
