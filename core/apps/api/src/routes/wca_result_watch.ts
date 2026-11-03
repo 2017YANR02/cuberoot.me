@@ -23,6 +23,7 @@ import { query } from '../db/connection.js';
 import { requireAdminOrApiKey, requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
 import { isPenaltyOnlyFields } from '@cuberoot/shared/result-penalty';
 import { visibleResultChangeSql } from '../utils/wca_result_change_visibility.js';
+import { inferPlacementChangeReason, isPlacementOnlyChange, RESULT_CHANGE_CORRELATION_MS, type ReasonChange } from '../utils/wca_result_change_reason.js';
 
 export const wcaResultWatchRoutes = new Hono();
 
@@ -149,6 +150,30 @@ wcaResultWatchRoutes.get('/wca/result-watch/changes', async (c) => {
     params,
   );
 
+  const placementRows = rows.filter(isPlacementOnlyChange);
+  // Fetch evidence independently of the public page limit and person filter.
+  // Reuse the visibility predicate so republished results cannot become causes.
+  const candidates = placementRows.length ? await query<ReasonChange>(
+    `SELECT ch.id, ch.wca_id, ch.competition_id, ch.event_id, ch.round_type_id,
+            ch.change_type, ch.before_json, ch.after_json, ch.detected_at, ch.source, ch.status,
+            COALESCE(s.person_name, wp.match_key) AS person_name
+       FROM wca_result_changes ch
+       LEFT JOIN wca_person_results_snapshot s ON s.wca_id = ch.wca_id
+       LEFT JOIN watched_persons wp ON wp.wca_id = ch.wca_id
+      WHERE ch.source = 'auto' AND ch.status = 'approved' AND ${visibleResultChangeSql}
+        AND EXISTS (
+          SELECT 1 FROM wca_result_changes target
+           WHERE target.id = ANY(?::bigint[])
+             AND target.wca_id <> ch.wca_id
+             AND target.competition_id = ch.competition_id
+             AND target.event_id = ch.event_id
+             AND target.round_type_id = ch.round_type_id
+             AND ch.detected_at BETWEEN target.detected_at - (? * INTERVAL '1 millisecond')
+                                    AND target.detected_at + (? * INTERVAL '1 millisecond')
+        )`,
+    [placementRows.map(row => Number(row.id)), RESULT_CHANGE_CORRELATION_MS, RESULT_CHANGE_CORRELATION_MS],
+  ) : [];
+
   return c.json({
     changes: rows.map((r) => ({
       id: Number(r.id),
@@ -173,6 +198,7 @@ wcaResultWatchRoutes.get('/wca/result-watch/changes', async (c) => {
       createdBy: r.created_by ?? null,
       editedAt: r.edited_at ?? null,
       status: r.status ?? 'approved',
+      placementReason: inferPlacementChangeReason(r, candidates),
     })),
   });
 });

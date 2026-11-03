@@ -81,6 +81,20 @@ export interface ResultChange {
   editedAt: string | null;
   // approved=已生效(自动/管理员/本人+2);pending=待审核(任何登录用户的提议);rejected=已驳回(端点已过滤)。
   status: 'approved' | 'pending' | 'rejected';
+  placementReason?: {
+    kind: 'inferred' | 'unknown';
+    causes: {
+      changeId: number;
+      wcaId: string;
+      personName: string | null;
+      changeType: 'modified' | 'removed';
+      field: 'average' | 'best';
+      oldValue: number;
+      newValue: number | null;
+      oldPlace: number;
+      newPlace: number | null;
+    }[];
+  } | null;
 }
 
 /** 一条变更是否已生效(进有效值)。缺省/approved 视为已生效;pending/rejected 不算。 */
@@ -114,7 +128,7 @@ export async function fetchResultChanges(
   noStore = false,
 ): Promise<ResultChange[]> {
   const qs = new URLSearchParams();
-  qs.set('v', '2');
+  qs.set('v', '3');
   if (wcaId) qs.set('wcaId', wcaId);
   qs.set('limit', String(limit));
   if (noStore) qs.set('_t', String(Date.now()));
@@ -145,7 +159,7 @@ export async function fetchResultChangesByComp(
   signal?: AbortSignal,
   noStore = false,
 ): Promise<ResultChange[]> {
-  const qs = new URLSearchParams({ compId, limit: String(limit), v: '2' });
+  const qs = new URLSearchParams({ compId, limit: String(limit), v: '3' });
   if (noStore) qs.set('_t', String(Date.now()));
   const res = await sessionFetch(apiUrl(`/v1/wca/result-watch/changes?${qs.toString()}`), {
     signal,

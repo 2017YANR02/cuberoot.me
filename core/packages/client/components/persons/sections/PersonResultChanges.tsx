@@ -24,6 +24,7 @@ import { formatDateRangeIso } from '@/lib/wca-date';
 import { SolveValue } from './results/SolveValue';
 import { buildRowChangeListMap, effectiveAttempts, rowChangeKey } from '@/lib/result-watch-api';
 import { summarizeResultChanges } from '@/lib/result-change-summary';
+import { displayCuberName } from '@/lib/cuber-name-display';
 
 // 本面板=「已生效的成绩更正历史」,只收 approved。待审核(pending)提议另由成绩表行内
 // 「待审核」标记展示,绝不在此当作官方更正呈现(否则任何登录用户都能伪造一条假更正)。
@@ -255,6 +256,23 @@ function ChangeRow({ c, fields, isZh }: { c: ResultChange; fields: DisplayField[
         </div>;
       })}
       {c.note && <span className="wp-rc-note">{c.note}</span>}
+      {c.placementReason?.kind === 'inferred' && <div className="wp-rc-note">
+        <span>{tr({ zh: '名次变化原因（据同轮变更推断）', en: 'Placement change (inferred from this round)' })}</span>
+        {c.placementReason.causes.map(cause => <div key={cause.changeId}>
+          <Link className="wp-rc-cause-link" prefetch={false}
+            href={`/wca/persons/${cause.wcaId}?tab=results&sub=event&event=${encodeURIComponent(eventId)}${resultRowHash(c.competitionId!, eventId, c.roundTypeId!)}`}>
+            {displayCuberName(cause.personName || cause.wcaId, isZh)}
+          </Link>{' '}
+          {cause.changeType === 'removed'
+            ? tr({ zh: '该轮成绩被移除', en: 'Result removed from this round' })
+            : <>{tr(cause.field === 'average' ? { zh: '平均', en: 'Average' } : { zh: '单次', en: 'Single' })}{' '}
+              {formatChangeFieldValue(cause.field, cause.oldValue, eventId)} → {formatChangeFieldValue(cause.field, cause.newValue, eventId)}</>}
+          {cause.newPlace != null && <>{' · '}{tr({ zh: '名次', en: 'Place' })} {cause.oldPlace} → {cause.newPlace}</>}
+        </div>)}
+      </div>}
+      {c.placementReason?.kind === 'unknown' && !c.note && <span className="wp-rc-note">
+        {tr({ zh: '本人成绩未变，名次调整的具体原因暂未确认。', en: 'Result unchanged; the reason for the placement adjustment is not yet confirmed.' })}
+      </span>}
     </li>
   );
 }

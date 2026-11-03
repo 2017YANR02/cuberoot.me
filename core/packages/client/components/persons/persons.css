@@ -170,6 +170,7 @@ html[data-theme=dark] .wp-page {
 }
 .wp-rc-result-link { position: absolute; inset: 0; border-radius: inherit; z-index: 1; }
 .wp-rc-result-link:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.wp-rc-cause-link { position: relative; z-index: 2; text-underline-offset: 3px; }
 .wp-rc-context { display: flex; align-items: center; flex-wrap: wrap; gap: var(--wp-rc-inline-gap); line-height: 1.4; }
 .wp-rc-badge, .wp-rc-source {
     flex: none; font-size: 0.68rem; font-weight: 500; padding: 1px 6px; border-radius: 5px;
