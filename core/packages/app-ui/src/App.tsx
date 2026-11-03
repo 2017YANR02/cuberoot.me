@@ -2659,6 +2659,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       : storeRef.current?.settings.bluetoothAutoReady === 'scrambled',
     canStartAttempt: () => attemptCanStartRef.current,
     getPhase: () => timerPhaseRef.current,
+    correctionLimit: () => storeRef.current?.settings.smartCubeCorrectionLimit,
     isTimingEnabled: () => timingEnabledRef.current,
     onGuidanceChange: setSmartCubeGuidance,
     onMove: ({ move, timestamp }) => {

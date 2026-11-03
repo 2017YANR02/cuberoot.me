@@ -43,7 +43,7 @@ csTimer 是这块的**正确基线**：它的智能魔方链路被上万人用�
 |---|---|---|---|---|
 | 打乱正确性校验 | ✅ `checkScramble()` | ✅ 「打乱已就绪 / 与打乱不符」 | — | — |
 | **逐步打乱提示**（已完成的变暗、当前步高亮、✓） | ✅ `scrHinter.checkState` + `scrambleToHtml`（`bluetoothutil.js:74/108`） | ✅ `_lib/bluetooth/scramble_hint.ts`（Sprint 6） | — | 已完成；半步未拧完时**照打乱原样显示**（`L2` 拧到一半仍是 `L2`，不改写成剩余转量），上游只在第一步改写，Sprint 19 起我们一处都不改 |
-| 拧错时给一条回到同一打乱的路径 | ✅ `genState`/`genScr` → `scramble_333.genFacelet` | ✅ `_lib/bluetooth/scramble_fixup.ts`（Sprint 7） | — | 已完成；求解期间又转动会从新状态重解（上游求解器同步，没这个问题） |
+| 拧错时给一条回到同一打乱的路径 | ✅ `genState`/`genScr` → `scramble_333.genFacelet` | ✅ shared `scramble_guidance.ts` + `_lib/bluetooth/scramble_fixup.ts` | — | 2026-11-02 本地更新：参考 [DCTimer-BLE cadb8224](https://github.com/huizhiLLL/DCTimer-BLE/blob/cadb8224af87f274671d99646407a7e94edd8dfb/app/src/main/java/com/dctimer/activity/MainActivity.java#L1719)，优先在当前步骤前显示红色逆序纠错并合并同面转动；合并后超过可配置阈值（默认 6 步）才重规划，未知起始状态仍直接规划。新路径继续支持逆序纠错；已完成的纠错步骤保留原位，沿用正常步骤的缩放与变浅过渡，换题或重规划时清理显示历史；正常路径半转保留原记号，纠错组合使用实际剩余转量。共享 Web/App 实现，未作为 GAN 16 UI 真机或发布验收。 |
 | 自由打乱：完成时按实际状态反推打乱记入成绩 | ✅ `markScrambled` 内 `genFacelet` + 替换打乱 | ❌ | 必须精确照拧 | P1 |
 | 静止 N 秒自动预备 | ✅ `giiSD` 2/3/4/5s | ✅ `bluetoothAutoReady: 'still'` | 秒数不可调 | P2：把 2/3/4/5s 做成可选 |
 | 「打乱正确即预备」 | ✅ `giiSD='s'`（默认） | ✅ `bluetoothAutoReady: 'scrambled'`，**已设为默认**（Sprint 11） | — | 已完成 |

@@ -3,10 +3,11 @@
  * to the same scrambled state.
  *
  * `hintScramble` can only tell the user which move they owe while the cube is
- * still ON the scramble's path. One wrong turn and it has nothing to say, which
- * is the moment csTimer does something better than "wrong, start over": it asks
- * the solver for a sequence from the cube's CURRENT state to the state the
- * scramble was going to reach, and hints on that instead
+ * still ON the scramble's path. The shared guidance controller now first
+ * shows merged inverse turns (DCTimer-BLE interaction reference). Only when
+ * that undo sequence exceeds the configured limit (default 6), or no reliable
+ * move history is available, does it ask the solver for a sequence from the
+ * cube's CURRENT state to the state the scramble was going to reach
  * (`bluetoothutil.js:71`, the `genState` / `genScr` branch).
  *
  * The scramble RECORDED with the solve does not change — the correction path

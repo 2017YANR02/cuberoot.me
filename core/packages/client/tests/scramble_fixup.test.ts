@@ -289,7 +289,7 @@ describe('Solo smart-cube guidance has one shared lifecycle controller', () => {
     );
     const start = controller.indexOf('this.options.startFromCube(event.timestamp)');
     const record = controller.indexOf('this.options.recordMove(event)', start);
-    const guidance = controller.indexOf('this.guidance.observe(event.facelets)');
+    const guidance = controller.indexOf('this.guidance.observe(event.facelets, event.move)');
     expect(start).toBeGreaterThan(-1);
     expect(record).toBeGreaterThan(start);
     expect(guidance).toBeGreaterThan(record);

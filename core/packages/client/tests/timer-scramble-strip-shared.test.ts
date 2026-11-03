@@ -13,6 +13,9 @@ import { join } from 'node:path';
 import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cubeMove, SOLVED_3X3 } from '@cuberoot/puzzle-solvers/timer-333-cube';
+import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
+import { createSmartCubeGuidanceController } from '@cuberoot/shared/smart-cube/scramble-guidance';
 
 const labels: TimerScrambleStripProps['verificationLabels'] = {
   copiedCorrection: 'Copied the scramble',
@@ -50,6 +53,103 @@ describe('shared TimerScrambleStrip', () => {
     act(() => root.render(createElement(TimerScrambleStrip, props)));
     return host.querySelector<HTMLElement>('.scramble-strip')!;
   }
+
+  it('keeps completed undo moves in place with the normal completion animation and unchanged length', () => {
+    const strip = render({ hint: { done: ['R'], corrections: ["F'", 'L2'], current: 'U', pending: ['B'], complete: false } });
+    const originalNodes = [...host.querySelectorAll<HTMLElement>('.scramble-move')];
+    const originalText = strip.querySelector('.scramble-moves')?.textContent;
+    const originalScale = strip.style.getPropertyValue('--scramble-length-scale');
+    expect([...host.querySelectorAll('.scramble-move')].map(node => [node.textContent, node.getAttribute('data-hint')]))
+      .toEqual([['R', 'done'], ["F'", 'correction'], ['L2', 'correction'], ['U', 'current'], ['B', 'pending']]);
+    render({ hint: { done: ['R'], corrections: ['L2'], current: 'U', pending: ['B'], complete: false } });
+    expect(originalNodes[1].dataset.hint).toBe('done');
+    expect(originalNodes[1].dataset.completing).toBe('true');
+    expect(originalNodes[1].dataset.correctionCompleting).toBe('true');
+    // A split half turn keeps L2 displayed until both quarters are done.
+    render({ hint: { done: ['R'], corrections: ['L'], current: 'U', pending: ['B'], complete: false } });
+    expect(originalNodes[2].textContent).toBe('L2');
+    expect(originalNodes[2].dataset.hint).toBe('correction');
+    render({ hint: { done: ['R'], current: 'U', pending: ['B'], complete: false } });
+    expect(host.querySelectorAll('[data-hint="correction"]')).toHaveLength(0);
+    expect(host.querySelector('[data-hint="current"]')?.textContent).toBe('U');
+    expect([...host.querySelectorAll('.scramble-move')]).toEqual(originalNodes);
+    expect(originalNodes[2].dataset.completing).toBe('true');
+    expect(strip.querySelector('.scramble-moves')?.textContent).toBe(originalText);
+    expect(strip.style.getPropertyValue('--scramble-length-scale')).toBe(originalScale);
+    render({ hint: { done: ['R', 'U'], current: 'B', pending: [], complete: false } });
+    expect([...host.querySelectorAll('.scramble-move')]).toEqual(originalNodes);
+    expect(originalNodes[3].dataset.hint).toBe('done');
+  });
+
+  it('retains a correction merged with the final normal move through target completion without duplicating it', () => {
+    const strip = render({ scramble: 'R U', hint: { done: ['R'], corrections: ['U2'], current: null, pending: [], complete: false } });
+    const node = strip.querySelectorAll<HTMLElement>('.scramble-move')[1];
+    render({ scramble: 'R U', hint: { done: ['R'], corrections: ['U'], current: null, pending: [], complete: false } });
+    render({ scramble: 'R U', match: true, hint: null });
+    expect(strip.querySelectorAll('.scramble-move')).toHaveLength(2);
+    expect(strip.querySelectorAll('.scramble-move')[1]).toBe(node);
+    expect(node.textContent).toBe('U2');
+    expect(node.dataset.hint).toBe('done');
+    expect(node.dataset.correctionCompleting).toBe('true');
+    render({ scramble: 'L D', hint: { done: [], current: 'L', pending: ['D'], complete: false } });
+    expect(strip.querySelector('.scramble-moves')?.textContent).toBe('L D');
+  });
+
+  it('preserves completed correction history across another error but clears it on replanning', () => {
+    const strip = render({ scramble: 'R U B', hint: { done: ['R'], corrections: ["F'"], current: 'U', pending: ['B'], complete: false } });
+    render({ scramble: 'R U B', hint: { done: ['R'], current: 'U', pending: ['B'], complete: false } });
+    const doneCorrection = strip.querySelectorAll('.scramble-move')[1];
+    render({ scramble: 'R U B', hint: { done: ['R'], corrections: ["L'"], current: 'U', pending: ['B'], complete: false } });
+    render({ scramble: 'R U B', hint: { done: ['R'], corrections: ['L2'], current: 'U', pending: ['B'], complete: false } });
+    expect(strip.querySelectorAll('.scramble-move')[1]).toBe(doneCorrection);
+    expect([...strip.querySelectorAll('[data-hint="done"]')].map(node => node.textContent)).toEqual(['R', "F'"]);
+    expect(strip.querySelector('[data-hint="correction"]')?.textContent).toBe('L2');
+    render({ scramble: 'R U B', match: false, hint: null });
+    render({ scramble: 'R U B', hint: { done: [], current: 'D', pending: ['F2'], complete: false } });
+    expect(strip.querySelector('.scramble-moves')?.textContent).toBe('D F2');
+  });
+
+  it('keeps the normal half-turn text stable while an intervening correction completes', () => {
+    const strip = render({ scramble: 'R2 U', hint: { done: [], current: 'R2', pending: ['U'], complete: false } });
+    const normal = strip.querySelector('.scramble-move');
+    render({ scramble: 'R2 U', hint: { done: [], corrections: ["F'"], current: 'R', pending: ['U'], complete: false } });
+    expect(strip.querySelectorAll('.scramble-move')[1]).toBe(normal);
+    expect(normal?.textContent).toBe('R2');
+    render({ scramble: 'R2 U', hint: { done: [], current: 'R2', pending: ['U'], complete: false } });
+    expect(strip.querySelector('.scramble-moves')?.textContent).toBe("F' R2 U");
+  });
+
+  it('retains completed correction and normal moves when a GAN batch ends with a new error', () => {
+    const scramble = 'R U B';
+    const controller = createSmartCubeGuidanceController({
+      solve: async () => null,
+      onChange: state => root.render(createElement(TimerScrambleStrip, {
+        scramble, copiedLabel: 'Copied', verificationLabels: labels, ...state,
+      })),
+    });
+    let facelets = SOLVED_3X3;
+    const turn = (move: string) => {
+      facelets = cubeMove(facelets, move);
+      controller.observe(facelets, move);
+    };
+    act(() => {
+      controller.setConnected(true);
+      controller.setContext({ id: 1, scramble, targetFacelets: smartCubeTargetFacelets(scramble)! });
+      controller.syncFacelets(facelets);
+      turn('R');
+    });
+    act(() => turn('F'));
+    const correction = host.querySelector<HTMLElement>('[data-hint="correction"]')!;
+    const normal = host.querySelector<HTMLElement>('[data-hint="current"]')!;
+    // One act, just like a synchronous BLE history batch: only the last state renders.
+    act(() => { turn("F'"); turn('U'); turn('L'); });
+    expect([...host.querySelectorAll('.scramble-move')].map(node => [node.textContent, node.getAttribute('data-hint')]))
+      .toEqual([['R', 'done'], ["F'", 'done'], ['U', 'done'], ["L'", 'correction'], ['B', 'current']]);
+    expect(host.querySelectorAll('.scramble-move')[1]).toBe(correction);
+    expect(host.querySelectorAll('.scramble-move')[2]).toBe(normal);
+    expect(correction.dataset.correctionCompleting).toBe('true');
+    controller.dispose();
+  });
 
   it('keeps Web classes, font tiers, copy feedback and match data without status captions', () => {
     const activate = vi.fn();

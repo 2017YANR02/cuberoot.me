@@ -45,6 +45,7 @@ export interface SmartCubeSoloTimerControllerOptions<
 > {
   armFromCube(timestamp?: number): boolean | void;
   autoReadyOnScramble(): boolean;
+  correctionLimit?(): number | undefined;
   canStartAttempt(): boolean;
   getPhase(): TimerPhase;
   isTimingEnabled(): boolean;
@@ -93,6 +94,7 @@ export class SmartCubeSoloTimerController<
     this.guidance = createSmartCubeGuidanceController({
       onChange: options.onGuidanceChange,
       solve: options.solve,
+      correctionLimit: options.correctionLimit,
     });
   }
 
@@ -182,10 +184,11 @@ export class SmartCubeSoloTimerController<
         || !context?.targetFacelets
         || !timerSupportsSmartCubeAutoTiming(context.event)
         || contextRevision !== this.contextRevision) return outcome;
-      const observation = this.guidance.observe(event.facelets);
+      const observation = this.guidance.observe(event.facelets, event.move);
       outcome.guidanceCompleted = observation.completedNow;
       const hint = observation.state.hint;
       if (!this.penultimateObserved && hint && !hint.complete
+        && !hint.corrections?.length
         && hint.done.length > 0 && hint.current !== null && hint.pending.length === 0) {
         this.penultimateObserved = true;
         outcome.guidancePenultimate = true;

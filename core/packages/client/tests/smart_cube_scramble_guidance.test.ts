@@ -1,5 +1,7 @@
 import { cubeMove } from '@cuberoot/puzzle-solvers/timer-333-cube';
-import { describe, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { invertAlg } from '@cuberoot/shared/alg-transform';
+import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
 
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { createSmartCubeGuidanceController } from '@cuberoot/shared/smart-cube/scramble-guidance';
@@ -205,4 +207,128 @@ describe('shared smart-cube scramble guidance controller', () => {
   it('runs the latest target after a stale target settles', latestTargetWaitsForPendingTarget);
   it('drops late results after disconnect or dispose', disconnectAndDisposeDropLateResults);
   it('drops a late result while running and recovers for the next slot', runningDropsLateResultAndRecovers);
+});
+
+describe('undo before replanning', () => {
+  function setup(scramble = 'R U', options: {
+    limit?: number;
+    orientation?: string;
+    solve?: (from: string, to: string) => Promise<string | null>;
+  } = {}) {
+    const solve = vi.fn(options.solve ?? (async () => null));
+    const controller = createSmartCubeGuidanceController({ solve, correctionLimit: () => options.limit });
+    const targetFacelets = smartCubeTargetFacelets(scramble, options.orientation)!;
+    controller.setContext({ id: 1, scramble, targetFacelets, orientation: options.orientation });
+    controller.setConnected(true);
+    let facelets = target('');
+    controller.syncFacelets(facelets);
+    return {
+      controller, solve, targetFacelets,
+      turn(move: string) {
+        facelets = cubeMove(facelets, move);
+        return controller.observe(facelets, move);
+      },
+      facelets: () => facelets,
+    };
+  }
+
+  it('keeps the final normal move, merges undo turns, and removes corrections as they are undone', () => {
+    const h = setup();
+    h.turn('R');
+    expect(h.turn('F').state.hint).toEqual({ displayMoves: expect.any(Array), done: ['R'], corrections: ["F'"], current: 'U', pending: [], complete: false });
+    expect(h.turn('F').state.hint?.corrections).toEqual(['F2']);
+    expect(h.turn("F'").state.hint?.corrections).toEqual(["F'"]);
+    expect(h.turn("F'").state.hint).toEqual({ displayMoves: expect.any(Array), done: ['R'], current: 'U', pending: [], complete: false });
+    expect(h.turn('U').completedNow).toBe(true);
+    expect(h.solve).not.toHaveBeenCalled();
+  });
+
+  it('merges same-face wrong direction with the pending normal move', () => {
+    const h = setup();
+    expect(h.turn("R'").state.hint).toEqual({ displayMoves: expect.any(Array), done: [], corrections: ['R2'], current: 'U', pending: [], complete: false });
+    // Either direction of the displayed half turn must reach the original path.
+    expect(h.turn("R'").state.hint?.corrections).toEqual(["R'"]);
+    expect(h.turn("R'").state.hint?.corrections).toBeUndefined();
+    expect(h.turn('U').completedNow).toBe(true);
+    expect(h.solve).not.toHaveBeenCalled();
+  });
+
+  it.each(['R', "R'"])('preserves the unfinished half turn after %s then a wrong face', (partial) => {
+    const h = setup('R2 U');
+    expect(h.turn(partial).state.hint?.current).toBe('R2');
+    expect(h.turn('F').state.hint).toEqual({ displayMoves: expect.any(Array), done: [], corrections: ["F'"], current: partial, pending: ['U'], complete: false });
+    h.turn("F'");
+    h.turn(partial);
+    expect(h.turn('U').completedNow).toBe(true);
+    expect(h.solve).not.toHaveBeenCalled();
+  });
+
+  it('uses display orientation for red moves while tracking physical device moves', () => {
+    const h = setup('R U', { orientation: 'y' });
+    const physicalWrong = normalizeWcaScramble('y F')!;
+    const hint = h.turn(physicalWrong).state.hint!;
+    expect(hint.corrections).toEqual(["F'"]);
+    expect(hint.current).toBe('R');
+    h.turn(invertAlg(physicalWrong));
+    expect(h.controller.snapshot().correctionActive).toBe(false);
+  });
+
+  it('keeps six merged undo moves, replans on seven, and rejects a late result after undoing back to six', async () => {
+    const pending = deferred<string | null>();
+    const h = setup('R U', { solve: () => pending.promise });
+    h.turn('R');
+    const wrong = ['F', 'L', 'B', 'D', 'R', 'F', 'B'];
+    for (const move of wrong.slice(0, 6)) h.turn(move);
+    expect(h.controller.snapshot().hint?.corrections).toHaveLength(6);
+    expect(h.solve).not.toHaveBeenCalled();
+    h.turn(wrong[6]);
+    expect(h.solve).toHaveBeenCalledTimes(1);
+    h.turn("B'");
+    expect(h.controller.snapshot().hint?.corrections).toHaveLength(6);
+    pending.resolve(`${invertAlg(wrong.join(' '))} U`);
+    await flush();
+    expect(h.controller.snapshot().hint?.corrections).toEqual(invertAlg(wrong.slice(0, 6).join(' ')).split(' '));
+    expect(h.solve).toHaveBeenCalledTimes(1);
+  });
+
+  it('re-enters undo mode on the newly planned path and still reaches the same target', async () => {
+    const h = setup('R U', { limit: 1, solve: async () => "L' F' U" });
+    h.turn('R'); h.turn('F'); h.turn('L');
+    await flush();
+    expect(h.controller.snapshot().hint?.current).toBe("L'");
+    expect(h.turn('B').state.hint?.corrections).toEqual(["B'"]);
+    h.turn("B'"); h.turn("L'"); h.turn("F'");
+    expect(h.turn('U').completedNow).toBe(true);
+    expect(h.facelets()).toBe(h.targetFacelets);
+    expect(h.solve).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows zero to replan immediately and does not double-count repeated state frames', () => {
+    const immediate = setup('R U', { limit: 0 });
+    immediate.turn('F');
+    expect(immediate.solve).toHaveBeenCalledTimes(1);
+    const h = setup();
+    h.turn('F');
+    h.controller.syncFacelets(h.facelets());
+    expect(h.controller.snapshot().hint?.corrections).toEqual(["F'"]);
+    h.controller.syncFacelets(target('L B D'));
+    expect(h.controller.snapshot().hint).toBeNull();
+    expect(h.solve).toHaveBeenCalledTimes(1);
+  });
+
+  it('retries a solver result when a wrong-direction quarter turn arrives while solving', async () => {
+    const pending = deferred<string | null>();
+    const solve = vi.fn().mockImplementationOnce(() => pending.promise).mockResolvedValue("R' F' U");
+    const controller = createSmartCubeGuidanceController({ solve });
+    controller.setContext({ id: 1, scramble: 'U', targetFacelets: target('U') });
+    controller.setConnected(true);
+    controller.observe(target('F')); // Unknown starting state requires a route.
+    controller.observe(target('F R'));
+    pending.resolve("R' R F' U"); // R is the wrong direction for the first R'.
+    await flush();
+    expect(solve).toHaveBeenCalledTimes(2);
+    expect(solve).toHaveBeenLastCalledWith(target('F R'), target('U'));
+    expect(controller.snapshot().hint?.current).toBe("R'");
+    controller.dispose();
+  });
 });

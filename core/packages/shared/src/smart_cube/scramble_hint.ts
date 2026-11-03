@@ -16,9 +16,87 @@ import { invertAlg } from '../alg_transform';
 
 export interface SmartCubeScrambleHint {
   done: string[];
+  /** Remaining undo moves, displayed in red before the next normal move. */
+  corrections?: string[];
+  /** Stable display history, including completed undo turns; never used for cube state or storage. */
+  displayMoves?: SmartCubeScrambleDisplayMove[];
   current: string | null;
   pending: string[];
   complete: boolean;
+}
+
+export type SmartCubeScrambleMoveState = 'done' | 'correction' | 'current' | 'pending';
+export interface SmartCubeScrambleDisplayMove {
+  id: number;
+  move: string;
+  /** Live remaining turn; a split half turn keeps its original display text. */
+  token: string;
+  state: SmartCubeScrambleMoveState;
+}
+
+function hintMoves(hint: SmartCubeScrambleHint): Omit<SmartCubeScrambleDisplayMove, 'id'>[] {
+  return [
+    ...hint.done.map(move => ({ move, state: 'done' as const })),
+    ...(hint.corrections ?? []).map(move => ({ move, state: 'correction' as const })),
+    ...(hint.current === null ? [] : [{ move: hint.current, state: 'current' as const }]),
+    ...hint.pending.map(move => ({ move, state: 'pending' as const })),
+  ].map(move => ({ ...move, token: move.move }));
+}
+
+export interface SmartCubeScrambleDisplayState {
+  hint: SmartCubeScrambleHint | null;
+  scramble?: string;
+  moves: SmartCubeScrambleDisplayMove[];
+  nextId: number;
+}
+
+/** Display-only history. Call for each observed move, before a UI can batch updates. */
+export function projectSmartCubeScrambleDisplay(
+  previous: SmartCubeScrambleDisplayState | null,
+  hint: SmartCubeScrambleHint | null,
+  scramble?: string,
+): SmartCubeScrambleDisplayState {
+  let nextId = previous?.nextId ?? 0;
+  const incoming = hint ? hintMoves(hint) : [];
+  let moves: SmartCubeScrambleDisplayMove[];
+  const normalPath = (value: SmartCubeScrambleHint) => [...value.done, value.current, ...value.pending].filter(Boolean).join(' ');
+  const reset = !hint || !previous?.hint || previous.scramble !== scramble
+    || hint.done.length < previous.hint.done.length
+    || (!hint.complete && !hint.corrections?.length && !previous.hint.corrections?.length
+      && normalPath(hint) !== normalPath(previous.hint));
+  if (reset) {
+    moves = incoming.map(move => ({ ...move, id: nextId++ }));
+  } else {
+    const done = previous.moves.filter(move => move.state === 'done');
+    const before = previous.moves.filter(move => move.state !== 'done');
+    const after = incoming.filter(move => move.state !== 'done');
+    // The unconsumed suffix retains its nodes and positions, even when an
+    // inverse is inserted or a normal half-turn's remaining amount changes.
+    let common = 0;
+    while (common < before.length && common < after.length) {
+      const oldMove = before[before.length - 1 - common];
+      const newMove = after[after.length - 1 - common];
+      const sameNormalFace = oldMove.state !== 'correction' && newMove.state !== 'correction'
+        && oldMove.token[0] === newMove.token[0];
+      const partialCorrection = oldMove.state === 'correction' && newMove.state === 'correction'
+        && oldMove.token.endsWith('2') && oldMove.token[0] === newMove.token[0];
+      if (oldMove.token !== newMove.token && !sameNormalFace && !partialCorrection) break;
+      common++;
+    }
+    const removed = before.slice(0, before.length - common);
+    const added = after.slice(0, after.length - common);
+    moves = [
+      ...done,
+      // Only a consumed prefix completes. A newly wrong turn can replace the
+      // inverse prefix, but must not mark that discarded advice as performed.
+      ...(added.length === 0 ? removed.map(move => ({ ...move, state: 'done' as const })) : []),
+      ...added.map(move => ({ ...move, id: nextId++ })),
+      ...before.slice(before.length - common).map((move, index) => ({
+        ...move, token: after[after.length - common + index].token, state: after[after.length - common + index].state,
+      })),
+    ];
+  }
+  return { hint, scramble, moves, nextId };
 }
 
 interface FaceTurn {
@@ -61,6 +139,32 @@ export function hintSmartCubeScramble(
   fromFacelets: string = SOLVED_3X3,
   orientation = '',
 ): SmartCubeScrambleHint | null {
+  return scrambleProgress(scramble, facelets, fromFacelets, orientation, false)?.hint ?? null;
+}
+
+export interface SmartCubeScrambleProgress {
+  hint: SmartCubeScrambleHint;
+  /** Exact remaining turns, including the unfinished half turn, in display coordinates. */
+  remaining: string[];
+}
+
+/** Only half turns admit an intermediate quarter turn on the timer's active path. */
+export function smartCubeScrambleProgress(
+  scramble: string,
+  facelets: string,
+  fromFacelets: string = SOLVED_3X3,
+  orientation = '',
+): SmartCubeScrambleProgress | null {
+  return scrambleProgress(scramble, facelets, fromFacelets, orientation, true);
+}
+
+function scrambleProgress(
+  scramble: string,
+  facelets: string,
+  fromFacelets: string,
+  orientation: string,
+  strictPartial: boolean,
+): SmartCubeScrambleProgress | null {
   const turns = parseHintableSmartCubeScramble(scramble, orientation);
   if (!turns
     || !cubieStateFromFacelets(facelets)
@@ -68,23 +172,31 @@ export function hintSmartCubeScramble(
 
   let currentFacelets = fromFacelets;
   let next = currentFacelets === facelets ? 0 : -1;
+  let partial = 0;
   for (let index = 0; index < turns.length; index++) {
     const turn = turns[index];
     for (const quarters of [1, 2, 3] as const) {
+      if (strictPartial && quarters !== turn.quarters && turn.quarters !== 2) continue;
       if (cubeMove(currentFacelets, turnToken(turn.face, quarters)) !== facelets) continue;
       next = quarters === turn.quarters ? index + 1 : index;
+      partial = next === index ? quarters : 0;
       break;
     }
     if (next === index) break;
     currentFacelets = cubeMove(currentFacelets, turn.token);
   }
   if (next < 0) return null;
-  return {
+  const hint = {
     done: turns.slice(0, next).map((turn) => turn.displayToken),
     current: next < turns.length ? turns[next].displayToken : null,
     pending: turns.slice(next + 1).map((turn) => turn.displayToken),
     complete: next >= turns.length,
   };
+  const remaining = turns.slice(next).map((turn) => turn.displayToken);
+  if (partial && remaining.length) {
+    remaining[0] = turnToken(remaining[0][0], ((turns[next].quarters - partial + 4) % 4) as 1 | 2 | 3);
+  }
+  return { hint, remaining };
 }
 
 export interface SmartCubeFixupPath {
@@ -189,7 +301,7 @@ export function createSmartCubeFixupRequester(
           const scramble = await deps.solve(fromFacelets, targetFacelets);
           if (!scramble || !deps.valid(targetFacelets)) return null;
           const currentFacelets = deps.facelets() ?? fromFacelets;
-          const hint = hintSmartCubeScramble(scramble, currentFacelets, fromFacelets);
+          const hint = smartCubeScrambleProgress(scramble, currentFacelets, fromFacelets)?.hint;
           if (hint?.complete) return null;
           if (hint) return { fromFacelets, scramble, hint };
         }

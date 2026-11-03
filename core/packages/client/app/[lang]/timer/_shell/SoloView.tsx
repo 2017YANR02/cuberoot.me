@@ -1697,6 +1697,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       && !autoRecapInputBlockedRef.current
       && (!competitionRef.current.enabled || competitionRef.current.canStart()),
     getPhase: () => phaseSnapshotRef.current,
+    correctionLimit: () => getSettings().smartCubeCorrectionLimit,
     isTimingEnabled: () => competitionRef.current.enabled || getSettings().timingEnabled,
     onGuidanceChange: setScrambleGuidance,
     onMove: ({ metadata, move, timestamp }) => {

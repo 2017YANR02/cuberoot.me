@@ -1,9 +1,17 @@
 import {
   createSmartCubeFixupRequester,
-  verifySmartCubeScramble,
+  smartCubeScrambleProgress,
+  projectSmartCubeScrambleDisplay,
+  type SmartCubeScrambleDisplayState,
   type SmartCubeFixupPath,
+  type SmartCubeScrambleProgress,
   type SmartCubeScrambleHint,
 } from './scramble_hint';
+import { cubeMove, faceTurnToken, SOLVED_3X3 } from '@cuberoot/puzzle-solvers/timer-333-cube';
+import { mergeAdjacentMoves } from '../alg_notation';
+import { invertAlg } from '../alg_transform';
+import { normalizeWcaScramble } from '../normalize_wca_scramble';
+import { normalizeSmartCubeCorrectionLimit } from '../timer/settings-contract';
 
 export interface SmartCubeGuidanceState {
   correctionActive: boolean;
@@ -34,6 +42,7 @@ const EMPTY_STATE: SmartCubeGuidanceState = {
 export function createSmartCubeGuidanceController(deps: {
   onChange?(state: SmartCubeGuidanceState): void;
   solve(fromFacelets: string, targetFacelets: string): Promise<string | null>;
+  correctionLimit?(): number | undefined;
 }) {
   let connected = false;
   let context: SmartCubeGuidanceContext | null = null;
@@ -45,16 +54,31 @@ export function createSmartCubeGuidanceController(deps: {
   let running = false;
   let state = EMPTY_STATE;
   let wanted = false;
+  let anchor: SmartCubeScrambleProgress | null = null;
+  let deviation: string[] = [];
+  let presentation: SmartCubeScrambleDisplayState | null = null;
+  let retainCorrections = false;
   const pendingGenerations = new Set<number>();
 
   const emit = (next: SmartCubeGuidanceState): SmartCubeGuidanceState => {
-    state = next;
+    // GAN can deliver several moves synchronously. Accumulate completed moves
+    // here so React batching cannot discard a correction followed by a new error.
+    presentation = projectSmartCubeScrambleDisplay(presentation, next.hint, context?.scramble);
+    if (!next.hint) retainCorrections = false;
+    else if (next.hint.corrections?.length) retainCorrections = true;
+    state = retainCorrections && next.hint
+      ? { ...next, hint: { ...next.hint, displayMoves: presentation.moves } }
+      : next;
     deps.onChange?.(state);
     return state;
   };
 
   const clear = (resetCompletion: boolean, notify = true) => {
     correction = null;
+    anchor = null;
+    deviation = [];
+    presentation = null;
+    retainCorrections = false;
     currentFacelets = null;
     wanted = false;
     if (resetCompletion) guidanceComplete = false;
@@ -91,20 +115,9 @@ export function createSmartCubeGuidanceController(deps: {
         fromFacelets: result.fromFacelets,
         scramble: result.scramble,
       };
-      const verification = verifySmartCubeScramble(
-        context.scramble,
-        targetFacelets,
-        currentFacelets,
-        correction,
-        context.orientation,
-      );
-      wanted = verification.needsFixup;
-      if (!verification.correctionActive) correction = null;
-      emit({
-        correctionActive: verification.correctionActive,
-        hint: verification.match ? null : verification.hint,
-        match: verification.match,
-      });
+      anchor = null;
+      deviation = [];
+      evaluate(currentFacelets, false);
     }).finally(() => {
       pendingGenerations.delete(requestGeneration);
     });
@@ -113,10 +126,12 @@ export function createSmartCubeGuidanceController(deps: {
   const evaluate = (
     facelets: string,
     allowCompletion: boolean,
+    move?: string,
   ): SmartCubeGuidanceObservation => {
     if (disposed || !connected || running || !context) {
       return { completedNow: false, state };
     }
+    const previousFacelets = currentFacelets;
     currentFacelets = facelets;
     if (guidanceComplete) {
       const next = facelets === context.targetFacelets
@@ -125,30 +140,62 @@ export function createSmartCubeGuidanceController(deps: {
       return { completedNow: false, state: emit(next) };
     }
 
-    const verification = verifySmartCubeScramble(
-      context.scramble,
-      context.targetFacelets,
-      facelets,
-      correction,
-      context.orientation,
-    );
-    wanted = verification.needsFixup;
-    if (verification.match) {
+    if (facelets === context.targetFacelets) {
       guidanceComplete = allowCompletion;
       wanted = false;
       correction = null;
+      anchor = null;
+      deviation = [];
       return {
         completedNow: allowCompletion,
         state: emit({ correctionActive: false, hint: null, match: true }),
       };
     }
-    if (!verification.correctionActive) correction = null;
+    const orientation = context.orientation ?? '';
+    const displayAlg = (alg: string) => normalizeWcaScramble(`${invertAlg(orientation)} ${alg}`) ?? alg;
+    let progress = correction ? smartCubeScrambleProgress(
+      displayAlg(correction.scramble), facelets, correction.fromFacelets, orientation,
+    ) : null;
+    if (!progress) {
+      progress = smartCubeScrambleProgress(context.scramble, facelets, SOLVED_3X3, orientation);
+      if (progress) correction = null;
+    }
+    let hint: SmartCubeScrambleHint | null = null;
+    wanted = false;
+    if (progress) {
+      anchor = progress;
+      deviation = [];
+      hint = progress.hint;
+    } else {
+      // State frames may repeat a move's final state. Never count it twice, or
+      // invent missing turns when reconnect/history recovery jumps the cube.
+      if (anchor && previousFacelets !== facelets) {
+        const turn = previousFacelets ? observedTurn(previousFacelets, facelets, move) : null;
+        if (turn) deviation = mergeAdjacentMoves([...deviation, turn].join(' ')).split(/\s+/).filter(Boolean);
+        else anchor = null;
+      }
+      if (anchor && deviation.length > 0
+        && deviation.length <= normalizeSmartCubeCorrectionLimit(deps.correctionLimit?.())) {
+        const corrections = displayAlg(invertAlg(deviation.join(' '))).split(/\s+/).filter(Boolean);
+        const remaining = [...anchor.remaining];
+        // DCTimer-BLE's correction-first presentation, with the same adjacent
+        // face merge used elsewhere in CubeRoot (including across this boundary).
+        while (corrections.length && remaining.length && corrections.at(-1)![0] === remaining[0][0]) {
+          const merged = mergeAdjacentMoves(`${corrections.pop()} ${remaining.shift()}`);
+          if (merged) corrections.push(merged);
+        }
+        hint = { done: anchor.hint.done, corrections, current: remaining[0] ?? null, pending: remaining.slice(1), complete: false };
+      } else {
+        if (!anchor) deviation = [];
+        wanted = true;
+      }
+    }
     const next = emit({
-      correctionActive: verification.correctionActive,
-      hint: verification.hint,
+      correctionActive: Boolean(correction || hint?.corrections?.length),
+      hint,
       match: false,
     });
-    if (verification.needsFixup) requestCorrection(context.targetFacelets, generation);
+    if (wanted) requestCorrection(context.targetFacelets, generation);
     return { completedNow: false, state: next };
   };
 
@@ -162,8 +209,8 @@ export function createSmartCubeGuidanceController(deps: {
       clear(true, false);
     },
 
-    observe(facelets: string): SmartCubeGuidanceObservation {
-      return evaluate(facelets, true);
+    observe(facelets: string, move?: string): SmartCubeGuidanceObservation {
+      return evaluate(facelets, true, move);
     },
 
     setConnected(next: boolean) {
@@ -200,4 +247,19 @@ export function createSmartCubeGuidanceController(deps: {
 
     snapshot: () => state,
   };
+}
+
+function observedTurn(from: string, to: string, move?: string): string | null {
+  if (move) {
+    const turn = faceTurnToken(move);
+    return turn && cubeMove(from, turn) === to ? turn : null;
+  }
+  // Compatibility for state-only consumers: accept only an exact single turn.
+  for (const face of 'URFDLB') {
+    for (const suffix of ['', '2', "'"]) {
+      const turn = face + suffix;
+      if (cubeMove(from, turn) === to) return turn;
+    }
+  }
+  return null;
 }

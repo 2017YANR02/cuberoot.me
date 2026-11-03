@@ -12,7 +12,7 @@ import { useAutoReady as webAutoReady } from '@/app/[lang]/timer/_lib/bluetooth/
 
 describe('one smart-cube settings persistence contract', () => {
   it('supplies the exact Web defaults to new and old installed stores', () => {
-    expect(DEFAULT_TIMER_SMART_CUBE_SETTINGS).toEqual({ bluetoothAutoReady: 'scrambled', liveCubeView: '3d', gyroEnabled: true, autoCalibrateGyro: true, recordGyro: true, autoRecap: true, autoOpenSolution: true });
+    expect(DEFAULT_TIMER_SMART_CUBE_SETTINGS).toEqual({ bluetoothAutoReady: 'scrambled', smartCubeCorrectionLimit: 6, liveCubeView: '3d', gyroEnabled: true, autoCalibrateGyro: true, recordGyro: true, autoRecap: true, autoOpenSolution: true });
     const old = createTimerStoreData(0, 'session');
     for (const key of Object.keys(DEFAULT_TIMER_SMART_CUBE_SETTINGS)) delete (old.settings as unknown as Record<string, unknown>)[key];
     expect(decodeTimerStoreData(old)?.settings).toMatchObject(DEFAULT_TIMER_SMART_CUBE_SETTINGS);
@@ -35,7 +35,7 @@ describe('one smart-cube settings persistence contract', () => {
                 const data = createTimerStoreData(0, 'session');
                 Object.assign(data.settings, choice);
                 expect(parseTimerStoreJson(serializeTimerStoreData(data))?.settings).toMatchObject({ ...choice, recordGyro: true });
-                expect(normalizeTimerSmartCubeSettings(choice)).toEqual({ ...choice, recordGyro: true, autoCalibrateGyro: true });
+                expect(normalizeTimerSmartCubeSettings(choice)).toEqual({ ...choice, recordGyro: true, autoCalibrateGyro: true, smartCubeCorrectionLimit: 6 });
               });
             }
           }
@@ -48,6 +48,16 @@ describe('one smart-cube settings persistence contract', () => {
     data.settings.autoCalibrateGyro = autoCalibrateGyro;
     expect(parseTimerStoreJson(serializeTimerStoreData(data))?.settings.autoCalibrateGyro).toBe(autoCalibrateGyro);
     expect(normalizeTimerSmartCubeSettings({ autoCalibrateGyro }).autoCalibrateGyro).toBe(autoCalibrateGyro);
+  });
+  it.each([0, 1, 6, 8, 20, 100])('persists correction threshold %s through backup and reload', smartCubeCorrectionLimit => {
+    const data = createTimerStoreData(0, 'session');
+    data.settings.smartCubeCorrectionLimit = smartCubeCorrectionLimit;
+    expect(parseTimerStoreJson(serializeTimerStoreData(data))?.settings.smartCubeCorrectionLimit).toBe(smartCubeCorrectionLimit);
+  });
+  it.each([-1, 101, 1.5, '8', null])('rejects an invalid imported correction threshold %s', smartCubeCorrectionLimit => {
+    const data = createTimerStoreData(0, 'session');
+    Object.assign(data.settings, { smartCubeCorrectionLimit });
+    expect(decodeTimerStoreData(data)).toBeNull();
   });
   it.each([{ bluetoothAutoReady: 'other' }, { liveCubeView: 'other' }, { gyroEnabled: 'false' }, { autoCalibrateGyro: 'false' }, { recordGyro: 'false' }, { autoRecap: 0 }, { autoRecap: null }, { autoOpenSolution: 0 }, { autoOpenSolution: null }])('rejects explicit corrupt imported choices %j', (bad) => {
     const data = createTimerStoreData(0, 'session');
@@ -67,7 +77,29 @@ describe('shared smart-cube controls and auto-ready subscription', () => {
   afterEach(async () => {
     await act(async () => root.unmount()); host.remove(); vi.useRealTimers(); vi.unstubAllGlobals();
   });
-  it.each(['en', 'zh'] as const)('renders all six exact rows and every option, emitting only changed fields (%s)', async (lang) => {
+  it('commits a custom correction threshold on blur and restores six for an empty input on Enter', async () => {
+    const onChange = vi.fn();
+    const render = async (limit: number) => act(async () => root.render(createElement(TimerSmartCubeSettingsFields, {
+      value: { ...DEFAULT_TIMER_SMART_CUBE_SETTINGS, smartCubeCorrectionLimit: limit },
+      localize: copy => copy.en, onChange, renderBooleanControl: () => null,
+    })));
+    await render(6);
+    const input = host.querySelector<HTMLInputElement>('input[type="number"]')!;
+    const setInput = async (value: string) => act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(input.value).toBe('6');
+    await setInput('3');
+    await act(async () => input.dispatchEvent(new FocusEvent('focusout', { bubbles: true })));
+    expect(onChange).toHaveBeenLastCalledWith({ smartCubeCorrectionLimit: 3 });
+    await render(3);
+    await setInput('');
+    await act(async () => input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })));
+    expect(onChange).toHaveBeenLastCalledWith({ smartCubeCorrectionLimit: 6 });
+    expect(input.value).toBe('6');
+  });
+  it.each(['en', 'zh'] as const)('renders the shared rows and every option, emitting only changed fields (%s)', async (lang) => {
     const onChange = vi.fn();
     await act(async () => root.render(createElement(TimerSmartCubeSettingsFields, {
       value: DEFAULT_TIMER_SMART_CUBE_SETTINGS, localize: (copy) => copy[lang], onChange,

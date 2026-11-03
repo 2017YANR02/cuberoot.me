@@ -848,8 +848,8 @@
   {
     "name": "huizhiLLL/DCTimer-BLE",
     "url": "https://github.com/huizhiLLL/DCTimer-BLE",
-    "zh": "智能魔方专项训练规则参考；LSE/L10P 固定朝向随机状态约束参考其 Scrambler 实现，复用本站两阶段求解器生成打乱",
-    "en": "Reference for smart-cube training rules and fixed-grip LSE/L10P random-state constraints; scrambles use CubeRoot's existing two-phase solver"
+    "zh": "智能魔方专项训练规则及打乱逆序纠错交互参考（同层合并、红色纠错）；LSE/L10P 固定朝向随机状态约束参考其 Scrambler 实现，复用本站两阶段求解器生成打乱",
+    "en": "Reference for smart-cube training rules, scramble undo guidance with merged turns and inline red corrections, and fixed-grip LSE/L10P random-state constraints; scrambles use CubeRoot's existing two-phase solver"
   },
   {
     "name": "MeigenChou/DCTimer-Android",

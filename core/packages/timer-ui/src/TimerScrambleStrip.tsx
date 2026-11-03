@@ -3,7 +3,13 @@
 import './scramble-hint.css';
 
 import { Check } from 'lucide-react';
-import type { SmartCubeScrambleHint } from '@cuberoot/shared/smart-cube/scramble-hint';
+import {
+  projectSmartCubeScrambleDisplay,
+  type SmartCubeScrambleHint,
+  type SmartCubeScrambleDisplayMove as HintMove,
+  type SmartCubeScrambleDisplayState,
+  type SmartCubeScrambleMoveState as ScrambleMoveState,
+} from '@cuberoot/shared/smart-cube/scramble-hint';
 import type { TimerScrambleStatusKind } from '@cuberoot/shared/timer';
 import {
   Fragment,
@@ -78,14 +84,25 @@ export interface TimerScrambleHintTextProps {
   tailExtra?: ReactNode;
 }
 
-function ScrambleMove({ move, state }: { move: string; state: 'done' | 'current' | 'pending' }) {
+function useHintMoves(hint: TimerScrambleHint | null, scramble?: string): HintMove[] {
+  const committed = useRef<SmartCubeScrambleDisplayState | null>(null);
+  const projection = hint?.displayMoves
+    ? { hint, scramble, moves: hint.displayMoves, nextId: Math.max(0, ...hint.displayMoves.map(move => move.id + 1)) }
+    : projectSmartCubeScrambleDisplay(committed.current, hint, scramble);
+  useLayoutEffect(() => { committed.current = projection; });
+  return projection.moves;
+}
+
+function ScrambleMove({ move, state }: { move: string; state: ScrambleMoveState }) {
   const previous = useRef(state);
-  const completing = useRef(false);
+  const completing = useRef<'current' | 'correction' | null>(null);
   if (previous.current !== state) {
-    completing.current = previous.current === 'current' && state === 'done';
+    completing.current = (previous.current === 'current' || previous.current === 'correction') && state === 'done'
+      ? previous.current : null;
   }
   useLayoutEffect(() => { previous.current = state; }, [state]);
-  return <span className="scramble-move" data-hint={state} data-completing={completing.current || undefined}>{move}</span>;
+  return <span className="scramble-move" data-hint={state} data-completing={completing.current ? true : undefined}
+    data-correction-completing={completing.current === 'correction' || undefined}>{move}</span>;
 }
 
 /**
@@ -93,19 +110,18 @@ function ScrambleMove({ move, state }: { move: string; state: 'done' | 'current'
  * check in one relative wrapper means feedback never creates a new wrap point.
  */
 export function TimerScrambleHintText({ hint, tailExtra }: TimerScrambleHintTextProps) {
-  const moves: Array<{ move: string; state: 'done' | 'current' | 'pending' }> = [
-    ...hint.done.map((move) => ({ move, state: 'done' as const })),
-    ...(hint.current === null ? [] : [{ move: hint.current, state: 'current' as const }]),
-    ...hint.pending.map((move) => ({ move, state: 'pending' as const })),
-  ];
+  const moves = useHintMoves(hint);
+  return <ScrambleHintMoves moves={moves} tailExtra={tailExtra} />;
+}
 
+function ScrambleHintMoves({ moves, tailExtra }: { moves: HintMove[]; tailExtra?: ReactNode }) {
   return (
     <>
-      {moves.map(({ move, state }, index) => {
+      {moves.map(({ id, move, state }, index) => {
         const isLast = index === moves.length - 1;
         const node = <ScrambleMove move={move} state={state} />;
         return (
-          <Fragment key={`${index}:${move}`}>
+          <Fragment key={id}>
             {index > 0 ? ' ' : null}
             {isLast
               ? <span className="scramble-copied-tail">{node}{tailExtra}</span>
@@ -151,18 +167,20 @@ export function TimerScrambleStrip({
   if (hint && !hint.complete) previousHint.current = { scramble, hint };
   else if (match !== true) previousHint.current = null;
   const previous = previousHint.current?.hint;
-  const completedMoves = previous && [...previous.done, ...(previous.current === null ? [] : [previous.current]), ...previous.pending];
-  const completedHint = match === true && completedMoves && completedMoves.join(' ') === scramble.trim().replace(/\s+/g, ' ')
+  const completedMoves = previous && [...previous.done, ...(previous.corrections ?? []), ...(previous.current === null ? [] : [previous.current]), ...previous.pending];
+  const completedHint: TimerScrambleHint | null = match === true && completedMoves
+    && (previous?.corrections?.length || completedMoves.join(' ') === scramble.trim().replace(/\s+/g, ' '))
     ? { done: completedMoves, current: null, pending: [], complete: true }
     : null;
   const liveHint = hint && !hint.complete ? hint : completedHint;
+  const moves = useHintMoves(liveHint, scramble);
   const copiedCheck = copied && !correctionActive
     ? <Check className="scramble-copied-check" aria-label={copiedLabel} />
     : null;
   // Preserve the user's preferred size for short scrambles; reduce long ones
   // smoothly instead of making the move list an independently scrolling view.
   const displayedScramble = liveHint
-    ? [...liveHint.done, ...(liveHint.current === null ? [] : [liveHint.current]), ...liveHint.pending].join(' ')
+    ? moves.map(move => move.move).join(' ')
     : scramble;
   const lengthScale = Math.min(1, Math.sqrt(80 / Math.max(1, displayedScramble.length)));
   const style = {
@@ -204,7 +222,7 @@ export function TimerScrambleStrip({
           ? <>
               <span className="scramble-moves">
                 {liveHint
-                  ? <TimerScrambleHintText hint={liveHint} tailExtra={copiedCheck} />
+                  ? <ScrambleHintMoves moves={moves} tailExtra={copiedCheck} />
                   : <TimerScramblePlainText scramble={scramble} tailExtra={copiedCheck} />}
               </span>
               {nonOptimal && (
