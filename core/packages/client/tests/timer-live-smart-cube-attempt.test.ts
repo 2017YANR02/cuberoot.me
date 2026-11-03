@@ -39,3 +39,36 @@ it('coalesces live presentation without losing turns and rejects stale attempt s
     vi.useRealTimers(); vi.unstubAllGlobals();
   }
 });
+
+it('disables pending and future analysis while preserving recording, then resumes the full attempt', async () => {
+  vi.useFakeTimers();
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+  const producer = new SmartCubeAttemptProducer();
+  producer.begin(100, { model: 'gan-v4', name: 'Test cube' });
+  const snapshot = vi.spyOn(producer, 'snapshotLive');
+  let live!: ReturnType<typeof useLiveSmartCubeAttempt>;
+  function Harness({ enabled }: { enabled: boolean }) {
+    live = useLiveSmartCubeAttempt(producer, () => ({ startedAt: 100, event: '333', scramble: 'R' }), enabled);
+    return null;
+  }
+  const root = createRoot(document.createElement('div'));
+  try {
+    await act(async () => root.render(createElement(Harness, { enabled: true })));
+    producer.recordMove('R', 110); live.publish();
+    await act(async () => root.render(createElement(Harness, { enabled: false })));
+    producer.recordMove('U', 120); live.publish();
+    await act(async () => vi.advanceTimersByTimeAsync(100));
+    expect(live.solve).toBeNull();
+    expect(snapshot).not.toHaveBeenCalled();
+    expect(producer.snapshotMoves()).toHaveLength(2);
+    await act(async () => root.render(createElement(Harness, { enabled: true })));
+    await act(async () => vi.advanceTimersByTimeAsync(100));
+    expect(live.solve?.moves?.map(move => move.m)).toEqual(['R', 'U']);
+    await act(async () => root.render(createElement(Harness, { enabled: false })));
+    expect(live.solve).toBeNull();
+  } finally {
+    await act(async () => root.unmount());
+    expect(vi.getTimerCount()).toBe(0);
+    vi.useRealTimers(); vi.unstubAllGlobals();
+  }
+});

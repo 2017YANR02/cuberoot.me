@@ -1418,7 +1418,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const { solve: liveSolve, publish: publishLiveSolve, clear: clearLiveSolve } = useLiveSmartCubeAttempt(
     smartCubeAttemptProducerRef.current, () => phaseSnapshotRef.current === 'running'
       ? { startedAt: attemptStartedAtRef.current, event: eventAtStartRef.current, scramble: scrambleAtStartRef.current }
-      : null);
+      : null, settings.liveSolutionAnalysis);
   const [liveStageTarget, setLiveStageTarget] = useState<HTMLDivElement | null>(null);
   const autoRecapDismissGestureRef = useRef(new AutoRecapDismissGesture());
   const autoRecapInputBlockedRef = useRef(false);

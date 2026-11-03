@@ -53,6 +53,7 @@ export function TimerSmartCubeSettingsFields({ value, localize, onChange, render
     if (limit !== settings.smartCubeCorrectionLimit) onChange({ smartCubeCorrectionLimit: limit });
   };
   const liveView = field('liveCubeView');
+  const liveAnalysis = field('liveSolutionAnalysis');
   const recap = field('autoRecap');
   const solution = field('autoOpenSolution');
   return (
@@ -84,6 +85,8 @@ export function TimerSmartCubeSettingsFields({ value, localize, onChange, render
         </select>
       </TimerSettingRow>
       {orientationControl}
+      <TimerBooleanSettingRow field={liveAnalysis} label={localize(liveAnalysis.copy)} value={settings.liveSolutionAnalysis}
+        onChange={(liveSolutionAnalysis) => onChange({ liveSolutionAnalysis })} renderBooleanControl={renderBooleanControl} />
       </TimerSettingsSection>
       <TimerSettingsSection title={localize({ zh: '结束后', en: 'After solving' })}>
       <TimerBooleanSettingRow field={recap} label={localize(recap.copy)} value={settings.autoRecap}

@@ -199,6 +199,8 @@ export interface TimerSmartCubeSettings {
   autoCalibrateGyro: boolean;
   /** Compatibility field: pose recording is always enabled, independent of the live view. */
   recordGyro: boolean;
+  /** Analyze the in-progress solve in the side panel and beneath the cube. */
+  liveSolutionAnalysis: boolean;
   autoRecap: boolean;
   autoOpenSolution: boolean;
 }
@@ -210,6 +212,7 @@ export const DEFAULT_TIMER_SMART_CUBE_SETTINGS: TimerSmartCubeSettings = {
   gyroEnabled: true,
   autoCalibrateGyro: true,
   recordGyro: true,
+  liveSolutionAnalysis: true,
   autoRecap: true,
   autoOpenSolution: true,
 };
@@ -224,6 +227,7 @@ export function normalizeTimerSmartCubeSettings(value: Partial<Record<keyof Time
     gyroEnabled: normalizedBoolean(value.gyroEnabled, DEFAULT_TIMER_SMART_CUBE_SETTINGS.gyroEnabled),
     autoCalibrateGyro: normalizedBoolean(value.autoCalibrateGyro, DEFAULT_TIMER_SMART_CUBE_SETTINGS.autoCalibrateGyro),
     recordGyro: true,
+    liveSolutionAnalysis: normalizedBoolean(value.liveSolutionAnalysis, DEFAULT_TIMER_SMART_CUBE_SETTINGS.liveSolutionAnalysis),
     autoRecap: normalizedBoolean(value.autoRecap, DEFAULT_TIMER_SMART_CUBE_SETTINGS.autoRecap),
     autoOpenSolution: normalizedBoolean(value.autoOpenSolution, DEFAULT_TIMER_SMART_CUBE_SETTINGS.autoOpenSolution),
   };
@@ -297,6 +301,7 @@ export const TIMER_SETTING_FIELD_CONTRACTS = [
   { id: 'settings.smart-cube.gyro', category: 'smart-cube', copy: { en: 'Gyroscope', zh: '陀螺仪' }, storagePath: 'gyroEnabled', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-live-cube-gyro' },
   { id: 'settings.smart-cube.auto-calibrate', category: 'smart-cube', copy: { en: 'Auto-reset orientation', zh: '朝向自动重置' }, storagePath: 'autoCalibrateGyro', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-calibrate-gyro' },
   { id: 'settings.smart-cube.live-view', category: 'smart-cube', copy: { en: 'Live cube', zh: '实况魔方' }, storagePath: 'liveCubeView', value: { kind: 'enum', values: TIMER_SMART_CUBE_LIVE_VIEWS }, visibility: 'always', disabledWhen: 'never', effect: 'persist-live-cube-view' },
+  { id: 'settings.smart-cube.live-analysis', category: 'smart-cube', copy: { en: 'Live solution analysis', zh: '解法实时分析' }, storagePath: 'liveSolutionAnalysis', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-live-solution-analysis' },
   { id: 'settings.smart-cube.auto-recap', category: 'smart-cube', copy: { en: 'Open reconstruction', zh: '自动打开复盘' }, storagePath: 'autoRecap', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-recap' },
   { id: 'settings.smart-cube.auto-solution', category: 'smart-cube', copy: { en: 'Open solution', zh: '自动打开解法' }, storagePath: 'autoOpenSolution', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-solution' },
 

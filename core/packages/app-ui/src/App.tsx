@@ -2399,7 +2399,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const { solve: liveSolve, publish: publishLiveSolve, clear: clearLiveSolve } = useLiveSmartCubeAttempt(
     smartCubeAttemptProducerRef.current, () => timerPhaseRef.current === 'running' && attemptRef.current
       ? { startedAt: attemptStartedAtRef.current, event: attemptRef.current.event, scramble: attemptRef.current.scramble }
-      : null);
+      : null, store?.settings.liveSolutionAnalysis ?? true);
   const [liveStageTarget, setLiveStageTarget] = useState<HTMLDivElement | null>(null);
   const timerDisplayMsRef = useRef(0);
   const externalAttemptRef = useRef<{kind: 'smart-timer' | 'stackmat'; sessionId: string; snapshot: MobileScrambleAttemptSnapshot; running: boolean} | null>(null);

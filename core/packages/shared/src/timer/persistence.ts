@@ -380,6 +380,7 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
     'autoCalibrateGyro',
     'recordGyro',
     'autoRecap',
+    'liveSolutionAnalysis',
     'autoOpenSolution',
     'autoMarkWcaScramble',
   ] as const) {

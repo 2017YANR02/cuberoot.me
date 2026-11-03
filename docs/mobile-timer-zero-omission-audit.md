@@ -250,7 +250,7 @@ shared 映射快照是 19 个 Timer ID：
 | 类别 | Web 项目 | Mobile 快照 |
 | --- | --- | --- |
 | 计时 | 计时开关、WCA 观察、按住阈值、切项目匹配 session、切 session 匹配项目、隐藏运行时间、运行精度、成绩精度 | shared 已统一默认/normalizer，`TimerTimingSettingsSections` 已成为 Web/Mobile 共用真实 UI consumer；Mobile 8 字段 effect 已接且 OPPO 读到 8/8 canonical ID、无横向溢出并可滚动到底。仍缺逐字段效果、iOS、横屏/大字与全视口证据 |
-| 智能魔方 | 陀螺仪；自动预备：打乱正确/关/静止 2s/双拨；实况 3D/q2look/net/2D；记录姿态；每把后展开复盘；自动打开解法 | 六项设置的默认/归一化/持久化与 TimerSmartCubeSettingsFields、useAutoReady 已由 Web/App 共用；模式/弹层/阶段门禁及连续手势自动化已锁，五平台实操待验 |
+| 智能魔方 | 陀螺仪；自动预备：打乱正确/关/静止 2s/双拨；实况 3D/q2look/net/2D；记录姿态；解法实时分析；每把后展开复盘；自动打开解法 | 默认/归一化/持久化与 TimerSmartCubeSettingsFields、useAutoReady 已由 Web/App 共用；2026-11-02 新增实时分析开关，控制两处展示与实时计算，保留记录与事后复盘；模式/弹层/阶段门禁及连续手势自动化已锁，五平台实操待验 |
 | 打乱 | 最优打乱、真题自动打卡、预打乱朝向、训练预朝向、颜色中立、同步种子/计数器 | 最优、自动打卡、两类预朝向和颜色中立已有共享设置及实际 effect；同步种子/计数仍缺，五端操作矩阵待验 |
 | 训练 | CFOP 分段、BLD memo/执行分段、每项目目标时间、每日目标、轮次模拟开关/赛制/cutoff/time limit/累计口径 | 分段与目标/轮次设置、反馈均由 shared/timer-ui 提供，App 持久化及运行接线已完成；五端操作矩阵待验 |
 | 外观 | 计时器字体/字号、打乱字体/字号、紧凑打乱、打乱图、3D 魔方、运行隐藏全 UI、排名徽章、排名国家；旧点击动作字段不再可见 | 字体/字号、紧凑打乱、预览与运行隐藏 UI 均有共享设置和真实 effect；排名徽章/国家仍缺。Android/iOS/Harmony/Windows/macOS 的实体环境视觉与交互矩阵未验 |
