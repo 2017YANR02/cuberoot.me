@@ -5,6 +5,8 @@
 //   3. 分布 动态分布可视化 (DistributionViz)
 
 import { memo, useState, useEffect, useMemo, useCallback } from 'react';
+import { flushSync } from 'react-dom';
+import { runViewTransition } from '@/lib/view-transition';
 import Link from '@/components/AppLink';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
@@ -752,7 +754,10 @@ const EventRoundsList = memo(function EventRoundsList({
                     label={selectedSingleMetric.label}
                     items={singleMetricItems}
                     value={singleMetricMode}
-                    onChange={setSingleMetricMode}
+                    onChange={(mode) => {
+                      if (mode === singleMetricMode) return;
+                      runViewTransition(() => flushSync(() => setSingleMetricMode(mode)), true);
+                    }}
                     ariaLabel={t('选择单次统计', 'Select single metric')}
                     variant="plain"
                   />
@@ -780,7 +785,10 @@ const EventRoundsList = memo(function EventRoundsList({
                     label={selectedAverageMetric.label}
                     items={averageMetricItems}
                     value={averageMetricMode}
-                    onChange={setAverageMetricMode}
+                    onChange={(mode) => {
+                      if (mode === averageMetricMode) return;
+                      runViewTransition(() => flushSync(() => setAverageMetricMode(mode)), true);
+                    }}
                     ariaLabel={t('选择平均统计', 'Select average metric')}
                     variant="plain"
                   />
