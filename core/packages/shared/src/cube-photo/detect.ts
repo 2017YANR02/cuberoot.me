@@ -177,7 +177,10 @@ function boundaryPairs(lines: Line[], w: number, h: number): [Line, Line][] {
       }
       score += best;
     }
-    if (score > 1) pairs.push({ pair: [a, b], score: score + 0.15 * Math.sqrt(a.votes * b.votes) });
+    // Same-colour sticker seams may be too short/soft to survive global Hough
+    // selection. They still contribute to the local pixel grid score below.
+    // Rank by the Hough evidence, but do not require internal Hough lines.
+    pairs.push({ pair: [a, b], score: score + 0.15 * Math.sqrt(a.votes * b.votes) });
   }
   // Ranking uses approximately parallel offsets. Keep a wider bounded beam:
   // real perspective makes opposite edges converge, so the right pair can rank
@@ -235,6 +238,30 @@ function sideScore(image: PhotoPixels, edges: Edges, corners: CubeCorners): numb
     return (row * 0.6 + columns / 4 * 0.4) * (0.6 + cellCoherence(image, q, 1) * 0.4);
   });
   return (scores[0] + scores[1]) * 0.35 + Math.min(...scores) * 0.3;
+}
+
+/** A standard cube cannot have 15 neutral last-layer stickers. Check all three
+ * visible regions together: a completely white top is valid, a keyboard is not.
+ * Only the measured top row of each side is used, so hands below it are ignored.
+ */
+function hasColorEvidence(image: PhotoPixels, corners: CubeCorners): boolean {
+  let colored = 0;
+  for (const face of ['top', 'left', 'right'] as const) {
+    const h = homography(faceQuad(corners, face))!;
+    for (let row = 0; row < (face === 'top' ? 3 : 1); row++) for (let col = 0; col < 3; col++) {
+      let support = 0;
+      for (const [du, dv] of [[0.4, 0.4], [0.6, 0.4], [0.4, 0.6], [0.6, 0.6]]) {
+        const p = project(h, (col + du) / 3, (row + dv) / 3), x = Math.round(p.x), y = Math.round(p.y);
+        if (x < 0 || y < 0 || x >= image.width || y >= image.height) continue;
+        const i = (y * image.width + x) * 4;
+        const hi = Math.max(image.data[i], image.data[i + 1], image.data[i + 2]);
+        const lo = Math.min(image.data[i], image.data[i + 1], image.data[i + 2]);
+        if (hi > 40 && hi - lo > 25 && (hi - lo) / hi > 0.25) support++;
+      }
+      if (support >= 3) colored++;
+    }
+  }
+  return colored >= 3;
 }
 
 function fitSides(image: PhotoPixels, edges: Edges, q: Quad): { corners: CubeCorners; score: number } | null {
@@ -295,7 +322,7 @@ export function detectCubePhoto(image: PhotoPixels): CubePhotoDetection {
   const candidates: CubePhotoCandidate[] = [];
   for (const p of distinct) {
     const top = refineTop(image, edges, p.q), sides = fitSides(image, edges, top.q);
-    if (!sides || top.score < 0.42 || sides.score < 0.32) continue;
+    if (!sides || top.score < 0.42 || sides.score < 0.32 || !hasColorEvidence(image, sides.corners)) continue;
     candidates.push({ corners: sides.corners, topSupport: top.score, sideSupport: sides.score });
   }
   candidates.sort((a, b) => (b.topSupport * 0.6 + b.sideSupport * 0.4) - (a.topSupport * 0.6 + a.sideSupport * 0.4));

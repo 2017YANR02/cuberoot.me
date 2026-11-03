@@ -26,6 +26,18 @@ const reflectedOrangePhoto: RGB[] = [
 ];
 
 describe('photo last-layer state and formulas', () => {
+  it('recognizes a shadowed blue patch without inventing colors in dark neutral pixels', () => {
+    // Measured patch only; do not commit the private handheld source photo.
+    const rgb: RGB = [10, 29, 57];
+    const sample = classifyPhotoColors([rgb])[0];
+    expect(sample.color).toBe('blue');
+    expect(sample.reliable).toBe(true);
+    expect(sample.rgb).toEqual(rgb);
+    expect(sample.corrected).toBe(false);
+    for (const dark of [[12, 12, 12], [46, 50, 57], [3, 9, 18]] as RGB[]) {
+      expect(classifyPhotoColors([dark])[0].reliable).toBe(false);
+    }
+  });
   it('uses independent photo references to separate reflected orange from red', () => {
     const samples = classifyPhotoColors(reflectedOrangePhoto);
     expect(samples.slice(0, 15).map(s => s.color)).toEqual([

@@ -4,6 +4,7 @@ import { detectCubePhoto } from '@/lib/cube-photo/detect';
 import { faceGrid, homography, project, validQuad, type Quad } from '@/lib/cube-photo/geometry';
 import { cubePhotoFixture } from '@cuberoot/shared/testing/cube-photo';
 import { resizePhotoPixels } from '@cuberoot/shared/cube-photo/pixels';
+import { SOLVED_FACELET } from '@cuberoot/shared/cube-facelet';
 
 describe('cube photo geometry', () => {
   it('projects perspective thirds, rather than dividing image-space edges equally', () => {
@@ -18,6 +19,23 @@ describe('cube photo geometry', () => {
   it('does not manufacture a candidate for a blank photo', () => {
     const data = new Uint8ClampedArray(120 * 100 * 4).fill(160);
     expect(detectCubePhoto({ width: 120, height: 100, data })).toEqual({ candidates: [], lineCount: 0, reason: 'no-edges' });
+  });
+  it('rejects neutral grids even when their perspective matches three cube faces', async () => {
+    const fixture = cubePhotoFixture(false, .1, SOLVED_FACELET);
+    // Strong, coherent 3x3 edges alone must not certify a keyboard/table-like grid.
+    const svg = fixture.svg.replace(/#(?:f9dc28|1075db|e82b35)/g, '#dddddd');
+    const { data, info } = await sharp(Buffer.from(svg)).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const detection = detectCubePhoto({ width: info.width, height: info.height, data: new Uint8ClampedArray(data) });
+    expect(detection.reason).toBe('no-grid');
+    expect(detection.candidates).toEqual([]);
+  });
+  it('keeps a fully white top when the side top rows provide color evidence', async () => {
+    const fixture = cubePhotoFixture(true, .1, SOLVED_FACELET);
+    const svg = fixture.svg.replaceAll('#f9dc28', '#eeeeee');
+    const { data, info } = await sharp(Buffer.from(svg)).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const detection = detectCubePhoto({ width: info.width, height: info.height, data: new Uint8ClampedArray(data) });
+    expect(detection.reason).toBe('ok');
+    expect(detection.candidates[0].corners.slice(0, 4).every((p, i) => Math.hypot(p.x - fixture.top[i].x, p.y - fixture.top[i].y) < 10)).toBe(true);
   });
   for (const occluded of [false, true]) it(`locates the top grid with lower layers ${occluded ? 'occluded' : 'visible'}`, async () => {
     const fixture = cubePhotoFixture(occluded);

@@ -1,6 +1,6 @@
 import { CORNER_FACELET, EDGE_FACELET, cubieToFacelet, validateFacelet, type CubieCube } from '../cube_facelet';
 import { applyScramble } from '../timer/reconstruct/state';
-import { CANONICAL_RGB, sampleGridColors, srgbToLab, type PhotoFace, type RGB } from './scan';
+import { CANONICAL_RGB, linearToLab, sampleGridColors, srgbToLab, srgbToLinear, type Lab, type PhotoFace, type RGB } from './scan';
 import { faceQuad, homography, project, type CubeCorners, type FaceName } from './geometry';
 import type { PhotoPixels } from './detect';
 
@@ -25,14 +25,13 @@ export interface PhotoRecognition {
 }
 
 const REFERENCES = COLOR_ORDER.map(color => ({ color, lab: srgbToLab(COLOR_RGB[color]) }));
-function rankColors(rgb: RGB, references = REFERENCES) {
-  const lab = srgbToLab(rgb);
+function rankColors(lab: Lab, references = REFERENCES) {
   return references.map(ref => ({ color: ref.color, distance: Math.hypot(
     .4 * (lab[0] - ref.lab[0]), lab[1] - ref.lab[1], lab[2] - ref.lab[2],
   ) })).sort((a, b) => a.distance - b.distance);
 }
-function classify(rgb: RGB, references = REFERENCES): StickerSample {
-  const lab = srgbToLab(rgb), ranked = rankColors(rgb, references);
+function classify(rgb: RGB, references = REFERENCES, lab = srgbToLab(rgb)): StickerSample {
+  const ranked = rankColors(lab, references);
   const best = ranked[0], margin = ranked[1].distance - best.distance;
   // Skin/shadows may be nearest to white without being a white sticker. These
   // are rejection gates, not calibrated probabilities; corrections stay explicit.
@@ -41,12 +40,26 @@ function classify(rgb: RGB, references = REFERENCES): StickerSample {
     reliable: margin >= 8 && best.distance < 48 && plausibleWhite, corrected: false, calibrated: false };
 }
 
+/** Dark blue loses Lab chroma and can be nearer white than a lit blue reference.
+ * For an otherwise uncertain, visibly chromatic patch, try a bounded neutral
+ * exposure lift in linear RGB. Preserve the measured RGB and reject near-black,
+ * neutral, or still ambiguous patches; cube legality never participates.
+ */
+function classifyExposure(rgb: RGB): StickerSample {
+  const initial = classify(rgb), hi = Math.max(...rgb), lo = Math.min(...rgb);
+  if (initial.reliable || hi < 40 || hi >= 100 || (hi - lo) / hi < 0.5) return initial;
+  const linear = srgbToLinear(rgb);
+  const gain = Math.min(12, srgbToLinear([180, 180, 180])[0] / Math.max(...linear));
+  const lifted = classify(rgb, REFERENCES, linearToLab(linear.map(c => c * gain)));
+  return lifted.color !== 'white' && lifted.reliable && lifted.margin >= 12 && lifted.distance <= 24 ? lifted : initial;
+}
+
 /** One calibration pass from independent, confidently labeled cells in THIS photo.
  * Uncertain cells never train their own reference and strong readings never move.
  * Cube legality is deliberately not used to choose a pixel's color.
  */
 export function classifyPhotoColors(colors: readonly RGB[]): StickerSample[] {
-  const initial = colors.map(rgb => classify(rgb));
+  const initial = colors.map(classifyExposure);
   const photoRefs = new Map<CubeColor, RGB>();
   for (const color of COLOR_ORDER) {
     const anchors = initial.filter(s => s.color === color && s.reliable && s.margin >= 12);
@@ -63,7 +76,7 @@ export function classifyPhotoColors(colors: readonly RGB[]): StickerSample[] {
     const adjusted = classify(sample.rgb, references);
     // Require actual photo support, bounded distance, and one of the original
     // two plausible colors. Do not turn a background/occlusion into a sticker.
-    const plausible = rankColors(sample.rgb).slice(0, 2).some(r => r.color === adjusted.color);
+    const plausible = rankColors(srgbToLab(sample.rgb)).slice(0, 2).some(r => r.color === adjusted.color);
     // Reflections can reduce chroma and compress absolute Lab gaps. With an
     // independent photo reference, require a clear relative gap as well as a
     // minimum absolute gap; an almost tied red/orange reading still fails.
