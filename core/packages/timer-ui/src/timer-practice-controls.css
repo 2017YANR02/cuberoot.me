@@ -17,6 +17,32 @@
   margin-inline: 4px;
 }
 
+/* Desktop training uses the same spacing and control axis as the timer.
+   Keep narrow training layouts under their workspace's responsive rules. */
+@media (min-width: 768px) {
+  .timer-training-workspace__navigation > .timer-practice-control {
+    margin-inline: 4px;
+  }
+
+  .timer-training-workspace__navigation :is(.pp-trigger, .compact-select-trigger) {
+    height: var(--timer-topbar-control-size, 32px);
+    padding-block: 0;
+    font-size: 13px;
+    line-height: 20px;
+  }
+
+  .timer-training-workspace__navigation .settings-popover-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--timer-topbar-control-size, 32px);
+    height: var(--timer-topbar-control-size, 32px);
+    padding: 0;
+    margin: 0;
+    flex-shrink: 0;
+  }
+}
+
 .timer-practice-control .pp-trigger,
 .timer-practice-control .compact-select-trigger {
   font-size: inherit;
