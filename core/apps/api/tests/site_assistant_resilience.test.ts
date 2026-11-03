@@ -13,6 +13,20 @@ const createSiteAssistantRoutes = (deps: Omit<Parameters<typeof createRoutes>[0]
 const secret='test-only-service-signing-secret-32-chars';
 afterEach(()=>{vi.restoreAllMocks();vi.unstubAllEnvs();});
 describe('assistant resilience',()=>{
+  it('answers from the formula catalog when a documentation search has no matches',async()=>{
+    const answer={answerKind:'grounded',answer:'可以查询 PLL。[[algorithms]]',sourceIds:['algorithms']};
+    const fetcher=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(model([{tool:'algorithms',puzzle:'3x3'},{tool:'pages',query:'你能查询什么公式',pageIds:[]}]))
+      .mockResolvedValueOnce(Response.json([{puzzle:'3x3',setSlug:'pll',count:21}]))
+      .mockResolvedValueOnce(Response.json({version:2,updated:'2026-10-10T00:00:00.000Z',pages:[]}))
+      .mockImplementation(async()=>model(answer));
+    const result=await answerSiteQuestion('你能查询什么公式','zh',config,AbortSignal.timeout(5000),withCatalog(fetcher));
+    expect(result.answer).toBe(answer.answer);
+    expect(result.sources.map(source=>source.id)).toEqual(['algorithms']);
+    const evidence=wireEvidence(JSON.parse(String(fetcher.mock.calls[3][1]?.body)));
+    expect(evidence.find((entry:any)=>entry.tool.tool==='pages').data).toMatchObject({notEvidence:true,pages:[]});
+    expect(evidence.find((entry:any)=>entry.tool.tool==='algorithms').data.sets).toEqual([{puzzle:'3x3',setSlug:'pll',count:21}]);
+  });
   it('reads dated official news without loading competition indexes',async()=>{
     vi.useFakeTimers();vi.setSystemTime(new Date('2026-10-23T12:00:00Z'));
     try {

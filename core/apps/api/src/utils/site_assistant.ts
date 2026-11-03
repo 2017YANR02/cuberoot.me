@@ -406,7 +406,11 @@ export async function answerSiteQuestion(
     const readable=selected.filter(p=>p.content);
     if(!readable.length) {
       const failed=reads.find((result):result is PromiseRejectedResult=>result.status==='rejected');
-      throw failed?.reason ?? new AssistantFailure('source_unavailable');
+      if(failed) throw failed.reason;
+      // A successful corpus search with no matches is not an infrastructure
+      // failure. Keep existing data evidence available to the next model turn.
+      if(!selected.length && !call.pageIds.length) return {sources:[],artifacts:[],evidence:{notEvidence:true,pages:[],instruction:'No matching documentation was found. This does not establish that the feature is absent. Use already-read data tools for supported facts, or refine the search. Do not invent website instructions or cite this empty result.'}};
+      throw new AssistantFailure('source_unavailable');
     }
     return {evidence:{updated,pages:readable,coverage:'These retrieved excerpts are not an exhaustive feature inventory. If they do not document the requested capability, say it could not be verified from the available documentation. Do not infer that a feature does not exist, is unlaunched or is only available elsewhere. Cite only passages supporting the requested claim; omit unrelated results.'},sources:readable.map(p=>({id:p.id,title:p.title,href:p.href,read:true})),artifacts:[]};
   };
@@ -627,6 +631,10 @@ export async function answerSiteQuestion(
         }
         for (const s of result.sources) sources.set(s.id,s);
         if(parsed.data.tool==='pages') for(const source of result.sources) if(source.read) pageSourceIds.add(source.id);
+        if(parsed.data.tool==='pages' && result.evidence && typeof result.evidence==='object' && 'notEvidence' in result.evidence) {
+          siteContentRequired=false;
+          pendingReadFollowUp='The documentation search returned no matching passages. Answer from other already-read evidence with answerKind grounded and its source IDs, or acknowledge the documentation gap with answerKind general. Do not invent website usage instructions.';
+        }
         if(result.factualSummary && (parsed.data.tool!=='person' || asksForAllPersonalRecords)) for(const s of result.sources) {
           const summaries=factualSummaries.get(s.id) ?? new Set<string>();
           summaries.add(result.factualSummary);factualSummaries.set(s.id,summaries);
