@@ -299,6 +299,226 @@
           }
         }
       ]
+    },
+    "cmll": {
+      "scrapedAt": "2026-08-07T20:15:28.778Z",
+      "source": "https://speedcubedb.com/a/3x3/CMLL; https://cubingapp.com/algorithms/CMLL; https://github.com/spencerchubb/cubingapp/commit/613a49885dc618023368e5f0c2a25024b8c7e9a5",
+      "puzzle": "3x3",
+      "set": "cmll",
+      "cases": [
+        {
+          "id": 3707,
+          "name": "O Adjacent",
+          "subgroup": "Solved",
+          "setup": "R U R2' F' R U R U' R' F R U' R'",
+          "sticker": {
+            "ub": "globlbblb",
+            "uf": "rlgglgglg",
+            "ul": "blbrrrrrr",
+            "ur": "olroooooo",
+            "us": "ylylllyly",
+            "kind": "face"
+          },
+          "algs": [
+            [
+              {
+                "alg": "R U R' F' R U R' U' R' F R2 U' R'",
+                "altId": "2640"
+              },
+              {
+                "alg": "R U R' U' R' F R2 U' R' U' R U R' F'",
+                "altId": "2639"
+              },
+              {
+                "alg": "r U R' F' R U R' U' R' F R2 U' r'",
+                "altId": "2524"
+              },
+              {
+                "alg": "R U2 R' U' R U2 r' F R' F' r U",
+                "altId": "3898"
+              },
+              {
+                "alg": "R U2 R' U' R U2 L' U R' U' L U",
+                "source": "cubingapp"
+              }
+            ]
+          ]
+        },
+        {
+          "id": 3719,
+          "name": "U Up Slash",
+          "subgroup": "U",
+          "setup": "R U2' R D R' U2' R D' R2' U2'",
+          "sticker": {
+            "ub": "ylyblbblb",
+            "uf": "olbglgglg",
+            "ul": "rlgrrrrrr",
+            "ur": "rlboooooo",
+            "us": "glolllyly",
+            "kind": "face"
+          },
+          "algs": [
+            [
+              {
+                "alg": "U2 R2 D R' U2 R D' R' U2 R'",
+                "altId": "2572"
+              },
+              {
+                "alg": "U2 R r D r' U2 r D' r' U2 R'",
+                "altId": "3798"
+              },
+              {
+                "alg": "F R' F' U2 R U R U' R' U R' U R",
+                "altId": "27688"
+              },
+              {
+                "alg": "L2 D L' U2 L D' L' U2 L' U2",
+                "altId": "22367"
+              },
+              {
+                "alg": "r U' r' U' r U' r' U' F' U2 F",
+                "source": "cubingapp"
+              },
+              {
+                "alg": "R' U2 R U2 F U' R' U R U F' U'",
+                "source": "cubingapp"
+              }
+            ]
+          ]
+        },
+        {
+          "id": 3733,
+          "name": "Sune Up Slash",
+          "subgroup": "Sune",
+          "setup": "R U2 R' U2' R' F R F' U'",
+          "sticker": {
+            "ub": "blyblbblb",
+            "uf": "rlgglgglg",
+            "ul": "olyrrrrrr",
+            "ur": "olyoooooo",
+            "us": "blrlllgly",
+            "kind": "face"
+          },
+          "algs": [
+            [
+              {
+                "alg": "U F R' F' R U2 R U2 R'",
+                "altId": "2607"
+              },
+              {
+                "alg": "U M F R' F' R U2 R U2 r'",
+                "altId": "2608"
+              },
+              {
+                "alg": "U M F R' F' r U2 R U2 R'",
+                "altId": "3745"
+              },
+              {
+                "alg": "U F U R U' R2 F' R U R U' R'",
+                "altId": "3854"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    "ell": {
+      "scrapedAt": "2026-05-03T13:38:24.339Z",
+      "source": "https://speedcubedb.com/a/3x3/ELL",
+      "puzzle": "3x3",
+      "set": "ell",
+      "cases": [
+        {
+          "id": 3789,
+          "name": "4 Flip H",
+          "subgroup": "",
+          "setup": "S R' U' R U R U R U' R' S'",
+          "sticker": {
+            "ub": "oyobbbbbb",
+            "uf": "ryrgggggg",
+            "ul": "bybrrrrrr",
+            "ur": "gygoooooo",
+            "us": "yrygybyoy",
+            "kind": "face"
+          },
+          "algs": [
+            [
+              {
+                "alg": "S (R U R' U') (R' U' R' U R) S'",
+                "stm": 11,
+                "sqtm": 11,
+                "source": "cuberoot"
+              },
+              {
+                "alg": "r U R' U' M2 U R U' R' U' M' U2 U2",
+                "stm": 13,
+                "sqtm": 16,
+                "altId": "4551",
+                "source": "speedcubedb"
+              },
+              {
+                "alg": "S' R U R' S U' M' U R U' r' U U2",
+                "stm": 13,
+                "sqtm": 14,
+                "altId": "5051",
+                "source": "speedcubedb"
+              },
+              {
+                "alg": "S R' U' R U R U R U' R' S' U2",
+                "stm": 12,
+                "sqtm": 13,
+                "altId": "7332",
+                "source": "speedcubedb"
+              },
+              {
+                "alg": "S U' S R' F R S2 R' F' R U2 U2",
+                "stm": 12,
+                "sqtm": 15,
+                "altId": "7972",
+                "source": "speedcubedb"
+              }
+            ]
+          ],
+          "meta": {
+            "cp": "X",
+            "im": 498,
+            "no": 498,
+            "gen": "RSU",
+            "inv": 498,
+            "oll": "X",
+            "sym": {
+              "cn": "4",
+              "any": true,
+              "full": true
+            },
+            "docNo": "513",
+            "oldNo": "1850",
+            "ollcp": "XH",
+            "mirror": 498,
+            "subset": "ELL-X",
+            "optimal": {
+              "htm": {
+                "len": 13
+              },
+              "qtm": {
+                "len": 16
+              },
+              "stm": {
+                "len": 9,
+                "scramble": "S2 L2 S' L2 U S2 R2 S R2"
+              },
+              "sqtm": {
+                "len": 15,
+                "scramble": "S2 L2 S' L2 U S2 R2 S R2"
+              }
+            },
+            "scramble": "S (R U R' U') (R' U' R' U R) S'"
+          }
+        }
+      ]
     }
+  },
+  "extraStates": {
+    "ell": "URUBUFULUBUBRRRRRRRURFFFFFFDDDDDDDDDFUFLLLLLLLULBBBBBB"
   }
 }

@@ -61,3 +61,44 @@ it('exports exact AUF, orientation and case links without exposing the private i
   expect(pdf).toContain(match.alg); expect(pdf).toContain('https://www.cuberoot.me' + match.href);
   expect(pdf).not.toContain(result.attachmentId!);
 });
+
+it('shows preloaded alternatives immediately, expands only one category and never starts a lookup on click', async () => {
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+  const worker = vi.fn();
+  vi.stubGlobal('Worker', worker);
+  const writeText = vi.fn(async () => {});
+  Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+  const cross = fixture.states.cross;
+  const crossResults = (['zbll', 'oll', 'coll'] as const).map(set => {
+    const match = findPhotoAlg(cross, set, fixture.libraries[set] as AlgFile)!;
+    return { set, status: 'found' as const, match, alternatives: [{ ...match, alg: match.alg + " R L R' L'" }] };
+  });
+  const crossArtifact: CubePhotoArtifact = { ...result, recognition: { ...result.recognition!, candidates: [{ facelet: cross, frame }] }, results: crossResults };
+  const alternative = crossResults[1].alternatives[0];
+  const host = document.createElement('div'); document.body.append(host);
+  const root = createRoot(host); roots.push(root);
+  await act(async () => root.render(createElement(PhotoChatResult, { result: crossArtifact })));
+  const toggle = (set: string) => host.querySelector<HTMLButtonElement>('[data-alg-set="' + set + '"] .cube-photo-expand')!;
+  const panel = (set: string) => host.querySelector('[data-alg-set="' + set + '"] [role="region"]')!;
+  expect(panel('oll').querySelector('code')?.textContent).toBe(alternative.alg);
+  expect(panel('oll').hasAttribute('inert')).toBe(true);
+  await act(async () => toggle('zbll').click());
+  await act(async () => toggle('oll').click());
+  expect(host.querySelectorAll('.cube-photo-expand[aria-expanded="true"]')).toHaveLength(1);
+  expect(toggle('oll').getAttribute('aria-expanded')).toBe('true');
+  expect(panel('zbll').hasAttribute('inert')).toBe(true);
+  expect(panel('oll').hasAttribute('inert')).toBe(false);
+  expect(panel('oll').querySelector('code')?.textContent).toBe(alternative.alg);
+  expect(panel('oll').textContent).not.toContain('正在查找');
+  await act(async () => panel('oll').querySelector<HTMLButtonElement>('[aria-label="复制 OLL 其他公式 1"]')!.click());
+  expect(writeText).toHaveBeenCalledWith(alternative.alg);
+  await act(async () => toggle('oll').click());
+  expect(host.querySelectorAll('.cube-photo-expand[aria-expanded="true"]')).toHaveLength(0);
+  expect(panel('oll').hasAttribute('inert')).toBe(true);
+  await act(async () => toggle('oll').click());
+  expect(panel('oll').querySelector('code')?.textContent).toBe(alternative.alg);
+  expect(worker).not.toHaveBeenCalled();
+  await act(async () => root.render(createElement(PhotoChatResult, { result })));
+  expect(host.querySelectorAll('.cube-photo-expand')).toHaveLength(0);
+  expect(host.textContent).not.toContain(alternative.alg);
+});

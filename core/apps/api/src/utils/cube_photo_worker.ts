@@ -3,7 +3,7 @@ import sharp from 'sharp';
 import { resizePhotoPixels } from '@cuberoot/shared/cube-photo/pixels';
 import { locateCubePhoto, analyzeCubePhoto } from '@cuberoot/shared/cube-photo/analyze';
 import { recognizePhoto } from '@cuberoot/shared/cube-photo/recognize';
-import { photoAlgSets, type PhotoAlgSet } from '@cuberoot/shared/cube-photo/lookup';
+import { photoRecognitionSets, type PhotoAlgSet } from '@cuberoot/shared/cube-photo/lookup';
 import type { CubePhotoResult } from '@cuberoot/shared/cube-photo/result';
 import type { AlgFile } from '@cuberoot/shared/alg';
 import type { AssistantImage } from '@cuberoot/shared/site-assistant';
@@ -23,9 +23,10 @@ try {
   else {
     const recognition = recognizePhoto(pixels, corners);
     Object.assign(result, { recognition, status: recognition.status });
-    if (recognition.status !== 'ok') { port.postMessage({ type: 'result', result }); port.close(); }
+    if (recognition.status === 'corners-only') result.assumptions.f2lSolved = 'not-required';
+    if (recognition.status !== 'ok' && recognition.status !== 'corners-only') { port.postMessage({ type: 'result', result }); port.close(); }
     else {
-      const sets = photoAlgSets(recognition.candidates[0].facelet).filter(set => !input.sets || input.sets.includes(set));
+      const sets = photoRecognitionSets(recognition).filter(set => !input.sets || input.sets.includes(set));
       port.once('message', async (libraries: Partial<Record<PhotoAlgSet, AlgFile>>) => {
         try {
           const analysis = await analyzeCubePhoto({ pixels, corners, corrections: {}, sets }, async set => {

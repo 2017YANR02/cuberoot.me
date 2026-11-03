@@ -13,15 +13,18 @@ export const COLOR_ORDER = Object.keys(COLOR_NAMES) as CubeColor[];
 const STANDARD: Record<PhotoFace, CubeColor> = { U: 'white', R: 'red', F: 'green', D: 'yellow', L: 'orange', B: 'blue' };
 export const COLOR_RGB = Object.fromEntries(Object.entries(STANDARD).map(([face, color]) => [color, CANONICAL_RGB[face as PhotoFace]])) as Record<CubeColor, RGB>;
 export type ColorFrame = Record<PhotoFace, CubeColor>;
-export interface StickerSample { rgb: RGB; color: CubeColor; margin: number; distance: number; reliable: boolean; corrected: boolean; calibrated: boolean }
+export interface StickerSample { rgb: RGB; color: CubeColor; margin: number; distance: number; reliable: boolean; corrected: boolean; calibrated: boolean; inferred?: boolean; observedColor?: CubeColor }
 export interface VisibleLastLayer { U: string; F: string; R: string }
 export interface RecoveredState { facelet: string; frame: ColorFrame }
+/** Only corner coordinates are known; no edge or complete-cube state is claimed. */
+export interface RecoveredCorners { cp: number[]; co: number[]; frame: ColorFrame }
 export interface PhotoRecognition {
   /** U row-major (back to front), then F top row, then R top row. */
   samples: StickerSample[];
   centers: { F: StickerSample; R: StickerSample };
   candidates: RecoveredState[];
-  status: 'ok' | 'uncertain-colors' | 'ambiguous' | 'invalid';
+  cornerCandidates?: RecoveredCorners[];
+  status: 'ok' | 'corners-only' | 'uncertain-colors' | 'ambiguous' | 'invalid';
 }
 
 const REFERENCES = COLOR_ORDER.map(color => ({ color, lab: srgbToLab(COLOR_RGB[color]) }));
@@ -124,12 +127,11 @@ const PERMUTATIONS = permutations([0, 1, 2, 3]);
 const parity = (p: number[]) => p.reduce((sum, v, i) => sum + p.slice(i + 1).filter(w => v > w).length, 0) % 2;
 const solved = (): CubieCube => ({ cp: [0, 1, 2, 3, 4, 5, 6, 7], co: Array(8).fill(0), ep: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], eo: Array(12).fill(0) });
 
-/** Exact completion under solved F2L. Never fixes a measured sticker to force a match. */
-export function completeLastLayer(observed: VisibleLastLayer): string[] {
-  if (!/^[URFDLB]{9}$/.test(observed.U) || !/^[URFDLB]{3}$/.test(observed.F) || !/^[URFDLB]{3}$/.test(observed.R) || observed.U[4] !== 'U') return [];
+function lastLayerPieces(observed: VisibleLastLayer): { corners: CubieCube[]; edges: CubieCube[] } {
+  if (!/^[URFDLB?]{9}$/.test(observed.U) || !/^[URFDLB?]{3}$/.test(observed.F) || !/^[URFDLB?]{3}$/.test(observed.R) || observed.U[4] !== 'U') return { corners: [], edges: [] };
   const measured = new Map<number, string>();
   for (const [start, colors] of [[0, observed.U], [18, observed.F], [9, observed.R]] as const) {
-    [...colors].forEach((color, i) => measured.set(start + i, color));
+    [...colors].forEach((color, i) => { if (color !== '?') measured.set(start + i, color); });
   }
   const matches = (facelet: string, indices: readonly (readonly number[])[]) => indices.slice(0, 4).flat().every(i => !measured.has(i) || facelet[i] === measured.get(i));
   const corners: CubieCube[] = [], edges: CubieCube[] = [];
@@ -147,11 +149,17 @@ export function completeLastLayer(observed: VisibleLastLayer): string[] {
       if (matches(cubieToFacelet(c), EDGE_FACELET)) edges.push(c);
     }
   }
-  const results: string[] = [];
+  return { corners, edges };
+}
+
+/** Exact completion under solved F2L. Only explicit '?' cells are unconstrained. */
+export function completeLastLayer(observed: VisibleLastLayer, limit = Infinity): string[] {
+  const { corners, edges } = lastLayerPieces(observed), results: string[] = [];
   for (const c of corners) for (const e of edges) {
     if (parity(c.cp) !== parity(e.ep)) continue;
     const facelet = cubieToFacelet({ cp: c.cp, co: c.co, ep: e.ep, eo: e.eo });
     if (validateFacelet(facelet) === null) results.push(facelet);
+    if (results.length >= limit) return results;
   }
   return results;
 }
@@ -165,13 +173,52 @@ export function recognizePhoto(image: PhotoPixels, corners: CubeCorners, correct
   const samples = classified.slice(0, 15).map((sample, i) => corrections[i]
     ? { ...sample, color: corrections[i], reliable: true, corrected: true } : sample);
   const centers = { F: classified[15], R: classified[16] };
-  if (samples.some(s => !s.reliable)) return { samples, centers, candidates: [], status: 'uncertain-colors' };
+  // A side center can be occluded or reflected. Use the same stronger threshold
+  // as calibration anchors before letting it constrain the entire color frame.
+  const anchor = (s: StickerSample) => s.reliable && s.margin >= 12;
+  if (!samples[4].reliable) return { samples, centers, candidates: [], status: 'uncertain-colors' };
   const possibleFrames = standardColorFrames().filter(frame => frame.U === samples[4].color && (front
     ? frame.F === front
-    : (!centers.F.reliable || frame.F === centers.F.color) && (!centers.R.reliable || frame.R === centers.R.color)));
+    : (!anchor(centers.F) || frame.F === centers.F.color) && (!anchor(centers.R) || frame.R === centers.R.color)));
+  const cornerIndices = new Set([0, 2, 6, 8, 9, 11, 12, 14]);
+  const opposite = standardColorFrames().find(frame => frame.U === samples[4].color)!.D;
+  // Opposite-color edges are valid in Roux/LSE. Only an automatic corner reading
+  // can be discarded; a user's explicit correction always remains a constraint.
+  const impossible = samples.flatMap((s, i) => cornerIndices.has(i) && !s.corrected && s.color === opposite ? [i] : []);
+  // Multiple such corners can mean an M-rotated center, not multiple bad pixels.
+  // Do not erase that evidence to manufacture a full last-layer completion.
+  const measured = samples.map((s, i) => impossible.length === 1 && impossible[0] === i ? { ...s, reliable: false } : s);
+  const observed = (frame: ColorFrame, cells: StickerSample[], cornersOnly = false): VisibleLastLayer => {
+    const toFace = (start: number, end: number) => cells.slice(start, end).map((s, j) => {
+      const i = start + j;
+      if (i === 4) return 'U';
+      if (!s.reliable || (cornersOnly && !cornerIndices.has(i))) return '?';
+      return Object.keys(frame).find(f => frame[f as PhotoFace] === s.color)!;
+    }).join('');
+    return { U: toFace(0, 9), F: toFace(9, 12), R: toFace(12, 15) };
+  };
   const candidates = possibleFrames.flatMap(frame => {
-    const toFace = (start: number, end: number) => samples.slice(start, end).map(s => Object.keys(frame).find(f => frame[f as PhotoFace] === s.color)).join('');
-    return completeLastLayer({ U: toFace(0, 9), F: toFace(9, 12), R: toFace(12, 15) }).map(facelet => ({ facelet, frame }));
+    return completeLastLayer(observed(frame, measured), 2).map(facelet => ({ facelet, frame }));
   });
-  return { samples, centers, candidates, status: candidates.length === 1 ? 'ok' : candidates.length ? 'ambiguous' : 'invalid' };
+  const infer = (facelet: string, frame: ColorFrame, cells: StickerSample[], cornersOnly = false) => cells.map((s, i) => {
+    if (s.reliable || (cornersOnly && !cornerIndices.has(i))) return s;
+    const index = i < 9 ? i : i < 12 ? i + 9 : i - 3;
+    return { ...s, observedColor: s.color, color: frame[facelet[index] as PhotoFace], inferred: true };
+  });
+  if (candidates.length === 1) return { samples: infer(candidates[0].facelet, candidates[0].frame, measured), centers, candidates, status: 'ok' };
+
+  // CMLL needs the four corners, not a fabricated F2L edge state. M turns can
+  // move U/F centers, so only the R center (or an explicit F choice) anchors it.
+  const cornerCandidates = standardColorFrames().filter(frame => (!front || frame.F === front)
+    && (!anchor(centers.R) || frame.R === centers.R.color)).flatMap(frame => {
+      const cells = frame.U === samples[4].color ? measured : samples;
+      return lastLayerPieces(observed(frame, cells, true)).corners.map(c => ({ cp: c.cp.slice(0, 4), co: c.co.slice(0, 4), frame }));
+    });
+  if (cornerCandidates.length === 1) {
+    const c = cornerCandidates[0], cube = solved();
+    cube.cp.splice(0, 4, ...c.cp); cube.co.splice(0, 4, ...c.co);
+    return { samples: infer(cubieToFacelet(cube), c.frame, c.frame.U === samples[4].color ? measured : samples, true), centers,
+      candidates: [], cornerCandidates, status: 'corners-only' };
+  }
+  return { samples: measured, centers, candidates, status: measured.some(s => !s.reliable) ? 'uncertain-colors' : candidates.length || cornerCandidates.length ? 'ambiguous' : 'invalid' };
 }

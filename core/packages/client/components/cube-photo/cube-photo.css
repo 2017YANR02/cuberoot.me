@@ -1,29 +1,28 @@
 .cube-photo-page { max-width: 1120px; margin: 0 auto; padding: 28px 24px 64px; color: var(--foreground); }
 .cube-photo-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .cube-photo-header a { color: var(--muted-foreground); font-size: 13px; }
-.cube-photo-header h1 { margin: 8px 0 0; font-size: clamp(24px, 4vw, 34px); font-weight: 650; letter-spacing: -.03em; }
-.cube-photo-description { color: var(--muted-foreground); line-height: 1.7; margin: 16px 0 24px; max-width: 800px; }
-.cube-photo-toolbar, .cube-photo-options, .cube-photo-candidates { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.cube-photo-header h1 { display: flex; align-items: center; gap: 10px; margin: 8px 0 0; font-size: clamp(24px, 4vw, 34px); font-weight: 650; letter-spacing: -.03em; }
+.cube-photo-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 24px 0 18px; }
 .cube-photo-toolbar > button, .cube-photo-details button, .cube-photo-empty { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 9px 13px; border: 1px solid var(--border-default); border-radius: 9px; background: var(--background); color: var(--foreground); font: inherit; font-size: 13px; cursor: pointer; }
 .cube-photo-toolbar > button:hover, .cube-photo-details button:hover { background: var(--muted); }
-.cube-photo-page button:focus-visible, .cube-photo-details summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.cube-photo-page button:focus-visible, .cube-photo-formula button:focus-visible, .cube-photo-details summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
 .cube-photo-toolbar > button:disabled { opacity: .5; cursor: wait; }
 .cube-photo-toolbar > button[aria-pressed="true"], .cube-photo-details button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
 .cube-photo-toolbar .cube-photo-primary { background: var(--primary); color: var(--primary-foreground); border-color: transparent; }
 .cube-photo-toolbar .cube-photo-primary:hover { background: color-mix(in srgb, var(--primary) 88%, var(--background)); }
-.cube-photo-status { min-height: 24px; margin: 14px 0 8px; color: var(--muted-foreground); font-size: 13px; }
 .cube-photo-error { color: var(--destructive); font-size: 14px; }
 .cube-photo-stage { border-radius: 12px; overflow: hidden; background: var(--muted); }
-.cube-photo-stage > svg { display: block; width: 100%; height: auto; max-height: 76vh; }
+.cube-photo-stage > svg { display: block; width: 100%; height: 100%; }
+.cube-photo-workspace.has-photo .cube-photo-stage { height: clamp(320px, 72vh, 720px); }
+.cube-photo-image, .cube-photo-result-content { animation: cube-photo-reveal .2s ease-out; }
+.cube-photo-image-placeholder { display: grid; place-items: center; height: 100%; color: var(--muted-foreground); }
 .cube-photo-stage.is-empty { border: 1px dashed var(--border-strong); background: transparent; }
 .cube-photo-empty { display: flex; flex-direction: column; width: 100%; min-height: 340px; gap: 16px; border: 0; background: transparent; font-size: 16px; }
-.cube-photo-empty svg { color: var(--muted-foreground); }
+.cube-photo-guide { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .cube-photo-empty small { color: var(--muted-foreground); font-size: 12px; }
 .cube-photo-handle { touch-action: none; cursor: grab; }
 .cube-photo-handle:active { cursor: grabbing; }
 .cube-photo-handle:focus-visible { outline: none; stroke: var(--ring); stroke-width: 2; }
-.cube-photo-options { margin-top: 16px; font-size: 13px; gap: 12px 20px; }
-.cube-photo-legend { display: inline-flex; align-items: center; gap: 6px; color: var(--muted-foreground); }
 .cube-photo-note, .cube-photo-details p { color: var(--muted-foreground); font-size: 13px; line-height: 1.6; }
 .cube-photo-details { margin-top: 24px; }
 .cube-photo-details summary { list-style: none; display: flex; gap: 6px; align-items: center; cursor: pointer; font-size: 13px; width: fit-content; }
@@ -31,22 +30,48 @@
 .cube-photo-details summary::marker { content: ''; }
 .cube-photo-details summary svg { transform: rotate(-90deg); transition: transform .15s; }
 .cube-photo-details[open] summary svg { transform: rotate(0); }
-.cube-photo-workspace.has-results { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: start; gap: 28px; }
+.cube-photo-workspace.has-photo { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: start; gap: 28px; }
 .cube-photo-results { min-width: 0; }
-.cube-photo-results h2 { margin: 0; font-size: 20px; font-weight: 600; }
-.cube-photo-orientation { display: flex; flex-wrap: wrap; gap: 20px; margin: 14px 0 0; }
-.cube-photo-orientation span { display: inline-flex; align-items: center; gap: 5px; font-size: 14px; }
-.cube-photo-formulas { display: grid; gap: 12px; }
-.cube-photo-formulas > p { margin: 0; }
-.cube-photo-formula { padding: 14px 16px; border-radius: 10px; background: var(--card); }
-.cube-photo-formula-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.cube-photo-formula h3 { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px; margin: 0; font-size: 15px; }
-.cube-photo-formula h3 a { color: var(--accent); font-weight: 500; }
-.cube-photo-formula-heading button { display: inline-flex; padding: 7px; border: 0; background: transparent; color: var(--muted-foreground); cursor: pointer; }
+.cube-photo-loading { color: var(--muted-foreground); font-size: 14px; }
+.cube-photo-skeletons { display: grid; gap: 12px; margin-top: 24px; }
+.cube-photo-skeleton { display: grid; gap: 16px; padding: 18px 16px; }
+.cube-photo-skeleton span { height: 12px; border-radius: 4px; background: var(--muted); animation: cube-photo-pulse 1.4s ease-in-out infinite; }
+.cube-photo-skeleton span:first-child { width: 30%; height: 16px; }
+.cube-photo-skeleton span:last-child { width: 65%; }
+@keyframes cube-photo-reveal { from { opacity: 0; } to { opacity: 1; } }
+@keyframes cube-photo-pulse { 50% { opacity: .4; } }
+@media (prefers-reduced-motion: reduce) {
+  .cube-photo-image, .cube-photo-result-content, .cube-photo-skeleton span { animation: none; }
+}
+.cube-photo-formulas { display: grid; gap: 20px; }
+.cube-photo-formula { padding: 0 16px 14px; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--card); overflow: hidden; }
+.cube-photo-formula-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 -16px 14px; padding: 10px 16px; border-bottom: 1px solid var(--border-default); background: color-mix(in srgb, var(--foreground) 4%, transparent); }
+.cube-photo-formula-title { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; color: inherit; text-decoration: none; }
+.cube-photo-formula-title > .puzzle-art { flex-shrink: 0; }
+.cube-photo-formula h3 { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px; margin: 0; font-size: 16px; font-weight: 650; }
+.cube-photo-case-name { color: var(--accent); font-weight: 500; }
+.cube-photo-formula-heading button, .cube-photo-copy { display: inline-flex; padding: 7px; border: 0; background: transparent; color: var(--muted-foreground); cursor: pointer; }
 .cube-photo-formula .cube-photo-note { margin: 6px 0 10px; }
-.cube-photo-formula code { display: block; font-size: 16px; line-height: 1.8; overflow-wrap: anywhere; }
-.cube-photo-formula small { display: flex; align-items: center; gap: 4px; margin-top: 10px; color: var(--muted-foreground); font-size: 11px; }
-.cube-photo-color-grids { display: flex; gap: 18px; margin-top: 12px; }
+.cube-photo-sequence { font-size: 16px; line-height: 1.8; overflow-wrap: anywhere; }
+.cube-photo-sequence code { display: inline; font-size: inherit; }
+.cube-photo-sequence small { display: inline-block; margin-inline-start: 10px; color: var(--muted-foreground); font-size: 11px; white-space: nowrap; }
+.cube-photo-expand { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; padding: 4px 0; border: 0; background: transparent; color: var(--muted-foreground); font: inherit; font-size: 12px; cursor: pointer; }
+.cube-photo-expand:hover, .cube-photo-copy:hover, .cube-photo-formula-heading button:hover { color: var(--foreground); }
+.cube-photo-expand svg { transition: transform .22s ease; }
+.cube-photo-expand[aria-expanded="true"] svg { transform: rotate(180deg); }
+.cube-photo-alternatives { display: grid; grid-template-rows: 0fr; opacity: 0; visibility: hidden; transition: grid-template-rows .22s ease, opacity .18s ease, visibility 0s .22s; }
+.cube-photo-alternatives.is-open { grid-template-rows: 1fr; opacity: 1; visibility: visible; transition-delay: 0s; }
+.cube-photo-alternatives-inner { min-height: 0; overflow: hidden; }
+.cube-photo-alternatives-content { padding-top: 14px; color: var(--muted-foreground); font-size: 13px; }
+.cube-photo-alternative-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; }
+.cube-photo-alternative-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 8px; }
+.cube-photo-alternative-list li + li { border-top: 1px solid var(--border-default); padding-top: 14px; }
+.cube-photo-alternative-list code { color: var(--foreground); }
+.cube-photo-copy { margin-top: 1px; }
+@media (prefers-reduced-motion: reduce) {
+  .cube-photo-expand svg, .cube-photo-alternatives { transition: none; }
+}
+.cube-photo-color-grids { display: flex; gap: 18px; margin: 12px 0; }
 .cube-photo-color-grids h4 { margin: 0 0 6px; font-size: 13px; }
 .cube-photo-color-grid { display: grid; grid-template-columns: repeat(3, 28px); gap: 3px; }
 .cube-photo-color-grid button { padding: 4px; border-radius: 5px; min-width: 0; }
@@ -54,8 +79,8 @@
 .cube-photo-color.is-corrected { outline: 1px solid var(--accent); border-radius: 5px; }
 .cube-photo-retry { display: inline-flex; align-items: center; gap: 6px; padding: 8px 0; border: 0; background: transparent; color: var(--accent); cursor: pointer; }
 @media (max-width: 800px) {
-  .cube-photo-workspace.has-results { grid-template-columns: 1fr; gap: 22px; }
-  .cube-photo-workspace.has-results .cube-photo-stage > svg { max-height: 52vh; }
+  .cube-photo-workspace.has-photo { grid-template-columns: 1fr; gap: 22px; }
+  .cube-photo-workspace.has-photo .cube-photo-stage { height: clamp(260px, 52vh, 440px); }
 }
 @media (max-width: 600px) {
   .cube-photo-page { padding: 18px 14px 40px; }

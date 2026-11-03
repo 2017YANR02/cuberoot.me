@@ -11,7 +11,7 @@ export interface CubePhotoResult {
   recognition?: PhotoRecognition;
   results: PhotoAlgResult[];
   requestedSets?: PhotoAlgSet[];
-  assumptions: { f2lSolved: true; standardColorScheme: true };
+  assumptions: { f2lSolved: true | 'not-required'; standardColorScheme: true };
 }
 export interface CubePhotoArtifact extends CubePhotoResult {
   kind: 'cube-photo';

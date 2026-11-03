@@ -9,8 +9,8 @@ export function assistantAnswerText(result: AssistantAnswer, origin: string) {
   });
   const tables = (result.artifacts ?? []).map(a => a.kind === 'table'
     ? [a.title, a.columns.join('\t'), ...a.rows.map(row => row.join('\t'))].join('\n')
-    : a.kind === 'cube-photo' ? [a.title, 'Assumes solved F2L and standard colors. Each algorithm is independent and includes AUF.',
-      ...(a.recognition?.status === 'ok' ? [(['U','F','R'] as const).map(face => `${face}: ${a.recognition!.candidates[0].frame[face]}`).join(' · ')] : [a.status]),
+    : a.kind === 'cube-photo' ? [a.title, a.status === 'corners-only' ? 'Only last-layer corners are known; edges and the M slice are not reconstructed.' : 'Assumes solved F2L and standard colors. Each algorithm is independent and includes AUF.',
+      ...(a.recognition?.status === 'ok' || a.recognition?.status === 'corners-only' ? [(['U','F','R'] as const).map(face => `${face}: ${(a.recognition!.candidates[0] ?? a.recognition!.cornerCandidates![0]).frame[face]}`).join(' · ')] : [a.status]),
       ...a.results.map(r => r.match ? `${r.set.toUpperCase()} · [${r.match.name}](${new URL(r.match.href, origin).href})\n${r.match.alg}` : `${r.set.toUpperCase()}: ${r.status}`)].join('\n')
     : [a.title, ...a.points.map(p => `${p.date}\t${formatWcaResult(p.value, a.event, a.metric)}`)].join('\n'));
   return [text, ...tables].join('\n\n');

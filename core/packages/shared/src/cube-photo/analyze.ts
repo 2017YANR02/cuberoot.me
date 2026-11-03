@@ -2,7 +2,7 @@ import type { AlgFile } from '../alg';
 import { detectCubePhoto, type PhotoPixels, type CubePhotoDetection } from './detect';
 import type { CubeCorners } from './geometry';
 import { recognizePhoto, type CubeColor, type PhotoRecognition } from './recognize';
-import { findPhotoAlg, photoAlgSets, photoAufOnly, type PhotoAlgResult, type PhotoAlgSet } from './lookup';
+import { findPhotoAlg, findPhotoAlternatives, photoRecognitionSets, photoAufOnly, type PhotoAlgResult, type PhotoAlgSet } from './lookup';
 
 export interface PhotoAnalysisInput {
   pixels: PhotoPixels;
@@ -23,13 +23,15 @@ export async function analyzeCubePhoto(input: PhotoAnalysisInput, load: (set: Ph
   emit: (message: PhotoAnalysisMessage) => void = () => {}): Promise<PhotoAnalysis> {
   const recognition = recognizePhoto(input.pixels, input.corners, input.corrections, input.front);
   emit({ type: 'state', recognition });
-  const facelet = recognition.status === 'ok' ? recognition.candidates[0].facelet : undefined;
-  const sets = facelet ? photoAlgSets(facelet).filter(set => !input.sets || input.sets.includes(set)) : [];
+  const target = recognition.status === 'ok' ? recognition.candidates[0].facelet : recognition.cornerCandidates?.[0];
+  const sets = photoRecognitionSets(recognition).filter(set => !input.sets || input.sets.includes(set));
   const results = await Promise.all(sets.map(async set => {
     let result: PhotoAlgResult;
     try {
-      const match = (set === 'pll' && photoAufOnly(facelet!)) || findPhotoAlg(facelet!, set, await load(set));
-      result = match ? { set, status: 'found', match } : { set, status: 'missing' };
+      const alignment = set === 'pll' && typeof target === 'string' && photoAufOnly(target);
+      const file = alignment ? undefined : await load(set);
+      const match = alignment || findPhotoAlg(target!, set, file!);
+      result = match ? { set, status: 'found', match, alternatives: file ? findPhotoAlternatives(target!, match, file) : [] } : { set, status: 'missing' };
     } catch { result = { set, status: 'error' }; }
     emit({ type: 'alg', result });
     return result;

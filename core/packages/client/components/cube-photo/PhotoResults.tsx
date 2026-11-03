@@ -1,6 +1,7 @@
 'use client';
 
-import PhotoAlgorithmCards, { Swatch, PhotoStateHeading } from './PhotoAlgorithmCards';
+import PhotoAlgorithmCards, { Swatch } from './PhotoAlgorithmCards';
+import PhotoLoading from './PhotoLoading';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, RotateCcw } from 'lucide-react';
@@ -10,7 +11,7 @@ import { COLOR_NAMES, COLOR_ORDER, type CubeColor, type PhotoRecognition } from 
 import type { CubeCorners } from '@/lib/cube-photo/geometry';
 import type { PhotoPixels } from '@/lib/cube-photo/detect';
 import type { PhotoAnalysisInput, PhotoAnalysisMessage } from '@/lib/cube-photo/analyze.worker';
-import { photoAlgSets, type PhotoAlgResult, type PhotoAlgSet } from '@/lib/cube-photo/lookup';
+import { photoRecognitionSets, type PhotoAlgResult, type PhotoAlgSet } from '@/lib/cube-photo/lookup';
 
 interface Snapshot { request: PhotoAnalysisInput; recognition?: PhotoRecognition; results: Partial<Record<PhotoAlgSet, PhotoAlgResult>>; done: boolean; error: boolean }
 const STATUS = {
@@ -31,8 +32,9 @@ export default function PhotoResults({ pixels, corners, width, height }: { pixel
   // Never show an old state's algorithms while new geometry/colors are pending.
   const current = snapshot?.request === request ? snapshot : null;
   const recognition = current?.recognition;
-  const recovered = recognition?.status === 'ok' ? recognition.candidates[0] : null;
-  const sets = recovered ? photoAlgSets(recovered.facelet) : [];
+  const recovered = recognition?.status === 'ok' ? recognition.candidates[0] : recognition?.status === 'corners-only' ? recognition.cornerCandidates?.[0] : null;
+  const sets = recognition ? photoRecognitionSets(recognition) : [];
+  const pending = !current?.done && !current?.error;
 
   useEffect(() => {
     let active = true, worker: Worker | undefined;
@@ -68,31 +70,29 @@ export default function PhotoResults({ pixels, corners, width, height }: { pixel
   function adjustColor(index: number, color: CubeColor) {
     setAdjustments({ corners, colors: { ...request.corrections, [index]: color }, front: request.front });
   }
-  return <section className="cube-photo-results" aria-label={tr({ zh: '状态与公式', en: 'State and algorithms' })}>
+  return <section className="cube-photo-results" aria-label={tr({ zh: '状态与公式', en: 'State and algorithms' })} aria-busy={pending}>
+    {pending ? <PhotoLoading /> : <div className="cube-photo-result-content">
     <div className="cube-photo-result-status" role="status" aria-live="polite">
-      {!recognition && !current?.error && tr({ zh: '正在读取色块与补全状态…', en: 'Reading colors and completing the state…' })}
-      {recognition && recognition.status !== 'ok' && <p className="cube-photo-error">{tr(STATUS[recognition.status])}</p>}
-      {recovered && <PhotoStateHeading state={recovered} />}
+      {recognition && recognition.status !== 'ok' && recognition.status !== 'corners-only' && <p className="cube-photo-error">{tr(STATUS[recognition.status])}</p>}
     </div>
-    <PhotoAlgorithmCards sets={sets} results={current?.results ?? {}} error={current?.error} />
+    <PhotoAlgorithmCards stateKey={recovered && ('facelet' in recovered ? recovered.facelet : JSON.stringify(recovered)) || undefined} sets={sets} results={current?.results ?? {}} error={current?.error} />
     {current?.error && !sets.length && <p className="cube-photo-error" role="alert">{tr({ zh: '识别未完成，请重试。', en: 'Analysis did not finish. Please retry.' })}</p>}
     {(current?.error || Object.values(current?.results ?? {}).some(r => r?.status === 'error')) && <button className="cube-photo-retry" onClick={() => setRetry(v => v + 1)}><RotateCcw size={15} />{tr({ zh: '重试检索', en: 'Retry lookup' })}</button>}
     {recognition && <details className="cube-photo-details" open={recognition.status !== 'ok' || undefined}>
-      <summary><ChevronDown size={16} />{tr({ zh: '色块与持方校正', en: 'Colors and orientation' })}</summary>
+      <summary><ChevronDown size={16} />{tr({ zh: '颜色校正', en: 'Color correction' })}</summary>
       <div className="cube-photo-color-grids">{[{ face: 'U', start: 0, count: 9 }, { face: 'F', start: 9, count: 3 }, { face: 'R', start: 12, count: 3 }].map(({ face, start, count }) => <div key={face}>
         <h4>{face}</h4><div className="cube-photo-color-grid">{recognition.samples.slice(start, start + count).map((sample, offset) => <CompactSelect key={offset}
           className={`cube-photo-color${sample.reliable ? '' : ' is-uncertain'}${sample.corrected ? ' is-corrected' : ''}`}
-          value={sample.color} items={colorOptions} ariaLabel={`${face}${offset + 1} ${tr(COLOR_NAMES[sample.color])}`}
-          label={<Swatch color={sample.color} />} onChange={color => adjustColor(start + offset, color)} />)}</div>
+          value={sample.color} items={colorOptions} ariaLabel={`${face}${offset + 1} ${tr(COLOR_NAMES[sample.color])}${sample.inferred ? tr({ zh: ' · 由唯一状态推导', en: ' · inferred from the unique state' }) : ''}`}
+          label={<span title={sample.inferred ? tr({ zh: '由唯一状态推导', en: 'Inferred from the unique state' }) : undefined}><Swatch color={sample.color} /></span>} onChange={color => adjustColor(start + offset, color)} />)}</div>
       </div>)}</div>
-      <p className="cube-photo-note">{tr({ zh: 'U 按远到近逐行排列；F、R 按照片从左到右排列。', en: 'U rows run from back to front; F and R run left to right in the photo.' })}</p>
       <CompactSelect<CubeColor | 'auto'> showArrow value={request.front ?? 'auto'}
         ariaLabel={tr({ zh: '照片左侧面中心色', en: 'Center color of the left face in the photo' })}
         label={<>{tr({ zh: 'F 中心', en: 'F center' })} · {request.front ? tr(COLOR_NAMES[request.front]) : tr({ zh: '自动', en: 'Auto' })}</>}
         items={[{ value: 'auto', label: tr({ zh: '自动', en: 'Auto' }) }, ...colorOptions]}
         onChange={value => setAdjustments({ corners, colors: request.corrections, front: value === 'auto' ? undefined : value })} />
       {(request.front || Object.keys(request.corrections).length > 0) && <button onClick={() => setAdjustments(null)}>{tr({ zh: '恢复自动取色', en: 'Restore sampled colors' })}</button>}
-      {recovered && <p className="cube-photo-note">{tr({ zh: '合法状态唯一匹配。前两层按已复原补全；不可见中心按标准配色推导。', en: 'One legal state matches. F2L is assumed solved; hidden centers follow the standard color scheme.' })}</p>}
     </details>}
+    </div>}
   </section>;
 }

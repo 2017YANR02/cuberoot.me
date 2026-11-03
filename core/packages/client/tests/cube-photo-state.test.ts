@@ -6,7 +6,7 @@ import { parseScramble } from '@cuberoot/puzzle-solvers/cube-moves';
 import { applyMoves, fromFaceletString, toFaceletString } from '@cuberoot/shared/timer/reconstruct/state';
 import { classifyPhotoColors, completeLastLayer, recognizePhoto, standardColorFrames } from '@/lib/cube-photo/recognize';
 import type { RGB } from '@/lib/cube-photo';
-import { findPhotoAlg, photoAlgGoal, photoAlgSets, photoAufOnly, type PhotoAlgSet } from '@/lib/cube-photo/lookup';
+import { findPhotoAlg, findPhotoAlternatives, photoAlgGoal, photoAlgSets, photoRecognitionSets, photoAufOnly, type PhotoAlgSet } from '@/lib/cube-photo/lookup';
 import type { CubeCorners } from '@/lib/cube-photo/geometry';
 import { cubePhotoFixture } from '@cuberoot/shared/testing/cube-photo';
 import fixture from '@cuberoot/shared/testing/cube-photo-algs';
@@ -25,7 +25,70 @@ const reflectedOrangePhoto: RGB[] = [
   [218, 178, 151], [240, 100, 31], // occluded F center, visible R center
 ];
 
+// Independent center patches from the reported photo, including its shadowed
+// blue corner and low-confidence reflected side center. No source image retained.
+const grayBluePhoto: RGB[] = [
+  [35, 176, 30], [232, 233, 17], [252, 122, 30], [236, 239, 17], [234, 238, 18],
+  [23, 188, 18], [50, 108, 182], [80, 134, 198], [233, 240, 16],
+  [215, 218, 15], [211, 217, 15], [193, 63, 38], [53, 81, 40], [140, 146, 46], [84, 91, 102],
+  [44, 144, 29], [172, 91, 68],
+];
+async function sampledPhoto(colors: RGB[]) {
+  const image = cubePhotoFixture(false, .1, fixture.states.oll);
+  const patches = new Map<number, RGB>([[15, colors[15]], [25, colors[16]]]);
+  for (let i = 0; i < 9; i++) patches.set(i + 1, colors[i]);
+  for (let i = 0; i < 3; i++) { patches.set(11 + i, colors[9 + i]); patches.set(21 + i, colors[12 + i]); }
+  let polygon = 0;
+  const svg = image.svg.replace(/<polygon[^>]+>/g, tag => {
+    const rgb = patches.get(polygon++);
+    return rgb ? tag.replace(/fill="[^"]+"/, `fill="rgb(${rgb.join(',')})"`) : tag;
+  });
+  const { data, info } = await sharp(Buffer.from(svg)).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  return { pixels: { width: info.width, height: info.height, data: new Uint8ClampedArray(data) }, corners: image.corners as CubeCorners };
+}
+
 describe('photo last-layer state and formulas', () => {
+  it('uniquely infers the impossible opposite-color corner while retaining its measured evidence', async () => {
+    const { pixels, corners } = await sampledPhoto(grayBluePhoto);
+    expect(classifyPhotoColors(grayBluePhoto)[14]).toMatchObject({ color: 'white', reliable: true });
+    const recognized = recognizePhoto(pixels, corners);
+    expect(recognized.status).toBe('ok');
+    expect(recognized.candidates[0].facelet).toBe('FURUUFBBUFUBRRRRRRUULFFFFFFDDDDDDDDDULLLLLLLLURRBBBBBB');
+    expect(recognized.samples[14]).toMatchObject({ rgb: grayBluePhoto[14], color: 'blue', observedColor: 'white', inferred: true, reliable: false, corrected: false });
+    expect(recognized.samples.slice(0, 14).some(s => s.inferred)).toBe(false);
+    const explicit = recognizePhoto(pixels, corners, { 14: 'white' });
+    expect(explicit.status).toBe('invalid');
+    expect(explicit.samples[14].inferred).toBeUndefined();
+  });
+  it('does not select a completion when the visible evidence admits multiple corner states', async () => {
+    const observed = { U: '????U????', F: '???', R: '???' };
+    expect(completeLastLayer(observed, 2)).toHaveLength(2);
+    const colors = grayBluePhoto.map((rgb, i) => [0, 2, 6, 8, 9, 11, 12, 14].includes(i) ? [12, 12, 12] as RGB : rgb);
+    const { pixels, corners } = await sampledPhoto(colors);
+    const recognized = recognizePhoto(pixels, corners);
+    expect(recognized.status).toBe('uncertain-colors');
+    expect(photoRecognitionSets(recognized)).toEqual([]);
+    expect(recognized.samples.some(s => s.inferred)).toBe(false);
+  });
+  it('keeps opposite-color edges and recognizes only CMLL corners with an unsolved M slice', async () => {
+    for (const moves of ['M', 'M2', "M'"]) {
+      const actual = applyMoves(fromFaceletString(fixture.states.cross)!, 3, parseScramble(moves));
+      const image = cubePhotoFixture(false, .1, toFaceletString(actual));
+      const { data, info } = await sharp(Buffer.from(image.svg)).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+      const result = await analyzeCubePhoto({ pixels: { width: info.width, height: info.height, data: new Uint8ClampedArray(data) }, corners: image.corners as CubeCorners, corrections: {} }, async set => libraries[set]);
+      expect(result.recognition.status, moves).toBe('corners-only');
+      expect(result.recognition.candidates).toEqual([]);
+      expect(result.recognition.cornerCandidates).toHaveLength(1);
+      expect(result.results.map(r => r.set)).toEqual(['cmll']);
+      expect(result.results[0].status).toBe('found');
+      expect(result.recognition.samples.filter((_, i) => [1, 3, 5, 7, 10, 13].includes(i)).some(s => s.inferred)).toBe(false);
+      if (moves === 'M2') expect(result.recognition.samples[1]).toMatchObject({ color: 'white', reliable: true });
+      for (const match of [result.results[0].match!, ...result.results[0].alternatives!]) {
+        expect(photoAlgGoal('cmll', applyMoves(actual, 3, parseScramble(match.alg))), moves).toBe(true);
+      }
+      expect(findPhotoAlg(result.recognition.cornerCandidates![0], 'oll', libraries.oll)).toBeNull();
+    }
+  });
   it('recognizes a shadowed blue patch without inventing colors in dark neutral pixels', () => {
     // Measured patch only; do not commit the private handheld source photo.
     const rgb: RGB = [10, 29, 57];
@@ -53,11 +116,39 @@ describe('photo last-layer state and formulas', () => {
     expect(classifyPhotoColors([...reflectedOrangePhoto, [228, 75, 39]]).at(-1)?.reliable).toBe(false);
   });
   it('routes the three stages to exactly the requested sets; solved/invalid states have none', () => {
-    expect(photoAlgSets(fixture.states.oll)).toEqual(['ollcp', '1lll', 'oll']);
-    expect(photoAlgSets(fixture.states.cross)).toEqual(['zbll', 'oll', 'coll']);
-    expect(photoAlgSets(fixture.states.pll)).toEqual(['pll']);
+    expect(photoAlgSets(fixture.states.oll)).toEqual(['oll', 'cmll', 'ollcp', '1lll']);
+    expect(photoAlgSets(fixture.states.cross)).toEqual(['oll', 'cmll', 'coll', 'zbll']);
+    expect(photoAlgSets(fixture.states.pll)).toEqual(['pll', 'cmll']);
     expect(photoAlgSets(SOLVED_FACELET)).toEqual([]);
     expect(photoAlgSets('U'.repeat(54))).toEqual([]);
+  });
+  it('uses the Roux CMLL finish line, allowing M-slice changes but rejecting broken blocks', () => {
+    const solved = fromFaceletString(SOLVED_FACELET)!;
+    for (const moves of ['M', 'M2', "M' U", 'M U2 M\' U']) {
+      expect(photoAlgGoal('cmll', applyMoves(solved, 3, parseScramble(moves)))).toBe(true);
+      expect(photoAlgGoal('coll', applyMoves(solved, 3, parseScramble(moves)))).toBe(false);
+    }
+    expect(photoAlgGoal('cmll', applyMoves(solved, 3, parseScramble('R')))).toBe(false);
+    const first = findPhotoAlg(fixture.states.cross, 'cmll', libraries.cmll)!;
+    const selected = libraries.cmll.cases.find(c => c.id === first.caseId)!;
+    const file = { ...libraries.cmll, cases: [{ ...selected, algs: [[{ alg: `${first.body} M` }]] }] };
+    expect(findPhotoAlg(fixture.states.cross, 'cmll', file)).not.toBeNull();
+  });
+  it('requires both corner orientation and permutation for ELL, handles AUF, and keeps EPLL in PLL', () => {
+    expect(photoAlgSets(fixture.states.pll)).not.toContain('ell'); // oriented corners, wrong permutation
+    for (const auf of ['', 'U', 'U2', "U'"]) {
+      const state = applyMoves(fromFaceletString(fixture.extraStates.ell)!, 3, parseScramble(auf));
+      const facelet = toFaceletString(state);
+      expect(photoAlgSets(facelet)).toEqual(['oll', 'ell', 'ollcp', '1lll']);
+      const match = findPhotoAlg(facelet, 'ell', libraries.ell)!;
+      expect(match).not.toBeNull();
+      expect(photoAlgGoal('ell', applyMoves(state, 3, parseScramble(match.alg)))).toBe(true);
+      for (const alternative of findPhotoAlternatives(facelet, match, libraries.ell)) {
+        expect(photoAlgGoal('ell', applyMoves(state, 3, parseScramble(alternative.alg)))).toBe(true);
+      }
+    }
+    const epll = toFaceletString(applyMoves(fromFaceletString(SOLVED_FACELET)!, 3, parseScramble('M2 U M2 U2 M2 U M2')));
+    expect(photoAlgSets(epll)).toEqual(['pll']);
   });
   it('uniquely completes all three representative states in all four U positions', () => {
     for (const facelet of Object.values(fixture.states)) for (const auf of ['', 'U', 'U2', "U'"]) {
@@ -85,6 +176,29 @@ describe('photo last-layer state and formulas', () => {
   it('rejects a library candidate that matches a label but does not reach the goal', () => {
     const file: AlgFile = { ...libraries['1lll'], cases: libraries['1lll'].cases.map(c => ({ ...c, algs: [[{ alg: 'R U' }]] })) };
     expect(findPhotoAlg(fixture.states.oll, '1lll', file)).toBeNull();
+  });
+  it('returns distinct alternatives from the matched case with independently verified AUFs', () => {
+    for (const facelet of Object.values(fixture.states)) for (const auf of ['', 'U', 'U2', "U'"]) {
+      const state = applyMoves(fromFaceletString(facelet)!, 3, parseScramble(auf));
+      const rotated = toFaceletString(state);
+      for (const set of photoAlgSets(rotated)) {
+        const first = findPhotoAlg(rotated, set, libraries[set])!;
+        const selected = libraries[set].cases.find(c => first.caseId != null ? c.id === first.caseId : c.name === first.caseName)!;
+        // Opposite faces commute, giving a distinct but equivalent test entry.
+        const otherBody = `${first.body} R L R' L'`;
+        const file: AlgFile = { ...libraries[set], cases: [
+          { ...selected, algs: [[{ alg: first.body! }, { alg: otherBody }, { alg: otherBody }, { alg: 'R U' }, { alg: 'invalid' }]] },
+          { ...selected, id: -1, name: 'Unrelated case', meta: undefined, algs: [[{ alg: `${first.body} F B F' B'` }]] },
+        ] };
+        expect(findPhotoAlg(rotated, set, file)).toEqual(first);
+        const alternatives = findPhotoAlternatives(rotated, first, file);
+        expect(alternatives).toHaveLength(1);
+        expect(alternatives[0].body).toBe(otherBody);
+        expect(alternatives[0].href).toBe(first.href);
+        expect(alternatives[0].alg).not.toBe(first.alg);
+        expect(photoAlgGoal(set, applyMoves(state, 3, parseScramble(alternatives[0].alg)))).toBe(true);
+      }
+    }
   });
   it('handles PLL skip as an exact U adjustment without needing a library case', () => {
     for (const auf of ['U', 'U2', "U'"]) {
@@ -115,7 +229,10 @@ describe('photo last-layer state and formulas', () => {
       return libraries[set];
     });
     expect(result.recognition.status).toBe('ok');
-    expect(result.results.map(r => [r.set, r.status])).toEqual([['zbll', 'found'], ['oll', 'found'], ['coll', 'error']]);
+    expect(result.results.map(r => [r.set, r.status])).toEqual([['oll', 'found'], ['cmll', 'found'], ['coll', 'error'], ['zbll', 'found']]);
+    for (const item of result.results.filter(r => r.status === 'found')) {
+      expect(item.alternatives).toEqual(findPhotoAlternatives(fixture.states.cross, item.match!, libraries[item.set]));
+    }
     const subset = await analyzeCubePhoto({ ...input, sets: ['oll', 'pll'] }, async set => libraries[set]);
     expect(subset.results.map(r => r.set)).toEqual(['oll']);
   });

@@ -8,6 +8,7 @@ import { formatDateRangeIso, isValidIsoDate } from '@cuberoot/shared/iso-date';
 import { roundChronologicalOrder } from '@cuberoot/shared/wca-round';
 import { mergeCompetitionIndexes } from '@cuberoot/shared/competition-index';
 import type { AssistantArtifact, AssistantSource, AssistantTable } from '@cuberoot/shared/site-assistant';
+import { PHOTO_ALG_SETS } from '@cuberoot/shared/cube-photo/lookup';
 import { findAssistantPeople } from './site_assistant_people.js';
 import { analysisSchemaCall, analysisQueryCall } from './site_assistant_analysis.js';
 import { readAssistantNews } from './site_assistant_news.js';
@@ -37,7 +38,7 @@ export const toolCallSchema = z.discriminatedUnion('tool', [
   z.object({ tool: z.literal('forum'), query }).strict(),
   z.object({ tool: z.literal('algorithms'), puzzle: id.default('3x3'), set: id.optional() }).strict(),
   z.object({ tool: z.literal('lookup_cube_photo'), imageRef: z.string().regex(/^(?:current:[0-2]|history:[0-9]:[0-2])$/),
-    sets: z.union([z.literal('auto'), z.array(z.enum(['oll','ollcp','1lll','zbll','coll','pll'])).min(1).max(6)]).default('auto'),
+    sets: z.union([z.literal('auto'), z.array(z.enum(PHOTO_ALG_SETS)).min(1).max(PHOTO_ALG_SETS.length)]).default('auto'),
   }).strict(),
   z.object({ tool: z.literal('statistics'), id: id.optional(), tableKey: z.string().regex(/^[0-9.]{1,40}$/).optional(), offset: z.number().int().min(0).max(50000).optional(), limit: z.number().int().min(1).max(20).default(10) }).strict().refine(value=>!value.tableKey || !!value.id, {path:['id'],message:'A tableKey requires its statistic id. Repeat the id from the previous result; table keys are not global.'}),
   z.object({ tool: z.literal('pages'), query, pageIds: z.array(z.string().max(120)).max(3).default([]), audience: z.enum(['user','developer']).default('user') }).strict(),
