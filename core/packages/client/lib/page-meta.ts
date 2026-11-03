@@ -470,6 +470,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   },
   'dev/stack': { title: { zh: '技术栈', en: 'Stack' } },
   'dev/tokens': { title: { zh: '设计令牌', en: 'Design Tokens' } },
+  'alg/photo': { title: { zh: '拍照查公式', en: 'Photo Algorithm Lookup' }, description: { zh: '在本机识别手持三阶魔方照片，查询并验证顶层公式。', en: 'Identify a handheld 3×3 cube photo locally and find verified last-layer algorithms.' } },
   'dev/cube-photo': { title: { zh: '魔方照片识别', en: 'Cube Photo Recognition' } },
   'dev/utils': { title: { zh: '速查', en: 'Hooks & Utils' } },
   'dev/wca-export': { title: { zh: 'WST 数据导出', en: 'WST Export' } },

@@ -1,13 +1,12 @@
 'use client';
 
+import PhotoAlgorithmCards, { Swatch } from './PhotoAlgorithmCards';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, ChevronDown, Copy, RotateCcw } from 'lucide-react';
-import Link from '@/components/AppLink';
+import { ChevronDown, RotateCcw } from 'lucide-react';
 import { CompactSelect } from '@/components/CompactSelect';
-import { useCopy } from '@/hooks/useCopy';
 import { tr } from '@/i18n/tr';
-import { COLOR_NAMES, COLOR_ORDER, COLOR_RGB, type CubeColor, type PhotoRecognition } from '@/lib/cube-photo/recognize';
+import { COLOR_NAMES, COLOR_ORDER, type CubeColor, type PhotoRecognition } from '@/lib/cube-photo/recognize';
 import type { CubeCorners } from '@/lib/cube-photo/geometry';
 import type { PhotoPixels } from '@/lib/cube-photo/detect';
 import type { PhotoAnalysisInput, PhotoAnalysisMessage } from '@/lib/cube-photo/analyze.worker';
@@ -19,22 +18,9 @@ const STATUS = {
   ambiguous: { zh: '状态不唯一，请指定照片左侧面的中心颜色。', en: 'The state is ambiguous. Specify the center color of the left face in the photo.' },
   invalid: { zh: '颜色无法组成合法顶层，请核对色块、持方与网格。', en: 'These colors do not form a legal last layer. Check the colors, orientation and grid.' },
 };
-const GOALS: Record<PhotoAlgSet, { zh: string; en: string }> = {
-  oll: { zh: '完成顶面', en: 'Orient the last layer' },
-  ollcp: { zh: '完成顶面与角块', en: 'Solve corners and last-layer orientation' },
-  coll: { zh: '完成顶层角块，保持十字', en: 'Solve corners and preserve the oriented cross' },
-  '1lll': { zh: '直接复原', en: 'Solve the cube' }, zbll: { zh: '直接复原', en: 'Solve the cube' }, pll: { zh: '复原顶层排列', en: 'Solve the last-layer permutation' },
-};
-
-function Swatch({ color }: { color: CubeColor }) {
-  const [r, g, b] = COLOR_RGB[color];
-  // Cube sticker colors are media data, independent of page theme.
-  return <svg width="17" height="17" viewBox="0 0 17 17" aria-hidden="true"><rect width="17" height="17" rx="3" fill={`rgb(${r},${g},${b})`} /></svg>;
-}
 
 export default function PhotoResults({ pixels, corners, width, height }: { pixels: PhotoPixels; corners: CubeCorners; width: number; height: number }) {
   useTranslation();
-  const { copiedKey, copy } = useCopy();
   const [adjustments, setAdjustments] = useState<{ corners: CubeCorners; colors: Record<number, CubeColor>; front?: CubeColor } | null>(null);
   const [retry, setRetry] = useState(0), [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const request = useMemo<PhotoAnalysisInput>(() => ({ pixels,
@@ -55,7 +41,7 @@ export default function PhotoResults({ pixels, corners, width, height }: { pixel
     const deadline = setTimeout(fail, 30000);
     const debounce = setTimeout(() => {
       try {
-        worker = new Worker(new URL('../../../../lib/cube-photo/analyze.worker.ts', import.meta.url), { type: 'module' });
+        worker = new Worker(new URL('../../lib/cube-photo/analyze.worker.ts', import.meta.url), { type: 'module' });
         setSnapshot({ request, results: {}, done: false, error: false });
         worker.onerror = fail;
         worker.onmessage = (event: MessageEvent<PhotoAnalysisMessage>) => {
@@ -92,22 +78,7 @@ export default function PhotoResults({ pixels, corners, width, height }: { pixel
         <p className="cube-photo-note">{tr({ zh: 'F 对应照片左侧面，R 对应照片右侧面。', en: 'F is the left face in the photo; R is the right face.' })}</p>
       </>}
     </div>
-    {sets.length > 0 && <div className="cube-photo-formulas">
-      <p className="cube-photo-note">{tr({ zh: '每条公式独立从照片状态出发，已包含所需 AUF。', en: 'Each formula starts independently from the photo state and includes the required AUF.' })}</p>
-      {sets.map(set => {
-        const result = current?.results[set], match = result?.match;
-        return <article key={set} className="cube-photo-formula" data-site-surface="panel" data-alg-set={set}>
-          <div className="cube-photo-formula-heading"><h3>{!match?.name.toLowerCase().startsWith(set) && set.toUpperCase()}{match && <Link href={match.href} prefetch={false}>{match.name}</Link>}</h3>
-            {match && <button aria-label={tr({ zh: `复制 ${set.toUpperCase()} 公式`, en: `Copy ${set.toUpperCase()} algorithm` })} onClick={() => copy(match.alg, set)}>{copiedKey === set ? <Check size={16} /> : <Copy size={16} />}</button>}
-          </div>
-          <p className="cube-photo-note">{tr(GOALS[set])}</p>
-          {match ? <><code>{match.alg}</code><small><Check size={13} />{tr({ zh: '模拟验证通过', en: 'Simulation verified' })} · {match.turns} STM</small></> : <p className="cube-photo-note">{result?.status === 'error' || current?.error
-            ? tr({ zh: '公式库加载失败，请重试。', en: 'Could not load the algorithm library. Retry.' })
-            : result?.status === 'missing' ? tr({ zh: '当前公式库中未找到通过验证的公式。', en: 'No verified algorithm found in the current library.' })
-              : tr({ zh: '正在检索与验证…', en: 'Finding and verifying an algorithm…' })}</p>}
-        </article>;
-      })}
-    </div>}
+    <PhotoAlgorithmCards sets={sets} results={current?.results ?? {}} error={current?.error} />
     {current?.error && !sets.length && <p className="cube-photo-error" role="alert">{tr({ zh: '识别未完成，请重试。', en: 'Analysis did not finish. Please retry.' })}</p>}
     {(current?.error || Object.values(current?.results ?? {}).some(r => r?.status === 'error')) && <button className="cube-photo-retry" onClick={() => setRetry(v => v + 1)}><RotateCcw size={15} />{tr({ zh: '重试检索', en: 'Retry lookup' })}</button>}
     {recognition && <details className="cube-photo-details" open={recognition.status !== 'ok' || undefined}>

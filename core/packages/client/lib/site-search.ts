@@ -87,6 +87,7 @@ const ALG_SET_PATH_OVERRIDE: Record<string, string> = {
 export const METRIC_LABEL_OVERRIDE: Record<string, string> = { 'Mo3': 'Mo3' };
 
 export const TOOL_ITEMS: ToolItem[] = [
+  { path: '/alg/photo', zh: '拍照查公式', en: 'Photo algorithm lookup' },
   { path: '/wca/comp',       zh: '比赛',   en: 'Comp'
 },
   { path: '/wca/comp?view=globe', zh: '地球', en: 'Globe' },
