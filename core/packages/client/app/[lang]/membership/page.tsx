@@ -11,7 +11,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Check, RefreshCw, AlertTriangle } from '@app-foundation/icons/lucide';
 import { useQueryState } from 'nuqs';
 import { useRouter } from 'next/navigation';
-import { clearMembershipReturn, membershipReturnPath, readMembershipReturn, rememberMembershipReturn } from '@/lib/membership-return';
+import { clearMembershipReturn, membershipReturnRequiresActive, membershipReturnPath, readMembershipReturn, rememberMembershipReturn } from '@/lib/membership-return';
 import { tr, useLang } from '@/i18n/tr';
 import { useAuthStore, isAdmin, getSessionToken, getWcaToken } from '@/lib/auth-store';
 import { isMiniProgramCommerceRestricted } from '@/lib/miniprogram-bridge';
@@ -108,11 +108,14 @@ export default function MembershipPage() {
     }
     const uid = user?.uid;
     const queryNext = membershipReturnPath(new URLSearchParams(window.location.search).get('next'));
-    if (uid && queryNext) rememberMembershipReturn(queryNext, uid);
+    const requireActive = queryNext
+      ? new URLSearchParams(window.location.search).get('requireActive') === '1'
+      : !!(uid && membershipReturnRequiresActive(uid));
+    if (uid && queryNext) rememberMembershipReturn(queryNext, uid, requireActive);
     getMyMembership().then((r) => {
       if (useAuthStore.getState().user?.uid !== uid) return;
       const destination = queryNext ?? (uid ? readMembershipReturn(uid) : null);
-      if ((r.isMember ?? r.membership?.active) && destination) {
+      if ((requireActive ? r.membership?.active : (r.isMember ?? r.membership?.active)) && destination) {
         clearMembershipReturn();
         router.replace(destination);
         return;

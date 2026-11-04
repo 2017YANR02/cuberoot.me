@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { membershipEntryHref, membershipReturnPath, rememberMembershipReturn, readMembershipReturn } from '@/lib/membership-return';
+import { membershipEntryHref, membershipReturnPath, rememberMembershipReturn, readMembershipReturn, membershipReturnRequiresActive } from '@/lib/membership-return';
 
 afterEach(() => vi.unstubAllGlobals());
 describe('membership continuation', () => {
@@ -13,6 +13,13 @@ describe('membership continuation', () => {
   it.each(['https://evil.example', '//evil.example', '/\\evil.example', '/zh/account?next=/sim', '/membership?paid=1'])('rejects unsafe or looping destination %s', path => {
     expect(membershipReturnPath(path)).toBe(null);
   });
+  it('carries strict membership and the student-filter continuation through login', () => {
+    const source = '/zh/wca/results?events=333,222&myStudents=1';
+    const membership = new URL(membershipEntryHref(source, true), 'https://cuberoot.me');
+    expect(membership.searchParams.get('requireActive')).toBe('1');
+    expect(membership.searchParams.get('next')).toBe(source);
+    expect(new URL(membershipEntryHref('/sim'), 'https://cuberoot.me').searchParams.has('requireActive')).toBe(false);
+  });
   it('retains a provider round trip only for the same account and expires it', () => {
     const data = new Map<string, string>();
     vi.stubGlobal('sessionStorage', {
@@ -20,11 +27,14 @@ describe('membership continuation', () => {
       setItem: (key: string, value: string) => data.set(key, value),
       removeItem: (key: string) => data.delete(key),
     });
-    rememberMembershipReturn('/sim?puzzle=3', 1);
+    rememberMembershipReturn('/sim?puzzle=3', 1, true);
     expect(readMembershipReturn(1)).toBe('/sim?puzzle=3');
+    expect(membershipReturnRequiresActive(1)).toBe(true);
+    expect(membershipReturnRequiresActive(2)).toBe(false);
     expect(readMembershipReturn(2)).toBe(null);
     expect(readMembershipReturn(1)).toBe(null);
     rememberMembershipReturn('/sim', 1);
+    expect(membershipReturnRequiresActive(1)).toBe(false);
     const now = vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 3 * 60 * 60 * 1000);
     expect(readMembershipReturn(1)).toBe(null);
     now.mockRestore();

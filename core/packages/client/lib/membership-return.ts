@@ -11,17 +11,17 @@ export function membershipReturnPath(raw: string | null | undefined): string | n
   return path;
 }
 
-export function membershipEntryHref(path: string): string {
+export function membershipEntryHref(path: string, requireActive = false): string {
   const next = membershipReturnPath(path);
   const prefix = path.startsWith('/zh/') ? '/zh' : '';
-  return `${prefix}/membership${next ? `?next=${encodeURIComponent(next)}` : ''}`;
+  return `${prefix}/membership${next ? `?next=${encodeURIComponent(next)}${requireActive ? '&requireActive=1' : ''}` : ''}`;
 }
 
 /** Tab-local, account-bound continuation survives the payment provider's fixed return URL. */
-export function rememberMembershipReturn(path: string, uid: number): void {
+export function rememberMembershipReturn(path: string, uid: number, requireActive = false): void {
   const next = membershipReturnPath(path);
   if (!next) return;
-  try { sessionStorage.setItem(KEY, JSON.stringify({ next, uid, at: Date.now() })); } catch { /* URL remains the fallback. */ }
+  try { sessionStorage.setItem(KEY, JSON.stringify({ next, uid, requireActive, at: Date.now() })); } catch { /* URL remains the fallback. */ }
 }
 
 export function readMembershipReturn(uid: number): string | null {
@@ -37,4 +37,11 @@ export function readMembershipReturn(uid: number): string | null {
 
 export function clearMembershipReturn(): void {
   try { sessionStorage.removeItem(KEY); } catch { /* unavailable storage */ }
+}
+
+/** Preserve strict membership requirements across payment-provider redirects. */
+export function membershipReturnRequiresActive(uid: number): boolean {
+  if (!readMembershipReturn(uid)) return false;
+  try { return JSON.parse(sessionStorage.getItem(KEY) || 'null')?.requireActive === true; }
+  catch { return false; }
 }
