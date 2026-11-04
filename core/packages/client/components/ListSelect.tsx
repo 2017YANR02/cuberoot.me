@@ -27,6 +27,8 @@ export interface ListSelectItem {
   hint?: string;
   /** 用于搜索过滤的额外文本 (如中文模式下也想被英文名命中) */
   searchTerms?: string;
+  /** Hide from the default menu; reveal matching entries after a search. */
+  searchOnly?: boolean;
   /** ISO2 国家码;非空时 label 前渲染 <Flag> */
   country?: string;
   /** label 前的自定义图标 */
@@ -45,6 +47,10 @@ interface ListSelectProps {
   /** Escape scrolling tables using the shared viewport-positioned menu. */
   portal?: boolean;
   showArrow?: boolean;
+  /** Hide only the selected label; keep menu labels and accessible text. */
+  hideSelectedLabel?: boolean;
+  /** Optional trigger text; menu labels and option values remain unchanged. */
+  selectedLabel?: ReactNode;
   disabled?: boolean;
   ariaLabel?: string;
   pinCountries?: boolean;
@@ -63,7 +69,7 @@ interface ListSelectProps {
   searchPlaceholder?: string;
 }
 
-export function ListSelect({ portal = false, showArrow = true, items, value, onChange, allLabel, className, searchable, clearable = true, maxVisible, searchPlaceholder, pinCountries = false, disabled = false, ariaLabel }: ListSelectProps) {
+export function ListSelect({ portal = false, showArrow = true, hideSelectedLabel = false, selectedLabel, items, value, onChange, allLabel, className, searchable, clearable = true, maxVisible, searchPlaceholder, pinCountries = false, disabled = false, ariaLabel }: ListSelectProps) {
   const [pins, togglePin] = usePinnedCountries();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -119,7 +125,8 @@ export function ListSelect({ portal = false, showArrow = true, items, value, onC
   }, [open, searchable]);
 
   const filtered = useMemo(() => {
-    if (!searchable || !query.trim()) return items;
+    if (!searchable) return items;
+    if (!query.trim()) return items.filter(item => !item.searchOnly);
     const q = query.trim().toLowerCase();
     return items.filter(i =>
       i.label.toLowerCase().includes(q) ||
@@ -193,7 +200,7 @@ export function ListSelect({ portal = false, showArrow = true, items, value, onC
     </div>
   </>;
   if (portal) return <CompactSelect className={className} popupClassName="wca-relation-filter-popup" unstyledTrigger showArrow={showArrow}
-    ariaLabel={ariaLabel ?? allLabel} label={current ? <span title={current.hideLabel ? current.label : undefined}>{current.icon}<span className={current.hideLabel ? 'sr-only' : undefined}>{current.label}</span></span> : allLabel}
+    ariaLabel={ariaLabel ?? allLabel} label={selectedLabel ?? (current ? <span title={current.hideLabel ? current.label : undefined}>{current.icon}<span className={(hideSelectedLabel || current.hideLabel) ? 'sr-only' : undefined}>{current.label}</span></span> : allLabel)}
     items={shown.filter(item => !item.group || expandedGroups[item.group.value] || (searchable && query.trim()))} value={value} onChange={select} disabled={disabled} open={open}
     onOpenChange={next => {
       if (next) { const group = current?.group; setExpandedGroups(group ? { [group.value]: true } : {}); }
@@ -218,16 +225,16 @@ export function ListSelect({ portal = false, showArrow = true, items, value, onC
         }}
       >
         <span className="list-select-current">
-          {current ? (
+          {selectedLabel ?? (current ? (
             <>
               {current.country && <Flag iso2={current.country} className="list-select-flag" />}
               {current.icon && <span className="list-select-icon" aria-hidden>{current.icon}</span>}
-              <span className={current.hideLabel ? 'sr-only' : 'list-select-label'}>{current.label}</span>
+              <span className={(hideSelectedLabel || current.hideLabel) ? 'sr-only' : 'list-select-label'}>{current.label}</span>
               {current.hint && <span className="list-select-hint">{current.hint}</span>}
             </>
           ) : (
             <span className="list-select-label">{allLabel}</span>
-          )}
+          ))}
         </span>
         {clearable && value && (
           <span

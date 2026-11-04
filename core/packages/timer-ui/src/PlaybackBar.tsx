@@ -86,13 +86,9 @@ export default function PlaybackBar({
   const atEnd = disabled || step >= total;
   const empty = disabled || total === 0;
   const hasSegmentCounts = !!segmentCounts?.length && !empty;
-  // Fraction of the way along the track the thumb sits, so the value bubble can
-  // float directly above it (native <input type=range> gives no thumb hook — the
-  // calc offsets by the thumb width so the label tracks the thumb centre exactly).
-  const frac = step / Math.max(total, 1);
   return (
     <div className={`playback-bar${layout === 'wide' ? ' playback-bar--wide' : ''}`}>
-      <div className="playback-bar-scrub">
+      <div className={`playback-bar-scrub${hasSegmentCounts ? ' playback-bar-scrub--counts' : ''}`}>
         {!empty && segmentEnds?.map((end, index) => {
           const start = segmentEnds[index - 1] ?? 0;
           const count = segmentCounts?.[index];
@@ -102,12 +98,6 @@ export default function PlaybackBar({
             {count}
           </span>;
         })}
-        {!hasSegmentCounts && <span
-          className="playback-bar-bubble"
-          style={{ left: `calc(${frac} * (100% - var(--pb-thumb)) + var(--pb-thumb) / 2)` }}
-        >
-          {step}
-        </span>}
         <PlaybackScrubber step={step} total={total} segmentEnds={segmentEnds} onScrub={onScrub} disabled={empty} ariaLabel={L.scrub} />
         {stepMarkers && !empty && <div className="playback-bar-markers" aria-hidden="true">
           {stepMarkers.map(position => <span

@@ -61,6 +61,10 @@ export function usePopoverPosition({
         viewportTop + viewportHeight - VIEWPORT_MARGIN - Math.max(0, viewportBottomInset),
       );
       const anchor = (contentAnchorRef?.current ?? trigger).getBoundingClientRect();
+      // A previous search may have shrunk the menu. Measure without that cap:
+      // nested flex/scroll containers otherwise report the old, clipped height.
+      const previousMaxHeight = panel.style.maxHeight;
+      panel.style.maxHeight = 'none';
       const panelRect = panel.getBoundingClientRect();
       const optionContent = contentAnchorRef ? panel.querySelector('.compact-select-option')?.firstElementChild : null;
       const contentInset = contentAnchorRef?.current && optionContent
@@ -85,6 +89,7 @@ export function usePopoverPosition({
         + (parseFloat(panelCss.paddingTop) || 0) + (parseFloat(panelCss.paddingBottom) || 0) : 0;
       const contentHeight = columnHeight || panel.scrollHeight;
       const desiredHeight = contentHeight ? contentHeight + borderHeight : panelRect.height;
+      panel.style.maxHeight = previousMaxHeight;
       const placeBelow = side === 'top'
         ? aboveSpace < Math.min(desiredHeight, belowSpace)
         : belowSpace >= Math.min(desiredHeight, aboveSpace);

@@ -11,14 +11,13 @@
   align-self: center;
 }
 
-/* Reserve one row above the track for stage totals, or the current step when
-   stage totals are not available. */
+/* Reserve a label row only when stage totals are displayed. */
 .playback-bar-scrub {
   position: relative;
   display: flex;
   align-items: center;
-  padding-top: 26px;
 }
+.playback-bar-scrub--counts { padding-top: 26px; }
 .playback-bar-scrub .playback-scrubber {
   flex: 1;
   width: 100%;
