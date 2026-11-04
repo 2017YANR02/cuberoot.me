@@ -14,7 +14,7 @@ export default function F2lSlotSelector({ selected, onSelect, disabledSlots = []
   className?: string;
 }) {
   return <div className={`f2l-slot-selector ${className}`} role="group" aria-label={ariaLabel}>
-    {SLOTS.map(slot => <button key={slot} type="button"
+    {SLOTS.map(slot => <button key={slot} type="button" className="f2l-slot-button"
       aria-pressed={selected.includes(slot)} disabled={disabledSlots.includes(slot)}
       title={disabledSlots.includes(slot) ? disabledTitle : undefined}
       onClick={() => onSelect(slot)}>{slot}</button>)}

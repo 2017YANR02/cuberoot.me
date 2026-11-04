@@ -174,7 +174,7 @@ export default function LetteringPage() {
 
             <div className="lettering-alg-heading">
               <h3>{tr({ zh: '拼字公式', en: 'Lettering alg' })}</h3>
-              <button type="button" onClick={() => void copyAlg()}>
+              <button type="button" className="lettering-copy-button" onClick={() => void copyAlg()}>
                 {copied ? <Check size={16} aria-hidden /> : <Copy size={16} aria-hidden />}
                 {copied ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: '复制公式', en: 'Copy alg' })}
               </button>

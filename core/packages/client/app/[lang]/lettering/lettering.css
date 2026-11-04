@@ -197,7 +197,7 @@
   font-size: 1rem;
 }
 
-.lettering-alg-heading button {
+.lettering-copy-button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -230,7 +230,7 @@
   .lettering-order:hover,
   .lettering-character:hover,
   .lettering-word:hover,
-  .lettering-alg-heading button:hover {
+  .lettering-copy-button:hover {
     border-color: var(--accent);
   }
 }

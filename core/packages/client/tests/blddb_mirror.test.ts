@@ -180,9 +180,9 @@ function variantHit(set: BlddbSet, code: string, type: BlddbType): string | null
 
 describe('公式镜像', () => {
   it('换位子的结构原样保留', () => {
-    expect(mirrorAlgText('R2:[U,R2 D R2 D\' R2]')).toBe('L2:[U\',L2 D\' L2 D L2]');
-    expect(mirrorAlgText('[L E2 L2 E L,U]')).toBe('[R\' E2 R2 E\' R\',U\']');
-    expect(mirrorAlgText("S U':[S,R2]")).toBe("S' U:[S',L2]");
+    expect(mirrorAlgText('R2:[U,R2 D R2 D\' R2]')).toBe("L2':[U',L2' D' L2' D L2']");
+    expect(mirrorAlgText('[L E2 L2 E L,U]')).toBe("[R' E2' R2' E' R',U']");
+    expect(mirrorAlgText("S U':[S,R2]")).toBe("S' U:[S',L2']");
   });
 
   // M 与 x 落在镜面法线上,**不取反** —— 这条是 @cuberoot/shared 注释里写了"犯过两次"的坑。
