@@ -63,12 +63,11 @@ it.each(['', 'CN'])('updates current holder days across UTC midnight (%s)', asyn
     controlledEventId: '333', controlledCountry: country,
   })));
   expect(host.querySelector('.t10h-bigdate')?.textContent).toBe('2026-10-10');
-  const scope = country ? 'National' : 'World';
   // Breaking one's own record on Oct 4 must not reset the Oct 3 start date.
-  expect(host.querySelector('.t10h-holder-sub')?.textContent).toBe(`${scope} record holder for 7 days`);
+  expect(host.querySelector('.t10h-holder-sub')?.textContent).toBe(`Held for 7 days`);
   await act(async () => vi.advanceTimersByTime(60_000));
   expect(host.querySelector('.t10h-bigdate')?.textContent).toBe('2026-10-11');
-  expect(host.querySelector('.t10h-holder-sub')?.textContent).toBe(`${scope} record holder for 8 days`);
+  expect(host.querySelector('.t10h-holder-sub')?.textContent).toBe(`Held for 8 days`);
 
   const slider = host.querySelector<HTMLInputElement>('.t10h-scrub')!;
   await act(async () => {
@@ -76,10 +75,10 @@ it.each(['', 'CN'])('updates current holder days across UTC midnight (%s)', asyn
     slider.dispatchEvent(new Event('input', { bubbles: true }));
   });
   expect(host.querySelector('.t10h-holder-name')?.textContent).toBe('Alice');
-  expect(host.querySelector('.t10h-holder-sub')?.textContent).toBe(`${scope} record holder for 1 days`);
+  expect(host.querySelector('.t10h-holder-sub')?.textContent).toBe(`Held for 1 days`);
   await act(async () => vi.advanceTimersByTime(86_400_000));
   expect(host.querySelector('.t10h-bigdate')?.textContent).toBe('2026-10-02');
-  expect(host.querySelector('.t10h-holder-sub')?.textContent).toBe(`${scope} record holder for 1 days`);
+  expect(host.querySelector('.t10h-holder-sub')?.textContent).toBe(`Held for 1 days`);
 });
 
 it('keeps the server render independent of the wall clock', () => {

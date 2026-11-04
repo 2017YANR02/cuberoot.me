@@ -8,7 +8,7 @@ vi.mock('@/components/WcaPersonPicker', () => ({ WcaPersonPicker: ({ onChange, a
 vi.mock('@/components/WcaEventSelector', () => ({ default: () => null }));
 vi.mock('@/components/EventIcon', () => ({ EventIcon: () => null }));
 vi.mock('@/components/Flag', () => ({ Flag: () => null }));
-vi.mock('@/components/PersonLink', () => ({ default: ({ name }: { name: string }) => name }));
+vi.mock('@/components/PersonLink', () => ({ default: ({ name, children }: { name?: string; children?: import('react').ReactNode }) => children ?? name }));
 import { WcaTeacherCell, type WcaTeacherDirectory } from '@/components/WcaTeacherCell';
 
 const company = { id: '11111111-1111-4111-8111-111111111111', name: '上海魔方根科技有限公司' };
@@ -38,12 +38,14 @@ async function select(label: string, value: string) {
   const control = document.querySelector<HTMLSelectElement>(`select[aria-label="${label}"]`)!;
   await act(async () => { control.value = value; control.dispatchEvent(new Event('change', { bubbles: true })); });
 }
-it('displays all four combinations without turning an institution-only student into self-taught', async () => {
+it('keeps institution assignments editable independently of teacher attribution', async () => {
   for (const teacher of [false, true]) for (const institution of [false, true]) {
     await render(directory(teacher, institution));
     expect(host.textContent?.includes('颜瑞民')).toBe(teacher);
-    expect(host.textContent?.includes(company.name)).toBe(institution);
     expect(host.textContent).not.toContain('自学');
+    await click(teacher ? '编辑' : '填写');
+    expect(document.querySelector<HTMLSelectElement>('select[aria-label="培训机构"]')?.value).toBe(institution ? company.id : '');
+    await click('取消');
   }
 });
 it('saves an institution alone without creating or removing teacher relations', async () => {

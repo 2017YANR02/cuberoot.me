@@ -75,7 +75,7 @@
   outline: none;
 }
 .wse-name-search-mode { position: relative; flex: none; border-left: 1px solid var(--input); }
-.wse-name-search-mode select {
+.wse-name-search-select {
   appearance: none;
   field-sizing: content;
   max-width: 12rem;

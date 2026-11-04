@@ -571,7 +571,7 @@ function AllResultsPageInner() {
         type: RANK_TYPE_IDS.has(recordMetric) ? recordMetric : query.type,
         country: countryToRecordRegion(country, countries) === (query.rregion || 'world')
           ? country : recordRegionToCountry(query.rregion || 'world', countries),
-        gender: query.rgender || null,
+        gender: query.rgender || 'all',
       }, { history: 'push' });
     }
   };
@@ -702,7 +702,7 @@ function AllResultsPageInner() {
                   ? tr({ zh: '搜索选手姓名…', en: 'Search person name…' })
                   : tr({ zh: '搜索选手或比赛…', en: 'Search person or competition…' })} />
               <div className="wse-name-search-mode">
-                <select aria-label={tr({ zh: '姓名匹配方式', en: 'Name matching' })}
+                <select className="wse-name-search-select" aria-label={tr({ zh: '姓名匹配方式', en: 'Name matching' })}
                   value={qMode} onChange={e => update('qmode', e.target.value === 'any' ? '' : e.target.value)}>
                   <option value="any">{tr({ zh: '包含', en: 'Contains' })}</option>
                   <option value="first">{tr({ zh: '名完全匹配', en: 'Exact first name' })}</option>

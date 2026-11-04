@@ -124,11 +124,12 @@ describe('/wca/results — backfill 托管的 URL 参数一律写显式值', () 
 });
 
 describe('/wca/results — 老师分享视图', () => {
-  it('用 URL 保留指定老师,并在每个排名表的老师列隐藏其他老师', () => {
-    expect(src).toContain('teacher: parseAsString');
-    expect(src).toContain('setQuery({ teacher: value ? teacherDirectory.userWcaId : null })');
-    expect(src.match(/visibleTeacherWcaId=\{visibleTeacherWcaId \|\| undefined\}/g)).toHaveLength(3);
-    expect(teacherCellSrc).toContain('teacher.teacherWcaId === visibleTeacherWcaId');
+  it('用 URL 保留具体老师 ID,并将筛选交给排名接口', () => {
+    expect(src).toContain('teacherFilter: parseAsString');
+    expect(src).toContain('setQuery({ teacherFilter: myTeacherId, myStudents: null, page: null })');
+    expect(src.match(/if \(teacherFilter\) qs.set\('teacherFilter', teacherFilter\)/g)).toHaveLength(2);
+    expect(src.match(/<WcaTeacherColumnHeader filter=\{teacherColumnFilter\}/g)).toHaveLength(3);
+    expect(src).not.toContain('visibleTeacherWcaId=');
   });
 
 });
