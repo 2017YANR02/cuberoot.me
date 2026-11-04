@@ -12,6 +12,7 @@ import { toolCallSchema, runDataTool, type ToolResult } from './site_assistant_t
 import { cubePhotoImages, requiresCubePhotoEvidence, runCubePhotoTool } from './site_assistant_cube_photo.js';
 import { describeAnalysis, runAnalysisQuery } from './site_assistant_analysis_db.js';
 import { assistantAttendanceScope, applyAttendanceScope, attendanceScopeError } from './site_assistant_scope.js';
+import { championListPresentation } from './site_assistant_presentation.js';
 import { resolveAssistantTime, SITE_ASSISTANT_ANSWER_MAX_LENGTH, type AssistantThinkingMode, type AssistantStreamEvent, type AssistantAnswer, type AssistantMessage, type AssistantImage } from '@cuberoot/shared/site-assistant';
 export type { AssistantSource, AssistantAnswer } from '@cuberoot/shared/site-assistant';
 import { SITE_DIRECTORY_GROUPS, SITE_DIRECTORY_TEXTS } from '@cuberoot/shared/site-directory';
@@ -516,9 +517,22 @@ export async function answerSiteQuestion(
         return {answer:{zh:'这次计算结果的统计口径未通过核验，暂时无法给出可靠结论。',en:'The calculation did not pass the scope and unit checks, so I cannot give a reliable result yet.'}[lang],sources:[],artifacts:[]};
       }
       const selected=[...new Set([...step.sourceIds,...inlineIds])].flatMap(id=>sources.has(id)?[sources.get(id)!]:[]);
+      const reviewed=selected.filter(source=>reviewedAnalysisSources.has(source.id));
+      let championIntro:string|undefined;
+      if(!hasImages && !analysisIncomplete && selected.length===1 && reviewed.length===1) {
+        const source=reviewed[0];
+        const calculation=evidence.find(item=>item.id===source.id && item.tool && typeof item.tool==='object' && 'tool' in item.tool && item.tool.tool==='analysis_query');
+        const tables=artifacts.filter(item=>item.sourceIds.includes(source.id));
+        if(calculation && tables.length===1 && tables[0].artifact.kind==='table') championIntro=championListPresentation({
+          question,lang,hasHistory:history.length>0,periods:timeContext.periods,sourceId:source.id,
+          query:(calculation.tool as {query:unknown}).query,
+          truncated:calculation.data && typeof calculation.data==='object' && 'truncated' in calculation.data ? calculation.data.truncated : undefined,
+          rowCount:tables[0].artifact.rows.length,
+        });
+      }
       // Retrieval makes evidence available; only an explicit valid selection
       // associates it with an answer. Never lend unrelated sources to a draft.
-      const cited=selected;
+      const cited=championIntro ? reviewed : selected;
       const citedIds=new Set(cited.map(source=>source.id));
       const partial=analysisIncomplete && cited.some(s=>s.id.startsWith('analysis:')) ? {zh:'部分计算未完成，以下仅展示已取得的结果。',en:'Some calculations could not be completed. Only the available results are shown below.'}[lang]+' '+cited.filter(s=>s.id.startsWith('analysis:')).map(s=>`[[${s.id}]]`).join(' ') : undefined;
       const factual=!hasImages && cited.length>0 && cited.every(s=>factualSummaries.has(s.id)) && (!step.answerKind || step.answerKind==='grounded') ? [...new Set(cited.flatMap(s=>[...factualSummaries.get(s.id)!]))].map(text=>text+' '+cited.filter(s=>factualSummaries.get(s.id)!.has(text)).map(s=>`[[${s.id}]]`).join(' ')).join('\n\n') : undefined;
@@ -533,8 +547,8 @@ export async function answerSiteQuestion(
       // summaries still prevent fabricated counts; incomplete analysis stays gated.
       const reviewedCalculation=cited.some(source=>reviewedAnalysisSources.has(source.id));
       const fallback=factual && failedCalls.size ? factual+'\n\n'+{zh:'部分补充资料未能读取，以上仅包含已核实的结果。',en:'Some additional sources could not be read. Only verified results are included above.'}[lang] : factual;
-      const answer=partial || (reviewedCalculation ? rendered || fallback : fallback || rendered);
-      return {answer:answer || {zh:'这次没有完成回答，请重试。',en:'The answer did not complete. Please try again.'}[lang],sources:cited,actions:selected.filter(s=>/^\/(?!\/)/.test(s.href) && !/[\\\r\n]/.test(s.href)).map(s=>navigationActions.get(s.id) ?? {id:s.id,title:s.title,href:s.href}),artifacts:[...new Map(artifacts.filter(a=>a.artifact.kind==='cube-photo' || a.sourceIds.some(id=>citedIds.has(id))).map(a=>[JSON.stringify(a.artifact),a.artifact])).values()]};
+      const answer=partial || championIntro || (reviewedCalculation ? rendered || fallback : fallback || rendered);
+      return {answer:answer || {zh:'这次没有完成回答，请重试。',en:'The answer did not complete. Please try again.'}[lang],sources:cited,actions:cited.filter(s=>/^\/(?!\/)/.test(s.href) && !/[\\\r\n]/.test(s.href)).map(s=>navigationActions.get(s.id) ?? {id:s.id,title:s.title,href:s.href}),artifacts:[...new Map(artifacts.filter(a=>a.artifact.kind==='cube-photo' || a.sourceIds.some(id=>citedIds.has(id))).map(a=>[JSON.stringify(a.artifact),a.artifact])).values()]};
   };
   const reviewAnalysis = async(step:z.infer<typeof stepSchema>,round:number,finalOnly:boolean) => {
     // One independent check before publishing a calculated answer. It can use
