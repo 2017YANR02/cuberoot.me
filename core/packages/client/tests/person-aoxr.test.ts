@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { computeAoxr, aoxrKey } from '@/components/persons/logic/aoxr';
+import { parseAoxrWorldRecords } from '@/lib/aoxr-records';
 import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
 
 // 选手页 AoXR 列的口径回归:必须与世界榜 /wca/wr_aoxr
@@ -249,5 +250,60 @@ describe('computeAoxr — 直播(非官方)分层', () => {
 
   it('直播场自己的名次在「官方 + 直播」序列里算(4.05 是当时最快 → PR1)', () => {
     expect(map.get(aoxrKey('LiveB', '333'))!.prRank).toBe(1);
+  });
+});
+
+// Guangzhou's current WR and the superseded Yancheng WR both occur in the history feed.
+// Ranking rows alone must never grant a WR badge.
+describe('AoXR world-record history', () => {
+  const wcaId = '2019WANY36';
+  const currentComp = 'GuangzhouGrandOpen2026';
+  const oldComp = 'YanchengSpringOpen2026';
+  const historyRow = (person: string, competition: string, csv: string) => [
+    '4.09', '', '', `[Person](https://www.worldcubeassociation.org/persons/${person})`,
+    '2026-10-05', `[Competition](https://www.worldcubeassociation.org/competitions/${competition})`,
+    { _type: 'solves', csv },
+  ];
+  const worldRecords = parseAoxrWorldRecords({ metricPanels: [{
+    id: 'ao4r', labelEn: 'Ao4R', labelZh: 'Ao4R', panels: [{
+      id: 'history', labelEn: 'History', labelZh: '历史',
+      header: ['result', 'improvement', 'days', 'person', 'date', 'competition', 'details']
+        .map(key => ({ key, label: key, labelZh: key, align: 'left' as const })),
+      sections: [{ title: "Rubik's Cube", rows: [
+        historyRow(wcaId, currentComp, '4.12,4.20,3.84,4.20'),
+        historyRow(wcaId, oldComp, '4.22,3.96,4.31,4.47'),
+      ] }],
+    }, {
+      id: 'ranking', labelEn: 'Ranking', labelZh: '排名', header: [],
+      sections: [{ title: "Rubik's Cube", rows: [historyRow(wcaId, 'RankingOnly', '4.12,4.20,3.84,4.20')] }],
+    }],
+  }] });
+  const competitions = [comp(currentComp, '2026-10-05'), comp(oldComp, '2026-03-29')];
+  const options = { wcaId, worldRecords };
+
+  it('marks Guangzhou 4.09 and historical WRs, retaining the underlying PR rank', () => {
+    const cells = computeAoxr([
+      ...rounds(currentComp, [412, 420, 384, 420]),
+      ...rounds(oldComp, [422, 396, 431, 447]),
+    ], competitions, options);
+    expect(cells.get(aoxrKey(currentComp, '333'))?.value).toBe(409);
+    expect(cells.get(aoxrKey(currentComp, '333'))?.record).toBe('WR');
+    expect(cells.get(aoxrKey(currentComp, '333'))?.prRank).toBe(1);
+    expect(cells.get(aoxrKey(oldComp, '333'))?.record).toBe('WR');
+  });
+
+  it('does not mark live results, other people, other events, ranking-only rows or missing feeds', () => {
+    const rows = rounds(currentComp, [412, 420, 384, 420]);
+    expect(computeAoxr(rows.map(r => ({ ...r, live: true })), competitions, options).get(aoxrKey(currentComp, '333'))?.record).toBeUndefined();
+    expect(computeAoxr(rows, competitions, { ...options, wcaId: '2023GENG02' }).get(aoxrKey(currentComp, '333'))?.record).toBeUndefined();
+    expect(computeAoxr(rows.map(r => ({ ...r, event_id: '222' })), competitions, options).get(aoxrKey(currentComp, '222'))?.record).toBeUndefined();
+    expect(computeAoxr(rounds('RankingOnly', [412, 420, 384, 420]), competitions, options).get(aoxrKey('RankingOnly', '333'))?.record).toBeUndefined();
+    expect(computeAoxr(rows, competitions, { wcaId, worldRecords: null }).get(aoxrKey(currentComp, '333'))?.prRank).toBe(1);
+  });
+
+  it('does not retain WR after a correction even when the rounded display still says 4.09', () => {
+    const cell = computeAoxr(rounds(currentComp, [413, 420, 384, 420]), competitions, options).get(aoxrKey(currentComp, '333'))!;
+    expect(cell.value).toBe(409);
+    expect(cell.record).toBeUndefined();
   });
 });

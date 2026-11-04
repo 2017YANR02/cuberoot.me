@@ -24,7 +24,9 @@ export function AoxrValue({ cell, eventId }: { cell: AoxrCell | null | undefined
       <span className="wp-aoxr-label">Ao{cell.x}R</span>
       <span className="wp-aoxr-value">
         {formatWcaResult(cell.value, eventId, 'average')}
-        {cell.prRank
+        {cell.record
+          ? <RecordBadge record={cell.record} variant="inline" />
+          : cell.prRank
           ? <RecordBadge record={cell.prRank === 1 ? 'PR' : `PR${cell.prRank}`} variant="inline" />
           : null}
       </span>

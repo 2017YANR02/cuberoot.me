@@ -16,6 +16,7 @@ import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import { computePrRank } from '../../logic/progress';
 import { computeAoxr, aoxrKey, type AoxrCell } from '../../logic/aoxr';
 import { AoxrValue, aoxrHint } from './AoxrValue';
+import { useAoxrWorldRecords } from '../../logic/use-aoxr-records';
 import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } from '@/lib/wca-round-meta';
 import { AttemptsList } from './AttemptsList';
 import { AverageValueCell } from './AverageValueCell';
@@ -105,9 +106,10 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
   const livePrRanks = useLivePrRanks(results, wcaId);
 
   // AoXR(跨轮平均)按 (比赛 × 项目) 聚合,与单次/平均同用「订正后」的有效值。
+  const aoxrRecords = useAoxrWorldRecords(effResultsForRank.some(r => r.average > 0 && !r.live));
   const aoxrMap = useMemo(
-    () => (comps ? computeAoxr(effResultsForRank, comps) : new Map<string, AoxrCell>()),
-    [effResultsForRank, comps],
+    () => (comps ? computeAoxr(effResultsForRank, comps, { wcaId, worldRecords: aoxrRecords }) : new Map<string, AoxrCell>()),
+    [effResultsForRank, comps, wcaId, aoxrRecords],
   );
 
   const grouped = useMemo(() => {

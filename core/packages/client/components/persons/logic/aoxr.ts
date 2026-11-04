@@ -14,6 +14,7 @@
 
 import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
 import { isMbldEvent } from '@/lib/mbf-average';
+import { aoxrRecordKey } from '@/lib/aoxr-records';
 
 /** 世界榜只有 Ao1R…Ao4R 四档(ROUND_COUNTS)。WCA 一场比赛单项目不会超过 4 轮,
  *  这里只作防御上限:真出现异常数据时留空,而不是算出个查无此档的 Ao5R。 */
@@ -32,6 +33,7 @@ export interface AoxrCell {
   prRank: number | null;
   /** 组内含直播轮次 → 非官方,不与官方场次同列比较 */
   unofficial: boolean;
+  record?: 'WR';
 }
 
 export const aoxrKey = (compId: string, eventId: string): string => `${compId}|${eventId}`;
@@ -51,6 +53,7 @@ interface Bucket {
 export function computeAoxr(
   results: WcaResultRow[],
   comps: WcaCompetition[],
+  records?: { wcaId: string; worldRecords: ReadonlySet<string> | null },
 ): Map<string, AoxrCell> {
   const out = new Map<string, AoxrCell>();
   if (results.length === 0) return out;
@@ -117,6 +120,10 @@ export function computeAoxr(
       value: valueOf(b),
       prRank: (b.hasLive ? liveRanks?.get(key) : officialRanks.get(key)) ?? null,
       unofficial: b.hasLive,
+      ...(!b.hasLive && records?.worldRecords?.has(aoxrRecordKey(
+        records.wcaId, b.compId, b.eventId, b.averages.length,
+        b.averages.reduce((sum, value) => sum + value, 0),
+      )) ? { record: 'WR' as const } : {}),
     });
   }
   return out;

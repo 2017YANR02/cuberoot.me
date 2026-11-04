@@ -24,6 +24,7 @@ import { personResultRecord } from '@/lib/person-achievements';
 import { computePrRank, countPersonalRecords } from '../../logic/progress';
 import { computeAoxr, aoxrKey } from '../../logic/aoxr';
 import { AoxrValue, aoxrHint } from './AoxrValue';
+import { useAoxrWorldRecords } from '../../logic/use-aoxr-records';
 import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } from '@/lib/wca-round-meta';
 import { AttemptsList } from './AttemptsList';
 import { AverageValueCell } from './AverageValueCell';
@@ -347,9 +348,10 @@ const EventRoundsList = memo(function EventRoundsList({
   }, [rows, compById]);
 
   // AoXR(跨轮平均)按 (比赛 × 项目) 聚合,与单次/平均同用「订正后」的有效值。
+  const aoxrRecords = useAoxrWorldRecords(effResultsForRank.some(r => r.average > 0 && !r.live));
   const aoxrMap = useMemo(
-    () => computeAoxr(effResultsForRank, comps),
-    [effResultsForRank, comps],
+    () => computeAoxr(effResultsForRank, comps, { wcaId, worldRecords: aoxrRecords }),
+    [effResultsForRank, comps, wcaId, aoxrRecords],
   );
 
   // 排序后的展示顺序:key=null 用默认分组序;否则拉平按所选键升/降排,无效(≤0)恒垫底,
