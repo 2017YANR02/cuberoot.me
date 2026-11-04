@@ -573,7 +573,6 @@ export function relabelYMoveString(alg: string, k: number): string {
       family = hit[0];
       if (hit[1] === -1) amount = -amount;
     }
-    if (amount === -2) amount = 2;
     return renderMove({ family, amount, layer: move.layer });
   }).join(' ');
 }

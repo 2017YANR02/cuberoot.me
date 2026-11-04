@@ -1,4 +1,5 @@
 'use client';
+import F2lSlotSelector from '@/components/F2lSlotSelector';
 import MoreToggle from '@/components/MoreToggle';
 import '@cuberoot/timer-ui/compact-select.css';
 
@@ -125,58 +126,7 @@ const PRIMARY_MODES: Array<{ id: 'train' | 'memo'; zh: string; en: string }> = [
 ];
 
 
-const F2L_SLOT_GRID: readonly F2LSlot[] = ['BL', 'BR', 'FL', 'FR'];
 
-function SlotChoicePicker<T extends string>({
-  label,
-  ariaLabel,
-  choices,
-  selected,
-  minimumSelected,
-  keepMinimumTitle,
-  onChange,
-}: {
-  label: string;
-  ariaLabel: string;
-  choices: readonly T[];
-  selected: readonly T[];
-  minimumSelected: number;
-  keepMinimumTitle: string;
-  onChange: (choices: readonly T[]) => void;
-}) {
-  return (
-    <div className="trainer-opts-row">
-      <span className="trainer-opts-label">{label}</span>
-      <div
-        className="trainer-ori-cells trainer-slot-cells"
-        role="group"
-        aria-label={ariaLabel}
-      >
-        {choices.map(choice => {
-          const isSelected = selected.includes(choice);
-          const atMinimum = isSelected && selected.length <= minimumSelected;
-          return (
-            <button
-              key={choice}
-              type="button"
-              className={`trainer-ori-cell trainer-slot-cell${isSelected ? ' is-on' : ''}`}
-              aria-pressed={isSelected}
-              disabled={atMinimum}
-              title={atMinimum ? keepMinimumTitle : undefined}
-              onClick={() => onChange(
-                isSelected
-                  ? selected.filter(value => value !== choice)
-                  : [...selected, choice],
-              )}
-            >
-              {choice}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 function F2LSlotPicker({
   slots,
@@ -190,17 +140,15 @@ function F2LSlotPicker({
   onChange: (slots: readonly F2LSlot[]) => void;
 }) {
   return (
-    <SlotChoicePicker
-      label={tr({ zh: '槽位', en: 'Slots' })}
-      ariaLabel={ariaLabel}
-      choices={F2L_SLOT_GRID}
-      selected={slots}
-      minimumSelected={minimumSelected}
-      keepMinimumTitle={minimumSelected === 2
-        ? tr({ zh: '至少保留两个槽位', en: 'Keep at least two slots' })
-        : tr({ zh: '至少保留一个槽位', en: 'Keep at least one slot' })}
-      onChange={onChange}
-    />
+    <div className="trainer-opts-row">
+      <span className="trainer-opts-label">{tr({ zh: '槽位', en: 'Slots' })}</span>
+      <F2lSlotSelector ariaLabel={ariaLabel} selected={slots}
+        disabledSlots={slots.length <= minimumSelected ? slots : []}
+        disabledTitle={minimumSelected === 2
+          ? tr({ zh: '至少保留两个槽位', en: 'Keep at least two slots' })
+          : tr({ zh: '至少保留一个槽位', en: 'Keep at least one slot' })}
+        onSelect={slot => onChange(slots.includes(slot) ? slots.filter(value => value !== slot) : [...slots, slot])} />
+    </div>
   );
 }
 

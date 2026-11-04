@@ -38,7 +38,7 @@ export type ImageSpecPatch = (patch: Partial<ImageSpec>) => void;
  * spec's puzzleType/cubeSize in sync as its selector changes (SimPage does this).
  * `opts.puzzle` presence is fixed for a mount, so memoizing on `hasPuzzle` is safe.
  */
-export function useImageSpec(prefix: string, opts?: CodecOptions): [ImageSpec, ImageSpecPatch] {
+export function useImageSpec(prefix: string, opts?: CodecOptions, initialSpec?: ImageSpec): [ImageSpec, ImageSpecPatch] {
   const hasPuzzle = !!opts?.puzzle;
   const hasInherit = !!opts?.inherit;
   // The KEY set (imageQueryKeys / imageWriteKeys) depends only on WHICH options are
@@ -74,7 +74,7 @@ export function useImageSpec(prefix: string, opts?: CodecOptions): [ImageSpec, I
   // panel mode the host puzzle is injected here so `view`/rotations parse correctly.
   const initialRef = useRef<ImageSpec | null>(null);
   if (initialRef.current === null) {
-    initialRef.current = readSpecFromParams(urlParams, prefix, opts);
+    initialRef.current = initialSpec ?? readSpecFromParams(urlParams, prefix, opts);
   }
   const [spec, setSpec] = useState<ImageSpec>(initialRef.current);
 

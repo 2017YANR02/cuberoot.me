@@ -101,10 +101,8 @@ function rewrite(alg: string, f: (m: ParsedMove) => { family: string; amount: nu
   if (junk.length) throw new Error(`认不出来的记号:${junk.join(' ')}`);
   return moves.map(m => {
     const next = f(m);
-    // 半圈没有方向。镜像把源里的 `U2` 一律翻成 `U2'`,那是记法噪音不是动作差别 ——
-    // 抹平它,免得生成的公式满屏 `U2'`。只动 ±2,别的量照写(`R4` 之类在 SQTM 下有意义)。
-    // 这条只对四阶轴成立,而镜像表本来就只有立方体记号,前提天然满足。
-    if (next.amount === -2) next.amount = 2;
+    // Preserve signed half turns for fingertricks and animation; only comparison
+    // keys may normalize equivalent final states.
     return renderMove({ layer: m.layer, ...next });
   }).join(' ');
 }

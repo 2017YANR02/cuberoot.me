@@ -401,7 +401,6 @@ html[data-theme=dark] .alg-root {
   font-weight: 600;
   color: var(--muted-foreground);
   margin: 16px 0 10px;
-  text-transform: uppercase;
   letter-spacing: 0.04em;
   display: flex;
   align-items: center;
@@ -921,6 +920,17 @@ html[data-theme=dark] .alg-root {
 .alg-alg-text.is-karnaukh {
   white-space: pre-line;
 }
+.alg-case-detail-ori-algs .alg-alg-row {
+  justify-content: flex-start;
+  column-gap: 12px;
+}
+.alg-case-detail-ori-algs .alg-alg-text {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.alg-case-detail-ori-algs .alg-alg-len {
+  min-width: 0;
+}
 .alg-alg-note {
   margin-inline-start: 8px;
   font-size: 11px;
@@ -1141,6 +1151,11 @@ html[data-theme=dark] .alg-root {
   font-size: 0.78rem;
 }
 .alg-editor-del { padding: 4px; }
+.alg-editor-add {
+  width: 100%;
+  min-height: 32px;
+  justify-content: center;
+}
 .alg-editor-del:hover { color: var(--destructive); border-color: color-mix(in srgb, var(--destructive) 40%, transparent); }
 .alg-editor-add:hover { color: var(--accent); border-color: var(--accent); }
 .alg-editor-player {
@@ -1272,7 +1287,10 @@ html[data-theme=dark] .alg-root {
 .alg-alg-row:hover .alg-alg-copy-icon { color: var(--accent); }
 .alg-alg-row.is-expanded {
   background: transparent;
-  color: var(--accent);
+}
+.alg-alg-row.is-expanded .alg-alg-text,
+.alg-meta-algline.is-expanded .alg-meta-algline-code {
+  font-weight: 700;
 }
 .alg-alg-copy-btn {
   display: inline-flex;
@@ -1477,6 +1495,9 @@ a.alg-community-author:hover {
   background: color-mix(in srgb, var(--foreground) 16%, transparent);
   border-color: color-mix(in srgb, var(--foreground) 55%, transparent);
 }
+.alg-admin-add-btn.alg-admin-validate-btn { background: transparent; border-color: transparent; }
+.alg-admin-add-btn.alg-admin-validate-btn:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
+.alg-admin-validate-btn:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .alg-admin-edit-btn {
   margin-left: 6px; padding: 2px 4px;
 }
@@ -1991,6 +2012,23 @@ a.alg-community-author:hover {
   gap: 16px;
   flex-wrap: wrap;
 }
+.alg-case-edit-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.alg-case-edit-toggle:hover,
+.alg-case-edit-toggle[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+.alg-case-edit-toggle:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.alg-case-edit-toggle:disabled { opacity: .5; cursor: wait; }
 .alg-order-toggle {
   display: inline-flex;
   align-items: center;
@@ -2020,8 +2058,8 @@ a.alg-community-author:hover {
 .alg-case-details-tabs [role="tab"][aria-selected="true"] { border-bottom-color: var(--accent); color: var(--foreground); }
 .alg-case-details-tabs [role="tab"]:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
 .alg-case-details-viewport { overflow: hidden; }
-.alg-case-details-track { display: flex; align-items: flex-start; width: 200%; transition: transform 220ms ease; }
-.alg-case-details-track > [role="tabpanel"] { box-sizing: border-box; flex: 0 0 50%; min-width: 0; height: 0; overflow: hidden; visibility: hidden; }
+.alg-case-details-track { display: flex; align-items: flex-start; transition: transform 220ms ease; }
+.alg-case-details-track > [role="tabpanel"] { box-sizing: border-box; flex-shrink: 0; min-width: 0; height: 0; overflow: hidden; visibility: hidden; }
 .alg-case-details-track > .is-active[role="tabpanel"] { height: auto; visibility: visible; }
 .alg-case-details-tabs .alg-case-inline-fields.alg-admin-modal-body { margin: 0; }
 .alg-player-list-player .alg-meta-related-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 4px; margin-top: 10px; }
@@ -2039,10 +2077,14 @@ a.alg-community-author:hover {
 }
 .alg-case-detail-back:hover { color: var(--accent); }
 .alg-case-navigation {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
   gap: 12px;
 }
+.alg-case-navigation > [data-case-direction="previous"] { grid-column: 1; justify-self: start; }
+.alg-case-navigation > [data-case-direction="next"] { grid-column: 3; justify-self: end; }
+.alg-case-navigation > .alg-case-slot-picker { grid-column: 2; grid-row: 1; }
 .alg-case-navigation-link {
   display: inline-flex;
   align-items: center;
@@ -2089,38 +2131,33 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
 .alg-case-detail-lean-algs.is-paired-player {
   gap: 24px;
 }
-.alg-case-slot-picker { display: none; }
+.f2l-slot-selector.alg-case-slot-picker { display: none; }
 @media (max-width: 900px) {
-  .alg-case-slot-order { display: none; }
-  .alg-case-slot-picker {
+  [data-mobile-slot] .alg-case-detail-ori-label,
+  [data-mobile-slot] .alg-editor-ori-name {
+    display: none;
+  }
+  .f2l-slot-selector.alg-case-slot-picker {
+    --slot-cell-width: 64px;
     display: grid;
-    grid-template-columns: repeat(2, 64px);
-    gap: 4px;
     align-self: center;
     margin-bottom: 16px;
   }
-  .alg-case-slot-picker .alg-case-slot-button {
-    appearance: none;
-    min-height: 44px;
-    padding: 8px;
-    border: 1px solid var(--border-strong);
-    border-radius: 10px;
-    background: transparent;
-    color: var(--foreground);
-    font: inherit;
-    font-weight: 600;
-    cursor: pointer;
+  .alg-case-navigation > .alg-case-slot-picker {
+    --slot-cell-width: clamp(40px, 7vw, 56px);
+    margin-bottom: 0;
+    grid-row: 1 / span 2;
+    grid-template-rows: subgrid;
+    row-gap: 0;
+    align-self: stretch;
   }
-  .alg-case-slot-picker .alg-case-slot-button[aria-pressed="true"] {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-    color: var(--accent);
+  .alg-case-navigation:has(> .alg-case-slot-picker) {
+    grid-template-rows: repeat(2, auto);
+    row-gap: 0;
   }
-  .alg-case-slot-picker .alg-case-slot-button:focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: 2px;
+  .alg-case-navigation:has(> .alg-case-slot-picker) > .alg-case-navigation-link {
+    grid-row: 1;
   }
-  .alg-case-slot-picker .alg-case-slot-button:disabled { opacity: .4; cursor: default; }
   .is-f2l-orientation-grid > .alg-case-detail-ori[data-mobile-active="false"],
   [data-mobile-slot="0"] .alg-editor > .alg-editor-ori:not(:nth-child(1)),
   [data-mobile-slot="1"] .alg-editor > .alg-editor-ori:not(:nth-child(2)),
@@ -2154,23 +2191,34 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: start;
-    column-gap: 32px;
+    column-gap: 24px;
     row-gap: 24px;
   }
-  .alg-case-detail-lean-algs.is-paired-player.is-f2l-orientation-grid.is-editing .alg-editor > .alg-editor-ori:nth-child(3) {
-    order: 4;
+  .is-f2l-orientation-grid.is-editing .alg-editor > .alg-editor-ori:nth-child(1) { order: 3; }
+  .is-f2l-orientation-grid.is-editing .alg-editor > .alg-editor-ori:nth-child(2) { order: 2; }
+  .is-f2l-orientation-grid.is-editing .alg-editor > .alg-editor-ori:nth-child(3) { order: 0; }
+  .is-f2l-orientation-grid.is-editing .alg-editor > .alg-editor-ori:nth-child(4) { order: 1; }
+}
+@media (min-width: 901px) {
+  .alg-case-detail-lean-algs.is-f2l-orientation-grid .alg-player-list-layout {
+    grid-template-columns: 260px minmax(0, 1fr);
+    gap: 12px;
   }
-  .alg-case-detail-lean-algs.is-paired-player.is-f2l-orientation-grid.is-editing .alg-editor > .alg-editor-ori:nth-child(4) {
-    order: 3;
+  .alg-case-detail-lean-algs.is-f2l-orientation-grid .alg-player-list-player {
+    width: 260px;
   }
 }
-@media (min-width: 901px) and (max-width: 1399px) {
-  .alg-case-detail-lean-algs.is-paired-player.is-f2l-orientation-grid .alg-player-list-layout {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+@media (min-width: 901px) and (max-width: 1099px) {
+  .alg-case-detail-lean-algs.is-paired-player.is-f2l-orientation-grid:not(.is-editing),
+  .alg-case-detail-lean-algs.is-paired-player.is-f2l-orientation-grid.is-editing .alg-editor {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  [data-slot-order="physical"] .alg-case-detail-ori[data-slot],
+  [data-slot-order="physical"] .alg-editor > .alg-editor-ori:nth-child(n) {
+    grid-area: auto;
   }
 }
+
 .alg-case-detail-ori {
   display: flex;
   flex-direction: column;
@@ -2179,9 +2227,14 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
 .alg-case-detail-ori-main {
   min-width: 0;
 }
+.alg-case-preview-image {
+  display: flex;
+  justify-content: center;
+  padding-block: 8px;
+}
 .alg-case-detail-ori-algs {
   min-width: 0;
-  --alg-case-detail-formula-size: 0.85rem;
+  --alg-case-detail-formula-size: 1.125rem;
   --alg-case-detail-formula-indent: 32px;
 }
 .alg-case-detail-ori-algs > .alg-case-standard {
@@ -2209,11 +2262,18 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
   margin: 0 0 10px;
 }
 .alg-case-detail-ori-algs > .alg-case-standard code,
-.alg-case-detail-ori-algs > .alg-alg-row,
-.alg-case-detail-ori-algs > .alg-alg-sortable .alg-alg-row,
+.alg-case-detail-ori-algs .alg-alg-row,
+.alg-case-detail-ori-algs .f2l-solution-prefix,
+.alg-case-detail-ori-algs .f2l-solution-play,
+.alg-case-detail-ori-algs .f2l-solution-select,
 .alg-case-detail-ori-algs .alg-editor-input {
   font-family: inherit;
   font-size: var(--alg-case-detail-formula-size);
+  line-height: 1.5;
+}
+.alg-case-detail-ori-algs .alg-mirror-alg {
+  font-family: inherit;
+  font-size: inherit;
   line-height: 1.5;
 }
 .alg-case-detail-ori > .alg-alg-row:hover,
@@ -2348,6 +2408,9 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
   color: var(--muted-foreground);
   font-size: 13px;
 }
+.settings-popover-panel .alg-view-angle {
+  align-self: flex-start;
+}
 .alg-meta-scramble-loading {
   font-size: 12px;
   color: var(--muted-foreground);
@@ -2383,6 +2446,8 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
   align-items: center;
   padding-inline-end: 8px;
 }
+.alg-case-standard-detail[role="button"] { cursor: pointer; }
+.alg-case-standard-detail[aria-pressed="true"] code { font-weight: 700; }
 .alg-case-standard-detail code {
   white-space: nowrap;
   word-break: normal;
@@ -2632,11 +2697,10 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
 .alg-mirror-toggle:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent); color: var(--foreground); }
 .alg-mirror-toggle.is-on { color: var(--accent); }
 
-/* 三行是拿来**互相对照**的,所以整块一个网格、三行列对齐(每行各自 flex 会让 `y²` 那行
-   的公式错位)。`justify-content: start` 让整块靠左紧凑 —— 不拿 spacer 把复制按钮顶到行尾。 */
+/* 变换、目标情况、公式三列对齐，便于逐行对照。 */
 .alg-mirror-panel {
   display: grid;
-  grid-template-columns: max-content max-content minmax(0, max-content) max-content;
+  grid-template-columns: max-content max-content minmax(0, max-content);
   justify-content: start;
   align-items: baseline;
   column-gap: 8px;
@@ -2647,8 +2711,11 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
   border-left: 2px solid color-mix(in srgb, var(--foreground) 14%, transparent);
   font-size: 12px;
 }
-/* 行本身不成盒 —— 四个子元素直接落进上面那张网格,三行才对得齐 */
+/* 每行的三个子元素共用网格列。 */
 .alg-mirror-line { display: contents; }
+a.alg-mirror-line { text-decoration: none; }
+a.alg-mirror-line:hover > *,
+a.alg-mirror-line:focus-visible > * { text-decoration: underline; }
 .alg-mirror-label {
   flex: none;
   /* CJK 单行标签禁定宽 px —— 微信内置浏览器字体偏宽会折行 */
@@ -2668,7 +2735,7 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
   color: var(--foreground);
 }
 @media (max-width: 480px) {
-  /* 窄屏一行塞不下「标签 + 落点 + 公式 + 复制」,每条镜像折成两行:上排注解、下排公式。
+  /* 窄屏每条镜像折成两行:上排注解、下排公式。
      此时列对齐让位于放得下,所以每行各自成盒。 */
   .alg-mirror-panel { display: flex; flex-direction: column; gap: 6px; }
   .alg-mirror-line {
@@ -2676,7 +2743,7 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
     grid-template-columns: minmax(0, max-content) max-content;
     grid-template-areas:
       'label where'
-      'alg   copy';
+      'alg   alg';
     justify-content: start;
     column-gap: 8px;
     row-gap: 2px;
@@ -2685,7 +2752,6 @@ a.alg-case-navigation-link:active { transform: scale(.97); }
   .alg-mirror-label { grid-area: label; }
   .alg-mirror-where { grid-area: where; }
   .alg-mirror-alg { grid-area: alg; }
-  .alg-mirror-line .alg-alg-copy-btn { grid-area: copy; }
 }
 
 /* Site scenery: preserve the original surface when scenery is disabled. */

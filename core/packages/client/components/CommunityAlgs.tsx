@@ -112,6 +112,7 @@ interface Props {
   submissions: AlgSubmission[];
   /** 列表页只展示投稿；新增统一进入 case 详情页。 */
   allowAdd?: boolean;
+  allowAdminActions?: boolean;
   /** 列表卡使用与标准公式相同的紧凑行；作者和管理信息只留在详情页。 */
   compact?: boolean;
   /** 投稿备注若只是当前栏的朝向名，详情页栏头已经表达过，不再重复显示。 */
@@ -198,6 +199,7 @@ export default function CommunityAlgs({
   firstAlg,
   submissions,
   allowAdd = true,
+  allowAdminActions = true,
   compact = false,
   redundantNote,
   preferredRef,
@@ -211,7 +213,7 @@ export default function CommunityAlgs({
   const isZh = i18n.language.startsWith('zh');
   const user = useAuthStore(s => s.user);
   const login = useAuthStore(s => s.login);
-  const isAdmin = hasAdminAccess(user);
+  const isAdmin = allowAdminActions && hasAdminAccess(user);
   // 所有权键(与服务端一致):非 WCA 账号也能认出自己提交的公式。
   const myKey = user ? computeOwnerKey(user.uid, user.wcaId) : '';
   const [alignedSubmissions, setAlignedSubmissions] = useState<Map<AlgSubmission, AlgEntry>>(new Map());

@@ -21,12 +21,11 @@
  * docs/issue-40-alg-mirror-plan.md §5.7。
  */
 import { useMemo } from 'react';
-import { Copy, Check } from '@app-foundation/icons/lucide';
+import AppLink from '@/components/AppLink';
 import { MIRROR_SETS, type AlgPuzzle } from '@cuberoot/shared';
-import { applyMirrorGen, MIRROR_TARGET, MIRROR_VIEW, VIEWS, type MirrorGen } from '@cuberoot/shared/alg-mirror';
+import { applyMirrorGen, mirrorGensFor, MIRROR_TARGET, MIRROR_VIEW, VIEWS, type MirrorGen } from '@cuberoot/shared/alg-mirror';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { displayAlg } from '@/lib/alg_display';
-import { useCopy } from '@/hooks/useCopy';
 import { tr } from '@/i18n/tr';
 
 /** 这个 puzzle/set 有没有镜像系统。 */
@@ -40,31 +39,25 @@ interface Variant {
   alg: string;
 }
 
-function VariantRow({ v, puzzle }: { v: Variant; puzzle: AlgPuzzle }) {
-  const { copied, copy } = useCopy();
+function VariantRow({ v, puzzle, href }: { v: Variant; puzzle: AlgPuzzle; href?: string }) {
   const text = formatScrambleForEvent(puzzle, v.alg);
-  return (
-    <div className="alg-mirror-line">
+  const content = <>
       <span className="alg-mirror-label">{v.label}</span>
       <span className="alg-mirror-where">{v.where}</span>
       <code className="alg-mirror-alg">{text}</code>
-      <button
-        type="button"
-        className="alg-alg-copy-btn"
-        onClick={(e) => { e.stopPropagation(); copy(text); }}
-        title={tr({ zh: '复制', en: 'Copy' })}
-      >
-        {copied ? <Check size={12} /> : <Copy size={12} />}
-      </button>
-    </div>
-  );
+    </>;
+  return href
+    ? <AppLink href={href} prefetch={false} className="alg-mirror-line" onClick={event => event.stopPropagation()}>{content}</AppLink>
+    : <div className="alg-mirror-line">{content}</div>;
 }
 
 export default function AlgMirrorPanel({
-  alg, puzzle, mirrorName, selfName, ori = 0,
+  alg, puzzle, mirrorName, selfName, ori = 0, mirrorHref, selfHref,
 }: {
   alg: string;
   puzzle: AlgPuzzle;
+  mirrorHref?: string;
+  selfHref?: string;
   /** 伙伴 case 的显示名;没建链时传 undefined,只标视角不标 case */
   mirrorName?: string | null;
   /** 本 case 的显示名(y² 那行落在自己身上) */
@@ -74,6 +67,8 @@ export default function AlgMirrorPanel({
 }) {
   const variants = useMemo<Variant[]>(() => {
     const body = displayAlg(alg);
+    // 与公式库自动生成共用筛选规则，不展示被收录规则排除的变换。
+    const allowedGens = new Set(mirrorGensFor(alg));
     const partner = mirrorName ?? tr({ zh: '镜像 case', en: 'the mirror case' });
     const self = selfName ?? tr({ zh: '本 case', en: 'this case' });
     // 认不出来的记号会抛 —— 那条就不出行,不能让一条脏公式把整个面板打空
@@ -83,11 +78,12 @@ export default function AlgMirrorPanel({
     const at = (gen: MirrorGen) =>
       `${MIRROR_TARGET[gen] === 'self' ? self : partner} ${VIEWS[MIRROR_VIEW[gen][ori % 4]]}`;
     const rows: Array<[MirrorGen, string]> = [
-      ['lr', tr({ zh: '左右镜', en: 'Left-right' })],
-      ['fb', tr({ zh: '前后镜', en: 'Front-back' })],
-      ['y2', 'y²'],
+      ['lr', tr({ zh: 'LR镜像', en: 'LR-mirror' })],
+      ['fb', tr({ zh: 'FB镜像', en: 'FB-mirror' })],
+      ['y2', tr({ zh: 'y2旋转', en: 'y2-rot' })],
     ];
     return rows.flatMap(([key, label]) => {
+      if (!allowedGens.has(key)) return [];
       const out = made(key);
       return out ? [{ key, label, where: at(key), alg: out }] : [];
     });
@@ -97,7 +93,12 @@ export default function AlgMirrorPanel({
 
   return (
     <div className="alg-mirror-panel">
-      {variants.map(v => <VariantRow key={v.key} v={v} puzzle={puzzle} />)}
+      {variants.map(v => {
+        const base = MIRROR_TARGET[v.key] === 'self' ? selfHref : mirrorHref;
+        const slot = VIEWS[MIRROR_VIEW[v.key][ori % 4]];
+        const href = base ? `${base}${base.includes('?') ? '&' : '?'}slot=${slot}#slot-${slot}` : undefined;
+        return <VariantRow key={v.key} v={v} puzzle={puzzle} href={href} />;
+      })}
     </div>
   );
 }

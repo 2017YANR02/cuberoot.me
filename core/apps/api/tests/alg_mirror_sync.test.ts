@@ -81,6 +81,19 @@ describe('生效范围', () => {
 });
 
 describe('一对 case', () => {
+  it('rebuilds legacy generated half turns from the signed original without changing originals', async () => {
+    const original = "U2 R2' F R F' R";
+    db.rows = [
+      row(1, views([], [], [], [original]), 2),
+      row(2, [[], [], [{ alg: "U2 L2 F' L' F L'", gen: 'lr', src: { id: 1, ori: 3, i: 0 } }], []], 1),
+    ];
+    const result = await syncMirrorForCase('3x3', 'f2l', 1);
+    expect(result.notes).toEqual([]);
+    expect(texts(1)[3]).toEqual([original]);
+    expect(texts(2)[2]).toEqual(["U2' L2 F' L' F L'"]);
+    expect((await syncMirrorForCase('3x3', 'f2l', 1)).updated).toEqual([]);
+  });
+
   it('写伙伴的 FL / BR,写自己的 BL', async () => {
     db.rows = [row(1, views(["U R U' R'"]), 2), row(2, views([]), 1)];
     const { updated, notes } = await syncMirrorForCase('3x3', 'f2l', 1);
@@ -154,8 +167,8 @@ describe('自镜像', () => {
 
     const generatedLr = (id: number) => db.rows.find(r => r.id === id)!.algs[1]
       .find(entry => entry.gen === 'lr')?.alg;
-    expect(generatedLr(5169)).toBe("L2 U2 F' L2 F U2 L U' L");
-    expect(generatedLr(5170)).toBe("U2 y' U F' L U2 L2 U' L2 U' F' L' F2");
+    expect(generatedLr(5169)).toBe("L2' U2' F' L2' F U2' L U' L");
+    expect(generatedLr(5170)).toBe("U2 y' U F' L U2' L2' U' L2 U' F' L' F2");
     expect(generatedLr(6081)).toBe("U F' L' U' L U F");
   });
 });

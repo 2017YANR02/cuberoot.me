@@ -8,18 +8,7 @@ import { F2L_CASES } from '../data/basic-cases';
 import { f2lDiagramFacelets, f2lPlaybackSections } from './cube-preview';
 import algSnapshot from '../data/alg-snapshot.json';
 
-const GROUP_NAMES: Record<string, { zh: string; en: string }> = {
-  'Free Pairs': { zh: '自由棱角对', en: 'Free pairs' },
-  'Disconnected Pairs': { zh: '分离的棱角对', en: 'Disconnected pairs' },
-  'Connected Pairs': { zh: '连接的棱角对', en: 'Connected pairs' },
-  'Corner In Slot': { zh: '角在槽内', en: 'Corner in slot' },
-  'Edge In Slot': { zh: '棱在槽内', en: 'Edge in slot' },
-  'Pieces In Slot': { zh: '棱角都在槽内', en: 'Pieces in slot' },
-};
-export function f2lGroupName(group: string) {
-  return Object.entries(GROUP_NAMES).find(([key]) => key.toLowerCase() === group.toLowerCase())?.[1]
-    ?? { zh: group, en: group };
-}
+export { f2lGroupName } from '@/lib/f2l-group-name';
 
 // Formula edits belong in alg-snapshot.json; optional chapter choices stay local too.
 export const F2L_TEACHING_OVERRIDES: Record<string, { chapter?: 8 | 9 }> = {};

@@ -1,0 +1,33 @@
+.f2l-slot-selector {
+  display: grid;
+  grid-template-columns: repeat(2, var(--slot-cell-width, 44px));
+  width: max-content;
+  padding: 1px 0 0 1px;
+}
+.f2l-slot-selector > button {
+  position: relative;
+  appearance: none;
+  min-height: 44px;
+  margin: -1px 0 0 -1px;
+  padding: 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.f2l-slot-selector > button:nth-child(1) { border-top-left-radius: 10px; }
+.f2l-slot-selector > button:nth-child(2) { border-top-right-radius: 10px; }
+.f2l-slot-selector > button:nth-child(3) { border-bottom-left-radius: 10px; }
+.f2l-slot-selector > button:nth-child(4) { border-bottom-right-radius: 10px; }
+.f2l-slot-selector > button[aria-pressed="true"] {
+  z-index: 1;
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.f2l-slot-selector > button:focus-visible { z-index: 2; outline: 2px solid var(--ring); outline-offset: 2px; }
+.f2l-slot-selector > button:disabled { cursor: not-allowed; }
+.f2l-slot-selector > button:disabled:not([aria-pressed="true"]) { color: var(--faint-foreground); }

@@ -41,6 +41,7 @@ import { VisualCube } from '@/components/VisualCube';
 import { CaseThumb } from '@/components/CaseThumb';
 import { EventIcon } from '@/components/EventIcon';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';
+import F2lSlotSelector from '@/components/F2lSlotSelector';
 import {
   cubeThumbParams,
   DEFAULT_ALG_CUBE_ORIENTATION,
@@ -73,6 +74,7 @@ import { caseAnchor, findCaseByHash, algCaseDetailHref, buildCaseSlugMap, caseSl
 import { replaceHash } from '@/lib/url_hash';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { buildOllNameByGroup, displayAlgCaseName, primaryCaseName, displayZbllToken } from '@/lib/alg_case_display';
+import { f2lGroupName } from '@/lib/f2l-group-name';
 import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { sortByCp } from '@/lib/alg_cp_order';
 import { groupAlgCases } from '@/lib/alg-case-groups';
@@ -1087,7 +1089,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       // 组标题印展示名:库里的 `AS/ASD` 在页面上叫 `S-D`,打印表不该露出 DB 里那一串
       groupLabel: (sub) => (isSq1Ep && sq1EpNumericNames ? sq1EpNumericGroupName(sub) : null)
         ?? ollByGroup.get(sub)
-        ?? (set === 'zbll' ? displayZbllToken(sub.split('/').pop() ?? sub)
+        ?? (set === 'f2l' ? tr(f2lGroupName(sub))
+          : set === 'zbll' ? displayZbllToken(sub.split('/').pop() ?? sub)
           : displayAlgCaseName(puzzleParam, set, sub)),
       sectionOf: isSq1Ep
         ? (c => classifySq1EpParity(c.name) === 'no-parity'
@@ -1418,6 +1421,24 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       {data && !showSubgroupPicker && (() => {
         const oriNames = data.cases[0]?.oriNames;
         if (!oriNames || oriNames.length <= 1) return null;
+        if (puzzleParam === '3x3' && (set === 'f2l' || set === 'adv-f2l')) {
+          const slots = oriNames.map(shortOriName);
+          return (
+            <div className="alg-ori-tabs alg-ori-tabs-global">
+              <F2lSlotSelector
+                ariaLabel={tr({ zh: '槽位', en: 'Slot' })}
+                selected={[slots[activeOri]]}
+                disabledSlots={['BL', 'BR', 'FL', 'FR'].filter(slot => !slots.includes(slot))}
+                onSelect={slot => {
+                  const index = slots.indexOf(slot);
+                  if (index < 0) return;
+                  setActiveOri(index);
+                  setCaseOri({});
+                }}
+              />
+            </div>
+          );
+        }
         return (
           <div className="alg-ori-tabs alg-ori-tabs-global">
             {oriNames.map((name, i) => (
@@ -1510,7 +1531,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                   ? (sq1EpNumericNames
                     ? `${sq1EpNumericLayerName(subgroup) ?? subgroup}.*`
                     : tr({ zh: `上层 ${displayAlgCaseName(puzzleParam, set, subgroup)}`, en: `Top ${displayAlgCaseName(puzzleParam, set, subgroup)}` }))
-                  : (ollByGroup.get(subgroup)
+                  : (set === 'f2l' ? tr(f2lGroupName(subgroup)) : ollByGroup.get(subgroup)
                     ?? displayAlgCaseName(puzzleParam, set, subgroup)
                     ?? tr({ zh: '其他', en: 'Other' }))}
               </h2>

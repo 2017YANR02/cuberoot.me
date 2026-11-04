@@ -57,8 +57,15 @@
     gap: 6px;
   }
 
-  .alg-player-list-player,
-  .alg-player-list-options {
+  .alg-player-list-player {
     width: 100%;
+  }
+
+  .alg-player-list-options {
+    width: fit-content;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin-inline: auto;
+    text-align: left;
   }
 }

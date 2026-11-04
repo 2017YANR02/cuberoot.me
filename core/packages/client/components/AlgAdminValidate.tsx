@@ -44,7 +44,7 @@ export default function AlgAdminValidate({ scope, options, triggerContainer, lab
 
   const trigger = options ? (
         <select
-          className={className ?? 'alg-admin-add-btn'}
+          className={className ?? 'alg-admin-add-btn alg-admin-validate-btn'}
           aria-label={label ?? tr({ zh: '校验', en: 'Validate' })}
           value=""
           onChange={event => {
@@ -57,7 +57,7 @@ export default function AlgAdminValidate({ scope, options, triggerContainer, lab
         </select>
       ) : <button
         type="button"
-        className={className ?? 'alg-admin-add-btn'}
+        className={className ?? 'alg-admin-add-btn alg-admin-validate-btn'}
         onClick={() => setActiveScope(scope)}
         title={tr({ zh: '校验公式(setup + 公式是否还原)', en: 'Validate algs (setup + alg solves)' })}
       >

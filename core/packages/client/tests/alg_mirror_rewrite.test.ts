@@ -144,8 +144,15 @@ describe('落在镜面法线轴上的不取反 —— 这个错犯过两次', ()
     '左右镜下 %s → %s(不动)', (from, to) => expect(mirrorMoveString(from, 'M')).toBe(to));
   it.each([['R', "L'"], ['U', "U'"], ['S', "S'"], ['E', "E'"], ['r', "l'"]])(
     '左右镜下 %s → %s(取反)', (from, to) => expect(mirrorMoveString(from, 'M')).toBe(to));
-  it.each([['L2', 'R2'], ['Rw2', 'Lw2'], ["U2'", 'U2']])(
-    '半圈没有方向:%s → %s,不写成 `X2\'`', (from, to) => expect(mirrorMoveString(from, 'M')).toBe(to));
+  it.each([['L2', "R2'"], ['Rw2', "Lw2'"], ["U2'", 'U2'], ["R2'", 'L2']])(
+    '半圈镜像保留方向:%s → %s', (from, to) => expect(mirrorMoveString(from, 'M')).toBe(to));
+  it('preserves signed half turns through a mirror round trip and view changes', () => {
+    const source = "U2 R2' F R F' R";
+    expect(applyMirrorGen(source, 'lr')).toBe("U2' L2 F' L' F L'");
+    expect(applyMirrorGen(applyMirrorGen(source, 'lr'), 'lr')).toBe(source);
+    expect(relabelYMoveString("R2' U2'", 2)).toBe("L2' U2'");
+    expect(relabelYMoveString("R2' U2'", 0)).toBe("R2' U2'");
+  });
   it("宽招关系 l = L M 逼出来的:mirror(l) 必须等于 r'", () => {
     expect(run(mirrorMoveString('Lw', 'M')).isIdentical(run("Rw'"))).toBe(true);
   });
@@ -367,7 +374,7 @@ describe('regenerateMirrorAlgs', () => {
     const flipped = regenerateMirrorAlgs(
       { id: 1, algs: views(["U2 R U2 R'", "U R U' R'"]) }, { id: 2, algs: views([]) },
     ).algsById.get(2)![1];
-    expect(first.map(e => e.alg)).toEqual(["U' L' U L", "U2 L' U2 L"]);
-    expect(flipped.map(e => e.alg)).toEqual(["U2 L' U2 L", "U' L' U L"]);
+    expect(first.map(e => e.alg)).toEqual(["U' L' U L", "U2' L' U2' L"]);
+    expect(flipped.map(e => e.alg)).toEqual(["U2' L' U2' L", "U' L' U L"]);
   });
 });

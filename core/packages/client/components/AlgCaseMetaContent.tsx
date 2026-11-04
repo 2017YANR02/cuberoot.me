@@ -79,7 +79,7 @@ function AlgLine({
       aria-pressed={playable ? selected : undefined}
       onClick={playable ? onPlay : undefined}
       onKeyDown={playable ? (event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
+        if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
           event.preventDefault();
           onPlay?.();
         }
@@ -159,13 +159,15 @@ interface Props {
   orientation?: string;
   /** 详情页启用；训练弹窗保持紧凑静态正文。 */
   playable?: boolean;
+  /** Replace the detail player with a static case diagram, without mounting an animation. */
+  previewImage?: ReactNode;
   /** 管理员拖拽时保持数据库原始顺序，避免个人置顶改变拖拽索引。 */
   preserveAlgOrder?: boolean;
   /** 详情页的社区公式紧跟主公式列表；训练弹窗不传。 */
   algsAfter?: React.ReactNode;
   onRotate?: () => Promise<void>;
-  editorAlgorithms?: (afterPlayer?: React.ReactNode) => React.ReactNode;
-  renderMetadata?: (metadata: React.ReactNode) => React.ReactNode;
+  editorAlgorithms?: (afterPlayer?: React.ReactNode, beforeAlgorithms?: React.ReactNode) => React.ReactNode;
+  renderMetadata?: (metadata: React.ReactNode, related: React.ReactNode) => React.ReactNode;
   subgroupEditor?: React.ReactNode;
   setupEditor?: React.ReactNode;
   editing?: boolean;
@@ -180,10 +182,11 @@ export default function AlgCaseMetaContent({
   viewAngle = 'default',
   orientation,
   playable = false,
+  previewImage,
   preserveAlgOrder = false,
   algsAfter,
   onRotate, editorAlgorithms, subgroupEditor, setupEditor, editing = false,
-  renderMetadata = metadata => metadata,
+  renderMetadata,
 }: Props) {
   /**
    * 没有 meta 的集(虚拟集 LSLL、库里还没补元数据的集)一样要能看:空对象兜底后
@@ -192,6 +195,7 @@ export default function AlgCaseMetaContent({
    */
   const m = (caseObj.meta ?? {}) as AlgCaseMeta;
   const [selectedAlgKey, setSelectedAlgKey] = useState<string | null>(null);
+  const [playingScramble, setPlayingScramble] = useState<string | null>(null);
   const [playRequest, setPlayRequest] = useState(0);
   const preferenceSet = caseObj.srcSet ?? set;
   const preferenceKey = `${puzzle}/${preferenceSet}`;
@@ -229,6 +233,7 @@ export default function AlgCaseMetaContent({
 
   useEffect(() => {
     setSelectedAlgKey(null);
+    setPlayingScramble(null);
     setPlayRequest(0);
   }, [caseObj.id, caseObj.name]);
 
@@ -341,6 +346,8 @@ export default function AlgCaseMetaContent({
   const rawScramble = selectedScrambleKind === 'cstimer'
     ? cstimerScramble && { text: cstimerScramble.text, fromInvCase: cstimerScramble.fallback }
     : storedScramble;
+  const scramblePlaybackAlg = playingScramble === null ? null : caseViewSetup(playingScramble, viewAngle);
+  const scrambleSelected = playingScramble !== null && playingScramble === rawScramble?.text;
   const scramble = rawScramble && {
     ...rawScramble,
     text: displayCaseScramble(puzzle, set, caseViewSetup(rawScramble.text, viewAngle)),
@@ -366,6 +373,7 @@ export default function AlgCaseMetaContent({
       <select
         className="alg-meta-scramble-kind"
         value={editingSetup ? 'setup' : selectedScrambleKind}
+        onClick={event => event.stopPropagation()}
         onChange={event => {
           const kind = event.target.value;
           setShowGeneratedScramble(kind !== 'setup');
@@ -412,6 +420,54 @@ export default function AlgCaseMetaContent({
     />;
   };
 
+  const scrambleContent = (setupEditor || scramble || (selectedScrambleKind === 'cstimer' && inverseScramble)) && (
+    <div className="alg-meta-section">
+      <div className="alg-meta-scramble-row">
+        {editingSetup && (
+          <>
+            <h3 aria-label={tr({ zh: '打乱', en: 'Scramble' })}>
+              <Shuffle size={16} aria-hidden="true" />
+            </h3>
+            {scrambleKindSelect}
+          </>
+        )}
+        {setupEditor && <div className="alg-meta-setup-editor" hidden={!editingSetup}>{setupEditor}</div>}
+        {!editingSetup && (scramble ? (
+          <AlgLine
+            prefix={(
+              <span className="alg-meta-scramble-prefix">
+                <span role="img" aria-label={tr({ zh: '打乱', en: 'Scramble' })}>
+                  <Shuffle size={16} aria-hidden="true" />
+                </span>
+                {scrambleKindSelect}
+              </span>
+            )}
+            label={scramble.fromInvCase && (!onScrambleKindChange || selectedScrambleKind === 'cstimer')
+              ? tr({ zh: '逆 case', en: 'Inv case' })
+              : ''}
+            alg={scramble.text}
+            playable={playable && !editing && !previewImage}
+            selected={!previewImage && scrambleSelected}
+            onPlay={() => {
+              setPlayingScramble(rawScramble!.text);
+              setPlayRequest(current => current + 1);
+            }}
+          />
+        ) : (
+          <>
+            <h3 aria-label={tr({ zh: '打乱', en: 'Scramble' })}>
+              <Shuffle size={16} aria-hidden="true" />
+            </h3>
+            {scrambleKindSelect}
+            <span className="alg-meta-scramble-loading">
+              {tr({ zh: '正在生成…', en: 'Generating…' })}
+            </span>
+          </>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <>
       {!playable && <AlgCaseRelationCards
@@ -424,73 +480,36 @@ export default function AlgCaseMetaContent({
 
       {/* 打乱紧跟着图 —— 图画的就是打乱之后的样子,两者一起看才对得上;公式是「怎么解开它」,
           排在后面。取值的三档(逆 case 的公式 / 现推 / setup 保底)见 {@link caseScramble}。 */}
-      {(setupEditor || scramble || (selectedScrambleKind === 'cstimer' && inverseScramble)) && (
-        <div className="alg-meta-section">
-          <div className="alg-meta-scramble-row">
-            {editingSetup && (
-              <>
-                <h3 aria-label={tr({ zh: '打乱', en: 'Scramble' })}>
-                  <Shuffle size={16} aria-hidden="true" />
-                </h3>
-                {scrambleKindSelect}
-              </>
-            )}
-            {setupEditor && <div className="alg-meta-setup-editor" hidden={!editingSetup}>{setupEditor}</div>}
-            {!editingSetup && (scramble ? (
-              <AlgLine
-                prefix={(
-                  <span className="alg-meta-scramble-prefix">
-                    <span role="img" aria-label={tr({ zh: '打乱', en: 'Scramble' })}>
-                      <Shuffle size={16} aria-hidden="true" />
-                    </span>
-                    {scrambleKindSelect}
-                  </span>
-                )}
-                label={scramble.fromInvCase && (!onScrambleKindChange || selectedScrambleKind === 'cstimer')
-                  ? tr({ zh: '逆 case', en: 'Inv case' })
-                  : ''}
-                alg={scramble.text}
-              />
-            ) : (
-              <>
-                <h3 aria-label={tr({ zh: '打乱', en: 'Scramble' })}>
-                  <Shuffle size={16} aria-hidden="true" />
-                </h3>
-                {scrambleKindSelect}
-                <span className="alg-meta-scramble-loading">
-                  {tr({ zh: '正在生成…', en: 'Generating…' })}
-                </span>
-              </>
-            ))}
-          </div>
-        </div>
-      )}
+      {!playable && !editing && scrambleContent}
 
       <div className="alg-meta-case">
         {editorAlgorithms && <div className="alg-meta-case-player-layout" hidden={!editing}>{editorAlgorithms(
-          <AlgCaseRelationCards items={relationCards} puzzle={puzzle} set={set} viewAngle={viewAngle} orientation={orientation} />,
+          !renderMetadata && <AlgCaseRelationCards items={relationCards} puzzle={puzzle} set={set} viewAngle={viewAngle} orientation={orientation} />,
+          scrambleContent,
         )}</div>}
         {!editing && (
         <div className={playable ? 'alg-meta-case-player-layout alg-case-detail-ori-main alg-player-list-layout' : undefined}>
           {playable && (
             <div className="alg-case-detail-ori-player alg-player-list-player">
-              {selectedAlg && <AlgPlayer
-                alg={selectedAlg.playbackAlg}
+              {previewImage ?? ((selectedAlg || scramblePlaybackAlg) && <AlgPlayer
+                alg={scramblePlaybackAlg ?? selectedAlg?.playbackAlg ?? ''}
                 puzzle={puzzle}
                 set={set}
-                setup={caseViewSetup(caseObj.setup, viewAngle)}
+                setup={scramblePlaybackAlg !== null ? undefined : caseViewSetup(caseObj.setup, viewAngle)}
+                startSolved={scramblePlaybackAlg !== null}
                 orientation={orientation}
                 size={260}
                 autoPlay={playRequest > 0}
                 playRequest={playRequest}
-              />}
-              <AlgCaseRelationCards items={relationCards} puzzle={puzzle} set={set} viewAngle={viewAngle} orientation={orientation} />
+              />)}
+              {!renderMetadata && <AlgCaseRelationCards items={relationCards} puzzle={puzzle} set={set} viewAngle={viewAngle} orientation={orientation} />}
             </div>
           )}
           <div className={playable ? 'alg-meta-case-algs alg-case-detail-ori-algs alg-player-list-options' : 'alg-meta-case-algs'}>
+            {playable && scrambleContent}
             {algsWrap(algs.map((a) => {
               const rowKey = `${a.key}:${a.originalIndex}`;
-              const selected = playable && selectedAlg === a;
+              const selected = playable && !previewImage && playingScramble === null && selectedAlg === a;
               const isPreferred = a.ref === preferredRef;
               const label = [
                 isPreferred ? tr({ zh: '已置顶', en: 'Pinned' }) : '',
@@ -527,9 +546,10 @@ export default function AlgCaseMetaContent({
                     len={a.len}
                     preferred={isPreferred}
                     onPreferredToggle={togglePreferred}
-                    playable={!caseAlgIssue(a.entry)}
+                    playable={!previewImage && !caseAlgIssue(a.entry)}
                     selected={selected}
                     onPlay={() => {
+                      setPlayingScramble(null);
                       setSelectedAlgKey(rowKey);
                       setPlayRequest(current => current + 1);
                     }}
@@ -543,7 +563,7 @@ export default function AlgCaseMetaContent({
         </div>)}
       </div>
 
-      {renderMetadata(<>
+      {(renderMetadata ?? (metadata => metadata))(<>
       {/* 紧凑规格表:桌面三列,平板两列,手机一列。每条都是「有才出」。 */}
       <div className="alg-meta-facts">
         {m.no != null && (
@@ -673,7 +693,7 @@ export default function AlgCaseMetaContent({
           <Row label="speedcubedb">{m.sdbNo}</Row>
         </div>
       )}
-      </>)}
+      </>, <AlgCaseRelationCards items={relationCards} puzzle={puzzle} set={set} viewAngle={viewAngle} orientation={orientation} />)}
     </>
   );
 }

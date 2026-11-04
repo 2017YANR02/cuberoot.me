@@ -46,11 +46,12 @@ export interface InlineCaseEditorParts {
   name: React.ReactNode;
   subgroup: React.ReactNode;
   setup: React.ReactNode;
-  algorithms: (afterPlayer?: React.ReactNode) => React.ReactNode;
+  algorithms: (afterPlayer?: React.ReactNode, beforeAlgorithms?: React.ReactNode) => React.ReactNode;
   advanced: React.ReactNode;
   actions: React.ReactNode;
   error: React.ReactNode;
   busy: boolean;
+  saving: boolean;
   confirmDiscard: () => boolean;
 }
 
@@ -65,6 +66,10 @@ interface Props {
   f2lLibrary?: readonly AlgCase[];
   /** 内联多朝向详情中，按当前朝向渲染由原始 setup 派生的打乱。 */
   renderOrientationSetup?: (setup: string, oi: number) => React.ReactNode;
+  /** Optional static preview for the detail page's diagram-only mode. */
+  renderPreviewImage?: (setup: string, alg: string, oi: number) => React.ReactNode;
+  /** Keep the inline page mounted while switching between reading and editing. */
+  renderReadOnly?: () => React.ReactNode;
   children?: (parts: InlineCaseEditorParts) => React.ReactNode;
   onClose: () => void;
   onSaved: (action:
@@ -102,8 +107,9 @@ function blankCase(puzzle: string, set: string): AlgCase {
   };
 }
 
-export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid, algorithmsAfter, f2lLibrary, renderOrientationSetup, onClose, onSaved, children }: Props) {
+export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid, algorithmsAfter, f2lLibrary, renderOrientationSetup, renderPreviewImage, renderReadOnly, onClose, onSaved, children }: Props) {
   useTranslation(); // subscribe to language changes; text via tr()
+  const active = !children || !renderReadOnly;
   const initial = state.mode === 'edit' ? state.existing : blankCase(puzzle, setSlug);
   const [orientation] = useQueryState(
     'orientation',
@@ -115,7 +121,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
     parseAsStringEnum<Sq1NotationMode>([...SQ1_NOTATION_MODES]).withDefault('compact'),
   );
   // Reading notation can change without replacing an unsaved numeric input.
-  const [editorNotationMode] = useState(sq1NotationMode);
+  const [editorNotationMode, setEditorNotationMode] = useState(sq1NotationMode);
   const formatSq1EditorAlg = useCallback(
     (alg: string) => puzzle === 'sq1' && editorNotationMode === 'full'
       ? canonicalSq1Alg(alg)
@@ -140,9 +146,11 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editRevision, setEditRevision] = useState(0);
+  const savedRevision = useRef(0);
+  const [saving, setSaving] = useState(false);
   const markEdited = useCallback(() => {
-    if (state.mode === 'edit') setEditRevision(revision => revision + 1);
-  }, [state.mode]);
+    if (active && state.mode === 'edit') setEditRevision(revision => revision + 1);
+  }, [active, state.mode]);
   const backdrop = useModalBackdrop(onClose, busy);
   const initialPreviewEntry = initial.algs[0]?.[0];
   const [preview, setPreview] = useState(() => ({
@@ -158,12 +166,13 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
   // Debounce preview(给 AlgPlayer);避免每次按键都重建播放器。
   const [debouncedPreview, setDebouncedPreview] = useState(preview);
   useEffect(() => {
+    if (!active) return;
     const t = setTimeout(() => {
       setDebouncedPreview(preview);
       setOriPreviews(current => ({ ...current, [preview.oi]: preview }));
     }, 400);
     return () => clearTimeout(t);
-  }, [preview]);
+  }, [active, preview]);
 
   // 光标 sync:AlgEditor 上报 prefix token 数,这里转成 player.timestamp
   const playerHandleRef = useRef<AlgPlayerHandle>(null);
@@ -178,6 +187,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
   }, []);
   // alg 重建后 player ready 也要再 sync 一次到当前 caret(否则停在 0)
   useEffect(() => {
+    if (!active) return;
     const tries = [50, 200, 500].map(d =>
       setTimeout(() => {
         const p = (oriPlayers.current.get(activeOri.current) ?? playerHandleRef.current)?.getPlayer();
@@ -185,7 +195,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
       }, d),
     );
     return () => tries.forEach(clearTimeout);
-  }, [debouncedPreview, setup]);
+  }, [active, debouncedPreview, setup]);
 
   /**
    * 镜像伙伴(issue #40 T5)—— 删一条公式 / 删整张 case 之前要算「会连带抹掉哪些生成公式」,
@@ -197,7 +207,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
    */
   const selfId = state.mode === 'edit' ? state.existing.id ?? null : null;
   const linkedId = state.mode === 'edit' ? state.existing.mirrorCaseId ?? null : null;
-  const mirrorWanted = selfId != null && linkedId != null && MIRROR_ALG_SYNC_SETS.has(`${puzzle}/${setSlug}`);
+  const mirrorWanted = active && selfId != null && linkedId != null && MIRROR_ALG_SYNC_SETS.has(`${puzzle}/${setSlug}`);
   const [mirrorCtx, setMirrorCtx] = useState<AlgEditorMirror | null>(null);
   const [mirrorError, setMirrorError] = useState<string | null>(null);
   useEffect(() => {
@@ -250,6 +260,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
   }, [algsJson, stickerJson, oriNamesJson, initial]);
 
   const handleSave = async ({ closeAfterSave = true, background = false }: { closeAfterSave?: boolean; background?: boolean } = {}) => {
+    if (!active) return;
     setError(null);
     if (!caseName.trim()) { setError(tr({ zh: 'Case 名不能为空', en: 'caseName required' })); return; }
 
@@ -391,6 +402,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
       } else {
         const updated = await updateCase(puzzle, setSlug, state.existing.id!, body);
         await onSaved({ type: 'update', updated });
+        savedRevision.current = editRevision;
       }
       if (closeAfterSave) onClose();
     } catch (e) {
@@ -407,8 +419,9 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
   const attemptedRevision = useRef(0);
   const flushAutoSave = useRef<() => Promise<void>>(async () => {});
   flushAutoSave.current = async () => {
-    if (autoSaveRunning.current) return;
+    if (!active || autoSaveRunning.current) return;
     autoSaveRunning.current = true;
+    setSaving(true);
     try {
       while (attemptedRevision.current < queuedRevision.current) {
         attemptedRevision.current = queuedRevision.current;
@@ -416,20 +429,50 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
       }
     } finally {
       autoSaveRunning.current = false;
+      setSaving(false);
       if (attemptedRevision.current < queuedRevision.current) void flushAutoSave.current();
     }
   };
   useEffect(() => {
-    if (state.mode !== 'edit' || editRevision === 0) return;
+    if (!active || state.mode !== 'edit' || editRevision === 0) return;
     const timer = setTimeout(() => {
       queuedRevision.current = editRevision;
       void flushAutoSave.current();
     }, 600);
     return () => clearTimeout(timer);
-  }, [editRevision, state.mode]);
+  }, [active, editRevision, state.mode]);
 
   // ── 删整张 case:先摊开「这张自己的全部公式」+「伙伴那边会被剥掉的生成公式」再问一句。
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+
+  // A hidden editor must neither save nor retain discarded drafts. Keep its
+  // latest saved case ready for the next session without remounting the page.
+  useEffect(() => {
+    if (active) return;
+    setCaseName(initial.name);
+    setSubgroup(initial.subgroup);
+    setEditorNotationMode(sq1NotationMode);
+    setSetup(initialSetupText);
+    setSetupFocused(false);
+    setAdvancedOpen(false);
+    setStandard(initial.standard ?? '');
+    setStickerJson(JSON.stringify(initial.sticker, null, 2));
+    setAlgsJson('');
+    setOriNamesJson(initial.oriNames ? JSON.stringify(initial.oriNames) : '');
+    setTrainerKey(initial.trainerKey ?? '');
+    setError(null);
+    setConfirmingDelete(false);
+    setEditRevision(0);
+    savedRevision.current = queuedRevision.current = attemptedRevision.current = 0;
+    const entry = initial.algs[0]?.[0];
+    const nextPreview = { alg: entry?.alg ?? '', setup: entry?.setup, oi: 0 };
+    setPreview(nextPreview);
+    setDebouncedPreview(nextPreview);
+    setOriPreviews({});
+    setGroupPlayRequests({});
+    activeOri.current = 0;
+    lastMoveCountRef.current = 0;
+  }, [active, initial, initialSetupText, sq1NotationMode]);
 
   /** 这张 case 自己的公式,按视角分组 —— 删掉就是这些全没。 */
   const ownAlgGroups = useMemo<AlgDeleteGroup[]>(() =>
@@ -519,7 +562,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
               <CubeKeyboardSection target={setupElRef} toggleContainer={setupKeyboardToggle} />
             )}
           </label>);
-  const algorithms = (afterPlayer?: React.ReactNode) => (<div className="alg-admin-algs-block">
+  const algorithms = (afterPlayer?: React.ReactNode, beforeAlgorithms?: React.ReactNode) => (<div className="alg-admin-algs-block">
             {!children && <span className="alg-admin-algs-label" title={tr({ zh: 'Enter 加新行，记号键可添加下划线、波浪线和删除线', en: 'Enter adds a row; use the marks key for underline, wave and strikethrough' })}>
               {tr({ zh: '公式', en: 'Algorithms' })}
             </span>}
@@ -541,16 +584,17 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
                     : oriAdjustSetup(setup, oi);
                 return <div className="alg-case-detail-ori-main alg-player-list-layout">
                   <div className="alg-case-detail-ori-player alg-player-list-player">
-                    <AlgPlayer
+                    {renderPreviewImage ? renderPreviewImage(orientationSetup, firstEntry?.alg ?? '', oi) : <AlgPlayer
                       ref={handle => { if (handle) oriPlayers.current.set(oi, handle); else oriPlayers.current.delete(oi); }}
                       alg={selected?.alg ?? ''}
                       setup={orientationSetup}
                       puzzle={puzzle} set={setSlug} orientation={orientation} size={260}
                       playRequest={groupPlayRequests[oi] ?? 0} autoPlay={(groupPlayRequests[oi] ?? 0) > 0}
-                    />
+                    />}
                     {oi === 0 && afterPlayer}
                   </div>
                   <div className="alg-case-detail-ori-algs alg-player-list-options">
+                    {oi === 0 && beforeAlgorithms}
                     {renderOrientationSetup && (derivesOrientationSetup
                       ? renderOrientationSetup(orientationSetup, oi)
                       : oi === 0 ? setupField : renderOrientationSetup(orientationSetup, oi))}
@@ -639,13 +683,19 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
 </>);
 
   const confirmDiscard = () => {
-    if (state.mode === 'edit') return true;
+    if (state.mode === 'edit') {
+      if (autoSaveRunning.current) return false;
+      return editRevision === savedRevision.current || window.confirm(tr({
+        zh: '仍有未保存的修改，放弃这些修改并继续吗？',
+        en: 'There are unsaved changes. Discard them and continue?',
+      }));
+    }
     const changed = caseName !== initial.name || subgroup !== initial.subgroup || setup !== initialSetupText
       || standard !== (initial.standard ?? '') || trainerKey !== (initial.trainerKey ?? '') || advancedDirty
       || JSON.stringify(algEditorRef.current?.getValue()) !== JSON.stringify(initial.algs);
     return !changed || window.confirm(tr({ zh: '旋转会放弃未保存的修改，继续吗？', en: 'Rotating will discard unsaved changes. Continue?' }));
   };
-  if (children) return <><div inert={busy || undefined} aria-busy={busy}>{children({ name: nameField, subgroup: subgroupField, setup: setupField, algorithms, advanced, actions, error: errorMessage, busy, confirmDiscard })}</div>{deleteConfirmation}</>;
+  if (children) return <><div inert={active && busy || undefined} aria-busy={active && busy}>{renderReadOnly ? renderReadOnly() : children({ name: nameField, subgroup: subgroupField, setup: setupField, algorithms, advanced, actions, error: errorMessage, busy, saving, confirmDiscard })}</div>{active && deleteConfirmation}</>;
 
   return (
     <div className="alg-admin-modal-backdrop alg-admin-modal-backdrop-top" {...backdrop} role="dialog" aria-modal="true">

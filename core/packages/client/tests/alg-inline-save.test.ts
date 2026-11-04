@@ -121,4 +121,31 @@ describe('inline case save pipeline', () => {
     await act(async () => finish());
     expect(onClose).not.toHaveBeenCalled();
   });
+
+  it('keeps the page and mode button mounted, cancelling discarded drafts in read mode', async () => {
+    const page = (parts?: InlineCaseEditorParts) => createElement('main', null,
+      createElement('button', { 'aria-pressed': !!parts }, 'Edit'),
+      parts ? createElement(Fragment, null, parts.name, parts.algorithms()) : createElement('span', null, original.name));
+    const show = async (editing: boolean) => act(async () => root.render(createElement(AdminCaseEditor, {
+      puzzle: '3x3', setSlug: 'pll', state: { mode: 'edit', existing: original }, onClose, onSaved,
+      children: page, renderReadOnly: editing ? undefined : () => page(),
+    })));
+    await show(false);
+    const shell = host.querySelector('main');
+    const button = host.querySelector('button');
+    await show(true);
+    expect(host.querySelector('main')).toBe(shell);
+    expect(host.querySelector('button')).toBe(button);
+    await fill('Case Name', 'Discarded draft');
+    await show(false);
+    expect(host.querySelector('main')).toBe(shell);
+    expect(host.querySelector('button')).toBe(button);
+    expect(button?.getAttribute('aria-pressed')).toBe('false');
+    await autoSave();
+    expect(mocks.update).not.toHaveBeenCalled();
+    await show(true);
+    expect(host.querySelector<HTMLInputElement>('.alg-case-name-input')?.value).toBe(original.name);
+    await autoSave();
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
 });
