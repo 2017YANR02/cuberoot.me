@@ -1,0 +1,23 @@
+{
+  "initial": {
+    "videos": 10,
+    "assignedSources": 0,
+    "overflow": false
+  },
+  "first": {
+    "duration": 12,
+    "videoWidth": 1920,
+    "videoHeight": 1080,
+    "time": 0.1358
+  },
+  "handoff": {
+    "firstPaused": true,
+    "playing": 1,
+    "error": ""
+  },
+  "mobile": {
+    "overflow": false,
+    "columns": "362px"
+  },
+  "errors": []
+}

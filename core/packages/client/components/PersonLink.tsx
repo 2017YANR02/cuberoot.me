@@ -29,20 +29,22 @@ interface Props {
   prefetch?: boolean;
   title?: string;
   children?: ReactNode;
-  /** Disable when the row already has a dedicated team column. */
+  /** Optional flag rendered between the team badge and the name link. */
+  flag?: ReactNode;
+  /** Disable when the caller already renders the team identity. */
   showTeam?: boolean;
 }
 
 export default function PersonLink({
-  wcaId, name, isZh = false, className, prefetch = false, title, children, showTeam = true,
+  wcaId, name, isZh = false, className, prefetch = false, title, children, showTeam = true, flag,
 }: Props) {
   const body = children ?? (name != null ? displayCuberName(name, isZh) : wcaId);
   if (!isWcaIdFormat(wcaId)) {
-    return <span className={className} title={title}>{body}</span>;
+    return <>{flag}<span className={className} title={title}>{body}</span></>;
   }
   return (
-    <><AppLink href={personHref(wcaId)} prefetch={prefetch} className={className} title={title}>
+    <>{showTeam && <WcaPersonTeamBadge wcaId={wcaId} />}{flag}<AppLink href={personHref(wcaId)} prefetch={prefetch} className={className} title={title}>
       {body}
-    </AppLink>{showTeam && <WcaPersonTeamBadge wcaId={wcaId} />}</>
+    </AppLink></>
   );
 }

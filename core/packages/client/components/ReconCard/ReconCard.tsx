@@ -135,8 +135,9 @@ export function ReconCard({ solve, isZh, href, horizontal = false, showScrambleF
             {cubers.map((c, i) => (
               <span key={i}>
                 {i > 0 ? <span className="recon-cuber-sep"> &amp; </span> : null}
+                <WcaPersonTeamBadge wcaId={c.id} linked={false} />
                 {c.country ? <><Flag iso2={c.country} className="recon-inline-flag" />{' '}</> : null}
-                {displayCuberName(c.name, isZh)}<WcaPersonTeamBadge wcaId={c.id} linked={false} />
+                {displayCuberName(c.name, isZh)}
               </span>
             ))}
           </span>

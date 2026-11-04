@@ -231,14 +231,14 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
                 {' '}
                 <span className="detail-cuber">
                   {i > 0 && <span className="detail-cuber-sep">&amp;{' '}</span>}
-                  {c.country && <Flag iso2={c.country} className="recon-inline-flag" />}
+                  <WcaPersonTeamBadge wcaId={c.id} />{c.country && <Flag iso2={c.country} className="recon-inline-flag" />}
                   {c.id ? (
                     <><Link
                       href={i === 0 ? personLinkForSolve(solve, isZh) : personHref(c.id, isZh)}
                       className="detail-person-link"
                     >
                       {displayCuberName(c.name, isZh)}
-                    </Link><WcaPersonTeamBadge wcaId={c.id} /></>
+                    </Link></>
                   ) : displayCuberName(c.name, isZh)}
                 </span>
               </Fragment>
@@ -1055,8 +1055,8 @@ function SameScrambleNav({ solve, initial }: { solve: ReconSolve; initial?: Reco
               {time != null && <span className="ss-time">{formatTime(time)}</span>}
               {s.event && <EventIcon event={s.event} title={eventDisplayName(s.event, isZh)} />}
               <span className="ss-name">
-                {s.personId && <Flag iso2={personFlagIso2(s.personId)} className="yt-comment-flag" />}
-                {displayCuberName(s.person ?? '', isZh)}<WcaPersonTeamBadge wcaId={s.personId} linked={false} />
+                <WcaPersonTeamBadge wcaId={s.personId} linked={false} />{s.personId && <Flag iso2={personFlagIso2(s.personId)} className="yt-comment-flag" />}
+                {displayCuberName(s.person ?? '', isZh)}
               </span>
               {s.method && <span className="ss-method">{s.method}</span>}
             </Link>

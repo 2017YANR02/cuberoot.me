@@ -11,9 +11,10 @@ import './wca-person-team-badge.css';
 export function WcaPersonTeamBadge({ wcaId, linked = true }: { wcaId?: string | null; linked?: boolean }) {
   const team = useSyncExternalStore(subscribeWcaTeams, () => getWcaPersonTeam(wcaId ?? ''), () => undefined);
   useEffect(() => { if (wcaId) requestWcaPersonTeam(wcaId); }, [wcaId]);
-  if (!team) return null;
-  if (linked) return <WcaTeamLink team={team} className="wca-person-team-badge" />;
-  return <span className="wca-person-team-badge" title={tr({ zh: `战队：${team.name}`, en: `Team: ${team.name}` })}>
-    <CubingBrandLabel name={team.name} logoOnly fallbackToName />
-  </span>;
+  return <span className="wca-person-team-slot">{team && (linked
+    ? <WcaTeamLink team={team} className="wca-person-team-badge" />
+    : <span className="wca-person-team-badge" title={tr({ zh: `战队：${team.name}`, en: `Team: ${team.name}` })}>
+      <CubingBrandLabel name={team.name} logoOnly fallbackToName />
+    </span>
+  )}</span>;
 }

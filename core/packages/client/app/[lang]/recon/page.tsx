@@ -832,11 +832,11 @@ export default function ReconListPage() {
             {cubers.map((c, i) => (
               <span key={i}>
                 {i > 0 ? <span className="recon-cuber-sep"> &amp; </span> : null}
-                {c.country ? <><Flag iso2={c.country} className="recon-inline-flag" />{' '}</> : null}
+                <WcaPersonTeamBadge wcaId={c.id} />{c.country ? <><Flag iso2={c.country} className="recon-inline-flag" />{' '}</> : null}
                 {c.id ? (
                   <><Link href={`/recon/person/${c.id}`} onClick={(e) => e.stopPropagation()}>
                     {displayCuberName(c.name, isZh)}
-                  </Link><WcaPersonTeamBadge wcaId={c.id} /></>
+                  </Link></>
                 ) : displayCuberName(c.name, isZh)}
               </span>
             ))}

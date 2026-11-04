@@ -19,8 +19,9 @@ interface Props {
 export default function PersonCell({ person, isZh }: Props) {
   return (
     <span>
+      <WcaPersonTeamBadge wcaId={person.wcaId} />
       <Flag iso2={person.countryIso2} className="nemesizer-flag-icon" />
-      {displayCuberName(person.name, isZh)}<WcaPersonTeamBadge wcaId={person.wcaId} />
+      {displayCuberName(person.name, isZh)}
     </span>
   );
 }

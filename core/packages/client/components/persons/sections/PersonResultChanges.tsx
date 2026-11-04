@@ -257,7 +257,7 @@ function ChangeRow({ c, fields, isZh }: { c: ResultChange; fields: DisplayField[
       })}
       {c.note && <span className="wp-rc-note">{c.note}</span>}
       {c.placementReason?.kind === 'inferred' && <div className="wp-rc-note">
-        <span>{tr({ zh: '名次变化原因（据同轮变更推断）', en: 'Placement change (inferred from this round)' })}</span>
+        <span>{tr({ zh: '变化原因', en: 'Reason for change' })}</span>
         {c.placementReason.causes.map(cause => <div key={cause.changeId}>
           <Link className="wp-rc-cause-link" prefetch={false}
             href={`/wca/persons/${cause.wcaId}?tab=results&sub=event&event=${encodeURIComponent(eventId)}${resultRowHash(c.competitionId!, eventId, c.roundTypeId!)}`}>

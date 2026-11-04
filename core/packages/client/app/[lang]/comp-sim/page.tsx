@@ -647,8 +647,7 @@ export default function CompSimPage() {
                               tr({ zh: '本次训练', en: 'This practice' })
                             ) : (
                               <>
-                                <Flag iso2={row.countryIso2} />{' '}
-                                <PersonLink wcaId={row.wcaId} name={row.name} isZh={isZh} />
+                                <PersonLink flag={<><Flag iso2={row.countryIso2} />{' '}</>} wcaId={row.wcaId} name={row.name} isZh={isZh} />
                               </>
                             )}
                           </td>
@@ -1136,7 +1135,7 @@ export default function CompSimPage() {
             )}
             {user?.wcaId && (
               <p>
-                <Flag iso2={user.country} /> <PersonLink wcaId={user.wcaId} name={user.name} isZh={isZh} />
+                <PersonLink flag={<><Flag iso2={user.country} /></>} wcaId={user.wcaId} name={user.name} isZh={isZh} />
               </p>
             )}
           </section>

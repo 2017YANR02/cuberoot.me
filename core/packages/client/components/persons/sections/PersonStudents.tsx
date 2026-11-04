@@ -373,15 +373,9 @@ export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh,
                         onSaved={() => setReloadKey((current) => current + 1)}
                       />
                     ) : null}
-                    {student.countryIso2 && (
-                      <Flag
-                        iso2={student.countryIso2}
-                        spanClassName="country-flag"
-                        imgClassName="country-flag-ct"
-                      />
-                    )}
                     {student.wcaId ? (
                       <PersonLink
+                        flag={student.countryIso2 ? <Flag iso2={student.countryIso2} spanClassName="country-flag" imgClassName="country-flag-ct" /> : null}
                         wcaId={student.wcaId}
                         name={student.name}
                         isZh={isZh}
@@ -389,6 +383,7 @@ export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh,
                       />
                     ) : (
                       <>
+                        {student.countryIso2 && <Flag iso2={student.countryIso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
                         <span className="wp-student-unregistered-name">{student.name}</span>
                         <span className="wp-student-unregistered">{t('未参赛', 'Not competed')}</span>
                       </>

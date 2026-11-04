@@ -109,7 +109,7 @@ export default function GalleryPage() {
                   loading="lazy"
                   decoding="async"
                 />
-                <figcaption>{name}{photo.wcaId && <WcaPersonTeamBadge wcaId={photo.wcaId} linked={false} />}</figcaption>
+                <figcaption>{photo.wcaId && <WcaPersonTeamBadge wcaId={photo.wcaId} linked={false} />}{name}</figcaption>
               </>;
               return (
                 <figure className="gallery-photo" key={photo.id}>

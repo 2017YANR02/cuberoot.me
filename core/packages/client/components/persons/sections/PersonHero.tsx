@@ -192,11 +192,11 @@ export default function PersonHero({
         )}
         <div className="wp-hero-name-row">
           <span className="wp-hero-name-flag" title={p.country_iso2 ? countryName(p.country_iso2, isZh) : undefined}>
-            <Flag iso2={p.country_iso2} className="wp-flag" />
+            <WcaPersonTeamBadge wcaId={p.wca_id} /><Flag iso2={p.country_iso2} className="wp-flag" />
           </span>
           <div className="wp-hero-name-line page-back-heading">
             <PageHeading backHref="/wca/results" titleClassName="wp-hero-name">
-              <a href={wcaUrl} target="_blank" rel="noopener noreferrer" className="wp-hero-name-link" title="WCA">{displayName}</a><WcaPersonTeamBadge wcaId={p.wca_id} />
+              <a href={wcaUrl} target="_blank" rel="noopener noreferrer" className="wp-hero-name-link" title="WCA">{displayName}</a>
             </PageHeading>
           </div>
           {former && former.length > 0 && (

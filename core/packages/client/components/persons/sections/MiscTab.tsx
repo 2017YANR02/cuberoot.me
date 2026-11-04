@@ -60,8 +60,7 @@ export default function MiscTab({ profile, comps, isZh }: Props) {
                 {misc.closest.map((p) => (
                   <tr key={p.wcaId}>
                     <td className="wp-misc-cuber">
-                      {p.iso2 ? <Flag iso2={p.iso2} className="wp-flag-sm" /> : null}
-                      <PersonLink wcaId={p.wcaId} name={p.name} isZh={isZh} />
+                      <PersonLink flag={<>{p.iso2 ? <Flag iso2={p.iso2} className="wp-flag-sm" /> : null}</>} wcaId={p.wcaId} name={p.name} isZh={isZh} />
                     </td>
                     <td className="wp-cell-num">{p.shared}</td>
                   </tr>

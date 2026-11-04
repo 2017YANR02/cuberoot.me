@@ -1832,8 +1832,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   <span className="submit-label">{t('recon.solver')} *</span>
                   {solverLite ? (
                     <div className="submit-solver-pill">
-                      <Flag iso2={solverLite.country_iso2} />
-                      <PersonLink wcaId={solverLite.id} name={solverLite.name} isZh={isZh} className="submit-solver-name" />
+                      <PersonLink flag={<><Flag iso2={solverLite.country_iso2} /></>} wcaId={solverLite.id} name={solverLite.name} isZh={isZh} className="submit-solver-name" />
                       <ClearButton onClick={clearSolver} isZh={isZh} variant="standalone" preserveFocus />
                     </div>
                   ) : (
