@@ -4,11 +4,11 @@ import { getLblAlgGroups } from '@/app/[lang]/tutorial/lbl/alg-cues';
 import { LBL_STEPS } from '@/app/[lang]/tutorial/lbl/content';
 
 describe('LBL bilingual move cues', () => {
-  it('labels the corner-position alignment turns separately from the taught algorithm', () => {
+  it('keeps the final alignment inside the complete taught J algorithm', () => {
     const examples = LBL_STEPS.find(step => step.id === 'corner-position')!.examples;
-    expect(getLblAlgGroups('corner-position', examples[0].alg).map(group => group.length)).toEqual([1, 4, 4, 5, 1]);
+    expect(getLblAlgGroups('corner-position', examples[0].alg).map(group => group.length)).toEqual([1, 4, 4, 6]);
     expect(getLblAlgGroups('corner-position', examples[0].alg)[0][0].cue.zh).toBe('眼放左');
-    expect(getLblAlgGroups('corner-position', examples[1].alg).map(group => group.length)).toEqual([4, 4, 5]);
+    expect(getLblAlgGroups('corner-position', examples[1].alg).map(group => group.length)).toEqual([4, 4, 6]);
   });
   it('labels the wall placement and final alignment without repeating the edge algorithms', () => {
     const examples = LBL_STEPS.find(step => step.id === 'edge-position')!.examples;
@@ -16,7 +16,7 @@ describe('LBL bilingual move cues', () => {
     for (const example of examples.slice(0, 2)) {
       const groups = getLblAlgGroups('edge-position', example.alg);
       expect(groups.map(group => group.length)).toEqual([1, 7, 1, 7, 1]);
-      expect(groups[0][0].cue.zh).toBe('墙放后');
+      expect(groups[0][0].cue.zh).toBe('转体调整');
       expect(groups.at(-1)![0].cue.zh).toBe('顶层对齐');
     }
   });
@@ -36,15 +36,13 @@ describe('LBL bilingual move cues', () => {
   it('keeps both four-move triggers intact and puts the divider after the cube rotation', () => {
     const examples = LBL_STEPS.find(step => step.id === 'middle')!.examples;
     expect(getLblAlgGroups('middle', examples[0].alg).map(group => group.map(move => [move.cue.zh, move.notation]))).toEqual([
-      [['转顶层', 'U']],
-      [['对齐', 'd']],
       [['左', 'U']],
       [['上', 'R'], ['勾', 'U'], ['下', "R'"], ['回', "U'"]],
       [['左转体', 'y']],
       [['上', "L'"], ['勾', "U'"], ['下', 'L'], ['回', 'U']],
     ]);
     expect(getLblAlgGroups('middle', examples[1].alg).map(group => group.map(move => move.cue.zh).join('')))
-      .toEqual(['转顶层', '对齐', '右', '上勾下回', '右转体', '上勾下回']);
+      .toEqual(['右', '上勾下回', '右转体', '上勾下回']);
   });
 
   it('uses the fish mnemonic for both hands instead of labeling every U as hook', () => {

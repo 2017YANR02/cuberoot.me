@@ -22,7 +22,7 @@ describe('LBL corner-position alignment', () => {
       const moves = new Alg(example.alg).expand().toString().split(/\s+/);
       const at = (n: number): string[][] => JSON.parse(practiceState(colors, `${setup} ${moves.slice(0, n).join(' ')}`));
       expect(eyes(at(0))).toEqual(index === 0 ? [2] : []);
-      expect(moves.length).toBe(index === 0 ? 15 : 13);
+      expect(moves.length).toBe(index === 0 ? 15 : 14);
       if (index === 0) {
         expect(moves[0]).toBe('y');
         expect(eyes(at(1))).toEqual([4]);
@@ -30,10 +30,10 @@ describe('LBL corner-position alignment', () => {
         expect(aligned(at(14))).toBe(false);
         expect(aligned(at(15))).toBe(true);
       } else {
-        expect(eyes(at(13))).toEqual([2]);
-        expect(aligned(at(13))).toBe(false);
+        expect(eyes(at(14))).toEqual([1]);
+        expect(aligned(at(14))).toBe(false);
       }
-      for (const n of index === 0 ? [0, 1, 14, 15] : [0, 13]) {
+      for (const n of index === 0 ? [0, 1, 14, 15] : [0, 14]) {
         const faces = at(n);
         expect(faces[0].every(color => color === 'U')).toBe(true);
         expect(sides.every(side => faces[side].slice(3).every(color => color === faces[side][4]))).toBe(true);
@@ -278,7 +278,7 @@ describe('LBL daisy positioning', () => {
     expect(practiceState(colors, `${example.setup} y'`)).toBe(practiceState(colors, original));
     expect(practiceState(colors, `${example.setup} ${example.alg}`)).toBe(practiceState(colors, `${original} R2`));
   });
-  for (const index of [0, 2]) {
+  for (const index of [0, 1]) {
     it(`rotates the white sticker to the front before lifting (${index})`, () => {
       const example = examples[index];
       const [rotation, lift] = example.alg.split(' ');
@@ -333,31 +333,29 @@ describe('LBL middle-layer prerequisites', () => {
       const after = faces(setup + ' ' + example.alg);
       expect(firstLayerSolved(before)).toBe(true);
       expect(firstLayerSolved(after)).toBe(true);
-      if (index !== 2) {
-        const moves = new Alg(example.alg).expand().toString().split(/\s+/);
-        expect(moves.slice(0, 2)).toEqual(index === 0 ? ['U', 'd'] : ["U'", "d'"]);
-        const front = faces(`${setup} ${moves[0]}`);
-        const ready = faces(`${setup} ${moves.slice(0, 2).join(' ')}`);
-        // Track the same non-yellow edge: it must move to UF, then need color matching.
-        const target = [ready[0][7], ready[2][1]].sort().join('');
-        expect([[before[0][1], before[5][1]], [before[0][3], before[4][1]], [before[0][5], before[1][1]]]
-          .some(pair => pair.sort().join('') === target)).toBe(true);
-        expect(front[2][1]).not.toBe(front[2][4]);
-        expect(ready[0]).toEqual(front[0]);
-        expect(ready[2][1]).toBe(front[2][1]);
-        expect(ready[2][1]).toBe(ready[2][4]);
-        expect(ready[0][7]).toBe(ready[index === 0 ? 1 : 4][4]);
-        expect(firstLayerSolved(front)).toBe(true);
-        expect(firstLayerSolved(ready)).toBe(true);
+      const moves = new Alg(example.alg).expand().toString().split(/\s+/);
+      if (index < 2) {
+        // Core insertion lessons start aligned; complete demonstrations teach
+        // color matching separately before this starting state.
+        expect(moves.length).toBe(10);
+        expect(moves[0]).toBe(index === 0 ? 'U' : "U'");
+        expect(before[2][1]).toBe(before[2][4]);
+        expect(before[0][7]).toBe(before[index === 0 ? 1 : 4][4]);
         expect(sides.every(side => [3, 5, 6, 7, 8].every(i => after[side][i] === after[side][4]))).toBe(true);
       } else {
-        // Rotate the misplaced edge to FR before ejecting it.
-        expect(example.alg.split(' ')[0]).toBe("y'");
-        const positioned = faces(`${setup} y'`);
+        // Special cases stop after ejecting the target edge. The wrong-slot
+        // case first rotates to FR; the flipped edge already sits there.
+        expect(moves.length).toBe(index === 2 ? 10 : 11);
+        expect(moves[0]).toBe(index === 2 ? 'U' : 'y');
+        const positioned = faces(index === 2 ? setup : setup + ' y');
         expect(firstLayerSolved(positioned)).toBe(true);
-        expect(before).not.toEqual(positioned);
-        expect(positioned[2][5]).toBe(positioned[1][4]);
-        expect(positioned[1][3]).toBe(positioned[2][4]);
+        if (index === 2) {
+          expect(positioned[2][5]).toBe(positioned[1][4]);
+          expect(positioned[1][3]).toBe(positioned[2][4]);
+        } else {
+          expect([positioned[2][5], positioned[1][3]].sort())
+            .not.toEqual([positioned[2][4], positioned[1][4]].sort());
+        }
         const edge = [positioned[2][5], positioned[1][3]].sort().join('');
         const topEdges = [[after[0][7], after[2][1]], [after[0][5], after[1][1]], [after[0][1], after[5][1]], [after[0][3], after[4][1]]];
         expect(topEdges.some(pair => pair.sort().join('') === edge)).toBe(true);
