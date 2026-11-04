@@ -55,6 +55,7 @@ import { assistantTimeoutMs, SITE_ASSISTANT_QUESTION_MAX_LENGTH, isAssistantSour
 import { ASSISTANT_ERROR_TEXT, assistantResponseError } from '@/lib/site-assistant-errors';
 import { useAssistantThinkingMode } from '@/hooks/useAssistantThinkingMode';
 import { requestSiteAssistant, assistantImageHistory } from '@/lib/site-assistant-request';
+import { assistantAnswerHistory } from '@/lib/assistant-answer-export';
 import type { AssistantConversationSnapshot } from '@/lib/assistant-conversations';
 import { ALG_PUZZLES, type AlgCase } from '@cuberoot/shared/alg';
 
@@ -372,7 +373,7 @@ export default function LandingSearch({
       const response = await requestSiteAssistant(apiUrl('/v1/site-assistant'), {
         conversationId: assistantConversation.current, parentId: previous.at(-1)?.requestId, retryOf: replaceLast ? assistantTurns.at(-1)?.requestId : undefined,
         question, lang, thinking: assistantThinking, ...(images.length ? {images} : {}), timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,
-        history: assistantImageHistory(previous.filter(turn => !turn.partial).slice(-5).flatMap(turn => [{ role: 'user', content: turn.question, ...(turn.images?.length ? {images:turn.images} : {}) }, { role: 'assistant', content: turn.result!.answer }]), images),
+        history: assistantImageHistory(previous.filter(turn => !turn.partial).slice(-5).flatMap(turn => [{ role: 'user', content: turn.question, ...(turn.images?.length ? {images:turn.images} : {}) }, { role: 'assistant', content: assistantAnswerHistory(turn.result!, window.location.origin) }]), images),
       }, {headers: { ...authHeaders(), Accept: 'text/event-stream' },signal: controller.signal});
       const requestId = response.headers.get('X-Assistant-Request-Id') ?? undefined;
       if (assistantRequest.current === controller) setAssistantTurns([...previous, { question, images, requestId, createdAt }]);

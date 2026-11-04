@@ -61,6 +61,53 @@ describe('assistant resilience',()=>{
     await expect(answerSiteQuestion('CFOP','en',config,controller.signal,withCatalog(aborted))).rejects.toThrow();
     expect(aborted).toHaveBeenCalledTimes(2);
   });
+  it('keeps supported facts when an additional source fails, without repeating its failed read',async()=>{
+    const calls=[{tool:'algorithms',puzzle:'3x3'},{tool:'glossary',query:'PLL'}];
+    const answer={answerKind:'grounded',answer:'PLL has 21 cases. The glossary explanation could not be verified. [[algorithms]]',sourceIds:['algorithms']};
+    const fetcher=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(model(calls))
+      .mockResolvedValueOnce(Response.json([{puzzle:'3x3',setSlug:'pll',count:21}]))
+      .mockRejectedValueOnce(new TypeError('private-network-detail'))
+      .mockRejectedValueOnce(new TypeError('private-network-detail'))
+      .mockResolvedValueOnce(model([{tool:'glossary',query:'PLL'}]))
+      .mockResolvedValueOnce(model(answer));
+    const result=await answerSiteQuestion('How many PLL cases are there, and what does the glossary say?','en',config,AbortSignal.timeout(5000),withCatalog(fetcher));
+    expect(result.answer).toBe(answer.answer);
+    expect(result.sources.map(source=>source.id)).toEqual(['algorithms']);
+    expect(fetcher.mock.calls.filter(([url])=>String(url).endsWith('/wiki/terms'))).toHaveLength(2);
+    expect(fetcher).toHaveBeenCalledTimes(6);
+    const evidence=wireEvidence(JSON.parse(String(fetcher.mock.calls[5][1]?.body)));
+    expect(evidence.filter((entry:any)=>entry.tool.tool==='glossary')).toHaveLength(2);
+    expect(evidence.filter((entry:any)=>entry.tool.tool==='glossary').every((entry:any)=>entry.data.notEvidence)).toBe(true);
+    expect(JSON.stringify(evidence)).not.toContain('private-network-detail');
+  });
+  it('still stops at access challenges after an earlier successful read',async()=>{
+    const fetcher=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(model([{tool:'algorithms',puzzle:'3x3'},{tool:'glossary',query:'PLL'}]))
+      .mockResolvedValueOnce(Response.json([{puzzle:'3x3',setSlug:'pll',count:21}]))
+      .mockResolvedValueOnce(new Response('',{status:403}));
+    await expect(answerSiteQuestion('List PLL cases and explain the glossary.','en',config,AbortSignal.timeout(5000),withCatalog(fetcher))).rejects.toMatchObject({code:'source_verification_required'});
+    expect(fetcher).toHaveBeenCalledTimes(3);
+  });
+  it('retains the failure notice when a verified fixed-tool summary replaces an invented count',async()=>{
+    const sourceId='person-competitions:2017YANR02:all:all';
+    const modelFetch=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(model([{tool:'person_competitions',wcaId:'2017YANR02'},{tool:'glossary',query:'CFOP'}]))
+      .mockResolvedValueOnce(model({answerKind:'grounded',answer:'999 competitions. The glossary could not be read.',sourceIds:[sourceId]}));
+    const fetcher:typeof fetch=async(input,init)=>{
+      const url=new URL(String(input));
+      if(url.pathname.endsWith('/person-page'))return Response.json({profile:{person:{name:'Ruimin Yan (颜瑞民)'}},results:[{competition_id:'A'}],comps:[{id:'A',start_date:'2026-01-01'}]});
+      if(url.pathname.endsWith('/meta'))return Response.json({lastImportedAt:'2026-11-01'});
+      if(url.pathname.endsWith('/wiki/terms'))throw new TypeError('private-network-detail');
+      return modelFetch(input,init);
+    };
+    const result=await answerSiteQuestion('Count my competitions and explain CFOP.','en',config,AbortSignal.timeout(5000),withCatalog(fetcher),[],'2017YANR02');
+    expect(result.answer).toContain('competed in 1 competitions');
+    expect(result.answer).not.toContain('999');
+    expect(result.answer).toContain('Some additional sources could not be read.');
+    expect(result.sources.map(source=>source.id)).toEqual([sourceId]);
+    expect(modelFetch).toHaveBeenCalledTimes(2);
+  });
   it('accepts native tool calls without retry, while still validating every tool',async()=>{
     const fetcher=vi.fn<typeof fetch>()
       .mockResolvedValueOnce(model([{tool:'statistics',id:'example',limit:5}]))

@@ -1316,6 +1316,7 @@ CREATE INDEX IF NOT EXISTS wcp_wca ON wca_championship_podiums (wca_id);
 CREATE TABLE IF NOT EXISTS wca_person_results (wca_id VARCHAR(20) NOT NULL, comp_id VARCHAR(50) NOT NULL, comp_date DATE NOT NULL, event_id VARCHAR(20) NOT NULL, round_type_id VARCHAR(2) NOT NULL DEFAULT '', format_id VARCHAR(2) NOT NULL DEFAULT '', pos SMALLINT NOT NULL DEFAULT 0, best INTEGER NOT NULL, average INTEGER NOT NULL DEFAULT 0, attempts INTEGER[], single_record VARCHAR(3) NOT NULL DEFAULT '', average_record VARCHAR(3) NOT NULL DEFAULT '');
 CREATE INDEX IF NOT EXISTS wpr_person ON wca_person_results (wca_id);
 CREATE INDEX IF NOT EXISTS wpr_comp ON wca_person_results (comp_id);
+CREATE INDEX IF NOT EXISTS wpr_final_winners ON wca_person_results (event_id, comp_id) WHERE pos = 1 AND round_type_id IN ('f', 'c');
 CREATE TABLE IF NOT EXISTS wca_kinch (wca_id VARCHAR(20) PRIMARY KEY, country_id VARCHAR(50) NOT NULL, continent_id VARCHAR(50) NOT NULL, world_score_x100 SMALLINT NOT NULL, continent_score_x100 SMALLINT NOT NULL, country_score_x100 SMALLINT NOT NULL);
 CREATE INDEX IF NOT EXISTS kinch_world_score ON wca_kinch (world_score_x100 DESC, wca_id);
 CREATE INDEX IF NOT EXISTS kinch_continent_score ON wca_kinch (continent_id, continent_score_x100 DESC, wca_id);

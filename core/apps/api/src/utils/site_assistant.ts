@@ -11,6 +11,7 @@ import { z } from 'zod';
 import { toolCallSchema, runDataTool, type ToolResult } from './site_assistant_tools.js';
 import { cubePhotoImages, requiresCubePhotoEvidence, runCubePhotoTool } from './site_assistant_cube_photo.js';
 import { describeAnalysis, runAnalysisQuery } from './site_assistant_analysis_db.js';
+import { assistantAttendanceScope, attendanceScopeError } from './site_assistant_scope.js';
 import { resolveAssistantTime, SITE_ASSISTANT_ANSWER_MAX_LENGTH, type AssistantThinkingMode, type AssistantStreamEvent, type AssistantAnswer, type AssistantMessage, type AssistantImage } from '@cuberoot/shared/site-assistant';
 export type { AssistantSource, AssistantAnswer } from '@cuberoot/shared/site-assistant';
 import { SITE_DIRECTORY_GROUPS, SITE_DIRECTORY_TEXTS } from '@cuberoot/shared/site-directory';
@@ -160,6 +161,7 @@ export async function answerSiteQuestion(
   const asksForPersonalCompetitionCount=/^(?:我(?:一共|总共|总计|已经)?(?:参加过|参加|参赛|比过)(?:了)?(?:一共|总共|总计)?(?:多少|几)(?:场|次|个)(?:WCA\s*)?比赛(?:了)?|(?:how many (?:WCA )?competitions have I (?:competed in|attended|participated in)(?: in total)?))[?？。!！\s]*$/i.test(question.trim());
   const requestedLimit=requestedAssistantLimit(question);
   const timeContext=resolveAssistantTime(question,new Date(),timeZone);
+  const attendanceScope=assistantAttendanceScope(question,history,new Date(),timeZone,viewerWcaId);
   const referenceYear=Number(timeContext.today.slice(0,4));
   const requestedAnnouncements=findSiteAnnouncements(timeContext.normalizedQuestion,referenceYear);
   const asksForAllPersonalRecords=/(?:全部|所有|各项|全项目).{0,30}(?:\b(?:pb|pr)\b|个人(?:最佳|最好|纪录)|官方成绩)|(?:\b(?:pb|pr)\b|个人(?:最佳|最好|纪录)).{0,30}(?:全部|所有|各项|全项目)|\ball\b.{0,40}\b(?:pbs?|prs?|personal bests?|personal records?)\b|\b(?:pbs?|prs?|personal bests?|personal records?)\b.{0,40}\ball\b/i.test(question);
@@ -257,13 +259,15 @@ export async function answerSiteQuestion(
   }
   // This explicit personal question has a fixed public data source. Resolve
   // "I" from the verified identity before any planner can select a leaderboard.
-  if (!experiment.forceKnowledge && !hasImages && asksForPersonalCountries && /^(?:我(?:去过哪些国家比赛|参加过哪些国家的比赛)|Which countries have I competed in)[?？。!！\s]*$/i.test(question.trim())) {
+  if (!experiment.forceKnowledge && !hasImages && history.length===0 && asksForPersonalCountries && /^(?:我(?:去过哪些国家比赛|参加过哪些国家的比赛)|Which countries have I competed in)[?？。!！\s]*$/i.test(question.trim())) {
     if (!selfWcaId) return {answer:{zh:'请提供你的 WCA ID 或选手姓名，我才能查询你在哪些国家或地区参加过比赛。',en:'Please provide your WCA ID or competitor name so I can look up the countries or regions where you competed.'}[lang],sources:[],artifacts:[]};
     await emit?.({type:'status',status:{phase:'querying',tool:'person_countries'}});
     const result=await assistantStage('tool',()=>runDataTool({tool:'person_countries',wcaId:selfWcaId},lang,read),0,'person_countries');
     return {answer:result.factualSummary+result.sources.map(s=>` [[${s.id}]]`).join(''),sources:result.sources,artifacts:result.artifacts};
   }
-  if (!experiment.forceKnowledge && !hasImages && asksForPersonalCompetitionCount) {
+  // A short follow-up can inherit a year/event filter or a user-supplied identity.
+  // Lifetime shortcuts are safe only without conversation context to resolve.
+  if (!experiment.forceKnowledge && !hasImages && history.length===0 && asksForPersonalCompetitionCount) {
     if (!selfWcaId) return {answer:{zh:'请提供你的 WCA ID 或选手姓名，我才能查询你的参赛总数。',en:'Please provide your WCA ID or competitor name so I can look up your competition total.'}[lang],sources:[],artifacts:[]};
     await emit?.({type:'status',status:{phase:'querying',tool:'person'}});
     const result=await assistantStage('tool',()=>runDataTool({tool:'person',wcaId:selfWcaId,event:'all',progress:false,view:'profile'},lang,read),0,'person');
@@ -289,6 +293,7 @@ export async function answerSiteQuestion(
   const factualSummaries = new Map<string,Set<string>>();
   const artifacts: Array<{sourceIds:string[]; artifact:NonNullable<AssistantAnswer['artifacts']>[number]}> = [];
   const called=new Set<string>();
+  const failedCalls=new Set<string>();
   let navigationReadRequired=false;
   let navigationDiscoveryRequired=false;
   let siteContentRequired=false;
@@ -323,7 +328,7 @@ export async function answerSiteQuestion(
     let previous = '';
     return await model.complete({
       system: `${ASSISTANT_ANSWER_POLICY} Answer in ${lang === 'zh' ? 'Simplified Chinese' : 'English'}. ${PLANNING_GUIDE}${artifacts.some(a=>a.artifact.kind==='table') ? '\nThe UI already renders the retrieved rows as tables below your answer. Introduce those results briefly and do not list the rows again. Answer any separate requested explanation or reasoning with appropriate detail.' : ''}${finalOnly ? '\nNo further reads are available. Answer the verified portion from existing evidence and the independent general portion from your knowledge. If published/current data is unavailable, say so. Do not invent missing results or claim to have searched.' : ''}${reviewInstruction}${formatRepair}${selectedTools.length?'\n'+ASSISTANT_EVIDENCE_REVIEW:''}`,
-      context: {question,draftAnswer,timeContext,viewerWcaId,availableImages:[...availableImages.keys()],runtime:{model:config.model,provider:new URL(config.baseUrl).origin==='https://api.deepseek.com'?'DeepSeek':/^(?:dashscope\.aliyuncs\.com|ws-[a-z0-9]+\.cn-beijing\.maas\.aliyuncs\.com)$/.test(new URL(config.baseUrl).hostname)?'Alibaba Cloud Bailian':'OpenAI-compatible provider'},capabilities:{webSearch:assistantWebAvailable(),thinkingMode},now:timeContext.today,round,remainingCalls:10-attemptedCalls,statisticsCatalog,announcementCatalog:SITE_ANNOUNCEMENTS.map(a=>({id:a.id,title:a.title[lang],aliases:a.aliases})),evidence:evidence.filter(item=>!transcriptEvidence.has(item)),sources:[...sources.values()],finalRound:finalOnly}, finalOnly, thinking, effort,
+      context: {question,draftAnswer,timeContext,viewerWcaId,attendanceScope,availableImages:[...availableImages.keys()],runtime:{model:config.model,provider:new URL(config.baseUrl).origin==='https://api.deepseek.com'?'DeepSeek':/^(?:dashscope\.aliyuncs\.com|ws-[a-z0-9]+\.cn-beijing\.maas\.aliyuncs\.com)$/.test(new URL(config.baseUrl).hostname)?'Alibaba Cloud Bailian':'OpenAI-compatible provider'},capabilities:{webSearch:assistantWebAvailable(),thinkingMode},now:timeContext.today,round,remainingCalls:10-attemptedCalls,statisticsCatalog,announcementCatalog:SITE_ANNOUNCEMENTS.map(a=>({id:a.id,title:a.title[lang],aliases:a.aliases})),evidence:evidence.filter(item=>!transcriptEvidence.has(item)),sources:[...sources.values()],finalRound:finalOnly}, finalOnly, thinking, effort,
       maxTokens, ...(requirePhotoTool ? { requiredTool: 'lookup_cube_photo' as const } : {}),
       // A completed assistant message needs a new user turn for a real review;
       // changing an earlier context message alone can merely continue that answer.
@@ -443,15 +448,31 @@ export async function answerSiteQuestion(
         else add(`page:${p.href}`,p.title,p.href,p.description || '',p.access);
       }
     } catch { signal.throwIfAborted(); /* The shared catalogs remain available. */ }
+    // A short task label (e.g. "观察") can lose its subject in the catalog while
+    // its child guide retains a full heading. Reuse that verified relationship
+    // for search, and distinguish a task entry from its instructions.
+    const guideParents=new Map<string,string>();
+    for(const entry of entries.values()) {
+      const parentHref=entry.href.replace(/\/(?:guide|help|tutorial|instructions)\/?$/i,'');
+      const parent=parentHref!==entry.href ? entries.get(parentHref) : undefined;
+      if(!parent)continue;
+      guideParents.set(entry.href,parentHref);
+      for(const title of labels.get(entry.href) ?? []) {
+        const subject=title.replace(/(?:[\s·—:：-]*(?:使用)?(?:指南|教程|帮助|说明)|\s+(?:user\s+)?(?:guide|tutorial|help|instructions))$/i,'').trim();
+        if(subject)add(parent.id,subject,parent.href);
+      }
+    }
+    const asksForGuide=/指南|教程|帮助|说明|\b(?:guide|tutorial|instructions|manual|help)\b/i.test(question+' '+call.query);
     const tokenize = (text:string) => [...new Set((text.toLowerCase().match(/[a-z0-9]+|[\u3400-\u9fff]+/g) ?? []).flatMap(token=>
       /^[\u3400-\u9fff]+$/.test(token) && token.length>1 ? Array.from({length:token.length-1},(_,i)=>token.slice(i,i+2)) : [token]))]
-      .filter(token=>!['i','me','my','the','a','an','please','want','need','show','open','go','to','for','website','site','page','can','how','do','use','on','of','and'].includes(token));
+      .filter(token=>!['i','me','my','the','a','an','please','want','need','show','open','go','to','for','website','site','page','can','how','do','use','on','of','and','learn','learning','train','training','practice','practise'].includes(token));
     const terms = tokenize(call.query);
     const phrase = call.query.trim().toLowerCase();
     // Keep the visitor's actual topic when a planner paraphrases it too broadly.
     const questionTerms = tokenize(question).filter(term=>!['公式','训练','生成','需要','学习','我要','我想','打开','查看','网站'].includes(term));
     const ranked = [...entries.values()]
       .filter(p=>call.kind==='all' || (call.kind==='algorithms' ? p.id.startsWith('alg:') : call.kind==='training' ? p.id.startsWith('train:') || /^\/(recognize|predict|memo|color-test|alg-trainers|timer|cstimer|comp-sim|quiz)(?:\/|$)/.test(p.href) || (p.href.startsWith('/alg/') && /训练|练习|trainer|training|practice|drill/i.test(p.title)) : /^\/(?:scramble\/solver|solver)(?:\?|$)/.test(p.href)))
+      .filter(p=>call.kind!=='training' || asksForGuide || call.pageIds.includes(p.id) || !guideParents.has(p.href))
       .map(p=>({p,
         questionScore:questionTerms.reduce((n,t)=>n+([...(labels.get(p.href) ?? [])].some(label=>label.includes(t))?16:0)+(p.href.toLowerCase().includes(t)?4:0)+(p.description.toLowerCase().includes(t)?1:0),0),
         queryScore:terms.reduce((n,t)=>n+([...(labels.get(p.href) ?? [])].some(label=>label.includes(t))?8:0)+(p.href.toLowerCase().includes(t)?2:0)+(p.description.toLowerCase().includes(t)?1:0),0)
@@ -465,11 +486,17 @@ export async function answerSiteQuestion(
     for (const field of ['queryScore','questionScore'] as const) {
       [...ranked].filter(r=>r[field]>0).sort((a,b)=>b[field]-a[field]).forEach((r,i)=>scores.set(r.p.id,(scores.get(r.p.id) ?? 0)+1/(60+i+1)));
     }
-    const matches = ranked.sort((a,b)=>(scores.get(b.p.id) ?? 0)-(scores.get(a.p.id) ?? 0)).slice(0,12).map(r=>r.p);
+    const matches = ranked.sort((a,b)=>(scores.get(b.p.id) ?? 0)-(scores.get(a.p.id) ?? 0)).slice(0,12).map(r=>({...r.p,
+      aliases:[...(labels.get(r.p.href) ?? [])],purpose:guideParents.has(r.p.href)?'guide':'entry',
+      ...(guideParents.has(r.p.href)?{entryHref:guideParents.get(r.p.href)}:{}),
+    }));
     for (const {id,title,href} of matches) navigationActions.set(id,{id,title,href});
-    return {evidence:{destinations:matches,instruction:'Select only relevant destination IDs in sourceIds. Ask for clarification if these choices do not establish a match. Navigation labels and descriptions are not evidence of private content. Account/admin destinations retain normal page authorization; linking does not perform an operation or grant access.'},sources:matches.map(({id,title,href})=>({id,title,href,read:false})),artifacts:[]};
+    return {evidence:{destinations:matches,instruction:'Select only the destinations needed for the requested task. For a clear request for ONE entry, answer in one short sentence citing the single best matching destination; sourceIds must contain only that destination ID. Do not append related practice, beginner alternatives, prerequisite pages or "if you also want" suggestions unless the visitor asked for multiple options. Preserve multiple destinations when the request actually needs them. Use the [[source ID]] citation to provide the clickable entry; never print raw URL paths, full URLs or Markdown links in the answer. A guide explains its entryHref; it is not the practice/tool entry. For an entry request choose the matching entry, not its guide or adjacent types of practice. Ask for clarification if these choices do not establish a match. Navigation labels and descriptions are not evidence of private content. Account/admin destinations retain normal page authorization; linking does not perform an operation or grant access.'},sources:matches.map(({id,title,href})=>({id,title,href,read:false})),artifacts:[]};
   };
   const finish = (step: z.infer<typeof stepSchema>): AssistantAnswer => {
+      // Compatible models occasionally emit one bracket around a real source ID.
+      // Normalize only IDs read in this request, never arbitrary text or links.
+      step.answer=step.answer.replace(/(?<!\[)\[([^\[\]\n]+)\](?![\]\(])/g,(marker,id:string)=>sources.has(id)?`[[${id}]]`:marker);
       const inlineIds=[...step.answer.matchAll(/\[\[([^\]\n]+)\]\]/g)].map(match=>match[1]);
       if((analysisRevision>0 && reviewedAnalysisRevision!==analysisRevision) || [...step.sourceIds,...inlineIds].some(id=>id.startsWith('analysis:') && !reviewedAnalysisSources.has(id))) {
         return {answer:{zh:'这次计算结果的统计口径未通过核验，暂时无法给出可靠结论。',en:'The calculation did not pass the scope and unit checks, so I cannot give a reliable result yet.'}[lang],sources:[],artifacts:[]};
@@ -486,7 +513,14 @@ export async function answerSiteQuestion(
       // Preserve a valid full answer at the transport boundary. Explicitly
       // selected sources remain available in the UI even without this fallback.
       const rendered=body.length+citationSuffix.length<=SITE_ASSISTANT_ANSWER_MAX_LENGTH?body+citationSuffix:body;
-      return {answer:partial || factual || rendered || {zh:'这次没有完成回答，请重试。',en:'The answer did not complete. Please try again.'}[lang],sources:cited,actions:selected.filter(s=>/^\/(?!\/)/.test(s.href) && !/[\\\r\n]/.test(s.href)).map(s=>navigationActions.get(s.id) ?? {id:s.id,title:s.title,href:s.href}),artifacts:[...new Map(artifacts.filter(a=>a.artifact.kind==='cube-photo' || a.sourceIds.some(id=>citedIds.has(id))).map(a=>[JSON.stringify(a.artifact),a.artifact])).values()]};
+      // Analysis prose has already been reviewed against the question and rows.
+      // Keep its conclusion, assumptions and coverage instead of replacing it
+      // with the tool's generic "results below" fallback. Unreviewed fixed-tool
+      // summaries still prevent fabricated counts; incomplete analysis stays gated.
+      const reviewedCalculation=cited.some(source=>reviewedAnalysisSources.has(source.id));
+      const fallback=factual && failedCalls.size ? factual+'\n\n'+{zh:'部分补充资料未能读取，以上仅包含已核实的结果。',en:'Some additional sources could not be read. Only verified results are included above.'}[lang] : factual;
+      const answer=partial || (reviewedCalculation ? rendered || fallback : fallback || rendered);
+      return {answer:answer || {zh:'这次没有完成回答，请重试。',en:'The answer did not complete. Please try again.'}[lang],sources:cited,actions:selected.filter(s=>/^\/(?!\/)/.test(s.href) && !/[\\\r\n]/.test(s.href)).map(s=>navigationActions.get(s.id) ?? {id:s.id,title:s.title,href:s.href}),artifacts:[...new Map(artifacts.filter(a=>a.artifact.kind==='cube-photo' || a.sourceIds.some(id=>citedIds.has(id))).map(a=>[JSON.stringify(a.artifact),a.artifact])).values()]};
   };
   const reviewAnalysis = async(step:z.infer<typeof stepSchema>,round:number,finalOnly:boolean) => {
     // One independent check before publishing a calculated answer. It can use
@@ -606,8 +640,18 @@ export async function answerSiteQuestion(
         evidence.push({id:`unresolved:${evidence.length}`,tool:parsed.data,data:'This WCA ID has not been resolved. Use find_person with the name from the question/history first; never guess an ID.'});
         continue;
       }
+      const scopeError=attendanceScopeError(attendanceScope,parsed.data,viewerWcaId);
+      if(scopeError) {
+        evidence.push({id:`invalid:scope:${evidence.length}`,tool:parsed.data,data:{notEvidence:true,error:scopeError}});
+        pendingReadFollowUp=scopeError;
+        continue;
+      }
       const key=assistantToolKey(parsed.data);
       if (called.has(key)) { duplicates++; evidence.push({id:`duplicate:${evidence.length}`,tool:parsed.data,data:'Already read; reuse the previous evidence.'}); continue; }
+      if (failedCalls.has(key)) {
+        evidence.push({id:`unavailable:${evidence.length}`,tool:parsed.data,data:{notEvidence:true,error:'This read already failed in this answer. Do not retry it. Answer only the independently supported parts and state the remaining verification gap.'}});
+        continue;
+      }
       try {
         await emit?.({type:'status',status:{phase:'querying',tool:parsed.data.tool}});
         const result=await assistantStage('tool',async()=>{
@@ -660,9 +704,14 @@ export async function answerSiteQuestion(
         evidence.push({id:result.sources[0]?.id ?? `data:${evidence.length}`,tool:parsed.data,data:text.length>limit ? {excerpt:text.slice(0,limit),truncated:true} : result.evidence});
       } catch(error) {
         signal.throwIfAborted();
-        // Surface infrastructure failures instead of spending another model round
-        // turning a CAPTCHA or a failed data request into a plausible answer.
-        throw error instanceof AssistantFailure ? error : new AssistantFailure(assistantFailureCode(error)==='timeout'?'timeout':'source_unavailable');
+        const failure=error instanceof AssistantFailure ? error : new AssistantFailure(assistantFailureCode(error)==='timeout'?'timeout':'source_unavailable');
+        // An optional failed read must not erase facts already obtained. Access
+        // challenges and requests with no readable evidence still fail closed.
+        if (![...sources.values()].some(source=>source.read) || !['timeout','source_unavailable'].includes(failure.code)) throw failure;
+        failedCalls.add(key);
+        evidence.push({id:`unavailable:${evidence.length}`,tool:parsed.data,data:{notEvidence:true,error:'This source could not be read. Its missing results are unknown, not zero or proof of absence. Do not retry this read. Preserve independently supported facts and briefly state which requested part could not be verified.'}});
+        if(parsed.data.tool==='pages')siteContentRequired=false;
+        pendingReadFollowUp='An additional source read failed. Answer the original question using only the successful evidence, and briefly identify any requested part that remains unverified. Do not invent data or website instructions from the failed read; do not repeat it.';
       }
       } finally {
         const added=evidence.slice(evidenceStart);

@@ -249,9 +249,12 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
     const upcomingOnly=call.upcoming && years.length===0 && !(call.from && call.from<today) && !(call.to && call.to<today);
     const all = upcomingOnly ? upcoming : mergeCompetitionIndexes(await read(`${stat}/all_past_comps.json`),upcoming);
     const q=call.query.toLocaleLowerCase().replace(/\s/g,'');
-    const rows=all.filter((c:any)=>(!upcomingOnly || c.end_date >= today) && (!call.from || c.end_date>=call.from) && (!call.to || c.start_date<=call.to) && (!call.country || c.country===call.country) && (worldQuery ? /^WC(?:19|20)\d{2}$/.test(c.id) && (!years.length || years.includes(c.id.slice(2))) : !q || `${c.id} ${c.name} ${c.city}`.toLocaleLowerCase().replace(/\s/g,'').includes(q)))
-      .sort((a:any,b:any)=>upcomingOnly ? a.start_date.localeCompare(b.start_date) : b.start_date.localeCompare(a.start_date)).slice(0,call.limit);
-    out.evidence={...call,competitions:rows.map((c:any)=>({...c,name:compName(c.id,c.name,c.start_date)}))};
+    const matches=all.filter((c:any)=>(!upcomingOnly || c.end_date >= today) && (!call.from || c.end_date>=call.from) && (!call.to || c.start_date<=call.to) && (!call.country || c.country===call.country) && (worldQuery ? /^WC(?:19|20)\d{2}$/.test(c.id) && (!years.length || years.includes(c.id.slice(2))) : !q || `${c.id} ${c.name} ${c.city}`.toLocaleLowerCase().replace(/\s/g,'').includes(q)))
+      .sort((a:any,b:any)=>upcomingOnly ? a.start_date.localeCompare(b.start_date) : b.start_date.localeCompare(a.start_date));
+    const rows=matches.slice(0,call.limit);
+    out.evidence={...call,total:matches.length,returnedRows:rows.length,truncated:rows.length<matches.length,
+      coverage:'Matching competitions in the imported site catalogs, filtered before the output limit. total is the full matched catalog count; returnedRows is only the displayed list length. Do not report returnedRows as the total when truncated. This is schedule metadata, not published results or champions, and does not establish that a competition has results. Catalog coverage is not a live exhaustive WCA check. Date filters use competition date overlap, not individual round or solve dates.',
+      competitions:rows.map((c:any)=>({...c,name:compName(c.id,c.name,c.start_date)}))};
     out.sources=rows.map((c:any)=>source(`comp:${c.id}`,compName(c.id,c.name,c.start_date),`/wca/comp/${c.id}`));
     table(label('比赛','Competitions'),[label('比赛','Competition'),label('城市','City'),label('地区','Country'),label('日期','Dates')],rows.map((c:any)=>[compName(c.id,c.name,c.start_date),c.city,c.country,formatDateRangeIso(c.start_date,c.end_date)]),rows.map((c:any)=>`/wca/comp/${c.id}`),['text','text','country','date']);
   } else if (call.tool === 'scrambles') {

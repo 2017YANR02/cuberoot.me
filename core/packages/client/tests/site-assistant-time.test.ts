@@ -12,6 +12,9 @@ describe('assistant calendar interpretation',()=>{
     ['一周前','2026-09-25','2026-09-25'],['上个月','2026-09-01','2026-09-30'],['下个月','2026-11-01','2026-11-30'],
     ['year before last','2024-01-01','2024-12-31'],['next year','2027-01-01','2027-12-31'],
     ['day after tomorrow','2026-10-04','2026-10-04'],['next week','2026-10-05','2026-10-11'],
+    ['上周末','2026-09-26','2026-09-27'],['上个周末','2026-09-26','2026-09-27'],
+    ['本周末','2026-10-03','2026-10-04'],['这个周末','2026-10-03','2026-10-04'],['下周末','2026-10-10','2026-10-11'],
+    ['last weekend','2026-09-26','2026-09-27'],['this weekend','2026-10-03','2026-10-04'],['next weekend','2026-10-10','2026-10-11'],
   ])('resolves %s from a fixed clock', (phrase,start,end)=>{
     expect(resolveAssistantTime(phrase,now,'America/Los_Angeles').periods).toEqual([{phrase,unit:expect.any(String),start,end}]);
   });
@@ -19,6 +22,12 @@ describe('assistant calendar interpretation',()=>{
     const boundary=new Date('2027-01-01T01:00:00Z');
     expect(resolveAssistantTime('明年',boundary,'America/Los_Angeles')).toMatchObject({today:'2026-12-31',normalizedQuestion:'2027'});
     expect(resolveAssistantTime('明年',boundary,'Asia/Shanghai')).toMatchObject({today:'2027-01-01',normalizedQuestion:'2028'});
+  });
+  it('resolves the reported winner question to Saturday and Sunday without a leftover suffix',()=>{
+    const context=resolveAssistantTime('上周末谁拿了冠军？',new Date('2026-11-03T12:00:00Z'),'Asia/Shanghai');
+    expect(context.periods).toEqual([{phrase:'上周末',unit:'weekend',start:'2026-10-31',end:'2026-11-01'}]);
+    expect(context.normalizedQuestion).not.toContain('末');
+    expect(resolveAssistantTime('上周末',new Date('2027-01-04T12:00:00Z')).periods[0]).toMatchObject({start:'2027-01-02',end:'2027-01-03'});
   });
   it('handles leap days, year-crossing weeks and calendar days across DST',()=>{
     expect(resolveAssistantTime('明天',new Date('2024-02-28T12:00:00Z')).periods[0].start).toBe('2024-02-29');

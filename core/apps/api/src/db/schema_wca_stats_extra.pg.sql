@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS wca_person_results (
 );
 CREATE INDEX IF NOT EXISTS wpr_person ON wca_person_results (wca_id);
 CREATE INDEX IF NOT EXISTS wpr_comp   ON wca_person_results (comp_id);
+CREATE INDEX IF NOT EXISTS wpr_final_winners ON wca_person_results (event_id, comp_id) WHERE pos = 1 AND round_type_id IN ('f', 'c');
 
 -- ── wca_person_avatar: 头像 URL 懒缓存(dump 里没有,按访问回源一次) ──
 CREATE TABLE IF NOT EXISTS wca_person_avatar (

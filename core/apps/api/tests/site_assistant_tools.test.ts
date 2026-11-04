@@ -56,8 +56,18 @@ describe('assistant public data adapters',()=>{
     ];
     const result=await runDataTool({tool:'competitions',query:'',country:'',upcoming:true,from:'2026-09-28',to:'2026-10-04',limit:20},'en',async url=>url.endsWith('/all_past_comps.json')?rows:[],undefined,'2026-10-02');
     expect(result.sources.map(s=>s.id)).toEqual(['comp:Inside','comp:Overlap']);
+    expect(result.evidence).toMatchObject({total:2,returnedRows:2,truncated:false});
     expect(toolCallSchema.safeParse({tool:'competitions',from:'2026-02-30'}).success).toBe(false);
     expect(toolCallSchema.safeParse({tool:'competitions',from:'2026-10-03',to:'2026-10-01'}).success).toBe(false);
+  });
+  it('distinguishes the full matched competition count from the capped schedule list',async()=>{
+    const base={city:'City',country:'US',start_date:'2026-10-31',end_date:'2026-11-01'};
+    const matches=Array.from({length:25},(_,i)=>({...base,id:`Weekend${i}`,name:`Weekend ${i}`}));
+    const past=[...matches,{...base,id:'OtherCountry',name:'Other',country:'CA'},{...base,id:'OutsideDates',name:'Outside',start_date:'2026-10-01',end_date:'2026-10-02'}];
+    const result=await runDataTool({tool:'competitions',query:'',country:'US',upcoming:false,from:'2026-10-31',to:'2026-11-01',limit:20},'en',async url=>url.endsWith('/all_past_comps.json')?past:[matches[0]],undefined,'2026-11-03');
+    expect(result.evidence).toMatchObject({total:25,returnedRows:20,truncated:true});
+    expect(result.sources).toHaveLength(20);
+    expect(result.artifacts[0].kind==='table' && result.artifacts[0].rows).toHaveLength(20);
   });
   it.each(['WC2025','WC 2025','世锦赛2025','World Championship 2025'])('resolves explicit historical editions despite the upcoming default: %s',async query=>{
     const result=await runDataTool({tool:'competitions',query,country:'',upcoming:true,limit:20},'en',async url=>url.endsWith('/all_past_comps.json') ? [

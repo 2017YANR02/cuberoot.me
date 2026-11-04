@@ -2,7 +2,7 @@ import { formatDateRangeIso } from './iso-date';
 
 export interface AssistantTimePeriod {
   phrase: string;
-  unit: 'year' | 'month' | 'week' | 'day';
+  unit: 'year' | 'month' | 'week' | 'weekend' | 'day';
   start: string;
   end: string;
 }
@@ -18,6 +18,9 @@ const rules: Array<{pattern:RegExp;unit:AssistantTimePeriod['unit'];offset:numbe
   {pattern:/上(?:个)?月|\blast month\b/gi,unit:'month',offset:-1},
   {pattern:/本月|这个月|\bthis month\b/gi,unit:'month',offset:0},
   {pattern:/下(?:个)?月|\bnext month\b/gi,unit:'month',offset:1},
+  {pattern:/上(?:一|个)?周末|上(?:个)?星期末|\blast weekend\b/gi,unit:'weekend',offset:-1},
+  {pattern:/本周末|这(?:个)?周末|这个星期末|\bthis weekend\b/gi,unit:'weekend',offset:0},
+  {pattern:/下(?:一|个)?周末|下(?:个)?星期末|\bnext weekend\b/gi,unit:'weekend',offset:1},
   {pattern:/前一周|上(?:一)?周|上(?:个)?星期|\blast week\b/gi,unit:'week',offset:-1},
   {pattern:/本周|这周|这个星期|\bthis week\b/gi,unit:'week',offset:0},
   {pattern:/下(?:一)?周|下(?:个)?星期|\bnext week\b/gi,unit:'week',offset:1},
@@ -58,6 +61,8 @@ export function resolveAssistantTime(question:string, now:Date, timeZone='UTC') 
     } else if(rule.unit==='month') {
       start=new Date(Date.UTC(base.getUTCFullYear(),base.getUTCMonth()+rule.offset,1));
       end=new Date(Date.UTC(base.getUTCFullYear(),base.getUTCMonth()+rule.offset+1,0));
+    } else if(rule.unit==='weekend') {
+      start=shift(base,-((base.getUTCDay()+6)%7)+rule.offset*7+5);end=shift(start,1);
     } else if(rule.unit==='week') {
       start=shift(base,-((base.getUTCDay()+6)%7)+rule.offset*7);end=shift(start,6);
     } else start=end=shift(base,rule.offset);

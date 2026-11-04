@@ -60,4 +60,14 @@ describe.skipIf(!enabled)('assistant analysis PostgreSQL isolation and calculati
     const country=await executeAnalysis(compileAnalysis({from:{dataset:'results',as:'r'},joins:[{dataset:'competitions',as:'c',type:'inner',on:{op:'=',args:[col('r.comp_id'),col('c.id')]}}],select:[output('country',col('c.country_iso2')),output('count',{fn:'count',args:[col('r.comp_id')],distinct:true})],groupBy:[col('c.country_iso2')],orderBy:[{expr:col('c.country_iso2'),direction:'asc'}]}),signal());expect(country.rows).toEqual([{country:'CN',count:'2'},{country:'JP',count:'1'}]);
     const attempts=await executeAnalysis(compileAnalysis({from:{dataset:'attempts',as:'a'},select:[output('dnf',{fn:'count',args:[],filter:{op:'=',args:[col('a.value'),value(-1)]}}),output('attempted',{fn:'count',args:[],filter:{op:'or',args:[{op:'>',args:[col('a.value'),value(0)]},{op:'=',args:[col('a.value'),value(-1)]}]}})]}),signal());expect(attempts.rows).toEqual([{dnf:'1',attempted:'18'}]);
   });
+  it('removes numeric padding while preserving text, nulls and significant precision',async()=>{
+    const query=compileAnalysis({from:{dataset:'recons',as:'r'},select:[
+      output('seconds',{op:'/',args:[value(657),value(100)]}),
+      output('precise',{op:'/',args:[value(1),value(3)]}),
+      output('numeric_text',value('006.570000')),
+      output('missing',col('r.tps')),
+    ]});
+    const result=await executeAnalysis(query,signal());
+    expect(result.rows).toEqual([{seconds:'6.57',precise:'0.33333333333333333333',numeric_text:'006.570000',missing:null}]);
+  });
 });
