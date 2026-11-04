@@ -150,6 +150,8 @@ export async function answerSiteQuestion(
   experiment: { forceKnowledge?: boolean } = {},
 ): Promise<AssistantAnswer> {
   const hasImages = images.length > 0 || history.some(message => message.role === 'user' && message.images?.length);
+  const entryOnlyRequest=!hasImages && /入口|链接|网址|\b(?:entry|link|url)\b/i.test(question)
+    && !/怎么|如何|步骤|教程|说明|介绍|解释|讲解|总结|原理|区别|功能|多少|几(?:个|次|场|秒)|是谁|比较|分析|统计|计算|翻译|写|生成|\b(?:how|why|explain|compare|summarize|write|translate|calculate|steps|tutorial|instructions?|features?|results?|records?|count)\b/i.test(question);
   const searchProtectedTerms=assistantSearchProtectedTerms([...history.map(message=>message.content),question],viewerWcaId);
   // Keep verified identity available to the planner regardless of wording.
   // Subject resolution belongs to the conversation, not this shortcut matcher.
@@ -338,7 +340,7 @@ export async function answerSiteQuestion(
           || (photoEvidenceRequired && !artifacts.some(a => a.artifact.kind === 'cube-photo'));
         const kind=partialAssistantAnswerKind(content);
         const canStream=kind==='general' || (kind==='image' && hasImages) || (kind==='site_content' ? pageSourceIds.size>0 : [...sources.values()].some(source=>source.read));
-        const partial = !selectedTools.some(tool=>EVIDENCE_REVIEW_TOOLS.has(String(tool))) && canStream && !forcedRead && !factualSummaries.size && !analysisSchemaRead && (!siteContentRequired || pageSourceIds.size>0) ? partialAssistantAnswer(content) : undefined;
+        const partial = !entryOnlyRequest && !selectedTools.some(tool=>EVIDENCE_REVIEW_TOOLS.has(String(tool))) && canStream && !forcedRead && !factualSummaries.size && !analysisSchemaRead && (!siteContentRequired || pageSourceIds.size>0) ? partialAssistantAnswer(content) : undefined;
         if (partial !== undefined && partial.length<=SITE_ASSISTANT_ANSWER_MAX_LENGTH && partial !== previous && (!previous || partial.length - previous.length >= 24)) {
           if (!previous) await emit({type:'status',status:{phase:'writing'}});
           previous = partial;
@@ -573,12 +575,10 @@ export async function answerSiteQuestion(
       if (!step.calls.some((call: unknown) => typeof call === 'object' && call !== null && 'tool' in call && call.tool === 'lookup_cube_photo')) throw new AssistantFailure('source_unavailable');
     }
     // A verified destination fully answers an explicit entry-only request.
-    // A planner may mislabel it as site_content or request pages anyway; do not
-    // make a clickable entry depend on reading its implementation/docs. Mixed
+    // Render the selected link consistently, even if a general draft adds raw
+    // paths/usage filler or requests a redundant page read. Mixed
     // questions still need their factual/procedural evidence, and no ID is guessed.
-    const entryOnlyRequest=!hasImages && /入口|链接|网址|\b(?:entry|link|url)\b/i.test(question)
-      && !/怎么|如何|步骤|教程|说明|介绍|解释|讲解|总结|原理|区别|功能|多少|几(?:个|次|场|秒)|是谁|比较|分析|统计|计算|翻译|写|生成|\b(?:how|why|explain|compare|summarize|write|translate|calculate|steps|tutorial|instructions?|features?|results?|records?|count)\b/i.test(question);
-    if(entryOnlyRequest && navigationActions.size && (step.answerKind==='site_content' || step.calls.length>0) && step.calls.every((call:any)=>call?.tool==='pages')) {
+    if(entryOnlyRequest && navigationActions.size && step.calls.every((call:any)=>call?.tool==='pages')) {
       const selectedIds=[...new Set([
         ...step.sourceIds,...[...step.answer.matchAll(/\[\[([^\]\n]+)\]\]/g)].map(match=>match[1]),
         ...step.calls.flatMap((call:any)=>Array.isArray(call.pageIds)?call.pageIds:[]),

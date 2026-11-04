@@ -7,7 +7,7 @@ vi.mock('../src/utils/site_assistant_people.js',()=>({findAssistantPeople:vi.fn(
 const config={key:'test-secret',baseUrl:'https://model.example/v1',model:'qwen3.8-flash'};
 
 describe('assistant task and guide navigation',()=>{
-  it.each(['wrong-kind','extra-read'] as const)('finishes a verified entry without a content dependency: %s',async mode=>{
+  it.each(['wrong-kind','extra-read','verbose-general'] as const)('finishes a verified entry without a content dependency: %s',async mode=>{
     const id='page:/alg/3bld/lookup';
     let requests=0;
     const fetcher=vi.fn<typeof fetch>(async input=>{
@@ -16,7 +16,8 @@ describe('assistant task and guide navigation',()=>{
       requests++;
       return modelResponse(requests===1 ? {calls:[{tool:'navigation',kind:'algorithms',query:'三盲公式查询'}]} : mode==='wrong-kind'
         ? {answerKind:'site_content',answer:'Unverified usage details.',sourceIds:[id]}
-        : {calls:[{tool:'pages',query:'三盲公式查询',pageIds:[id]}]});
+        : mode==='extra-read' ? {calls:[{tool:'pages',query:'三盲公式查询',pageIds:[id]}]}
+        : {answerKind:'general',answer:'打开 /alg/3bld/lookup 即可查询棱角三循环、翻棱和翻角。',sourceIds:[id]});
     });
     const result=await answerSiteQuestion('三盲公式查询在哪？给我一个入口。','zh',config,AbortSignal.timeout(5000),fetcher);
     expect(result.answer).toBe(`[[${id}]]`);
@@ -80,6 +81,7 @@ describe('assistant task and guide navigation',()=>{
     const result=await answerSiteQuestion(question,lang,config,AbortSignal.timeout(5000),fetcher);
     expect(destinations[0].href).toBe(selected);
     expect(result.actions?.map(action=>action.href)).toEqual([selected]);
+    if(question.includes('入口'))expect(result.answer).toBe(`[[page:${selected}]]`);
     expect(requests).toBe(2);
   });
 

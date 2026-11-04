@@ -93,6 +93,34 @@ describe('assistant streaming', () => {
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
 
+  it('holds an entry-only general draft until its verified link is ready',async()=>{
+    let provider!: ReadableStreamDefaultController<Uint8Array>;
+    const events:AssistantStreamEvent[]=[];
+    const id='page:/recognize/pll';
+    let requests=0;
+    const fetcher=vi.fn<typeof fetch>(async url=>{
+      if(String(url).endsWith('/assistant/pages.json'))return Response.json({destinations:[{lang:'zh',href:'/recognize/pll',title:'PLL 识别'}],pages:[]});
+      requests++;
+      if(requests===1)return new Response(new ReadableStream({start(c){
+        c.enqueue(frame({choices:[{index:0,delta:{role:'assistant',tool_calls:[{index:0,id:'nav-1',type:'function',function:{name:'navigation',arguments:JSON.stringify({query:'PLL 识别',kind:'training'})}}]},finish_reason:null}]}));
+        c.enqueue(frame({choices:[{index:0,delta:{},finish_reason:'tool_calls'}]}));c.enqueue(frame('[DONE]'));c.close();
+      }}),{headers:{'Content-Type':'text/event-stream'}});
+      return new Response(new ReadableStream({start(c){provider=c;}}),{headers:{'Content-Type':'text/event-stream'}});
+    });
+    let finished=false;
+    const pending=answerSiteQuestion('我想练 PLL 识别，入口在哪？','zh',config,AbortSignal.timeout(5000),fetcher,[],undefined,async event=>{events.push(event);}).then(answer=>{finished=true;return answer;});
+    await vi.waitFor(()=>expect(provider).toBeDefined());
+    provider.enqueue(frame({choices:[{index:0,delta:{role:'assistant',content:'{"answerKind":"general","answer":"入口是 /recognize/pll，点开即可进行练习。'},finish_reason:null}]}));
+    await new Promise(resolve=>setTimeout(resolve,30));
+    expect(events.some(event=>event.type==='answer')).toBe(false);
+    expect(finished).toBe(false);
+    provider.enqueue(frame({choices:[{index:0,delta:{content:`","sourceIds":["${id}"]}`},finish_reason:'stop'}]}));
+    provider.enqueue(frame('[DONE]'));provider.close();
+    expect((await pending).answer).toBe(`[[${id}]]`);
+    expect(events.some(event=>event.type==='answer')).toBe(false);
+    expect(requests).toBe(2);
+  });
+
   it('holds a site-specific draft until the actual page content has been read',async()=>{
     const corpus={version:2,updated:'2026-10-10T00:00:00.000Z',pages:[{lang:'zh' as const,href:'/timer',title:'计时器',text:'打开训练菜单，选择公式集。'}]};
     const events:AssistantStreamEvent[]=[];
