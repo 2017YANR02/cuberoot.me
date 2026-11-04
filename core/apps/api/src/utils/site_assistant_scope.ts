@@ -1,5 +1,6 @@
 import { resolveAssistantTime, type AssistantMessage } from '@cuberoot/shared/site-assistant';
 import { EVENT_DISPLAY_EN, EVENT_DISPLAY_ZH, WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
+import { EVENT_NAME_BY_ID } from '@cuberoot/shared/record-news';
 import { analysisQuerySchema, compileAnalysis, type AnalysisExpr } from './site_assistant_analysis.js';
 
 interface AttendanceScope {
@@ -10,12 +11,26 @@ interface AttendanceCall { tool: string; wcaId?: string; event?: string; from?: 
 const attendance = /参赛|比赛|\bcompetitions?\b|\bcompeted\b|\bparticipat|\battend/i;
 const self = /我(?:\s|\d{4}年|的|在|去|参|比|一共|总共|总计|已经|今年|去年|前年|历年|生涯|所有|全部|不限)|\bmy\b|\bI\s+(?:have\s+|did\s+)?(?:compet|attend|participat|visit)/i;
 const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const eventPattern = new RegExp(WCA_EVENT_ORDER.flatMap(id => [
-  escape(EVENT_DISPLAY_ZH[id]), `\\b${escape(EVENT_DISPLAY_EN[id]).replace(/×/g, '[x×]')}\\b`, `\\b${id}\\b`,
-]).join('|'), 'i');
+const normalizeEvent = (text: string) => text.toLowerCase().replace(/×/g,'x').replace(/\s+/g,' ').trim();
+const eventAliases = new Map<string,string>();
+// Reuse published names; add qualified spellings of the existing short labels.
+// Include known non-WCA names so "四阶金字塔" cannot become a 4x4 attendance filter.
+for (const id of Object.keys(EVENT_DISPLAY_ZH)) {
+  const labels=[id,EVENT_DISPLAY_ZH[id],EVENT_DISPLAY_EN[id],EVENT_NAME_BY_ID[id]];
+  if (/^[345]{3}[a-z]+$/.test(id)) {
+    const base=id.slice(0,3);
+    labels.push(EVENT_DISPLAY_ZH[base]+(id.endsWith('bf') && !id.includes('mb')?'盲拧':EVENT_DISPLAY_ZH[id]));
+    labels.push(EVENT_DISPLAY_EN[base]+' '+EVENT_DISPLAY_EN[id]);
+  }
+  for (const label of labels) if (label) eventAliases.set(normalizeEvent(label),id);
+}
+const eventPattern = new RegExp([...eventAliases.keys()].sort((a,b)=>b.length-a.length).map(label=>{
+  const pattern=escape(label).replace(/(\d)x(?=\d)/g,'$1[x×]').replace(/ /g,'\\s+');
+  return /[\u3400-\u9fff]/.test(label)?pattern:`\\b${pattern}\\b`;
+}).join('|'),'gi');
 const scopedEvent = (scope: AttendanceScope) => {
-  const normalize = (value: string) => value.toLowerCase().replace(/x/g, '×');
-  return scope.event && WCA_EVENT_ORDER.find(id => [id, EVENT_DISPLAY_ZH[id], EVENT_DISPLAY_EN[id]].some(label => normalize(label) === normalize(scope.event!.text)));
+  const id=scope.event && eventAliases.get(normalizeEvent(scope.event.text));
+  return WCA_EVENT_ORDER.find(event=>event===id);
 };
 
 /** A narrow guard for personal attendance follow-ups, based only on user wording. */
@@ -27,7 +42,7 @@ export function assistantAttendanceScope(question: string, history: AssistantMes
     const ids = text.match(/\b\d{4}[A-Z]{4}\d{2}\b/g) ?? [];
     const periods = resolveAssistantTime(text, now, timeZone).periods;
     // Only a bare date/event continuation may omit the established subject.
-    const delta = text.trim().replace(/^(?:那(?:么)?|再看|继续看|what about)\s*/i, '').replace(/(?:呢|怎么样)?[?？。!！\s]*$/, '');
+    const delta = text.trim().replace(/^(?:那(?:么)?|再看|继续看|what about)\s*/i, '').replace(/(?:呢|怎么样)?[?？。!！\s]*$/, '').trim();
     const reset = delta.replace(/[、，,\s]/g,'').replace(/(?:合计|总共|一共)?多少场(?:比赛)?$/,'');
     const elliptical = personalAttendance && (/^(?:19|20)\d{2}年?$/.test(delta)
       || periods.some(period => period.phrase === delta) || text.match(eventPattern)?.[0].toLowerCase() === delta.toLowerCase()
@@ -45,8 +60,20 @@ export function assistantAttendanceScope(question: string, history: AssistantMes
     }
     if (/(?:所有|全部|不限)(?:年份和|时间和)?项目|不限定项目|\ball events\b/i.test(text)) { delete scope.event; explicitReset = true; }
     else {
-      const event = text.match(eventPattern)?.[0];
-      if (event) scope.event = { text: event };
+      const matches = [...text.matchAll(eventPattern)];
+      const events = matches.map(match=>match[0]);
+      const ids = new Set(events.map(event=>eventAliases.get(normalizeEvent(event))));
+      const qualified = matches.map(match=>{
+        const before=text.slice(0,match.index).match(/(?:不(?:算|含|包括|统计|计入|看|要|是)|排除|除(?:了|去)?|非|\b(?:except(?: for)?|exclud(?:e|ing)|without|not))\s*$/i)?.[0] ?? '';
+        const after=text.slice(match.index+match[0].length).match(/^\s*(?:除外|以外|之外|不算|不计)/)?.[0] ?? '';
+        return before+match[0]+after;
+      });
+      // Exclusions cannot use an equality-only tool. Keep their wording (without
+      // stale dates) for analysis and subsequent date-only follow-ups.
+      const exclusion=qualified.some((event,index)=>event!==events[index]);
+      // Multiple requested events need the ordinary planner/review, not a forced first-event filter.
+      const first=events[0];
+      if (first) scope.event = { text: exclusion ? qualified.join('、') : ids.size===1 ? first : text };
     }
   }
   // An explicit all-time/all-event reset must reject a planner's stale filters.
@@ -60,6 +87,11 @@ export function applyAttendanceScope(scope: AttendanceScope | undefined, call: A
   if (scope.date?.from && scope.date.to) { call.from ??= scope.date.from; call.to ??= scope.date.to; }
   const event = scopedEvent(scope);
   if (event) call.event ??= event;
+}
+
+/** Equality-only attendance tools cannot express these already known constraints. */
+export function attendanceRequiresAnalysis(scope: AttendanceScope | undefined): boolean {
+  return !!scope && (!!scope.event && !scopedEvent(scope) || !!scope.date && (!scope.date.from || !scope.date.to));
 }
 
 /** A filter on one aggregate does not constrain other displayed aggregates. */
@@ -95,9 +127,13 @@ function analysisMatchesScope(scope: AttendanceScope, input: unknown, viewerWcaI
         if (query.joins.some(join => conjuncts(join.on).some(p => joined(p, prefix + 'comp_id', comp.as + '.id')))) dateColumns.push(comp.as + '.start_date');
       }
       if (scope.date && !dateColumns.some(column => datePredicatesCover(predicates, column, scope.date!.from!, scope.date!.to!))) return false;
-      // Empty scope specifically records an explicit all-time/all-event reset.
+      // Each missing dimension means unrestricted, including a partial reset.
       // Inspect raw WHERE predicates (including CTE bases), not select/grouping.
-      if (!scope.date && !scope.event && predicates.some(predicate=>references(predicate,new Set([prefix+'event_id',...dateColumns])))) return false;
+      const unrestrictedColumns=new Set([
+        ...(!scope.event?[prefix+'event_id']:[]),
+        ...(!scope.date?dateColumns:[]),
+      ]);
+      if (predicates.some(predicate=>references(predicate,unrestrictedColumns))) return false;
     }
     // Unused scoped CTEs and LEFT JOINs must not authorize an unrelated total.
     const scoped = rawSources > 0 || scopedSteps.has(query.from.dataset)
@@ -131,7 +167,7 @@ export function attendanceScopeError(scope: AttendanceScope | undefined, call: A
     if (analysisMatchesScope(scope, call.query, viewerWcaId) !== false) return;
     if (!scope.date && !scope.event) return 'The user explicitly reset personal attendance to all years and all events. Use the resolved viewer wca_id and remove stale event/date WHERE filters from every raw results/attempts input, including CTE bases. Do not carry the previous year or event into this total.';
     return 'The analysis includes rows outside the active personal-attendance scope: ' + JSON.stringify(scope)
-      + '. Apply the requested wca_id, event_id and comp_date constraints as global AND predicates in WHERE of each raw results/attempts input, including CTE base steps, before any aggregation. A FILTER on only one aggregate is insufficient. For a calendar year use year(comp_date)=year or >= start and < next year. Do not include an unrequested lifetime/all-event total or comparison. Return only the active scope.';
+      + '. Apply the requested wca_id, event_id and comp_date constraints as global AND predicates in WHERE of each raw results/attempts input, including CTE base steps, before any aggregation. A missing date/event dimension means all years/events: remove any cancelled or unrequested restriction on that dimension. A FILTER on only one aggregate is insufficient. For a calendar year use year(comp_date)=year or >= start and < next year. Do not include an unrequested lifetime/all-event total or comparison. Return only the active scope.';
   }
   if (!['person', 'person_countries', 'person_competitions'].includes(call.tool)) return;
   if (call.tool==='person' && call.view==='profile' && viewerWcaId && call.wcaId===viewerWcaId

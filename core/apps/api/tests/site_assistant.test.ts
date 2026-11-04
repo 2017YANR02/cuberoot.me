@@ -157,7 +157,7 @@ describe('site assistant grounding', () => {
   it('does not promote unused retrieved sources into citations on a general answer',async()=>{
     const fetcher=vi.fn<typeof fetch>()
       .mockResolvedValueOnce(modelResponse({calls:[{tool:'glossary',query:'CFOP'}]}))
-      .mockResolvedValueOnce(Response.json({sections:[{entries:[{headEn:'CFOP',bodyEn:'A solving method.'}]}]}))
+      .mockResolvedValueOnce(Response.json({sections:[{entries:[{id:92,headEn:'CFOP',bodyEn:'A solving method.'}]}]}))
       .mockResolvedValueOnce(modelResponse({answerKind:'general',answer:'A separate general explanation.',sourceIds:['invented']}));
     const result=await answerSiteQuestion('Explain this general concept.','en',config,AbortSignal.timeout(5000),fetcher);
     expect(result.answer).toBe('A separate general explanation.');
@@ -184,24 +184,24 @@ describe('site assistant grounding', () => {
     const answer='文'.repeat(SITE_ASSISTANT_ANSWER_MAX_LENGTH-ending.length)+ending;
     const fetcher=vi.fn<typeof fetch>()
       .mockResolvedValueOnce(modelResponse({calls:[{tool:'glossary',query:'CFOP'}]}))
-      .mockResolvedValueOnce(Response.json({sections:[{entries:[{headEn:'CFOP',bodyEn:'A solving method.'}]}]}))
-      .mockResolvedValueOnce(modelResponse({answerKind:'general',answer,sourceIds:['wiki']}));
+      .mockResolvedValueOnce(Response.json({sections:[{entries:[{id:92,headEn:'CFOP',bodyEn:'A solving method.'}]}]}))
+      .mockResolvedValueOnce(modelResponse({answerKind:'general',answer,sourceIds:['wiki:92']}));
     const result=await answerSiteQuestion('解释相关概念并附上来源。','zh',config,AbortSignal.timeout(5000),fetcher);
     expect(result.answer).toBe(answer);
     expect(result.answer.length).toBe(SITE_ASSISTANT_ANSWER_MAX_LENGTH);
-    expect(result.sources.map(source=>source.id)).toEqual(['wiki']);
+    expect(result.sources.map(source=>source.id)).toEqual(['wiki:92']);
     expect(fetcher).toHaveBeenCalledTimes(3);
   });
   it('repairs invented provenance on a retrieved factual answer without citing all available sources',async()=>{
     const fetcher=vi.fn<typeof fetch>()
       .mockResolvedValueOnce(modelResponse({calls:[{tool:'glossary',query:'CFOP'}]}))
-      .mockResolvedValueOnce(Response.json({sections:[{entries:[{headEn:'CFOP',bodyEn:'A solving method.'}]}]}))
+      .mockResolvedValueOnce(Response.json({sections:[{entries:[{id:92,headEn:'CFOP',bodyEn:'A solving method.'}]}]}))
       .mockResolvedValueOnce(modelResponse({answerKind:'grounded',answer:'The source says this.',sourceIds:['invented']}))
-      .mockResolvedValueOnce(modelResponse({answerKind:'grounded',answer:'CFOP is a solving method.',sourceIds:['wiki']}));
+      .mockResolvedValueOnce(modelResponse({answerKind:'grounded',answer:'CFOP is a solving method.',sourceIds:['wiki:92']}));
     const result=await answerSiteQuestion('What does the glossary say about CFOP?','en',config,AbortSignal.timeout(5000),fetcher);
     expect(fetcher).toHaveBeenCalledTimes(4);
-    expect(result.answer).toBe('CFOP is a solving method. [[wiki]]');
-    expect(result.sources.map(source=>source.id)).toEqual(['wiki']);
+    expect(result.answer).toBe('CFOP is a solving method. [[wiki:92]]');
+    expect(result.sources.map(source=>source.id)).toEqual(['wiki:92']);
     expect(JSON.parse(String(fetcher.mock.calls[3][1]?.body)).messages.at(-1).content).toContain('Repair the answer citations');
   });
   it.each(['auto','fast','deep'] as const)('honors %s thinking when the model requests deliberate reasoning',async mode=>{

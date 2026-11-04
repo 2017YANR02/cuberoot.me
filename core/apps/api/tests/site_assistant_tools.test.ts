@@ -1,6 +1,69 @@
 import {describe,it,expect,vi} from 'vitest';
 import {runDataTool,toolCallSchema} from '../src/utils/site_assistant_tools.js';
 
+describe('assistant glossary retrieval',()=>{
+  const entries=[
+    ...Array.from({length:10},(_,index)=>({id:100+index,headEn:`COLL variant ${index}`,bodyEn:'Related to OLL and PLL.'})),
+    {id:439,head:'OLL (Orientation of LL) 还原顶层色向',headEn:'OLL (Orientation of LL)',headZh:'还原顶层色向',body:'',bodyEn:'',bodyZh:'',source:'seed',ownerName:'private owner',additions:[{body:'Do not project additions'}]},
+    {id:482,head:'PLL (Permutation of LL) 还原顶层排列',headEn:'PLL (Permutation of LL)',headZh:'还原顶层排列',body:'',source:'seed'},
+    {id:440,headEn:'OLL Skip',bodyEn:'Probability=1/216',source:'seed'},
+    {id:151,headEn:'DNF (Did Not Finish)',bodyEn:'An attempt without a valid result.',source:'seed'},
+    {id:152,headEn:'DNS (Did Not Start)',bodyEn:'An attempt not started.',source:'seed'},
+    {id:203,headEn:'EOLL',bodyEn:'Edge orientation followed by last-layer orientation.'},
+    {id:204,headEn:'EO (Edge Orientation)',bodyEn:'Edge orientation.'},
+  ];
+  const read=async()=>({sections:[{entries}]});
+  it.each([['OLL',[439]],['oll',[439]],['EO',[204]],['OLL Skip',[440]]])('prioritizes the exact term over substrings and body mentions: %s',async(query,ids)=>{
+    const result=await runDataTool({tool:'glossary',query:query as string},'en',read);
+    expect(result.sources.map(source=>source.id)).toEqual((ids as number[]).map(id=>`wiki:${id}`));
+  });
+  it.each(['OLL PLL','OLL和PLL','OLL and PLL'])('retrieves each known term in a combined query: %s',async query=>{
+    const result=await runDataTool({tool:'glossary',query},'zh',read);
+    expect(result.sources.map(source=>source.id)).toEqual(['wiki:439','wiki:482']);
+    expect(result.sources.every(source=>source.href==='/wiki')).toBe(true);
+    expect(result.evidence).toMatchObject({entries:[{id:439,sourceId:'wiki:439',source:'seed',hasDescription:false},{id:482,sourceId:'wiki:482',source:'seed',hasDescription:false}],unmatchedTerms:[]});
+    expect(result.factualSummary).toBeUndefined();
+    expect(JSON.stringify(result.evidence)).not.toMatch(/private owner|Do not project additions/);
+  });
+  it('accepts slash-separated result terms with stable IDs across calls',async()=>{
+    const pair=await runDataTool({tool:'glossary',query:'DNF/DNS'},'en',read);
+    const single=await runDataTool({tool:'glossary',query:'DNS'},'en',read);
+    expect(pair.sources.map(source=>source.id)).toEqual(['wiki:151','wiki:152']);
+    expect(pair.sources[1]).toEqual(single.sources[0]);
+  });
+  it('preserves complete phrases and partial word searches when no heading matches',async()=>{
+    const phrase=await runDataTool({tool:'glossary',query:'attempt not started'},'en',read);
+    expect(phrase.sources.map(source=>source.id)).toEqual(['wiki:152']);
+    const partial=await runDataTool({tool:'glossary',query:'orient'},'en',read);
+    expect(partial.sources.map(source=>source.id)).toContain('wiki:204');
+  });
+  it('does not turn an unrecognized sentence into unrelated OR keyword matches',async()=>{
+    const result=await runDataTool({tool:'glossary',query:'explain OLL and PLL difference'},'en',read);
+    expect(result.sources).toEqual([]);
+    expect(result.evidence).toMatchObject({entries:[],unmatchedTerms:['explain oll and pll difference']});
+  });
+  it('keeps known terms from an explicit list while reporting the unmatched term',async()=>{
+    const result=await runDataTool({tool:'glossary',query:'OLL, PLL, 未知术语'},'zh',read);
+    expect(result.sources.map(source=>source.id)).toEqual(['wiki:439','wiki:482']);
+    expect(result.evidence).toMatchObject({unmatchedTerms:['未知术语'],truncated:false});
+  });
+  it('expands an all-known connected group within a punctuated list',async()=>{
+    const result=await runDataTool({tool:'glossary',query:'OLL, PLL and DNF'},'en',read);
+    expect(result.sources.map(source=>source.id)).toEqual(['wiki:439','wiki:482','wiki:151']);
+    expect(result.evidence).toMatchObject({unmatchedTerms:[],truncated:false});
+  });
+  it('does not invent source identities for malformed rows',async()=>{
+    const result=await runDataTool({tool:'glossary',query:'OLL'},'en',async()=>({sections:[{entries:[{headEn:'OLL'},{id:-1,headEn:'OLL'}]}]}));
+    expect(result.sources).toEqual([]);
+    expect(result.evidence).toMatchObject({entries:[]});
+  });
+  it('reports the full match count when the evidence limit truncates results',async()=>{
+    const result=await runDataTool({tool:'glossary',query:'related'},'en',read);
+    expect(result.sources).toHaveLength(8);
+    expect(result.evidence).toMatchObject({total:10,truncated:true,unmatchedTerms:[]});
+  });
+});
+
 describe('assistant public data adapters',()=>{
   it('keeps the complete requested-puzzle case-count catalog within the evidence budget',async()=>{
     const data=[...Array.from({length:80},(_,i)=>({puzzle:'2x2',setSlug:'other'+i,count:40,source:'x'.repeat(300)})),{puzzle:'3x3',setSlug:'oll',count:57,updatedAt:'2026-10-10',source:'upstream'},{puzzle:'3x3',setSlug:'pll',count:21,updatedAt:'2026-10-10',source:'upstream'}];

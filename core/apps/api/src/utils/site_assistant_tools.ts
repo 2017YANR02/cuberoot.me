@@ -66,6 +66,53 @@ const attendancePeriod = (from: string | undefined, to: string | undefined, lang
   return from && to ? formatDateRangeIso(from,to) : from ? lang==='zh'?`${from} 起`:`since ${from}` : to ? lang==='zh'?`截至 ${to}`:`through ${to}` : '';
 };
 
+interface GlossaryEntry {
+  id: number; head?: string; body?: string;
+  headEn?: string | null; headZh?: string | null; bodyEn?: string | null; bodyZh?: string | null;
+  source?: string;
+}
+const glossaryText = (value: string) => value.normalize('NFKC').trim().toLowerCase().replace(/\s+/g,' ');
+function glossaryMatches(entries: GlossaryEntry[], query: string) {
+  const records=entries.filter(entry=>Number.isSafeInteger(entry.id) && entry.id>0).map(entry=>{
+    const heads=[entry.headEn,entry.headZh,entry.head].filter((value):value is string=>typeof value==='string' && !!value.trim()).map(glossaryText);
+    // Parenthesized expansions belong to their leading term, not every acronym in the definition.
+    const aliases=[...new Set(heads.flatMap(head=>[head,head.split(/[（(]/,1)[0].trim()]).filter(Boolean))];
+    return {entry,heads,aliases,bodies:[entry.bodyEn,entry.bodyZh,entry.body].filter((value):value is string=>typeof value==='string').map(glossaryText)};
+  });
+  const normalized=glossaryText(query);
+  const exact=(term:string)=>records.filter(record=>record.aliases.includes(term));
+  const punctuated=normalized.split(/\s*[,，、/;&+]\s*/).filter(Boolean);
+  const knownTerms=(text:string)=>{
+    if(exact(text).length) return [text];
+    const connected=text.split(/\s*(?:和|与|及|\b(?:and|versus|vs\.?)\b)\s*/i).filter(Boolean);
+    const parts=connected.length>1 ? connected : text.split(' ');
+    return parts.every(term=>exact(term).length) ? parts : [text];
+  };
+  // Split known headings or an explicitly punctuated list; ordinary sentences stay intact.
+  const candidates=punctuated.length>1 ? punctuated.flatMap(knownTerms) : knownTerms(normalized);
+  const knownList=candidates.every(term=>exact(term).length);
+  const punctuatedList=punctuated.length>1 && candidates.some(term=>exact(term).length);
+  const terms=!exact(normalized).length && candidates.length>1 && (knownList || punctuatedList)
+    ? [...new Set(candidates)] : [normalized];
+  const matches=terms.map(term=>{
+    const direct=exact(term);
+    if(direct.length) return direct;
+    // Unknown terms retain the original full-text/phrase search behavior.
+    const contains=(text:string)=>text.includes(term);
+    return records.map(record=>({record,rank:record.heads.some(contains)?1:record.bodies.some(contains)?2:0}))
+      .filter(match=>match.rank>0).sort((a,b)=>a.rank-b.rank).map(match=>match.record);
+  });
+  const selected: GlossaryEntry[]=[];
+  const seen=new Set<number>();
+  // Interleave terms so a broad first term cannot crowd every later term out of the budget.
+  for(let index=0; selected.length<8 && matches.some(group=>index<group.length); index++) for(const group of matches) {
+    const entry=group[index]?.entry;
+    if(entry && !seen.has(entry.id) && selected.length<8) {selected.push(entry);seen.add(entry.id);}
+  }
+  const total=new Set(matches.flatMap(group=>group.map(record=>record.entry.id))).size;
+  return {entries:selected,total,truncated:total>selected.length,unmatchedTerms:terms.filter((_,index)=>!matches[index].length)};
+}
+
 /** Shared attendance set: select actual result rows before deduplicating competitions. */
 function selectAttendance(data: {results: Array<{competition_id: string; event_id?: string}>; comps: Array<{id: string; start_date?: string; country_iso2?: string}>}, call: {tool: string; event?: string; from?: string; to?: string}) {
   const attended = new Set(data.results.filter(result=>!call.event || result.event_id===call.event).map(result=>result.competition_id));
@@ -159,7 +206,7 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
   } else if (call.tool === 'records') {
     const data = await read(`${stat}/records/history/${call.region === 'world' ? 'world' : `country/${call.region}`}.json`);
     const rows = selectCurrentRecords((data.rows as WcaRecordRow[]).filter(r => r.e === call.event));
-    const href = `/wca/records?show=current&region=${call.region}&event=${call.event}`;
+    const href = `/wca/results?tab=records&rshow=current&rregion=${call.region}&revent=${call.event}`;
     const formatted = rows.map(r => [r.t === 's' ? label('单次','Single') : label('平均','Average'), formatWcaResult(r.v, r.e, r.t === 's' ? 'single' : 'average'), name(r.pn), r.p, compName(r.c,r.cn,r.d), r.d]);
     out.evidence = { updated: data.updated, event:call.event, region:call.region, columns:['type','result','person','wcaId','competition','date'], rows:formatted };
     out.sources.push(source(`records:${call.region}:${call.event}`, label('WCA 纪录','WCA records'), href));
@@ -320,9 +367,12 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
     out.sources.push(source(`recon:${call.id}`,label('复盘','Reconstruction'),`/recon/${call.id}`));
   } else if (call.tool === 'glossary') {
     const data=await read(`${api}/wiki/terms`);
-    const q=call.query.toLowerCase();
-    out.evidence=data.sections.flatMap((s:any)=>s.entries).filter((r:any)=>JSON.stringify([r.headEn,r.headZh,r.bodyEn,r.bodyZh,r.head,r.body]).toLowerCase().includes(q)).slice(0,8).map((r:any)=>({head:r.head,body:r.body,headEn:r.headEn,headZh:r.headZh,bodyEn:r.bodyEn,bodyZh:r.bodyZh}));
-    out.sources.push(source('wiki',label('魔方百科','Cubing glossary'),'/wiki'));
+    const matches=glossaryMatches(data.sections.flatMap((section:{entries:GlossaryEntry[]})=>section.entries),call.query);
+    out.evidence={entries:matches.entries.map(entry=>({id:entry.id,sourceId:`wiki:${entry.id}`,head:entry.head,body:entry.body,headEn:entry.headEn,headZh:entry.headZh,bodyEn:entry.bodyEn,bodyZh:entry.bodyZh,source:entry.source,
+      hasDescription:!![entry.body,entry.bodyEn,entry.bodyZh].some(value=>value?.trim()),
+    })),total:matches.total,truncated:matches.truncated,unmatchedTerms:matches.unmatchedTerms,instruction:'These are quoted glossary entries, not independently verified or complete definitions. Cite the sourceId of the actual entry used. A short heading or empty body does not establish extra prerequisites, preserved properties, or algorithm behavior; do not infer those restrictions from a brief definition.'};
+    // The page owns its title-derived anchors; do not duplicate its slug algorithm here.
+    out.sources=matches.entries.map(entry=>source(`wiki:${entry.id}`,(lang==='zh'?entry.headZh:entry.headEn)?.trim() || entry.head?.trim() || entry.headEn?.trim() || entry.headZh?.trim() || label('魔方百科','Cubing glossary'),'/wiki'));
   } else if (call.tool === 'forum') {
     const data=await read(url(`${api}/forum/search`,{q:call.query,size:6}));
     out.evidence=data.threads.map((r:any)=>({id:r.id,title:r.title,snippet:r.snippet}));

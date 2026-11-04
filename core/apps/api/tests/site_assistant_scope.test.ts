@@ -47,6 +47,79 @@ describe('personal attendance scope', () => {
     expect(active?.event).toBeDefined();
     expect(active?.date?.from).toBe('2025-01-01');
   });
+  it.each([
+    ['三阶单手','333oh'], ['三阶盲拧','333bf'], ['四阶盲拧','444bf'], ['三阶多盲','333mbf'],
+    ['3x3 OH','333oh'], ['3x3x3 One-Handed','333oh'], ['4x4x4 Blindfolded','444bf'],
+  ])('keeps the full event in a personal attendance request: %s', (name,event) => {
+    const active=scope(`我 2025 年 ${name} 参加过多少场比赛？`,[]);
+    const call:{tool:string;wcaId:string;event?:string;from?:string;to?:string}={tool:'person_competitions',wcaId:'2017YANR02'};
+    applyAttendanceScope(active,call,'2017YANR02');
+    expect(call).toEqual({tool:'person_competitions',wcaId:'2017YANR02',event,from:'2025-01-01',to:'2025-12-31'});
+    expect(attendanceScopeError(active,call,'2017YANR02')).toBeUndefined();
+    const followup=scope(`那 ${name} 呢？`);
+    const countries={tool:'person_countries',wcaId:'2017YANR02'};
+    applyAttendanceScope(followup,countries,'2017YANR02');
+    expect(countries).toMatchObject({event,from:'2025-01-01',to:'2025-12-31'});
+  });
+  it('does not silently reduce a multi-event request to the first event',()=>{
+    const active=scope('我 2025 年三阶和二阶分别参加过多少场比赛？',[]);
+    const call:{tool:string;wcaId:string;event?:string}={tool:'person_competitions',wcaId:'2017YANR02'};
+    applyAttendanceScope(active,call,'2017YANR02');
+    expect(call.event).toBeUndefined();
+    expect(attendanceScopeError(active,{...call,event:'333'},'2017YANR02')).toContain('Retain these user constraints');
+  });
+  it('does not interpret a known compound non-WCA name as its ordinary cube prefix',()=>{
+    const active=scope('我 2025 年四阶金字塔参加过多少场比赛？',[]);
+    const call:{tool:string;wcaId:string;event?:string}={tool:'person_competitions',wcaId:'2017YANR02'};
+    applyAttendanceScope(active,call,'2017YANR02');
+    expect(call.event).toBeUndefined();
+    expect(attendanceScopeError(active,{...call,event:'444'},'2017YANR02')).toContain('Retain these user constraints');
+  });
+  it('treats two names for one event as one constraint',()=>{
+    const active=scope('我 2025 年 3x3（三阶）参加过多少场比赛？',[]);
+    const call={tool:'person_competitions',wcaId:'2017YANR02'};
+    applyAttendanceScope(active,call,'2017YANR02');
+    expect(call).toMatchObject({event:'333',from:'2025-01-01',to:'2025-12-31'});
+  });
+  it.each([
+    '我2025年不算三阶，只看其他项目，参加过多少场比赛？',
+    '我2025年参加过多少场比赛，三阶除外？',
+    'How many competitions did I attend in 2025 excluding 3x3?',
+  ])('does not reverse an event exclusion into an inclusion: %s',question=>{
+    const active=scope(question,[]);
+    const call:{tool:string;wcaId:string;event?:string}={tool:'person_competitions',wcaId:'2017YANR02'};
+    applyAttendanceScope(active,call,'2017YANR02');
+    expect(call.event).toBeUndefined();
+    expect(attendanceScopeError(active,call,'2017YANR02')).toContain('Retain these user constraints');
+    expect(active?.event?.text).toMatch(/不算|除外|excluding/);
+    const next=scope('那2024年呢？',[{role:'user',content:question}]);
+    expect(next?.date?.from).toBe('2024-01-01');
+    expect(next?.event).toEqual(active?.event);
+  });
+  it('does not confuse a negated counting instruction with an excluded event',()=>{
+    const active=scope('我2025年三阶参加过多少场比赛？不要重复计算轮次。',[]);
+    const call={tool:'person_competitions',wcaId:'2017YANR02'};
+    applyAttendanceScope(active,call,'2017YANR02');
+    expect(call).toMatchObject({event:'333',from:'2025-01-01',to:'2025-12-31'});
+    expect(attendanceScopeError(active,call,'2017YANR02')).toBeUndefined();
+  });
+  it.each([
+    ['我2025年不算三阶，其他项目参加过多少场比赛？',false],
+    ['我2025年二阶和三阶分别参加过多少场比赛？',false],
+    ['我2024年和2025年分别参加过多少场比赛？',false],
+    ['我2025年三阶参加过多少场比赛？',true],
+    ['我所有年份全部项目参加过多少场比赛？',true],
+  ])('offers attendance tools only when they can express the known scope: %s',async(question,available)=>{
+    const fetcher=vi.fn<typeof fetch>(async()=>modelResponse({answerKind:'general',answer:'Scope fixture.',sourceIds:[]}));
+    await answerSiteQuestion(question,'zh',{key:'test',baseUrl:'https://model.example/v1',model:'test'},AbortSignal.timeout(3000),fetcher,[],'2017YANR02');
+    const request=JSON.parse(String(fetcher.mock.calls[0][1]?.body));
+    const tools=request.tools.map((tool:{function:{name:string}})=>tool.function.name);
+    expect(tools.includes('person_competitions')).toBe(available);
+    expect(tools.includes('person_countries')).toBe(available);
+    expect(tools).toContain('analysis_schema');
+    expect(tools).toContain('analysis_query');
+    expect(tools).toContain('person');
+  });
   it('understands an unspaced year and bare year/event continuations for the established subject', () => {
     expect(scope('那我去过哪些国家比赛？', [{role:'user',content:'我2025年三阶参加过多少场比赛？'}])?.date?.from).toBe('2025-01-01');
     expect(scope('那去年呢？')).toEqual({date:{text:'去年',from:'2025-01-01',to:'2025-12-31'},event:{text:'三阶'}});
@@ -124,6 +197,25 @@ describe('personal attendance scope', () => {
     expect(check(joined)).toContain('explicitly reset');
     expect(check({...total,select:[{as:'event',label:'Event',expr:{col:'r.event_id'}},{as:'n',label:'Competitions',expr:count}],groupBy:[{col:'r.event_id'}]})).toBeUndefined();
   });
+  it.each([
+    ['那全部项目呢？','event'], ['那所有年份呢？','date'],
+  ])('rejects the cancelled dimension in SQL after a partial reset: %s',(question,removed)=>{
+    const active=scope(question);
+    const person={op:'=',args:[{col:'r.wca_id'},{value:'2017YANR02'}]};
+    const event={op:'=',args:[{col:'r.event_id'},{value:'333'}]};
+    const year={op:'=',args:[{fn:'year',args:[{col:'r.comp_date'}]},{value:2025}]};
+    const kept=removed==='event'?year:event, stale=removed==='event'?event:year;
+    const total={from:{dataset:'results',as:'r'},select:[{as:'n',label:'Competitions',expr:{fn:'count',args:[{col:'r.comp_id'}],distinct:true}}],where:{op:'and',args:[person,kept]}};
+    const check=(query:unknown)=>attendanceScopeError(active,{tool:'analysis_query',query},'2017YANR02');
+    expect(check(total)).toBeUndefined();
+    const wrong={...total,where:{op:'and',args:[person,kept,stale]}};
+    expect(check(wrong)).toContain('cancelled');
+    expect(check({steps:[{name:'old',query:wrong}],from:{dataset:'old',as:'f'},select:[{as:'n',label:'Competitions',expr:{col:'f.n'}}]})).toContain('cancelled');
+    if(removed==='date') {
+      const joined={...total,joins:[{dataset:'competitions',as:'c',type:'inner',on:{op:'=',args:[{col:'r.comp_id'},{col:'c.id'}]}}],where:{op:'and',args:[person,kept,{op:'>=',args:[{col:'c.start_date'},{value:'2025-01-01'}]}]}};
+      expect(check(joined)).toContain('cancelled');
+    }
+  });
   it.each(['person_countries','person_competitions'])('fills omitted %s filters and completes scoped attendance without a schema or repair round', async tool => {
     const config = {key:'test',baseUrl:'https://model.example/v1',model:'test'};
     const id=`${tool==='person_countries'?'person-countries':'person-competitions'}:2017YANR02:2025-01-01:2025-12-31:333`;
@@ -144,5 +236,24 @@ describe('personal attendance scope', () => {
     const evidence=wireEvidence(JSON.parse(String(modelRequests[1][1]?.body)));
     expect(evidence[0]).toMatchObject({tool:{tool,wcaId:'2017YANR02',event:'333',from:'2025-01-01',to:'2025-12-31'}});
     expect(evidence[0].data).toMatchObject(tool==='person_countries'?{countries:[{iso2:'CN',competitions:1}]}:{count:1});
+  });
+  it.each([
+    ['我2025年参加过多少场比赛？只报总数。','zh',false,true],
+    ['How many competitions did I attend in 2025? Just the total.','en',false,true],
+    ['我2025年参加过多少场比赛？不要只报总数。','zh',false,false],
+    ['我2025年参加过多少场比赛？只报总数。','zh',true,false],
+  ] as const)('respects a total-only presentation without inventing numbers or hiding gaps: %s / missing date %s',async(question,lang,missingDate,short)=>{
+    let rounds=0;
+    const id='person-competitions:2017YANR02:2025-01-01:2025-12-31';
+    const fetcher=vi.fn<typeof fetch>(async input=>String(input).endsWith('/chat/completions')
+      ? ++rounds===1 ? modelResponse({calls:[{tool:'person_competitions',wcaId:'2017YANR02',from:'2025-01-01',to:'2025-12-31'}]})
+        : modelResponse({answerKind:'grounded',answer:'999 competitions.',sourceIds:[id]})
+      : Response.json(String(input).includes('/meta')?{lastImportedAt:'2026-11-03'}:{
+        profile:{person:{name:'Test'}},results:[{competition_id:'A',event_id:'333'}],comps:[{id:'A',...(!missingDate?{start_date:'2025-06-01'}:{})}],
+      }));
+    const result=await answerSiteQuestion(question,lang,{key:'test',baseUrl:'https://model.example/v1',model:'test'},AbortSignal.timeout(3000),fetcher,[],'2017YANR02');
+    expect(result.answer).not.toContain('999');
+    if(short)expect(result.answer).toBe((lang==='zh'?'1 场比赛。':'1 competition.')+` [[${id}]]`);
+    else expect(result.answer).toContain(missingDate?'缺少有效日期':'Test');
   });
 });
