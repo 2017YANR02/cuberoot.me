@@ -19,7 +19,8 @@ export async function executeAnalysis(query:CompiledAnalysis,signal:AbortSignal)
   if(active>=2)throw new AnalysisInputError('Analysis is busy. Do not retry in this answer; ask the visitor to try later.');
   active++;
   const db=postgres({...databaseSettings(),max:1,connect_timeout:2,idle_timeout:1,prepare:false,
-    connection:{application_name:'cuberoot-assistant-analysis',default_transaction_read_only:true,statement_timeout:4000,lock_timeout:500,work_mem:'4MB',max_parallel_workers_per_gather:0,search_path:'pg_catalog'},
+    // postgres.js omits falsy startup values; the string preserves the zero limit.
+    connection:{application_name:'cuberoot-assistant-analysis',default_transaction_read_only:true,statement_timeout:4000,lock_timeout:500,work_mem:'4MB',max_parallel_workers_per_gather:'0',search_path:'pg_catalog'},
   });
   let pending:{cancel:()=>void}|undefined;
   const close=()=>{pending?.cancel();void db.end({timeout:0}).catch(()=>{});};

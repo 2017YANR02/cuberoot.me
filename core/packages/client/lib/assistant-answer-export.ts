@@ -2,12 +2,14 @@ import { isAssistantSourceHref, SITE_ASSISTANT_HISTORY_MESSAGE_MAX_LENGTH, type 
 import { formatWcaResult } from '@/lib/wca-format-result';
 
 function assistantArtifactText(a: AssistantArtifact, origin: string, context = false): string {
-  if (a.kind === 'table') return [a.title, a.columns.join('\t'), ...a.rows.map((row, index) => {
+  if (a.kind === 'table') return [a.title,
+    ...(context ? ['[UI row is the 1-based position in this displayed table, not a performance rank. An unqualified ordinal such as "the second person" refers to this table order, unless the user explicitly refers to a ranking in the prose.]'] : []),
+    [...(context ? ['UI row'] : []), ...a.columns].join('\t'), ...a.rows.map((row, index) => {
     const cells = row.map((cell, column) => {
       const href = a.cellLinks?.[index]?.[column] ?? (column === 0 ? a.links?.[index] : undefined);
       return context && href && isAssistantSourceHref(href) ? `${cell} (${href})` : cell;
     });
-    return cells.join('\t');
+    return [...(context ? [String(index + 1)] : []), ...cells].join('\t');
   })].join('\n');
   if (a.kind === 'cube-photo') return [a.title, a.status === 'partial' ? 'The complete state is ambiguous; displayed algorithms work for every compatible state.' : a.status === 'corners-only' ? 'Only last-layer corners are known; edges and the M slice are not reconstructed.' : 'Assumes solved F2L and standard colors. Each algorithm is independent and includes AUF.',
     ...(a.recognition?.status === 'ok' || a.recognition?.status === 'corners-only' ? [(['U','F','R'] as const).map(face => `${face}: ${(a.recognition!.candidates[0] ?? a.recognition!.cornerCandidates![0]).frame[face]}`).join(' · ')] : [a.status]),

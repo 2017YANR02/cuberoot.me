@@ -55,6 +55,30 @@ it('round trips native tool IDs and reasoning only through the provider transcri
   expect(request.messages.find((m:any)=>m.role==='tool')).toMatchObject({tool_call_id:'native-id',content:JSON.stringify({sources:[{id:'timer'}]})});
   expect(request.tool_choice).toBe('none');
 });
+it.each([false,true])('returns one result per tool call after SDK input validation fails (stream=%s)',async stream=>{
+  const toolCalls=[
+    {id:'invalid-id',type:'function',function:{name:'navigation',arguments:JSON.stringify({query:42,kind:'all',pageIds:[]})}},
+    {id:'valid-id',type:'function',function:{name:'navigation',arguments:JSON.stringify({query:'timer',kind:'all',pageIds:[]})}},
+  ];
+  const message={content:null,reasoning_content:'provider-private-reasoning',tool_calls:toolCalls};
+  const chunk=(delta:object,finish_reason:string|null=null)=>'data: '+JSON.stringify({id:'test',created:1,model:config.model,choices:[{index:0,delta,finish_reason}]})+'\n\n';
+  const first=stream?new Response(chunk({role:'assistant',...message,tool_calls:toolCalls.map((call,index)=>({...call,index}))})+chunk({},'tool_calls')+'data: [DONE]\n\n',{headers:{'content-type':'text/event-stream'}}):response(message,'tool_calls');
+  const fetcher=vi.fn<typeof fetch>().mockResolvedValueOnce(first).mockResolvedValueOnce(response({content:JSON.stringify({answer:'Open timer',sourceIds:['timer']})}));
+  const model=createAssistantModel(config,fetcher,AbortSignal.timeout(2000),'navigation Find destinations');
+  const onText=vi.fn(async()=>{});
+  const step=await model.complete({...options,...(stream?{onText}:{})});
+  expect(step.calls).toHaveLength(2);
+  expect(model.record(step.calls[0],{error:'Invalid tool request. query must be string.'})).toBe(true);
+  expect(model.record(step.calls[1],{sources:[{id:'timer'}]})).toBe(true);
+  await model.complete({...options,finalOnly:true});
+  const request=JSON.parse(String(fetcher.mock.calls[1][1]?.body));
+  expect(request.messages.filter((message:any)=>message.role==='tool')).toEqual([
+    {role:'tool',tool_call_id:'invalid-id',content:JSON.stringify({error:'Invalid tool request. query must be string.'})},
+    {role:'tool',tool_call_id:'valid-id',content:JSON.stringify({sources:[{id:'timer'}]})},
+  ]);
+  expect(request.messages.find((message:any)=>message.role==='assistant').reasoning_content).toBe('provider-private-reasoning');
+  expect(JSON.stringify({step,updates:onText.mock.calls})).not.toContain('provider-private-reasoning');
+});
 it('streams answer text without sending reasoning to the UI callback',async()=>{
   const delta=(delta:object,finish_reason:string|null=null)=>'data: '+JSON.stringify({id:'test',object:'chat.completion.chunk',created:1,model:config.model,choices:[{index:0,delta,finish_reason}]})+'\n\n';
   const content=JSON.stringify({answer:'已找到训练说明',sourceIds:[]});

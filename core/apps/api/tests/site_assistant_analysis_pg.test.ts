@@ -44,8 +44,8 @@ describe.skipIf(!enabled)('assistant analysis PostgreSQL isolation and calculati
   });
   it('enforces read-only role, query timeout and cancellation, then releases capacity',async()=>{
     const base=compileAnalysis({from:{dataset:'recons',as:'r'},select:[output('id',col('r.id'))]});
-    const state=await executeAnalysis({...base,sql:"SELECT current_setting('transaction_read_only') AS mode,current_user AS role"},signal());
-    expect(state.rows).toEqual([{mode:'on',role:'cuberoot_assistant_reader'}]);
+    const state=await executeAnalysis({...base,sql:"SELECT current_setting('transaction_read_only') AS mode,current_user AS role,current_setting('max_parallel_workers_per_gather') AS parallel_workers"},signal());
+    expect(state.rows).toEqual([{mode:'on',role:'cuberoot_assistant_reader',parallel_workers:'0'}]);
     await expect(executeAnalysis({...base,sql:'SELECT pg_sleep(10)'},signal())).rejects.toMatchObject({code:'57014'});
     const controller=new AbortController();
     const task=executeAnalysis({...base,sql:'SELECT pg_sleep(10)'},controller.signal);

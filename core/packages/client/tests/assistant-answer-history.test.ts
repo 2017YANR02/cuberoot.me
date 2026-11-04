@@ -18,11 +18,33 @@ describe('assistant follow-up context', () => {
   it('retains the displayed row order, people, results and selected destinations', () => {
     const history = assistantAnswerHistory(answer, origin);
     expect(history).toContain('比赛\t选手\t平均');
-    expect(history).toContain('比赛二 (/wca/comp/Second2026)\t颜瑞民 (/wca/persons/2017YANR02)\t8.53');
+    expect(history).toContain('UI row\t比赛\t选手\t平均');
+    expect(history).toContain('\n2\t比赛二 (/wca/comp/Second2026)\t颜瑞民 (/wca/persons/2017YANR02)\t8.53');
     expect(history.indexOf('比赛一')).toBeLessThan(history.indexOf('比赛二'));
     expect(history).toContain('周末冠军 (/wca/results)');
     expect(history).toContain('reverify facts with tools');
     expect(assistantAnswerText(answer, origin)).toBe('现场计算结果见下表。\n\n周末冠军\n比赛\t选手\t平均\n比赛一\t选手一\t7.12\n比赛二\t颜瑞民\t8.53');
+  });
+  it('makes displayed row positions explicit when prose mentions a different order', () => {
+    const result: AssistantAnswer = {answer:'最快的是耿暄一，其次是连允之。',sources:[],artifacts:[{
+      kind:'table',title:'冠军名单',columns:['比赛','选手'],rows:[['Aigle Noir','Chenlai Zhao'],['Alella Open','Biel Salmons Gonzalez'],['Zhongshan City Open','连允之'],['Jiangmen Open','耿暄一']],
+    }]};
+    const history=assistantAnswerHistory(result,origin);
+    expect(history).toContain('\n2\tAlella Open\tBiel Salmons Gonzalez');
+    expect(history).toContain('\n3\tZhongshan City Open\t连允之');
+    expect(history).toContain('not a performance rank');
+    expect(history).toContain('unless the user explicitly refers to a ranking in the prose');
+    expect(assistantAnswerText(result,origin)).not.toContain('UI row');
+    expect(assistantAnswerText(result,origin)).toContain('\nAlella Open\tBiel Salmons Gonzalez');
+  });
+  it('numbers each displayed table independently without changing its row order', () => {
+    const result: AssistantAnswer = {answer:'两项名单如下。',sources:[],artifacts:[
+      {kind:'table',title:'三阶',columns:['选手'],rows:[['甲'],['乙']]},
+      {kind:'table',title:'二阶',columns:['选手'],rows:[['丙'],['丁']]},
+    ]};
+    const history=assistantAnswerHistory(result,origin);
+    expect(history).toContain('UI row\t选手\n1\t甲\n2\t乙');
+    expect(history).toContain('UI row\t选手\n1\t丙\n2\t丁');
   });
   it('reserves room for actual results when the previous prose is already long', () => {
     const history = assistantAnswerHistory({...answer, answer:'说明'.repeat(6000)}, origin);

@@ -107,7 +107,15 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       if (result.finishReason === 'length') throw new Error('Incomplete model output');
       if (result.toolCalls.length) {
         const calls = result.toolCalls.map(call => ({ ...call.input as object, tool: call.toolName }));
-        transcript.push(...result.response.messages);
+        // The SDK already supplies error results for invalid tool inputs. Our
+        // executor reports these calls too, so retain the native assistant and
+        // reasoning but let pending own each tool result exactly once.
+        const callIds = new Set(result.toolCalls.map(call => call.toolCallId));
+        for (const message of result.response.messages) {
+          if (message.role !== 'tool') { transcript.push(message); continue; }
+          const content = message.content.filter(part => part.type !== 'tool-result' || !callIds.has(part.toolCallId));
+          if (content.length) transcript.push({ ...message, content });
+        }
         pending = result.toolCalls.map((call, index) => ({ raw: calls[index], id: call.toolCallId, name: call.toolName }));
         return { calls, answer: '', sourceIds: [] as string[] };
       }
