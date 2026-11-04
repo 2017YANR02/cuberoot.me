@@ -43,7 +43,7 @@ describe('LBL teaching examples', () => {
       if (step.id === 'corner-position') {
         const p = start.patternData.CORNERS.pieces.slice(0, 4);
         const pairs = p.filter((piece, i) => (p[(i + 1) % 4] - piece + 4) % 4 === 1).length;
-        expect(pairs).toBe(demo.setup ? 0 : 1);
+        expect(pairs).toBe([1, 0][step.examples.indexOf(demo)]);
       }
     });
   }

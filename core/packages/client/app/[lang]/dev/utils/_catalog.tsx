@@ -73,6 +73,14 @@ export const UCATS: { id: UtilCat; zh: string; en: string }[] = [
 
 export const CATALOG: UtilEntry[] = [
   {
+    name: 'useCameraStream',
+    sig: 'useCameraStream({ enabled = true, width = 1920, height = 1080 } = {})',
+    imp: "import { useCameraStream } from '@/hooks/useCameraStream';",
+    category: 'hook',
+    zh: '按启用状态获取后置摄像头画面，支持重试；停用、卸载或迟到的授权结果都会释放摄像头。',
+    en: 'Acquire the rear camera while enabled, with retry support; release it on disable, unmount, or late permission results.',
+  },
+  {
     name: 'useAssistantTextReveal',
     sig: 'useAssistantTextReveal(text: string, animate: boolean, id?: string, onComplete?: (id: string, text: string) => void): string',
     imp: "import { useAssistantTextReveal } from '@/hooks/useAssistantTextReveal';",
