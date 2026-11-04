@@ -17,6 +17,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { Camera, Images, RefreshCw } from '@app-foundation/icons/lucide';
 import { useTranslation } from 'react-i18next';
 import { useT } from '@/hooks/useT';
+import { useCameraStream } from '@/hooks/useCameraStream';
 import { SCAN_STEPS, classifyScan, sampleGridColors, type RGB, type ScanResult, type PhotoFace } from '@/lib/cube-photo';
 import { COLOR_HEX, EMPTY_COLOR_HEX, faceletIdx, FACES, type FaceLetter, type PaintSpec } from './_paint-shared';
 
@@ -58,18 +59,24 @@ export default function PhotoScanner({ spec, onApply, resultActions, pixelSize }
 
   const [shots, setShots] = useState<(RGB[] | null)[]>(() => SCAN_STEPS.map(() => null));
   const [step, setStep] = useState(0);
-  const [camError, setCamError] = useState<string | null>(null);
-  const [camNonce, setCamNonce] = useState(0);
-  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
   const [live, setLive] = useState<RGB[] | null>(null);
   const [result, setResult] = useState<ScanResult | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const workRef = useRef<HTMLCanvasElement | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
 
   const done = shots.every(Boolean);
+  const { stream, error: cameraError, retry: retryCamera } = useCameraStream({ enabled: !done, width: 1280, height: 1280 });
+  const camError = imageError ?? (cameraError === 'Unsupported'
+    ? t('这个浏览器不支持网页相机,可以改用「从相册选」。', 'This browser has no camera API — use "From photos" instead.')
+    : cameraError === 'NotAllowedError'
+      ? t('相机权限被拒绝。到浏览器地址栏的站点设置里允许摄像头后重试,或改用「从相册选」。',
+        'Camera permission denied. Allow it in the site settings, or use "From photos".')
+      : cameraError === 'NotFoundError'
+        ? t('没找到摄像头,可以改用「从相册选」。', 'No camera found — use "From photos" instead.')
+        : cameraError ? t(`相机打不开(${cameraError})。可以改用「从相册选」。`, `Cannot open the camera (${cameraError}) — use "From photos" instead.`) : null);
   const stageSize = Math.max(240, Math.min(420, pixelSize));
 
   /** 把任意画面的正中方框重采样到 size×size,取出 n² 个格子的中位色。 */
@@ -84,45 +91,6 @@ export default function PhotoScanner({ spec, onApply, resultActions, pixelSize }
     ctx.drawImage(src, (sw - side) / 2, (sh - side) / 2, side, side, 0, 0, size, size);
     return sampleGridColors(ctx.getImageData(0, 0, size, size).data, size, n);
   }, [n]);
-
-  // 相机:拍摄阶段才开,6 张齐了立刻关(省电、也别一直亮着指示灯)。
-  useEffect(() => {
-    if (done) return;
-    let cancelled = false;
-    const start = async () => {
-      if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
-        setCamError(t('这个浏览器不支持网页相机,可以改用「从相册选」。', 'This browser has no camera API — use "From photos" instead.'));
-        return;
-      }
-      try {
-        const got = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 1280 } },
-        });
-        if (cancelled) { got.getTracks().forEach((tr) => tr.stop()); return; }
-        streamRef.current = got;
-        setCamError(null);
-        // 挂流交给下面那个 effect:报错时 <video> 根本没渲染(被错误提示替掉了),此刻
-        // videoRef 还是空的,直接挂会静默丢流 —— 「重试」按钮就是这么坏的。
-        setStream(got);
-      } catch (e) {
-        if (cancelled) return;
-        const name = (e as Error).name;
-        setCamError(name === 'NotAllowedError'
-          ? t('相机权限被拒绝。到浏览器地址栏的站点设置里允许摄像头后重试,或改用「从相册选」。',
-            'Camera permission denied. Allow it in the site settings, or use "From photos".')
-          : name === 'NotFoundError'
-            ? t('没找到摄像头,可以改用「从相册选」。', 'No camera found — use "From photos" instead.')
-            : t(`相机打不开(${name})。可以改用「从相册选」。`, `Cannot open the camera (${name}) — use "From photos" instead.`));
-      }
-    };
-    void start();
-    return () => {
-      cancelled = true;
-      streamRef.current?.getTracks().forEach((tr) => tr.stop());
-      streamRef.current = null;
-      setStream(null);
-    };
-  }, [done, camNonce, t]);
 
   // 流拿到之后才轮到 <video>(它要 camError 清空那一轮渲染完才在 DOM 里)。
   useEffect(() => {
@@ -176,7 +144,7 @@ export default function PhotoScanner({ spec, onApply, resultActions, pixelSize }
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
-      setCamError(t('这张图片读不出来,换一张试试。', 'Could not read that image — try another one.'));
+      setImageError(t('这张图片读不出来,换一张试试。', 'Could not read that image — try another one.'));
     };
     img.src = url;
   };
@@ -234,7 +202,7 @@ export default function PhotoScanner({ spec, onApply, resultActions, pixelSize }
           {camError ? (
             <div className="ps-camerr">
               <span>{camError}</span>
-              <button type="button" className="ps-btn" onClick={() => setCamNonce((v) => v + 1)}>
+              <button type="button" className="ps-btn" onClick={() => { setImageError(null); retryCamera(); }}>
                 <RefreshCw size={14} />{t('重试', 'Retry')}
               </button>
             </div>

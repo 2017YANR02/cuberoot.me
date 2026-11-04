@@ -1,3 +1,4 @@
+import { recognizePocket } from './pocket';
 import type { AlgFile } from '../alg';
 import { detectCubePhoto, type PhotoPixels, type CubePhotoDetection } from './detect';
 import type { CubeCorners } from './geometry';
@@ -5,6 +6,8 @@ import { recognizePhoto, type CubeColor, type PhotoRecognition } from './recogni
 import { findPhotoAlg, findPhotoAlternatives, photoRecognitionSets, photoRecognitionInput, photoAufOnly, type PhotoAlgResult, type PhotoAlgSet } from './lookup';
 
 export interface PhotoAnalysisInput {
+  puzzleSize?: 2 | 3;
+  up?: CubeColor;
   pixels: PhotoPixels;
   corners: CubeCorners;
   corrections: Record<number, CubeColor>;
@@ -20,8 +23,10 @@ export interface PhotoAnalysis {
 
 /** Same pure state/goal checks on both hosts. Only the catalog loader is injected. */
 export async function analyzeCubePhoto(input: PhotoAnalysisInput, load: (set: PhotoAlgSet) => Promise<AlgFile>,
-  emit: (message: PhotoAnalysisMessage) => void = () => {}): Promise<PhotoAnalysis> {
-  const recognition = recognizePhoto(input.pixels, input.corners, input.corrections, input.front);
+  emit: (message: PhotoAnalysisMessage) => void = () => {}, signal?: AbortSignal): Promise<PhotoAnalysis> {
+  signal?.throwIfAborted();
+  const recognition = input.puzzleSize === 2 ? recognizePocket(input.pixels, input.corners, input.corrections, input.up)
+    : recognizePhoto(input.pixels, input.corners, input.corrections, input.front);
   emit({ type: 'state', recognition });
   const target = photoRecognitionInput(recognition);
   const sets = photoRecognitionSets(recognition).filter(set => !input.sets || input.sets.includes(set));
@@ -30,14 +35,17 @@ export async function analyzeCubePhoto(input: PhotoAnalysisInput, load: (set: Ph
     try {
       const alignment = set === 'pll' && typeof target === 'string' && photoAufOnly(target);
       const file = alignment ? undefined : await load(set);
+      signal?.throwIfAborted();
       const match = alignment || findPhotoAlg(target!, set, file!);
       result = match ? { set, status: 'found', match, alternatives: file ? findPhotoAlternatives(target!, match, file) : [] } : { set, status: 'missing' };
     } catch { result = { set, status: 'error' }; }
+    signal?.throwIfAborted();
     emit({ type: 'alg', result });
     return result;
   }));
+  signal?.throwIfAborted();
   emit({ type: 'done' });
-  return { recognition, results: results.filter(r => recognition.status !== 'partial' || r.status !== 'missing') };
+  return { recognition, results: results.filter(r => (recognition.status !== 'partial' && recognition.puzzle !== '2x2') || r.status !== 'missing') };
 }
 
 /** Use image geometry first; a legal completion is not proof of the image's colors. */

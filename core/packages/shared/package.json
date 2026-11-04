@@ -258,6 +258,7 @@
       "./cube-photo/geometry": "runtime-neutral",
       "./cube-photo/detect": "runtime-neutral",
       "./cube-photo/recognize": "runtime-neutral",
+      "./cube-photo/pocket": "runtime-neutral",
       "./cube-photo/lookup": "runtime-neutral",
       "./cube-photo/analyze": "runtime-neutral",
       "./cube-photo/pixels": "runtime-neutral",
@@ -943,6 +944,10 @@
     "./cube-photo/lookup": {
       "node": "./dist/cube-photo/lookup.js",
       "default": "./src/cube-photo/lookup.ts"
+    },
+    "./cube-photo/pocket": {
+      "node": "./dist/cube-photo/pocket.js",
+      "default": "./src/cube-photo/pocket.ts"
     },
     "./cube-photo/analyze": {
       "node": "./dist/cube-photo/analyze.js",

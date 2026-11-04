@@ -8,16 +8,18 @@
 .cube-photo-action:focus-visible, .cube-photo-empty:focus-visible, .cube-photo-copy:focus-visible, .cube-photo-expand:focus-visible, .cube-photo-retry:focus-visible, .cube-photo-details summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
 .cube-photo-action:disabled { opacity: .5; cursor: wait; }
 .cube-photo-action[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
-.cube-photo-toolbar .cube-photo-primary { background: var(--primary); color: var(--primary-foreground); border-color: transparent; }
-.cube-photo-toolbar .cube-photo-primary:hover { background: color-mix(in srgb, var(--primary) 88%, var(--background)); }
+.cube-photo-action.cube-photo-primary { background: var(--primary); color: var(--primary-foreground); border-color: transparent; }
+.cube-photo-action.cube-photo-primary:hover { background: color-mix(in srgb, var(--primary) 88%, var(--background)); }
 .cube-photo-error { color: var(--destructive); font-size: 14px; }
-.cube-photo-stage { border-radius: 12px; overflow: hidden; background: var(--muted); }
+.cube-photo-stage { position: relative; border-radius: 12px; overflow: hidden; background: var(--muted); }
 .cube-photo-stage > svg { display: block; width: 100%; height: 100%; }
 .cube-photo-workspace.has-photo .cube-photo-stage { height: clamp(320px, 72vh, 720px); }
 .cube-photo-image, .cube-photo-result-content { animation: cube-photo-reveal .2s ease-out; }
 .cube-photo-image-placeholder { display: grid; place-items: center; height: 100%; color: var(--muted-foreground); }
 .cube-photo-stage.is-empty { border: 1px dashed var(--border-strong); background: transparent; }
 .cube-photo-empty { display: flex; flex-direction: column; width: 100%; min-height: 340px; gap: 16px; border: 0; background: transparent; font-size: 16px; }
+.cube-photo-workspace:not(.has-photo) { margin-top: 24px; }
+.cube-photo-replace { position: absolute; top: 12px; right: 12px; }
 .cube-photo-guide { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .cube-photo-empty small { color: var(--muted-foreground); font-size: 12px; }
 .cube-photo-handle { touch-action: none; cursor: grab; }

@@ -33,6 +33,14 @@ const grayBluePhoto: RGB[] = [
   [215, 218, 15], [211, 217, 15], [193, 63, 38], [53, 81, 40], [140, 146, 46], [84, 91, 102],
   [44, 144, 29], [172, 91, 68],
 ];
+// Center-patch medians from the reported Sune screenshot. The shaded R edge
+// retains blue hue but has about half the chroma of the independent U corner.
+const shadedSunePhoto: RGB[] = [
+  [0, 165, 19], [223, 219, 1], [0, 77, 167], [227, 226, 0], [222, 204, 20],
+  [229, 230, 0], [239, 237, 1], [232, 233, 0], [255, 100, 0],
+  [230, 54, 47], [35, 169, 34], [226, 221, 1], [50, 114, 25], [53, 61, 103], [177, 186, 48],
+  [173, 77, 55], [45, 116, 27],
+];
 async function sampledPhoto(colors: RGB[]) {
   const image = cubePhotoFixture(false, .1, fixture.states.oll);
   const patches = new Map<number, RGB>([[15, colors[15]], [25, colors[16]]]);
@@ -48,6 +56,40 @@ async function sampledPhoto(colors: RGB[]) {
 }
 
 describe('photo last-layer state and formulas', () => {
+  it('recovers the shaded Sune edge from independent color evidence and returns ZBLL', async () => {
+    expect(classifyPhotoColors([shadedSunePhoto[13]])[0].reliable).toBe(false);
+    const { pixels, corners } = await sampledPhoto(shadedSunePhoto);
+    const zbll: AlgFile = { ...libraries.zbll, cases: [{ ...libraries.zbll.cases[0], name: 'S+L2',
+      algs: [[{ alg: "L U2' L F L' U' L' U L F' U2 L'" }]] }] };
+    const result = await analyzeCubePhoto({ pixels, corners, corrections: {} }, async set => set === 'zbll' ? zbll : libraries[set]);
+    expect(result.recognition.status).toBe('ok');
+    expect(result.recognition.candidates.map(c => c.facelet)).toEqual([
+      'RULUUUUUBRLURRRRRRFRUFFFFFFDDDDDDDDDFFLLLLLLLBBUBBBBBB',
+    ]);
+    expect(result.recognition.samples[13]).toMatchObject({ rgb: shadedSunePhoto[13], color: 'blue', reliable: true, calibrated: true, corrected: false });
+    expect(result.recognition.samples[13].inferred).toBeUndefined();
+    expect(photoRecognitionSets(result.recognition)).toEqual(['oll', 'cmll', 'coll', 'zbll']);
+    const zbllResult = result.results.find(r => r.set === 'zbll')!;
+    expect(zbllResult.status).toBe('found');
+    expect(zbllResult.match?.caseName).toBe('S+L2');
+    expect(photoAlgGoal('zbll', applyMoves(fromFaceletString(result.recognition.candidates[0].facelet)!, 3,
+      parseScramble(zbllResult.match!.alg)))).toBe(true);
+    // A gray edge still admits three permutations; never pick one for ZBLL.
+    const unknown = await sampledPhoto(shadedSunePhoto.map((rgb, i) => i === 13 ? [46, 50, 57] : rgb));
+    const partial = recognizePhoto(unknown.pixels, unknown.corners);
+    expect(partial.status).toBe('partial');
+    expect(partial.candidates.map(c => c.facelet)).toEqual([
+      'RULUUUUUBRFURRRRRRFRUFFFFFFDDDDDDDDDFBLLLLLLLBLUBBBBBB',
+      'RULUUUUUBRLURRRRRRFRUFFFFFFDDDDDDDDDFFLLLLLLLBBUBBBBBB',
+      'RULUUUUUBRBURRRRRRFRUFFFFFFDDDDDDDDDFLLLLLLLLBFUBBBBBB',
+    ]);
+    expect(photoRecognitionSets(partial)).toEqual(['oll', 'cmll', 'coll']);
+    expect(findPhotoAlg(photoRecognitionInput(partial)!, 'zbll', zbll)).toBeNull();
+    const explicit = recognizePhoto(pixels, corners, { 13: 'red' });
+    expect(explicit.status).toBe('ok');
+    expect(explicit.samples[13]).toMatchObject({ color: 'red', reliable: true, corrected: true });
+    expect(explicit.candidates[0].facelet).toBe(partial.candidates[0].facelet);
+  });
   it('infers two shaded orange corners without letting red calibration certify them', async () => {
     const colors: RGB[] = [
       [3, 203, 54], [0, 197, 50], [31, 204, 68], [252, 252, 0], [251, 251, 0], [245, 246, 1],
@@ -257,6 +299,18 @@ describe('photo last-layer state and formulas', () => {
     expect(photoAufOnly(fixture.states.pll)).toBeNull();
     expect(photoAufOnly(SOLVED_FACELET)).toBeNull();
   });
+  it('invalidates prepared moves if a catalog entry changes without replacing its object', () => {
+    const file = structuredClone(libraries.oll);
+    const first = findPhotoAlg(fixture.states.oll, 'oll', file)!;
+    const selected = file.cases.find(c => c.name === first.caseName)!;
+    const entry = { alg: first.body! };
+    file.cases = [{ ...selected, algs: [[entry]] }];
+    expect(findPhotoAlg(fixture.states.oll, 'oll', file)?.alg).toBe(first.alg);
+    entry.alg = 'invalid';
+    expect(findPhotoAlg(fixture.states.oll, 'oll', file)).toBeNull();
+    entry.alg = first.body!;
+    expect(findPhotoAlg(fixture.states.oll, 'oll', file)?.alg).toBe(first.alg);
+  });
   it('reads ordered pixels and completes the state using the standard center frame', async () => {
     expect(standardColorFrames()).toHaveLength(24);
     const image = cubePhotoFixture(false, .1, fixture.states.oll);
@@ -282,5 +336,18 @@ describe('photo last-layer state and formulas', () => {
     }
     const subset = await analyzeCubePhoto({ ...input, sets: ['oll', 'pll'] }, async set => libraries[set]);
     expect(subset.results.map(r => r.set)).toEqual(['oll']);
+  });
+  it('cancels obsolete analysis after catalog loading without emitting stale algorithms', async () => {
+    const image = cubePhotoFixture(false, .1, fixture.states.oll);
+    const { data, info } = await sharp(Buffer.from(image.svg)).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const controller = new AbortController();
+    const messages: string[] = [];
+    let release!: () => void;
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    const analysis = analyzeCubePhoto({ pixels: { width: info.width, height: info.height, data: new Uint8ClampedArray(data) }, corners: image.corners as CubeCorners, corrections: {} },
+      async set => { await gate; return libraries[set]; }, message => messages.push(message.type), controller.signal);
+    controller.abort(); release();
+    await expect(analysis).rejects.toMatchObject({ name: 'AbortError' });
+    expect(messages).toEqual(['state']);
   });
 });

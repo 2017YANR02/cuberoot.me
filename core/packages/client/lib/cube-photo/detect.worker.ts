@@ -1,13 +1,17 @@
 /// <reference lib="webworker" />
-import { detectCubePhoto, type PhotoPixels } from './detect';
+import { detectCubePhoto } from './detect';
+import type { PhotoWorkerRequest, PhotoWorkerReply, PhotoDetectionMessage, PhotoDetectionInput } from './workers';
 
-self.onmessage = (event: MessageEvent<PhotoPixels>) => {
+self.onmessage = (event: MessageEvent<PhotoWorkerRequest<PhotoDetectionInput>>) => {
+  if ('cancel' in event.data) return;
+  const { id, input } = event.data;
+  const send = (message: PhotoDetectionMessage) => self.postMessage({ id, message } satisfies PhotoWorkerReply<PhotoDetectionMessage>);
   try {
     const start = performance.now();
-    const detection = detectCubePhoto(event.data);
-    self.postMessage({ detection, elapsedMs: Math.round(performance.now() - start) });
+    const detection = detectCubePhoto(input, input.puzzleSize);
+    send({ detection, elapsedMs: Math.round(performance.now() - start) });
   } catch {
-    self.postMessage({ error: 'detection_failed' });
+    send({ error: 'detection_failed' });
   }
 };
 export {};

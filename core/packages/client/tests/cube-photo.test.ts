@@ -47,6 +47,20 @@ describe('cube photo geometry', () => {
     const errors = detection.candidates[0].corners.slice(0, 4).map((p, i) => Math.hypot(p.x - fixture.top[i].x, p.y - fixture.top[i].y));
     expect(errors.every(error => error < 10), JSON.stringify(errors)).toBe(true);
   });
+  it('finds a uniform top in a landscape photo dominated by background grid lines', async () => {
+    const fixture = cubePhotoFixture(true, .18, SOLVED_FACELET);
+    const cube = fixture.svg.replace(/^.*?<rect[^>]*\/>/, '').replace('</svg>', '')
+      .replace('fill="#181b20"', 'fill="#b0b020"');
+    const background = Array.from({ length: 12 }, (_, row) => Array.from({ length: 26 }, (_, col) =>
+      `<rect x="${col * 25 + 2}" y="${row * 28 + 2}" width="20" height="20" rx="2" fill="#ddd"/>`).join('')).join('');
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360"><rect width="640" height="360" fill="#151820"/>${background}<g transform="translate(165 4) scale(.65)">${cube}</g></svg>`;
+    const { data, info } = await sharp(Buffer.from(svg)).blur(.6).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const detection = detectCubePhoto({ width: info.width, height: info.height, data: new Uint8ClampedArray(data) });
+    expect(detection.reason).toBe('ok');
+    const expected = fixture.top.map(p => ({ x: 165 + p.x * .65, y: 4 + p.y * .65 }));
+    const errors = detection.candidates[0].corners.slice(0, 4).map((p, i) => Math.hypot(p.x - expected[i].x, p.y - expected[i].y));
+    expect(errors.every(error => error < 10), JSON.stringify(errors)).toBe(true);
+  });
   for (const occluded of [false, true]) it(`locates the top grid with lower layers ${occluded ? 'occluded' : 'visible'}`, async () => {
     const fixture = cubePhotoFixture(occluded);
     const { data, info } = await sharp(Buffer.from(fixture.svg)).ensureAlpha().raw().toBuffer({ resolveWithObject: true });

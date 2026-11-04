@@ -47,14 +47,14 @@ export function validQuad(q: Quad, minArea = 4): boolean {
 }
 
 export interface GridSegment { a: Point; b: Point; inferred: boolean; boundary: boolean }
-export function faceGrid(q: Quad, face: FaceName): GridSegment[] {
+export function faceGrid(q: Quad, face: FaceName, size: 2 | 3 = 3): GridSegment[] {
   const h = homography(q);
   if (!h || !validQuad(q)) return [];
   const segments: GridSegment[] = [];
-  for (let i = 0; i <= 3; i++) {
-    const t = i / 3, boundary = i === 0 || i === 3;
-    segments.push({ a: project(h, 0, t), b: project(h, 1, t), inferred: face !== 'top' && i > 1, boundary });
-    if (face === 'top') segments.push({ a: project(h, t, 0), b: project(h, t, 1), inferred: false, boundary });
+  for (let i = 0; i <= size; i++) {
+    const t = i / size, boundary = i === 0 || i === size;
+    segments.push({ a: project(h, 0, t), b: project(h, 1, t), inferred: size === 3 && face !== 'top' && i > 1, boundary });
+    if (face === 'top' || size === 2) segments.push({ a: project(h, t, 0), b: project(h, t, 1), inferred: false, boundary });
     else {
       segments.push({ a: project(h, t, 0), b: project(h, t, 1 / 3), inferred: false, boundary });
       segments.push({ a: project(h, t, 1 / 3), b: project(h, t, 1), inferred: true, boundary });

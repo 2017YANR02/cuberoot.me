@@ -1,0 +1,512 @@
+{
+  "ortega-oll": {
+    "scrapedAt": "2026-05-03T13:40:41.275Z",
+    "source": "https://speedcubedb.com/a/2x2/OrtegaOLL",
+    "puzzle": "2x2",
+    "set": "ortega-oll",
+    "cases": [
+      {
+        "id": 121,
+        "name": "Sune",
+        "subgroup": "",
+        "setup": "R U2' R' U' R U' R'",
+        "sticker": {
+          "ub": "rybb",
+          "uf": "bygg",
+          "ul": "gorr",
+          "ur": "byoo",
+          "us": "ogyr",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "R U R' U R U2 R'",
+              "altId": "1093"
+            },
+            {
+              "alg": "R U R2 U' R2 U R",
+              "altId": "3178"
+            },
+            {
+              "alg": "R U' L' U R' U' L",
+              "altId": "5414"
+            },
+            {
+              "alg": "y' R' U2 R U R' U R",
+              "altId": "18091"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 122,
+        "name": "Anti Sune",
+        "subgroup": "",
+        "setup": "R U R' U R U2' R'",
+        "sticker": {
+          "ub": "gobb",
+          "uf": "yrgg",
+          "ul": "ybrr",
+          "ur": "yroo",
+          "us": "gyob",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "R U2 R' U' R U' R'",
+              "altId": "1094"
+            },
+            {
+              "alg": "y L' U' L U' L' U2 L",
+              "altId": "2443"
+            },
+            {
+              "alg": "y' R' U' R U' R' U2 R",
+              "altId": "2442"
+            },
+            {
+              "alg": "U R' F R F' R U R'",
+              "altId": "17753"
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  "cll": {
+    "scrapedAt": "2026-08-05T10:49:43.087Z",
+    "source": "https://docs.google.com/spreadsheets/d/1OFXakCV85Mp2zsQBXMxiMX9a506JeAcLnUXZr8FgXAY/edit; https://speedcubedb.com/a/2x2/CLL",
+    "puzzle": "2x2",
+    "set": "cll",
+    "cases": [
+      {
+        "id": 28,
+        "name": "CLL Sune 6",
+        "subgroup": "S+",
+        "setup": "R U2' R' U' R U' R'",
+        "sticker": {
+          "ub": "rybb",
+          "uf": "bygg",
+          "ul": "gorr",
+          "ur": "byoo",
+          "us": "ogyr",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "R U R' U R U2 R'",
+              "altId": "2927"
+            },
+            {
+              "alg": "U' R' U2 R U R' U R",
+              "setup": "R' U' R U' R' U2' R U"
+            },
+            {
+              "alg": "R U R2 U' R2 U R",
+              "altId": "10567",
+              "setup": "R' U' R2' U R2' U' R'"
+            },
+            {
+              "alg": "U' R' U2 R U2 R U R U' R'"
+            },
+            {
+              "alg": "R' F' R U2 R' F R U2 R' F R",
+              "setup": "R' F' R U2' R' F' R U2' R' F R"
+            },
+            {
+              "alg": "y' R' U2 R U R' U R",
+              "altId": "2926"
+            },
+            {
+              "alg": "y L' U2 L U L' U L",
+              "altId": "2925"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 27,
+        "name": "CLL Sune 5",
+        "subgroup": "S+",
+        "setup": "R U' R2' U R U F R2' F' R U",
+        "sticker": {
+          "ub": "oyrr",
+          "uf": "gyoo",
+          "ul": "grgg",
+          "ur": "bybb",
+          "us": "obyr",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "U' R' F R2 F' U' R' U' R2 U R'"
+            },
+            {
+              "alg": "U' R' F R2 F' R U2 R' U' R2"
+            },
+            {
+              "alg": "U2 R U R' U R' F R F' R U2 R'",
+              "altId": "20749",
+              "setup": "R U2' R' F R' F' R U' R U' R' U2'"
+            },
+            {
+              "alg": "U2 R' F R' F' R2 U R' U' R' F R F' R",
+              "setup": "R' F R' F' R U R U' R2' F R F' R U2'"
+            },
+            {
+              "alg": "U z' U R' F R U2 R' F U' R U R",
+              "setup": "R' U' R' U F' R U2' R' F' R U' z U'"
+            },
+            {
+              "alg": "y2 R U R' U R' F R F' R U2 R'",
+              "altId": "2966",
+              "setup": "R U2' R' F R' F' R U' R U' R' y2'"
+            },
+            {
+              "alg": "y' R' F R2 F' U' R' U' R2 U R'",
+              "altId": "2965",
+              "setup": "R U' R2' U R U F R2' F' R y"
+            },
+            {
+              "alg": "R U R' U' R' F R F' R U' R' F R' F' R",
+              "altId": "18162"
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  "eg1": {
+    "scrapedAt": "2026-08-05T10:49:43.087Z",
+    "source": "https://docs.google.com/spreadsheets/d/1OFXakCV85Mp2zsQBXMxiMX9a506JeAcLnUXZr8FgXAY/edit; https://speedcubedb.com/a/2x2/EG1",
+    "puzzle": "2x2",
+    "set": "eg1",
+    "cases": [
+      {
+        "id": 63,
+        "name": "EG1 S 1",
+        "subgroup": "S",
+        "setup": "x U R' F2' U2' L' F U",
+        "sticker": {
+          "ub": "ryor",
+          "uf": "bybb",
+          "ul": "gogo",
+          "ur": "byrg",
+          "us": "ogyr",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "U' F' L U2 F2 R U' x'"
+            },
+            {
+              "alg": "U2 R U R' U F R U' R2 F' R",
+              "setup": "R' F R2' U R' F' U' R U' R' U2'"
+            },
+            {
+              "alg": "y' U' R' F R2 F' R2 U2 R",
+              "setup": "U R' F2' U2' L' F U"
+            },
+            {
+              "alg": "U' F' R U2 R' F2 U2 F",
+              "setup": "U R' F2' U2' L' F U"
+            },
+            {
+              "alg": "U R U' R2 F' R F U R' F R",
+              "setup": "R' F' R U' F' R' F R2' U R' U'"
+            },
+            {
+              "alg": "U' F' R F2 U2 R F'",
+              "setup": "U R' F2' U2' L' F U"
+            },
+            {
+              "alg": "y2 U' L F' L2 U' L F U L' U L",
+              "altId": "21947",
+              "setup": "L' U' L U' F' L' U L2' F L' U y2'"
+            },
+            {
+              "alg": "y2 R U R' U F R U' R2 F' R U'",
+              "altId": "3044",
+              "setup": "U R' F R2' U R' F' U' R U' R' y2'"
+            },
+            {
+              "alg": "y U R' F R2 F' R2 U2 R U",
+              "altId": "25405",
+              "setup": "U' R' U2' R2' F R2' F' R U' y'"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 64,
+        "name": "EG1 S 2",
+        "subgroup": "S",
+        "setup": "R U' R' F' U' F2' R U' R'",
+        "sticker": {
+          "ub": "rybb",
+          "uf": "byor",
+          "ul": "borg",
+          "ur": "gygo",
+          "us": "rgyo",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "R U R' F2 U F R U R'"
+            },
+            {
+              "alg": "U F R' F' R F R U' R' U R' F' R",
+              "setup": "R' F R U' R U R' F' R' F R F' U'"
+            },
+            {
+              "alg": "U2 F R2 U' R2 F U' F2 U' R",
+              "setup": "R' U F2' U F' R2' U R2' F' U2'"
+            },
+            {
+              "alg": "U' R' U R' U2 R U' F2 U' R U R"
+            },
+            {
+              "alg": "U2 R2 U' R2 F R2 U' R2 U' F2 U' R",
+              "setup": "R' U F2' U R2' U R2' F' R2' U R2' U2'"
+            },
+            {
+              "alg": "U2 R2 U R2 F' R2 U R2 U' F2 U' R",
+              "setup": "R' U F2' U R2' U' R2' F R2' U' R2' U2'"
+            },
+            {
+              "alg": "U2 R' F2 R2 U R' F2 U F",
+              "setup": "F' U' F2' R U' R2' F2' R U2'"
+            },
+            {
+              "alg": "U2 F' R2 U R2' F' U' F2 U' R",
+              "setup": "R' U F2' U F R2 U' R2' F U2'"
+            },
+            {
+              "alg": "U R' F R F U F2 R' F R",
+              "altId": "26136",
+              "setup": "R' F' R F2' U' F' R' F' R U'"
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  "eg2": {
+    "scrapedAt": "2026-08-05T10:49:43.087Z",
+    "source": "https://docs.google.com/spreadsheets/d/1OFXakCV85Mp2zsQBXMxiMX9a506JeAcLnUXZr8FgXAY/edit; https://speedcubedb.com/a/2x2/EG2",
+    "puzzle": "2x2",
+    "set": "eg2",
+    "cases": [
+      {
+        "id": 103,
+        "name": "EG2 S 1",
+        "subgroup": "S",
+        "setup": "F R2' U R' U2' R U R2' U F' U",
+        "sticker": {
+          "ub": "gyro",
+          "uf": "ryor",
+          "ul": "obbg",
+          "ur": "rygb",
+          "us": "boyg",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "U' F U' R2 U' R' U2 R U' R2 F'"
+            },
+            {
+              "alg": "U' R' F R2 F' R U2 R' U' F2 R2",
+              "setup": "R2' F2' U R U2' R' F R2' F' R U"
+            },
+            {
+              "alg": "R2 F2 R U R U' R' F R' F' R2 U R' U' R",
+              "altId": "22715",
+              "setup": "R' U R U' R2' F R F' R U R' U' R' F2' R2'"
+            },
+            {
+              "alg": "y' R' F R2 F' U' R' U' R2 U R B2 R2",
+              "altId": "23924"
+            },
+            {
+              "alg": "y' R' F R2 F' U' R' U' R2 U R F2 R2",
+              "altId": "21731"
+            },
+            {
+              "alg": "y' R' F R2 F' R U2 R' U' F2 R2",
+              "altId": "3063"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 104,
+        "name": "EG2 S 2",
+        "subgroup": "S",
+        "setup": "R2' B2' R' U2' R' U' R U' R'",
+        "sticker": {
+          "ub": "rybg",
+          "uf": "bygb",
+          "ul": "boor",
+          "ur": "gyro",
+          "us": "rgyo",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "R U R' U R U2 R B2 R2"
+            },
+            {
+              "alg": "U' R' U2 R U R' U R' F2 R2",
+              "setup": "R2' F2' R U' R U' R' U2' R U"
+            },
+            {
+              "alg": "U' R2 F2 R U2 R U R' U R",
+              "setup": "R' U' R U' R' U2' R' F2' R2' U"
+            },
+            {
+              "alg": "y' R2 F2 R U2 R U R' U R",
+              "altId": "21275"
+            },
+            {
+              "alg": "R2 B2 R' U R' U R U2 R'",
+              "altId": "24618"
+            },
+            {
+              "alg": "y' R' U2 R U R' U R' F2 R2",
+              "altId": "23108"
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  "ortega-pbl": {
+    "scrapedAt": "2026-08-05T10:49:43.087Z",
+    "source": "https://docs.google.com/spreadsheets/d/1OFXakCV85Mp2zsQBXMxiMX9a506JeAcLnUXZr8FgXAY/edit; https://speedcubedb.com/a/2x2/OrtegaPBL",
+    "puzzle": "2x2",
+    "set": "ortega-pbl",
+    "cases": [
+      {
+        "id": 6950,
+        "name": "PBL Solved 1",
+        "subgroup": "Solved",
+        "setup": "R R'",
+        "sticker": {
+          "ub": "bbbb",
+          "uf": "gggg",
+          "ul": "rrrr",
+          "ur": "oooo",
+          "us": "yyyy",
+          "kind": "face"
+        },
+        "algs": [
+          [
+            {
+              "alg": "R R'"
+            },
+            {
+              "alg": "R2 U2 R2 U2 R2 U2"
+            },
+            {
+              "alg": "R U R U' R' U' R' U' R U"
+            },
+            {
+              "alg": "R U' R' U' R U2 R' U R U R' U2"
+            },
+            {
+              "alg": "R2 U2 F2 R2 U2 R2 F2 U2"
+            },
+            {
+              "alg": "R F R2 U2 R2 F R2 U2 R"
+            },
+            {
+              "alg": "F2 R2 U2 R2 F' R2 U2 R2 F"
+            },
+            {
+              "alg": "R U R' U R' U' R2 U' R' U R' U R U2"
+            },
+            {
+              "alg": "F' R' U R U2 F U R' U' R2"
+            }
+          ]
+        ]
+      },
+      {
+        "id": 128,
+        "name": "Adj",
+        "subgroup": "",
+        "setup": "R U2' R' U' R U2' R' F R' F' R U'",
+        "sticker": {
+          "fl": "yyyyrrrrgoggrrrrgogg",
+          "kind": "f2l"
+        },
+        "algs": [
+          [
+            {
+              "alg": "U R' F R F' R U2 R' U R U2 R'"
+            },
+            {
+              "alg": "U F R U' R' F R F' R U R2 F'",
+              "setup": "F R2' U' R' F R' F' R U R' F' U'"
+            },
+            {
+              "alg": "U R U2 R' U' R U2 R' F R' F' R"
+            },
+            {
+              "alg": "U R U R' F' R U R' U' R' F R2 U' R'",
+              "setup": "R U R2' F' R U R U' R' F R U' R' U'"
+            },
+            {
+              "alg": "U R U R' U' R' F R2 U' R' U' R U R' F'"
+            },
+            {
+              "alg": "U2 R' F R' F2 R U' R' F2 R2",
+              "setup": "R2' F2' R U R' F2' R F' R U2'"
+            },
+            {
+              "alg": "U' R2 F2 R U R' F2 R F' R",
+              "setup": "R' F R' F2' R U' R' F2' R2' U"
+            },
+            {
+              "alg": "U' R U' R' F R' F2 R U' R' F2 R",
+              "setup": "R' F2' R U R' F2' R F' R U R' U"
+            },
+            {
+              "alg": "U' R2 U' R' F R' F2 R U' R' F2",
+              "setup": "F2' R U R' F2' R F' R U R2' U"
+            },
+            {
+              "alg": "F R2 U' R' F R' F' R U R' F'"
+            },
+            {
+              "alg": "y R U R' F' R U R' U' R' F R2 U' R'",
+              "altId": "1586"
+            },
+            {
+              "alg": "y R' F R F' R U2 R' U R U2 R'",
+              "altId": "3704",
+              "setup": "R U2' R' U' R U2' R' F R' F' R y'"
+            },
+            {
+              "alg": "y R U R' U' R' F R2 U' R' U' R U R' F'",
+              "altId": "1587",
+              "setup": "F R U' R' U R U R2' F' R U R U' R' y'"
+            },
+            {
+              "alg": "y2 R' F R' F2 R U' R' F2 R2",
+              "altId": "1584"
+            }
+          ]
+        ]
+      }
+    ]
+  }
+}

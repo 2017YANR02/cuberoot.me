@@ -19,9 +19,10 @@ export interface RecoveredState { facelet: string; frame: ColorFrame }
 /** Only corner coordinates are known; no edge or complete-cube state is claimed. */
 export interface RecoveredCorners { cp: number[]; co: number[]; frame: ColorFrame }
 export interface PhotoRecognition {
+  puzzle?: '2x2' | '3x3';
   /** U row-major (back to front), then F top row, then R top row. */
   samples: StickerSample[];
-  centers: { F: StickerSample; R: StickerSample };
+  centers?: { F: StickerSample; R: StickerSample };
   candidates: RecoveredState[];
   cornerCandidates?: RecoveredCorners[];
   /** partial contains ALL compatible F2L completions, never a truncated sample. */
@@ -83,6 +84,27 @@ export function classifyPhotoColors(colors: readonly RGB[]): StickerSample[] {
     photoRefs.set(color, [median(0), median(1), median(2)]);
   }
   const references = REFERENCES.map(ref => ({ ...ref, lab: photoRefs.has(ref.color) ? srgbToLab(photoRefs.get(ref.color)!) : ref.lab }));
+  const classifyShade = (sample: StickerSample): StickerSample => {
+    const lab = srgbToLab(sample.rgb), chroma = Math.hypot(lab[1], lab[2]);
+    // Shade/reflection can contract a colored sticker's chroma toward white.
+    // Compare hue at the measured chroma, but only with independent photo
+    // evidence and substantial remaining color. Never normalize a gray patch.
+    if (chroma < 24 || Math.max(...sample.rgb) < 40) return sample;
+    const shadedRefs = references.map(ref => {
+      const scale = Math.min(1, chroma / Math.max(1, Math.hypot(ref.lab[1], ref.lab[2])));
+      return { color: ref.color, lab: [ref.lab[0], ref.lab[1] * scale, ref.lab[2] * scale] as Lab };
+    });
+    const shaded = classify(sample.rgb, shadedRefs, lab);
+    const ref = references.find(r => r.color === shaded.color)!;
+    const refChroma = Math.hypot(ref.lab[1], ref.lab[2]), ratio = chroma / refChroma;
+    const hueCosine = (lab[1] * ref.lab[1] + lab[2] * ref.lab[2]) / (chroma * refChroma);
+    const plausible = rankColors(lab).slice(0, 2).some(r => r.color === shaded.color);
+    // Warm colors remain subject to the stricter red/orange calibration above.
+    return ['blue', 'green', 'yellow'].includes(shaded.color) && photoRefs.has(shaded.color)
+      && plausible && ratio >= .35 && ratio <= .85 && hueCosine >= Math.cos(Math.PI / 18)
+      && shaded.reliable && shaded.margin >= 12 && shaded.distance <= 24
+      ? { ...shaded, calibrated: true } : sample;
+  };
   return initial.map(sample => {
     if (sample.reliable) return sample;
     const adjusted = classify(sample.rgb, references);
@@ -100,11 +122,11 @@ export function classifyPhotoColors(colors: readonly RGB[]): StickerSample[] {
     const gap = ref ? Math.abs(hue(sample.rgb) - hue(ref)) : Infinity;
     const hueAgrees = !['red', 'orange'].includes(adjusted.color) || Math.min(gap, 360 - gap) <= 8;
     return separated && adjusted.distance <= 24 && ref && plausible && hueAgrees
-      ? { ...adjusted, reliable: true, calibrated: true } : sample;
+      ? { ...adjusted, reliable: true, calibrated: true } : classifyShade(sample);
   });
 }
 
-function sampleFace(image: PhotoPixels, corners: CubeCorners, face: FaceName): RGB[] {
+export function sampleFace(image: PhotoPixels, corners: CubeCorners, face: FaceName, gridSize: 2 | 3 = 3): RGB[] {
   const h = homography(faceQuad(corners, face));
   if (!h) throw new Error('invalid-grid');
   const size = 90, rectified = new Uint8ClampedArray(size * size * 4);
@@ -115,7 +137,7 @@ function sampleFace(image: PhotoPixels, corners: CubeCorners, face: FaceName): R
     const offset = (sy * image.width + sx) * 4;
     rectified.set(image.data.subarray(offset, offset + 4), (y * size + x) * 4);
   }
-  return sampleGridColors(rectified, size, 3, .35);
+  return sampleGridColors(rectified, size, gridSize, .35);
 }
 
 let frames: ColorFrame[] | undefined;

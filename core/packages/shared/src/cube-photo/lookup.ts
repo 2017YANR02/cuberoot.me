@@ -1,4 +1,4 @@
-import type { AlgFile, AlgSticker } from '../alg';
+import type { AlgEntry, AlgFile, AlgSticker } from '../alg';
 import { mergeAdjacentMoves, stm, toMoveStringStrict } from '../alg_notation';
 import { primaryCaseName } from '../recon/alg_case_display';
 import { algCaseDetailHref, buildCaseSlugMap } from '../recon/alg_case_link';
@@ -7,15 +7,33 @@ import { isF2l, isOll, isSolved } from '../timer/reconstruct/cfop-detect';
 import { stepSolvedInFrame } from '../timer/reconstruct/steps';
 import { parseScramble } from '@cuberoot/puzzle-solvers/cube-moves';
 import { cubieToFacelet, validateFacelet } from '../cube_facelet';
+import { pocketFaces, pocketSolved, pocketOriented } from './pocket';
 import type { PhotoRecognition, RecoveredCorners, RecoveredState } from './recognize';
 
 export const PHOTO_ALG_SETS = ['pll', 'oll', 'cmll', 'coll', 'ell', 'zbll', 'ollcp', '1lll'] as const;
-export type PhotoAlgSet = typeof PHOTO_ALG_SETS[number];
-export interface PhotoAlgMatch { set: PhotoAlgSet; name: string; caseName: string; caseId?: number; href: string; alg: string; body?: string; preAuf: string; postAuf: string; turns: number; thumbnail?: { alg: string; setup?: string; sticker: AlgSticker } }
+export const POCKET_PHOTO_ALG_SETS = ['ortega-oll', 'cll', 'eg1', 'eg2', 'ortega-pbl'] as const;
+export type PhotoAlgSet = typeof PHOTO_ALG_SETS[number] | typeof POCKET_PHOTO_ALG_SETS[number];
+export interface PhotoAlgMatch { puzzle?: '2x2' | '3x3'; set: PhotoAlgSet; name: string; caseName: string; caseId?: number; href: string; alg: string; body?: string; preAuf: string; postAuf: string; turns: number; thumbnail?: { alg: string; setup?: string; sticker: AlgSticker } }
 export interface PhotoAlgResult { set: PhotoAlgSet; status: 'found' | 'missing' | 'error'; match?: PhotoAlgMatch; alternatives?: PhotoAlgMatch[] }
 export type PhotoAlgInput = string | RecoveredCorners | { candidates: RecoveredState[] };
 const AUFS = ['', 'U', 'U2', "U'"];
 const AUF_MOVES = AUFS.map(a => parseScramble(a));
+type PreparedMoves = { body: string; moves: ReturnType<typeof parseScramble> };
+const preparedMoves = new WeakMap<AlgEntry, { source: string; value: PreparedMoves | null }>();
+
+/** Catalog entries survive across photos in the worker; parse each unchanged
+ * notation once, including rejected entries. A refreshed catalog is a new key. */
+function prepareMoves(entry: AlgEntry): PreparedMoves | null {
+  const cached = preparedMoves.get(entry);
+  if (cached?.source === entry.alg) return cached.value;
+  let value: PreparedMoves | null = null;
+  try {
+    const body = toMoveStringStrict(entry.alg);
+    if (body && !body.split(/\s+/).some(token => !parseScramble(token).length)) value = { body, moves: parseScramble(body) };
+  } catch { /* Unsupported notation must never become a guessed algorithm. */ }
+  preparedMoves.set(entry, { source: entry.alg, value });
+  return value;
+}
 
 /** Private simulation fixture: its edges are placeholders, never recovered evidence. */
 function cornerSimulation(corners: RecoveredCorners): string {
@@ -26,6 +44,10 @@ function cornerSimulation(corners: RecoveredCorners): string {
 }
 
 export function photoRecognitionSets(recognition: PhotoRecognition): PhotoAlgSet[] {
+  if (recognition.puzzle === '2x2') {
+    const eligible = recognition.candidates.map(c => photoAlgSets(c.facelet));
+    return eligible.length ? POCKET_PHOTO_ALG_SETS.filter(set => eligible.every(sets => sets.includes(set))) : [];
+  }
   if (recognition.status === 'ok') return photoAlgSets(recognition.candidates[0].facelet);
   if (recognition.status === 'partial') {
     // A full-solve algorithm cannot solve two different starting states. Partial
@@ -45,6 +67,11 @@ export function photoRecognitionInput(recognition: PhotoRecognition): PhotoAlgIn
 }
 
 export function photoAlgSets(facelet: string): PhotoAlgSet[] {
+  if (facelet.length === 24) {
+    const state = pocketFaces(facelet);
+    if (!state || pocketSolved(state) || !state.D.every(c => c === 'D')) return [];
+    return pocketOriented(state) ? ['cll', 'eg1', 'eg2', 'ortega-pbl'] : ['ortega-oll', 'cll', 'eg1', 'eg2'];
+  }
   if (validateFacelet(facelet) !== null) return [];
   const state = fromFaceletString(facelet);
   if (!state || !isF2l(state) || isSolved(state)) return [];
@@ -64,6 +91,7 @@ function topCornersSolved(state: CubeFaces): boolean {
 
 /** Use each set's own finish line. CMLL preserves Roux blocks, with M/LSE free. */
 export function photoAlgGoal(set: PhotoAlgSet, state: CubeFaces): boolean {
+  if (state.U.length === 4) return set === 'ortega-oll' ? pocketOriented(state) : pocketSolved(state);
   if (set === 'cmll') return stepSolvedInFrame('cmll', toFaceletString(state));
   if (!isF2l(state)) return false;
   if (set === 'oll') return isOll(state);
@@ -101,31 +129,34 @@ function* matchingPhotoAlgs(input: PhotoAlgInput, set: PhotoAlgSet, file: AlgFil
     const alignment = photoAufOnly(facelet);
     if (alignment && facelets.every(f => isSolved(applyMoves(fromFaceletString(f)!, 3, parseScramble(alignment.alg))))) { yield alignment; return; }
   }
-  const state = fromFaceletString(facelet)!;
-  const opened = AUF_MOVES.map(moves => applyMoves(state, 3, moves));
-  const remaining = facelets.slice(1).map(f => fromFaceletString(f)!);
+  const size = facelet.length === 24 ? 2 : 3;
+  const puzzle = size === 2 ? '2x2' : '3x3';
+  const decode = size === 2 ? pocketFaces : fromFaceletString;
+  const state = decode(facelet)!;
+  const prefixes = size === 2 ? ['', 'y', 'y2', "y'"].flatMap(rotation => AUFS.map(auf => [rotation, auf].filter(Boolean).join(' '))) : AUFS;
+  const opened = prefixes.map(prefix => applyMoves(state, size, parseScramble(prefix)));
+  const remaining = facelets.slice(1).map(f => decode(f)!);
   const slugs = buildCaseSlugMap(file.cases, set);
   const seen = new Set<string>();
   for (const c of file.cases) {
     if (selected && (selected.caseId != null ? c.id !== selected.caseId : c.name !== selected.caseName)) continue;
     entries: for (const entry of c.algs.flat()) {
-      let body: string;
-      try { body = toMoveStringStrict(entry.alg); } catch { continue; }
-      if (!body || body.split(/\s+/).some(token => !parseScramble(token).length)) continue;
-      const moves = parseScramble(body);
-      for (let pre = 0; pre < 4; pre++) {
-        const after = applyMoves(opened[pre], 3, moves);
+      const prepared = prepareMoves(entry);
+      if (!prepared) continue;
+      const { body, moves } = prepared;
+      for (let pre = 0; pre < opened.length; pre++) {
+        const after = applyMoves(opened[pre], size, moves);
         for (let post = 0; post < (set === 'oll' ? 1 : 4); post++) {
-          if (!photoAlgGoal(set, applyMoves(after, 3, AUF_MOVES[post]))) continue;
-          const alg = mergeAdjacentMoves([AUFS[pre], body, AUFS[post]].filter(Boolean).join(' '));
-          if (!remaining.every(candidate => photoAlgGoal(set, applyMoves(candidate, 3, parseScramble(alg))))) continue;
+          if (!photoAlgGoal(set, applyMoves(after, size, AUF_MOVES[post]))) continue;
+          const alg = mergeAdjacentMoves([prefixes[pre], body, AUFS[post]].filter(Boolean).join(' '));
+          if (!remaining.every(candidate => photoAlgGoal(set, applyMoves(candidate, size, parseScramble(alg))))) continue;
           const slug = c.id == null ? [...slugs.bySlug].find(([, value]) => value === c)?.[0] : slugs.byId.get(c.id);
           if (!slug) continue;
           // Preserve the two numeric parts of legacy OLLCP names ("OLLCP13 6").
           if (!seen.has(alg)) {
             seen.add(alg);
-            yield { set, name: set === 'ollcp' && !c.meta?.ollcp ? c.name : primaryCaseName('3x3', set, c), caseName: c.name,
-              caseId: c.id, href: algCaseDetailHref('3x3', set, slug), alg, body, preAuf: AUFS[pre], postAuf: AUFS[post], turns: stm(alg),
+            yield { puzzle, set, name: set === 'ollcp' && !c.meta?.ollcp ? c.name : primaryCaseName(puzzle, set, c), caseName: c.name,
+              caseId: c.id, href: algCaseDetailHref(puzzle, set, slug), alg, body, preAuf: prefixes[pre], postAuf: AUFS[post], turns: stm(alg),
               thumbnail: { alg: body, setup: c.setup, sticker: c.sticker } };
           }
           // Each database entry needs one valid alignment, not four symmetry duplicates.

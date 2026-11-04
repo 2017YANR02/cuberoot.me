@@ -1,0 +1,15 @@
+.photo-camera-backdrop { position: fixed; inset: 0; z-index: 1200; display: grid; place-items: center; padding: 16px; background: color-mix(in srgb, var(--background) 70%, transparent); }
+.photo-camera-panel { width: min(680px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 18px; border: 1px solid var(--border-strong); border-radius: 16px; background: var(--card); color: var(--foreground); animation: cube-photo-reveal .18s ease-out; }
+.photo-camera-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+.photo-camera-header h2 { margin: 0; font-size: 20px; font-weight: 600; }
+.photo-camera-preview { position: relative; height: min(52dvh, 460px); min-height: 160px; overflow: hidden; border-radius: 10px; background: var(--muted); }
+.photo-camera-preview video { display: block; width: 100%; height: 100%; object-fit: contain; }
+.photo-camera-preview video[hidden] { display: none; }
+.photo-camera-status { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 14px; padding: 24px; color: var(--muted-foreground); font-size: 14px; text-align: center; background: var(--muted); }
+.photo-camera-status p { margin: 0; line-height: 1.6; }
+.photo-camera-actions { display: flex; justify-content: space-between; gap: 12px; margin-top: 18px; }
+.photo-camera-actions .cube-photo-action { min-height: 44px; }
+.photo-camera-spinner { animation: photo-camera-spin 1s linear infinite; }
+@keyframes photo-camera-spin { to { transform: rotate(360deg); } }
+@media (max-width: 600px) { .photo-camera-panel { padding: 14px; } }
+@media (prefers-reduced-motion: reduce) { .photo-camera-spinner, .photo-camera-panel { animation: none; } }
