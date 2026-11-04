@@ -1,68 +1,75 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Check, Copy } from '@app-foundation/icons/lucide';
 import BackHome from '@/components/BackHome';
-import { VisualCube } from '@/components/VisualCube';
-import { CUBE_COLOR_NAMES, CUBE_FILL, type CubeFace } from '@/lib/cube-colors';
+import AlgPlayer from '@/components/AlgPlayer';
 import { tr, useLang } from '@/i18n/tr';
+import {
+  availableLetteringGlyphs,
+  buildLetteringSegments,
+  buildLetteringWordSegments,
+  getLetteringPattern,
+  getLetteringWordPattern,
+  LETTERING_ORDERS,
+  LETTERING_WORD_MIN_ORDER,
+  type LetteringGlyph,
+  type LetteringOrder,
+  type LetteringWord,
+} from './_lib/lettering-alg';
 import './lettering.css';
 
-const GLYPHS = {
-  '王': ['11111', '00100', '11111', '00100', '11111'],
-  '中': ['00100', '11111', '10101', '11111', '00100'],
-  '十': ['00100', '00100', '11111', '00100', '00100'],
-  '山': ['00100', '10101', '10101', '10101', '11111'],
-  '田': ['11111', '10101', '11111', '10101', '11111'],
-  '口': ['11111', '10001', '10001', '10001', '11111'],
-  '工': ['11111', '00100', '00100', '00100', '11111'],
-} as const;
-
-type Glyph = keyof typeof GLYPHS;
-type CubeOrder = 5 | 7;
-
-const GLYPH_OPTIONS = Object.keys(GLYPHS) as Glyph[];
-const ORDER_OPTIONS: CubeOrder[] = [5, 7];
-const PALETTE: CubeFace[] = ['U', 'D', 'F', 'B', 'L', 'R'];
-const FACELET_ORDER: CubeFace[] = ['U', 'R', 'F', 'D', 'L', 'B'];
-
-function createPreview(glyph: Glyph, order: CubeOrder, foreground: CubeFace, background: CubeFace) {
-  const faceArea = order * order;
-  const stickerColors = FACELET_ORDER.flatMap(face => Array<string>(faceArea).fill(CUBE_FILL[face]));
-  const frontStart = faceArea * 2;
-  const offset = (order - 5) / 2;
-  const frontColors = Array<string>(faceArea).fill(CUBE_FILL[background]);
-
-  GLYPHS[glyph].forEach((row, rowIndex) => {
-    [...row].forEach((pixel, columnIndex) => {
-      if (pixel !== '1') return;
-      const index = (rowIndex + offset) * order + columnIndex + offset;
-      frontColors[index] = CUBE_FILL[foreground];
-    });
-  });
-
-  stickerColors.splice(frontStart, faceArea, ...frontColors);
-  return { stickerColors, frontColors };
-}
+const LETTERING_WORD: LetteringWord = '一生一世';
 
 export default function LetteringPage() {
   useLang();
-  const [glyph, setGlyph] = useState<Glyph>('王');
-  const [order, setOrder] = useState<CubeOrder>(5);
-  const [foreground, setForeground] = useState<CubeFace>('R');
-  const [background, setBackground] = useState<CubeFace>('U');
-  const preview = useMemo(
-    () => createPreview(glyph, order, foreground, background),
-    [glyph, order, foreground, background],
+  const [order, setOrder] = useState<LetteringOrder>(7);
+  const [glyph, setGlyph] = useState<LetteringGlyph>('王');
+  const [word, setWord] = useState<LetteringWord | null>(null);
+  const [copied, setCopied] = useState(false);
+  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const glyphOptions = useMemo(() => availableLetteringGlyphs(order), [order]);
+  const pattern = useMemo(
+    () => word ? getLetteringWordPattern(word, order) : getLetteringPattern(glyph, order),
+    [glyph, order, word],
   );
+  const segments = useMemo(
+    () => word ? buildLetteringWordSegments(word, order) : buildLetteringSegments(glyph, order),
+    [glyph, order, word],
+  );
+  const alg = useMemo(() => segments.join(' '), [segments]);
+  const contentLabel = word ?? glyph;
+  const patternSize = pattern.length;
+  const moveCount = alg.split(/\s+/).filter(Boolean).length;
+  const moveDurationMs = Math.max(48, Math.min(360, Math.round(28_000 / moveCount)));
+  const usesOuterPieces = word === null && (glyph === '生' || glyph === '世') && order === 7;
 
-  const chooseForeground = (next: CubeFace) => {
-    setForeground(next);
-    if (next === background) setBackground(foreground);
+  useEffect(() => () => {
+    if (copyTimer.current) clearTimeout(copyTimer.current);
+  }, []);
+
+  const copyAlg = async () => {
+    await navigator.clipboard.writeText(alg);
+    setCopied(true);
+    if (copyTimer.current) clearTimeout(copyTimer.current);
+    copyTimer.current = setTimeout(() => setCopied(false), 1600);
   };
 
-  const chooseBackground = (next: CubeFace) => {
-    setBackground(next);
-    if (next === foreground) setForeground(background);
+  const selectOrder = (nextOrder: LetteringOrder) => {
+    const nextGlyphs = availableLetteringGlyphs(nextOrder);
+    setOrder(nextOrder);
+    if (word && nextOrder < LETTERING_WORD_MIN_ORDER) setWord(null);
+    if (!nextGlyphs.includes(glyph)) setGlyph(nextGlyphs[0]);
+  };
+
+  const selectGlyph = (nextGlyph: LetteringGlyph) => {
+    setWord(null);
+    setGlyph(nextGlyph);
+  };
+
+  const selectWord = () => {
+    setWord(LETTERING_WORD);
+    if (order < LETTERING_WORD_MIN_ORDER) setOrder(LETTERING_WORD_MIN_ORDER);
   };
 
   return (
@@ -80,132 +87,102 @@ export default function LetteringPage() {
       <main className="lettering-shell lettering-main">
         <p className="lettering-intro">
           {tr({
-            zh: '选择一个字、魔方阶数和配色，生成正面像素效果图。',
-            en: 'Choose a character, cube size, and colours to generate a front-face pixel preview.',
+            zh: '选择阶数、汉字或“一生一世”，模拟器会从复原状态执行中心块换位子。',
+            en: 'Choose a cube order, character, or the four-character phrase. The simulator executes centre commutators from the solved state.',
           })}
         </p>
 
         <div className="lettering-workspace">
-          <section className="lettering-controls" aria-label={tr({ zh: '拼字设置', en: 'Lettering settings' })}>
+          <section className="lettering-controls" data-site-surface="panel" aria-label={tr({ zh: '拼字设置', en: 'Lettering settings' })}>
+            <fieldset>
+              <legend>{tr({ zh: '魔方阶数', en: 'Cube order' })}</legend>
+              <div className="lettering-order-grid">
+                {LETTERING_ORDERS.map(option => (
+                  <button
+                    key={option}
+                    type="button"
+                    className="lettering-order"
+                    aria-pressed={order === option}
+                    onClick={() => selectOrder(option)}
+                  >
+                    {tr({ zh: `${option}阶`, en: `${option}×${option}` })}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
             <fieldset>
               <legend>{tr({ zh: '汉字', en: 'Character' })}</legend>
               <div className="lettering-character-grid">
-                {GLYPH_OPTIONS.map(option => (
+                {glyphOptions.map(option => (
                   <button
                     key={option}
                     type="button"
                     className="lettering-character"
-                    aria-pressed={glyph === option}
-                    onClick={() => setGlyph(option)}
+                    aria-pressed={word === null && glyph === option}
+                    onClick={() => selectGlyph(option)}
                   >
                     {option}
                   </button>
                 ))}
               </div>
             </fieldset>
-
             <fieldset>
-              <legend>{tr({ zh: '魔方阶数', en: 'Cube size' })}</legend>
-              <div className="lettering-segmented">
-                {ORDER_OPTIONS.map(option => (
-                  <button
-                    key={option}
-                    className="lettering-order-button"
-                    type="button"
-                    aria-pressed={order === option}
-                    onClick={() => setOrder(option)}
-                  >
-                    {option}×{option}
-                  </button>
-                ))}
-              </div>
+              <legend>{tr({ zh: '多字词语', en: 'Multi-character phrase' })}</legend>
+              <button
+                type="button"
+                className="lettering-word"
+                aria-pressed={word === LETTERING_WORD}
+                onClick={selectWord}
+              >
+                {LETTERING_WORD}
+              </button>
             </fieldset>
-
-            <ColorPicker
-              label={tr({ zh: '文字颜色', en: 'Character colour' })}
-              value={foreground}
-              onChange={chooseForeground}
-            />
-            <ColorPicker
-              label={tr({ zh: '底色', en: 'Background colour' })}
-              value={background}
-              onChange={chooseBackground}
-            />
+            <p className="lettering-method">
+              {usesOuterPieces
+                ? tr({
+                  zh: `字形使用完整 7×7 正面点阵，外圈棱块也参与转动，共 ${moveCount} 步。`,
+                  en: `The glyph uses the full 7×7 front-face grid, including outer edge pieces, for ${moveCount} moves.`,
+                })
+                : tr({
+                  zh: `${word ? '词语' : '字形'}使用 ${patternSize}×${patternSize} 中心点阵；相邻层合并成块转动，再补不能合并的部分，共 ${moveCount} 步。棱角保持复原。`,
+                  en: `The ${word ? 'phrase' : 'glyph'} uses a ${patternSize}×${patternSize} centre grid. Adjacent layers turn as blocks before the remaining parts are filled, for ${moveCount} moves; edges and corners stay solved.`,
+                })}
+            </p>
           </section>
 
-          <section className="lettering-preview" aria-labelledby="lettering-preview-title">
+          <section className="lettering-preview" data-site-surface="panel" aria-labelledby="lettering-preview-title">
             <div className="lettering-preview-heading">
               <div>
                 <p>{order}×{order}</p>
-                <h2 id="lettering-preview-title">{glyph}</h2>
-              </div>
-              <span>{tr({ zh: '拖动可旋转', en: 'Drag to rotate' })}</span>
-            </div>
-
-            <div className="lettering-preview-grid">
-              <div className="lettering-cube-card">
-                <VisualCube
-                  view="iso"
-                  puzzleSize={order}
-                  stickerColors={preview.stickerColors}
-                  local
-                  interactive
-                  enlargeable
-                  size={260}
-                  alt={tr({ zh: `${order} 阶魔方“${glyph}”效果图`, en: `${order}×${order} cube preview for ${glyph}` })}
-                />
-              </div>
-
-              <div
-                className="lettering-face-grid"
-                style={{ gridTemplateColumns: `repeat(${order}, 1fr)` }}
-                role="img"
-                aria-label={tr({ zh: `正面“${glyph}”像素图`, en: `Front-face pixel preview for ${glyph}` })}
-              >
-                {preview.frontColors.map((color, index) => (
-                  <span key={index} style={{ backgroundColor: color }} />
-                ))}
+                <h2 id="lettering-preview-title">{contentLabel}</h2>
               </div>
             </div>
 
-            <p className="lettering-note">
-              {tr({
-                zh: '当前仅生成视觉效果图，不表示该状态可以通过转动得到。',
-                en: 'This version creates a visual preview only; the state is not guaranteed to be reachable by turns.',
-              })}
-            </p>
+            <div className="lettering-cube-card">
+              <AlgPlayer
+                alg={alg}
+                puzzle="5x5"
+                puzzleOrder={order}
+                set=""
+                startSolved
+                autoPlay
+                interactionMode="view"
+                moveDurationMs={moveDurationMs}
+                fillPane
+              />
+            </div>
+
+            <div className="lettering-alg-heading">
+              <h3>{tr({ zh: '拼字公式', en: 'Lettering alg' })}</h3>
+              <button type="button" onClick={() => void copyAlg()}>
+                {copied ? <Check size={16} aria-hidden /> : <Copy size={16} aria-hidden />}
+                {copied ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: '复制公式', en: 'Copy alg' })}
+              </button>
+            </div>
+            <pre className="lettering-alg"><code>{segments.join('\n')}</code></pre>
           </section>
         </div>
       </main>
     </div>
-  );
-}
-
-function ColorPicker({ label, value, onChange }: {
-  label: string;
-  value: CubeFace;
-  onChange: (face: CubeFace) => void;
-}) {
-  return (
-    <fieldset>
-      <legend>{label}</legend>
-      <div className="lettering-colors">
-        {PALETTE.map(face => {
-          const name = tr(CUBE_COLOR_NAMES[face]);
-          return (
-            <button
-              key={face}
-              type="button"
-              className="lettering-color"
-              aria-label={name}
-              aria-pressed={value === face}
-              title={name}
-              style={{ backgroundColor: CUBE_FILL[face] }}
-              onClick={() => onChange(face)}
-            />
-          );
-        })}
-      </div>
-    </fieldset>
   );
 }
