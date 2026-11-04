@@ -248,8 +248,7 @@ function ChangeCard({ change: c, isZh, t, admin, onModerated }: {
       </div>
 
       <div className="rw-card-person">
-        {c.personIso2 && <Flag iso2={c.personIso2} spanClassName="rw-flag" imgClassName="rw-flag-ct" />}
-        <PersonLink wcaId={c.wcaId} className="rw-person-link">{personName}</PersonLink>
+        <PersonLink flag={<>{c.personIso2 && <Flag iso2={c.personIso2} spanClassName="rw-flag" imgClassName="rw-flag-ct" />}</>} wcaId={c.wcaId} className="rw-person-link">{personName}</PersonLink>
       </div>
 
       <div className="rw-card-context">

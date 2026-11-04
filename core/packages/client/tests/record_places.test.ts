@@ -209,7 +209,7 @@ describe('record place details', () => {
   });
 
   it('keeps both record pages on the shared row table', () => {
-    const recordsPage = readFileSync(new URL('../app/[lang]/wca/records/page.tsx', import.meta.url), 'utf8');
+    const recordsPage = readFileSync(new URL('../components/wca-records/RecordsView.tsx', import.meta.url), 'utf8');
     const placeRankings = readFileSync(new URL('../app/[lang]/wca/comp/stats/RecordPlaceRankings.tsx', import.meta.url), 'utf8');
     expect(recordsPage).toContain("@/components/wca-records/WcaRecordRowsTable");
     expect(placeRankings).toContain("@/components/wca-records/WcaRecordRowsTable");

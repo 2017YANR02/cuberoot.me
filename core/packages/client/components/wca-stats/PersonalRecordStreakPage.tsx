@@ -105,7 +105,7 @@ function PersonalRecordStreakPageInner() {
                 <tr>
                   <th className="wse-rank-col">#</th>
                   <th className="wse-value-col">{tr({ zh: '参赛场数', en: 'Competitions' })}</th>
-                  <th>{tr({ zh: '选手', en: 'Person' })}</th>
+                  <th className="wca-person-column">{tr({ zh: '选手', en: 'Person' })}</th>
                   <th>{tr({ zh: '起始比赛', en: 'Started at' })}</th>
                   <th>{tr({ zh: '结束比赛', en: 'Ended at' })}</th>
                   <th title={tr({ zh: '结束比赛是该选手目前最后一场比赛', en: "The streak ends at the person's latest competition" })}>
@@ -119,8 +119,7 @@ function PersonalRecordStreakPageInner() {
                     <td className="wse-rank-col">{row.rank}</td>
                     <td className="wse-value-col">{row.streak}</td>
                     <td>
-                      {row.iso2 && <Flag iso2={row.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
-                      <PersonLink wcaId={row.wcaId} name={row.name} isZh={isZh} />
+                      <PersonLink flag={<>{row.iso2 && <Flag iso2={row.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}</>} wcaId={row.wcaId} name={row.name} isZh={isZh} />
                     </td>
                     <td>{row.startCompId ? <AppLink {...compLinkProps(row.startCompId)}><CompCell compId={row.startCompId} compName={row.startCompName} isZh={isZh} date={null} /></AppLink> : '—'}</td>
                     <td>{row.endCompId ? <AppLink {...compLinkProps(row.endCompId)}><CompCell compId={row.endCompId} compName={row.endCompName} isZh={isZh} date={null} /></AppLink> : '—'}</td>

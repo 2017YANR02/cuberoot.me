@@ -21,6 +21,7 @@ import WcaEventSelector from '@/components/WcaEventSelector';
 import { EVENT_NAME_TO_ID, ALL_EVENT_IDS } from '@/lib/event-constants';
 import { loadFlagData, flagDataVersion } from '@/lib/country-flags';
 import { statsUrl } from '@/lib/stats-base';
+import { WR_METRICS } from '@/lib/wr-metrics';
 import Top10HistoryPage from '@/components/wca-stats/Top10HistoryPage';
 import type { Metric as Top10Metric } from '@/lib/top10-axis';
 import type { StatData, StatSection, StatPanel, MetricPanel } from './WcaStatView.types';
@@ -35,6 +36,13 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface WcaStatViewProps {
   statId: string;
+  /** Host owns navigation when embedded in the unified results page. */
+  panelId?: string;
+  panelNavigation?: React.ReactNode;
+  eventId?: string;
+  onEventChange?: (event: string) => void;
+  hideEventSelector?: boolean;
+  historyLayout?: 'grouped' | 'mixed';
   /** 'full' = 路由页(.wca-stats-page 暗锁外壳 + h1 + note + 标题由路由 metadata 管理);
    *  'note' = 嵌入(渲染 note 段 + 选择器 + 面板,无 h1,不改变路由 metadata);
    *  'none' = 嵌入且连 note 也不渲染。 */
@@ -51,7 +59,7 @@ interface WcaStatViewProps {
   afterEventSelector?: React.ReactNode | ((availableMetricIds: ReadonlySet<string>) => React.ReactNode);
 }
 
-export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metricId = null, eventSelectorPresentation = 'menu', afterEventSelector = null }: WcaStatViewProps) {
+export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metricId = null, eventSelectorPresentation = 'menu', afterEventSelector = null, panelId, panelNavigation, eventId, onEventChange, hideEventSelector = false, historyLayout }: WcaStatViewProps) {
   const { i18n } = useTranslation();
   const [data, setData] = useState<StatData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -129,10 +137,21 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
     if (idx !== -1) setActiveMetric(idx);
   }, [metricId, data]);
 
+  const controlledMetric = data?.metricPanels?.find(mp => mp.id === metricId);
+  const effectiveMetric = controlledMetric ? data!.metricPanels!.indexOf(controlledMetric) : activeMetric;
+  const note = statId === 'wr_metric'
+    ? WR_METRICS.find(metric => metric.id === data?.metricPanels?.[effectiveMetric]?.id)?.definition
+    : data?.note ? { zh: data.noteZh ?? data.note, en: data.note } : undefined;
+  const effectivePanel = panelId
+    ? Math.max(0, (controlledMetric ?? data?.metricPanels?.[effectiveMetric])?.panels?.findIndex(p => p.id === panelId) ?? 0)
+    : activePanel;
+  const effectiveEvent = eventId ?? selectedEvent;
+
   const handleSelectEvent = useCallback((ev: string) => {
+    if (onEventChange) { onEventChange(ev); return; }
     setSelectedEvent(ev);
     setUrlState({ [k('event')]: ev || null });
-  }, [setUrlState, k]);
+  }, [setUrlState, k, onEventChange]);
 
   useEffect(() => {
     const metric = data?.metricPanels?.[activeMetric];
@@ -192,12 +211,12 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
   }, [data]);
 
   const availableMetricIds = useMemo(
-    () => metricIdsWithDataForEvent(data?.metricPanels ?? [], selectedEvent || undefined),
-    [data?.metricPanels, selectedEvent],
+    () => metricIdsWithDataForEvent(data?.metricPanels ?? [], effectiveEvent || undefined),
+    [data?.metricPanels, effectiveEvent],
   );
 
   useEffect(() => {
-    if (renderMode !== 'annual' && availableEvents.size > 0 && !selectedEvent) {
+    if (eventId === undefined && renderMode !== 'annual' && availableEvents.size > 0 && !selectedEvent) {
       const urlEvent = new URLSearchParams(window.location.search).get(k('event'));
       const initial = (urlEvent && availableEvents.has(urlEvent))
         ? urlEvent
@@ -207,9 +226,9 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
         setUrlState({ [k('event')]: initial });
       }
     }
-  }, [availableEvents, selectedEvent, setUrlState, k, renderMode]);
+  }, [availableEvents, selectedEvent, setUrlState, k, renderMode, eventId]);
 
-  const showEventSelector = !['annual', 'records', 'rows', 'empty'].includes(renderMode) && availableEvents.size >= 2;
+  const showEventSelector = !hideEventSelector && !['annual', 'records', 'rows', 'empty'].includes(renderMode) && availableEvents.size >= 2;
 
   // headerMode='full' = 路由页:.wca-stats-page 自带暗锁 + 页面内边距 + h1。
   // 嵌入页(note/none)宿主已是暗锁的 .wse-page,用轻量壳,免重复暗锁/双层内边距。
@@ -242,7 +261,7 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
         <WcaEventSelector
           presentation={eventSelectorPresentation}
           availableEvents={availableEvents}
-          selectedEvent={selectedEvent}
+          selectedEvent={effectiveEvent}
           onSelect={handleSelectEvent}
           isZh={isZh}
         />
@@ -262,11 +281,11 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
             {isCrossCityStreak && data.note && <>{' '}<InfoTooltip
               icon={HelpCircle} iconSize={20}
               ariaLabel={tr({ zh: '统计口径', en: 'Counting rules' })}
-              content={tr({ zh: data.noteZh ?? data.note, en: data.note })}
+              content={note ? tr(note) : ''}
             /></>}
           </PageHeading>
-          {data.note && !isCrossCityStreak && (
-            <p className="wca-stats-note">{tr({ zh: data.noteZh ?? data.note, en: data.note })}</p>
+          {note && !isCrossCityStreak && (
+            <p className="wca-stats-note">{tr(note)}</p>
           )}
         </div>
       )}
@@ -277,8 +296,8 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
       {!['sections', 'panels', 'metricPanels'].includes(renderMode) && (showEventSelector || afterEventSelector) && (
         <div className="wca-stats-tab-bar">{filterControls}</div>
       )}
-      {headerMode === 'note' && data.note && (
-        <p className="wca-stats-note wca-stats-embedded-note">{tr({ zh: data.noteZh ?? data.note, en: data.note })}</p>
+      {headerMode === 'note' && note && (
+        <p className="wca-stats-note wca-stats-embedded-note">{tr(note)}</p>
       )}
 
       {renderMode === 'rows' && data.rows && data.years && data.cumulative && (
@@ -316,7 +335,7 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
           sections={data.sections}
           searchTerm={searchTerm}
           isZh={isZh}
-          selectedEvent={showEventSelector ? selectedEvent : undefined}
+          selectedEvent={eventId !== undefined ? eventId || undefined : showEventSelector ? selectedEvent : undefined}
         />
       )}
 
@@ -326,7 +345,7 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
           panels={data.panels}
           searchTerm={searchTerm}
           isZh={isZh}
-          selectedEvent={showEventSelector ? selectedEvent : undefined}
+          selectedEvent={eventId !== undefined ? eventId || undefined : showEventSelector ? selectedEvent : undefined}
           activePanel={activePanel}
           onSetActivePanel={(idx) => handleSetActivePanel(idx, data.panels!)}
         />
@@ -339,18 +358,20 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
           metricGroups={data.metricGroups}
           searchTerm={searchTerm}
           isZh={isZh}
-          selectedEvent={showEventSelector ? selectedEvent : undefined}
+          selectedEvent={eventId !== undefined ? eventId || undefined : showEventSelector ? selectedEvent : undefined}
           availableMetricIds={availableMetricIds}
           hideSelector={metricId != null}
-          activeMetric={activeMetric}
+          activeMetric={effectiveMetric}
+          panelNavigation={panelNavigation}
+          historyLayout={historyLayout}
           sourceId={urlState[k('source')]}
           onSetSource={source => { void setUrlState({ [k('source')]: source }); }}
           onSetActiveMetric={(idx) => handleSetActiveMetric(idx, data.metricPanels!)}
           onSetActivePanel={(idx, panels) => handleSetActivePanel(idx, panels)}
-          activePanel={activePanel}
+          activePanel={effectivePanel}
           belowTabs={(() => {
             // NOTE: wr_metric ranking 面板专属——bar chart race 渲染在 排名/历史 tabs 下方、表格上方
-            if (statId !== 'wr_metric' || activePanel !== 0) return null;
+            if (statId !== 'wr_metric' || effectivePanel !== 0) return null;
             const METRIC_KEY: Record<string, Top10Metric> = {
               single: 'single', average: 'average',
               bao5: 'bao5', wao5: 'wao5', mo5: 'mo5',
@@ -358,12 +379,12 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
               median: 'median', bestc: 'best_counting', worstc: 'worst_counting',
               worst: 'worst',
             };
-            const mp = data.metricPanels?.[activeMetric];
+            const mp = data.metricPanels?.[effectiveMetric];
             const m = mp ? METRIC_KEY[mp.id] : undefined;
             if (!m) return null;
             return (
               <Top10HistoryPage
-                controlledEventId={selectedEvent || '333'}
+                controlledEventId={effectiveEvent || '333'}
                 controlledMetric={m}
                 controlledMetricLabelZh={mp?.labelZh}
                 controlledMetricLabelEn={mp?.labelEn}

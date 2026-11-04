@@ -1,5 +1,17 @@
 /* Records 页样式 — 使用全站主题 token */
 
+.records-page > .wse-table-wrapper {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.records-page .wca-record-rows-table thead th {
+  --sticky-thead-background: transparent;
+  background: transparent;
+}
+
 /* 废止项目向右展开，箭头终态与内容方向一致。 */
 .records-page .event-btn-more.is-open > .more-toggle-chevron {
   transform: rotate(-90deg);
@@ -17,6 +29,9 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
+}
+.records-toolbar-row > .wca-stats-tab-bar {
+  margin: 0;
 }
 /* 项目在首位，控件按内容宽度同行排列，窄屏自然换行。 */
 .records-toolbar-row .records-toolbar-select { flex-shrink: 0; }

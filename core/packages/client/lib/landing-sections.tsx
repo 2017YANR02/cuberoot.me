@@ -74,7 +74,6 @@ const CARD_VISUALS: Partial<Record<SiteDirectoryEntry['id'], CardVisual>> = {
   recon: { iconText: '// xcross' },
   scramble: { iconText: "S' U' M'" },
   competitions: { Icon: CheckeredFlagIcon },
-  'wca-records': { record: 'WR' },
   'wca-results': { Icon: ListOrdered },
   'wca-stats': { iconImg: '/icons/wca.svg' },
   memo: { Icon: Brain },

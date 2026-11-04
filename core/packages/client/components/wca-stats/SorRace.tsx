@@ -1,9 +1,8 @@
 'use client';
-import '@cuberoot/timer-ui/compact-select.css';
 
 // NOTE: SOR(名次和)排名演化 — bar chart race
 //   展示完全复用 wr_metric:横条/坐标轴/网格走共享 <BarRaceChart>(0 锚定 + 真实值长度),
-//   scope 选择走共享 <RegionPicker>(世界/大洲/国家三态 + 国旗 + 双语)。本组件只负责
+//   scope/metric 跟随宿主页的国家和类型筛选。本组件只负责
 //   取数(逐比赛日帧)+ 播放控制 + banner/note。数据源:stats/sor_over_time.json(索引)
 //   + stats/sor_over_time/{scope}.json(per-scope lazy)。
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
@@ -21,7 +20,6 @@ import { countryName } from '@/lib/country-name';
 import { CONTINENT_HUE } from '@/lib/bar-race-colors';
 import { type Continent } from '@/lib/country-continents';
 import { niceAxis } from '@/lib/top10-axis';
-import { RegionPicker } from '@/components/RegionPicker';
 import BarRaceChart from '@/components/wca-stats/BarRaceChart';
 import { tr } from '@/i18n/tr';
 import './top10_history.css';
@@ -77,15 +75,13 @@ function rowHeightPx(): number {
   return 44;
 }
 
-export default function SorRace() {
+export default function SorRace({ metric, region }: { metric: Metric; region: string }) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
 
   const [index, setIndex] = useState<SorIndex | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // region: 'world' | 大洲 slug | 国家 iso2(小写,RegionPicker 约定)
-  const [region, setRegion] = useState<string>('world');
-  const [metric, setMetric] = useState<Metric>('single');
+  // region: 'world' | 大洲 slug | 国家 iso2，由宿主页统一映射。
   const [cache] = useState<Map<string, ScopeData>>(() => new Map());
   const [, setCacheTick] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -208,32 +204,9 @@ export default function SorRace() {
   const metricLabel = metric === 'single'
     ? tr({ zh: '单次', en: 'Single' })
     : tr({ zh: '平均', en: 'Average' });
-  const countriesIso2 = index.scopes.countries.map(c => c.iso2);
 
   return (
     <div className="t10h-page t10h-embedded sor-race">
-      {/* ── 顶部控制条:scope(RegionPicker)+ metric ── */}
-      <div className="sor-race-bar">
-        <select
-          value={String(metric === 'single')}
-          onChange={event => { const v = event.currentTarget.value === 'true'; setMetric(v ? 'single' : 'average'); }}
-          aria-label={tr({ zh: '单次 / 平均', en: 'Single / Average' })}
-          className={['native-select', "sor-race-metric"].filter(Boolean).join(' ')}
-        >
-          <option value="true">{tr({ zh: '单次', en: 'Single' })}</option>
-          <option value="false">{tr({ zh: '平均', en: 'Average' })}</option>
-        </select>
-        <RegionPicker
-          isZh={isZh}
-          value={region}
-          onChange={setRegion}
-          restrictTo={countriesIso2}
-          allLabel={tr({ zh: '世界', en: 'World' })}
-          searchPlaceholder={tr({ zh: '搜索地区...', en: 'Search region...' })}
-          className="sor-race-region"
-        />
-      </div>
-
       {/* ── 黑色舞台 ── */}
       <div className="t10h-stage">
         <div className="t10h-banner">

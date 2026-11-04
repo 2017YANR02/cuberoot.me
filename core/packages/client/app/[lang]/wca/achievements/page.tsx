@@ -40,7 +40,7 @@ export default function AchievementsPage() {
     {
       kind: 'wr' as const,
       description: t('在现役 WCA 项目中，当前单次或平均世界排名为第一，包括并列第一。多个项目合并为一枚徽章，明细区分单次和平均；排名更新后不再保持纪录时，徽章随之移除。', 'Currently rank first, including ties, in single or average for an active WCA event. One badge groups all qualifying events and distinguishes singles from averages. It disappears when updated rankings no longer qualify.'),
-      href: '/wca/records?show=current&region=world',
+      href: '/wca/results?tab=records&rshow=current&rregion=world',
       link: t('查看当前世界纪录保持者', 'View current world record holders'),
     },
     {
@@ -58,19 +58,19 @@ export default function AchievementsPage() {
     {
       kind: 'historicalWR' as const,
       description: t('该项目的正式单次或平均成绩曾获 WR 标记。', 'An official single or average in this event has received a WR marker.'),
-      href: '/wca/records?show=history&region=world',
+      href: '/wca/results?tab=records&rshow=history&rregion=world',
       link: t('查看历史纪录', 'View record history'),
     },
     {
       kind: 'historicalCR' as const,
       description: t('该项目的正式单次或平均成绩曾获洲际纪录标记，如 AsR、ER、NAR。', 'An official single or average in this event has received a continental record marker, such as AsR, ER or NAR.'),
-      href: '/wca/records?show=history&region=asia',
+      href: '/wca/results?tab=records&rshow=history&rregion=asia',
       link: t('查看洲际纪录，可切换大洲', 'View continental records; select a continent'),
     },
     {
       kind: 'historicalNR' as const,
       description: t('该项目的正式单次或平均成绩曾获 NR 标记。', 'An official single or average in this event has received an NR marker.'),
-      href: '/wca/records?show=history&region=CN',
+      href: '/wca/results?tab=records&rshow=history&rregion=CN',
       link: t('查看国家纪录，可切换国家', 'View national records; select a country'),
     },
   ];

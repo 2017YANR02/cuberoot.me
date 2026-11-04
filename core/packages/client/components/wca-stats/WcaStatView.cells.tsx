@@ -123,6 +123,7 @@ function renderLinkedSegment(segment: string, segIdx: number, isZh: boolean | un
     const wcaId = extractWcaId(url);
     const compId = extractCompId(url);
     const iso2 = wcaId ? (personCountry ?? personFlagIso2(wcaId)) : compId ? compFlagIso2(compId) : '';
+    if (wcaId) parts.push(<WcaPersonTeamBadge key={`team-${segIdx}-${match.index}`} wcaId={wcaId} />);
     if (iso2 && withFlag) {
       parts.push(<Flag key={`flag-${segIdx}-${match.index}`} iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />);
       parts.push(' ');
@@ -150,7 +151,7 @@ function renderLinkedSegment(segment: string, segIdx: number, isZh: boolean | un
       compId && internalHref
         ? <Link key={`${segIdx}-${match.index}`} href={internalHref} onMouseEnter={prefetch} onFocus={prefetch} onTouchStart={prefetch}>{displayText}</Link>
         : internalHref
-          ? <React.Fragment key={`${segIdx}-${match.index}`}><Link  href={internalHref} prefetch={false}>{displayText}</Link><WcaPersonTeamBadge wcaId={wcaId} /></React.Fragment>
+          ? <React.Fragment key={`${segIdx}-${match.index}`}><Link  href={internalHref} prefetch={false}>{displayText}</Link></React.Fragment>
           : <a key={`${segIdx}-${match.index}`} href={url} target="_blank" rel="noopener noreferrer">{displayText}</a>
     );
     lastIndex = match.index + match[0].length;
@@ -256,22 +257,7 @@ export function shouldHideCountryCol(colKey: string, header: StatHeader[]): bool
   return header.some(h => h.key === 'person' || h.key === 'name');
 }
 
-export function parseTimeValue(s: string): number {
-  if (!s || s === 'DNF' || s === 'DNS') return NaN;
-  const m = s.match(/^(\d+):(\d+\.\d+)$/);
-  if (m) return parseInt(m[1], 10) * 60 + parseFloat(m[2]);
-  const v = parseFloat(s);
-  return isNaN(v) ? NaN : v;
-}
-
-export function extractSolvesCell(row: unknown[]): { _type: 'solves'; csv: string } | null {
-  for (const cell of row) {
-    if (cell && typeof cell === 'object' && (cell as Record<string, unknown>)._type === 'solves') {
-      return cell as { _type: 'solves'; csv: string };
-    }
-  }
-  return null;
-}
+export { parseTimeValue, extractSolvesCell } from '@/lib/wca-stat-values';
 
 export function extractTextFromMdLink(s: string): string {
   const m = String(s).match(/^\[([^\]]+)\]\([^)]+\)$/);

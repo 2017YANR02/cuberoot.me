@@ -928,7 +928,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   },
   'wca/records': { title: { zh: '纪录', en: 'Records' } },
   'wca/result-watch': { title: { zh: '成绩变更监控', en: 'Result Change Monitor' } },
-  'wca/results': { title: { zh: '排名', en: 'Rankings' } },
+  'wca/results': { title: { zh: '成绩', en: 'Results' } },
   'wca/teams': { title: { zh: '厂商与战队', en: 'Brands & Teams' }, description: { zh: '查看已登记厂商、旗下战队与选手名单。', en: 'Browse registered brands, teams and their members.' } },
   'wca/success-rate': { title: { zh: '完成率', en: 'Success Rate' } },
   'why-cube': {

@@ -2,9 +2,43 @@
   display: inline-flex;
   vertical-align: middle;
   align-items: center;
-  margin-inline-start: 0.35em;
   font-size: 0.8em;
   font-weight: normal;
   line-height: 1;
   text-decoration: none;
+}
+
+.wca-person-team-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  margin-inline-end: 0.35rem;
+}
+.wca-person-team-slot:empty { display: none; }
+/* Reserve the same logo space in every table row, including unaffiliated people. */
+table .wca-person-team-slot {
+  width: 3rem;
+  min-width: 3rem;
+  flex: 0 0 3rem;
+}
+table .wca-person-team-slot:empty { display: inline-flex; }
+table .wca-person-team-slot .wca-person-team-badge,
+table .wca-person-team-slot .cubing-brand-label {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+table .wca-person-team-slot .cubing-brand-logo { max-width: 100%; }
+
+/* Header starts at the same flag position as the cells below it. */
+th.wca-person-column::before {
+  content: '';
+  display: inline-block;
+  width: calc(3rem + 0.35rem + var(--wca-person-column-gap, 0px));
+}
+table:has(.wse-person-cell) { --wca-person-column-gap: 6px; }
+table:has(.wca-team-person) { --wca-person-column-gap: 12px; }
+@media (max-width: 520px) {
+  table:has(.wca-team-person) { --wca-person-column-gap: 8px; }
 }

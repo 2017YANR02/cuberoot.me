@@ -1,17 +1,17 @@
 'use client';
-import MoreToggle from '@/components/MoreToggle';
 import '@cuberoot/timer-ui/compact-select.css';
 
 /**
- * 排名 — /wca/results
- * 同一条事件选择器,按「选中项目数」驱动两种视图:
+ * 成绩 — /wca/results
+ * 排名 / 纪录共用一层导航,切换时同步适用的项目、类型、地区和性别。
+ * 旧 /wca/records 在验收期间继续使用同一纪录组件。
+ * 普通排名使用同一条事件选择器,按「选中项目数」驱动两种视图:
  *   选 1 项  → 单项排名(show=results 每条成绩 / show=persons 每选手年末累积最佳;截至/当期口径)
- *   选 2+ 项 → 名次和(把所选项目的世界/国家排名相加;含查选手最优组合 + 名人堂 + 排名演化)
+ *   选 2+ 项 → 名次和(把所选项目的世界/国家排名相加;含查选手最优组合 + 排名演化)
  * 交互(累加):点事件 = 加入/取消对比(留 1 项回单项);分类快选替换整组;清除 → 空。
  * 合并自原 /wca/sum-of-ranks(已整页并入,旧路由弃用)。
  */
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
-import type { EChartsType } from 'echarts';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import PageHeading from '@/components/PageHeading';
 import { UnofficialMark } from '@/components/UnofficialMark';
@@ -19,7 +19,7 @@ import dynamic from 'next/dynamic';
 import { WcaPersonRelationCells, useWcaTeams } from './_components/WcaTeamCell';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { HelpCircle } from '@app-foundation/icons/lucide';
+import { HelpCircle, Search, ChevronDown } from '@app-foundation/icons/lucide';
 import Paginator from '@/components/wca-stats/Paginator';
 import NameStatsView, { type NameStatsData } from '@/components/wca-stats/NameStatsView';
 import { type NameMode, NAME_MODES, nameByMode, FormerNames } from '@/components/wca-stats/nameMode';
@@ -29,6 +29,7 @@ import { Flag } from '@/components/Flag';
 import { loadFlagData } from '@/lib/country-flags';
 import { CompCell } from '@/components/CompCell/CompCell';
 import { ClearButton } from '@/components/ClearButton';
+import { SearchInput } from '@/components/SearchInput';
 import { AttemptHeaderCells, AttemptCells } from '@/components/wca-results/AttemptsGrid';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -37,7 +38,8 @@ import { RecordBadge } from '@/components/RecordBadge';
 import { apiUrl } from '@/lib/api-base';
 import { compLinkProps } from '@/lib/comp-link';
 import { useCountries } from '@/components/wca-stats/useCountries';
-import RegionCountrySelect from '@/components/wca-stats/RegionCountrySelect';
+import RegionCountrySelect, { countryToRecordRegion, recordRegionToCountry } from '@/components/wca-stats/RegionCountrySelect';
+import { WcaGenderSelect } from '@/components/wca-stats/WcaGenderSelect';
 import { countryName } from '@/lib/country-name';
 import { EventIcon } from '@/components/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
@@ -46,6 +48,7 @@ import BoolToggle from '@/components/BoolToggle';
 import { WcaStatView } from '@/components/wca-stats/WcaStatView';
 import { WR_METRICS, RANK_TYPE_IDS, DEFAULT_METRIC_ID } from '@/lib/wr-metrics';
 import '../_wca_stats_extra.css';
+import '@/components/wca-stats/wca-stats-controls.css';
 import { tr } from '@/i18n/tr';
 import '@/i18n/i18n-client';
 import {
@@ -55,16 +58,19 @@ import {
 import { WcaRelationColumnHeader, teacherFilterItems } from '@/components/WcaRelationColumnHeader';
 import { wcaTeamSelectItems } from '@/components/wca-team-select-items';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { useMembership } from '@/hooks/useMembership';
+import { useRequireMembership } from '@/hooks/useRequireMembership';
+import { useAuthUser } from '@/lib/auth-store';
+import { WCA_ID_REGEX } from '@cuberoot/shared/wca-person';
+import MyStudentsPrompt from './_components/MyStudentsPrompt';
 
 // Persons / Results display mode for the WCA ranking view — was exported by the
 // (now removed) ShowToggle component; this page is its sole consumer.
 type ShowMode = 'persons' | 'results';
 
-// echarts-for-react / SorRace 仅客户端,名次和的名人堂时间线 + 排名演化用,懒挂.
-// 图表自身带 height:190,但 chunk 到之前这块是 0 高 → 常显位置会跳一下。占位补上。
-const ReactECharts = dynamic(() => import('echarts-for-react'), {
+const RecordsView = dynamic(() => import('@/components/wca-records/RecordsView'), {
   ssr: false,
-  loading: () => <div style={{ height: 190 }}><LoadingIndicator /></div>,
+  loading: () => <div className="wse-state"><LoadingIndicator /></div>,
 });
 const SorRace = dynamic(() => import('@/components/wca-stats/SorRace'), { ssr: false });
 // 单项视图(单次 / 平均)排名表上方常显的「纪录走势」bar chart race —— 复用 wr_metric 的同款组件(受控:
@@ -120,9 +126,6 @@ interface SorRow {
   bestYear?: number | null;
   bestTotal?: number | null;
 }
-interface CensusRow { rank: number; wcaId: string; name: string; iso2: string | null; subsetsWon: number; }
-interface Census { type: string; inclCancelled: boolean; noPodium?: boolean; year: number | null; years: number[]; distinct: number; totalSubsets: number; rows: CensusRow[]; }
-interface TimelinePoint { year: number; distinct: number; }
 
 function AllResultsPageInner() {
   const { i18n } = useTranslation();
@@ -130,6 +133,16 @@ function AllResultsPageInner() {
   const personHref = (id: string) => `/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${id}`;
   const [query, setQuery] = useQueryStates(
     {
+      rtype: parseAsString,
+      rdetails: parseAsString,
+      scancelled: parseAsString,
+      revent: parseAsString,
+      rshow: parseAsString,
+      rregion: parseAsString,
+      rgender: parseAsString,
+      mevent: parseAsString,
+      mtype: parseAsString,
+      tab: parseAsString,       // records = 纪录;rank = 排名;无参数时默认纪录,兼容旧排名深链
       view: parseAsString,      // 'metric' = 嵌入 wr_metric 指标视图;其余/null = 排名
       mmetric: parseAsString,   // 指标视图选中的指标 id(WcaStatView 的 scoped 'm'+'metric');顶层下拉驱动
       events: parseAsString,    // 逗号串;null=默认 333;'__none__'=空
@@ -144,7 +157,7 @@ function AllResultsPageInner() {
       basis: parseAsString,
       team: parseAsString,
       teacherFilter: parseAsString,
-      teacher: parseAsString, // 分享视图:只展示该 WCA ID 的老师姓名
+      myStudents: parseAsString, // One-time continuation after login/membership; never a shared identity.
       hidePodium: parseAsString, // 名次和:未登领奖台
       ssort: parseAsString,      // 名次和表头排序:'total'(默认) | 'best'(历史最佳名次) | 项目 id(单项名次列)
       sdir: parseAsString,       // 名次和排序方向:'asc'(默认) | 'desc'
@@ -161,7 +174,17 @@ function AllResultsPageInner() {
 
   // ---- 顶层视图:排名(本页原功能) / 指标(嵌入退役 wr_metric 的某个派生指标视图) ----
   // 统一在「排名」标题下:单次 / 平均 = 排名表;派生指标 = wr_metric 记录视图。不再出现「指标」字样。
-  const view: 'rank' | 'metric' = query.view === 'metric' ? 'metric' : 'rank';
+  // Legacy metric-history links now open Records with the same metric/event.
+  const legacyMetricHistory = query.tab !== 'records' && query.view === 'metric' && query.mtype === 'history';
+  const recordsActive = query.tab === 'records' || legacyMetricHistory || Object.values(query).every(value => value === null);
+  useEffect(() => {
+    if (legacyMetricHistory) {
+      void setQuery({ tab: 'records', rshow: 'history', rtype: query.mmetric || DEFAULT_METRIC_ID,
+        revent: query.mevent || '333', rregion: 'world', rgender: null, mtype: null,
+        rdetails: RANK_TYPE_IDS.has(query.mmetric || '') ? '1' : null });
+    } else if (recordsActive && query.tab === null) void setQuery({ tab: 'records' });
+  }, [recordsActive, legacyMetricHistory, query.tab, query.mmetric, query.mevent, setQuery]);
+  const view: 'rank' | 'metric' | 'records' = recordsActive ? 'records' : query.view === 'metric' ? 'metric' : 'rank';
 
   // ---- 选中项目 → 模式 ----
   const selectedSet: Set<string> = useMemo(() => {
@@ -187,9 +210,12 @@ function AllResultsPageInner() {
   // 切换:single/average → 排名视图(清 view+mmetric);其余 id → 指标视图(view=metric, mmetric=id)
   const onTypeViewChange = (id: string) => {
     if (RANK_TYPE_IDS.has(id)) {
-      setQuery({ view: null, mmetric: null, type: id === 'average' ? 'average' : 'single', page: null });
+      setQuery({ view: null, mmetric: null, type: id === 'average' ? 'average' : 'single',
+        events: view === 'metric' ? query.mevent || '333' : query.events, page: null });
     } else {
-      setQuery({ view: 'metric', mmetric: id, type: 'single', page: null });
+      setQuery({ view: 'metric', mmetric: id,
+        mevent: view === 'metric' ? query.mevent || '333' : mode === 'single' ? singleEvent : query.mevent || '333',
+        mtype: 'ranking', type: 'single', page: null });
     }
   };
   const country = query.country ?? '';
@@ -204,10 +230,6 @@ function AllResultsPageInner() {
   const qMode = ['first', 'last', 'exact'].includes(query.qmode ?? '') ? query.qmode! : 'any';
   const teamFilter = query.team ?? '';
   const teacherFilter = query.teacherFilter ?? '';
-  const requestedTeacherWcaId = (query.teacher ?? '').trim().toUpperCase();
-  const visibleTeacherWcaId = /^\d{4}[A-Z0-9]{4}\d{2}$/.test(requestedTeacherWcaId)
-    ? requestedTeacherWcaId
-    : '';
   const page = parseInt(query.page ?? '1', 10);
   const size = parseInt(query.size ?? '100', 10);
   const hidePodium = query.hidePodium === '1';
@@ -284,12 +306,12 @@ function AllResultsPageInner() {
   const [qInput, setQInput] = useState(qFromUrl);
   useEffect(() => { setQInput(qFromUrl); }, [qFromUrl]);
   useEffect(() => {
-    if (mode !== 'single') return;
+    if (view !== 'rank' || mode !== 'single') return;
     if (qInput === qFromUrl) return;
     const t = setTimeout(() => { setQuery({ q: qInput, page: null }); }, 300);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [qInput, qFromUrl, show, mode]);
+  }, [view, qInput, qFromUrl, show, mode]);
 
   // 全参数常驻 URL:把 Image#1 筛选栏(显示/类型/国家/性别/口径/年份/月份/搜索)的有效值补进 URL,
   // 含默认值 —— 让 URL 永远反映完整筛选状态、可分享/强制显示。只「补缺」(参数为 null 时填有效值),
@@ -438,10 +460,12 @@ function AllResultsPageInner() {
   }, [view, mode, singleEvent, selectedSet]);
   const teamDirectory = useWcaTeams(teacherStudentIds);
   const teacherDirectory = useWcaTeachers(teacherStudentIds, teacherEventIds);
+  const { membership, loading: membershipLoading } = useMembership();
   const [teacherOptions, setTeacherOptions] = useState<Array<{ teacherWcaId: string; teacherName: string }>>([]);
   const [teacherOptionsReady, setTeacherOptionsReady] = useState(false);
   const teacherEventsKey = teacherEventIds.join(',');
   useEffect(() => {
+    if (view !== 'rank') return;
     const controller = new AbortController();
     setTeacherOptionsReady(false);
     const qs = new URLSearchParams({ options: '1', events: teacherEventsKey, v: '7' });
@@ -452,120 +476,61 @@ function AllResultsPageInner() {
       if (!controller.signal.aborted) { setTeacherOptions(data.options); setTeacherOptionsReady(true); }
     }).catch(() => { /* Keep the header disabled until its directory is available. */ });
     return () => controller.abort();
-  }, [teacherEventsKey]);
+  }, [view, teacherEventsKey]);
+  const user = useAuthUser();
+  const memberActive = !membershipLoading && !!membership?.active && membership.wcaId === user?.wcaId;
+  const myTeacherId = memberActive && WCA_ID_REGEX.test(user?.wcaId ?? '') ? user!.wcaId! : '';
+  const requireMembership = useRequireMembership(memberActive);
+  const [showMyStudentsPrompt, setShowMyStudentsPrompt] = useState(false);
+  const applyMyStudents = () => {
+    if (!myTeacherId) { setShowMyStudentsPrompt(true); return; }
+    void setQuery({ teacherFilter: myTeacherId, myStudents: null, page: null });
+  };
+  // Resolve the account only after returning; shared links always contain a concrete teacher ID.
+  useEffect(() => {
+    if (query.myStudents !== '1' || !myTeacherId) return;
+    void setQuery({ teacherFilter: myTeacherId, myStudents: null, page: null });
+  }, [query.myStudents, myTeacherId, setQuery]);
+  const continueMyStudents = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('myStudents', '1');
+    const returnPath = url.pathname + url.search + url.hash;
+    if (!requireMembership({ returnPath, requireActive: true })) return;
+    if (!myTeacherId) return; // The prompt offers account binding for members without a WCA ID.
+    setShowMyStudentsPrompt(false);
+    applyMyStudents();
+  };
+  const teacherItems = teacherFilterItems(teacherOptions, isZh);
   const teacherColumnFilter = {
-    value: teacherFilter, onChange: (value: string) => { void setQuery({ teacherFilter: value || null, page: null }); },
-    items: teacherFilterItems(teacherOptions, isZh), disabled: !teacherOptionsReady,
+    value: teacherFilter,
+    onChange: (value: string) => {
+      if (value === '__mine__') { applyMyStudents(); return; }
+      void setQuery({ teacherFilter: value || null, myStudents: null, page: null });
+    },
+    items: [
+      { value: '__mine__', label: tr({ zh: '我的学生', en: 'My students' }) },
+      ...teacherItems.map(item => ({ ...item, disabled: !teacherOptionsReady })),
+    ],
+    selectedLabel: myTeacherId && teacherFilter === myTeacherId ? tr({ zh: '老师：我', en: 'Teacher: me' }) : undefined,
   };
   const teamColumnFilter = {
     value: teamFilter, onChange: (value: string) => { void setQuery({ team: value || null, page: null }); },
     items: [{ value: 'none', label: tr({ zh: '未设置', en: 'Not set' }) }, ...wcaTeamSelectItems(teamDirectory.teams, 'filter')],
     disabled: !teamDirectory.ready,
   };
-  const visibleTeacherName = useMemo(() => {
-    if (!visibleTeacherWcaId) return '';
-    for (const relation of teacherDirectory.teachers.values()) {
-      if (relation.teacherWcaId === visibleTeacherWcaId && relation.teacherName) {
-        return displayCuberName(relation.teacherName, isZh);
-      }
-    }
-    return visibleTeacherWcaId;
-  }, [isZh, teacherDirectory.teachers, visibleTeacherWcaId]);
-  const canCreateTeacherShare = Boolean(
-    teacherDirectory.userWcaId
-    && (teacherDirectory.canSelfAssign || teacherDirectory.isAdmin),
-  );
-
-  // ---- 名次和工具:名人堂 + 排名演化 ----
-  const [raceOpen, setRaceOpen] = useState(false);
-  const [census, setCensus] = useState<Census | null>(null);
-  const [censusOpen, setCensusOpen] = useState(false);
-  const [censusExpanded, setCensusExpanded] = useState(false);
-  const [censusYear, setCensusYear] = useState<number | null>(null);
-  const [timeline, setTimeline] = useState<TimelinePoint[] | null>(null);
-  useEffect(() => {
-    if (!censusOpen) return;
-    setCensus(null); setCensusExpanded(false);
-    const qs = new URLSearchParams({ type, v: '3' });
-    if (includeCancelled) qs.set('cancelled', '1');
-    if (hidePodium) qs.set('no_podium', '1');
-    if (censusYear != null) qs.set('year', String(censusYear));
-    fetch(apiUrl(`/v1/wca/sum-of-ranks/census?${qs.toString()}`))
-      .then(r => (r.ok ? r.json() : null)).then(setCensus).catch(() => {});
-  }, [censusOpen, type, includeCancelled, hidePodium, censusYear]);
-  useEffect(() => {
-    if (!censusOpen || hidePodium) { setTimeline(null); return; }
-    const qs = new URLSearchParams({ type, timeline: '1' });
-    if (includeCancelled) qs.set('cancelled', '1');
-    fetch(apiUrl(`/v1/wca/sum-of-ranks/census?${qs.toString()}`))
-      .then(r => (r.ok ? r.json() : null)).then(d => setTimeline(d?.points ?? null)).catch(() => {});
-  }, [censusOpen, type, includeCancelled, hidePodium]);
-
   const totalPages = (d: { total: number } | null) => d ? Math.max(1, Math.ceil(d.total / size)) : 1;
   const isCountryMode = !!country;
   const showBest = !!sorData && sorData.rows.length > 0 && 'bestRank' in sorData.rows[0]!;
-  const selYear = census?.year ?? null;
-  const censusYearLabel = census ? (census.year ?? census.years?.[census.years.length - 1] ?? null) : null;
-  const chartOption = useMemo(() => {
-    if (!timeline || timeline.length === 0) return null;
-    const css = typeof window !== 'undefined' ? getComputedStyle(document.documentElement) : null;
-    const tok = (name: string, fallback: string) => (css?.getPropertyValue(name).trim() || fallback);
-    const accent = tok('--accent', '#d97757');
-    const fg = tok('--muted-foreground', '#a8a29e');
-    const grid = tok('--border-default', '#44403c');
-    return {
-      grid: { left: 6, right: 14, top: 16, bottom: 4, containLabel: true },
-      tooltip: {
-        trigger: 'axis' as const,
-        formatter: (ps: Array<{ axisValue: string; data: number }>) =>
-          `${ps[0]!.axisValue}<br/>${tr({ zh: '人数', en: 'cubers' })}: <b>${ps[0]!.data}</b>`,
-      },
-      xAxis: {
-        type: 'category' as const,
-        data: timeline.map(p => p.year),
-        axisLabel: { color: fg, fontSize: 10 },
-        axisLine: { lineStyle: { color: grid } },
-        axisTick: { show: false },
-      },
-      yAxis: {
-        type: 'value' as const, minInterval: 1,
-        axisLabel: { color: fg, fontSize: 10 },
-        splitLine: { lineStyle: { color: grid, opacity: 0.4 } },
-      },
-      series: [{
-        type: 'line' as const,
-        data: timeline.map(p => p.distinct),
-        smooth: true, symbol: 'circle' as const,
-        symbolSize: (_v: number, p: { dataIndex: number }) => (timeline[p.dataIndex]!.year === selYear ? 10 : 4),
-        itemStyle: { color: accent },
-        lineStyle: { color: accent, width: 2 },
-        areaStyle: { color: accent, opacity: 0.12 },
-      }],
-    };
-  }, [timeline, selYear]);
-  // 折线图的 symbol 点太小、精确点击命中率低 → 用 zrender 原始 click + convertFromPixel
-  // 把整根 grid 竖列都算作"点这一年"(跟 tooltip 的 axis trigger 手感一致),而非只认小圆点本身。
-  const onChartReady = useCallback((chart: EChartsType) => {
-    chart.getZr().on('click', (p: { offsetX: number; offsetY: number }) => {
-      if (!chart.containPixel('grid', [p.offsetX, p.offsetY])) return;
-      const idx = Math.round(chart.convertFromPixel({ xAxisIndex: 0 }, p.offsetX));
-      const years = (chart.getOption().xAxis as Array<{ data: number[] }>)[0]!.data;
-      const year = years[idx];
-      if (year != null) setCensusYear(year);
-    });
-  }, []);
-
   // 顶层「类型」下拉(单次 / 平均 = 排名口径;其余派生指标 = 嵌入 wr_metric 对应指标视图)。
   // 同时是 排名 ↔ 指标 的切换入口,故各模式(单项 / 名次和 / 空态 / 指标视图)都渲染一份,保证哪都能切。
   // 各模式互斥 → 同时只挂一份,id 不重复。单项里放在「显示」右侧,其余模式作首个控件。
   const renderTypeSelect = (availableMetricIds?: ReadonlySet<string>) => {
     const metrics = availableMetricIds
-      ? WR_METRICS.filter(metric => availableMetricIds.has(metric.id))
+      ? WR_METRICS.filter(metric => RANK_TYPE_IDS.has(metric.id) || availableMetricIds.has(metric.id) || metric.id === typeView)
       : WR_METRICS;
     return (
       <div className="wse-filter wse-filter-show">
-        <label htmlFor="wse-type-view">{tr({ zh: '类型', en: 'Type' })}</label>
-        <select id="wse-type-view" className="wse-filter-select" value={typeView} onChange={(e) => onTypeViewChange(e.target.value)}>
+        <select id="wse-type-view" aria-label={tr({ zh: '类型', en: 'Type' })} className="wse-filter-select" value={typeView} onChange={(e) => onTypeViewChange(e.target.value)}>
           {metrics.map(metric => (
             <option key={metric.id} value={metric.id}>{tr({ zh: metric.zh, en: metric.en })}</option>
           ))}
@@ -578,34 +543,61 @@ function AllResultsPageInner() {
   // 名次按位置算 → 自动在性别子集内重排。默认 all 省略出 URL。
   const genderSelect = (
     <div className="wse-filter wse-filter-show">
-      <label htmlFor="wse-gender">{tr({ zh: '性别', en: 'Gender' })}</label>
-      <select id="wse-gender" className="wse-filter-select" value={gender} onChange={(e) => update('gender', e.target.value)}>
-        <option value="all">{tr({ zh: '所有', en: 'All' })}</option>
-        <option value="m">{tr({ zh: '男', en: 'Male' })}</option>
-        <option value="f">{tr({ zh: '女', en: 'Female' })}</option>
-      </select>
+      <WcaGenderSelect value={gender} onChange={value => update('gender', value)} />
     </div>
   );
-  const teacherShareToggle = (visibleTeacherWcaId || canCreateTeacherShare) ? (
-    <div className="wse-filter wse-filter-show wse-filter-share">
-      <BoolToggle
-        value={Boolean(visibleTeacherWcaId)}
-        onChange={(value) => {
-          if (value && !canCreateTeacherShare) return;
-          setQuery({ teacher: value ? teacherDirectory.userWcaId : null });
-        }}
-        label={visibleTeacherWcaId
-          ? tr({ zh: `仅显示 ${visibleTeacherName}`, en: `Only ${visibleTeacherName}` })
-          : tr({ zh: '分享时只显示我的名字', en: 'Show only my name when sharing' })}
-      />
-    </div>
-  ) : null;
+  const changeTab = (target: 'rank' | 'records') => {
+    if ((target === 'records') === recordsActive) return;
+    if (target === 'records') {
+      const metricView = view === 'metric';
+      void setQuery({ tab: target,
+        rtype: metricView ? metricId : mode === 'empty' ? 'both' : type,
+        revent: metricView ? query.mevent || '333' : mode === 'single' ? singleEvent : mode === 'sor' ? 'sor' : 'all',
+        rshow: metricView || mode === 'sor' ? 'history' : query.rshow,
+        scancelled: mode === 'sor' ? (includeCancelled ? '1' : null) : query.scancelled,
+        rregion: metricView ? 'world' : countryToRecordRegion(country, countries),
+        rgender: metricView ? null : gender,
+        mtype: null,
+      }, { history: 'push' });
+    } else {
+      const recordMetric = query.rtype || 'both';
+      const derived = recordMetric !== 'both' && !RANK_TYPE_IDS.has(recordMetric);
+      const recordEvent = RANK_EVENT_SET.has(query.revent || '') ? query.revent : null;
+      void setQuery({ tab: target, view: derived ? 'metric' : null,
+        mmetric: derived ? recordMetric : null, mtype: 'ranking',
+        mevent: recordEvent || query.mevent || '333',
+        events: recordEvent || (query.revent === 'all' ? 'all'
+          : query.revent === 'sor' && mode !== 'sor' ? 'all' : query.events),
+        type: RANK_TYPE_IDS.has(recordMetric) ? recordMetric : query.type,
+        country: countryToRecordRegion(country, countries) === (query.rregion || 'world')
+          ? country : recordRegionToCountry(query.rregion || 'world', countries),
+        gender: query.rgender || null,
+      }, { history: 'push' });
+    }
+  };
+
+  const viewTabs = (
+    <nav className="wca-stats-tab-bar wca-stats-tab-bar-connected" aria-label={tr({ zh: '排名视图', en: 'Ranking views' })}>
+      <button type="button" className={`wca-stats-tab${!recordsActive ? ' active' : ''}`}
+        aria-pressed={!recordsActive} onClick={() => changeTab('rank')}>
+        {tr({ zh: '排名', en: 'Rankings' })}
+      </button>
+      <button type="button" className={`wca-stats-tab${recordsActive ? ' active' : ''}`}
+        aria-pressed={recordsActive} onClick={() => changeTab('records')}>
+        {tr({ zh: '纪录', en: 'Records' })}
+      </button>
+    </nav>
+  );
 
   return (
     <div className="wse-page wse-results-page">
+      {showMyStudentsPrompt && <MyStudentsPrompt
+        loggedIn={!!user} needsWcaId={memberActive && !myTeacherId} loading={membershipLoading}
+        onClose={() => setShowMyStudentsPrompt(false)} onContinue={continueMyStudents}
+      />}
       <header className="wse-header">
         <PageHeading backHref="/wca" titleClassName="wse-title-row">
-          {tr({ zh: '排名', en: 'Rankings' })}
+          {tr({ zh: '成绩', en: 'Results' })}
           {view === 'rank' && (
             <Link
               href={mode === 'sor' ? '/wca/about/sum-of-ranks' : '/wca/about/all-results'}
@@ -619,33 +611,26 @@ function AllResultsPageInner() {
         </PageHeading>
       </header>
 
+      {recordsActive && !legacyMetricHistory && <RecordsView embedded leadingControls={viewTabs} />}
+
       {/* ============ 指标视图:嵌入退役的 wr_metric;指标由「类型」下拉受控(隐藏其内置选择器)。
           顶层「类型」下拉作为 afterEventSelector 插在 WcaStatView 的项目选择器之后，与类型同行 ============ */}
       {view === 'metric' && (
         <WcaStatView
           statId="wr_metric" headerMode="note" urlScope="m" metricId={metricId}
+          panelId="ranking" panelNavigation={false}
+          eventId={query.mevent || '333'} onEventChange={event => setQuery({ mevent: event })}
           eventSelectorPresentation="inline"
           afterEventSelector={(availableMetricIds) => (
-            renderTypeSelect(availableMetricIds)
+            <div className="wca-stats-controls">{renderTypeSelect(availableMetricIds)}{viewTabs}</div>
           )}
         />
       )}
 
       {/* ↓↓↓ 排名视图(本页原功能):事件多选 + 空态 / 单项 / 名次和 ↓↓↓ */}
       {view === 'rank' && (<>
-      {/* 名次和:排名演化 race(世界 / 大洲 / 国家),懒挂 */}
-      {mode === 'sor' && (
-        <div className="sor-census" style={{ marginBottom: 16 }}>
-          <MoreToggle type="button" className="sor-census-toggle" onClick={() => setRaceOpen(o => !o)} expanded={raceOpen}>
-
-            {tr({ zh: 'SOR 排名演化(世界 / 大洲 / 国家)', en: 'SOR over time (World / Continent / Country)' })}
-          </MoreToggle>
-          {raceOpen && <SorRace />}
-        </div>
-      )}
-
       {/* 项目选择器在模式切换时保持挂载。 */}
-      <div className="wse-filters">
+      <div className="wse-filters wca-stats-controls">
         <div className="wse-filter wse-filter-events" style={{ minWidth: '100%' }}>
           <WcaEventMultiSelector
             presentation="inline"
@@ -655,10 +640,10 @@ function AllResultsPageInner() {
             isZh={isZh}
           />
         </div>
-        {mode === 'empty' && renderTypeSelect()}
+        {mode === 'empty' && <div className="wca-stats-controls">{renderTypeSelect()}{viewTabs}</div>}
         {mode === 'single' && (<>
           <div className="wse-filter wse-filter-show">
-            <label>{tr({ zh: '显示', en: 'Show' })}</label>
+            <label className="sr-only">{tr({ zh: '显示', en: 'Show' })}</label>
             <select
               value={String(show === 'persons')}
               onChange={event => { const v = event.currentTarget.value === 'true'; handleShowChange(v ? 'persons' : 'results'); }}
@@ -669,12 +654,12 @@ function AllResultsPageInner() {
               <option value="false">{tr({ zh: '成绩', en: 'Results' })}</option>
             </select>
           </div>
-          {renderTypeSelect()}
-          <RegionCountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
+          <div className="wca-stats-controls">{renderTypeSelect()}{viewTabs}</div>
+          <RegionCountrySelect hideLabel countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
           {genderSelect}
           <div className="wse-filter wse-filter-show"
             title={mbfAvgPeriodOnly ? tr({ zh: '多盲非官方平均仅支持「当期」口径', en: 'Multi-Blind unofficial average supports the period basis only' }) : undefined}>
-            <label>{tr({ zh: '口径', en: 'Basis' })}</label>
+            <label className="sr-only">{tr({ zh: '口径', en: 'Basis' })}</label>
             <select
               disabled={mbfAvgPeriodOnly}
               value={String(basis === 'cumulative')}
@@ -687,8 +672,8 @@ function AllResultsPageInner() {
             </select>
           </div>
           <div className="wse-filter wse-filter-show">
-            <label>{tr({ zh: '年份', en: 'Year' })}</label>
-            <select className="wse-filter-select" value={year} onChange={e => update('year', e.target.value)}>
+            <label className="sr-only">{tr({ zh: '年份', en: 'Year' })}</label>
+            <select aria-label={tr({ zh: '年份', en: 'Year' })} className="wse-filter-select" value={year} onChange={e => update('year', e.target.value)}>
               {show === 'results' && <option value={0}>{tr({ zh: '全部年份', en: 'All years' })}</option>}
               {years.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
@@ -696,9 +681,10 @@ function AllResultsPageInner() {
           {/* 截至口径按年末、不分月 → 直接隐藏月份框(不再灰显占位) */}
           {basis !== 'cumulative' && (
             <div className="wse-filter wse-filter-show">
-              <label>{tr({ zh: '月份', en: 'Month' })}</label>
+              <label className="sr-only">{tr({ zh: '月份', en: 'Month' })}</label>
               <select
                 className="wse-filter-select"
+                aria-label={tr({ zh: '月份', en: 'Month' })}
                 value={month}
                 onChange={e => update('month', e.target.value)}
               >
@@ -708,34 +694,29 @@ function AllResultsPageInner() {
             </div>
           )}
           <div className="wse-filter wse-filter-q">
-            <label>{tr({ zh: '搜索', en: 'Search' })}</label>
-            <div className="wse-q-wrap">
-              <input
-                type="search"
-                className="wse-q-input"
-                value={qInput}
-                onChange={e => setQInput(e.target.value)}
+            <div className="wse-name-search" role="group" aria-label={tr({ zh: '选手搜索', en: 'Person search' })}>
+              <Search size={16} aria-hidden className="wse-name-search-icon" />
+              <SearchInput type="search" className="wse-name-search-input" value={qInput}
+                onChange={value => { setQInput(value); if (!value) update('q', ''); }}
                 placeholder={show === 'persons' || qMode !== 'any'
-                  ? tr({ zh: '选手名', en: 'Person name' })
-                  : tr({ zh: '选手或比赛名', en: 'Person or competition' })}
-              />
-              {qInput && <ClearButton onClick={() => { setQInput(''); update('q', ''); }} isZh={isZh} preserveFocus />}
+                  ? tr({ zh: '搜索选手姓名…', en: 'Search person name…' })
+                  : tr({ zh: '搜索选手或比赛…', en: 'Search person or competition…' })} />
+              <div className="wse-name-search-mode">
+                <select aria-label={tr({ zh: '姓名匹配方式', en: 'Name matching' })}
+                  value={qMode} onChange={e => update('qmode', e.target.value === 'any' ? '' : e.target.value)}>
+                  <option value="any">{tr({ zh: '包含', en: 'Contains' })}</option>
+                  <option value="first">{tr({ zh: '名完全匹配', en: 'Exact first name' })}</option>
+                  <option value="last">{tr({ zh: '姓完全匹配', en: 'Exact last name' })}</option>
+                  <option value="exact">{tr({ zh: '全名完全匹配', en: 'Exact full name' })}</option>
+                </select>
+                <ChevronDown size={14} aria-hidden />
+              </div>
             </div>
           </div>
-          <div className="wse-filter wse-filter-name-match">
-            <label>{tr({ zh: '名字匹配', en: 'Name match' })}</label>
-            <select className="wse-filter-select" value={qMode} onChange={e => update('qmode', e.target.value === 'any' ? '' : e.target.value)}>
-              <option value="any">{tr({ zh: '任意部分', en: 'Any part' })}</option>
-              <option value="first">{tr({ zh: '名完全相同', en: 'Exact first name' })}</option>
-              <option value="last">{tr({ zh: '姓完全相同', en: 'Exact last name' })}</option>
-              <option value="exact">{tr({ zh: '全名完全相同', en: 'Exact full name' })}</option>
-            </select>
-          </div>
-          {teacherShareToggle}
         </>)}
         {mode === 'sor' && (<>
-          {renderTypeSelect()}
-          <RegionCountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
+          <div className="wca-stats-controls">{renderTypeSelect()}{viewTabs}</div>
+          <RegionCountrySelect hideLabel countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
           {/* 单次 / 平均 由「类型」下拉统一控制(单次 / 平均 → 排名,派生指标 → 指标视图);此处仅保留「多盲平均不计入名次和」提示 */}
           {type === 'average' && selectedSet.has('333mbf') && (
             <div className="wse-filter wse-filter-show">
@@ -749,9 +730,18 @@ function AllResultsPageInner() {
               label={tr({ zh: '未登领奖台', en: 'No podium' })}
             />
           </div>
-          {teacherShareToggle}
         </>)}
       </div>
+
+      {/* 排名演化数据固定覆盖 17 个现役项目，仅在选择范围一致时挂载。 */}
+      {isActive17 && (
+        <div className="sor-census" style={{ marginBottom: 16 }}>
+          <h2 className="wse-section-title">
+            {tr({ zh: 'SOR 排名演化(世界 / 大洲 / 国家)', en: 'SOR over time (World / Continent / Country)' })}
+          </h2>
+          <SorRace metric={type} region={countryToRecordRegion(country, countries)} />
+        </div>
+      )}
 
       {/* ============ 空态:姓名分布(name_stats viz) + 名录(A-Z 平铺) ============ */}
       {mode === 'empty' && (
@@ -782,7 +772,7 @@ function AllResultsPageInner() {
           {/* ── 名录 A–Z ── */}
           <h2 className="wse-section-title">{tr({ zh: '名录 A–Z', en: 'Directory A–Z' })}</h2>
           <div className="wse-filters">
-            <RegionCountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
+            <RegionCountrySelect hideLabel countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
             {genderSelect}
             <div className="wse-filter wse-filter-show">
               <label>{tr({ zh: '排序', en: 'Sort' })}</label>
@@ -824,7 +814,7 @@ function AllResultsPageInner() {
                   <thead>
                     <tr>
                       <th className="wse-rank-col">#</th>
-                      <th>
+                      <th className="wca-person-column">
                         {/* 列头箭头 = 当前排序方向(首字母 / 名字长度都排这一列),点一下翻方向;排序键由上方切换器选 */}
                         <button type="button" className="wse-th-sort" onClick={() => setQuery({ pdir: pdir === 'asc' ? 'desc' : 'asc', page: null })}>
                           {tr({ zh: '选手', en: 'Person' })}
@@ -838,9 +828,9 @@ function AllResultsPageInner() {
                       <tr key={r.wcaId}>
                         <td className="wse-rank-col">{(page - 1) * size + i + 1}</td>
                         <td>
-                          {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
+                          <WcaPersonTeamBadge wcaId={r.wcaId} />{r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
                           <span className="ns-person-wrap">
-                            <><Link prefetch={false} href={personHref(r.wcaId)}>{nameByMode(r.name, pname)}</Link><WcaPersonTeamBadge wcaId={r.wcaId} /></>
+                            <><Link prefetch={false} href={personHref(r.wcaId)}>{nameByMode(r.name, pname)}</Link></>
                             {pname === 'aka' && <FormerNames former={r.former} />}
                           </span>
                         </td>
@@ -880,16 +870,12 @@ function AllResultsPageInner() {
             {error && <div className="wse-state wse-state-error">Error: {error}</div>}
             {data && data.mode === show && data.mode === 'results' && (
               <>
-                <div className="wse-result-meta">
-                  {isZh ? `共 ${data.total.toLocaleString()} 条,显示 ${data.rows.length}` : `${data.total.toLocaleString()} results, showing ${data.rows.length}`}
-                </div>
                 <table className="wse-table sticky-thead">
                   <thead>
                     <tr>
                       <th className="wse-rank-col">#</th>
-                      <th>{tr({ zh: '选手', en: 'Person' })}</th>
+                      <WcaRelationColumnHeader className="wca-person-column" label={tr({ zh: '选手', en: 'Person' })} filterLabel={tr({ zh: '战队', en: 'Team' })} resetLabel={tr({ zh: '不限战队', en: 'Any team' })} filter={teamColumnFilter} />
                       <WcaTeacherColumnHeader filter={teacherColumnFilter} />
-                      <WcaRelationColumnHeader label={tr({ zh: '战队', en: 'Team' })} filter={teamColumnFilter} />
                       <th className="wse-value-col">{isZh ? (effType === 'single' ? '单次' : '平均') : (effType === 'single' ? 'Single' : 'Average')}{isMbldAvg && effType === 'average' && <UnofficialMark />}</th>
                       <th>{tr({ zh: '日期', en: 'Date' })}</th>
                       <th>{tr({ zh: '比赛', en: 'Competition' })}</th>
@@ -901,10 +887,10 @@ function AllResultsPageInner() {
                       <tr key={`${r.rank}-${r.wcaId}-${r.compId}`}>
                         <td className="wse-rank-col">{r.rank}</td>
                         <td>
-                          {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
+                          <WcaPersonTeamBadge wcaId={r.wcaId} />{r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
                           <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
                         </td>
-                        <WcaPersonRelationCells wcaId={r.wcaId} eventIds={teacherEventIds} teacherDirectory={teacherDirectory} teamDirectory={teamDirectory} isZh={isZh} visibleTeacherWcaId={visibleTeacherWcaId || undefined} />
+                        <WcaPersonRelationCells wcaId={r.wcaId} eventIds={teacherEventIds} teacherDirectory={teacherDirectory} teamDirectory={teamDirectory} isZh={isZh} />
                         <td className="wse-value-col">
                           <span className="record-num-cell">
                             {formatWcaResult(r.value, singleEvent, effType)}
@@ -925,16 +911,12 @@ function AllResultsPageInner() {
             )}
             {data && data.mode === show && data.mode === 'persons' && (
               <>
-                <div className="wse-result-meta">
-                  {isZh ? `共 ${data.total.toLocaleString()} 人,${data.rows.length} 条` : `${data.total.toLocaleString()} cubers, showing ${data.rows.length}`}
-                </div>
                 <table className="wse-table sticky-thead">
                   <thead>
                     <tr>
                       <th className="wse-rank-col">#</th>
-                      <th>{tr({ zh: '选手', en: 'Person' })}</th>
+                      <WcaRelationColumnHeader className="wca-person-column" label={tr({ zh: '选手', en: 'Person' })} filterLabel={tr({ zh: '战队', en: 'Team' })} resetLabel={tr({ zh: '不限战队', en: 'Any team' })} filter={teamColumnFilter} />
                       <WcaTeacherColumnHeader filter={teacherColumnFilter} />
-                      <WcaRelationColumnHeader label={tr({ zh: '战队', en: 'Team' })} filter={teamColumnFilter} />
                       <th className="wse-value-col">{isZh ? (effType === 'single' ? '单次' : '平均') : (effType === 'single' ? 'Single' : 'Average')}{isMbldAvg && effType === 'average' && <UnofficialMark />}</th>
                       <th>{tr({ zh: '日期', en: 'Date' })}</th>
                       <th>{tr({ zh: '比赛', en: 'Competition' })}</th>
@@ -946,10 +928,10 @@ function AllResultsPageInner() {
                       <tr key={r.wcaId}>
                         <td className="wse-rank-col">{r.rank}</td>
                         <td>
-                          {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
+                          <WcaPersonTeamBadge wcaId={r.wcaId} />{r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
                           <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
                         </td>
-                        <WcaPersonRelationCells wcaId={r.wcaId} eventIds={teacherEventIds} teacherDirectory={teacherDirectory} teamDirectory={teamDirectory} isZh={isZh} visibleTeacherWcaId={visibleTeacherWcaId || undefined} />
+                        <WcaPersonRelationCells wcaId={r.wcaId} eventIds={teacherEventIds} teacherDirectory={teacherDirectory} teamDirectory={teamDirectory} isZh={isZh} />
                         <td className="wse-value-col">{r.value != null ? formatWcaResult(r.value, singleEvent, effType) : '—'}</td>
                         <td className="wse-detail-cell">{r.compDate ?? ''}</td>
                         <td>{r.compId ? <Link {...compLinkProps(r.compId)}><CompCell compId={r.compId} compName={r.compName} isZh={isZh} date={r.compDate ?? null} /></Link> : ''}</td>
@@ -970,74 +952,17 @@ function AllResultsPageInner() {
       {/* ============ 名次和 ============ */}
       {mode === 'sor' && (
         <>
-          {/* 名人堂 */}
-          <div className="sor-census">
-            <MoreToggle type="button" className="sor-census-toggle" onClick={() => setCensusOpen(o => !o)} expanded={censusOpen}>
-
-              {tr({ zh: '谁当过 SoWR?', en: "Who's ever topped the SoWR?" })}
-            </MoreToggle>
-            {censusOpen && (
-              <div className="sor-census-body">
-                <div className="sor-census-controls">
-                  {census && (census.years?.length ?? 0) > 1 && census.year != null && (
-                    <label className="sor-census-year">
-                      {tr({ zh: '截至', en: 'As of' })}
-                      <select className="sor-census-year-select" value={census.year} onChange={e => setCensusYear(parseInt(e.target.value, 10))}>
-                        {[...census.years].reverse().map(y => <option key={y} value={y}>{y}</option>)}
-                      </select>
-                    </label>
-                  )}
-                </div>
-                {chartOption && (
-                  <div className="sor-census-chart">
-                    <ReactECharts option={chartOption} style={{ height: 190, width: '100%', cursor: 'pointer' }} opts={{ renderer: 'canvas' }} onChartReady={onChartReady} />
-                    <div className="sor-census-chart-hint">{tr({ zh: '历年“名次和第一”不同人数 — 点某年看名单', en: 'Distinct #1-holders by year — click a year' })}</div>
-                  </div>
-                )}
-                {!census && <div className="sor-tool-hint"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator></div>}
-                {census && (
-                  <>
-                    <p className="sor-census-lead">{isZh
-                      ? `${censusYearLabel != null ? `截至 ${censusYearLabel} 年末,` : ''}${hidePodium ? '在从未登上比赛领奖台的选手中,' : ''}有 ${census.distinct} 名选手曾在 ${census.totalSubsets.toLocaleString()} 种项目组合的至少一种里排到“名次和第一”(${type === 'average' ? '平均' : '单次'}${includeCancelled ? ',含废止项' : ''},世界口径)。`
-                      : `${censusYearLabel != null ? `As of end of ${censusYearLabel}, ` : ''}${hidePodium ? 'among cubers who have never reached a competition podium, ' : ''}${census.distinct} cubers have ranked #1 in at least one of ${census.totalSubsets.toLocaleString()} event combinations (${type}${includeCancelled ? ', incl. cancelled' : ''}, world).`}</p>
-                    <ol className="sor-census-list">
-                      {(censusExpanded ? census.rows : census.rows.slice(0, 12)).map(r => {
-                        const share = r.subsetsWon / census.totalSubsets * 100;
-                        return (
-                          <li key={r.wcaId}>
-                            <span className="sor-census-rank">{r.rank}</span>
-                            {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-                            <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
-                            <WcaPersonTeamBadge wcaId={r.wcaId} />
-                            <span className="sor-census-share">{share < 0.1 ? share.toFixed(3) : share.toFixed(1)}%</span>
-                          </li>
-                        );
-                      })}
-                    </ol>
-                    {census.rows.length > 12 && (
-                      <MoreToggle expanded={censusExpanded} type="button" className="sor-census-more" onClick={() => setCensusExpanded(e => !e)}>
-                        {censusExpanded ? tr({ zh: '收起', en: 'Show less' }) : (isZh ? `展开全部 ${census.distinct} 人` : `Show all ${census.distinct}`)}
-                      </MoreToggle>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-
           <div className="wse-table-wrapper sticky-scroll wse-refresh-region" aria-busy={loading}>
             {loading && <div className={sorData ? "wse-refresh-status" : "wse-state"} role="status"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...' })}</LoadingIndicator></div>}
             {error && <div className="wse-state wse-state-error">{error}</div>}
             {sorData && (
               <>
-                <div className="wse-result-meta">{isZh ? `共 ${sorData.total.toLocaleString()} 人` : `${sorData.total.toLocaleString()} cubers`}</div>
                 <table className="wse-table sticky-thead">
                   <thead>
                     <tr>
                       <th className="wse-rank-col">#</th>
-                      <th>{tr({ zh: '选手', en: 'Person' })}</th>
+                      <WcaRelationColumnHeader className="wca-person-column" label={tr({ zh: '选手', en: 'Person' })} filterLabel={tr({ zh: '战队', en: 'Team' })} resetLabel={tr({ zh: '不限战队', en: 'Any team' })} filter={teamColumnFilter} />
                       <WcaTeacherColumnHeader filter={teacherColumnFilter} />
-                      <WcaRelationColumnHeader label={tr({ zh: '战队', en: 'Team' })} filter={teamColumnFilter} />
                       <th className="wse-value-col">
                         <button type="button" className="wse-th-sort" onClick={() => setSorSort('total')}>
                           {tr({ zh: '名次总和', en: 'Total' })}
@@ -1070,11 +995,11 @@ function AllResultsPageInner() {
                         <td className="wse-rank-col">{(page - 1) * size + i + 1}</td>
                         <td>
                           <span className="wse-person-cell">
-                            {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
+                            <WcaPersonTeamBadge wcaId={r.wcaId} />{r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
                             <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
                           </span>
                         </td>
-                        <WcaPersonRelationCells wcaId={r.wcaId} eventIds={teacherEventIds} teacherDirectory={teacherDirectory} teamDirectory={teamDirectory} isZh={isZh} visibleTeacherWcaId={visibleTeacherWcaId || undefined} />
+                        <WcaPersonRelationCells wcaId={r.wcaId} eventIds={teacherEventIds} teacherDirectory={teacherDirectory} teamDirectory={teamDirectory} isZh={isZh} />
                         <td className="wse-value-col">{r.subsetTotal != null ? r.subsetTotal : isCountryMode ? r.totalCountryRank : r.totalWorldRank}</td>
                         {showBest && (
                           <td className="wse-value-col"

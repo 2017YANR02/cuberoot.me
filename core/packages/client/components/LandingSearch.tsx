@@ -602,9 +602,10 @@ export default function LandingSearch({
             className="landing-search-item landing-search-item--rich"
             onClick={closeAfter}
           >
+            <WcaPersonTeamBadge wcaId={p.wcaId} linked={false} />
             <Flag iso2={p.iso2} className="country-flag" />
             <span className="landing-search-item-main">
-              <span className="landing-search-item-name">{displayCuberName(p.name, isZh)}<WcaPersonTeamBadge wcaId={p.wcaId} linked={false} /></span>
+              <span className="landing-search-item-name">{displayCuberName(p.name, isZh)}</span>
               <span className="landing-search-item-meta">{p.wcaId}</span>
             </span>
           </Link>

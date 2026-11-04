@@ -12,16 +12,18 @@ export interface WcaColumnFilter {
   onChange: (value: string) => void;
   items: ListSelectItem[];
   disabled?: boolean;
+  selectedLabel?: string;
 }
 
-export function WcaRelationColumnHeader({ label, filter, className }: { label: string; filter: WcaColumnFilter; className?: string }) {
+export function WcaRelationColumnHeader({ label, resetLabel, filter, className, filterLabel = label }: { label: string; resetLabel: string; filter: WcaColumnFilter; className?: string; filterLabel?: string }) {
   const items = filter.items.map(item => ({ ...item, disabled: filter.disabled || item.disabled }));
   if (filter.value && !items.some(item => item.value === filter.value)) items.push({ value: filter.value, label: filter.value, disabled: true });
   return <th className={className}>
-    <ListSelect portal showArrow={false} className="wca-relation-filter" ariaLabel={label} allLabel={label} searchable clearable={false}
+    <ListSelect portal showArrow={false} className="wca-relation-filter" ariaLabel={filterLabel} allLabel={label} searchable clearable={false}
       searchPlaceholder={tr({ zh: '搜索', en: 'Search' })}
       value={filter.value} onChange={filter.onChange}
-      items={[{ value: '', label }, ...items]} />
+      selectedLabel={filter.value ? filter.selectedLabel : label}
+      items={[{ value: '', label: resetLabel }, ...items]} />
   </th>;
 }
 
@@ -33,7 +35,7 @@ export function teacherFilterItems(teachers: Iterable<{ teacherWcaId: string | n
   return [
     { value: 'none', label: tr({ zh: '未设置', en: 'Not set' }) },
     { value: 'self', label: tr({ zh: '自学', en: 'Self-taught' }) },
-    ...[...names].map(([value, name]) => ({ value, label: displayCuberName(name, isZh), searchTerms: `${name} ${value}` })),
+    ...[...names].map(([value, name]) => ({ value, label: displayCuberName(name, isZh), searchTerms: `${name} ${value}`, searchOnly: true })),
   ];
 }
 

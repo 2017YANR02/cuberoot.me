@@ -58,6 +58,19 @@
   vertical-align: middle;
 }
 
+.wca-stats-tab-bar-connected {
+  gap: 0;
+  flex-wrap: nowrap;
+}
+
+/* In the unified results view, project/type filters precede its single navigation row. */
+.wse-results-page .wca-stats-metric-panels > .wca-stats-tab-bar:first-child {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
 /* ── Dedup toggle（iOS 药丸风格）───── */
 /* 日期去重布尔开关现走 components/BoolToggle(左文字 + 右滑钮);此处仅留位置 / 字号。 */
 .wca-stats-dedup-toggle {

@@ -880,14 +880,6 @@ td.is-pr {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.comp-result-team {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 3.3em;
-  margin-inline-start: auto;
-}
-.comp-result-team .wca-person-team-badge { margin-inline-start: 0; }
 
 /* 管理员编辑铅笔:绝对定位 + 仅悬停显示,不挤占固定 110px 选手列(否则名字被压成「耿…」)。
    触屏没有 hover 且本就能直接点详细成绩改 → 隐藏铅笔。 */

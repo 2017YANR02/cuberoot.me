@@ -22,6 +22,7 @@ import { Flag } from '@/components/Flag';
 import { EVENT_NAME_TO_ID } from '@/lib/event-constants';
 import DistributionChart, { type DistDataset } from '@/components/wca-stats/DistributionChart';
 import WrHistoryChart from '@/components/wca-stats/WrHistoryChart';
+import { mixedMetricHistory } from '@/lib/wca-metric-history';
 import { tr } from '@/i18n/tr';
 import type { StatHeader, StatSection, StatPanel, SourcePanel, MetricPanel, MetricGroup, RecordScope } from './WcaStatView.types';
 import {
@@ -162,7 +163,7 @@ export function StatsTable({ header, rows, searchTerm, isZh, searchColumnKey }: 
         <thead>
           <tr>
             {header.map(h => shouldHideCountryCol(h.key, header) ? null : (
-              <th key={h.key} style={{ textAlign: h.align }}>
+              <th key={h.key} className={h.key === 'person' || h.key === 'name' ? 'wca-person-column' : undefined} style={{ textAlign: h.align }}>
                 {isZh ? h.labelZh : h.label}
               </th>
             ))}
@@ -452,7 +453,7 @@ export function AoxRankingSection({ header, rows, isZh }: {
                 </th>
               )}
               {header.map(h => shouldHideCountryCol(h.key, header) ? null : (
-                <th key={h.key} style={{ textAlign: h.align }}>
+                <th key={h.key} className={h.key === 'person' || h.key === 'name' ? 'wca-person-column' : undefined} style={{ textAlign: h.align }}>
                   {isZh ? h.labelZh : h.label}
                 </th>
               ))}
@@ -495,7 +496,7 @@ export function AoxRankingSection({ header, rows, isZh }: {
   );
 }
 
-export function PanelsView({ leadingControls, panels, searchTerm, isZh, selectedEvent, activePanel, onSetActivePanel, belowTabs }: {
+export function PanelsView({ leadingControls, panels, searchTerm, isZh, selectedEvent, activePanel, onSetActivePanel, belowTabs, panelNavigation, historyLayout }: {
   leadingControls?: React.ReactNode;
   panels: StatPanel[];
   searchTerm: string;
@@ -504,6 +505,8 @@ export function PanelsView({ leadingControls, panels, searchTerm, isZh, selected
   activePanel: number;
   onSetActivePanel: (idx: number) => void;
   belowTabs?: React.ReactNode;
+  panelNavigation?: React.ReactNode;
+  historyLayout?: 'grouped' | 'mixed';
 }) {
   const [dedup, setDedup] = useState(true);
   const [metric, setMetric] = useState<string | null>(null);
@@ -544,6 +547,7 @@ export function PanelsView({ leadingControls, panels, searchTerm, isZh, selected
 
   const historyChartData = useMemo(() => {
     if (!panel || panel.id !== 'history') return null;
+    if (historyLayout && !selectedEvent) return null;
     const visible = selectedEvent
       ? activeSections.filter(s => {
           let eventId = EVENT_NAME_TO_ID[s.title];
@@ -556,7 +560,11 @@ export function PanelsView({ leadingControls, panels, searchTerm, isZh, selected
       : activeSections;
     const allRows = visible.flatMap(s => s.rows);
     return allRows.length > 0 ? allRows : null;
-  }, [panel, selectedEvent, activeSections]);
+  }, [panel, selectedEvent, activeSections, historyLayout]);
+
+  const mixedHistory = useMemo(() => panel && historyLayout === 'mixed'
+    ? mixedMetricHistory(panel.header, activeSections, selectedEvent, isZh) : null,
+  [panel, historyLayout, activeSections, selectedEvent, isZh]);
 
   if (!panel) return null;
 
@@ -573,7 +581,7 @@ export function PanelsView({ leadingControls, panels, searchTerm, isZh, selected
             {m === 'Single' ? tr({ zh: '单次', en: 'Single' }) : m === 'Average' ? tr({ zh: '平均', en: 'Average' }) : m}
           </button>
         ))}
-        {panels.map((p, i) => (
+        {panelNavigation ?? panels.map((p, i) => (
           <button
             key={p.id}
             className={`wca-stats-tab wca-stats-panel-tab ${i === activePanel ? 'active' : ''}`}
@@ -595,7 +603,13 @@ export function PanelsView({ leadingControls, panels, searchTerm, isZh, selected
       {historyChartData && (
         <WrHistoryChart rows={historyChartData} header={panel.header} isZh={isZh} />
       )}
-      {isAoxData && panel.id === 'ranking' ? (
+      {mixedHistory && panel.id === 'history' ? (
+        <StatsTable
+          header={mixedHistory.header}
+          rows={mixedHistory.rows}
+          searchTerm={searchTerm} isZh={isZh}
+        />
+      ) : isAoxData && panel.id === 'ranking' ? (
         <AoxSectionsView
           header={panel.header}
           sections={activeSections}
@@ -697,7 +711,7 @@ export function SourcePanelsView({ sourcePanels, searchTerm, isZh, selectedEvent
   );
 }
 
-export function MetricPanelsView({ leadingControls, metricPanels, metricGroups, searchTerm, isZh, selectedEvent, availableMetricIds, hideSelector, activeMetric, onSetActiveMetric, onSetActivePanel, activePanel, belowTabs, sourceId, onSetSource }: {
+export function MetricPanelsView({ leadingControls, metricPanels, metricGroups, searchTerm, isZh, selectedEvent, availableMetricIds, hideSelector, activeMetric, onSetActiveMetric, onSetActivePanel, activePanel, belowTabs, sourceId, onSetSource, panelNavigation, historyLayout }: {
   leadingControls?: React.ReactNode;
   metricPanels: MetricPanel[];
   metricGroups?: MetricGroup[];
@@ -713,10 +727,12 @@ export function MetricPanelsView({ leadingControls, metricPanels, metricGroups, 
   belowTabs?: React.ReactNode;
   sourceId?: string | null;
   onSetSource: (id: string) => void;
+  panelNavigation?: React.ReactNode;
+  historyLayout?: 'grouped' | 'mixed';
 }) {
   useEffect(() => {
     const activeId = metricPanels[activeMetric]?.id;
-    if (activeId && !availableMetricIds.has(activeId)) {
+    if (!hideSelector && activeId && !availableMetricIds.has(activeId)) {
       const singleIdx = metricPanels.findIndex(mp => mp.id === 'single' && availableMetricIds.has(mp.id));
       if (singleIdx !== -1) { onSetActiveMetric(singleIdx); return; }
       const avgIdx = metricPanels.findIndex(mp => mp.id === 'average' && availableMetricIds.has(mp.id));
@@ -724,7 +740,7 @@ export function MetricPanelsView({ leadingControls, metricPanels, metricGroups, 
       const firstValid = metricPanels.findIndex(mp => availableMetricIds.has(mp.id));
       if (firstValid !== -1) onSetActiveMetric(firstValid);
     }
-  }, [availableMetricIds, activeMetric, metricPanels, onSetActiveMetric]);
+  }, [availableMetricIds, activeMetric, metricPanels, onSetActiveMetric, hideSelector]);
 
   const metric = metricPanels[activeMetric];
   const allMetricItems: Array<{ idx: number; label: string }> = useMemo(() => {
@@ -781,7 +797,14 @@ export function MetricPanelsView({ leadingControls, metricPanels, metricGroups, 
         ))}
       </div>
 
-      {metric && metric.sourcePanels ? (
+      {hideSelector && metric && !availableMetricIds.has(metric.id) ? (
+        <>
+          {panelNavigation}
+          <p role="status" className="wca-stats-empty-state">{tr({
+            zh: '该项目暂无此类型的数据', en: 'No data for this type in the selected event',
+          })}</p>
+        </>
+      ) : metric && metric.sourcePanels ? (
         <SourcePanelsView sourcePanels={metric.sourcePanels} searchTerm={searchTerm} isZh={isZh} selectedEvent={selectedEvent}
           activeSource={Math.max(0, metric.sourcePanels.findIndex(s => s.id === `${metric.id}-${sourceId}` || s.id === sourceId))}
           onSetSource={idx => {
@@ -792,7 +815,7 @@ export function MetricPanelsView({ leadingControls, metricPanels, metricGroups, 
       ) : metric && metric.panels ? (
         <PanelsView panels={metric.panels} searchTerm={searchTerm} isZh={isZh} selectedEvent={selectedEvent}
           activePanel={activePanel} onSetActivePanel={(idx) => onSetActivePanel(idx, metric.panels!)}
-          belowTabs={belowTabs} />
+          belowTabs={belowTabs} panelNavigation={panelNavigation} historyLayout={historyLayout} />
       ) : null}
     </div>
   );

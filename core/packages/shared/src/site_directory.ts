@@ -152,7 +152,6 @@ export const SITE_DIRECTORY_GROUPS = [
     },
     entries: [
       { id: 'competitions', href: '/wca/comp', internal: true, tier: 'medium', nameKey: 'competitions' },
-      { id: 'wca-records', href: '/wca/records', internal: true, tier: 'medium', nameKey: 'records' },
       { id: 'wca-results', href: '/wca/results', internal: true, tier: 'medium', nameKey: 'rankings' },
       { id: 'wca-stats', href: '/wca', internal: true, tier: 'medium', nameKey: 'statistics' },
     ],

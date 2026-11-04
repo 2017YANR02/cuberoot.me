@@ -166,7 +166,7 @@ body[data-site-scenery] [data-site-surface='heading'],
 body[data-site-scenery] .compact-select-header,
 body[data-site-scenery] :is(.comp-table, .sticky-thead, .wse-table, .fun-stats-table, .wp-pr-table, .wp-lit-table, .recon-table, .bsp-table, .exact-cov-table, .admin-users-table) thead th,
 body[data-site-scenery] .wca-stats-table th {
-  background: var(--glass-popover-bg);
+  background: var(--sticky-thead-background, var(--glass-popover-bg));
   -webkit-backdrop-filter: var(--glass-filter);
   backdrop-filter: var(--glass-filter);
 }

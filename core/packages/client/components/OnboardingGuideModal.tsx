@@ -129,7 +129,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
       zh: '查看全部历史还原成绩，浏览每一次练习记录。',
       en: 'Browse your full solve history and every practice record.',
     },
-    href: '/wca/records',
+    href: '/wca/results?tab=records',
     cta: { zh: '前往纪录', en: 'Open records' },
     tour: 'records',
   },

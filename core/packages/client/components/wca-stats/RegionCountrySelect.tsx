@@ -7,6 +7,7 @@ import { useMemo } from 'react';
 import { RegionPicker } from '@/components/RegionPicker/RegionPicker';
 import type { CountryOption } from './useCountries';
 import { tr } from '@/i18n/tr';
+import { countryToIso2 } from '@/lib/country-flags';
 
 // RegionPicker 大洲 slug ↔ WCA continent_id(DB / 后端口径)。
 const SLUG_TO_CONTINENT_ID: Record<string, string> = {
@@ -21,41 +22,39 @@ const CONTINENT_ID_TO_SLUG: Record<string, string> = Object.fromEntries(
   Object.entries(SLUG_TO_CONTINENT_ID).map(([slug, id]) => [id, slug]),
 );
 
+export function countryToRecordRegion(value: string, countries: CountryOption[]): string {
+  if (!value) return 'world';
+  if (value.startsWith('_')) return CONTINENT_ID_TO_SLUG[value] ?? 'world';
+  return countries.find(c => c.id === value || c.iso2?.toLowerCase() === value.toLowerCase())?.iso2?.toLowerCase()
+    || countryToIso2(value) || value;
+}
+
+export function recordRegionToCountry(region: string, countries: CountryOption[]): string {
+  if (!region || region === 'world') return '';
+  return SLUG_TO_CONTINENT_ID[region]
+    ?? countries.find(c => c.iso2?.toLowerCase() === region.toLowerCase())?.id ?? region;
+}
+
 interface Props {
+  hideLabel?: boolean;
   countries: CountryOption[];
   value: string;
   isZh: boolean;
   onChange: (id: string) => void;
 }
 
-export default function RegionCountrySelect({ countries, value, isZh, onChange }: Props) {
-  const byId = useMemo(() => new Map(countries.map(c => [c.id, c])), [countries]);
-  const byIso2 = useMemo(
-    () => new Map(countries.filter(c => c.iso2).map(c => [c.iso2!.toLowerCase(), c])),
-    [countries],
-  );
+export default function RegionCountrySelect({ countries, value, isZh, onChange, hideLabel = false }: Props) {
   const restrictTo = useMemo(
     () => countries.map(c => c.iso2).filter((x): x is string => !!x),
     [countries],
   );
 
-  // country(WCA id / continent_id / '')→ RegionPicker 单选值('world' / slug / iso2 小写)
-  const rpValue = !value
-    ? 'world'
-    : value.startsWith('_')
-      ? (CONTINENT_ID_TO_SLUG[value] ?? 'world')
-      : (byId.get(value)?.iso2?.toLowerCase() ?? 'world');
-
-  const handleChange = (v: string) => {
-    if (!v || v === 'world') { onChange(''); return; }
-    if (SLUG_TO_CONTINENT_ID[v]) { onChange(SLUG_TO_CONTINENT_ID[v]); return; }
-    // iso2 → WCA 国家 id(后端 resolveCountry 也认 iso2,但本页其余逻辑按 id 查表,统一回写 id)
-    onChange(byIso2.get(v.toLowerCase())?.id ?? '');
-  };
+  const rpValue = countryToRecordRegion(value, countries);
+  const handleChange = (region: string) => onChange(recordRegionToCountry(region, countries));
 
   return (
     <div className="wse-filter wse-country">
-      <label>{tr({ zh: '国家', en: 'Country' })}</label>
+      <label className={hideLabel ? 'sr-only' : undefined}>{tr({ zh: '国家', en: 'Country' })}</label>
       <RegionPicker
         isZh={isZh}
         value={rpValue}

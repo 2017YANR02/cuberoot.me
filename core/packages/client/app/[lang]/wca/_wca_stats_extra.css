@@ -133,6 +133,12 @@
   border: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
   padding: 12px;
 }
+.wse-results-page > .wse-table-wrapper {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
 /* 默认横向滚动兜底;但当容器同时是 sticky 列头容器(.sticky-scroll)时不能自身横滚 —— 横滚容器会破坏
    thead「相对视口」吸顶,改交给共用工具 .sticky-scroll(桌面 overflow:visible / 窄屏 overflow-x:auto)。 */
 .wse-table-wrapper:not(.sticky-scroll) { overflow-x: auto; }
@@ -392,23 +398,6 @@ th.wse-sor-evcell { padding: 4px 2px !important; }
   pointer-events: none;
 }
 .wse-filter.wse-filter-q { min-width: 0; width: 20rem; max-width: 100%; flex: 0 1 20rem; }
-.wse-q-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-.wse-q-wrap .wse-q-input {
-  flex: 1;
-  width: 100%;
-  padding: 6px 28px 6px 10px;
-  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
-  background: color-mix(in srgb, var(--foreground) 4%, transparent);
-  color: inherit;
-  border-radius: 6px;
-  font-size: 14px;
-  height: 34px;
-}
-.wse-q-wrap .wse-q-input:hover { border-color: color-mix(in srgb, var(--foreground) 25%, transparent); }
 
 /* Mobile */
 @media (max-width: 600px) {
@@ -425,11 +414,9 @@ th.wse-sor-evcell { padding: 4px 2px !important; }
   .wse-results-page .wse-filter-share { grid-column: 1 / -1; width: 100%; }
   .wse-results-page .wse-filter.wse-filter-q { width: 100%; }
   .wse-results-page .wse-filter-select,
-  .wse-results-page .wse-filter .region-picker,
-  .wse-results-page .wse-q-wrap { width: 100%; min-width: 0; max-width: 100%; }
+  .wse-results-page .wse-filter .region-picker { width: 100%; min-width: 0; max-width: 100%; }
   .wse-results-page .wse-filter-select,
-  .wse-results-page .region-picker-trigger,
-  .wse-results-page .wse-q-input {
+  .wse-results-page .region-picker-trigger {
     height: 44px;
     min-height: 44px;
     box-sizing: border-box;
@@ -477,9 +464,10 @@ th.wse-sor-evcell { padding: 4px 2px !important; }
   display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 4px 16px;
 }
 .sor-census-list li { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.sor-census-list li > :is(.wca-person-team-slot, .country-flag, .country-flag-ct) { margin-inline-end: 0; }
 .sor-census-rank { min-width: 24px; text-align: right; color: var(--faint-foreground); font-variant-numeric: tabular-nums; }
-.sor-census-list a { color: var(--foreground); text-decoration: none; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sor-census-list a:hover { color: var(--accent); }
+.sor-census-list li > a { color: var(--foreground); text-decoration: none; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sor-census-list li > a:hover { color: var(--accent); }
 .sor-census-share { color: var(--muted-foreground); font-variant-numeric: tabular-nums; font-size: 12px; }
 .sor-census-more { margin-top: 10px; background: none; border: none; color: var(--accent); font-size: 13px; cursor: pointer; padding: 4px 0; }
 .sor-census-more:hover { text-decoration: underline; }

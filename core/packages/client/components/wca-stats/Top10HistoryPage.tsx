@@ -572,9 +572,7 @@ export default function Top10HistoryPage({
             <div className="t10h-holder-text">
               <div className="t10h-holder-name">{top1Name || ((eventLoading || countryLoading) ? <LoadingIndicator /> : '')}</div>
               <div className="t10h-holder-sub">
-                {top1Person && (country
-                  ? tr({ zh: `保持全国纪录 ${top1DurationDays} 天`, en: `National record holder for ${top1DurationDays} days` })
-                  : tr({ zh: `保持纪录 ${top1DurationDays} 天`, en: `World record holder for ${top1DurationDays} days` }))}
+                {top1Person && tr({ zh: `保持 ${top1DurationDays} 天`, en: `Held for ${top1DurationDays} days` })}
               </div>
             </div>
           </div>

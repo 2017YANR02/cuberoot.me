@@ -1,26 +1,3 @@
-/* NOTE: SorRace 专属 — 顶部 scope/metric 控制条。横条/轴/网格复用 top10_history.css + <BarRaceChart>。 */
-.sor-race .sor-race-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
-  padding: 10px 12px;
-}
-
-/* RegionPicker 跟随主题(亮色页是白底),但本控制条 + 舞台是固定深色广播台风格,
-   故在这里把 --rp-* 钉成深色,popup 作为 .region-picker 子节点自动继承。 */
-.sor-race .sor-race-bar .region-picker {
-  --rp-bg: var(--card);
-  --rp-bg-hover: var(--muted);
-  --rp-bg-active: var(--secondary);
-  --rp-text: var(--foreground);
-  --rp-text-sub: var(--muted-foreground);
-  --rp-border: var(--border-default);
-  --rp-border-hover: var(--border-strong);
-  --rp-popup-bg: var(--popover);
-}
-
 /* 大标题日期:年份大、月-日小挂在右侧 */
 .sor-race .t10h-bigdate .sor-race-md {
   font-size: 0.4em;
@@ -28,8 +5,4 @@
   color: var(--muted-foreground);
   font-weight: 600;
   letter-spacing: 0;
-}
-
-@media (max-width: 480px) {
-  .sor-race .sor-race-bar { gap: 8px; padding: 8px; }
 }

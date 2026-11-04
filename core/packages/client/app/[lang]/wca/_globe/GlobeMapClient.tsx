@@ -3009,8 +3009,9 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
             </button>
             {cuber && (
               <div className="cuber-chip">
+                <WcaPersonTeamBadge wcaId={cuber.wcaId} />
                 {flagIso2 && <Flag iso2={flagIso2} className="cuber-flag" />}
-                <span className="cuber-name">{displayCuberName(cuber.name, isZh)}<WcaPersonTeamBadge wcaId={cuber.wcaId} /></span>
+                <span className="cuber-name">{displayCuberName(cuber.name, isZh)}</span>
                 <ClearButton onClick={clearCuber} isZh={isZh} variant="standalone" preserveFocus />
               </div>
             )}
@@ -3223,8 +3224,8 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
                 {personResults.map((p) => (
                   <button key={`u${p.wcaId}`} className="globe-search-item" onClick={() => goToPerson(p)}>
                     <span className="globe-search-item-main globe-search-item-person">
-                      <Flag iso2={p.iso2} className="globe-search-person-flag" />
-                      <span>{displayCuberName(p.name, isZh)}<WcaPersonTeamBadge wcaId={p.wcaId} linked={false} /></span>
+                      <WcaPersonTeamBadge wcaId={p.wcaId} linked={false} /><Flag iso2={p.iso2} className="globe-search-person-flag" />
+                      <span>{displayCuberName(p.name, isZh)}</span>
                     </span>
                     <span className="globe-search-item-sub">{p.wcaId}</span>
                   </button>

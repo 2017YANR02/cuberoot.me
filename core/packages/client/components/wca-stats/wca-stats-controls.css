@@ -1,4 +1,8 @@
 /* WCA 筛选框共用尺寸与表面；菜单和搜索行为仍由原组件负责。 */
+.wse-page :is(.wca-stats-controls, .wca-stats-tab-bar-connected) {
+  --wca-stats-control-height: 40px;
+}
+
 .wse-page .wca-stats-controls {
   display: flex;
   flex-wrap: wrap;
@@ -6,10 +10,10 @@
   gap: 8px;
 }
 
-.wse-page .wca-stats-controls :is(.list-select-trigger, .region-picker-trigger, .search-control, .wse-filter-select, .cuber-search-chip) {
+.wse-page .wca-stats-controls :is(.list-select-trigger, .region-picker-trigger, .search-control, .wse-filter-select, .wse-pill, .wse-q-input, .cuber-search-chip) {
   box-sizing: border-box;
-  height: 40px;
-  min-height: 40px;
+  height: var(--wca-stats-control-height);
+  min-height: var(--wca-stats-control-height);
   padding: 8px 12px;
   border: 1px solid var(--input);
   border-radius: 8px;
@@ -17,6 +21,16 @@
   color: var(--foreground);
   font-size: 14px;
   line-height: 1.25;
+}
+
+.wse-page .wca-stats-tab-bar-connected .wca-stats-tab {
+  box-sizing: border-box;
+  height: var(--wca-stats-control-height);
+  min-height: var(--wca-stats-control-height);
+}
+
+.wse-results-page > .wca-stats-tab-bar-connected {
+  margin: 0 0 16px;
 }
 
 .wse-page .wca-stats-controls :is(.search-control--with-clear, .cuber-search-chip) { padding-right: 34px; }
@@ -29,3 +43,53 @@
 
 .wse-page .wca-stats-controls .region-picker { width: max-content; max-width: min(220px, calc(100vw - 32px)); }
 .wse-page .wca-stats-controls .wse-filter { min-width: 0; flex: 0 0 auto; }
+
+.wse-page .wca-stats-controls > .wca-stats-tab-bar { margin: 0; }
+
+.wse-page .wca-stats-controls .wse-filter > .bool-toggle {
+  box-sizing: border-box;
+  min-height: var(--wca-stats-control-height);
+  align-items: center;
+}
+
+.wse-page .wca-stats-controls .wse-filter-q { width: 28rem; flex: 0 1 28rem; max-width: 100%; }
+.wse-name-search {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: var(--wca-stats-control-height);
+  border: 1px solid var(--input);
+  border-radius: 8px;
+  background: var(--background);
+}
+.wse-name-search:hover { border-color: var(--border-strong); }
+.wse-name-search:focus-within { outline: 2px solid var(--ring); outline-offset: 2px; }
+.wse-name-search-icon { flex: none; margin-left: 12px; color: var(--muted-foreground); }
+.wse-name-search-input { flex: 1; min-width: 0; }
+.wse-page .wca-stats-controls .wse-name-search .search-control {
+  height: calc(var(--wca-stats-control-height) - 2px);
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
+}
+.wse-name-search-mode { position: relative; flex: none; border-left: 1px solid var(--input); }
+.wse-name-search-mode select {
+  appearance: none;
+  field-sizing: content;
+  max-width: 12rem;
+  border: 0;
+  border-radius: 0;
+  padding: 6px 28px 6px 12px;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.wse-name-search-mode option { background: var(--background); color: var(--foreground); }
+.wse-name-search-mode > svg { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+@media (max-width: 600px) {
+  .wse-page .wca-stats-controls .wse-filter-q { grid-column: 1 / -1; width: 100%; }
+}

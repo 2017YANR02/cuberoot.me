@@ -68,7 +68,7 @@ export function resolveRegulationHref(href: string, language: string): string | 
     const options = parseWcaAnchor(url.hash.slice(1));
     if (!url.hash || options.event) return localize(compHref(competition, options), language);
   }
-  if (path === '/results/records' && !url.hash && !contentQuery.length) return localize('/wca/records', language);
+  if (path === '/results/records' && !url.hash && !contentQuery.length) return localize('/wca/results?tab=records', language);
   const ranking = /^\/results\/rankings\/([^/]+)\/(single|average)$/.exec(path);
   if (ranking && ALL_EVENT_IDS.includes(ranking[1]) && !url.hash && !contentQuery.length) {
     return localize(`/wca/results?events=${ranking[1]}&type=${ranking[2]}&show=persons&basis=cumulative`, language);

@@ -73,7 +73,7 @@ export function WcaRecordRowsTable({
           {showEvent && <th>{tr({ zh: '项目', en: 'Event' })}</th>}
           <th className="wse-value-col">{tr({ zh: '单次', en: 'Single' })}</th>
           <th className="wse-value-col">{tr({ zh: '平均', en: 'Average' })}</th>
-          <th className="wse-name-col">{tr({ zh: '选手', en: 'Person' })}</th>
+          <th className="wse-name-col wca-person-column">{tr({ zh: '选手', en: 'Person' })}</th>
           <WcaTeacherColumnHeader filter={{ ...teacherFilter.filter, onChange: value => { teacherFilter.filter.onChange(value); setExtra(0); } }} />
           <th className="wse-name-col">{tr({ zh: '比赛', en: 'Competition' })}</th>
           <th>{tr({ zh: '日期', en: 'Date' })}</th>
@@ -102,10 +102,9 @@ export function WcaRecordRowsTable({
                 {row.t === 'a' ? formatWcaResult(row.v, row.e, 'average') : ''}
               </td>
               <td className="wse-name-col">
-                {personIso2 && (
+                <PersonLink flag={<>{personIso2 && (
                   <Flag iso2={personIso2} spanClassName="country-flag" imgClassName="country-flag-ct" />
-                )}{' '}
-                <PersonLink wcaId={row.p} name={row.pn} isZh={isZh} />
+                )}{' '}</>} wcaId={row.p} name={row.pn} isZh={isZh} />
               </td>
               <td>
                 <WcaTeacherCell

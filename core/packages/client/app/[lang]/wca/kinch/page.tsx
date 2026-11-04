@@ -225,12 +225,12 @@ function KinchPageInner() {
                 <tr key={row.wcaId}>
                   <td className="wse-rank-col">{row.rank}</td>
                   <td>
-                    <><AppLink
+                    <><WcaPersonTeamBadge wcaId={row.wcaId} /><AppLink
                       href={`/wca/kinch?wcaId=${encodeURIComponent(row.wcaId)}${country ? `&country=${encodeURIComponent(country)}` : ''}`}
                       prefetch={false}
                     >
                       {displayCuberName(row.name, isZh)}
-                    </AppLink><WcaPersonTeamBadge wcaId={row.wcaId} /></>
+                    </AppLink></>
                     <span className="kinch-person-id">{row.wcaId}</span>
                   </td>
                   <td>

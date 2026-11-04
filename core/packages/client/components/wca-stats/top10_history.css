@@ -91,7 +91,7 @@
   flex: 1 1 auto;
   min-width: 0;
 }
-.t10h-holder-flag {
+.t10h-holder .t10h-holder-flag {
   width: 96px;
   height: 64px;
   flex-shrink: 0;
@@ -483,7 +483,7 @@
     margin-bottom: 10px;
     min-height: 0;
   }
-  .t10h-holder-flag { width: 56px; height: 38px; }
+  .t10h-holder .t10h-holder-flag { width: 56px; height: 38px; }
   .t10h-holder-name { font-size: 16px; }
   .t10h-holder-sub { font-size: 12px; }
   .t10h-bigtitle { text-align: left; }
@@ -512,7 +512,7 @@
   .t10h-stage { --rank-w: 50px; --row-h: 38px; }
   .t10h-bigdate { font-size: 40px; }
   .t10h-bigtitle-pre { font-size: 14px; }
-  .t10h-holder-flag { width: 72px; height: 48px; }
+  .t10h-holder .t10h-holder-flag { width: 72px; height: 48px; }
   .t10h-holder-name { font-size: 20px; }
   .t10h-bar { height: 26px; font-size: 12px; }
   .t10h-comp { font-size: 12px; }

@@ -140,7 +140,7 @@ function GrandSlamPageInner() {
               <thead>
                 <tr>
                   <th className="wse-rank-col">#</th>
-                  <th>{tr({ zh: '选手', en: 'Person'
+                  <th className="wca-person-column">{tr({ zh: '选手', en: 'Person'
                 })}</th>
                   <th>{tr({ zh: '项目', en: 'Event'
                 })}</th>
@@ -161,8 +161,7 @@ function GrandSlamPageInner() {
                   <tr key={`${r.wcaId}-${r.eventId}`}>
                     <td className="wse-rank-col">{i + 1}</td>
                     <td>
-                      {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
-                      <PersonLink wcaId={r.wcaId} name={r.name} isZh={isZh} />
+                      <PersonLink flag={<>{r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}</>} wcaId={r.wcaId} name={r.name} isZh={isZh} />
                     </td>
                     <td>{r.eventId}</td>
                     <td className="wse-value-col">{r.single != null ? formatWcaResult(r.single, r.eventId, 'single') : '—'}</td>

@@ -105,8 +105,7 @@ function TeamsDirectory() {
     </div>
     {loading ? <LoadingIndicator /> : failed ? <button type="button" onClick={() => retry(value => value + 1)}>{tr({ zh: '加载失败，重试', en: 'Failed to load. Retry' })}</button> : null}
     <div className="wse-table-wrapper"><table className="wse-table wca-teams-table sticky-thead" aria-busy={loading}>
-      <thead><tr><th>{tr({ zh: '选手', en: 'Person' })}</th>
-        <WcaRelationColumnHeader label={tr({ zh: '战队', en: 'Team' })} filter={{ value: team, onChange: chooseTeam, items: wcaTeamSelectItems(data?.teams ?? []) }} />
+      <thead><tr><WcaRelationColumnHeader className="wca-person-column" label={tr({ zh: '选手', en: 'Person' })} filterLabel={tr({ zh: '战队', en: 'Team' })} resetLabel={tr({ zh: '不限战队', en: 'Any team' })} filter={{ value: team, onChange: chooseTeam, items: wcaTeamSelectItems(data?.teams ?? []) }} />
         <th>{tr({ zh: '三阶单次', en: '3×3 single' })}</th>
         <th>{tr({ zh: '三阶平均', en: '3×3 average' })}</th>
         <th>{tr({ zh: '参赛次数', en: 'Competitions' })}</th>
@@ -115,13 +114,13 @@ function TeamsDirectory() {
         </Tooltip></th></tr></thead>
       <tbody>{!loading && !failed && data?.members.map(member => <tr key={member.memberId ?? member.wcaId}>
         <td><div className="wca-team-person">
+          <span className="wca-person-team-slot"><WcaTeamLink team={{ id: member.teamId, name: member.teamName }} className="wca-person-team-badge" /></span>
           {member.iso2 && <Flag iso2={member.iso2} />}
           <div>{member.wcaId
             ? <PersonLink wcaId={member.wcaId} name={member.name} isZh={isZh} showTeam={false} />
             : <span>{displayCuberName(member.name, isZh)}</span>}
             {member.wcaId && <span className="wca-team-person-id">{member.wcaId}</span>}</div>
         </div></td>
-        <td><WcaTeamLink team={{ id: member.teamId, name: member.teamName }} /></td>
         <td>{member.bestSingle == null ? '—' : formatWcaResult(member.bestSingle, '333', 'single')}
           {member.bestSingle != null && member.singleWorldRank != null && member.singleWorldRank > 0 &&
             <span className="wca-team-world-rank">WR{member.singleWorldRank}</span>}
@@ -133,7 +132,7 @@ function TeamsDirectory() {
         <td>{member.competitionCount ?? '—'}</td>
         <td>{member.championshipCount ?? '—'}</td>
       </tr>)}
-      {!loading && !failed && data?.total === 0 && <tr><td colSpan={6}>{tr({ zh: '没有匹配的选手', en: 'No matching members' })}</td></tr>}
+      {!loading && !failed && data?.total === 0 && <tr><td colSpan={5}>{tr({ zh: '没有匹配的选手', en: 'No matching members' })}</td></tr>}
       </tbody></table></div>
     {data && data.total > 50 && <Paginator page={page} totalPages={Math.ceil(data.total / 50)} size={50} pageSizeOptions={[50]} isZh={isZh}
       onPageChange={page => { void setQuery({ page: String(page) }); }} onSizeChange={() => {}} />}

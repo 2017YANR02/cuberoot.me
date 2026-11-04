@@ -44,7 +44,7 @@ const LOOKUP = '__lookup__';
 
 const WCA_TOOLS: { path: string; zh: string; en: string; Icon: LucideIcon
  }[] = [
-  // 比赛 / 纪录 / 排名 已上移到首页直达卡,这里不再重复
+  // 比赛 / 排名(含纪录) 已上移到首页直达卡,这里不再重复
   // 成绩分布(原 /wca/viz)已退役,移入选手页「动态分布」子 tab
   { path: '/wca/prediction', zh: '预测',     en: 'Prediction',   Icon: TrendingDown
 },
@@ -55,10 +55,8 @@ const WCA_TOOLS: { path: string; zh: string; en: string; Icon: LucideIcon
 const LOOKUP_ITEMS: { path: string; zh: string; en: string; Icon: LucideIcon; extraQuery?: string; adminOnly?: boolean
  }[] = [
   { path: '/wca/teams', zh: '厂商与战队', en: 'Brands & Teams', Icon: Users },
-  // 首页直达卡(比赛 / 纪录 / 排名)同时并入查询区,方便从 /wca 直接进
+  // 首页直达卡(比赛 / 排名(含纪录))同时并入查询区,方便从 /wca 直接进
   { path: '/wca/comp',            zh: '比赛',         en: 'Competitions',    Icon: Radio
-},
-  { path: '/wca/records',         zh: '纪录',         en: 'Records',         Icon: Trophy
 },
   { path: '/wca/results',         zh: '排名',         en: 'Rankings',        Icon: ListOrdered
 },

@@ -2864,7 +2864,7 @@ const ResultsTableRow = memo(function ResultsTableRow({
       </td>
       <td className="td-person comp-result-person-cell">
         <div className="comp-result-person">
-          <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
+          <WcaPersonTeamBadge wcaId={u.wcaid} /><Flag iso2={regionToIso2(u.region)} className="comp-flag" />
           <Link
             href={compResultHref(compId ?? '', { eventId: r.e, roundId: r.r, number: r.n })}
             prefetch={false}
@@ -2875,7 +2875,6 @@ const ResultsTableRow = memo(function ResultsTableRow({
           >
             <span className="comp-result-person-name">{cuberName}</span>
           </Link>
-          <span className="comp-result-team"><WcaPersonTeamBadge wcaId={u.wcaid} /></span>
         </div>
         {/* 行级编辑铅笔已移除:管理员经点成绩弹窗里的「编辑变更记录…」打开整条变更编辑器。 */}
       </td>
@@ -3106,9 +3105,9 @@ function CompRecordsView({ groups, users, isZh, onClickCuber }: CompRecordsViewP
                         onClick={() => onClickCuber(row.n, g.ev.i, row.roundId)}
                       >
                         <td className="td-person">
-                          <Flag iso2={iso2} className="comp-flag" />
+                          <WcaPersonTeamBadge wcaId={u.wcaid} /><Flag iso2={iso2} className="comp-flag" />
                           <span className="cuber-name" title={regionDisplay(u.region, isZh)}>
-                            {displayCuberName(u.name, isZh)}<WcaPersonTeamBadge wcaId={u.wcaid} />
+                            {displayCuberName(u.name, isZh)}
                           </span>
                         </td>
                         <td className="td-best">
@@ -3256,9 +3255,9 @@ function CombinedDualRoundsTable({ data, ev, r1, r2, isZh, pbMap, compIso2, memb
                   {si === 0 && (
                     <td className="dual-td-span dual-td-person" rowSpan={span}>
                       <span className="dual-person-inner">
-                        <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
+                        <WcaPersonTeamBadge wcaId={u.wcaid} /><Flag iso2={regionToIso2(u.region)} className="comp-flag" />
                         <span className="cuber-name" title={`${fullCuberName}\n${regionDisplay(u.region, isZh)}`}>
-                          {cuberName}<WcaPersonTeamBadge wcaId={u.wcaid} />
+                          {cuberName}
                         </span>
                       </span>
                     </td>
@@ -3298,7 +3297,7 @@ function CuberNameLink({ u, isZh }: { u: User; isZh: boolean }) {
         onClick={e => e.stopPropagation()}
       >
         {name}
-      </Link><WcaPersonTeamBadge wcaId={u.wcaid} /></>
+      </Link></>
     );
   }
   return <span className="cuber-name" title={title}>{name}</span>;
@@ -3511,7 +3510,7 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
               >
                 <td className="td-place">{idx + 1}</td>
                 <td className="td-person">
-                  <Flag iso2={regionToIso2(row.u.region)} className="comp-flag" />
+                  <WcaPersonTeamBadge wcaId={row.u.wcaid} /><Flag iso2={regionToIso2(row.u.region)} className="comp-flag" />
                   <CuberNameLink u={row.u} isZh={isZh} />
                 </td>
                 {row.ranks.map((r, j) => (
@@ -3575,7 +3574,7 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
                   >
                     <td className="td-place">{rankByN.get(row.n) ?? idx + 1}</td>
                     <td className="td-person">
-                      <Flag iso2={regionToIso2(row.u.region)} className="comp-flag" />
+                      <WcaPersonTeamBadge wcaId={row.u.wcaid} /><Flag iso2={regionToIso2(row.u.region)} className="comp-flag" />
                       <CuberNameLink u={row.u} isZh={isZh} />
                     </td>
                     {(() => {
@@ -3633,7 +3632,7 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
                   >
                     <td className="td-place">{idx + 1}</td>
                     <td className="td-person">
-                      <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
+                      <WcaPersonTeamBadge wcaId={u.wcaid} /><Flag iso2={regionToIso2(u.region)} className="comp-flag" />
                       <CuberNameLink u={u} isZh={isZh} />
                     </td>
                     <td className="comp-roster-events">
@@ -3775,7 +3774,7 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, personal = false, lo
       <div ref={cardRef} className="comp-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
         <header className="comp-modal-header comp-cuber-modal-header">
           <div className="comp-modal-title">
-            {u && <Flag iso2={regionToIso2(u.region)} className="comp-flag" />}
+            {u && <><WcaPersonTeamBadge wcaId={u.wcaid} /><Flag iso2={regionToIso2(u.region)} className="comp-flag" /></>}
             {u?.wcaid ? (
               <><Link
                 prefetch={false}
@@ -3783,7 +3782,7 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, personal = false, lo
                 className="cuber-link-modal"
               >
                 {displayCuberName(u.name, isZh)}
-              </Link><WcaPersonTeamBadge wcaId={u.wcaid} /></>
+              </Link></>
             ) : (
               <span className="cuber-link-static">{u ? displayCuberName(u.name, isZh) : ''}</span>
             )}
@@ -4179,7 +4178,7 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
       <div ref={cardRef} className="comp-round-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
         <header className="comp-modal-header">
           <div className="comp-modal-title">
-            <Flag iso2={iso2} className="comp-flag" />
+            <WcaPersonTeamBadge wcaId={u.wcaid} /><Flag iso2={iso2} className="comp-flag" />
             {u.wcaid ? (
               <><Link
                 prefetch={false}
@@ -4187,7 +4186,7 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
                 className="cuber-link-modal"
               >
                 {displayCuberName(u.name, isZh)}
-              </Link><WcaPersonTeamBadge wcaId={u.wcaid} /></>
+              </Link></>
             ) : (
               <span>{displayCuberName(u.name, isZh)}</span>
             )}
