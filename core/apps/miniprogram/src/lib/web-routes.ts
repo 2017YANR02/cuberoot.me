@@ -14,7 +14,7 @@ import { publicPageSharePath, type PageShareMessage } from '@cuberoot/shared/pag
 import { nativeWebDestination } from './native-web-destination';
 
 type DiscoveryRouteKey = Exclude<SiteDirectoryEntryId, 'algdb' | 'alg' | 'github'> | 'alg';
-export type WebRouteKey = DiscoveryRouteKey | 'home' | 'training' | 'account' | 'account-link' | 'privacy' | 'renewal-terms' | 'logout';
+export type WebRouteKey = DiscoveryRouteKey | 'home' | 'training' | 'account' | 'account-link' | 'privacy' | 'renewal-terms' | 'logout' | 'wca-records';
 
 interface WebRouteDefinition {
   title: string;
@@ -112,6 +112,12 @@ function createWebRoutes(): Record<WebRouteKey, WebRouteDefinition> {
 
   return {
     ...discoveryRoutes,
+    // Retain links shared before records moved into the results page.
+    'wca-records': {
+      ...discoveryRoutes['wca-results'],
+      path: localizedWebsitePath('/wca/results?tab=records'),
+      publicEntry: false,
+    },
     training: {
       title: tr({ en: 'Daily training', zh: '每日训练' }),
       description: tr({ en: 'Class assignments, daily check-in and ranking', zh: '班级任务、每日打卡与排名' }),
@@ -188,7 +194,8 @@ export function listWebToolGroups(query = ''): WebToolGroup[] {
     .map((group) => ({
       ...group,
       tools: normalizedQuery
-        ? group.tools.filter((tool) => [tool.title, tool.titleEn, tool.href, tool.id]
+        ? group.tools.filter((tool) => [tool.title, tool.titleEn, tool.href, tool.id,
+          ...(tool.id === 'wca-results' ? [SITE_DIRECTORY_TEXTS.records.zh, SITE_DIRECTORY_TEXTS.records.en, 'wca-records'] : [])]
           .some((value) => value.toLocaleLowerCase().includes(normalizedQuery)))
         : [...group.tools],
     }))
