@@ -26,9 +26,9 @@ export const toolCallSchema = z.discriminatedUnion('tool', [
   z.object({ tool: z.literal('news'), from: date.optional(), to: date.optional(), limit: z.number().int().min(1).max(10).default(5) }).strict().refine(value=>!value.from || !value.to || value.from<=value.to,{message:'Date range is reversed'}),
   z.object({ tool: z.literal('records'), event, region: z.string().regex(/^(world|[A-Z]{2})$/).default('world') }).strict(),
   z.object({ tool: z.literal('find_person'), query }).strict(),
-  z.object({ tool: z.literal('person_countries'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/) }).strict(),
-  z.object({ tool: z.literal('person_competitions'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/), from: date.optional(), to: date.optional() }).strict().refine(value=>!value.from || !value.to || value.from<=value.to,{message:'Date range is reversed'}),
-  z.object({ tool: z.literal('person'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/), event: z.enum([...WCA_EVENT_ORDER, 'all']).default('333'), progress: z.boolean().default(false), view: z.enum(['records','profile']).optional() }).strict().refine(value=>value.event!=='all' || !value.progress,{path:['event'],message:'Progress charts require one event; use all only for current personal bests.'}),
+  z.object({ tool: z.literal('person_countries'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/), event: z.enum(WCA_EVENT_ORDER).optional(), from: date.optional(), to: date.optional() }).strict().refine(value=>!value.from || !value.to || value.from<=value.to,{message:'Date range is reversed'}),
+  z.object({ tool: z.literal('person_competitions'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/), event: z.enum(WCA_EVENT_ORDER).optional(), from: date.optional(), to: date.optional(), groupBy: z.literal('year').optional() }).strict().refine(value=>!value.from || !value.to || value.from<=value.to,{message:'Date range is reversed'}),
+  z.object({ tool: z.literal('person'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/), event: z.enum([...WCA_EVENT_ORDER, 'all']).default('333'), metric: z.enum(['single','average']).optional(), rankings: z.boolean().optional(), progress: z.boolean().default(false), view: z.enum(['records','profile']).optional() }).strict().refine(value=>value.event!=='all' || !value.progress,{path:['event'],message:'Progress charts require one event; use all only for current personal bests.'}).refine(value=>value.view!=='profile' || (!value.metric && !value.progress && value.rankings===undefined),{path:['view'],message:'Use records view for metric, rankings or progress requests.'}),
   z.object({ tool: z.literal('rankings'), event, type: z.enum(['single','average']).default('single'), country: z.string().regex(/^([A-Z]{2}|_Asia|_Europe|_Africa|_North America|_South America|_Oceania)?$/).default(''), year: z.number().int().min(2003).max(2100).optional(), limit: z.number().int().min(1).max(20).default(10) }).strict(),
   z.object({ tool: z.literal('competitions'), query: z.string().max(100).default(''), country: z.string().regex(/^([A-Z]{2})?$/).default(''), upcoming: z.boolean().default(true), from:date.optional(),to:date.optional(), limit: z.number().int().min(1).max(20).default(10) }).strict().refine(value=>!value.from || !value.to || value.from<=value.to,{message:'Date range is reversed'}),
   z.object({ tool: z.literal('scrambles'), compId: competitionId, event, round: z.string().regex(/^[a-z0-9]{1,2}$/).default('f') }).strict(),
@@ -61,6 +61,28 @@ const url = (path: string, params: Record<string, string | number | undefined>) 
   return result.href;
 };
 const source = (id: string, title: string, href: string): AssistantSource => ({ id, title, href, read: true });
+const attendancePeriod = (from: string | undefined, to: string | undefined, lang: 'zh'|'en') => {
+  if (from && to && from.endsWith('-01-01') && to===from.slice(0,4)+'-12-31') return from.slice(0,4)+(lang==='zh'?' 年':'');
+  return from && to ? formatDateRangeIso(from,to) : from ? lang==='zh'?`${from} 起`:`since ${from}` : to ? lang==='zh'?`截至 ${to}`:`through ${to}` : '';
+};
+
+/** Shared attendance set: select actual result rows before deduplicating competitions. */
+function selectAttendance(data: {results: Array<{competition_id: string; event_id?: string}>; comps: Array<{id: string; start_date?: string; country_iso2?: string}>}, call: {tool: string; event?: string; from?: string; to?: string}) {
+  const attended = new Set(data.results.filter(result=>!call.event || result.event_id===call.event).map(result=>result.competition_id));
+  const metadata = new Map(data.comps.map(comp=>[comp.id,comp]));
+  const competitions: Array<{id: string; start?: string; country?: string}> = [];
+  let unknownDateCompetitions = 0;
+  for (const id of attended) {
+    const comp = metadata.get(id), parsedDate = date.safeParse(comp?.start_date);
+    const start = parsedDate.success ? parsedDate.data : undefined;
+    if (!start) {
+      unknownDateCompetitions++;
+      if (call.from || call.to || call.tool==='person_competitions') continue;
+    } else if ((call.from && start<call.from) || (call.to && start>call.to)) continue;
+    competitions.push({id,start,country:comp?.country_iso2});
+  }
+  return {competitions,unknownDateCompetitions};
+}
 
 /** Only fixed public origins/endpoints. Never forwards cookies or credentials. */
 export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'|'navigation'|'analysis_schema'|'analysis_query'|'web_search'|'deliberate'|'lookup_cube_photo'}>, lang: 'zh'|'en', read: JsonReader, findPeople = findAssistantPeople,today=new Date().toISOString().slice(0,10),timeZone='UTC'): Promise<ToolResult> {
@@ -154,49 +176,46 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
     const title = name(data.profile.person.name);
     // Results contain multiple events/rounds per competition. Count each ID
     // once, including DNF results; unrelated competition metadata is not attendance.
-    const attended = new Set<string>(data.results.map((r:any)=>r.competition_id));
-    const dates = new Map<string,string>(data.comps.map((c:any)=>[c.id,c.start_date]));
+    const {competitions,unknownDateCompetitions} = selectAttendance(data,call);
     const years = new Map<string,number>();
-    let count = 0, unknownDateCompetitions = 0;
-    for (const compId of attended) {
-      const parsedDate = date.safeParse(dates.get(compId));
-      if (!parsedDate.success) { unknownDateCompetitions++; continue; }
-      const start = parsedDate.data;
-      if ((call.from && start<call.from) || (call.to && start>call.to)) continue;
-      count++;
-      const year = start.slice(0,4);
-      years.set(year,(years.get(year) ?? 0)+1);
+    const count = competitions.length;
+    if (call.groupBy==='year') for (const comp of competitions) {
+      const year = comp.start!.slice(0,4); years.set(year,(years.get(year) ?? 0)+1);
     }
     const byYear = [...years].sort(([a],[b])=>a.localeCompare(b)).map(([year,competitions])=>({year,competitions}));
-    out.evidence = {updated,wcaId:call.wcaId,name:title,from:call.from,to:call.to,count,byYear,unknownDateCompetitions,
+    out.evidence = {updated,wcaId:call.wcaId,name:title,event:call.event,from:call.from,to:call.to,count,...(call.groupBy==='year'?{byYear}:{}),unknownDateCompetitions,
       basis:'Distinct competition IDs with imported official results, grouped/filtered by competition start date. DNF participation is included. Not a count of rounds, events, registrations or an annualized average. Missing years have zero imported competitions only when unknownDateCompetitions is zero. Coverage ends at the import timestamp, not today.'};
-    out.sources.push(source(`person-competitions:${call.wcaId}:${call.from ?? 'all'}:${call.to ?? 'all'}`,title,`/wca/persons/${call.wcaId}`));
-    const period = call.from && call.to ? formatDateRangeIso(call.from,call.to) : call.from ? label(`${call.from} 起`,`since ${call.from}`) : call.to ? label(`截至 ${call.to}`,`through ${call.to}`) : label('全部年份','all years');
+    out.sources.push(source(`person-competitions:${call.wcaId}:${call.from ?? 'all'}:${call.to ?? 'all'}${call.event?':'+call.event:''}${call.groupBy?':'+call.groupBy:''}`,title,`/wca/persons/${call.wcaId}`));
+    const period = attendancePeriod(call.from,call.to,lang) || label('全部年份','all years');
+    const scope = period + (call.event ? ` · ${({zh:EVENT_DISPLAY_ZH,en:EVENT_DISPLAY_EN})[lang][call.event]}` : '');
     out.factualSummary = (call.from && call.from>today
       ? label(`${period} 尚未发生，当前没有该期间的正式比赛成绩，无法提供未来的确切成绩。`,`The period ${period} is in the future. Official results do not exist yet, so exact future results are unavailable.`)
-      : label(`${title}在 ${period} 参加过 ${count} 场比赛，以比赛开始日期计。`,`${title} competed in ${count} competitions (${period}), counted by competition start date.`))
+      : label(`${title}在 ${scope} 参加过 ${count} 场比赛，以比赛开始日期计。`,`${title} competed in ${count} competitions (${scope}), counted by competition start date.`))
       + (unknownDateCompetitions ? label(`另有 ${unknownDateCompetitions} 场比赛缺少有效日期，未计入，以上数量可能不完整。`,` ${unknownDateCompetitions} competitions lack valid dates and are excluded; this count may be incomplete.`) : '');
-    if (byYear.length) table(label('按年参赛数','Competitions by year'),[label('年份','Year'),label('比赛数','Competitions')],byYear.map(row=>[row.year,String(row.competitions)]));
+    if (call.groupBy==='year' && byYear.length) table(label('按年参赛数','Competitions by year'),[label('年份','Year'),label('比赛数','Competitions')],byYear.map(row=>[row.year,String(row.competitions)]));
   } else if (call.tool === 'person_countries') {
     const [data, updated] = await Promise.all([read(url(`${api}/wca/person-page`, {wcaId:call.wcaId})), freshness()]);
     const title = name(data.profile.person.name);
     // Count competition locations from actual result-bearing competitions,
     // never the person's nationality or a truncated global traveler ranking.
-    const attended = new Set<string>(data.results.map((r:any)=>r.competition_id));
-    const locations = new Map<string,string>(data.comps.map((c:any)=>[c.id,c.country_iso2]));
+    const {competitions,unknownDateCompetitions} = selectAttendance(data,call);
     const counts = new Map<string,number>();
     let unknownCompetitions = 0;
-    for (const compId of attended) {
-      const country = locations.get(compId);
+    for (const {country} of competitions) {
       if (!country || !/^[A-Z]{2}$/.test(country)) { unknownCompetitions++; continue; }
       counts.set(country,(counts.get(country) ?? 0)+1);
     }
     const regions = new Intl.DisplayNames([lang === 'zh' ? 'zh-Hans' : 'en'],{type:'region'});
     const countries = [...counts].sort(([a],[b])=>a.localeCompare(b)).map(([iso2,competitions])=>({iso2,name:regions.of(iso2) ?? iso2,competitions}));
-    out.evidence = {updated,wcaId:call.wcaId,name:title,countries,unknownCompetitions,basis:'Competition host country/region, distinct competitions with official results; not nationality or travel without competing.'};
-    out.sources.push(source(`person:${call.wcaId}`,title,`/wca/persons/${call.wcaId}`));
-    table(label('参赛国家和地区','Countries and regions competed in'),[label('国家或地区','Country or region'),label('比赛数','Competitions')],countries.map(c=>[c.iso2,String(c.competitions)]),undefined,['country','text']);
-    out.factualSummary = label(`按已导入的官方成绩，${title}在 ${countries.length} 个国家或地区参赛，明细见下表。以比赛举办地计算，不按选手国籍计算。`,`Imported official results show ${title} competed in ${countries.length} countries or regions, listed below. Locations refer to competition hosts, not nationality.`)
+    out.evidence = {updated,wcaId:call.wcaId,name:title,event:call.event,from:call.from,to:call.to,countries,unknownCompetitions,unknownDateCompetitions:call.from || call.to ? unknownDateCompetitions : 0,basis:'Competition host country/region, distinct competitions with official results including DNF, filtered by event and competition start date before counting; not nationality or travel without competing. Coverage ends at the import timestamp.'};
+    out.sources.push(source(call.event || call.from || call.to ? `person-countries:${call.wcaId}:${call.from ?? 'all'}:${call.to ?? 'all'}:${call.event ?? 'all'}` : `person:${call.wcaId}`,title,`/wca/persons/${call.wcaId}`));
+    table(label('参赛国家和地区','Countries and regions competed in'),[label('国家或地区','Country or region'),label('比赛数','Competitions')],countries.map(c=>[c.name,String(c.competitions)]));
+    const period = attendancePeriod(call.from,call.to,lang);
+    const scope = [period,call.event?({zh:EVENT_DISPLAY_ZH,en:EVENT_DISPLAY_EN})[lang][call.event]:''].filter(Boolean).join(' · ');
+    out.factualSummary = (call.from && call.from>today
+      ? label(`${period} 尚未发生，当前没有该期间的正式比赛成绩。`,`The period ${period} is in the future; official results do not exist yet.`)
+      : label(`${title}${scope?`（${scope}）`:''}在 ${countries.length} 个国家或地区参赛。以比赛举办地计算。`,`${title} competed in ${countries.length} countries or regions${scope?` (${scope})`:''}. Locations refer to competition hosts.`))
+      + ((call.from || call.to) && unknownDateCompetitions ? label(`另有 ${unknownDateCompetitions} 场比赛缺少有效日期，未计入，以上范围可能不完整。`,` ${unknownDateCompetitions} competitions lack valid dates and are excluded; coverage may be incomplete.`) : '')
       + (unknownCompetitions ? label(`另有 ${unknownCompetitions} 场比赛缺少有效举办地，未计入。`,` ${unknownCompetitions} competitions lack a valid host location and are excluded.`) : '');
   } else if (call.tool === 'person') {
     const [data, updated] = await Promise.all([read(url(`${api}/wca/person-page`, { wcaId:call.wcaId })), freshness()]);
@@ -210,17 +229,34 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
     const eventOrder: readonly string[] = WCA_EVENT_ORDER;
     const personal = Object.entries(profile.personal_records ?? {}).sort(([a],[b])=>eventOrder.indexOf(a)-eventOrder.indexOf(b)).map(([eventId, v]: [string,any]) => ({ event:eventId, single:formatWcaResult(v.single?.best ?? 0,eventId,'single'), average:formatWcaResult(v.average?.best ?? 0,eventId,'average'), singleRank:v.single?.world_rank, averageRank:v.average?.world_rank }));
     const selected = personal.filter(r=>call.event==='all' || r.event===call.event);
-    out.evidence = { updated, wcaId:call.wcaId, name:title, country:profile.person.country_iso2, competitionCount:profile.competition_count, medals:profile.medals, historicalRecordBreaks:profile.records, personalRecords:selected, event:call.event };
+    const metrics = call.metric ? [call.metric] : ['single','average'] as const;
+    const rankings = call.rankings !== false;
+    const records = selected.map(record=>({event:record.event,...Object.fromEntries(metrics.flatMap(metric=>[
+      [metric,call.metric && !(profile.personal_records[record.event]?.[metric]?.best>0) ? null : record[metric]],
+      ...(rankings ? [[metric+'Rank',record[metric==='single'?'singleRank':'averageRank']]] : []),
+    ]))}));
+    out.evidence = { updated, wcaId:call.wcaId, name:title, event:call.event, ...(call.metric ? {metric:call.metric} : {country:profile.person.country_iso2,competitionCount:profile.competition_count,medals:profile.medals,historicalRecordBreaks:profile.records}), personalRecords:records };
     const href = `/wca/persons/${call.wcaId}`;
-    out.sources.push(source(`person:${call.wcaId}`, title, href));
-    table(title, [label('项目','Event'),label('单次','Single'),label('世界排名','World rank'),label('平均','Average'),label('世界排名','World rank')], selected.map(r=>[({zh:EVENT_DISPLAY_ZH,en:EVENT_DISPLAY_EN})[lang][r.event] ?? r.event,r.single,String(r.singleRank ?? '—'),r.average,String(r.averageRank ?? '—')]));
+    const sourceId = call.metric || !rankings ? `person:${call.wcaId}:${call.event}:${call.metric ?? 'both'}:${rankings?'ranks':'no-ranks'}:${call.progress?'progress':'current'}` : `person:${call.wcaId}`;
+    const metricName = call.metric==='single' ? label('单次','single') : label('平均','average');
+    const eventName = call.event==='all' ? label('全部项目','all events') : ({zh:EVENT_DISPLAY_ZH,en:EVENT_DISPLAY_EN})[lang][call.event];
+    // A scalar's citation must still distinguish people/events when several
+    // values are requested together; the value itself stays concise.
+    out.sources.push(source(sourceId, call.metric ? `${title} · ${eventName} ${metricName}` : title, href));
+    if (call.metric && !rankings && !call.progress && call.event!=='all') {
+      const raw = profile.personal_records?.[call.event]?.[call.metric]?.best;
+      const formatted = raw>0 ? formatWcaResult(raw,call.event,call.metric) + (call.event==='333fm' ? label(' 步',' moves') : !['333mbf','333mbo'].includes(call.event) && raw<6000 ? label(' 秒',' seconds') : '') : '';
+      out.factualSummary = raw>0
+        ? formatted
+        : label(`${title}没有已导入的${eventName}有效${metricName}成绩。`,`${title} has no imported valid ${eventName} ${metricName} result.`);
+    } else table(title, [label('项目','Event'),...metrics.flatMap(metric=>[metric==='single'?label('单次','Single'):label('平均','Average'),...(rankings?[label('世界排名','World rank')]:[])])], records.map(record=>[({zh:EVENT_DISPLAY_ZH,en:EVENT_DISPLAY_EN})[lang][record.event] ?? record.event,...metrics.flatMap(metric=>[String((record as Record<string,unknown>)[metric] ?? '—'),...(rankings?[String((record as Record<string,unknown>)[metric+'Rank'] ?? '—')]:[])])]));
     if(call.event==='all') out.factualSummary=label(`已列出${title}全部 ${selected.length} 个有成绩项目的官方个人最佳成绩。`,`Showing ${title}'s official personal bests for all ${selected.length} events with results.`);
     if (call.progress && call.event!=='all') {
       const dates = new Map<string,string>(data.comps.map((c:any)=>[c.id,c.start_date]));
       const competitions = new Map<string,any>(data.comps.map((c:any)=>[c.id,c]));
       const results = data.results.filter((r:any)=>r.event_id===call.event).sort((a:any,b:any)=>(dates.get(a.competition_id) ?? '').localeCompare(dates.get(b.competition_id) ?? '') || a.competition_id.localeCompare(b.competition_id) || roundChronologicalOrder(a.round_type_id)-roundChronologicalOrder(b.round_type_id));
       const flags = personalRecordFlags(results as Array<{event_id:string;best:number;average:number}>);
-      for (const metric of ['single','average'] as const) {
+      for (const metric of metrics) {
         const points = results.flatMap((r:any)=>{
           const value = metric === 'single' ? r.best : r.average;
           const date = dates.get(r.competition_id);

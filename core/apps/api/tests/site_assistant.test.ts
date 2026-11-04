@@ -525,7 +525,7 @@ describe('site assistant grounding', () => {
     });
     const result=await answerSiteQuestion(question,'zh',config,AbortSignal.timeout(5000),fetcher,[{role:'user',content:'Max Park 的全部 PB'}],'2017YANR02');
     expect(result.answer).toContain('颜瑞民在 2 个国家或地区参赛');
-    expect(result.artifacts).toEqual([{kind:'table',title:'参赛国家和地区',columns:['国家或地区','比赛数'],rows:[['CN','1'],['JP','1']],links:undefined,columnKinds:['country','text']}]);
+    expect(result.artifacts).toEqual([{kind:'table',title:'参赛国家和地区',columns:['国家或地区','比赛数'],rows:[['中国','1'],['日本','1']],links:undefined}]);
     expect(fetcher).toHaveBeenCalledTimes(4);
   });
   it.each(['我去过哪些国家比赛','我参加过多少场比赛了'])('keeps prior year and event constraints available for a short follow-up: %s',async question=>{
@@ -726,6 +726,27 @@ describe('site assistant grounding', () => {
     expect(evidence.at(-1).tool).toMatchObject({event:'all'});
     expect(evidence.at(-1).data.personalRecords.map((r:{event:string})=>r.event)).toEqual(['333','222']);
   });
+  it('does not retain a broad PB table after a narrower metric answer supersedes it', async () => {
+    let calls=0;
+    const fetcher=vi.fn<typeof fetch>(async(input,init)=>{
+      if(String(input).startsWith(config.baseUrl)) {
+        calls++;
+        if(calls===1)return modelResponse({calls:[{tool:'person',wcaId:'2010WANG68',event:'333'}]});
+        if(calls===2)return modelResponse({calls:[{tool:'person',wcaId:'2010WANG68',event:'333',metric:'average',rankings:false}]});
+        const narrow=wireEvidence(JSON.parse(String(init?.body))).at(-1);
+        expect(narrow.id).not.toBe('person:2010WANG68');
+        expect(narrow.data.personalRecords).toEqual([{event:'333',average:'5.88'}]);
+        return modelResponse({answerKind:'grounded',answer:'平均 999 秒，单次 4.50 秒，世界排名第一。',sourceIds:[narrow.id]});
+      }
+      return Response.json(String(input).includes('/meta')?{lastImportedAt:'2026-11-03'}:{profile:{person:{name:'Bill Wang'},personal_records:{333:{single:{best:450,world_rank:141},average:{best:588,world_rank:101}}}}});
+    });
+    const result=await answerSiteQuestion('2010WANG68 的三阶平均 PB，只要这个成绩。','zh',config,AbortSignal.timeout(5000),fetcher);
+    expect(calls).toBe(3);
+    expect(result.artifacts).toEqual([]);
+    expect(result.sources).toHaveLength(1);
+    expect(result.answer).toBe(`5.88 秒 [[${result.sources[0].id}]]`);
+    expect(result.answer).not.toContain('4.50');
+  });
   it('deduplicates successful normalized person reads and classifies a stalled planner as a model failure', async () => {
     const model=vi.fn()
       .mockResolvedValueOnce(modelResponse({calls:[{tool:'person',wcaId:'2012PARK03'}]}))
@@ -780,7 +801,7 @@ describe('site assistant grounding', () => {
     const result=await answerSiteQuestion('我今年参加了多少场 wca','zh',config,AbortSignal.timeout(5000),withCatalog(fetcher),[], '2017YANR02',undefined,'America/Los_Angeles');
     expect(result.answer).toContain('参加过 1 场比赛');
     expect(result.answer).not.toContain('数据导入时间');
-    expect(result.artifacts?.[0]).toMatchObject({rows:[['2026','1']]});
+    expect(result.artifacts).toEqual([]);
   });
 
   it('reads the canonical English page when the content index is unavailable', async () => {

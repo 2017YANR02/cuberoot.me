@@ -15,11 +15,11 @@ describe('assistant public data adapters',()=>{
       results:[{competition_id:'Previous'},{competition_id:'A'},{competition_id:'A'},{competition_id:'B',best:-1},{competition_id:'Next'},{competition_id:'Missing'},{competition_id:'Invalid'}],
       comps:[{id:'Previous',start_date:'2025-12-31',end_date:'2026-01-01'},{id:'A',start_date:'2026-01-01'},{id:'B',start_date:'2026-12-31'},{id:'Next',start_date:'2027-01-01'},{id:'Unattended',start_date:'2026-07-01'},{id:'Invalid',start_date:'2026-02-30'}],
     };
-    const result=await runDataTool({tool:'person_competitions',wcaId:'2017YANR02',from:'2026-01-01',to:'2026-12-31'},'zh',read);
+    const result=await runDataTool({tool:'person_competitions',wcaId:'2017YANR02',from:'2026-01-01',to:'2026-12-31',groupBy:'year'},'zh',read);
     expect(result.evidence).toMatchObject({count:2,byYear:[{year:'2026',competitions:2}],unknownDateCompetitions:2,updated:'2026-10-01'});
     expect(result.artifacts[0]).toMatchObject({rows:[['2026','2']]});
     expect(result.factualSummary).toContain('以上数量可能不完整');
-    const all=await runDataTool({tool:'person_competitions',wcaId:'2017YANR02'},'en',read);
+    const all=await runDataTool({tool:'person_competitions',wcaId:'2017YANR02',groupBy:'year'},'en',read);
     expect(all.evidence).toMatchObject({count:4,byYear:[{year:'2025',competitions:1},{year:'2026',competitions:2},{year:'2027',competitions:1}]});
     expect(toolCallSchema.safeParse({tool:'person_competitions',wcaId:'2017YANR02',from:'2026-02-30'}).success).toBe(false);
     expect(toolCallSchema.safeParse({tool:'person_competitions',wcaId:'2017YANR02',from:'2026-12-31',to:'2026-01-01'}).success).toBe(false);
@@ -28,7 +28,9 @@ describe('assistant public data adapters',()=>{
     const result=await runDataTool({tool:'person_competitions',wcaId:'2017YANR02',from:'2026-01-01',to:'2026-12-31'},'en',async url=>url.includes('/meta')?{}:{
       profile:{person:{name:'Ruimin Yan'}},results:[{competition_id:'Previous'}],comps:[{id:'Previous',start_date:'2025-01-01'}],
     });
-    expect(result.evidence).toMatchObject({count:0,byYear:[],unknownDateCompetitions:0});
+    expect(result.evidence).toMatchObject({count:0,unknownDateCompetitions:0});
+    expect(result.evidence).not.toHaveProperty('byYear');
+    expect(result.artifacts).toEqual([]);
     expect(result.factualSummary).toContain('0 competitions');
   });
   it('does not describe future missing results as a completed zero-attendance year',async()=>{
@@ -82,9 +84,31 @@ describe('assistant public data adapters',()=>{
       results:[{competition_id:'A'},{competition_id:'A'},{competition_id:'B'},{competition_id:'C'},{competition_id:'Missing'}],
       comps:[{id:'A',country_iso2:'JP'},{id:'B',country_iso2:'JP'},{id:'C',country_iso2:'US'},{id:'Unattended',country_iso2:'CN'}],
     });
-    expect(result.artifacts[0]).toMatchObject({rows:[['JP','2'],['US','1']],columnKinds:['country','text']});
+    expect(result.artifacts[0]).toMatchObject({rows:[['Japan','2'],['United States','1']]});
+    expect(result.artifacts[0]).not.toHaveProperty('columnKinds');
     expect(result.evidence).toMatchObject({updated:'2026-10-01',unknownCompetitions:1,countries:[{iso2:'JP',competitions:2},{iso2:'US',competitions:1}]});
     expect(result.factualSummary).toContain('1 competitions lack a valid host location');
+  });
+  it('uses the same event/date attendance set for totals and host countries without adding unrequested year groups',async()=>{
+    const data={profile:{person:{name:'Test',country_iso2:'CN'}},
+      results:[{competition_id:'A',event_id:'333'},{competition_id:'A',event_id:'333'},{competition_id:'B',event_id:'333',best:-1},{competition_id:'B',event_id:'222'},{competition_id:'OtherEvent',event_id:'222'},{competition_id:'OtherYear',event_id:'333'},{competition_id:'NoDate',event_id:'333'},{competition_id:'NoCountry',event_id:'333'}],
+      comps:[{id:'A',start_date:'2025-01-01',country_iso2:'JP'},{id:'B',start_date:'2025-12-31',country_iso2:'US'},{id:'OtherEvent',start_date:'2025-06-01',country_iso2:'CN'},{id:'OtherYear',start_date:'2024-12-31',country_iso2:'VN'},{id:'NoDate',country_iso2:'MY'},{id:'NoCountry',start_date:'2025-05-01'},{id:'Unattended',start_date:'2025-01-01',country_iso2:'SG'}]};
+    const read=async(url:string)=>url.includes('/meta')?{lastImportedAt:'2026-10-01'}:data;
+    const filters={wcaId:'2017YANR02',event:'333' as const,from:'2025-01-01',to:'2025-12-31'};
+    const total=await runDataTool({tool:'person_competitions',...filters},'zh',read);
+    expect(total.evidence).toMatchObject({...filters,count:3,unknownDateCompetitions:1});
+    expect(total.evidence).not.toHaveProperty('byYear');
+    expect(total.artifacts).toEqual([]);
+    expect(total.factualSummary).toContain('2025 年 · 三阶');
+    const locations=await runDataTool({tool:'person_countries',...filters},'zh',read);
+    expect(locations.evidence).toMatchObject({...filters,countries:[{iso2:'JP',competitions:1},{iso2:'US',competitions:1}],unknownCompetitions:1,unknownDateCompetitions:1});
+    expect(locations.artifacts[0]).toMatchObject({rows:[['日本','1'],['美国','1']]});
+    expect(locations.factualSummary).toContain('缺少有效日期');
+    expect(locations.factualSummary).toContain('缺少有效举办地');
+    expect(toolCallSchema.safeParse({tool:'person_countries',...filters,from:'2025-02-30'}).success).toBe(false);
+    expect(toolCallSchema.safeParse({tool:'person_countries',...filters,from:'2026-01-01'}).success).toBe(false);
+    expect(toolCallSchema.safeParse({tool:'person_competitions',...filters,event:'invented'}).success).toBe(false);
+    expect(toolCallSchema.safeParse({tool:'person_competitions',...filters,groupBy:'month'}).success).toBe(false);
   });
   it('shows all tied record holders, filters invalid values and uses actual freshness',async()=>{
     const row={e:'333',t:'s',v:276,l:'WR',p:'2021ZAJD03',pn:'One',c:'C2026',cn:'Comp 2026',d:'2026-01-01',a:null};
@@ -149,6 +173,37 @@ describe('assistant public data adapters',()=>{
     const one=await runDataTool({tool:'person',wcaId:'2012PARK03',event:'333',progress:false},'en',read);
     expect(one.evidence).toMatchObject({event:'333',personalRecords:[{event:'333'}]});
     expect(one.artifacts[0]).toMatchObject({rows:[['3×3','3.13','1','5.00','2']]});
+  });
+  it('projects only the requested PB metric and returns a scalar with its unit',async()=>{
+    const data={profile:{person:{name:'Test'},competition_count:100,medals:{gold:42},records:{world:4},personal_records:{333:{single:{best:313,world_rank:1},average:{best:588,world_rank:2}}}}};
+    const read=async(url:string)=>url.includes('/meta')?{lastImportedAt:'2026-10-01'}:data;
+    const result=await runDataTool({tool:'person',wcaId:'2012PARK03',event:'333',metric:'average',rankings:false,progress:false},'zh',read);
+    expect(result.evidence).toEqual({updated:'2026-10-01',wcaId:'2012PARK03',name:'Test',event:'333',metric:'average',personalRecords:[{event:'333',average:'5.88'}]});
+    expect(result.artifacts).toEqual([]);
+    expect(result.factualSummary).toBe('5.88 秒');
+    const broad=await runDataTool({tool:'person',wcaId:'2012PARK03',event:'333',progress:false},'zh',read);
+    expect(result.sources[0].id).toBe('person:2012PARK03:333:average:no-ranks:current');
+    expect(result.sources[0].id).not.toBe(broad.sources[0].id);
+    expect(result.sources[0].href).toBe(broad.sources[0].href);
+    const all=await runDataTool({tool:'person',wcaId:'2012PARK03',event:'all',metric:'average',rankings:false,progress:false},'en',read);
+    expect(all.artifacts[0]).toMatchObject({columns:['Event','Average'],rows:[['3×3','5.88']]});
+    for(const extra of [{metric:'average'},{rankings:false},{progress:true}]) expect(toolCallSchema.safeParse({tool:'person',wcaId:'2012PARK03',view:'profile',...extra}).success).toBe(false);
+  });
+  it.each([
+    {event:'333' as const,metric:'average' as const,value:6500,expected:'1:05.00'},
+    {event:'333fm' as const,metric:'single' as const,value:20,expected:'20 moves'},
+    {event:'333fm' as const,metric:'average' as const,value:2500,expected:'25.00 moves'},
+    {event:'333mbf' as const,metric:'single' as const,value:970360000,expected:'2/2 1:00:00'},
+  ])('preserves canonical formatting for scalar $event $metric',async({event,metric,value,expected})=>{
+    const result=await runDataTool({tool:'person',wcaId:'2012PARK03',event,metric,rankings:false,progress:false},'en',async url=>url.includes('/meta')?{}:{profile:{person:{name:'Test'},personal_records:{[event]:{[metric]:{best:value}}}}});
+    expect(result.factualSummary).toBe(expected);
+    expect(result.artifacts).toEqual([]);
+  });
+  it.each([0,-1,-2,undefined])('does not turn a missing or invalid requested PB into a numeric answer: %s',async best=>{
+    const result=await runDataTool({tool:'person',wcaId:'2012PARK03',event:'333',metric:'average',rankings:false,progress:false},'en',async url=>url.includes('/meta')?{}:{profile:{person:{name:'Test'},personal_records:{333:{single:{best:500},average:{best}}}}});
+    expect(result.factualSummary).toBe('Test has no imported valid 3×3 average result.');
+    expect(result.evidence).toMatchObject({personalRecords:[{event:'333',average:null}]});
+    expect(result.artifacts).toEqual([]);
   });
 });
 

@@ -11,7 +11,7 @@ import { z } from 'zod';
 import { toolCallSchema, runDataTool, type ToolResult } from './site_assistant_tools.js';
 import { cubePhotoImages, requiresCubePhotoEvidence, runCubePhotoTool } from './site_assistant_cube_photo.js';
 import { describeAnalysis, runAnalysisQuery } from './site_assistant_analysis_db.js';
-import { assistantAttendanceScope, attendanceScopeError } from './site_assistant_scope.js';
+import { assistantAttendanceScope, applyAttendanceScope, attendanceScopeError } from './site_assistant_scope.js';
 import { resolveAssistantTime, SITE_ASSISTANT_ANSWER_MAX_LENGTH, type AssistantThinkingMode, type AssistantStreamEvent, type AssistantAnswer, type AssistantMessage, type AssistantImage } from '@cuberoot/shared/site-assistant';
 export type { AssistantSource, AssistantAnswer } from '@cuberoot/shared/site-assistant';
 import { SITE_DIRECTORY_GROUPS, SITE_DIRECTORY_TEXTS } from '@cuberoot/shared/site-directory';
@@ -113,9 +113,9 @@ analysis_schema {datasets:[] or selected names}: discover public raw-data column
 analysis_query {title,description,query}: compute a new analysis from those public rows using the plan returned by analysis_schema. You MUST read analysis_schema first. Supports filters, joins, distinct counts, grouping, conditional expressions, arithmetic, medians, windows and up to three untruncated intermediate steps. Use known identities and timeContext; never guess units or compute totals from truncated rows. Compute derived rates/differences in the query too. Review query predicates and resulting totals against the requested method; successful execution alone does not establish correctness. Correct inconsistent tables by querying again, never by substituting different numbers only in prose. Correct a rejected plan within the remaining budget. Do not ask the user to write a query or manually calculate an answer that these datasets support.
 records {event:"333",region:"world" or ISO2}: current single/average record VALUES, all tied holders. This cannot answer record counts, streaks or how long records stood; use statistics for those questions and do not substitute current holders.
 find_person {query:name}: resolve names or WCA IDs from imported WCA competitors. Pass the user's original spelling: search supports partial names and tone-free pinyin, including homophones written with different Chinese characters and either surname order. Exact matches take priority; match:pinyin is a phonetic candidate, not an exact written-name match. Never guess an ID. For one match, continue to person and answer with results without asking for the WCA ID or spelling confirmation. For multiple equally strong matches, show the candidates and ask which person; never silently choose one.
-person {wcaId,event:"333" or "all",progress:false,view:"records"|"profile"}: Use view:"profile" for competition totals, medals or profile facts without a PB table. Competition totals are lifetime totals, not counts for a specific year, event or country. Default view:"records" returns selected-event PRs, medals, historical record-breaking counts (NOT currently held records). For all official PBs/PRs across events use event:"all" in ONE call; the table includes every event with results. progress:true requires ONE specific event and generates single AND average PR charts. For comparison call person for each identified person.
-person_countries {wcaId}: LIFETIME countries/regions where ONE person has officially competed, grouped by competition host location. This tool has no date or event filters: ANY year/date/event restriction requires analysis_schema and analysis_query joining results to competitions. Never substitute lifetime countries, a global leaderboard or personal bests for a filtered question.
-person_competitions {wcaId,from?:ISO date,to?:ISO date}: count ONE person's distinct competitions from their complete imported results, optionally within an inclusive range of competition START dates, with calendar-year counts ONLY. Use for this/last/specific year, date ranges or year-by-year participation; never substitute lifetime totals or annualized-average leaderboards. Monthly/weekly grouping, event filters and calculated changes require analysis_schema and analysis_query; a year total does not answer them. Use timeContext for relative dates. Missing dates are reported separately, not counted as zero. This covers published participation, not future registrations.
+person {wcaId,event:"333" or "all",progress:false,view:"records"|"profile",metric?:"single"|"average",rankings?:boolean}: Use view:"profile" for lifetime profile facts without a PB table; filtered participation belongs to person_competitions. For a request for ONLY one PB metric, set metric to that metric and rankings:false unless rankings were requested. Do not retrieve or display the other metric, rankings or progression just because they are available. Omit metric for both single and average. For all official PBs/PRs across events use event:"all" in ONE call. progress:true requires ONE specific event; set metric if only that progression was requested. For comparison call person for each identified person.
+person_countries {wcaId,event?:event ID,from?:ISO date,to?:ISO date}: countries/regions where ONE person has officially competed, grouped by competition host location, with counts of distinct competitions. Supports optional event and inclusive competition START-date filters on complete imported results. Prefer this tool to analysis for a person's country list, including year/event-filtered follow-ups; retain all active attendanceScope filters. No filters means lifetime/all events. Never substitute nationality, a global leaderboard or personal bests for participation.
+person_competitions {wcaId,event?:event ID,from?:ISO date,to?:ISO date,groupBy?:"year"}: count ONE person's distinct competitions from complete imported results, optionally filtered by event and inclusive competition START dates. Prefer this tool for simple counts, including year/event-filtered follow-ups; retain all active attendanceScope filters. Request groupBy:"year" ONLY for a requested year-by-year breakdown; omit it for a total. Monthly/weekly grouping, country filters, comparisons and calculated changes still require analysis_schema and analysis_query. Use timeContext for relative dates. Missing dates are reported separately; this covers published participation, not future registrations.
 rankings {event,type:"single"|"average",country:"" or ISO2 or _Asia/_Europe/_Africa/_North America/_South America/_Oceania,year?:number,limit:1..20}: current or year-end rankings.
 competitions {query:"",country:"" or ISO2,upcoming:true,from?:ISO date,to?:ISO date,limit:1..20}: find competitions and IDs; query matches name/city/id. from/to filter competitions overlapping an inclusive date range. Use English place/name keywords for this index.
 timeContext is computed from the server clock in the visitor's time zone. A time zone is NOT the visitor's location. For nearby recommendations, ask for a city/area if the user has not supplied one; never infer residence/current location from timeZone, past competitions or language. Use its concrete periods for relative years/days/weeks/months across ALL topics, never your training cutoff or a date in old conversation history. Weeks start Monday. Use from/to for dated competition queries and upcoming:false for historical periods. Time resolution is not factual evidence: still read the appropriate tools. Multiple periods, weekday-qualified weeks, rolling durations or dates relative to another event require careful interpretation; do not silently substitute one period or the current clock for an explicit event anchor. Ask a brief clarification if ambiguous.
@@ -316,7 +316,7 @@ export async function answerSiteQuestion(
       : reviewKind==='content'
       ? '\nReview the explanation against the retrieved readable passages. The draft cites only navigation labels, which cannot support usage instructions. Use the actual passage IDs marked read:true in sources for the supported factual sentences and sourceIds. Remove claims unsupported by those passages. Navigation IDs may accompany links, but cannot be the only citations for an explanation. Do not perform further reads.'
       : reviewKind==='citation' ? '\nRepair the answer citations against the supplied sources. The draft has no valid supporting source IDs. Use exact IDs only for claims actually supported by that source; do not cite unrelated evidence. Remove unsupported current/site/data claims and state any verification limitation. If this is independent general knowledge, set answerKind to general and use sourceIds:[] instead. Do not perform further reads.'
-      : '\nIndependently review the draft against the ORIGINAL question, actual query predicates and returned cells. Every requested calculated measure (rates, differences, ranks, denominators, etc.) must be present in the query result, not mentally filled into prose. Server countMeasure metadata describes what is actually counted; model labels/descriptions are not proof. Check granularity, filtering, zero vs NULL and predecessor ordering. Reject conflicting or wrongly scoped tables. Return reviewedSourceIds containing ONLY the exact analysis source IDs whose entire displayed table is correct and relevant; omit rejected/superseded IDs from both sourceIds and the answer. Empty reviewedSourceIds means no calculation was verified. If a specific expression/scope is wrong, call analysis_query for a corrected table when reads remain. Do not repeat a successful aggregate solely because its detail list was truncated. Do not retrieve unrequested details or additional measures. If no reads remain, state the missing calculation briefly. Introduce correct tables without repeating rows. Never silently correct numbers in prose while displaying a wrong table.';
+      : '\nIndependently review the draft against the ORIGINAL question, actual query predicates and returned cells. Every requested calculated measure (rates, differences, ranks, denominators, etc.) must be present in the query result, not mentally filled into prose. Server countMeasure metadata describes what is actually counted; model labels/descriptions are not proof. Check granularity, filtering, zero vs NULL and predecessor ordering. Reject conflicting or wrongly scoped tables. Return reviewedSourceIds containing ONLY the exact analysis source IDs whose entire displayed table is correct and relevant; omit rejected/superseded IDs from both sourceIds and the answer. Empty reviewedSourceIds means no calculation was verified. If a specific expression/scope is wrong, call analysis_query for a corrected table when reads remain. Do not repeat a successful aggregate solely because its detail list was truncated. Do not retrieve unrequested details or additional measures. If no reads remain, state the missing calculation briefly. Introduce correct tables without repeating rows. Never silently correct numbers in prose while displaying a wrong table. Review is for correctness and relevance, not elaboration. Keep only the requested facts and the shortest material scope qualifier; do not add dates, rankings, tutorials or alternative-scope offers merely because evidence contains them. Keep the full methodology in evidence, not final prose.';
     let formatRepair = '';
     for(let attempt=0;attempt<2;attempt++) {
     try {
@@ -448,6 +448,18 @@ export async function answerSiteQuestion(
         else add(`page:${p.href}`,p.title,p.href,p.description || '',p.access);
       }
     } catch { signal.throwIfAborted(); /* The shared catalogs remain available. */ }
+    // Algorithm tools are real directory entries even when they are not a
+    // catalog formula set. Reuse the event labels for their puzzle route slug
+    // so localized subjects (e.g. 三盲) also match a 3bld route/title.
+    const {EVENT_DISPLAY_ZH,EVENT_DISPLAY_EN}=await import('@cuberoot/shared/wca-events');
+    const normalizedSubject=(value:string)=>value.toLowerCase().replace(/×/g,'x');
+    for(const entry of entries.values()) {
+      const puzzle=entry.href.match(/^\/alg\/([^/?#]+)/)?.[1];
+      if(!puzzle)continue;
+      const event=Object.keys(EVENT_DISPLAY_EN).find(id=>id===puzzle || normalizedSubject(EVENT_DISPLAY_EN[id])===normalizedSubject(puzzle));
+      if(!event)continue;
+      for(const subject of [EVENT_DISPLAY_ZH[event],EVENT_DISPLAY_EN[event]]) if(subject) add(entry.id,`${subject} ${entry.title}`,entry.href);
+    }
     // A short task label (e.g. "观察") can lose its subject in the catalog while
     // its child guide retains a full heading. Reuse that verified relationship
     // for search, and distinguish a task entry from its instructions.
@@ -471,7 +483,7 @@ export async function answerSiteQuestion(
     // Keep the visitor's actual topic when a planner paraphrases it too broadly.
     const questionTerms = tokenize(question).filter(term=>!['公式','训练','生成','需要','学习','我要','我想','打开','查看','网站'].includes(term));
     const ranked = [...entries.values()]
-      .filter(p=>call.kind==='all' || (call.kind==='algorithms' ? p.id.startsWith('alg:') : call.kind==='training' ? p.id.startsWith('train:') || /^\/(recognize|predict|memo|color-test|alg-trainers|timer|cstimer|comp-sim|quiz)(?:\/|$)/.test(p.href) || (p.href.startsWith('/alg/') && /训练|练习|trainer|training|practice|drill/i.test(p.title)) : /^\/(?:scramble\/solver|solver)(?:\?|$)/.test(p.href)))
+      .filter(p=>call.kind==='all' || (call.kind==='algorithms' ? p.id.startsWith('alg:') || /^\/(?:alg|blddb)(?:\/|$)/.test(p.href) : call.kind==='training' ? p.id.startsWith('train:') || /^\/(recognize|predict|memo|color-test|alg-trainers|timer|cstimer|comp-sim|quiz)(?:\/|$)/.test(p.href) || (p.href.startsWith('/alg/') && /训练|练习|trainer|training|practice|drill/i.test(p.title)) : /^\/(?:scramble\/solver|solver)(?:\?|$)/.test(p.href)))
       .filter(p=>call.kind!=='training' || asksForGuide || call.pageIds.includes(p.id) || !guideParents.has(p.href))
       .map(p=>({p,
         questionScore:questionTerms.reduce((n,t)=>n+([...(labels.get(p.href) ?? [])].some(label=>label.includes(t))?16:0)+(p.href.toLowerCase().includes(t)?4:0)+(p.description.toLowerCase().includes(t)?1:0),0),
@@ -560,6 +572,19 @@ export async function answerSiteQuestion(
       step = await complete(round, false, undefined, 'analysis', true);
       if (!step.calls.some((call: unknown) => typeof call === 'object' && call !== null && 'tool' in call && call.tool === 'lookup_cube_photo')) throw new AssistantFailure('source_unavailable');
     }
+    // A verified destination fully answers an explicit entry-only request.
+    // A planner may mislabel it as site_content or request pages anyway; do not
+    // make a clickable entry depend on reading its implementation/docs. Mixed
+    // questions still need their factual/procedural evidence, and no ID is guessed.
+    const entryOnlyRequest=!hasImages && /入口|链接|网址|\b(?:entry|link|url)\b/i.test(question)
+      && !/怎么|如何|步骤|教程|说明|介绍|解释|讲解|总结|原理|区别|功能|多少|几(?:个|次|场|秒)|是谁|比较|分析|统计|计算|翻译|写|生成|\b(?:how|why|explain|compare|summarize|write|translate|calculate|steps|tutorial|instructions?|features?|results?|records?|count)\b/i.test(question);
+    if(entryOnlyRequest && navigationActions.size && (step.answerKind==='site_content' || step.calls.length>0) && step.calls.every((call:any)=>call?.tool==='pages')) {
+      const selectedIds=[...new Set([
+        ...step.sourceIds,...[...step.answer.matchAll(/\[\[([^\]\n]+)\]\]/g)].map(match=>match[1]),
+        ...step.calls.flatMap((call:any)=>Array.isArray(call.pageIds)?call.pageIds:[]),
+      ].filter(id=>typeof id==='string' && navigationActions.has(id)))];
+      if(selectedIds.length===1) return finish({...step,calls:[],answerKind:'general',answer:`[[${selectedIds[0]}]]`,sourceIds:selectedIds});
+    }
     siteContentRequired ||= step.answerKind==='site_content';
     // A directory match establishes a destination, never its usage instructions.
     // If the planner stops after navigation on an explanatory question, require
@@ -631,7 +656,7 @@ export async function answerSiteQuestion(
         }
       }
       if(requestedLimit && 'limit' in parsed.data) parsed.data.limit=parsed.data.tool==='news'?Math.min(10,requestedLimit):requestedLimit;
-      if((parsed.data.tool==='competitions' || parsed.data.tool==='person_competitions' || parsed.data.tool==='news') && timeContext.periods.length===1) {
+      if((parsed.data.tool==='competitions' || parsed.data.tool==='person_competitions' || parsed.data.tool==='person_countries' || parsed.data.tool==='news') && timeContext.periods.length===1) {
         const period=timeContext.periods[0];
         parsed.data.from ??=period.start;parsed.data.to ??=period.end;
       }
@@ -640,6 +665,9 @@ export async function answerSiteQuestion(
         evidence.push({id:`unresolved:${evidence.length}`,tool:parsed.data,data:'This WCA ID has not been resolved. Use find_person with the name from the question/history first; never guess an ID.'});
         continue;
       }
+      // Fill only omitted filters from explicit user scope after resolving identity.
+      // Conflicting model filters still fail the same validation below.
+      applyAttendanceScope(attendanceScope,parsed.data,viewerWcaId);
       const scopeError=attendanceScopeError(attendanceScope,parsed.data,viewerWcaId);
       if(scopeError) {
         evidence.push({id:`invalid:scope:${evidence.length}`,tool:parsed.data,data:{notEvidence:true,error:scopeError}});
@@ -691,7 +719,8 @@ export async function answerSiteQuestion(
           siteContentRequired=false;
           pendingReadFollowUp='The documentation search returned no matching passages. Answer from other already-read evidence with answerKind grounded and its source IDs, or acknowledge the documentation gap with answerKind general. Do not invent website usage instructions.';
         }
-        if(result.factualSummary && (parsed.data.tool!=='person' || asksForAllPersonalRecords)) for(const s of result.sources) {
+        if(result.factualSummary && (parsed.data.tool!=='person' || asksForAllPersonalRecords
+          || (parsed.data.metric && parsed.data.rankings===false && !parsed.data.progress && parsed.data.event!=='all'))) for(const s of result.sources) {
           const summaries=factualSummaries.get(s.id) ?? new Set<string>();
           summaries.add(result.factualSummary);factualSummaries.set(s.id,summaries);
         }
