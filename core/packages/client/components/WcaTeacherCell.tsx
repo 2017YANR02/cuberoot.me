@@ -10,7 +10,7 @@ import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { loadPersonsIndex } from '@cuberoot/shared/persons-index';
 import type { WcaPersonLite } from '@/lib/wca-api';
 import { EventIcon } from '@/components/EventIcon';
-import { Flag } from '@/components/Flag';
+import { formatTeacherSignature } from '@cuberoot/shared/account';
 import PersonLink from '@/components/PersonLink';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { ClearButton } from '@/components/ClearButton';
@@ -272,7 +272,8 @@ export function useWcaTeachers(studentWcaIds: string[], eventIds: string[], name
 }
 
 export function WcaTeacherColumnHeader({ className, filter }: { className?: string; filter: WcaColumnFilter }) {
-  return <WcaRelationColumnHeader className={className} label={tr({ zh: '老师', en: 'Teacher' })} filter={filter} />;
+  const label = tr({ zh: '老师', en: 'Teacher' });
+  return <WcaRelationColumnHeader className={className} label={label} resetLabel={tr({ zh: '不限老师', en: 'Any teacher' })} filter={{ ...filter, selectedLabel: label }} />;
 }
 
 
@@ -1372,6 +1373,13 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
       ? [{ eventId, teacher }]
       : [];
   });
+  const attributionGroups = [...relations.reduce((groups, { eventId, teacher }) => {
+    const key = teacher.teacherWcaId ?? 'self';
+    const group = groups.get(key);
+    if (group) group.eventIds.push(eventId);
+    else groups.set(key, { teacher, eventIds: [eventId] });
+    return groups;
+  }, new Map<string, { teacher: WcaTeacher; eventIds: string[] }>()).values()];
   const [editing, setEditing] = useState(false);
   const [selectedEventIds, setSelectedEventIds] = useState<Set<string>>(
     () => new Set((defaultEditEventId ? [defaultEditEventId] : normalizedEditableEventIds).slice(0, 1)),
@@ -1417,7 +1425,6 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
   const canOpenEditor = teacherDataReady && (managedTeacherWcaId
     ? canManageTeacherStudents
     : (directory.isAdmin || directory.canSelfAssign || hasOwnRelation));
-  const isMultiDisplay = normalizedEventIds.length > 1;
   const isMultiEditor = normalizedEditableEventIds.length > 1;
   const selectedIds = normalizedEditableEventIds.filter((eventId) => selectedEventIds.has(eventId));
   const selectedRelations = selectedIds.flatMap((eventId) => {
@@ -1563,27 +1570,27 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
     <div className="wca-teacher-cell">
       {!editorOnly && (
         <span className="wca-teacher-value wca-teacher-value-multi">
-          {relations.length > 0
-            ? relations.map(({ eventId, teacher: relation }) => (
-              <span key={eventId} className="wca-teacher-relation">
-                {(isMultiDisplay || showEventNames) && <EventIcon event={eventId} title={eventDisplayName(eventId, isZh)} />}
-                {showEventNames && <span className="wca-teacher-event-name">{eventDisplayName(eventId, isZh)}:</span>}
-                {relation.teacherCountryIso2 && (
-                  <Flag
-                    iso2={relation.teacherCountryIso2}
-                    spanClassName="country-flag"
-                    imgClassName="country-flag-ct"
-                  />
-                )}
+          {attributionGroups.length > 0
+            ? attributionGroups.map(({ eventIds: groupEvents, teacher: relation }) => (
+              <span key={relation.teacherWcaId ?? 'self'} className="wca-teacher-relation"
+                title={groupEvents.map(event => eventDisplayName(event, isZh)).join(', ')}>
+                {(attributionGroups.length > 1 || showEventNames) && groupEvents.map(event => (
+                  <span key={event} className="wca-teacher-relation">
+                    <EventIcon event={event} title={eventDisplayName(event, isZh)} />
+                    {showEventNames && <span className="wca-teacher-event-name">{eventDisplayName(event, isZh)}:</span>}
+                  </span>
+                ))}
                 {relation.isSelfTaught
                   ? <span className="wca-teacher-self-taught">{tr({ zh: '自学', en: 'Self-taught' })}</span>
                   : relation.teacherWcaId && relation.teacherName
-                    ? <PersonLink wcaId={relation.teacherWcaId} name={relation.teacherName} isZh={isZh} />
+                    ? <PersonLink wcaId={relation.teacherWcaId} showTeam={false}>
+                      {formatTeacherSignature(displayCuberName(relation.teacherName, isZh), relation.teacherSignature)}
+                    </PersonLink>
                     : null}
               </span>
             ))
-            : !institution && <span className="wca-teacher-empty">{emptyLabel}</span>}
-          {institution && <span className="wca-teacher-relation">{institution.name}</span>}
+            : <span className="wca-teacher-empty">{emptyLabel}</span>}
+
         </span>
       )}
       {teacherDataReady && !canOpenEditor && !directory.canSelfAssign && !directory.isAdmin

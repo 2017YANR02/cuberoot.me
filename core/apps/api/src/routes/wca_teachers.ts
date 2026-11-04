@@ -10,6 +10,7 @@
  *   PUT    /v1/wca/teachers/:studentId/:eventId    — 有效会员老师登记自己；有效会员学生或管理员可填写老师/自学
  *   DELETE /v1/wca/teachers/:studentId/:eventId    — 老师本人、有效会员学生本人或管理员撤销学习来源
  */
+import type { TeacherSignature } from '@cuberoot/shared/account';
 import { Hono } from 'hono';
 import { query, withTransaction } from '../db/connection.js';
 import { requireAuth } from '../utils/recon_helpers.js';
@@ -35,6 +36,8 @@ interface TeacherRow {
   teacher_wca_id: string | null;
   teacher_name: string | null;
   teacher_country_iso2: string | null;
+  teacher_signature_mode?: TeacherSignature['mode'];
+  teacher_signature_organization?: string;
 }
 
 interface TeacherWriteRow {
@@ -64,6 +67,7 @@ function toJson(row: TeacherRow) {
     teacherWcaId: row.teacher_wca_id,
     teacherName: row.teacher_name,
     teacherCountryIso2: row.teacher_country_iso2,
+    teacherSignature: { mode: row.teacher_signature_mode ?? 'name', organization: row.teacher_signature_organization ?? '' },
   };
 }
 
@@ -130,10 +134,12 @@ wcaTeacherRoutes.get('/wca/teachers', async (c) => {
     `SELECT wt.student_wca_id, student.name AS student_name,
             student_333.best_average AS student_333_average,
             wt.event_id, wt.teacher_wca_id, wt.teacher_name,
-            teacher_country.iso2 AS teacher_country_iso2
+            teacher_country.iso2 AS teacher_country_iso2,
+            teacher_account.teacher_signature_mode, teacher_account.teacher_signature_organization
        FROM wca_teachers wt
        JOIN wca_persons student ON student.wca_id = wt.student_wca_id
        LEFT JOIN wca_persons teacher ON teacher.wca_id = wt.teacher_wca_id
+       LEFT JOIN app_users teacher_account ON teacher_account.wca_id = wt.teacher_wca_id AND teacher_account.merged_into_user_id IS NULL
        LEFT JOIN wca_countries teacher_country ON teacher_country.id = teacher.country_id
        LEFT JOIN LATERAL (
          SELECT MIN(result.average) AS best_average
@@ -392,7 +398,11 @@ wcaTeacherRoutes.put('/wca/teachers/:studentId/:eventId', async (c) => {
     [studentWcaId, eventId, teacherWcaId, teacher?.name ?? null, actorWcaId, actorWcaId],
   );
   if (!rows.length) return c.json({ error: 'teacher already set' }, 409);
+  const [signature] = teacherWcaId ? await query<Pick<TeacherRow, 'teacher_signature_mode' | 'teacher_signature_organization'>>(
+    'SELECT teacher_signature_mode, teacher_signature_organization FROM app_users WHERE wca_id = ? AND merged_into_user_id IS NULL', [teacherWcaId],
+  ) : [];
   return c.json({ teacher: toJson({
+    ...signature,
     ...rows[0],
     student_name: student.name,
     teacher_country_iso2: teacher?.country_iso2 ?? null,

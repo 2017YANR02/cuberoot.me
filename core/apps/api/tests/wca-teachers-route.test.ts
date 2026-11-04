@@ -24,7 +24,7 @@ import { wcaTeacherRoutes } from '../src/routes/wca_teachers';
 const app = new Hono().route('/v1', wcaTeacherRoutes);
 
 describe('GET /v1/wca/teachers', () => {
-  beforeEach(() => mocks.query.mockReset());
+  beforeEach(() => mocks.query.mockReset().mockResolvedValue([]));
   it('lists teacher options for the selected events without a student-page restriction', async () => {
     const options = [{ teacherWcaId: '2017YANR02', teacherName: 'Ruimin Yan (颜瑞民)' }];
     mocks.query.mockResolvedValueOnce(options);
@@ -58,6 +58,7 @@ describe('GET /v1/wca/teachers', () => {
       teacherWcaId: '2017YANR02',
       teacherName: 'Ruimin Yan (颜瑞民)',
       teacherCountryIso2: 'CN',
+      teacherSignature: { mode: 'name', organization: '' },
     }] });
     expect(mocks.query).toHaveBeenCalledWith(
       expect.stringContaining('WHERE wt.teacher_wca_id IN (?)'),
@@ -111,6 +112,7 @@ describe('GET /v1/wca/teachers', () => {
       teacherWcaId: null,
       teacherName: null,
       teacherCountryIso2: null,
+      teacherSignature: { mode: 'name', organization: '' },
     }] });
     expect(mocks.query.mock.calls[0][0]).toContain(
       'LEFT JOIN wca_persons teacher ON teacher.wca_id = wt.teacher_wca_id',
@@ -129,7 +131,7 @@ describe('GET /v1/wca/teachers', () => {
 });
 
 describe('GET /v1/wca/teachers/:teacherId/named-students', () => {
-  beforeEach(() => mocks.query.mockReset());
+  beforeEach(() => mocks.query.mockReset().mockResolvedValue([]));
 
   it('returns roster students without fabricating WCA IDs', async () => {
     mocks.query.mockResolvedValueOnce([{
@@ -167,7 +169,7 @@ describe('GET /v1/wca/teachers/:teacherId/named-students', () => {
 
 describe('POST /v1/wca/teachers/:teacherId/named-students', () => {
   beforeEach(() => {
-    mocks.query.mockReset();
+    mocks.query.mockReset().mockResolvedValue([]);
     mocks.requireAuth.mockReset();
     mocks.hasActiveMembership.mockReset();
   });
@@ -260,7 +262,7 @@ describe('POST /v1/wca/teachers/:teacherId/named-students', () => {
 
 describe('PUT /v1/wca/teachers/:teacherId/named-students/:namedStudentId', () => {
   beforeEach(() => {
-    mocks.query.mockReset();
+    mocks.query.mockReset().mockResolvedValue([]);
     mocks.requireAuth.mockReset();
     mocks.hasActiveMembership.mockReset();
   });
@@ -298,7 +300,7 @@ describe('PUT /v1/wca/teachers/:teacherId/named-students/:namedStudentId', () =>
 
 describe('PUT /v1/wca/teachers/:studentId/:eventId', () => {
   beforeEach(() => {
-    mocks.query.mockReset();
+    mocks.query.mockReset().mockResolvedValue([]);
     mocks.requireAuth.mockReset();
     mocks.hasActiveMembership.mockReset();
   });
@@ -335,6 +337,7 @@ describe('PUT /v1/wca/teachers/:studentId/:eventId', () => {
       teacherWcaId: '2017YANR02',
       teacherName: 'Teacher',
       teacherCountryIso2: 'CN',
+      teacherSignature: { mode: 'name', organization: '' },
     } });
     expect(mocks.hasActiveMembership).toHaveBeenCalledWith('2026GANR02');
     expect(mocks.query.mock.calls[0][0]).toContain(
@@ -378,6 +381,7 @@ describe('PUT /v1/wca/teachers/:studentId/:eventId', () => {
       teacherWcaId: null,
       teacherName: null,
       teacherCountryIso2: null,
+      teacherSignature: { mode: 'name', organization: '' },
     } });
     expect(mocks.query).toHaveBeenNthCalledWith(
       3,
@@ -440,7 +444,7 @@ describe('PUT /v1/wca/teachers/:studentId/:eventId', () => {
 
 describe('DELETE /v1/wca/teachers/:studentId/:eventId', () => {
   beforeEach(() => {
-    mocks.query.mockReset();
+    mocks.query.mockReset().mockResolvedValue([]);
     mocks.requireAuth.mockReset();
     mocks.hasActiveMembership.mockReset();
   });

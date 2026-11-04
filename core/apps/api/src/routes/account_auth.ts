@@ -9,6 +9,7 @@ import { registrationReport, membershipSummaryReport } from '../utils/admin_repo
  *      合并登录/注册为同一流程 → 天然免用户枚举(不泄露某邮箱是否已注册)。
  * 可选服务:email/sms 未配 env 时对应端点返 503(不崩),与 membership 同款降级。
  */
+import { parseTeacherSignature, type TeacherSignature } from '@cuberoot/shared/account';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import type { Context } from 'hono';
@@ -1125,23 +1126,37 @@ accountAuthRoutes.get('/auth/profile', async (c) => {
   const uid = await requireAppUserId(c);
   const profile = await getAccountBasicProfile(uid);
   if (!profile) return c.json({ error: 'account not found' }, 404);
-  const [selection] = await query<{ deskpet_selection: string | null }>('SELECT deskpet_selection FROM app_users WHERE id = ?', [uid]);
-  return c.json({ profile, deskPetSelection: selection?.deskpet_selection ?? null });
+  const [selection] = await query<{ deskpet_selection: string | null; teacher_signature_mode: TeacherSignature['mode']; teacher_signature_organization: string }>('SELECT deskpet_selection, teacher_signature_mode, teacher_signature_organization FROM app_users WHERE id = ?', [uid]);
+  return c.json({ profile, deskPetSelection: selection?.deskpet_selection ?? null, teacherSignature: { mode: selection?.teacher_signature_mode ?? 'name', organization: selection?.teacher_signature_organization ?? '' } });
 });
 
 accountAuthRoutes.post('/auth/profile', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
   const uid = await requireAppUserId(c);
-  const body: { name?: unknown; avatar?: unknown; basic?: unknown; deskPetSelection?: unknown; expectedUid?: unknown } = await c.req
-    .json<{ name?: unknown; avatar?: unknown; basic?: unknown; deskPetSelection?: unknown; expectedUid?: unknown }>()
+  const body: { name?: unknown; avatar?: unknown; basic?: unknown; deskPetSelection?: unknown; teacherSignature?: unknown; expectedUid?: unknown } = await c.req
+    .json<{ name?: unknown; avatar?: unknown; basic?: unknown; deskPetSelection?: unknown; teacherSignature?: unknown; expectedUid?: unknown }>()
     .catch(() => ({}));
   const hasName = body.name !== undefined;
   const hasAvatar = body.avatar !== undefined;
   const hasBasic = body.basic !== undefined;
   const hasPet = body.deskPetSelection !== undefined;
-  if ([hasName, hasAvatar, hasBasic, hasPet].filter(Boolean).length !== 1) {
+  const hasSignature = body.teacherSignature !== undefined;
+  if ([hasName, hasAvatar, hasBasic, hasPet, hasSignature].filter(Boolean).length !== 1) {
     return c.json({ error: 'provide exactly one profile field' }, 400);
+  }
+
+  if (hasSignature) {
+    if (body.expectedUid !== uid) return c.json({ error: 'Account changed' }, 409);
+    const signature = parseTeacherSignature(body.teacherSignature);
+    if (!signature) return c.json({ error: 'Invalid teacher signature' }, 400);
+    const rows = await query(
+      `UPDATE app_users SET teacher_signature_mode = ?, teacher_signature_organization = ?
+       WHERE id = ? AND merged_into_user_id IS NULL AND wca_id ~ '^[0-9]{4}[A-Z]{4}[0-9]{2}$' RETURNING id`,
+      [signature.mode, signature.organization, uid],
+    );
+    if (!rows.length) return c.json({ error: 'WCA account required' }, 403);
+    return c.json({ ok: true, teacherSignature: signature });
   }
 
   if (hasPet) {

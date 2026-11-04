@@ -189,6 +189,30 @@ export function isValidPassword(pw: unknown): pw is string {
   return typeof pw === 'string' && pw.length >= 8 && pw.length <= 128;
 }
 
+/** Public teacher attribution; never used as an identity or roster filter. */
+export interface TeacherSignature {
+  mode: 'name' | 'organization' | 'both';
+  organization: string;
+}
+
+export function parseTeacherSignature(value: unknown): TeacherSignature | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const entry = value as Record<string, unknown>;
+  if (Object.keys(entry).some(key => key !== 'mode' && key !== 'organization')
+    || !['name', 'organization', 'both'].includes(String(entry.mode))
+    || typeof entry.organization !== 'string'
+    || /[\u0000-\u001f\u007f-\u009f\u2028-\u202e\u2066-\u2069]/u.test(entry.organization)) return null;
+  const organization = entry.organization.normalize('NFC').trim();
+  if (Array.from(organization).length > 40) return null;
+  return { mode: entry.mode as TeacherSignature['mode'], organization };
+}
+
+export function formatTeacherSignature(name: string, signature?: TeacherSignature | null): string {
+  const organization = signature?.organization.trim();
+  if (!organization || !signature || signature.mode === 'name') return name;
+  return signature.mode === 'organization' ? organization : `${name} · ${organization}`;
+}
+
 /** Saved private profile required for forum replies; unavailable location inputs are exempt. */
 export function isForumReplyProfileComplete(profile: AccountBasicProfile | null, todayIso: string): boolean {
   if (!profile || !profile.fullName?.trim() || !isValidDisplayName(profile.fullName)

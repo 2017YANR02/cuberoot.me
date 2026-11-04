@@ -1,5 +1,7 @@
 'use client';
 
+import type { TeacherSignature } from '@cuberoot/shared/account';
+
 import { sessionFetch } from '@/lib/session-fetch';
 // 内部账号 API 客户端(邮箱/手机验证码登录 + 绑定/解绑)。全走 apiUrl(),别硬编码 origin。
 import { apiUrl } from './api-base';
@@ -111,6 +113,16 @@ export const mergeAccount = (code: string, expectedSourceUid: number) =>
 // 修改站内用户名后同时换发带新名字的 JWT,供本机登录态原子刷新。
 export const updateDisplayName = (name: string) =>
   post<{ ok: true; token: string; user: SessionUser }>('/v1/auth/profile', { name }, true);
+export async function fetchTeacherSignature(signal?: AbortSignal): Promise<TeacherSignature> {
+  const { response, data } = await authJson<{ teacherSignature?: TeacherSignature }>('/v1/auth/profile?v=4', {
+    headers: authHeaders(false), cache: 'no-store', signal,
+  });
+  if (!response.ok || !data.teacherSignature) throw new Error('Teacher signature unavailable');
+  return data.teacherSignature;
+}
+export const updateTeacherSignature = (teacherSignature: TeacherSignature, expectedUid: number) =>
+  post<{ ok: true; teacherSignature: TeacherSignature }>('/v1/auth/profile', { teacherSignature, expectedUid }, true);
+
 export async function fetchAccountDeskPetSelection(signal?: AbortSignal): Promise<string | null> {
   const { response, data } = await authJson<{ deskPetSelection?: string | null }>('/v1/auth/profile?v=3', {
     headers: authHeaders(false), cache: 'no-store', signal,

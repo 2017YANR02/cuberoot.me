@@ -67,6 +67,7 @@ import { isMiniProgramCommerceRestricted, notifyMiniProgramLogout } from '@/lib/
 import { tr, useLang } from '@/i18n/tr';
 import PetAccountCard from '@/components/PetAccountCard';
 import AccountCardGrid from './AccountCardGrid';
+import TeacherSignatureEditor from './TeacherSignatureEditor';
 import './account.css';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
@@ -390,6 +391,7 @@ function DisplayNameEditor() {
         onSave={save}
       />
       <BasicProfileEditor />
+      {user.uid && user.wcaId && <TeacherSignatureEditor key={user.uid} uid={user.uid} name={user.name} />}
     </div>
   );
 }

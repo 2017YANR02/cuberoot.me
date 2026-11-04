@@ -460,10 +460,46 @@ describe('auth route wire contracts', () => {
     const response = await accountAuthRoutes.request('/auth/profile');
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ profile, deskPetSelection });
+    expect(await response.json()).toEqual({ profile, deskPetSelection, teacherSignature: { mode: 'name', organization: '' } });
     expect(mocks.getAccountBasicProfile).toHaveBeenCalledWith(42);
-    expect(mocks.query).toHaveBeenCalledWith('SELECT deskpet_selection FROM app_users WHERE id = ?', [42]);
+    expect(mocks.query).toHaveBeenCalledWith('SELECT deskpet_selection, teacher_signature_mode, teacher_signature_organization FROM app_users WHERE id = ?', [42]);
     expect(mocks.signSession).not.toHaveBeenCalled();
+  });
+
+  it('saves only the authenticated teacher signature with normalized public text', async () => {
+    mocks.requireAppUserId.mockResolvedValue(42);
+    mocks.query.mockResolvedValueOnce([{ id: 42 }]);
+    const response = await accountAuthRoutes.request('/auth/profile', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ expectedUid: 42, teacherSignature: { mode: 'both', organization: ' 魔方根 ' } }),
+    });
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true, teacherSignature: { mode: 'both', organization: '魔方根' } });
+    expect(mocks.query).toHaveBeenCalledWith(expect.stringContaining('WHERE id = ? AND merged_into_user_id IS NULL'), ['both', '魔方根', 42]);
+    expect(mocks.signSession).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [{ expectedUid: 43, teacherSignature: { mode: 'name', organization: '' } }, 409],
+    [{ expectedUid: 42, teacherSignature: { mode: 'fake', organization: '' } }, 400],
+    [{ expectedUid: 42, teacherSignature: { mode: 'name', organization: '' }, name: 'new' }, 400],
+  ])('rejects stale accounts and invalid signature payloads', async (body, status) => {
+    mocks.requireAppUserId.mockResolvedValue(42);
+    const response = await accountAuthRoutes.request('/auth/profile', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    expect(response.status).toBe(status);
+    expect(mocks.query).not.toHaveBeenCalled();
+  });
+
+  it('does not save a teacher signature on an unbound or merged account', async () => {
+    mocks.requireAppUserId.mockResolvedValue(42);
+    mocks.query.mockResolvedValueOnce([]);
+    const response = await accountAuthRoutes.request('/auth/profile', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ expectedUid: 42, teacherSignature: { mode: 'name', organization: '' } }),
+    });
+    expect(response.status).toBe(403);
   });
 
   it('normalizes and saves a complete basic profile action', async () => {

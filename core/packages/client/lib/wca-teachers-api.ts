@@ -1,9 +1,10 @@
+import type { TeacherSignature } from '@cuberoot/shared/account';
 import { sessionFetch } from '@/lib/session-fetch';
 import { API_ORIGIN } from '@/lib/api-base';
 import { authHeaders, handleApi } from '@/lib/admin-api';
 
 const BASE = API_ORIGIN + '/v1/wca/teachers';
-const RESPONSE_VERSION = '6';
+const RESPONSE_VERSION = '7';
 
 export interface WcaTeacher {
   studentWcaId: string;
@@ -13,6 +14,7 @@ export interface WcaTeacher {
   isSelfTaught: boolean;
   teacherWcaId: string | null;
   teacherName: string | null;
+  teacherSignature?: TeacherSignature;
   teacherCountryIso2: string | null;
 }
 
