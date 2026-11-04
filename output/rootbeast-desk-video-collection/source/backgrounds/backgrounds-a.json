@@ -1,0 +1,29 @@
+[
+  {
+    "id": "01-morning",
+    "title": "晨光问好",
+    "animation": "hello",
+    "background": "/Users/eula/Developer/cuberoot.me/output/rootbeast-desk-video-collection/source/backgrounds/01-morning.png",
+    "promptPath": "/Users/eula/Developer/cuberoot.me/output/rootbeast-desk-video-collection/source/backgrounds/01-morning.prompt.txt",
+    "notes": "Checked visually. Clear center; spring morning, trees and city rooftops. Mug rim approx (356,206) in 480x270. No computer or string lights: omit terminal cursor, nighttime stars and bulb overlays. Window inner bounds approximately x40..225,y31..164. Desktop supports character feet near y235.",
+    "generation": "Built-in image_gen, reference-based new illustration"
+  },
+  {
+    "id": "02-rain-reading",
+    "title": "雨夜阅读",
+    "animation": "reading",
+    "background": "/Users/eula/Developer/cuberoot.me/output/rootbeast-desk-video-collection/source/backgrounds/02-rain-reading.png",
+    "promptPath": "/Users/eula/Developer/cuberoot.me/output/rootbeast-desk-video-collection/source/backgrounds/02-rain-reading.prompt.txt",
+    "notes": "Checked visually. Clear center; indigo rain, city lights, books and warm lamp. Mug rim approx (356,208) in 480x270. Four window panes: x40..128 or135..222; y35..83 or90..172. String lights present; no computer, moon or stars. Add rain only inside panes.",
+    "generation": "Built-in image_gen, reference-based new illustration"
+  },
+  {
+    "id": "03-sunset-cubing",
+    "title": "午后魔方",
+    "animation": "cubing",
+    "background": "/Users/eula/Developer/cuberoot.me/output/rootbeast-desk-video-collection/source/backgrounds/03-sunset-cubing.png",
+    "promptPath": "/Users/eula/Developer/cuberoot.me/output/rootbeast-desk-video-collection/source/backgrounds/03-sunset-cubing.prompt.txt",
+    "notes": "Checked visually. Clear center; low sunset sun and hill, cube shelf, cubing timer and mat on far left. Mug rim approx (356,207) in 480x270. Top string lights present; no terminal or stars. Window similar to baseline, lower pane x38..225,y100..165. Desktop supports character feet near y235.",
+    "generation": "Built-in image_gen, reference-based new illustration"
+  }
+]

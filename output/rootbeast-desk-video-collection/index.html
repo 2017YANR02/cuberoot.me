@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>根号兽 · 像素日常</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --page: #171519;
+      --card: #211d23;
+      --line: #393039;
+      --text: #f6eee8;
+      --muted: #b6a7ae;
+      --accent: #f5b27c;
+      --accent-ink: #2c1d18;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--page); color: var(--text); }
+    a { color: inherit; text-decoration: none; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    button { font: inherit; }
+    button:focus-visible, a:focus-visible, video:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+    .wrap { width: min(1264px, calc(100% - 48px)); margin: 0 auto; padding: 38px 0 44px; }
+    .masthead { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
+    h1 { margin: 0 0 11px; font-size: clamp(25px, 3.2vw, 36px); line-height: 1.2; font-weight: 700; letter-spacing: -.04em; }
+    h1 span { color: var(--accent); }
+    .details { display: flex; flex-wrap: wrap; gap: 6px 15px; margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .actions { display: flex; align-items: center; gap: 9px; flex-shrink: 0; }
+    .action { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 0 15px; border-radius: 11px; border: 1px solid var(--line); background: var(--card); font-size: 14px; font-weight: 600; transition: background .16s ease, border-color .16s ease; }
+    .action:hover { background: #302830; border-color: #67505a; }
+    .action.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+    .action.primary:hover { background: #ffc59a; border-color: #ffc59a; }
+    .icon { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+    .grid { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px 18px; padding: 0; margin: 0; }
+    .card { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
+    .media { position: relative; aspect-ratio: 16 / 9; background: #100e12; }
+    video { display: block; width: 100%; height: 100%; aspect-ratio: 16 / 9; object-fit: contain; background: #100e12; }
+    .start { position: absolute; inset: 0; width: 100%; border: 0; color: #fff6ee; cursor: pointer; display: grid; place-items: center; background: linear-gradient(180deg, transparent 40%, #1715191a); }
+    .start[hidden] { display: none; }
+    .play-disc { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; background: #211a22d9; border: 1px solid #fff0d95c; box-shadow: 0 3px 15px #0003; transition: background .16s ease, transform .16s ease; }
+    .start:hover .play-disc { background: #171219f0; transform: scale(1.06); }
+    .play-disc .icon { width: 23px; height: 23px; margin-left: 2px; fill: currentColor; stroke-width: 1.4; }
+    .caption { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 12px 12px 15px; }
+    .name { display: flex; align-items: baseline; gap: 9px; min-width: 0; }
+    .number { color: #927f8a; font-size: 11px; font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+    h2 { margin: 0; font-size: 15px; line-height: 1.5; font-weight: 600; }
+    .download { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 7px 8px; border-radius: 7px; font-size: 12px; line-height: 1.3; color: var(--muted); white-space: nowrap; }
+    .download:hover { background: #362c36; color: var(--text); }
+    .download .icon { width: 15px; height: 15px; }
+    #playback-error { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 2; max-width: calc(100% - 32px); padding: 11px 16px; border-radius: 10px; border: 1px solid #6e4c47; background: #302027; color: #ffe3d2; font-size: 14px; box-shadow: 0 8px 30px #0005; }
+    #playback-error:empty { display: none; }
+    @media (max-width: 1000px) {
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .wrap { width: min(840px, calc(100% - 40px)); }
+      .masthead { align-items: flex-start; }
+    }
+    @media (max-width: 620px) {
+      .wrap { width: calc(100% - 28px); padding: 25px 0 30px; }
+      .masthead { display: block; margin-bottom: 21px; }
+      .actions { margin-top: 18px; }
+      .action { min-height: 40px; }
+      .grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+      .card { border-radius: 12px; }
+      .caption { padding: 11px 11px 11px 14px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" aria-hidden="true" style="position:absolute;overflow:hidden"><defs>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7Z"/></symbol>
+  </defs></svg>
+  <main class="wrap">
+    <header class="masthead">
+      <div>
+        <h1>根号兽 <span>·</span> 像素日常</h1>
+        <p class="details"><span>10 支短片</span><span>每支 12 秒</span><span>1080p · 30fps</span><span>无声循环</span></p>
+      </div>
+      <nav class="actions" aria-label="合集">
+        <a class="action" href="30秒总览.mp4" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg>观看总览</a>
+        <a class="action primary" href="根号兽桌宠视频-10支.zip" download><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>打包下载</a>
+      </nav>
+    </header>
+    <ul class="grid">
+      <li class="card"><div class="media"><video data-src="videos/01-晨光问好.mp4" poster="covers/01-晨光问好.png" aria-label="晨光问好" controls loop muted playsinline preload="none"></video><button class="start" type="button" aria-label="播放晨光问好"><span class="play-disc"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg></span></button></div><div class="caption"><div class="name"><span class="number">01</span><h2>晨光问好</h2></div><a class="download" href="videos/01-晨光问好.mp4" download aria-label="下载晨光问好 MP4"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>下载</a></div></li>
+      <li class="card"><div class="media"><video data-src="videos/02-雨夜阅读.mp4" poster="covers/02-雨夜阅读.png" aria-label="雨夜阅读" controls loop muted playsinline preload="none"></video><button class="start" type="button" aria-label="播放雨夜阅读"><span class="play-disc"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg></span></button></div><div class="caption"><div class="name"><span class="number">02</span><h2>雨夜阅读</h2></div><a class="download" href="videos/02-雨夜阅读.mp4" download aria-label="下载雨夜阅读 MP4"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>下载</a></div></li>
+      <li class="card"><div class="media"><video data-src="videos/03-午后魔方.mp4" poster="covers/03-午后魔方.png" aria-label="午后魔方" controls loop muted playsinline preload="none"></video><button class="start" type="button" aria-label="播放午后魔方"><span class="play-disc"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg></span></button></div><div class="caption"><div class="name"><span class="number">03</span><h2>午后魔方</h2></div><a class="download" href="videos/03-午后魔方.mp4" download aria-label="下载午后魔方 MP4"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>下载</a></div></li>
+      <li class="card"><div class="media"><video data-src="videos/04-深夜码字.mp4" poster="covers/04-深夜码字.png" aria-label="深夜码字" controls loop muted playsinline preload="none"></video><button class="start" type="button" aria-label="播放深夜码字"><span class="play-disc"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg></span></button></div><div class="caption"><div class="name"><span class="number">04</span><h2>深夜码字</h2></div><a class="download" href="videos/04-深夜码字.mp4" download aria-label="下载深夜码字 MP4"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>下载</a></div></li>
+      <li class="card"><div class="media"><video data-src="videos/05-星光魔术.mp4" poster="covers/05-星光魔术.png" aria-label="星光魔术" controls loop muted playsinline preload="none"></video><button class="start" type="button" aria-label="播放星光魔术"><span class="play-disc"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg></span></button></div><div class="caption"><div class="name"><span class="number">05</span><h2>星光魔术</h2></div><a class="download" href="videos/05-星光魔术.mp4" download aria-label="下载星光魔术 MP4"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>下载</a></div></li>
+      <li class="card"><div class="media"><video data-src="videos/06-月亮晚安.mp4" poster="covers/06-月亮晚安.png" aria-label="月亮晚安" controls loop muted playsinline preload="none"></video><button class="start" type="button" aria-label="播放月亮晚安"><span class="play-disc"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg></span></button></div><div class="caption"><div class="name"><span class="number">06</span><h2>月亮晚安</h2></div><a class="download" href="videos/06-月亮晚安.mp4" download aria-label="下载月亮晚安 MP4"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>下载</a></div></li>
+      <li class="card"><div class="media"><video data-src="videos/07-甜点休息.mp4" poster="covers/07-甜点休息.png" aria-label="甜点休息" controls loop muted playsinline preload="none"></video><button class="start" type="button" aria-label="播放甜点休息"><span class="play-disc"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg></span></button></div><div class="caption"><div class="name"><span class="number">07</span><h2>甜点休息</h2></div><a class="download" href="videos/07-甜点休息.mp4" download aria-label="下载甜点休息 MP4"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>下载</a></div></li>
+      <li class="card"><div class="media"><video data-src="videos/08-快乐摇摆.mp4" poster="covers/08-快乐摇摆.png" aria-label="快乐摇摆" controls loop muted playsinline preload="none"></video><button class="start" type="button" aria-label="播放快乐摇摆"><span class="play-disc"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg></span></button></div><div class="caption"><div class="name"><span class="number">08</span><h2>快乐摇摆</h2></div><a class="download" href="videos/08-快乐摇摆.mp4" download aria-label="下载快乐摇摆 MP4"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>下载</a></div></li>
+      <li class="card"><div class="media"><video data-src="videos/09-纸飞机出发.mp4" poster="covers/09-纸飞机出发.png" aria-label="纸飞机出发" controls loop muted playsinline preload="none"></video><button class="start" type="button" aria-label="播放纸飞机出发"><span class="play-disc"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg></span></button></div><div class="caption"><div class="name"><span class="number">09</span><h2>纸飞机出发</h2></div><a class="download" href="videos/09-纸飞机出发.mp4" download aria-label="下载纸飞机出发 MP4"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>下载</a></div></li>
+      <li class="card"><div class="media"><video data-src="videos/10-方块杂耍.mp4" poster="covers/10-方块杂耍.png" aria-label="方块杂耍" controls loop muted playsinline preload="none"></video><button class="start" type="button" aria-label="播放方块杂耍"><span class="play-disc"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg></span></button></div><div class="caption"><div class="name"><span class="number">10</span><h2>方块杂耍</h2></div><a class="download" href="videos/10-方块杂耍.mp4" download aria-label="下载方块杂耍 MP4"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>下载</a></div></li>
+    </ul>
+  </main>
+  <output id="playback-error" aria-live="polite"></output>
+  <script>
+    const videos = [...document.querySelectorAll('video')];
+    const errorOutput = document.getElementById('playback-error');
+    let errorTimeout;
+    function showError() {
+      errorOutput.textContent = '暂时无法播放，请下载视频观看。';
+      clearTimeout(errorTimeout);
+      errorTimeout = setTimeout(() => { errorOutput.textContent = ''; }, 6000);
+    }
+    for (const video of videos) {
+      const start = video.parentElement.querySelector('.start');
+      start.addEventListener('click', async () => {
+        for (const other of videos) if (other !== video) other.pause();
+        if (!video.getAttribute('src')) {
+          video.src = video.dataset.src;
+          video.load();
+        }
+        start.hidden = true;
+        try {
+          await video.play();
+          video.focus({ preventScroll: true });
+        } catch (error) {
+          if (error.name !== 'AbortError') { start.hidden = false; showError(); }
+        }
+      });
+      video.addEventListener('play', () => {
+        for (const other of videos) if (other !== video) other.pause();
+      });
+      video.addEventListener('error', () => { start.hidden = false; showError(); });
+    }
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) for (const video of videos) video.pause();
+    });
+  </script>
+</body>
+</html>

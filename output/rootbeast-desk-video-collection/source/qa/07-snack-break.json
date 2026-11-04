@@ -1,0 +1,42 @@
+{
+  "id": "07-snack-break",
+  "title": "甜点休息",
+  "animation": "43-popcorn.svg",
+  "hash": "5e3331dcfcba568f430a30f73b52b1161fe25b5318ab376c3398442c41e79ce4",
+  "sourceDuration": 5.4,
+  "cycles": 2,
+  "rendererPid": 14491,
+  "browserPid": 14549,
+  "loopBoundary": {
+    "meanChannelDifference": 0.8132,
+    "changedChannelPct": 1.011
+  },
+  "actionDifference": {
+    "meanChannelDifference": 0.9336,
+    "changedChannelPct": 1.224
+  },
+  "complete": true,
+  "probe": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "width": 1920,
+        "height": 1080,
+        "r_frame_rate": "30/1",
+        "nb_frames": "360"
+      }
+    ],
+    "format": {
+      "duration": "12.000000",
+      "size": "607079"
+    }
+  },
+  "resourceAtEnd": {
+    "boot": "{ sec = 1792734550, usec = 589691 } Thu Oct 22 22:49:10 2026",
+    "swapouts": 16,
+    "freeBytes": 5538185216,
+    "pressure": 60
+  }
+}

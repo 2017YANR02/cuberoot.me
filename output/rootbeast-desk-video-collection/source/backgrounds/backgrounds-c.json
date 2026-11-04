@@ -1,0 +1,23 @@
+[
+  {
+    "id": "07-snack-break",
+    "title": "甜点休息",
+    "background": "07-snack-break.png",
+    "promptPath": "07-snack-break.prompt.txt",
+    "notes": "内置 image_gen 生成。1672×941。奶油色下午茶房间、玫瑰花园与花拱门，左侧饼干盘，右侧珊瑚色灯和花纹茶杯。中央留白，桌后沿约 y77.5%，杯口约 y76%。适合原 popcorn 动作；白天不要添加星光、流星或终端光标。首次生成连接失败，内置工具原提示词重试成功。"
+  },
+  {
+    "id": "08-dance-party",
+    "title": "快乐摇摆",
+    "background": "08-dance-party.png",
+    "promptPath": "08-dance-party.prompt.txt",
+    "notes": "内置 image_gen 生成。1672×941。复古唱片机与单只音箱在左，墙面黑胶在右上，窗外海湾与桃紫夕照。中央留空，桌后沿约 y77%，杯口约 y76%，可直接复用基准角色落点。夜景可添加稀疏星光，唱片机区域无需终端光标。"
+  },
+  {
+    "id": "09-paper-plane",
+    "title": "纸飞机出发",
+    "background": "09-paper-plane.png",
+    "promptPath": "09-paper-plane.prompt.txt",
+    "notes": "内置 image_gen 生成。1672×941。白天晴空、远山与松林，蓝窗帘、浅木桌，左侧空白手账和铅笔，右侧蓝白台灯。中心清晰留白。杯口约 y76.5%，不添加星光或终端光标；适合轻微云层与纸飞机动作。"
+  }
+]

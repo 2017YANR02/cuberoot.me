@@ -1,0 +1,393 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-11-03T19:27:12.338Z",
+  "sceneCount": 10,
+  "qaComplete": true,
+  "videos": [
+    {
+      "id": "01-morning",
+      "title": "晨光问好",
+      "file": "videos/01-晨光问好.mp4",
+      "cover": "covers/01-晨光问好.png",
+      "preview": "previews/01-晨光问好.gif",
+      "size": 486731,
+      "sha256": "d5605fc885db9988cd7eb31fcfe9f12b301d4e2e3e2c00c5fbea75e6b094a548",
+      "ffprobe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "index": 0,
+            "codec_name": "h264",
+            "codec_type": "video",
+            "width": 1920,
+            "height": 1080,
+            "pix_fmt": "yuv420p",
+            "r_frame_rate": "30/1",
+            "avg_frame_rate": "30/1",
+            "nb_frames": "360"
+          }
+        ],
+        "format": {
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "duration": "12.000000",
+          "size": "486731"
+        }
+      },
+      "sourceQa": "source/qa/01-morning.json",
+      "sourceRenderHash": "3420aac8097b32394ffab43a8941d5345856c261dec0b8caf294e7b673744224"
+    },
+    {
+      "id": "02-rain-reading",
+      "title": "雨夜阅读",
+      "file": "videos/02-雨夜阅读.mp4",
+      "cover": "covers/02-雨夜阅读.png",
+      "preview": "previews/02-雨夜阅读.gif",
+      "size": 1431978,
+      "sha256": "91440af705fd0940a3b6466d34053882e944c6b7f0061b6c4d1f8c845a5984cd",
+      "ffprobe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "index": 0,
+            "codec_name": "h264",
+            "codec_type": "video",
+            "width": 1920,
+            "height": 1080,
+            "pix_fmt": "yuv420p",
+            "r_frame_rate": "30/1",
+            "avg_frame_rate": "30/1",
+            "nb_frames": "360"
+          }
+        ],
+        "format": {
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "duration": "12.000000",
+          "size": "1431978"
+        }
+      },
+      "sourceQa": "source/qa/02-rain-reading.json",
+      "sourceRenderHash": "8c1d4d411cb3b370bb8e127df8a734df57f0d84485ee38541e4327f1c3804148"
+    },
+    {
+      "id": "03-sunset-cubing",
+      "title": "午后魔方",
+      "file": "videos/03-午后魔方.mp4",
+      "cover": "covers/03-午后魔方.png",
+      "preview": "previews/03-午后魔方.gif",
+      "size": 917920,
+      "sha256": "64f25e5b4b0fb3d036237ab61531c4cb0c4fa96aa28ff3cdae312755ed1c8a52",
+      "ffprobe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "index": 0,
+            "codec_name": "h264",
+            "codec_type": "video",
+            "width": 1920,
+            "height": 1080,
+            "pix_fmt": "yuv420p",
+            "r_frame_rate": "30/1",
+            "avg_frame_rate": "30/1",
+            "nb_frames": "360"
+          }
+        ],
+        "format": {
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "duration": "12.000000",
+          "size": "917920"
+        }
+      },
+      "sourceQa": "source/qa/03-sunset-cubing.json",
+      "sourceRenderHash": "b668dfeb145b182cdc303d87a364bea30ff163e4d98917cbef8308cd894959e6"
+    },
+    {
+      "id": "04-midnight-coding",
+      "title": "深夜码字",
+      "file": "videos/04-深夜码字.mp4",
+      "cover": "covers/04-深夜码字.png",
+      "preview": "previews/04-深夜码字.gif",
+      "size": 361679,
+      "sha256": "437a48b766147a0f47662a1865ebd98b7a21f52c6bc37e7dec200845ddb7c89e",
+      "ffprobe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "index": 0,
+            "codec_name": "h264",
+            "codec_type": "video",
+            "width": 1920,
+            "height": 1080,
+            "pix_fmt": "yuv420p",
+            "r_frame_rate": "30/1",
+            "avg_frame_rate": "30/1",
+            "nb_frames": "360"
+          }
+        ],
+        "format": {
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "duration": "12.000000",
+          "size": "361679"
+        }
+      },
+      "sourceQa": "source/qa/04-midnight-coding.json",
+      "sourceRenderHash": "a0b4d6006ada2a34affaa82322da51ac4822a9339d26d0452d2a470b92b52aec"
+    },
+    {
+      "id": "05-starlight-magic",
+      "title": "星光魔术",
+      "file": "videos/05-星光魔术.mp4",
+      "cover": "covers/05-星光魔术.png",
+      "preview": "previews/05-星光魔术.gif",
+      "size": 1419712,
+      "sha256": "cd3e5d75757aa1f5d21c6588dd6c2a2aa646d50f1559a5965e1e827d89a853f3",
+      "ffprobe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "index": 0,
+            "codec_name": "h264",
+            "codec_type": "video",
+            "width": 1920,
+            "height": 1080,
+            "pix_fmt": "yuv420p",
+            "r_frame_rate": "30/1",
+            "avg_frame_rate": "30/1",
+            "nb_frames": "360"
+          }
+        ],
+        "format": {
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "duration": "12.000000",
+          "size": "1419712"
+        }
+      },
+      "sourceQa": "source/qa/05-starlight-magic.json",
+      "sourceRenderHash": "13148528cdf5eaf0ca0134e2ecdd57bfedf908f0ffd2b70eee926841e59b960d"
+    },
+    {
+      "id": "06-moon-goodnight",
+      "title": "月亮晚安",
+      "file": "videos/06-月亮晚安.mp4",
+      "cover": "covers/06-月亮晚安.png",
+      "preview": "previews/06-月亮晚安.gif",
+      "size": 801828,
+      "sha256": "6854aba5af3452956672f5c226e4c5da5db4608b4d36987f7f6bca538f576ca8",
+      "ffprobe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "index": 0,
+            "codec_name": "h264",
+            "codec_type": "video",
+            "width": 1920,
+            "height": 1080,
+            "pix_fmt": "yuv420p",
+            "r_frame_rate": "30/1",
+            "avg_frame_rate": "30/1",
+            "nb_frames": "360"
+          }
+        ],
+        "format": {
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "duration": "12.000000",
+          "size": "801828"
+        }
+      },
+      "sourceQa": "source/qa/06-moon-goodnight.json",
+      "sourceRenderHash": "a3b27f41f2e954df980012350af16e8228191a36765454c38885b95439af92be"
+    },
+    {
+      "id": "07-snack-break",
+      "title": "甜点休息",
+      "file": "videos/07-甜点休息.mp4",
+      "cover": "covers/07-甜点休息.png",
+      "preview": "previews/07-甜点休息.gif",
+      "size": 607079,
+      "sha256": "0e1563232c79b0926bc14e1ebfdffe9f981c052a79e11aed2aff0f8785cf11b7",
+      "ffprobe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "index": 0,
+            "codec_name": "h264",
+            "codec_type": "video",
+            "width": 1920,
+            "height": 1080,
+            "pix_fmt": "yuv420p",
+            "r_frame_rate": "30/1",
+            "avg_frame_rate": "30/1",
+            "nb_frames": "360"
+          }
+        ],
+        "format": {
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "duration": "12.000000",
+          "size": "607079"
+        }
+      },
+      "sourceQa": "source/qa/07-snack-break.json",
+      "sourceRenderHash": "5e3331dcfcba568f430a30f73b52b1161fe25b5318ab376c3398442c41e79ce4"
+    },
+    {
+      "id": "08-dance-party",
+      "title": "快乐摇摆",
+      "file": "videos/08-快乐摇摆.mp4",
+      "cover": "covers/08-快乐摇摆.png",
+      "preview": "previews/08-快乐摇摆.gif",
+      "size": 1639090,
+      "sha256": "92bca4ddcd26128af62638575cbbb45dafb409b3560b45ab74478fd69599e69e",
+      "ffprobe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "index": 0,
+            "codec_name": "h264",
+            "codec_type": "video",
+            "width": 1920,
+            "height": 1080,
+            "pix_fmt": "yuv420p",
+            "r_frame_rate": "30/1",
+            "avg_frame_rate": "30/1",
+            "nb_frames": "360"
+          }
+        ],
+        "format": {
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "duration": "12.000000",
+          "size": "1639090"
+        }
+      },
+      "sourceQa": "source/qa/08-dance-party.json",
+      "sourceRenderHash": "e1e118f8a81e930523f679436268f7efdd8911291c35989156a0f813cfd6b52e"
+    },
+    {
+      "id": "09-paper-plane",
+      "title": "纸飞机出发",
+      "file": "videos/09-纸飞机出发.mp4",
+      "cover": "covers/09-纸飞机出发.png",
+      "preview": "previews/09-纸飞机出发.gif",
+      "size": 1973258,
+      "sha256": "1f3979ee4eb9ef53f6067cb4adaa7a31e6ac7b972f35eac7629579c7c761d0f8",
+      "ffprobe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "index": 0,
+            "codec_name": "h264",
+            "codec_type": "video",
+            "width": 1920,
+            "height": 1080,
+            "pix_fmt": "yuv420p",
+            "r_frame_rate": "30/1",
+            "avg_frame_rate": "30/1",
+            "nb_frames": "360"
+          }
+        ],
+        "format": {
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "duration": "12.000000",
+          "size": "1973258"
+        }
+      },
+      "sourceQa": "source/qa/09-paper-plane.json",
+      "sourceRenderHash": "3a15d9789389b439fbf8f57d1d50893c4b5f03434672e8dc386630ab2c080053"
+    },
+    {
+      "id": "10-block-juggling",
+      "title": "方块杂耍",
+      "file": "videos/10-方块杂耍.mp4",
+      "cover": "covers/10-方块杂耍.png",
+      "preview": "previews/10-方块杂耍.gif",
+      "size": 725797,
+      "sha256": "ccfbea5176d8806f9edde31d33317b53985efe7af226e260b5fdee1948a210b0",
+      "ffprobe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "index": 0,
+            "codec_name": "h264",
+            "codec_type": "video",
+            "width": 1920,
+            "height": 1080,
+            "pix_fmt": "yuv420p",
+            "r_frame_rate": "30/1",
+            "avg_frame_rate": "30/1",
+            "nb_frames": "360"
+          }
+        ],
+        "format": {
+          "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+          "duration": "12.000000",
+          "size": "725797"
+        }
+      },
+      "sourceQa": "source/qa/10-block-juggling.json",
+      "sourceRenderHash": "b6be00d8d92a098c46f0b5944dad819d61148ed9483d0700e9eea1f5552b6a43"
+    }
+  ],
+  "contactSheet": {
+    "file": "总览.png",
+    "size": 1404836,
+    "sha256": "415bd0db5027cb2a5e85961db6cecb2e26e146a0a70b8b361a21d3ee97dcb1ce",
+    "width": 2528,
+    "height": 796,
+    "columns": 5,
+    "rows": 2
+  },
+  "overview": {
+    "file": "30秒总览.mp4",
+    "size": 1794529,
+    "sha256": "5307671181837b48f95e5fa74675c00295e0ee9a441b5f29666d4b44812b4eec",
+    "durationSeconds": 30,
+    "ffprobe": {
+      "programs": [],
+      "stream_groups": [],
+      "streams": [
+        {
+          "index": 0,
+          "codec_name": "h264",
+          "codec_type": "video",
+          "width": 960,
+          "height": 540,
+          "pix_fmt": "yuv420p",
+          "r_frame_rate": "30/1",
+          "avg_frame_rate": "30/1",
+          "nb_frames": "900"
+        }
+      ],
+      "format": {
+        "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+        "duration": "30.000000",
+        "size": "1794529"
+      }
+    }
+  },
+  "archive": {
+    "file": "根号兽桌宠视频-10支.zip",
+    "size": 10366240,
+    "sha256": "e46cb548eb2638487519f064e1e4b1284461971fada6b3e6423e44688905cac3",
+    "entries": [
+      "01-晨光问好.mp4",
+      "02-雨夜阅读.mp4",
+      "03-午后魔方.mp4",
+      "04-深夜码字.mp4",
+      "05-星光魔术.mp4",
+      "06-月亮晚安.mp4",
+      "07-甜点休息.mp4",
+      "08-快乐摇摆.mp4",
+      "09-纸飞机出发.mp4",
+      "10-方块杂耍.mp4"
+    ]
+  },
+  "previewPage": "index.html"
+}

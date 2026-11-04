@@ -1,0 +1,12 @@
+[
+  {"id":"01-morning","title":"晨光问好","animation":"hello","cycles":3,"ambient":"morning","mug":[356,206]},
+  {"id":"02-rain-reading","title":"雨夜阅读","animation":"reading","cycles":3,"ambient":"rain","mug":[356,208],"panes":[[40,35,88,48],[135,35,87,48],[40,90,88,82],[135,90,87,82]]},
+  {"id":"03-sunset-cubing","title":"午后魔方","animation":"cubing","cycles":3,"ambient":"sunset","mug":[356,207]},
+  {"id":"04-midnight-coding","title":"深夜码字","animation":"typing","cycles":4,"ambient":"night","mug":[358,204]},
+  {"id":"05-starlight-magic","title":"星光魔术","animation":"wizard","cycles":3,"ambient":"magic","mug":[358,208]},
+  {"id":"06-moon-goodnight","title":"月亮晚安","animation":"moon-hug","cycles":3,"ambient":"moon","mug":[360,207]},
+  {"id":"07-snack-break","title":"甜点休息","animation":"popcorn","cycles":2,"ambient":"garden","mug":[356,206]},
+  {"id":"08-dance-party","title":"快乐摇摆","animation":"dance","cycles":4,"ambient":"sunset","mug":[356,206],"groundShadow":true},
+  {"id":"09-paper-plane","title":"纸飞机出发","animation":"paper-plane","cycles":3,"ambient":"morning","mug":[356,207],"groundShadow":true},
+  {"id":"10-block-juggling","title":"方块杂耍","animation":"juggling","cycles":4,"ambient":"snow","mug":[356,206],"groundShadow":true}
+]

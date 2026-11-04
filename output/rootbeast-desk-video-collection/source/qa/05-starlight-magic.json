@@ -1,0 +1,42 @@
+{
+  "id": "05-starlight-magic",
+  "title": "星光魔术",
+  "animation": "15-wizard.svg",
+  "hash": "13148528cdf5eaf0ca0134e2ecdd57bfedf908f0ffd2b70eee926841e59b960d",
+  "sourceDuration": 3.2,
+  "cycles": 3,
+  "rendererPid": 14491,
+  "browserPid": 14549,
+  "loopBoundary": {
+    "meanChannelDifference": 0.1453,
+    "changedChannelPct": 0.373
+  },
+  "actionDifference": {
+    "meanChannelDifference": 18.7959,
+    "changedChannelPct": 19.92
+  },
+  "complete": true,
+  "probe": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "width": 1920,
+        "height": 1080,
+        "r_frame_rate": "30/1",
+        "nb_frames": "360"
+      }
+    ],
+    "format": {
+      "duration": "12.000000",
+      "size": "1419712"
+    }
+  },
+  "resourceAtEnd": {
+    "boot": "{ sec = 1792734550, usec = 589691 } Thu Oct 22 22:49:10 2026",
+    "swapouts": 16,
+    "freeBytes": 5510152192,
+    "pressure": 59
+  }
+}

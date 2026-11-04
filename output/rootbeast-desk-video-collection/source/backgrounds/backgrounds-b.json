@@ -1,0 +1,59 @@
+[
+  {
+    "id": "04-midnight-coding",
+    "title": "深夜码字",
+    "background": "/Users/eula/Developer/cuberoot.me/output/rootbeast-desk-video-collection/source/backgrounds/04-midnight-coding.png",
+    "promptPath": "/Users/eula/Developer/cuberoot.me/output/rootbeast-desk-video-collection/source/backgrounds/04-midnight-coding.prompt.txt",
+    "notes": "Indigo city night and teal-lit workstation. Small monitor at left; mug and lamp at right. No mascot; center clear. Window contains city at midnight. Desktop spans native y209..244. Main empty center confirmed.",
+    "generationMode": "built-in image_gen",
+    "originalGeneratedPath": "/Users/eula/.codex/generated_images/01a1a2cf-e7a9-7573-841d-e2e6897d340c/exec-d39e2124-1c6e-4ed8-b434-7f7d94caa38f.png",
+    "ambientHints480x270": {
+      "steamOrigin": [
+        358,
+        204
+      ],
+      "terminalCursor": [
+        116,
+        209
+      ],
+      "topLights": "17 bulbs, close to original; no orange leaves in sky",
+      "notes": "Window contains city at midnight. Desktop spans native y209..244. Main empty center confirmed."
+    }
+  },
+  {
+    "id": "05-starlight-magic",
+    "title": "星光魔术",
+    "background": "/Users/eula/Developer/cuberoot.me/output/rootbeast-desk-video-collection/source/backgrounds/05-starlight-magic.png",
+    "promptPath": "/Users/eula/Developer/cuberoot.me/output/rootbeast-desk-video-collection/source/backgrounds/05-starlight-magic.prompt.txt",
+    "notes": "Lilac astronomy nook with starry hills, gold lantern, small crystal props confined to right. No mascot; center clear. No monitor. Window has stars, nebula and hill silhouettes. Desktop spans native y213..246. Main empty center confirmed.",
+    "generationMode": "built-in image_gen",
+    "originalGeneratedPath": "/Users/eula/.codex/generated_images/01a1a2cf-e7a9-7573-841d-e2e6897d340c/exec-5306ac0b-27d1-4de7-8c79-9cb3be9b4189.png",
+    "ambientHints480x270": {
+      "steamOrigin": [
+        358,
+        208
+      ],
+      "terminalCursor": null,
+      "topLights": "9 star bulbs; do not draw original 17 rectangular bulbs",
+      "notes": "No monitor. Window has stars, nebula and hill silhouettes. Desktop spans native y213..246. Main empty center confirmed."
+    }
+  },
+  {
+    "id": "06-moon-goodnight",
+    "title": "月亮晚安",
+    "background": "/Users/eula/Developer/cuberoot.me/output/rootbeast-desk-video-collection/source/backgrounds/06-moon-goodnight.png",
+    "promptPath": "/Users/eula/Developer/cuberoot.me/output/rootbeast-desk-video-collection/source/backgrounds/06-moon-goodnight.prompt.txt",
+    "notes": "Quiet dark-blue bedroom study, moon above lake and pines, dim bedside lamp and small books. No mascot; center clear. No monitor. Window has moon, clouds, lake and pine silhouettes. Desktop spans native y212..245. Main empty center confirmed.",
+    "generationMode": "built-in image_gen",
+    "originalGeneratedPath": "/Users/eula/.codex/generated_images/01a1a2cf-e7a9-7573-841d-e2e6897d340c/exec-f56ce597-5d52-4e3e-9713-e9b68333b4f7.png",
+    "ambientHints480x270": {
+      "steamOrigin": [
+        360,
+        207
+      ],
+      "terminalCursor": null,
+      "topLights": "Only 4 dim squares at native x20,43,67,90; no light strand across frame",
+      "notes": "No monitor. Window has moon, clouds, lake and pine silhouettes. Desktop spans native y212..245. Main empty center confirmed."
+    }
+  }
+]
