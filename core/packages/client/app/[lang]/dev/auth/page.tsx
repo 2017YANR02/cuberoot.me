@@ -1,6 +1,6 @@
 'use client';
 
-/* auth-doc-review {"fingerprint":"69516ca3725cefb1ba7a3b9eab297b1dc6e7502b6f1733616052772fec9456c6","reason":"Reviewed 1953ee019 assistant follow-up serialization: LandingSearch now includes already-displayed table/chart rows and validated destinations in bounded assistant-role history, without adding account fields, credentials or authorization. The same five completed turns and image-history limits remain; omitted context is marked and old facts require reverification. Reviewed local reset/abort on identity change, owner-keyed conversation storage and keyed workspace remount; serialization does not read another owner's workspace. API admission still verifies the current CubeRoot session and canonical WCA binding, and resolves attachments under the current uid before quota/model work. No sign-in, linking, merging, deletion, session installation or payment-handoff changes. Browser/device account-switch acceptance remains separate."} */
+/* auth-doc-review {"fingerprint":"6510f0e37292bc656741de3ec53a3ab0eb7e0cd62a03b7092c74a400c2d35c11","reason":"Reviewed public teacher signatures and strict membership continuation. Profile updates require the current session, matching expectedUid, one validated profile field, and a live WCA-linked account; signatures affect public attribution only. Membership return destinations remain same-origin product paths, tab-local and uid-bound with a two-hour expiry; requireActive survives payment redirects and requires server-confirmed active membership. LandingSearch only reorders the public team badge. Sign-in, binding, merging, deletion and session installation remain unchanged; browser/device and real-payment acceptance are separate."} */
 
 import MoreToggle from '@/components/MoreToggle';
 import type { ReactNode } from 'react';
@@ -62,6 +62,15 @@ export default function AuthFlowPage() {
         <AppLink href="#role-preview" prefetch={false}>{t('角色测试 / 用户查看', 'Role testing / user viewing')}</AppLink>
       </nav>
     </header>
+
+    <section className="auth-map-section" aria-labelledby="profile-preferences-title">
+      <h2 id="profile-preferences-title">{t('公开署名与会员回跳', 'Public attribution and membership return')}</h2>
+      <Steps items={[
+        t('已绑定 WCA 的账号设置教师署名 → 服务端核对当前会话与提交时的账号 → 保存姓名、机构或两者的展示偏好；不改变教师身份及学生关系', 'A WCA-linked account edits its teacher signature → the server checks the current session and expected account → save name, organization or both as display preferences, without changing teacher identity or student relationships'),
+        t('功能要求有效会员 → 保留原站内地址及有效会员条件 → 未登录时先登录，再进入会员页', 'A feature requires active membership → retain the original product URL and active-membership requirement → sign in if needed, then open membership'),
+        t('付款返回 → 同一账号向服务端查询会员状态 → 满足原条件才返回；临时记录两小时过期，换号不沿用旧账号记录', 'Return from payment → the same account queries membership status on the server → return only after the original requirement is met; temporary records expire after two hours and are not reused by another account'),
+      ]} />
+    </section>
 
     <section id="platforms" className="auth-map-section" aria-labelledby="platform-title">
       <h2 id="platform-title">{t('从哪里进入？账号不按平台分家', 'Where do you start? Platforms do not create separate account systems')}</h2>
