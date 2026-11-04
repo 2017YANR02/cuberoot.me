@@ -146,7 +146,7 @@
   },
   {
     "path": "app/[lang]/sim/SimPage.tsx",
-    "call": "useQueryStates({tool}) history='push'",
+    "call": "parseAsStringEnum(['sim', 'capture', 'draw', 'image'] as const) .withDefault('sim') .withOptions({history}) history='push'",
     "reason": "切换模拟、拍摄、涂色或图像工具"
   },
   {
@@ -191,7 +191,7 @@
   },
   {
     "path": "app/[lang]/tutorial/lbl/page.tsx",
-    "call": "useQueryState('step') history='push'",
+    "call": "useQueryStates({step,topic,basics}) history='push'",
     "reason": "进入课程章节、知识主题或练习界面"
   },
   {
@@ -263,5 +263,15 @@
     "path": "components/platform/PlatformRouteView.tsx",
     "call": "useQueryState('lesson') history='push'",
     "reason": "打开具体课程课时"
+  },
+  {
+    "path": "app/[lang]/wca/results/page.tsx",
+    "call": "setQuery({tab,rtype,revent,rshow,scancelled,rregion,rgender,mtype}) history='push'",
+    "reason": "排名与纪录两个主要内容页之间导航，同步适用筛选；页内筛选仍使用 replace"
+  },
+  {
+    "path": "app/[lang]/wca/results/page.tsx",
+    "call": "setQuery({tab,view,mmetric,mtype,mevent,events,type,country,gender}) history='push'",
+    "reason": "排名与纪录两个主要内容页之间导航，同步适用筛选；页内筛选仍使用 replace"
   }
 ]

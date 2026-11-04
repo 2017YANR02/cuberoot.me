@@ -134,7 +134,7 @@ describe('space viewport resizing', () => {
     camera.position.set(100, 70, 200);
     const host = { clientWidth: 390, clientHeight: 480 };
     const renderer = { setSize: vi.fn() }, composer = { setSize: vi.fn() }, ao = { setSize: vi.fn() };
-    const room = { resize: vi.fn(), style: 'modern' }, render = vi.fn();
+    const room = { root: new THREE.Group(), resize: vi.fn(), style: 'modern' }, render = vi.fn();
     Object.assign(scene, { host, camera, renderer, composer, ao, room, render, currentView: 'interior', freeCamera: false });
     return { scene, camera, host, renderer, composer, ao, room, render };
   };
